@@ -2,48 +2,38 @@ const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 
 const SPRITE_SHEET = 'char_run_001.png';
-
-// 시트가 8x2로 깔끔하게 잘린 경우 true, 원본 큰 시트(라벨 포함)이면 false로 두고 아래 수동 좌표 사용.
-const USE_FULL_GRID = true;
 const GRID_COLS = 8;
 const GRID_ROWS = 2;
 
-// 원본 시트 대응용 수동 프레임 데이터(필요 시 값 조정)
-const MANUAL_FRAME_W = 190;
-const MANUAL_FRAME_H = 210;
-const MANUAL_START_X = 58;
-const MANUAL_START_Y = 292;
-const MANUAL_GAP_X = 58;
-const MANUAL_GAP_Y = 204;
-
-// 1번 프레임을 버리고 16번 프레임을 1번 자리에 배치한 순서 (요청사항 반영)
-// 즉: 16,2,3,4,...,15
-const ANIM_SEQUENCE = [15, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
+// 1(16) = idle, run loop = 2~15
+const IDLE_FRAME = 15;
+const RUN_SEQUENCE = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
 
 const keys = { a: false, d: false, space: false };
 
 const world = {
-  gravity: 1400,
-  groundY: 420,
+  gravity: 1800,
+  groundRatio: 0.84,
+  groundY: 0,
   tileW: 280,
-  tileH: 20,
+  tileH: 22,
   scrollX: 0,
 };
 
 const player = {
-  x: canvas.width / 2,
-  y: world.groundY,
+  x: 0,
+  y: 0,
   w: 122,
   h: 184,
   vx: 0,
   vy: 0,
-  speed: 290,
-  jumpPower: 620,
+  speed: 320,
+  jumpPower: 700,
   facing: 1,
   onGround: true,
-  animIdx: 0,
+  runIdx: 0,
   frameTimer: 0,
-  frameInterval: 0.07,
+  frameInterval: 0.065,
 };
 
 const sprite = new Image();
@@ -51,27 +41,65 @@ sprite.src = SPRITE_SHEET;
 
 let frameW = 256;
 let frameH = 384;
+const frameAnchors = [];
+
+function resizeCanvas() {
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  canvas.width = Math.floor(window.innerWidth * dpr);
+  canvas.height = Math.floor(window.innerHeight * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  player.x = window.innerWidth * 0.5;
+  world.groundY = Math.floor(window.innerHeight * world.groundRatio);
+  if (player.onGround) player.y = world.groundY;
+}
 
 function getFrameRect(frameIndex) {
-  if (USE_FULL_GRID) {
-    const col = frameIndex % GRID_COLS;
-    const row = Math.floor(frameIndex / GRID_COLS);
-    return {
-      sx: col * frameW,
-      sy: row * frameH,
-      sw: frameW,
-      sh: frameH,
-    };
-  }
-
   const col = frameIndex % GRID_COLS;
   const row = Math.floor(frameIndex / GRID_COLS);
   return {
-    sx: MANUAL_START_X + col * (MANUAL_FRAME_W + MANUAL_GAP_X),
-    sy: MANUAL_START_Y + row * (MANUAL_FRAME_H + MANUAL_GAP_Y),
-    sw: MANUAL_FRAME_W,
-    sh: MANUAL_FRAME_H,
+    sx: col * frameW,
+    sy: row * frameH,
+    sw: frameW,
+    sh: frameH,
   };
+}
+
+function buildFrameAnchors() {
+  frameAnchors.length = GRID_COLS * GRID_ROWS;
+
+  const probe = document.createElement('canvas');
+  probe.width = frameW;
+  probe.height = frameH;
+  const pctx = probe.getContext('2d', { willReadFrequently: true });
+
+  for (let frame = 0; frame < GRID_COLS * GRID_ROWS; frame += 1) {
+    pctx.clearRect(0, 0, frameW, frameH);
+    const { sx, sy, sw, sh } = getFrameRect(frame);
+    pctx.drawImage(sprite, sx, sy, sw, sh, 0, 0, sw, sh);
+
+    const data = pctx.getImageData(0, 0, frameW, frameH).data;
+    let minX = frameW; let maxX = 0;
+    let minY = frameH; let maxY = 0;
+    let hasPixel = false;
+
+    for (let y = 0; y < frameH; y += 1) {
+      for (let x = 0; x < frameW; x += 1) {
+        const alpha = data[(y * frameW + x) * 4 + 3];
+        if (alpha > 12) {
+          hasPixel = true;
+          if (x < minX) minX = x;
+          if (x > maxX) maxX = x;
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+        }
+      }
+    }
+
+    frameAnchors[frame] = hasPixel
+      ? { minX, maxX, minY, maxY, footY: maxY }
+      : { minX: 0, maxX: frameW, minY: 0, maxY: frameH, footY: frameH };
+  }
 }
 
 function update(dt) {
@@ -82,7 +110,6 @@ function update(dt) {
   player.vx = inputX * player.speed;
   if (inputX !== 0) player.facing = inputX;
 
-  // 무한맵 느낌: 플레이어는 중앙 근처 유지, 월드 스크롤만 계속 이동
   world.scrollX += player.vx * dt;
 
   if (keys.space && player.onGround) {
@@ -99,31 +126,31 @@ function update(dt) {
     player.onGround = true;
   }
 
-  const moving = inputX !== 0;
-  if (moving) {
+  if (inputX !== 0) {
     player.frameTimer += dt;
     if (player.frameTimer >= player.frameInterval) {
       player.frameTimer = 0;
-      player.animIdx = (player.animIdx + 1) % ANIM_SEQUENCE.length;
+      player.runIdx = (player.runIdx + 1) % RUN_SEQUENCE.length;
     }
   } else {
-    player.animIdx = 0;
+    player.runIdx = 0;
+    player.frameTimer = 0;
   }
 }
 
 function drawBackground() {
   ctx.fillStyle = '#0a1d40';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
 
   ctx.fillStyle = '#102b58';
   for (let i = 0; i < 40; i += 1) {
-    const x = ((i * 211 - world.scrollX * 0.18) % (canvas.width + 220)) - 110;
-    const y = 40 + (i * 57) % 180;
+    const x = ((i * 211 - world.scrollX * 0.18) % (window.innerWidth + 220)) - 110;
+    const y = 40 + (i * 57) % 220;
     ctx.fillRect(x, y, 2, 2);
   }
 
   const offset = ((-world.scrollX % world.tileW) + world.tileW) % world.tileW;
-  for (let x = -world.tileW; x < canvas.width + world.tileW; x += world.tileW) {
+  for (let x = -world.tileW; x < window.innerWidth + world.tileW; x += world.tileW) {
     const drawX = x + offset;
     ctx.fillStyle = '#213b78';
     ctx.fillRect(drawX, world.groundY, world.tileW - 8, world.tileH);
@@ -133,18 +160,19 @@ function drawBackground() {
 }
 
 function drawPlayer() {
-  const frame = ANIM_SEQUENCE[player.animIdx];
+  const frame = player.vx === 0 ? IDLE_FRAME : RUN_SEQUENCE[player.runIdx];
   const { sx, sy, sw, sh } = getFrameRect(frame);
+  const anchor = frameAnchors[frame] || { footY: sh };
 
-  // 원본 비율 유지 축소 (눌림 방지)
   const scale = Math.min(player.w / sw, player.h / sh);
   const drawW = sw * scale;
   const drawH = sh * scale;
+  const footOffset = (sh - anchor.footY) * scale;
 
   ctx.save();
   ctx.translate(player.x, player.y);
   ctx.scale(player.facing, 1);
-  ctx.drawImage(sprite, sx, sy, sw, sh, -drawW / 2, -drawH, drawW, drawH);
+  ctx.drawImage(sprite, sx, sy, sw, sh, -drawW / 2, -drawH + footOffset, drawW, drawH);
   ctx.restore();
 }
 
@@ -158,18 +186,19 @@ function loop(ts) {
 
   if (sprite.complete && sprite.naturalWidth > 0) {
     drawPlayer();
-  } else {
-    ctx.fillStyle = '#d7e7ff';
-    ctx.fillText('char_run_001.png 로딩 중...', 20, 30);
   }
 
   requestAnimationFrame(loop);
 }
 
 sprite.onload = () => {
-  frameW = sprite.width / GRID_COLS;
-  frameH = sprite.height / GRID_ROWS;
+  frameW = Math.floor(sprite.width / GRID_COLS);
+  frameH = Math.floor(sprite.height / GRID_ROWS);
+  buildFrameAnchors();
 };
+
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
 
 window.addEventListener('keydown', (e) => {
   if (e.code === 'KeyA') keys.a = true;

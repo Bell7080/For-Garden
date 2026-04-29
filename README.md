@@ -24,3 +24,4 @@ python -m http.server 8080
 - 기본: 8열 x 2행
 - `USE_FULL_GRID = true` : 깔끔하게 잘린 시트
 - 원본처럼 라벨/여백이 큰 시트면 `USE_FULL_GRID = false`로 바꾸고 상단 수동 좌표값 조정
+

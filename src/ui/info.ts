@@ -156,7 +156,7 @@ export class InfoManager {
   }
 
   /**
-   * 렐릭 한 명의 설명 본문. 능력치 · 패시브 · 기본 공격 · 서포트 · 궁극기를
+   * 렐릭 한 명의 설명 본문. 능력치 · 패시브 · 기본 공격 · 궁극기를
    * 언제나 이 순서로 낸다. 정보창이 여러 곳에서 열려도 읽는 순서가 흔들리지 않게 하려는 것이다.
    */
   private describe(def: RelicDef): string {
@@ -169,9 +169,6 @@ export class InfoManager {
       "",
       `[ 기본 공격 ] ${def.basic.name}`,
       def.basic.desc,
-      "",
-      `[ 서포트 ] ${def.support.name}`,
-      def.support.desc,
       "",
       `[ 궁극기 ] ${def.ultimate.name}   (게이지 ${def.ultimate.cost})`,
       def.ultimate.desc,

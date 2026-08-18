@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   canSwap,
-  canUseSupport,
   createBattle,
   enemyTurn,
   frontUnit,
@@ -77,41 +76,6 @@ describe("스왑", () => {
     expect(canSwap(state.player, 0)).toBe(false);
     expect(playerAct(state, { kind: "swap", memberIndex: 0 })).toBe(false);
     expect(state.phase).toBe("player");
-  });
-});
-
-describe("서포트 스킬", () => {
-  it("은 후방 유닛만 쓸 수 있다", () => {
-    const state = newBattle();
-    expect(canUseSupport(state.player, 0)).toBe(false); // 전방(안키)
-    expect(canUseSupport(state.player, 2)).toBe(true); // 후방(도도)
-  });
-
-  it("heal은 전방 아군을 회복시킨다", () => {
-    const state = newBattle();
-    const front = frontUnit(state.player);
-    front.hp = front.maxHp - 300;
-
-    playerAct(state, { kind: "support", memberIndex: 2 }); // 도도의 품어주기(220)
-    expect(front.hp).toBe(front.maxHp - 80);
-  });
-
-  it("buff는 전방의 다음 공격만 강화하고 사라진다", () => {
-    const state = newBattle(["anky", "mammoth", "dodo"]);
-    playerAct(state, { kind: "support", memberIndex: 1 }); // 마무의 돌진 지원(+30%)
-    enemyTurn(state);
-    expect(frontUnit(state.player).atkBuff).toBe(30);
-
-    const before = frontUnit(state.enemy).hp;
-    playerAct(state, { kind: "basic" });
-    const buffed = before - frontUnit(state.enemy).hp;
-    expect(frontUnit(state.player).atkBuff).toBe(0);
-
-    // 버프 없이 같은 공격을 했을 때보다 세다.
-    const plain = newBattle(["anky", "mammoth", "dodo"]);
-    const plainBefore = frontUnit(plain.enemy).hp;
-    playerAct(plain, { kind: "basic" });
-    expect(buffed).toBeGreaterThan(plainBefore - frontUnit(plain.enemy).hp);
   });
 });
 

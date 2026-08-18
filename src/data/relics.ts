@@ -19,13 +19,6 @@ export const RELICS: RelicDef[] = [
       desc: "교대로 전방에 나선 직후의 첫 공격 피해가 35% 오른다.",
     },
     basic: { id: "rex-basic", name: "턱 물어뜯기", power: 100, desc: "적 전방을 문다." },
-    support: {
-      id: "rex-support",
-      name: "포효 위압",
-      kind: "buff",
-      power: 35,
-      desc: "후방에서 전방 아군의 공격력을 35% 올린다.",
-    },
     ultimate: {
       id: "rex-ult",
       name: "절멸의 포효",
@@ -48,13 +41,6 @@ export const RELICS: RelicDef[] = [
       desc: "전방에 있을 때 받는 피해가 25% 줄어든다.",
     },
     basic: { id: "anky-basic", name: "곤봉 꼬리", power: 100, desc: "꼬리로 후려친다." },
-    support: {
-      id: "anky-support",
-      name: "방벽 전개",
-      kind: "heal",
-      power: 160,
-      desc: "후방에서 전방 아군의 HP를 회복시킨다.",
-    },
     ultimate: {
       id: "anky-ult",
       name: "지각 붕괴",
@@ -77,13 +63,6 @@ export const RELICS: RelicDef[] = [
       desc: "전방에 있을 때 받는 피해가 18% 줄어든다.",
     },
     basic: { id: "mammoth-basic", name: "상아 치받기", power: 100, desc: "상아로 들이받는다." },
-    support: {
-      id: "mammoth-support",
-      name: "돌진 지원",
-      kind: "buff",
-      power: 30,
-      desc: "후방에서 전방 아군의 공격력을 30% 올린다.",
-    },
     ultimate: {
       id: "mammoth-ult",
       name: "혹한 돌진",
@@ -106,13 +85,6 @@ export const RELICS: RelicDef[] = [
       desc: "후방에 있는 동안 매 턴 전방 아군의 HP를 45 회복시킨다.",
     },
     basic: { id: "dodo-basic", name: "부리 쪼기", power: 100, desc: "부리로 쪼아댄다." },
-    support: {
-      id: "dodo-support",
-      name: "품어주기",
-      kind: "heal",
-      power: 220,
-      desc: "후방에서 전방 아군을 크게 회복시킨다.",
-    },
     ultimate: {
       id: "dodo-ult",
       name: "잊힌 노래",
@@ -135,13 +107,6 @@ export const RELICS: RelicDef[] = [
       desc: "교대로 전방에 나선 직후의 첫 공격 피해가 28% 오른다.",
     },
     basic: { id: "smilo-basic", name: "송곳니 절단", power: 100, desc: "긴 송곳니로 벤다." },
-    support: {
-      id: "smilo-support",
-      name: "사냥 신호",
-      kind: "buff",
-      power: 32,
-      desc: "후방에서 전방 아군의 공격력을 32% 올린다.",
-    },
     ultimate: {
       id: "smilo-ult",
       name: "빙원의 사냥",
@@ -164,13 +129,6 @@ export const RELICS: RelicDef[] = [
       desc: "후방에 있는 동안 매 턴 전방 아군의 HP를 30 회복시킨다.",
     },
     basic: { id: "quetz-basic", name: "급강하", power: 100, desc: "하늘에서 내리꽂는다." },
-    support: {
-      id: "quetz-support",
-      name: "상승 기류",
-      kind: "buff",
-      power: 40,
-      desc: "후방에서 전방 아군의 공격력을 40% 올린다.",
-    },
     ultimate: {
       id: "quetz-ult",
       name: "창공 지배",
@@ -195,13 +153,6 @@ export const RELICS: RelicDef[] = [
       desc: "교대 직후 첫 공격이 20% 강해진다.",
     },
     basic: { id: "husk-raptor-basic", name: "갈퀴 할퀴기", power: 100, desc: "갈퀴로 할퀸다." },
-    support: {
-      id: "husk-raptor-support",
-      name: "무리 신호",
-      kind: "buff",
-      power: 25,
-      desc: "후방에서 전방 개체의 공격력을 25% 올린다.",
-    },
     ultimate: {
       id: "husk-raptor-ult",
       name: "무리 사냥",
@@ -224,13 +175,6 @@ export const RELICS: RelicDef[] = [
       desc: "전방에서 받는 피해가 15% 줄어든다.",
     },
     basic: { id: "husk-shell-basic", name: "몸통 박치기", power: 100, desc: "몸으로 들이받는다." },
-    support: {
-      id: "husk-shell-support",
-      name: "잔해 보수",
-      kind: "heal",
-      power: 120,
-      desc: "후방에서 전방 개체를 수복한다.",
-    },
     ultimate: {
       id: "husk-shell-ult",
       name: "붕괴 압사",
@@ -253,13 +197,6 @@ export const RELICS: RelicDef[] = [
       desc: "후방에 있는 동안 매 턴 전방 개체를 25 회복시킨다.",
     },
     basic: { id: "husk-wing-basic", name: "날개 후려치기", power: 100, desc: "날개로 후려친다." },
-    support: {
-      id: "husk-wing-support",
-      name: "잔해 수복",
-      kind: "heal",
-      power: 100,
-      desc: "후방에서 전방 개체를 회복시킨다.",
-    },
     ultimate: {
       id: "husk-wing-ult",
       name: "굉음 확산",

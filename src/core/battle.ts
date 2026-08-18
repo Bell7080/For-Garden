@@ -18,8 +18,6 @@ export interface BattleUnit {
   maxHp: number;
   /** 궁극기 게이지. 행동할 때마다 찬다. */
   energy: number;
-  /** 이번 턴에 걸린 공격력 버프(%). 서포트 buff로 붙고 쓰면 사라진다. */
-  atkBuff: number;
   /** 스왑으로 막 전방에 나왔는지. swapMomentum 패시브가 이걸 본다. */
   justSwapped: boolean;
 }
@@ -36,8 +34,6 @@ export interface Team {
 export type BattleAction =
   | { kind: "basic" }
   | { kind: "ultimate" }
-  /** 후방 유닛의 서포트 스킬을 쓴다. `memberIndex`는 units 배열의 인덱스. */
-  | { kind: "support"; memberIndex: number }
   /** 후방 유닛과 전방을 맞바꾼다. */
   | { kind: "swap"; memberIndex: number };
 
@@ -61,7 +57,6 @@ function makeUnit(def: RelicDef): BattleUnit {
     hp: def.stats.hp,
     maxHp: def.stats.hp,
     energy: 0,
-    atkBuff: 0,
     justSwapped: false,
   };
 }
@@ -110,7 +105,7 @@ export function computeDamage(
   power: number,
   targetIsFront: boolean,
 ): number {
-  const atk = attacker.def.stats.atk * (1 + attacker.atkBuff / 100);
+  const atk = attacker.def.stats.atk;
   const momentum =
     attacker.justSwapped && attacker.def.passive.kind === "swapMomentum"
       ? 1 + attacker.def.passive.value / 100
@@ -165,12 +160,6 @@ export function canUseUltimate(unit: BattleUnit): boolean {
   return isAlive(unit) && unit.energy >= unit.def.ultimate.cost;
 }
 
-export function canUseSupport(team: Team, memberIndex: number): boolean {
-  const pos = team.order.indexOf(memberIndex);
-  if (pos <= 0) return false; // 서포트는 후방에서만 쓴다
-  return isAlive(team.units[memberIndex]);
-}
-
 /** 한쪽이 행동을 한 번 한다. 규칙 위반이면 아무것도 바꾸지 않고 false를 돌려준다. */
 function performAction(state: BattleState, side: Side, action: BattleAction): boolean {
   const team = side === "player" ? state.player : state.enemy;
@@ -200,7 +189,6 @@ function performAction(state: BattleState, side: Side, action: BattleAction): bo
       const dmg = computeDamage(front, foeFront, front.def.basic.power, true);
       applyDamage(foeFront, dmg);
       gainEnergy(front);
-      front.atkBuff = 0;
       front.justSwapped = false;
       state.log.push(`${front.def.name}의 ${front.def.basic.name} — ${foeFront.def.name}에게 ${dmg}`);
       return true;
@@ -212,32 +200,11 @@ function performAction(state: BattleState, side: Side, action: BattleAction): bo
       const dmg = computeDamage(front, foeFront, ult.power, true);
       applyDamage(foeFront, dmg);
       front.energy -= ult.cost;
-      front.atkBuff = 0;
       front.justSwapped = false;
       state.log.push(`${front.def.name}의 궁극기 ${ult.name} — ${foeFront.def.name}에게 ${dmg}`);
       return true;
     }
 
-    case "support": {
-      if (!canUseSupport(team, action.memberIndex)) return false;
-      const helper = team.units[action.memberIndex];
-      const skill = helper.def.support;
-      switch (skill.kind) {
-        case "heal": {
-          const healed = Math.min(skill.power, front.maxHp - front.hp);
-          front.hp += healed;
-          state.log.push(`${helper.def.name}의 ${skill.name} — ${front.def.name} HP +${healed}`);
-          break;
-        }
-        case "buff": {
-          front.atkBuff += skill.power;
-          state.log.push(`${helper.def.name}의 ${skill.name} — ${front.def.name} 공격력 +${skill.power}%`);
-          break;
-        }
-      }
-      gainEnergy(helper);
-      return true;
-    }
   }
 }
 
@@ -256,7 +223,6 @@ export function decideEnemyAction(state: BattleState): BattleAction {
     if (relief !== undefined) return { kind: "swap", memberIndex: relief };
   }
 
-  // 서포트는 플레이어 쪽 조작에서 잠시 빠져 있다. 양쪽 규칙을 맞추려고 적도 쓰지 않는다.
   return { kind: "basic" };
 }
 

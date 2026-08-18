@@ -96,17 +96,6 @@ describe("서포트 스킬", () => {
     expect(front.hp).toBe(front.maxHp - 80);
   });
 
-  it("strike는 적 후방을 직접 때린다", () => {
-    const state = newBattle();
-    const enemyRearBefore = rearUnits(state.enemy).map((u) => u.hp);
-    const enemyFrontBefore = frontUnit(state.enemy).hp;
-
-    playerAct(state, { kind: "support", memberIndex: 1 }); // 렉스의 후방 급습
-
-    expect(frontUnit(state.enemy).hp).toBe(enemyFrontBefore);
-    expect(rearUnits(state.enemy)[0].hp).toBeLessThan(enemyRearBefore[0]);
-  });
-
   it("buff는 전방의 다음 공격만 강화하고 사라진다", () => {
     const state = newBattle(["anky", "mammoth", "dodo"]);
     playerAct(state, { kind: "support", memberIndex: 1 }); // 마무의 돌진 지원(+30%)

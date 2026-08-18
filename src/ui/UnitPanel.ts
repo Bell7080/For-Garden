@@ -1,11 +1,12 @@
 import Phaser from "phaser";
 import type { BattleUnit } from "../core/battle";
 import { ULTIMATE_MAX } from "../core/battle";
-import { COLOR, FONT } from "./theme";
+import { addHelpBadge } from "./info";
+import { COLOR, textStyle } from "./theme";
 
 /**
- * 전투 중 렐릭 한 명을 보여주는 패널. 진형 자리(전방/후방)에 고정되어 있고,
- * 스왑이 일어나면 그 자리에 선 유닛만 바뀐다.
+ * 전장에 선 렐릭 한 명. 진형 자리에 고정되어 있고, 스왑이 일어나면
+ * 그 자리에 선 유닛만 바뀐다. 위쪽에 `?`를 달아 정보창을 열 수 있다.
  */
 export class UnitPanel extends Phaser.GameObjects.Container {
   private readonly box: Phaser.GameObjects.Rectangle;
@@ -23,6 +24,7 @@ export class UnitPanel extends Phaser.GameObjects.Container {
     w: number,
     h: number,
     private readonly enemy: boolean,
+    onInfo: () => void,
   ) {
     super(scene, x, y);
     this.barWidth = w - 32;
@@ -33,44 +35,31 @@ export class UnitPanel extends Phaser.GameObjects.Container {
     this.add(this.box);
 
     this.nameText = scene.add
-      .text(-w / 2 + 16, -h / 2 + 14, "", {
-        fontFamily: FONT,
-        fontSize: `${Math.round(h * 0.16)}px`,
-        color: COLOR.ink,
-      })
+      .text(-w / 2 + 16, -h / 2 + 12, "", textStyle({ size: 32 }))
       .setOrigin(0, 0);
     this.add(this.nameText);
 
     this.slotText = scene.add
-      .text(w / 2 - 16, -h / 2 + 18, "", {
-        fontFamily: FONT,
-        fontSize: `${Math.round(h * 0.11)}px`,
-        color: COLOR.inkDim,
-      })
+      .text(w / 2 - 16, -h / 2 + 20, "", textStyle({ size: 22, color: COLOR.inkDim }))
       .setOrigin(1, 0);
     this.add(this.slotText);
 
     // 아래에서 위로 궁극기 게이지 · HP 바 · 수치 순서로 쌓아 서로 겹치지 않게 한다.
     this.hpText = scene.add
-      .text(-w / 2 + 16, h / 2 - 76, "", {
-        fontFamily: FONT,
-        fontSize: `${Math.round(h * 0.1)}px`,
-        color: COLOR.inkDim,
-      })
+      .text(-w / 2 + 16, h / 2 - 66, "", textStyle({ size: 24, color: COLOR.inkDim }))
       .setOrigin(0, 0.5);
     this.add(this.hpText);
 
-    const barY = h / 2 - 46;
+    const barY = h / 2 - 42;
     this.add(
-      scene.add.rectangle(-this.barWidth / 2, barY, this.barWidth, 16, COLOR.panelEdge).setOrigin(0, 0.5),
+      scene.add.rectangle(-this.barWidth / 2, barY, this.barWidth, 14, COLOR.panelEdge).setOrigin(0, 0.5),
     );
     this.hpBar = scene.add
-      .rectangle(-this.barWidth / 2, barY, this.barWidth, 16, enemy ? COLOR.hpEnemy : COLOR.hpFill)
+      .rectangle(-this.barWidth / 2, barY, this.barWidth, 14, enemy ? COLOR.hpEnemy : COLOR.hpFill)
       .setOrigin(0, 0.5);
     this.add(this.hpBar);
 
-    // 궁극기 게이지
-    const energyY = h / 2 - 22;
+    const energyY = h / 2 - 20;
     this.add(
       scene.add.rectangle(-this.barWidth / 2, energyY, this.barWidth, 8, COLOR.panelEdge).setOrigin(0, 0.5),
     );
@@ -78,6 +67,9 @@ export class UnitPanel extends Phaser.GameObjects.Container {
       .rectangle(-this.barWidth / 2, energyY, 0, 8, COLOR.energy)
       .setOrigin(0, 0.5);
     this.add(this.energyBar);
+
+    // `?`는 패널 위쪽 모서리에 걸쳐 둔다.
+    this.add(addHelpBadge(scene, w / 2 - 12, -h / 2 - 12, onInfo, 24));
 
     scene.add.existing(this);
   }

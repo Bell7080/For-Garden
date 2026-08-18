@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { BASE_WIDTH, BASE_HEIGHT } from "../config/gameConfig";
 import { setDebugReady, setDebugScene } from "../debug";
+import { COLOR, textStyle } from "../ui/theme";
 
 export class TitleScene extends Phaser.Scene {
   constructor() {
@@ -11,22 +12,12 @@ export class TitleScene extends Phaser.Scene {
     setDebugScene("title");
 
     const cx = BASE_WIDTH / 2;
-    this.add.rectangle(cx, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, 0x0b0b0d);
+    this.add.rectangle(cx, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void);
+
+    this.add.text(cx, BASE_HEIGHT * 0.34, "ETERNAL CITY", textStyle({ size: 92 })).setOrigin(0.5);
 
     this.add
-      .text(cx, BASE_HEIGHT * 0.34, "ETERNAL CITY", {
-        fontFamily: "Georgia, serif",
-        fontSize: "88px",
-        color: "#e8e6e1",
-      })
-      .setOrigin(0.5);
-
-    this.add
-      .text(cx, BASE_HEIGHT * 0.34 + 90, "RELIC 관리 프로젝트", {
-        fontFamily: "Georgia, serif",
-        fontSize: "36px",
-        color: "#b99a5b",
-      })
+      .text(cx, BASE_HEIGHT * 0.34 + 96, "RELIC 관리 프로젝트", textStyle({ size: 40, color: COLOR.accentText }))
       .setOrigin(0.5);
 
     this.add
@@ -34,22 +25,12 @@ export class TitleScene extends Phaser.Scene {
         cx,
         BASE_HEIGHT * 0.5,
         "멸종한 DNA로 되살린 호문쿨루스 소녀들,\n렐릭들이 살아가는 유일한 도시.\n\n당신은 이곳의 유일한 연구원이다.",
-        {
-          fontFamily: "Georgia, serif",
-          fontSize: "30px",
-          color: "#8b8a86",
-          align: "center",
-          lineSpacing: 12,
-        },
+        textStyle({ size: 34, color: COLOR.inkDim, align: "center", lineSpacing: 14 }),
       )
       .setOrigin(0.5);
 
     const prompt = this.add
-      .text(cx, BASE_HEIGHT * 0.82, "TAP TO ENTER", {
-        fontFamily: "Georgia, serif",
-        fontSize: "32px",
-        color: "#e8e6e1",
-      })
+      .text(cx, BASE_HEIGHT * 0.82, "TAP TO ENTER", textStyle({ size: 36 }))
       .setOrigin(0.5);
 
     this.tweens.add({

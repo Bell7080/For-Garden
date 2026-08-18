@@ -2,37 +2,61 @@ import Phaser from "phaser";
 import { BASE_WIDTH, BASE_HEIGHT } from "../config/gameConfig";
 import { setDebugBattle, setDebugScene } from "../debug";
 import {
-  canSwap,
-  canUseSupport,
   canUseUltimate,
   createBattle,
   enemyTurn,
   frontUnit,
   playerAct,
+  type BattleAction,
   type BattlePhase,
   type BattleState,
+  type Team,
 } from "../core/battle";
 import { getRelic } from "../data/relics";
 import { getStage } from "../data/stages";
 import { session } from "../state/session";
 import { Button } from "../ui/Button";
+import { InfoManager, addHelpBadge } from "../ui/info";
+import { Revolver } from "../ui/Revolver";
 import { UnitPanel } from "../ui/UnitPanel";
-import { COLOR, FONT } from "../ui/theme";
+import { COLOR, textStyle } from "../ui/theme";
 
 /** 적이 생각하는 척하는 시간. 행동이 한꺼번에 처리되어 보이지 않게 한다. */
 const ENEMY_DELAY_MS = 700;
 
 /**
- * 전투 화면. 아군은 좌하단, 적은 우상단에 놓고 3명을 태그로 스왑하며 싸운다.
- * 규칙 판단은 전부 `core/battle`이 하고, 여기서는 그리기와 입력만 맡는다.
+ * 전장은 비스듬한 좌우 대치다. 적은 우상단, 아군은 좌하단에 각각 삼각형으로 서고
+ * 전방에 선 쪽이 상대를 향해 튀어나온 꼭짓점이 된다.
+ *
+ * 배열은 진형 순서(0=전방)와 같다.
+ */
+const ENEMY_SPOTS: [number, number, number, number][] = [
+  [600, 620, 310, 150], // 전방 — 아군 쪽으로 내려온 꼭짓점
+  [810, 395, 280, 140],
+  [905, 600, 280, 140],
+];
+const PLAYER_SPOTS: [number, number, number, number][] = [
+  [450, 790, 310, 150], // 전방 — 적 쪽으로 올라간 꼭짓점
+  [205, 950, 270, 140],
+  [495, 1005, 270, 140],
+];
+
+/** 조작부. 좌측은 교대 리볼버, 우측은 적 정보 · 궁극기 · 기본 공격. */
+const CONTROL_TOP = 1200;
+
+/**
+ * 전투 화면. 규칙 판단은 전부 `core/battle`이 하고, 여기서는 그리기와 입력만 맡는다.
  */
 export class BattleScene extends Phaser.Scene {
   private state!: BattleState;
   private playerPanels: UnitPanel[] = [];
   private enemyPanels: UnitPanel[] = [];
+  private revolver!: Revolver;
+  private info!: InfoManager;
   private turnText!: Phaser.GameObjects.Text;
   private logText!: Phaser.GameObjects.Text;
-  private actionButtons: { button: Button; enabled: () => boolean; sub: () => string }[] = [];
+  private ultButton!: Button;
+  private basicButton!: Button;
   private busy = false;
 
   constructor() {
@@ -44,140 +68,135 @@ export class BattleScene extends Phaser.Scene {
     this.busy = false;
     this.playerPanels = [];
     this.enemyPanels = [];
-    this.actionButtons = [];
 
     const stage = getStage(session.selectedStageId ?? "1-1");
-    this.state = createBattle(
-      session.party.map(getRelic),
-      stage.enemies.map(getRelic),
-    );
+    this.state = createBattle(session.party.map(getRelic), stage.enemies.map(getRelic));
 
     const cx = BASE_WIDTH / 2;
     this.add.rectangle(cx, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void);
 
     this.add
-      .text(40, 60, `${stage.id}  ${stage.name}`, {
-        fontFamily: FONT,
-        fontSize: "34px",
-        color: COLOR.inkDim,
-      })
+      .text(40, 60, `${stage.id}  ${stage.name}`, textStyle({ size: 34, color: COLOR.inkDim }))
       .setOrigin(0, 0);
 
     this.turnText = this.add
-      .text(BASE_WIDTH - 40, 60, "", {
-        fontFamily: FONT,
-        fontSize: "34px",
-        color: COLOR.accentText,
-      })
+      .text(BASE_WIDTH - 40, 60, "", textStyle({ size: 34, color: COLOR.accentText }))
       .setOrigin(1, 0);
 
-    // 적 — 우상단. 전방이 크고 앞에 나와 있다.
-    this.add
-      .text(BASE_WIDTH - 40, 140, "적 침식체", {
-        fontFamily: FONT,
-        fontSize: "28px",
-        color: COLOR.dangerText,
-      })
-      .setOrigin(1, 0);
-    this.enemyPanels = [
-      new UnitPanel(this, 700, 350, 420, 200, true),
-      new UnitPanel(this, 890, 560, 340, 160, true),
-      new UnitPanel(this, 890, 740, 340, 160, true),
-    ];
+    this.buildBattlefield();
+    this.buildControls();
 
-    // 아군 — 좌하단.
-    this.add
-      .text(40, 900, "편성 렐릭", { fontFamily: FONT, fontSize: "28px", color: COLOR.ink })
-      .setOrigin(0, 0);
-    this.playerPanels = [
-      new UnitPanel(this, 280, 1230, 440, 220, false),
-      new UnitPanel(this, 730, 1050, 340, 160, false),
-      new UnitPanel(this, 730, 1230, 340, 160, false),
-    ];
-
-    this.logText = this.add
-      .text(cx, 1400, "", {
-        fontFamily: FONT,
-        fontSize: "26px",
-        color: COLOR.inkDim,
-        align: "center",
-        wordWrap: { width: BASE_WIDTH - 120 },
-      })
-      .setOrigin(0.5, 0);
-
-    this.buildActionBar();
+    this.info = new InfoManager(this);
     this.refresh();
   }
 
-  /** 하단 조작 바. 공격 · 궁극기 · 서포트 · 스왑을 모두 여기서 고른다. */
-  private buildActionBar(): void {
-    const barTop = 1520;
+  private buildBattlefield(): void {
+    // 좌하단 ↔ 우상단을 잇는 대치선. 전장이 비스듬하다는 걸 눈으로 알려준다.
+    this.add.line(0, 0, 300, 1010, 830, 480, COLOR.panelEdge).setOrigin(0).setLineWidth(2).setAlpha(0.5);
+
     this.add
-      .rectangle(BASE_WIDTH / 2, (barTop + BASE_HEIGHT) / 2, BASE_WIDTH, BASE_HEIGHT - barTop, COLOR.panel)
-      .setStrokeStyle(2, COLOR.panelEdge);
-
-    const left = BASE_WIDTH / 2 - 250;
-    const right = BASE_WIDTH / 2 + 250;
-
-    const front = () => frontUnit(this.state.player);
-
-    this.addAction(left, 1600, 460, "기본 공격", () => front().def.basic.name, () => true, {
-      kind: "basic",
-    });
-    this.addAction(
-      right,
-      1600,
-      460,
-      "궁극기",
-      () => front().def.ultimate.name,
-      () => canUseUltimate(front()),
-      { kind: "ultimate" },
+      .text(BASE_WIDTH - 40, 150, "적 침식체", textStyle({ size: 30, color: COLOR.dangerText }))
+      .setOrigin(1, 0);
+    this.enemyPanels = ENEMY_SPOTS.map(
+      ([x, y, w, h], slot) =>
+        new UnitPanel(this, x, y, w, h, true, () => this.showUnitInfo(this.state.enemy, slot)),
     );
 
-    // 후방 두 명의 서포트와 스왑. 진형이 바뀌어도 같은 자리에서 조작한다.
-    const rearSlots = [1, 2];
-    rearSlots.forEach((slot, i) => {
-      const x = i === 0 ? left : right;
-      const memberIndex = () => this.state.player.order[slot];
-      this.addAction(
-        x,
-        1725,
-        460,
-        "서포트",
-        () => this.state.player.units[memberIndex()].def.support.name,
-        () => canUseSupport(this.state.player, memberIndex()),
-        () => ({ kind: "support", memberIndex: memberIndex() }),
-      );
-      this.addAction(
-        x,
-        1850,
-        460,
-        "스왑",
-        () => `${this.state.player.units[memberIndex()].def.name} 교대`,
-        () => canSwap(this.state.player, memberIndex()),
-        () => ({ kind: "swap", memberIndex: memberIndex() }),
-      );
-    });
+    this.add
+      .text(40, 700, "편성 렐릭", textStyle({ size: 30 }))
+      .setOrigin(0, 0);
+    this.playerPanels = PLAYER_SPOTS.map(
+      ([x, y, w, h], slot) =>
+        new UnitPanel(this, x, y, w, h, false, () => this.showUnitInfo(this.state.player, slot)),
+    );
+
+    this.logText = this.add
+      .text(
+        BASE_WIDTH / 2,
+        CONTROL_TOP - 100,
+        "",
+        textStyle({ size: 26, color: COLOR.inkDim, align: "center", wrap: BASE_WIDTH - 120 }),
+      )
+      .setOrigin(0.5, 0);
   }
 
-  private addAction(
-    x: number,
-    y: number,
-    width: number,
-    label: string,
-    sub: () => string,
-    enabled: () => boolean,
-    action: Parameters<typeof playerAct>[1] | (() => Parameters<typeof playerAct>[1]),
-  ): void {
-    const button = new Button(this, x, y, {
-      width,
-      height: 110,
-      label,
-      sub: sub(),
-      fontSize: 32,
-      onClick: () => this.doPlayerAction(typeof action === "function" ? action() : action),
+  private buildControls(): void {
+    this.add
+      .rectangle(
+        BASE_WIDTH / 2,
+        (CONTROL_TOP + BASE_HEIGHT) / 2,
+        BASE_WIDTH,
+        BASE_HEIGHT - CONTROL_TOP,
+        COLOR.panel,
+      )
+      .setStrokeStyle(2, COLOR.panelEdge);
+
+    // 좌측 — 교대 리볼버. 맨 위가 출전 중인 렐릭이다.
+    this.revolver = new Revolver(
+      this,
+      300,
+      1540,
+      190,
+      this.state.player,
+      (memberIndex) => this.doPlayerAction({ kind: "swap", memberIndex }),
+      (memberIndex) => {
+        const team = this.state.player;
+        this.info.showUnit(team.units[memberIndex], team.order[0] === memberIndex);
+      },
+    );
+
+    // 우측 — 위에서부터 적 정보 · 궁극기 · 기본 공격.
+    const rightX = 780;
+    new Button(this, rightX, 1300, {
+      width: 440,
+      height: 96,
+      label: "적 정보",
+      fontSize: 30,
+      onClick: () => this.showEnemyTeamInfo(),
     });
-    this.actionButtons.push({ button, enabled, sub });
+
+    this.ultButton = new Button(this, rightX, 1470, {
+      width: 440,
+      height: 150,
+      label: "궁극기",
+      sub: "",
+      fontSize: 38,
+      onClick: () => this.doPlayerAction({ kind: "ultimate" }),
+    });
+    addHelpBadge(this, rightX + 200, 1470 - 88, () => {
+      const def = frontUnit(this.state.player).def;
+      this.info.showSkill(
+        "궁극기",
+        def.ultimate.name,
+        def.ultimate.desc,
+        `필요 게이지 ${def.ultimate.cost}\n행동할 때마다 게이지가 찬다.`,
+      );
+    });
+
+    this.basicButton = new Button(this, rightX, 1690, {
+      width: 440,
+      height: 150,
+      label: "기본 공격",
+      sub: "",
+      fontSize: 38,
+      onClick: () => this.doPlayerAction({ kind: "basic" }),
+    });
+    addHelpBadge(this, rightX + 200, 1690 - 88, () => {
+      const def = frontUnit(this.state.player).def;
+      this.info.showSkill("기본 공격", def.basic.name, def.basic.desc);
+    });
+
+    this.add
+      .text(300, 1790, "아래 렐릭을 눌러 교대", textStyle({ size: 26, color: COLOR.inkDim }))
+      .setOrigin(0.5, 0);
+  }
+
+  private showUnitInfo(team: Team, slot: number): void {
+    this.info.showUnit(team.units[team.order[slot]], slot === 0);
+  }
+
+  private showEnemyTeamInfo(): void {
+    this.info.showEnemyTeam(this.state.enemy.units, this.state.enemy.order);
   }
 
   /** 지금 phase를 읽는다. 함수를 거치므로 앞선 검사로 타입이 좁혀지지 않는다. */
@@ -185,8 +204,8 @@ export class BattleScene extends Phaser.Scene {
     return this.state.phase;
   }
 
-  private doPlayerAction(action: Parameters<typeof playerAct>[1]): void {
-    if (this.busy || this.phase() !== "player") return;
+  private doPlayerAction(action: BattleAction): void {
+    if (this.busy || this.info.isOpen || this.phase() !== "player") return;
     if (!playerAct(this.state, action)) return;
 
     this.refresh();
@@ -215,51 +234,56 @@ export class BattleScene extends Phaser.Scene {
       });
     }
 
+    const actable = this.phase() === "player" && !this.busy;
+    this.revolver.update(this.state.player, actable);
+
+    const front = frontUnit(this.state.player);
+    this.ultButton.setSub(front.def.ultimate.name).setEnabled(actable && canUseUltimate(front));
+    this.basicButton.setSub(front.def.basic.name).setEnabled(actable);
+
     const cooling = this.state.player.swapCooldown > 0;
     this.turnText.setText(
-      `${this.state.turn}턴 · ${this.state.phase === "player" ? "내 차례" : "적 차례"}` +
-        (cooling ? "  (스왑 재정비)" : ""),
+      `${this.state.turn}턴 · ${this.phase() === "player" ? "내 차례" : "적 차례"}` +
+        (cooling ? "  (교대 재정비)" : ""),
     );
-
-    this.logText.setText(this.state.log.slice(-3).join("\n"));
-
-    // 진형이 바뀌면 버튼이 가리키는 대상도 바뀌므로 문구까지 다시 맞춘다.
-    const actable = this.state.phase === "player" && !this.busy;
-    for (const { button, enabled, sub } of this.actionButtons) {
-      button.setSub(sub()).setEnabled(actable && enabled());
-    }
+    this.logText.setText(this.state.log.slice(-2).join("\n"));
 
     setDebugBattle({
       turn: this.state.turn,
       phase: this.state.phase,
       playerOrder: this.state.player.order.map((i) => this.state.player.units[i].def.name),
       enemyFrontHp: frontUnit(this.state.enemy).hp,
-      playerFrontHp: frontUnit(this.state.player).hp,
+      playerFrontHp: front.hp,
     });
   }
 
   private finishIfOver(): void {
-    if (this.state.phase !== "victory" && this.state.phase !== "defeat") return;
+    if (this.phase() !== "victory" && this.phase() !== "defeat") return;
 
-    const won = this.state.phase === "victory";
+    const won = this.phase() === "victory";
     if (won && session.selectedStageId) session.cleared.add(session.selectedStageId);
 
     const cx = BASE_WIDTH / 2;
-    this.add.rectangle(cx, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.86);
-    this.add
-      .text(cx, BASE_HEIGHT / 2 - 80, won ? "작전 성공" : "작전 실패", {
-        fontFamily: FONT,
-        fontSize: "72px",
-        color: won ? COLOR.accentText : COLOR.dangerText,
-      })
-      .setOrigin(0.5);
-
-    new Button(this, cx, BASE_HEIGHT / 2 + 80, {
-      width: 400,
-      height: 120,
-      label: "지도로",
-      fontSize: 36,
-      onClick: () => this.scene.start("stageMap"),
-    });
+    const overlay = this.add.container(0, 0).setDepth(900);
+    overlay.add(this.add.rectangle(cx, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.86));
+    overlay.add(
+      this.add
+        .text(
+          cx,
+          BASE_HEIGHT / 2 - 80,
+          won ? "작전 성공" : "작전 실패",
+          textStyle({ size: 76, color: won ? COLOR.accentText : COLOR.dangerText }),
+        )
+        .setOrigin(0.5),
+    );
+    overlay.add(
+      new Button(this, cx, BASE_HEIGHT / 2 + 80, {
+        width: 400,
+        height: 120,
+        label: "지도로",
+        fontSize: 36,
+        onClick: () => this.scene.start("stageMap"),
+      }),
+    );
   }
 }

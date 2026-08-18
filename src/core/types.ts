@@ -25,8 +25,11 @@ export interface Ultimate extends Skill {
   cost: number;
 }
 
-/** 후방에서 전방을 돕는 스킬. 어떤 방식으로 돕는지에 따라 처리가 갈린다. */
-export type SupportKind = "heal" | "buff" | "strike";
+/**
+ * 후방에서 전방을 돕는 스킬. 어떤 방식으로 돕는지에 따라 처리가 갈린다.
+ * 후방에서 적을 직접 때리는 "서포트 공격"은 뺐다 — 후방은 돕기만 한다.
+ */
+export type SupportKind = "heal" | "buff";
 
 export interface SupportSkill extends Skill {
   kind: SupportKind;

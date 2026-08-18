@@ -15,6 +15,8 @@ export interface DebugState {
   ready: boolean;
   scene: string;
   battle?: DebugBattle;
+  /** 정보창이 떠 있는지. `?`와 꾹 누르기를 확인하는 데 쓴다. */
+  infoOpen?: boolean;
 }
 
 declare global {
@@ -38,4 +40,8 @@ export function setDebugReady(ready: boolean): void {
 
 export function setDebugBattle(battle: DebugBattle | undefined): void {
   ensure().battle = battle;
+}
+
+export function setDebugInfoOpen(open: boolean): void {
+  ensure().infoOpen = open;
 }

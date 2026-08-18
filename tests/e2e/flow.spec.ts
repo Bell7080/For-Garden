@@ -3,29 +3,63 @@ import { test, expect, type Page } from "@playwright/test";
 const BASE_WIDTH = 1080;
 const BASE_HEIGHT = 1920;
 
+/** 편성 화면 그리드에서 렐릭 카드의 기준 좌표. PLAYABLE_RELICS 순서와 같다. */
+const ROSTER = { startX: 156, startY: 1100, stepX: 256, stepY: 240, cols: 4 };
+function card(index: number): [number, number] {
+  return [
+    ROSTER.startX + (index % ROSTER.cols) * ROSTER.stepX,
+    ROSTER.startY + Math.floor(index / ROSTER.cols) * ROSTER.stepY,
+  ];
+}
+const REX = card(0);
+const ANKY = card(1);
+const DODO = card(3);
+
+/** 전투 화면 조작부 좌표. */
+const BASIC_ATTACK: [number, number] = [780, 1690];
+/** 리볼버 아래쪽 두 자리 (중심 300,1540 · 반지름 190 · 각 150°/30°). */
+const REVOLVER_REAR_1: [number, number] = [135, 1635];
+
+async function canvasBox(page: Page) {
+  const box = await page.locator("canvas").boundingBox();
+  if (!box) throw new Error("캔버스를 찾지 못했다");
+  return box;
+}
+
 /**
  * 게임 기준 해상도(1080×1920) 좌표를 실제 캔버스 좌표로 바꿔 누른다.
  * Scale.FIT + CENTER_BOTH라 캔버스 요소가 곧 게임 화면이므로 비율만 맞추면 된다.
  */
 async function tap(page: Page, x: number, y: number): Promise<void> {
-  const canvas = page.locator("canvas");
-  const box = await canvas.boundingBox();
-  if (!box) throw new Error("캔버스를 찾지 못했다");
-  await canvas.click({
+  const box = await canvasBox(page);
+  await page.locator("canvas").click({
     position: { x: (x / BASE_WIDTH) * box.width, y: (y / BASE_HEIGHT) * box.height },
   });
+}
+
+/** 꾹 누르기. 편성 화면에서 정보창을 여는 조작이다. */
+async function longPress(page: Page, x: number, y: number, ms = 700): Promise<void> {
+  const box = await canvasBox(page);
+  const px = box.x + (x / BASE_WIDTH) * box.width;
+  const py = box.y + (y / BASE_HEIGHT) * box.height;
+  await page.mouse.move(px, py);
+  await page.mouse.down();
+  await page.waitForTimeout(ms);
+  await page.mouse.up();
 }
 
 function scene(page: Page) {
   return page.evaluate(() => window.__PF_DEBUG?.scene);
 }
-
 function battle(page: Page) {
   return page.evaluate(() => window.__PF_DEBUG?.battle);
 }
+function infoOpen(page: Page) {
+  return page.evaluate(() => window.__PF_DEBUG?.infoOpen);
+}
 
-/** 타이틀에서 전투 화면까지 들어간다. 파티는 안키(전방) · 렉스 · 도도. */
-async function enterBattle(page: Page): Promise<void> {
+/** 타이틀에서 편성 화면까지 들어간다. */
+async function enterParty(page: Page): Promise<void> {
   await page.goto("/");
   await page.waitForFunction(() => window.__PF_DEBUG?.ready === true);
 
@@ -37,12 +71,15 @@ async function enterBattle(page: Page): Promise<void> {
 
   await tap(page, BASE_WIDTH / 2 - 110, BASE_HEIGHT - 460); // 1-1 노드
   await expect.poll(() => scene(page)).toBe("party");
+}
 
-  await tap(page, 784, 460); // 안키 — 전방
-  await tap(page, 296, 460); // 렉스
-  await tap(page, 784, 724); // 도도
-  await tap(page, BASE_WIDTH / 2 + 170, BASE_HEIGHT - 180); // 전투 시작
-
+/** 파티는 안키(선봉) · 렉스 · 도도. */
+async function enterBattle(page: Page): Promise<void> {
+  await enterParty(page);
+  await tap(page, ...ANKY);
+  await tap(page, ...REX);
+  await tap(page, ...DODO);
+  await tap(page, BASE_WIDTH / 2, 1700); // 전투 시작
   await expect.poll(() => scene(page)).toBe("battle");
 }
 
@@ -51,15 +88,27 @@ test("출격 → 스테이지 지도 → 파티 편성 → 전투까지 이어�
 
   const state = await battle(page);
   expect(state?.turn).toBe(1);
-  // 먼저 고른 렐릭이 전방에 선다.
+  // 먼저 고른 렐릭이 선봉에 선다.
   expect(state?.playerOrder).toEqual(["안키", "렉스", "도도"]);
 });
 
-test("기본 공격을 하면 적 전방 HP가 깎이고 턴이 넘어간다", async ({ page }) => {
+test("편성 화면에서 렐릭을 꾹 누르면 정보창이 열린다", async ({ page }) => {
+  await enterParty(page);
+  expect(await infoOpen(page)).toBeFalsy();
+
+  await longPress(page, ...ANKY);
+  await expect.poll(() => infoOpen(page)).toBe(true);
+
+  // 짧게 누르는 편성 토글과 섞이지 않아야 한다.
+  await tap(page, BASE_WIDTH / 2, 1700); // 정보창이 떠 있으면 전투 시작으로 넘어가지 않는다
+  expect(await scene(page)).toBe("party");
+});
+
+test("기본 공격을 하면 적 선봉 HP가 깎이고 턴이 넘어간다", async ({ page }) => {
   await enterBattle(page);
   const before = await battle(page);
 
-  await tap(page, BASE_WIDTH / 2 - 250, 1600); // 기본 공격
+  await tap(page, ...BASIC_ATTACK);
 
   await expect.poll(async () => (await battle(page))?.enemyFrontHp).toBeLessThan(
     before!.enemyFrontHp,
@@ -69,12 +118,12 @@ test("기본 공격을 하면 적 전방 HP가 깎이고 턴이 넘어간다", a
   await expect.poll(async () => (await battle(page))?.phase).toBe("player");
 });
 
-test("스왑하면 전방이 바뀌고, 그 턴에 다른 행동은 하지 못한다", async ({ page }) => {
+test("리볼버 아래쪽 렐릭을 누르면 선봉이 바뀌고 한 턴을 쓴다", async ({ page }) => {
   await enterBattle(page);
 
-  await tap(page, BASE_WIDTH / 2 - 250, 1850); // 후방 1번(렉스)과 교대
+  await tap(page, ...REVOLVER_REAR_1);
 
   await expect.poll(async () => (await battle(page))?.playerOrder?.[0]).toBe("렉스");
-  // 스왑도 한 턴을 쓴 것이므로 적이 행동하고 턴이 넘어간다.
+  // 교대도 한 턴을 쓴 것이므로 적이 행동하고 턴이 넘어간다.
   await expect.poll(async () => (await battle(page))?.turn, { timeout: 10_000 }).toBe(2);
 });

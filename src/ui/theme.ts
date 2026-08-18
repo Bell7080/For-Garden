@@ -3,16 +3,43 @@ export const COLOR = {
   void: 0x0b0b0d,
   panel: 0x14120f,
   panelEdge: 0x2a2723,
-  ink: "#e8e6e1",
-  inkDim: "#8b8a86",
-  accent: 0xb99a5b,
-  accentText: "#b99a5b",
-  danger: 0x8c2f2f,
-  dangerText: "#c25b5b",
-  ally: 0x3d5a6c,
-  hpFill: 0xb99a5b,
-  hpEnemy: 0x8c2f2f,
-  energy: 0x6c8fb9,
+  ink: "#f2f0ec",
+  inkDim: "#a9a7a2",
+  accent: 0xd8b978,
+  accentText: "#d8b978",
+  danger: 0xb03a3a,
+  dangerText: "#e07a7a",
+  ally: 0x5b86a3,
+  hpFill: 0xd8b978,
+  hpEnemy: 0xb03a3a,
+  energy: 0x7ea8d8,
 } as const;
 
-export const FONT = "Georgia, serif";
+/**
+ * 작은 화면에서 읽혀야 하므로 획이 굵고 자간이 넓은 산세리프를 쓴다.
+ * 세리프(Georgia)는 한글 글자가 얇게 렌더링돼 가독성이 떨어졌다.
+ */
+export const FONT = '"Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
+
+export interface TextOpts {
+  size: number;
+  color?: string;
+  align?: "left" | "center" | "right";
+  wrap?: number;
+  lineSpacing?: number;
+  /** 굵기를 낮추고 싶을 때만 끈다. 기본은 굵게다. */
+  bold?: boolean;
+}
+
+/** 글자 스타일을 만든다. 기본이 굵은 글씨라 어두운 배경에서도 또렷하다. */
+export function textStyle(opts: TextOpts): Phaser.Types.GameObjects.Text.TextStyle {
+  return {
+    fontFamily: FONT,
+    fontSize: `${opts.size}px`,
+    fontStyle: opts.bold === false ? "normal" : "bold",
+    color: opts.color ?? COLOR.ink,
+    align: opts.align,
+    lineSpacing: opts.lineSpacing,
+    wordWrap: opts.wrap ? { width: opts.wrap } : undefined,
+  };
+}

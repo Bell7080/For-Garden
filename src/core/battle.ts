@@ -234,14 +234,6 @@ function performAction(state: BattleState, side: Side, action: BattleAction): bo
           state.log.push(`${helper.def.name}의 ${skill.name} — ${front.def.name} 공격력 +${skill.power}%`);
           break;
         }
-        case "strike": {
-          // 후방에서 적 후방을 직접 노리는 연계. 적 후방이 모두 쓰러졌으면 전방을 친다.
-          const target = rearUnits(foes).find(isAlive) ?? foeFront;
-          const dmg = computeDamage(helper, target, skill.power, target === foeFront);
-          applyDamage(target, dmg);
-          state.log.push(`${helper.def.name}의 ${skill.name} — ${target.def.name}에게 ${dmg}`);
-          break;
-        }
       }
       gainEnergy(helper);
       return true;
@@ -264,12 +256,7 @@ export function decideEnemyAction(state: BattleState): BattleAction {
     if (relief !== undefined) return { kind: "swap", memberIndex: relief };
   }
 
-  // 두 턴에 한 번은 후방 서포트를 섞어 플레이어 후방까지 압박한다.
-  if (state.turn % 2 === 0) {
-    const helper = team.order.find((i, pos) => pos > 0 && canUseSupport(team, i));
-    if (helper !== undefined) return { kind: "support", memberIndex: helper };
-  }
-
+  // 서포트는 플레이어 쪽 조작에서 잠시 빠져 있다. 양쪽 규칙을 맞추려고 적도 쓰지 않는다.
   return { kind: "basic" };
 }
 

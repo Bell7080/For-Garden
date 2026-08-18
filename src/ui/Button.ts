@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { COLOR, FONT } from "./theme";
+import { COLOR, textStyle } from "./theme";
 
 export interface ButtonOptions {
   width: number;
@@ -23,22 +23,18 @@ export class Button extends Phaser.GameObjects.Container {
 
     this.bg = scene.add
       .rectangle(0, 0, opts.width, opts.height, opts.fill ?? COLOR.panel)
-      .setStrokeStyle(2, COLOR.accent);
+      .setStrokeStyle(3, COLOR.accent);
     this.add(this.bg);
 
     const hasSub = Boolean(opts.sub);
     this.add(
       scene.add
-        .text(0, hasSub ? -12 : 0, opts.label, {
-          fontFamily: FONT,
-          fontSize: `${opts.fontSize ?? 34}px`,
-          color: COLOR.ink,
-        })
+        .text(0, hasSub ? -14 : 0, opts.label, textStyle({ size: opts.fontSize ?? 36 }))
         .setOrigin(0.5),
     );
     if (opts.sub) {
       this.subText = scene.add
-        .text(0, 22, opts.sub, { fontFamily: FONT, fontSize: "22px", color: COLOR.inkDim })
+        .text(0, 26, opts.sub, textStyle({ size: 26, color: COLOR.inkDim }))
         .setOrigin(0.5);
       this.add(this.subText);
     }

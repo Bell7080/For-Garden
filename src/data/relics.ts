@@ -21,10 +21,10 @@ export const RELICS: RelicDef[] = [
     basic: { id: "rex-basic", name: "턱 물어뜯기", power: 100, desc: "적 전방을 문다." },
     support: {
       id: "rex-support",
-      name: "후방 급습",
-      kind: "strike",
-      power: 70,
-      desc: "후방에서 적 후방을 직접 노린다.",
+      name: "포효 위압",
+      kind: "buff",
+      power: 35,
+      desc: "후방에서 전방 아군의 공격력을 35% 올린다.",
     },
     ultimate: {
       id: "rex-ult",
@@ -137,10 +137,10 @@ export const RELICS: RelicDef[] = [
     basic: { id: "smilo-basic", name: "송곳니 절단", power: 100, desc: "긴 송곳니로 벤다." },
     support: {
       id: "smilo-support",
-      name: "측면 우회",
-      kind: "strike",
-      power: 80,
-      desc: "후방에서 적 후방을 노려 벤다.",
+      name: "사냥 신호",
+      kind: "buff",
+      power: 32,
+      desc: "후방에서 전방 아군의 공격력을 32% 올린다.",
     },
     ultimate: {
       id: "smilo-ult",
@@ -197,10 +197,10 @@ export const RELICS: RelicDef[] = [
     basic: { id: "husk-raptor-basic", name: "갈퀴 할퀴기", power: 100, desc: "갈퀴로 할퀸다." },
     support: {
       id: "husk-raptor-support",
-      name: "틈새 침투",
-      kind: "strike",
-      power: 60,
-      desc: "후방에서 상대 후방을 파고든다.",
+      name: "무리 신호",
+      kind: "buff",
+      power: 25,
+      desc: "후방에서 전방 개체의 공격력을 25% 올린다.",
     },
     ultimate: {
       id: "husk-raptor-ult",
@@ -255,10 +255,10 @@ export const RELICS: RelicDef[] = [
     basic: { id: "husk-wing-basic", name: "날개 후려치기", power: 100, desc: "날개로 후려친다." },
     support: {
       id: "husk-wing-support",
-      name: "교란 신호",
-      kind: "strike",
-      power: 55,
-      desc: "후방에서 상대 후방을 교란한다.",
+      name: "잔해 수복",
+      kind: "heal",
+      power: 100,
+      desc: "후방에서 전방 개체를 회복시킨다.",
     },
     ultimate: {
       id: "husk-wing-ult",

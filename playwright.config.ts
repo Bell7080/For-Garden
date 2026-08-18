@@ -7,6 +7,8 @@ import { defineConfig, devices } from "@playwright/test";
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: true,
+  // 캐릭터 묶음(zip)이 수 MB라 첫 화면까지 시간이 걸린다. 기본 30초로는 빠듯하다.
+  timeout: 60_000,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [["html", { outputFolder: "playwright-report", open: "never" }]] : "list",
   use: {

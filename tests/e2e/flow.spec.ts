@@ -16,9 +16,9 @@ const ANKY = card(1);
 const DODO = card(3);
 
 /** 전투 화면 조작부 좌표. */
-const BASIC_ATTACK: [number, number] = [780, 1690];
-/** 리볼버 아래쪽 두 자리 (중심 300,1540 · 반지름 190 · 각 150°/30°). */
-const REVOLVER_REAR_1: [number, number] = [135, 1635];
+const BASIC_ATTACK: [number, number] = [780, 1730];
+/** 리볼버 아래쪽 두 자리 (중심 300,1600 · 반지름 185 · 각 150°/30°). */
+const REVOLVER_REAR_1: [number, number] = [140, 1692];
 
 async function canvasBox(page: Page) {
   const box = await page.locator("canvas").boundingBox();

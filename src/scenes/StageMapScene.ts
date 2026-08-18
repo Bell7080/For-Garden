@@ -53,7 +53,7 @@ export class StageMapScene extends Phaser.Scene {
           x,
           y,
           stage.id,
-          textStyle({ size: 32, color: cleared ? "#14120f" : unlocked ? COLOR.ink : COLOR.inkDim }),
+          textStyle({ size: 32, color: cleared ? "#1a1d21" : unlocked ? COLOR.ink : COLOR.inkDim }),
         )
         .setOrigin(0.5);
 

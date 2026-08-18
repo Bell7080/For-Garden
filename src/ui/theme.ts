@@ -1,8 +1,12 @@
 /** 색과 글꼴을 한 곳에 모아둔다. 씬에서 값을 직접 박아 넣지 않는다. */
 export const COLOR = {
-  void: 0x0b0b0d,
-  panel: 0x14120f,
-  panelEdge: 0x2a2723,
+  /**
+   * 게임 화면 바탕. 순수 검정이 아니라 살짝 밝은 검회색이다 —
+   * 세로 화면 바깥의 레터박스(검정)와 게임 화면의 경계가 보여야 한다.
+   */
+  void: 0x1a1d21,
+  panel: 0x24282e,
+  panelEdge: 0x3a404a,
   ink: "#f2f0ec",
   inkDim: "#a9a7a2",
   accent: 0xd8b978,

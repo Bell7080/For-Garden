@@ -1,10 +1,18 @@
 import Phaser from "phaser";
+import type { PuppetCreature } from "puppetforge/phaser";
 import { BASE_WIDTH, BASE_HEIGHT } from "../config/gameConfig";
 import type { BattleUnit } from "../core/battle";
 import { ULTIMATE_MAX } from "../core/battle";
 import type { RelicDef } from "../core/types";
 import { setDebugInfoOpen } from "../debug";
+import { CHAR_ASSET, spawnPuppet, tintPuppet } from "../puppets/assets";
+import { mixWhite, tintFor } from "../puppets/tints";
 import { COLOR, textStyle } from "./theme";
+
+/** 전신 일러스트가 설 자리. 발끝을 바닥선에 맞춘다. */
+const PORTRAIT = { x: BASE_WIDTH / 2, groundY: 880, height: 500 } as const;
+/** 일러스트를 띄울 때와 아닐 때의 본문 시작 높이. */
+const BODY_TOP = { withPortrait: 920, plain: 360 } as const;
 
 export const ROLE_LABEL: Record<string, string> = {
   attacker: "공격",
@@ -48,9 +56,13 @@ export class InfoManager {
   private readonly titleText: Phaser.GameObjects.Text;
   private readonly subtitleText: Phaser.GameObjects.Text;
   private readonly bodyText: Phaser.GameObjects.Text;
+  /** 전신 일러스트. 파일을 읽는 동안에도 정보창은 열 수 있어야 해서 늦게 붙는다. */
+  private portrait?: PuppetCreature;
+  private portraitWanted = false;
 
-  constructor(scene: Phaser.Scene) {
+  constructor(scene: Phaser.Scene, portraitDepth = 1001) {
     this.root = scene.add.container(0, 0).setDepth(1000).setVisible(false);
+    void this.loadPortrait(scene, portraitDepth);
 
     const shade = scene.add
       .rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.9)
@@ -59,7 +71,7 @@ export class InfoManager {
     this.root.add(shade);
 
     const panelW = BASE_WIDTH - 120;
-    const panelH = 1180;
+    const panelH = 1560;
     const top = BASE_HEIGHT / 2 - panelH / 2;
     this.root.add(
       scene.add
@@ -80,9 +92,9 @@ export class InfoManager {
     this.bodyText = scene.add
       .text(
         BASE_WIDTH / 2 - panelW / 2 + 40,
-        top + 180,
+        BODY_TOP.plain,
         "",
-        textStyle({ size: 30, lineSpacing: 12, wrap: panelW - 80 }),
+        textStyle({ size: 26, lineSpacing: 9, wrap: panelW - 80 }),
       )
       .setOrigin(0, 0);
     this.root.add(this.bodyText);
@@ -103,20 +115,38 @@ export class InfoManager {
 
   hide(): void {
     this.root.setVisible(false);
+    this.portraitWanted = false;
+    this.portrait?.setVisible(false);
     setDebugInfoOpen(false);
   }
 
-  private open(title: string, subtitle: string, body: string): void {
+  private async loadPortrait(scene: Phaser.Scene, depth: number): Promise<void> {
+    this.portrait = await spawnPuppet(scene, CHAR_ASSET, { ...PORTRAIT, depth });
+    this.portrait.setVisible(this.portraitWanted && this.root.visible);
+    scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.portrait?.destroy());
+  }
+
+  /** 일러스트는 렐릭 한 명을 볼 때만 띄운다. 목록을 볼 때는 글이 들어갈 자리가 필요하다. */
+  private open(title: string, subtitle: string, body: string, relicId?: string): void {
     this.titleText.setText(title);
     this.subtitleText.setText(subtitle);
     this.bodyText.setText(body);
+    this.bodyText.setY(relicId ? BODY_TOP.withPortrait : BODY_TOP.plain);
+
+    this.portraitWanted = relicId !== undefined;
+    if (this.portrait) {
+      this.portrait.setVisible(this.portraitWanted);
+      // 렐릭마다 제 일러스트가 생기기 전까지는 색으로만 구분한다.
+      if (relicId) tintPuppet(this.portrait, mixWhite(tintFor(relicId), 0.55));
+    }
+
     this.root.setVisible(true);
     setDebugInfoOpen(true);
   }
 
   /** 렐릭 정보창. 편성 화면처럼 아직 전투 전이라 현재 상태가 없을 때 쓴다. */
   showRelic(def: RelicDef): void {
-    this.open(def.name, `${def.origin} · ${ROLE_LABEL[def.role]}`, this.describe(def));
+    this.open(def.name, `${def.origin} · ${ROLE_LABEL[def.role]}`, this.describe(def), def.id);
   }
 
   /** 전투 중인 렐릭 정보창. 지금 HP와 궁극기 게이지가 함께 붙는다. */
@@ -130,6 +160,7 @@ export class InfoManager {
       unit.def.name,
       `${unit.def.origin} · ${ROLE_LABEL[unit.def.role]}`,
       `[ 현재 상태 ]\n${live}\n\n${this.describe(unit.def)}`,
+      unit.def.id,
     );
   }
 

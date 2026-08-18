@@ -1,0 +1,64 @@
+:root {
+  --bg-void: #0b0b0d;
+  --ink: #e8e6e1;
+  --ink-dim: #8b8a86;
+  --accent: #b99a5b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg-void);
+  overflow: hidden;
+  color: var(--ink);
+  font-family: "Noto Serif KR", Georgia, "Apple SD Gothic Neo", serif;
+}
+
+#app {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
+    env(safe-area-inset-left);
+}
+
+#app canvas {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+#rotate-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  text-align: center;
+  padding: 2rem;
+  background: var(--bg-void);
+  color: var(--ink);
+}
+
+#rotate-overlay .en {
+  color: var(--ink-dim);
+  font-size: 0.85em;
+}
+
+/* 세로형 전용 게임이므로, 터치 기기(폰/태블릿)가 가로로 눕혀졌을 때만 회전 안내를 띄운다.
+   마우스 기반 데스크톱 창은 pointer:fine이라 여기 걸리지 않고, 대신 Phaser Scale.FIT이
+   창 비율에 맞춰 세로 화면을 레터박스로 축소해 보여준다 — 컴퓨터에서의 테스트 시나리오. */
+@media (orientation: landscape) and (pointer: coarse) {
+  #rotate-overlay {
+    display: flex;
+  }
+}

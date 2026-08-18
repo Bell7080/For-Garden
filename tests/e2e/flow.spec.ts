@@ -3,7 +3,10 @@ import { test, expect, type Page } from "@playwright/test";
 const BASE_WIDTH = 1080;
 const BASE_HEIGHT = 1920;
 
-/** 편성 화면 그리드에서 렐릭 카드의 기준 좌표. PLAYABLE_RELICS 순서와 같다. */
+/**
+ * 편성 화면 그리드에서 렐릭 카드의 기준 좌표.
+ * 그리드에는 **보유한** 렐릭만 순서대로 놓인다 — 시작 보유는 렉스 · 안키 · 도도 셋이다.
+ */
 const ROSTER = { startX: 156, startY: 1100, stepX: 256, stepY: 240, cols: 4 };
 function card(index: number): [number, number] {
   return [
@@ -13,7 +16,7 @@ function card(index: number): [number, number] {
 }
 const REX = card(0);
 const ANKY = card(1);
-const DODO = card(3);
+const DODO = card(2);
 
 /** 전투 화면 조작부 좌표. */
 const BASIC_ATTACK: [number, number] = [780, 1730];
@@ -63,10 +66,10 @@ async function enterParty(page: Page): Promise<void> {
   await page.goto("/");
   await page.waitForFunction(() => window.__PF_DEBUG?.ready === true);
 
-  await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2); // 타이틀 → 연구소
-  await expect.poll(() => scene(page)).toBe("archive");
+  await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2); // 타이틀 → 로비
+  await expect.poll(() => scene(page)).toBe("lobby");
 
-  await tap(page, BASE_WIDTH / 2, BASE_HEIGHT * 0.78); // 출격 버튼
+  await tap(page, BASE_WIDTH - 300, BASE_HEIGHT - 180 - 140); // 출격 버튼
   await expect.poll(() => scene(page)).toBe("stageMap");
 
   await tap(page, BASE_WIDTH / 2 - 110, BASE_HEIGHT - 460); // 1-1 노드
@@ -126,4 +129,37 @@ test("리볼버 아래쪽 렐릭을 누르면 선봉이 바뀌고 한 턴을 쓴
   await expect.poll(async () => (await battle(page))?.playerOrder?.[0]).toBe("렉스");
   // 교대도 한 턴을 쓴 것이므로 적이 행동하고 턴이 넘어간다.
   await expect.poll(async () => (await battle(page))?.turn, { timeout: 10_000 }).toBe(2);
+});
+
+
+test("하단 탭으로 렐릭 · 로비 · 연구소를 오간다", async ({ page }) => {
+  await page.goto("/");
+  await page.waitForFunction(() => window.__PF_DEBUG?.ready === true);
+  await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
+  await expect.poll(() => scene(page)).toBe("lobby");
+
+  const navY = BASE_HEIGHT - 180 + 90;
+  await tap(page, BASE_WIDTH / 6, navY); // 렐릭
+  await expect.poll(() => scene(page)).toBe("relics");
+
+  await tap(page, (BASE_WIDTH * 5) / 6, navY); // 연구소
+  await expect.poll(() => scene(page)).toBe("lab");
+
+  await tap(page, BASE_WIDTH / 2, navY); // 로비
+  await expect.poll(() => scene(page)).toBe("lobby");
+});
+
+test("연구소에서 발굴하면 화석이 줄고 결과가 뜬다", async ({ page }) => {
+  await page.goto("/");
+  await page.waitForFunction(() => window.__PF_DEBUG?.ready === true);
+  await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
+  await tap(page, (BASE_WIDTH * 5) / 6, BASE_HEIGHT - 180 + 90);
+  await expect.poll(() => scene(page)).toBe("lab");
+
+  const before = await page.evaluate(() => window.__PF_DEBUG?.wallet?.fossil);
+  expect(before).toBe(1200);
+
+  await tap(page, 300, BASE_HEIGHT - 180 - 250); // 1회 발굴
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.wallet?.fossil)).toBe(1100);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.owned)).not.toBeUndefined();
 });

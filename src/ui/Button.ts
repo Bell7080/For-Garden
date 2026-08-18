@@ -26,15 +26,16 @@ export class Button extends Phaser.GameObjects.Container {
       .setStrokeStyle(3, COLOR.accent);
     this.add(this.bg);
 
-    const hasSub = Boolean(opts.sub);
+    // 빈 문자열로 시작해 나중에 setSub로 채우는 버튼이 있다. undefined일 때만 자리를 없앤다.
+    const hasSub = opts.sub !== undefined;
     this.add(
       scene.add
         .text(0, hasSub ? -14 : 0, opts.label, textStyle({ size: opts.fontSize ?? 36 }))
         .setOrigin(0.5),
     );
-    if (opts.sub) {
+    if (hasSub) {
       this.subText = scene.add
-        .text(0, 26, opts.sub, textStyle({ size: 26, color: COLOR.inkDim }))
+        .text(0, 26, opts.sub ?? "", textStyle({ size: 26, color: COLOR.inkDim }))
         .setOrigin(0.5);
       this.add(this.subText);
     }

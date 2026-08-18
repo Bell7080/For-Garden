@@ -3,7 +3,9 @@ import "./style.css";
 import { BASE_WIDTH, BASE_HEIGHT } from "./config/gameConfig";
 import { BootScene } from "./scenes/BootScene";
 import { TitleScene } from "./scenes/TitleScene";
-import { ArchiveScene } from "./scenes/ArchiveScene";
+import { LobbyScene } from "./scenes/LobbyScene";
+import { RelicsScene } from "./scenes/RelicsScene";
+import { LabScene } from "./scenes/LabScene";
 import { StageMapScene } from "./scenes/StageMapScene";
 import { PartyScene } from "./scenes/PartyScene";
 import { BattleScene } from "./scenes/BattleScene";
@@ -18,5 +20,5 @@ new Phaser.Game({
     width: BASE_WIDTH,
     height: BASE_HEIGHT,
   },
-  scene: [BootScene, TitleScene, ArchiveScene, StageMapScene, PartyScene, BattleScene],
+  scene: [BootScene, TitleScene, LobbyScene, RelicsScene, LabScene, StageMapScene, PartyScene, BattleScene],
 });

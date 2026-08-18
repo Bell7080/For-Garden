@@ -17,6 +17,9 @@ export interface DebugState {
   battle?: DebugBattle;
   /** 정보창이 떠 있는지. `?`와 꾹 누르기를 확인하는 데 쓴다. */
   infoOpen?: boolean;
+  /** 재화와 보유 렐릭. 뽑기가 실제로 반영됐는지 확인하는 데 쓴다. */
+  wallet?: { fossil: number; amber: number };
+  owned?: string[];
 }
 
 declare global {
@@ -44,4 +47,10 @@ export function setDebugBattle(battle: DebugBattle | undefined): void {
 
 export function setDebugInfoOpen(open: boolean): void {
   ensure().infoOpen = open;
+}
+
+export function setDebugProgress(wallet: { fossil: number; amber: number }, owned: Set<string>): void {
+  const state = ensure();
+  state.wallet = { ...wallet };
+  state.owned = [...owned];
 }

@@ -44,7 +44,7 @@ export class TitleScene extends Phaser.Scene {
     setDebugReady(true);
 
     this.input.once("pointerdown", () => {
-      this.scene.start("archive");
+      this.scene.start("lobby");
     });
   }
 }

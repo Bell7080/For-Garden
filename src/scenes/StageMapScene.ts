@@ -78,7 +78,7 @@ export class StageMapScene extends Phaser.Scene {
       height: 96,
       label: "돌아가기",
       fontSize: 30,
-      onClick: () => this.scene.start("archive"),
+      onClick: () => this.scene.start("lobby"),
     });
   }
 }

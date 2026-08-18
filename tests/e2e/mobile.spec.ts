@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-test("세로형 화면에서 캔버스가 뜨고 타이틀에서 연구소로 전환된다", async ({ page }) => {
+test("세로형 화면에서 캔버스가 뜨고 타이틀에서 로비로 전환된다", async ({ page }) => {
   const consoleErrors: string[] = [];
   page.on("console", (msg) => {
     if (msg.type() === "error") consoleErrors.push(msg.text());
@@ -27,7 +27,7 @@ test("세로형 화면에서 캔버스가 뜨고 타이틀에서 연구소로 �
   await canvas.click();
   await expect
     .poll(() => page.evaluate(() => window.__PF_DEBUG?.scene))
-    .toBe("archive");
+    .toBe("lobby");
 
   expect(consoleErrors, `콘솔 에러 발생: ${consoleErrors.join(", ")}`).toEqual([]);
 });

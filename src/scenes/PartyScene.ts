@@ -169,7 +169,9 @@ export class PartyScene extends Phaser.Scene {
     const startX = (BASE_WIDTH - gridW) / 2 + cardW / 2;
     const startY = 1100;
 
-    PLAYABLE_RELICS.forEach((relic, i) => {
+    // 보유한 렐릭만 편성할 수 있다.
+    const roster = PLAYABLE_RELICS.filter((relic) => session.owned.has(relic.id));
+    roster.forEach((relic, i) => {
       const x = startX + (i % cols) * (cardW + gapX);
       const y = startY + Math.floor(i / cols) * (cardH + gapY);
 

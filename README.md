@@ -47,6 +47,20 @@ npm run test:e2e   # Playwright — 모바일 화면비/터치로 빌드 결과 
 로컬에 모바일 기기가 없다면 Actions 실행 결과의 `mobile-screenshots` 아티팩트로
 실제 화면을 확인하면 된다.
 
+## 배포 (Vercel)
+
+배포는 이 CI가 아니라 **Vercel의 GitHub 연동**이 맡는다. `vercel.json`에 빌드 설정을
+미리 넣어뒀지만, Vercel 쪽 저장소 연결(Import)은 계정 인증이 필요해 아래 절차를
+Vercel 대시보드에서 직접 한 번 해야 한다.
+
+1. https://vercel.com/new 에서 GitHub 계정으로 로그인 → `Bell7080/For-Garden` Import
+2. Framework Preset은 Vite로 자동 인식됨 (`vercel.json`이 있으면 그대로 따른다)
+3. 이후로는 `main`에 push할 때마다 Vercel이 자체적으로 빌드·배포한다 (PR에는 미리보기
+   배포 URL이 자동으로 달린다) — 이 저장소의 GitHub Actions와는 완전히 별개로 동작하므로,
+   Playwright e2e처럼 느린 잡 때문에 배포가 지연되지 않는다.
+
+CI(`ci.yml`)는 타입체크·테스트 품질 게이트로만 남겨뒀다. GitHub Pages 배포 잡은 제거했다.
+
 ## 구조
 
 ```text

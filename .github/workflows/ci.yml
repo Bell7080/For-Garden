@@ -59,34 +59,5 @@ jobs:
           path: dist/
           retention-days: 14
 
-  # main에 push될 때만 GitHub Pages로 배포한다 (Repo Settings → Pages → Source를
-  # "GitHub Actions"로 한 번 지정해 둬야 https://<user>.github.io/<repo>/ 링크가 생긴다).
-  deploy:
-    needs: build-and-test
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - run: npm ci
-      - run: npm run build
-
-      - uses: actions/configure-pages@v5
-
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist
-
-      - id: deployment
-        uses: actions/deploy-pages@v4
+# 배포는 Vercel의 GitHub 연동이 맡는다 (vercel.json 참고) — 이 워크플로는 push마다
+# 독립적으로 타입체크·테스트만 돌기 때문에, 느린 e2e 잡에 배포가 발이 묶이지 않는다.

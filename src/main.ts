@@ -4,6 +4,9 @@ import { BASE_WIDTH, BASE_HEIGHT } from "./config/gameConfig";
 import { BootScene } from "./scenes/BootScene";
 import { TitleScene } from "./scenes/TitleScene";
 import { ArchiveScene } from "./scenes/ArchiveScene";
+import { StageMapScene } from "./scenes/StageMapScene";
+import { PartyScene } from "./scenes/PartyScene";
+import { BattleScene } from "./scenes/BattleScene";
 
 new Phaser.Game({
   type: Phaser.AUTO,
@@ -15,5 +18,5 @@ new Phaser.Game({
     width: BASE_WIDTH,
     height: BASE_HEIGHT,
   },
-  scene: [BootScene, TitleScene, ArchiveScene],
+  scene: [BootScene, TitleScene, ArchiveScene, StageMapScene, PartyScene, BattleScene],
 });

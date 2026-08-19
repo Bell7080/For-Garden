@@ -7,6 +7,7 @@ export const BACKGROUND = {
   relics: "background-relics",
   info: "background-info",
   battleArea: "background-battle-area",
+  lab: "background-lab",
 } as const;
 
 /** BootScene이 모든 화면 배경을 한 번에 적재할 때 사용하는 경로 목록이다. */
@@ -16,6 +17,8 @@ export const BACKGROUND_ASSETS = [
   [BACKGROUND.relics, "sprites/background/background_002.webp"],
   [BACKGROUND.info, "sprites/background/background_003.webp"],
   [BACKGROUND.battleArea, "sprites/background/background_004.webp"],
+  // 5번 원화는 발굴 설비가 있는 연구소 전용 배경이다.
+  [BACKGROUND.lab, "sprites/background/background_005.webp"],
 ] as const;
 
 /**

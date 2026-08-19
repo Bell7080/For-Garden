@@ -11,7 +11,7 @@ import { COLOR, textStyle } from "./theme";
 import { addSceneBackground, BACKGROUND } from "./backgrounds";
 
 /** 전신 일러스트는 화면 왼쪽을 크게 쓰고, 오른쪽에 전투 정보를 겹쳐 배치한다. */
-const PORTRAIT = { x: 390, groundY: 1540, height: 1320 } as const;
+const PORTRAIT_BOX = { left: 74, right: 748, top: 274, bottom: 1570 } as const;
 
 export const ROLE_LABEL: Record<string, string> = {
   attacker: "공격",
@@ -165,8 +165,17 @@ export class InfoManager {
   private async loadPortrait(def: RelicDef): Promise<void> {
     const request = ++this.portraitRequest;
     // 루트 배경과 정보 레이어 사이에 세워 UI가 캐릭터 위로 선명하게 읽힌다.
-    const portrait = await spawnPuppet(this.scene, portraitAssetFor(def.portraitAssetId), {
-      ...PORTRAIT,
+    const asset = portraitAssetFor(def.portraitAssetId);
+    // 원화의 실제 가로/세로 비율을 함께 제한해 긴 꼬리도 화면 밖에서 잘리지 않게 한다.
+    const contentWidth = asset.content.right - asset.content.left;
+    const contentHeight = asset.content.bottom - asset.content.top;
+    const safeWidth = PORTRAIT_BOX.right - PORTRAIT_BOX.left;
+    const safeHeight = PORTRAIT_BOX.bottom - PORTRAIT_BOX.top;
+    const height = Math.min(safeHeight, (safeWidth * contentHeight) / contentWidth);
+    const portrait = await spawnPuppet(this.scene, asset, {
+      x: (PORTRAIT_BOX.left + PORTRAIT_BOX.right) / 2,
+      groundY: PORTRAIT_BOX.bottom,
+      height,
       depth: Math.max(this.portraitDepth, 1001),
     });
     if (request !== this.portraitRequest) {

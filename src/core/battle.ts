@@ -215,14 +215,7 @@ export function decideEnemyAction(state: BattleState): BattleAction {
 
   if (canUseUltimate(front)) return { kind: "ultimate" };
 
-  // 전방이 위태로우면 멀쩡한 후방과 교대한다.
-  if (front.hp < front.maxHp * 0.3) {
-    const relief = team.order.find(
-      (i, pos) => pos > 0 && isAlive(team.units[i]) && canSwap(team, i),
-    );
-    if (relief !== undefined) return { kind: "swap", memberIndex: relief };
-  }
-
+  // 자동 전투에서는 생존 교대보다 공격을 우선해 흐름이 끊기지 않게 한다.
   return { kind: "basic" };
 }
 

@@ -19,6 +19,7 @@ import { BottomNav, NAV_TOP } from "../ui/BottomNav";
 import { Button } from "../ui/Button";
 import { TopBar } from "../ui/TopBar";
 import { COLOR, textStyle } from "../ui/theme";
+import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 
 /** 배너 그림이 서는 바닥. */
 const BANNER_FLOOR = 1240;
@@ -55,9 +56,9 @@ export class LabScene extends Phaser.Scene {
     this.bannerIndex = 0;
 
     const cx = BASE_WIDTH / 2;
-    // 연구소는 배경 일러스트 없이 기존 패널 계열 색으로 발굴 UI와 캐릭터에 시선을 모은다.
-    this.add.rectangle(cx, 960, BASE_WIDTH, 1920, COLOR.void).setDepth(-30);
-    this.add.rectangle(cx, 760, BASE_WIDTH, 1020, 0x20242a).setDepth(-29);
+    // 배경 5번의 연구 설비 원화를 쓰고, 얇은 암막으로 기존 청록색 UI 대비를 유지한다.
+    addSceneBackground(this, BACKGROUND.lab);
+    this.add.rectangle(cx, 960, BASE_WIDTH, 1920, COLOR.void, 0.34).setDepth(-29);
     this.add.rectangle(cx, BANNER_FLOOR, BASE_WIDTH, 3, COLOR.panelEdge).setDepth(-28);
 
     this.topBar = new TopBar(this);

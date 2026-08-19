@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "phaser": "^3.90.0",
-    "puppetforge": "github:bell7080/webgle"
+    "puppetforge": "github:bell7080/webgle#593e920"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",

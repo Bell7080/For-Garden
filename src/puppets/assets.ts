@@ -53,6 +53,9 @@ export const MOTION = {
 
 export type MotionName = keyof typeof MOTION;
 
+/** 개체별 최신 동작 번호. 오래된 복귀 타이머가 새 동작을 idle로 끊지 못하게 한다. */
+const motionGeneration = new WeakMap<PuppetCreature, number>();
+
 /** 묶음은 파일당 한 번만 읽고 여러 마리가 나눠 쓴다. */
 const loaded = new Map<string, Promise<Puppet>>();
 
@@ -63,6 +66,15 @@ function loadPuppet(asset: PuppetAsset): Promise<Puppet> {
     loaded.set(asset.url, pending);
   }
   return pending;
+}
+
+/**
+ * 게임 플레이 전에 공용 묶음을 한 번 해석해 둔다.
+ * ZIP 다운로드와 파싱이 첫 idle 프레임 도중 일어나면 재생 문제처럼 보이는 긴 프레임이 생기므로
+ * 부트 화면에서 비용을 지불하고, 전투와 팝업에서는 캐시된 Puppet만 복제한다.
+ */
+export async function preloadPuppetAssets(): Promise<void> {
+  await Promise.all([loadPuppet(CHAR_ASSET), loadPuppet(ENTITY_ASSET)]);
 }
 
 export interface SpawnOptions {
@@ -151,9 +163,13 @@ export function playMotion(
   const played = config.names.some((name) => creature.play(name));
   if (!played) return;
 
+  const generation = (motionGeneration.get(creature) ?? 0) + 1;
+  motionGeneration.set(creature, generation);
+
   const holdMs = "holdMs" in config ? config.holdMs : undefined;
   if (holdMs === undefined) return;
   scene.time.delayedCall(holdMs, () => {
-    if (creature.active) creature.play("idle");
+    // 공격 직후 피격처럼 동작이 겹쳐도 가장 최근 동작의 유지 시간은 온전히 보장한다.
+    if (creature.active && motionGeneration.get(creature) === generation) creature.play("idle");
   });
 }

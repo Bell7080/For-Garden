@@ -1,0 +1,7 @@
+/**
+ * 캐릭터 상세 팝업의 공개 진입점이다.
+ *
+ * 실제 프리팹 구현은 Phaser UI 계층에 두되, 전투·편성·도감 같은 기능 화면은 이 경로만
+ * 바라보게 한다. 추후 탭이 늘거나 팝업 레이아웃이 바뀌어도 호출부의 계약은 유지된다.
+ */
+export { InfoManager as CharacterInfoManager, ROLE_LABEL, addHelpBadge } from "../ui/info";

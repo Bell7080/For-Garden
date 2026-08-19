@@ -16,11 +16,11 @@ import {
 } from "../core/battle";
 import { getRelic } from "../data/relics";
 import { getStage } from "../data/stages";
+import { CharacterInfoManager, addHelpBadge } from "../managers/CharacterInfoManager";
 import { ENTITY_ASSET, placePuppet, playMotion, spawnPuppet } from "../puppets/assets";
 import { tintFor } from "../puppets/tints";
 import { session } from "../state/session";
 import { Button } from "../ui/Button";
-import { InfoManager, addHelpBadge } from "../ui/info";
 import { Revolver } from "../ui/Revolver";
 import { UnitTag } from "../ui/UnitTag";
 import { COLOR, textStyle } from "../ui/theme";
@@ -70,7 +70,7 @@ export class BattleScene extends Phaser.Scene {
   private creatures = new Map<BattleUnit, PuppetCreature>();
   private shadows = new Map<BattleUnit, Phaser.GameObjects.Ellipse>();
   private revolver!: Revolver;
-  private info!: InfoManager;
+  private info!: CharacterInfoManager;
   private turnText!: Phaser.GameObjects.Text;
   private logText!: Phaser.GameObjects.Text;
   private ultButton!: Button;
@@ -111,7 +111,7 @@ export class BattleScene extends Phaser.Scene {
     this.buildBattlefield();
     this.buildControls();
 
-    this.info = new InfoManager(this, DEPTH.portrait);
+    this.info = new CharacterInfoManager(this, DEPTH.portrait);
     this.refresh();
     void this.spawnCreatures();
   }

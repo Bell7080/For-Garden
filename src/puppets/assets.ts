@@ -1,7 +1,10 @@
 import type Phaser from "phaser";
-import { Puppet, PuppetCreature } from "puppetforge/phaser";
+import { Puppet } from "puppetforge/phaser";
 import type { PortraitAssetId } from "../core/types";
-import { optimizePuppetProject } from "./meshOptimization";
+import { IndexedPuppetCreature } from "./IndexedPuppetCreature";
+
+/** 기존 호출부가 렌더러 구현을 몰라도 되도록 인게임 Puppet 타입을 한 곳에서 공개한다. */
+export type PuppetCreature = IndexedPuppetCreature;
 
 /**
  * PuppetForge로 만든 임시 아트를 불러오고, 발바닥이 바닥에 닿도록 세운다.
@@ -94,11 +97,8 @@ const loaded = new Map<string, Promise<Puppet>>();
 function loadPuppet(asset: PuppetAsset): Promise<Puppet> {
   let pending = loaded.get(asset.url);
   if (!pending) {
-    pending = Puppet.load(asset.url).then((puppet) => {
-      // 편집기 원본은 보존하고 Phaser에서만 격자를 낮춰, 고정 방식과 모션 설정을 유지하며 렉을 없앤다.
-      const project = optimizePuppetProject(puppet.project);
-      return project === puppet.project ? puppet : Puppet.fromProject(project, puppet.texture);
-    });
+    // ZIP의 원본 격자와 모든 deform 가중치를 그대로 캐시한다. 인게임용 재샘플링은 하지 않는다.
+    pending = Puppet.load(asset.url);
     loaded.set(asset.url, pending);
   }
   return pending;
@@ -149,9 +149,9 @@ export function computePlacement(asset: PuppetAsset, options: SpawnOptions): Pla
   return { x: options.x - offsetX, y: options.groundY - offsetY, scale };
 }
 
-/** Mesh에는 tint가 없다. 정점 색을 직접 칠해 색 필터를 만든다. */
+/** indexed renderer는 단일 GPU uniform으로 색 필터를 적용한다. */
 export function tintPuppet(creature: PuppetCreature, color: number): void {
-  for (const vertex of creature.vertices) vertex.color = color;
+  creature.setTint(color);
 }
 
 /**
@@ -166,7 +166,7 @@ export async function spawnPuppet(
   // Puppet은 재생 시각·속도·강도를 내부에 보관한다. 같은 인스턴스를 여러 Mesh가 공유하면 한
   // 캐릭터의 play가 다른 캐릭터를 덮으므로, 정적 프로젝트만 공유하고 재생기는 개체마다 만든다.
   const puppet = Puppet.fromProject(template.project, template.texture);
-  const creature = await PuppetCreature.fromPuppet(scene, puppet);
+  const creature = await IndexedPuppetCreature.fromPuppet(scene, puppet);
 
   placePuppet(creature, asset, options);
   if (options.tint !== undefined) tintPuppet(creature, options.tint);

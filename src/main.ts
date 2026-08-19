@@ -11,8 +11,8 @@ import { PartyScene } from "./scenes/PartyScene";
 import { BattleScene } from "./scenes/BattleScene";
 
 new Phaser.Game({
-  // AUTO는 가능한 환경에서 Mesh에 유리한 WebGL을 선택하고, 미지원 기기에는 Canvas로 폴백한다.
-  type: Phaser.AUTO,
+  // Puppet 원본 indexed mesh를 GPU로 직접 그리므로 중복 정점을 만드는 Canvas 폴백은 사용하지 않는다.
+  type: Phaser.WEBGL,
   parent: "app",
   backgroundColor: "#1a1d21",
   scale: {

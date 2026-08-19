@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import type { PuppetCreature } from "puppetforge/phaser";
+import type { PuppetCreature } from "../puppets/assets";
 import { BASE_WIDTH } from "../config/gameConfig";
 import { setDebugScene } from "../debug";
 import { getRelic } from "../data/relics";

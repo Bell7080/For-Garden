@@ -5,6 +5,9 @@ export type Side = "player" | "enemy";
 /** 역할. 전방에 세울지 후방에 둘지 판단하는 기준이 된다. */
 export type Role = "attacker" | "tank" | "support";
 
+/** 정적 렐릭 데이터에서 선택할 수 있는 전신 원화 키. 새 Puppet 등록 시 함께 확장한다. */
+export type PortraitAssetId = "torika" | "lexia" | "torika-placeholder";
+
 export interface Stats {
   hp: number;
   atk: number;
@@ -47,6 +50,8 @@ export interface Passive {
 export interface RelicDef {
   id: string;
   name: string;
+  /** 상세·로비·배너에서 사용할 Puppet 전신 원화의 데이터 키. */
+  portraitAssetId: PortraitAssetId;
   /** 어떤 유전자에서 되살아났는지. */
   origin: string;
   role: Role;

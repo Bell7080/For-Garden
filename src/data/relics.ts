@@ -8,6 +8,7 @@ export const RELICS: RelicDef[] = [
   {
     id: "rex",
     name: "렉시아",
+    portraitAssetId: "lexia",
     origin: "티라노사우루스",
     role: "attacker",
     stats: { hp: 820, atk: 132, def: 42 },
@@ -30,6 +31,7 @@ export const RELICS: RelicDef[] = [
   {
     id: "anky",
     name: "토리카",
+    portraitAssetId: "torika",
     origin: "트리케라톱스",
     role: "tank",
     stats: { hp: 1420, atk: 74, def: 128 },
@@ -52,6 +54,7 @@ export const RELICS: RelicDef[] = [
   {
     id: "mammoth",
     name: "마무",
+    portraitAssetId: "torika-placeholder",
     origin: "털매머드",
     role: "tank",
     stats: { hp: 1260, atk: 88, def: 104 },
@@ -74,6 +77,7 @@ export const RELICS: RelicDef[] = [
   {
     id: "dodo",
     name: "도도",
+    portraitAssetId: "torika-placeholder",
     origin: "도도새",
     role: "support",
     stats: { hp: 760, atk: 96, def: 48 },
@@ -96,6 +100,7 @@ export const RELICS: RelicDef[] = [
   {
     id: "smilo",
     name: "스밀라",
+    portraitAssetId: "torika-placeholder",
     origin: "스밀로돈",
     role: "attacker",
     stats: { hp: 840, atk: 124, def: 56 },
@@ -118,6 +123,7 @@ export const RELICS: RelicDef[] = [
   {
     id: "quetz",
     name: "케찰",
+    portraitAssetId: "torika-placeholder",
     origin: "케찰코아틀루스",
     role: "support",
     stats: { hp: 780, atk: 108, def: 44 },
@@ -142,6 +148,7 @@ export const RELICS: RelicDef[] = [
   {
     id: "husk-raptor",
     name: "허스크 랩터",
+    portraitAssetId: "torika-placeholder",
     origin: "실패한 벨로키랍토르 개체",
     role: "attacker",
     stats: { hp: 620, atk: 92, def: 38 },
@@ -164,6 +171,7 @@ export const RELICS: RelicDef[] = [
   {
     id: "husk-shell",
     name: "허스크 셸",
+    portraitAssetId: "torika-placeholder",
     origin: "실패한 갑주 개체",
     role: "tank",
     stats: { hp: 980, atk: 66, def: 92 },
@@ -186,6 +194,7 @@ export const RELICS: RelicDef[] = [
   {
     id: "husk-wing",
     name: "허스크 윙",
+    portraitAssetId: "torika-placeholder",
     origin: "실패한 익룡 개체",
     role: "support",
     stats: { hp: 580, atk: 84, def: 34 },

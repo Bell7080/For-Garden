@@ -19,6 +19,8 @@ export interface Banner {
   id: string;
   name: string;
   desc: string;
+  /** 배너 화면에 대표로 노출할 실제 픽업 렐릭 id. */
+  featuredRelicId: string;
   currency: Currency;
   /** 1회 뽑기 비용. */
   costOne: number;

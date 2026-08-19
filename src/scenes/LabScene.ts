@@ -7,7 +7,12 @@ import { GameApiError } from "../api/contracts";
 import { canPull, pullCost, type Banner } from "../core/gacha";
 import { BANNERS } from "../data/banners";
 import { getRelic } from "../data/relics";
-import { enableHitOnClick, spawnPuppet, tintPuppet, TORIKA_ASSET } from "../puppets/assets";
+import {
+  enableHitOnClick,
+  portraitAssetFor,
+  portraitUsesRelicTint,
+  spawnPuppet,
+} from "../puppets/assets";
 import { mixWhite, tintFor } from "../puppets/tints";
 import { session } from "../state/session";
 import { BottomNav, NAV_TOP } from "../ui/BottomNav";
@@ -33,6 +38,8 @@ export class LabScene extends Phaser.Scene {
   private oneButton!: Button;
   private tenButton!: Button;
   private showcase?: PuppetCreature;
+  /** 빠른 배너 전환 중 늦게 끝난 원화 로딩이 최신 배너를 덮지 못하게 하는 요청 번호. */
+  private showcaseRequest = 0;
   /** 연속 터치로 같은 재화가 두 번 결제되는 요청 중복을 클라이언트에서도 막는다. */
   private pullPending = false;
 
@@ -104,6 +111,12 @@ export class LabScene extends Phaser.Scene {
       .setOrigin(0.5, 0);
 
     new BottomNav(this, "lab");
+    // 씬을 떠난 뒤 끝나는 비동기 로딩도 무효화하고 현재 Puppet을 정리한다.
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.showcaseRequest += 1;
+      this.showcase?.destroy();
+      this.showcase = undefined;
+    });
     void this.showcaseRelic();
     this.refresh();
   }
@@ -111,20 +124,31 @@ export class LabScene extends Phaser.Scene {
   private switchBanner(delta: number): void {
     this.bannerIndex = (this.bannerIndex + delta + BANNERS.length) % BANNERS.length;
     this.refresh();
+    void this.showcaseRelic();
   }
 
-  /** 배너 대표 그림. 아직 배너별 전용 구성이 없어 1번 원화를 기본으로 세운다. */
+  /** 배너 데이터의 픽업 렐릭과 그 렐릭 데이터의 원화를 차례로 따라 대표 그림을 교체한다. */
   private async showcaseRelic(): Promise<void> {
-    this.showcase = await spawnPuppet(this, TORIKA_ASSET, {
+    const request = ++this.showcaseRequest;
+    const featured = getRelic(this.banner.featuredRelicId);
+    const nextShowcase = await spawnPuppet(this, portraitAssetFor(featured.portraitAssetId), {
       x: BASE_WIDTH / 2,
       groundY: BANNER_FLOOR,
       height: 860,
+      tint: portraitUsesRelicTint(featured.portraitAssetId)
+        ? mixWhite(tintFor(featured.id), 0.55)
+        : undefined,
       depth: -20,
     });
+    // 이미 다른 배너를 골랐다면 방금 완성된 오래된 원화는 화면에 붙이지 않는다.
+    if (request !== this.showcaseRequest) {
+      nextShowcase.destroy();
+      return;
+    }
+    this.showcase?.destroy();
+    this.showcase = nextShowcase;
     // 배너의 전신 일러스트도 정보창과 동일하게 터치 반응을 준다.
     enableHitOnClick(this, this.showcase);
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.showcase?.destroy());
-    this.refresh();
   }
 
   private async doPull(count: 1 | 10): Promise<void> {
@@ -210,11 +234,5 @@ export class LabScene extends Phaser.Scene {
     this.tenButton
       .setSub(`${unit} ${pullCost(banner, 10)}`)
       .setEnabled(!this.pullPending && canPull(session.wallet, banner, 10));
-
-    // 배너마다 그림 색을 달리해 서로 다른 발굴이라는 느낌을 준다.
-    if (this.showcase) {
-      const featured = banner.pool[this.bannerIndex % banner.pool.length];
-      tintPuppet(this.showcase, mixWhite(tintFor(featured), 0.55));
-    }
   }
 }

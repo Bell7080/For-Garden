@@ -26,6 +26,10 @@
 ## 애니메이션 주의사항
 
 - Puppet ZIP은 `BootScene`에서 미리 파싱하며 `src/puppets/assets.ts`의 캐시를 우회하지 않는다.
+- `puppetforge`는 `pinnedSoft` 반경 감쇠가 게임 Runtime에도 포함된 v0.41.1 커밋에 고정한다.
+  범위 없는 GitHub 의존성으로 되돌리면 lockfile이 예전 Runtime을 계속 가리켜 발 고정 영역이
+  통째로 딱딱하게 붙고 외곽 정점이 찌그러질 수 있으므로, 버전을 바꿀 때 ZIP과 Runtime을 함께
+  회귀 검증한다.
 - 일회성 동작은 반드시 `playMotion`을 사용한다. 직접 `delayedCall`로 idle 복귀를 만들면 이전
   타이머가 최신 피격·공격 모션을 잘라 재생 끊김처럼 보일 수 있다.
 - 캐릭터마다 실제 에셋이 생기기 전까지 `public/puppets`의 두 파일과 tint는 임시 아트다.

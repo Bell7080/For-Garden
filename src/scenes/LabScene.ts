@@ -2,9 +2,10 @@ import Phaser from "phaser";
 import type { PuppetCreature } from "puppetforge/phaser";
 import { BASE_WIDTH } from "../config/gameConfig";
 import { setDebugScene } from "../debug";
-import { applyPull, canPull, pull, pullCost, spend, type Banner } from "../core/gacha";
+import { canPull, pull, pullCost, spend, type Banner } from "../core/gacha";
 import { BANNERS } from "../data/banners";
 import { getRelic } from "../data/relics";
+import { relicCollection } from "../managers/RelicCollectionManager";
 import { CHAR_ASSET, spawnPuppet, tintPuppet } from "../puppets/assets";
 import { mixWhite, tintFor } from "../puppets/tints";
 import { session } from "../state/session";
@@ -125,7 +126,7 @@ export class LabScene extends Phaser.Scene {
 
     session.wallet = spend(session.wallet, banner, count);
     const results = pull(banner, count, Math.random);
-    const outcome = applyPull(session.owned, results);
+    const outcome = relicCollection.applyAcquisitions(results);
 
     this.topBar.refresh();
     this.refresh();

@@ -2,11 +2,12 @@ import Phaser from "phaser";
 import { BASE_WIDTH } from "../config/gameConfig";
 import { setDebugScene } from "../debug";
 import type { RelicDef } from "../core/types";
-import { PLAYABLE_RELICS, getRelic } from "../data/relics";
+import { getRelic } from "../data/relics";
+import { relicCollection } from "../managers/RelicCollectionManager";
 import { session } from "../state/session";
 import { BottomNav, NAV_TOP } from "../ui/BottomNav";
 import { Button } from "../ui/Button";
-import { InfoManager, ROLE_LABEL } from "../ui/info";
+import { CharacterInfoManager, ROLE_LABEL } from "../managers/CharacterInfoManager";
 import { TopBar } from "../ui/TopBar";
 import { COLOR, textStyle } from "../ui/theme";
 
@@ -17,7 +18,7 @@ import { COLOR, textStyle } from "../ui/theme";
  * 하나를 고르면 아래에 요약이 뜨고, 거기서 정보창을 열거나 애착 렐릭으로 세울 수 있다.
  */
 export class RelicsScene extends Phaser.Scene {
-  private info!: InfoManager;
+  private info!: CharacterInfoManager;
   private selected: string | null = null;
   private cards = new Map<string, Phaser.GameObjects.Rectangle>();
   private summaryName!: Phaser.GameObjects.Text;
@@ -38,7 +39,7 @@ export class RelicsScene extends Phaser.Scene {
     this.add.rectangle(cx, 960, BASE_WIDTH, 1920, COLOR.void).setDepth(-30);
     new TopBar(this);
 
-    const ownedCount = PLAYABLE_RELICS.filter((r) => session.owned.has(r.id)).length;
+    const ownedCount = relicCollection.owned.length;
     this.add
       .text(40, 170, "보유 렐릭", textStyle({ size: 40 }))
       .setOrigin(0, 0);
@@ -46,7 +47,7 @@ export class RelicsScene extends Phaser.Scene {
       .text(
         BASE_WIDTH - 40,
         182,
-        `${ownedCount} / ${PLAYABLE_RELICS.length}`,
+        `${ownedCount} / ${relicCollection.catalog.length}`,
         textStyle({ size: 30, color: COLOR.accentText }),
       )
       .setOrigin(1, 0);
@@ -55,7 +56,7 @@ export class RelicsScene extends Phaser.Scene {
     this.buildSummary();
 
     new BottomNav(this, "relics");
-    this.info = new InfoManager(this);
+    this.info = new CharacterInfoManager(this);
     this.refresh();
   }
 
@@ -69,10 +70,10 @@ export class RelicsScene extends Phaser.Scene {
     const startX = (BASE_WIDTH - gridW) / 2 + cardW / 2;
     const startY = 380;
 
-    PLAYABLE_RELICS.forEach((relic, i) => {
+    relicCollection.catalog.forEach((relic, i) => {
       const x = startX + (i % cols) * (cardW + gapX);
       const y = startY + Math.floor(i / cols) * (cardH + gapY);
-      const owned = session.owned.has(relic.id);
+      const owned = relicCollection.owns(relic.id);
 
       const box = this.add
         .rectangle(x, y, cardW, cardH, COLOR.panel)
@@ -142,7 +143,7 @@ export class RelicsScene extends Phaser.Scene {
       fontSize: 32,
       onClick: () => {
         if (!this.selected) return;
-        session.favorite = this.selected;
+        relicCollection.setFavorite(this.selected);
         this.refresh();
       },
     });
@@ -150,7 +151,7 @@ export class RelicsScene extends Phaser.Scene {
 
   private refresh(): void {
     for (const [id, box] of this.cards) {
-      const owned = session.owned.has(id);
+      const owned = relicCollection.owns(id);
       const chosen = owned && id === this.selected;
       box.setStrokeStyle(chosen ? 5 : 3, chosen ? COLOR.accent : COLOR.panelEdge);
       box.setFillStyle(chosen ? COLOR.panelEdge : COLOR.panel);

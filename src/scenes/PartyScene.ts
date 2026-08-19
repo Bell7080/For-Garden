@@ -2,11 +2,12 @@ import Phaser from "phaser";
 import { BASE_WIDTH, BASE_HEIGHT } from "../config/gameConfig";
 import { setDebugScene } from "../debug";
 import type { RelicDef } from "../core/types";
-import { PLAYABLE_RELICS, getRelic } from "../data/relics";
+import { getRelic } from "../data/relics";
+import { relicCollection } from "../managers/RelicCollectionManager";
+import { CharacterInfoManager, ROLE_LABEL, addHelpBadge } from "../managers/CharacterInfoManager";
 import { getStage } from "../data/stages";
 import { session } from "../state/session";
 import { Button } from "../ui/Button";
-import { InfoManager, ROLE_LABEL, addHelpBadge } from "../ui/info";
 import { COLOR, textStyle } from "../ui/theme";
 
 /** 이만큼 누르고 있으면 정보창이 열린다. 짧게 누르면 편성 토글이다. */
@@ -48,7 +49,7 @@ export class PartyScene extends Phaser.Scene {
   private allySlots: AllySlot[] = [];
   private startButton!: Button;
   private hint!: Phaser.GameObjects.Text;
-  private info!: InfoManager;
+  private info!: CharacterInfoManager;
   private pressTimer?: Phaser.Time.TimerEvent;
   private pressStartedAt = 0;
   private longPressFired = false;
@@ -88,7 +89,7 @@ export class PartyScene extends Phaser.Scene {
       fontSize: 44,
       onClick: () => {
         if (this.picked.length !== 3) return;
-        session.party = [...this.picked];
+        if (!relicCollection.setParty(this.picked)) return;
         this.scene.start("battle");
       },
     });
@@ -101,7 +102,7 @@ export class PartyScene extends Phaser.Scene {
       onClick: () => this.scene.start("stageMap"),
     });
 
-    this.info = new InfoManager(this);
+    this.info = new CharacterInfoManager(this);
     this.refresh();
   }
 
@@ -170,7 +171,7 @@ export class PartyScene extends Phaser.Scene {
     const startY = 1100;
 
     // 보유한 렐릭만 편성할 수 있다.
-    const roster = PLAYABLE_RELICS.filter((relic) => session.owned.has(relic.id));
+    const roster = relicCollection.owned;
     roster.forEach((relic, i) => {
       const x = startX + (i % cols) * (cardW + gapX);
       const y = startY + Math.floor(i / cols) * (cardH + gapY);

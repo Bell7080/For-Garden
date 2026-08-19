@@ -1,10 +1,16 @@
 import Phaser from "phaser";
 import { setDebugScene } from "../debug";
 import { preloadPuppetAssets } from "../puppets/assets";
+import { BACKGROUND_ASSETS } from "../ui/backgrounds";
 
 export class BootScene extends Phaser.Scene {
   constructor() {
     super("boot");
+  }
+
+  preload(): void {
+    // 전환 직후 빈 화면이 보이지 않도록 네 화면의 공용 배경을 부트 단계에서 선로딩한다.
+    BACKGROUND_ASSETS.forEach(([key, path]) => this.load.image(key, path));
   }
 
   async create(): Promise<void> {

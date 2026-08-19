@@ -24,6 +24,7 @@ import { Button } from "../ui/Button";
 import { Revolver } from "../ui/Revolver";
 import { UnitTag } from "../ui/UnitTag";
 import { COLOR, textStyle } from "../ui/theme";
+import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 
 /** 적이 생각하는 척하는 시간. 행동이 한꺼번에 처리되어 보이지 않게 한다. */
 const ENEMY_DELAY_MS = 700;
@@ -93,9 +94,11 @@ export class BattleScene extends Phaser.Scene {
     this.state = createBattle(session.party.map(getRelic), stage.enemies.map(getRelic));
 
     const cx = BASE_WIDTH / 2;
+    // 지도·편성에서 확인한 background_004 위에서 실제 전투가 이어진다.
+    addSceneBackground(this, BACKGROUND.battleArea, DEPTH.background);
     this.add
-      .rectangle(cx, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void)
-      .setDepth(DEPTH.background);
+      .rectangle(cx, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.3)
+      .setDepth(DEPTH.background + 1);
 
     this.add
       .text(40, 56, `${stage.id}  ${stage.name}`, textStyle({ size: 32, color: COLOR.inkDim }))

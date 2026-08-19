@@ -14,6 +14,7 @@ import { BottomNav, NAV_TOP } from "../ui/BottomNav";
 import { Button } from "../ui/Button";
 import { TopBar } from "../ui/TopBar";
 import { COLOR, textStyle } from "../ui/theme";
+import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 
 /** 배너 그림이 서는 바닥. */
 const BANNER_FLOOR = 1240;
@@ -48,8 +49,9 @@ export class LabScene extends Phaser.Scene {
     this.bannerIndex = 0;
 
     const cx = BASE_WIDTH / 2;
-    this.add.rectangle(cx, 960, BASE_WIDTH, 1920, COLOR.void).setDepth(-30);
-    this.add.rectangle(cx, 760, BASE_WIDTH, 1020, 0x20242a).setDepth(-29);
+    // background_001은 채광 설비와 식물이 함께 있는 메인 연구소 원화다.
+    addSceneBackground(this, BACKGROUND.lab);
+    this.add.rectangle(cx, 760, BASE_WIDTH, 1020, COLOR.void, 0.24).setDepth(-29);
     this.add.rectangle(cx, BANNER_FLOOR, BASE_WIDTH, 3, COLOR.panelEdge).setDepth(-28);
 
     this.topBar = new TopBar(this);

@@ -9,6 +9,7 @@ import { getStage } from "../data/stages";
 import { session } from "../state/session";
 import { Button } from "../ui/Button";
 import { COLOR, textStyle } from "../ui/theme";
+import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 
 /** 이만큼 누르고 있으면 정보창이 열린다. 짧게 누르면 편성 토글이다. */
 const LONG_PRESS_MS = 420;
@@ -67,7 +68,9 @@ export class PartyScene extends Phaser.Scene {
     this.pressStartedAt = 0;
 
     const cx = BASE_WIDTH / 2;
-    this.add.rectangle(cx, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void);
+    // 지도에서 본 전투 에리어가 편성 미리보기까지 자연스럽게 이어진다.
+    addSceneBackground(this, BACKGROUND.battleArea);
+    this.add.rectangle(cx, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.42).setDepth(-29);
 
     const stage = getStage(session.selectedStageId ?? "1-1");
     this.add.text(cx, 70, `${stage.id}  ${stage.name}`, textStyle({ size: 46 })).setOrigin(0.5, 0);

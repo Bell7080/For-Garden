@@ -54,7 +54,16 @@ export class FakeServer implements GameApi {
   }
 
   private snapshot(): PlayerStateDto {
-    return { wallet: { ...this.state.wallet }, ownedRelicIds: [...this.state.owned] };
+    // 중첩 슬롯까지 복사해 응답 변경이 서버 역할의 세션을 오염시키지 않게 한다.
+    const relicProgress = Object.fromEntries(
+      Object.entries(this.state.relicProgress).map(([id, progress]) => [id, { ...progress, heartGemSlots: [...progress.heartGemSlots] as typeof progress.heartGemSlots }]),
+    );
+    return {
+      wallet: { ...this.state.wallet },
+      ownedRelicIds: [...this.state.owned],
+      relicProgress,
+      ownedHeartGemIds: [...this.state.ownedHeartGemIds],
+    };
   }
 
   private delay(): Promise<void> {

@@ -1,6 +1,7 @@
 import type Phaser from "phaser";
 import { Puppet, PuppetCreature } from "puppetforge/phaser";
 import type { PortraitAssetId } from "../core/types";
+import { optimizePuppetProject } from "./meshOptimization";
 
 /**
  * PuppetForge로 만든 임시 아트를 불러오고, 발바닥이 바닥에 닿도록 세운다.
@@ -75,10 +76,10 @@ export const ENTITY_ASSET: PuppetAsset = {
  */
 export const MOTION = {
   idle: { names: ["idle"] },
-  hit: { names: ["hit", "idle"], holdMs: 520 },
+  hit: { names: ["hit", "idle"], returnsToIdle: true },
   /** 공격 동작이 따로 없어 포효로 대신한다. */
-  attack: { names: ["attack", "roar", "idle"], holdMs: 900 },
-} as const satisfies Record<string, { names: readonly string[]; holdMs?: number }>;
+  attack: { names: ["attack", "roar", "idle"], returnsToIdle: true },
+} as const satisfies Record<string, { names: readonly string[]; returnsToIdle?: boolean }>;
 
 export type MotionName = keyof typeof MOTION;
 
@@ -87,13 +88,17 @@ const motionGeneration = new WeakMap<PuppetCreature, number>();
 /** 이전 일회성 동작의 idle 복귀 예약. 새 동작이 오면 즉시 해제한다. */
 const motionTimers = new WeakMap<PuppetCreature, Phaser.Time.TimerEvent>();
 
-/** 묶음은 파일당 한 번만 읽고 여러 마리가 나눠 쓴다. */
+/** 묶음의 정적 프로젝트와 텍스처는 파일당 한 번만 읽어 재사용한다. */
 const loaded = new Map<string, Promise<Puppet>>();
 
 function loadPuppet(asset: PuppetAsset): Promise<Puppet> {
   let pending = loaded.get(asset.url);
   if (!pending) {
-    pending = Puppet.load(asset.url);
+    pending = Puppet.load(asset.url).then((puppet) => {
+      // 편집기 원본은 보존하고 Phaser에서만 격자를 낮춰, 고정 방식과 모션 설정을 유지하며 렉을 없앤다.
+      const project = optimizePuppetProject(puppet.project);
+      return project === puppet.project ? puppet : Puppet.fromProject(project, puppet.texture);
+    });
     loaded.set(asset.url, pending);
   }
   return pending;
@@ -157,7 +162,10 @@ export async function spawnPuppet(
   asset: PuppetAsset,
   options: SpawnOptions,
 ): Promise<PuppetCreature> {
-  const puppet = await loadPuppet(asset);
+  const template = await loadPuppet(asset);
+  // Puppet은 재생 시각·속도·강도를 내부에 보관한다. 같은 인스턴스를 여러 Mesh가 공유하면 한
+  // 캐릭터의 play가 다른 캐릭터를 덮으므로, 정적 프로젝트만 공유하고 재생기는 개체마다 만든다.
+  const puppet = Puppet.fromProject(template.project, template.texture);
   const creature = await PuppetCreature.fromPuppet(scene, puppet);
 
   placePuppet(creature, asset, options);
@@ -191,16 +199,21 @@ export function playMotion(
   motion: MotionName,
 ): void {
   const config = MOTION[motion];
-  const played = config.names.some((name) => creature.play(name));
-  if (!played) return;
+  const playedName = config.names.find((name) => creature.play(name));
+  if (!playedName) return;
 
   const generation = (motionGeneration.get(creature) ?? 0) + 1;
   motionGeneration.set(creature, generation);
   motionTimers.get(creature)?.remove(false);
   motionTimers.delete(creature);
 
-  const holdMs = "holdMs" in config ? config.holdMs : undefined;
-  if (holdMs === undefined) return;
+  if (!("returnsToIdle" in config) || !config.returnsToIdle || playedName === "idle") return;
+
+  // PuppetForge의 내보내기 speed/strength/secondary는 play()가 그대로 적용한다. 복귀 시각도
+  // 고정 숫자가 아니라 내보낸 duration과 speed로 계산해 느린 동작이 중간에 잘리지 않게 한다.
+  const exportedMotion = creature.core.project.animations[playedName];
+  const speed = Math.max(exportedMotion.speed ?? 1, 0.01);
+  const holdMs = (exportedMotion.duration / speed) * 1000;
   const timer = scene.time.delayedCall(holdMs, () => {
     // 공격 직후 피격처럼 동작이 겹쳐도 가장 최근 동작의 유지 시간은 온전히 보장한다.
     if (motionGeneration.get(creature) !== generation) return;

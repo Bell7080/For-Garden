@@ -42,8 +42,15 @@ export class Button extends Phaser.GameObjects.Container {
 
     this.bg.setInteractive({ useHandCursor: true });
     this.bg.on("pointerdown", () => {
+      // Phaser의 pointer 이벤트는 touchstart와 마우스를 함께 추상화해 모바일/PC 테스트를 모두 지원한다.
+      if (this.enabledState) this.setScale(0.97);
+    });
+    this.bg.on("pointerup", () => {
+      // touchend에 해당하는 시점에 실행해 스크롤하려던 손가락의 오발을 줄인다.
+      this.setScale(1);
       if (this.enabledState) opts.onClick();
     });
+    this.bg.on("pointerout", () => this.setScale(1));
 
     scene.add.existing(this);
   }

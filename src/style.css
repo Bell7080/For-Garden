@@ -33,6 +33,8 @@ body {
 #app canvas {
   max-width: 100%;
   max-height: 100%;
+  /* 브라우저 스크롤/더블탭 확대가 게임의 touchstart/touchend 입력을 가로채지 않게 한다. */
+  touch-action: none;
 }
 
 #rotate-overlay {

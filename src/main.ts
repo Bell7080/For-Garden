@@ -33,5 +33,9 @@ new Phaser.Game({
     roundPixels: false,
     powerPreference: "high-performance",
   },
+  input: {
+    // 멀티터치 환경에서도 Phaser pointer 이벤트가 touchstart/touchend를 안정적으로 추적한다.
+    activePointers: 3,
+  },
   scene: [BootScene, TitleScene, LobbyScene, RelicsScene, LabScene, StageMapScene, PartyScene, BattleScene],
 });

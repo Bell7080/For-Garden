@@ -5,6 +5,8 @@
 ## 필수 구조 규칙
 
 - `src/core`: Phaser를 import하지 않는 순수 게임 규칙만 둔다.
+- `src/api`: 씬이 의존하는 서버 인터페이스와 임시 FakeServer 구현을 둔다. 재화 차감과 가챠
+  난수 결과는 씬에서 계산하지 말고 반드시 이 경계를 통과시킨다.
 - `src/data`: 캐릭터, 배너, 스테이지처럼 운영 중 늘어나는 정적 정의를 둔다.
 - `src/managers`: 여러 씬이 공유하는 수집 상태와 재사용 UI의 공개 진입점을 둔다.
 - `src/state`: 직렬화 가능한 진행 데이터 모양과 현재 메모리 세션을 둔다. 씬에서 직접 변경하지
@@ -32,3 +34,10 @@
 
 `npm run typecheck`, `npm test`, `npm run build`를 기본 품질 게이트로 실행한다. UI 배치를
 바꿨다면 Playwright 또는 수동 스크린샷으로 기존 1080×1920 테마와 겹침을 확인한다.
+
+## 입력 및 임시 서버
+
+- Phaser의 `pointerdown`/`pointerup`은 터치와 마우스를 함께 지원한다. 모바일 우선 입력은
+  `pointerup`(브라우저의 `touchend`)에서 확정하되 PC 테스트용 마우스 동작도 제거하지 않는다.
+- 씬은 `GameApi`만 참조하고 `FakeServer`의 내부 상태를 전제로 삼지 않는다. 실제 백엔드가 생기면
+  `src/api/FakeServer.ts`의 공유 인스턴스를 HTTP 구현으로 바꾸고 DTO 규격을 유지한다.

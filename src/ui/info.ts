@@ -9,10 +9,8 @@ import { CHAR_ASSET, spawnPuppet, tintPuppet } from "../puppets/assets";
 import { mixWhite, tintFor } from "../puppets/tints";
 import { COLOR, textStyle } from "./theme";
 
-/** 전신 일러스트가 설 자리. 발끝을 바닥선에 맞춘다. */
-const PORTRAIT = { x: BASE_WIDTH / 2, groundY: 880, height: 500 } as const;
-/** 일러스트를 띄울 때와 아닐 때의 본문 시작 높이. */
-const BODY_TOP = { withPortrait: 920, plain: 360 } as const;
+/** 전신 일러스트는 화면 왼쪽을 크게 쓰고, 오른쪽에 전투 정보를 겹쳐 배치한다. */
+const PORTRAIT = { x: 390, groundY: 1540, height: 1320 } as const;
 
 export const ROLE_LABEL: Record<string, string> = {
   attacker: "공격",
@@ -53,60 +51,94 @@ export function addHelpBadge(
  */
 export class InfoManager {
   private readonly root: Phaser.GameObjects.Container;
+  /** 캐릭터보다 앞에 그려지는 정보 레이어. */
+  private readonly chrome: Phaser.GameObjects.Container;
   private readonly titleText: Phaser.GameObjects.Text;
   private readonly subtitleText: Phaser.GameObjects.Text;
   private readonly bodyText: Phaser.GameObjects.Text;
+  private readonly rarityText: Phaser.GameObjects.Text;
   /** 전신 일러스트. 파일을 읽는 동안에도 정보창은 열 수 있어야 해서 늦게 붙는다. */
   private portrait?: PuppetCreature;
   private portraitWanted = false;
 
   constructor(scene: Phaser.Scene, portraitDepth = 1001) {
     this.root = scene.add.container(0, 0).setDepth(1000).setVisible(false);
+    this.chrome = scene.add.container(0, 0).setDepth(1002).setVisible(false);
     void this.loadPortrait(scene, portraitDepth);
 
+    // 반투명 암막 대신 화면 전체를 쓰는 도감 페이지로 만들어 전신이 잘리지 않게 한다.
     const shade = scene.add
-      .rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.9)
+      .rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.98)
       .setInteractive();
-    shade.on("pointerdown", () => this.hide()); // 바깥을 누르면 닫힌다
     this.root.add(shade);
 
-    const panelW = BASE_WIDTH - 120;
-    const panelH = 1560;
-    const top = BASE_HEIGHT / 2 - panelH / 2;
+    // 옅은 세로선과 큰 인덱스 숫자가 연구 기록지 같은 기존 세계관을 이어 준다.
+    this.root.add(scene.add.rectangle(28, BASE_HEIGHT / 2, 4, BASE_HEIGHT, COLOR.accent, 0.75));
+    this.root.add(scene.add.rectangle(48, 620, 2, 1040, COLOR.panelEdge, 0.8));
     this.root.add(
-      scene.add
-        .rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, panelW, panelH, COLOR.panel)
-        .setStrokeStyle(4, COLOR.accent),
+      scene.add.text(72, 186, "RELIC / ARCHIVE", textStyle({ size: 20, color: COLOR.inkDim })).setAngle(-90),
     );
 
+    // 닫기 버튼은 모바일 엄지로도 누르기 쉬운 88px 터치 영역을 확보한다.
+    const closeHit = scene.add
+      .rectangle(BASE_WIDTH - 72, 76, 88, 88, COLOR.panel, 0.9)
+      .setStrokeStyle(2, COLOR.panelEdge)
+      .setInteractive({ useHandCursor: true });
+    closeHit.on("pointerup", () => this.hide());
+    this.chrome.add(closeHit);
+    this.chrome.add(scene.add.text(BASE_WIDTH - 72, 76, "×", textStyle({ size: 54, bold: false })).setOrigin(0.5));
+
+    this.rarityText = scene.add
+      .text(86, 82, "SSR", textStyle({ size: 30, color: COLOR.accentText }))
+      .setOrigin(0, 0.5);
+    this.chrome.add(this.rarityText);
+    this.chrome.add(scene.add.rectangle(166, 82, 190, 3, COLOR.accent, 0.8).setOrigin(0, 0.5));
+
     this.titleText = scene.add
-      .text(BASE_WIDTH / 2, top + 44, "", textStyle({ size: 52, align: "center" }))
-      .setOrigin(0.5, 0);
-    this.root.add(this.titleText);
+      .text(82, 124, "", textStyle({ size: 72 }))
+      .setOrigin(0, 0);
+    this.chrome.add(this.titleText);
 
     this.subtitleText = scene.add
-      .text(BASE_WIDTH / 2, top + 112, "", textStyle({ size: 30, color: COLOR.accentText, align: "center" }))
-      .setOrigin(0.5, 0);
-    this.root.add(this.subtitleText);
+      .text(86, 212, "", textStyle({ size: 25, color: COLOR.inkDim }))
+      .setOrigin(0, 0);
+    this.chrome.add(this.subtitleText);
+
+    // 우측 능력 패널은 일러스트 위에 떠 있는 계기판처럼 반투명하게 처리한다.
+    const dataPanel = scene.add
+      .rectangle(786, 770, 500, 760, COLOR.panel, 0.92)
+      .setStrokeStyle(2, COLOR.panelEdge);
+    this.chrome.add(dataPanel);
+    this.chrome.add(scene.add.rectangle(544, 404, 8, 82, COLOR.accent));
+    this.chrome.add(scene.add.text(574, 414, "COMBAT DATA", textStyle({ size: 23, color: COLOR.accentText })));
 
     this.bodyText = scene.add
       .text(
-        BASE_WIDTH / 2 - panelW / 2 + 40,
-        BODY_TOP.plain,
+        580,
+        482,
         "",
-        textStyle({ size: 26, lineSpacing: 9, wrap: panelW - 80 }),
+        textStyle({ size: 23, lineSpacing: 8, wrap: 420 }),
       )
       .setOrigin(0, 0);
-    this.root.add(this.bodyText);
+    this.chrome.add(this.bodyText);
 
-    const closeY = BASE_HEIGHT / 2 + panelH / 2 - 76;
-    const close = scene.add
-      .rectangle(BASE_WIDTH / 2, closeY, 320, 96, COLOR.panelEdge)
-      .setStrokeStyle(3, COLOR.accent)
-      .setInteractive({ useHandCursor: true });
-    close.on("pointerdown", () => this.hide());
-    this.root.add(close);
-    this.root.add(scene.add.text(BASE_WIDTH / 2, closeY, "닫기", textStyle({ size: 34 })).setOrigin(0.5));
+    // 하단의 탭과 장식은 참고 이미지의 조작 밀도를 빌리되 실제 기능처럼 오해하지 않게 고정 라벨로 둔다.
+    const footerY = 1660;
+    const footer = scene.add.rectangle(BASE_WIDTH / 2, footerY, BASE_WIDTH - 100, 250, COLOR.panel, 0.96)
+      .setStrokeStyle(2, COLOR.panelEdge);
+    this.chrome.add(footer);
+    this.chrome.add(scene.add.text(78, footerY - 96, "STATUS", textStyle({ size: 22, color: COLOR.accentText })));
+    ["DNA", "ROLE", "SKILL"].forEach((label, index) => {
+      const x = 710 + index * 105;
+      const tile = scene.add.rectangle(x, footerY + 10, 82, 82, index === 2 ? COLOR.accent : COLOR.panelEdge, 0.9)
+        .setStrokeStyle(2, index === 2 ? COLOR.accent : COLOR.panelEdge);
+      this.chrome.add(tile);
+      this.chrome.add(scene.add.text(x, footerY + 10, label.slice(0, 1), textStyle({
+        size: 24,
+        color: index === 2 ? "#1a1d21" : COLOR.ink,
+      })).setOrigin(0.5));
+      this.chrome.add(scene.add.text(x, footerY + 70, label, textStyle({ size: 15, color: COLOR.inkDim })).setOrigin(0.5));
+    });
   }
 
   get isOpen(): boolean {
@@ -115,13 +147,15 @@ export class InfoManager {
 
   hide(): void {
     this.root.setVisible(false);
+    this.chrome.setVisible(false);
     this.portraitWanted = false;
     this.portrait?.setVisible(false);
     setDebugInfoOpen(false);
   }
 
   private async loadPortrait(scene: Phaser.Scene, depth: number): Promise<void> {
-    this.portrait = await spawnPuppet(scene, CHAR_ASSET, { ...PORTRAIT, depth });
+    // 루트 배경(1000)과 정보 레이어(1002) 사이에 세워 UI가 캐릭터 위로 선명하게 읽힌다.
+    this.portrait = await spawnPuppet(scene, CHAR_ASSET, { ...PORTRAIT, depth: Math.max(depth, 1001) });
     this.portrait.setVisible(this.portraitWanted && this.root.visible);
     scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.portrait?.destroy());
   }
@@ -131,9 +165,12 @@ export class InfoManager {
     this.titleText.setText(title);
     this.subtitleText.setText(subtitle);
     this.bodyText.setText(body);
-    this.bodyText.setY(relicId ? BODY_TOP.withPortrait : BODY_TOP.plain);
+    const hasPortrait = relicId !== undefined;
+    this.rarityText.setText(hasPortrait ? "SSR" : "INFO");
+    this.bodyText.setPosition(hasPortrait ? 580 : 100, hasPortrait ? 482 : 370);
+    this.bodyText.setWordWrapWidth(hasPortrait ? 420 : 880);
 
-    this.portraitWanted = relicId !== undefined;
+    this.portraitWanted = hasPortrait;
     if (this.portrait) {
       this.portrait.setVisible(this.portraitWanted);
       // 렐릭마다 제 일러스트가 생기기 전까지는 색으로만 구분한다.
@@ -141,6 +178,7 @@ export class InfoManager {
     }
 
     this.root.setVisible(true);
+    this.chrome.setVisible(true);
     setDebugInfoOpen(true);
   }
 

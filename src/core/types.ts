@@ -43,12 +43,33 @@ export interface RelicProgress {
   heartGemSlots: [string | null, string | null, string | null];
 }
 
-/** 스킬이 어느 공격 능력치와 방어 능력치를 참조하는지 구분한다. */
-export type DamageType = "physical" | "magical";
+/** 공격과 비공격 효과를 UI와 전투 규칙이 같은 어휘로 구분하는 분류다. */
+export type EffectType =
+  | "physical"
+  | "magical"
+  | "fixed"
+  | "healing"
+  | "buff";
+
+/** 방어 능력치의 영향을 받는 두 공격 계열이다. */
+export type DamageType = Extract<EffectType, "physical" | "magical">;
+
+/** 현재 제공하는 공용 스킬 아이콘 키다. 미완성 아트는 캐릭터 복사본 대신 fallback을 쓴다. */
+export type SkillIconAssetId =
+  | "skill-icon-physical"
+  | "skill-icon-magical"
+  | "skill-icon-fixed"
+  | "skill-icon-healing"
+  | "skill-icon-buff"
+  | "skill-icon-fallback";
 
 export interface Skill {
   id: string;
   name: string;
+  /** Phaser 텍스처 캐시에서 찾을 공용 아이콘 키다. */
+  iconAssetId: SkillIconAssetId;
+  /** UI가 피해·회복·강화 의미를 damageType 존재 여부와 무관하게 표현하는 분류다. */
+  effectType: EffectType;
   /** 공격력 배율(%). 100이면 공격력 그대로. 회복·버프 스킬은 회복량/버프량으로 쓴다. */
   power: number;
   /** 물리는 atk/def, 마법은 ap/res를 참조한다. */
@@ -73,6 +94,10 @@ export type PassiveKind =
 export interface Passive {
   id: string;
   name: string;
+  /** 패시브도 일반 스킬과 같은 정보창 표현 계약을 따른다. */
+  iconAssetId: SkillIconAssetId;
+  /** 회복과 능력 강화처럼 피해 타입이 없는 효과를 명시한다. */
+  effectType: EffectType;
   kind: PassiveKind;
   /** 종류에 따른 수치(피해 감소 %, 공격 증가 %, 회복량 등). */
   value: number;

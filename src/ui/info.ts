@@ -1,8 +1,8 @@
 import Phaser from "phaser";
 import type { PuppetCreature } from "../puppets/assets";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
-import type { BattleUnit } from "../core/battle";
-import type { RelicDef, Skill } from "../core/types";
+import { previewSkillDamage, type BattleUnit } from "../core/battle";
+import type { EffectType, RelicDef, Skill, SkillIconAssetId } from "../core/types";
 import { setDebugInfoOpen } from "../debug";
 import { getHeartGem } from "../data/heartGems";
 import { relicProgression } from "../managers/RelicProgressionManager";
@@ -11,6 +11,27 @@ import { mixWhite, tintFor } from "../puppets/tints";
 import { addSceneBackground, BACKGROUND } from "./backgrounds";
 import { StatRadar } from "./StatRadar";
 import { COLOR, textStyle } from "./theme";
+import { FALLBACK_SKILL_ICON } from "./skillIcons";
+
+/** 문자열 순서에 의존하지 않고 스킬 상세의 각 UI 요소를 직접 채우는 계약이다. */
+export interface SkillInfoViewModel {
+  name: string;
+  kindLabel: string;
+  iconAssetId: SkillIconAssetId;
+  effectLabel: string;
+  valueLabel?: string;
+  gaugeCost?: number;
+  description: string;
+}
+
+/** 데이터 효과 분류를 플레이어가 읽는 고정 라벨로 바꾼다. */
+const EFFECT_LABEL: Record<EffectType, string> = {
+  physical: "물리 피해",
+  magical: "마법 피해",
+  fixed: "고정 피해",
+  healing: "회복",
+  buff: "버프",
+};
 
 /** 왼쪽 전신의 얼굴·몸통을 비워 두고 정보는 오른쪽 두 섬에만 놓는다. */
 const PORTRAIT_BOX = { left: 32, right: 668, top: 280, bottom: 1660 } as const;
@@ -50,9 +71,13 @@ export class InfoManager {
   private readonly radar: StatRadar;
   private readonly gemLabels: Phaser.GameObjects.Text[] = [];
   private readonly detailTitle: Phaser.GameObjects.Text;
+  private readonly detailIcon: Phaser.GameObjects.Image;
   private readonly detailMeta: Phaser.GameObjects.Text;
   private readonly detailDescription: Phaser.GameObjects.Text;
   private currentDef?: RelicDef;
+  /** 전투에서 연 정보창일 때 실제 공격자와 피해 대상을 보존한다. */
+  private currentUnit?: BattleUnit;
+  private previewTarget?: BattleUnit;
   private portrait?: PuppetCreature;
   private portraitWanted = false;
   private portraitRequest = 0;
@@ -93,14 +118,30 @@ export class InfoManager {
     this.skills = floatingLayer(scene, 646, 930, 388, 444, "스킬 / SKILLS");
     this.chrome.add(this.skills);
     this.skillDetail = floatingLayer(scene, 620, 905, 414, 610, "스킬 상세").setVisible(false);
-    this.detailTitle = scene.add.text(28, 82, "", textStyle({ size: 32, color: COLOR.accentText, wrap: 350 })).setOrigin(0);
+    // fallback도 파일 로딩에 실패할 경우를 대비해 런타임 공용 텍스처를 마지막 안전망으로 만든다.
+    this.ensureFallbackIcon();
+    this.detailIcon = scene.add.image(72, 122, FALLBACK_SKILL_ICON).setDisplaySize(88, 88);
+    this.detailTitle = scene.add.text(132, 82, "", textStyle({ size: 32, color: COLOR.accentText, wrap: 245 })).setOrigin(0);
     this.detailMeta = scene.add.text(28, 172, "", textStyle({ size: 21, lineSpacing: 12 })).setOrigin(0);
     this.detailDescription = scene.add.text(28, 292, "", textStyle({ size: 22, wrap: 350, lineSpacing: 9 })).setOrigin(0);
     const back = scene.add.rectangle(207, 555, 358, 88, COLOR.void, 0.7).setInteractive({ useHandCursor: true });
     back.on("pointerup", () => this.closeSkillDetail());
-    this.skillDetail.add([this.detailTitle, this.detailMeta, this.detailDescription, back,
+    this.skillDetail.add([this.detailIcon, this.detailTitle, this.detailMeta, this.detailDescription, back,
       scene.add.text(207, 555, "‹ 캐릭터 상세로", textStyle({ size: 22, color: COLOR.accentText })).setOrigin(0.5)]);
     this.chrome.add(this.skillDetail);
+  }
+
+  /** 외부 SVG까지 실패해도 정보창 자체는 열리도록 단순 황동 다이아 텍스처를 생성한다. */
+  private ensureFallbackIcon(): void {
+    if (this.scene.textures.exists(FALLBACK_SKILL_ICON)) return;
+    const graphic = this.scene.make.graphics({ x: 0, y: 0 }, false);
+    graphic.fillStyle(COLOR.void, 1).fillRect(0, 0, 96, 96);
+    graphic.lineStyle(6, COLOR.accent, 1).strokePoints([
+      new Phaser.Geom.Point(48, 14), new Phaser.Geom.Point(82, 48),
+      new Phaser.Geom.Point(48, 82), new Phaser.Geom.Point(14, 48),
+    ], true);
+    graphic.generateTexture(FALLBACK_SKILL_ICON, 96, 96);
+    graphic.destroy();
   }
 
   get isOpen(): boolean { return this.root.visible; }
@@ -134,8 +175,11 @@ export class InfoManager {
   }
 
   /** 공용 진입점의 캐릭터 화면을 성장 데이터와 함께 채운다. */
-  private openCharacter(def: RelicDef, live?: string): void {
+  private openCharacter(def: RelicDef, live?: string, unit?: BattleUnit, target?: BattleUnit): void {
     this.currentDef = def;
+    // 도감 진입 시 이전 전투 대상을 지워 잘못된 확정 피해를 노출하지 않는다.
+    this.currentUnit = unit;
+    this.previewTarget = target;
     const progress = relicProgression.getProgress(def.id);
     const finalStats = relicProgression.getFinalStats(def.id);
     this.headerText.setText(`SSR  ${def.name}\nLV.${progress.level} · ${progress.levelTitle}  |  ${def.origin} · ${ROLE_LABEL[def.role]}`);
@@ -154,41 +198,57 @@ export class InfoManager {
     // floatingLayer가 만든 배경·섹션 바·제목 세 개는 유지하고 이전 캐릭터 버튼만 교체한다.
     while (this.skills.length > 3) this.skills.removeAt(3, true);
     const entries = [
-      ["패시브", "◇", def.passive.name, () => this.openSkill("패시브", def.passive.name, def.passive.desc)],
-      ["일반 공격", "⚔", def.basic.name, () => this.openSkill("일반 공격", def.basic.name, def.basic.desc, def.basic)],
-      ["궁극기", "✦", def.ultimate.name, () => this.openSkill("궁극기", def.ultimate.name, def.ultimate.desc, def.ultimate, def.ultimate.cost)],
+      ["패시브", def.passive.iconAssetId, def.passive.name, () => this.showSkill({ name: def.passive.name, kindLabel: "패시브", iconAssetId: def.passive.iconAssetId, effectLabel: EFFECT_LABEL[def.passive.effectType], description: def.passive.desc })],
+      ["일반 공격", def.basic.iconAssetId, def.basic.name, () => this.showSkill(this.skillViewModel("일반 공격", def.basic))],
+      ["궁극기", def.ultimate.iconAssetId, def.ultimate.name, () => this.showSkill(this.skillViewModel("궁극기", def.ultimate, def.ultimate.cost))],
     ] as const;
-    entries.forEach(([kind, icon, name, handler], index) => {
+    entries.forEach(([kind, iconAssetId, name, handler], index) => {
       const y = 78 + index * 116;
       const hit = this.scene.add.rectangle(58, y + 44, 104, 96, index === 2 ? COLOR.energy : COLOR.void, 0.72).setInteractive({ useHandCursor: true });
       hit.on("pointerup", handler);
-      this.skills.add([hit, this.scene.add.text(58, y + 44, icon, textStyle({ size: 39 })).setOrigin(0.5),
+      const icon = this.scene.add.image(58, y + 44, this.resolveIcon(iconAssetId)).setDisplaySize(72, 72);
+      this.skills.add([hit, icon,
         this.scene.add.text(126, y + 9, `${kind}\n${name}`, textStyle({ size: 21, wrap: 225, lineSpacing: 5 })).setOrigin(0)]);
     });
   }
 
-  /** 값이 없는 패시브는 피해량·게이지 행을 애초에 만들지 않는다. */
-  private openSkill(kind: string, name: string, desc: string, skill?: Skill, cost?: number): void {
-    const rows = [`분류  ${kind}`];
-    if (skill) {
-      rows.push(`피해 타입  ${skill.damageType === "physical" ? "물리" : "마법"}`);
-      const base = skill.damageType === "physical" ? this.currentDef?.stats.atk : this.currentDef?.stats.ap;
-      if (base !== undefined && skill.power > 0) rows.push(`예상 피해량  ${Math.round(base * skill.power / 100).toLocaleString()}`);
-    }
-    if (cost !== undefined) rows.push(`필요 게이지  ${cost}`);
-    this.detailTitle.setText(`◆  ${name}`); this.detailMeta.setText(rows.join("\n")); this.detailDescription.setText(desc);
+  /** 로드되지 않은 키는 캐릭터와 무관한 하나의 fallback으로 안전하게 치환한다. */
+  private resolveIcon(iconAssetId: SkillIconAssetId): string {
+    return this.scene.textures.exists(iconAssetId) ? iconAssetId : FALLBACK_SKILL_ICON;
+  }
+
+  /** 현재 화면 문맥에 따라 도감 배율 또는 대상 방어력이 반영된 전투 피해를 만든다. */
+  private skillViewModel(kindLabel: string, skill: Skill, gaugeCost?: number): SkillInfoViewModel {
+    const attacker = this.currentUnit ?? (this.currentDef && {
+      def: this.currentDef, hp: this.currentDef.stats.hp, maxHp: this.currentDef.stats.hp,
+      energy: 0, justSwapped: false,
+    });
+    const preview = attacker ? previewSkillDamage(attacker, skill, this.previewTarget, true) : undefined;
+    const valueLabel = preview?.kind === "damage"
+      ? `${preview.label}  ${preview.amount.toLocaleString()} (대상 방어 반영)`
+      : preview ? `${preview.label}  ${preview.stat} ${preview.power}% (도감 기준)` : undefined;
+    return { name: skill.name, kindLabel, iconAssetId: skill.iconAssetId,
+      effectLabel: EFFECT_LABEL[skill.effectType], valueLabel, gaugeCost, description: skill.desc };
+  }
+
+  /** 구조화된 값의 각 필드를 대응하는 아이콘·텍스트 요소에 직접 바인딩한다. */
+  showSkill(viewModel: SkillInfoViewModel): void {
+    if (!this.root.visible) return;
+    const rows = [`분류  ${viewModel.kindLabel}`, `효과 타입  ${viewModel.effectLabel}`];
+    if (viewModel.valueLabel) rows.push(viewModel.valueLabel);
+    if (viewModel.gaugeCost !== undefined) rows.push(`필요 게이지  ${viewModel.gaugeCost}`);
+    this.detailIcon.setTexture(this.resolveIcon(viewModel.iconAssetId));
+    this.detailTitle.setText(viewModel.name); this.detailMeta.setText(rows.join("\n")); this.detailDescription.setText(viewModel.description);
     this.skills.setVisible(false); this.skillDetail.setVisible(true);
   }
 
   private closeSkillDetail(): void { this.skillDetail.setVisible(false); if (this.root.visible) this.skills.setVisible(true); }
   showRelic(def: RelicDef): void { this.openCharacter(def); }
-  showUnit(unit: BattleUnit, isFront: boolean): void { this.openCharacter(unit.def, `HP ${unit.hp.toLocaleString()} / ${unit.maxHp.toLocaleString()}  ·  게이지 ${unit.energy}/${unit.def.ultimate.cost}\n${isFront ? "전방 · 선봉" : "후방"}`); }
-
-  /** 기존 보조 계약은 내부 스킬 카드로 연결한다. */
-  showSkill(kind: string, name: string, desc: string, extra?: string): void {
-    if (!this.root.visible) return;
-    this.openSkill(kind, name, extra ? `${desc}\n\n${extra}` : desc);
+  /** target을 함께 넘긴 전투 정보창은 방어력/저항력을 적용한 비치명타 예상값을 표시한다. */
+  showUnit(unit: BattleUnit, isFront: boolean, target?: BattleUnit): void {
+    this.openCharacter(unit.def, `HP ${unit.hp.toLocaleString()} / ${unit.maxHp.toLocaleString()}  ·  게이지 ${unit.energy}/${unit.def.ultimate.cost}\n${isFront ? "전방 · 선봉" : "후방"}`, unit, target);
   }
+
 
   /** 팀 요약은 별도 팝업 없이 첫 유닛의 공용 캐릭터 상세로 진입한다. */
   showEnemyTeam(units: BattleUnit[], order: number[]): void {

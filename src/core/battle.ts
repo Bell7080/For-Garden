@@ -1,4 +1,4 @@
-import type { DamageType, RelicDef, Side } from "./types";
+import type { DamageType, RelicDef, Side, Skill } from "./types";
 
 /**
  * 턴제 3인 파티 전투.
@@ -53,6 +53,36 @@ export interface DamageInput {
   damageType: DamageType;
   /** 확률 난수를 코어에 숨기지 않아 리플레이와 테스트를 결정적으로 유지한다. */
   isCritical: boolean;
+}
+
+/** 정보창이 확정 피해와 상태 없는 배율을 혼동하지 않도록 하는 순수 미리보기 결과다. */
+export type DamagePreview =
+  | { kind: "damage"; amount: number; label: "예상 피해" }
+  | { kind: "scaling"; power: number; stat: "공격력" | "주문력"; label: "기준 배율" };
+
+/**
+ * 전투 상태를 변경하지 않고 비치명타 한 번의 피해를 미리 본다.
+ * 대상이 없는 도감에서는 방어력을 임의로 가정하지 않고 능력치 배율만 돌려준다.
+ */
+export function previewSkillDamage(
+  attacker: BattleUnit,
+  skill: Skill,
+  target?: BattleUnit,
+  targetIsFront = false,
+): DamagePreview {
+  if (!target) {
+    return {
+      kind: "scaling",
+      power: skill.power,
+      stat: skill.damageType === "physical" ? "공격력" : "주문력",
+      label: "기준 배율",
+    };
+  }
+  return {
+    kind: "damage",
+    amount: computeDamage(attacker, target, { ...skill, isCritical: false }, targetIsFront),
+    label: "예상 피해",
+  };
 }
 
 /** 0 이상 1 미만의 주입된 판정값으로 치명타 여부를 결정한다. */

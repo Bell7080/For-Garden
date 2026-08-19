@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import type { PuppetCreature } from "puppetforge/phaser";
+import type { PuppetCreature } from "../puppets/assets";
 import { BASE_WIDTH, BASE_HEIGHT } from "../config/gameConfig";
 import type { BattleUnit } from "../core/battle";
 import { ULTIMATE_MAX } from "../core/battle";

@@ -3,7 +3,7 @@ import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 
 /** 화면 용도별 배경 키. 파일 번호와 실제 사용처의 대응을 한 곳에서 관리한다. */
 export const BACKGROUND = {
-  lab: "background-lab",
+  lobby: "background-lobby",
   relics: "background-relics",
   info: "background-info",
   battleArea: "background-battle-area",
@@ -12,7 +12,7 @@ export const BACKGROUND = {
 /** BootScene이 모든 화면 배경을 한 번에 적재할 때 사용하는 경로 목록이다. */
 export const BACKGROUND_ASSETS = [
   // 일반 배경 스프라이트는 PuppetForge 번들과 분리한 공용 자산 경로에서 읽는다.
-  [BACKGROUND.lab, "sprites/background/background_001.webp"],
+  [BACKGROUND.lobby, "sprites/background/background_001.webp"],
   [BACKGROUND.relics, "sprites/background/background_002.webp"],
   [BACKGROUND.info, "sprites/background/background_003.webp"],
   [BACKGROUND.battleArea, "sprites/background/background_004.webp"],

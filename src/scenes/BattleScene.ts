@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
-import { enemyTurn, frontUnit, playerAct, createBattle, type BattleState, type BattleUnit } from "../core/battle";
+import { enemyTurn, frontUnit, playerAct, createBattle, ULTIMATE_ENERGY_MAX, type BattleState, type BattleUnit } from "../core/battle";
 import { getRelic } from "../data/relics";
 import { getStage } from "../data/stages";
 import { AutoBattleManager } from "../managers/AutoBattleManager";
@@ -155,10 +155,10 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private refreshDebug(): void {
-    // 프로필 게이지는 각 캐릭터에게 정의된 궁극기 비용을 최대치로 표시한다.
+    // 분자는 저장량, 분모는 코어가 정한 공용 저장 상한이며 괄호로 스킬별 소비 비용을 구분한다.
     this.profileLabels.forEach((label, index) => {
       const unit = this.state.player.units[index];
-      label.setText(`${unit.energy} / ${unit.def.ultimate.cost}`);
+      label.setText(`${unit.energy} / ${ULTIMATE_ENERGY_MAX} (비용 ${unit.def.ultimate.cost})`);
     });
     setDebugBattle({
       turn: this.state.turn,

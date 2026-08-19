@@ -10,6 +10,7 @@ import { Button } from "../ui/Button";
 import { CharacterInfoManager, ROLE_LABEL } from "../managers/CharacterInfoManager";
 import { TopBar } from "../ui/TopBar";
 import { COLOR, textStyle } from "../ui/theme";
+import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 
 /**
  * 렐릭 — 보유 중인 렐릭을 훑어보는 화면.
@@ -36,7 +37,10 @@ export class RelicsScene extends Phaser.Scene {
     this.selected = session.favorite;
 
     const cx = BASE_WIDTH / 2;
-    this.add.rectangle(cx, 960, BASE_WIDTH, 1920, COLOR.void).setDepth(-30);
+    // background_002를 렐릭 탭의 야외 유적 전경으로 사용한다.
+    addSceneBackground(this, BACKGROUND.relics);
+    // 밝은 원화 위에서도 카드와 본문을 읽을 수 있도록 기존 void 색을 얇게 덮는다.
+    this.add.rectangle(cx, 960, BASE_WIDTH, 1920, COLOR.void, 0.48).setDepth(-29);
     new TopBar(this);
 
     const ownedCount = relicCollection.owned.length;

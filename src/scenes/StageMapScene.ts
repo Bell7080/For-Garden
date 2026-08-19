@@ -5,6 +5,7 @@ import { STAGES } from "../data/stages";
 import { isStageUnlocked, session } from "../state/session";
 import { Button } from "../ui/Button";
 import { COLOR, textStyle } from "../ui/theme";
+import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 
 /**
  * 스테이지 지도. 세로 게임이므로 진행 경로가 아래에서 위로 뻗는다.
@@ -19,7 +20,9 @@ export class StageMapScene extends Phaser.Scene {
     setDebugScene("stageMap");
 
     const cx = BASE_WIDTH / 2;
-    this.add.rectangle(cx, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void);
+    // 출전 이후 지도부터는 background_004를 공통 전투 에리어로 이어 쓴다.
+    addSceneBackground(this, BACKGROUND.battleArea);
+    this.add.rectangle(cx, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.38).setDepth(-29);
 
     this.add
       .text(cx, 140, "제 1 구역", textStyle({ size: 60 }))

@@ -8,6 +8,7 @@ import { setDebugInfoOpen } from "../debug";
 import { CHAR_ASSET, spawnPuppet, tintPuppet } from "../puppets/assets";
 import { mixWhite, tintFor } from "../puppets/tints";
 import { COLOR, textStyle } from "./theme";
+import { addSceneBackground, BACKGROUND } from "./backgrounds";
 
 /** 전신 일러스트는 화면 왼쪽을 크게 쓰고, 오른쪽에 전투 정보를 겹쳐 배치한다. */
 const PORTRAIT = { x: 390, groundY: 1540, height: 1320 } as const;
@@ -67,8 +68,11 @@ export class InfoManager {
     void this.loadPortrait(scene, portraitDepth);
 
     // 반투명 암막 대신 화면 전체를 쓰는 도감 페이지로 만들어 전신이 잘리지 않게 한다.
+    // background_003의 문양이 정보창 전체를 도감의 전시 공간처럼 감싸도록 루트에 넣는다.
+    const background = addSceneBackground(scene, BACKGROUND.info, 0);
+    this.root.add(background);
     const shade = scene.add
-      .rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.98)
+      .rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.58)
       .setInteractive();
     this.root.add(shade);
 

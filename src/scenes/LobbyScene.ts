@@ -12,8 +12,8 @@ import { TopBar } from "../ui/TopBar";
 import { COLOR, textStyle } from "../ui/theme";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 
-/** 애착 렐릭이 서는 광장 바닥. */
-const STAGE_FLOOR = 1360;
+/** 확대된 애착 렐릭의 골반 아래가 내비게이션 뒤로 자연스럽게 이어지는 기준선. */
+const STAGE_FLOOR = 1660;
 
 /**
  * 로비 — 메인 화면.
@@ -81,7 +81,8 @@ export class LobbyScene extends Phaser.Scene {
     this.favorite = await spawnPuppet(this, portraitAssetFor(def.portraitAssetId), {
       x: BASE_WIDTH / 2 + 60,
       groundY: STAGE_FLOOR,
-      height: 900,
+      // 설명 카드 없이 화면 대부분을 차지하도록 상반신 중심의 큰 전신 연출을 만든다.
+      height: 1420,
       // 전용 원화가 연결된 두 캐릭터는 원본 색을 유지한다.
       tint: portraitUsesRelicTint(def.portraitAssetId) ? mixWhite(tintFor(def.id), 0.55) : undefined,
       depth: -20,
@@ -89,12 +90,7 @@ export class LobbyScene extends Phaser.Scene {
     enableHitOnClick(this, this.favorite);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.favorite?.destroy());
 
-    this.add
-      .text(BASE_WIDTH / 2, STAGE_FLOOR + 24, def.name, textStyle({ size: 34 }))
-      .setOrigin(0.5, 0);
-    this.add
-      .text(BASE_WIDTH / 2, STAGE_FLOOR + 70, def.origin, textStyle({ size: 24, color: COLOR.inkDim }))
-      .setOrigin(0.5, 0);
+    // 캐릭터 하단 이름/종 설명은 제거해 로비가 원화 감상 화면처럼 보이게 한다.
   }
 
   private notReady(label: string): void {

@@ -73,6 +73,29 @@ export const ENTITY_ASSET: PuppetAsset = {
   content: { left: 352, top: 155, right: 993, bottom: 1082 },
 };
 
+/** 1번 SD: 토리카. 실제 투명 영역을 제외한 범위로 발 위치와 크기를 잡는다. */
+export const TORIKA_SD_ASSET: PuppetAsset = {
+  url: `${base}puppets/charSD_001.zip`,
+  imageWidth: 1254,
+  imageHeight: 1254,
+  content: { left: 245, top: 120, right: 1010, bottom: 1135 },
+};
+
+/** 2번 SD: 렉시아. */
+export const LEXIA_SD_ASSET: PuppetAsset = {
+  url: `${base}puppets/charSD_002.zip`,
+  imageWidth: 1254,
+  imageHeight: 1254,
+  content: { left: 185, top: 105, right: 1080, bottom: 1140 },
+};
+
+/** 전투용 SD가 완성된 캐릭터만 전용 묶음을 쓰고 나머지는 임시 적 아트를 공유한다. */
+export function battleAssetFor(relicId: string): PuppetAsset {
+  if (relicId === "anky") return TORIKA_SD_ASSET;
+  if (relicId === "rex") return LEXIA_SD_ASSET;
+  return ENTITY_ASSET;
+}
+
 /**
  * 전장에서 쓰는 동작. 묶음마다 가진 동작이 달라서 쓸 이름을 순서대로 적어 둔다 —
  * 앞에서부터 있는 것을 쓰고, 하나도 없으면 그냥 넘어간다.
@@ -81,7 +104,7 @@ export const MOTION = {
   idle: { names: ["idle"] },
   hit: { names: ["hit", "idle"], returnsToIdle: true },
   /** 공격 동작이 따로 없어 포효로 대신한다. */
-  attack: { names: ["attack", "roar", "idle"], returnsToIdle: true },
+  attack: { names: ["attack", "slam", "roar", "idle"], returnsToIdle: true },
 } as const satisfies Record<string, { names: readonly string[]; returnsToIdle?: boolean }>;
 
 export type MotionName = keyof typeof MOTION;
@@ -110,7 +133,13 @@ function loadPuppet(asset: PuppetAsset): Promise<Puppet> {
  * 부트 화면에서 비용을 지불하고, 전투와 팝업에서는 캐시된 Puppet만 복제한다.
  */
 export async function preloadPuppetAssets(): Promise<void> {
-  await Promise.all([loadPuppet(TORIKA_ASSET), loadPuppet(LEXIA_ASSET), loadPuppet(ENTITY_ASSET)]);
+  await Promise.all([
+    loadPuppet(TORIKA_ASSET),
+    loadPuppet(LEXIA_ASSET),
+    loadPuppet(TORIKA_SD_ASSET),
+    loadPuppet(LEXIA_SD_ASSET),
+    loadPuppet(ENTITY_ASSET),
+  ]);
 }
 
 export interface SpawnOptions {

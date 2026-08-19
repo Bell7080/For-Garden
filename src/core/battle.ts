@@ -1,4 +1,4 @@
-import type { RelicDef, Side } from "./types";
+import type { DamageType, RelicDef, Side } from "./types";
 
 /**
  * 턴제 3인 파티 전투.
@@ -32,8 +32,8 @@ export interface Team {
 }
 
 export type BattleAction =
-  | { kind: "basic" }
-  | { kind: "ultimate" }
+  | { kind: "basic"; criticalRoll?: number }
+  | { kind: "ultimate"; criticalRoll?: number }
   /** 후방 유닛과 전방을 맞바꾼다. */
   | { kind: "swap"; memberIndex: number };
 
@@ -47,9 +47,21 @@ export interface BattleState {
   log: string[];
 }
 
-export const ULTIMATE_MAX = 100;
-/** 행동 한 번에 차는 궁극기 게이지. */
-const ENERGY_PER_ACTION = 25;
+/** 피해 계산에 필요한, 호출자가 명시적으로 확정하는 판정값이다. */
+export interface DamageInput {
+  power: number;
+  damageType: DamageType;
+  /** 확률 난수를 코어에 숨기지 않아 리플레이와 테스트를 결정적으로 유지한다. */
+  isCritical: boolean;
+}
+
+/** 0 이상 1 미만의 주입된 판정값으로 치명타 여부를 결정한다. */
+export function isCriticalHit(critChance: number, roll: number): boolean {
+  // 범위를 벗어난 난수는 호출자 오류를 조용히 보정하지 않는다.
+  if (roll < 0 || roll >= 1)
+    throw new RangeError("critical roll은 0 이상 1 미만이어야 합니다.");
+  return roll < critChance / 100;
+}
 
 function makeUnit(def: RelicDef): BattleUnit {
   return {
@@ -69,7 +81,10 @@ function makeTeam(defs: RelicDef[]): Team {
   };
 }
 
-export function createBattle(playerDefs: RelicDef[], enemyDefs: RelicDef[]): BattleState {
+export function createBattle(
+  playerDefs: RelicDef[],
+  enemyDefs: RelicDef[],
+): BattleState {
   return {
     player: makeTeam(playerDefs),
     enemy: makeTeam(enemyDefs),
@@ -102,16 +117,25 @@ export function teamDefeated(team: Team): boolean {
 export function computeDamage(
   attacker: BattleUnit,
   target: BattleUnit,
-  power: number,
+  input: DamageInput,
   targetIsFront: boolean,
 ): number {
-  const atk = attacker.def.stats.atk;
+  // 피해 유형에 맞는 공격·방어 능력치만 짝지어 사용한다.
+  const offense =
+    input.damageType === "physical"
+      ? attacker.def.stats.atk
+      : attacker.def.stats.ap;
+  const defense =
+    input.damageType === "physical"
+      ? target.def.stats.def
+      : target.def.stats.res;
   const momentum =
     attacker.justSwapped && attacker.def.passive.kind === "swapMomentum"
       ? 1 + attacker.def.passive.value / 100
       : 1;
-  const raw = ((atk * power) / 100) * momentum;
-  const afterDef = (raw * 100) / (100 + target.def.stats.def);
+  const critical = input.isCritical ? attacker.def.stats.critDamage / 100 : 1;
+  const raw = ((offense * input.power) / 100) * momentum * critical;
+  const afterDef = (raw * 100) / (100 + defense);
   const guard =
     targetIsFront && target.def.passive.kind === "frontGuard"
       ? 1 - target.def.passive.value / 100
@@ -124,13 +148,19 @@ function applyDamage(target: BattleUnit, amount: number): void {
 }
 
 function gainEnergy(unit: BattleUnit): void {
-  unit.energy = Math.min(ULTIMATE_MAX, unit.energy + ENERGY_PER_ACTION);
+  // 궁극기마다 비용이 다를 수 있으므로 해당 캐릭터의 비용까지만 축적한다.
+  unit.energy = Math.min(
+    unit.def.ultimate.cost,
+    unit.energy + unit.def.stats.ferocity,
+  );
 }
 
 /** 쓰러진 유닛이 전방에 있으면 살아있는 후방 유닛을 자동으로 앞에 세운다. */
 function promoteIfFallen(team: Team): void {
   if (isAlive(frontUnit(team))) return;
-  const nextIndex = team.order.findIndex((i, pos) => pos > 0 && isAlive(team.units[i]));
+  const nextIndex = team.order.findIndex(
+    (i, pos) => pos > 0 && isAlive(team.units[i]),
+  );
   if (nextIndex === -1) return;
   const [moved] = team.order.splice(nextIndex, 1);
   team.order.unshift(moved);
@@ -145,7 +175,9 @@ function tickRearPassives(team: Team, state: BattleState): void {
     const healed = Math.min(unit.def.passive.value, front.maxHp - front.hp);
     if (healed <= 0) continue;
     front.hp += healed;
-    state.log.push(`${unit.def.name}의 ${unit.def.passive.name} — ${front.def.name} HP +${healed}`);
+    state.log.push(
+      `${unit.def.name}의 ${unit.def.passive.name} — ${front.def.name} HP +${healed}`,
+    );
   }
 }
 
@@ -161,7 +193,11 @@ export function canUseUltimate(unit: BattleUnit): boolean {
 }
 
 /** 한쪽이 행동을 한 번 한다. 규칙 위반이면 아무것도 바꾸지 않고 false를 돌려준다. */
-function performAction(state: BattleState, side: Side, action: BattleAction): boolean {
+function performAction(
+  state: BattleState,
+  side: Side,
+  action: BattleAction,
+): boolean {
   const team = side === "player" ? state.player : state.enemy;
   const foes = side === "player" ? state.enemy : state.player;
   const front = frontUnit(team);
@@ -186,25 +222,43 @@ function performAction(state: BattleState, side: Side, action: BattleAction): bo
 
     case "basic": {
       if (!isAlive(front)) return false;
-      const dmg = computeDamage(front, foeFront, front.def.basic.power, true);
+      // 생략 시 가장 높은 비치명타 판정값을 써서 자동전투도 항상 재현 가능하다.
+      const isCritical = isCriticalHit(
+        front.def.stats.critChance,
+        action.criticalRoll ?? 0.999999,
+      );
+      const dmg = computeDamage(
+        front,
+        foeFront,
+        { ...front.def.basic, isCritical },
+        true,
+      );
       applyDamage(foeFront, dmg);
       gainEnergy(front);
       front.justSwapped = false;
-      state.log.push(`${front.def.name}의 ${front.def.basic.name} — ${foeFront.def.name}에게 ${dmg}`);
+      state.log.push(
+        `${front.def.name}의 ${front.def.basic.name} — ${foeFront.def.name}에게 ${dmg}`,
+      );
       return true;
     }
 
     case "ultimate": {
       if (!canUseUltimate(front)) return false;
       const ult = front.def.ultimate;
-      const dmg = computeDamage(front, foeFront, ult.power, true);
+      // 궁극기도 동일한 주입 판정 경로를 사용해 결과를 재현 가능하게 유지한다.
+      const isCritical = isCriticalHit(
+        front.def.stats.critChance,
+        action.criticalRoll ?? 0.999999,
+      );
+      const dmg = computeDamage(front, foeFront, { ...ult, isCritical }, true);
       applyDamage(foeFront, dmg);
       front.energy -= ult.cost;
       front.justSwapped = false;
-      state.log.push(`${front.def.name}의 궁극기 ${ult.name} — ${foeFront.def.name}에게 ${dmg}`);
+      state.log.push(
+        `${front.def.name}의 궁극기 ${ult.name} — ${foeFront.def.name}에게 ${dmg}`,
+      );
       return true;
     }
-
   }
 }
 

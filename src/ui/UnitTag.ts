@@ -1,6 +1,5 @@
 import Phaser from "phaser";
 import type { BattleUnit } from "../core/battle";
-import { ULTIMATE_MAX } from "../core/battle";
 import { COLOR, textStyle } from "./theme";
 
 // 이름과 HP 수치가 한 줄에 나란히 들어갈 만큼은 넓어야 한다.
@@ -57,7 +56,8 @@ export class UnitTag extends Phaser.GameObjects.Container {
     this.hpText.setText(dead ? "전투 불능" : `${unit.hp} / ${unit.maxHp}`);
 
     this.hpBar.width = WIDTH * Math.max(0, unit.hp / unit.maxHp);
-    this.energyBar.width = WIDTH * (unit.energy / ULTIMATE_MAX);
+    // 게이지 최대치는 전역 상수가 아니라 각 렐릭 궁극기의 비용이다.
+    this.energyBar.width = WIDTH * (unit.energy / unit.def.ultimate.cost);
     this.setAlpha(dead ? 0.35 : 1);
   }
 }

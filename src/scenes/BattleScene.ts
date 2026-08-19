@@ -155,7 +155,11 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private refreshDebug(): void {
-    this.profileLabels.forEach((label, index) => label.setText(`${this.state.player.units[index].energy} / 100`));
+    // 프로필 게이지는 각 캐릭터에게 정의된 궁극기 비용을 최대치로 표시한다.
+    this.profileLabels.forEach((label, index) => {
+      const unit = this.state.player.units[index];
+      label.setText(`${unit.energy} / ${unit.def.ultimate.cost}`);
+    });
     setDebugBattle({
       turn: this.state.turn,
       phase: this.state.phase,

@@ -9,17 +9,38 @@ export type Role = "attacker" | "tank" | "support";
 export type PortraitAssetId = "torika" | "lexia" | "torika-placeholder";
 
 export interface Stats {
+  /** 생존력과 물리·마법 공격의 기반이 되는 주 능력치다. */
   hp: number;
-  atk: number;
-  /** 받는 피해를 줄인다. 탱커가 높다. */
+  /** 물리 피해를 줄이는 방어력이다. */
   def: number;
+  /** 마법 피해를 줄이는 저항력이다. */
+  res: number;
+  /** 물리 스킬의 공격력이다. */
+  atk: number;
+  /** 마법 스킬의 주문력이다. */
+  ap: number;
+  /** 향후 턴 간격 계산에 사용할 공격속도다. */
+  attackSpeed: number;
+  /** 향후 진형·행동 순서 계산에 사용할 이동속도다. */
+  moveSpeed: number;
+  /** 치명타가 발생할 확률(%)이다. */
+  critChance: number;
+  /** 치명타가 가하는 최종 피해 배율(%)이다. */
+  critDamage: number;
+  /** 기본 공격 한 번으로 얻는 궁극기 게이지다. */
+  ferocity: number;
 }
+
+/** 스킬이 어느 공격 능력치와 방어 능력치를 참조하는지 구분한다. */
+export type DamageType = "physical" | "magical";
 
 export interface Skill {
   id: string;
   name: string;
   /** 공격력 배율(%). 100이면 공격력 그대로. 회복·버프 스킬은 회복량/버프량으로 쓴다. */
   power: number;
+  /** 물리는 atk/def, 마법은 ap/res를 참조한다. */
+  damageType: DamageType;
   desc: string;
 }
 

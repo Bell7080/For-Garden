@@ -2,10 +2,11 @@ import Phaser from "phaser";
 import type { PuppetCreature } from "puppetforge/phaser";
 import { BASE_WIDTH } from "../config/gameConfig";
 import { setDebugScene } from "../debug";
-import { canPull, pull, pullCost, spend, type Banner } from "../core/gacha";
+import { gameApi } from "../api/FakeServer";
+import { GameApiError } from "../api/contracts";
+import { canPull, pullCost, type Banner } from "../core/gacha";
 import { BANNERS } from "../data/banners";
 import { getRelic } from "../data/relics";
-import { relicCollection } from "../managers/RelicCollectionManager";
 import { CHAR_ASSET, spawnPuppet, tintPuppet } from "../puppets/assets";
 import { mixWhite, tintFor } from "../puppets/tints";
 import { session } from "../state/session";
@@ -31,6 +32,8 @@ export class LabScene extends Phaser.Scene {
   private oneButton!: Button;
   private tenButton!: Button;
   private showcase?: PuppetCreature;
+  /** 연속 터치로 같은 재화가 두 번 결제되는 요청 중복을 클라이언트에서도 막는다. */
+  private pullPending = false;
 
   constructor() {
     super("lab");
@@ -120,17 +123,33 @@ export class LabScene extends Phaser.Scene {
     this.refresh();
   }
 
-  private doPull(count: number): void {
+  private async doPull(count: 1 | 10): Promise<void> {
     const banner = this.banner;
-    if (!canPull(session.wallet, banner, count)) return;
+    if (this.pullPending || !canPull(session.wallet, banner, count)) return;
 
-    session.wallet = spend(session.wallet, banner, count);
-    const results = pull(banner, count, Math.random);
-    const outcome = relicCollection.applyAcquisitions(results);
-
-    this.topBar.refresh();
+    this.pullPending = true;
     this.refresh();
-    this.showResult(results, outcome.fresh.length);
+    try {
+      // 결과와 비용은 클라이언트에서 계산하지 않고 API 응답만 화면에 반영한다.
+      const response = await gameApi.pullRelics({ bannerId: banner.id, count });
+      this.topBar.refresh();
+      this.showResult(response.relicIds, response.freshRelicIds.length);
+    } catch (error) {
+      const message = error instanceof GameApiError ? error.message : "통신에 실패했습니다. 다시 시도해 주세요.";
+      this.showNotice(message);
+    } finally {
+      this.pullPending = false;
+      this.refresh();
+    }
+  }
+
+  /** 임시 API 오류도 게임 테마 안에서 짧게 안내한다. */
+  private showNotice(message: string): void {
+    const notice = this.add
+      .text(BASE_WIDTH / 2, NAV_TOP - 390, message, textStyle({ size: 28, color: COLOR.accentText }))
+      .setOrigin(0.5)
+      .setDepth(700);
+    this.time.delayedCall(1800, () => notice.destroy());
   }
 
   /** 뽑은 결과를 한 장에 보여 준다. */
@@ -183,10 +202,10 @@ export class LabScene extends Phaser.Scene {
     const unit = banner.currency === "fossil" ? "화석" : "호박석";
     this.oneButton
       .setSub(`${unit} ${pullCost(banner, 1)}`)
-      .setEnabled(canPull(session.wallet, banner, 1));
+      .setEnabled(!this.pullPending && canPull(session.wallet, banner, 1));
     this.tenButton
       .setSub(`${unit} ${pullCost(banner, 10)}`)
-      .setEnabled(canPull(session.wallet, banner, 10));
+      .setEnabled(!this.pullPending && canPull(session.wallet, banner, 10));
 
     // 배너마다 그림 색을 달리해 서로 다른 발굴이라는 느낌을 준다.
     if (this.showcase) {

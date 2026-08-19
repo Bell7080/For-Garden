@@ -78,7 +78,7 @@ export interface Skill {
 }
 
 export interface Ultimate extends Skill {
-  /** 필요한 궁극기 게이지. 행동할 때마다 게이지가 찬다. */
+  /** 사용 시 소비하는 궁극기 게이지. 저장 상한과 독립된 스킬별 값이다. */
   cost: number;
 }
 

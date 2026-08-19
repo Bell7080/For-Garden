@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import type { BattleUnit } from "../core/battle";
+import { canUseUltimate, ULTIMATE_ENERGY_MAX, type BattleUnit } from "../core/battle";
 import { COLOR, textStyle } from "./theme";
 
 // 이름과 HP 수치가 한 줄에 나란히 들어갈 만큼은 넓어야 한다.
@@ -16,6 +16,8 @@ export class UnitTag extends Phaser.GameObjects.Container {
   private readonly hpText: Phaser.GameObjects.Text;
   private readonly hpBar: Phaser.GameObjects.Rectangle;
   private readonly energyBar: Phaser.GameObjects.Rectangle;
+  private readonly energyCostMarker: Phaser.GameObjects.Rectangle;
+  private readonly readyText: Phaser.GameObjects.Text;
 
   constructor(
     scene: Phaser.Scene,
@@ -45,6 +47,18 @@ export class UnitTag extends Phaser.GameObjects.Container {
       .setOrigin(0, 0.5);
     this.add(this.energyBar);
 
+    // 밝은 세로선은 공용 저장 바에서 이 유닛의 궁극기를 쓸 수 있게 되는 비용 지점을 표시한다.
+    this.energyCostMarker = scene.add
+      .rectangle(-WIDTH / 2, 26, 3, 12, COLOR.accent)
+      .setOrigin(0.5);
+    this.add(this.energyCostMarker);
+    // 기존 강조색의 짧은 라벨로 작은 모바일 화면에서도 준비 상태를 알아볼 수 있게 한다.
+    this.readyText = scene.add
+      .text(WIDTH / 2, 30, "READY", textStyle({ size: 14, color: COLOR.accentText }))
+      .setOrigin(1, 0)
+      .setVisible(false);
+    this.add(this.readyText);
+
     scene.add.existing(this);
   }
 
@@ -56,8 +70,11 @@ export class UnitTag extends Phaser.GameObjects.Container {
     this.hpText.setText(dead ? "전투 불능" : `${unit.hp} / ${unit.maxHp}`);
 
     this.hpBar.width = WIDTH * Math.max(0, unit.hp / unit.maxHp);
-    // 게이지 최대치는 전역 상수가 아니라 각 렐릭 궁극기의 비용이다.
-    this.energyBar.width = WIDTH * (unit.energy / unit.def.ultimate.cost);
+    // 바의 채움은 공용 저장 상한, 마커는 별도 스킬 비용을 기준으로 계산한다.
+    this.energyBar.width = WIDTH * (unit.energy / ULTIMATE_ENERGY_MAX);
+    const markerRatio = Math.min(1, unit.def.ultimate.cost / ULTIMATE_ENERGY_MAX);
+    this.energyCostMarker.x = -WIDTH / 2 + WIDTH * markerRatio;
+    this.readyText.setVisible(canUseUltimate(unit));
     this.setAlpha(dead ? 0.35 : 1);
   }
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   canSwap,
+  canUseUltimate,
   computeDamage,
   createBattle,
   enemyTurn,
@@ -10,6 +11,7 @@ import {
   previewSkillDamage,
   rearUnits,
   teamDefeated,
+  ULTIMATE_ENERGY_MAX,
 } from "../../src/core/battle";
 import { getRelic } from "../../src/data/relics";
 import { getStage } from "../../src/data/stages";
@@ -95,6 +97,32 @@ describe("궁극기", () => {
     expect(playerAct(state, { kind: "ultimate" })).toBe(true);
     expect(frontUnit(state.enemy).hp).toBeLessThan(before);
     expect(frontUnit(state.player).energy).toBe(0);
+  });
+
+  it("100 미만 비용은 공용 상한에서 비용만 소비한다", () => {
+    const state = newBattle();
+    const unit = frontUnit(state.player);
+    // 테스트 전용 복제 정의로 운영 데이터를 바꾸지 않고 저비용 정책을 검증한다.
+    unit.def = { ...unit.def, ultimate: { ...unit.def.ultimate, cost: 80 } };
+    unit.energy = ULTIMATE_ENERGY_MAX;
+
+    expect(canUseUltimate(unit)).toBe(true);
+    expect(playerAct(state, { kind: "ultimate" })).toBe(true);
+    expect(unit.energy).toBe(ULTIMATE_ENERGY_MAX - 80);
+  });
+
+  it("100 초과 비용은 비용 도달 전에는 막고 도달하면 정확히 소비한다", () => {
+    const state = newBattle();
+    const unit = frontUnit(state.player);
+    // 공용 상한 안의 고비용 궁극기도 과거의 100 표시값과 무관하게 판정한다.
+    unit.def = { ...unit.def, ultimate: { ...unit.def.ultimate, cost: 120 } };
+    unit.energy = 119;
+    expect(canUseUltimate(unit)).toBe(false);
+    expect(playerAct(state, { kind: "ultimate" })).toBe(false);
+
+    unit.energy = ULTIMATE_ENERGY_MAX;
+    expect(playerAct(state, { kind: "ultimate" })).toBe(true);
+    expect(unit.energy).toBe(ULTIMATE_ENERGY_MAX - 120);
   });
 });
 

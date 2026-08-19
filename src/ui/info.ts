@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import type { PuppetCreature } from "../puppets/assets";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
-import { previewSkillDamage, type BattleUnit } from "../core/battle";
+import { previewSkillDamage, ULTIMATE_ENERGY_MAX, type BattleUnit } from "../core/battle";
 import type { EffectType, RelicDef, Skill, SkillIconAssetId } from "../core/types";
 import { setDebugInfoOpen } from "../debug";
 import { getHeartGem } from "../data/heartGems";
@@ -246,7 +246,8 @@ export class InfoManager {
   showRelic(def: RelicDef): void { this.openCharacter(def); }
   /** target을 함께 넘긴 전투 정보창은 방어력/저항력을 적용한 비치명타 예상값을 표시한다. */
   showUnit(unit: BattleUnit, isFront: boolean, target?: BattleUnit): void {
-    this.openCharacter(unit.def, `HP ${unit.hp.toLocaleString()} / ${unit.maxHp.toLocaleString()}  ·  게이지 ${unit.energy}/${unit.def.ultimate.cost}\n${isFront ? "전방 · 선봉" : "후방"}`, unit, target);
+    // 저장 상한과 현재 궁극기의 소비 비용을 함께 적어 두 수치의 의미를 혼동하지 않게 한다.
+    this.openCharacter(unit.def, `HP ${unit.hp.toLocaleString()} / ${unit.maxHp.toLocaleString()}  ·  게이지 ${unit.energy}/${ULTIMATE_ENERGY_MAX} (비용 ${unit.def.ultimate.cost})\n${isFront ? "전방 · 선봉" : "후방"}`, unit, target);
   }
 
 

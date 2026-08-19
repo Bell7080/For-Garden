@@ -1,5 +1,8 @@
 import type { DamageType, RelicDef, Side, Skill } from "./types";
 
+/** 모든 유닛이 저장할 수 있는 궁극기 게이지의 공용 상한이다. 스킬 비용과는 별개다. */
+export const ULTIMATE_ENERGY_MAX = 150;
+
 /**
  * 턴제 3인 파티 전투.
  *
@@ -178,11 +181,8 @@ function applyDamage(target: BattleUnit, amount: number): void {
 }
 
 function gainEnergy(unit: BattleUnit): void {
-  // 궁극기마다 비용이 다를 수 있으므로 해당 캐릭터의 비용까지만 축적한다.
-  unit.energy = Math.min(
-    unit.def.ultimate.cost,
-    unit.energy + unit.def.stats.ferocity,
-  );
+  // 저비용 궁극기를 준비한 뒤에도 남는 게이지를 더 저장할 수 있도록 공용 상한을 적용한다.
+  unit.energy = Math.min(ULTIMATE_ENERGY_MAX, unit.energy + unit.def.stats.ferocity);
 }
 
 /** 쓰러진 유닛이 전방에 있으면 살아있는 후방 유닛을 자동으로 앞에 세운다. */

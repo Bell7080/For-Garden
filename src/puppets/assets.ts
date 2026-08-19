@@ -24,13 +24,27 @@ export interface PuppetAsset {
 
 const base = import.meta.env.BASE_URL;
 
-/** 정보창에 띄우는 전신 일러스트. 지금은 idle 하나만 들어 있다. */
-export const CHAR_ASSET: PuppetAsset = {
+/** 1번 전신 일러스트: 토리카(트리케라톱스). */
+export const TORIKA_ASSET: PuppetAsset = {
   url: `${base}puppets/char_001.zip`,
   imageWidth: 1054,
   imageHeight: 1492,
   content: { left: 95, top: 69, right: 894, bottom: 1419 },
 };
+
+/** 2번 전신 일러스트: 렉시아(티라노사우루스). */
+export const LEXIA_ASSET: PuppetAsset = {
+  url: `${base}puppets/char_002.zip`,
+  imageWidth: 1054,
+  imageHeight: 1492,
+  content: { left: 95, top: 69, right: 894, bottom: 1419 },
+};
+
+/** 전용 원화가 없는 렐릭은 토리카 원화를 임시 사용한다. */
+export function portraitAssetFor(relicId: string): PuppetAsset {
+  if (relicId === "rex") return LEXIA_ASSET;
+  return TORIKA_ASSET;
+}
 
 /** 전장에 세우는 SD 개체. idle · hit · stun · roar를 가지고 있다. */
 export const ENTITY_ASSET: PuppetAsset = {
@@ -55,6 +69,8 @@ export type MotionName = keyof typeof MOTION;
 
 /** 개체별 최신 동작 번호. 오래된 복귀 타이머가 새 동작을 idle로 끊지 못하게 한다. */
 const motionGeneration = new WeakMap<PuppetCreature, number>();
+/** 이전 일회성 동작의 idle 복귀 예약. 새 동작이 오면 즉시 해제한다. */
+const motionTimers = new WeakMap<PuppetCreature, Phaser.Time.TimerEvent>();
 
 /** 묶음은 파일당 한 번만 읽고 여러 마리가 나눠 쓴다. */
 const loaded = new Map<string, Promise<Puppet>>();
@@ -74,7 +90,7 @@ function loadPuppet(asset: PuppetAsset): Promise<Puppet> {
  * 부트 화면에서 비용을 지불하고, 전투와 팝업에서는 캐시된 Puppet만 복제한다.
  */
 export async function preloadPuppetAssets(): Promise<void> {
-  await Promise.all([loadPuppet(CHAR_ASSET), loadPuppet(ENTITY_ASSET)]);
+  await Promise.all([loadPuppet(TORIKA_ASSET), loadPuppet(LEXIA_ASSET), loadPuppet(ENTITY_ASSET)]);
 }
 
 export interface SpawnOptions {
@@ -165,11 +181,22 @@ export function playMotion(
 
   const generation = (motionGeneration.get(creature) ?? 0) + 1;
   motionGeneration.set(creature, generation);
+  motionTimers.get(creature)?.remove(false);
+  motionTimers.delete(creature);
 
   const holdMs = "holdMs" in config ? config.holdMs : undefined;
   if (holdMs === undefined) return;
-  scene.time.delayedCall(holdMs, () => {
+  const timer = scene.time.delayedCall(holdMs, () => {
     // 공격 직후 피격처럼 동작이 겹쳐도 가장 최근 동작의 유지 시간은 온전히 보장한다.
-    if (creature.active && motionGeneration.get(creature) === generation) creature.play("idle");
+    if (motionGeneration.get(creature) !== generation) return;
+    motionTimers.delete(creature);
+    if (creature.active) creature.play("idle");
   });
+  motionTimers.set(creature, timer);
+}
+
+/** 전신 일러스트를 누르면 현재 동작을 새 hit 동작으로 교체한다. */
+export function enableHitOnClick(scene: Phaser.Scene, creature: PuppetCreature): void {
+  creature.setInteractive({ useHandCursor: true });
+  creature.on("pointerup", () => playMotion(scene, creature, "hit"));
 }

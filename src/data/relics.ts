@@ -7,8 +7,8 @@ import type { RelicDef } from "../core/types";
 export const RELICS: RelicDef[] = [
   {
     id: "rex",
-    name: "렉스",
-    origin: "티라노사우루스 렉스",
+    name: "렉시아",
+    origin: "티라노사우루스",
     role: "attacker",
     stats: { hp: 820, atk: 132, def: 42 },
     passive: {
@@ -29,8 +29,8 @@ export const RELICS: RelicDef[] = [
   },
   {
     id: "anky",
-    name: "안키",
-    origin: "안킬로사우루스",
+    name: "토리카",
+    origin: "트리케라톱스",
     role: "tank",
     stats: { hp: 1420, atk: 74, def: 128 },
     passive: {

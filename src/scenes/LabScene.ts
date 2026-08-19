@@ -7,7 +7,7 @@ import { GameApiError } from "../api/contracts";
 import { canPull, pullCost, type Banner } from "../core/gacha";
 import { BANNERS } from "../data/banners";
 import { getRelic } from "../data/relics";
-import { CHAR_ASSET, spawnPuppet, tintPuppet } from "../puppets/assets";
+import { enableHitOnClick, spawnPuppet, tintPuppet, TORIKA_ASSET } from "../puppets/assets";
 import { mixWhite, tintFor } from "../puppets/tints";
 import { session } from "../state/session";
 import { BottomNav, NAV_TOP } from "../ui/BottomNav";
@@ -113,14 +113,16 @@ export class LabScene extends Phaser.Scene {
     this.refresh();
   }
 
-  /** 배너 그림. 지금은 대표 렐릭 하나를 색만 바꿔 세워 둔다. */
+  /** 배너 대표 그림. 아직 배너별 전용 구성이 없어 1번 원화를 기본으로 세운다. */
   private async showcaseRelic(): Promise<void> {
-    this.showcase = await spawnPuppet(this, CHAR_ASSET, {
+    this.showcase = await spawnPuppet(this, TORIKA_ASSET, {
       x: BASE_WIDTH / 2,
       groundY: BANNER_FLOOR,
       height: 860,
       depth: -20,
     });
+    // 배너의 전신 일러스트도 정보창과 동일하게 터치 반응을 준다.
+    enableHitOnClick(this, this.showcase);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.showcase?.destroy());
     this.refresh();
   }

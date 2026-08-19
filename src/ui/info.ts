@@ -5,7 +5,7 @@ import type { BattleUnit } from "../core/battle";
 import { ULTIMATE_MAX } from "../core/battle";
 import type { RelicDef } from "../core/types";
 import { setDebugInfoOpen } from "../debug";
-import { enableHitOnClick, portraitAssetFor, spawnPuppet, tintPuppet } from "../puppets/assets";
+import { enableHitOnClick, portraitAssetFor, portraitUsesRelicTint, spawnPuppet, tintPuppet } from "../puppets/assets";
 import { mixWhite, tintFor } from "../puppets/tints";
 import { COLOR, textStyle } from "./theme";
 import { addSceneBackground, BACKGROUND } from "./backgrounds";
@@ -162,10 +162,10 @@ export class InfoManager {
     setDebugInfoOpen(false);
   }
 
-  private async loadPortrait(relicId: string): Promise<void> {
+  private async loadPortrait(def: RelicDef): Promise<void> {
     const request = ++this.portraitRequest;
     // 루트 배경과 정보 레이어 사이에 세워 UI가 캐릭터 위로 선명하게 읽힌다.
-    const portrait = await spawnPuppet(this.scene, portraitAssetFor(relicId), {
+    const portrait = await spawnPuppet(this.scene, portraitAssetFor(def.portraitAssetId), {
       ...PORTRAIT,
       depth: Math.max(this.portraitDepth, 1001),
     });
@@ -177,23 +177,23 @@ export class InfoManager {
     this.portrait = portrait;
     enableHitOnClick(this.scene, portrait);
     // 아직 전용 원화가 없는 렐릭만 기존 임시 tint로 구분한다.
-    if (relicId !== "anky" && relicId !== "rex") tintPuppet(portrait, mixWhite(tintFor(relicId), 0.55));
+    if (portraitUsesRelicTint(def.portraitAssetId)) tintPuppet(portrait, mixWhite(tintFor(def.id), 0.55));
     portrait.setVisible(this.portraitWanted && this.root.visible);
   }
 
   /** 일러스트는 렐릭 한 명을 볼 때만 띄운다. 목록을 볼 때는 글이 들어갈 자리가 필요하다. */
-  private open(title: string, subtitle: string, body: string, relicId?: string): void {
+  private open(title: string, subtitle: string, body: string, def?: RelicDef): void {
     this.titleText.setText(title);
     this.subtitleText.setText(subtitle);
     this.bodyText.setText(body);
-    const hasPortrait = relicId !== undefined;
+    const hasPortrait = def !== undefined;
     this.rarityText.setText(hasPortrait ? "SSR" : "INFO");
     this.bodyText.setPosition(hasPortrait ? 580 : 100, hasPortrait ? 482 : 370);
     this.bodyText.setWordWrapWidth(hasPortrait ? 420 : 880);
 
     this.portraitWanted = hasPortrait;
     this.portrait?.setVisible(false);
-    if (relicId) void this.loadPortrait(relicId);
+    if (def) void this.loadPortrait(def);
 
     this.root.setVisible(true);
     this.chrome.setVisible(true);
@@ -202,7 +202,7 @@ export class InfoManager {
 
   /** 렐릭 정보창. 편성 화면처럼 아직 전투 전이라 현재 상태가 없을 때 쓴다. */
   showRelic(def: RelicDef): void {
-    this.open(def.name, `${def.origin} · ${ROLE_LABEL[def.role]}`, this.describe(def), def.id);
+    this.open(def.name, `${def.origin} · ${ROLE_LABEL[def.role]}`, this.describe(def), def);
   }
 
   /** 전투 중인 렐릭 정보창. 지금 HP와 궁극기 게이지가 함께 붙는다. */
@@ -216,7 +216,7 @@ export class InfoManager {
       unit.def.name,
       `${unit.def.origin} · ${ROLE_LABEL[unit.def.role]}`,
       `[ 현재 상태 ]\n${live}\n\n${this.describe(unit.def)}`,
-      unit.def.id,
+      unit.def,
     );
   }
 

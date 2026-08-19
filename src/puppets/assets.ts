@@ -1,5 +1,6 @@
 import type Phaser from "phaser";
 import { Puppet, PuppetCreature } from "puppetforge/phaser";
+import type { PortraitAssetId } from "../core/types";
 
 /**
  * PuppetForge로 만든 임시 아트를 불러오고, 발바닥이 바닥에 닿도록 세운다.
@@ -40,10 +41,24 @@ export const LEXIA_ASSET: PuppetAsset = {
   content: { left: 95, top: 69, right: 894, bottom: 1419 },
 };
 
-/** 전용 원화가 없는 렐릭은 토리카 원화를 임시 사용한다. */
-export function portraitAssetFor(relicId: string): PuppetAsset {
-  if (relicId === "rex") return LEXIA_ASSET;
-  return TORIKA_ASSET;
+/**
+ * 렐릭 데이터가 참조하는 원화 레지스트리. 새 원화는 여기에 한 번 등록한 뒤 데이터 키로 연결한다.
+ * placeholder 키는 같은 임시 파일을 쓰되 화면에서 렐릭별 tint를 적용할 수 있게 별도로 둔다.
+ */
+const PORTRAIT_ASSETS = {
+  torika: { asset: TORIKA_ASSET, usesRelicTint: false },
+  lexia: { asset: LEXIA_ASSET, usesRelicTint: false },
+  "torika-placeholder": { asset: TORIKA_ASSET, usesRelicTint: true },
+} as const satisfies Record<PortraitAssetId, { asset: PuppetAsset; usesRelicTint: boolean }>;
+
+/** 데이터 키로 전신 원화를 찾는다. 캐릭터 내부 id에 의존하지 않는다. */
+export function portraitAssetFor(assetId: PortraitAssetId): PuppetAsset {
+  return PORTRAIT_ASSETS[assetId].asset;
+}
+
+/** 임시 공유 원화인지 판별해 기존 렐릭 구분 tint를 유지한다. */
+export function portraitUsesRelicTint(assetId: PortraitAssetId): boolean {
+  return PORTRAIT_ASSETS[assetId].usesRelicTint;
 }
 
 /** 전장에 세우는 SD 개체. idle · hit · stun · roar를 가지고 있다. */

@@ -3,7 +3,7 @@ import type { PuppetCreature } from "puppetforge/phaser";
 import { BASE_WIDTH, BASE_HEIGHT } from "../config/gameConfig";
 import { setDebugScene } from "../debug";
 import { getRelic } from "../data/relics";
-import { enableHitOnClick, portraitAssetFor, spawnPuppet } from "../puppets/assets";
+import { enableHitOnClick, portraitAssetFor, portraitUsesRelicTint, spawnPuppet } from "../puppets/assets";
 import { mixWhite, tintFor } from "../puppets/tints";
 import { session } from "../state/session";
 import { BottomNav, NAV_TOP } from "../ui/BottomNav";
@@ -74,12 +74,12 @@ export class LobbyScene extends Phaser.Scene {
   /** 애착 렐릭을 광장 한가운데 세우고, 전용 원화가 없을 때만 임시 색으로 구분한다. */
   private async showFavorite(): Promise<void> {
     const def = getRelic(session.favorite);
-    this.favorite = await spawnPuppet(this, portraitAssetFor(def.id), {
+    this.favorite = await spawnPuppet(this, portraitAssetFor(def.portraitAssetId), {
       x: BASE_WIDTH / 2 + 60,
       groundY: STAGE_FLOOR,
       height: 900,
       // 전용 원화가 연결된 두 캐릭터는 원본 색을 유지한다.
-      tint: def.id === "anky" || def.id === "rex" ? undefined : mixWhite(tintFor(def.id), 0.55),
+      tint: portraitUsesRelicTint(def.portraitAssetId) ? mixWhite(tintFor(def.id), 0.55) : undefined,
       depth: -20,
     });
     enableHitOnClick(this, this.favorite);

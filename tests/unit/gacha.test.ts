@@ -6,6 +6,8 @@ const banner: Banner = {
   id: "test",
   name: "시험 발굴",
   desc: "",
+  // 대표 렐릭은 확률 계산과 무관하지만 실제 Banner 계약을 그대로 검증한다.
+  featuredRelicId: "a",
   currency: "fossil",
   costOne: 100,
   costTen: 900,
@@ -29,6 +31,13 @@ describe("뽑기 비용", () => {
     expect(canPull({ fossil: 100, amber: 0 }, banner, 1)).toBe(true);
     expect(canPull({ fossil: 99, amber: 0 }, banner, 1)).toBe(false);
     expect(canPull({ fossil: 899, amber: 999 }, banner, 10)).toBe(false);
+  });
+});
+
+describe("배너 대표 렐릭", () => {
+  it("모든 운영 배너는 실제 추첨 풀 안의 픽업 렐릭을 대표로 노출한다", () => {
+    // 데이터 오타로 배너 원화와 실제 추첨 대상이 어긋나는 회귀를 막는다.
+    for (const candidate of BANNERS) expect(candidate.pool).toContain(candidate.featuredRelicId);
   });
 });
 

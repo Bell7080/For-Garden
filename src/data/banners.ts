@@ -11,6 +11,7 @@ export const BANNERS: Banner[] = [
   {
     id: "fossil",
     name: "화석 발굴",
+    featuredRelicId: "anky",
     desc: "굳은 화석에서 DNA를 긁어낸다. 흔하게 돌릴 수 있다.",
     currency: "fossil",
     costOne: 100,
@@ -20,6 +21,7 @@ export const BANNERS: Banner[] = [
   {
     id: "amber",
     name: "호박석 발굴",
+    featuredRelicId: "rex",
     desc: "호박에 갇힌 온전한 DNA. 보존 상태가 좋아 결과도 좋다.",
     currency: "amber",
     costOne: 2,

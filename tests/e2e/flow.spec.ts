@@ -107,6 +107,21 @@ test("편성 화면에서 렐릭을 꾹 누르면 정보창이 열린다", async
   expect(await scene(page)).toBe("party");
 });
 
+test("1080×1920 캐릭터 상세과 스킬 카드가 안전 영역 안에 표시된다", async ({ page }) => {
+  // 기준 해상도를 직접 사용해 전신과 최대 폭 정보 레이어의 회귀를 스크린샷으로 남긴다.
+  await page.setViewportSize({ width: BASE_WIDTH, height: BASE_HEIGHT });
+  await enterParty(page);
+  await longPress(page, ...ANKY);
+  await expect.poll(() => infoOpen(page)).toBe(true);
+  await page.screenshot({ path: `test-results/${test.info().project.name}-character-info-1080x1920.png`, fullPage: true });
+
+  // 오른쪽 첫 스킬 버튼을 눌러 긴 한국어 설명 카드와 내부 뒤로가기 상태도 기록한다.
+  await tap(page, 704, 1052);
+  await page.screenshot({ path: `test-results/${test.info().project.name}-skill-info-1080x1920.png`, fullPage: true });
+  await tap(page, 827, 1460);
+  await expect.poll(() => infoOpen(page)).toBe(true);
+});
+
 test("기본 공격을 하면 적 선봉 HP가 깎이고 턴이 넘어간다", async ({ page }) => {
   await enterBattle(page);
   const before = await battle(page);

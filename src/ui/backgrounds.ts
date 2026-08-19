@@ -11,10 +11,11 @@ export const BACKGROUND = {
 
 /** BootScene이 모든 화면 배경을 한 번에 적재할 때 사용하는 경로 목록이다. */
 export const BACKGROUND_ASSETS = [
-  [BACKGROUND.lab, "puppets/sprites/background/background_001.webp"],
-  [BACKGROUND.relics, "puppets/sprites/background/background_002.webp"],
-  [BACKGROUND.info, "puppets/sprites/background/background_003.webp"],
-  [BACKGROUND.battleArea, "puppets/sprites/background/background_004.webp"],
+  // 일반 배경 스프라이트는 PuppetForge 번들과 분리한 공용 자산 경로에서 읽는다.
+  [BACKGROUND.lab, "sprites/background/background_001.webp"],
+  [BACKGROUND.relics, "sprites/background/background_002.webp"],
+  [BACKGROUND.info, "sprites/background/background_003.webp"],
+  [BACKGROUND.battleArea, "sprites/background/background_004.webp"],
 ] as const;
 
 /**

@@ -5,7 +5,7 @@ import type { BattleUnit } from "../core/battle";
 import { ULTIMATE_MAX } from "../core/battle";
 import type { RelicDef } from "../core/types";
 import { setDebugInfoOpen } from "../debug";
-import { CHAR_ASSET, spawnPuppet, tintPuppet } from "../puppets/assets";
+import { enableHitOnClick, portraitAssetFor, spawnPuppet, tintPuppet } from "../puppets/assets";
 import { mixWhite, tintFor } from "../puppets/tints";
 import { COLOR, textStyle } from "./theme";
 import { addSceneBackground, BACKGROUND } from "./backgrounds";
@@ -51,6 +51,8 @@ export function addHelpBadge(
  * 씬은 "누구의 정보를 열지"만 말하고, 무엇을 어떤 순서로 보여줄지는 여기서 정한다.
  */
 export class InfoManager {
+  private readonly scene: Phaser.Scene;
+  private readonly portraitDepth: number;
   private readonly root: Phaser.GameObjects.Container;
   /** 캐릭터보다 앞에 그려지는 정보 레이어. */
   private readonly chrome: Phaser.GameObjects.Container;
@@ -61,11 +63,14 @@ export class InfoManager {
   /** 전신 일러스트. 파일을 읽는 동안에도 정보창은 열 수 있어야 해서 늦게 붙는다. */
   private portrait?: PuppetCreature;
   private portraitWanted = false;
+  /** 빠른 캐릭터 전환 중 이전 로딩 결과가 최신 원화를 덮지 않게 하는 요청 번호다. */
+  private portraitRequest = 0;
 
   constructor(scene: Phaser.Scene, portraitDepth = 1001) {
+    this.scene = scene;
+    this.portraitDepth = portraitDepth;
     this.root = scene.add.container(0, 0).setDepth(1000).setVisible(false);
     this.chrome = scene.add.container(0, 0).setDepth(1002).setVisible(false);
-    void this.loadPortrait(scene, portraitDepth);
 
     // 반투명 암막 대신 화면 전체를 쓰는 도감 페이지로 만들어 전신이 잘리지 않게 한다.
     // background_003의 문양이 정보창 전체를 도감의 전시 공간처럼 감싸도록 루트에 넣는다.
@@ -157,11 +162,23 @@ export class InfoManager {
     setDebugInfoOpen(false);
   }
 
-  private async loadPortrait(scene: Phaser.Scene, depth: number): Promise<void> {
-    // 루트 배경(1000)과 정보 레이어(1002) 사이에 세워 UI가 캐릭터 위로 선명하게 읽힌다.
-    this.portrait = await spawnPuppet(scene, CHAR_ASSET, { ...PORTRAIT, depth: Math.max(depth, 1001) });
-    this.portrait.setVisible(this.portraitWanted && this.root.visible);
-    scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.portrait?.destroy());
+  private async loadPortrait(relicId: string): Promise<void> {
+    const request = ++this.portraitRequest;
+    // 루트 배경과 정보 레이어 사이에 세워 UI가 캐릭터 위로 선명하게 읽힌다.
+    const portrait = await spawnPuppet(this.scene, portraitAssetFor(relicId), {
+      ...PORTRAIT,
+      depth: Math.max(this.portraitDepth, 1001),
+    });
+    if (request !== this.portraitRequest) {
+      portrait.destroy();
+      return;
+    }
+    this.portrait?.destroy();
+    this.portrait = portrait;
+    enableHitOnClick(this.scene, portrait);
+    // 아직 전용 원화가 없는 렐릭만 기존 임시 tint로 구분한다.
+    if (relicId !== "anky" && relicId !== "rex") tintPuppet(portrait, mixWhite(tintFor(relicId), 0.55));
+    portrait.setVisible(this.portraitWanted && this.root.visible);
   }
 
   /** 일러스트는 렐릭 한 명을 볼 때만 띄운다. 목록을 볼 때는 글이 들어갈 자리가 필요하다. */
@@ -175,11 +192,8 @@ export class InfoManager {
     this.bodyText.setWordWrapWidth(hasPortrait ? 420 : 880);
 
     this.portraitWanted = hasPortrait;
-    if (this.portrait) {
-      this.portrait.setVisible(this.portraitWanted);
-      // 렐릭마다 제 일러스트가 생기기 전까지는 색으로만 구분한다.
-      if (relicId) tintPuppet(this.portrait, mixWhite(tintFor(relicId), 0.55));
-    }
+    this.portrait?.setVisible(false);
+    if (relicId) void this.loadPortrait(relicId);
 
     this.root.setVisible(true);
     this.chrome.setVisible(true);

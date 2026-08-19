@@ -1,6 +1,7 @@
 import type Phaser from "phaser";
 import { Puppet, PuppetCreature } from "puppetforge/phaser";
 import type { PortraitAssetId } from "../core/types";
+import { optimizePuppetProject } from "./meshOptimization";
 
 /**
  * PuppetForge로 만든 임시 아트를 불러오고, 발바닥이 바닥에 닿도록 세운다.
@@ -93,7 +94,11 @@ const loaded = new Map<string, Promise<Puppet>>();
 function loadPuppet(asset: PuppetAsset): Promise<Puppet> {
   let pending = loaded.get(asset.url);
   if (!pending) {
-    pending = Puppet.load(asset.url);
+    pending = Puppet.load(asset.url).then((puppet) => {
+      // 편집기 원본은 보존하고 Phaser에서만 격자를 낮춰, 고정 방식과 모션 설정을 유지하며 렉을 없앤다.
+      const project = optimizePuppetProject(puppet.project);
+      return project === puppet.project ? puppet : Puppet.fromProject(project, puppet.texture);
+    });
     loaded.set(asset.url, pending);
   }
   return pending;

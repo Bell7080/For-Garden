@@ -7,6 +7,7 @@ import {
   frontUnit,
   isCriticalHit,
   playerAct,
+  previewSkillDamage,
   rearUnits,
   teamDefeated,
 } from "../../src/core/battle";
@@ -98,6 +99,24 @@ describe("궁극기", () => {
 });
 
 describe("확장 능력치 전투 규칙", () => {
+  it("대상 유무에 따라 도감 배율과 방어 반영 예상 피해를 구분한다", () => {
+    const attacker = frontUnit(newBattle(["rex", "anky", "dodo"]).player);
+    const defender = frontUnit(newBattle(["mammoth", "rex", "dodo"]).player);
+
+    // 도감에는 존재하지 않는 방어력을 가정하지 않고 어떤 능력치의 배율인지 명시한다.
+    expect(previewSkillDamage(attacker, attacker.def.ultimate)).toEqual({
+      kind: "scaling", power: 240, stat: "공격력", label: "기준 배율",
+    });
+    // 전투 미리보기는 실제 대상의 방어력과 전방 패시브까지 기존 계산기로 반영한다.
+    const preview = previewSkillDamage(attacker, attacker.def.ultimate, defender, true);
+    expect(preview.kind).toBe("damage");
+    if (preview.kind === "damage") {
+      expect(preview.amount).toBe(computeDamage(attacker, defender, {
+        ...attacker.def.ultimate, isCritical: false,
+      }, true));
+    }
+  });
+
   it("캐릭터별 ferocity만큼 궁극기 게이지를 획득한다", () => {
     const rexState = newBattle(["rex", "anky", "dodo"]);
     const ankyState = newBattle(["anky", "rex", "dodo"]);

@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { setDebugScene } from "../debug";
 import { preloadPuppetAssets } from "../puppets/assets";
 import { BACKGROUND_ASSETS } from "../ui/backgrounds";
+import { SKILL_ICON_ASSETS } from "../ui/skillIcons";
 
 export class BootScene extends Phaser.Scene {
   constructor() {
@@ -11,6 +12,8 @@ export class BootScene extends Phaser.Scene {
   preload(): void {
     // 전환 직후 빈 화면이 보이지 않도록 네 화면의 공용 배경을 부트 단계에서 선로딩한다.
     BACKGROUND_ASSETS.forEach(([key, path]) => this.load.image(key, path));
+    // 캐릭터별 임시 복사본 대신 전 효과가 함께 쓰는 공용 아이콘 묶음만 선로딩한다.
+    SKILL_ICON_ASSETS.forEach(([key, path]) => this.load.image(key, path));
   }
 
   async create(): Promise<void> {

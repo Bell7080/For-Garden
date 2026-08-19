@@ -1,4 +1,5 @@
 import type { Wallet } from "../core/gacha";
+import type { RelicProgress } from "../core/types";
 
 /** 네트워크로 직렬화할 수 있는 플레이어 진행 정보의 최소 규격이다. */
 export interface PlayerStateDto {
@@ -6,6 +7,10 @@ export interface PlayerStateDto {
   wallet: Wallet;
   /** Set 대신 배열을 써서 JSON 응답과 같은 모양을 유지한다. */
   ownedRelicIds: string[];
+  /** 렐릭 id별 성장과 Heart Gem 3슬롯 장착 상태다. */
+  relicProgress: Record<string, RelicProgress>;
+  /** 플레이어가 보유한 Heart Gem id 목록이다. */
+  ownedHeartGemIds: string[];
 }
 
 /** 발굴 요청에는 클라이언트가 선택한 배너와 횟수만 보낸다. */

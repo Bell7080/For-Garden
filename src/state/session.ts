@@ -4,6 +4,7 @@
  */
 
 import type { Wallet } from "../core/gacha";
+import type { RelicProgress } from "../core/types";
 import { STAGES } from "../data/stages";
 
 /** 처음 시작할 때 쥐어 주는 렐릭. 셋이면 바로 출격할 수 있다. */
@@ -21,6 +22,15 @@ export interface Session {
   /** 로비에 세워 두는 애착 렐릭. */
   favorite: string;
   wallet: Wallet;
+  /** 렐릭 id별 성장/장착 상태다. 객체와 배열만 사용해 그대로 직렬화할 수 있다. */
+  relicProgress: Record<string, RelicProgress>;
+  /** 보유 Heart Gem id 목록이다. 중복 없는 직렬화 가능한 배열로 유지한다. */
+  ownedHeartGemIds: string[];
+}
+
+/** 신규 렐릭에 부여하는 독립 복사 가능한 기본 성장 상태다. */
+export function createInitialRelicProgress(): RelicProgress {
+  return { level: 1, levelTitle: "복원체", dnaMastery: 0, heartGemSlots: [null, null, null] };
 }
 
 export const session: Session = {
@@ -30,6 +40,8 @@ export const session: Session = {
   owned: new Set(STARTER_RELICS),
   favorite: STARTER_RELICS[0],
   wallet: { fossil: 1200, amber: 10 },
+  relicProgress: Object.fromEntries(STARTER_RELICS.map((id) => [id, createInitialRelicProgress()])),
+  ownedHeartGemIds: ["vital-seed", "fang-core", "ancient-pulse"],
 };
 
 /** 첫 스테이지와, 직전 스테이지를 깬 스테이지만 들어갈 수 있다. */

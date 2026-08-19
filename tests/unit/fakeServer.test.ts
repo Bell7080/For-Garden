@@ -12,6 +12,8 @@ function makeSession(fossil = 1000): Session {
     owned: new Set(["anky", "rex", "dodo"]),
     favorite: "anky",
     wallet: { fossil, amber: 10 },
+    relicProgress: { anky: { level: 2, levelTitle: "발아체", dnaMastery: 1, heartGemSlots: ["vital-seed", null, null] } },
+    ownedHeartGemIds: ["vital-seed"],
   };
 }
 
@@ -45,8 +47,12 @@ describe("FakeServer", () => {
 
     snapshot.wallet.fossil = 0;
     snapshot.ownedRelicIds.push("mammoth");
+    snapshot.relicProgress.anky.heartGemSlots[0] = null;
+    snapshot.ownedHeartGemIds.length = 0;
 
     expect(state.wallet.fossil).toBe(1000);
     expect(state.owned.has("mammoth")).toBe(false);
+    expect(state.relicProgress.anky.heartGemSlots[0]).toBe("vital-seed");
+    expect(state.ownedHeartGemIds).toEqual(["vital-seed"]);
   });
 });

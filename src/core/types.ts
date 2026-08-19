@@ -31,6 +31,18 @@ export interface Stats {
   ferocity: number;
 }
 
+/** 플레이어마다 달라지는 렐릭 성장/Heart Gem 장착 정보다. */
+export interface RelicProgress {
+  /** 1부터 시작하는 현재 성장 레벨이다. */
+  level: number;
+  /** 저장 시점의 레벨 구간을 사람이 읽을 수 있게 표현한 칭호다. */
+  levelTitle: string;
+  /** DNA 복원 숙련도이며 코어 규칙상 0~5만 허용한다. */
+  dnaMastery: number;
+  /** 정확히 세 자리인 Heart Gem 장착 슬롯이다. null은 빈 슬롯을 뜻한다. */
+  heartGemSlots: [string | null, string | null, string | null];
+}
+
 /** 스킬이 어느 공격 능력치와 방어 능력치를 참조하는지 구분한다. */
 export type DamageType = "physical" | "magical";
 
@@ -67,7 +79,7 @@ export interface Passive {
   desc: string;
 }
 
-/** 렐릭 한 명의 정의. 멸종한 DNA에서 되살아난 호문쿨루스. */
+/** 렐릭 한 명의 불변 정의. 플레이어별 성장 값은 RelicProgress에만 둔다. */
 export interface RelicDef {
   id: string;
   name: string;

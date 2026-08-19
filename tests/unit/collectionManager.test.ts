@@ -11,6 +11,8 @@ function makeSession(): Session {
     owned: new Set(["anky", "rex", "dodo"]),
     favorite: "anky",
     wallet: { fossil: 0, amber: 0 },
+    relicProgress: {},
+    ownedHeartGemIds: [],
   };
 }
 

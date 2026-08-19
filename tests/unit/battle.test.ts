@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   canSwap,
+  computeDamage,
   createBattle,
   enemyTurn,
   frontUnit,
+  isCriticalHit,
   playerAct,
   rearUnits,
   teamDefeated,
@@ -13,17 +15,17 @@ import { getStage } from "../../src/data/stages";
 
 function newBattle(party = ["anky", "rex", "dodo"], stageId = "1-1") {
   const stage = getStage(stageId);
-  return createBattle(
-    party.map(getRelic),
-    stage.enemies.map(getRelic),
-  );
+  return createBattle(party.map(getRelic), stage.enemies.map(getRelic));
 }
 
 describe("진형", () => {
   it("은 전방 1명 · 후방 2명으로 시작한다", () => {
     const state = newBattle();
     expect(frontUnit(state.player).def.id).toBe("anky");
-    expect(rearUnits(state.player).map((u) => u.def.id)).toEqual(["rex", "dodo"]);
+    expect(rearUnits(state.player).map((u) => u.def.id)).toEqual([
+      "rex",
+      "dodo",
+    ]);
     expect(state.enemy.units).toHaveLength(3);
   });
 });
@@ -34,7 +36,10 @@ describe("스왑", () => {
     expect(playerAct(state, { kind: "swap", memberIndex: 1 })).toBe(true);
 
     expect(frontUnit(state.player).def.id).toBe("rex");
-    expect(rearUnits(state.player).map((u) => u.def.id)).toEqual(["anky", "dodo"]);
+    expect(rearUnits(state.player).map((u) => u.def.id)).toEqual([
+      "anky",
+      "dodo",
+    ]);
     // 행동을 썼으므로 곧바로 적 차례다.
     expect(state.phase).toBe("enemy");
   });
@@ -89,6 +94,89 @@ describe("궁극기", () => {
     expect(playerAct(state, { kind: "ultimate" })).toBe(true);
     expect(frontUnit(state.enemy).hp).toBeLessThan(before);
     expect(frontUnit(state.player).energy).toBe(0);
+  });
+});
+
+describe("확장 능력치 전투 규칙", () => {
+  it("캐릭터별 ferocity만큼 궁극기 게이지를 획득한다", () => {
+    const rexState = newBattle(["rex", "anky", "dodo"]);
+    const ankyState = newBattle(["anky", "rex", "dodo"]);
+    playerAct(rexState, { kind: "basic" });
+    playerAct(ankyState, { kind: "basic" });
+
+    expect(frontUnit(rexState.player).energy).toBe(
+      getRelic("rex").stats.ferocity,
+    );
+    expect(frontUnit(ankyState.player).energy).toBe(
+      getRelic("anky").stats.ferocity,
+    );
+    expect(frontUnit(rexState.player).energy).not.toBe(
+      frontUnit(ankyState.player).energy,
+    );
+  });
+
+  it("물리 피해에는 방어력만 적용한다", () => {
+    const attacker = frontUnit(newBattle(["rex", "anky", "dodo"]).player);
+    const defender = frontUnit(newBattle(["mammoth", "rex", "dodo"]).player);
+    const damage = computeDamage(
+      attacker,
+      defender,
+      { power: 100, damageType: "physical", isCritical: false },
+      false,
+    );
+
+    expect(damage).toBe(
+      Math.round(
+        (attacker.def.stats.atk * 100) / (100 + defender.def.stats.def),
+      ),
+    );
+  });
+
+  it("마법 피해에는 저항력만 적용한다", () => {
+    const attacker = frontUnit(newBattle(["quetz", "anky", "dodo"]).player);
+    const defender = frontUnit(newBattle(["mammoth", "rex", "dodo"]).player);
+    const damage = computeDamage(
+      attacker,
+      defender,
+      { power: 100, damageType: "magical", isCritical: false },
+      false,
+    );
+
+    expect(damage).toBe(
+      Math.round(
+        (attacker.def.stats.ap * 100) / (100 + defender.def.stats.res),
+      ),
+    );
+  });
+
+  it("주입된 판정값으로 치명타 확률과 피해 배율을 결정적으로 적용한다", () => {
+    const attacker = frontUnit(newBattle(["rex", "anky", "dodo"]).player);
+    const defender = frontUnit(newBattle(["mammoth", "rex", "dodo"]).player);
+    const normal = computeDamage(
+      attacker,
+      defender,
+      { power: 100, damageType: "physical", isCritical: false },
+      false,
+    );
+    const critical = computeDamage(
+      attacker,
+      defender,
+      {
+        power: 100,
+        damageType: "physical",
+        isCritical: isCriticalHit(attacker.def.stats.critChance, 0),
+      },
+      false,
+    );
+
+    expect(isCriticalHit(attacker.def.stats.critChance, 0.99)).toBe(false);
+    expect(critical).toBeGreaterThan(normal);
+    expect(critical).toBe(
+      Math.round(
+        (attacker.def.stats.atk * (attacker.def.stats.critDamage / 100) * 100) /
+          (100 + defender.def.stats.def),
+      ),
+    );
   });
 });
 

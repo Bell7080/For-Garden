@@ -2,7 +2,6 @@ import Phaser from "phaser";
 import type { PuppetCreature } from "../puppets/assets";
 import { BASE_WIDTH, BASE_HEIGHT } from "../config/gameConfig";
 import type { BattleUnit } from "../core/battle";
-import { ULTIMATE_MAX } from "../core/battle";
 import type { RelicDef } from "../core/types";
 import { setDebugInfoOpen } from "../debug";
 import { enableHitOnClick, portraitAssetFor, portraitUsesRelicTint, spawnPuppet, tintPuppet } from "../puppets/assets";
@@ -218,7 +217,8 @@ export class InfoManager {
   showUnit(unit: BattleUnit, isFront: boolean): void {
     const live = [
       `현재 HP ${unit.hp} / ${unit.maxHp}`,
-      `궁극기 게이지 ${unit.energy} / ${ULTIMATE_MAX}`,
+      // 캐릭터마다 다른 궁극기 비용을 상세 정보에도 그대로 표시한다.
+      `궁극기 게이지 ${unit.energy} / ${unit.def.ultimate.cost}`,
       `위치 ${isFront ? "전방(선봉)" : "후방"}`,
     ].join("\n");
     this.open(

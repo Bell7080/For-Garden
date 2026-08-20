@@ -42,15 +42,22 @@ export class FakeServer implements GameApi {
       throw new GameApiError("INSUFFICIENT_CURRENCY", "재화가 부족합니다.");
     }
 
-    // 응답을 만들기 전에 서버 저장소 역할의 세션을 먼저 확정한다.
-    this.state.wallet = spend(this.state.wallet, banner, request.count);
-    const relicIds = pull(banner, request.count, this.random);
-    const outcome = applyPull(this.state.owned, relicIds);
-    // 비용과 획득이 모두 확정된 API 경계에서 한 스냅샷으로 저장한다.
-    if (this.state === session) saveManager.save(this.state);
+    // 원본을 전혀 건드리지 않은 복제 상태에서 비용·천장·보유 결과를 모두 먼저 계산한다.
+    const nextWallet = spend(this.state.wallet, banner, request.count);
+    const pulled = pull(banner, request.count, this.state.pullCountSinceHighestRarity[banner.id] ?? 0, this.random);
+    const nextOwned = new Set(this.state.owned);
+    const outcome = applyPull(nextOwned, pulled.relicIds);
+    const nextPity = { ...this.state.pullCountSinceHighestRarity, [banner.id]: pulled.pullCountSinceHighestRarity };
+    const nextState: Session = { ...this.state, wallet: nextWallet, owned: nextOwned, pullCountSinceHighestRarity: nextPity };
+
+    // 저장 실패도 원본 메모리에 부분 반영되지 않도록 저장을 먼저 성공시킨 뒤 필드를 일괄 교체한다.
+    if (this.state === session) saveManager.save(nextState);
+    this.state.wallet = nextWallet;
+    this.state.owned = nextOwned;
+    this.state.pullCountSinceHighestRarity = nextPity;
     return {
       ...this.snapshot(),
-      relicIds,
+      relicIds: pulled.relicIds,
       freshRelicIds: outcome.fresh,
       duplicateRelicIds: outcome.duplicates,
     };
@@ -63,6 +70,7 @@ export class FakeServer implements GameApi {
     );
     return {
       wallet: { ...this.state.wallet },
+      pullCountSinceHighestRarity: { ...this.state.pullCountSinceHighestRarity },
       ownedRelicIds: [...this.state.owned],
       relicProgress,
       ownedHeartGemIds: [...this.state.ownedHeartGemIds],

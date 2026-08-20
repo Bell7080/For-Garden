@@ -42,6 +42,16 @@ describe("SaveManager", () => {
     expect(manager.migrate(legacy)).toMatchObject({ saveVersion: CURRENT_SAVE_VERSION, dailyContent: { completedIds: [] } });
   });
 
+  it("저장에 현재 배너 ID가 빠졌거나 삭제된 배너 ID가 있어도 천장을 기본값으로 보정한다", () => {
+    const storage = new MemoryStorage();
+    const data = validData() as SaveData & { pullCountSinceHighestRarity: Record<string, number> };
+    data.pullCountSinceHighestRarity = { fossil: 12, "retired-banner": 77 };
+    storage.setItem(SAVE_STORAGE_KEY, JSON.stringify(data));
+
+    const loaded = new SaveManager(storage).load()!;
+    expect(loaded.pullCountSinceHighestRarity).toEqual({ fossil: 12, amber: 0 });
+  });
+
   it("손상 JSON을 복구 가능한 저장 오류로 보고한다", () => {
     const storage = new MemoryStorage();
     storage.setItem(SAVE_STORAGE_KEY, "{broken");

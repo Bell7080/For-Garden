@@ -11,6 +11,7 @@ function makeSession(fossil = 1000): Session {
     cleared: new Set(),
     owned: new Set(["anky", "rex", "dodo"]),
     favorite: "anky",
+    pullCountSinceHighestRarity: { fossil: 0, amber: 0 },
     wallet: { fossil, amber: 10 },
     relicProgress: { anky: { level: 2, levelTitle: "발아체", dnaMastery: 1, heartGemSlots: ["vital-seed", null, null] } },
     ownedHeartGemIds: ["vital-seed"],
@@ -29,6 +30,7 @@ describe("FakeServer", () => {
     expect(response.relicIds).toEqual(["rex"]);
     expect(response.duplicateRelicIds).toEqual(["rex"]);
     expect(state.wallet.fossil).toBe(900);
+    expect(state.pullCountSinceHighestRarity.fossil).toBe(0);
   });
 
   it("재화가 부족하면 상태를 변경하지 않는다", async () => {

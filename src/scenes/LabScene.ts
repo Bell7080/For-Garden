@@ -35,6 +35,8 @@ export class LabScene extends Phaser.Scene {
   private bannerIndex = 0;
   private bannerName!: Phaser.GameObjects.Text;
   private bannerDesc!: Phaser.GameObjects.Text;
+  private pickupText!: Phaser.GameObjects.Text;
+  private pityText!: Phaser.GameObjects.Text;
   private oneButton!: Button;
   private tenButton!: Button;
   private showcase?: PuppetCreature;
@@ -68,6 +70,13 @@ export class LabScene extends Phaser.Scene {
       .text(cx, 228, "", textStyle({ size: 26, color: COLOR.inkDim, align: "center", wrap: BASE_WIDTH - 120 }))
       .setOrigin(0.5, 0);
 
+    this.pickupText = this.add.text(cx, 310, "", textStyle({ size: 28, color: COLOR.accentText })).setOrigin(0.5, 0);
+    // 기존 Button/패널 토큰을 재사용해 확률 정보가 별도 웹 UI처럼 보이지 않게 한다.
+    new Button(this, cx, 390, {
+      width: 300, height: 82, label: "확률 정보", fontSize: 28,
+      onClick: () => this.showRates(),
+    });
+
     // 배너 전환.
     new Button(this, 100, 700, {
       width: 110,
@@ -100,6 +109,8 @@ export class LabScene extends Phaser.Scene {
       fontSize: 36,
       onClick: () => this.doPull(10),
     });
+
+    this.pityText = this.add.text(cx, NAV_TOP - 355, "", textStyle({ size: 28, color: COLOR.accentText })).setOrigin(0.5);
 
     this.add
       .text(
@@ -180,6 +191,25 @@ export class LabScene extends Phaser.Scene {
     this.time.delayedCall(1800, () => notice.destroy());
   }
 
+  /** 배너에 선언된 조건부 픽업 확률과 등급 확률을 읽기 전용 패널로 보여 준다. */
+  private showRates(): void {
+    const banner = this.banner;
+    const cx = BASE_WIDTH / 2;
+    const overlay = this.add.container(0, 0).setDepth(850);
+    const shade = this.add.rectangle(cx, 960, BASE_WIDTH, 1920, COLOR.void, 0.9).setInteractive();
+    const panel = this.add.rectangle(cx, 800, 820, 720, COLOR.panel).setStrokeStyle(3, COLOR.panelEdge);
+    overlay.add([shade, panel]);
+    overlay.add(this.add.text(cx, 510, "발굴 확률", textStyle({ size: 44 })).setOrigin(0.5));
+    const rates = (["SSR", "SR", "R"] as const)
+      .map((rarity) => `${rarity}  ${(banner.rarityRates[rarity] * 100).toFixed(1)}%`)
+      .join("\n");
+    overlay.add(this.add.text(cx, 610, rates, textStyle({ size: 34, align: "center", lineSpacing: 24 })).setOrigin(0.5, 0));
+    overlay.add(this.add.text(cx, 870, `등급 내 픽업 확률 ${(banner.pickupRate * 100).toFixed(0)}%\n10연 마지막 슬롯 SR 이상 보장`, textStyle({ size: 27, color: COLOR.inkDim, align: "center", lineSpacing: 14 })).setOrigin(0.5, 0));
+    const close = new Button(this, cx, 1080, { width: 320, height: 100, label: "확인", fontSize: 32, onClick: () => overlay.destroy() });
+    overlay.add(close);
+    shade.on("pointerdown", () => overlay.destroy());
+  }
+
   /** 뽑은 결과를 한 장에 보여 준다. */
   private showResult(results: string[], freshCount: number): void {
     const cx = BASE_WIDTH / 2;
@@ -226,6 +256,10 @@ export class LabScene extends Phaser.Scene {
     const banner = this.banner;
     this.bannerName.setText(banner.name);
     this.bannerDesc.setText(banner.desc);
+    const pickupNames = Object.values(banner.pickupRelicIds).flat().map((id) => getRelic(id).name);
+    this.pickupText.setText(`PICK UP  ${pickupNames.join(" · ")}`);
+    const currentPity = session.pullCountSinceHighestRarity[banner.id] ?? 0;
+    this.pityText.setText(`SSR 확정까지 ${Math.max(0, banner.highestRarityGuarantee - currentPity)}회`);
 
     const unit = banner.currency === "fossil" ? "화석" : "호박석";
     this.oneButton

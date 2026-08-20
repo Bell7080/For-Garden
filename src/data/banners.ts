@@ -1,37 +1,37 @@
 import type { Banner } from "../core/gacha";
+import type { RelicRarity } from "../core/types";
 import { PLAYABLE_RELICS } from "./relics";
 
-const ALL = PLAYABLE_RELICS.map((r) => r.id);
+/** 정적 렐릭 희귀도를 기준으로 구성해 등급 결정 후 다른 등급이 섞이지 않게 한다. */
+const POOLS = Object.fromEntries(
+  (["R", "SR", "SSR"] satisfies RelicRarity[]).map((rarity) => [
+    rarity,
+    PLAYABLE_RELICS.filter((relic) => relic.rarity === rarity).map((relic) => relic.id),
+  ]),
+) as Record<RelicRarity, string[]>;
 
-/**
- * 발굴 배너. 지금은 렐릭이 여섯이라 둘 다 전체 풀을 쓰고 비용만 다르다.
- * 등급과 픽업은 렐릭이 30종에 가까워지면 나눈다.
- */
+/** 프로토타입 운영값. 천장(80회)은 배너마다 독립적으로 누적된다. */
 export const BANNERS: Banner[] = [
   {
-    id: "fossil",
-    name: "화석 발굴",
-    featuredRelicId: "anky",
-    desc: "굳은 화석에서 DNA를 긁어낸다. 흔하게 돌릴 수 있다.",
-    currency: "fossil",
-    costOne: 100,
-    costTen: 900,
-    pool: ALL,
+    id: "fossil", name: "화석 발굴", featuredRelicId: "anky",
+    desc: "굳은 화석에서 DNA를 긁어낸다. 토리카 픽업 진행 중.",
+    currency: "fossil", costOne: 100, costTen: 900,
+    rarityRates: { R: 0.9, SR: 0.09, SSR: 0.01 },
+    relicPools: POOLS, pickupRelicIds: { SR: ["anky"] }, pickupRate: 0.5,
+    highestRarityGuarantee: 80,
   },
   {
-    id: "amber",
-    name: "호박석 발굴",
-    featuredRelicId: "rex",
-    desc: "호박에 갇힌 온전한 DNA. 보존 상태가 좋아 결과도 좋다.",
-    currency: "amber",
-    costOne: 2,
-    costTen: 18,
-    pool: ALL,
+    id: "amber", name: "호박석 발굴", featuredRelicId: "rex",
+    desc: "호박에 갇힌 온전한 DNA. 렉시아 픽업 진행 중.",
+    currency: "amber", costOne: 2, costTen: 18,
+    rarityRates: { R: 0.8, SR: 0.17, SSR: 0.03 },
+    relicPools: POOLS, pickupRelicIds: { SSR: ["rex"] }, pickupRate: 0.5,
+    highestRarityGuarantee: 80,
   },
 ];
 
 export function getBanner(id: string): Banner {
-  const found = BANNERS.find((b) => b.id === id);
+  const found = BANNERS.find((banner) => banner.id === id);
   if (!found) throw new Error(`알 수 없는 배너 id: ${id}`);
   return found;
 }

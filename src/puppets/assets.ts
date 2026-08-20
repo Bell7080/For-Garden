@@ -55,6 +55,14 @@ export const LEXIA_ASSET: PuppetAsset = {
   content: { left: 95, top: 69, right: 894, bottom: 1419 },
 };
 
+/** 3번 전신 일러스트: 세이라(스피노사우루스). */
+export const SEIRA_ASSET: PuppetAsset = {
+  url: `${base}puppets/char_003.zip`,
+  imageWidth: 1085,
+  imageHeight: 1450,
+  content: { left: 0, top: 0, right: 1085, bottom: 1450 },
+};
+
 /**
  * 렐릭 데이터가 참조하는 원화 레지스트리. 새 원화는 여기에 한 번 등록한 뒤 데이터 키로 연결한다.
  * placeholder 키는 같은 임시 파일을 쓰되 화면에서 렐릭별 tint를 적용할 수 있게 별도로 둔다.
@@ -62,6 +70,7 @@ export const LEXIA_ASSET: PuppetAsset = {
 const PORTRAIT_ASSETS = {
   torika: { asset: TORIKA_ASSET, usesRelicTint: false },
   lexia: { asset: LEXIA_ASSET, usesRelicTint: false },
+  seira: { asset: SEIRA_ASSET, usesRelicTint: false },
   "torika-placeholder": { asset: TORIKA_ASSET, usesRelicTint: true },
 } as const satisfies Record<PortraitAssetId, { asset: PuppetAsset; usesRelicTint: boolean }>;
 
@@ -99,10 +108,19 @@ export const LEXIA_SD_ASSET: PuppetAsset = {
   content: { left: 185, top: 105, right: 1080, bottom: 1140 },
 };
 
+/** 3번 SD: 세이라. 원화와 같은 렐릭 id로 연결해 전투에서도 전용 묶음을 사용한다. */
+export const SEIRA_SD_ASSET: PuppetAsset = {
+  url: `${base}puppets/charSD_003.zip`,
+  imageWidth: 1122,
+  imageHeight: 1402,
+  content: { left: 0, top: 0, right: 1122, bottom: 1402 },
+};
+
 /** 전투용 SD가 완성된 캐릭터만 전용 묶음을 쓰고 나머지는 임시 적 아트를 공유한다. */
 export function battleAssetFor(relicId: string): PuppetAsset {
   if (relicId === "anky") return TORIKA_SD_ASSET;
   if (relicId === "rex") return LEXIA_SD_ASSET;
+  if (relicId === "spino") return SEIRA_SD_ASSET;
   return ENTITY_ASSET;
 }
 
@@ -165,8 +183,10 @@ export async function preloadPuppetAssets(): Promise<void> {
   await Promise.all([
     loadPuppet(TORIKA_ASSET),
     loadPuppet(LEXIA_ASSET),
+    loadPuppet(SEIRA_ASSET),
     loadPuppet(TORIKA_SD_ASSET),
     loadPuppet(LEXIA_SD_ASSET),
+    loadPuppet(SEIRA_SD_ASSET),
     loadPuppet(ENTITY_ASSET),
   ]);
 }

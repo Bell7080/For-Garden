@@ -8,7 +8,8 @@ import type { RelicProgress } from "../core/types";
 import { STAGES } from "../data/stages";
 
 /** 처음 시작할 때 쥐어 주는 렐릭. 셋이면 바로 출격할 수 있다. */
-const STARTER_RELICS = ["anky", "rex", "dodo"];
+// 전용 원화와 SD 전투 Puppet까지 개발된 첫 세 캐릭터를 초기 체험 풀로 연다.
+const STARTER_RELICS = ["anky", "rex", "spino"];
 
 export interface Session {
   /** 지도에서 고른 스테이지 id. */

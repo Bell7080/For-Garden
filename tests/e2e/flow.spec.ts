@@ -5,7 +5,7 @@ const BASE_HEIGHT = 1920;
 
 /**
  * 편성 화면 그리드에서 렐릭 카드의 기준 좌표.
- * 그리드에는 **보유한** 렐릭만 순서대로 놓인다 — 시작 보유는 렉시아 · 토리카 · 도도 셋이다.
+ * 그리드에는 **보유한** 렐릭만 순서대로 놓인다 — 시작 보유는 전용 아트가 완성된 세 명이다.
  */
 const ROSTER = { startX: 116, startY: 1080, stepX: 212, stepY: 244, cols: 5 };
 function card(index: number): [number, number] {
@@ -16,7 +16,7 @@ function card(index: number): [number, number] {
 }
 const LEXIA = card(0);
 const TORIKA = card(1);
-const DODO = card(2);
+const SEIRA = card(2);
 
 async function canvasBox(page: Page) {
   const box = await page.locator("canvas").boundingBox();
@@ -72,12 +72,12 @@ async function enterParty(page: Page): Promise<void> {
   await expect.poll(() => scene(page)).toBe("party");
 }
 
-/** 파티는 토리카 · 렉시아 · 도도 순으로 고른다. */
+/** 파티는 토리카 · 렉시아 · 세이라 순으로 고른다. */
 async function enterBattle(page: Page): Promise<void> {
   await enterParty(page);
   await tap(page, ...TORIKA);
   await tap(page, ...LEXIA);
-  await tap(page, ...DODO);
+  await tap(page, ...SEIRA);
   await tap(page, BASE_WIDTH / 2, 1700); // 전투 시작
   await expect.poll(() => scene(page)).toBe("battle");
 }
@@ -88,14 +88,14 @@ test("출격 → 스테이지 지도 → 파티 편성 → 전투까지 이어�
   const state = await battle(page);
   expect(state?.phase).toBe("fight");
   // 편성한 셋이 그대로 전장에 선다.
-  expect(state?.playerOrder).toEqual(["토리카", "렉시아", "도도"]);
+  expect(state?.playerOrder).toEqual(["토리카", "렉시아", "세이라"]);
 });
 
 test("편성 화면에서 렐릭을 꾹 누르면 정보창이 열린다", async ({ page }) => {
   await enterParty(page);
   expect(await infoOpen(page)).toBeFalsy();
 
-  await longPress(page, ...TORIKA);
+  await longPress(page, ...SEIRA);
   await expect.poll(() => infoOpen(page)).toBe(true);
 
   // 짧게 누르는 편성 토글과 섞이지 않아야 한다.
@@ -107,7 +107,7 @@ test("1080×1920 캐릭터 상세과 스킬 카드가 안전 영역 안에 표�
   // 기준 해상도를 직접 사용해 전신과 최대 폭 정보 레이어의 회귀를 스크린샷으로 남긴다.
   await page.setViewportSize({ width: BASE_WIDTH, height: BASE_HEIGHT });
   await enterParty(page);
-  await longPress(page, ...TORIKA);
+  await longPress(page, ...SEIRA);
   await expect.poll(() => infoOpen(page)).toBe(true);
   await page.screenshot({ path: `test-results/${test.info().project.name}-character-info-1080x1920.png`, fullPage: true });
 

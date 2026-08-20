@@ -21,16 +21,16 @@ describe("RelicCollectionManager", () => {
     const manager = new RelicCollectionManager(makeSession());
 
     expect(manager.acquire("anky")).toBe(false);
-    expect(manager.acquire("mammoth")).toBe(true);
-    expect(manager.owns("mammoth")).toBe(true);
+    expect(manager.acquire("spino")).toBe(true);
+    expect(manager.owns("spino")).toBe(true);
   });
 
   it("여러 발굴 결과의 신규와 중복을 순서대로 분리한다", () => {
     const manager = new RelicCollectionManager(makeSession());
 
-    expect(manager.applyAcquisitions(["anky", "mammoth", "mammoth"])).toEqual({
-      fresh: ["mammoth"],
-      duplicates: ["anky", "mammoth"],
+    expect(manager.applyAcquisitions(["anky", "spino", "spino"])).toEqual({
+      fresh: ["spino"],
+      duplicates: ["anky", "spino"],
     });
   });
 
@@ -38,8 +38,8 @@ describe("RelicCollectionManager", () => {
     const state = makeSession();
     const manager = new RelicCollectionManager(state);
 
-    expect(manager.setFavorite("mammoth")).toBe(false);
-    expect(manager.setParty(["anky", "rex", "mammoth"])).toBe(false);
+    expect(manager.setFavorite("spino")).toBe(false);
+    expect(manager.setParty(["anky", "rex", "spino"])).toBe(false);
     expect(state.favorite).toBe("anky");
     expect(state.party).toEqual(["anky", "rex", "dodo"]);
   });

@@ -46,7 +46,8 @@
 
 ## 변경 전 확인
 
-`npm run typecheck`, `npm test`, `npm run build`를 기본 품질 게이트로 실행한다. UI 배치를
+GitHub Actions는 두지 않는다 — 배포는 Vercel이 맡고 품질 게이트는 로컬에서 돌린다. 커밋 전에
+`npm run typecheck`, `npm test`, `npm run build`를 반드시 실행한다. UI 배치를
 바꿨다면 Playwright 또는 수동 스크린샷으로 기존 1080×1920 테마와 겹침을 확인한다.
 
 ## 입력 및 임시 서버

@@ -102,33 +102,32 @@ npm run typecheck
 npm run test:e2e   # Playwright — 모바일 화면비/터치로 빌드 결과 구동 확인 (build 이후 실행)
 ```
 
-## GitHub Actions로 구동 확인
+## 구동 확인
 
-실제 모바일 기기 없이도 `.github/workflows/ci.yml`이 매 push/PR마다:
+CI는 두지 않는다. 배포는 Vercel이 맡고, 품질 게이트는 커밋 전에 로컬에서 직접 돌린다.
 
-1. 타입체크 → Vitest → 빌드
-2. iPhone 14 / Pixel 7 화면비로 Playwright가 빌드 결과를 실제로 띄워
-   - 캔버스가 세로로 렌더링되는지
-   - 탭(터치) 입력으로 타이틀 → 연구소 씬 전환이 되는지
-   - 기기를 가로로 눕히면 회전 안내가 뜨는지
-   를 확인하고 스크린샷을 아티팩트로 남긴다.
+```bash
+npm run typecheck && npm test && npm run build
+npm run test:e2e   # iPhone 14 / Pixel 7 화면비로 빌드 결과를 실제로 띄워 본다
+```
 
-로컬에 모바일 기기가 없다면 Actions 실행 결과의 `mobile-screenshots` 아티팩트로
-실제 화면을 확인하면 된다.
+e2e는 캔버스가 세로로 렌더링되는지, 탭(터치)으로 씬이 전환되는지, 기기를 가로로 눕히면
+회전 안내가 뜨는지를 확인하고 `test-results/`에 스크린샷을 남긴다. 실제 모바일 기기가 없을
+때는 그 스크린샷으로 화면을 확인하면 된다.
 
 ## 배포 (Vercel)
 
-배포는 이 CI가 아니라 **Vercel의 GitHub 연동**이 맡는다. `vercel.json`에 빌드 설정을
+배포는 **Vercel의 GitHub 연동**이 전담한다. `vercel.json`에 빌드 설정을
 미리 넣어뒀지만, Vercel 쪽 저장소 연결(Import)은 계정 인증이 필요해 아래 절차를
 Vercel 대시보드에서 직접 한 번 해야 한다.
 
 1. https://vercel.com/new 에서 GitHub 계정으로 로그인 → `Bell7080/For-Garden` Import
 2. Framework Preset은 Vite로 자동 인식됨 (`vercel.json`이 있으면 그대로 따른다)
 3. 이후로는 `main`에 push할 때마다 Vercel이 자체적으로 빌드·배포한다 (PR에는 미리보기
-   배포 URL이 자동으로 달린다) — 이 저장소의 GitHub Actions와는 완전히 별개로 동작하므로,
-   Playwright e2e처럼 느린 잡 때문에 배포가 지연되지 않는다.
+   배포 URL이 자동으로 달린다).
 
-CI(`ci.yml`)는 타입체크·테스트 품질 게이트로만 남겨뒀다. GitHub Pages 배포 잡은 제거했다.
+빌드가 깨진 채로 push하면 Vercel 배포가 그대로 실패한다. 막아 줄 CI가 없으니 위의 품질
+게이트는 반드시 커밋 전에 돌린다.
 
 ## 구조
 

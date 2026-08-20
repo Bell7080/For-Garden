@@ -200,6 +200,8 @@ export interface SpawnOptions {
    * 화면 밖으로 잘려도 되는 큰 연출은 발끝 대신 이쪽을 쓴다.
    */
   focus?: { anchor: AnchorKind; x: number; y: number };
+  /** 바닥 높이는 유지하면서 지정 관절의 가로 위치만 맞춘다. 로비 전신처럼 발을 세운 화면에 쓴다. */
+  focusX?: { anchor: AnchorKind; x: number };
   /** 그림(투명 여백 제외)의 화면상 높이. 이 값에 맞춰 배율이 정해진다. */
   height: number;
   tint?: number;
@@ -300,15 +302,21 @@ function resolvePlacement(
     };
     return computeAnchoredPlacement(asset, anchorsOf()[options.focus.anchor], focus);
   }
-  return computePlacement(asset, {
+  const grounded = computePlacement(asset, {
     ...options,
     x: options.x ?? 0,
     groundY: options.groundY ?? 0,
   });
+  if (!options.focusX) return grounded;
+
+  // 발끝의 세로 배치는 그대로 두고, 꼬리·날개 면적과 무관하게 중심 관절만 목표 x에 맞춘다.
+  const anchor = anchorsOf()[options.focusX.anchor];
+  const signedOffsetX = (anchor.x - asset.imageWidth / 2) * grounded.scale * (options.flipX ? -1 : 1);
+  return { ...grounded, x: options.focusX.x - signedOffsetX };
 }
 
 /**
- * 묶음을 씬에 세운다. 발끝이 `groundY`에, 그림의 가로 중앙이 `x`에 오도록 놓는다.
+ * 묶음을 씬에 세운다. 기본은 발끝과 그림 중앙을 맞추고, `focusX`는 발을 둔 채 관절만 가로 정렬한다.
  * `focus`를 주면 그 대신 지정한 관절이 화면의 한 점에 오도록 놓는다.
  */
 export async function spawnPuppet(

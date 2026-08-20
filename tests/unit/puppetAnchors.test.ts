@@ -4,6 +4,7 @@ import {
   computeAnchoredPlacement,
   computeHeadCardFrame,
   findAnchorBone,
+  findGroundBones,
   resolveAnchors,
   type AnchorFrame,
 } from "../../src/puppets/anchors";
@@ -39,6 +40,15 @@ describe("기준 관절 찾기", () => {
 
   it("는 몸통1이 아니라 중심1을 코어 기준으로 고른다", () => {
     expect(findAnchorBone(BONES, "core")?.name).toBe("중심1");
+  });
+
+  it("는 중심 태그를 제외하고 몸통1을 몸통 기준으로 고른다", () => {
+    expect(findAnchorBone(BONES, "body")?.name).toBe("몸통1");
+  });
+
+  it("는 발1·발2 태그를 바닥 접점 후보로 모두 찾는다", () => {
+    const feet = [bone("발1", 4, 90, ["foot", "ground"]), bone("발2", 8, 92, ["foot", "ground"])];
+    expect(findGroundBones([...BONES, ...feet]).map((item) => item.name)).toEqual(["발1", "발2"]);
   });
 
   it("는 태그가 없는 예전 묶음도 이름으로 찾는다", () => {

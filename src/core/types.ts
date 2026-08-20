@@ -117,6 +117,18 @@ export interface Passive {
 export interface RelicDef {
   id: string;
   name: string;
+  /** 도감에서 쓰는 개체번호. 앞자리 0을 보존하기 위해 숫자가 아닌 문자열로 저장한다. */
+  specimenNumber: string;
+  /** 복원 프로젝트 내부에서 부르는 정적 코드네임이다. */
+  projectName: string;
+  /** 표본을 발견한 장소이며 생물학적 기원(origin)과 구분한다. */
+  excavationSite: string;
+  /** 미보유 상태에서도 공개할 수 있는 외형 중심의 짧은 도감 요약이다. */
+  catalogSummary: string;
+  /** 설정 확정 여부를 문자열 임시 문구가 아니라 판별 가능한 데이터로 표현한다. */
+  unlockRecord:
+    | { status: "recorded"; text: string }
+    | { status: "sealed"; reason: "pending-lore" | "restricted" };
   /** 정적 희귀도는 배너 확률/풀 검증과 결과 UI가 공유하는 단일 기준이다. */
   rarity: RelicRarity;
   /** 상세·로비·배너에서 사용할 Puppet 전신 원화의 데이터 키. */

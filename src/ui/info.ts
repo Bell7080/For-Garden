@@ -26,6 +26,7 @@ import { gameApi } from "../api/FakeServer";
 import { canLevelUpRelic, RELIC_LEVEL_CAP, relicLevelUpCost } from "../core/relicProgression";
 import { session } from "../state/session";
 import { BOND_FEROCITY_MULTIPLIER, BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL } from "../core/bond";
+import { getRelicCatalogDisclosure } from "../core/relicCatalog";
 
 /** 문자열 순서에 의존하지 않고 스킬 상세의 각 UI 요소를 직접 채우는 계약이다. */
 export interface SkillInfoViewModel {
@@ -116,12 +117,14 @@ export class InfoManager {
   private readonly root: Phaser.GameObjects.Container;
   private readonly chrome: Phaser.GameObjects.Container;
   private readonly header: Phaser.GameObjects.Container;
+  private readonly archive: Phaser.GameObjects.Container;
   private readonly stats: Phaser.GameObjects.Container;
   private readonly growth: Phaser.GameObjects.Container;
   private readonly gems: Phaser.GameObjects.Container;
   private readonly skills: Phaser.GameObjects.Container;
   private readonly skillDetail: Phaser.GameObjects.Container;
   private readonly headerText: Phaser.GameObjects.Text;
+  private readonly archiveText: Phaser.GameObjects.Text;
   private readonly dnaText: Phaser.GameObjects.Text;
   private readonly levelText: Phaser.GameObjects.Text;
   private readonly levelButton: Button;
@@ -158,6 +161,12 @@ export class InfoManager {
     this.chrome.add(this.header);
     // 닫기는 다른 화면의 뒤로가기와 같은 버튼·같은 자리를 쓴다.
     this.chrome.add(addBackButton(scene, () => this.hide()));
+
+    // 도감 정적 기록은 성장·전투 수치와 분리해 왼쪽 반투명 패널에 고정한다.
+    this.archive = floatingLayer(scene, 58, 300, 560, 470, "기록 / ARCHIVE RECORD");
+    this.archiveText = scene.add.text(28, 62, "", textStyle({ size: 21, wrap: 500, lineSpacing: 9 })).setOrigin(0);
+    this.archive.add(this.archiveText);
+    this.chrome.add(this.archive);
 
     this.stats = floatingLayer(scene, 664, 300, 370, 590, "능력치 / STATUS");
     this.radar = new StatRadar(scene, 185, 205, 105);
@@ -269,19 +278,25 @@ export class InfoManager {
   }
 
   /** 공용 진입점의 캐릭터 화면을 성장 데이터와 함께 채운다. */
-  private openCharacter(def: RelicDef, live?: string, unit?: BattleUnit, target?: BattleUnit): void {
+  private openCharacter(def: RelicDef, live?: string, unit?: BattleUnit, target?: BattleUnit, owned = true): void {
     this.currentDef = def;
     // 도감 진입 시 이전 전투 대상을 지워 잘못된 확정 피해를 노출하지 않는다.
     this.currentUnit = unit;
     this.previewTarget = target;
     const progress = relicProgression.getProgress(def.id);
     const finalStats = relicProgression.getFinalStats(def.id);
-    this.headerText.setText(`SSR  ${def.name}\nLV.${progress.level} · ${progress.levelTitle}  |  ${def.origin} · ${ROLE_LABEL[def.role]}`);
+    this.headerText.setText(owned
+      ? `NO.${def.specimenNumber}  ${def.rarity}  ${def.name}\nPROJECT ${def.projectName}  |  ${def.origin} · ${ROLE_LABEL[def.role]}`
+      : `NO.${def.specimenNumber}  미발굴 개체\nSILHOUETTE RECORD`);
+    const disclosure = getRelicCatalogDisclosure(def, owned);
+    this.archiveText.setText(disclosure.access === "full"
+      ? `프로젝트 네임  ${disclosure.projectName}\n기원  ${disclosure.origin}\n발굴지  ${disclosure.excavationSite}\n\n기록\n${disclosure.record}`
+      : `제한 실루엣 정보\n${disclosure.catalogSummary}\n\n상세 기록은 개체 획득 후 해제됩니다.`);
     const maxed = progress.level >= RELIC_LEVEL_CAP;
     const cost = maxed ? 0 : relicLevelUpCost(progress.level);
     // 다음 레벨은 모든 기본 능력치가 누적 +2%p라는 코어 성장 규칙을 사람이 읽는 상승치로 표시한다.
     this.levelText.setText(`현재 LV.${progress.level} / ${RELIC_LEVEL_CAP}\n다음 레벨  모든 능력치 +2%p\n비용  ${maxed ? "MAX" : `잡초 ${cost}`}  · 보유 ${session.wallet.weeds}`);
-    this.levelButton.setVisible(!unit).setEnabled(!unit && canLevelUpRelic(progress, session.wallet.weeds));
+    this.levelButton.setVisible(owned && !unit).setEnabled(owned && !unit && canLevelUpRelic(progress, session.wallet.weeds));
     const bondMaxed = progress.bondLevel >= BOND_LEVEL_CAP;
     const nextBondXp = BOND_TOTAL_XP_BY_LEVEL[Math.min(BOND_LEVEL_CAP, progress.bondLevel + 1)];
     const ferocityReduction = Math.round((1 - BOND_FEROCITY_MULTIPLIER[progress.bondLevel]) * 100);
@@ -293,9 +308,11 @@ export class InfoManager {
     progress.heartGemSlots.forEach((id, index) => this.gemLabels[index].setText(id ? getHeartGem(id).name.replace(" Heart Gem", "") : "빈 슬롯").setColor(id ? COLOR.accentText : COLOR.inkDim));
     this.buildSkillButtons(def);
     this.skillDetail.setVisible(false); this.skills.setVisible(true);
-    this.portraitWanted = true;
+    // 미보유 개체는 원화·수치·스킬을 노출하지 않고 번호와 실루엣 요약만 남긴다.
+    this.stats.setVisible(owned); this.growth.setVisible(owned); this.gems.setVisible(owned); this.skills.setVisible(owned);
+    this.portraitWanted = owned;
     this.portrait?.setVisible(false); this.figure?.setVisible(false);
-    void this.loadPortrait(def); void this.loadFigure(def);
+    if (owned) { void this.loadPortrait(def); void this.loadFigure(def); }
     this.root.setVisible(true); this.chrome.setVisible(true); setDebugInfoOpen(true);
   }
 
@@ -358,7 +375,8 @@ export class InfoManager {
   }
 
   private closeSkillDetail(): void { this.skillDetail.setVisible(false); if (this.root.visible) this.skills.setVisible(true); }
-  showRelic(def: RelicDef): void { this.openCharacter(def); }
+  /** 도감은 보유 여부를 전달해 정적 기록과 성장 정보의 잠금을 한곳에서 적용한다. */
+  showRelic(def: RelicDef, owned = true): void { this.openCharacter(def, undefined, undefined, undefined, owned); }
   /** target을 함께 넘긴 전투 정보창은 방어력/저항력을 적용한 비치명타 예상값을 표시한다. */
   showUnit(unit: BattleUnit, isFront: boolean, target?: BattleUnit): void {
     // 저장 상한과 현재 궁극기의 소비 비용을 함께 적어 두 수치의 의미를 혼동하지 않게 한다.

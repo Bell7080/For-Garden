@@ -8,6 +8,11 @@ export const RELICS: RelicDef[] = [
   {
     id: "rex",
     name: "렉시아",
+    specimenNumber: "072",
+    projectName: "APEX CROWN",
+    excavationSite: "몽골 네메그트층 제7구역",
+    catalogSummary: "거대한 두개골과 강한 턱 구조가 확인된 육식성 표본.",
+    unlockRecord: { status: "recorded", text: "제7구역에서 회수한 치아 조직으로 복원했다. 높은 공격성과 달리 동료의 신호에는 빠르게 반응한다." },
     rarity: "SSR",
     portraitAssetId: "lexia",
     origin: "티라노사우루스",
@@ -56,6 +61,11 @@ export const RELICS: RelicDef[] = [
   {
     id: "anky",
     name: "토리카",
+    specimenNumber: "014",
+    projectName: "BASTION HORN",
+    excavationSite: "고비 사막 백악기 퇴적층",
+    catalogSummary: "머리 장식과 골편이 발달한 대형 초식성 표본.",
+    unlockRecord: { status: "recorded", text: "풍화된 골편에서 안정적인 DNA를 확보했다. 복원 직후부터 방어 행동으로 조사대를 보호했다." },
     rarity: "SR",
     portraitAssetId: "torika",
     origin: "트리케라톱스",
@@ -104,6 +114,11 @@ export const RELICS: RelicDef[] = [
   {
     id: "spino",
     name: "세이라",
+    specimenNumber: "105",
+    projectName: "TIDAL SAIL",
+    excavationSite: "북아프리카 켐켐층 수로",
+    catalogSummary: "긴 주둥이와 돛 형태의 등 구조를 지닌 반수생 표본.",
+    unlockRecord: { status: "recorded", text: "고대 수로의 퇴적암에서 척추 표본을 발굴했다. 수중 환경 적응 신호가 복원 과정에서도 유지됐다." },
     rarity: "SR",
     portraitAssetId: "seira",
     origin: "스피노사우루스",
@@ -152,6 +167,11 @@ export const RELICS: RelicDef[] = [
   {
     id: "dodo",
     name: "도도",
+    specimenNumber: "001",
+    projectName: "ECHO NEST",
+    excavationSite: "모리셔스 석회동굴 보관층",
+    catalogSummary: "짧은 날개와 단단한 부리를 가진 비행 불능 조류 표본.",
+    unlockRecord: { status: "recorded", text: "보존된 골격과 난각에서 최초의 안정 표본을 완성했다. 낮은 경계성 덕분에 생태 관찰 기준 개체가 됐다." },
     rarity: "R",
     portraitAssetId: "torika-placeholder",
     origin: "도도새",
@@ -200,6 +220,11 @@ export const RELICS: RelicDef[] = [
   {
     id: "smilo",
     name: "스밀라",
+    specimenNumber: "044",
+    projectName: "FROST FANG",
+    excavationSite: "라브레아 타르피트 북측 갱도",
+    catalogSummary: "길게 발달한 송곳니와 민첩한 골격의 포식성 포유류 표본.",
+    unlockRecord: { status: "recorded", text: "타르층에서 회수한 송곳니 수질부를 복원 기반으로 삼았다. 소리보다 움직임에 먼저 반응한다." },
     rarity: "R",
     portraitAssetId: "torika-placeholder",
     origin: "스밀로돈",
@@ -248,6 +273,11 @@ export const RELICS: RelicDef[] = [
   {
     id: "quetz",
     name: "케찰",
+    specimenNumber: "093",
+    projectName: "HIGH CURRENT",
+    excavationSite: "텍사스 자벨리나층 절벽",
+    catalogSummary: "긴 목과 거대한 날개 골격이 확인된 익룡 표본.",
+    unlockRecord: { status: "recorded", text: "절벽 붕괴면에서 날개뼈 조직을 수습했다. 기압 변화에 민감하며 높은 지형을 선호한다." },
     rarity: "R",
     portraitAssetId: "torika-placeholder",
     origin: "케찰코아틀루스",
@@ -298,6 +328,11 @@ export const RELICS: RelicDef[] = [
   {
     id: "husk-raptor",
     name: "토비",
+    specimenNumber: "201",
+    projectName: "SEALED",
+    excavationSite: "비공개",
+    catalogSummary: "날렵한 체형과 갈고리 발톱이 관측된 미확인 개체.",
+    unlockRecord: { status: "sealed", reason: "pending-lore" },
     rarity: "R",
     portraitAssetId: "torika-placeholder",
     origin: "실패한 벨로키랍토르 개체",
@@ -346,6 +381,11 @@ export const RELICS: RelicDef[] = [
   {
     id: "husk-shell",
     name: "아모",
+    specimenNumber: "202",
+    projectName: "SEALED",
+    excavationSite: "비공개",
+    catalogSummary: "두꺼운 외피를 가진 미확인 개체.",
+    unlockRecord: { status: "sealed", reason: "pending-lore" },
     rarity: "R",
     portraitAssetId: "torika-placeholder",
     origin: "실패한 갑주 개체",
@@ -394,6 +434,11 @@ export const RELICS: RelicDef[] = [
   {
     id: "husk-wing",
     name: "리파",
+    specimenNumber: "203",
+    projectName: "SEALED",
+    excavationSite: "비공개",
+    catalogSummary: "날개 형태의 사지가 관측된 미확인 개체.",
+    unlockRecord: { status: "sealed", reason: "restricted" },
     rarity: "R",
     portraitAssetId: "torika-placeholder",
     origin: "실패한 익룡 개체",
@@ -440,6 +485,30 @@ export const RELICS: RelicDef[] = [
     },
   },
 ];
+
+/** 콘텐츠 로드 시 잘못된 형식과 중복 번호를 즉시 실패시켜 저장 데이터와 UI 순서를 보호한다. */
+export function validateSpecimenNumbers(relics: readonly RelicDef[]): void {
+  const seen = new Set<string>();
+  for (const relic of relics) {
+    if (!/^\d{3}$/.test(relic.specimenNumber)) throw new Error(`개체번호는 세 자리 문자열이어야 합니다: ${relic.id}`);
+    if (seen.has(relic.specimenNumber)) throw new Error(`중복 개체번호: ${relic.specimenNumber}`);
+    seen.add(relic.specimenNumber);
+  }
+}
+
+/** 이야기 등장 순서와 무관한 안정적인 번호순 복사본을 반환한다. */
+export function sortRelicsBySpecimenNumber(relics: readonly RelicDef[]): RelicDef[] {
+  return [...relics].sort((a, b) => a.specimenNumber.localeCompare(b.specimenNumber));
+}
+
+/** SSR→SR→R 순으로 묶고 같은 희귀도 안에서는 개체번호순을 유지한다. */
+export function sortRelicsByRarity(relics: readonly RelicDef[]): RelicDef[] {
+  const priority = { SSR: 0, SR: 1, R: 2 } as const;
+  return [...relics].sort((a, b) => priority[a.rarity] - priority[b.rarity]
+    || a.specimenNumber.localeCompare(b.specimenNumber));
+}
+
+validateSpecimenNumbers(RELICS);
 
 const BY_ID = new Map(RELICS.map((r) => [r.id, r]));
 

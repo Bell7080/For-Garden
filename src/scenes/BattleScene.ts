@@ -5,11 +5,12 @@ import { getRelic } from "../data/relics";
 import { getStage } from "../data/stages";
 import { AutoBattleManager } from "../managers/AutoBattleManager";
 import type { PuppetCreature, PuppetAsset } from "../puppets/assets";
-import { battleAssetFor, playMotion, portraitAssetFor, spawnPuppet } from "../puppets/assets";
+import { battleAssetFor, playMotion, spawnPuppet } from "../puppets/assets";
 import { tintFor } from "../puppets/tints";
 import { session } from "../state/session";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { Button } from "../ui/Button";
+import { PortraitCard, relicCardTint } from "../ui/PortraitCard";
 import { COLOR, textStyle } from "../ui/theme";
 import { setDebugBattle, setDebugScene } from "../debug";
 
@@ -101,24 +102,18 @@ export class BattleScene extends Phaser.Scene {
       .setStrokeStyle(2, COLOR.panelEdge);
     this.state.player.units.forEach((unit, index) => {
       const x = 190 + index * 350;
-      this.add.rectangle(x, 1640, 300, 330, COLOR.void, 0.62).setStrokeStyle(2, COLOR.panelEdge);
-      this.add.text(x, 1500, unit.def.name, textStyle({ size: 26 })).setOrigin(0.5);
-      this.add.text(x, 1760, `각성 · ${unit.def.ultimate.name}`, textStyle({ size: 20, color: COLOR.accentText, wrap: 270, align: "center" })).setOrigin(0.5);
-      const gauge = this.add.text(x, 1810, "0 / 100", textStyle({ size: 20, color: COLOR.inkDim })).setOrigin(0.5);
+      // 도감·편성과 같은 카드 규격을 써서 전투 중에도 같은 얼굴 프레임으로 알아보게 한다.
+      new PortraitCard(this, x, 1620, {
+        width: 300,
+        height: 300,
+        portraitAssetId: unit.def.portraitAssetId,
+        tint: relicCardTint(unit.def),
+        label: unit.def.name,
+        sub: `각성 · ${unit.def.ultimate.name}`,
+      }).hit.disableInteractive();
+      const gauge = this.add.text(x, 1800, "0 / 100", textStyle({ size: 22, color: COLOR.inkDim })).setOrigin(0.5, 0);
       this.profileLabels.push(gauge);
-      void this.spawnProfilePortrait(unit, x);
     });
-  }
-
-  /** 전신 원화를 카드 안에서 상반신 프로필처럼 작게 배치한다. */
-  private async spawnProfilePortrait(unit: BattleUnit, x: number): Promise<void> {
-    const portrait = await spawnPuppet(this, portraitAssetFor(unit.def.portraitAssetId), {
-      x,
-      groundY: 1740,
-      height: 245,
-      depth: 5,
-    });
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => portrait.destroy());
   }
 
   /** 현재 선봉이 앞으로 튀어나가 공격하고, 피해 대상은 hit 모션을 우선 재생한다. */

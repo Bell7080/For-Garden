@@ -21,7 +21,10 @@
 2. 획득·보유·편성·애착 설정은 `RelicCollectionManager`를 사용한다.
 3. 상세 정보는 `CharacterInfoManager`를 생성해 `showRelic` 또는 `showUnit`으로 연다.
 4. 새 화면만의 상세 팝업을 복사해 만들지 말고 `src/ui/info.ts`의 공용 프리팹을 확장한다.
-5. 전투 수치 규칙은 `src/core`에서 구현하고 Vitest로 고정한다.
+5. 캐릭터를 화면에 크게 세울 때는 이미지 상자가 아니라 `src/puppets/anchors.ts`가 찾아 주는
+   `중심1`(코어)·`머리1` 관절을 기준으로 배치한다. 그리드·프로필의 얼굴 카드는
+   `src/ui/PortraitCard.ts`를 쓰고 화면마다 잘라내기 값을 다시 계산하지 않는다.
+6. 전투 수치 규칙은 `src/core`에서 구현하고 Vitest로 고정한다.
 
 ## 애니메이션 주의사항
 

@@ -8,6 +8,7 @@ import { CharacterInfoManager, ROLE_LABEL, addHelpBadge } from "../managers/Char
 import { getStage } from "../data/stages";
 import { session } from "../state/session";
 import { Button } from "../ui/Button";
+import { PortraitCard, relicCardTint } from "../ui/PortraitCard";
 import { COLOR, textStyle } from "../ui/theme";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 
@@ -27,8 +28,8 @@ const ALLY_PREVIEW: [number, number][] = [
 ];
 
 interface RosterCard {
-  box: Phaser.GameObjects.Rectangle;
-  order: Phaser.GameObjects.Text;
+  card: PortraitCard;
+  role: string;
 }
 
 interface AllySlot {
@@ -162,47 +163,39 @@ export class PartyScene extends Phaser.Scene {
     });
   }
 
-  /** 아래쪽 보유 렐릭 그리드. 짧게 누르면 편성, 꾹 누르면 정보창이다. */
+  /**
+   * 아래쪽 보유 렐릭 그리드. 짧게 누르면 편성, 꾹 누르면 정보창이다.
+   *
+   * 카드는 도감과 같은 규격이라 이름·역할만 띠에 남기고 얼굴로 고르게 한다.
+   * 고른 카드는 띠 문구가 진형(선봉·후방)으로 바뀐다.
+   */
   private buildRoster(): void {
-    const cols = 4;
-    const cardW = 240;
-    const cardH = 220;
-    const gapX = 16;
-    const gapY = 20;
+    const cols = 5;
+    const cardW = 200;
+    const cardH = 226;
+    const gapX = 12;
+    const gapY = 18;
     const gridW = cols * cardW + (cols - 1) * gapX;
     const startX = (BASE_WIDTH - gridW) / 2 + cardW / 2;
-    const startY = 1100;
+    const startY = 1080;
 
     // 보유한 렐릭만 편성할 수 있다.
     const roster = relicCollection.owned;
     roster.forEach((relic, i) => {
       const x = startX + (i % cols) * (cardW + gapX);
       const y = startY + Math.floor(i / cols) * (cardH + gapY);
+      const role = ROLE_LABEL[relic.role];
+      const card = new PortraitCard(this, x, y, {
+        width: cardW,
+        height: cardH,
+        portraitAssetId: relic.portraitAssetId,
+        tint: relicCardTint(relic),
+        label: relic.name,
+        sub: role,
+      });
 
-      const box = this.add
-        .rectangle(x, y, cardW, cardH, COLOR.panel)
-        .setStrokeStyle(3, COLOR.panelEdge)
-        .setInteractive({ useHandCursor: true });
-
-      this.add.text(x, y - cardH / 2 + 18, relic.name, textStyle({ size: 32 })).setOrigin(0.5, 0);
-      this.add
-        .text(x, y - cardH / 2 + 62, ROLE_LABEL[relic.role], textStyle({ size: 24, color: COLOR.accentText }))
-        .setOrigin(0.5, 0);
-      this.add
-        .text(
-          x,
-          y - cardH / 2 + 104,
-          `HP ${relic.stats.hp}\n공 ${relic.stats.atk}  방 ${relic.stats.def}`,
-          textStyle({ size: 22, color: COLOR.inkDim, align: "center", lineSpacing: 6 }),
-        )
-        .setOrigin(0.5, 0);
-
-      const order = this.add
-        .text(x, y + cardH / 2 - 16, "", textStyle({ size: 24, color: COLOR.accentText }))
-        .setOrigin(0.5, 1);
-
-      this.bindCardInput(box, relic);
-      this.cards.set(relic.id, { box, order });
+      this.bindCardInput(card.hit, relic);
+      this.cards.set(relic.id, { card, role });
     });
 
     this.add
@@ -262,12 +255,11 @@ export class PartyScene extends Phaser.Scene {
   }
 
   private refresh(): void {
-    for (const [id, card] of this.cards) {
+    for (const [id, entry] of this.cards) {
       const at = this.picked.indexOf(id);
       const chosen = at >= 0;
-      card.box.setStrokeStyle(chosen ? 5 : 3, chosen ? COLOR.accent : COLOR.panelEdge);
-      card.box.setFillStyle(chosen ? COLOR.panelEdge : COLOR.panel);
-      card.order.setText(chosen ? (at === 0 ? "선봉" : `후방 ${at}`) : "");
+      entry.card.setSelected(chosen);
+      entry.card.setSub(chosen ? (at === 0 ? "선봉" : `후방 ${at}`) : entry.role);
     }
 
     // 고른 순서 그대로 아군 진형 자리에 올린다.

@@ -7,7 +7,7 @@ const BASE_HEIGHT = 1920;
  * 편성 화면 그리드에서 렐릭 카드의 기준 좌표.
  * 그리드에는 **보유한** 렐릭만 순서대로 놓인다 — 시작 보유는 렉스 · 안키 · 도도 셋이다.
  */
-const ROSTER = { startX: 156, startY: 1100, stepX: 256, stepY: 240, cols: 4 };
+const ROSTER = { startX: 116, startY: 1080, stepX: 212, stepY: 244, cols: 5 };
 function card(index: number): [number, number] {
   return [
     ROSTER.startX + (index % ROSTER.cols) * ROSTER.stepX,

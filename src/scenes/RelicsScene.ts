@@ -9,6 +9,7 @@ import { BottomNav, NAV_TOP } from "../ui/BottomNav";
 import { Button } from "../ui/Button";
 import { CharacterInfoManager, ROLE_LABEL } from "../managers/CharacterInfoManager";
 import { TopBar } from "../ui/TopBar";
+import { PortraitCard, relicCardTint } from "../ui/PortraitCard";
 import { COLOR, textStyle } from "../ui/theme";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 
@@ -21,7 +22,7 @@ import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 export class RelicsScene extends Phaser.Scene {
   private info!: CharacterInfoManager;
   private selected: string | null = null;
-  private cards = new Map<string, Phaser.GameObjects.Rectangle>();
+  private cards = new Map<string, PortraitCard>();
   private summaryName!: Phaser.GameObjects.Text;
   private summaryBody!: Phaser.GameObjects.Text;
   private detailButton!: Button;
@@ -64,57 +65,43 @@ export class RelicsScene extends Phaser.Scene {
     this.refresh();
   }
 
+  /**
+   * 카드 그리드.
+   *
+   * 카드마다 전신 원화의 얼굴 부분을 꽉 채워 넣는다. 이름·역할 같은 글자는 아래 띠에만 두고
+   * 세부 수치는 요약 칸으로 미뤄, 한눈에 "누가 있는지"부터 보이게 한다.
+   */
   private buildGrid(): void {
     const cols = 4;
     const cardW = 240;
-    const cardH = 250;
+    const cardH = 316;
     const gapX = 16;
     const gapY = 20;
     const gridW = cols * cardW + (cols - 1) * gapX;
     const startX = (BASE_WIDTH - gridW) / 2 + cardW / 2;
-    const startY = 380;
+    const startY = 400;
 
     relicCollection.catalog.forEach((relic, i) => {
       const x = startX + (i % cols) * (cardW + gapX);
       const y = startY + Math.floor(i / cols) * (cardH + gapY);
       const owned = relicCollection.owns(relic.id);
 
-      const box = this.add
-        .rectangle(x, y, cardW, cardH, COLOR.panel)
-        .setStrokeStyle(3, COLOR.panelEdge)
-        .setInteractive({ useHandCursor: true });
-      box.on("pointerdown", () => {
+      const card = new PortraitCard(this, x, y, {
+        width: cardW,
+        height: cardH,
+        portraitAssetId: relic.portraitAssetId,
+        tint: relicCardTint(relic),
+        label: relic.name,
+        sub: owned ? ROLE_LABEL[relic.role] : "미발굴",
+        badge: owned ? "SSR" : undefined,
+        locked: !owned,
+      });
+      card.hit.on("pointerup", () => {
         if (!owned) return;
         this.selected = relic.id;
         this.refresh();
       });
-      this.cards.set(relic.id, box);
-
-      this.add
-        .text(x, y - cardH / 2 + 18, owned ? relic.name : "???", textStyle({ size: 32 }))
-        .setOrigin(0.5, 0)
-        .setAlpha(owned ? 1 : 0.45);
-      this.add
-        .text(
-          x,
-          y - cardH / 2 + 64,
-          owned ? ROLE_LABEL[relic.role] : "미발굴",
-          textStyle({ size: 24, color: owned ? COLOR.accentText : COLOR.inkDim }),
-        )
-        .setOrigin(0.5, 0);
-
-      if (owned) {
-        this.add
-          .text(
-            x,
-            y - cardH / 2 + 112,
-            `HP ${relic.stats.hp}\n공 ${relic.stats.atk}  방 ${relic.stats.def}`,
-            textStyle({ size: 22, color: COLOR.inkDim, align: "center", lineSpacing: 6 }),
-          )
-          .setOrigin(0.5, 0);
-      } else {
-        box.setAlpha(0.4);
-      }
+      this.cards.set(relic.id, card);
     });
   }
 
@@ -154,11 +141,9 @@ export class RelicsScene extends Phaser.Scene {
   }
 
   private refresh(): void {
-    for (const [id, box] of this.cards) {
+    for (const [id, card] of this.cards) {
       const owned = relicCollection.owns(id);
-      const chosen = owned && id === this.selected;
-      box.setStrokeStyle(chosen ? 5 : 3, chosen ? COLOR.accent : COLOR.panelEdge);
-      box.setFillStyle(chosen ? COLOR.panelEdge : COLOR.panel);
+      card.setSelected(owned && id === this.selected);
     }
 
     const def: RelicDef | null = this.selected ? getRelic(this.selected) : null;

@@ -96,7 +96,7 @@ function createProgram(gl: WebGLRenderingContext): SharedGpuProgram {
 }
 
 /** 같은 Puppet 이미지는 Phaser Texture Manager에 한 번만 디코딩해서 모든 개체가 공유한다. */
-async function ensureTexture(scene: Phaser.Scene, puppet: Puppet): Promise<string> {
+export async function ensureTexture(scene: Phaser.Scene, puppet: Puppet): Promise<string> {
   const key = `puppetforge:indexed:${puppet.name}`;
   if (scene.textures.exists(key)) return key;
   if (!puppet.texture) throw new Error(`Puppet 묶음에 이미지가 없습니다: ${puppet.name}`);

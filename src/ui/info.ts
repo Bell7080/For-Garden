@@ -6,7 +6,14 @@ import type { EffectType, RelicDef, Skill, SkillIconAssetId } from "../core/type
 import { setDebugInfoOpen } from "../debug";
 import { getHeartGem } from "../data/heartGems";
 import { relicProgression } from "../managers/RelicProgressionManager";
-import { enableHitOnClick, portraitAssetFor, portraitUsesRelicTint, spawnPuppet, tintPuppet } from "../puppets/assets";
+import {
+  battleAssetFor,
+  enableHitOnClick,
+  portraitAssetFor,
+  portraitUsesRelicTint,
+  spawnPuppet,
+  tintPuppet,
+} from "../puppets/assets";
 import { mixWhite, tintFor } from "../puppets/tints";
 import { addSceneBackground, BACKGROUND } from "./backgrounds";
 import { StatRadar } from "./StatRadar";
@@ -33,8 +40,17 @@ const EFFECT_LABEL: Record<EffectType, string> = {
   buff: "버프",
 };
 
-/** 왼쪽 전신의 얼굴·몸통을 비워 두고 정보는 오른쪽 두 섬에만 놓는다. */
-const PORTRAIT_BOX = { left: 32, right: 668, top: 280, bottom: 1660 } as const;
+/**
+ * 전신 원화의 코어(`중심1`) 관절이 놓이는 자리와 확대 높이.
+ *
+ * 상자에 맞춰 축소하면 얼굴이 작아지므로, 로비와 같은 방식으로 코어를 기준 삼아 크게 키우고
+ * 정수리와 다리 끝은 화면 밖으로 흘려보낸다. 오른쪽 정보 섬들은 반투명이라 원화 위에 겹쳐도
+ * 글자가 읽히고, 인물이 화면 전체를 채우는 느낌만 남는다.
+ */
+const PORTRAIT_FOCUS = { x: 400, y: 1060, height: 1800 } as const;
+
+/** 정보창 구석에 세우는 SD 피규어. 받침 위에서 idle만 재생한다. */
+const FIGURE = { x: 862, y: 1836, height: 300 } as const;
 export const ROLE_LABEL: Record<string, string> = { attacker: "공격", tank: "방어", support: "지원" };
 
 /** `?` 도움말 배지의 클릭이 아래 카드 입력으로 전파되지 않게 한다. */
@@ -44,6 +60,39 @@ export function addHelpBadge(scene: Phaser.Scene, x: number, y: number, onClick:
   badge.add([circle, scene.add.text(0, 0, "?", textStyle({ size: Math.round(radius * 1.3), color: COLOR.accentText })).setOrigin(0.5)]);
   circle.on("pointerdown", (_p: unknown, _x: unknown, _y: unknown, event?: Phaser.Types.Input.EventData) => { event?.stopPropagation(); onClick(); });
   return badge;
+}
+
+/** 흰 카드 위에서 아이콘이 떠 보이도록 같은 그림을 어둡게 복제해 깔아 둔다. */
+const CARD_WHITE = 0xf5f4f1;
+const CARD_SHADOW = 0x1a1d21;
+
+/**
+ * 스킬 아이콘 한 칸을 카드 형태로 만든다.
+ *
+ * 그리드 캐릭터 카드와 같은 규격 — 흰 바탕 · 복제 그림자 · 얇은 테두리 — 을 써서
+ * 화면이 달라도 "누를 수 있는 카드"의 생김새가 하나로 읽히게 한다.
+ */
+function iconCard(
+  scene: Phaser.Scene,
+  x: number,
+  y: number,
+  size: number,
+  texture: string,
+  accent: boolean,
+): { objects: Phaser.GameObjects.GameObject[]; icon: Phaser.GameObjects.Image } {
+  const iconSize = Math.round(size * 0.66);
+  const shadow = scene.add.image(x + 5, y + 6, texture).setDisplaySize(iconSize, iconSize).setTint(CARD_SHADOW).setAlpha(0.28);
+  const icon = scene.add.image(x, y, texture).setDisplaySize(iconSize, iconSize);
+  return {
+    objects: [
+      scene.add.rectangle(x + 4, y + 6, size, size, CARD_SHADOW, 0.3),
+      scene.add.rectangle(x, y, size, size, CARD_WHITE),
+      shadow,
+      icon,
+      scene.add.rectangle(x, y, size, size).setStrokeStyle(3, accent ? COLOR.accent : COLOR.panelEdge),
+    ],
+    icon,
+  };
 }
 
 /** 외곽선 없이 명도 차이와 황동 섹션 바로 구분하는 작은 플로팅 레이어다. */
@@ -81,6 +130,8 @@ export class InfoManager {
   private portrait?: PuppetCreature;
   private portraitWanted = false;
   private portraitRequest = 0;
+  private figure?: PuppetCreature;
+  private figureRequest = 0;
 
   constructor(private readonly scene: Phaser.Scene, private readonly portraitDepth = 1001) {
     this.root = scene.add.container(0, 0).setDepth(1000).setVisible(false);
@@ -120,15 +171,27 @@ export class InfoManager {
     this.skillDetail = floatingLayer(scene, 620, 905, 414, 610, "스킬 상세").setVisible(false);
     // fallback도 파일 로딩에 실패할 경우를 대비해 런타임 공용 텍스처를 마지막 안전망으로 만든다.
     this.ensureFallbackIcon();
-    this.detailIcon = scene.add.image(72, 122, FALLBACK_SKILL_ICON).setDisplaySize(88, 88);
-    this.detailTitle = scene.add.text(132, 82, "", textStyle({ size: 32, color: COLOR.accentText, wrap: 245 })).setOrigin(0);
+    const detailCard = iconCard(scene, 74, 122, 108, FALLBACK_SKILL_ICON, true);
+    this.skillDetail.add(detailCard.objects);
+    this.detailIcon = detailCard.icon;
+    this.detailTitle = scene.add.text(150, 84, "", textStyle({ size: 32, color: COLOR.accentText, wrap: 232 })).setOrigin(0);
     this.detailMeta = scene.add.text(28, 172, "", textStyle({ size: 21, lineSpacing: 12 })).setOrigin(0);
     this.detailDescription = scene.add.text(28, 292, "", textStyle({ size: 22, wrap: 350, lineSpacing: 9 })).setOrigin(0);
     const back = scene.add.rectangle(207, 555, 358, 88, COLOR.void, 0.7).setInteractive({ useHandCursor: true });
     back.on("pointerup", () => this.closeSkillDetail());
-    this.skillDetail.add([this.detailIcon, this.detailTitle, this.detailMeta, this.detailDescription, back,
+    this.skillDetail.add([this.detailTitle, this.detailMeta, this.detailDescription, back,
       scene.add.text(207, 555, "‹ 캐릭터 상세로", textStyle({ size: 22, color: COLOR.accentText })).setOrigin(0.5)]);
     this.chrome.add(this.skillDetail);
+    this.buildFigureStand(scene);
+  }
+
+  /** SD 피규어가 공중에 뜨지 않도록 받침과 그림자를 함께 깔아 둔다. */
+  private buildFigureStand(scene: Phaser.Scene): void {
+    this.root.add(scene.add.ellipse(FIGURE.x, FIGURE.y + 6, 236, 62, COLOR.void, 0.55));
+    this.root.add(scene.add.ellipse(FIGURE.x, FIGURE.y, 220, 54, COLOR.panel, 0.9).setStrokeStyle(3, COLOR.accent, 0.7));
+    this.chrome.add(
+      scene.add.text(FIGURE.x, FIGURE.y + 40, "IN-GAME SD", textStyle({ size: 18, color: COLOR.inkDim })).setOrigin(0.5, 0),
+    );
   }
 
   /** 외부 SVG까지 실패해도 정보창 자체는 열리도록 단순 황동 다이아 텍스처를 생성한다. */
@@ -149,7 +212,8 @@ export class InfoManager {
   /** 상세 카드가 열려 있어도 X만 전체 정보창을 닫는다. */
   hide(): void {
     this.root.setVisible(false); this.chrome.setVisible(false); this.portraitWanted = false;
-    this.portrait?.setVisible(false); this.closeSkillDetail(); setDebugInfoOpen(false);
+    this.portrait?.setVisible(false); this.figure?.setVisible(false);
+    this.closeSkillDetail(); setDebugInfoOpen(false);
   }
 
   /** 하트 실루엣과 텍스트를 함께 써 빈 슬롯과 장착 슬롯을 색·문자로 중복 구분한다. */
@@ -165,13 +229,34 @@ export class InfoManager {
   private async loadPortrait(def: RelicDef): Promise<void> {
     const request = ++this.portraitRequest;
     const asset = portraitAssetFor(def.portraitAssetId);
-    const scaleHeight = Math.min(PORTRAIT_BOX.bottom - PORTRAIT_BOX.top,
-      ((PORTRAIT_BOX.right - PORTRAIT_BOX.left) * (asset.content.bottom - asset.content.top)) / (asset.content.right - asset.content.left));
-    const portrait = await spawnPuppet(this.scene, asset, { x: 330, groundY: PORTRAIT_BOX.bottom, height: scaleHeight, depth: Math.max(this.portraitDepth, 1001) });
+    const portrait = await spawnPuppet(this.scene, asset, {
+      focus: { anchor: "core", x: PORTRAIT_FOCUS.x, y: PORTRAIT_FOCUS.y },
+      height: PORTRAIT_FOCUS.height,
+      depth: Math.max(this.portraitDepth, 1001),
+    });
     if (request !== this.portraitRequest) { portrait.destroy(); return; }
     this.portrait?.destroy(); this.portrait = portrait; enableHitOnClick(this.scene, portrait);
     if (portraitUsesRelicTint(def.portraitAssetId)) tintPuppet(portrait, mixWhite(tintFor(def.id), 0.55));
     portrait.setVisible(this.portraitWanted && this.root.visible);
+  }
+
+  /**
+   * 전투용 SD를 정보창 구석에 피규어처럼 세운다.
+   *
+   * 전신 원화만 있으면 인게임에서 어떤 모습으로 움직이는지 알 수 없어서, 같은 캐릭터의
+   * 전투 묶음을 작게 세워 idle만 돌린다. 전용 SD가 없는 캐릭터는 공용 개체 아트를 쓴다.
+   */
+  private async loadFigure(def: RelicDef): Promise<void> {
+    const request = ++this.figureRequest;
+    const figure = await spawnPuppet(this.scene, battleAssetFor(def.id), {
+      x: FIGURE.x,
+      groundY: FIGURE.y,
+      height: FIGURE.height,
+      depth: Math.max(this.portraitDepth, 1001),
+    });
+    if (request !== this.figureRequest) { figure.destroy(); return; }
+    this.figure?.destroy(); this.figure = figure;
+    figure.setVisible(this.portraitWanted && this.root.visible);
   }
 
   /** 공용 진입점의 캐릭터 화면을 성장 데이터와 함께 채운다. */
@@ -189,7 +274,9 @@ export class InfoManager {
     progress.heartGemSlots.forEach((id, index) => this.gemLabels[index].setText(id ? getHeartGem(id).name.replace(" Heart Gem", "") : "빈 슬롯").setColor(id ? COLOR.accentText : COLOR.inkDim));
     this.buildSkillButtons(def);
     this.skillDetail.setVisible(false); this.skills.setVisible(true);
-    this.portraitWanted = true; this.portrait?.setVisible(false); void this.loadPortrait(def);
+    this.portraitWanted = true;
+    this.portrait?.setVisible(false); this.figure?.setVisible(false);
+    void this.loadPortrait(def); void this.loadFigure(def);
     this.root.setVisible(true); this.chrome.setVisible(true); setDebugInfoOpen(true);
   }
 
@@ -204,10 +291,11 @@ export class InfoManager {
     ] as const;
     entries.forEach(([kind, iconAssetId, name, handler], index) => {
       const y = 78 + index * 116;
-      const hit = this.scene.add.rectangle(58, y + 44, 104, 96, index === 2 ? COLOR.energy : COLOR.void, 0.72).setInteractive({ useHandCursor: true });
+      const card = iconCard(this.scene, 60, y + 44, 100, this.resolveIcon(iconAssetId), index === 2);
+      // 카드 전체가 터치 영역이다. 아이콘 위에 투명 판을 덮어 88×88 이상을 유지한다.
+      const hit = this.scene.add.rectangle(60, y + 44, 104, 104, COLOR.void, 0).setInteractive({ useHandCursor: true });
       hit.on("pointerup", handler);
-      const icon = this.scene.add.image(58, y + 44, this.resolveIcon(iconAssetId)).setDisplaySize(72, 72);
-      this.skills.add([hit, icon,
+      this.skills.add([...card.objects, hit,
         this.scene.add.text(126, y + 9, `${kind}\n${name}`, textStyle({ size: 21, wrap: 225, lineSpacing: 5 })).setOrigin(0)]);
     });
   }

@@ -1,7 +1,17 @@
 import type Phaser from "phaser";
 import { Puppet } from "puppetforge/phaser";
 import type { PortraitAssetId } from "../core/types";
-import { IndexedPuppetCreature } from "./IndexedPuppetCreature";
+import {
+  computeAnchoredPlacement,
+  computeHeadCardFrame,
+  resolveAnchors,
+  type AnchorKind,
+  type AnchorPoint,
+  type CardFrame,
+  type CardFrameOptions,
+  type FocusOptions,
+} from "./anchors";
+import { ensureTexture, IndexedPuppetCreature } from "./IndexedPuppetCreature";
 
 /** 기존 호출부가 렌더러 구현을 몰라도 되도록 인게임 Puppet 타입을 한 곳에서 공개한다. */
 export type PuppetCreature = IndexedPuppetCreature;
@@ -143,9 +153,14 @@ export async function preloadPuppetAssets(): Promise<void> {
 }
 
 export interface SpawnOptions {
-  /** 발끝을 놓을 바닥 지점. */
-  x: number;
-  groundY: number;
+  /** 발끝을 놓을 바닥 지점. `focus`를 주면 쓰이지 않는다. */
+  x?: number;
+  groundY?: number;
+  /**
+   * 코어(`중심1`)나 머리(`머리1`) 관절을 화면의 한 점에 맞추는 배치.
+   * 화면 밖으로 잘려도 되는 큰 연출은 발끝 대신 이쪽을 쓴다.
+   */
+  focus?: { anchor: AnchorKind; x: number; y: number };
   /** 그림(투명 여백 제외)의 화면상 높이. 이 값에 맞춰 배율이 정해진다. */
   height: number;
   tint?: number;
@@ -166,7 +181,10 @@ export interface Placement {
  * PuppetCreature는 Phaser Mesh라 원점이 **이미지 한가운데**다. 원하는 위치를 그대로
  * 넣으면 안 되고, 그림이 이미지 안에서 치우친 만큼 되돌려 놓아야 한다.
  */
-export function computePlacement(asset: PuppetAsset, options: SpawnOptions): Placement {
+export function computePlacement(
+  asset: PuppetAsset,
+  options: SpawnOptions & { x: number; groundY: number },
+): Placement {
   const contentHeight = asset.content.bottom - asset.content.top;
   const scale = options.height / contentHeight;
 
@@ -178,13 +196,78 @@ export function computePlacement(asset: PuppetAsset, options: SpawnOptions): Pla
   return { x: options.x - offsetX, y: options.groundY - offsetY, scale };
 }
 
+/** 묶음의 관절에서 해석한 코어·머리 기준점. 같은 파일은 한 번만 계산한다. */
+const anchorCache = new Map<string, Record<AnchorKind, AnchorPoint>>();
+
+/**
+ * 묶음의 `중심1`·`머리1` 위치를 텍스처 좌표로 돌려준다.
+ * ZIP은 이미 캐시되어 있으므로 두 번째 호출부터는 파싱 비용이 없다.
+ */
+export async function loadPuppetAnchors(asset: PuppetAsset): Promise<Record<AnchorKind, AnchorPoint>> {
+  const cached = anchorCache.get(asset.url);
+  if (cached) return cached;
+  const template = await loadPuppet(asset);
+  const anchors = resolveAnchors(template.project.bones, asset);
+  anchorCache.set(asset.url, anchors);
+  return anchors;
+}
+
+/** 카드 섬네일이 쓰는 정지 이미지. Mesh를 만들지 않고 원본 텍스처만 Phaser에 올린다. */
+export interface PortraitTexture {
+  key: string;
+  anchors: Record<AnchorKind, AnchorPoint>;
+}
+
+/**
+ * 섬네일용 텍스처 키와 기준점을 준비한다.
+ *
+ * 도감·편성 그리드처럼 여러 장이 동시에 필요한 곳에서 Mesh를 30개 만들면 GPU draw call이
+ * 그만큼 늘어난다. 카드에는 같은 텍스처를 공유하는 정지 이미지만 쓴다.
+ */
+export async function loadPortraitTexture(scene: Phaser.Scene, asset: PuppetAsset): Promise<PortraitTexture> {
+  const template = await loadPuppet(asset);
+  const [key, anchors] = await Promise.all([ensureTexture(scene, template), loadPuppetAnchors(asset)]);
+  return { key, anchors };
+}
+
+/** 카드 한 장의 잘라내기 상자를 묶음 기준점으로 계산한다. */
+export function headCardFrame(asset: PuppetAsset, anchors: Record<AnchorKind, AnchorPoint>, options: CardFrameOptions): CardFrame {
+  return computeHeadCardFrame(asset, anchors.head, options);
+}
+
 /** indexed renderer는 단일 GPU uniform으로 색 필터를 적용한다. */
 export function tintPuppet(creature: PuppetCreature, color: number): void {
   creature.setTint(color);
 }
 
 /**
+ * 요청한 방식(발끝 · 기준 관절)에 맞는 최종 좌표를 고른다.
+ * 기준 관절 배치는 관절 위치가 필요하므로 이미 읽어 둔 project를 함께 받는다.
+ */
+function resolvePlacement(
+  asset: PuppetAsset,
+  anchors: Record<AnchorKind, AnchorPoint>,
+  options: SpawnOptions,
+): Placement {
+  if (options.focus) {
+    const focus: FocusOptions = {
+      x: options.focus.x,
+      y: options.focus.y,
+      height: options.height,
+      flipX: options.flipX,
+    };
+    return computeAnchoredPlacement(asset, anchors[options.focus.anchor], focus);
+  }
+  return computePlacement(asset, {
+    ...options,
+    x: options.x ?? 0,
+    groundY: options.groundY ?? 0,
+  });
+}
+
+/**
  * 묶음을 씬에 세운다. 발끝이 `groundY`에, 그림의 가로 중앙이 `x`에 오도록 놓는다.
+ * `focus`를 주면 그 대신 지정한 관절이 화면의 한 점에 오도록 놓는다.
  */
 export async function spawnPuppet(
   scene: Phaser.Scene,
@@ -211,7 +294,8 @@ export function placePuppet(
   asset: PuppetAsset,
   options: SpawnOptions,
 ): void {
-  const { x, y, scale } = computePlacement(asset, options);
+  const anchors = resolveAnchors(creature.core.project.bones, asset);
+  const { x, y, scale } = resolvePlacement(asset, anchors, options);
   creature.setScale(scale);
   creature.setPosition(x, y);
   // setScale이 좌우 반전을 지웠을 수 있어 다시 맞춘다.

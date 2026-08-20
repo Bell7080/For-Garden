@@ -16,6 +16,15 @@ import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 const STAGE_FLOOR = 1660;
 
 /**
+ * 애착 렐릭의 코어(`중심1`) 관절이 놓이는 화면 지점과 확대 높이.
+ *
+ * 화면 안에 전신을 다 넣으면 얼굴이 작아져 원화가 잘 보이지 않는다. 니케처럼 상반신을
+ * 크게 잡고 정수리와 다리 끝은 과감히 잘라 낸다. 코어를 기준으로 잡기 때문에 캐릭터마다
+ * 그림 안에서 서 있는 위치가 달라도 얼굴 높이가 흔들리지 않는다.
+ */
+const LOBBY_FOCUS = { x: BASE_WIDTH / 2 + 30, y: 1020, height: 2120 } as const;
+
+/**
  * 로비 — 메인 화면.
  *
  * 연구소 광장에 애착 렐릭이 서 있고, 그 위에 출격과 상점 같은 버튼이 얹힌다.
@@ -70,6 +79,8 @@ export class LobbyScene extends Phaser.Scene {
       .setDepth(-29);
     this.add.rectangle(cx, STAGE_FLOOR, BASE_WIDTH, 3, COLOR.panelEdge).setDepth(-28);
 
+    // 확대한 원화가 뒤로 지나가므로 지명은 얇은 어두운 판 위에 얹어 대비를 지킨다.
+    this.add.rectangle(cx, 219, 470, 56, COLOR.void, 0.62);
     this.add
       .text(cx, 200, "이터널 시티 · 중앙 광장", textStyle({ size: 30, color: COLOR.inkDim }))
       .setOrigin(0.5, 0);
@@ -79,10 +90,10 @@ export class LobbyScene extends Phaser.Scene {
   private async showFavorite(): Promise<void> {
     const def = getRelic(session.favorite);
     this.favorite = await spawnPuppet(this, portraitAssetFor(def.portraitAssetId), {
-      x: BASE_WIDTH / 2 + 60,
-      groundY: STAGE_FLOOR,
+      // 코어 관절을 화면 가운데로 끌어와 얼굴이 상단 정보 바 아래에 오게 한다.
+      focus: { anchor: "core", x: LOBBY_FOCUS.x, y: LOBBY_FOCUS.y },
       // 설명 카드 없이 화면 대부분을 차지하도록 상반신 중심의 큰 전신 연출을 만든다.
-      height: 1420,
+      height: LOBBY_FOCUS.height,
       // 전용 원화가 연결된 두 캐릭터는 원본 색을 유지한다.
       tint: portraitUsesRelicTint(def.portraitAssetId) ? mixWhite(tintFor(def.id), 0.55) : undefined,
       depth: -20,

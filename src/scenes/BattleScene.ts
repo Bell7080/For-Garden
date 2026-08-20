@@ -5,6 +5,7 @@ import {
   aliveFighters,
   createSkirmish,
   isFighterAlive,
+  renderPose,
   stepSkirmish,
   teamHp,
   type Arena,
@@ -213,19 +214,23 @@ export class BattleScene extends Phaser.Scene {
     this.views.forEach((view) => {
       if (view.dead) return;
       const { fighter } = view;
+      // 돌진·피격으로 밀린 거리와 뛰어오른 높이까지 코어가 계산해 둔 값을 그대로 쓴다.
+      const pose = renderPose(fighter);
       placePuppet(view.creature, view.asset, {
-        x: fighter.x,
-        groundY: fighter.y,
+        x: pose.x,
+        groundY: pose.y,
         height: UNIT_HEIGHT,
         flipX: fighter.facing < 0,
       });
       // 아래에 선 캐릭터가 앞에 오도록 발 높이로 앞뒤를 정한다.
       view.creature.setDepth(Math.round(fighter.y / 10) - 60);
-      view.shadow.setPosition(fighter.x, fighter.y + 4);
-      const barY = fighter.y - UNIT_HEIGHT - 26;
-      view.hpBack.setPosition(fighter.x, barY).setDepth(45);
+      // 떠 있는 동안 그림자는 땅에 남되 작고 옅어진다.
+      const lift = 1 - Math.min(pose.hop / 60, 0.45);
+      view.shadow.setPosition(pose.shadowX, pose.shadowY + 4).setDisplaySize(132 * lift, 24 * lift).setAlpha(0.38 * lift);
+      const barY = pose.y - UNIT_HEIGHT - 26;
+      view.hpBack.setPosition(pose.x, barY).setDepth(45);
       view.hpFill
-        .setPosition(fighter.x - 48, barY)
+        .setPosition(pose.x - 48, barY)
         .setDepth(46)
         .setDisplaySize(96 * Math.max(0, fighter.hp / fighter.maxHp), 10);
     });

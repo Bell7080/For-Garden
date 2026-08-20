@@ -33,6 +33,18 @@ export interface Fighter extends BattleUnit {
   targetId: string | null;
   /** 붙는 각도를 사람마다 어긋나게 만드는 고유 위상. 여섯이 한 점에 겹치지 않게 한다. */
   wander: number;
+  /**
+   * 발 위치와 별개로 그림만 흔드는 순간 변위(px).
+   *
+   * 때릴 때는 상대 쪽으로 튀어나갔다가 돌아오고, 맞을 때는 반대로 밀려난다. 실제 좌표를
+   * 건드리지 않으므로 맞고 밀려나도 진형이 무너지거나 사거리 밖으로 튕겨 나가지 않는다.
+   */
+  dashX: number;
+  dashY: number;
+  /** 달릴 때 떠오르는 높이(px). 0이면 땅에 붙어 있다. */
+  hop: number;
+  /** 통통 튀는 주기의 현재 위상. 이동을 멈춰도 이어서 센다. */
+  hopPhase: number;
 }
 
 export type SkirmishPhase = "fight" | "victory" | "defeat";
@@ -78,6 +90,16 @@ export const SKIRMISH = {
   swirl: 0.32,
   /** 붙어 있는 동안 상대 주위를 도는 속도 비율. 서서 때리기만 하지 않게 한다. */
   strafe: 0.4,
+  /** 때리는 순간 상대 쪽으로 튀어나가는 거리(px). */
+  lunge: 52,
+  /** 맞은 쪽이 반대로 밀려나는 거리(px). */
+  knockback: 40,
+  /** 튀어나간 거리와 밀려난 거리가 제자리로 돌아오는 속도. 클수록 빨리 복귀한다. */
+  recover: 9,
+  /** 달릴 때 튀어 오르는 최대 높이(px). */
+  hopHeight: 24,
+  /** 이동 속도 100 기준 초당 튀는 횟수. 빠를수록 더 자주 통통거린다. */
+  hopRate: 2.6,
   /** 한 번에 적분하는 최대 시간(초). 프레임이 길어도 서로를 통과하지 않는다. */
   maxStep: 0.05,
   /** 탭 전환 등으로 프레임이 통째로 밀렸을 때 한꺼번에 진행할 상한(초). */
@@ -103,6 +125,11 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     attackCooldown: index * 0.18,
     targetId: null,
     wander: index * 2.1 + (side === "player" ? 0 : 1.05),
+    dashX: 0,
+    dashY: 0,
+    hop: 0,
+    // 여섯이 같은 박자로 뛰지 않도록 시작 위상을 어긋나게 둔다.
+    hopPhase: index * 1.3 + (side === "player" ? 0 : 0.65),
   };
 }
 
@@ -172,6 +199,29 @@ export function moveSpeed(fighter: Fighter): number {
   return fighter.def.stats.moveSpeed * SKIRMISH.moveRate;
 }
 
+/** 화면에 그릴 위치. 발 좌표에 돌진·피격 변위와 뛰어오른 높이를 얹은 값이다. */
+export interface RenderPose {
+  /** SD를 세울 지점. */
+  x: number;
+  y: number;
+  /** 그림자를 놓을 지점. 떠 있어도 그림자는 땅에 남는다. */
+  shadowX: number;
+  shadowY: number;
+  /** 지금 떠 있는 높이(px). 그림자 크기를 줄이는 데 쓴다. */
+  hop: number;
+}
+
+/** 씬이 좌표 보정을 다시 계산하지 않도록 그릴 위치를 여기서 한 번에 만든다. */
+export function renderPose(fighter: Fighter): RenderPose {
+  return {
+    x: fighter.x + fighter.dashX,
+    y: fighter.y + fighter.dashY - fighter.hop,
+    shadowX: fighter.x + fighter.dashX * 0.6,
+    shadowY: fighter.y + fighter.dashY * 0.6,
+    hop: fighter.hop,
+  };
+}
+
 function distance(a: Fighter, b: Fighter): number {
   return Math.hypot(b.x - a.x, b.y - a.y);
 }
@@ -220,6 +270,16 @@ function strike(
   target.hp = Math.max(0, target.hp - amount);
   if (useUltimate) attacker.energy -= attacker.def.ultimate.cost;
   else gainEnergy(attacker);
+
+  // 때린 쪽은 상대 쪽으로 쿵 들어가고, 맞은 쪽은 같은 방향으로 밀려난다.
+  const dx = target.x - attacker.x;
+  const dy = target.y - attacker.y;
+  const gap = Math.hypot(dx, dy) || 1;
+  const power = useUltimate ? 1.4 : 1;
+  attacker.dashX = (dx / gap) * SKIRMISH.lunge * power;
+  attacker.dashY = (dy / gap) * SKIRMISH.lunge * power;
+  target.dashX = (dx / gap) * SKIRMISH.knockback * power;
+  target.dashY = (dy / gap) * SKIRMISH.knockback * power;
 
   events.push({
     kind: "attack",
@@ -279,8 +339,18 @@ function settle(state: SkirmishState, events: SkirmishEvent[]): void {
 function advance(state: SkirmishState, dt: number, rng: () => number, events: SkirmishEvent[]): void {
   state.elapsed += dt;
 
+  // 돌진·피격 변위는 시간이 지나면 제자리로 돌아온다. 죽은 캐릭터도 마지막 밀림은 마저 푼다.
+  const recovery = Math.exp(-SKIRMISH.recover * dt);
   for (const fighter of state.fighters) {
-    if (!isFighterAlive(fighter)) continue;
+    fighter.dashX *= recovery;
+    fighter.dashY *= recovery;
+  }
+
+  for (const fighter of state.fighters) {
+    if (!isFighterAlive(fighter)) {
+      fighter.hop *= recovery;
+      continue;
+    }
     const target = resolveTarget(state, fighter);
     if (!target) continue;
 
@@ -293,12 +363,18 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
 
     if (gap > SKIRMISH.reach) {
       const step = moveSpeed(fighter) * dt;
+      // 달리는 동안에는 통통 튀어 오른다. 발이 땅에 닿는 순간마다 hop이 0을 지난다.
+      fighter.hopPhase += dt * SKIRMISH.hopRate * Math.PI * (fighter.def.stats.moveSpeed / 100);
+      fighter.hop = Math.abs(Math.sin(fighter.hopPhase)) * SKIRMISH.hopHeight;
       // 곧장 달려들지 않고 조금씩 옆으로 흘러 여섯이 서로를 돌며 붙는다.
       const swirl = Math.sin(state.elapsed * 1.7 + fighter.wander) * SKIRMISH.swirl;
       fighter.x += ((dx / gap) + (-dy / gap) * swirl) * step;
       fighter.y += ((dy / gap) + (dx / gap) * swirl) * step;
       continue;
     }
+
+    // 멈춰 서면 튀어 오르던 높이만 부드럽게 내려놓는다.
+    fighter.hop *= recovery;
 
     // 붙은 뒤에도 상대 주위를 천천히 돌며 자리를 바꾼다. 멈춰 서서 주고받는 그림이 되지 않는다.
     const orbit = Math.sin(state.elapsed * 0.9 + fighter.wander) * moveSpeed(fighter) * SKIRMISH.strafe * dt;

@@ -4,6 +4,7 @@ import {
   attackInterval,
   createSkirmish,
   findFighter,
+  renderPose,
   SKIRMISH,
   stepSkirmish,
   teamHp,
@@ -134,5 +135,72 @@ describe("자리 정리", () => {
       expect(fighter.y).toBeGreaterThanOrEqual(ARENA.top);
       expect(fighter.y).toBeLessThanOrEqual(ARENA.bottom);
     }
+  });
+});
+
+describe("타격 연출", () => {
+  /**
+   * 아군만 한 대 때린 직후의 상태.
+   * 둘을 사거리 안에 직접 세우고 적의 공격만 늦춰, 누가 누구를 때렸는지가 분명하게 만든다.
+   */
+  function oneHit() {
+    const state = newSkirmish(["rex"], ["husk-shell"]);
+    const [ally, foe] = state.fighters;
+    ally.x = 400;
+    ally.y = 1000;
+    foe.x = 400 + SKIRMISH.reach - 20;
+    foe.y = 1000;
+    ally.attackCooldown = 0;
+    foe.attackCooldown = 99;
+    stepSkirmish(state, 1 / 60);
+    return state;
+  }
+
+  it("은 때린 쪽을 상대 방향으로 밀어 넣는다", () => {
+    const [ally] = oneHit().fighters;
+    // 상대가 오른쪽에 있으므로 오른쪽으로 튀어나간다.
+    expect(ally.dashX).toBeGreaterThan(SKIRMISH.lunge * 0.8);
+    expect(Math.abs(ally.dashY)).toBeLessThan(1);
+  });
+
+  it("은 맞은 쪽을 반대로 밀려나게 한다", () => {
+    const [, foe] = oneHit().fighters;
+    // 때린 쪽에서 멀어지는 방향, 즉 같은 오른쪽으로 밀려난다.
+    expect(foe.dashX).toBeGreaterThan(SKIRMISH.knockback * 0.8);
+  });
+
+  it("은 밀린 만큼을 곧 제자리로 되돌린다", () => {
+    const state = oneHit();
+    const ally = state.fighters[0];
+    state.fighters[1].attackCooldown = 99;
+    const pushed = Math.hypot(ally.dashX, ally.dashY);
+    // 다음 공격이 나기 전 짧은 시간 안에 거의 돌아온다.
+    for (let t = 0; t < 0.4; t += 1 / 60) stepSkirmish(state, 1 / 60);
+    expect(Math.hypot(ally.dashX, ally.dashY)).toBeLessThan(pushed * 0.2);
+  });
+
+  it("은 달리는 동안에만 통통 튀어 오른다", () => {
+    const state = newSkirmish(["rex"], ["husk-shell"]);
+    let peak = 0;
+    for (let t = 0; t < 2; t += 1 / 60) {
+      stepSkirmish(state, 1 / 60);
+      peak = Math.max(peak, state.fighters[0].hop);
+    }
+    expect(peak).toBeGreaterThan(SKIRMISH.hopHeight * 0.5);
+    expect(peak).toBeLessThanOrEqual(SKIRMISH.hopHeight);
+
+    // 붙어서 주고받기 시작하면 다시 땅에 내려온다.
+    for (let t = 0; t < 20; t += 1 / 60) stepSkirmish(state, 1 / 60);
+    expect(state.fighters[0].hop).toBeLessThan(1);
+  });
+
+  it("은 그릴 위치에 변위와 높이를 함께 얹는다", () => {
+    const state = oneHit();
+    const ally = state.fighters[0];
+    const pose = renderPose(ally);
+    expect(pose.x).toBeCloseTo(ally.x + ally.dashX);
+    expect(pose.y).toBeCloseTo(ally.y + ally.dashY - ally.hop);
+    // 떠 있어도 그림자는 발밑을 크게 벗어나지 않는다.
+    expect(Math.abs(pose.shadowX - ally.x)).toBeLessThanOrEqual(Math.abs(ally.dashX));
   });
 });

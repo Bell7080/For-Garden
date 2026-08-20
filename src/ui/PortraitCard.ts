@@ -151,6 +151,18 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     return this;
   }
 
+  /** 전투 통제 불능처럼 카드 전체에 즉시 알아볼 상태색이 필요할 때 원화와 테두리를 함께 물들인다. */
+  setDanger(danger: boolean): this {
+    for (const portrait of this.portraits) {
+      if (danger) portrait.setTint(COLOR.danger);
+      else if (this.options.tint) portrait.setTint(this.options.tint);
+      else portrait.clearTint();
+    }
+    if (danger) this.frame.setStrokeStyle(7, COLOR.danger);
+    else this.frame.setStrokeStyle(this.selected ? 6 : 3, this.selected ? COLOR.accent : COLOR.panelEdge);
+    return this;
+  }
+
 }
 
 /**

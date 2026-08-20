@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  attenuateFerocityGain,
   canSwap,
   canUseUltimate,
   computeDamage,
@@ -12,6 +13,7 @@ import {
   rearUnits,
   teamDefeated,
   ULTIMATE_ENERGY_MAX,
+  FEROCITY_RULES,
 } from "../../src/core/battle";
 import { getRelic } from "../../src/data/relics";
 import { getStage } from "../../src/data/stages";
@@ -145,17 +147,17 @@ describe("확장 능력치 전투 규칙", () => {
     }
   });
 
-  it("캐릭터별 ferocity만큼 궁극기 게이지를 획득한다", () => {
+  it("캐릭터별 energyGain만큼 궁극기 게이지를 획득한다", () => {
     const rexState = newBattle(["rex", "anky", "dodo"]);
     const ankyState = newBattle(["anky", "rex", "dodo"]);
     playerAct(rexState, { kind: "basic" });
     playerAct(ankyState, { kind: "basic" });
 
     expect(frontUnit(rexState.player).energy).toBe(
-      getRelic("rex").stats.ferocity,
+      getRelic("rex").stats.energyGain,
     );
     expect(frontUnit(ankyState.player).energy).toBe(
-      getRelic("anky").stats.ferocity,
+      getRelic("anky").stats.energyGain,
     );
     expect(frontUnit(rexState.player).energy).not.toBe(
       frontUnit(ankyState.player).energy,
@@ -224,6 +226,93 @@ describe("확장 능력치 전투 규칙", () => {
           (100 + defender.def.stats.def),
       ),
     );
+  });
+});
+
+describe("야성", () => {
+  it("유대 레벨에 따라 증가량을 감쇠하며 원본 입력을 바꾸지 않는다", () => {
+    expect(attenuateFerocityGain(20, 0)).toBe(20);
+    expect(attenuateFerocityGain(20, 4)).toBe(16);
+    expect(attenuateFerocityGain(20, 20)).toBe(10);
+  });
+
+  it("50/80/100 경계에서만 단계별 피해 보너스와 방어 페널티가 적용된다", () => {
+    const state = newBattle(["rex", "anky", "dodo"]);
+    const attacker = frontUnit(state.player);
+    const target = frontUnit(state.enemy);
+    const input = { power: 100, damageType: "physical" as const, isCritical: false };
+    attacker.ferocity = 49;
+    target.ferocity = 49;
+    const calm = computeDamage(attacker, target, input, false);
+    attacker.ferocity = 50;
+    const empowered = computeDamage(attacker, target, input, false);
+    target.ferocity = 80;
+    const exposed = computeDamage(attacker, target, input, false);
+    attacker.ferocity = 100;
+    const uncontrolled = computeDamage(attacker, target, input, false);
+
+    expect(empowered).toBeGreaterThan(calm);
+    expect(exposed).toBeGreaterThan(empowered);
+    expect(uncontrolled).toBeGreaterThan(exposed);
+  });
+
+  it("기본 공격은 공격자와 피격자의 야성을 올리고 임계 진입을 기록한다", () => {
+    const state = newBattle();
+    const attacker = frontUnit(state.player);
+    const target = frontUnit(state.enemy);
+    attacker.ferocity = 49;
+    target.ferocity = 49;
+    playerAct(state, { kind: "basic" });
+    expect(attacker.ferocity).toBe(49 + FEROCITY_RULES.basicGain);
+    expect(target.ferocity).toBe(49 + FEROCITY_RULES.hitGain);
+    expect(state.log.filter((line) => line.includes("야성 50 진입"))).toHaveLength(2);
+  });
+
+  it("궁극기 사용도 야성을 올리지만 통제 불능에서는 사용할 수 없다", () => {
+    const state = newBattle();
+    const unit = frontUnit(state.player);
+    unit.energy = ULTIMATE_ENERGY_MAX;
+    expect(playerAct(state, { kind: "ultimate" })).toBe(true);
+    expect(unit.ferocity).toBe(FEROCITY_RULES.ultimateGain);
+
+    const blocked = newBattle();
+    frontUnit(blocked.player).energy = ULTIMATE_ENERGY_MAX;
+    frontUnit(blocked.player).ferocity = 100;
+    expect(canUseUltimate(frontUnit(blocked.player))).toBe(false);
+  });
+
+  it("교대는 들어오는 유닛의 야성을 감소시키고 통제 회복을 기록한다", () => {
+    const state = newBattle();
+    state.player.units[1].ferocity = 60;
+    playerAct(state, { kind: "swap", memberIndex: 1 });
+    expect(frontUnit(state.player).ferocity).toBe(35);
+    expect(state.log.some((line) => line.includes("통제 회복"))).toBe(true);
+  });
+
+  it("100에서는 아군 오인 공격을 강제하고 진압하면 0과 긴 기절을 적용한다", () => {
+    const state = newBattle();
+    const attacker = frontUnit(state.player);
+    const ally = state.player.units[1];
+    attacker.ferocity = 100;
+    const allyHp = ally.hp;
+    playerAct(state, { kind: "ultimate" });
+    expect(ally.hp).toBeLessThan(allyHp);
+    expect(state.log.some((line) => line.includes("오인 공격"))).toBe(true);
+
+    const suppressed = newBattle();
+    const unit = frontUnit(suppressed.player);
+    unit.ferocity = 100;
+    expect(playerAct(suppressed, { kind: "suppress" })).toBe(true);
+    expect(unit.ferocity).toBe(0);
+    expect(unit.stunTurns).toBe(FEROCITY_RULES.suppressionStunTurns);
+    expect(suppressed.log.some((line) => line.includes("통제 회복"))).toBe(true);
+  });
+
+  it("새 전투 생성은 이전 전투 종료 상태의 야성을 전부 초기화한다", () => {
+    const ended = newBattle();
+    ended.player.units.forEach((unit) => { unit.ferocity = 100; unit.hp = 0; });
+    const restarted = newBattle();
+    expect(restarted.player.units.map((unit) => unit.ferocity)).toEqual([0, 0, 0]);
   });
 });
 

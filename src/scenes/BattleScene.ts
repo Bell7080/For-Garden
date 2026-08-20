@@ -1,12 +1,13 @@
 import Phaser from "phaser";
 import { gameApi } from "../api/FakeServer";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
-import { ULTIMATE_ENERGY_MAX } from "../core/battle";
+import { FEROCITY_RULES, ULTIMATE_ENERGY_MAX } from "../core/battle";
 import {
   aliveFighters,
   canFireUltimate,
   createSkirmish,
   fireUltimate,
+  suppressFerocity,
   isFighterAlive,
   renderPose,
   stepSkirmish,
@@ -64,6 +65,10 @@ interface ProfileView {
   card: PortraitCard;
   glow: Phaser.GameObjects.Rectangle;
   gauge: Phaser.GameObjects.Text;
+  /** 패널 안에서 궁극기 텍스트와 분리해 표시하는 야성 전용 바다. */
+  ferocityBack: Phaser.GameObjects.Rectangle;
+  ferocityFill: Phaser.GameObjects.Rectangle;
+  ferocityLabel: Phaser.GameObjects.Text;
   ready: boolean;
   pulse?: Phaser.Tweens.Tween;
 }
@@ -86,7 +91,9 @@ export class BattleScene extends Phaser.Scene {
     setDebugScene("battle");
     const stage = getStage(session.selectedStageId ?? "1-1");
     // 적은 스테이지별 임시 레벨 성장치를 적용한 복사본으로 전투에 투입한다.
-    this.state = createSkirmish(session.party.map(getRelic), getStageEnemies(stage), ARENA);
+    // 유대는 정적 RelicDef가 아니라 현재 플레이어의 저장 진행에서 전투 스냅샷으로 넘긴다.
+    const bonds = Object.fromEntries(session.party.map((id) => [id, session.relicProgress[id]?.bondLevel ?? 0]));
+    this.state = createSkirmish(session.party.map(getRelic), getStageEnemies(stage), ARENA, bonds);
     this.views.clear();
     this.profiles = [];
     this.finished = false;
@@ -159,14 +166,21 @@ export class BattleScene extends Phaser.Scene {
       });
       card.hit.on("pointerup", () => this.useUltimate(fighter));
       const gauge = this.add.text(x, 1800, "", textStyle({ size: 22, color: COLOR.inkDim })).setOrigin(0.5, 0);
-      this.profiles.push({ fighter, card, glow, gauge, ready: false });
+      // 기존 패널/테두리 형태를 유지한 얇은 별도 바로 두 게이지를 혼동하지 않게 한다.
+      const ferocityBack = this.add.rectangle(x, 1868, 300, 18, COLOR.void, 0.9).setStrokeStyle(2, COLOR.panelEdge);
+      const ferocityFill = this.add.rectangle(x - 150, 1868, 0, 14, COLOR.ferocityLow).setOrigin(0, 0.5);
+      const ferocityLabel = this.add.text(x, 1837, "야성 0 / 100", textStyle({ size: 18, color: COLOR.inkDim })).setOrigin(0.5, 0);
+      this.profiles.push({ fighter, card, glow, gauge, ferocityBack, ferocityFill, ferocityLabel, ready: false });
     });
   }
 
   /** 카드를 눌렀을 때. 조건이 맞지 않으면 코어가 아무것도 바꾸지 않는다. */
   private useUltimate(fighter: Fighter): void {
     if (this.finished || !this.spawned) return;
-    const events = fireUltimate(this.state, fighter.id, () => Math.random());
+    // 100에서는 같은 터치가 궁극기가 아닌 진압으로 바뀌어 위험 유지/안정 회복 선택을 제공한다.
+    const events = fighter.ferocity >= FEROCITY_RULES.max
+      ? suppressFerocity(this.state, fighter.id)
+      : fireUltimate(this.state, fighter.id, () => Math.random());
     if (events.length === 0) return;
     events.forEach((event) => this.playEvent(event));
     this.syncViews();
@@ -206,6 +220,14 @@ export class BattleScene extends Phaser.Scene {
     }
     if (event.kind === "death") {
       this.playDeath(event.fighterId);
+      return;
+    }
+    if (event.kind === "suppress") {
+      const view = this.views.get(event.fighterId);
+      if (view) {
+        // 추후 전용 스턴 모션이 들어오기 전까지 회전으로 긴 기절을 명확히 표현한다.
+        this.tweens.add({ targets: view.creature, angle: 360, duration: 700, repeat: FEROCITY_RULES.suppressionStunTurns - 1 });
+      }
       return;
     }
 
@@ -308,7 +330,15 @@ export class BattleScene extends Phaser.Scene {
       const ready = canFireUltimate(this.state, fighter);
       profile.gauge.setColor(alive ? (ready ? COLOR.accentText : COLOR.inkDim) : COLOR.dangerText);
       profile.card.setAlpha(alive ? 1 : 0.45);
+      const ferocityColor = fighter.ferocity >= 100 ? COLOR.ferocityDanger
+        : fighter.ferocity >= 80 ? COLOR.ferocityWarning : COLOR.ferocityLow;
+      profile.ferocityFill.setFillStyle(ferocityColor).setDisplaySize(300 * fighter.ferocity / 100, 14);
+      profile.ferocityLabel.setText(fighter.ferocity >= 100 ? "통제 불능 · 눌러서 진압" : `야성 ${fighter.ferocity} / 100`);
+      profile.ferocityLabel.setColor(fighter.ferocity >= 100 ? COLOR.dangerText : fighter.ferocity >= 80 ? COLOR.accentText : "#70d6cb");
+      // 통제 불능은 프로필 전체를 붉게 물들이고 궁극기 준비 연출을 끈다.
       if (ready !== profile.ready) this.setUltimateReady(profile, ready);
+      // 준비 상태 갱신이 테두리를 되돌릴 수 있으므로 통제 불능 색을 마지막에 적용한다.
+      profile.card.setDanger(fighter.ferocity >= 100);
     }
   }
 

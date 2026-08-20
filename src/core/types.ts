@@ -30,8 +30,8 @@ export interface Stats {
   critChance: number;
   /** 치명타가 가하는 최종 피해 배율(%)이다. */
   critDamage: number;
-  /** 기본 공격 한 번으로 얻는 궁극기 게이지다. */
-  ferocity: number;
+  /** 기본 공격 한 번으로 얻는 궁극기 충전량이다. 런타임 야성과는 별개다. */
+  energyGain: number;
 }
 
 /** 플레이어마다 달라지는 렐릭 성장/Heart Gem 장착 정보다. */
@@ -42,6 +42,8 @@ export interface RelicProgress {
   levelTitle: string;
   /** DNA 복원 숙련도이며 코어 규칙상 0~5만 허용한다. */
   dnaMastery: number;
+  /** 플레이어별 유대 레벨. 야성 증가를 완화하며 정적 렐릭 정의에는 두지 않는다. */
+  bondLevel: number;
   /** 정확히 세 자리인 Heart Gem 장착 슬롯이다. null은 빈 슬롯을 뜻한다. */
   heartGemSlots: [string | null, string | null, string | null];
 }

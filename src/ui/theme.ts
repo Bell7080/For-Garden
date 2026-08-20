@@ -17,6 +17,10 @@ export const COLOR = {
   hpFill: 0xd8b978,
   hpEnemy: 0xb03a3a,
   energy: 0x7ea8d8,
+  /** 야성 단계색은 HP/궁극기와 즉시 구분되는 청록→황색→적색 신호다. */
+  ferocityLow: 0x42b8ad,
+  ferocityWarning: 0xd6a83d,
+  ferocityDanger: 0xc84646,
 } as const;
 
 /**

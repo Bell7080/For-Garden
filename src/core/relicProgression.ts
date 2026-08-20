@@ -29,7 +29,7 @@ export function levelUpRelic(progress: RelicProgress, weeds: number): RelicLevel
 }
 
 /** 모든 능력치를 빠짐없이 같은 규칙으로 순회하기 위한 고정 키 목록이다. */
-const STAT_KEYS: readonly (keyof Stats)[] = ["hp", "def", "res", "atk", "ap", "attackSpeed", "moveSpeed", "critChance", "critDamage", "ferocity"];
+const STAT_KEYS: readonly (keyof Stats)[] = ["hp", "def", "res", "atk", "ap", "attackSpeed", "moveSpeed", "critChance", "critDamage", "energyGain"];
 
 /** 한 성장 단계의 백분율을 적용하고 단계마다 반올림해 계산 순서를 결정적으로 만든다. */
 export function applyStatPercent(stats: Stats, effect: HeartGemStatEffect): Stats {

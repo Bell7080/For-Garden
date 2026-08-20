@@ -22,7 +22,7 @@ export const RELICS: RelicDef[] = [
       moveSpeed: 108,
       critChance: 20,
       critDamage: 160,
-      ferocity: 28,
+      energyGain: 28,
     },
     passive: {
       id: "rex-passive",
@@ -70,7 +70,7 @@ export const RELICS: RelicDef[] = [
       moveSpeed: 72,
       critChance: 5,
       critDamage: 140,
-      ferocity: 20,
+      energyGain: 20,
     },
     passive: {
       id: "anky-passive",
@@ -118,7 +118,7 @@ export const RELICS: RelicDef[] = [
       moveSpeed: 68,
       critChance: 5,
       critDamage: 140,
-      ferocity: 22,
+      energyGain: 22,
     },
     passive: {
       id: "spino-passive",
@@ -166,7 +166,7 @@ export const RELICS: RelicDef[] = [
       moveSpeed: 94,
       critChance: 10,
       critDamage: 150,
-      ferocity: 30,
+      energyGain: 30,
     },
     passive: {
       id: "dodo-passive",
@@ -214,7 +214,7 @@ export const RELICS: RelicDef[] = [
       moveSpeed: 116,
       critChance: 25,
       critDamage: 170,
-      ferocity: 26,
+      energyGain: 26,
     },
     passive: {
       id: "smilo-passive",
@@ -262,7 +262,7 @@ export const RELICS: RelicDef[] = [
       moveSpeed: 120,
       critChance: 15,
       critDamage: 150,
-      ferocity: 32,
+      energyGain: 32,
     },
     passive: {
       id: "quetz-passive",
@@ -312,7 +312,7 @@ export const RELICS: RelicDef[] = [
       moveSpeed: 110,
       critChance: 12,
       critDamage: 150,
-      ferocity: 24,
+      energyGain: 24,
     },
     passive: {
       id: "husk-raptor-passive",
@@ -360,7 +360,7 @@ export const RELICS: RelicDef[] = [
       moveSpeed: 64,
       critChance: 5,
       critDamage: 140,
-      ferocity: 18,
+      energyGain: 18,
     },
     passive: {
       id: "husk-shell-passive",
@@ -408,7 +408,7 @@ export const RELICS: RelicDef[] = [
       moveSpeed: 114,
       critChance: 10,
       critDamage: 150,
-      ferocity: 27,
+      energyGain: 27,
     },
     passive: {
       id: "husk-wing-passive",

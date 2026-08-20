@@ -291,7 +291,7 @@ export const RELICS: RelicDef[] = [
   // --- 적 개체. 폭주해 이터널 시티를 위협하는 실패작들이다. ---
   {
     id: "husk-raptor",
-    name: "허스크 랩터",
+    name: "토비",
     portraitAssetId: "torika-placeholder",
     origin: "실패한 벨로키랍토르 개체",
     role: "attacker",
@@ -338,7 +338,7 @@ export const RELICS: RelicDef[] = [
   },
   {
     id: "husk-shell",
-    name: "허스크 셸",
+    name: "아모",
     portraitAssetId: "torika-placeholder",
     origin: "실패한 갑주 개체",
     role: "tank",
@@ -385,7 +385,7 @@ export const RELICS: RelicDef[] = [
   },
   {
     id: "husk-wing",
-    name: "허스크 윙",
+    name: "리파",
     portraitAssetId: "torika-placeholder",
     origin: "실패한 익룡 개체",
     role: "support",

@@ -1,4 +1,4 @@
-import type { Wallet } from "../core/gacha";
+import type { AcquisitionResult, Wallet } from "../core/gacha";
 import type { RelicProgress } from "../core/types";
 
 /** 네트워크로 직렬화할 수 있는 플레이어 진행 정보의 최소 규격이다. */
@@ -27,8 +27,9 @@ export interface PullRequest {
 
 /** 서버가 확정한 발굴 결과와 그 직후 상태다. */
 export interface PullResponse extends PlayerStateDto {
-  relicIds: string[];
-  freshRelicIds: string[];
+  /** 추첨 순서를 보존하며 각 슬롯의 신규/숙련/상한 변화를 명시한다. */
+  results: AcquisitionResult[];
+  newRelicIds: string[];
   duplicateRelicIds: string[];
 }
 

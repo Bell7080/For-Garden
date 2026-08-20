@@ -1,6 +1,6 @@
-import { applyPull, canPull, pull, spend } from "../core/gacha";
+import { canPull, pull, resolveAcquisitions, spend } from "../core/gacha";
 import { BANNERS } from "../data/banners";
-import { session, type Session } from "../state/session";
+import { createInitialRelicProgress, session, type Session } from "../state/session";
 import { saveManager } from "../state/SaveManager";
 import { GameApiError, type GameApi, type PlayerStateDto, type PullRequest, type PullResponse } from "./contracts";
 
@@ -43,23 +43,30 @@ export class FakeServer implements GameApi {
     }
 
     // 원본을 전혀 건드리지 않은 복제 상태에서 비용·천장·보유 결과를 모두 먼저 계산한다.
-    const nextWallet = spend(this.state.wallet, banner, request.count);
     const pulled = pull(banner, request.count, this.state.pullCountSinceHighestRarity[banner.id] ?? 0, this.random);
-    const nextOwned = new Set(this.state.owned);
-    const outcome = applyPull(nextOwned, pulled.relicIds);
+    const masteryById = Object.fromEntries(Object.entries(this.state.relicProgress).map(([id, value]) => [id, value.dnaMastery]));
+    const outcome = resolveAcquisitions(this.state.owned, masteryById, pulled.relicIds);
+    // 최초 획득은 반드시 기본 성장 레코드를 만들고, 중복 변화도 같은 복제본에 반영한다.
+    const nextProgress = Object.fromEntries(Object.entries(this.state.relicProgress).map(([id, value]) => [id, { ...value, heartGemSlots: [...value.heartGemSlots] as typeof value.heartGemSlots }]));
+    for (const result of outcome.slots) {
+      nextProgress[result.relicId] ??= createInitialRelicProgress();
+      nextProgress[result.relicId].dnaMastery = result.dnaAfter;
+    }
+    const nextWallet = { ...spend(this.state.wallet, banner, request.count), dnaFragments: this.state.wallet.dnaFragments + outcome.overflowFragments };
     const nextPity = { ...this.state.pullCountSinceHighestRarity, [banner.id]: pulled.pullCountSinceHighestRarity };
-    const nextState: Session = { ...this.state, wallet: nextWallet, owned: nextOwned, pullCountSinceHighestRarity: nextPity };
+    const nextState: Session = { ...this.state, wallet: nextWallet, owned: outcome.ownedRelicIds, relicProgress: nextProgress, pullCountSinceHighestRarity: nextPity };
 
     // 저장 실패도 원본 메모리에 부분 반영되지 않도록 저장을 먼저 성공시킨 뒤 필드를 일괄 교체한다.
     if (this.state === session) saveManager.save(nextState);
     this.state.wallet = nextWallet;
-    this.state.owned = nextOwned;
+    this.state.owned = outcome.ownedRelicIds;
+    this.state.relicProgress = nextProgress;
     this.state.pullCountSinceHighestRarity = nextPity;
     return {
       ...this.snapshot(),
-      relicIds: pulled.relicIds,
-      freshRelicIds: outcome.fresh,
-      duplicateRelicIds: outcome.duplicates,
+      results: outcome.slots,
+      newRelicIds: outcome.newRelicIds,
+      duplicateRelicIds: outcome.duplicateRelicIds,
     };
   }
 

@@ -69,11 +69,13 @@ export class SaveManager {
     const savedPity = legacy.pullCountSinceHighestRarity && typeof legacy.pullCountSinceHighestRarity === "object"
       ? legacy.pullCountSinceHighestRarity as Record<string, unknown> : {};
     const normalizedPity = Object.fromEntries(BANNERS.map(({ id }) => [id, savedPity[id] ?? 0]));
+    // DNA 조각 도입 전 저장도 별도 초기화 없이 0개로 복구한다.
+    const wallet = { ...(legacy.wallet as object), dnaFragments: (legacy.wallet as Partial<SaveData["wallet"]> | undefined)?.dnaFragments ?? 0 };
     if (legacy.saveVersion === undefined) {
-      return { ...legacy, saveVersion: CURRENT_SAVE_VERSION, pullCountSinceHighestRarity: normalizedPity, dailyContent: legacy.dailyContent ?? { date: "", completedIds: [], claimedRewardIds: [] } } as unknown as SaveData;
+      return { ...legacy, wallet, saveVersion: CURRENT_SAVE_VERSION, pullCountSinceHighestRarity: normalizedPity, dailyContent: legacy.dailyContent ?? { date: "", completedIds: [], claimedRewardIds: [] } } as unknown as SaveData;
     }
     if (legacy.saveVersion !== CURRENT_SAVE_VERSION) throw new SaveDataError(`지원하지 않는 저장 버전입니다: ${String(legacy.saveVersion)}`);
-    return { ...legacy, pullCountSinceHighestRarity: normalizedPity } as unknown as SaveData;
+    return { ...legacy, wallet, pullCountSinceHighestRarity: normalizedPity } as unknown as SaveData;
   }
 
   /** 콘텐츠 ID와 교차 필드 불변식까지 검사해 부분 손상을 조용히 전파하지 않는다. */
@@ -87,9 +89,11 @@ export class SaveManager {
     if (!relicIds.has(data.favorite) || !data.ownedRelicIds.includes(data.favorite)) fail("애착 렐릭이 올바르지 않습니다.");
     if (data.selectedStageId !== null && !stageIds.has(data.selectedStageId)) fail("스테이지 ID가 올바르지 않습니다.");
     if (!Array.isArray(data.clearedStageIds) || data.clearedStageIds.some((id) => !stageIds.has(id))) fail("클리어 진행이 올바르지 않습니다.");
-    if (!data.wallet || !Number.isFinite(data.wallet.fossil) || data.wallet.fossil < 0 || !Number.isFinite(data.wallet.amber) || data.wallet.amber < 0) fail("재화가 올바르지 않습니다.");
+    if (!data.wallet || !Number.isFinite(data.wallet.fossil) || data.wallet.fossil < 0 || !Number.isFinite(data.wallet.amber) || data.wallet.amber < 0 || !Number.isInteger(data.wallet.dnaFragments) || data.wallet.dnaFragments < 0) fail("재화가 올바르지 않습니다.");
     if (!data.pullCountSinceHighestRarity || BANNERS.some(({ id }) => !Number.isInteger(data.pullCountSinceHighestRarity[id]) || data.pullCountSinceHighestRarity[id] < 0)) fail("배너 천장 정보가 올바르지 않습니다.");
     if (!data.relicProgress || typeof data.relicProgress !== "object") fail("성장 정보가 없습니다.");
+    // 보유 목록과 성장 레코드는 항상 정확히 같은 렐릭 집합이어야 한다.
+    if (data.ownedRelicIds.some((id) => !data.relicProgress[id]) || Object.keys(data.relicProgress).some((id) => !data.ownedRelicIds.includes(id))) fail("보유 렐릭과 성장 정보가 일치하지 않습니다.");
     for (const [id, progress] of Object.entries(data.relicProgress)) {
       if (!relicIds.has(id) || !Number.isInteger(progress.dnaMastery) || progress.dnaMastery < 0 || progress.dnaMastery > 5 || !Number.isInteger(progress.level) || progress.level < 1 || !Array.isArray(progress.heartGemSlots) || progress.heartGemSlots.length !== 3) fail("렐릭 성장 정보가 올바르지 않습니다.");
       if (progress.heartGemSlots.some((id) => id !== null && !gemIds.has(id))) fail("Heart Gem 장착 정보가 올바르지 않습니다.");

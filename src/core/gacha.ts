@@ -5,9 +5,12 @@ import type { RelicRarity } from "./types";
 export interface Wallet {
   fossil: number;
   amber: number;
+  /** DNA 숙련도 상한에서 중복 렐릭이 바뀌는 공용 성장 재료다. */
+  dnaFragments: number;
 }
 
-export type Currency = keyof Wallet;
+/** 배너 비용으로 쓸 수 있는 재화만 허용하고 보상 재료는 제외한다. */
+export type Currency = "fossil" | "amber";
 export const RARITIES: readonly RelicRarity[] = ["SSR", "SR", "R"];
 
 export interface Banner {
@@ -102,15 +105,57 @@ export function spend(wallet: Wallet, banner: Banner, count: number): Wallet {
   return { ...wallet, [banner.currency]: wallet[banner.currency] - pullCost(banner, count) };
 }
 
-export interface PullOutcome { fresh: string[]; duplicates: string[] }
+export type AcquisitionKind = "new" | "mastery" | "overflow";
 
-/** 원본 Set을 바꾸므로 트랜잭션 계산에서는 반드시 복제한 Set을 넘긴다. */
-export function applyPull(owned: Set<string>, results: string[]): PullOutcome {
-  const fresh: string[] = [];
-  const duplicates: string[] = [];
-  for (const id of results) {
-    if (owned.has(id)) duplicates.push(id);
-    else { owned.add(id); fresh.push(id); }
+/** 한 슬롯이 실제 수집 상태에 준 변화를 UI까지 손실 없이 전달한다. */
+export interface AcquisitionResult {
+  relicId: string;
+  kind: AcquisitionKind;
+  dnaBefore: number;
+  dnaAfter: number;
+  overflowFragments: number;
+}
+
+export interface AcquisitionOutcome {
+  slots: AcquisitionResult[];
+  newRelicIds: string[];
+  duplicateRelicIds: string[];
+  /** 호출자가 원본 상태를 건드리지 않고 한 번에 커밋할 수 있는 다음 값이다. */
+  ownedRelicIds: Set<string>;
+  dnaMasteryById: Record<string, number>;
+  overflowFragments: number;
+}
+
+/** 슬롯 순서대로 신규/숙련/상한 보상을 계산하는 Phaser 비의존 순수 규칙이다. */
+export function resolveAcquisitions(
+  ownedRelicIds: ReadonlySet<string>,
+  dnaMasteryById: Readonly<Record<string, number>>,
+  results: readonly string[],
+): AcquisitionOutcome {
+  const owned = new Set(ownedRelicIds);
+  const mastery = { ...dnaMasteryById };
+  const slots: AcquisitionResult[] = [];
+  const newRelicIds: string[] = [];
+  const duplicateRelicIds: string[] = [];
+  let overflowFragments = 0;
+
+  for (const relicId of results) {
+    const before = mastery[relicId] ?? 0;
+    if (!owned.has(relicId)) {
+      owned.add(relicId);
+      mastery[relicId] = before;
+      newRelicIds.push(relicId);
+      slots.push({ relicId, kind: "new", dnaBefore: before, dnaAfter: before, overflowFragments: 0 });
+    } else if (before < 5) {
+      mastery[relicId] = before + 1;
+      duplicateRelicIds.push(relicId);
+      slots.push({ relicId, kind: "mastery", dnaBefore: before, dnaAfter: before + 1, overflowFragments: 0 });
+    } else {
+      // 상한 중복 한 장은 공용 DNA 조각 한 개로 바뀐다.
+      overflowFragments += 1;
+      duplicateRelicIds.push(relicId);
+      slots.push({ relicId, kind: "overflow", dnaBefore: before, dnaAfter: before, overflowFragments: 1 });
+    }
   }
-  return { fresh, duplicates };
+  return { slots, newRelicIds, duplicateRelicIds, ownedRelicIds: owned, dnaMasteryById: mastery, overflowFragments };
 }

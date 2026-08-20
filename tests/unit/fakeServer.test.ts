@@ -12,8 +12,8 @@ function makeSession(fossil = 1000): Session {
     owned: new Set(["anky", "rex", "dodo"]),
     favorite: "anky",
     pullCountSinceHighestRarity: { fossil: 0, amber: 0 },
-    wallet: { fossil, amber: 10 },
-    relicProgress: { anky: { level: 2, levelTitle: "발아체", dnaMastery: 1, heartGemSlots: ["vital-seed", null, null] } },
+    wallet: { fossil, amber: 10, dnaFragments: 0 },
+    relicProgress: Object.fromEntries(["anky", "rex", "dodo"].map((id) => [id, { level: id === "anky" ? 2 : 1, levelTitle: id === "anky" ? "발아체" : "복원체", dnaMastery: id === "anky" ? 1 : 0, heartGemSlots: id === "anky" ? ["vital-seed", null, null] : [null, null, null] }])),
     ownedHeartGemIds: ["vital-seed"],
     dailyContent: { date: "", completedIds: [], claimedRewardIds: [] },
   };
@@ -27,10 +27,22 @@ describe("FakeServer", () => {
     const response = await server.pullRelics({ bannerId: "fossil", count: 1 });
 
     expect(response.wallet.fossil).toBe(900);
-    expect(response.relicIds).toEqual(["rex"]);
+    expect(response.results).toEqual([{ relicId: "rex", kind: "mastery", dnaBefore: 0, dnaAfter: 1, overflowFragments: 0 }]);
     expect(response.duplicateRelicIds).toEqual(["rex"]);
     expect(state.wallet.fossil).toBe(900);
     expect(state.pullCountSinceHighestRarity.fossil).toBe(0);
+  });
+
+  it("최초 획득의 성장 레코드를 같은 처리에서 만들고 같은 10연 중복을 누적한다", async () => {
+    const state = makeSession();
+    // fossil 배너에서 RNG 0은 rex만 뽑으므로 미보유로 만들어 순차 획득을 검증한다.
+    state.owned.delete("rex");
+    delete state.relicProgress.rex;
+    const response = await new FakeServer(state, { latencyMs: 0, random: () => 0 }).pullRelics({ bannerId: "fossil", count: 10 });
+    expect(response.results[0].kind).toBe("new");
+    expect(response.results[1]).toMatchObject({ kind: "mastery", dnaBefore: 0, dnaAfter: 1 });
+    expect(state.relicProgress.rex).toMatchObject({ level: 1, dnaMastery: 5 });
+    expect(state.wallet.dnaFragments).toBe(4);
   });
 
   it("재화가 부족하면 상태를 변경하지 않는다", async () => {

@@ -1,6 +1,5 @@
 import type { RelicDef } from "../core/types";
-import type { PullOutcome } from "../core/gacha";
-import { PLAYABLE_RELICS, getRelic } from "../data/relics";
+import { PLAYABLE_RELICS } from "../data/relics";
 import { session, type Session } from "../state/session";
 import { saveManager } from "../state/SaveManager";
 
@@ -27,25 +26,6 @@ export class RelicCollectionManager {
   /** 보유 여부 검사를 한곳에서 처리해 잠금 규칙이 UI마다 달라지지 않게 한다. */
   owns(relicId: string): boolean {
     return this.state.owned.has(relicId);
-  }
-
-  /** 획득 결과를 반영한다. 이미 보유했다면 false를 반환해 추후 중복 보상에 연결할 수 있다. */
-  acquire(relicId: string): boolean {
-    getRelic(relicId); // 잘못된 콘텐츠 id가 저장 데이터에 들어가기 전에 즉시 막는다.
-    const wasOwned = this.owns(relicId);
-    this.state.owned.add(relicId);
-    this.persistSharedSession();
-    return !wasOwned;
-  }
-
-  /** 발굴 결과를 일괄 반영하고 신규/중복을 UI가 바로 표시할 수 있게 나눈다. */
-  applyAcquisitions(relicIds: readonly string[]): PullOutcome {
-    const outcome: PullOutcome = { fresh: [], duplicates: [] };
-    for (const relicId of relicIds) {
-      const target = this.acquire(relicId) ? outcome.fresh : outcome.duplicates;
-      target.push(relicId);
-    }
-    return outcome;
   }
 
   /** 애착 렐릭은 반드시 보유한 플레이 가능 렐릭이어야 한다. */

@@ -4,7 +4,7 @@ import { BASE_WIDTH } from "../config/gameConfig";
 import { setDebugScene } from "../debug";
 import { gameApi } from "../api/FakeServer";
 import { GameApiError } from "../api/contracts";
-import { canPull, pullCost, type Banner } from "../core/gacha";
+import { canPull, pullCost, type AcquisitionResult, type Banner } from "../core/gacha";
 import { BANNERS } from "../data/banners";
 import { getRelic } from "../data/relics";
 import {
@@ -172,7 +172,7 @@ export class LabScene extends Phaser.Scene {
       // 결과와 비용은 클라이언트에서 계산하지 않고 API 응답만 화면에 반영한다.
       const response = await gameApi.pullRelics({ bannerId: banner.id, count });
       this.topBar.refresh();
-      this.showResult(response.relicIds, response.freshRelicIds.length);
+      this.showResult(response.results);
     } catch (error) {
       const message = error instanceof GameApiError ? error.message : "통신에 실패했습니다. 다시 시도해 주세요.";
       this.showNotice(message);
@@ -211,7 +211,7 @@ export class LabScene extends Phaser.Scene {
   }
 
   /** 뽑은 결과를 한 장에 보여 준다. */
-  private showResult(results: string[], freshCount: number): void {
+  private showResult(results: AcquisitionResult[]): void {
     const cx = BASE_WIDTH / 2;
     const overlay = this.add.container(0, 0).setDepth(800);
 
@@ -219,27 +219,22 @@ export class LabScene extends Phaser.Scene {
     overlay.add(shade);
     overlay.add(this.add.text(cx, 320, "발굴 결과", textStyle({ size: 52 })).setOrigin(0.5));
 
-    const lines = results
-      .map((id) => {
-        const def = getRelic(id);
-        return `${def.name} — ${def.origin}`;
-      })
-      .join("\n");
-    overlay.add(
-      this.add
-        .text(cx, 420, lines, textStyle({ size: 30, align: "center", lineSpacing: 10 }))
-        .setOrigin(0.5, 0),
-    );
-    overlay.add(
-      this.add
-        .text(
-          cx,
-          420 + results.length * 40 + 40,
-          freshCount > 0 ? `새로 얻은 렐릭 ${freshCount}명` : "모두 이미 가진 렐릭이다",
-          textStyle({ size: 28, color: COLOR.accentText }),
-        )
-        .setOrigin(0.5, 0),
-    );
+    results.forEach((result, index) => {
+      const def = getRelic(result.relicId);
+      const y = 430 + index * 92;
+      // 기존 청록 계열 ally 패널과 금색 강조 글자로 슬롯별 보상을 빠르게 구분한다.
+      const row = this.add.rectangle(cx, y, 820, 72, COLOR.panel).setStrokeStyle(2, COLOR.ally);
+      const badge = result.kind === "new"
+        ? "신규"
+        : result.kind === "mastery"
+          ? `DNA ${result.dnaBefore}→${result.dnaAfter}`
+          : `DNA 조각 +${result.overflowFragments}`;
+      overlay.add([
+        row,
+        this.add.text(cx - 380, y, `${def.name} — ${def.origin}`, textStyle({ size: 27 })).setOrigin(0, 0.5),
+        this.add.text(cx + 380, y, badge, textStyle({ size: 25, color: COLOR.accentText })).setOrigin(1, 0.5),
+      ]);
+    });
 
     const close = new Button(this, cx, NAV_TOP - 200, {
       width: 400,

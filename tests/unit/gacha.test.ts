@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyPull, canPull, determineRarity, pull, pullCost, spend, type Banner, type Wallet } from "../../src/core/gacha";
+import { canPull, determineRarity, pull, pullCost, resolveAcquisitions, spend, type Banner, type Wallet } from "../../src/core/gacha";
 import { BANNERS } from "../../src/data/banners";
 
 /** 모든 분기와 난수 소비 순서를 눈으로 추적할 수 있는 최소 3등급 배너다. */
@@ -21,8 +21,8 @@ describe("뽑기 비용", () => {
   it("10회 할인과 잔액 경계를 계산한다", () => {
     expect(pullCost(banner, 1)).toBe(100);
     expect(pullCost(banner, 10)).toBe(900);
-    expect(canPull({ fossil: 100, amber: 0 }, banner, 1)).toBe(true);
-    expect(canPull({ fossil: 99, amber: 999 }, banner, 1)).toBe(false);
+    expect(canPull({ fossil: 100, amber: 0, dnaFragments: 0 }, banner, 1)).toBe(true);
+    expect(canPull({ fossil: 99, amber: 999, dnaFragments: 0 }, banner, 1)).toBe(false);
   });
 });
 
@@ -77,14 +77,21 @@ describe("보장 우선순위와 천장", () => {
 
 describe("재화와 보유 반영", () => {
   it("원본 지갑은 바꾸지 않고 비용만 차감한다", () => {
-    const wallet: Wallet = { fossil: 1000, amber: 5 };
-    expect(spend(wallet, banner, 1)).toEqual({ fossil: 900, amber: 5 });
+    const wallet: Wallet = { fossil: 1000, amber: 5, dnaFragments: 2 };
+    expect(spend(wallet, banner, 1)).toEqual({ fossil: 900, amber: 5, dnaFragments: 2 });
     expect(wallet.fossil).toBe(1000);
   });
 
   it("처음 획득과 중복을 분리한다", () => {
-    const owned = new Set(["r-a"]);
-    expect(applyPull(owned, ["r-a", "r-b", "r-b"])).toEqual({ fresh: ["r-b"], duplicates: ["r-a", "r-b"] });
+    const outcome = resolveAcquisitions(new Set(["r-a"]), { "r-a": 4 }, ["r-b", "r-b", "r-a", "r-a"]);
+    expect(outcome.slots).toEqual([
+      { relicId: "r-b", kind: "new", dnaBefore: 0, dnaAfter: 0, overflowFragments: 0 },
+      { relicId: "r-b", kind: "mastery", dnaBefore: 0, dnaAfter: 1, overflowFragments: 0 },
+      { relicId: "r-a", kind: "mastery", dnaBefore: 4, dnaAfter: 5, overflowFragments: 0 },
+      { relicId: "r-a", kind: "overflow", dnaBefore: 5, dnaAfter: 5, overflowFragments: 1 },
+    ]);
+    expect(outcome.newRelicIds).toEqual(["r-b"]);
+    expect(outcome.duplicateRelicIds).toEqual(["r-b", "r-a", "r-a"]);
   });
 });
 

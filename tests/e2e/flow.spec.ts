@@ -172,4 +172,6 @@ test("연구소에서 발굴하면 화석이 줄고 결과가 뜬다", async ({ 
   await tap(page, 300, BASE_HEIGHT - 180 - 250); // 1회 발굴
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.wallet?.fossil)).toBe(1100);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.owned)).not.toBeUndefined();
+  // 슬롯별 신규/DNA 배지가 모바일 안전 영역에 표시되는 모습을 회귀 자료로 남긴다.
+  await page.screenshot({ path: `test-results/${test.info().project.name}-lab-pull-result.png`, fullPage: true });
 });

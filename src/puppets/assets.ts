@@ -108,12 +108,13 @@ export const LEXIA_SD_ASSET: PuppetAsset = {
   content: { left: 185, top: 105, right: 1080, bottom: 1140 },
 };
 
-/** 3번 SD: 세이라. 원화와 같은 렐릭 id로 연결해 전투에서도 전용 묶음을 사용한다. */
+/** 3번 SD: 세이라. 알파가 있는 실제 그림 영역으로 발끝을 잡아 투명 여백만큼 뜨지 않게 한다. */
 export const SEIRA_SD_ASSET: PuppetAsset = {
   url: `${base}puppets/charSD_003.zip`,
   imageWidth: 1122,
   imageHeight: 1402,
-  content: { left: 0, top: 0, right: 1122, bottom: 1402 },
+  // 원본 PNG에서 alpha > 16인 경계다. 특히 아래 74px은 투명하므로 이미지 끝을 바닥에 맞추면 발이 뜬다.
+  content: { left: 218, top: 112, right: 987, bottom: 1328 },
 };
 
 /** 전투용 SD가 완성된 캐릭터만 전용 묶음을 쓰고 나머지는 임시 적 아트를 공유한다. */

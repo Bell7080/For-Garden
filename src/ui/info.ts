@@ -25,6 +25,7 @@ import { Button } from "./Button";
 import { gameApi } from "../api/FakeServer";
 import { canLevelUpRelic, RELIC_LEVEL_CAP, relicLevelUpCost } from "../core/relicProgression";
 import { session } from "../state/session";
+import { BOND_FEROCITY_MULTIPLIER, BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL } from "../core/bond";
 
 /** 문자열 순서에 의존하지 않고 스킬 상세의 각 UI 요소를 직접 채우는 계약이다. */
 export interface SkillInfoViewModel {
@@ -166,7 +167,7 @@ export class InfoManager {
 
     this.growth = floatingLayer(scene, 58, 1420, 560, 255, "성장 / LEVEL & DNA");
     this.levelText = scene.add.text(28, 58, "", textStyle({ size: 22, color: COLOR.ink, lineSpacing: 7 })).setOrigin(0);
-    this.dnaText = scene.add.text(28, 154, "", textStyle({ size: 24, color: COLOR.accentText, lineSpacing: 8 })).setOrigin(0);
+    this.dnaText = scene.add.text(28, 142, "", textStyle({ size: 20, color: COLOR.accentText, lineSpacing: 5 })).setOrigin(0);
     // 기존 IconButton의 황동 테두리·pointerup 입력을 재사용해 상세 화면의 시각 언어를 유지한다.
     this.levelButton = new Button(scene, 455, 108, { width: 160, height: 76, label: "레벨업", fontSize: 22, onClick: () => this.requestLevelUp() });
     this.growth.add([this.levelText, this.dnaText, this.levelButton]);
@@ -281,7 +282,11 @@ export class InfoManager {
     // 다음 레벨은 모든 기본 능력치가 누적 +2%p라는 코어 성장 규칙을 사람이 읽는 상승치로 표시한다.
     this.levelText.setText(`현재 LV.${progress.level} / ${RELIC_LEVEL_CAP}\n다음 레벨  모든 능력치 +2%p\n비용  ${maxed ? "MAX" : `잡초 ${cost}`}  · 보유 ${session.wallet.weeds}`);
     this.levelButton.setVisible(!unit).setEnabled(!unit && canLevelUpRelic(progress, session.wallet.weeds));
-    this.dnaText.setText(`${"★".repeat(progress.dnaMastery)}${"☆".repeat(5 - progress.dnaMastery)}  ${live ?? "DNA 복원 동기화"}`);
+    const bondMaxed = progress.bondLevel >= BOND_LEVEL_CAP;
+    const nextBondXp = BOND_TOTAL_XP_BY_LEVEL[Math.min(BOND_LEVEL_CAP, progress.bondLevel + 1)];
+    const ferocityReduction = Math.round((1 - BOND_FEROCITY_MULTIPLIER[progress.bondLevel]) * 100);
+    // 애착은 로비 대표 선택, 유대는 개별 누적 관계이므로 상세에서는 유대 효과만 표시한다.
+    this.dnaText.setText(`${"★".repeat(progress.dnaMastery)}${"☆".repeat(5 - progress.dnaMastery)}  ${live ?? "DNA 복원 동기화"}\n유대 LV.${progress.bondLevel}/${BOND_LEVEL_CAP}  ${bondMaxed ? "MAX" : `${progress.bondXp}/${nextBondXp} EXP`}  · 야성 증가 -${ferocityReduction}%`);
     this.radar.draw(finalStats);
     // 과거 "야성"으로 불리던 정적 수치는 실제 의미에 맞춰 궁극기 충전량으로 명시한다.
     this.statsText.setText(`체력  ${finalStats.hp.toLocaleString()}\n방어력  ${finalStats.def.toLocaleString()}    저항력  ${finalStats.res.toLocaleString()}\n공격력  ${finalStats.atk.toLocaleString()}    주문력  ${finalStats.ap.toLocaleString()}\n궁극기 충전량  ${finalStats.energyGain}`);

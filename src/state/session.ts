@@ -4,6 +4,7 @@ import type { Wallet } from "../core/gacha";
 import type { RelicProgress } from "../core/types";
 import { BANNERS } from "../data/banners";
 import { STAGES } from "../data/stages";
+import { BOND_XP_REWARD, grantBondXp } from "../core/bond";
 
 /** 처음 시작할 때 쥐어 주는 렐릭. 셋이면 바로 출격할 수 있다. */
 // 전용 원화와 SD 전투 Puppet까지 개발된 첫 세 캐릭터를 초기 체험 풀로 연다.
@@ -63,8 +64,11 @@ export interface SaveData {
 /** 신규 렐릭에 부여하는 독립 복사 가능한 기본 성장 상태다. */
 export function createInitialRelicProgress(): RelicProgress {
   // 유대는 플레이어별 진행 값이며 신규/마이그레이션 계정 모두 0에서 시작한다.
-  return { level: 1, levelTitle: "복원체", dnaMastery: 0, bondLevel: 0, heartGemSlots: [null, null, null] };
+  return { level: 1, levelTitle: "복원체", dnaMastery: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] };
 }
+
+/** 새 계정의 시작 렐릭도 최초 획득 경로를 거친 것으로 동일한 유대 보상을 받는다. */
+function createStarterProgress(): RelicProgress { return grantBondXp(createInitialRelicProgress(), BOND_XP_REWARD.firstAcquisition).progress; }
 
 /** 신규 계정과 복구 실패가 공유하는 독립 기본 세션을 만든다. */
 export function createDefaultSession(): Session {
@@ -76,7 +80,7 @@ export function createDefaultSession(): Session {
     favorite: STARTER_RELICS[0],
     wallet: { fossil: 1200, amber: 10, dnaFragments: 0, weeds: 0 },
     pullCountSinceHighestRarity: Object.fromEntries(BANNERS.map(({ id }) => [id, 0])),
-    relicProgress: Object.fromEntries(STARTER_RELICS.map((id) => [id, createInitialRelicProgress()])),
+    relicProgress: Object.fromEntries(STARTER_RELICS.map((id) => [id, createStarterProgress()])),
     ownedHeartGemIds: ["vital-seed", "fang-core", "ancient-pulse"],
     dailyContent: { date: "", restorationEntries: 0, completedIds: [], claimedRewardIds: [] },
   };

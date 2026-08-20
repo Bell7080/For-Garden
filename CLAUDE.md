@@ -23,6 +23,10 @@
 
 ## 캐릭터 기능을 추가할 때
 
+> **용어 구분:** 애착(`Session.favorite`)은 로비에 표시할 대표 렐릭 선택이고, 유대
+> (`RelicProgress.bond*`)는 획득·승리·일일 상호작용으로 성장하는 렐릭별 관계 수치다.
+> 애착 변경은 유대 경험치나 레벨을 직접 변경하지 않는다.
+
 1. 캐릭터 정의는 `src/data/relics.ts`에 추가한다.
 2. 획득·보유·편성·애착 설정은 `RelicCollectionManager`를 사용한다.
 3. 상세 정보는 `CharacterInfoManager`를 생성해 `showRelic` 또는 `showUnit`으로 연다.

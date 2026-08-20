@@ -11,6 +11,8 @@ import { Button } from "../ui/Button";
 import { TopBar } from "../ui/TopBar";
 import { COLOR, textStyle } from "../ui/theme";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
+import { gameApi } from "../api/FakeServer";
+import { bondDialogue } from "../data/bonds";
 
 /** 확대된 애착 렐릭의 골반 아래가 내비게이션 뒤로 자연스럽게 이어지는 기준선. */
 const STAGE_FLOOR = 1660;
@@ -32,6 +34,9 @@ const LOBBY_BOX = { left: 26, right: BASE_WIDTH - 26, top: 190, bottom: BASE_HEI
  */
 export class LobbyScene extends Phaser.Scene {
   private favorite?: PuppetCreature;
+  /** 같은 방문 중 반복 터치의 대사 변형 순번이며 보상 중복 판정은 서버 날짜가 담당한다. */
+  private interactionIndex = 0;
+  private interactionPending = false;
 
   constructor() {
     super("lobby");
@@ -107,9 +112,26 @@ export class LobbyScene extends Phaser.Scene {
       depth: -20,
     });
     enableHitOnClick(this, this.favorite);
+    this.favorite.on("pointerup", () => this.interactWithFavorite(def.id));
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.favorite?.destroy());
 
     // 캐릭터 하단 이름/종 설명은 제거해 로비가 원화 감상 화면처럼 보이게 한다.
+  }
+
+  /** Puppet hit 반응과 함께 짧은 대사 및 서버가 확정한 일일 유대 결과를 표시한다. */
+  private interactWithFavorite(relicId: string): void {
+    if (this.interactionPending) return;
+    this.interactionPending = true;
+    void gameApi.interactInLobby(relicId).then((result) => {
+      const progress = result.relicProgress[relicId];
+      const dialogue = bondDialogue(relicId, progress.bondLevel, this.interactionIndex++);
+      const reward = result.bondXpEarned > 0 ? `\n유대 EXP +${result.bondXpEarned}${result.bondLevelsGained ? ` · LEVEL UP +${result.bondLevelsGained}` : ""}` : "";
+      const bubble = this.add.rectangle(BASE_WIDTH / 2, 470, 760, 150, COLOR.panel, 0.9).setStrokeStyle(2, COLOR.accent).setDepth(500);
+      const text = this.add.text(BASE_WIDTH / 2, 470, `“${dialogue.text}”${reward}`, textStyle({ size: 28, color: COLOR.ink, align: "center", lineSpacing: 7 })).setOrigin(0.5).setDepth(501);
+      // 대사 ID는 번역/분석 추적용으로 객체에 남기되 플레이어 화면에는 노출하지 않는다.
+      text.setData("dialogueId", dialogue.id);
+      this.time.delayedCall(1800, () => { bubble.destroy(); text.destroy(); });
+    }).finally(() => { this.interactionPending = false; });
   }
 
   private notReady(label: string): void {

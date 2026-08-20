@@ -7,7 +7,7 @@ import { createDefaultSession, type SaveData, type Session } from "./session";
 
 /** 키는 계정 연동 저장소와 충돌하지 않도록 로컬 프로토타입임을 명시한다. */
 export const SAVE_STORAGE_KEY = "eternal-city.local-save";
-export const CURRENT_SAVE_VERSION = 2;
+export const CURRENT_SAVE_VERSION = 3;
 
 type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
@@ -78,11 +78,17 @@ export class SaveManager {
     // 저장에서는 플레이어별 신규 유대 필드만 보강하고 옛 정의 캐시는 의도적으로 전파하지 않는다.
     const savedProgress = legacy.relicProgress && typeof legacy.relicProgress === "object"
       ? legacy.relicProgress as Record<string, RelicProgress> : {};
-    const relicProgress = Object.fromEntries(Object.entries(savedProgress).map(([id, progress]) => [id, { ...progress, bondLevel: progress.bondLevel ?? 0 }]));
+    const relicProgress = Object.fromEntries(Object.entries(savedProgress).map(([id, progress]) => [id, {
+      ...progress,
+      // 구버전 저장은 관계 진행과 일일 날짜를 모두 안전한 미진행 상태로 복구한다.
+      bondLevel: progress.bondLevel ?? 0,
+      bondXp: progress.bondXp ?? 0,
+      lastLobbyInteractionDate: progress.lastLobbyInteractionDate ?? "",
+    }]));
     if (legacy.saveVersion === undefined) {
       return { ...legacy, wallet, relicProgress, saveVersion: CURRENT_SAVE_VERSION, pullCountSinceHighestRarity: normalizedPity, dailyContent } as unknown as SaveData;
     }
-    if (legacy.saveVersion !== 1 && legacy.saveVersion !== CURRENT_SAVE_VERSION) throw new SaveDataError(`지원하지 않는 저장 버전입니다: ${String(legacy.saveVersion)}`);
+    if (legacy.saveVersion !== 1 && legacy.saveVersion !== 2 && legacy.saveVersion !== CURRENT_SAVE_VERSION) throw new SaveDataError(`지원하지 않는 저장 버전입니다: ${String(legacy.saveVersion)}`);
     return { ...legacy, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, dailyContent, pullCountSinceHighestRarity: normalizedPity } as unknown as SaveData;
   }
 
@@ -103,7 +109,7 @@ export class SaveManager {
     // 보유 목록과 성장 레코드는 항상 정확히 같은 렐릭 집합이어야 한다.
     if (data.ownedRelicIds.some((id) => !data.relicProgress[id]) || Object.keys(data.relicProgress).some((id) => !data.ownedRelicIds.includes(id))) fail("보유 렐릭과 성장 정보가 일치하지 않습니다.");
     for (const [id, progress] of Object.entries(data.relicProgress)) {
-      if (!relicIds.has(id) || !Number.isInteger(progress.dnaMastery) || progress.dnaMastery < 0 || progress.dnaMastery > 5 || !Number.isInteger(progress.bondLevel) || progress.bondLevel < 0 || progress.bondLevel > 10 || !Number.isInteger(progress.level) || progress.level < 1 || !Array.isArray(progress.heartGemSlots) || progress.heartGemSlots.length !== 3) fail("렐릭 성장 정보가 올바르지 않습니다.");
+      if (!relicIds.has(id) || !Number.isInteger(progress.dnaMastery) || progress.dnaMastery < 0 || progress.dnaMastery > 5 || !Number.isInteger(progress.bondLevel) || progress.bondLevel < 0 || progress.bondLevel > 10 || !Number.isInteger(progress.bondXp) || progress.bondXp < 0 || progress.bondXp > 650 || typeof progress.lastLobbyInteractionDate !== "string" || !Number.isInteger(progress.level) || progress.level < 1 || !Array.isArray(progress.heartGemSlots) || progress.heartGemSlots.length !== 3) fail("렐릭 성장 정보가 올바르지 않습니다.");
       if (progress.heartGemSlots.some((id) => id !== null && !gemIds.has(id))) fail("Heart Gem 장착 정보가 올바르지 않습니다.");
     }
     if (!Array.isArray(data.ownedHeartGemIds) || data.ownedHeartGemIds.some((id) => !gemIds.has(id))) fail("Heart Gem 보유 정보가 올바르지 않습니다.");

@@ -42,6 +42,8 @@ export type ApiErrorCode = "BANNER_NOT_FOUND" | "INSUFFICIENT_CURRENCY" | "INVAL
 export interface LevelUpRelicResponse extends PlayerStateDto { relicId: string; cost: number; }
 /** 전투 확인 시 저장되는 보상으로 최초 여부와 획득 잡초를 결과 UI에 그대로 전달한다. */
 export interface CompleteStageResponse extends PlayerStateDto { stageId: string; firstClear: boolean; weedsEarned: number; }
+/** 로비 터치 결과는 중복 여부와 대사 UI가 표시할 유대 변화량을 돌려준다. */
+export interface LobbyInteractionResponse extends PlayerStateDto { relicId: string; bondXpEarned: number; bondLevelsGained: number; }
 /** 일일 입장 소비와 즉시 지급된 프로토타입 보상을 한 응답으로 확정한다. */
 export interface EnterDailyRestorationResponse extends PlayerStateDto { entriesRemaining: number; weedsEarned: number; }
 
@@ -50,7 +52,9 @@ export interface GameApi {
   getPlayerState(): Promise<PlayerStateDto>;
   pullRelics(request: PullRequest): Promise<PullResponse>;
   levelUpRelic(relicId: string): Promise<LevelUpRelicResponse>;
-  completeStage(stageId: string): Promise<CompleteStageResponse>;
+  /** 패배도 서버에 명시해 승리 전용 보상이 새지 않도록 한다. */
+  completeStage(stageId: string, victory?: boolean): Promise<CompleteStageResponse>;
+  interactInLobby(relicId: string): Promise<LobbyInteractionResponse>;
   enterDailyRestoration(): Promise<EnterDailyRestorationResponse>;
 }
 

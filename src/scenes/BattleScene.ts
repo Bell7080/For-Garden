@@ -393,7 +393,7 @@ export class BattleScene extends Phaser.Scene {
     this.add.text(BASE_WIDTH / 2, 930, won ? `획득 잡초  +${weedsEarned}\n${firstClear ? "최초 클리어 보상" : "반복 클리어 보상"}` : "획득 보상 없음", textStyle({ size: 28, color: COLOR.ink, align: "center", lineSpacing: 8 })).setOrigin(0.5).setDepth(101);
     let confirming = false;
     new Button(this, BASE_WIDTH / 2, 1050, { width: 400, height: 110, label: won ? "확인 및 저장" : "지도로", fontSize: 34, onClick: () => {
-      if (!won) { this.scene.start("stageMap"); return; }
+      if (!won) { void gameApi.completeStage(stage.id, false).finally(() => this.scene.start("stageMap")); return; }
       if (confirming) return;
       confirming = true;
       // API 완료 뒤에만 이동하므로 사용자가 지도를 본 시점에는 보상과 최초 클리어가 저장되어 있다.

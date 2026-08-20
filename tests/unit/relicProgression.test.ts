@@ -20,7 +20,7 @@ function makeSession(): Session {
 
 describe("렐릭 성장 규칙", () => {
   it("현재 레벨 비용의 정확한 경계에서만 레벨업하고 원본을 변경하지 않는다", () => {
-    const progress: RelicProgress = { level: 2, levelTitle: "복원체", dnaMastery: 0, bondLevel: 0, heartGemSlots: [null, null, null] };
+    const progress: RelicProgress = { level: 2, levelTitle: "복원체", dnaMastery: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] };
     expect(relicLevelUpCost(2)).toBe(20);
     expect(canLevelUpRelic(progress, 19)).toBe(false);
     expect(levelUpRelic(progress, 20)).toMatchObject({ progress: { level: 3 }, weeds: 0, cost: 20 });
@@ -28,12 +28,12 @@ describe("렐릭 성장 규칙", () => {
   });
 
   it("최대 레벨과 재화 부족에서는 성장 상태를 만들지 않는다", () => {
-    const base: RelicProgress = { level: 1, levelTitle: "복원체", dnaMastery: 0, bondLevel: 0, heartGemSlots: [null, null, null] };
+    const base: RelicProgress = { level: 1, levelTitle: "복원체", dnaMastery: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] };
     expect(() => levelUpRelic(base, 9)).toThrow("잡초가 부족");
     expect(() => levelUpRelic({ ...base, level: RELIC_LEVEL_CAP }, 9999)).toThrow("최대 레벨");
   });
   it("기본 능력치에 레벨, DNA, Heart Gem 순으로 단계별 반올림해 적용한다", () => {
-    const progress: RelicProgress = { level: 2, levelTitle: "발아체", dnaMastery: 1, bondLevel: 0, heartGemSlots: ["vital-seed", null, null] };
+    const progress: RelicProgress = { level: 2, levelTitle: "발아체", dnaMastery: 1, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: ["vital-seed", null, null] };
     // 101 → 레벨 2%(103) → DNA 3%(106) → Heart Gem HP 10%(117) 순서다.
     expect(calculateFinalStats(BASE, progress, [getHeartGem("vital-seed")]).hp).toBe(117);
   });
@@ -59,7 +59,7 @@ describe("렐릭 성장 규칙", () => {
     const state = makeSession();
     new RelicProgressionManager(state).setHeartGemSlots("rex", [null, "fang-core", null]);
     const restored = JSON.parse(JSON.stringify(state.relicProgress)) as Session["relicProgress"];
-    expect(restored.rex).toEqual({ level: 1, levelTitle: "복원체", dnaMastery: 0, bondLevel: 0, heartGemSlots: [null, "fang-core", null] });
+    expect(restored.rex).toEqual({ level: 1, levelTitle: "복원체", dnaMastery: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, "fang-core", null] });
     expect(restored.rex.heartGemSlots).toHaveLength(3);
   });
 });

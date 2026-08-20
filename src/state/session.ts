@@ -33,7 +33,10 @@ export interface Session {
 
 /** 아직 서버 계정에 귀속되지 않은 브라우저 일일 콘텐츠 스냅샷이다. */
 export interface DailyContentState {
+  /** 서버가 정한 UTC YYYY-MM-DD 키다. 앱 재실행이 아니라 키 변경만 횟수를 초기화한다. */
   date: string;
+  /** 일일 복원에 실제 입장해 소비한 횟수다. */
+  restorationEntries: number;
   completedIds: string[];
   claimedRewardIds: string[];
 }
@@ -70,11 +73,11 @@ export function createDefaultSession(): Session {
     cleared: new Set<string>(),
     owned: new Set(STARTER_RELICS),
     favorite: STARTER_RELICS[0],
-    wallet: { fossil: 1200, amber: 10, dnaFragments: 0 },
+    wallet: { fossil: 1200, amber: 10, dnaFragments: 0, weeds: 0 },
     pullCountSinceHighestRarity: Object.fromEntries(BANNERS.map(({ id }) => [id, 0])),
     relicProgress: Object.fromEntries(STARTER_RELICS.map((id) => [id, createInitialRelicProgress()])),
     ownedHeartGemIds: ["vital-seed", "fang-core", "ancient-pulse"],
-    dailyContent: { date: "", completedIds: [], claimedRewardIds: [] },
+    dailyContent: { date: "", restorationEntries: 0, completedIds: [], claimedRewardIds: [] },
   };
 }
 

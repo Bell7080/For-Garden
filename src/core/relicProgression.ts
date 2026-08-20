@@ -1,6 +1,33 @@
 import type { HeartGemDef, HeartGemStatEffect } from "../data/heartGems";
 import type { RelicProgress, Stats } from "./types";
 
+/** 프로토타입 레벨 상한은 짧은 플레이에서도 최대 상태를 검증할 수 있도록 20으로 제한한다. */
+export const RELIC_LEVEL_CAP = 20;
+/** 레벨 N에서 N+1로 갈 때 드는 잡초다. 선형 비용은 각 레벨 투자의 의미를 쉽게 조정하게 한다. */
+export function relicLevelUpCost(level: number): number {
+  if (!Number.isInteger(level) || level < 1 || level > RELIC_LEVEL_CAP) throw new RangeError("레벨이 성장 범위를 벗어났습니다.");
+  return level * 10;
+}
+
+/** UI와 API가 같은 경계 판정을 쓰도록 현재 성장 상태를 값으로 반환한다. */
+export function canLevelUpRelic(progress: RelicProgress, weeds: number): boolean {
+  return progress.level < RELIC_LEVEL_CAP && Number.isInteger(weeds) && weeds >= relicLevelUpCost(progress.level);
+}
+
+export interface RelicLevelUpResult {
+  progress: RelicProgress;
+  weeds: number;
+  cost: number;
+}
+
+/** 원본을 변경하지 않고 비용 차감과 새 성장 상태를 함께 계산해 서버가 원자적으로 커밋하게 한다. */
+export function levelUpRelic(progress: RelicProgress, weeds: number): RelicLevelUpResult {
+  const cost = relicLevelUpCost(progress.level);
+  if (progress.level >= RELIC_LEVEL_CAP) throw new RangeError("이미 최대 레벨입니다.");
+  if (!Number.isInteger(weeds) || weeds < cost) throw new RangeError("잡초가 부족합니다.");
+  return { progress: { ...progress, level: progress.level + 1, heartGemSlots: [...progress.heartGemSlots] as RelicProgress["heartGemSlots"] }, weeds: weeds - cost, cost };
+}
+
 /** 모든 능력치를 빠짐없이 같은 규칙으로 순회하기 위한 고정 키 목록이다. */
 const STAT_KEYS: readonly (keyof Stats)[] = ["hp", "def", "res", "atk", "ap", "attackSpeed", "moveSpeed", "critChance", "critDamage", "ferocity"];
 

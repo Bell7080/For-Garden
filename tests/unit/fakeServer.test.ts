@@ -12,14 +12,39 @@ function makeSession(fossil = 1000): Session {
     owned: new Set(["anky", "rex", "dodo"]),
     favorite: "anky",
     pullCountSinceHighestRarity: { fossil: 0, amber: 0 },
-    wallet: { fossil, amber: 10, dnaFragments: 0 },
+    wallet: { fossil, amber: 10, dnaFragments: 0, weeds: 0 },
     relicProgress: Object.fromEntries(["anky", "rex", "dodo"].map((id) => [id, { level: id === "anky" ? 2 : 1, levelTitle: id === "anky" ? "발아체" : "복원체", dnaMastery: id === "anky" ? 1 : 0, heartGemSlots: id === "anky" ? ["vital-seed", null, null] : [null, null, null] }])),
     ownedHeartGemIds: ["vital-seed"],
-    dailyContent: { date: "", completedIds: [], claimedRewardIds: [] },
+    dailyContent: { date: "", restorationEntries: 0, completedIds: [], claimedRewardIds: [] },
   };
 }
 
 describe("FakeServer", () => {
+  it("레벨업 재화를 검사·차감하고 새 성장을 서버 상태에 반영한다", async () => {
+    const state = makeSession(); state.wallet.weeds = 20;
+    const server = new FakeServer(state, { latencyMs: 0 });
+    const response = await server.levelUpRelic("anky");
+    expect(response).toMatchObject({ relicId: "anky", cost: 20, wallet: { weeds: 0 } });
+    expect(state.relicProgress.anky.level).toBe(3);
+    await expect(server.levelUpRelic("anky")).rejects.toMatchObject({ code: "INSUFFICIENT_CURRENCY" });
+  });
+
+  it("메인 스테이지의 최초와 반복 보상을 데이터대로 구분한다", async () => {
+    const state = makeSession(); const server = new FakeServer(state, { latencyMs: 0 });
+    await expect(server.completeStage("1-1")).resolves.toMatchObject({ firstClear: true, weedsEarned: 30 });
+    await expect(server.completeStage("1-1")).resolves.toMatchObject({ firstClear: false, weedsEarned: 10 });
+    expect(state.wallet.weeds).toBe(40);
+  });
+
+  it("일일 복원은 UTC 하루 3회이고 다음 UTC 날짜에만 횟수를 초기화한다", async () => {
+    const state = makeSession(); let now = new Date("2026-08-20T23:59:00Z");
+    const server = new FakeServer(state, { latencyMs: 0, now: () => now });
+    for (let index = 0; index < 3; index += 1) await server.enterDailyRestoration();
+    await expect(server.enterDailyRestoration()).rejects.toMatchObject({ code: "DAILY_ENTRY_LIMIT" });
+    now = new Date("2026-08-21T00:00:00Z");
+    await expect(server.enterDailyRestoration()).resolves.toMatchObject({ entriesRemaining: 2, weedsEarned: 40 });
+    expect(state.dailyContent).toMatchObject({ date: "2026-08-21", restorationEntries: 1 });
+  });
   it("서버 안에서 비용과 결과를 함께 확정한다", async () => {
     const state = makeSession();
     const server = new FakeServer(state, { latencyMs: 0, random: () => 0 });

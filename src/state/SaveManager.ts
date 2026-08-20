@@ -70,12 +70,15 @@ export class SaveManager {
       ? legacy.pullCountSinceHighestRarity as Record<string, unknown> : {};
     const normalizedPity = Object.fromEntries(BANNERS.map(({ id }) => [id, savedPity[id] ?? 0]));
     // DNA 조각 도입 전 저장도 별도 초기화 없이 0개로 복구한다.
-    const wallet = { ...(legacy.wallet as object), dnaFragments: (legacy.wallet as Partial<SaveData["wallet"]> | undefined)?.dnaFragments ?? 0 };
+    const wallet = { ...(legacy.wallet as object), dnaFragments: (legacy.wallet as Partial<SaveData["wallet"]> | undefined)?.dnaFragments ?? 0, weeds: (legacy.wallet as Partial<SaveData["wallet"]> | undefined)?.weeds ?? 0 };
+    // 일일 입장 횟수 도입 전 저장은 같은 UTC 키에서 0회로 시작하되 이후 재실행에는 저장값을 유지한다.
+    const savedDaily = legacy.dailyContent as Partial<SaveData["dailyContent"]> | undefined;
+    const dailyContent = { date: savedDaily?.date ?? "", restorationEntries: savedDaily?.restorationEntries ?? 0, completedIds: savedDaily?.completedIds ?? [], claimedRewardIds: savedDaily?.claimedRewardIds ?? [] };
     if (legacy.saveVersion === undefined) {
-      return { ...legacy, wallet, saveVersion: CURRENT_SAVE_VERSION, pullCountSinceHighestRarity: normalizedPity, dailyContent: legacy.dailyContent ?? { date: "", completedIds: [], claimedRewardIds: [] } } as unknown as SaveData;
+      return { ...legacy, wallet, saveVersion: CURRENT_SAVE_VERSION, pullCountSinceHighestRarity: normalizedPity, dailyContent } as unknown as SaveData;
     }
     if (legacy.saveVersion !== CURRENT_SAVE_VERSION) throw new SaveDataError(`지원하지 않는 저장 버전입니다: ${String(legacy.saveVersion)}`);
-    return { ...legacy, wallet, pullCountSinceHighestRarity: normalizedPity } as unknown as SaveData;
+    return { ...legacy, wallet, dailyContent, pullCountSinceHighestRarity: normalizedPity } as unknown as SaveData;
   }
 
   /** 콘텐츠 ID와 교차 필드 불변식까지 검사해 부분 손상을 조용히 전파하지 않는다. */
@@ -89,7 +92,7 @@ export class SaveManager {
     if (!relicIds.has(data.favorite) || !data.ownedRelicIds.includes(data.favorite)) fail("애착 렐릭이 올바르지 않습니다.");
     if (data.selectedStageId !== null && !stageIds.has(data.selectedStageId)) fail("스테이지 ID가 올바르지 않습니다.");
     if (!Array.isArray(data.clearedStageIds) || data.clearedStageIds.some((id) => !stageIds.has(id))) fail("클리어 진행이 올바르지 않습니다.");
-    if (!data.wallet || !Number.isFinite(data.wallet.fossil) || data.wallet.fossil < 0 || !Number.isFinite(data.wallet.amber) || data.wallet.amber < 0 || !Number.isInteger(data.wallet.dnaFragments) || data.wallet.dnaFragments < 0) fail("재화가 올바르지 않습니다.");
+    if (!data.wallet || !Number.isFinite(data.wallet.fossil) || data.wallet.fossil < 0 || !Number.isFinite(data.wallet.amber) || data.wallet.amber < 0 || !Number.isInteger(data.wallet.dnaFragments) || data.wallet.dnaFragments < 0 || !Number.isInteger(data.wallet.weeds) || data.wallet.weeds < 0) fail("재화가 올바르지 않습니다.");
     if (!data.pullCountSinceHighestRarity || BANNERS.some(({ id }) => !Number.isInteger(data.pullCountSinceHighestRarity[id]) || data.pullCountSinceHighestRarity[id] < 0)) fail("배너 천장 정보가 올바르지 않습니다.");
     if (!data.relicProgress || typeof data.relicProgress !== "object") fail("성장 정보가 없습니다.");
     // 보유 목록과 성장 레코드는 항상 정확히 같은 렐릭 집합이어야 한다.
@@ -99,7 +102,7 @@ export class SaveManager {
       if (progress.heartGemSlots.some((id) => id !== null && !gemIds.has(id))) fail("Heart Gem 장착 정보가 올바르지 않습니다.");
     }
     if (!Array.isArray(data.ownedHeartGemIds) || data.ownedHeartGemIds.some((id) => !gemIds.has(id))) fail("Heart Gem 보유 정보가 올바르지 않습니다.");
-    if (!data.dailyContent || typeof data.dailyContent.date !== "string" || !Array.isArray(data.dailyContent.completedIds) || !Array.isArray(data.dailyContent.claimedRewardIds)) fail("일일 콘텐츠 정보가 올바르지 않습니다.");
+    if (!data.dailyContent || typeof data.dailyContent.date !== "string" || !Number.isInteger(data.dailyContent.restorationEntries) || data.dailyContent.restorationEntries < 0 || data.dailyContent.restorationEntries > 3 || !Array.isArray(data.dailyContent.completedIds) || !Array.isArray(data.dailyContent.claimedRewardIds)) fail("일일 콘텐츠 정보가 올바르지 않습니다.");
   }
 
   private toSession(data: SaveData): Session {

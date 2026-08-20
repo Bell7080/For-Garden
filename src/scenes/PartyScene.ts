@@ -5,6 +5,9 @@ import type { RelicDef } from "../core/types";
 import { getRelic } from "../data/relics";
 import { relicCollection } from "../managers/RelicCollectionManager";
 import { CharacterInfoManager, ROLE_LABEL, addHelpBadge } from "../managers/CharacterInfoManager";
+import type { PuppetCreature } from "../puppets/assets";
+import { battleAssetFor, spawnPuppet } from "../puppets/assets";
+import { tintFor } from "../puppets/tints";
 import { getStage } from "../data/stages";
 import { session } from "../state/session";
 import { Button } from "../ui/Button";
@@ -15,17 +18,18 @@ import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 /** 이만큼 누르고 있으면 정보창이 열린다. 짧게 누르면 편성 토글이다. */
 const LONG_PRESS_MS = 420;
 
-/** 미리보기 전장. 전투 화면과 같은 배치(적 우상단 · 아군 좌하단)를 축소해 보여준다. */
-const ENEMY_PREVIEW: [number, number, number, number][] = [
-  [620, 560, 300, 130], // 전방 — 선봉
-  [850, 380, 270, 110],
-  [925, 560, 270, 110],
-];
-const ALLY_PREVIEW: [number, number][] = [
-  [440, 680], // 전방 — 선봉
-  [230, 780],
-  [340, 880],
-];
+/**
+ * 미리보기 전장.
+ *
+ * 실시간 난전에는 전방·후방이 없다. 전투가 시작될 때와 똑같이 적 셋이 위에, 아군 셋이 아래에
+ * 나란히 서고, 고른 순서가 왼쪽부터의 자리를 정한다.
+ */
+const PREVIEW_COLUMNS = [270, 540, 810];
+const ENEMY_ROW = 430;
+const ALLY_ROW = 830;
+/** 두 줄을 가르는 대치선. 적 이름표 아래, 아군 머리 위에 놓는다. */
+const FRONT_LINE = 556;
+const PREVIEW_HEIGHT = 210;
 
 interface RosterCard {
   card: PortraitCard;
@@ -35,15 +39,20 @@ interface RosterCard {
 interface AllySlot {
   platform: Phaser.GameObjects.Ellipse;
   name: Phaser.GameObjects.Text;
-  role: Phaser.GameObjects.Text;
+  slotLabel: Phaser.GameObjects.Text;
+  /** 이 자리에 서 있는 SD. 편성이 바뀔 때마다 갈아 세운다. */
+  creature?: PuppetCreature;
+  /** 지금 이 자리가 보여 주고 있는 렐릭. 같은 렐릭이면 다시 세우지 않는다. */
+  currentId?: string;
+  /** 늦게 도착한 로딩이 최신 편성을 덮지 않게 하는 요청 번호. */
+  request: number;
 }
 
 /**
  * 편성 화면.
  *
- * 위쪽에 이번 전투의 전장을 그대로 축소해 둔다. 적 진형에서 누가 선봉인지, 내가 고른 렐릭이
- * 어느 자리에 서는지를 들어가기 전에 볼 수 있게 하려는 것이다. 고른 순서가 곧 진형이라
- * 첫 번째로 고른 렐릭이 선봉 자리에 올라간다.
+ * 위쪽에 이번 전투의 시작 배치를 그대로 축소해 둔다. 어떤 적이 나오는지, 내가 고른 렐릭이
+ * 어느 자리에 서는지를 들어가기 전에 SD 그대로 볼 수 있게 하려는 것이다.
  */
 export class PartyScene extends Phaser.Scene {
   private picked: string[] = [];
@@ -76,7 +85,7 @@ export class PartyScene extends Phaser.Scene {
     const stage = getStage(session.selectedStageId ?? "1-1");
     this.add.text(cx, 70, `${stage.id}  ${stage.name}`, textStyle({ size: 46 })).setOrigin(0.5, 0);
     this.add
-      .text(cx, 132, "렐릭 3명 편성 — 먼저 고른 순서가 진형이다", textStyle({ size: 28, color: COLOR.inkDim }))
+      .text(cx, 132, "렐릭 3명 편성 — 고른 순서대로 왼쪽부터 선다", textStyle({ size: 28, color: COLOR.inkDim }))
       .setOrigin(0.5, 0);
 
     this.buildPreview(stage.enemies);
@@ -110,64 +119,86 @@ export class PartyScene extends Phaser.Scene {
     this.refresh();
   }
 
-  /** 위쪽 전장 미리보기. 적은 실제 진형대로, 아군은 고른 순서대로 자리에 올라간다. */
+  /** 위쪽 시작 배치 미리보기. 적은 위에, 아군은 아래에 나란히 선다. */
   private buildPreview(enemyIds: readonly string[]): void {
     this.add
-      .text(BASE_WIDTH - 40, 210, "적 진형", textStyle({ size: 30, color: COLOR.dangerText }))
+      .text(BASE_WIDTH - 40, 210, "적", textStyle({ size: 30, color: COLOR.dangerText }))
       .setOrigin(1, 0);
-
-    // 좌하단 ↔ 우상단 대치선.
-    this.add.line(0, 0, 300, 900, 830, 470, COLOR.panelEdge).setOrigin(0).setLineWidth(2).setAlpha(0.5);
+    // 두 줄 사이의 대치선.
+    this.add
+      .line(0, 0, 120, FRONT_LINE, BASE_WIDTH - 120, FRONT_LINE, COLOR.panelEdge)
+      .setOrigin(0)
+      .setLineWidth(2)
+      .setAlpha(0.45);
 
     enemyIds.forEach((id, slot) => {
       const def = getRelic(id);
-      const [x, y, w, h] = ENEMY_PREVIEW[slot];
-      const box = this.add
-        .rectangle(x, y, w, h, COLOR.panel)
-        .setStrokeStyle(slot === 0 ? 6 : 3, COLOR.danger)
-        .setInteractive({ useHandCursor: true });
-      box.on("pointerdown", () => this.info.showRelic(def));
+      const x = PREVIEW_COLUMNS[slot];
+      // 받침은 SD(-10)보다 뒤에 둬야 발을 덮지 않는다.
+      this.add.ellipse(x, ENEMY_ROW + 4, 190, 34, COLOR.void, 0.45).setDepth(-12);
+      void this.standSD(def.id, x, ENEMY_ROW, true);
 
-      this.add.text(x - w / 2 + 16, y - h / 2 + 14, def.name, textStyle({ size: 30 })).setOrigin(0, 0);
+      this.add.text(x, ENEMY_ROW + 26, def.name, textStyle({ size: 28 })).setOrigin(0.5, 0);
       this.add
-        .text(
-          x + w / 2 - 16,
-          y - h / 2 + 20,
-          slot === 0 ? "선봉" : "후방",
-          textStyle({ size: 22, color: slot === 0 ? COLOR.accentText : COLOR.inkDim }),
-        )
-        .setOrigin(1, 0);
-      this.add
-        .text(
-          x - w / 2 + 16,
-          y + h / 2 - 16,
-          `${ROLE_LABEL[def.role]}  HP ${def.stats.hp}`,
-          textStyle({ size: 22, color: COLOR.inkDim }),
-        )
-        .setOrigin(0, 1);
-
-      addHelpBadge(this, x + w / 2 - 12, y - h / 2 - 12, () => this.info.showRelic(def), 24);
-    });
-
-    this.add.text(40, 640, "아군 진형", textStyle({ size: 30 })).setOrigin(0, 0);
-
-    ALLY_PREVIEW.forEach(([x, y], slot) => {
-      const platform = this.add
-        .ellipse(x, y, 250, 70, COLOR.panel)
-        .setStrokeStyle(slot === 0 ? 5 : 3, slot === 0 ? COLOR.accent : COLOR.ally);
-      const name = this.add.text(x, y - 8, "", textStyle({ size: 28 })).setOrigin(0.5);
-      const role = this.add
-        .text(x, y + 40, slot === 0 ? "선봉" : `후방 ${slot}`, textStyle({ size: 22, color: COLOR.inkDim }))
+        .text(x, ENEMY_ROW + 62, `${ROLE_LABEL[def.role]}  HP ${def.stats.hp}`, textStyle({ size: 22, color: COLOR.inkDim }))
         .setOrigin(0.5, 0);
-      this.allySlots.push({ platform, name, role });
+      // SD 자체는 그림이라 입력을 받지 않는다. 상세는 옆의 ?로 연다.
+      addHelpBadge(this, x + 96, ENEMY_ROW - PREVIEW_HEIGHT + 10, () => this.info.showRelic(def), 24);
     });
+
+    this.add.text(40, FRONT_LINE + 28, "아군", textStyle({ size: 30 })).setOrigin(0, 0);
+
+    PREVIEW_COLUMNS.forEach((x, slot) => {
+      const platform = this.add.ellipse(x, ALLY_ROW, 210, 46, COLOR.panel, 0.85).setStrokeStyle(3, COLOR.ally).setDepth(-12);
+      const name = this.add.text(x, ALLY_ROW + 26, "―", textStyle({ size: 28, color: COLOR.inkDim })).setOrigin(0.5, 0);
+      const slotLabel = this.add
+        .text(x, ALLY_ROW + 62, `${slot + 1}번 자리`, textStyle({ size: 22, color: COLOR.inkDim }))
+        .setOrigin(0.5, 0);
+      this.allySlots.push({ platform, name, slotLabel, request: 0 });
+    });
+  }
+
+  /** 미리보기용 SD 하나를 세운다. 씬을 떠난 뒤 도착한 로딩은 그대로 버린다. */
+  private async standSD(relicId: string, x: number, groundY: number, enemy: boolean): Promise<PuppetCreature | undefined> {
+    const creature = await spawnPuppet(this, battleAssetFor(relicId), {
+      x,
+      groundY,
+      height: PREVIEW_HEIGHT,
+      flipX: enemy,
+      // 전투 화면과 같은 규칙 — 임시 공용 적만 색으로 구분한다.
+      tint: relicId.startsWith("husk-") ? tintFor(relicId) : undefined,
+      depth: -10,
+    });
+    if (!this.scene.isActive()) {
+      creature.destroy();
+      return undefined;
+    }
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => creature.destroy());
+    return creature;
+  }
+
+  /** 아군 자리의 SD를 지금 편성에 맞춘다. 빈 자리는 받침만 남긴다. */
+  private async fillAllySlot(slot: AllySlot, index: number, relicId?: string): Promise<void> {
+    const request = ++slot.request;
+    slot.creature?.destroy();
+    slot.creature = undefined;
+    if (!relicId) return;
+
+    const creature = await this.standSD(relicId, PREVIEW_COLUMNS[index], ALLY_ROW, false);
+    if (!creature) return;
+    // 기다리는 사이 편성이 바뀌었다면 방금 세운 SD는 쓰지 않는다.
+    if (request !== slot.request) {
+      creature.destroy();
+      return;
+    }
+    slot.creature = creature;
   }
 
   /**
    * 아래쪽 보유 렐릭 그리드. 짧게 누르면 편성, 꾹 누르면 정보창이다.
    *
    * 카드는 도감과 같은 규격이라 이름·역할만 띠에 남기고 얼굴로 고르게 한다.
-   * 고른 카드는 띠 문구가 진형(선봉·후방)으로 바뀐다.
+   * 고른 카드는 띠 문구가 전장에서 설 자리 번호로 바뀐다.
    */
   private buildRoster(): void {
     const cols = 5;
@@ -259,16 +290,20 @@ export class PartyScene extends Phaser.Scene {
       const at = this.picked.indexOf(id);
       const chosen = at >= 0;
       entry.card.setSelected(chosen);
-      entry.card.setSub(chosen ? (at === 0 ? "선봉" : `후방 ${at}`) : entry.role);
+      entry.card.setSub(chosen ? `${at + 1}번 자리` : entry.role);
     }
 
-    // 고른 순서 그대로 아군 진형 자리에 올린다.
+    // 고른 순서 그대로 왼쪽 자리부터 올린다.
     this.allySlots.forEach((slot, i) => {
       const id = this.picked[i];
+      const standing = slot.creature !== undefined;
       slot.name.setText(id ? getRelic(id).name : "―");
       slot.name.setColor(id ? COLOR.ink : COLOR.inkDim);
-      slot.platform.setAlpha(id ? 1 : 0.4);
-      slot.role.setAlpha(id ? 1 : 0.5);
+      slot.platform.setAlpha(id ? 1 : 0.55);
+      slot.slotLabel.setAlpha(id ? 1 : 0.75);
+      // 이미 그 렐릭이 서 있으면 다시 세우지 않는다.
+      if (!id || !standing || slot.currentId !== id) void this.fillAllySlot(slot, i, id);
+      slot.currentId = id;
     });
 
     this.startButton.setEnabled(this.picked.length === 3);

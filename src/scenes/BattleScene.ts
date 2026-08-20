@@ -38,6 +38,14 @@ const ARENA: Arena = { left: 130, right: 950, top: 600, bottom: 1360 };
 const UNIT_HEIGHT = 210;
 const PROFILE_TOP = 1430;
 
+/**
+ * 전장 안에서의 앞뒤 순서.
+ *
+ * SD는 발 높이에 따라 0~90 사이를 오간다. 체력 바와 피해 숫자는 그보다 확실히 위에 둬야
+ * 아래쪽에 선 캐릭터에 가려지지 않는다 — 정확히 이 이유로 피해량이 보이지 않았다.
+ */
+const DEPTH = { unitBase: -60, hpBar: 200, damage: 300, burst: 320 } as const;
+
 interface FighterView {
   creature: PuppetCreature;
   asset: PuppetAsset;
@@ -211,14 +219,31 @@ export class BattleScene extends Phaser.Scene {
     }
   }
 
-  /** 맞은 자리에서 피해량이 떠오른다. 실시간으로 몇 대를 주고받는지 눈으로 세게 한다. */
+  /**
+   * 맞은 자리에서 피해량이 떠올랐다 사라진다.
+   *
+   * 아군이 받은 피해는 붉게, 적에게 준 피해는 흰색, 궁극기는 황동색이다. 배경과 SD 위에서도
+   * 읽히도록 어두운 외곽선을 두르고, 뜨는 순간 살짝 커졌다 제 크기로 돌아온다.
+   */
   private popDamage(fighter: Fighter, amount: number, ultimate: boolean, critical: boolean): void {
     const color = ultimate ? COLOR.accentText : fighter.side === "player" ? COLOR.dangerText : COLOR.ink;
+    const big = critical || ultimate;
     const label = this.add
-      .text(fighter.x + Phaser.Math.Between(-26, 26), fighter.y - UNIT_HEIGHT * 0.7, `${amount}`, textStyle({ size: critical || ultimate ? 38 : 28, color }))
+      .text(fighter.x + Phaser.Math.Between(-26, 26), fighter.y - UNIT_HEIGHT * 0.72, `${amount}`, textStyle({ size: big ? 40 : 30, color }))
       .setOrigin(0.5)
-      .setDepth(40);
-    this.tweens.add({ targets: label, y: label.y - 70, alpha: 0, duration: 620, ease: "Quad.Out", onComplete: () => label.destroy() });
+      .setDepth(DEPTH.damage)
+      .setStroke("#14171a", 7)
+      .setScale(0.6);
+    this.tweens.add({ targets: label, scale: 1, duration: 130, ease: "Back.Out" });
+    this.tweens.add({
+      targets: label,
+      y: label.y - 86,
+      alpha: 0,
+      delay: 130,
+      duration: 620,
+      ease: "Quad.Out",
+      onComplete: () => label.destroy(),
+    });
   }
 
   /** 쓰러진 SD는 별이 되어 화면 위로 날아가고 자리와 체력 바를 지운다. */
@@ -229,7 +254,7 @@ export class BattleScene extends Phaser.Scene {
     view.shadow.setVisible(false);
     view.hpBack.setVisible(false);
     view.hpFill.setVisible(false);
-    const burst = this.add.star(view.creature.x, view.creature.y, 10, 24, 66, COLOR.accent, 0.9).setDepth(30);
+    const burst = this.add.star(view.creature.x, view.creature.y, 10, 24, 66, COLOR.accent, 0.9).setDepth(DEPTH.burst);
     this.tweens.add({ targets: burst, scale: 1.8, alpha: 0, angle: 90, duration: 360, onComplete: () => burst.destroy() });
     this.tweens.add({
       targets: view.creature,
@@ -256,15 +281,15 @@ export class BattleScene extends Phaser.Scene {
         flipX: fighter.facing < 0,
       });
       // 아래에 선 캐릭터가 앞에 오도록 발 높이로 앞뒤를 정한다.
-      view.creature.setDepth(Math.round(fighter.y / 10) - 60);
+      view.creature.setDepth(Math.round(fighter.y / 10) + DEPTH.unitBase);
       // 떠 있는 동안 그림자는 땅에 남되 작고 옅어진다.
       const lift = 1 - Math.min(pose.hop / 60, 0.45);
       view.shadow.setPosition(pose.shadowX, pose.shadowY + 4).setDisplaySize(132 * lift, 24 * lift).setAlpha(0.38 * lift);
       const barY = pose.y - UNIT_HEIGHT - 26;
-      view.hpBack.setPosition(pose.x, barY).setDepth(45);
+      view.hpBack.setPosition(pose.x, barY).setDepth(DEPTH.hpBar);
       view.hpFill
         .setPosition(pose.x - 48, barY)
-        .setDepth(46)
+        .setDepth(DEPTH.hpBar + 1)
         .setDisplaySize(96 * Math.max(0, fighter.hp / fighter.maxHp), 10);
     });
   }

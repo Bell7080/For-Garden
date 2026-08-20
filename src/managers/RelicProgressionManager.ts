@@ -3,6 +3,7 @@ import type { RelicProgress, Stats } from "../core/types";
 import { getHeartGem } from "../data/heartGems";
 import { getRelic } from "../data/relics";
 import { createInitialRelicProgress, session, type Session } from "../state/session";
+import { saveManager } from "../state/SaveManager";
 
 /** 성장 상태 변경과 Heart Gem 검증을 독점하는 공개 진입점이다. */
 export class RelicProgressionManager {
@@ -19,12 +20,14 @@ export class RelicProgressionManager {
     if (!Number.isInteger(level) || level < 1) throw new RangeError("레벨은 1 이상의 정수여야 합니다.");
     if (!levelTitle.trim()) throw new Error("레벨 칭호는 비워 둘 수 없습니다.");
     Object.assign(this.getProgress(relicId), { level, levelTitle });
+    this.persistSharedSession();
   }
 
   /** DNA 숙련도는 정수 0~5일 때만 저장한다. */
   setDnaMastery(relicId: string, mastery: number): void {
     if (!Number.isInteger(mastery) || mastery < 0 || mastery > 5) throw new RangeError("DNA 숙련도는 0~5의 정수여야 합니다.");
     this.getProgress(relicId).dnaMastery = mastery;
+    this.persistSharedSession();
   }
 
   /** 정확히 세 슬롯, 빈 슬롯, 중복, 미보유 Heart Gem을 모두 한곳에서 검증한다. */
@@ -37,6 +40,7 @@ export class RelicProgressionManager {
       if (!this.state.ownedHeartGemIds.includes(id)) throw new Error(`보유하지 않은 Heart Gem입니다: ${id}`);
     }
     this.getProgress(relicId).heartGemSlots = [...slots] as RelicProgress["heartGemSlots"];
+    this.persistSharedSession();
   }
 
   /** UI와 전투가 공유할 최종 능력치를 순수 코어 계산기로 구한다. */
@@ -44,6 +48,11 @@ export class RelicProgressionManager {
     const progress = this.getProgress(relicId);
     const gems = progress.heartGemSlots.flatMap((id) => (id === null ? [] : [getHeartGem(id)]));
     return calculateFinalStats(getRelic(relicId).stats, progress, gems);
+  }
+
+  /** 성장 트랜잭션이 끝난 뒤에만 저장해 중간 상태가 남지 않게 한다. */
+  private persistSharedSession(): void {
+    if (this.state === session) saveManager.save(this.state);
   }
 }
 

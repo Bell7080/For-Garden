@@ -14,6 +14,7 @@ function makeSession(fossil = 1000): Session {
     wallet: { fossil, amber: 10 },
     relicProgress: { anky: { level: 2, levelTitle: "발아체", dnaMastery: 1, heartGemSlots: ["vital-seed", null, null] } },
     ownedHeartGemIds: ["vital-seed"],
+    dailyContent: { date: "", completedIds: [], claimedRewardIds: [] },
   };
 }
 

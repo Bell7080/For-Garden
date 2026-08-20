@@ -1,7 +1,4 @@
-/**
- * 씬 사이를 오가는 진행 상태. 지금은 메모리에만 둔다.
- * (저장/서버 연동은 코어 루프가 굳은 뒤에 붙인다.)
- */
+/** 씬 사이를 오가는 런타임 상태다. JSON 경계에서는 반드시 SaveData로 변환한다. */
 
 import type { Wallet } from "../core/gacha";
 import type { RelicProgress } from "../core/types";
@@ -27,6 +24,32 @@ export interface Session {
   relicProgress: Record<string, RelicProgress>;
   /** 보유 Heart Gem id 목록이다. 중복 없는 직렬화 가능한 배열로 유지한다. */
   ownedHeartGemIds: string[];
+  /** 날짜가 바뀔 때 서버 시간 기준으로 교체할 일일 콘텐츠 진행이다. */
+  dailyContent: DailyContentState;
+}
+
+/** 아직 서버 계정에 귀속되지 않은 브라우저 일일 콘텐츠 스냅샷이다. */
+export interface DailyContentState {
+  date: string;
+  completedIds: string[];
+  claimedRewardIds: string[];
+}
+
+/**
+ * JSON 직렬화만을 위한 저장 계약이다. Set은 JSON에서 유실되므로 이름을 분리한 배열로 둔다.
+ * 계정 연동 시에도 이 형태를 업로드 모델로 오해하지 않고 SaveManager 경계에서만 사용한다.
+ */
+export interface SaveData {
+  saveVersion: number;
+  selectedStageId: string | null;
+  party: string[];
+  clearedStageIds: string[];
+  ownedRelicIds: string[];
+  favorite: string;
+  wallet: Wallet;
+  relicProgress: Record<string, RelicProgress>;
+  ownedHeartGemIds: string[];
+  dailyContent: DailyContentState;
 }
 
 /** 신규 렐릭에 부여하는 독립 복사 가능한 기본 성장 상태다. */
@@ -34,16 +57,27 @@ export function createInitialRelicProgress(): RelicProgress {
   return { level: 1, levelTitle: "복원체", dnaMastery: 0, heartGemSlots: [null, null, null] };
 }
 
-export const session: Session = {
-  selectedStageId: null,
-  party: [...STARTER_RELICS],
-  cleared: new Set<string>(),
-  owned: new Set(STARTER_RELICS),
-  favorite: STARTER_RELICS[0],
-  wallet: { fossil: 1200, amber: 10 },
-  relicProgress: Object.fromEntries(STARTER_RELICS.map((id) => [id, createInitialRelicProgress()])),
-  ownedHeartGemIds: ["vital-seed", "fang-core", "ancient-pulse"],
-};
+/** 신규 계정과 복구 실패가 공유하는 독립 기본 세션을 만든다. */
+export function createDefaultSession(): Session {
+  return {
+    selectedStageId: null,
+    party: [...STARTER_RELICS],
+    cleared: new Set<string>(),
+    owned: new Set(STARTER_RELICS),
+    favorite: STARTER_RELICS[0],
+    wallet: { fossil: 1200, amber: 10 },
+    relicProgress: Object.fromEntries(STARTER_RELICS.map((id) => [id, createInitialRelicProgress()])),
+    ownedHeartGemIds: ["vital-seed", "fang-core", "ancient-pulse"],
+    dailyContent: { date: "", completedIds: [], claimedRewardIds: [] },
+  };
+}
+
+export const session: Session = createDefaultSession();
+
+/** 공유 객체 참조를 유지한 채 부트에서 검증된 상태만 주입한다. */
+export function replaceSession(next: Session): void {
+  Object.assign(session, next);
+}
 
 /** 첫 스테이지와, 직전 스테이지를 깬 스테이지만 들어갈 수 있다. */
 export function isStageUnlocked(stageId: string): boolean {

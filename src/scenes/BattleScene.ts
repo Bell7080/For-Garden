@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { saveManager } from "../state/SaveManager";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { ULTIMATE_ENERGY_MAX } from "../core/battle";
 import {
@@ -353,7 +354,11 @@ export class BattleScene extends Phaser.Scene {
     this.syncViews();
     this.refreshDebug();
     const won = phase === "victory";
-    if (won && session.selectedStageId) session.cleared.add(session.selectedStageId);
+    if (won && session.selectedStageId) {
+      session.cleared.add(session.selectedStageId);
+      // 승리 판정이 끝난 시점만 체크포인트로 삼아 진행을 저장한다.
+      saveManager.save(session);
+    }
     this.add.rectangle(BASE_WIDTH / 2, 930, BASE_WIDTH, 420, COLOR.void, 0.84).setDepth(100);
     this.add.text(BASE_WIDTH / 2, 840, won ? "작전 성공" : "작전 실패", textStyle({ size: 68, color: won ? COLOR.accentText : COLOR.dangerText })).setOrigin(0.5).setDepth(101);
     new Button(this, BASE_WIDTH / 2, 1010, { width: 400, height: 110, label: "지도로", fontSize: 34, onClick: () => this.scene.start("stageMap") }).setDepth(101);

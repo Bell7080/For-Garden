@@ -2,6 +2,7 @@ import type { RelicDef } from "../core/types";
 import type { PullOutcome } from "../core/gacha";
 import { PLAYABLE_RELICS, getRelic } from "../data/relics";
 import { session, type Session } from "../state/session";
+import { saveManager } from "../state/SaveManager";
 
 /**
  * 보유 렐릭과 편성처럼 여러 화면이 함께 쓰는 수집 상태의 단일 진입점이다.
@@ -33,6 +34,7 @@ export class RelicCollectionManager {
     getRelic(relicId); // 잘못된 콘텐츠 id가 저장 데이터에 들어가기 전에 즉시 막는다.
     const wasOwned = this.owns(relicId);
     this.state.owned.add(relicId);
+    this.persistSharedSession();
     return !wasOwned;
   }
 
@@ -50,6 +52,7 @@ export class RelicCollectionManager {
   setFavorite(relicId: string): boolean {
     if (!this.owns(relicId) || !PLAYABLE_RELICS.some((relic) => relic.id === relicId)) return false;
     this.state.favorite = relicId;
+    this.persistSharedSession();
     return true;
   }
 
@@ -58,7 +61,13 @@ export class RelicCollectionManager {
     const unique = new Set(relicIds);
     if (relicIds.length !== 3 || unique.size !== 3 || relicIds.some((id) => !this.owns(id))) return false;
     this.state.party = [...relicIds];
+    this.persistSharedSession();
     return true;
+  }
+
+  /** 테스트 주입 상태는 디스크에 쓰지 않고 앱 공유 상태의 확정 변경만 저장한다. */
+  private persistSharedSession(): void {
+    if (this.state === session) saveManager.save(this.state);
   }
 }
 

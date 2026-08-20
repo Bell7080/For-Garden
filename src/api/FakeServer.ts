@@ -1,6 +1,7 @@
 import { applyPull, canPull, pull, spend } from "../core/gacha";
 import { BANNERS } from "../data/banners";
 import { session, type Session } from "../state/session";
+import { saveManager } from "../state/SaveManager";
 import { GameApiError, type GameApi, type PlayerStateDto, type PullRequest, type PullResponse } from "./contracts";
 
 /** FakeServer의 지연과 난수원을 테스트에서 결정적으로 바꾸기 위한 선택 설정이다. */
@@ -45,6 +46,8 @@ export class FakeServer implements GameApi {
     this.state.wallet = spend(this.state.wallet, banner, request.count);
     const relicIds = pull(banner, request.count, this.random);
     const outcome = applyPull(this.state.owned, relicIds);
+    // 비용과 획득이 모두 확정된 API 경계에서 한 스냅샷으로 저장한다.
+    if (this.state === session) saveManager.save(this.state);
     return {
       ...this.snapshot(),
       relicIds,
@@ -63,6 +66,9 @@ export class FakeServer implements GameApi {
       ownedRelicIds: [...this.state.owned],
       relicProgress,
       ownedHeartGemIds: [...this.state.ownedHeartGemIds],
+      party: [...this.state.party],
+      favorite: this.state.favorite,
+      clearedStageIds: [...this.state.cleared],
     };
   }
 

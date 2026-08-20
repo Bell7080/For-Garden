@@ -13,6 +13,7 @@ function makeSession(): Session {
   return {
     selectedStageId: null, party: ["rex"], cleared: new Set(), owned: new Set(["rex"]), favorite: "rex",
     wallet: { fossil: 0, amber: 0 }, relicProgress: {}, ownedHeartGemIds: ["vital-seed", "fang-core"],
+    dailyContent: { date: "", completedIds: [], claimedRewardIds: [] },
   };
 }
 

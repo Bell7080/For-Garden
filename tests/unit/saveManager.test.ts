@@ -31,6 +31,21 @@ describe("SaveManager", () => {
     expect(json.clearedStageIds).toEqual(["1-1"]);
     expect(loaded.owned).toBeInstanceOf(Set);
     expect(loaded.cleared).toEqual(new Set(["1-1"]));
+    expect(loaded.completedStoryIds).toEqual(new Set());
+  });
+
+  it("완료 스토리 ID를 저장하고 v3 저장은 빈 완료 목록으로 마이그레이션한다", () => {
+    const storage = new MemoryStorage();
+    const manager = new SaveManager(storage);
+    const source = createDefaultSession();
+    source.completedStoryIds.add("opening-train");
+    manager.save(source);
+    expect(manager.load()?.completedStoryIds).toEqual(new Set(["opening-train"]));
+
+    const legacy = validData() as unknown as Record<string, unknown>;
+    legacy.saveVersion = 3;
+    delete legacy.completedStoryIds;
+    expect(manager.migrate(legacy).completedStoryIds).toEqual([]);
   });
 
   it("신규 획득 성장 정보와 DNA 조각을 저장 후 그대로 복구한다", () => {

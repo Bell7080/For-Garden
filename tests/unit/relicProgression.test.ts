@@ -11,6 +11,7 @@ const BASE: Stats = { hp: 101, def: 101, res: 101, atk: 101, ap: 101, attackSpee
 /** manager 검증 테스트마다 독립된 저장 상태를 만든다. */
 function makeSession(): Session {
   return {
+    completedStoryIds: new Set(),
     selectedStageId: null, party: ["rex"], cleared: new Set(), owned: new Set(["rex"]), favorite: "rex",
     pullCountSinceHighestRarity: { fossil: 0, amber: 0 },
     wallet: { fossil: 0, amber: 0, dnaFragments: 0, weeds: 0 }, relicProgress: {}, ownedHeartGemIds: ["vital-seed", "fang-core"],

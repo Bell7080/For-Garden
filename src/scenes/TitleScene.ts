@@ -2,6 +2,9 @@ import Phaser from "phaser";
 import { BASE_WIDTH, BASE_HEIGHT } from "../config/gameConfig";
 import { setDebugReady, setDebugScene } from "../debug";
 import { COLOR, textStyle } from "../ui/theme";
+import { OPENING_TRAIN } from "../data/dialogues/openingTrain";
+import { storyManager } from "../managers/StoryManager";
+import { Button } from "../ui/Button";
 
 export class TitleScene extends Phaser.Scene {
   constructor() {
@@ -40,7 +43,8 @@ export class TitleScene extends Phaser.Scene {
 
     const prompt = this.add
       .text(cx, BASE_HEIGHT * 0.82, "TAP TO ENTER", textStyle({ size: 36 }))
-      .setOrigin(0.5);
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true });
 
     this.tweens.add({
       targets: prompt,
@@ -52,8 +56,13 @@ export class TitleScene extends Phaser.Scene {
 
     setDebugReady(true);
 
-    this.input.once("pointerdown", () => {
-      this.scene.start("lobby");
+    if (storyManager.isCompleted(OPENING_TRAIN.id)) {
+      // 회상은 완료 플래그를 지우지 않으므로 선택 보상이 다시 지급되지 않는다.
+      new Button(this, cx, BASE_HEIGHT * 0.72, { width: 360, height: 96, label: "오프닝 회상", fontSize: 30, onClick: () => this.scene.start("opening") });
+    }
+
+    prompt.once("pointerup", () => {
+      this.scene.start(storyManager.isCompleted(OPENING_TRAIN.id) ? "lobby" : "opening");
     });
   }
 }

@@ -38,7 +38,7 @@ describe("SaveManager", () => {
     const manager = new SaveManager(storage);
     const source = createDefaultSession();
     source.owned.add("dodo");
-    source.relicProgress.dodo = { level: 1, levelTitle: "복원체", dnaMastery: 5, bondLevel: 0, heartGemSlots: [null, null, null] };
+    source.relicProgress.dodo = { level: 1, levelTitle: "복원체", dnaMastery: 5, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] };
     source.wallet.dnaFragments = 3;
 
     manager.save(source);
@@ -62,11 +62,15 @@ describe("SaveManager", () => {
     const legacy = validData() as unknown as Record<string, unknown>;
     legacy.saveVersion = 1;
     const progress = legacy.relicProgress as Record<string, Record<string, unknown>>;
-    for (const value of Object.values(progress)) delete value.bondLevel;
+    for (const value of Object.values(progress)) {
+      delete value.bondLevel; delete value.bondXp; delete value.lastLobbyInteractionDate;
+    }
 
     const migrated = manager.migrate(legacy);
     expect(migrated.saveVersion).toBe(CURRENT_SAVE_VERSION);
     expect(migrated.relicProgress.anky.bondLevel).toBe(0);
+    expect(migrated.relicProgress.anky.bondXp).toBe(0);
+    expect(migrated.relicProgress.anky.lastLobbyInteractionDate).toBe("");
   });
 
   it("저장에 현재 배너 ID가 빠졌거나 삭제된 배너 ID가 있어도 천장을 기본값으로 보정한다", () => {

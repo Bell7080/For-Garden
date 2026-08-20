@@ -2,10 +2,11 @@ import { canPull, pull, resolveAcquisitions, spend } from "../core/gacha";
 import { BANNERS } from "../data/banners";
 import { consumeRestorationEntry, normalizeDailyContent } from "../core/dailyContent";
 import { levelUpRelic as calculateLevelUp, RELIC_LEVEL_CAP } from "../core/relicProgression";
+import { BOND_XP_REWARD, grantBondXp, grantDailyLobbyBondXp } from "../core/bond";
 import { DAILY_RESTORATION, getStage } from "../data/stages";
 import { createInitialRelicProgress, session, type Session } from "../state/session";
 import { saveManager } from "../state/SaveManager";
-import { GameApiError, type CompleteStageResponse, type EnterDailyRestorationResponse, type GameApi, type LevelUpRelicResponse, type PlayerStateDto, type PullRequest, type PullResponse } from "./contracts";
+import { GameApiError, type CompleteStageResponse, type EnterDailyRestorationResponse, type GameApi, type LevelUpRelicResponse, type LobbyInteractionResponse, type PlayerStateDto, type PullRequest, type PullResponse } from "./contracts";
 
 /** FakeServer의 지연과 난수원을 테스트에서 결정적으로 바꾸기 위한 선택 설정이다. */
 export interface FakeServerOptions {
@@ -56,7 +57,8 @@ export class FakeServer implements GameApi {
     // 최초 획득은 반드시 기본 성장 레코드를 만들고, 중복 변화도 같은 복제본에 반영한다.
     const nextProgress = Object.fromEntries(Object.entries(this.state.relicProgress).map(([id, value]) => [id, { ...value, heartGemSlots: [...value.heartGemSlots] as typeof value.heartGemSlots }]));
     for (const result of outcome.slots) {
-      nextProgress[result.relicId] ??= createInitialRelicProgress();
+      // 최초 획득만 유대 경험치를 지급하며 중복 획득은 DNA 처리만 수행한다.
+      if (!nextProgress[result.relicId]) nextProgress[result.relicId] = grantBondXp(createInitialRelicProgress(), BOND_XP_REWARD.firstAcquisition).progress;
       nextProgress[result.relicId].dnaMastery = result.dnaAfter;
     }
     const nextWallet = { ...spend(this.state.wallet, banner, request.count), dnaFragments: this.state.wallet.dnaFragments + outcome.overflowFragments };
@@ -94,17 +96,33 @@ export class FakeServer implements GameApi {
   }
 
   /** 승리 결과 확인 시 최초/반복 보상을 판정하고 클리어와 지갑을 함께 저장한다. */
-  async completeStage(stageId: string): Promise<CompleteStageResponse> {
+  async completeStage(stageId: string, victory = true): Promise<CompleteStageResponse> {
     await this.delay();
     let stage;
     try { stage = getStage(stageId); } catch { throw new GameApiError("STAGE_NOT_FOUND", "존재하지 않는 스테이지입니다."); }
-    const firstClear = !this.state.cleared.has(stageId);
-    const weedsEarned = firstClear ? stage.rewards.firstClearWeeds : stage.rewards.repeatClearWeeds;
-    const nextCleared = new Set(this.state.cleared).add(stageId);
+    const firstClear = victory && !this.state.cleared.has(stageId);
+    const weedsEarned = victory ? (firstClear ? stage.rewards.firstClearWeeds : stage.rewards.repeatClearWeeds) : 0;
+    const nextCleared = victory ? new Set(this.state.cleared).add(stageId) : new Set(this.state.cleared);
     const nextWallet = { ...this.state.wallet, weeds: this.state.wallet.weeds + weedsEarned };
-    this.persist({ ...this.state, cleared: nextCleared, wallet: nextWallet });
-    this.state.cleared = nextCleared; this.state.wallet = nextWallet;
+    // 승리한 전투에 실제 편성된 세 렐릭에게만 유대 경험치를 지급한다.
+    const nextProgress = Object.fromEntries(Object.entries(this.state.relicProgress).map(([id, progress]) => [id,
+      victory && this.state.party.includes(id) ? grantBondXp(progress, BOND_XP_REWARD.partyVictory).progress : progress]));
+    this.persist({ ...this.state, cleared: nextCleared, wallet: nextWallet, relicProgress: nextProgress });
+    this.state.cleared = nextCleared; this.state.wallet = nextWallet; this.state.relicProgress = nextProgress;
     return { ...this.snapshot(), stageId, firstClear, weedsEarned };
+  }
+
+  /** 서버 UTC 날짜를 기준으로 해당 렐릭의 하루 첫 로비 상호작용만 보상한다. */
+  async interactInLobby(relicId: string): Promise<LobbyInteractionResponse> {
+    await this.delay();
+    const current = this.state.relicProgress[relicId];
+    if (!this.state.owned.has(relicId) || !current) throw new GameApiError("RELIC_NOT_FOUND", "보유하지 않은 렐릭입니다.");
+    const utcDate = this.now().toISOString().slice(0, 10);
+    const result = grantDailyLobbyBondXp(current, utcDate);
+    const nextProgress = { ...this.state.relicProgress, [relicId]: result.progress };
+    this.persist({ ...this.state, relicProgress: nextProgress });
+    this.state.relicProgress = nextProgress;
+    return { ...this.snapshot(), relicId, bondXpEarned: result.xpGained, bondLevelsGained: result.levelsGained };
   }
 
   /** UTC 날짜를 서버에서 정규화한 뒤 하루 3회 제한과 보상을 원자적으로 반영한다. */

@@ -13,7 +13,7 @@ function makeSession(fossil = 1000): Session {
     favorite: "anky",
     pullCountSinceHighestRarity: { fossil: 0, amber: 0 },
     wallet: { fossil, amber: 10, dnaFragments: 0, weeds: 0 },
-    relicProgress: Object.fromEntries(["anky", "rex", "dodo"].map((id) => [id, { level: id === "anky" ? 2 : 1, levelTitle: id === "anky" ? "발아체" : "복원체", dnaMastery: id === "anky" ? 1 : 0, bondLevel: 0, heartGemSlots: id === "anky" ? ["vital-seed", null, null] : [null, null, null] }])),
+    relicProgress: Object.fromEntries(["anky", "rex", "dodo"].map((id) => [id, { level: id === "anky" ? 2 : 1, levelTitle: id === "anky" ? "발아체" : "복원체", dnaMastery: id === "anky" ? 1 : 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: id === "anky" ? ["vital-seed", null, null] : [null, null, null] }])),
     ownedHeartGemIds: ["vital-seed"],
     dailyContent: { date: "", restorationEntries: 0, completedIds: [], claimedRewardIds: [] },
   };
@@ -34,6 +34,23 @@ describe("FakeServer", () => {
     await expect(server.completeStage("1-1")).resolves.toMatchObject({ firstClear: true, weedsEarned: 30 });
     await expect(server.completeStage("1-1")).resolves.toMatchObject({ firstClear: false, weedsEarned: 10 });
     expect(state.wallet.weeds).toBe(40);
+  });
+
+  it("승리만 편성 렐릭 유대를 올리고 패배에는 전투 보상을 지급하지 않는다", async () => {
+    const state = makeSession(); const server = new FakeServer(state, { latencyMs: 0 });
+    await server.completeStage("1-1", false);
+    expect([state.wallet.weeds, state.relicProgress.anky.bondXp]).toEqual([0, 0]);
+    await server.completeStage("1-1", true);
+    expect(state.relicProgress.anky.bondXp).toBe(12);
+    expect(state.relicProgress.rex.bondXp).toBe(12);
+    expect(state.relicProgress.dodo.bondXp).toBe(12);
+  });
+
+  it("로비 상호작용은 서버 UTC 날짜마다 첫 터치만 지급한다", async () => {
+    const state = makeSession();
+    const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-20T23:59:00Z") });
+    await expect(server.interactInLobby("anky")).resolves.toMatchObject({ bondXpEarned: 5 });
+    await expect(server.interactInLobby("anky")).resolves.toMatchObject({ bondXpEarned: 0 });
   });
 
   it("일일 복원은 UTC 하루 3회이고 다음 UTC 날짜에만 횟수를 초기화한다", async () => {
@@ -67,6 +84,7 @@ describe("FakeServer", () => {
     expect(response.results[0].kind).toBe("new");
     expect(response.results[1]).toMatchObject({ kind: "mastery", dnaBefore: 0, dnaAfter: 1 });
     expect(state.relicProgress.rex).toMatchObject({ level: 1, dnaMastery: 5 });
+    expect(state.relicProgress.rex).toMatchObject({ bondLevel: 1, bondXp: 20 });
     expect(state.wallet.dnaFragments).toBe(4);
   });
 

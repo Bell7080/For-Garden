@@ -1,4 +1,6 @@
 import type { DamageType, RelicDef, Side, Skill } from "./types";
+import { attenuateFerocityGain } from "./bond";
+export { attenuateFerocityGain } from "./bond";
 
 /** 모든 유닛이 저장할 수 있는 궁극기 게이지의 공용 상한이다. 스킬 비용과는 별개다. */
 export const ULTIMATE_ENERGY_MAX = 150;
@@ -21,12 +23,6 @@ export const FEROCITY_RULES = {
 } as const;
 
 /** 유대 1레벨마다 증가량을 5% 감쇠하되, 최소 절반은 쌓여 위험 선택을 없애지 않는다. */
-export function attenuateFerocityGain(amount: number, bondLevel: number): number {
-  if (!Number.isFinite(amount) || amount < 0 || !Number.isInteger(bondLevel) || bondLevel < 0)
-    throw new RangeError("야성 증가량과 유대 레벨이 올바르지 않습니다.");
-  return Math.max(0, Math.round(amount * Math.max(0.5, 1 - bondLevel * 0.05)));
-}
-
 /** 현재 구간의 누적 공격 보너스와 방어 페널티를 반환한다. */
 export function ferocityModifiers(ferocity: number): { damageBonus: number; defensePenalty: number } {
   const active = [...FEROCITY_RULES.thresholds].reverse().find(({ value }) => ferocity >= value);

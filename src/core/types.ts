@@ -44,6 +44,10 @@ export interface RelicProgress {
   dnaMastery: number;
   /** 플레이어별 유대 레벨. 야성 증가를 완화하며 정적 렐릭 정의에는 두지 않는다. */
   bondLevel: number;
+  /** 유대 레벨을 산출하는 누적 경험치다. 애착(favorite) 선택과는 무관하다. */
+  bondXp: number;
+  /** 해당 렐릭이 로비 일일 유대 보상을 마지막으로 받은 UTC 날짜키다. */
+  lastLobbyInteractionDate: string;
   /** 정확히 세 자리인 Heart Gem 장착 슬롯이다. null은 빈 슬롯을 뜻한다. */
   heartGemSlots: [string | null, string | null, string | null];
 }

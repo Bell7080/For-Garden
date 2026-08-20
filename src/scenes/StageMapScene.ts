@@ -2,12 +2,10 @@ import Phaser from "phaser";
 import { BASE_WIDTH, BASE_HEIGHT } from "../config/gameConfig";
 import type { StageDef } from "../core/types";
 import { setDebugScene } from "../debug";
-import { getRelic } from "../data/relics";
-import { STAGES } from "../data/stages";
+import { STAGES, getStageEnemies } from "../data/stages";
 import { CharacterInfoManager, ROLE_LABEL } from "../managers/CharacterInfoManager";
 import type { PuppetCreature } from "../puppets/assets";
 import { battleAssetFor, spawnPuppet } from "../puppets/assets";
-import { tintFor } from "../puppets/tints";
 import { isStageUnlocked, session } from "../state/session";
 import { Button } from "../ui/Button";
 import { addBackButton } from "../ui/IconButton";
@@ -232,13 +230,13 @@ export class StageMapScene extends Phaser.Scene {
   /** 패널 내용을 지금 스테이지의 적으로 바꾸고, 아직 올라가 있으면 내린다. */
   private showPanel(stage: StageDef): void {
     const request = ++this.panelRequest;
-    this.panelTitle.setText(`${stage.id}  ${stage.name}`);
+    this.panelTitle.setText(`${stage.id}  ${stage.name}  ·  적 LV.${stage.enemyLevel}`);
 
-    stage.enemies.forEach((id, slot) => {
-      const def = getRelic(id);
+    getStageEnemies(stage).forEach((def, slot) => {
       const view = this.panelSlots[slot];
       view.name.setText(def.name);
-      view.detail.setText(`${ROLE_LABEL[def.role]}  HP ${def.stats.hp}`);
+      // 지도에서도 실제 전투에 투입될 레벨 보정 체력을 미리 보여준다.
+      view.detail.setText(`LV.${stage.enemyLevel}  ${ROLE_LABEL[def.role]}  HP ${def.stats.hp}`);
       view.hit.removeAllListeners("pointerup");
       view.hit.on("pointerup", () => this.info.showRelic(def));
       view.creature?.destroy();
@@ -273,7 +271,8 @@ export class StageMapScene extends Phaser.Scene {
       groundY: PANEL.height - 130,
       height: PANEL.sdHeight,
       flipX: true,
-      tint: relicId.startsWith("husk-") ? tintFor(relicId) : undefined,
+      // 적 번호별 원본 색을 그대로 보여 줘 토비·아모·리파 외형을 명확히 구분한다.
+      tint: 0xffffff,
       depth: 61,
     });
     if (!this.scene.isActive() || request !== this.panelRequest) {

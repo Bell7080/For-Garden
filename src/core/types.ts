@@ -125,4 +125,6 @@ export interface StageDef {
   name: string;
   /** 이 스테이지에 나오는 적 3명의 렐릭 id. */
   enemies: [string, string, string];
+  /** 임시 밸런스용 적 레벨. 스테이지가 오를 때마다 정확히 1씩 증가한다. */
+  enemyLevel: number;
 }

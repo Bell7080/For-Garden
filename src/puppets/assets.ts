@@ -84,9 +84,25 @@ export function portraitUsesRelicTint(assetId: PortraitAssetId): boolean {
   return PORTRAIT_ASSETS[assetId].usesRelicTint;
 }
 
-/** 전장에 세우는 SD 개체. idle · hit · stun · roar를 가지고 있다. */
-export const ENTITY_ASSET: PuppetAsset = {
-  url: `${base}puppets/entity_001.zip`,
+/** 1번 적 토비. 적 전용 Puppet 번호와 스테이지 고정 편성 번호를 일치시킨다. */
+export const TOBY_ASSET: PuppetAsset = {
+  url: `${base}puppets/enemy_001.zip`,
+  imageWidth: 1254,
+  imageHeight: 1254,
+  content: { left: 352, top: 155, right: 993, bottom: 1082 },
+};
+
+/** 2번 적 아모. 현재 적 ZIP들이 같은 캔버스 규격을 사용해 동일한 가시 영역 기준을 공유한다. */
+export const AMO_ASSET: PuppetAsset = {
+  url: `${base}puppets/enemy_002.zip`,
+  imageWidth: 1254,
+  imageHeight: 1254,
+  content: { left: 352, top: 155, right: 993, bottom: 1082 },
+};
+
+/** 3번 적 리파. 파일명의 기존 표기(enemy003)를 실제 공개 에셋 경로대로 연결한다. */
+export const RIPA_ASSET: PuppetAsset = {
+  url: `${base}puppets/enemy003.zip`,
   imageWidth: 1254,
   imageHeight: 1254,
   content: { left: 352, top: 155, right: 993, bottom: 1082 },
@@ -117,12 +133,15 @@ export const SEIRA_SD_ASSET: PuppetAsset = {
   content: { left: 218, top: 112, right: 987, bottom: 1328 },
 };
 
-/** 전투용 SD가 완성된 캐릭터만 전용 묶음을 쓰고 나머지는 임시 적 아트를 공유한다. */
+/** 적은 번호별 전용 묶음을 쓰고, 전용 SD가 없는 아군은 요청대로 아군 1번 SD를 공유한다. */
 export function battleAssetFor(relicId: string): PuppetAsset {
+  if (relicId === "husk-raptor") return TOBY_ASSET;
+  if (relicId === "husk-shell") return AMO_ASSET;
+  if (relicId === "husk-wing") return RIPA_ASSET;
   if (relicId === "anky") return TORIKA_SD_ASSET;
   if (relicId === "rex") return LEXIA_SD_ASSET;
   if (relicId === "spino") return SEIRA_SD_ASSET;
-  return ENTITY_ASSET;
+  return TORIKA_SD_ASSET;
 }
 
 /**
@@ -188,7 +207,9 @@ export async function preloadPuppetAssets(): Promise<void> {
     loadPuppet(TORIKA_SD_ASSET),
     loadPuppet(LEXIA_SD_ASSET),
     loadPuppet(SEIRA_SD_ASSET),
-    loadPuppet(ENTITY_ASSET),
+    loadPuppet(TOBY_ASSET),
+    loadPuppet(AMO_ASSET),
+    loadPuppet(RIPA_ASSET),
   ]);
 }
 

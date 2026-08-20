@@ -16,10 +16,9 @@ import {
   type SkirmishState,
 } from "../core/skirmish";
 import { getRelic } from "../data/relics";
-import { getStage } from "../data/stages";
+import { getStage, getStageEnemies } from "../data/stages";
 import type { PuppetCreature, PuppetAsset } from "../puppets/assets";
 import { battleAssetFor, flashHit, placePuppet, playMotion, spawnPuppet } from "../puppets/assets";
-import { tintFor } from "../puppets/tints";
 import { session } from "../state/session";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { Button } from "../ui/Button";
@@ -85,7 +84,8 @@ export class BattleScene extends Phaser.Scene {
   create(): void {
     setDebugScene("battle");
     const stage = getStage(session.selectedStageId ?? "1-1");
-    this.state = createSkirmish(session.party.map(getRelic), stage.enemies.map(getRelic), ARENA);
+    // 적은 스테이지별 임시 레벨 성장치를 적용한 복사본으로 전투에 투입한다.
+    this.state = createSkirmish(session.party.map(getRelic), getStageEnemies(stage), ARENA);
     this.views.clear();
     this.profiles = [];
     this.finished = false;
@@ -93,7 +93,7 @@ export class BattleScene extends Phaser.Scene {
 
     addSceneBackground(this, BACKGROUND.battleArea, -30);
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.28).setDepth(-29);
-    this.add.text(42, 48, `${stage.id} · ${stage.name}`, textStyle({ size: 30, color: COLOR.inkDim }));
+    this.add.text(42, 48, `${stage.id} · ${stage.name} · 적 LV.${stage.enemyLevel}`, textStyle({ size: 30, color: COLOR.inkDim }));
     this.add.text(BASE_WIDTH / 2, 160, "AUTO BATTLE", textStyle({ size: 28, color: COLOR.accentText })).setOrigin(0.5);
 
     this.buildProfiles();
@@ -109,8 +109,8 @@ export class BattleScene extends Phaser.Scene {
   private async spawnFighters(): Promise<void> {
     for (const fighter of this.state.fighters) {
       const asset = battleAssetFor(fighter.def.id);
-      // 임시 공용 적만 색으로 구분하고 완성된 1·2번 SD는 원색을 보존한다.
-      const tint = fighter.def.id.startsWith("husk-") ? tintFor(fighter.def.id) : 0xffffff;
+      // 번호별 전용 적 SD도 원화 색을 보존하므로 더 이상 임시 허스크 tint를 입히지 않는다.
+      const tint = 0xffffff;
       const creature = await spawnPuppet(this, asset, {
         x: fighter.x,
         groundY: fighter.y,

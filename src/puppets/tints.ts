@@ -1,8 +1,8 @@
 /**
  * 렐릭별 색 필터. **임시다.**
  *
- * 지금은 아군도 적도 같은 SD 개체 하나를 돌려 쓰고 있어서, 누가 누구인지 색으로만 가른다.
- * 렐릭마다 제 그림이 생기면 이 파일은 통째로 없어진다.
+ * 아직 전용 SD가 없는 아군을 1번 SD로 대신 표시할 때 서로 구분하기 위한 임시 색이다.
+ * 토비·아모·리파는 전용 적 Puppet을 연결했으므로 이 색 목록을 사용하지 않는다.
  */
 const TINTS: Record<string, number> = {
   rex: 0xd86b4a, // 티라노 — 붉은 흙빛
@@ -11,10 +11,6 @@ const TINTS: Record<string, number> = {
   dodo: 0xe8d9a0, // 도도 — 바랜 깃털
   smilo: 0xd9a54a, // 스밀로돈 — 황토빛 털
   quetz: 0x6fb3c4, // 케찰 — 창공빛
-
-  "husk-raptor": 0xa33b3b, // 허스크 — 폭주한 붉은빛
-  "husk-shell": 0x6d6a63,
-  "husk-wing": 0x7a4a86,
 };
 
 const FALLBACK = 0xffffff;

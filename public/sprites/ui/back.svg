@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96">
+  <!-- 뒤로가기: 왼쪽을 가리키는 화살촉과 그 뒤로 이어지는 축 하나. 색은 Phaser에서 tint로 입힌다. -->
+  <g fill="none" stroke="#ffffff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M53 30 L35 48 L53 66" />
+    <path d="M35 48 H68" />
+  </g>
+</svg>

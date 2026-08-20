@@ -11,6 +11,7 @@ import { tintFor } from "../puppets/tints";
 import { getStage } from "../data/stages";
 import { session } from "../state/session";
 import { Button } from "../ui/Button";
+import { addBackButton } from "../ui/IconButton";
 import { PortraitCard, relicCardTint } from "../ui/PortraitCard";
 import { COLOR, textStyle } from "../ui/theme";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
@@ -107,13 +108,7 @@ export class PartyScene extends Phaser.Scene {
       },
     });
 
-    new Button(this, 160, 1830, {
-      width: 260,
-      height: 96,
-      label: "돌아가기",
-      fontSize: 30,
-      onClick: () => this.scene.start("stageMap"),
-    });
+    addBackButton(this, () => this.scene.start("stageMap"));
 
     this.info = new CharacterInfoManager(this);
     this.refresh();

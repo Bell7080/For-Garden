@@ -10,6 +10,11 @@ export const STAGES: StageDef[] = [
   { id: "1-3", name: "침수된 배양실", enemies: ["husk-wing", "husk-shell", "husk-raptor"] },
   { id: "1-4", name: "표본 보관고", enemies: ["husk-shell", "husk-wing", "husk-shell"] },
   { id: "1-5", name: "제1구역 관제탑", enemies: ["husk-shell", "husk-raptor", "husk-shell"] },
+  { id: "1-6", name: "무너진 통신소", enemies: ["husk-raptor", "husk-raptor", "husk-wing"] },
+  { id: "1-7", name: "폐기물 처리장", enemies: ["husk-wing", "husk-wing", "husk-shell"] },
+  { id: "1-8", name: "지하 배수로", enemies: ["husk-shell", "husk-shell", "husk-raptor"] },
+  { id: "1-9", name: "봉쇄된 정거장", enemies: ["husk-raptor", "husk-shell", "husk-wing"] },
+  { id: "1-10", name: "구역 경계문", enemies: ["husk-shell", "husk-wing", "husk-shell"] },
 ];
 
 export function getStage(id: string): StageDef {

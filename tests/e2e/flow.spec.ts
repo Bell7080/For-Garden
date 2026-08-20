@@ -67,7 +67,8 @@ async function enterParty(page: Page): Promise<void> {
   await tap(page, BASE_WIDTH - 300, BASE_HEIGHT - 180 - 140); // 출격 버튼
   await expect.poll(() => scene(page)).toBe("stageMap");
 
-  await tap(page, BASE_WIDTH / 2 - 110, BASE_HEIGHT - 460); // 1-1 노드
+  // 지도는 열려 있는 가장 뒤쪽 스테이지를 이미 골라 둔다. 출전만 누르면 편성으로 넘어간다.
+  await tap(page, BASE_WIDTH / 2, BASE_HEIGHT - 180); // 출전
   await expect.poll(() => scene(page)).toBe("party");
 }
 
@@ -113,7 +114,8 @@ test("1080×1920 캐릭터 상세과 스킬 카드가 안전 영역 안에 표�
   // 오른쪽 첫 스킬 버튼을 눌러 긴 한국어 설명 카드와 내부 뒤로가기 상태도 기록한다.
   await tap(page, 704, 1052);
   await page.screenshot({ path: `test-results/${test.info().project.name}-skill-info-1080x1920.png`, fullPage: true });
-  await tap(page, 827, 1460);
+  // 스킬 상세의 뒤로가기(아이콘 버튼)로 캐릭터 상세로 되돌아온다.
+  await tap(page, 694, 1450);
   await expect.poll(() => infoOpen(page)).toBe(true);
 });
 

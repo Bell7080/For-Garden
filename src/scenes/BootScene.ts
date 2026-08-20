@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { setDebugScene } from "../debug";
 import { preloadPuppetAssets } from "../puppets/assets";
 import { BACKGROUND_ASSETS } from "../ui/backgrounds";
+import { UI_ICON_ASSETS } from "../ui/icons";
 import { SKILL_ICON_ASSETS } from "../ui/skillIcons";
 
 export class BootScene extends Phaser.Scene {
@@ -14,6 +15,8 @@ export class BootScene extends Phaser.Scene {
     BACKGROUND_ASSETS.forEach(([key, path]) => this.load.image(key, path));
     // 캐릭터별 임시 복사본 대신 전 효과가 함께 쓰는 공용 아이콘 묶음만 선로딩한다.
     SKILL_ICON_ASSETS.forEach(([key, path]) => this.load.image(key, path));
+    // 조작 아이콘은 확대해도 또렷하도록 지정한 크기로 래스터화한다.
+    UI_ICON_ASSETS.forEach(([key, path, size]) => this.load.svg(key, path, { width: size, height: size }));
   }
 
   async create(): Promise<void> {

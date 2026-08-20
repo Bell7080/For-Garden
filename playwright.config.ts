@@ -7,8 +7,11 @@ import { defineConfig, devices } from "@playwright/test";
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: true,
-  // 캐릭터 묶음(zip)이 수 MB라 첫 화면까지 시간이 걸린다. 기본 30초로는 빠듯하다.
-  timeout: 60_000,
+  /**
+   * 캐릭터 묶음(zip)이 수 MB라 첫 화면까지 시간이 걸리고, 실시간 전투 검증은 전투가 실제로
+   * 끝날 때까지 기다린다. GPU 없이 도는 환경에서는 이 둘만으로 1분을 넘긴다.
+   */
+  timeout: 120_000,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [["html", { outputFolder: "playwright-report", open: "never" }]] : "list",
   use: {

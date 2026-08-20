@@ -17,7 +17,9 @@ import {
 import { mixWhite, tintFor } from "../puppets/tints";
 import { addSceneBackground, BACKGROUND } from "./backgrounds";
 import { StatRadar } from "./StatRadar";
+import { addBackButton, IconButton } from "./IconButton";
 import { COLOR, textStyle } from "./theme";
+import { UI_ICON } from "./icons";
 import { FALLBACK_SKILL_ICON } from "./skillIcons";
 
 /** 문자열 순서에 의존하지 않고 스킬 상세의 각 UI 요소를 직접 채우는 계약이다. */
@@ -50,7 +52,7 @@ const EFFECT_LABEL: Record<EffectType, string> = {
 const PORTRAIT_FOCUS = { x: 400, y: 1060, height: 1800 } as const;
 
 /** 정보창 구석에 세우는 SD 피규어. 받침 위에서 idle만 재생한다. */
-const FIGURE = { x: 862, y: 1836, height: 300 } as const;
+const FIGURE = { x: 790, y: 1806, height: 290 } as const;
 export const ROLE_LABEL: Record<string, string> = { attacker: "공격", tank: "방어", support: "지원" };
 
 /** `?` 도움말 배지의 클릭이 아래 카드 입력으로 전파되지 않게 한다. */
@@ -146,10 +148,9 @@ export class InfoManager {
     this.header = floatingLayer(scene, 58, 54, 930, 202, "RELIC / ARCHIVE");
     this.headerText = scene.add.text(25, 56, "", textStyle({ size: 39, wrap: 820, lineSpacing: 5 })).setOrigin(0);
     this.header.add(this.headerText);
-    const close = scene.add.rectangle(878, 52, 88, 88, COLOR.void, 0.7).setInteractive({ useHandCursor: true });
-    close.on("pointerup", () => this.hide());
-    this.header.add([close, scene.add.text(878, 52, "×", textStyle({ size: 50, bold: false })).setOrigin(0.5)]);
     this.chrome.add(this.header);
+    // 닫기는 다른 화면의 뒤로가기와 같은 버튼·같은 자리를 쓴다.
+    this.chrome.add(addBackButton(scene, () => this.hide()));
 
     this.stats = floatingLayer(scene, 664, 300, 370, 590, "능력치 / STATUS");
     this.radar = new StatRadar(scene, 185, 205, 105);
@@ -177,10 +178,8 @@ export class InfoManager {
     this.detailTitle = scene.add.text(150, 84, "", textStyle({ size: 32, color: COLOR.accentText, wrap: 232 })).setOrigin(0);
     this.detailMeta = scene.add.text(28, 172, "", textStyle({ size: 21, lineSpacing: 12 })).setOrigin(0);
     this.detailDescription = scene.add.text(28, 292, "", textStyle({ size: 22, wrap: 350, lineSpacing: 9 })).setOrigin(0);
-    const back = scene.add.rectangle(207, 555, 358, 88, COLOR.void, 0.7).setInteractive({ useHandCursor: true });
-    back.on("pointerup", () => this.closeSkillDetail());
-    this.skillDetail.add([this.detailTitle, this.detailMeta, this.detailDescription, back,
-      scene.add.text(207, 555, "‹ 캐릭터 상세로", textStyle({ size: 22, color: COLOR.accentText })).setOrigin(0.5)]);
+    this.skillDetail.add([this.detailTitle, this.detailMeta, this.detailDescription,
+      new IconButton(scene, 74, 545, { icon: UI_ICON.back, size: 84, label: "캐릭터 상세로", onClick: () => this.closeSkillDetail() })]);
     this.chrome.add(this.skillDetail);
     this.buildFigureStand(scene);
   }

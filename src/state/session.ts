@@ -62,7 +62,8 @@ export interface SaveData {
 
 /** 신규 렐릭에 부여하는 독립 복사 가능한 기본 성장 상태다. */
 export function createInitialRelicProgress(): RelicProgress {
-  return { level: 1, levelTitle: "복원체", dnaMastery: 0, heartGemSlots: [null, null, null] };
+  // 유대는 플레이어별 진행 값이며 신규/마이그레이션 계정 모두 0에서 시작한다.
+  return { level: 1, levelTitle: "복원체", dnaMastery: 0, bondLevel: 0, heartGemSlots: [null, null, null] };
 }
 
 /** 신규 계정과 복구 실패가 공유하는 독립 기본 세션을 만든다. */

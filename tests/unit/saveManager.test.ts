@@ -38,7 +38,7 @@ describe("SaveManager", () => {
     const manager = new SaveManager(storage);
     const source = createDefaultSession();
     source.owned.add("dodo");
-    source.relicProgress.dodo = { level: 1, levelTitle: "복원체", dnaMastery: 5, heartGemSlots: [null, null, null] };
+    source.relicProgress.dodo = { level: 1, levelTitle: "복원체", dnaMastery: 5, bondLevel: 0, heartGemSlots: [null, null, null] };
     source.wallet.dnaFragments = 3;
 
     manager.save(source);
@@ -55,6 +55,18 @@ describe("SaveManager", () => {
     delete legacy.dailyContent;
 
     expect(manager.migrate(legacy)).toMatchObject({ saveVersion: CURRENT_SAVE_VERSION, dailyContent: { completedIds: [] } });
+  });
+
+  it("v1 저장은 스탯 이름 변경과 함께 플레이어별 유대를 0으로 마이그레이션한다", () => {
+    const manager = new SaveManager(new MemoryStorage());
+    const legacy = validData() as unknown as Record<string, unknown>;
+    legacy.saveVersion = 1;
+    const progress = legacy.relicProgress as Record<string, Record<string, unknown>>;
+    for (const value of Object.values(progress)) delete value.bondLevel;
+
+    const migrated = manager.migrate(legacy);
+    expect(migrated.saveVersion).toBe(CURRENT_SAVE_VERSION);
+    expect(migrated.relicProgress.anky.bondLevel).toBe(0);
   });
 
   it("저장에 현재 배너 ID가 빠졌거나 삭제된 배너 ID가 있어도 천장을 기본값으로 보정한다", () => {

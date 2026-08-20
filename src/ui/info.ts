@@ -283,7 +283,8 @@ export class InfoManager {
     this.levelButton.setVisible(!unit).setEnabled(!unit && canLevelUpRelic(progress, session.wallet.weeds));
     this.dnaText.setText(`${"★".repeat(progress.dnaMastery)}${"☆".repeat(5 - progress.dnaMastery)}  ${live ?? "DNA 복원 동기화"}`);
     this.radar.draw(finalStats);
-    this.statsText.setText(`체력  ${finalStats.hp.toLocaleString()}\n방어력  ${finalStats.def.toLocaleString()}    저항력  ${finalStats.res.toLocaleString()}\n공격력  ${finalStats.atk.toLocaleString()}    주문력  ${finalStats.ap.toLocaleString()}`);
+    // 과거 "야성"으로 불리던 정적 수치는 실제 의미에 맞춰 궁극기 충전량으로 명시한다.
+    this.statsText.setText(`체력  ${finalStats.hp.toLocaleString()}\n방어력  ${finalStats.def.toLocaleString()}    저항력  ${finalStats.res.toLocaleString()}\n공격력  ${finalStats.atk.toLocaleString()}    주문력  ${finalStats.ap.toLocaleString()}\n궁극기 충전량  ${finalStats.energyGain}`);
     progress.heartGemSlots.forEach((id, index) => this.gemLabels[index].setText(id ? getHeartGem(id).name.replace(" Heart Gem", "") : "빈 슬롯").setColor(id ? COLOR.accentText : COLOR.inkDim));
     this.buildSkillButtons(def);
     this.skillDetail.setVisible(false); this.skills.setVisible(true);
@@ -330,7 +331,7 @@ export class InfoManager {
   private skillViewModel(kindLabel: string, skill: Skill, gaugeCost?: number): SkillInfoViewModel {
     const attacker = this.currentUnit ?? (this.currentDef && {
       def: this.currentDef, hp: this.currentDef.stats.hp, maxHp: this.currentDef.stats.hp,
-      energy: 0, justSwapped: false,
+      energy: 0, ferocity: 0, bondLevel: 0, stunTurns: 0, justSwapped: false,
     });
     const preview = attacker ? previewSkillDamage(attacker, skill, this.previewTarget, true) : undefined;
     const valueLabel = preview?.kind === "damage"
@@ -356,7 +357,7 @@ export class InfoManager {
   /** target을 함께 넘긴 전투 정보창은 방어력/저항력을 적용한 비치명타 예상값을 표시한다. */
   showUnit(unit: BattleUnit, isFront: boolean, target?: BattleUnit): void {
     // 저장 상한과 현재 궁극기의 소비 비용을 함께 적어 두 수치의 의미를 혼동하지 않게 한다.
-    this.openCharacter(unit.def, `HP ${unit.hp.toLocaleString()} / ${unit.maxHp.toLocaleString()}  ·  게이지 ${unit.energy}/${ULTIMATE_ENERGY_MAX} (비용 ${unit.def.ultimate.cost})\n${isFront ? "전방 · 선봉" : "후방"}`, unit, target);
+    this.openCharacter(unit.def, `HP ${unit.hp.toLocaleString()} / ${unit.maxHp.toLocaleString()}  ·  궁극기 ${unit.energy}/${ULTIMATE_ENERGY_MAX} (비용 ${unit.def.ultimate.cost})  ·  야성 ${unit.ferocity}/100\n${isFront ? "전방 · 선봉" : "후방"}`, unit, target);
   }
 
 

@@ -11,6 +11,8 @@ import { BOND_XP_REWARD, grantBondXp } from "../core/bond";
 const STARTER_RELICS = ["anky", "rex", "spino"];
 
 export interface Session {
+  /** 완료한 스토리 ID. 첫 실행 진입과 회상 보상 차단에 함께 사용한다. */
+  completedStoryIds: Set<string>;
   /** 지도에서 고른 스테이지 id. */
   selectedStageId: string | null;
   /** 편성한 파티. 렐릭 id 3개, 0번이 전방이다. */
@@ -48,6 +50,7 @@ export interface DailyContentState {
  */
 export interface SaveData {
   saveVersion: number;
+  completedStoryIds: string[];
   selectedStageId: string | null;
   party: string[];
   clearedStageIds: string[];
@@ -73,6 +76,7 @@ function createStarterProgress(): RelicProgress { return grantBondXp(createIniti
 /** 신규 계정과 복구 실패가 공유하는 독립 기본 세션을 만든다. */
 export function createDefaultSession(): Session {
   return {
+    completedStoryIds: new Set<string>(),
     selectedStageId: null,
     party: [...STARTER_RELICS],
     cleared: new Set<string>(),

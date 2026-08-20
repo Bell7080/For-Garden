@@ -6,6 +6,7 @@ import type { Session } from "../../src/state/session";
 /** 각 테스트가 독립적으로 쓸 서버 저장소 역할의 세션을 만든다. */
 function makeSession(fossil = 1000): Session {
   return {
+    completedStoryIds: new Set(),
     selectedStageId: null,
     party: ["anky", "rex", "dodo"],
     cleared: new Set(),

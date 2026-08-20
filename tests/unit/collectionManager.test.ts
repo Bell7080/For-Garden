@@ -5,6 +5,7 @@ import { RelicCollectionManager } from "../../src/managers/RelicCollectionManage
 /** 테스트끼리 진행 상태를 공유하지 않도록 가장 작은 독립 세션을 만든다. */
 function makeSession(): Session {
   return {
+    completedStoryIds: new Set(),
     selectedStageId: null,
     party: ["anky", "rex", "dodo"],
     cleared: new Set(),

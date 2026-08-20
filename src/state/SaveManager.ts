@@ -7,7 +7,7 @@ import { createDefaultSession, type SaveData, type Session } from "./session";
 
 /** 키는 계정 연동 저장소와 충돌하지 않도록 로컬 프로토타입임을 명시한다. */
 export const SAVE_STORAGE_KEY = "eternal-city.local-save";
-export const CURRENT_SAVE_VERSION = 3;
+export const CURRENT_SAVE_VERSION = 4;
 
 type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
@@ -41,6 +41,7 @@ export class SaveManager {
   save(state: Session): void {
     const data: SaveData = {
       saveVersion: CURRENT_SAVE_VERSION,
+      completedStoryIds: [...state.completedStoryIds],
       selectedStageId: state.selectedStageId,
       party: [...state.party],
       clearedStageIds: [...state.cleared],
@@ -74,6 +75,8 @@ export class SaveManager {
     // 일일 입장 횟수 도입 전 저장은 같은 UTC 키에서 0회로 시작하되 이후 재실행에는 저장값을 유지한다.
     const savedDaily = legacy.dailyContent as Partial<SaveData["dailyContent"]> | undefined;
     const dailyContent = { date: savedDaily?.date ?? "", restorationEntries: savedDaily?.restorationEntries ?? 0, completedIds: savedDaily?.completedIds ?? [], claimedRewardIds: savedDaily?.claimedRewardIds ?? [] };
+    // 스토리 저장 도입 전 계정은 미완료로 두어 다음 타이틀 진입에서 오프닝을 한 번 재생한다.
+    const completedStoryIds = Array.isArray(legacy.completedStoryIds) ? legacy.completedStoryIds : [];
     // v1까지는 유대가 없었다. 정적 Stats.ferocity→energyGain 변경은 저장 대상이 아니므로,
     // 저장에서는 플레이어별 신규 유대 필드만 보강하고 옛 정의 캐시는 의도적으로 전파하지 않는다.
     const savedProgress = legacy.relicProgress && typeof legacy.relicProgress === "object"
@@ -86,10 +89,10 @@ export class SaveManager {
       lastLobbyInteractionDate: progress.lastLobbyInteractionDate ?? "",
     }]));
     if (legacy.saveVersion === undefined) {
-      return { ...legacy, wallet, relicProgress, saveVersion: CURRENT_SAVE_VERSION, pullCountSinceHighestRarity: normalizedPity, dailyContent } as unknown as SaveData;
+      return { ...legacy, wallet, relicProgress, completedStoryIds, saveVersion: CURRENT_SAVE_VERSION, pullCountSinceHighestRarity: normalizedPity, dailyContent } as unknown as SaveData;
     }
-    if (legacy.saveVersion !== 1 && legacy.saveVersion !== 2 && legacy.saveVersion !== CURRENT_SAVE_VERSION) throw new SaveDataError(`지원하지 않는 저장 버전입니다: ${String(legacy.saveVersion)}`);
-    return { ...legacy, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, dailyContent, pullCountSinceHighestRarity: normalizedPity } as unknown as SaveData;
+    if (legacy.saveVersion !== 1 && legacy.saveVersion !== 2 && legacy.saveVersion !== 3 && legacy.saveVersion !== CURRENT_SAVE_VERSION) throw new SaveDataError(`지원하지 않는 저장 버전입니다: ${String(legacy.saveVersion)}`);
+    return { ...legacy, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, completedStoryIds, dailyContent, pullCountSinceHighestRarity: normalizedPity } as unknown as SaveData;
   }
 
   /** 콘텐츠 ID와 교차 필드 불변식까지 검사해 부분 손상을 조용히 전파하지 않는다. */
@@ -99,6 +102,7 @@ export class SaveManager {
     const gemIds = new Set(HEART_GEMS.map(({ id }) => id));
     const fail = (message: string): never => { throw new SaveDataError(message); };
     if (data.saveVersion !== CURRENT_SAVE_VERSION || !Array.isArray(data.ownedRelicIds) || data.ownedRelicIds.some((id) => !relicIds.has(id))) fail("존재하지 않는 렐릭 ID가 있습니다.");
+    if (!Array.isArray(data.completedStoryIds) || data.completedStoryIds.some((id) => typeof id !== "string") || new Set(data.completedStoryIds).size !== data.completedStoryIds.length) fail("완료 스토리 정보가 올바르지 않습니다.");
     if (!Array.isArray(data.party) || data.party.length !== 3 || new Set(data.party).size !== 3 || data.party.some((id) => !data.ownedRelicIds.includes(id))) fail("파티는 서로 다른 보유 렐릭 3명이어야 합니다.");
     if (!relicIds.has(data.favorite) || !data.ownedRelicIds.includes(data.favorite)) fail("애착 렐릭이 올바르지 않습니다.");
     if (data.selectedStageId !== null && !stageIds.has(data.selectedStageId)) fail("스테이지 ID가 올바르지 않습니다.");
@@ -118,6 +122,7 @@ export class SaveManager {
 
   private toSession(data: SaveData): Session {
     return {
+      completedStoryIds: new Set(data.completedStoryIds),
       selectedStageId: data.selectedStageId, party: [...data.party], cleared: new Set(data.clearedStageIds), owned: new Set(data.ownedRelicIds), favorite: data.favorite,
       wallet: { ...data.wallet }, relicProgress: Object.fromEntries(Object.entries(data.relicProgress).map(([id, value]) => [id, cloneProgress(value)])), ownedHeartGemIds: [...data.ownedHeartGemIds],
       pullCountSinceHighestRarity: { ...data.pullCountSinceHighestRarity },

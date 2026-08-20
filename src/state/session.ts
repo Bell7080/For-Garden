@@ -2,6 +2,7 @@
 
 import type { Wallet } from "../core/gacha";
 import type { RelicProgress } from "../core/types";
+import { BANNERS } from "../data/banners";
 import { STAGES } from "../data/stages";
 
 /** 처음 시작할 때 쥐어 주는 렐릭. 셋이면 바로 출격할 수 있다. */
@@ -20,6 +21,8 @@ export interface Session {
   /** 로비에 세워 두는 애착 렐릭. */
   favorite: string;
   wallet: Wallet;
+  /** 배너별 SSR 미획득 연속 횟수. 신규/사라진 키는 로드 경계에서 현재 배너 기준 0으로 보정한다. */
+  pullCountSinceHighestRarity: Record<string, number>;
   /** 렐릭 id별 성장/장착 상태다. 객체와 배열만 사용해 그대로 직렬화할 수 있다. */
   relicProgress: Record<string, RelicProgress>;
   /** 보유 Heart Gem id 목록이다. 중복 없는 직렬화 가능한 배열로 유지한다. */
@@ -47,6 +50,8 @@ export interface SaveData {
   ownedRelicIds: string[];
   favorite: string;
   wallet: Wallet;
+  /** 배너 ID를 키로 둬 서로 다른 천장이 섞이지 않게 저장한다. */
+  pullCountSinceHighestRarity: Record<string, number>;
   relicProgress: Record<string, RelicProgress>;
   ownedHeartGemIds: string[];
   dailyContent: DailyContentState;
@@ -66,6 +71,7 @@ export function createDefaultSession(): Session {
     owned: new Set(STARTER_RELICS),
     favorite: STARTER_RELICS[0],
     wallet: { fossil: 1200, amber: 10 },
+    pullCountSinceHighestRarity: Object.fromEntries(BANNERS.map(({ id }) => [id, 0])),
     relicProgress: Object.fromEntries(STARTER_RELICS.map((id) => [id, createInitialRelicProgress()])),
     ownedHeartGemIds: ["vital-seed", "fang-core", "ancient-pulse"],
     dailyContent: { date: "", completedIds: [], claimedRewardIds: [] },

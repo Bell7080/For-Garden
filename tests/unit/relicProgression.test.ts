@@ -12,6 +12,7 @@ const BASE: Stats = { hp: 101, def: 101, res: 101, atk: 101, ap: 101, attackSpee
 function makeSession(): Session {
   return {
     selectedStageId: null, party: ["rex"], cleared: new Set(), owned: new Set(["rex"]), favorite: "rex",
+    pullCountSinceHighestRarity: { fossil: 0, amber: 0 },
     wallet: { fossil: 0, amber: 0 }, relicProgress: {}, ownedHeartGemIds: ["vital-seed", "fang-core"],
     dailyContent: { date: "", completedIds: [], claimedRewardIds: [] },
   };

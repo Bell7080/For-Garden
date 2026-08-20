@@ -5,6 +5,9 @@ export type Side = "player" | "enemy";
 /** 역할. 전방에 세울지 후방에 둘지 판단하는 기준이 된다. */
 export type Role = "attacker" | "tank" | "support";
 
+/** 프로토타입 렐릭 희귀도. 배열 순서에 기대지 말고 가챠 규칙의 명시적 우선순위를 사용한다. */
+export type RelicRarity = "R" | "SR" | "SSR";
+
 /** 정적 렐릭 데이터에서 선택할 수 있는 전신 원화 키. 새 Puppet 등록 시 함께 확장한다. */
 export type PortraitAssetId = "torika" | "lexia" | "seira" | "torika-placeholder";
 
@@ -108,6 +111,8 @@ export interface Passive {
 export interface RelicDef {
   id: string;
   name: string;
+  /** 정적 희귀도는 배너 확률/풀 검증과 결과 UI가 공유하는 단일 기준이다. */
+  rarity: RelicRarity;
   /** 상세·로비·배너에서 사용할 Puppet 전신 원화의 데이터 키. */
   portraitAssetId: PortraitAssetId;
   /** 어떤 유전자에서 되살아났는지. */

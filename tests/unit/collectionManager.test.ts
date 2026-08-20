@@ -10,6 +10,7 @@ function makeSession(): Session {
     cleared: new Set(),
     owned: new Set(["anky", "rex", "dodo"]),
     favorite: "anky",
+    pullCountSinceHighestRarity: { fossil: 0, amber: 0 },
     wallet: { fossil: 0, amber: 0 },
     relicProgress: {},
     ownedHeartGemIds: [],

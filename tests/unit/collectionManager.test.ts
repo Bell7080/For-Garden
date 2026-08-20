@@ -11,31 +11,14 @@ function makeSession(): Session {
     owned: new Set(["anky", "rex", "dodo"]),
     favorite: "anky",
     pullCountSinceHighestRarity: { fossil: 0, amber: 0 },
-    wallet: { fossil: 0, amber: 0 },
-    relicProgress: {},
+    wallet: { fossil: 0, amber: 0, dnaFragments: 0 },
+    relicProgress: Object.fromEntries(["anky", "rex", "dodo"].map((id) => [id, { level: 1, levelTitle: "복원체", dnaMastery: 0, heartGemSlots: [null, null, null] }])),
     ownedHeartGemIds: [],
     dailyContent: { date: "", completedIds: [], claimedRewardIds: [] },
   };
 }
 
 describe("RelicCollectionManager", () => {
-  it("중복 획득과 최초 획득을 구분한다", () => {
-    const manager = new RelicCollectionManager(makeSession());
-
-    expect(manager.acquire("anky")).toBe(false);
-    expect(manager.acquire("spino")).toBe(true);
-    expect(manager.owns("spino")).toBe(true);
-  });
-
-  it("여러 발굴 결과의 신규와 중복을 순서대로 분리한다", () => {
-    const manager = new RelicCollectionManager(makeSession());
-
-    expect(manager.applyAcquisitions(["anky", "spino", "spino"])).toEqual({
-      fresh: ["spino"],
-      duplicates: ["anky", "spino"],
-    });
-  });
-
   it("미보유 렐릭을 애착 렐릭이나 파티에 넣지 않는다", () => {
     const state = makeSession();
     const manager = new RelicCollectionManager(state);

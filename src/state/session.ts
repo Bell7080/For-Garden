@@ -70,7 +70,7 @@ export function createDefaultSession(): Session {
     cleared: new Set<string>(),
     owned: new Set(STARTER_RELICS),
     favorite: STARTER_RELICS[0],
-    wallet: { fossil: 1200, amber: 10 },
+    wallet: { fossil: 1200, amber: 10, dnaFragments: 0 },
     pullCountSinceHighestRarity: Object.fromEntries(BANNERS.map(({ id }) => [id, 0])),
     relicProgress: Object.fromEntries(STARTER_RELICS.map((id) => [id, createInitialRelicProgress()])),
     ownedHeartGemIds: ["vital-seed", "fang-core", "ancient-pulse"],

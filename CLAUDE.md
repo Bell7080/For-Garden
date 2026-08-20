@@ -57,6 +57,13 @@ GitHub Actions는 두지 않는다 — 배포는 Vercel이 맡고 품질 게이�
 
 ## 입력 및 임시 서버
 
+### 획득 상태의 단일 소유자
+
+- 발굴 획득으로 바뀌는 `owned`, `relicProgress`, 공용 DNA 조각은 `GameApi` 구현(FakeServer 및
+  향후 실제 서버)만 한 처리 단위로 확정한다. `core/gacha.ts`는 순수 계산만 하며 상태를 변경하지 않는다.
+- `RelicCollectionManager`는 조회·애착·편성만 담당한다. 획득 메서드를 다시 추가해 API 응답을 이중
+  반영하지 않는다. 씬은 슬롯별 `PullResponse.results`를 표시만 한다.
+
 - Phaser의 `pointerdown`/`pointerup`은 터치와 마우스를 함께 지원한다. 모바일 우선 입력은
   `pointerup`(브라우저의 `touchend`)에서 확정하되 PC 테스트용 마우스 동작도 제거하지 않는다.
 - 씬은 `GameApi`만 참조하고 `FakeServer`의 내부 상태를 전제로 삼지 않는다. 실제 백엔드가 생기면

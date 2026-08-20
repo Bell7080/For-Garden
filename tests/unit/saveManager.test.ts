@@ -33,6 +33,21 @@ describe("SaveManager", () => {
     expect(loaded.cleared).toEqual(new Set(["1-1"]));
   });
 
+  it("신규 획득 성장 정보와 DNA 조각을 저장 후 그대로 복구한다", () => {
+    const storage = new MemoryStorage();
+    const manager = new SaveManager(storage);
+    const source = createDefaultSession();
+    source.owned.add("dodo");
+    source.relicProgress.dodo = { level: 1, levelTitle: "복원체", dnaMastery: 5, heartGemSlots: [null, null, null] };
+    source.wallet.dnaFragments = 3;
+
+    manager.save(source);
+    const loaded = manager.load()!;
+    expect(loaded.owned.has("dodo")).toBe(true);
+    expect(loaded.relicProgress.dodo).toMatchObject({ level: 1, dnaMastery: 5 });
+    expect(loaded.wallet.dnaFragments).toBe(3);
+  });
+
   it("saveVersion 없는 저장을 현재 규격으로 마이그레이션한다", () => {
     const manager = new SaveManager(new MemoryStorage());
     const legacy: Record<string, unknown> = { ...validData() };

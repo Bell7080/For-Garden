@@ -8,6 +8,8 @@ export interface DebugBattle {
   elapsed: number;
   /** 아직 살아 있는 아군 이름. 편성 순서를 유지한다. */
   playerOrder: string[];
+  /** 지금 궁극기를 누를 수 있는 아군 이름. */
+  ultimateReady: string[];
   /** 편별 남은 체력 합계. 실시간 난전에는 선봉 개념이 없다. */
   enemyHp: number;
   playerHp: number;

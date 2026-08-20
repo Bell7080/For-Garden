@@ -3,7 +3,9 @@ import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { ULTIMATE_ENERGY_MAX } from "../core/battle";
 import {
   aliveFighters,
+  canFireUltimate,
   createSkirmish,
+  fireUltimate,
   isFighterAlive,
   renderPose,
   stepSkirmish,
@@ -16,7 +18,7 @@ import {
 import { getRelic } from "../data/relics";
 import { getStage } from "../data/stages";
 import type { PuppetCreature, PuppetAsset } from "../puppets/assets";
-import { battleAssetFor, placePuppet, playMotion, spawnPuppet } from "../puppets/assets";
+import { battleAssetFor, flashHit, placePuppet, playMotion, spawnPuppet } from "../puppets/assets";
 import { tintFor } from "../puppets/tints";
 import { session } from "../state/session";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
@@ -43,15 +45,26 @@ interface FighterView {
   shadow: Phaser.GameObjects.Ellipse;
   hpBack: Phaser.GameObjects.Rectangle;
   hpFill: Phaser.GameObjects.Rectangle;
+  /** 피격 섬광이 끝난 뒤 되돌릴 원래 색. */
+  tint: number;
   dead: boolean;
+}
+
+/** 하단 프로필 한 칸. 궁극기가 차면 카드 자체가 발동 버튼이 된다. */
+interface ProfileView {
+  fighter: Fighter;
+  card: PortraitCard;
+  glow: Phaser.GameObjects.Rectangle;
+  gauge: Phaser.GameObjects.Text;
+  ready: boolean;
+  pulse?: Phaser.Tweens.Tween;
 }
 
 /** SD 여섯이 실시간으로 뒤엉켜 싸우는 자동 전투 화면이다. */
 export class BattleScene extends Phaser.Scene {
   private state!: SkirmishState;
   private views = new Map<string, FighterView>();
-  private profileGauges: Phaser.GameObjects.Text[] = [];
-  private profileCards: PortraitCard[] = [];
+  private profiles: ProfileView[] = [];
   private finished = false;
   private spawned = false;
   /** 마지막으로 시뮬레이션을 굴린 실제 시각(ms). */
@@ -66,8 +79,7 @@ export class BattleScene extends Phaser.Scene {
     const stage = getStage(session.selectedStageId ?? "1-1");
     this.state = createSkirmish(session.party.map(getRelic), stage.enemies.map(getRelic), ARENA);
     this.views.clear();
-    this.profileGauges = [];
-    this.profileCards = [];
+    this.profiles = [];
     this.finished = false;
     this.spawned = false;
 
@@ -89,13 +101,14 @@ export class BattleScene extends Phaser.Scene {
   private async spawnFighters(): Promise<void> {
     for (const fighter of this.state.fighters) {
       const asset = battleAssetFor(fighter.def.id);
+      // 임시 공용 적만 색으로 구분하고 완성된 1·2번 SD는 원색을 보존한다.
+      const tint = fighter.def.id.startsWith("husk-") ? tintFor(fighter.def.id) : 0xffffff;
       const creature = await spawnPuppet(this, asset, {
         x: fighter.x,
         groundY: fighter.y,
         height: UNIT_HEIGHT,
         flipX: fighter.facing < 0,
-        // 임시 공용 적만 색으로 구분하고 완성된 1·2번 SD는 원색을 보존한다.
-        tint: fighter.def.id.startsWith("husk-") ? tintFor(fighter.def.id) : undefined,
+        tint,
       });
       if (!this.scene.isActive()) {
         creature.destroy();
@@ -105,7 +118,7 @@ export class BattleScene extends Phaser.Scene {
       const barColor = fighter.side === "player" ? COLOR.hpFill : COLOR.hpEnemy;
       const hpBack = this.add.rectangle(fighter.x, 0, 96, 10, COLOR.void, 0.75);
       const hpFill = this.add.rectangle(fighter.x, 0, 96, 10, barColor).setOrigin(0, 0.5);
-      this.views.set(fighter.id, { creature, asset, fighter, shadow, hpBack, hpFill, dead: false });
+      this.views.set(fighter.id, { creature, asset, fighter, shadow, hpBack, hpFill, tint, dead: false });
     }
     this.syncViews();
     // 마지막 한 명까지 서고 나서 시간을 흘려야 먼저 뜬 캐릭터만 앞서 달려가지 않는다.
@@ -113,12 +126,19 @@ export class BattleScene extends Phaser.Scene {
     this.spawned = true;
   }
 
-  /** 하단 프로필은 편성 순서의 원화를 매치하고 각성 스킬과 게이지를 함께 보여 준다. */
+  /**
+   * 하단 프로필.
+   *
+   * 카드가 곧 궁극기 버튼이다. 게이지가 차면 카드가 커지며 뒤에서 빛이 맥동하고, 누르면
+   * 그 자리에서 궁극기가 나간다. 게이지가 모자라면 눌러도 아무 일도 일어나지 않는다.
+   */
   private buildProfiles(): void {
     this.add.rectangle(BASE_WIDTH / 2, (PROFILE_TOP + BASE_HEIGHT) / 2, BASE_WIDTH, BASE_HEIGHT - PROFILE_TOP, COLOR.panel, 0.96)
       .setStrokeStyle(2, COLOR.panelEdge);
     this.playerFighters().forEach((fighter, index) => {
       const x = 190 + index * 350;
+      // 카드가 불투명해서 뒤에 깐 빛은 테두리처럼만 보인다. 그만큼 넉넉히 키워 둔다.
+      const glow = this.add.rectangle(x, 1620, 378, 378, COLOR.accent, 0);
       // 도감·편성과 같은 카드 규격을 써서 전투 중에도 같은 얼굴 프레임으로 알아보게 한다.
       const card = new PortraitCard(this, x, 1620, {
         width: 300,
@@ -128,10 +148,21 @@ export class BattleScene extends Phaser.Scene {
         label: fighter.def.name,
         sub: `각성 · ${fighter.def.ultimate.name}`,
       });
-      card.hit.disableInteractive();
-      this.profileCards.push(card);
-      this.profileGauges.push(this.add.text(x, 1800, "", textStyle({ size: 22, color: COLOR.inkDim })).setOrigin(0.5, 0));
+      card.hit.on("pointerup", () => this.useUltimate(fighter));
+      const gauge = this.add.text(x, 1800, "", textStyle({ size: 22, color: COLOR.inkDim })).setOrigin(0.5, 0);
+      this.profiles.push({ fighter, card, glow, gauge, ready: false });
     });
+  }
+
+  /** 카드를 눌렀을 때. 조건이 맞지 않으면 코어가 아무것도 바꾸지 않는다. */
+  private useUltimate(fighter: Fighter): void {
+    if (this.finished || !this.spawned) return;
+    const events = fireUltimate(this.state, fighter.id, () => Math.random());
+    if (events.length === 0) return;
+    events.forEach((event) => this.playEvent(event));
+    this.syncViews();
+    this.refreshProfiles();
+    this.refreshDebug();
   }
 
   /** 편성 순서 그대로의 아군 셋. 쓰러진 뒤에도 프로필 자리는 지킨다. */
@@ -173,6 +204,8 @@ export class BattleScene extends Phaser.Scene {
     const target = this.views.get(event.targetId);
     if (attacker) playMotion(this, attacker.creature, "attack");
     if (target) {
+      // 붉은 섬광이 피격을 알리고, 동작은 공격을 끊지 않는 선에서 얕게만 얹힌다.
+      flashHit(this, target.creature, target.tint);
       playMotion(this, target.creature, "hit");
       this.popDamage(target.fighter, event.amount, event.skill === "ultimate", event.critical);
     }
@@ -237,19 +270,42 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private refreshProfiles(): void {
-    this.playerFighters()
-      .forEach((fighter, index) => {
-        const gauge = this.profileGauges[index];
-        if (!gauge) return;
-        // 분자는 저장량, 분모는 코어가 정한 공용 저장 상한이며 괄호로 스킬별 소비 비용을 구분한다.
-        gauge.setText(
-          isFighterAlive(fighter)
-            ? `HP ${fighter.hp} · ${fighter.energy} / ${ULTIMATE_ENERGY_MAX} (비용 ${fighter.def.ultimate.cost})`
-            : "전투 불능",
-        );
-        gauge.setColor(isFighterAlive(fighter) ? COLOR.inkDim : COLOR.dangerText);
-        this.profileCards[index]?.setAlpha(isFighterAlive(fighter) ? 1 : 0.45);
-      });
+    for (const profile of this.profiles) {
+      const { fighter } = profile;
+      const alive = isFighterAlive(fighter);
+      // 분자는 저장량, 분모는 코어가 정한 공용 저장 상한이며 괄호로 궁극기의 소비 비용을 구분한다.
+      profile.gauge.setText(
+        alive
+          ? `HP ${fighter.hp} · ${fighter.energy} / ${ULTIMATE_ENERGY_MAX} (비용 ${fighter.def.ultimate.cost})`
+          : "전투 불능",
+      );
+      const ready = canFireUltimate(this.state, fighter);
+      profile.gauge.setColor(alive ? (ready ? COLOR.accentText : COLOR.inkDim) : COLOR.dangerText);
+      profile.card.setAlpha(alive ? 1 : 0.45);
+      if (ready !== profile.ready) this.setUltimateReady(profile, ready);
+    }
+  }
+
+  /** 준비 상태가 바뀔 때만 연출을 갈아 끼운다. 매 프레임 트윈을 다시 만들지 않는다. */
+  private setUltimateReady(profile: ProfileView, ready: boolean): void {
+    profile.ready = ready;
+    profile.pulse?.remove();
+    profile.pulse = undefined;
+    // 황동 테두리는 카드 프리팹의 선택 상태를 그대로 쓴다.
+    profile.card.setSelected(ready);
+    if (!ready) {
+      profile.card.setScale(1);
+      profile.glow.setAlpha(0);
+      return;
+    }
+    profile.card.setScale(1.08);
+    profile.pulse = this.tweens.add({
+      targets: profile.glow,
+      alpha: { from: 0.16, to: 0.52 },
+      duration: 520,
+      yoyo: true,
+      repeat: -1,
+    });
   }
 
   private refreshDebug(): void {
@@ -257,6 +313,7 @@ export class BattleScene extends Phaser.Scene {
       phase: this.state.phase,
       elapsed: Math.round(this.state.elapsed * 10) / 10,
       playerOrder: aliveFighters(this.state, "player").map((fighter) => fighter.def.name),
+      ultimateReady: this.playerFighters().filter((fighter) => canFireUltimate(this.state, fighter)).map((fighter) => fighter.def.name),
       playerHp: teamHp(this.state, "player"),
       enemyHp: teamHp(this.state, "enemy"),
     });
@@ -266,6 +323,8 @@ export class BattleScene extends Phaser.Scene {
   private finishBattle(phase: "victory" | "defeat"): void {
     if (this.finished) return;
     this.finished = true;
+    // 전투가 끝나면 궁극기 버튼도 함께 꺼진다.
+    this.profiles.forEach((profile) => this.setUltimateReady(profile, false));
     this.syncViews();
     this.refreshDebug();
     const won = phase === "victory";

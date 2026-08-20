@@ -31,6 +31,13 @@ export interface Fighter extends BattleUnit {
   /** 다음 공격까지 남은 시간(초). */
   attackCooldown: number;
   targetId: string | null;
+  /**
+   * 지금 상대와 붙어 있는지.
+   *
+   * 사거리 하나로만 판단하면 밀려났다 다가서기를 프레임마다 반복해 제자리에서 떠는 것처럼
+   * 보인다. 붙는 거리와 떨어지는 거리를 다르게 둬서 경계에서 상태가 튀지 않게 한다.
+   */
+  engaged: boolean;
   /** 붙는 각도를 사람마다 어긋나게 만드는 고유 위상. 여섯이 한 점에 겹치지 않게 한다. */
   wander: number;
   /**
@@ -84,6 +91,15 @@ export const SKIRMISH = {
   reach: 172,
   /** 서로 밀어내 겹치지 않게 유지하는 간격. 여섯이 한 덩어리로 뭉쳐 보이지 않게 한다. */
   spacing: 132,
+  /**
+   * 겹친 만큼을 1초에 몇 배로 풀지. 한 프레임에 전부 밀어내면 걸어 들어가는 힘과 부딪쳐
+   * 몸이 낀 것처럼 떤다. 천천히 풀면 서로 비집고 자리를 잡는 것처럼 보인다.
+   */
+  separationRate: 6,
+  /** 이 비율만큼 다가가면 붙은 것으로 본다. 다시 떨어지는 기준은 `reach`다. */
+  engageRatio: 0.82,
+  /** 좌우를 뒤집기 전에 필요한 최소 가로 거리(px). 상대와 세로로 겹칠 때 깜빡이지 않게 한다. */
+  facingDeadzone: 16,
   /** 이미 그 상대에게 붙은 아군 한 명당 더해지는 거리 가중치. 셋이 한 명에게 몰리지 않는다. */
   crowdPenalty: 240,
   /** 상대에게 곧장 가지 않고 옆으로 흐르는 정도. 패싸움처럼 보이게 한다. */
@@ -92,8 +108,11 @@ export const SKIRMISH = {
   strafe: 0.4,
   /** 때리는 순간 상대 쪽으로 튀어나가는 거리(px). */
   lunge: 52,
-  /** 맞은 쪽이 반대로 밀려나는 거리(px). */
-  knockback: 40,
+  /**
+   * 맞은 쪽이 반대로 밀려나는 거리(px).
+   * 때리는 쪽 절반도 되지 않는다 — 맞을 때마다 크게 밀리면 주고받는 내내 화면이 튄다.
+   */
+  knockback: 20,
   /** 튀어나간 거리와 밀려난 거리가 제자리로 돌아오는 속도. 클수록 빨리 복귀한다. */
   recover: 9,
   /** 달릴 때 튀어 오르는 최대 높이(px). */
@@ -124,6 +143,7 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     // 시작하자마자 전원이 동시에 때리지 않도록 첫 공격만 조금씩 어긋나게 둔다.
     attackCooldown: index * 0.18,
     targetId: null,
+    engaged: false,
     wander: index * 2.1 + (side === "player" ? 0 : 1.05),
     dashX: 0,
     dashY: 0,
@@ -254,15 +274,15 @@ function gainEnergy(fighter: Fighter): void {
   fighter.energy = Math.min(ULTIMATE_ENERGY_MAX, fighter.energy + fighter.def.stats.ferocity);
 }
 
-/** 한 번 때린다. 게이지가 찼으면 궁극기를 먼저 쓴다. */
+/** 한 번 때린다. 궁극기 여부는 호출하는 쪽이 정한다. */
 function strike(
   attacker: Fighter,
   target: Fighter,
   rng: () => number,
   state: SkirmishState,
   events: SkirmishEvent[],
+  useUltimate: boolean,
 ): void {
-  const useUltimate = canUseUltimate(attacker);
   const skill: Skill = useUltimate ? attacker.def.ultimate : attacker.def.basic;
   const critical = isCriticalHit(attacker.def.stats.critChance, rng());
   const amount = computeDamage(attacker, target, { ...skill, isCritical: critical }, true);
@@ -297,8 +317,8 @@ function strike(
   }
 }
 
-/** 서로 겹쳐 서지 않도록 가까운 둘을 반씩 밀어낸다. */
-function separate(state: SkirmishState): void {
+/** 서로 겹쳐 서지 않도록 가까운 둘을 조금씩 밀어낸다. */
+function separate(state: SkirmishState, dt: number): void {
   const alive = state.fighters.filter(isFighterAlive);
   for (let i = 0; i < alive.length; i += 1) {
     for (let j = i + 1; j < alive.length; j += 1) {
@@ -310,7 +330,8 @@ function separate(state: SkirmishState): void {
       if (gap >= SKIRMISH.spacing) continue;
       // 정확히 겹쳤을 때도 방향이 필요하므로 고유 위상으로 갈라 세운다.
       const angle = gap > 0.001 ? Math.atan2(dy, dx) : a.wander;
-      const push = (SKIRMISH.spacing - gap) / 2;
+      // 겹친 양을 한 번에 없애지 않고 시간에 비례해 조금씩 푼다.
+      const push = ((SKIRMISH.spacing - gap) / 2) * Math.min(1, SKIRMISH.separationRate * dt);
       a.x -= Math.cos(angle) * push;
       a.y -= Math.sin(angle) * push;
       b.x += Math.cos(angle) * push;
@@ -357,11 +378,15 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     const dx = target.x - fighter.x;
     const dy = target.y - fighter.y;
     const gap = Math.hypot(dx, dy) || 0.001;
-    fighter.facing = dx >= 0 ? 1 : -1;
+    // 세로로 거의 겹쳐 있을 때 좌우가 깜빡이지 않도록 일정 거리부터만 방향을 바꾼다.
+    if (Math.abs(dx) > SKIRMISH.facingDeadzone) fighter.facing = dx >= 0 ? 1 : -1;
     // 붙는 동안에도 시계가 흘러야 접촉하자마자 첫 타가 나간다.
     fighter.attackCooldown -= dt;
 
-    if (gap > SKIRMISH.reach) {
+    // 붙을 때와 떨어질 때의 기준을 다르게 둬 경계에서 걷다 서다를 반복하지 않는다.
+    fighter.engaged = fighter.engaged ? gap <= SKIRMISH.reach : gap <= SKIRMISH.reach * SKIRMISH.engageRatio;
+
+    if (!fighter.engaged) {
       const step = moveSpeed(fighter) * dt;
       // 달리는 동안에는 통통 튀어 오른다. 발이 땅에 닿는 순간마다 hop이 0을 지난다.
       fighter.hopPhase += dt * SKIRMISH.hopRate * Math.PI * (fighter.def.stats.moveSpeed / 100);
@@ -382,14 +407,46 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     fighter.y += (dx / gap) * orbit;
 
     if (fighter.attackCooldown <= 0) {
-      strike(fighter, target, rng, state, events);
+      // 아군 궁극기는 자동으로 나가지 않는다. 화면에서 누를 때만 fireUltimate로 들어온다.
+      strike(fighter, target, rng, state, events, fighter.side === "enemy" && canUseUltimate(fighter));
       fighter.attackCooldown = attackInterval(fighter);
     }
   }
 
-  separate(state);
+  separate(state, dt);
   clampToArena(state);
   settle(state, events);
+}
+
+/** 지금 궁극기를 쓸 수 있는지. 게이지가 찼고, 살아 있고, 때릴 상대가 남아 있어야 한다. */
+export function canFireUltimate(state: SkirmishState, fighter: Fighter): boolean {
+  if (state.phase !== "fight" || !isFighterAlive(fighter) || !canUseUltimate(fighter)) return false;
+  return state.fighters.some((other) => other.side !== fighter.side && isFighterAlive(other));
+}
+
+/**
+ * 눌러서 궁극기를 쓴다.
+ *
+ * 붙어 있지 않아도 즉시 나간다 — 게이지를 채워 둔 플레이어가 누른 순간에 반응해야 하기 때문이다.
+ * 조건을 채우지 못하면 아무것도 바꾸지 않고 빈 목록을 돌려준다.
+ */
+export function fireUltimate(
+  state: SkirmishState,
+  fighterId: string,
+  rng: () => number = NO_CRIT,
+): SkirmishEvent[] {
+  const events: SkirmishEvent[] = [];
+  const attacker = findFighter(state, fighterId);
+  if (!attacker || !canFireUltimate(state, attacker)) return events;
+
+  const target = resolveTarget(state, attacker);
+  if (!target) return events;
+
+  strike(attacker, target, rng, state, events, true);
+  // 방금 크게 휘둘렀으니 다음 평타까지의 간격도 새로 센다.
+  attacker.attackCooldown = attackInterval(attacker);
+  settle(state, events);
+  return events;
 }
 
 /**

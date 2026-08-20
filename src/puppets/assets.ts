@@ -110,17 +110,36 @@ export function battleAssetFor(relicId: string): PuppetAsset {
  * 전장에서 쓰는 동작. 묶음마다 가진 동작이 달라서 쓸 이름을 순서대로 적어 둔다 —
  * 앞에서부터 있는 것을 쓰고, 하나도 없으면 그냥 넘어간다.
  */
+/** 동작 하나의 재생 규칙. 우선순위가 높을수록 다른 동작에 끊기지 않는다. */
+export interface MotionConfig {
+  names: readonly string[];
+  returnsToIdle?: boolean;
+  priority: number;
+  /** 내보낸 속도를 덮어쓴다. 크면 빨리 지나간다. */
+  speed?: number;
+  /** 움직임 크기 배율. 작으면 얕게 꺾인다. */
+  strength?: number;
+}
+
 export const MOTION = {
-  idle: { names: ["idle"] },
-  hit: { names: ["hit", "idle"], returnsToIdle: true },
-  /** 공격 동작이 따로 없어 포효로 대신한다. */
-  attack: { names: ["attack", "slam", "roar", "idle"], returnsToIdle: true },
-} as const satisfies Record<string, { names: readonly string[]; returnsToIdle?: boolean }>;
+  idle: { names: ["idle"], priority: 0 },
+  /**
+   * 피격. 얕고 빠르게 지나간다.
+   *
+   * 우선순위가 공격보다 낮아서 휘두르는 중에는 끼어들지 않는다. 맞을 때마다 크게 꺾이면
+   * 주고받는 동안 캐릭터가 계속 튀어 보이고, 무엇보다 자기 공격 모션이 매번 잘린다.
+   */
+  hit: { names: ["hit", "idle"], returnsToIdle: true, priority: 1, speed: 2.2, strength: 0.4 },
+  /** 공격 동작이 따로 없어 포효로 대신한다. 재생 중에는 어떤 동작도 이걸 끊지 못한다. */
+  attack: { names: ["attack", "slam", "roar", "idle"], returnsToIdle: true, priority: 2 },
+} as const satisfies Record<string, MotionConfig>;
 
 export type MotionName = keyof typeof MOTION;
 
 /** 개체별 최신 동작 번호. 오래된 복귀 타이머가 새 동작을 idle로 끊지 못하게 한다. */
 const motionGeneration = new WeakMap<PuppetCreature, number>();
+/** 지금 재생 중인 일회성 동작의 우선순위와 끝나는 시각. 낮은 동작이 끼어들지 못하게 막는다. */
+const motionHold = new WeakMap<PuppetCreature, { priority: number; until: number }>();
 /** 이전 일회성 동작의 idle 복귀 예약. 새 동작이 오면 즉시 해제한다. */
 const motionTimers = new WeakMap<PuppetCreature, Phaser.Time.TimerEvent>();
 
@@ -190,7 +209,8 @@ export function computePlacement(
 
   const contentCenterX = (asset.content.left + asset.content.right) / 2;
   // 이미지 중앙에서 그림 중앙까지의 어긋남과, 중앙에서 발끝까지의 거리를 배율만큼 되돌린다.
-  const offsetX = (contentCenterX - asset.imageWidth / 2) * scale;
+  // 좌우를 뒤집으면 가로 어긋남의 방향도 함께 뒤집힌다.
+  const offsetX = (contentCenterX - asset.imageWidth / 2) * scale * (options.flipX ? -1 : 1);
   const offsetY = (asset.content.bottom - asset.imageHeight / 2) * scale;
 
   return { x: options.x - offsetX, y: options.groundY - offsetY, scale };
@@ -299,8 +319,8 @@ export function placePuppet(
   const { x, y, scale } = resolvePlacement(asset, () => resolveAnchors(creature.core.project.bones, asset), options);
   creature.setScale(scale);
   creature.setPosition(x, y);
-  // setScale이 좌우 반전을 지웠을 수 있어 다시 맞춘다.
-  if (creature.flipX) creature.setFlipX(true);
+  // 매 프레임 다시 놓는 전투에서는 여기가 방향 전환도 함께 맡는다. 요청이 없으면 지금 방향을 지킨다.
+  creature.setFlipX(options.flipX ?? creature.flipX);
 }
 
 /**
@@ -312,29 +332,60 @@ export function playMotion(
   creature: PuppetCreature,
   motion: MotionName,
 ): void {
-  const config = MOTION[motion];
-  const playedName = config.names.find((name) => creature.play(name));
+  const config: MotionConfig = MOTION[motion];
+  // 더 중요한 동작이 아직 재생 중이면 그대로 둔다. 공격은 끝까지 휘두르고, 피격이 자른다.
+  const held = motionHold.get(creature);
+  if (held && held.until > scene.time.now && held.priority >= config.priority) return;
+
+  const options = { speed: config.speed, strength: config.strength };
+  const playedName = config.names.find((name) => creature.play(name, options));
   if (!playedName) return;
 
   const generation = (motionGeneration.get(creature) ?? 0) + 1;
   motionGeneration.set(creature, generation);
   motionTimers.get(creature)?.remove(false);
   motionTimers.delete(creature);
+  motionHold.delete(creature);
 
-  if (!("returnsToIdle" in config) || !config.returnsToIdle || playedName === "idle") return;
+  if (!config.returnsToIdle || playedName === "idle") return;
 
   // PuppetForge의 내보내기 speed/strength/secondary는 play()가 그대로 적용한다. 복귀 시각도
-  // 고정 숫자가 아니라 내보낸 duration과 speed로 계산해 느린 동작이 중간에 잘리지 않게 한다.
+  // 고정 숫자가 아니라 내보낸 duration과 실제 재생 속도로 계산해 동작이 중간에 잘리지 않게 한다.
   const exportedMotion = creature.core.project.animations[playedName];
-  const speed = Math.max(exportedMotion.speed ?? 1, 0.01);
+  const speed = Math.max((config.speed ?? exportedMotion.speed) ?? 1, 0.01);
   const holdMs = (exportedMotion.duration / speed) * 1000;
+  motionHold.set(creature, { priority: config.priority, until: scene.time.now + holdMs });
   const timer = scene.time.delayedCall(holdMs, () => {
     // 공격 직후 피격처럼 동작이 겹쳐도 가장 최근 동작의 유지 시간은 온전히 보장한다.
     if (motionGeneration.get(creature) !== generation) return;
     motionTimers.delete(creature);
+    motionHold.delete(creature);
     if (creature.active) creature.play("idle");
   });
   motionTimers.set(creature, timer);
+}
+
+/** 맞은 순간 붉게 물드는 시간(ms)과 색. 동작을 크게 흔들지 않아도 피격이 눈에 띄게 한다. */
+const HIT_FLASH_MS = 120;
+const HIT_FLASH_TINT = 0xff8a7a;
+const flashTimers = new WeakMap<PuppetCreature, Phaser.Time.TimerEvent>();
+
+/**
+ * 피격 표시. 잠깐 붉게 덮었다가 원래 색으로 돌아온다.
+ *
+ * 연달아 맞아도 마지막 한 번만 색을 되돌리도록 이전 예약을 지운다. 그러지 않으면 먼저 걸린
+ * 타이머가 아직 붉어야 할 캐릭터의 색을 지운다.
+ */
+export function flashHit(scene: Phaser.Scene, creature: PuppetCreature, baseTint = 0xffffff): void {
+  flashTimers.get(creature)?.remove(false);
+  tintPuppet(creature, HIT_FLASH_TINT);
+  flashTimers.set(
+    creature,
+    scene.time.delayedCall(HIT_FLASH_MS, () => {
+      flashTimers.delete(creature);
+      if (creature.active) tintPuppet(creature, baseTint);
+    }),
+  );
 }
 
 /** 전신 일러스트를 누르면 현재 동작을 새 hit 동작으로 교체한다. */

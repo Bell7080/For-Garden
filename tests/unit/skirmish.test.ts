@@ -2,13 +2,16 @@ import { describe, expect, it } from "vitest";
 import {
   aliveFighters,
   attackInterval,
+  canFireUltimate,
   createSkirmish,
+  fireUltimate,
   findFighter,
   renderPose,
   SKIRMISH,
   stepSkirmish,
   teamHp,
   type Arena,
+  type SkirmishEvent,
   type SkirmishState,
 } from "../../src/core/skirmish";
 import { getRelic } from "../../src/data/relics";
@@ -148,7 +151,8 @@ describe("타격 연출", () => {
     const [ally, foe] = state.fighters;
     ally.x = 400;
     ally.y = 1000;
-    foe.x = 400 + SKIRMISH.reach - 20;
+    // 붙었다고 판정되는 거리(reach * engageRatio) 안쪽에 세운다.
+    foe.x = 400 + SKIRMISH.reach * 0.75;
     foe.y = 1000;
     ally.attackCooldown = 0;
     foe.attackCooldown = 99;
@@ -202,5 +206,110 @@ describe("타격 연출", () => {
     expect(pose.y).toBeCloseTo(ally.y + ally.dashY - ally.hop);
     // 떠 있어도 그림자는 발밑을 크게 벗어나지 않는다.
     expect(Math.abs(pose.shadowX - ally.x)).toBeLessThanOrEqual(Math.abs(ally.dashX));
+  });
+});
+
+describe("궁극기", () => {
+  /** 게이지를 가득 채운 아군 하나와 적 하나를 붙여 세운다. */
+  function charged() {
+    const state = newSkirmish(["rex"], ["husk-shell"]);
+    const [ally, foe] = state.fighters;
+    ally.x = 400;
+    ally.y = 1000;
+    foe.x = 400 + SKIRMISH.reach * 0.75;
+    foe.y = 1000;
+    ally.energy = ally.def.ultimate.cost;
+    ally.attackCooldown = 99;
+    foe.attackCooldown = 99;
+    return state;
+  }
+
+  it("는 아군 게이지가 차도 저절로 나가지 않는다", () => {
+    const state = newSkirmish();
+    const events = run(state, 20);
+    const autoUltimates = events.filter(
+      (event) => event.kind === "attack" && event.skill === "ultimate" && event.attackerId.startsWith("player"),
+    );
+    expect(autoUltimates).toHaveLength(0);
+    // 대신 게이지는 그대로 차 있어 누를 수 있는 상태가 된다.
+    const charged = state.fighters.filter((f) => f.side === "player" && f.energy >= f.def.ultimate.cost);
+    expect(charged.length).toBeGreaterThan(0);
+  });
+
+  it("는 적은 게이지가 차면 알아서 쓴다", () => {
+    const state = newSkirmish();
+    const events = run(state, 30);
+    const enemyUltimates = events.filter(
+      (event) => event.kind === "attack" && event.skill === "ultimate" && event.attackerId.startsWith("enemy"),
+    );
+    expect(enemyUltimates.length).toBeGreaterThan(0);
+  });
+
+  it("는 눌렀을 때 게이지를 쓰고 평타보다 크게 때린다", () => {
+    const ultimateState = charged();
+    const ultimateHit = fireUltimate(ultimateState, "player-0").find((event) => event.kind === "attack");
+    expect(ultimateHit).toMatchObject({ skill: "ultimate", targetId: "enemy-0" });
+
+    const basicState = charged();
+    basicState.fighters[0].attackCooldown = 0;
+    const basicHit = run(basicState, 1 / 30).find((event) => event.kind === "attack");
+    expect(basicHit).toMatchObject({ skill: "basic" });
+
+    // 같은 상대를 같은 상태에서 때렸을 때 궁극기 쪽이 더 아프다.
+    const damage = (event?: SkirmishEvent) => (event?.kind === "attack" ? event.amount : 0);
+    expect(damage(ultimateHit)).toBeGreaterThan(damage(basicHit));
+    expect(ultimateState.fighters[0].energy).toBe(0);
+  });
+
+  it("는 게이지가 모자라면 아무것도 하지 않는다", () => {
+    const state = charged();
+    state.fighters[0].energy = state.fighters[0].def.ultimate.cost - 1;
+    expect(canFireUltimate(state, state.fighters[0])).toBe(false);
+    expect(fireUltimate(state, "player-0")).toHaveLength(0);
+    expect(state.fighters[1].hp).toBe(state.fighters[1].maxHp);
+  });
+
+  it("는 전투가 끝난 뒤에는 쓸 수 없다", () => {
+    const state = charged();
+    state.fighters[1].hp = 0;
+    state.phase = "victory";
+    expect(canFireUltimate(state, state.fighters[0])).toBe(false);
+    expect(fireUltimate(state, "player-0")).toHaveLength(0);
+  });
+});
+
+describe("자리 잡기", () => {
+  it("은 붙는 거리와 떨어지는 거리를 다르게 둬 경계에서 떨지 않는다", () => {
+    const state = newSkirmish(["rex"], ["husk-shell"]);
+    const [ally, foe] = state.fighters;
+    ally.x = 400;
+    ally.y = 1000;
+    // 붙는 기준(reach * engageRatio) 밖, 떨어지는 기준(reach) 안에 세운다.
+    foe.x = 400 + SKIRMISH.reach - 4;
+    foe.y = 1000;
+
+    stepSkirmish(state, 1 / 60);
+    expect(ally.engaged).toBe(false); // 아직 붙지 않았으니 계속 다가간다
+
+    ally.engaged = true;
+    stepSkirmish(state, 1 / 60);
+    expect(ally.engaged).toBe(true); // 이미 붙었다면 그 자리에서 계속 싸운다
+  });
+
+  it("은 세로로 겹쳐 있을 때 좌우가 깜빡이지 않는다", () => {
+    const state = newSkirmish(["rex"], ["husk-shell"]);
+    const [ally, foe] = state.fighters;
+    ally.x = 400;
+    ally.y = 1000;
+    ally.facing = 1;
+    // 상대가 왼쪽으로 아주 조금 치우친 정도로는 방향을 바꾸지 않는다.
+    foe.x = 400 - SKIRMISH.facingDeadzone / 2;
+    foe.y = 900;
+    stepSkirmish(state, 1 / 60);
+    expect(ally.facing).toBe(1);
+
+    foe.x = 400 - SKIRMISH.facingDeadzone * 3;
+    stepSkirmish(state, 1 / 60);
+    expect(ally.facing).toBe(-1);
   });
 });

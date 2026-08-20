@@ -129,7 +129,7 @@ describe("궁극기", () => {
 describe("확장 능력치 전투 규칙", () => {
   it("대상 유무에 따라 도감 배율과 방어 반영 예상 피해를 구분한다", () => {
     const attacker = frontUnit(newBattle(["rex", "anky", "dodo"]).player);
-    const defender = frontUnit(newBattle(["mammoth", "rex", "dodo"]).player);
+    const defender = frontUnit(newBattle(["spino", "rex", "dodo"]).player);
 
     // 도감에는 존재하지 않는 방어력을 가정하지 않고 어떤 능력치의 배율인지 명시한다.
     expect(previewSkillDamage(attacker, attacker.def.ultimate)).toEqual({
@@ -164,7 +164,7 @@ describe("확장 능력치 전투 규칙", () => {
 
   it("물리 피해에는 방어력만 적용한다", () => {
     const attacker = frontUnit(newBattle(["rex", "anky", "dodo"]).player);
-    const defender = frontUnit(newBattle(["mammoth", "rex", "dodo"]).player);
+    const defender = frontUnit(newBattle(["spino", "rex", "dodo"]).player);
     const damage = computeDamage(
       attacker,
       defender,
@@ -181,7 +181,7 @@ describe("확장 능력치 전투 규칙", () => {
 
   it("마법 피해에는 저항력만 적용한다", () => {
     const attacker = frontUnit(newBattle(["quetz", "anky", "dodo"]).player);
-    const defender = frontUnit(newBattle(["mammoth", "rex", "dodo"]).player);
+    const defender = frontUnit(newBattle(["spino", "rex", "dodo"]).player);
     const damage = computeDamage(
       attacker,
       defender,
@@ -198,7 +198,7 @@ describe("확장 능력치 전투 규칙", () => {
 
   it("주입된 판정값으로 치명타 확률과 피해 배율을 결정적으로 적용한다", () => {
     const attacker = frontUnit(newBattle(["rex", "anky", "dodo"]).player);
-    const defender = frontUnit(newBattle(["mammoth", "rex", "dodo"]).player);
+    const defender = frontUnit(newBattle(["spino", "rex", "dodo"]).player);
     const normal = computeDamage(
       attacker,
       defender,

@@ -7,7 +7,7 @@
 const TINTS: Record<string, number> = {
   rex: 0xd86b4a, // 티라노 — 붉은 흙빛
   anky: 0x8a9a6b, // 안킬로 — 이끼 낀 갑주
-  mammoth: 0x9d8ec4, // 매머드 — 언 하늘빛
+  spino: 0x5b9cad, // 스피노사우루스 — 물빛 청록
   dodo: 0xe8d9a0, // 도도 — 바랜 깃털
   smilo: 0xd9a54a, // 스밀로돈 — 황토빛 털
   quetz: 0x6fb3c4, // 케찰 — 창공빛

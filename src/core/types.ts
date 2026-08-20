@@ -6,7 +6,7 @@ export type Side = "player" | "enemy";
 export type Role = "attacker" | "tank" | "support";
 
 /** 정적 렐릭 데이터에서 선택할 수 있는 전신 원화 키. 새 Puppet 등록 시 함께 확장한다. */
-export type PortraitAssetId = "torika" | "lexia" | "torika-placeholder";
+export type PortraitAssetId = "torika" | "lexia" | "seira" | "torika-placeholder";
 
 export interface Stats {
   /** 생존력과 물리·마법 공격의 기반이 되는 주 능력치다. */

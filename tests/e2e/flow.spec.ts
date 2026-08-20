@@ -5,7 +5,7 @@ const BASE_HEIGHT = 1920;
 
 /**
  * 편성 화면 그리드에서 렐릭 카드의 기준 좌표.
- * 그리드에는 **보유한** 렐릭만 순서대로 놓인다 — 시작 보유는 렉스 · 안키 · 도도 셋이다.
+ * 그리드에는 **보유한** 렐릭만 순서대로 놓인다 — 시작 보유는 렉시아 · 토리카 · 도도 셋이다.
  */
 const ROSTER = { startX: 116, startY: 1080, stepX: 212, stepY: 244, cols: 5 };
 function card(index: number): [number, number] {
@@ -14,14 +14,9 @@ function card(index: number): [number, number] {
     ROSTER.startY + Math.floor(index / ROSTER.cols) * ROSTER.stepY,
   ];
 }
-const REX = card(0);
-const ANKY = card(1);
+const LEXIA = card(0);
+const TORIKA = card(1);
 const DODO = card(2);
-
-/** 전투 화면 조작부 좌표. */
-const BASIC_ATTACK: [number, number] = [780, 1730];
-/** 리볼버 아래쪽 두 자리 (중심 300,1600 · 반지름 185 · 각 150°/30°). */
-const REVOLVER_REAR_1: [number, number] = [140, 1692];
 
 async function canvasBox(page: Page) {
   const box = await page.locator("canvas").boundingBox();
@@ -76,11 +71,11 @@ async function enterParty(page: Page): Promise<void> {
   await expect.poll(() => scene(page)).toBe("party");
 }
 
-/** 파티는 안키(선봉) · 렉스 · 도도. */
+/** 파티는 토리카 · 렉시아 · 도도 순으로 고른다. */
 async function enterBattle(page: Page): Promise<void> {
   await enterParty(page);
-  await tap(page, ...ANKY);
-  await tap(page, ...REX);
+  await tap(page, ...TORIKA);
+  await tap(page, ...LEXIA);
   await tap(page, ...DODO);
   await tap(page, BASE_WIDTH / 2, 1700); // 전투 시작
   await expect.poll(() => scene(page)).toBe("battle");
@@ -90,16 +85,16 @@ test("출격 → 스테이지 지도 → 파티 편성 → 전투까지 이어�
   await enterBattle(page);
 
   const state = await battle(page);
-  expect(state?.turn).toBe(1);
-  // 먼저 고른 렐릭이 선봉에 선다.
-  expect(state?.playerOrder).toEqual(["안키", "렉스", "도도"]);
+  expect(state?.phase).toBe("fight");
+  // 편성한 셋이 그대로 전장에 선다.
+  expect(state?.playerOrder).toEqual(["토리카", "렉시아", "도도"]);
 });
 
 test("편성 화면에서 렐릭을 꾹 누르면 정보창이 열린다", async ({ page }) => {
   await enterParty(page);
   expect(await infoOpen(page)).toBeFalsy();
 
-  await longPress(page, ...ANKY);
+  await longPress(page, ...TORIKA);
   await expect.poll(() => infoOpen(page)).toBe(true);
 
   // 짧게 누르는 편성 토글과 섞이지 않아야 한다.
@@ -111,7 +106,7 @@ test("1080×1920 캐릭터 상세과 스킬 카드가 안전 영역 안에 표�
   // 기준 해상도를 직접 사용해 전신과 최대 폭 정보 레이어의 회귀를 스크린샷으로 남긴다.
   await page.setViewportSize({ width: BASE_WIDTH, height: BASE_HEIGHT });
   await enterParty(page);
-  await longPress(page, ...ANKY);
+  await longPress(page, ...TORIKA);
   await expect.poll(() => infoOpen(page)).toBe(true);
   await page.screenshot({ path: `test-results/${test.info().project.name}-character-info-1080x1920.png`, fullPage: true });
 
@@ -122,28 +117,26 @@ test("1080×1920 캐릭터 상세과 스킬 카드가 안전 영역 안에 표�
   await expect.poll(() => infoOpen(page)).toBe(true);
 });
 
-test("기본 공격을 하면 적 선봉 HP가 깎이고 턴이 넘어간다", async ({ page }) => {
+test("실시간 자동 전투는 입력 없이 서로 붙어 체력을 깎는다", async ({ page }) => {
   await enterBattle(page);
   const before = await battle(page);
 
-  await tap(page, ...BASIC_ATTACK);
-
-  await expect.poll(async () => (await battle(page))?.enemyFrontHp).toBeLessThan(
-    before!.enemyFrontHp,
-  );
-  // 적이 반격하고 다음 턴이 시작된다.
-  await expect.poll(async () => (await battle(page))?.turn, { timeout: 10_000 }).toBe(2);
-  await expect.poll(async () => (await battle(page))?.phase).toBe("player");
+  // 조작하지 않아도 여섯이 달려가 붙고, 양쪽 체력이 함께 줄어든다.
+  await expect
+    .poll(async () => (await battle(page))?.enemyHp, { timeout: 20_000 })
+    .toBeLessThan(before!.enemyHp);
+  await expect
+    .poll(async () => (await battle(page))?.playerHp, { timeout: 20_000 })
+    .toBeLessThan(before!.playerHp);
+  await expect.poll(async () => (await battle(page))?.elapsed).toBeGreaterThan(0);
 });
 
-test("리볼버 아래쪽 렐릭을 누르면 선봉이 바뀌고 한 턴을 쓴다", async ({ page }) => {
+test("전투는 한쪽이 전멸하면 끝난다", async ({ page }) => {
   await enterBattle(page);
 
-  await tap(page, ...REVOLVER_REAR_1);
-
-  await expect.poll(async () => (await battle(page))?.playerOrder?.[0]).toBe("렉스");
-  // 교대도 한 턴을 쓴 것이므로 적이 행동하고 턴이 넘어간다.
-  await expect.poll(async () => (await battle(page))?.turn, { timeout: 10_000 }).toBe(2);
+  await expect
+    .poll(async () => (await battle(page))?.phase, { timeout: 45_000 })
+    .toMatch(/victory|defeat/);
 });
 
 

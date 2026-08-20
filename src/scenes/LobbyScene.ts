@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import type { PuppetCreature } from "../puppets/assets";
-import { BASE_WIDTH } from "../config/gameConfig";
+import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugScene } from "../debug";
 import { getRelic } from "../data/relics";
 import { enableHitOnClick, portraitAssetFor, portraitUsesRelicTint, spawnPuppet } from "../puppets/assets";
@@ -16,13 +16,13 @@ import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 const STAGE_FLOOR = 1660;
 
 /**
- * 애착 렐릭의 코어(`중심1`) 관절이 놓이는 화면 지점과 확대 높이.
+ * 애착 렐릭이 들어가야 하는 상자.
  *
- * 화면 안에 전신을 다 넣으면 얼굴이 작아져 원화가 잘 보이지 않는다. 니케처럼 상반신을
- * 크게 잡고 정수리와 다리 끝은 과감히 잘라 낸다. 코어를 기준으로 잡기 때문에 캐릭터마다
- * 그림 안에서 서 있는 위치가 달라도 얼굴 높이가 흔들리지 않는다.
+ * 로비의 주인공이므로 최대한 키우되 좌우와 정수리는 절대 자르지 않는다. 그래서 세로가 아니라
+ * **가로 폭**이 크기를 정한다 — 상자 안에 온전히 들어가는 최대 높이를 캐릭터마다 계산한다.
+ * 아래쪽만 화면 밖으로 조금 흘려보내 발끝이 내비게이션 뒤로 이어지게 한다.
  */
-const LOBBY_FOCUS = { x: BASE_WIDTH / 2 + 30, y: 1020, height: 2120 } as const;
+const LOBBY_BOX = { left: 26, right: BASE_WIDTH - 26, top: 190, bottom: BASE_HEIGHT + 40 } as const;
 
 /**
  * 로비 — 메인 화면.
@@ -89,11 +89,18 @@ export class LobbyScene extends Phaser.Scene {
   /** 애착 렐릭을 광장 한가운데 세우고, 전용 원화가 없을 때만 임시 색으로 구분한다. */
   private async showFavorite(): Promise<void> {
     const def = getRelic(session.favorite);
-    this.favorite = await spawnPuppet(this, portraitAssetFor(def.portraitAssetId), {
-      // 코어 관절을 화면 가운데로 끌어와 얼굴이 상단 정보 바 아래에 오게 한다.
-      focus: { anchor: "core", x: LOBBY_FOCUS.x, y: LOBBY_FOCUS.y },
-      // 설명 카드 없이 화면 대부분을 차지하도록 상반신 중심의 큰 전신 연출을 만든다.
-      height: LOBBY_FOCUS.height,
+    const asset = portraitAssetFor(def.portraitAssetId);
+    const content = asset.content;
+    // 좌우가 잘리지 않는 최대 높이와 상자 높이 중 작은 쪽을 고른다.
+    const height = Math.min(
+      LOBBY_BOX.bottom - LOBBY_BOX.top,
+      ((LOBBY_BOX.right - LOBBY_BOX.left) * (content.bottom - content.top)) / (content.right - content.left),
+    );
+    this.favorite = await spawnPuppet(this, asset, {
+      x: (LOBBY_BOX.left + LOBBY_BOX.right) / 2,
+      // 위를 상자 천장에 맞추면 남는 만큼만 아래로 내려가 발끝이 화면 밖으로 살짝 나간다.
+      groundY: LOBBY_BOX.top + height,
+      height,
       // 전용 원화가 연결된 두 캐릭터는 원본 색을 유지한다.
       tint: portraitUsesRelicTint(def.portraitAssetId) ? mixWhite(tintFor(def.id), 0.55) : undefined,
       depth: -20,

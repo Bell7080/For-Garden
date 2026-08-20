@@ -242,11 +242,13 @@ export function tintPuppet(creature: PuppetCreature, color: number): void {
 
 /**
  * 요청한 방식(발끝 · 기준 관절)에 맞는 최종 좌표를 고른다.
- * 기준 관절 배치는 관절 위치가 필요하므로 이미 읽어 둔 project를 함께 받는다.
+ *
+ * 관절 해석은 실제로 필요할 때만 한다. 실시간 전투는 매 프레임 여섯 명을 다시 놓기 때문에
+ * 발끝 배치에서까지 관절 목록을 훑으면 그만큼이 그대로 프레임 비용이 된다.
  */
 function resolvePlacement(
   asset: PuppetAsset,
-  anchors: Record<AnchorKind, AnchorPoint>,
+  anchorsOf: () => Record<AnchorKind, AnchorPoint>,
   options: SpawnOptions,
 ): Placement {
   if (options.focus) {
@@ -256,7 +258,7 @@ function resolvePlacement(
       height: options.height,
       flipX: options.flipX,
     };
-    return computeAnchoredPlacement(asset, anchors[options.focus.anchor], focus);
+    return computeAnchoredPlacement(asset, anchorsOf()[options.focus.anchor], focus);
   }
   return computePlacement(asset, {
     ...options,
@@ -294,8 +296,7 @@ export function placePuppet(
   asset: PuppetAsset,
   options: SpawnOptions,
 ): void {
-  const anchors = resolveAnchors(creature.core.project.bones, asset);
-  const { x, y, scale } = resolvePlacement(asset, anchors, options);
+  const { x, y, scale } = resolvePlacement(asset, () => resolveAnchors(creature.core.project.bones, asset), options);
   creature.setScale(scale);
   creature.setPosition(x, y);
   // setScale이 좌우 반전을 지웠을 수 있어 다시 맞춘다.

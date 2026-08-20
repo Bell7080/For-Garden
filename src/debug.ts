@@ -3,12 +3,14 @@
  * E2E(Playwright) 테스트가 씬 전환과 전투 진행을 검증할 수 있도록 최소한의 상태만 window에 노출한다.
  */
 export interface DebugBattle {
-  turn: number;
   phase: string;
-  /** 진형 순서대로의 이름. 스왑이 됐는지 여기서 확인한다. */
+  /** 전투가 시작된 뒤 흐른 시간(초). 실시간 전투라 턴 번호가 없다. */
+  elapsed: number;
+  /** 아직 살아 있는 아군 이름. 편성 순서를 유지한다. */
   playerOrder: string[];
-  enemyFrontHp: number;
-  playerFrontHp: number;
+  /** 편별 남은 체력 합계. 실시간 난전에는 선봉 개념이 없다. */
+  enemyHp: number;
+  playerHp: number;
 }
 
 export interface DebugState {

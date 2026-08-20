@@ -18,9 +18,9 @@ const STAGE_FLOOR = 1660;
 /**
  * 애착 렐릭이 들어가야 하는 상자.
  *
- * 로비의 주인공이므로 최대한 키우되 좌우와 정수리는 절대 자르지 않는다. 그래서 세로가 아니라
- * **가로 폭**이 크기를 정한다 — 상자 안에 온전히 들어가는 최대 높이를 캐릭터마다 계산한다.
- * 아래쪽만 화면 밖으로 조금 흘려보내 발끝이 내비게이션 뒤로 이어지게 한다.
+ * 로비의 주인공이므로 최대한 키우되, 꼬리까지 포함한 외곽 상자 대신 중심 관절을 화면 중앙에 둔다.
+ * **가로 폭**으로 지나친 확대만 막고, 긴 꼬리 끝은 안전 영역 밖으로 자연스럽게 흘려보낸다.
+ * 아래쪽도 화면 밖으로 조금 이어서 발끝이 내비게이션 뒤에 숨도록 한다.
  */
 const LOBBY_BOX = { left: 26, right: BASE_WIDTH - 26, top: 190, bottom: BASE_HEIGHT + 40 } as const;
 
@@ -91,13 +91,14 @@ export class LobbyScene extends Phaser.Scene {
     const def = getRelic(session.favorite);
     const asset = portraitAssetFor(def.portraitAssetId);
     const content = asset.content;
-    // 좌우가 잘리지 않는 최대 높이와 상자 높이 중 작은 쪽을 고른다.
+    // 원화 폭과 상자 높이 중 더 빡빡한 제한을 골라 과도하게 확대되는 것만 막는다.
     const height = Math.min(
       LOBBY_BOX.bottom - LOBBY_BOX.top,
       ((LOBBY_BOX.right - LOBBY_BOX.left) * (content.bottom - content.top)) / (content.right - content.left),
     );
     this.favorite = await spawnPuppet(this, asset, {
-      x: (LOBBY_BOX.left + LOBBY_BOX.right) / 2,
+      // 꼬리가 긴 렉시아도 그림 외곽이 아니라 `중심1` 관절이 광장 중앙에 오도록 맞춘다.
+      focusX: { anchor: "core", x: (LOBBY_BOX.left + LOBBY_BOX.right) / 2 },
       // 위를 상자 천장에 맞추면 남는 만큼만 아래로 내려가 발끝이 화면 밖으로 살짝 나간다.
       groundY: LOBBY_BOX.top + height,
       height,

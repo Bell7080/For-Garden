@@ -10,7 +10,7 @@ import type { PuppetBone } from "puppetforge";
  */
 
 /** 화면 배치의 기준으로 쓰는 관절 종류. */
-export type AnchorKind = "core" | "head";
+export type AnchorKind = "core" | "head" | "body";
 
 /** 텍스처(원본 이미지) 좌표계의 한 점. */
 export interface AnchorPoint {
@@ -45,6 +45,7 @@ interface AnchorRule {
 const ANCHOR_RULES: Record<AnchorKind, AnchorRule> = {
   core: { requiredTags: ["core", "root"], excludedTags: [], namePrefix: "중심" },
   head: { requiredTags: ["head"], excludedTags: ["eye", "mouth", "hair", "cloth"], namePrefix: "머리" },
+  body: { requiredTags: ["body"], excludedTags: ["root"], namePrefix: "몸통" },
 };
 
 function matches(bone: PuppetBone, rule: AnchorRule): boolean {
@@ -72,14 +73,22 @@ export function findAnchorBone(bones: readonly PuppetBone[], kind: AnchorKind): 
   return kind === "core" ? bones.find((bone) => bone.parentId === null) : undefined;
 }
 
+/** 발 태그를 우선하고, 태그가 없는 구형 묶음은 `발1`·`발2` 이름으로 찾는다. */
+export function findGroundBones(bones: readonly PuppetBone[]): PuppetBone[] {
+  const tagged = bones.filter((bone) => (bone.tags ?? []).some((tag) => tag === "foot" || tag === "ground"));
+  return tagged.length > 0 ? tagged : bones.filter((bone) => bone.name.startsWith("발"));
+}
+
 /** 관절을 찾지 못한 묶음을 위한 대체 기준점. 코어는 상자 중앙, 머리는 상자 위쪽이다. */
 function fallbackAnchor(frame: AnchorFrame, kind: AnchorKind): AnchorPoint {
   const x = (frame.content.left + frame.content.right) / 2;
   const height = frame.content.bottom - frame.content.top;
-  return { x, y: frame.content.top + height * (kind === "core" ? 0.5 : 0.12) };
+  // 몸통은 코어보다 조금 위에 두어, 관절 정보가 적은 구형 묶음도 자연스러운 순서를 유지한다.
+  const ratio = kind === "head" ? 0.12 : kind === "body" ? 0.38 : 0.5;
+  return { x, y: frame.content.top + height * ratio };
 }
 
-/** 배치에 바로 쓸 수 있도록 코어·머리 기준점을 한 번에 해석한다. */
+/** 배치에 바로 쓸 수 있도록 코어·머리·몸통 기준점을 한 번에 해석한다. */
 export function resolveAnchors(
   bones: readonly PuppetBone[],
   frame: AnchorFrame,
@@ -88,7 +97,7 @@ export function resolveAnchors(
     const bone = findAnchorBone(bones, kind);
     return bone ? { x: bone.x, y: bone.y } : fallbackAnchor(frame, kind);
   };
-  return { core: pick("core"), head: pick("head") };
+  return { core: pick("core"), head: pick("head"), body: pick("body") };
 }
 
 /** 기준 관절을 화면의 한 점에 맞출 때 쓰는 설정. */

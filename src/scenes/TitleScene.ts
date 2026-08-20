@@ -20,6 +20,15 @@ export class TitleScene extends Phaser.Scene {
       .text(cx, BASE_HEIGHT * 0.34 + 96, "RELIC 관리 프로젝트", textStyle({ size: 40, color: COLOR.accentText }))
       .setOrigin(0.5);
 
+    const recoveryNotice = this.registry.get("saveRecoveryNotice") as string | undefined;
+    if (recoveryNotice) {
+      // 새게임 버튼 대신 자동 복구 사실만 안내해 향후 Google/Apple 계정 복구 흐름을 막지 않는다.
+      this.add
+        .text(cx, BASE_HEIGHT * 0.68, recoveryNotice, textStyle({ size: 26, color: COLOR.dangerText, align: "center" }))
+        .setOrigin(0.5);
+      this.registry.remove("saveRecoveryNotice");
+    }
+
     this.add
       .text(
         cx,

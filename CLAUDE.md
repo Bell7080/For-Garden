@@ -12,6 +12,10 @@
 - `src/managers`: 여러 씬이 공유하는 수집 상태와 재사용 UI의 공개 진입점을 둔다.
 - `src/state`: 직렬화 가능한 진행 데이터 모양과 현재 메모리 세션을 둔다. 씬에서 직접 변경하지
   말고 해당 manager를 통해 변경한다.
+  런타임 `Session`의 `Set`은 `SaveManager`만 JSON 배열로 바꾼다. 상태 변경은 manager/API
+  경계에서 검증을 모두 마친 뒤 `saveManager.save`를 호출하며, 씬은 `localStorage`를 직접
+  참조하지 않는다. 부트만 저장 로드·마이그레이션·복구를 조율하고 저장 버전은 로컬 모델의
+  책임이므로 서버 `PlayerStateDto`에 섞지 않는다.
 - `src/ui`: Phaser 프리팹의 실제 구현과 테마 토큰을 둔다. 화면을 벗어나는 뒤로가기는
   `IconButton`의 `addBackButton`만 쓰고, 자리(우하단)와 생김새를 씬마다 다시 정하지 않는다.
 - `src/scenes`: 화면 배치와 입력 연결만 담당한다. 게임 규칙과 수집 검증을 복제하지 않는다.

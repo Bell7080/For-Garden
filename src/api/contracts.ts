@@ -11,6 +11,10 @@ export interface PlayerStateDto {
   relicProgress: Record<string, RelicProgress>;
   /** 플레이어가 보유한 Heart Gem id 목록이다. */
   ownedHeartGemIds: string[];
+  /** 서버 동기화 대상인 편성, 애착, 클리어 진행이다. 로컬 SaveData와 버전 책임은 분리한다. */
+  party: string[];
+  favorite: string;
+  clearedStageIds: string[];
 }
 
 /** 발굴 요청에는 클라이언트가 선택한 배너와 횟수만 보낸다. */

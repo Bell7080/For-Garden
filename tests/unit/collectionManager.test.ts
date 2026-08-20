@@ -13,6 +13,7 @@ function makeSession(): Session {
     wallet: { fossil: 0, amber: 0 },
     relicProgress: {},
     ownedHeartGemIds: [],
+    dailyContent: { date: "", completedIds: [], claimedRewardIds: [] },
   };
 }
 

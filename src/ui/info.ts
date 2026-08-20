@@ -21,6 +21,10 @@ import { addBackButton, IconButton } from "./IconButton";
 import { COLOR, textStyle } from "./theme";
 import { UI_ICON } from "./icons";
 import { FALLBACK_SKILL_ICON } from "./skillIcons";
+import { Button } from "./Button";
+import { gameApi } from "../api/FakeServer";
+import { canLevelUpRelic, RELIC_LEVEL_CAP, relicLevelUpCost } from "../core/relicProgression";
+import { session } from "../state/session";
 
 /** 문자열 순서에 의존하지 않고 스킬 상세의 각 UI 요소를 직접 채우는 계약이다. */
 export interface SkillInfoViewModel {
@@ -118,6 +122,8 @@ export class InfoManager {
   private readonly skillDetail: Phaser.GameObjects.Container;
   private readonly headerText: Phaser.GameObjects.Text;
   private readonly dnaText: Phaser.GameObjects.Text;
+  private readonly levelText: Phaser.GameObjects.Text;
+  private readonly levelButton: Button;
   private readonly statsText: Phaser.GameObjects.Text;
   private readonly radar: StatRadar;
   private readonly gemLabels: Phaser.GameObjects.Text[] = [];
@@ -158,9 +164,12 @@ export class InfoManager {
     this.stats.add([this.radar, this.statsText]);
     this.chrome.add(this.stats);
 
-    this.growth = floatingLayer(scene, 58, 1485, 560, 190, "성장 / DNA");
-    this.dnaText = scene.add.text(28, 70, "", textStyle({ size: 27, color: COLOR.accentText, lineSpacing: 12 })).setOrigin(0);
-    this.growth.add(this.dnaText);
+    this.growth = floatingLayer(scene, 58, 1420, 560, 255, "성장 / LEVEL & DNA");
+    this.levelText = scene.add.text(28, 58, "", textStyle({ size: 22, color: COLOR.ink, lineSpacing: 7 })).setOrigin(0);
+    this.dnaText = scene.add.text(28, 154, "", textStyle({ size: 24, color: COLOR.accentText, lineSpacing: 8 })).setOrigin(0);
+    // 기존 IconButton의 황동 테두리·pointerup 입력을 재사용해 상세 화면의 시각 언어를 유지한다.
+    this.levelButton = new Button(scene, 455, 108, { width: 160, height: 76, label: "레벨업", fontSize: 22, onClick: () => this.requestLevelUp() });
+    this.growth.add([this.levelText, this.dnaText, this.levelButton]);
     this.chrome.add(this.growth);
 
     this.gems = floatingLayer(scene, 58, 1692, 560, 174, "HEART GEM");
@@ -267,7 +276,12 @@ export class InfoManager {
     const progress = relicProgression.getProgress(def.id);
     const finalStats = relicProgression.getFinalStats(def.id);
     this.headerText.setText(`SSR  ${def.name}\nLV.${progress.level} · ${progress.levelTitle}  |  ${def.origin} · ${ROLE_LABEL[def.role]}`);
-    this.dnaText.setText(`${"★".repeat(progress.dnaMastery)}${"☆".repeat(5 - progress.dnaMastery)}\n${live ?? "DNA 복원 동기화"}`);
+    const maxed = progress.level >= RELIC_LEVEL_CAP;
+    const cost = maxed ? 0 : relicLevelUpCost(progress.level);
+    // 다음 레벨은 모든 기본 능력치가 누적 +2%p라는 코어 성장 규칙을 사람이 읽는 상승치로 표시한다.
+    this.levelText.setText(`현재 LV.${progress.level} / ${RELIC_LEVEL_CAP}\n다음 레벨  모든 능력치 +2%p\n비용  ${maxed ? "MAX" : `잡초 ${cost}`}  · 보유 ${session.wallet.weeds}`);
+    this.levelButton.setVisible(!unit).setEnabled(!unit && canLevelUpRelic(progress, session.wallet.weeds));
+    this.dnaText.setText(`${"★".repeat(progress.dnaMastery)}${"☆".repeat(5 - progress.dnaMastery)}  ${live ?? "DNA 복원 동기화"}`);
     this.radar.draw(finalStats);
     this.statsText.setText(`체력  ${finalStats.hp.toLocaleString()}\n방어력  ${finalStats.def.toLocaleString()}    저항력  ${finalStats.res.toLocaleString()}\n공격력  ${finalStats.atk.toLocaleString()}    주문력  ${finalStats.ap.toLocaleString()}`);
     progress.heartGemSlots.forEach((id, index) => this.gemLabels[index].setText(id ? getHeartGem(id).name.replace(" Heart Gem", "") : "빈 슬롯").setColor(id ? COLOR.accentText : COLOR.inkDim));
@@ -277,6 +291,14 @@ export class InfoManager {
     this.portrait?.setVisible(false); this.figure?.setVisible(false);
     void this.loadPortrait(def); void this.loadFigure(def);
     this.root.setVisible(true); this.chrome.setVisible(true); setDebugInfoOpen(true);
+  }
+
+  /** 버튼은 API에 요청만 보내며 응답 뒤 같은 공용 상세를 다시 채워 직접 진행 상태를 바꾸지 않는다. */
+  private requestLevelUp(): void {
+    const def = this.currentDef;
+    if (!def || this.currentUnit) return;
+    this.levelButton.setEnabled(false);
+    void gameApi.levelUpRelic(def.id).then(() => this.openCharacter(def)).catch(() => this.openCharacter(def));
   }
 
   /** 패시브·일반·궁극기 버튼은 각각 88×88 이상의 pointerup 터치 영역을 가진다. */

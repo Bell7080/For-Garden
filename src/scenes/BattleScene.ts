@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { saveManager } from "../state/SaveManager";
+import { gameApi } from "../api/FakeServer";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { ULTIMATE_ENERGY_MAX } from "../core/battle";
 import {
@@ -354,13 +354,20 @@ export class BattleScene extends Phaser.Scene {
     this.syncViews();
     this.refreshDebug();
     const won = phase === "victory";
-    if (won && session.selectedStageId) {
-      session.cleared.add(session.selectedStageId);
-      // 승리 판정이 끝난 시점만 체크포인트로 삼아 진행을 저장한다.
-      saveManager.save(session);
-    }
+    const stage = getStage(session.selectedStageId ?? "1-1");
+    // 결과 화면은 정적 스테이지 보상만 미리 읽고, 실제 상태 변경은 확인 버튼의 API 요청에 맡긴다.
+    const firstClear = !session.cleared.has(stage.id);
+    const weedsEarned = won ? (firstClear ? stage.rewards.firstClearWeeds : stage.rewards.repeatClearWeeds) : 0;
     this.add.rectangle(BASE_WIDTH / 2, 930, BASE_WIDTH, 420, COLOR.void, 0.84).setDepth(100);
     this.add.text(BASE_WIDTH / 2, 840, won ? "작전 성공" : "작전 실패", textStyle({ size: 68, color: won ? COLOR.accentText : COLOR.dangerText })).setOrigin(0.5).setDepth(101);
-    new Button(this, BASE_WIDTH / 2, 1010, { width: 400, height: 110, label: "지도로", fontSize: 34, onClick: () => this.scene.start("stageMap") }).setDepth(101);
+    this.add.text(BASE_WIDTH / 2, 930, won ? `획득 잡초  +${weedsEarned}\n${firstClear ? "최초 클리어 보상" : "반복 클리어 보상"}` : "획득 보상 없음", textStyle({ size: 28, color: COLOR.ink, align: "center", lineSpacing: 8 })).setOrigin(0.5).setDepth(101);
+    let confirming = false;
+    new Button(this, BASE_WIDTH / 2, 1050, { width: 400, height: 110, label: won ? "확인 및 저장" : "지도로", fontSize: 34, onClick: () => {
+      if (!won) { this.scene.start("stageMap"); return; }
+      if (confirming) return;
+      confirming = true;
+      // API 완료 뒤에만 이동하므로 사용자가 지도를 본 시점에는 보상과 최초 클리어가 저장되어 있다.
+      void gameApi.completeStage(stage.id).then(() => this.scene.start("stageMap")).catch(() => { confirming = false; });
+    } }).setDepth(101);
   }
 }

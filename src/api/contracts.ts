@@ -17,6 +17,8 @@ export interface PlayerStateDto {
   party: string[];
   favorite: string;
   clearedStageIds: string[];
+  /** 서버 UTC 키와 일일 복원 소비 횟수다. */
+  dailyContent: { date: string; restorationEntries: number };
 }
 
 /** 발굴 요청에는 클라이언트가 선택한 배너와 횟수만 보낸다. */
@@ -34,12 +36,22 @@ export interface PullResponse extends PlayerStateDto {
 }
 
 /** UI가 서버 실패 원인을 문구로 바꿀 수 있게 고정한 오류 코드다. */
-export type ApiErrorCode = "BANNER_NOT_FOUND" | "INSUFFICIENT_CURRENCY" | "INVALID_PULL_COUNT";
+export type ApiErrorCode = "BANNER_NOT_FOUND" | "INSUFFICIENT_CURRENCY" | "INVALID_PULL_COUNT" | "RELIC_NOT_FOUND" | "RELIC_MAX_LEVEL" | "STAGE_NOT_FOUND" | "DAILY_ENTRY_LIMIT";
+
+/** 레벨업 응답은 차감 비용과 서버가 확정한 전체 상태를 함께 제공한다. */
+export interface LevelUpRelicResponse extends PlayerStateDto { relicId: string; cost: number; }
+/** 전투 확인 시 저장되는 보상으로 최초 여부와 획득 잡초를 결과 UI에 그대로 전달한다. */
+export interface CompleteStageResponse extends PlayerStateDto { stageId: string; firstClear: boolean; weedsEarned: number; }
+/** 일일 입장 소비와 즉시 지급된 프로토타입 보상을 한 응답으로 확정한다. */
+export interface EnterDailyRestorationResponse extends PlayerStateDto { entriesRemaining: number; weedsEarned: number; }
 
 /** 실제 HTTP API로 교체할 때도 씬이 의존할 단 하나의 통신 인터페이스다. */
 export interface GameApi {
   getPlayerState(): Promise<PlayerStateDto>;
   pullRelics(request: PullRequest): Promise<PullResponse>;
+  levelUpRelic(relicId: string): Promise<LevelUpRelicResponse>;
+  completeStage(stageId: string): Promise<CompleteStageResponse>;
+  enterDailyRestoration(): Promise<EnterDailyRestorationResponse>;
 }
 
 /** 예상 가능한 요청 실패를 일반 네트워크 예외와 구분한다. */

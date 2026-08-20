@@ -1,19 +1,25 @@
 import { canPull, pull, resolveAcquisitions, spend } from "../core/gacha";
 import { BANNERS } from "../data/banners";
+import { consumeRestorationEntry, normalizeDailyContent } from "../core/dailyContent";
+import { levelUpRelic as calculateLevelUp, RELIC_LEVEL_CAP } from "../core/relicProgression";
+import { DAILY_RESTORATION, getStage } from "../data/stages";
 import { createInitialRelicProgress, session, type Session } from "../state/session";
 import { saveManager } from "../state/SaveManager";
-import { GameApiError, type GameApi, type PlayerStateDto, type PullRequest, type PullResponse } from "./contracts";
+import { GameApiError, type CompleteStageResponse, type EnterDailyRestorationResponse, type GameApi, type LevelUpRelicResponse, type PlayerStateDto, type PullRequest, type PullResponse } from "./contracts";
 
 /** FakeServer의 지연과 난수원을 테스트에서 결정적으로 바꾸기 위한 선택 설정이다. */
 export interface FakeServerOptions {
   latencyMs?: number;
   random?: () => number;
+  /** 실제 서버 시각 대신 테스트에서 UTC 경계를 주입하는 날짜 공급자다. */
+  now?: () => Date;
 }
 
 /** 백엔드가 생기기 전까지 메모리 상태를 서버처럼 독점 변경하는 임시 어댑터다. */
 export class FakeServer implements GameApi {
   private readonly latencyMs: number;
   private readonly random: () => number;
+  private readonly now: () => Date;
 
   constructor(
     private readonly state: Session = session,
@@ -21,6 +27,7 @@ export class FakeServer implements GameApi {
   ) {
     this.latencyMs = options.latencyMs ?? 180;
     this.random = options.random ?? Math.random;
+    this.now = options.now ?? (() => new Date());
   }
 
   /** 실제 통신처럼 다음 비동기 구간을 거친 뒤 직렬화 가능한 복사본을 돌려준다. */
@@ -70,6 +77,48 @@ export class FakeServer implements GameApi {
     };
   }
 
+  /** 서버가 보유·상한·잡초를 검증하고 차감과 성장 반영을 한 저장 단위로 확정한다. */
+  async levelUpRelic(relicId: string): Promise<LevelUpRelicResponse> {
+    await this.delay();
+    const current = this.state.relicProgress[relicId];
+    if (!this.state.owned.has(relicId) || !current) throw new GameApiError("RELIC_NOT_FOUND", "보유하지 않은 렐릭입니다.");
+    if (current.level >= RELIC_LEVEL_CAP) throw new GameApiError("RELIC_MAX_LEVEL", "이미 최대 레벨입니다.");
+    let result;
+    try { result = calculateLevelUp(current, this.state.wallet.weeds); }
+    catch { throw new GameApiError("INSUFFICIENT_CURRENCY", "잡초가 부족합니다."); }
+    const nextProgress = { ...this.state.relicProgress, [relicId]: result.progress };
+    const nextWallet = { ...this.state.wallet, weeds: result.weeds };
+    this.persist({ ...this.state, relicProgress: nextProgress, wallet: nextWallet });
+    this.state.relicProgress = nextProgress; this.state.wallet = nextWallet;
+    return { ...this.snapshot(), relicId, cost: result.cost };
+  }
+
+  /** 승리 결과 확인 시 최초/반복 보상을 판정하고 클리어와 지갑을 함께 저장한다. */
+  async completeStage(stageId: string): Promise<CompleteStageResponse> {
+    await this.delay();
+    let stage;
+    try { stage = getStage(stageId); } catch { throw new GameApiError("STAGE_NOT_FOUND", "존재하지 않는 스테이지입니다."); }
+    const firstClear = !this.state.cleared.has(stageId);
+    const weedsEarned = firstClear ? stage.rewards.firstClearWeeds : stage.rewards.repeatClearWeeds;
+    const nextCleared = new Set(this.state.cleared).add(stageId);
+    const nextWallet = { ...this.state.wallet, weeds: this.state.wallet.weeds + weedsEarned };
+    this.persist({ ...this.state, cleared: nextCleared, wallet: nextWallet });
+    this.state.cleared = nextCleared; this.state.wallet = nextWallet;
+    return { ...this.snapshot(), stageId, firstClear, weedsEarned };
+  }
+
+  /** UTC 날짜를 서버에서 정규화한 뒤 하루 3회 제한과 보상을 원자적으로 반영한다. */
+  async enterDailyRestoration(): Promise<EnterDailyRestorationResponse> {
+    await this.delay();
+    let nextDaily;
+    try { nextDaily = consumeRestorationEntry(this.state.dailyContent, this.now()); }
+    catch { throw new GameApiError("DAILY_ENTRY_LIMIT", "오늘의 입장 횟수를 모두 사용했습니다."); }
+    const nextWallet = { ...this.state.wallet, weeds: this.state.wallet.weeds + DAILY_RESTORATION.rewardWeeds };
+    this.persist({ ...this.state, dailyContent: nextDaily, wallet: nextWallet });
+    this.state.dailyContent = nextDaily; this.state.wallet = nextWallet;
+    return { ...this.snapshot(), entriesRemaining: DAILY_RESTORATION.maxEntriesPerUtcDay - nextDaily.restorationEntries, weedsEarned: DAILY_RESTORATION.rewardWeeds };
+  }
+
   private snapshot(): PlayerStateDto {
     // 중첩 슬롯까지 복사해 응답 변경이 서버 역할의 세션을 오염시키지 않게 한다.
     const relicProgress = Object.fromEntries(
@@ -84,8 +133,12 @@ export class FakeServer implements GameApi {
       party: [...this.state.party],
       favorite: this.state.favorite,
       clearedStageIds: [...this.state.cleared],
+      dailyContent: { date: normalizeDailyContent(this.state.dailyContent, this.now()).date, restorationEntries: normalizeDailyContent(this.state.dailyContent, this.now()).restorationEntries },
     };
   }
+
+  /** 공유 세션일 때만 브라우저 저장을 수행해 단위 테스트의 독립 세션에는 부작용을 만들지 않는다. */
+  private persist(next: Session): void { if (this.state === session) saveManager.save(next); }
 
   private delay(): Promise<void> {
     // globalThis를 써서 브라우저와 Vitest(Node) 양쪽에서 같은 구현을 사용한다.

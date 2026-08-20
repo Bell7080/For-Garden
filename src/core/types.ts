@@ -132,4 +132,6 @@ export interface StageDef {
   enemies: [string, string, string];
   /** 임시 밸런스용 적 레벨. 스테이지가 오를 때마다 정확히 1씩 증가한다. */
   enemyLevel: number;
+  /** 최초/반복 클리어마다 지급할 잡초 수량이며 씬은 이 값을 재정의하지 않는다. */
+  rewards: { firstClearWeeds: number; repeatClearWeeds: number };
 }

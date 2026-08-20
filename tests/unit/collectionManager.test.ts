@@ -11,10 +11,10 @@ function makeSession(): Session {
     owned: new Set(["anky", "rex", "dodo"]),
     favorite: "anky",
     pullCountSinceHighestRarity: { fossil: 0, amber: 0 },
-    wallet: { fossil: 0, amber: 0, dnaFragments: 0 },
+    wallet: { fossil: 0, amber: 0, dnaFragments: 0, weeds: 0 },
     relicProgress: Object.fromEntries(["anky", "rex", "dodo"].map((id) => [id, { level: 1, levelTitle: "복원체", dnaMastery: 0, heartGemSlots: [null, null, null] }])),
     ownedHeartGemIds: [],
-    dailyContent: { date: "", completedIds: [], claimedRewardIds: [] },
+    dailyContent: { date: "", restorationEntries: 0, completedIds: [], claimedRewardIds: [] },
   };
 }
 

@@ -11,6 +11,8 @@ import { Button } from "../ui/Button";
 import { addBackButton } from "../ui/IconButton";
 import { COLOR, textStyle } from "../ui/theme";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
+import { gameApi } from "../api/FakeServer";
+import { DAILY_RESTORATION } from "../data/stages";
 
 /** 지도가 보이는 세로 구간. 위쪽 제목과 아래쪽 버튼을 침범하지 않는다. */
 const WINDOW = { top: 500, bottom: 1560 } as const;
@@ -83,6 +85,21 @@ export class StageMapScene extends Phaser.Scene {
 
     this.buildMap();
     this.buildPanel();
+
+    // 별도 대형 지도를 만들지 않고 메인 지도 상단의 단일 일일 콘텐츠 진입점으로 제공한다.
+    const dailyButton = new Button(this, cx, 340, {
+      width: 430, height: 104, label: DAILY_RESTORATION.name,
+      sub: `UTC 기준 · 남은 입장 ${Math.max(0, DAILY_RESTORATION.maxEntriesPerUtcDay - session.dailyContent.restorationEntries)}/${DAILY_RESTORATION.maxEntriesPerUtcDay}`,
+      fontSize: 30,
+      onClick: () => {
+        dailyButton.setEnabled(false);
+        // 프로토타입은 입장 요청 자체를 짧은 복원 훈련 완료로 보며 서버가 횟수와 보상을 함께 저장한다.
+        void gameApi.enterDailyRestoration().then((result) => {
+          dailyButton.setSub(`잡초 +${result.weedsEarned} · 남은 입장 ${result.entriesRemaining}/${DAILY_RESTORATION.maxEntriesPerUtcDay}`);
+          dailyButton.setEnabled(result.entriesRemaining > 0);
+        }).catch(() => dailyButton.setSub("오늘의 입장을 모두 사용했습니다."));
+      },
+    });
 
     this.sortieButton = new Button(this, cx, BASE_HEIGHT - 180, {
       width: 340,

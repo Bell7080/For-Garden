@@ -2,17 +2,23 @@ import Phaser from "phaser";
 import { COLOR } from "./theme";
 
 const GAP = 96;
-/** 정사각형을 45도 돌려 마름모로 쓴다. Polygon과 달리 원점이 정확히 가운데라 줄이 어긋나지 않는다. */
-const SIDE = 38;
+/**
+ * 꼭짓점 반지름과 허리 반지름.
+ *
+ * 허리가 `OUTER / √2`(≈0.707)면 변이 곧은 마름모가 되고, 그보다 작을수록 변이 파여 뾰족해진다.
+ * 0.57로 살짝만 파 놓아 마름모로 읽히면서 끝이 서 있게 한다.
+ */
+const OUTER = 30;
+const INNER = 17;
 
 /**
  * 로딩 진행 칸. 마름모 하나가 로딩 단계 하나다.
  *
  * 퍼센트 막대 대신 칸을 쓰는 이유는, 실제로 기다리는 대상이 파일 다섯 무리라서 남은 양보다
- * "몇 개 남았는지"가 정확하기 때문이다. 모양은 하단 탭의 로비 아이콘과 같은 마름모다.
+ * "몇 개 남았는지"가 정확하기 때문이다. 모양은 하단 탭의 로비 아이콘과 같은 마름모이되, 끝을 살짝 세웠다.
  */
 export class LoadingDiamonds extends Phaser.GameObjects.Container {
-  private readonly marks: Phaser.GameObjects.Rectangle[] = [];
+  private readonly marks: Phaser.GameObjects.Star[] = [];
   private filled = 0;
 
   constructor(scene: Phaser.Scene, x: number, y: number, count: number) {
@@ -20,9 +26,8 @@ export class LoadingDiamonds extends Phaser.GameObjects.Container {
     const left = -((count - 1) * GAP) / 2;
     for (let i = 0; i < count; i++) {
       const mark = scene.add
-        .rectangle(left + i * GAP, 0, SIDE, SIDE, COLOR.panel)
-        .setStrokeStyle(3, COLOR.panelEdge)
-        .setRotation(Math.PI / 4);
+        .star(left + i * GAP, 0, 4, INNER, OUTER, COLOR.panel)
+        .setStrokeStyle(3, COLOR.panelEdge);
       this.marks.push(mark);
       this.add(mark);
     }

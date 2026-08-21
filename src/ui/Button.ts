@@ -3,6 +3,38 @@ import { drawGlyph, type GlyphName } from "./glyphs";
 import { chipPoints, drawLayer, HOLO, perspectiveRect, slantedRect } from "./holo";
 import { COLOR, textStyle } from "./theme";
 
+/**
+ * 판 양 끝에서 안쪽으로 사라지는 점 패턴.
+ *
+ * 점의 크기와 진하기가 안쪽으로 갈수록 줄어 그라데이션처럼 읽힌다. 판이 기울어지거나 모서리가
+ * 깎여도 삐져나오지 않도록, 실제 판 모양 안에 들어오는 점만 찍는다.
+ */
+function dotPattern(scene: Phaser.Scene, shape: number[], color: number): Phaser.GameObjects.Graphics {
+  const points = toShapePoints(shape);
+  const polygon = new Phaser.Geom.Polygon(points.map((point) => new Phaser.Geom.Point(point.x, point.y)));
+  const left = Math.min(...points.map((point) => point.x));
+  const right = Math.max(...points.map((point) => point.x));
+  const top = Math.min(...points.map((point) => point.y));
+  const bottom = Math.max(...points.map((point) => point.y));
+  const step = 15;
+  // 점이 흩어지는 깊이. 판 폭의 절반을 넘기면 가운데에서 두 무늬가 만나 지저분해진다.
+  const reach = (right - left) * 0.34;
+  const graphics = scene.add.graphics();
+  for (let y = top + step / 2; y < bottom; y += step) {
+    // 줄마다 반 칸씩 어긋나게 찍어 격자가 아니라 흩뿌린 것처럼 보이게 한다.
+    const offset = Math.round((y - top) / step) % 2 === 0 ? 0 : step / 2;
+    for (let x = left + offset; x < right; x += step) {
+      const depth = Math.min(x - left, right - x);
+      if (depth > reach) continue;
+      const fade = 1 - depth / reach;
+      if (!polygon.contains(x, y)) continue;
+      graphics.fillStyle(color, 0.5 * fade * fade);
+      graphics.fillCircle(x, y, 1.2 + 1.8 * fade);
+    }
+  }
+  return graphics;
+}
+
 /** 평평한 좌표 배열을 점 목록으로 바꾼다. 아래 변을 찾을 때만 쓴다. */
 function toShapePoints(flat: number[]): { x: number; y: number }[] {
   const points: { x: number; y: number }[] = [];
@@ -33,9 +65,11 @@ export interface ButtonOptions {
   /** 강조색과 함께 쓸 글자색. 넘기지 않으면 기본 잉크색이다. */
   accentTextColor?: string;
   /**
-   * 라벨 좌우에 검은 별 두 쌍을 찍어 강조한다. 화면에서 가장 중요한 버튼 하나에만 쓴다.
+   * 판 양 끝에 점을 촘촘히 찍어 안쪽으로 흩어지게 한다. 그라데이션 대신 점의 밀도로 농담을
+   * 만드는 옛 인쇄 방식이라, 평평한 유리판에 얹어도 광택처럼 들뜨지 않는다.
+   * 화면에서 가장 중요한 버튼 하나에만 쓴다.
    */
-  decorStars?: boolean;
+  decorDots?: boolean;
   /**
    * 원근. **키가 큰 변**을 알려 주면 반대쪽이 좁아진 사다리꼴이 된다.
    * 화면 가장자리 쪽이 커야 바깥에서 안으로 들어오는 판처럼 보이므로, 왼쪽 끝 버튼은
@@ -113,14 +147,7 @@ export class Button extends Phaser.GameObjects.Container {
       label.setX(-total / 2 + iconSize + gap + label.width / 2);
       plate.add(drawGlyph(scene, opts.icon, -total / 2 + iconSize / 2, hasSub ? -14 : 0, iconSize, primary ? accent : 0xd8d5cf));
     }
-    if (opts.decorStars) {
-      // 글자 양옆에 큰 별·작은 별을 한 쌍씩. 판이 유리라 검은 별이 가장 또렷하게 남는다.
-      const edge = width / 2 - height * 0.34;
-      for (const side of [-1, 1]) {
-        plate.add(scene.add.star(side * edge, 0, 4, fontSize * 0.16, fontSize * 0.42, 0x000000, 0.85));
-        plate.add(scene.add.star(side * (edge - fontSize * 0.62), -fontSize * 0.3, 4, fontSize * 0.1, fontSize * 0.24, 0x000000, 0.7));
-      }
-    }
+    if (opts.decorDots) plate.add(dotPattern(scene, shape, accent));
     if (hasSub) {
       this.subText = scene.add
         .text(label.x, 26, opts.sub ?? "", textStyle({ role: "body", size: 26, color: primary ? accentText : COLOR.inkDim }))

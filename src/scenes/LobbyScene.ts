@@ -89,7 +89,7 @@ export class LobbyScene extends Phaser.Scene {
       tilt: -6,
       accentColor: COLOR.sortie,
       accentTextColor: COLOR.sortieText,
-      decorStars: true,
+      decorDots: true,
       onClick: () => this.scene.start("stageMap"),
     });
 

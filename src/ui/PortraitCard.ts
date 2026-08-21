@@ -94,7 +94,13 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     this.once(Phaser.GameObjects.Events.DESTROY, () => {
       this.disposed = true;
     });
-    void this.loadPortrait();
+    void this.loadPortrait().catch(() => {
+      if (this.disposed) return;
+      // Puppet 텍스처 실패가 전체 결과 그리드를 깨지 않도록 카드 내부에 읽을 수 있는 폴백을 둔다.
+      this.addAt(scene.add.text(0, -18, options.locked ? "?" : (options.label ?? "RELIC"), textStyle({
+        size: Math.min(34, width / 8), color: COLOR.inkDim, align: "center", wrap: width - 32,
+      })).setOrigin(0.5), 3);
+    });
   }
 
   /**
@@ -137,11 +143,11 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     this.addAt(portrait, 4);
   }
 
-  /** 고른 카드는 테두리를 굵은 강조색으로 바꾸고 살짝 띄운다. */
-  setSelected(selected: boolean): this {
-    if (this.selected === selected) return this;
+  /** 고른 카드는 테두리를 굵은 강조색으로 바꾸고 살짝 띄운다. 발굴만 등급 보조색을 넘긴다. */
+  setSelected(selected: boolean, accent: number = COLOR.accent): this {
+    if (this.selected === selected && !selected) return this;
     this.selected = selected;
-    this.frame.setStrokeStyle(selected ? 6 : 3, selected ? COLOR.accent : COLOR.panelEdge);
+    this.frame.setStrokeStyle(selected ? 6 : 3, selected ? accent : COLOR.panelEdge);
     this.setScale(selected ? 1.04 : 1);
     return this;
   }

@@ -17,6 +17,12 @@ export const COLOR = {
   hpFill: 0xd8b978,
   hpEnemy: 0xb03a3a,
   energy: 0x7ea8d8,
+  /** 발굴 등급은 기본 금속 패널 위에서만 쓰는 보조 신호색이다. */
+  rarityR: 0x7890a3,
+  raritySR: 0x6fc4bd,
+  raritySRAlt: 0x9b78c7,
+  raritySSR: 0xe0a83e,
+  raritySSRLight: 0xffd37a,
   /** 야성 단계색은 HP/궁극기와 즉시 구분되는 청록→황색→적색 신호다. */
   ferocityLow: 0x42b8ad,
   ferocityWarning: 0xd6a83d,

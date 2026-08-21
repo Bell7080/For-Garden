@@ -13,6 +13,10 @@ export interface DebugBattle {
   /** 편별 남은 체력 합계. 실시간 난전에는 선봉 개념이 없다. */
   enemyHp: number;
   playerHp: number;
+  /** E2E가 전투 조작 칩의 실제 적용 상태를 확인하는 현재 배속이다. */
+  speed: number;
+  /** 준비된 궁극기를 씬이 자동 발동하는지 여부다. */
+  autoUltimate: boolean;
 }
 
 export interface DebugState {

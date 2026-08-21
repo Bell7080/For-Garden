@@ -1,7 +1,14 @@
 import Phaser from "phaser";
 import { drawGlyph, type GlyphName } from "./glyphs";
-import { chipPoints, drawLayer, HOLO, slantedRect } from "./holo";
+import { chipPoints, drawLayer, HOLO, perspectiveRect, slantedRect } from "./holo";
 import { COLOR, textStyle } from "./theme";
+
+/** 평평한 좌표 배열을 점 목록으로 바꾼다. 아래 변을 찾을 때만 쓴다. */
+function toShapePoints(flat: number[]): { x: number; y: number }[] {
+  const points: { x: number; y: number }[] = [];
+  for (let i = 0; i < flat.length; i += 2) points.push({ x: flat[i], y: flat[i + 1] });
+  return points;
+}
 
 export interface ButtonOptions {
   width: number;
@@ -25,6 +32,11 @@ export interface ButtonOptions {
   accentColor?: number;
   /** 강조색과 함께 쓸 글자색. 넘기지 않으면 기본 잉크색이다. */
   accentTextColor?: string;
+  /**
+   * 원근. 화면 가운데를 향한 변을 알려 주면 판이 그쪽으로 쏠린 사다리꼴이 된다.
+   * 왼쪽 끝 버튼은 `right`, 오른쪽 끝 버튼은 `left`다.
+   */
+  perspective?: "left" | "right";
   onClick: () => void;
 }
 
@@ -50,26 +62,36 @@ export class Button extends Phaser.GameObjects.Container {
     const plate = scene.add.container(0, 0);
     if (opts.tilt) plate.setRotation(Phaser.Math.DegToRad(opts.tilt));
 
-    const shape = primary
-      ? chipPoints(width, height, {
-          bevel: { topLeft: height * 0.52, topRight: 0, bottomRight: height * 0.52, bottomLeft: 0 },
-        })
-      : slantedRect(width, height);
+    const shape = opts.perspective
+      ? perspectiveRect(width, height, { inner: opts.perspective, taper: 0.32 })
+      : primary
+        ? chipPoints(width, height, {
+            bevel: { topLeft: height * 0.52, topRight: 0, bottomRight: height * 0.52, bottomLeft: 0 },
+          })
+        : slantedRect(width, height);
     plate.add(drawLayer(scene, 0, 0, shape, {
       // 유리판이라 바탕을 짙게 칠하지 않는다. 뒤 배경이 비쳐야 두께가 느껴진다.
       fill: opts.fill ?? (primary ? 0x0d1219 : 0x1b2029),
-      alpha: primary ? 0.66 : HOLO.glass,
+      alpha: primary ? 0.74 : HOLO.glass,
       sheen: primary ? 0.07 : 0.04,
       // 사방을 두르지 않고 빛이 닿는 윗변 한 줄만 긋는다.
       edge: accent,
       edgeAlpha: primary ? 0.95 : 0.4,
     }));
-    if (primary) {
+    if (primary && !opts.perspective) {
       // 강조 버튼만 아래에도 한 줄을 그어 유리판의 두께를 만든다.
       const underline = scene.add.graphics();
       underline.lineStyle(3, accent, 0.6);
       underline.lineBetween(-width / 2 + height * 0.52, height / 2 - 5, width / 2 - height * 0.52, height / 2 - 5);
       plate.add(underline);
+    }
+    if (opts.perspective) {
+      // 사다리꼴은 아래 변도 기울어 있다. 그 변을 따라 한 줄 그어 원근을 한 번 더 알린다.
+      const bottom = [...toShapePoints(shape)].sort((a, b) => b.y - a.y).slice(0, 2).sort((a, b) => a.x - b.x);
+      const line = scene.add.graphics();
+      line.lineStyle(3, accent, 0.55);
+      line.lineBetween(bottom[0].x, bottom[0].y, bottom[1].x, bottom[1].y);
+      plate.add(line);
     }
 
     const hasSub = opts.sub !== undefined;

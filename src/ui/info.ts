@@ -372,6 +372,7 @@ export class InfoManager {
     this.headerText.setText(owned
       ? `NO.${def.specimenNumber}  ${def.rarity}  ${def.name}\nPROJECT ${def.projectName}  |  ${def.origin} · ${ROLE_LABEL[def.role]}`
       : `NO.${def.specimenNumber}  미발굴 개체\nSILHOUETTE RECORD`);
+    this.refreshBadges();
     const disclosure = getRelicCatalogDisclosure(def, owned);
     this.archiveText.setText(disclosure.access === "full"
       ? `프로젝트 네임  ${disclosure.projectName}\n기원  ${disclosure.origin}\n발굴지  ${disclosure.excavationSite}\n\n기록\n${disclosure.record}`

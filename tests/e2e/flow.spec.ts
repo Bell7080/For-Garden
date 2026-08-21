@@ -8,6 +8,14 @@ const BASE_HEIGHT = 1920;
  * 편성 화면 그리드에서 렐릭 카드의 기준 좌표.
  * 그리드에는 **보유한** 렐릭만 순서대로 놓인다 — 시작 보유는 전용 아트가 완성된 세 명이다.
  */
+/**
+ * 로비 출격 버튼의 한가운데.
+ *
+ * 유리판이 기울어 있어 모서리를 누르면 빗나간다. 씬이 두는 좌표(NAV_TOP - 245)와 같은 값을
+ * 여기에도 적어 둔다.
+ */
+const SORTIE: [number, number] = [BASE_WIDTH - 290, BASE_HEIGHT - 180 - 245];
+
 const ROSTER = { startX: 116, startY: 1080, stepX: 212, stepY: 244, cols: 5 };
 function card(index: number): [number, number] {
   return [
@@ -64,7 +72,7 @@ async function enterParty(page: Page): Promise<void> {
   await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2); // 타이틀 → 로비
   await expect.poll(() => scene(page)).toBe("lobby");
 
-  await tap(page, BASE_WIDTH - 300, BASE_HEIGHT - 180 - 140); // 출격 버튼
+  await tap(page, ...SORTIE); // 출격 버튼
   await expect.poll(() => scene(page)).toBe("stageMap");
 
   // 지도는 열려 있는 가장 뒤쪽 스테이지를 이미 골라 둔다. 출전만 누르면 편성으로 넘어간다.

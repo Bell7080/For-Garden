@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import type { PortraitAssetId, RelicDef, RelicRarity } from "../core/types";
 import { headCardFrame, loadPortraitTexture, portraitAssetFor, portraitUsesRelicTint } from "../puppets/assets";
 import { mixWhite, tintFor } from "../puppets/tints";
-import { chipPoints, drawLayer, HOLO } from "./holo";
+import { chipPoints, HOLO } from "./holo";
 import { COLOR, textStyle } from "./theme";
 
 /** 카드 한 장의 조립 옵션. 크기와 라벨만 주면 나머지 연출은 프리팹이 맞춘다. */
@@ -26,20 +26,14 @@ export interface PortraitCardOptions {
   badge?: string;
 }
 
-/** 칩 본체와 하단 레이어의 바탕. 검은 유리에 가깝게 두고 원화가 빛을 담당한다. */
+/** 칩 바탕. 검은 유리에 가깝게 두고 원화가 빛을 담당한다. */
 const CHIP_FILL = 0x161a20;
-const FOOTER_FILL = 0x0e1116;
 const SILHOUETTE = 0x0b0d10;
 /** 빈 별의 선 색. 글자용 문자열 색과 달리 도형은 숫자 색이 필요하다. */
 const STAR_EMPTY = 0x6f7681;
 
-/**
- * 칩을 카드 좌우 안쪽으로 들여 놓는 폭.
- *
- * 하단 레이어는 카드 폭을 꽉 채우므로, 칩만 들여 놓으면 아래 레이어가 더 넓게 튀어나온 것처럼
- * 보인다. 실제로 카드 밖으로 나가면 옆 칸과 겹치므로 넓히지 않고 칩을 좁힌다.
- */
-const CHIP_INSET = 11;
+/** 칩을 카드 좌우 안쪽으로 들여 놓는 폭. 옆 칸과 숨 쉴 틈을 남긴다. */
+const CHIP_INSET = 6;
 
 /**
  * 모서리를 깎는 길이.
@@ -48,8 +42,10 @@ const CHIP_INSET = 11;
  * 보이기 때문이다. 반대로 **아래쪽은 깎지 않는다** — 이름 레이어와 맞닿는 변이라 깎으면
  * 두 조각 사이에 틈이 생겨 카드가 두 장으로 갈라져 보인다. 깎임은 하단 레이어의 바닥이 잇는다.
  */
-const CHIP_BEVEL = { topLeft: 0.20, topRight: 0.08, bottomRight: 0, bottomLeft: 0 };
-const FOOTER_BEVEL = { topLeft: 0, topRight: 0, bottomRight: 0.34, bottomLeft: 0.14 };
+const CHIP_BEVEL = { topLeft: 0.18, topRight: 0.07, bottomRight: 0.14, bottomLeft: 0.05 };
+
+/** 이름이 얹히는 아래쪽 어둠이 차지하는 높이 비율. */
+const SHADE_RATIO = 0.42;
 
 /** 등급이 곧 성급이다. 카드마다 다른 기준을 쓰지 않는다. */
 export function starsForRarity(rarity: RelicRarity): { filled: number; total: number } {
@@ -68,17 +64,17 @@ export class PortraitCard extends Phaser.GameObjects.Container {
   /** 씬이 pointerdown·pointerup을 붙이는 카드 전체 입력 영역이다. */
   readonly hit: Phaser.GameObjects.Rectangle;
   private readonly chip: Phaser.GameObjects.Graphics;
-  private readonly outline: Phaser.GameObjects.Graphics;
+  private readonly glow: Phaser.GameObjects.Graphics;
   private readonly portraits: Phaser.GameObjects.Image[] = [];
   private readonly nameText?: Phaser.GameObjects.Text;
   private readonly subText?: Phaser.GameObjects.Text;
   private readonly options: PortraitCardOptions;
   private readonly bodyHeight: number;
-  private readonly footerHeight: number;
   private readonly overhang: number;
   private readonly chipShape: number[];
   private readonly portraitMask: Phaser.GameObjects.Graphics;
   private readonly maskOffsetY: number;
+  private readonly shadeHeight: number;
   private selected = false;
   private disposed = false;
 
@@ -87,8 +83,7 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     this.options = options;
     const { width, height } = options;
 
-    this.footerHeight = options.label ? Math.min(options.sub ? 84 : 58, height * 0.34) : 0;
-    this.bodyHeight = height - this.footerHeight;
+    this.bodyHeight = height;
     // 머리가 칩 위로 빠져나올 여유. 카드가 납작할수록 조금만 내민다.
     this.overhang = Math.round(Math.min(this.bodyHeight * 0.22, 54));
     const chipWidth = width - CHIP_INSET * 2;
@@ -100,10 +95,15 @@ export class PortraitCard extends Phaser.GameObjects.Container {
       bottomRight: unit * CHIP_BEVEL.bottomRight,
       bottomLeft: unit * CHIP_BEVEL.bottomLeft,
     };
-    const bodyCenter = -this.footerHeight / 2;
+    const bodyCenter = 0;
     this.chipShape = chipPoints(chipWidth, this.bodyHeight, { bevel });
 
-    // 칩 본체. 테두리 대신 그림자로 떠 보이게 한다.
+    // 고르거나 애착으로 세운 카드에만 켜지는 발광. 테두리를 두르는 대신 카드 전체가 은은하게 빛난다.
+    this.glow = scene.add.graphics({ x: 0, y: bodyCenter }).setVisible(false);
+    this.paintGlow(COLOR.accent);
+    this.add(this.glow);
+
+    // 칩 본체. 카드는 이 한 장뿐이라 그림자도 하나만 진다.
     this.chip = scene.add.graphics({ x: 0, y: bodyCenter });
     this.paintChip(CHIP_FILL);
     this.add(this.chip);
@@ -114,6 +114,7 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     // 이동을 물려받지 않아, 카드 안에 넣으면 마스크만 화면 원점 근처에 남아 그림이 통째로
     // 사라진다. 그래서 카드가 자리를 잡은 뒤 월드 좌표로 옮겨 준다.
     this.maskOffsetY = bodyCenter;
+    this.shadeHeight = Math.round(this.bodyHeight * SHADE_RATIO);
     this.portraitMask = scene.make.graphics({});
     this.portraitMask.fillStyle(0xffffff, 1);
     this.portraitMask.fillPoints(
@@ -122,25 +123,18 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     );
 
     if (options.label) {
-      const footerTop = height / 2 - this.footerHeight;
-      const footerUnit = Math.min(width, this.footerHeight * 3);
-      const footerShape = chipPoints(width, this.footerHeight, {
-        bevel: {
-          bottomRight: footerUnit * FOOTER_BEVEL.bottomRight,
-          bottomLeft: footerUnit * FOOTER_BEVEL.bottomLeft,
-        },
-      });
-      // 그림자를 깔지 않는다. 칩 바로 아래 붙는 같은 조각의 아랫단이라, 그림자가 생기면
-      // 카드가 두 장으로 갈라져 보인다.
-      this.add(drawLayer(scene, 0, footerTop + this.footerHeight / 2, footerShape, {
-        fill: FOOTER_FILL,
-        alpha: 0.94,
-        shadow: false,
-      }));
+      // 이름은 별도의 레이어가 아니라 칩 안쪽 아래에 깔린 어둠 위에 얹힌다. 투명에서 검정으로
+      // 빠지는 그라데이션이라 원화가 자연스럽게 어두워지고, 카드는 끝까지 한 장으로 남는다.
+      const shade = scene.add.graphics();
+      shade.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, 0, 0.9, 0.9);
+      shade.fillRect(-width / 2, height / 2 - this.shadeHeight, width, this.shadeHeight);
+      // 칩 밖으로 새어 나가지 않도록 원화와 같은 마스크를 씌운다. 깎인 아래 모서리도 함께 지킨다.
+      shade.setMask(this.portraitMask.createGeometryMask());
+      this.add(shade);
 
       const name = options.locked ? "???" : options.label;
       const nameSize = Math.min(30, width / 9);
-      const nameY = footerTop + (options.sub ? 12 : this.footerHeight / 2 - nameSize * 0.62);
+      const nameY = height / 2 - nameSize * 1.5 - (options.sub ? 26 : 0);
       this.nameText = scene.add.text(0, nameY, name, textStyle({ role: "display", size: nameSize })).setOrigin(0.5, 0);
       this.add(this.nameText);
       if (options.level !== undefined && !options.locked) {
@@ -156,11 +150,11 @@ export class PortraitCard extends Phaser.GameObjects.Container {
       }
       if (options.sub) {
         this.subText = scene.add
-          .text(0, footerTop + 50, options.sub, textStyle({ role: "emphasis", size: Math.min(22, width / 12), color: COLOR.accentText }))
+          .text(0, nameY + nameSize * 1.35, options.sub, textStyle({ role: "emphasis", size: Math.min(22, width / 12), color: COLOR.accentText }))
           .setOrigin(0.5, 0);
         this.add(this.subText);
       }
-      if (options.stars) this.addStars(footerTop);
+      if (options.stars) this.addStars(nameY - Math.min(24, width / 11));
     }
 
     if (options.badge) {
@@ -172,15 +166,13 @@ export class PortraitCard extends Phaser.GameObjects.Container {
       );
     }
 
-    // 고른 카드에만 켜지는 얇은 선. 평소에는 아무 테두리도 두르지 않는다.
-    this.outline = scene.add.graphics({ x: 0, y: bodyCenter });
-    this.add(this.outline);
-
     this.hit = scene.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
     this.add(this.hit);
 
     this.setSize(width, height);
     scene.add.existing(this);
+    // 원화가 늦게 오거나 실패해도 아래 어둠은 제자리에 있어야 한다.
+    this.syncMask();
     this.once(Phaser.GameObjects.Events.DESTROY, () => {
       this.disposed = true;
       this.portraitMask.destroy();
@@ -189,8 +181,23 @@ export class PortraitCard extends Phaser.GameObjects.Container {
       if (this.disposed) return;
       // Puppet 텍스처 실패가 전체 결과 그리드를 깨지 않도록 카드 안에 읽을 수 있는 폴백을 둔다.
       const fallback = textStyle({ role: "display", size: Math.min(34, width / 8), color: COLOR.inkDim, align: "center", wrap: width - 32 });
-      this.addAt(scene.add.text(0, bodyCenter, options.locked ? "?" : (options.label ?? "RELIC"), fallback).setOrigin(0.5), 2);
+      this.addAt(scene.add.text(0, bodyCenter, options.locked ? "?" : (options.label ?? "RELIC"), fallback).setOrigin(0.5), this.getIndex(this.chip) + 1);
     });
+  }
+
+  /**
+   * 발광.
+   *
+   * 사각 테두리를 두르는 대신 카드 실루엣을 조금씩 키워 겹쳐 칠한다. 원화·이름·성급까지
+   * 한 덩어리로 감싸는 빛이라, 고른 카드가 테두리가 아니라 "밝아진 카드"로 읽힌다.
+   */
+  private paintGlow(color: number): void {
+    const points = toGeomPoints(this.chipShape);
+    this.glow.clear();
+    for (const [scale, alpha] of [[1.16, 0.07], [1.1, 0.1], [1.05, 0.16]] as const) {
+      this.glow.fillStyle(color, alpha);
+      this.glow.fillPoints(points.map((point) => new Phaser.Geom.Point(point.x * scale, point.y * scale)), true);
+    }
   }
 
   /** 칩 바탕과 그림자를 다시 칠한다. 상태색이 바뀔 때도 같은 모양을 쓴다. */
@@ -205,8 +212,8 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     this.chip.fillPoints(points, true);
   }
 
-  /** 칩과 하단 레이어의 경계에 성급을 찍는다. 찬 별은 강조색, 빈 별은 선만 남긴다. */
-  private addStars(footerTop: number): void {
+  /** 이름 바로 위에 성급을 찍는다. 찬 별은 빛무리를 두른 반짝임, 빈 별은 선만 남긴다. */
+  private addStars(y: number): void {
     const stars = this.options.stars!;
     const size = Math.min(13, this.options.width / 20);
     const gap = size * 2.6;
@@ -214,9 +221,14 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     for (let i = 0; i < stars.total; i++) {
       const filled = i < stars.filled && !this.options.locked;
       // 별은 원화와 하단 레이어의 경계에 걸린다. 밝은 옷 위에서 묻히지 않도록 어두운 받침을 깐다.
-      this.add(this.scene.add.star(left + i * gap, footerTop, 4, size * 0.6, size * 1.5, FOOTER_FILL, 0.92));
-      const star = this.scene.add.star(left + i * gap, footerTop, 4, size * 0.42, size, filled ? COLOR.accent : 0x000000, filled ? 1 : 0.4);
-      if (!filled) star.setStrokeStyle(2, STAR_EMPTY, 0.9);
+      const x = left + i * gap;
+      if (filled) {
+        // 찬 별은 두 겹이다. 뒤의 옅고 큰 반짝임이 빛무리 노릇을 해서 밝은 옷 위에서도 뜬다.
+        this.add(this.scene.add.star(x, y, 4, size * 0.22, size * 2.1, COLOR.accent, 0.22));
+        this.add(this.scene.add.star(x, y, 4, size * 0.3, size * 1.25, 0xfff2cf, 0.95));
+      }
+      const star = this.scene.add.star(x, y, 4, size * 0.34, size, filled ? COLOR.accent : 0x000000, filled ? 1 : 0.35);
+      if (!filled) star.setStrokeStyle(2, STAR_EMPTY, 0.85);
       this.add(star);
     }
   }
@@ -266,9 +278,11 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     }
 
     this.portraits.push(shadow, portrait);
-    // 칩 바탕 위·하단 레이어 아래에 끼워 넣어야 이름과 성급이 그림에 가리지 않는다.
-    this.addAt(shadow, 1);
-    this.addAt(portrait, 2);
+    // 칩 바로 위, 아래 어둠보다 아래에 끼운다. 자리를 숫자로 박아 두면 발광 같은 레이어가
+    // 하나 늘 때마다 그림이 칩 밑으로 숨는다. 칩을 기준으로 찾는다.
+    const above = this.getIndex(this.chip) + 1;
+    this.addAt(shadow, above);
+    this.addAt(portrait, above + 1);
   }
 
   /** 마스크를 카드의 현재 화면 위치·배율에 맞춘다. 카드를 옮기거나 키운 뒤에 부른다. */
@@ -280,16 +294,18 @@ export class PortraitCard extends Phaser.GameObjects.Container {
       .setScale(decomposed.scaleX, decomposed.scaleY);
   }
 
-  /** 고른 카드는 얇은 강조선을 켜고 살짝 커진다. 발굴만 등급 보조색을 넘긴다. */
+  /**
+   * 고른 카드는 커지고 은은하게 빛난다.
+   *
+   * 노란 사각 테두리를 두르지 않는다. 테두리는 카드 위에 다른 물체를 하나 더 얹는 것처럼
+   * 보이지만, 발광은 카드 전체가 상태를 갖는 것처럼 읽힌다. 발굴만 등급 보조색을 넘긴다.
+   */
   setSelected(selected: boolean, accent: number = COLOR.accent): this {
     if (this.selected === selected && !selected) return this;
     this.selected = selected;
-    this.outline.clear();
-    if (selected) {
-      this.outline.lineStyle(HOLO.lineWidth + 1, accent, 0.95);
-      this.outline.strokePoints(toGeomPoints(this.chipShape), true);
-    }
-    this.setScale(selected ? 1.05 : 1);
+    if (selected) this.paintGlow(accent);
+    this.glow.setVisible(selected);
+    this.setScale(selected ? 1.06 : 1);
     this.syncMask();
     return this;
   }

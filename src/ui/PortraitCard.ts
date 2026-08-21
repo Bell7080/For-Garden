@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import type { PortraitAssetId, RelicDef, RelicRarity } from "../core/types";
 import { headCardFrame, loadPortraitTexture, portraitAssetFor, portraitUsesRelicTint } from "../puppets/assets";
 import { mixWhite, tintFor } from "../puppets/tints";
-import { chipPoints, HOLO, slantedRect } from "./holo";
+import { chipPoints, HOLO } from "./holo";
 import { COLOR, textStyle } from "./theme";
 
 /** 카드 한 장의 조립 옵션. 크기와 라벨만 주면 나머지 연출은 프리팹이 맞춘다. */
@@ -236,7 +236,8 @@ export class PortraitCard extends Phaser.GameObjects.Container {
   /**
    * 이름 바로 위의 성급.
    *
-   * 다섯 칸을 카드 가운데에 모으고, 줄 뒤에 진한 그림자 판을 깔아 원화에서 떼어 낸다.
+   * 다섯 칸을 카드 가운데에 모은다. 별마다 같은 모양의 진한 그림자를 뒤에 깔아 밝은 원화
+   * 위에서도 떨어져 보이게 한다 — 판을 깔면 별이 아니라 띠가 먼저 읽힌다.
    * 찬 별은 빛무리를 두른 반짝임, 빈 별은 선만 남긴다.
    */
   private addStars(y: number): void {
@@ -246,14 +247,11 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     // 성급은 카드 가운데에 모은다. 레벨(왼쪽)·이름과 세로로 겹치지 않는 유일한 줄이다.
     const left = -((stars.total - 1) * gap) / 2;
 
-    const plate = this.scene.add.graphics({ x: 0, y });
-    plate.fillStyle(0x000000, 0.55);
-    plate.fillPoints(toGeomPoints(slantedRect((stars.total - 1) * gap + size * 3.6, size * 2.9, size * 1.2)), true);
-    this.add(plate);
-
     for (let i = 0; i < stars.total; i++) {
       const filled = i < stars.filled && !this.options.locked;
       const x = left + i * gap;
+      // 그림자는 판이 아니라 별 모양이다. 조금 크게, 조금 어긋나게 깔아 별만 도드라지게 한다.
+      this.add(this.scene.add.star(x + 2, y + 3, 4, size * 0.42, size * 1.22, 0x000000, 0.72));
       if (filled) {
         // 찬 별은 두 겹이다. 뒤의 옅고 큰 반짝임이 빛무리 노릇을 해서 밝은 옷 위에서도 뜬다.
         this.add(this.scene.add.star(x, y, 4, size * 0.22, size * 2.1, COLOR.accent, 0.22));

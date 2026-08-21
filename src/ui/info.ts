@@ -111,12 +111,15 @@ function iconCard(
 function floatingLayer(scene: Phaser.Scene, x: number, y: number, width: number, height: number, title: string): Phaser.GameObjects.Container {
   const container = scene.add.container(x, y);
   const unit = Math.min(width, height);
+  const bevel = unit * 0.14;
   const layer = drawLayer(scene, width / 2, height / 2, chipPoints(width, height, {
-    bevel: { topLeft: unit * 0.14, topRight: 0, bottomRight: unit * 0.2, bottomLeft: 0 },
+    bevel: { topLeft: bevel, topRight: 0, bottomRight: unit * 0.2, bottomLeft: 0 },
   }), { fill: 0x141920, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.35 });
   container.add(layer);
-  container.add(scene.add.rectangle(0, 6, 6, 34, COLOR.accent, 0.9).setOrigin(0));
-  container.add(scene.add.text(24, 10, title, textStyle({ role: "emphasis", size: 20, color: COLOR.accentText })).setOrigin(0));
+  // 왼쪽 위가 잘려 나갔으므로 강조 막대와 제목도 그만큼 안쪽에서 시작한다. 잘린 자리에 얹으면
+  // 막대만 판 밖의 허공에 떠 보인다.
+  container.add(scene.add.rectangle(bevel * 0.5, bevel * 0.5 + 4, 6, 34, COLOR.accent, 0.9).setOrigin(0));
+  container.add(scene.add.text(bevel * 0.5 + 18, bevel * 0.5 + 8, title, textStyle({ role: "emphasis", size: 20, color: COLOR.accentText })).setOrigin(0));
   return container;
 }
 
@@ -189,7 +192,7 @@ export class InfoManager {
 
     // 도감 정적 기록은 성장·전투 수치와 분리해 왼쪽 반투명 패널에 고정한다.
     this.archive = floatingLayer(scene, 58, 300, 560, 470, "기록 / ARCHIVE RECORD");
-    this.archiveText = scene.add.text(28, 62, "", textStyle({ role: "body", size: 21, wrap: 500, lineSpacing: 9 })).setOrigin(0);
+    this.archiveText = scene.add.text(28, 96, "", textStyle({ role: "body", size: 21, wrap: 500, lineSpacing: 9 })).setOrigin(0);
     this.archive.add(this.archiveText);
     this.chrome.add(this.archive);
 

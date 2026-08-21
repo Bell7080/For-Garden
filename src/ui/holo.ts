@@ -251,6 +251,34 @@ export function drawVignette(
   return g.setDepth(options.depth ?? -25);
 }
 
+/**
+ * 도형의 변을 그대로 따라 긋는 선.
+ *
+ * 기울어진 판 위에 수평선을 그으면 변과 어긋나 판이 두 겹으로 보인다. 판을 만든 좌표를 그대로
+ * 넘겨 같은 변을 다시 긋게 해서, 꾸미는 선이 언제나 판에 붙어 있게 한다.
+ * `inset`은 양 끝을 안쪽으로 당기는 길이다.
+ */
+export function drawShapeEdge(
+  scene: Phaser.Scene,
+  x: number,
+  y: number,
+  shape: number[],
+  edge: "top" | "bottom",
+  options: { color?: number; alpha?: number; width?: number; inset?: number } = {},
+): Phaser.GameObjects.Graphics {
+  const points = toPoints(shape);
+  const sorted = [...points].sort((a, b) => (edge === "top" ? a.y - b.y : b.y - a.y));
+  const [left, right] = [sorted[0], sorted[1]].sort((a, b) => a.x - b.x);
+  const inset = options.inset ?? 0;
+  const span = Math.hypot(right.x - left.x, right.y - left.y) || 1;
+  const ux = (right.x - left.x) / span;
+  const uy = (right.y - left.y) / span;
+  const graphics = scene.add.graphics({ x, y });
+  graphics.lineStyle(options.width ?? HOLO.lineWidth, options.color ?? COLOR.accent, options.alpha ?? 0.55);
+  graphics.lineBetween(left.x + ux * inset, left.y + uy * inset, right.x - ux * inset, right.y - uy * inset);
+  return graphics;
+}
+
 /** 얇은 구분선. 그라데이션 바 위쪽처럼 경계만 알려야 하는 자리에 쓴다. */
 export function drawHairline(
   scene: Phaser.Scene,

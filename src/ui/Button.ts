@@ -33,6 +33,10 @@ export interface ButtonOptions {
   /** 강조색과 함께 쓸 글자색. 넘기지 않으면 기본 잉크색이다. */
   accentTextColor?: string;
   /**
+   * 라벨 좌우에 검은 별 두 쌍을 찍어 강조한다. 화면에서 가장 중요한 버튼 하나에만 쓴다.
+   */
+  decorStars?: boolean;
+  /**
    * 원근. **키가 큰 변**을 알려 주면 반대쪽이 좁아진 사다리꼴이 된다.
    * 화면 가장자리 쪽이 커야 바깥에서 안으로 들어오는 판처럼 보이므로, 왼쪽 끝 버튼은
    * `left`, 오른쪽 끝 버튼은 `right`다.
@@ -108,6 +112,14 @@ export class Button extends Phaser.GameObjects.Container {
       const total = iconSize + gap + label.width;
       label.setX(-total / 2 + iconSize + gap + label.width / 2);
       plate.add(drawGlyph(scene, opts.icon, -total / 2 + iconSize / 2, hasSub ? -14 : 0, iconSize, primary ? accent : 0xd8d5cf));
+    }
+    if (opts.decorStars) {
+      // 글자 양옆에 큰 별·작은 별을 한 쌍씩. 판이 유리라 검은 별이 가장 또렷하게 남는다.
+      const edge = width / 2 - height * 0.34;
+      for (const side of [-1, 1]) {
+        plate.add(scene.add.star(side * edge, 0, 4, fontSize * 0.16, fontSize * 0.42, 0x000000, 0.85));
+        plate.add(scene.add.star(side * (edge - fontSize * 0.62), -fontSize * 0.3, 4, fontSize * 0.1, fontSize * 0.24, 0x000000, 0.7));
+      }
     }
     if (hasSub) {
       this.subText = scene.add

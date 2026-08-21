@@ -26,9 +26,9 @@ const DRAG_SLOP = 14;
  * 화면 위쪽에 붙은 큰 패널은 구역 제목과 자리를 다퉜다. 고른 노드는 언제나 창 한가운데로
  * 올라오므로, 그 바로 위에 작은 팝업을 띄우면 어느 스테이지의 적인지도 함께 읽힌다.
  */
-const POPUP = { width: 700, height: 250, sdHeight: 120 } as const;
+const POPUP = { width: 840, height: 320, sdHeight: 168 } as const;
 /** 팝업 가운데를 기준으로 한 세 칸의 가로 위치. */
-const POPUP_COLUMNS = [-210, 0, 210];
+const POPUP_COLUMNS = [-256, 0, 256];
 /** 고른 노드가 멈추는 화면 높이. 팝업은 이 위에 뜬다. */
 const NODE_FOCUS_Y = (WINDOW.top + WINDOW.bottom) / 2;
 
@@ -221,25 +221,27 @@ export class StageMapScene extends Phaser.Scene {
     // 노드보다 위, 지도보다 앞. 팝업 가운데가 원점이라 자리를 옮겨도 안쪽 좌표는 그대로다.
     this.panel = this.add.container(BASE_WIDTH / 2, NODE_FOCUS_Y - POPUP.height / 2 - 96).setDepth(60).setVisible(false);
     const unit = Math.min(POPUP.width, POPUP.height);
+    const bevel = unit * 0.16;
     this.panel.add(drawLayer(this, 0, 0, chipPoints(POPUP.width, POPUP.height, {
-      bevel: { topLeft: unit * 0.16, topRight: 0, bottomRight: unit * 0.16, bottomLeft: 0 },
+      bevel: { topLeft: bevel, topRight: 0, bottomRight: bevel, bottomLeft: 0 },
     }), { fill: 0x0b0f15, alpha: 0.92, edge: COLOR.accent, edgeAlpha: 0.55 }));
     // 팝업이 어느 노드에 붙은 것인지 짧은 선이 알려 준다. 방향은 붙는 자리에 따라 바뀐다.
     this.panelTail = this.add.graphics();
     this.panel.add(this.panelTail);
 
-    this.panelTitle = this.add.text(-POPUP.width / 2 + 28, -POPUP.height / 2 + 22, "", textStyle({ role: "display", size: 30 })).setOrigin(0, 0);
+    // 제목도 잘린 왼쪽 위를 피해 안쪽에서 시작한다.
+    this.panelTitle = this.add.text(-POPUP.width / 2 + bevel * 0.7, -POPUP.height / 2 + 24, "", textStyle({ role: "display", size: 32 })).setOrigin(0, 0);
     this.panel.add(this.panelTitle);
-    this.panel.add(this.add.text(POPUP.width / 2 - 28, -POPUP.height / 2 + 26, "적 편성", textStyle({ role: "emphasis", size: 22, color: COLOR.dangerText })).setOrigin(1, 0));
-    this.panel.add(drawHairline(this, 0, -POPUP.height / 2 + 68, POPUP.width - 56, { color: COLOR.accent, alpha: 0.35 }));
+    this.panel.add(this.add.text(POPUP.width / 2 - 30, -POPUP.height / 2 + 28, "적 편성", textStyle({ role: "emphasis", size: 22, color: COLOR.dangerText })).setOrigin(1, 0));
+    this.panel.add(drawHairline(this, 0, -POPUP.height / 2 + 74, POPUP.width - 60, { color: COLOR.accent, alpha: 0.35 }));
 
     POPUP_COLUMNS.forEach((x) => {
-      const ground = POPUP.height / 2 - 62;
-      this.panel.add(this.add.ellipse(x, ground + 4, 120, 22, COLOR.void, 0.5));
-      const name = this.add.text(x, ground + 14, "", textStyle({ role: "display", size: 22 })).setOrigin(0.5, 0);
-      const detail = this.add.text(x, ground + 42, "", textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0.5, 0);
+      const ground = POPUP.height / 2 - 70;
+      this.panel.add(this.add.ellipse(x, ground + 4, 150, 26, COLOR.void, 0.5));
+      const name = this.add.text(x, ground + 14, "", textStyle({ role: "display", size: 24 })).setOrigin(0.5, 0);
+      const detail = this.add.text(x, ground + 44, "", textStyle({ role: "body", size: 19, color: COLOR.inkDim })).setOrigin(0.5, 0);
       // SD는 그림이라 입력을 받지 않는다. 칸 전체를 눌러 상세를 연다.
-      const hit = this.add.rectangle(x, ground - POPUP.sdHeight / 2, 190, POPUP.sdHeight + 90, 0xffffff, 0).setInteractive({ useHandCursor: true });
+      const hit = this.add.rectangle(x, ground - POPUP.sdHeight / 2, 230, POPUP.sdHeight + 100, 0xffffff, 0).setInteractive({ useHandCursor: true });
       this.panel.add([name, detail, hit]);
       this.panelSlots.push({ name, detail, hit });
     });
@@ -328,7 +330,7 @@ export class StageMapScene extends Phaser.Scene {
   private async standEnemy(relicId: string, slot: number, request: number): Promise<void> {
     const creature = await spawnPuppet(this, battleAssetFor(relicId), {
       x: BASE_WIDTH / 2 + POPUP_COLUMNS[slot],
-      groundY: this.panel.y + POPUP.height / 2 - 62,
+      groundY: this.panel.y + POPUP.height / 2 - 70,
       height: POPUP.sdHeight,
       flipX: true,
       // 적 번호별 원본 색을 그대로 보여 줘 토비·아모·리파 외형을 명확히 구분한다.

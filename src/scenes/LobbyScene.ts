@@ -10,7 +10,7 @@ import { BottomNav, NAV_TOP } from "../ui/BottomNav";
 import { Button } from "../ui/Button";
 import { RailButton } from "../ui/RailButton";
 import { TopBar } from "../ui/TopBar";
-import { chipPoints, drawHairline, drawLayer, drawVignette, HOLO, slantedRect } from "../ui/holo";
+import { chipPoints, drawHairline, drawLayer, drawShapeEdge, drawVignette, HOLO, slantedRect } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { gameApi } from "../api/FakeServer";
@@ -58,13 +58,13 @@ export class LobbyScene extends Phaser.Scene {
 
     // 원정 — 지도 위를 가리던 일일 복원을 로비의 독립된 일일 콘텐츠 입구로 옮긴다.
     // 자리와 기울기는 출격과 한 벌이라 같은 원근을 쓴다.
-    const expeditionButton = new Button(this, BASE_WIDTH - 300, NAV_TOP - 400, {
-      width: 340,
-      height: 112,
+    const expeditionButton = new Button(this, BASE_WIDTH - 250, NAV_TOP - 400, {
+      width: 292,
+      height: 106,
       label: "원정",
       sub: this.expeditionStatus(),
-      fontSize: 36,
-      variant: "primary",
+      fontSize: 34,
+      // 출격과 성격이 다른 입구라 강조 양식을 쓰지 않는다. 같은 원근만 공유한다.
       perspective: "right",
       tilt: -6,
       onClick: () => {
@@ -89,17 +89,17 @@ export class LobbyScene extends Phaser.Scene {
       tilt: -6,
       accentColor: COLOR.sortie,
       accentTextColor: COLOR.sortieText,
+      decorStars: true,
       onClick: () => this.scene.start("stageMap"),
     });
 
     // 교류 — 맞은편이라 기울기와 원근을 뒤집어 `\` 방향으로 눕힌다.
-    new Button(this, 300, NAV_TOP - 400, {
-      width: 340,
-      height: 112,
+    new Button(this, 250, NAV_TOP - 400, {
+      width: 292,
+      height: 106,
       label: "교류",
       sub: "EXCHANGE",
-      fontSize: 36,
-      variant: "primary",
+      fontSize: 34,
       perspective: "left",
       tilt: 6,
       accentColor: EXCHANGE_BLUE,
@@ -220,14 +220,15 @@ export class LobbyScene extends Phaser.Scene {
     const width = BASE_WIDTH - left * 2;
     const layer = this.add.container(0, 0).setDepth(500);
 
-    layer.add(drawLayer(this, BASE_WIDTH / 2, cy + 4, slantedRect(width, 176, 18), {
+    const band = slantedRect(width, 176, 18);
+    layer.add(drawLayer(this, BASE_WIDTH / 2, cy + 4, band, {
       fill: 0x05070a,
       alpha: 0.94,
       shadow: false,
     }));
-    // 위는 밝게, 아래는 옅게 그어 빛이 위에서 내려오는 것처럼 보이게 한다.
-    layer.add(drawHairline(this, BASE_WIDTH / 2, cy - 82, width - 10, { color: COLOR.accent, alpha: 0.8 }));
-    layer.add(drawHairline(this, BASE_WIDTH / 2, cy + 90, width - 10, { color: COLOR.accent, alpha: 0.3 }));
+    // 선은 판의 변을 그대로 따라 긋는다. 수평으로 그으면 기울어진 판과 어긋나 두 겹으로 보인다.
+    layer.add(drawShapeEdge(this, BASE_WIDTH / 2, cy + 4, band, "top", { color: COLOR.accent, alpha: 0.8, inset: 6 }));
+    layer.add(drawShapeEdge(this, BASE_WIDTH / 2, cy + 4, band, "bottom", { color: COLOR.accent, alpha: 0.3, inset: 6 }));
 
     // 이름 왼쪽의 두꺼운 막대. 누가 말하는지를 한 글자보다 먼저 알린다.
     const bar = this.add.rectangle(left + 30, cy - 44, 9, 46, COLOR.accent, 0.95).setOrigin(0, 0.5);

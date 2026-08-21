@@ -162,6 +162,35 @@ export function drawGlassFade(
   return graphics;
 }
 
+/**
+ * 화면 가장자리를 눌러 주는 비네트.
+ *
+ * 캔버스에는 방사형 그라데이션이 없으므로 네 변에서 안쪽으로 사라지는 띠를 겹쳐 만든다.
+ * 배경 원화의 가장자리를 어둡게 눌러 화면 가운데의 캐릭터에 눈이 먼저 가게 한다.
+ */
+export function drawVignette(
+  scene: Phaser.Scene,
+  width: number,
+  height: number,
+  options: { depth?: number; strength?: number; thickness?: number } = {},
+): Phaser.GameObjects.Graphics {
+  const strength = options.strength ?? 0.55;
+  const band = options.thickness ?? Math.round(Math.min(width, height) * 0.28);
+  const g = scene.add.graphics();
+  const black = 0x000000;
+  // 위·아래
+  g.fillGradientStyle(black, black, black, black, strength, strength, 0, 0);
+  g.fillRect(0, 0, width, band);
+  g.fillGradientStyle(black, black, black, black, 0, 0, strength, strength);
+  g.fillRect(0, height - band, width, band);
+  // 좌·우
+  g.fillGradientStyle(black, black, black, black, strength, 0, strength, 0);
+  g.fillRect(0, 0, band, height);
+  g.fillGradientStyle(black, black, black, black, 0, strength, 0, strength);
+  g.fillRect(width - band, 0, band, height);
+  return g.setDepth(options.depth ?? -25);
+}
+
 /** 얇은 구분선. 그라데이션 바 위쪽처럼 경계만 알려야 하는 자리에 쓴다. */
 export function drawHairline(
   scene: Phaser.Scene,

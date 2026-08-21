@@ -36,6 +36,25 @@ export class RelicCollectionManager {
     return true;
   }
 
+  /** 즐겨찾기 여부. 애착 렐릭과 달리 여러 명이 될 수 있다. */
+  isBookmarked(relicId: string): boolean {
+    return this.state.bookmarked.has(relicId);
+  }
+
+  /**
+   * 즐겨찾기를 켜고 끈다. 보유하지 않은 렐릭은 담지 않는다.
+   *
+   * 애착 렐릭과 섞지 않는다. 애착은 로비에 서는 한 명이고 즐겨찾기는 목록을 추리는 표시라,
+   * 하나를 바꿔도 다른 하나는 그대로 둔다.
+   */
+  toggleBookmark(relicId: string): boolean {
+    if (!this.owns(relicId)) return false;
+    if (this.state.bookmarked.has(relicId)) this.state.bookmarked.delete(relicId);
+    else this.state.bookmarked.add(relicId);
+    this.persistSharedSession();
+    return true;
+  }
+
   /** 파티는 서로 다른 보유 렐릭 3명으로만 확정한다. */
   setParty(relicIds: readonly string[]): boolean {
     const unique = new Set(relicIds);

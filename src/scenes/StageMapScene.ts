@@ -9,6 +9,7 @@ import { battleAssetFor, spawnPuppet } from "../puppets/assets";
 import { isStageUnlocked, session } from "../state/session";
 import { Button } from "../ui/Button";
 import { addBackButton } from "../ui/IconButton";
+import { chipPoints, drawGlassFade, drawHairline, drawLayer } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { gameApi } from "../api/FakeServer";
@@ -139,7 +140,17 @@ export class StageMapScene extends Phaser.Scene {
       const cleared = session.cleared.has(stage.id);
 
       this.map.add(this.add.line(0, 0, cx, y, x, y, COLOR.panelEdge).setOrigin(0).setLineWidth(4));
-      const ring = this.add.circle(x, y, 46, cleared ? COLOR.accent : COLOR.panel).setStrokeStyle(4, unlocked ? COLOR.accent : COLOR.panelEdge);
+      // 노드도 카드와 같은 칩 언어를 쓴다. 원형 테두리 대신 깎인 조각으로 둔다.
+      this.map.add(drawLayer(this, x, y, chipPoints(96, 96, {
+        bevel: { topLeft: 30, topRight: 0, bottomRight: 30, bottomLeft: 0 },
+      }), {
+        fill: cleared ? 0x3a3016 : 0x141920,
+        alpha: unlocked ? 0.94 : 0.6,
+        edge: COLOR.accent,
+        edgeAlpha: unlocked ? 0.8 : 0.25,
+      }));
+      // 입력과 선택 표시는 투명한 원이 계속 맡는다. 손가락이 모서리에서 빠지지 않게 한다.
+      const ring = this.add.circle(x, y, 48, 0xffffff, 0);
       const label = this.add
         .text(x, y, stage.id, textStyle({ role: "emphasis", size: 30, color: cleared ? "#1a1d21" : unlocked ? COLOR.ink : COLOR.inkDim }))
         .setOrigin(0.5);
@@ -150,7 +161,6 @@ export class StageMapScene extends Phaser.Scene {
       this.nodes.set(stage.id, { ring, label });
 
       if (!unlocked) {
-        ring.setAlpha(0.4);
         name.setAlpha(0.5);
         return;
       }
@@ -205,10 +215,12 @@ export class StageMapScene extends Phaser.Scene {
   /** 위에서 미끄러져 내려오는 적 정보 패널. 내용만 갈아 끼우고 한 번만 만든다. */
   private buildPanel(): void {
     this.panel = this.add.container(0, -PANEL.height).setDepth(60);
-    const plate = this.add.graphics();
-    plate.fillStyle(COLOR.void, 0.93).fillRoundedRect(-20, -40, BASE_WIDTH + 40, PANEL.height + 40, 34);
-    plate.fillStyle(COLOR.accent, 0.85).fillRect(0, PANEL.height - 4, BASE_WIDTH, 4);
-    this.panel.add(plate);
+    // 판때기 대신 아래로 짙어지는 유리면과 아래쪽 강조선 한 줄.
+    this.panel.add(drawGlassFade(this, BASE_WIDTH / 2, PANEL.height / 2 - 20, BASE_WIDTH + 40, PANEL.height + 40, {
+      topAlpha: 0.95,
+      bottomAlpha: 0.6,
+    }));
+    this.panel.add(drawHairline(this, BASE_WIDTH / 2, PANEL.height - 2, BASE_WIDTH, { color: COLOR.accent, alpha: 0.8 }));
 
     this.panelTitle = this.add.text(40, 34, "", textStyle({ role: "display", size: 40 })).setOrigin(0, 0);
     this.panel.add(this.panelTitle);
@@ -234,8 +246,9 @@ export class StageMapScene extends Phaser.Scene {
 
     for (const [id, node] of this.nodes) {
       const chosen = id === stage.id;
-      node.ring.setStrokeStyle(chosen ? 8 : 4, chosen || session.cleared.has(id) ? COLOR.accent : COLOR.panelEdge);
-      node.label.setScale(chosen ? 1.1 : 1);
+      // 고른 노드는 테두리가 아니라 크기와 색으로 알린다.
+      node.label.setScale(chosen ? 1.25 : 1);
+      node.label.setColor(chosen ? COLOR.accentText : session.cleared.has(id) ? COLOR.ink : COLOR.inkDim);
     }
 
     // 고른 노드를 창 한가운데로 올린다.

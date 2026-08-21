@@ -34,9 +34,8 @@ export class Revolver {
     private readonly onSwap: (memberIndex: number) => void,
     onInfo: (memberIndex: number) => void,
   ) {
-    scene.add
-      .circle(cx, cy, radius + 74, COLOR.panel)
-      .setStrokeStyle(2, COLOR.panelEdge);
+    // 회전판 바탕. 테두리 대신 옅은 원 하나로 자리만 알린다.
+    scene.add.circle(cx, cy, radius + 74, 0x141920, 0.75);
 
     team.units.forEach((unit, memberIndex) => {
       const slot = team.order.indexOf(memberIndex);
@@ -44,8 +43,8 @@ export class Revolver {
       const container = scene.add.container(...this.pointAt(angle));
 
       const ring = scene.add
-        .circle(0, 0, 66, COLOR.panelEdge)
-        .setStrokeStyle(4, COLOR.ally)
+        .circle(0, 0, 66, 0x1a1f27, 0.94)
+        .setStrokeStyle(3, COLOR.ally, 0.9)
         .setInteractive({ useHandCursor: true });
       ring.on("pointerdown", () => this.onSwap(memberIndex));
       container.add(ring);
@@ -87,7 +86,9 @@ export class Revolver {
       profile.active.setVisible(slot === 0);
 
       const front = slot === 0;
-      profile.ring.setStrokeStyle(front ? 6 : 4, front ? COLOR.accent : COLOR.ally);
+      // 선봉은 굵은 테두리가 아니라 강조색 선과 살짝 큰 크기로 알린다.
+      profile.ring.setStrokeStyle(3, front ? COLOR.accent : COLOR.ally, front ? 1 : 0.7);
+      profile.container.setScale(front ? 1.08 : 1);
 
       // 지금 교대할 수 있는 애만 또렷하게 둔다.
       const swappable = interactive && canSwap(team, memberIndex);

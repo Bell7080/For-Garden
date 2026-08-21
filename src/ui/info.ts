@@ -18,6 +18,9 @@ import { mixWhite, tintFor } from "../puppets/tints";
 import { addSceneBackground, BACKGROUND } from "./backgrounds";
 import { StatRadar } from "./StatRadar";
 import { addBackButton, IconButton } from "./IconButton";
+import { chipPoints, drawHairline, drawLayer, HOLO } from "./holo";
+import { drawGlyph } from "./glyphs";
+import { relicCollection } from "../managers/RelicCollectionManager";
 import { COLOR, textStyle } from "./theme";
 import { UI_ICON } from "./icons";
 import { FALLBACK_SKILL_ICON } from "./skillIcons";
@@ -70,10 +73,6 @@ export function addHelpBadge(scene: Phaser.Scene, x: number, y: number, onClick:
   return badge;
 }
 
-/** 흰 카드 위에서 아이콘이 떠 보이도록 같은 그림을 어둡게 복제해 깔아 둔다. */
-const CARD_WHITE = 0xf5f4f1;
-const CARD_SHADOW = 0x1a1d21;
-
 /**
  * 스킬 아이콘 한 칸을 카드 형태로 만든다.
  *
@@ -89,27 +88,48 @@ function iconCard(
   accent: boolean,
 ): { objects: Phaser.GameObjects.GameObject[]; icon: Phaser.GameObjects.Image } {
   const iconSize = Math.round(size * 0.66);
-  const shadow = scene.add.image(x + 5, y + 6, texture).setDisplaySize(iconSize, iconSize).setTint(CARD_SHADOW).setAlpha(0.28);
+  const shadow = scene.add.image(x + 5, y + 6, texture).setDisplaySize(iconSize, iconSize).setTint(0x000000).setAlpha(0.35);
   const icon = scene.add.image(x, y, texture).setDisplaySize(iconSize, iconSize);
   return {
     objects: [
-      scene.add.rectangle(x + 4, y + 6, size, size, CARD_SHADOW, 0.3),
-      scene.add.rectangle(x, y, size, size, CARD_WHITE),
+      drawLayer(scene, x, y, chipPoints(size, size, {
+        bevel: { topLeft: size * 0.26, topRight: 0, bottomRight: size * 0.26, bottomLeft: 0 },
+      }), { fill: accent ? 0x2a2418 : 0x1a1f27, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: accent ? 0.8 : 0.3 }),
       shadow,
       icon,
-      scene.add.rectangle(x, y, size, size).setStrokeStyle(3, accent ? COLOR.accent : COLOR.panelEdge),
     ],
     icon,
   };
 }
 
-/** 외곽선 없이 명도 차이와 황동 섹션 바로 구분하는 작은 플로팅 레이어다. */
+/**
+ * 정보창의 한 칸.
+ *
+ * 테두리 대신 모서리를 어긋나게 깎은 유리면과 제목 왼쪽의 짧은 강조 막대로만 구분한다.
+ * 칸이 여럿 겹치는 화면이라 사방 외곽선을 두르면 곧바로 격자 그물처럼 보인다.
+ */
 function floatingLayer(scene: Phaser.Scene, x: number, y: number, width: number, height: number, title: string): Phaser.GameObjects.Container {
   const container = scene.add.container(x, y);
-  container.add(scene.add.rectangle(0, 0, width, height, COLOR.panel, 0.72).setOrigin(0));
-  container.add(scene.add.rectangle(0, 0, 7, 46, COLOR.accent, 0.9).setOrigin(0));
+  const unit = Math.min(width, height);
+  const layer = drawLayer(scene, width / 2, height / 2, chipPoints(width, height, {
+    bevel: { topLeft: unit * 0.14, topRight: 0, bottomRight: unit * 0.2, bottomLeft: 0 },
+  }), { fill: 0x141920, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.35 });
+  container.add(layer);
+  container.add(scene.add.rectangle(0, 6, 6, 34, COLOR.accent, 0.9).setOrigin(0));
   container.add(scene.add.text(24, 10, title, textStyle({ role: "emphasis", size: 20, color: COLOR.accentText })).setOrigin(0));
   return container;
+}
+
+/** 꺼져 있는 뱃지의 선 색. 글자용 문자열 색과 달리 도형은 숫자 색이 필요하다. */
+const BADGE_OFF = 0x8b8f96;
+
+/** 왼쪽 위 상태 뱃지 한 칸. 켜짐 여부는 세션이 쥐고 있고 여기서는 그리기만 한다. */
+interface BadgeToggle {
+  container: Phaser.GameObjects.Container;
+  glyph: Phaser.GameObjects.Graphics;
+  glyphName: "bookmark" | "heart";
+  size: number;
+  isOn: (relicId: string) => boolean;
 }
 
 /** Phaser 컨테이너 단위로 헤더·능력치·성장·보석·스킬을 조립하는 공용 정보 화면이다. */
@@ -135,6 +155,9 @@ export class InfoManager {
   private readonly detailIcon: Phaser.GameObjects.Image;
   private readonly detailMeta: Phaser.GameObjects.Text;
   private readonly detailDescription: Phaser.GameObjects.Text;
+  private readonly badges: BadgeToggle[] = [];
+  /** 지금 열려 있는 렐릭을 실제로 보유했는지. 미발굴이면 뱃지를 누를 수 없다. */
+  private ownedNow = true;
   private currentDef?: RelicDef;
   /** 전투에서 연 정보창일 때 실제 공격자와 피해 대상을 보존한다. */
   private currentUnit?: BattleUnit;
@@ -156,9 +179,11 @@ export class InfoManager {
     this.root.add(gradient);
 
     this.header = floatingLayer(scene, 58, 54, 930, 202, "RELIC / ARCHIVE");
-    this.headerText = scene.add.text(25, 56, "", textStyle({ role: "display", size: 39, wrap: 820, lineSpacing: 5 })).setOrigin(0);
+    // 왼쪽은 뱃지 두 칸이 쓰므로 글자는 그만큼 밀어 시작한다.
+    this.headerText = scene.add.text(190, 46, "", textStyle({ role: "display", size: 38, wrap: 680, lineSpacing: 5 })).setOrigin(0);
     this.header.add(this.headerText);
     this.chrome.add(this.header);
+    this.buildBadges(scene);
     // 닫기는 다른 화면의 뒤로가기와 같은 버튼·같은 자리를 쓴다.
     this.chrome.add(addBackButton(scene, () => this.hide()));
 
@@ -203,10 +228,61 @@ export class InfoManager {
     this.buildFigureStand(scene);
   }
 
+  /**
+   * 왼쪽 위 뱃지 두 개.
+   *
+   * 1번은 즐겨찾기(목록을 추리는 표시), 2번은 애착 렐릭(로비에 서는 한 명)이다. 성격이 다른
+   * 두 상태라 한 버튼으로 합치지 않고 나란히 둔다. 애착은 한 명뿐이라 켜기만 되고, 이미
+   * 애착인 렐릭을 다시 누르면 아무 일도 일어나지 않는다.
+   */
+  private buildBadges(scene: Phaser.Scene): void {
+    const definitions = [
+      { glyph: "bookmark" as const, label: "즐겨찾기", toggle: (id: string) => relicCollection.toggleBookmark(id), isOn: (id: string) => relicCollection.isBookmarked(id) },
+      { glyph: "heart" as const, label: "애착", toggle: (id: string) => relicCollection.setFavorite(id), isOn: (id: string) => session.favorite === id },
+    ];
+    definitions.forEach((definition, index) => {
+      // 헤더 칸 안쪽 왼편. 칸 사이 빈 자리에 두면 어느 칸에 속한 표시인지 흐려진다.
+      const size = 68;
+      const x = 108 + index * 80;
+      const y = 155;
+      const container = scene.add.container(x, y);
+      const face = drawLayer(scene, 0, 0, chipPoints(size, size, {
+        bevel: { topLeft: size * 0.3, topRight: 0, bottomRight: size * 0.3, bottomLeft: 0 },
+      }), { fill: 0x1a1f27, alpha: HOLO.glass });
+      const glyph = drawGlyph(scene, definition.glyph, 0, 0, size * 0.5, BADGE_OFF);
+      container.add([face, glyph]);
+      const hit = scene.add.rectangle(0, 0, size, size, 0xffffff, 0).setInteractive({ useHandCursor: true });
+      hit.on("pointerdown", () => container.setScale(1.12));
+      hit.on("pointerout", () => container.setScale(1));
+      hit.on("pointerup", () => {
+        container.setScale(1);
+        if (!this.currentDef || !this.ownedNow) return;
+        definition.toggle(this.currentDef.id);
+        this.refreshBadges();
+      });
+      container.add(hit);
+      this.chrome.add(container);
+      this.badges.push({ container, glyph, glyphName: definition.glyph, size, isOn: definition.isOn });
+    });
+  }
+
+  /** 뱃지의 켜짐/꺼짐을 지금 열려 있는 렐릭 기준으로 다시 칠한다. */
+  private refreshBadges(): void {
+    for (const badge of this.badges) {
+      const on = this.currentDef !== undefined && this.ownedNow && badge.isOn(this.currentDef.id);
+      badge.glyph.destroy();
+      badge.container.setAlpha(this.ownedNow ? 1 : 0.35);
+      const glyph = drawGlyph(this.scene, badge.glyphName, 0, 0, badge.size * 0.5, on ? COLOR.accent : BADGE_OFF);
+      badge.container.addAt(glyph, 1);
+      badge.glyph = glyph;
+    }
+  }
+
   /** SD 피규어가 공중에 뜨지 않도록 받침과 그림자를 함께 깔아 둔다. */
   private buildFigureStand(scene: Phaser.Scene): void {
     this.root.add(scene.add.ellipse(FIGURE.x, FIGURE.y + 6, 236, 62, COLOR.void, 0.55));
-    this.root.add(scene.add.ellipse(FIGURE.x, FIGURE.y, 220, 54, COLOR.panel, 0.9).setStrokeStyle(3, COLOR.accent, 0.7));
+    this.root.add(scene.add.ellipse(FIGURE.x, FIGURE.y, 220, 54, 0x141920, 0.92));
+    this.root.add(drawHairline(scene, FIGURE.x, FIGURE.y - 22, 200, { color: COLOR.accent, alpha: 0.45 }));
     this.chrome.add(
       scene.add.text(FIGURE.x, FIGURE.y + 40, "IN-GAME SD", textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0.5, 0),
     );
@@ -227,11 +303,19 @@ export class InfoManager {
 
   get isOpen(): boolean { return this.root.visible; }
 
+  /**
+   * 닫힐 때 부르는 콜백.
+   *
+   * 정보창 안에서 애착·즐겨찾기가 바뀔 수 있으므로, 목록 화면이 다시 그릴 기회를 준다.
+   */
+  onClose?: () => void;
+
   /** 상세 카드가 열려 있어도 X만 전체 정보창을 닫는다. */
   hide(): void {
     this.root.setVisible(false); this.chrome.setVisible(false); this.portraitWanted = false;
     this.portrait?.setVisible(false); this.figure?.setVisible(false);
     this.closeSkillDetail(); setDebugInfoOpen(false);
+    this.onClose?.();
   }
 
   /** 하트 실루엣과 텍스트를 함께 써 빈 슬롯과 장착 슬롯을 색·문자로 중복 구분한다. */
@@ -310,6 +394,8 @@ export class InfoManager {
     this.skillDetail.setVisible(false); this.skills.setVisible(true);
     // 미보유 개체는 원화·수치·스킬을 노출하지 않고 번호와 실루엣 요약만 남긴다.
     this.stats.setVisible(owned); this.growth.setVisible(owned); this.gems.setVisible(owned); this.skills.setVisible(owned);
+    this.ownedNow = owned;
+    this.refreshBadges();
     this.portraitWanted = owned;
     this.portrait?.setVisible(false); this.figure?.setVisible(false);
     if (owned) { void this.loadPortrait(def); void this.loadFigure(def); }

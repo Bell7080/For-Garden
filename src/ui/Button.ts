@@ -1,5 +1,6 @@
 import Phaser from "phaser";
-import { drawLayer, HOLO, slantedRect } from "./holo";
+import { drawGlyph, type GlyphName } from "./glyphs";
+import { chipPoints, drawLayer, HOLO, slantedRect } from "./holo";
 import { COLOR, textStyle } from "./theme";
 
 export interface ButtonOptions {
@@ -10,6 +11,16 @@ export interface ButtonOptions {
   sub?: string;
   fontSize?: number;
   fill?: number;
+  /** 라벨 왼쪽에 붙는 선 아이콘. */
+  icon?: GlyphName;
+  /**
+   * 화면에서 가장 중요한 버튼인지.
+   *
+   * `primary`는 강조색 면과 두 겹의 밝은 선을 쓰고 모서리를 크게 깎는다. 한 화면에 하나만 둔다.
+   */
+  variant?: "default" | "primary";
+  /** 판을 실제로 기울이는 각도(도). 출격처럼 비스듬히 꽂힌 판을 만들 때 쓴다. */
+  tilt?: number;
   onClick: () => void;
 }
 
@@ -26,32 +37,58 @@ export class Button extends Phaser.GameObjects.Container {
 
   constructor(scene: Phaser.Scene, x: number, y: number, opts: ButtonOptions) {
     super(scene, x, y);
+    const primary = opts.variant === "primary";
+    const { width, height } = opts;
 
-    const shape = slantedRect(opts.width, opts.height);
-    this.add(drawLayer(scene, 0, 0, shape, {
-      fill: opts.fill ?? 0x1b2029,
-      alpha: HOLO.glass,
-      // 위 모서리에만 얇게 긋는 강조선. 사방을 두르는 테두리는 쓰지 않는다.
+    // 판 자체를 기울인다. 안에 얹는 글자와 아이콘도 함께 돌아 하나의 조각처럼 보인다.
+    const plate = scene.add.container(0, 0);
+    if (opts.tilt) plate.setRotation(Phaser.Math.DegToRad(opts.tilt));
+
+    const shape = primary
+      ? chipPoints(width, height, {
+          bevel: { topLeft: height * 0.52, topRight: 0, bottomRight: height * 0.52, bottomLeft: 0 },
+        })
+      : slantedRect(width, height);
+    plate.add(drawLayer(scene, 0, 0, shape, {
+      fill: opts.fill ?? (primary ? 0x2a2418 : 0x1b2029),
+      alpha: primary ? 0.94 : HOLO.glass,
+      // 사방을 두르지 않고 빛이 닿는 윗변 한 줄만 긋는다.
       edge: COLOR.accent,
-      edgeAlpha: 0.4,
+      edgeAlpha: primary ? 0.9 : 0.4,
     }));
-    // 입력만 받는 투명 판. 기울어진 모양과 달리 직사각이라 손가락이 모서리에서 빠지지 않는다.
-    this.bg = scene.add.rectangle(0, 0, opts.width, opts.height, 0xffffff, 0);
-    this.add(this.bg);
+    if (primary) {
+      // 강조 버튼만 아래에 한 줄을 더 그어 판이 두껍게 꽂힌 것처럼 보이게 한다.
+      const underline = scene.add.graphics();
+      underline.lineStyle(3, COLOR.accent, 0.55);
+      underline.lineBetween(-width / 2 + height * 0.52, height / 2 - 6, width / 2 - height * 0.52, height / 2 - 6);
+      plate.add(underline);
+    }
 
-    // 빈 문자열로 시작해 나중에 setSub로 채우는 버튼이 있다. undefined일 때만 자리를 없앤다.
     const hasSub = opts.sub !== undefined;
-    this.add(
-      scene.add
-        .text(0, hasSub ? -14 : 0, opts.label, textStyle({ role: "display", size: opts.fontSize ?? 36 }))
-        .setOrigin(0.5),
-    );
+    const fontSize = opts.fontSize ?? 36;
+    const iconSize = fontSize * 1.35;
+    const label = scene.add
+      .text(0, hasSub ? -14 : 0, opts.label, textStyle({ role: "display", size: fontSize }))
+      .setOrigin(0.5);
+    plate.add(label);
+    if (opts.icon) {
+      // 아이콘은 글자 왼쪽에 붙고, 둘을 합친 폭이 판 가운데에 오도록 함께 민다.
+      const gap = fontSize * 0.5;
+      const total = iconSize + gap + label.width;
+      label.setX(-total / 2 + iconSize + gap + label.width / 2);
+      plate.add(drawGlyph(scene, opts.icon, -total / 2 + iconSize / 2, hasSub ? -14 : 0, iconSize, primary ? COLOR.accent : 0xd8d5cf));
+    }
     if (hasSub) {
       this.subText = scene.add
-        .text(0, 26, opts.sub ?? "", textStyle({ role: "body", size: 26, color: COLOR.inkDim }))
+        .text(label.x, 26, opts.sub ?? "", textStyle({ role: "body", size: 26, color: primary ? COLOR.accentText : COLOR.inkDim }))
         .setOrigin(0.5);
-      this.add(this.subText);
+      plate.add(this.subText);
     }
+    this.add(plate);
+
+    // 입력만 받는 투명 판. 기울어진 모양과 달리 직사각이라 손가락이 모서리에서 빠지지 않는다.
+    this.bg = scene.add.rectangle(0, 0, width, height, 0xffffff, 0);
+    this.add(this.bg);
 
     this.bg.setInteractive({ useHandCursor: true });
     this.bg.on("pointerdown", () => {

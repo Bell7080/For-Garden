@@ -8,8 +8,9 @@ import { mixWhite, tintFor } from "../puppets/tints";
 import { session } from "../state/session";
 import { BottomNav, NAV_TOP } from "../ui/BottomNav";
 import { Button } from "../ui/Button";
+import { RailButton } from "../ui/RailButton";
 import { TopBar } from "../ui/TopBar";
-import { drawLayer, HOLO, slantedRect } from "../ui/holo";
+import { chipPoints, drawGlassFade, drawHairline, drawLayer, drawVignette, HOLO } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { gameApi } from "../api/FakeServer";
@@ -47,27 +48,31 @@ export class LobbyScene extends Phaser.Scene {
     setDebugScene("lobby");
 
     this.buildPlaza();
-    new TopBar(this);
+    new TopBar(this, 40, { onSettings: () => this.notReady("설정") });
+    this.buildPromo();
+    this.buildSideRail();
 
-    // 좌측 세로 버튼 줄 — 앞으로 늘어날 BM · 편의 기능 자리.
-    const sideLabels = ["상점", "우편", "프로필"];
-    sideLabels.forEach((label, i) => {
-      new Button(this, 150, 320 + i * 150, {
-        width: 220,
-        height: 110,
-        label,
-        fontSize: 30,
-        onClick: () => this.notReady(label),
-      });
+    // 원정 — 출격 위에 한 단 작게. 매일 도는 일일 던전 입구다.
+    new Button(this, BASE_WIDTH - 300, NAV_TOP - 300, {
+      width: 340,
+      height: 108,
+      label: "원정",
+      fontSize: 34,
+      icon: "expedition",
+      tilt: -2.5,
+      onClick: () => this.notReady("원정"),
     });
 
-    // 출격 — 로비에서 가장 큰 버튼이다.
-    new Button(this, BASE_WIDTH - 300, NAV_TOP - 140, {
-      width: 500,
-      height: 160,
+    // 출격 — 로비에서 가장 큰 버튼이자 유일한 강조 버튼이다.
+    new Button(this, BASE_WIDTH - 300, NAV_TOP - 150, {
+      width: 520,
+      height: 168,
       label: "출  격",
       sub: "SORTIE",
-      fontSize: 48,
+      fontSize: 52,
+      icon: "sortie",
+      variant: "primary",
+      tilt: -2.5,
       onClick: () => this.scene.start("stageMap"),
     });
 
@@ -79,17 +84,58 @@ export class LobbyScene extends Phaser.Scene {
   private buildPlaza(): void {
     const cx = BASE_WIDTH / 2;
     addSceneBackground(this, BACKGROUND.lobby);
+    // 가장자리를 눌러 화면 가운데의 렐릭에 눈이 먼저 가게 한다.
+    drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { depth: -26, strength: 0.62 });
     // 하단 조작부의 글자 대비를 유지하되 원화는 은은하게 이어 보이도록 반투명 바닥만 얹는다.
     this.add
       .rectangle(cx, (STAGE_FLOOR + NAV_TOP) / 2, BASE_WIDTH, NAV_TOP - STAGE_FLOOR, COLOR.void, 0.24)
       .setDepth(-29);
-    this.add.rectangle(cx, STAGE_FLOOR, BASE_WIDTH, 3, COLOR.panelEdge).setDepth(-28);
+    drawHairline(this, cx, STAGE_FLOOR, BASE_WIDTH, { color: COLOR.accent, alpha: 0.14 }).setDepth(-28);
 
-    // 확대한 원화가 뒤로 지나가므로 지명은 얇은 어두운 판 위에 얹어 대비를 지킨다.
-    this.add.rectangle(cx, 219, 470, 56, COLOR.void, 0.62);
     this.add
-      .text(cx, 200, "이터널 시티 · 중앙 광장", textStyle({ role: "body", size: 30, color: COLOR.inkDim }))
-      .setOrigin(0.5, 0);
+      .text(cx, 196, "이터널 시티 · 중앙 광장", textStyle({ role: "body", size: 26, color: COLOR.inkDim }))
+      .setOrigin(0.5, 0)
+      .setAlpha(0.85);
+  }
+
+  /**
+   * 왼쪽 세로 줄.
+   *
+   * 위 세 칸은 늘 쓰는 편의 기능이고, 한 칸 띄운 아래가 다른 연구 도시와의 교류 입구다.
+   * 성격이 다르므로 붙여 쌓지 않고 간격과 강조로 가른다.
+   */
+  private buildSideRail(): void {
+    const x = 106;
+    const rail = [
+      { icon: "shop", label: "상점" },
+      { icon: "mail", label: "우편" },
+      { icon: "friends", label: "친구" },
+    ] as const;
+    rail.forEach((item, i) => {
+      new RailButton(this, x, 700 + i * 152, { icon: item.icon, label: item.label, onClick: () => this.notReady(item.label) });
+    });
+    new RailButton(this, x, 700 + rail.length * 152 + 48, {
+      icon: "exchange",
+      label: "교류",
+      size: 108,
+      accent: true,
+      onClick: () => this.notReady("교류"),
+    });
+  }
+
+  /** 오른쪽 위, 프로필 줄 아래의 홍보 칸. 기간 상품과 공지가 들어갈 자리다. */
+  private buildPromo(): void {
+    const width = 300;
+    const height = 132;
+    const x = BASE_WIDTH - 30 - width / 2;
+    const y = 250;
+    drawLayer(this, x, y, chipPoints(width, height, {
+      bevel: { topLeft: height * 0.42, topRight: 0, bottomRight: height * 0.42, bottomLeft: 0 },
+    }), { fill: 0x1a1f27, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.5 });
+    this.add.text(x, y - 26, "월간 화석 패스", textStyle({ role: "display", size: 28 })).setOrigin(0.5);
+    this.add.text(x, y + 16, "준비 중", textStyle({ role: "emphasis", size: 22, color: COLOR.accentText })).setOrigin(0.5);
+    const hit = this.add.rectangle(x, y, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    hit.on("pointerup", () => this.notReady("월간 화석 패스"));
   }
 
   /** 애착 렐릭을 광장 한가운데 세우고, 전용 원화가 없을 때만 임시 색으로 구분한다. */
@@ -127,14 +173,34 @@ export class LobbyScene extends Phaser.Scene {
       const progress = result.relicProgress[relicId];
       const dialogue = bondDialogue(relicId, progress.bondLevel, this.interactionIndex++);
       const reward = result.bondXpEarned > 0 ? `\n유대 EXP +${result.bondXpEarned}${result.bondLevelsGained ? ` · LEVEL UP +${result.bondLevelsGained}` : ""}` : "";
-      const bubble = drawLayer(this, BASE_WIDTH / 2, 470, slantedRect(760, 150), {
-        fill: 0x141920, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.35,
-      }).setDepth(500);
-      const text = this.add.text(BASE_WIDTH / 2, 470, `“${dialogue.text}”${reward}`, textStyle({ role: "body", size: 28, color: COLOR.ink, align: "center", lineSpacing: 7 })).setOrigin(0.5).setDepth(501);
-      // 대사 ID는 번역/분석 추적용으로 객체에 남기되 플레이어 화면에는 노출하지 않는다.
-      text.setData("dialogueId", dialogue.id);
-      this.time.delayedCall(1800, () => { bubble.destroy(); text.destroy(); });
+      this.showLine(getRelic(relicId).name, dialogue.text, reward, dialogue.id);
     }).finally(() => { this.interactionPending = false; });
+  }
+
+  /**
+   * 로비 대사.
+   *
+   * 말풍선 판을 씌우지 않는다. 화면 중단에 금빛 이름과 큰 대사를 얹고 위로 떠오르며 사라지게
+   * 해서, 캐릭터를 가리지 않으면서도 눈이 먼저 가게 한다. 읽히는 힘은 판이 아니라 크기와
+   * 글자 뒤에 깔린 옅은 유리면이 담당한다.
+   */
+  private showLine(name: string, line: string, reward: string, dialogueId: string): void {
+    const cy = 880;
+    const layer = this.add.container(0, 0).setDepth(500);
+    // 가장자리가 딱 끊기지 않도록 위아래로 사라지는 두 겹의 유리면을 겹친다.
+    layer.add(drawGlassFade(this, BASE_WIDTH / 2, cy - 60, BASE_WIDTH, 150, { topAlpha: 0, bottomAlpha: 0.62 }));
+    layer.add(drawGlassFade(this, BASE_WIDTH / 2, cy + 90, BASE_WIDTH, 150, { topAlpha: 0.62, bottomAlpha: 0 }));
+    layer.add(drawHairline(this, BASE_WIDTH / 2, cy - 96, BASE_WIDTH - 220, { color: COLOR.accent, alpha: 0.5 }));
+    layer.add(this.add.text(BASE_WIDTH / 2, cy - 74, name, textStyle({ role: "display", size: 44, color: COLOR.accentText })).setOrigin(0.5, 0));
+    const text = this.add
+      .text(BASE_WIDTH / 2, cy + 6, `“${line}”${reward}`, textStyle({ role: "body", size: 40, color: COLOR.ink, align: "center", lineSpacing: 10, wrap: BASE_WIDTH - 220 }))
+      .setOrigin(0.5, 0);
+    // 대사 ID는 번역/분석 추적용으로 객체에 남기되 플레이어 화면에는 노출하지 않는다.
+    text.setData("dialogueId", dialogueId);
+    layer.add(text);
+    layer.setAlpha(0);
+    this.tweens.add({ targets: layer, alpha: 1, y: -24, duration: 260, ease: "Sine.easeOut" });
+    this.tweens.add({ targets: layer, alpha: 0, y: -70, delay: 2000, duration: 420, onComplete: () => layer.destroy() });
   }
 
   private notReady(label: string): void {

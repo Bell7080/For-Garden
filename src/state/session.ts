@@ -21,8 +21,10 @@ export interface Session {
   cleared: Set<string>;
   /** 보유한 렐릭. 뽑기로 늘어난다. */
   owned: Set<string>;
-  /** 로비에 세워 두는 애착 렐릭. */
+  /** 로비에 세워 두는 애착 렐릭. 한 명뿐이다. */
   favorite: string;
+  /** 즐겨찾기한 렐릭. 애착과 달리 여러 명을 담을 수 있고 목록 위쪽에 모아 보는 데 쓴다. */
+  bookmarked: Set<string>;
   wallet: Wallet;
   /** 배너별 SSR 미획득 연속 횟수. 신규/사라진 키는 로드 경계에서 현재 배너 기준 0으로 보정한다. */
   pullCountSinceHighestRarity: Record<string, number>;
@@ -56,6 +58,7 @@ export interface SaveData {
   clearedStageIds: string[];
   ownedRelicIds: string[];
   favorite: string;
+  bookmarkedRelicIds: string[];
   wallet: Wallet;
   /** 배너 ID를 키로 둬 서로 다른 천장이 섞이지 않게 저장한다. */
   pullCountSinceHighestRarity: Record<string, number>;
@@ -82,6 +85,7 @@ export function createDefaultSession(): Session {
     cleared: new Set<string>(),
     owned: new Set(STARTER_RELICS),
     favorite: STARTER_RELICS[0],
+    bookmarked: new Set<string>(),
     wallet: { fossil: 1200, amber: 10, dnaFragments: 0, weeds: 0 },
     pullCountSinceHighestRarity: Object.fromEntries(BANNERS.map(({ id }) => [id, 0])),
     relicProgress: Object.fromEntries(STARTER_RELICS.map((id) => [id, createStarterProgress()])),

@@ -48,6 +48,21 @@ describe("SaveManager", () => {
     expect(manager.migrate(legacy).completedStoryIds).toEqual([]);
   });
 
+  it("즐겨찾기를 저장하고 v4 저장은 빈 즐겨찾기로 마이그레이션한다", () => {
+    const storage = new MemoryStorage();
+    const manager = new SaveManager(storage);
+    const source = createDefaultSession();
+    source.bookmarked.add("rex");
+    manager.save(source);
+    expect(manager.load()?.bookmarked).toEqual(new Set(["rex"]));
+
+    const legacy = validData() as unknown as Record<string, unknown>;
+    legacy.saveVersion = 4;
+    delete legacy.bookmarkedRelicIds;
+    // 애착 렐릭은 즐겨찾기와 다른 값이라 옮겨 담지 않는다.
+    expect(manager.migrate(legacy).bookmarkedRelicIds).toEqual([]);
+  });
+
   it("신규 획득 성장 정보와 DNA 조각을 저장 후 그대로 복구한다", () => {
     const storage = new MemoryStorage();
     const manager = new SaveManager(storage);

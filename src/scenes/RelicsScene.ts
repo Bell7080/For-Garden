@@ -1,17 +1,15 @@
 import Phaser from "phaser";
 import { BASE_WIDTH } from "../config/gameConfig";
 import { setDebugScene } from "../debug";
-import type { RelicDef } from "../core/types";
-import { getRelic, sortRelicsByRarity, sortRelicsBySpecimenNumber } from "../data/relics";
+import { sortRelicsByRarity, sortRelicsBySpecimenNumber } from "../data/relics";
 import { relicCollection } from "../managers/RelicCollectionManager";
 import { session } from "../state/session";
-import { BottomNav, NAV_TOP } from "../ui/BottomNav";
+import { BottomNav } from "../ui/BottomNav";
 import { Button } from "../ui/Button";
-import { CharacterInfoManager, ROLE_LABEL } from "../managers/CharacterInfoManager";
+import { CharacterInfoManager } from "../managers/CharacterInfoManager";
 import { TopBar } from "../ui/TopBar";
 import { PortraitCard, relicCardTint, starsForRarity } from "../ui/PortraitCard";
 import { relicProgression } from "../managers/RelicProgressionManager";
-import { drawLayer, HOLO, slantedRect } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 
@@ -19,16 +17,12 @@ import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
  * 렐릭 — 보유 중인 렐릭을 훑어보는 화면.
  *
  * 가지지 않은 렐릭도 자리는 남겨 둔다. 무엇이 더 있는지 보여야 뽑을 마음이 든다.
- * 하나를 고르면 아래에 요약이 뜨고, 거기서 정보창을 열거나 애착 렐릭으로 세울 수 있다.
+ * 카드를 누르면 곧바로 정보창이 열린다. 요약 칸을 따로 두지 않는 이유는, 같은 정보를 두 곳에
+ * 두면 어느 쪽을 봐야 하는지 흐려지고 그리드에 쓸 자리도 줄기 때문이다.
  */
 export class RelicsScene extends Phaser.Scene {
   private info!: CharacterInfoManager;
-  private selected: string | null = null;
   private cards = new Map<string, PortraitCard>();
-  private summaryName!: Phaser.GameObjects.Text;
-  private summaryBody!: Phaser.GameObjects.Text;
-  private detailButton!: Button;
-  private favoriteButton!: Button;
   /** 스토리 배열 순서와 분리된 도감 표시 정렬 기준이다. */
   private sortMode: "number" | "rarity" = "number";
 
@@ -39,7 +33,6 @@ export class RelicsScene extends Phaser.Scene {
   create(): void {
     setDebugScene("relics");
     this.cards.clear();
-    this.selected = session.favorite;
 
     const cx = BASE_WIDTH / 2;
     // background_002를 렐릭 탭의 야외 유적 전경으로 사용한다.
@@ -66,10 +59,11 @@ export class RelicsScene extends Phaser.Scene {
     new Button(this, 790, 248, { width: 430, height: 78, label: "희귀도순", fontSize: 24, onClick: () => this.setSortMode("rarity") });
 
     this.buildGrid();
-    this.buildSummary();
 
     new BottomNav(this, "relics");
     this.info = new CharacterInfoManager(this);
+    // 정보창 안에서 애착 렐릭이 바뀔 수 있으므로 닫힐 때 카드 표시를 다시 맞춘다.
+    this.info.onClose = () => this.refresh();
     this.refresh();
   }
 
@@ -80,14 +74,14 @@ export class RelicsScene extends Phaser.Scene {
    * 세부 수치는 요약 칸으로 미뤄, 한눈에 "누가 있는지"부터 보이게 한다.
    */
   private buildGrid(): void {
-    const cols = 4;
-    const cardW = 216;
-    const cardH = 300;
-    const gapX = 34;
-    const gapY = 30;
+    const cols = 3;
+    const cardW = 300;
+    const cardH = 400;
+    const gapX = 40;
+    const gapY = 64;
     const gridW = cols * cardW + (cols - 1) * gapX;
     const startX = (BASE_WIDTH - gridW) / 2 + cardW / 2;
-    const startY = 500;
+    const startY = 560;
 
     const catalog = this.sortMode === "number"
       ? sortRelicsBySpecimenNumber(relicCollection.catalog)
@@ -108,10 +102,8 @@ export class RelicsScene extends Phaser.Scene {
         badge: relic.specimenNumber,
         locked: !owned,
       });
-      card.hit.on("pointerup", () => {
-        this.selected = relic.id;
-        this.refresh();
-      });
+      // 카드를 누르면 바로 정보창이 열린다. 애착 설정도 그 안의 뱃지가 맡는다.
+      card.hit.on("pointerup", () => this.info.showRelic(relic, relicCollection.owns(relic.id)));
       this.cards.set(relic.id, card);
     });
   }
@@ -126,71 +118,11 @@ export class RelicsScene extends Phaser.Scene {
     this.refresh();
   }
 
-  /** 아래쪽 요약 칸. 고른 렐릭이 무엇인지와, 거기서 할 수 있는 것을 모아 둔다. */
-  private buildSummary(): void {
-    const top = NAV_TOP - 400;
-    // 테두리 없는 유리 레이어. 그림자로만 배경에서 떠 보이게 한다.
-    drawLayer(this, BASE_WIDTH / 2, top + 190, slantedRect(BASE_WIDTH - 60, 380), {
-      fill: 0x141920,
-      alpha: HOLO.glass,
-      edge: COLOR.accent,
-      edgeAlpha: 0.25,
-    });
-
-    this.summaryName = this.add.text(60, top + 30, "", textStyle({ role: "display", size: 38 })).setOrigin(0, 0);
-    this.summaryBody = this.add
-      .text(60, top + 88, "", textStyle({ role: "body", size: 26, color: COLOR.inkDim, lineSpacing: 8 }))
-      .setOrigin(0, 0);
-
-    this.detailButton = new Button(this, 300, top + 300, {
-      width: 400,
-      height: 110,
-      label: "상세 정보",
-      fontSize: 32,
-      onClick: () => {
-        if (this.selected) this.info.showRelic(getRelic(this.selected), relicCollection.owns(this.selected));
-      },
-    });
-
-    this.favoriteButton = new Button(this, 760, top + 300, {
-      width: 400,
-      height: 110,
-      label: "애착 렐릭",
-      fontSize: 32,
-      onClick: () => {
-        if (!this.selected) return;
-        relicCollection.setFavorite(this.selected);
-        this.refresh();
-      },
-    });
-  }
-
+  /** 애착 렐릭만 카드에 표시를 남긴다. 정보창에서 바꾸고 나오면 다시 부른다. */
   private refresh(): void {
     for (const [id, card] of this.cards) {
-      const owned = relicCollection.owns(id);
-      card.setSelected(owned && id === this.selected);
+      card.setSelected(relicCollection.owns(id) && id === session.favorite);
     }
 
-    const def: RelicDef | null = this.selected ? getRelic(this.selected) : null;
-    const isFavorite = def !== null && session.favorite === def.id;
-    const owned = def !== null && relicCollection.owns(def.id);
-
-    this.summaryName.setText(def ? `NO.${def.specimenNumber}  ${owned ? def.name : "미발굴 개체"}` : "렐릭을 고르세요");
-    this.summaryBody.setText(
-      def
-        ? owned ? [
-            `${def.origin} · ${ROLE_LABEL[def.role]}`,
-            `패시브 · ${def.passive.name}`,
-            `궁극기 · ${def.ultimate.name}`,
-            isFavorite ? "로비에 서 있는 애착 렐릭이다." : "",
-          ]
-            .filter(Boolean)
-            .join("\n")
-          : [def.catalogSummary, "기록은 개체 획득 후 해제된다."].join("\n")
-        : "",
-    );
-
-    this.detailButton.setEnabled(def !== null);
-    this.favoriteButton.setSub("").setEnabled(owned && !isFavorite);
   }
 }

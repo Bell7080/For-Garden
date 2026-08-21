@@ -12,6 +12,7 @@ function makeSession(fossil = 1000): Session {
     cleared: new Set(),
     owned: new Set(["anky", "rex", "dodo"]),
     favorite: "anky",
+    bookmarked: new Set<string>(),
     pullCountSinceHighestRarity: { fossil: 0, amber: 0 },
     wallet: { fossil, amber: 10, dnaFragments: 0, weeds: 0 },
     relicProgress: Object.fromEntries(["anky", "rex", "dodo"].map((id) => [id, { level: id === "anky" ? 2 : 1, levelTitle: id === "anky" ? "발아체" : "복원체", dnaMastery: id === "anky" ? 1 : 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: id === "anky" ? ["vital-seed", null, null] : [null, null, null] }])),

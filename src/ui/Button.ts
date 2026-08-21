@@ -33,8 +33,9 @@ export interface ButtonOptions {
   /** 강조색과 함께 쓸 글자색. 넘기지 않으면 기본 잉크색이다. */
   accentTextColor?: string;
   /**
-   * 원근. 화면 가운데를 향한 변을 알려 주면 판이 그쪽으로 쏠린 사다리꼴이 된다.
-   * 왼쪽 끝 버튼은 `right`, 오른쪽 끝 버튼은 `left`다.
+   * 원근. **키가 큰 변**을 알려 주면 반대쪽이 좁아진 사다리꼴이 된다.
+   * 화면 가장자리 쪽이 커야 바깥에서 안으로 들어오는 판처럼 보이므로, 왼쪽 끝 버튼은
+   * `left`, 오른쪽 끝 버튼은 `right`다.
    */
   perspective?: "left" | "right";
   onClick: () => void;
@@ -63,7 +64,7 @@ export class Button extends Phaser.GameObjects.Container {
     if (opts.tilt) plate.setRotation(Phaser.Math.DegToRad(opts.tilt));
 
     const shape = opts.perspective
-      ? perspectiveRect(width, height, { inner: opts.perspective, taper: 0.42 })
+      ? perspectiveRect(width, height, { tall: opts.perspective, taper: 0.42 })
       : primary
         ? chipPoints(width, height, {
             bevel: { topLeft: height * 0.52, topRight: 0, bottomRight: height * 0.52, bottomLeft: 0 },

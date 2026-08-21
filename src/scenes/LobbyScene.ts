@@ -22,8 +22,6 @@ const STAGE_FLOOR = 1660;
 
 /** 교류의 강조색. 출격의 주황과 마주 보는 자리라 성격이 다른 색을 쓴다. */
 const EXCHANGE_BLUE = 0x6fa8d6;
-/** 출격의 강조색. 금색보다 붉게 기울여 "나가서 싸운다"는 신호를 준다. */
-const SORTIE_ORANGE = 0xe8913c;
 
 /**
  * 애착 렐릭이 들어가야 하는 상자.
@@ -67,7 +65,7 @@ export class LobbyScene extends Phaser.Scene {
       sub: this.expeditionStatus(),
       fontSize: 36,
       variant: "primary",
-      perspective: "left",
+      perspective: "right",
       tilt: -6,
       onClick: () => {
         expeditionButton.setEnabled(false);
@@ -87,10 +85,10 @@ export class LobbyScene extends Phaser.Scene {
       sub: "SORTIE",
       fontSize: 52,
       variant: "primary",
-      perspective: "left",
+      perspective: "right",
       tilt: -6,
-      accentColor: SORTIE_ORANGE,
-      accentTextColor: "#f2b070",
+      accentColor: COLOR.sortie,
+      accentTextColor: COLOR.sortieText,
       onClick: () => this.scene.start("stageMap"),
     });
 
@@ -102,7 +100,7 @@ export class LobbyScene extends Phaser.Scene {
       sub: "EXCHANGE",
       fontSize: 36,
       variant: "primary",
-      perspective: "right",
+      perspective: "left",
       tilt: 6,
       accentColor: EXCHANGE_BLUE,
       accentTextColor: "#9fd0f0",
@@ -242,7 +240,7 @@ export class LobbyScene extends Phaser.Scene {
     layer.add(drawHairline(this, BASE_WIDTH / 2, cy - 16, width - 60, { color: COLOR.accent, alpha: 0.45 }));
 
     const text = this.add
-      .text(left + 30, cy + 4, `“${line}”${reward}`, textStyle({ role: "body", size: 34, color: COLOR.ink, lineSpacing: 8, wrap: width - 60 }))
+      .text(left + 30, cy + 2, `${line}${reward}`, textStyle({ role: "body", size: 40, color: COLOR.ink, lineSpacing: 8, wrap: width - 60 }))
       .setOrigin(0, 0);
     // 대사 ID는 번역/분석 추적용으로 객체에 남기되 플레이어 화면에는 노출하지 않는다.
     text.setData("dialogueId", dialogueId);

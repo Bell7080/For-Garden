@@ -19,6 +19,9 @@ export const COLOR = {
   hpFill: 0xd8b978,
   hpEnemy: 0xb03a3a,
   energy: 0x7ea8d8,
+  /** 출격·출전처럼 "나가서 싸운다"를 뜻하는 입구의 강조색. 금색보다 붉다. */
+  sortie: 0xd85f34,
+  sortieText: "#f08b62",
   /** 발굴 등급은 기본 금속 패널 위에서만 쓰는 보조 신호색이다. */
   rarityR: 0x7890a3,
   raritySR: 0x6fc4bd,

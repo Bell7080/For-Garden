@@ -43,21 +43,21 @@ export interface Bevels {
 /**
  * 원근이 들어간 사다리꼴.
  *
- * 화면 양쪽 끝의 판을 가운데로 쏠리게 만들 때 쓴다. 안쪽(가운데를 향한) 변은 높이가 그대로고
- * 바깥 변만 `taper`만큼 짧아져, 정면이 아니라 비스듬히 놓인 판처럼 보인다.
+ * 화면 밖에서 안으로 들어오는 판처럼 보이게 한다. `tall`로 준 변이 높이를 그대로 쓰고
+ * 반대쪽이 `taper`만큼 짧아져, 가까운 바깥쪽이 크고 먼 안쪽이 작은 그림이 된다.
  */
 export function perspectiveRect(
   width: number,
   height: number,
-  options: { taper?: number; inner?: "left" | "right" } = {},
+  options: { taper?: number; tall?: "left" | "right" } = {},
 ): number[] {
   const taper = options.taper ?? 0.2;
   const hw = width / 2;
   const hh = height / 2;
-  const outer = hh * (1 - taper);
-  return options.inner === "left"
-    ? [-hw, -hh, hw, -outer, hw, outer, -hw, hh]
-    : [-hw, -outer, hw, -hh, hw, hh, -hw, outer];
+  const short = hh * (1 - taper);
+  return options.tall === "left"
+    ? [-hw, -hh, hw, -short, hw, short, -hw, hh]
+    : [-hw, -short, hw, -hh, hw, hh, -hw, short];
 }
 
 export interface ChipOptions {

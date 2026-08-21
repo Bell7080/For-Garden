@@ -143,14 +143,14 @@ export class PortraitCard extends Phaser.GameObjects.Container {
       const name = options.locked ? "???" : options.label;
       const inset = CHIP_INSET + 14;
       const baseline = height / 2 - (options.sub ? 44 : 20);
-      const nameSize = Math.min(40, width / 7);
+      const nameSize = Math.min(46, width / 6);
       const hasLevel = options.level !== undefined && !options.locked;
 
       // 레벨은 이름과 나란히 서지 않고 왼쪽 사이드에서 훨씬 크게 선다. 세로로 살짝 늘려
       // 계기판 숫자처럼 보이게 하고, 이름과는 색으로만 가른다.
       let nameLeft = -width / 2 + inset;
       if (hasLevel) {
-        const levelSize = Math.min(54, width / 5.2);
+        const levelSize = Math.min(56, width / 5);
         const levelText = scene.add
           .text(-width / 2 + inset, baseline + 4, `${options.level}`, textStyle({ role: "display", size: levelSize, color: COLOR.accentText }))
           .setOrigin(0, 1)
@@ -175,7 +175,7 @@ export class PortraitCard extends Phaser.GameObjects.Container {
           .setOrigin(0, 0);
         this.add(this.subText);
       }
-      if (options.stars) this.addStars(baseline - nameSize * 1.55, width / 2 - inset);
+      if (options.stars) this.addStars(baseline - nameSize * 2.05);
     }
 
     if (options.badge) {
@@ -236,16 +236,17 @@ export class PortraitCard extends Phaser.GameObjects.Container {
   /**
    * 이름 바로 위의 성급.
    *
-   * 다섯 칸이 원화 위에 바로 얹히면 밝은 옷에 묻히므로, 줄 뒤에 진한 그림자 판을 깔아 한
-   * 덩어리로 떼어 낸다. 찬 별은 빛무리를 두른 반짝임, 빈 별은 선만 남긴다.
+   * 다섯 칸을 카드 가운데에 모으고, 줄 뒤에 진한 그림자 판을 깔아 원화에서 떼어 낸다.
+   * 찬 별은 빛무리를 두른 반짝임, 빈 별은 선만 남긴다.
    */
-  private addStars(y: number, right: number): void {
+  private addStars(y: number): void {
     const stars = this.options.stars!;
     const size = Math.min(13, this.options.width / 22);
     const gap = size * 2.5;
-    const left = right - (stars.total - 1) * gap;
+    // 성급은 카드 가운데에 모은다. 레벨(왼쪽)·이름과 세로로 겹치지 않는 유일한 줄이다.
+    const left = -((stars.total - 1) * gap) / 2;
 
-    const plate = this.scene.add.graphics({ x: (left + right) / 2, y });
+    const plate = this.scene.add.graphics({ x: 0, y });
     plate.fillStyle(0x000000, 0.55);
     plate.fillPoints(toGeomPoints(slantedRect((stars.total - 1) * gap + size * 3.6, size * 2.9, size * 1.2)), true);
     this.add(plate);

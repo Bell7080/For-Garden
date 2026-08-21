@@ -9,7 +9,7 @@ import { battleAssetFor, spawnPuppet } from "../puppets/assets";
 import { isStageUnlocked, session } from "../state/session";
 import { Button } from "../ui/Button";
 import { addBackButton } from "../ui/IconButton";
-import { chipPoints, drawGlassFade, drawHairline, drawLayer } from "../ui/holo";
+import { chipPoints, drawGlassFade, drawHairline, drawLayer, drawVignette } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
 import { BACKGROUND } from "../ui/backgrounds";
 
@@ -20,10 +20,17 @@ const NODE_GAP = 230;
 /** 드래그를 스크롤로 볼지 탭으로 볼지 가르는 거리. */
 const DRAG_SLOP = 14;
 
-/** 위에서 내려오는 적 정보 패널. */
-const PANEL = { height: 470, sdHeight: 170 } as const;
-/** 패널 안 세 칸의 가로 위치. */
-const PANEL_COLUMNS = [270, 540, 810];
+/**
+ * 고른 스테이지 바로 위에 뜨는 적 편성 팝업.
+ *
+ * 화면 위쪽에 붙은 큰 패널은 구역 제목과 자리를 다퉜다. 고른 노드는 언제나 창 한가운데로
+ * 올라오므로, 그 바로 위에 작은 팝업을 띄우면 어느 스테이지의 적인지도 함께 읽힌다.
+ */
+const POPUP = { width: 700, height: 250, sdHeight: 120 } as const;
+/** 팝업 가운데를 기준으로 한 세 칸의 가로 위치. */
+const POPUP_COLUMNS = [-210, 0, 210];
+/** 고른 노드가 멈추는 화면 높이. 팝업은 이 위에 뜬다. */
+const NODE_FOCUS_Y = (WINDOW.top + WINDOW.bottom) / 2;
 
 /**
  * 스테이지 지도.
@@ -40,9 +47,10 @@ export class StageMapScene extends Phaser.Scene {
   private selected!: string;
   private sortieButton!: Button;
 
-  /** 적 정보 패널. */
+  /** 적 편성 팝업. */
   private panel!: Phaser.GameObjects.Container;
   private panelTitle!: Phaser.GameObjects.Text;
+  private panelTail!: Phaser.GameObjects.Graphics;
   private panelSlots: {
     name: Phaser.GameObjects.Text;
     detail: Phaser.GameObjects.Text;
@@ -76,6 +84,11 @@ export class StageMapScene extends Phaser.Scene {
     // 장축 지도 밖의 여백만 어둡게 남기고, 실제 원화는 노드와 같은 컨테이너에서 함께 스크롤한다.
     this.add.rectangle(cx, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void).setDepth(-30);
 
+    // 지도 원화의 가장자리를 눌러 노드와 글자가 먼저 읽히게 한다.
+    drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { depth: 40, strength: 0.5 });
+    // 아래쪽은 출전 버튼이 앉는 자리라 한 겹 더 검게 깔아 톤을 정리한다.
+    drawGlassFade(this, cx, BASE_HEIGHT - 190, BASE_WIDTH, 620, { topAlpha: 0, bottomAlpha: 0.92 }).setDepth(41);
+
     this.add.text(cx, 140, "제 1 구역", textStyle({ role: "display", size: 60 })).setOrigin(0.5);
     this.add
       .text(cx, 202, "격리 구역 — 이터널 시티 외곽", textStyle({ role: "body", size: 28, color: COLOR.inkDim }))
@@ -87,6 +100,9 @@ export class StageMapScene extends Phaser.Scene {
     this.sortieButton = new Button(this, cx, BASE_HEIGHT - 180, {
       width: 340,
       height: 108,
+      variant: "primary",
+      accentColor: COLOR.sortie,
+      accentTextColor: COLOR.sortieText,
       label: "출  전",
       fontSize: 36,
       onClick: () => {
@@ -200,27 +216,30 @@ export class StageMapScene extends Phaser.Scene {
     this.tweens.add({ targets: this.map, y: clamped, duration: 420, ease: "Cubic.Out" });
   }
 
-  /** 위에서 미끄러져 내려오는 적 정보 패널. 내용만 갈아 끼우고 한 번만 만든다. */
+  /** 고른 노드 위에 뜨는 적 편성 팝업. 내용만 갈아 끼우고 한 번만 만든다. */
   private buildPanel(): void {
-    this.panel = this.add.container(0, -PANEL.height).setDepth(60);
-    // 판때기 대신 아래로 짙어지는 유리면과 아래쪽 강조선 한 줄.
-    this.panel.add(drawGlassFade(this, BASE_WIDTH / 2, PANEL.height / 2 - 20, BASE_WIDTH + 40, PANEL.height + 40, {
-      topAlpha: 0.95,
-      bottomAlpha: 0.6,
-    }));
-    this.panel.add(drawHairline(this, BASE_WIDTH / 2, PANEL.height - 2, BASE_WIDTH, { color: COLOR.accent, alpha: 0.8 }));
+    // 노드보다 위, 지도보다 앞. 팝업 가운데가 원점이라 자리를 옮겨도 안쪽 좌표는 그대로다.
+    this.panel = this.add.container(BASE_WIDTH / 2, NODE_FOCUS_Y - POPUP.height / 2 - 96).setDepth(60).setVisible(false);
+    const unit = Math.min(POPUP.width, POPUP.height);
+    this.panel.add(drawLayer(this, 0, 0, chipPoints(POPUP.width, POPUP.height, {
+      bevel: { topLeft: unit * 0.16, topRight: 0, bottomRight: unit * 0.16, bottomLeft: 0 },
+    }), { fill: 0x0b0f15, alpha: 0.92, edge: COLOR.accent, edgeAlpha: 0.55 }));
+    // 팝업이 어느 노드에 붙은 것인지 짧은 선이 알려 준다. 방향은 붙는 자리에 따라 바뀐다.
+    this.panelTail = this.add.graphics();
+    this.panel.add(this.panelTail);
 
-    this.panelTitle = this.add.text(40, 34, "", textStyle({ role: "display", size: 40 })).setOrigin(0, 0);
+    this.panelTitle = this.add.text(-POPUP.width / 2 + 28, -POPUP.height / 2 + 22, "", textStyle({ role: "display", size: 30 })).setOrigin(0, 0);
     this.panel.add(this.panelTitle);
-    this.panel.add(this.add.text(BASE_WIDTH - 40, 46, "적 편성", textStyle({ role: "emphasis", size: 26, color: COLOR.dangerText })).setOrigin(1, 0));
+    this.panel.add(this.add.text(POPUP.width / 2 - 28, -POPUP.height / 2 + 26, "적 편성", textStyle({ role: "emphasis", size: 22, color: COLOR.dangerText })).setOrigin(1, 0));
+    this.panel.add(drawHairline(this, 0, -POPUP.height / 2 + 68, POPUP.width - 56, { color: COLOR.accent, alpha: 0.35 }));
 
-    PANEL_COLUMNS.forEach((x) => {
-      const ground = PANEL.height - 130;
-      this.panel.add(this.add.ellipse(x, ground + 4, 170, 30, COLOR.panel, 0.6));
-      const name = this.add.text(x, ground + 22, "", textStyle({ role: "display", size: 26 })).setOrigin(0.5, 0);
-      const detail = this.add.text(x, ground + 56, "", textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0.5, 0);
+    POPUP_COLUMNS.forEach((x) => {
+      const ground = POPUP.height / 2 - 62;
+      this.panel.add(this.add.ellipse(x, ground + 4, 120, 22, COLOR.void, 0.5));
+      const name = this.add.text(x, ground + 14, "", textStyle({ role: "display", size: 22 })).setOrigin(0.5, 0);
+      const detail = this.add.text(x, ground + 42, "", textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0.5, 0);
       // SD는 그림이라 입력을 받지 않는다. 칸 전체를 눌러 상세를 연다.
-      const hit = this.add.rectangle(x, ground - PANEL.sdHeight / 2 + 20, 240, PANEL.sdHeight + 120, 0xffffff, 0).setInteractive({ useHandCursor: true });
+      const hit = this.add.rectangle(x, ground - POPUP.sdHeight / 2, 190, POPUP.sdHeight + 90, 0xffffff, 0).setInteractive({ useHandCursor: true });
       this.panel.add([name, detail, hit]);
       this.panelSlots.push({ name, detail, hit });
     });
@@ -239,16 +258,36 @@ export class StageMapScene extends Phaser.Scene {
       node.label.setColor(chosen ? COLOR.accentText : session.cleared.has(id) ? COLOR.ink : COLOR.inkDim);
     }
 
-    // 고른 노드를 창 한가운데로 올린다.
-    this.scrollTo((WINDOW.top + WINDOW.bottom) / 2 + index * NODE_GAP, !instant);
+    // 고른 노드를 창 한가운데로 올린다. 지도 끝에서는 더 굴러가지 않으므로 실제로 노드가
+    // 멈추는 자리를 미리 계산해 팝업을 그 위에 붙인다.
+    const scroll = Phaser.Math.Clamp((WINDOW.top + WINDOW.bottom) / 2 + index * NODE_GAP, this.scrollMin, this.scrollMax);
+    this.scrollTo(scroll, !instant);
+    this.anchorPanel(scroll - index * NODE_GAP);
     this.sortieButton.setSub("");
     this.showPanel(stage);
+  }
+
+  /**
+   * 팝업을 노드 바로 위(자리가 없으면 아래)에 붙인다.
+   *
+   * 지도 위쪽 끝에서는 팝업이 구역 제목을 덮으므로, 그때만 노드 아래로 내려 붙인다.
+   */
+  private anchorPanel(nodeY: number): void {
+    const above = nodeY - POPUP.height / 2 - 96;
+    const fitsAbove = above >= WINDOW.top - 40;
+    this.panel.setY(fitsAbove ? above : nodeY + POPUP.height / 2 + 96);
+    // 꼬리는 팝업에서 노드 쪽으로 뻗는다. 컨테이너를 뒤집으면 글자까지 뒤집히므로 다시 긋는다.
+    const edge = fitsAbove ? POPUP.height / 2 : -POPUP.height / 2;
+    this.panelTail.clear();
+    this.panelTail.lineStyle(3, COLOR.accent, 0.55);
+    this.panelTail.lineBetween(0, edge, 0, edge + (fitsAbove ? 52 : -52));
   }
 
   /** 패널 내용을 지금 스테이지의 적으로 바꾸고, 아직 올라가 있으면 내린다. */
   private showPanel(stage: StageDef): void {
     const request = ++this.panelRequest;
     this.panelTitle.setText(`${stage.id}  ${stage.name}  ·  적 LV.${stage.enemyLevel}`);
+    // 팝업이 새로 뜰 때마다 SD도 다시 세운다. 이전 스테이지의 SD는 여기서 지운다.
 
     getStageEnemies(stage).forEach((def, slot) => {
       const view = this.panelSlots[slot];
@@ -264,10 +303,13 @@ export class StageMapScene extends Phaser.Scene {
 
     if (this.panelShown) return;
     this.panelShown = true;
+    // 노드에서 솟아오르듯 살짝 커지며 뜬다.
+    this.panel.setVisible(true).setAlpha(0).setScale(0.94);
     this.tweens.add({
       targets: this.panel,
-      y: 0,
-      duration: 380,
+      alpha: 1,
+      scale: 1,
+      duration: 260,
       ease: "Cubic.Out",
       onComplete: () => {
         this.panelDown = true;
@@ -277,17 +319,17 @@ export class StageMapScene extends Phaser.Scene {
   }
 
   /**
-   * 패널 안 SD 하나.
+   * 팝업 안 SD 하나.
    *
-   * Puppet은 자체 GPU 경로로 그려서 컨테이너의 이동을 따라가지 않는다. 그래서 패널이 다 내려온
-   * 자리의 화면 좌표에 직접 세우고, 내려오는 동안에는 감춰 둔다. 늦게 도착한 로딩이 다른
+   * Puppet은 자체 GPU 경로로 그려서 컨테이너의 이동을 따라가지 않는다. 그래서 팝업이 자리
+   * 잡은 화면 좌표에 직접 세우고, 떠오르는 동안에는 감춰 둔다. 늦게 도착한 로딩이 다른
    * 스테이지의 적을 세우지 않도록 요청 번호도 확인한다.
    */
   private async standEnemy(relicId: string, slot: number, request: number): Promise<void> {
     const creature = await spawnPuppet(this, battleAssetFor(relicId), {
-      x: PANEL_COLUMNS[slot],
-      groundY: PANEL.height - 130,
-      height: PANEL.sdHeight,
+      x: BASE_WIDTH / 2 + POPUP_COLUMNS[slot],
+      groundY: this.panel.y + POPUP.height / 2 - 62,
+      height: POPUP.sdHeight,
       flipX: true,
       // 적 번호별 원본 색을 그대로 보여 줘 토비·아모·리파 외형을 명확히 구분한다.
       tint: 0xffffff,

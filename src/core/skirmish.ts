@@ -105,8 +105,6 @@ export const SKIRMISH = {
   crowdPenalty: 240,
   /** 상대에게 곧장 가지 않고 옆으로 흐르는 정도. 패싸움처럼 보이게 한다. */
   swirl: 0.32,
-  /** 붙어 있는 동안 상대 주위를 도는 속도 비율. 서서 때리기만 하지 않게 한다. */
-  strafe: 0.4,
   /** 때리는 순간 상대 쪽으로 튀어나가는 거리(px). */
   lunge: 52,
   /**
@@ -333,7 +331,12 @@ function strike(
   }
 }
 
-/** 서로 겹쳐 서지 않도록 가까운 둘을 조금씩 밀어낸다. */
+/**
+ * 서로 겹쳐 서지 않도록 **달려드는 쪽만** 비켜 세운다.
+ *
+ * 이미 붙어 싸우는 캐릭터까지 밀면 주고받는 내내 둘이 함께 미끄러진다. 겹침은 대부분 같은
+ * 상대에게 몰려드는 도중에 생기므로, 아직 붙지 않은 쪽만 움직여도 충분히 풀린다.
+ */
 function separate(state: SkirmishState, dt: number): void {
   const alive = state.fighters.filter(isFighterAlive);
   for (let i = 0; i < alive.length; i += 1) {
@@ -347,11 +350,19 @@ function separate(state: SkirmishState, dt: number): void {
       // 정확히 겹쳤을 때도 방향이 필요하므로 고유 위상으로 갈라 세운다.
       const angle = gap > 0.001 ? Math.atan2(dy, dx) : a.wander;
       // 겹친 양을 한 번에 없애지 않고 시간에 비례해 조금씩 푼다.
-      const push = ((SKIRMISH.spacing - gap) / 2) * Math.min(1, SKIRMISH.separationRate * dt);
-      a.x -= Math.cos(angle) * push;
-      a.y -= Math.sin(angle) * push;
-      b.x += Math.cos(angle) * push;
-      b.y += Math.sin(angle) * push;
+      // 한쪽만 움직일 수 있으면 그쪽이 겹친 양을 전부 감당한다.
+      const movable = [!a.engaged, !b.engaged];
+      if (!movable[0] && !movable[1]) continue;
+      const share = movable[0] && movable[1] ? 0.5 : 1;
+      const push = (SKIRMISH.spacing - gap) * share * Math.min(1, SKIRMISH.separationRate * dt);
+      if (movable[0]) {
+        a.x -= Math.cos(angle) * push;
+        a.y -= Math.sin(angle) * push;
+      }
+      if (movable[1]) {
+        b.x += Math.cos(angle) * push;
+        b.y += Math.sin(angle) * push;
+      }
     }
   }
 }
@@ -417,10 +428,8 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     // 멈춰 서면 튀어 오르던 높이만 부드럽게 내려놓는다.
     fighter.hop *= recovery;
 
-    // 붙은 뒤에도 상대 주위를 천천히 돌며 자리를 바꾼다. 멈춰 서서 주고받는 그림이 되지 않는다.
-    const orbit = Math.sin(state.elapsed * 0.9 + fighter.wander) * moveSpeed(fighter) * SKIRMISH.strafe * dt;
-    fighter.x += (-dy / gap) * orbit;
-    fighter.y += (dx / gap) * orbit;
+    // 붙은 뒤에는 발을 붙인다. 자리를 계속 바꾸면 서로 밀며 미끄러지는 것처럼 보이고,
+    // 때리는 순간의 돌진·피격 반동(그림만 흔드는 변위)도 묻힌다.
 
     if (fighter.attackCooldown <= 0) {
       // 진압 기절은 공격 주기 단위로 감소해 장시간 무방비라는 대가를 눈에 보이게 만든다.

@@ -5,6 +5,7 @@ import { setDebugScene } from "../debug";
 import { gameApi } from "../api/FakeServer";
 import { GameApiError } from "../api/contracts";
 import { canPull, pullCost, type AcquisitionResult, type Banner } from "../core/gacha";
+import { ExcavationPresentationController, firstMeetingRelicIds, highestRarity } from "../core/excavationPresentation";
 import { BANNERS } from "../data/banners";
 import { getRelic } from "../data/relics";
 import {
@@ -20,6 +21,8 @@ import { Button } from "../ui/Button";
 import { TopBar } from "../ui/TopBar";
 import { COLOR, textStyle } from "../ui/theme";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
+import { PortraitCard } from "../ui/PortraitCard";
+import { firstMeetingLine } from "../data/relicFirstMeetings";
 
 /** 배너 그림이 서는 바닥. */
 const BANNER_FLOOR = 1240;
@@ -44,6 +47,11 @@ export class LabScene extends Phaser.Scene {
   private showcaseRequest = 0;
   /** 연속 터치로 같은 재화가 두 번 결제되는 요청 중복을 클라이언트에서도 막는다. */
   private pullPending = false;
+  /** 결과 저장 뒤의 시각 연출만 소유하며, 씬 종료 시 반드시 invalidate/destroy한다. */
+  private readonly presentation = new ExcavationPresentationController();
+  private presentationLayer?: Phaser.GameObjects.Container;
+  /** 단계 넘기기가 현재 기다리는 타이머를 즉시 깨우는 훅이다. */
+  private finishStage?: () => void;
 
   constructor() {
     super("lab");
@@ -127,6 +135,10 @@ export class LabScene extends Phaser.Scene {
       this.showcaseRequest += 1;
       this.showcase?.destroy();
       this.showcase = undefined;
+      this.presentation.invalidate();
+      this.finishStage?.();
+      this.presentationLayer?.destroy(true);
+      this.presentationLayer = undefined;
     });
     void this.showcaseRelic();
     this.refresh();
@@ -172,7 +184,8 @@ export class LabScene extends Phaser.Scene {
       // 결과와 비용은 클라이언트에서 계산하지 않고 API 응답만 화면에 반영한다.
       const response = await gameApi.pullRelics({ bannerId: banner.id, count });
       this.topBar.refresh();
-      this.showResult(response.results);
+      // API가 상태 반영과 저장까지 끝낸 뒤 응답하므로 이후 건너뛰기는 보상에 영향을 주지 않는다.
+      await this.playPresentation(response.results);
     } catch (error) {
       const message = error instanceof GameApiError ? error.message : "통신에 실패했습니다. 다시 시도해 주세요.";
       this.showNotice(message);
@@ -210,30 +223,153 @@ export class LabScene extends Phaser.Scene {
     shade.on("pointerdown", () => overlay.destroy());
   }
 
-  /** 뽑은 결과를 한 장에 보여 준다. */
-  private showResult(results: AcquisitionResult[]): void {
-    const cx = BASE_WIDTH / 2;
-    const overlay = this.add.container(0, 0).setDepth(800);
+  /** 현재 단계의 자동 진행을 기다린다. 탭하면 이 Promise만 끝나고 다음 상태로 넘어간다. */
+  private waitForStage(ms: number, request: number): Promise<void> {
+    return new Promise((resolve) => {
+      let done = false;
+      const timer = this.time.delayedCall(ms, finish);
+      const trigger = () => finish();
+      this.finishStage = trigger;
+      const scene = this;
+      function finish(): void {
+        if (done) return;
+        done = true;
+        timer.remove(false);
+        if (scene.finishStage === trigger && scene.presentation.isCurrent(request)) scene.finishStage = undefined;
+        resolve();
+      }
+    });
+  }
 
-    const shade = this.add.rectangle(cx, 960, BASE_WIDTH, 1920, COLOR.void, 0.96).setInteractive();
-    overlay.add(shade);
-    overlay.add(this.add.text(cx, 320, "발굴 결과", textStyle({ size: 52 })).setOrigin(0.5));
+  /** 서버 확정 등급을 복권처럼 암시한 뒤 균열→첫 대면→카드 순서로 재생한다. */
+  private async playPresentation(results: AcquisitionResult[]): Promise<void> {
+    const request = this.presentation.begin();
+    const rarity = highestRarity(results.map((result) => getRelic(result.relicId).rarity));
+    const meetings = firstMeetingRelicIds(results);
+    this.presentationLayer?.destroy(true);
+    const layer = this.add.container(0, 0).setDepth(900);
+    this.presentationLayer = layer;
+    const shade = this.add.rectangle(BASE_WIDTH / 2, 960, BASE_WIDTH, 1920, COLOR.void, 0.97).setInteractive();
+    layer.add(shade);
+    // 단계 콘텐츠만 교체해 고정 입력면과 건너뛰기 버튼을 실수로 파괴하지 않는다.
+    const content = this.add.container(0, 0);
+    layer.add(content);
+    shade.on("pointerup", () => this.finishStage?.());
+    const skip = new Button(this, BASE_WIDTH - 150, 100, { width: 230, height: 70, label: "전체 건너뛰기", fontSize: 22, onClick: () => {
+      this.presentation.skipAll();
+      this.finishStage?.();
+    } });
+    layer.add(skip);
+
+    content.add(this.add.text(BASE_WIDTH / 2, 660, "화석층 탐사 중", textStyle({ size: 48, color: COLOR.inkDim })).setOrigin(0.5));
+    await this.waitForStage(650, request);
+    if (!this.presentation.isCurrent(request)) return;
+    if (!this.presentation.wasSkipped) this.presentation.advance();
+
+    if (!this.presentation.wasSkipped) {
+      content.removeAll(true);
+      this.drawCrack(content, rarity);
+      this.cameras.main.shake(rarity === "SSR" ? 420 : 260, rarity === "SSR" ? 0.012 : 0.006);
+      // 오디오가 준비되면 씬 외부에서 이 훅을 받아 실제 파일을 재생한다.
+      this.events.emit("excavation-sound", "crack", rarity);
+      await this.waitForStage(700, request);
+      this.presentation.advance();
+    }
+    if (!this.presentation.isCurrent(request)) return;
+
+    if (!this.presentation.wasSkipped) {
+      this.showRarityFlash(content, rarity);
+      await this.waitForStage(650, request);
+      this.presentation.advance();
+    }
+
+    for (const relicId of meetings) {
+      if (!this.presentation.isCurrent(request) || this.presentation.wasSkipped) break;
+      await this.showFirstMeeting(content, relicId, request);
+    }
+    if (!this.presentation.wasSkipped) this.presentation.advance();
+    if (this.presentation.isCurrent(request)) {
+      skip.destroy();
+      this.showResultCards(content, layer, results);
+    }
+  }
+
+  /** 고비용 영상 대신 Graphics 선과 작은 원 파편 tween으로 균열을 만든다. */
+  private drawCrack(layer: Phaser.GameObjects.Container, rarity: "R" | "SR" | "SSR"): void {
+    const color = this.rarityColor(rarity);
+    const graphics = this.add.graphics();
+    graphics.lineStyle(rarity === "SSR" ? 10 : 6, color, 1);
+    const branches = [[540, 450, 500, 690, 585, 850, 490, 1080], [540, 450, 650, 620, 620, 820], [500, 690, 350, 790, 300, 970]];
+    for (const points of branches) graphics.strokePoints(points.reduce<Phaser.Math.Vector2[]>((all, value, index) => {
+      if (index % 2 === 0) all.push(new Phaser.Math.Vector2(value, points[index + 1]));
+      return all;
+    }, []));
+    layer.add(graphics);
+    for (let index = 0; index < 12; index += 1) {
+      const mote = this.add.circle(540, 720, 3 + (index % 4), color, 0.9);
+      layer.add(mote);
+      this.tweens.add({ targets: mote, x: 300 + ((index * 83) % 480), y: 500 + ((index * 137) % 620), alpha: 0, duration: 500 });
+    }
+  }
+
+  /** 최고 등급 색만 미리 보여 주고 구체적인 카드 결과는 아직 숨긴다. */
+  private showRarityFlash(layer: Phaser.GameObjects.Container, rarity: "R" | "SR" | "SSR"): void {
+    layer.removeAll(true);
+    const flash = this.add.rectangle(BASE_WIDTH / 2, 960, BASE_WIDTH, 1920, this.rarityColor(rarity), 0.18);
+    layer.add(flash);
+    // SR은 보라 외곽, SSR은 밝은 호박 외곽을 더해 단색 R과 실루엣만으로도 구분한다.
+    if (rarity !== "R") layer.add(this.add.rectangle(BASE_WIDTH / 2, 960, 920, 1240)
+      .setStrokeStyle(10, rarity === "SR" ? COLOR.raritySRAlt : COLOR.raritySSRLight, 0.85));
+    layer.add(this.add.text(BASE_WIDTH / 2, 800, rarity === "SSR" ? "호박빛 공명이 폭발한다" : rarity === "SR" ? "청록과 보랏빛이 교차한다" : "회청색 파장이 감지된다", textStyle({ size: 42, align: "center", wrap: 820 })).setOrigin(0.5));
+    this.tweens.add({ targets: flash, alpha: 0.55, duration: 180, yoyo: true, repeat: 1 });
+  }
+
+  private rarityColor(rarity: "R" | "SR" | "SSR"): number {
+    return rarity === "SSR" ? COLOR.raritySSR : rarity === "SR" ? COLOR.raritySR : COLOR.rarityR;
+  }
+
+  /** 신규 Puppet 로딩 실패도 연출을 멈추지 않고 이름과 대사 텍스트로 대체한다. */
+  private async showFirstMeeting(layer: Phaser.GameObjects.Container, relicId: string, request: number): Promise<void> {
+    layer.removeAll(true);
+    const def = getRelic(relicId);
+    let standing: PuppetCreature | undefined;
+    try {
+      standing = await spawnPuppet(this, portraitAssetFor(def.portraitAssetId), { x: BASE_WIDTH / 2, groundY: 1260, height: 900, tint: portraitUsesRelicTint(def.portraitAssetId) ? mixWhite(tintFor(def.id), 0.55) : undefined, depth: 905 });
+    } catch {
+      // 부트 캐시나 WebGL 복제가 실패해도 첫 대면 정보는 텍스트로 온전히 전달한다.
+      layer.add(this.add.text(BASE_WIDTH / 2, 650, `[${def.name} 스탠딩을 불러오지 못했습니다]`, textStyle({ size: 30, color: COLOR.inkDim })).setOrigin(0.5));
+    }
+    if (!this.presentation.isCurrent(request)) { standing?.destroy(); return; }
+    layer.add(this.add.rectangle(BASE_WIDTH / 2, 1470, 900, 250, COLOR.panel, 0.96).setStrokeStyle(3, this.rarityColor(def.rarity)));
+    layer.add(this.add.text(140, 1380, `${def.name} · ${def.rarity}`, textStyle({ size: 32, color: COLOR.accentText })).setOrigin(0, 0.5));
+    layer.add(this.add.text(BASE_WIDTH / 2, 1500, firstMeetingLine(relicId), textStyle({ size: 30, wrap: 780, align: "center" })).setOrigin(0.5));
+    await this.waitForStage(1200, request);
+    standing?.destroy();
+  }
+
+  /** 한 장과 10연 모두 같은 프로필 카드 그리드로 신규/DNA 결과를 읽게 한다. */
+  private showResultCards(content: Phaser.GameObjects.Container, layer: Phaser.GameObjects.Container, results: AcquisitionResult[]): void {
+    const cx = BASE_WIDTH / 2;
+    content.removeAll(true);
+    content.add(this.add.text(cx, 210, "발굴 결과", textStyle({ size: 52 })).setOrigin(0.5));
 
     results.forEach((result, index) => {
       const def = getRelic(result.relicId);
-      const y = 430 + index * 92;
-      // 기존 청록 계열 ally 패널과 금색 강조 글자로 슬롯별 보상을 빠르게 구분한다.
-      const row = this.add.rectangle(cx, y, 820, 72, COLOR.panel).setStrokeStyle(2, COLOR.ally);
       const badge = result.kind === "new"
         ? "신규"
         : result.kind === "mastery"
           ? `DNA ${result.dnaBefore}→${result.dnaAfter}`
           : `DNA 조각 +${result.overflowFragments}`;
-      overlay.add([
-        row,
-        this.add.text(cx - 380, y, `${def.name} — ${def.origin}`, textStyle({ size: 27 })).setOrigin(0, 0.5),
-        this.add.text(cx + 380, y, badge, textStyle({ size: 25, color: COLOR.accentText })).setOrigin(1, 0.5),
-      ]);
+      const columns = results.length === 1 ? 1 : 2;
+      const card = new PortraitCard(this, columns === 1 ? cx : 285 + (index % 2) * 510, results.length === 1 ? 850 : 390 + Math.floor(index / 2) * 230, {
+        width: results.length === 1 ? 520 : 440, height: results.length === 1 ? 720 : 210,
+        portraitAssetId: def.portraitAssetId, tint: portraitUsesRelicTint(def.portraitAssetId) ? mixWhite(tintFor(def.id), 0.55) : undefined,
+        label: def.name, sub: badge, badge: def.rarity,
+      });
+      card.setDepth(902);
+      content.add(card);
+      // 등급 테두리는 기존 금속 패널을 유지하면서 보조 토큰만 더한다.
+      card.setSelected(true, this.rarityColor(def.rarity));
     });
 
     const close = new Button(this, cx, NAV_TOP - 200, {
@@ -241,10 +377,9 @@ export class LabScene extends Phaser.Scene {
       height: 120,
       label: "확인",
       fontSize: 36,
-      onClick: () => overlay.destroy(),
+      onClick: () => { layer.destroy(true); this.presentationLayer = undefined; },
     });
-    overlay.add(close);
-    shade.on("pointerdown", () => overlay.destroy());
+    content.add(close);
   }
 
   private refresh(): void {

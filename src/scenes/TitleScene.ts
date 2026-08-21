@@ -17,10 +17,15 @@ export class TitleScene extends Phaser.Scene {
     const cx = BASE_WIDTH / 2;
     this.add.rectangle(cx, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void);
 
-    this.add.text(cx, BASE_HEIGHT * 0.34, "ETERNAL CITY", textStyle({ role: "display", size: 92 })).setOrigin(0.5);
+    // 제목(For - Garden) · 부제(이터널 시티) · 도시 소개 세 줄이 곧 위계 셋의 본보기다.
+    this.add.text(cx, BASE_HEIGHT * 0.34, "For - Garden", textStyle({ role: "display", size: 92 })).setOrigin(0.5);
 
     this.add
-      .text(cx, BASE_HEIGHT * 0.34 + 96, "RELIC 관리 프로젝트", textStyle({ role: "emphasis", size: 40, color: COLOR.accentText }))
+      .text(cx, BASE_HEIGHT * 0.34 + 96, "이터널 시티", textStyle({ role: "emphasis", size: 40, color: COLOR.accentText }))
+      .setOrigin(0.5);
+
+    this.add
+      .text(cx, BASE_HEIGHT * 0.34 + 152, "멸종 동물 복원 연구 도시", textStyle({ role: "body", size: 30, color: COLOR.inkDim }))
       .setOrigin(0.5);
 
     const recoveryNotice = this.registry.get("saveRecoveryNotice") as string | undefined;

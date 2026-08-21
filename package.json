@@ -1,9 +1,9 @@
 {
-  "name": "eternal-city",
+  "name": "for-garden",
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "이터널 시티 — RELIC 관리 프로젝트. 세로형 모바일 수집형 RPG.",
+  "description": "For - Garden — 이터널 시티. 멸종 동물 복원 연구 도시를 무대로 한 세로형 모바일 수집형 RPG.",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",

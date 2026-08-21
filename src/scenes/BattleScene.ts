@@ -104,7 +104,8 @@ export class BattleScene extends Phaser.Scene {
     this.finished = false;
     this.spawned = false;
 
-    addSceneBackground(this, BACKGROUND.battleArea, -30);
+    // 편성 화면에서 본 6번 전장을 그대로 이어 실제 전투의 공간으로 사용한다.
+    addSceneBackground(this, BACKGROUND.combat, -30);
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.28).setDepth(-29);
     this.add.text(42, 48, `${stage.id} · ${stage.name} · 적 LV.${stage.enemyLevel}`, textStyle({ role: "body", size: 30, color: COLOR.inkDim }));
     this.add.text(BASE_WIDTH / 2, 160, "AUTO BATTLE", textStyle({ role: "emphasis", size: 28, color: COLOR.accentText })).setOrigin(0.5);

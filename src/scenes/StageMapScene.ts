@@ -11,9 +11,7 @@ import { Button } from "../ui/Button";
 import { addBackButton } from "../ui/IconButton";
 import { chipPoints, drawGlassFade, drawHairline, drawLayer } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
-import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
-import { gameApi } from "../api/FakeServer";
-import { DAILY_RESTORATION } from "../data/stages";
+import { BACKGROUND } from "../ui/backgrounds";
 
 /** 지도가 보이는 세로 구간. 위쪽 제목과 아래쪽 버튼을 침범하지 않는다. */
 const WINDOW = { top: 500, bottom: 1560 } as const;
@@ -75,9 +73,8 @@ export class StageMapScene extends Phaser.Scene {
     this.panelRequest = 0;
 
     const cx = BASE_WIDTH / 2;
-    // 출전 이후 지도부터는 background_004를 공통 전투 에리어로 이어 쓴다.
-    addSceneBackground(this, BACKGROUND.battleArea);
-    this.add.rectangle(cx, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.38).setDepth(-29);
+    // 장축 지도 밖의 여백만 어둡게 남기고, 실제 원화는 노드와 같은 컨테이너에서 함께 스크롤한다.
+    this.add.rectangle(cx, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void).setDepth(-30);
 
     this.add.text(cx, 140, "제 1 구역", textStyle({ role: "display", size: 60 })).setOrigin(0.5);
     this.add
@@ -86,21 +83,6 @@ export class StageMapScene extends Phaser.Scene {
 
     this.buildMap();
     this.buildPanel();
-
-    // 별도 대형 지도를 만들지 않고 메인 지도 상단의 단일 일일 콘텐츠 진입점으로 제공한다.
-    const dailyButton = new Button(this, cx, 340, {
-      width: 430, height: 104, label: DAILY_RESTORATION.name,
-      sub: `UTC 기준 · 남은 입장 ${Math.max(0, DAILY_RESTORATION.maxEntriesPerUtcDay - session.dailyContent.restorationEntries)}/${DAILY_RESTORATION.maxEntriesPerUtcDay}`,
-      fontSize: 30,
-      onClick: () => {
-        dailyButton.setEnabled(false);
-        // 프로토타입은 입장 요청 자체를 짧은 복원 훈련 완료로 보며 서버가 횟수와 보상을 함께 저장한다.
-        void gameApi.enterDailyRestoration().then((result) => {
-          dailyButton.setSub(`잡초 +${result.weedsEarned} · 남은 입장 ${result.entriesRemaining}/${DAILY_RESTORATION.maxEntriesPerUtcDay}`);
-          dailyButton.setEnabled(result.entriesRemaining > 0);
-        }).catch(() => dailyButton.setSub("오늘의 입장을 모두 사용했습니다."));
-      },
-    });
 
     this.sortieButton = new Button(this, cx, BASE_HEIGHT - 180, {
       width: 340,
@@ -130,6 +112,12 @@ export class StageMapScene extends Phaser.Scene {
     const cx = BASE_WIDTH / 2;
     this.map = this.add.container(0, 0);
     const height = (STAGES.length - 1) * NODE_GAP;
+    // 원화 하단을 1-1 기준점에 고정한다. 위 스테이지로 스크롤할수록 배경도 같은 거리만큼 올라간다.
+    const mapArt = this.add.image(cx, 140, BACKGROUND.stageMap).setOrigin(0.5, 1);
+    mapArt.setScale(BASE_WIDTH / mapArt.width);
+    this.map.add(mapArt);
+    // 어두운 투명막도 지도에 묶어 원화의 이동감을 보존하면서 노드와 글자의 대비를 일정하게 한다.
+    this.map.add(this.add.rectangle(cx, -height / 2, BASE_WIDTH, height + BASE_HEIGHT, COLOR.void, 0.22));
     this.map.add(this.add.line(0, 0, cx, 0, cx, -height, COLOR.panelEdge).setOrigin(0).setLineWidth(6));
 
     STAGES.forEach((stage, index) => {

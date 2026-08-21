@@ -80,8 +80,8 @@ export class PartyScene extends Phaser.Scene {
     this.pressStartedAt = 0;
 
     const cx = BASE_WIDTH / 2;
-    // 지도에서 본 전투 에리어가 편성 미리보기까지 자연스럽게 이어진다.
-    addSceneBackground(this, BACKGROUND.battleArea);
+    // 편성 미리보기와 실제 전투가 같은 6번 전장 원화를 공유해 출전 흐름을 시각적으로 잇는다.
+    addSceneBackground(this, BACKGROUND.combat);
     this.add.rectangle(cx, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.42).setDepth(-29);
 
     const stage = getStage(session.selectedStageId ?? "1-1");

@@ -17,6 +17,7 @@ import {
 } from "../../src/core/battle";
 import { getRelic } from "../../src/data/relics";
 import { getStage } from "../../src/data/stages";
+import { elementMultiplier } from "../../src/core/element";
 
 function newBattle(party = ["anky", "rex", "dodo"], stageId = "1-1") {
   const stage = getStage(stageId);
@@ -176,7 +177,8 @@ describe("확장 능력치 전투 규칙", () => {
 
     expect(damage).toBe(
       Math.round(
-        (attacker.def.stats.atk * 100) / (100 + defender.def.stats.def),
+        ((attacker.def.stats.atk * 100) / (100 + defender.def.stats.def))
+          * elementMultiplier(attacker.def.element, defender.def.element),
       ),
     );
   });
@@ -193,7 +195,8 @@ describe("확장 능력치 전투 규칙", () => {
 
     expect(damage).toBe(
       Math.round(
-        (attacker.def.stats.ap * 100) / (100 + defender.def.stats.res),
+        ((attacker.def.stats.ap * 100) / (100 + defender.def.stats.res))
+          * elementMultiplier(attacker.def.element, defender.def.element),
       ),
     );
   });
@@ -222,8 +225,9 @@ describe("확장 능력치 전투 규칙", () => {
     expect(critical).toBeGreaterThan(normal);
     expect(critical).toBe(
       Math.round(
-        (attacker.def.stats.atk * (attacker.def.stats.critDamage / 100) * 100) /
-          (100 + defender.def.stats.def),
+        ((attacker.def.stats.atk * (attacker.def.stats.critDamage / 100) * 100) /
+          (100 + defender.def.stats.def))
+          * elementMultiplier(attacker.def.element, defender.def.element),
       ),
     );
   });

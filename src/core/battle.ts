@@ -1,5 +1,6 @@
 import type { DamageType, RelicDef, Side, Skill } from "./types";
 import { attenuateFerocityGain } from "./bond";
+import { elementMultiplier } from "./element";
 export { attenuateFerocityGain } from "./bond";
 
 /** 모든 유닛이 저장할 수 있는 궁극기 게이지의 공용 상한이다. 스킬 비용과는 별개다. */
@@ -213,7 +214,9 @@ export function computeDamage(
     targetIsFront && target.def.passive.kind === "frontGuard"
       ? 1 - target.def.passive.value / 100
       : 1;
-  return Math.max(1, Math.round(afterDef * guard));
+  // 속성은 모든 공격·방어·야성 계산이 끝난 최종 피해에 곱해 규칙의 결합 순서를 고정한다.
+  const affinity = elementMultiplier(attacker.def.element, target.def.element);
+  return Math.max(1, Math.round(afterDef * guard * affinity));
 }
 
 function applyDamage(target: BattleUnit, amount: number): void {

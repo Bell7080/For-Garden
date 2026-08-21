@@ -198,10 +198,10 @@ export class PartyScene extends Phaser.Scene {
    */
   private buildRoster(): void {
     const cols = 5;
-    const cardW = 200;
+    const cardW = 186;
     const cardH = 226;
-    const gapX = 12;
-    const gapY = 18;
+    const gapX = 26;
+    const gapY = 26;
     const gridW = cols * cardW + (cols - 1) * gapX;
     const startX = (BASE_WIDTH - gridW) / 2 + cardW / 2;
     const startY = 1080;
@@ -218,7 +218,6 @@ export class PartyScene extends Phaser.Scene {
         portraitAssetId: relic.portraitAssetId,
         tint: relicCardTint(relic),
         label: relic.name,
-        sub: role,
         level: relicProgression.getProgress(relic.id).level,
         stars: starsForRarity(relic.rarity),
       });

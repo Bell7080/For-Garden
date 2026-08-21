@@ -35,16 +35,24 @@ export interface PuppetAsset {
   imageWidth: number;
   imageHeight: number;
   content: { left: number; top: number; right: number; bottom: number };
+  /**
+   * 카드에서의 확대 보정. 1이 기준이다.
+   *
+   * 등신이 낮은(머리가 큰) 원화는 같은 배율로 넣으면 혼자만 얼굴이 커 보인다. 카드 규격을
+   * 캐릭터마다 다르게 만들지 않고, 원화 쪽에 보정값을 달아 한 그리드에서 크기가 맞게 한다.
+   */
+  cardZoom?: number;
 }
 
 const base = import.meta.env.BASE_URL;
 
-/** 1번 전신 일러스트: 토리카(트리케라톱스). */
+/** 1번 전신 일러스트: 토리카(트리케라톱스). 다른 둘보다 등신이 낮아 카드에서는 확대를 줄여 얼굴 크기를 맞춘다. */
 export const TORIKA_ASSET: PuppetAsset = {
   url: `${base}puppets/char_001.zip`,
   imageWidth: 1054,
   imageHeight: 1492,
   content: { left: 95, top: 69, right: 894, bottom: 1419 },
+  cardZoom: 0.62,
 };
 
 /** 2번 전신 일러스트: 렉시아(티라노사우루스). */

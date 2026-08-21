@@ -32,9 +32,17 @@ export function slantedRect(width: number, height: number, slant: number = HOLO.
   return [-hw + s, -hh, hw + s, -hh, hw - s, hh, -hw - s, hh];
 }
 
+/** 네 모서리를 각각 다르게 깎기 위한 값. 0이면 직각으로 둔다. */
+export interface Bevels {
+  topLeft?: number;
+  topRight?: number;
+  bottomRight?: number;
+  bottomLeft?: number;
+}
+
 export interface ChipOptions {
-  /** 잘라낼 위쪽 모서리 길이. */
-  bevel?: number;
+  /** 모서리별로 잘라낼 길이. 숫자 하나를 주면 위쪽 두 모서리에만 쓴다. */
+  bevel?: number | Bevels;
   /** 위쪽 가운데를 얼마나 열어 둘지(원화의 머리가 빠져나갈 폭). 0이면 열지 않는다. */
   openWidth?: number;
   /** 열린 구간이 위로 얼마나 뻗는지. */
@@ -42,22 +50,35 @@ export interface ChipOptions {
 }
 
 /**
- * 위쪽 모서리를 잘라낸 칩 모양.
+ * 모서리를 깎아 낸 칩 모양.
+ *
+ * 네 모서리를 서로 다르게 깎는 것이 기본이다. 같은 길이로 깎으면 반듯한 팔각형이 되어
+ * 정면에서 찍어 낸 판처럼 보이고, 어긋나게 깎아야 비스듬히 잘린 조각처럼 읽힌다.
  *
  * `openWidth`를 주면 윗변 가운데가 위로 뚫린다. 카드에서 캐릭터 머리만 칩 밖으로 나오게 하는
  * 구멍이라, 잘린 모서리는 그대로 두고 가운데만 연다.
  */
 export function chipPoints(width: number, height: number, options: ChipOptions = {}): number[] {
-  const bevel = options.bevel ?? HOLO.bevel;
+  const given = options.bevel ?? HOLO.bevel;
+  const bevels: Required<Bevels> = typeof given === "number"
+    ? { topLeft: given, topRight: given, bottomRight: 0, bottomLeft: 0 }
+    : { topLeft: given.topLeft ?? 0, topRight: given.topRight ?? 0, bottomRight: given.bottomRight ?? 0, bottomLeft: given.bottomLeft ?? 0 };
   const open = options.openWidth ?? 0;
   const openTop = -height / 2 - (options.openHeight ?? 0);
   const hw = width / 2;
   const hh = height / 2;
-  const points = [-hw, -hh + bevel, -hw + bevel, -hh];
+  const points = [-hw, -hh + bevels.topLeft, -hw + bevels.topLeft, -hh];
   if (open > 0) {
     points.push(-open / 2, -hh, -open / 2, openTop, open / 2, openTop, open / 2, -hh);
   }
-  points.push(hw - bevel, -hh, hw, -hh + bevel, hw, hh, -hw, hh);
+  points.push(
+    hw - bevels.topRight, -hh,
+    hw, -hh + bevels.topRight,
+    hw, hh - bevels.bottomRight,
+    hw - bevels.bottomRight, hh,
+    -hw + bevels.bottomLeft, hh,
+    -hw, hh - bevels.bottomLeft,
+  );
   return points;
 }
 

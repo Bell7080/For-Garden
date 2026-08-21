@@ -81,13 +81,13 @@ export class RelicsScene extends Phaser.Scene {
    */
   private buildGrid(): void {
     const cols = 4;
-    const cardW = 232;
-    const cardH = 316;
-    const gapX = 26;
-    const gapY = 14;
+    const cardW = 216;
+    const cardH = 300;
+    const gapX = 34;
+    const gapY = 30;
     const gridW = cols * cardW + (cols - 1) * gapX;
     const startX = (BASE_WIDTH - gridW) / 2 + cardW / 2;
-    const startY = 510;
+    const startY = 500;
 
     const catalog = this.sortMode === "number"
       ? sortRelicsBySpecimenNumber(relicCollection.catalog)
@@ -103,7 +103,6 @@ export class RelicsScene extends Phaser.Scene {
         portraitAssetId: relic.portraitAssetId,
         tint: relicCardTint(relic),
         label: relic.name,
-        sub: owned ? `${relic.rarity} · ${ROLE_LABEL[relic.role]}` : "미발굴",
         level: owned ? relicProgression.getProgress(relic.id).level : undefined,
         stars: starsForRarity(relic.rarity),
         badge: relic.specimenNumber,

@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
+import { chipPoints, drawLayer, HOLO } from "./holo";
 import { COLOR, textStyle } from "./theme";
 import { UI_ICON } from "./icons";
 
@@ -13,39 +14,37 @@ export interface IconButtonOptions {
   onClick: () => void;
 }
 
-/** 둥근 모서리 정사각형. 한 변 대비 이 비율만큼 깎는다. */
-const CORNER = 0.3;
-
 /**
- * 아이콘 하나만 얹은 둥근 정사각형 버튼.
+ * 아이콘 하나만 얹은 칩 버튼.
  *
- * 테두리를 두르지 않고 그림자와 명도 차이로만 떠 보이게 한다. 게임 안의 모든 뒤로가기가
- * 같은 모양·같은 자리를 쓰도록 생김새는 이 프리팹에서만 정한다.
+ * 카드와 같은 언어로 모서리를 어긋나게 깎는다. 되돌아가는 방향인 왼쪽 아래를 크게 깎아
+ * 버튼 자체가 뒤를 가리키게 두고, 테두리 대신 그림자와 윗변 한 줄로만 떠 보이게 한다.
+ * 게임 안의 모든 뒤로가기가 같은 모양·같은 자리를 쓰도록 생김새는 이 프리팹에서만 정한다.
  */
 export class IconButton extends Phaser.GameObjects.Container {
-  private readonly shadow: Phaser.GameObjects.Graphics;
+  private readonly face: Phaser.GameObjects.Graphics;
 
   constructor(scene: Phaser.Scene, x: number, y: number, options: IconButtonOptions) {
     super(scene, x, y);
     const size = options.size ?? 108;
-    const radius = size * CORNER;
-    const half = size / 2;
 
-    this.shadow = scene.add.graphics();
-    this.shadow.fillStyle(0x000000, 0.42).fillRoundedRect(-half + 3, -half + 9, size, size, radius);
-    this.add(this.shadow);
+    // 되돌아가는 방향인 왼쪽 아래를 크게 깎고 마주 보는 오른쪽 위를 조금 깎는다.
+    // 네 모서리를 고르게 깎으면 반듯한 팔각형이 되어 방향이 사라진다.
+    const shape = chipPoints(size, size, {
+      bevel: { topLeft: size * 0.06, topRight: size * 0.38, bottomRight: size * 0.06, bottomLeft: size * 0.42 },
+    });
+    this.face = drawLayer(scene, 0, 0, shape, { fill: 0x1f2632, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.5 });
+    // 크게 깎인 모서리에만 강조선을 한 줄 더 그어 잘린 면이 빛을 받는 것처럼 보이게 한다.
+    const cut = scene.add.graphics();
+    cut.lineStyle(HOLO.lineWidth, COLOR.accent, 0.5);
+    cut.lineBetween(-size / 2, size / 2 - size * 0.42, -size / 2 + size * 0.42, size / 2);
+    this.add([this.face, cut]);
 
-    const face = scene.add.graphics();
-    face.fillStyle(COLOR.panel, 0.96).fillRoundedRect(-half, -half, size, size, radius);
-    // 위쪽만 아주 옅게 밝혀 평평한 사각형이 아니라 눌리는 판처럼 보이게 한다.
-    face.fillStyle(0xffffff, 0.05).fillRoundedRect(-half, -half, size, size * 0.45, radius);
-    this.add(face);
-
-    this.add(scene.add.image(0, 0, options.icon).setDisplaySize(size * 0.52, size * 0.52).setTint(0xf2f0ec));
+    this.add(scene.add.image(0, 0, options.icon).setDisplaySize(size * 0.5, size * 0.5).setTint(0xf2f0ec));
 
     if (options.label) {
       this.add(
-        scene.add.text(half + 18, 0, options.label, textStyle({ role: "body", size: Math.round(size * 0.26), color: COLOR.inkDim })).setOrigin(0, 0.5),
+        scene.add.text(size / 2 + 18, 0, options.label, textStyle({ role: "body", size: Math.round(size * 0.26), color: COLOR.inkDim })).setOrigin(0, 0.5),
       );
     }
 
@@ -62,10 +61,9 @@ export class IconButton extends Phaser.GameObjects.Container {
     scene.add.existing(this);
   }
 
-  /** 누르는 동안 살짝 작아지고 그림자가 붙는다. */
+  /** 누르는 동안 커진다. 화면의 다른 누름과 같은 신호를 쓴다. */
   private press(down: boolean): void {
-    this.setScale(down ? 0.94 : 1);
-    this.shadow.setAlpha(down ? 0.5 : 1);
+    this.setScale(down ? 1.08 : 1);
   }
 }
 

@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import type { PortraitAssetId, RelicDef, RelicRarity } from "../core/types";
 import { headCardFrame, loadPortraitTexture, portraitAssetFor, portraitUsesRelicTint } from "../puppets/assets";
 import { mixWhite, tintFor } from "../puppets/tints";
-import { chipPoints, HOLO } from "./holo";
+import { chipPoints, drawLayer, HOLO } from "./holo";
 import { COLOR, textStyle } from "./theme";
 
 /** 카드 한 장의 조립 옵션. 크기와 라벨만 주면 나머지 연출은 프리팹이 맞춘다. */
@@ -33,8 +33,22 @@ const SILHOUETTE = 0x0b0d10;
 /** 빈 별의 선 색. 글자용 문자열 색과 달리 도형은 숫자 색이 필요하다. */
 const STAR_EMPTY = 0x6f7681;
 
-/** 하단 레이어가 칩 밖으로 삐져나오는 폭. 두 레이어가 나뉘어 보이게 한다. */
-const FOOTER_BLEED = 8;
+/**
+ * 칩을 카드 좌우 안쪽으로 들여 놓는 폭.
+ *
+ * 하단 레이어는 카드 폭을 꽉 채우므로, 칩만 들여 놓으면 아래 레이어가 더 넓게 튀어나온 것처럼
+ * 보인다. 실제로 카드 밖으로 나가면 옆 칸과 겹치므로 넓히지 않고 칩을 좁힌다.
+ */
+const CHIP_INSET = 11;
+
+/**
+ * 모서리를 깎는 길이.
+ *
+ * 넷을 서로 다르게 둔다. 같은 길이로 깎으면 반듯한 팔각형이 되어 정면 판때기처럼 보이고,
+ * 어긋나게 깎아야 비스듬히 잘린 조각으로 읽힌다.
+ */
+const CHIP_BEVEL = { topLeft: 0.20, topRight: 0.08, bottomRight: 0.13, bottomLeft: 0 };
+const FOOTER_BEVEL = { topLeft: 0, topRight: 0, bottomRight: 0.34, bottomLeft: 0.14 };
 
 /** 등급이 곧 성급이다. 카드마다 다른 기준을 쓰지 않는다. */
 export function starsForRarity(rarity: RelicRarity): { filled: number; total: number } {
@@ -76,9 +90,17 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     this.bodyHeight = height - this.footerHeight;
     // 머리가 칩 위로 빠져나올 여유. 카드가 납작할수록 조금만 내민다.
     this.overhang = Math.round(Math.min(this.bodyHeight * 0.22, 54));
-    const bevel = Math.min(HOLO.bevel, this.bodyHeight * 0.28);
+    const chipWidth = width - CHIP_INSET * 2;
+    // 깎는 길이는 카드 크기를 따라간다. 작은 카드에서 모서리만 크게 잘려 나가지 않게 한다.
+    const unit = Math.min(chipWidth, this.bodyHeight);
+    const bevel = {
+      topLeft: unit * CHIP_BEVEL.topLeft,
+      topRight: unit * CHIP_BEVEL.topRight,
+      bottomRight: unit * CHIP_BEVEL.bottomRight,
+      bottomLeft: unit * CHIP_BEVEL.bottomLeft,
+    };
     const bodyCenter = -this.footerHeight / 2;
-    this.chipShape = chipPoints(width, this.bodyHeight, { bevel });
+    this.chipShape = chipPoints(chipWidth, this.bodyHeight, { bevel });
 
     // 칩 본체. 테두리 대신 그림자로 떠 보이게 한다.
     this.chip = scene.add.graphics({ x: 0, y: bodyCenter });
@@ -94,25 +116,40 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     this.portraitMask = scene.make.graphics({});
     this.portraitMask.fillStyle(0xffffff, 1);
     this.portraitMask.fillPoints(
-      toGeomPoints(chipPoints(width, this.bodyHeight, { bevel, openWidth: width * 0.56, openHeight: this.overhang })),
+      toGeomPoints(chipPoints(chipWidth, this.bodyHeight, { bevel, openWidth: chipWidth * 0.58, openHeight: this.overhang })),
       true,
     );
 
     if (options.label) {
       const footerTop = height / 2 - this.footerHeight;
-      const footer = scene.add.graphics({ x: 0, y: 0 });
-      footer.fillStyle(0x000000, 0.5);
-      footer.fillRect(-width / 2 - FOOTER_BLEED + 6, footerTop + 8, width + FOOTER_BLEED * 2, this.footerHeight);
-      footer.fillStyle(FOOTER_FILL, 0.94);
-      footer.fillRect(-width / 2 - FOOTER_BLEED, footerTop, width + FOOTER_BLEED * 2, this.footerHeight);
-      this.add(footer);
+      const footerUnit = Math.min(width, this.footerHeight * 3);
+      const footerShape = chipPoints(width, this.footerHeight, {
+        bevel: {
+          bottomRight: footerUnit * FOOTER_BEVEL.bottomRight,
+          bottomLeft: footerUnit * FOOTER_BEVEL.bottomLeft,
+        },
+      });
+      this.add(drawLayer(scene, 0, footerTop + this.footerHeight / 2, footerShape, {
+        fill: FOOTER_FILL,
+        alpha: 0.94,
+      }));
 
       const name = options.locked ? "???" : options.label;
-      this.nameText = scene.add
-        .text(0, footerTop + (options.sub ? 12 : this.footerHeight / 2 - 17), options.level !== undefined && !options.locked ? `LV.${options.level}  |  ${name}` : name,
-          textStyle({ role: "display", size: Math.min(30, width / 9) }))
-        .setOrigin(0.5, 0);
+      const nameSize = Math.min(30, width / 9);
+      const nameY = footerTop + (options.sub ? 12 : this.footerHeight / 2 - nameSize * 0.62);
+      this.nameText = scene.add.text(0, nameY, name, textStyle({ role: "display", size: nameSize })).setOrigin(0.5, 0);
       this.add(this.nameText);
+      if (options.level !== undefined && !options.locked) {
+        // 레벨은 이름과 다른 뜻이라 색으로만 가른다. 사이에 구분 기호를 두지 않는다.
+        const levelText = scene.add
+          .text(0, nameY + 2, `LV.${options.level}`, textStyle({ role: "emphasis", size: nameSize * 0.78, color: COLOR.accentText }))
+          .setOrigin(0, 0);
+        const gap = nameSize * 0.4;
+        const total = levelText.width + gap + this.nameText.width;
+        levelText.setX(-total / 2);
+        this.nameText.setX(-total / 2 + levelText.width + gap + this.nameText.width / 2);
+        this.add(levelText);
+      }
       if (options.sub) {
         this.subText = scene.add
           .text(0, footerTop + 50, options.sub, textStyle({ role: "emphasis", size: Math.min(22, width / 12), color: COLOR.accentText }))
@@ -123,11 +160,11 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     }
 
     if (options.badge) {
-      const badgeY = -height / 2 + 26;
+      // 왼쪽 위는 크게 깎여 나가므로, 표식은 덜 깎인 오른쪽 위에 붙인다.
       this.add(
         scene.add
-          .text(-width / 2 + 20, badgeY, options.badge, textStyle({ role: "emphasis", size: Math.min(20, width / 14), color: COLOR.accentText }))
-          .setOrigin(0, 0.5),
+          .text(width / 2 - CHIP_INSET - 12, -height / 2 + 28, options.badge, textStyle({ role: "emphasis", size: Math.min(20, width / 14), color: COLOR.accentText }))
+          .setOrigin(1, 0.5),
       );
     }
 
@@ -172,7 +209,9 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     const left = -((stars.total - 1) * gap) / 2;
     for (let i = 0; i < stars.total; i++) {
       const filled = i < stars.filled && !this.options.locked;
-      const star = this.scene.add.star(left + i * gap, footerTop, 4, size * 0.42, size, filled ? COLOR.accent : 0x000000, filled ? 1 : 0.35);
+      // 별은 원화와 하단 레이어의 경계에 걸린다. 밝은 옷 위에서 묻히지 않도록 어두운 받침을 깐다.
+      this.add(this.scene.add.star(left + i * gap, footerTop, 4, size * 0.6, size * 1.5, FOOTER_FILL, 0.92));
+      const star = this.scene.add.star(left + i * gap, footerTop, 4, size * 0.42, size, filled ? COLOR.accent : 0x000000, filled ? 1 : 0.4);
       if (!filled) star.setStrokeStyle(2, STAR_EMPTY, 0.9);
       this.add(star);
     }
@@ -192,8 +231,14 @@ export class PortraitCard extends Phaser.GameObjects.Container {
 
     const { width, height } = this.options;
     const frameHeight = this.bodyHeight + this.overhang;
-    // fillRatio가 작을수록 캐릭터가 카드를 꽉 채운다. 뒷배경이 거의 보이지 않는 값이다.
-    const card = headCardFrame(asset, anchors, { width, height: frameHeight, fillRatio: 0.56, headroom: 0.04 });
+    // fillRatio가 작을수록 캐릭터가 카드를 꽉 채운다. 뒷배경이 거의 보이지 않는 값이며,
+    // 등신이 낮은 원화는 asset.cardZoom으로 되돌려 한 그리드에서 크기가 맞게 한다.
+    const card = headCardFrame(asset, anchors, {
+      width,
+      height: frameHeight,
+      fillRatio: 0.56 / (asset.cardZoom ?? 1),
+      headroom: 0.04,
+    });
     const originX = -width / 2 - card.cropX * card.scale;
     const originY = -height / 2 - this.overhang - card.cropY * card.scale;
 

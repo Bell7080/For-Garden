@@ -19,7 +19,8 @@ export type GlyphName =
   | "bookmark"
   | "scroll"
   | "magnifier"
-  | "costume";
+  | "costume"
+  | "ferocity";
 
 function points(...pairs: number[]): Phaser.Geom.Point[] {
   const list: Phaser.Geom.Point[] = [];
@@ -50,6 +51,20 @@ export function drawGlyph(
       // 깃발 — 멀리 나가 꽂고 오는 원정.
       g.lineBetween(-r * 0.5, -r * 0.9, -r * 0.5, r * 0.9);
       g.strokePoints(points(-r * 0.5, -r * 0.85, r * 0.8, -r * 0.45, -r * 0.5, -r * 0.05), true);
+      break;
+    case "ferocity":
+      // 각진 불꽃 — 야성이 끓어오르는 표시다. 둥근 곡선 없이 꺾어서 그린다.
+      g.fillStyle(color, alpha);
+      g.fillPoints(points(
+        0, -r,
+        r * 0.62, -r * 0.1,
+        r * 0.34, r * 0.06,
+        r * 0.58, r * 0.88,
+        -r * 0.12, r * 0.3,
+        -r * 0.36, r * 0.86,
+        -r * 0.62, -r * 0.06,
+        -r * 0.26, -r * 0.18,
+      ), true);
       break;
     case "shop":
       // 손잡이 달린 가방.

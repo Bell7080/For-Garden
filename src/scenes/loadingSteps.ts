@@ -32,6 +32,14 @@ function loadWithPhaser(scene: Phaser.Scene, queue: () => void): Promise<void> {
   });
 }
 
+/**
+ * SVG를 몇 픽셀로 구울지.
+ *
+ * 스킬 아이콘은 정보창(74px)보다 팝업(82px)에서 더 크게 서고, 앞으로 들어올 SVG 일러스트는
+ * 더 클 수 있다. 넉넉히 굽고 줄여 쓰는 편이 확대해서 뭉개는 것보다 낫다.
+ */
+const SVG_BAKE = { skill: 256, uiScale: 2 } as const;
+
 export const LOADING_STEPS: ReadonlyArray<LoadingStep> = [
   {
     label: "글꼴",
@@ -46,9 +54,10 @@ export const LOADING_STEPS: ReadonlyArray<LoadingStep> = [
     label: "조작·스킬 아이콘",
     run: (scene) =>
       loadWithPhaser(scene, () => {
-        SKILL_ICON_ASSETS.forEach(([key, path]) => scene.load.image(key, path));
-        // 조작 아이콘은 확대해도 또렷하도록 지정한 크기로 래스터화한다.
-        UI_ICON_ASSETS.forEach(([key, path, size]) => scene.load.svg(key, path, { width: size, height: size }));
+        // SVG를 그대로 이미지로 받으면 파일에 적힌 크기 그대로 구워져 확대할 때 뭉갠다.
+        // 화면에서 쓰는 크기보다 넉넉히 크게 래스터화해 두고 줄여 쓴다.
+        SKILL_ICON_ASSETS.forEach(([key, path]) => scene.load.svg(key, path, { width: SVG_BAKE.skill, height: SVG_BAKE.skill }));
+        UI_ICON_ASSETS.forEach(([key, path, size]) => scene.load.svg(key, path, { width: size * SVG_BAKE.uiScale, height: size * SVG_BAKE.uiScale }));
       }),
   },
   {

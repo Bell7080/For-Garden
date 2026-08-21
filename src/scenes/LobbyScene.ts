@@ -9,6 +9,7 @@ import { session } from "../state/session";
 import { BottomNav, NAV_TOP } from "../ui/BottomNav";
 import { Button } from "../ui/Button";
 import { TopBar } from "../ui/TopBar";
+import { drawLayer, HOLO, slantedRect } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { gameApi } from "../api/FakeServer";
@@ -126,7 +127,9 @@ export class LobbyScene extends Phaser.Scene {
       const progress = result.relicProgress[relicId];
       const dialogue = bondDialogue(relicId, progress.bondLevel, this.interactionIndex++);
       const reward = result.bondXpEarned > 0 ? `\n유대 EXP +${result.bondXpEarned}${result.bondLevelsGained ? ` · LEVEL UP +${result.bondLevelsGained}` : ""}` : "";
-      const bubble = this.add.rectangle(BASE_WIDTH / 2, 470, 760, 150, COLOR.panel, 0.9).setStrokeStyle(2, COLOR.accent).setDepth(500);
+      const bubble = drawLayer(this, BASE_WIDTH / 2, 470, slantedRect(760, 150), {
+        fill: 0x141920, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.35,
+      }).setDepth(500);
       const text = this.add.text(BASE_WIDTH / 2, 470, `“${dialogue.text}”${reward}`, textStyle({ role: "body", size: 28, color: COLOR.ink, align: "center", lineSpacing: 7 })).setOrigin(0.5).setDepth(501);
       // 대사 ID는 번역/분석 추적용으로 객체에 남기되 플레이어 화면에는 노출하지 않는다.
       text.setData("dialogueId", dialogue.id);

@@ -4,6 +4,7 @@ import { DialogueFlow, type DialogueChoice } from "../core/dialogue";
 import { OPENING_TRAIN } from "../data/dialogues/openingTrain";
 import { setDebugReady, setDebugScene } from "../debug";
 import { storyManager } from "../managers/StoryManager";
+import { drawLayer, slantedRect } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
 import { DialogueLayer } from "../ui/DialogueLayer";
 
@@ -20,7 +21,9 @@ export class OpeningScene extends Phaser.Scene {
     setDebugScene("opening");
     // 임시 배경 자산을 만들지 않고 기존 색 토큰으로 야간 열차 창과 실내를 암시한다.
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void);
-    this.add.rectangle(BASE_WIDTH / 2, 560, 880, 720, COLOR.panel).setStrokeStyle(8, COLOR.panelEdge);
+    drawLayer(this, BASE_WIDTH / 2, 560, slantedRect(880, 720), {
+      fill: 0x141920, alpha: 0.9, edge: COLOR.accent, edgeAlpha: 0.25,
+    });
     this.add.text(BASE_WIDTH / 2, 250, "NIGHT TRAIN · ETERNAL CITY LINE", textStyle({ role: "body", size: 25, color: COLOR.inkDim })).setOrigin(0.5);
     this.layer = new DialogueLayer(this, (choice) => this.advance(choice));
     void this.layer.show(this.flow.current).finally(() => this.flow.unlockInput());

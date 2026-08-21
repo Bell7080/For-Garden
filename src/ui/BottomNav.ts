@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { BASE_WIDTH, BASE_HEIGHT } from "../config/gameConfig";
+import { drawGlassFade, drawHairline, HOLO } from "./holo";
 import { COLOR, textStyle } from "./theme";
 
 /** 하단 탭 세 개. 어느 화면에 있든 같은 자리, 같은 순서다. */
@@ -14,59 +15,87 @@ export type NavKey = (typeof NAV_TABS)[number]["key"];
 export const NAV_TOP = BASE_HEIGHT - 180;
 
 /**
- * 아이콘은 아직 그림이 없어 도형으로 그린다. 나중에 아트가 나오면 이 함수만 바꾸면 된다.
- * 셋을 한눈에 구분하려고 실루엣을 다르게 뒀다.
+ * 아이콘은 아직 그림이 없어 선으로 그린다. 채운 덩어리 대신 얇은 선을 쓰는 이유는, 하단 바에
+ * 판때기가 없어서 굵은 실루엣이 배경 원화 위에 얼룩처럼 보이기 때문이다.
  */
-function drawIcon(scene: Phaser.Scene, key: NavKey, x: number, y: number, color: number): Phaser.GameObjects.GameObject[] {
-  const parts: Phaser.GameObjects.GameObject[] = [];
+function drawIcon(scene: Phaser.Scene, key: NavKey, x: number, y: number, color: number): Phaser.GameObjects.Graphics {
+  const g = scene.add.graphics({ x, y });
+  g.lineStyle(3, color, 1);
   switch (key) {
     case "relics":
       // 사람 실루엣 — 보유 렐릭.
-      parts.push(scene.add.circle(x, y - 14, 12, color));
-      parts.push(scene.add.ellipse(x, y + 12, 36, 26, color));
+      g.strokeCircle(0, -13, 11);
+      g.beginPath();
+      g.arc(0, 20, 19, Math.PI, 0);
+      g.strokePath();
       break;
     case "lobby":
       // 마름모 — 이터널 시티의 중심.
-      parts.push(scene.add.star(x, y, 4, 12, 26, color));
+      g.strokePoints([
+        new Phaser.Geom.Point(0, -22), new Phaser.Geom.Point(17, 0),
+        new Phaser.Geom.Point(0, 22), new Phaser.Geom.Point(-17, 0),
+      ], true);
       break;
     case "lab":
-      // 플라스크 — 발굴과 배양. 점은 좌표 원점이 도형의 왼쪽 위라 모두 양수로 준다.
-      parts.push(scene.add.rectangle(x, y - 20, 14, 14, color));
-      parts.push(scene.add.triangle(x, y + 8, 22, 0, 44, 36, 0, 36, color));
+      // 플라스크 — 발굴과 배양.
+      g.strokePoints([
+        new Phaser.Geom.Point(-7, -20), new Phaser.Geom.Point(7, -20),
+        new Phaser.Geom.Point(7, -6), new Phaser.Geom.Point(19, 20),
+        new Phaser.Geom.Point(-19, 20), new Phaser.Geom.Point(-7, -6),
+      ], true);
       break;
   }
-  return parts;
+  return g;
 }
 
 /**
- * 하단 탭 막대. 지금 화면에 해당하는 탭은 눌리지 않고 강조만 된다.
+ * 하단 탭 막대.
+ *
+ * 판때기를 깔지 않고 검정에서 투명으로 빠지는 유리면만 둔다. 배경 원화가 바 아래까지 이어져
+ * 보이되 아이콘과 글자는 읽힌다. 지금 화면인 탭은 강조색과 살짝 큰 크기로만 알린다.
  */
 export class BottomNav {
   constructor(scene: Phaser.Scene, current: NavKey) {
-    scene.add
-      .rectangle(BASE_WIDTH / 2, (NAV_TOP + BASE_HEIGHT) / 2, BASE_WIDTH, BASE_HEIGHT - NAV_TOP, COLOR.panel)
-      .setStrokeStyle(2, COLOR.panelEdge);
+    const height = BASE_HEIGHT - NAV_TOP;
+    drawGlassFade(scene, BASE_WIDTH / 2, NAV_TOP + height / 2, BASE_WIDTH, height, {
+      topAlpha: 0,
+      bottomAlpha: 0.94,
+    });
+    drawHairline(scene, BASE_WIDTH / 2, NAV_TOP + 12, BASE_WIDTH, { color: COLOR.accent, alpha: 0.22 });
 
     const step = BASE_WIDTH / NAV_TABS.length;
     NAV_TABS.forEach((tab, i) => {
       const x = step * (i + 0.5);
       const active = tab.key === current;
-      const color = active ? COLOR.accent : COLOR.panelEdge;
+      const color = active ? COLOR.accent : 0x9aa3ad;
+
+      const group = scene.add.container(x, NAV_TOP + 84);
+      group.add(drawIcon(scene, tab.key, 0, -16, color));
+      group.add(
+        scene.add
+          .text(0, 26, tab.label, textStyle({ role: "emphasis", size: 26, color: active ? COLOR.accentText : COLOR.inkDim }))
+          .setOrigin(0.5, 0),
+      );
+      // 지금 화면인 탭만 살짝 크다. 밑줄이나 상자 대신 크기로 알린다.
+      group.setScale(active ? 1.12 : 1);
 
       const hit = scene.add
-        .rectangle(x, NAV_TOP + 90, step - 8, 160, COLOR.panel, 0)
+        .rectangle(x, NAV_TOP + 90, step - 8, 160, 0xffffff, 0)
         .setInteractive({ useHandCursor: true });
-      if (!active) hit.on("pointerdown", () => scene.scene.start(tab.scene));
-
-      for (const part of drawIcon(scene, tab.key, x, NAV_TOP + 62, color)) void part;
-
-      scene.add
-        .text(x, NAV_TOP + 110, tab.label, textStyle({ role: "emphasis", size: 26, color: active ? COLOR.accentText : COLOR.inkDim }))
-        .setOrigin(0.5, 0);
+      if (!active) {
+        // 누르는 동안만 확대해 눌린 자리를 알린다.
+        hit.on("pointerdown", () => group.setScale(1.16));
+        hit.on("pointerout", () => group.setScale(1));
+        hit.on("pointerup", () => scene.scene.start(tab.scene));
+      }
 
       if (active) {
-        // 지금 화면임을 위쪽 선으로 알린다.
-        scene.add.rectangle(x, NAV_TOP + 3, step - 40, 6, COLOR.accent);
+        // 탭 사이를 가르는 얇은 세로선. 상자를 두르지 않고 자리만 나눈다.
+        for (const edge of [x - step / 2, x + step / 2]) {
+          const divider = scene.add.graphics({ x: edge, y: NAV_TOP + 92 });
+          divider.lineStyle(HOLO.lineWidth, COLOR.accent, 0.18);
+          divider.lineBetween(0, -52, 0, 52);
+        }
       }
     });
   }

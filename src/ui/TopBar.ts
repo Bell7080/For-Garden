@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { BASE_WIDTH } from "../config/gameConfig";
 import { setDebugProgress } from "../debug";
 import { session } from "../state/session";
+import { drawGlassFade, drawHairline } from "./holo";
 import { COLOR, textStyle } from "./theme";
 
 /**
@@ -13,9 +14,9 @@ export class TopBar {
   private readonly amberText: Phaser.GameObjects.Text;
 
   constructor(scene: Phaser.Scene, y = 40) {
-    scene.add
-      .rectangle(BASE_WIDTH / 2, y + 44, BASE_WIDTH, 88, COLOR.panel)
-      .setStrokeStyle(2, COLOR.panelEdge);
+    // 판때기 대신 위에서 아래로 옅어지는 유리면. 배경 원화가 끊기지 않게 한다.
+    drawGlassFade(scene, BASE_WIDTH / 2, y + 30, BASE_WIDTH, 140, { topAlpha: 0.92, bottomAlpha: 0 });
+    drawHairline(scene, BASE_WIDTH / 2, y + 88, BASE_WIDTH, { color: COLOR.accent, alpha: 0.18 });
 
     scene.add
       .text(32, y + 30, "연구원", textStyle({ role: "body", size: 26, color: COLOR.inkDim }))

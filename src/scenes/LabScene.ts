@@ -19,9 +19,10 @@ import { session } from "../state/session";
 import { BottomNav, NAV_TOP } from "../ui/BottomNav";
 import { Button } from "../ui/Button";
 import { TopBar } from "../ui/TopBar";
+import { drawLayer, HOLO, slantedRect } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
-import { PortraitCard } from "../ui/PortraitCard";
+import { PortraitCard, starsForRarity } from "../ui/PortraitCard";
 import { firstMeetingLine } from "../data/relicFirstMeetings";
 
 /** 배너 그림이 서는 바닥. */
@@ -210,7 +211,9 @@ export class LabScene extends Phaser.Scene {
     const cx = BASE_WIDTH / 2;
     const overlay = this.add.container(0, 0).setDepth(850);
     const shade = this.add.rectangle(cx, 960, BASE_WIDTH, 1920, COLOR.void, 0.9).setInteractive();
-    const panel = this.add.rectangle(cx, 800, 820, 720, COLOR.panel).setStrokeStyle(3, COLOR.panelEdge);
+    const panel = drawLayer(this, cx, 800, slantedRect(820, 720), {
+      fill: 0x141920, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.3,
+    });
     overlay.add([shade, panel]);
     overlay.add(this.add.text(cx, 510, "발굴 확률", textStyle({ role: "display", size: 44 })).setOrigin(0.5));
     const rates = (["SSR", "SR", "R"] as const)
@@ -340,7 +343,9 @@ export class LabScene extends Phaser.Scene {
       layer.add(this.add.text(BASE_WIDTH / 2, 650, `[${def.name} 스탠딩을 불러오지 못했습니다]`, textStyle({ role: "body", size: 30, color: COLOR.inkDim })).setOrigin(0.5));
     }
     if (!this.presentation.isCurrent(request)) { standing?.destroy(); return; }
-    layer.add(this.add.rectangle(BASE_WIDTH / 2, 1470, 900, 250, COLOR.panel, 0.96).setStrokeStyle(3, this.rarityColor(def.rarity)));
+    layer.add(drawLayer(this, BASE_WIDTH / 2, 1470, slantedRect(900, 250), {
+      fill: 0x141920, alpha: HOLO.glass, edge: this.rarityColor(def.rarity), edgeAlpha: 0.8,
+    }));
     layer.add(this.add.text(140, 1380, `${def.name} · ${def.rarity}`, textStyle({ role: "display", size: 32, color: COLOR.accentText })).setOrigin(0, 0.5));
     layer.add(this.add.text(BASE_WIDTH / 2, 1500, firstMeetingLine(relicId), textStyle({ role: "body", size: 30, wrap: 780, align: "center" })).setOrigin(0.5));
     await this.waitForStage(1200, request);
@@ -364,7 +369,7 @@ export class LabScene extends Phaser.Scene {
       const card = new PortraitCard(this, columns === 1 ? cx : 285 + (index % 2) * 510, results.length === 1 ? 850 : 390 + Math.floor(index / 2) * 230, {
         width: results.length === 1 ? 520 : 440, height: results.length === 1 ? 720 : 210,
         portraitAssetId: def.portraitAssetId, tint: portraitUsesRelicTint(def.portraitAssetId) ? mixWhite(tintFor(def.id), 0.55) : undefined,
-        label: def.name, sub: badge, badge: def.rarity,
+        label: def.name, sub: badge, badge: def.rarity, stars: starsForRarity(def.rarity),
       });
       card.setDepth(902);
       content.add(card);

@@ -9,7 +9,9 @@ import { BottomNav, NAV_TOP } from "../ui/BottomNav";
 import { Button } from "../ui/Button";
 import { CharacterInfoManager, ROLE_LABEL } from "../managers/CharacterInfoManager";
 import { TopBar } from "../ui/TopBar";
-import { PortraitCard, relicCardTint } from "../ui/PortraitCard";
+import { PortraitCard, relicCardTint, starsForRarity } from "../ui/PortraitCard";
+import { relicProgression } from "../managers/RelicProgressionManager";
+import { drawLayer, HOLO, slantedRect } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 
@@ -60,8 +62,8 @@ export class RelicsScene extends Phaser.Scene {
       .setOrigin(1, 0);
 
     // 기존 황동 테두리 버튼을 그대로 사용해 도감 정렬도 다른 화면의 조작 체계와 맞춘다.
-    new Button(this, 290, 275, { width: 430, height: 78, label: "개체번호순", fontSize: 24, onClick: () => this.setSortMode("number") });
-    new Button(this, 790, 275, { width: 430, height: 78, label: "희귀도순", fontSize: 24, onClick: () => this.setSortMode("rarity") });
+    new Button(this, 290, 248, { width: 430, height: 78, label: "개체번호순", fontSize: 24, onClick: () => this.setSortMode("number") });
+    new Button(this, 790, 248, { width: 430, height: 78, label: "희귀도순", fontSize: 24, onClick: () => this.setSortMode("rarity") });
 
     this.buildGrid();
     this.buildSummary();
@@ -79,13 +81,13 @@ export class RelicsScene extends Phaser.Scene {
    */
   private buildGrid(): void {
     const cols = 4;
-    const cardW = 240;
+    const cardW = 232;
     const cardH = 316;
-    const gapX = 16;
-    const gapY = 20;
+    const gapX = 26;
+    const gapY = 14;
     const gridW = cols * cardW + (cols - 1) * gapX;
     const startX = (BASE_WIDTH - gridW) / 2 + cardW / 2;
-    const startY = 440;
+    const startY = 510;
 
     const catalog = this.sortMode === "number"
       ? sortRelicsBySpecimenNumber(relicCollection.catalog)
@@ -102,6 +104,8 @@ export class RelicsScene extends Phaser.Scene {
         tint: relicCardTint(relic),
         label: relic.name,
         sub: owned ? `${relic.rarity} · ${ROLE_LABEL[relic.role]}` : "미발굴",
+        level: owned ? relicProgression.getProgress(relic.id).level : undefined,
+        stars: starsForRarity(relic.rarity),
         badge: relic.specimenNumber,
         locked: !owned,
       });
@@ -126,9 +130,13 @@ export class RelicsScene extends Phaser.Scene {
   /** 아래쪽 요약 칸. 고른 렐릭이 무엇인지와, 거기서 할 수 있는 것을 모아 둔다. */
   private buildSummary(): void {
     const top = NAV_TOP - 400;
-    this.add
-      .rectangle(BASE_WIDTH / 2, top + 190, BASE_WIDTH - 60, 380, COLOR.panel)
-      .setStrokeStyle(3, COLOR.panelEdge);
+    // 테두리 없는 유리 레이어. 그림자로만 배경에서 떠 보이게 한다.
+    drawLayer(this, BASE_WIDTH / 2, top + 190, slantedRect(BASE_WIDTH - 60, 380), {
+      fill: 0x141920,
+      alpha: HOLO.glass,
+      edge: COLOR.accent,
+      edgeAlpha: 0.25,
+    });
 
     this.summaryName = this.add.text(60, top + 30, "", textStyle({ role: "display", size: 38 })).setOrigin(0, 0);
     this.summaryBody = this.add

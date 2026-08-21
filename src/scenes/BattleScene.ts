@@ -24,7 +24,8 @@ import { battleAssetFor, flashHit, placePuppet, playMotion, spawnPuppet } from "
 import { session } from "../state/session";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { Button } from "../ui/Button";
-import { PortraitCard, relicCardTint } from "../ui/PortraitCard";
+import { drawGlassFade, drawHairline, HoloBar } from "../ui/holo";
+import { PortraitCard, relicCardTint, starsForRarity } from "../ui/PortraitCard";
 import { COLOR, textStyle } from "../ui/theme";
 import { setDebugBattle, setDebugScene } from "../debug";
 
@@ -38,6 +39,8 @@ const ARENA: Arena = { left: 130, right: 950, top: 600, bottom: 1360 };
 /** SD 한 명의 화면 높이. 여섯이 겹치지 않도록 기존 300에서 0.7배로 줄였다. */
 const UNIT_HEIGHT = 210;
 const PROFILE_TOP = 1430;
+/** 프로필 게이지 셋의 공통 폭. 카드 폭과 같아야 한 칸으로 읽힌다. */
+const BAR_WIDTH = 300;
 
 /**
  * 전장 안에서의 앞뒤 순서.
@@ -64,10 +67,12 @@ interface ProfileView {
   fighter: Fighter;
   card: PortraitCard;
   glow: Phaser.GameObjects.Rectangle;
-  gauge: Phaser.GameObjects.Text;
-  /** 패널 안에서 궁극기 텍스트와 분리해 표시하는 야성 전용 바다. */
-  ferocityBack: Phaser.GameObjects.Rectangle;
-  ferocityFill: Phaser.GameObjects.Rectangle;
+  /** 체력·각성·야성을 같은 모양의 바 셋으로 보여 준다. 숫자는 바 위 작은 글자로만 남긴다. */
+  hpBar: HoloBar;
+  hpLabel: Phaser.GameObjects.Text;
+  energyBar: HoloBar;
+  energyLabel: Phaser.GameObjects.Text;
+  ferocityBar: HoloBar;
   ferocityLabel: Phaser.GameObjects.Text;
   ready: boolean;
   pulse?: Phaser.Tweens.Tween;
@@ -149,8 +154,12 @@ export class BattleScene extends Phaser.Scene {
    * 그 자리에서 궁극기가 나간다. 게이지가 모자라면 눌러도 아무 일도 일어나지 않는다.
    */
   private buildProfiles(): void {
-    this.add.rectangle(BASE_WIDTH / 2, (PROFILE_TOP + BASE_HEIGHT) / 2, BASE_WIDTH, BASE_HEIGHT - PROFILE_TOP, COLOR.panel, 0.96)
-      .setStrokeStyle(2, COLOR.panelEdge);
+    // 판때기를 깔지 않는다. 전장이 아래까지 이어져 보이도록 검정으로 빠지는 유리면만 둔다.
+    drawGlassFade(this, BASE_WIDTH / 2, (PROFILE_TOP + BASE_HEIGHT) / 2, BASE_WIDTH, BASE_HEIGHT - PROFILE_TOP, {
+      topAlpha: 0,
+      bottomAlpha: 0.9,
+    });
+    drawHairline(this, BASE_WIDTH / 2, PROFILE_TOP + 20, BASE_WIDTH, { color: COLOR.accent, alpha: 0.2 });
     this.playerFighters().forEach((fighter, index) => {
       const x = 190 + index * 350;
       // 카드가 불투명해서 뒤에 깐 빛은 테두리처럼만 보인다. 그만큼 넉넉히 키워 둔다.
@@ -163,14 +172,19 @@ export class BattleScene extends Phaser.Scene {
         tint: relicCardTint(fighter.def),
         label: fighter.def.name,
         sub: `각성 · ${fighter.def.ultimate.name}`,
+        stars: starsForRarity(fighter.def.rarity),
       });
       card.hit.on("pointerup", () => this.useUltimate(fighter));
-      const gauge = this.add.text(x, 1800, "", textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0.5, 0);
-      // 기존 패널/테두리 형태를 유지한 얇은 별도 바로 두 게이지를 혼동하지 않게 한다.
-      const ferocityBack = this.add.rectangle(x, 1868, 300, 18, COLOR.void, 0.9).setStrokeStyle(2, COLOR.panelEdge);
-      const ferocityFill = this.add.rectangle(x - 150, 1868, 0, 14, COLOR.ferocityLow).setOrigin(0, 0.5);
-      const ferocityLabel = this.add.text(x, 1837, "야성 0 / 100", textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0.5, 0);
-      this.profiles.push({ fighter, card, glow, gauge, ferocityBack, ferocityFill, ferocityLabel, ready: false });
+      // 세 게이지는 굵기만 다르고 모양이 같다. 위에서부터 체력 · 각성 · 야성 순이다.
+      const label = (y: number, color: string) =>
+        this.add.text(x - BAR_WIDTH / 2, y, "", textStyle({ role: "body", size: 18, color })).setOrigin(0, 1);
+      const hpLabel = label(1782, COLOR.inkDim);
+      const hpBar = new HoloBar(this, x, 1792, BAR_WIDTH, 14, { color: COLOR.hpFill });
+      const energyLabel = label(1834, COLOR.inkDim);
+      const energyBar = new HoloBar(this, x, 1844, BAR_WIDTH, 10, { color: COLOR.energy });
+      const ferocityLabel = label(1886, COLOR.inkDim);
+      const ferocityBar = new HoloBar(this, x, 1896, BAR_WIDTH, 10, { color: COLOR.ferocityLow });
+      this.profiles.push({ fighter, card, glow, hpBar, hpLabel, energyBar, energyLabel, ferocityBar, ferocityLabel, ready: false });
     });
   }
 
@@ -321,18 +335,18 @@ export class BattleScene extends Phaser.Scene {
     for (const profile of this.profiles) {
       const { fighter } = profile;
       const alive = isFighterAlive(fighter);
+      profile.hpBar.setValue(alive ? fighter.hp / fighter.maxHp : 0);
+      profile.hpLabel.setText(alive ? `HP ${fighter.hp}` : "전투 불능");
+      profile.hpLabel.setColor(alive ? COLOR.inkDim : COLOR.dangerText);
       // 분자는 저장량, 분모는 코어가 정한 공용 저장 상한이며 괄호로 궁극기의 소비 비용을 구분한다.
-      profile.gauge.setText(
-        alive
-          ? `HP ${fighter.hp} · ${fighter.energy} / ${ULTIMATE_ENERGY_MAX} (비용 ${fighter.def.ultimate.cost})`
-          : "전투 불능",
-      );
       const ready = canFireUltimate(this.state, fighter);
-      profile.gauge.setColor(alive ? (ready ? COLOR.accentText : COLOR.inkDim) : COLOR.dangerText);
+      profile.energyBar.setValue(fighter.energy / ULTIMATE_ENERGY_MAX, ready ? COLOR.accent : COLOR.energy);
+      profile.energyLabel.setText(`각성 ${fighter.energy} / ${ULTIMATE_ENERGY_MAX} (비용 ${fighter.def.ultimate.cost})`);
+      profile.energyLabel.setColor(ready ? COLOR.accentText : COLOR.inkDim);
       profile.card.setAlpha(alive ? 1 : 0.45);
       const ferocityColor = fighter.ferocity >= 100 ? COLOR.ferocityDanger
         : fighter.ferocity >= 80 ? COLOR.ferocityWarning : COLOR.ferocityLow;
-      profile.ferocityFill.setFillStyle(ferocityColor).setDisplaySize(300 * fighter.ferocity / 100, 14);
+      profile.ferocityBar.setValue(fighter.ferocity / 100, ferocityColor);
       profile.ferocityLabel.setText(fighter.ferocity >= 100 ? "통제 불능 · 눌러서 진압" : `야성 ${fighter.ferocity} / 100`);
       profile.ferocityLabel.setColor(fighter.ferocity >= 100 ? COLOR.dangerText : fighter.ferocity >= 80 ? COLOR.accentText : "#70d6cb");
       // 통제 불능은 프로필 전체를 붉게 물들이고 궁극기 준비 연출을 끈다.

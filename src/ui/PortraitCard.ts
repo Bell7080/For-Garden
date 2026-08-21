@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import type { PortraitAssetId, RelicDef, RelicRarity } from "../core/types";
 import { headCardFrame, loadPortraitTexture, portraitAssetFor, portraitUsesRelicTint } from "../puppets/assets";
 import { mixWhite, tintFor } from "../puppets/tints";
-import { chipPoints, HOLO } from "./holo";
+import { chipPoints, HOLO, slantedRect } from "./holo";
 import { COLOR, textStyle } from "./theme";
 
 /** 카드 한 장의 조립 옵션. 크기와 라벨만 주면 나머지 연출은 프리팹이 맞춘다. */
@@ -45,12 +45,20 @@ const CHIP_INSET = 6;
 const CHIP_BEVEL = { topLeft: 0.18, topRight: 0.07, bottomRight: 0.14, bottomLeft: 0.05 };
 
 /** 이름이 얹히는 아래쪽 어둠이 차지하는 높이 비율. */
-const SHADE_RATIO = 0.42;
+const SHADE_RATIO = 0.46;
 
-/** 등급이 곧 성급이다. 카드마다 다른 기준을 쓰지 않는다. */
+/** 레벨 숫자를 세로로 늘리는 비율. 계기판 숫자처럼 보이게 하는 최소한의 왜곡이다. */
+const LEVEL_STRETCH = 1.26;
+
+/**
+ * 등급이 곧 성급이다. 카드마다 다른 기준을 쓰지 않는다.
+ *
+ * 칸은 언제나 다섯이고 등급이 그중 몇 칸을 채우는지만 정한다. 칸 수까지 등급마다 달라지면
+ * 두 카드를 나란히 놓았을 때 어느 쪽이 높은지 한눈에 비교되지 않는다.
+ */
 export function starsForRarity(rarity: RelicRarity): { filled: number; total: number } {
-  const filled = rarity === "SSR" ? 3 : rarity === "SR" ? 2 : 1;
-  return { filled, total: 3 };
+  const filled = rarity === "SSR" ? 5 : rarity === "SR" ? 4 : 3;
+  return { filled, total: 5 };
 }
 
 /**
@@ -133,28 +141,41 @@ export class PortraitCard extends Phaser.GameObjects.Container {
       this.add(shade);
 
       const name = options.locked ? "???" : options.label;
-      const nameSize = Math.min(30, width / 9);
-      const nameY = height / 2 - nameSize * 1.5 - (options.sub ? 26 : 0);
-      this.nameText = scene.add.text(0, nameY, name, textStyle({ role: "display", size: nameSize })).setOrigin(0.5, 0);
-      this.add(this.nameText);
-      if (options.level !== undefined && !options.locked) {
-        // 레벨은 이름과 다른 뜻이라 색으로만 가른다. 사이에 구분 기호를 두지 않는다.
+      const inset = CHIP_INSET + 14;
+      const baseline = height / 2 - (options.sub ? 44 : 20);
+      const nameSize = Math.min(40, width / 7);
+      const hasLevel = options.level !== undefined && !options.locked;
+
+      // 레벨은 이름과 나란히 서지 않고 왼쪽 사이드에서 훨씬 크게 선다. 세로로 살짝 늘려
+      // 계기판 숫자처럼 보이게 하고, 이름과는 색으로만 가른다.
+      let nameLeft = -width / 2 + inset;
+      if (hasLevel) {
+        const levelSize = Math.min(54, width / 5.2);
         const levelText = scene.add
-          .text(0, nameY + 2, `LV.${options.level}`, textStyle({ role: "emphasis", size: nameSize * 0.78, color: COLOR.accentText }))
-          .setOrigin(0, 0);
-        const gap = nameSize * 0.4;
-        const total = levelText.width + gap + this.nameText.width;
-        levelText.setX(-total / 2);
-        this.nameText.setX(-total / 2 + levelText.width + gap + this.nameText.width / 2);
-        this.add(levelText);
+          .text(-width / 2 + inset, baseline + 4, `${options.level}`, textStyle({ role: "display", size: levelSize, color: COLOR.accentText }))
+          .setOrigin(0, 1)
+          .setScale(1, LEVEL_STRETCH);
+        // 숫자가 세로로 늘어난 만큼 태그도 그 위로 밀어야 두 글자가 겹치지 않는다.
+        const levelTag = scene.add
+          .text(-width / 2 + inset + 2, levelText.y - levelText.displayHeight - 2, "LV", textStyle({ role: "display", size: levelSize * 0.36, color: COLOR.accentText }))
+          .setOrigin(0, 1)
+          .setAlpha(0.8);
+        this.add([levelTag, levelText]);
+        nameLeft = -width / 2 + inset + Math.max(levelText.width, levelTag.width) + nameSize * 0.42;
       }
+
+      this.nameText = scene.add
+        .text(nameLeft, baseline, name, textStyle({ role: "display", size: nameSize, wrap: width / 2 - inset }))
+        .setOrigin(0, 1);
+      this.add(this.nameText);
+
       if (options.sub) {
         this.subText = scene.add
-          .text(0, nameY + nameSize * 1.35, options.sub, textStyle({ role: "emphasis", size: Math.min(22, width / 12), color: COLOR.accentText }))
-          .setOrigin(0.5, 0);
+          .text(nameLeft, baseline + 10, options.sub, textStyle({ role: "emphasis", size: Math.min(22, width / 12), color: COLOR.accentText }))
+          .setOrigin(0, 0);
         this.add(this.subText);
       }
-      if (options.stars) this.addStars(nameY - Math.min(24, width / 11));
+      if (options.stars) this.addStars(baseline - nameSize * 1.55, width / 2 - inset);
     }
 
     if (options.badge) {
@@ -212,15 +233,25 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     this.chip.fillPoints(points, true);
   }
 
-  /** 이름 바로 위에 성급을 찍는다. 찬 별은 빛무리를 두른 반짝임, 빈 별은 선만 남긴다. */
-  private addStars(y: number): void {
+  /**
+   * 이름 바로 위의 성급.
+   *
+   * 다섯 칸이 원화 위에 바로 얹히면 밝은 옷에 묻히므로, 줄 뒤에 진한 그림자 판을 깔아 한
+   * 덩어리로 떼어 낸다. 찬 별은 빛무리를 두른 반짝임, 빈 별은 선만 남긴다.
+   */
+  private addStars(y: number, right: number): void {
     const stars = this.options.stars!;
-    const size = Math.min(13, this.options.width / 20);
-    const gap = size * 2.6;
-    const left = -((stars.total - 1) * gap) / 2;
+    const size = Math.min(13, this.options.width / 22);
+    const gap = size * 2.5;
+    const left = right - (stars.total - 1) * gap;
+
+    const plate = this.scene.add.graphics({ x: (left + right) / 2, y });
+    plate.fillStyle(0x000000, 0.55);
+    plate.fillPoints(toGeomPoints(slantedRect((stars.total - 1) * gap + size * 3.6, size * 2.9, size * 1.2)), true);
+    this.add(plate);
+
     for (let i = 0; i < stars.total; i++) {
       const filled = i < stars.filled && !this.options.locked;
-      // 별은 원화와 하단 레이어의 경계에 걸린다. 밝은 옷 위에서 묻히지 않도록 어두운 받침을 깐다.
       const x = left + i * gap;
       if (filled) {
         // 찬 별은 두 겹이다. 뒤의 옅고 큰 반짝임이 빛무리 노릇을 해서 밝은 옷 위에서도 뜬다.

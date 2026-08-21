@@ -80,10 +80,10 @@ export class RelicsScene extends Phaser.Scene {
     const cardW = 300;
     const cardH = 400;
     const gapX = 40;
-    const gapY = 64;
+    const gapY = 74;
     const gridW = cols * cardW + (cols - 1) * gapX;
     const startX = (BASE_WIDTH - gridW) / 2 + cardW / 2;
-    const startY = 560;
+    const startY = 580;
 
     const catalog = this.sortMode === "number"
       ? sortRelicsBySpecimenNumber(relicCollection.catalog)

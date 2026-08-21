@@ -201,7 +201,7 @@ export class PartyScene extends Phaser.Scene {
     const cardW = 186;
     const cardH = 226;
     const gapX = 26;
-    const gapY = 26;
+    const gapY = 52;
     const gridW = cols * cardW + (cols - 1) * gapX;
     const startX = (BASE_WIDTH - gridW) / 2 + cardW / 2;
     const startY = 1080;

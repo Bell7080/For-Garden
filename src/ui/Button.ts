@@ -63,7 +63,7 @@ export class Button extends Phaser.GameObjects.Container {
     if (opts.tilt) plate.setRotation(Phaser.Math.DegToRad(opts.tilt));
 
     const shape = opts.perspective
-      ? perspectiveRect(width, height, { inner: opts.perspective, taper: 0.32 })
+      ? perspectiveRect(width, height, { inner: opts.perspective, taper: 0.42 })
       : primary
         ? chipPoints(width, height, {
             bevel: { topLeft: height * 0.52, topRight: 0, bottomRight: height * 0.52, bottomLeft: 0 },

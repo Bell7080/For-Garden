@@ -66,7 +66,7 @@ export class LobbyScene extends Phaser.Scene {
       fontSize: 36,
       variant: "primary",
       perspective: "left",
-      tilt: -3.5,
+      tilt: -6,
       onClick: () => this.notReady("원정"),
     });
 
@@ -79,7 +79,7 @@ export class LobbyScene extends Phaser.Scene {
       fontSize: 52,
       variant: "primary",
       perspective: "left",
-      tilt: -3.5,
+      tilt: -6,
       accentColor: SORTIE_ORANGE,
       accentTextColor: "#f2b070",
       onClick: () => this.scene.start("stageMap"),
@@ -94,7 +94,7 @@ export class LobbyScene extends Phaser.Scene {
       fontSize: 36,
       variant: "primary",
       perspective: "right",
-      tilt: 3.5,
+      tilt: 6,
       accentColor: EXCHANGE_BLUE,
       accentTextColor: "#9fd0f0",
       onClick: () => this.notReady("교류"),
@@ -207,26 +207,27 @@ export class LobbyScene extends Phaser.Scene {
     const width = BASE_WIDTH - left * 2;
     const layer = this.add.container(0, 0).setDepth(500);
 
-    layer.add(drawLayer(this, BASE_WIDTH / 2, cy + 4, slantedRect(width, 172, 18), {
-      fill: 0x080a0e,
-      alpha: 0.8,
+    layer.add(drawLayer(this, BASE_WIDTH / 2, cy + 4, slantedRect(width, 176, 18), {
+      fill: 0x05070a,
+      alpha: 0.94,
       shadow: false,
     }));
     // 위는 밝게, 아래는 옅게 그어 빛이 위에서 내려오는 것처럼 보이게 한다.
     layer.add(drawHairline(this, BASE_WIDTH / 2, cy - 82, width - 10, { color: COLOR.accent, alpha: 0.8 }));
     layer.add(drawHairline(this, BASE_WIDTH / 2, cy + 90, width - 10, { color: COLOR.accent, alpha: 0.3 }));
 
+    // 이름 왼쪽의 두꺼운 막대. 누가 말하는지를 한 글자보다 먼저 알린다.
+    const bar = this.add.rectangle(left + 30, cy - 44, 9, 46, COLOR.accent, 0.95).setOrigin(0, 0.5);
+    layer.add(bar);
     const nameText = this.add
-      .text(left + 30, cy - 66, name, textStyle({ role: "display", size: 38, color: COLOR.accentText }))
+      .text(left + 54, cy - 66, name, textStyle({ role: "display", size: 38, color: COLOR.accentText }))
       .setOrigin(0, 0);
     layer.add(nameText);
-    // 이름 오른쪽으로 이어지는 선. 이름과 대사를 가르는 동시에 띠의 폭을 눈에 그려 준다.
-    const ruleLeft = left + 46 + nameText.width;
-    const ruleWidth = BASE_WIDTH - left - 30 - ruleLeft;
-    layer.add(drawHairline(this, ruleLeft + ruleWidth / 2, cy - 44, ruleWidth, { color: COLOR.accent, alpha: 0.4 }));
+    // 이름과 대사 사이를 가르는 긴 선. 띠의 폭을 그대로 그어 두 줄의 성격을 나눈다.
+    layer.add(drawHairline(this, BASE_WIDTH / 2, cy - 16, width - 60, { color: COLOR.accent, alpha: 0.45 }));
 
     const text = this.add
-      .text(left + 30, cy - 4, `“${line}”${reward}`, textStyle({ role: "body", size: 34, color: COLOR.ink, lineSpacing: 8, wrap: width - 60 }))
+      .text(left + 30, cy + 4, `“${line}”${reward}`, textStyle({ role: "body", size: 34, color: COLOR.ink, lineSpacing: 8, wrap: width - 60 }))
       .setOrigin(0, 0);
     // 대사 ID는 번역/분석 추적용으로 객체에 남기되 플레이어 화면에는 노출하지 않는다.
     text.setData("dialogueId", dialogueId);

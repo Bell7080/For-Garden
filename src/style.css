@@ -1,3 +1,6 @@
+/* 글꼴 파일은 여기서 선언하지 않는다. @font-face는 src/ui/fonts.ts의 FONT_FACES가 부트에서
+   등록한다 — 파일 이름과 굵기가 두 곳에 갈라지지 않게 하기 위해서다. */
+
 :root {
   /* 레터박스(게임 화면 바깥). 게임 바탕보다 어두워야 경계가 보인다. */
   --bg-void: #000000;
@@ -17,7 +20,10 @@ body {
   background: var(--bg-void);
   overflow: hidden;
   color: var(--ink);
-  font-family: "Noto Serif KR", Georgia, "Apple SD Gothic Neo", serif;
+  /* 캔버스 바깥(회전 안내 등)도 게임과 같은 글꼴을 쓴다. 본문이므로 미디움이다. */
+  font-family: "NEXON Kart", "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic",
+    sans-serif;
+  font-weight: 500;
 }
 
 #app {

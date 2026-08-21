@@ -51,17 +51,17 @@ export class Revolver {
       container.add(ring);
 
       const name = scene.add
-        .text(0, -14, unit.def.name, textStyle({ size: 32 }))
+        .text(0, -14, unit.def.name, textStyle({ role: "display", size: 32 }))
         .setOrigin(0.5);
       container.add(name);
 
       const hp = scene.add
-        .text(0, 24, "", textStyle({ size: 24, color: COLOR.inkDim }))
+        .text(0, 24, "", textStyle({ role: "body", size: 24, color: COLOR.inkDim }))
         .setOrigin(0.5);
       container.add(hp);
 
       const active = scene.add
-        .text(0, -92, "출전", textStyle({ size: 28, color: COLOR.accentText }))
+        .text(0, -92, "출전", textStyle({ role: "emphasis", size: 28, color: COLOR.accentText }))
         .setOrigin(0.5);
       container.add(active);
 

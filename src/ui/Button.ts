@@ -30,12 +30,12 @@ export class Button extends Phaser.GameObjects.Container {
     const hasSub = opts.sub !== undefined;
     this.add(
       scene.add
-        .text(0, hasSub ? -14 : 0, opts.label, textStyle({ size: opts.fontSize ?? 36 }))
+        .text(0, hasSub ? -14 : 0, opts.label, textStyle({ role: "display", size: opts.fontSize ?? 36 }))
         .setOrigin(0.5),
     );
     if (hasSub) {
       this.subText = scene.add
-        .text(0, 26, opts.sub ?? "", textStyle({ size: 26, color: COLOR.inkDim }))
+        .text(0, 26, opts.sub ?? "", textStyle({ role: "body", size: 26, color: COLOR.inkDim }))
         .setOrigin(0.5);
       this.add(this.subText);
     }

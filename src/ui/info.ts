@@ -65,7 +65,7 @@ export const ROLE_LABEL: Record<string, string> = { attacker: "공격", tank: "�
 export function addHelpBadge(scene: Phaser.Scene, x: number, y: number, onClick: () => void, radius = 26): Phaser.GameObjects.Container {
   const badge = scene.add.container(x, y);
   const circle = scene.add.circle(0, 0, radius, COLOR.void).setStrokeStyle(3, COLOR.accent).setInteractive({ useHandCursor: true });
-  badge.add([circle, scene.add.text(0, 0, "?", textStyle({ size: Math.round(radius * 1.3), color: COLOR.accentText })).setOrigin(0.5)]);
+  badge.add([circle, scene.add.text(0, 0, "?", textStyle({ role: "emphasis", size: Math.round(radius * 1.3), color: COLOR.accentText })).setOrigin(0.5)]);
   circle.on("pointerdown", (_p: unknown, _x: unknown, _y: unknown, event?: Phaser.Types.Input.EventData) => { event?.stopPropagation(); onClick(); });
   return badge;
 }
@@ -108,7 +108,7 @@ function floatingLayer(scene: Phaser.Scene, x: number, y: number, width: number,
   const container = scene.add.container(x, y);
   container.add(scene.add.rectangle(0, 0, width, height, COLOR.panel, 0.72).setOrigin(0));
   container.add(scene.add.rectangle(0, 0, 7, 46, COLOR.accent, 0.9).setOrigin(0));
-  container.add(scene.add.text(24, 10, title, textStyle({ size: 20, color: COLOR.accentText })).setOrigin(0));
+  container.add(scene.add.text(24, 10, title, textStyle({ role: "emphasis", size: 20, color: COLOR.accentText })).setOrigin(0));
   return container;
 }
 
@@ -156,7 +156,7 @@ export class InfoManager {
     this.root.add(gradient);
 
     this.header = floatingLayer(scene, 58, 54, 930, 202, "RELIC / ARCHIVE");
-    this.headerText = scene.add.text(25, 56, "", textStyle({ size: 39, wrap: 820, lineSpacing: 5 })).setOrigin(0);
+    this.headerText = scene.add.text(25, 56, "", textStyle({ role: "display", size: 39, wrap: 820, lineSpacing: 5 })).setOrigin(0);
     this.header.add(this.headerText);
     this.chrome.add(this.header);
     // 닫기는 다른 화면의 뒤로가기와 같은 버튼·같은 자리를 쓴다.
@@ -164,19 +164,19 @@ export class InfoManager {
 
     // 도감 정적 기록은 성장·전투 수치와 분리해 왼쪽 반투명 패널에 고정한다.
     this.archive = floatingLayer(scene, 58, 300, 560, 470, "기록 / ARCHIVE RECORD");
-    this.archiveText = scene.add.text(28, 62, "", textStyle({ size: 21, wrap: 500, lineSpacing: 9 })).setOrigin(0);
+    this.archiveText = scene.add.text(28, 62, "", textStyle({ role: "body", size: 21, wrap: 500, lineSpacing: 9 })).setOrigin(0);
     this.archive.add(this.archiveText);
     this.chrome.add(this.archive);
 
     this.stats = floatingLayer(scene, 664, 300, 370, 590, "능력치 / STATUS");
     this.radar = new StatRadar(scene, 185, 205, 105);
-    this.statsText = scene.add.text(28, 350, "", textStyle({ size: 22, lineSpacing: 9 })).setOrigin(0);
+    this.statsText = scene.add.text(28, 350, "", textStyle({ role: "body", size: 22, lineSpacing: 9 })).setOrigin(0);
     this.stats.add([this.radar, this.statsText]);
     this.chrome.add(this.stats);
 
     this.growth = floatingLayer(scene, 58, 1420, 560, 255, "성장 / LEVEL & DNA");
-    this.levelText = scene.add.text(28, 58, "", textStyle({ size: 22, color: COLOR.ink, lineSpacing: 7 })).setOrigin(0);
-    this.dnaText = scene.add.text(28, 142, "", textStyle({ size: 20, color: COLOR.accentText, lineSpacing: 5 })).setOrigin(0);
+    this.levelText = scene.add.text(28, 58, "", textStyle({ role: "body", size: 22, color: COLOR.ink, lineSpacing: 7 })).setOrigin(0);
+    this.dnaText = scene.add.text(28, 142, "", textStyle({ role: "emphasis", size: 20, color: COLOR.accentText, lineSpacing: 5 })).setOrigin(0);
     // 기존 IconButton의 황동 테두리·pointerup 입력을 재사용해 상세 화면의 시각 언어를 유지한다.
     this.levelButton = new Button(scene, 455, 108, { width: 160, height: 76, label: "레벨업", fontSize: 22, onClick: () => this.requestLevelUp() });
     this.growth.add([this.levelText, this.dnaText, this.levelButton]);
@@ -194,9 +194,9 @@ export class InfoManager {
     const detailCard = iconCard(scene, 74, 122, 108, FALLBACK_SKILL_ICON, true);
     this.skillDetail.add(detailCard.objects);
     this.detailIcon = detailCard.icon;
-    this.detailTitle = scene.add.text(150, 84, "", textStyle({ size: 32, color: COLOR.accentText, wrap: 232 })).setOrigin(0);
-    this.detailMeta = scene.add.text(28, 172, "", textStyle({ size: 21, lineSpacing: 12 })).setOrigin(0);
-    this.detailDescription = scene.add.text(28, 292, "", textStyle({ size: 22, wrap: 350, lineSpacing: 9 })).setOrigin(0);
+    this.detailTitle = scene.add.text(150, 84, "", textStyle({ role: "display", size: 32, color: COLOR.accentText, wrap: 232 })).setOrigin(0);
+    this.detailMeta = scene.add.text(28, 172, "", textStyle({ role: "body", size: 21, lineSpacing: 12 })).setOrigin(0);
+    this.detailDescription = scene.add.text(28, 292, "", textStyle({ role: "body", size: 22, wrap: 350, lineSpacing: 9 })).setOrigin(0);
     this.skillDetail.add([this.detailTitle, this.detailMeta, this.detailDescription,
       new IconButton(scene, 74, 545, { icon: UI_ICON.back, size: 84, label: "캐릭터 상세로", onClick: () => this.closeSkillDetail() })]);
     this.chrome.add(this.skillDetail);
@@ -208,7 +208,7 @@ export class InfoManager {
     this.root.add(scene.add.ellipse(FIGURE.x, FIGURE.y + 6, 236, 62, COLOR.void, 0.55));
     this.root.add(scene.add.ellipse(FIGURE.x, FIGURE.y, 220, 54, COLOR.panel, 0.9).setStrokeStyle(3, COLOR.accent, 0.7));
     this.chrome.add(
-      scene.add.text(FIGURE.x, FIGURE.y + 40, "IN-GAME SD", textStyle({ size: 18, color: COLOR.inkDim })).setOrigin(0.5, 0),
+      scene.add.text(FIGURE.x, FIGURE.y + 40, "IN-GAME SD", textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0.5, 0),
     );
   }
 
@@ -240,7 +240,7 @@ export class InfoManager {
     const heart = this.scene.add.graphics().setPosition(x, 92);
     heart.fillStyle(COLOR.panelEdge, 0.85).fillCircle(-21, -10, 29).fillCircle(21, -10, 29)
       .fillTriangle(-49, 0, 49, 0, 0, 62);
-    const label = this.scene.add.text(x, 105, "빈 슬롯", textStyle({ size: 15, align: "center", wrap: 130 })).setOrigin(0.5, 0);
+    const label = this.scene.add.text(x, 105, "빈 슬롯", textStyle({ role: "body", size: 15, align: "center", wrap: 130 })).setOrigin(0.5, 0);
     this.gemLabels.push(label); this.gems.add([heart, label]);
   }
 
@@ -340,7 +340,7 @@ export class InfoManager {
       const hit = this.scene.add.rectangle(60, y + 44, 104, 104, COLOR.void, 0).setInteractive({ useHandCursor: true });
       hit.on("pointerup", handler);
       this.skills.add([...card.objects, hit,
-        this.scene.add.text(126, y + 9, `${kind}\n${name}`, textStyle({ size: 21, wrap: 225, lineSpacing: 5 })).setOrigin(0)]);
+        this.scene.add.text(126, y + 9, `${kind}\n${name}`, textStyle({ role: "body", size: 21, wrap: 225, lineSpacing: 5 })).setOrigin(0)]);
     });
   }
 

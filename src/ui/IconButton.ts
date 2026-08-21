@@ -45,7 +45,7 @@ export class IconButton extends Phaser.GameObjects.Container {
 
     if (options.label) {
       this.add(
-        scene.add.text(half + 18, 0, options.label, textStyle({ size: Math.round(size * 0.26), color: COLOR.inkDim })).setOrigin(0, 0.5),
+        scene.add.text(half + 18, 0, options.label, textStyle({ role: "body", size: Math.round(size * 0.26), color: COLOR.inkDim })).setOrigin(0, 0.5),
       );
     }
 

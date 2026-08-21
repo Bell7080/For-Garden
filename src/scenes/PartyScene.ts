@@ -84,16 +84,16 @@ export class PartyScene extends Phaser.Scene {
     this.add.rectangle(cx, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.42).setDepth(-29);
 
     const stage = getStage(session.selectedStageId ?? "1-1");
-    this.add.text(cx, 70, `${stage.id}  ${stage.name}`, textStyle({ size: 46 })).setOrigin(0.5, 0);
+    this.add.text(cx, 70, `${stage.id}  ${stage.name}`, textStyle({ role: "display", size: 46 })).setOrigin(0.5, 0);
     this.add
-      .text(cx, 132, "렐릭 3명 편성 — 고른 순서대로 왼쪽부터 선다", textStyle({ size: 28, color: COLOR.inkDim }))
+      .text(cx, 132, "렐릭 3명 편성 — 고른 순서대로 왼쪽부터 선다", textStyle({ role: "body", size: 28, color: COLOR.inkDim }))
       .setOrigin(0.5, 0);
 
     this.buildPreview(stage.enemies);
     this.buildRoster();
 
     this.hint = this.add
-      .text(cx, 1560, "", textStyle({ size: 28, color: COLOR.inkDim }))
+      .text(cx, 1560, "", textStyle({ role: "body", size: 28, color: COLOR.inkDim }))
       .setOrigin(0.5, 0);
 
     this.startButton = new Button(this, cx, 1700, {
@@ -117,7 +117,7 @@ export class PartyScene extends Phaser.Scene {
   /** 위쪽 시작 배치 미리보기. 적은 위에, 아군은 아래에 나란히 선다. */
   private buildPreview(enemyIds: readonly string[]): void {
     this.add
-      .text(BASE_WIDTH - 40, 210, "적", textStyle({ size: 30, color: COLOR.dangerText }))
+      .text(BASE_WIDTH - 40, 210, "적", textStyle({ role: "emphasis", size: 30, color: COLOR.dangerText }))
       .setOrigin(1, 0);
     // 두 줄 사이의 대치선.
     this.add
@@ -133,21 +133,21 @@ export class PartyScene extends Phaser.Scene {
       this.add.ellipse(x, ENEMY_ROW + 4, 190, 34, COLOR.void, 0.45).setDepth(-12);
       void this.standSD(def.id, x, ENEMY_ROW, true);
 
-      this.add.text(x, ENEMY_ROW + 26, def.name, textStyle({ size: 28 })).setOrigin(0.5, 0);
+      this.add.text(x, ENEMY_ROW + 26, def.name, textStyle({ role: "display", size: 28 })).setOrigin(0.5, 0);
       this.add
-        .text(x, ENEMY_ROW + 62, `${ROLE_LABEL[def.role]}  HP ${def.stats.hp}`, textStyle({ size: 22, color: COLOR.inkDim }))
+        .text(x, ENEMY_ROW + 62, `${ROLE_LABEL[def.role]}  HP ${def.stats.hp}`, textStyle({ role: "body", size: 22, color: COLOR.inkDim }))
         .setOrigin(0.5, 0);
       // SD 자체는 그림이라 입력을 받지 않는다. 상세는 옆의 ?로 연다.
       addHelpBadge(this, x + 96, ENEMY_ROW - PREVIEW_HEIGHT + 10, () => this.info.showRelic(def), 24);
     });
 
-    this.add.text(40, FRONT_LINE + 28, "아군", textStyle({ size: 30 })).setOrigin(0, 0);
+    this.add.text(40, FRONT_LINE + 28, "아군", textStyle({ role: "emphasis", size: 30 })).setOrigin(0, 0);
 
     PREVIEW_COLUMNS.forEach((x, slot) => {
       const platform = this.add.ellipse(x, ALLY_ROW, 210, 46, COLOR.panel, 0.85).setStrokeStyle(3, COLOR.ally).setDepth(-12);
-      const name = this.add.text(x, ALLY_ROW + 26, "―", textStyle({ size: 28, color: COLOR.inkDim })).setOrigin(0.5, 0);
+      const name = this.add.text(x, ALLY_ROW + 26, "―", textStyle({ role: "display", size: 28, color: COLOR.inkDim })).setOrigin(0.5, 0);
       const slotLabel = this.add
-        .text(x, ALLY_ROW + 62, `${slot + 1}번 자리`, textStyle({ size: 22, color: COLOR.inkDim }))
+        .text(x, ALLY_ROW + 62, `${slot + 1}번 자리`, textStyle({ role: "body", size: 22, color: COLOR.inkDim }))
         .setOrigin(0.5, 0);
       this.allySlots.push({ platform, name, slotLabel, request: 0 });
     });
@@ -225,7 +225,7 @@ export class PartyScene extends Phaser.Scene {
     });
 
     this.add
-      .text(BASE_WIDTH / 2, 1520, "꾹 누르면 상세 정보", textStyle({ size: 24, color: COLOR.inkDim }))
+      .text(BASE_WIDTH / 2, 1520, "꾹 누르면 상세 정보", textStyle({ role: "body", size: 24, color: COLOR.inkDim }))
       .setOrigin(0.5, 0);
   }
 

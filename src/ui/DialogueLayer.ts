@@ -25,9 +25,9 @@ export class DialogueLayer extends Phaser.GameObjects.Container {
       // 선택지가 떠 있을 때 패널 탭으로 분기를 건너뛰지 않는다.
       if (this.choiceObjects.length === 0) this.onAdvance();
     });
-    this.speaker = scene.add.text(92, PANEL_TOP + 52, "", textStyle({ size: 34, color: COLOR.accentText }));
-    this.bodyText = scene.add.text(92, PANEL_TOP + 126, "", textStyle({ size: 36, wrap: BASE_WIDTH - 184, lineSpacing: 14 }));
-    this.nextMark = scene.add.text(BASE_WIDTH - 100, PANEL_TOP + 464, "▼", textStyle({ size: 28, color: COLOR.accentText })).setOrigin(0.5);
+    this.speaker = scene.add.text(92, PANEL_TOP + 52, "", textStyle({ role: "display", size: 34, color: COLOR.accentText }));
+    this.bodyText = scene.add.text(92, PANEL_TOP + 126, "", textStyle({ role: "body", size: 36, wrap: BASE_WIDTH - 184, lineSpacing: 14 }));
+    this.nextMark = scene.add.text(BASE_WIDTH - 100, PANEL_TOP + 464, "▼", textStyle({ role: "emphasis", size: 28, color: COLOR.accentText })).setOrigin(0.5);
     this.add([blocker, this.speaker, this.bodyText, this.nextMark]);
     this.setDepth(600);
     scene.add.existing(this);

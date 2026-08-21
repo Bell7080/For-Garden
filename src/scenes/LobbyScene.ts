@@ -87,7 +87,7 @@ export class LobbyScene extends Phaser.Scene {
     // 확대한 원화가 뒤로 지나가므로 지명은 얇은 어두운 판 위에 얹어 대비를 지킨다.
     this.add.rectangle(cx, 219, 470, 56, COLOR.void, 0.62);
     this.add
-      .text(cx, 200, "이터널 시티 · 중앙 광장", textStyle({ size: 30, color: COLOR.inkDim }))
+      .text(cx, 200, "이터널 시티 · 중앙 광장", textStyle({ role: "body", size: 30, color: COLOR.inkDim }))
       .setOrigin(0.5, 0);
   }
 
@@ -127,7 +127,7 @@ export class LobbyScene extends Phaser.Scene {
       const dialogue = bondDialogue(relicId, progress.bondLevel, this.interactionIndex++);
       const reward = result.bondXpEarned > 0 ? `\n유대 EXP +${result.bondXpEarned}${result.bondLevelsGained ? ` · LEVEL UP +${result.bondLevelsGained}` : ""}` : "";
       const bubble = this.add.rectangle(BASE_WIDTH / 2, 470, 760, 150, COLOR.panel, 0.9).setStrokeStyle(2, COLOR.accent).setDepth(500);
-      const text = this.add.text(BASE_WIDTH / 2, 470, `“${dialogue.text}”${reward}`, textStyle({ size: 28, color: COLOR.ink, align: "center", lineSpacing: 7 })).setOrigin(0.5).setDepth(501);
+      const text = this.add.text(BASE_WIDTH / 2, 470, `“${dialogue.text}”${reward}`, textStyle({ role: "body", size: 28, color: COLOR.ink, align: "center", lineSpacing: 7 })).setOrigin(0.5).setDepth(501);
       // 대사 ID는 번역/분석 추적용으로 객체에 남기되 플레이어 화면에는 노출하지 않는다.
       text.setData("dialogueId", dialogue.id);
       this.time.delayedCall(1800, () => { bubble.destroy(); text.destroy(); });
@@ -136,7 +136,7 @@ export class LobbyScene extends Phaser.Scene {
 
   private notReady(label: string): void {
     const toast = this.add
-      .text(BASE_WIDTH / 2, NAV_TOP - 300, `${label} — 준비 중`, textStyle({ size: 30, color: COLOR.accentText }))
+      .text(BASE_WIDTH / 2, NAV_TOP - 300, `${label} — 준비 중`, textStyle({ role: "emphasis", size: 30, color: COLOR.accentText }))
       .setOrigin(0.5)
       .setDepth(500);
     this.tweens.add({ targets: toast, alpha: 0, duration: 1200, onComplete: () => toast.destroy() });

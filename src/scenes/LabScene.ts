@@ -73,12 +73,12 @@ export class LabScene extends Phaser.Scene {
 
     this.topBar = new TopBar(this);
 
-    this.bannerName = this.add.text(cx, 170, "", textStyle({ size: 44 })).setOrigin(0.5, 0);
+    this.bannerName = this.add.text(cx, 170, "", textStyle({ role: "display", size: 44 })).setOrigin(0.5, 0);
     this.bannerDesc = this.add
-      .text(cx, 228, "", textStyle({ size: 26, color: COLOR.inkDim, align: "center", wrap: BASE_WIDTH - 120 }))
+      .text(cx, 228, "", textStyle({ role: "body", size: 26, color: COLOR.inkDim, align: "center", wrap: BASE_WIDTH - 120 }))
       .setOrigin(0.5, 0);
 
-    this.pickupText = this.add.text(cx, 310, "", textStyle({ size: 28, color: COLOR.accentText })).setOrigin(0.5, 0);
+    this.pickupText = this.add.text(cx, 310, "", textStyle({ role: "emphasis", size: 28, color: COLOR.accentText })).setOrigin(0.5, 0);
     // 기존 Button/패널 토큰을 재사용해 확률 정보가 별도 웹 UI처럼 보이지 않게 한다.
     new Button(this, cx, 390, {
       width: 300, height: 82, label: "확률 정보", fontSize: 28,
@@ -118,14 +118,14 @@ export class LabScene extends Phaser.Scene {
       onClick: () => this.doPull(10),
     });
 
-    this.pityText = this.add.text(cx, NAV_TOP - 355, "", textStyle({ size: 28, color: COLOR.accentText })).setOrigin(0.5);
+    this.pityText = this.add.text(cx, NAV_TOP - 355, "", textStyle({ role: "emphasis", size: 28, color: COLOR.accentText })).setOrigin(0.5);
 
     this.add
       .text(
         cx,
         NAV_TOP - 130,
         "화석은 흔한 재화, 호박석은 귀한 재화다.",
-        textStyle({ size: 24, color: COLOR.inkDim }),
+        textStyle({ role: "body", size: 24, color: COLOR.inkDim }),
       )
       .setOrigin(0.5, 0);
 
@@ -198,7 +198,7 @@ export class LabScene extends Phaser.Scene {
   /** 임시 API 오류도 게임 테마 안에서 짧게 안내한다. */
   private showNotice(message: string): void {
     const notice = this.add
-      .text(BASE_WIDTH / 2, NAV_TOP - 390, message, textStyle({ size: 28, color: COLOR.accentText }))
+      .text(BASE_WIDTH / 2, NAV_TOP - 390, message, textStyle({ role: "emphasis", size: 28, color: COLOR.accentText }))
       .setOrigin(0.5)
       .setDepth(700);
     this.time.delayedCall(1800, () => notice.destroy());
@@ -212,12 +212,12 @@ export class LabScene extends Phaser.Scene {
     const shade = this.add.rectangle(cx, 960, BASE_WIDTH, 1920, COLOR.void, 0.9).setInteractive();
     const panel = this.add.rectangle(cx, 800, 820, 720, COLOR.panel).setStrokeStyle(3, COLOR.panelEdge);
     overlay.add([shade, panel]);
-    overlay.add(this.add.text(cx, 510, "발굴 확률", textStyle({ size: 44 })).setOrigin(0.5));
+    overlay.add(this.add.text(cx, 510, "발굴 확률", textStyle({ role: "display", size: 44 })).setOrigin(0.5));
     const rates = (["SSR", "SR", "R"] as const)
       .map((rarity) => `${rarity}  ${(banner.rarityRates[rarity] * 100).toFixed(1)}%`)
       .join("\n");
-    overlay.add(this.add.text(cx, 610, rates, textStyle({ size: 34, align: "center", lineSpacing: 24 })).setOrigin(0.5, 0));
-    overlay.add(this.add.text(cx, 870, `등급 내 픽업 확률 ${(banner.pickupRate * 100).toFixed(0)}%\n10연 마지막 슬롯 SR 이상 보장`, textStyle({ size: 27, color: COLOR.inkDim, align: "center", lineSpacing: 14 })).setOrigin(0.5, 0));
+    overlay.add(this.add.text(cx, 610, rates, textStyle({ role: "body", size: 34, align: "center", lineSpacing: 24 })).setOrigin(0.5, 0));
+    overlay.add(this.add.text(cx, 870, `등급 내 픽업 확률 ${(banner.pickupRate * 100).toFixed(0)}%\n10연 마지막 슬롯 SR 이상 보장`, textStyle({ role: "body", size: 27, color: COLOR.inkDim, align: "center", lineSpacing: 14 })).setOrigin(0.5, 0));
     const close = new Button(this, cx, 1080, { width: 320, height: 100, label: "확인", fontSize: 32, onClick: () => overlay.destroy() });
     overlay.add(close);
     shade.on("pointerdown", () => overlay.destroy());
@@ -261,7 +261,7 @@ export class LabScene extends Phaser.Scene {
     } });
     layer.add(skip);
 
-    content.add(this.add.text(BASE_WIDTH / 2, 660, "화석층 탐사 중", textStyle({ size: 48, color: COLOR.inkDim })).setOrigin(0.5));
+    content.add(this.add.text(BASE_WIDTH / 2, 660, "화석층 탐사 중", textStyle({ role: "display", size: 48, color: COLOR.inkDim })).setOrigin(0.5));
     await this.waitForStage(650, request);
     if (!this.presentation.isCurrent(request)) return;
     if (!this.presentation.wasSkipped) this.presentation.advance();
@@ -320,7 +320,7 @@ export class LabScene extends Phaser.Scene {
     // SR은 보라 외곽, SSR은 밝은 호박 외곽을 더해 단색 R과 실루엣만으로도 구분한다.
     if (rarity !== "R") layer.add(this.add.rectangle(BASE_WIDTH / 2, 960, 920, 1240)
       .setStrokeStyle(10, rarity === "SR" ? COLOR.raritySRAlt : COLOR.raritySSRLight, 0.85));
-    layer.add(this.add.text(BASE_WIDTH / 2, 800, rarity === "SSR" ? "호박빛 공명이 폭발한다" : rarity === "SR" ? "청록과 보랏빛이 교차한다" : "회청색 파장이 감지된다", textStyle({ size: 42, align: "center", wrap: 820 })).setOrigin(0.5));
+    layer.add(this.add.text(BASE_WIDTH / 2, 800, rarity === "SSR" ? "호박빛 공명이 폭발한다" : rarity === "SR" ? "청록과 보랏빛이 교차한다" : "회청색 파장이 감지된다", textStyle({ role: "emphasis", size: 42, align: "center", wrap: 820 })).setOrigin(0.5));
     this.tweens.add({ targets: flash, alpha: 0.55, duration: 180, yoyo: true, repeat: 1 });
   }
 
@@ -337,12 +337,12 @@ export class LabScene extends Phaser.Scene {
       standing = await spawnPuppet(this, portraitAssetFor(def.portraitAssetId), { x: BASE_WIDTH / 2, groundY: 1260, height: 900, tint: portraitUsesRelicTint(def.portraitAssetId) ? mixWhite(tintFor(def.id), 0.55) : undefined, depth: 905 });
     } catch {
       // 부트 캐시나 WebGL 복제가 실패해도 첫 대면 정보는 텍스트로 온전히 전달한다.
-      layer.add(this.add.text(BASE_WIDTH / 2, 650, `[${def.name} 스탠딩을 불러오지 못했습니다]`, textStyle({ size: 30, color: COLOR.inkDim })).setOrigin(0.5));
+      layer.add(this.add.text(BASE_WIDTH / 2, 650, `[${def.name} 스탠딩을 불러오지 못했습니다]`, textStyle({ role: "body", size: 30, color: COLOR.inkDim })).setOrigin(0.5));
     }
     if (!this.presentation.isCurrent(request)) { standing?.destroy(); return; }
     layer.add(this.add.rectangle(BASE_WIDTH / 2, 1470, 900, 250, COLOR.panel, 0.96).setStrokeStyle(3, this.rarityColor(def.rarity)));
-    layer.add(this.add.text(140, 1380, `${def.name} · ${def.rarity}`, textStyle({ size: 32, color: COLOR.accentText })).setOrigin(0, 0.5));
-    layer.add(this.add.text(BASE_WIDTH / 2, 1500, firstMeetingLine(relicId), textStyle({ size: 30, wrap: 780, align: "center" })).setOrigin(0.5));
+    layer.add(this.add.text(140, 1380, `${def.name} · ${def.rarity}`, textStyle({ role: "display", size: 32, color: COLOR.accentText })).setOrigin(0, 0.5));
+    layer.add(this.add.text(BASE_WIDTH / 2, 1500, firstMeetingLine(relicId), textStyle({ role: "body", size: 30, wrap: 780, align: "center" })).setOrigin(0.5));
     await this.waitForStage(1200, request);
     standing?.destroy();
   }
@@ -351,7 +351,7 @@ export class LabScene extends Phaser.Scene {
   private showResultCards(content: Phaser.GameObjects.Container, layer: Phaser.GameObjects.Container, results: AcquisitionResult[]): void {
     const cx = BASE_WIDTH / 2;
     content.removeAll(true);
-    content.add(this.add.text(cx, 210, "발굴 결과", textStyle({ size: 52 })).setOrigin(0.5));
+    content.add(this.add.text(cx, 210, "발굴 결과", textStyle({ role: "display", size: 52 })).setOrigin(0.5));
 
     results.forEach((result, index) => {
       const def = getRelic(result.relicId);

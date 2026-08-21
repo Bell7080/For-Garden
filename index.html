@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <meta name="theme-color" content="#000000" />
   <link rel="icon" href="data:," />
+  <!-- 부트가 글꼴을 기다리므로, HTML을 읽는 동안 먼저 내려받게 한다. 목록은 src/ui/fonts.ts의
+       FONT_FACES와 같아야 한다. -->
+  <link rel="preload" href="/fonts/NexonKart-Medium.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/fonts/NexonKart-Bold.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/fonts/NexonKart-ExtraBold.woff2" as="font" type="font/woff2" crossorigin />
   <title>ETERNAL CITY</title>
 </head>
 <body>

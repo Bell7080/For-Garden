@@ -1,3 +1,5 @@
+import { FONT_FAMILY, fontStyleFor, type TextRole } from "./fonts";
+
 /** 색과 글꼴을 한 곳에 모아둔다. 씬에서 값을 직접 박아 넣지 않는다. */
 export const COLOR = {
   /**
@@ -29,28 +31,28 @@ export const COLOR = {
   ferocityDanger: 0xc84646,
 } as const;
 
-/**
- * 작은 화면에서 읽혀야 하므로 획이 굵고 자간이 넓은 산세리프를 쓴다.
- * 세리프(Georgia)는 한글 글자가 얇게 렌더링돼 가독성이 떨어졌다.
- */
-export const FONT = '"Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
+export { FONT_FAMILY, type TextRole } from "./fonts";
 
 export interface TextOpts {
   size: number;
+  /**
+   * 글의 위계. 크기가 아니라 역할로 고른다 — `src/ui/fonts.ts`의 `TextRole` 설명이 기준이다.
+   * 기본값을 두지 않는 이유는, 기본값이 있으면 아무도 고르지 않고 화면마다 굵기가 어긋나기
+   * 때문이다. 고르기 애매하면 문장은 `body`다.
+   */
+  role: TextRole;
   color?: string;
   align?: "left" | "center" | "right";
   wrap?: number;
   lineSpacing?: number;
-  /** 굵기를 낮추고 싶을 때만 끈다. 기본은 굵게다. */
-  bold?: boolean;
 }
 
-/** 글자 스타일을 만든다. 기본이 굵은 글씨라 어두운 배경에서도 또렷하다. */
+/** 글자 스타일을 만든다. 굵기는 역할에서만 나오고 씬이 직접 정하지 못한다. */
 export function textStyle(opts: TextOpts): Phaser.Types.GameObjects.Text.TextStyle {
   return {
-    fontFamily: FONT,
+    fontFamily: FONT_FAMILY,
     fontSize: `${opts.size}px`,
-    fontStyle: opts.bold === false ? "normal" : "bold",
+    fontStyle: fontStyleFor(opts.role),
     color: opts.color ?? COLOR.ink,
     align: opts.align,
     lineSpacing: opts.lineSpacing,

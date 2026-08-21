@@ -22,7 +22,7 @@ export class StatRadar extends Phaser.GameObjects.Container {
     AXES.forEach(([, label], index) => {
       const angle = -Math.PI / 2 + index * Math.PI * 2 / AXES.length;
       this.add(scene.add.text(Math.cos(angle) * (radius + 31), Math.sin(angle) * (radius + 25), label,
-        textStyle({ size: 17, color: COLOR.inkDim })).setOrigin(0.5));
+        textStyle({ role: "body", size: 17, color: COLOR.inkDim })).setOrigin(0.5));
     });
     this.draw({ hp: 0, def: 0, res: 0, atk: 0, ap: 0 } as Stats, radius);
   }

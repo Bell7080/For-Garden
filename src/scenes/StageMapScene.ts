@@ -78,9 +78,9 @@ export class StageMapScene extends Phaser.Scene {
     addSceneBackground(this, BACKGROUND.battleArea);
     this.add.rectangle(cx, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.38).setDepth(-29);
 
-    this.add.text(cx, 140, "제 1 구역", textStyle({ size: 60 })).setOrigin(0.5);
+    this.add.text(cx, 140, "제 1 구역", textStyle({ role: "display", size: 60 })).setOrigin(0.5);
     this.add
-      .text(cx, 202, "격리 구역 — 이터널 시티 외곽", textStyle({ size: 28, color: COLOR.inkDim }))
+      .text(cx, 202, "격리 구역 — 이터널 시티 외곽", textStyle({ role: "body", size: 28, color: COLOR.inkDim }))
       .setOrigin(0.5);
 
     this.buildMap();
@@ -141,10 +141,10 @@ export class StageMapScene extends Phaser.Scene {
       this.map.add(this.add.line(0, 0, cx, y, x, y, COLOR.panelEdge).setOrigin(0).setLineWidth(4));
       const ring = this.add.circle(x, y, 46, cleared ? COLOR.accent : COLOR.panel).setStrokeStyle(4, unlocked ? COLOR.accent : COLOR.panelEdge);
       const label = this.add
-        .text(x, y, stage.id, textStyle({ size: 30, color: cleared ? "#1a1d21" : unlocked ? COLOR.ink : COLOR.inkDim }))
+        .text(x, y, stage.id, textStyle({ role: "emphasis", size: 30, color: cleared ? "#1a1d21" : unlocked ? COLOR.ink : COLOR.inkDim }))
         .setOrigin(0.5);
       const name = this.add
-        .text(x, y + 66, stage.name, textStyle({ size: 28, color: unlocked ? COLOR.ink : COLOR.inkDim }))
+        .text(x, y + 66, stage.name, textStyle({ role: "display", size: 28, color: unlocked ? COLOR.ink : COLOR.inkDim }))
         .setOrigin(0.5, 0);
       this.map.add([ring, label, name]);
       this.nodes.set(stage.id, { ring, label });
@@ -210,15 +210,15 @@ export class StageMapScene extends Phaser.Scene {
     plate.fillStyle(COLOR.accent, 0.85).fillRect(0, PANEL.height - 4, BASE_WIDTH, 4);
     this.panel.add(plate);
 
-    this.panelTitle = this.add.text(40, 34, "", textStyle({ size: 40 })).setOrigin(0, 0);
+    this.panelTitle = this.add.text(40, 34, "", textStyle({ role: "display", size: 40 })).setOrigin(0, 0);
     this.panel.add(this.panelTitle);
-    this.panel.add(this.add.text(BASE_WIDTH - 40, 46, "적 편성", textStyle({ size: 26, color: COLOR.dangerText })).setOrigin(1, 0));
+    this.panel.add(this.add.text(BASE_WIDTH - 40, 46, "적 편성", textStyle({ role: "emphasis", size: 26, color: COLOR.dangerText })).setOrigin(1, 0));
 
     PANEL_COLUMNS.forEach((x) => {
       const ground = PANEL.height - 130;
       this.panel.add(this.add.ellipse(x, ground + 4, 170, 30, COLOR.panel, 0.6));
-      const name = this.add.text(x, ground + 22, "", textStyle({ size: 26 })).setOrigin(0.5, 0);
-      const detail = this.add.text(x, ground + 56, "", textStyle({ size: 21, color: COLOR.inkDim })).setOrigin(0.5, 0);
+      const name = this.add.text(x, ground + 22, "", textStyle({ role: "display", size: 26 })).setOrigin(0.5, 0);
+      const detail = this.add.text(x, ground + 56, "", textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0.5, 0);
       // SD는 그림이라 입력을 받지 않는다. 칸 전체를 눌러 상세를 연다.
       const hit = this.add.rectangle(x, ground - PANEL.sdHeight / 2 + 20, 240, PANEL.sdHeight + 120, 0xffffff, 0).setInteractive({ useHandCursor: true });
       this.panel.add([name, detail, hit]);

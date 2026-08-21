@@ -21,7 +21,7 @@ export class OpeningScene extends Phaser.Scene {
     // 임시 배경 자산을 만들지 않고 기존 색 토큰으로 야간 열차 창과 실내를 암시한다.
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void);
     this.add.rectangle(BASE_WIDTH / 2, 560, 880, 720, COLOR.panel).setStrokeStyle(8, COLOR.panelEdge);
-    this.add.text(BASE_WIDTH / 2, 250, "NIGHT TRAIN · ETERNAL CITY LINE", textStyle({ size: 25, color: COLOR.inkDim })).setOrigin(0.5);
+    this.add.text(BASE_WIDTH / 2, 250, "NIGHT TRAIN · ETERNAL CITY LINE", textStyle({ role: "body", size: 25, color: COLOR.inkDim })).setOrigin(0.5);
     this.layer = new DialogueLayer(this, (choice) => this.advance(choice));
     void this.layer.show(this.flow.current).finally(() => this.flow.unlockInput());
     setDebugReady(true);

@@ -101,8 +101,8 @@ export class BattleScene extends Phaser.Scene {
 
     addSceneBackground(this, BACKGROUND.battleArea, -30);
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.28).setDepth(-29);
-    this.add.text(42, 48, `${stage.id} · ${stage.name} · 적 LV.${stage.enemyLevel}`, textStyle({ size: 30, color: COLOR.inkDim }));
-    this.add.text(BASE_WIDTH / 2, 160, "AUTO BATTLE", textStyle({ size: 28, color: COLOR.accentText })).setOrigin(0.5);
+    this.add.text(42, 48, `${stage.id} · ${stage.name} · 적 LV.${stage.enemyLevel}`, textStyle({ role: "body", size: 30, color: COLOR.inkDim }));
+    this.add.text(BASE_WIDTH / 2, 160, "AUTO BATTLE", textStyle({ role: "emphasis", size: 28, color: COLOR.accentText })).setOrigin(0.5);
 
     this.buildProfiles();
     void this.spawnFighters();
@@ -165,11 +165,11 @@ export class BattleScene extends Phaser.Scene {
         sub: `각성 · ${fighter.def.ultimate.name}`,
       });
       card.hit.on("pointerup", () => this.useUltimate(fighter));
-      const gauge = this.add.text(x, 1800, "", textStyle({ size: 22, color: COLOR.inkDim })).setOrigin(0.5, 0);
+      const gauge = this.add.text(x, 1800, "", textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0.5, 0);
       // 기존 패널/테두리 형태를 유지한 얇은 별도 바로 두 게이지를 혼동하지 않게 한다.
       const ferocityBack = this.add.rectangle(x, 1868, 300, 18, COLOR.void, 0.9).setStrokeStyle(2, COLOR.panelEdge);
       const ferocityFill = this.add.rectangle(x - 150, 1868, 0, 14, COLOR.ferocityLow).setOrigin(0, 0.5);
-      const ferocityLabel = this.add.text(x, 1837, "야성 0 / 100", textStyle({ size: 18, color: COLOR.inkDim })).setOrigin(0.5, 0);
+      const ferocityLabel = this.add.text(x, 1837, "야성 0 / 100", textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0.5, 0);
       this.profiles.push({ fighter, card, glow, gauge, ferocityBack, ferocityFill, ferocityLabel, ready: false });
     });
   }
@@ -252,7 +252,7 @@ export class BattleScene extends Phaser.Scene {
     const color = ultimate ? COLOR.accentText : fighter.side === "player" ? COLOR.dangerText : COLOR.ink;
     const big = critical || ultimate;
     const label = this.add
-      .text(fighter.x + Phaser.Math.Between(-26, 26), fighter.y - UNIT_HEIGHT * 0.72, `${amount}`, textStyle({ size: big ? 40 : 30, color }))
+      .text(fighter.x + Phaser.Math.Between(-26, 26), fighter.y - UNIT_HEIGHT * 0.72, `${amount}`, textStyle({ role: "display", size: big ? 40 : 30, color }))
       .setOrigin(0.5)
       .setDepth(DEPTH.damage)
       .setStroke("#14171a", 7)
@@ -389,8 +389,8 @@ export class BattleScene extends Phaser.Scene {
     const firstClear = !session.cleared.has(stage.id);
     const weedsEarned = won ? (firstClear ? stage.rewards.firstClearWeeds : stage.rewards.repeatClearWeeds) : 0;
     this.add.rectangle(BASE_WIDTH / 2, 930, BASE_WIDTH, 420, COLOR.void, 0.84).setDepth(100);
-    this.add.text(BASE_WIDTH / 2, 840, won ? "작전 성공" : "작전 실패", textStyle({ size: 68, color: won ? COLOR.accentText : COLOR.dangerText })).setOrigin(0.5).setDepth(101);
-    this.add.text(BASE_WIDTH / 2, 930, won ? `획득 잡초  +${weedsEarned}\n${firstClear ? "최초 클리어 보상" : "반복 클리어 보상"}` : "획득 보상 없음", textStyle({ size: 28, color: COLOR.ink, align: "center", lineSpacing: 8 })).setOrigin(0.5).setDepth(101);
+    this.add.text(BASE_WIDTH / 2, 840, won ? "작전 성공" : "작전 실패", textStyle({ role: "display", size: 68, color: won ? COLOR.accentText : COLOR.dangerText })).setOrigin(0.5).setDepth(101);
+    this.add.text(BASE_WIDTH / 2, 930, won ? `획득 잡초  +${weedsEarned}\n${firstClear ? "최초 클리어 보상" : "반복 클리어 보상"}` : "획득 보상 없음", textStyle({ role: "body", size: 28, color: COLOR.ink, align: "center", lineSpacing: 8 })).setOrigin(0.5).setDepth(101);
     let confirming = false;
     new Button(this, BASE_WIDTH / 2, 1050, { width: 400, height: 110, label: won ? "확인 및 저장" : "지도로", fontSize: 34, onClick: () => {
       if (!won) { void gameApi.completeStage(stage.id, false).finally(() => this.scene.start("stageMap")); return; }

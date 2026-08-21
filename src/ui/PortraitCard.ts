@@ -64,12 +64,12 @@ export class PortraitCard extends Phaser.GameObjects.Container {
       const bandHeight = options.sub ? 74 : 52;
       this.add(scene.add.rectangle(0, height / 2 - bandHeight / 2, width, bandHeight, COLOR.void, 0.86));
       this.nameText = scene.add
-        .text(0, height / 2 - bandHeight + 10, options.locked ? "???" : options.label, textStyle({ size: 28 }))
+        .text(0, height / 2 - bandHeight + 10, options.locked ? "???" : options.label, textStyle({ role: "display", size: 28 }))
         .setOrigin(0.5, 0);
       this.add(this.nameText);
       if (options.sub) {
         this.subText = scene.add
-          .text(0, height / 2 - bandHeight + 44, options.sub, textStyle({ size: 20, color: COLOR.accentText }))
+          .text(0, height / 2 - bandHeight + 44, options.sub, textStyle({ role: "emphasis", size: 20, color: COLOR.accentText }))
           .setOrigin(0.5, 0);
         this.add(this.subText);
       }
@@ -78,7 +78,7 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     if (options.badge) {
       this.add(scene.add.rectangle(left + 34, top + 26, 60, 40, COLOR.void, 0.82));
       this.badgeText = scene.add
-        .text(left + 34, top + 26, options.badge, textStyle({ size: 20, color: COLOR.accentText }))
+        .text(left + 34, top + 26, options.badge, textStyle({ role: "emphasis", size: 20, color: COLOR.accentText }))
         .setOrigin(0.5);
       this.add(this.badgeText);
     }
@@ -97,7 +97,7 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     void this.loadPortrait().catch(() => {
       if (this.disposed) return;
       // Puppet 텍스처 실패가 전체 결과 그리드를 깨지 않도록 카드 내부에 읽을 수 있는 폴백을 둔다.
-      this.addAt(scene.add.text(0, -18, options.locked ? "?" : (options.label ?? "RELIC"), textStyle({
+      this.addAt(scene.add.text(0, -18, options.locked ? "?" : (options.label ?? "RELIC"), textStyle({ role: "display",
         size: Math.min(34, width / 8), color: COLOR.inkDim, align: "center", wrap: width - 32,
       })).setOrigin(0.5), 3);
     });

@@ -61,7 +61,7 @@ export class BottomNav {
       for (const part of drawIcon(scene, tab.key, x, NAV_TOP + 62, color)) void part;
 
       scene.add
-        .text(x, NAV_TOP + 110, tab.label, textStyle({ size: 26, color: active ? COLOR.accentText : COLOR.inkDim }))
+        .text(x, NAV_TOP + 110, tab.label, textStyle({ role: "emphasis", size: 26, color: active ? COLOR.accentText : COLOR.inkDim }))
         .setOrigin(0.5, 0);
 
       if (active) {

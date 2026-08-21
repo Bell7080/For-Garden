@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { setDebugScene } from "../debug";
 import { preloadPuppetAssets } from "../puppets/assets";
 import { BACKGROUND_ASSETS } from "../ui/backgrounds";
+import { loadGameFonts } from "../ui/fonts";
 import { UI_ICON_ASSETS } from "../ui/icons";
 import { SKILL_ICON_ASSETS } from "../ui/skillIcons";
 import { defaultSessionAfterReset, saveManager } from "../state/SaveManager";
@@ -32,6 +33,10 @@ export class BootScene extends Phaser.Scene {
       replaceSession(defaultSessionAfterReset());
       this.registry.set("saveRecoveryNotice", "저장 데이터를 확인할 수 없어 안전한 초기 상태로 복구했습니다.");
     }
+    // Phaser Text는 그린 순간의 글꼴로 텍스처를 굳히므로, 첫 화면 전에 세 굵기를 모두 받아 둔다.
+    // 실패해도 대체 글꼴로 계속 진행한다.
+    await loadGameFonts();
+    if (!this.scene.isActive()) return;
     // 첫 캐릭터가 나타나는 순간 ZIP 파싱으로 프레임이 멎지 않도록 공용 묶음을 미리 읽는다.
     // 아트 파일 하나가 손상되어도 UI와 전투 규칙까지 막지 않고 기존의 비동기 폴백으로 진행한다.
     await preloadPuppetAssets().catch(() => undefined);

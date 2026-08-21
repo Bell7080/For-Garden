@@ -48,14 +48,14 @@ export class RelicsScene extends Phaser.Scene {
 
     const ownedCount = relicCollection.owned.length;
     this.add
-      .text(40, 170, "보유 렐릭", textStyle({ size: 40 }))
+      .text(40, 170, "보유 렐릭", textStyle({ role: "display", size: 40 }))
       .setOrigin(0, 0);
     this.add
       .text(
         BASE_WIDTH - 40,
         182,
         `${ownedCount} / ${relicCollection.catalog.length}`,
-        textStyle({ size: 30, color: COLOR.accentText }),
+        textStyle({ role: "emphasis", size: 30, color: COLOR.accentText }),
       )
       .setOrigin(1, 0);
 
@@ -130,9 +130,9 @@ export class RelicsScene extends Phaser.Scene {
       .rectangle(BASE_WIDTH / 2, top + 190, BASE_WIDTH - 60, 380, COLOR.panel)
       .setStrokeStyle(3, COLOR.panelEdge);
 
-    this.summaryName = this.add.text(60, top + 30, "", textStyle({ size: 38 })).setOrigin(0, 0);
+    this.summaryName = this.add.text(60, top + 30, "", textStyle({ role: "display", size: 38 })).setOrigin(0, 0);
     this.summaryBody = this.add
-      .text(60, top + 88, "", textStyle({ size: 26, color: COLOR.inkDim, lineSpacing: 8 }))
+      .text(60, top + 88, "", textStyle({ role: "body", size: 26, color: COLOR.inkDim, lineSpacing: 8 }))
       .setOrigin(0, 0);
 
     this.detailButton = new Button(this, 300, top + 300, {

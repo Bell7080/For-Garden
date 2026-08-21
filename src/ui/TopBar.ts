@@ -18,19 +18,19 @@ export class TopBar {
       .setStrokeStyle(2, COLOR.panelEdge);
 
     scene.add
-      .text(32, y + 30, "연구원", textStyle({ size: 26, color: COLOR.inkDim }))
+      .text(32, y + 30, "연구원", textStyle({ role: "body", size: 26, color: COLOR.inkDim }))
       .setOrigin(0, 0);
 
     // 화석 — 흔한 재화.
     scene.add.circle(BASE_WIDTH - 470, y + 44, 16, 0x8a8071);
     this.fossilText = scene.add
-      .text(BASE_WIDTH - 440, y + 28, "", textStyle({ size: 28 }))
+      .text(BASE_WIDTH - 440, y + 28, "", textStyle({ role: "emphasis", size: 28 }))
       .setOrigin(0, 0);
 
     // 호박석 — 귀한 재화.
     scene.add.star(BASE_WIDTH - 190, y + 44, 6, 8, 18, COLOR.accent);
     this.amberText = scene.add
-      .text(BASE_WIDTH - 160, y + 28, "", textStyle({ size: 28, color: COLOR.accentText }))
+      .text(BASE_WIDTH - 160, y + 28, "", textStyle({ role: "emphasis", size: 28, color: COLOR.accentText }))
       .setOrigin(0, 0);
 
     this.refresh();

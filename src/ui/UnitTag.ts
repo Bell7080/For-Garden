@@ -27,11 +27,11 @@ export class UnitTag extends Phaser.GameObjects.Container {
   ) {
     super(scene, x, y);
 
-    this.nameText = scene.add.text(-WIDTH / 2, -26, "", textStyle({ size: 24 })).setOrigin(0, 0);
+    this.nameText = scene.add.text(-WIDTH / 2, -26, "", textStyle({ role: "display", size: 24 })).setOrigin(0, 0);
     this.add(this.nameText);
 
     this.hpText = scene.add
-      .text(WIDTH / 2, -20, "", textStyle({ size: 18, color: COLOR.inkDim }))
+      .text(WIDTH / 2, -20, "", textStyle({ role: "body", size: 18, color: COLOR.inkDim }))
       .setOrigin(1, 0);
     this.add(this.hpText);
 
@@ -54,7 +54,7 @@ export class UnitTag extends Phaser.GameObjects.Container {
     this.add(this.energyCostMarker);
     // 기존 강조색의 짧은 라벨로 작은 모바일 화면에서도 준비 상태를 알아볼 수 있게 한다.
     this.readyText = scene.add
-      .text(WIDTH / 2, 30, "READY", textStyle({ size: 14, color: COLOR.accentText }))
+      .text(WIDTH / 2, 30, "READY", textStyle({ role: "emphasis", size: 14, color: COLOR.accentText }))
       .setOrigin(1, 0)
       .setVisible(false);
     this.add(this.readyText);

@@ -23,6 +23,7 @@
   책임이므로 서버 `PlayerStateDto`에 섞지 않는다.
 - `src/ui`: Phaser 프리팹의 실제 구현과 테마 토큰을 둔다. 화면을 벗어나는 뒤로가기는
   `IconButton`의 `addBackButton`만 쓰고, 자리(우하단)와 생김새를 씬마다 다시 정하지 않는다.
+  글꼴은 `src/ui/fonts.ts`가 유일한 소유자다 — 아래 "글꼴 규칙"을 따른다.
 - `src/scenes`: 화면 배치와 입력 연결만 담당한다. 게임 규칙과 수집 검증을 복제하지 않는다.
 - `src/puppets`: PuppetForge 로딩, 배치, 동작 재생을 전담한다.
 
@@ -41,6 +42,34 @@
    `src/ui/PortraitCard.ts`를 쓰고 화면마다 잘라내기 값을 다시 계산하지 않는다.
 6. 전투 수치 규칙은 `src/core`에서 구현하고 Vitest로 고정한다. 공속·이속처럼 난전 진행에
    영향을 주는 수치는 `src/core/skirmish.ts`의 상수와 함께 테스트로 묶는다.
+
+## 글꼴 규칙
+
+글꼴 파일·가족 이름·굵기 숫자는 `src/ui/fonts.ts`에만 있다. 씬·프리팹은 굵기를 고르지 않고
+**글의 역할**만 고른다. 굵기를 눈대중으로 고르면 같은 위계의 글이 화면마다 다른 무게로 보인다.
+
+| 역할 | 글꼴 | 쓰는 곳 |
+| --- | --- | --- |
+| `display` | NEXON Kart **ExtraBold** (800) | 화면 제목, 캐릭터·스테이지·스킬 이름, 화자 이름, 결과 문구, 버튼 라벨, 전투 피해 수치 |
+| `emphasis` | NEXON Kart Gothic **Bold** (700) | 설명 속에서 튀어야 하는 소제목·라벨·태그·재화 수치, 하단 탭, 강조된 한 문장 |
+| `body` | NEXON Kart Gothic **Medium** (500) | 스킬 설명, 대사 본문, 아카이브, 안내 문구, 통계 나열 — 문장으로 읽는 모든 글 |
+
+- 텍스트는 반드시 `textStyle({ role, size, ... })`로 만든다. `role`은 선택이 아니라 필수다.
+  기본값을 두지 않는 이유는, 기본값이 있으면 아무도 고르지 않기 때문이다.
+- 애매하면 **문장이면 `body`**다. `display`는 "이름표"에만 쓴다. 한 화면에서 `display`가 여러
+  개 보이면 위계가 무너진 것이다.
+- `fontFamily`, `fontStyle`, `font-weight`, `font-family`를 `fonts.ts`/`theme.ts` 밖에서 직접
+  쓰지 않는다. 굵기가 필요하면 역할을 고르고, 역할이 모자라면 역할을 늘리는 게 아니라 먼저
+  기존 셋으로 표현되는지 검토한다 — 파일이 세 개뿐이라 다른 굵기는 브라우저가 가짜로 흉내 내
+  한글 획이 뭉갠다. 예외는 캔버스 바깥의 회전 안내뿐이라 `src/style.css`의 `body` 한 곳에서만
+  같은 가족·미디움을 지정한다.
+- 글꼴 파일은 `public/fonts`에 두고 `FONT_FACES`에 등록한다. CSS에 `@font-face`를 따로 적지
+  않는다 — 부트에서 `loadGameFonts()`가 그 목록으로 등록한다. `index.html`의 preload 줄도
+  같은 목록이어야 한다.
+- Phaser Text는 그린 순간의 글꼴로 텍스처를 굳히므로 첫 화면 전에 `BootScene`이
+  `loadGameFonts()`를 한 번 기다린다. 씬에서 다시 부르지 않는다.
+- 위 규칙은 `tests/unit/fonts.test.ts`가 강제한다(역할 누락, 직접 굵기 지정, 파일·preload
+  불일치). 규칙을 바꾸려면 이 문서와 테스트를 함께 고친다.
 
 ## 애니메이션 주의사항
 

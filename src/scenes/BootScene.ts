@@ -1,10 +1,5 @@
 import Phaser from "phaser";
 import { setDebugScene } from "../debug";
-import { preloadPuppetAssets } from "../puppets/assets";
-import { BACKGROUND_ASSETS } from "../ui/backgrounds";
-import { loadGameFonts } from "../ui/fonts";
-import { UI_ICON_ASSETS } from "../ui/icons";
-import { SKILL_ICON_ASSETS } from "../ui/skillIcons";
 import { defaultSessionAfterReset, saveManager } from "../state/SaveManager";
 import { replaceSession } from "../state/session";
 
@@ -13,16 +8,7 @@ export class BootScene extends Phaser.Scene {
     super("boot");
   }
 
-  preload(): void {
-    // 전환 직후 빈 화면이 보이지 않도록 네 화면의 공용 배경을 부트 단계에서 선로딩한다.
-    BACKGROUND_ASSETS.forEach(([key, path]) => this.load.image(key, path));
-    // 캐릭터별 임시 복사본 대신 전 효과가 함께 쓰는 공용 아이콘 묶음만 선로딩한다.
-    SKILL_ICON_ASSETS.forEach(([key, path]) => this.load.image(key, path));
-    // 조작 아이콘은 확대해도 또렷하도록 지정한 크기로 래스터화한다.
-    UI_ICON_ASSETS.forEach(([key, path, size]) => this.load.svg(key, path, { width: size, height: size }));
-  }
-
-  async create(): Promise<void> {
+  create(): void {
     setDebugScene("boot");
     try {
       const loaded = saveManager.load();
@@ -33,15 +19,8 @@ export class BootScene extends Phaser.Scene {
       replaceSession(defaultSessionAfterReset());
       this.registry.set("saveRecoveryNotice", "저장 데이터를 확인할 수 없어 안전한 초기 상태로 복구했습니다.");
     }
-    // Phaser Text는 그린 순간의 글꼴로 텍스처를 굳히므로, 첫 화면 전에 세 굵기를 모두 받아 둔다.
-    // 실패해도 대체 글꼴로 계속 진행한다.
-    await loadGameFonts();
-    if (!this.scene.isActive()) return;
-    // 첫 캐릭터가 나타나는 순간 ZIP 파싱으로 프레임이 멎지 않도록 공용 묶음을 미리 읽는다.
-    // 아트 파일 하나가 손상되어도 UI와 전투 규칙까지 막지 않고 기존의 비동기 폴백으로 진행한다.
-    await preloadPuppetAssets().catch(() => undefined);
-    // 비동기 로딩 중 씬이 종료된 경우 다음 씬을 중복 시작하지 않는다.
-    if (!this.scene.isActive()) return;
+    // 글꼴·원화·Puppet 묶음은 타이틀이 로딩 화면 노릇을 하며 읽는다(scenes/loadingSteps.ts).
+    // 부트는 저장 로드와 복구만 조율하고 곧바로 넘긴다.
     this.scene.start("title");
   }
 }

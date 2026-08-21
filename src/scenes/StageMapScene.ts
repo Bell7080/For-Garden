@@ -9,7 +9,7 @@ import { battleAssetFor, spawnPuppet } from "../puppets/assets";
 import { isStageUnlocked, session } from "../state/session";
 import { Button } from "../ui/Button";
 import { addBackButton } from "../ui/IconButton";
-import { chipPoints, drawGlassFade, drawHairline, drawLayer, drawVignette } from "../ui/holo";
+import { chipPoints, drawHairline, drawLayer, drawVignette } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
 import { BACKGROUND } from "../ui/backgrounds";
 
@@ -29,6 +29,9 @@ const DRAG_SLOP = 14;
 const POPUP = { width: 840, height: 320, sdHeight: 168 } as const;
 /** 팝업 가운데를 기준으로 한 세 칸의 가로 위치. */
 const POPUP_COLUMNS = [-256, 0, 256];
+/** 제목·출전·뒤로가기가 앉는 깊이. 비네트(40)보다 위, 적 편성 팝업(60)보다 아래다. */
+const CHROME_DEPTH = 50;
+
 /** 고른 노드가 멈추는 화면 높이. 팝업은 이 위에 뜬다. */
 const NODE_FOCUS_Y = (WINDOW.top + WINDOW.bottom) / 2;
 
@@ -84,15 +87,15 @@ export class StageMapScene extends Phaser.Scene {
     // 장축 지도 밖의 여백만 어둡게 남기고, 실제 원화는 노드와 같은 컨테이너에서 함께 스크롤한다.
     this.add.rectangle(cx, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void).setDepth(-30);
 
-    // 지도 원화의 가장자리를 눌러 노드와 글자가 먼저 읽히게 한다.
+    // 지도 원화의 가장자리를 눌러 노드와 글자가 먼저 읽히게 한다. 제목·출전·뒤로가기는
+    // 이 위에 얹혀 눌리지 않는다(CHROME_DEPTH).
     drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { depth: 40, strength: 0.5 });
-    // 아래쪽은 출전 버튼이 앉는 자리라 한 겹 더 검게 깔아 톤을 정리한다.
-    drawGlassFade(this, cx, BASE_HEIGHT - 190, BASE_WIDTH, 620, { topAlpha: 0, bottomAlpha: 0.92 }).setDepth(41);
 
-    this.add.text(cx, 140, "제 1 구역", textStyle({ role: "display", size: 60 })).setOrigin(0.5);
+    this.add.text(cx, 140, "제 1 구역", textStyle({ role: "display", size: 60 })).setOrigin(0.5).setDepth(CHROME_DEPTH);
     this.add
       .text(cx, 202, "격리 구역 — 이터널 시티 외곽", textStyle({ role: "body", size: 28, color: COLOR.inkDim }))
-      .setOrigin(0.5);
+      .setOrigin(0.5)
+      .setDepth(CHROME_DEPTH);
 
     this.buildMap();
     this.buildPanel();
@@ -110,7 +113,8 @@ export class StageMapScene extends Phaser.Scene {
         this.scene.start("party");
       },
     });
-    addBackButton(this, () => this.scene.start("lobby"));
+    this.sortieButton.setDepth(CHROME_DEPTH);
+    addBackButton(this, () => this.scene.start("lobby")).setDepth(CHROME_DEPTH);
 
     this.info = new CharacterInfoManager(this);
     // 들어오면 가장 최근에 열린 스테이지로 올라가 그 스테이지를 고른 상태로 시작한다.
@@ -128,9 +132,13 @@ export class StageMapScene extends Phaser.Scene {
     const cx = BASE_WIDTH / 2;
     this.map = this.add.container(0, 0);
     const height = (STAGES.length - 1) * NODE_GAP;
-    // 원화 하단을 1-1 기준점에 고정한다. 위 스테이지로 스크롤할수록 배경도 같은 거리만큼 올라간다.
-    const mapArt = this.add.image(cx, 140, BACKGROUND.stageMap).setOrigin(0.5, 1);
-    mapArt.setScale(BASE_WIDTH / mapArt.width);
+    // 원화 하단을 1-1보다 조금 아래에 고정한다. 위 스테이지로 스크롤할수록 배경도 같은 거리만큼
+    // 올라간다. 지도가 화면을 가득 채워야 하므로, 폭에 맞춘 배율로 모자라면 세로를 기준으로 키운다.
+    const artBottom = 460;
+    const mapArt = this.add.image(cx, artBottom, BACKGROUND.stageMap).setOrigin(0.5, 1);
+    // 가장 위 스테이지까지 굴렸을 때 화면 꼭대기가 비지 않는 길이.
+    const needed = artBottom + WINDOW.top + 120 + height;
+    mapArt.setScale(Math.max(BASE_WIDTH / mapArt.width, needed / mapArt.height));
     this.map.add(mapArt);
     // 어두운 투명막도 지도에 묶어 원화의 이동감을 보존하면서 노드와 글자의 대비를 일정하게 한다.
     this.map.add(this.add.rectangle(cx, -height / 2, BASE_WIDTH, height + BASE_HEIGHT, COLOR.void, 0.22));
@@ -177,7 +185,8 @@ export class StageMapScene extends Phaser.Scene {
 
     // 창 밖(제목·버튼 자리)으로 넘어간 노드는 그리지 않는다.
     const mask = this.make.graphics({ x: 0, y: 0 }, false);
-    mask.fillStyle(0xffffff).fillRect(0, WINDOW.top, BASE_WIDTH, WINDOW.bottom - WINDOW.top);
+    // 지도는 화면을 가득 채운다. 제목과 출전 버튼은 그 위에 얹히므로 잘라 낼 이유가 없다.
+    mask.fillStyle(0xffffff).fillRect(0, 0, BASE_WIDTH, BASE_HEIGHT);
     this.map.setMask(mask.createGeometryMask());
 
     // 1-1이 창 아래에 걸릴 때와 마지막 스테이지가 창 위에 걸릴 때가 스크롤의 양 끝이다.

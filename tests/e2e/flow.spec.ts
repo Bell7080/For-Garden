@@ -111,6 +111,14 @@ test("편성 화면에서 렐릭을 꾹 누르면 정보창이 열린다", async
   expect(await scene(page)).toBe("party");
 });
 
+test("편성 화면은 자동 배치한 세 명으로 바로 출전할 수 있다", async ({ page }) => {
+  await enterParty(page);
+  await tap(page, BASE_WIDTH - 190, 912); // 적 상성 합이 높은 보유 렐릭 세 명을 자동 선택한다.
+  await tap(page, BASE_WIDTH / 2, 1700);
+  await expect.poll(() => scene(page)).toBe("battle");
+  expect((await battle(page))?.playerOrder).toHaveLength(3);
+});
+
 test("1080×1920 캐릭터 상세과 스킬 카드가 안전 영역 안에 표시된다", async ({ page }) => {
   // 기준 해상도를 직접 사용해 전신과 최대 폭 정보 레이어의 회귀를 스크린샷으로 남긴다.
   await page.setViewportSize({ width: BASE_WIDTH, height: BASE_HEIGHT });
@@ -139,6 +147,22 @@ test("실시간 자동 전투는 입력 없이 서로 붙어 체력을 깎는다
     .poll(async () => (await battle(page))?.playerHp, { timeout: 20_000 })
     .toBeLessThan(before!.playerHp);
   await expect.poll(async () => (await battle(page))?.elapsed).toBeGreaterThan(0);
+});
+
+test("전투 조작 칩으로 1·2·3배속과 자동 궁극기를 전환한다", async ({ page }) => {
+  await enterBattle(page);
+  expect(await battle(page)).toMatchObject({ speed: 1, autoUltimate: false });
+
+  // 배속 칩은 1→2→3→1로 순환한다.
+  await tap(page, BASE_WIDTH - 335, 150);
+  await expect.poll(async () => (await battle(page))?.speed).toBe(2);
+  await tap(page, BASE_WIDTH - 335, 150);
+  await expect.poll(async () => (await battle(page))?.speed).toBe(3);
+
+  // 자동 궁극기는 배속과 독립적으로 켜고 끌 수 있다.
+  await tap(page, BASE_WIDTH - 130, 150);
+  await expect.poll(async () => (await battle(page))?.autoUltimate).toBe(true);
+  await page.screenshot({ path: `test-results/${test.info().project.name}-battle-controls.png`, fullPage: true });
 });
 
 test("전투는 한쪽이 전멸하면 끝난다", async ({ page }) => {

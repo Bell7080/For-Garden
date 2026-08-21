@@ -8,6 +8,10 @@ export const BACKGROUND = {
   info: "background-info",
   battleArea: "background-battle-area",
   lab: "background-lab",
+  /** 편성부터 실제 전투까지 이어지는 6번 전장 원화다. */
+  combat: "background-combat",
+  /** 스테이지 진행과 함께 아래에서 위로 움직이는 장축 지도 원화다. */
+  stageMap: "background-stage-map",
 } as const;
 
 /** BootScene이 모든 화면 배경을 한 번에 적재할 때 사용하는 경로 목록이다. */
@@ -19,6 +23,8 @@ export const BACKGROUND_ASSETS = [
   [BACKGROUND.battleArea, "sprites/background/background_004.webp"],
   // 5번 원화는 발굴 설비가 있는 연구소 전용 배경이다.
   [BACKGROUND.lab, "sprites/background/background_005.webp"],
+  [BACKGROUND.combat, "sprites/background/background_006.webp"],
+  [BACKGROUND.stageMap, "sprites/background/map_001.webp"],
 ] as const;
 
 /**

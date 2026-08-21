@@ -15,6 +15,7 @@ import { COLOR, textStyle } from "../ui/theme";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { gameApi } from "../api/FakeServer";
 import { bondDialogue } from "../data/bonds";
+import { DAILY_RESTORATION } from "../data/stages";
 
 /** 확대된 애착 렐릭의 골반 아래가 내비게이션 뒤로 자연스럽게 이어지는 기준선. */
 const STAGE_FLOOR = 1660;
@@ -55,16 +56,23 @@ export class LobbyScene extends Phaser.Scene {
     this.buildPromo();
     this.buildSideRail();
 
-    // 원정 — 출격 위에 한 단 작게. 매일 도는 일일 던전 입구다.
-    new Button(this, BASE_WIDTH - 300, NAV_TOP - 300, {
+    // 원정 — 지도 위를 가리던 일일 복원을 로비의 독립된 일일 콘텐츠 입구로 옮긴다.
+    const expeditionButton = new Button(this, BASE_WIDTH - 300, NAV_TOP - 300, {
       width: 340,
       height: 108,
       label: "원정",
-      sub: "EXPEDITION",
+      sub: this.expeditionStatus(),
       fontSize: 36,
       variant: "primary",
       tilt: -2.5,
-      onClick: () => this.notReady("원정"),
+      onClick: () => {
+        expeditionButton.setEnabled(false);
+        // 입장 소비와 보상 지급은 기존처럼 API가 한 처리 단위로 저장하며 로비는 결과만 표시한다.
+        void gameApi.enterDailyRestoration().then((result) => {
+          expeditionButton.setSub(`잡초 +${result.weedsEarned} · 남은 ${result.entriesRemaining}/${DAILY_RESTORATION.maxEntriesPerUtcDay}`);
+          expeditionButton.setEnabled(result.entriesRemaining > 0);
+        }).catch(() => expeditionButton.setSub("오늘의 원정 완료"));
+      },
     });
 
     // 출격 — 로비에서 가장 큰 버튼이다.
@@ -95,6 +103,12 @@ export class LobbyScene extends Phaser.Scene {
 
     new BottomNav(this, "lobby");
     void this.showFavorite();
+  }
+
+  /** 저장된 UTC 일일 입장 횟수를 로비 원정 버튼의 짧은 상태 문구로 바꾼다. */
+  private expeditionStatus(): string {
+    const remaining = Math.max(0, DAILY_RESTORATION.maxEntriesPerUtcDay - session.dailyContent.restorationEntries);
+    return `일일 복원 · 남은 ${remaining}/${DAILY_RESTORATION.maxEntriesPerUtcDay}`;
   }
 
   /** 연구소에서 옮긴 채광 설비·식물 원화를 로비 광장 배경으로 사용한다. */

@@ -97,6 +97,37 @@ export interface LayerOptions {
   /** 윗변에만 긋는 얇은 강조선 색. 사방을 두르는 테두리는 만들지 않는다. */
   edge?: number;
   edgeAlpha?: number;
+  /**
+   * 유리 광택. 면의 위쪽에만 아주 옅은 흰빛을 얹어 빛을 받은 유리처럼 보이게 한다.
+   * 값은 흰빛의 진하기(0~1)이며 0.07 언저리가 넘어 보이지 않는 한계다.
+   */
+  sheen?: number;
+}
+
+/**
+ * 다각형을 가로선 위쪽만 남기고 잘라 낸다.
+ *
+ * 광택은 면의 위쪽에만 얹어야 하는데, 깎인 칩과 기울어진 판은 단순한 사각형이 아니라
+ * 좌표를 그때그때 계산해야 한다. Sutherland-Hodgman 절단을 가로선 한 변에만 쓴다.
+ */
+function clipAbove(points: Phaser.Geom.Point[], limit: number): Phaser.Geom.Point[] {
+  const inside = (point: Phaser.Geom.Point): boolean => point.y <= limit;
+  const cross = (a: Phaser.Geom.Point, b: Phaser.Geom.Point): Phaser.Geom.Point => {
+    const t = (limit - a.y) / (b.y - a.y);
+    return new Phaser.Geom.Point(a.x + (b.x - a.x) * t, limit);
+  };
+  const result: Phaser.Geom.Point[] = [];
+  for (let i = 0; i < points.length; i++) {
+    const current = points[i];
+    const previous = points[(i + points.length - 1) % points.length];
+    if (inside(current)) {
+      if (!inside(previous)) result.push(cross(previous, current));
+      result.push(current);
+    } else if (inside(previous)) {
+      result.push(cross(previous, current));
+    }
+  }
+  return result;
 }
 
 /**
@@ -122,6 +153,15 @@ export function drawLayer(
   }
   graphics.fillStyle(options.fill, options.alpha ?? HOLO.glass);
   graphics.fillPoints(points, true);
+  if (options.sheen) {
+    // 위쪽 절반에만 흰빛을 얹는다. 아래로 갈수록 사라지는 그라데이션은 다각형 채우기에
+    // 쓸 수 없으므로, 절단한 윗면 하나로 대신한다.
+    const top = Math.min(...points.map((point) => point.y));
+    const bottom = Math.max(...points.map((point) => point.y));
+    const upper = clipAbove(points, top + (bottom - top) * 0.45);
+    graphics.fillStyle(0xffffff, options.sheen);
+    graphics.fillPoints(upper, true);
+  }
   if (options.edge !== undefined) {
     // 사방을 두르면 옛 금속 테두리로 되돌아간다. 빛이 닿는 윗변 한 줄만 긋는다.
     const top = [...points].sort((a, b) => a.y - b.y).slice(0, 2).sort((a, b) => a.x - b.x);

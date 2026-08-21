@@ -44,10 +44,11 @@ const CHIP_INSET = 11;
 /**
  * 모서리를 깎는 길이.
  *
- * 넷을 서로 다르게 둔다. 같은 길이로 깎으면 반듯한 팔각형이 되어 정면 판때기처럼 보이고,
- * 어긋나게 깎아야 비스듬히 잘린 조각으로 읽힌다.
+ * 위쪽 둘은 서로 다르게 깎는다. 같은 길이로 깎으면 반듯한 팔각형이 되어 정면 판때기처럼
+ * 보이기 때문이다. 반대로 **아래쪽은 깎지 않는다** — 이름 레이어와 맞닿는 변이라 깎으면
+ * 두 조각 사이에 틈이 생겨 카드가 두 장으로 갈라져 보인다. 깎임은 하단 레이어의 바닥이 잇는다.
  */
-const CHIP_BEVEL = { topLeft: 0.20, topRight: 0.08, bottomRight: 0.13, bottomLeft: 0 };
+const CHIP_BEVEL = { topLeft: 0.20, topRight: 0.08, bottomRight: 0, bottomLeft: 0 };
 const FOOTER_BEVEL = { topLeft: 0, topRight: 0, bottomRight: 0.34, bottomLeft: 0.14 };
 
 /** 등급이 곧 성급이다. 카드마다 다른 기준을 쓰지 않는다. */
@@ -129,9 +130,12 @@ export class PortraitCard extends Phaser.GameObjects.Container {
           bottomLeft: footerUnit * FOOTER_BEVEL.bottomLeft,
         },
       });
+      // 그림자를 깔지 않는다. 칩 바로 아래 붙는 같은 조각의 아랫단이라, 그림자가 생기면
+      // 카드가 두 장으로 갈라져 보인다.
       this.add(drawLayer(scene, 0, footerTop + this.footerHeight / 2, footerShape, {
         fill: FOOTER_FILL,
         alpha: 0.94,
+        shadow: false,
       }));
 
       const name = options.locked ? "???" : options.label;

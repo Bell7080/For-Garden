@@ -26,6 +26,9 @@ const STAGE_FLOOR = 1660;
  * **가로 폭**으로 지나친 확대만 막고, 긴 꼬리 끝은 안전 영역 밖으로 자연스럽게 흘려보낸다.
  * 아래쪽도 화면 밖으로 조금 이어서 발끝이 내비게이션 뒤에 숨도록 한다.
  */
+/** 교류의 강조색. 출격의 금색과 마주 보는 자리라 성격이 다른 색을 쓴다. */
+const EXCHANGE_BLUE = 0x6fa8d6;
+
 const LOBBY_BOX = { left: 26, right: BASE_WIDTH - 26, top: 190, bottom: BASE_HEIGHT + 40 } as const;
 
 /**
@@ -57,23 +60,37 @@ export class LobbyScene extends Phaser.Scene {
       width: 340,
       height: 108,
       label: "원정",
-      fontSize: 34,
-      icon: "expedition",
+      sub: "EXPEDITION",
+      fontSize: 36,
+      variant: "primary",
       tilt: -2.5,
       onClick: () => this.notReady("원정"),
     });
 
-    // 출격 — 로비에서 가장 큰 버튼이자 유일한 강조 버튼이다.
+    // 출격 — 로비에서 가장 큰 버튼이다.
     new Button(this, BASE_WIDTH - 300, NAV_TOP - 150, {
       width: 520,
       height: 168,
       label: "출  격",
       sub: "SORTIE",
       fontSize: 52,
-      icon: "sortie",
       variant: "primary",
       tilt: -2.5,
       onClick: () => this.scene.start("stageMap"),
+    });
+
+    // 교류 — 출격의 맞은편. 싸우러 나가는 쪽이 금색이면 사람을 만나러 가는 쪽은 푸른색이다.
+    new Button(this, 300, NAV_TOP - 300, {
+      width: 340,
+      height: 108,
+      label: "교류",
+      sub: "EXCHANGE",
+      fontSize: 36,
+      variant: "primary",
+      tilt: 2.5,
+      accentColor: EXCHANGE_BLUE,
+      accentTextColor: "#9fd0f0",
+      onClick: () => this.notReady("교류"),
     });
 
     new BottomNav(this, "lobby");
@@ -99,13 +116,13 @@ export class LobbyScene extends Phaser.Scene {
   }
 
   /**
-   * 왼쪽 세로 줄.
+   * 오른쪽 세로 줄.
    *
-   * 위 세 칸은 늘 쓰는 편의 기능이고, 한 칸 띄운 아래가 다른 연구 도시와의 교류 입구다.
-   * 성격이 다르므로 붙여 쌓지 않고 간격과 강조로 가른다.
+   * 늘 쓰지만 화면의 주인공은 아닌 편의 기능들이다. 캐릭터를 가리지 않도록 가장자리에 세우고
+   * 크기도 출격·교류보다 한참 작게 둔다.
    */
   private buildSideRail(): void {
-    const x = 106;
+    const x = BASE_WIDTH - 106;
     const rail = [
       { icon: "shop", label: "상점" },
       { icon: "mail", label: "우편" },
@@ -114,20 +131,13 @@ export class LobbyScene extends Phaser.Scene {
     rail.forEach((item, i) => {
       new RailButton(this, x, 700 + i * 152, { icon: item.icon, label: item.label, onClick: () => this.notReady(item.label) });
     });
-    new RailButton(this, x, 700 + rail.length * 152 + 48, {
-      icon: "exchange",
-      label: "교류",
-      size: 108,
-      accent: true,
-      onClick: () => this.notReady("교류"),
-    });
   }
 
-  /** 오른쪽 위, 프로필 줄 아래의 홍보 칸. 기간 상품과 공지가 들어갈 자리다. */
+  /** 왼쪽 위, 프로필 줄 바로 아래의 홍보 칸. 기간 상품과 공지가 들어갈 자리다. */
   private buildPromo(): void {
     const width = 300;
     const height = 132;
-    const x = BASE_WIDTH - 30 - width / 2;
+    const x = 30 + width / 2;
     const y = 250;
     drawLayer(this, x, y, chipPoints(width, height, {
       bevel: { topLeft: height * 0.42, topRight: 0, bottomRight: height * 0.42, bottomLeft: 0 },

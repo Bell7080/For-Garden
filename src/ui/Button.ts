@@ -21,6 +21,10 @@ export interface ButtonOptions {
   variant?: "default" | "primary";
   /** 판을 실제로 기울이는 각도(도). 출격처럼 비스듬히 꽂힌 판을 만들 때 쓴다. */
   tilt?: number;
+  /** 강조색을 바꾼다. 출격(금)과 성격이 다른 입구를 색으로 가를 때만 쓴다. */
+  accentColor?: number;
+  /** 강조색과 함께 쓸 글자색. 넘기지 않으면 기본 잉크색이다. */
+  accentTextColor?: string;
   onClick: () => void;
 }
 
@@ -39,6 +43,8 @@ export class Button extends Phaser.GameObjects.Container {
     super(scene, x, y);
     const primary = opts.variant === "primary";
     const { width, height } = opts;
+    const accent = opts.accentColor ?? COLOR.accent;
+    const accentText = opts.accentTextColor ?? (opts.accentColor === undefined ? COLOR.accentText : COLOR.ink);
 
     // 판 자체를 기울인다. 안에 얹는 글자와 아이콘도 함께 돌아 하나의 조각처럼 보인다.
     const plate = scene.add.container(0, 0);
@@ -50,17 +56,19 @@ export class Button extends Phaser.GameObjects.Container {
         })
       : slantedRect(width, height);
     plate.add(drawLayer(scene, 0, 0, shape, {
-      fill: opts.fill ?? (primary ? 0x2a2418 : 0x1b2029),
-      alpha: primary ? 0.94 : HOLO.glass,
+      // 유리판이라 바탕을 짙게 칠하지 않는다. 뒤 배경이 비쳐야 두께가 느껴진다.
+      fill: opts.fill ?? (primary ? 0x0d1219 : 0x1b2029),
+      alpha: primary ? 0.66 : HOLO.glass,
+      sheen: primary ? 0.07 : 0.04,
       // 사방을 두르지 않고 빛이 닿는 윗변 한 줄만 긋는다.
-      edge: COLOR.accent,
-      edgeAlpha: primary ? 0.9 : 0.4,
+      edge: accent,
+      edgeAlpha: primary ? 0.95 : 0.4,
     }));
     if (primary) {
-      // 강조 버튼만 아래에 한 줄을 더 그어 판이 두껍게 꽂힌 것처럼 보이게 한다.
+      // 강조 버튼만 아래에도 한 줄을 그어 유리판의 두께를 만든다.
       const underline = scene.add.graphics();
-      underline.lineStyle(3, COLOR.accent, 0.55);
-      underline.lineBetween(-width / 2 + height * 0.52, height / 2 - 6, width / 2 - height * 0.52, height / 2 - 6);
+      underline.lineStyle(3, accent, 0.6);
+      underline.lineBetween(-width / 2 + height * 0.52, height / 2 - 5, width / 2 - height * 0.52, height / 2 - 5);
       plate.add(underline);
     }
 
@@ -76,11 +84,11 @@ export class Button extends Phaser.GameObjects.Container {
       const gap = fontSize * 0.5;
       const total = iconSize + gap + label.width;
       label.setX(-total / 2 + iconSize + gap + label.width / 2);
-      plate.add(drawGlyph(scene, opts.icon, -total / 2 + iconSize / 2, hasSub ? -14 : 0, iconSize, primary ? COLOR.accent : 0xd8d5cf));
+      plate.add(drawGlyph(scene, opts.icon, -total / 2 + iconSize / 2, hasSub ? -14 : 0, iconSize, primary ? accent : 0xd8d5cf));
     }
     if (hasSub) {
       this.subText = scene.add
-        .text(label.x, 26, opts.sub ?? "", textStyle({ role: "body", size: 26, color: primary ? COLOR.accentText : COLOR.inkDim }))
+        .text(label.x, 26, opts.sub ?? "", textStyle({ role: "body", size: 26, color: primary ? accentText : COLOR.inkDim }))
         .setOrigin(0.5);
       plate.add(this.subText);
     }

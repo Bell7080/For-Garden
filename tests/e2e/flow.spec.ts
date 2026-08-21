@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { startAfterOpening } from "./openingSave";
 
 const BASE_WIDTH = 1080;
 const BASE_HEIGHT = 1920;
@@ -58,8 +59,7 @@ function infoOpen(page: Page) {
 
 /** 타이틀에서 편성 화면까지 들어간다. */
 async function enterParty(page: Page): Promise<void> {
-  await page.goto("/");
-  await page.waitForFunction(() => window.__PF_DEBUG?.ready === true);
+  await startAfterOpening(page);
 
   await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2); // 타이틀 → 로비
   await expect.poll(() => scene(page)).toBe("lobby");
@@ -143,8 +143,7 @@ test("전투는 한쪽이 전멸하면 끝난다", async ({ page }) => {
 
 
 test("하단 탭으로 렐릭 · 로비 · 연구소를 오간다", async ({ page }) => {
-  await page.goto("/");
-  await page.waitForFunction(() => window.__PF_DEBUG?.ready === true);
+  await startAfterOpening(page);
   await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => scene(page)).toBe("lobby");
 
@@ -160,8 +159,7 @@ test("하단 탭으로 렐릭 · 로비 · 연구소를 오간다", async ({ pag
 });
 
 test("연구소에서 발굴하면 화석이 줄고 결과가 뜬다", async ({ page }) => {
-  await page.goto("/");
-  await page.waitForFunction(() => window.__PF_DEBUG?.ready === true);
+  await startAfterOpening(page);
   await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await tap(page, (BASE_WIDTH * 5) / 6, BASE_HEIGHT - 180 + 90);
   await expect.poll(() => scene(page)).toBe("lab");

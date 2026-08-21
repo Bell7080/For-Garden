@@ -107,6 +107,11 @@ GitHub Actions는 두지 않는다 — 배포는 Vercel이 맡고 품질 게이�
 `npm run typecheck`, `npm test`, `npm run build`를 반드시 실행한다. UI 배치를
 바꿨다면 Playwright 또는 수동 스크린샷으로 기존 1080×1920 테마와 겹침을 확인한다.
 
+E2E는 `__PF_DEBUG.ready`(타이틀 로딩 완료)를 기다린 뒤에 조작한다. 로비 이후를 확인하는
+테스트는 `page.goto` 대신 `tests/e2e/openingSave.ts`의 `startAfterOpening`으로 연다 —
+저장이 없으면 타이틀에서 오프닝 스토리로 들어가기 때문이다. 저장 JSON을 테스트가 손으로
+적지 말고 이 헬퍼가 `SaveManager`를 통과시켜 만든 것을 쓴다.
+
 ## 입력 및 임시 서버
 
 ### 획득 상태의 단일 소유자

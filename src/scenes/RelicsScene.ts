@@ -62,6 +62,8 @@ export class RelicsScene extends Phaser.Scene {
 
     new BottomNav(this, "relics");
     this.info = new CharacterInfoManager(this);
+    // 정보창에서 애착 렐릭을 바꾸고 나오면 그리드의 발광도 함께 옮겨 간다.
+    this.info.onClose = () => this.refresh();
     // 정보창 안에서 애착 렐릭이 바뀔 수 있으므로 닫힐 때 카드 표시를 다시 맞춘다.
     this.info.onClose = () => this.refresh();
     this.refresh();

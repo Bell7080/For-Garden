@@ -10,7 +10,7 @@ import { BottomNav, NAV_TOP } from "../ui/BottomNav";
 import { Button } from "../ui/Button";
 import { RailButton } from "../ui/RailButton";
 import { TopBar } from "../ui/TopBar";
-import { chipPoints, drawGlassFade, drawHairline, drawLayer, drawVignette, HOLO } from "../ui/holo";
+import { chipPoints, drawHairline, drawLayer, drawVignette, HOLO, slantedRect } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { gameApi } from "../api/FakeServer";
@@ -19,6 +19,11 @@ import { bondDialogue } from "../data/bonds";
 /** 확대된 애착 렐릭의 골반 아래가 내비게이션 뒤로 자연스럽게 이어지는 기준선. */
 const STAGE_FLOOR = 1660;
 
+/** 교류의 강조색. 출격의 주황과 마주 보는 자리라 성격이 다른 색을 쓴다. */
+const EXCHANGE_BLUE = 0x6fa8d6;
+/** 출격의 강조색. 금색보다 붉게 기울여 "나가서 싸운다"는 신호를 준다. */
+const SORTIE_ORANGE = 0xe8913c;
+
 /**
  * 애착 렐릭이 들어가야 하는 상자.
  *
@@ -26,9 +31,6 @@ const STAGE_FLOOR = 1660;
  * **가로 폭**으로 지나친 확대만 막고, 긴 꼬리 끝은 안전 영역 밖으로 자연스럽게 흘려보낸다.
  * 아래쪽도 화면 밖으로 조금 이어서 발끝이 내비게이션 뒤에 숨도록 한다.
  */
-/** 교류의 강조색. 출격의 금색과 마주 보는 자리라 성격이 다른 색을 쓴다. */
-const EXCHANGE_BLUE = 0x6fa8d6;
-
 const LOBBY_BOX = { left: 26, right: BASE_WIDTH - 26, top: 190, bottom: BASE_HEIGHT + 40 } as const;
 
 /**
@@ -55,39 +57,44 @@ export class LobbyScene extends Phaser.Scene {
     this.buildPromo();
     this.buildSideRail();
 
-    // 원정 — 출격 위에 한 단 작게. 매일 도는 일일 던전 입구다.
-    new Button(this, BASE_WIDTH - 300, NAV_TOP - 300, {
+    // 오른쪽 두 판은 안쪽(화면 가운데)이 높은 사다리꼴이라 `/` 방향으로 누워 보인다.
+    new Button(this, BASE_WIDTH - 300, NAV_TOP - 400, {
       width: 340,
-      height: 108,
+      height: 112,
       label: "원정",
       sub: "EXPEDITION",
       fontSize: 36,
       variant: "primary",
-      tilt: -2.5,
+      perspective: "left",
+      tilt: -3.5,
       onClick: () => this.notReady("원정"),
     });
 
-    // 출격 — 로비에서 가장 큰 버튼이다.
-    new Button(this, BASE_WIDTH - 300, NAV_TOP - 150, {
+    // 출격 — 로비에서 가장 큰 버튼이다. 주황빛 강조로 다른 입구와 구분한다.
+    new Button(this, BASE_WIDTH - 290, NAV_TOP - 245, {
       width: 520,
-      height: 168,
+      height: 170,
       label: "출  격",
       sub: "SORTIE",
       fontSize: 52,
       variant: "primary",
-      tilt: -2.5,
+      perspective: "left",
+      tilt: -3.5,
+      accentColor: SORTIE_ORANGE,
+      accentTextColor: "#f2b070",
       onClick: () => this.scene.start("stageMap"),
     });
 
-    // 교류 — 출격의 맞은편. 싸우러 나가는 쪽이 금색이면 사람을 만나러 가는 쪽은 푸른색이다.
-    new Button(this, 300, NAV_TOP - 300, {
+    // 교류 — 맞은편이라 기울기와 원근을 뒤집어 `\` 방향으로 눕힌다.
+    new Button(this, 300, NAV_TOP - 400, {
       width: 340,
-      height: 108,
+      height: 112,
       label: "교류",
       sub: "EXCHANGE",
       fontSize: 36,
       variant: "primary",
-      tilt: 2.5,
+      perspective: "right",
+      tilt: 3.5,
       accentColor: EXCHANGE_BLUE,
       accentTextColor: "#9fd0f0",
       onClick: () => this.notReady("교류"),
@@ -129,7 +136,7 @@ export class LobbyScene extends Phaser.Scene {
       { icon: "friends", label: "친구" },
     ] as const;
     rail.forEach((item, i) => {
-      new RailButton(this, x, 700 + i * 152, { icon: item.icon, label: item.label, onClick: () => this.notReady(item.label) });
+      new RailButton(this, x, 640 + i * 152, { icon: item.icon, label: item.label, onClick: () => this.notReady(item.label) });
     });
   }
 
@@ -190,27 +197,43 @@ export class LobbyScene extends Phaser.Scene {
   /**
    * 로비 대사.
    *
-   * 말풍선 판을 씌우지 않는다. 화면 중단에 금빛 이름과 큰 대사를 얹고 위로 떠오르며 사라지게
-   * 해서, 캐릭터를 가리지 않으면서도 눈이 먼저 가게 한다. 읽히는 힘은 판이 아니라 크기와
-   * 글자 뒤에 깔린 옅은 유리면이 담당한다.
+   * 화면을 최대한 덜 가리도록 이름줄과 대사줄만 덮는 얇은 띠를 쓴다. 대신 그 띠는 충분히
+   * 불투명해서 배경이 아무리 밝아도 글자가 뭉개지지 않는다. 경계는 판때기가 아니라 위아래
+   * 선 두 줄이 잡고, 이름 옆으로 이어지는 짧은 선이 이름과 대사를 가른다.
    */
   private showLine(name: string, line: string, reward: string, dialogueId: string): void {
-    const cy = 880;
+    const cy = 900;
+    const left = 96;
+    const width = BASE_WIDTH - left * 2;
     const layer = this.add.container(0, 0).setDepth(500);
-    // 가장자리가 딱 끊기지 않도록 위아래로 사라지는 두 겹의 유리면을 겹친다.
-    layer.add(drawGlassFade(this, BASE_WIDTH / 2, cy - 60, BASE_WIDTH, 150, { topAlpha: 0, bottomAlpha: 0.62 }));
-    layer.add(drawGlassFade(this, BASE_WIDTH / 2, cy + 90, BASE_WIDTH, 150, { topAlpha: 0.62, bottomAlpha: 0 }));
-    layer.add(drawHairline(this, BASE_WIDTH / 2, cy - 96, BASE_WIDTH - 220, { color: COLOR.accent, alpha: 0.5 }));
-    layer.add(this.add.text(BASE_WIDTH / 2, cy - 74, name, textStyle({ role: "display", size: 44, color: COLOR.accentText })).setOrigin(0.5, 0));
+
+    layer.add(drawLayer(this, BASE_WIDTH / 2, cy + 4, slantedRect(width, 172, 18), {
+      fill: 0x080a0e,
+      alpha: 0.8,
+      shadow: false,
+    }));
+    // 위는 밝게, 아래는 옅게 그어 빛이 위에서 내려오는 것처럼 보이게 한다.
+    layer.add(drawHairline(this, BASE_WIDTH / 2, cy - 82, width - 10, { color: COLOR.accent, alpha: 0.8 }));
+    layer.add(drawHairline(this, BASE_WIDTH / 2, cy + 90, width - 10, { color: COLOR.accent, alpha: 0.3 }));
+
+    const nameText = this.add
+      .text(left + 30, cy - 66, name, textStyle({ role: "display", size: 38, color: COLOR.accentText }))
+      .setOrigin(0, 0);
+    layer.add(nameText);
+    // 이름 오른쪽으로 이어지는 선. 이름과 대사를 가르는 동시에 띠의 폭을 눈에 그려 준다.
+    const ruleLeft = left + 46 + nameText.width;
+    const ruleWidth = BASE_WIDTH - left - 30 - ruleLeft;
+    layer.add(drawHairline(this, ruleLeft + ruleWidth / 2, cy - 44, ruleWidth, { color: COLOR.accent, alpha: 0.4 }));
+
     const text = this.add
-      .text(BASE_WIDTH / 2, cy + 6, `“${line}”${reward}`, textStyle({ role: "body", size: 40, color: COLOR.ink, align: "center", lineSpacing: 10, wrap: BASE_WIDTH - 220 }))
-      .setOrigin(0.5, 0);
+      .text(left + 30, cy - 4, `“${line}”${reward}`, textStyle({ role: "body", size: 34, color: COLOR.ink, lineSpacing: 8, wrap: width - 60 }))
+      .setOrigin(0, 0);
     // 대사 ID는 번역/분석 추적용으로 객체에 남기되 플레이어 화면에는 노출하지 않는다.
     text.setData("dialogueId", dialogueId);
     layer.add(text);
     layer.setAlpha(0);
-    this.tweens.add({ targets: layer, alpha: 1, y: -24, duration: 260, ease: "Sine.easeOut" });
-    this.tweens.add({ targets: layer, alpha: 0, y: -70, delay: 2000, duration: 420, onComplete: () => layer.destroy() });
+    this.tweens.add({ targets: layer, alpha: 1, y: -22, duration: 240, ease: "Sine.easeOut" });
+    this.tweens.add({ targets: layer, alpha: 0, y: -64, delay: 2200, duration: 420, onComplete: () => layer.destroy() });
   }
 
   private notReady(label: string): void {

@@ -40,6 +40,26 @@ export interface Bevels {
   bottomLeft?: number;
 }
 
+/**
+ * 원근이 들어간 사다리꼴.
+ *
+ * 화면 양쪽 끝의 판을 가운데로 쏠리게 만들 때 쓴다. 안쪽(가운데를 향한) 변은 높이가 그대로고
+ * 바깥 변만 `taper`만큼 짧아져, 정면이 아니라 비스듬히 놓인 판처럼 보인다.
+ */
+export function perspectiveRect(
+  width: number,
+  height: number,
+  options: { taper?: number; inner?: "left" | "right" } = {},
+): number[] {
+  const taper = options.taper ?? 0.2;
+  const hw = width / 2;
+  const hh = height / 2;
+  const outer = hh * (1 - taper);
+  return options.inner === "left"
+    ? [-hw, -hh, hw, -outer, hw, outer, -hw, hh]
+    : [-hw, -outer, hw, -hh, hw, hh, -hw, outer];
+}
+
 export interface ChipOptions {
   /** 모서리별로 잘라낼 길이. 숫자 하나를 주면 위쪽 두 모서리에만 쓴다. */
   bevel?: number | Bevels;
@@ -83,7 +103,7 @@ export function chipPoints(width: number, height: number, options: ChipOptions =
 }
 
 /** 좌표 배열을 Phaser Graphics가 받는 점 목록으로 바꾼다. */
-function toPoints(flat: number[]): Phaser.Geom.Point[] {
+export function toPoints(flat: number[]): Phaser.Geom.Point[] {
   const points: Phaser.Geom.Point[] = [];
   for (let i = 0; i < flat.length; i += 2) points.push(new Phaser.Geom.Point(flat[i], flat[i + 1]));
   return points;

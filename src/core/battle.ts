@@ -1,6 +1,7 @@
 import type { DamageType, RelicDef, Side, Skill } from "./types";
 import { amplifyFerocityGain } from "./bond";
 import { elementMultiplier } from "./element";
+import { awakeningBonus } from "./relicProgression";
 export { amplifyFerocityGain } from "./bond";
 
 /** 모든 유닛이 저장할 수 있는 궁극기 게이지의 공용 상한이다. 스킬 비용과는 별개다. */
@@ -61,6 +62,8 @@ export interface BattleUnit {
   stunTurns: number;
   /** 스왑으로 막 전방에 나왔는지. swapMomentum 패시브가 이걸 본다. */
   justSwapped: boolean;
+  /** 플레이어 진행 상태에서 복사한 각성 단계다. 단계 효과표가 피해에 곱해진다. */
+  awakening: number;
 }
 
 export interface Team {
@@ -95,6 +98,8 @@ export interface DamageInput {
   damageType: DamageType;
   /** 확률 난수를 코어에 숨기지 않아 리플레이와 테스트를 결정적으로 유지한다. */
   isCritical: boolean;
+  /** 각성 단계 효과가 일반 공격과 궁극기를 갈라 보므로 어느 쪽인지 함께 받는다. */
+  kind?: "basic" | "ultimate";
 }
 
 /** 정보창이 확정 피해와 상태 없는 배율을 혼동하지 않도록 하는 순수 미리보기 결과다. */
@@ -135,7 +140,7 @@ export function isCriticalHit(critChance: number, roll: number): boolean {
   return roll < critChance / 100;
 }
 
-function makeUnit(def: RelicDef, bondLevel = 0): BattleUnit {
+function makeUnit(def: RelicDef, bondLevel = 0, awakening = 0): BattleUnit {
   return {
     def,
     hp: def.stats.hp,
@@ -143,6 +148,7 @@ function makeUnit(def: RelicDef, bondLevel = 0): BattleUnit {
     energy: 0,
     ferocity: 0,
     bondLevel,
+    awakening,
     stunTurns: 0,
     justSwapped: false,
   };
@@ -210,9 +216,12 @@ export function computeDamage(
       ? 1 + attacker.def.passive.value / 100
       : 1;
   const critical = input.isCritical ? attacker.def.stats.critDamage / 100 : 1;
+  // 각성은 능력치(3·4단계)와 별개로 1·2단계에서 특정 공격의 피해만 키운다.
+  const opened = awakeningBonus(attacker.awakening);
+  const awakened = 1 + (input.kind === "ultimate" ? opened.ultimateDamage : input.kind === "basic" ? opened.basicDamage : 0);
   const attackFerocity = ferocityModifiers(attacker.ferocity).damageBonus;
 
-  const raw = ((offense * input.power) / 100) * momentum * critical * (1 + attackFerocity);
+  const raw = ((offense * input.power) / 100) * momentum * critical * awakened * (1 + attackFerocity);
   // 야성이 높을수록 유효 방어력이 낮아져 화력과 생존을 맞바꾸게 한다.
   const afterDef = (raw * 100) / (100 + defense);
   const guard =

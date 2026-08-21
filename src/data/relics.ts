@@ -30,14 +30,15 @@ export const RELICS: RelicDef[] = [
       critDamage: 160,
       energyGain: 28,
     },
+    ferocityTrait: { name: "폭주", desc: "야성이 가득 차면 물어뜯는 속도가 붙어 연속 공격이 더 빨리 이어진다." },
     passive: {
       id: "rex-passive",
       name: "포식 본능",
-      kind: "swapMomentum",
-      iconAssetId: "skill-icon-buff",
-      effectType: "buff",
-      value: 35,
-      desc: "교대로 전방에 나선 직후의 첫 공격 피해가 35% 오른다.",
+      kind: "bleedStreak",
+      iconAssetId: "skill-icon-physical",
+      effectType: "fixed",
+      value: 5,
+      desc: "같은 적을 5회 연속 공격하면 [[bleed|출혈]]을 남긴다. 3초 동안 매 초 최대 체력의 2%만큼 피해를 준다.",
     },
     basic: {
       id: "rex-basic",
@@ -84,6 +85,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 140,
       energyGain: 20,
     },
+    ferocityTrait: { name: "경화", desc: "야성이 가득 차면 껍질이 굳어 받는 피해를 크게 줄인 채 버틴다." },
     passive: {
       id: "anky-passive",
       name: "골질 갑주",
@@ -138,6 +140,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 140,
       energyGain: 22,
     },
+    ferocityTrait: { name: "범람", desc: "야성이 가득 차면 등지느러미가 물을 끌어와 주변 적을 함께 적신다." },
     passive: {
       id: "spino-passive",
       name: "등지느러미 방벽",
@@ -192,6 +195,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 30,
     },
+    ferocityTrait: { name: "소란", desc: "야성이 가득 차면 정신없이 뛰어다니며 아군의 궁극기 충전을 앞당긴다." },
     passive: {
       id: "dodo-passive",
       name: "온순한 둥지",
@@ -246,6 +250,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 170,
       energyGain: 26,
     },
+    ferocityTrait: { name: "사냥", desc: "야성이 가득 차면 발톱이 서서 치명타 확률이 크게 오른다." },
     passive: {
       id: "smilo-passive",
       name: "매복 습성",
@@ -300,6 +305,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 32,
     },
+    ferocityTrait: { name: "상승", desc: "야성이 가득 차면 바람을 타고 떠올라 아군 전체의 이동이 빨라진다." },
     passive: {
       id: "quetz-passive",
       name: "활공 경계",
@@ -356,6 +362,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 24,
     },
+    ferocityTrait: { name: "맹추", desc: "야성이 가득 차면 목표를 끝까지 쫓아 공격을 멈추지 않는다." },
     passive: {
       id: "husk-raptor-passive",
       name: "무리 본능",
@@ -410,6 +417,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 140,
       energyGain: 18,
     },
+    ferocityTrait: { name: "농성", desc: "야성이 가득 차면 자리를 지키며 밀려나지 않는다." },
     passive: {
       id: "husk-shell-passive",
       name: "굳은 껍질",
@@ -464,6 +472,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 27,
     },
+    ferocityTrait: { name: "역풍", desc: "야성이 가득 차면 날갯짓이 적의 접근을 늦춘다." },
     passive: {
       id: "husk-wing-passive",
       name: "잔존 신호",

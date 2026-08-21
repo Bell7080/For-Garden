@@ -1,4 +1,5 @@
 import { amplifyFerocityGain, canUseUltimate, computeDamage, FEROCITY_RULES, isCriticalHit, ULTIMATE_ENERGY_MAX, type BattleUnit } from "./battle";
+import { awakeningBonus } from "./relicProgression";
 import type { RelicDef, Side, Skill } from "./types";
 
 /**
@@ -52,6 +53,12 @@ export interface Fighter extends BattleUnit {
   hop: number;
   /** 통통 튀는 주기의 현재 위상. 이동을 멈춰도 이어서 센다. */
   hopPhase: number;
+  /** 연속 공격을 세는 상대. 상대가 바뀌면 셈이 처음으로 돌아간다. */
+  streakTargetId: string | null;
+  /** 같은 상대를 몇 번 이어서 때렸는지. */
+  streakCount: number;
+  /** 걸려 있는 출혈. 없으면 null이다. */
+  bleed: { remaining: number; tickIn: number; percent: number } | null;
 }
 
 export type SkirmishPhase = "fight" | "victory" | "defeat";
@@ -75,6 +82,7 @@ export type SkirmishEvent =
       amount: number;
       critical: boolean;
     }
+  | { kind: "bleed"; fighterId: string; amount: number; started: boolean }
   | { kind: "death"; fighterId: string }
   | { kind: "suppress"; fighterId: string }
   | { kind: "finish"; phase: "victory" | "defeat" };
@@ -124,17 +132,33 @@ export const SKIRMISH = {
   maxCatchUp: 0.25,
 } as const;
 
+/**
+ * 출혈. `bleedStreak` 패시브가 남기는 상처다.
+ *
+ * 방어력을 거치지 않고 최대 체력 비율로 깎으므로, 단단한 상대일수록 상대적으로 아프다.
+ * 수치는 데이터가 아니라 규칙이라 여기 한 곳에만 둔다.
+ */
+export const BLEED = {
+  /** 지속 시간(초). */
+  seconds: 3,
+  /** 1초마다 깎는 최대 체력 비율(%). */
+  percentPerSecond: 2,
+} as const;
+
 /** 항상 같은 결과를 원하는 호출부(테스트)를 위한 기본 판정값 — 치명타가 나지 않는다. */
 const NO_CRIT = (): number => 0.999999;
 
-function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: number, bondLevel = 0): Fighter {
+function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: number, bondLevel = 0, awakening = 0): Fighter {
+  const opened = awakeningBonus(awakening);
   return {
     def,
     hp: def.stats.hp,
     maxHp: def.stats.hp,
-    energy: 0,
+    // 각성 5단계는 전투를 궁극기 준비 상태로 연다.
+    energy: opened.readyUltimate ? def.ultimate.cost : 0,
     ferocity: 0,
     bondLevel,
+    awakening,
     stunTurns: 0,
     justSwapped: false,
     id: `${side}-${index}`,
@@ -152,6 +176,9 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     hop: 0,
     // 여섯이 같은 박자로 뛰지 않도록 시작 위상을 어긋나게 둔다.
     hopPhase: index * 1.3 + (side === "player" ? 0 : 0.65),
+    streakTargetId: null,
+    streakCount: 0,
+    bleed: null,
   };
 }
 
@@ -177,12 +204,13 @@ export function createSkirmish(
   enemyDefs: RelicDef[],
   arena: Arena,
   playerBondLevels: Readonly<Record<string, number>> = {},
+  playerAwakenings: Readonly<Record<string, number>> = {},
 ): SkirmishState {
   const playerSpots = spawnSpots(arena, "player");
   const enemySpots = spawnSpots(arena, "enemy");
   return {
     fighters: [
-      ...playerDefs.map((def, i) => makeFighter(def, "player", i, playerSpots[i].x, playerSpots[i].y, playerBondLevels[def.id] ?? 0)),
+      ...playerDefs.map((def, i) => makeFighter(def, "player", i, playerSpots[i].x, playerSpots[i].y, playerBondLevels[def.id] ?? 0, playerAwakenings[def.id] ?? 0)),
       ...enemyDefs.map((def, i) => makeFighter(def, "enemy", i, enemySpots[i].x, enemySpots[i].y)),
     ],
     arena,
@@ -286,6 +314,43 @@ function gainFerocity(fighter: Fighter, base: number, state: SkirmishState): voi
   }
 }
 
+/**
+ * 같은 상대를 이어서 때린 횟수를 세고, 다 채우면 출혈을 남긴다.
+ *
+ * 상대를 바꾸면 셈은 처음으로 돌아간다 — 한 명에게 붙어 물고 늘어져야 터지는 보상이라야
+ * "포식 본능"이라는 이름과 맞는다.
+ */
+function applyStreak(attacker: Fighter, target: Fighter, events: SkirmishEvent[]): void {
+  if (attacker.def.passive.kind !== "bleedStreak") return;
+  attacker.streakCount = attacker.streakTargetId === target.id ? attacker.streakCount + 1 : 1;
+  attacker.streakTargetId = target.id;
+  if (attacker.streakCount < attacker.def.passive.value) return;
+  attacker.streakCount = 0;
+  target.bleed = { remaining: BLEED.seconds, tickIn: 1, percent: BLEED.percentPerSecond };
+  events.push({ kind: "bleed", fighterId: target.id, amount: 0, started: true });
+}
+
+/** 걸린 출혈을 1초 간격으로 깎는다. 방어력을 거치지 않는 고정 피해다. */
+function tickBleed(fighter: Fighter, dt: number, state: SkirmishState, events: SkirmishEvent[]): void {
+  const bleed = fighter.bleed;
+  if (!bleed) return;
+  bleed.remaining -= dt;
+  bleed.tickIn -= dt;
+  while (bleed.tickIn <= 0 && isFighterAlive(fighter)) {
+    const amount = Math.max(1, Math.round((fighter.maxHp * bleed.percent) / 100));
+    fighter.hp = Math.max(0, fighter.hp - amount);
+    events.push({ kind: "bleed", fighterId: fighter.id, amount, started: false });
+    state.log.push(`${fighter.def.name} 출혈 ${amount}`);
+    bleed.tickIn += 1;
+    if (!isFighterAlive(fighter)) {
+      fighter.targetId = null;
+      events.push({ kind: "death", fighterId: fighter.id });
+      state.log.push(`${fighter.def.name} 전투 불능`);
+    }
+  }
+  if (bleed.remaining <= 0 || !isFighterAlive(fighter)) fighter.bleed = null;
+}
+
 /** 한 번 때린다. 궁극기 여부는 호출하는 쪽이 정한다. */
 function strike(
   attacker: Fighter,
@@ -297,7 +362,7 @@ function strike(
 ): void {
   const skill: Skill = useUltimate ? attacker.def.ultimate : attacker.def.basic;
   const critical = isCriticalHit(attacker.def.stats.critChance, rng());
-  const amount = computeDamage(attacker, target, { ...skill, isCritical: critical }, true);
+  const amount = computeDamage(attacker, target, { ...skill, isCritical: critical, kind: useUltimate ? "ultimate" : "basic" }, true);
 
   target.hp = Math.max(0, target.hp - amount);
   if (useUltimate) attacker.energy -= attacker.def.ultimate.cost;
@@ -314,6 +379,8 @@ function strike(
   attacker.dashY = (dy / gap) * SKIRMISH.lunge * power;
   target.dashX = (dx / gap) * SKIRMISH.knockback * power;
   target.dashY = (dy / gap) * SKIRMISH.knockback * power;
+
+  applyStreak(attacker, target, events);
 
   events.push({
     kind: "attack",
@@ -397,8 +464,12 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
   for (const fighter of state.fighters) {
     if (!isFighterAlive(fighter)) {
       fighter.hop *= recovery;
+      fighter.bleed = null;
       continue;
     }
+    // 출혈은 붙어 있든 달려가든 흐르는 시간만큼 깎는다.
+    tickBleed(fighter, dt, state, events);
+    if (!isFighterAlive(fighter)) continue;
     const target = resolveTarget(state, fighter);
     if (!target) continue;
 

@@ -44,8 +44,16 @@ export function openSkillPopup(
   popups: PopupLayer,
   keywords: KeywordManager,
   skill: SkillInfoViewModel,
+  /** 누른 아이콘 자리와 눌린 상태를 되돌릴 콜백. 쪽지가 그 위에 얹히게 한다. */
+  from?: { x: number; y: number; onClose?: () => void },
 ): void {
-  popups.open({ width: POPUP.width, height: POPUP.height, tilt: -1.2 }, (body) => {
+  popups.open({
+    width: POPUP.width,
+    height: POPUP.height,
+    tilt: -1.2,
+    anchor: from && { x: from.x, y: from.y },
+    onClose: from?.onClose,
+  }, (body) => {
     const left = -POPUP.width / 2;
     const top = -POPUP.height / 2;
 

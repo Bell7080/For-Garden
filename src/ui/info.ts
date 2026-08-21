@@ -26,7 +26,7 @@ import { relicCollection } from "../managers/RelicCollectionManager";
 import { COLOR, textStyle } from "./theme";
 import { FALLBACK_SKILL_ICON } from "./skillIcons";
 import { gameApi } from "../api/FakeServer";
-import { AWAKENING_CAP, canFeedRelic, FEED_UNIT, RELIC_LEVEL_CAP, relicExpToNext } from "../core/relicProgression";
+import { AWAKENING_CAP, AWAKENING_STEPS, canFeedRelic, FEED_UNIT, RELIC_LEVEL_CAP, relicExpToNext } from "../core/relicProgression";
 import { session } from "../state/session";
 import { BOND_FEROCITY_MULTIPLIER, BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL } from "../core/bond";
 import { getRelicCatalogDisclosure } from "../core/relicCatalog";
@@ -50,6 +50,8 @@ const BADGE_OFF = 0x8b8f96;
 /** 즐겨찾기는 노랑, 애착은 분홍. 색만으로도 둘이 갈린다. */
 const BOOKMARK_ON = 0xf2c744;
 const FAVORITE_ON = 0xf2789f;
+/** 야성 뱃지의 색. 게이지가 끓는 쪽이라 붉은 기가 돈다. */
+const FEROCITY_BADGE = 0x8f3a2a;
 /** 유대 하트와 급여 버튼의 색. */
 const BOND_HEART = 0xf2789f;
 const FEED_GREEN = 0x7fc47f;
@@ -80,6 +82,23 @@ const STAT_LABEL: Record<string, string> = {
   hp: "체력", def: "방어력", res: "저항력", atk: "공격력", ap: "주문력",
   attackSpeed: "공격 속도", moveSpeed: "이동 속도", critChance: "치명타 확률", critDamage: "치명타 피해", energyGain: "충전량",
 };
+
+/**
+ * 팝업을 부른 자리.
+ *
+ * 팝업은 새 화면이 아니라 누른 것 위에 얹히는 쪽지다. 그래서 여는 쪽은 언제나 "어디를
+ * 눌렀는지"와 "닫히면 무엇을 되돌릴지"를 함께 넘긴다.
+ */
+interface PopupSource {
+  x: number;
+  y: number;
+  onClose: () => void;
+}
+
+/** 부른 자리를 팝업 옵션으로 옮긴다. */
+function anchorOf(from: PopupSource): { anchor: { x: number; y: number }; onClose: () => void } {
+  return { anchor: { x: from.x, y: from.y }, onClose: from.onClose };
+}
 
 /** 뱃지 하나를 다시 칠하는 손잡이. */
 interface BadgeHandle {
@@ -181,7 +200,7 @@ export class InfoManager {
 
     this.starRow = scene.add.container(COLUMN.x, 196);
     this.chrome.add(this.starRow);
-    this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 40, 196, () => this.openAwakening());
+    this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 40, 196, (from) => this.openAwakening(from));
 
     // 레벨 · 경험치 · 급여.
     this.addPanel(COLUMN.x, 424, COLUMN.width, 320);
@@ -213,7 +232,7 @@ export class InfoManager {
     // 능력치.
     this.addPanel(COLUMN.x, 1024, COLUMN.width, 420);
     this.chrome.add(scene.add.text(COLUMN.x - COLUMN.width / 2 + 44, 838, "능력치", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0));
-    this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 48, 852, () => this.openExtraStats());
+    this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 48, 852, (from) => this.openExtraStats(from));
     STAT_CHIPS.forEach((chip, index) => this.addStatChip(chip, index));
 
     // 하트 젬 — 하트 하나를 셋으로 가른 자리.
@@ -274,25 +293,25 @@ export class InfoManager {
     container.add(drawGlyph(this.scene, "scroll", 0, 0, size * 0.54, 0xd8c7a0));
     const hit = this.scene.add.rectangle(0, 0, size + 12, size + 12, 0xffffff, 0).setInteractive({ useHandCursor: true });
     hit.on("pointerdown", () => container.setScale(1.12));
-    hit.on("pointerout", () => container.setScale(1));
+    hit.on("pointerout", () => { if (!this.popups.isOpen) container.setScale(1); });
     hit.on("pointerup", () => {
-      container.setScale(1);
-      this.openJournal();
+      container.setScale(1.12);
+      this.openJournal({ x, y: y + size / 2, onClose: () => container.setScale(1) });
     });
     container.add(hit);
     this.chrome.add(container);
   }
 
   /** 더 볼 것이 있다는 표시. 자리만 다를 뿐 생김새와 크기는 같다. */
-  private addMagnifier(x: number, y: number, onClick: () => void): void {
+  private addMagnifier(x: number, y: number, onClick: (from: PopupSource) => void): void {
     const container = this.scene.add.container(x, y);
     container.add(drawGlyph(this.scene, "magnifier", 0, 0, 44, COLOR.accent));
     const hit = this.scene.add.rectangle(x, y, 84, 84, 0xffffff, 0).setInteractive({ useHandCursor: true });
     hit.on("pointerdown", () => container.setScale(1.15));
-    hit.on("pointerout", () => container.setScale(1));
+    hit.on("pointerout", () => { if (!this.popups.isOpen) container.setScale(1); });
     hit.on("pointerup", () => {
-      container.setScale(1);
-      onClick();
+      container.setScale(1.15);
+      onClick({ x, y: y - 30, onClose: () => container.setScale(1) });
     });
     this.chrome.add([container, hit]);
   }
@@ -444,7 +463,7 @@ export class InfoManager {
   private openGemPicker(index: number): void {
     const def = this.currentDef;
     if (!def || !this.ownedNow) return;
-    this.popups.open({ width: 820, height: 620, title: "HEART GEM " + (index + 1) }, (body, close) => {
+    this.popups.open({ width: 820, height: 620, title: "HEART GEM " + (index + 1), dim: true }, (body, close) => {
       const owned = HEART_GEMS.filter((gem) => session.ownedHeartGemIds.includes(gem.id));
       const rows: { id: string | null; name: string; effect: string }[] = [
         { id: null, name: "비우기", effect: "" },
@@ -471,11 +490,11 @@ export class InfoManager {
   }
 
   /** 개체번호·프로젝트명·기원·발굴지·기록을 한 장에 모은 관찰 일지. */
-  private openJournal(): void {
+  private openJournal(from: PopupSource): void {
     const def = this.currentDef;
     if (!def) return;
     const disclosure = getRelicCatalogDisclosure(def, this.ownedNow);
-    this.popups.open({ width: 880, height: 760, title: "관찰 일지", tilt: -1.2 }, (body) => {
+    this.popups.open({ width: 880, height: 760, title: "관찰 일지", tilt: -1.2, ...anchorOf(from) }, (body) => {
       const lines = disclosure.access === "full"
         ? [
             "개체번호   NO." + disclosure.specimenNumber,
@@ -494,13 +513,14 @@ export class InfoManager {
   }
 
   /** 각성 단계 테크트리. 0~5단계를 세우고 지금 어디까지 왔는지 알린다. */
-  private openAwakening(): void {
+  private openAwakening(from: PopupSource): void {
     const def = this.currentDef;
     if (!def) return;
     const awakening = relicProgression.getProgress(def.id).awakening;
-    this.popups.open({ width: 900, height: 640, title: "각성", tilt: -1.2 }, (body) => {
+    this.popups.open({ width: 900, height: 640, title: "각성", tilt: -1.2, ...anchorOf(from) }, (body) => {
       body.add(this.scene.add.text(-390, -226, "같은 렐릭을 다시 발굴하면 한 단계씩 깨어난다.", textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0, 0));
-      for (let step = 1; step <= AWAKENING_CAP; step += 1) {
+      for (const entry of AWAKENING_STEPS) {
+        const step = entry.step;
         const y = -160 + step * 84;
         const reached = step <= awakening;
         body.add(drawLayer(this.scene, 0, y, slantedRect(700, 70, 14), {
@@ -513,18 +533,20 @@ export class InfoManager {
         if (!reached) star.setStrokeStyle(2, BADGE_OFF, 0.85);
         body.add(star);
         body.add(this.scene.add.text(-274, y, step + "단계", textStyle({ role: "display", size: 26, color: reached ? COLOR.accentText : COLOR.inkDim })).setOrigin(0, 0.5));
-        body.add(this.scene.add.text(-160, y, "모든 능력치 +3%" + (step === AWAKENING_CAP ? "   ·   단계 효과 예정" : ""), textStyle({ role: "body", size: 22, color: reached ? COLOR.ink : COLOR.inkDim })).setOrigin(0, 0.5));
+        // 단계 효과 문구는 core의 표 하나에서만 온다. 화면이 따로 적어 두면 수치가 갈라진다.
+        const note = entry.readyUltimate ? entry.label + "   ·   준비 중" : entry.label;
+        body.add(this.scene.add.text(-160, y, note, textStyle({ role: "body", size: 22, color: reached ? COLOR.ink : COLOR.inkDim })).setOrigin(0, 0.5));
       }
       body.add(this.scene.add.text(0, 256, "현재 " + awakening + " / " + AWAKENING_CAP + " 단계", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0.5));
     });
   }
 
   /** 공격 속도처럼 자주 보지 않는 수치는 돋보기 안에만 둔다. */
-  private openExtraStats(): void {
+  private openExtraStats(from: PopupSource): void {
     const def = this.currentDef;
     if (!def) return;
     const stats = relicProgression.getFinalStats(def.id);
-    this.popups.open({ width: 720, height: 520, title: "추가 능력치", tilt: -1.2 }, (body) => {
+    this.popups.open({ width: 720, height: 520, title: "추가 능력치", tilt: -1.2, ...anchorOf(from) }, (body) => {
       EXTRA_STATS.forEach((row, index) => {
         const y = -140 + index * 76;
         body.add(this.scene.add.text(-290, y, row.label, textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0, 0.5));
@@ -544,7 +566,7 @@ export class InfoManager {
     container.add(drawGlyph(this.scene, "costume", 0, 0, size * 0.54, 0xd2d6dc));
     const hit = this.scene.add.rectangle(0, 0, size + 10, size + 10, 0xffffff, 0).setInteractive({ useHandCursor: true });
     hit.on("pointerup", () => {
-      this.popups.open({ width: 720, height: 420, title: "옷장" }, (body) => {
+      this.popups.open({ width: 720, height: 420, title: "옷장", dim: true }, (body) => {
         body.add(this.scene.add.text(0, 20, "코스튬은 준비 중이다.", textStyle({ role: "body", size: 28, color: COLOR.inkDim })).setOrigin(0.5));
       });
     });
@@ -664,14 +686,62 @@ export class InfoManager {
       container.add(this.scene.add.text(0, size / 2 - 24, kindLabel, textStyle({ role: "body", size: 17, color: COLOR.inkDim })).setOrigin(0.5));
       const hit = this.scene.add.rectangle(0, 0, size, size, 0xffffff, 0).setInteractive({ useHandCursor: true });
       hit.on("pointerdown", () => container.setScale(1.08));
-      hit.on("pointerout", () => container.setScale(1));
+      hit.on("pointerout", () => { if (!this.popups.isOpen) container.setScale(1); });
       hit.on("pointerup", () => {
-        container.setScale(1);
-        openSkillPopup(this.scene, this.popups, this.keywords, this.skillViewModel(kindLabel, skill, gaugeCost));
+        // 팝업이 떠 있는 동안 아이콘은 눌린 채로 남는다. 어디서 나온 쪽지인지 보이게 한다.
+        container.setScale(1.08);
+        openSkillPopup(this.scene, this.popups, this.keywords, this.skillViewModel(kindLabel, skill, gaugeCost), {
+          x: container.x,
+          y: container.y - size / 2,
+          onClose: () => container.setScale(1),
+        });
       });
       container.add(hit);
+      // 패시브 위에만 이 개체의 피버 발현을 작게 얹는다. 야성은 벌이 아니라 상이라는 표시다.
+      if (index === 0) this.addFerocityBadge(container, size, def);
       this.chrome.add(container);
       this.skillIcons.push(container);
+    });
+  }
+
+  /**
+   * 패시브 아이콘 위에 붙는 야성(피버) 뱃지.
+   *
+   * 야성은 모든 개체가 공유하는 규칙이지만 어떻게 터지는지는 개체마다 다르다. 그 차이만
+   * 이름 두 글자로 알리고, 자세한 것은 눌렀을 때 그 위에 뜨는 쪽지가 맡는다.
+   */
+  private addFerocityBadge(icon: Phaser.GameObjects.Container, size: number, def: RelicDef): void {
+    const badge = this.scene.add.container(0, -size / 2 - 20);
+    const width = 96;
+    const shape = chipPoints(width, 38, { bevel: { topLeft: 12, topRight: 0, bottomRight: 12, bottomLeft: 0 } });
+    badge.add(drawLayer(this.scene, 0, 0, shape, { fill: FEROCITY_BADGE, alpha: 0.95 }));
+    badge.add(this.scene.add.text(0, 0, def.ferocityTrait.name, textStyle({ role: "emphasis", size: 21 })).setOrigin(0.5));
+    const hit = this.scene.add.rectangle(0, 0, width + 12, 52, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    hit.on("pointerdown", () => badge.setScale(1.1));
+    hit.on("pointerout", () => { if (!this.popups.isOpen) badge.setScale(1); });
+    hit.on("pointerup", () => {
+      badge.setScale(1.1);
+      this.openFerocityTrait(def, { x: icon.x, y: icon.y - size / 2 - 40, onClose: () => badge.setScale(1) });
+    });
+    badge.add(hit);
+    icon.add(badge);
+  }
+
+  /** 개체별 피버 발현 설명. 야성 규칙 자체는 강조된 말을 눌러 다시 열 수 있다. */
+  private openFerocityTrait(def: RelicDef, from: PopupSource): void {
+    this.popups.open({ width: 720, height: 340, title: def.ferocityTrait.name, tilt: -1.2, ...anchorOf(from) }, (body) => {
+      body.add(
+        this.scene.add
+          .text(-720 / 2 + 52, -340 / 2 + 74, "야성 발현", textStyle({ role: "emphasis", size: 22, color: COLOR.accentText }))
+          .setOrigin(0, 0),
+      );
+      const text = this.keywords.layout("[[ferocity|야성]]이 가득 차면 피버에 들어간다. " + def.ferocityTrait.desc, {
+        width: 610,
+        size: 25,
+        lineSpacing: 8,
+      });
+      text.setPosition(-720 / 2 + 52, -340 / 2 + 118);
+      body.add(text);
     });
   }
 
@@ -680,6 +750,7 @@ export class InfoManager {
     const attacker = this.currentUnit ?? (this.currentDef && {
       def: this.currentDef, hp: this.currentDef.stats.hp, maxHp: this.currentDef.stats.hp,
       energy: 0, ferocity: 0, bondLevel: 0, stunTurns: 0, justSwapped: false,
+      awakening: relicProgression.getProgress(this.currentDef.id).awakening,
     });
     const preview = attacker && kindLabel !== "패시브" ? previewSkillDamage(attacker, skill, this.previewTarget, true) : undefined;
     const valueLabel = preview?.kind === "damage"

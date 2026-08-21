@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   aliveFighters,
+  BLEED,
   attackInterval,
   canFireUltimate,
   createSkirmish,
@@ -311,5 +312,59 @@ describe("자리 잡기", () => {
     foe.x = 400 - SKIRMISH.facingDeadzone * 3;
     stepSkirmish(state, 1 / 60);
     expect(ally.facing).toBe(-1);
+  });
+});
+
+describe("출혈", () => {
+  /** 렉시아와 상대만 세워 연속 공격을 관찰한다. */
+  function duel(): SkirmishState {
+    const state = createSkirmish([getRelic("rex")], [getRelic("husk-shell")], ARENA);
+    const [ally, foe] = state.fighters;
+    ally.x = 500; ally.y = 1000; foe.x = 560; foe.y = 1000;
+    return state;
+  }
+
+  it("은 같은 상대를 다섯 번 이어서 때린 순간 걸린다", () => {
+    const state = duel();
+    const [ally, foe] = state.fighters;
+    // 첫 타는 시작하자마자 나가므로 네 번의 간격이면 다섯 번을 때린다.
+    const events = run(state, attackInterval(ally) * 4 + 0.05);
+    expect(ally.streakCount).toBe(0); // 다섯 번을 채우면 셈이 처음으로 돌아간다
+    expect(foe.bleed).not.toBeNull();
+    expect(events.some((event) => event.kind === "bleed" && event.started)).toBe(true);
+  });
+
+  it("은 3초 동안 매 초 최대 체력의 2%를 깎고 스스로 끝난다", () => {
+    const state = duel();
+    const foe = state.fighters[1];
+    foe.bleed = { remaining: BLEED.seconds, tickIn: 1, percent: BLEED.percentPerSecond };
+    const hpBefore = foe.hp;
+    const ticks = run(state, 3.2).filter((event): event is Extract<SkirmishEvent, { kind: "bleed" }> => event.kind === "bleed");
+    const bleedDamage = ticks.reduce((sum, event) => sum + event.amount, 0);
+    expect(ticks).toHaveLength(BLEED.seconds);
+    expect(bleedDamage).toBe(Math.round((foe.maxHp * BLEED.percentPerSecond) / 100) * BLEED.seconds);
+    expect(hpBefore - foe.hp).toBeGreaterThanOrEqual(bleedDamage);
+    expect(foe.bleed).toBeNull();
+  });
+
+  it("은 상대를 바꾸면 셈이 처음으로 돌아간다", () => {
+    const state = createSkirmish([getRelic("rex")], [getRelic("husk-shell"), getRelic("husk-wing")], ARENA);
+    const ally = state.fighters[0];
+    ally.streakTargetId = "enemy-0";
+    ally.streakCount = 4;
+    ally.x = state.fighters[2].x; ally.y = state.fighters[2].y - 60;
+    ally.targetId = "enemy-1";
+    run(state, 0.05);
+    expect(ally.streakCount).toBe(1);
+    expect(state.fighters[1].bleed).toBeNull();
+  });
+});
+
+describe("각성", () => {
+  it("5단계는 전투를 궁극기 준비 상태로 연다", () => {
+    const ready = createSkirmish([getRelic("rex")], [getRelic("husk-shell")], ARENA, {}, { rex: 5 });
+    const plain = createSkirmish([getRelic("rex")], [getRelic("husk-shell")], ARENA);
+    expect(ready.fighters[0].energy).toBe(getRelic("rex").ultimate.cost);
+    expect(plain.fighters[0].energy).toBe(0);
   });
 });

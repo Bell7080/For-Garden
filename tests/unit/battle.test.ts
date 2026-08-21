@@ -66,15 +66,16 @@ describe("스왑", () => {
   });
 
   it("직후의 공격은 swapMomentum 패시브로 더 아프다", () => {
-    const withSwap = newBattle();
-    playerAct(withSwap, { kind: "swap", memberIndex: 1 }); // 렉스를 전방으로
+    // 스밀라가 swapMomentum 패시브를 가진 쪽이다.
+    const withSwap = newBattle(["anky", "smilo", "dodo"]);
+    playerAct(withSwap, { kind: "swap", memberIndex: 1 }); // 스밀라를 전방으로
     enemyTurn(withSwap);
     const enemyHpBefore = frontUnit(withSwap.enemy).hp;
     playerAct(withSwap, { kind: "basic" });
     const swappedDamage = enemyHpBefore - frontUnit(withSwap.enemy).hp;
 
-    // 렉스를 처음부터 전방에 둔 경우와 비교한다.
-    const plain = newBattle(["rex", "anky", "dodo"]);
+    // 스밀라를 처음부터 전방에 둔 경우와 비교한다.
+    const plain = newBattle(["smilo", "anky", "dodo"]);
     const plainBefore = frontUnit(plain.enemy).hp;
     playerAct(plain, { kind: "basic" });
     const plainDamage = plainBefore - frontUnit(plain.enemy).hp;

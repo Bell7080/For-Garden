@@ -57,6 +57,8 @@ interface FighterView {
   shadow: Phaser.GameObjects.Ellipse;
   hpBack: Phaser.GameObjects.Rectangle;
   hpFill: Phaser.GameObjects.Rectangle;
+  /** 걸린 상태이상을 알리는 작은 뱃지. 체력 바 옆에 붙는다. */
+  bleedBadge: Phaser.GameObjects.Container;
   /** 피격 섬광이 끝난 뒤 되돌릴 원래 색. */
   tint: number;
   dead: boolean;
@@ -98,7 +100,9 @@ export class BattleScene extends Phaser.Scene {
     // 적은 스테이지별 임시 레벨 성장치를 적용한 복사본으로 전투에 투입한다.
     // 유대는 정적 RelicDef가 아니라 현재 플레이어의 저장 진행에서 전투 스냅샷으로 넘긴다.
     const bonds = Object.fromEntries(session.party.map((id) => [id, session.relicProgress[id]?.bondLevel ?? 0]));
-    this.state = createSkirmish(session.party.map(getRelic), getStageEnemies(stage), ARENA, bonds);
+    // 각성 단계도 같은 방식으로 스냅샷을 넘긴다. 전투 코어는 저장 상태를 직접 읽지 않는다.
+    const awakenings = Object.fromEntries(session.party.map((id) => [id, session.relicProgress[id]?.awakening ?? 0]));
+    this.state = createSkirmish(session.party.map(getRelic), getStageEnemies(stage), ARENA, bonds, awakenings);
     this.views.clear();
     this.profiles = [];
     this.finished = false;
@@ -140,7 +144,8 @@ export class BattleScene extends Phaser.Scene {
       const barColor = fighter.side === "player" ? COLOR.hpFill : COLOR.hpEnemy;
       const hpBack = this.add.rectangle(fighter.x, 0, 96, 10, COLOR.void, 0.75);
       const hpFill = this.add.rectangle(fighter.x, 0, 96, 10, barColor).setOrigin(0, 0.5);
-      this.views.set(fighter.id, { creature, asset, fighter, shadow, hpBack, hpFill, tint, dead: false });
+      const bleedBadge = this.makeBleedBadge();
+      this.views.set(fighter.id, { creature, asset, fighter, shadow, hpBack, hpFill, bleedBadge, tint, dead: false });
     }
     this.syncViews();
     // 마지막 한 명까지 서고 나서 시간을 흘려야 먼저 뜬 캐릭터만 앞서 달려가지 않는다.
@@ -246,6 +251,18 @@ export class BattleScene extends Phaser.Scene {
       return;
     }
 
+    if (event.kind === "bleed") {
+      const view = this.views.get(event.fighterId);
+      if (!view) return;
+      if (event.started) {
+        // 상처가 열리는 순간에만 한 번 붉게 번쩍인다. 이후 초당 피해는 숫자로만 뜬다.
+        flashHit(this, view.creature, view.tint);
+        return;
+      }
+      this.popDamage(view.fighter, event.amount, false, false);
+      return;
+    }
+
     const attacker = this.views.get(event.attackerId);
     const target = this.views.get(event.targetId);
     if (attacker) playMotion(this, attacker.creature, "attack");
@@ -292,6 +309,7 @@ export class BattleScene extends Phaser.Scene {
     view.shadow.setVisible(false);
     view.hpBack.setVisible(false);
     view.hpFill.setVisible(false);
+    view.bleedBadge.setVisible(false);
     const burst = this.add.star(view.creature.x, view.creature.y, 10, 24, 66, COLOR.accent, 0.9).setDepth(DEPTH.burst);
     this.tweens.add({ targets: burst, scale: 1.8, alpha: 0, angle: 90, duration: 360, onComplete: () => burst.destroy() });
     this.tweens.add({
@@ -303,6 +321,27 @@ export class BattleScene extends Phaser.Scene {
       ease: "Back.In",
       onComplete: () => view.creature.setVisible(false),
     });
+  }
+
+  /**
+   * 출혈 뱃지.
+   *
+   * 상태이상은 숫자가 아니라 표식으로 알린다 — 전투 중에는 읽을 틈이 없으므로 색과 모양
+   * 하나로 "지금 피가 흐르는 중"만 전한다.
+   */
+  private makeBleedBadge(): Phaser.GameObjects.Container {
+    const badge = this.add.container(0, 0).setVisible(false);
+    const mark = this.add.graphics();
+    mark.fillStyle(0xc2303a, 0.95);
+    mark.fillPoints([
+      new Phaser.Geom.Point(0, -11),
+      new Phaser.Geom.Point(7, 3),
+      new Phaser.Geom.Point(0, 10),
+      new Phaser.Geom.Point(-7, 3),
+    ], true);
+    badge.add(this.add.circle(0, 0, 13, COLOR.void, 0.7));
+    badge.add(mark);
+    return badge;
   }
 
   /** 좌표·방향·체력 바·앞뒤 순서를 시뮬레이션 상태에 맞춘다. */
@@ -329,6 +368,8 @@ export class BattleScene extends Phaser.Scene {
         .setPosition(pose.x - 48, barY)
         .setDepth(DEPTH.hpBar + 1)
         .setDisplaySize(96 * Math.max(0, fighter.hp / fighter.maxHp), 10);
+      // 출혈 중인 동안만 체력 바 왼쪽에 붉은 물방울이 붙는다.
+      view.bleedBadge.setPosition(pose.x - 62, barY).setDepth(DEPTH.hpBar + 2).setVisible(fighter.bleed !== null);
     });
   }
 

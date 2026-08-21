@@ -71,13 +71,14 @@ export class KeywordManager {
     const hit = this.scene.add
       .rectangle(label.x + label.width / 2, label.y + label.height / 2, label.width + 8, Math.max(label.height, 40), 0xffffff, 0)
       .setInteractive({ useHandCursor: true });
-    hit.on("pointerup", () => this.explain(keyword));
+    // 누른 자리 위에 뜻이 뜬다. 화면을 새로 채우지 않고 읽던 글 위에 한 겹 얹힌다.
+    hit.on("pointerup", (pointer: Phaser.Input.Pointer) => this.explain(keyword, { x: pointer.worldX, y: pointer.worldY - 20 }));
     container.add(hit);
   }
 
   /** 용어 하나를 설명하는 작은 팝업. 스킬 팝업 위에 한 겹 더 쌓인다. */
-  explain(keyword: KeywordDef): void {
-    this.popups.open({ width: 720, height: 360, title: keyword.term }, (body) => {
+  explain(keyword: KeywordDef, anchor?: { x: number; y: number }): void {
+    this.popups.open({ width: 720, height: 360, title: keyword.term, anchor }, (body) => {
       body.add(
         this.scene.add
           .text(-720 / 2 + 52, -360 / 2 + 74, keyword.kind, textStyle({ role: "emphasis", size: 22, color: COLOR.accentText }))

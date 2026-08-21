@@ -106,7 +106,16 @@ export type PassiveKind =
   /** 스왑으로 막 전방에 나온 직후 첫 공격 강화 */
   | "swapMomentum"
   /** 후방에 있을 때 매 턴 전방 아군을 조금씩 회복 */
-  | "rearMend";
+  | "rearMend"
+  /** 같은 상대를 연속으로 때리면 출혈을 남긴다 */
+  | "bleedStreak";
+
+/** 개체별 피버 발현. 지금은 표기 전용이며 전투 공식은 공용 야성 규칙을 따른다. */
+export interface FerocityTrait {
+  /** 뱃지에 찍히는 짧은 이름. 두세 글자를 넘기지 않는다. */
+  name: string;
+  desc: string;
+}
 
 export interface Passive {
   id: string;
@@ -149,6 +158,13 @@ export interface RelicDef {
   role: Role;
   stats: Stats;
   passive: Passive;
+  /**
+   * 이 개체만의 야성(피버) 발현 방식.
+   *
+   * 야성은 벌이 아니라 상이다 — 게이지가 차면 더 세게 몰아친다. 어떻게 몰아치는지가 개체마다
+   * 다르므로 정적 정의로 두고, 정보창은 패시브 아이콘 위에 작은 뱃지로 이것만 알린다.
+   */
+  ferocityTrait: FerocityTrait;
   basic: Skill;
   ultimate: Ultimate;
 }

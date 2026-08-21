@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import type { PuppetCreature } from "../puppets/assets";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { previewSkillDamage, ULTIMATE_ENERGY_MAX, type BattleUnit } from "../core/battle";
-import type { EffectType, RelicDef, Skill, SkillIconAssetId } from "../core/types";
+import type { EffectType, Element, RelicDef, Role, Skill, SkillIconAssetId } from "../core/types";
 import { setDebugInfoOpen } from "../debug";
 import { getHeartGem } from "../data/heartGems";
 import { relicProgression } from "../managers/RelicProgressionManager";
@@ -62,7 +62,10 @@ const PORTRAIT_FOCUS = { x: 400, y: 1060, height: 1800 } as const;
 
 /** 정보창 구석에 세우는 SD 피규어. 받침 위에서 idle만 재생한다. */
 const FIGURE = { x: 790, y: 1806, height: 290 } as const;
-export const ROLE_LABEL: Record<string, string> = { attacker: "공격", tank: "방어", support: "지원" };
+/** 역할은 전투 공식을 바꾸지 않는 특화 태그로만 노출한다. */
+export const ROLE_LABEL: Record<Role, string> = { warrior: "전사", tank: "탱커", assassin: "암살자", support: "지원가" };
+/** 상세 정보에서 코드 키 대신 일관된 한국어 속성명을 보여 준다. */
+export const ELEMENT_LABEL: Record<Element, string> = { fire: "불", water: "물", grass: "풀", earth: "땅", wind: "바람" };
 
 /** `?` 도움말 배지의 클릭이 아래 카드 입력으로 전파되지 않게 한다. */
 export function addHelpBadge(scene: Phaser.Scene, x: number, y: number, onClick: () => void, radius = 26): Phaser.GameObjects.Container {
@@ -373,7 +376,7 @@ export class InfoManager {
     const progress = relicProgression.getProgress(def.id);
     const finalStats = relicProgression.getFinalStats(def.id);
     this.headerText.setText(owned
-      ? `NO.${def.specimenNumber}  ${def.rarity}  ${def.name}\nPROJECT ${def.projectName}  |  ${def.origin} · ${ROLE_LABEL[def.role]}`
+      ? `NO.${def.specimenNumber}  ${def.rarity}  ${def.name}\nPROJECT ${def.projectName}  |  ${def.origin} · ${ELEMENT_LABEL[def.element]} · ${ROLE_LABEL[def.role]}`
       : `NO.${def.specimenNumber}  미발굴 개체\nSILHOUETTE RECORD`);
     this.refreshBadges();
     const disclosure = getRelicCatalogDisclosure(def, owned);

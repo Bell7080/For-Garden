@@ -2,9 +2,10 @@ import Phaser from "phaser";
 import type { PuppetCreature } from "../puppets/assets";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { previewSkillDamage, ULTIMATE_ENERGY_MAX, type BattleUnit } from "../core/battle";
-import type { EffectType, RelicDef, Skill, SkillIconAssetId } from "../core/types";
+import type { RelicDef, Skill, SkillIconAssetId, Stats } from "../core/types";
 import { setDebugInfoOpen } from "../debug";
-import { getHeartGem } from "../data/heartGems";
+import { getHeartGem, HEART_GEMS } from "../data/heartGems";
+import { KeywordManager } from "../managers/KeywordManager";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import {
   battleAssetFor,
@@ -16,53 +17,81 @@ import {
 } from "../puppets/assets";
 import { mixWhite, tintFor } from "../puppets/tints";
 import { addSceneBackground, BACKGROUND } from "./backgrounds";
-import { StatRadar } from "./StatRadar";
-import { addBackButton, IconButton } from "./IconButton";
-import { chipPoints, drawHairline, drawLayer, HOLO } from "./holo";
+import { addBackButton } from "./IconButton";
+import { chipPoints, drawGlassFade, drawHairline, drawLayer, drawShapeEdge, drawVignette, HOLO, perspectiveRect, slantedRect, toPoints } from "./holo";
 import { drawGlyph } from "./glyphs";
+import { PopupLayer } from "./PopupLayer";
+import { openSkillPopup, type SkillInfoViewModel } from "./SkillPopup";
 import { relicCollection } from "../managers/RelicCollectionManager";
 import { COLOR, textStyle } from "./theme";
-import { UI_ICON } from "./icons";
 import { FALLBACK_SKILL_ICON } from "./skillIcons";
-import { Button } from "./Button";
 import { gameApi } from "../api/FakeServer";
-import { canLevelUpRelic, RELIC_LEVEL_CAP, relicLevelUpCost } from "../core/relicProgression";
+import { AWAKENING_CAP, canFeedRelic, FEED_UNIT, RELIC_LEVEL_CAP, relicExpToNext } from "../core/relicProgression";
 import { session } from "../state/session";
 import { BOND_FEROCITY_MULTIPLIER, BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL } from "../core/bond";
 import { getRelicCatalogDisclosure } from "../core/relicCatalog";
 
-/** 문자열 순서에 의존하지 않고 스킬 상세의 각 UI 요소를 직접 채우는 계약이다. */
-export interface SkillInfoViewModel {
-  name: string;
-  kindLabel: string;
-  iconAssetId: SkillIconAssetId;
-  effectLabel: string;
-  valueLabel?: string;
-  gaugeCost?: number;
-  description: string;
-}
+export type { SkillInfoViewModel } from "./SkillPopup";
 
-/** 데이터 효과 분류를 플레이어가 읽는 고정 라벨로 바꾼다. */
-const EFFECT_LABEL: Record<EffectType, string> = {
-  physical: "물리 피해",
-  magical: "마법 피해",
-  fixed: "고정 피해",
-  healing: "회복",
-  buff: "버프",
-};
+export const ROLE_LABEL: Record<string, string> = { attacker: "공격", tank: "방어", support: "지원" };
 
-/**
- * 전신 원화의 코어(`중심1`) 관절이 놓이는 자리와 확대 높이.
- *
- * 상자에 맞춰 축소하면 얼굴이 작아지므로, 로비와 같은 방식으로 코어를 기준 삼아 크게 키우고
- * 정수리와 다리 끝은 화면 밖으로 흘려보낸다. 오른쪽 정보 섬들은 반투명이라 원화 위에 겹쳐도
- * 글자가 읽히고, 인물이 화면 전체를 채우는 느낌만 남는다.
- */
-const PORTRAIT_FOCUS = { x: 400, y: 1060, height: 1800 } as const;
+/** 전신 원화의 코어(`중심1`) 관절이 놓이는 자리와 확대 높이. 정보창의 주인공은 캐릭터다. */
+const PORTRAIT_FOCUS = { x: 420, y: 1040, height: 1820 } as const;
 
 /** 정보창 구석에 세우는 SD 피규어. 받침 위에서 idle만 재생한다. */
-const FIGURE = { x: 790, y: 1806, height: 290 } as const;
-export const ROLE_LABEL: Record<string, string> = { attacker: "공격", tank: "방어", support: "지원" };
+const FIGURE = { x: 806, y: 1786, height: 240 } as const;
+
+/** 오른쪽 정보 기둥. 캐릭터를 덮지 않도록 화면 오른쪽 절반만 쓴다. */
+const COLUMN = { x: 818, width: 476 } as const;
+
+/** 판 하나하나가 같은 각도로 기울어 한 벌로 읽힌다. */
+const PANEL_TILT = -1.6;
+
+/** 꺼진 뱃지·빈 별의 선 색. 글자용 문자열 색과 달리 도형은 숫자 색이 필요하다. */
+const BADGE_OFF = 0x8b8f96;
+/** 즐겨찾기는 노랑, 애착은 분홍. 색만으로도 둘이 갈린다. */
+const BOOKMARK_ON = 0xf2c744;
+const FAVORITE_ON = 0xf2789f;
+/** 유대 하트와 급여 버튼의 색. */
+const BOND_HEART = 0xf2789f;
+const FEED_GREEN = 0x7fc47f;
+/** 낀 젬 조각이 내는 빛. */
+const GEM_GLOW = 0xf2789f;
+const GEM_FILL = 0xc95f8a;
+const GEM_EDGE = 0xffc2d8;
+
+/** 능력치 칩에서 쓰는 다섯 축과 색. */
+const STAT_CHIPS: readonly { key: keyof Stats; label: string; color: number }[] = [
+  { key: "hp", label: "체력", color: 0x6fc47f },
+  { key: "atk", label: "공격", color: 0xe07a5f },
+  { key: "def", label: "방어", color: 0x6f9bd8 },
+  { key: "res", label: "저항", color: 0xb08ad8 },
+  { key: "ap", label: "주문", color: 0x59c2c9 },
+];
+
+/** 돋보기로만 여는 보조 능력치. 평소에는 다섯 축만 보여 화면을 비운다. */
+const EXTRA_STATS: readonly { key: keyof Stats; label: string; suffix?: string }[] = [
+  { key: "attackSpeed", label: "공격 속도" },
+  { key: "moveSpeed", label: "이동 속도" },
+  { key: "critChance", label: "치명타 확률", suffix: "%" },
+  { key: "critDamage", label: "치명타 피해", suffix: "%" },
+  { key: "energyGain", label: "궁극기 충전량" },
+];
+
+const STAT_LABEL: Record<string, string> = {
+  hp: "체력", def: "방어력", res: "저항력", atk: "공격력", ap: "주문력",
+  attackSpeed: "공격 속도", moveSpeed: "이동 속도", critChance: "치명타 확률", critDamage: "치명타 피해", energyGain: "충전량",
+};
+
+/** 뱃지 하나를 다시 칠하는 손잡이. */
+interface BadgeHandle {
+  paint(on: boolean, enabled: boolean): void;
+}
+
+/** 젬 조각 하나를 다시 칠하는 손잡이. */
+interface GemSlot {
+  paint(gemId: string | null): void;
+}
 
 /** `?` 도움말 배지의 클릭이 아래 카드 입력으로 전파되지 않게 한다. */
 export function addHelpBadge(scene: Phaser.Scene, x: number, y: number, onClick: () => void, radius = 26): Phaser.GameObjects.Container {
@@ -74,261 +103,511 @@ export function addHelpBadge(scene: Phaser.Scene, x: number, y: number, onClick:
 }
 
 /**
- * 스킬 아이콘 한 칸을 카드 형태로 만든다.
+ * 캐릭터 정보창.
  *
- * 그리드 캐릭터 카드와 같은 규격 — 흰 바탕 · 복제 그림자 · 얇은 테두리 — 을 써서
- * 화면이 달라도 "누를 수 있는 카드"의 생김새가 하나로 읽히게 한다.
+ * 왼쪽은 캐릭터(원화·이름·스킬·SD), 오른쪽은 수치(성급·레벨·유대·능력치·젬)다. 오른쪽 판은
+ * 전부 같은 각도로 기울어 있고 반투명이라 인물을 덮지 않는다. 더 자세한 것은 모두 팝업으로
+ * 열린다 — 화면에 늘 떠 있는 정보는 "지금 얼마나 컸는가"까지다.
  */
-function iconCard(
-  scene: Phaser.Scene,
-  x: number,
-  y: number,
-  size: number,
-  texture: string,
-  accent: boolean,
-): { objects: Phaser.GameObjects.GameObject[]; icon: Phaser.GameObjects.Image } {
-  const iconSize = Math.round(size * 0.66);
-  const shadow = scene.add.image(x + 5, y + 6, texture).setDisplaySize(iconSize, iconSize).setTint(0x000000).setAlpha(0.35);
-  const icon = scene.add.image(x, y, texture).setDisplaySize(iconSize, iconSize);
-  return {
-    objects: [
-      drawLayer(scene, x, y, chipPoints(size, size, {
-        bevel: { topLeft: size * 0.26, topRight: 0, bottomRight: size * 0.26, bottomLeft: 0 },
-      }), { fill: accent ? 0x2a2418 : 0x1a1f27, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: accent ? 0.8 : 0.3 }),
-      shadow,
-      icon,
-    ],
-    icon,
-  };
-}
-
-/**
- * 정보창의 한 칸.
- *
- * 테두리 대신 모서리를 어긋나게 깎은 유리면과 제목 왼쪽의 짧은 강조 막대로만 구분한다.
- * 칸이 여럿 겹치는 화면이라 사방 외곽선을 두르면 곧바로 격자 그물처럼 보인다.
- */
-function floatingLayer(scene: Phaser.Scene, x: number, y: number, width: number, height: number, title: string): Phaser.GameObjects.Container {
-  const container = scene.add.container(x, y);
-  const unit = Math.min(width, height);
-  const bevel = unit * 0.14;
-  const layer = drawLayer(scene, width / 2, height / 2, chipPoints(width, height, {
-    bevel: { topLeft: bevel, topRight: 0, bottomRight: unit * 0.2, bottomLeft: 0 },
-  }), { fill: 0x141920, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.35 });
-  container.add(layer);
-  // 왼쪽 위가 잘려 나갔으므로 강조 막대와 제목도 그만큼 안쪽에서 시작한다. 잘린 자리에 얹으면
-  // 막대만 판 밖의 허공에 떠 보인다.
-  container.add(scene.add.rectangle(bevel * 0.5, bevel * 0.5 + 4, 6, 34, COLOR.accent, 0.9).setOrigin(0));
-  container.add(scene.add.text(bevel * 0.5 + 18, bevel * 0.5 + 8, title, textStyle({ role: "emphasis", size: 20, color: COLOR.accentText })).setOrigin(0));
-  return container;
-}
-
-/** 꺼져 있는 뱃지의 선 색. 글자용 문자열 색과 달리 도형은 숫자 색이 필요하다. */
-const BADGE_OFF = 0x8b8f96;
-
-/** 왼쪽 위 상태 뱃지 한 칸. 켜짐 여부는 세션이 쥐고 있고 여기서는 그리기만 한다. */
-interface BadgeToggle {
-  container: Phaser.GameObjects.Container;
-  glyph: Phaser.GameObjects.Graphics;
-  glyphName: "bookmark" | "heart";
-  size: number;
-  isOn: (relicId: string) => boolean;
-}
-
-/** Phaser 컨테이너 단위로 헤더·능력치·성장·보석·스킬을 조립하는 공용 정보 화면이다. */
 export class InfoManager {
   private readonly root: Phaser.GameObjects.Container;
   private readonly chrome: Phaser.GameObjects.Container;
-  private readonly header: Phaser.GameObjects.Container;
-  private readonly archive: Phaser.GameObjects.Container;
-  private readonly stats: Phaser.GameObjects.Container;
-  private readonly growth: Phaser.GameObjects.Container;
-  private readonly gems: Phaser.GameObjects.Container;
-  private readonly skills: Phaser.GameObjects.Container;
-  private readonly skillDetail: Phaser.GameObjects.Container;
-  private readonly headerText: Phaser.GameObjects.Text;
-  private readonly archiveText: Phaser.GameObjects.Text;
-  private readonly dnaText: Phaser.GameObjects.Text;
-  private readonly levelText: Phaser.GameObjects.Text;
-  private readonly levelButton: Button;
-  private readonly statsText: Phaser.GameObjects.Text;
-  private readonly radar: StatRadar;
-  private readonly gemLabels: Phaser.GameObjects.Text[] = [];
-  private readonly detailTitle: Phaser.GameObjects.Text;
-  private readonly detailIcon: Phaser.GameObjects.Image;
-  private readonly detailMeta: Phaser.GameObjects.Text;
-  private readonly detailDescription: Phaser.GameObjects.Text;
-  private readonly badges: BadgeToggle[] = [];
-  /** 지금 열려 있는 렐릭을 실제로 보유했는지. 미발굴이면 뱃지를 누를 수 없다. */
-  private ownedNow = true;
+  private readonly popups: PopupLayer;
+  private readonly keywords: KeywordManager;
+
+  private readonly rarityText: Phaser.GameObjects.Text;
+  private readonly nameText: Phaser.GameObjects.Text;
+  private readonly roleText: Phaser.GameObjects.Text;
+  private readonly bookmarkBadge: BadgeHandle;
+  private readonly favoriteBadge: BadgeHandle;
+
+  private readonly starRow: Phaser.GameObjects.Container;
+  private readonly levelValue: Phaser.GameObjects.Text;
+  private readonly levelCap: Phaser.GameObjects.Text;
+  private readonly expBar: Gauge;
+  private readonly expLabel: Phaser.GameObjects.Text;
+  private readonly feedButton: Phaser.GameObjects.Container;
+  private readonly feedLabel: Phaser.GameObjects.Text;
+
+  private readonly bondValue: Phaser.GameObjects.Text;
+  private readonly bondBar: Gauge;
+  private readonly bondLabel: Phaser.GameObjects.Text;
+
+  private readonly statValues: Phaser.GameObjects.Text[] = [];
+  private readonly statGains: Phaser.GameObjects.Text[] = [];
+  private readonly gemSlots: GemSlot[] = [];
+  private readonly skillIcons: Phaser.GameObjects.Container[] = [];
+
   private currentDef?: RelicDef;
+  private ownedNow = true;
   /** 전투에서 연 정보창일 때 실제 공격자와 피해 대상을 보존한다. */
   private currentUnit?: BattleUnit;
   private previewTarget?: BattleUnit;
+  private liveLine?: Phaser.GameObjects.Text;
   private portrait?: PuppetCreature;
   private portraitWanted = false;
   private portraitRequest = 0;
   private figure?: PuppetCreature;
   private figureRequest = 0;
+  private feedHold?: Phaser.Time.TimerEvent;
+  private feeding = false;
+
+  /** 정보창이 닫힐 때 목록 화면이 카드 표시를 다시 맞출 수 있게 알린다. */
+  onClose?: () => void;
 
   constructor(private readonly scene: Phaser.Scene, private readonly portraitDepth = 1001) {
     this.root = scene.add.container(0, 0).setDepth(1000).setVisible(false);
     this.chrome = scene.add.container(0, 0).setDepth(1002).setVisible(false);
+    this.popups = new PopupLayer(scene, 2000);
+    this.keywords = new KeywordManager(scene, this.popups);
+
     this.root.add(addSceneBackground(scene, BACKGROUND.info, 0));
-    // 화면 전체 암막은 58%로 두되 우측은 별도의 55~75% 플로팅 레이어만 사용한다.
-    this.root.add(scene.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.58).setInteractive());
-    const gradient = scene.add.graphics().fillGradientStyle(COLOR.void, COLOR.void, COLOR.panel, COLOR.panel, 0.05, 0.7, 0.05, 0.7);
-    gradient.fillRect(420, 0, 660, BASE_HEIGHT);
-    this.root.add(gradient);
+    this.root.add(scene.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.52).setInteractive());
+    this.root.add(drawVignette(scene, BASE_WIDTH, BASE_HEIGHT, { depth: 0, strength: 0.6 }));
 
-    this.header = floatingLayer(scene, 58, 54, 930, 202, "RELIC / ARCHIVE");
-    // 왼쪽은 뱃지 두 칸이 쓰므로 글자는 그만큼 밀어 시작한다.
-    this.headerText = scene.add.text(190, 46, "", textStyle({ role: "display", size: 38, wrap: 680, lineSpacing: 5 })).setOrigin(0);
-    this.header.add(this.headerText);
-    this.chrome.add(this.header);
-    this.buildBadges(scene);
-    // 닫기는 다른 화면의 뒤로가기와 같은 버튼·같은 자리를 쓴다.
+    // 이름줄은 판때기가 아니라 위에서 내려오는 어둠이다. 배경 원화를 자르지 않는다.
+    this.chrome.add(drawGlassFade(scene, BASE_WIDTH / 2, 150, BASE_WIDTH, 420, { topAlpha: 0.92, bottomAlpha: 0 }));
+    this.rarityText = scene.add.text(46, 56, "", textStyle({ role: "display", size: 44, color: COLOR.accentText })).setOrigin(0, 0);
+    this.nameText = scene.add.text(46, 104, "", textStyle({ role: "display", size: 84 })).setOrigin(0, 0);
+    this.roleText = scene.add.text(50, 206, "", textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0, 0);
+    this.chrome.add([this.rarityText, this.nameText, this.roleText]);
+
+    this.bookmarkBadge = this.addBadge(84, 300, "bookmark", BOOKMARK_ON, () => this.toggleBookmark());
+    this.favoriteBadge = this.addBadge(176, 300, "heart", FAVORITE_ON, () => this.toggleFavorite());
+    this.addJournalButton(268, 300);
+
+    this.starRow = scene.add.container(COLUMN.x, 196);
+    this.chrome.add(this.starRow);
+    this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 40, 196, () => this.openAwakening());
+
+    // 레벨 · 경험치 · 급여.
+    this.addPanel(COLUMN.x, 424, COLUMN.width, 320);
+    this.chrome.add(scene.add.text(COLUMN.x - COLUMN.width / 2 + 42, 306, "LV", textStyle({ role: "display", size: 30, color: COLOR.accentText })).setOrigin(0, 0));
+    this.levelValue = scene.add.text(COLUMN.x - COLUMN.width / 2 + 92, 296, "", textStyle({ role: "display", size: 96 })).setOrigin(0, 0).setScale(1, 1.16);
+    this.levelCap = scene.add.text(COLUMN.x + COLUMN.width / 2 - 46, 376, "", textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(1, 0);
+    this.chrome.add([this.levelValue, this.levelCap]);
+    this.expBar = new Gauge(scene, COLUMN.x, 452, COLUMN.width - 88, 16, COLOR.accent);
+    this.chrome.add(this.expBar.objects);
+    this.expLabel = scene.add.text(COLUMN.x, 470, "", textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0.5, 0);
+    this.chrome.add(this.expLabel);
+    const feed = this.addFeedButton(COLUMN.x, 540, COLUMN.width - 96, 96);
+    this.feedButton = feed.container;
+    this.feedLabel = feed.label;
+
+    // 유대.
+    this.addPanel(COLUMN.x, 700, COLUMN.width, 150);
+    const bondHeart = scene.add.container(COLUMN.x - COLUMN.width / 2 + 78, 700);
+    bondHeart.add(drawGlyph(scene, "heart", 0, 0, 92, BOND_HEART));
+    this.bondValue = scene.add.text(0, 4, "", textStyle({ role: "display", size: 34 })).setOrigin(0.5);
+    bondHeart.add(this.bondValue);
+    this.chrome.add(bondHeart);
+    this.chrome.add(scene.add.text(COLUMN.x - COLUMN.width / 2 + 146, 652, "유대", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0));
+    this.bondBar = new Gauge(scene, COLUMN.x + 52, 712, COLUMN.width - 216, 14, BOND_HEART);
+    this.chrome.add(this.bondBar.objects);
+    this.bondLabel = scene.add.text(COLUMN.x - COLUMN.width / 2 + 146, 728, "", textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0, 0);
+    this.chrome.add(this.bondLabel);
+
+    // 능력치.
+    this.addPanel(COLUMN.x, 1024, COLUMN.width, 420);
+    this.chrome.add(scene.add.text(COLUMN.x - COLUMN.width / 2 + 44, 838, "능력치", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0));
+    this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 48, 852, () => this.openExtraStats());
+    STAT_CHIPS.forEach((chip, index) => this.addStatChip(chip, index));
+
+    // 하트 젬 — 하트 하나를 셋으로 가른 자리.
+    this.addPanel(COLUMN.x, 1370, COLUMN.width, 250);
+    this.chrome.add(scene.add.text(COLUMN.x - COLUMN.width / 2 + 44, 1268, "HEART GEM", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0));
+    for (let index = 0; index < 3; index += 1) this.gemSlots.push(this.addGemSlot(index));
+
+    this.buildFigureStand();
+    this.addCostumeButton(FIGURE.x + 152, FIGURE.y - 206);
     this.chrome.add(addBackButton(scene, () => this.hide()));
+  }
 
-    // 도감 정적 기록은 성장·전투 수치와 분리해 왼쪽 반투명 패널에 고정한다.
-    this.archive = floatingLayer(scene, 58, 300, 560, 470, "기록 / ARCHIVE RECORD");
-    this.archiveText = scene.add.text(28, 96, "", textStyle({ role: "body", size: 21, wrap: 500, lineSpacing: 9 })).setOrigin(0);
-    this.archive.add(this.archiveText);
-    this.chrome.add(this.archive);
+  /** 오른쪽 기둥의 판 하나. 전부 같은 각도로 기울어 한 벌로 읽힌다. */
+  private addPanel(x: number, y: number, width: number, height: number): void {
+    const panel = this.scene.add.container(x, y).setRotation(Phaser.Math.DegToRad(PANEL_TILT));
+    const shape = perspectiveRect(width, height, { tall: "right", taper: 0.06 });
+    panel.add(drawLayer(this.scene, 0, 0, shape, { fill: 0x0b0f15, alpha: 0.6, edge: COLOR.accent, edgeAlpha: 0.4 }));
+    panel.add(drawShapeEdge(this.scene, 0, 0, shape, "bottom", { color: COLOR.accent, alpha: 0.22, inset: 10 }));
+    this.chrome.add(panel);
+  }
 
-    this.stats = floatingLayer(scene, 664, 300, 370, 590, "능력치 / STATUS");
-    this.radar = new StatRadar(scene, 185, 205, 105);
-    this.statsText = scene.add.text(28, 350, "", textStyle({ role: "body", size: 22, lineSpacing: 9 })).setOrigin(0);
-    this.stats.add([this.radar, this.statsText]);
-    this.chrome.add(this.stats);
+  /** 즐겨찾기(별)와 애착(하트). 켜짐은 저마다의 색, 꺼짐은 회색이다. */
+  private addBadge(x: number, y: number, glyph: "bookmark" | "heart", onColor: number, onToggle: () => void): BadgeHandle {
+    const size = 76;
+    const container = this.scene.add.container(x, y);
+    container.add(drawLayer(this.scene, 0, 0, chipPoints(size, size, {
+      bevel: { topLeft: size * 0.3, topRight: 0, bottomRight: size * 0.3, bottomLeft: 0 },
+    }), { fill: 0x121820, alpha: HOLO.glass }));
+    let mark = drawGlyph(this.scene, glyph, 0, 0, size * 0.5, BADGE_OFF);
+    container.add(mark);
+    const hit = this.scene.add.rectangle(0, 0, size + 12, size + 12, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    hit.on("pointerdown", () => container.setScale(1.12));
+    hit.on("pointerout", () => container.setScale(1));
+    hit.on("pointerup", () => {
+      container.setScale(1);
+      onToggle();
+    });
+    container.add(hit);
+    this.chrome.add(container);
+    return {
+      paint: (on, enabled) => {
+        mark.destroy();
+        mark = drawGlyph(this.scene, glyph, 0, 0, size * 0.5, on ? onColor : BADGE_OFF);
+        container.addAt(mark, 1);
+        container.setAlpha(enabled ? 1 : 0.35);
+        hit.setVisible(enabled);
+      },
+    };
+  }
 
-    this.growth = floatingLayer(scene, 58, 1420, 560, 255, "성장 / LEVEL & DNA");
-    this.levelText = scene.add.text(28, 58, "", textStyle({ role: "body", size: 22, color: COLOR.ink, lineSpacing: 7 })).setOrigin(0);
-    this.dnaText = scene.add.text(28, 142, "", textStyle({ role: "emphasis", size: 20, color: COLOR.accentText, lineSpacing: 5 })).setOrigin(0);
-    // 기존 IconButton의 황동 테두리·pointerup 입력을 재사용해 상세 화면의 시각 언어를 유지한다.
-    this.levelButton = new Button(scene, 455, 108, { width: 160, height: 76, label: "레벨업", fontSize: 22, onClick: () => this.requestLevelUp() });
-    this.growth.add([this.levelText, this.dnaText, this.levelButton]);
-    this.chrome.add(this.growth);
+  /** 개체번호·프로젝트명·기원·발굴지는 한 장의 관찰 일지로 모은다. */
+  private addJournalButton(x: number, y: number): void {
+    const size = 76;
+    const container = this.scene.add.container(x, y);
+    container.add(drawLayer(this.scene, 0, 0, chipPoints(size, size, {
+      bevel: { topLeft: size * 0.3, topRight: 0, bottomRight: size * 0.3, bottomLeft: 0 },
+    }), { fill: 0x121820, alpha: HOLO.glass }));
+    container.add(drawGlyph(this.scene, "scroll", 0, 0, size * 0.54, 0xd8c7a0));
+    const hit = this.scene.add.rectangle(0, 0, size + 12, size + 12, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    hit.on("pointerdown", () => container.setScale(1.12));
+    hit.on("pointerout", () => container.setScale(1));
+    hit.on("pointerup", () => {
+      container.setScale(1);
+      this.openJournal();
+    });
+    container.add(hit);
+    this.chrome.add(container);
+  }
 
-    this.gems = floatingLayer(scene, 58, 1692, 560, 174, "HEART GEM");
-    for (let index = 0; index < 3; index += 1) this.addGemSlot(index);
-    this.chrome.add(this.gems);
-
-    this.skills = floatingLayer(scene, 646, 930, 388, 444, "스킬 / SKILLS");
-    this.chrome.add(this.skills);
-    this.skillDetail = floatingLayer(scene, 620, 905, 414, 610, "스킬 상세").setVisible(false);
-    // fallback도 파일 로딩에 실패할 경우를 대비해 런타임 공용 텍스처를 마지막 안전망으로 만든다.
-    this.ensureFallbackIcon();
-    const detailCard = iconCard(scene, 74, 122, 108, FALLBACK_SKILL_ICON, true);
-    this.skillDetail.add(detailCard.objects);
-    this.detailIcon = detailCard.icon;
-    this.detailTitle = scene.add.text(150, 84, "", textStyle({ role: "display", size: 32, color: COLOR.accentText, wrap: 232 })).setOrigin(0);
-    this.detailMeta = scene.add.text(28, 172, "", textStyle({ role: "body", size: 21, lineSpacing: 12 })).setOrigin(0);
-    this.detailDescription = scene.add.text(28, 292, "", textStyle({ role: "body", size: 22, wrap: 350, lineSpacing: 9 })).setOrigin(0);
-    this.skillDetail.add([this.detailTitle, this.detailMeta, this.detailDescription,
-      new IconButton(scene, 74, 545, { icon: UI_ICON.back, size: 84, label: "캐릭터 상세로", onClick: () => this.closeSkillDetail() })]);
-    this.chrome.add(this.skillDetail);
-    this.buildFigureStand(scene);
+  /** 더 볼 것이 있다는 표시. 자리만 다를 뿐 생김새와 크기는 같다. */
+  private addMagnifier(x: number, y: number, onClick: () => void): void {
+    const container = this.scene.add.container(x, y);
+    container.add(drawGlyph(this.scene, "magnifier", 0, 0, 44, COLOR.accent));
+    const hit = this.scene.add.rectangle(x, y, 84, 84, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    hit.on("pointerdown", () => container.setScale(1.15));
+    hit.on("pointerout", () => container.setScale(1));
+    hit.on("pointerup", () => {
+      container.setScale(1);
+      onClick();
+    });
+    this.chrome.add([container, hit]);
   }
 
   /**
-   * 왼쪽 위 뱃지 두 개.
+   * 급여 버튼.
    *
-   * 1번은 즐겨찾기(목록을 추리는 표시), 2번은 애착 렐릭(로비에 서는 한 명)이다. 성격이 다른
-   * 두 상태라 한 버튼으로 합치지 않고 나란히 둔다. 애착은 한 명뿐이라 켜기만 되고, 이미
-   * 애착인 렐릭을 다시 누르면 아무 일도 일어나지 않는다.
+   * 한 번 누르면 한 번 먹이고, 꾹 누르고 있으면 계속 먹인다. 잠깐 누르고 있으면 그 위로 한 번에
+   * 여러 레벨을 채우는 작은 팝업이 떠서, 레벨 하나에 수십 번 두드리지 않아도 된다.
    */
-  private buildBadges(scene: Phaser.Scene): void {
-    const definitions = [
-      { glyph: "bookmark" as const, label: "즐겨찾기", toggle: (id: string) => relicCollection.toggleBookmark(id), isOn: (id: string) => relicCollection.isBookmarked(id) },
-      { glyph: "heart" as const, label: "애착", toggle: (id: string) => relicCollection.setFavorite(id), isOn: (id: string) => session.favorite === id },
-    ];
-    definitions.forEach((definition, index) => {
-      // 헤더 칸 안쪽 왼편. 칸 사이 빈 자리에 두면 어느 칸에 속한 표시인지 흐려진다.
-      const size = 68;
-      const x = 108 + index * 80;
-      const y = 155;
-      const container = scene.add.container(x, y);
-      const face = drawLayer(scene, 0, 0, chipPoints(size, size, {
-        bevel: { topLeft: size * 0.3, topRight: 0, bottomRight: size * 0.3, bottomLeft: 0 },
-      }), { fill: 0x1a1f27, alpha: HOLO.glass });
-      const glyph = drawGlyph(scene, definition.glyph, 0, 0, size * 0.5, BADGE_OFF);
-      container.add([face, glyph]);
-      const hit = scene.add.rectangle(0, 0, size, size, 0xffffff, 0).setInteractive({ useHandCursor: true });
-      hit.on("pointerdown", () => container.setScale(1.12));
-      hit.on("pointerout", () => container.setScale(1));
-      hit.on("pointerup", () => {
-        container.setScale(1);
-        if (!this.currentDef || !this.ownedNow) return;
-        definition.toggle(this.currentDef.id);
-        this.refreshBadges();
+  private addFeedButton(x: number, y: number, width: number, height: number): { container: Phaser.GameObjects.Container; label: Phaser.GameObjects.Text } {
+    const container = this.scene.add.container(x, y);
+    const shape = slantedRect(width, height, 16);
+    container.add(drawLayer(this.scene, 0, 0, shape, { fill: 0x18261c, alpha: 0.92, edge: FEED_GREEN, edgeAlpha: 0.9, sheen: 0.06 }));
+    const label = this.scene.add.text(0, -10, "급여하기", textStyle({ role: "display", size: 38 })).setOrigin(0.5);
+    const hint = this.scene.add.text(0, 24, "잡초 " + FEED_UNIT.weeds + " · 꾹 누르면 계속", textStyle({ role: "body", size: 19, color: COLOR.inkDim })).setOrigin(0.5);
+    container.add([label, hint]);
+    const hit = this.scene.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    hit.on("pointerdown", () => {
+      container.setScale(1.04);
+      void this.feed(1);
+      this.feedHold = this.scene.time.addEvent({ delay: 260, loop: true, callback: () => void this.feed(1) });
+      this.scene.time.delayedCall(420, () => {
+        if (this.feedHold) this.openFeedBulk(x, y - height);
       });
-      container.add(hit);
-      this.chrome.add(container);
-      this.badges.push({ container, glyph, glyphName: definition.glyph, size, isOn: definition.isOn });
+    });
+    const release = (): void => {
+      container.setScale(1);
+      this.feedHold?.remove();
+      this.feedHold = undefined;
+    };
+    hit.on("pointerup", release);
+    hit.on("pointerout", release);
+    container.add(hit);
+    this.chrome.add(container);
+    return { container, label };
+  }
+
+  /** 한 번에 여러 레벨을 채우는 임시 팝업. 급여 버튼 바로 위에 뜬다. */
+  private openFeedBulk(x: number, y: number): void {
+    if (this.popups.isOpen) return;
+    this.popups.open({ width: 420, height: 190, x, y: y - 60 }, (body, close) => {
+      body.add(this.scene.add.text(0, -58, "한 번에 급여", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0.5));
+      ([["1 레벨", 1], ["10 레벨", 10]] as const).forEach(([label, levels], index) => {
+        const bx = index === 0 ? -100 : 100;
+        body.add(drawLayer(this.scene, bx, 18, slantedRect(170, 76, 14), { fill: 0x18261c, alpha: 0.92, edge: FEED_GREEN, edgeAlpha: 0.8 }));
+        body.add(this.scene.add.text(bx, 18, label, textStyle({ role: "display", size: 28 })).setOrigin(0.5));
+        const hit = this.scene.add.rectangle(bx, 18, 170, 76, 0xffffff, 0).setInteractive({ useHandCursor: true });
+        hit.on("pointerup", () => {
+          close();
+          void this.feedLevels(levels);
+        });
+        body.add(hit);
+      });
     });
   }
 
-  /** 뱃지의 켜짐/꺼짐을 지금 열려 있는 렐릭 기준으로 다시 칠한다. */
-  private refreshBadges(): void {
-    for (const badge of this.badges) {
-      const on = this.currentDef !== undefined && this.ownedNow && badge.isOn(this.currentDef.id);
-      badge.glyph.destroy();
-      badge.container.setAlpha(this.ownedNow ? 1 : 0.35);
-      const glyph = drawGlyph(this.scene, badge.glyphName, 0, 0, badge.size * 0.5, on ? COLOR.accent : BADGE_OFF);
-      badge.container.addAt(glyph, 1);
-      badge.glyph = glyph;
+  /** 지금 레벨에서 목표 레벨까지 필요한 급여 횟수를 계산해 한 번에 요청한다. */
+  private async feedLevels(levels: number): Promise<void> {
+    if (!this.currentDef) return;
+    const progress = relicProgression.getProgress(this.currentDef.id);
+    let need = 0;
+    let level = progress.level;
+    let exp = progress.exp;
+    for (let i = 0; i < levels && level < RELIC_LEVEL_CAP; i += 1) {
+      need += Math.ceil((relicExpToNext(level) - exp) / FEED_UNIT.exp);
+      level += 1;
+      exp = 0;
+    }
+    await this.feed(Math.max(1, need));
+  }
+
+  private async feed(feeds: number): Promise<void> {
+    const def = this.currentDef;
+    if (!def || !this.ownedNow || this.feeding) return;
+    if (!canFeedRelic(relicProgression.getProgress(def.id), session.wallet.weeds)) return;
+    this.feeding = true;
+    try {
+      await gameApi.feedRelic(def.id, feeds);
+    } catch {
+      // 잡초 부족·상한은 화면에서 이미 막는다. 실패하면 상태만 다시 그린다.
+    } finally {
+      this.feeding = false;
+      this.refreshGrowth();
     }
   }
 
-  /** SD 피규어가 공중에 뜨지 않도록 받침과 그림자를 함께 깔아 둔다. */
-  private buildFigureStand(scene: Phaser.Scene): void {
-    this.root.add(scene.add.ellipse(FIGURE.x, FIGURE.y + 6, 236, 62, COLOR.void, 0.55));
-    this.root.add(scene.add.ellipse(FIGURE.x, FIGURE.y, 220, 54, 0x141920, 0.92));
-    this.root.add(drawHairline(scene, FIGURE.x, FIGURE.y - 22, 200, { color: COLOR.accent, alpha: 0.45 }));
+  /** 능력치 칩 하나. 큰 수치가 먼저 읽히고 기본치·성장분은 그 아래 작게 붙는다. */
+  private addStatChip(chip: { key: keyof Stats; label: string; color: number }, index: number): void {
+    const x = COLUMN.x - COLUMN.width / 2 + 76 + (index % 2) * (COLUMN.width / 2 - 8);
+    const y = 906 + Math.floor(index / 2) * 118;
+    const size = 62;
+    const container = this.scene.add.container(x - 34, y);
+    container.add(drawLayer(this.scene, 0, 0, chipPoints(size, size, {
+      bevel: { topLeft: size * 0.32, topRight: 0, bottomRight: size * 0.32, bottomLeft: 0 },
+    }), { fill: 0x11161d, alpha: 0.92, edge: chip.color, edgeAlpha: 0.95 }));
+    container.add(this.scene.add.text(0, 0, chip.label, textStyle({ role: "emphasis", size: 21 })).setOrigin(0.5));
+    this.chrome.add(container);
+
+    const value = this.scene.add.text(x + 12, y - 26, "", textStyle({ role: "display", size: 36 })).setOrigin(0, 0);
+    const gain = this.scene.add.text(x + 12, y + 16, "", textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0, 0);
+    this.statValues.push(value);
+    this.statGains.push(gain);
+    this.chrome.add([value, gain]);
+  }
+
+  /**
+   * 하트 젬 슬롯.
+   *
+   * 하트 세 개가 아니라 하트 **하나를 셋으로 가른** 자리다. 세 조각이 다 차야 온전한 하트가
+   * 완성되므로, 빈 자리가 곧 "아직 덜 채운 마음"으로 읽힌다.
+   */
+  private addGemSlot(index: number): GemSlot {
+    const center = { x: COLUMN.x + 30, y: 1382 };
+    const size = 210;
+    const piece = this.scene.add.graphics({ x: center.x, y: center.y });
+    const shape = heartSlice(size, index);
+    const spot = heartSliceCenter(size, index);
+    this.chrome.add(piece);
+
+    const label = this.scene.add
+      .text(center.x + spot.x, center.y + spot.y, "", textStyle({ role: "body", size: 16, color: COLOR.inkDim, align: "center", wrap: 92 }))
+      .setOrigin(0.5);
+    this.chrome.add(label);
+
+    const hit = this.scene.add
+      .rectangle(center.x + spot.x, center.y + spot.y, size * 0.44, size * 0.44, 0xffffff, 0)
+      .setInteractive({ useHandCursor: true });
+    hit.on("pointerup", () => this.openGemPicker(index));
+    this.chrome.add(hit);
+
+    return {
+      paint: (gemId) => {
+        piece.clear();
+        // 낀 조각만 보석처럼 빛난다. 두 겹으로 칠해 가장자리보다 안쪽이 밝게 남는다.
+        piece.fillStyle(gemId ? GEM_GLOW : 0x11161d, gemId ? 0.32 : 0.85);
+        piece.fillPoints(toPoints(shape), true);
+        piece.fillStyle(gemId ? GEM_FILL : 0x161c25, gemId ? 0.95 : 0.7);
+        piece.fillPoints(toPoints(heartSlice(size * 0.84, index)), true);
+        piece.lineStyle(2, gemId ? GEM_EDGE : 0x2a3440, 0.9);
+        piece.strokePoints(toPoints(shape), true);
+        label.setText(gemId ? getHeartGem(gemId).name.replace(" Heart Gem", "") : "빈 자리");
+        label.setColor(gemId ? COLOR.ink : COLOR.inkDim);
+      },
+    };
+  }
+
+  /** 슬롯 하나에 낄 젬을 고르는 팝업. */
+  private openGemPicker(index: number): void {
+    const def = this.currentDef;
+    if (!def || !this.ownedNow) return;
+    this.popups.open({ width: 820, height: 620, title: "HEART GEM " + (index + 1) }, (body, close) => {
+      const owned = HEART_GEMS.filter((gem) => session.ownedHeartGemIds.includes(gem.id));
+      const rows: { id: string | null; name: string; effect: string }[] = [
+        { id: null, name: "비우기", effect: "" },
+        ...owned.map((gem) => ({
+          id: gem.id,
+          name: gem.name,
+          effect: Object.entries(gem.statPercent).map(([key, percent]) => (STAT_LABEL[key] ?? key) + " +" + percent + "%").join("   "),
+        })),
+      ];
+      rows.forEach((row, rowIndex) => {
+        const y = -200 + rowIndex * 96;
+        body.add(drawLayer(this.scene, 0, y, slantedRect(700, 82, 14), { fill: 0x141a22, alpha: 0.9, edge: COLOR.accent, edgeAlpha: 0.3 }));
+        body.add(this.scene.add.text(-320, y - 20, row.name, textStyle({ role: "display", size: 26 })).setOrigin(0, 0));
+        if (row.effect) body.add(this.scene.add.text(-320, y + 12, row.effect, textStyle({ role: "body", size: 20, color: COLOR.accentText })).setOrigin(0, 0));
+        const hit = this.scene.add.rectangle(0, y, 700, 82, 0xffffff, 0).setInteractive({ useHandCursor: true });
+        hit.on("pointerup", () => {
+          relicProgression.equipHeartGem(def.id, index, row.id);
+          close();
+          this.refreshGrowth();
+        });
+        body.add(hit);
+      });
+    });
+  }
+
+  /** 개체번호·프로젝트명·기원·발굴지·기록을 한 장에 모은 관찰 일지. */
+  private openJournal(): void {
+    const def = this.currentDef;
+    if (!def) return;
+    const disclosure = getRelicCatalogDisclosure(def, this.ownedNow);
+    this.popups.open({ width: 880, height: 760, title: "관찰 일지", tilt: -1.2 }, (body) => {
+      const lines = disclosure.access === "full"
+        ? [
+            "개체번호   NO." + disclosure.specimenNumber,
+            "프로젝트   " + disclosure.projectName,
+            "기원         " + disclosure.origin,
+            "발굴지      " + disclosure.excavationSite,
+          ]
+        : ["개체번호   NO." + disclosure.specimenNumber, "프로젝트   기록 없음", "기원         미상", "발굴지      미상"];
+      body.add(this.scene.add.text(-380, -276, lines.join("\n"), textStyle({ role: "body", size: 26, lineSpacing: 14 })).setOrigin(0, 0));
+      body.add(drawHairline(this.scene, 0, -84, 760, { color: COLOR.accent, alpha: 0.35 }));
+      const record = disclosure.access === "full" ? disclosure.record : def.catalogSummary + "\n\n상세 기록은 개체 획득 후 해제됩니다.";
+      const text = this.keywords.layout(record, { width: 760, size: 26, lineSpacing: 10 });
+      text.setPosition(-380, -48);
+      body.add(text);
+    });
+  }
+
+  /** 각성 단계 테크트리. 0~5단계를 세우고 지금 어디까지 왔는지 알린다. */
+  private openAwakening(): void {
+    const def = this.currentDef;
+    if (!def) return;
+    const awakening = relicProgression.getProgress(def.id).awakening;
+    this.popups.open({ width: 900, height: 640, title: "각성", tilt: -1.2 }, (body) => {
+      body.add(this.scene.add.text(-390, -226, "같은 렐릭을 다시 발굴하면 한 단계씩 깨어난다.", textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0, 0));
+      for (let step = 1; step <= AWAKENING_CAP; step += 1) {
+        const y = -160 + step * 84;
+        const reached = step <= awakening;
+        body.add(drawLayer(this.scene, 0, y, slantedRect(700, 70, 14), {
+          fill: reached ? 0x2a2418 : 0x121820,
+          alpha: reached ? 0.95 : 0.7,
+          edge: COLOR.accent,
+          edgeAlpha: reached ? 0.9 : 0.2,
+        }));
+        const star = this.scene.add.star(-306, y, 4, 7, 17, reached ? COLOR.accent : 0x000000, reached ? 1 : 0.4);
+        if (!reached) star.setStrokeStyle(2, BADGE_OFF, 0.85);
+        body.add(star);
+        body.add(this.scene.add.text(-274, y, step + "단계", textStyle({ role: "display", size: 26, color: reached ? COLOR.accentText : COLOR.inkDim })).setOrigin(0, 0.5));
+        body.add(this.scene.add.text(-160, y, "모든 능력치 +3%" + (step === AWAKENING_CAP ? "   ·   단계 효과 예정" : ""), textStyle({ role: "body", size: 22, color: reached ? COLOR.ink : COLOR.inkDim })).setOrigin(0, 0.5));
+      }
+      body.add(this.scene.add.text(0, 256, "현재 " + awakening + " / " + AWAKENING_CAP + " 단계", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0.5));
+    });
+  }
+
+  /** 공격 속도처럼 자주 보지 않는 수치는 돋보기 안에만 둔다. */
+  private openExtraStats(): void {
+    const def = this.currentDef;
+    if (!def) return;
+    const stats = relicProgression.getFinalStats(def.id);
+    this.popups.open({ width: 720, height: 520, title: "추가 능력치", tilt: -1.2 }, (body) => {
+      EXTRA_STATS.forEach((row, index) => {
+        const y = -140 + index * 76;
+        body.add(this.scene.add.text(-290, y, row.label, textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0, 0.5));
+        body.add(this.scene.add.text(290, y, stats[row.key].toLocaleString() + (row.suffix ?? ""), textStyle({ role: "display", size: 30 })).setOrigin(1, 0.5));
+        body.add(drawHairline(this.scene, 0, y + 34, 580, { color: COLOR.accent, alpha: 0.15 }));
+      });
+    });
+  }
+
+  /** 코스튬은 아직 데이터가 없다. 자리와 여는 방법만 먼저 정해 둔다. */
+  private addCostumeButton(x: number, y: number): void {
+    const size = 78;
+    const container = this.scene.add.container(x, y);
+    container.add(drawLayer(this.scene, 0, 0, chipPoints(size, size, {
+      bevel: { topLeft: size * 0.3, topRight: 0, bottomRight: size * 0.3, bottomLeft: 0 },
+    }), { fill: 0x121820, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.4 }));
+    container.add(drawGlyph(this.scene, "costume", 0, 0, size * 0.54, 0xd2d6dc));
+    const hit = this.scene.add.rectangle(0, 0, size + 10, size + 10, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    hit.on("pointerup", () => {
+      this.popups.open({ width: 720, height: 420, title: "옷장" }, (body) => {
+        body.add(this.scene.add.text(0, 20, "코스튬은 준비 중이다.", textStyle({ role: "body", size: 28, color: COLOR.inkDim })).setOrigin(0.5));
+      });
+    });
+    container.add(hit);
+    this.chrome.add(container);
+  }
+
+  /** SD 피규어가 공중에 뜨지 않도록 받침을 깐다. 대사는 그 위에 뜬다. */
+  private buildFigureStand(): void {
+    this.chrome.add(this.scene.add.ellipse(FIGURE.x, FIGURE.y + 6, 206, 52, COLOR.void, 0.55));
+    this.chrome.add(this.scene.add.ellipse(FIGURE.x, FIGURE.y, 192, 44, 0x141920, 0.92));
+    this.chrome.add(drawHairline(this.scene, FIGURE.x, FIGURE.y - 20, 172, { color: COLOR.accent, alpha: 0.4 }));
     this.chrome.add(
-      scene.add.text(FIGURE.x, FIGURE.y + 40, "IN-GAME SD", textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0.5, 0),
+      this.scene.add.text(FIGURE.x, FIGURE.y + 32, "IN-GAME SD", textStyle({ role: "body", size: 17, color: COLOR.inkDim })).setOrigin(0.5, 0),
     );
   }
 
-  /** 외부 SVG까지 실패해도 정보창 자체는 열리도록 단순 황동 다이아 텍스처를 생성한다. */
-  private ensureFallbackIcon(): void {
-    if (this.scene.textures.exists(FALLBACK_SKILL_ICON)) return;
-    const graphic = this.scene.make.graphics({ x: 0, y: 0 }, false);
-    graphic.fillStyle(COLOR.void, 1).fillRect(0, 0, 96, 96);
-    graphic.lineStyle(6, COLOR.accent, 1).strokePoints([
-      new Phaser.Geom.Point(48, 14), new Phaser.Geom.Point(82, 48),
-      new Phaser.Geom.Point(48, 82), new Phaser.Geom.Point(14, 48),
-    ], true);
-    graphic.generateTexture(FALLBACK_SKILL_ICON, 96, 96);
-    graphic.destroy();
+  /** 캐릭터 대사. SD 위에 떠서 오른쪽 판들과 겹치지 않는다. */
+  private say(line: string): void {
+    this.liveLine?.destroy();
+    const text = this.scene.add
+      .text(FIGURE.x, FIGURE.y - FIGURE.height - 30, line, textStyle({ role: "body", size: 24, align: "center", wrap: 300 }))
+      .setOrigin(0.5, 1)
+      .setDepth(1006);
+    this.liveLine = text;
+    this.scene.tweens.add({ targets: text, alpha: { from: 0, to: 1 }, y: text.y - 14, duration: 200 });
+    this.scene.tweens.add({ targets: text, alpha: 0, delay: 2400, duration: 400, onComplete: () => text.destroy() });
   }
 
-  get isOpen(): boolean { return this.root.visible; }
+  get isOpen(): boolean {
+    return this.root.visible;
+  }
 
-  /**
-   * 닫힐 때 부르는 콜백.
-   *
-   * 정보창 안에서 애착·즐겨찾기가 바뀔 수 있으므로, 목록 화면이 다시 그릴 기회를 준다.
-   */
-  onClose?: () => void;
-
-  /** 상세 카드가 열려 있어도 X만 전체 정보창을 닫는다. */
+  /** 팝업이 떠 있으면 그것부터 닫는다. 뒤로가기 한 번에 화면이 통째로 사라지지 않게. */
   hide(): void {
-    this.root.setVisible(false); this.chrome.setVisible(false); this.portraitWanted = false;
-    this.portrait?.setVisible(false); this.figure?.setVisible(false);
-    this.closeSkillDetail(); setDebugInfoOpen(false);
+    if (this.popups.isOpen) {
+      this.popups.closeTop();
+      return;
+    }
+    this.root.setVisible(false);
+    this.chrome.setVisible(false);
+    this.portraitWanted = false;
+    this.portrait?.setVisible(false);
+    this.figure?.setVisible(false);
+    this.liveLine?.destroy();
+    setDebugInfoOpen(false);
     this.onClose?.();
   }
 
-  /** 하트 실루엣과 텍스트를 함께 써 빈 슬롯과 장착 슬롯을 색·문자로 중복 구분한다. */
-  private addGemSlot(index: number): void {
-    const x = 100 + index * 170;
-    const heart = this.scene.add.graphics().setPosition(x, 92);
-    heart.fillStyle(COLOR.panelEdge, 0.85).fillCircle(-21, -10, 29).fillCircle(21, -10, 29)
-      .fillTriangle(-49, 0, 49, 0, 0, 62);
-    const label = this.scene.add.text(x, 105, "빈 슬롯", textStyle({ role: "body", size: 15, align: "center", wrap: 130 })).setOrigin(0.5, 0);
-    this.gemLabels.push(label); this.gems.add([heart, label]);
+  private toggleBookmark(): void {
+    if (!this.currentDef || !this.ownedNow) return;
+    relicCollection.toggleBookmark(this.currentDef.id);
+    this.refreshBadges();
+  }
+
+  private toggleFavorite(): void {
+    if (!this.currentDef || !this.ownedNow) return;
+    relicCollection.setFavorite(this.currentDef.id);
+    this.refreshBadges();
+  }
+
+  private refreshBadges(): void {
+    const def = this.currentDef;
+    const owned = this.ownedNow && def !== undefined && relicCollection.owns(def.id);
+    this.bookmarkBadge.paint(owned && relicCollection.isBookmarked(def!.id), owned);
+    this.favoriteBadge.paint(owned && session.favorite === def!.id, owned);
   }
 
   private async loadPortrait(def: RelicDef): Promise<void> {
@@ -340,103 +619,57 @@ export class InfoManager {
       depth: Math.max(this.portraitDepth, 1001),
     });
     if (request !== this.portraitRequest) { portrait.destroy(); return; }
-    this.portrait?.destroy(); this.portrait = portrait; enableHitOnClick(this.scene, portrait);
+    this.portrait?.destroy();
+    this.portrait = portrait;
+    enableHitOnClick(this.scene, portrait);
     if (portraitUsesRelicTint(def.portraitAssetId)) tintPuppet(portrait, mixWhite(tintFor(def.id), 0.55));
     portrait.setVisible(this.portraitWanted && this.root.visible);
   }
 
-  /**
-   * 전투용 SD를 정보창 구석에 피규어처럼 세운다.
-   *
-   * 전신 원화만 있으면 인게임에서 어떤 모습으로 움직이는지 알 수 없어서, 같은 캐릭터의
-   * 전투 묶음을 작게 세워 idle만 돌린다. 전용 SD가 없는 캐릭터는 공용 개체 아트를 쓴다.
-   */
   private async loadFigure(def: RelicDef): Promise<void> {
     const request = ++this.figureRequest;
     const figure = await spawnPuppet(this.scene, battleAssetFor(def.id), {
       x: FIGURE.x,
       groundY: FIGURE.y,
       height: FIGURE.height,
-      depth: Math.max(this.portraitDepth, 1001),
+      depth: 1004,
     });
     if (request !== this.figureRequest) { figure.destroy(); return; }
-    this.figure?.destroy(); this.figure = figure;
+    this.figure?.destroy();
+    this.figure = figure;
+    enableHitOnClick(this.scene, figure);
+    figure.on("pointerup", () => this.say(def.name + "는 당신을 바라본다."));
     figure.setVisible(this.portraitWanted && this.root.visible);
   }
 
-  /** 공용 진입점의 캐릭터 화면을 성장 데이터와 함께 채운다. */
-  private openCharacter(def: RelicDef, live?: string, unit?: BattleUnit, target?: BattleUnit, owned = true): void {
-    this.currentDef = def;
-    // 도감 진입 시 이전 전투 대상을 지워 잘못된 확정 피해를 노출하지 않는다.
-    this.currentUnit = unit;
-    this.previewTarget = target;
-    const progress = relicProgression.getProgress(def.id);
-    const finalStats = relicProgression.getFinalStats(def.id);
-    this.headerText.setText(owned
-      ? `NO.${def.specimenNumber}  ${def.rarity}  ${def.name}\nPROJECT ${def.projectName}  |  ${def.origin} · ${ROLE_LABEL[def.role]}`
-      : `NO.${def.specimenNumber}  미발굴 개체\nSILHOUETTE RECORD`);
-    this.refreshBadges();
-    const disclosure = getRelicCatalogDisclosure(def, owned);
-    this.archiveText.setText(disclosure.access === "full"
-      ? `프로젝트 네임  ${disclosure.projectName}\n기원  ${disclosure.origin}\n발굴지  ${disclosure.excavationSite}\n\n기록\n${disclosure.record}`
-      : `제한 실루엣 정보\n${disclosure.catalogSummary}\n\n상세 기록은 개체 획득 후 해제됩니다.`);
-    const maxed = progress.level >= RELIC_LEVEL_CAP;
-    const cost = maxed ? 0 : relicLevelUpCost(progress.level);
-    // 다음 레벨은 모든 기본 능력치가 누적 +2%p라는 코어 성장 규칙을 사람이 읽는 상승치로 표시한다.
-    this.levelText.setText(`현재 LV.${progress.level} / ${RELIC_LEVEL_CAP}\n다음 레벨  모든 능력치 +2%p\n비용  ${maxed ? "MAX" : `잡초 ${cost}`}  · 보유 ${session.wallet.weeds}`);
-    this.levelButton.setVisible(owned && !unit).setEnabled(owned && !unit && canLevelUpRelic(progress, session.wallet.weeds));
-    const bondMaxed = progress.bondLevel >= BOND_LEVEL_CAP;
-    const nextBondXp = BOND_TOTAL_XP_BY_LEVEL[Math.min(BOND_LEVEL_CAP, progress.bondLevel + 1)];
-    const ferocityReduction = Math.round((1 - BOND_FEROCITY_MULTIPLIER[progress.bondLevel]) * 100);
-    // 애착은 로비 대표 선택, 유대는 개별 누적 관계이므로 상세에서는 유대 효과만 표시한다.
-    this.dnaText.setText(`${"★".repeat(progress.dnaMastery)}${"☆".repeat(5 - progress.dnaMastery)}  ${live ?? "DNA 복원 동기화"}\n유대 LV.${progress.bondLevel}/${BOND_LEVEL_CAP}  ${bondMaxed ? "MAX" : `${progress.bondXp}/${nextBondXp} EXP`}  · 야성 증가 -${ferocityReduction}%`);
-    this.radar.draw(finalStats);
-    // 과거 "야성"으로 불리던 정적 수치는 실제 의미에 맞춰 궁극기 충전량으로 명시한다.
-    this.statsText.setText(`체력  ${finalStats.hp.toLocaleString()}\n방어력  ${finalStats.def.toLocaleString()}    저항력  ${finalStats.res.toLocaleString()}\n공격력  ${finalStats.atk.toLocaleString()}    주문력  ${finalStats.ap.toLocaleString()}\n궁극기 충전량  ${finalStats.energyGain}`);
-    progress.heartGemSlots.forEach((id, index) => this.gemLabels[index].setText(id ? getHeartGem(id).name.replace(" Heart Gem", "") : "빈 슬롯").setColor(id ? COLOR.accentText : COLOR.inkDim));
-    this.buildSkillButtons(def);
-    this.skillDetail.setVisible(false); this.skills.setVisible(true);
-    // 미보유 개체는 원화·수치·스킬을 노출하지 않고 번호와 실루엣 요약만 남긴다.
-    this.stats.setVisible(owned); this.growth.setVisible(owned); this.gems.setVisible(owned); this.skills.setVisible(owned);
-    this.ownedNow = owned;
-    this.refreshBadges();
-    this.portraitWanted = owned;
-    this.portrait?.setVisible(false); this.figure?.setVisible(false);
-    if (owned) { void this.loadPortrait(def); void this.loadFigure(def); }
-    this.root.setVisible(true); this.chrome.setVisible(true); setDebugInfoOpen(true);
-  }
-
-  /** 버튼은 API에 요청만 보내며 응답 뒤 같은 공용 상세를 다시 채워 직접 진행 상태를 바꾸지 않는다. */
-  private requestLevelUp(): void {
-    const def = this.currentDef;
-    if (!def || this.currentUnit) return;
-    this.levelButton.setEnabled(false);
-    void gameApi.levelUpRelic(def.id).then(() => this.openCharacter(def)).catch(() => this.openCharacter(def));
-  }
-
-  /** 패시브·일반·궁극기 버튼은 각각 88×88 이상의 pointerup 터치 영역을 가진다. */
-  private buildSkillButtons(def: RelicDef): void {
-    // floatingLayer가 만든 배경·섹션 바·제목 세 개는 유지하고 이전 캐릭터 버튼만 교체한다.
-    while (this.skills.length > 3) this.skills.removeAt(3, true);
-    const entries = [
-      ["패시브", def.passive.iconAssetId, def.passive.name, () => this.showSkill({ name: def.passive.name, kindLabel: "패시브", iconAssetId: def.passive.iconAssetId, effectLabel: EFFECT_LABEL[def.passive.effectType], description: def.passive.desc })],
-      ["일반 공격", def.basic.iconAssetId, def.basic.name, () => this.showSkill(this.skillViewModel("일반 공격", def.basic))],
-      ["궁극기", def.ultimate.iconAssetId, def.ultimate.name, () => this.showSkill(this.skillViewModel("궁극기", def.ultimate, def.ultimate.cost))],
-    ] as const;
-    entries.forEach(([kind, iconAssetId, name, handler], index) => {
-      const y = 78 + index * 116;
-      const card = iconCard(this.scene, 60, y + 44, 100, this.resolveIcon(iconAssetId), index === 2);
-      // 카드 전체가 터치 영역이다. 아이콘 위에 투명 판을 덮어 88×88 이상을 유지한다.
-      const hit = this.scene.add.rectangle(60, y + 44, 104, 104, COLOR.void, 0).setInteractive({ useHandCursor: true });
-      hit.on("pointerup", handler);
-      this.skills.add([...card.objects, hit,
-        this.scene.add.text(126, y + 9, `${kind}\n${name}`, textStyle({ role: "body", size: 21, wrap: 225, lineSpacing: 5 })).setOrigin(0)]);
+  /** 원화 아래 스킬 아이콘 세 개. 누르면 정형 팝업이 뜬다. */
+  private buildSkillIcons(def: RelicDef): void {
+    for (const icon of this.skillIcons.splice(0)) icon.destroy();
+    const entries: [string, Skill, number | undefined][] = [
+      ["패시브", { ...def.passive, power: def.passive.value, damageType: "physical" } as unknown as Skill, undefined],
+      ["일반 공격", def.basic, undefined],
+      ["궁극기", def.ultimate, def.ultimate.cost],
+    ];
+    entries.forEach(([kindLabel, skill, gaugeCost], index) => {
+      const size = 116;
+      const container = this.scene.add.container(112 + index * 132, BASE_HEIGHT - 176);
+      container.add(drawLayer(this.scene, 0, 0, chipPoints(size, size, {
+        bevel: { topLeft: size * 0.26, topRight: 0, bottomRight: size * 0.26, bottomLeft: 0 },
+      }), { fill: index === 2 ? 0x2a2418 : 0x141a22, alpha: 0.92, edge: COLOR.accent, edgeAlpha: index === 2 ? 0.9 : 0.4 }));
+      const texture = this.scene.textures.exists(skill.iconAssetId) ? skill.iconAssetId : FALLBACK_SKILL_ICON;
+      container.add(this.scene.add.image(0, -8, texture).setDisplaySize(size * 0.5, size * 0.5));
+      container.add(this.scene.add.text(0, size / 2 - 24, kindLabel, textStyle({ role: "body", size: 17, color: COLOR.inkDim })).setOrigin(0.5));
+      const hit = this.scene.add.rectangle(0, 0, size, size, 0xffffff, 0).setInteractive({ useHandCursor: true });
+      hit.on("pointerdown", () => container.setScale(1.08));
+      hit.on("pointerout", () => container.setScale(1));
+      hit.on("pointerup", () => {
+        container.setScale(1);
+        openSkillPopup(this.scene, this.popups, this.keywords, this.skillViewModel(kindLabel, skill, gaugeCost));
+      });
+      container.add(hit);
+      this.chrome.add(container);
+      this.skillIcons.push(container);
     });
-  }
-
-  /** 로드되지 않은 키는 캐릭터와 무관한 하나의 fallback으로 안전하게 치환한다. */
-  private resolveIcon(iconAssetId: SkillIconAssetId): string {
-    return this.scene.textures.exists(iconAssetId) ? iconAssetId : FALLBACK_SKILL_ICON;
   }
 
   /** 현재 화면 문맥에 따라 도감 배율 또는 대상 방어력이 반영된 전투 피해를 만든다. */
@@ -445,38 +678,200 @@ export class InfoManager {
       def: this.currentDef, hp: this.currentDef.stats.hp, maxHp: this.currentDef.stats.hp,
       energy: 0, ferocity: 0, bondLevel: 0, stunTurns: 0, justSwapped: false,
     });
-    const preview = attacker ? previewSkillDamage(attacker, skill, this.previewTarget, true) : undefined;
+    const preview = attacker && kindLabel !== "패시브" ? previewSkillDamage(attacker, skill, this.previewTarget, true) : undefined;
     const valueLabel = preview?.kind === "damage"
-      ? `${preview.label}  ${preview.amount.toLocaleString()} (대상 방어 반영)`
-      : preview ? `${preview.label}  ${preview.stat} ${preview.power}% (도감 기준)` : undefined;
-    return { name: skill.name, kindLabel, iconAssetId: skill.iconAssetId,
-      effectLabel: EFFECT_LABEL[skill.effectType], valueLabel, gaugeCost, description: skill.desc };
+      ? preview.label + "  " + preview.amount.toLocaleString() + " (대상 방어 반영)"
+      : preview ? preview.label + "  " + preview.stat + " " + preview.power + "% (도감 기준)" : undefined;
+    return {
+      name: skill.name,
+      kindLabel,
+      iconAssetId: skill.iconAssetId as SkillIconAssetId,
+      effectType: skill.effectType,
+      valueLabel,
+      gaugeCost,
+      description: skill.desc,
+    };
   }
 
-  /** 구조화된 값의 각 필드를 대응하는 아이콘·텍스트 요소에 직접 바인딩한다. */
-  showSkill(viewModel: SkillInfoViewModel): void {
-    if (!this.root.visible) return;
-    const rows = [`분류  ${viewModel.kindLabel}`, `효과 타입  ${viewModel.effectLabel}`];
-    if (viewModel.valueLabel) rows.push(viewModel.valueLabel);
-    if (viewModel.gaugeCost !== undefined) rows.push(`필요 게이지  ${viewModel.gaugeCost}`);
-    this.detailIcon.setTexture(this.resolveIcon(viewModel.iconAssetId));
-    this.detailTitle.setText(viewModel.name); this.detailMeta.setText(rows.join("\n")); this.detailDescription.setText(viewModel.description);
-    this.skills.setVisible(false); this.skillDetail.setVisible(true);
-  }
-
-  private closeSkillDetail(): void { this.skillDetail.setVisible(false); if (this.root.visible) this.skills.setVisible(true); }
   /** 도감은 보유 여부를 전달해 정적 기록과 성장 정보의 잠금을 한곳에서 적용한다. */
-  showRelic(def: RelicDef, owned = true): void { this.openCharacter(def, undefined, undefined, undefined, owned); }
-  /** target을 함께 넘긴 전투 정보창은 방어력/저항력을 적용한 비치명타 예상값을 표시한다. */
-  showUnit(unit: BattleUnit, isFront: boolean, target?: BattleUnit): void {
-    // 저장 상한과 현재 궁극기의 소비 비용을 함께 적어 두 수치의 의미를 혼동하지 않게 한다.
-    this.openCharacter(unit.def, `HP ${unit.hp.toLocaleString()} / ${unit.maxHp.toLocaleString()}  ·  궁극기 ${unit.energy}/${ULTIMATE_ENERGY_MAX} (비용 ${unit.def.ultimate.cost})  ·  야성 ${unit.ferocity}/100\n${isFront ? "전방 · 선봉" : "후방"}`, unit, target);
+  showRelic(def: RelicDef, owned = true): void {
+    this.openCharacter(def, undefined, undefined, undefined, owned);
   }
 
+  /** target을 함께 넘긴 전투 정보창은 방어력/저항력을 적용한 비치명타 예상값을 표시한다. */
+  showUnit(unit: BattleUnit, _isFront: boolean, target?: BattleUnit): void {
+    this.openCharacter(
+      unit.def,
+      "HP " + unit.hp.toLocaleString() + " / " + unit.maxHp.toLocaleString() + "   ·   궁극기 " + unit.energy + "/" + ULTIMATE_ENERGY_MAX + "   ·   야성 " + unit.ferocity + "/100",
+      unit,
+      target,
+    );
+  }
 
   /** 팀 요약은 별도 팝업 없이 첫 유닛의 공용 캐릭터 상세로 진입한다. */
   showEnemyTeam(units: BattleUnit[], order: number[]): void {
     const front = units[order[0]];
     if (front) this.showUnit(front, true);
   }
+
+  private openCharacter(def: RelicDef, live?: string, unit?: BattleUnit, target?: BattleUnit, owned = true): void {
+    this.currentDef = def;
+    this.ownedNow = owned;
+    this.currentUnit = unit;
+    this.previewTarget = target;
+    this.popups.closeAll();
+
+    this.rarityText.setText(owned ? def.rarity : "???");
+    this.nameText.setText(owned ? def.name : "미발굴 개체");
+    this.roleText.setText("NO." + def.specimenNumber + (owned ? "   " + def.origin + " · " + ROLE_LABEL[def.role] : "   실루엣 기록"));
+    this.refreshBadges();
+    this.paintStars(def);
+    this.buildSkillIcons(def);
+    this.refreshGrowth();
+
+    // 미보유 개체는 원화·스킬을 감추고 번호와 실루엣만 남긴다.
+    for (const icon of this.skillIcons) icon.setVisible(owned);
+    this.portraitWanted = owned;
+    this.portrait?.setVisible(false);
+    this.figure?.setVisible(false);
+    if (owned) {
+      void this.loadPortrait(def);
+      void this.loadFigure(def);
+    }
+    this.root.setVisible(true);
+    this.chrome.setVisible(true);
+    setDebugInfoOpen(true);
+    if (live) this.say(live);
+  }
+
+  /** 성급은 등급에서만 나온다. 각성 단계는 옆의 돋보기가 맡는다. */
+  private paintStars(def: RelicDef): void {
+    this.starRow.removeAll(true);
+    const filled = def.rarity === "SSR" ? 5 : def.rarity === "SR" ? 4 : 3;
+    const gap = 52;
+    const left = -((5 - 1) * gap) / 2 - 40;
+    for (let i = 0; i < 5; i += 1) {
+      const on = i < filled;
+      const star = this.scene.add.star(left + i * gap, 0, 4, 8, 22, on ? COLOR.accent : 0x000000, on ? 1 : 0.35);
+      if (!on) star.setStrokeStyle(2, BADGE_OFF, 0.85);
+      this.starRow.add(star);
+    }
+  }
+
+  /** 레벨·경험치·유대·능력치·젬을 지금 상태로 다시 칠한다. */
+  private refreshGrowth(): void {
+    const def = this.currentDef;
+    if (!def) return;
+    const progress = relicProgression.getProgress(def.id);
+    const finalStats = relicProgression.getFinalStats(def.id);
+    const maxed = progress.level >= RELIC_LEVEL_CAP;
+
+    this.levelValue.setText(String(progress.level));
+    this.levelCap.setText("/ " + RELIC_LEVEL_CAP);
+    const need = maxed ? 0 : relicExpToNext(progress.level);
+    this.expBar.setValue(maxed ? 1 : progress.exp / need);
+    this.expLabel.setText(maxed ? "MAX" : progress.exp + " / " + need + " EXP   ·   보유 잡초 " + session.wallet.weeds);
+    this.feedButton.setAlpha(this.ownedNow && canFeedRelic(progress, session.wallet.weeds) ? 1 : 0.4);
+    this.feedLabel.setText(maxed ? "최대 레벨" : "급여하기");
+
+    const bondMaxed = progress.bondLevel >= BOND_LEVEL_CAP;
+    const bondBase = BOND_TOTAL_XP_BY_LEVEL[progress.bondLevel];
+    const bondNext = bondMaxed ? bondBase : BOND_TOTAL_XP_BY_LEVEL[progress.bondLevel + 1];
+    this.bondValue.setText(String(progress.bondLevel));
+    this.bondBar.setValue(bondMaxed ? 1 : (progress.bondXp - bondBase) / (bondNext - bondBase));
+    const reduction = Math.round((1 - BOND_FEROCITY_MULTIPLIER[progress.bondLevel]) * 100);
+    this.bondLabel.setText((bondMaxed ? "MAX" : progress.bondXp + " / " + bondNext + " EXP") + "   ·   야성 증가 -" + reduction + "%");
+
+    STAT_CHIPS.forEach((chip, index) => {
+      const base = def.stats[chip.key];
+      const gain = finalStats[chip.key] - base;
+      this.statValues[index].setText(finalStats[chip.key].toLocaleString());
+      this.statGains[index].setText("기본 " + base.toLocaleString());
+      this.statGains[index].setColor(COLOR.inkDim);
+      if (gain > 0) {
+        this.statGains[index].setText("기본 " + base.toLocaleString() + "   +" + gain.toLocaleString());
+        this.statGains[index].setColor(COLOR.accentText);
+      }
+    });
+
+    progress.heartGemSlots.forEach((id, index) => this.gemSlots[index].paint(id));
+  }
+}
+
+/** 얇은 게이지 하나. 홈과 채움 두 겹으로만 그린다. */
+class Gauge {
+  private readonly fill: Phaser.GameObjects.Graphics;
+  private readonly track: Phaser.GameObjects.Graphics;
+
+  constructor(scene: Phaser.Scene, x: number, y: number, private readonly width: number, private readonly height: number, private readonly color: number) {
+    this.track = scene.add.graphics({ x, y });
+    this.track.fillStyle(0x000000, 0.55);
+    this.track.fillPoints(toPoints(slantedRect(width, height, height)), true);
+    this.fill = scene.add.graphics({ x, y });
+    this.setValue(0);
+  }
+
+  get objects(): Phaser.GameObjects.Graphics[] {
+    return [this.track, this.fill];
+  }
+
+  setValue(ratio: number): void {
+    const filled = this.width * Phaser.Math.Clamp(Number.isFinite(ratio) ? ratio : 0, 0, 1);
+    this.fill.clear();
+    if (filled <= 0) return;
+    const s = this.height / 2;
+    const left = -this.width / 2;
+    this.fill.fillStyle(this.color, 1);
+    this.fill.fillPoints(toPoints([
+      left + s, -this.height / 2,
+      left + filled + s, -this.height / 2,
+      left + filled - s, this.height / 2,
+      left - s, this.height / 2,
+    ]), true);
+  }
+}
+
+/**
+ * 하트 하나를 세 조각으로 가른 다각형.
+ *
+ * 하트 곡선을 촘촘히 찍어 외곽을 만들고, 가운데에서 세 갈래로 잘라 왼쪽 봉우리 · 오른쪽
+ * 봉우리 · 아래 꼭짓점을 나눈다. 세 조각이 다 차야 하트 하나가 완성된다.
+ */
+function heartOutline(t: number, size: number): [number, number] {
+  const scale = size / 32;
+  const x = 16 * Math.sin(t) ** 3;
+  // 수학 좌표의 하트를 화면 좌표(아래가 +)로 뒤집는다.
+  const y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
+  return [x * scale, y * scale];
+}
+
+/** 조각 하나가 차지하는 곡선 구간. 0번 왼쪽 봉우리, 1번 오른쪽 봉우리, 2번 아래다. */
+const HEART_RANGES: readonly [number, number][] = [
+  [Math.PI * 1.34, Math.PI * 2],
+  [0, Math.PI * 0.66],
+  [Math.PI * 0.66, Math.PI * 1.34],
+];
+
+/** 세 조각이 만나는 가운데 점. 하트의 무게중심보다 살짝 위다. */
+function heartCenter(size: number): [number, number] {
+  return [0, (-2 * size) / 32];
+}
+
+function heartSlice(size: number, index: number): number[] {
+  const [from, to] = HEART_RANGES[index];
+  const center = heartCenter(size);
+  const points: number[] = [...center];
+  const steps = 22;
+  for (let i = 0; i <= steps; i += 1) {
+    points.push(...heartOutline(from + ((to - from) * i) / steps, size));
+  }
+  return points;
+}
+
+/** 조각 안쪽의 글자 자리. 곡선 구간의 한가운데와 중심을 반씩 섞는다. */
+function heartSliceCenter(size: number, index: number): { x: number; y: number } {
+  const [from, to] = HEART_RANGES[index];
+  const [mx, my] = heartOutline((from + to) / 2, size);
+  const [cx, cy] = heartCenter(size);
+  return { x: (mx + cx) / 2, y: (my + cy) / 2 };
 }

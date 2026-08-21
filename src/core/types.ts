@@ -38,10 +38,15 @@ export interface Stats {
 export interface RelicProgress {
   /** 1부터 시작하는 현재 성장 레벨이다. */
   level: number;
-  /** 저장 시점의 레벨 구간을 사람이 읽을 수 있게 표현한 칭호다. */
-  levelTitle: string;
-  /** DNA 복원 숙련도이며 코어 규칙상 0~5만 허용한다. */
-  dnaMastery: number;
+  /** 현재 레벨에서 다음 레벨까지 쌓은 경험치다. 레벨이 오르면 남은 만큼만 이월한다. */
+  exp: number;
+  /**
+   * 각성 단계(0~5).
+   *
+   * 같은 렐릭을 다시 발굴했을 때만 오른다. 레벨이 "얼마나 키웠나"라면 각성은 "몇 번 더
+   * 만났나"이며, 단계마다 모든 능력치가 함께 오르고 단계별 해금 효과가 붙는다.
+   */
+  awakening: number;
   /** 플레이어별 유대 레벨. 야성 증가를 완화하며 정적 렐릭 정의에는 두지 않는다. */
   bondLevel: number;
   /** 유대 레벨을 산출하는 누적 경험치다. 애착(favorite) 선택과는 무관하다. */

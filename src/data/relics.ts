@@ -12,7 +12,7 @@ export const RELICS: RelicDef[] = [
     projectName: "APEX CROWN",
     excavationSite: "몽골 네메그트층 제7구역",
     catalogSummary: "거대한 두개골과 강한 턱 구조가 확인된 육식성 표본.",
-    unlockRecord: { status: "recorded", text: "제7구역에서 회수한 치아 조직으로 복원했다. 높은 공격성과 달리 동료의 신호에는 빠르게 반응한다." },
+    unlockRecord: { status: "recorded", text: "제7구역에서 회수한 치아 조직으로 복원했다. 높은 공격성과 달리 동료의 신호에는 빠르게 반응한다. 전투가 길어질수록 [[ferocity|야성]]이 빠르게 오르므로 유대를 쌓아 눌러 두는 편이 좋다." },
     rarity: "SSR",
     portraitAssetId: "lexia",
     origin: "티라노사우루스",

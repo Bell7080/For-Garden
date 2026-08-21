@@ -38,8 +38,13 @@ export interface PullResponse extends PlayerStateDto {
 /** UI가 서버 실패 원인을 문구로 바꿀 수 있게 고정한 오류 코드다. */
 export type ApiErrorCode = "BANNER_NOT_FOUND" | "INSUFFICIENT_CURRENCY" | "INVALID_PULL_COUNT" | "RELIC_NOT_FOUND" | "RELIC_MAX_LEVEL" | "STAGE_NOT_FOUND" | "DAILY_ENTRY_LIMIT";
 
-/** 레벨업 응답은 차감 비용과 서버가 확정한 전체 상태를 함께 제공한다. */
-export interface LevelUpRelicResponse extends PlayerStateDto { relicId: string; cost: number; }
+/**
+ * 급여 응답.
+ *
+ * 요청한 횟수를 다 먹이지 못할 수도 있으므로(잡초 부족·레벨 상한) 실제로 소비한 횟수와
+ * 그때 오른 레벨 수를 함께 돌려준다. 화면은 이 값으로만 연출을 정한다.
+ */
+export interface FeedRelicResponse extends PlayerStateDto { relicId: string; feeds: number; weedsSpent: number; levelsGained: number; }
 /** 전투 확인 시 저장되는 보상으로 최초 여부와 획득 잡초를 결과 UI에 그대로 전달한다. */
 export interface CompleteStageResponse extends PlayerStateDto { stageId: string; firstClear: boolean; weedsEarned: number; }
 /** 로비 터치 결과는 중복 여부와 대사 UI가 표시할 유대 변화량을 돌려준다. */
@@ -51,7 +56,8 @@ export interface EnterDailyRestorationResponse extends PlayerStateDto { entriesR
 export interface GameApi {
   getPlayerState(): Promise<PlayerStateDto>;
   pullRelics(request: PullRequest): Promise<PullResponse>;
-  levelUpRelic(relicId: string): Promise<LevelUpRelicResponse>;
+  /** 급여로 경험치를 올린다. 횟수를 넘기면 한 번에 여러 번 먹인다. */
+  feedRelic(relicId: string, feeds?: number): Promise<FeedRelicResponse>;
   /** 패배도 서버에 명시해 승리 전용 보상이 새지 않도록 한다. */
   completeStage(stageId: string, victory?: boolean): Promise<CompleteStageResponse>;
   interactInLobby(relicId: string): Promise<LobbyInteractionResponse>;

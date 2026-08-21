@@ -63,18 +63,33 @@ describe("SaveManager", () => {
     expect(manager.migrate(legacy).bookmarkedRelicIds).toEqual([]);
   });
 
+  it("v5 저장의 DNA 숙련도를 각성 단계로 옮기고 경험치를 0으로 채운다", () => {
+    const manager = new SaveManager(new MemoryStorage());
+    const legacy = validData() as unknown as Record<string, unknown>;
+    legacy.saveVersion = 5;
+    const progress = legacy.relicProgress as Record<string, Record<string, unknown>>;
+    for (const value of Object.values(progress)) {
+      delete value.awakening; delete value.exp;
+      value.dnaMastery = 3;
+    }
+
+    const migrated = manager.migrate(legacy);
+    expect(migrated.saveVersion).toBe(CURRENT_SAVE_VERSION);
+    expect(migrated.relicProgress.anky).toMatchObject({ awakening: 3, exp: 0 });
+  });
+
   it("신규 획득 성장 정보와 DNA 조각을 저장 후 그대로 복구한다", () => {
     const storage = new MemoryStorage();
     const manager = new SaveManager(storage);
     const source = createDefaultSession();
     source.owned.add("dodo");
-    source.relicProgress.dodo = { level: 1, levelTitle: "복원체", dnaMastery: 5, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] };
+    source.relicProgress.dodo = { level: 1, exp: 0, awakening: 5, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] };
     source.wallet.dnaFragments = 3;
 
     manager.save(source);
     const loaded = manager.load()!;
     expect(loaded.owned.has("dodo")).toBe(true);
-    expect(loaded.relicProgress.dodo).toMatchObject({ level: 1, dnaMastery: 5 });
+    expect(loaded.relicProgress.dodo).toMatchObject({ level: 1, awakening: 5 });
     expect(loaded.wallet.dnaFragments).toBe(3);
   });
 
@@ -133,7 +148,7 @@ describe("SaveManager", () => {
 
   it("범위를 벗어난 DNA 숙련도를 거부한다", () => {
     const data = validData();
-    data.relicProgress.anky.dnaMastery = 6;
+    data.relicProgress.anky.awakening = 6;
     expect(() => new SaveManager(new MemoryStorage()).validate(data)).toThrow("성장 정보");
   });
 });

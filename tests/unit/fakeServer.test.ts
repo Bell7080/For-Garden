@@ -15,20 +15,21 @@ function makeSession(fossil = 1000): Session {
     bookmarked: new Set<string>(),
     pullCountSinceHighestRarity: { fossil: 0, amber: 0 },
     wallet: { fossil, amber: 10, dnaFragments: 0, weeds: 0 },
-    relicProgress: Object.fromEntries(["anky", "rex", "dodo"].map((id) => [id, { level: id === "anky" ? 2 : 1, levelTitle: id === "anky" ? "발아체" : "복원체", dnaMastery: id === "anky" ? 1 : 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: id === "anky" ? ["vital-seed", null, null] : [null, null, null] }])),
+    relicProgress: Object.fromEntries(["anky", "rex", "dodo"].map((id) => [id, { level: id === "anky" ? 2 : 1, exp: 0, awakening: id === "anky" ? 1 : 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: id === "anky" ? ["vital-seed", null, null] : [null, null, null] }])),
     ownedHeartGemIds: ["vital-seed"],
     dailyContent: { date: "", restorationEntries: 0, completedIds: [], claimedRewardIds: [] },
   };
 }
 
 describe("FakeServer", () => {
-  it("레벨업 재화를 검사·차감하고 새 성장을 서버 상태에 반영한다", async () => {
-    const state = makeSession(); state.wallet.weeds = 20;
+  it("급여 재화를 검사·차감하고 오른 레벨을 서버 상태에 반영한다", async () => {
+    const state = makeSession(); state.wallet.weeds = 25;
     const server = new FakeServer(state, { latencyMs: 0 });
-    const response = await server.levelUpRelic("anky");
-    expect(response).toMatchObject({ relicId: "anky", cost: 20, wallet: { weeds: 0 } });
-    expect(state.relicProgress.anky.level).toBe(3);
-    await expect(server.levelUpRelic("anky")).rejects.toMatchObject({ code: "INSUFFICIENT_CURRENCY" });
+    // 열 번 요청해도 잡초가 두 번 치뿐이다. 레벨 2는 80 EXP가 필요해 아직 오르지 않는다.
+    const response = await server.feedRelic("anky", 10);
+    expect(response).toMatchObject({ relicId: "anky", feeds: 2, weedsSpent: 20, wallet: { weeds: 5 } });
+    expect(state.relicProgress.anky).toMatchObject({ level: 2, exp: 40 });
+    await expect(server.feedRelic("anky")).rejects.toMatchObject({ code: "INSUFFICIENT_CURRENCY" });
   });
 
   it("메인 스테이지의 최초와 반복 보상을 데이터대로 구분한다", async () => {
@@ -85,7 +86,7 @@ describe("FakeServer", () => {
     const response = await new FakeServer(state, { latencyMs: 0, random: () => 0 }).pullRelics({ bannerId: "fossil", count: 10 });
     expect(response.results[0].kind).toBe("new");
     expect(response.results[1]).toMatchObject({ kind: "mastery", dnaBefore: 0, dnaAfter: 1 });
-    expect(state.relicProgress.rex).toMatchObject({ level: 1, dnaMastery: 5 });
+    expect(state.relicProgress.rex).toMatchObject({ level: 1, awakening: 5 });
     expect(state.relicProgress.rex).toMatchObject({ bondLevel: 1, bondXp: 20 });
     expect(state.wallet.dnaFragments).toBe(4);
   });

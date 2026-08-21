@@ -1,12 +1,12 @@
 import { canPull, pull, resolveAcquisitions, spend } from "../core/gacha";
 import { BANNERS } from "../data/banners";
 import { consumeRestorationEntry, normalizeDailyContent } from "../core/dailyContent";
-import { levelUpRelic as calculateLevelUp, RELIC_LEVEL_CAP } from "../core/relicProgression";
+import { canFeedRelic, feedRelic as calculateFeed, FEED_UNIT, RELIC_LEVEL_CAP } from "../core/relicProgression";
 import { BOND_XP_REWARD, grantBondXp, grantDailyLobbyBondXp } from "../core/bond";
 import { DAILY_RESTORATION, getStage } from "../data/stages";
 import { createInitialRelicProgress, session, type Session } from "../state/session";
 import { saveManager } from "../state/SaveManager";
-import { GameApiError, type CompleteStageResponse, type EnterDailyRestorationResponse, type GameApi, type LevelUpRelicResponse, type LobbyInteractionResponse, type PlayerStateDto, type PullRequest, type PullResponse } from "./contracts";
+import { GameApiError, type CompleteStageResponse, type EnterDailyRestorationResponse, type FeedRelicResponse, type GameApi, type LobbyInteractionResponse, type PlayerStateDto, type PullRequest, type PullResponse } from "./contracts";
 
 /** FakeServer의 지연과 난수원을 테스트에서 결정적으로 바꾸기 위한 선택 설정이다. */
 export interface FakeServerOptions {
@@ -52,14 +52,14 @@ export class FakeServer implements GameApi {
 
     // 원본을 전혀 건드리지 않은 복제 상태에서 비용·천장·보유 결과를 모두 먼저 계산한다.
     const pulled = pull(banner, request.count, this.state.pullCountSinceHighestRarity[banner.id] ?? 0, this.random);
-    const masteryById = Object.fromEntries(Object.entries(this.state.relicProgress).map(([id, value]) => [id, value.dnaMastery]));
+    const masteryById = Object.fromEntries(Object.entries(this.state.relicProgress).map(([id, value]) => [id, value.awakening]));
     const outcome = resolveAcquisitions(this.state.owned, masteryById, pulled.relicIds);
     // 최초 획득은 반드시 기본 성장 레코드를 만들고, 중복 변화도 같은 복제본에 반영한다.
     const nextProgress = Object.fromEntries(Object.entries(this.state.relicProgress).map(([id, value]) => [id, { ...value, heartGemSlots: [...value.heartGemSlots] as typeof value.heartGemSlots }]));
     for (const result of outcome.slots) {
       // 최초 획득만 유대 경험치를 지급하며 중복 획득은 DNA 처리만 수행한다.
       if (!nextProgress[result.relicId]) nextProgress[result.relicId] = grantBondXp(createInitialRelicProgress(), BOND_XP_REWARD.firstAcquisition).progress;
-      nextProgress[result.relicId].dnaMastery = result.dnaAfter;
+      nextProgress[result.relicId].awakening = result.dnaAfter;
     }
     const nextWallet = { ...spend(this.state.wallet, banner, request.count), dnaFragments: this.state.wallet.dnaFragments + outcome.overflowFragments };
     const nextPity = { ...this.state.pullCountSinceHighestRarity, [banner.id]: pulled.pullCountSinceHighestRarity };
@@ -80,19 +80,18 @@ export class FakeServer implements GameApi {
   }
 
   /** 서버가 보유·상한·잡초를 검증하고 차감과 성장 반영을 한 저장 단위로 확정한다. */
-  async levelUpRelic(relicId: string): Promise<LevelUpRelicResponse> {
+  async feedRelic(relicId: string, feeds = 1): Promise<FeedRelicResponse> {
     await this.delay();
     const current = this.state.relicProgress[relicId];
     if (!this.state.owned.has(relicId) || !current) throw new GameApiError("RELIC_NOT_FOUND", "보유하지 않은 렐릭입니다.");
     if (current.level >= RELIC_LEVEL_CAP) throw new GameApiError("RELIC_MAX_LEVEL", "이미 최대 레벨입니다.");
-    let result;
-    try { result = calculateLevelUp(current, this.state.wallet.weeds); }
-    catch { throw new GameApiError("INSUFFICIENT_CURRENCY", "잡초가 부족합니다."); }
+    if (!canFeedRelic(current, this.state.wallet.weeds)) throw new GameApiError("INSUFFICIENT_CURRENCY", "잡초가 부족합니다.");
+    const result = calculateFeed(current, this.state.wallet.weeds, feeds);
     const nextProgress = { ...this.state.relicProgress, [relicId]: result.progress };
     const nextWallet = { ...this.state.wallet, weeds: result.weeds };
     this.persist({ ...this.state, relicProgress: nextProgress, wallet: nextWallet });
     this.state.relicProgress = nextProgress; this.state.wallet = nextWallet;
-    return { ...this.snapshot(), relicId, cost: result.cost };
+    return { ...this.snapshot(), relicId, feeds: result.feeds, weedsSpent: result.feeds * FEED_UNIT.weeds, levelsGained: result.levelsGained };
   }
 
   /** 승리 결과 확인 시 최초/반복 보상을 판정하고 클리어와 지갑을 함께 저장한다. */

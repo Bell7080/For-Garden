@@ -124,18 +124,18 @@ export interface AcquisitionOutcome {
   duplicateRelicIds: string[];
   /** 호출자가 원본 상태를 건드리지 않고 한 번에 커밋할 수 있는 다음 값이다. */
   ownedRelicIds: Set<string>;
-  dnaMasteryById: Record<string, number>;
+  awakeningById: Record<string, number>;
   overflowFragments: number;
 }
 
 /** 슬롯 순서대로 신규/숙련/상한 보상을 계산하는 Phaser 비의존 순수 규칙이다. */
 export function resolveAcquisitions(
   ownedRelicIds: ReadonlySet<string>,
-  dnaMasteryById: Readonly<Record<string, number>>,
+  awakeningById: Readonly<Record<string, number>>,
   results: readonly string[],
 ): AcquisitionOutcome {
   const owned = new Set(ownedRelicIds);
-  const mastery = { ...dnaMasteryById };
+  const mastery = { ...awakeningById };
   const slots: AcquisitionResult[] = [];
   const newRelicIds: string[] = [];
   const duplicateRelicIds: string[] = [];
@@ -159,5 +159,5 @@ export function resolveAcquisitions(
       slots.push({ relicId, kind: "overflow", dnaBefore: before, dnaAfter: before, overflowFragments: 1 });
     }
   }
-  return { slots, newRelicIds, duplicateRelicIds, ownedRelicIds: owned, dnaMasteryById: mastery, overflowFragments };
+  return { slots, newRelicIds, duplicateRelicIds, ownedRelicIds: owned, awakeningById: mastery, overflowFragments };
 }

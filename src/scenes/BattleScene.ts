@@ -240,8 +240,8 @@ export class BattleScene extends Phaser.Scene {
     if (event.kind === "suppress") {
       const view = this.views.get(event.fighterId);
       if (view) {
-        // 추후 전용 스턴 모션이 들어오기 전까지 회전으로 긴 기절을 명확히 표현한다.
-        this.tweens.add({ targets: view.creature, angle: 360, duration: 700, repeat: FEROCITY_RULES.suppressionStunTurns - 1 });
+        // 개방된 야성을 잠재우는 연출. 한 바퀴 크게 숨을 고르고 제자리로 돌아온다.
+        this.tweens.add({ targets: view.creature, angle: 360, duration: 700 });
       }
       return;
     }

@@ -12,8 +12,14 @@ export const BOND_TOTAL_XP_BY_LEVEL = [0, 20, 50, 90, 140, 200, 270, 350, 440, 5
 /** 허용된 세 경로만 이름 있는 상수로 노출해 임의 보상 생성을 막는다. */
 export const BOND_XP_REWARD = { firstAcquisition: 20, partyVictory: 12, firstLobbyInteraction: 5 } as const;
 
-/** 유대 레벨별 야성 증가 배율. 10레벨에도 위험 자원은 최소 절반 쌓인다. */
-export const BOND_FEROCITY_MULTIPLIER = [1, 0.95, 0.9, 0.85, 0.8, 0.75, 0.7, 0.65, 0.6, 0.55, 0.5] as const;
+/**
+ * 유대 레벨별 야성 증가 배율.
+ *
+ * 야성은 벌이 아니라 이 게임의 피버다. 오래 함께 싸운 렐릭일수록 본능을 더 빨리 끌어올리고,
+ * 연구원(플레이어)은 그것을 언제 터뜨릴지 고르는 관제탑 역할을 한다. 그래서 유대가 높을수록
+ * 배율이 **커진다**.
+ */
+export const BOND_FEROCITY_MULTIPLIER = [1, 1.05, 1.1, 1.15, 1.2, 1.25, 1.3, 1.35, 1.4, 1.45, 1.5] as const;
 
 export interface BondXpResult { progress: RelicProgress; xpGained: number; levelsGained: number; }
 
@@ -42,7 +48,7 @@ export function grantDailyLobbyBondXp(progress: RelicProgress, utcDate: string):
 }
 
 /** 전투 엔진이 정적 유대 효과표와 같은 반올림 규칙을 사용하게 한다. */
-export function attenuateFerocityGain(amount: number, bondLevel: number): number {
+export function amplifyFerocityGain(amount: number, bondLevel: number): number {
   if (!Number.isFinite(amount) || amount < 0 || !Number.isInteger(bondLevel) || bondLevel < 0) throw new RangeError("야성 증가량과 유대 레벨이 올바르지 않습니다.");
   // 외부 전투 스냅샷에 상한 초과 값이 와도 최대 해금 효과로 안전하게 제한한다.
   return Math.max(0, Math.round(amount * BOND_FEROCITY_MULTIPLIER[Math.min(BOND_LEVEL_CAP, bondLevel)]));

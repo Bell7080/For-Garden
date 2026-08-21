@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  attenuateFerocityGain,
+  amplifyFerocityGain,
   canSwap,
   canUseUltimate,
   computeDamage,
@@ -230,13 +230,13 @@ describe("확장 능력치 전투 규칙", () => {
 });
 
 describe("야성", () => {
-  it("유대 레벨에 따라 증가량을 감쇠하며 원본 입력을 바꾸지 않는다", () => {
-    expect(attenuateFerocityGain(20, 0)).toBe(20);
-    expect(attenuateFerocityGain(20, 4)).toBe(16);
-    expect(attenuateFerocityGain(20, 20)).toBe(10);
+  it("유대 레벨이 높을수록 더 빨리 차오르며 상한 밖 값도 안전하게 다룬다", () => {
+    expect(amplifyFerocityGain(20, 0)).toBe(20);
+    expect(amplifyFerocityGain(20, 4)).toBe(24);
+    expect(amplifyFerocityGain(20, 20)).toBe(30);
   });
 
-  it("50/80/100 경계에서만 단계별 피해 보너스와 방어 페널티가 적용된다", () => {
+  it("50/80/100 경계에서만 공격자의 피해 보너스가 오르고 맞는 쪽은 손해를 보지 않는다", () => {
     const state = newBattle(["rex", "anky", "dodo"]);
     const attacker = frontUnit(state.player);
     const target = frontUnit(state.enemy);
@@ -246,14 +246,15 @@ describe("야성", () => {
     const calm = computeDamage(attacker, target, input, false);
     attacker.ferocity = 50;
     const empowered = computeDamage(attacker, target, input, false);
-    target.ferocity = 80;
-    const exposed = computeDamage(attacker, target, input, false);
     attacker.ferocity = 100;
-    const uncontrolled = computeDamage(attacker, target, input, false);
+    const opened = computeDamage(attacker, target, input, false);
 
     expect(empowered).toBeGreaterThan(calm);
-    expect(exposed).toBeGreaterThan(empowered);
-    expect(uncontrolled).toBeGreaterThan(exposed);
+    expect(opened).toBeGreaterThan(empowered);
+
+    // 야성은 피버라 맞는 쪽의 방어가 깎이지 않는다. 대상 야성은 피해에 영향이 없다.
+    target.ferocity = 100;
+    expect(computeDamage(attacker, target, input, false)).toBe(opened);
   });
 
   it("기본 공격은 공격자와 피격자의 야성을 올리고 임계 진입을 기록한다", () => {
@@ -268,17 +269,18 @@ describe("야성", () => {
     expect(state.log.filter((line) => line.includes("야성 50 진입"))).toHaveLength(2);
   });
 
-  it("궁극기 사용도 야성을 올리지만 통제 불능에서는 사용할 수 없다", () => {
+  it("궁극기 사용도 야성을 올리고, 야성이 가득 차도 궁극기를 막지 않는다", () => {
     const state = newBattle();
     const unit = frontUnit(state.player);
     unit.energy = ULTIMATE_ENERGY_MAX;
     expect(playerAct(state, { kind: "ultimate" })).toBe(true);
     expect(unit.ferocity).toBe(FEROCITY_RULES.ultimateGain);
 
-    const blocked = newBattle();
-    frontUnit(blocked.player).energy = ULTIMATE_ENERGY_MAX;
-    frontUnit(blocked.player).ferocity = 100;
-    expect(canUseUltimate(frontUnit(blocked.player))).toBe(false);
+    // 야성은 피버라 개방 상태에서도 궁극기를 쓸 수 있다.
+    const opened = newBattle();
+    frontUnit(opened.player).energy = ULTIMATE_ENERGY_MAX;
+    frontUnit(opened.player).ferocity = 100;
+    expect(canUseUltimate(frontUnit(opened.player))).toBe(true);
   });
 
   it("교대는 들어오는 유닛의 야성을 감소시키고 통제 회복을 기록한다", () => {
@@ -304,8 +306,9 @@ describe("야성", () => {
     unit.ferocity = 100;
     expect(playerAct(suppressed, { kind: "suppress" })).toBe(true);
     expect(unit.ferocity).toBe(0);
-    expect(unit.stunTurns).toBe(FEROCITY_RULES.suppressionStunTurns);
-    expect(suppressed.log.some((line) => line.includes("통제 회복"))).toBe(true);
+    // 잠재우는 데 기절 같은 대가는 없다. 게이지만 비운다.
+    expect(unit.stunTurns).toBe(0);
+    expect(suppressed.log.some((line) => line.includes("야성 진정"))).toBe(true);
   });
 
   it("새 전투 생성은 이전 전투 종료 상태의 야성을 전부 초기화한다", () => {

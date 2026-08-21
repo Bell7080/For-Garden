@@ -1,6 +1,6 @@
 import type { DamageType, RelicDef, Side, Skill } from "./types";
-import { attenuateFerocityGain } from "./bond";
-export { attenuateFerocityGain } from "./bond";
+import { amplifyFerocityGain } from "./bond";
+export { amplifyFerocityGain } from "./bond";
 
 /** 모든 유닛이 저장할 수 있는 궁극기 게이지의 공용 상한이다. 스킬 비용과는 별개다. */
 export const ULTIMATE_ENERGY_MAX = 150;
@@ -13,20 +13,25 @@ export const FEROCITY_RULES = {
   ultimateGain: 18,
   hitGain: 8,
   swapReduction: 25,
-  suppressionStunTurns: 3,
-  /** 50은 이득을 체감하는 선택 구간, 80은 위험 경고, 100은 통제 상실 구간이다. */
+  /**
+   * 야성 단계.
+   *
+   * 야성은 벌이 아니라 피버다. 차오를수록 더 세게 때리고, 가득 차면 렐릭이 본능을 완전히
+   * 개방한다. 연구원은 그것을 언제 터뜨리고 언제 잠재울지 고르는 관제탑이라, 어느 단계에도
+   * 방어가 깎이거나 아군을 오인 공격하는 대가는 없다.
+   */
   thresholds: [
-    { value: 50, damageBonus: 0.1, defensePenalty: 0.1 },
-    { value: 80, damageBonus: 0.2, defensePenalty: 0.2 },
-    { value: 100, damageBonus: 0.35, defensePenalty: 0.3 },
+    { value: 50, damageBonus: 0.1 },
+    { value: 80, damageBonus: 0.2 },
+    { value: 100, damageBonus: 0.35 },
   ],
 } as const;
 
 /** 유대 1레벨마다 증가량을 5% 감쇠하되, 최소 절반은 쌓여 위험 선택을 없애지 않는다. */
-/** 현재 구간의 누적 공격 보너스와 방어 페널티를 반환한다. */
-export function ferocityModifiers(ferocity: number): { damageBonus: number; defensePenalty: number } {
+/** 현재 구간의 누적 공격 보너스를 반환한다. */
+export function ferocityModifiers(ferocity: number): { damageBonus: number } {
   const active = [...FEROCITY_RULES.thresholds].reverse().find(({ value }) => ferocity >= value);
-  return active ? { damageBonus: active.damageBonus, defensePenalty: active.defensePenalty } : { damageBonus: 0, defensePenalty: 0 };
+  return { damageBonus: active?.damageBonus ?? 0 };
 }
 
 /**
@@ -205,10 +210,10 @@ export function computeDamage(
       : 1;
   const critical = input.isCritical ? attacker.def.stats.critDamage / 100 : 1;
   const attackFerocity = ferocityModifiers(attacker.ferocity).damageBonus;
-  const defensePenalty = ferocityModifiers(target.ferocity).defensePenalty;
+
   const raw = ((offense * input.power) / 100) * momentum * critical * (1 + attackFerocity);
   // 야성이 높을수록 유효 방어력이 낮아져 화력과 생존을 맞바꾸게 한다.
-  const afterDef = (raw * 100) / (100 + defense * (1 - defensePenalty));
+  const afterDef = (raw * 100) / (100 + defense);
   const guard =
     targetIsFront && target.def.passive.kind === "frontGuard"
       ? 1 - target.def.passive.value / 100
@@ -228,7 +233,7 @@ function gainEnergy(unit: BattleUnit): void {
 /** 사건별 야성을 올리고 임계 진입을 로그에 한 번만 남긴다. */
 function changeFerocity(unit: BattleUnit, delta: number, state: BattleState): void {
   const before = unit.ferocity;
-  const adjusted = delta > 0 ? attenuateFerocityGain(delta, unit.bondLevel) : delta;
+  const adjusted = delta > 0 ? amplifyFerocityGain(delta, unit.bondLevel) : delta;
   unit.ferocity = Math.min(FEROCITY_RULES.max, Math.max(FEROCITY_RULES.min, before + adjusted));
   for (const threshold of FEROCITY_RULES.thresholds) {
     if (before < threshold.value && unit.ferocity >= threshold.value)
@@ -272,8 +277,8 @@ export function canSwap(team: Team, memberIndex: number): boolean {
 }
 
 export function canUseUltimate(unit: BattleUnit): boolean {
-  // 100 야성에서는 궁극기 대신 진압만 선택할 수 있다.
-  return isAlive(unit) && unit.ferocity < FEROCITY_RULES.max && unit.stunTurns === 0 && unit.energy >= unit.def.ultimate.cost;
+  // 야성이 가득 차도 궁극기를 막지 않는다. 개방된 본능은 오히려 더 세게 나가는 상태다.
+  return isAlive(unit) && unit.stunTurns === 0 && unit.energy >= unit.def.ultimate.cost;
 }
 
 /** 한쪽이 행동을 한 번 한다. 규칙 위반이면 아무것도 바꾸지 않고 false를 돌려준다. */
@@ -371,8 +376,7 @@ function performAction(
     case "suppress": {
       if (!isAlive(front) || front.ferocity < FEROCITY_RULES.max) return false;
       front.ferocity = FEROCITY_RULES.min;
-      front.stunTurns = FEROCITY_RULES.suppressionStunTurns;
-      state.log.push(`${front.def.name} 진압 — 야성 0, ${front.stunTurns}턴 기절 · 통제 회복`);
+      state.log.push(`${front.def.name} 야성 진정 — 게이지를 비웠다`);
       return true;
     }
   }

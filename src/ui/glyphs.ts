@@ -16,7 +16,10 @@ export type GlyphName =
   | "exchange"
   | "settings"
   | "heart"
-  | "bookmark";
+  | "bookmark"
+  | "scroll"
+  | "magnifier"
+  | "costume";
 
 function points(...pairs: number[]): Phaser.Geom.Point[] {
   const list: Phaser.Geom.Point[] = [];
@@ -97,6 +100,28 @@ export function drawGlyph(
       g.lineTo(0, r * 0.85);
       g.closePath();
       g.fillPath();
+      break;
+    case "scroll":
+      // 파피루스 두루마리 — 관찰 일지. 양 끝을 말아 둔 축 두 개와 펼친 면.
+      g.strokeRect(-r * 0.55, -r * 0.72, r * 1.1, r * 1.44);
+      g.beginPath();
+      g.arc(-r * 0.55, -r * 0.72, r * 0.26, Math.PI * 0.5, Math.PI * 1.5, true);
+      g.strokePath();
+      g.beginPath();
+      g.arc(r * 0.55, r * 0.72, r * 0.26, Math.PI * 1.5, Math.PI * 0.5, true);
+      g.strokePath();
+      g.lineBetween(-r * 0.28, -r * 0.28, r * 0.28, -r * 0.28);
+      g.lineBetween(-r * 0.28, r * 0.06, r * 0.28, r * 0.06);
+      break;
+    case "magnifier":
+      // 돋보기 — 더 볼 것이 있다는 표시.
+      g.strokeCircle(-r * 0.14, -r * 0.14, r * 0.55);
+      g.lineBetween(r * 0.26, r * 0.26, r * 0.86, r * 0.86);
+      break;
+    case "costume":
+      // 옷걸이에 걸린 옷 — 코스튬.
+      g.strokePoints(points(-r * 0.9, -r * 0.2, -r * 0.35, -r * 0.62, r * 0.35, -r * 0.62, r * 0.9, -r * 0.2, r * 0.5, r * 0.1, r * 0.5, r * 0.85, -r * 0.5, r * 0.85, -r * 0.5, r * 0.1), true);
+      g.lineBetween(0, -r * 0.62, 0, -r * 0.9);
       break;
     case "bookmark":
       // 즐겨찾기 — 아래가 갈라진 책갈피.

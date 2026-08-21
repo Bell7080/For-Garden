@@ -3,6 +3,107 @@ import type { RelicProgress, Stats } from "./types";
 
 /** 프로토타입 레벨 상한은 짧은 플레이에서도 최대 상태를 검증할 수 있도록 20으로 제한한다. */
 export const RELIC_LEVEL_CAP = 20;
+/** 각성 상한. 같은 렐릭을 다섯 번 더 만나면 끝이다. */
+export const AWAKENING_CAP = 5;
+/** 급여 한 번에 드는 잡초와 그때 오르는 경험치. */
+export const FEED_UNIT = { weeds: 10, exp: 20 } as const;
+
+/**
+ * 레벨 N에서 N+1로 가는 데 필요한 경험치.
+ *
+ * 한 번 먹였다고 곧바로 오르지 않는다. 경험치는 급여 말고도 여러 곳에서 조금씩 차오를 값이라,
+ * 레벨 하나가 여러 번의 행동을 담을 만큼은 커야 한다. 낮은 레벨은 세 번, 뒤로 갈수록 더 든다.
+ */
+export function relicExpToNext(level: number): number {
+  if (!Number.isInteger(level) || level < 1 || level > RELIC_LEVEL_CAP) throw new RangeError("레벨이 성장 범위를 벗어났습니다.");
+  return 40 + level * 20;
+}
+
+/**
+ * 각성 단계별 해금 효과.
+ *
+ * 같은 렐릭을 다시 만날 때마다 하나씩 열린다. 셋째·넷째 단계만 능력치를 올리고 나머지는
+ * 전투 방식 자체를 바꾼다 — 단계마다 성격이 달라야 다음 중복이 기대된다.
+ */
+export interface AwakeningStep {
+  step: number;
+  label: string;
+  /** 모든 능력치에 더해지는 백분율. 없으면 0이다. */
+  statPercent?: number;
+  /** 일반 공격 피해 배율 증가(0.25 = +25%). */
+  basicDamage?: number;
+  /** 궁극기 피해 배율 증가. */
+  ultimateDamage?: number;
+  /** 전투 시작 시 궁극기가 준비된 상태로 시작하는지. */
+  readyUltimate?: boolean;
+}
+
+export const AWAKENING_STEPS: readonly AwakeningStep[] = [
+  { step: 1, label: "일반 공격 피해 +25%", basicDamage: 0.25 },
+  { step: 2, label: "궁극기 피해 +25%", ultimateDamage: 0.25 },
+  { step: 3, label: "모든 능력치 +15%", statPercent: 15 },
+  { step: 4, label: "모든 능력치 +15%", statPercent: 15 },
+  { step: 5, label: "전투 시작 시 궁극기 준비", readyUltimate: true },
+];
+
+/** 해당 단계까지 열린 효과를 한 값으로 합친다. 전투와 UI가 같은 표를 본다. */
+export function awakeningBonus(awakening: number): { statPercent: number; basicDamage: number; ultimateDamage: number; readyUltimate: boolean } {
+  const opened = AWAKENING_STEPS.filter((entry) => entry.step <= awakening);
+  return {
+    statPercent: opened.reduce((sum, entry) => sum + (entry.statPercent ?? 0), 0),
+    basicDamage: opened.reduce((sum, entry) => sum + (entry.basicDamage ?? 0), 0),
+    ultimateDamage: opened.reduce((sum, entry) => sum + (entry.ultimateDamage ?? 0), 0),
+    readyUltimate: opened.some((entry) => entry.readyUltimate === true),
+  };
+}
+
+export interface RelicFeedResult {
+  progress: RelicProgress;
+  weeds: number;
+  /** 실제로 소비한 급여 횟수. 잡초나 레벨 상한에 걸리면 요청보다 적을 수 있다. */
+  feeds: number;
+  levelsGained: number;
+}
+
+/**
+ * 급여로 경험치를 올린다.
+ *
+ * 한 번에 여러 번 먹이는 버튼이 있으므로 반복 처리도 순수 함수 하나로 끝낸다. 상한에 닿으면
+ * 남은 경험치는 버리지 않고 그 자리에서 멈춘다 — 잡초만 사라지고 아무 일도 없는 급여를
+ * 만들지 않기 위해서다.
+ */
+export function feedRelic(progress: RelicProgress, weeds: number, feeds: number): RelicFeedResult {
+  if (!Number.isInteger(feeds) || feeds < 1) throw new RangeError("급여 횟수는 1 이상의 정수여야 합니다.");
+  if (!Number.isInteger(weeds) || weeds < 0) throw new RangeError("잡초가 올바르지 않습니다.");
+  let level = progress.level;
+  let exp = progress.exp;
+  let spent = 0;
+  let used = 0;
+  for (let i = 0; i < feeds; i += 1) {
+    if (level >= RELIC_LEVEL_CAP) break;
+    if (weeds - spent < FEED_UNIT.weeds) break;
+    spent += FEED_UNIT.weeds;
+    used += 1;
+    exp += FEED_UNIT.exp;
+    while (level < RELIC_LEVEL_CAP && exp >= relicExpToNext(level)) {
+      exp -= relicExpToNext(level);
+      level += 1;
+    }
+    // 상한에 닿으면 경험치는 더 쌓지 않는다.
+    if (level >= RELIC_LEVEL_CAP) exp = 0;
+  }
+  return {
+    progress: { ...progress, level, exp, heartGemSlots: [...progress.heartGemSlots] as RelicProgress["heartGemSlots"] },
+    weeds: weeds - spent,
+    feeds: used,
+    levelsGained: level - progress.level,
+  };
+}
+
+/** 급여를 한 번이라도 할 수 있는지. 버튼을 끌지 말지 판단하는 단일 기준이다. */
+export function canFeedRelic(progress: RelicProgress, weeds: number): boolean {
+  return progress.level < RELIC_LEVEL_CAP && Number.isInteger(weeds) && weeds >= FEED_UNIT.weeds;
+}
 /** 레벨 N에서 N+1로 갈 때 드는 잡초다. 선형 비용은 각 레벨 투자의 의미를 쉽게 조정하게 한다. */
 export function relicLevelUpCost(level: number): number {
   if (!Number.isInteger(level) || level < 1 || level > RELIC_LEVEL_CAP) throw new RangeError("레벨이 성장 범위를 벗어났습니다.");
@@ -45,10 +146,11 @@ export function applyLevelGrowth(base: Stats, level: number): Stats {
   return applyStatPercent(base, Object.fromEntries(STAT_KEYS.map((key) => [key, percent])) as HeartGemStatEffect);
 }
 
-/** DNA 숙련도 한 단계마다 모든 능력치를 3% 높이며 0~5 경계를 강제한다. */
-export function applyDnaMastery(stats: Stats, dnaMastery: number): Stats {
-  if (!Number.isInteger(dnaMastery) || dnaMastery < 0 || dnaMastery > 5) throw new RangeError("DNA 숙련도는 0~5의 정수여야 합니다.");
-  return applyStatPercent(stats, Object.fromEntries(STAT_KEYS.map((key) => [key, dnaMastery * 3])) as HeartGemStatEffect);
+/** 각성이 능력치를 올리는 것은 3·4단계뿐이다. 나머지 단계는 전투 규칙을 바꾼다. */
+export function applyAwakening(stats: Stats, awakening: number): Stats {
+  if (!Number.isInteger(awakening) || awakening < 0 || awakening > AWAKENING_CAP) throw new RangeError("각성 단계는 0~5의 정수여야 합니다.");
+  const percent = awakeningBonus(awakening).statPercent;
+  return applyStatPercent(stats, Object.fromEntries(STAT_KEYS.map((key) => [key, percent])) as HeartGemStatEffect);
 }
 
 /** 장착된 Heart Gem을 슬롯 순서대로 적용해 저장 순서까지 계산 규칙의 일부로 고정한다. */
@@ -59,5 +161,5 @@ export function applyHeartGems(stats: Stats, gems: readonly HeartGemDef[]): Stat
 /** 최종 능력치는 기본 → 레벨 → DNA → Heart Gem 순서로만 계산한다. */
 export function calculateFinalStats(base: Stats, progress: RelicProgress, gems: readonly HeartGemDef[]): Stats {
   if (progress.heartGemSlots.length !== 3) throw new RangeError("Heart Gem 슬롯은 정확히 3개여야 합니다.");
-  return applyHeartGems(applyDnaMastery(applyLevelGrowth(base, progress.level), progress.dnaMastery), gems);
+  return applyHeartGems(applyAwakening(applyLevelGrowth(base, progress.level), progress.awakening), gems);
 }

@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL, attenuateFerocityGain, bondLevelForXp, grantBondXp, grantDailyLobbyBondXp } from "../../src/core/bond";
+import { BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL, amplifyFerocityGain, bondLevelForXp, grantBondXp, grantDailyLobbyBondXp } from "../../src/core/bond";
 import { createInitialRelicProgress } from "../../src/state/session";
 
-/** Phaser나 저장소 없이 유대의 날짜·상한·감쇠 경계를 검증한다. */
+/** Phaser나 저장소 없이 유대의 날짜·상한·야성 배율 경계를 검증한다. */
 describe("bond rules", () => {
   it("같은 UTC 날짜의 로비 상호작용은 경험치를 한 번만 지급한다", () => {
     const first = grantDailyLobbyBondXp(createInitialRelicProgress(), "2026-08-20");
@@ -15,8 +15,8 @@ describe("bond rules", () => {
     expect(result.progress).toMatchObject({ bondLevel: BOND_LEVEL_CAP, bondXp: BOND_TOTAL_XP_BY_LEVEL[10] });
     expect(bondLevelForXp(BOND_TOTAL_XP_BY_LEVEL[10])).toBe(10);
   });
-  it("정적 레벨 효과표에 따라 야성 증가를 감쇠한다", () => {
-    expect(attenuateFerocityGain(20, 0)).toBe(20);
-    expect(attenuateFerocityGain(20, 10)).toBe(10);
+  it("정적 레벨 효과표에 따라 야성 증가를 키운다", () => {
+    expect(amplifyFerocityGain(20, 0)).toBe(20);
+    expect(amplifyFerocityGain(20, 10)).toBe(30);
   });
 });

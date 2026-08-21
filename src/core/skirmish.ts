@@ -1,4 +1,4 @@
-import { attenuateFerocityGain, canUseUltimate, computeDamage, FEROCITY_RULES, isCriticalHit, ULTIMATE_ENERGY_MAX, type BattleUnit } from "./battle";
+import { amplifyFerocityGain, canUseUltimate, computeDamage, FEROCITY_RULES, isCriticalHit, ULTIMATE_ENERGY_MAX, type BattleUnit } from "./battle";
 import type { RelicDef, Side, Skill } from "./types";
 
 /**
@@ -280,7 +280,7 @@ function gainEnergy(fighter: Fighter): void {
 /** 실시간 전투도 턴제와 같은 사건별 증가 및 임계 로그 계약을 사용한다. */
 function gainFerocity(fighter: Fighter, base: number, state: SkirmishState): void {
   const before = fighter.ferocity;
-  fighter.ferocity = Math.min(FEROCITY_RULES.max, before + attenuateFerocityGain(base, fighter.bondLevel));
+  fighter.ferocity = Math.min(FEROCITY_RULES.max, before + amplifyFerocityGain(base, fighter.bondLevel));
   for (const { value } of FEROCITY_RULES.thresholds) {
     if (before < value && fighter.ferocity >= value) state.log.push(`${fighter.def.name} 야성 ${value} 진입`);
   }
@@ -438,12 +438,8 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
         fighter.attackCooldown = attackInterval(fighter);
         continue;
       }
-      // 야성 100에서는 후방의 살아 있는 아군을 우선 오인 공격한다.
-      const confusedTarget = fighter.ferocity >= FEROCITY_RULES.max
-        ? state.fighters.find((other) => other.side === fighter.side && other.id !== fighter.id && isFighterAlive(other))
-        : undefined;
       // 아군 궁극기는 자동으로 나가지 않는다. 화면에서 누를 때만 fireUltimate로 들어온다.
-      strike(fighter, confusedTarget ?? target, rng, state, events, !confusedTarget && fighter.side === "enemy" && canUseUltimate(fighter));
+      strike(fighter, target, rng, state, events, fighter.side === "enemy" && canUseUltimate(fighter));
       fighter.attackCooldown = attackInterval(fighter);
     }
   }
@@ -484,14 +480,17 @@ export function fireUltimate(
   return events;
 }
 
-/** 통제 불능 프로필을 누르면 궁극기 대신 야성을 비우고 긴 기절을 부여한다. */
+/**
+ * 개방된 야성을 잠재운다.
+ *
+ * 벌이 아니라 선택이다. 지금 터뜨린 피해를 포기하고 게이지를 비워 다음 개방을 새로 쌓는다.
+ * 기절 같은 대가는 두지 않는다 — 관제는 손해가 아니라 운영이다.
+ */
 export function suppressFerocity(state: SkirmishState, fighterId: string): SkirmishEvent[] {
   const fighter = findFighter(state, fighterId);
   if (!fighter || state.phase !== "fight" || !isFighterAlive(fighter) || fighter.ferocity < FEROCITY_RULES.max) return [];
   fighter.ferocity = FEROCITY_RULES.min;
-  fighter.stunTurns = FEROCITY_RULES.suppressionStunTurns;
-  fighter.attackCooldown = attackInterval(fighter);
-  state.log.push(`${fighter.def.name} 진압 — 야성 0, ${fighter.stunTurns}회 행동 기절 · 통제 회복`);
+  state.log.push(`${fighter.def.name} 야성 진정 — 게이지를 비웠다`);
   return [{ kind: "suppress", fighterId }];
 }
 

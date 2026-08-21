@@ -1,4 +1,4 @@
-import { calculateFinalStats } from "../core/relicProgression";
+import { AWAKENING_CAP, calculateFinalStats } from "../core/relicProgression";
 import type { RelicProgress, Stats } from "../core/types";
 import { getHeartGem } from "../data/heartGems";
 import { getRelic } from "../data/relics";
@@ -15,19 +15,35 @@ export class RelicProgressionManager {
     return (this.state.relicProgress[relicId] ??= createInitialRelicProgress());
   }
 
-  /** 레벨을 검증하고 칭호도 같은 트랜잭션에서 갱신한다. */
-  setLevel(relicId: string, level: number, levelTitle: string): void {
+  /** 레벨은 정수만 저장한다. 경험치는 레벨이 바뀌면 그 레벨의 시작점으로 되돌린다. */
+  setLevel(relicId: string, level: number): void {
     if (!Number.isInteger(level) || level < 1) throw new RangeError("레벨은 1 이상의 정수여야 합니다.");
-    if (!levelTitle.trim()) throw new Error("레벨 칭호는 비워 둘 수 없습니다.");
-    Object.assign(this.getProgress(relicId), { level, levelTitle });
+    Object.assign(this.getProgress(relicId), { level, exp: 0 });
     this.persistSharedSession();
   }
 
-  /** DNA 숙련도는 정수 0~5일 때만 저장한다. */
-  setDnaMastery(relicId: string, mastery: number): void {
-    if (!Number.isInteger(mastery) || mastery < 0 || mastery > 5) throw new RangeError("DNA 숙련도는 0~5의 정수여야 합니다.");
-    this.getProgress(relicId).dnaMastery = mastery;
+  /** 각성 단계는 정수 0~5일 때만 저장한다. */
+  setAwakening(relicId: string, awakening: number): void {
+    if (!Number.isInteger(awakening) || awakening < 0 || awakening > AWAKENING_CAP) throw new RangeError("각성 단계는 0~5의 정수여야 합니다.");
+    this.getProgress(relicId).awakening = awakening;
     this.persistSharedSession();
+  }
+
+  /**
+   * 슬롯 하나만 갈아 끼운다.
+   *
+   * 정보창은 조각 하나를 눌러 고르므로, 세 자리를 통째로 넘기는 API를 화면이 다시 조립하게
+   * 두면 그 조립 규칙이 화면마다 갈라진다. 같은 젬이 다른 자리에 있으면 그 자리를 비운다.
+   */
+  equipHeartGem(relicId: string, index: number, gemId: string | null): void {
+    if (!Number.isInteger(index) || index < 0 || index > 2) throw new RangeError("Heart Gem 슬롯 번호가 올바르지 않습니다.");
+    const slots = [...this.getProgress(relicId).heartGemSlots] as (string | null)[];
+    if (gemId !== null) {
+      const duplicate = slots.indexOf(gemId);
+      if (duplicate !== -1) slots[duplicate] = null;
+    }
+    slots[index] = gemId;
+    this.setHeartGemSlots(relicId, slots);
   }
 
   /** 정확히 세 슬롯, 빈 슬롯, 중복, 미보유 Heart Gem을 모두 한곳에서 검증한다. */

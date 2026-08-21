@@ -10,6 +10,7 @@
 
 - 세계관 전문: [`docs/lore.md`](docs/lore.md)
 - 수집형 RPG로서 비어 있는 축: [`docs/design-gaps.md`](docs/design-gaps.md)
+- 다섯 속성 상성과 직업 태그: [`docs/combat-affinities.md`](docs/combat-affinities.md)
 
 ## 현재 상태
 
@@ -85,6 +86,10 @@ PuppetForge로 만든 묶음 둘을 돌려 쓰고 있다.
 
 전투 엔진(`src/core/battle.ts`)은 난수를 쓰지 않는다. 같은 입력이면 같은 결과가 나와서
 규칙을 테스트로 고정할 수 있다.
+
+불·물·풀·땅·바람은 각자 두 속성에 강하고 두 속성에 약하다. 유리하면 최종 피해 1.25배,
+불리하면 0.8배이며 같은 속성은 1배다. 전사·탱커·암살자·지원가는 고정 보정이 없는 특화
+태그이고, 자세한 표와 공식은 [`docs/combat-affinities.md`](docs/combat-affinities.md)에 둔다.
 
 ## 기술 스택
 

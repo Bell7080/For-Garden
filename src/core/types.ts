@@ -2,8 +2,11 @@
 
 export type Side = "player" | "enemy";
 
-/** 역할. 전방에 세울지 후방에 둘지 판단하는 기준이 된다. */
-export type Role = "attacker" | "tank" | "support";
+/** 속성. 다섯 속성은 서로 정확히 두 속성을 이기고 나머지 두 속성에 진다. */
+export type Element = "fire" | "water" | "grass" | "earth" | "wind";
+
+/** 전투 성능을 강제하지 않는 캐릭터 특화 태그다. 실제 행동은 능력치와 스킬이 결정한다. */
+export type Role = "warrior" | "tank" | "assassin" | "support";
 
 /** 프로토타입 렐릭 희귀도. 배열 순서에 기대지 말고 가챠 규칙의 명시적 우선순위를 사용한다. */
 export type RelicRarity = "R" | "SR" | "SSR";
@@ -140,6 +143,9 @@ export interface RelicDef {
   portraitAssetId: PortraitAssetId;
   /** 어떤 유전자에서 되살아났는지. */
   origin: string;
+  /** 공격자와 방어자의 상성 배율을 결정하는 고유 속성이다. */
+  element: Element;
+  /** 편성 이해를 돕는 특화 태그이며 별도의 고정 보정치는 주지 않는다. */
   role: Role;
   stats: Stats;
   passive: Passive;

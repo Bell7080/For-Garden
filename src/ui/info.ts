@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import type { PuppetCreature } from "../puppets/assets";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { previewSkillDamage, ULTIMATE_ENERGY_MAX, type BattleUnit } from "../core/battle";
-import type { RelicDef, Skill, SkillIconAssetId, Stats } from "../core/types";
+import type { Element, RelicDef, Role, Skill, SkillIconAssetId, Stats } from "../core/types";
 import { setDebugInfoOpen } from "../debug";
 import { getHeartGem, HEART_GEMS } from "../data/heartGems";
 import { KeywordManager } from "../managers/KeywordManager";
@@ -32,8 +32,6 @@ import { BOND_FEROCITY_MULTIPLIER, BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL } from
 import { getRelicCatalogDisclosure } from "../core/relicCatalog";
 
 export type { SkillInfoViewModel } from "./SkillPopup";
-
-export const ROLE_LABEL: Record<string, string> = { attacker: "공격", tank: "방어", support: "지원" };
 
 /** 전신 원화의 코어(`중심1`) 관절이 놓이는 자리와 확대 높이. 정보창의 주인공은 캐릭터다. */
 const PORTRAIT_FOCUS = { x: 420, y: 1040, height: 1820 } as const;
@@ -92,6 +90,11 @@ interface BadgeHandle {
 interface GemSlot {
   paint(gemId: string | null): void;
 }
+
+/** 역할은 전투 공식을 바꾸지 않는 특화 태그로만 노출한다. */
+export const ROLE_LABEL: Record<Role, string> = { warrior: "전사", tank: "탱커", assassin: "암살자", support: "지원가" };
+/** 상세 정보에서 코드 키 대신 일관된 한국어 속성명을 보여 준다. */
+export const ELEMENT_LABEL: Record<Element, string> = { fire: "불", water: "물", grass: "풀", earth: "땅", wind: "바람" };
 
 /** `?` 도움말 배지의 클릭이 아래 카드 입력으로 전파되지 않게 한다. */
 export function addHelpBadge(scene: Phaser.Scene, x: number, y: number, onClick: () => void, radius = 26): Phaser.GameObjects.Container {
@@ -723,7 +726,7 @@ export class InfoManager {
 
     this.rarityText.setText(owned ? def.rarity : "???");
     this.nameText.setText(owned ? def.name : "미발굴 개체");
-    this.roleText.setText("NO." + def.specimenNumber + (owned ? "   " + def.origin + " · " + ROLE_LABEL[def.role] : "   실루엣 기록"));
+    this.roleText.setText("NO." + def.specimenNumber + (owned ? "   " + def.origin + " · " + ELEMENT_LABEL[def.element] + " · " + ROLE_LABEL[def.role] : "   실루엣 기록"));
     this.refreshBadges();
     this.paintStars(def);
     this.buildSkillIcons(def);
@@ -779,8 +782,9 @@ export class InfoManager {
     const bondNext = bondMaxed ? bondBase : BOND_TOTAL_XP_BY_LEVEL[progress.bondLevel + 1];
     this.bondValue.setText(String(progress.bondLevel));
     this.bondBar.setValue(bondMaxed ? 1 : (progress.bondXp - bondBase) / (bondNext - bondBase));
-    const reduction = Math.round((1 - BOND_FEROCITY_MULTIPLIER[progress.bondLevel]) * 100);
-    this.bondLabel.setText((bondMaxed ? "MAX" : progress.bondXp + " / " + bondNext + " EXP") + "   ·   야성 증가 -" + reduction + "%");
+    // 유대는 야성을 눌러 주는 것이 아니라 더 빨리 끓게 한다. 피버로 가는 지름길이다.
+    const boost = Math.round((BOND_FEROCITY_MULTIPLIER[progress.bondLevel] - 1) * 100);
+    this.bondLabel.setText((bondMaxed ? "MAX" : progress.bondXp + " / " + bondNext + " EXP") + "   ·   야성 상승 +" + boost + "%");
 
     STAT_CHIPS.forEach((chip, index) => {
       const base = def.stats[chip.key];

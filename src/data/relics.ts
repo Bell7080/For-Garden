@@ -16,7 +16,8 @@ export const RELICS: RelicDef[] = [
     rarity: "SSR",
     portraitAssetId: "lexia",
     origin: "티라노사우루스",
-    role: "attacker",
+    element: "fire",
+    role: "warrior",
     stats: {
       hp: 820,
       def: 42,
@@ -69,6 +70,7 @@ export const RELICS: RelicDef[] = [
     rarity: "SR",
     portraitAssetId: "torika",
     origin: "트리케라톱스",
+    element: "earth",
     role: "tank",
     stats: {
       hp: 1420,
@@ -122,6 +124,7 @@ export const RELICS: RelicDef[] = [
     rarity: "SR",
     portraitAssetId: "seira",
     origin: "스피노사우루스",
+    element: "water",
     role: "tank",
     stats: {
       hp: 1260,
@@ -175,6 +178,7 @@ export const RELICS: RelicDef[] = [
     rarity: "R",
     portraitAssetId: "torika-placeholder",
     origin: "도도새",
+    element: "wind",
     role: "support",
     stats: {
       hp: 760,
@@ -228,7 +232,8 @@ export const RELICS: RelicDef[] = [
     rarity: "R",
     portraitAssetId: "torika-placeholder",
     origin: "스밀로돈",
-    role: "attacker",
+    element: "grass",
+    role: "assassin",
     stats: {
       hp: 840,
       def: 56,
@@ -281,6 +286,7 @@ export const RELICS: RelicDef[] = [
     rarity: "R",
     portraitAssetId: "torika-placeholder",
     origin: "케찰코아틀루스",
+    element: "wind",
     role: "support",
     stats: {
       hp: 780,
@@ -336,7 +342,8 @@ export const RELICS: RelicDef[] = [
     rarity: "R",
     portraitAssetId: "torika-placeholder",
     origin: "실패한 벨로키랍토르 개체",
-    role: "attacker",
+    element: "fire",
+    role: "assassin",
     stats: {
       hp: 620,
       def: 38,
@@ -389,6 +396,7 @@ export const RELICS: RelicDef[] = [
     rarity: "R",
     portraitAssetId: "torika-placeholder",
     origin: "실패한 갑주 개체",
+    element: "earth",
     role: "tank",
     stats: {
       hp: 980,
@@ -442,6 +450,7 @@ export const RELICS: RelicDef[] = [
     rarity: "R",
     portraitAssetId: "torika-placeholder",
     origin: "실패한 익룡 개체",
+    element: "water",
     role: "support",
     stats: {
       hp: 580,

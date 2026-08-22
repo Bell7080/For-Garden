@@ -147,7 +147,8 @@ export class LobbyScene extends Phaser.Scene {
       // 로비의 옛 상점은 현금 상품과 분리된 인게임 재화 전용 "무역"으로 개편한다.
       { icon: "shop", label: "무역", onClick: () => this.scene.start("shop", { section: "trade" }) },
       { icon: "mail", label: "우편" },
-      { icon: "friends", label: "친구" },
+      // 친구는 더 이상 준비 중 토스트가 아니라 목록과 공개 프로필 화면으로 연결된다.
+      { icon: "friends", label: "친구", onClick: () => this.scene.start("friends") },
     ] as const;
     rail.forEach((item, i) => {
       new RailButton(this, x, 640 + i * 152, { icon: item.icon, label: item.label, onClick: "onClick" in item ? item.onClick : () => this.notReady(item.label) });

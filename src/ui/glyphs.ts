@@ -53,17 +53,26 @@ export function drawGlyph(
       g.strokePoints(points(-r * 0.5, -r * 0.85, r * 0.8, -r * 0.45, -r * 0.5, -r * 0.05), true);
       break;
     case "ferocity":
-      // 각진 불꽃 — 야성이 끓어오르는 표시다. 둥근 곡선 없이 꺾어서 그린다.
+      // 각진 불꽃 — 야성이 끓어오르는 표시다. 큰 혀 하나와 그 앞에 겹치는 작은 혀 하나로
+      // 세운다. 곡선 없이 꺾어서 그려야 다른 아이콘과 같은 결로 읽힌다.
       g.fillStyle(color, alpha);
       g.fillPoints(points(
-        0, -r,
-        r * 0.62, -r * 0.1,
-        r * 0.34, r * 0.06,
-        r * 0.58, r * 0.88,
-        -r * 0.12, r * 0.3,
-        -r * 0.36, r * 0.86,
-        -r * 0.62, -r * 0.06,
-        -r * 0.26, -r * 0.18,
+        r * 0.05, -r,
+        r * 0.72, -r * 0.02,
+        r * 0.5, r * 0.34,
+        r * 0.62, r * 0.92,
+        -r * 0.62, r * 0.92,
+        -r * 0.74, r * 0.14,
+        -r * 0.3, -r * 0.34,
+        -r * 0.36, r * 0.2,
+      ), true);
+      g.fillStyle(color, alpha * 0.45);
+      g.fillPoints(points(
+        r * 0.02, -r * 0.24,
+        r * 0.34, r * 0.3,
+        r * 0.2, r * 0.9,
+        -r * 0.28, r * 0.9,
+        -r * 0.34, r * 0.28,
       ), true);
       break;
     case "shop":

@@ -40,15 +40,7 @@ const PORTRAIT_FOCUS = { x: 336, y: 980, height: 1820 } as const;
 const FIGURE = { x: 806, y: 1786, height: 240 } as const;
 
 /** 오른쪽 정보 기둥. 캐릭터를 덮지 않도록 화면 오른쪽 절반만 쓴다. */
-const COLUMN = {
-  x: 818,
-  width: 476,
-  /** 판 한 장이 덮는 위아래 끝. */
-  top: 258,
-  bottom: 1500,
-  /** 칸을 가르는 선의 화면 좌표. 각 칸의 제목 바로 위를 지난다. */
-  section: { bond: 620, stats: 806, gem: 1236 },
-} as const;
+const COLUMN = { x: 818, width: 476 } as const;
 
 /** 판 하나하나가 같은 각도로 기울어 한 벌로 읽힌다. */
 const PANEL_TILT = -1.6;
@@ -64,6 +56,14 @@ const FAVORITE_ON = 0xf2789f;
  * 앞으로 SVG 일러스트가 들어올 액자라 넉넉하게 잡는다. 셋의 간격도 여기서만 정한다.
  */
 const SKILL_ICON = { size: 150, x: 124, step: 168 } as const;
+
+/**
+ * 성급 별의 크기와 색.
+ *
+ * 호박(amber) 계열 하나로만 쌓는다. 겹마다 색을 바꾸면 화려한 대신 화면의 다른 강조색과
+ * 싸운다. 밝기와 투명도만 달리해 같은 빛에서 나온 것처럼 보이게 한다.
+ */
+const STAR = { outer: 34, halo: 0xffb340, glow: 0xffcf5e, body: 0xf5a623, core: 0xfff6d8 } as const;
 
 /** 야성 뱃지의 색. 게이지가 끓는 쪽이라 붉은 기가 돈다. */
 const FEROCITY_BADGE = 0x8f3a2a;
@@ -113,6 +113,20 @@ interface PopupSource {
 /** 부른 자리를 팝업 옵션으로 옮긴다. */
 function anchorOf(from: PopupSource): { anchor: { x: number; y: number }; onClose: () => void } {
   return { anchor: { x: from.x, y: from.y }, onClose: from.onClose };
+}
+
+/**
+ * 화면 좌표로 만든 것을 기울어진 판 안으로 옮긴다.
+ *
+ * 자리는 전부 화면 기준으로 적는 편이 읽기 쉽다. 그래서 만들 때는 화면 좌표를 쓰고, 판에
+ * 넣는 순간 판 기준으로 바꾼다 — 그래야 판과 내용물이 같은 각도로 함께 기운다.
+ */
+function attach(panel: Phaser.GameObjects.Container, ...objects: Phaser.GameObjects.Components.Transform[]): void {
+  for (const object of objects) {
+    object.x -= panel.x;
+    object.y -= panel.y;
+    panel.add(object as unknown as Phaser.GameObjects.GameObject);
+  }
 }
 
 /** 뱃지 하나를 다시 칠하는 손잡이. */
@@ -217,20 +231,22 @@ export class InfoManager {
     this.chrome.add(this.starRow);
     this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 40, 196, (from) => this.openAwakening(from));
 
-    // 오른쪽 수치는 판 하나 위에 얹는다. 칸마다 판을 따로 깔면 기울기가 겹치는 자리에서
-    // 폭과 그림자가 제각각으로 어긋나 네 장이 따로 노는 것처럼 보인다.
-    this.addColumnPanel([COLUMN.section.bond, COLUMN.section.stats, COLUMN.section.gem]);
+    // 오른쪽 수치는 칸마다 판을 따로 깐다. 대신 칸의 내용물을 그 판 **안에** 넣어 판과 같은
+    // 각도로 함께 기운다. 판만 기울고 글자가 반듯하면 판 위에 종이를 얹어 둔 것처럼 어긋난다.
+    const levelPanel = this.addPanel(COLUMN.x, 440, COLUMN.width, 368);
+    const bondPanel = this.addPanel(COLUMN.x, 700, COLUMN.width, 150);
+    const statPanel = this.addPanel(COLUMN.x, 1024, COLUMN.width, 420);
+    const gemPanel = this.addPanel(COLUMN.x, 1378, COLUMN.width, 262);
 
     // 레벨 · 경험치 · 급여.
-    this.chrome.add(scene.add.text(COLUMN.x - COLUMN.width / 2 + 42, 306, "LV", textStyle({ role: "display", size: 30, color: COLOR.accentText })).setOrigin(0, 0));
     this.levelValue = scene.add.text(COLUMN.x - COLUMN.width / 2 + 92, 296, "", textStyle({ role: "display", size: 96 })).setOrigin(0, 0).setScale(1, 1.16);
     this.levelCap = scene.add.text(COLUMN.x + COLUMN.width / 2 - 46, 376, "", textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(1, 0);
-    this.chrome.add([this.levelValue, this.levelCap]);
     this.expBar = new Gauge(scene, COLUMN.x, 452, COLUMN.width - 88, 16, COLOR.accent);
-    this.chrome.add(this.expBar.objects);
     this.expLabel = scene.add.text(COLUMN.x, 470, "", textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0.5, 0);
-    this.chrome.add(this.expLabel);
-    const feed = this.addFeedButton(COLUMN.x, 556, COLUMN.width - 96, 112);
+    attach(levelPanel,
+      scene.add.text(COLUMN.x - COLUMN.width / 2 + 42, 306, "LV", textStyle({ role: "display", size: 30, color: COLOR.accentText })).setOrigin(0, 0),
+      this.levelValue, this.levelCap, ...this.expBar.objects, this.expLabel);
+    const feed = this.addFeedButton(COLUMN.x, 556, COLUMN.width - 96, 112, levelPanel);
     this.feedButton = feed.container;
     this.feedLabel = feed.label;
 
@@ -245,21 +261,20 @@ export class InfoManager {
     );
     this.bondValue = scene.add.text(0, 4, "", textStyle({ role: "display", size: 34 })).setOrigin(0.5);
     bondHeart.add(this.bondValue);
-    this.chrome.add(bondHeart);
-    this.chrome.add(scene.add.text(COLUMN.x - COLUMN.width / 2 + 146, 652, "유대", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0));
     this.bondBar = new Gauge(scene, COLUMN.x + 52, 712, COLUMN.width - 216, 14, BOND_HEART);
-    this.chrome.add(this.bondBar.objects);
     this.bondLabel = scene.add.text(COLUMN.x - COLUMN.width / 2 + 146, 728, "", textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0, 0);
-    this.chrome.add(this.bondLabel);
+    attach(bondPanel, bondHeart,
+      scene.add.text(COLUMN.x - COLUMN.width / 2 + 146, 652, "유대", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0),
+      ...this.bondBar.objects, this.bondLabel);
 
     // 능력치.
-    this.chrome.add(scene.add.text(COLUMN.x - COLUMN.width / 2 + 44, 838, "능력치", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0));
-    this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 48, 852, (from) => this.openExtraStats(from));
-    STAT_CHIPS.forEach((chip, index) => this.addStatChip(chip, index));
+    attach(statPanel, scene.add.text(COLUMN.x - COLUMN.width / 2 + 44, 838, "능력치", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0));
+    this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 48, 852, (from) => this.openExtraStats(from), statPanel);
+    STAT_CHIPS.forEach((chip, index) => this.addStatChip(chip, index, statPanel));
 
     // 하트 젬 — 하트 하나를 셋으로 가른 자리.
-    this.chrome.add(scene.add.text(COLUMN.x - COLUMN.width / 2 + 44, 1268, "HEART GEM", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0));
-    for (let index = 0; index < 3; index += 1) this.gemSlots.push(this.addGemSlot(index));
+    attach(gemPanel, scene.add.text(COLUMN.x - COLUMN.width / 2 + 44, 1268, "HEART GEM", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0));
+    for (let index = 0; index < 3; index += 1) this.gemSlots.push(this.addGemSlot(index, gemPanel));
 
     this.buildFigureStand();
     this.addCostumeButton(FIGURE.x + 152, FIGURE.y - 206);
@@ -267,23 +282,18 @@ export class InfoManager {
   }
 
   /**
-   * 오른쪽 수치를 전부 받치는 판 한 장.
+   * 오른쪽 기둥의 판 하나.
    *
-   * 레벨·유대·능력치·젬은 서로 다른 이야기지만 같은 기둥에 선다. 판을 넷으로 나누면 기울기
-   * 때문에 폭이 저마다 달라 보이고 그림자도 네 겹으로 진다. 한 장으로 깔고 칸은 얇은
-   * 구분선으로만 가른다.
+   * 판만 기울고 그 위의 글자와 칩이 반듯하면 종이를 얹어 둔 것처럼 어긋난다. 그래서 판을
+   * 돌려주고, 칸의 내용물은 전부 이 컨테이너 **안에** 넣어 같은 각도로 함께 기운다.
    */
-  private addColumnPanel(dividers: readonly number[]): void {
-    const height = COLUMN.bottom - COLUMN.top;
-    const centerY = (COLUMN.top + COLUMN.bottom) / 2;
-    const panel = this.scene.add.container(COLUMN.x, centerY).setRotation(Phaser.Math.DegToRad(PANEL_TILT));
-    const shape = perspectiveRect(COLUMN.width, height, { tall: "right", taper: 0.06 });
+  private addPanel(x: number, y: number, width: number, height: number): Phaser.GameObjects.Container {
+    const panel = this.scene.add.container(x, y).setRotation(Phaser.Math.DegToRad(PANEL_TILT));
+    const shape = perspectiveRect(width, height, { tall: "right", taper: 0.06 });
     panel.add(drawLayer(this.scene, 0, 0, shape, { fill: 0x0b0f15, alpha: 0.6, edge: COLOR.accent, edgeAlpha: 0.4 }));
     panel.add(drawShapeEdge(this.scene, 0, 0, shape, "bottom", { color: COLOR.accent, alpha: 0.22, inset: 10 }));
-    for (const y of dividers) {
-      panel.add(drawHairline(this.scene, 0, y - centerY, COLUMN.width - 72, { color: COLOR.accent, alpha: 0.18 }));
-    }
     this.chrome.add(panel);
+    return panel;
   }
 
   /** 즐겨찾기(별)와 애착(하트). 켜짐은 저마다의 색, 꺼짐은 회색이다. */
@@ -335,7 +345,7 @@ export class InfoManager {
   }
 
   /** 더 볼 것이 있다는 표시. 자리만 다를 뿐 생김새와 크기는 같다. */
-  private addMagnifier(x: number, y: number, onClick: (from: PopupSource) => void): void {
+  private addMagnifier(x: number, y: number, onClick: (from: PopupSource) => void, panel?: Phaser.GameObjects.Container): void {
     const container = this.scene.add.container(x, y);
     container.add(drawGlyph(this.scene, "magnifier", 0, 0, 44, COLOR.accent));
     const hit = this.scene.add.rectangle(x, y, 84, 84, 0xffffff, 0).setInteractive({ useHandCursor: true });
@@ -345,7 +355,8 @@ export class InfoManager {
       container.setScale(1.15);
       onClick({ x, y: y - 30, onClose: () => container.setScale(1) });
     });
-    this.chrome.add([container, hit]);
+    if (panel) attach(panel, container, hit);
+    else this.chrome.add([container, hit]);
   }
 
   /**
@@ -354,12 +365,12 @@ export class InfoManager {
    * 한 번 누르면 한 번 먹이고, 꾹 누르고 있으면 계속 먹인다. 잠깐 누르고 있으면 그 위로 한 번에
    * 여러 레벨을 채우는 작은 팝업이 떠서, 레벨 하나에 수십 번 두드리지 않아도 된다.
    */
-  private addFeedButton(x: number, y: number, width: number, height: number): { container: Phaser.GameObjects.Container; label: Phaser.GameObjects.Text } {
+  private addFeedButton(x: number, y: number, width: number, height: number, panel: Phaser.GameObjects.Container): { container: Phaser.GameObjects.Container; label: Phaser.GameObjects.Text } {
     const container = this.scene.add.container(x, y);
     const shape = slantedRect(width, height, 16);
     container.add(drawLayer(this.scene, 0, 0, shape, { fill: 0x18261c, alpha: 0.92, edge: FEED_GREEN, edgeAlpha: 0.9, sheen: 0.06 }));
-    const label = this.scene.add.text(0, -18, "급여하기", textStyle({ role: "display", size: 38 })).setOrigin(0.5);
-    const hint = this.scene.add.text(0, 20, "잡초 " + FEED_UNIT.weeds + " · 꾹 누르면 계속", textStyle({ role: "body", size: 19, color: COLOR.inkDim })).setOrigin(0.5);
+    const label = this.scene.add.text(0, -22, "급여하기", textStyle({ role: "display", size: 38 })).setOrigin(0.5);
+    const hint = this.scene.add.text(0, 16, "잡초 " + FEED_UNIT.weeds + " · 꾹 누르면 계속", textStyle({ role: "body", size: 19, color: COLOR.inkDim })).setOrigin(0.5);
     container.add([label, hint]);
     const hit = this.scene.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
     hit.on("pointerdown", () => {
@@ -378,7 +389,7 @@ export class InfoManager {
     hit.on("pointerup", release);
     hit.on("pointerout", release);
     container.add(hit);
-    this.chrome.add(container);
+    attach(panel, container);
     return { container, label };
   }
 
@@ -432,7 +443,7 @@ export class InfoManager {
   }
 
   /** 능력치 칩 하나. 큰 수치가 먼저 읽히고 기본치·성장분은 그 아래 작게 붙는다. */
-  private addStatChip(chip: { key: keyof Stats; label: string; color: number }, index: number): void {
+  private addStatChip(chip: { key: keyof Stats; label: string; color: number }, index: number, panel: Phaser.GameObjects.Container): void {
     const x = COLUMN.x - COLUMN.width / 2 + 76 + (index % 2) * (COLUMN.width / 2 - 8);
     const y = 906 + Math.floor(index / 2) * 118;
     const size = 62;
@@ -441,13 +452,12 @@ export class InfoManager {
       bevel: { topLeft: size * 0.32, topRight: 0, bottomRight: size * 0.32, bottomLeft: 0 },
     }), { fill: 0x11161d, alpha: 0.92, edge: chip.color, edgeAlpha: 0.95 }));
     container.add(this.scene.add.text(0, 0, chip.label, textStyle({ role: "emphasis", size: 21 })).setOrigin(0.5));
-    this.chrome.add(container);
 
     const value = this.scene.add.text(x + 12, y - 26, "", textStyle({ role: "display", size: 36 })).setOrigin(0, 0);
     const gain = this.scene.add.text(x + 12, y + 16, "", textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0, 0);
     this.statValues.push(value);
     this.statGains.push(gain);
-    this.chrome.add([value, gain]);
+    attach(panel, container, value, gain);
   }
 
   /**
@@ -456,25 +466,23 @@ export class InfoManager {
    * 하트 세 개가 아니라 하트 **하나를 셋으로 가른** 자리다. 세 조각이 다 차야 온전한 하트가
    * 완성되므로, 빈 자리가 곧 "아직 덜 채운 마음"으로 읽힌다.
    */
-  private addGemSlot(index: number): GemSlot {
+  private addGemSlot(index: number, panel: Phaser.GameObjects.Container): GemSlot {
     const center = { x: COLUMN.x - 44, y: 1378 };
     const size = 232;
     const piece = this.scene.add.graphics({ x: center.x, y: center.y });
     const shape = heartSlice(size, index);
     const spot = heartSliceCenter(size, index);
-    this.chrome.add(piece);
 
     // 이름은 하트 오른쪽에 세 줄로 세운다. 조각 안에 넣으면 좁은 면에 글자가 눌려 읽히지 않는다.
     const label = this.scene.add
       .text(center.x + size * 0.62, center.y - 46 + index * 46, "", textStyle({ role: "body", size: 20, color: COLOR.inkDim }))
       .setOrigin(0, 0.5);
-    this.chrome.add(label);
 
     const hit = this.scene.add
       .rectangle(center.x + spot.x, center.y + spot.y, size * 0.44, size * 0.44, 0xffffff, 0)
       .setInteractive({ useHandCursor: true });
     hit.on("pointerup", () => this.openGemPicker(index));
-    this.chrome.add(hit);
+    attach(panel, piece, label, hit);
 
     return {
       paint: (gemId) => {
@@ -760,7 +768,7 @@ export class InfoManager {
   private addFerocityBadge(icon: Phaser.GameObjects.Container, size: number, def: RelicDef): void {
     // 이름표가 아니라 아이콘이다. 스킬 액자 어깨에 걸린 작은 불꽃 하나로 알린다.
     const badgeSize = 52;
-    const badge = this.scene.add.container(-size / 2 + 10, -size / 2 - 6);
+    const badge = this.scene.add.container(0, -size / 2 - 30);
     const shape = chipPoints(badgeSize, badgeSize, {
       bevel: { topLeft: badgeSize * 0.34, topRight: 0, bottomRight: badgeSize * 0.34, bottomLeft: 0 },
     });
@@ -771,7 +779,7 @@ export class InfoManager {
     hit.on("pointerout", () => { if (!this.popups.isOpen) badge.setScale(1); });
     hit.on("pointerup", () => {
       badge.setScale(1.1);
-      this.openFerocityTrait(def, { x: icon.x - size / 2, y: icon.y - size / 2 - 30, onClose: () => badge.setScale(1) });
+      this.openFerocityTrait(def, { x: icon.x, y: icon.y - size / 2 - 56, onClose: () => badge.setScale(1) });
     });
     badge.add(hit);
     icon.add(badge);
@@ -872,24 +880,35 @@ export class InfoManager {
   private paintStars(def: RelicDef): void {
     this.starRow.removeAll(true);
     const filled = def.rarity === "SSR" ? 5 : def.rarity === "SR" ? 4 : 3;
-    const gap = 58;
-    const left = -((5 - 1) * gap) / 2 - 40;
-    for (let i = 0; i < 5; i += 1) {
-      const x = left + i * gap;
-      if (i < filled) {
-        // 찬 별은 넉 장을 겹친다 — 뒤로 지는 그림자, 넓고 옅은 빛무리, 강조색 몸통, 흰 심지.
-        // 밝은 원화 위에서도 떠 보이려면 테두리가 아니라 빛으로 띄워야 한다.
-        this.starRow.add(this.scene.add.star(x + 2, 4, 4, 9, 27, 0x000000, 0.55));
-        this.starRow.add(this.scene.add.star(x, 0, 4, 5, 46, COLOR.accent, 0.2));
-        this.starRow.add(this.scene.add.star(x, 0, 4, 9, 27, COLOR.accent, 1));
-        this.starRow.add(this.scene.add.star(x, 0, 4, 4, 14, 0xfff4d6, 0.95));
-        // 오른쪽 위로 튀는 작은 반짝임. 다섯이 나란히 서도 하나하나가 살아 있게 한다.
-        this.starRow.add(this.scene.add.star(x + 17, -15, 4, 1.5, 7, 0xfff4d6, 0.8));
-        continue;
-      }
-      // 빈 별은 자리만 지킨다. 채워진 쪽과 크기를 맞추되 선 하나로 얇게 남긴다.
-      this.starRow.add(this.scene.add.star(x, 0, 4, 9, 27, 0x000000, 0.28).setStrokeStyle(2, BADGE_OFF, 0.8));
+    const gap = 74;
+    const left = -((5 - 1) * gap) / 2 - 34;
+    for (let i = 0; i < 5; i += 1) this.paintStar(left + i * gap, i < filled);
+  }
+
+  /**
+   * 성급 별 하나.
+   *
+   * 찬 별은 일곱 겹이다 — 뒤로 지는 그림자, 넓게 퍼지는 호박빛 무리, 그 안쪽의 짙은 무리,
+   * 몸통, 위쪽만 밝은 심지, 그리고 십자로 뻗는 빛살. 겹을 줄이면 밝은 원화 위에서 그냥
+   * 노란 도형이 되고, 색을 바꾸면 화면의 호박색 계열이 깨진다. 그래서 겹으로만 화려하게 한다.
+   */
+  private paintStar(x: number, filled: boolean): void {
+    const outer = STAR.outer;
+    const inner = outer * 0.42;
+    if (!filled) {
+      // 빈 별은 자리만 지킨다. 채운 쪽과 크기가 같아야 다섯 칸이 나란히 읽힌다.
+      this.starRow.add(this.scene.add.star(x, 0, 5, inner, outer, 0x000000, 0.3).setStrokeStyle(2, BADGE_OFF, 0.75));
+      return;
     }
+    // 빛무리는 별 모양 그대로 세 겹으로 퍼진다. 선처럼 뻗는 빛살을 쓰면 별에 막대를 꽂은
+    // 것처럼 보이므로, 크기와 투명도만 달리해 부드럽게 번지게 한다.
+    this.starRow.add(this.scene.add.star(x + 2, 5, 5, inner, outer, 0x1a0f00, 0.5));
+    this.starRow.add(this.scene.add.star(x, 0, 5, inner * 1.5, outer * 1.95, STAR.halo, 0.1));
+    this.starRow.add(this.scene.add.star(x, 0, 5, inner * 1.3, outer * 1.5, STAR.halo, 0.18));
+    this.starRow.add(this.scene.add.star(x, 0, 5, inner * 1.12, outer * 1.18, STAR.glow, 0.34));
+    this.starRow.add(this.scene.add.star(x, 0, 5, inner, outer, STAR.body, 1));
+    // 심지는 작고 옅게, 위로 조금 치우쳐 앉는다. 크게 두면 별 안에 별이 하나 더 있는 것처럼 보인다.
+    this.starRow.add(this.scene.add.star(x, -outer * 0.16, 5, inner * 0.5, outer * 0.42, STAR.core, 0.7));
   }
 
   /** 레벨·경험치·유대·능력치·젬을 지금 상태로 다시 칠한다. */

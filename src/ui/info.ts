@@ -58,6 +58,14 @@ const FAVORITE_ON = 0xf2789f;
  */
 const SKILL_ICON = { size: 150, x: 124, step: 168 } as const;
 
+/**
+ * 유대 하트의 지름.
+ *
+ * 가로세로 같은 자리에 앉는다(1:1). 하트 곡선은 세로가 조금 짧아서 그대로 그리면 납작해
+ * 보이므로, 그리는 쪽에서 세로만 늘려 정사각형 자리를 꽉 채운다.
+ */
+const BOND_HEART_SIZE = 104;
+
 /** 정보창의 별은 화면에서 가장 큰 성급 표시다. 모양과 색은 `stars.ts`가 정한다. */
 const STAR_SIZE = 34;
 
@@ -248,14 +256,12 @@ export class InfoManager {
 
     // 유대.
     const bondHeart = scene.add.container(COLUMN.x - COLUMN.width / 2 + 78, 700);
-    // 하트는 도형이 아니라 글자다. 굵은 어두운 테두리를 둘러 밝은 배경 위에서도 읽힌다.
-    bondHeart.add(
-      scene.add
-        .text(0, -4, "♥", textStyle({ role: "display", size: 96, color: "#f2789f" }))
-        .setOrigin(0.5)
-        .setStroke("#2a0f1a", 10),
-    );
-    this.bondValue = scene.add.text(0, 4, "", textStyle({ role: "display", size: 34 })).setOrigin(0.5);
+    // 하트도 별과 같은 방식이다 — 그림자·빛무리·몸통을 겹으로 쌓고 어두운 선으로 마무리한다.
+    bondHeart.add(paintBondHeart(scene, BOND_HEART_SIZE));
+    this.bondValue = scene.add
+      .text(0, 2, "", textStyle({ role: "display", size: 46 }))
+      .setOrigin(0.5)
+      .setStroke("#2a0b16", 9);
     bondHeart.add(this.bondValue);
     this.bondBar = new Gauge(scene, COLUMN.x + 52, 712, COLUMN.width - 216, 14, BOND_HEART);
     this.bondLabel = scene.add.text(COLUMN.x - COLUMN.width / 2 + 146, 728, "", textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0, 0);
@@ -960,6 +966,43 @@ class Gauge {
  * 하트 곡선을 촘촘히 찍어 외곽을 만들고, 가운데에서 세 갈래로 잘라 왼쪽 봉우리 · 오른쪽
  * 봉우리 · 아래 꼭짓점을 나눈다. 세 조각이 다 차야 하트 하나가 완성된다.
  */
+/**
+ * 유대 하트 한 덩이.
+ *
+ * 별과 같은 방식으로 겹을 쌓는다 — 뒤로 지는 그림자, 번지는 빛무리 두 겹, 몸통, 그리고
+ * 어두운 테두리. 글자 하트(♥)를 쓰면 글꼴마다 모양과 두께가 달라지고 테두리도 획을 따라
+ * 울퉁불퉁해지므로, 젬과 같은 곡선식으로 직접 그린다.
+ */
+function paintBondHeart(scene: Phaser.Scene, size: number): Phaser.GameObjects.Graphics {
+  const g = scene.add.graphics();
+  const shape = (scale: number, dx = 0, dy = 0): Phaser.Geom.Point[] => {
+    const list: Phaser.Geom.Point[] = [];
+    for (let i = 0; i <= 72; i += 1) {
+      const [x, y] = heartOutline((Math.PI * 2 * i) / 72, size * scale);
+      // 하트 곡선은 세로가 짧다. 1:1 자리를 꽉 채우도록 세로만 늘린다.
+      list.push(new Phaser.Geom.Point(x + dx, y * BOND_HEART_STRETCH + dy));
+    }
+    return list;
+  };
+  g.fillStyle(0x2a0b16, 0.5);
+  g.fillPoints(shape(1, size * 0.05, size * 0.06), true);
+  g.fillStyle(BOND_HEART, 0.12);
+  g.fillPoints(shape(1.34), true);
+  g.fillStyle(BOND_HEART, 0.22);
+  g.fillPoints(shape(1.14), true);
+  g.fillStyle(BOND_HEART, 1);
+  g.fillPoints(shape(1), true);
+  // 위쪽 봉우리에만 얹는 밝은 결. 하트를 평평한 스티커로 보이지 않게 한다.
+  g.fillStyle(0xffd9e6, 0.28);
+  g.fillPoints(shape(0.34, -size * 0.2, -size * 0.19), true);
+  g.lineStyle(4, 0x2a0b16, 0.9);
+  g.strokePoints(shape(1), true);
+  return g;
+}
+
+/** 하트 곡선의 세로를 늘리는 비율. 1:1 자리에 꽉 차게 앉힌다. */
+const BOND_HEART_STRETCH = 1.16;
+
 function heartOutline(t: number, size: number): [number, number] {
   const scale = size / 32;
   const x = 16 * Math.sin(t) ** 3;

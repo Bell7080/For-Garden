@@ -1,4 +1,4 @@
-import type { AcquisitionResult, Wallet } from "../core/gacha";
+import type { AcquisitionResult, GachaPityState, Wallet } from "../core/gacha";
 import type { RelicProgress } from "../core/types";
 import type { MissionPeriod } from "../core/missions";
 
@@ -6,8 +6,8 @@ import type { MissionPeriod } from "../core/missions";
 export interface PlayerStateDto {
   /** 서버가 확정한 현재 재화다. */
   wallet: Wallet;
-  /** 서버가 확정한 배너별 SSR 천장 진행도다. */
-  pullCountSinceHighestRarity: Record<string, number>;
+  /** 서버가 확정한 이월 그룹별 천장과 픽업 확정 상태다. */
+  gachaPityByGroup: Record<string, GachaPityState>;
   /** Set 대신 배열을 써서 JSON 응답과 같은 모양을 유지한다. */
   ownedRelicIds: string[];
   /** 렐릭 id별 성장과 Heart Gem 3슬롯 장착 상태다. */

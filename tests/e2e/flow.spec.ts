@@ -205,3 +205,15 @@ test("연구소에서 발굴하면 화석이 줄고 결과가 뜬다", async ({ 
   // 슬롯별 신규/DNA 배지가 모바일 안전 영역에 표시되는 모습을 회귀 자료로 남긴다.
   await page.screenshot({ path: `test-results/${test.info().project.name}-lab-pull-result.png`, fullPage: true });
 });
+
+test("연구소 확률 정보에서 현재 천장과 픽업·이월·중복 정책을 함께 확인한다", async ({ page }) => {
+  await page.setViewportSize({ width: BASE_WIDTH, height: BASE_HEIGHT });
+  await startAfterOpening(page);
+  await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
+  await tap(page, (BASE_WIDTH * 5) / 6, BASE_HEIGHT - 180 + 90);
+  await expect.poll(() => scene(page)).toBe("lab");
+
+  // 확률 정보 버튼의 팝업이 기준 모바일 화면에서 잘리지 않는지 회귀 이미지로 남긴다.
+  await tap(page, BASE_WIDTH / 2, 390);
+  await page.screenshot({ path: `test-results/${test.info().project.name}-lab-rates-policy.png`, fullPage: true });
+});

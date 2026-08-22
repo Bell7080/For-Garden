@@ -52,7 +52,7 @@ export class FakeServer implements GameApi {
     }
 
     // 원본을 전혀 건드리지 않은 복제 상태에서 비용·천장·보유 결과를 모두 먼저 계산한다.
-    const pulled = pull(banner, request.count, this.state.pullCountSinceHighestRarity[banner.id] ?? 0, this.random);
+    const pulled = pull(banner, request.count, this.state.gachaPityByGroup[banner.pityGroupId] ?? { pullsSinceSsr: 0, pickupGuaranteed: false }, this.random);
     const masteryById = Object.fromEntries(Object.entries(this.state.relicProgress).map(([id, value]) => [id, value.awakening]));
     const outcome = resolveAcquisitions(this.state.owned, masteryById, pulled.relicIds);
     // 최초 획득은 반드시 기본 성장 레코드를 만들고, 중복 변화도 같은 복제본에 반영한다.
@@ -63,17 +63,17 @@ export class FakeServer implements GameApi {
       nextProgress[result.relicId].awakening = result.dnaAfter;
     }
     const nextWallet = { ...spend(this.state.wallet, banner, request.count), dnaFragments: this.state.wallet.dnaFragments + outcome.overflowFragments };
-    const nextPity = { ...this.state.pullCountSinceHighestRarity, [banner.id]: pulled.pullCountSinceHighestRarity };
+    const nextPity = { ...this.state.gachaPityByGroup, [banner.pityGroupId]: pulled.pity };
     // 발굴 성공 이벤트는 결과 확정 뒤 이 API 경계에서만 임무로 환산한다.
     const nextMissions = applyMissionEvent(this.state.missions, { type: "excavation_completed", count: request.count }, this.now());
-    const nextState: Session = { ...this.state, wallet: nextWallet, owned: outcome.ownedRelicIds, relicProgress: nextProgress, pullCountSinceHighestRarity: nextPity, missions: nextMissions };
+    const nextState: Session = { ...this.state, wallet: nextWallet, owned: outcome.ownedRelicIds, relicProgress: nextProgress, gachaPityByGroup: nextPity, missions: nextMissions };
 
     // 저장 실패도 원본 메모리에 부분 반영되지 않도록 저장을 먼저 성공시킨 뒤 필드를 일괄 교체한다.
     if (this.state === session) saveManager.save(nextState);
     this.state.wallet = nextWallet;
     this.state.owned = outcome.ownedRelicIds;
     this.state.relicProgress = nextProgress;
-    this.state.pullCountSinceHighestRarity = nextPity;
+    this.state.gachaPityByGroup = nextPity;
     this.state.missions = nextMissions;
     return {
       ...this.snapshot(),
@@ -205,7 +205,7 @@ export class FakeServer implements GameApi {
     );
     return {
       wallet: { ...this.state.wallet },
-      pullCountSinceHighestRarity: { ...this.state.pullCountSinceHighestRarity },
+      gachaPityByGroup: Object.fromEntries(Object.entries(this.state.gachaPityByGroup).map(([id, pity]) => [id, { ...pity }])),
       ownedRelicIds: [...this.state.owned],
       relicProgress,
       ownedHeartGemIds: [...this.state.ownedHeartGemIds],

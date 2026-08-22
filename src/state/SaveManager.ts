@@ -8,7 +8,7 @@ import { createDefaultSession, type SaveData, type Session } from "./session";
 
 /** 키는 계정 연동 저장소와 충돌하지 않도록 로컬 프로토타입임을 명시한다. */
 export const SAVE_STORAGE_KEY = "eternal-city.local-save";
-export const CURRENT_SAVE_VERSION = 7;
+export const CURRENT_SAVE_VERSION = 8;
 
 type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
@@ -50,7 +50,7 @@ export class SaveManager {
       favorite: state.favorite,
       bookmarkedRelicIds: [...state.bookmarked],
       wallet: { ...state.wallet },
-      pullCountSinceHighestRarity: { ...state.pullCountSinceHighestRarity },
+      gachaPityByGroup: Object.fromEntries(Object.entries(state.gachaPityByGroup).map(([id, pity]) => [id, { ...pity }])),
       relicProgress: Object.fromEntries(Object.entries(state.relicProgress).map(([id, value]) => [id, cloneProgress(value)])),
       ownedHeartGemIds: [...state.ownedHeartGemIds],
       dailyContent: { ...state.dailyContent, completedIds: [...state.dailyContent.completedIds], claimedRewardIds: [...state.dailyContent.claimedRewardIds] },
@@ -70,10 +70,18 @@ export class SaveManager {
   migrate(input: unknown): SaveData {
     if (!input || typeof input !== "object") throw new SaveDataError("저장 데이터가 객체가 아닙니다.");
     const legacy = input as Record<string, unknown>;
-    // 현재 배너 ID만 복사하고 저장에 새 배너 키가 없으면 0을 넣는다. 삭제된 옛 배너 키도 안전하게 버린다.
-    const savedPity = legacy.pullCountSinceHighestRarity && typeof legacy.pullCountSinceHighestRarity === "object"
+    // 현재 이월 그룹만 정규화하며 삭제된 그룹 키는 버리고 새 그룹은 기본 상태로 만든다.
+    const savedGroups = legacy.gachaPityByGroup && typeof legacy.gachaPityByGroup === "object"
+      ? legacy.gachaPityByGroup as Record<string, { pullsSinceSsr?: unknown; pickupGuaranteed?: unknown }> : {};
+    const legacyBannerPity = legacy.pullCountSinceHighestRarity && typeof legacy.pullCountSinceHighestRarity === "object"
       ? legacy.pullCountSinceHighestRarity as Record<string, unknown> : {};
-    const normalizedPity = Object.fromEntries(BANNERS.map(({ id }) => [id, savedPity[id] ?? 0]));
+    // v7까지의 배너별 카운터는 현재 배너가 속한 그룹으로 옮긴다. 같은 그룹이면 가장 큰 진행을 보존한다.
+    const groupIds = [...new Set(BANNERS.map(({ pityGroupId }) => pityGroupId))];
+    const normalizedPity = Object.fromEntries(groupIds.map((groupId) => {
+      const saved = savedGroups[groupId];
+      const legacyCount = Math.max(0, ...BANNERS.filter((banner) => banner.pityGroupId === groupId).map((banner) => Number(legacyBannerPity[banner.id]) || 0));
+      return [groupId, { pullsSinceSsr: saved?.pullsSinceSsr ?? legacyCount, pickupGuaranteed: saved?.pickupGuaranteed ?? false }];
+    }));
     // DNA 조각 도입 전 저장도 별도 초기화 없이 0개로 복구한다.
     const wallet = { ...(legacy.wallet as object), dnaFragments: (legacy.wallet as Partial<SaveData["wallet"]> | undefined)?.dnaFragments ?? 0, weeds: (legacy.wallet as Partial<SaveData["wallet"]> | undefined)?.weeds ?? 0 };
     // 일일 입장 횟수 도입 전 저장은 같은 UTC 키에서 0회로 시작하되 이후 재실행에는 저장값을 유지한다.
@@ -104,11 +112,11 @@ export class SaveManager {
       breakthrough: progress.breakthrough ?? 0,
     }]));
     if (legacy.saveVersion === undefined) {
-      return { ...legacy, wallet, relicProgress, completedStoryIds, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, pullCountSinceHighestRarity: normalizedPity, dailyContent, missions } as unknown as SaveData;
+      return { ...legacy, wallet, relicProgress, completedStoryIds, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, gachaPityByGroup: normalizedPity, dailyContent, missions } as unknown as SaveData;
     }
-    const supported = [1, 2, 3, 4, 5, 6, CURRENT_SAVE_VERSION];
+    const supported = [1, 2, 3, 4, 5, 6, 7, CURRENT_SAVE_VERSION];
     if (!supported.includes(legacy.saveVersion as number)) throw new SaveDataError(`지원하지 않는 저장 버전입니다: ${String(legacy.saveVersion)}`);
-    return { ...legacy, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, completedStoryIds, bookmarkedRelicIds, dailyContent, missions, pullCountSinceHighestRarity: normalizedPity } as unknown as SaveData;
+    return { ...legacy, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, completedStoryIds, bookmarkedRelicIds, dailyContent, missions, gachaPityByGroup: normalizedPity } as unknown as SaveData;
   }
 
   /** 콘텐츠 ID와 교차 필드 불변식까지 검사해 부분 손상을 조용히 전파하지 않는다. */
@@ -126,7 +134,7 @@ export class SaveManager {
     if (data.selectedStageId !== null && !stageIds.has(data.selectedStageId)) fail("스테이지 ID가 올바르지 않습니다.");
     if (!Array.isArray(data.clearedStageIds) || data.clearedStageIds.some((id) => !stageIds.has(id))) fail("클리어 진행이 올바르지 않습니다.");
     if (!data.wallet || !Number.isFinite(data.wallet.fossil) || data.wallet.fossil < 0 || !Number.isFinite(data.wallet.amber) || data.wallet.amber < 0 || !Number.isInteger(data.wallet.dnaFragments) || data.wallet.dnaFragments < 0 || !Number.isInteger(data.wallet.weeds) || data.wallet.weeds < 0) fail("재화가 올바르지 않습니다.");
-    if (!data.pullCountSinceHighestRarity || BANNERS.some(({ id }) => !Number.isInteger(data.pullCountSinceHighestRarity[id]) || data.pullCountSinceHighestRarity[id] < 0)) fail("배너 천장 정보가 올바르지 않습니다.");
+    if (!data.gachaPityByGroup || [...new Set(BANNERS.map(({ pityGroupId }) => pityGroupId))].some((id) => !Number.isInteger(data.gachaPityByGroup[id]?.pullsSinceSsr) || data.gachaPityByGroup[id].pullsSinceSsr < 0 || typeof data.gachaPityByGroup[id].pickupGuaranteed !== "boolean")) fail("배너 그룹 천장 정보가 올바르지 않습니다.");
     if (!data.relicProgress || typeof data.relicProgress !== "object") fail("성장 정보가 없습니다.");
     // 보유 목록과 성장 레코드는 항상 정확히 같은 렐릭 집합이어야 한다.
     if (data.ownedRelicIds.some((id) => !data.relicProgress[id]) || Object.keys(data.relicProgress).some((id) => !data.ownedRelicIds.includes(id))) fail("보유 렐릭과 성장 정보가 일치하지 않습니다.");
@@ -144,7 +152,7 @@ export class SaveManager {
       completedStoryIds: new Set(data.completedStoryIds),
       selectedStageId: data.selectedStageId, party: [...data.party], cleared: new Set(data.clearedStageIds), owned: new Set(data.ownedRelicIds), favorite: data.favorite, bookmarked: new Set(data.bookmarkedRelicIds),
       wallet: { ...data.wallet }, relicProgress: Object.fromEntries(Object.entries(data.relicProgress).map(([id, value]) => [id, cloneProgress(value)])), ownedHeartGemIds: [...data.ownedHeartGemIds],
-      pullCountSinceHighestRarity: { ...data.pullCountSinceHighestRarity },
+      gachaPityByGroup: Object.fromEntries(Object.entries(data.gachaPityByGroup).map(([id, pity]) => [id, { ...pity }])),
       dailyContent: { ...data.dailyContent, completedIds: [...data.dailyContent.completedIds], claimedRewardIds: [...data.dailyContent.claimedRewardIds] },
       missions: { ...data.missions, progress: { ...data.missions.progress }, claimedIds: [...data.missions.claimedIds] },
     };

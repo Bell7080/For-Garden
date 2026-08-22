@@ -14,7 +14,7 @@ function makeSession(fossil = 1000): Session {
     owned: new Set(["anky", "rex", "dodo"]),
     favorite: "anky",
     bookmarked: new Set<string>(),
-    pullCountSinceHighestRarity: { fossil: 0, amber: 0 },
+    gachaPityByGroup: { "standard-fossil": { pullsSinceSsr: 0, pickupGuaranteed: false }, "limited-pickup": { pullsSinceSsr: 0, pickupGuaranteed: false } },
     wallet: { fossil, amber: 10, dnaFragments: 0, weeds: 0 },
     relicProgress: Object.fromEntries(["anky", "rex", "dodo"].map((id) => [id, { level: id === "anky" ? 2 : 1, exp: 0, awakening: id === "anky" ? 1 : 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: id === "anky" ? ["vital-seed", null, null] : [null, null, null] }])),
     ownedHeartGemIds: ["vital-seed"],
@@ -90,7 +90,7 @@ describe("FakeServer", () => {
     expect(response.results).toEqual([{ relicId: "rex", kind: "mastery", dnaBefore: 0, dnaAfter: 1, overflowFragments: 0 }]);
     expect(response.duplicateRelicIds).toEqual(["rex"]);
     expect(state.wallet.fossil).toBe(900);
-    expect(state.pullCountSinceHighestRarity.fossil).toBe(0);
+    expect(state.gachaPityByGroup["standard-fossil"].pullsSinceSsr).toBe(0);
   });
 
   it("최초 획득의 성장 레코드를 같은 처리에서 만들고 같은 10연 중복을 누적한다", async () => {

@@ -4,7 +4,7 @@ import { BANNERS } from "../../src/data/banners";
 
 /** 모든 분기와 난수 소비 순서를 눈으로 추적할 수 있는 최소 3등급 배너다. */
 const banner: Banner = {
-  id: "test", name: "시험 발굴", desc: "", featuredRelicId: "ssr-pick",
+  id: "test", pityGroupId: "test-group", name: "시험 발굴", desc: "", featuredRelicId: "ssr-pick",
   currency: "fossil", costOne: 100, costTen: 900,
   rarityRates: { SSR: 0.1, SR: 0.2, R: 0.7 },
   relicPools: { SSR: ["ssr-pick", "ssr-normal"], SR: ["sr-pick", "sr-normal"], R: ["r-a", "r-b"] },
@@ -36,42 +36,52 @@ describe("등급과 픽업 추첨 순서", () => {
   });
 
   it("등급 결정 뒤 픽업 성공과 비픽업 성공을 각각 분리한다", () => {
-    expect(pull(banner, 1, 0, fakeRng([0.05, 0.49, 0])).relicIds).toEqual(["ssr-pick"]);
-    expect(pull(banner, 1, 0, fakeRng([0.05, 0.5, 0])).relicIds).toEqual(["ssr-normal"]);
+    expect(pull(banner, 1, { pullsSinceSsr: 0, pickupGuaranteed: false }, fakeRng([0.05, 0.49, 0])).relicIds).toEqual(["ssr-pick"]);
+    expect(pull(banner, 1, { pullsSinceSsr: 0, pickupGuaranteed: false }, fakeRng([0.05, 0.5, 0])).relicIds).toEqual(["ssr-normal"]);
   });
 
   it("같은 난수열과 천장값이면 같은 결과와 다음 천장값을 반환한다", () => {
-    const a = pull(banner, 3, 0, fakeRng([0.8, 0, 0.2, 0.1, 0, 0.8, 0]));
-    const b = pull(banner, 3, 0, fakeRng([0.8, 0, 0.2, 0.1, 0, 0.8, 0]));
+    const a = pull(banner, 3, { pullsSinceSsr: 0, pickupGuaranteed: false }, fakeRng([0.8, 0, 0.2, 0.1, 0, 0.8, 0]));
+    const b = pull(banner, 3, { pullsSinceSsr: 0, pickupGuaranteed: false }, fakeRng([0.8, 0, 0.2, 0.1, 0, 0.8, 0]));
     expect(a).toEqual(b);
   });
 });
 
 describe("보장 우선순위와 천장", () => {
   it("10연 마지막 슬롯의 R을 SR로 올린다", () => {
-    const result = pull({ ...banner, highestRarityGuarantee: 100 }, 10, 0, () => 0.99);
+    const result = pull({ ...banner, highestRarityGuarantee: 100 }, 10, { pullsSinceSsr: 0, pickupGuaranteed: false }, () => 0.99);
     expect(result.rarities.slice(0, 9)).toEqual(Array(9).fill("R"));
     expect(result.rarities[9]).toBe("SR");
   });
 
   it("천장 직전 슬롯은 자연 등급이고 도달 슬롯은 SSR로 강제한다", () => {
-    const before = pull(banner, 1, 3, () => 0.99);
+    const before = pull(banner, 1, { pullsSinceSsr: 3, pickupGuaranteed: false }, () => 0.99);
     expect(before.rarities).toEqual(["R"]);
-    expect(before.pullCountSinceHighestRarity).toBe(4);
-    const reached = pull(banner, 1, before.pullCountSinceHighestRarity, () => 0.99);
+    expect(before.pity.pullsSinceSsr).toBe(4);
+    const reached = pull(banner, 1, before.pity, () => 0.99);
     expect(reached.rarities).toEqual(["SSR"]);
-    expect(reached.pullCountSinceHighestRarity).toBe(0);
+    expect(reached.pity.pullsSinceSsr).toBe(0);
   });
 
   it("10연 SR 보장 슬롯이어도 천장 도달이면 SSR이 우선한다", () => {
-    const result = pull(banner, 10, 0, () => 0.99);
+    const result = pull(banner, 10, { pullsSinceSsr: 0, pickupGuaranteed: false }, () => 0.99);
     expect(result.rarities[4]).toBe("SSR");
     expect(result.rarities[9]).toBe("SSR");
-    expect(result.pullCountSinceHighestRarity).toBe(0);
+    expect(result.pity.pullsSinceSsr).toBe(0);
   });
 
   it("자연 SSR을 얻은 직후 천장 카운터를 0으로 초기화한다", () => {
-    expect(pull(banner, 1, 3, fakeRng([0.05, 0, 0])).pullCountSinceHighestRarity).toBe(0);
+    expect(pull(banner, 1, { pullsSinceSsr: 3, pickupGuaranteed: false }, fakeRng([0.05, 0, 0])).pity.pullsSinceSsr).toBe(0);
+  });
+
+  it("SSR 픽업 실패는 카운터와 별개로 다음 SSR 픽업 확정을 켠다", () => {
+    const failed = pull(banner, 1, { pullsSinceSsr: 0, pickupGuaranteed: false }, fakeRng([0.05, 0.8, 0]));
+    expect(failed.relicIds).toEqual(["ssr-normal"]);
+    expect(failed.pity).toEqual({ pullsSinceSsr: 0, pickupGuaranteed: true });
+    // 확정 상태에서는 픽업 판정 난수 없이 픽업 풀 선택 난수만 소비한다.
+    const guaranteed = pull(banner, 1, failed.pity, fakeRng([0.05, 0]));
+    expect(guaranteed.relicIds).toEqual(["ssr-pick"]);
+    expect(guaranteed.pity.pickupGuaranteed).toBe(false);
   });
 });
 

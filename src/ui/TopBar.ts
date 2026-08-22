@@ -26,10 +26,13 @@ interface CurrencySlot {
 /**
  * 화면별 재화 조합.
  *
- * 로비와 도감은 "지금 얼마나 가졌나"(보석·골드·스테미나)를 묻고, 모집은 "무엇으로 뽑을 수
- * 있나"(다이아·화석·호박석)를 묻는다. 화면마다 다른 것을 보여 주되 자리와 생김새는 같다.
+ * 로비는 "지금 얼마나 가졌나"(보석·골드·스테미나), 모집은 "무엇으로 뽑을 수 있나"
+ * (다이아·화석·호박석), 렐릭은 "어떻게 성장시키나"(다이아·치즈케이크·DNA)를 묻는다.
+ * 화면마다 다른 것을 보여 주되 자리와 생김새는 같다.
  */
-const SLOTS: Record<"default" | "recruit", readonly CurrencySlot[]> = {
+export type TopBarCurrencyContext = "default" | "recruit" | "relic";
+
+const SLOTS: Record<TopBarCurrencyContext, readonly CurrencySlot[]> = {
   default: [
     { icon: "currency-gems", read: () => session.wallet.gems, color: "#cfe6ff" },
     { icon: "currency-gold", read: () => session.wallet.gold, compact: true, color: "#ffdf9a" },
@@ -39,6 +42,12 @@ const SLOTS: Record<"default" | "recruit", readonly CurrencySlot[]> = {
     { icon: "currency-gems", read: () => session.wallet.gems, color: "#cfe6ff" },
     { icon: "currency-fossil", read: () => session.wallet.fossil, compact: true, color: "#e6dcc4" },
     { icon: "currency-amber", read: () => session.wallet.amber, color: "#ffc98a" },
+  ],
+  // 급여와 돌파에 바로 쓰는 두 재화를 모집 화면과 같은 위계의 세 칸 안에 배치한다.
+  relic: [
+    { icon: "currency-gems", read: () => session.wallet.gems, color: "#cfe6ff" },
+    { icon: "currency-cheesecake", read: () => session.wallet.cheesecake, compact: true, color: "#ffe0d5" },
+    { icon: "currency-dna", read: () => session.wallet.dnaFragments, color: "#ffb5c1" },
   ],
 };
 
@@ -61,7 +70,7 @@ const CLUSTER_CENTER = 0.57;
 export class TopBar {
   private readonly slots: { slot: CurrencySlot; text: Phaser.GameObjects.Text }[] = [];
 
-  constructor(scene: Phaser.Scene, y = 40, options: { onSettings?: () => void; currencies?: "default" | "recruit" } = {}) {
+  constructor(scene: Phaser.Scene, y = 40, options: { onSettings?: () => void; currencies?: TopBarCurrencyContext } = {}) {
     drawGlassFade(scene, BASE_WIDTH / 2, y + 30, BASE_WIDTH, 150, { topAlpha: 0.92, bottomAlpha: 0 });
     drawHairline(scene, BASE_WIDTH / 2, y + 96, BASE_WIDTH, { color: COLOR.accent, alpha: 0.18 });
 

@@ -15,6 +15,8 @@ export type GlyphName =
   | "friends"
   | "exchange"
   | "settings"
+  | "auto"
+  | "speed"
   | "heart"
   | "bookmark"
   | "scroll"
@@ -111,6 +113,22 @@ export function drawGlyph(
       for (let i = 0; i < 6; i++) {
         const angle = (Math.PI / 3) * i;
         g.lineBetween(Math.cos(angle) * r * 0.6, Math.sin(angle) * r * 0.6, Math.cos(angle) * r * 0.95, Math.sin(angle) * r * 0.95);
+      }
+      break;
+    case "auto":
+      // 순환 화살표와 가운데 각성점으로 자동 발동을 표현한다.
+      g.beginPath();
+      g.arc(0, 0, r * 0.68, Math.PI * 0.15, Math.PI * 1.55);
+      g.strokePath();
+      g.strokePoints(points(-r * 0.65, -r * 0.25, -r * 0.82, r * 0.35, -r * 0.22, r * 0.22), false);
+      g.fillStyle(color, alpha);
+      g.fillCircle(0, 0, r * 0.16);
+      break;
+    case "speed":
+      // 세 개의 각진 진행 표식은 1~3배속 순환을 뜻한다.
+      for (let i = -1; i <= 1; i++) {
+        const offset = i * r * 0.5;
+        g.strokePoints(points(offset - r * 0.25, -r * 0.62, offset + r * 0.2, 0, offset - r * 0.25, r * 0.62), false);
       }
       break;
     case "heart":

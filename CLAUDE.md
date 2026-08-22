@@ -46,6 +46,8 @@
    영향을 주는 수치는 `src/core/skirmish.ts`의 상수와 함께 테스트로 묶는다.
 7. 속성 상성과 직업의 기준은 `docs/combat-affinities.md`를 따른다. 직업은 데이터 태그일 뿐
    숨은 보정치를 만들지 않고, 속성 배율은 `src/core/element.ts` 한곳에서만 정의한다.
+8. 자동 편성은 `src/core/partyAffinity.ts`, 배속 순환은 `src/core/battleControls.ts`의 순수 규칙을
+   사용한다. 씬에서 상성 점수나 허용 배속을 다시 만들지 않는다.
 
 ## 로딩 화면
 

@@ -28,6 +28,8 @@ import { drawGlassFade, drawHairline, HoloBar } from "../ui/holo";
 import { PortraitCard, relicCardTint, starsForRarity } from "../ui/PortraitCard";
 import { COLOR, textStyle } from "../ui/theme";
 import { setDebugBattle, setDebugScene } from "../debug";
+import { nextBattleSpeed, type BattleSpeed } from "../core/battleControls";
+import { ControlChip } from "../ui/ControlChip";
 
 /**
  * 여섯이 돌아다닐 수 있는 범위.
@@ -89,6 +91,12 @@ export class BattleScene extends Phaser.Scene {
   private spawned = false;
   /** 마지막으로 시뮬레이션을 굴린 실제 시각(ms). */
   private lastStepAt = 0;
+  /** 시뮬레이션 시간에만 곱하는 현재 전투 배속이다. */
+  private battleSpeed: BattleSpeed = 1;
+  /** 켜져 있으면 게이지가 찬 아군 궁극기를 다음 프레임에 자동 발동한다. */
+  private autoUltimate = false;
+  private speedChip!: ControlChip;
+  private autoChip!: ControlChip;
 
   constructor() {
     super("battle");
@@ -107,6 +115,8 @@ export class BattleScene extends Phaser.Scene {
     this.profiles = [];
     this.finished = false;
     this.spawned = false;
+    this.battleSpeed = 1;
+    this.autoUltimate = false;
 
     // 편성 화면에서 본 6번 전장을 그대로 이어 실제 전투의 공간으로 사용한다.
     addSceneBackground(this, BACKGROUND.combat, -30);
@@ -114,12 +124,37 @@ export class BattleScene extends Phaser.Scene {
     this.add.text(42, 48, `${stage.id} · ${stage.name} · 적 LV.${stage.enemyLevel}`, textStyle({ role: "body", size: 30, color: COLOR.inkDim }));
     this.add.text(BASE_WIDTH / 2, 160, "AUTO BATTLE", textStyle({ role: "emphasis", size: 28, color: COLOR.accentText })).setOrigin(0.5);
 
+    this.buildBattleControls();
+
     this.buildProfiles();
     void this.spawnFighters();
     this.refreshDebug();
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.views.forEach((view) => view.creature.destroy());
       this.views.clear();
+    });
+  }
+
+  /** 전장 위쪽 가장자리에 배속과 자동 궁극기 토글을 같은 홀로그램 칩으로 나란히 둔다. */
+  private buildBattleControls(): void {
+    this.speedChip = new ControlChip(this, BASE_WIDTH - 335, 150, {
+      icon: "speed",
+      label: "1배속",
+      onClick: () => {
+        this.battleSpeed = nextBattleSpeed(this.battleSpeed);
+        this.speedChip.setLabel(`${this.battleSpeed}배속`).setActive(this.battleSpeed > 1);
+        this.refreshDebug();
+      },
+    });
+    this.autoChip = new ControlChip(this, BASE_WIDTH - 130, 150, {
+      icon: "auto",
+      label: "궁극 OFF",
+      width: 170,
+      onClick: () => {
+        this.autoUltimate = !this.autoUltimate;
+        this.autoChip.setLabel(this.autoUltimate ? "궁극 ON" : "궁극 OFF").setActive(this.autoUltimate);
+        this.refreshDebug();
+      },
     });
   }
 
@@ -225,11 +260,24 @@ export class BattleScene extends Phaser.Scene {
     const now = performance.now();
     const dt = (now - this.lastStepAt) / 1000;
     this.lastStepAt = now;
-    const events = stepSkirmish(this.state, dt, () => Math.random());
+    // 실제 프레임 간격에 선택 배율을 곱해 이동·공격 간격·게이지가 모두 같은 시간축을 쓴다.
+    const events = stepSkirmish(this.state, dt * this.battleSpeed, () => Math.random());
     events.forEach((event) => this.playEvent(event));
+    if (this.autoUltimate && !this.finished) this.fireReadyUltimates();
     this.syncViews();
     this.refreshProfiles();
     this.refreshDebug();
+  }
+
+  /** 자동 모드에서는 살아 있고 준비된 아군을 편성 순서대로 한 번씩 발동한다. */
+  private fireReadyUltimates(): void {
+    for (const fighter of this.playerFighters()) {
+      if (!canFireUltimate(this.state, fighter)) continue;
+      const events = fireUltimate(this.state, fighter.id, () => Math.random());
+      events.forEach((event) => this.playEvent(event));
+      // 앞선 궁극기로 전투가 끝났다면 뒤 캐릭터의 입력을 더 만들지 않는다.
+      if (this.finished) break;
+    }
   }
 
   /** 공격·사망·종료를 각각의 연출로 옮긴다. */
@@ -428,6 +476,8 @@ export class BattleScene extends Phaser.Scene {
       ultimateReady: this.playerFighters().filter((fighter) => canFireUltimate(this.state, fighter)).map((fighter) => fighter.def.name),
       playerHp: teamHp(this.state, "player"),
       enemyHp: teamHp(this.state, "enemy"),
+      speed: this.battleSpeed,
+      autoUltimate: this.autoUltimate,
     });
   }
 

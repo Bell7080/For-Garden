@@ -4,7 +4,7 @@ import { setDebugScene } from "../debug";
 import type { RelicDef } from "../core/types";
 import { getRelic } from "../data/relics";
 import { relicCollection } from "../managers/RelicCollectionManager";
-import { CharacterInfoManager, ROLE_LABEL, addHelpBadge } from "../managers/CharacterInfoManager";
+import { CharacterInfoManager, ELEMENT_LABEL, ROLE_LABEL, addHelpBadge } from "../managers/CharacterInfoManager";
 import type { PuppetCreature } from "../puppets/assets";
 import { battleAssetFor, spawnPuppet } from "../puppets/assets";
 import { tintFor } from "../puppets/tints";
@@ -16,6 +16,7 @@ import { PortraitCard, relicCardTint, starsForRarity } from "../ui/PortraitCard"
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { COLOR, textStyle } from "../ui/theme";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
+import { autoPickParty, elementDistribution, partyAffinitySummary } from "../core/partyAffinity";
 
 /** 이만큼 누르고 있으면 정보창이 열린다. 짧게 누르면 편성 토글이다. */
 const LONG_PRESS_MS = 420;
@@ -62,6 +63,10 @@ export class PartyScene extends Phaser.Scene {
   private allySlots: AllySlot[] = [];
   private startButton!: Button;
   private hint!: Phaser.GameObjects.Text;
+  /** 현재 선택과 적 전체의 교차 상성을 한 줄로 요약한다. */
+  private affinityHint!: Phaser.GameObjects.Text;
+  /** 자동 배치와 상성 요약이 함께 참조하는 이번 스테이지의 적 정의다. */
+  private enemies: RelicDef[] = [];
   private info!: CharacterInfoManager;
   private pressTimer?: Phaser.Time.TimerEvent;
   private pressStartedAt = 0;
@@ -85,6 +90,7 @@ export class PartyScene extends Phaser.Scene {
     this.add.rectangle(cx, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.42).setDepth(-29);
 
     const stage = getStage(session.selectedStageId ?? "1-1");
+    this.enemies = stage.enemies.map(getRelic);
     this.add.text(cx, 70, `${stage.id}  ${stage.name}`, textStyle({ role: "display", size: 46 })).setOrigin(0.5, 0);
     this.add
       .text(cx, 132, "렐릭 3명 편성 — 고른 순서대로 왼쪽부터 선다", textStyle({ role: "body", size: 28, color: COLOR.inkDim }))
@@ -92,6 +98,21 @@ export class PartyScene extends Phaser.Scene {
 
     this.buildPreview(stage.enemies);
     this.buildRoster();
+
+    // 자동 배치는 직업 보정 없이 이번 적에게 유리한 속성 합만 비교한다.
+    new Button(this, BASE_WIDTH - 190, 912, {
+      width: 300,
+      height: 82,
+      label: "자동 배치",
+      fontSize: 30,
+      onClick: () => {
+        this.picked = autoPickParty(relicCollection.owned, this.enemies);
+        this.refresh();
+      },
+    });
+    this.affinityHint = this.add
+      .text(54, 888, "", textStyle({ role: "emphasis", size: 25, color: COLOR.ink }))
+      .setOrigin(0, 0);
 
     this.hint = this.add
       .text(cx, 1560, "", textStyle({ role: "body", size: 28, color: COLOR.inkDim }))
@@ -120,6 +141,12 @@ export class PartyScene extends Phaser.Scene {
     this.add
       .text(BASE_WIDTH - 40, 210, "적", textStyle({ role: "emphasis", size: 30, color: COLOR.dangerText }))
       .setOrigin(1, 0);
+    const distribution = elementDistribution(enemyIds.map(getRelic))
+      .map(({ element, count }) => `${ELEMENT_LABEL[element]} ${count}`)
+      .join("  ·  ");
+    this.add
+      .text(BASE_WIDTH / 2, 178, `적 속성  ${distribution}`, textStyle({ role: "emphasis", size: 24, color: COLOR.dangerText }))
+      .setOrigin(0.5, 0);
     // 두 줄 사이의 대치선.
     this.add
       .line(0, 0, 120, FRONT_LINE, BASE_WIDTH - 120, FRONT_LINE, COLOR.panelEdge)
@@ -136,7 +163,7 @@ export class PartyScene extends Phaser.Scene {
 
       this.add.text(x, ENEMY_ROW + 26, def.name, textStyle({ role: "display", size: 28 })).setOrigin(0.5, 0);
       this.add
-        .text(x, ENEMY_ROW + 62, `${ROLE_LABEL[def.role]}  HP ${def.stats.hp}`, textStyle({ role: "body", size: 22, color: COLOR.inkDim }))
+        .text(x, ENEMY_ROW + 62, `${ELEMENT_LABEL[def.element]} · ${ROLE_LABEL[def.role]}  HP ${def.stats.hp}`, textStyle({ role: "body", size: 22, color: COLOR.inkDim }))
         .setOrigin(0.5, 0);
       // SD 자체는 그림이라 입력을 받지 않는다. 상세는 옆의 ?로 연다.
       addHelpBadge(this, x + 96, ENEMY_ROW - PREVIEW_HEIGHT + 10, () => this.info.showRelic(def), 24);
@@ -304,6 +331,10 @@ export class PartyScene extends Phaser.Scene {
     });
 
     this.startButton.setEnabled(this.picked.length === 3);
+    const affinity = partyAffinitySummary(this.picked.map(getRelic), this.enemies);
+    // 아직 고르지 않았을 때도 0으로 보여 줘 지표가 무엇을 뜻하는지 먼저 학습하게 한다.
+    this.affinityHint.setText(`상성 미리보기  유리 ${affinity.advantage}  /  불리 ${affinity.disadvantage}  /  중립 ${affinity.neutral}`);
+    this.affinityHint.setColor(affinity.advantage >= affinity.disadvantage ? COLOR.accentText : COLOR.dangerText);
     this.hint.setText(
       this.picked.length === 3 ? "편성 완료" : `${3 - this.picked.length}명 더 골라야 한다`,
     );

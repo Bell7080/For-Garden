@@ -135,6 +135,16 @@ test("1080×1920 캐릭터 상세과 스킬 카드가 안전 영역 안에 표�
   await expect.poll(() => infoOpen(page)).toBe(true);
 });
 
+test("관찰 일지에서 오늘의 질문과 발견 기록 영역을 확인한다", async ({ page }) => {
+  // 기준 해상도에서 기존 두루마리 버튼으로 인터뷰가 자연스럽게 이어지는지 시각 회귀를 남긴다.
+  await page.setViewportSize({ width: BASE_WIDTH, height: BASE_HEIGHT });
+  await enterParty(page);
+  await longPress(page, ...TORIKA);
+  await expect.poll(() => infoOpen(page)).toBe(true);
+  await tap(page, 268, 300);
+  await page.screenshot({ path: `test-results/${test.info().project.name}-observation-journal.png`, fullPage: true });
+});
+
 test("실시간 자동 전투는 입력 없이 서로 붙어 체력을 깎는다", async ({ page }) => {
   await enterBattle(page);
   const before = await battle(page);

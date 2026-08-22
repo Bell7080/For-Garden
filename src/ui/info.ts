@@ -37,6 +37,8 @@ import { AWAKENING_CAP, AWAKENING_STEPS, canBreakThrough, canFeedRelic, FEED_UNI
 import { session } from "../state/session";
 import { BOND_FEROCITY_MULTIPLIER, BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL, BOND_XP_REWARD } from "../core/bond";
 import { getRelicCatalogDisclosure } from "../core/relicCatalog";
+import { observations } from "../managers/ObservationManager";
+import { observationQuestionForDate } from "../data/observations";
 
 export type { SkillInfoViewModel } from "./SkillPopup";
 
@@ -816,7 +818,7 @@ export class InfoManager {
     const def = this.currentDef;
     if (!def) return;
     const disclosure = getRelicCatalogDisclosure(def, this.ownedNow);
-    this.popups.open({ width: 880, height: 760, title: "관찰 일지", tilt: -1.2, ...anchorOf(from) }, (body) => {
+    this.popups.open({ width: 880, height: 980, title: "관찰 일지", tilt: -1.2, ...anchorOf(from) }, (body, close) => {
       const lines = disclosure.access === "full"
         ? [
             "개체번호   NO." + disclosure.specimenNumber,
@@ -825,12 +827,40 @@ export class InfoManager {
             "발굴지      " + disclosure.excavationSite,
           ]
         : ["개체번호   NO." + disclosure.specimenNumber, "프로젝트   기록 없음", "기원         미상", "발굴지      미상"];
-      body.add(this.scene.add.text(-380, -276, lines.join("\n"), textStyle({ role: "body", size: 26, lineSpacing: 14 })).setOrigin(0, 0));
-      body.add(drawHairline(this.scene, 0, -84, 760, { color: COLOR.accent, alpha: 0.35 }));
+      body.add(this.scene.add.text(-380, -386, lines.join("\n"), textStyle({ role: "body", size: 26, lineSpacing: 14 })).setOrigin(0, 0));
+      body.add(drawHairline(this.scene, 0, -194, 760, { color: COLOR.accent, alpha: 0.35 }));
       const record = disclosure.access === "full" ? disclosure.record : def.catalogSummary + "\n\n상세 기록은 개체 획득 후 해제됩니다.";
       const text = this.keywords.layout(record, { width: 760, size: 26, lineSpacing: 10 });
-      text.setPosition(-380, -48);
+      text.setPosition(-380, -158);
       body.add(text);
+
+      // 기존 일지 아래에 날짜·질문·답변·발견 습성을 같은 쪽지 안에서 시간순으로 보여 준다.
+      // 작은 쪽지에는 가장 최근 한 건만 두고 전체 이력은 저장에 유지해 내용이 겹치지 않게 한다.
+      const entries = observations.recordFor(def.id).slice(-1).reverse();
+      body.add(drawHairline(this.scene, 0, 92, 760, { color: COLOR.accent, alpha: 0.35 }));
+      body.add(this.scene.add.text(-380, 116, "관찰 인터뷰", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0));
+      if (!entries.length) body.add(this.scene.add.text(-380, 158, "아직 기록된 인터뷰가 없습니다.", textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0, 0));
+      entries.forEach((entry, index) => {
+        const y = 158 + index * 128;
+        const copy = `${entry.date}  ·  #${entry.personalityTag}\nQ. ${entry.question}\nA. ${entry.answer}\n발견  ${entry.discoveredHabit}`;
+        body.add(this.scene.add.text(-380, y, copy, textStyle({ role: "body", size: 20, color: COLOR.ink, lineSpacing: 4 })).setOrigin(0, 0));
+      });
+
+      // 초기 버전은 공용 질문을 일지에서 바로 답하게 해 별도 대형 화면 제작을 피한다.
+      const utcDate = new Date().toISOString().slice(0, 10);
+      if (this.ownedNow && observations.canStart(def.id, utcDate)) {
+        const question = observationQuestionForDate(utcDate);
+        const y = entries.length ? 300 : 238;
+        body.add(this.scene.add.text(-380, y, "오늘의 질문  " + question.prompt, textStyle({ role: "emphasis", size: 21, color: COLOR.accentText })).setOrigin(0, 0));
+        question.choices.forEach((choice, index) => {
+          const buttonY = y + 64 + index * 54;
+          body.add(drawLayer(this.scene, 0, buttonY, slantedRect(740, 44, 12), { fill: 0x141a22, alpha: 0.92, edge: COLOR.accent, edgeAlpha: 0.4 }));
+          body.add(this.scene.add.text(-350, buttonY, choice.label, textStyle({ role: "body", size: 20 })).setOrigin(0, 0.5));
+          const hit = this.scene.add.rectangle(0, buttonY, 740, 44, 0xffffff, 0).setInteractive({ useHandCursor: true });
+          hit.on("pointerup", () => { observations.complete(def.id, utcDate, choice.id); close(); this.openJournal(from); this.refreshGrowth(); });
+          body.add(hit);
+        });
+      }
     });
   }
 

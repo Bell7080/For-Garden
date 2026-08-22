@@ -8,7 +8,7 @@ import { createDefaultSession, type SaveData, type Session } from "./session";
 
 /** 키는 계정 연동 저장소와 충돌하지 않도록 로컬 프로토타입임을 명시한다. */
 export const SAVE_STORAGE_KEY = "eternal-city.local-save";
-export const CURRENT_SAVE_VERSION = 10;
+export const CURRENT_SAVE_VERSION = 11;
 
 type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
@@ -43,6 +43,7 @@ export class SaveManager {
     const data: SaveData = {
       saveVersion: CURRENT_SAVE_VERSION,
       completedStoryIds: [...state.completedStoryIds],
+      observationRecords: state.observationRecords.map((record) => ({ ...record })),
       selectedStageId: state.selectedStageId,
       party: [...state.party],
       clearedStageIds: [...state.cleared],
@@ -98,6 +99,8 @@ export class SaveManager {
     const productPurchases = legacy.productPurchases && typeof legacy.productPurchases === "object" ? legacy.productPurchases : {};
     // 스토리 저장 도입 전 계정은 미완료로 두어 다음 타이틀 진입에서 오프닝을 한 번 재생한다.
     const completedStoryIds = Array.isArray(legacy.completedStoryIds) ? legacy.completedStoryIds : [];
+    // 관찰 인터뷰 도입 전 저장에는 일지가 없으며, 완료 스토리에서 내용을 추측해 만들지 않는다.
+    const observationRecords = Array.isArray(legacy.observationRecords) ? legacy.observationRecords : [];
     // 즐겨찾기 도입 전 저장은 빈 목록으로 시작한다. 애착 렐릭과는 다른 값이라 옮겨 담지 않는다.
     const bookmarkedRelicIds = Array.isArray(legacy.bookmarkedRelicIds) ? legacy.bookmarkedRelicIds : [];
     // v1까지는 유대가 없었다. 정적 Stats.ferocity→energyGain 변경은 저장 대상이 아니므로,
@@ -118,11 +121,11 @@ export class SaveManager {
       breakthrough: progress.breakthrough ?? 0,
     }]));
     if (legacy.saveVersion === undefined) {
-      return { ...legacy, wallet, relicProgress, completedStoryIds, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, gachaPityByGroup: normalizedPity, dailyContent, missions, productPurchases } as unknown as SaveData;
+      return { ...legacy, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, gachaPityByGroup: normalizedPity, dailyContent, missions, productPurchases } as unknown as SaveData;
     }
-    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, CURRENT_SAVE_VERSION];
+    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, CURRENT_SAVE_VERSION];
     if (!supported.includes(legacy.saveVersion as number)) throw new SaveDataError(`지원하지 않는 저장 버전입니다: ${String(legacy.saveVersion)}`);
-    return { ...legacy, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, completedStoryIds, bookmarkedRelicIds, dailyContent, missions, productPurchases, gachaPityByGroup: normalizedPity } as unknown as SaveData;
+    return { ...legacy, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, missions, productPurchases, gachaPityByGroup: normalizedPity } as unknown as SaveData;
   }
 
   /** 콘텐츠 ID와 교차 필드 불변식까지 검사해 부분 손상을 조용히 전파하지 않는다. */
@@ -133,6 +136,8 @@ export class SaveManager {
     const fail = (message: string): never => { throw new SaveDataError(message); };
     if (data.saveVersion !== CURRENT_SAVE_VERSION || !Array.isArray(data.ownedRelicIds) || data.ownedRelicIds.some((id) => !relicIds.has(id))) fail("존재하지 않는 렐릭 ID가 있습니다.");
     if (!Array.isArray(data.completedStoryIds) || data.completedStoryIds.some((id) => typeof id !== "string") || new Set(data.completedStoryIds).size !== data.completedStoryIds.length) fail("완료 스토리 정보가 올바르지 않습니다.");
+    if (!Array.isArray(data.observationRecords) || data.observationRecords.some((record) => !record || typeof record.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(record.date) || !relicIds.has(record.relicId) || typeof record.storyId !== "string" || typeof record.questionId !== "string" || typeof record.question !== "string" || typeof record.choiceId !== "string" || typeof record.answer !== "string" || typeof record.personalityTag !== "string" || typeof record.discoveredHabit !== "string")) fail("관찰 인터뷰 기록이 올바르지 않습니다.");
+    if (new Set(data.observationRecords.map(({ date }) => date)).size !== data.observationRecords.length) fail("하루에 관찰 인터뷰를 두 번 기록할 수 없습니다.");
     if (!Array.isArray(data.party) || data.party.length !== 3 || new Set(data.party).size !== 3 || data.party.some((id) => !data.ownedRelicIds.includes(id))) fail("파티는 서로 다른 보유 렐릭 3명이어야 합니다.");
     if (!relicIds.has(data.favorite) || !data.ownedRelicIds.includes(data.favorite)) fail("애착 렐릭이 올바르지 않습니다.");
     // 즐겨찾기는 여러 명이 될 수 있지만 보유하지 않은 렐릭이 섞이면 목록이 깨진다.
@@ -157,6 +162,7 @@ export class SaveManager {
   private toSession(data: SaveData): Session {
     return {
       completedStoryIds: new Set(data.completedStoryIds),
+      observationRecords: data.observationRecords.map((record) => ({ ...record })),
       selectedStageId: data.selectedStageId, party: [...data.party], cleared: new Set(data.clearedStageIds), owned: new Set(data.ownedRelicIds), favorite: data.favorite, bookmarked: new Set(data.bookmarkedRelicIds),
       wallet: { ...data.wallet }, relicProgress: Object.fromEntries(Object.entries(data.relicProgress).map(([id, value]) => [id, cloneProgress(value)])), ownedHeartGemIds: [...data.ownedHeartGemIds],
       gachaPityByGroup: Object.fromEntries(Object.entries(data.gachaPityByGroup).map(([id, pity]) => [id, { ...pity }])),

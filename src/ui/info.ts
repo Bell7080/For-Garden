@@ -64,7 +64,7 @@ const SKILL_ICON = { size: 150, x: 124, step: 168 } as const;
  * 가로세로 같은 자리에 앉는다(1:1). 하트 곡선은 세로가 조금 짧아서 그대로 그리면 납작해
  * 보이므로, 그리는 쪽에서 세로만 늘려 정사각형 자리를 꽉 채운다.
  */
-const BOND_HEART_SIZE = 104;
+const BOND_HEART_SIZE = 96;
 
 /** 정보창의 별은 화면에서 가장 큰 성급 표시다. 모양과 색은 `stars.ts`가 정한다. */
 const STAR_SIZE = 34;
@@ -255,7 +255,7 @@ export class InfoManager {
     this.feedLabel = feed.label;
 
     // 유대.
-    const bondHeart = scene.add.container(COLUMN.x - COLUMN.width / 2 + 78, 700);
+    const bondHeart = scene.add.container(COLUMN.x - COLUMN.width / 2 + 116, 700);
     // 하트도 별과 같은 방식이다 — 그림자·빛무리·몸통을 겹으로 쌓고 어두운 선으로 마무리한다.
     bondHeart.add(paintBondHeart(scene, BOND_HEART_SIZE));
     this.bondValue = scene.add
@@ -263,10 +263,10 @@ export class InfoManager {
       .setOrigin(0.5)
       .setStroke("#2a0b16", 9);
     bondHeart.add(this.bondValue);
-    this.bondBar = new Gauge(scene, COLUMN.x + 52, 712, COLUMN.width - 216, 14, BOND_HEART);
-    this.bondLabel = scene.add.text(COLUMN.x - COLUMN.width / 2 + 146, 728, "", textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0, 0);
+    this.bondBar = new Gauge(scene, COLUMN.x + 76, 712, COLUMN.width - 256, 14, BOND_HEART);
+    this.bondLabel = scene.add.text(COLUMN.x - COLUMN.width / 2 + 186, 728, "", textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0, 0);
     attach(bondPanel, bondHeart,
-      scene.add.text(COLUMN.x - COLUMN.width / 2 + 146, 652, "유대", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0),
+      scene.add.text(COLUMN.x - COLUMN.width / 2 + 186, 652, "유대", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0),
       ...this.bondBar.objects, this.bondLabel);
 
     // 능력치.
@@ -446,7 +446,9 @@ export class InfoManager {
 
   /** 능력치 칩 하나. 큰 수치가 먼저 읽히고 기본치·성장분은 그 아래 작게 붙는다. */
   private addStatChip(chip: { key: keyof Stats; label: string; color: number }, index: number, panel: Phaser.GameObjects.Container): void {
-    const x = COLUMN.x - COLUMN.width / 2 + 76 + (index % 2) * (COLUMN.width / 2 - 8);
+    // 칩은 왼쪽으로 34만큼 더 나가므로 판 가장자리에서 넉넉히 띄운다. 판 밖으로 걸치면
+    // 내용물이 판에 얹힌 것이 아니라 흘러넘친 것처럼 보인다.
+    const x = COLUMN.x - COLUMN.width / 2 + 104 + (index % 2) * (COLUMN.width / 2 - 26);
     const y = 906 + Math.floor(index / 2) * 118;
     const size = 62;
     const container = this.scene.add.container(x - 34, y);
@@ -469,8 +471,8 @@ export class InfoManager {
    * 완성되므로, 빈 자리가 곧 "아직 덜 채운 마음"으로 읽힌다.
    */
   private addGemSlot(index: number, panel: Phaser.GameObjects.Container): GemSlot {
-    const center = { x: COLUMN.x - 44, y: 1378 };
-    const size = 232;
+    const center = { x: COLUMN.x - 48, y: 1372 };
+    const size = 208;
     const piece = this.scene.add.graphics({ x: center.x, y: center.y });
     const shape = heartSlice(size, index);
     const spot = heartSliceCenter(size, index);

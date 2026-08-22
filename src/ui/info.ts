@@ -340,14 +340,22 @@ export class InfoManager {
    */
   private addSectionTitle(text: string, y: number): void {
     const x = COLUMN.x - COLUMN.width / 2 + 52;
+    const label = this.scene.add
+      .text(x + 26, y, text, textStyle({ role: "display", size: 34, color: COLOR.accentText }))
+      .setOrigin(0, 0.5);
+    // 제목이 판 위에 그냥 얹혀 있으면 아래 수치와 한 덩어리로 읽힌다. 강조 막대에서 시작해
+    // 글자 끝까지만 덮는 어두운 마름모 한 장을 깔아 "여기부터 새 칸"임을 확실히 가른다.
+    const width = label.width + 74;
+    const plate = drawLayer(this.scene, x + width / 2 - 12, y, slantedRect(width, 52, 16), {
+      fill: 0x05070a,
+      alpha: 0.92,
+      edge: COLOR.accent,
+      edgeAlpha: 0.55,
+    });
     const bar = this.scene.add.graphics();
     bar.fillStyle(COLOR.accent, 0.95);
-    bar.fillPoints(toPoints(slantedRect(8, 34, 6)).map((point) => new Phaser.Geom.Point(point.x + x, point.y + y)), true);
-    const label = this.scene.add
-      .text(x + 20, y, text, textStyle({ role: "display", size: 34, color: COLOR.accentText }))
-      .setOrigin(0, 0.5)
-      .setShadow(0, 4, "#05070a", 6, false, true);
-    this.chrome.add([bar, label]);
+    bar.fillPoints(toPoints(slantedRect(9, 36, 7)).map((point) => new Phaser.Geom.Point(point.x + x, point.y + y)), true);
+    this.chrome.add([plate, bar, label]);
   }
 
   /** 즐겨찾기(별)와 애착(하트). 켜짐은 저마다의 색, 꺼짐은 회색이다. */

@@ -71,6 +71,15 @@ export const SEIRA_ASSET: PuppetAsset = {
   content: { left: 0, top: 0, right: 1085, bottom: 1450 },
 };
 
+/** 4번 전신 일러스트: 루카(벨로키랍토르). 넓은 후드와 꼬리까지 포함한 전용 원화다. */
+export const LUKA_ASSET: PuppetAsset = {
+  url: `${base}puppets/char_004.zip`,
+  imageWidth: 1728,
+  imageHeight: 2446,
+  // 원화의 후드·손·발·꼬리를 모두 포함한 가시 영역으로 발 높이와 화면 확대를 맞춘다.
+  content: { left: 32, top: 22, right: 1728, bottom: 2396 },
+};
+
 /**
  * 렐릭 데이터가 참조하는 원화 레지스트리. 새 원화는 여기에 한 번 등록한 뒤 데이터 키로 연결한다.
  * placeholder 키는 같은 임시 파일을 쓰되 화면에서 렐릭별 tint를 적용할 수 있게 별도로 둔다.
@@ -79,6 +88,7 @@ const PORTRAIT_ASSETS = {
   torika: { asset: TORIKA_ASSET, usesRelicTint: false },
   lexia: { asset: LEXIA_ASSET, usesRelicTint: false },
   seira: { asset: SEIRA_ASSET, usesRelicTint: false },
+  luka: { asset: LUKA_ASSET, usesRelicTint: false },
   "torika-placeholder": { asset: TORIKA_ASSET, usesRelicTint: true },
 } as const satisfies Record<PortraitAssetId, { asset: PuppetAsset; usesRelicTint: boolean }>;
 
@@ -149,6 +159,15 @@ export const SEIRA_SD_ASSET: PuppetAsset = {
   content: { left: 218, top: 112, right: 987, bottom: 1328 },
 };
 
+/** 4번 SD: 루카. 전용 SD의 1254 정사각 캔버스와 가시 영역을 사용한다. */
+export const LUKA_SD_ASSET: PuppetAsset = {
+  url: `${base}puppets/charSD_004.zip`,
+  imageWidth: 1254,
+  imageHeight: 1254,
+  // 투명 여백을 제외하고 후드 끝부터 발끝까지를 잡아 다른 SD와 같은 바닥선에 세운다.
+  content: { left: 202, top: 76, right: 1098, bottom: 1197 },
+};
+
 /** 적은 번호별 전용 묶음을 쓰고, 전용 SD가 없는 아군은 요청대로 아군 1번 SD를 공유한다. */
 export function battleAssetFor(relicId: string): PuppetAsset {
   if (relicId === "husk-raptor") return ENEMY_SD_ASSETS[0];
@@ -157,6 +176,7 @@ export function battleAssetFor(relicId: string): PuppetAsset {
   if (relicId === "anky") return TORIKA_SD_ASSET;
   if (relicId === "rex") return LEXIA_SD_ASSET;
   if (relicId === "spino") return SEIRA_SD_ASSET;
+  if (relicId === "luka") return LUKA_SD_ASSET;
   return TORIKA_SD_ASSET;
 }
 
@@ -215,8 +235,8 @@ function loadPuppet(asset: PuppetAsset): Promise<Puppet> {
  * 전신 스탠딩이 먼저 필요하고(로비·발굴 연출), SD와 적은 전투에 들어가야 쓰인다.
  */
 export const PUPPET_PRELOAD_GROUPS: ReadonlyArray<readonly PuppetAsset[]> = [
-  [TORIKA_ASSET, LEXIA_ASSET, SEIRA_ASSET],
-  [TORIKA_SD_ASSET, LEXIA_SD_ASSET, SEIRA_SD_ASSET, ...ENEMY_SD_ASSETS, TOBY_ASSET, AMO_ASSET, RIPA_ASSET],
+  [TORIKA_ASSET, LEXIA_ASSET, SEIRA_ASSET, LUKA_ASSET],
+  [TORIKA_SD_ASSET, LEXIA_SD_ASSET, SEIRA_SD_ASSET, LUKA_SD_ASSET, ...ENEMY_SD_ASSETS, TOBY_ASSET, AMO_ASSET, RIPA_ASSET],
 ];
 
 /**

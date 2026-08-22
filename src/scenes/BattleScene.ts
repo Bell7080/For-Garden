@@ -1,7 +1,8 @@
 import Phaser from "phaser";
 import { gameApi } from "../api/FakeServer";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
-import { FEROCITY_RULES, ULTIMATE_ENERGY_MAX } from "../core/battle";
+import { FEROCITY_RULES } from "../core/ferocity";
+import { ULTIMATE_ENERGY_MAX } from "../core/ultimate";
 import {
   aliveFighters,
   canFireUltimate,

@@ -1,7 +1,8 @@
 import Phaser from "phaser";
 import type { PuppetCreature } from "../puppets/assets";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
-import { previewSkillDamage, ULTIMATE_ENERGY_MAX, type BattleUnit } from "../core/battle";
+import type { Combatant } from "../core/combatTypes";
+import { previewSkillDamage } from "../core/damage";
 import type { Element, RelicDef, RelicProgress, RelicRarity, Role, Skill, SkillIconAssetId, Stats } from "../core/types";
 import { setDebugInfoOpen } from "../debug";
 import { getHeartGem, HEART_GEMS } from "../data/heartGems";
@@ -269,8 +270,6 @@ export class InfoManager {
   private currentDef?: RelicDef;
   private ownedNow = true;
   /** 전투에서 연 정보창일 때 실제 공격자와 피해 대상을 보존한다. */
-  private currentUnit?: BattleUnit;
-  private previewTarget?: BattleUnit;
   private liveLine?: Phaser.GameObjects.Text;
   private portrait?: PuppetCreature;
   private portraitWanted = false;
@@ -913,7 +912,7 @@ export class InfoManager {
     this.scene.input.on("pointerup", (pointer: Phaser.Input.Pointer) => {
       const from = start;
       start = undefined;
-      if (!from || !this.root.visible || this.currentUnit || this.popups.isOpen || this.gallery) return;
+      if (!from || !this.root.visible || this.popups.isOpen || this.gallery) return;
       const dx = pointer.x - from.x;
       // 세로로 더 많이 움직였으면 넘기지 않는다. 목록을 훑다가 실수로 넘어가지 않게 한다.
       if (Math.abs(dx) < SWIPE_DISTANCE || Math.abs(pointer.y - from.y) > Math.abs(dx) * 0.8) return;
@@ -938,7 +937,7 @@ export class InfoManager {
       duration: 150,
       ease: "Cubic.In",
       onComplete: () => {
-        this.openCharacter(next, undefined, undefined, undefined, relicCollection.owns(next.id));
+        this.openCharacter(next, relicCollection.owns(next.id));
         this.chrome.setPosition(distance, 0).setAlpha(0);
         this.scene.tweens.add({
           targets: this.chrome,
@@ -1313,17 +1312,17 @@ export class InfoManager {
     });
   }
 
-  /** 현재 화면 문맥에 따라 도감 배율 또는 대상 방어력이 반영된 전투 피해를 만든다. */
+  /** 읽기 전용 도감에 실제 방어력을 가정하지 않은 스킬 능력치 배율을 만든다. */
   private skillViewModel(kindLabel: string, skill: Skill, gaugeCost?: number): SkillInfoViewModel {
-    const attacker = this.currentUnit ?? (this.currentDef && {
+    const attacker: Combatant | undefined = this.currentDef && {
       def: this.currentDef, hp: this.currentDef.stats.hp, maxHp: this.currentDef.stats.hp,
-      energy: 0, ferocity: 0, bondLevel: 0, ferocityFever: false, justSwapped: false,
+      energy: 0, ferocity: 0, bondLevel: 0, ferocityFever: false,
       awakening: relicProgression.getProgress(this.currentDef.id).awakening,
-    });
-    const preview = attacker && kindLabel !== "패시브" ? previewSkillDamage(attacker, skill, this.previewTarget, true) : undefined;
-    const valueLabel = preview?.kind === "damage"
-      ? preview.label + "  " + preview.amount.toLocaleString() + " (대상 방어 반영)"
-      : preview ? preview.label + "  " + preview.stat + " " + preview.power + "% (도감 기준)" : undefined;
+    };
+    const preview = attacker && kindLabel !== "패시브" ? previewSkillDamage(attacker, skill) : undefined;
+    const valueLabel = preview?.kind === "scaling"
+      ? preview.label + "  " + preview.stat + " " + preview.power + "% (도감 기준)"
+      : undefined;
     return {
       name: skill.name,
       kindLabel,
@@ -1337,30 +1336,13 @@ export class InfoManager {
 
   /** 도감은 보유 여부를 전달해 정적 기록과 성장 정보의 잠금을 한곳에서 적용한다. */
   showRelic(def: RelicDef, owned = true): void {
-    this.openCharacter(def, undefined, undefined, undefined, owned);
+    this.openCharacter(def, owned);
   }
 
-  /** target을 함께 넘긴 전투 정보창은 방어력/저항력을 적용한 비치명타 예상값을 표시한다. */
-  showUnit(unit: BattleUnit, _isFront: boolean, target?: BattleUnit): void {
-    this.openCharacter(
-      unit.def,
-      "HP " + unit.hp.toLocaleString() + " / " + unit.maxHp.toLocaleString() + "   ·   궁극기 " + unit.energy + "/" + ULTIMATE_ENERGY_MAX + "   ·   야성 " + unit.ferocity + "/100",
-      unit,
-      target,
-    );
-  }
-
-  /** 팀 요약은 별도 팝업 없이 첫 유닛의 공용 캐릭터 상세로 진입한다. */
-  showEnemyTeam(units: BattleUnit[], order: number[]): void {
-    const front = units[order[0]];
-    if (front) this.showUnit(front, true);
-  }
-
-  private openCharacter(def: RelicDef, live?: string, unit?: BattleUnit, target?: BattleUnit, owned = true): void {
+  /** 정적 렐릭 정의만 받아 읽기 전용 상세 화면의 상태를 교체한다. */
+  private openCharacter(def: RelicDef, owned = true): void {
     this.currentDef = def;
     this.ownedNow = owned;
-    this.currentUnit = unit;
-    this.previewTarget = target;
     this.popups.closeAll();
 
     this.paintRarity(owned ? def.rarity : undefined);
@@ -1389,7 +1371,6 @@ export class InfoManager {
     this.root.setVisible(true);
     this.chrome.setVisible(true);
     setDebugInfoOpen(true);
-    if (live) this.say(live);
   }
 
   /**

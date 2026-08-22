@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import type { PuppetCreature } from "../puppets/assets";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { previewSkillDamage, ULTIMATE_ENERGY_MAX, type BattleUnit } from "../core/battle";
-import type { Element, RelicDef, Role, Skill, SkillIconAssetId, Stats } from "../core/types";
+import type { Element, RelicDef, RelicRarity, Role, Skill, SkillIconAssetId, Stats } from "../core/types";
 import { setDebugInfoOpen } from "../debug";
 import { getHeartGem, HEART_GEMS } from "../data/heartGems";
 import { KeywordManager } from "../managers/KeywordManager";
@@ -74,6 +74,18 @@ const SKILL_ICON = { size: 150, x: 124, step: 168 } as const;
  * 보이므로, 그리는 쪽에서 세로만 늘려 정사각형 자리를 꽉 채운다.
  */
 const BOND_HEART_SIZE = 59;
+
+/**
+ * 등급 글자에 흐르는 보석 색.
+ *
+ * 위 → 가운데 → 아래 순서로 색이 넘어간다. SSR은 황금 호박, SR은 보랏빛에서 분홍, R은
+ * 청량한 푸른빛이다. 등급은 화면마다 다른 색으로 칠하지 않는다.
+ */
+const RARITY_GEM: Record<RelicRarity, readonly [string, string, string]> = {
+  SSR: ["#fff3c4", "#f5a623", "#a25c0c"],
+  SR: ["#ffd6f5", "#c07cff", "#6d4bd8"],
+  R: ["#d6f2ff", "#63c4f2", "#2a6fd0"],
+};
 
 /** 정보창의 별은 화면에서 가장 큰 성급 표시다. 모양과 색은 `stars.ts`가 정한다. */
 const STAR_SIZE = 34;
@@ -182,7 +194,11 @@ export class InfoManager {
   private readonly keywords: KeywordManager;
 
   private readonly rarityText: Phaser.GameObjects.Text;
+  /** 등급 글자 뒤에 깔리는 같은 모양의 발광. 보석처럼 스스로 빛나 보이게 한다. */
+  private readonly rarityGlow: Phaser.GameObjects.Text;
   private readonly nameText: Phaser.GameObjects.Text;
+  /** 이름 뒤에 한 겹 어긋나게 깔리는 같은 글자. 겹친 레이어처럼 보이는 그림자다. */
+  private readonly nameShadow: Phaser.GameObjects.Text;
   private readonly roleText: Phaser.GameObjects.Text;
   private readonly bookmarkBadge: BadgeHandle;
   private readonly favoriteBadge: BadgeHandle;
@@ -233,10 +249,13 @@ export class InfoManager {
 
     // 이름줄은 판때기가 아니라 위에서 내려오는 어둠이다. 배경 원화를 자르지 않는다.
     this.chrome.add(drawGlassFade(scene, BASE_WIDTH / 2, 150, BASE_WIDTH, 420, { topAlpha: 0.92, bottomAlpha: 0 }));
-    this.rarityText = scene.add.text(46, 56, "", textStyle({ role: "display", size: 44, color: COLOR.accentText })).setOrigin(0, 0);
+    this.rarityGlow = scene.add.text(46, 56, "", textStyle({ role: "display", size: 44 })).setOrigin(0, 0).setAlpha(0.55).setScale(1.06).setBlendMode(Phaser.BlendModes.ADD);
+    this.rarityText = scene.add.text(46, 56, "", textStyle({ role: "display", size: 44 })).setOrigin(0, 0);
+    // 이름은 같은 글자를 한 겹 어긋나게 깔아 그림자를 만든다. 흐린 그림자보다 또렷하다.
+    this.nameShadow = scene.add.text(52, 112, "", textStyle({ role: "display", size: 84, color: "#05070a" })).setOrigin(0, 0).setAlpha(0.85);
     this.nameText = scene.add.text(46, 104, "", textStyle({ role: "display", size: 84 })).setOrigin(0, 0);
     this.roleText = scene.add.text(50, 206, "", textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0, 0);
-    this.chrome.add([this.rarityText, this.nameText, this.roleText]);
+    this.chrome.add([this.rarityGlow, this.rarityText, this.nameShadow, this.nameText, this.roleText]);
 
     this.bookmarkBadge = this.addBadge(84, 300, "bookmark", BOOKMARK_ON, () => this.toggleBookmark());
     this.favoriteBadge = this.addBadge(176, 300, "heart", FAVORITE_ON, () => this.toggleFavorite());
@@ -254,8 +273,13 @@ export class InfoManager {
     const gemPanel = this.addPanel(COLUMN.x, 1398, COLUMN.width, 292);
 
     // 레벨 · 경험치 · 급여.
-    this.levelValue = scene.add.text(COLUMN.x - COLUMN.width / 2 + 92, 296, "", textStyle({ role: "display", size: 96 })).setOrigin(0, 0).setScale(1, 1.16);
-    this.levelCap = scene.add.text(COLUMN.x + COLUMN.width / 2 - 46, 376, "", textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(1, 0);
+    this.levelValue = scene.add
+      .text(COLUMN.x - COLUMN.width / 2 + 92, 296, "", textStyle({ role: "display", size: 96 }))
+      .setOrigin(0, 0)
+      .setScale(1, 1.16)
+      .setShadow(3, 8, "#05070a", 10, false, true);
+    // 최대 레벨은 숫자 바로 옆에 붙는다. 멀리 떨어뜨리면 "1"과 "20"이 다른 값처럼 읽힌다.
+    this.levelCap = scene.add.text(0, 372, "", textStyle({ role: "emphasis", size: 30, color: COLOR.inkDim })).setOrigin(0, 1);
     this.expBar = new Gauge(scene, COLUMN.x, 452, COLUMN.width - 88, 16, COLOR.accent);
     this.expLabel = scene.add.text(COLUMN.x, 470, "", textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0.5, 0);
     attach(levelPanel,
@@ -271,19 +295,18 @@ export class InfoManager {
     bondHeart.add(paintBondHeart(scene, BOND_HEART_SIZE));
     this.bondValue = scene.add.text(0, 1, "", textStyle({ role: "display", size: 32 })).setOrigin(0.5);
     bondHeart.add(this.bondValue);
-    this.bondBar = new Gauge(scene, COLUMN.x + 76, 718, COLUMN.width - 256, 14, BOND_HEART);
-    this.bondLabel = scene.add.text(COLUMN.x - COLUMN.width / 2 + 186, 734, "", textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0, 0);
-    attach(bondPanel, bondHeart,
-      scene.add.text(COLUMN.x - COLUMN.width / 2 + 172, 660, "유대", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0),
-      ...this.bondBar.objects, this.bondLabel);
+    this.bondBar = new Gauge(scene, COLUMN.x + 40, 718, COLUMN.width - 184, 14, BOND_HEART);
+    this.bondLabel = scene.add.text(COLUMN.x - COLUMN.width / 2 + 152, 738, "", textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0, 0);
+    attach(bondPanel, bondHeart, ...this.bondBar.objects, this.bondLabel);
+    this.addSectionTitle("유대", 662);
 
     // 능력치.
-    attach(statPanel, scene.add.text(COLUMN.x - COLUMN.width / 2 + 56, 846, "능력치", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0));
+    this.addSectionTitle("능력치", 852);
     this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 48, 852, (from) => this.openExtraStats(from), statPanel);
     STAT_CHIPS.forEach((chip, index) => this.addStatChip(chip, index, statPanel));
 
     // 하트 젬 — 하트 하나를 셋으로 가른 자리.
-    attach(gemPanel, scene.add.text(COLUMN.x - COLUMN.width / 2 + 56, 1282, "HEART GEM", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0));
+    this.addSectionTitle("룬", 1288);
     for (let index = 0; index < 3; index += 1) this.gemSlots.push(this.addGemSlot(index, gemPanel));
 
     this.buildFigureStand();
@@ -306,6 +329,25 @@ export class InfoManager {
     panel.add(drawShapeEdge(this.scene, 0, 0, shape, "bottom", { color: COLOR.accent, alpha: 0.22, inset: 10 }));
     this.chrome.add(panel);
     return panel;
+  }
+
+  /**
+   * 칸 제목.
+   *
+   * 판은 기울지만 제목은 기울지 않는다 — 세 칸의 제목이 저마다 다른 각도로 누우면 어느 것이
+   * 같은 위계인지 읽히지 않는다. 그래서 판 밖(기울지 않는 층)에 얹고, 셋 다 같은 x에 선다.
+   * 왼쪽의 짧은 막대와 아래로 흐르는 얇은 선이 제목을 판에 묶어 준다.
+   */
+  private addSectionTitle(text: string, y: number): void {
+    const x = COLUMN.x - COLUMN.width / 2 + 52;
+    const bar = this.scene.add.graphics();
+    bar.fillStyle(COLOR.accent, 0.95);
+    bar.fillPoints(toPoints(slantedRect(8, 34, 6)).map((point) => new Phaser.Geom.Point(point.x + x, point.y + y)), true);
+    const label = this.scene.add
+      .text(x + 20, y, text, textStyle({ role: "display", size: 34, color: COLOR.accentText }))
+      .setOrigin(0, 0.5)
+      .setShadow(0, 4, "#05070a", 6, false, true);
+    this.chrome.add([bar, label]);
   }
 
   /** 즐겨찾기(별)와 애착(하트). 켜짐은 저마다의 색, 꺼짐은 회색이다. */
@@ -502,16 +544,17 @@ export class InfoManager {
       paint: (gemId) => {
         piece.clear();
         // 낀 조각만 보석처럼 빛난다. 두 겹으로 칠해 가장자리보다 안쪽이 밝게 남는다.
-        piece.fillStyle(gemId ? GEM_GLOW : 0x1b2330, gemId ? 0.32 : 0.95);
+        // 빈 자리는 판때기가 아니라 검은 유리다. 뒤 원화가 비쳐야 "아직 비어 있다"로 읽힌다.
+        piece.fillStyle(gemId ? GEM_GLOW : 0x05070a, gemId ? 0.32 : 0.42);
         piece.fillPoints(toPoints(shape), true);
-        piece.fillStyle(gemId ? GEM_FILL : 0x232c39, gemId ? 0.95 : 0.95);
+        piece.fillStyle(gemId ? GEM_FILL : 0x05070a, gemId ? 0.95 : 0.34);
         piece.fillPoints(toPoints(heartSlice(size * 0.84, index)), true);
         // 커팅면. 낀 조각은 밝게 갈라지고 빈 자리는 흐릿한 결만 남는다.
         piece.lineStyle(2, gemId ? GEM_EDGE : 0x2a3440, gemId ? 0.7 : 0.35);
         for (const line of heartFacetLines(size * 0.84, index)) {
           piece.lineBetween(line.from[0], line.from[1], line.to[0], line.to[1]);
         }
-        piece.lineStyle(3, gemId ? GEM_EDGE : 0x55637a, 0.95);
+        piece.lineStyle(3, gemId ? GEM_EDGE : 0x7d8ba0, gemId ? 0.95 : 0.6);
         piece.strokePoints(toPoints(shape), true);
         label.setText((index + 1) + "   " + (gemId ? getHeartGem(gemId).name.replace(" Heart Gem", "") : "빈 자리"));
         label.setColor(gemId ? COLOR.ink : COLOR.inkDim);
@@ -868,8 +911,9 @@ export class InfoManager {
     this.previewTarget = target;
     this.popups.closeAll();
 
-    this.rarityText.setText(owned ? def.rarity : "???");
+    this.paintRarity(owned ? def.rarity : undefined);
     this.nameText.setText(owned ? def.name : "미발굴 개체");
+    this.nameShadow.setText(this.nameText.text);
     this.roleText.setText("NO." + def.specimenNumber + (owned ? "   " + def.origin + " · " + ELEMENT_LABEL[def.element] + " · " + ROLE_LABEL[def.role] : "   실루엣 기록"));
     this.refreshBadges();
     this.paintStars(def);
@@ -891,6 +935,24 @@ export class InfoManager {
     if (live) this.say(live);
   }
 
+  /**
+   * 등급 글자를 보석처럼 칠한다.
+   *
+   * SSR은 황금 호박, SR은 보랏빛에서 분홍으로 넘어가는 결, R은 청량한 푸른빛이다. 색만
+   * 바꾸면 그냥 색 글씨라, 위아래로 색이 흐르는 결과 뒤에 깔리는 같은 색 발광을 함께 쓴다.
+   */
+  private paintRarity(rarity?: RelicRarity): void {
+    const stops = rarity ? RARITY_GEM[rarity] : ["#9aa3ad", "#6f7681", "#4a5058"] as const;
+    this.rarityText.setText(rarity ?? "???");
+    this.rarityGlow.setText(rarity ?? "???").setColor(stops[1]);
+    // 글자 높이를 따라 색이 흐르게 한다. Phaser Text는 캔버스 채우기를 그대로 받는다.
+    const gradient = this.rarityText.context.createLinearGradient(0, 0, 0, this.rarityText.height);
+    gradient.addColorStop(0, stops[0]);
+    gradient.addColorStop(0.55, stops[1]);
+    gradient.addColorStop(1, stops[2]);
+    this.rarityText.setFill(gradient);
+  }
+
   /** 성급은 등급에서만 나온다. 별 모양과 색은 `stars.ts` 하나가 정한다. */
   private paintStars(def: RelicDef): void {
     this.starRow.removeAll(true);
@@ -908,6 +970,8 @@ export class InfoManager {
 
     this.levelValue.setText(String(progress.level));
     this.levelCap.setText("/ " + RELIC_LEVEL_CAP);
+    // 숫자 폭이 자리 수에 따라 달라지므로 붙는 자리도 그릴 때마다 다시 잡는다.
+    this.levelCap.setX(this.levelValue.x + this.levelValue.displayWidth + 16);
     const need = maxed ? 0 : relicExpToNext(progress.level);
     this.expBar.setValue(maxed ? 1 : progress.exp / need);
     this.expLabel.setText(maxed ? "MAX" : progress.exp + " / " + need + " EXP   ·   보유 잡초 " + session.wallet.weeds);

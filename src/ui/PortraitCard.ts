@@ -174,7 +174,8 @@ export class PortraitCard extends Phaser.GameObjects.Container {
           .setOrigin(0, 0);
         this.add(this.subText);
       }
-      if (options.stars) this.addStars(baseline - nameSize * 2.05);
+      // 별은 이름 바로 위에 앉는다. 더 올리면 카드 한가운데에 떠서 얼굴을 가린다.
+      if (options.stars) this.addStars(baseline - nameSize * 1.8);
     }
 
     if (options.badge) {

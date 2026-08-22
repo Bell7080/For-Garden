@@ -22,6 +22,8 @@ import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
  */
 export class RelicsScene extends Phaser.Scene {
   private info!: CharacterInfoManager;
+  /** 정보창의 급여·돌파가 지갑을 바꾸면 같은 씬이 소유한 상단 표시도 즉시 다시 그린다. */
+  private topBar!: TopBar;
   private cards = new Map<string, PortraitCard>();
   /** 스토리 배열 순서와 분리된 도감 표시 정렬 기준이다. */
   private sortMode: "number" | "rarity" = "number";
@@ -39,7 +41,7 @@ export class RelicsScene extends Phaser.Scene {
     addSceneBackground(this, BACKGROUND.relics);
     // 밝은 원화 위에서도 카드와 본문을 읽을 수 있도록 기존 void 색을 얇게 덮는다.
     this.add.rectangle(cx, 960, BASE_WIDTH, 1920, COLOR.void, 0.48).setDepth(-29);
-    new TopBar(this);
+    this.topBar = new TopBar(this, 40, { currencies: "relic" });
 
     const ownedCount = relicCollection.owned.length;
     this.add
@@ -62,10 +64,10 @@ export class RelicsScene extends Phaser.Scene {
 
     new BottomNav(this, "relics");
     this.info = new CharacterInfoManager(this);
-    // 정보창에서 애착 렐릭을 바꾸고 나오면 그리드의 발광도 함께 옮겨 간다.
-    this.info.onClose = () => this.refresh();
     // 정보창 안에서 애착 렐릭이 바뀔 수 있으므로 닫힐 때 카드 표시를 다시 맞춘다.
     this.info.onClose = () => this.refresh();
+    // 서버가 재화 차감을 확정한 직후 정보창과 상단 줄이 같은 세션 지갑을 다시 읽는다.
+    this.info.onWalletChange = () => this.topBar.refresh();
     this.refresh();
   }
 

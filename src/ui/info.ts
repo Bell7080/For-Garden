@@ -290,6 +290,8 @@ export class InfoManager {
 
   /** 정보창이 닫힐 때 목록 화면이 카드 표시를 다시 맞출 수 있게 알린다. */
   onClose?: () => void;
+  /** 급여·돌파가 지갑을 바꾼 직후 소유 씬의 상단 재화 줄을 갱신하는 경계다. */
+  onWalletChange?: () => void;
 
   constructor(private readonly scene: Phaser.Scene, private readonly portraitDepth = 1001) {
     this.root = scene.add.container(0, 0).setDepth(1000).setVisible(false);
@@ -643,6 +645,8 @@ export class InfoManager {
     if (!def) return;
     try {
       await gameApi.breakThroughRelic(def.id);
+      // 성공한 서버 처리만 알린다. 실패했을 때는 지갑 값이 바뀌지 않는다.
+      this.onWalletChange?.();
     } catch {
       // 조건은 화면에서 이미 막는다. 실패하면 상태만 다시 그린다.
     }
@@ -698,6 +702,8 @@ export class InfoManager {
     this.feeding = true;
     try {
       await gameApi.feedRelic(def.id, feeds);
+      // 정보창과 상단 줄 모두 확정된 단일 세션 지갑을 읽도록 성공 직후 알린다.
+      this.onWalletChange?.();
     } catch {
       // 치즈케이크 부족·상한은 화면에서 이미 막는다. 실패하면 상태만 다시 그린다.
     } finally {
@@ -1426,7 +1432,8 @@ export class InfoManager {
     this.levelCap.setX(this.levelValue.x + this.levelValue.displayWidth + 14);
     const need = maxed ? 0 : relicExpToNext(progress.level);
     this.expBar.setValue(maxed ? 1 : progress.exp / need);
-    this.expLabel.setText(maxed ? "MAX" : progress.exp + " / " + need + " EXP   ·   보유 치즈케이크 " + session.wallet.cheesecake);
+    // 보유 치즈케이크는 상단 줄 한 곳에서만 보여 중복되거나 서로 다른 시점의 값이 보이지 않게 한다.
+    this.expLabel.setText(maxed ? "MAX" : progress.exp + " / " + need + " EXP");
     this.paintFeedButton(this.ownedNow && canFeedRelic(progress, session.wallet.cheesecake));
     this.feedLabel.setText(maxed ? "최대 레벨" : "급여하기");
     this.paintBreakButton(progress);

@@ -8,9 +8,10 @@ import { setDebugScene } from "../debug";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { Button } from "../ui/Button";
 import { addBackButton } from "../ui/IconButton";
-import { PortraitCard, starsForRarity } from "../ui/PortraitCard";
+import { PortraitCard } from "../ui/PortraitCard";
 import { chipPoints, drawHairline, drawLayer, HOLO } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
+import { InfoManager } from "../ui/info";
 
 /** 로비의 친구 버튼에서 진입하는 최소 소셜 화면이며 목록과 프로필을 같은 씬에서 전환한다. */
 export class FriendsScene extends Phaser.Scene {
@@ -20,6 +21,8 @@ export class FriendsScene extends Phaser.Scene {
   private content?: Phaser.GameObjects.Container;
   private title?: Phaser.GameObjects.Text;
   private summary?: Phaser.GameObjects.Text;
+  /** 친구 정보창은 생성 때부터 읽기 전용 권한으로 고정한다. */
+  private info!: InfoManager;
 
   constructor() { super("friends"); }
 
@@ -31,6 +34,7 @@ export class FriendsScene extends Phaser.Scene {
     this.title = this.add.text(54, 76, "친구", textStyle({ role: "display", size: 52 })).setOrigin(0, 0);
     this.summary = this.add.text(BASE_WIDTH - 54, 88, "동기화 중", textStyle({ role: "emphasis", size: 25, color: COLOR.accentText })).setOrigin(1, 0);
     addBackButton(this, () => this.scene.start("lobby"));
+    this.info = new InfoManager(this, 1001, "friend");
     void this.loadFriends();
   }
 
@@ -50,10 +54,10 @@ export class FriendsScene extends Phaser.Scene {
     this.title?.setText("친구");
     this.updateSummary();
     this.friends.forEach((friend, index) => {
-      const relic = getRelic(friend.favoriteRelicId);
+      const relic = getRelic(friend.favoriteRelic.relicId);
       const y = 330 + index * 300;
       const panel = drawLayer(this, BASE_WIDTH / 2, y, chipPoints(930, 236, { bevel: { topLeft: 42, topRight: 0, bottomRight: 42, bottomLeft: 0 } }), { fill: 0x1a1f27, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.42 });
-      const card = new PortraitCard(this, 190, y, { width: 190, height: 200, portraitAssetId: relic.portraitAssetId, label: relic.name, level: friend.favoriteRelicLevel, stars: starsForRarity(relic.rarity) });
+      const card = new PortraitCard(this, 190, y, { width: 190, height: 200, portraitAssetId: relic.portraitAssetId, label: relic.name, level: friend.favoriteRelic.level, stars: { filled: friend.favoriteRelic.stars, total: 5 } });
       const name = this.add.text(330, y - 76, `${friend.name}  ·  연구 LV.${friend.researcherLevel}`, textStyle({ role: "emphasis", size: 31 })).setOrigin(0, 0);
       const status = this.add.text(330, y - 20, friend.status, textStyle({ role: "body", size: 27, color: COLOR.inkDim })).setOrigin(0, 0);
       const active = this.add.text(900, y + 62, friend.lastActive, textStyle({ role: "body", size: 23, color: COLOR.accentText })).setOrigin(1, 0);
@@ -71,8 +75,10 @@ export class FriendsScene extends Phaser.Scene {
     this.content = this.add.container(0, 0);
     this.title?.setText("친구 프로필");
     this.updateSummary();
-    const relic = getRelic(friend.favoriteRelicId);
-    const card = new PortraitCard(this, BASE_WIDTH / 2, 610, { width: 500, height: 620, portraitAssetId: relic.portraitAssetId, label: relic.name, level: friend.favoriteRelicLevel, stars: starsForRarity(relic.rarity), affinity: { element: relic.element, role: relic.role } });
+    const relic = getRelic(friend.favoriteRelic.relicId);
+    const card = new PortraitCard(this, BASE_WIDTH / 2, 610, { width: 500, height: 620, portraitAssetId: relic.portraitAssetId, label: relic.name, level: friend.favoriteRelic.level, stars: { filled: friend.favoriteRelic.stars, total: 5 }, affinity: { element: relic.element, role: relic.role } });
+    // 렐릭 카드는 서버 공개 DTO만 넘기는 공용 읽기 전용 정보창의 진입점이다.
+    card.hit.on("pointerup", () => this.info.showFriend(friend.favoriteRelic));
     const name = this.add.text(BASE_WIDTH / 2, 1020, friend.name, textStyle({ role: "display", size: 48 })).setOrigin(0.5);
     const meta = this.add.text(BASE_WIDTH / 2, 1088, `연구 LV.${friend.researcherLevel}  ·  ${friend.lastActive}`, textStyle({ role: "body", size: 27, color: COLOR.inkDim })).setOrigin(0.5);
     const status = this.add.text(BASE_WIDTH / 2, 1160, `“${friend.status}”`, textStyle({ role: "body", size: 30, color: COLOR.ink })).setOrigin(0.5);

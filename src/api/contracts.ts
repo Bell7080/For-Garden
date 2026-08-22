@@ -1,10 +1,22 @@
 import type { AcquisitionResult, GachaPityState, Wallet } from "../core/gacha";
-import type { RelicProgress } from "../core/types";
+import type { RelicProgress, Stats } from "../core/types";
 import type { MissionPeriod } from "../core/missions";
 import type { ProductCurrency, ProductGrant, ProductRefresh } from "../data/products";
 import type { DnaExchangeKind } from "../data/economy";
 import type { StageDef } from "../core/types";
 import type { EventDefinition } from "../data/events/types";
+
+/** 다른 이용자에게 공개해도 되는 렐릭 정보만 담는 소셜 DTO다. */
+export interface PublicRelicProfileDto {
+  relicId: string;
+  level: number;
+  /** 성급은 중복 획득/각성 단계와 구분되는 공개 표시 값이다. */
+  stars: number;
+  /** 서버가 공개 시점에 계산한 대표 능력치라 조회자의 세션을 참조하지 않는다. */
+  stats: Stats;
+  /** 공개가 허용된 스킬만 id로 전달한다. */
+  skillIds: string[];
+}
 
 /** 네트워크로 직렬화할 수 있는 플레이어 진행 정보의 최소 규격이다. */
 export interface PlayerStateDto {

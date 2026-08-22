@@ -103,6 +103,9 @@ const BOND_HEART = 0xe23a46;
 /** 하트 안쪽에 한 겹 더 얹는 밝은 심지. */
 const BOND_HEART_CORE = 0xff8a7a;
 const FEED_GREEN = 0x7fc47f;
+/** 빈 자리가 제 크기에서 물러나는 비율. 셋이 물러나면 사이에 고른 틈이 생긴다. */
+const GEM_GAP = 0.955;
+
 /** 낀 젬 조각이 내는 빛. */
 const GEM_GLOW = 0xf2789f;
 const GEM_FILL = 0xc95f8a;
@@ -566,36 +569,45 @@ export class InfoManager {
     return {
       paint: (gemId) => {
         piece.clear();
-        // 낀 조각만 보석처럼 빛난다. 두 겹으로 칠해 가장자리보다 안쪽이 밝게 남는다.
-        // 빈 자리는 판때기가 아니라 검은 유리다. 뒤 원화가 비쳐야 "아직 비어 있다"로 읽힌다.
-        piece.fillStyle(gemId ? GEM_GLOW : 0x05070a, gemId ? 0.32 : 0.42);
-        piece.fillPoints(toPoints(shape), true);
-        piece.fillStyle(gemId ? GEM_FILL : 0x05070a, gemId ? 0.95 : 0.34);
+        // 빈 자리는 제 크기보다 조금 오므라들어 조각 사이에 틈이 생긴다. 룬을 끼우면 제
+        // 크기로 펴져 틈이 메워지므로, 셋을 다 채우면 이음매 없는 하트 한 장이 된다.
+        const outline = toPoints(gemId ? shape : shrinkSlice(shape, index, size, GEM_GAP));
+        if (!gemId) {
+          // 빈 자리에는 선을 두르지 않는다. 대신 짙은 어둠 두 겹으로 안쪽이 더 깊어 보이게
+          // 해, 테두리 없이도 조각의 면이 읽히게 한다.
+          piece.fillStyle(0x02040a, 0.66);
+          piece.fillPoints(outline, true);
+          piece.fillStyle(0x000000, 0.55);
+          piece.fillPoints(toPoints(shrinkSlice(shape, index, size, GEM_GAP * 0.86)), true);
+          label.setText(index + 1 + "   빈 자리").setColor(COLOR.inkDim);
+          return;
+        }
+        piece.fillStyle(GEM_GLOW, 0.32);
+        piece.fillPoints(outline, true);
+        piece.fillStyle(GEM_FILL, 0.95);
         piece.fillPoints(toPoints(heartSlice(size * 0.84, index)), true);
-        // 커팅면. 낀 조각은 밝게 갈라지고 빈 자리는 흐릿한 결만 남는다.
-        piece.lineStyle(2, gemId ? GEM_EDGE : 0x2a3440, gemId ? 0.7 : 0.35);
+        // 커팅면만 남긴다. 낀 조각끼리 맞물리는 자리에 선이 겹치면 이음매가 도드라진다.
+        piece.lineStyle(2, GEM_EDGE, 0.7);
         for (const line of heartFacetLines(size * 0.84, index)) {
           piece.lineBetween(line.from[0], line.from[1], line.to[0], line.to[1]);
         }
-        piece.lineStyle(3, gemId ? GEM_EDGE : 0x7d8ba0, gemId ? 0.95 : 0.6);
-        piece.strokePoints(toPoints(shape), true);
-        label.setText((index + 1) + "   " + (gemId ? getHeartGem(gemId).name.replace(" Heart Gem", "") : "빈 자리"));
-        label.setColor(gemId ? COLOR.ink : COLOR.inkDim);
+        label.setText(index + 1 + "   " + getHeartGem(gemId).name.replace(" Heart Gem", "")).setColor(COLOR.ink);
       },
     };
   }
 
-  /** 슬롯 하나에 낄 젬을 고르는 팝업. */
+  /** 칸 하나에 낄 룬을 고르는 가방. 그 칸에 낄 수 있는 것만 늘어놓는다. */
   private openGemPicker(index: number): void {
     const def = this.currentDef;
     if (!def || !this.ownedNow) return;
-    this.popups.open({ width: 820, height: 620, title: "HEART GEM " + (index + 1), dim: true }, (body, close) => {
+    this.popups.open({ width: 820, height: 620, title: "룬 가방 · " + (index + 1) + "번 칸", dim: true }, (body, close) => {
       const owned = HEART_GEMS.filter((gem) => session.ownedHeartGemIds.includes(gem.id));
       const rows: { id: string | null; name: string; effect: string }[] = [
         { id: null, name: "비우기", effect: "" },
         ...owned.map((gem) => ({
           id: gem.id,
-          name: gem.name,
+          // 칸 이름이 "룬"이므로 가방에서도 룬으로 부른다. 데이터의 정적 이름은 그대로 둔다.
+          name: gem.name.replace(" Heart Gem", " 룬"),
           effect: Object.entries(gem.statPercent).map(([key, percent]) => (STAT_LABEL[key] ?? key) + " +" + percent + "%").join("   "),
         })),
       ];
@@ -1125,11 +1137,26 @@ function heartSlice(size: number, index: number): number[] {
   const points: number[] = [...center];
   // 곡선을 촘촘히 따면 매끈한 하트가 되지만, 이것은 보석이다. 몇 개의 곧은 면으로만 깎아
   // 각 조각이 커팅된 것처럼 보이게 한다.
-  const facets = 4;
+  const facets = 5;
   for (let i = 0; i <= facets; i += 1) {
     points.push(...heartOutline(from + ((to - from) * i) / facets, size));
   }
   return points;
+}
+
+/**
+ * 조각을 제 무게중심 쪽으로 오므린다.
+ *
+ * 빈 자리에만 쓴다. 세 조각이 각자 조금씩 물러나면 사이에 고른 틈이 생기고, 룬을 끼워
+ * 제 크기로 돌아오는 순간 그 틈이 메워진다.
+ */
+function shrinkSlice(shape: number[], index: number, size: number, gap: number): number[] {
+  const spot = heartSliceCenter(size, index);
+  const shrunk: number[] = [];
+  for (let i = 0; i < shape.length; i += 2) {
+    shrunk.push(spot.x + (shape[i] - spot.x) * gap, spot.y + (shape[i + 1] - spot.y) * gap);
+  }
+  return shrunk;
 }
 
 /** 조각 안쪽에 긋는 커팅면. 중심에서 각 꼭짓점으로 뻗는 선이 보석의 결을 만든다. */

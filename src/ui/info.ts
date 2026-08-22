@@ -971,9 +971,9 @@ class Gauge {
 /**
  * 유대 하트 한 덩이.
  *
- * 별과 같은 방식으로 겹을 쌓는다 — 뒤로 지는 그림자, 번지는 빛무리 두 겹, 몸통, 그리고
- * 어두운 테두리. 글자 하트(♥)를 쓰면 글꼴마다 모양과 두께가 달라지고 테두리도 획을 따라
- * 울퉁불퉁해지므로, 젬과 같은 곡선식으로 직접 그린다.
+ * 글자 하트(♥)는 글꼴마다 모양과 두께가 달라지므로 젬과 같은 곡선식으로 직접 그린다.
+ * 다만 성급 별처럼 화려하게 쌓지는 않는다 — 별은 등급을 자랑하는 자리지만 이것은 게이지
+ * 옆의 이름표라, 테두리 없이 옅은 그림자와 한 겹의 빛무리로만 조용히 앉는다.
  */
 function paintBondHeart(scene: Phaser.Scene, size: number): Phaser.GameObjects.Graphics {
   const g = scene.add.graphics();
@@ -986,19 +986,14 @@ function paintBondHeart(scene: Phaser.Scene, size: number): Phaser.GameObjects.G
     }
     return list;
   };
-  g.fillStyle(0x2a0b16, 0.5);
-  g.fillPoints(shape(1, size * 0.05, size * 0.06), true);
-  g.fillStyle(BOND_HEART, 0.12);
-  g.fillPoints(shape(1.34), true);
-  g.fillStyle(BOND_HEART, 0.22);
-  g.fillPoints(shape(1.14), true);
+  // 겹은 셋이면 충분하다. 옅은 그림자로 바닥에서 떼고, 한 겹의 빛무리로 번지게 한 뒤,
+  // 몸통을 얹는다. 테두리를 두르면 다른 요소보다 먼저 눈에 들어와 판을 어지럽힌다.
+  g.fillStyle(0x2a0b16, 0.35);
+  g.fillPoints(shape(1, size * 0.04, size * 0.05), true);
+  g.fillStyle(BOND_HEART, 0.14);
+  g.fillPoints(shape(1.16), true);
   g.fillStyle(BOND_HEART, 1);
   g.fillPoints(shape(1), true);
-  // 위쪽 봉우리에만 얹는 밝은 결. 하트를 평평한 스티커로 보이지 않게 한다.
-  g.fillStyle(0xffd9e6, 0.28);
-  g.fillPoints(shape(0.34, -size * 0.2, -size * 0.19), true);
-  g.lineStyle(4, 0x2a0b16, 0.9);
-  g.strokePoints(shape(1), true);
   return g;
 }
 

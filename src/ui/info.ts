@@ -22,6 +22,7 @@ import { chipPoints, drawGlassFade, drawHairline, drawLayer, drawShapeEdge, draw
 import { drawGlyph } from "./glyphs";
 import { PopupLayer } from "./PopupLayer";
 import { addStarRow } from "./stars";
+import { StatRadar } from "./StatRadar";
 import { openSkillPopup, type SkillInfoViewModel } from "./SkillPopup";
 import { relicCollection } from "../managers/RelicCollectionManager";
 import { COLOR, textStyle } from "./theme";
@@ -276,9 +277,9 @@ export class InfoManager {
     this.favoriteBadge = this.addBadge(176, 300, "heart", FAVORITE_ON, () => this.toggleFavorite());
     this.addJournalButton(268, 300);
 
-    this.starRow = scene.add.container(COLUMN.x, 196);
+    this.starRow = scene.add.container(COLUMN.x, 150);
     this.chrome.add(this.starRow);
-    this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 40, 196, (from) => this.openAwakening(from));
+    this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 40, 150, (from) => this.openAwakening(from));
 
     // 오른쪽 수치는 칸마다 판을 따로 깐다. 대신 칸의 내용물을 그 판 **안에** 넣어 판과 같은
     // 각도로 함께 기운다. 판만 기울고 글자가 반듯하면 판 위에 종이를 얹어 둔 것처럼 어긋난다.
@@ -288,8 +289,9 @@ export class InfoManager {
     const gemPanel = this.addPanel(COLUMN.x, 1398, COLUMN.width, 292);
 
     // 레벨 · 경험치 · 급여.
+    this.addSectionTitle("레벨", 442 - 166);
     this.levelValue = scene.add
-      .text(COLUMN.x - COLUMN.width / 2 + 92, 296, "", textStyle({ role: "display", size: 96 }))
+      .text(COLUMN.x - COLUMN.width / 2 + 54, 300, "", textStyle({ role: "display", size: 96 }))
       .setOrigin(0, 0)
       .setScale(1, 1.16)
       .setShadow(3, 8, "#05070a", 10, false, true);
@@ -297,9 +299,7 @@ export class InfoManager {
     this.levelCap = scene.add.text(0, 372, "", textStyle({ role: "emphasis", size: 30, color: COLOR.inkDim })).setOrigin(0, 1);
     this.expBar = new Gauge(scene, COLUMN.x, 452, COLUMN.width - 88, 16, COLOR.accent);
     this.expLabel = scene.add.text(COLUMN.x, 470, "", textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0.5, 0);
-    attach(levelPanel,
-      scene.add.text(COLUMN.x - COLUMN.width / 2 + 50, 310, "LV", textStyle({ role: "display", size: 30, color: COLOR.accentText })).setOrigin(0, 0),
-      this.levelValue, this.levelCap, ...this.expBar.objects, this.expLabel);
+    attach(levelPanel, this.levelValue, this.levelCap, ...this.expBar.objects, this.expLabel);
     const feed = this.addFeedButton(COLUMN.x, 556, COLUMN.width - 96, 112, levelPanel);
     this.feedButton = feed.container;
     this.feedLabel = feed.label;
@@ -684,12 +684,23 @@ export class InfoManager {
     const def = this.currentDef;
     if (!def) return;
     const stats = relicProgression.getFinalStats(def.id);
-    this.popups.open({ width: 720, height: 520, title: "추가 능력치", tilt: -1.2, ...anchorOf(from) }, (body) => {
+    this.popups.open({ width: 800, height: 900, title: "능력치 상세", tilt: -1.2, ...anchorOf(from) }, (body) => {
+      // 위쪽은 다섯 축을 한눈에 견주는 오각형이다. 숫자 다섯 줄보다 "무엇이 센 개체인지"가
+      // 먼저 읽힌다. 아래쪽은 그 오각형에 들어가지 않는 세부 수치를 따로 모은 칸이다.
+      const radar = new StatRadar(this.scene, 0, -210, 148);
+      radar.draw(stats, 148);
+      body.add(radar);
+      body.add(drawHairline(this.scene, 0, -6, 660, { color: COLOR.accent, alpha: 0.35 }));
+      body.add(
+        this.scene.add
+          .text(-330, 16, "세부 능력치", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText }))
+          .setOrigin(0, 0),
+      );
       EXTRA_STATS.forEach((row, index) => {
-        const y = -140 + index * 76;
-        body.add(this.scene.add.text(-290, y, row.label, textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0, 0.5));
-        body.add(this.scene.add.text(290, y, stats[row.key].toLocaleString() + (row.suffix ?? ""), textStyle({ role: "display", size: 30 })).setOrigin(1, 0.5));
-        body.add(drawHairline(this.scene, 0, y + 34, 580, { color: COLOR.accent, alpha: 0.15 }));
+        const y = 90 + index * 74;
+        body.add(this.scene.add.text(-330, y, row.label, textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0, 0.5));
+        body.add(this.scene.add.text(330, y, stats[row.key].toLocaleString() + (row.suffix ?? ""), textStyle({ role: "display", size: 30 })).setOrigin(1, 0.5));
+        if (index < EXTRA_STATS.length - 1) body.add(drawHairline(this.scene, 0, y + 37, 660, { color: COLOR.accent, alpha: 0.14 }));
       });
     });
   }
@@ -845,7 +856,7 @@ export class InfoManager {
       });
       container.add(hit);
       // 패시브 위에만 이 개체의 피버 발현을 작게 얹는다. 야성은 벌이 아니라 상이라는 표시다.
-      if (index === 0) this.addFerocityBadge(container, size, def);
+      if (index === 0) this.addFerocityBadge(container.x, container.y - size / 2 - 56, def);
       this.chrome.add(container);
       this.skillIcons.push(container);
     });
@@ -857,25 +868,28 @@ export class InfoManager {
    * 야성은 모든 개체가 공유하는 규칙이지만 어떻게 터지는지는 개체마다 다르다. 그 차이만
    * 이름 두 글자로 알리고, 자세한 것은 눌렀을 때 그 위에 뜨는 쪽지가 맡는다.
    */
-  private addFerocityBadge(icon: Phaser.GameObjects.Container, size: number, def: RelicDef): void {
-    // 이름표가 아니라 아이콘이다. 스킬 액자 어깨에 걸린 작은 불꽃 하나로 알린다.
+  private addFerocityBadge(x: number, y: number, def: RelicDef): void {
+    // 스킬 아이콘의 자식으로 두면 아이콘을 눌러 커질 때 뱃지까지 함께 커져, 패시브를 눌렀는데
+    // 야성까지 눌린 것처럼 보인다. 자리만 아이콘 위로 잡고 층은 따로 세운다.
     const badgeSize = 72;
-    // 액자 위로 넉넉히 띄운다. 붙여 두면 아이콘이 액자에 얹힌 얼룩처럼 보인다.
-    const badge = this.scene.add.container(0, -size / 2 - 56);
+    const badge = this.scene.add.container(x, y);
     const shape = chipPoints(badgeSize, badgeSize, {
       bevel: { topLeft: badgeSize * 0.34, topRight: 0, bottomRight: badgeSize * 0.34, bottomLeft: 0 },
     });
     badge.add(drawLayer(this.scene, 0, 0, shape, { fill: FEROCITY_BADGE, alpha: 0.96, edge: 0xf0a58a, edgeAlpha: 0.8 }));
     badge.add(drawGlyph(this.scene, "ferocity", 0, 1, badgeSize * 0.56, 0xffd9c4));
-    const hit = this.scene.add.rectangle(0, 0, badgeSize + 18, badgeSize + 18, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    // 입력 영역도 뱃지 크기에 딱 맞춘다. 넓게 잡으면 아래 아이콘의 터치를 가로챈다.
+    const hit = this.scene.add.rectangle(0, 0, badgeSize, badgeSize, 0xffffff, 0).setInteractive({ useHandCursor: true });
     hit.on("pointerdown", () => badge.setScale(1.1));
     hit.on("pointerout", () => { if (!this.popups.isOpen) badge.setScale(1); });
     hit.on("pointerup", () => {
       badge.setScale(1.1);
-      this.openFerocityTrait(def, { x: icon.x, y: icon.y - size / 2 - 92, onClose: () => badge.setScale(1) });
+      this.openFerocityTrait(def, { x, y: y - badgeSize / 2 - 12, onClose: () => badge.setScale(1) });
     });
     badge.add(hit);
-    icon.add(badge);
+    this.chrome.add(badge);
+    // 스킬 아이콘과 같은 목록에 담아 미보유 개체에서 함께 숨고 다시 그릴 때 함께 지워진다.
+    this.skillIcons.push(badge);
   }
 
   /** 개체별 피버 발현 설명. 야성 규칙 자체는 강조된 말을 눌러 다시 열 수 있다. */

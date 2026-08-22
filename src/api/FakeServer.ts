@@ -92,20 +92,20 @@ export class FakeServer implements GameApi {
     };
   }
 
-  /** 서버가 보유·상한·잡초를 검증하고 차감과 성장 반영을 한 저장 단위로 확정한다. */
+  /** 서버가 보유·상한·치즈케이크를 검증하고 차감과 성장 반영을 한 저장 단위로 확정한다. */
   async feedRelic(relicId: string, feeds = 1): Promise<FeedRelicResponse> {
     await this.delay();
     const current = this.state.relicProgress[relicId];
     if (!this.state.owned.has(relicId) || !current) throw new GameApiError("RELIC_NOT_FOUND", "보유하지 않은 렐릭입니다.");
     if (current.level >= relicLevelCap(current.breakthrough)) throw new GameApiError("RELIC_MAX_LEVEL", "이미 최대 레벨입니다.");
-    if (!canFeedRelic(current, this.state.wallet.weeds)) throw new GameApiError("INSUFFICIENT_CURRENCY", "잡초가 부족합니다.");
-    const result = calculateFeed(current, this.state.wallet.weeds, feeds);
+    if (!canFeedRelic(current, this.state.wallet.cheesecake)) throw new GameApiError("INSUFFICIENT_CURRENCY", "치즈케이크가 부족합니다.");
+    const result = calculateFeed(current, this.state.wallet.cheesecake, feeds);
     const nextProgress = { ...this.state.relicProgress, [relicId]: result.progress };
-    const nextWallet = { ...this.state.wallet, weeds: result.weeds };
+    const nextWallet = { ...this.state.wallet, cheesecake: result.cheesecake };
     const nextMissions = applyMissionEvent(this.state.missions, { type: "salary_given", count: result.feeds }, this.now());
     this.persist({ ...this.state, relicProgress: nextProgress, wallet: nextWallet, missions: nextMissions });
     this.state.relicProgress = nextProgress; this.state.wallet = nextWallet; this.state.missions = nextMissions;
-    return { ...this.snapshot(), relicId, feeds: result.feeds, weedsSpent: result.feeds * FEED_UNIT.weeds, levelsGained: result.levelsGained };
+    return { ...this.snapshot(), relicId, feeds: result.feeds, cheesecakeSpent: result.feeds * FEED_UNIT.cheesecake, levelsGained: result.levelsGained };
   }
 
   /**
@@ -126,7 +126,7 @@ export class FakeServer implements GameApi {
     const nextWallet = {
       ...this.state.wallet,
       dnaFragments: this.state.wallet.dnaFragments - step.dnaFragments,
-      weeds: this.state.wallet.weeds - step.weeds,
+      cheesecake: this.state.wallet.cheesecake - step.cheesecake,
     };
     this.persist({ ...this.state, relicProgress: nextProgress, wallet: nextWallet });
     this.state.relicProgress = nextProgress; this.state.wallet = nextWallet;
@@ -142,16 +142,16 @@ export class FakeServer implements GameApi {
     if (owningEvent) this.assertEventActive(owningEvent, this.now());
     try { stage = owningEvent?.stages.find(({ id }) => id === stageId) ?? getStage(stageId); } catch { throw new GameApiError("STAGE_NOT_FOUND", "존재하지 않는 스테이지입니다."); }
     const firstClear = victory && !this.state.cleared.has(stageId);
-    const weedsEarned = victory ? (firstClear ? stage.rewards.firstClearWeeds : stage.rewards.repeatClearWeeds) : 0;
+    const cheesecakeEarned = victory ? (firstClear ? stage.rewards.firstClearCheesecake : stage.rewards.repeatClearCheesecake) : 0;
     const nextCleared = victory ? new Set(this.state.cleared).add(stageId) : new Set(this.state.cleared);
-    const nextWallet = { ...this.state.wallet, weeds: this.state.wallet.weeds + weedsEarned };
+    const nextWallet = { ...this.state.wallet, cheesecake: this.state.wallet.cheesecake + cheesecakeEarned };
     // 승리한 전투에 실제 편성된 세 렐릭에게만 유대 경험치를 지급한다.
     const nextProgress = Object.fromEntries(Object.entries(this.state.relicProgress).map(([id, progress]) => [id,
       victory && this.state.party.includes(id) ? grantBondXp(progress, BOND_XP_REWARD.partyVictory).progress : progress]));
     const nextMissions = applyMissionEvent(this.state.missions, { type: "battle_completed", victory }, this.now());
     this.persist({ ...this.state, cleared: nextCleared, wallet: nextWallet, relicProgress: nextProgress, missions: nextMissions });
     this.state.cleared = nextCleared; this.state.wallet = nextWallet; this.state.relicProgress = nextProgress; this.state.missions = nextMissions;
-    return { ...this.snapshot(), stageId, firstClear, weedsEarned };
+    return { ...this.snapshot(), stageId, firstClear, cheesecakeEarned };
   }
 
   /** 서버 UTC 날짜를 기준으로 해당 렐릭의 하루 첫 로비 상호작용만 보상한다. */
@@ -174,10 +174,10 @@ export class FakeServer implements GameApi {
     let nextDaily;
     try { nextDaily = consumeRestorationEntry(this.state.dailyContent, this.now()); }
     catch { throw new GameApiError("DAILY_ENTRY_LIMIT", "오늘의 입장 횟수를 모두 사용했습니다."); }
-    const nextWallet = { ...this.state.wallet, weeds: this.state.wallet.weeds + DAILY_RESTORATION.rewardWeeds };
+    const nextWallet = { ...this.state.wallet, cheesecake: this.state.wallet.cheesecake + DAILY_RESTORATION.rewardCheesecake };
     this.persist({ ...this.state, dailyContent: nextDaily, wallet: nextWallet });
     this.state.dailyContent = nextDaily; this.state.wallet = nextWallet;
-    return { ...this.snapshot(), entriesRemaining: DAILY_RESTORATION.maxEntriesPerUtcDay - nextDaily.restorationEntries, weedsEarned: DAILY_RESTORATION.rewardWeeds };
+    return { ...this.snapshot(), entriesRemaining: DAILY_RESTORATION.maxEntriesPerUtcDay - nextDaily.restorationEntries, cheesecakeEarned: DAILY_RESTORATION.rewardCheesecake };
   }
 
   /** 정적 이벤트에 서버가 판정한 상태를 결합해 클라이언트 시계 의존을 없앤다. */
@@ -222,12 +222,12 @@ export class FakeServer implements GameApi {
       if (normalized.claimedIds.includes(id)) throw new GameApiError("MISSION_ALREADY_CLAIMED", "이미 수령한 임무입니다.");
       if ((normalized.progress[id] ?? 0) < mission.target) throw new GameApiError("MISSION_NOT_COMPLETE", "완료하지 않은 임무입니다.");
     }
-    const weedsEarned = uniqueIds.reduce((sum, id) => sum + (MISSIONS.find((mission) => mission.id === id)?.rewardWeeds ?? 0), 0);
+    const cheesecakeEarned = uniqueIds.reduce((sum, id) => sum + (MISSIONS.find((mission) => mission.id === id)?.rewardCheesecake ?? 0), 0);
     const nextMissions = { ...normalized, claimedIds: [...normalized.claimedIds, ...uniqueIds] };
-    const nextWallet = { ...this.state.wallet, weeds: this.state.wallet.weeds + weedsEarned };
+    const nextWallet = { ...this.state.wallet, cheesecake: this.state.wallet.cheesecake + cheesecakeEarned };
     this.persist({ ...this.state, missions: nextMissions, wallet: nextWallet });
     this.state.missions = nextMissions; this.state.wallet = nextWallet;
-    return { ...this.snapshot(), claimedIds: uniqueIds, weedsEarned };
+    return { ...this.snapshot(), claimedIds: uniqueIds, cheesecakeEarned };
   }
 
   /** 서버 시각의 노출 기간과 현재 제한 주기를 반영해 공용 카탈로그를 조회한다. */

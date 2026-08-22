@@ -10,7 +10,7 @@ export type CurrencyIconKey =
   | "currency-stamina"
   | "currency-fossil"
   | "currency-amber"
-  | "currency-weeds"
+  | "currency-cheesecake"
   | "currency-dna";
 
 export const CURRENCY_ICON_ASSETS: ReadonlyArray<readonly [CurrencyIconKey, string]> = [
@@ -19,6 +19,6 @@ export const CURRENCY_ICON_ASSETS: ReadonlyArray<readonly [CurrencyIconKey, stri
   ["currency-stamina", "/sprites/currency/energy.webp"],
   ["currency-fossil", "/sprites/currency/fossil.webp"],
   ["currency-amber", "/sprites/currency/amber.webp"],
-  ["currency-weeds", "/sprites/currency/cake.webp"],
+  ["currency-cheesecake", "/sprites/currency/cake.webp"],
   ["currency-dna", "/sprites/currency/heart.webp"],
 ];

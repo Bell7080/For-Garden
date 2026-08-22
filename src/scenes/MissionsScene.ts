@@ -55,7 +55,7 @@ export class MissionsScene extends Phaser.Scene {
       const y = 390 + index * 210;
       const panel = drawLayer(this, BASE_WIDTH / 2, y, chipPoints(920, 160, { bevel: { topLeft: 30, topRight: 0, bottomRight: 30, bottomLeft: 0 } }), { fill: 0x1a1f27, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.4 });
       const title = this.add.text(110, y - 54, mission.title, textStyle({ role: "emphasis", size: 31, color: mission.claimed ? COLOR.inkDim : COLOR.ink })).setOrigin(0, 0);
-      const reward = this.add.text(970, y - 50, mission.claimed ? "수령 완료" : `잡초 +${mission.rewardWeeds}`, textStyle({ role: "body", size: 25, color: mission.claimed ? COLOR.inkDim : COLOR.accentText })).setOrigin(1, 0);
+      const reward = this.add.text(970, y - 50, mission.claimed ? "수령 완료" : `치즈케이크 +${mission.rewardCheesecake}`, textStyle({ role: "body", size: 25, color: mission.claimed ? COLOR.inkDim : COLOR.accentText })).setOrigin(1, 0);
       const bar = new HoloBar(this, 360, y + 38, 500, 18, { color: COLOR.accent });
       bar.setValue(mission.progress / mission.target);
       this.bars.push(bar);
@@ -67,7 +67,7 @@ export class MissionsScene extends Phaser.Scene {
   /** 완료된 미수령 항목을 서버의 단일 수령 처리에 맡긴 뒤 최신 목록을 다시 받는다. */
   private async claimAll(): Promise<void> {
     const result = await gameApi.claimMissionRewards();
-    this.status?.setText(result.claimedIds.length ? `잡초 +${result.weedsEarned}` : "수령할 보상 없음");
+    this.status?.setText(result.claimedIds.length ? `치즈케이크 +${result.cheesecakeEarned}` : "수령할 보상 없음");
     await this.refresh();
   }
 }

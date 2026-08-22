@@ -14,13 +14,13 @@ export interface BreakthroughStep {
   /** 이 단계를 열었을 때의 레벨 상한. */
   levelCap: number;
   dnaFragments: number;
-  weeds: number;
+  cheesecake: number;
 }
 
 export const BREAKTHROUGH_STEPS: readonly BreakthroughStep[] = [
-  { levelCap: 30, dnaFragments: 2, weeds: 200 },
-  { levelCap: 40, dnaFragments: 4, weeds: 500 },
-  { levelCap: 50, dnaFragments: 8, weeds: 1000 },
+  { levelCap: 30, dnaFragments: 2, cheesecake: 200 },
+  { levelCap: 40, dnaFragments: 4, cheesecake: 500 },
+  { levelCap: 50, dnaFragments: 8, cheesecake: 1000 },
 ];
 
 /** 돌파를 몇 번까지 할 수 있는지. */
@@ -45,16 +45,16 @@ export function nextBreakthrough(breakthrough: number): BreakthroughStep | undef
  * 레벨을 상한까지 채운 뒤에만 뚫을 수 있다. 그래야 돌파가 "더 키우고 싶을 때 하는 선택"이
  * 되고, 재료를 미리 태워 두는 낭비가 생기지 않는다.
  */
-export function canBreakThrough(progress: RelicProgress, wallet: { dnaFragments: number; weeds: number }): boolean {
+export function canBreakThrough(progress: RelicProgress, wallet: { dnaFragments: number; cheesecake: number }): boolean {
   const step = nextBreakthrough(progress.breakthrough);
   if (!step) return false;
   if (progress.level < relicLevelCap(progress.breakthrough)) return false;
-  return wallet.dnaFragments >= step.dnaFragments && wallet.weeds >= step.weeds;
+  return wallet.dnaFragments >= step.dnaFragments && wallet.cheesecake >= step.cheesecake;
 }
 /** 각성 상한. 같은 렐릭을 다섯 번 더 만나면 끝이다. */
 export const AWAKENING_CAP = 5;
-/** 급여 한 번에 드는 잡초와 그때 오르는 경험치. */
-export const FEED_UNIT = { weeds: 10, exp: 20 } as const;
+/** 급여 한 번에 드는 치즈케이크와 그때 오르는 경험치. */
+export const FEED_UNIT = { cheesecake: 10, exp: 20 } as const;
 
 /**
  * 레벨 N에서 N+1로 가는 데 필요한 경험치.
@@ -107,8 +107,8 @@ export function awakeningBonus(awakening: number): { statPercent: number; basicD
 
 export interface RelicFeedResult {
   progress: RelicProgress;
-  weeds: number;
-  /** 실제로 소비한 급여 횟수. 잡초나 레벨 상한에 걸리면 요청보다 적을 수 있다. */
+  cheesecake: number;
+  /** 실제로 소비한 급여 횟수. 치즈케이크나 레벨 상한에 걸리면 요청보다 적을 수 있다. */
   feeds: number;
   levelsGained: number;
 }
@@ -117,12 +117,12 @@ export interface RelicFeedResult {
  * 급여로 경험치를 올린다.
  *
  * 한 번에 여러 번 먹이는 버튼이 있으므로 반복 처리도 순수 함수 하나로 끝낸다. 상한에 닿으면
- * 남은 경험치는 버리지 않고 그 자리에서 멈춘다 — 잡초만 사라지고 아무 일도 없는 급여를
+ * 남은 경험치는 버리지 않고 그 자리에서 멈춘다 — 치즈케이크만 사라지고 아무 일도 없는 급여를
  * 만들지 않기 위해서다.
  */
-export function feedRelic(progress: RelicProgress, weeds: number, feeds: number): RelicFeedResult {
+export function feedRelic(progress: RelicProgress, cheesecake: number, feeds: number): RelicFeedResult {
   if (!Number.isInteger(feeds) || feeds < 1) throw new RangeError("급여 횟수는 1 이상의 정수여야 합니다.");
-  if (!Number.isInteger(weeds) || weeds < 0) throw new RangeError("잡초가 올바르지 않습니다.");
+  if (!Number.isInteger(cheesecake) || cheesecake < 0) throw new RangeError("치즈케이크가 올바르지 않습니다.");
   const cap = relicLevelCap(progress.breakthrough);
   let level = progress.level;
   let exp = progress.exp;
@@ -130,8 +130,8 @@ export function feedRelic(progress: RelicProgress, weeds: number, feeds: number)
   let used = 0;
   for (let i = 0; i < feeds; i += 1) {
     if (level >= cap) break;
-    if (weeds - spent < FEED_UNIT.weeds) break;
-    spent += FEED_UNIT.weeds;
+    if (cheesecake - spent < FEED_UNIT.cheesecake) break;
+    spent += FEED_UNIT.cheesecake;
     used += 1;
     exp += FEED_UNIT.exp;
     while (level < cap && exp >= relicExpToNext(level)) {
@@ -143,39 +143,39 @@ export function feedRelic(progress: RelicProgress, weeds: number, feeds: number)
   }
   return {
     progress: { ...progress, level, exp, heartGemSlots: [...progress.heartGemSlots] as RelicProgress["heartGemSlots"] },
-    weeds: weeds - spent,
+    cheesecake: cheesecake - spent,
     feeds: used,
     levelsGained: level - progress.level,
   };
 }
 
 /** 급여를 한 번이라도 할 수 있는지. 버튼을 끌지 말지 판단하는 단일 기준이다. */
-export function canFeedRelic(progress: RelicProgress, weeds: number): boolean {
-  return progress.level < relicLevelCap(progress.breakthrough) && Number.isInteger(weeds) && weeds >= FEED_UNIT.weeds;
+export function canFeedRelic(progress: RelicProgress, cheesecake: number): boolean {
+  return progress.level < relicLevelCap(progress.breakthrough) && Number.isInteger(cheesecake) && cheesecake >= FEED_UNIT.cheesecake;
 }
-/** 레벨 N에서 N+1로 갈 때 드는 잡초다. 선형 비용은 각 레벨 투자의 의미를 쉽게 조정하게 한다. */
+/** 레벨 N에서 N+1로 갈 때 드는 치즈케이크다. 선형 비용은 각 레벨 투자의 의미를 쉽게 조정하게 한다. */
 export function relicLevelUpCost(level: number): number {
   if (!Number.isInteger(level) || level < 1 || level > RELIC_LEVEL_CAP) throw new RangeError("레벨이 성장 범위를 벗어났습니다.");
   return level * 10;
 }
 
 /** UI와 API가 같은 경계 판정을 쓰도록 현재 성장 상태를 값으로 반환한다. */
-export function canLevelUpRelic(progress: RelicProgress, weeds: number): boolean {
-  return progress.level < RELIC_LEVEL_CAP && Number.isInteger(weeds) && weeds >= relicLevelUpCost(progress.level);
+export function canLevelUpRelic(progress: RelicProgress, cheesecake: number): boolean {
+  return progress.level < RELIC_LEVEL_CAP && Number.isInteger(cheesecake) && cheesecake >= relicLevelUpCost(progress.level);
 }
 
 export interface RelicLevelUpResult {
   progress: RelicProgress;
-  weeds: number;
+  cheesecake: number;
   cost: number;
 }
 
 /** 원본을 변경하지 않고 비용 차감과 새 성장 상태를 함께 계산해 서버가 원자적으로 커밋하게 한다. */
-export function levelUpRelic(progress: RelicProgress, weeds: number): RelicLevelUpResult {
+export function levelUpRelic(progress: RelicProgress, cheesecake: number): RelicLevelUpResult {
   const cost = relicLevelUpCost(progress.level);
   if (progress.level >= RELIC_LEVEL_CAP) throw new RangeError("이미 최대 레벨입니다.");
-  if (!Number.isInteger(weeds) || weeds < cost) throw new RangeError("잡초가 부족합니다.");
-  return { progress: { ...progress, level: progress.level + 1, heartGemSlots: [...progress.heartGemSlots] as RelicProgress["heartGemSlots"] }, weeds: weeds - cost, cost };
+  if (!Number.isInteger(cheesecake) || cheesecake < cost) throw new RangeError("치즈케이크가 부족합니다.");
+  return { progress: { ...progress, level: progress.level + 1, heartGemSlots: [...progress.heartGemSlots] as RelicProgress["heartGemSlots"] }, cheesecake: cheesecake - cost, cost };
 }
 
 /** 모든 능력치를 빠짐없이 같은 규칙으로 순회하기 위한 고정 키 목록이다. */

@@ -9,7 +9,7 @@ const GREAT_AUK_SHORE: StageDef = {
   name: "큰바다쇠오리 해안 발굴지",
   enemies: [...FIXED_STAGE_ENEMIES],
   enemyLevel: 4,
-  rewards: { firstClearWeeds: 60, repeatClearWeeds: 15 },
+  rewards: { firstClearCheesecake: 60, repeatClearCheesecake: 15 },
 };
 
 /** 한 종의 발굴·기록·교환만 담아 첫 운영 검증 범위를 작게 유지한다. */

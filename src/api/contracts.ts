@@ -29,11 +29,11 @@ export interface PlayerStateDto {
 }
 
 /** 임무 화면에 필요한 진행·보상·수령 상태를 한 행으로 전달한다. */
-export interface MissionDto { id: string; period: MissionPeriod; title: string; progress: number; target: number; rewardWeeds: number; claimed: boolean; }
+export interface MissionDto { id: string; period: MissionPeriod; title: string; progress: number; target: number; rewardCheesecake: number; claimed: boolean; }
 /** 목록 응답은 로비 배지에서 바로 쓸 미수령 개수를 포함한다. */
 export interface MissionListResponse { missions: MissionDto[]; claimableCount: number; }
 /** 일괄 또는 선택 수령 뒤 지급 총액과 최신 상태를 반환한다. */
-export interface ClaimMissionRewardsResponse extends PlayerStateDto { claimedIds: string[]; weedsEarned: number; }
+export interface ClaimMissionRewardsResponse extends PlayerStateDto { claimedIds: string[]; cheesecakeEarned: number; }
 
 /** 상품 목록은 정적 정의에 서버가 계산한 현재 구매 가능 횟수를 결합한다. */
 export interface ProductDto { id: string; section: "trade" | "premium"; name: string; description: string; price: { currency: ProductCurrency; amount: number; display?: string }; grants: readonly ProductGrant[]; purchaseLimit: number; refresh: ProductRefresh; remaining: number; purchasable: boolean; disabledReason?: string; }
@@ -66,18 +66,18 @@ export type ApiErrorCode = "BANNER_NOT_FOUND" | "INSUFFICIENT_CURRENCY" | "INVAL
 /**
  * 급여 응답.
  *
- * 요청한 횟수를 다 먹이지 못할 수도 있으므로(잡초 부족·레벨 상한) 실제로 소비한 횟수와
+ * 요청한 횟수를 다 먹이지 못할 수도 있으므로(치즈케이크 부족·레벨 상한) 실제로 소비한 횟수와
  * 그때 오른 레벨 수를 함께 돌려준다. 화면은 이 값으로만 연출을 정한다.
  */
-export interface FeedRelicResponse extends PlayerStateDto { relicId: string; feeds: number; weedsSpent: number; levelsGained: number; }
+export interface FeedRelicResponse extends PlayerStateDto { relicId: string; feeds: number; cheesecakeSpent: number; levelsGained: number; }
 /** 돌파 결과. 열린 상한을 함께 돌려줘 화면이 표를 다시 뒤지지 않게 한다. */
 export interface BreakThroughResponse extends PlayerStateDto { relicId: string; breakthrough: number; levelCap: number; }
-/** 전투 확인 시 저장되는 보상으로 최초 여부와 획득 잡초를 결과 UI에 그대로 전달한다. */
-export interface CompleteStageResponse extends PlayerStateDto { stageId: string; firstClear: boolean; weedsEarned: number; }
+/** 전투 확인 시 저장되는 보상으로 최초 여부와 획득 치즈케이크를 결과 UI에 그대로 전달한다. */
+export interface CompleteStageResponse extends PlayerStateDto { stageId: string; firstClear: boolean; cheesecakeEarned: number; }
 /** 로비 터치 결과는 중복 여부와 대사 UI가 표시할 유대 변화량을 돌려준다. */
 export interface LobbyInteractionResponse extends PlayerStateDto { relicId: string; bondXpEarned: number; bondLevelsGained: number; }
 /** 일일 입장 소비와 즉시 지급된 프로토타입 보상을 한 응답으로 확정한다. */
-export interface EnterDailyRestorationResponse extends PlayerStateDto { entriesRemaining: number; weedsEarned: number; }
+export interface EnterDailyRestorationResponse extends PlayerStateDto { entriesRemaining: number; cheesecakeEarned: number; }
 /** 클라이언트가 자체 시계를 보지 않도록 서버 시각과 판정 상태를 함께 보낸다. */
 export interface EventDto extends EventDefinition { status: "upcoming" | "active" | "ended"; }
 export interface EventListResponse { events: EventDto[]; serverTime: string; }

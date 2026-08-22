@@ -71,7 +71,7 @@ export class LobbyScene extends Phaser.Scene {
         expeditionButton.setEnabled(false);
         // 입장 소비와 보상 지급은 기존처럼 API가 한 처리 단위로 저장하며 로비는 결과만 표시한다.
         void gameApi.enterDailyRestoration().then((result) => {
-          expeditionButton.setSub(`잡초 +${result.weedsEarned} · 남은 ${result.entriesRemaining}/${DAILY_RESTORATION.maxEntriesPerUtcDay}`);
+          expeditionButton.setSub(`치즈케이크 +${result.cheesecakeEarned} · 남은 ${result.entriesRemaining}/${DAILY_RESTORATION.maxEntriesPerUtcDay}`);
           expeditionButton.setEnabled(result.entriesRemaining > 0);
         }).catch(() => expeditionButton.setSub("오늘의 원정 완료"));
       },

@@ -11,6 +11,7 @@
 - 세계관 전문: [`docs/lore.md`](docs/lore.md)
 - 수집형 RPG로서 비어 있는 축: [`docs/design-gaps.md`](docs/design-gaps.md)
 - 다섯 속성 상성과 직업 태그: [`docs/combat-affinities.md`](docs/combat-affinities.md)
+- 출시 이후 비동기 방어전 설계: [`docs/asynchronous-arena.md`](docs/asynchronous-arena.md)
 
 ## 현재 상태
 

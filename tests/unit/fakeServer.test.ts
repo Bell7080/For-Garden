@@ -176,3 +176,28 @@ describe("FakeServer 상품 카탈로그", () => {
     expect(state.productPurchases).toEqual({});
   });
 });
+
+describe("FakeServer DNA 조각 교환소와 경제 경계", () => {
+  it("선택한 보유 렐릭만 각성시키고 DNA를 차감한다", async () => {
+    const state = makeSession(); state.wallet.dnaFragments = 10;
+    const response = await new FakeServer(state, { latencyMs: 0 }).exchangeDna({ offerId: "dna-awakening", relicId: "rex" });
+    expect(response).toMatchObject({ offerId: "dna-awakening", rewardKind: "relic_awakening", wallet: { dnaFragments: 0 } });
+    expect(state.relicProgress.rex.awakening).toBe(1);
+    expect(state.relicProgress.anky.awakening).toBe(1);
+  });
+
+  it("잘못된 대상과 중복 Heart Gem에는 차감이나 지급이 없다", async () => {
+    const state = makeSession(); state.wallet.dnaFragments = 30;
+    const server = new FakeServer(state, { latencyMs: 0 });
+    await expect(server.exchangeDna({ offerId: "dna-awakening", relicId: "not-owned" })).rejects.toMatchObject({ code: "INVALID_EXCHANGE_TARGET" });
+    await expect(server.exchangeDna({ offerId: "dna-heart-gem" })).rejects.toMatchObject({ code: "DUPLICATE_GRANT" });
+    expect(state.wallet.dnaFragments).toBe(30);
+  });
+
+  it("지급 결과가 재화 상한을 넘으면 원본 상태를 변경하지 않는다", async () => {
+    const state = makeSession(); state.wallet.dnaFragments = 5; state.wallet.fossil = 9_999_900;
+    const server = new FakeServer(state, { latencyMs: 0 });
+    await expect(server.exchangeDna({ offerId: "dna-past-event" })).rejects.toMatchObject({ code: "CURRENCY_LIMIT_EXCEEDED" });
+    expect(state.wallet).toMatchObject({ dnaFragments: 5, fossil: 9_999_900 });
+  });
+});

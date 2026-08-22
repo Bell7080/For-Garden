@@ -2,6 +2,7 @@ import type { AcquisitionResult, GachaPityState, Wallet } from "../core/gacha";
 import type { RelicProgress } from "../core/types";
 import type { MissionPeriod } from "../core/missions";
 import type { ProductCurrency, ProductGrant, ProductRefresh } from "../data/products";
+import type { DnaExchangeKind } from "../data/economy";
 
 /** 네트워크로 직렬화할 수 있는 플레이어 진행 정보의 최소 규격이다. */
 export interface PlayerStateDto {
@@ -38,6 +39,10 @@ export interface ProductDto { id: string; section: "trade" | "premium"; name: st
 export interface ProductListResponse { products: ProductDto[]; serverTime: string; }
 /** 인게임 상품의 차감·지급·제한 갱신이 모두 끝난 뒤의 응답이다. */
 export interface PurchaseProductResponse extends PlayerStateDto { productId: string; grants: readonly ProductGrant[]; remaining: number; }
+/** DNA 교환 요청은 무작위 시드가 아니라 선택한 교환품과 필요할 때 렐릭 대상을 명시한다. */
+export interface ExchangeDnaRequest { offerId: string; relicId?: string; }
+/** 서버가 확정한 선택 보상과 잔여 DNA를 반환해 UI가 추첨 연출을 만들지 않게 한다. */
+export interface ExchangeDnaResponse extends PlayerStateDto { offerId: string; rewardKind: DnaExchangeKind; relicId?: string; }
 
 /** 발굴 요청에는 클라이언트가 선택한 배너와 횟수만 보낸다. */
 export interface PullRequest {
@@ -54,7 +59,7 @@ export interface PullResponse extends PlayerStateDto {
 }
 
 /** UI가 서버 실패 원인을 문구로 바꿀 수 있게 고정한 오류 코드다. */
-export type ApiErrorCode = "BANNER_NOT_FOUND" | "INSUFFICIENT_CURRENCY" | "INVALID_PULL_COUNT" | "RELIC_NOT_FOUND" | "RELIC_MAX_LEVEL" | "STAGE_NOT_FOUND" | "DAILY_ENTRY_LIMIT" | "MISSION_NOT_FOUND" | "MISSION_NOT_COMPLETE" | "MISSION_ALREADY_CLAIMED" | "PRODUCT_NOT_FOUND" | "PRODUCT_NOT_VISIBLE" | "PURCHASE_LIMIT_REACHED" | "PLATFORM_PAYMENT_REQUIRED";
+export type ApiErrorCode = "BANNER_NOT_FOUND" | "INSUFFICIENT_CURRENCY" | "INVALID_PULL_COUNT" | "RELIC_NOT_FOUND" | "RELIC_MAX_LEVEL" | "STAGE_NOT_FOUND" | "DAILY_ENTRY_LIMIT" | "MISSION_NOT_FOUND" | "MISSION_NOT_COMPLETE" | "MISSION_ALREADY_CLAIMED" | "PRODUCT_NOT_FOUND" | "PRODUCT_NOT_VISIBLE" | "PURCHASE_LIMIT_REACHED" | "PLATFORM_PAYMENT_REQUIRED" | "DNA_OFFER_NOT_FOUND" | "INVALID_EXCHANGE_TARGET" | "DUPLICATE_GRANT" | "INVALID_STATE" | "CURRENCY_LIMIT_EXCEEDED";
 
 /**
  * 급여 응답.
@@ -91,6 +96,8 @@ export interface GameApi {
   getProducts(): Promise<ProductListResponse>;
   /** 인게임 재화 상품만 구매한다. 유료 상품은 플랫폼 결제/영수증 검증 경계를 사용해야 한다. */
   purchaseProduct(productId: string): Promise<PurchaseProductResponse>;
+  /** DNA 조각을 요청에서 고른 보상으로 교환하며 랜덤 발굴 경로를 사용하지 않는다. */
+  exchangeDna(request: ExchangeDnaRequest): Promise<ExchangeDnaResponse>;
 }
 
 /** 예상 가능한 요청 실패를 일반 네트워크 예외와 구분한다. */

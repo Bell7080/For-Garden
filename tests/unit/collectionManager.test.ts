@@ -29,7 +29,7 @@ describe("RelicCollectionManager", () => {
     const manager = new RelicCollectionManager(state);
 
     expect(manager.setFavorite("spino")).toBe(false);
-    expect(manager.setParty(["anky", "rex", "spino"])).toBe(false);
+    expect(manager.setParty(["anky", "rex", "spino"])).toEqual({ ok: false, reason: "not-owned", relicId: "spino" });
     expect(state.favorite).toBe("anky");
     expect(state.party).toEqual(["anky", "rex", "dodo"]);
   });
@@ -61,8 +61,16 @@ describe("RelicCollectionManager", () => {
     const state = makeSession();
     const manager = new RelicCollectionManager(state);
 
-    expect(manager.setParty(["rex", "dodo", "anky"])).toBe(true);
-    expect(manager.setParty(["rex", "rex", "anky"])).toBe(false);
+    expect(manager.setParty(["rex", "dodo", "anky"])).toEqual({ ok: true });
+    expect(manager.setParty(["rex", "rex", "anky"])).toEqual({ ok: false, reason: "duplicate" });
     expect(state.party).toEqual(["rex", "dodo", "anky"]);
+  });
+
+  it("파티 인원 부족과 미보유를 서로 다른 실패 사유로 돌려준다", () => {
+    const manager = new RelicCollectionManager(makeSession());
+
+    // UI가 같은 false를 추측하지 않고 각 원인에 맞는 안내를 표시할 수 있어야 한다.
+    expect(manager.setParty(["anky", "rex"])).toEqual({ ok: false, reason: "wrong-size" });
+    expect(manager.setParty(["anky", "rex", "quetzal"])).toEqual({ ok: false, reason: "not-owned", relicId: "quetzal" });
   });
 });

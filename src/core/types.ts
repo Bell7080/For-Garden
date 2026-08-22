@@ -117,12 +117,33 @@ export type PassiveKind =
   /** 같은 상대를 연속으로 때리면 출혈을 남긴다 */
   | "bleedStreak";
 
-/** 개체별 피버 발현. 지금은 표기 전용이며 전투 공식은 공용 야성 규칙을 따른다. */
-export interface FerocityTrait {
+/** 전투 엔진이 판별하는 야성 특성 효과 ID다. 새 효과는 수치 계약과 함께 명시적으로 추가한다. */
+export type FerocityEffectId =
+  | "attackIntervalReduction"
+  | "damageReduction"
+  | "splashDamage"
+  | "allyEnergyGain"
+  | "criticalChanceBonus"
+  | "teamMoveSpeedBonus";
+
+/**
+ * 개체별 피버 발현 정적 데이터다.
+ *
+ * 효과별 파라미터를 판별 가능한 union으로 묶어 잘못된 수치 키를 콘텐츠 작성 시점에 막는다.
+ */
+export type FerocityTrait = {
   /** 뱃지에 찍히는 짧은 이름. 두세 글자를 넘기지 않는다. */
   name: string;
+  /** UI가 그대로 읽는 설명이며 아래 수치 파라미터와 반드시 같은 값을 적는다. */
   desc: string;
-}
+} & (
+  | { effectId: "attackIntervalReduction"; reductionPercent: number }
+  | { effectId: "damageReduction"; reductionPercent: number }
+  | { effectId: "splashDamage"; damagePercent: number; radius: number }
+  | { effectId: "allyEnergyGain"; energy: number }
+  | { effectId: "criticalChanceBonus"; chancePercent: number }
+  | { effectId: "teamMoveSpeedBonus"; bonusPercent: number }
+);
 
 export interface Passive {
   id: string;

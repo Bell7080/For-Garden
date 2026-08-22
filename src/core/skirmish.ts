@@ -241,12 +241,24 @@ export function findFighter(state: SkirmishState, id: string): Fighter | undefin
 
 /** 공격 속도가 정하는 공격 간격(초). 100이 기준이다. */
 export function attackInterval(fighter: Fighter): number {
-  return (SKIRMISH.attackInterval * 100) / Math.max(1, fighter.def.stats.attackSpeed);
+  const trait = fighter.def.ferocityTrait;
+  // 개별 공속은 공용 야성 피해 보너스를 다시 건드리지 않고 재사용 대기시간에만 곱한다.
+  const feverMultiplier = fighter.ferocityFever && trait.effectId === "attackIntervalReduction"
+    ? 1 - trait.reductionPercent / 100
+    : 1;
+  return ((SKIRMISH.attackInterval * 100) / Math.max(1, fighter.def.stats.attackSpeed)) * feverMultiplier;
 }
 
-/** 이동 속도가 정하는 초당 이동 거리(px). */
-export function moveSpeed(fighter: Fighter): number {
-  return fighter.def.stats.moveSpeed * SKIRMISH.moveRate;
+/** 이동 속도와 현재 편의 피버 오라가 정하는 초당 이동 거리(px). */
+export function moveSpeed(fighter: Fighter, state?: SkirmishState): number {
+  // 같은 효과가 여러 개 있어도 가장 높은 하나만 적용해 지원가 중첩 폭주를 막는다.
+  const teamBonus = state
+    ? Math.max(0, ...state.fighters
+      .filter((ally) => ally.side === fighter.side && isFighterAlive(ally) && ally.ferocityFever
+        && ally.def.ferocityTrait.effectId === "teamMoveSpeedBonus")
+      .map((ally) => ally.def.ferocityTrait.effectId === "teamMoveSpeedBonus" ? ally.def.ferocityTrait.bonusPercent : 0))
+    : 0;
+  return fighter.def.stats.moveSpeed * SKIRMISH.moveRate * (1 + teamBonus / 100);
 }
 
 /** 화면에 그릴 위치. 발 좌표에 돌진·피격 변위와 뛰어오른 높이를 얹은 값이다. */
@@ -302,6 +314,17 @@ function resolveTarget(state: SkirmishState, fighter: Fighter): Fighter | undefi
 
 function gainEnergy(fighter: Fighter): void {
   fighter.energy = Math.min(ULTIMATE_ENERGY_MAX, fighter.energy + fighter.def.stats.energyGain);
+}
+
+/** 피버 공격이 아군 에너지를 보조한다. 공격자 자신의 기본 획득과는 분리한다. */
+function grantFerocityTeamEnergy(attacker: Fighter, state: SkirmishState): void {
+  const trait = attacker.def.ferocityTrait;
+  if (!attacker.ferocityFever || trait.effectId !== "allyEnergyGain") return;
+  for (const ally of state.fighters) {
+    if (ally.side === attacker.side && ally.id !== attacker.id && isFighterAlive(ally)) {
+      ally.energy = Math.min(ULTIMATE_ENERGY_MAX, ally.energy + trait.energy);
+    }
+  }
 }
 
 /** 실시간 전투도 턴제와 같은 사건별 증가 및 임계 로그 계약을 사용한다. */
@@ -364,12 +387,25 @@ function strike(
   useUltimate: boolean,
 ): void {
   const skill: Skill = useUltimate ? attacker.def.ultimate : attacker.def.basic;
-  const critical = isCriticalHit(attacker.def.stats.critChance, rng());
-  const amount = computeDamage(attacker, target, { ...skill, isCritical: critical, kind: useUltimate ? "ultimate" : "basic" }, true);
+  // 이번 타격 시작 시점의 피버만 본다. 이 공격으로 100에 도달했다면 다음 공격부터 발현한다.
+  const attackingInFever = attacker.ferocityFever;
+  const critTrait = attacker.def.ferocityTrait;
+  // 수치가 100%를 넘더라도 판정 함수에는 유효한 확률만 전달한다.
+  const criticalChance = attacker.def.stats.critChance
+    + (attackingInFever && critTrait.effectId === "criticalChanceBonus" ? critTrait.chancePercent : 0);
+  const critical = isCriticalHit(Math.min(100, criticalChance), rng());
+  const damageInput = { ...skill, isCritical: critical, kind: useUltimate ? "ultimate" as const : "basic" as const };
+  const rawAmount = computeDamage(attacker, target, damageInput, true);
+  const guardTrait = target.def.ferocityTrait;
+  // 개별 경감은 방어·패시브·상성까지 끝난 공용 피해의 마지막에 한 번만 적용한다.
+  const amount = target.ferocityFever && guardTrait.effectId === "damageReduction"
+    ? Math.max(1, Math.round(rawAmount * (1 - guardTrait.reductionPercent / 100)))
+    : rawAmount;
 
   target.hp = Math.max(0, target.hp - amount);
   if (useUltimate) attacker.energy -= attacker.def.ultimate.cost;
   else gainEnergy(attacker);
+  grantFerocityTeamEnergy(attacker, state);
   gainFerocity(attacker, useUltimate ? FEROCITY_RULES.ultimateGain : FEROCITY_RULES.basicGain, state);
   gainFerocity(target, FEROCITY_RULES.hitGain, state);
 
@@ -393,6 +429,24 @@ function strike(
     amount,
     critical,
   });
+
+  // 광역 피해는 주 대상 타격의 부가 결과이며 에너지·야성·연속 공격을 추가 획득하지 않는다.
+  const splashTrait = attacker.def.ferocityTrait;
+  if (attackingInFever && splashTrait.effectId === "splashDamage") {
+    for (const secondary of state.fighters) {
+      if (secondary.side === attacker.side || secondary.id === target.id || !isFighterAlive(secondary)
+        || distance(target, secondary) > splashTrait.radius) continue;
+      const secondaryBase = computeDamage(attacker, secondary, damageInput, true);
+      const secondaryGuard = secondary.def.ferocityTrait;
+      const reduced = secondary.ferocityFever && secondaryGuard.effectId === "damageReduction"
+        ? secondaryBase * (1 - secondaryGuard.reductionPercent / 100)
+        : secondaryBase;
+      const splashAmount = Math.max(1, Math.round(reduced * splashTrait.damagePercent / 100));
+      secondary.hp = Math.max(0, secondary.hp - splashAmount);
+      events.push({ kind: "attack", attackerId: attacker.id, targetId: secondary.id, skill: useUltimate ? "ultimate" : "basic", amount: splashAmount, critical });
+      if (!isFighterAlive(secondary)) events.push({ kind: "death", fighterId: secondary.id });
+    }
+  }
   state.log.push(`${attacker.def.name} → ${target.def.name} ${amount}`);
   if (!isFighterAlive(target)) {
     target.targetId = null;
@@ -488,7 +542,7 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     fighter.engaged = fighter.engaged ? gap <= SKIRMISH.reach : gap <= SKIRMISH.reach * SKIRMISH.engageRatio;
 
     if (!fighter.engaged) {
-      const step = moveSpeed(fighter) * dt;
+      const step = moveSpeed(fighter, state) * dt;
       // 달리는 동안에는 통통 튀어 오른다. 발이 땅에 닿는 순간마다 hop이 0을 지난다.
       fighter.hopPhase += dt * SKIRMISH.hopRate * Math.PI * (fighter.def.stats.moveSpeed / 100);
       fighter.hop = Math.abs(Math.sin(fighter.hopPhase)) * SKIRMISH.hopHeight;

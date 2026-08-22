@@ -4,7 +4,7 @@ import type { ProductDto } from "../api/contracts";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugScene } from "../debug";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
-import { addBackButton } from "../ui/IconButton";
+import { BottomNav, NAV_TOP } from "../ui/BottomNav";
 import { chipPoints, drawLayer, drawVignette, HOLO } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
 import { TopBar } from "../ui/TopBar";
@@ -30,7 +30,8 @@ export class ShopScene extends Phaser.Scene {
     new TopBar(this);
     this.add.text(60, 185, this.section === "trade" ? "무  역" : "상  점", textStyle({ role: "display", size: 52 })).setOrigin(0, 0);
     this.add.text(62, 252, this.section === "trade" ? "인게임 재화 교환소" : "패키지 · 유료 BM 미리보기", textStyle({ role: "body", size: 27, color: COLOR.inkDim })).setOrigin(0, 0);
-    addBackButton(this, () => this.scene.start(this.section === "trade" ? "lobby" : "lab"));
+    // 상점은 더 이상 연구소의 보조 버튼이 아니므로 모든 핵심 화면과 같은 하단 슬롯을 유지한다.
+    new BottomNav(this, "shop");
     void this.refresh();
   }
 
@@ -44,7 +45,8 @@ export class ShopScene extends Phaser.Scene {
 
   /** 플랫 반투명 면, 윗변 강조선, 확대 선택 상태를 기존 홀로그램 규칙 그대로 쓴다. */
   private addProduct(product: ProductDto, index: number): void {
-    const x = BASE_WIDTH / 2; const y = 420 + index * 360; const width = 900; const height = 290;
+    // 마지막 카드도 하단 내비게이션의 터치 영역을 침범하지 않도록 콘텐츠 영역 안에 배치한다.
+    const x = BASE_WIDTH / 2; const y = Math.min(420 + index * 360, NAV_TOP - 190); const width = 900; const height = 290;
     const card = this.add.container(x, y);
     card.add(drawLayer(this, 0, 0, chipPoints(width, height, { bevel: { topLeft: 55, topRight: 0, bottomRight: 38, bottomLeft: 0 } }), { fill: 0x161d25, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.62 }));
     card.add(this.add.text(-390, -92, product.name, textStyle({ role: "display", size: 36 })).setOrigin(0, 0));

@@ -30,7 +30,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 160,
       energyGain: 28,
     },
-    ferocityTrait: { name: "폭주", desc: "야성이 가득 차면 물어뜯는 속도가 붙어 연속 공격이 더 빨리 이어진다." },
+    ferocityTrait: { name: "폭주", effectId: "attackIntervalReduction", reductionPercent: 20, desc: "피버 중 공격 간격이 20% 짧아진다." },
     passive: {
       id: "rex-passive",
       name: "포식 본능",
@@ -85,7 +85,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 140,
       energyGain: 20,
     },
-    ferocityTrait: { name: "경화", desc: "야성이 가득 차면 껍질이 굳어 받는 피해를 크게 줄인 채 버틴다." },
+    ferocityTrait: { name: "경화", effectId: "damageReduction", reductionPercent: 18, desc: "피버 중 받는 피해가 18% 줄어든다." },
     passive: {
       id: "anky-passive",
       name: "골질 갑주",
@@ -140,7 +140,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 140,
       energyGain: 22,
     },
-    ferocityTrait: { name: "범람", desc: "야성이 가득 차면 등지느러미가 물을 끌어와 주변 적을 함께 적신다." },
+    ferocityTrait: { name: "범람", effectId: "splashDamage", damagePercent: 35, radius: 220, desc: "피버 중 타격이 대상 주변 220px의 적에게 원래 피해의 35%를 준다." },
     passive: {
       id: "spino-passive",
       name: "등지느러미 방벽",
@@ -195,7 +195,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 30,
     },
-    ferocityTrait: { name: "소란", desc: "야성이 가득 차면 정신없이 뛰어다니며 아군의 궁극기 충전을 앞당긴다." },
+    ferocityTrait: { name: "소란", effectId: "allyEnergyGain", energy: 6, desc: "피버 중 공격할 때마다 다른 생존 아군이 궁극기 에너지를 6 얻는다." },
     passive: {
       id: "dodo-passive",
       name: "온순한 둥지",
@@ -250,7 +250,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 170,
       energyGain: 26,
     },
-    ferocityTrait: { name: "사냥", desc: "야성이 가득 차면 발톱이 서서 치명타 확률이 크게 오른다." },
+    ferocityTrait: { name: "사냥", effectId: "criticalChanceBonus", chancePercent: 25, desc: "피버 중 치명타율이 25%p 오른다." },
     passive: {
       id: "smilo-passive",
       name: "매복 습성",
@@ -305,7 +305,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 32,
     },
-    ferocityTrait: { name: "상승", desc: "야성이 가득 차면 바람을 타고 떠올라 아군 전체의 이동이 빨라진다." },
+    ferocityTrait: { name: "상승", effectId: "teamMoveSpeedBonus", bonusPercent: 18, desc: "피버 중 생존 아군 전체의 이동 속도가 18% 빨라진다." },
     passive: {
       id: "quetz-passive",
       name: "활공 경계",
@@ -362,7 +362,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 24,
     },
-    ferocityTrait: { name: "맹추", desc: "야성이 가득 차면 목표를 끝까지 쫓아 공격을 멈추지 않는다." },
+    ferocityTrait: { name: "맹추", effectId: "attackIntervalReduction", reductionPercent: 12, desc: "피버 중 공격 간격이 12% 짧아진다." },
     passive: {
       id: "husk-raptor-passive",
       name: "무리 본능",
@@ -417,7 +417,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 140,
       energyGain: 18,
     },
-    ferocityTrait: { name: "농성", desc: "야성이 가득 차면 자리를 지키며 밀려나지 않는다." },
+    ferocityTrait: { name: "농성", effectId: "damageReduction", reductionPercent: 12, desc: "피버 중 받는 피해가 12% 줄어든다." },
     passive: {
       id: "husk-shell-passive",
       name: "굳은 껍질",
@@ -472,7 +472,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 27,
     },
-    ferocityTrait: { name: "역풍", desc: "야성이 가득 차면 날갯짓이 적의 접근을 늦춘다." },
+    ferocityTrait: { name: "역풍", effectId: "teamMoveSpeedBonus", bonusPercent: 12, desc: "피버 중 생존 아군 전체의 이동 속도가 12% 빨라진다." },
     passive: {
       id: "husk-wing-passive",
       name: "잔존 신호",

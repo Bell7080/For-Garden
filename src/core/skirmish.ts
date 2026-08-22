@@ -1,6 +1,10 @@
-import { amplifyFerocityGain, canUseUltimate, computeDamage, drainFerocityFever, FEROCITY_RULES, isCriticalHit, ULTIMATE_ENERGY_MAX, type BattleUnit } from "./battle";
+import { amplifyFerocityGain } from "./bond";
+import type { Combatant } from "./combatTypes";
+import { computeDamage, isCriticalHit } from "./damage";
+import { drainFerocityFever, FEROCITY_RULES } from "./ferocity";
 import { awakeningBonus } from "./relicProgression";
 import type { RelicDef, Side, Skill } from "./types";
+import { canUseUltimate, ULTIMATE_ENERGY_MAX } from "./ultimate";
 
 /**
  * 실시간 난전(3 대 3).
@@ -20,8 +24,8 @@ export interface Arena {
   bottom: number;
 }
 
-/** 난전에 참가한 한 명. 턴제 유닛과 같은 체력·게이지 모양을 그대로 쓴다. */
-export interface Fighter extends BattleUnit {
+/** 난전에 참가한 한 명. 공용 전투 수치에 실시간 좌표와 행동 상태를 더한다. */
+export interface Fighter extends Combatant {
   id: string;
   side: Side;
   /** 발이 닿아 있는 바닥 좌표. 씬은 이 점을 기준으로 SD를 세운다. */
@@ -159,7 +163,6 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     bondLevel,
     awakening,
     ferocityFever: false,
-    justSwapped: false,
     id: `${side}-${index}`,
     side,
     x,

@@ -3,6 +3,8 @@ import type { RelicProgress } from "../core/types";
 import type { MissionPeriod } from "../core/missions";
 import type { ProductCurrency, ProductGrant, ProductRefresh } from "../data/products";
 import type { DnaExchangeKind } from "../data/economy";
+import type { StageDef } from "../core/types";
+import type { EventDefinition } from "../data/events/types";
 
 /** 네트워크로 직렬화할 수 있는 플레이어 진행 정보의 최소 규격이다. */
 export interface PlayerStateDto {
@@ -59,7 +61,7 @@ export interface PullResponse extends PlayerStateDto {
 }
 
 /** UI가 서버 실패 원인을 문구로 바꿀 수 있게 고정한 오류 코드다. */
-export type ApiErrorCode = "BANNER_NOT_FOUND" | "INSUFFICIENT_CURRENCY" | "INVALID_PULL_COUNT" | "RELIC_NOT_FOUND" | "RELIC_MAX_LEVEL" | "STAGE_NOT_FOUND" | "DAILY_ENTRY_LIMIT" | "MISSION_NOT_FOUND" | "MISSION_NOT_COMPLETE" | "MISSION_ALREADY_CLAIMED" | "PRODUCT_NOT_FOUND" | "PRODUCT_NOT_VISIBLE" | "PURCHASE_LIMIT_REACHED" | "PLATFORM_PAYMENT_REQUIRED" | "DNA_OFFER_NOT_FOUND" | "INVALID_EXCHANGE_TARGET" | "DUPLICATE_GRANT" | "INVALID_STATE" | "CURRENCY_LIMIT_EXCEEDED";
+export type ApiErrorCode = "BANNER_NOT_FOUND" | "INSUFFICIENT_CURRENCY" | "INVALID_PULL_COUNT" | "RELIC_NOT_FOUND" | "RELIC_MAX_LEVEL" | "STAGE_NOT_FOUND" | "DAILY_ENTRY_LIMIT" | "MISSION_NOT_FOUND" | "MISSION_NOT_COMPLETE" | "MISSION_ALREADY_CLAIMED" | "PRODUCT_NOT_FOUND" | "PRODUCT_NOT_VISIBLE" | "PURCHASE_LIMIT_REACHED" | "PLATFORM_PAYMENT_REQUIRED" | "DNA_OFFER_NOT_FOUND" | "INVALID_EXCHANGE_TARGET" | "DUPLICATE_GRANT" | "INVALID_STATE" | "CURRENCY_LIMIT_EXCEEDED" | "EVENT_NOT_FOUND" | "EVENT_NOT_ACTIVE";
 
 /**
  * 급여 응답.
@@ -76,6 +78,11 @@ export interface CompleteStageResponse extends PlayerStateDto { stageId: string;
 export interface LobbyInteractionResponse extends PlayerStateDto { relicId: string; bondXpEarned: number; bondLevelsGained: number; }
 /** 일일 입장 소비와 즉시 지급된 프로토타입 보상을 한 응답으로 확정한다. */
 export interface EnterDailyRestorationResponse extends PlayerStateDto { entriesRemaining: number; weedsEarned: number; }
+/** 클라이언트가 자체 시계를 보지 않도록 서버 시각과 판정 상태를 함께 보낸다. */
+export interface EventDto extends EventDefinition { status: "upcoming" | "active" | "ended"; }
+export interface EventListResponse { events: EventDto[]; serverTime: string; }
+/** 입장 허가 뒤에도 기존 StageDef로 같은 전투 엔진을 사용한다. */
+export interface EnterEventStageResponse { eventId: string; stage: StageDef; serverTime: string; }
 
 /** 실제 HTTP API로 교체할 때도 씬이 의존할 단 하나의 통신 인터페이스다. */
 export interface GameApi {
@@ -89,6 +96,10 @@ export interface GameApi {
   completeStage(stageId: string, victory?: boolean): Promise<CompleteStageResponse>;
   interactInLobby(relicId: string): Promise<LobbyInteractionResponse>;
   enterDailyRestoration(): Promise<EnterDailyRestorationResponse>;
+  /** 이벤트 목록과 활성 상태는 서버 시각으로만 계산한다. */
+  getEvents(): Promise<EventListResponse>;
+  /** 종료된 이벤트 전투의 입장을 API 경계에서 차단한다. */
+  enterEventStage(eventId: string, stageId: string): Promise<EnterEventStageResponse>;
   getMissions(): Promise<MissionListResponse>;
   /** ID를 생략하면 현재 완료된 모든 미수령 임무를 한 저장 처리로 받는다. */
   claimMissionRewards(missionIds?: string[]): Promise<ClaimMissionRewardsResponse>;

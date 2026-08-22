@@ -5,6 +5,7 @@ import type { RelicProgress } from "../core/types";
 import { BANNERS } from "../data/banners";
 import { STAGES } from "../data/stages";
 import { BOND_XP_REWARD, grantBondXp } from "../core/bond";
+import type { MissionState } from "../core/missions";
 
 /** 처음 시작할 때 쥐어 주는 렐릭. 셋이면 바로 출격할 수 있다. */
 // 전용 원화와 SD 전투 Puppet까지 개발된 첫 세 캐릭터를 초기 체험 풀로 연다.
@@ -34,6 +35,8 @@ export interface Session {
   ownedHeartGemIds: string[];
   /** 날짜가 바뀔 때 서버 시간 기준으로 교체할 일일 콘텐츠 진행이다. */
   dailyContent: DailyContentState;
+  /** 서버 UTC 일자·주차에 묶인 직렬화 가능한 임무 진행과 수령 기록이다. */
+  missions: MissionState;
 }
 
 /** 아직 서버 계정에 귀속되지 않은 브라우저 일일 콘텐츠 스냅샷이다. */
@@ -65,6 +68,7 @@ export interface SaveData {
   relicProgress: Record<string, RelicProgress>;
   ownedHeartGemIds: string[];
   dailyContent: DailyContentState;
+  missions: MissionState;
 }
 
 /** 신규 렐릭에 부여하는 독립 복사 가능한 기본 성장 상태다. */
@@ -91,6 +95,7 @@ export function createDefaultSession(): Session {
     relicProgress: Object.fromEntries(STARTER_RELICS.map((id) => [id, createStarterProgress()])),
     ownedHeartGemIds: ["vital-seed", "fang-core", "ancient-pulse"],
     dailyContent: { date: "", restorationEntries: 0, completedIds: [], claimedRewardIds: [] },
+    missions: { dailyKey: "", weeklyKey: "", progress: {}, claimedIds: [] },
   };
 }
 

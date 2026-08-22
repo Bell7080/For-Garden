@@ -323,6 +323,8 @@ export function drawHairline(
  */
 export class HoloBar {
   private readonly fill: Phaser.GameObjects.Graphics;
+  /** 홈도 채움과 같은 생명주기로 제거해 탭 재구성 시 잔상이 남지 않게 한다. */
+  private readonly track: Phaser.GameObjects.Graphics;
   private ratio = 1;
   private color: number;
 
@@ -336,9 +338,9 @@ export class HoloBar {
   ) {
     this.color = options.color;
     const slant = options.slant ?? Math.min(HOLO.slant, height);
-    const track = scene.add.graphics({ x, y });
-    track.fillStyle(0x000000, options.trackAlpha ?? 0.55);
-    track.fillPoints(toPoints(slantedRect(width, height, slant)), true);
+    this.track = scene.add.graphics({ x, y });
+    this.track.fillStyle(0x000000, options.trackAlpha ?? 0.55);
+    this.track.fillPoints(toPoints(slantedRect(width, height, slant)), true);
     this.fill = scene.add.graphics({ x, y });
     this.redraw();
   }
@@ -378,6 +380,7 @@ export class HoloBar {
 
   /** 바를 화면에서 지운다. */
   destroy(): void {
+    this.track.destroy();
     this.fill.destroy();
   }
 }

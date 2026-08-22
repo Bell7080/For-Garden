@@ -17,6 +17,8 @@ import {
   type SkirmishState,
 } from "../../src/core/skirmish";
 import { getRelic } from "../../src/data/relics";
+import { FEROCITY_RULES } from "../../src/core/ferocity";
+import { ULTIMATE_ENERGY_MAX } from "../../src/core/ultimate";
 
 const ARENA: Arena = { left: 130, right: 950, top: 600, bottom: 1360 };
 
@@ -115,6 +117,44 @@ describe("능력치 반영", () => {
     run(always, 12, () => 0);
     run(never, 12, () => 0.999999);
     expect(teamHp(always, "enemy")).toBeLessThan(teamHp(never, "enemy"));
+  });
+
+  it("은 실시간 타격에서 물리·마법 공격력과 대응 방어 능력치를 사용한다", () => {
+    /** 한 번의 실시간 공격만 발생시켜 이벤트 피해량을 비교한다. */
+    const hit = (player: string, enemy: string) => {
+      const state = newSkirmish([player], [enemy]);
+      const [attacker, target] = state.fighters;
+      attacker.x = 400; attacker.y = 1000; attacker.attackCooldown = 0;
+      target.x = 460; target.y = 1000; target.attackCooldown = 99;
+      return stepSkirmish(state, 1 / 60).find((event) => event.kind === "attack")?.amount ?? 0;
+    };
+    // 렉시아의 물리 공격과 케찰의 마법 공격 모두 실제 난전 이벤트를 통해 피해를 만든다.
+    expect(hit("rex", "husk-shell")).toBeGreaterThan(0);
+    expect(hit("quetz", "husk-shell")).toBeGreaterThan(0);
+  });
+});
+
+describe("실시간 야성 공용 규칙", () => {
+  /** 공격자와 대상을 붙여 한 번의 실제 난전 타격만 관찰한다. */
+  function oneHit(ferocity: number) {
+    const state = newSkirmish(["rex"], ["husk-shell"]);
+    const [attacker, target] = state.fighters;
+    attacker.x = 400; attacker.y = 1000; attacker.attackCooldown = 0; attacker.ferocity = ferocity;
+    target.x = 460; target.y = 1000; target.attackCooldown = 99;
+    const event = stepSkirmish(state, 1 / 60).find((item) => item.kind === "attack");
+    return { attacker, target, amount: event?.kind === "attack" ? event.amount : 0 };
+  }
+
+  it("은 50/80/100 경계에서 공격 피해를 올리고 타격 양쪽의 게이지를 채운다", () => {
+    const calm = oneHit(49);
+    const first = oneHit(50);
+    const second = oneHit(80);
+    const fever = oneHit(100);
+    expect(first.amount).toBeGreaterThan(calm.amount);
+    expect(second.amount).toBeGreaterThan(first.amount);
+    expect(fever.amount).toBeGreaterThan(second.amount);
+    expect(calm.attacker.ferocity).toBe(49 + FEROCITY_RULES.basicGain);
+    expect(calm.target.ferocity).toBe(FEROCITY_RULES.hitGain);
   });
 });
 
@@ -353,6 +393,17 @@ describe("궁극기", () => {
     expect(canFireUltimate(state, state.fighters[0])).toBe(false);
     expect(fireUltimate(state, "player-0")).toHaveLength(0);
     expect(state.fighters[1].hp).toBe(state.fighters[1].maxHp);
+  });
+
+  it("는 공용 저장 상한 안에서 스킬별 비용만 정확히 소비한다", () => {
+    const state = charged();
+    const fighter = state.fighters[0];
+    // 운영 정의를 바꾸지 않고 이 전투원에게만 저비용 궁극기 계약을 복제한다.
+    fighter.def = { ...fighter.def, ultimate: { ...fighter.def.ultimate, cost: 80 } };
+    fighter.energy = ULTIMATE_ENERGY_MAX;
+    expect(canFireUltimate(state, fighter)).toBe(true);
+    fireUltimate(state, fighter.id);
+    expect(fighter.energy).toBe(ULTIMATE_ENERGY_MAX - 80);
   });
 
   it("는 전투가 끝난 뒤에는 쓸 수 없다", () => {

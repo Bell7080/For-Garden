@@ -120,6 +120,13 @@ export interface LayerOptions {
   /** 윗변 강조선의 두께. 색으로 뜻을 알리는 자리(능력치 칩)는 굵게 긋는다. */
   edgeWidth?: number;
   /**
+   * 면 **안쪽** 위에서 아래로 사라지는 색 발광.
+   *
+   * 테두리로 색을 알리면 면 밖으로 선이 튀어나와 홀로그램의 결이 깨진다. 대신 면을 잘라 낸
+   * 조각을 겹겹이 칠해, 마스크 없이도 위쪽만 은은하게 물든 그라데이션을 만든다.
+   */
+  glow?: { color: number; strength?: number; height?: number };
+  /**
    * 유리 광택. 면의 위쪽에만 아주 옅은 흰빛을 얹어 빛을 받은 유리처럼 보이게 한다.
    * 값은 흰빛의 진하기(0~1)이며 0.07 언저리가 넘어 보이지 않는 한계다.
    */
@@ -183,6 +190,18 @@ export function drawLayer(
     const upper = clipAbove(points, top + (bottom - top) * 0.45);
     graphics.fillStyle(0xffffff, options.sheen);
     graphics.fillPoints(upper, true);
+  }
+  if (options.glow) {
+    // 같은 알파로 점점 작게 잘라 낸 조각을 겹친다. 위로 갈수록 여러 겹이 포개져 저절로
+    // 위가 진하고 아래로 사라지는 결이 된다 — 다각형 채우기에는 그라데이션이 없기 때문이다.
+    const top = Math.min(...points.map((point) => point.y));
+    const bottom = Math.max(...points.map((point) => point.y));
+    const span = (bottom - top) * (options.glow.height ?? 0.55);
+    const bands = 9;
+    graphics.fillStyle(options.glow.color, (options.glow.strength ?? 0.5) / bands);
+    for (let i = 1; i <= bands; i += 1) {
+      graphics.fillPoints(clipAbove(points, top + (span * i) / bands), true);
+    }
   }
   if (options.edge !== undefined) {
     // 사방을 두르면 옛 금속 테두리로 되돌아간다. 빛이 닿는 윗변 한 줄만 긋는다.

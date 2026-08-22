@@ -310,15 +310,15 @@ export class InfoManager {
     this.bondBar = new Gauge(scene, COLUMN.x + 40, 718, COLUMN.width - 184, 14, BOND_HEART);
     this.bondLabel = scene.add.text(COLUMN.x - COLUMN.width / 2 + 152, 738, "", textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0, 0);
     attach(bondPanel, bondHeart, ...this.bondBar.objects, this.bondLabel);
-    this.addSectionTitle("유대", 662);
+    this.addSectionTitle("유대", 706 - 72);
 
     // 능력치.
-    this.addSectionTitle("능력치", 852);
+    this.addSectionTitle("능력치", 1024 - 198);
     this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 48, 852, (from) => this.openExtraStats(from), statPanel);
     STAT_CHIPS.forEach((chip, index) => this.addStatChip(chip, index, statPanel));
 
     // 하트 젬 — 하트 하나를 셋으로 가른 자리.
-    this.addSectionTitle("룬", 1288);
+    this.addSectionTitle("룬", 1398 - 146);
     for (let index = 0; index < 3; index += 1) this.gemSlots.push(this.addGemSlot(index, gemPanel));
 
     this.buildFigureStand();
@@ -350,15 +350,16 @@ export class InfoManager {
    * 같은 위계인지 읽히지 않는다. 그래서 판 밖(기울지 않는 층)에 얹고, 셋 다 같은 x에 선다.
    * 왼쪽의 짧은 막대와 아래로 흐르는 얇은 선이 제목을 판에 묶어 준다.
    */
-  private addSectionTitle(text: string, y: number): void {
-    const x = COLUMN.x - COLUMN.width / 2 + 52;
+  private addSectionTitle(text: string, panelTop: number): void {
+    // 제목은 판의 왼쪽 끝에서 시작해 윗변에 걸터앉는다. 판 안으로 들여놓으면 아래 수치와
+    // 한 덩어리로 읽히고, 어중간하게 띄우면 어느 판의 제목인지 흐려진다.
+    const left = COLUMN.x - COLUMN.width / 2;
+    const y = panelTop - 4;
     const label = this.scene.add
-      .text(x + 26, y, text, textStyle({ role: "display", size: 34, color: COLOR.accentText }))
+      .text(left + 34, y, text, textStyle({ role: "display", size: 34, color: COLOR.accentText }))
       .setOrigin(0, 0.5);
-    // 제목이 판 위에 그냥 얹혀 있으면 아래 수치와 한 덩어리로 읽힌다. 강조 막대에서 시작해
-    // 글자 끝까지만 덮는 어두운 마름모 한 장을 깔아 "여기부터 새 칸"임을 확실히 가른다.
-    const width = label.width + 74;
-    const plate = drawLayer(this.scene, x + width / 2 - 12, y, slantedRect(width, 52, 16), {
+    const width = label.width + 62;
+    const plate = drawLayer(this.scene, left + width / 2 + 8, y, slantedRect(width, 52, 16), {
       fill: 0x05070a,
       alpha: 0.92,
       edge: COLOR.accent,
@@ -366,7 +367,7 @@ export class InfoManager {
     });
     const bar = this.scene.add.graphics();
     bar.fillStyle(COLOR.accent, 0.95);
-    bar.fillPoints(toPoints(slantedRect(9, 36, 7)).map((point) => new Phaser.Geom.Point(point.x + x, point.y + y)), true);
+    bar.fillPoints(toPoints(slantedRect(9, 36, 7)).map((point) => new Phaser.Geom.Point(point.x + left + 16, point.y + y)), true);
     this.column.add([plate, bar, label]);
   }
 
@@ -526,8 +527,9 @@ export class InfoManager {
     const container = this.scene.add.container(x - 34, y);
     container.add(drawLayer(this.scene, 0, 0, chipPoints(size, size, {
       bevel: { topLeft: size * 0.32, topRight: 0, bottomRight: size * 0.32, bottomLeft: 0 },
-    // 윗변의 색 막대가 곧 어떤 능력치인지 알리는 표시다. 얇으면 색이 읽히지 않으므로 굵게 긋는다.
-    }), { fill: 0x11161d, alpha: 0.92, edge: chip.color, edgeAlpha: 1, edgeWidth: 7 }));
+    // 어떤 능력치인지는 색으로 알린다. 다만 색을 테두리로 두르면 선이 면 밖으로 튀어나오므로,
+    // 칩 안쪽 위에서 아래로 사라지는 발광으로 물들인다.
+    }), { fill: 0x11161d, alpha: 0.92, edge: chip.color, edgeAlpha: 0.85, glow: { color: chip.color, strength: 0.42, height: 0.5 } }));
     container.add(this.scene.add.text(0, 2, chip.label, textStyle({ role: "emphasis", size: 21 })).setOrigin(0.5));
 
     const value = this.scene.add.text(x + 12, y - 26, "", textStyle({ role: "display", size: 36 })).setOrigin(0, 0);

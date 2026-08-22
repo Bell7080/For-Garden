@@ -15,6 +15,8 @@ export const FEROCITY_RULES = {
   ultimateGain: 18,
   hitGain: 8,
   swapReduction: 25,
+  /** 최대치에서 시작한 피버가 8초에 걸쳐 자연스럽게 끝나도록 초당 빠지는 양이다. */
+  feverDrainPerSecond: 12.5,
   /**
    * 야성 단계.
    *
@@ -58,8 +60,8 @@ export interface BattleUnit {
   ferocity: number;
   /** 플레이어 진행 상태에서 복사한 유대 레벨이다. */
   bondLevel: number;
-  /** 진압 뒤 행동할 수 없는 남은 턴이다. */
-  stunTurns: number;
+  /** 최대 야성 도달 뒤 게이지가 0까지 자연 감소하는 피버 구간인지 나타낸다. */
+  ferocityFever: boolean;
   /** 스왑으로 막 전방에 나왔는지. swapMomentum 패시브가 이걸 본다. */
   justSwapped: boolean;
   /** 플레이어 진행 상태에서 복사한 각성 단계다. 단계 효과표가 피해에 곱해진다. */
@@ -78,7 +80,6 @@ export interface Team {
 export type BattleAction =
   | { kind: "basic"; criticalRoll?: number }
   | { kind: "ultimate"; criticalRoll?: number }
-  | { kind: "suppress" }
   /** 후방 유닛과 전방을 맞바꾼다. */
   | { kind: "swap"; memberIndex: number };
 
@@ -149,7 +150,7 @@ function makeUnit(def: RelicDef, bondLevel = 0, awakening = 0): BattleUnit {
     ferocity: 0,
     bondLevel,
     awakening,
-    stunTurns: 0,
+    ferocityFever: false,
     justSwapped: false,
   };
 }
@@ -245,14 +246,26 @@ function gainEnergy(unit: BattleUnit): void {
 /** 사건별 야성을 올리고 임계 진입을 로그에 한 번만 남긴다. */
 function changeFerocity(unit: BattleUnit, delta: number, state: BattleState): void {
   const before = unit.ferocity;
+  // 피버 카운트다운 중에는 새 야성 획득으로 지속 시간을 연장하지 않는다.
+  if (unit.ferocityFever && delta > 0) return;
   const adjusted = delta > 0 ? amplifyFerocityGain(delta, unit.bondLevel) : delta;
   unit.ferocity = Math.min(FEROCITY_RULES.max, Math.max(FEROCITY_RULES.min, before + adjusted));
+  // 최대치에 닿는 순간부터 피버 타이머가 시작되며 추가 피격도 종료 시점을 미루지 않는다.
+  if (before < FEROCITY_RULES.max && unit.ferocity >= FEROCITY_RULES.max) unit.ferocityFever = true;
   for (const threshold of FEROCITY_RULES.thresholds) {
     if (before < threshold.value && unit.ferocity >= threshold.value)
       state.log.push(`${unit.def.name} 야성 ${threshold.value} 진입`);
   }
   if (before >= FEROCITY_RULES.thresholds[0].value && unit.ferocity < FEROCITY_RULES.thresholds[0].value)
     state.log.push(`${unit.def.name} 통제 회복`);
+}
+
+/** 턴제와 실시간 코어가 함께 쓰는 피버 자연 감소 규칙이다. */
+export function drainFerocityFever(unit: BattleUnit, seconds: number): void {
+  if (!unit.ferocityFever || seconds <= 0) return;
+  unit.ferocity = Math.max(FEROCITY_RULES.min, unit.ferocity - FEROCITY_RULES.feverDrainPerSecond * seconds);
+  // 완전히 진정된 뒤에만 다음 최대치 도달로 새 피버를 시작할 수 있다.
+  if (unit.ferocity <= FEROCITY_RULES.min) unit.ferocityFever = false;
 }
 
 /** 쓰러진 유닛이 전방에 있으면 살아있는 후방 유닛을 자동으로 앞에 세운다. */
@@ -290,7 +303,7 @@ export function canSwap(team: Team, memberIndex: number): boolean {
 
 export function canUseUltimate(unit: BattleUnit): boolean {
   // 야성이 가득 차도 궁극기를 막지 않는다. 개방된 본능은 오히려 더 세게 나가는 상태다.
-  return isAlive(unit) && unit.stunTurns === 0 && unit.energy >= unit.def.ultimate.cost;
+  return isAlive(unit) && unit.energy >= unit.def.ultimate.cost;
 }
 
 /** 한쪽이 행동을 한 번 한다. 규칙 위반이면 아무것도 바꾸지 않고 false를 돌려준다. */
@@ -303,24 +316,6 @@ function performAction(
   const foes = side === "player" ? state.enemy : state.player;
   const front = frontUnit(team);
   const foeFront = frontUnit(foes);
-
-  if (front.stunTurns > 0) {
-    front.stunTurns -= 1;
-    state.log.push(`${front.def.name} 진압 후 기절 (${front.stunTurns}턴)`);
-    return true;
-  }
-
-  // 통제 불능에서는 입력을 무시하고 아군 오인 공격을 강제해 고화력 유지의 위험을 명확히 한다.
-  if (front.ferocity >= FEROCITY_RULES.max && action.kind !== "suppress") {
-    const ally = team.order.slice(1).map((i) => team.units[i]).find(isAlive);
-    const target = ally ?? foeFront;
-    const dmg = computeDamage(front, target, { ...front.def.basic, isCritical: false }, false);
-    applyDamage(target, dmg);
-    changeFerocity(front, FEROCITY_RULES.basicGain, state);
-    changeFerocity(target, FEROCITY_RULES.hitGain, state);
-    state.log.push(`${front.def.name} 통제 불능 — ${target.def.name} 오인 공격 ${dmg}`);
-    return true;
-  }
 
   switch (action.kind) {
     case "swap": {
@@ -385,12 +380,6 @@ function performAction(
       return true;
     }
 
-    case "suppress": {
-      if (!isAlive(front) || front.ferocity < FEROCITY_RULES.max) return false;
-      front.ferocity = FEROCITY_RULES.min;
-      state.log.push(`${front.def.name} 야성 진정 — 게이지를 비웠다`);
-      return true;
-    }
   }
 }
 
@@ -451,5 +440,7 @@ export function enemyTurn(state: BattleState): void {
   state.enemy.swapCooldown = Math.max(0, state.enemy.swapCooldown - 1);
   tickRearPassives(state.player, state);
   tickRearPassives(state.enemy, state);
+  // 턴제에서는 한 라운드를 1초로 환산해 실시간 코어와 같은 피버 감소 공식을 적용한다.
+  [...state.player.units, ...state.enemy.units].forEach((unit) => drainFerocityFever(unit, 1));
   state.phase = "player";
 }

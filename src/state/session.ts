@@ -14,6 +14,8 @@ const STARTER_RELICS = ["anky", "rex", "spino"];
 export interface Session {
   /** 완료한 스토리 ID. 첫 실행 진입과 회상 보상 차단에 함께 사용한다. */
   completedStoryIds: Set<string>;
+  /** 날짜별 관찰 인터뷰 기록. 답변 태그는 전투 수치와 분리된 작은 성격 단서다. */
+  observationRecords: ObservationRecord[];
   /** 지도에서 고른 스테이지 id. */
   selectedStageId: string | null;
   /** 편성한 파티. 렐릭 id 3개, 0번이 전방이다. */
@@ -51,6 +53,19 @@ export interface DailyContentState {
   claimedRewardIds: string[];
 }
 
+/** 관찰 일지에 그대로 표시할 수 있는, 완료된 인터뷰의 최소 스냅샷이다. */
+export interface ObservationRecord {
+  date: string;
+  relicId: string;
+  storyId: string;
+  questionId: string;
+  question: string;
+  choiceId: string;
+  answer: string;
+  personalityTag: string;
+  discoveredHabit: string;
+}
+
 /**
  * JSON 직렬화만을 위한 저장 계약이다. Set은 JSON에서 유실되므로 이름을 분리한 배열로 둔다.
  * 계정 연동 시에도 이 형태를 업로드 모델로 오해하지 않고 SaveManager 경계에서만 사용한다.
@@ -58,6 +73,7 @@ export interface DailyContentState {
 export interface SaveData {
   saveVersion: number;
   completedStoryIds: string[];
+  observationRecords: ObservationRecord[];
   selectedStageId: string | null;
   party: string[];
   clearedStageIds: string[];
@@ -87,13 +103,14 @@ function createStarterProgress(): RelicProgress { return grantBondXp(createIniti
 export function createDefaultSession(): Session {
   return {
     completedStoryIds: new Set<string>(),
+    observationRecords: [],
     selectedStageId: null,
     party: [...STARTER_RELICS],
     cleared: new Set<string>(),
     owned: new Set(STARTER_RELICS),
     favorite: STARTER_RELICS[0],
     bookmarked: new Set<string>(),
-    wallet: { fossil: 1200, amber: 10, gems: 120, gold: 25_400, stamina: 60, dnaFragments: 0, weeds: 0 },
+    wallet: { fossil: 1200, amber: 10, gems: 120, gold: 25_400, stamina: 60, dnaFragments: 0, cheesecake: 0 },
     gachaPityByGroup: Object.fromEntries([...new Set(BANNERS.map(({ pityGroupId }) => pityGroupId))].map((id) => [id, { pullsSinceSsr: 0, pickupGuaranteed: false }])),
     relicProgress: Object.fromEntries(STARTER_RELICS.map((id) => [id, createStarterProgress()])),
     ownedHeartGemIds: ["vital-seed", "fang-core", "ancient-pulse"],

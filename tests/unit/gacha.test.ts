@@ -21,8 +21,8 @@ describe("뽑기 비용", () => {
   it("10회 할인과 잔액 경계를 계산한다", () => {
     expect(pullCost(banner, 1)).toBe(100);
     expect(pullCost(banner, 10)).toBe(900);
-    expect(canPull({ fossil: 100, amber: 0, gems: 0, gold: 0, stamina: 0, dnaFragments: 0, weeds: 0 }, banner, 1)).toBe(true);
-    expect(canPull({ fossil: 99, amber: 999, gems: 0, gold: 0, stamina: 0, dnaFragments: 0, weeds: 0 }, banner, 1)).toBe(false);
+    expect(canPull({ fossil: 100, amber: 0, gems: 0, gold: 0, stamina: 0, dnaFragments: 0, cheesecake: 0 }, banner, 1)).toBe(true);
+    expect(canPull({ fossil: 99, amber: 999, gems: 0, gold: 0, stamina: 0, dnaFragments: 0, cheesecake: 0 }, banner, 1)).toBe(false);
   });
 });
 
@@ -87,8 +87,8 @@ describe("보장 우선순위와 천장", () => {
 
 describe("재화와 보유 반영", () => {
   it("원본 지갑은 바꾸지 않고 비용만 차감한다", () => {
-    const wallet: Wallet = { fossil: 1000, amber: 5, gems: 0, gold: 0, stamina: 0, dnaFragments: 2, weeds: 0 };
-    expect(spend(wallet, banner, 1)).toEqual({ fossil: 900, amber: 5, gems: 0, gold: 0, stamina: 0, dnaFragments: 2, weeds: 0 });
+    const wallet: Wallet = { fossil: 1000, amber: 5, gems: 0, gold: 0, stamina: 0, dnaFragments: 2, cheesecake: 0 };
+    expect(spend(wallet, banner, 1)).toEqual({ fossil: 900, amber: 5, gems: 0, gold: 0, stamina: 0, dnaFragments: 2, cheesecake: 0 });
     expect(wallet.fossil).toBe(1000);
   });
 
@@ -106,6 +106,10 @@ describe("재화와 보유 반영", () => {
 });
 
 describe("운영 배너 데이터", () => {
+  it("모든 운영 배너의 SSR 천장은 100회다", () => {
+    // 문서와 UI가 같은 정적 운영값을 읽도록 과거 80회 값의 회귀를 막는다.
+    expect(BANNERS.every((candidate) => candidate.highestRarityGuarantee === 100)).toBe(true);
+  });
   it("픽업과 대표 렐릭이 해당 등급 풀에 있고 확률 합계가 1이다", () => {
     for (const candidate of BANNERS) {
       expect(Object.values(candidate.rarityRates).reduce((sum, rate) => sum + rate, 0)).toBeCloseTo(1);

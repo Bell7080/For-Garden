@@ -23,18 +23,18 @@ export interface MissionDefinition {
   period: MissionPeriod;
   title: string;
   target: number;
-  rewardWeeds: number;
+  rewardCheesecake: number;
   event: MissionEvent["type"];
 }
 
 // 운영 데이터가 붙기 전의 최소 임무 묶음이며, 보상과 목표를 한곳에서만 정의한다.
 export const MISSIONS: readonly MissionDefinition[] = [
-  { id: "daily-battle", period: "daily", title: "전투 완료 1회", target: 1, rewardWeeds: 20, event: "battle_completed" },
-  { id: "daily-excavate", period: "daily", title: "발굴 1회", target: 1, rewardWeeds: 20, event: "excavation_completed" },
-  { id: "daily-salary", period: "daily", title: "급여 1회", target: 1, rewardWeeds: 20, event: "salary_given" },
-  { id: "daily-lobby", period: "daily", title: "로비 교류 1회", target: 1, rewardWeeds: 20, event: "lobby_interaction" },
-  { id: "weekly-battle", period: "weekly", title: "전투 완료 5회", target: 5, rewardWeeds: 100, event: "battle_completed" },
-  { id: "weekly-excavate", period: "weekly", title: "발굴 10회", target: 10, rewardWeeds: 100, event: "excavation_completed" },
+  { id: "daily-battle", period: "daily", title: "전투 완료 1회", target: 1, rewardCheesecake: 20, event: "battle_completed" },
+  { id: "daily-excavate", period: "daily", title: "발굴 1회", target: 1, rewardCheesecake: 20, event: "excavation_completed" },
+  { id: "daily-salary", period: "daily", title: "급여 1회", target: 1, rewardCheesecake: 20, event: "salary_given" },
+  { id: "daily-lobby", period: "daily", title: "로비 교류 1회", target: 1, rewardCheesecake: 20, event: "lobby_interaction" },
+  { id: "weekly-battle", period: "weekly", title: "전투 완료 5회", target: 5, rewardCheesecake: 100, event: "battle_completed" },
+  { id: "weekly-excavate", period: "weekly", title: "발굴 10회", target: 10, rewardCheesecake: 100, event: "excavation_completed" },
 ];
 
 /** UTC 날짜와 그 날짜가 속한 월요일을 안정적인 기간 키로 만든다. */

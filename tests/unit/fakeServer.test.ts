@@ -7,7 +7,7 @@ import type { Session } from "../../src/state/session";
 /** 각 테스트가 독립적으로 쓸 서버 저장소 역할의 세션을 만든다. */
 function makeSession(fossil = 1000): Session {
   return {
-    completedStoryIds: new Set(),
+    completedStoryIds: new Set(), observationRecords: [],
     selectedStageId: null,
     party: ["anky", "rex", "dodo"],
     cleared: new Set(),
@@ -15,7 +15,7 @@ function makeSession(fossil = 1000): Session {
     favorite: "anky",
     bookmarked: new Set<string>(),
     gachaPityByGroup: { "standard-fossil": { pullsSinceSsr: 0, pickupGuaranteed: false }, "limited-pickup": { pullsSinceSsr: 0, pickupGuaranteed: false } },
-    wallet: { fossil, amber: 10, gems: 0, gold: 0, stamina: 0, dnaFragments: 0, weeds: 0 },
+    wallet: { fossil, amber: 10, gems: 0, gold: 0, stamina: 0, dnaFragments: 0, cheesecake: 0 },
     relicProgress: Object.fromEntries(["anky", "rex", "dodo"].map((id) => [id, { level: id === "anky" ? 2 : 1, exp: 0, awakening: id === "anky" ? 1 : 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: id === "anky" ? ["vital-seed", null, null] : [null, null, null] }])),
     ownedHeartGemIds: ["vital-seed"],
     dailyContent: { date: "", restorationEntries: 0, completedIds: [], claimedRewardIds: [] },
@@ -27,11 +27,11 @@ function makeSession(fossil = 1000): Session {
 
 describe("FakeServer", () => {
   it("급여 재화를 검사·차감하고 오른 레벨을 서버 상태에 반영한다", async () => {
-    const state = makeSession(); state.wallet.weeds = 25;
+    const state = makeSession(); state.wallet.cheesecake = 25;
     const server = new FakeServer(state, { latencyMs: 0 });
-    // 열 번 요청해도 잡초가 두 번 치뿐이다. 레벨 2는 80 EXP가 필요해 아직 오르지 않는다.
+    // 열 번 요청해도 치즈케이크가 두 번 치뿐이다. 레벨 2는 80 EXP가 필요해 아직 오르지 않는다.
     const response = await server.feedRelic("anky", 10);
-    expect(response).toMatchObject({ relicId: "anky", feeds: 2, weedsSpent: 20, wallet: { weeds: 5 } });
+    expect(response).toMatchObject({ relicId: "anky", feeds: 2, cheesecakeSpent: 20, wallet: { cheesecake: 5 } });
     expect(state.relicProgress.anky).toMatchObject({ level: 2, exp: 40 });
     await expect(server.feedRelic("anky")).rejects.toMatchObject({ code: "INSUFFICIENT_CURRENCY" });
   });
@@ -40,26 +40,26 @@ describe("FakeServer", () => {
     const state = makeSession();
     const step = BREAKTHROUGH_STEPS[0];
     state.relicProgress.anky = { ...state.relicProgress.anky, level: RELIC_LEVEL_CAP, exp: 0 };
-    state.wallet.dnaFragments = step.dnaFragments; state.wallet.weeds = step.weeds;
+    state.wallet.dnaFragments = step.dnaFragments; state.wallet.cheesecake = step.cheesecake;
     const server = new FakeServer(state, { latencyMs: 0 });
     await expect(server.feedRelic("anky")).rejects.toMatchObject({ code: "RELIC_MAX_LEVEL" });
     const response = await server.breakThroughRelic("anky");
     expect(response).toMatchObject({ relicId: "anky", breakthrough: 1, levelCap: step.levelCap });
-    expect(state.wallet).toMatchObject({ dnaFragments: 0, weeds: 0 });
+    expect(state.wallet).toMatchObject({ dnaFragments: 0, cheesecake: 0 });
     await expect(server.breakThroughRelic("anky")).rejects.toMatchObject({ code: "RELIC_MAX_LEVEL" });
   });
 
   it("메인 스테이지의 최초와 반복 보상을 데이터대로 구분한다", async () => {
     const state = makeSession(); const server = new FakeServer(state, { latencyMs: 0 });
-    await expect(server.completeStage("1-1")).resolves.toMatchObject({ firstClear: true, weedsEarned: 30 });
-    await expect(server.completeStage("1-1")).resolves.toMatchObject({ firstClear: false, weedsEarned: 10 });
-    expect(state.wallet.weeds).toBe(40);
+    await expect(server.completeStage("1-1")).resolves.toMatchObject({ firstClear: true, cheesecakeEarned: 30 });
+    await expect(server.completeStage("1-1")).resolves.toMatchObject({ firstClear: false, cheesecakeEarned: 10 });
+    expect(state.wallet.cheesecake).toBe(40);
   });
 
   it("승리만 편성 렐릭 유대를 올리고 패배에는 전투 보상을 지급하지 않는다", async () => {
     const state = makeSession(); const server = new FakeServer(state, { latencyMs: 0 });
     await server.completeStage("1-1", false);
-    expect([state.wallet.weeds, state.relicProgress.anky.bondXp]).toEqual([0, 0]);
+    expect([state.wallet.cheesecake, state.relicProgress.anky.bondXp]).toEqual([0, 0]);
     await server.completeStage("1-1", true);
     expect(state.relicProgress.anky.bondXp).toBe(12);
     expect(state.relicProgress.rex.bondXp).toBe(12);
@@ -79,7 +79,7 @@ describe("FakeServer", () => {
     for (let index = 0; index < 3; index += 1) await server.enterDailyRestoration();
     await expect(server.enterDailyRestoration()).rejects.toMatchObject({ code: "DAILY_ENTRY_LIMIT" });
     now = new Date("2026-08-21T00:00:00Z");
-    await expect(server.enterDailyRestoration()).resolves.toMatchObject({ entriesRemaining: 2, weedsEarned: 40 });
+    await expect(server.enterDailyRestoration()).resolves.toMatchObject({ entriesRemaining: 2, cheesecakeEarned: 40 });
     expect(state.dailyContent).toMatchObject({ date: "2026-08-21", restorationEntries: 1 });
   });
   it("서버 안에서 비용과 결과를 함께 확정한다", async () => {
@@ -139,14 +139,14 @@ describe("FakeServer", () => {
     const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-20T12:00:00Z") });
     await expect(server.claimMissionRewards(["daily-battle"])).rejects.toMatchObject({ code: "MISSION_NOT_COMPLETE" });
     await server.completeStage("1-1", true);
-    await expect(server.claimMissionRewards(["daily-battle"])).resolves.toMatchObject({ claimedIds: ["daily-battle"], weedsEarned: 20 });
-    const afterFirstClaim = state.wallet.weeds;
+    await expect(server.claimMissionRewards(["daily-battle"])).resolves.toMatchObject({ claimedIds: ["daily-battle"], cheesecakeEarned: 20 });
+    const afterFirstClaim = state.wallet.cheesecake;
     await expect(server.claimMissionRewards(["daily-battle"])).rejects.toMatchObject({ code: "MISSION_ALREADY_CLAIMED" });
-    expect(state.wallet.weeds).toBe(afterFirstClaim);
+    expect(state.wallet.cheesecake).toBe(afterFirstClaim);
   });
 
   it("발굴·급여·로비 성공을 각 API 경계에서 임무에 한 번 반영한다", async () => {
-    const state = makeSession(); state.wallet.weeds = 20;
+    const state = makeSession(); state.wallet.cheesecake = 20;
     const server = new FakeServer(state, { latencyMs: 0, random: () => 0, now: () => new Date("2026-08-20T12:00:00Z") });
     await server.pullRelics({ bannerId: "fossil", count: 1 });
     await server.feedRelic("anky", 1);
@@ -160,7 +160,7 @@ describe("FakeServer 상품 카탈로그", () => {
   it("인게임 가격 차감, 지급, 일일 제한을 한 처리로 확정한다", async () => {
     const state = makeSession(1000);
     const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-22T12:00:00Z") });
-    await expect(server.purchaseProduct("trade-weeds")).resolves.toMatchObject({ productId: "trade-weeds", remaining: 2, wallet: { fossil: 820, weeds: 100 } });
+    await expect(server.purchaseProduct("trade-weeds")).resolves.toMatchObject({ productId: "trade-weeds", remaining: 2, wallet: { fossil: 820, cheesecake: 100 } });
     expect(state.productPurchases["trade-weeds"]).toEqual({ periodKey: "2026-08-22", count: 1 });
     await server.purchaseProduct("trade-weeds");
     await server.purchaseProduct("trade-weeds");
@@ -174,5 +174,30 @@ describe("FakeServer 상품 카탈로그", () => {
     await expect(server.purchaseProduct("premium-starter")).rejects.toMatchObject({ code: "PLATFORM_PAYMENT_REQUIRED" });
     expect(state.wallet).toEqual(before);
     expect(state.productPurchases).toEqual({});
+  });
+});
+
+describe("FakeServer DNA 조각 교환소와 경제 경계", () => {
+  it("선택한 보유 렐릭만 각성시키고 DNA를 차감한다", async () => {
+    const state = makeSession(); state.wallet.dnaFragments = 10;
+    const response = await new FakeServer(state, { latencyMs: 0 }).exchangeDna({ offerId: "dna-awakening", relicId: "rex" });
+    expect(response).toMatchObject({ offerId: "dna-awakening", rewardKind: "relic_awakening", wallet: { dnaFragments: 0 } });
+    expect(state.relicProgress.rex.awakening).toBe(1);
+    expect(state.relicProgress.anky.awakening).toBe(1);
+  });
+
+  it("잘못된 대상과 중복 Heart Gem에는 차감이나 지급이 없다", async () => {
+    const state = makeSession(); state.wallet.dnaFragments = 30;
+    const server = new FakeServer(state, { latencyMs: 0 });
+    await expect(server.exchangeDna({ offerId: "dna-awakening", relicId: "not-owned" })).rejects.toMatchObject({ code: "INVALID_EXCHANGE_TARGET" });
+    await expect(server.exchangeDna({ offerId: "dna-heart-gem" })).rejects.toMatchObject({ code: "DUPLICATE_GRANT" });
+    expect(state.wallet.dnaFragments).toBe(30);
+  });
+
+  it("지급 결과가 재화 상한을 넘으면 원본 상태를 변경하지 않는다", async () => {
+    const state = makeSession(); state.wallet.dnaFragments = 5; state.wallet.fossil = 9_999_900;
+    const server = new FakeServer(state, { latencyMs: 0 });
+    await expect(server.exchangeDna({ offerId: "dna-past-event" })).rejects.toMatchObject({ code: "CURRENCY_LIMIT_EXCEEDED" });
+    expect(state.wallet).toMatchObject({ dnaFragments: 5, fossil: 9_999_900 });
   });
 });

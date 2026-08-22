@@ -37,6 +37,8 @@ import { AWAKENING_CAP, AWAKENING_STEPS, canBreakThrough, canFeedRelic, FEED_UNI
 import { session } from "../state/session";
 import { BOND_FEROCITY_MULTIPLIER, BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL, BOND_XP_REWARD } from "../core/bond";
 import { getRelicCatalogDisclosure } from "../core/relicCatalog";
+import { observations } from "../managers/ObservationManager";
+import { observationQuestionForDate } from "../data/observations";
 
 export type { SkillInfoViewModel } from "./SkillPopup";
 
@@ -288,6 +290,8 @@ export class InfoManager {
 
   /** 정보창이 닫힐 때 목록 화면이 카드 표시를 다시 맞출 수 있게 알린다. */
   onClose?: () => void;
+  /** 급여·돌파가 지갑을 바꾼 직후 소유 씬의 상단 재화 줄을 갱신하는 경계다. */
+  onWalletChange?: () => void;
 
   constructor(private readonly scene: Phaser.Scene, private readonly portraitDepth = 1001) {
     this.root = scene.add.container(0, 0).setDepth(1000).setVisible(false);
@@ -523,7 +527,7 @@ export class InfoManager {
     });
     container.add([off, on]);
     const label = this.scene.add.text(0, -20, "급여하기", textStyle({ role: "display", size: 36 })).setOrigin(0.5);
-    const hint = this.scene.add.text(0, 16, "잡초 " + FEED_UNIT.weeds + " · 꾹 누르면 한 번에", textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0.5);
+    const hint = this.scene.add.text(0, 16, "치즈케이크 " + FEED_UNIT.cheesecake + " · 꾹 누르면 한 번에", textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0.5);
     container.add([label, hint]);
     const hit = this.scene.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
     let heldFrom = 0;
@@ -603,7 +607,7 @@ export class InfoManager {
       );
       const rows: [string, number, number][] = [
         ["DNA 조각", step.dnaFragments, session.wallet.dnaFragments],
-        ["잡초", step.weeds, session.wallet.weeds],
+        ["치즈케이크", step.cheesecake, session.wallet.cheesecake],
       ];
       rows.forEach(([label, need, have], index) => {
         const y = -40 + index * 60;
@@ -641,6 +645,8 @@ export class InfoManager {
     if (!def) return;
     try {
       await gameApi.breakThroughRelic(def.id);
+      // 성공한 서버 처리만 알린다. 실패했을 때는 지갑 값이 바뀌지 않는다.
+      this.onWalletChange?.();
     } catch {
       // 조건은 화면에서 이미 막는다. 실패하면 상태만 다시 그린다.
     }
@@ -692,12 +698,14 @@ export class InfoManager {
   private async feed(feeds: number): Promise<void> {
     const def = this.currentDef;
     if (!def || !this.ownedNow || this.feeding) return;
-    if (!canFeedRelic(relicProgression.getProgress(def.id), session.wallet.weeds)) return;
+    if (!canFeedRelic(relicProgression.getProgress(def.id), session.wallet.cheesecake)) return;
     this.feeding = true;
     try {
       await gameApi.feedRelic(def.id, feeds);
+      // 정보창과 상단 줄 모두 확정된 단일 세션 지갑을 읽도록 성공 직후 알린다.
+      this.onWalletChange?.();
     } catch {
-      // 잡초 부족·상한은 화면에서 이미 막는다. 실패하면 상태만 다시 그린다.
+      // 치즈케이크 부족·상한은 화면에서 이미 막는다. 실패하면 상태만 다시 그린다.
     } finally {
       this.feeding = false;
       this.refreshGrowth();
@@ -816,7 +824,7 @@ export class InfoManager {
     const def = this.currentDef;
     if (!def) return;
     const disclosure = getRelicCatalogDisclosure(def, this.ownedNow);
-    this.popups.open({ width: 880, height: 760, title: "관찰 일지", tilt: -1.2, ...anchorOf(from) }, (body) => {
+    this.popups.open({ width: 880, height: 980, title: "관찰 일지", tilt: -1.2, ...anchorOf(from) }, (body, close) => {
       const lines = disclosure.access === "full"
         ? [
             "개체번호   NO." + disclosure.specimenNumber,
@@ -825,12 +833,40 @@ export class InfoManager {
             "발굴지      " + disclosure.excavationSite,
           ]
         : ["개체번호   NO." + disclosure.specimenNumber, "프로젝트   기록 없음", "기원         미상", "발굴지      미상"];
-      body.add(this.scene.add.text(-380, -276, lines.join("\n"), textStyle({ role: "body", size: 26, lineSpacing: 14 })).setOrigin(0, 0));
-      body.add(drawHairline(this.scene, 0, -84, 760, { color: COLOR.accent, alpha: 0.35 }));
+      body.add(this.scene.add.text(-380, -386, lines.join("\n"), textStyle({ role: "body", size: 26, lineSpacing: 14 })).setOrigin(0, 0));
+      body.add(drawHairline(this.scene, 0, -194, 760, { color: COLOR.accent, alpha: 0.35 }));
       const record = disclosure.access === "full" ? disclosure.record : def.catalogSummary + "\n\n상세 기록은 개체 획득 후 해제됩니다.";
       const text = this.keywords.layout(record, { width: 760, size: 26, lineSpacing: 10 });
-      text.setPosition(-380, -48);
+      text.setPosition(-380, -158);
       body.add(text);
+
+      // 기존 일지 아래에 날짜·질문·답변·발견 습성을 같은 쪽지 안에서 시간순으로 보여 준다.
+      // 작은 쪽지에는 가장 최근 한 건만 두고 전체 이력은 저장에 유지해 내용이 겹치지 않게 한다.
+      const entries = observations.recordFor(def.id).slice(-1).reverse();
+      body.add(drawHairline(this.scene, 0, 92, 760, { color: COLOR.accent, alpha: 0.35 }));
+      body.add(this.scene.add.text(-380, 116, "관찰 인터뷰", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0));
+      if (!entries.length) body.add(this.scene.add.text(-380, 158, "아직 기록된 인터뷰가 없습니다.", textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0, 0));
+      entries.forEach((entry, index) => {
+        const y = 158 + index * 128;
+        const copy = `${entry.date}  ·  #${entry.personalityTag}\nQ. ${entry.question}\nA. ${entry.answer}\n발견  ${entry.discoveredHabit}`;
+        body.add(this.scene.add.text(-380, y, copy, textStyle({ role: "body", size: 20, color: COLOR.ink, lineSpacing: 4 })).setOrigin(0, 0));
+      });
+
+      // 초기 버전은 공용 질문을 일지에서 바로 답하게 해 별도 대형 화면 제작을 피한다.
+      const utcDate = new Date().toISOString().slice(0, 10);
+      if (this.ownedNow && observations.canStart(def.id, utcDate)) {
+        const question = observationQuestionForDate(utcDate);
+        const y = entries.length ? 300 : 238;
+        body.add(this.scene.add.text(-380, y, "오늘의 질문  " + question.prompt, textStyle({ role: "emphasis", size: 21, color: COLOR.accentText })).setOrigin(0, 0));
+        question.choices.forEach((choice, index) => {
+          const buttonY = y + 64 + index * 54;
+          body.add(drawLayer(this.scene, 0, buttonY, slantedRect(740, 44, 12), { fill: 0x141a22, alpha: 0.92, edge: COLOR.accent, edgeAlpha: 0.4 }));
+          body.add(this.scene.add.text(-350, buttonY, choice.label, textStyle({ role: "body", size: 20 })).setOrigin(0, 0.5));
+          const hit = this.scene.add.rectangle(0, buttonY, 740, 44, 0xffffff, 0).setInteractive({ useHandCursor: true });
+          hit.on("pointerup", () => { observations.complete(def.id, utcDate, choice.id); close(); this.openJournal(from); this.refreshGrowth(); });
+          body.add(hit);
+        });
+      }
     });
   }
 
@@ -1281,7 +1317,7 @@ export class InfoManager {
   private skillViewModel(kindLabel: string, skill: Skill, gaugeCost?: number): SkillInfoViewModel {
     const attacker = this.currentUnit ?? (this.currentDef && {
       def: this.currentDef, hp: this.currentDef.stats.hp, maxHp: this.currentDef.stats.hp,
-      energy: 0, ferocity: 0, bondLevel: 0, stunTurns: 0, justSwapped: false,
+      energy: 0, ferocity: 0, bondLevel: 0, ferocityFever: false, justSwapped: false,
       awakening: relicProgression.getProgress(this.currentDef.id).awakening,
     });
     const preview = attacker && kindLabel !== "패시브" ? previewSkillDamage(attacker, skill, this.previewTarget, true) : undefined;
@@ -1396,8 +1432,9 @@ export class InfoManager {
     this.levelCap.setX(this.levelValue.x + this.levelValue.displayWidth + 14);
     const need = maxed ? 0 : relicExpToNext(progress.level);
     this.expBar.setValue(maxed ? 1 : progress.exp / need);
-    this.expLabel.setText(maxed ? "MAX" : progress.exp + " / " + need + " EXP   ·   보유 잡초 " + session.wallet.weeds);
-    this.paintFeedButton(this.ownedNow && canFeedRelic(progress, session.wallet.weeds));
+    // 보유 치즈케이크는 상단 줄 한 곳에서만 보여 중복되거나 서로 다른 시점의 값이 보이지 않게 한다.
+    this.expLabel.setText(maxed ? "MAX" : progress.exp + " / " + need + " EXP");
+    this.paintFeedButton(this.ownedNow && canFeedRelic(progress, session.wallet.cheesecake));
     this.feedLabel.setText(maxed ? "최대 레벨" : "급여하기");
     this.paintBreakButton(progress);
 

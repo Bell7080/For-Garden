@@ -7,6 +7,7 @@ import {
   createSkirmish,
   fireUltimate,
   findFighter,
+  moveSpeed,
   renderPose,
   SKIRMISH,
   stepSkirmish,
@@ -114,6 +115,90 @@ describe("능력치 반영", () => {
     run(always, 12, () => 0);
     run(never, 12, () => 0.999999);
     expect(teamHp(always, "enemy")).toBeLessThan(teamHp(never, "enemy"));
+  });
+});
+
+describe("효과 ID별 야성 특성", () => {
+  /** 원하는 둘을 즉시 교전시키고 다른 전투원의 행동은 멈춰 한 번의 효과만 관찰한다. */
+  function prepareHit(player: string, enemies = ["husk-shell"]): SkirmishState {
+    const state = newSkirmish([player], enemies);
+    const [attacker, target] = state.fighters;
+    attacker.x = 400; attacker.y = 1000; attacker.attackCooldown = 0; attacker.targetId = target.id;
+    target.x = 460; target.y = 1000;
+    for (const enemy of state.fighters.slice(1)) enemy.attackCooldown = 99;
+    return state;
+  }
+
+  it("attackIntervalReduction은 렉시아의 피버 중 공격 간격만 20% 줄인다", () => {
+    const state = newSkirmish(["rex"], ["husk-shell"]);
+    const rex = state.fighters[0];
+    const before = attackInterval(rex);
+    rex.ferocity = 99;
+    expect(attackInterval(rex)).toBe(before); // 100 미만 경계에서는 설명 효과가 열리지 않는다.
+    rex.ferocity = 100; rex.ferocityFever = true;
+    expect(attackInterval(rex)).toBeCloseTo(before * 0.8);
+  });
+
+  it("damageReduction은 토리카가 피버일 때 최종 피해를 18% 줄인다", () => {
+    const hit = (fever: boolean, ferocity: number) => {
+      const state = prepareHit("husk-raptor", ["anky"]);
+      const target = state.fighters[1];
+      target.ferocity = ferocity; target.ferocityFever = fever;
+      return (stepSkirmish(state, 1 / 60).find((event) => event.kind === "attack") as Extract<SkirmishEvent, { kind: "attack" }>).amount;
+    };
+    const before = hit(false, 0);
+    expect(hit(false, 99)).toBe(before); // 게이지만 99로 둔 상태에는 경감이 없다.
+    expect(hit(true, 100)).toBe(Math.max(1, Math.round(before * 0.82)));
+  });
+
+  it("splashDamage는 세이라의 피버 타격을 220px 안의 주변 적에게 35%로 번지게 한다", () => {
+    const state = prepareHit("spino", ["husk-shell", "husk-raptor"]);
+    const [attacker, primary, nearby] = state.fighters;
+    nearby.x = primary.x + 100; nearby.y = primary.y;
+    attacker.ferocity = 99;
+    expect(stepSkirmish(state, 1 / 60).filter((event) => event.kind === "attack")).toHaveLength(1);
+
+    const fever = prepareHit("spino", ["husk-shell", "husk-raptor"]);
+    fever.fighters[2].x = fever.fighters[1].x + 100; fever.fighters[2].y = fever.fighters[1].y;
+    fever.fighters[0].ferocity = 100; fever.fighters[0].ferocityFever = true;
+    const hits = stepSkirmish(fever, 1 / 60).filter((event) => event.kind === "attack");
+    expect(hits).toHaveLength(2);
+    expect(hits.some((event) => event.kind === "attack" && event.targetId === fever.fighters[2].id)).toBe(true);
+  });
+
+  it("allyEnergyGain은 도도의 피버 공격마다 다른 아군에게 에너지 6을 준다", () => {
+    const state = newSkirmish(["dodo", "rex"], ["husk-shell"]);
+    const [dodo, ally, target] = state.fighters;
+    dodo.x = 400; dodo.y = 1000; target.x = 460; target.y = 1000;
+    dodo.attackCooldown = 0; ally.attackCooldown = 99; target.attackCooldown = 99;
+    dodo.ferocity = 99;
+    stepSkirmish(state, 1 / 60);
+    expect(ally.energy).toBe(0);
+
+    dodo.attackCooldown = 0; dodo.ferocity = 100; dodo.ferocityFever = true;
+    stepSkirmish(state, 1 / 60);
+    expect(ally.energy).toBe(6);
+  });
+
+  it("criticalChanceBonus은 스밀라의 피버 중 치명타율을 25%p 올린다", () => {
+    const normal = prepareHit("smilo");
+    normal.fighters[0].ferocity = 99;
+    const normalHit = stepSkirmish(normal, 1 / 60, () => 0.3).find((event) => event.kind === "attack");
+    const fever = prepareHit("smilo");
+    fever.fighters[0].ferocity = 100; fever.fighters[0].ferocityFever = true;
+    const feverHit = stepSkirmish(fever, 1 / 60, () => 0.3).find((event) => event.kind === "attack");
+    expect(normalHit).toMatchObject({ critical: false });
+    expect(feverHit).toMatchObject({ critical: true });
+  });
+
+  it("teamMoveSpeedBonus은 케찰의 피버 중 생존 아군 이동 속도를 18% 올린다", () => {
+    const state = newSkirmish(["quetz", "rex"], ["husk-shell"]);
+    const [quetz, ally] = state.fighters;
+    const before = moveSpeed(ally, state);
+    quetz.ferocity = 99;
+    expect(moveSpeed(ally, state)).toBe(before);
+    quetz.ferocity = 100; quetz.ferocityFever = true;
+    expect(moveSpeed(ally, state)).toBeCloseTo(before * 1.18);
   });
 });
 
@@ -276,6 +361,26 @@ describe("궁극기", () => {
     state.phase = "victory";
     expect(canFireUltimate(state, state.fighters[0])).toBe(false);
     expect(fireUltimate(state, "player-0")).toHaveLength(0);
+  });
+
+  it("는 최대 야성에서도 적에게 궁극기를 쓰며 피버 게이지가 자동으로 진정된다", () => {
+    const state = charged();
+    const [ally, foe] = state.fighters;
+    ally.ferocity = 100;
+    ally.ferocityFever = true;
+    const foeHp = foe.hp;
+
+    const events = fireUltimate(state, ally.id);
+    expect(events).toContainEqual(expect.objectContaining({ kind: "attack", attackerId: ally.id, targetId: foe.id, skill: "ultimate" }));
+    expect(foe.hp).toBeLessThan(foeHp);
+    // 피버는 별도 진압 입력 없이 전투 시간에 맞춰 0까지 줄어든다.
+    // 두 전투원의 공격을 늦춰 피버 카운트다운 자체만 정확히 8초 관찰한다.
+    ally.attackCooldown = 99;
+    foe.attackCooldown = 99;
+    for (let tick = 0; tick < 32; tick += 1) stepSkirmish(state, 0.25);
+    expect(ally.ferocity).toBe(0);
+    expect(ally.ferocityFever).toBe(false);
+    expect(events.some((event) => event.kind === "attack" && event.targetId.startsWith("player"))).toBe(false);
   });
 });
 

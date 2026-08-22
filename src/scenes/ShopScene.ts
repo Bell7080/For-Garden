@@ -75,6 +75,6 @@ export class ShopScene extends Phaser.Scene {
 
   /** 내부 재화 키를 플레이어가 읽는 짧은 한국어 단위로 바꾼다. */
   private currencyLabel(currency: ProductDto["price"]["currency"]): string {
-    return ({ fossil: "화석", amber: "호박석", weeds: "잡초", dnaFragments: "DNA", real_money: "현금" } as const)[currency];
+    return ({ fossil: "화석", amber: "호박석", cheesecake: "치즈케이크", dnaFragments: "DNA", real_money: "현금" } as const)[currency];
   }
 }

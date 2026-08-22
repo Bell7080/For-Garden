@@ -5,8 +5,8 @@ import { DAILY_RESTORATION, FIXED_STAGE_ENEMIES, STAGES, getStageEnemies } from 
 /** 임시 스테이지 편성과 레벨 성장 설계가 콘텐츠 수정 중 흐트러지지 않도록 고정한다. */
 describe("stage enemy design", () => {
   it("최초/반복 보상과 단일 일일 복원 3회 제한을 정적 데이터로 제공한다", () => {
-    expect(STAGES[0].rewards).toEqual({ firstClearWeeds: 30, repeatClearWeeds: 10 });
-    expect(DAILY_RESTORATION).toMatchObject({ id: "daily-restoration", maxEntriesPerUtcDay: 3, rewardWeeds: 40 });
+    expect(STAGES[0].rewards).toEqual({ firstClearCheesecake: 30, repeatClearCheesecake: 10 });
+    expect(DAILY_RESTORATION).toMatchObject({ id: "daily-restoration", maxEntriesPerUtcDay: 3, rewardCheesecake: 40 });
   });
   it("모든 스테이지에 토비·아모·리파를 1·2·3번 순서로 고정한다", () => {
     expect(STAGES.every((stage) => stage.enemies.join(",") === FIXED_STAGE_ENEMIES.join(","))).toBe(true);

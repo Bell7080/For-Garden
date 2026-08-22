@@ -71,7 +71,7 @@ export class LobbyScene extends Phaser.Scene {
         expeditionButton.setEnabled(false);
         // 입장 소비와 보상 지급은 기존처럼 API가 한 처리 단위로 저장하며 로비는 결과만 표시한다.
         void gameApi.enterDailyRestoration().then((result) => {
-          expeditionButton.setSub(`잡초 +${result.weedsEarned} · 남은 ${result.entriesRemaining}/${DAILY_RESTORATION.maxEntriesPerUtcDay}`);
+          expeditionButton.setSub(`치즈케이크 +${result.cheesecakeEarned} · 남은 ${result.entriesRemaining}/${DAILY_RESTORATION.maxEntriesPerUtcDay}`);
           expeditionButton.setEnabled(result.entriesRemaining > 0);
         }).catch(() => expeditionButton.setSub("오늘의 원정 완료"));
       },
@@ -147,7 +147,8 @@ export class LobbyScene extends Phaser.Scene {
       // 로비의 옛 상점은 현금 상품과 분리된 인게임 재화 전용 "무역"으로 개편한다.
       { icon: "shop", label: "무역", onClick: () => this.scene.start("shop", { section: "trade" }) },
       { icon: "mail", label: "우편" },
-      { icon: "friends", label: "친구" },
+      // 친구는 더 이상 준비 중 토스트가 아니라 목록과 공개 프로필 화면으로 연결된다.
+      { icon: "friends", label: "친구", onClick: () => this.scene.start("friends") },
     ] as const;
     rail.forEach((item, i) => {
       new RailButton(this, x, 640 + i * 152, { icon: item.icon, label: item.label, onClick: "onClick" in item ? item.onClick : () => this.notReady(item.label) });

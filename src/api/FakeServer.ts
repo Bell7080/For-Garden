@@ -11,6 +11,11 @@ import { GameApiError, type BreakThroughResponse, type ClaimMissionRewardsRespon
 import type { ProductDefinition } from "../data/products";
 import { PRODUCTS } from "../data/products";
 import type { ProductListResponse, PurchaseProductResponse } from "./contracts";
+import type { ExchangeDnaRequest, ExchangeDnaResponse } from "./contracts";
+import { DNA_EXCHANGE_OFFERS, WALLET_CAPS } from "../data/economy";
+import { EVENTS, findEventByProductId, findEventByStageId } from "../data/events";
+import type { EventDefinition } from "../data/events/types";
+import type { EnterEventStageResponse, EventListResponse } from "./contracts";
 
 /** FakeServer의 지연과 난수원을 테스트에서 결정적으로 바꾸기 위한 선택 설정이다. */
 export interface FakeServerOptions {
@@ -72,6 +77,7 @@ export class FakeServer implements GameApi {
     const nextState: Session = { ...this.state, wallet: nextWallet, owned: outcome.ownedRelicIds, relicProgress: nextProgress, gachaPityByGroup: nextPity, missions: nextMissions };
 
     // 저장 실패도 원본 메모리에 부분 반영되지 않도록 저장을 먼저 성공시킨 뒤 필드를 일괄 교체한다.
+    this.validateState(nextState);
     if (this.state === session) saveManager.save(nextState);
     this.state.wallet = nextWallet;
     this.state.owned = outcome.ownedRelicIds;
@@ -86,20 +92,20 @@ export class FakeServer implements GameApi {
     };
   }
 
-  /** 서버가 보유·상한·잡초를 검증하고 차감과 성장 반영을 한 저장 단위로 확정한다. */
+  /** 서버가 보유·상한·치즈케이크를 검증하고 차감과 성장 반영을 한 저장 단위로 확정한다. */
   async feedRelic(relicId: string, feeds = 1): Promise<FeedRelicResponse> {
     await this.delay();
     const current = this.state.relicProgress[relicId];
     if (!this.state.owned.has(relicId) || !current) throw new GameApiError("RELIC_NOT_FOUND", "보유하지 않은 렐릭입니다.");
     if (current.level >= relicLevelCap(current.breakthrough)) throw new GameApiError("RELIC_MAX_LEVEL", "이미 최대 레벨입니다.");
-    if (!canFeedRelic(current, this.state.wallet.weeds)) throw new GameApiError("INSUFFICIENT_CURRENCY", "잡초가 부족합니다.");
-    const result = calculateFeed(current, this.state.wallet.weeds, feeds);
+    if (!canFeedRelic(current, this.state.wallet.cheesecake)) throw new GameApiError("INSUFFICIENT_CURRENCY", "치즈케이크가 부족합니다.");
+    const result = calculateFeed(current, this.state.wallet.cheesecake, feeds);
     const nextProgress = { ...this.state.relicProgress, [relicId]: result.progress };
-    const nextWallet = { ...this.state.wallet, weeds: result.weeds };
+    const nextWallet = { ...this.state.wallet, cheesecake: result.cheesecake };
     const nextMissions = applyMissionEvent(this.state.missions, { type: "salary_given", count: result.feeds }, this.now());
     this.persist({ ...this.state, relicProgress: nextProgress, wallet: nextWallet, missions: nextMissions });
     this.state.relicProgress = nextProgress; this.state.wallet = nextWallet; this.state.missions = nextMissions;
-    return { ...this.snapshot(), relicId, feeds: result.feeds, weedsSpent: result.feeds * FEED_UNIT.weeds, levelsGained: result.levelsGained };
+    return { ...this.snapshot(), relicId, feeds: result.feeds, cheesecakeSpent: result.feeds * FEED_UNIT.cheesecake, levelsGained: result.levelsGained };
   }
 
   /**
@@ -120,7 +126,7 @@ export class FakeServer implements GameApi {
     const nextWallet = {
       ...this.state.wallet,
       dnaFragments: this.state.wallet.dnaFragments - step.dnaFragments,
-      weeds: this.state.wallet.weeds - step.weeds,
+      cheesecake: this.state.wallet.cheesecake - step.cheesecake,
     };
     this.persist({ ...this.state, relicProgress: nextProgress, wallet: nextWallet });
     this.state.relicProgress = nextProgress; this.state.wallet = nextWallet;
@@ -131,18 +137,21 @@ export class FakeServer implements GameApi {
   async completeStage(stageId: string, victory = true): Promise<CompleteStageResponse> {
     await this.delay();
     let stage;
-    try { stage = getStage(stageId); } catch { throw new GameApiError("STAGE_NOT_FOUND", "존재하지 않는 스테이지입니다."); }
+    const owningEvent = findEventByStageId(stageId);
+    // 입장 뒤 시간이 넘어간 우회 요청도 결과 확정 경계에서 다시 차단한다.
+    if (owningEvent) this.assertEventActive(owningEvent, this.now());
+    try { stage = owningEvent?.stages.find(({ id }) => id === stageId) ?? getStage(stageId); } catch { throw new GameApiError("STAGE_NOT_FOUND", "존재하지 않는 스테이지입니다."); }
     const firstClear = victory && !this.state.cleared.has(stageId);
-    const weedsEarned = victory ? (firstClear ? stage.rewards.firstClearWeeds : stage.rewards.repeatClearWeeds) : 0;
+    const cheesecakeEarned = victory ? (firstClear ? stage.rewards.firstClearCheesecake : stage.rewards.repeatClearCheesecake) : 0;
     const nextCleared = victory ? new Set(this.state.cleared).add(stageId) : new Set(this.state.cleared);
-    const nextWallet = { ...this.state.wallet, weeds: this.state.wallet.weeds + weedsEarned };
+    const nextWallet = { ...this.state.wallet, cheesecake: this.state.wallet.cheesecake + cheesecakeEarned };
     // 승리한 전투에 실제 편성된 세 렐릭에게만 유대 경험치를 지급한다.
     const nextProgress = Object.fromEntries(Object.entries(this.state.relicProgress).map(([id, progress]) => [id,
       victory && this.state.party.includes(id) ? grantBondXp(progress, BOND_XP_REWARD.partyVictory).progress : progress]));
     const nextMissions = applyMissionEvent(this.state.missions, { type: "battle_completed", victory }, this.now());
     this.persist({ ...this.state, cleared: nextCleared, wallet: nextWallet, relicProgress: nextProgress, missions: nextMissions });
     this.state.cleared = nextCleared; this.state.wallet = nextWallet; this.state.relicProgress = nextProgress; this.state.missions = nextMissions;
-    return { ...this.snapshot(), stageId, firstClear, weedsEarned };
+    return { ...this.snapshot(), stageId, firstClear, cheesecakeEarned };
   }
 
   /** 서버 UTC 날짜를 기준으로 해당 렐릭의 하루 첫 로비 상호작용만 보상한다. */
@@ -165,10 +174,30 @@ export class FakeServer implements GameApi {
     let nextDaily;
     try { nextDaily = consumeRestorationEntry(this.state.dailyContent, this.now()); }
     catch { throw new GameApiError("DAILY_ENTRY_LIMIT", "오늘의 입장 횟수를 모두 사용했습니다."); }
-    const nextWallet = { ...this.state.wallet, weeds: this.state.wallet.weeds + DAILY_RESTORATION.rewardWeeds };
+    const nextWallet = { ...this.state.wallet, cheesecake: this.state.wallet.cheesecake + DAILY_RESTORATION.rewardCheesecake };
     this.persist({ ...this.state, dailyContent: nextDaily, wallet: nextWallet });
     this.state.dailyContent = nextDaily; this.state.wallet = nextWallet;
-    return { ...this.snapshot(), entriesRemaining: DAILY_RESTORATION.maxEntriesPerUtcDay - nextDaily.restorationEntries, weedsEarned: DAILY_RESTORATION.rewardWeeds };
+    return { ...this.snapshot(), entriesRemaining: DAILY_RESTORATION.maxEntriesPerUtcDay - nextDaily.restorationEntries, cheesecakeEarned: DAILY_RESTORATION.rewardCheesecake };
+  }
+
+  /** 정적 이벤트에 서버가 판정한 상태를 결합해 클라이언트 시계 의존을 없앤다. */
+  async getEvents(): Promise<EventListResponse> {
+    await this.delay();
+    const now = this.now();
+    return { events: EVENTS.map((event) => ({ ...event, status: this.eventStatus(event, now) })), serverTime: now.toISOString() };
+  }
+
+  /** 이벤트·스테이지 소유 관계와 기간을 확인한 뒤에만 전투 정의를 내준다. */
+  async enterEventStage(eventId: string, stageId: string): Promise<EnterEventStageResponse> {
+    await this.delay();
+    const now = this.now();
+    const event = EVENTS.find(({ id }) => id === eventId);
+    if (!event) throw new GameApiError("EVENT_NOT_FOUND", "존재하지 않는 이벤트입니다.");
+    this.assertEventActive(event, now);
+    const stage = event.stages.find(({ id }) => id === stageId);
+    if (!stage) throw new GameApiError("STAGE_NOT_FOUND", "이 이벤트에 속하지 않은 스테이지입니다.");
+    // 중첩 값도 복제해 응답 소비자가 정적 운영 데이터를 바꾸지 못하게 한다.
+    return { eventId, stage: { ...stage, enemies: [...stage.enemies], rewards: { ...stage.rewards } }, serverTime: now.toISOString() };
   }
 
   /** 현재 UTC 기간으로 정규화한 임무와 로비용 미수령 개수를 조회한다. */
@@ -193,12 +222,12 @@ export class FakeServer implements GameApi {
       if (normalized.claimedIds.includes(id)) throw new GameApiError("MISSION_ALREADY_CLAIMED", "이미 수령한 임무입니다.");
       if ((normalized.progress[id] ?? 0) < mission.target) throw new GameApiError("MISSION_NOT_COMPLETE", "완료하지 않은 임무입니다.");
     }
-    const weedsEarned = uniqueIds.reduce((sum, id) => sum + (MISSIONS.find((mission) => mission.id === id)?.rewardWeeds ?? 0), 0);
+    const cheesecakeEarned = uniqueIds.reduce((sum, id) => sum + (MISSIONS.find((mission) => mission.id === id)?.rewardCheesecake ?? 0), 0);
     const nextMissions = { ...normalized, claimedIds: [...normalized.claimedIds, ...uniqueIds] };
-    const nextWallet = { ...this.state.wallet, weeds: this.state.wallet.weeds + weedsEarned };
+    const nextWallet = { ...this.state.wallet, cheesecake: this.state.wallet.cheesecake + cheesecakeEarned };
     this.persist({ ...this.state, missions: nextMissions, wallet: nextWallet });
     this.state.missions = nextMissions; this.state.wallet = nextWallet;
-    return { ...this.snapshot(), claimedIds: uniqueIds, weedsEarned };
+    return { ...this.snapshot(), claimedIds: uniqueIds, cheesecakeEarned };
   }
 
   /** 서버 시각의 노출 기간과 현재 제한 주기를 반영해 공용 카탈로그를 조회한다. */
@@ -219,6 +248,9 @@ export class FakeServer implements GameApi {
     const now = this.now();
     const product = PRODUCTS.find((candidate) => candidate.id === productId);
     if (!product) throw new GameApiError("PRODUCT_NOT_FOUND", "존재하지 않는 상품입니다.");
+    const owningEvent = findEventByProductId(productId);
+    // 상품 노출 기간과 별개로 이벤트 기간도 검사해 운영 데이터 불일치 시 구매를 막는다.
+    if (owningEvent) this.assertEventActive(owningEvent, now);
     if (!this.isVisible(product, now)) throw new GameApiError("PRODUCT_NOT_VISIBLE", "현재 노출 기간이 아닌 상품입니다.");
     // FakeServer는 플랫폼 성공이나 영수증을 만들지 않는다. 유료 지급은 실제 검증 서버의 책임이다.
     if (product.price.currency === "real_money") throw new GameApiError("PLATFORM_PAYMENT_REQUIRED", "플랫폼 영수증 검증이 필요한 상품입니다.");
@@ -230,7 +262,8 @@ export class FakeServer implements GameApi {
     const nextGems = [...this.state.ownedHeartGemIds];
     for (const grant of product.grants) {
       if (grant.kind === "currency") nextWallet[grant.currency] += grant.amount;
-      else if (!nextGems.includes(grant.itemId)) nextGems.push(grant.itemId);
+      else if (nextGems.includes(grant.itemId)) throw new GameApiError("DUPLICATE_GRANT", "이미 보유한 Heart Gem은 중복 지급할 수 없습니다.");
+      else nextGems.push(grant.itemId);
     }
     const periodKey = this.productPeriodKey(product, now);
     const current = this.state.productPurchases[product.id];
@@ -241,8 +274,49 @@ export class FakeServer implements GameApi {
     return { ...this.snapshot(), productId, grants: product.grants, remaining: Math.max(0, product.purchaseLimit - count) };
   }
 
+  /** DNA 조각을 무작위 결과가 아닌 명시적으로 고른 렐릭·제작 재료·과거 재화로 교환한다. */
+  async exchangeDna(request: ExchangeDnaRequest): Promise<ExchangeDnaResponse> {
+    await this.delay();
+    const offer = DNA_EXCHANGE_OFFERS.find((candidate) => candidate.id === request.offerId);
+    if (!offer) throw new GameApiError("DNA_OFFER_NOT_FOUND", "존재하지 않는 DNA 교환품입니다.");
+    if (this.state.wallet.dnaFragments < offer.dnaCost) throw new GameApiError("INSUFFICIENT_CURRENCY", "DNA 조각이 부족합니다.");
+
+    const nextWallet = { ...this.state.wallet, dnaFragments: this.state.wallet.dnaFragments - offer.dnaCost };
+    const nextProgress = { ...this.state.relicProgress };
+    const nextGems = [...this.state.ownedHeartGemIds];
+    if (offer.kind === "relic_awakening") {
+      const target = request.relicId ? this.state.relicProgress[request.relicId] : undefined;
+      if (!request.relicId || !this.state.owned.has(request.relicId) || !target || target.awakening >= 5) {
+        throw new GameApiError("INVALID_EXCHANGE_TARGET", "각성할 수 있는 보유 렐릭을 선택해야 합니다.");
+      }
+      // 선택한 한 렐릭만 복사해 각성 1단계를 확정하며 다른 렐릭 진행은 건드리지 않는다.
+      nextProgress[request.relicId] = { ...target, heartGemSlots: [...target.heartGemSlots] as typeof target.heartGemSlots, awakening: target.awakening + 1 };
+    } else if (offer.kind === "heart_gem_material") {
+      if (nextGems.includes(offer.heartGemId)) throw new GameApiError("DUPLICATE_GRANT", "이미 보유한 Heart Gem 제작 재료입니다.");
+      nextGems.push(offer.heartGemId);
+    } else {
+      nextWallet.fossil += offer.fossilAmount;
+    }
+
+    const nextState = { ...this.state, wallet: nextWallet, relicProgress: nextProgress, ownedHeartGemIds: nextGems };
+    this.persist(nextState);
+    this.state.wallet = nextWallet; this.state.relicProgress = nextProgress; this.state.ownedHeartGemIds = nextGems;
+    return { ...this.snapshot(), offerId: offer.id, rewardKind: offer.kind, relicId: offer.kind === "relic_awakening" ? request.relicId : undefined };
+  }
+
   /** 노출 판정은 클라이언트 시간이 아니라 주입 가능한 서버 시간만 사용한다. */
   private isVisible(product: ProductDefinition, now: Date): boolean { return now >= new Date(product.visibleFrom) && now < new Date(product.visibleUntil); }
+
+  /** 시작 포함·종료 제외 규칙을 주입된 서버 시각 한 곳에서 계산한다. */
+  private eventStatus(event: EventDefinition, now: Date): "upcoming" | "active" | "ended" {
+    if (now < new Date(event.startsAt)) return "upcoming";
+    return now < new Date(event.endsAt) ? "active" : "ended";
+  }
+
+  /** 이벤트 전투와 구매가 공유하는 기간 가드다. */
+  private assertEventActive(event: EventDefinition, now: Date): void {
+    if (this.eventStatus(event, now) !== "active") throw new GameApiError("EVENT_NOT_ACTIVE", "현재 진행 중인 이벤트가 아닙니다.");
+  }
 
   /** 일/주/계정 단위 제한을 비교할 안정적인 키로 바꾼다. */
   private productPeriodKey(product: ProductDefinition, now: Date): string {
@@ -289,7 +363,22 @@ export class FakeServer implements GameApi {
   }
 
   /** 공유 세션일 때만 브라우저 저장을 수행해 단위 테스트의 독립 세션에는 부작용을 만들지 않는다. */
-  private persist(next: Session): void { if (this.state === session) saveManager.save(next); }
+  private persist(next: Session): void {
+    // 모든 쓰기 API가 공유하는 마지막 경계에서 음수·상한·중복을 저장 전에 차단한다.
+    this.validateState(next);
+    if (this.state === session) saveManager.save(next);
+  }
+
+  /** 실제 HTTP 서버로 옮겨도 그대로 적용할 API 응답 직전 불변식 검사다. */
+  private validateState(next: Session): void {
+    for (const [currency, cap] of Object.entries(WALLET_CAPS) as [keyof typeof WALLET_CAPS, number][]) {
+      const amount = next.wallet[currency];
+      if (!Number.isInteger(amount) || amount < 0) throw new GameApiError("INVALID_STATE", `${currency} 재화는 음수가 아닌 정수여야 합니다.`);
+      if (amount > cap) throw new GameApiError("CURRENCY_LIMIT_EXCEEDED", `${currency} 재화 상한을 초과했습니다.`);
+    }
+    if (new Set(next.ownedHeartGemIds).size !== next.ownedHeartGemIds.length) throw new GameApiError("DUPLICATE_GRANT", "Heart Gem 중복 지급이 감지되었습니다.");
+    if (Object.values(next.relicProgress).some((progress) => progress.awakening < 0 || progress.awakening > 5)) throw new GameApiError("INVALID_STATE", "렐릭 각성 상한을 벗어났습니다.");
+  }
 
   private delay(): Promise<void> {
     // globalThis를 써서 브라우저와 Vitest(Node) 양쪽에서 같은 구현을 사용한다.

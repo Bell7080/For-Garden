@@ -11,10 +11,10 @@ const BASE: Stats = { hp: 101, def: 101, res: 101, atk: 101, ap: 101, attackSpee
 /** manager 검증 테스트마다 독립된 저장 상태를 만든다. */
 function makeSession(): Session {
   return {
-    completedStoryIds: new Set(),
+    completedStoryIds: new Set(), observationRecords: [],
     selectedStageId: null, party: ["rex"], cleared: new Set(), owned: new Set(["rex"]), favorite: "rex", bookmarked: new Set<string>(),
     gachaPityByGroup: { "standard-fossil": { pullsSinceSsr: 0, pickupGuaranteed: false }, "limited-pickup": { pullsSinceSsr: 0, pickupGuaranteed: false } },
-    wallet: { fossil: 0, amber: 0, gems: 0, gold: 0, stamina: 0, dnaFragments: 0, weeds: 0 }, relicProgress: {}, ownedHeartGemIds: ["vital-seed", "fang-core"],
+    wallet: { fossil: 0, amber: 0, gems: 0, gold: 0, stamina: 0, dnaFragments: 0, cheesecake: 0 }, relicProgress: {}, ownedHeartGemIds: ["vital-seed", "fang-core"],
     dailyContent: { date: "", restorationEntries: 0, completedIds: [], claimedRewardIds: [] },
     missions: { dailyKey: "", weeklyKey: "", progress: {}, claimedIds: [] },
     // 상품 테스트가 아닌 세션도 최신 저장 계약의 빈 구매 이력을 명시한다.
@@ -27,13 +27,13 @@ describe("렐릭 성장 규칙", () => {
     const progress: RelicProgress = { level: 2, exp: 0, awakening: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] };
     expect(relicLevelUpCost(2)).toBe(20);
     expect(canLevelUpRelic(progress, 19)).toBe(false);
-    expect(levelUpRelic(progress, 20)).toMatchObject({ progress: { level: 3 }, weeds: 0, cost: 20 });
+    expect(levelUpRelic(progress, 20)).toMatchObject({ progress: { level: 3 }, cheesecake: 0, cost: 20 });
     expect(progress.level).toBe(2);
   });
 
   it("최대 레벨과 재화 부족에서는 성장 상태를 만들지 않는다", () => {
     const base: RelicProgress = { level: 1, exp: 0, awakening: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] };
-    expect(() => levelUpRelic(base, 9)).toThrow("잡초가 부족");
+    expect(() => levelUpRelic(base, 9)).toThrow("치즈케이크가 부족");
     expect(() => levelUpRelic({ ...base, level: RELIC_LEVEL_CAP }, 9999)).toThrow("최대 레벨");
   });
   it("기본 능력치에 레벨, 각성, Heart Gem 순으로 단계별 반올림해 적용한다", () => {
@@ -91,29 +91,29 @@ describe("렐릭 성장 규칙", () => {
 describe("급여", () => {
   const base = (): RelicProgress => ({ level: 1, exp: 0, awakening: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] });
 
-  it("는 잡초를 쓴 만큼만 경험치를 올리고 넘친 경험치는 다음 레벨로 이월한다", () => {
+  it("는 치즈케이크를 쓴 만큼만 경험치를 올리고 넘친 경험치는 다음 레벨로 이월한다", () => {
     // 레벨 1은 60 EXP가 필요하다. 한 번에 20씩 오르므로 네 번 먹이면 한 번 오르고 20이 남는다.
     expect(relicExpToNext(1)).toBe(60);
     const result = feedRelic(base(), 100, 4);
-    expect(result).toMatchObject({ feeds: 4, weeds: 60, levelsGained: 1 });
+    expect(result).toMatchObject({ feeds: 4, cheesecake: 60, levelsGained: 1 });
     expect(result.progress).toMatchObject({ level: 2, exp: 20 });
   });
 
-  it("는 잡초가 모자라면 가능한 횟수까지만 먹인다", () => {
+  it("는 치즈케이크가 모자라면 가능한 횟수까지만 먹인다", () => {
     const result = feedRelic(base(), 25, 10);
-    expect(result).toMatchObject({ feeds: 2, weeds: 5 });
+    expect(result).toMatchObject({ feeds: 2, cheesecake: 5 });
   });
 
-  it("는 최대 레벨에서 멈추고 잡초를 더 쓰지 않는다", () => {
+  it("는 최대 레벨에서 멈추고 치즈케이크를 더 쓰지 않는다", () => {
     const maxed = { ...base(), level: RELIC_LEVEL_CAP };
     const result = feedRelic(maxed, 1000, 5);
-    expect(result).toMatchObject({ feeds: 0, weeds: 1000, levelsGained: 0 });
+    expect(result).toMatchObject({ feeds: 0, cheesecake: 1000, levelsGained: 0 });
     expect(canFeedRelic(maxed, 1000)).toBe(false);
   });
 
-  it("는 잡초가 한 번치도 없으면 먹일 수 없다", () => {
-    expect(canFeedRelic(base(), FEED_UNIT.weeds - 1)).toBe(false);
-    expect(canFeedRelic(base(), FEED_UNIT.weeds)).toBe(true);
+  it("는 치즈케이크가 한 번치도 없으면 먹일 수 없다", () => {
+    expect(canFeedRelic(base(), FEED_UNIT.cheesecake - 1)).toBe(false);
+    expect(canFeedRelic(base(), FEED_UNIT.cheesecake)).toBe(true);
   });
 });
 
@@ -129,7 +129,7 @@ describe("돌파", () => {
 
   it("는 레벨을 상한까지 채우고 재료가 있어야 할 수 있다", () => {
     const step = nextBreakthrough(0)!;
-    const wallet = { dnaFragments: step.dnaFragments, weeds: step.weeds };
+    const wallet = { dnaFragments: step.dnaFragments, cheesecake: step.cheesecake };
     expect(canBreakThrough(base(), wallet)).toBe(false); // 레벨이 상한에 못 미친다
     const maxed = { ...base(), level: RELIC_LEVEL_CAP };
     expect(canBreakThrough(maxed, wallet)).toBe(true);

@@ -42,8 +42,21 @@ const SLOTS: Record<"default" | "recruit", readonly CurrencySlot[]> = {
   ],
 };
 
-/** 재화 한 칸의 크기. 셋이 같은 폭이라 값이 늘어도 줄이 흔들리지 않는다. */
-const SLOT = { width: 176, height: 60, icon: 52, gap: 12 } as const;
+/**
+ * 재화 한 칸의 크기와 간격.
+ *
+ * 셋이 같은 폭이라 값이 늘어도 줄이 흔들리지 않는다. 아이콘은 칸 **안쪽**에 넉넉히 들어가고,
+ * 칸 사이도 손가락 하나만큼 띄운다 — 붙여 놓으면 세 재화가 한 덩어리로 읽힌다.
+ */
+const SLOT = { width: 182, height: 66, icon: 46, gap: 24 } as const;
+
+/**
+ * 재화 줄이 놓이는 가로 자리(화면 폭 대비).
+ *
+ * 가운데에 두되 왼쪽 프로필과 오른쪽 설정을 피해 아주 조금 오른쪽으로 민다. 정확히 절반에
+ * 두면 프로필의 이름줄과 부딪힌다.
+ */
+const CLUSTER_CENTER = 0.57;
 
 export class TopBar {
   private readonly slots: { slot: CurrencySlot; text: Phaser.GameObjects.Text }[] = [];
@@ -56,10 +69,10 @@ export class TopBar {
 
     // 재화는 오른쪽에서 왼쪽으로 쌓는다. 설정 아이콘이 오른쪽 끝을 차지하기 때문이다.
     const slots = SLOTS[options.currencies ?? "default"];
+    const span = slots.length * SLOT.width + (slots.length - 1) * SLOT.gap;
+    const first = BASE_WIDTH * CLUSTER_CENTER - span / 2 + SLOT.width / 2;
     slots.forEach((slot, index) => {
-      // 마지막 칸은 설정 아이콘과 손가락 하나 너비만큼 떨어뜨린다.
-      const cx = BASE_WIDTH - 216 - (slots.length - 1 - index) * (SLOT.width + SLOT.gap);
-      this.slots.push({ slot, text: this.buildSlot(scene, cx, y + 46, slot) });
+      this.slots.push({ slot, text: this.buildSlot(scene, first + index * (SLOT.width + SLOT.gap), y + 46, slot) });
     });
 
     // 설정 — 오른쪽 끝. 재화보다 뒤에 두어 손이 먼저 닿지 않게 한다.
@@ -84,13 +97,14 @@ export class TopBar {
    */
   private buildSlot(scene: Phaser.Scene, cx: number, cy: number, slot: CurrencySlot): Phaser.GameObjects.Text {
     const shape = slantedRect(SLOT.width, SLOT.height, 14);
-    drawLayer(scene, cx, cy, shape, { fill: 0x080b11, alpha: 0.88, edge: COLOR.accent, edgeAlpha: 0.5 });
-    const iconX = cx - SLOT.width / 2 - 2;
-    // 아이콘 뒤로 지는 그림자. 밝은 배경 원화 위에서도 그림이 떠 보이게 한다.
-    scene.add.image(iconX + 3, cy + 4, slot.icon).setDisplaySize(SLOT.icon, SLOT.icon).setTint(0x05070a).setAlpha(0.6);
+    // 테두리를 두르지 않는다. 옅은 유리 한 겹이면 값이 어디까지인지 충분히 읽힌다.
+    drawLayer(scene, cx, cy, shape, { fill: 0x05070a, alpha: 0.46, shadow: false });
+    // 아이콘은 칸 안쪽에 온전히 들어간다. 잘린 모서리에 걸치면 그림이 반쯤 잘려 보인다.
+    const iconX = cx - SLOT.width / 2 + SLOT.icon * 0.66;
+    scene.add.image(iconX + 3, cy + 4, slot.icon).setDisplaySize(SLOT.icon, SLOT.icon).setTint(0x05070a).setAlpha(0.55);
     scene.add.image(iconX, cy, slot.icon).setDisplaySize(SLOT.icon, SLOT.icon);
     return scene.add
-      .text(cx + SLOT.width / 2 - 18, cy, "", textStyle({ role: "emphasis", size: 28, color: slot.color ?? COLOR.ink }))
+      .text(cx + SLOT.width / 2 - 20, cy, "", textStyle({ role: "emphasis", size: 28, color: slot.color ?? COLOR.ink }))
       .setOrigin(1, 0.5);
   }
 

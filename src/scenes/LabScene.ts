@@ -24,6 +24,7 @@ import { COLOR, textStyle } from "../ui/theme";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { PortraitCard, starsForRarity } from "../ui/PortraitCard";
 import { firstMeetingLine } from "../data/relicFirstMeetings";
+import { RailButton } from "../ui/RailButton";
 
 /** 배너 그림이 서는 바닥. */
 const BANNER_FLOOR = 1240;
@@ -73,6 +74,9 @@ export class LabScene extends Phaser.Scene {
     this.add.rectangle(cx, BANNER_FLOOR, BASE_WIDTH, 3, COLOR.panelEdge).setDepth(-28);
 
     this.topBar = new TopBar(this);
+
+    // 연구소 우측 4번 기능 슬롯은 패키지/BM 전시 상점으로 연결한다. 결제는 해당 씬에서 비활성이다.
+    new RailButton(this, BASE_WIDTH - 92, 555, { icon: "shop", label: "4 · 상점", accent: true, onClick: () => this.scene.start("shop", { section: "premium" }) });
 
     this.bannerName = this.add.text(cx, 170, "", textStyle({ role: "display", size: 44 })).setOrigin(0.5, 0);
     this.bannerDesc = this.add

@@ -8,7 +8,7 @@ import { createDefaultSession, type SaveData, type Session } from "./session";
 
 /** 키는 계정 연동 저장소와 충돌하지 않도록 로컬 프로토타입임을 명시한다. */
 export const SAVE_STORAGE_KEY = "eternal-city.local-save";
-export const CURRENT_SAVE_VERSION = 8;
+export const CURRENT_SAVE_VERSION = 9;
 
 type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
@@ -56,6 +56,8 @@ export class SaveManager {
       dailyContent: { ...state.dailyContent, completedIds: [...state.dailyContent.completedIds], claimedRewardIds: [...state.dailyContent.claimedRewardIds] },
       // 임무 진행 객체와 수령 배열도 호출자가 저장 후 바꾸지 못하도록 복사한다.
       missions: { ...state.missions, progress: { ...state.missions.progress }, claimedIds: [...state.missions.claimedIds] },
+      // 구매 제한도 지급과 같은 저장 단위에 포함해 재실행으로 제한이 풀리지 않게 한다.
+      productPurchases: Object.fromEntries(Object.entries(state.productPurchases).map(([id, value]) => [id, { ...value }])),
     };
     this.validate(data);
     this.storage?.setItem(SAVE_STORAGE_KEY, JSON.stringify(data));
@@ -90,6 +92,8 @@ export class SaveManager {
     // 임무 도입 전 저장은 기간 키가 비어 있어 다음 서버 접근에서 현재 UTC 기간으로 정규화된다.
     const savedMissions = legacy.missions as Partial<SaveData["missions"]> | undefined;
     const missions = { dailyKey: savedMissions?.dailyKey ?? "", weeklyKey: savedMissions?.weeklyKey ?? "", progress: savedMissions?.progress ?? {}, claimedIds: savedMissions?.claimedIds ?? [] };
+    // 상품 도입 전 저장에는 구매 이력이 없으므로 빈 기록으로 안전하게 시작한다.
+    const productPurchases = legacy.productPurchases && typeof legacy.productPurchases === "object" ? legacy.productPurchases : {};
     // 스토리 저장 도입 전 계정은 미완료로 두어 다음 타이틀 진입에서 오프닝을 한 번 재생한다.
     const completedStoryIds = Array.isArray(legacy.completedStoryIds) ? legacy.completedStoryIds : [];
     // 즐겨찾기 도입 전 저장은 빈 목록으로 시작한다. 애착 렐릭과는 다른 값이라 옮겨 담지 않는다.
@@ -112,11 +116,11 @@ export class SaveManager {
       breakthrough: progress.breakthrough ?? 0,
     }]));
     if (legacy.saveVersion === undefined) {
-      return { ...legacy, wallet, relicProgress, completedStoryIds, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, gachaPityByGroup: normalizedPity, dailyContent, missions } as unknown as SaveData;
+      return { ...legacy, wallet, relicProgress, completedStoryIds, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, gachaPityByGroup: normalizedPity, dailyContent, missions, productPurchases } as unknown as SaveData;
     }
-    const supported = [1, 2, 3, 4, 5, 6, 7, CURRENT_SAVE_VERSION];
+    const supported = [1, 2, 3, 4, 5, 6, 7, 8, CURRENT_SAVE_VERSION];
     if (!supported.includes(legacy.saveVersion as number)) throw new SaveDataError(`지원하지 않는 저장 버전입니다: ${String(legacy.saveVersion)}`);
-    return { ...legacy, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, completedStoryIds, bookmarkedRelicIds, dailyContent, missions, gachaPityByGroup: normalizedPity } as unknown as SaveData;
+    return { ...legacy, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, completedStoryIds, bookmarkedRelicIds, dailyContent, missions, productPurchases, gachaPityByGroup: normalizedPity } as unknown as SaveData;
   }
 
   /** 콘텐츠 ID와 교차 필드 불변식까지 검사해 부분 손상을 조용히 전파하지 않는다. */
@@ -145,6 +149,7 @@ export class SaveManager {
     if (!Array.isArray(data.ownedHeartGemIds) || data.ownedHeartGemIds.some((id) => !gemIds.has(id))) fail("Heart Gem 보유 정보가 올바르지 않습니다.");
     if (!data.dailyContent || typeof data.dailyContent.date !== "string" || !Number.isInteger(data.dailyContent.restorationEntries) || data.dailyContent.restorationEntries < 0 || data.dailyContent.restorationEntries > 3 || !Array.isArray(data.dailyContent.completedIds) || !Array.isArray(data.dailyContent.claimedRewardIds)) fail("일일 콘텐츠 정보가 올바르지 않습니다.");
     if (!data.missions || typeof data.missions.dailyKey !== "string" || typeof data.missions.weeklyKey !== "string" || !data.missions.progress || typeof data.missions.progress !== "object" || Object.values(data.missions.progress).some((value) => !Number.isInteger(value) || value < 0) || !Array.isArray(data.missions.claimedIds) || new Set(data.missions.claimedIds).size !== data.missions.claimedIds.length) fail("임무 진행 정보가 올바르지 않습니다.");
+    if (!data.productPurchases || typeof data.productPurchases !== "object" || Object.values(data.productPurchases).some((value) => typeof value.periodKey !== "string" || !Number.isInteger(value.count) || value.count < 0)) fail("상품 구매 제한 정보가 올바르지 않습니다.");
   }
 
   private toSession(data: SaveData): Session {
@@ -155,6 +160,7 @@ export class SaveManager {
       gachaPityByGroup: Object.fromEntries(Object.entries(data.gachaPityByGroup).map(([id, pity]) => [id, { ...pity }])),
       dailyContent: { ...data.dailyContent, completedIds: [...data.dailyContent.completedIds], claimedRewardIds: [...data.dailyContent.claimedRewardIds] },
       missions: { ...data.missions, progress: { ...data.missions.progress }, claimedIds: [...data.missions.claimedIds] },
+      productPurchases: Object.fromEntries(Object.entries(data.productPurchases).map(([id, value]) => [id, { ...value }])),
     };
   }
 }

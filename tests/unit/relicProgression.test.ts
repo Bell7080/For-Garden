@@ -17,6 +17,8 @@ function makeSession(): Session {
     wallet: { fossil: 0, amber: 0, dnaFragments: 0, weeds: 0 }, relicProgress: {}, ownedHeartGemIds: ["vital-seed", "fang-core"],
     dailyContent: { date: "", restorationEntries: 0, completedIds: [], claimedRewardIds: [] },
     missions: { dailyKey: "", weeklyKey: "", progress: {}, claimedIds: [] },
+    // 상품 테스트가 아닌 세션도 최신 저장 계약의 빈 구매 이력을 명시한다.
+    productPurchases: {},
   };
 }
 

@@ -13,7 +13,7 @@ function makeSession(): Session {
   return {
     completedStoryIds: new Set(),
     selectedStageId: null, party: ["rex"], cleared: new Set(), owned: new Set(["rex"]), favorite: "rex", bookmarked: new Set<string>(),
-    pullCountSinceHighestRarity: { fossil: 0, amber: 0 },
+    gachaPityByGroup: { "standard-fossil": { pullsSinceSsr: 0, pickupGuaranteed: false }, "limited-pickup": { pullsSinceSsr: 0, pickupGuaranteed: false } },
     wallet: { fossil: 0, amber: 0, dnaFragments: 0, weeds: 0 }, relicProgress: {}, ownedHeartGemIds: ["vital-seed", "fang-core"],
     dailyContent: { date: "", restorationEntries: 0, completedIds: [], claimedRewardIds: [] },
     missions: { dailyKey: "", weeklyKey: "", progress: {}, claimedIds: [] },

@@ -10,10 +10,13 @@ const POOLS = Object.fromEntries(
   ]),
 ) as Record<RelicRarity, string[]>;
 
-/** 프로토타입 운영값. 천장(80회)은 배너마다 독립적으로 누적된다. */
+/** 교체 배너가 같은 값을 쓰면 천장과 픽업 확정이 이월되는 명시적 운영 그룹이다. */
+export const PITY_GROUP = { STANDARD: "standard-fossil", LIMITED_PICKUP: "limited-pickup" } as const;
+
+/** 프로토타입 운영값. 천장(80회)은 개별 배너가 아니라 pityGroupId별로 누적된다. */
 export const BANNERS: Banner[] = [
   {
-    id: "fossil", name: "화석 발굴", featuredRelicId: "anky",
+    id: "fossil", pityGroupId: PITY_GROUP.STANDARD, name: "화석 발굴", featuredRelicId: "anky",
     desc: "굳은 화석에서 DNA를 긁어낸다. 토리카 픽업 진행 중.",
     currency: "fossil", costOne: 100, costTen: 900,
     rarityRates: { R: 0.9, SR: 0.09, SSR: 0.01 },
@@ -21,7 +24,7 @@ export const BANNERS: Banner[] = [
     highestRarityGuarantee: 80,
   },
   {
-    id: "amber", name: "호박석 발굴", featuredRelicId: "rex",
+    id: "amber", pityGroupId: PITY_GROUP.LIMITED_PICKUP, name: "호박석 발굴", featuredRelicId: "rex",
     desc: "호박에 갇힌 온전한 DNA. 렉시아 픽업 진행 중.",
     currency: "amber", costOne: 2, costTen: 18,
     rarityRates: { R: 0.8, SR: 0.17, SSR: 0.03 },

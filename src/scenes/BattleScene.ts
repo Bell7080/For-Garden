@@ -28,6 +28,7 @@ import { drawGlassFade, drawHairline, HoloBar } from "../ui/holo";
 import { PortraitCard, relicCardTint, starsForRarity } from "../ui/PortraitCard";
 import { COLOR, textStyle } from "../ui/theme";
 import { setDebugBattle, setDebugScene } from "../debug";
+import { InfoManager } from "../ui/info";
 import { nextBattleSpeed, type BattleSpeed } from "../core/battleControls";
 import { ControlChip } from "../ui/ControlChip";
 
@@ -97,6 +98,8 @@ export class BattleScene extends Phaser.Scene {
   private autoUltimate = false;
   private speedChip!: ControlChip;
   private autoChip!: ControlChip;
+  /** 적 상세는 플레이어 성장 입력을 만들지 않는 전투 읽기 전용 창이다. */
+  private info!: InfoManager;
 
   constructor() {
     super("battle");
@@ -117,6 +120,7 @@ export class BattleScene extends Phaser.Scene {
     this.spawned = false;
     this.battleSpeed = 1;
     this.autoUltimate = false;
+    this.info = new InfoManager(this, 1001, "enemy");
 
     // 편성 화면에서 본 6번 전장을 그대로 이어 실제 전투의 공간으로 사용한다.
     addSceneBackground(this, BACKGROUND.combat, -30);
@@ -171,6 +175,8 @@ export class BattleScene extends Phaser.Scene {
         flipX: fighter.facing < 0,
         tint,
       });
+      // 적 본체를 누르면 같은 공용 정보창에 현재 전투 스냅샷만 전달한다.
+      if (fighter.side === "enemy") creature.setInteractive({ useHandCursor: true }).on("pointerup", () => this.info.showEnemy(fighter));
       if (!this.scene.isActive()) {
         creature.destroy();
         return;

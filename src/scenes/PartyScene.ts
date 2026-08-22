@@ -17,6 +17,7 @@ import { relicProgression } from "../managers/RelicProgressionManager";
 import { COLOR, textStyle } from "../ui/theme";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { autoPickParty, elementDistribution, partyAffinitySummary } from "../core/partyAffinity";
+import type { SetPartyFailureReason } from "../managers/RelicCollectionManager";
 
 /** 이만큼 누르고 있으면 정보창이 열린다. 짧게 누르면 편성 토글이다. */
 const LONG_PRESS_MS = 420;
@@ -71,6 +72,8 @@ export class PartyScene extends Phaser.Scene {
   private pressTimer?: Phaser.Time.TimerEvent;
   private pressStartedAt = 0;
   private longPressFired = false;
+  /** 저장을 포함한 전투 진입 처리 중에는 연속 탭이 같은 처리를 다시 시작하지 못하게 한다. */
+  private isEnteringBattle = false;
 
   constructor() {
     super("party");
@@ -83,6 +86,7 @@ export class PartyScene extends Phaser.Scene {
     this.allySlots = [];
     this.pressTimer = undefined;
     this.pressStartedAt = 0;
+    this.isEnteringBattle = false;
 
     const cx = BASE_WIDTH / 2;
     // 편성 미리보기와 실제 전투가 같은 6번 전장 원화를 공유해 출전 흐름을 시각적으로 잇는다.
@@ -124,9 +128,28 @@ export class PartyScene extends Phaser.Scene {
       label: "전투 시작",
       fontSize: 44,
       onClick: () => {
-        if (this.picked.length !== 3) return;
-        if (!relicCollection.setParty(this.picked)) return;
-        this.scene.start("battle");
+        // 첫 유효 클릭에서 즉시 잠가 같은 프레임의 빠른 연속 입력도 한 번만 처리한다.
+        if (this.isEnteringBattle || this.picked.length !== 3) return;
+        this.isEnteringBattle = true;
+        this.startButton.setEnabled(false);
+
+        try {
+          // 화면에 그린 뒤 보유 상태가 바뀔 수 있으므로 전환 직전에 매니저에서 다시 검증한다.
+          const result = relicCollection.setParty([...this.picked]);
+          if (!result.ok) {
+            this.isEnteringBattle = false;
+            this.hint.setText(this.partyFailureMessage(result.reason, result.relicId));
+            this.refreshButtonState();
+            return;
+          }
+          // setParty가 저장까지 정상 완료한 성공 결과를 준 뒤에만 전투 씬으로 넘어간다.
+          this.scene.start("battle");
+        } catch {
+          // 저장소 용량/보안 오류의 세부 정보 대신 사용자가 재시도할 수 있는 문구를 보여 준다.
+          this.isEnteringBattle = false;
+          this.hint.setText("파티 저장에 실패했다. 저장 공간을 확인한 뒤 다시 시도해 주세요.");
+          this.refreshButtonState();
+        }
       },
     });
 
@@ -331,7 +354,7 @@ export class PartyScene extends Phaser.Scene {
       slot.currentId = id;
     });
 
-    this.startButton.setEnabled(this.picked.length === 3);
+    this.refreshButtonState();
     const affinity = partyAffinitySummary(this.picked.map(getRelic), this.enemies);
     // 아직 고르지 않았을 때도 0으로 보여 줘 지표가 무엇을 뜻하는지 먼저 학습하게 한다.
     this.affinityHint.setText(`상성 미리보기  유리 ${affinity.advantage}  /  불리 ${affinity.disadvantage}  /  중립 ${affinity.neutral}`);
@@ -339,5 +362,18 @@ export class PartyScene extends Phaser.Scene {
     this.hint.setText(
       this.picked.length === 3 ? "편성 완료" : `${3 - this.picked.length}명 더 골라야 한다`,
     );
+  }
+
+  /** 선택 수와 전투 진입 잠금을 함께 반영해 버튼 활성 상태를 한곳에서 계산한다. */
+  private refreshButtonState(): void {
+    this.startButton.setEnabled(this.picked.length === 3 && !this.isEnteringBattle);
+  }
+
+  /** 매니저의 안정적인 실패 코드를 편성 화면에서 바로 이해할 수 있는 안내로 바꾼다. */
+  private partyFailureMessage(reason: SetPartyFailureReason, relicId?: string): string {
+    if (reason === "wrong-size") return "정확히 3명을 골라야 전투를 시작할 수 있다.";
+    if (reason === "duplicate") return "같은 렐릭을 두 자리 이상 편성할 수 없다.";
+    const relicName = relicId ? getRelic(relicId).name : "선택한 렐릭";
+    return `${relicName}은(는) 현재 보유하고 있지 않아 편성할 수 없다.`;
   }
 }

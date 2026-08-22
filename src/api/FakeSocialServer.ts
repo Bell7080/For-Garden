@@ -21,7 +21,8 @@ export class FakeSocialServer {
 
   /** 화면이 내부 배열을 바꾸지 못하도록 친구 프로필을 복사해 반환한다. */
   async getFriends(): Promise<FriendListResponse> {
-    return { friends: PREVIEW_FRIENDS.map((friend) => ({ ...friend })), friendPoints: this.friendPoints, helperUsesToday: this.helperUsesToday };
+    // 중첩 DTO도 복사해 화면이 임시 서버의 공개 원본을 바꾸지 못하게 한다.
+    return { friends: PREVIEW_FRIENDS.map((friend) => ({ ...friend, favoriteRelic: { ...friend.favoriteRelic, stats: { ...friend.favoriteRelic.stats }, skillIds: [...friend.favoriteRelic.skillIds] } })), friendPoints: this.friendPoints, helperUsesToday: this.helperUsesToday };
   }
 
   /** 일일 제한 확인, 양쪽 포인트 지급, 사용 횟수 증가를 실제 서버의 단일 처리처럼 묶는다. */
@@ -32,7 +33,7 @@ export class FakeSocialServer {
     if (!availability.allowed) throw new SocialApiError("DAILY_HELPER_LIMIT", "오늘의 조력자 대여를 모두 사용했습니다.");
     this.helperUsesToday += 1;
     this.friendPoints += FRIEND_POINTS_PER_RENTAL;
-    return { friendId, relicId: friend.favoriteRelicId, renterPointsEarned: FRIEND_POINTS_PER_RENTAL, ownerPointsEarned: FRIEND_POINTS_PER_RENTAL, friendPoints: this.friendPoints, remaining: helperRentalAvailability(this.helperUsesToday).remaining };
+    return { friendId, relicId: friend.favoriteRelic.relicId, renterPointsEarned: FRIEND_POINTS_PER_RENTAL, ownerPointsEarned: FRIEND_POINTS_PER_RENTAL, friendPoints: this.friendPoints, remaining: helperRentalAvailability(this.helperUsesToday).remaining };
   }
 }
 

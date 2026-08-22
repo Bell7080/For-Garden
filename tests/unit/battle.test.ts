@@ -296,24 +296,21 @@ describe("야성", () => {
     expect(state.log.some((line) => line.includes("통제 회복"))).toBe(true);
   });
 
-  it("100에서는 아군 오인 공격을 강제하고 진압하면 0과 긴 기절을 적용한다", () => {
+  it("100에서도 궁극기로 적만 공격하고 아군 오인 공격이나 기절을 만들지 않는다", () => {
     const state = newBattle();
     const attacker = frontUnit(state.player);
     const ally = state.player.units[1];
+    const enemy = frontUnit(state.enemy);
     attacker.ferocity = 100;
+    attacker.energy = ULTIMATE_ENERGY_MAX;
     const allyHp = ally.hp;
-    playerAct(state, { kind: "ultimate" });
-    expect(ally.hp).toBeLessThan(allyHp);
-    expect(state.log.some((line) => line.includes("오인 공격"))).toBe(true);
+    const enemyHp = enemy.hp;
 
-    const suppressed = newBattle();
-    const unit = frontUnit(suppressed.player);
-    unit.ferocity = 100;
-    expect(playerAct(suppressed, { kind: "suppress" })).toBe(true);
-    expect(unit.ferocity).toBe(0);
-    // 잠재우는 데 기절 같은 대가는 없다. 게이지만 비운다.
-    expect(unit.stunTurns).toBe(0);
-    expect(suppressed.log.some((line) => line.includes("야성 진정"))).toBe(true);
+    expect(playerAct(state, { kind: "ultimate" })).toBe(true);
+    // 폭주는 보상 상태이므로 입력한 궁극기가 적에게 정상 적중하고 아군은 안전하다.
+    expect(enemy.hp).toBeLessThan(enemyHp);
+    expect(ally.hp).toBe(allyHp);
+    expect(state.log.some((line) => line.includes("오인 공격") || line.includes("기절"))).toBe(false);
   });
 
   it("새 전투 생성은 이전 전투 종료 상태의 야성을 전부 초기화한다", () => {

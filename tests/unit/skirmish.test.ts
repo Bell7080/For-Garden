@@ -277,6 +277,26 @@ describe("궁극기", () => {
     expect(canFireUltimate(state, state.fighters[0])).toBe(false);
     expect(fireUltimate(state, "player-0")).toHaveLength(0);
   });
+
+  it("는 최대 야성에서도 적에게 궁극기를 쓰며 피버 게이지가 자동으로 진정된다", () => {
+    const state = charged();
+    const [ally, foe] = state.fighters;
+    ally.ferocity = 100;
+    ally.ferocityFever = true;
+    const foeHp = foe.hp;
+
+    const events = fireUltimate(state, ally.id);
+    expect(events).toContainEqual(expect.objectContaining({ kind: "attack", attackerId: ally.id, targetId: foe.id, skill: "ultimate" }));
+    expect(foe.hp).toBeLessThan(foeHp);
+    // 피버는 별도 진압 입력 없이 전투 시간에 맞춰 0까지 줄어든다.
+    // 두 전투원의 공격을 늦춰 피버 카운트다운 자체만 정확히 8초 관찰한다.
+    ally.attackCooldown = 99;
+    foe.attackCooldown = 99;
+    for (let tick = 0; tick < 32; tick += 1) stepSkirmish(state, 0.25);
+    expect(ally.ferocity).toBe(0);
+    expect(ally.ferocityFever).toBe(false);
+    expect(events.some((event) => event.kind === "attack" && event.targetId.startsWith("player"))).toBe(false);
+  });
 });
 
 describe("자리 잡기", () => {

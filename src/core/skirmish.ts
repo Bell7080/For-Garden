@@ -1,4 +1,4 @@
-import { amplifyFerocityGain, canUseUltimate, computeDamage, FEROCITY_RULES, isCriticalHit, ULTIMATE_ENERGY_MAX, type BattleUnit } from "./battle";
+import { amplifyFerocityGain, canUseUltimate, computeDamage, drainFerocityFever, FEROCITY_RULES, isCriticalHit, ULTIMATE_ENERGY_MAX, type BattleUnit } from "./battle";
 import { awakeningBonus } from "./relicProgression";
 import type { RelicDef, Side, Skill } from "./types";
 
@@ -84,7 +84,6 @@ export type SkirmishEvent =
     }
   | { kind: "bleed"; fighterId: string; amount: number; started: boolean }
   | { kind: "death"; fighterId: string }
-  | { kind: "suppress"; fighterId: string }
   | { kind: "finish"; phase: "victory" | "defeat" };
 
 /** 난전의 손맛을 정하는 값. 전부 여기서만 조정한다. */
@@ -159,7 +158,7 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     ferocity: 0,
     bondLevel,
     awakening,
-    stunTurns: 0,
+    ferocityFever: false,
     justSwapped: false,
     id: `${side}-${index}`,
     side,
@@ -308,7 +307,11 @@ function gainEnergy(fighter: Fighter): void {
 /** 실시간 전투도 턴제와 같은 사건별 증가 및 임계 로그 계약을 사용한다. */
 function gainFerocity(fighter: Fighter, base: number, state: SkirmishState): void {
   const before = fighter.ferocity;
+  // 피버 중 추가 획득은 무시해 한 번 열린 보상 구간이 정해진 시간 안에 반드시 끝나게 한다.
+  if (fighter.ferocityFever) return;
   fighter.ferocity = Math.min(FEROCITY_RULES.max, before + amplifyFerocityGain(base, fighter.bondLevel));
+  // 처음 최대치에 닿은 순간 피버 카운트다운을 켠다.
+  if (before < FEROCITY_RULES.max && fighter.ferocity >= FEROCITY_RULES.max) fighter.ferocityFever = true;
   for (const { value } of FEROCITY_RULES.thresholds) {
     if (before < value && fighter.ferocity >= value) state.log.push(`${fighter.def.name} 야성 ${value} 진입`);
   }
@@ -503,12 +506,6 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     // 때리는 순간의 돌진·피격 반동(그림만 흔드는 변위)도 묻힌다.
 
     if (fighter.attackCooldown <= 0) {
-      // 진압 기절은 공격 주기 단위로 감소해 장시간 무방비라는 대가를 눈에 보이게 만든다.
-      if (fighter.stunTurns > 0) {
-        fighter.stunTurns -= 1;
-        fighter.attackCooldown = attackInterval(fighter);
-        continue;
-      }
       // 아군 궁극기는 자동으로 나가지 않는다. 화면에서 누를 때만 fireUltimate로 들어온다.
       strike(fighter, target, rng, state, events, fighter.side === "enemy" && canUseUltimate(fighter));
       fighter.attackCooldown = attackInterval(fighter);
@@ -552,20 +549,6 @@ export function fireUltimate(
 }
 
 /**
- * 개방된 야성을 잠재운다.
- *
- * 벌이 아니라 선택이다. 지금 터뜨린 피해를 포기하고 게이지를 비워 다음 개방을 새로 쌓는다.
- * 기절 같은 대가는 두지 않는다 — 관제는 손해가 아니라 운영이다.
- */
-export function suppressFerocity(state: SkirmishState, fighterId: string): SkirmishEvent[] {
-  const fighter = findFighter(state, fighterId);
-  if (!fighter || state.phase !== "fight" || !isFighterAlive(fighter) || fighter.ferocity < FEROCITY_RULES.max) return [];
-  fighter.ferocity = FEROCITY_RULES.min;
-  state.log.push(`${fighter.def.name} 야성 진정 — 게이지를 비웠다`);
-  return [{ kind: "suppress", fighterId }];
-}
-
-/**
  * 시간을 dt초만큼 굴린다.
  *
  * 프레임이 길어져도 한 번에 통째로 적분하지 않고 잘게 나눈다. 그러지 않으면 서로를 지나쳐
@@ -579,6 +562,8 @@ export function stepSkirmish(state: SkirmishState, dt: number, rng: () => number
   while (remaining > 0 && state.phase === "fight") {
     const step = Math.min(remaining, SKIRMISH.maxStep);
     advance(state, step, rng, events);
+    // 최대치에서 시작한 피버는 공격 여부와 무관하게 실제 전투 시간만큼 자연 감소한다.
+    state.fighters.forEach((fighter) => drainFerocityFever(fighter, step));
     remaining -= step;
   }
   return events;

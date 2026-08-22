@@ -30,10 +30,9 @@ export const COLOR = {
   raritySRAlt: 0x9b78c7,
   raritySSR: 0xe0a83e,
   raritySSRLight: 0xffd37a,
-  /** 야성 단계색은 HP/궁극기와 즉시 구분되는 청록→황색→적색 신호다. */
+  /** 야성 단계색은 청록→황색으로 차오르고 피버에서는 공용 황동 강조색을 사용한다. */
   ferocityLow: 0x42b8ad,
   ferocityWarning: 0xd6a83d,
-  ferocityDanger: 0xc84646,
 } as const;
 
 export { FONT_FAMILY, type TextRole } from "./fonts";

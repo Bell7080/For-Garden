@@ -8,7 +8,7 @@ import { createDefaultSession, type SaveData, type Session } from "./session";
 
 /** 키는 계정 연동 저장소와 충돌하지 않도록 로컬 프로토타입임을 명시한다. */
 export const SAVE_STORAGE_KEY = "eternal-city.local-save";
-export const CURRENT_SAVE_VERSION = 11;
+export const CURRENT_SAVE_VERSION = 12;
 
 type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
@@ -86,9 +86,13 @@ export class SaveManager {
       return [groupId, { pullsSinceSsr: saved?.pullsSinceSsr ?? legacyCount, pickupGuaranteed: saved?.pickupGuaranteed ?? false }];
     }));
     // DNA 조각 도입 전 저장도 별도 초기화 없이 0개로 복구한다.
-    const savedWallet = legacy.wallet as Partial<SaveData["wallet"]> | undefined;
+    const savedWallet = legacy.wallet as (Partial<SaveData["wallet"]> & { weeds?: unknown }) | undefined;
     // v10에서 보석·골드·스테미나가 생겼다. 예전 저장은 0에서 시작한다.
-    const wallet = { ...(legacy.wallet as object), dnaFragments: savedWallet?.dnaFragments ?? 0, weeds: savedWallet?.weeds ?? 0, gems: savedWallet?.gems ?? 0, gold: savedWallet?.gold ?? 0, stamina: savedWallet?.stamina ?? 0 };
+    // v12는 weeds를 cheesecake로 옮긴다. 두 키가 함께 있으면 이미 변환된 cheesecake를 우선해
+    // 중복 합산을 막고, 구조 분해로 구 키가 현재 저장 모델에 남지 않게 한다.
+    const { weeds: _legacyWeeds, ...walletWithoutLegacyCurrency } = savedWallet ?? {};
+    const legacyCheesecake = typeof _legacyWeeds === "number" ? _legacyWeeds : 0;
+    const wallet = { ...walletWithoutLegacyCurrency, dnaFragments: savedWallet?.dnaFragments ?? 0, cheesecake: savedWallet?.cheesecake ?? legacyCheesecake, gems: savedWallet?.gems ?? 0, gold: savedWallet?.gold ?? 0, stamina: savedWallet?.stamina ?? 0 };
     // 일일 입장 횟수 도입 전 저장은 같은 UTC 키에서 0회로 시작하되 이후 재실행에는 저장값을 유지한다.
     const savedDaily = legacy.dailyContent as Partial<SaveData["dailyContent"]> | undefined;
     const dailyContent = { date: savedDaily?.date ?? "", restorationEntries: savedDaily?.restorationEntries ?? 0, completedIds: savedDaily?.completedIds ?? [], claimedRewardIds: savedDaily?.claimedRewardIds ?? [] };
@@ -123,7 +127,7 @@ export class SaveManager {
     if (legacy.saveVersion === undefined) {
       return { ...legacy, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, gachaPityByGroup: normalizedPity, dailyContent, missions, productPurchases } as unknown as SaveData;
     }
-    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, CURRENT_SAVE_VERSION];
+    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, CURRENT_SAVE_VERSION];
     if (!supported.includes(legacy.saveVersion as number)) throw new SaveDataError(`지원하지 않는 저장 버전입니다: ${String(legacy.saveVersion)}`);
     return { ...legacy, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, missions, productPurchases, gachaPityByGroup: normalizedPity } as unknown as SaveData;
   }
@@ -144,7 +148,7 @@ export class SaveManager {
     if (!Array.isArray(data.bookmarkedRelicIds) || data.bookmarkedRelicIds.some((id) => !data.ownedRelicIds.includes(id)) || new Set(data.bookmarkedRelicIds).size !== data.bookmarkedRelicIds.length) fail("즐겨찾기 정보가 올바르지 않습니다.");
     if (data.selectedStageId !== null && !stageIds.has(data.selectedStageId)) fail("스테이지 ID가 올바르지 않습니다.");
     if (!Array.isArray(data.clearedStageIds) || data.clearedStageIds.some((id) => !stageIds.has(id))) fail("클리어 진행이 올바르지 않습니다.");
-    if (!data.wallet || !Number.isFinite(data.wallet.fossil) || data.wallet.fossil < 0 || !Number.isFinite(data.wallet.amber) || data.wallet.amber < 0 || !Number.isInteger(data.wallet.dnaFragments) || data.wallet.dnaFragments < 0 || !Number.isInteger(data.wallet.weeds) || data.wallet.weeds < 0) fail("재화가 올바르지 않습니다.");
+    if (!data.wallet || !Number.isFinite(data.wallet.fossil) || data.wallet.fossil < 0 || !Number.isFinite(data.wallet.amber) || data.wallet.amber < 0 || !Number.isInteger(data.wallet.dnaFragments) || data.wallet.dnaFragments < 0 || !Number.isInteger(data.wallet.cheesecake) || data.wallet.cheesecake < 0) fail("재화가 올바르지 않습니다.");
     if (!data.gachaPityByGroup || [...new Set(BANNERS.map(({ pityGroupId }) => pityGroupId))].some((id) => !Number.isInteger(data.gachaPityByGroup[id]?.pullsSinceSsr) || data.gachaPityByGroup[id].pullsSinceSsr < 0 || typeof data.gachaPityByGroup[id].pickupGuaranteed !== "boolean")) fail("배너 그룹 천장 정보가 올바르지 않습니다.");
     if (!data.relicProgress || typeof data.relicProgress !== "object") fail("성장 정보가 없습니다.");
     // 보유 목록과 성장 레코드는 항상 정확히 같은 렐릭 집합이어야 한다.

@@ -102,6 +102,22 @@ describe("SaveManager", () => {
     expect(manager.migrate(legacy)).toMatchObject({ saveVersion: CURRENT_SAVE_VERSION, dailyContent: { completedIds: [] } });
   });
 
+  it("v11 wallet.weeds를 cheesecake로 손실 없이 옮기고 새 키가 함께 있으면 우선한다", () => {
+    const manager = new SaveManager(new MemoryStorage());
+    const legacy = validData() as unknown as Record<string, unknown>;
+    legacy.saveVersion = 11;
+    legacy.wallet = { ...(legacy.wallet as object), weeds: 345 };
+    delete (legacy.wallet as Record<string, unknown>).cheesecake;
+
+    const migratedLegacyOnly = manager.migrate(legacy);
+    expect(migratedLegacyOnly.wallet.cheesecake).toBe(345);
+    expect(migratedLegacyOnly.wallet).not.toHaveProperty("weeds");
+
+    // 부분 배포 저장처럼 두 키가 공존해도 합산하지 않고 새 계약의 값을 보존한다.
+    legacy.wallet = { ...(legacy.wallet as object), weeds: 345, cheesecake: 27 };
+    expect(manager.migrate(legacy).wallet.cheesecake).toBe(27);
+  });
+
   it("v1 저장은 스탯 이름 변경과 함께 플레이어별 유대를 0으로 마이그레이션한다", () => {
     const manager = new SaveManager(new MemoryStorage());
     const legacy = validData() as unknown as Record<string, unknown>;

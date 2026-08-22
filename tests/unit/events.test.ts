@@ -29,13 +29,13 @@ describe("이벤트 서버 시간 경계", () => {
   it("종료 시각부터 전투 결과 확정과 이벤트 상품 구매를 모두 거부한다", async () => {
     const event = EVENTS[0];
     const state = createDefaultSession();
-    state.wallet.weeds = 100;
+    state.wallet.cheesecake = 100;
     const server = new FakeServer(state, { latencyMs: 0, now: () => new Date(event.endsAt) });
 
     await expect(server.completeStage(event.stages[0].id)).rejects.toMatchObject({ code: "EVENT_NOT_ACTIVE" });
     await expect(server.purchaseProduct(event.exchangeProductIds[0])).rejects.toMatchObject({ code: "EVENT_NOT_ACTIVE" });
     // 거부된 요청은 재화·클리어·구매 기록 어느 것도 변경하지 않는다.
-    expect(state.wallet.weeds).toBe(100);
+    expect(state.wallet.cheesecake).toBe(100);
     expect(state.cleared.has(event.stages[0].id)).toBe(false);
     expect(state.productPurchases).toEqual({});
   });

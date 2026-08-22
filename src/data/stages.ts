@@ -18,8 +18,8 @@ export const STAGES: StageDef[] = [
   // 배열을 복사해 한 스테이지의 편성 변경이 다른 스테이지까지 번지지 않게 한다.
   enemies: [...FIXED_STAGE_ENEMIES],
   enemyLevel: index + 1,
-  // 최초 보상은 탐험 진척을, 반복 보상은 이후 성장 파밍을 장려하는 잡초 수량이다.
-  rewards: { firstClearWeeds: 30 + index * 5, repeatClearWeeds: 10 + index * 2 },
+  // 최초 보상은 탐험 진척을, 반복 보상은 이후 성장 파밍을 장려하는 치즈케이크 수량이다.
+  rewards: { firstClearCheesecake: 30 + index * 5, repeatClearCheesecake: 10 + index * 2 },
 }));
 
 /** 대규모 던전 대신 하루 세 번만 보상을 받을 수 있는 단일 복원 훈련이다. */
@@ -27,7 +27,7 @@ export const DAILY_RESTORATION = {
   id: "daily-restoration",
   name: "일일 복원",
   maxEntriesPerUtcDay: 3,
-  rewardWeeds: 40,
+  rewardCheesecake: 40,
 } as const;
 
 export function getStage(id: string): StageDef {

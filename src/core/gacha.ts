@@ -13,8 +13,8 @@ export interface Wallet {
   stamina: number;
   /** DNA 숙련도 상한에서 중복 렐릭이 바뀌는 공용 성장 재료다. */
   dnaFragments: number;
-  /** 프로토타입에서 렐릭 레벨 복원에만 쓰는 잡초다. 추후 경험치 재화로 교체할 임시 단일 재료다. */
-  weeds: number;
+  /** 프로토타입에서 렐릭 레벨 복원에만 쓰는 치즈케이크다. 추후 경험치 재화로 교체할 임시 단일 재료다. */
+  cheesecake: number;
 }
 
 /** 배너 비용으로 쓸 수 있는 재화만 허용하고 보상 재료는 제외한다. */

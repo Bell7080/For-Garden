@@ -525,7 +525,7 @@ export class InfoManager {
     });
     container.add([off, on]);
     const label = this.scene.add.text(0, -20, "급여하기", textStyle({ role: "display", size: 36 })).setOrigin(0.5);
-    const hint = this.scene.add.text(0, 16, "잡초 " + FEED_UNIT.weeds + " · 꾹 누르면 한 번에", textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0.5);
+    const hint = this.scene.add.text(0, 16, "치즈케이크 " + FEED_UNIT.cheesecake + " · 꾹 누르면 한 번에", textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0.5);
     container.add([label, hint]);
     const hit = this.scene.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
     let heldFrom = 0;
@@ -605,7 +605,7 @@ export class InfoManager {
       );
       const rows: [string, number, number][] = [
         ["DNA 조각", step.dnaFragments, session.wallet.dnaFragments],
-        ["잡초", step.weeds, session.wallet.weeds],
+        ["치즈케이크", step.cheesecake, session.wallet.cheesecake],
       ];
       rows.forEach(([label, need, have], index) => {
         const y = -40 + index * 60;
@@ -694,12 +694,12 @@ export class InfoManager {
   private async feed(feeds: number): Promise<void> {
     const def = this.currentDef;
     if (!def || !this.ownedNow || this.feeding) return;
-    if (!canFeedRelic(relicProgression.getProgress(def.id), session.wallet.weeds)) return;
+    if (!canFeedRelic(relicProgression.getProgress(def.id), session.wallet.cheesecake)) return;
     this.feeding = true;
     try {
       await gameApi.feedRelic(def.id, feeds);
     } catch {
-      // 잡초 부족·상한은 화면에서 이미 막는다. 실패하면 상태만 다시 그린다.
+      // 치즈케이크 부족·상한은 화면에서 이미 막는다. 실패하면 상태만 다시 그린다.
     } finally {
       this.feeding = false;
       this.refreshGrowth();
@@ -1426,8 +1426,8 @@ export class InfoManager {
     this.levelCap.setX(this.levelValue.x + this.levelValue.displayWidth + 14);
     const need = maxed ? 0 : relicExpToNext(progress.level);
     this.expBar.setValue(maxed ? 1 : progress.exp / need);
-    this.expLabel.setText(maxed ? "MAX" : progress.exp + " / " + need + " EXP   ·   보유 잡초 " + session.wallet.weeds);
-    this.paintFeedButton(this.ownedNow && canFeedRelic(progress, session.wallet.weeds));
+    this.expLabel.setText(maxed ? "MAX" : progress.exp + " / " + need + " EXP   ·   보유 치즈케이크 " + session.wallet.cheesecake);
+    this.paintFeedButton(this.ownedNow && canFeedRelic(progress, session.wallet.cheesecake));
     this.feedLabel.setText(maxed ? "최대 레벨" : "급여하기");
     this.paintBreakButton(progress);
 

@@ -57,7 +57,7 @@ export interface ArenaWeeklyScore {
 export type ArenaCosmeticReward =
   | { kind: "profile_frame"; cosmeticId: string }
   | { kind: "title"; cosmeticId: string }
-  | { kind: "soft_currency"; currency: "weeds" | "gold"; amount: number };
+  | { kind: "soft_currency"; currency: "cheesecake" | "gold"; amount: number };
 
 /** 시즌 종료 후 한 번만 수령 가능한 보상 상태다. */
 export interface ArenaSeasonRewardState {

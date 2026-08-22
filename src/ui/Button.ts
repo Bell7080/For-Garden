@@ -89,6 +89,11 @@ export class Button extends Phaser.GameObjects.Container {
   private readonly bg: Phaser.GameObjects.Rectangle;
   private readonly subText?: Phaser.GameObjects.Text;
   private enabledState = true;
+  /** 누른 동일 포인터만 클릭을 끝낼 수 있게 기억하는 포인터 ID다. */
+  private pressedPointerId?: number;
+  private pressX = 0;
+  private pressY = 0;
+  private pressDragged = false;
 
   constructor(scene: Phaser.Scene, x: number, y: number, opts: ButtonOptions) {
     super(scene, x, y);
@@ -161,16 +166,48 @@ export class Button extends Phaser.GameObjects.Container {
     this.add(this.bg);
 
     this.bg.setInteractive({ useHandCursor: true });
-    this.bg.on("pointerdown", () => {
-      // Phaser의 pointer 이벤트는 touchstart와 마우스를 함께 추상화해 모바일/PC 테스트를 모두 지원한다.
-      if (this.enabledState) this.setScale(1.05);
-    });
-    this.bg.on("pointerup", () => {
-      // touchend에 해당하는 시점에 실행해 스크롤하려던 손가락의 오발을 줄인다.
+    // 손떨림은 허용하되 스크롤/드래그 의도는 클릭으로 오인하지 않는 게임 좌표 거리다.
+    const dragCancelDistance = 24;
+    const finishPress = (pointer: Phaser.Input.Pointer): void => {
+      if (pointer.id !== this.pressedPointerId) return;
+      const shouldClick = this.enabledState && !this.pressDragged;
+      this.pressedPointerId = undefined;
       this.setScale(1);
-      if (this.enabledState) opts.onClick();
+      if (shouldClick) opts.onClick();
+    };
+    const cancelPress = (): void => {
+      this.pressedPointerId = undefined;
+      this.pressDragged = false;
+      this.setScale(1);
+    };
+    const trackPressMove = (pointer: Phaser.Input.Pointer): void => {
+      if (pointer.id !== this.pressedPointerId) return;
+      // 경계를 살짝 벗어나도 작은 이동이면 유지하고, 누적 거리가 임계값을 넘으면 실제 드래그로 취소한다.
+      if (Phaser.Math.Distance.Between(this.pressX, this.pressY, pointer.worldX, pointer.worldY) > dragCancelDistance) {
+        this.pressDragged = true;
+        this.setScale(1);
+      }
+    };
+
+    this.bg.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+      // Phaser의 pointer 이벤트는 touchstart와 마우스를 함께 추상화해 모바일/PC 테스트를 모두 지원한다.
+      if (!this.enabledState || this.pressedPointerId !== undefined) return;
+      this.pressedPointerId = pointer.id;
+      this.pressX = pointer.worldX;
+      this.pressY = pointer.worldY;
+      this.pressDragged = false;
+      this.setScale(1.05);
     });
-    this.bg.on("pointerout", () => this.setScale(1));
+    scene.input.on("pointermove", trackPressMove);
+    // 전역 pointerup을 받아 버튼 경계의 작은 이동도 클릭으로 인정하되 시작 포인터 ID는 반드시 일치시킨다.
+    scene.input.on("pointerup", finishPress);
+    // 브라우저/캔버스가 포인터를 잃으면 클릭 없이 눌림 상태만 해제한다.
+    scene.input.on("gameout", cancelPress);
+    this.once(Phaser.GameObjects.Events.DESTROY, () => {
+      scene.input.off("pointermove", trackPressMove);
+      scene.input.off("pointerup", finishPress);
+      scene.input.off("gameout", cancelPress);
+    });
 
     scene.add.existing(this);
   }

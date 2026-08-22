@@ -3,6 +3,14 @@ import { PLAYABLE_RELICS } from "../data/relics";
 import { session, type Session } from "../state/session";
 import { saveManager } from "../state/SaveManager";
 
+/** 편성 실패를 UI와 테스트가 문자열 추측 없이 구분하기 위한 안정적인 사유 코드다. */
+export type SetPartyFailureReason = "wrong-size" | "duplicate" | "not-owned";
+
+/** 성공과 검증 실패를 판별 가능한 형태로 돌려주는 편성 확정 결과다. */
+export type SetPartyResult =
+  | { ok: true }
+  | { ok: false; reason: SetPartyFailureReason; relicId?: string };
+
 /**
  * 보유 렐릭과 편성처럼 여러 화면이 함께 쓰는 수집 상태의 단일 진입점이다.
  *
@@ -55,13 +63,24 @@ export class RelicCollectionManager {
     return true;
   }
 
-  /** 파티는 서로 다른 보유 렐릭 3명으로만 확정한다. */
-  setParty(relicIds: readonly string[]): boolean {
+  /** 파티는 서로 다른 보유 렐릭 3명으로만 확정하고, 실패하면 정확한 원인을 돌려준다. */
+  setParty(relicIds: readonly string[]): SetPartyResult {
     const unique = new Set(relicIds);
-    if (relicIds.length !== 3 || unique.size !== 3 || relicIds.some((id) => !this.owns(id))) return false;
+    if (relicIds.length !== 3) return { ok: false, reason: "wrong-size" };
+    if (unique.size !== 3) return { ok: false, reason: "duplicate" };
+    const notOwnedId = relicIds.find((id) => !this.owns(id));
+    if (notOwnedId !== undefined) return { ok: false, reason: "not-owned", relicId: notOwnedId };
+
+    // 저장이 실패하면 메모리 파티도 이전 값으로 되돌려 확정과 영속화를 하나의 처리로 보이게 한다.
+    const previousParty = [...this.state.party];
     this.state.party = [...relicIds];
-    this.persistSharedSession();
-    return true;
+    try {
+      this.persistSharedSession();
+    } catch (error) {
+      this.state.party = previousParty;
+      throw error;
+    }
+    return { ok: true };
   }
 
   /** 테스트 주입 상태는 디스크에 쓰지 않고 앱 공유 상태의 확정 변경만 저장한다. */

@@ -1,5 +1,6 @@
 import type { AcquisitionResult, Wallet } from "../core/gacha";
 import type { RelicProgress } from "../core/types";
+import type { MissionPeriod } from "../core/missions";
 
 /** 네트워크로 직렬화할 수 있는 플레이어 진행 정보의 최소 규격이다. */
 export interface PlayerStateDto {
@@ -19,7 +20,16 @@ export interface PlayerStateDto {
   clearedStageIds: string[];
   /** 서버 UTC 키와 일일 복원 소비 횟수다. */
   dailyContent: { date: string; restorationEntries: number };
+  /** 서버 기간 정규화가 끝난 임무 목록이다. */
+  missions: MissionDto[];
 }
+
+/** 임무 화면에 필요한 진행·보상·수령 상태를 한 행으로 전달한다. */
+export interface MissionDto { id: string; period: MissionPeriod; title: string; progress: number; target: number; rewardWeeds: number; claimed: boolean; }
+/** 목록 응답은 로비 배지에서 바로 쓸 미수령 개수를 포함한다. */
+export interface MissionListResponse { missions: MissionDto[]; claimableCount: number; }
+/** 일괄 또는 선택 수령 뒤 지급 총액과 최신 상태를 반환한다. */
+export interface ClaimMissionRewardsResponse extends PlayerStateDto { claimedIds: string[]; weedsEarned: number; }
 
 /** 발굴 요청에는 클라이언트가 선택한 배너와 횟수만 보낸다. */
 export interface PullRequest {
@@ -36,7 +46,7 @@ export interface PullResponse extends PlayerStateDto {
 }
 
 /** UI가 서버 실패 원인을 문구로 바꿀 수 있게 고정한 오류 코드다. */
-export type ApiErrorCode = "BANNER_NOT_FOUND" | "INSUFFICIENT_CURRENCY" | "INVALID_PULL_COUNT" | "RELIC_NOT_FOUND" | "RELIC_MAX_LEVEL" | "STAGE_NOT_FOUND" | "DAILY_ENTRY_LIMIT";
+export type ApiErrorCode = "BANNER_NOT_FOUND" | "INSUFFICIENT_CURRENCY" | "INVALID_PULL_COUNT" | "RELIC_NOT_FOUND" | "RELIC_MAX_LEVEL" | "STAGE_NOT_FOUND" | "DAILY_ENTRY_LIMIT" | "MISSION_NOT_FOUND" | "MISSION_NOT_COMPLETE" | "MISSION_ALREADY_CLAIMED";
 
 /**
  * 급여 응답.
@@ -62,6 +72,9 @@ export interface GameApi {
   completeStage(stageId: string, victory?: boolean): Promise<CompleteStageResponse>;
   interactInLobby(relicId: string): Promise<LobbyInteractionResponse>;
   enterDailyRestoration(): Promise<EnterDailyRestorationResponse>;
+  getMissions(): Promise<MissionListResponse>;
+  /** ID를 생략하면 현재 완료된 모든 미수령 임무를 한 저장 처리로 받는다. */
+  claimMissionRewards(missionIds?: string[]): Promise<ClaimMissionRewardsResponse>;
 }
 
 /** 예상 가능한 요청 실패를 일반 네트워크 예외와 구분한다. */

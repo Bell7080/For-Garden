@@ -11,7 +11,18 @@ describe("relic catalog", () => {
 
   it("앞자리 0을 보존한 문자열 개체번호순으로 정렬한다", () => {
     const sorted = sortRelicsBySpecimenNumber(PLAYABLE_RELICS);
-    expect(sorted.map((relic) => relic.specimenNumber)).toEqual(["001", "014", "044", "072", "093", "105"]);
+    // 루카를 포함해 배열 등록 순서와 무관하게 도감 번호가 정렬되는지 고정한다.
+    expect(sorted.map((relic) => relic.specimenNumber)).toEqual(["001", "014", "038", "044", "072", "093", "105"]);
+  });
+
+  it("4번 Puppet 캐릭터 루카를 플레이 가능 렐릭으로 공개한다", () => {
+    // 도감·가챠·정보창이 함께 읽는 단일 정적 정의에 전용 원화 키가 연결되어야 한다.
+    expect(PLAYABLE_RELICS.find((relic) => relic.id === "luka")).toMatchObject({
+      name: "루카",
+      origin: "벨로키랍토르",
+      portraitAssetId: "luka",
+      role: "assassin",
+    });
   });
 
   it("미보유 개체에는 번호와 실루엣 요약만 공개한다", () => {

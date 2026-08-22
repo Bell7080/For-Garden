@@ -11,8 +11,8 @@ export type Role = "warrior" | "tank" | "assassin" | "support";
 /** 프로토타입 렐릭 희귀도. 배열 순서에 기대지 말고 가챠 규칙의 명시적 우선순위를 사용한다. */
 export type RelicRarity = "R" | "SR" | "SSR";
 
-/** 정적 렐릭 데이터에서 선택할 수 있는 전신 원화 키. 새 Puppet 등록 시 함께 확장한다. */
-export type PortraitAssetId = "torika" | "lexia" | "seira" | "torika-placeholder";
+/** 전신 Puppet 레지스트리의 안정적인 데이터 키다. 파일 번호를 게임 데이터에 직접 노출하지 않는다. */
+export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "torika-placeholder";
 
 export interface Stats {
   /** 생존력과 물리·마법 공격의 기반이 되는 주 능력치다. */

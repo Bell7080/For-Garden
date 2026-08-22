@@ -101,6 +101,7 @@ export class RelicsScene extends Phaser.Scene {
         label: relic.name,
         level: owned ? relicProgression.getProgress(relic.id).level : undefined,
         stars: starsForRarity(relic.rarity),
+        affinity: { element: relic.element, role: relic.role },
         badge: relic.specimenNumber,
         locked: !owned,
       });

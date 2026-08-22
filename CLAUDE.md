@@ -90,6 +90,11 @@
   경계는 위아래 선 두 줄과 이름 옆으로 이어지는 선이 잡는다. 이름은 금색, 대사는 흰색이다.
 - 배경 원화를 쓰는 화면은 `drawVignette`로 가장자리를 눌러 가운데로 눈이 가게 한다.
 - 아이콘은 `src/ui/glyphs.ts`의 `drawGlyph`만 쓴다. 씬에서 도형을 직접 조립하지 않는다.
+- 속성·직군·재화 아이콘은 그림 파일이다. 원본은 저장소에 남기지 않고 `scripts/prepare_icons.py`가
+  구운 WebP만 `public/sprites/{elements,roles,currency}`에 둔다. 속성·직군은 단색 실루엣이라
+  **색도 그 스크립트의 표에서 정한다** — 화면이 tint로 다시 칠하지 않는다.
+- 속성·직군을 화면에 세울 때는 `src/ui/AffinityBadge.ts`를 쓴다. 두꺼운 그림자와 같은 색
+  발광을 겹치는 규칙이 거기 한 곳에 있고, 속성이 크고 직군이 조금 작다는 크기 차이도 지킨다.
 - SVG 아이콘(`public/sprites`)도 같은 결을 지킨다. 둥근 끝(`stroke-linecap="round"`)과 둥근
   모서리(`rx`)를 쓰지 않고 `miter`로 각지게 맞춘다. 아이콘 바탕은 SVG에 넣지 않는다 —
   칩은 UI 쪽(`iconCard`)이 그리므로 파일에 넣으면 칩이 두 겹으로 겹친다.

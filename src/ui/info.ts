@@ -24,6 +24,8 @@ import { addBackButton } from "./IconButton";
 import { chipPoints, drawGlassFade, drawHairline, drawLayer, drawShapeEdge, drawVignette, HOLO, perspectiveRect, slantedRect, toPoints } from "./holo";
 import { drawGlyph } from "./glyphs";
 import { PopupLayer } from "./PopupLayer";
+import { AffinityBadge } from "./AffinityBadge";
+import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
 import { addStarRow } from "./stars";
 import { StatRadar } from "./StatRadar";
 import { openSkillPopup, type SkillInfoViewModel } from "./SkillPopup";
@@ -96,6 +98,9 @@ const RARITY_GEM: Record<RelicRarity, readonly [string, string, string]> = {
   SR: ["#ffd6f5", "#c07cff", "#6d4bd8"],
   R: ["#d6f2ff", "#63c4f2", "#2a6fd0"],
 };
+
+/** 이름 옆 속성·직군 뱃지의 크기와 이름에서 띄우는 간격. */
+const AFFINITY = { main: 78, sub: 58, gap: 26 } as const;
 
 /** 정보창의 별은 화면에서 가장 큰 성급 표시다. 모양과 색은 `stars.ts`가 정한다. */
 const STAR_SIZE = 34;
@@ -236,6 +241,8 @@ export class InfoManager {
   private readonly nameText: Phaser.GameObjects.Text;
   /** 이름 뒤에 한 겹 어긋나게 깔리는 같은 글자. 겹친 레이어처럼 보이는 그림자다. */
   private readonly nameShadow: Phaser.GameObjects.Text;
+  private readonly elementBadge: AffinityBadge;
+  private readonly roleBadge: AffinityBadge;
   private readonly roleText: Phaser.GameObjects.Text;
   private readonly bookmarkBadge: BadgeHandle;
   private readonly favoriteBadge: BadgeHandle;
@@ -316,6 +323,11 @@ export class InfoManager {
     this.nameText = scene.add.text(46, 104, "", textStyle({ role: "display", size: 84 })).setOrigin(0, 0);
     this.roleText = scene.add.text(50, 206, "", textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0, 0);
     this.chrome.add([this.rarityGlow, this.rarityText, this.nameShadow, this.nameText, this.roleText]);
+    // 이름 오른쪽에 속성과 직군을 세운다. 이름 줄에 붙어 있어야 "이 개체가 무엇인지"가 한
+    // 덩어리로 읽힌다. 카드와 마찬가지로 속성이 크고 직군이 조금 작다.
+    this.elementBadge = new AffinityBadge(scene, 0, 152, ELEMENT_ICON.fire, AFFINITY.main);
+    this.roleBadge = new AffinityBadge(scene, 0, 152, ROLE_ICON.warrior, AFFINITY.sub);
+    this.chrome.add([this.elementBadge, this.roleBadge]);
 
     this.bookmarkBadge = this.addBadge(84, 300, "bookmark", BOOKMARK_ON, () => this.toggleBookmark());
     this.favoriteBadge = this.addBadge(176, 300, "heart", FAVORITE_ON, () => this.toggleFavorite());
@@ -1318,7 +1330,12 @@ export class InfoManager {
     this.paintRarity(owned ? def.rarity : undefined);
     this.nameText.setText(owned ? def.name : "미발굴 개체");
     this.nameShadow.setText(this.nameText.text);
-    this.roleText.setText("NO." + def.specimenNumber + (owned ? "   " + def.origin + " · " + ELEMENT_LABEL[def.element] + " · " + ROLE_LABEL[def.role] : "   실루엣 기록"));
+    // 이름 폭이 캐릭터마다 다르므로 뱃지 자리도 그릴 때마다 이름 끝에서 다시 잡는다.
+    const badgeLeft = this.nameText.x + this.nameText.width + AFFINITY.gap;
+    this.elementBadge.setIcon(ELEMENT_ICON[def.element], AFFINITY.main).setPosition(badgeLeft + AFFINITY.main / 2, 152).setVisible(owned);
+    this.roleBadge.setIcon(ROLE_ICON[def.role], AFFINITY.sub).setPosition(badgeLeft + AFFINITY.main + AFFINITY.sub / 2 + 12, 158).setVisible(owned);
+    // 속성과 직군은 옆의 아이콘이 말한다. 같은 것을 글자로 또 적으면 줄만 길어진다.
+    this.roleText.setText("NO." + def.specimenNumber + (owned ? "   " + def.origin : "   실루엣 기록"));
     this.refreshBadges();
     this.paintStars(def);
     this.buildSkillIcons(def);

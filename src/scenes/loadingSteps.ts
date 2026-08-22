@@ -3,6 +3,7 @@ import { preloadPuppetAssets, PUPPET_PRELOAD_GROUPS } from "../puppets/assets";
 import { BACKGROUND_ASSETS } from "../ui/backgrounds";
 import { loadGameFonts } from "../ui/fonts";
 import { UI_ICON_ASSETS } from "../ui/icons";
+import { AFFINITY_ICON_ASSETS } from "../ui/affinityIcons";
 import { SKILL_ICON_ASSETS } from "../ui/skillIcons";
 
 /**
@@ -57,6 +58,8 @@ export const LOADING_STEPS: ReadonlyArray<LoadingStep> = [
         // SVG를 그대로 이미지로 받으면 파일에 적힌 크기 그대로 구워져 확대할 때 뭉갠다.
         // 화면에서 쓰는 크기보다 넉넉히 크게 래스터화해 두고 줄여 쓴다.
         SKILL_ICON_ASSETS.forEach(([key, path]) => scene.load.svg(key, path, { width: SVG_BAKE.skill, height: SVG_BAKE.skill }));
+        // 속성·직군은 이미 구워 둔 WebP라 그대로 읽는다.
+        AFFINITY_ICON_ASSETS.forEach(([key, path]) => scene.load.image(key, path));
         UI_ICON_ASSETS.forEach(([key, path, size]) => scene.load.svg(key, path, { width: size * SVG_BAKE.uiScale, height: size * SVG_BAKE.uiScale }));
       }),
   },

@@ -1,8 +1,10 @@
 import Phaser from "phaser";
-import type { PortraitAssetId, RelicDef, RelicRarity } from "../core/types";
+import type { Element, PortraitAssetId, RelicDef, RelicRarity, Role } from "../core/types";
 import { headCardFrame, loadPortraitTexture, portraitAssetFor, portraitUsesRelicTint } from "../puppets/assets";
 import { mixWhite, tintFor } from "../puppets/tints";
 import { chipPoints, HOLO } from "./holo";
+import { AffinityBadge } from "./AffinityBadge";
+import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
 import { addStarRow } from "./stars";
 import { COLOR, textStyle } from "./theme";
 
@@ -25,6 +27,8 @@ export interface PortraitCardOptions {
   locked?: boolean;
   /** 칩 왼쪽 위의 작은 표식(개체번호·등급). */
   badge?: string;
+  /** 카드 왼쪽에 세로로 서는 속성·직군. 속성이 크고 직군이 조금 작다. */
+  affinity?: { element: Element; role: Role };
 }
 
 /** 칩 바탕. 검은 유리에 가깝게 두고 원화가 빛을 담당한다. */
@@ -178,6 +182,8 @@ export class PortraitCard extends Phaser.GameObjects.Container {
       if (options.stars) this.addStars(baseline - nameSize * 1.8);
     }
 
+    if (options.affinity) this.addAffinity(options.affinity, width, height);
+
     if (options.badge) {
       // 왼쪽 위는 크게 깎여 나가므로, 표식은 덜 깎인 오른쪽 위에 붙인다.
       this.add(
@@ -245,6 +251,22 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     const outer = Math.min(15, this.options.width / 19);
     const filled = this.options.locked ? 0 : stars.filled;
     addStarRow(this.scene, this, 0, y, outer, filled, stars.total);
+  }
+
+  /**
+   * 속성과 직군.
+   *
+   * 카드 왼쪽 위에 세로로 선다. 속성이 먼저 읽혀야 하므로 크게, 직군은 그 아래 조금 작게
+   * 둔다 — 둘이 같은 크기면 무엇을 먼저 봐야 하는지 알 수 없다.
+   */
+  private addAffinity(affinity: { element: Element; role: Role }, width: number, height: number): void {
+    const main = Math.min(42, width * 0.24);
+    const sub = main * 0.74;
+    // 발광이 칩 밖으로 새지 않도록 안쪽으로 충분히 들인다.
+    const x = -width / 2 + main * 0.86;
+    const top = -height / 2 + main * 0.8;
+    this.add(new AffinityBadge(this.scene, x, top, ELEMENT_ICON[affinity.element], main));
+    this.add(new AffinityBadge(this.scene, x, top + main * 0.92, ROLE_ICON[affinity.role], sub));
   }
 
   /**

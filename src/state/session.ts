@@ -37,6 +37,8 @@ export interface Session {
   dailyContent: DailyContentState;
   /** 서버 UTC 일자·주차에 묶인 직렬화 가능한 임무 진행과 수령 기록이다. */
   missions: MissionState;
+  /** 상품별 현재 제한 주기 키와 구매 횟수다. FakeServer만 갱신한다. */
+  productPurchases: Record<string, { periodKey: string; count: number }>;
 }
 
 /** 아직 서버 계정에 귀속되지 않은 브라우저 일일 콘텐츠 스냅샷이다. */
@@ -69,6 +71,7 @@ export interface SaveData {
   ownedHeartGemIds: string[];
   dailyContent: DailyContentState;
   missions: MissionState;
+  productPurchases: Record<string, { periodKey: string; count: number }>;
 }
 
 /** 신규 렐릭에 부여하는 독립 복사 가능한 기본 성장 상태다. */
@@ -96,6 +99,7 @@ export function createDefaultSession(): Session {
     ownedHeartGemIds: ["vital-seed", "fang-core", "ancient-pulse"],
     dailyContent: { date: "", restorationEntries: 0, completedIds: [], claimedRewardIds: [] },
     missions: { dailyKey: "", weeklyKey: "", progress: {}, claimedIds: [] },
+    productPurchases: {},
   };
 }
 

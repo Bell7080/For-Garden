@@ -8,7 +8,7 @@ import { createDefaultSession, type SaveData, type Session } from "./session";
 
 /** 키는 계정 연동 저장소와 충돌하지 않도록 로컬 프로토타입임을 명시한다. */
 export const SAVE_STORAGE_KEY = "eternal-city.local-save";
-export const CURRENT_SAVE_VERSION = 9;
+export const CURRENT_SAVE_VERSION = 10;
 
 type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
@@ -85,7 +85,9 @@ export class SaveManager {
       return [groupId, { pullsSinceSsr: saved?.pullsSinceSsr ?? legacyCount, pickupGuaranteed: saved?.pickupGuaranteed ?? false }];
     }));
     // DNA 조각 도입 전 저장도 별도 초기화 없이 0개로 복구한다.
-    const wallet = { ...(legacy.wallet as object), dnaFragments: (legacy.wallet as Partial<SaveData["wallet"]> | undefined)?.dnaFragments ?? 0, weeds: (legacy.wallet as Partial<SaveData["wallet"]> | undefined)?.weeds ?? 0 };
+    const savedWallet = legacy.wallet as Partial<SaveData["wallet"]> | undefined;
+    // v10에서 보석·골드·스테미나가 생겼다. 예전 저장은 0에서 시작한다.
+    const wallet = { ...(legacy.wallet as object), dnaFragments: savedWallet?.dnaFragments ?? 0, weeds: savedWallet?.weeds ?? 0, gems: savedWallet?.gems ?? 0, gold: savedWallet?.gold ?? 0, stamina: savedWallet?.stamina ?? 0 };
     // 일일 입장 횟수 도입 전 저장은 같은 UTC 키에서 0회로 시작하되 이후 재실행에는 저장값을 유지한다.
     const savedDaily = legacy.dailyContent as Partial<SaveData["dailyContent"]> | undefined;
     const dailyContent = { date: savedDaily?.date ?? "", restorationEntries: savedDaily?.restorationEntries ?? 0, completedIds: savedDaily?.completedIds ?? [], claimedRewardIds: savedDaily?.claimedRewardIds ?? [] };
@@ -118,7 +120,7 @@ export class SaveManager {
     if (legacy.saveVersion === undefined) {
       return { ...legacy, wallet, relicProgress, completedStoryIds, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, gachaPityByGroup: normalizedPity, dailyContent, missions, productPurchases } as unknown as SaveData;
     }
-    const supported = [1, 2, 3, 4, 5, 6, 7, 8, CURRENT_SAVE_VERSION];
+    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, CURRENT_SAVE_VERSION];
     if (!supported.includes(legacy.saveVersion as number)) throw new SaveDataError(`지원하지 않는 저장 버전입니다: ${String(legacy.saveVersion)}`);
     return { ...legacy, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, completedStoryIds, bookmarkedRelicIds, dailyContent, missions, productPurchases, gachaPityByGroup: normalizedPity } as unknown as SaveData;
   }

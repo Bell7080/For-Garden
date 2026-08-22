@@ -93,7 +93,7 @@ export function createDefaultSession(): Session {
     owned: new Set(STARTER_RELICS),
     favorite: STARTER_RELICS[0],
     bookmarked: new Set<string>(),
-    wallet: { fossil: 1200, amber: 10, dnaFragments: 0, weeds: 0 },
+    wallet: { fossil: 1200, amber: 10, gems: 120, gold: 25_400, stamina: 60, dnaFragments: 0, weeds: 0 },
     gachaPityByGroup: Object.fromEntries([...new Set(BANNERS.map(({ pityGroupId }) => pityGroupId))].map((id) => [id, { pullsSinceSsr: 0, pickupGuaranteed: false }])),
     relicProgress: Object.fromEntries(STARTER_RELICS.map((id) => [id, createStarterProgress()])),
     ownedHeartGemIds: ["vital-seed", "fang-core", "ancient-pulse"],

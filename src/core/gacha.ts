@@ -5,6 +5,12 @@ import type { RelicRarity } from "./types";
 export interface Wallet {
   fossil: number;
   amber: number;
+  /** 상단 줄의 첫 칸. 유료 결제와 상점의 기준이 되는 귀한 재화다. */
+  gems: number;
+  /** 상단 줄의 둘째 칸. 성장과 교환에 두루 쓰는 흔한 재화라 자릿수가 크게 늘어난다. */
+  gold: number;
+  /** 상단 줄의 셋째 칸. 콘텐츠 입장에 쓰며 시간이 지나면 차오른다. */
+  stamina: number;
   /** DNA 숙련도 상한에서 중복 렐릭이 바뀌는 공용 성장 재료다. */
   dnaFragments: number;
   /** 프로토타입에서 렐릭 레벨 복원에만 쓰는 잡초다. 추후 경험치 재화로 교체할 임시 단일 재료다. */

@@ -26,6 +26,9 @@ import { PortraitCard, starsForRarity } from "../ui/PortraitCard";
 import { firstMeetingLine } from "../data/relicFirstMeetings";
 import { RailButton } from "../ui/RailButton";
 
+/** 마일리지 상점 버튼의 황금빛. 다른 버튼과 갈라 놓아 "쌓아 두었다 쓰는 곳"임을 알린다. */
+const MILEAGE_EDGE = 0xf2c744;
+
 /** 배너 그림이 서는 바닥. */
 const BANNER_FLOOR = 1240;
 
@@ -73,7 +76,9 @@ export class LabScene extends Phaser.Scene {
     this.add.rectangle(cx, 960, BASE_WIDTH, 1920, COLOR.void, 0.34).setDepth(-29);
     this.add.rectangle(cx, BANNER_FLOOR, BASE_WIDTH, 3, COLOR.panelEdge).setDepth(-28);
 
-    this.topBar = new TopBar(this);
+    // 모집 화면은 "무엇으로 뽑을 수 있나"를 묻는다. 상단 줄도 다이아·화석·호박석으로 바꾼다.
+    this.topBar = new TopBar(this, 40, { currencies: "recruit" });
+    this.addMileageButton(BASE_WIDTH - 246, 178);
 
     // 연구소 우측 4번 기능 슬롯은 패키지/BM 전시 상점으로 연결한다. 결제는 해당 씬에서 비활성이다.
     new RailButton(this, BASE_WIDTH - 92, 555, { icon: "shop", label: "4 · 상점", accent: true, onClick: () => this.scene.start("shop", { section: "premium" }) });
@@ -147,6 +152,37 @@ export class LabScene extends Phaser.Scene {
     });
     void this.showcaseRelic();
     this.refresh();
+  }
+
+  /**
+   * 마일리지 상점.
+   *
+   * 뽑을 때마다 쌓이는 마일리지를 쓰는 자리라 상단 재화 바로 아래에 붙는다. 다른 버튼과
+   * 달리 황금빛 홀로그램인 이유는, 모집 화면에서 유일하게 "쌓아 두었다가 쓰는" 곳이기
+   * 때문이다 — 색이 곧 그 성격을 알린다.
+   */
+  private addMileageButton(x: number, y: number): void {
+    const width = 300;
+    const height = 68;
+    const shape = slantedRect(width, height, 16);
+    const container = this.add.container(x, y);
+    container.add(drawLayer(this, 0, 0, shape, {
+      fill: 0x2a2110,
+      alpha: 0.94,
+      edge: MILEAGE_EDGE,
+      edgeAlpha: 1,
+      edgeWidth: 4,
+      glow: { color: MILEAGE_EDGE, strength: 0.5, height: 0.7 },
+    }));
+    container.add(this.add.image(-width / 2 + 34, 0, "currency-gold").setDisplaySize(46, 46));
+    container.add(this.add.text(16, 0, "마일리지 상점", textStyle({ role: "display", size: 27, color: "#ffe9a3" })).setOrigin(0.5));
+    const hit = this.add.rectangle(x, y, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    hit.on("pointerdown", () => container.setScale(1.06));
+    hit.on("pointerout", () => container.setScale(1));
+    hit.on("pointerup", () => {
+      container.setScale(1);
+      this.scene.start("shop", { section: "trade" });
+    });
   }
 
   private switchBanner(delta: number): void {

@@ -174,8 +174,7 @@ export class LabScene extends Phaser.Scene {
       edgeWidth: 4,
       glow: { color: MILEAGE_EDGE, strength: 0.5, height: 0.7 },
     }));
-    container.add(this.add.image(-width / 2 + 34, 0, "currency-gold").setDisplaySize(46, 46));
-    container.add(this.add.text(16, 0, "마일리지 상점", textStyle({ role: "display", size: 27, color: "#ffe9a3" })).setOrigin(0.5));
+    container.add(this.add.text(0, 0, "마일리지 상점", textStyle({ role: "display", size: 28, color: "#ffe9a3" })).setOrigin(0.5));
     const hit = this.add.rectangle(x, y, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
     hit.on("pointerdown", () => container.setScale(1.06));
     hit.on("pointerout", () => container.setScale(1));

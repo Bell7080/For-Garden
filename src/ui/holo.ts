@@ -212,6 +212,27 @@ export function drawLayer(
   return graphics;
 }
 
+/**
+ * 모서리를 둥글린 면 하나.
+ *
+ * 화면의 판은 기울이는 것이 기본이지만, 상단 재화 줄처럼 **여러 칸이 나란히 서는 자리**는
+ * 예외다. 칸마다 기울면 숫자와 아이콘까지 함께 비뚤어 보여 줄이 어수선해진다. 곧고 둥근
+ * 면 하나로 값만 담는다.
+ */
+export function drawRoundedLayer(
+  scene: Phaser.Scene,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  options: { fill: number; alpha?: number; radius?: number } = { fill: 0x05070a },
+): Phaser.GameObjects.Graphics {
+  const graphics = scene.add.graphics({ x, y });
+  graphics.fillStyle(options.fill, options.alpha ?? HOLO.glass);
+  graphics.fillRoundedRect(-width / 2, -height / 2, width, height, options.radius ?? height / 2);
+  return graphics;
+}
+
 /** 레이어와 같은 모양의 마스크를 만든다. 그림에만 씌우고 화면에는 보이지 않는다. */
 export function shapeMask(scene: Phaser.Scene, x: number, y: number, shape: number[]): Phaser.Display.Masks.GeometryMask {
   const graphics = scene.make.graphics({ x, y });

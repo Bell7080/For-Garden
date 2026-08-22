@@ -5,7 +5,7 @@ import { session } from "../state/session";
 import { drawGlyph } from "./glyphs";
 import { formatCurrency } from "../core/formatCurrency";
 import type { CurrencyIconKey } from "./currencyIcons";
-import { chipPoints, drawGlassFade, drawHairline, drawLayer, slantedRect, HOLO } from "./holo";
+import { chipPoints, drawGlassFade, drawHairline, drawLayer, drawRoundedLayer, HOLO } from "./holo";
 import { COLOR, textStyle } from "./theme";
 
 /**
@@ -48,7 +48,7 @@ const SLOTS: Record<"default" | "recruit", readonly CurrencySlot[]> = {
  * 셋이 같은 폭이라 값이 늘어도 줄이 흔들리지 않는다. 아이콘은 칸 **안쪽**에 넉넉히 들어가고,
  * 칸 사이도 손가락 하나만큼 띄운다 — 붙여 놓으면 세 재화가 한 덩어리로 읽힌다.
  */
-const SLOT = { width: 182, height: 66, icon: 46, gap: 24 } as const;
+const SLOT = { width: 196, height: 74, icon: 62, gap: 24 } as const;
 
 /**
  * 재화 줄이 놓이는 가로 자리(화면 폭 대비).
@@ -96,11 +96,11 @@ export class TopBar {
    * 앉는다. 아이콘이 칸 안에 갇히면 작아져 무슨 재화인지 알아보기 어렵다.
    */
   private buildSlot(scene: Phaser.Scene, cx: number, cy: number, slot: CurrencySlot): Phaser.GameObjects.Text {
-    const shape = slantedRect(SLOT.width, SLOT.height, 14);
-    // 테두리를 두르지 않는다. 옅은 유리 한 겹이면 값이 어디까지인지 충분히 읽힌다.
-    drawLayer(scene, cx, cy, shape, { fill: 0x05070a, alpha: 0.46, shadow: false });
+    // 테두리를 두르지 않는다. 옅은 유리 한 겹이면 값이 어디까지인지 충분히 읽힌다. 이 줄만
+    // 기울이지 않고 둥근 면을 쓰는 이유는 `drawRoundedLayer`에 적어 두었다.
+    drawRoundedLayer(scene, cx, cy, SLOT.width, SLOT.height, { fill: 0x05070a, alpha: 0.46, radius: SLOT.height / 2 });
     // 아이콘은 칸 안쪽에 온전히 들어간다. 잘린 모서리에 걸치면 그림이 반쯤 잘려 보인다.
-    const iconX = cx - SLOT.width / 2 + SLOT.icon * 0.66;
+    const iconX = cx - SLOT.width / 2 + SLOT.icon * 0.56;
     scene.add.image(iconX + 3, cy + 4, slot.icon).setDisplaySize(SLOT.icon, SLOT.icon).setTint(0x05070a).setAlpha(0.55);
     scene.add.image(iconX, cy, slot.icon).setDisplaySize(SLOT.icon, SLOT.icon);
     return scene.add

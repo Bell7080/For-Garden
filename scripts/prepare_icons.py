@@ -36,13 +36,14 @@ FLAT = {
 #
 # 호박석과 스테미나가 누런빛이라 작은 아이콘에서는 구분되지 않았다. 호박석은 노란 쪽으로,
 # 스테미나는 초록 쪽으로 밀어 갈라 놓는다. 채널별 배율만 쓰므로 명암과 질감은 그대로다.
-ART: dict[str, tuple[str, tuple[float, float, float] | None]] = {
+ART: dict[str, tuple[str, tuple[float, float, float] | None] | tuple[str, tuple[float, float, float] | None, float]] = {
     "sprites/currency/gold.webp": ("Photoroom_20260822_113125.png", None),
     "sprites/currency/crystal.webp": ("Photoroom_20260822_113155.png", None),
     "sprites/currency/cake.webp": ("Photoroom_20260822_113222.png", None),
     "sprites/currency/amber.webp": ("Photoroom_20260822_113236.png", (1.06, 0.99, 0.62)),
-    # 화석은 원본 색이 곧 돌빛이라 손대지 않는다. 푸르게 밀었더니 광물이 아니라 얼음처럼 보였다.
-    "sprites/currency/fossil.webp": ("Photoroom_20260822_113252.png", None),
+    # 화석은 채도만 덜어 낸다. 색을 밀면 광물이 아니라 얼음이 되고, 그대로 두면 호박석의
+    # 누런빛과 섞인다. 회색 쪽으로 살짝 빼는 정도가 돌빛에 가장 가깝다.
+    "sprites/currency/fossil.webp": ("Photoroom_20260822_113252.png", None, 0.55),
     "sprites/currency/heart.webp": ("Photoroom_20260822_113309.png", None),
     "sprites/currency/energy.webp": ("Photoroom_20260822_113612.png", (0.44, 1.04, 0.52)),
 }
@@ -57,6 +58,13 @@ def recolor(image: Image.Image, color: tuple[int, int, int]) -> Image.Image:
     flat = Image.new("RGBA", image.size, (*color, 255))
     flat.putalpha(alpha)
     return flat
+
+
+def desaturate(image: Image.Image, keep: float) -> Image.Image:
+    """색을 회색 쪽으로 섞는다. `keep`이 1이면 원본, 0이면 완전한 흑백이다."""
+    grey = image.convert("L").convert("RGBA")
+    grey.putalpha(image.getchannel("A"))
+    return Image.blend(grey, image, keep)
 
 
 def shift(image: Image.Image, factor: tuple[float, float, float]) -> Image.Image:
@@ -75,9 +83,14 @@ def save(image: Image.Image, target: Path) -> None:
 def main() -> None:
     for out, (source, color) in FLAT.items():
         save(recolor(Image.open(SOURCE / source).convert("RGBA"), color), PUBLIC / out)
-    for out, (source, factor) in ART.items():
+    for out, entry in ART.items():
+        source, factor = entry[0], entry[1]
         art = Image.open(SOURCE / source).convert("RGBA")
-        save(shift(art, factor) if factor else art, PUBLIC / out)
+        if factor:
+            art = shift(art, factor)
+        if len(entry) == 3:
+            art = desaturate(art, entry[2])
+        save(art, PUBLIC / out)
 
 
 if __name__ == "__main__":

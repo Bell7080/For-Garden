@@ -50,9 +50,10 @@ const PANEL_TILT = -1.6;
  * 판의 왼쪽 변이 오른쪽 변보다 짧아지는 양(px).
  *
  * 네 판이 같은 값을 쓰므로 변의 기울기가 같아진다. 높이에 비례시키면 큰 판만 크게 기울어
- * 한 벌로 읽히지 않는다.
+ * 한 벌로 읽히지 않는다. 값이 커지면 왼쪽 위 구석이 안쪽으로 깊이 파여 제목이 판 밖으로
+ * 밀려나므로, 기울어 보이는 최소한만 남긴다.
  */
-const PANEL_TAPER = 22;
+const PANEL_TAPER = 12;
 
 /** 꺼진 뱃지·빈 별의 선 색. 글자용 문자열 색과 달리 도형은 숫자 색이 필요하다. */
 const BADGE_OFF = 0x8b8f96;
@@ -72,7 +73,7 @@ const SKILL_ICON = { size: 150, x: 124, step: 168 } as const;
  * 가로세로 같은 자리에 앉는다(1:1). 하트 곡선은 세로가 조금 짧아서 그대로 그리면 납작해
  * 보이므로, 그리는 쪽에서 세로만 늘려 정사각형 자리를 꽉 채운다.
  */
-const BOND_HEART_SIZE = 84;
+const BOND_HEART_SIZE = 59;
 
 /** 정보창의 별은 화면에서 가장 큰 성급 표시다. 모양과 색은 `stars.ts`가 정한다. */
 const STAR_SIZE = 34;
@@ -258,31 +259,31 @@ export class InfoManager {
     this.expBar = new Gauge(scene, COLUMN.x, 452, COLUMN.width - 88, 16, COLOR.accent);
     this.expLabel = scene.add.text(COLUMN.x, 470, "", textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0.5, 0);
     attach(levelPanel,
-      scene.add.text(COLUMN.x - COLUMN.width / 2 + 42, 306, "LV", textStyle({ role: "display", size: 30, color: COLOR.accentText })).setOrigin(0, 0),
+      scene.add.text(COLUMN.x - COLUMN.width / 2 + 50, 310, "LV", textStyle({ role: "display", size: 30, color: COLOR.accentText })).setOrigin(0, 0),
       this.levelValue, this.levelCap, ...this.expBar.objects, this.expLabel);
     const feed = this.addFeedButton(COLUMN.x, 556, COLUMN.width - 96, 112, levelPanel);
     this.feedButton = feed.container;
     this.feedLabel = feed.label;
 
     // 유대.
-    const bondHeart = scene.add.container(COLUMN.x - COLUMN.width / 2 + 116, 710);
+    const bondHeart = scene.add.container(COLUMN.x - COLUMN.width / 2 + 92, 710);
     // 하트도 별과 같은 방식이다 — 그림자·빛무리·몸통을 겹으로 쌓고 어두운 선으로 마무리한다.
     bondHeart.add(paintBondHeart(scene, BOND_HEART_SIZE));
-    this.bondValue = scene.add.text(0, 2, "", textStyle({ role: "display", size: 46 })).setOrigin(0.5);
+    this.bondValue = scene.add.text(0, 1, "", textStyle({ role: "display", size: 32 })).setOrigin(0.5);
     bondHeart.add(this.bondValue);
     this.bondBar = new Gauge(scene, COLUMN.x + 76, 718, COLUMN.width - 256, 14, BOND_HEART);
     this.bondLabel = scene.add.text(COLUMN.x - COLUMN.width / 2 + 186, 734, "", textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0, 0);
     attach(bondPanel, bondHeart,
-      scene.add.text(COLUMN.x - COLUMN.width / 2 + 186, 658, "유대", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0),
+      scene.add.text(COLUMN.x - COLUMN.width / 2 + 172, 660, "유대", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0),
       ...this.bondBar.objects, this.bondLabel);
 
     // 능력치.
-    attach(statPanel, scene.add.text(COLUMN.x - COLUMN.width / 2 + 44, 838, "능력치", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0));
+    attach(statPanel, scene.add.text(COLUMN.x - COLUMN.width / 2 + 56, 846, "능력치", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0));
     this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 48, 852, (from) => this.openExtraStats(from), statPanel);
     STAT_CHIPS.forEach((chip, index) => this.addStatChip(chip, index, statPanel));
 
     // 하트 젬 — 하트 하나를 셋으로 가른 자리.
-    attach(gemPanel, scene.add.text(COLUMN.x - COLUMN.width / 2 + 44, 1276, "HEART GEM", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0));
+    attach(gemPanel, scene.add.text(COLUMN.x - COLUMN.width / 2 + 56, 1282, "HEART GEM", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0));
     for (let index = 0; index < 3; index += 1) this.gemSlots.push(this.addGemSlot(index, gemPanel));
 
     this.buildFigureStand();

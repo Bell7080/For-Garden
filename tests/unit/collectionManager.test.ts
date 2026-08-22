@@ -12,12 +12,14 @@ function makeSession(): Session {
     owned: new Set(["anky", "rex", "dodo"]),
     favorite: "anky",
     bookmarked: new Set<string>(),
-    pullCountSinceHighestRarity: { fossil: 0, amber: 0 },
+    gachaPityByGroup: { "standard-fossil": { pullsSinceSsr: 0, pickupGuaranteed: false }, "limited-pickup": { pullsSinceSsr: 0, pickupGuaranteed: false } },
     wallet: { fossil: 0, amber: 0, dnaFragments: 0, weeds: 0 },
     relicProgress: Object.fromEntries(["anky", "rex", "dodo"].map((id) => [id, { level: 1, exp: 0, awakening: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] }])),
     ownedHeartGemIds: [],
     dailyContent: { date: "", restorationEntries: 0, completedIds: [], claimedRewardIds: [] },
     missions: { dailyKey: "", weeklyKey: "", progress: {}, claimedIds: [] },
+    // 상품 테스트가 아닌 세션도 최신 저장 계약의 빈 구매 이력을 명시한다.
+    productPurchases: {},
   };
 }
 

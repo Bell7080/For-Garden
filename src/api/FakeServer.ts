@@ -8,6 +8,9 @@ import { DAILY_RESTORATION, getStage } from "../data/stages";
 import { createInitialRelicProgress, session, type Session } from "../state/session";
 import { saveManager } from "../state/SaveManager";
 import { GameApiError, type BreakThroughResponse, type ClaimMissionRewardsResponse, type CompleteStageResponse, type EnterDailyRestorationResponse, type FeedRelicResponse, type GameApi, type LobbyInteractionResponse, type MissionListResponse, type PlayerStateDto, type PullRequest, type PullResponse } from "./contracts";
+import type { ProductDefinition } from "../data/products";
+import { PRODUCTS } from "../data/products";
+import type { ProductListResponse, PurchaseProductResponse } from "./contracts";
 
 /** FakeServer의 지연과 난수원을 테스트에서 결정적으로 바꾸기 위한 선택 설정이다. */
 export interface FakeServerOptions {
@@ -52,7 +55,7 @@ export class FakeServer implements GameApi {
     }
 
     // 원본을 전혀 건드리지 않은 복제 상태에서 비용·천장·보유 결과를 모두 먼저 계산한다.
-    const pulled = pull(banner, request.count, this.state.pullCountSinceHighestRarity[banner.id] ?? 0, this.random);
+    const pulled = pull(banner, request.count, this.state.gachaPityByGroup[banner.pityGroupId] ?? { pullsSinceSsr: 0, pickupGuaranteed: false }, this.random);
     const masteryById = Object.fromEntries(Object.entries(this.state.relicProgress).map(([id, value]) => [id, value.awakening]));
     const outcome = resolveAcquisitions(this.state.owned, masteryById, pulled.relicIds);
     // 최초 획득은 반드시 기본 성장 레코드를 만들고, 중복 변화도 같은 복제본에 반영한다.
@@ -63,17 +66,17 @@ export class FakeServer implements GameApi {
       nextProgress[result.relicId].awakening = result.dnaAfter;
     }
     const nextWallet = { ...spend(this.state.wallet, banner, request.count), dnaFragments: this.state.wallet.dnaFragments + outcome.overflowFragments };
-    const nextPity = { ...this.state.pullCountSinceHighestRarity, [banner.id]: pulled.pullCountSinceHighestRarity };
+    const nextPity = { ...this.state.gachaPityByGroup, [banner.pityGroupId]: pulled.pity };
     // 발굴 성공 이벤트는 결과 확정 뒤 이 API 경계에서만 임무로 환산한다.
     const nextMissions = applyMissionEvent(this.state.missions, { type: "excavation_completed", count: request.count }, this.now());
-    const nextState: Session = { ...this.state, wallet: nextWallet, owned: outcome.ownedRelicIds, relicProgress: nextProgress, pullCountSinceHighestRarity: nextPity, missions: nextMissions };
+    const nextState: Session = { ...this.state, wallet: nextWallet, owned: outcome.ownedRelicIds, relicProgress: nextProgress, gachaPityByGroup: nextPity, missions: nextMissions };
 
     // 저장 실패도 원본 메모리에 부분 반영되지 않도록 저장을 먼저 성공시킨 뒤 필드를 일괄 교체한다.
     if (this.state === session) saveManager.save(nextState);
     this.state.wallet = nextWallet;
     this.state.owned = outcome.ownedRelicIds;
     this.state.relicProgress = nextProgress;
-    this.state.pullCountSinceHighestRarity = nextPity;
+    this.state.gachaPityByGroup = nextPity;
     this.state.missions = nextMissions;
     return {
       ...this.snapshot(),
@@ -198,6 +201,67 @@ export class FakeServer implements GameApi {
     return { ...this.snapshot(), claimedIds: uniqueIds, weedsEarned };
   }
 
+  /** 서버 시각의 노출 기간과 현재 제한 주기를 반영해 공용 카탈로그를 조회한다. */
+  async getProducts(): Promise<ProductListResponse> {
+    await this.delay();
+    const now = this.now();
+    const products = PRODUCTS.filter((product) => this.isVisible(product, now)).map((product) => {
+      const remaining = this.remaining(product, now);
+      const premium = product.price.currency === "real_money";
+      return { ...product, remaining, purchasable: !premium && remaining > 0, disabledReason: premium ? "서버 영수증 검증 연결 전에는 구매할 수 없습니다." : remaining <= 0 ? "구매 제한에 도달했습니다." : undefined };
+    });
+    return { products, serverTime: now.toISOString() };
+  }
+
+  /** 가격 검증부터 제한 갱신까지 복제 상태에서 끝내고 마지막에 한 번만 확정한다. */
+  async purchaseProduct(productId: string): Promise<PurchaseProductResponse> {
+    await this.delay();
+    const now = this.now();
+    const product = PRODUCTS.find((candidate) => candidate.id === productId);
+    if (!product) throw new GameApiError("PRODUCT_NOT_FOUND", "존재하지 않는 상품입니다.");
+    if (!this.isVisible(product, now)) throw new GameApiError("PRODUCT_NOT_VISIBLE", "현재 노출 기간이 아닌 상품입니다.");
+    // FakeServer는 플랫폼 성공이나 영수증을 만들지 않는다. 유료 지급은 실제 검증 서버의 책임이다.
+    if (product.price.currency === "real_money") throw new GameApiError("PLATFORM_PAYMENT_REQUIRED", "플랫폼 영수증 검증이 필요한 상품입니다.");
+    const remaining = this.remaining(product, now);
+    if (remaining <= 0) throw new GameApiError("PURCHASE_LIMIT_REACHED", "구매 제한에 도달했습니다.");
+    if (this.state.wallet[product.price.currency] < product.price.amount) throw new GameApiError("INSUFFICIENT_CURRENCY", "재화가 부족합니다.");
+
+    const nextWallet = { ...this.state.wallet, [product.price.currency]: this.state.wallet[product.price.currency] - product.price.amount };
+    const nextGems = [...this.state.ownedHeartGemIds];
+    for (const grant of product.grants) {
+      if (grant.kind === "currency") nextWallet[grant.currency] += grant.amount;
+      else if (!nextGems.includes(grant.itemId)) nextGems.push(grant.itemId);
+    }
+    const periodKey = this.productPeriodKey(product, now);
+    const current = this.state.productPurchases[product.id];
+    const count = current?.periodKey === periodKey ? current.count + 1 : 1;
+    const nextPurchases = { ...this.state.productPurchases, [product.id]: { periodKey, count } };
+    this.persist({ ...this.state, wallet: nextWallet, ownedHeartGemIds: nextGems, productPurchases: nextPurchases });
+    this.state.wallet = nextWallet; this.state.ownedHeartGemIds = nextGems; this.state.productPurchases = nextPurchases;
+    return { ...this.snapshot(), productId, grants: product.grants, remaining: Math.max(0, product.purchaseLimit - count) };
+  }
+
+  /** 노출 판정은 클라이언트 시간이 아니라 주입 가능한 서버 시간만 사용한다. */
+  private isVisible(product: ProductDefinition, now: Date): boolean { return now >= new Date(product.visibleFrom) && now < new Date(product.visibleUntil); }
+
+  /** 일/주/계정 단위 제한을 비교할 안정적인 키로 바꾼다. */
+  private productPeriodKey(product: ProductDefinition, now: Date): string {
+    const day = now.toISOString().slice(0, 10);
+    if (product.refresh === "daily") return day;
+    if (product.refresh === "weekly") {
+      const date = new Date(`${day}T00:00:00Z`); date.setUTCDate(date.getUTCDate() - ((date.getUTCDay() + 6) % 7));
+      return date.toISOString().slice(0, 10);
+    }
+    return product.refresh === "once" ? "account" : "permanent";
+  }
+
+  /** 기간 키가 바뀐 구매 기록은 0회로 간주한다. */
+  private remaining(product: ProductDefinition, now: Date): number {
+    const record = this.state.productPurchases[product.id];
+    const count = record?.periodKey === this.productPeriodKey(product, now) ? record.count : 0;
+    return Math.max(0, product.purchaseLimit - count);
+  }
+
   private snapshot(): PlayerStateDto {
     // 중첩 슬롯까지 복사해 응답 변경이 서버 역할의 세션을 오염시키지 않게 한다.
     const relicProgress = Object.fromEntries(
@@ -205,7 +269,7 @@ export class FakeServer implements GameApi {
     );
     return {
       wallet: { ...this.state.wallet },
-      pullCountSinceHighestRarity: { ...this.state.pullCountSinceHighestRarity },
+      gachaPityByGroup: Object.fromEntries(Object.entries(this.state.gachaPityByGroup).map(([id, pity]) => [id, { ...pity }])),
       ownedRelicIds: [...this.state.owned],
       relicProgress,
       ownedHeartGemIds: [...this.state.ownedHeartGemIds],

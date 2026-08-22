@@ -24,6 +24,7 @@ import { COLOR, textStyle } from "../ui/theme";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { PortraitCard, starsForRarity } from "../ui/PortraitCard";
 import { firstMeetingLine } from "../data/relicFirstMeetings";
+import { RailButton } from "../ui/RailButton";
 
 /** 배너 그림이 서는 바닥. */
 const BANNER_FLOOR = 1240;
@@ -73,6 +74,9 @@ export class LabScene extends Phaser.Scene {
     this.add.rectangle(cx, BANNER_FLOOR, BASE_WIDTH, 3, COLOR.panelEdge).setDepth(-28);
 
     this.topBar = new TopBar(this);
+
+    // 연구소 우측 4번 기능 슬롯은 패키지/BM 전시 상점으로 연결한다. 결제는 해당 씬에서 비활성이다.
+    new RailButton(this, BASE_WIDTH - 92, 555, { icon: "shop", label: "4 · 상점", accent: true, onClick: () => this.scene.start("shop", { section: "premium" }) });
 
     this.bannerName = this.add.text(cx, 170, "", textStyle({ role: "display", size: 44 })).setOrigin(0.5, 0);
     this.bannerDesc = this.add
@@ -211,17 +215,28 @@ export class LabScene extends Phaser.Scene {
     const cx = BASE_WIDTH / 2;
     const overlay = this.add.container(0, 0).setDepth(850);
     const shade = this.add.rectangle(cx, 960, BASE_WIDTH, 1920, COLOR.void, 0.9).setInteractive();
-    const panel = drawLayer(this, cx, 800, slantedRect(820, 720), {
+    const panel = drawLayer(this, cx, 840, slantedRect(860, 980), {
       fill: 0x141920, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.3,
     });
     overlay.add([shade, panel]);
-    overlay.add(this.add.text(cx, 510, "발굴 확률", textStyle({ role: "display", size: 44 })).setOrigin(0.5));
+    overlay.add(this.add.text(cx, 390, "발굴 확률 · 보장 정책", textStyle({ role: "display", size: 42 })).setOrigin(0.5));
     const rates = (["SSR", "SR", "R"] as const)
       .map((rarity) => `${rarity}  ${(banner.rarityRates[rarity] * 100).toFixed(1)}%`)
       .join("\n");
-    overlay.add(this.add.text(cx, 610, rates, textStyle({ role: "body", size: 34, align: "center", lineSpacing: 24 })).setOrigin(0.5, 0));
-    overlay.add(this.add.text(cx, 870, `등급 내 픽업 확률 ${(banner.pickupRate * 100).toFixed(0)}%\n10연 마지막 슬롯 SR 이상 보장`, textStyle({ role: "body", size: 27, color: COLOR.inkDim, align: "center", lineSpacing: 14 })).setOrigin(0.5, 0));
-    const close = new Button(this, cx, 1080, { width: 320, height: 100, label: "확인", fontSize: 32, onClick: () => overlay.destroy() });
+    overlay.add(this.add.text(cx, 475, rates, textStyle({ role: "body", size: 30, align: "center", lineSpacing: 14 })).setOrigin(0.5, 0));
+    const pity = session.gachaPityByGroup[banner.pityGroupId] ?? { pullsSinceSsr: 0, pickupGuaranteed: false };
+    // 확률뿐 아니라 현재 계정 상태와 배너 교체 정책, 중복 환산까지 한 화면에서 확인시킨다.
+    const policy = [
+      `현재 SSR 미획득 ${pity.pullsSinceSsr}회 · 확정까지 ${Math.max(0, banner.highestRarityGuarantee - pity.pullsSinceSsr)}회`,
+      `픽업 확정  ${pity.pickupGuaranteed ? "ON · 다음 SSR은 픽업" : "OFF"}`,
+      `SSR 픽업 확률 ${(banner.pickupRate * 100).toFixed(0)}% · 실패 시 다음 SSR 픽업 확정`,
+      `이월 그룹  ${banner.pityGroupId}`,
+      "같은 그룹의 교체 배너로 천장·픽업 확정 이월",
+      "10연 마지막 슬롯 SR 이상 보장 (SSR 천장 우선)",
+      "중복 보상  각성 +1 · 각성 5 이후 공용 DNA 조각 +1",
+    ].join("\n");
+    overlay.add(this.add.text(cx, 700, policy, textStyle({ role: "body", size: 25, color: COLOR.inkDim, align: "center", lineSpacing: 13, wrap: 760 })).setOrigin(0.5, 0));
+    const close = new Button(this, cx, 1190, { width: 320, height: 100, label: "확인", fontSize: 32, onClick: () => overlay.destroy() });
     overlay.add(close);
     shade.on("pointerdown", () => overlay.destroy());
   }
@@ -393,8 +408,8 @@ export class LabScene extends Phaser.Scene {
     this.bannerDesc.setText(banner.desc);
     const pickupNames = Object.values(banner.pickupRelicIds).flat().map((id) => getRelic(id).name);
     this.pickupText.setText(`PICK UP  ${pickupNames.join(" · ")}`);
-    const currentPity = session.pullCountSinceHighestRarity[banner.id] ?? 0;
-    this.pityText.setText(`SSR 확정까지 ${Math.max(0, banner.highestRarityGuarantee - currentPity)}회`);
+    const currentPity = session.gachaPityByGroup[banner.pityGroupId] ?? { pullsSinceSsr: 0, pickupGuaranteed: false };
+    this.pityText.setText(`SSR 확정까지 ${Math.max(0, banner.highestRarityGuarantee - currentPity.pullsSinceSsr)}회${currentPity.pickupGuaranteed ? " · 다음 SSR 픽업 확정" : ""}`);
 
     const unit = banner.currency === "fossil" ? "화석" : "호박석";
     this.oneButton

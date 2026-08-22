@@ -14,12 +14,14 @@ function makeSession(fossil = 1000): Session {
     owned: new Set(["anky", "rex", "dodo"]),
     favorite: "anky",
     bookmarked: new Set<string>(),
-    pullCountSinceHighestRarity: { fossil: 0, amber: 0 },
+    gachaPityByGroup: { "standard-fossil": { pullsSinceSsr: 0, pickupGuaranteed: false }, "limited-pickup": { pullsSinceSsr: 0, pickupGuaranteed: false } },
     wallet: { fossil, amber: 10, dnaFragments: 0, weeds: 0 },
     relicProgress: Object.fromEntries(["anky", "rex", "dodo"].map((id) => [id, { level: id === "anky" ? 2 : 1, exp: 0, awakening: id === "anky" ? 1 : 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: id === "anky" ? ["vital-seed", null, null] : [null, null, null] }])),
     ownedHeartGemIds: ["vital-seed"],
     dailyContent: { date: "", restorationEntries: 0, completedIds: [], claimedRewardIds: [] },
     missions: { dailyKey: "", weeklyKey: "", progress: {}, claimedIds: [] },
+    // 상품 테스트가 아닌 세션도 최신 저장 계약의 빈 구매 이력을 명시한다.
+    productPurchases: {},
   };
 }
 
@@ -90,7 +92,7 @@ describe("FakeServer", () => {
     expect(response.results).toEqual([{ relicId: "rex", kind: "mastery", dnaBefore: 0, dnaAfter: 1, overflowFragments: 0 }]);
     expect(response.duplicateRelicIds).toEqual(["rex"]);
     expect(state.wallet.fossil).toBe(900);
-    expect(state.pullCountSinceHighestRarity.fossil).toBe(0);
+    expect(state.gachaPityByGroup["standard-fossil"].pullsSinceSsr).toBe(0);
   });
 
   it("최초 획득의 성장 레코드를 같은 처리에서 만들고 같은 10연 중복을 누적한다", async () => {
@@ -151,5 +153,26 @@ describe("FakeServer", () => {
     await server.interactInLobby("anky");
     expect(state.missions.progress).toMatchObject({ "daily-excavate": 1, "daily-salary": 1, "daily-lobby": 1 });
     await expect(server.getMissions()).resolves.toMatchObject({ claimableCount: 3 });
+  });
+});
+
+describe("FakeServer 상품 카탈로그", () => {
+  it("인게임 가격 차감, 지급, 일일 제한을 한 처리로 확정한다", async () => {
+    const state = makeSession(1000);
+    const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-22T12:00:00Z") });
+    await expect(server.purchaseProduct("trade-weeds")).resolves.toMatchObject({ productId: "trade-weeds", remaining: 2, wallet: { fossil: 820, weeds: 100 } });
+    expect(state.productPurchases["trade-weeds"]).toEqual({ periodKey: "2026-08-22", count: 1 });
+    await server.purchaseProduct("trade-weeds");
+    await server.purchaseProduct("trade-weeds");
+    await expect(server.purchaseProduct("trade-weeds")).rejects.toMatchObject({ code: "PURCHASE_LIMIT_REACHED" });
+  });
+
+  it("재화 부족과 유료 상품은 어떤 지급도 만들지 않는다", async () => {
+    const state = makeSession(0); const before = { ...state.wallet };
+    const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-22T12:00:00Z") });
+    await expect(server.purchaseProduct("trade-weeds")).rejects.toMatchObject({ code: "INSUFFICIENT_CURRENCY" });
+    await expect(server.purchaseProduct("premium-starter")).rejects.toMatchObject({ code: "PLATFORM_PAYMENT_REQUIRED" });
+    expect(state.wallet).toEqual(before);
+    expect(state.productPurchases).toEqual({});
   });
 });

@@ -11,6 +11,7 @@ import { PartyScene } from "./scenes/PartyScene";
 import { BattleScene } from "./scenes/BattleScene";
 import { OpeningScene } from "./scenes/OpeningScene";
 import { MissionsScene } from "./scenes/MissionsScene";
+import { ShopScene } from "./scenes/ShopScene";
 
 new Phaser.Game({
   // Puppet 원본 indexed mesh를 GPU로 직접 그리므로 중복 정점을 만드는 Canvas 폴백은 사용하지 않는다.
@@ -39,5 +40,6 @@ new Phaser.Game({
     // 멀티터치 환경에서도 Phaser pointer 이벤트가 touchstart/touchend를 안정적으로 추적한다.
     activePointers: 3,
   },
-  scene: [BootScene, TitleScene, OpeningScene, LobbyScene, MissionsScene, RelicsScene, LabScene, StageMapScene, PartyScene, BattleScene],
+  // 무역과 유료 상품 전시는 같은 카탈로그 씬을 진입 데이터만 달리해 공유한다.
+  scene: [BootScene, TitleScene, OpeningScene, LobbyScene, MissionsScene, ShopScene, RelicsScene, LabScene, StageMapScene, PartyScene, BattleScene],
 });

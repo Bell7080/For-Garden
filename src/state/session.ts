@@ -1,6 +1,6 @@
 /** 씬 사이를 오가는 런타임 상태다. JSON 경계에서는 반드시 SaveData로 변환한다. */
 
-import type { Wallet } from "../core/gacha";
+import type { GachaPityState, Wallet } from "../core/gacha";
 import type { RelicProgress } from "../core/types";
 import { BANNERS } from "../data/banners";
 import { STAGES } from "../data/stages";
@@ -27,8 +27,8 @@ export interface Session {
   /** 즐겨찾기한 렐릭. 애착과 달리 여러 명을 담을 수 있고 목록 위쪽에 모아 보는 데 쓴다. */
   bookmarked: Set<string>;
   wallet: Wallet;
-  /** 배너별 SSR 미획득 연속 횟수. 신규/사라진 키는 로드 경계에서 현재 배너 기준 0으로 보정한다. */
-  pullCountSinceHighestRarity: Record<string, number>;
+  /** 이월 가능한 배너 그룹별 SSR 카운터와 픽업 확정 상태다. */
+  gachaPityByGroup: Record<string, GachaPityState>;
   /** 렐릭 id별 성장/장착 상태다. 객체와 배열만 사용해 그대로 직렬화할 수 있다. */
   relicProgress: Record<string, RelicProgress>;
   /** 보유 Heart Gem id 목록이다. 중복 없는 직렬화 가능한 배열로 유지한다. */
@@ -37,6 +37,8 @@ export interface Session {
   dailyContent: DailyContentState;
   /** 서버 UTC 일자·주차에 묶인 직렬화 가능한 임무 진행과 수령 기록이다. */
   missions: MissionState;
+  /** 상품별 현재 제한 주기 키와 구매 횟수다. FakeServer만 갱신한다. */
+  productPurchases: Record<string, { periodKey: string; count: number }>;
 }
 
 /** 아직 서버 계정에 귀속되지 않은 브라우저 일일 콘텐츠 스냅샷이다. */
@@ -63,12 +65,13 @@ export interface SaveData {
   favorite: string;
   bookmarkedRelicIds: string[];
   wallet: Wallet;
-  /** 배너 ID를 키로 둬 서로 다른 천장이 섞이지 않게 저장한다. */
-  pullCountSinceHighestRarity: Record<string, number>;
+  /** 배너 교체에도 유지되는 그룹 ID를 키로 쓰며 개별 배너 ID에는 귀속하지 않는다. */
+  gachaPityByGroup: Record<string, GachaPityState>;
   relicProgress: Record<string, RelicProgress>;
   ownedHeartGemIds: string[];
   dailyContent: DailyContentState;
   missions: MissionState;
+  productPurchases: Record<string, { periodKey: string; count: number }>;
 }
 
 /** 신규 렐릭에 부여하는 독립 복사 가능한 기본 성장 상태다. */
@@ -91,11 +94,12 @@ export function createDefaultSession(): Session {
     favorite: STARTER_RELICS[0],
     bookmarked: new Set<string>(),
     wallet: { fossil: 1200, amber: 10, dnaFragments: 0, weeds: 0 },
-    pullCountSinceHighestRarity: Object.fromEntries(BANNERS.map(({ id }) => [id, 0])),
+    gachaPityByGroup: Object.fromEntries([...new Set(BANNERS.map(({ pityGroupId }) => pityGroupId))].map((id) => [id, { pullsSinceSsr: 0, pickupGuaranteed: false }])),
     relicProgress: Object.fromEntries(STARTER_RELICS.map((id) => [id, createStarterProgress()])),
     ownedHeartGemIds: ["vital-seed", "fang-core", "ancient-pulse"],
     dailyContent: { date: "", restorationEntries: 0, completedIds: [], claimedRewardIds: [] },
     missions: { dailyKey: "", weeklyKey: "", progress: {}, claimedIds: [] },
+    productPurchases: {},
   };
 }
 

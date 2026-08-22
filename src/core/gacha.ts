@@ -17,6 +17,8 @@ export const RARITIES: readonly RelicRarity[] = ["SSR", "SR", "R"];
 
 export interface Banner {
   id: string;
+  /** 교체되어도 천장과 픽업 확정을 함께 이월하는 운영 정책 단위다. */
+  pityGroupId: string;
   name: string;
   desc: string;
   /** 배너 대표 그림에 쓰며 pickupRelicIds에도 반드시 포함되는 렐릭이다. */
@@ -40,7 +42,13 @@ export interface PullResult {
   relicIds: string[];
   rarities: RelicRarity[];
   /** 슬롯별 SSR에서 0으로 초기화되고, 비SSR에서 1씩 증가한 최종 천장 카운터다. */
-  pullCountSinceHighestRarity: number;
+  pity: GachaPityState;
+}
+
+/** SSR 미획득 횟수와 다음 SSR 픽업 확정을 서로 독립적으로 보존한다. */
+export interface GachaPityState {
+  pullsSinceSsr: number;
+  pickupGuaranteed: boolean;
 }
 
 export function pullCost(banner: Banner, count: number): number {
@@ -75,15 +83,15 @@ export function determineRarity(banner: Banner, random: number): RelicRarity {
 export function pull(
   banner: Banner,
   count: number,
-  pullCountSinceHighestRarity: number,
+  currentPity: GachaPityState,
   rng: () => number,
 ): PullResult {
   const relicIds: string[] = [];
   const rarities: RelicRarity[] = [];
-  let pity = pullCountSinceHighestRarity;
+  let pity = { ...currentPity };
 
   for (let slot = 0; slot < count; slot += 1) {
-    const pityForcesSsr = pity + 1 >= banner.highestRarityGuarantee;
+    const pityForcesSsr = pity.pullsSinceSsr + 1 >= banner.highestRarityGuarantee;
     let rarity = pityForcesSsr ? "SSR" : determineRarity(banner, rng());
     if (!pityForcesSsr && count === 10 && slot === 9 && rarity === "R") rarity = "SR";
 
@@ -91,14 +99,21 @@ export function pull(
     const pickupPool = banner.pickupRelicIds[rarity] ?? [];
     const nonPickupPool = fullPool.filter((id) => !pickupPool.includes(id));
     // 픽업이 없으면 불필요한 난수를 소비하지 않는다. 픽업 판정 뒤 선택 난수만 소비한다.
-    const pickedUp = pickupPool.length > 0 && rng() < banner.pickupRate;
+    // 픽업 확정은 SSR 슬롯에만 적용하며, 확정 때는 판정 난수를 소비하지 않는다.
+    const guaranteesPickup = rarity === "SSR" && pity.pickupGuaranteed && pickupPool.length > 0;
+    const pickedUp = guaranteesPickup || (pickupPool.length > 0 && rng() < banner.pickupRate);
     const selectionPool = pickedUp ? pickupPool : (nonPickupPool.length > 0 ? nonPickupPool : fullPool);
     relicIds.push(choose(selectionPool, rng));
     rarities.push(rarity);
-    pity = rarity === "SSR" ? 0 : pity + 1;
+    if (rarity === "SSR") {
+      // SSR 픽업 실패만 다음 SSR 확정을 켜고, 픽업 획득은 기존 확정까지 해제한다.
+      pity = { pullsSinceSsr: 0, pickupGuaranteed: pickupPool.length > 0 && !pickedUp };
+    } else {
+      pity = { ...pity, pullsSinceSsr: pity.pullsSinceSsr + 1 };
+    }
   }
 
-  return { relicIds, rarities, pullCountSinceHighestRarity: pity };
+  return { relicIds, rarities, pity };
 }
 
 /** 비용을 치른 새 지갑. 모자라면 원래 참조를 돌려준다. */

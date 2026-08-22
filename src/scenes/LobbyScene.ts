@@ -144,12 +144,13 @@ export class LobbyScene extends Phaser.Scene {
   private buildSideRail(): void {
     const x = BASE_WIDTH - 106;
     const rail = [
-      { icon: "shop", label: "상점" },
+      // 로비의 옛 상점은 현금 상품과 분리된 인게임 재화 전용 "무역"으로 개편한다.
+      { icon: "shop", label: "무역", onClick: () => this.scene.start("shop", { section: "trade" }) },
       { icon: "mail", label: "우편" },
       { icon: "friends", label: "친구" },
     ] as const;
     rail.forEach((item, i) => {
-      new RailButton(this, x, 640 + i * 152, { icon: item.icon, label: item.label, onClick: () => this.notReady(item.label) });
+      new RailButton(this, x, 640 + i * 152, { icon: item.icon, label: item.label, onClick: "onClick" in item ? item.onClick : () => this.notReady(item.label) });
     });
     // 임무 입구는 상세 내용을 복제하지 않고 서버가 계산한 미수령 개수만 짧게 표시한다.
     const missionButton = new RailButton(this, x, 1096, { icon: "scroll", label: "임무", accent: true, onClick: () => this.scene.start("missions") });

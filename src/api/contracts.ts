@@ -1,13 +1,14 @@
-import type { AcquisitionResult, Wallet } from "../core/gacha";
+import type { AcquisitionResult, GachaPityState, Wallet } from "../core/gacha";
 import type { RelicProgress } from "../core/types";
 import type { MissionPeriod } from "../core/missions";
+import type { ProductCurrency, ProductGrant, ProductRefresh } from "../data/products";
 
 /** 네트워크로 직렬화할 수 있는 플레이어 진행 정보의 최소 규격이다. */
 export interface PlayerStateDto {
   /** 서버가 확정한 현재 재화다. */
   wallet: Wallet;
-  /** 서버가 확정한 배너별 SSR 천장 진행도다. */
-  pullCountSinceHighestRarity: Record<string, number>;
+  /** 서버가 확정한 이월 그룹별 천장과 픽업 확정 상태다. */
+  gachaPityByGroup: Record<string, GachaPityState>;
   /** Set 대신 배열을 써서 JSON 응답과 같은 모양을 유지한다. */
   ownedRelicIds: string[];
   /** 렐릭 id별 성장과 Heart Gem 3슬롯 장착 상태다. */
@@ -31,6 +32,13 @@ export interface MissionListResponse { missions: MissionDto[]; claimableCount: n
 /** 일괄 또는 선택 수령 뒤 지급 총액과 최신 상태를 반환한다. */
 export interface ClaimMissionRewardsResponse extends PlayerStateDto { claimedIds: string[]; weedsEarned: number; }
 
+/** 상품 목록은 정적 정의에 서버가 계산한 현재 구매 가능 횟수를 결합한다. */
+export interface ProductDto { id: string; section: "trade" | "premium"; name: string; description: string; price: { currency: ProductCurrency; amount: number; display?: string }; grants: readonly ProductGrant[]; purchaseLimit: number; refresh: ProductRefresh; remaining: number; purchasable: boolean; disabledReason?: string; }
+/** 상품 조회 응답은 서버 시각 기준으로 노출 중인 상품만 담는다. */
+export interface ProductListResponse { products: ProductDto[]; serverTime: string; }
+/** 인게임 상품의 차감·지급·제한 갱신이 모두 끝난 뒤의 응답이다. */
+export interface PurchaseProductResponse extends PlayerStateDto { productId: string; grants: readonly ProductGrant[]; remaining: number; }
+
 /** 발굴 요청에는 클라이언트가 선택한 배너와 횟수만 보낸다. */
 export interface PullRequest {
   bannerId: string;
@@ -46,7 +54,7 @@ export interface PullResponse extends PlayerStateDto {
 }
 
 /** UI가 서버 실패 원인을 문구로 바꿀 수 있게 고정한 오류 코드다. */
-export type ApiErrorCode = "BANNER_NOT_FOUND" | "INSUFFICIENT_CURRENCY" | "INVALID_PULL_COUNT" | "RELIC_NOT_FOUND" | "RELIC_MAX_LEVEL" | "STAGE_NOT_FOUND" | "DAILY_ENTRY_LIMIT" | "MISSION_NOT_FOUND" | "MISSION_NOT_COMPLETE" | "MISSION_ALREADY_CLAIMED";
+export type ApiErrorCode = "BANNER_NOT_FOUND" | "INSUFFICIENT_CURRENCY" | "INVALID_PULL_COUNT" | "RELIC_NOT_FOUND" | "RELIC_MAX_LEVEL" | "STAGE_NOT_FOUND" | "DAILY_ENTRY_LIMIT" | "MISSION_NOT_FOUND" | "MISSION_NOT_COMPLETE" | "MISSION_ALREADY_CLAIMED" | "PRODUCT_NOT_FOUND" | "PRODUCT_NOT_VISIBLE" | "PURCHASE_LIMIT_REACHED" | "PLATFORM_PAYMENT_REQUIRED";
 
 /**
  * 급여 응답.
@@ -79,6 +87,10 @@ export interface GameApi {
   getMissions(): Promise<MissionListResponse>;
   /** ID를 생략하면 현재 완료된 모든 미수령 임무를 한 저장 처리로 받는다. */
   claimMissionRewards(missionIds?: string[]): Promise<ClaimMissionRewardsResponse>;
+  /** 서버 시각과 구매 이력을 반영한 공용 카탈로그를 조회한다. */
+  getProducts(): Promise<ProductListResponse>;
+  /** 인게임 재화 상품만 구매한다. 유료 상품은 플랫폼 결제/영수증 검증 경계를 사용해야 한다. */
+  purchaseProduct(productId: string): Promise<PurchaseProductResponse>;
 }
 
 /** 예상 가능한 요청 실패를 일반 네트워크 예외와 구분한다. */

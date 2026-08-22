@@ -100,7 +100,7 @@ const RARITY_GEM: Record<RelicRarity, readonly [string, string, string]> = {
 };
 
 /** 이름 옆 속성·직군 뱃지의 크기와 이름에서 띄우는 간격. */
-const AFFINITY = { main: 78, sub: 58, gap: 26 } as const;
+const AFFINITY = { main: 96, sub: 72, gap: 30 } as const;
 
 /** 정보창의 별은 화면에서 가장 큰 성급 표시다. 모양과 색은 `stars.ts`가 정한다. */
 const STAR_SIZE = 34;

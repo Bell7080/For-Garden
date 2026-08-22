@@ -260,11 +260,11 @@ export class PortraitCard extends Phaser.GameObjects.Container {
    * 둔다 — 둘이 같은 크기면 무엇을 먼저 봐야 하는지 알 수 없다.
    */
   private addAffinity(affinity: { element: Element; role: Role }, width: number, height: number): void {
-    const main = Math.min(48, width * 0.27);
-    const sub = main * 0.72;
+    const main = Math.min(60, width * 0.33);
+    const sub = main * 0.74;
     // 발광이 칩 밖으로 새지 않도록 안쪽으로 충분히 들인다.
-    const x = -width / 2 + main * 0.82;
-    const top = -height / 2 + main * 0.76;
+    const x = -width / 2 + main * 0.72;
+    const top = -height / 2 + main * 0.66;
     // 카드의 원화는 밝고 복잡하다. 그늘을 진하게 줘야 실루엣이 옷 무늬에 묻히지 않는다.
     this.add(new AffinityBadge(this.scene, x, top, ELEMENT_ICON[affinity.element], main, 0.62));
     this.add(new AffinityBadge(this.scene, x, top + main * 0.94, ROLE_ICON[affinity.role], sub, 0.62));

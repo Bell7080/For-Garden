@@ -92,8 +92,8 @@ export interface ArenaBattleTicket {
 
 /** 클라이언트가 할 수 있는 결정만 기록하며 승패·피해·점수는 포함하지 않는다. */
 export type ArenaPlayerCommand =
-  | { sequence: number; atTick: number; kind: "ultimate"; fighterSlot: 0 | 1 | 2 }
-  | { sequence: number; atTick: number; kind: "suppress_ferocity"; fighterSlot: 0 | 1 | 2 };
+  // 진압이 사라져 플레이어가 기록할 전투 개입은 궁극기 발동뿐이다.
+  { sequence: number; atTick: number; kind: "ultimate"; fighterSlot: 0 | 1 | 2 };
 
 /** 클라이언트 제출물은 서버 재시뮬레이션에 필요한 결정 로그뿐이다. */
 export interface SubmitArenaBattleRequest {

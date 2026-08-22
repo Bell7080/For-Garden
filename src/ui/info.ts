@@ -1311,7 +1311,7 @@ export class InfoManager {
   private skillViewModel(kindLabel: string, skill: Skill, gaugeCost?: number): SkillInfoViewModel {
     const attacker = this.currentUnit ?? (this.currentDef && {
       def: this.currentDef, hp: this.currentDef.stats.hp, maxHp: this.currentDef.stats.hp,
-      energy: 0, ferocity: 0, bondLevel: 0, stunTurns: 0, justSwapped: false,
+      energy: 0, ferocity: 0, bondLevel: 0, ferocityFever: false, justSwapped: false,
       awakening: relicProgression.getProgress(this.currentDef.id).awakening,
     });
     const preview = attacker && kindLabel !== "패시브" ? previewSkillDamage(attacker, skill, this.previewTarget, true) : undefined;

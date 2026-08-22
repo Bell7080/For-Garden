@@ -7,7 +7,6 @@ import {
   canFireUltimate,
   createSkirmish,
   fireUltimate,
-  suppressFerocity,
   isFighterAlive,
   renderPose,
   stepSkirmish,
@@ -232,10 +231,8 @@ export class BattleScene extends Phaser.Scene {
   /** 카드를 눌렀을 때. 조건이 맞지 않으면 코어가 아무것도 바꾸지 않는다. */
   private useUltimate(fighter: Fighter): void {
     if (this.finished || !this.spawned) return;
-    // 100에서는 같은 터치가 궁극기가 아닌 진압으로 바뀌어 위험 유지/안정 회복 선택을 제공한다.
-    const events = fighter.ferocity >= FEROCITY_RULES.max
-      ? suppressFerocity(this.state, fighter.id)
-      : fireUltimate(this.state, fighter.id, () => Math.random());
+    // 야성 피버는 궁극기 입력을 가로채지 않으며, 최대치에서도 즉시 궁극기를 발동한다.
+    const events = fireUltimate(this.state, fighter.id, () => Math.random());
     if (events.length === 0) return;
     events.forEach((event) => this.playEvent(event));
     this.syncViews();
@@ -290,15 +287,6 @@ export class BattleScene extends Phaser.Scene {
       this.playDeath(event.fighterId);
       return;
     }
-    if (event.kind === "suppress") {
-      const view = this.views.get(event.fighterId);
-      if (view) {
-        // 개방된 야성을 잠재우는 연출. 한 바퀴 크게 숨을 고르고 제자리로 돌아온다.
-        this.tweens.add({ targets: view.creature, angle: 360, duration: 700 });
-      }
-      return;
-    }
-
     if (event.kind === "bleed") {
       const view = this.views.get(event.fighterId);
       if (!view) return;
@@ -434,15 +422,13 @@ export class BattleScene extends Phaser.Scene {
       profile.energyLabel.setText(`각성 ${fighter.energy} / ${ULTIMATE_ENERGY_MAX} (비용 ${fighter.def.ultimate.cost})`);
       profile.energyLabel.setColor(ready ? COLOR.accentText : COLOR.inkDim);
       profile.card.setAlpha(alive ? 1 : 0.45);
-      const ferocityColor = fighter.ferocity >= 100 ? COLOR.ferocityDanger
+      const ferocityColor = fighter.ferocityFever ? COLOR.accent
         : fighter.ferocity >= 80 ? COLOR.ferocityWarning : COLOR.ferocityLow;
-      profile.ferocityBar.setValue(fighter.ferocity / 100, ferocityColor);
-      profile.ferocityLabel.setText(fighter.ferocity >= 100 ? "통제 불능 · 눌러서 진압" : `야성 ${fighter.ferocity} / 100`);
-      profile.ferocityLabel.setColor(fighter.ferocity >= 100 ? COLOR.dangerText : fighter.ferocity >= 80 ? COLOR.accentText : "#70d6cb");
-      // 통제 불능은 프로필 전체를 붉게 물들이고 궁극기 준비 연출을 끈다.
+      profile.ferocityBar.setValue(fighter.ferocity / FEROCITY_RULES.max, ferocityColor);
+      // 피버 중에는 보상 상태와 자동 감소를 함께 알려 별도 진압 입력을 찾지 않게 한다.
+      profile.ferocityLabel.setText(fighter.ferocityFever ? `폭주 중 · 피버 ${Math.ceil(fighter.ferocity)} / ${FEROCITY_RULES.max}` : `야성 ${Math.ceil(fighter.ferocity)} / ${FEROCITY_RULES.max}`);
+      profile.ferocityLabel.setColor(fighter.ferocityFever ? COLOR.accentText : fighter.ferocity >= 80 ? COLOR.accentText : "#70d6cb");
       if (ready !== profile.ready) this.setUltimateReady(profile, ready);
-      // 준비 상태 갱신이 테두리를 되돌릴 수 있으므로 통제 불능 색을 마지막에 적용한다.
-      profile.card.setDanger(fighter.ferocity >= 100);
     }
   }
 

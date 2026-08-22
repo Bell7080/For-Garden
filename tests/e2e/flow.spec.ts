@@ -222,26 +222,33 @@ test("전투는 한쪽이 전멸하면 끝난다", async ({ page }) => {
 });
 
 
-test("하단 탭으로 렐릭 · 로비 · 연구소를 오간다", async ({ page }) => {
+test("하단 탭으로 발굴 · 렐릭 · 로비 · 연구소 · 상점을 오간다", async ({ page }) => {
   await startAfterOpening(page);
   await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => scene(page)).toBe("lobby");
 
   const navY = BASE_HEIGHT - 180 + 90;
-  await tap(page, BASE_WIDTH / 6, navY); // 렐릭
+  // 다섯 슬롯의 중심 좌표를 차례로 눌러 화면 순서와 연결을 함께 고정한다.
+  await tap(page, (BASE_WIDTH * 3) / 10, navY); // 렐릭
   await expect.poll(() => scene(page)).toBe("relics");
 
-  await tap(page, (BASE_WIDTH * 5) / 6, navY); // 연구소
-  await expect.poll(() => scene(page)).toBe("lab");
+  await tap(page, BASE_WIDTH / 10, navY); // 발굴
+  await expect.poll(() => scene(page)).toBe("excavation");
 
   await tap(page, BASE_WIDTH / 2, navY); // 로비
   await expect.poll(() => scene(page)).toBe("lobby");
+
+  await tap(page, (BASE_WIDTH * 7) / 10, navY); // 연구소
+  await expect.poll(() => scene(page)).toBe("lab");
+
+  await tap(page, (BASE_WIDTH * 9) / 10, navY); // 상점
+  await expect.poll(() => scene(page)).toBe("shop");
 });
 
-test("연구소에서 발굴하면 화석이 줄고 결과가 뜬다", async ({ page }) => {
+test("연구소에서 화석을 사용하면 렐릭 발굴 결과가 뜬다", async ({ page }) => {
   await startAfterOpening(page);
   await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
-  await tap(page, (BASE_WIDTH * 5) / 6, BASE_HEIGHT - 180 + 90);
+  await tap(page, (BASE_WIDTH * 7) / 10, BASE_HEIGHT - 180 + 90);
   await expect.poll(() => scene(page)).toBe("lab");
 
   const before = await page.evaluate(() => window.__PF_DEBUG?.wallet?.fossil);
@@ -254,11 +261,11 @@ test("연구소에서 발굴하면 화석이 줄고 결과가 뜬다", async ({ 
   await page.screenshot({ path: `test-results/${test.info().project.name}-lab-pull-result.png`, fullPage: true });
 });
 
-test("연구소 확률 정보에서 현재 천장과 픽업·이월·중복 정책을 함께 확인한다", async ({ page }) => {
+test("연구소 발굴 확률 정보에서 현재 천장과 픽업·이월·중복 정책을 함께 확인한다", async ({ page }) => {
   await page.setViewportSize({ width: BASE_WIDTH, height: BASE_HEIGHT });
   await startAfterOpening(page);
   await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
-  await tap(page, (BASE_WIDTH * 5) / 6, BASE_HEIGHT - 180 + 90);
+  await tap(page, (BASE_WIDTH * 7) / 10, BASE_HEIGHT - 180 + 90);
   await expect.poll(() => scene(page)).toBe("lab");
 
   // 확률 정보 버튼의 팝업이 기준 모바일 화면에서 잘리지 않는지 회귀 이미지로 남긴다.

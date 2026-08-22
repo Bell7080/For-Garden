@@ -24,7 +24,6 @@ import { COLOR, textStyle } from "../ui/theme";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { PortraitCard, starsForRarity } from "../ui/PortraitCard";
 import { firstMeetingLine } from "../data/relicFirstMeetings";
-import { RailButton } from "../ui/RailButton";
 
 /** 마일리지 상점 버튼의 황금빛. 다른 버튼과 갈라 놓아 "쌓아 두었다 쓰는 곳"임을 알린다. */
 const MILEAGE_EDGE = 0xf2c744;
@@ -33,7 +32,7 @@ const MILEAGE_EDGE = 0xf2c744;
 const BANNER_FLOOR = 1240;
 
 /**
- * 연구소 — 화석과 호박석으로 렐릭을 발굴하는 곳.
+ * 연구소 — 화석과 호박석으로 렐릭을 복원하는 기존 연구 시설이다.
  *
  * 화석은 흔한 재화, 호박석은 귀한 재화다. 뽑기 규칙 자체는 `core/gacha`에 있고
  * 여기서는 무엇을 눌렀는지 전하고 결과를 보여 주기만 한다.
@@ -79,9 +78,6 @@ export class LabScene extends Phaser.Scene {
     // 모집 화면은 "무엇으로 뽑을 수 있나"를 묻는다. 상단 줄도 다이아·화석·호박석으로 바꾼다.
     this.topBar = new TopBar(this, 40, { currencies: "recruit" });
     this.addMileageButton(BASE_WIDTH - 246, 178);
-
-    // 연구소 우측 4번 기능 슬롯은 패키지/BM 전시 상점으로 연결한다. 결제는 해당 씬에서 비활성이다.
-    new RailButton(this, BASE_WIDTH - 92, 555, { icon: "shop", label: "4 · 상점", accent: true, onClick: () => this.scene.start("shop", { section: "premium" }) });
 
     this.bannerName = this.add.text(cx, 170, "", textStyle({ role: "display", size: 44 })).setOrigin(0.5, 0);
     this.bannerDesc = this.add
@@ -139,6 +135,7 @@ export class LabScene extends Phaser.Scene {
       )
       .setOrigin(0.5, 0);
 
+    // 기존 발굴 배너와 마일리지 기능은 연구소에 남고, 새 발굴 콘텐츠만 첫 슬롯으로 분리한다.
     new BottomNav(this, "lab");
     // 씬을 떠난 뒤 끝나는 비동기 로딩도 무효화하고 현재 Puppet을 정리한다.
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {

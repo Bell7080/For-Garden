@@ -3,11 +3,13 @@ import { BASE_WIDTH, BASE_HEIGHT } from "../config/gameConfig";
 import { drawGlassFade, drawHairline, HOLO } from "./holo";
 import { COLOR, textStyle } from "./theme";
 
-/** 하단 탭 세 개. 어느 화면에 있든 같은 자리, 같은 순서다. */
+/** 핵심 화면 다섯 개. 로비를 중심으로 발굴과 상점이 양 끝에서 서로 균형을 이룬다. */
 export const NAV_TABS = [
+  { key: "excavation", scene: "excavation", label: "발굴" },
   { key: "relics", scene: "relics", label: "렐릭" },
   { key: "lobby", scene: "lobby", label: "로비" },
   { key: "lab", scene: "lab", label: "연구소" },
+  { key: "shop", scene: "shop", label: "상점" },
 ] as const;
 
 export type NavKey = (typeof NAV_TABS)[number]["key"];
@@ -22,6 +24,15 @@ function drawIcon(scene: Phaser.Scene, key: NavKey, x: number, y: number, color:
   const g = scene.add.graphics({ x, y });
   g.lineStyle(3, color, 1);
   switch (key) {
+    case "excavation":
+      // 아래를 향한 드릴 — 땅속 자원과 장기 탐사를 찾는 발굴 입구다.
+      g.strokePoints([
+        new Phaser.Geom.Point(-15, -20), new Phaser.Geom.Point(15, -20),
+        new Phaser.Geom.Point(10, 6), new Phaser.Geom.Point(0, 23),
+        new Phaser.Geom.Point(-10, 6),
+      ], true);
+      g.lineBetween(-19, -9, 19, -9);
+      break;
     case "relics":
       // 사람 실루엣 — 보유 렐릭.
       g.strokeCircle(0, -13, 11);
@@ -37,12 +48,22 @@ function drawIcon(scene: Phaser.Scene, key: NavKey, x: number, y: number, color:
       ], true);
       break;
     case "lab":
-      // 플라스크 — 발굴과 배양.
+      // 플라스크 — 분석과 배양을 담당하는 연구소.
       g.strokePoints([
         new Phaser.Geom.Point(-7, -20), new Phaser.Geom.Point(7, -20),
         new Phaser.Geom.Point(7, -6), new Phaser.Geom.Point(19, 20),
         new Phaser.Geom.Point(-19, 20), new Phaser.Geom.Point(-7, -6),
       ], true);
+      break;
+    case "shop":
+      // 각진 쇼핑백 — 별도 화면으로 독립한 상점이다.
+      g.strokeRect(-18, -8, 36, 30);
+      g.beginPath();
+      g.moveTo(-10, -8);
+      g.lineTo(-7, -19);
+      g.lineTo(7, -19);
+      g.lineTo(10, -8);
+      g.strokePath();
       break;
   }
   return g;

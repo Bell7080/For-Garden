@@ -28,6 +28,7 @@ import { PopupLayer } from "./PopupLayer";
 import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
 import { addStarRow } from "./stars";
+import { RUNE_ACCENT, RUNE_CENTER_Y, runeTexture } from "./runeIcons";
 import { StatRadar } from "./StatRadar";
 import { openSkillPopup, type SkillInfoViewModel } from "./SkillPopup";
 import { relicCollection } from "../managers/RelicCollectionManager";
@@ -138,12 +139,7 @@ const FEED_HOLD_MS = 420;
 const SWIPE_DISTANCE = 110;
 
 /** 빈 자리가 제 크기에서 물러나는 비율. 셋이 물러나면 사이에 고른 틈이 생긴다. */
-const GEM_GAP = 0.955;
-
-/** 낀 젬 조각이 내는 빛. */
-const GEM_GLOW = 0xf2789f;
-const GEM_FILL = 0xc95f8a;
-const GEM_EDGE = 0xffc2d8;
+const RUNE_GAP = 0.955;
 
 /** 능력치 칩에서 쓰는 다섯 축과 색. */
 const STAT_CHIPS: readonly { key: keyof Stats; label: string; color: number }[] = [
@@ -734,55 +730,54 @@ export class InfoManager {
   }
 
   /**
-   * 하트 젬 슬롯.
+   * 하트 젬(룬) 슬롯.
    *
-   * 하트 세 개가 아니라 하트 **하나를 셋으로 가른** 자리다. 세 조각이 다 차야 온전한 하트가
-   * 완성되므로, 빈 자리가 곧 "아직 덜 채운 마음"으로 읽힌다.
+   * 하트 세 개가 아니라 하트 원화 **하나를 셋으로 가른** 조각이다. 세 조각을 같은 자리에
+   * 겹치면 다시 한 장의 하트로 돌아간다 — `scripts/prepare_icons.py`가 항상 같은 중심점을
+   * 기준으로 잘라 두었기 때문이다. 등급 색은 `RUNE_ACCENT`가 유일한 기준이다.
    */
   private addGemSlot(index: number, panel: Phaser.GameObjects.Container): GemSlot {
     const center = { x: COLUMN.x - 48, y: 1404 };
     const size = 214;
-    const piece = this.scene.add.graphics({ x: center.x, y: center.y });
-    const shape = heartSlice(size, index);
-    const spot = heartSliceCenter(size, index);
+    // 조각의 대략적인 무게중심. 세 조각이 나뉘는 방향(위 왼쪽·위 오른쪽·아래)을 그대로 따른다.
+    const spot = runeSpot(size, index);
 
+    // 등급색 발광 → 조각 그림 순으로 쌓는다. 빈 자리는 발광 없이 어두운 조각만 남는다.
+    const glow = this.scene.add
+      .image(center.x, center.y, runeTexture(undefined, index))
+      .setOrigin(0.5, RUNE_CENTER_Y)
+      .setDisplaySize(size * 1.22, size * 1.22)
+      .setBlendMode(Phaser.BlendModes.ADD)
+      .setAlpha(0);
+    const piece = this.scene.add
+      .image(center.x, center.y, runeTexture(undefined, index))
+      .setOrigin(0.5, RUNE_CENTER_Y)
+      .setDisplaySize(size, size);
     // 이름은 하트 오른쪽에 세 줄로 세운다. 조각 안에 넣으면 좁은 면에 글자가 눌려 읽히지 않는다.
     const label = this.scene.add
       .text(center.x + size * 0.62, center.y - 46 + index * 46, "", textStyle({ role: "body", size: 20, color: COLOR.inkDim }))
       .setOrigin(0, 0.5);
 
     const hit = this.scene.add
-      .rectangle(center.x + spot.x, center.y + spot.y, size * 0.44, size * 0.44, 0xffffff, 0)
+      .rectangle(center.x + spot.x, center.y + spot.y, size * 0.42, size * 0.42, 0xffffff, 0)
       .setInteractive({ useHandCursor: true });
     hit.on("pointerup", () => this.openGemPicker(index));
-    attach(panel, piece, label, hit);
+    attach(panel, glow, piece, label, hit);
 
     return {
       paint: (gemId) => {
-        piece.clear();
+        const gem = gemId ? getHeartGem(gemId) : undefined;
+        piece.setTexture(runeTexture(gem?.rarity, index));
         // 빈 자리는 제 크기보다 조금 오므라들어 조각 사이에 틈이 생긴다. 룬을 끼우면 제
         // 크기로 펴져 틈이 메워지므로, 셋을 다 채우면 이음매 없는 하트 한 장이 된다.
-        const outline = toPoints(gemId ? shape : shrinkSlice(shape, index, size, GEM_GAP));
-        if (!gemId) {
-          // 빈 자리에는 선을 두르지 않는다. 대신 짙은 어둠 두 겹으로 안쪽이 더 깊어 보이게
-          // 해, 테두리 없이도 조각의 면이 읽히게 한다.
-          piece.fillStyle(0x02040a, 0.66);
-          piece.fillPoints(outline, true);
-          piece.fillStyle(0x000000, 0.55);
-          piece.fillPoints(toPoints(shrinkSlice(shape, index, size, GEM_GAP * 0.86)), true);
+        piece.setDisplaySize(size, size).setScale(piece.scaleX * (gem ? 1 : RUNE_GAP), piece.scaleY * (gem ? 1 : RUNE_GAP));
+        if (gem) {
+          glow.setTexture(runeTexture(gem.rarity, index)).setTint(RUNE_ACCENT[gem.rarity]).setAlpha(0.4);
+          label.setText(index + 1 + "   " + gem.name.replace(" Heart Gem", "")).setColor(COLOR.ink);
+        } else {
+          glow.setAlpha(0);
           label.setText(index + 1 + "   빈 자리").setColor(COLOR.inkDim);
-          return;
         }
-        piece.fillStyle(GEM_GLOW, 0.32);
-        piece.fillPoints(outline, true);
-        piece.fillStyle(GEM_FILL, 0.95);
-        piece.fillPoints(toPoints(heartSlice(size * 0.84, index)), true);
-        // 커팅면만 남긴다. 낀 조각끼리 맞물리는 자리에 선이 겹치면 이음매가 도드라진다.
-        piece.lineStyle(2, GEM_EDGE, 0.7);
-        for (const line of heartFacetLines(size * 0.84, index)) {
-          piece.lineBetween(line.from[0], line.from[1], line.to[0], line.to[1]);
-        }
-        label.setText(index + 1 + "   " + getHeartGem(gemId).name.replace(" Heart Gem", "")).setColor(COLOR.ink);
       },
     };
   }
@@ -1054,7 +1049,7 @@ export class InfoManager {
         body.add(drawLayer(this.scene, 0, y, slantedRect(680, 108, 16), {
           fill: gem ? 0x1c1520 : 0x0d1219,
           alpha: gem ? 0.95 : 0.7,
-          edge: gem ? GEM_EDGE : COLOR.accent,
+          edge: gem ? RUNE_ACCENT[gem.rarity] : COLOR.accent,
           edgeAlpha: gem ? 0.7 : 0.16,
         }));
         body.add(this.scene.add.text(-306, y - 26, index + 1 + "번 칸", textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0, 0));
@@ -1525,62 +1520,15 @@ function heartOutline(t: number, size: number): [number, number] {
   return [x * scale, y * scale];
 }
 
-/** 조각 하나가 차지하는 곡선 구간. 0번 왼쪽 봉우리, 1번 오른쪽 봉우리, 2번 아래다. */
-const HEART_RANGES: readonly [number, number][] = [
-  [Math.PI * 1.34, Math.PI * 2],
-  [0, Math.PI * 0.66],
-  [Math.PI * 0.66, Math.PI * 1.34],
-];
-
-/** 세 조각이 만나는 가운데 점. 하트의 무게중심보다 살짝 위다. */
-function heartCenter(size: number): [number, number] {
-  return [0, (-2 * size) / 32];
-}
-
-function heartSlice(size: number, index: number): number[] {
-  const [from, to] = HEART_RANGES[index];
-  const center = heartCenter(size);
-  const points: number[] = [...center];
-  // 곡선을 촘촘히 따면 매끈한 하트가 되지만, 이것은 보석이다. 몇 개의 곧은 면으로만 깎아
-  // 각 조각이 커팅된 것처럼 보이게 한다.
-  const facets = 5;
-  for (let i = 0; i <= facets; i += 1) {
-    points.push(...heartOutline(from + ((to - from) * i) / facets, size));
-  }
-  return points;
-}
-
 /**
- * 조각을 제 무게중심 쪽으로 오므린다.
+ * 룬 조각의 대략적인 무게중심(px, `center` 기준 상대 좌표).
  *
- * 빈 자리에만 쓴다. 세 조각이 각자 조금씩 물러나면 사이에 고른 틈이 생기고, 룬을 끼워
- * 제 크기로 돌아오는 순간 그 틈이 메워진다.
+ * 실제 자르는 각도는 `scripts/prepare_icons.py`의 `RUNE_CUTS`가 정한다. 여기서는 그 세 구간의
+ * 가운데 각도만 그대로 옮겨, 손이 닿을 자리와 이름표를 놓을 자리로 쓴다.
  */
-function shrinkSlice(shape: number[], index: number, size: number, gap: number): number[] {
-  const spot = heartSliceCenter(size, index);
-  const shrunk: number[] = [];
-  for (let i = 0; i < shape.length; i += 2) {
-    shrunk.push(spot.x + (shape[i] - spot.x) * gap, spot.y + (shape[i + 1] - spot.y) * gap);
-  }
-  return shrunk;
-}
-
-/** 조각 안쪽에 긋는 커팅면. 중심에서 각 꼭짓점으로 뻗는 선이 보석의 결을 만든다. */
-function heartFacetLines(size: number, index: number): { from: [number, number]; to: [number, number] }[] {
-  const [start, end] = HEART_RANGES[index];
-  const [cx, cy] = heartCenter(size);
-  const lines: { from: [number, number]; to: [number, number] }[] = [];
-  for (let i = 1; i < 4; i += 1) {
-    const [x, y] = heartOutline(start + ((end - start) * i) / 4, size * 0.9);
-    lines.push({ from: [cx, cy], to: [x, y] });
-  }
-  return lines;
-}
-
-/** 조각 안쪽의 글자 자리. 곡선 구간의 한가운데와 중심을 반씩 섞는다. */
-function heartSliceCenter(size: number, index: number): { x: number; y: number } {
-  const [from, to] = HEART_RANGES[index];
-  const [mx, my] = heartOutline((from + to) / 2, size);
-  const [cx, cy] = heartCenter(size);
-  return { x: (mx + cx) / 2, y: (my + cy) / 2 };
+function runeSpot(size: number, index: number): { x: number; y: number } {
+  const midDegrees = [210, 330, 90][index];
+  const radius = size * 0.3;
+  const rad = Phaser.Math.DegToRad(midDegrees);
+  return { x: Math.cos(rad) * radius, y: Math.sin(rad) * radius };
 }

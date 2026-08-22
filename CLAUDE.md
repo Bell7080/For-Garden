@@ -165,6 +165,12 @@
 - 레벨 상한은 **돌파**가 연다. 상한을 묻는 곳은 전부 `relicLevelCap(breakthrough)`을 쓰고
   숫자를 직접 적지 않는다. 단계별 상한과 재료는 `BREAKTHROUGH_STEPS` 한 표에만 있으며,
   재료 차감과 단계 확정은 `GameApi.breakThroughRelic`이 한 처리 단위로 맡는다.
+- 룬(하트 젬) 슬롯은 하트 원화 한 장을 셋으로 자른 조각이다. `scripts/prepare_icons.py`가
+  같은 중심점 기준으로 미리 오려 등급별로 다시 칠해 두므로, 세 조각을 같은 자리에 겹치면
+  이음매 없는 하트 한 장이 된다. 등급 색(`HeartGemRarity`)은 초록 고급 → 파랑 희귀 →
+  보라 영웅 → 빨강 전설이며, `src/ui/runeIcons.ts`의 `RUNE_ACCENT`와 파이썬 스크립트의
+  `RUNE_TINTS` 두 곳이 이름까지 반드시 같아야 한다. 빈 자리는 같은 조각을 검게 눌러 파인
+  것처럼 반투명하게 남긴다.
 
 ## 야성은 메리트다
 

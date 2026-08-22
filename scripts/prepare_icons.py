@@ -10,6 +10,7 @@
 원본은 저장소에 남기지 않는다. 다시 구울 일이 생기면 원본을 public/ 아래에 두고 이 표의
 `source`만 갱신한다.
 """
+import math
 import sys
 from pathlib import Path
 from PIL import Image, ImageChops
@@ -60,6 +61,72 @@ def recolor(image: Image.Image, color: tuple[int, int, int]) -> Image.Image:
     return flat
 
 
+# 룬 하트를 등급별로 칠하는 색. 초록 고급 → 파랑 희귀 → 보라 영웅 → 빨강 전설 순으로 오른다.
+#
+# 채널 배율로 밀면 원본이 붉은 보석이라 초록·파랑이 어둡게 죽는다. 그래서 명암만 남긴 뒤
+# 어두운 곳·중간·밝은 곳 세 색으로 다시 칠한다. 보석의 깎인 면과 반짝임이 그대로 살아난다.
+RUNE_TINTS: dict[str, tuple[str, str, str]] = {
+    "uncommon": ("#06140a", "#3fbb56", "#dcffe2"),
+    "rare": ("#04101e", "#3d90e2", "#d8edff"),
+    "epic": ("#150720", "#a24ee0", "#f2ddff"),
+    "legendary": ("#1a0406", "#e0343c", "#ffdcdc"),
+}
+
+# 하트를 셋으로 가르는 경계(화면 각도, 아래가 +). 위·오른아래·왼아래 세 방향으로 자른다.
+RUNE_CUTS = {0: (150, 270), 1: (270, 390), 2: (30, 150)}
+# 자른 면을 서로에게서 몇 도 물러나게 할지. 이 각도만큼 사이가 벌어져 세 조각으로 읽힌다.
+RUNE_GAP_DEGREES = 1.6
+# 조각이 만나는 가운데 점(이미지 높이 대비). 하트의 무게중심보다 살짝 위다.
+RUNE_CENTER_Y = 0.44
+
+
+def colorize(art: Image.Image, tones: tuple[str, str, str]) -> Image.Image:
+    """명암만 남기고 등급 색으로 다시 칠한다. 알파는 원본 그대로다."""
+    from PIL import ImageOps
+
+    grey = art.convert("L")
+    tinted = ImageOps.colorize(grey, black=tones[0], mid=tones[1], white=tones[2], midpoint=128).convert("RGBA")
+    tinted.putalpha(art.getchannel("A"))
+    return tinted
+
+
+def wedge_mask(size: int, start: float, end: float) -> Image.Image:
+    """가운데에서 뻗어 나가는 부채꼴 하나. 이것으로 원본을 오려 조각을 만든다."""
+    from PIL import ImageDraw
+
+    mask = Image.new("L", (size, size), 0)
+    draw = ImageDraw.Draw(mask)
+    center = (size / 2, size * RUNE_CENTER_Y)
+    radius = size * 1.5
+    points = [center]
+    steps = 48
+    for i in range(steps + 1):
+        angle = math.radians(start + (end - start) * i / steps)
+        points.append((center[0] + math.cos(angle) * radius, center[1] + math.sin(angle) * radius))
+    draw.polygon(points, fill=255)
+    return mask
+
+
+def rune_pieces(art: Image.Image, size: int) -> list[Image.Image]:
+    """원본 하트를 세 조각으로 오린다. 셋을 같은 자리에 겹치면 다시 한 장의 하트가 된다."""
+    art = art.resize((size, size), Image.LANCZOS)
+    pieces: list[Image.Image] = []
+    for index in range(3):
+        start, end = RUNE_CUTS[index]
+        mask = wedge_mask(size, start + RUNE_GAP_DEGREES, end - RUNE_GAP_DEGREES)
+        piece = art.copy()
+        piece.putalpha(ImageChops.multiply(art.getchannel("A"), mask))
+        pieces.append(piece)
+    return pieces
+
+
+def socket(piece: Image.Image) -> Image.Image:
+    """빈 자리. 같은 조각을 검게 눌러 파인 것처럼 보이게 하고 반투명하게 남긴다."""
+    black = Image.new("RGBA", piece.size, (2, 4, 10, 255))
+    black.putalpha(piece.getchannel("A").point(lambda value: int(value * 0.62)))
+    return black
+
+
 def desaturate(image: Image.Image, keep: float) -> Image.Image:
     """색을 회색 쪽으로 섞는다. `keep`이 1이면 원본, 0이면 완전한 흑백이다."""
     grey = image.convert("L").convert("RGBA")
@@ -75,14 +142,27 @@ def shift(image: Image.Image, factor: tuple[float, float, float]) -> Image.Image
 
 
 def save(image: Image.Image, target: Path) -> None:
+    save_exact(image.resize((SIZE, SIZE), Image.LANCZOS), target)
+
+
+def save_exact(image: Image.Image, target: Path) -> None:
+    """이미 크기를 맞춘 그림을 그대로 굽는다. 조각은 캔버스 자리가 곧 위치라 다시 늘리지 않는다."""
     target.parent.mkdir(parents=True, exist_ok=True)
-    image.resize((SIZE, SIZE), Image.LANCZOS).save(target, "WEBP", quality=92, method=6)
+    image.save(target, "WEBP", quality=92, method=6)
     print(f"{target.relative_to(PUBLIC)}  {target.stat().st_size // 1024} KB")
 
 
 def main() -> None:
     for out, (source, color) in FLAT.items():
         save(recolor(Image.open(SOURCE / source).convert("RGBA"), color), PUBLIC / out)
+    # 룬 하트: 등급별 색 넷 × 조각 셋, 그리고 조각 모양 그대로의 빈 자리.
+    heart = Image.open(SOURCE / "Photoroom_20260822_113309.png").convert("RGBA")
+    for rarity, tones in RUNE_TINTS.items():
+        for index, piece in enumerate(rune_pieces(colorize(heart, tones), SIZE)):
+            save_exact(piece, PUBLIC / f"sprites/runes/{rarity}-{index}.webp")
+    for index, piece in enumerate(rune_pieces(heart, SIZE)):
+        save_exact(socket(piece), PUBLIC / f"sprites/runes/empty-{index}.webp")
+
     for out, entry in ART.items():
         source, factor = entry[0], entry[1]
         art = Image.open(SOURCE / source).convert("RGBA")

@@ -5,6 +5,7 @@ import { loadGameFonts } from "../ui/fonts";
 import { UI_ICON_ASSETS } from "../ui/icons";
 import { AFFINITY_ICON_ASSETS } from "../ui/affinityIcons";
 import { CURRENCY_ICON_ASSETS } from "../ui/currencyIcons";
+import { RUNE_ICON_ASSETS } from "../ui/runeIcons";
 import { SKILL_ICON_ASSETS } from "../ui/skillIcons";
 
 /**
@@ -62,6 +63,7 @@ export const LOADING_STEPS: ReadonlyArray<LoadingStep> = [
         // 속성·직군은 이미 구워 둔 WebP라 그대로 읽는다.
         AFFINITY_ICON_ASSETS.forEach(([key, path]) => scene.load.image(key, path));
         CURRENCY_ICON_ASSETS.forEach(([key, path]) => scene.load.image(key, path));
+        RUNE_ICON_ASSETS.forEach(([key, path]) => scene.load.image(key, path));
         UI_ICON_ASSETS.forEach(([key, path, size]) => scene.load.svg(key, path, { width: size * SVG_BAKE.uiScale, height: size * SVG_BAKE.uiScale }));
       }),
   },

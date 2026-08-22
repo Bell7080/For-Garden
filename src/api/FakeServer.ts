@@ -13,6 +13,9 @@ import { PRODUCTS } from "../data/products";
 import type { ProductListResponse, PurchaseProductResponse } from "./contracts";
 import type { ExchangeDnaRequest, ExchangeDnaResponse } from "./contracts";
 import { DNA_EXCHANGE_OFFERS, WALLET_CAPS } from "../data/economy";
+import { EVENTS, findEventByProductId, findEventByStageId } from "../data/events";
+import type { EventDefinition } from "../data/events/types";
+import type { EnterEventStageResponse, EventListResponse } from "./contracts";
 
 /** FakeServer의 지연과 난수원을 테스트에서 결정적으로 바꾸기 위한 선택 설정이다. */
 export interface FakeServerOptions {
@@ -134,7 +137,10 @@ export class FakeServer implements GameApi {
   async completeStage(stageId: string, victory = true): Promise<CompleteStageResponse> {
     await this.delay();
     let stage;
-    try { stage = getStage(stageId); } catch { throw new GameApiError("STAGE_NOT_FOUND", "존재하지 않는 스테이지입니다."); }
+    const owningEvent = findEventByStageId(stageId);
+    // 입장 뒤 시간이 넘어간 우회 요청도 결과 확정 경계에서 다시 차단한다.
+    if (owningEvent) this.assertEventActive(owningEvent, this.now());
+    try { stage = owningEvent?.stages.find(({ id }) => id === stageId) ?? getStage(stageId); } catch { throw new GameApiError("STAGE_NOT_FOUND", "존재하지 않는 스테이지입니다."); }
     const firstClear = victory && !this.state.cleared.has(stageId);
     const weedsEarned = victory ? (firstClear ? stage.rewards.firstClearWeeds : stage.rewards.repeatClearWeeds) : 0;
     const nextCleared = victory ? new Set(this.state.cleared).add(stageId) : new Set(this.state.cleared);
@@ -172,6 +178,26 @@ export class FakeServer implements GameApi {
     this.persist({ ...this.state, dailyContent: nextDaily, wallet: nextWallet });
     this.state.dailyContent = nextDaily; this.state.wallet = nextWallet;
     return { ...this.snapshot(), entriesRemaining: DAILY_RESTORATION.maxEntriesPerUtcDay - nextDaily.restorationEntries, weedsEarned: DAILY_RESTORATION.rewardWeeds };
+  }
+
+  /** 정적 이벤트에 서버가 판정한 상태를 결합해 클라이언트 시계 의존을 없앤다. */
+  async getEvents(): Promise<EventListResponse> {
+    await this.delay();
+    const now = this.now();
+    return { events: EVENTS.map((event) => ({ ...event, status: this.eventStatus(event, now) })), serverTime: now.toISOString() };
+  }
+
+  /** 이벤트·스테이지 소유 관계와 기간을 확인한 뒤에만 전투 정의를 내준다. */
+  async enterEventStage(eventId: string, stageId: string): Promise<EnterEventStageResponse> {
+    await this.delay();
+    const now = this.now();
+    const event = EVENTS.find(({ id }) => id === eventId);
+    if (!event) throw new GameApiError("EVENT_NOT_FOUND", "존재하지 않는 이벤트입니다.");
+    this.assertEventActive(event, now);
+    const stage = event.stages.find(({ id }) => id === stageId);
+    if (!stage) throw new GameApiError("STAGE_NOT_FOUND", "이 이벤트에 속하지 않은 스테이지입니다.");
+    // 중첩 값도 복제해 응답 소비자가 정적 운영 데이터를 바꾸지 못하게 한다.
+    return { eventId, stage: { ...stage, enemies: [...stage.enemies], rewards: { ...stage.rewards } }, serverTime: now.toISOString() };
   }
 
   /** 현재 UTC 기간으로 정규화한 임무와 로비용 미수령 개수를 조회한다. */
@@ -222,6 +248,9 @@ export class FakeServer implements GameApi {
     const now = this.now();
     const product = PRODUCTS.find((candidate) => candidate.id === productId);
     if (!product) throw new GameApiError("PRODUCT_NOT_FOUND", "존재하지 않는 상품입니다.");
+    const owningEvent = findEventByProductId(productId);
+    // 상품 노출 기간과 별개로 이벤트 기간도 검사해 운영 데이터 불일치 시 구매를 막는다.
+    if (owningEvent) this.assertEventActive(owningEvent, now);
     if (!this.isVisible(product, now)) throw new GameApiError("PRODUCT_NOT_VISIBLE", "현재 노출 기간이 아닌 상품입니다.");
     // FakeServer는 플랫폼 성공이나 영수증을 만들지 않는다. 유료 지급은 실제 검증 서버의 책임이다.
     if (product.price.currency === "real_money") throw new GameApiError("PLATFORM_PAYMENT_REQUIRED", "플랫폼 영수증 검증이 필요한 상품입니다.");
@@ -277,6 +306,17 @@ export class FakeServer implements GameApi {
 
   /** 노출 판정은 클라이언트 시간이 아니라 주입 가능한 서버 시간만 사용한다. */
   private isVisible(product: ProductDefinition, now: Date): boolean { return now >= new Date(product.visibleFrom) && now < new Date(product.visibleUntil); }
+
+  /** 시작 포함·종료 제외 규칙을 주입된 서버 시각 한 곳에서 계산한다. */
+  private eventStatus(event: EventDefinition, now: Date): "upcoming" | "active" | "ended" {
+    if (now < new Date(event.startsAt)) return "upcoming";
+    return now < new Date(event.endsAt) ? "active" : "ended";
+  }
+
+  /** 이벤트 전투와 구매가 공유하는 기간 가드다. */
+  private assertEventActive(event: EventDefinition, now: Date): void {
+    if (this.eventStatus(event, now) !== "active") throw new GameApiError("EVENT_NOT_ACTIVE", "현재 진행 중인 이벤트가 아닙니다.");
+  }
 
   /** 일/주/계정 단위 제한을 비교할 안정적인 키로 바꾼다. */
   private productPeriodKey(product: ProductDefinition, now: Date): string {

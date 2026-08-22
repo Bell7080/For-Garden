@@ -216,7 +216,9 @@
   `npm install`로 lockfile을 갱신한다. SHA를 그대로 두면 npm은 절대 새 커밋을 가져오지 않는다.
 - 일회성 동작은 반드시 `playMotion`을 사용한다. 직접 `delayedCall`로 idle 복귀를 만들면 이전
   타이머가 최신 피격·공격 모션을 잘라 재생 끊김처럼 보일 수 있다.
-- 캐릭터마다 실제 에셋이 생기기 전까지 `public/puppets`의 두 파일과 tint는 임시 아트다.
+- `public/puppets`에는 전신 3개, 아군 SD 3개, 적 SD 3개가 있다. 도도·스밀라·케찰만 토리카
+  전신/SD와 `tints.ts`를 placeholder로 공유하며, 전용 에셋이 연결된 나머지 여섯 개체에는 tint를
+  적용하지 않는다.
 
 ## 변경 전 확인
 

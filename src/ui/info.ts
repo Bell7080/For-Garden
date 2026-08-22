@@ -314,7 +314,7 @@ export class InfoManager {
 
     this.starRow = scene.add.container(COLUMN.x, 150);
     this.chrome.add(this.starRow);
-    this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 40, 150, (from) => this.openAwakening(from));
+    this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 30, 158, (from) => this.openAwakening(from));
 
     // 오른쪽 수치는 칸마다 판을 따로 깐다. 대신 칸의 내용물을 그 판 **안에** 넣어 판과 같은
     // 각도로 함께 기운다. 판만 기울고 글자가 반듯하면 판 위에 종이를 얹어 둔 것처럼 어긋난다.
@@ -349,16 +349,16 @@ export class InfoManager {
     this.bondLabel = scene.add.text(COLUMN.x - COLUMN.width / 2 + 152, 738, "", textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0, 0);
     attach(bondPanel, bondHeart, ...this.bondBar.objects, this.bondLabel);
     this.addSectionTitle("유대", 706 - 72);
-    this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 44, 662, (from) => this.openBondDetail(from), bondPanel);
+    this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 30, 686, (from) => this.openBondDetail(from), bondPanel);
 
     // 능력치.
     this.addSectionTitle("능력치", 1024 - 198);
-    this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 48, 852, (from) => this.openExtraStats(from), statPanel);
+    this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 30, 876, (from) => this.openExtraStats(from), statPanel);
     STAT_CHIPS.forEach((chip, index) => this.addStatChip(chip, index, statPanel));
 
     // 하트 젬 — 하트 하나를 셋으로 가른 자리.
     this.addSectionTitle("룬", 1398 - 146);
-    this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 44, 1300, (from) => this.openRuneOverview(from), gemPanel);
+    this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 30, 1316, (from) => this.openRuneOverview(from), gemPanel);
     for (let index = 0; index < 3; index += 1) this.gemSlots.push(this.addGemSlot(index, gemPanel));
 
     this.buildFigureStand();
@@ -461,6 +461,8 @@ export class InfoManager {
 
   /** 더 볼 것이 있다는 표시. 자리만 다를 뿐 생김새와 크기는 같다. */
   private addMagnifier(x: number, y: number, onClick: (from: PopupSource) => void, panel?: Phaser.GameObjects.Container): void {
+    // 자리는 늘 판의 오른쪽 끝 안쪽이다. 끝에 붙어야 "이 칸에 딸린 것"으로 읽히고, 안쪽으로
+    // 조금 들여야 기울어진 변에 걸치지 않는다.
     const container = this.scene.add.container(x, y);
     // 작고 흐린 회색이다. 이것은 "더 있다"는 힌트일 뿐이라, 옆의 수치보다 먼저 눈에 들어오면
     // 안 된다. 대신 작아진 만큼 선은 굵게 줘야 형태가 뭉개지지 않는다.

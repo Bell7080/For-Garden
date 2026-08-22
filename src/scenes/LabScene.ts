@@ -19,7 +19,7 @@ import { session } from "../state/session";
 import { BottomNav, NAV_TOP } from "../ui/BottomNav";
 import { Button } from "../ui/Button";
 import { TopBar } from "../ui/TopBar";
-import { drawLayer, HOLO, slantedRect } from "../ui/holo";
+import { drawLayer, drawRoundedLayer, HOLO, slantedRect } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { PortraitCard, starsForRarity } from "../ui/PortraitCard";
@@ -163,17 +163,14 @@ export class LabScene extends Phaser.Scene {
    */
   private addMileageButton(x: number, y: number): void {
     const width = 300;
-    const height = 68;
-    const shape = slantedRect(width, height, 16);
+    const height = 70;
     const container = this.add.container(x, y);
-    container.add(drawLayer(this, 0, 0, shape, {
-      fill: 0x2a2110,
-      alpha: 0.94,
-      edge: MILEAGE_EDGE,
-      edgeAlpha: 1,
-      edgeWidth: 4,
-      glow: { color: MILEAGE_EDGE, strength: 0.5, height: 0.7 },
-    }));
+    // 상단 재화 줄과 같은 둥근 면이다. 바로 아래에 붙는 버튼이라 모양이 갈리면 따로 논다.
+    container.add(drawRoundedLayer(this, 0, 0, width, height, { fill: 0x2a2110, alpha: 0.95, radius: height / 2 }));
+    const ring = this.add.graphics();
+    ring.lineStyle(3, MILEAGE_EDGE, 0.95);
+    ring.strokeRoundedRect(-width / 2, -height / 2, width, height, height / 2);
+    container.add(ring);
     container.add(this.add.text(0, 0, "마일리지 상점", textStyle({ role: "display", size: 28, color: "#ffe9a3" })).setOrigin(0.5));
     const hit = this.add.rectangle(x, y, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
     hit.on("pointerdown", () => container.setScale(1.06));

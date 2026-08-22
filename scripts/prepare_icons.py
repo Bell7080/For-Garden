@@ -34,15 +34,15 @@ FLAT = {
 
 # 여러 색으로 그린 재화 아이콘. 모양은 그대로 두고 필요한 것만 색을 민다.
 #
-# 화석·호박석·스테미나가 모두 누런빛이라 작은 아이콘에서는 구분되지 않았다. 화석은 푸른
-# 쪽으로, 호박석은 노란 쪽으로, 스테미나는 초록 쪽으로 밀어 서로 갈라 놓는다. 채널별 배율만
-# 쓰므로 그림의 명암과 질감은 그대로 살아 있다.
+# 호박석과 스테미나가 누런빛이라 작은 아이콘에서는 구분되지 않았다. 호박석은 노란 쪽으로,
+# 스테미나는 초록 쪽으로 밀어 갈라 놓는다. 채널별 배율만 쓰므로 명암과 질감은 그대로다.
 ART: dict[str, tuple[str, tuple[float, float, float] | None]] = {
     "sprites/currency/gold.webp": ("Photoroom_20260822_113125.png", None),
     "sprites/currency/crystal.webp": ("Photoroom_20260822_113155.png", None),
     "sprites/currency/cake.webp": ("Photoroom_20260822_113222.png", None),
     "sprites/currency/amber.webp": ("Photoroom_20260822_113236.png", (1.06, 0.99, 0.62)),
-    "sprites/currency/fossil.webp": ("Photoroom_20260822_113252.png", (0.62, 0.86, 1.34)),
+    # 화석은 원본 색이 곧 돌빛이라 손대지 않는다. 푸르게 밀었더니 광물이 아니라 얼음처럼 보였다.
+    "sprites/currency/fossil.webp": ("Photoroom_20260822_113252.png", None),
     "sprites/currency/heart.webp": ("Photoroom_20260822_113309.png", None),
     "sprites/currency/energy.webp": ("Photoroom_20260822_113612.png", (0.44, 1.04, 0.52)),
 }

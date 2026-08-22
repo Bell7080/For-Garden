@@ -3,6 +3,7 @@ import type { PortraitAssetId, RelicDef, RelicRarity } from "../core/types";
 import { headCardFrame, loadPortraitTexture, portraitAssetFor, portraitUsesRelicTint } from "../puppets/assets";
 import { mixWhite, tintFor } from "../puppets/tints";
 import { chipPoints, HOLO } from "./holo";
+import { addStarRow } from "./stars";
 import { COLOR, textStyle } from "./theme";
 
 /** 카드 한 장의 조립 옵션. 크기와 라벨만 주면 나머지 연출은 프리팹이 맞춘다. */
@@ -29,8 +30,6 @@ export interface PortraitCardOptions {
 /** 칩 바탕. 검은 유리에 가깝게 두고 원화가 빛을 담당한다. */
 const CHIP_FILL = 0x161a20;
 const SILHOUETTE = 0x0b0d10;
-/** 빈 별의 선 색. 글자용 문자열 색과 달리 도형은 숫자 색이 필요하다. */
-const STAR_EMPTY = 0x6f7681;
 
 /** 칩을 카드 좌우 안쪽으로 들여 놓는 폭. 옆 칸과 숨 쉴 틈을 남긴다. */
 const CHIP_INSET = 6;
@@ -236,31 +235,15 @@ export class PortraitCard extends Phaser.GameObjects.Container {
   /**
    * 이름 바로 위의 성급.
    *
-   * 다섯 칸을 카드 가운데에 모은다. 별마다 같은 모양의 진한 그림자를 뒤에 깔아 밝은 원화
-   * 위에서도 떨어져 보이게 한다 — 판을 깔면 별이 아니라 띠가 먼저 읽힌다.
-   * 찬 별은 빛무리를 두른 반짝임, 빈 별은 선만 남긴다.
+   * 다섯 칸을 카드 가운데에 모은다. 별 모양·색·겹은 `stars.ts` 하나가 정한다 — 도감 카드와
+   * 정보창이 같은 별을 써야 같은 등급이 어디서나 같은 무게로 읽힌다.
    */
   private addStars(y: number): void {
     const stars = this.options.stars!;
-    const size = Math.min(13, this.options.width / 22);
-    const gap = size * 2.5;
-    // 성급은 카드 가운데에 모은다. 레벨(왼쪽)·이름과 세로로 겹치지 않는 유일한 줄이다.
-    const left = -((stars.total - 1) * gap) / 2;
-
-    for (let i = 0; i < stars.total; i++) {
-      const filled = i < stars.filled && !this.options.locked;
-      const x = left + i * gap;
-      // 그림자는 판이 아니라 별 모양이다. 조금 크게, 조금 어긋나게 깔아 별만 도드라지게 한다.
-      this.add(this.scene.add.star(x + 2, y + 3, 4, size * 0.42, size * 1.22, 0x000000, 0.72));
-      if (filled) {
-        // 찬 별은 두 겹이다. 뒤의 옅고 큰 반짝임이 빛무리 노릇을 해서 밝은 옷 위에서도 뜬다.
-        this.add(this.scene.add.star(x, y, 4, size * 0.22, size * 2.1, COLOR.accent, 0.22));
-        this.add(this.scene.add.star(x, y, 4, size * 0.3, size * 1.25, 0xfff2cf, 0.95));
-      }
-      const star = this.scene.add.star(x, y, 4, size * 0.34, size, filled ? COLOR.accent : 0x000000, filled ? 1 : 0.35);
-      if (!filled) star.setStrokeStyle(2, STAR_EMPTY, 0.85);
-      this.add(star);
-    }
+    // 카드에서는 별이 작다. 빛무리가 이웃 별과 뭉치지 않도록 크기만 줄이고 모양은 그대로 쓴다.
+    const outer = Math.min(15, this.options.width / 19);
+    const filled = this.options.locked ? 0 : stars.filled;
+    addStarRow(this.scene, this, 0, y, outer, filled, stars.total);
   }
 
   /**

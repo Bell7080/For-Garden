@@ -21,6 +21,7 @@ import { addBackButton } from "./IconButton";
 import { chipPoints, drawGlassFade, drawHairline, drawLayer, drawShapeEdge, drawVignette, HOLO, perspectiveRect, slantedRect, toPoints } from "./holo";
 import { drawGlyph } from "./glyphs";
 import { PopupLayer } from "./PopupLayer";
+import { addStarRow } from "./stars";
 import { openSkillPopup, type SkillInfoViewModel } from "./SkillPopup";
 import { relicCollection } from "../managers/RelicCollectionManager";
 import { COLOR, textStyle } from "./theme";
@@ -57,13 +58,8 @@ const FAVORITE_ON = 0xf2789f;
  */
 const SKILL_ICON = { size: 150, x: 124, step: 168 } as const;
 
-/**
- * 성급 별의 크기와 색.
- *
- * 호박(amber) 계열 하나로만 쌓는다. 겹마다 색을 바꾸면 화려한 대신 화면의 다른 강조색과
- * 싸운다. 밝기와 투명도만 달리해 같은 빛에서 나온 것처럼 보이게 한다.
- */
-const STAR = { outer: 34, halo: 0xffb340, glow: 0xffcf5e, body: 0xf5a623, core: 0xfff6d8 } as const;
+/** 정보창의 별은 화면에서 가장 큰 성급 표시다. 모양과 색은 `stars.ts`가 정한다. */
+const STAR_SIZE = 34;
 
 /** 야성 뱃지의 색. 게이지가 끓는 쪽이라 붉은 기가 돈다. */
 const FEROCITY_BADGE = 0x8f3a2a;
@@ -767,8 +763,9 @@ export class InfoManager {
    */
   private addFerocityBadge(icon: Phaser.GameObjects.Container, size: number, def: RelicDef): void {
     // 이름표가 아니라 아이콘이다. 스킬 액자 어깨에 걸린 작은 불꽃 하나로 알린다.
-    const badgeSize = 52;
-    const badge = this.scene.add.container(0, -size / 2 - 30);
+    const badgeSize = 72;
+    // 액자 위로 넉넉히 띄운다. 붙여 두면 아이콘이 액자에 얹힌 얼룩처럼 보인다.
+    const badge = this.scene.add.container(0, -size / 2 - 56);
     const shape = chipPoints(badgeSize, badgeSize, {
       bevel: { topLeft: badgeSize * 0.34, topRight: 0, bottomRight: badgeSize * 0.34, bottomLeft: 0 },
     });
@@ -779,7 +776,7 @@ export class InfoManager {
     hit.on("pointerout", () => { if (!this.popups.isOpen) badge.setScale(1); });
     hit.on("pointerup", () => {
       badge.setScale(1.1);
-      this.openFerocityTrait(def, { x: icon.x, y: icon.y - size / 2 - 56, onClose: () => badge.setScale(1) });
+      this.openFerocityTrait(def, { x: icon.x, y: icon.y - size / 2 - 92, onClose: () => badge.setScale(1) });
     });
     badge.add(hit);
     icon.add(badge);
@@ -876,39 +873,11 @@ export class InfoManager {
     if (live) this.say(live);
   }
 
-  /** 성급은 등급에서만 나온다. 각성 단계는 옆의 돋보기가 맡는다. */
+  /** 성급은 등급에서만 나온다. 별 모양과 색은 `stars.ts` 하나가 정한다. */
   private paintStars(def: RelicDef): void {
     this.starRow.removeAll(true);
     const filled = def.rarity === "SSR" ? 5 : def.rarity === "SR" ? 4 : 3;
-    const gap = 74;
-    const left = -((5 - 1) * gap) / 2 - 34;
-    for (let i = 0; i < 5; i += 1) this.paintStar(left + i * gap, i < filled);
-  }
-
-  /**
-   * 성급 별 하나.
-   *
-   * 찬 별은 일곱 겹이다 — 뒤로 지는 그림자, 넓게 퍼지는 호박빛 무리, 그 안쪽의 짙은 무리,
-   * 몸통, 위쪽만 밝은 심지, 그리고 십자로 뻗는 빛살. 겹을 줄이면 밝은 원화 위에서 그냥
-   * 노란 도형이 되고, 색을 바꾸면 화면의 호박색 계열이 깨진다. 그래서 겹으로만 화려하게 한다.
-   */
-  private paintStar(x: number, filled: boolean): void {
-    const outer = STAR.outer;
-    const inner = outer * 0.42;
-    if (!filled) {
-      // 빈 별은 자리만 지킨다. 채운 쪽과 크기가 같아야 다섯 칸이 나란히 읽힌다.
-      this.starRow.add(this.scene.add.star(x, 0, 5, inner, outer, 0x000000, 0.3).setStrokeStyle(2, BADGE_OFF, 0.75));
-      return;
-    }
-    // 빛무리는 별 모양 그대로 세 겹으로 퍼진다. 선처럼 뻗는 빛살을 쓰면 별에 막대를 꽂은
-    // 것처럼 보이므로, 크기와 투명도만 달리해 부드럽게 번지게 한다.
-    this.starRow.add(this.scene.add.star(x + 2, 5, 5, inner, outer, 0x1a0f00, 0.5));
-    this.starRow.add(this.scene.add.star(x, 0, 5, inner * 1.5, outer * 1.95, STAR.halo, 0.1));
-    this.starRow.add(this.scene.add.star(x, 0, 5, inner * 1.3, outer * 1.5, STAR.halo, 0.18));
-    this.starRow.add(this.scene.add.star(x, 0, 5, inner * 1.12, outer * 1.18, STAR.glow, 0.34));
-    this.starRow.add(this.scene.add.star(x, 0, 5, inner, outer, STAR.body, 1));
-    // 심지는 작고 옅게, 위로 조금 치우쳐 앉는다. 크게 두면 별 안에 별이 하나 더 있는 것처럼 보인다.
-    this.starRow.add(this.scene.add.star(x, -outer * 0.16, 5, inner * 0.5, outer * 0.42, STAR.core, 0.7));
+    addStarRow(this.scene, this.starRow, -34, 0, STAR_SIZE, filled, 5);
   }
 
   /** 레벨·경험치·유대·능력치·젬을 지금 상태로 다시 칠한다. */

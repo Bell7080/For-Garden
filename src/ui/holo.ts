@@ -117,6 +117,8 @@ export interface LayerOptions {
   /** 윗변에만 긋는 얇은 강조선 색. 사방을 두르는 테두리는 만들지 않는다. */
   edge?: number;
   edgeAlpha?: number;
+  /** 윗변 강조선의 두께. 색으로 뜻을 알리는 자리(능력치 칩)는 굵게 긋는다. */
+  edgeWidth?: number;
   /**
    * 유리 광택. 면의 위쪽에만 아주 옅은 흰빛을 얹어 빛을 받은 유리처럼 보이게 한다.
    * 값은 흰빛의 진하기(0~1)이며 0.07 언저리가 넘어 보이지 않는 한계다.
@@ -185,7 +187,7 @@ export function drawLayer(
   if (options.edge !== undefined) {
     // 사방을 두르면 옛 금속 테두리로 되돌아간다. 빛이 닿는 윗변 한 줄만 긋는다.
     const top = [...points].sort((a, b) => a.y - b.y).slice(0, 2).sort((a, b) => a.x - b.x);
-    graphics.lineStyle(HOLO.lineWidth, options.edge, options.edgeAlpha ?? 1);
+    graphics.lineStyle(options.edgeWidth ?? HOLO.lineWidth, options.edge, options.edgeAlpha ?? 1);
     graphics.lineBetween(top[0].x, top[0].y, top[1].x, top[1].y);
   }
   return graphics;

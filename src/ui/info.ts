@@ -41,7 +41,13 @@ const PORTRAIT_FOCUS = { x: 336, y: 980, height: 1820 } as const;
 const FIGURE = { x: 762, y: 1786, height: 240 } as const;
 
 /** 오른쪽 정보 기둥. 캐릭터를 덮지 않도록 화면 오른쪽 절반만 쓴다. */
-const COLUMN = { x: 818, width: 476 } as const;
+const COLUMN = {
+  x: 818,
+  width: 476,
+  /** 기둥 전체를 화면 왼쪽 위로 미는 양. 판과 제목이 함께 움직인다. */
+  offsetX: -26,
+  offsetY: -22,
+} as const;
 
 /** 판 하나하나가 같은 각도로 기울어 한 벌로 읽힌다. */
 const PANEL_TILT = -1.6;
@@ -190,6 +196,8 @@ export function addHelpBadge(scene: Phaser.Scene, x: number, y: number, onClick:
 export class InfoManager {
   private readonly root: Phaser.GameObjects.Container;
   private readonly chrome: Phaser.GameObjects.Container;
+  /** 오른쪽 기둥(판과 칸 제목)을 한꺼번에 옮기는 층. */
+  private readonly column: Phaser.GameObjects.Container;
   private readonly popups: PopupLayer;
   private readonly keywords: KeywordManager;
 
@@ -240,6 +248,10 @@ export class InfoManager {
   constructor(private readonly scene: Phaser.Scene, private readonly portraitDepth = 1001) {
     this.root = scene.add.container(0, 0).setDepth(1000).setVisible(false);
     this.chrome = scene.add.container(0, 0).setDepth(1002).setVisible(false);
+    // 판과 제목은 이 층에 담아 한꺼번에 옮긴다. 자리를 조금 고칠 때마다 수십 개의 좌표를
+    // 다시 계산하지 않기 위해서다.
+    this.column = scene.add.container(COLUMN.offsetX, COLUMN.offsetY);
+    this.chrome.add(this.column);
     this.popups = new PopupLayer(scene, 2000);
     this.keywords = new KeywordManager(scene, this.popups);
 
@@ -327,7 +339,7 @@ export class InfoManager {
     const shape = perspectiveRect(width, height, { tall: "right", taper: (2 * PANEL_TAPER) / height });
     panel.add(drawLayer(this.scene, 0, 0, shape, { fill: 0x0b0f15, alpha: 0.6, edge: COLOR.accent, edgeAlpha: 0.4 }));
     panel.add(drawShapeEdge(this.scene, 0, 0, shape, "bottom", { color: COLOR.accent, alpha: 0.22, inset: 10 }));
-    this.chrome.add(panel);
+    this.column.add(panel);
     return panel;
   }
 
@@ -355,7 +367,7 @@ export class InfoManager {
     const bar = this.scene.add.graphics();
     bar.fillStyle(COLOR.accent, 0.95);
     bar.fillPoints(toPoints(slantedRect(9, 36, 7)).map((point) => new Phaser.Geom.Point(point.x + x, point.y + y)), true);
-    this.chrome.add([plate, bar, label]);
+    this.column.add([plate, bar, label]);
   }
 
   /** 즐겨찾기(별)와 애착(하트). 켜짐은 저마다의 색, 꺼짐은 회색이다. */
@@ -514,8 +526,9 @@ export class InfoManager {
     const container = this.scene.add.container(x - 34, y);
     container.add(drawLayer(this.scene, 0, 0, chipPoints(size, size, {
       bevel: { topLeft: size * 0.32, topRight: 0, bottomRight: size * 0.32, bottomLeft: 0 },
-    }), { fill: 0x11161d, alpha: 0.92, edge: chip.color, edgeAlpha: 0.95 }));
-    container.add(this.scene.add.text(0, 0, chip.label, textStyle({ role: "emphasis", size: 21 })).setOrigin(0.5));
+    // 윗변의 색 막대가 곧 어떤 능력치인지 알리는 표시다. 얇으면 색이 읽히지 않으므로 굵게 긋는다.
+    }), { fill: 0x11161d, alpha: 0.92, edge: chip.color, edgeAlpha: 1, edgeWidth: 7 }));
+    container.add(this.scene.add.text(0, 2, chip.label, textStyle({ role: "emphasis", size: 21 })).setOrigin(0.5));
 
     const value = this.scene.add.text(x + 12, y - 26, "", textStyle({ role: "display", size: 36 })).setOrigin(0, 0);
     const gain = this.scene.add.text(x + 12, y + 16, "", textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0, 0);

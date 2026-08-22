@@ -40,8 +40,13 @@ import { BOND_FEROCITY_MULTIPLIER, BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL, BOND_
 import { getRelicCatalogDisclosure } from "../core/relicCatalog";
 import { observations } from "../managers/ObservationManager";
 import { observationQuestionForDate } from "../data/observations";
+import type { PublicRelicProfileDto } from "../api/contracts";
+import type { Fighter } from "../core/skirmish";
+import { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../core/infoCapabilities";
 
 export type { SkillInfoViewModel } from "./SkillPopup";
+
+export { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../core/infoCapabilities";
 
 /** 전신 원화의 코어(`중심1`) 관절이 놓이는 자리와 확대 높이. 정보창의 주인공은 캐릭터다. */
 const PORTRAIT_FOCUS = { x: 336, y: 980, height: 1820 } as const;
@@ -202,6 +207,7 @@ function attach(panel: Phaser.GameObjects.Container, ...objects: Phaser.GameObje
 /** 뱃지 하나를 다시 칠하는 손잡이. */
 interface BadgeHandle {
   paint(on: boolean, enabled: boolean): void;
+  setVisible(visible: boolean): void;
 }
 
 /** 젬 조각 하나를 다시 칠하는 손잡이. */
@@ -286,13 +292,17 @@ export class InfoManager {
   private feedPlate?: { on: Phaser.GameObjects.Graphics; off: Phaser.GameObjects.Graphics };
   private feedHold?: Phaser.Time.TimerEvent;
   private feeding = false;
+  /** 생성 시 고정한 문맥 덕분에 읽기 전용 창이 도중에 소유자 권한으로 승격되지 않는다. */
+  private readonly capabilities: Readonly<InfoCapabilities>;
+  private publicProfile?: PublicRelicProfileDto;
 
   /** 정보창이 닫힐 때 목록 화면이 카드 표시를 다시 맞출 수 있게 알린다. */
   onClose?: () => void;
   /** 급여·돌파가 지갑을 바꾼 직후 소유 씬의 상단 재화 줄을 갱신하는 경계다. */
   onWalletChange?: () => void;
 
-  constructor(private readonly scene: Phaser.Scene, private readonly portraitDepth = 1001) {
+  constructor(private readonly scene: Phaser.Scene, private readonly portraitDepth = 1001, context: InfoContext = "owner") {
+    this.capabilities = capabilitiesFor(context);
     this.root = scene.add.container(0, 0).setDepth(1000).setVisible(false);
     this.chrome = scene.add.container(0, 0).setDepth(1002).setVisible(false);
     // 판과 제목은 이 층에 담아 한꺼번에 옮긴다. 자리를 조금 고칠 때마다 수십 개의 좌표를
@@ -347,6 +357,10 @@ export class InfoManager {
     const bondPanel = this.addPanel(COLUMN.x, 706, COLUMN.width, 144);
     const statPanel = this.addPanel(COLUMN.x, 1024, COLUMN.width, 396);
     const gemPanel = this.addPanel(COLUMN.x, 1398, COLUMN.width, 292);
+    // 친구에게는 유대/룬 판을, 적에게는 성장 기둥 전체를 노출하지 않는다.
+    bondPanel.setVisible(this.capabilities.showBond);
+    gemPanel.setVisible(this.capabilities.mutateProgress);
+    if (this.capabilities.showRuntimeCombat) this.column.setVisible(false);
 
     // 레벨 · 경험치 · 급여.
     this.addSectionTitle("레벨", 442 - 166);
@@ -364,6 +378,8 @@ export class InfoManager {
     const feed = this.addFeedButton(COLUMN.x, 546, COLUMN.width - 130, 98, levelPanel);
     this.feedButton = feed.container;
     this.feedLabel = feed.label;
+    this.feedButton.setVisible(this.capabilities.mutateProgress);
+    this.breakButton.container.setVisible(this.capabilities.mutateProgress);
 
     // 유대.
     const bondHeart = scene.add.container(COLUMN.x - COLUMN.width / 2 + 92, 710);
@@ -374,7 +390,7 @@ export class InfoManager {
     this.bondBar = new Gauge(scene, COLUMN.x + 40, 718, COLUMN.width - 184, 14, BOND_HEART);
     this.bondLabel = scene.add.text(COLUMN.x - COLUMN.width / 2 + 152, 738, "", textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0, 0);
     attach(bondPanel, bondHeart, ...this.bondBar.objects, this.bondLabel);
-    this.addSectionTitle("유대", 706 - 72);
+    this.addSectionTitle("유대", 706 - 72).setVisible(this.capabilities.showBond);
     this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 30, 686, (from) => this.openBondDetail(from), bondPanel);
 
     // 능력치.
@@ -383,7 +399,7 @@ export class InfoManager {
     STAT_CHIPS.forEach((chip, index) => this.addStatChip(chip, index, statPanel));
 
     // 하트 젬 — 하트 하나를 셋으로 가른 자리.
-    this.addSectionTitle("룬", 1398 - 146);
+    this.addSectionTitle("룬", 1398 - 146).setVisible(this.capabilities.mutateProgress);
     this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 30, 1316, (from) => this.openRuneOverview(from), gemPanel);
     for (let index = 0; index < 3; index += 1) this.gemSlots.push(this.addGemSlot(index, gemPanel));
 
@@ -416,7 +432,7 @@ export class InfoManager {
    * 같은 위계인지 읽히지 않는다. 그래서 판 밖(기울지 않는 층)에 얹고, 셋 다 같은 x에 선다.
    * 왼쪽의 짧은 막대와 아래로 흐르는 얇은 선이 제목을 판에 묶어 준다.
    */
-  private addSectionTitle(text: string, panelTop: number): void {
+  private addSectionTitle(text: string, panelTop: number): Phaser.GameObjects.Container {
     // 제목은 판의 왼쪽 끝에서 시작해 윗변에 걸터앉는다. 판 안으로 들여놓으면 아래 수치와
     // 한 덩어리로 읽히고, 어중간하게 띄우면 어느 판의 제목인지 흐려진다.
     const left = COLUMN.x - COLUMN.width / 2;
@@ -434,7 +450,9 @@ export class InfoManager {
     const bar = this.scene.add.graphics();
     bar.fillStyle(COLOR.accent, 0.95);
     bar.fillPoints(toPoints(slantedRect(9, 36, 7)).map((point) => new Phaser.Geom.Point(point.x + left + 16, point.y + y)), true);
-    this.column.add([plate, bar, label]);
+    const title = this.scene.add.container(0, 0, [plate, bar, label]);
+    this.column.add(title);
+    return title;
   }
 
   /** 즐겨찾기(별)와 애착(하트). 켜짐은 저마다의 색, 꺼짐은 회색이다. */
@@ -463,6 +481,7 @@ export class InfoManager {
         container.setAlpha(enabled ? 1 : 0.35);
         hit.setVisible(enabled);
       },
+      setVisible: (visible) => container.setVisible(visible),
     };
   }
 
@@ -589,6 +608,7 @@ export class InfoManager {
 
   /** 돌파에 드는 재료와 열리는 상한을 보여 주고 그 자리에서 확정한다. */
   private openBreakthrough(from: PopupSource): void {
+    if (!this.capabilities.mutateProgress) return;
     const def = this.currentDef;
     if (!def) return;
     const progress = relicProgression.getProgress(def.id);
@@ -789,6 +809,7 @@ export class InfoManager {
 
   /** 칸 하나에 낄 룬을 고르는 가방. 그 칸에 낄 수 있는 것만 늘어놓는다. */
   private openGemPicker(index: number): void {
+    if (!this.capabilities.mutateProgress) return;
     const def = this.currentDef;
     if (!def || !this.ownedNow) return;
     this.popups.open({ width: 820, height: 620, title: "룬 가방 · " + (index + 1) + "번 칸", dim: true }, (body, close) => {
@@ -1164,18 +1185,26 @@ export class InfoManager {
   }
 
   private toggleBookmark(): void {
+    if (!this.capabilities.mutateProgress) return;
     if (!this.currentDef || !this.ownedNow) return;
     relicCollection.toggleBookmark(this.currentDef.id);
     this.refreshBadges();
   }
 
   private toggleFavorite(): void {
+    if (!this.capabilities.mutateProgress) return;
     if (!this.currentDef || !this.ownedNow) return;
     relicCollection.setFavorite(this.currentDef.id);
     this.refreshBadges();
   }
 
   private refreshBadges(): void {
+    if (!this.capabilities.mutateProgress) {
+      // 읽기 전용 문맥에서는 애착/즐겨찾기 입력 객체 자체를 화면에서 제거한다.
+      this.bookmarkBadge.setVisible(false);
+      this.favoriteBadge.setVisible(false);
+      return;
+    }
     const def = this.currentDef;
     const owned = this.ownedNow && def !== undefined && relicCollection.owns(def.id);
     this.bookmarkBadge.paint(owned && relicCollection.isBookmarked(def!.id), owned);
@@ -1336,7 +1365,24 @@ export class InfoManager {
 
   /** 도감은 보유 여부를 전달해 정적 기록과 성장 정보의 잠금을 한곳에서 적용한다. */
   showRelic(def: RelicDef, owned = true): void {
+    this.publicProfile = undefined;
     this.openCharacter(def, owned);
+  }
+
+  /** 친구 서버가 공개한 스냅샷만 사용하며 로컬 `session.relicProgress`는 읽지 않는다. */
+  showFriend(profile: PublicRelicProfileDto): void {
+    this.publicProfile = profile;
+    const def = RELICS.find((relic) => relic.id === profile.relicId);
+    if (!def) throw new Error(`알 수 없는 공개 렐릭 id: ${profile.relicId}`);
+    this.openCharacter(def, true);
+  }
+
+  /** 전투 스냅샷에서 허용된 현재 게이지와 상태이상만 헤더에 붙이는 적 전용 진입점이다. */
+  showEnemy(fighter: Fighter): void {
+    this.publicProfile = { relicId: fighter.def.id, level: 1, stars: 0, stats: { ...fighter.def.stats }, skillIds: [fighter.def.basic.id, fighter.def.passive.id, fighter.def.ultimate.id] };
+    this.openCharacter(fighter.def, true);
+    const ailment = fighter.bleed ? `  ·  출혈 ${Math.ceil(fighter.bleed.remaining)}초` : "  ·  상태이상 없음";
+    this.roleText.setText(`${ELEMENT_LABEL[fighter.def.element]} · ${ROLE_LABEL[fighter.def.role]}  ·  HP ${Math.ceil(fighter.hp)}/${fighter.maxHp}  ·  궁극 ${Math.round(fighter.energy)}  ·  야성 ${Math.round(fighter.ferocity)}${ailment}`);
   }
 
   /** 정적 렐릭 정의만 받아 읽기 전용 상세 화면의 상태를 교체한다. */
@@ -1402,8 +1448,11 @@ export class InfoManager {
   private refreshGrowth(): void {
     const def = this.currentDef;
     if (!def) return;
-    const progress = relicProgression.getProgress(def.id);
-    const finalStats = relicProgression.getFinalStats(def.id);
+    // 공개 프로필은 필요한 표시용 기본값도 DTO로부터 만들며 플레이어 저장을 건드리지 않는다.
+    const progress: RelicProgress = this.publicProfile
+      ? { level: this.publicProfile.level, exp: 0, awakening: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] }
+      : relicProgression.getProgress(def.id);
+    const finalStats = this.publicProfile?.stats ?? relicProgression.getFinalStats(def.id);
     const cap = relicLevelCap(progress.breakthrough);
     const maxed = progress.level >= cap;
 

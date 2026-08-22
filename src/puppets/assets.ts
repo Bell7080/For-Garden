@@ -110,11 +110,19 @@ export const AMO_ASSET: PuppetAsset = {
 
 /** 3번 적 리파. 파일명의 기존 표기(enemy003)를 실제 공개 에셋 경로대로 연결한다. */
 export const RIPA_ASSET: PuppetAsset = {
-  url: `${base}puppets/enemy003.zip`,
+  url: `${base}puppets/enemy_003.zip`,
   imageWidth: 1254,
   imageHeight: 1254,
   content: { left: 352, top: 155, right: 993, bottom: 1082 },
 };
+
+/** 전투용 적 SD 1~3번은 정보창용 전신 원화와 파일을 섞지 않는다. */
+export const ENEMY_SD_ASSETS: readonly [PuppetAsset, PuppetAsset, PuppetAsset] = ([1, 2, 3] as const).map((number) => ({
+  url: `${base}puppets/enemySD_${String(number).padStart(3, "0")}.zip`,
+  imageWidth: 1254,
+  imageHeight: 1254,
+  content: { left: 352, top: 155, right: 993, bottom: 1082 },
+})) as unknown as readonly [PuppetAsset, PuppetAsset, PuppetAsset];
 
 /** 1번 SD: 토리카. 실제 투명 영역을 제외한 범위로 발 위치와 크기를 잡는다. */
 export const TORIKA_SD_ASSET: PuppetAsset = {
@@ -143,9 +151,9 @@ export const SEIRA_SD_ASSET: PuppetAsset = {
 
 /** 적은 번호별 전용 묶음을 쓰고, 전용 SD가 없는 아군은 요청대로 아군 1번 SD를 공유한다. */
 export function battleAssetFor(relicId: string): PuppetAsset {
-  if (relicId === "husk-raptor") return TOBY_ASSET;
-  if (relicId === "husk-shell") return AMO_ASSET;
-  if (relicId === "husk-wing") return RIPA_ASSET;
+  if (relicId === "husk-raptor") return ENEMY_SD_ASSETS[0];
+  if (relicId === "husk-shell") return ENEMY_SD_ASSETS[1];
+  if (relicId === "husk-wing") return ENEMY_SD_ASSETS[2];
   if (relicId === "anky") return TORIKA_SD_ASSET;
   if (relicId === "rex") return LEXIA_SD_ASSET;
   if (relicId === "spino") return SEIRA_SD_ASSET;
@@ -208,7 +216,7 @@ function loadPuppet(asset: PuppetAsset): Promise<Puppet> {
  */
 export const PUPPET_PRELOAD_GROUPS: ReadonlyArray<readonly PuppetAsset[]> = [
   [TORIKA_ASSET, LEXIA_ASSET, SEIRA_ASSET],
-  [TORIKA_SD_ASSET, LEXIA_SD_ASSET, SEIRA_SD_ASSET, TOBY_ASSET, AMO_ASSET, RIPA_ASSET],
+  [TORIKA_SD_ASSET, LEXIA_SD_ASSET, SEIRA_SD_ASSET, ...ENEMY_SD_ASSETS, TOBY_ASSET, AMO_ASSET, RIPA_ASSET],
 ];
 
 /**

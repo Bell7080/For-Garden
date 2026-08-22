@@ -38,13 +38,21 @@ export type { SkillInfoViewModel } from "./SkillPopup";
 const PORTRAIT_FOCUS = { x: 336, y: 980, height: 1820 } as const;
 
 /** 정보창 구석에 세우는 SD 피규어. 받침 위에서 idle만 재생한다. */
-const FIGURE = { x: 806, y: 1786, height: 240 } as const;
+const FIGURE = { x: 762, y: 1786, height: 240 } as const;
 
 /** 오른쪽 정보 기둥. 캐릭터를 덮지 않도록 화면 오른쪽 절반만 쓴다. */
 const COLUMN = { x: 818, width: 476 } as const;
 
 /** 판 하나하나가 같은 각도로 기울어 한 벌로 읽힌다. */
 const PANEL_TILT = -1.6;
+
+/**
+ * 판의 왼쪽 변이 오른쪽 변보다 짧아지는 양(px).
+ *
+ * 네 판이 같은 값을 쓰므로 변의 기울기가 같아진다. 높이에 비례시키면 큰 판만 크게 기울어
+ * 한 벌로 읽히지 않는다.
+ */
+const PANEL_TAPER = 22;
 
 /** 꺼진 뱃지·빈 별의 선 색. 글자용 문자열 색과 달리 도형은 숫자 색이 필요하다. */
 const BADGE_OFF = 0x8b8f96;
@@ -64,15 +72,17 @@ const SKILL_ICON = { size: 150, x: 124, step: 168 } as const;
  * 가로세로 같은 자리에 앉는다(1:1). 하트 곡선은 세로가 조금 짧아서 그대로 그리면 납작해
  * 보이므로, 그리는 쪽에서 세로만 늘려 정사각형 자리를 꽉 채운다.
  */
-const BOND_HEART_SIZE = 96;
+const BOND_HEART_SIZE = 84;
 
 /** 정보창의 별은 화면에서 가장 큰 성급 표시다. 모양과 색은 `stars.ts`가 정한다. */
 const STAR_SIZE = 34;
 
 /** 야성 뱃지의 색. 게이지가 끓는 쪽이라 붉은 기가 돈다. */
 const FEROCITY_BADGE = 0x8f3a2a;
-/** 유대 하트와 급여 버튼의 색. */
-const BOND_HEART = 0xf2789f;
+/** 유대 하트와 급여 버튼의 색. 하트는 반투명하게 겹쳐 발광하는 붉은 빛으로 쓴다. */
+const BOND_HEART = 0xe23a46;
+/** 하트 안쪽에 한 겹 더 얹는 밝은 심지. */
+const BOND_HEART_CORE = 0xff8a7a;
 const FEED_GREEN = 0x7fc47f;
 /** 낀 젬 조각이 내는 빛. */
 const GEM_GLOW = 0xf2789f;
@@ -237,10 +247,10 @@ export class InfoManager {
 
     // 오른쪽 수치는 칸마다 판을 따로 깐다. 대신 칸의 내용물을 그 판 **안에** 넣어 판과 같은
     // 각도로 함께 기운다. 판만 기울고 글자가 반듯하면 판 위에 종이를 얹어 둔 것처럼 어긋난다.
-    const levelPanel = this.addPanel(COLUMN.x, 440, COLUMN.width, 368);
-    const bondPanel = this.addPanel(COLUMN.x, 700, COLUMN.width, 150);
-    const statPanel = this.addPanel(COLUMN.x, 1024, COLUMN.width, 420);
-    const gemPanel = this.addPanel(COLUMN.x, 1378, COLUMN.width, 262);
+    const levelPanel = this.addPanel(COLUMN.x, 442, COLUMN.width, 332);
+    const bondPanel = this.addPanel(COLUMN.x, 706, COLUMN.width, 144);
+    const statPanel = this.addPanel(COLUMN.x, 1024, COLUMN.width, 396);
+    const gemPanel = this.addPanel(COLUMN.x, 1398, COLUMN.width, 292);
 
     // 레벨 · 경험치 · 급여.
     this.levelValue = scene.add.text(COLUMN.x - COLUMN.width / 2 + 92, 296, "", textStyle({ role: "display", size: 96 })).setOrigin(0, 0).setScale(1, 1.16);
@@ -255,18 +265,15 @@ export class InfoManager {
     this.feedLabel = feed.label;
 
     // 유대.
-    const bondHeart = scene.add.container(COLUMN.x - COLUMN.width / 2 + 116, 700);
+    const bondHeart = scene.add.container(COLUMN.x - COLUMN.width / 2 + 116, 710);
     // 하트도 별과 같은 방식이다 — 그림자·빛무리·몸통을 겹으로 쌓고 어두운 선으로 마무리한다.
     bondHeart.add(paintBondHeart(scene, BOND_HEART_SIZE));
-    this.bondValue = scene.add
-      .text(0, 2, "", textStyle({ role: "display", size: 46 }))
-      .setOrigin(0.5)
-      .setStroke("#2a0b16", 9);
+    this.bondValue = scene.add.text(0, 2, "", textStyle({ role: "display", size: 46 })).setOrigin(0.5);
     bondHeart.add(this.bondValue);
-    this.bondBar = new Gauge(scene, COLUMN.x + 76, 712, COLUMN.width - 256, 14, BOND_HEART);
-    this.bondLabel = scene.add.text(COLUMN.x - COLUMN.width / 2 + 186, 728, "", textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0, 0);
+    this.bondBar = new Gauge(scene, COLUMN.x + 76, 718, COLUMN.width - 256, 14, BOND_HEART);
+    this.bondLabel = scene.add.text(COLUMN.x - COLUMN.width / 2 + 186, 734, "", textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0, 0);
     attach(bondPanel, bondHeart,
-      scene.add.text(COLUMN.x - COLUMN.width / 2 + 186, 652, "유대", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0),
+      scene.add.text(COLUMN.x - COLUMN.width / 2 + 186, 658, "유대", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0),
       ...this.bondBar.objects, this.bondLabel);
 
     // 능력치.
@@ -275,7 +282,7 @@ export class InfoManager {
     STAT_CHIPS.forEach((chip, index) => this.addStatChip(chip, index, statPanel));
 
     // 하트 젬 — 하트 하나를 셋으로 가른 자리.
-    attach(gemPanel, scene.add.text(COLUMN.x - COLUMN.width / 2 + 44, 1268, "HEART GEM", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0));
+    attach(gemPanel, scene.add.text(COLUMN.x - COLUMN.width / 2 + 44, 1276, "HEART GEM", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0));
     for (let index = 0; index < 3; index += 1) this.gemSlots.push(this.addGemSlot(index, gemPanel));
 
     this.buildFigureStand();
@@ -291,7 +298,9 @@ export class InfoManager {
    */
   private addPanel(x: number, y: number, width: number, height: number): Phaser.GameObjects.Container {
     const panel = this.scene.add.container(x, y).setRotation(Phaser.Math.DegToRad(PANEL_TILT));
-    const shape = perspectiveRect(width, height, { tall: "right", taper: 0.06 });
+    // 좁아지는 양을 비율이 아니라 픽셀로 고정한다. 비율로 두면 높은 판이 더 많이 좁아져
+    // 판마다 변의 기울기가 달라지고, 네 장이 저마다 다른 방향으로 노는 것처럼 보인다.
+    const shape = perspectiveRect(width, height, { tall: "right", taper: (2 * PANEL_TAPER) / height });
     panel.add(drawLayer(this.scene, 0, 0, shape, { fill: 0x0b0f15, alpha: 0.6, edge: COLOR.accent, edgeAlpha: 0.4 }));
     panel.add(drawShapeEdge(this.scene, 0, 0, shape, "bottom", { color: COLOR.accent, alpha: 0.22, inset: 10 }));
     this.chrome.add(panel);
@@ -471,8 +480,8 @@ export class InfoManager {
    * 완성되므로, 빈 자리가 곧 "아직 덜 채운 마음"으로 읽힌다.
    */
   private addGemSlot(index: number, panel: Phaser.GameObjects.Container): GemSlot {
-    const center = { x: COLUMN.x - 48, y: 1372 };
-    const size = 208;
+    const center = { x: COLUMN.x - 48, y: 1404 };
+    const size = 214;
     const piece = this.scene.add.graphics({ x: center.x, y: center.y });
     const shape = heartSlice(size, index);
     const spot = heartSliceCenter(size, index);
@@ -986,14 +995,16 @@ function paintBondHeart(scene: Phaser.Scene, size: number): Phaser.GameObjects.G
     }
     return list;
   };
-  // 겹은 셋이면 충분하다. 옅은 그림자로 바닥에서 떼고, 한 겹의 빛무리로 번지게 한 뒤,
-  // 몸통을 얹는다. 테두리를 두르면 다른 요소보다 먼저 눈에 들어와 판을 어지럽힌다.
-  g.fillStyle(0x2a0b16, 0.35);
-  g.fillPoints(shape(1, size * 0.04, size * 0.05), true);
-  g.fillStyle(BOND_HEART, 0.14);
-  g.fillPoints(shape(1.16), true);
-  g.fillStyle(BOND_HEART, 1);
+  // 반투명한 붉은 빛이다. 판때기처럼 꽉 채우지 않고, 옅은 빛이 세 겹 겹쳐 안쪽이 밝게
+  // 남는다. 뒤의 게이지와 글자가 살짝 비쳐야 "빛나는 표시"로 읽힌다.
+  g.fillStyle(BOND_HEART, 0.18);
+  g.fillPoints(shape(1.14), true);
+  g.fillStyle(BOND_HEART, 0.3);
+  g.fillPoints(shape(1.06), true);
+  g.fillStyle(BOND_HEART, 0.5);
   g.fillPoints(shape(1), true);
+  g.fillStyle(BOND_HEART_CORE, 0.34);
+  g.fillPoints(shape(0.72, 0, -size * 0.02), true);
   return g;
 }
 

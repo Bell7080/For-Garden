@@ -106,6 +106,10 @@ describe("재화와 보유 반영", () => {
 });
 
 describe("운영 배너 데이터", () => {
+  it("모든 운영 배너의 SSR 천장은 100회다", () => {
+    // 문서와 UI가 같은 정적 운영값을 읽도록 과거 80회 값의 회귀를 막는다.
+    expect(BANNERS.every((candidate) => candidate.highestRarityGuarantee === 100)).toBe(true);
+  });
   it("픽업과 대표 렐릭이 해당 등급 풀에 있고 확률 합계가 1이다", () => {
     for (const candidate of BANNERS) {
       expect(Object.values(candidate.rarityRates).reduce((sum, rate) => sum + rate, 0)).toBeCloseTo(1);

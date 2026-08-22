@@ -11,6 +11,8 @@ import { GameApiError, type BreakThroughResponse, type ClaimMissionRewardsRespon
 import type { ProductDefinition } from "../data/products";
 import { PRODUCTS } from "../data/products";
 import type { ProductListResponse, PurchaseProductResponse } from "./contracts";
+import type { ExchangeDnaRequest, ExchangeDnaResponse } from "./contracts";
+import { DNA_EXCHANGE_OFFERS, WALLET_CAPS } from "../data/economy";
 
 /** FakeServer의 지연과 난수원을 테스트에서 결정적으로 바꾸기 위한 선택 설정이다. */
 export interface FakeServerOptions {
@@ -72,6 +74,7 @@ export class FakeServer implements GameApi {
     const nextState: Session = { ...this.state, wallet: nextWallet, owned: outcome.ownedRelicIds, relicProgress: nextProgress, gachaPityByGroup: nextPity, missions: nextMissions };
 
     // 저장 실패도 원본 메모리에 부분 반영되지 않도록 저장을 먼저 성공시킨 뒤 필드를 일괄 교체한다.
+    this.validateState(nextState);
     if (this.state === session) saveManager.save(nextState);
     this.state.wallet = nextWallet;
     this.state.owned = outcome.ownedRelicIds;
@@ -230,7 +233,8 @@ export class FakeServer implements GameApi {
     const nextGems = [...this.state.ownedHeartGemIds];
     for (const grant of product.grants) {
       if (grant.kind === "currency") nextWallet[grant.currency] += grant.amount;
-      else if (!nextGems.includes(grant.itemId)) nextGems.push(grant.itemId);
+      else if (nextGems.includes(grant.itemId)) throw new GameApiError("DUPLICATE_GRANT", "이미 보유한 Heart Gem은 중복 지급할 수 없습니다.");
+      else nextGems.push(grant.itemId);
     }
     const periodKey = this.productPeriodKey(product, now);
     const current = this.state.productPurchases[product.id];
@@ -239,6 +243,36 @@ export class FakeServer implements GameApi {
     this.persist({ ...this.state, wallet: nextWallet, ownedHeartGemIds: nextGems, productPurchases: nextPurchases });
     this.state.wallet = nextWallet; this.state.ownedHeartGemIds = nextGems; this.state.productPurchases = nextPurchases;
     return { ...this.snapshot(), productId, grants: product.grants, remaining: Math.max(0, product.purchaseLimit - count) };
+  }
+
+  /** DNA 조각을 무작위 결과가 아닌 명시적으로 고른 렐릭·제작 재료·과거 재화로 교환한다. */
+  async exchangeDna(request: ExchangeDnaRequest): Promise<ExchangeDnaResponse> {
+    await this.delay();
+    const offer = DNA_EXCHANGE_OFFERS.find((candidate) => candidate.id === request.offerId);
+    if (!offer) throw new GameApiError("DNA_OFFER_NOT_FOUND", "존재하지 않는 DNA 교환품입니다.");
+    if (this.state.wallet.dnaFragments < offer.dnaCost) throw new GameApiError("INSUFFICIENT_CURRENCY", "DNA 조각이 부족합니다.");
+
+    const nextWallet = { ...this.state.wallet, dnaFragments: this.state.wallet.dnaFragments - offer.dnaCost };
+    const nextProgress = { ...this.state.relicProgress };
+    const nextGems = [...this.state.ownedHeartGemIds];
+    if (offer.kind === "relic_awakening") {
+      const target = request.relicId ? this.state.relicProgress[request.relicId] : undefined;
+      if (!request.relicId || !this.state.owned.has(request.relicId) || !target || target.awakening >= 5) {
+        throw new GameApiError("INVALID_EXCHANGE_TARGET", "각성할 수 있는 보유 렐릭을 선택해야 합니다.");
+      }
+      // 선택한 한 렐릭만 복사해 각성 1단계를 확정하며 다른 렐릭 진행은 건드리지 않는다.
+      nextProgress[request.relicId] = { ...target, heartGemSlots: [...target.heartGemSlots] as typeof target.heartGemSlots, awakening: target.awakening + 1 };
+    } else if (offer.kind === "heart_gem_material") {
+      if (nextGems.includes(offer.heartGemId)) throw new GameApiError("DUPLICATE_GRANT", "이미 보유한 Heart Gem 제작 재료입니다.");
+      nextGems.push(offer.heartGemId);
+    } else {
+      nextWallet.fossil += offer.fossilAmount;
+    }
+
+    const nextState = { ...this.state, wallet: nextWallet, relicProgress: nextProgress, ownedHeartGemIds: nextGems };
+    this.persist(nextState);
+    this.state.wallet = nextWallet; this.state.relicProgress = nextProgress; this.state.ownedHeartGemIds = nextGems;
+    return { ...this.snapshot(), offerId: offer.id, rewardKind: offer.kind, relicId: offer.kind === "relic_awakening" ? request.relicId : undefined };
   }
 
   /** 노출 판정은 클라이언트 시간이 아니라 주입 가능한 서버 시간만 사용한다. */
@@ -289,7 +323,22 @@ export class FakeServer implements GameApi {
   }
 
   /** 공유 세션일 때만 브라우저 저장을 수행해 단위 테스트의 독립 세션에는 부작용을 만들지 않는다. */
-  private persist(next: Session): void { if (this.state === session) saveManager.save(next); }
+  private persist(next: Session): void {
+    // 모든 쓰기 API가 공유하는 마지막 경계에서 음수·상한·중복을 저장 전에 차단한다.
+    this.validateState(next);
+    if (this.state === session) saveManager.save(next);
+  }
+
+  /** 실제 HTTP 서버로 옮겨도 그대로 적용할 API 응답 직전 불변식 검사다. */
+  private validateState(next: Session): void {
+    for (const [currency, cap] of Object.entries(WALLET_CAPS) as [keyof typeof WALLET_CAPS, number][]) {
+      const amount = next.wallet[currency];
+      if (!Number.isInteger(amount) || amount < 0) throw new GameApiError("INVALID_STATE", `${currency} 재화는 음수가 아닌 정수여야 합니다.`);
+      if (amount > cap) throw new GameApiError("CURRENCY_LIMIT_EXCEEDED", `${currency} 재화 상한을 초과했습니다.`);
+    }
+    if (new Set(next.ownedHeartGemIds).size !== next.ownedHeartGemIds.length) throw new GameApiError("DUPLICATE_GRANT", "Heart Gem 중복 지급이 감지되었습니다.");
+    if (Object.values(next.relicProgress).some((progress) => progress.awakening < 0 || progress.awakening > 5)) throw new GameApiError("INVALID_STATE", "렐릭 각성 상한을 벗어났습니다.");
+  }
 
   private delay(): Promise<void> {
     // globalThis를 써서 브라우저와 Vitest(Node) 양쪽에서 같은 구현을 사용한다.

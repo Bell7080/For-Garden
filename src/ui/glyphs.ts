@@ -39,10 +39,12 @@ export function drawGlyph(
   size: number,
   color: number,
   alpha = 1,
+  /** 선 두께. 작게 그릴수록 기본 비례로는 가늘어지므로 필요한 자리에서만 굵게 준다. */
+  lineWidth?: number,
 ): Phaser.GameObjects.Graphics {
   const g = scene.add.graphics({ x, y });
   const r = size / 2;
-  g.lineStyle(Math.max(2, size * 0.09), color, alpha);
+  g.lineStyle(lineWidth ?? Math.max(2, size * 0.09), color, alpha);
   switch (name) {
     case "sortie":
       // 앞으로 내미는 화살촉 둘. 출격의 방향을 보여 준다.

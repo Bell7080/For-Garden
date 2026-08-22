@@ -462,8 +462,9 @@ export class InfoManager {
   /** 더 볼 것이 있다는 표시. 자리만 다를 뿐 생김새와 크기는 같다. */
   private addMagnifier(x: number, y: number, onClick: (from: PopupSource) => void, panel?: Phaser.GameObjects.Container): void {
     const container = this.scene.add.container(x, y);
-    // 작고 반투명하다. 이것은 "더 있다"는 힌트일 뿐이라, 옆의 수치보다 먼저 눈에 들어오면 안 된다.
-    container.add(drawGlyph(this.scene, "magnifier", 0, 0, 36, COLOR.accent, 0.6));
+    // 작고 흐린 회색이다. 이것은 "더 있다"는 힌트일 뿐이라, 옆의 수치보다 먼저 눈에 들어오면
+    // 안 된다. 대신 작아진 만큼 선은 굵게 줘야 형태가 뭉개지지 않는다.
+    container.add(drawGlyph(this.scene, "magnifier", 0, 0, 30, 0xb9c0ca, 0.42, 4));
     const hit = this.scene.add.rectangle(x, y, 78, 78, 0xffffff, 0).setInteractive({ useHandCursor: true });
     hit.on("pointerdown", () => container.setScale(1.15));
     hit.on("pointerout", () => { if (!this.popups.isOpen) container.setScale(1); });

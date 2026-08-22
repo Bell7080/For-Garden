@@ -10,7 +10,7 @@ export const BOND_LEVEL_CAP = 10;
 export const BOND_TOTAL_XP_BY_LEVEL = [0, 20, 50, 90, 140, 200, 270, 350, 440, 540, 650] as const;
 
 /** 허용된 세 경로만 이름 있는 상수로 노출해 임의 보상 생성을 막는다. */
-export const BOND_XP_REWARD = { firstAcquisition: 20, partyVictory: 12, firstLobbyInteraction: 5 } as const;
+export const BOND_XP_REWARD = { firstAcquisition: 20, partyVictory: 12, firstLobbyInteraction: 5, firstObservationInterview: 5 } as const;
 
 /**
  * 유대 레벨별 야성 증가 배율.

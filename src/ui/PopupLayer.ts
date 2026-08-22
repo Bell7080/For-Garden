@@ -24,7 +24,7 @@ export interface PopupOptions {
    */
   dim?: boolean;
   /**
-   * 누른 자리. 주면 그 위(자리가 없으면 아래)에 붙고, 붙은 곳을 가리키는 짧은 선이 그려진다.
+   * 누른 자리. 주면 그 위(자리가 없으면 아래)에 붙는다.
    * 화면 밖으로 나가지 않도록 가장자리에서 안쪽으로 밀어 넣는다.
    */
   anchor?: { x: number; y: number };
@@ -74,15 +74,6 @@ export class PopupLayer {
     });
     body.add(drawLayer(this.scene, 0, 0, shape, { fill: 0x0b0f15, alpha: 0.96, edge: COLOR.accent, edgeAlpha: 0.6 }));
     body.add(drawShapeEdge(this.scene, 0, 0, shape, "bottom", { color: COLOR.accent, alpha: 0.3, inset: 12 }));
-    if (options.anchor) {
-      // 어디서 나온 쪽지인지 알리는 짧은 선. 누른 자리 쪽으로 뻗는다.
-      const below = options.anchor.y > cy;
-      const tail = this.scene.add.graphics();
-      tail.lineStyle(3, COLOR.accent, 0.55);
-      const edge = below ? height / 2 : -height / 2;
-      tail.lineBetween(options.anchor.x - cx, edge, options.anchor.x - cx, edge + (below ? 40 : -40));
-      body.add(tail);
-    }
     layer.add(body);
 
     const close = (): void => {

@@ -156,20 +156,29 @@ export function drawGlyph(
       g.lineBetween(-r * 0.28, r * 0.06, r * 0.28, r * 0.06);
       break;
     case "magnifier":
-      // 돋보기 — 더 볼 것이 있다는 표시.
+      // 돋보기 — 더 볼 것이 있다는 표시. 렌즈 안의 +가 "펼쳐 본다"를 알린다.
       g.strokeCircle(-r * 0.14, -r * 0.14, r * 0.55);
       g.lineBetween(r * 0.26, r * 0.26, r * 0.86, r * 0.86);
+      g.lineBetween(-r * 0.42, -r * 0.14, r * 0.14, -r * 0.14);
+      g.lineBetween(-r * 0.14, -r * 0.42, -r * 0.14, r * 0.14);
       break;
     case "costume":
       // 옷걸이에 걸린 옷 — 코스튬.
       g.strokePoints(points(-r * 0.9, -r * 0.2, -r * 0.35, -r * 0.62, r * 0.35, -r * 0.62, r * 0.9, -r * 0.2, r * 0.5, r * 0.1, r * 0.5, r * 0.85, -r * 0.5, r * 0.85, -r * 0.5, r * 0.1), true);
       g.lineBetween(0, -r * 0.62, 0, -r * 0.9);
       break;
-    case "bookmark":
-      // 즐겨찾기 — 아래가 갈라진 책갈피.
+    case "bookmark": {
+      // 즐겨찾기 — 별. 성급 별과 같은 5각이라 "골라 둔 것"으로 바로 읽힌다.
+      const star: number[] = [];
+      for (let i = 0; i < 10; i += 1) {
+        const radius = i % 2 === 0 ? r * 0.95 : r * 0.4;
+        const angle = -Math.PI / 2 + (i * Math.PI) / 5;
+        star.push(Math.cos(angle) * radius, Math.sin(angle) * radius);
+      }
       g.fillStyle(color, alpha);
-      g.fillPoints(points(-r * 0.6, -r * 0.85, r * 0.6, -r * 0.85, r * 0.6, r * 0.85, 0, r * 0.3, -r * 0.6, r * 0.85), true);
+      g.fillPoints(points(...star), true);
       break;
+    }
   }
   return g;
 }

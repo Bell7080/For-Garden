@@ -5,11 +5,14 @@ import { previewSkillDamage, ULTIMATE_ENERGY_MAX, type BattleUnit } from "../cor
 import type { Element, RelicDef, RelicRarity, Role, Skill, SkillIconAssetId, Stats } from "../core/types";
 import { setDebugInfoOpen } from "../debug";
 import { getHeartGem, HEART_GEMS } from "../data/heartGems";
+import { RELICS } from "../data/relics";
 import { KeywordManager } from "../managers/KeywordManager";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import {
   battleAssetFor,
   enableHitOnClick,
+  placePuppet,
+  playMotion,
   portraitAssetFor,
   portraitUsesRelicTint,
   spawnPuppet,
@@ -30,7 +33,7 @@ import { FALLBACK_SKILL_ICON } from "./skillIcons";
 import { gameApi } from "../api/FakeServer";
 import { AWAKENING_CAP, AWAKENING_STEPS, canFeedRelic, FEED_UNIT, RELIC_LEVEL_CAP, relicExpToNext } from "../core/relicProgression";
 import { session } from "../state/session";
-import { BOND_FEROCITY_MULTIPLIER, BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL } from "../core/bond";
+import { BOND_FEROCITY_MULTIPLIER, BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL, BOND_XP_REWARD } from "../core/bond";
 import { getRelicCatalogDisclosure } from "../core/relicCatalog";
 
 export type { SkillInfoViewModel } from "./SkillPopup";
@@ -104,6 +107,22 @@ const BOND_HEART = 0xe23a46;
 /** 하트 안쪽에 한 겹 더 얹는 밝은 심지. */
 const BOND_HEART_CORE = 0xff8a7a;
 const FEED_GREEN = 0x7fc47f;
+/**
+ * 유대로 하나씩 열리는 이야기 네 편.
+ *
+ * 아직 대사 데이터가 없어 제목과 조건만 둔다. 원문이 생기면 `src/data/dialogues`에 넣고
+ * 여기서는 그 id만 가리키게 바꾼다 — 대사를 화면에 적어 두지 않기 위해서다.
+ */
+const BOND_STORY_STEPS: readonly { level: number; title: string }[] = [
+  { level: 2, title: "1화 · 첫 인사" },
+  { level: 4, title: "2화 · 사육장의 밤" },
+  { level: 7, title: "3화 · 옛 기억의 조각" },
+  { level: 10, title: "4화 · 이터널 시티의 끝" },
+];
+
+/** 옆 캐릭터로 넘어가는 데 필요한 가로 이동(px). */
+const SWIPE_DISTANCE = 110;
+
 /** 빈 자리가 제 크기에서 물러나는 비율. 셋이 물러나면 사이에 고른 틈이 생긴다. */
 const GEM_GAP = 0.955;
 
@@ -243,6 +262,10 @@ export class InfoManager {
   private portraitRequest = 0;
   private figure?: PuppetCreature;
   private figureRequest = 0;
+  /** 전신 감상 중일 때 화면을 덮는 종료 판. 없으면 감상 중이 아니다. */
+  private gallery?: Phaser.GameObjects.Rectangle;
+  /** 좌우 넘김이 진행 중인지. 연달아 밀어도 한 번에 한 명씩만 넘어간다. */
+  private sliding = false;
   private feedHold?: Phaser.Time.TimerEvent;
   private feeding = false;
 
@@ -263,6 +286,17 @@ export class InfoManager {
     this.root.add(scene.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.52).setInteractive());
     this.root.add(drawVignette(scene, BASE_WIDTH, BASE_HEIGHT, { depth: 0, strength: 0.6 }));
 
+    // 인물을 누르는 자리. 코어(중심1) 관절 둘레의 몸통만 받는다. 원화 전체를 입력으로 두면
+    // 빈 배경을 눌러도 캐릭터가 튀어 정신이 없다.
+    const body = scene.add
+      .rectangle(PORTRAIT_FOCUS.x, PORTRAIT_FOCUS.y, 340, 620, 0xffffff, 0)
+      .setInteractive({ useHandCursor: true });
+    body.on("pointerup", () => {
+      if (this.portrait) playMotion(scene, this.portrait, "hit");
+    });
+    this.root.add(body);
+    this.enableSwipe();
+
     // 이름줄은 판때기가 아니라 위에서 내려오는 어둠이다. 배경 원화를 자르지 않는다.
     this.chrome.add(drawGlassFade(scene, BASE_WIDTH / 2, 150, BASE_WIDTH, 420, { topAlpha: 0.92, bottomAlpha: 0 }));
     this.rarityGlow = scene.add.text(46, 56, "", textStyle({ role: "display", size: 44 })).setOrigin(0, 0).setAlpha(0.55).setScale(1.06).setBlendMode(Phaser.BlendModes.ADD);
@@ -276,6 +310,7 @@ export class InfoManager {
     this.bookmarkBadge = this.addBadge(84, 300, "bookmark", BOOKMARK_ON, () => this.toggleBookmark());
     this.favoriteBadge = this.addBadge(176, 300, "heart", FAVORITE_ON, () => this.toggleFavorite());
     this.addJournalButton(268, 300);
+    this.addMagnifier(84, 392, () => this.enterGallery());
 
     this.starRow = scene.add.container(COLUMN.x, 150);
     this.chrome.add(this.starRow);
@@ -314,6 +349,7 @@ export class InfoManager {
     this.bondLabel = scene.add.text(COLUMN.x - COLUMN.width / 2 + 152, 738, "", textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0, 0);
     attach(bondPanel, bondHeart, ...this.bondBar.objects, this.bondLabel);
     this.addSectionTitle("유대", 706 - 72);
+    this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 44, 662, (from) => this.openBondDetail(from), bondPanel);
 
     // 능력치.
     this.addSectionTitle("능력치", 1024 - 198);
@@ -322,6 +358,7 @@ export class InfoManager {
 
     // 하트 젬 — 하트 하나를 셋으로 가른 자리.
     this.addSectionTitle("룬", 1398 - 146);
+    this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 44, 1300, (from) => this.openRuneOverview(from), gemPanel);
     for (let index = 0; index < 3; index += 1) this.gemSlots.push(this.addGemSlot(index, gemPanel));
 
     this.buildFigureStand();
@@ -425,13 +462,14 @@ export class InfoManager {
   /** 더 볼 것이 있다는 표시. 자리만 다를 뿐 생김새와 크기는 같다. */
   private addMagnifier(x: number, y: number, onClick: (from: PopupSource) => void, panel?: Phaser.GameObjects.Container): void {
     const container = this.scene.add.container(x, y);
-    container.add(drawGlyph(this.scene, "magnifier", 0, 0, 44, COLOR.accent));
-    const hit = this.scene.add.rectangle(x, y, 84, 84, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    // 작고 반투명하다. 이것은 "더 있다"는 힌트일 뿐이라, 옆의 수치보다 먼저 눈에 들어오면 안 된다.
+    container.add(drawGlyph(this.scene, "magnifier", 0, 0, 36, COLOR.accent, 0.6));
+    const hit = this.scene.add.rectangle(x, y, 78, 78, 0xffffff, 0).setInteractive({ useHandCursor: true });
     hit.on("pointerdown", () => container.setScale(1.15));
     hit.on("pointerout", () => { if (!this.popups.isOpen) container.setScale(1); });
     hit.on("pointerup", () => {
       container.setScale(1.15);
-      onClick({ x, y: y - 30, onClose: () => container.setScale(1) });
+      onClick({ x, y: y - 26, onClose: () => container.setScale(1) });
     });
     if (panel) attach(panel, container, hit);
     else this.chrome.add([container, hit]);
@@ -679,6 +717,185 @@ export class InfoManager {
     });
   }
 
+  /**
+   * 좌우로 밀어 옆 캐릭터로 넘긴다.
+   *
+   * 도감에서 하나씩 닫았다 여는 대신 손가락 한 번으로 옆으로 간다. 전투에서 연 정보창은
+   * 그 유닛의 것이므로 넘기지 않는다.
+   */
+  private enableSwipe(): void {
+    let start: { x: number; y: number } | undefined;
+    this.scene.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+      start = this.root.visible ? { x: pointer.x, y: pointer.y } : undefined;
+    });
+    this.scene.input.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+      const from = start;
+      start = undefined;
+      if (!from || !this.root.visible || this.currentUnit || this.popups.isOpen || this.gallery) return;
+      const dx = pointer.x - from.x;
+      // 세로로 더 많이 움직였으면 넘기지 않는다. 목록을 훑다가 실수로 넘어가지 않게 한다.
+      if (Math.abs(dx) < SWIPE_DISTANCE || Math.abs(pointer.y - from.y) > Math.abs(dx) * 0.8) return;
+      this.slideToNeighbor(dx < 0 ? 1 : -1);
+    });
+  }
+
+  /** 옆 캐릭터로 미끄러져 간다. 판이 한쪽으로 빠지고 반대쪽에서 새로 들어온다. */
+  private slideToNeighbor(step: 1 | -1): void {
+    const current = this.currentDef;
+    if (!current || this.sliding) return;
+    const order = RELICS;
+    const index = order.findIndex((def) => def.id === current.id);
+    if (index === -1) return;
+    const next = order[(index + step + order.length) % order.length];
+    this.sliding = true;
+    const distance = 150 * step;
+    this.scene.tweens.add({
+      targets: this.chrome,
+      x: -distance,
+      alpha: 0,
+      duration: 150,
+      ease: "Cubic.In",
+      onComplete: () => {
+        this.openCharacter(next, undefined, undefined, undefined, relicCollection.owns(next.id));
+        this.chrome.setPosition(distance, 0).setAlpha(0);
+        this.scene.tweens.add({
+          targets: this.chrome,
+          x: 0,
+          alpha: 1,
+          duration: 260,
+          ease: "Cubic.Out",
+          onComplete: () => { this.sliding = false; },
+        });
+      },
+    });
+  }
+
+  /**
+   * 전신 감상.
+   *
+   * 수치를 읽는 화면과 인물을 보는 화면은 목적이 다르다. 판을 흐리게 지우는 대신 **화면
+   * 바깥으로 밀어내고** 원화만 가운데로 옮겨 크게 세운다. 아무 데나 누르면 되돌아온다.
+   */
+  private enterGallery(): void {
+    const def = this.currentDef;
+    if (!def || this.gallery || !this.portrait) return;
+    const asset = portraitAssetFor(def.portraitAssetId);
+    const portrait = this.portrait;
+    // 되돌릴 때 쓸 원래 자리. 화면 크기가 바뀌지 않으므로 값 하나면 충분하다.
+    const before = { x: portrait.x, y: portrait.y, scale: portrait.scaleX };
+    placePuppet(portrait, asset, {
+      focus: { anchor: "core", x: BASE_WIDTH / 2, y: BASE_HEIGHT * 0.52 },
+      height: BASE_HEIGHT * 1.02,
+    });
+    portrait.setAlpha(0.001);
+    this.scene.tweens.add({ targets: portrait, alpha: 1, duration: 260 });
+    // SD는 판이 아니라 따로 선 인형이라 함께 빠지지 않는다. 감상 중에는 접어 둔다.
+    this.figure?.setVisible(false);
+    // 판은 오른쪽으로, 이름줄과 스킬은 그대로 두면 인물을 가리므로 chrome 통째로 민다.
+    this.scene.tweens.add({ targets: this.chrome, x: BASE_WIDTH, alpha: 0, duration: 320, ease: "Cubic.In" });
+    const exit = this.scene.add
+      .rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, 0xffffff, 0)
+      .setDepth(1600)
+      .setInteractive({ useHandCursor: true });
+    exit.on("pointerup", () => this.leaveGallery(before));
+    this.gallery = exit;
+  }
+
+  /** 감상에서 나온다. 판이 다시 제자리로 미끄러져 들어온다. */
+  private leaveGallery(before: { x: number; y: number; scale: number }): void {
+    const portrait = this.portrait;
+    this.gallery?.destroy();
+    this.gallery = undefined;
+    if (portrait) {
+      this.scene.tweens.add({ targets: portrait, x: before.x, y: before.y, scale: before.scale, duration: 320, ease: "Cubic.Out" });
+    }
+    this.scene.tweens.add({ targets: this.chrome, x: 0, alpha: 1, duration: 320, ease: "Cubic.Out" });
+    this.figure?.setVisible(this.portraitWanted && this.root.visible);
+  }
+
+  /**
+   * 유대가 지금 무엇을 얼마나 바꾸고 있는지.
+   *
+   * 게이지 옆의 "+5%" 한 줄로는 무엇이 5% 오르는지 알 수 없다. 지금 레벨의 효과와 다음
+   * 레벨의 효과를 나란히 두고, 아래에 지금까지 열린 이야기를 함께 건다.
+   */
+  private openBondDetail(from: PopupSource): void {
+    const def = this.currentDef;
+    if (!def) return;
+    const progress = relicProgression.getProgress(def.id);
+    const level = progress.bondLevel;
+    const next = Math.min(BOND_LEVEL_CAP, level + 1);
+    this.popups.open({ width: 820, height: 900, title: "유대 " + level + " / " + BOND_LEVEL_CAP, tilt: -1.2, ...anchorOf(from) }, (body) => {
+      const rows: [string, string, string][] = [
+        ["야성 상승", "+" + Math.round((BOND_FEROCITY_MULTIPLIER[level] - 1) * 100) + "%", "+" + Math.round((BOND_FEROCITY_MULTIPLIER[next] - 1) * 100) + "%"],
+        ["로비 상호작용", "하루 한 번 " + BOND_XP_REWARD.firstLobbyInteraction + " EXP", "같음"],
+        ["전투 승리", "편성 렐릭 전원 " + BOND_XP_REWARD.partyVictory + " EXP", "같음"],
+      ];
+      body.add(this.scene.add.text(-350, -368, "지금", textStyle({ role: "emphasis", size: 22, color: COLOR.accentText })).setOrigin(0, 0.5));
+      body.add(this.scene.add.text(348, -368, "다음 단계", textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(1, 0.5));
+      rows.forEach(([label, now, later], index) => {
+        const y = -300 + index * 84;
+        body.add(this.scene.add.text(-350, y - 18, label, textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0, 0));
+        body.add(this.scene.add.text(-350, y + 14, now, textStyle({ role: "display", size: 28 })).setOrigin(0, 0));
+        body.add(this.scene.add.text(348, y + 14, later, textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(1, 0));
+        body.add(drawHairline(this.scene, 0, y + 56, 700, { color: COLOR.accent, alpha: 0.14 }));
+      });
+      body.add(this.scene.add.text(-350, -20, "유대 이야기", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0));
+      // 이야기는 유대 레벨로 하나씩 열린다. 아직 잠긴 것도 자리를 보여 줘 다음 목표가 된다.
+      BOND_STORY_STEPS.forEach((step, index) => {
+        const y = 46 + index * 92;
+        const open = level >= step.level;
+        body.add(drawLayer(this.scene, 0, y + 30, slantedRect(700, 76, 14), {
+          fill: open ? 0x1a2130 : 0x0d1219,
+          alpha: open ? 0.95 : 0.7,
+          edge: COLOR.accent,
+          edgeAlpha: open ? 0.6 : 0.16,
+        }));
+        body.add(this.scene.add.text(-318, y + 12, step.title, textStyle({ role: "display", size: 26, color: open ? COLOR.ink : COLOR.inkDim })).setOrigin(0, 0));
+        body.add(
+          this.scene.add
+            .text(318, y + 18, open ? "열림" : "유대 " + step.level + " 필요", textStyle({ role: "body", size: 21, color: open ? COLOR.accentText : COLOR.inkDim }))
+            .setOrigin(1, 0),
+        );
+      });
+    });
+  }
+
+  /** 세 룬을 한 장에 펼쳐 무엇이 얼마나 붙었는지 한 번에 본다. */
+  private openRuneOverview(from: PopupSource): void {
+    const def = this.currentDef;
+    if (!def) return;
+    const slots = relicProgression.getProgress(def.id).heartGemSlots;
+    this.popups.open({ width: 800, height: 620, title: "룬 세 자리", tilt: -1.2, ...anchorOf(from) }, (body) => {
+      slots.forEach((gemId, index) => {
+        const y = -180 + index * 130;
+        const gem = gemId ? getHeartGem(gemId) : undefined;
+        body.add(drawLayer(this.scene, 0, y, slantedRect(680, 108, 16), {
+          fill: gem ? 0x1c1520 : 0x0d1219,
+          alpha: gem ? 0.95 : 0.7,
+          edge: gem ? GEM_EDGE : COLOR.accent,
+          edgeAlpha: gem ? 0.7 : 0.16,
+        }));
+        body.add(this.scene.add.text(-306, y - 26, index + 1 + "번 칸", textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0, 0));
+        body.add(
+          this.scene.add
+            .text(-306, y + 2, gem ? gem.name.replace(" Heart Gem", " 룬") : "빈 자리", textStyle({ role: "display", size: 28, color: gem ? COLOR.ink : COLOR.inkDim }))
+            .setOrigin(0, 0),
+        );
+        if (gem) {
+          const effect = Object.entries(gem.statPercent).map(([key, percent]) => (STAT_LABEL[key] ?? key) + " +" + percent + "%").join("   ");
+          body.add(this.scene.add.text(306, y + 8, effect, textStyle({ role: "emphasis", size: 22, color: COLOR.accentText })).setOrigin(1, 0));
+        }
+      });
+      const filled = slots.filter(Boolean).length;
+      body.add(
+        this.scene.add
+          .text(0, 240, filled === 3 ? "세 조각이 모두 맞물렸다." : "채운 자리 " + filled + " / 3", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText }))
+          .setOrigin(0.5),
+      );
+    });
+  }
+
   /** 공격 속도처럼 자주 보지 않는 수치는 돋보기 안에만 둔다. */
   private openExtraStats(from: PopupSource): void {
     const def = this.currentDef;
@@ -795,9 +1012,13 @@ export class InfoManager {
     if (request !== this.portraitRequest) { portrait.destroy(); return; }
     this.portrait?.destroy();
     this.portrait = portrait;
-    enableHitOnClick(this.scene, portrait);
+    // 화면 아무 데나 눌러도 통통 튀면 정신이 없다. 코어 관절 둘레의 몸통에서만 반응한다.
+    portrait.disableInteractive();
     if (portraitUsesRelicTint(def.portraitAssetId)) tintPuppet(portrait, mixWhite(tintFor(def.id), 0.55));
     portrait.setVisible(this.portraitWanted && this.root.visible);
+    // 새 인물은 살짝 떠오르며 나타난다. 좌우로 넘길 때 갈아 끼우는 티가 덜 난다.
+    portrait.setAlpha(0);
+    this.scene.tweens.add({ targets: portrait, alpha: 1, duration: 220 });
   }
 
   private async loadFigure(def: RelicDef): Promise<void> {

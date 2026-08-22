@@ -19,6 +19,7 @@ function makeSession(fossil = 1000): Session {
     relicProgress: Object.fromEntries(["anky", "rex", "dodo"].map((id) => [id, { level: id === "anky" ? 2 : 1, exp: 0, awakening: id === "anky" ? 1 : 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: id === "anky" ? ["vital-seed", null, null] : [null, null, null] }])),
     ownedHeartGemIds: ["vital-seed"],
     dailyContent: { date: "", restorationEntries: 0, completedIds: [], claimedRewardIds: [] },
+    missions: { dailyKey: "", weeklyKey: "", progress: {}, claimedIds: [] },
   };
 }
 
@@ -129,5 +130,26 @@ describe("FakeServer", () => {
     expect(state.owned.has("spino")).toBe(false);
     expect(state.relicProgress.anky.heartGemSlots[0]).toBe("vital-seed");
     expect(state.ownedHeartGemIds).toEqual(["vital-seed"]);
+  });
+
+  it("완료 전 수령을 거부하고 완료 보상은 중복 지급하지 않는다", async () => {
+    const state = makeSession();
+    const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-20T12:00:00Z") });
+    await expect(server.claimMissionRewards(["daily-battle"])).rejects.toMatchObject({ code: "MISSION_NOT_COMPLETE" });
+    await server.completeStage("1-1", true);
+    await expect(server.claimMissionRewards(["daily-battle"])).resolves.toMatchObject({ claimedIds: ["daily-battle"], weedsEarned: 20 });
+    const afterFirstClaim = state.wallet.weeds;
+    await expect(server.claimMissionRewards(["daily-battle"])).rejects.toMatchObject({ code: "MISSION_ALREADY_CLAIMED" });
+    expect(state.wallet.weeds).toBe(afterFirstClaim);
+  });
+
+  it("발굴·급여·로비 성공을 각 API 경계에서 임무에 한 번 반영한다", async () => {
+    const state = makeSession(); state.wallet.weeds = 20;
+    const server = new FakeServer(state, { latencyMs: 0, random: () => 0, now: () => new Date("2026-08-20T12:00:00Z") });
+    await server.pullRelics({ bannerId: "fossil", count: 1 });
+    await server.feedRelic("anky", 1);
+    await server.interactInLobby("anky");
+    expect(state.missions.progress).toMatchObject({ "daily-excavate": 1, "daily-salary": 1, "daily-lobby": 1 });
+    await expect(server.getMissions()).resolves.toMatchObject({ claimableCount: 3 });
   });
 });

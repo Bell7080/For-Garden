@@ -16,6 +16,7 @@ function makeSession(): Session {
     pullCountSinceHighestRarity: { fossil: 0, amber: 0 },
     wallet: { fossil: 0, amber: 0, dnaFragments: 0, weeds: 0 }, relicProgress: {}, ownedHeartGemIds: ["vital-seed", "fang-core"],
     dailyContent: { date: "", restorationEntries: 0, completedIds: [], claimedRewardIds: [] },
+    missions: { dailyKey: "", weeklyKey: "", progress: {}, claimedIds: [] },
   };
 }
 

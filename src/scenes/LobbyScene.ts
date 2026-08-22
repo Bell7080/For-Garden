@@ -151,6 +151,11 @@ export class LobbyScene extends Phaser.Scene {
     rail.forEach((item, i) => {
       new RailButton(this, x, 640 + i * 152, { icon: item.icon, label: item.label, onClick: () => this.notReady(item.label) });
     });
+    // 임무 입구는 상세 내용을 복제하지 않고 서버가 계산한 미수령 개수만 짧게 표시한다.
+    const missionButton = new RailButton(this, x, 1096, { icon: "scroll", label: "임무", accent: true, onClick: () => this.scene.start("missions") });
+    void gameApi.getMissions().then(({ claimableCount }) => {
+      if (claimableCount > 0) this.add.text(x + 42, 1050, String(claimableCount), textStyle({ role: "emphasis", size: 24, color: COLOR.sortieText })).setOrigin(0.5).setDepth(missionButton.depth + 1);
+    });
   }
 
   /** 왼쪽 위, 프로필 줄 바로 아래의 홍보 칸. 기간 상품과 공지가 들어갈 자리다. */

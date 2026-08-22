@@ -14,7 +14,7 @@ function makeSession(): Session {
     bookmarked: new Set<string>(),
     pullCountSinceHighestRarity: { fossil: 0, amber: 0 },
     wallet: { fossil: 0, amber: 0, dnaFragments: 0, weeds: 0 },
-    relicProgress: Object.fromEntries(["anky", "rex", "dodo"].map((id) => [id, { level: 1, exp: 0, awakening: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] }])),
+    relicProgress: Object.fromEntries(["anky", "rex", "dodo"].map((id) => [id, { level: 1, exp: 0, awakening: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] }])),
     ownedHeartGemIds: [],
     dailyContent: { date: "", restorationEntries: 0, completedIds: [], claimedRewardIds: [] },
   };

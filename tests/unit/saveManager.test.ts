@@ -83,7 +83,7 @@ describe("SaveManager", () => {
     const manager = new SaveManager(storage);
     const source = createDefaultSession();
     source.owned.add("dodo");
-    source.relicProgress.dodo = { level: 1, exp: 0, awakening: 5, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] };
+    source.relicProgress.dodo = { level: 1, exp: 0, awakening: 5, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] };
     source.wallet.dnaFragments = 3;
 
     manager.save(source);

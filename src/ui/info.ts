@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import type { PuppetCreature } from "../puppets/assets";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { previewSkillDamage, ULTIMATE_ENERGY_MAX, type BattleUnit } from "../core/battle";
-import type { Element, RelicDef, RelicRarity, Role, Skill, SkillIconAssetId, Stats } from "../core/types";
+import type { Element, RelicDef, RelicProgress, RelicRarity, Role, Skill, SkillIconAssetId, Stats } from "../core/types";
 import { setDebugInfoOpen } from "../debug";
 import { getHeartGem, HEART_GEMS } from "../data/heartGems";
 import { RELICS } from "../data/relics";
@@ -31,7 +31,7 @@ import { relicCollection } from "../managers/RelicCollectionManager";
 import { COLOR, textStyle } from "./theme";
 import { FALLBACK_SKILL_ICON } from "./skillIcons";
 import { gameApi } from "../api/FakeServer";
-import { AWAKENING_CAP, AWAKENING_STEPS, canFeedRelic, FEED_UNIT, RELIC_LEVEL_CAP, relicExpToNext } from "../core/relicProgression";
+import { AWAKENING_CAP, AWAKENING_STEPS, canBreakThrough, canFeedRelic, FEED_UNIT, nextBreakthrough, relicExpToNext, relicLevelCap } from "../core/relicProgression";
 import { session } from "../state/session";
 import { BOND_FEROCITY_MULTIPLIER, BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL, BOND_XP_REWARD } from "../core/bond";
 import { getRelicCatalogDisclosure } from "../core/relicCatalog";
@@ -119,6 +119,12 @@ const BOND_STORY_STEPS: readonly { level: number; title: string }[] = [
   { level: 7, title: "3화 · 옛 기억의 조각" },
   { level: 10, title: "4화 · 이터널 시티의 끝" },
 ];
+
+/** 돌파 버튼과 팝업이 함께 쓰는 색. 레벨(초록)과 갈라 놓아 다른 종류의 성장임을 알린다. */
+const BREAK_EDGE = 0xa88cf0;
+
+/** 이만큼 누르고 있으면 한 번에 급여 팝업이 열린다(ms). */
+const FEED_HOLD_MS = 420;
 
 /** 옆 캐릭터로 넘어가는 데 필요한 가로 이동(px). */
 const SWIPE_DISTANCE = 110;
@@ -266,6 +272,10 @@ export class InfoManager {
   private gallery?: Phaser.GameObjects.Rectangle;
   /** 좌우 넘김이 진행 중인지. 연달아 밀어도 한 번에 한 명씩만 넘어간다. */
   private sliding = false;
+  /** 급여 버튼의 켜짐·꺼짐 판 두 장. */
+  /** 돌파 버튼. 레벨 옆에 붙어 지금 뚫을 수 있는지를 진하기로 알린다. */
+  private breakButton?: { container: Phaser.GameObjects.Container; label: Phaser.GameObjects.Text };
+  private feedPlate?: { on: Phaser.GameObjects.Graphics; off: Phaser.GameObjects.Graphics };
   private feedHold?: Phaser.Time.TimerEvent;
   private feeding = false;
 
@@ -330,12 +340,13 @@ export class InfoManager {
       .setOrigin(0, 0)
       .setScale(1, 1.16)
       .setShadow(3, 8, "#05070a", 10, false, true);
-    // 최대 레벨은 숫자 바로 옆에 붙는다. 멀리 떨어뜨리면 "1"과 "20"이 다른 값처럼 읽힌다.
-    this.levelCap = scene.add.text(0, 372, "", textStyle({ role: "emphasis", size: 30, color: COLOR.inkDim })).setOrigin(0, 1);
+    // 상한은 숫자의 **발치**에 붙는다. 가운데에 두면 현재 레벨과 같은 무게로 읽혀 헷갈린다.
+    this.levelCap = scene.add.text(0, 384, "", textStyle({ role: "emphasis", size: 28, color: COLOR.inkDim })).setOrigin(0, 1);
     this.expBar = new Gauge(scene, COLUMN.x, 452, COLUMN.width - 88, 16, COLOR.accent);
     this.expLabel = scene.add.text(COLUMN.x, 470, "", textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0.5, 0);
     attach(levelPanel, this.levelValue, this.levelCap, ...this.expBar.objects, this.expLabel);
-    const feed = this.addFeedButton(COLUMN.x, 556, COLUMN.width - 96, 112, levelPanel);
+    this.breakButton = this.addBreakButton(COLUMN.x + COLUMN.width / 2 - 96, 330, levelPanel);
+    const feed = this.addFeedButton(COLUMN.x, 546, COLUMN.width - 130, 98, levelPanel);
     this.feedButton = feed.container;
     this.feedLabel = feed.label;
 
@@ -487,35 +498,154 @@ export class InfoManager {
   private addFeedButton(x: number, y: number, width: number, height: number, panel: Phaser.GameObjects.Container): { container: Phaser.GameObjects.Container; label: Phaser.GameObjects.Text } {
     const container = this.scene.add.container(x, y);
     const shape = slantedRect(width, height, 16);
-    container.add(drawLayer(this.scene, 0, 0, shape, { fill: 0x18261c, alpha: 0.92, edge: FEED_GREEN, edgeAlpha: 0.9, sheen: 0.06 }));
-    const label = this.scene.add.text(0, -22, "급여하기", textStyle({ role: "display", size: 38 })).setOrigin(0.5);
-    const hint = this.scene.add.text(0, 16, "잡초 " + FEED_UNIT.weeds + " · 꾹 누르면 계속", textStyle({ role: "body", size: 19, color: COLOR.inkDim })).setOrigin(0.5);
+    // 켜진 상태와 꺼진 상태를 판 두 장으로 나눠 둔다. 켜진 쪽만 진하게 차오르고 빛나서,
+    // 지금 누를 수 있는지가 글자를 읽기 전에 보인다.
+    const off = drawLayer(this.scene, 0, 0, shape, { fill: 0x10160f, alpha: 0.55, edge: FEED_GREEN, edgeAlpha: 0.3 });
+    const on = drawLayer(this.scene, 0, 0, shape, {
+      fill: 0x1f3a24,
+      alpha: 0.98,
+      edge: 0x9ee6a0,
+      edgeAlpha: 1,
+      edgeWidth: 4,
+      glow: { color: FEED_GREEN, strength: 0.45, height: 0.7 },
+    });
+    container.add([off, on]);
+    const label = this.scene.add.text(0, -20, "급여하기", textStyle({ role: "display", size: 36 })).setOrigin(0.5);
+    const hint = this.scene.add.text(0, 16, "잡초 " + FEED_UNIT.weeds + " · 꾹 누르면 한 번에", textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0.5);
     container.add([label, hint]);
     const hit = this.scene.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    let heldFrom = 0;
     hit.on("pointerdown", () => {
       container.setScale(1.04);
+      heldFrom = this.scene.time.now;
       void this.feed(1);
       this.feedHold = this.scene.time.addEvent({ delay: 260, loop: true, callback: () => void this.feed(1) });
-      this.scene.time.delayedCall(420, () => {
-        if (this.feedHold) this.openFeedBulk(x, y - height);
-      });
     });
-    const release = (): void => {
+    const release = (opened: boolean): void => {
       container.setScale(1);
+      const held = this.scene.time.now - heldFrom;
       this.feedHold?.remove();
       this.feedHold = undefined;
+      // 꾹 누른 손을 뗀 **뒤에** 연다. 누르고 있는 동안 열면 손을 떼는 그 입력이 곧바로
+      // 팝업을 닫아 버려 잠깐 번쩍이고 사라진다.
+      if (opened && heldFrom > 0 && held >= FEED_HOLD_MS) this.openFeedBulk(x, y + height / 2);
+      heldFrom = 0;
     };
-    hit.on("pointerup", release);
-    hit.on("pointerout", release);
+    hit.on("pointerup", () => release(true));
+    hit.on("pointerout", () => release(false));
+    container.add(hit);
+    attach(panel, container);
+    this.feedPlate = { on, off };
+    return { container, label };
+  }
+
+  /**
+   * 돌파 버튼.
+   *
+   * 레벨 옆에 붙는다 — 천장을 여는 일이라 레벨과 같은 칸에 있어야 "여기까지가 끝"이라는
+   * 맥락이 이어진다. 누르면 필요한 재료를 먼저 보여 주고, 거기서 확정한다.
+   */
+  private addBreakButton(x: number, y: number, panel: Phaser.GameObjects.Container): { container: Phaser.GameObjects.Container; label: Phaser.GameObjects.Text } {
+    const container = this.scene.add.container(x, y);
+    const shape = slantedRect(150, 62, 12);
+    container.add(drawLayer(this.scene, 0, 0, shape, { fill: 0x24202f, alpha: 0.94, edge: BREAK_EDGE, edgeAlpha: 0.9, glow: { color: BREAK_EDGE, strength: 0.4, height: 0.6 } }));
+    const label = this.scene.add.text(0, 0, "돌파", textStyle({ role: "display", size: 30 })).setOrigin(0.5);
+    container.add(label);
+    const hit = this.scene.add.rectangle(0, 0, 158, 74, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    hit.on("pointerdown", () => container.setScale(1.08));
+    hit.on("pointerout", () => { if (!this.popups.isOpen) container.setScale(1); });
+    hit.on("pointerup", () => {
+      container.setScale(1.08);
+      this.openBreakthrough({ x, y: y - 40, onClose: () => container.setScale(1) });
+    });
     container.add(hit);
     attach(panel, container);
     return { container, label };
   }
 
-  /** 한 번에 여러 레벨을 채우는 임시 팝업. 급여 버튼 바로 위에 뜬다. */
+  /** 돌파할 수 있는 상태인지 알린다. 재료가 모자라도 눌러 무엇이 필요한지 볼 수 있다. */
+  private paintBreakButton(progress: RelicProgress): void {
+    const step = nextBreakthrough(progress.breakthrough);
+    const ready = this.ownedNow && canBreakThrough(progress, session.wallet);
+    this.breakButton?.container.setAlpha(step ? (ready ? 1 : 0.62) : 0.35);
+    this.breakButton?.label.setText(step ? "돌파" : "최대");
+    this.breakButton?.label.setColor(ready ? COLOR.ink : COLOR.inkDim);
+  }
+
+  /** 돌파에 드는 재료와 열리는 상한을 보여 주고 그 자리에서 확정한다. */
+  private openBreakthrough(from: PopupSource): void {
+    const def = this.currentDef;
+    if (!def) return;
+    const progress = relicProgression.getProgress(def.id);
+    const step = nextBreakthrough(progress.breakthrough);
+    this.popups.open({ width: 720, height: 460, title: "돌파", tilt: -1.2, ...anchorOf(from) }, (body, close) => {
+      if (!step) {
+        body.add(this.scene.add.text(0, 20, "더 뚫을 천장이 없다.", textStyle({ role: "body", size: 28, color: COLOR.inkDim })).setOrigin(0.5));
+        return;
+      }
+      const cap = relicLevelCap(progress.breakthrough);
+      body.add(
+        this.scene.add
+          .text(0, -120, "레벨 상한 " + cap + "  →  " + step.levelCap, textStyle({ role: "display", size: 34, color: COLOR.accentText }))
+          .setOrigin(0.5),
+      );
+      const rows: [string, number, number][] = [
+        ["DNA 조각", step.dnaFragments, session.wallet.dnaFragments],
+        ["잡초", step.weeds, session.wallet.weeds],
+      ];
+      rows.forEach(([label, need, have], index) => {
+        const y = -40 + index * 60;
+        const enough = have >= need;
+        body.add(this.scene.add.text(-280, y, label, textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0, 0.5));
+        body.add(
+          this.scene.add
+            .text(280, y, have.toLocaleString() + " / " + need.toLocaleString(), textStyle({ role: "display", size: 28, color: enough ? COLOR.ink : COLOR.dangerText }))
+            .setOrigin(1, 0.5),
+        );
+      });
+      const ready = canBreakThrough(progress, session.wallet);
+      const reason = progress.level < cap ? "레벨을 " + cap + "까지 올려야 한다." : ready ? "" : "재료가 부족하다.";
+      body.add(drawLayer(this.scene, 0, 130, slantedRect(360, 76, 14), {
+        fill: ready ? 0x2d2440 : 0x161a20,
+        alpha: ready ? 0.98 : 0.7,
+        edge: BREAK_EDGE,
+        edgeAlpha: ready ? 1 : 0.25,
+      }));
+      body.add(this.scene.add.text(0, 130, "돌파하기", textStyle({ role: "display", size: 30, color: ready ? COLOR.ink : COLOR.inkDim })).setOrigin(0.5));
+      if (reason) body.add(this.scene.add.text(0, 186, reason, textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0.5));
+      if (!ready) return;
+      const hit = this.scene.add.rectangle(0, 130, 360, 76, 0xffffff, 0).setInteractive({ useHandCursor: true });
+      hit.on("pointerup", () => {
+        close();
+        void this.breakThrough();
+      });
+      body.add(hit);
+    });
+  }
+
+  /** 재료 차감과 단계 확정은 서버가 한 처리로 맡는다. 화면은 결과만 다시 그린다. */
+  private async breakThrough(): Promise<void> {
+    const def = this.currentDef;
+    if (!def) return;
+    try {
+      await gameApi.breakThroughRelic(def.id);
+    } catch {
+      // 조건은 화면에서 이미 막는다. 실패하면 상태만 다시 그린다.
+    }
+    this.refreshGrowth();
+  }
+
+  /** 급여를 지금 할 수 있는지에 따라 버튼의 진하기를 바꾼다. */
+  private paintFeedButton(enabled: boolean): void {
+    this.feedPlate?.on.setAlpha(enabled ? 1 : 0);
+    this.feedLabel.setColor(enabled ? COLOR.ink : COLOR.inkDim);
+    this.feedButton.setAlpha(enabled ? 1 : 0.7);
+  }
+
+  /** 한 번에 여러 레벨을 채우는 쪽지. 급여 버튼 바로 아래에 뜨고 다른 곳을 누를 때까지 남는다. */
   private openFeedBulk(x: number, y: number): void {
     if (this.popups.isOpen) return;
-    this.popups.open({ width: 420, height: 190, x, y: y - 60 }, (body, close) => {
+    this.popups.open({ width: 420, height: 190, x, y: y + 120 }, (body, close) => {
       body.add(this.scene.add.text(0, -58, "한 번에 급여", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0.5));
       ([["1 레벨", 1], ["10 레벨", 10]] as const).forEach(([label, levels], index) => {
         const bx = index === 0 ? -100 : 100;
@@ -538,7 +668,8 @@ export class InfoManager {
     let need = 0;
     let level = progress.level;
     let exp = progress.exp;
-    for (let i = 0; i < levels && level < RELIC_LEVEL_CAP; i += 1) {
+    const cap = relicLevelCap(progress.breakthrough);
+    for (let i = 0; i < levels && level < cap; i += 1) {
       need += Math.ceil((relicExpToNext(level) - exp) / FEED_UNIT.exp);
       level += 1;
       exp = 0;
@@ -1239,17 +1370,19 @@ export class InfoManager {
     if (!def) return;
     const progress = relicProgression.getProgress(def.id);
     const finalStats = relicProgression.getFinalStats(def.id);
-    const maxed = progress.level >= RELIC_LEVEL_CAP;
+    const cap = relicLevelCap(progress.breakthrough);
+    const maxed = progress.level >= cap;
 
     this.levelValue.setText(String(progress.level));
-    this.levelCap.setText("/ " + RELIC_LEVEL_CAP);
+    this.levelCap.setText("/ " + cap);
     // 숫자 폭이 자리 수에 따라 달라지므로 붙는 자리도 그릴 때마다 다시 잡는다.
-    this.levelCap.setX(this.levelValue.x + this.levelValue.displayWidth + 16);
+    this.levelCap.setX(this.levelValue.x + this.levelValue.displayWidth + 14);
     const need = maxed ? 0 : relicExpToNext(progress.level);
     this.expBar.setValue(maxed ? 1 : progress.exp / need);
     this.expLabel.setText(maxed ? "MAX" : progress.exp + " / " + need + " EXP   ·   보유 잡초 " + session.wallet.weeds);
-    this.feedButton.setAlpha(this.ownedNow && canFeedRelic(progress, session.wallet.weeds) ? 1 : 0.4);
+    this.paintFeedButton(this.ownedNow && canFeedRelic(progress, session.wallet.weeds));
     this.feedLabel.setText(maxed ? "최대 레벨" : "급여하기");
+    this.paintBreakButton(progress);
 
     const bondMaxed = progress.bondLevel >= BOND_LEVEL_CAP;
     const bondBase = BOND_TOTAL_XP_BY_LEVEL[progress.bondLevel];

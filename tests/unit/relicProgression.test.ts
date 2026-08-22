@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { awakeningBonus, calculateFinalStats, canFeedRelic, canLevelUpRelic, feedRelic, FEED_UNIT, levelUpRelic, RELIC_LEVEL_CAP, relicExpToNext, relicLevelUpCost } from "../../src/core/relicProgression";
+import { awakeningBonus, BREAKTHROUGH_STEPS, calculateFinalStats, canBreakThrough, canFeedRelic, canLevelUpRelic, feedRelic, FEED_UNIT, levelUpRelic, nextBreakthrough, relicLevelCap, RELIC_LEVEL_CAP, relicExpToNext, relicLevelUpCost } from "../../src/core/relicProgression";
 import type { RelicProgress, Stats } from "../../src/core/types";
 import { getHeartGem } from "../../src/data/heartGems";
 import { RelicProgressionManager } from "../../src/managers/RelicProgressionManager";
@@ -21,7 +21,7 @@ function makeSession(): Session {
 
 describe("렐릭 성장 규칙", () => {
   it("현재 레벨 비용의 정확한 경계에서만 레벨업하고 원본을 변경하지 않는다", () => {
-    const progress: RelicProgress = { level: 2, exp: 0, awakening: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] };
+    const progress: RelicProgress = { level: 2, exp: 0, awakening: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] };
     expect(relicLevelUpCost(2)).toBe(20);
     expect(canLevelUpRelic(progress, 19)).toBe(false);
     expect(levelUpRelic(progress, 20)).toMatchObject({ progress: { level: 3 }, weeds: 0, cost: 20 });
@@ -29,13 +29,13 @@ describe("렐릭 성장 규칙", () => {
   });
 
   it("최대 레벨과 재화 부족에서는 성장 상태를 만들지 않는다", () => {
-    const base: RelicProgress = { level: 1, exp: 0, awakening: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] };
+    const base: RelicProgress = { level: 1, exp: 0, awakening: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] };
     expect(() => levelUpRelic(base, 9)).toThrow("잡초가 부족");
     expect(() => levelUpRelic({ ...base, level: RELIC_LEVEL_CAP }, 9999)).toThrow("최대 레벨");
   });
   it("기본 능력치에 레벨, 각성, Heart Gem 순으로 단계별 반올림해 적용한다", () => {
     // 각성은 3·4단계에서만 능력치를 올린다. 1단계는 일반 공격 피해만 바꾸므로 수치는 그대로다.
-    const early: RelicProgress = { level: 2, exp: 0, awakening: 1, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: ["vital-seed", null, null] };
+    const early: RelicProgress = { level: 2, exp: 0, awakening: 1, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: ["vital-seed", null, null] };
     // 101 → 레벨 2%(103) → 각성 0%(103) → Heart Gem HP 10%(113) 순서다.
     expect(calculateFinalStats(BASE, early, [getHeartGem("vital-seed")]).hp).toBe(113);
 
@@ -80,13 +80,13 @@ describe("렐릭 성장 규칙", () => {
     const state = makeSession();
     new RelicProgressionManager(state).setHeartGemSlots("rex", [null, "fang-core", null]);
     const restored = JSON.parse(JSON.stringify(state.relicProgress)) as Session["relicProgress"];
-    expect(restored.rex).toEqual({ level: 1, exp: 0, awakening: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, "fang-core", null] });
+    expect(restored.rex).toEqual({ level: 1, exp: 0, awakening: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, "fang-core", null] });
     expect(restored.rex.heartGemSlots).toHaveLength(3);
   });
 });
 
 describe("급여", () => {
-  const base = (): RelicProgress => ({ level: 1, exp: 0, awakening: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] });
+  const base = (): RelicProgress => ({ level: 1, exp: 0, awakening: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] });
 
   it("는 잡초를 쓴 만큼만 경험치를 올리고 넘친 경험치는 다음 레벨로 이월한다", () => {
     // 레벨 1은 60 EXP가 필요하다. 한 번에 20씩 오르므로 네 번 먹이면 한 번 오르고 20이 남는다.
@@ -111,5 +111,35 @@ describe("급여", () => {
   it("는 잡초가 한 번치도 없으면 먹일 수 없다", () => {
     expect(canFeedRelic(base(), FEED_UNIT.weeds - 1)).toBe(false);
     expect(canFeedRelic(base(), FEED_UNIT.weeds)).toBe(true);
+  });
+});
+
+describe("돌파", () => {
+  const base = (): RelicProgress => ({ level: 1, exp: 0, awakening: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] });
+
+  it("는 단계마다 레벨 상한을 표대로 연다", () => {
+    expect(relicLevelCap(0)).toBe(RELIC_LEVEL_CAP);
+    expect(relicLevelCap(1)).toBe(BREAKTHROUGH_STEPS[0].levelCap);
+    expect(relicLevelCap(BREAKTHROUGH_STEPS.length)).toBe(BREAKTHROUGH_STEPS[BREAKTHROUGH_STEPS.length - 1].levelCap);
+    expect(() => relicLevelCap(BREAKTHROUGH_STEPS.length + 1)).toThrow(RangeError);
+  });
+
+  it("는 레벨을 상한까지 채우고 재료가 있어야 할 수 있다", () => {
+    const step = nextBreakthrough(0)!;
+    const wallet = { dnaFragments: step.dnaFragments, weeds: step.weeds };
+    expect(canBreakThrough(base(), wallet)).toBe(false); // 레벨이 상한에 못 미친다
+    const maxed = { ...base(), level: RELIC_LEVEL_CAP };
+    expect(canBreakThrough(maxed, wallet)).toBe(true);
+    expect(canBreakThrough(maxed, { ...wallet, dnaFragments: step.dnaFragments - 1 })).toBe(false);
+  });
+
+  it("뒤에는 열린 상한까지 다시 급여할 수 있다", () => {
+    const maxed = { ...base(), level: RELIC_LEVEL_CAP };
+    expect(canFeedRelic(maxed, 999)).toBe(false);
+    expect(canFeedRelic({ ...maxed, breakthrough: 1 }, 999)).toBe(true);
+    // 20레벨의 다음 단계는 440 EXP다. 한 번에 20씩 오르므로 스물두 번은 먹여야 한 칸 오른다.
+    const fed = feedRelic({ ...maxed, breakthrough: 1 }, 9999, 25);
+    expect(fed.progress.level).toBeGreaterThan(RELIC_LEVEL_CAP);
+    expect(fed.progress.level).toBeLessThanOrEqual(relicLevelCap(1));
   });
 });

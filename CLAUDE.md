@@ -150,6 +150,9 @@
   차감과 확정은 `GameApi.feedRelic`이 한 처리 단위로 맡는다.
 - 각성은 0~5단계이고 단계별 효과표는 `src/core/relicProgression.ts`의 `AWAKENING_STEPS`
   하나뿐이다. 화면이 문구를 따로 적지 않는다.
+- 레벨 상한은 **돌파**가 연다. 상한을 묻는 곳은 전부 `relicLevelCap(breakthrough)`을 쓰고
+  숫자를 직접 적지 않는다. 단계별 상한과 재료는 `BREAKTHROUGH_STEPS` 한 표에만 있으며,
+  재료 차감과 단계 확정은 `GameApi.breakThroughRelic`이 한 처리 단위로 맡는다.
 
 ## 야성은 메리트다
 

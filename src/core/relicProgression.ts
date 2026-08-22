@@ -1,8 +1,56 @@
 import type { HeartGemDef, HeartGemStatEffect } from "../data/heartGems";
 import type { RelicProgress, Stats } from "./types";
 
-/** 프로토타입 레벨 상한은 짧은 플레이에서도 최대 상태를 검증할 수 있도록 20으로 제한한다. */
+/** 돌파를 하지 않은 렐릭의 레벨 상한. 프로토타입에서도 최대 상태를 금방 볼 수 있게 짧다. */
 export const RELIC_LEVEL_CAP = 20;
+
+/**
+ * 돌파 단계별로 열리는 레벨 상한과 재료.
+ *
+ * 급여만으로는 천장을 넘지 못한다. 돌파는 "재료를 모아 한 번 더 크게 열어 주는" 행동이라
+ * 레벨과는 다른 재화(DNA 조각)를 쓴다. 표가 하나뿐이므로 화면과 서버가 같은 조건을 본다.
+ */
+export interface BreakthroughStep {
+  /** 이 단계를 열었을 때의 레벨 상한. */
+  levelCap: number;
+  dnaFragments: number;
+  weeds: number;
+}
+
+export const BREAKTHROUGH_STEPS: readonly BreakthroughStep[] = [
+  { levelCap: 30, dnaFragments: 2, weeds: 200 },
+  { levelCap: 40, dnaFragments: 4, weeds: 500 },
+  { levelCap: 50, dnaFragments: 8, weeds: 1000 },
+];
+
+/** 돌파를 몇 번까지 할 수 있는지. */
+export const BREAKTHROUGH_CAP = BREAKTHROUGH_STEPS.length;
+
+/** 지금 돌파 단계에서의 레벨 상한. 상한을 묻는 곳은 전부 이 함수를 쓴다. */
+export function relicLevelCap(breakthrough: number): number {
+  if (!Number.isInteger(breakthrough) || breakthrough < 0 || breakthrough > BREAKTHROUGH_CAP) {
+    throw new RangeError("돌파 단계가 범위를 벗어났습니다.");
+  }
+  return breakthrough === 0 ? RELIC_LEVEL_CAP : BREAKTHROUGH_STEPS[breakthrough - 1].levelCap;
+}
+
+/** 다음 돌파에 드는 재료. 이미 끝까지 뚫었으면 없다. */
+export function nextBreakthrough(breakthrough: number): BreakthroughStep | undefined {
+  return BREAKTHROUGH_STEPS[breakthrough];
+}
+
+/**
+ * 돌파할 수 있는지.
+ *
+ * 레벨을 상한까지 채운 뒤에만 뚫을 수 있다. 그래야 돌파가 "더 키우고 싶을 때 하는 선택"이
+ * 되고, 재료를 미리 태워 두는 낭비가 생기지 않는다.
+ */
+export function canBreakThrough(progress: RelicProgress, wallet: { dnaFragments: number; weeds: number }): boolean {
+  const step = nextBreakthrough(progress.breakthrough);
+  if (!step) return false;
+  if (progress.level < relicLevelCap(progress.breakthrough)) return false;
+  return wallet.dnaFragments >= step.dnaFragments && wallet.weeds >= step.weeds;
+}
 /** 각성 상한. 같은 렐릭을 다섯 번 더 만나면 끝이다. */
 export const AWAKENING_CAP = 5;
 /** 급여 한 번에 드는 잡초와 그때 오르는 경험치. */
@@ -15,7 +63,7 @@ export const FEED_UNIT = { weeds: 10, exp: 20 } as const;
  * 레벨 하나가 여러 번의 행동을 담을 만큼은 커야 한다. 낮은 레벨은 세 번, 뒤로 갈수록 더 든다.
  */
 export function relicExpToNext(level: number): number {
-  if (!Number.isInteger(level) || level < 1 || level > RELIC_LEVEL_CAP) throw new RangeError("레벨이 성장 범위를 벗어났습니다.");
+  if (!Number.isInteger(level) || level < 1 || level > relicLevelCap(BREAKTHROUGH_CAP)) throw new RangeError("레벨이 성장 범위를 벗어났습니다.");
   return 40 + level * 20;
 }
 
@@ -75,22 +123,23 @@ export interface RelicFeedResult {
 export function feedRelic(progress: RelicProgress, weeds: number, feeds: number): RelicFeedResult {
   if (!Number.isInteger(feeds) || feeds < 1) throw new RangeError("급여 횟수는 1 이상의 정수여야 합니다.");
   if (!Number.isInteger(weeds) || weeds < 0) throw new RangeError("잡초가 올바르지 않습니다.");
+  const cap = relicLevelCap(progress.breakthrough);
   let level = progress.level;
   let exp = progress.exp;
   let spent = 0;
   let used = 0;
   for (let i = 0; i < feeds; i += 1) {
-    if (level >= RELIC_LEVEL_CAP) break;
+    if (level >= cap) break;
     if (weeds - spent < FEED_UNIT.weeds) break;
     spent += FEED_UNIT.weeds;
     used += 1;
     exp += FEED_UNIT.exp;
-    while (level < RELIC_LEVEL_CAP && exp >= relicExpToNext(level)) {
+    while (level < cap && exp >= relicExpToNext(level)) {
       exp -= relicExpToNext(level);
       level += 1;
     }
     // 상한에 닿으면 경험치는 더 쌓지 않는다.
-    if (level >= RELIC_LEVEL_CAP) exp = 0;
+    if (level >= cap) exp = 0;
   }
   return {
     progress: { ...progress, level, exp, heartGemSlots: [...progress.heartGemSlots] as RelicProgress["heartGemSlots"] },
@@ -102,7 +151,7 @@ export function feedRelic(progress: RelicProgress, weeds: number, feeds: number)
 
 /** 급여를 한 번이라도 할 수 있는지. 버튼을 끌지 말지 판단하는 단일 기준이다. */
 export function canFeedRelic(progress: RelicProgress, weeds: number): boolean {
-  return progress.level < RELIC_LEVEL_CAP && Number.isInteger(weeds) && weeds >= FEED_UNIT.weeds;
+  return progress.level < relicLevelCap(progress.breakthrough) && Number.isInteger(weeds) && weeds >= FEED_UNIT.weeds;
 }
 /** 레벨 N에서 N+1로 갈 때 드는 잡초다. 선형 비용은 각 레벨 투자의 의미를 쉽게 조정하게 한다. */
 export function relicLevelUpCost(level: number): number {

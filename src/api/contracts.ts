@@ -45,6 +45,8 @@ export type ApiErrorCode = "BANNER_NOT_FOUND" | "INSUFFICIENT_CURRENCY" | "INVAL
  * 그때 오른 레벨 수를 함께 돌려준다. 화면은 이 값으로만 연출을 정한다.
  */
 export interface FeedRelicResponse extends PlayerStateDto { relicId: string; feeds: number; weedsSpent: number; levelsGained: number; }
+/** 돌파 결과. 열린 상한을 함께 돌려줘 화면이 표를 다시 뒤지지 않게 한다. */
+export interface BreakThroughResponse extends PlayerStateDto { relicId: string; breakthrough: number; levelCap: number; }
 /** 전투 확인 시 저장되는 보상으로 최초 여부와 획득 잡초를 결과 UI에 그대로 전달한다. */
 export interface CompleteStageResponse extends PlayerStateDto { stageId: string; firstClear: boolean; weedsEarned: number; }
 /** 로비 터치 결과는 중복 여부와 대사 UI가 표시할 유대 변화량을 돌려준다. */
@@ -58,6 +60,8 @@ export interface GameApi {
   pullRelics(request: PullRequest): Promise<PullResponse>;
   /** 급여로 경험치를 올린다. 횟수를 넘기면 한 번에 여러 번 먹인다. */
   feedRelic(relicId: string, feeds?: number): Promise<FeedRelicResponse>;
+  /** 레벨 상한을 한 단계 연다. 재료 차감과 단계 확정을 한 처리로 맡는다. */
+  breakThroughRelic(relicId: string): Promise<BreakThroughResponse>;
   /** 패배도 서버에 명시해 승리 전용 보상이 새지 않도록 한다. */
   completeStage(stageId: string, victory?: boolean): Promise<CompleteStageResponse>;
   interactInLobby(relicId: string): Promise<LobbyInteractionResponse>;

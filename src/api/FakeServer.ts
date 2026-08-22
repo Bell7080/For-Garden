@@ -1,12 +1,12 @@
 import { canPull, pull, resolveAcquisitions, spend } from "../core/gacha";
 import { BANNERS } from "../data/banners";
 import { consumeRestorationEntry, normalizeDailyContent } from "../core/dailyContent";
-import { canFeedRelic, feedRelic as calculateFeed, FEED_UNIT, RELIC_LEVEL_CAP } from "../core/relicProgression";
+import { canBreakThrough, canFeedRelic, feedRelic as calculateFeed, FEED_UNIT, nextBreakthrough, relicLevelCap } from "../core/relicProgression";
 import { BOND_XP_REWARD, grantBondXp, grantDailyLobbyBondXp } from "../core/bond";
 import { DAILY_RESTORATION, getStage } from "../data/stages";
 import { createInitialRelicProgress, session, type Session } from "../state/session";
 import { saveManager } from "../state/SaveManager";
-import { GameApiError, type CompleteStageResponse, type EnterDailyRestorationResponse, type FeedRelicResponse, type GameApi, type LobbyInteractionResponse, type PlayerStateDto, type PullRequest, type PullResponse } from "./contracts";
+import { GameApiError, type CompleteStageResponse, type EnterDailyRestorationResponse, type BreakThroughResponse, type FeedRelicResponse, type GameApi, type LobbyInteractionResponse, type PlayerStateDto, type PullRequest, type PullResponse } from "./contracts";
 
 /** FakeServer의 지연과 난수원을 테스트에서 결정적으로 바꾸기 위한 선택 설정이다. */
 export interface FakeServerOptions {
@@ -84,7 +84,7 @@ export class FakeServer implements GameApi {
     await this.delay();
     const current = this.state.relicProgress[relicId];
     if (!this.state.owned.has(relicId) || !current) throw new GameApiError("RELIC_NOT_FOUND", "보유하지 않은 렐릭입니다.");
-    if (current.level >= RELIC_LEVEL_CAP) throw new GameApiError("RELIC_MAX_LEVEL", "이미 최대 레벨입니다.");
+    if (current.level >= relicLevelCap(current.breakthrough)) throw new GameApiError("RELIC_MAX_LEVEL", "이미 최대 레벨입니다.");
     if (!canFeedRelic(current, this.state.wallet.weeds)) throw new GameApiError("INSUFFICIENT_CURRENCY", "잡초가 부족합니다.");
     const result = calculateFeed(current, this.state.wallet.weeds, feeds);
     const nextProgress = { ...this.state.relicProgress, [relicId]: result.progress };
@@ -92,6 +92,31 @@ export class FakeServer implements GameApi {
     this.persist({ ...this.state, relicProgress: nextProgress, wallet: nextWallet });
     this.state.relicProgress = nextProgress; this.state.wallet = nextWallet;
     return { ...this.snapshot(), relicId, feeds: result.feeds, weedsSpent: result.feeds * FEED_UNIT.weeds, levelsGained: result.levelsGained };
+  }
+
+  /**
+   * 돌파.
+   *
+   * 재료 검사와 차감, 단계 확정을 한 처리 단위로 끝낸다. 화면은 결과만 받아 다시 그린다.
+   */
+  async breakThroughRelic(relicId: string): Promise<BreakThroughResponse> {
+    await this.delay();
+    const current = this.state.relicProgress[relicId];
+    if (!this.state.owned.has(relicId) || !current) throw new GameApiError("RELIC_NOT_FOUND", "보유하지 않은 렐릭입니다.");
+    const step = nextBreakthrough(current.breakthrough);
+    if (!step) throw new GameApiError("RELIC_MAX_LEVEL", "더 뚫을 천장이 없습니다.");
+    if (current.level < relicLevelCap(current.breakthrough)) throw new GameApiError("RELIC_MAX_LEVEL", "레벨을 상한까지 올려야 돌파할 수 있습니다.");
+    if (!canBreakThrough(current, this.state.wallet)) throw new GameApiError("INSUFFICIENT_CURRENCY", "돌파 재료가 부족합니다.");
+    const breakthrough = current.breakthrough + 1;
+    const nextProgress = { ...this.state.relicProgress, [relicId]: { ...current, breakthrough } };
+    const nextWallet = {
+      ...this.state.wallet,
+      dnaFragments: this.state.wallet.dnaFragments - step.dnaFragments,
+      weeds: this.state.wallet.weeds - step.weeds,
+    };
+    this.persist({ ...this.state, relicProgress: nextProgress, wallet: nextWallet });
+    this.state.relicProgress = nextProgress; this.state.wallet = nextWallet;
+    return { ...this.snapshot(), relicId, breakthrough, levelCap: relicLevelCap(breakthrough) };
   }
 
   /** 승리 결과 확인 시 최초/반복 보상을 판정하고 클리어와 지갑을 함께 저장한다. */

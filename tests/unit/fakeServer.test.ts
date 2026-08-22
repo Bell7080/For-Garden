@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { FakeServer } from "../../src/api/FakeServer";
+import { BREAKTHROUGH_STEPS, RELIC_LEVEL_CAP } from "../../src/core/relicProgression";
 import { GameApiError } from "../../src/api/contracts";
 import type { Session } from "../../src/state/session";
 
@@ -15,7 +16,7 @@ function makeSession(fossil = 1000): Session {
     bookmarked: new Set<string>(),
     pullCountSinceHighestRarity: { fossil: 0, amber: 0 },
     wallet: { fossil, amber: 10, dnaFragments: 0, weeds: 0 },
-    relicProgress: Object.fromEntries(["anky", "rex", "dodo"].map((id) => [id, { level: id === "anky" ? 2 : 1, exp: 0, awakening: id === "anky" ? 1 : 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: id === "anky" ? ["vital-seed", null, null] : [null, null, null] }])),
+    relicProgress: Object.fromEntries(["anky", "rex", "dodo"].map((id) => [id, { level: id === "anky" ? 2 : 1, exp: 0, awakening: id === "anky" ? 1 : 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: id === "anky" ? ["vital-seed", null, null] : [null, null, null] }])),
     ownedHeartGemIds: ["vital-seed"],
     dailyContent: { date: "", restorationEntries: 0, completedIds: [], claimedRewardIds: [] },
   };
@@ -30,6 +31,19 @@ describe("FakeServer", () => {
     expect(response).toMatchObject({ relicId: "anky", feeds: 2, weedsSpent: 20, wallet: { weeds: 5 } });
     expect(state.relicProgress.anky).toMatchObject({ level: 2, exp: 40 });
     await expect(server.feedRelic("anky")).rejects.toMatchObject({ code: "INSUFFICIENT_CURRENCY" });
+  });
+
+  it("돌파는 재료를 차감하고 상한을 연 뒤에만 다시 급여할 수 있다", async () => {
+    const state = makeSession();
+    const step = BREAKTHROUGH_STEPS[0];
+    state.relicProgress.anky = { ...state.relicProgress.anky, level: RELIC_LEVEL_CAP, exp: 0 };
+    state.wallet.dnaFragments = step.dnaFragments; state.wallet.weeds = step.weeds;
+    const server = new FakeServer(state, { latencyMs: 0 });
+    await expect(server.feedRelic("anky")).rejects.toMatchObject({ code: "RELIC_MAX_LEVEL" });
+    const response = await server.breakThroughRelic("anky");
+    expect(response).toMatchObject({ relicId: "anky", breakthrough: 1, levelCap: step.levelCap });
+    expect(state.wallet).toMatchObject({ dnaFragments: 0, weeds: 0 });
+    await expect(server.breakThroughRelic("anky")).rejects.toMatchObject({ code: "RELIC_MAX_LEVEL" });
   });
 
   it("메인 스테이지의 최초와 반복 보상을 데이터대로 구분한다", async () => {

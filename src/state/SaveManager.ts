@@ -2,12 +2,13 @@ import { HEART_GEMS } from "../data/heartGems";
 import { PLAYABLE_RELICS } from "../data/relics";
 import { STAGES } from "../data/stages";
 import { BANNERS } from "../data/banners";
+import { BREAKTHROUGH_CAP } from "../core/relicProgression";
 import type { RelicProgress } from "../core/types";
 import { createDefaultSession, type SaveData, type Session } from "./session";
 
 /** 키는 계정 연동 저장소와 충돌하지 않도록 로컬 프로토타입임을 명시한다. */
 export const SAVE_STORAGE_KEY = "eternal-city.local-save";
-export const CURRENT_SAVE_VERSION = 6;
+export const CURRENT_SAVE_VERSION = 7;
 
 type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
@@ -94,11 +95,13 @@ export class SaveManager {
       awakening: progress.awakening ?? (progress as unknown as { dnaMastery?: number }).dnaMastery ?? 0,
       // 급여로 쌓는 경험치는 v5까지 없었다. 지금 레벨의 시작점에서 다시 시작한다.
       exp: progress.exp ?? 0,
+      // 돌파는 v7에서 생겼다. 예전 저장은 아직 천장을 뚫지 않은 상태로 본다.
+      breakthrough: progress.breakthrough ?? 0,
     }]));
     if (legacy.saveVersion === undefined) {
       return { ...legacy, wallet, relicProgress, completedStoryIds, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, pullCountSinceHighestRarity: normalizedPity, dailyContent } as unknown as SaveData;
     }
-    const supported = [1, 2, 3, 4, 5, CURRENT_SAVE_VERSION];
+    const supported = [1, 2, 3, 4, 5, 6, CURRENT_SAVE_VERSION];
     if (!supported.includes(legacy.saveVersion as number)) throw new SaveDataError(`지원하지 않는 저장 버전입니다: ${String(legacy.saveVersion)}`);
     return { ...legacy, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, completedStoryIds, bookmarkedRelicIds, dailyContent, pullCountSinceHighestRarity: normalizedPity } as unknown as SaveData;
   }
@@ -123,7 +126,7 @@ export class SaveManager {
     // 보유 목록과 성장 레코드는 항상 정확히 같은 렐릭 집합이어야 한다.
     if (data.ownedRelicIds.some((id) => !data.relicProgress[id]) || Object.keys(data.relicProgress).some((id) => !data.ownedRelicIds.includes(id))) fail("보유 렐릭과 성장 정보가 일치하지 않습니다.");
     for (const [id, progress] of Object.entries(data.relicProgress)) {
-      if (!relicIds.has(id) || !Number.isInteger(progress.awakening) || progress.awakening < 0 || progress.awakening > 5 || !Number.isInteger(progress.exp) || progress.exp < 0 || !Number.isInteger(progress.bondLevel) || progress.bondLevel < 0 || progress.bondLevel > 10 || !Number.isInteger(progress.bondXp) || progress.bondXp < 0 || progress.bondXp > 650 || typeof progress.lastLobbyInteractionDate !== "string" || !Number.isInteger(progress.level) || progress.level < 1 || !Array.isArray(progress.heartGemSlots) || progress.heartGemSlots.length !== 3) fail("렐릭 성장 정보가 올바르지 않습니다.");
+      if (!relicIds.has(id) || !Number.isInteger(progress.awakening) || progress.awakening < 0 || progress.awakening > 5 || !Number.isInteger(progress.breakthrough) || progress.breakthrough < 0 || progress.breakthrough > BREAKTHROUGH_CAP || !Number.isInteger(progress.exp) || progress.exp < 0 || !Number.isInteger(progress.bondLevel) || progress.bondLevel < 0 || progress.bondLevel > 10 || !Number.isInteger(progress.bondXp) || progress.bondXp < 0 || progress.bondXp > 650 || typeof progress.lastLobbyInteractionDate !== "string" || !Number.isInteger(progress.level) || progress.level < 1 || !Array.isArray(progress.heartGemSlots) || progress.heartGemSlots.length !== 3) fail("렐릭 성장 정보가 올바르지 않습니다.");
       if (progress.heartGemSlots.some((id) => id !== null && !gemIds.has(id))) fail("Heart Gem 장착 정보가 올바르지 않습니다.");
     }
     if (!Array.isArray(data.ownedHeartGemIds) || data.ownedHeartGemIds.some((id) => !gemIds.has(id))) fail("Heart Gem 보유 정보가 올바르지 않습니다.");

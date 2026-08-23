@@ -6,6 +6,7 @@ import { RUNE_RARITY_LABELS } from "../core/runes";
 import { previewSkillDamage } from "../core/damage";
 import type { Element, RelicDef, RelicProgress, RelicRarity, Role, Skill, SkillIconAssetId, Stats } from "../core/types";
 import { setDebugInfoOpen } from "../debug";
+import { formatCurrency } from "../core/formatCurrency";
 import { RELICS } from "../data/relics";
 import { KeywordManager } from "../managers/KeywordManager";
 import { relicProgression } from "../managers/RelicProgressionManager";
@@ -36,6 +37,7 @@ import { openSkillPopup, type SkillInfoViewModel } from "./SkillPopup";
 import { relicCollection } from "../managers/RelicCollectionManager";
 import { COLOR, textStyle } from "./theme";
 import { FALLBACK_SKILL_ICON } from "./skillIcons";
+import { skillArtFor, skillArtTint, SKILL_ART_WASH_ALPHA, type SkillArtSlot } from "./skillArt";
 import { gameApi } from "../api/FakeServer";
 import { AWAKENING_CAP, AWAKENING_STEPS, canBreakThrough, canFeedRelic, FEED_UNIT, nextBreakthrough, relicExpToNext, relicLevelCap } from "../core/relicProgression";
 import { session } from "../state/session";
@@ -123,6 +125,50 @@ const BOND_HEART = 0xe23a46;
 /** 하트 안쪽에 한 겹 더 얹는 밝은 심지. */
 const BOND_HEART_CORE = 0xff8a7a;
 const FEED_GREEN = 0x7fc47f;
+/** 치즈케이크 수를 적는 색. 케이크 그림의 따뜻한 크림빛을 그대로 가져온다. */
+const FEED_TEXT = "#ffe0d5";
+
+/**
+ * 급여에 쓰는 치즈케이크 한 조각.
+ *
+ * 상단 재화 줄과 같은 그림 파일을 쓰고, 그림자를 한 겹 깔아 같은 방식으로 앉는다. 급여는
+ * 치즈케이크를 먹이는 일이므로 버튼과 팝업 어디서든 수치 옆에 이 그림이 함께 선다.
+ */
+function cheesecakeIcon(scene: Phaser.Scene, x: number, y: number, size: number): Phaser.GameObjects.Container {
+  const container = scene.add.container(x, y);
+  container.add(scene.add.image(3, 4, "currency-cheesecake").setDisplaySize(size, size).setTint(0x05070a).setAlpha(0.55));
+  container.add(scene.add.image(0, 0, "currency-cheesecake").setDisplaySize(size, size));
+  return container;
+}
+
+/**
+ * 치즈케이크 값줄 — `아이콘 가진 수/드는 수`.
+ *
+ * 급여 버튼과 한 번에 급여 팝업이 같은 줄을 쓴다. 아이콘은 **하나만** 크게 세우고 두 수를
+ * 빗금으로 묶는다. 아이콘을 수마다 하나씩 붙이면 같은 재화가 둘로 보이고, 빗금 없이 떼어 놓으면
+ * "가진 것"과 "나가는 것"이 서로 다른 값처럼 읽힌다.
+ *
+ * 판 안에 한 겹 더 파인 자리를 두는 이유는 이 줄이 버튼 라벨보다 크기 때문이다 — 눌러야 할
+ * 판과 읽어야 할 수가 같은 높이에 있으면 어느 쪽이 버튼인지 흐려진다.
+ */
+function feedCostRow(
+  scene: Phaser.Scene,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  size: number,
+): { container: Phaser.GameObjects.Container; text: Phaser.GameObjects.Text } {
+  const container = scene.add.container(x, y);
+  container.add(drawLayer(scene, 0, 0, slantedRect(width, height, 8), { fill: 0x0b1410, alpha: 0.66, edge: FEED_GREEN, edgeAlpha: 0.22 }));
+  const icon = Math.round(height * 0.86);
+  container.add(cheesecakeIcon(scene, -width / 2 + icon * 0.62, 0, icon));
+  const text = scene.add
+    .text(-width / 2 + icon * 1.16, 1, "", textStyle({ role: "display", size, color: FEED_TEXT }))
+    .setOrigin(0, 0.5);
+  container.add(text);
+  return { container, text };
+}
 /**
  * 유대로 하나씩 열리는 이야기 네 편.
  *
@@ -288,6 +334,8 @@ export class InfoManager {
   /** 돌파 버튼. 레벨 옆에 붙어 지금 뚫을 수 있는지를 진하기로 알린다. */
   private breakButton?: { container: Phaser.GameObjects.Container; label: Phaser.GameObjects.Text };
   private feedPlate?: { on: Phaser.GameObjects.Graphics; off: Phaser.GameObjects.Graphics };
+  /** 급여 버튼의 치즈케이크 값줄 — `가진 수/한 번에 드는 수`. */
+  private feedCost?: Phaser.GameObjects.Text;
   private feedHold?: Phaser.Time.TimerEvent;
   private feeding = false;
   /** 생성 시 고정한 문맥 덕분에 읽기 전용 창이 도중에 소유자 권한으로 승격되지 않는다. */
@@ -526,6 +574,10 @@ export class InfoManager {
    *
    * 한 번 누르면 한 번 먹이고, 꾹 누르고 있으면 계속 먹인다. 잠깐 누르고 있으면 그 위로 한 번에
    * 여러 레벨을 채우는 작은 팝업이 떠서, 레벨 하나에 수십 번 두드리지 않아도 된다.
+   *
+   * 버튼에서 가장 크게 읽어야 하는 것은 "급여하기"라는 행동 이름이 아니라 **치즈케이크 수**다 —
+   * 지금 몇 개를 가졌고 한 번 누르면 몇 개가 나가는지. 행동 이름은 이미 초록 판과 아이콘으로
+   * 짐작되므로 작게 얹고, 꾹 누르기 안내는 적지 않는다.
    */
   private addFeedButton(x: number, y: number, width: number, height: number, panel: Phaser.GameObjects.Container): { container: Phaser.GameObjects.Container; label: Phaser.GameObjects.Text } {
     const container = this.scene.add.container(x, y);
@@ -542,9 +594,11 @@ export class InfoManager {
       glow: { color: FEED_GREEN, strength: 0.45, height: 0.7 },
     });
     container.add([off, on]);
-    const label = this.scene.add.text(0, -20, "급여하기", textStyle({ role: "display", size: 36 })).setOrigin(0.5);
-    const hint = this.scene.add.text(0, 16, "치즈케이크 " + FEED_UNIT.cheesecake + " · 꾹 누르면 한 번에", textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0.5);
-    container.add([label, hint]);
+    const label = this.scene.add.text(0, -height / 2 + 22, "급여하기", textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0.5);
+    container.add(label);
+    const row = feedCostRow(this.scene, 0, 16, width - 40, 54, 36);
+    this.feedCost = row.text;
+    container.add(row.container);
     const hit = this.scene.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
     let heldFrom = 0;
     hit.on("pointerdown", () => {
@@ -677,16 +731,29 @@ export class InfoManager {
     this.feedButton.setAlpha(enabled ? 1 : 0.7);
   }
 
-  /** 한 번에 여러 레벨을 채우는 쪽지. 급여 버튼 바로 아래에 뜨고 다른 곳을 누를 때까지 남는다. */
+  /**
+   * 한 번에 여러 레벨을 채우는 쪽지. 급여 버튼 바로 아래에 뜨고 다른 곳을 누를 때까지 남는다.
+   *
+   * 여기서도 크게 읽어야 하는 것은 레벨 수가 아니라 **나가는 치즈케이크 수**다. 한 번에
+   * 수십 번을 먹이는 자리라 지갑이 얼마나 줄어드는지 모르고 누르면 안 된다.
+   */
   private openFeedBulk(x: number, y: number): void {
     if (this.popups.isOpen) return;
-    this.popups.open({ width: 420, height: 190, x, y: y + 120 }, (body, close) => {
-      body.add(this.scene.add.text(0, -58, "한 번에 급여", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0.5));
+    this.popups.open({ width: 500, height: 250, x, y: y + 150 }, (body, close) => {
+      body.add(this.scene.add.text(0, -86, "한 번에 급여", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0.5));
       ([["1 레벨", 1], ["10 레벨", 10]] as const).forEach(([label, levels], index) => {
-        const bx = index === 0 ? -100 : 100;
-        body.add(drawLayer(this.scene, bx, 18, slantedRect(170, 76, 14), { fill: 0x18261c, alpha: 0.92, edge: FEED_GREEN, edgeAlpha: 0.8 }));
-        body.add(this.scene.add.text(bx, 18, label, textStyle({ role: "display", size: 28 })).setOrigin(0.5));
-        const hit = this.scene.add.rectangle(bx, 18, 170, 76, 0xffffff, 0).setInteractive({ useHandCursor: true });
+        const bx = index === 0 ? -118 : 118;
+        const cost = this.feedsForLevels(levels) * FEED_UNIT.cheesecake;
+        const enough = session.wallet.cheesecake >= cost;
+        body.add(drawLayer(this.scene, bx, 12, slantedRect(212, 116, 14), { fill: 0x18261c, alpha: 0.92, edge: FEED_GREEN, edgeAlpha: enough ? 0.8 : 0.3 }));
+        body.add(this.scene.add.text(bx, -22, label, textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0.5));
+        // 버튼과 같은 값줄이다. 여기서 바뀌는 것은 오른쪽 수(한 번에 나가는 양)뿐이다.
+        const price = feedCostRow(this.scene, bx, 32, 184, 48, 28);
+        price.text.setText(formatCurrency(session.wallet.cheesecake) + "/" + formatCurrency(cost));
+        price.text.setColor(enough ? FEED_TEXT : COLOR.dangerText);
+        body.add(price.container);
+        if (!enough) return;
+        const hit = this.scene.add.rectangle(bx, 12, 212, 116, 0xffffff, 0).setInteractive({ useHandCursor: true });
         hit.on("pointerup", () => {
           close();
           void this.feedLevels(levels);
@@ -696,9 +763,9 @@ export class InfoManager {
     });
   }
 
-  /** 지금 레벨에서 목표 레벨까지 필요한 급여 횟수를 계산해 한 번에 요청한다. */
-  private async feedLevels(levels: number): Promise<void> {
-    if (!this.currentDef) return;
+  /** 지금 레벨에서 목표 레벨까지 필요한 급여 횟수. 팝업의 소모량 표기와 실제 요청이 같은 값을 쓴다. */
+  private feedsForLevels(levels: number): number {
+    if (!this.currentDef) return 1;
     const progress = relicProgression.getProgress(this.currentDef.id);
     let need = 0;
     let level = progress.level;
@@ -709,7 +776,12 @@ export class InfoManager {
       level += 1;
       exp = 0;
     }
-    await this.feed(Math.max(1, need));
+    return Math.max(1, need);
+  }
+
+  /** 필요한 급여 횟수를 한 번에 요청한다. */
+  private async feedLevels(levels: number): Promise<void> {
+    await this.feed(this.feedsForLevels(levels));
   }
 
   private async feed(feeds: number): Promise<void> {
@@ -1259,12 +1331,13 @@ export class InfoManager {
   /** 원화 아래 스킬 아이콘 세 개. 누르면 정형 팝업이 뜬다. */
   private buildSkillIcons(def: RelicDef): void {
     for (const icon of this.skillIcons.splice(0)) icon.destroy();
-    const entries: [string, Skill, number | undefined][] = [
-      ["패시브", { ...def.passive, power: def.passive.value, damageType: "physical" } as unknown as Skill, undefined],
-      ["일반 공격", def.basic, undefined],
-      ["궁극기", def.ultimate, def.ultimate.cost],
+    const entries: [string, Skill, number | undefined, SkillArtSlot][] = [
+      ["패시브", { ...def.passive, power: def.passive.value, damageType: "physical" } as unknown as Skill, undefined, "passive"],
+      ["일반 공격", def.basic, undefined, "basic"],
+      ["궁극기", def.ultimate, def.ultimate.cost, "ultimate"],
     ];
-    entries.forEach(([kindLabel, skill, gaugeCost], index) => {
+    const tint = skillArtTint(def.element, def.role);
+    entries.forEach(([kindLabel, skill, gaugeCost, slot], index) => {
       const size = SKILL_ICON.size;
       const container = this.scene.add.container(SKILL_ICON.x + index * SKILL_ICON.step, BASE_HEIGHT - 196);
       const bevel = { topLeft: size * 0.26, topRight: 0, bottomRight: size * 0.26, bottomLeft: 0 };
@@ -1276,11 +1349,18 @@ export class InfoManager {
         edgeAlpha: index === 2 ? 0.9 : 0.45,
       }));
       const innerSize = size - 16;
-      container.add(drawLayer(this.scene, 0, -6, chipPoints(innerSize, innerSize - 14, {
+      const inner = chipPoints(innerSize, innerSize - 14, {
         bevel: { topLeft: innerSize * 0.22, topRight: 0, bottomRight: innerSize * 0.22, bottomLeft: 0 },
-      }), { fill: 0x05080c, alpha: 0.55 }));
-      const texture = this.scene.textures.exists(skill.iconAssetId) ? skill.iconAssetId : FALLBACK_SKILL_ICON;
-      container.add(this.scene.add.image(0, -8, texture).setDisplaySize(size * 0.52, size * 0.52));
+      });
+      container.add(drawLayer(this.scene, 0, -6, inner, { fill: 0x05080c, alpha: 0.55 }));
+      const art = skillArtFor(def.id, slot);
+      // 그림 자리에 같은 색을 아주 옅게 한 겹 깔아 아이콘이 색판 위에 앉은 것처럼 보이게 한다.
+      if (art) container.add(drawLayer(this.scene, 0, -6, inner, { fill: tint, alpha: SKILL_ART_WASH_ALPHA }));
+      const texture = art ?? (this.scene.textures.exists(skill.iconAssetId) ? skill.iconAssetId : FALLBACK_SKILL_ICON);
+      const image = this.scene.add.image(0, -8, texture).setDisplaySize(size * (art ? 0.74 : 0.52), size * (art ? 0.74 : 0.52));
+      // 전용 일러스트는 흰 실루엣이라 여기서 속성·직군을 섞은 색을 입는다.
+      if (art) image.setTint(tint);
+      container.add(image);
       container.add(this.scene.add.text(0, size / 2 - 26, kindLabel, textStyle({ role: "emphasis", size: 19, color: index === 2 ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5));
       const hit = this.scene.add.rectangle(0, 0, size, size, 0xffffff, 0).setInteractive({ useHandCursor: true });
       hit.on("pointerdown", () => container.setScale(1.08));
@@ -1288,7 +1368,7 @@ export class InfoManager {
       hit.on("pointerup", () => {
         // 팝업이 떠 있는 동안 아이콘은 눌린 채로 남는다. 어디서 나온 쪽지인지 보이게 한다.
         container.setScale(1.08);
-        openSkillPopup(this.scene, this.popups, this.keywords, this.skillViewModel(kindLabel, skill, gaugeCost), {
+        openSkillPopup(this.scene, this.popups, this.keywords, this.skillViewModel(kindLabel, skill, gaugeCost, slot), {
           x: container.x,
           y: container.y - size / 2,
           onClose: () => container.setScale(1),
@@ -1317,7 +1397,15 @@ export class InfoManager {
       bevel: { topLeft: badgeSize * 0.34, topRight: 0, bottomRight: badgeSize * 0.34, bottomLeft: 0 },
     });
     badge.add(drawLayer(this.scene, 0, 0, shape, { fill: FEROCITY_BADGE, alpha: 0.96, edge: 0xf0a58a, edgeAlpha: 0.8 }));
-    badge.add(drawGlyph(this.scene, "ferocity", 0, 1, badgeSize * 0.56, 0xffd9c4));
+    // 폭주도 스킬 넷 중 하나라 전용 일러스트를 쓴다. 다만 붉은 판 위에서는 속성 색을 그대로
+    // 얹으면 판에 묻히므로, 여기서만 야성의 살구빛을 쓴다 — 이 뱃지는 개체 구분이 아니라
+    // "야성이 이렇게 터진다"를 알리는 자리이기 때문이다.
+    const art = skillArtFor(def.id, "ferocity");
+    if (art) {
+      badge.add(this.scene.add.image(0, 1, art).setDisplaySize(badgeSize * 0.82, badgeSize * 0.82).setTint(0xffd9c4));
+    } else {
+      badge.add(drawGlyph(this.scene, "ferocity", 0, 1, badgeSize * 0.56, 0xffd9c4));
+    }
     // 입력 영역도 뱃지 크기에 딱 맞춘다. 넓게 잡으면 아래 아이콘의 터치를 가로챈다.
     const hit = this.scene.add.rectangle(0, 0, badgeSize, badgeSize, 0xffffff, 0).setInteractive({ useHandCursor: true });
     hit.on("pointerdown", () => badge.setScale(1.1));
@@ -1351,7 +1439,7 @@ export class InfoManager {
   }
 
   /** 읽기 전용 도감에 실제 방어력을 가정하지 않은 스킬 능력치 배율을 만든다. */
-  private skillViewModel(kindLabel: string, skill: Skill, gaugeCost?: number): SkillInfoViewModel {
+  private skillViewModel(kindLabel: string, skill: Skill, gaugeCost?: number, slot?: SkillArtSlot): SkillInfoViewModel {
     const attacker: Combatant | undefined = this.currentDef && {
       def: this.currentDef, hp: this.currentDef.stats.hp, maxHp: this.currentDef.stats.hp,
       energy: 0, ferocity: 0, bondLevel: 0, ferocityFever: false,
@@ -1365,6 +1453,10 @@ export class InfoManager {
       name: skill.name,
       kindLabel,
       iconAssetId: skill.iconAssetId as SkillIconAssetId,
+      // 전용 일러스트가 있으면 팝업도 같은 그림과 같은 색을 쓴다. 아이콘과 쪽지가 갈라지면
+      // 어느 스킬을 눌렀는지 되짚어야 한다.
+      art: this.currentDef && slot ? skillArtFor(this.currentDef.id, slot) : undefined,
+      tint: this.currentDef && skillArtTint(this.currentDef.element, this.currentDef.role),
       effectType: skill.effectType,
       valueLabel,
       gaugeCost,
@@ -1471,10 +1563,15 @@ export class InfoManager {
     this.levelCap.setX(this.levelValue.x + this.levelValue.displayWidth + 14);
     const need = maxed ? 0 : relicExpToNext(progress.level);
     this.expBar.setValue(maxed ? 1 : progress.exp / need);
-    // 보유 치즈케이크는 상단 줄 한 곳에서만 보여 중복되거나 서로 다른 시점의 값이 보이지 않게 한다.
+    // 경험치 줄은 "얼마나 컸는가"만 말한다. 급여에 드는 치즈케이크는 바로 아래 버튼이 맡는다.
     this.expLabel.setText(maxed ? "MAX" : progress.exp + " / " + need + " EXP");
     this.paintFeedButton(this.ownedNow && canFeedRelic(progress, session.wallet.cheesecake));
     this.feedLabel.setText(maxed ? "최대 레벨" : "급여하기");
+    // 급여는 치즈케이크를 먹이는 일이라 버튼이 그 수를 직접 말한다. 상단 줄과 같은 세션 지갑을
+    // 읽으므로 두 곳의 값이 갈라지지 않는다.
+    this.feedCost?.setText(formatCurrency(session.wallet.cheesecake) + "/" + (maxed ? "—" : String(FEED_UNIT.cheesecake)));
+    // 모자라면 줄 전체가 붉어진다. 두 수 중 하나만 물들이면 어느 쪽이 모자란 것인지 되레 헷갈린다.
+    this.feedCost?.setColor(!maxed && session.wallet.cheesecake < FEED_UNIT.cheesecake ? COLOR.dangerText : FEED_TEXT);
     this.paintBreakButton(progress);
 
     const bondMaxed = progress.bondLevel >= BOND_LEVEL_CAP;

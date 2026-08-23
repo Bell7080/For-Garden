@@ -7,6 +7,7 @@ import { AFFINITY_ICON_ASSETS } from "../ui/affinityIcons";
 import { CURRENCY_ICON_ASSETS } from "../ui/currencyIcons";
 import { RUNE_ICON_ASSETS } from "../ui/runeIcons";
 import { SKILL_ICON_ASSETS } from "../ui/skillIcons";
+import { SKILL_ART_ASSETS } from "../ui/skillArt";
 
 /**
  * 타이틀 화면이 지불하는 로딩 비용의 전부.
@@ -60,6 +61,8 @@ export const LOADING_STEPS: ReadonlyArray<LoadingStep> = [
         // SVG를 그대로 이미지로 받으면 파일에 적힌 크기 그대로 구워져 확대할 때 뭉갠다.
         // 화면에서 쓰는 크기보다 넉넉히 크게 래스터화해 두고 줄여 쓴다.
         SKILL_ICON_ASSETS.forEach(([key, path]) => scene.load.svg(key, path, { width: SVG_BAKE.skill, height: SVG_BAKE.skill }));
+        // 전용 스킬 일러스트는 흰 실루엣 WebP다. 색은 화면이 tint로 입힌다.
+        SKILL_ART_ASSETS.forEach(([key, path]) => scene.load.image(key, path));
         // 속성·직군은 이미 구워 둔 WebP라 그대로 읽는다.
         AFFINITY_ICON_ASSETS.forEach(([key, path]) => scene.load.image(key, path));
         CURRENCY_ICON_ASSETS.forEach(([key, path]) => scene.load.image(key, path));

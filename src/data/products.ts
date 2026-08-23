@@ -1,8 +1,20 @@
 /** 상점의 가격 재화. `real_money`는 플랫폼 영수증 검증 전에는 구매할 수 없다. */
 export type ProductCurrency = "fossil" | "amber" | "cheesecake" | "dnaFragments" | "real_money";
 
-/** 현재 상점은 재화만 지급한다. 룬은 옵션 생성 권한이 있는 별도 서버 계약으로 발급한다. */
-export type ProductGrant = { kind: "currency"; currency: Exclude<ProductCurrency, "real_money">; amount: number };
+/** 즉시 지급품은 재화와 서버 계정에 귀속되는 프로필 장식만 허용한다. */
+export type ProductGrant =
+  | { kind: "currency"; currency: Exclude<ProductCurrency, "real_money">; amount: number }
+  | { kind: "profile_decoration"; decorationId: string; name: string };
+
+/** 단순 묶음과 구분되는 후원 패스의 기간·일일 권리다. null 기간은 영구 권리를 뜻한다. */
+export interface PassBenefitDefinition {
+  durationDays: number | null;
+  instantAdRewards: true;
+  /** 광고 이용자와 동일한 슬롯별 기본 보상·UTC 일일 한도를 사용한다. */
+  usesStandardAdRewardPolicy: true;
+  /** UTC 날짜마다 첫 즉시 수령에 덧붙는 소량의 후원 보너스다. */
+  dailyBonus: { currency: "gems"; amount: number };
+}
 
 /** 구매 제한의 재설정 주기. `once`는 계정 전체에서 한 번만 허용한다. */
 export type ProductRefresh = "none" | "daily" | "weekly" | "once";
@@ -15,6 +27,8 @@ export interface ProductDefinition {
   description: string;
   price: { currency: ProductCurrency; amount: number; display?: string };
   grants: readonly ProductGrant[];
+  /** 값이 있으면 이 상품은 소모성 재화 묶음이 아니라 계정 권리 상품이다. */
+  passBenefit?: PassBenefitDefinition;
   purchaseLimit: number;
   refresh: ProductRefresh;
   visibleFrom: string;
@@ -29,5 +43,8 @@ export const PRODUCTS: readonly ProductDefinition[] = [
   { id: "trade-weeds", section: "trade", name: "복원용 치즈케이크 묶음", description: "급여에 쓰는 치즈케이크 100개", price: { currency: "fossil", amount: 180 }, grants: [{ kind: "currency", currency: "cheesecake", amount: 100 }], purchaseLimit: 3, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "trade-dna", section: "trade", name: "공용 DNA 조각", description: "돌파 재료 5개", price: { currency: "cheesecake", amount: 80 }, grants: [{ kind: "currency", currency: "dnaFragments", amount: 5 }], purchaseLimit: 2, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "premium-starter", section: "premium", name: "신입 연구원 패키지", description: "호박석 20개 · 플랫폼 결제 준비 중", price: { currency: "real_money", amount: 4900, display: "₩4,900" }, grants: [{ kind: "currency", currency: "amber", amount: 20 }], purchaseLimit: 1, refresh: "once", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
-  { id: "premium-monthly", section: "premium", name: "월간 화석 패스", description: "화석 3,000개 · 플랫폼 결제 준비 중", price: { currency: "real_money", amount: 9900, display: "₩9,900" }, grants: [{ kind: "currency", currency: "fossil", amount: 3000 }], purchaseLimit: 1, refresh: "none", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  // 후원 패스는 광고를 제거하지 않고, 기존 광고 슬롯을 같은 보상·한도의 즉시 수령 슬롯으로 바꾼다.
+  { id: "premium-monthly", section: "premium", name: "월간 연구 후원", description: "30일간 광고 보상 즉시 수령 · 슬롯별 기존 일일 한도 · 매일 다이아 5개 · 즉시 화석 4,000개 · 월간 후원자 명찰", price: { currency: "real_money", amount: 14900, display: "₩14,900" }, grants: [{ kind: "currency", currency: "fossil", amount: 4000 }, { kind: "profile_decoration", decorationId: "patron-monthly", name: "월간 후원자 명찰" }], passBenefit: { durationDays: 30, instantAdRewards: true, usesStandardAdRewardPolicy: true, dailyBonus: { currency: "gems", amount: 5 } }, purchaseLimit: 1, refresh: "none", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  // 영구 권리는 장기 지급 부채를 가격에 반영하며, 실제 판매 전 운영 수명과 원가를 다시 검토해야 한다.
+  { id: "premium-lifetime", section: "premium", name: "영구 연구 후원자", description: "영구 광고 보상 즉시 수령 · 슬롯별 기존 일일 한도 · 매일 다이아 5개 · 즉시 화석 12,000개 · 영구 후원자 홀로그램", price: { currency: "real_money", amount: 119000, display: "₩119,000" }, grants: [{ kind: "currency", currency: "fossil", amount: 12000 }, { kind: "profile_decoration", decorationId: "patron-lifetime", name: "영구 후원자 홀로그램" }], passBenefit: { durationDays: null, instantAdRewards: true, usesStandardAdRewardPolicy: true, dailyBonus: { currency: "gems", amount: 5 } }, purchaseLimit: 1, refresh: "once", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
 ];

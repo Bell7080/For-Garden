@@ -226,6 +226,33 @@ describe("FakeServer 상품 카탈로그", () => {
     expect(state.wallet).toEqual(before);
     expect(state.productPurchases).toEqual({});
   });
+
+  it("후원 영수증 검증과 권리 활성화를 요청 재시도에도 한 결과로 유지한다", async () => {
+    const state = makeSession();
+    const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-22T12:00:00Z") });
+    const receipt = { productId: "premium-monthly", platform: "test" as const, receipt: "verified-receipt:premium-monthly:tx-1", requestId: "verify-1" };
+    const first = await server.verifyPurchaseReceipt(receipt);
+    await expect(server.verifyPurchaseReceipt(receipt)).resolves.toEqual(first);
+    const activation = await server.activatePass({ verificationId: first.verificationId, requestId: "activate-1" });
+    await expect(server.activatePass({ verificationId: first.verificationId, requestId: "activate-1" })).resolves.toEqual(activation);
+    expect(activation.entitlement).toMatchObject({ productId: "premium-monthly", activatedAt: "2026-08-22T12:00:00.000Z", expiresAt: "2026-09-21T12:00:00.000Z", active: true });
+  });
+
+  it("패스 즉시 수령도 광고 슬롯의 기본 보상·UTC 한도를 공유하고 중복 지급하지 않는다", async () => {
+    const state = makeSession(); let now = new Date("2026-08-22T23:59:00Z");
+    const server = new FakeServer(state, { latencyMs: 0, now: () => now });
+    const verified = await server.verifyPurchaseReceipt({ productId: "premium-monthly", platform: "test", receipt: "verified-receipt:premium-monthly:tx-2", requestId: "verify-2" });
+    const { entitlement } = await server.activatePass({ verificationId: verified.verificationId, requestId: "activate-2" });
+    const request = { entitlementId: entitlement.entitlementId, slotId: "daily-stamina", requestId: "instant-1" };
+    const first = await server.claimInstantAdReward(request);
+    await expect(server.claimInstantAdReward(request)).resolves.toMatchObject({ dailyClaims: 1, wallet: first.wallet });
+    expect(first).toMatchObject({ reward: { currency: "stamina", amount: 10 }, dailyBonus: { currency: "gems", amount: 5 }, dailyRemaining: 2 });
+    await server.claimInstantAdReward({ ...request, requestId: "instant-2" });
+    await server.claimInstantAdReward({ ...request, requestId: "instant-3" });
+    await expect(server.claimInstantAdReward({ ...request, requestId: "instant-4" })).rejects.toMatchObject({ code: "AD_DAILY_LIMIT" });
+    now = new Date("2026-08-23T00:00:00Z");
+    await expect(server.claimInstantAdReward({ ...request, requestId: "instant-next-day" })).resolves.toMatchObject({ dailyClaims: 1, dailyBonus: { currency: "gems", amount: 5 } });
+  });
 });
 
 describe("FakeServer DNA 조각 교환소와 경제 경계", () => {

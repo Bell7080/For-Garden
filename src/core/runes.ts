@@ -79,7 +79,9 @@ export interface RuneInstance {
   enhancementHistory: Readonly<Partial<Record<RuneStatKey, readonly RuneEnhancementRecord[]>>>;
   /** 다음 강화 시도에 쓸 확률(0~1)이다. */
   currentSuccessChance: number;
-  /** 완료된 각인 결과다. 같은 옵션 키를 두 번 각인할 수 없다. */
+  /** 희귀도별 필수 시도를 모두 마쳤는지 나타내는 파생 상태다. */
+  enhancementComplete: boolean;
+  /** 완료된 각인 결과다. 룬 하나에 최대 한 번만 각인할 수 있다. */
   engravings: readonly RuneEngravingResult[];
 }
 
@@ -99,6 +101,23 @@ export const RUNE_SUB_STAT_COUNTS: Readonly<Record<RuneRarity, number>> = {
   legendary: 3,
 };
 
+/** 일반 강화의 모든 확률 및 횟수 밸런스를 소유하는 단일 표다. */
+export const RUNE_ENHANCEMENT_RULES = {
+  initialSuccessChance: 0.75,
+  successChanceDelta: 0.1,
+  minimumSuccessChance: 0.25,
+  maximumSuccessChance: 0.75,
+  attemptsPerOption: 3,
+  totalAttempts: { uncommon: 6, rare: 9, epic: 12, legendary: 15 },
+} as const satisfies {
+  initialSuccessChance: number;
+  successChanceDelta: number;
+  minimumSuccessChance: number;
+  maximumSuccessChance: number;
+  attemptsPerOption: number;
+  totalAttempts: Readonly<Record<RuneRarity, number>>;
+};
+
 /** 룬 생성에 필요한 밸런스 값과 난수 의존성이다. 모든 옵션 값의 단위는 백분율이다. */
 export interface CreateRuneInput {
   instanceId: string;
@@ -108,8 +127,6 @@ export interface CreateRuneInput {
   statValues: Readonly<Record<RuneStatKey, number>>;
   /** [0, 1) 값을 반환하는 난수 함수다. 테스트와 서버가 결과를 재현할 수 있도록 주입한다. */
   random: () => number;
-  /** 첫 강화 성공 확률(0~1)이다. */
-  initialSuccessChance: number;
 }
 
 const MAIN_KEYS: readonly RuneMainStatKey[] = ["hp", "atk", "ap", "def", "res"];
@@ -139,7 +156,8 @@ export function createRuneInstance(input: CreateRuneInput): RuneInstance {
     mainStats,
     subStats,
     enhancementHistory: {},
-    currentSuccessChance: input.initialSuccessChance,
+    currentSuccessChance: RUNE_ENHANCEMENT_RULES.initialSuccessChance,
+    enhancementComplete: false,
     engravings: [],
   };
   assertValidRuneInstance(rune);
@@ -175,9 +193,72 @@ export function assertValidRuneInstance(rune: RuneInstance): void {
       if (record.attempt !== index + 1 || record.successChance < 0 || record.successChance > 1) throw new Error("강화 이력 순서 또는 확률이 올바르지 않습니다.");
       if (!Number.isFinite(record.valueAdded) || record.valueAdded < 0 || (!record.succeeded && record.valueAdded !== 0)) throw new Error("강화 이력의 증가량이 올바르지 않습니다.");
     });
+    if ((history?.length ?? 0) > RUNE_ENHANCEMENT_RULES.attemptsPerOption) throw new Error("한 옵션은 세 번까지만 강화할 수 있습니다.");
   }
-  if (new Set(rune.engravings.map(({ statKey }) => statKey)).size !== rune.engravings.length) throw new Error("같은 옵션을 중복 각인할 수 없습니다.");
+  if (rune.engravings.length > 1) throw new Error("각인은 룬 하나에 한 번만 적용할 수 있습니다.");
   if (rune.engravings.some(({ statKey, valueAdded }) => !optionKeys.has(statKey) || !Number.isFinite(valueAdded) || valueAdded < 0)) throw new Error("각인 결과가 올바르지 않습니다.");
+  if (rune.enhancementComplete !== (runeEnhancementAttempts(rune) === runeTotalEnhancementAttempts(rune.rarity))) throw new Error("강화 완료 상태가 누적 시도와 다릅니다.");
+}
+
+/** 희귀도가 완료되기 위해 요구하는 일반 강화 총횟수를 반환한다. */
+export function runeTotalEnhancementAttempts(rarity: RuneRarity): number {
+  return RUNE_ENHANCEMENT_RULES.totalAttempts[rarity];
+}
+
+/** 성공과 실패를 모두 포함한 룬의 누적 일반 강화 횟수를 계산한다. */
+export function runeEnhancementAttempts(rune: RuneInstance): number {
+  return Object.values(rune.enhancementHistory).reduce((total, history) => total + (history?.length ?? 0), 0);
+}
+
+/** 직전 결과로 다음 성공률을 계산하며 25~75% 경계를 벗어나지 않게 한다. */
+export function calculateRuneEnhancementSuccessChance(currentChance: number, succeeded: boolean): number {
+  if (!Number.isFinite(currentChance) || currentChance < 0 || currentChance > 1) throw new RangeError("현재 성공 확률은 0~1이어야 합니다.");
+  const moved = currentChance + (succeeded ? -RUNE_ENHANCEMENT_RULES.successChanceDelta : RUNE_ENHANCEMENT_RULES.successChanceDelta);
+  return Math.min(RUNE_ENHANCEMENT_RULES.maximumSuccessChance, Math.max(RUNE_ENHANCEMENT_RULES.minimumSuccessChance, moved));
+}
+
+/** 지정 옵션에 일반 강화를 더 시도할 수 있는지 저장 상태를 바꾸지 않고 판정한다. */
+export function canEnhanceRune(rune: RuneInstance, statKey: RuneStatKey): boolean {
+  const exists = [...rune.mainStats, ...rune.subStats].some((option) => option.key === statKey);
+  return exists && !rune.enhancementComplete && (rune.enhancementHistory[statKey]?.length ?? 0) < RUNE_ENHANCEMENT_RULES.attemptsPerOption;
+}
+
+/** 주입된 [0, 1) 난수로 일반 강화 한 회를 판정하고 새 룬 값을 반환한다. */
+export function enhanceRune(rune: RuneInstance, statKey: RuneStatKey, valueIncrease: number, random: number): RuneInstance {
+  assertValidRuneInstance(rune);
+  if (!canEnhanceRune(rune, statKey)) throw new Error("존재하지 않거나 세 번을 마친 옵션은 강화할 수 없습니다.");
+  if (!Number.isFinite(random) || random < 0 || random >= 1) throw new RangeError("강화 난수는 0 이상 1 미만이어야 합니다.");
+  if (!Number.isFinite(valueIncrease) || valueIncrease < 0) throw new RangeError("강화 증가량은 0 이상의 유한한 값이어야 합니다.");
+  const succeeded = random < rune.currentSuccessChance;
+  const previous = rune.enhancementHistory[statKey] ?? [];
+  const record: RuneEnhancementRecord = { attempt: previous.length + 1, successChance: rune.currentSuccessChance, succeeded, valueAdded: succeeded ? valueIncrease : 0 };
+  const update = <K extends RuneStatKey>(option: RuneStatOption<K>): RuneStatOption<K> => option.key === statKey && succeeded ? { ...option, value: option.value + valueIncrease } : option;
+  const attempts = runeEnhancementAttempts(rune) + 1;
+  const next: RuneInstance = {
+    ...rune,
+    mainStats: rune.mainStats.map(update) as [RuneStatOption<RuneMainStatKey>, RuneStatOption<RuneMainStatKey>],
+    subStats: rune.subStats.map(update) as RuneStatOption<RuneSubStatKey>[],
+    enhancementHistory: { ...rune.enhancementHistory, [statKey]: [...previous, record] },
+    currentSuccessChance: calculateRuneEnhancementSuccessChance(rune.currentSuccessChance, succeeded),
+    enhancementComplete: attempts === runeTotalEnhancementAttempts(rune.rarity),
+  };
+  assertValidRuneInstance(next);
+  return next;
+}
+
+/** 모든 일반 강화를 끝내고 아직 각인하지 않은 룬인지 판정한다. */
+export function canEngraveRune(rune: RuneInstance): boolean {
+  return rune.enhancementComplete && rune.engravings.length === 0;
+}
+
+/** 완료된 룬에 한 번뿐인 확정 각인을 적용하고 새 룬 값을 반환한다. */
+export function engraveRune(rune: RuneInstance, result: RuneEngravingResult): RuneInstance {
+  assertValidRuneInstance(rune);
+  if (!canEngraveRune(rune)) throw new Error("모든 강화를 마친 각인 전 룬만 각인할 수 있습니다.");
+  if (![...rune.mainStats, ...rune.subStats].some(({ key }) => key === result.statKey)) throw new Error("존재하지 않는 옵션은 각인할 수 없습니다.");
+  const next = { ...rune, engravings: [result] } satisfies RuneInstance;
+  assertValidRuneInstance(next);
+  return next;
 }
 
 /** 룬 옵션 합계에서 `Stats` 밖의 흡혈·야성 증가량을 추출해 전투 계층에 전달한다. */

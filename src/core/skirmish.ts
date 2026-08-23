@@ -335,7 +335,9 @@ function gainFerocity(fighter: Fighter, base: number, state: SkirmishState): voi
   const before = fighter.ferocity;
   // 피버 중 추가 획득은 무시해 한 번 열린 보상 구간이 정해진 시간 안에 반드시 끝나게 한다.
   if (fighter.ferocityFever) return;
-  fighter.ferocity = Math.min(FEROCITY_RULES.max, before + amplifyFerocityGain(base, fighter.bondLevel));
+  // 룬 야성 보정은 유대 보정 뒤의 사건별 충전량에 곱하며 단위는 percent다.
+  const adjusted = amplifyFerocityGain(base, fighter.bondLevel) * (1 + fighter.def.stats.ferocityGain / 100);
+  fighter.ferocity = Math.min(FEROCITY_RULES.max, before + adjusted);
   // 처음 최대치에 닿은 순간 피버 카운트다운을 켠다.
   if (before < FEROCITY_RULES.max && fighter.ferocity >= FEROCITY_RULES.max) fighter.ferocityFever = true;
   for (const { value } of FEROCITY_RULES.thresholds) {
@@ -405,7 +407,17 @@ function strike(
     ? Math.max(1, Math.round(rawAmount * (1 - guardTrait.reductionPercent / 100)))
     : rawAmount;
 
+  const targetHpBefore = target.hp;
   target.hp = Math.max(0, target.hp - amount);
+  /**
+   * 흡혈 규칙: 보호막을 통과한 뒤 실제 HP에서 빠진 직접/광역 피해에만 적용한다.
+   * 과잉 피해는 제외하고, 출혈 같은 별도 고정 피해에는 적용하지 않는다. 현재 보호막 모델이
+   * 생기면 이 지점에 도달하는 HP 피해만 넘기면 규칙이 그대로 유지된다.
+   */
+  const healFromDamage = (dealt: number) => {
+    attacker.hp = Math.min(attacker.maxHp, attacker.hp + dealt * attacker.def.stats.lifeSteal / 100);
+  };
+  healFromDamage(targetHpBefore - target.hp);
   if (useUltimate) attacker.energy -= attacker.def.ultimate.cost;
   else gainEnergy(attacker);
   grantFerocityTeamEnergy(attacker, state);
@@ -445,7 +457,10 @@ function strike(
         ? secondaryBase * (1 - secondaryGuard.reductionPercent / 100)
         : secondaryBase;
       const splashAmount = Math.max(1, Math.round(reduced * splashTrait.damagePercent / 100));
+      const secondaryHpBefore = secondary.hp;
       secondary.hp = Math.max(0, secondary.hp - splashAmount);
+      // 광역 피해도 공격자가 실제로 입힌 HP 피해이므로 같은 흡혈 규칙에 포함한다.
+      healFromDamage(secondaryHpBefore - secondary.hp);
       events.push({ kind: "attack", attackerId: attacker.id, targetId: secondary.id, skill: useUltimate ? "ultimate" : "basic", amount: splashAmount, critical });
       if (!isFighterAlive(secondary)) events.push({ kind: "death", fighterId: secondary.id });
     }

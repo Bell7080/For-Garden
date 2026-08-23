@@ -17,6 +17,12 @@ export interface DebugBattle {
   speed: number;
   /** 준비된 궁극기를 씬이 자동 발동하는지 여부다. */
   autoUltimate: boolean;
+  /** E2E가 컷인 중첩 없이 직렬 실행되는지 관찰하는 읽기 전용 잠금 상태다. */
+  ultimateSequenceActive?: boolean;
+  /** 활성 연출 뒤에 기다리는 전투원 id. 게임 규칙 입력에는 사용하지 않는다. */
+  ultimateQueue?: string[];
+  /** 실제 이동 중인 적 클릭 영역 중심. E2E가 고정 좌표 대신 렌더 입력 계약을 누르는 데만 쓴다. */
+  enemyTargets?: Array<{ x: number; y: number }>;
 }
 
 export interface DebugState {
@@ -28,6 +34,8 @@ export interface DebugState {
   /** 재화와 보유 렐릭. 뽑기가 실제로 반영됐는지 확인하는 데 쓴다. */
   wallet?: { fossil: number; amber: number };
   owned?: string[];
+  /** 캔버스 내부 편성 UI의 위치/표시 상태를 모바일 E2E가 읽는 최소 정보다. */
+  party?: { autoButton: { x: number; y: number }; visibleAffinityDirections: number };
 }
 
 declare global {
@@ -51,6 +59,11 @@ export function setDebugReady(ready: boolean): void {
 
 export function setDebugBattle(battle: DebugBattle | undefined): void {
   ensure().battle = battle;
+}
+
+/** 편성 UI의 실제 렌더 상태만 복사해 노출하고 게임 규칙 입력에는 사용하지 않는다. */
+export function setDebugParty(party: DebugState["party"]): void {
+  ensure().party = party;
 }
 
 export function setDebugInfoOpen(open: boolean): void {

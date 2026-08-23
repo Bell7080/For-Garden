@@ -22,7 +22,8 @@ export type GlyphName =
   | "scroll"
   | "magnifier"
   | "costume"
-  | "ferocity";
+  | "ferocity"
+  | "edit";
 
 function points(...pairs: number[]): Phaser.Geom.Point[] {
   const list: Phaser.Geom.Point[] = [];
@@ -46,6 +47,13 @@ export function drawGlyph(
   const r = size / 2;
   g.lineStyle(lineWidth ?? Math.max(2, size * 0.09), color, alpha);
   switch (name) {
+    case "edit":
+      // 각진 연필과 짧은 밑줄. 이름 변경 조작은 모든 씬에서 이 표식만 사용한다.
+      g.lineBetween(-r * 0.72, r * 0.5, r * 0.48, -r * 0.7);
+      g.lineBetween(-r * 0.52, r * 0.7, r * 0.68, -r * 0.5);
+      g.lineBetween(-r * 0.72, r * 0.5, -r * 0.52, r * 0.7);
+      g.lineBetween(-r * 0.8, r * 0.9, r * 0.8, r * 0.9);
+      break;
     case "sortie":
       // 앞으로 내미는 화살촉 둘. 출격의 방향을 보여 준다.
       g.strokePoints(points(-r * 0.9, -r * 0.7, r * 0.1, 0, -r * 0.9, r * 0.7), false);

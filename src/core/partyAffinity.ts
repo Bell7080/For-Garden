@@ -8,6 +8,22 @@ export interface PartyAffinitySummary {
   neutral: number;
 }
 
+/** 한 렐릭이 이번 적 편성 전체에 대해 갖는 상성 방향이다. */
+export type AffinityDirection = "up" | "down" | "neutral";
+
+/**
+ * 선택 렐릭과 모든 적의 유리/불리 횟수를 합산해 다수결로 방향을 정한다.
+ * 유리와 불리가 같은 수로 상쇄되거나 적 목록이 비었으면 중립이다. 최고 위험이나 평균 배율 대신
+ * 합계를 고정해, 한 극단값이 나머지 적과의 관계를 가리지 않고 자동 배치의 전체 합산 관점과 맞춘다.
+ */
+export function relicAffinityDirection(relic: RelicDef, enemies: readonly RelicDef[]): AffinityDirection {
+  const balance = enemies.reduce((sum, enemy) => {
+    const multiplier = elementMultiplier(relic.element, enemy.element);
+    return sum + (multiplier > 1 ? 1 : multiplier < 1 ? -1 : 0);
+  }, 0);
+  return balance > 0 ? "up" : balance < 0 ? "down" : "neutral";
+}
+
 /** 적 편성의 속성별 인원수를 첫 등장 순서대로 반환해 UI가 같은 정보를 재계산하지 않게 한다. */
 export function elementDistribution(defs: readonly RelicDef[]): Array<{ element: Element; count: number }> {
   const counts = new Map<Element, number>();

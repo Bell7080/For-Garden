@@ -29,6 +29,8 @@ export const RELICS: RelicDef[] = [
       critChance: 20,
       critDamage: 160,
       energyGain: 28,
+      lifeSteal: 0,
+      ferocityGain: 0,
     },
     ferocityTrait: { name: "폭주", effectId: "attackIntervalReduction", reductionPercent: 20, desc: "피버 중 공격 간격이 20% 짧아진다." },
     passive: {
@@ -84,6 +86,8 @@ export const RELICS: RelicDef[] = [
       critChance: 5,
       critDamage: 140,
       energyGain: 20,
+      lifeSteal: 0,
+      ferocityGain: 0,
     },
     ferocityTrait: { name: "경화", effectId: "damageReduction", reductionPercent: 18, desc: "피버 중 받는 피해가 18% 줄어든다." },
     passive: {
@@ -139,6 +143,8 @@ export const RELICS: RelicDef[] = [
       critChance: 5,
       critDamage: 140,
       energyGain: 22,
+      lifeSteal: 0,
+      ferocityGain: 0,
     },
     ferocityTrait: { name: "범람", effectId: "splashDamage", damagePercent: 35, radius: 220, desc: "피버 중 타격이 대상 주변 220px의 적에게 원래 피해의 35%를 준다." },
     passive: {
@@ -195,6 +201,8 @@ export const RELICS: RelicDef[] = [
       critChance: 24,
       critDamage: 165,
       energyGain: 28,
+      lifeSteal: 0,
+      ferocityGain: 0,
     },
     ferocityTrait: { name: "추적", effectId: "criticalChanceBonus", chancePercent: 22, desc: "피버 중 치명타율이 22%p 오른다." },
     passive: {
@@ -250,6 +258,8 @@ export const RELICS: RelicDef[] = [
       critChance: 10,
       critDamage: 150,
       energyGain: 30,
+      lifeSteal: 0,
+      ferocityGain: 0,
     },
     ferocityTrait: { name: "소란", effectId: "allyEnergyGain", energy: 6, desc: "피버 중 공격할 때마다 다른 생존 아군이 궁극기 에너지를 6 얻는다." },
     passive: {
@@ -305,6 +315,8 @@ export const RELICS: RelicDef[] = [
       critChance: 25,
       critDamage: 170,
       energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 0,
     },
     ferocityTrait: { name: "사냥", effectId: "criticalChanceBonus", chancePercent: 25, desc: "피버 중 치명타율이 25%p 오른다." },
     passive: {
@@ -360,6 +372,8 @@ export const RELICS: RelicDef[] = [
       critChance: 15,
       critDamage: 150,
       energyGain: 32,
+      lifeSteal: 0,
+      ferocityGain: 0,
     },
     ferocityTrait: { name: "상승", effectId: "teamMoveSpeedBonus", bonusPercent: 18, desc: "피버 중 생존 아군 전체의 이동 속도가 18% 빨라진다." },
     passive: {
@@ -417,6 +431,8 @@ export const RELICS: RelicDef[] = [
       critChance: 12,
       critDamage: 150,
       energyGain: 24,
+      lifeSteal: 0,
+      ferocityGain: 0,
     },
     ferocityTrait: { name: "맹추", effectId: "attackIntervalReduction", reductionPercent: 12, desc: "피버 중 공격 간격이 12% 짧아진다." },
     passive: {
@@ -472,6 +488,8 @@ export const RELICS: RelicDef[] = [
       critChance: 5,
       critDamage: 140,
       energyGain: 18,
+      lifeSteal: 0,
+      ferocityGain: 0,
     },
     ferocityTrait: { name: "농성", effectId: "damageReduction", reductionPercent: 12, desc: "피버 중 받는 피해가 12% 줄어든다." },
     passive: {
@@ -527,6 +545,8 @@ export const RELICS: RelicDef[] = [
       critChance: 10,
       critDamage: 150,
       energyGain: 27,
+      lifeSteal: 0,
+      ferocityGain: 0,
     },
     ferocityTrait: { name: "역풍", effectId: "teamMoveSpeedBonus", bonusPercent: 12, desc: "피버 중 생존 아군 전체의 이동 속도가 12% 빨라진다." },
     passive: {

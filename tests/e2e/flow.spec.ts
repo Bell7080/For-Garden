@@ -197,6 +197,17 @@ test("실시간 자동 전투는 입력 없이 서로 붙어 체력을 깎는다
   await expect.poll(async () => (await battle(page))?.elapsed).toBeGreaterThan(0);
 });
 
+test("전투 중 움직이는 적을 누르면 적 전용 정보창과 일러스트가 열린다", async ({ page }) => {
+  await enterBattle(page);
+  await expect.poll(async () => (await battle(page))?.enemyTargets?.length).toBe(3);
+
+  // 전투원은 계속 움직이므로 디버그 계약이 공개한 현재 클릭 영역 중심을 읽은 직후 누른다.
+  const target = (await battle(page))!.enemyTargets![0];
+  await tap(page, target.x, target.y);
+  await expect.poll(() => infoOpen(page)).toBe(true);
+  await page.screenshot({ path: `test-results/${test.info().project.name}-battle-enemy-info.png`, fullPage: true });
+});
+
 test("전투 조작 칩으로 1·2·3배속과 자동 궁극기를 전환한다", async ({ page }) => {
   await enterBattle(page);
   expect(await battle(page)).toMatchObject({ speed: 1, autoUltimate: false });
@@ -211,6 +222,23 @@ test("전투 조작 칩으로 1·2·3배속과 자동 궁극기를 전환한다"
   await tap(page, BASE_WIDTH - 130, 150);
   await expect.poll(async () => (await battle(page))?.autoUltimate).toBe(true);
   await page.screenshot({ path: `test-results/${test.info().project.name}-battle-controls.png`, fullPage: true });
+});
+
+test("동시에 준비된 두 궁극기는 컷인 하나씩 직렬 실행한다", async ({ page }) => {
+  await enterBattle(page);
+  // 빠르게 게이지를 모으되 자동 발동은 두 명이 준비될 때까지 켜지 않는다.
+  await tap(page, BASE_WIDTH - 335, 150);
+  await tap(page, BASE_WIDTH - 335, 150);
+  await expect.poll(async () => (await battle(page))?.ultimateReady.length ?? 0, { timeout: 35_000 }).toBeGreaterThanOrEqual(2);
+  await tap(page, BASE_WIDTH - 130, 150);
+
+  // 첫 컷인 활성 중 다음 전투원이 큐에 남는 것이 곧 겹치지 않고 직렬화됐다는 관찰 계약이다.
+  await expect.poll(async () => (await battle(page))?.ultimateSequenceActive, { timeout: 5_000 }).toBe(true);
+  await expect.poll(async () => (await battle(page))?.ultimateQueue?.length ?? 0).toBeGreaterThanOrEqual(1);
+  await page.screenshot({ path: `test-results/${test.info().project.name}-ultimate-cutin-serialized.png`, fullPage: true });
+  // 두 연출이 모두 끝나면 큐와 입력 잠금이 함께 풀린다.
+  await expect.poll(async () => (await battle(page))?.ultimateSequenceActive, { timeout: 10_000 }).toBe(false);
+  await expect.poll(async () => (await battle(page))?.ultimateQueue ?? []).toEqual([]);
 });
 
 test("전투는 한쪽이 전멸하면 끝난다", async ({ page }) => {

@@ -19,6 +19,47 @@ import {
 import { getRelic } from "../../src/data/relics";
 import { FEROCITY_RULES } from "../../src/core/ferocity";
 import { ULTIMATE_ENERGY_MAX } from "../../src/core/ultimate";
+import {
+  beginNextUltimate, cancelUltimateSequence, createUltimateSequenceState, enqueueUltimate, releaseUltimate,
+} from "../../src/core/ultimateSequence";
+
+describe("궁극기 연출 직렬 상태", () => {
+  it("는 중복 발동을 막고 올바른 토큰만 잠금을 해제한다", () => {
+    const sequence = createUltimateSequenceState();
+    expect(enqueueUltimate(sequence, "player-0")).toBe(true);
+    expect(enqueueUltimate(sequence, "player-0")).toBe(false);
+    const first = beginNextUltimate(sequence)!;
+    expect(beginNextUltimate(sequence)).toBeNull();
+    expect(releaseUltimate(sequence, first.token + 1)).toBe(false);
+    expect(releaseUltimate(sequence, first.token)).toBe(true);
+  });
+
+  it("는 전투 종료 취소가 활성 연출과 남은 자동 큐를 모두 비운다", () => {
+    const sequence = createUltimateSequenceState();
+    enqueueUltimate(sequence, "player-0");
+    enqueueUltimate(sequence, "player-1");
+    const active = beginNextUltimate(sequence)!;
+    cancelUltimateSequence(sequence);
+    expect(sequence.activeToken).toBeNull();
+    expect(sequence.queue).toEqual([]);
+    // 취소 전에 잡은 비동기 완료는 새 상태의 잠금을 건드릴 수 없다.
+    expect(releaseUltimate(sequence, active.token)).toBe(false);
+  });
+
+  it("는 동시에 준비된 자동 궁극기를 편성 순서대로 한 번씩 꺼낸다", () => {
+    const sequence = createUltimateSequenceState();
+    ["player-0", "player-1"].forEach((id) => {
+      enqueueUltimate(sequence, id);
+      enqueueUltimate(sequence, id);
+    });
+    const fired: string[] = [];
+    for (let next = beginNextUltimate(sequence); next; next = beginNextUltimate(sequence)) {
+      fired.push(next.fighterId);
+      releaseUltimate(sequence, next.token);
+    }
+    expect(fired).toEqual(["player-0", "player-1"]);
+  });
+});
 
 const ARENA: Arena = { left: 130, right: 950, top: 600, bottom: 1360 };
 
@@ -131,6 +172,41 @@ describe("능력치 반영", () => {
     // 렉시아의 물리 공격과 케찰의 마법 공격 모두 실제 난전 이벤트를 통해 피해를 만든다.
     expect(hit("rex", "husk-shell")).toBeGreaterThan(0);
     expect(hit("quetz", "husk-shell")).toBeGreaterThan(0);
+  });
+
+  it("은 최종 궁극기·야성 충전 보정과 실제 HP 피해 기준 흡혈을 적용한다", () => {
+    const state = newSkirmish(["rex"], ["husk-shell"]);
+    const [attacker, target] = state.fighters;
+    attacker.def = { ...attacker.def, stats: { ...attacker.def.stats, energyGain: 40, ferocityGain: 50, lifeSteal: 25 } };
+    attacker.hp = attacker.maxHp - 100;
+    attacker.x = 400; attacker.y = 1000; attacker.attackCooldown = 0;
+    target.x = 460; target.y = 1000; target.attackCooldown = 99;
+    const hpBefore = attacker.hp;
+    const targetBefore = target.hp;
+    stepSkirmish(state, 1 / 60, () => 0.999999);
+    const dealt = targetBefore - target.hp;
+    expect(attacker.energy).toBe(40);
+    expect(attacker.ferocity).toBeCloseTo(FEROCITY_RULES.basicGain * 1.5);
+    expect(attacker.hp - hpBefore).toBeCloseTo(dealt * 0.25);
+  });
+
+  it("은 광역 실제 피해에는 흡혈하고 별도 고정 출혈 피해에는 흡혈하지 않는다", () => {
+    const state = newSkirmish(["spino"], ["husk-shell", "husk-raptor"]);
+    const [attacker, primary, secondary] = state.fighters;
+    attacker.def = { ...attacker.def, stats: { ...attacker.def.stats, lifeSteal: 100 } };
+    attacker.hp = 1; attacker.ferocity = 100; attacker.ferocityFever = true;
+    attacker.x = 400; attacker.y = 1000; attacker.attackCooldown = 0;
+    primary.x = 460; primary.y = 1000; primary.attackCooldown = 99;
+    secondary.x = 500; secondary.y = 1000; secondary.attackCooldown = 99;
+    const totalBefore = primary.hp + secondary.hp;
+    stepSkirmish(state, 1 / 60, () => 0.999999);
+    expect(attacker.hp).toBeCloseTo(Math.min(attacker.maxHp, 1 + totalBefore - primary.hp - secondary.hp));
+
+    const healed = attacker.hp;
+    primary.bleed = { remaining: 1, tickIn: 0, percent: BLEED.percentPerSecond };
+    attacker.attackCooldown = 99;
+    stepSkirmish(state, 1 / 60);
+    expect(attacker.hp).toBe(healed);
   });
 });
 

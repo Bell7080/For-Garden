@@ -6,6 +6,7 @@ import { BANNERS } from "../data/banners";
 import { STAGES } from "../data/stages";
 import { BOND_XP_REWARD, grantBondXp } from "../core/bond";
 import type { MissionState } from "../core/missions";
+import type { RuneInstance } from "../core/runes";
 
 /** 처음 시작할 때 쥐어 주는 렐릭. 셋이면 바로 출격할 수 있다. */
 // 전용 원화와 SD 전투 Puppet까지 개발된 첫 세 캐릭터를 초기 체험 풀로 연다.
@@ -33,8 +34,8 @@ export interface Session {
   gachaPityByGroup: Record<string, GachaPityState>;
   /** 렐릭 id별 성장/장착 상태다. 객체와 배열만 사용해 그대로 직렬화할 수 있다. */
   relicProgress: Record<string, RelicProgress>;
-  /** 보유 Heart Gem id 목록이다. 중복 없는 직렬화 가능한 배열로 유지한다. */
-  ownedHeartGemIds: string[];
+  /** 보유 룬 인스턴스다. 정적 정의 ID가 아니라 각 개체의 고유 ID로 구분한다. */
+  runeInventory: RuneInstance[];
   /** 날짜가 바뀔 때 서버 시간 기준으로 교체할 일일 콘텐츠 진행이다. */
   dailyContent: DailyContentState;
   /** 서버 UTC 일자·주차에 묶인 직렬화 가능한 임무 진행과 수령 기록이다. */
@@ -84,7 +85,7 @@ export interface SaveData {
   /** 배너 교체에도 유지되는 그룹 ID를 키로 쓰며 개별 배너 ID에는 귀속하지 않는다. */
   gachaPityByGroup: Record<string, GachaPityState>;
   relicProgress: Record<string, RelicProgress>;
-  ownedHeartGemIds: string[];
+  runeInventory: RuneInstance[];
   dailyContent: DailyContentState;
   missions: MissionState;
   productPurchases: Record<string, { periodKey: string; count: number }>;
@@ -113,7 +114,8 @@ export function createDefaultSession(): Session {
     wallet: { fossil: 1200, amber: 10, gems: 120, gold: 25_400, stamina: 60, dnaFragments: 0, cheesecake: 0 },
     gachaPityByGroup: Object.fromEntries([...new Set(BANNERS.map(({ pityGroupId }) => pityGroupId))].map((id) => [id, { pullsSinceSsr: 0, pickupGuaranteed: false }])),
     relicProgress: Object.fromEntries(STARTER_RELICS.map((id) => [id, createStarterProgress()])),
-    ownedHeartGemIds: ["vital-seed", "fang-core", "ancient-pulse"],
+    // 신규 계정은 정적 정의 ID가 아니라 서버 지급 계약을 통해 룬 인스턴스를 얻는다.
+    runeInventory: [],
     dailyContent: { date: "", restorationEntries: 0, completedIds: [], claimedRewardIds: [] },
     missions: { dailyKey: "", weeklyKey: "", progress: {}, claimedIds: [] },
     productPurchases: {},

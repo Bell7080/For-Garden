@@ -349,6 +349,9 @@ export class HoloBar {
   private ratio = 1;
   private color: number;
 
+  /** 복합 UI가 게이지 두 겹을 자신의 컨테이너 생명주기에 함께 묶을 때 쓰는 표시 객체다. */
+  get objects(): readonly Phaser.GameObjects.Graphics[] { return [this.track, this.fill]; }
+
   constructor(
     scene: Phaser.Scene,
     x: number,
@@ -378,6 +381,12 @@ export class HoloBar {
 
   setDepth(depth: number): void {
     this.fill.setDepth(depth);
+  }
+
+  /** 팝업 같은 컨테이너 프리팹 안에서도 홈과 채움을 한 묶음으로 이동시킨다. */
+  addTo(container: Phaser.GameObjects.Container): this {
+    container.add([this.track, this.fill]);
+    return this;
   }
 
   private redraw(): void {

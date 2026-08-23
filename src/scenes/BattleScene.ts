@@ -28,9 +28,17 @@ import { drawGlassFade, drawHairline, HoloBar } from "../ui/holo";
 import { PortraitCard, relicCardTint, starsForRarity } from "../ui/PortraitCard";
 import { COLOR, textStyle } from "../ui/theme";
 import { setDebugBattle, setDebugScene } from "../debug";
-import { InfoManager } from "../ui/info";
+import { EnemyStatusWindow } from "../ui/EnemyStatusWindow";
 import { nextBattleSpeed, type BattleSpeed } from "../core/battleControls";
 import { ControlChip } from "../ui/ControlChip";
+import { UltimateCutIn } from "../ui/UltimateCutIn";
+import {
+  beginNextUltimate, cancelUltimateSequence, createUltimateSequenceState, enqueueUltimate, releaseUltimate,
+  type UltimateSequenceState,
+} from "../core/ultimateSequence";
+import type { MotionPlayback } from "../puppets/assets";
+import { ultimatePresentationFor } from "../data/ultimatePresentations";
+import { relicProgression } from "../managers/RelicProgressionManager";
 
 /**
  * 여섯이 돌아다닐 수 있는 범위.
@@ -57,6 +65,8 @@ interface FighterView {
   creature: PuppetCreature;
   asset: PuppetAsset;
   fighter: Fighter;
+  /** 움직이는 Puppet의 메시 입력 경계 대신 몸통을 따라가는 안정적인 전투 클릭 영역이다. */
+  infoHit?: Phaser.GameObjects.Rectangle;
   shadow: Phaser.GameObjects.Ellipse;
   hpBack: Phaser.GameObjects.Rectangle;
   hpFill: Phaser.GameObjects.Rectangle;
@@ -81,6 +91,9 @@ interface ProfileView {
   ferocityLabel: Phaser.GameObjects.Text;
   ready: boolean;
   pulse?: Phaser.Tweens.Tween;
+  /** 입력 가능한 카드 위만 주기적으로 지나는 얇은 황동 사선이다. */
+  sweep: Phaser.GameObjects.Rectangle;
+  sweepTween?: Phaser.Tweens.Tween;
 }
 
 /** SD 여섯이 실시간으로 뒤엉켜 싸우는 자동 전투 화면이다. */
@@ -96,10 +109,18 @@ export class BattleScene extends Phaser.Scene {
   private battleSpeed: BattleSpeed = 1;
   /** 켜져 있으면 게이지가 찬 아군 궁극기를 다음 프레임에 자동 발동한다. */
   private autoUltimate = false;
+  /** 공개적으로 읽기 쉬운 입력 잠금. 토큰 큐와 항상 함께 갱신한다. */
+  private ultimateSequenceActive = false;
+  /** 자동 동시 준비를 직렬화하고 오래된 async 완료를 구분하는 순수 상태다. */
+  private ultimateSequence: UltimateSequenceState = createUltimateSequenceState();
+  /** 현재 컷인을 즉시 제거하기 위한 참조. shutdown/전투 종료 정리에서 사용한다. */
+  private activeCutIn?: UltimateCutIn;
+  /** 잠금 중에도 연출 주인공 카드만 밝게 남기기 위한 현재 전투원 id다. */
+  private currentUltimateFighterId: string | null = null;
   private speedChip!: ControlChip;
   private autoChip!: ControlChip;
   /** 적 상세는 플레이어 성장 입력을 만들지 않는 전투 읽기 전용 창이다. */
-  private info!: InfoManager;
+  private info!: EnemyStatusWindow;
 
   constructor() {
     super("battle");
@@ -113,14 +134,19 @@ export class BattleScene extends Phaser.Scene {
     const bonds = Object.fromEntries(session.party.map((id) => [id, session.relicProgress[id]?.bondLevel ?? 0]));
     // 각성 단계도 같은 방식으로 스냅샷을 넘긴다. 전투 코어는 저장 상태를 직접 읽지 않는다.
     const awakenings = Object.fromEntries(session.party.map((id) => [id, session.relicProgress[id]?.awakening ?? 0]));
-    this.state = createSkirmish(session.party.map(getRelic), getStageEnemies(stage), ARENA, bonds, awakenings);
+    // UI와 같은 성장 계산기의 스냅샷을 복사해 전투가 룬 수치를 다시 계산하지 않게 한다.
+    const players = session.party.map((id) => ({ ...getRelic(id), stats: relicProgression.getFinalStats(id) }));
+    this.state = createSkirmish(players, getStageEnemies(stage), ARENA, bonds, awakenings);
     this.views.clear();
     this.profiles = [];
     this.finished = false;
     this.spawned = false;
     this.battleSpeed = 1;
     this.autoUltimate = false;
-    this.info = new InfoManager(this, 1001, "enemy");
+    this.ultimateSequenceActive = false;
+    this.ultimateSequence = createUltimateSequenceState();
+    this.currentUltimateFighterId = null;
+    this.info = new EnemyStatusWindow(this);
 
     // 편성 화면에서 본 6번 전장을 그대로 이어 실제 전투의 공간으로 사용한다.
     addSceneBackground(this, BACKGROUND.combat, -30);
@@ -134,6 +160,7 @@ export class BattleScene extends Phaser.Scene {
     void this.spawnFighters();
     this.refreshDebug();
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.cancelUltimatePresentation();
       this.views.forEach((view) => view.creature.destroy());
       this.views.clear();
     });
@@ -175,18 +202,23 @@ export class BattleScene extends Phaser.Scene {
         flipX: fighter.facing < 0,
         tint,
       });
-      // 적 본체를 누르면 같은 공용 정보창에 현재 전투 스냅샷만 전달한다.
-      if (fighter.side === "enemy") creature.setInteractive({ useHandCursor: true }).on("pointerup", () => this.info.showEnemy(fighter));
       if (!this.scene.isActive()) {
         creature.destroy();
         return;
       }
+      // Puppet Mesh의 기본 입력 경계는 비동기 생성 시점의 로컬 크기에 묶여 이동·배율 적용 뒤
+      // 실제 SD와 어긋날 수 있다. 투명 몸통 영역을 따로 두고 매 프레임 발 위치를 따라가게 한다.
+      const infoHit = fighter.side === "enemy"
+        ? this.add.rectangle(fighter.x, fighter.y - UNIT_HEIGHT / 2, 190, UNIT_HEIGHT + 70, 0xffffff, 0)
+          .setInteractive({ useHandCursor: true })
+          .on("pointerup", () => this.info.show(fighter))
+        : undefined;
       const shadow = this.add.ellipse(fighter.x, fighter.y + 4, 132, 24, 0x000000, 0.38);
       const barColor = fighter.side === "player" ? COLOR.hpFill : COLOR.hpEnemy;
       const hpBack = this.add.rectangle(fighter.x, 0, 96, 10, COLOR.void, 0.75);
       const hpFill = this.add.rectangle(fighter.x, 0, 96, 10, barColor).setOrigin(0, 0.5);
       const bleedBadge = this.makeBleedBadge();
-      this.views.set(fighter.id, { creature, asset, fighter, shadow, hpBack, hpFill, bleedBadge, tint, dead: false });
+      this.views.set(fighter.id, { creature, asset, fighter, infoHit, shadow, hpBack, hpFill, bleedBadge, tint, dead: false });
     }
     this.syncViews();
     // 마지막 한 명까지 서고 나서 시간을 흘려야 먼저 뜬 캐릭터만 앞서 달려가지 않는다.
@@ -211,6 +243,8 @@ export class BattleScene extends Phaser.Scene {
       const x = 190 + index * 350;
       // 카드가 불투명해서 뒤에 깐 빛은 테두리처럼만 보인다. 그만큼 넉넉히 키워 둔다.
       const glow = this.add.rectangle(x, 1620, 378, 378, COLOR.accent, 0);
+      // 카드 마스크 안쪽을 가로지르는 광선. 준비되지 않았거나 잠겼을 때는 숨긴다.
+      const sweep = this.add.rectangle(x - 125, 1620, 34, 320, COLOR.accent, 0).setAngle(18).setDepth(2);
       // 도감·편성과 같은 카드 규격을 써서 전투 중에도 같은 얼굴 프레임으로 알아보게 한다.
       const card = new PortraitCard(this, x, 1620, {
         width: 300,
@@ -221,6 +255,11 @@ export class BattleScene extends Phaser.Scene {
         sub: `각성 · ${fighter.def.ultimate.name}`,
         stars: starsForRarity(fighter.def.rarity),
       });
+      card.hit.on("pointerdown", () => {
+        // 기존 입력 규칙대로 누른 순간만 추가 확대하고, 잠금 카드는 반응하지 않는다.
+        if (!this.ultimateSequenceActive && canFireUltimate(this.state, fighter)) card.setScale(1.14);
+      });
+      card.hit.on("pointerout", () => card.setScale(profileScale(canFireUltimate(this.state, fighter))));
       card.hit.on("pointerup", () => this.useUltimate(fighter));
       // 세 게이지는 굵기만 다르고 모양이 같다. 위에서부터 체력 · 각성 · 야성 순이다.
       const label = (y: number, color: string) =>
@@ -231,20 +270,71 @@ export class BattleScene extends Phaser.Scene {
       const energyBar = new HoloBar(this, x, 1844, BAR_WIDTH, 10, { color: COLOR.energy });
       const ferocityLabel = label(1886, COLOR.inkDim);
       const ferocityBar = new HoloBar(this, x, 1896, BAR_WIDTH, 10, { color: COLOR.ferocityLow });
-      this.profiles.push({ fighter, card, glow, hpBar, hpLabel, energyBar, energyLabel, ferocityBar, ferocityLabel, ready: false });
+      this.profiles.push({ fighter, card, glow, sweep, hpBar, hpLabel, energyBar, energyLabel, ferocityBar, ferocityLabel, ready: false });
     });
   }
 
   /** 카드를 눌렀을 때. 조건이 맞지 않으면 코어가 아무것도 바꾸지 않는다. */
   private useUltimate(fighter: Fighter): void {
-    if (this.finished || !this.spawned) return;
-    // 야성 피버는 궁극기 입력을 가로채지 않으며, 최대치에서도 즉시 궁극기를 발동한다.
-    const events = fireUltimate(this.state, fighter.id, () => Math.random());
-    if (events.length === 0) return;
-    events.forEach((event) => this.playEvent(event));
-    this.syncViews();
+    // 수동 입력은 연출 중 큐에 넣지 않는다. 연타가 다음 궁극기로 예약되는 오해를 막는다.
+    if (this.finished || !this.spawned || this.ultimateSequenceActive || !canFireUltimate(this.state, fighter)) return;
+    if (enqueueUltimate(this.ultimateSequence, fighter.id)) void this.pumpUltimateQueue();
+  }
+
+  /** 입력 잠금부터 정상 복구까지 한 곳에서 소유하는 유일한 궁극기 비동기 시퀀스다. */
+  private async pumpUltimateQueue(): Promise<void> {
+    const next = beginNextUltimate(this.ultimateSequence);
+    if (!next) return;
+    this.ultimateSequenceActive = true;
+    this.currentUltimateFighterId = next.fighterId;
     this.refreshProfiles();
     this.refreshDebug();
+    const fighter = this.state.fighters.find((item) => item.id === next.fighterId);
+    try {
+      // 컷인 동안 코어 시간은 update에서 완전히 멈춘다. 사용자의 포효/공격 Puppet은 정상 속도다.
+      if (!fighter || !this.sequenceValid(next.token, fighter)) return;
+      const view = this.views.get(fighter.id);
+      if (!view) return;
+      // 씬은 ID별 값을 판단하지 않고 정적 프리셋(또는 공용 기본값)만 소비한다.
+      const presentation = ultimatePresentationFor(fighter.def.id);
+      this.activeCutIn = await UltimateCutIn.create(this, fighter.def, presentation);
+      if (!this.sequenceValid(next.token, fighter)) return;
+      const roar = playMotion(this, view.creature, presentation.roarMotion);
+      await Promise.all([roar.completed, this.activeCutIn.play()]);
+      this.activeCutIn.destroy();
+      this.activeCutIn = undefined;
+
+      // 컷인과 피해 판정 사이의 호흡 및 충격도 프리셋에 두되 흔들림 시간은 공용으로 유지한다.
+      await new Promise<void>((resolve) => this.time.delayedCall(presentation.preAttackDelayMs, resolve));
+      if (!this.sequenceValid(next.token, fighter)) return;
+      this.cameras.main.shake(180, presentation.cameraShakeIntensity);
+
+      // 입력 순간이 아니라 포효가 끝난 바로 이 시점의 생존/게이지/전투 결과를 코어에 재검증한다.
+      if (!this.sequenceValid(next.token, fighter) || !canFireUltimate(this.state, fighter)) return;
+      const events = fireUltimate(this.state, fighter.id, () => Math.random());
+      let attackMotion: MotionPlayback | undefined;
+      events.forEach((event) => { attackMotion ??= this.playEvent(event); });
+      await attackMotion?.completed;
+      this.syncViews();
+      this.refreshDebug();
+    } finally {
+      this.activeCutIn?.destroy();
+      this.activeCutIn = undefined;
+      // 토큰 일치 때만 정상 속도/입력을 복구해 종료 후의 오래된 Promise가 새 연출을 풀지 못하게 한다.
+      if (releaseUltimate(this.ultimateSequence, next.token)) {
+        this.ultimateSequenceActive = false;
+        this.currentUltimateFighterId = null;
+        this.lastStepAt = performance.now();
+        this.refreshProfiles();
+        this.refreshDebug();
+        if (!this.finished) void this.pumpUltimateQueue();
+      }
+    }
+  }
+
+  private sequenceValid(token: number, fighter: Fighter): boolean {
+    return this.scene.isActive() && !this.finished && this.state.phase === "fight"
+      && this.ultimateSequence.activeToken === token && isFighterAlive(fighter);
   }
 
   /** 편성 순서 그대로의 아군 셋. 쓰러진 뒤에도 프로필 자리는 지킨다. */
@@ -264,6 +354,8 @@ export class BattleScene extends Phaser.Scene {
     const now = performance.now();
     const dt = (now - this.lastStepAt) / 1000;
     this.lastStepAt = now;
+    // 코어 시간과 전투 배속을 컷인과 분리한다. 연출 Puppet/tween은 씬의 정상 시계로 계속 돈다.
+    if (this.ultimateSequenceActive) return;
     // 실제 프레임 간격에 선택 배율을 곱해 이동·공격 간격·게이지가 모두 같은 시간축을 쓴다.
     const events = stepSkirmish(this.state, dt * this.battleSpeed, () => Math.random());
     events.forEach((event) => this.playEvent(event));
@@ -275,46 +367,46 @@ export class BattleScene extends Phaser.Scene {
 
   /** 자동 모드에서는 살아 있고 준비된 아군을 편성 순서대로 한 번씩 발동한다. */
   private fireReadyUltimates(): void {
+    if (this.ultimateSequenceActive) return;
     for (const fighter of this.playerFighters()) {
       if (!canFireUltimate(this.state, fighter)) continue;
-      const events = fireUltimate(this.state, fighter.id, () => Math.random());
-      events.forEach((event) => this.playEvent(event));
-      // 앞선 궁극기로 전투가 끝났다면 뒤 캐릭터의 입력을 더 만들지 않는다.
-      if (this.finished) break;
+      enqueueUltimate(this.ultimateSequence, fighter.id);
     }
+    void this.pumpUltimateQueue();
   }
 
   /** 공격·사망·종료를 각각의 연출로 옮긴다. */
-  private playEvent(event: SkirmishEvent): void {
+  private playEvent(event: SkirmishEvent): MotionPlayback | undefined {
     if (event.kind === "finish") {
       this.finishBattle(event.phase);
-      return;
+      return undefined;
     }
     if (event.kind === "death") {
       this.playDeath(event.fighterId);
-      return;
+      return undefined;
     }
     if (event.kind === "bleed") {
       const view = this.views.get(event.fighterId);
-      if (!view) return;
+      if (!view) return undefined;
       if (event.started) {
         // 상처가 열리는 순간에만 한 번 붉게 번쩍인다. 이후 초당 피해는 숫자로만 뜬다.
         flashHit(this, view.creature, view.tint);
-        return;
+        return undefined;
       }
       this.popDamage(view.fighter, event.amount, false, false);
-      return;
+      return undefined;
     }
 
     const attacker = this.views.get(event.attackerId);
     const target = this.views.get(event.targetId);
-    if (attacker) playMotion(this, attacker.creature, "attack");
+    const playback = attacker ? playMotion(this, attacker.creature, "attack") : undefined;
     if (target) {
       // 붉은 섬광이 피격을 알리고, 동작은 공격을 끊지 않는 선에서 얕게만 얹힌다.
       flashHit(this, target.creature, target.tint);
       playMotion(this, target.creature, "hit");
       this.popDamage(target.fighter, event.amount, event.skill === "ultimate", event.critical);
     }
+    return playback;
   }
 
   /**
@@ -353,6 +445,8 @@ export class BattleScene extends Phaser.Scene {
     view.hpBack.setVisible(false);
     view.hpFill.setVisible(false);
     view.bleedBadge.setVisible(false);
+    // 쓰러진 적의 빈자리가 계속 정보창을 열지 않도록 입력도 함께 닫는다.
+    view.infoHit?.disableInteractive().setVisible(false);
     const burst = this.add.star(view.creature.x, view.creature.y, 10, 24, 66, COLOR.accent, 0.9).setDepth(DEPTH.burst);
     this.tweens.add({ targets: burst, scale: 1.8, alpha: 0, angle: 90, duration: 360, onComplete: () => burst.destroy() });
     this.tweens.add({
@@ -402,6 +496,10 @@ export class BattleScene extends Phaser.Scene {
       });
       // 아래에 선 캐릭터가 앞에 오도록 발 높이로 앞뒤를 정한다.
       view.creature.setDepth(Math.round(fighter.y / 10) + DEPTH.unitBase);
+      // SD의 발 위치보다 몸통 중앙을 누르는 편이 자연스러우므로 클릭 영역은 반 높이만큼 올린다.
+      view.infoHit
+        ?.setPosition(pose.x, pose.y - UNIT_HEIGHT / 2)
+        .setDepth(Math.round(fighter.y / 10) + DEPTH.unitBase + 1);
       // 떠 있는 동안 그림자는 땅에 남되 작고 옅어진다.
       const lift = 1 - Math.min(pose.hop / 60, 0.45);
       view.shadow.setPosition(pose.shadowX, pose.shadowY + 4).setDisplaySize(132 * lift, 24 * lift).setAlpha(0.38 * lift);
@@ -429,6 +527,8 @@ export class BattleScene extends Phaser.Scene {
       profile.energyLabel.setText(`각성 ${fighter.energy} / ${ULTIMATE_ENERGY_MAX} (비용 ${fighter.def.ultimate.cost})`);
       profile.energyLabel.setColor(ready ? COLOR.accentText : COLOR.inkDim);
       profile.card.setAlpha(alive ? 1 : 0.45);
+      // 연출 중에는 사용자 외 모든 카드가 잠겼다는 것을 명도로 즉시 알린다.
+      if (this.ultimateSequenceActive && this.currentUltimateFighterId !== fighter.id) profile.card.setAlpha(alive ? 0.32 : 0.2);
       const ferocityColor = fighter.ferocityFever ? COLOR.accent
         : fighter.ferocity >= 80 ? COLOR.ferocityWarning : COLOR.ferocityLow;
       profile.ferocityBar.setValue(fighter.ferocity / FEROCITY_RULES.max, ferocityColor);
@@ -436,6 +536,8 @@ export class BattleScene extends Phaser.Scene {
       profile.ferocityLabel.setText(fighter.ferocityFever ? `폭주 중 · 피버 ${Math.ceil(fighter.ferocity)} / ${FEROCITY_RULES.max}` : `야성 ${Math.ceil(fighter.ferocity)} / ${FEROCITY_RULES.max}`);
       profile.ferocityLabel.setColor(fighter.ferocityFever ? COLOR.accentText : fighter.ferocity >= 80 ? COLOR.accentText : "#70d6cb");
       if (ready !== profile.ready) this.setUltimateReady(profile, ready);
+      // 준비 상태가 유지된 채 다른 궁극기가 시작되어도 잠긴 카드의 반복 광선은 즉시 감춘다.
+      if (this.ultimateSequenceActive) profile.sweep.setAlpha(0);
     }
   }
 
@@ -443,7 +545,10 @@ export class BattleScene extends Phaser.Scene {
   private setUltimateReady(profile: ProfileView, ready: boolean): void {
     profile.ready = ready;
     profile.pulse?.remove();
+    profile.sweepTween?.remove();
     profile.pulse = undefined;
+    profile.sweepTween = undefined;
+    profile.sweep.setAlpha(0);
     // 황동 테두리는 카드 프리팹의 선택 상태를 그대로 쓴다.
     profile.card.setSelected(ready);
     if (!ready) {
@@ -459,6 +564,12 @@ export class BattleScene extends Phaser.Scene {
       yoyo: true,
       repeat: -1,
     });
+    // 게이지 완료 플래시는 한 번, 사선 스윕은 입력 가능 동안 낮은 빈도로 반복한다.
+    this.tweens.add({ targets: profile.energyBar, alpha: { from: 1, to: 0.35 }, duration: 110, yoyo: true, repeat: 1 });
+    profile.sweepTween = this.tweens.add({
+      targets: profile.sweep, x: profile.sweep.x + 250, alpha: { from: 0, to: 0.42 },
+      duration: 520, hold: 80, repeat: -1, repeatDelay: 900, yoyo: true,
+    });
   }
 
   private refreshDebug(): void {
@@ -471,6 +582,12 @@ export class BattleScene extends Phaser.Scene {
       enemyHp: teamHp(this.state, "enemy"),
       speed: this.battleSpeed,
       autoUltimate: this.autoUltimate,
+      ultimateSequenceActive: this.ultimateSequenceActive,
+      ultimateQueue: [...this.ultimateSequence.queue],
+      // E2E도 사용자가 보는 이동 중 클릭 영역의 중심을 그대로 눌러 입력 회귀를 확인한다.
+      enemyTargets: [...this.views.values()]
+        .filter((view) => view.fighter.side === "enemy" && !view.dead)
+        .map((view) => ({ x: view.infoHit?.x ?? view.fighter.x, y: view.infoHit?.y ?? view.fighter.y })),
     });
   }
 
@@ -478,6 +595,7 @@ export class BattleScene extends Phaser.Scene {
   private finishBattle(phase: "victory" | "defeat"): void {
     if (this.finished) return;
     this.finished = true;
+    this.cancelUltimatePresentation();
     // 전투가 끝나면 궁극기 버튼도 함께 꺼진다.
     this.profiles.forEach((profile) => this.setUltimateReady(profile, false));
     this.syncViews();
@@ -499,4 +617,21 @@ export class BattleScene extends Phaser.Scene {
       void gameApi.completeStage(stage.id).then(() => this.scene.start("stageMap")).catch(() => { confirming = false; });
     } }).setDepth(101);
   }
+
+  /** 종료 경로마다 컷인·큐·트윈·입력 잠금을 같은 방식으로 정리한다. */
+  private cancelUltimatePresentation(): void {
+    cancelUltimateSequence(this.ultimateSequence);
+    this.ultimateSequenceActive = false;
+    this.currentUltimateFighterId = null;
+    this.activeCutIn?.destroy();
+    this.activeCutIn = undefined;
+    this.profiles.forEach((profile) => {
+      profile.pulse?.remove();
+      profile.sweepTween?.remove();
+      profile.sweep.setAlpha(0);
+    });
+  }
 }
+
+/** 눌림 해제 때 준비 카드의 기본 확대를 일관되게 복구한다. */
+function profileScale(ready: boolean): number { return ready ? 1.08 : 1; }

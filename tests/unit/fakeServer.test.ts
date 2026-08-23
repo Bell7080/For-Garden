@@ -3,6 +3,13 @@ import { FakeServer } from "../../src/api/FakeServer";
 import { BREAKTHROUGH_STEPS, RELIC_LEVEL_CAP } from "../../src/core/relicProgression";
 import { GameApiError } from "../../src/api/contracts";
 import type { Session } from "../../src/state/session";
+import { createRuneInstance, enhanceRune as applyRuneEnhancement, type RuneInstance, type RuneStatKey } from "../../src/core/runes";
+
+/** API 테스트에서 같은 옵션 구성을 재현하는 보유 룬을 만든다. */
+function makeRune(instanceId = "rune-1"): RuneInstance {
+  const values = Object.fromEntries(["hp", "atk", "ap", "def", "res", "moveSpeed", "attackSpeed", "lifeSteal", "critChance", "critDamage", "ferocityGain", "energyGain"].map((key) => [key, 1])) as Record<RuneStatKey, number>;
+  return createRuneInstance({ instanceId, baseName: "서버 테스트 룬", rarity: "uncommon", statValues: values, random: () => 0 });
+}
 
 /** 각 테스트가 독립적으로 쓸 서버 저장소 역할의 세션을 만든다. */
 function makeSession(fossil = 1000): Session {
@@ -16,8 +23,8 @@ function makeSession(fossil = 1000): Session {
     bookmarked: new Set<string>(),
     gachaPityByGroup: { "standard-fossil": { pullsSinceSsr: 0, pickupGuaranteed: false }, "limited-pickup": { pullsSinceSsr: 0, pickupGuaranteed: false } },
     wallet: { fossil, amber: 10, gems: 0, gold: 0, stamina: 0, dnaFragments: 0, cheesecake: 0 },
-    relicProgress: Object.fromEntries(["anky", "rex", "dodo"].map((id) => [id, { level: id === "anky" ? 2 : 1, exp: 0, awakening: id === "anky" ? 1 : 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: id === "anky" ? ["vital-seed", null, null] : [null, null, null] }])),
-    ownedHeartGemIds: ["vital-seed"],
+    relicProgress: Object.fromEntries(["anky", "rex", "dodo"].map((id) => [id, { level: id === "anky" ? 2 : 1, exp: 0, awakening: id === "anky" ? 1 : 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] }])),
+    runeInventory: [],
     dailyContent: { date: "", restorationEntries: 0, completedIds: [], claimedRewardIds: [] },
     missions: { dailyKey: "", weeklyKey: "", progress: {}, claimedIds: [] },
     // 상품 테스트가 아닌 세션도 최신 저장 계약의 빈 구매 이력을 명시한다.
@@ -26,6 +33,45 @@ function makeSession(fossil = 1000): Session {
 }
 
 describe("FakeServer", () => {
+  it("강화 요청의 선택 정보만 받아 서버 난수·골드 차감·룬 갱신을 함께 확정한다", async () => {
+    const state = makeSession(); state.wallet.gold = 100; state.runeInventory = [makeRune()];
+    const statId = state.runeInventory[0].mainStats[0].key;
+    const server = new FakeServer(state, { latencyMs: 0, random: () => 0 });
+    const response = await server.enhanceRune({ runeInstanceId: "rune-1", statId });
+    expect(response).toMatchObject({ succeeded: true, goldSpent: 100, nextSuccessChance: 0.65 });
+    expect(state.wallet.gold).toBe(0);
+    expect(state.runeInventory[0].enhancementHistory[statId]).toHaveLength(1);
+  });
+
+  it("강화는 옵션 잔여 횟수와 골드를 판정 전에 검사해 실패 시 상태를 보존한다", async () => {
+    const state = makeSession(); state.wallet.gold = 99; state.runeInventory = [makeRune()];
+    const before = JSON.stringify(state.runeInventory);
+    const statId = state.runeInventory[0].mainStats[0].key;
+    const server = new FakeServer(state, { latencyMs: 0, random: () => { throw new Error("검증 전에 난수를 부르면 안 됩니다."); } });
+    await expect(server.enhanceRune({ runeInstanceId: "rune-1", statId })).rejects.toMatchObject({ code: "INSUFFICIENT_GOLD" });
+    expect(state.wallet.gold).toBe(99); expect(JSON.stringify(state.runeInventory)).toBe(before);
+  });
+
+  it("이름 정책과 전역 장착 중복을 서버 경계에서 구분해 거부한다", async () => {
+    const state = makeSession(); state.runeInventory = [makeRune()];
+    const server = new FakeServer(state, { latencyMs: 0 });
+    await expect(server.renameRune({ runeInstanceId: "rune-1", name: " \u0001 " })).rejects.toMatchObject({ code: "INVALID_RUNE_NAME" });
+    const renamed = await server.renameRune({ runeInstanceId: "rune-1", name: "  새 이름  " });
+    expect(renamed.rune.customName).toBe("새 이름");
+    await server.equipRune({ runeInstanceId: "rune-1", relicId: "anky", slotIndex: 0 });
+    await expect(server.equipRune({ runeInstanceId: "rune-1", relicId: "rex", slotIndex: 2 })).rejects.toMatchObject({ code: "RUNE_ALREADY_EQUIPPED" });
+    expect(state.relicProgress.anky.heartGemSlots).toEqual(["rune-1", null, null]);
+  });
+
+  it("모든 일반 강화 뒤에만 대상 옵션 각인을 정확히 하나 저장한다", async () => {
+    const state = makeSession(); let rune = makeRune();
+    for (const { key } of rune.mainStats) for (let count = 0; count < 3; count += 1) rune = applyRuneEnhancement(rune, key, 1, 0);
+    state.runeInventory = [rune];
+    const server = new FakeServer(state, { latencyMs: 0, random: () => 0 });
+    const response = await server.engraveRune({ runeInstanceId: "rune-1", statId: rune.mainStats[0].key });
+    expect(response.rune.engravings).toEqual([{ statKey: rune.mainStats[0].key, grade: "perfect", valueAdded: 3 }]);
+    await expect(server.engraveRune({ runeInstanceId: "rune-1", statId: rune.mainStats[0].key })).rejects.toMatchObject({ code: "RUNE_ENGRAVING_NOT_ALLOWED" });
+  });
   it("급여 재화를 검사·차감하고 오른 레벨을 서버 상태에 반영한다", async () => {
     const state = makeSession(); state.wallet.cheesecake = 25;
     const server = new FakeServer(state, { latencyMs: 0 });
@@ -120,18 +166,19 @@ describe("FakeServer", () => {
 
   it("응답 스냅샷을 바꿔도 서버 상태는 바뀌지 않는다", async () => {
     const state = makeSession();
+    state.runeInventory = [makeRune()]; state.relicProgress.anky.heartGemSlots[0] = "rune-1";
     const server = new FakeServer(state, { latencyMs: 0 });
     const snapshot = await server.getPlayerState();
 
     snapshot.wallet.fossil = 0;
     snapshot.ownedRelicIds.push("spino");
     snapshot.relicProgress.anky.heartGemSlots[0] = null;
-    snapshot.ownedHeartGemIds.length = 0;
+    snapshot.runeInventory.runes.length = 0;
 
     expect(state.wallet.fossil).toBe(1000);
     expect(state.owned.has("spino")).toBe(false);
-    expect(state.relicProgress.anky.heartGemSlots[0]).toBe("vital-seed");
-    expect(state.ownedHeartGemIds).toEqual(["vital-seed"]);
+    expect(state.relicProgress.anky.heartGemSlots[0]).toBe("rune-1");
+    expect(state.runeInventory).toHaveLength(1);
   });
 
   it("완료 전 수령을 거부하고 완료 보상은 중복 지급하지 않는다", async () => {
@@ -186,12 +233,28 @@ describe("FakeServer DNA 조각 교환소와 경제 경계", () => {
     expect(state.relicProgress.anky.awakening).toBe(1);
   });
 
-  it("잘못된 대상과 중복 Heart Gem에는 차감이나 지급이 없다", async () => {
+  it("잘못된 대상은 거부하고 같은 정의의 룬도 서로 다른 인스턴스로 지급한다", async () => {
     const state = makeSession(); state.wallet.dnaFragments = 30;
     const server = new FakeServer(state, { latencyMs: 0 });
     await expect(server.exchangeDna({ offerId: "dna-awakening", relicId: "not-owned" })).rejects.toMatchObject({ code: "INVALID_EXCHANGE_TARGET" });
-    await expect(server.exchangeDna({ offerId: "dna-heart-gem" })).rejects.toMatchObject({ code: "DUPLICATE_GRANT" });
-    expect(state.wallet.dnaFragments).toBe(30);
+    const first = await server.exchangeDna({ offerId: "dna-rune" });
+    expect(first.runeInventory.runes).toHaveLength(1);
+    expect(first.grantedRune).toEqual(first.runeInventory.runes[0]);
+    expect(state.wallet.dnaFragments).toBe(15);
+    const second = await server.exchangeDna({ offerId: "dna-rune" });
+    // 시계와 RNG가 같아도 획득 건별 인스턴스와 중첩 배열은 독립적이어야 한다.
+    expect(second.grantedRune?.instanceId).not.toBe(first.grantedRune?.instanceId);
+    expect(new Set(state.runeInventory.map(({ instanceId }) => instanceId)).size).toBe(2);
+    expect(second.grantedRune).not.toBe(state.runeInventory[0]);
+  });
+
+  it("이미 저장된 시각·순번 ID와 충돌하면 미사용 ID까지 전진한다", async () => {
+    const state = makeSession(); state.wallet.dnaFragments = 15;
+    const now = () => new Date("2026-08-22T12:00:00Z");
+    state.runeInventory = [makeRune(`rune-${now().getTime()}-0`)];
+    const response = await new FakeServer(state, { latencyMs: 0, now, random: () => 0 }).exchangeDna({ offerId: "dna-rune" });
+    expect(response.grantedRune?.instanceId).toBe(`rune-${now().getTime()}-1`);
+    expect(state.runeInventory).toHaveLength(2);
   });
 
   it("지급 결과가 재화 상한을 넘으면 원본 상태를 변경하지 않는다", async () => {

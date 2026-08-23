@@ -1,12 +1,20 @@
 import { describe, expect, it } from "vitest";
 import { awakeningBonus, BREAKTHROUGH_STEPS, calculateFinalStats, canBreakThrough, canFeedRelic, canLevelUpRelic, feedRelic, FEED_UNIT, levelUpRelic, nextBreakthrough, relicLevelCap, RELIC_LEVEL_CAP, relicExpToNext, relicLevelUpCost } from "../../src/core/relicProgression";
 import type { RelicProgress, Stats } from "../../src/core/types";
-import { getHeartGem } from "../../src/data/heartGems";
 import { RelicProgressionManager } from "../../src/managers/RelicProgressionManager";
 import type { Session } from "../../src/state/session";
+import { createRuneInstance, engraveRune, enhanceRune, type RuneInstance, type RuneStatKey } from "../../src/core/runes";
+import { FakeServer } from "../../src/api/FakeServer";
 
 /** 계산 순서를 쉽게 확인할 수 있도록 모든 능력치가 같은 테스트 기본값을 쓴다. */
-const BASE: Stats = { hp: 101, def: 101, res: 101, atk: 101, ap: 101, attackSpeed: 101, moveSpeed: 101, critChance: 101, critDamage: 101, energyGain: 101 };
+const BASE: Stats = { hp: 101, def: 101, res: 101, atk: 101, ap: 101, attackSpeed: 101, moveSpeed: 101, critChance: 101, critDamage: 101, energyGain: 101, lifeSteal: 0, ferocityGain: 0 };
+
+
+/** 장착 테스트에서 정적 정의 ID와 인스턴스 ID가 우연히 같다고 가정하지 않게 룬을 만든다. */
+function testRune(instanceId: string) {
+  const values = Object.fromEntries(["hp", "atk", "ap", "def", "res", "moveSpeed", "attackSpeed", "lifeSteal", "critChance", "critDamage", "ferocityGain", "energyGain"].map((key) => [key, 1])) as Record<RuneStatKey, number>;
+  return createRuneInstance({ instanceId, baseName: instanceId, rarity: "uncommon", statValues: values, random: () => 0 });
+}
 
 /** manager 검증 테스트마다 독립된 저장 상태를 만든다. */
 function makeSession(): Session {
@@ -17,7 +25,7 @@ function makeSession(): Session {
     // 보유 렐릭과 성장 레코드는 실제 저장 계약처럼 항상 한 쌍으로 구성한다.
     wallet: { fossil: 0, amber: 0, gems: 0, gold: 0, stamina: 0, dnaFragments: 0, cheesecake: 0 }, relicProgress: {
       rex: { level: 1, exp: 0, awakening: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] },
-    }, ownedHeartGemIds: ["vital-seed", "fang-core"],
+    }, runeInventory: [testRune("vital-seed"), testRune("fang-core")],
     dailyContent: { date: "", restorationEntries: 0, completedIds: [], claimedRewardIds: [] },
     missions: { dailyKey: "", weeklyKey: "", progress: {}, claimedIds: [] },
     // 상품 테스트가 아닌 세션도 최신 저장 계약의 빈 구매 이력을 명시한다.
@@ -42,12 +50,34 @@ describe("렐릭 성장 규칙", () => {
   it("기본 능력치에 레벨, 각성, Heart Gem 순으로 단계별 반올림해 적용한다", () => {
     // 각성은 3·4단계에서만 능력치를 올린다. 1단계는 일반 공격 피해만 바꾸므로 수치는 그대로다.
     const early: RelicProgress = { level: 2, exp: 0, awakening: 1, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: ["vital-seed", null, null] };
-    // 101 → 레벨 2%(103) → 각성 0%(103) → Heart Gem HP 10%(113) 순서다.
-    expect(calculateFinalStats(BASE, early, [getHeartGem("vital-seed")]).hp).toBe(113);
+    const rune = testRune("growth");
+    // 101 → 레벨 2%(103) → 각성 0%(103) → 룬 표의 HP 기본 8%(111) 순서다.
+    expect(calculateFinalStats(BASE, early, [rune]).hp).toBe(111);
 
     // 3단계부터 15%씩 붙는다. 103 → 각성 15%(118) → Heart Gem 10%(130).
     const awakened: RelicProgress = { ...early, awakening: 3 };
-    expect(calculateFinalStats(BASE, awakened, [getHeartGem("vital-seed")]).hp).toBe(130);
+    expect(calculateFinalStats(BASE, awakened, [rune]).hp).toBe(127);
+  });
+
+  it("룬 교체 계산은 렐릭 기본 객체를 변경하지 않고 실패 강화는 수치를 올리지 않는다", () => {
+    const baseSnapshot = structuredClone(BASE);
+    const rune = testRune("immutable");
+    const failed = enhanceRune(rune, "hp", 999, 0.99);
+    const progress: RelicProgress = { level: 1, exp: 0, awakening: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [rune.instanceId, null, null] };
+    expect(calculateFinalStats(BASE, progress, [failed]).hp).toBe(calculateFinalStats(BASE, progress, [rune]).hp);
+    expect(BASE).toEqual(baseSnapshot);
+  });
+
+  it("각인은 선택 옵션만 표의 강화 한 단계만큼 올린다", () => {
+    let rune: RuneInstance = testRune("engraved");
+    // 고급 룬은 두 주력 옵션에 세 번씩 시도하면 완료된다. 실패 난수로 일반 강화 증가는 배제한다.
+    for (const key of ["hp", "atk"] as const) for (let attempt = 0; attempt < 3; attempt += 1) rune = enhanceRune(rune, key, 999, 0.99);
+    const engraved = engraveRune(rune, { statKey: "hp", grade: "perfect", valueAdded: 999 });
+    const progress: RelicProgress = { level: 1, exp: 0, awakening: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [rune.instanceId, null, null] };
+    const before = calculateFinalStats(BASE, progress, [rune]);
+    const after = calculateFinalStats(BASE, progress, [engraved]);
+    expect(after.hp).toBeGreaterThan(before.hp);
+    expect(after.atk).toBe(before.atk);
   });
 
   it("각성 단계 효과는 열린 단계까지만 합쳐진다", () => {
@@ -63,31 +93,14 @@ describe("렐릭 성장 규칙", () => {
     for (const invalid of [-1, 6, 2.5]) expect(() => manager.setAwakening("rex", invalid)).toThrow(RangeError);
   });
 
-  it("젬 한 칸만 갈아 끼우면 같은 젬이 있던 다른 칸은 비운다", () => {
-    const manager = new RelicProgressionManager(makeSession());
-    manager.setHeartGemSlots("rex", ["vital-seed", null, null]);
-    manager.equipHeartGem("rex", 2, "vital-seed");
-    expect(manager.getProgress("rex").heartGemSlots).toEqual([null, null, "vital-seed"]);
-    manager.equipHeartGem("rex", 2, null);
-    expect(manager.getProgress("rex").heartGemSlots).toEqual([null, null, null]);
-  });
-
-  it("Heart Gem은 정확히 3슬롯이며 빈 칸은 허용하되 중복과 미보유는 거부한다", () => {
+  it("장착과 해제는 API 응답의 전체 장착표를 세션에 적용한다", async () => {
     const state = makeSession();
     const manager = new RelicProgressionManager(state);
-    manager.setHeartGemSlots("rex", ["vital-seed", null, "fang-core"]);
-    expect(state.relicProgress.rex.heartGemSlots).toEqual(["vital-seed", null, "fang-core"]);
-    expect(() => manager.setHeartGemSlots("rex", [null, null])).toThrow(RangeError);
-    expect(() => manager.setHeartGemSlots("rex", ["vital-seed", "vital-seed", null])).toThrow(/중복/);
-    expect(() => manager.setHeartGemSlots("rex", ["ancient-pulse", null, null])).toThrow(/보유하지 않은/);
-  });
-
-  it("성장 상태는 JSON 저장과 복원 뒤에도 3슬롯 형태를 유지한다", () => {
-    const state = makeSession();
-    new RelicProgressionManager(state).setHeartGemSlots("rex", [null, "fang-core", null]);
-    const restored = JSON.parse(JSON.stringify(state.relicProgress)) as Session["relicProgress"];
-    expect(restored.rex).toEqual({ level: 1, exp: 0, awakening: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, "fang-core", null] });
-    expect(restored.rex.heartGemSlots).toHaveLength(3);
+    const api = new FakeServer(state, { latencyMs: 0 });
+    await manager.equipRune("rex", 1, "fang-core", api);
+    expect(state.relicProgress.rex.heartGemSlots).toEqual([null, "fang-core", null]);
+    await manager.unequipRune("rex", 1, api);
+    expect(state.relicProgress.rex.heartGemSlots).toEqual([null, null, null]);
   });
 });
 

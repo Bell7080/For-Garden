@@ -2,11 +2,11 @@ import Phaser from "phaser";
 import type { PuppetCreature } from "../puppets/assets";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import type { Combatant } from "../core/combatTypes";
+import { RUNE_RARITY_LABELS } from "../core/runes";
 import { previewSkillDamage } from "../core/damage";
 import type { Element, RelicDef, RelicProgress, RelicRarity, Role, Skill, SkillIconAssetId, Stats } from "../core/types";
 import { setDebugInfoOpen } from "../debug";
 import { formatCurrency } from "../core/formatCurrency";
-import { getHeartGem, HEART_GEMS } from "../data/heartGems";
 import { RELICS } from "../data/relics";
 import { KeywordManager } from "../managers/KeywordManager";
 import { relicProgression } from "../managers/RelicProgressionManager";
@@ -30,6 +30,8 @@ import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
 import { addStarRow } from "./stars";
 import { RUNE_ACCENT, RUNE_CENTER_Y, runeTexture } from "./runeIcons";
+import { openRunePopup } from "./RunePopup";
+import { Button } from "./Button";
 import { StatRadar } from "./StatRadar";
 import { openSkillPopup, type SkillInfoViewModel } from "./SkillPopup";
 import { relicCollection } from "../managers/RelicCollectionManager";
@@ -849,22 +851,28 @@ export class InfoManager {
       .text(center.x + size * 0.62, center.y - 46 + index * 46, "", textStyle({ role: "body", size: 20, color: COLOR.inkDim }))
       .setOrigin(0, 0.5);
 
+    let currentRuneId: string | null = null;
     const hit = this.scene.add
       .rectangle(center.x + spot.x, center.y + spot.y, size * 0.42, size * 0.42, 0xffffff, 0)
       .setInteractive({ useHandCursor: true });
-    hit.on("pointerup", () => this.openGemPicker(index));
+    hit.on("pointerup", () => {
+      // 채운 조각은 곧바로 공용 성장 팝업, 빈 조각은 장착 가방을 연다.
+      if (currentRuneId) openRunePopup(this.scene, this.popups, { runeInstanceId: currentRuneId, anchor: { x: center.x + spot.x, y: center.y + spot.y }, onChanged: () => this.refreshGrowth() });
+      else this.openGemPicker(index);
+    });
     attach(panel, glow, piece, label, hit);
 
     return {
       paint: (gemId) => {
-        const gem = gemId ? getHeartGem(gemId) : undefined;
+        currentRuneId = gemId;
+        const gem = gemId ? session.runeInventory.find(({ instanceId }) => instanceId === gemId) : undefined;
         piece.setTexture(runeTexture(gem?.rarity, index));
         // 빈 자리는 제 크기보다 조금 오므라들어 조각 사이에 틈이 생긴다. 룬을 끼우면 제
         // 크기로 펴져 틈이 메워지므로, 셋을 다 채우면 이음매 없는 하트 한 장이 된다.
         piece.setDisplaySize(size, size).setScale(piece.scaleX * (gem ? 1 : RUNE_GAP), piece.scaleY * (gem ? 1 : RUNE_GAP));
         if (gem) {
           glow.setTexture(runeTexture(gem.rarity, index)).setTint(RUNE_ACCENT[gem.rarity]).setAlpha(0.4);
-          label.setText(index + 1 + "   " + gem.name.replace(" Heart Gem", "")).setColor(COLOR.ink);
+          label.setText(index + 1 + "   " + (gem.customName ?? `${RUNE_RARITY_LABELS[gem.rarity]} 룬`)).setColor(COLOR.ink);
         } else {
           glow.setAlpha(0);
           label.setText(index + 1 + "   빈 자리").setColor(COLOR.inkDim);
@@ -879,7 +887,8 @@ export class InfoManager {
     const def = this.currentDef;
     if (!def || !this.ownedNow) return;
     this.popups.open({ width: 820, height: 620, title: "룬 가방 · " + (index + 1) + "번 칸", dim: true }, (body, close) => {
-      const owned = HEART_GEMS.filter((gem) => session.ownedHeartGemIds.includes(gem.id));
+      // 가방은 정적 카탈로그가 아니라 실제 보유 인스턴스를 표시하고 슬롯에도 instanceId를 쓴다.
+      const owned = session.runeInventory.map((rune) => ({ id: rune.instanceId, name: rune.customName ?? rune.baseName, statPercent: Object.fromEntries([...rune.mainStats, ...rune.subStats].map(({ key, value }) => [key, value])) }));
       const rows: { id: string | null; name: string; effect: string }[] = [
         { id: null, name: "비우기", effect: "" },
         ...owned.map((gem) => ({
@@ -894,13 +903,18 @@ export class InfoManager {
         body.add(drawLayer(this.scene, 0, y, slantedRect(700, 82, 14), { fill: 0x141a22, alpha: 0.9, edge: COLOR.accent, edgeAlpha: 0.3 }));
         body.add(this.scene.add.text(-320, y - 20, row.name, textStyle({ role: "display", size: 26 })).setOrigin(0, 0));
         if (row.effect) body.add(this.scene.add.text(-320, y + 12, row.effect, textStyle({ role: "body", size: 20, color: COLOR.accentText })).setOrigin(0, 0));
-        const hit = this.scene.add.rectangle(0, y, 700, 82, 0xffffff, 0).setInteractive({ useHandCursor: true });
+        const hit = this.scene.add.rectangle(-70, y, 560, 82, 0xffffff, 0).setInteractive({ useHandCursor: true });
         hit.on("pointerup", () => {
-          relicProgression.equipHeartGem(def.id, index, row.id);
-          close();
-          this.refreshGrowth();
+          // 실제 룬 행은 장착 전에 공용 상세를 열어 목록과 조각이 같은 경험을 제공한다.
+          if (row.id) openRunePopup(this.scene, this.popups, { runeInstanceId: row.id, anchor: { x: 470, y: 960 + y }, onChanged: () => this.refreshGrowth() });
+          else void relicProgression.unequipRune(def.id, index).then(() => { close(); this.refreshGrowth(); });
         });
         body.add(hit);
+        if (row.id) {
+          // 장착은 서버가 반환한 전체 인벤토리를 매니저가 적용한 뒤에만 화면을 갱신한다.
+          const equip = new Button(this.scene, 286, y, { width: 120, height: 62, label: "장착", fontSize: 22, onClick: () => { void relicProgression.equipRune(def.id, index, row.id!).then(() => { close(); this.refreshGrowth(); }); } });
+          body.add(equip);
+        }
       });
     });
   }
@@ -1137,7 +1151,7 @@ export class InfoManager {
     this.popups.open({ width: 800, height: 620, title: "룬 세 자리", tilt: -1.2, ...anchorOf(from) }, (body) => {
       slots.forEach((gemId, index) => {
         const y = -180 + index * 130;
-        const gem = gemId ? getHeartGem(gemId) : undefined;
+        const gem = gemId ? session.runeInventory.find(({ instanceId }) => instanceId === gemId) : undefined;
         body.add(drawLayer(this.scene, 0, y, slantedRect(680, 108, 16), {
           fill: gem ? 0x1c1520 : 0x0d1219,
           alpha: gem ? 0.95 : 0.7,
@@ -1147,11 +1161,11 @@ export class InfoManager {
         body.add(this.scene.add.text(-306, y - 26, index + 1 + "번 칸", textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0, 0));
         body.add(
           this.scene.add
-            .text(-306, y + 2, gem ? gem.name.replace(" Heart Gem", " 룬") : "빈 자리", textStyle({ role: "display", size: 28, color: gem ? COLOR.ink : COLOR.inkDim }))
+            .text(-306, y + 2, gem ? (gem.customName ?? `${RUNE_RARITY_LABELS[gem.rarity]} 룬`) : "빈 자리", textStyle({ role: "display", size: 28, color: gem ? COLOR.ink : COLOR.inkDim }))
             .setOrigin(0, 0),
         );
         if (gem) {
-          const effect = Object.entries(gem.statPercent).map(([key, percent]) => (STAT_LABEL[key] ?? key) + " +" + percent + "%").join("   ");
+          const effect = [...gem.mainStats, ...gem.subStats].map(({ key, value }) => (STAT_LABEL[key] ?? key) + " +" + value + "%").join("   ");
           body.add(this.scene.add.text(306, y + 8, effect, textStyle({ role: "emphasis", size: 22, color: COLOR.accentText })).setOrigin(1, 0));
         }
       });

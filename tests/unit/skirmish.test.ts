@@ -19,6 +19,47 @@ import {
 import { getRelic } from "../../src/data/relics";
 import { FEROCITY_RULES } from "../../src/core/ferocity";
 import { ULTIMATE_ENERGY_MAX } from "../../src/core/ultimate";
+import {
+  beginNextUltimate, cancelUltimateSequence, createUltimateSequenceState, enqueueUltimate, releaseUltimate,
+} from "../../src/core/ultimateSequence";
+
+describe("궁극기 연출 직렬 상태", () => {
+  it("는 중복 발동을 막고 올바른 토큰만 잠금을 해제한다", () => {
+    const sequence = createUltimateSequenceState();
+    expect(enqueueUltimate(sequence, "player-0")).toBe(true);
+    expect(enqueueUltimate(sequence, "player-0")).toBe(false);
+    const first = beginNextUltimate(sequence)!;
+    expect(beginNextUltimate(sequence)).toBeNull();
+    expect(releaseUltimate(sequence, first.token + 1)).toBe(false);
+    expect(releaseUltimate(sequence, first.token)).toBe(true);
+  });
+
+  it("는 전투 종료 취소가 활성 연출과 남은 자동 큐를 모두 비운다", () => {
+    const sequence = createUltimateSequenceState();
+    enqueueUltimate(sequence, "player-0");
+    enqueueUltimate(sequence, "player-1");
+    const active = beginNextUltimate(sequence)!;
+    cancelUltimateSequence(sequence);
+    expect(sequence.activeToken).toBeNull();
+    expect(sequence.queue).toEqual([]);
+    // 취소 전에 잡은 비동기 완료는 새 상태의 잠금을 건드릴 수 없다.
+    expect(releaseUltimate(sequence, active.token)).toBe(false);
+  });
+
+  it("는 동시에 준비된 자동 궁극기를 편성 순서대로 한 번씩 꺼낸다", () => {
+    const sequence = createUltimateSequenceState();
+    ["player-0", "player-1"].forEach((id) => {
+      enqueueUltimate(sequence, id);
+      enqueueUltimate(sequence, id);
+    });
+    const fired: string[] = [];
+    for (let next = beginNextUltimate(sequence); next; next = beginNextUltimate(sequence)) {
+      fired.push(next.fighterId);
+      releaseUltimate(sequence, next.token);
+    }
+    expect(fired).toEqual(["player-0", "player-1"]);
+  });
+});
 
 const ARENA: Arena = { left: 130, right: 950, top: 600, bottom: 1360 };
 

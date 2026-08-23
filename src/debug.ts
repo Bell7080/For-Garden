@@ -17,6 +17,10 @@ export interface DebugBattle {
   speed: number;
   /** 준비된 궁극기를 씬이 자동 발동하는지 여부다. */
   autoUltimate: boolean;
+  /** E2E가 컷인 중첩 없이 직렬 실행되는지 관찰하는 읽기 전용 잠금 상태다. */
+  ultimateSequenceActive?: boolean;
+  /** 활성 연출 뒤에 기다리는 전투원 id. 게임 규칙 입력에는 사용하지 않는다. */
+  ultimateQueue?: string[];
 }
 
 export interface DebugState {

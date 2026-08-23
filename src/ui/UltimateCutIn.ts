@@ -4,9 +4,10 @@ import { portraitAssetFor, portraitUsesRelicTint, spawnPuppet } from "../puppets
 import { tintFor } from "../puppets/tints";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { COLOR, textStyle } from "./theme";
+import type { UltimatePresentation } from "../data/ultimatePresentations";
 
 /** 컷인이 화면을 점유하는 짧은 구간. 공격 판정 시각은 이 프리팹이 아니라 BattleScene이 소유한다. */
-const CUT_IN = { enterMs: 210, holdMs: 430, exitMs: 170, depth: 900 } as const;
+const CUT_IN = { enterMs: 210, exitMs: 170, depth: 900 } as const;
 
 /** Phaser tween을 await 가능한 한 번의 단계로 바꿔 궁극기 시퀀스를 읽는 순서 그대로 유지한다. */
 function tween(scene: Phaser.Scene, config: Phaser.Types.Tweens.TweenBuilderConfig): Promise<void> {
@@ -20,7 +21,7 @@ function tween(scene: Phaser.Scene, config: Phaser.Types.Tweens.TweenBuilderConf
 export class UltimateCutIn extends Phaser.GameObjects.Container {
   private disposed = false;
 
-  private constructor(scene: Phaser.Scene, relic: RelicDef) {
+  private constructor(scene: Phaser.Scene, relic: RelicDef, private readonly presentation: Readonly<UltimatePresentation>) {
     super(scene, 0, 0);
     scene.add.existing(this);
     this.setDepth(CUT_IN.depth);
@@ -42,11 +43,12 @@ export class UltimateCutIn extends Phaser.GameObjects.Container {
   }
 
   /** 캐시된 원화를 준비한 뒤에만 진입시켜 빈 컷인 프레임이 보이지 않게 한다. */
-  static async create(scene: Phaser.Scene, relic: RelicDef): Promise<UltimateCutIn> {
-    const cutIn = new UltimateCutIn(scene, relic);
+  static async create(scene: Phaser.Scene, relic: RelicDef, presentation: Readonly<UltimatePresentation>): Promise<UltimateCutIn> {
+    const cutIn = new UltimateCutIn(scene, relic, presentation);
     const asset = portraitAssetFor(relic.portraitAssetId);
     const portrait = await spawnPuppet(scene, asset, {
-      focus: { anchor: "core", x: 650, y: 810 }, height: 1280,
+      // 데이터의 기준점과 배율만 해석하며 렐릭 ID에 따른 UI 분기는 만들지 않는다.
+      focus: { anchor: "core", ...presentation.artworkOrigin }, height: 1280 * presentation.artworkScale,
       tint: portraitUsesRelicTint(relic.portraitAssetId) ? tintFor(relic.id) : 0xffffff,
     });
     if (cutIn.disposed || !scene.scene.isActive()) { portrait.destroy(); return cutIn; }
@@ -57,11 +59,13 @@ export class UltimateCutIn extends Phaser.GameObjects.Container {
   /** 측면 진입+확대, 짧은 이름 노출, 공격 직전 반대편 퇴장을 하나의 await 계약으로 제공한다. */
   async play(): Promise<void> {
     if (this.disposed) return;
-    this.setX(-BASE_WIDTH).setScale(0.82).setAlpha(0);
+    // 진입 방향의 부호를 퇴장에도 재사용해 한 프리셋이 동선 전체를 설명하게 한다.
+    const direction = this.presentation.enterFrom === "left" ? -1 : 1;
+    this.setX(direction * BASE_WIDTH).setScale(0.82).setAlpha(0);
     await tween(this.scene, { targets: this, x: 0, scale: 1, alpha: 1, duration: CUT_IN.enterMs, ease: "Cubic.Out" });
-    await new Promise<void>((resolve) => this.scene.time.delayedCall(CUT_IN.holdMs, resolve));
+    await new Promise<void>((resolve) => this.scene.time.delayedCall(this.presentation.cutInDurationMs, resolve));
     if (this.disposed) return;
-    await tween(this.scene, { targets: this, x: BASE_WIDTH, alpha: 0, duration: CUT_IN.exitMs, ease: "Cubic.In" });
+    await tween(this.scene, { targets: this, x: -direction * BASE_WIDTH, alpha: 0, duration: CUT_IN.exitMs, ease: "Cubic.In" });
   }
 
   override destroy(fromScene?: boolean): void {

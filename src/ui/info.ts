@@ -5,6 +5,7 @@ import type { Combatant } from "../core/combatTypes";
 import { previewSkillDamage } from "../core/damage";
 import type { Element, RelicDef, RelicProgress, RelicRarity, Role, Skill, SkillIconAssetId, Stats } from "../core/types";
 import { setDebugInfoOpen } from "../debug";
+import { formatCurrency } from "../core/formatCurrency";
 import { getHeartGem, HEART_GEMS } from "../data/heartGems";
 import { RELICS } from "../data/relics";
 import { KeywordManager } from "../managers/KeywordManager";
@@ -121,6 +122,19 @@ const BOND_HEART = 0xe23a46;
 /** 하트 안쪽에 한 겹 더 얹는 밝은 심지. */
 const BOND_HEART_CORE = 0xff8a7a;
 const FEED_GREEN = 0x7fc47f;
+
+/**
+ * 급여에 쓰는 치즈케이크 한 조각.
+ *
+ * 상단 재화 줄과 같은 그림 파일을 쓰고, 그림자를 한 겹 깔아 같은 방식으로 앉는다. 급여는
+ * 치즈케이크를 먹이는 일이므로 버튼과 팝업 어디서든 수치 옆에 이 그림이 함께 선다.
+ */
+function cheesecakeIcon(scene: Phaser.Scene, x: number, y: number, size: number): Phaser.GameObjects.Container {
+  const container = scene.add.container(x, y);
+  container.add(scene.add.image(3, 4, "currency-cheesecake").setDisplaySize(size, size).setTint(0x05070a).setAlpha(0.55));
+  container.add(scene.add.image(0, 0, "currency-cheesecake").setDisplaySize(size, size));
+  return container;
+}
 /**
  * 유대로 하나씩 열리는 이야기 네 편.
  *
@@ -286,6 +300,9 @@ export class InfoManager {
   /** 돌파 버튼. 레벨 옆에 붙어 지금 뚫을 수 있는지를 진하기로 알린다. */
   private breakButton?: { container: Phaser.GameObjects.Container; label: Phaser.GameObjects.Text };
   private feedPlate?: { on: Phaser.GameObjects.Graphics; off: Phaser.GameObjects.Graphics };
+  /** 급여 버튼 위의 치즈케이크 두 수치 — 왼쪽은 가진 것, 오른쪽은 한 번에 드는 것. */
+  private feedHave?: Phaser.GameObjects.Text;
+  private feedCost?: Phaser.GameObjects.Text;
   private feedHold?: Phaser.Time.TimerEvent;
   private feeding = false;
   /** 생성 시 고정한 문맥 덕분에 읽기 전용 창이 도중에 소유자 권한으로 승격되지 않는다. */
@@ -524,6 +541,10 @@ export class InfoManager {
    *
    * 한 번 누르면 한 번 먹이고, 꾹 누르고 있으면 계속 먹인다. 잠깐 누르고 있으면 그 위로 한 번에
    * 여러 레벨을 채우는 작은 팝업이 떠서, 레벨 하나에 수십 번 두드리지 않아도 된다.
+   *
+   * 버튼에서 가장 크게 읽어야 하는 것은 "급여하기"라는 행동 이름이 아니라 **치즈케이크 수**다 —
+   * 지금 몇 개를 가졌고 한 번 누르면 몇 개가 나가는지. 행동 이름은 이미 초록 판과 아이콘으로
+   * 짐작되므로 작게 얹고, 꾹 누르기 안내는 적지 않는다.
    */
   private addFeedButton(x: number, y: number, width: number, height: number, panel: Phaser.GameObjects.Container): { container: Phaser.GameObjects.Container; label: Phaser.GameObjects.Text } {
     const container = this.scene.add.container(x, y);
@@ -540,9 +561,16 @@ export class InfoManager {
       glow: { color: FEED_GREEN, strength: 0.45, height: 0.7 },
     });
     container.add([off, on]);
-    const label = this.scene.add.text(0, -20, "급여하기", textStyle({ role: "display", size: 36 })).setOrigin(0.5);
-    const hint = this.scene.add.text(0, 16, "치즈케이크 " + FEED_UNIT.cheesecake + " · 꾹 누르면 한 번에", textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0.5);
-    container.add([label, hint]);
+    const label = this.scene.add.text(0, -height / 2 + 22, "급여하기", textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0.5);
+    container.add(label);
+    // 가진 것(왼쪽)과 한 번에 드는 것(오른쪽)이 화살표를 사이에 두고 마주 본다. 둘 다 같은
+    // 치즈케이크라 아이콘을 양쪽에 하나씩 세워야 "이만큼 있고 이만큼 나간다"로 읽힌다.
+    const row = 14;
+    container.add(cheesecakeIcon(this.scene, -width / 2 + 46, row, 56));
+    this.feedHave = this.scene.add.text(-width / 2 + 78, row, "", textStyle({ role: "display", size: 40, color: "#ffe0d5" })).setOrigin(0, 0.5);
+    // 나가는 쪽은 빼기 부호를 앞에 달아 "가진 것"과 한눈에 갈라진다. 색도 조금 더 익은 빛이다.
+    this.feedCost = this.scene.add.text(width / 2 - 62, row, "", textStyle({ role: "display", size: 40, color: "#ffb98a" })).setOrigin(1, 0.5);
+    container.add([this.feedHave, this.feedCost, cheesecakeIcon(this.scene, width / 2 - 32, row, 44)]);
     const hit = this.scene.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
     let heldFrom = 0;
     hit.on("pointerdown", () => {
@@ -675,16 +703,32 @@ export class InfoManager {
     this.feedButton.setAlpha(enabled ? 1 : 0.7);
   }
 
-  /** 한 번에 여러 레벨을 채우는 쪽지. 급여 버튼 바로 아래에 뜨고 다른 곳을 누를 때까지 남는다. */
+  /**
+   * 한 번에 여러 레벨을 채우는 쪽지. 급여 버튼 바로 아래에 뜨고 다른 곳을 누를 때까지 남는다.
+   *
+   * 여기서도 크게 읽어야 하는 것은 레벨 수가 아니라 **나가는 치즈케이크 수**다. 한 번에
+   * 수십 번을 먹이는 자리라 지갑이 얼마나 줄어드는지 모르고 누르면 안 된다.
+   */
   private openFeedBulk(x: number, y: number): void {
     if (this.popups.isOpen) return;
-    this.popups.open({ width: 420, height: 190, x, y: y + 120 }, (body, close) => {
-      body.add(this.scene.add.text(0, -58, "한 번에 급여", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0.5));
+    this.popups.open({ width: 460, height: 250, x, y: y + 150 }, (body, close) => {
+      body.add(this.scene.add.text(0, -86, "한 번에 급여", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0.5));
       ([["1 레벨", 1], ["10 레벨", 10]] as const).forEach(([label, levels], index) => {
-        const bx = index === 0 ? -100 : 100;
-        body.add(drawLayer(this.scene, bx, 18, slantedRect(170, 76, 14), { fill: 0x18261c, alpha: 0.92, edge: FEED_GREEN, edgeAlpha: 0.8 }));
-        body.add(this.scene.add.text(bx, 18, label, textStyle({ role: "display", size: 28 })).setOrigin(0.5));
-        const hit = this.scene.add.rectangle(bx, 18, 170, 76, 0xffffff, 0).setInteractive({ useHandCursor: true });
+        const bx = index === 0 ? -108 : 108;
+        const cost = this.feedsForLevels(levels) * FEED_UNIT.cheesecake;
+        const enough = session.wallet.cheesecake >= cost;
+        body.add(drawLayer(this.scene, bx, 12, slantedRect(186, 116, 14), { fill: 0x18261c, alpha: 0.92, edge: FEED_GREEN, edgeAlpha: enough ? 0.8 : 0.3 }));
+        body.add(this.scene.add.text(bx, -22, label, textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0.5));
+        // 수치와 아이콘을 한 덩어리로 담아 자릿수가 늘어도 가운데에 머문다.
+        const price = this.scene.add.container(bx, 30);
+        const value = this.scene.add
+          .text(-16, 0, "−" + formatCurrency(cost), textStyle({ role: "display", size: 36, color: enough ? "#ffb98a" : COLOR.dangerText }))
+          .setOrigin(1, 0.5);
+        price.add([value, cheesecakeIcon(this.scene, 8, 0, 42)]);
+        price.setX(bx + (value.displayWidth + 30) / 2 - 8);
+        body.add(price);
+        if (!enough) return;
+        const hit = this.scene.add.rectangle(bx, 12, 186, 116, 0xffffff, 0).setInteractive({ useHandCursor: true });
         hit.on("pointerup", () => {
           close();
           void this.feedLevels(levels);
@@ -694,9 +738,9 @@ export class InfoManager {
     });
   }
 
-  /** 지금 레벨에서 목표 레벨까지 필요한 급여 횟수를 계산해 한 번에 요청한다. */
-  private async feedLevels(levels: number): Promise<void> {
-    if (!this.currentDef) return;
+  /** 지금 레벨에서 목표 레벨까지 필요한 급여 횟수. 팝업의 소모량 표기와 실제 요청이 같은 값을 쓴다. */
+  private feedsForLevels(levels: number): number {
+    if (!this.currentDef) return 1;
     const progress = relicProgression.getProgress(this.currentDef.id);
     let need = 0;
     let level = progress.level;
@@ -707,7 +751,12 @@ export class InfoManager {
       level += 1;
       exp = 0;
     }
-    await this.feed(Math.max(1, need));
+    return Math.max(1, need);
+  }
+
+  /** 필요한 급여 횟수를 한 번에 요청한다. */
+  private async feedLevels(levels: number): Promise<void> {
+    await this.feed(this.feedsForLevels(levels));
   }
 
   private async feed(feeds: number): Promise<void> {
@@ -1457,10 +1506,15 @@ export class InfoManager {
     this.levelCap.setX(this.levelValue.x + this.levelValue.displayWidth + 14);
     const need = maxed ? 0 : relicExpToNext(progress.level);
     this.expBar.setValue(maxed ? 1 : progress.exp / need);
-    // 보유 치즈케이크는 상단 줄 한 곳에서만 보여 중복되거나 서로 다른 시점의 값이 보이지 않게 한다.
+    // 경험치 줄은 "얼마나 컸는가"만 말한다. 급여에 드는 치즈케이크는 바로 아래 버튼이 맡는다.
     this.expLabel.setText(maxed ? "MAX" : progress.exp + " / " + need + " EXP");
     this.paintFeedButton(this.ownedNow && canFeedRelic(progress, session.wallet.cheesecake));
     this.feedLabel.setText(maxed ? "최대 레벨" : "급여하기");
+    // 급여는 치즈케이크를 먹이는 일이라 버튼이 그 수를 직접 말한다. 상단 줄과 같은 세션 지갑을
+    // 읽으므로 두 곳의 값이 갈라지지 않는다.
+    this.feedHave?.setText(formatCurrency(session.wallet.cheesecake));
+    this.feedCost?.setText(maxed ? "—" : "−" + FEED_UNIT.cheesecake);
+    this.feedHave?.setColor(session.wallet.cheesecake >= FEED_UNIT.cheesecake ? "#ffe0d5" : COLOR.dangerText);
     this.paintBreakButton(progress);
 
     const bondMaxed = progress.bondLevel >= BOND_LEVEL_CAP;

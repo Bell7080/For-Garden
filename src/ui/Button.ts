@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { drawGlyph, type GlyphName } from "./glyphs";
+import type { CurrencyIconKey } from "./currencyIcons";
 import { chipPoints, drawLayer, HOLO, perspectiveRect, slantedRect } from "./holo";
 import { COLOR, textStyle } from "./theme";
 
@@ -52,6 +53,13 @@ export interface ButtonOptions {
   fill?: number;
   /** 라벨 왼쪽에 붙는 선 아이콘. */
   icon?: GlyphName;
+  /**
+   * 라벨 오른쪽에 박는 비용.
+   *
+   * "얼마가 드는가"는 버튼 밖의 안내문이 아니라 **누르는 것 위**에 있어야 한다. 재화 이름은
+   * 글자로 적지 않고 그림으로 둔다 — 아이콘 하나가 "골드"라는 두 글자보다 빨리 읽힌다.
+   */
+  cost?: { icon: CurrencyIconKey; amount: number; affordable?: boolean };
   /**
    * 화면에서 가장 중요한 버튼인지.
    *
@@ -151,6 +159,22 @@ export class Button extends Phaser.GameObjects.Container {
       const total = iconSize + gap + label.width;
       label.setX(-total / 2 + iconSize + gap + label.width / 2);
       plate.add(drawGlyph(scene, opts.icon, -total / 2 + iconSize / 2, hasSub ? -14 : 0, iconSize, primary ? accent : 0xd8d5cf));
+    }
+    if (opts.cost) {
+      // 라벨과 비용을 한 덩어리로 보고 판 가운데에 세운다. 값이 길어져도 덩어리째 가운데다.
+      const coin = fontSize * 1.06;
+      const gap = fontSize * 0.42;
+      const costStyle = textStyle({ role: "display", size: fontSize * 0.9, color: opts.cost.affordable === false ? COLOR.dangerText : COLOR.ink });
+      const amount = scene.add.text(0, hasSub ? -14 : 0, opts.cost.amount.toLocaleString(), costStyle).setOrigin(0, 0.5);
+      const total = label.width + gap + coin + gap * 0.5 + amount.width;
+      const left = -total / 2;
+      label.setX(left + label.width / 2);
+      const coinX = left + label.width + gap + coin / 2;
+      // 그림자를 한 겹 깔아 상단 재화 줄과 같은 방식으로 앉는다.
+      plate.add(scene.add.image(coinX + 3, (hasSub ? -14 : 0) + 4, opts.cost.icon).setDisplaySize(coin, coin).setTint(0x05070a).setAlpha(0.55));
+      plate.add(scene.add.image(coinX, hasSub ? -14 : 0, opts.cost.icon).setDisplaySize(coin, coin));
+      amount.setX(coinX + coin / 2 + gap * 0.5);
+      plate.add(amount);
     }
     if (opts.decorDots) plate.add(dotPattern(scene, shape, accent));
     if (hasSub) {

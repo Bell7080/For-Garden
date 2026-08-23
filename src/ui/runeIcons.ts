@@ -86,11 +86,11 @@ export function addRuneMark(
 }
 
 /**
- * 성공과 실패를 한 줄로 보여 주는 발광 선.
+ * 성공과 실패를 한 줄로 나눠 가지는 발광 막대.
  *
- * 막대 두 개를 나란히 두지 않고 **한 줄을 갈라** 쓴다 — 성공과 실패는 늘 합쳐서 하나이므로,
- * 한 줄이 좌우로 밀리는 모습이 곧 확률의 변화다. 채움 위에 같은 색을 크게 한 겹 더 깔아
- * 선 자체가 빛나는 것처럼 보이게 한다.
+ * 양 끝은 화면의 다른 면과 같은 결로 **어긋나게** 깎는다(왼쪽은 위, 오른쪽은 아래). 가운데는
+ * 수직 눈금이 아니라 비스듬한 `/`로 가른다 — 두 값이 맞물려 하나를 이룬다는 것이 선 모양에서
+ * 먼저 읽히고, 시도할 때마다 그 빗금이 좌우로 미끄러진다.
  */
 export function addChanceLine(
   scene: Phaser.Scene,
@@ -101,26 +101,48 @@ export function addChanceLine(
   chance: number,
 ): void {
   const clamped = Math.max(0, Math.min(1, chance));
-  const split = width * clamped;
+  const height = 16;
+  const bevel = height * 0.9;
+  // 빗금의 기울기. 조각 둘 사이에 이만큼의 틈을 두어 `/` 한 줄이 살아 있게 한다.
+  const slant = height * 0.72;
+  const gap = 5;
   const left = x - width / 2;
-  const line = scene.add.graphics();
-  // 굵은 막대가 아니라 **가는 실선**이다. 같은 선을 두께만 키워 옅게 두 겹 더 깔면 선 자체가
-  // 빛나 보인다 — 두께로 채우는 대신 빛으로 채우는 쪽이 화면의 다른 게이지와 섞이지 않는다.
-  for (const [thickness, alpha] of [[9, 0.1], [5, 0.2], [2.5, 1]] as const) {
-    line.lineStyle(thickness, RUNE_MARK.success.body, alpha);
-    line.lineBetween(left, y, left + split, y);
-    line.lineStyle(thickness, RUNE_MARK.fail.body, thickness === 2.5 ? alpha : alpha * 0.8);
-    line.lineBetween(left + split, y, left + width, y);
-  }
-  // 양 끝과 가르는 지점에 작은 마디를 찍는다. 별자리처럼 점과 선으로 읽히게 하는 최소한이다.
-  const node = (nx: number, color: number, size: number): void => {
-    line.fillStyle(color, 0.22);
-    line.fillCircle(nx, y, size * 2.1);
-    line.fillStyle(color, 1);
-    line.fillCircle(nx, y, size);
+  const right = x + width / 2;
+  const split = left + width * clamped;
+  const topY = y - height / 2;
+  const bottomY = y + height / 2;
+  const success = [
+    left + bevel, topY,
+    split + slant / 2 - gap / 2, topY,
+    split - slant / 2 - gap / 2, bottomY,
+    left, bottomY,
+  ];
+  const fail = [
+    split + slant / 2 + gap / 2, topY,
+    right, topY,
+    right - bevel, bottomY,
+    split - slant / 2 + gap / 2, bottomY,
+  ];
+  const toPolygon = (flat: number[]): Phaser.Geom.Point[] => {
+    const points: Phaser.Geom.Point[] = [];
+    for (let i = 0; i < flat.length; i += 2) points.push(new Phaser.Geom.Point(flat[i], flat[i + 1]));
+    return points;
   };
-  node(left, RUNE_MARK.success.body, 3);
-  node(left + width, RUNE_MARK.fail.body, 3);
-  node(left + split, 0xffffff, 4);
-  parent.add(line);
+  const graphics = scene.add.graphics();
+  // 같은 조각을 조금 키워 옅게 한 겹 더 깔면 막대 자체가 빛나 보인다.
+  const glow = (flat: number[], color: number): void => {
+    const points = toPolygon(flat).map((point) => new Phaser.Geom.Point(point.x, y + (point.y - y) * 1.9));
+    graphics.fillStyle(color, 0.16);
+    graphics.fillPoints(points, true);
+  };
+  glow(success, RUNE_MARK.success.halo);
+  glow(fail, RUNE_MARK.fail.halo);
+  graphics.fillStyle(RUNE_MARK.success.body, 1);
+  graphics.fillPoints(toPolygon(success), true);
+  graphics.fillStyle(RUNE_MARK.fail.body, 1);
+  graphics.fillPoints(toPolygon(fail), true);
+  // 가르는 빗금 한 줄. 어디까지가 성공인지 숫자를 읽기 전에 보인다.
+  graphics.lineStyle(3, 0xffffff, 0.9);
+  graphics.lineBetween(split - slant / 2, bottomY + 3, split + slant / 2, topY - 3);
+  parent.add(graphics);
 }

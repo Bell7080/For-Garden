@@ -120,8 +120,13 @@ const STAT_RADAR_RADIUS = 128;
 /** 정보창의 별은 화면에서 가장 큰 성급 표시다. 모양과 색은 `stars.ts`가 정한다. */
 const STAR_SIZE = 34;
 
-/** 야성 뱃지의 색. 게이지가 끓는 쪽이라 붉은 기가 돈다. */
-const FEROCITY_BADGE = 0x8f3a2a;
+/**
+ * 야성 뱃지의 색.
+ *
+ * 게이지가 끓는 쪽이라 붉은 기가 돌되, 스킬 액자와 나란히 설 때 혼자 새빨갛게 튀지 않도록
+ * 채도를 덜어 둔다. 강조는 색이 아니라 살구빛 테두리와 발광이 맡는다.
+ */
+const FEROCITY_BADGE = 0x4b2f2b;
 /** 유대 하트와 급여 버튼의 색. 하트는 반투명하게 겹쳐 발광하는 붉은 빛으로 쓴다. */
 const BOND_HEART = 0xe23a46;
 /** 하트 안쪽에 한 겹 더 얹는 밝은 심지. */
@@ -1449,7 +1454,11 @@ export class InfoManager {
       // 전용 일러스트는 흰 실루엣이라 여기서 속성·직군을 섞은 색을 입는다.
       if (art) image.setTint(tint);
       container.add(image);
-      container.add(this.scene.add.text(0, size / 2 - 26, kindLabel, textStyle({ role: "emphasis", size: 19, color: index === 2 ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5));
+      // 액자 안의 이름은 그림 다음으로 먼저 읽히는 것이라 굵고 크게 둔다.
+      const kindStyle = index === 2
+        ? textStyle({ role: "display", size: 25, color: COLOR.accentText })
+        : textStyle({ role: "display", size: 25, color: COLOR.ink });
+      container.add(this.scene.add.text(0, size / 2 - 27, kindLabel, kindStyle).setOrigin(0.5));
       // 액자 테두리. 채운 판 위에 한 줄을 얹어 배경 원화와 확실히 갈라 놓는다.
       container.add(drawShapeOutline(this.scene, 0, 0, chip, { color: COLOR.accent, alpha: index === 2 ? 0.75 : 0.42, width: 3 }));
       const hit = this.scene.add.rectangle(0, 0, size, size, 0xffffff, 0).setInteractive({ useHandCursor: true });
@@ -1488,17 +1497,19 @@ export class InfoManager {
     const shape = chipPoints(badgeSize, badgeSize, {
       bevel: { topLeft: badgeSize * 0.34, topRight: 0, bottomRight: badgeSize * 0.34, bottomLeft: 0 },
     });
-    badge.add(drawLayer(this.scene, 0, 0, shape, { fill: FEROCITY_BADGE, alpha: 1, edge: 0xf0a58a, edgeAlpha: 0.8 }));
+    badge.add(drawLayer(this.scene, 0, 0, shape, { fill: FEROCITY_BADGE, alpha: 1, edge: 0xf0a58a, edgeAlpha: 0.8, glow: { color: 0x8f3a2a, strength: 0.35, height: 0.6 } }));
     badge.add(drawInnerVignette(this.scene, 0, 0, shape, { strength: 0.4 }));
     // 폭주도 스킬 넷 중 하나라 전용 일러스트를 쓴다. 다만 붉은 판 위에서는 속성 색을 그대로
     // 얹으면 판에 묻히므로, 여기서만 야성의 살구빛을 쓴다 — 이 뱃지는 개체 구분이 아니라
     // "야성이 이렇게 터진다"를 알리는 자리이기 때문이다.
     const art = skillArtFor(def.id, "ferocity");
     if (art) {
-      badge.add(this.scene.add.image(0, 1, art).setDisplaySize(badgeSize * 0.82, badgeSize * 0.82).setTint(0xffd9c4));
+      badge.add(this.scene.add.image(0, -8, art).setDisplaySize(badgeSize * 0.74, badgeSize * 0.74).setTint(0xffd9c4));
     } else {
-      badge.add(drawGlyph(this.scene, "ferocity", 0, 1, badgeSize * 0.56, 0xffd9c4));
+      badge.add(drawGlyph(this.scene, "ferocity", 0, -8, badgeSize * 0.5, 0xffd9c4));
     }
+    // 스킬 액자와 같은 방식으로 이름을 안쪽 아래에 단다. 셋과 나란히 읽히려면 이름이 있어야 한다.
+    badge.add(this.scene.add.text(0, badgeSize / 2 - 19, "폭주", textStyle({ role: "display", size: 20, color: "#ffd9c4" })).setOrigin(0.5));
     // 입력 영역도 뱃지 크기에 딱 맞춘다. 넓게 잡으면 아래 아이콘의 터치를 가로챈다.
     const hit = this.scene.add.rectangle(0, 0, badgeSize, badgeSize, 0xffffff, 0).setInteractive({ useHandCursor: true });
     hit.on("pointerdown", () => badge.setScale(1.1));

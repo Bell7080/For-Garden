@@ -11,6 +11,8 @@ import { drawGlyph } from "./glyphs";
 import { drawHairline, drawLayer, slantedRect } from "./holo";
 import { PopupLayer } from "./PopupLayer";
 import { addChanceLine, addEmptyRuneMark, addRuneIcon, addRuneMark, RUNE_ACCENT, RUNE_MARK } from "./runeIcons";
+import { addCurrencyChip } from "./CurrencyChip";
+import { formatCurrency } from "../core/formatCurrency";
 import { COLOR, textStyle } from "./theme";
 
 /**
@@ -184,9 +186,17 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
       content.add(scene.add.text(-half + 148, top + 78, rarity, textStyle({ role: "emphasis", size: 22, color: hex(accent) })).setOrigin(0, 0));
       content.add(scene.add.text(-half + 148, top + 108, displayName, textStyle({ role: "display", size: 32 })).setOrigin(0, 0).setWordWrapWidth(420));
       content.add(scene.add.text(-half + 148, top + 154, equippedLine(rune!.instanceId), textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0, 0));
+      // 보유 골드는 로비 상단과 같은 칸으로 세운다. 세공은 골드를 쓰는 화면이라 지갑이 늘
+      // 보여야 하고, 같은 값이 화면마다 다른 모양으로 보이지 않게 한다.
+      addCurrencyChip(scene, half - 148, top + 96, "currency-gold", {
+        width: 196,
+        height: 62,
+        color: "#ffdf9a",
+        parent: content,
+      }).setText(formatCurrency(session.wallet.gold));
       // 연필은 씬에서 직접 작도하지 않고 glyph 공용 시스템의 edit 표식을 쓴다.
       const pencilX = half - 62;
-      const pencilY = top + 116;
+      const pencilY = top + 170;
       content.add(drawGlyph(scene, "edit", pencilX, pencilY, 32, accent));
       const renameHit = scene.add.rectangle(pencilX, pencilY, 74, 74, 0xffffff, 0).setInteractive({ useHandCursor: true });
       renameHit.on("pointerup", () => requestRuneName(scene, rune!.customName ?? "", async (value) => {
@@ -262,12 +272,21 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
       content.add(drawHairline(scene, 0, footerY - 40, CRAFT.width - 96, { color: accent, alpha: 0.4 }));
       const engraved = rune!.engravings.length > 0;
       const cost = completed ? 0 : runeEnhancementGoldCost(rune!.rarity, runeEnhancementAttempts(rune!));
-      content.add(scene.add.text(-CRAFT.width / 2 + 48, footerY - 18, completed ? "각인 · 선택 능력치 확정 강화" : `이번 비용  ${cost.toLocaleString()} 골드`, textStyle({ role: "emphasis", size: 22, color: hex(accent) })).setOrigin(0, 0));
-      content.add(scene.add.text(CRAFT.width / 2 - 48, footerY - 18, `보유 골드  ${session.wallet.gold.toLocaleString()}`, textStyle({ role: "body", size: 21, color: session.wallet.gold < cost ? "#ef7474" : COLOR.ink })).setOrigin(1, 0));
+      const affordable = completed || session.wallet.gold >= cost;
       const reason = engraved ? "각인 완료" : completed ? (selected ? "선택한 능력치를 확정 강화합니다." : "각인할 능력치를 선택하세요.") : selected ? "성공하면 다음 확률 ↓ · 실패하면 ↑" : "먼저 세공할 능력치 줄을 선택하세요.";
-      content.add(scene.add.text(-CRAFT.width / 2 + 48, footerY + 18, notice || reason, textStyle({ role: "body", size: 19, color: COLOR.inkDim })).setOrigin(0, 0));
-      const allowed = !pending && !!selected && !engraved && (completed || session.wallet.gold >= cost);
-      const action = new Button(scene, 0, footerY + 96, { width: 560, height: 84, label: completed ? "각인 확정" : "세공", variant: "primary", accentColor: accent, onClick: async () => {
+      // 방금 무슨 일이 있었는지는 버튼 바로 위에 크게 박는다. 손이 머무는 자리에서 결과가
+      // 나오지 않으면 확률만 바뀐 채 무엇이 성공이었는지 되짚어야 한다.
+      const resultStyle = notice.includes("성공")
+        ? textStyle({ role: "display", size: 30, color: hex(RUNE_MARK.success.body) })
+        : notice.includes("실패")
+          ? textStyle({ role: "display", size: 30, color: hex(RUNE_MARK.fail.halo) })
+          : notice
+            ? textStyle({ role: "display", size: 30, color: hex(accent) })
+            : textStyle({ role: "body", size: 20, color: COLOR.inkDim });
+      content.add(scene.add.text(0, notice ? footerY - 18 : footerY - 6, notice || reason, resultStyle).setOrigin(0.5, 0));
+      const allowed = !pending && !!selected && !engraved && affordable;
+      // 비용은 안내문이 아니라 **누르는 것 위**에 박는다. 재화 이름은 글자 대신 아이콘이다.
+      const action = new Button(scene, 0, footerY + 96, { width: 560, height: 84, label: completed ? "각인 확정" : "세공", variant: "primary", accentColor: accent, cost: completed ? undefined : { icon: "currency-gold", amount: cost, affordable }, onClick: async () => {
         if (!allowed || !selected || pending) return;
         pending = true; action.setEnabled(false);
         try {

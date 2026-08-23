@@ -13,8 +13,10 @@ import { createDefaultSettings } from "../core/settings";
 export interface GameSettings {
   sound: { masterVolume: number; musicVolume: number; effectsVolume: number; voiceVolume: number; masterMuted: boolean; musicMuted: boolean; effectsMuted: boolean; voiceMuted: boolean };
   vibration: { enabled: boolean; combatHit: boolean; ultimate: boolean; excavationResult: boolean; uiInput: boolean };
-  notifications: { staminaFull: boolean; freeRecruit: boolean; dailyMission: boolean; event: boolean; mail: boolean; quietHours: boolean };
+  notifications: { enabled: boolean; staminaFull: boolean; freeRecruit: boolean; dailyMission: boolean; event: boolean; mail: boolean; quietHours: boolean; quietHoursStart: string; quietHoursEnd: string; lastScheduledIds: Partial<Record<"staminaFull" | "freeRecruit" | "dailyMission", string>> };
   presentation: { ultimateCutIn: boolean; screenShake: boolean; damageNumbers: boolean; shortenExcavation: boolean; lowSpecMode: boolean };
+  /** 읽기 편의 옵션은 장면 좌표가 아니라 공용 텍스트/연출 계층에서 소비한다. */
+  accessibility: { textScale: 1 | 1.15 | 1.3; reduceMotion: boolean; reduceFlashes: boolean; colorAssist: boolean; subtitles: boolean };
   game: { battleSpeed: 1 | 1.5 | 2; autoUltimate: boolean; textSpeed: 0.5 | 1 | 2; language: "ko" | "en" | "ja" };
   account: { provider: "guest" | "google" | "apple"; displayId: string };
 }
@@ -55,6 +57,15 @@ export interface Session {
   missions: MissionState;
   /** 상품별 현재 제한 주기 키와 구매 횟수다. FakeServer만 갱신한다. */
   productPurchases: Record<string, { periodKey: string; count: number }>;
+  /** 서버 UTC 날짜에 귀속된 광고 수령 횟수와 멱등 요청 ID만 저장한다. */
+  dailyAdRewards: DailyAdRewardState;
+}
+
+/** 광고 SDK 토큰은 저장하지 않고 지급 재실행 방지에 필요한 값만 담는 일일 상태다. */
+export interface DailyAdRewardState {
+  date: string;
+  claimsBySlot: Record<string, number>;
+  requestIds: string[];
 }
 
 /** 아직 서버 계정에 귀속되지 않은 브라우저 일일 콘텐츠 스냅샷이다. */
@@ -103,6 +114,7 @@ export interface SaveData {
   dailyContent: DailyContentState;
   missions: MissionState;
   productPurchases: Record<string, { periodKey: string; count: number }>;
+  dailyAdRewards: DailyAdRewardState;
 }
 
 /** 신규 렐릭에 부여하는 독립 복사 가능한 기본 성장 상태다. */
@@ -136,6 +148,8 @@ export function createDefaultSession(): Session {
     dailyContent: { date: "", restorationEntries: 0, completedIds: [], claimedRewardIds: [] },
     missions: { dailyKey: "", weeklyKey: "", progress: {}, claimedIds: [] },
     productPurchases: {},
+    // 검증 토큰은 일회성 서버 입력이므로 신규 저장에는 일일 카운터만 둔다.
+    dailyAdRewards: { date: "", claimsBySlot: {}, requestIds: [] },
   };
 }
 

@@ -231,3 +231,15 @@ describe("SaveManager", () => {
     expect(() => new SaveManager(new MemoryStorage()).validate(slotData)).toThrow("장착 소유권");
   });
 });
+
+// 광고 일일 상태는 토큰 없이 직렬화되고 v15 저장은 빈 상태로 이관되어야 한다.
+describe("SaveManager 광고 상태 마이그레이션", () => {
+  it("수령 상태를 왕복하고 v15 누락 필드를 기본값으로 채운다", () => {
+    const storage = new MemoryStorage(); const source = createDefaultSession();
+    source.dailyAdRewards = { date: "2026-08-22", claimsBySlot: { "daily-stamina": 2 }, requestIds: ["request-1"] };
+    new SaveManager(storage).save(source);
+    expect(new SaveManager(storage).load()?.dailyAdRewards).toEqual(source.dailyAdRewards);
+    const legacy = validData() as unknown as Record<string, unknown>; legacy.saveVersion = 15; delete legacy.dailyAdRewards;
+    expect(new SaveManager(new MemoryStorage()).migrate(legacy).dailyAdRewards).toEqual({ date: "", claimsBySlot: {}, requestIds: [] });
+  });
+});

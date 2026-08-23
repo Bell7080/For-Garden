@@ -1,4 +1,5 @@
 import { FONT_FAMILY, fontStyleFor, type TextRole } from "./fonts";
+import { getTextScale } from "./textScale";
 
 /** 색과 글꼴을 한 곳에 모아둔다. 씬에서 값을 직접 박아 넣지 않는다. */
 export const COLOR = {
@@ -55,7 +56,8 @@ export interface TextOpts {
 export function textStyle(opts: TextOpts): Phaser.Types.GameObjects.Text.TextStyle {
   return {
     fontFamily: FONT_FAMILY,
-    fontSize: `${opts.size}px`,
+    // 접근성 배율은 개별 씬 좌표 대신 모든 텍스트가 거치는 이 스타일 계층에서만 적용한다.
+    fontSize: `${Math.round(opts.size * getTextScale())}px`,
     fontStyle: fontStyleFor(opts.role),
     color: opts.color ?? COLOR.ink,
     align: opts.align,

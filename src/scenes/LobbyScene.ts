@@ -52,6 +52,7 @@ export class LobbyScene extends Phaser.Scene {
     setDebugScene("lobby");
 
     this.buildPlaza();
+    // 설정 아이콘은 준비 중 토스트가 아니라 등록된 환경 설정 씬으로 곧바로 이동한다.
     new TopBar(this, 40, { onSettings: () => this.scene.start("settings") });
     this.buildPromo();
     this.buildSideRail();

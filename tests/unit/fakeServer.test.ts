@@ -31,6 +31,8 @@ function makeSession(fossil = 1000): Session {
     missions: { dailyKey: "", weeklyKey: "", progress: {}, claimedIds: [] },
     // 상품 테스트가 아닌 세션도 최신 저장 계약의 빈 구매 이력을 명시한다.
     productPurchases: {},
+    // 테스트 계정은 광고 수령 이력이 없는 UTC 일일 상태로 시작한다.
+    dailyAdRewards: { date: "", claimsBySlot: {}, requestIds: [] },
   };
 }
 
@@ -224,6 +226,33 @@ describe("FakeServer 상품 카탈로그", () => {
     expect(state.wallet).toEqual(before);
     expect(state.productPurchases).toEqual({});
   });
+
+  it("후원 영수증 검증과 권리 활성화를 요청 재시도에도 한 결과로 유지한다", async () => {
+    const state = makeSession();
+    const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-22T12:00:00Z") });
+    const receipt = { productId: "premium-monthly", platform: "test" as const, receipt: "verified-receipt:premium-monthly:tx-1", requestId: "verify-1" };
+    const first = await server.verifyPurchaseReceipt(receipt);
+    await expect(server.verifyPurchaseReceipt(receipt)).resolves.toEqual(first);
+    const activation = await server.activatePass({ verificationId: first.verificationId, requestId: "activate-1" });
+    await expect(server.activatePass({ verificationId: first.verificationId, requestId: "activate-1" })).resolves.toEqual(activation);
+    expect(activation.entitlement).toMatchObject({ productId: "premium-monthly", activatedAt: "2026-08-22T12:00:00.000Z", expiresAt: "2026-09-21T12:00:00.000Z", active: true });
+  });
+
+  it("패스 즉시 수령도 광고 슬롯의 기본 보상·UTC 한도를 공유하고 중복 지급하지 않는다", async () => {
+    const state = makeSession(); let now = new Date("2026-08-22T23:59:00Z");
+    const server = new FakeServer(state, { latencyMs: 0, now: () => now });
+    const verified = await server.verifyPurchaseReceipt({ productId: "premium-monthly", platform: "test", receipt: "verified-receipt:premium-monthly:tx-2", requestId: "verify-2" });
+    const { entitlement } = await server.activatePass({ verificationId: verified.verificationId, requestId: "activate-2" });
+    const request = { entitlementId: entitlement.entitlementId, slotId: "daily-stamina", requestId: "instant-1" };
+    const first = await server.claimInstantAdReward(request);
+    await expect(server.claimInstantAdReward(request)).resolves.toMatchObject({ dailyClaims: 1, wallet: first.wallet });
+    expect(first).toMatchObject({ reward: { currency: "stamina", amount: 10 }, dailyBonus: { currency: "gems", amount: 5 }, dailyRemaining: 2 });
+    await server.claimInstantAdReward({ ...request, requestId: "instant-2" });
+    await server.claimInstantAdReward({ ...request, requestId: "instant-3" });
+    await expect(server.claimInstantAdReward({ ...request, requestId: "instant-4" })).rejects.toMatchObject({ code: "AD_DAILY_LIMIT" });
+    now = new Date("2026-08-23T00:00:00Z");
+    await expect(server.claimInstantAdReward({ ...request, requestId: "instant-next-day" })).resolves.toMatchObject({ dailyClaims: 1, dailyBonus: { currency: "gems", amount: 5 } });
+  });
 });
 
 describe("FakeServer DNA 조각 교환소와 경제 경계", () => {
@@ -264,5 +293,28 @@ describe("FakeServer DNA 조각 교환소와 경제 경계", () => {
     const server = new FakeServer(state, { latencyMs: 0 });
     await expect(server.exchangeDna({ offerId: "dna-past-event" })).rejects.toMatchObject({ code: "CURRENCY_LIMIT_EXCEEDED" });
     expect(state.wallet).toMatchObject({ dnaFragments: 5, fossil: 9_999_900 });
+  });
+});
+
+describe("FakeServer 광고 보상 경계", () => {
+  it("완료 토큰을 검증하고 일반 재화와 UTC 일일 상태를 함께 확정한다", async () => {
+    const state = makeSession();
+    const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-22T23:59:00Z") });
+    const result = await server.claimAdReward({ slotId: "daily-stamina", verificationToken: "verified:daily-stamina", requestId: "ad-request-1" });
+    expect(result).toMatchObject({ reward: { currency: "stamina", amount: 10 }, dailyClaims: 1, dailyRemaining: 2 });
+    expect(state.dailyAdRewards).toEqual({ date: "2026-08-22", claimsBySlot: { "daily-stamina": 1 }, requestIds: ["ad-request-1"] });
+  });
+
+  it("잘못된 토큰·중복 ID·일일 초과는 지급 없이 거부하고 다음 UTC 일자에 초기화한다", async () => {
+    const state = makeSession(); let now = new Date("2026-08-22T12:00:00Z");
+    const server = new FakeServer(state, { latencyMs: 0, now: () => now });
+    await expect(server.claimAdReward({ slotId: "daily-cheesecake", verificationToken: "invalid", requestId: "bad" })).rejects.toMatchObject({ code: "AD_TOKEN_INVALID" });
+    for (let index = 0; index < 3; index += 1) await server.claimAdReward({ slotId: "daily-cheesecake", verificationToken: "verified:daily-cheesecake", requestId: `claim-${index}` });
+    const before = state.wallet.cheesecake;
+    await expect(server.claimAdReward({ slotId: "daily-cheesecake", verificationToken: "verified:daily-cheesecake", requestId: "claim-0" })).rejects.toMatchObject({ code: "AD_REQUEST_DUPLICATE" });
+    await expect(server.claimAdReward({ slotId: "daily-cheesecake", verificationToken: "verified:daily-cheesecake", requestId: "over-limit" })).rejects.toMatchObject({ code: "AD_DAILY_LIMIT" });
+    expect(state.wallet.cheesecake).toBe(before);
+    now = new Date("2026-08-23T00:00:00Z");
+    await expect(server.claimAdReward({ slotId: "daily-cheesecake", verificationToken: "verified:daily-cheesecake", requestId: "next-day" })).resolves.toMatchObject({ dailyClaims: 1 });
   });
 });

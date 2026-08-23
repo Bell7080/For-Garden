@@ -48,6 +48,22 @@ export class PopupLayer {
     return this.stack.length > 0;
   }
 
+  /** 파괴적 동작이 화면마다 제각각 구현되지 않도록 같은 팝업 위에 확인/취소를 제공한다. */
+  confirm(options: { title: string; message: string; confirmLabel: string; destructive?: boolean }, onConfirm: () => void): void {
+    this.open({ width: 820, height: 390, title: options.title, dim: true, closeOnBackdrop: false }, (body, close) => {
+      body.add(this.scene.add.text(-350, -75, options.message, textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setWordWrapWidth(700));
+      const addAction = (x: number, label: string, color: string, action: () => void): void => {
+        const button = this.scene.add.text(x, 105, label, textStyle({ role: "emphasis", size: 28, color })).setOrigin(0.5).setInteractive({ useHandCursor: true });
+        button.on("pointerdown", () => button.setScale(1.1));
+        button.on("pointerout", () => button.setScale(1));
+        button.on("pointerup", action);
+        body.add(button);
+      };
+      addAction(-150, "취소", COLOR.inkDim, close);
+      addAction(150, options.confirmLabel, options.destructive ? "#ff8c88" : COLOR.accentText, () => { close(); onConfirm(); });
+    });
+  }
+
   /** 팝업 한 장을 연다. `build`는 판 가운데를 원점으로 하는 컨테이너를 받는다. */
   open(
     options: PopupOptions,

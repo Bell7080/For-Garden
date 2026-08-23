@@ -64,13 +64,25 @@ test("오프닝을 이미 본 저장이면 타이틀에서 로비로 바로 간�
     .toBe("lobby");
 });
 
-test("로비 설정은 스크롤 변경을 재접속 뒤 유지하고 뒤로 돌아간다", async ({ page }) => {
+test("설정 탭은 텍스트 확대·스크롤·두 단계 초기화를 좁은 모바일에서 안전하게 처리한다", async ({ page }) => {
   await startAfterOpening(page); await page.locator("canvas").click();
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
-  await tapGame(page, BASE_WIDTH - 58, 86); await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("settings");
-  // 첫 사운드 슬라이더를 행 오른쪽으로 눌러 값 변경과 즉시 저장을 함께 검증한다.
-  await tapGame(page, 800, 278); const saved = await page.evaluate(() => localStorage.getItem("eternal-city.local-save")); expect(saved).toContain('"masterVolume"');
-  await page.mouse.wheel(0, 2200); await page.screenshot({ path: `test-results/${test.info().project.name}-settings-scrolled.png` });
+  await tapGame(page, BASE_WIDTH - 58, 86);
+  // 미구현 토스트가 아니라 실제 설정 화면의 사용자 표시 제목까지 렌더됐는지 확인한다.
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.screenTitle)).toBe("환경 설정");
+  // 새 고정 헤더 아래 첫 사운드 슬라이더가 88px 이상의 터치 행으로 저장을 즉시 반영한다.
+  await tapGame(page, 800, 392); let saved = await page.evaluate(() => localStorage.getItem("eternal-city.local-save")); expect(saved).toContain('"masterVolume"');
+  // 접근성 탭에서 공용 텍스트 배율을 올린 뒤 재생성된 탭이 잘리지 않는지 캡처한다.
+  await tapGame(page, 743, 210); await tapGame(page, 800, 392);
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("eternal-city.local-save")!).settings.accessibility.textScale)).toBe(1.15);
+  await page.screenshot({ path: `test-results/${test.info().project.name}-settings-accessibility-expanded.png` });
+  // 지원·데이터 탭은 자체 높이에 종속되어 스크롤되고 초기화 팝업이 배경 입력을 가로막는다.
+  await tapGame(page, 946, 210); await page.mouse.wheel(0, 800); await page.screenshot({ path: `test-results/${test.info().project.name}-settings-support-scrolled.png` });
+  await tapGame(page, 450, 1026); await tapGame(page, 690, 1065);
+  saved = await page.evaluate(() => localStorage.getItem("eternal-city.local-save")); expect(saved).not.toBeNull();
+  await tapGame(page, 690, 1065); await expect.poll(() => page.evaluate(() => localStorage.getItem("eternal-city.local-save"))).toBeNull();
+  // 검증 이후 다음 케이스에 영향을 주지 않도록 오프닝 완료 저장을 다시 준비한다.
+  await startAfterOpening(page);
   await page.reload(); await page.waitForFunction(() => window.__PF_DEBUG?.ready === true); await page.locator("canvas").click();
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby"); expect(await page.evaluate(() => JSON.parse(localStorage.getItem("eternal-city.local-save")!).settings.sound.masterVolume)).toBeGreaterThan(0);
   await tapGame(page, BASE_WIDTH - 58, 86); await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("settings"); await tapGame(page, BASE_WIDTH - 106, BASE_HEIGHT - 120);

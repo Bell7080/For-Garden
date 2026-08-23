@@ -80,11 +80,11 @@ export interface ProductDto { id: string; section: "trade" | "premium"; name: st
 /** 상품 조회 응답은 서버 시각 기준으로 노출 중인 상품만 담는다. */
 export interface ProductListResponse { products: ProductDto[]; serverTime: string; }
 /** 인게임 상품의 차감·지급·제한 갱신이 모두 끝난 뒤의 응답이다. */
-export interface PurchaseProductResponse extends PlayerStateDto { productId: string; grants: readonly ProductGrant[]; remaining: number; }
+export interface PurchaseProductResponse extends PlayerStateDto { productId: string; grants: readonly ProductGrant[]; remaining: number; /** 이번 구매에서 서버가 생성한 완성 룬들이다. */ grantedRunes: RuneInstance[]; }
 /** DNA 교환 요청은 무작위 시드가 아니라 선택한 교환품과 필요할 때 렐릭 대상을 명시한다. */
 export interface ExchangeDnaRequest { offerId: string; relicId?: string; }
 /** 서버가 확정한 선택 보상과 잔여 DNA를 반환해 UI가 추첨 연출을 만들지 않게 한다. */
-export interface ExchangeDnaResponse extends PlayerStateDto { offerId: string; rewardKind: DnaExchangeKind; relicId?: string; }
+export interface ExchangeDnaResponse extends PlayerStateDto { offerId: string; rewardKind: DnaExchangeKind; relicId?: string; /** 교환 결과가 룬일 때 서버가 생성한 완성 인스턴스다. */ grantedRune?: RuneInstance; }
 
 /** 발굴 요청에는 클라이언트가 선택한 배너와 횟수만 보낸다. */
 export interface PullRequest {

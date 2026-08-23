@@ -7,9 +7,11 @@ import {
   canEngraveRune,
   canEnhanceRune,
   createRuneInstance,
+  generateRune,
   engraveRune,
   enhanceRune,
   RUNE_ENHANCEMENT_RULES,
+  RUNE_GENERATION_RULES,
   RUNE_RARITY_LABELS,
   RUNE_SUB_STAT_COUNTS,
   runeCombatModifiers,
@@ -37,6 +39,18 @@ function makeRune(rarity: RuneRarity) {
 }
 
 describe("룬 도메인", () => {
+  it("같은 seed는 같은 옵션을 재현하고 수치는 등급 고정표만 따른다", () => {
+    /** 간단한 선형 합동 생성기로 seed와 난수 열의 관계를 테스트 내에 고정한다. */
+    const seeded = (seed: number) => () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 0x100000000);
+    const make = (random: () => number) => generateRune({ instanceId: "seeded", baseName: "재현 룬", rarity: "legendary", random });
+    const first = make(seeded(42)); const replay = make(seeded(42));
+    expect(replay).toEqual(first);
+    expect(first.mainStats).toHaveLength(2); expect(first.subStats).toHaveLength(3);
+    expect(new Set([...first.mainStats, ...first.subStats].map(({ key }) => key)).size).toBe(5);
+    expect(first.mainStats.every(({ value }) => value === RUNE_GENERATION_RULES.legendary.mainBase)).toBe(true);
+    expect(first.subStats.every(({ value }) => value === RUNE_GENERATION_RULES.legendary.subBase)).toBe(true);
+  });
+
   it("한국어 희귀도 표기와 희귀도별 보조 옵션 수를 한 규칙으로 제공한다", () => {
     expect(RUNE_RARITY_LABELS).toEqual({ uncommon: "고급", rare: "희귀", epic: "영웅", legendary: "전설" });
     for (const rarity of Object.keys(RUNE_SUB_STAT_COUNTS) as RuneRarity[]) {

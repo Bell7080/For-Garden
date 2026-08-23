@@ -1,13 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { awakeningBonus, BREAKTHROUGH_STEPS, calculateFinalStats, canBreakThrough, canFeedRelic, canLevelUpRelic, feedRelic, FEED_UNIT, levelUpRelic, nextBreakthrough, relicLevelCap, RELIC_LEVEL_CAP, relicExpToNext, relicLevelUpCost } from "../../src/core/relicProgression";
 import type { RelicProgress, Stats } from "../../src/core/types";
-import { getHeartGem } from "../../src/data/heartGems";
 import { RelicProgressionManager } from "../../src/managers/RelicProgressionManager";
 import type { Session } from "../../src/state/session";
-import { createRuneInstance, type RuneStatKey } from "../../src/core/runes";
+import { createRuneInstance, engraveRune, enhanceRune, type RuneInstance, type RuneStatKey } from "../../src/core/runes";
 
 /** 계산 순서를 쉽게 확인할 수 있도록 모든 능력치가 같은 테스트 기본값을 쓴다. */
-const BASE: Stats = { hp: 101, def: 101, res: 101, atk: 101, ap: 101, attackSpeed: 101, moveSpeed: 101, critChance: 101, critDamage: 101, energyGain: 101 };
+const BASE: Stats = { hp: 101, def: 101, res: 101, atk: 101, ap: 101, attackSpeed: 101, moveSpeed: 101, critChance: 101, critDamage: 101, energyGain: 101, lifeSteal: 0, ferocityGain: 0 };
 
 
 /** 장착 테스트에서 정적 정의 ID와 인스턴스 ID가 우연히 같다고 가정하지 않게 룬을 만든다. */
@@ -50,12 +49,34 @@ describe("렐릭 성장 규칙", () => {
   it("기본 능력치에 레벨, 각성, Heart Gem 순으로 단계별 반올림해 적용한다", () => {
     // 각성은 3·4단계에서만 능력치를 올린다. 1단계는 일반 공격 피해만 바꾸므로 수치는 그대로다.
     const early: RelicProgress = { level: 2, exp: 0, awakening: 1, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: ["vital-seed", null, null] };
-    // 101 → 레벨 2%(103) → 각성 0%(103) → Heart Gem HP 10%(113) 순서다.
-    expect(calculateFinalStats(BASE, early, [getHeartGem("vital-seed")]).hp).toBe(113);
+    const rune = testRune("growth");
+    // 101 → 레벨 2%(103) → 각성 0%(103) → 룬 표의 HP 기본 8%(111) 순서다.
+    expect(calculateFinalStats(BASE, early, [rune]).hp).toBe(111);
 
     // 3단계부터 15%씩 붙는다. 103 → 각성 15%(118) → Heart Gem 10%(130).
     const awakened: RelicProgress = { ...early, awakening: 3 };
-    expect(calculateFinalStats(BASE, awakened, [getHeartGem("vital-seed")]).hp).toBe(130);
+    expect(calculateFinalStats(BASE, awakened, [rune]).hp).toBe(127);
+  });
+
+  it("룬 교체 계산은 렐릭 기본 객체를 변경하지 않고 실패 강화는 수치를 올리지 않는다", () => {
+    const baseSnapshot = structuredClone(BASE);
+    const rune = testRune("immutable");
+    const failed = enhanceRune(rune, "hp", 999, 0.99);
+    const progress: RelicProgress = { level: 1, exp: 0, awakening: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [rune.instanceId, null, null] };
+    expect(calculateFinalStats(BASE, progress, [failed]).hp).toBe(calculateFinalStats(BASE, progress, [rune]).hp);
+    expect(BASE).toEqual(baseSnapshot);
+  });
+
+  it("각인은 선택 옵션만 표의 강화 한 단계만큼 올린다", () => {
+    let rune: RuneInstance = testRune("engraved");
+    // 고급 룬은 두 주력 옵션에 세 번씩 시도하면 완료된다. 실패 난수로 일반 강화 증가는 배제한다.
+    for (const key of ["hp", "atk"] as const) for (let attempt = 0; attempt < 3; attempt += 1) rune = enhanceRune(rune, key, 999, 0.99);
+    const engraved = engraveRune(rune, { statKey: "hp", grade: "perfect", valueAdded: 999 });
+    const progress: RelicProgress = { level: 1, exp: 0, awakening: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [rune.instanceId, null, null] };
+    const before = calculateFinalStats(BASE, progress, [rune]);
+    const after = calculateFinalStats(BASE, progress, [engraved]);
+    expect(after.hp).toBeGreaterThan(before.hp);
+    expect(after.atk).toBe(before.atk);
   });
 
   it("각성 단계 효과는 열린 단계까지만 합쳐진다", () => {

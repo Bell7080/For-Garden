@@ -173,6 +173,41 @@ describe("능력치 반영", () => {
     expect(hit("rex", "husk-shell")).toBeGreaterThan(0);
     expect(hit("quetz", "husk-shell")).toBeGreaterThan(0);
   });
+
+  it("은 최종 궁극기·야성 충전 보정과 실제 HP 피해 기준 흡혈을 적용한다", () => {
+    const state = newSkirmish(["rex"], ["husk-shell"]);
+    const [attacker, target] = state.fighters;
+    attacker.def = { ...attacker.def, stats: { ...attacker.def.stats, energyGain: 40, ferocityGain: 50, lifeSteal: 25 } };
+    attacker.hp = attacker.maxHp - 100;
+    attacker.x = 400; attacker.y = 1000; attacker.attackCooldown = 0;
+    target.x = 460; target.y = 1000; target.attackCooldown = 99;
+    const hpBefore = attacker.hp;
+    const targetBefore = target.hp;
+    stepSkirmish(state, 1 / 60, () => 0.999999);
+    const dealt = targetBefore - target.hp;
+    expect(attacker.energy).toBe(40);
+    expect(attacker.ferocity).toBeCloseTo(FEROCITY_RULES.basicGain * 1.5);
+    expect(attacker.hp - hpBefore).toBeCloseTo(dealt * 0.25);
+  });
+
+  it("은 광역 실제 피해에는 흡혈하고 별도 고정 출혈 피해에는 흡혈하지 않는다", () => {
+    const state = newSkirmish(["spino"], ["husk-shell", "husk-raptor"]);
+    const [attacker, primary, secondary] = state.fighters;
+    attacker.def = { ...attacker.def, stats: { ...attacker.def.stats, lifeSteal: 100 } };
+    attacker.hp = 1; attacker.ferocity = 100; attacker.ferocityFever = true;
+    attacker.x = 400; attacker.y = 1000; attacker.attackCooldown = 0;
+    primary.x = 460; primary.y = 1000; primary.attackCooldown = 99;
+    secondary.x = 500; secondary.y = 1000; secondary.attackCooldown = 99;
+    const totalBefore = primary.hp + secondary.hp;
+    stepSkirmish(state, 1 / 60, () => 0.999999);
+    expect(attacker.hp).toBeCloseTo(Math.min(attacker.maxHp, 1 + totalBefore - primary.hp - secondary.hp));
+
+    const healed = attacker.hp;
+    primary.bleed = { remaining: 1, tickIn: 0, percent: BLEED.percentPerSecond };
+    attacker.attackCooldown = 99;
+    stepSkirmish(state, 1 / 60);
+    expect(attacker.hp).toBe(healed);
+  });
 });
 
 describe("실시간 야성 공용 규칙", () => {

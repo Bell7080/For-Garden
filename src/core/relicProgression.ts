@@ -1,4 +1,6 @@
-import type { HeartGemDef, HeartGemStatEffect } from "../data/heartGems";
+import type { HeartGemStatEffect } from "../data/heartGems";
+import { RUNE_STAT_RULES } from "../data/runes";
+import { assertValidRuneInstance, type RuneInstance } from "./runes";
 import type { RelicProgress, Stats } from "./types";
 
 /** 돌파를 하지 않은 렐릭의 레벨 상한. 프로토타입에서도 최대 상태를 금방 볼 수 있게 짧다. */
@@ -179,7 +181,7 @@ export function levelUpRelic(progress: RelicProgress, cheesecake: number): Relic
 }
 
 /** 모든 능력치를 빠짐없이 같은 규칙으로 순회하기 위한 고정 키 목록이다. */
-const STAT_KEYS: readonly (keyof Stats)[] = ["hp", "def", "res", "atk", "ap", "attackSpeed", "moveSpeed", "critChance", "critDamage", "energyGain"];
+const STAT_KEYS: readonly (keyof Stats)[] = ["hp", "def", "res", "atk", "ap", "attackSpeed", "moveSpeed", "critChance", "critDamage", "energyGain", "lifeSteal", "ferocityGain"];
 
 /** 한 성장 단계의 백분율을 적용하고 단계마다 반올림해 계산 순서를 결정적으로 만든다. */
 export function applyStatPercent(stats: Stats, effect: HeartGemStatEffect): Stats {
@@ -203,12 +205,27 @@ export function applyAwakening(stats: Stats, awakening: number): Stats {
 }
 
 /** 장착된 Heart Gem을 슬롯 순서대로 적용해 저장 순서까지 계산 규칙의 일부로 고정한다. */
-export function applyHeartGems(stats: Stats, gems: readonly HeartGemDef[]): Stats {
-  return gems.reduce((current, gem) => applyStatPercent(current, gem.statPercent), stats);
+export function applyHeartGems(stats: Stats, gems: readonly RuneInstance[]): Stats {
+  const result = { ...stats };
+  for (const gem of gems) {
+    assertValidRuneInstance(gem);
+    for (const option of [...gem.mainStats, ...gem.subStats]) {
+      const rule = RUNE_STAT_RULES[option.key];
+      // 저장된 option.value는 과거 버전의 중복 합산값일 수 있어, 성공 이력과 표로 정규화한다.
+      const successes = (gem.enhancementHistory[option.key] ?? []).filter(({ succeeded }) => succeeded).length;
+      const engraved = gem.engravings.some(({ statKey }) => statKey === option.key) ? 1 : 0;
+      const value = rule.base + rule.enhancement * (successes + engraved);
+      const key = option.key as keyof Stats;
+      result[key] = rule.unit === "percentagePoint"
+        ? result[key] + value
+        : Math.round(result[key] * (1 + value / 100));
+    }
+  }
+  return result;
 }
 
 /** 최종 능력치는 기본 → 레벨 → DNA → Heart Gem 순서로만 계산한다. */
-export function calculateFinalStats(base: Stats, progress: RelicProgress, gems: readonly HeartGemDef[]): Stats {
+export function calculateFinalStats(base: Stats, progress: RelicProgress, gems: readonly RuneInstance[]): Stats {
   if (progress.heartGemSlots.length !== 3) throw new RangeError("Heart Gem 슬롯은 정확히 3개여야 합니다.");
   return applyHeartGems(applyAwakening(applyLevelGrowth(base, progress.level), progress.awakening), gems);
 }

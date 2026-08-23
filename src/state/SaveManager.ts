@@ -1,4 +1,4 @@
-import { HEART_GEMS } from "../data/heartGems";
+import { createLegacyHeartGemRune } from "../data/heartGems";
 import { PLAYABLE_RELICS } from "../data/relics";
 import { STAGES } from "../data/stages";
 import { BANNERS } from "../data/banners";
@@ -9,7 +9,7 @@ import { assertValidRuneInstance, type RuneInstance } from "../core/runes";
 
 /** 키는 계정 연동 저장소와 충돌하지 않도록 로컬 프로토타입임을 명시한다. */
 export const SAVE_STORAGE_KEY = "eternal-city.local-save";
-export const CURRENT_SAVE_VERSION = 13;
+export const CURRENT_SAVE_VERSION = 14;
 
 type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
@@ -65,9 +65,7 @@ export class SaveManager {
       wallet: { ...state.wallet },
       gachaPityByGroup: Object.fromEntries(Object.entries(state.gachaPityByGroup).map(([id, pity]) => [id, { ...pity }])),
       relicProgress: Object.fromEntries(Object.entries(state.relicProgress).map(([id, value]) => [id, cloneProgress(value)])),
-      ownedHeartGemIds: [...state.ownedHeartGemIds],
-      runeInventory: (state.runeInventory ?? []).map(cloneRune),
-      runeSlotsByRelicId: Object.fromEntries(Object.entries(state.runeSlotsByRelicId ?? {}).map(([id, slots]) => [id, [...slots]])),
+      runeInventory: state.runeInventory.map(cloneRune),
       dailyContent: { ...state.dailyContent, completedIds: [...state.dailyContent.completedIds], claimedRewardIds: [...state.dailyContent.claimedRewardIds] },
       // 임무 진행 객체와 수령 배열도 호출자가 저장 후 바꾸지 못하도록 복사한다.
       missions: { ...state.missions, progress: { ...state.missions.progress }, claimedIds: [...state.missions.claimedIds] },
@@ -115,9 +113,13 @@ export class SaveManager {
     const missions = { dailyKey: savedMissions?.dailyKey ?? "", weeklyKey: savedMissions?.weeklyKey ?? "", progress: savedMissions?.progress ?? {}, claimedIds: savedMissions?.claimedIds ?? [] };
     // 상품 도입 전 저장에는 구매 이력이 없으므로 빈 기록으로 안전하게 시작한다.
     const productPurchases = legacy.productPurchases && typeof legacy.productPurchases === "object" ? legacy.productPurchases : {};
-    // v13 이전에는 인스턴스형 룬이 없었으므로 기존 정적 Heart Gem을 억지로 변환하지 않는다.
-    const runeInventory = Array.isArray(legacy.runeInventory) ? legacy.runeInventory : [];
-    const runeSlotsByRelicId = legacy.runeSlotsByRelicId && typeof legacy.runeSlotsByRelicId === "object" ? legacy.runeSlotsByRelicId : {};
+    // v12는 정적 정의 ID를 소유권과 슬롯에 함께 썼다. 결정적 ID로 인스턴스를 만들고 모든 슬롯을 같은 표로 치환한다.
+    const isV12OrOlder = legacy.saveVersion === undefined || Number(legacy.saveVersion) <= 12;
+    const legacyOwned = Array.isArray(legacy.ownedHeartGemIds) ? legacy.ownedHeartGemIds.filter((id): id is string => typeof id === "string") : [];
+    let runeInventory: RuneInstance[];
+    try { runeInventory = isV12OrOlder ? legacyOwned.map(createLegacyHeartGemRune) : (Array.isArray(legacy.runeInventory) ? legacy.runeInventory as unknown as RuneInstance[] : []); }
+    catch { throw new SaveDataError("v12 Heart Gem 보유 정보가 올바르지 않습니다."); }
+    const legacyIdMap = new Map(legacyOwned.map((id) => [id, `legacy-v12-${id}`]));
     // 스토리 저장 도입 전 계정은 미완료로 두어 다음 타이틀 진입에서 오프닝을 한 번 재생한다.
     const completedStoryIds = Array.isArray(legacy.completedStoryIds) ? legacy.completedStoryIds : [];
     // 관찰 인터뷰 도입 전 저장에는 일지가 없으며, 완료 스토리에서 내용을 추측해 만들지 않는다.
@@ -128,6 +130,7 @@ export class SaveManager {
     // 저장에서는 플레이어별 신규 유대 필드만 보강하고 옛 정의 캐시는 의도적으로 전파하지 않는다.
     const savedProgress = legacy.relicProgress && typeof legacy.relicProgress === "object"
       ? legacy.relicProgress as Record<string, RelicProgress> : {};
+    const v13Slots = legacy.runeSlotsByRelicId && typeof legacy.runeSlotsByRelicId === "object" ? legacy.runeSlotsByRelicId as Record<string, RelicProgress["heartGemSlots"]> : {};
     const relicProgress = Object.fromEntries(Object.entries(savedProgress).map(([id, progress]) => [id, {
       ...progress,
       // 구버전 저장은 관계 진행과 일일 날짜를 모두 안전한 미진행 상태로 복구한다.
@@ -140,20 +143,21 @@ export class SaveManager {
       exp: progress.exp ?? 0,
       // 돌파는 v7에서 생겼다. 예전 저장은 아직 천장을 뚫지 않은 상태로 본다.
       breakthrough: progress.breakthrough ?? 0,
+      // v12 슬롯의 정적 ID와 임시 v13 장착표를 최종 단일 기준인 RelicProgress 슬롯으로 합친다.
+      heartGemSlots: (v13Slots[id] ?? progress.heartGemSlots ?? [null, null, null]).map((slot) => slot === null ? null : (legacyIdMap.get(slot) ?? slot)) as RelicProgress["heartGemSlots"],
     }]));
-    if (legacy.saveVersion === undefined) {
-      return { ...legacy, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, gachaPityByGroup: normalizedPity, dailyContent, missions, productPurchases, runeInventory, runeSlotsByRelicId } as unknown as SaveData;
-    }
-    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, CURRENT_SAVE_VERSION];
+    // 반환 전 폐기 필드를 구조 분해해 현재 저장 JSON에 다시 섞이지 않게 한다.
+    const { ownedHeartGemIds: _oldOwned, runeSlotsByRelicId: _oldSlots, ...current } = legacy;
+    if (legacy.saveVersion === undefined) return { ...current, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, gachaPityByGroup: normalizedPity, dailyContent, missions, productPurchases, runeInventory } as unknown as SaveData;
+    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, CURRENT_SAVE_VERSION];
     if (!supported.includes(legacy.saveVersion as number)) throw new SaveDataError(`지원하지 않는 저장 버전입니다: ${String(legacy.saveVersion)}`);
-    return { ...legacy, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, runeSlotsByRelicId } as unknown as SaveData;
+    return { ...current, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory } as unknown as SaveData;
   }
 
   /** 콘텐츠 ID와 교차 필드 불변식까지 검사해 부분 손상을 조용히 전파하지 않는다. */
   validate(data: SaveData): void {
     const relicIds = new Set(PLAYABLE_RELICS.map(({ id }) => id));
     const stageIds = new Set(STAGES.map(({ id }) => id));
-    const gemIds = new Set(HEART_GEMS.map(({ id }) => id));
     const fail = (message: string): never => { throw new SaveDataError(message); };
     if (data.saveVersion !== CURRENT_SAVE_VERSION || !Array.isArray(data.ownedRelicIds) || data.ownedRelicIds.some((id) => !relicIds.has(id))) fail("존재하지 않는 렐릭 ID가 있습니다.");
     if (!Array.isArray(data.completedStoryIds) || data.completedStoryIds.some((id) => typeof id !== "string") || new Set(data.completedStoryIds).size !== data.completedStoryIds.length) fail("완료 스토리 정보가 올바르지 않습니다.");
@@ -172,18 +176,13 @@ export class SaveManager {
     if (data.ownedRelicIds.some((id) => !data.relicProgress[id]) || Object.keys(data.relicProgress).some((id) => !data.ownedRelicIds.includes(id))) fail("보유 렐릭과 성장 정보가 일치하지 않습니다.");
     for (const [id, progress] of Object.entries(data.relicProgress)) {
       if (!relicIds.has(id) || !Number.isInteger(progress.awakening) || progress.awakening < 0 || progress.awakening > 5 || !Number.isInteger(progress.breakthrough) || progress.breakthrough < 0 || progress.breakthrough > BREAKTHROUGH_CAP || !Number.isInteger(progress.exp) || progress.exp < 0 || !Number.isInteger(progress.bondLevel) || progress.bondLevel < 0 || progress.bondLevel > 10 || !Number.isInteger(progress.bondXp) || progress.bondXp < 0 || progress.bondXp > 650 || typeof progress.lastLobbyInteractionDate !== "string" || !Number.isInteger(progress.level) || progress.level < 1 || !Array.isArray(progress.heartGemSlots) || progress.heartGemSlots.length !== 3) fail("렐릭 성장 정보가 올바르지 않습니다.");
-      if (progress.heartGemSlots.some((id) => id !== null && !gemIds.has(id))) fail("Heart Gem 장착 정보가 올바르지 않습니다.");
     }
-    if (!Array.isArray(data.ownedHeartGemIds) || data.ownedHeartGemIds.some((id) => !gemIds.has(id))) fail("Heart Gem 보유 정보가 올바르지 않습니다.");
     if (!Array.isArray(data.runeInventory)) fail("룬 인벤토리가 올바르지 않습니다.");
     try { data.runeInventory.forEach(assertValidRuneInstance); } catch { fail("룬 인벤토리에 손상된 인스턴스가 있습니다."); }
     const runeIds = data.runeInventory.map(({ instanceId }) => instanceId);
     if (new Set(runeIds).size !== runeIds.length) fail("룬 인스턴스 ID가 중복되었습니다.");
-    if (!data.runeSlotsByRelicId || typeof data.runeSlotsByRelicId !== "object") fail("룬 장착표가 올바르지 않습니다.");
-    const equipped = Object.entries(data.runeSlotsByRelicId).flatMap(([relicId, slots]) => {
-      if (!data.ownedRelicIds.includes(relicId) || !Array.isArray(slots) || slots.length !== 3) fail("룬 장착 슬롯이 올바르지 않습니다.");
-      return slots.filter((id): id is string => id !== null);
-    });
+    // RelicProgress가 장착의 단일 기준이며 모든 값은 보유 RuneInstance.instanceId여야 한다.
+    const equipped = Object.values(data.relicProgress).flatMap(({ heartGemSlots }) => heartGemSlots.filter((id): id is string => id !== null));
     if (equipped.some((id) => !runeIds.includes(id)) || new Set(equipped).size !== equipped.length) fail("룬 장착 소유권 또는 중복이 올바르지 않습니다.");
     if (!data.dailyContent || typeof data.dailyContent.date !== "string" || !Number.isInteger(data.dailyContent.restorationEntries) || data.dailyContent.restorationEntries < 0 || data.dailyContent.restorationEntries > 3 || !Array.isArray(data.dailyContent.completedIds) || !Array.isArray(data.dailyContent.claimedRewardIds)) fail("일일 콘텐츠 정보가 올바르지 않습니다.");
     if (!data.missions || typeof data.missions.dailyKey !== "string" || typeof data.missions.weeklyKey !== "string" || !data.missions.progress || typeof data.missions.progress !== "object" || Object.values(data.missions.progress).some((value) => !Number.isInteger(value) || value < 0) || !Array.isArray(data.missions.claimedIds) || new Set(data.missions.claimedIds).size !== data.missions.claimedIds.length) fail("임무 진행 정보가 올바르지 않습니다.");
@@ -195,9 +194,8 @@ export class SaveManager {
       completedStoryIds: new Set(data.completedStoryIds),
       observationRecords: data.observationRecords.map((record) => ({ ...record })),
       selectedStageId: data.selectedStageId, party: [...data.party], cleared: new Set(data.clearedStageIds), owned: new Set(data.ownedRelicIds), favorite: data.favorite, bookmarked: new Set(data.bookmarkedRelicIds),
-      wallet: { ...data.wallet }, relicProgress: Object.fromEntries(Object.entries(data.relicProgress).map(([id, value]) => [id, cloneProgress(value)])), ownedHeartGemIds: [...data.ownedHeartGemIds],
+      wallet: { ...data.wallet }, relicProgress: Object.fromEntries(Object.entries(data.relicProgress).map(([id, value]) => [id, cloneProgress(value)])),
       runeInventory: data.runeInventory.map(cloneRune),
-      runeSlotsByRelicId: Object.fromEntries(Object.entries(data.runeSlotsByRelicId).map(([id, slots]) => [id, [...slots] as [string | null, string | null, string | null]])),
       gachaPityByGroup: Object.fromEntries(Object.entries(data.gachaPityByGroup).map(([id, pity]) => [id, { ...pity }])),
       dailyContent: { ...data.dailyContent, completedIds: [...data.dailyContent.completedIds], claimedRewardIds: [...data.dailyContent.claimedRewardIds] },
       missions: { ...data.missions, progress: { ...data.missions.progress }, claimedIds: [...data.missions.claimedIds] },

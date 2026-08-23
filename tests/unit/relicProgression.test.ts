@@ -4,9 +4,17 @@ import type { RelicProgress, Stats } from "../../src/core/types";
 import { getHeartGem } from "../../src/data/heartGems";
 import { RelicProgressionManager } from "../../src/managers/RelicProgressionManager";
 import type { Session } from "../../src/state/session";
+import { createRuneInstance, type RuneStatKey } from "../../src/core/runes";
 
 /** 계산 순서를 쉽게 확인할 수 있도록 모든 능력치가 같은 테스트 기본값을 쓴다. */
 const BASE: Stats = { hp: 101, def: 101, res: 101, atk: 101, ap: 101, attackSpeed: 101, moveSpeed: 101, critChance: 101, critDamage: 101, energyGain: 101 };
+
+
+/** 장착 테스트에서 정적 정의 ID와 인스턴스 ID가 우연히 같다고 가정하지 않게 룬을 만든다. */
+function testRune(instanceId: string) {
+  const values = Object.fromEntries(["hp", "atk", "ap", "def", "res", "moveSpeed", "attackSpeed", "lifeSteal", "critChance", "critDamage", "ferocityGain", "energyGain"].map((key) => [key, 1])) as Record<RuneStatKey, number>;
+  return createRuneInstance({ instanceId, baseName: instanceId, rarity: "uncommon", statValues: values, random: () => 0 });
+}
 
 /** manager 검증 테스트마다 독립된 저장 상태를 만든다. */
 function makeSession(): Session {
@@ -17,7 +25,7 @@ function makeSession(): Session {
     // 보유 렐릭과 성장 레코드는 실제 저장 계약처럼 항상 한 쌍으로 구성한다.
     wallet: { fossil: 0, amber: 0, gems: 0, gold: 0, stamina: 0, dnaFragments: 0, cheesecake: 0 }, relicProgress: {
       rex: { level: 1, exp: 0, awakening: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] },
-    }, ownedHeartGemIds: ["vital-seed", "fang-core"],
+    }, runeInventory: [testRune("vital-seed"), testRune("fang-core")],
     dailyContent: { date: "", restorationEntries: 0, completedIds: [], claimedRewardIds: [] },
     missions: { dailyKey: "", weeklyKey: "", progress: {}, claimedIds: [] },
     // 상품 테스트가 아닌 세션도 최신 저장 계약의 빈 구매 이력을 명시한다.

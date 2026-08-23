@@ -1,6 +1,5 @@
 import { AWAKENING_CAP, calculateFinalStats } from "../core/relicProgression";
 import type { RelicProgress, Stats } from "../core/types";
-import { getHeartGem } from "../data/heartGems";
 import { getRelic } from "../data/relics";
 import { createInitialRelicProgress, session, type Session } from "../state/session";
 import { saveManager } from "../state/SaveManager";
@@ -60,8 +59,7 @@ export class RelicProgressionManager {
     const equipped = slots.filter((id): id is string => id !== null);
     if (new Set(equipped).size !== equipped.length) throw new Error("같은 Heart Gem을 중복 장착할 수 없습니다.");
     for (const id of equipped) {
-      getHeartGem(id);
-      if (!this.state.ownedHeartGemIds.includes(id)) throw new Error(`보유하지 않은 Heart Gem입니다: ${id}`);
+      if (!this.state.runeInventory.some((rune) => rune.instanceId === id)) throw new Error(`보유하지 않은 룬 인스턴스입니다: ${id}`);
     }
     this.ownedProgress(relicId).heartGemSlots = [...slots] as RelicProgress["heartGemSlots"];
     this.persistSharedSession();
@@ -70,7 +68,13 @@ export class RelicProgressionManager {
   /** UI와 전투가 공유할 최종 능력치를 순수 코어 계산기로 구한다. */
   getFinalStats(relicId: string): Stats {
     const progress = this.getProgress(relicId);
-    const gems = progress.heartGemSlots.flatMap((id) => (id === null ? [] : [getHeartGem(id)]));
+    // 전투 계산기에는 장착 시점의 인스턴스 옵션 합계를 정적 효과와 같은 최소 모양으로 전달한다.
+    const gems = progress.heartGemSlots.flatMap((id) => {
+      const rune = id === null ? undefined : this.state.runeInventory.find((candidate) => candidate.instanceId === id);
+      if (!rune) return [];
+      const statPercent = Object.fromEntries([...rune.mainStats, ...rune.subStats].map(({ key, value }) => [key, value]));
+      return [{ id: rune.instanceId, name: rune.customName ?? rune.baseName, rarity: rune.rarity, iconKey: "rune-instance", statPercent }];
+    });
     return calculateFinalStats(getRelic(relicId).stats, progress, gems);
   }
 

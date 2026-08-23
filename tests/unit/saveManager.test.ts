@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { CURRENT_SAVE_VERSION, SAVE_STORAGE_KEY, SaveDataError, SaveManager } from "../../src/state/SaveManager";
 import { createDefaultSession, type SaveData } from "../../src/state/session";
+import { createRuneInstance, type RuneStatKey } from "../../src/core/runes";
+
+/** 저장 왕복과 손상 검증에 쓰는 결정적 신규 룬이다. */
+function testRune(instanceId = "rune-save-1") {
+  const values = Object.fromEntries(["hp", "atk", "ap", "def", "res", "moveSpeed", "attackSpeed", "lifeSteal", "critChance", "critDamage", "ferocityGain", "energyGain"].map((key) => [key, 1])) as Record<RuneStatKey, number>;
+  return createRuneInstance({ instanceId, baseName: "저장 테스트 룬", rarity: "uncommon", statValues: values, random: () => 0 });
+}
 
 /** 브라우저 전역을 건드리지 않고 직렬화 경계를 검증하는 최소 Storage 대역이다. */
 class MemoryStorage {
@@ -179,5 +186,43 @@ describe("SaveManager", () => {
     const data = validData();
     data.relicProgress.anky.awakening = 6;
     expect(() => new SaveManager(new MemoryStorage()).validate(data)).toThrow("성장 정보");
+  });
+
+  it("v12 정적 젬을 안정적인 룬 인스턴스로 바꾸고 장착 참조도 함께 보존한다", () => {
+    const legacy = validData() as unknown as Record<string, unknown>;
+    legacy.saveVersion = 12;
+    legacy.ownedHeartGemIds = ["vital-seed", "fang-core", "ancient-pulse"];
+    delete legacy.runeInventory;
+    const progress = legacy.relicProgress as Record<string, { heartGemSlots: [string | null, string | null, string | null] }>;
+    progress.anky.heartGemSlots = ["vital-seed", null, "ancient-pulse"];
+
+    const migrated = new SaveManager(new MemoryStorage()).migrate(legacy);
+    expect(migrated.runeInventory.map(({ instanceId }) => instanceId)).toEqual(["legacy-v12-vital-seed", "legacy-v12-fang-core", "legacy-v12-ancient-pulse"]);
+    expect(migrated.relicProgress.anky.heartGemSlots).toEqual(["legacy-v12-vital-seed", null, "legacy-v12-ancient-pulse"]);
+  });
+
+  it("신규 룬 인벤토리와 인스턴스 장착 참조를 저장 후 독립 객체로 왕복한다", () => {
+    const storage = new MemoryStorage();
+    const source = createDefaultSession();
+    source.runeInventory = [testRune()];
+    source.relicProgress.anky.heartGemSlots = ["rune-save-1", null, null];
+    new SaveManager(storage).save(source);
+    const loaded = new SaveManager(storage).load()!;
+    expect(loaded.runeInventory).toEqual(source.runeInventory);
+    expect(loaded.runeInventory).not.toBe(source.runeInventory);
+    expect(loaded.relicProgress.anky.heartGemSlots).toEqual(["rune-save-1", null, null]);
+  });
+
+  it("손상된 강화 이력과 존재하지 않는 장착 인스턴스 참조를 거부한다", () => {
+    const historyData = validData();
+    const rune = testRune();
+    historyData.runeInventory = [rune];
+    const key = rune.mainStats[0].key;
+    historyData.runeInventory[0] = { ...rune, enhancementHistory: { [key]: [{ attempt: 1, successChance: 2, succeeded: true, valueAdded: 1 }] } };
+    expect(() => new SaveManager(new MemoryStorage()).validate(historyData)).toThrow("손상된 인스턴스");
+
+    const slotData = validData();
+    slotData.relicProgress.anky.heartGemSlots = ["missing-instance", null, null];
+    expect(() => new SaveManager(new MemoryStorage()).validate(slotData)).toThrow("장착 소유권");
   });
 });

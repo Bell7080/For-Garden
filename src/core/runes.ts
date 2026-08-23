@@ -190,13 +190,17 @@ export function assertValidRuneInstance(rune: RuneInstance): void {
   for (const [key, history] of Object.entries(rune.enhancementHistory)) {
     if (!optionKeys.has(key as RuneStatKey)) throw new Error("존재하지 않는 옵션의 강화 이력이 있습니다.");
     history?.forEach((record, index) => {
-      if (record.attempt !== index + 1 || record.successChance < 0 || record.successChance > 1) throw new Error("강화 이력 순서 또는 확률이 올바르지 않습니다.");
+      if (!Number.isInteger(record.attempt) || record.attempt < 1 || record.attempt > RUNE_ENHANCEMENT_RULES.attemptsPerOption || record.attempt !== index + 1 || !Number.isFinite(record.successChance) || record.successChance < 0 || record.successChance > 1 || typeof record.succeeded !== "boolean") throw new Error("강화 이력 순서 또는 확률이 올바르지 않습니다.");
       if (!Number.isFinite(record.valueAdded) || record.valueAdded < 0 || (!record.succeeded && record.valueAdded !== 0)) throw new Error("강화 이력의 증가량이 올바르지 않습니다.");
     });
     if ((history?.length ?? 0) > RUNE_ENHANCEMENT_RULES.attemptsPerOption) throw new Error("한 옵션은 세 번까지만 강화할 수 있습니다.");
   }
+  // 성공은 반드시 실제 시도 레코드의 부분집합이어야 하며 손상된 역직렬화 값을 숫자로 묵인하지 않는다.
+  const histories = Object.values(rune.enhancementHistory).flatMap((history) => history ?? []);
+  if (histories.filter(({ succeeded }) => succeeded).length > histories.length) throw new Error("강화 성공 횟수는 시도 횟수를 넘을 수 없습니다.");
   if (rune.engravings.length > 1) throw new Error("각인은 룬 하나에 한 번만 적용할 수 있습니다.");
-  if (rune.engravings.some(({ statKey, valueAdded }) => !optionKeys.has(statKey) || !Number.isFinite(valueAdded) || valueAdded < 0)) throw new Error("각인 결과가 올바르지 않습니다.");
+  if (rune.engravings.length > 0 && !rune.enhancementComplete) throw new Error("강화를 완료하기 전에는 각인할 수 없습니다.");
+  if (rune.engravings.some(({ statKey, grade, valueAdded }) => !optionKeys.has(statKey) || !["normal", "great", "perfect"].includes(grade) || !Number.isFinite(valueAdded) || valueAdded < 0)) throw new Error("각인 결과가 올바르지 않습니다.");
   if (rune.enhancementComplete !== (runeEnhancementAttempts(rune) === runeTotalEnhancementAttempts(rune.rarity))) throw new Error("강화 완료 상태가 누적 시도와 다릅니다.");
 }
 

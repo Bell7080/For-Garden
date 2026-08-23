@@ -95,6 +95,12 @@
 - 속성·직군·재화 아이콘은 그림 파일이다. 원본은 저장소에 남기지 않고 `scripts/prepare_icons.py`가
   구운 WebP만 `public/sprites/{elements,roles,currency}`에 둔다. 속성·직군은 단색 실루엣이라
   **색도 그 스크립트의 표에서 정한다** — 화면이 tint로 다시 칠하지 않는다.
+- 스킬 일러스트는 **흰 실루엣 WebP 한 장**이다. 원본(검은 판 위 흰 그림)은 저장소에 남기지
+  않고 `scripts/prepare_skill_icons.py`가 밝기를 알파로 옮겨 구운 것만
+  `public/sprites/skills/<렐릭id>/{passive,basic,ultimate,ferocity}.webp`에 둔다. 파일에 색을
+  굽지 않는 이유는 색이 개체의 속성·직군에서 나오기 때문이다 — 속성과 직군을 섞은 은은한
+  파스텔은 `src/ui/skillArt.ts`의 `skillArtTint` 하나가 정하고 화면은 tint로 입히기만 한다.
+  아트가 없는 개체는 공용 효과 아이콘(`skillIcons.ts`)으로 자동으로 되돌아간다.
 - 상단 재화 줄의 칸만 기울이지 않고 둥근 면(`drawRoundedLayer`)을 쓴다. 여러 칸이 나란히
   설 때 칸마다 기울면 숫자와 아이콘까지 비뚤어 보여 줄이 어수선해지기 때문이다.
 - 상단 줄의 재화는 화면마다 다른 조합을 세운다 — 로비·도감은 보석·골드·스테미나, 모집은

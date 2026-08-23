@@ -37,6 +37,7 @@ import { openSkillPopup, type SkillInfoViewModel } from "./SkillPopup";
 import { relicCollection } from "../managers/RelicCollectionManager";
 import { COLOR, textStyle } from "./theme";
 import { FALLBACK_SKILL_ICON } from "./skillIcons";
+import { skillArtFor, skillArtTint, SKILL_ART_WASH_ALPHA, type SkillArtSlot } from "./skillArt";
 import { gameApi } from "../api/FakeServer";
 import { AWAKENING_CAP, AWAKENING_STEPS, canBreakThrough, canFeedRelic, FEED_UNIT, nextBreakthrough, relicExpToNext, relicLevelCap } from "../core/relicProgression";
 import { session } from "../state/session";
@@ -1330,12 +1331,13 @@ export class InfoManager {
   /** 원화 아래 스킬 아이콘 세 개. 누르면 정형 팝업이 뜬다. */
   private buildSkillIcons(def: RelicDef): void {
     for (const icon of this.skillIcons.splice(0)) icon.destroy();
-    const entries: [string, Skill, number | undefined][] = [
-      ["패시브", { ...def.passive, power: def.passive.value, damageType: "physical" } as unknown as Skill, undefined],
-      ["일반 공격", def.basic, undefined],
-      ["궁극기", def.ultimate, def.ultimate.cost],
+    const entries: [string, Skill, number | undefined, SkillArtSlot][] = [
+      ["패시브", { ...def.passive, power: def.passive.value, damageType: "physical" } as unknown as Skill, undefined, "passive"],
+      ["일반 공격", def.basic, undefined, "basic"],
+      ["궁극기", def.ultimate, def.ultimate.cost, "ultimate"],
     ];
-    entries.forEach(([kindLabel, skill, gaugeCost], index) => {
+    const tint = skillArtTint(def.element, def.role);
+    entries.forEach(([kindLabel, skill, gaugeCost, slot], index) => {
       const size = SKILL_ICON.size;
       const container = this.scene.add.container(SKILL_ICON.x + index * SKILL_ICON.step, BASE_HEIGHT - 196);
       const bevel = { topLeft: size * 0.26, topRight: 0, bottomRight: size * 0.26, bottomLeft: 0 };
@@ -1347,11 +1349,18 @@ export class InfoManager {
         edgeAlpha: index === 2 ? 0.9 : 0.45,
       }));
       const innerSize = size - 16;
-      container.add(drawLayer(this.scene, 0, -6, chipPoints(innerSize, innerSize - 14, {
+      const inner = chipPoints(innerSize, innerSize - 14, {
         bevel: { topLeft: innerSize * 0.22, topRight: 0, bottomRight: innerSize * 0.22, bottomLeft: 0 },
-      }), { fill: 0x05080c, alpha: 0.55 }));
-      const texture = this.scene.textures.exists(skill.iconAssetId) ? skill.iconAssetId : FALLBACK_SKILL_ICON;
-      container.add(this.scene.add.image(0, -8, texture).setDisplaySize(size * 0.52, size * 0.52));
+      });
+      container.add(drawLayer(this.scene, 0, -6, inner, { fill: 0x05080c, alpha: 0.55 }));
+      const art = skillArtFor(def.id, slot);
+      // 그림 자리에 같은 색을 아주 옅게 한 겹 깔아 아이콘이 색판 위에 앉은 것처럼 보이게 한다.
+      if (art) container.add(drawLayer(this.scene, 0, -6, inner, { fill: tint, alpha: SKILL_ART_WASH_ALPHA }));
+      const texture = art ?? (this.scene.textures.exists(skill.iconAssetId) ? skill.iconAssetId : FALLBACK_SKILL_ICON);
+      const image = this.scene.add.image(0, -8, texture).setDisplaySize(size * (art ? 0.74 : 0.52), size * (art ? 0.74 : 0.52));
+      // 전용 일러스트는 흰 실루엣이라 여기서 속성·직군을 섞은 색을 입는다.
+      if (art) image.setTint(tint);
+      container.add(image);
       container.add(this.scene.add.text(0, size / 2 - 26, kindLabel, textStyle({ role: "emphasis", size: 19, color: index === 2 ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5));
       const hit = this.scene.add.rectangle(0, 0, size, size, 0xffffff, 0).setInteractive({ useHandCursor: true });
       hit.on("pointerdown", () => container.setScale(1.08));
@@ -1359,7 +1368,7 @@ export class InfoManager {
       hit.on("pointerup", () => {
         // 팝업이 떠 있는 동안 아이콘은 눌린 채로 남는다. 어디서 나온 쪽지인지 보이게 한다.
         container.setScale(1.08);
-        openSkillPopup(this.scene, this.popups, this.keywords, this.skillViewModel(kindLabel, skill, gaugeCost), {
+        openSkillPopup(this.scene, this.popups, this.keywords, this.skillViewModel(kindLabel, skill, gaugeCost, slot), {
           x: container.x,
           y: container.y - size / 2,
           onClose: () => container.setScale(1),
@@ -1388,7 +1397,15 @@ export class InfoManager {
       bevel: { topLeft: badgeSize * 0.34, topRight: 0, bottomRight: badgeSize * 0.34, bottomLeft: 0 },
     });
     badge.add(drawLayer(this.scene, 0, 0, shape, { fill: FEROCITY_BADGE, alpha: 0.96, edge: 0xf0a58a, edgeAlpha: 0.8 }));
-    badge.add(drawGlyph(this.scene, "ferocity", 0, 1, badgeSize * 0.56, 0xffd9c4));
+    // 폭주도 스킬 넷 중 하나라 전용 일러스트를 쓴다. 다만 붉은 판 위에서는 속성 색을 그대로
+    // 얹으면 판에 묻히므로, 여기서만 야성의 살구빛을 쓴다 — 이 뱃지는 개체 구분이 아니라
+    // "야성이 이렇게 터진다"를 알리는 자리이기 때문이다.
+    const art = skillArtFor(def.id, "ferocity");
+    if (art) {
+      badge.add(this.scene.add.image(0, 1, art).setDisplaySize(badgeSize * 0.82, badgeSize * 0.82).setTint(0xffd9c4));
+    } else {
+      badge.add(drawGlyph(this.scene, "ferocity", 0, 1, badgeSize * 0.56, 0xffd9c4));
+    }
     // 입력 영역도 뱃지 크기에 딱 맞춘다. 넓게 잡으면 아래 아이콘의 터치를 가로챈다.
     const hit = this.scene.add.rectangle(0, 0, badgeSize, badgeSize, 0xffffff, 0).setInteractive({ useHandCursor: true });
     hit.on("pointerdown", () => badge.setScale(1.1));
@@ -1422,7 +1439,7 @@ export class InfoManager {
   }
 
   /** 읽기 전용 도감에 실제 방어력을 가정하지 않은 스킬 능력치 배율을 만든다. */
-  private skillViewModel(kindLabel: string, skill: Skill, gaugeCost?: number): SkillInfoViewModel {
+  private skillViewModel(kindLabel: string, skill: Skill, gaugeCost?: number, slot?: SkillArtSlot): SkillInfoViewModel {
     const attacker: Combatant | undefined = this.currentDef && {
       def: this.currentDef, hp: this.currentDef.stats.hp, maxHp: this.currentDef.stats.hp,
       energy: 0, ferocity: 0, bondLevel: 0, ferocityFever: false,
@@ -1436,6 +1453,10 @@ export class InfoManager {
       name: skill.name,
       kindLabel,
       iconAssetId: skill.iconAssetId as SkillIconAssetId,
+      // 전용 일러스트가 있으면 팝업도 같은 그림과 같은 색을 쓴다. 아이콘과 쪽지가 갈라지면
+      // 어느 스킬을 눌렀는지 되짚어야 한다.
+      art: this.currentDef && slot ? skillArtFor(this.currentDef.id, slot) : undefined,
+      tint: this.currentDef && skillArtTint(this.currentDef.element, this.currentDef.role),
       effectType: skill.effectType,
       valueLabel,
       gaugeCost,

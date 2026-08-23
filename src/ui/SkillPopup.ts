@@ -4,6 +4,7 @@ import type { EffectType, SkillIconAssetId } from "../core/types";
 import { chipPoints, drawHairline, drawLayer, HOLO } from "./holo";
 import type { PopupLayer } from "./PopupLayer";
 import { FALLBACK_SKILL_ICON } from "./skillIcons";
+import { SKILL_ART_WASH_ALPHA } from "./skillArt";
 import { COLOR, textStyle } from "./theme";
 
 /** 데이터 효과 분류를 플레이어가 읽는 고정 라벨로 바꾼다. */
@@ -21,6 +22,10 @@ export interface SkillInfoViewModel {
   /** 패시브 · 일반 공격 · 궁극기. */
   kindLabel: string;
   iconAssetId: SkillIconAssetId;
+  /** 전용 스킬 일러스트의 텍스처 키. 없으면 공용 효과 아이콘으로 되돌린다. */
+  art?: string;
+  /** 속성·직군을 섞은 필터 색. 흰 실루엣 일러스트에만 입힌다. */
+  tint?: number;
   effectType: EffectType;
   /** 배율이나 예상 피해처럼 한 줄로 읽는 수치. */
   valueLabel?: string;
@@ -61,11 +66,16 @@ export function openSkillPopup(
     const iconSize = 132;
     const iconX = left + 96;
     const iconY = top + 108;
-    body.add(drawLayer(scene, iconX, iconY, chipPoints(iconSize, iconSize, {
+    const chip = chipPoints(iconSize, iconSize, {
       bevel: { topLeft: iconSize * 0.26, topRight: 0, bottomRight: iconSize * 0.26, bottomLeft: 0 },
-    }), { fill: 0x1a1f27, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.6 }));
-    const texture = scene.textures.exists(skill.iconAssetId) ? skill.iconAssetId : FALLBACK_SKILL_ICON;
-    body.add(scene.add.image(iconX, iconY, texture).setDisplaySize(iconSize * 0.62, iconSize * 0.62));
+    });
+    body.add(drawLayer(scene, iconX, iconY, chip, { fill: 0x1a1f27, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.6 }));
+    const art = skill.art && scene.textures.exists(skill.art) ? skill.art : undefined;
+    if (art && skill.tint !== undefined) body.add(drawLayer(scene, iconX, iconY, chip, { fill: skill.tint, alpha: SKILL_ART_WASH_ALPHA }));
+    const texture = art ?? (scene.textures.exists(skill.iconAssetId) ? skill.iconAssetId : FALLBACK_SKILL_ICON);
+    const image = scene.add.image(iconX, iconY, texture).setDisplaySize(iconSize * (art ? 0.82 : 0.62), iconSize * (art ? 0.82 : 0.62));
+    if (art && skill.tint !== undefined) image.setTint(skill.tint);
+    body.add(image);
 
     // 분류와 이름. 궁극기는 소비 게이지를 분류 옆에 붙여 "얼마를 쓰는 기술인지"를 먼저 알린다.
     const textLeft = iconX + iconSize / 2 + 28;

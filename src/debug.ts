@@ -21,6 +21,8 @@ export interface DebugBattle {
   ultimateSequenceActive?: boolean;
   /** 활성 연출 뒤에 기다리는 전투원 id. 게임 규칙 입력에는 사용하지 않는다. */
   ultimateQueue?: string[];
+  /** 실제 이동 중인 적 클릭 영역 중심. E2E가 고정 좌표 대신 렌더 입력 계약을 누르는 데만 쓴다. */
+  enemyTargets?: Array<{ x: number; y: number }>;
 }
 
 export interface DebugState {

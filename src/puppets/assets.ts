@@ -126,6 +126,14 @@ export const RIPA_ASSET: PuppetAsset = {
   content: { left: 352, top: 155, right: 993, bottom: 1082 },
 };
 
+/** 적 상세창은 임시 아군 초상이 아니라 번호가 일치하는 적 전용 전신 묶음을 사용한다. */
+export function enemyPortraitAssetFor(relicId: string): PuppetAsset {
+  if (relicId === "husk-raptor") return TOBY_ASSET;
+  if (relicId === "husk-shell") return AMO_ASSET;
+  if (relicId === "husk-wing") return RIPA_ASSET;
+  throw new Error(`적 전신 원화가 등록되지 않은 렐릭 id: ${relicId}`);
+}
+
 /** 전투용 적 SD 1~3번은 정보창용 전신 원화와 파일을 섞지 않는다. */
 export const ENEMY_SD_ASSETS: readonly [PuppetAsset, PuppetAsset, PuppetAsset] = ([1, 2, 3] as const).map((number) => ({
   url: `${base}puppets/enemySD_${String(number).padStart(3, "0")}.zip`,

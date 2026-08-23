@@ -349,6 +349,9 @@ export class HoloBar {
   private ratio = 1;
   private color: number;
 
+  /** 복합 UI가 게이지 두 겹을 자신의 컨테이너 생명주기에 함께 묶을 때 쓰는 표시 객체다. */
+  get objects(): readonly Phaser.GameObjects.Graphics[] { return [this.track, this.fill]; }
+
   constructor(
     scene: Phaser.Scene,
     x: number,

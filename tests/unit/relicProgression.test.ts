@@ -5,6 +5,7 @@ import { RelicProgressionManager } from "../../src/managers/RelicProgressionMana
 import type { Session } from "../../src/state/session";
 import { createRuneInstance, engraveRune, enhanceRune, type RuneInstance, type RuneStatKey } from "../../src/core/runes";
 import { FakeServer } from "../../src/api/FakeServer";
+import { createDefaultSettings } from "../../src/core/settings";
 
 /** 계산 순서를 쉽게 확인할 수 있도록 모든 능력치가 같은 테스트 기본값을 쓴다. */
 const BASE: Stats = { hp: 101, def: 101, res: 101, atk: 101, ap: 101, attackSpeed: 101, moveSpeed: 101, critChance: 101, critDamage: 101, energyGain: 101, lifeSteal: 0, ferocityGain: 0 };
@@ -19,6 +20,7 @@ function testRune(instanceId: string) {
 /** manager 검증 테스트마다 독립된 저장 상태를 만든다. */
 function makeSession(): Session {
   return {
+    settings: createDefaultSettings(),
     completedStoryIds: new Set(), observationRecords: [],
     selectedStageId: null, party: ["rex"], cleared: new Set(), owned: new Set(["rex"]), favorite: "rex", bookmarked: new Set<string>(),
     gachaPityByGroup: { "standard-fossil": { pullsSinceSsr: 0, pickupGuaranteed: false }, "limited-pickup": { pullsSinceSsr: 0, pickupGuaranteed: false } },

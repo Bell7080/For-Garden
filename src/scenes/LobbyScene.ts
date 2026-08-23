@@ -52,7 +52,7 @@ export class LobbyScene extends Phaser.Scene {
     setDebugScene("lobby");
 
     this.buildPlaza();
-    new TopBar(this, 40, { onSettings: () => this.notReady("설정") });
+    new TopBar(this, 40, { onSettings: () => this.scene.start("settings") });
     this.buildPromo();
     this.buildSideRail();
 

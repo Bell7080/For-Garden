@@ -7,12 +7,25 @@ import { STAGES } from "../data/stages";
 import { BOND_XP_REWARD, grantBondXp } from "../core/bond";
 import type { MissionState } from "../core/missions";
 import type { RuneInstance } from "../core/runes";
+import { createDefaultSettings } from "../core/settings";
+
+/** 로컬에 저장 가능한 사용자 환경설정이다. 계정에는 표시 정보만 두며 인증 비밀은 서버 경계에 남긴다. */
+export interface GameSettings {
+  sound: { masterVolume: number; musicVolume: number; effectsVolume: number; voiceVolume: number; masterMuted: boolean; musicMuted: boolean; effectsMuted: boolean; voiceMuted: boolean };
+  vibration: { enabled: boolean; combatHit: boolean; ultimate: boolean; excavationResult: boolean; uiInput: boolean };
+  notifications: { staminaFull: boolean; freeRecruit: boolean; dailyMission: boolean; event: boolean; mail: boolean; quietHours: boolean };
+  presentation: { ultimateCutIn: boolean; screenShake: boolean; damageNumbers: boolean; shortenExcavation: boolean; lowSpecMode: boolean };
+  game: { battleSpeed: 1 | 1.5 | 2; autoUltimate: boolean; textSpeed: 0.5 | 1 | 2; language: "ko" | "en" | "ja" };
+  account: { provider: "guest" | "google" | "apple"; displayId: string };
+}
 
 /** 처음 시작할 때 쥐어 주는 렐릭. 셋이면 바로 출격할 수 있다. */
 // 전용 원화와 SD 전투 Puppet까지 개발된 첫 세 캐릭터를 초기 체험 풀로 연다.
 const STARTER_RELICS = ["anky", "rex", "spino"];
 
 export interface Session {
+  /** 씬은 직접 쓰지 않고 SettingsManager를 거쳐 저장·이벤트와 한 처리로 변경한다. */
+  settings: GameSettings;
   /** 완료한 스토리 ID. 첫 실행 진입과 회상 보상 차단에 함께 사용한다. */
   completedStoryIds: Set<string>;
   /** 날짜별 관찰 인터뷰 기록. 답변 태그는 전투 수치와 분리된 작은 성격 단서다. */
@@ -73,6 +86,7 @@ export interface ObservationRecord {
  */
 export interface SaveData {
   saveVersion: number;
+  settings: GameSettings;
   completedStoryIds: string[];
   observationRecords: ObservationRecord[];
   selectedStageId: string | null;
@@ -102,7 +116,10 @@ function createStarterProgress(): RelicProgress { return grantBondXp(createIniti
 
 /** 신규 계정과 복구 실패가 공유하는 독립 기본 세션을 만든다. */
 export function createDefaultSession(): Session {
+  // 순수 설정 팩토리는 지연 require 대신 정적 import로 의존 방향을 core→state 타입에만 제한한다.
+  const settings = createDefaultSettings();
   return {
+    settings,
     completedStoryIds: new Set<string>(),
     observationRecords: [],
     selectedStageId: null,

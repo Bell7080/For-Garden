@@ -239,7 +239,22 @@ describe("FakeServer DNA 조각 교환소와 경제 경계", () => {
     await expect(server.exchangeDna({ offerId: "dna-awakening", relicId: "not-owned" })).rejects.toMatchObject({ code: "INVALID_EXCHANGE_TARGET" });
     const first = await server.exchangeDna({ offerId: "dna-heart-gem" });
     expect(first.runeInventory.runes).toHaveLength(1);
+    expect(first.grantedRune).toEqual(first.runeInventory.runes[0]);
     expect(state.wallet.dnaFragments).toBe(15);
+    const second = await server.exchangeDna({ offerId: "dna-heart-gem" });
+    // 시계와 RNG가 같아도 획득 건별 인스턴스와 중첩 배열은 독립적이어야 한다.
+    expect(second.grantedRune?.instanceId).not.toBe(first.grantedRune?.instanceId);
+    expect(new Set(state.runeInventory.map(({ instanceId }) => instanceId)).size).toBe(2);
+    expect(second.grantedRune).not.toBe(state.runeInventory[0]);
+  });
+
+  it("이미 저장된 시각·순번 ID와 충돌하면 미사용 ID까지 전진한다", async () => {
+    const state = makeSession(); state.wallet.dnaFragments = 15;
+    const now = () => new Date("2026-08-22T12:00:00Z");
+    state.runeInventory = [makeRune(`vital-seed-${now().getTime()}-0`)];
+    const response = await new FakeServer(state, { latencyMs: 0, now, random: () => 0 }).exchangeDna({ offerId: "dna-heart-gem" });
+    expect(response.grantedRune?.instanceId).toBe(`vital-seed-${now().getTime()}-1`);
+    expect(state.runeInventory).toHaveLength(2);
   });
 
   it("지급 결과가 재화 상한을 넘으면 원본 상태를 변경하지 않는다", async () => {

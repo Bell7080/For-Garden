@@ -101,6 +101,21 @@ export const RUNE_SUB_STAT_COUNTS: Readonly<Record<RuneRarity, number>> = {
   legendary: 3,
 };
 
+/**
+ * 최초 버전의 등급별 고정 수치표다.
+ *
+ * 획득 시에는 옵션 종류만 무작위로 고르고 기본값과 강화 성공 1회의 증가량은 이 표로 고정한다.
+ * 주력과 보조 풀은 서로 겹치지 않으므로 한 룬에서 같은 능력치를 중복 표시하지 않는 규칙이 명시적으로 유지된다.
+ */
+export const RUNE_GENERATION_RULES: Readonly<Record<RuneRarity, {
+  mainBase: number; subBase: number; mainEnhancement: number; subEnhancement: number;
+}>> = {
+  uncommon: { mainBase: 6, subBase: 3, mainEnhancement: 1, subEnhancement: 1 },
+  rare: { mainBase: 8, subBase: 4, mainEnhancement: 2, subEnhancement: 1 },
+  epic: { mainBase: 10, subBase: 5, mainEnhancement: 2, subEnhancement: 1 },
+  legendary: { mainBase: 12, subBase: 6, mainEnhancement: 3, subEnhancement: 2 },
+};
+
 /** 일반 강화의 모든 확률 및 횟수 밸런스를 소유하는 단일 표다. */
 export const RUNE_ENHANCEMENT_RULES = {
   initialSuccessChance: 0.75,
@@ -128,6 +143,9 @@ export interface CreateRuneInput {
   /** [0, 1) 값을 반환하는 난수 함수다. 테스트와 서버가 결과를 재현할 수 있도록 주입한다. */
   random: () => number;
 }
+
+/** 고정 밸런스 표로 신규 룬을 생성할 때 호출자가 제공하는 식별 정보와 RNG다. */
+export type GenerateRuneInput = Omit<CreateRuneInput, "statValues">;
 
 const MAIN_KEYS: readonly RuneMainStatKey[] = ["hp", "atk", "ap", "def", "res"];
 const SUB_KEYS: readonly RuneSubStatKey[] = ["moveSpeed", "attackSpeed", "lifeSteal", "critChance", "critDamage", "ferocityGain", "energyGain"];
@@ -162,6 +180,26 @@ export function createRuneInstance(input: CreateRuneInput): RuneInstance {
   };
   assertValidRuneInstance(rune);
   return rune;
+}
+
+/**
+ * RNG 이외의 외부 상태를 읽지 않는 신규 룬 생성 함수다.
+ * 메인 풀에서 정확히 2개, 별도 보조 풀에서 등급별 개수를 각각 비복원 추출한다.
+ */
+export function generateRune(input: GenerateRuneInput): RuneInstance {
+  const rule = RUNE_GENERATION_RULES[input.rarity];
+  // 풀의 역할에 따라 고정 기본값을 배정해 초기 수치 재추첨이라는 두 번째 랜덤 축을 만들지 않는다.
+  const statValues = Object.fromEntries([
+    ...MAIN_KEYS.map((key) => [key, rule.mainBase] as const),
+    ...SUB_KEYS.map((key) => [key, rule.subBase] as const),
+  ]) as Record<RuneStatKey, number>;
+  return createRuneInstance({ ...input, statValues });
+}
+
+/** 등급과 옵션 역할에 맞는 강화 성공 1회 고정 증가량을 반환한다. */
+export function runeEnhancementIncrease(rarity: RuneRarity, statKey: RuneStatKey): number {
+  const rule = RUNE_GENERATION_RULES[rarity];
+  return MAIN_KEYS.includes(statKey as RuneMainStatKey) ? rule.mainEnhancement : rule.subEnhancement;
 }
 
 /** 인스턴스의 저장 불변 조건을 검사하며, 유효하면 true를 반환하고 아니면 false를 반환한다. */

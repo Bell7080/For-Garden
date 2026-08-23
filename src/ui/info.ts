@@ -122,6 +122,8 @@ const BOND_HEART = 0xe23a46;
 /** 하트 안쪽에 한 겹 더 얹는 밝은 심지. */
 const BOND_HEART_CORE = 0xff8a7a;
 const FEED_GREEN = 0x7fc47f;
+/** 치즈케이크 수를 적는 색. 케이크 그림의 따뜻한 크림빛을 그대로 가져온다. */
+const FEED_TEXT = "#ffe0d5";
 
 /**
  * 급여에 쓰는 치즈케이크 한 조각.
@@ -134,6 +136,35 @@ function cheesecakeIcon(scene: Phaser.Scene, x: number, y: number, size: number)
   container.add(scene.add.image(3, 4, "currency-cheesecake").setDisplaySize(size, size).setTint(0x05070a).setAlpha(0.55));
   container.add(scene.add.image(0, 0, "currency-cheesecake").setDisplaySize(size, size));
   return container;
+}
+
+/**
+ * 치즈케이크 값줄 — `아이콘 가진 수/드는 수`.
+ *
+ * 급여 버튼과 한 번에 급여 팝업이 같은 줄을 쓴다. 아이콘은 **하나만** 크게 세우고 두 수를
+ * 빗금으로 묶는다. 아이콘을 수마다 하나씩 붙이면 같은 재화가 둘로 보이고, 빗금 없이 떼어 놓으면
+ * "가진 것"과 "나가는 것"이 서로 다른 값처럼 읽힌다.
+ *
+ * 판 안에 한 겹 더 파인 자리를 두는 이유는 이 줄이 버튼 라벨보다 크기 때문이다 — 눌러야 할
+ * 판과 읽어야 할 수가 같은 높이에 있으면 어느 쪽이 버튼인지 흐려진다.
+ */
+function feedCostRow(
+  scene: Phaser.Scene,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  size: number,
+): { container: Phaser.GameObjects.Container; text: Phaser.GameObjects.Text } {
+  const container = scene.add.container(x, y);
+  container.add(drawLayer(scene, 0, 0, slantedRect(width, height, 8), { fill: 0x0b1410, alpha: 0.66, edge: FEED_GREEN, edgeAlpha: 0.22 }));
+  const icon = Math.round(height * 0.86);
+  container.add(cheesecakeIcon(scene, -width / 2 + icon * 0.62, 0, icon));
+  const text = scene.add
+    .text(-width / 2 + icon * 1.16, 1, "", textStyle({ role: "display", size, color: FEED_TEXT }))
+    .setOrigin(0, 0.5);
+  container.add(text);
+  return { container, text };
 }
 /**
  * 유대로 하나씩 열리는 이야기 네 편.
@@ -300,8 +331,7 @@ export class InfoManager {
   /** 돌파 버튼. 레벨 옆에 붙어 지금 뚫을 수 있는지를 진하기로 알린다. */
   private breakButton?: { container: Phaser.GameObjects.Container; label: Phaser.GameObjects.Text };
   private feedPlate?: { on: Phaser.GameObjects.Graphics; off: Phaser.GameObjects.Graphics };
-  /** 급여 버튼 위의 치즈케이크 두 수치 — 왼쪽은 가진 것, 오른쪽은 한 번에 드는 것. */
-  private feedHave?: Phaser.GameObjects.Text;
+  /** 급여 버튼의 치즈케이크 값줄 — `가진 수/한 번에 드는 수`. */
   private feedCost?: Phaser.GameObjects.Text;
   private feedHold?: Phaser.Time.TimerEvent;
   private feeding = false;
@@ -563,14 +593,9 @@ export class InfoManager {
     container.add([off, on]);
     const label = this.scene.add.text(0, -height / 2 + 22, "급여하기", textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0.5);
     container.add(label);
-    // 가진 것(왼쪽)과 한 번에 드는 것(오른쪽)이 화살표를 사이에 두고 마주 본다. 둘 다 같은
-    // 치즈케이크라 아이콘을 양쪽에 하나씩 세워야 "이만큼 있고 이만큼 나간다"로 읽힌다.
-    const row = 14;
-    container.add(cheesecakeIcon(this.scene, -width / 2 + 46, row, 56));
-    this.feedHave = this.scene.add.text(-width / 2 + 78, row, "", textStyle({ role: "display", size: 40, color: "#ffe0d5" })).setOrigin(0, 0.5);
-    // 나가는 쪽은 빼기 부호를 앞에 달아 "가진 것"과 한눈에 갈라진다. 색도 조금 더 익은 빛이다.
-    this.feedCost = this.scene.add.text(width / 2 - 62, row, "", textStyle({ role: "display", size: 40, color: "#ffb98a" })).setOrigin(1, 0.5);
-    container.add([this.feedHave, this.feedCost, cheesecakeIcon(this.scene, width / 2 - 32, row, 44)]);
+    const row = feedCostRow(this.scene, 0, 16, width - 40, 54, 36);
+    this.feedCost = row.text;
+    container.add(row.container);
     const hit = this.scene.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
     let heldFrom = 0;
     hit.on("pointerdown", () => {
@@ -711,24 +736,21 @@ export class InfoManager {
    */
   private openFeedBulk(x: number, y: number): void {
     if (this.popups.isOpen) return;
-    this.popups.open({ width: 460, height: 250, x, y: y + 150 }, (body, close) => {
+    this.popups.open({ width: 500, height: 250, x, y: y + 150 }, (body, close) => {
       body.add(this.scene.add.text(0, -86, "한 번에 급여", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0.5));
       ([["1 레벨", 1], ["10 레벨", 10]] as const).forEach(([label, levels], index) => {
-        const bx = index === 0 ? -108 : 108;
+        const bx = index === 0 ? -118 : 118;
         const cost = this.feedsForLevels(levels) * FEED_UNIT.cheesecake;
         const enough = session.wallet.cheesecake >= cost;
-        body.add(drawLayer(this.scene, bx, 12, slantedRect(186, 116, 14), { fill: 0x18261c, alpha: 0.92, edge: FEED_GREEN, edgeAlpha: enough ? 0.8 : 0.3 }));
+        body.add(drawLayer(this.scene, bx, 12, slantedRect(212, 116, 14), { fill: 0x18261c, alpha: 0.92, edge: FEED_GREEN, edgeAlpha: enough ? 0.8 : 0.3 }));
         body.add(this.scene.add.text(bx, -22, label, textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0.5));
-        // 수치와 아이콘을 한 덩어리로 담아 자릿수가 늘어도 가운데에 머문다.
-        const price = this.scene.add.container(bx, 30);
-        const value = this.scene.add
-          .text(-16, 0, "−" + formatCurrency(cost), textStyle({ role: "display", size: 36, color: enough ? "#ffb98a" : COLOR.dangerText }))
-          .setOrigin(1, 0.5);
-        price.add([value, cheesecakeIcon(this.scene, 8, 0, 42)]);
-        price.setX(bx + (value.displayWidth + 30) / 2 - 8);
-        body.add(price);
+        // 버튼과 같은 값줄이다. 여기서 바뀌는 것은 오른쪽 수(한 번에 나가는 양)뿐이다.
+        const price = feedCostRow(this.scene, bx, 32, 184, 48, 28);
+        price.text.setText(formatCurrency(session.wallet.cheesecake) + "/" + formatCurrency(cost));
+        price.text.setColor(enough ? FEED_TEXT : COLOR.dangerText);
+        body.add(price.container);
         if (!enough) return;
-        const hit = this.scene.add.rectangle(bx, 12, 186, 116, 0xffffff, 0).setInteractive({ useHandCursor: true });
+        const hit = this.scene.add.rectangle(bx, 12, 212, 116, 0xffffff, 0).setInteractive({ useHandCursor: true });
         hit.on("pointerup", () => {
           close();
           void this.feedLevels(levels);
@@ -1512,9 +1534,9 @@ export class InfoManager {
     this.feedLabel.setText(maxed ? "최대 레벨" : "급여하기");
     // 급여는 치즈케이크를 먹이는 일이라 버튼이 그 수를 직접 말한다. 상단 줄과 같은 세션 지갑을
     // 읽으므로 두 곳의 값이 갈라지지 않는다.
-    this.feedHave?.setText(formatCurrency(session.wallet.cheesecake));
-    this.feedCost?.setText(maxed ? "—" : "−" + FEED_UNIT.cheesecake);
-    this.feedHave?.setColor(session.wallet.cheesecake >= FEED_UNIT.cheesecake ? "#ffe0d5" : COLOR.dangerText);
+    this.feedCost?.setText(formatCurrency(session.wallet.cheesecake) + "/" + (maxed ? "—" : String(FEED_UNIT.cheesecake)));
+    // 모자라면 줄 전체가 붉어진다. 두 수 중 하나만 물들이면 어느 쪽이 모자란 것인지 되레 헷갈린다.
+    this.feedCost?.setColor(!maxed && session.wallet.cheesecake < FEED_UNIT.cheesecake ? COLOR.dangerText : FEED_TEXT);
     this.paintBreakButton(progress);
 
     const bondMaxed = progress.bondLevel >= BOND_LEVEL_CAP;

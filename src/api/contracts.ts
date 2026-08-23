@@ -66,7 +66,14 @@ export interface PlayerStateDto {
   missions: MissionDto[];
   /** 서버가 소유권과 RelicProgress 슬롯의 장착 중복을 검증한 룬 인벤토리다. */
   runeInventory: RuneInventoryDto;
+  /** 서버 UTC 날짜로 정규화된 광고 슬롯별 수령 횟수다. 멱등 ID는 공개하지 않는다. */
+  dailyAdRewards: { date: string; claimsBySlot: Record<string, number> };
 }
+
+/** 광고 SDK 완료 증명과 요청 재시도 멱등 키를 서버로 전달하는 요청이다. */
+export interface ClaimAdRewardRequest { slotId: string; verificationToken: string; requestId: string; }
+/** 검증·중복·일일 제한 확인 후 지급과 저장까지 확정된 광고 보상 결과다. */
+export interface ClaimAdRewardResponse extends PlayerStateDto { slotId: string; reward: { currency: "stamina" | "cheesecake"; amount: number }; dailyClaims: number; dailyRemaining: number; }
 
 /** 임무 화면에 필요한 진행·보상·수령 상태를 한 행으로 전달한다. */
 export interface MissionDto { id: string; period: MissionPeriod; title: string; progress: number; target: number; rewardCheesecake: number; claimed: boolean; }
@@ -101,7 +108,7 @@ export interface PullResponse extends PlayerStateDto {
 }
 
 /** UI가 서버 실패 원인을 문구로 바꿀 수 있게 고정한 오류 코드다. */
-export type ApiErrorCode = "BANNER_NOT_FOUND" | "INSUFFICIENT_CURRENCY" | "INSUFFICIENT_GOLD" | "INVALID_PULL_COUNT" | "RELIC_NOT_FOUND" | "RELIC_MAX_LEVEL" | "RUNE_NOT_FOUND" | "RUNE_ENHANCEMENT_COMPLETE" | "RUNE_STAT_EXHAUSTED" | "RUNE_ENGRAVING_NOT_ALLOWED" | "INVALID_RUNE_NAME" | "INVALID_RUNE_SLOT" | "RUNE_ALREADY_EQUIPPED" | "RUNE_SLOT_EMPTY" | "STAGE_NOT_FOUND" | "DAILY_ENTRY_LIMIT" | "MISSION_NOT_FOUND" | "MISSION_NOT_COMPLETE" | "MISSION_ALREADY_CLAIMED" | "PRODUCT_NOT_FOUND" | "PRODUCT_NOT_VISIBLE" | "PURCHASE_LIMIT_REACHED" | "PLATFORM_PAYMENT_REQUIRED" | "DNA_OFFER_NOT_FOUND" | "INVALID_EXCHANGE_TARGET" | "DUPLICATE_GRANT" | "INVALID_STATE" | "CURRENCY_LIMIT_EXCEEDED" | "EVENT_NOT_FOUND" | "EVENT_NOT_ACTIVE";
+export type ApiErrorCode = "AD_SLOT_NOT_FOUND" | "AD_TOKEN_INVALID" | "AD_REQUEST_DUPLICATE" | "AD_DAILY_LIMIT" | "BANNER_NOT_FOUND" | "INSUFFICIENT_CURRENCY" | "INSUFFICIENT_GOLD" | "INVALID_PULL_COUNT" | "RELIC_NOT_FOUND" | "RELIC_MAX_LEVEL" | "RUNE_NOT_FOUND" | "RUNE_ENHANCEMENT_COMPLETE" | "RUNE_STAT_EXHAUSTED" | "RUNE_ENGRAVING_NOT_ALLOWED" | "INVALID_RUNE_NAME" | "INVALID_RUNE_SLOT" | "RUNE_ALREADY_EQUIPPED" | "RUNE_SLOT_EMPTY" | "STAGE_NOT_FOUND" | "DAILY_ENTRY_LIMIT" | "MISSION_NOT_FOUND" | "MISSION_NOT_COMPLETE" | "MISSION_ALREADY_CLAIMED" | "PRODUCT_NOT_FOUND" | "PRODUCT_NOT_VISIBLE" | "PURCHASE_LIMIT_REACHED" | "PLATFORM_PAYMENT_REQUIRED" | "DNA_OFFER_NOT_FOUND" | "INVALID_EXCHANGE_TARGET" | "DUPLICATE_GRANT" | "INVALID_STATE" | "CURRENCY_LIMIT_EXCEEDED" | "EVENT_NOT_FOUND" | "EVENT_NOT_ACTIVE";
 
 /**
  * 급여 응답.
@@ -127,6 +134,8 @@ export interface EnterEventStageResponse { eventId: string; stage: StageDef; ser
 /** 실제 HTTP API로 교체할 때도 씬이 의존할 단 하나의 통신 인터페이스다. */
 export interface GameApi {
   getPlayerState(): Promise<PlayerStateDto>;
+  /** 광고 완료 증명을 검증하고 멱등성·UTC 제한·지급·저장을 한 처리로 확정한다. */
+  claimAdReward(request: ClaimAdRewardRequest): Promise<ClaimAdRewardResponse>;
   pullRelics(request: PullRequest): Promise<PullResponse>;
   /** 급여로 경험치를 올린다. 횟수를 넘기면 한 번에 여러 번 먹인다. */
   feedRelic(relicId: string, feeds?: number): Promise<FeedRelicResponse>;

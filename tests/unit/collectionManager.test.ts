@@ -22,6 +22,8 @@ function makeSession(): Session {
     missions: { dailyKey: "", weeklyKey: "", progress: {}, claimedIds: [] },
     // 상품 테스트가 아닌 세션도 최신 저장 계약의 빈 구매 이력을 명시한다.
     productPurchases: {},
+    // 테스트 계정은 광고 수령 이력이 없는 UTC 일일 상태로 시작한다.
+    dailyAdRewards: { date: "", claimsBySlot: {}, requestIds: [] },
   };
 }
 

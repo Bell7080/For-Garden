@@ -31,6 +31,8 @@ function makeSession(fossil = 1000): Session {
     missions: { dailyKey: "", weeklyKey: "", progress: {}, claimedIds: [] },
     // 상품 테스트가 아닌 세션도 최신 저장 계약의 빈 구매 이력을 명시한다.
     productPurchases: {},
+    // 테스트 계정은 광고 수령 이력이 없는 UTC 일일 상태로 시작한다.
+    dailyAdRewards: { date: "", claimsBySlot: {}, requestIds: [] },
   };
 }
 
@@ -264,5 +266,28 @@ describe("FakeServer DNA 조각 교환소와 경제 경계", () => {
     const server = new FakeServer(state, { latencyMs: 0 });
     await expect(server.exchangeDna({ offerId: "dna-past-event" })).rejects.toMatchObject({ code: "CURRENCY_LIMIT_EXCEEDED" });
     expect(state.wallet).toMatchObject({ dnaFragments: 5, fossil: 9_999_900 });
+  });
+});
+
+describe("FakeServer 광고 보상 경계", () => {
+  it("완료 토큰을 검증하고 일반 재화와 UTC 일일 상태를 함께 확정한다", async () => {
+    const state = makeSession();
+    const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-22T23:59:00Z") });
+    const result = await server.claimAdReward({ slotId: "daily-stamina", verificationToken: "verified:daily-stamina", requestId: "ad-request-1" });
+    expect(result).toMatchObject({ reward: { currency: "stamina", amount: 10 }, dailyClaims: 1, dailyRemaining: 2 });
+    expect(state.dailyAdRewards).toEqual({ date: "2026-08-22", claimsBySlot: { "daily-stamina": 1 }, requestIds: ["ad-request-1"] });
+  });
+
+  it("잘못된 토큰·중복 ID·일일 초과는 지급 없이 거부하고 다음 UTC 일자에 초기화한다", async () => {
+    const state = makeSession(); let now = new Date("2026-08-22T12:00:00Z");
+    const server = new FakeServer(state, { latencyMs: 0, now: () => now });
+    await expect(server.claimAdReward({ slotId: "daily-cheesecake", verificationToken: "invalid", requestId: "bad" })).rejects.toMatchObject({ code: "AD_TOKEN_INVALID" });
+    for (let index = 0; index < 3; index += 1) await server.claimAdReward({ slotId: "daily-cheesecake", verificationToken: "verified:daily-cheesecake", requestId: `claim-${index}` });
+    const before = state.wallet.cheesecake;
+    await expect(server.claimAdReward({ slotId: "daily-cheesecake", verificationToken: "verified:daily-cheesecake", requestId: "claim-0" })).rejects.toMatchObject({ code: "AD_REQUEST_DUPLICATE" });
+    await expect(server.claimAdReward({ slotId: "daily-cheesecake", verificationToken: "verified:daily-cheesecake", requestId: "over-limit" })).rejects.toMatchObject({ code: "AD_DAILY_LIMIT" });
+    expect(state.wallet.cheesecake).toBe(before);
+    now = new Date("2026-08-23T00:00:00Z");
+    await expect(server.claimAdReward({ slotId: "daily-cheesecake", verificationToken: "verified:daily-cheesecake", requestId: "next-day" })).resolves.toMatchObject({ dailyClaims: 1 });
   });
 });

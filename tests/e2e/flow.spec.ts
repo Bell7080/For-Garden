@@ -197,6 +197,17 @@ test("실시간 자동 전투는 입력 없이 서로 붙어 체력을 깎는다
   await expect.poll(async () => (await battle(page))?.elapsed).toBeGreaterThan(0);
 });
 
+test("전투 중 움직이는 적을 누르면 적 전용 정보창과 일러스트가 열린다", async ({ page }) => {
+  await enterBattle(page);
+  await expect.poll(async () => (await battle(page))?.enemyTargets?.length).toBe(3);
+
+  // 전투원은 계속 움직이므로 디버그 계약이 공개한 현재 클릭 영역 중심을 읽은 직후 누른다.
+  const target = (await battle(page))!.enemyTargets![0];
+  await tap(page, target.x, target.y);
+  await expect.poll(() => infoOpen(page)).toBe(true);
+  await page.screenshot({ path: `test-results/${test.info().project.name}-battle-enemy-info.png`, fullPage: true });
+});
+
 test("전투 조작 칩으로 1·2·3배속과 자동 궁극기를 전환한다", async ({ page }) => {
   await enterBattle(page);
   expect(await battle(page)).toMatchObject({ speed: 1, autoUltimate: false });

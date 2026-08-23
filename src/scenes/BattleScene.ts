@@ -64,6 +64,8 @@ interface FighterView {
   creature: PuppetCreature;
   asset: PuppetAsset;
   fighter: Fighter;
+  /** 움직이는 Puppet의 메시 입력 경계 대신 몸통을 따라가는 안정적인 전투 클릭 영역이다. */
+  infoHit?: Phaser.GameObjects.Rectangle;
   shadow: Phaser.GameObjects.Ellipse;
   hpBack: Phaser.GameObjects.Rectangle;
   hpFill: Phaser.GameObjects.Rectangle;
@@ -197,18 +199,23 @@ export class BattleScene extends Phaser.Scene {
         flipX: fighter.facing < 0,
         tint,
       });
-      // 적 본체를 누르면 같은 공용 정보창에 현재 전투 스냅샷만 전달한다.
-      if (fighter.side === "enemy") creature.setInteractive({ useHandCursor: true }).on("pointerup", () => this.info.showEnemy(fighter));
       if (!this.scene.isActive()) {
         creature.destroy();
         return;
       }
+      // Puppet Mesh의 기본 입력 경계는 비동기 생성 시점의 로컬 크기에 묶여 이동·배율 적용 뒤
+      // 실제 SD와 어긋날 수 있다. 투명 몸통 영역을 따로 두고 매 프레임 발 위치를 따라가게 한다.
+      const infoHit = fighter.side === "enemy"
+        ? this.add.rectangle(fighter.x, fighter.y - UNIT_HEIGHT / 2, 190, UNIT_HEIGHT + 70, 0xffffff, 0)
+          .setInteractive({ useHandCursor: true })
+          .on("pointerup", () => this.info.showEnemy(fighter))
+        : undefined;
       const shadow = this.add.ellipse(fighter.x, fighter.y + 4, 132, 24, 0x000000, 0.38);
       const barColor = fighter.side === "player" ? COLOR.hpFill : COLOR.hpEnemy;
       const hpBack = this.add.rectangle(fighter.x, 0, 96, 10, COLOR.void, 0.75);
       const hpFill = this.add.rectangle(fighter.x, 0, 96, 10, barColor).setOrigin(0, 0.5);
       const bleedBadge = this.makeBleedBadge();
-      this.views.set(fighter.id, { creature, asset, fighter, shadow, hpBack, hpFill, bleedBadge, tint, dead: false });
+      this.views.set(fighter.id, { creature, asset, fighter, infoHit, shadow, hpBack, hpFill, bleedBadge, tint, dead: false });
     }
     this.syncViews();
     // 마지막 한 명까지 서고 나서 시간을 흘려야 먼저 뜬 캐릭터만 앞서 달려가지 않는다.
@@ -435,6 +442,8 @@ export class BattleScene extends Phaser.Scene {
     view.hpBack.setVisible(false);
     view.hpFill.setVisible(false);
     view.bleedBadge.setVisible(false);
+    // 쓰러진 적의 빈자리가 계속 정보창을 열지 않도록 입력도 함께 닫는다.
+    view.infoHit?.disableInteractive().setVisible(false);
     const burst = this.add.star(view.creature.x, view.creature.y, 10, 24, 66, COLOR.accent, 0.9).setDepth(DEPTH.burst);
     this.tweens.add({ targets: burst, scale: 1.8, alpha: 0, angle: 90, duration: 360, onComplete: () => burst.destroy() });
     this.tweens.add({
@@ -484,6 +493,10 @@ export class BattleScene extends Phaser.Scene {
       });
       // 아래에 선 캐릭터가 앞에 오도록 발 높이로 앞뒤를 정한다.
       view.creature.setDepth(Math.round(fighter.y / 10) + DEPTH.unitBase);
+      // SD의 발 위치보다 몸통 중앙을 누르는 편이 자연스러우므로 클릭 영역은 반 높이만큼 올린다.
+      view.infoHit
+        ?.setPosition(pose.x, pose.y - UNIT_HEIGHT / 2)
+        .setDepth(Math.round(fighter.y / 10) + DEPTH.unitBase + 1);
       // 떠 있는 동안 그림자는 땅에 남되 작고 옅어진다.
       const lift = 1 - Math.min(pose.hop / 60, 0.45);
       view.shadow.setPosition(pose.shadowX, pose.shadowY + 4).setDisplaySize(132 * lift, 24 * lift).setAlpha(0.38 * lift);
@@ -568,6 +581,10 @@ export class BattleScene extends Phaser.Scene {
       autoUltimate: this.autoUltimate,
       ultimateSequenceActive: this.ultimateSequenceActive,
       ultimateQueue: [...this.ultimateSequence.queue],
+      // E2E도 사용자가 보는 이동 중 클릭 영역의 중심을 그대로 눌러 입력 회귀를 확인한다.
+      enemyTargets: [...this.views.values()]
+        .filter((view) => view.fighter.side === "enemy" && !view.dead)
+        .map((view) => ({ x: view.infoHit?.x ?? view.fighter.x, y: view.infoHit?.y ?? view.fighter.y })),
     });
   }
 

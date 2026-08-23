@@ -68,12 +68,11 @@ export class RelicProgressionManager {
   /** UI와 전투가 공유할 최종 능력치를 순수 코어 계산기로 구한다. */
   getFinalStats(relicId: string): Stats {
     const progress = this.getProgress(relicId);
-    // 전투 계산기에는 장착 시점의 인스턴스 옵션 합계를 정적 효과와 같은 최소 모양으로 전달한다.
+    // 인스턴스 전체를 넘겨 성공 이력과 각인을 코어의 단일 계산기가 해석하게 한다.
     const gems = progress.heartGemSlots.flatMap((id) => {
       const rune = id === null ? undefined : this.state.runeInventory.find((candidate) => candidate.instanceId === id);
       if (!rune) return [];
-      const statPercent = Object.fromEntries([...rune.mainStats, ...rune.subStats].map(({ key, value }) => [key, value]));
-      return [{ id: rune.instanceId, name: rune.customName ?? rune.baseName, rarity: rune.rarity, iconKey: "rune-instance", statPercent }];
+      return [rune];
     });
     return calculateFinalStats(getRelic(relicId).stats, progress, gems);
   }

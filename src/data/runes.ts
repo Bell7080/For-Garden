@@ -1,4 +1,26 @@
-import type { RuneRarity } from "../core/runes";
+import type { RuneRarity, RuneStatKey } from "../core/runes";
+
+/** 옵션 수치 단위. percent는 기존 수치에 곱하고 percentagePoint는 게이지/확률에 그대로 더한다. */
+export type RuneStatUnit = "percent" | "percentagePoint";
+
+/**
+ * 룬 옵션의 생성 기본값·성공 강화 1회 증가량·적용 단위를 소유하는 단일 밸런스 표다.
+ * UI, 성장 계산기, 전투가 서로 숫자나 `%`의 의미를 추측하지 않도록 한다.
+ */
+export const RUNE_STAT_RULES: Readonly<Record<RuneStatKey, { base: number; enhancement: number; unit: RuneStatUnit }>> = {
+  hp: { base: 8, enhancement: 2, unit: "percent" },
+  atk: { base: 8, enhancement: 2, unit: "percent" },
+  ap: { base: 8, enhancement: 2, unit: "percent" },
+  def: { base: 8, enhancement: 2, unit: "percent" },
+  res: { base: 8, enhancement: 2, unit: "percent" },
+  moveSpeed: { base: 5, enhancement: 1, unit: "percent" },
+  attackSpeed: { base: 5, enhancement: 1, unit: "percent" },
+  lifeSteal: { base: 3, enhancement: 1, unit: "percentagePoint" },
+  critChance: { base: 5, enhancement: 1, unit: "percentagePoint" },
+  critDamage: { base: 8, enhancement: 2, unit: "percentagePoint" },
+  ferocityGain: { base: 5, enhancement: 1, unit: "percent" },
+  energyGain: { base: 5, enhancement: 1, unit: "percent" },
+};
 
 /** 희귀도와 누적 시도 번호별 골드 비용표다. 운영 수치는 이 표에서만 조정한다. */
 export const RUNE_ENHANCEMENT_GOLD_COSTS: Readonly<Record<RuneRarity, readonly number[]>> = {

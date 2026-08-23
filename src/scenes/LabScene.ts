@@ -24,6 +24,7 @@ import { COLOR, textStyle } from "../ui/theme";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { PortraitCard, starsForRarity } from "../ui/PortraitCard";
 import { firstMeetingLine } from "../data/relicFirstMeetings";
+import { audioManager, type AudioScope } from "../managers/AudioManager";
 
 /** 마일리지 상점 버튼의 황금빛. 다른 버튼과 갈라 놓아 "쌓아 두었다 쓰는 곳"임을 알린다. */
 const MILEAGE_EDGE = 0xf2c744;
@@ -56,6 +57,8 @@ export class LabScene extends Phaser.Scene {
   private presentationLayer?: Phaser.GameObjects.Container;
   /** 단계 넘기기가 현재 기다리는 타이머를 즉시 깨우는 훅이다. */
   private finishStage?: () => void;
+  /** 씬 종료 뒤 비동기 연출의 늦은 효과음 요청이 재생되지 않게 하는 오디오 수명 범위다. */
+  private audioScope?: AudioScope;
 
   constructor() {
     super("lab");
@@ -68,6 +71,7 @@ export class LabScene extends Phaser.Scene {
   create(): void {
     setDebugScene("lab");
     this.bannerIndex = 0;
+    this.audioScope = audioManager?.createScope();
 
     const cx = BASE_WIDTH / 2;
     // 배경 5번의 연구 설비 원화를 쓰고, 얇은 암막으로 기존 청록색 UI 대비를 유지한다.
@@ -146,6 +150,8 @@ export class LabScene extends Phaser.Scene {
       this.finishStage?.();
       this.presentationLayer?.destroy(true);
       this.presentationLayer = undefined;
+      this.audioScope?.release();
+      this.audioScope = undefined;
     });
     void this.showcaseRelic();
     this.refresh();
@@ -317,8 +323,8 @@ export class LabScene extends Phaser.Scene {
       content.removeAll(true);
       this.drawCrack(content, rarity);
       this.cameras.main.shake(rarity === "SSR" ? 420 : 260, rarity === "SSR" ? 0.012 : 0.006);
-      // 오디오가 준비되면 씬 외부에서 이 훅을 받아 실제 파일을 재생한다.
-      this.events.emit("excavation-sound", "crack", rarity);
+      // 등급은 시각 연출에만 쓰며 사운드는 의미 키와 중앙 버스 설정으로 일관되게 재생한다.
+      this.audioScope?.play("excavation.crack");
       await this.waitForStage(700, request);
       this.presentation.advance();
     }

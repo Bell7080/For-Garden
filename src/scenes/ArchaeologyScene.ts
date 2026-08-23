@@ -33,7 +33,7 @@ export class ArchaeologyScene extends Phaser.Scene {
     panel.add(drawLayer(this, 0, 0, chipPoints(880, 510, { bevel: { topLeft: 62, topRight: 0, bottomRight: 44, bottomLeft: 0 } }), {
       fill: 0x111b24, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.62,
     }));
-    panel.add(this.add.text(0, -110, "미확인 발굴 구역", textStyle({ role: "display", size: 40, color: COLOR.accentText })).setOrigin(0.5));
+    panel.add(this.add.text(0, -110, "미확인 탐사 구역", textStyle({ role: "display", size: 40, color: COLOR.accentText })).setOrigin(0.5));
     panel.add(this.add.text(0, 0, "장기 탐사로 추가 에너지와 다양한 재화,\n아이템 및 강화 재료를 회수할 구역입니다.", textStyle({ role: "body", size: 29, color: COLOR.inkDim, align: "center" })).setOrigin(0.5));
     panel.add(this.add.text(0, 145, "탐사 체계 준비 중", textStyle({ role: "emphasis", size: 27, color: COLOR.ink })).setOrigin(0.5));
 

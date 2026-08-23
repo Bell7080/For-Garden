@@ -57,7 +57,7 @@ export class FriendsScene extends Phaser.Scene {
       const relic = getRelic(friend.favoriteRelic.relicId);
       const y = 330 + index * 300;
       const panel = drawLayer(this, BASE_WIDTH / 2, y, chipPoints(930, 236, { bevel: { topLeft: 42, topRight: 0, bottomRight: 42, bottomLeft: 0 } }), { fill: 0x1a1f27, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.42 });
-      const card = new PortraitCard(this, 190, y, { width: 190, height: 200, portraitAssetId: relic.portraitAssetId, label: relic.name, level: friend.favoriteRelic.level, stars: { filled: friend.favoriteRelic.stars, total: 5 } });
+      const card = new PortraitCard(this, 190, y, { width: 190, height: 200, portraitAssetId: relic.portraitAssetId, label: relic.name, level: friend.favoriteRelic.level, rarity: relic.rarity });
       const name = this.add.text(330, y - 76, `${friend.name}  ·  연구 LV.${friend.researcherLevel}`, textStyle({ role: "emphasis", size: 31 })).setOrigin(0, 0);
       const status = this.add.text(330, y - 20, friend.status, textStyle({ role: "body", size: 27, color: COLOR.inkDim })).setOrigin(0, 0);
       const active = this.add.text(900, y + 62, friend.lastActive, textStyle({ role: "body", size: 23, color: COLOR.accentText })).setOrigin(1, 0);
@@ -76,7 +76,7 @@ export class FriendsScene extends Phaser.Scene {
     this.title?.setText("친구 프로필");
     this.updateSummary();
     const relic = getRelic(friend.favoriteRelic.relicId);
-    const card = new PortraitCard(this, BASE_WIDTH / 2, 610, { width: 500, height: 620, portraitAssetId: relic.portraitAssetId, label: relic.name, level: friend.favoriteRelic.level, stars: { filled: friend.favoriteRelic.stars, total: 5 }, affinity: { element: relic.element, role: relic.role } });
+    const card = new PortraitCard(this, BASE_WIDTH / 2, 610, { width: 500, height: 620, portraitAssetId: relic.portraitAssetId, label: relic.name, level: friend.favoriteRelic.level, rarity: relic.rarity, affinity: { element: relic.element, role: relic.role } });
     // 렐릭 카드는 서버 공개 DTO만 넘기는 공용 읽기 전용 정보창의 진입점이다.
     card.hit.on("pointerup", () => this.info.showFriend(friend.favoriteRelic));
     const name = this.add.text(BASE_WIDTH / 2, 1020, friend.name, textStyle({ role: "display", size: 48 })).setOrigin(0.5);

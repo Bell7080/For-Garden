@@ -8,7 +8,7 @@ import { BottomNav } from "../ui/BottomNav";
 import { Button } from "../ui/Button";
 import { CharacterInfoManager } from "../managers/CharacterInfoManager";
 import { TopBar } from "../ui/TopBar";
-import { PortraitCard, relicCardTint, starsForRarity } from "../ui/PortraitCard";
+import { PortraitCard, relicCardTint } from "../ui/PortraitCard";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { COLOR, textStyle } from "../ui/theme";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
@@ -103,9 +103,8 @@ export class RelicsScene extends Phaser.Scene {
         tint: relicCardTint(relic),
         label: relic.name,
         level: owned ? relicProgression.getProgress(relic.id).level : undefined,
-        stars: starsForRarity(relic.rarity),
+        rarity: relic.rarity,
         affinity: { element: relic.element, role: relic.role },
-        badge: relic.specimenNumber,
         locked: !owned,
       });
       // 카드를 누르면 바로 정보창이 열린다. 애착 설정도 그 안의 뱃지가 맡는다.

@@ -5,7 +5,7 @@ import { mixWhite, tintFor } from "../puppets/tints";
 import { chipPoints, HOLO } from "./holo";
 import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
-import { addStarRow } from "./stars";
+import { addRarityMark, RARITY_TONE } from "./rarityMark";
 import { COLOR, textStyle } from "./theme";
 
 /** 카드 한 장의 조립 옵션. 크기와 라벨만 주면 나머지 연출은 프리팹이 맞춘다. */
@@ -21,11 +21,15 @@ export interface PortraitCardOptions {
   sub?: string;
   /** 이름 앞에 붙는 레벨. 없으면 이름만 보인다. */
   level?: number;
-  /** 칩과 하단 레이어의 경계에 찍는 성급. */
-  stars?: { filled: number; total: number };
+  /**
+   * 등급. 칩 바탕색과 오른쪽 위 로마자 표식이 함께 여기서 나온다.
+   *
+   * 카드가 "무슨 등급인가"를 두 번 말하지 않도록 색과 글자를 한 값에서 뽑는다.
+   */
+  rarity?: RelicRarity;
   /** 미발굴 카드. 원화를 실루엣으로 덮고 이름을 감춘다. */
   locked?: boolean;
-  /** 칩 왼쪽 위의 작은 표식(개체번호·등급). */
+  /** 칩 오른쪽 위의 작은 표식. 등급을 주면 그 자리는 로마자 표식이 가져간다. */
   badge?: string;
   /** 카드 왼쪽에 세로로 서는 속성·직군. 속성이 크고 직군이 조금 작다. */
   affinity?: { element: Element; role: Role };
@@ -54,22 +58,11 @@ const SHADE_RATIO = 0.46;
 const LEVEL_STRETCH = 1.26;
 
 /**
- * 등급이 곧 성급이다. 카드마다 다른 기준을 쓰지 않는다.
- *
- * 칸은 언제나 다섯이고 등급이 그중 몇 칸을 채우는지만 정한다. 칸 수까지 등급마다 달라지면
- * 두 카드를 나란히 놓았을 때 어느 쪽이 높은지 한눈에 비교되지 않는다.
- */
-export function starsForRarity(rarity: RelicRarity): { filled: number; total: number } {
-  const filled = rarity === "SSR" ? 5 : rarity === "SR" ? 4 : 3;
-  return { filled, total: 5 };
-}
-
-/**
  * 캐릭터 카드.
  *
  * 위쪽 모서리를 잘라낸 칩 한 장에 원화를 머리 관절 기준으로 크게 채우고, 머리는 칩 위로
- * 빠져나오게 둔다. 아래에는 살짝 넓은 레이어를 겹쳐 레벨과 이름을 얹고, 두 레이어의 경계에
- * 성급을 찍는다. 도감·편성·전투 프로필·발굴 결과가 모두 이 한 장을 공유한다.
+ * 빠져나오게 둔다. 아래에는 살짝 넓은 레이어를 겹쳐 레벨과 이름을 얹고, 오른쪽 위에는 로마자 등급을
+ * 찍는다. 도감·편성·전투 프로필·발굴 결과가 모두 이 한 장을 공유한다.
  */
 export class PortraitCard extends Phaser.GameObjects.Container {
   /** 씬이 pointerdown·pointerup을 붙이는 카드 전체 입력 영역이다. */
@@ -114,9 +107,10 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     this.paintGlow(COLOR.accent);
     this.add(this.glow);
 
-    // 칩 본체. 카드는 이 한 장뿐이라 그림자도 하나만 진다.
+    // 칩 본체. 카드는 이 한 장뿐이라 그림자도 하나만 진다. 바탕은 등급색이다 — 원화가
+    // 칩을 거의 채우므로 가장자리에만 남지만, 그 한 줄로 등급이 먼저 읽힌다.
     this.chip = scene.add.graphics({ x: 0, y: bodyCenter });
-    this.paintChip(CHIP_FILL);
+    this.paintChip(options.rarity && !options.locked ? RARITY_TONE[options.rarity].chip : CHIP_FILL);
     this.add(this.chip);
 
     // 원화는 칩 안에 갇히되 윗변 가운데만 열어 머리가 빠져나오게 한다.
@@ -178,14 +172,15 @@ export class PortraitCard extends Phaser.GameObjects.Container {
           .setOrigin(0, 0);
         this.add(this.subText);
       }
-      // 별은 이름 바로 위에 앉는다. 더 올리면 카드 한가운데에 떠서 얼굴을 가린다.
-      if (options.stars) this.addStars(baseline - nameSize * 1.8);
     }
 
     if (options.affinity) this.addAffinity(options.affinity, width, height);
 
-    if (options.badge) {
-      // 왼쪽 위는 크게 깎여 나가므로, 표식은 덜 깎인 오른쪽 위에 붙인다.
+    // 왼쪽 위는 크게 깎여 나가므로, 표식은 덜 깎인 오른쪽 위에 붙인다. 등급을 아는 카드는
+    // 개체번호 대신 로마자 등급이 그 자리에 선다 — 카드에서 궁금한 것은 번호가 아니라 등급이다.
+    if (options.rarity && !options.locked) {
+      addRarityMark(scene, this, width / 2 - CHIP_INSET - 22, -height / 2 + 34, Math.min(46, width / 6), options.rarity);
+    } else if (options.badge) {
       this.add(
         scene.add
           .text(width / 2 - CHIP_INSET - 12, -height / 2 + 28, options.badge, textStyle({ role: "emphasis", size: Math.min(20, width / 14), color: COLOR.accentText }))
@@ -237,20 +232,6 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     this.chip.translateCanvas(-HOLO.shadow.x, -HOLO.shadow.y);
     this.chip.fillStyle(fill, 0.92);
     this.chip.fillPoints(points, true);
-  }
-
-  /**
-   * 이름 바로 위의 성급.
-   *
-   * 다섯 칸을 카드 가운데에 모은다. 별 모양·색·겹은 `stars.ts` 하나가 정한다 — 도감 카드와
-   * 정보창이 같은 별을 써야 같은 등급이 어디서나 같은 무게로 읽힌다.
-   */
-  private addStars(y: number): void {
-    const stars = this.options.stars!;
-    // 카드에서는 별이 작다. 빛무리가 이웃 별과 뭉치지 않도록 크기만 줄이고 모양은 그대로 쓴다.
-    const outer = Math.min(15, this.options.width / 19);
-    const filled = this.options.locked ? 0 : stars.filled;
-    addStarRow(this.scene, this, 0, y, outer, filled, stars.total);
   }
 
   /**

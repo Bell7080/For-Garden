@@ -25,7 +25,7 @@ import { session } from "../state/session";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { Button } from "../ui/Button";
 import { drawGlassFade, drawHairline, HoloBar } from "../ui/holo";
-import { PortraitCard, relicCardTint, starsForRarity } from "../ui/PortraitCard";
+import { PortraitCard, relicCardTint } from "../ui/PortraitCard";
 import { COLOR, textStyle } from "../ui/theme";
 import { setDebugBattle, setDebugScene } from "../debug";
 import { CharacterInfoManager } from "../managers/CharacterInfoManager";
@@ -254,7 +254,7 @@ export class BattleScene extends Phaser.Scene {
         tint: relicCardTint(fighter.def),
         label: fighter.def.name,
         sub: `각성 · ${fighter.def.ultimate.name}`,
-        stars: starsForRarity(fighter.def.rarity),
+        rarity: fighter.def.rarity,
       });
       card.hit.on("pointerdown", () => {
         // 기존 입력 규칙대로 누른 순간만 추가 확대하고, 잠금 카드는 반응하지 않는다.

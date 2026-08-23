@@ -12,7 +12,7 @@ import { getStage, getStageEnemies } from "../data/stages";
 import { session } from "../state/session";
 import { Button } from "../ui/Button";
 import { addBackButton } from "../ui/IconButton";
-import { PortraitCard, relicCardTint, starsForRarity } from "../ui/PortraitCard";
+import { PortraitCard, relicCardTint } from "../ui/PortraitCard";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { COLOR, textStyle } from "../ui/theme";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
@@ -277,7 +277,7 @@ export class PartyScene extends Phaser.Scene {
         tint: relicCardTint(relic),
         label: relic.name,
         level: relicProgression.getProgress(relic.id).level,
-        stars: starsForRarity(relic.rarity),
+        rarity: relic.rarity,
         affinity: { element: relic.element, role: relic.role },
       });
 

@@ -22,7 +22,7 @@ import { TopBar } from "../ui/TopBar";
 import { drawLayer, drawRoundedLayer, HOLO, slantedRect } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
-import { PortraitCard, starsForRarity } from "../ui/PortraitCard";
+import { PortraitCard } from "../ui/PortraitCard";
 import { firstMeetingLine } from "../data/relicFirstMeetings";
 
 /** 마일리지 상점 버튼의 황금빛. 다른 버튼과 갈라 놓아 "쌓아 두었다 쓰는 곳"임을 알린다. */
@@ -413,7 +413,7 @@ export class LabScene extends Phaser.Scene {
       const card = new PortraitCard(this, columns === 1 ? cx : 285 + (index % 2) * 510, results.length === 1 ? 850 : 390 + Math.floor(index / 2) * 230, {
         width: results.length === 1 ? 520 : 440, height: results.length === 1 ? 720 : 210,
         portraitAssetId: def.portraitAssetId, tint: portraitUsesRelicTint(def.portraitAssetId) ? mixWhite(tintFor(def.id), 0.55) : undefined,
-        label: def.name, sub: badge, badge: def.rarity, stars: starsForRarity(def.rarity),
+        label: def.name, sub: badge, rarity: def.rarity,
       });
       card.setDepth(902);
       content.add(card);

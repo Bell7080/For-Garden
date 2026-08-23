@@ -28,7 +28,8 @@ import { drawGlyph } from "./glyphs";
 import { PopupLayer } from "./PopupLayer";
 import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
-import { addStar, addStarRow } from "./stars";
+import { addStar } from "./stars";
+import { addRarityMark } from "./rarityMark";
 import { addRuneIcon, RUNE_ACCENT, RUNE_CENTER_Y, runeTexture } from "./runeIcons";
 import { openRuneInfoPopup, RUNE_STAT_LABEL } from "./RunePopup";
 import { StatRadar } from "./StatRadar";
@@ -117,7 +118,7 @@ const AFFINITY = { main: 96, sub: 72, gap: 30 } as const;
 /** 능력치 칸에 서는 오각형의 반지름. 축 이름까지 판 안에 들어오는 크기다. */
 const STAT_RADAR_RADIUS = 128;
 
-/** 정보창의 별은 화면에서 가장 큰 성급 표시다. 모양과 색은 `stars.ts`가 정한다. */
+/** 정보창의 등급 표식 기준 크기. 로마자 한 글자가 이 두 배 높이로 선다. */
 const STAR_SIZE = 34;
 
 /**
@@ -1134,7 +1135,7 @@ export class InfoManager {
     this.scene.tweens.killTweensOf(portrait);
     this.galleryReturn = onClose;
     placePuppet(portrait, asset, {
-      focus: { anchor: "core", x: BASE_WIDTH / 2, y: BASE_HEIGHT * 0.52 },
+      focus: { anchor: "core", x: BASE_WIDTH / 2, y: BASE_HEIGHT * 0.52 + (asset.portraitOffsetY ?? 0) },
       height: BASE_HEIGHT * 1.02 * (asset.portraitZoom ?? 1),
     });
     portrait.setAlpha(0.001);
@@ -1382,7 +1383,7 @@ export class InfoManager {
     const request = ++this.portraitRequest;
     const asset = portraitAssetFor(def.portraitAssetId);
     const portrait = await spawnPuppet(this.scene, asset, {
-      focus: { anchor: "core", x: PORTRAIT_FOCUS.x, y: PORTRAIT_FOCUS.y },
+      focus: { anchor: "core", x: PORTRAIT_FOCUS.x, y: PORTRAIT_FOCUS.y + (asset.portraitOffsetY ?? 0) },
       // 그림 영역이 작은 원화는 공용 높이 그대로 세우면 혼자 화면을 넘는다. 보정값은 원화에 있다.
       height: PORTRAIT_FOCUS.height * (asset.portraitZoom ?? 1),
       depth: Math.max(this.portraitDepth, 1001),
@@ -1662,11 +1663,10 @@ export class InfoManager {
     this.rarityText.setFill(gradient);
   }
 
-  /** 성급은 등급에서만 나온다. 별 모양과 색은 `stars.ts` 하나가 정한다. */
+  /** 등급은 별 다섯 칸이 아니라 로마자 한 글자다. 모양과 색은 `rarityMark.ts`가 정한다. */
   private paintStars(def: RelicDef): void {
     this.starRow.removeAll(true);
-    const filled = def.rarity === "SSR" ? 5 : def.rarity === "SR" ? 4 : 3;
-    addStarRow(this.scene, this.starRow, -34, 0, STAR_SIZE, filled, 5);
+    addRarityMark(this.scene, this.starRow, 0, 0, STAR_SIZE * 2, def.rarity);
   }
 
   /** 레벨·경험치·유대·능력치·젬을 지금 상태로 다시 칠한다. */

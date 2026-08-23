@@ -49,6 +49,14 @@ export interface PuppetAsset {
    * 확대된다. 화면이 개체마다 다른 높이를 정하지 않도록 보정값을 원화 쪽에 붙인다.
    */
   portraitZoom?: number;
+  /**
+   * 정보창 전신의 세로 보정(+는 아래). 0이 기준이다.
+   *
+   * 코어 관절을 화면의 한 점에 맞춰 세우지만, 관절을 어디에 박았는지는 원화마다 다르다.
+   * 그래서 같은 점에 맞춰도 어떤 인물은 조금 내려앉아 보인다. 화면이 인물마다 다른 y를
+   * 적지 않도록 그 차이를 원화 쪽에 적어 둔다.
+   */
+  portraitOffsetY?: number;
 }
 
 const base = import.meta.env.BASE_URL;
@@ -84,34 +92,39 @@ export const LUKA_ASSET: PuppetAsset = {
   imageWidth: 1728,
   imageHeight: 2446,
   // 원화의 후드·손·발·꼬리를 모두 포함한 가시 영역으로 발 높이와 화면 확대를 맞춘다.
-  content: { left: 32, top: 22, right: 1728, bottom: 2396 },
+  content: { left: 52, top: 44, right: 1683, bottom: 2404 },
+  // 코어 관절이 다른 원화보다 아래에 박혀 있어 정보창에서 혼자 내려앉아 보인다.
+  portraitOffsetY: -34,
 };
 
-/** 1번 적 토비. 적 전용 Puppet 번호와 스테이지 고정 편성 번호를 일치시킨다. */
+/**
+ * 1번 적 토비. 적 전용 Puppet 번호와 스테이지 고정 편성 번호를 일치시킨다.
+ *
+ * 적 셋은 캔버스 크기가 서로 다르다. 한때 셋이 같은 1254 정사각 규격을 쓴다고 적어 두었지만
+ * 실제 묶음은 그렇지 않았고, 그래서 그림 영역이 실제보다 작게 잡혀 정보창에서 지나치게
+ * 확대되었다. 값은 원본 알파(>16) 경계 그대로다 — 임의로 줄인 배율로 덮지 않는다.
+ */
 export const TOBY_ASSET: PuppetAsset = {
   url: `${base}puppets/enemy_001.zip`,
-  imageWidth: 1254,
-  imageHeight: 1254,
-  content: { left: 352, top: 155, right: 993, bottom: 1082 },
-  portraitZoom: 0.5,
+  imageWidth: 1448,
+  imageHeight: 2048,
+  content: { left: 24, top: 76, right: 1424, bottom: 1968 },
 };
 
-/** 2번 적 아모. 현재 적 ZIP들이 같은 캔버스 규격을 사용해 동일한 가시 영역 기준을 공유한다. */
+/** 2번 적 아모. */
 export const AMO_ASSET: PuppetAsset = {
   url: `${base}puppets/enemy_002.zip`,
-  imageWidth: 1254,
-  imageHeight: 1254,
-  content: { left: 352, top: 155, right: 993, bottom: 1082 },
-  portraitZoom: 0.5,
+  imageWidth: 2172,
+  imageHeight: 2898,
+  content: { left: 201, top: 44, right: 1972, bottom: 2854 },
 };
 
 /** 3번 적 리파. 파일명의 기존 표기(enemy003)를 실제 공개 에셋 경로대로 연결한다. */
 export const RIPA_ASSET: PuppetAsset = {
   url: `${base}puppets/enemy_003.zip`,
-  imageWidth: 1254,
-  imageHeight: 1254,
-  content: { left: 352, top: 155, right: 993, bottom: 1082 },
-  portraitZoom: 0.5,
+  imageWidth: 2892,
+  imageHeight: 4096,
+  content: { left: 44, top: 249, right: 2849, bottom: 3844 },
 };
 
 /**

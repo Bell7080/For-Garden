@@ -1,7 +1,8 @@
 import Phaser from "phaser";
 import { setDebugScene } from "../debug";
 import { defaultSessionAfterReset, saveManager } from "../state/SaveManager";
-import { replaceSession } from "../state/session";
+import { replaceSession, session } from "../state/session";
+import { setTextScale } from "../ui/textScale";
 
 export class BootScene extends Phaser.Scene {
   constructor() {
@@ -19,6 +20,8 @@ export class BootScene extends Phaser.Scene {
       replaceSession(defaultSessionAfterReset());
       this.registry.set("saveRecoveryNotice", "저장 데이터를 확인할 수 없어 안전한 초기 상태로 복구했습니다.");
     }
+    // 저장에서 복원한 접근성 배율을 어떤 씬도 생성되기 전에 공용 텍스트 계층에 반영한다.
+    setTextScale(session.settings.accessibility.textScale);
     // 글꼴·원화·Puppet 묶음은 타이틀이 로딩 화면 노릇을 하며 읽는다(scenes/loadingSteps.ts).
     // 부트는 저장 로드와 복구만 조율하고 곧바로 넘긴다.
     this.scene.start("title");

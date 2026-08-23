@@ -380,6 +380,12 @@ export class HoloBar {
     this.fill.setDepth(depth);
   }
 
+  /** 팝업 같은 컨테이너 프리팹 안에서도 홈과 채움을 한 묶음으로 이동시킨다. */
+  addTo(container: Phaser.GameObjects.Container): this {
+    container.add([this.track, this.fill]);
+    return this;
+  }
+
   private redraw(): void {
     const slant = Math.min(HOLO.slant, this.height);
     const filled = this.width * this.ratio;

@@ -5,6 +5,34 @@ import type { ProductCurrency, ProductGrant, ProductRefresh } from "../data/prod
 import type { DnaExchangeKind } from "../data/economy";
 import type { StageDef } from "../core/types";
 import type { EventDefinition } from "../data/events/types";
+import type { RuneInstance, RuneStatKey } from "../core/runes";
+
+/** 룬 장착 위치다. 룬 인스턴스에 역참조를 복제하지 않고 렐릭의 세 슬롯만 기준으로 삼는다. */
+export interface RuneEquipmentDto { relicId: string; slots: [string | null, string | null, string | null]; }
+
+/** 보유 룬과 단일 기준 장착표를 한 번에 전달하는 직렬화 가능한 인벤토리 DTO다. */
+export interface RuneInventoryDto { runes: RuneInstance[]; equipment: RuneEquipmentDto[]; }
+
+/** 강화 요청에는 선택 정보만 있으며 성공 여부나 난수는 의도적으로 넣을 수 없다. */
+export interface EnhanceRuneRequest { runeInstanceId: string; statId: RuneStatKey; }
+/** 서버가 판정하고 저장한 한 번의 강화 결과다. */
+export interface EnhanceRuneResponse { succeeded: boolean; goldSpent: number; nextSuccessChance: number; rune: RuneInstance; inventory: RuneInventoryDto; }
+/** 각인 요청 역시 대상 룬과 실제 옵션만 고르며 등급과 증가량은 서버가 정한다. */
+export interface EngraveRuneRequest { runeInstanceId: string; statId: RuneStatKey; }
+/** 각인 뒤 갱신된 룬과 인벤토리를 반환한다. */
+export interface EngraveRuneResponse { rune: RuneInstance; inventory: RuneInventoryDto; }
+/** 이름 원문은 서버 경계에서 정규화하므로 요청에는 별도 정규화 플래그가 없다. */
+export interface RenameRuneRequest { runeInstanceId: string; name: string; }
+/** 공백 제거와 검증을 마친 이름이 반영된 룬이다. */
+export interface RenameRuneResponse { rune: RuneInstance; inventory: RuneInventoryDto; }
+/** 장착 대상은 보유 룬, 보유 렐릭, 0부터 시작하는 세 슬롯으로 특정한다. */
+export interface EquipRuneRequest { runeInstanceId: string; relicId: string; slotIndex: number; }
+/** 장착표 변경 뒤의 단일 기준 인벤토리다. */
+export interface EquipRuneResponse { inventory: RuneInventoryDto; }
+/** 해제는 렐릭 슬롯을 직접 비워 요청 시점의 룬 역참조에 의존하지 않는다. */
+export interface UnequipRuneRequest { relicId: string; slotIndex: number; }
+/** 해제 뒤의 단일 기준 인벤토리다. */
+export interface UnequipRuneResponse { inventory: RuneInventoryDto; }
 
 /** 다른 이용자에게 공개해도 되는 렐릭 정보만 담는 소셜 DTO다. */
 export interface PublicRelicProfileDto {
@@ -38,6 +66,8 @@ export interface PlayerStateDto {
   dailyContent: { date: string; restorationEntries: number };
   /** 서버 기간 정규화가 끝난 임무 목록이다. */
   missions: MissionDto[];
+  /** 서버가 소유권과 장착 중복을 검증한 룬 인벤토리다. */
+  runeInventory: RuneInventoryDto;
 }
 
 /** 임무 화면에 필요한 진행·보상·수령 상태를 한 행으로 전달한다. */
@@ -73,7 +103,7 @@ export interface PullResponse extends PlayerStateDto {
 }
 
 /** UI가 서버 실패 원인을 문구로 바꿀 수 있게 고정한 오류 코드다. */
-export type ApiErrorCode = "BANNER_NOT_FOUND" | "INSUFFICIENT_CURRENCY" | "INVALID_PULL_COUNT" | "RELIC_NOT_FOUND" | "RELIC_MAX_LEVEL" | "STAGE_NOT_FOUND" | "DAILY_ENTRY_LIMIT" | "MISSION_NOT_FOUND" | "MISSION_NOT_COMPLETE" | "MISSION_ALREADY_CLAIMED" | "PRODUCT_NOT_FOUND" | "PRODUCT_NOT_VISIBLE" | "PURCHASE_LIMIT_REACHED" | "PLATFORM_PAYMENT_REQUIRED" | "DNA_OFFER_NOT_FOUND" | "INVALID_EXCHANGE_TARGET" | "DUPLICATE_GRANT" | "INVALID_STATE" | "CURRENCY_LIMIT_EXCEEDED" | "EVENT_NOT_FOUND" | "EVENT_NOT_ACTIVE";
+export type ApiErrorCode = "BANNER_NOT_FOUND" | "INSUFFICIENT_CURRENCY" | "INSUFFICIENT_GOLD" | "INVALID_PULL_COUNT" | "RELIC_NOT_FOUND" | "RELIC_MAX_LEVEL" | "RUNE_NOT_FOUND" | "RUNE_ENHANCEMENT_COMPLETE" | "RUNE_STAT_EXHAUSTED" | "RUNE_ENGRAVING_NOT_ALLOWED" | "INVALID_RUNE_NAME" | "INVALID_RUNE_SLOT" | "RUNE_ALREADY_EQUIPPED" | "RUNE_SLOT_EMPTY" | "STAGE_NOT_FOUND" | "DAILY_ENTRY_LIMIT" | "MISSION_NOT_FOUND" | "MISSION_NOT_COMPLETE" | "MISSION_ALREADY_CLAIMED" | "PRODUCT_NOT_FOUND" | "PRODUCT_NOT_VISIBLE" | "PURCHASE_LIMIT_REACHED" | "PLATFORM_PAYMENT_REQUIRED" | "DNA_OFFER_NOT_FOUND" | "INVALID_EXCHANGE_TARGET" | "DUPLICATE_GRANT" | "INVALID_STATE" | "CURRENCY_LIMIT_EXCEEDED" | "EVENT_NOT_FOUND" | "EVENT_NOT_ACTIVE";
 
 /**
  * 급여 응답.
@@ -121,6 +151,16 @@ export interface GameApi {
   purchaseProduct(productId: string): Promise<PurchaseProductResponse>;
   /** DNA 조각을 요청에서 고른 보상으로 교환하며 랜덤 발굴 경로를 사용하지 않는다. */
   exchangeDna(request: ExchangeDnaRequest): Promise<ExchangeDnaResponse>;
+  /** 룬의 한 옵션을 서버 난수로 한 번 강화한다. */
+  enhanceRune(request: EnhanceRuneRequest): Promise<EnhanceRuneResponse>;
+  /** 모든 일반 강화를 마친 룬에 서버 판정 각인을 한 번 적용한다. */
+  engraveRune(request: EngraveRuneRequest): Promise<EngraveRuneResponse>;
+  /** 서버 이름 정책을 통과한 사용자 이름으로 바꾼다. */
+  renameRune(request: RenameRuneRequest): Promise<RenameRuneResponse>;
+  /** 한 룬이 전체 장착표에서 정확히 한 슬롯에만 있도록 장착한다. */
+  equipRune(request: EquipRuneRequest): Promise<EquipRuneResponse>;
+  /** 렐릭 슬롯을 장착표의 단일 기준에서 해제한다. */
+  unequipRune(request: UnequipRuneRequest): Promise<UnequipRuneResponse>;
 }
 
 /** 예상 가능한 요청 실패를 일반 네트워크 예외와 구분한다. */

@@ -1,4 +1,3 @@
-import { createLegacyHeartGemRune } from "../data/heartGems";
 import { PLAYABLE_RELICS } from "../data/relics";
 import { STAGES } from "../data/stages";
 import { BANNERS } from "../data/banners";
@@ -6,6 +5,20 @@ import { BREAKTHROUGH_CAP } from "../core/relicProgression";
 import type { RelicProgress } from "../core/types";
 import { createDefaultSession, type SaveData, type Session } from "./session";
 import { assertValidRuneInstance, type RuneInstance } from "../core/runes";
+
+/** v12에서만 존재했던 정적 젬을 저장 마이그레이션용 인스턴스로 재현하는 폐쇄된 표다. */
+const LEGACY_V12_RUNES: Readonly<Record<string, RuneInstance>> = {
+  "vital-seed": { instanceId: "legacy-v12-vital-seed", baseName: "생명의 Heart Gem", customName: null, rarity: "uncommon", mainStats: [{ key: "hp", value: 10 }, { key: "def", value: 0 }], subStats: [], enhancementHistory: {}, currentSuccessChance: 0.75, enhancementComplete: false, engravings: [] },
+  "fang-core": { instanceId: "legacy-v12-fang-core", baseName: "송곳니 Heart Gem", customName: null, rarity: "rare", mainStats: [{ key: "atk", value: 12 }, { key: "hp", value: 0 }], subStats: [{ key: "critChance", value: 5 }], enhancementHistory: {}, currentSuccessChance: 0.75, enhancementComplete: false, engravings: [] },
+  "ancient-pulse": { instanceId: "legacy-v12-ancient-pulse", baseName: "고대의 Heart Gem", customName: null, rarity: "epic", mainStats: [{ key: "hp", value: 8 }, { key: "def", value: 8 }], subStats: [{ key: "ferocityGain", value: 0 }, { key: "energyGain", value: 0 }], enhancementHistory: {}, currentSuccessChance: 0.75, enhancementComplete: false, engravings: [] },
+};
+
+/** 레거시 표의 객체가 여러 저장 로드 사이에서 공유되지 않도록 매번 완전 복사한다. */
+function migrateV12Rune(definitionId: string): RuneInstance {
+  const rune = LEGACY_V12_RUNES[definitionId];
+  if (!rune) throw new Error(`알 수 없는 v12 Heart Gem id: ${definitionId}`);
+  return cloneRune(rune);
+}
 
 /** 키는 계정 연동 저장소와 충돌하지 않도록 로컬 프로토타입임을 명시한다. */
 export const SAVE_STORAGE_KEY = "eternal-city.local-save";
@@ -117,7 +130,7 @@ export class SaveManager {
     const isV12OrOlder = legacy.saveVersion === undefined || Number(legacy.saveVersion) <= 12;
     const legacyOwned = Array.isArray(legacy.ownedHeartGemIds) ? legacy.ownedHeartGemIds.filter((id): id is string => typeof id === "string") : [];
     let runeInventory: RuneInstance[];
-    try { runeInventory = isV12OrOlder ? legacyOwned.map(createLegacyHeartGemRune) : (Array.isArray(legacy.runeInventory) ? legacy.runeInventory as unknown as RuneInstance[] : []); }
+    try { runeInventory = isV12OrOlder ? legacyOwned.map(migrateV12Rune) : (Array.isArray(legacy.runeInventory) ? legacy.runeInventory as unknown as RuneInstance[] : []); }
     catch { throw new SaveDataError("v12 Heart Gem 보유 정보가 올바르지 않습니다."); }
     const legacyIdMap = new Map(legacyOwned.map((id) => [id, `legacy-v12-${id}`]));
     // 스토리 저장 도입 전 계정은 미완료로 두어 다음 타이틀 진입에서 오프닝을 한 번 재생한다.

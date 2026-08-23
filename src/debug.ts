@@ -28,6 +28,8 @@ export interface DebugBattle {
 export interface DebugState {
   ready: boolean;
   scene: string;
+  /** 캔버스 DOM에서 읽을 수 없는 현재 화면 제목을 E2E가 사용자 관점으로 확인할 때 쓴다. */
+  screenTitle?: string;
   battle?: DebugBattle;
   /** 정보창이 떠 있는지. `?`와 꾹 누르기를 확인하는 데 쓴다. */
   infoOpen?: boolean;
@@ -49,8 +51,11 @@ function ensure(): DebugState {
   return window.__PF_DEBUG;
 }
 
-export function setDebugScene(scene: string): void {
-  ensure().scene = scene;
+export function setDebugScene(scene: string, screenTitle?: string): void {
+  const state = ensure();
+  state.scene = scene;
+  // 이전 씬의 제목이 남아 거짓 양성이 되지 않도록 씬 전환마다 함께 초기화한다.
+  state.screenTitle = screenTitle;
 }
 
 export function setDebugReady(ready: boolean): void {

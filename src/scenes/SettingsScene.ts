@@ -21,7 +21,8 @@ export class SettingsScene extends Phaser.Scene {
   private accountBusy = false;
   constructor() { super("settings"); }
   create(): void {
-    setDebugScene("settings"); addSceneBackground(this, BACKGROUND.lobby);
+    // 캔버스 제목을 DOM에서 읽을 수 없는 E2E에도 실제 사용자 표시 문구를 함께 공개한다.
+    setDebugScene("settings", "환경 설정"); addSceneBackground(this, BACKGROUND.lobby);
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.82).setDepth(-20);
     this.add.text(54, 60, "환경 설정", textStyle({ role: "display", size: 52 })).setDepth(20);
     this.add.text(54, 124, "SYSTEM CONFIGURATION", textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setDepth(20);

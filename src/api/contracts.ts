@@ -1,7 +1,7 @@
 import type { AcquisitionResult, GachaPityState, Wallet } from "../core/gacha";
 import type { RelicProgress, Stats } from "../core/types";
 import type { MissionPeriod } from "../core/missions";
-import type { ProductCurrency, ProductGrant, ProductRefresh } from "../data/products";
+import type { PassBenefitDefinition, ProductCurrency, ProductGrant, ProductRefresh } from "../data/products";
 import type { DnaExchangeKind } from "../data/economy";
 import type { StageDef } from "../core/types";
 import type { EventDefinition } from "../data/events/types";
@@ -75,6 +75,18 @@ export interface ClaimAdRewardRequest { slotId: string; verificationToken: strin
 /** 검증·중복·일일 제한 확인 후 지급과 저장까지 확정된 광고 보상 결과다. */
 export interface ClaimAdRewardResponse extends PlayerStateDto { slotId: string; reward: { currency: "stamina" | "cheesecake"; amount: number }; dailyClaims: number; dailyRemaining: number; }
 
+/** 서버 계정에 활성화된 연구 후원 권리다. null 만료는 영구이며 판정 기준 시각도 함께 내려간다. */
+export interface PassEntitlementDto { entitlementId: string; productId: string; activatedAt: string; expiresAt: string | null; active: boolean; serverTime: string; }
+/** 플랫폼 영수증 재시도는 요청 ID로 같은 검증 결과를 돌려받는다. */
+export interface VerifyPurchaseReceiptRequest { productId: string; platform: "apple" | "google" | "test"; receipt: string; requestId: string; }
+export interface VerifyPurchaseReceiptResponse { verificationId: string; productId: string; transactionId: string; verified: true; serverTime: string; }
+/** 검증 결과를 권리로 바꾸는 단계도 별도 멱등 키를 가져 네트워크 재시도 중 이중 활성화를 막는다. */
+export interface ActivatePassRequest { verificationId: string; requestId: string; }
+export interface ActivatePassResponse { entitlement: PassEntitlementDto; grants: readonly ProductGrant[]; }
+/** 패스 즉시 수령은 광고 토큰 없이 권리와 서버 UTC 카운터를 검증한다. */
+export interface ClaimInstantAdRewardRequest { entitlementId: string; slotId: string; requestId: string; }
+export interface ClaimInstantAdRewardResponse extends ClaimAdRewardResponse { entitlement: PassEntitlementDto; dailyBonus?: { currency: "gems"; amount: number }; }
+
 /** 임무 화면에 필요한 진행·보상·수령 상태를 한 행으로 전달한다. */
 export interface MissionDto { id: string; period: MissionPeriod; title: string; progress: number; target: number; rewardCheesecake: number; claimed: boolean; }
 /** 목록 응답은 로비 배지에서 바로 쓸 미수령 개수를 포함한다. */
@@ -83,7 +95,7 @@ export interface MissionListResponse { missions: MissionDto[]; claimableCount: n
 export interface ClaimMissionRewardsResponse extends PlayerStateDto { claimedIds: string[]; cheesecakeEarned: number; }
 
 /** 상품 목록은 정적 정의에 서버가 계산한 현재 구매 가능 횟수를 결합한다. */
-export interface ProductDto { id: string; section: "trade" | "premium"; name: string; description: string; price: { currency: ProductCurrency; amount: number; display?: string }; grants: readonly ProductGrant[]; purchaseLimit: number; refresh: ProductRefresh; remaining: number; purchasable: boolean; disabledReason?: string; }
+export interface ProductDto { id: string; section: "trade" | "premium"; name: string; description: string; price: { currency: ProductCurrency; amount: number; display?: string }; grants: readonly ProductGrant[]; passBenefit?: PassBenefitDefinition; purchaseLimit: number; refresh: ProductRefresh; remaining: number; purchasable: boolean; disabledReason?: string; }
 /** 상품 조회 응답은 서버 시각 기준으로 노출 중인 상품만 담는다. */
 export interface ProductListResponse { products: ProductDto[]; serverTime: string; }
 /** 인게임 상품의 차감·지급·제한 갱신이 모두 끝난 뒤의 응답이다. */
@@ -108,7 +120,7 @@ export interface PullResponse extends PlayerStateDto {
 }
 
 /** UI가 서버 실패 원인을 문구로 바꿀 수 있게 고정한 오류 코드다. */
-export type ApiErrorCode = "AD_SLOT_NOT_FOUND" | "AD_TOKEN_INVALID" | "AD_REQUEST_DUPLICATE" | "AD_DAILY_LIMIT" | "BANNER_NOT_FOUND" | "INSUFFICIENT_CURRENCY" | "INSUFFICIENT_GOLD" | "INVALID_PULL_COUNT" | "RELIC_NOT_FOUND" | "RELIC_MAX_LEVEL" | "RUNE_NOT_FOUND" | "RUNE_ENHANCEMENT_COMPLETE" | "RUNE_STAT_EXHAUSTED" | "RUNE_ENGRAVING_NOT_ALLOWED" | "INVALID_RUNE_NAME" | "INVALID_RUNE_SLOT" | "RUNE_ALREADY_EQUIPPED" | "RUNE_SLOT_EMPTY" | "STAGE_NOT_FOUND" | "DAILY_ENTRY_LIMIT" | "MISSION_NOT_FOUND" | "MISSION_NOT_COMPLETE" | "MISSION_ALREADY_CLAIMED" | "PRODUCT_NOT_FOUND" | "PRODUCT_NOT_VISIBLE" | "PURCHASE_LIMIT_REACHED" | "PLATFORM_PAYMENT_REQUIRED" | "DNA_OFFER_NOT_FOUND" | "INVALID_EXCHANGE_TARGET" | "DUPLICATE_GRANT" | "INVALID_STATE" | "CURRENCY_LIMIT_EXCEEDED" | "EVENT_NOT_FOUND" | "EVENT_NOT_ACTIVE";
+export type ApiErrorCode = "AD_SLOT_NOT_FOUND" | "AD_TOKEN_INVALID" | "AD_REQUEST_DUPLICATE" | "AD_DAILY_LIMIT" | "RECEIPT_INVALID" | "PASS_NOT_FOUND" | "PASS_EXPIRED" | "BANNER_NOT_FOUND" | "INSUFFICIENT_CURRENCY" | "INSUFFICIENT_GOLD" | "INVALID_PULL_COUNT" | "RELIC_NOT_FOUND" | "RELIC_MAX_LEVEL" | "RUNE_NOT_FOUND" | "RUNE_ENHANCEMENT_COMPLETE" | "RUNE_STAT_EXHAUSTED" | "RUNE_ENGRAVING_NOT_ALLOWED" | "INVALID_RUNE_NAME" | "INVALID_RUNE_SLOT" | "RUNE_ALREADY_EQUIPPED" | "RUNE_SLOT_EMPTY" | "STAGE_NOT_FOUND" | "DAILY_ENTRY_LIMIT" | "MISSION_NOT_FOUND" | "MISSION_NOT_COMPLETE" | "MISSION_ALREADY_CLAIMED" | "PRODUCT_NOT_FOUND" | "PRODUCT_NOT_VISIBLE" | "PURCHASE_LIMIT_REACHED" | "PLATFORM_PAYMENT_REQUIRED" | "DNA_OFFER_NOT_FOUND" | "INVALID_EXCHANGE_TARGET" | "DUPLICATE_GRANT" | "INVALID_STATE" | "CURRENCY_LIMIT_EXCEEDED" | "EVENT_NOT_FOUND" | "EVENT_NOT_ACTIVE";
 
 /**
  * 급여 응답.
@@ -136,6 +148,12 @@ export interface GameApi {
   getPlayerState(): Promise<PlayerStateDto>;
   /** 광고 완료 증명을 검증하고 멱등성·UTC 제한·지급·저장을 한 처리로 확정한다. */
   claimAdReward(request: ClaimAdRewardRequest): Promise<ClaimAdRewardResponse>;
+  /** 실제 결제 서버가 플랫폼 원본 영수증을 검증하며 요청 ID 재시도에는 같은 결과를 반환한다. */
+  verifyPurchaseReceipt(request: VerifyPurchaseReceiptRequest): Promise<VerifyPurchaseReceiptResponse>;
+  /** 검증된 거래를 기간 권리로 한 번만 활성화한다. */
+  activatePass(request: ActivatePassRequest): Promise<ActivatePassResponse>;
+  /** 활성 권리로 광고 슬롯의 원래 보상과 원래 UTC 일일 한도를 그대로 즉시 수령한다. */
+  claimInstantAdReward(request: ClaimInstantAdRewardRequest): Promise<ClaimInstantAdRewardResponse>;
   pullRelics(request: PullRequest): Promise<PullResponse>;
   /** 급여로 경험치를 올린다. 횟수를 넘기면 한 번에 여러 번 먹인다. */
   feedRelic(relicId: string, feeds?: number): Promise<FeedRelicResponse>;

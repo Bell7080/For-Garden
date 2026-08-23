@@ -30,6 +30,14 @@ export class ShopScene extends Phaser.Scene {
     new TopBar(this);
     this.add.text(60, 185, this.section === "trade" ? "무  역" : "상  점", textStyle({ role: "display", size: 52 })).setOrigin(0, 0);
     this.add.text(62, 252, this.section === "trade" ? "인게임 재화 교환소" : "패키지 · 유료 BM 미리보기", textStyle({ role: "body", size: 27, color: COLOR.inkDim })).setOrigin(0, 0);
+    // 별도 화면을 복제하지 않고 확대·강조색만으로 현재 카탈로그 탭을 구분한다.
+    ([{ section: "trade", label: "교환" }, { section: "premium", label: "후원" }] as const).forEach(({ section, label }, index) => {
+      const selected = this.section === section;
+      const tab = this.add.text(780 + index * 120, 225, label, textStyle({ role: "emphasis", size: 27, color: selected ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5).setScale(selected ? 1.12 : 1).setInteractive({ useHandCursor: true });
+      tab.on("pointerdown", () => tab.setScale(1.16));
+      tab.on("pointerout", () => tab.setScale(selected ? 1.12 : 1));
+      tab.on("pointerup", () => { if (!selected) this.scene.restart({ section }); });
+    });
     // 상점은 더 이상 연구소의 보조 버튼이 아니므로 모든 핵심 화면과 같은 하단 슬롯을 유지한다.
     new BottomNav(this, "shop");
     void this.refresh();
@@ -50,7 +58,11 @@ export class ShopScene extends Phaser.Scene {
     const card = this.add.container(x, y);
     card.add(drawLayer(this, 0, 0, chipPoints(width, height, { bevel: { topLeft: 55, topRight: 0, bottomRight: 38, bottomLeft: 0 } }), { fill: 0x161d25, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.62 }));
     card.add(this.add.text(-390, -92, product.name, textStyle({ role: "display", size: 36 })).setOrigin(0, 0));
-    card.add(this.add.text(-390, -35, product.description, textStyle({ role: "body", size: 26, color: COLOR.inkDim, wrap: 540 })).setOrigin(0, 0));
+    // 권리 상품은 구매 전에 즉시 수령 방식·유효 기간·기존 광고와 같은 UTC 일일 제한을 별도 줄로 확인시킨다.
+    const benefitNotice = product.passBenefit
+      ? `광고 보상 즉시 수령  ·  ${product.passBenefit.durationDays === null ? "영구" : `유효 기간 ${product.passBenefit.durationDays}일`}\n광고 이용자와 동일한 기본 보상 · 슬롯별 UTC 일일 한도`
+      : product.description;
+    card.add(this.add.text(-390, -35, benefitNotice, textStyle({ role: "body", size: 24, color: COLOR.inkDim, wrap: 590, lineSpacing: 8 })).setOrigin(0, 0));
     const price = product.price.display ?? `${product.price.amount.toLocaleString()} ${this.currencyLabel(product.price.currency)}`;
     card.add(this.add.text(360, -28, price, textStyle({ role: "emphasis", size: 30, color: COLOR.accentText })).setOrigin(1, 0.5));
     card.add(this.add.text(360, 52, product.price.currency === "real_money" ? "결제 비활성" : `남은 구매 ${product.remaining}/${product.purchaseLimit}`, textStyle({ role: "body", size: 22, color: product.purchasable ? COLOR.ink : COLOR.inkDim })).setOrigin(1, 0));

@@ -5,6 +5,7 @@ import { BREAKTHROUGH_CAP } from "../core/relicProgression";
 import type { RelicProgress } from "../core/types";
 import { createDefaultSession, type SaveData, type Session } from "./session";
 import { assertValidRuneInstance, type RuneInstance } from "../core/runes";
+import { normalizeSettings } from "../core/settings";
 
 /** v12에서만 존재했던 정적 젬을 저장 마이그레이션용 인스턴스로 재현하는 폐쇄된 표다. */
 const LEGACY_V12_RUNES: Readonly<Record<string, RuneInstance>> = {
@@ -22,7 +23,7 @@ function migrateV12Rune(definitionId: string): RuneInstance {
 
 /** 키는 계정 연동 저장소와 충돌하지 않도록 로컬 프로토타입임을 명시한다. */
 export const SAVE_STORAGE_KEY = "eternal-city.local-save";
-export const CURRENT_SAVE_VERSION = 14;
+export const CURRENT_SAVE_VERSION = 15;
 
 type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
@@ -67,6 +68,7 @@ export class SaveManager {
   save(state: Session): void {
     const data: SaveData = {
       saveVersion: CURRENT_SAVE_VERSION,
+      settings: normalizeSettings(state.settings),
       completedStoryIds: [...state.completedStoryIds],
       observationRecords: state.observationRecords.map((record) => ({ ...record })),
       selectedStageId: state.selectedStageId,
@@ -98,6 +100,8 @@ export class SaveManager {
   migrate(input: unknown): SaveData {
     if (!input || typeof input !== "object") throw new SaveDataError("저장 데이터가 객체가 아닙니다.");
     const legacy = input as Record<string, unknown>;
+    // v15 이전 진행은 그대로 펼쳐 보존하고 새 설정 필드만 기본값/정규화 값으로 보충한다.
+    const settings = normalizeSettings(legacy.settings);
     // 현재 이월 그룹만 정규화하며 삭제된 그룹 키는 버리고 새 그룹은 기본 상태로 만든다.
     const savedGroups = legacy.gachaPityByGroup && typeof legacy.gachaPityByGroup === "object"
       ? legacy.gachaPityByGroup as Record<string, { pullsSinceSsr?: unknown; pickupGuaranteed?: unknown }> : {};
@@ -161,10 +165,10 @@ export class SaveManager {
     }]));
     // 반환 전 폐기 필드를 구조 분해해 현재 저장 JSON에 다시 섞이지 않게 한다.
     const { ownedHeartGemIds: _oldOwned, runeSlotsByRelicId: _oldSlots, ...current } = legacy;
-    if (legacy.saveVersion === undefined) return { ...current, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, gachaPityByGroup: normalizedPity, dailyContent, missions, productPurchases, runeInventory } as unknown as SaveData;
-    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, CURRENT_SAVE_VERSION];
+    if (legacy.saveVersion === undefined) return { ...current, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, gachaPityByGroup: normalizedPity, dailyContent, missions, productPurchases, runeInventory } as unknown as SaveData;
+    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, CURRENT_SAVE_VERSION];
     if (!supported.includes(legacy.saveVersion as number)) throw new SaveDataError(`지원하지 않는 저장 버전입니다: ${String(legacy.saveVersion)}`);
-    return { ...current, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory } as unknown as SaveData;
+    return { ...current, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory } as unknown as SaveData;
   }
 
   /** 콘텐츠 ID와 교차 필드 불변식까지 검사해 부분 손상을 조용히 전파하지 않는다. */
@@ -173,6 +177,8 @@ export class SaveManager {
     const stageIds = new Set(STAGES.map(({ id }) => id));
     const fail = (message: string): never => { throw new SaveDataError(message); };
     if (data.saveVersion !== CURRENT_SAVE_VERSION || !Array.isArray(data.ownedRelicIds) || data.ownedRelicIds.some((id) => !relicIds.has(id))) fail("존재하지 않는 렐릭 ID가 있습니다.");
+    // 설정은 저장 전에 정규화되므로 검증 시 값이 바뀐다면 현재 계약이 아닌 손상 데이터다.
+    if (JSON.stringify(data.settings) !== JSON.stringify(normalizeSettings(data.settings))) fail("설정 정보가 올바르지 않습니다.");
     if (!Array.isArray(data.completedStoryIds) || data.completedStoryIds.some((id) => typeof id !== "string") || new Set(data.completedStoryIds).size !== data.completedStoryIds.length) fail("완료 스토리 정보가 올바르지 않습니다.");
     if (!Array.isArray(data.observationRecords) || data.observationRecords.some((record) => !record || typeof record.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(record.date) || !relicIds.has(record.relicId) || typeof record.storyId !== "string" || typeof record.questionId !== "string" || typeof record.question !== "string" || typeof record.choiceId !== "string" || typeof record.answer !== "string" || typeof record.personalityTag !== "string" || typeof record.discoveredHabit !== "string")) fail("관찰 인터뷰 기록이 올바르지 않습니다.");
     if (new Set(data.observationRecords.map(({ date }) => date)).size !== data.observationRecords.length) fail("하루에 관찰 인터뷰를 두 번 기록할 수 없습니다.");
@@ -204,6 +210,7 @@ export class SaveManager {
 
   private toSession(data: SaveData): Session {
     return {
+      settings: normalizeSettings(data.settings),
       completedStoryIds: new Set(data.completedStoryIds),
       observationRecords: data.observationRecords.map((record) => ({ ...record })),
       selectedStageId: data.selectedStageId, party: [...data.party], cleared: new Set(data.clearedStageIds), owned: new Set(data.ownedRelicIds), favorite: data.favorite, bookmarked: new Set(data.bookmarkedRelicIds),

@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { Session } from "../../src/state/session";
 import { RelicCollectionManager } from "../../src/managers/RelicCollectionManager";
+import { createDefaultSettings } from "../../src/core/settings";
 
 /** 테스트끼리 진행 상태를 공유하지 않도록 가장 작은 독립 세션을 만든다. */
 function makeSession(): Session {
   return {
+    settings: createDefaultSettings(),
     completedStoryIds: new Set(), observationRecords: [],
     selectedStageId: null,
     party: ["anky", "rex", "dodo"],

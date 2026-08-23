@@ -64,6 +64,19 @@ test("오프닝을 이미 본 저장이면 타이틀에서 로비로 바로 간�
     .toBe("lobby");
 });
 
+test("로비 설정은 스크롤 변경을 재접속 뒤 유지하고 뒤로 돌아간다", async ({ page }) => {
+  await startAfterOpening(page); await page.locator("canvas").click();
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+  await tapGame(page, BASE_WIDTH - 58, 86); await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("settings");
+  // 첫 사운드 슬라이더를 행 오른쪽으로 눌러 값 변경과 즉시 저장을 함께 검증한다.
+  await tapGame(page, 800, 278); const saved = await page.evaluate(() => localStorage.getItem("eternal-city.local-save")); expect(saved).toContain('"masterVolume"');
+  await page.mouse.wheel(0, 2200); await page.screenshot({ path: `test-results/${test.info().project.name}-settings-scrolled.png` });
+  await page.reload(); await page.waitForFunction(() => window.__PF_DEBUG?.ready === true); await page.locator("canvas").click();
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby"); expect(await page.evaluate(() => JSON.parse(localStorage.getItem("eternal-city.local-save")!).settings.sound.masterVolume)).toBeGreaterThan(0);
+  await tapGame(page, BASE_WIDTH - 58, 86); await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("settings"); await tapGame(page, BASE_WIDTH - 106, BASE_HEIGHT - 120);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+});
+
 test("가로로 눕히면 세로로 돌려달라는 안내가 뜬다", async ({ page }) => {
   const viewport = page.viewportSize();
   if (viewport) {

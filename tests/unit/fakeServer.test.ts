@@ -4,6 +4,7 @@ import { BREAKTHROUGH_STEPS, RELIC_LEVEL_CAP } from "../../src/core/relicProgres
 import { GameApiError } from "../../src/api/contracts";
 import type { Session } from "../../src/state/session";
 import { createRuneInstance, enhanceRune as applyRuneEnhancement, type RuneInstance, type RuneStatKey } from "../../src/core/runes";
+import { createDefaultSettings } from "../../src/core/settings";
 
 /** API 테스트에서 같은 옵션 구성을 재현하는 보유 룬을 만든다. */
 function makeRune(instanceId = "rune-1"): RuneInstance {
@@ -14,6 +15,7 @@ function makeRune(instanceId = "rune-1"): RuneInstance {
 /** 각 테스트가 독립적으로 쓸 서버 저장소 역할의 세션을 만든다. */
 function makeSession(fossil = 1000): Session {
   return {
+    settings: createDefaultSettings(),
     completedStoryIds: new Set(), observationRecords: [],
     selectedStageId: null,
     party: ["anky", "rex", "dodo"],

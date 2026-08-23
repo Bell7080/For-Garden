@@ -25,6 +25,11 @@ function validData(): SaveData {
 }
 
 describe("SaveManager", () => {
+  it("v14 진행을 유지하면서 누락 설정만 기본값으로 마이그레이션한다", () => {
+    const legacy = validData() as unknown as Record<string, unknown>; legacy.saveVersion = 14; delete legacy.settings;
+    const migrated = new SaveManager(new MemoryStorage()).migrate(legacy);
+    expect(migrated.wallet.gold).toBe((legacy.wallet as { gold: number }).gold); expect(migrated.settings.game.battleSpeed).toBe(1);
+  });
   it("Set을 배열로 저장하고 로드할 때 독립 Set으로 복원한다", () => {
     const storage = new MemoryStorage();
     const manager = new SaveManager(storage);

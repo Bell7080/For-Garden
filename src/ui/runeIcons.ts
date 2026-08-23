@@ -65,10 +65,15 @@ export const RUNE_MARK: Readonly<Record<"success" | "fail" | "engrave", StarTone
 
 /** 아직 시도하지 않은 칸. 자리는 지키되 눈에 먼저 들어오지 않게 옅은 테두리만 남긴다. */
 export function addEmptyRuneMark(scene: Phaser.Scene, parent: Phaser.GameObjects.Container, x: number, y: number, outer: number): void {
-  parent.add(scene.add.star(x, y, 5, outer * 0.42, outer, 0x000000, 0.22).setStrokeStyle(2, 0x8a929c, 0.3));
+  parent.add(scene.add.star(x, y, 4, outer * 0.34, outer, 0x000000, 0.22).setStrokeStyle(2, 0x8a929c, 0.3));
 }
 
-/** 세공 결과 별 하나. 성공·실패·각인이 같은 모양을 쓰고 색과 크기만 다르다. */
+/**
+ * 세공 결과 표식 하나.
+ *
+ * 세공 칸은 십자로 뻗는 다이아(꼭짓점 넷)다 — 성급 별과 한 화면에서 섞이지 않게 모양을 가른다.
+ * 각인만 별(꼭짓점 다섯)로 남겨, 한 룬에 한 번뿐인 결과가 다른 종류로 읽히게 한다.
+ */
 export function addRuneMark(
   scene: Phaser.Scene,
   parent: Phaser.GameObjects.Container,
@@ -77,7 +82,7 @@ export function addRuneMark(
   outer: number,
   kind: "success" | "fail" | "engrave",
 ): void {
-  addGlowStar(scene, parent, x, y, outer, RUNE_MARK[kind]);
+  addGlowStar(scene, parent, x, y, outer, RUNE_MARK[kind], kind === "engrave" ? 5 : 4);
 }
 
 /**
@@ -96,22 +101,26 @@ export function addChanceLine(
   chance: number,
 ): void {
   const clamped = Math.max(0, Math.min(1, chance));
-  const height = 10;
   const split = width * clamped;
   const left = x - width / 2;
-  const glow = scene.add.graphics();
-  // 발광은 본체보다 두껍고 옅게 깔아 선 주위로 번지게 한다.
-  glow.fillStyle(RUNE_MARK.success.halo, 0.22);
-  glow.fillRect(left, y - height, split, height * 2);
-  glow.fillStyle(RUNE_MARK.fail.halo, 0.16);
-  glow.fillRect(left + split, y - height, width - split, height * 2);
-  const bar = scene.add.graphics();
-  bar.fillStyle(RUNE_MARK.success.body, 1);
-  bar.fillRect(left, y - height / 2, split, height);
-  bar.fillStyle(RUNE_MARK.fail.body, 1);
-  bar.fillRect(left + split, y - height / 2, width - split, height);
-  // 가르는 지점에 밝은 눈금 하나. 어디까지가 성공인지 숫자를 읽기 전에 보인다.
-  bar.fillStyle(0xffffff, 0.85);
-  bar.fillRect(left + split - 1.5, y - height, 3, height * 2);
-  parent.add([glow, bar]);
+  const line = scene.add.graphics();
+  // 굵은 막대가 아니라 **가는 실선**이다. 같은 선을 두께만 키워 옅게 두 겹 더 깔면 선 자체가
+  // 빛나 보인다 — 두께로 채우는 대신 빛으로 채우는 쪽이 화면의 다른 게이지와 섞이지 않는다.
+  for (const [thickness, alpha] of [[9, 0.1], [5, 0.2], [2.5, 1]] as const) {
+    line.lineStyle(thickness, RUNE_MARK.success.body, alpha);
+    line.lineBetween(left, y, left + split, y);
+    line.lineStyle(thickness, RUNE_MARK.fail.body, thickness === 2.5 ? alpha : alpha * 0.8);
+    line.lineBetween(left + split, y, left + width, y);
+  }
+  // 양 끝과 가르는 지점에 작은 마디를 찍는다. 별자리처럼 점과 선으로 읽히게 하는 최소한이다.
+  const node = (nx: number, color: number, size: number): void => {
+    line.fillStyle(color, 0.22);
+    line.fillCircle(nx, y, size * 2.1);
+    line.fillStyle(color, 1);
+    line.fillCircle(nx, y, size);
+  };
+  node(left, RUNE_MARK.success.body, 3);
+  node(left + width, RUNE_MARK.fail.body, 3);
+  node(left + split, 0xffffff, 4);
+  parent.add(line);
 }

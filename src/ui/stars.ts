@@ -55,14 +55,16 @@ export function addGlowStar(
   y: number,
   outer: number,
   tones: StarTones = AMBER_STAR,
+  /** 꼭짓점 수. 5는 별, 4는 십자로 뻗는 다이아다. 겹과 비율은 그대로 공유한다. */
+  points = 5,
 ): void {
-  const inner = outer * STAR.innerRatio;
+  const inner = outer * (points === 5 ? STAR.innerRatio : 0.34);
   const bloom = tones.bloom ?? 1;
-  parent.add(scene.add.star(x + outer * 0.06, y + outer * 0.14, 5, inner, outer, tones.shadow, 0.5));
-  parent.add(scene.add.star(x, y, 5, inner * 1.5, outer * 1.95, tones.halo, 0.1 * bloom));
-  parent.add(scene.add.star(x, y, 5, inner * 1.3, outer * 1.5, tones.halo, 0.18 * bloom));
-  parent.add(scene.add.star(x, y, 5, inner * 1.12, outer * 1.18, tones.glow, 0.34 * bloom));
-  parent.add(scene.add.star(x, y, 5, inner, outer, tones.body, 1));
+  parent.add(scene.add.star(x + outer * 0.06, y + outer * 0.14, points, inner, outer, tones.shadow, 0.5));
+  parent.add(scene.add.star(x, y, points, inner * 1.5, outer * 1.95, tones.halo, 0.1 * bloom));
+  parent.add(scene.add.star(x, y, points, inner * 1.3, outer * 1.5, tones.halo, 0.18 * bloom));
+  parent.add(scene.add.star(x, y, points, inner * 1.12, outer * 1.18, tones.glow, 0.34 * bloom));
+  parent.add(scene.add.star(x, y, points, inner, outer, tones.body, 1));
 }
 
 /**

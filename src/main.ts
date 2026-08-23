@@ -13,7 +13,7 @@ import { OpeningScene } from "./scenes/OpeningScene";
 import { MissionsScene } from "./scenes/MissionsScene";
 import { ShopScene } from "./scenes/ShopScene";
 import { FriendsScene } from "./scenes/FriendsScene";
-import { ExcavationScene } from "./scenes/ExcavationScene";
+import { ArchaeologyScene } from "./scenes/ArchaeologyScene";
 
 new Phaser.Game({
   // Puppet 원본 indexed mesh를 GPU로 직접 그리므로 중복 정점을 만드는 Canvas 폴백은 사용하지 않는다.
@@ -43,5 +43,5 @@ new Phaser.Game({
     activePointers: 3,
   },
   // 새 장기 탐사형 발굴과 기존 배너 연구소는 독립 화면이며 상점은 카탈로그 씬을 공유한다.
-  scene: [BootScene, TitleScene, OpeningScene, LobbyScene, FriendsScene, MissionsScene, ShopScene, RelicsScene, LabScene, ExcavationScene, StageMapScene, PartyScene, BattleScene],
+  scene: [BootScene, TitleScene, OpeningScene, LobbyScene, FriendsScene, MissionsScene, ShopScene, RelicsScene, LabScene, ArchaeologyScene, StageMapScene, PartyScene, BattleScene],
 });

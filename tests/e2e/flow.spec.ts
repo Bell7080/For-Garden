@@ -276,7 +276,7 @@ test("전투는 한쪽이 전멸하면 끝난다", async ({ page }) => {
 });
 
 
-test("하단 탭으로 발굴 · 렐릭 · 로비 · 연구소 · 상점을 오간다", async ({ page }) => {
+test("하단 탭으로 고고학 · 렐릭 · 로비 · 연구소 · 상점을 오간다", async ({ page }) => {
   await startAfterOpening(page);
   await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => scene(page)).toBe("lobby");
@@ -286,8 +286,8 @@ test("하단 탭으로 발굴 · 렐릭 · 로비 · 연구소 · 상점을 오�
   await tap(page, (BASE_WIDTH * 3) / 10, navY); // 렐릭
   await expect.poll(() => scene(page)).toBe("relics");
 
-  await tap(page, BASE_WIDTH / 10, navY); // 발굴
-  await expect.poll(() => scene(page)).toBe("excavation");
+  await tap(page, BASE_WIDTH / 10, navY); // 고고학
+  await expect.poll(() => scene(page)).toBe("archaeology");
 
   await tap(page, BASE_WIDTH / 2, navY); // 로비
   await expect.poll(() => scene(page)).toBe("lobby");

@@ -23,7 +23,7 @@ import {
 import { mixWhite, tintFor } from "../puppets/tints";
 import { addSceneBackground, BACKGROUND } from "./backgrounds";
 import { addBackButton } from "./IconButton";
-import { chipPoints, drawGlassFade, drawHairline, drawLayer, drawShapeEdge, drawVignette, HOLO, perspectiveRect, slantedRect, toPoints } from "./holo";
+import { chipPoints, drawGlassFade, drawHairline, drawInnerVignette, drawLayer, drawShapeEdge, drawShapeOutline, drawVignette, HOLO, perspectiveRect, slantedRect, toPoints } from "./holo";
 import { drawGlyph } from "./glyphs";
 import { PopupLayer } from "./PopupLayer";
 import { AffinityBadge } from "./AffinityBadge";
@@ -158,16 +158,22 @@ function feedCostRow(
   width: number,
   height: number,
   size: number,
-): { container: Phaser.GameObjects.Container; text: Phaser.GameObjects.Text } {
+): { container: Phaser.GameObjects.Container; text: Phaser.GameObjects.Text; layout: () => void } {
   const container = scene.add.container(x, y);
   container.add(drawLayer(scene, 0, 0, slantedRect(width, height, 8), { fill: 0x0b1410, alpha: 0.66, edge: FEED_GREEN, edgeAlpha: 0.22 }));
   const icon = Math.round(height * 0.86);
-  container.add(cheesecakeIcon(scene, -width / 2 + icon * 0.62, 0, icon));
-  const text = scene.add
-    .text(-width / 2 + icon * 1.16, 1, "", textStyle({ role: "display", size, color: FEED_TEXT }))
-    .setOrigin(0, 0.5);
-  container.add(text);
-  return { container, text };
+  const gap = Math.round(icon * 0.22);
+  // 아이콘과 수를 한 덩어리로 담아 통째로 가운데에 세운다. 아이콘을 판 왼쪽 끝에 붙이면
+  // 자릿수가 적을 때 값이 왼쪽으로 쏠려 판 오른쪽이 휑하게 빈다.
+  const group = scene.add.container(0, 0);
+  group.add(cheesecakeIcon(scene, 0, 0, icon));
+  const text = scene.add.text(icon / 2 + gap, 1, "", textStyle({ role: "display", size, color: FEED_TEXT })).setOrigin(0, 0.5);
+  group.add(text);
+  container.add(group);
+  // 값이 바뀌면 폭도 바뀌므로 다시 부른다. 덩어리의 왼쪽 끝은 아이콘 반쪽이다.
+  const layout = (): void => { group.setX(-(gap + text.width) / 2); };
+  layout();
+  return { container, text, layout };
 }
 /**
  * 유대로 하나씩 열리는 이야기 네 편.
@@ -345,6 +351,8 @@ export class InfoManager {
   private feedPlate?: { on: Phaser.GameObjects.Graphics; off: Phaser.GameObjects.Graphics };
   /** 급여 버튼의 치즈케이크 값줄 — `가진 수/한 번에 드는 수`. */
   private feedCost?: Phaser.GameObjects.Text;
+  /** 값이 바뀔 때마다 아이콘과 수를 다시 가운데로 모은다. */
+  private feedCostLayout?: () => void;
   private feedHold?: Phaser.Time.TimerEvent;
   private feeding = false;
   /** 생성 시 고정한 문맥 덕분에 읽기 전용 창이 도중에 소유자 권한으로 승격되지 않는다. */
@@ -624,6 +632,7 @@ export class InfoManager {
     container.add(label);
     const row = feedCostRow(this.scene, 0, 16, width - 40, 54, 36);
     this.feedCost = row.text;
+    this.feedCostLayout = row.layout;
     container.add(row.container);
     const hit = this.scene.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
     let heldFrom = 0;
@@ -777,6 +786,7 @@ export class InfoManager {
         const price = feedCostRow(this.scene, bx, 32, 184, 48, 28);
         price.text.setText(formatCurrency(session.wallet.cheesecake) + "/" + formatCurrency(cost));
         price.text.setColor(enough ? FEED_TEXT : COLOR.dangerText);
+        price.layout();
         body.add(price.container);
         if (!enough) return;
         const hit = this.scene.add.rectangle(bx, 12, 212, 116, 0xffffff, 0).setInteractive({ useHandCursor: true });
@@ -1379,10 +1389,12 @@ export class InfoManager {
       const size = SKILL_ICON.size;
       const container = this.scene.add.container(SKILL_ICON.x + index * SKILL_ICON.step, BASE_HEIGHT - 196);
       const bevel = { topLeft: size * 0.26, topRight: 0, bottomRight: size * 0.26, bottomLeft: 0 };
-      // 바깥 칩이 액자, 안쪽 칩이 그림 자리다. 나중에 들어올 SVG 일러스트가 액자 안에 앉는다.
-      container.add(drawLayer(this.scene, 0, 0, chipPoints(size, size, { bevel }), {
-        fill: index === 2 ? 0x2a2418 : 0x141a22,
-        alpha: 0.94,
+      const chip = chipPoints(size, size, { bevel });
+      // 아이콘은 **액자**다. 배경 원화가 비쳐 보이면 그림 두 장이 겹쳐 무엇이 스킬인지 흐려지므로
+      // 판을 불투명하게 채우고 사방을 한 줄로 두른다(화면의 다른 판과 다른 이유가 이것이다).
+      container.add(drawLayer(this.scene, 0, 0, chip, {
+        fill: index === 2 ? 0x241f16 : 0x11161d,
+        alpha: 1,
         edge: COLOR.accent,
         edgeAlpha: index === 2 ? 0.9 : 0.45,
       }));
@@ -1390,16 +1402,20 @@ export class InfoManager {
       const inner = chipPoints(innerSize, innerSize - 14, {
         bevel: { topLeft: innerSize * 0.22, topRight: 0, bottomRight: innerSize * 0.22, bottomLeft: 0 },
       });
-      container.add(drawLayer(this.scene, 0, -6, inner, { fill: 0x05080c, alpha: 0.55 }));
+      container.add(drawLayer(this.scene, 0, -6, inner, { fill: 0x05080c, alpha: 1, shadow: false }));
       const art = skillArtFor(def.id, slot);
       // 그림 자리에 같은 색을 아주 옅게 한 겹 깔아 아이콘이 색판 위에 앉은 것처럼 보이게 한다.
-      if (art) container.add(drawLayer(this.scene, 0, -6, inner, { fill: tint, alpha: SKILL_ART_WASH_ALPHA }));
+      if (art) container.add(drawLayer(this.scene, 0, -6, inner, { fill: tint, alpha: SKILL_ART_WASH_ALPHA, shadow: false }));
+      // 테두리 안쪽으로 스며드는 어둠. 그림이 액자 안으로 들어앉아 보인다.
+      container.add(drawInnerVignette(this.scene, 0, -6, inner, { strength: 0.55 }));
       const texture = art ?? (this.scene.textures.exists(skill.iconAssetId) ? skill.iconAssetId : FALLBACK_SKILL_ICON);
       const image = this.scene.add.image(0, -8, texture).setDisplaySize(size * (art ? 0.74 : 0.52), size * (art ? 0.74 : 0.52));
       // 전용 일러스트는 흰 실루엣이라 여기서 속성·직군을 섞은 색을 입는다.
       if (art) image.setTint(tint);
       container.add(image);
       container.add(this.scene.add.text(0, size / 2 - 26, kindLabel, textStyle({ role: "emphasis", size: 19, color: index === 2 ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5));
+      // 액자 테두리. 채운 판 위에 한 줄을 얹어 배경 원화와 확실히 갈라 놓는다.
+      container.add(drawShapeOutline(this.scene, 0, 0, chip, { color: COLOR.accent, alpha: index === 2 ? 0.75 : 0.42, width: 3 }));
       const hit = this.scene.add.rectangle(0, 0, size, size, 0xffffff, 0).setInteractive({ useHandCursor: true });
       hit.on("pointerdown", () => container.setScale(1.08));
       hit.on("pointerout", () => { if (!this.popups.isOpen) container.setScale(1); });
@@ -1414,7 +1430,7 @@ export class InfoManager {
       });
       container.add(hit);
       // 패시브 위에만 이 개체의 피버 발현을 작게 얹는다. 야성은 벌이 아니라 상이라는 표시다.
-      if (index === 0) this.addFerocityBadge(container.x, container.y - size / 2 - 56, def);
+      if (index === 0) this.addFerocityBadge(container.x, container.y - size / 2 - 64, def);
       this.chrome.add(container);
       this.skillIcons.push(container);
     });
@@ -1429,12 +1445,15 @@ export class InfoManager {
   private addFerocityBadge(x: number, y: number, def: RelicDef): void {
     // 스킬 아이콘의 자식으로 두면 아이콘을 눌러 커질 때 뱃지까지 함께 커져, 패시브를 눌렀는데
     // 야성까지 눌린 것처럼 보인다. 자리만 아이콘 위로 잡고 층은 따로 세운다.
-    const badgeSize = 72;
+    // 스킬 아이콘(150)보다는 작게 두되, 그림이 무엇인지 알아볼 만큼은 키운다. 너무 작으면
+    // 폭주 일러스트가 점처럼 뭉갠다.
+    const badgeSize = 96;
     const badge = this.scene.add.container(x, y);
     const shape = chipPoints(badgeSize, badgeSize, {
       bevel: { topLeft: badgeSize * 0.34, topRight: 0, bottomRight: badgeSize * 0.34, bottomLeft: 0 },
     });
-    badge.add(drawLayer(this.scene, 0, 0, shape, { fill: FEROCITY_BADGE, alpha: 0.96, edge: 0xf0a58a, edgeAlpha: 0.8 }));
+    badge.add(drawLayer(this.scene, 0, 0, shape, { fill: FEROCITY_BADGE, alpha: 1, edge: 0xf0a58a, edgeAlpha: 0.8 }));
+    badge.add(drawInnerVignette(this.scene, 0, 0, shape, { strength: 0.4 }));
     // 폭주도 스킬 넷 중 하나라 전용 일러스트를 쓴다. 다만 붉은 판 위에서는 속성 색을 그대로
     // 얹으면 판에 묻히므로, 여기서만 야성의 살구빛을 쓴다 — 이 뱃지는 개체 구분이 아니라
     // "야성이 이렇게 터진다"를 알리는 자리이기 때문이다.
@@ -1452,6 +1471,7 @@ export class InfoManager {
       badge.setScale(1.1);
       this.openFerocityTrait(def, { x, y: y - badgeSize / 2 - 12, onClose: () => badge.setScale(1) });
     });
+    badge.add(drawShapeOutline(this.scene, 0, 0, shape, { color: 0xf0a58a, alpha: 0.65, width: 3 }));
     badge.add(hit);
     this.chrome.add(badge);
     // 스킬 아이콘과 같은 목록에 담아 미보유 개체에서 함께 숨고 다시 그릴 때 함께 지워진다.
@@ -1629,6 +1649,7 @@ export class InfoManager {
     this.feedCost?.setText(formatCurrency(session.wallet.cheesecake) + "/" + (maxed ? "—" : String(FEED_UNIT.cheesecake)));
     // 모자라면 줄 전체가 붉어진다. 두 수 중 하나만 물들이면 어느 쪽이 모자란 것인지 되레 헷갈린다.
     this.feedCost?.setColor(!maxed && session.wallet.cheesecake < FEED_UNIT.cheesecake ? COLOR.dangerText : FEED_TEXT);
+    this.feedCostLayout?.();
     this.paintBreakButton(progress);
 
     const bondMaxed = progress.bondLevel >= BOND_LEVEL_CAP;

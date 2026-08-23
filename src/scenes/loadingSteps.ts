@@ -72,6 +72,11 @@ export const LOADING_STEPS: ReadonlyArray<LoadingStep> = [
     run: () => preloadPuppetAssets(PUPPET_PRELOAD_GROUPS[0]),
   },
   {
+    // 컷인은 portraitAssetFor가 가리키는 동일 캐시를 재사용한다. 단계 등록으로 첫 발동 중 파싱을 막는다.
+    label: "궁극기 컷인 원화",
+    run: () => preloadPuppetAssets(PUPPET_PRELOAD_GROUPS[0]),
+  },
+  {
     label: "SD·적 묶음",
     run: () => preloadPuppetAssets(PUPPET_PRELOAD_GROUPS[1]),
   },

@@ -204,6 +204,8 @@ export const MOTION = {
    * 주고받는 동안 캐릭터가 계속 튀어 보이고, 무엇보다 자기 공격 모션이 매번 잘린다.
    */
   hit: { names: ["hit", "idle"], returnsToIdle: true, priority: 1, speed: 2.2, strength: 0.4 },
+  /** 궁극기 컷인의 독립 포효. 일반 공격보다 높아 연출 중 피격/공격에 잘리지 않는다. */
+  roar: { names: ["roar", "shout", "attack", "idle"], returnsToIdle: true, priority: 3 },
   /** 공격 동작이 따로 없어 포효로 대신한다. 재생 중에는 어떤 동작도 이걸 끊지 못한다. */
   attack: { names: ["attack", "slam", "roar", "idle"], returnsToIdle: true, priority: 2 },
 } as const satisfies Record<string, MotionConfig>;
@@ -416,19 +418,29 @@ export function placePuppet(
  * 있는 동작 중 첫 번째를 재생한다. 한 번만 재생하는 동작은 끝날 즈음 idle로 돌려놓는다
  * (그냥 두면 마지막 자세로 굳는다).
  */
+/** 실제로 선택된 원본 이름과 재생 시간을 노출해 씬이 추측 타이머 없이 다음 연출을 이을 수 있다. */
+export interface MotionPlayback {
+  readonly playedName: string | null;
+  readonly durationMs: number;
+  /** idle 복귀까지 기다린다. 씬 종료로 타이머가 폐기된 경우에도 즉시 풀린다. */
+  readonly completed: Promise<void>;
+}
+
 export function playMotion(
   scene: Phaser.Scene,
   creature: PuppetCreature,
   motion: MotionName,
-): void {
+): MotionPlayback {
   const config: MotionConfig = MOTION[motion];
   // 더 중요한 동작이 아직 재생 중이면 그대로 둔다. 공격은 끝까지 휘두르고, 피격이 자른다.
   const held = motionHold.get(creature);
-  if (held && held.until > scene.time.now && held.priority >= config.priority) return;
+  if (held && held.until > scene.time.now && held.priority >= config.priority) {
+    return { playedName: null, durationMs: 0, completed: Promise.resolve() };
+  }
 
   const options = { speed: config.speed, strength: config.strength };
   const playedName = config.names.find((name) => creature.play(name, options));
-  if (!playedName) return;
+  if (!playedName) return { playedName: null, durationMs: 0, completed: Promise.resolve() };
 
   const generation = (motionGeneration.get(creature) ?? 0) + 1;
   motionGeneration.set(creature, generation);
@@ -436,7 +448,9 @@ export function playMotion(
   motionTimers.delete(creature);
   motionHold.delete(creature);
 
-  if (!config.returnsToIdle || playedName === "idle") return;
+  if (!config.returnsToIdle || playedName === "idle") {
+    return { playedName, durationMs: 0, completed: Promise.resolve() };
+  }
 
   // PuppetForge의 내보내기 speed/strength/secondary는 play()가 그대로 적용한다. 복귀 시각도
   // 고정 숫자가 아니라 내보낸 duration과 실제 재생 속도로 계산해 동작이 중간에 잘리지 않게 한다.
@@ -444,14 +458,22 @@ export function playMotion(
   const speed = Math.max((config.speed ?? exportedMotion.speed) ?? 1, 0.01);
   const holdMs = (exportedMotion.duration / speed) * 1000;
   motionHold.set(creature, { priority: config.priority, until: scene.time.now + holdMs });
-  const timer = scene.time.delayedCall(holdMs, () => {
+  let resolveCompletion!: () => void;
+  const completed = new Promise<void>((resolve) => { resolveCompletion = resolve; });
+  const finish = () => {
     // 공격 직후 피격처럼 동작이 겹쳐도 가장 최근 동작의 유지 시간은 온전히 보장한다.
-    if (motionGeneration.get(creature) !== generation) return;
+    if (motionGeneration.get(creature) !== generation) { resolveCompletion(); return; }
     motionTimers.delete(creature);
     motionHold.delete(creature);
     if (creature.active) creature.play("idle");
-  });
+    resolveCompletion();
+  };
+  const timer = scene.time.delayedCall(holdMs, finish);
   motionTimers.set(creature, timer);
+  // shutdown은 Phaser 타이머를 조용히 폐기하므로 Promise도 함께 해제해 비동기 시퀀스를 남기지 않는다.
+  scene.events.once("shutdown", resolveCompletion);
+  completed.finally(() => scene.events.off("shutdown", resolveCompletion));
+  return { playedName, durationMs: holdMs, completed };
 }
 
 /** 맞은 순간 붉게 물드는 시간(ms)과 색. 동작을 크게 흔들지 않아도 피격이 눈에 띄게 한다. */

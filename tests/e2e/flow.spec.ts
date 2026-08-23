@@ -213,6 +213,23 @@ test("전투 조작 칩으로 1·2·3배속과 자동 궁극기를 전환한다"
   await page.screenshot({ path: `test-results/${test.info().project.name}-battle-controls.png`, fullPage: true });
 });
 
+test("동시에 준비된 두 궁극기는 컷인 하나씩 직렬 실행한다", async ({ page }) => {
+  await enterBattle(page);
+  // 빠르게 게이지를 모으되 자동 발동은 두 명이 준비될 때까지 켜지 않는다.
+  await tap(page, BASE_WIDTH - 335, 150);
+  await tap(page, BASE_WIDTH - 335, 150);
+  await expect.poll(async () => (await battle(page))?.ultimateReady.length ?? 0, { timeout: 35_000 }).toBeGreaterThanOrEqual(2);
+  await tap(page, BASE_WIDTH - 130, 150);
+
+  // 첫 컷인 활성 중 다음 전투원이 큐에 남는 것이 곧 겹치지 않고 직렬화됐다는 관찰 계약이다.
+  await expect.poll(async () => (await battle(page))?.ultimateSequenceActive, { timeout: 5_000 }).toBe(true);
+  await expect.poll(async () => (await battle(page))?.ultimateQueue?.length ?? 0).toBeGreaterThanOrEqual(1);
+  await page.screenshot({ path: `test-results/${test.info().project.name}-ultimate-cutin-serialized.png`, fullPage: true });
+  // 두 연출이 모두 끝나면 큐와 입력 잠금이 함께 풀린다.
+  await expect.poll(async () => (await battle(page))?.ultimateSequenceActive, { timeout: 10_000 }).toBe(false);
+  await expect.poll(async () => (await battle(page))?.ultimateQueue ?? []).toEqual([]);
+});
+
 test("전투는 한쪽이 전멸하면 끝난다", async ({ page }) => {
   await enterBattle(page);
 

@@ -1,4 +1,5 @@
 import type { HeartGemRarity } from "../data/heartGems";
+import Phaser from "phaser";
 
 /**
  * 룬 하트 조각.
@@ -26,6 +27,20 @@ export const RUNE_ACCENT: Record<HeartGemRarity, number> = {
 
 export function runeTexture(rarity: HeartGemRarity | undefined, index: number): string {
   return rarity ? `rune-${rarity}-${index}` : `rune-empty-${index}`;
+}
+
+/**
+ * 목록에서 쓰는 완성 룬 아이콘이다.
+ *
+ * 세 자산은 굽기 단계에서 같은 중심을 공유하므로 여기서도 정확히 같은 좌표에 포갠다. 가방과
+ * 정보창이 별도 합성 이미지를 만들지 않고 이 컨테이너 하나를 공유하도록 공개 함수로 둔다.
+ */
+export function addRuneIcon(scene: Phaser.Scene, x: number, y: number, size: number, rarity: HeartGemRarity): Phaser.GameObjects.Container {
+  const icon = scene.add.container(x, y);
+  for (let index = 0; index < 3; index += 1) {
+    icon.add(scene.add.image(0, 0, runeTexture(rarity, index)).setOrigin(0.5, RUNE_CENTER_Y).setDisplaySize(size, size));
+  }
+  return icon;
 }
 
 export const RUNE_ICON_ASSETS: ReadonlyArray<readonly [string, string]> = [

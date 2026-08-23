@@ -37,6 +37,7 @@ import {
   type UltimateSequenceState,
 } from "../core/ultimateSequence";
 import type { MotionPlayback } from "../puppets/assets";
+import { ultimatePresentationFor } from "../data/ultimatePresentations";
 
 /**
  * 여섯이 돌아다닐 수 있는 범위.
@@ -284,12 +285,19 @@ export class BattleScene extends Phaser.Scene {
       if (!fighter || !this.sequenceValid(next.token, fighter)) return;
       const view = this.views.get(fighter.id);
       if (!view) return;
-      this.activeCutIn = await UltimateCutIn.create(this, fighter.def);
+      // 씬은 ID별 값을 판단하지 않고 정적 프리셋(또는 공용 기본값)만 소비한다.
+      const presentation = ultimatePresentationFor(fighter.def.id);
+      this.activeCutIn = await UltimateCutIn.create(this, fighter.def, presentation);
       if (!this.sequenceValid(next.token, fighter)) return;
-      const roar = playMotion(this, view.creature, "roar");
+      const roar = playMotion(this, view.creature, presentation.roarMotion);
       await Promise.all([roar.completed, this.activeCutIn.play()]);
       this.activeCutIn.destroy();
       this.activeCutIn = undefined;
+
+      // 컷인과 피해 판정 사이의 호흡 및 충격도 프리셋에 두되 흔들림 시간은 공용으로 유지한다.
+      await new Promise<void>((resolve) => this.time.delayedCall(presentation.preAttackDelayMs, resolve));
+      if (!this.sequenceValid(next.token, fighter)) return;
+      this.cameras.main.shake(180, presentation.cameraShakeIntensity);
 
       // 입력 순간이 아니라 포효가 끝난 바로 이 시점의 생존/게이지/전투 결과를 코어에 재검증한다.
       if (!this.sequenceValid(next.token, fighter) || !canFireUltimate(this.state, fighter)) return;

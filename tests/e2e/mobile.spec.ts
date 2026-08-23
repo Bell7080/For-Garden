@@ -67,7 +67,9 @@ test("오프닝을 이미 본 저장이면 타이틀에서 로비로 바로 간�
 test("로비 설정은 스크롤 변경을 재접속 뒤 유지하고 뒤로 돌아간다", async ({ page }) => {
   await startAfterOpening(page); await page.locator("canvas").click();
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
-  await tapGame(page, BASE_WIDTH - 58, 86); await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("settings");
+  await tapGame(page, BASE_WIDTH - 58, 86);
+  // 미구현 토스트가 아니라 실제 설정 화면의 사용자 표시 제목까지 렌더됐는지 확인한다.
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.screenTitle)).toBe("환경 설정");
   // 첫 사운드 슬라이더를 행 오른쪽으로 눌러 값 변경과 즉시 저장을 함께 검증한다.
   await tapGame(page, 800, 278); const saved = await page.evaluate(() => localStorage.getItem("eternal-city.local-save")); expect(saved).toContain('"masterVolume"');
   await page.mouse.wheel(0, 2200); await page.screenshot({ path: `test-results/${test.info().project.name}-settings-scrolled.png` });

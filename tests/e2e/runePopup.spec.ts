@@ -13,14 +13,21 @@ async function tap(page: Page, x: number, y: number): Promise<void> {
   await canvas.click({ position: { x: x / W * box.width, y: y / H * box.height } });
 }
 
-/** 로비→렐릭→첫 카드→첫 룬 조각의 실제 사용자 경로로 공용 팝업을 연다. */
+/**
+ * 로비→렐릭→첫 카드→첫 룬 조각→세공의 실제 사용자 경로로 세공 화면을 연다.
+ *
+ * 조각을 누르면 먼저 간소한 룬 쪽지가 열리고, 세공은 거기서 한 번 더 골라야 열린다. 쪽지의
+ * 세공 버튼은 조각 위쪽으로 붙는 팝업의 아래쪽에 서므로, 조각 좌표에서 일정한 거리만큼 위다.
+ */
 async function openFirstRune(page: Page): Promise<void> {
   await tap(page, W / 2, H / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   await tap(page, W * 0.3, H - 90);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("relics");
-  await tap(page, 200, 580);
-  await tap(page, 744, 1258);
+  // 애착 렐릭(토리카) 카드 → 1번 룬 조각 → 쪽지의 세공 버튼 순서다.
+  await tap(page, 530, 580);
+  await tap(page, 688, 1350);
+  await tap(page, 676, 1232);
 }
 
 test("세로 화면에서 전설 5행×3칸, 긴 옵션명, 키보드 이름 입력과 바깥 닫기가 함께 동작한다", async ({ page }) => {

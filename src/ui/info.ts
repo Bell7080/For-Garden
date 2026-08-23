@@ -28,10 +28,9 @@ import { drawGlyph } from "./glyphs";
 import { PopupLayer } from "./PopupLayer";
 import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
-import { addStarRow } from "./stars";
-import { RUNE_ACCENT, RUNE_CENTER_Y, runeTexture } from "./runeIcons";
-import { openRunePopup } from "./RunePopup";
-import { Button } from "./Button";
+import { addStar, addStarRow } from "./stars";
+import { addRuneIcon, RUNE_ACCENT, RUNE_CENTER_Y, runeTexture } from "./runeIcons";
+import { openRuneInfoPopup, RUNE_STAT_LABEL } from "./RunePopup";
 import { StatRadar } from "./StatRadar";
 import { openSkillPopup, type SkillInfoViewModel } from "./SkillPopup";
 import { relicCollection } from "../managers/RelicCollectionManager";
@@ -114,6 +113,9 @@ const RARITY_GEM: Record<RelicRarity, readonly [string, string, string]> = {
 
 /** 이름 옆 속성·직군 뱃지의 크기와 이름에서 띄우는 간격. */
 const AFFINITY = { main: 96, sub: 72, gap: 30 } as const;
+
+/** 능력치 칸에 서는 오각형의 반지름. 축 이름까지 판 안에 들어오는 크기다. */
+const STAT_RADAR_RADIUS = 128;
 
 /** 정보창의 별은 화면에서 가장 큰 성급 표시다. 모양과 색은 `stars.ts`가 정한다. */
 const STAR_SIZE = 34;
@@ -218,11 +220,6 @@ const EXTRA_STATS: readonly { key: keyof Stats; label: string; suffix?: string }
   { key: "energyGain", label: "궁극기 충전량" },
 ];
 
-const STAT_LABEL: Record<string, string> = {
-  hp: "체력", def: "방어력", res: "저항력", atk: "공격력", ap: "주문력",
-  attackSpeed: "공격 속도", moveSpeed: "이동 속도", critChance: "치명타 확률", critDamage: "치명타 피해", energyGain: "충전량",
-};
-
 /**
  * 팝업을 부른 자리.
  *
@@ -318,8 +315,8 @@ export class InfoManager {
   private readonly bondBar: Gauge;
   private readonly bondLabel: Phaser.GameObjects.Text;
 
-  private readonly statValues: Phaser.GameObjects.Text[] = [];
-  private readonly statGains: Phaser.GameObjects.Text[] = [];
+  /** 능력치 칸의 오각형. 숫자는 돋보기로 연 상세가 맡는다. */
+  private statRadar?: StatRadar;
   private readonly gemSlots: GemSlot[] = [];
   private readonly skillIcons: Phaser.GameObjects.Container[] = [];
 
@@ -476,7 +473,13 @@ export class InfoManager {
     // 능력치.
     this.addSectionTitle("능력치", 1024 - 198);
     this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 30, 876, (from) => this.openExtraStats(from), statPanel);
-    STAT_CHIPS.forEach((chip, index) => this.addStatChip(chip, index, statPanel));
+    // 칸에는 숫자가 아니라 **오각형**이 선다. 다섯 축의 균형은 숫자 다섯 줄보다 한눈에 읽히고,
+    // 정확한 값이 필요할 때만 돋보기로 연다. 축 이름은 굵게 키우고 능력치 색을 입힌다.
+    this.statRadar = new StatRadar(this.scene, COLUMN.x, 1030, STAT_RADAR_RADIUS, {
+      size: 25,
+      colors: Object.fromEntries(STAT_CHIPS.map((chip) => [chip.key, `#${chip.color.toString(16).padStart(6, "0")}`])),
+    });
+    attach(statPanel, this.statRadar);
 
     // 하트 젬 — 하트 하나를 셋으로 가른 자리.
     this.addSectionTitle("룬", 1398 - 146).setVisible(this.capabilities.mutateProgress);
@@ -837,27 +840,6 @@ export class InfoManager {
     }
   }
 
-  /** 능력치 칩 하나. 큰 수치가 먼저 읽히고 기본치·성장분은 그 아래 작게 붙는다. */
-  private addStatChip(chip: { key: keyof Stats; label: string; color: number }, index: number, panel: Phaser.GameObjects.Container): void {
-    // 칩은 왼쪽으로 34만큼 더 나가므로 판 가장자리에서 넉넉히 띄운다. 판 밖으로 걸치면
-    // 내용물이 판에 얹힌 것이 아니라 흘러넘친 것처럼 보인다.
-    const x = COLUMN.x - COLUMN.width / 2 + 104 + (index % 2) * (COLUMN.width / 2 - 26);
-    const y = 906 + Math.floor(index / 2) * 118;
-    const size = 62;
-    const container = this.scene.add.container(x - 34, y);
-    container.add(drawLayer(this.scene, 0, 0, chipPoints(size, size, {
-      bevel: { topLeft: size * 0.32, topRight: 0, bottomRight: size * 0.32, bottomLeft: 0 },
-    // 어떤 능력치인지는 색으로 알린다. 다만 색을 테두리로 두르면 선이 면 밖으로 튀어나오므로,
-    // 칩 안쪽 위에서 아래로 사라지는 발광으로 물들인다.
-    }), { fill: 0x11161d, alpha: 0.92, edge: chip.color, edgeAlpha: 0.85, glow: { color: chip.color, strength: 0.42, height: 0.5 } }));
-    container.add(this.scene.add.text(0, 2, chip.label, textStyle({ role: "emphasis", size: 21 })).setOrigin(0.5));
-
-    const value = this.scene.add.text(x + 12, y - 26, "", textStyle({ role: "display", size: 36 })).setOrigin(0, 0);
-    const gain = this.scene.add.text(x + 12, y + 16, "", textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0, 0);
-    this.statValues.push(value);
-    this.statGains.push(gain);
-    attach(panel, container, value, gain);
-  }
 
   /**
    * 하트 젬(룬) 슬롯.
@@ -893,9 +875,14 @@ export class InfoManager {
       .rectangle(center.x + spot.x, center.y + spot.y, size * 0.42, size * 0.42, 0xffffff, 0)
       .setInteractive({ useHandCursor: true });
     hit.on("pointerup", () => {
-      // 채운 조각은 곧바로 공용 성장 팝업, 빈 조각은 장착 가방을 연다.
-      if (currentRuneId) openRunePopup(this.scene, this.popups, { runeInstanceId: currentRuneId, anchor: { x: center.x + spot.x, y: center.y + spot.y }, onChanged: () => this.refreshGrowth() });
-      else this.openGemPicker(index);
+      // 채운 조각은 룬 쪽지(세공은 거기서 한 번 더 고른다), 빈 조각은 장착 가방을 연다.
+      if (currentRuneId) {
+        openRuneInfoPopup(this.scene, this.popups, {
+          runeInstanceId: currentRuneId,
+          anchor: { x: center.x + spot.x, y: center.y + spot.y },
+          onChanged: () => this.refreshGrowth(),
+        });
+      } else this.openGemPicker(index);
     });
     attach(panel, glow, piece, label, hit);
 
@@ -918,40 +905,77 @@ export class InfoManager {
     };
   }
 
-  /** 칸 하나에 낄 룬을 고르는 가방. 그 칸에 낄 수 있는 것만 늘어놓는다. */
+  /**
+   * 칸 하나에 낄 룬을 고르는 가방.
+   *
+   * 목록이 아니라 **격자**다. 룬은 등급 색과 조각 모양이 곧 성격이라, 이름만 늘어놓으면 무엇을
+   * 고르는지 그림 없이 읽어야 한다. 한 줄에 두 장씩 두고 그림·이름·등급·옵션을 한 칸에 담는다.
+   */
   private openGemPicker(index: number): void {
     if (!this.capabilities.mutateProgress) return;
     const def = this.currentDef;
     if (!def || !this.ownedNow) return;
-    this.popups.open({ width: 820, height: 620, title: "룬 가방 · " + (index + 1) + "번 칸", dim: true }, (body, close) => {
-      // 가방은 정적 카탈로그가 아니라 실제 보유 인스턴스를 표시하고 슬롯에도 instanceId를 쓴다.
-      const owned = session.runeInventory.map((rune) => ({ id: rune.instanceId, name: rune.customName ?? rune.baseName, statPercent: Object.fromEntries([...rune.mainStats, ...rune.subStats].map(({ key, value }) => [key, value])) }));
-      const rows: { id: string | null; name: string; effect: string }[] = [
-        { id: null, name: "비우기", effect: "" },
-        ...owned.map((gem) => ({
-          id: gem.id,
-          // 칸 이름이 "룬"이므로 가방에서도 룬으로 부른다. 데이터의 정적 이름은 그대로 둔다.
-          name: gem.name.replace(" Heart Gem", " 룬"),
-          effect: Object.entries(gem.statPercent).map(([key, percent]) => (STAT_LABEL[key] ?? key) + " +" + percent + "%").join("   "),
-        })),
-      ];
-      rows.forEach((row, rowIndex) => {
-        const y = -200 + rowIndex * 96;
-        body.add(drawLayer(this.scene, 0, y, slantedRect(700, 82, 14), { fill: 0x141a22, alpha: 0.9, edge: COLOR.accent, edgeAlpha: 0.3 }));
-        body.add(this.scene.add.text(-320, y - 20, row.name, textStyle({ role: "display", size: 26 })).setOrigin(0, 0));
-        if (row.effect) body.add(this.scene.add.text(-320, y + 12, row.effect, textStyle({ role: "body", size: 20, color: COLOR.accentText })).setOrigin(0, 0));
-        const hit = this.scene.add.rectangle(-70, y, 560, 82, 0xffffff, 0).setInteractive({ useHandCursor: true });
-        hit.on("pointerup", () => {
-          // 실제 룬 행은 장착 전에 공용 상세를 열어 목록과 조각이 같은 경험을 제공한다.
-          if (row.id) openRunePopup(this.scene, this.popups, { runeInstanceId: row.id, anchor: { x: 470, y: 960 + y }, onChanged: () => this.refreshGrowth() });
-          else void relicProgression.unequipRune(def.id, index).then(() => { close(); this.refreshGrowth(); });
-        });
-        body.add(hit);
-        if (row.id) {
-          // 장착은 서버가 반환한 전체 인벤토리를 매니저가 적용한 뒤에만 화면을 갱신한다.
-          const equip = new Button(this.scene, 286, y, { width: 120, height: 62, label: "장착", fontSize: 22, onClick: () => { void relicProgression.equipRune(def.id, index, row.id!).then(() => { close(); this.refreshGrowth(); }); } });
-          body.add(equip);
+    const runes = session.runeInventory;
+    const columns = 2;
+    const cell = { width: 372, height: 206, gapX: 24, gapY: 18 };
+    const rows = Math.ceil(runes.length / columns);
+    const pickerWidth = columns * cell.width + (columns - 1) * cell.gapX + 96;
+    // 판 높이는 가진 룬 수를 따르되 화면을 넘지 않는다. 못으로 박아 두면 룬이 늘어난 만큼 잘린다.
+    const pickerHeight = Math.min(BASE_HEIGHT - 120, 268 + rows * (cell.height + cell.gapY));
+    this.popups.open({ width: pickerWidth, height: pickerHeight, title: "룬 가방 · " + (index + 1) + "번 칸", dim: true }, (body, close) => {
+      const top = -pickerHeight / 2;
+      // 비우기는 격자 위 한 줄이다. 룬 카드와 섞이면 실수로 누르기 쉽다.
+      body.add(drawLayer(this.scene, 0, top + 128, slantedRect(pickerWidth - 96, 66, 12), { fill: 0x141a22, alpha: 0.92, edge: COLOR.accent, edgeAlpha: 0.3 }));
+      body.add(this.scene.add.text(0, top + 128, "비우기", textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0.5));
+      const clearHit = this.scene.add.rectangle(0, top + 128, pickerWidth - 96, 66, 0xffffff, 0).setInteractive({ useHandCursor: true });
+      clearHit.on("pointerup", () => void relicProgression.unequipRune(def.id, index).then(() => { close(); this.refreshGrowth(); }));
+      body.add(clearHit);
+
+      const firstX = -((columns - 1) * (cell.width + cell.gapX)) / 2;
+      runes.forEach((rune, order) => {
+        const x = firstX + (order % columns) * (cell.width + cell.gapX);
+        const y = top + 212 + Math.floor(order / columns) * (cell.height + cell.gapY) + cell.height / 2;
+        const accent = RUNE_ACCENT[rune.rarity];
+        const engraved = rune.engravings.length > 0;
+        const card = this.scene.add.container(x, y);
+        card.add(drawLayer(this.scene, 0, 0, chipPoints(cell.width, cell.height, {
+          bevel: { topLeft: cell.height * 0.24, topRight: 0, bottomRight: cell.height * 0.24, bottomLeft: 0 },
+        }), { fill: 0x101720, alpha: 0.96, edge: accent, edgeAlpha: engraved ? 1 : 0.5, glow: engraved ? { color: accent, strength: 0.35 } : undefined }));
+        const icon = addRuneIcon(this.scene, -cell.width / 2 + 70, -14, 108, rune.rarity);
+        card.add(icon);
+        // 각인까지 마친 룬은 다 자란 보석이다. 조각 뒤에서 숨 쉬듯 빛나 한눈에 골라진다.
+        if (engraved) {
+          const halo = addRuneIcon(this.scene, -cell.width / 2 + 70, -14, 142, rune.rarity);
+          halo.setAlpha(0.35).setBlendMode(Phaser.BlendModes.ADD);
+          card.addAt(halo, 1);
+          this.scene.tweens.add({ targets: halo, alpha: { from: 0.16, to: 0.5 }, scale: { from: 0.94, to: 1.06 }, duration: 1100, yoyo: true, repeat: -1, ease: "Sine.InOut" });
+          const spark = this.scene.add.container(0, 0);
+          addStar(this.scene, spark, cell.width / 2 - 34, -cell.height / 2 + 76, 14, true);
+          card.add(spark);
+          this.scene.tweens.add({ targets: spark, alpha: { from: 0.45, to: 1 }, angle: { from: -12, to: 12 }, duration: 900, yoyo: true, repeat: -1, ease: "Sine.InOut" });
         }
+        card.add(this.scene.add.text(-cell.width / 2 + 140, -84, RUNE_RARITY_LABELS[rune.rarity], textStyle({ role: "emphasis", size: 20, color: `#${accent.toString(16).padStart(6, "0")}` })).setOrigin(0, 0));
+        card.add(this.scene.add.text(-cell.width / 2 + 140, -56, rune.customName ?? `${RUNE_RARITY_LABELS[rune.rarity]} 룬`, textStyle({ role: "display", size: 25 })).setOrigin(0, 0).setWordWrapWidth(200));
+        // 옵션은 이름 아래 오른쪽 칸에 쌓는다. 전설(다섯 줄)까지 카드 안에 들어오는 크기다.
+        const lines = [...rune.mainStats, ...rune.subStats].map(({ key, value }) => RUNE_STAT_LABEL[key] + " +" + value + "%");
+        card.add(this.scene.add.text(-cell.width / 2 + 140, -10, lines.join("\n"), textStyle({ role: "body", size: 17, color: COLOR.accentText })).setOrigin(0, 0));
+        if (engraved) card.add(this.scene.add.text(cell.width / 2 - 22, -cell.height / 2 + 22, "각인", textStyle({ role: "emphasis", size: 19, color: "#ffc233" })).setOrigin(1, 0));
+        const hit = this.scene.add.rectangle(0, 0, cell.width, cell.height, 0xffffff, 0).setInteractive({ useHandCursor: true });
+        hit.on("pointerdown", () => card.setScale(1.04));
+        hit.on("pointerout", () => { if (!this.popups.isOpen) card.setScale(1); });
+        hit.on("pointerup", () => {
+          card.setScale(1);
+          // 가방에서도 곧바로 끼우지 않고 쪽지를 먼저 연다. 무엇을 끼우는지 보고 고르게 한다.
+          openRuneInfoPopup(this.scene, this.popups, {
+            runeInstanceId: rune.instanceId,
+            anchor: { x: 540, y: 960 },
+            onChanged: () => this.refreshGrowth(),
+            // 정보창에서 연 룬이므로 쪽지에 장착 버튼이 함께 선다.
+            equip: { relicId: def.id, slotIndex: index, onEquipped: () => { close(); this.refreshGrowth(); } },
+          });
+        });
+        card.add(hit);
+        body.add(card);
       });
     });
   }
@@ -1211,7 +1235,7 @@ export class InfoManager {
             .setOrigin(0, 0),
         );
         if (gem) {
-          const effect = [...gem.mainStats, ...gem.subStats].map(({ key, value }) => (STAT_LABEL[key] ?? key) + " +" + value + "%").join("   ");
+          const effect = [...gem.mainStats, ...gem.subStats].map(({ key, value }) => RUNE_STAT_LABEL[key] + " +" + value + "%").join("   ");
           body.add(this.scene.add.text(306, y + 8, effect, textStyle({ role: "emphasis", size: 22, color: COLOR.accentText })).setOrigin(1, 0));
         }
       });
@@ -1229,20 +1253,32 @@ export class InfoManager {
     const def = this.currentDef;
     if (!def) return;
     const stats = relicProgression.getFinalStats(def.id);
-    this.popups.open({ width: 800, height: 900, title: "능력치 상세", tilt: -1.2, ...anchorOf(from) }, (body) => {
-      // 위쪽은 다섯 축을 한눈에 견주는 오각형이다. 숫자 다섯 줄보다 "무엇이 센 개체인지"가
-      // 먼저 읽힌다. 아래쪽은 그 오각형에 들어가지 않는 세부 수치를 따로 모은 칸이다.
-      const radar = new StatRadar(this.scene, 0, -210, 148);
-      radar.draw(stats, 148);
-      body.add(radar);
-      body.add(drawHairline(this.scene, 0, -6, 660, { color: COLOR.accent, alpha: 0.35 }));
+    const height = 1080;
+    this.popups.open({ width: 800, height, title: "능력치 상세", tilt: -1.2, ...anchorOf(from) }, (body) => {
+      // 칸에는 오각형이 서 있으므로 여기서는 **숫자**를 맡는다. 다섯 축의 정확한 값과 기본값
+      // 대비 상승분이 먼저 오고, 그 아래에 오각형에 들어가지 않는 세부 수치가 온다.
+      const top = -height / 2;
+      STAT_CHIPS.forEach((chip, index) => {
+        const y = top + 132 + index * 80;
+        const base = def.stats[chip.key];
+        const gain = stats[chip.key] - base;
+        // 칸의 축 이름과 같은 색이라 그래프에서 본 축을 그대로 따라 읽는다.
+        body.add(this.scene.add.text(-330, y, chip.label, textStyle({ role: "display", size: 27, color: `#${chip.color.toString(16).padStart(6, "0")}` })).setOrigin(0, 0.5));
+        body.add(this.scene.add.text(330, y - 12, stats[chip.key].toLocaleString(), textStyle({ role: "display", size: 32 })).setOrigin(1, 0.5));
+        const detail = gain > 0 ? `기본 ${base.toLocaleString()}   +${gain.toLocaleString()}` : `기본 ${base.toLocaleString()}`;
+        const detailStyle = gain > 0
+          ? textStyle({ role: "body", size: 19, color: COLOR.accentText })
+          : textStyle({ role: "body", size: 19, color: COLOR.inkDim });
+        body.add(this.scene.add.text(330, y + 20, detail, detailStyle).setOrigin(1, 0.5));
+        body.add(drawHairline(this.scene, 0, y + 40, 660, { color: COLOR.accent, alpha: 0.14 }));
+      });
       body.add(
         this.scene.add
-          .text(-330, 16, "세부 능력치", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText }))
+          .text(-330, top + 566, "세부 능력치", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText }))
           .setOrigin(0, 0),
       );
       EXTRA_STATS.forEach((row, index) => {
-        const y = 90 + index * 74;
+        const y = top + 640 + index * 74;
         body.add(this.scene.add.text(-330, y, row.label, textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0, 0.5));
         body.add(this.scene.add.text(330, y, stats[row.key].toLocaleString() + (row.suffix ?? ""), textStyle({ role: "display", size: 30 })).setOrigin(1, 0.5));
         if (index < EXTRA_STATS.length - 1) body.add(drawHairline(this.scene, 0, y + 37, 660, { color: COLOR.accent, alpha: 0.14 }));
@@ -1661,17 +1697,7 @@ export class InfoManager {
     const boost = Math.round((BOND_FEROCITY_MULTIPLIER[progress.bondLevel] - 1) * 100);
     this.bondLabel.setText((bondMaxed ? "MAX" : progress.bondXp + " / " + bondNext + " EXP") + "   ·   야성 상승 +" + boost + "%");
 
-    STAT_CHIPS.forEach((chip, index) => {
-      const base = def.stats[chip.key];
-      const gain = finalStats[chip.key] - base;
-      this.statValues[index].setText(finalStats[chip.key].toLocaleString());
-      this.statGains[index].setText("기본 " + base.toLocaleString());
-      this.statGains[index].setColor(COLOR.inkDim);
-      if (gain > 0) {
-        this.statGains[index].setText("기본 " + base.toLocaleString() + "   +" + gain.toLocaleString());
-        this.statGains[index].setColor(COLOR.accentText);
-      }
-    });
+    this.statRadar?.draw(finalStats, STAT_RADAR_RADIUS);
 
     progress.heartGemSlots.forEach((id, index) => this.gemSlots[index].paint(id));
   }

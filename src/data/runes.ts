@@ -1,4 +1,4 @@
-import type { RuneRarity, RuneStatKey } from "../core/runes";
+import { generateRune, type RuneInstance, type RuneRarity, type RuneStatKey } from "../core/runes";
 
 /** 옵션 수치 단위. percent는 기존 수치에 곱하고 percentagePoint는 게이지/확률에 그대로 더한다. */
 export type RuneStatUnit = "percent" | "percentagePoint";
@@ -36,4 +36,28 @@ export function runeEnhancementGoldCost(rarity: RuneRarity, completedAttempts: n
   const cost = RUNE_ENHANCEMENT_GOLD_COSTS[rarity][completedAttempts];
   if (cost === undefined) throw new RangeError("모든 강화를 마친 룬에는 다음 비용이 없습니다.");
   return cost;
+}
+
+/**
+ * 시작 룬 열 개의 등급 구성(임시).
+ *
+ * 세공 화면을 실제로 만져 볼 수 있게 계정에 넣어 주는 임시 지급이다. 등급을 고르게 섞어
+ * 보조 옵션 0~3개가 모두 한 번씩 나오도록 했다. 정식 획득 경로(발굴·상점·교환)가 생기면
+ * 이 표와 `grantStarterRunes`를 함께 지운다.
+ */
+export const STARTER_RUNE_RARITIES: readonly RuneRarity[] = [
+  "uncommon", "uncommon", "uncommon",
+  "rare", "rare", "rare",
+  "epic", "epic",
+  "legendary", "legendary",
+];
+
+/** 등급표와 주입된 난수만으로 시작 룬을 만든다. 상태를 읽지도 바꾸지도 않는다. */
+export function createStarterRunes(random: () => number): RuneInstance[] {
+  return STARTER_RUNE_RARITIES.map((rarity, index) => generateRune({
+    instanceId: `starter-rune-${index + 1}`,
+    baseName: "발굴 룬",
+    rarity,
+    random,
+  }));
 }

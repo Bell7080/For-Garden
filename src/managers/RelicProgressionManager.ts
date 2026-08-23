@@ -1,6 +1,7 @@
 import { AWAKENING_CAP, calculateFinalStats } from "../core/relicProgression";
 import type { RelicProgress, Stats } from "../core/types";
 import { getRelic } from "../data/relics";
+import { createStarterRunes } from "../data/runes";
 import { createInitialRelicProgress, session, type Session } from "../state/session";
 import { saveManager } from "../state/SaveManager";
 import { gameApi } from "../api/FakeServer";
@@ -36,6 +37,20 @@ export class RelicProgressionManager {
     if (!Number.isInteger(awakening) || awakening < 0 || awakening > AWAKENING_CAP) throw new RangeError("각성 단계는 0~5의 정수여야 합니다.");
     this.ownedProgress(relicId).awakening = awakening;
     this.persistSharedSession();
+  }
+
+  /**
+   * 가방이 비어 있을 때만 시작 룬을 넣어 준다(임시 지급).
+   *
+   * 세공 화면을 만져 볼 룬이 없으면 기능이 있는지조차 알 수 없다. 정식 획득 경로가 생기면
+   * 이 메서드와 `createStarterRunes`를 함께 지운다. 이미 룬이 있으면 아무것도 하지 않으므로
+   * 저장을 여러 번 열어도 가방이 불어나지 않는다.
+   */
+  grantStarterRunes(random: () => number = Math.random): number {
+    if (this.state.runeInventory.length > 0) return 0;
+    this.state.runeInventory = createStarterRunes(random);
+    this.persistSharedSession();
+    return this.state.runeInventory.length;
   }
 
   /** 서버가 검증한 장착 응답만 로컬 세션에 적용해 UI가 슬롯 불변식을 재구현하지 않게 한다. */

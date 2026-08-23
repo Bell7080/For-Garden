@@ -16,8 +16,7 @@ import { DNA_EXCHANGE_OFFERS, WALLET_CAPS } from "../data/economy";
 import { EVENTS, findEventByProductId, findEventByStageId } from "../data/events";
 import type { EventDefinition } from "../data/events/types";
 import type { EnterEventStageResponse, EventListResponse } from "./contracts";
-import { assertValidRuneInstance, canEngraveRune, canEnhanceRune, generateRune, engraveRune as applyRuneEngraving, enhanceRune as applyRuneEnhancement, runeEnhancementAttempts, runeEnhancementIncrease, type RuneInstance } from "../core/runes";
-import { getHeartGem } from "../data/heartGems";
+import { assertValidRuneInstance, canEngraveRune, canEnhanceRune, generateRune, engraveRune as applyRuneEngraving, enhanceRune as applyRuneEnhancement, runeEnhancementAttempts, runeEnhancementIncrease, type RuneInstance, type RuneRarity } from "../core/runes";
 import { runeEnhancementGoldCost } from "../data/runes";
 import type { EngraveRuneRequest, EngraveRuneResponse, EnhanceRuneRequest, EnhanceRuneResponse, EquipRuneRequest, EquipRuneResponse, RenameRuneRequest, RenameRuneResponse, RuneInventoryDto, UnequipRuneRequest, UnequipRuneResponse } from "./contracts";
 
@@ -270,13 +269,8 @@ export class FakeServer implements GameApi {
     const nextWallet = { ...this.state.wallet, [product.price.currency]: this.state.wallet[product.price.currency] - product.price.amount };
     const nextRunes = [...this.state.runeInventory];
     const grantedRunes: RuneInstance[] = [];
-    for (const grant of product.grants) {
-      if (grant.kind === "currency") nextWallet[grant.currency] += grant.amount;
-      else {
-        const rune = this.createGrantedRune(grant.itemId, nextRunes);
-        nextRunes.push(rune); grantedRunes.push(rune);
-      }
-    }
+    // 상점은 현재 재화만 지급하며, 룬 생성은 DNA의 명시적인 인스턴스 발급 계약으로 분리한다.
+    for (const grant of product.grants) nextWallet[grant.currency] += grant.amount;
     const periodKey = this.productPeriodKey(product, now);
     const current = this.state.productPurchases[product.id];
     const count = current?.periodKey === periodKey ? current.count + 1 : 1;
@@ -304,8 +298,8 @@ export class FakeServer implements GameApi {
       }
       // 선택한 한 렐릭만 복사해 각성 1단계를 확정하며 다른 렐릭 진행은 건드리지 않는다.
       nextProgress[request.relicId] = { ...target, heartGemSlots: [...target.heartGemSlots] as typeof target.heartGemSlots, awakening: target.awakening + 1 };
-    } else if (offer.kind === "heart_gem_material") {
-      grantedRune = this.createGrantedRune(offer.heartGemId, nextRunes);
+    } else if (offer.kind === "rune") {
+      grantedRune = this.createGrantedRune(offer.rarity, nextRunes);
       nextRunes.push(grantedRune);
     } else {
       nextWallet.fossil += offer.fossilAmount;
@@ -457,14 +451,13 @@ export class FakeServer implements GameApi {
     };
   }
 
-  /** 옛 상품 카탈로그의 정의 ID를 서버가 소유하는 새 룬 인스턴스로 발급한다. */
-  private createGrantedRune(definitionId: string, inventory: readonly RuneInstance[]): RuneInstance {
-    const definition = getHeartGem(definitionId);
+  /** 희귀도 계약만 받아 옵션과 고유 ID를 서버가 소유하는 새 룬 인스턴스로 발급한다. */
+  private createGrantedRune(rarity: RuneRarity, inventory: readonly RuneInstance[]): RuneInstance {
     const occupied = new Set(inventory.map(({ instanceId }) => instanceId));
     let instanceId: string;
     // 저장 데이터에 같은 시각 기반 ID가 있어도 순번을 전진시키며 실제 미사용 ID를 고른다.
-    do { instanceId = `${definitionId}-${this.now().getTime()}-${this.runeIssueSequence++}`; } while (occupied.has(instanceId));
-    return generateRune({ instanceId, baseName: definition.name, rarity: definition.rarity, random: this.random });
+    do { instanceId = `rune-${this.now().getTime()}-${this.runeIssueSequence++}`; } while (occupied.has(instanceId));
+    return generateRune({ instanceId, baseName: `${rarity} 룬`, rarity, random: this.random });
   }
 
   /** 보유 인벤토리에서만 룬을 찾아 존재 여부와 소유권을 한 번에 확정한다. */

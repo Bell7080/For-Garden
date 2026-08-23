@@ -3,6 +3,8 @@ import type { RelicProgress, Stats } from "../core/types";
 import { getRelic } from "../data/relics";
 import { createInitialRelicProgress, session, type Session } from "../state/session";
 import { saveManager } from "../state/SaveManager";
+import { gameApi } from "../api/FakeServer";
+import type { GameApi, RuneInventoryDto } from "../api/contracts";
 
 /** 성장 상태 변경과 Heart Gem 검증을 독점하는 공개 진입점이다. */
 export class RelicProgressionManager {
@@ -36,32 +38,31 @@ export class RelicProgressionManager {
     this.persistSharedSession();
   }
 
-  /**
-   * 슬롯 하나만 갈아 끼운다.
-   *
-   * 정보창은 조각 하나를 눌러 고르므로, 세 자리를 통째로 넘기는 API를 화면이 다시 조립하게
-   * 두면 그 조립 규칙이 화면마다 갈라진다. 같은 젬이 다른 자리에 있으면 그 자리를 비운다.
-   */
-  equipHeartGem(relicId: string, index: number, gemId: string | null): void {
-    if (!Number.isInteger(index) || index < 0 || index > 2) throw new RangeError("Heart Gem 슬롯 번호가 올바르지 않습니다.");
-    const slots = [...this.ownedProgress(relicId).heartGemSlots] as (string | null)[];
-    if (gemId !== null) {
-      const duplicate = slots.indexOf(gemId);
-      if (duplicate !== -1) slots[duplicate] = null;
-    }
-    slots[index] = gemId;
-    this.setHeartGemSlots(relicId, slots);
+  /** 서버가 검증한 장착 응답만 로컬 세션에 적용해 UI가 슬롯 불변식을 재구현하지 않게 한다. */
+  async equipRune(relicId: string, slotIndex: number, runeInstanceId: string, api: GameApi = gameApi): Promise<void> {
+    const response = await api.equipRune({ relicId, slotIndex, runeInstanceId });
+    this.applyRuneInventory(response.inventory);
   }
 
-  /** 정확히 세 슬롯, 빈 슬롯, 중복, 미보유 Heart Gem을 모두 한곳에서 검증한다. */
-  setHeartGemSlots(relicId: string, slots: readonly (string | null)[]): void {
-    if (slots.length !== 3) throw new RangeError("Heart Gem 슬롯은 정확히 3개여야 합니다.");
-    const equipped = slots.filter((id): id is string => id !== null);
-    if (new Set(equipped).size !== equipped.length) throw new Error("같은 Heart Gem을 중복 장착할 수 없습니다.");
-    for (const id of equipped) {
-      if (!this.state.runeInventory.some((rune) => rune.instanceId === id)) throw new Error(`보유하지 않은 룬 인스턴스입니다: ${id}`);
+  /** 빈 슬롯 결과 역시 서버 응답의 전체 장착표를 적용한다. */
+  async unequipRune(relicId: string, slotIndex: number, api: GameApi = gameApi): Promise<void> {
+    const response = await api.unequipRune({ relicId, slotIndex });
+    this.applyRuneInventory(response.inventory);
+  }
+
+  /** 인벤토리 DTO를 기존 공유 객체에 복사해 씬 참조를 보존하고 응답 단위로 저장한다. */
+  private applyRuneInventory(inventory: RuneInventoryDto): void {
+    this.state.runeInventory = inventory.runes.map((rune) => ({
+      ...rune,
+      mainStats: [{ ...rune.mainStats[0] }, { ...rune.mainStats[1] }],
+      subStats: rune.subStats.map((stat) => ({ ...stat })),
+      enhancementHistory: Object.fromEntries(Object.entries(rune.enhancementHistory).map(([key, history]) => [key, history?.map((record) => ({ ...record }))])),
+      engravings: rune.engravings.map((engraving) => ({ ...engraving })),
+    }));
+    for (const equipment of inventory.equipment) {
+      const progress = this.ownedProgress(equipment.relicId);
+      progress.heartGemSlots = [...equipment.slots];
     }
-    this.ownedProgress(relicId).heartGemSlots = [...slots] as RelicProgress["heartGemSlots"];
     this.persistSharedSession();
   }
 

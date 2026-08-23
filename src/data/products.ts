@@ -1,10 +1,8 @@
 /** 상점의 가격 재화. `real_money`는 플랫폼 영수증 검증 전에는 구매할 수 없다. */
 export type ProductCurrency = "fossil" | "amber" | "cheesecake" | "dnaFragments" | "real_money";
 
-/** 지급 항목은 지갑 재화 또는 중복 없는 Heart Gem으로 제한해 서버가 판별 가능하게 한다. */
-export type ProductGrant =
-  | { kind: "currency"; currency: Exclude<ProductCurrency, "real_money">; amount: number }
-  | { kind: "heart_gem"; itemId: string; amount: 1 };
+/** 현재 상점은 재화만 지급한다. 룬은 옵션 생성 권한이 있는 별도 서버 계약으로 발급한다. */
+export type ProductGrant = { kind: "currency"; currency: Exclude<ProductCurrency, "real_money">; amount: number };
 
 /** 구매 제한의 재설정 주기. `once`는 계정 전체에서 한 번만 허용한다. */
 export type ProductRefresh = "none" | "daily" | "weekly" | "once";

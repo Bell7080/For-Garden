@@ -836,11 +836,12 @@ export class InfoManager {
         hit.on("pointerup", () => {
           // 실제 룬 행은 장착 전에 공용 상세를 열어 목록과 조각이 같은 경험을 제공한다.
           if (row.id) openRunePopup(this.scene, this.popups, { runeInstanceId: row.id, anchor: { x: 470, y: 960 + y }, onChanged: () => this.refreshGrowth() });
-          else { relicProgression.equipHeartGem(def.id, index, null); close(); this.refreshGrowth(); }
+          else void relicProgression.unequipRune(def.id, index).then(() => { close(); this.refreshGrowth(); });
         });
         body.add(hit);
         if (row.id) {
-          const equip = new Button(this.scene, 286, y, { width: 120, height: 62, label: "장착", fontSize: 22, onClick: () => { relicProgression.equipHeartGem(def.id, index, row.id); close(); this.refreshGrowth(); } });
+          // 장착은 서버가 반환한 전체 인벤토리를 매니저가 적용한 뒤에만 화면을 갱신한다.
+          const equip = new Button(this.scene, 286, y, { width: 120, height: 62, label: "장착", fontSize: 22, onClick: () => { void relicProgression.equipRune(def.id, index, row.id!).then(() => { close(); this.refreshGrowth(); }); } });
           body.add(equip);
         }
       });

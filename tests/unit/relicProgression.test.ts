@@ -4,6 +4,7 @@ import type { RelicProgress, Stats } from "../../src/core/types";
 import { RelicProgressionManager } from "../../src/managers/RelicProgressionManager";
 import type { Session } from "../../src/state/session";
 import { createRuneInstance, engraveRune, enhanceRune, type RuneInstance, type RuneStatKey } from "../../src/core/runes";
+import { FakeServer } from "../../src/api/FakeServer";
 
 /** 계산 순서를 쉽게 확인할 수 있도록 모든 능력치가 같은 테스트 기본값을 쓴다. */
 const BASE: Stats = { hp: 101, def: 101, res: 101, atk: 101, ap: 101, attackSpeed: 101, moveSpeed: 101, critChance: 101, critDamage: 101, energyGain: 101, lifeSteal: 0, ferocityGain: 0 };
@@ -92,31 +93,14 @@ describe("렐릭 성장 규칙", () => {
     for (const invalid of [-1, 6, 2.5]) expect(() => manager.setAwakening("rex", invalid)).toThrow(RangeError);
   });
 
-  it("젬 한 칸만 갈아 끼우면 같은 젬이 있던 다른 칸은 비운다", () => {
-    const manager = new RelicProgressionManager(makeSession());
-    manager.setHeartGemSlots("rex", ["vital-seed", null, null]);
-    manager.equipHeartGem("rex", 2, "vital-seed");
-    expect(manager.getProgress("rex").heartGemSlots).toEqual([null, null, "vital-seed"]);
-    manager.equipHeartGem("rex", 2, null);
-    expect(manager.getProgress("rex").heartGemSlots).toEqual([null, null, null]);
-  });
-
-  it("Heart Gem은 정확히 3슬롯이며 빈 칸은 허용하되 중복과 미보유는 거부한다", () => {
+  it("장착과 해제는 API 응답의 전체 장착표를 세션에 적용한다", async () => {
     const state = makeSession();
     const manager = new RelicProgressionManager(state);
-    manager.setHeartGemSlots("rex", ["vital-seed", null, "fang-core"]);
-    expect(state.relicProgress.rex.heartGemSlots).toEqual(["vital-seed", null, "fang-core"]);
-    expect(() => manager.setHeartGemSlots("rex", [null, null])).toThrow(RangeError);
-    expect(() => manager.setHeartGemSlots("rex", ["vital-seed", "vital-seed", null])).toThrow(/중복/);
-    expect(() => manager.setHeartGemSlots("rex", ["ancient-pulse", null, null])).toThrow(/보유하지 않은/);
-  });
-
-  it("성장 상태는 JSON 저장과 복원 뒤에도 3슬롯 형태를 유지한다", () => {
-    const state = makeSession();
-    new RelicProgressionManager(state).setHeartGemSlots("rex", [null, "fang-core", null]);
-    const restored = JSON.parse(JSON.stringify(state.relicProgress)) as Session["relicProgress"];
-    expect(restored.rex).toEqual({ level: 1, exp: 0, awakening: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, "fang-core", null] });
-    expect(restored.rex.heartGemSlots).toHaveLength(3);
+    const api = new FakeServer(state, { latencyMs: 0 });
+    await manager.equipRune("rex", 1, "fang-core", api);
+    expect(state.relicProgress.rex.heartGemSlots).toEqual([null, "fang-core", null]);
+    await manager.unequipRune("rex", 1, api);
+    expect(state.relicProgress.rex.heartGemSlots).toEqual([null, null, null]);
   });
 });
 

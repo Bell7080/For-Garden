@@ -75,6 +75,83 @@ export interface ClaimAdRewardRequest { slotId: string; verificationToken: strin
 /** 검증·중복·일일 제한 확인 후 지급과 저장까지 확정된 광고 보상 결과다. */
 export interface ClaimAdRewardResponse extends PlayerStateDto { slotId: string; reward: { currency: "stamina" | "cheesecake"; amount: number }; dailyClaims: number; dailyRemaining: number; }
 
+/** 인증된 서버 응답에서만 내려오는 슬롯별 운영 정책이며 앱 번들의 정적 표를 운영 기준으로 쓰지 않는다. */
+export interface AdSlotOperationsDto {
+  /** 로그·검증 요청·운영 집계를 연결하는 변경되지 않는 슬롯 식별자다. */
+  slotId: string;
+  /** false이면 UI는 제안을 숨기되 원래 보상과 콘텐츠 진행은 그대로 제공한다. */
+  enabled: boolean;
+  /** 서버 UTC 날짜 하나에 검증·지급할 수 있는 최대 완료 횟수다. */
+  dailyLimitUtc: number;
+  /** 표시와 실제 지급이 같은 서버 값을 사용하도록 화폐와 수량을 함께 전달한다. */
+  reward: { currency: "stamina" | "cheesecake"; amount: number };
+}
+
+/** 로그인된 API 채널이 전달하는 광고 운영 설정의 버전·유효 기간 포함 계약이다. */
+export interface AdOperationsConfigResponse {
+  /** 캐시와 지표가 어떤 운영 정책을 사용했는지 감사할 수 있는 불변 버전이다. */
+  configVersion: string;
+  /** 클라이언트 시계 대신 설정 신선도를 판단할 인증 서버의 UTC 시각이다. */
+  serverTime: string;
+  /** 만료되거나 조회에 실패한 설정은 광고 비활성으로 처리하고 게임 기본 흐름은 계속한다. */
+  expiresAt: string;
+  /** 응답에 없는 슬롯도 비활성으로 간주해 오래된 앱이 임의 기본값으로 광고를 켜지 않게 한다. */
+  slots: AdSlotOperationsDto[];
+}
+
+/** 광고 제공 불가는 결제·재화·콘텐츠 오류 코드와 분리되는 선택 기능의 종료 사유다. */
+export type AdUnavailableReason = "sdk_not_initialized" | "network" | "consent" | "no_inventory" | "config_disabled" | "config_unavailable";
+
+/** 광고 어댑터 결과는 실패 시 검증 토큰을 만들지 않으며 호출자는 원래 게임 흐름을 계속한다. */
+export type AdPresentationResult =
+  | { status: "completed"; verificationToken: string }
+  | { status: "unavailable"; reason: AdUnavailableReason }
+  | { status: "dismissed" | "failed"; reason?: string };
+
+/** 슬롯별 퍼널과 광고 전후 이탈을 개인 식별 없이 집계할 때 쓰는 사건 이름이다. */
+export type AdFunnelMetricName = "offer_shown" | "watch_started" | "watch_completed" | "watch_failed" | "reward_verification_succeeded" | "reward_duplicate_rejected" | "exit_before_ad" | "exit_after_ad";
+
+/** 광고 퍼널 사건은 슬롯·설정 버전만 담고 SDK 토큰이나 사용자 식별자를 담지 않는다. */
+export interface AdFunnelMetric {
+  name: AdFunnelMetricName;
+  slotId: string;
+  configVersion: string;
+  occurredAt: string;
+  /** 실패 분류는 SDK/네트워크/동의/재고 상태를 집계하며 자유 형식 개인정보를 받지 않는다. */
+  failureReason?: AdUnavailableReason | "dismissed" | "verification_invalid";
+}
+
+/** 광고 이용 여부별 재화 획득량 비교는 사용자 ID 대신 집계 코호트와 획득 출처만 전달한다. */
+export interface AdCurrencyEarningMetric {
+  name: "currency_earned";
+  cohort: "ad_user" | "non_ad_user";
+  currency: keyof Wallet;
+  amount: number;
+  source: "ad_reward" | "gameplay" | "mission" | "purchase" | "other";
+  occurredAt: string;
+}
+
+/** 동의 경계 밖 기본 전송은 개인·광고 식별자를 표현할 필드 자체를 제공하지 않는다. */
+export interface ContextualAdMetricsRequest {
+  privacyScope: "contextual";
+  events: Array<AdFunnelMetric | AdCurrencyEarningMetric>;
+}
+
+/** 플랫폼 추적 동의 뒤에만 광고 식별 연계가 필요한 별도 파이프라인을 명시적으로 선택한다. */
+export interface ConsentedAdMetricsRequest {
+  privacyScope: "consented_ad_tracking";
+  advertisingTrackingConsent: true;
+  /** 원본 플랫폼 광고 ID가 아니라 서버가 회전·가명화한 식별자만 허용한다. */
+  pseudonymousSubjectId: string;
+  events: Array<AdFunnelMetric | AdCurrencyEarningMetric>;
+}
+
+/** 호출부가 동의 상태와 맞지 않는 식별 포함 요청을 타입 단계에서 만들지 못하게 하는 합집합이다. */
+export type AdMetricsRequest = ContextualAdMetricsRequest | ConsentedAdMetricsRequest;
+
+/** 지표 수집 실패가 게임이나 보상 검증을 막지 않도록 수락 건수만 돌려주는 독립 응답이다. */
+export interface AdMetricsResponse { accepted: number; }
+
 /** 서버 계정에 활성화된 연구 후원 권리다. null 만료는 영구이며 판정 기준 시각도 함께 내려간다. */
 export interface PassEntitlementDto { entitlementId: string; productId: string; activatedAt: string; expiresAt: string | null; active: boolean; serverTime: string; }
 /** 플랫폼 영수증 재시도는 요청 ID로 같은 검증 결과를 돌려받는다. */

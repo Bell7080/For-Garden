@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { autoPickParty, elementDistribution, partyAffinitySummary } from "../../src/core/partyAffinity";
+import { autoPickParty, elementDistribution, partyAffinitySummary, relicAffinityDirection } from "../../src/core/partyAffinity";
 import { getRelic } from "../../src/data/relics";
 
 /** Phaser 없이 편성 추천과 화면 요약이 같은 속성 공식을 쓰는지 검증한다. */
@@ -22,5 +22,21 @@ describe("파티 속성 미리보기", () => {
     const roster = [getRelic("rex"), getRelic("anky"), getRelic("spino"), getRelic("dodo"), getRelic("smilo")];
     const enemies = [getRelic("husk-raptor"), getRelic("husk-shell"), getRelic("husk-wing")];
     expect(autoPickParty(roster, enemies)).toEqual(["spino", "smilo", "anky"]);
+  });
+
+  it("선택 렐릭이 적 다수에게 유리하면 위 방향이다", () => {
+    expect(relicAffinityDirection(getRelic("rex"), [getRelic("dodo"), getRelic("smilo")])).toBe("up");
+  });
+
+  it("선택 렐릭이 적 다수에게 불리하면 아래 방향이다", () => {
+    expect(relicAffinityDirection(getRelic("rex"), [getRelic("spino"), getRelic("husk-shell")])).toBe("down");
+  });
+
+  it("유리와 불리가 상쇄되면 중립이다", () => {
+    expect(relicAffinityDirection(getRelic("rex"), [getRelic("dodo"), getRelic("spino")])).toBe("neutral");
+  });
+
+  it("적 목록이 비었으면 중립이다", () => {
+    expect(relicAffinityDirection(getRelic("rex"), [])).toBe("neutral");
   });
 });

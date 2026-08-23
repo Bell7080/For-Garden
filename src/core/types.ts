@@ -63,7 +63,7 @@ export interface RelicProgress {
   bondXp: number;
   /** 해당 렐릭이 로비 일일 유대 보상을 마지막으로 받은 UTC 날짜키다. */
   lastLobbyInteractionDate: string;
-  /** 정확히 세 자리인 Heart Gem 장착 슬롯이다. null은 빈 슬롯을 뜻한다. */
+  /** 정확히 세 자리인 룬 장착 슬롯이다. 값은 정적 정의 ID가 아닌 RuneInstance.instanceId이며 null은 빈 슬롯이다. */
   heartGemSlots: [string | null, string | null, string | null];
 }
 

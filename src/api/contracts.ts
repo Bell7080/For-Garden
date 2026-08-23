@@ -7,7 +7,7 @@ import type { StageDef } from "../core/types";
 import type { EventDefinition } from "../data/events/types";
 import type { RuneInstance, RuneStatKey } from "../core/runes";
 
-/** 룬 장착 위치다. 룬 인스턴스에 역참조를 복제하지 않고 렐릭의 세 슬롯만 기준으로 삼는다. */
+/** 룬 장착 위치다. 슬롯 값은 정적 정의 ID가 아닌 룬 인스턴스 ID다. */
 export interface RuneEquipmentDto { relicId: string; slots: [string | null, string | null, string | null]; }
 
 /** 보유 룬과 단일 기준 장착표를 한 번에 전달하는 직렬화 가능한 인벤토리 DTO다. */
@@ -56,8 +56,6 @@ export interface PlayerStateDto {
   ownedRelicIds: string[];
   /** 렐릭 id별 성장과 Heart Gem 3슬롯 장착 상태다. */
   relicProgress: Record<string, RelicProgress>;
-  /** 플레이어가 보유한 Heart Gem id 목록이다. */
-  ownedHeartGemIds: string[];
   /** 서버 동기화 대상인 편성, 애착, 클리어 진행이다. 로컬 SaveData와 버전 책임은 분리한다. */
   party: string[];
   favorite: string;
@@ -66,7 +64,7 @@ export interface PlayerStateDto {
   dailyContent: { date: string; restorationEntries: number };
   /** 서버 기간 정규화가 끝난 임무 목록이다. */
   missions: MissionDto[];
-  /** 서버가 소유권과 장착 중복을 검증한 룬 인벤토리다. */
+  /** 서버가 소유권과 RelicProgress 슬롯의 장착 중복을 검증한 룬 인벤토리다. */
   runeInventory: RuneInventoryDto;
 }
 

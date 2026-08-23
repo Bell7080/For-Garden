@@ -5,7 +5,7 @@ import type { Combatant } from "../core/combatTypes";
 import { previewSkillDamage } from "../core/damage";
 import type { Element, RelicDef, RelicProgress, RelicRarity, Role, Skill, SkillIconAssetId, Stats } from "../core/types";
 import { setDebugInfoOpen } from "../debug";
-import { getHeartGem, HEART_GEMS } from "../data/heartGems";
+import { getHeartGem } from "../data/heartGems";
 import { RELICS } from "../data/relics";
 import { KeywordManager } from "../managers/KeywordManager";
 import { relicProgression } from "../managers/RelicProgressionManager";
@@ -808,7 +808,8 @@ export class InfoManager {
     const def = this.currentDef;
     if (!def || !this.ownedNow) return;
     this.popups.open({ width: 820, height: 620, title: "룬 가방 · " + (index + 1) + "번 칸", dim: true }, (body, close) => {
-      const owned = HEART_GEMS.filter((gem) => session.ownedHeartGemIds.includes(gem.id));
+      // 가방은 정적 카탈로그가 아니라 실제 보유 인스턴스를 표시하고 슬롯에도 instanceId를 쓴다.
+      const owned = session.runeInventory.map((rune) => ({ id: rune.instanceId, name: rune.customName ?? rune.baseName, statPercent: Object.fromEntries([...rune.mainStats, ...rune.subStats].map(({ key, value }) => [key, value])) }));
       const rows: { id: string | null; name: string; effect: string }[] = [
         { id: null, name: "비우기", effect: "" },
         ...owned.map((gem) => ({

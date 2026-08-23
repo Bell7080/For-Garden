@@ -16,7 +16,8 @@ import { DNA_EXCHANGE_OFFERS, WALLET_CAPS } from "../data/economy";
 import { EVENTS, findEventByProductId, findEventByStageId } from "../data/events";
 import type { EventDefinition } from "../data/events/types";
 import type { EnterEventStageResponse, EventListResponse } from "./contracts";
-import { assertValidRuneInstance, canEngraveRune, canEnhanceRune, engraveRune as applyRuneEngraving, enhanceRune as applyRuneEnhancement, runeEnhancementAttempts, type RuneInstance } from "../core/runes";
+import { assertValidRuneInstance, canEngraveRune, canEnhanceRune, createRuneInstance, engraveRune as applyRuneEngraving, enhanceRune as applyRuneEnhancement, runeEnhancementAttempts, type RuneInstance, type RuneStatKey } from "../core/runes";
+import { getHeartGem } from "../data/heartGems";
 import { runeEnhancementGoldCost } from "../data/runes";
 import type { EngraveRuneRequest, EngraveRuneResponse, EnhanceRuneRequest, EnhanceRuneResponse, EquipRuneRequest, EquipRuneResponse, RenameRuneRequest, RenameRuneResponse, RuneInventoryDto, UnequipRuneRequest, UnequipRuneResponse } from "./contracts";
 
@@ -265,18 +266,17 @@ export class FakeServer implements GameApi {
     if (this.state.wallet[product.price.currency] < product.price.amount) throw new GameApiError("INSUFFICIENT_CURRENCY", "재화가 부족합니다.");
 
     const nextWallet = { ...this.state.wallet, [product.price.currency]: this.state.wallet[product.price.currency] - product.price.amount };
-    const nextGems = [...this.state.ownedHeartGemIds];
+    const nextRunes = [...this.state.runeInventory];
     for (const grant of product.grants) {
       if (grant.kind === "currency") nextWallet[grant.currency] += grant.amount;
-      else if (nextGems.includes(grant.itemId)) throw new GameApiError("DUPLICATE_GRANT", "이미 보유한 Heart Gem은 중복 지급할 수 없습니다.");
-      else nextGems.push(grant.itemId);
+      else nextRunes.push(this.createGrantedRune(grant.itemId, nextRunes.length));
     }
     const periodKey = this.productPeriodKey(product, now);
     const current = this.state.productPurchases[product.id];
     const count = current?.periodKey === periodKey ? current.count + 1 : 1;
     const nextPurchases = { ...this.state.productPurchases, [product.id]: { periodKey, count } };
-    this.persist({ ...this.state, wallet: nextWallet, ownedHeartGemIds: nextGems, productPurchases: nextPurchases });
-    this.state.wallet = nextWallet; this.state.ownedHeartGemIds = nextGems; this.state.productPurchases = nextPurchases;
+    this.persist({ ...this.state, wallet: nextWallet, runeInventory: nextRunes, productPurchases: nextPurchases });
+    this.state.wallet = nextWallet; this.state.runeInventory = nextRunes; this.state.productPurchases = nextPurchases;
     return { ...this.snapshot(), productId, grants: product.grants, remaining: Math.max(0, product.purchaseLimit - count) };
   }
 
@@ -289,7 +289,7 @@ export class FakeServer implements GameApi {
 
     const nextWallet = { ...this.state.wallet, dnaFragments: this.state.wallet.dnaFragments - offer.dnaCost };
     const nextProgress = { ...this.state.relicProgress };
-    const nextGems = [...this.state.ownedHeartGemIds];
+    const nextRunes = [...this.state.runeInventory];
     if (offer.kind === "relic_awakening") {
       const target = request.relicId ? this.state.relicProgress[request.relicId] : undefined;
       if (!request.relicId || !this.state.owned.has(request.relicId) || !target || target.awakening >= 5) {
@@ -298,15 +298,14 @@ export class FakeServer implements GameApi {
       // 선택한 한 렐릭만 복사해 각성 1단계를 확정하며 다른 렐릭 진행은 건드리지 않는다.
       nextProgress[request.relicId] = { ...target, heartGemSlots: [...target.heartGemSlots] as typeof target.heartGemSlots, awakening: target.awakening + 1 };
     } else if (offer.kind === "heart_gem_material") {
-      if (nextGems.includes(offer.heartGemId)) throw new GameApiError("DUPLICATE_GRANT", "이미 보유한 Heart Gem 제작 재료입니다.");
-      nextGems.push(offer.heartGemId);
+      nextRunes.push(this.createGrantedRune(offer.heartGemId, nextRunes.length));
     } else {
       nextWallet.fossil += offer.fossilAmount;
     }
 
-    const nextState = { ...this.state, wallet: nextWallet, relicProgress: nextProgress, ownedHeartGemIds: nextGems };
+    const nextState = { ...this.state, wallet: nextWallet, relicProgress: nextProgress, runeInventory: nextRunes };
     this.persist(nextState);
-    this.state.wallet = nextWallet; this.state.relicProgress = nextProgress; this.state.ownedHeartGemIds = nextGems;
+    this.state.wallet = nextWallet; this.state.relicProgress = nextProgress; this.state.runeInventory = nextRunes;
     return { ...this.snapshot(), offerId: offer.id, rewardKind: offer.kind, relicId: offer.kind === "relic_awakening" ? request.relicId : undefined };
   }
 
@@ -323,7 +322,7 @@ export class FakeServer implements GameApi {
 
     // 성공 여부는 요청에 존재하지 않으며 서버 난수만 사용한다. 증가량 1은 현재 프로토타입의 서버 운영값이다.
     const rune = applyRuneEnhancement(current, request.statId, 1, this.random());
-    const nextRunes = (this.state.runeInventory ?? []).map((candidate) => candidate.instanceId === rune.instanceId ? rune : candidate);
+    const nextRunes = this.state.runeInventory.map((candidate) => candidate.instanceId === rune.instanceId ? rune : candidate);
     const nextWallet = { ...this.state.wallet, gold: this.state.wallet.gold - goldSpent };
     const nextState = { ...this.state, wallet: nextWallet, runeInventory: nextRunes };
     this.persist(nextState);
@@ -344,7 +343,7 @@ export class FakeServer implements GameApi {
     if (!Number.isFinite(roll) || roll < 0 || roll >= 1) throw new GameApiError("INVALID_STATE", "서버 룬 난수가 올바르지 않습니다.");
     const engraving = roll < 0.1 ? { statKey: request.statId, grade: "perfect" as const, valueAdded: 3 } : roll < 0.4 ? { statKey: request.statId, grade: "great" as const, valueAdded: 2 } : { statKey: request.statId, grade: "normal" as const, valueAdded: 1 };
     const rune = applyRuneEngraving(current, engraving);
-    const nextRunes = (this.state.runeInventory ?? []).map((candidate) => candidate.instanceId === rune.instanceId ? rune : candidate);
+    const nextRunes = this.state.runeInventory.map((candidate) => candidate.instanceId === rune.instanceId ? rune : candidate);
     const nextState = { ...this.state, runeInventory: nextRunes };
     this.persist(nextState);
     this.state.runeInventory = nextRunes;
@@ -359,7 +358,7 @@ export class FakeServer implements GameApi {
     if (!name || [...name].length > MAX_RUNE_NAME_LENGTH || /[\u0000-\u001F\u007F-\u009F]/u.test(name)) throw new GameApiError("INVALID_RUNE_NAME", `룬 이름은 제어문자 없이 1~${MAX_RUNE_NAME_LENGTH}글자여야 합니다.`);
     const rune = { ...current, customName: name };
     assertValidRuneInstance(rune);
-    const nextRunes = (this.state.runeInventory ?? []).map((candidate) => candidate.instanceId === rune.instanceId ? rune : candidate);
+    const nextRunes = this.state.runeInventory.map((candidate) => candidate.instanceId === rune.instanceId ? rune : candidate);
     const nextState = { ...this.state, runeInventory: nextRunes };
     this.persist(nextState);
     this.state.runeInventory = nextRunes;
@@ -372,14 +371,14 @@ export class FakeServer implements GameApi {
     this.ownedRune(request.runeInstanceId);
     if (!this.state.owned.has(request.relicId)) throw new GameApiError("RELIC_NOT_FOUND", "보유하지 않은 렐릭입니다.");
     this.assertRuneSlot(request.slotIndex);
-    const currentSlots = this.state.runeSlotsByRelicId ?? {};
-    if (Object.values(currentSlots).some((slots) => slots.includes(request.runeInstanceId))) throw new GameApiError("RUNE_ALREADY_EQUIPPED", "이미 다른 렐릭 또는 슬롯에 장착된 룬입니다.");
-    const slots = [...(currentSlots[request.relicId] ?? [null, null, null])] as [string | null, string | null, string | null];
+    if (Object.values(this.state.relicProgress).some(({ heartGemSlots }) => heartGemSlots.includes(request.runeInstanceId))) throw new GameApiError("RUNE_ALREADY_EQUIPPED", "이미 다른 렐릭 또는 슬롯에 장착된 룬입니다.");
+    const target = this.state.relicProgress[request.relicId];
+    const slots = [...target.heartGemSlots] as [string | null, string | null, string | null];
     slots[request.slotIndex] = request.runeInstanceId;
-    const nextSlots = { ...currentSlots, [request.relicId]: slots };
-    const nextState = { ...this.state, runeSlotsByRelicId: nextSlots };
+    const nextProgress = { ...this.state.relicProgress, [request.relicId]: { ...target, heartGemSlots: slots } };
+    const nextState = { ...this.state, relicProgress: nextProgress };
     this.persist(nextState);
-    this.state.runeSlotsByRelicId = nextSlots;
+    this.state.relicProgress = nextProgress;
     return { inventory: this.runeInventoryDto() };
   }
 
@@ -388,14 +387,14 @@ export class FakeServer implements GameApi {
     await this.delay();
     if (!this.state.owned.has(request.relicId)) throw new GameApiError("RELIC_NOT_FOUND", "보유하지 않은 렐릭입니다.");
     this.assertRuneSlot(request.slotIndex);
-    const currentSlots = this.state.runeSlotsByRelicId ?? {};
-    const slots = [...(currentSlots[request.relicId] ?? [null, null, null])] as [string | null, string | null, string | null];
+    const target = this.state.relicProgress[request.relicId];
+    const slots = [...target.heartGemSlots] as [string | null, string | null, string | null];
     if (slots[request.slotIndex] === null) throw new GameApiError("RUNE_SLOT_EMPTY", "이미 비어 있는 룬 슬롯입니다.");
     slots[request.slotIndex] = null;
-    const nextSlots = { ...currentSlots, [request.relicId]: slots };
-    const nextState = { ...this.state, runeSlotsByRelicId: nextSlots };
+    const nextProgress = { ...this.state.relicProgress, [request.relicId]: { ...target, heartGemSlots: slots } };
+    const nextState = { ...this.state, relicProgress: nextProgress };
     this.persist(nextState);
-    this.state.runeSlotsByRelicId = nextSlots;
+    this.state.relicProgress = nextProgress;
     return { inventory: this.runeInventoryDto() };
   }
 
@@ -441,7 +440,6 @@ export class FakeServer implements GameApi {
       gachaPityByGroup: Object.fromEntries(Object.entries(this.state.gachaPityByGroup).map(([id, pity]) => [id, { ...pity }])),
       ownedRelicIds: [...this.state.owned],
       relicProgress,
-      ownedHeartGemIds: [...this.state.ownedHeartGemIds],
       party: [...this.state.party],
       favorite: this.state.favorite,
       clearedStageIds: [...this.state.cleared],
@@ -451,9 +449,17 @@ export class FakeServer implements GameApi {
     };
   }
 
+  /** 옛 상품 카탈로그의 정의 ID를 서버가 소유하는 새 룬 인스턴스로 발급한다. */
+  private createGrantedRune(definitionId: string, sequence: number): RuneInstance {
+    const definition = getHeartGem(definitionId);
+    const values = Object.fromEntries(["hp", "atk", "ap", "def", "res", "moveSpeed", "attackSpeed", "lifeSteal", "critChance", "critDamage", "ferocityGain", "energyGain"].map((key) => [key, definition.statPercent[key as RuneStatKey] ?? 0])) as Record<RuneStatKey, number>;
+    // 서버 시각과 트랜잭션 내 순번을 결합해 같은 정의를 여러 개 보유해도 소유권이 충돌하지 않게 한다.
+    return createRuneInstance({ instanceId: `${definitionId}-${this.now().getTime()}-${sequence}`, baseName: definition.name, rarity: definition.rarity, statValues: values, random: this.random });
+  }
+
   /** 보유 인벤토리에서만 룬을 찾아 존재 여부와 소유권을 한 번에 확정한다. */
   private ownedRune(instanceId: string): RuneInstance {
-    const rune = (this.state.runeInventory ?? []).find((candidate) => candidate.instanceId === instanceId);
+    const rune = this.state.runeInventory.find((candidate) => candidate.instanceId === instanceId);
     if (!rune) throw new GameApiError("RUNE_NOT_FOUND", "보유하지 않거나 존재하지 않는 룬입니다.");
     return rune;
   }
@@ -477,8 +483,8 @@ export class FakeServer implements GameApi {
   /** 룬에 역참조를 넣지 않고 렐릭 슬롯 맵을 전송용 행 배열로 바꾼다. */
   private runeInventoryDto(): RuneInventoryDto {
     return {
-      runes: (this.state.runeInventory ?? []).map((rune) => this.cloneRune(rune)),
-      equipment: Object.entries(this.state.runeSlotsByRelicId ?? {}).map(([relicId, slots]) => ({ relicId, slots: [...slots] as [string | null, string | null, string | null] })),
+      runes: this.state.runeInventory.map((rune) => this.cloneRune(rune)),
+      equipment: Object.entries(this.state.relicProgress).map(([relicId, progress]) => ({ relicId, slots: [...progress.heartGemSlots] as [string | null, string | null, string | null] })),
     };
   }
 
@@ -503,13 +509,10 @@ export class FakeServer implements GameApi {
       if (!Number.isInteger(amount) || amount < 0) throw new GameApiError("INVALID_STATE", `${currency} 재화는 음수가 아닌 정수여야 합니다.`);
       if (amount > cap) throw new GameApiError("CURRENCY_LIMIT_EXCEEDED", `${currency} 재화 상한을 초과했습니다.`);
     }
-    if (new Set(next.ownedHeartGemIds).size !== next.ownedHeartGemIds.length) throw new GameApiError("DUPLICATE_GRANT", "Heart Gem 중복 지급이 감지되었습니다.");
-    const runeIds = (next.runeInventory ?? []).map((rune) => { try { assertValidRuneInstance(rune); } catch { throw new GameApiError("INVALID_STATE", "손상된 룬 인스턴스가 있습니다."); } return rune.instanceId; });
+    const runeIds = next.runeInventory.map((rune) => { try { assertValidRuneInstance(rune); } catch { throw new GameApiError("INVALID_STATE", "손상된 룬 인스턴스가 있습니다."); } return rune.instanceId; });
     if (new Set(runeIds).size !== runeIds.length) throw new GameApiError("INVALID_STATE", "룬 인스턴스 ID가 중복되었습니다.");
-    const equipped = Object.entries(next.runeSlotsByRelicId ?? {}).flatMap(([relicId, slots]) => {
-      if (!next.owned.has(relicId) || slots.length !== 3) throw new GameApiError("INVALID_STATE", "룬 장착 대상 또는 슬롯 수가 올바르지 않습니다.");
-      return slots.filter((id): id is string => id !== null);
-    });
+    // 성장 레코드의 세 슬롯만 장착 기준으로 사용해 별도 장착표와의 불일치를 없앤다.
+    const equipped = Object.values(next.relicProgress).flatMap(({ heartGemSlots }) => heartGemSlots.filter((id): id is string => id !== null));
     if (equipped.some((id) => !runeIds.includes(id)) || new Set(equipped).size !== equipped.length) throw new GameApiError("INVALID_STATE", "룬 장착 소유권 또는 중복이 올바르지 않습니다.");
     if (Object.values(next.relicProgress).some((progress) => progress.awakening < 0 || progress.awakening > 5)) throw new GameApiError("INVALID_STATE", "렐릭 각성 상한을 벗어났습니다.");
   }

@@ -3,6 +3,13 @@ import { FakeServer } from "../../src/api/FakeServer";
 import { BREAKTHROUGH_STEPS, RELIC_LEVEL_CAP } from "../../src/core/relicProgression";
 import { GameApiError } from "../../src/api/contracts";
 import type { Session } from "../../src/state/session";
+import { createRuneInstance, enhanceRune as applyRuneEnhancement, type RuneInstance, type RuneStatKey } from "../../src/core/runes";
+
+/** API 테스트에서 같은 옵션 구성을 재현하는 보유 룬을 만든다. */
+function makeRune(instanceId = "rune-1"): RuneInstance {
+  const values = Object.fromEntries(["hp", "atk", "ap", "def", "res", "moveSpeed", "attackSpeed", "lifeSteal", "critChance", "critDamage", "ferocityGain", "energyGain"].map((key) => [key, 1])) as Record<RuneStatKey, number>;
+  return createRuneInstance({ instanceId, baseName: "서버 테스트 룬", rarity: "uncommon", statValues: values, random: () => 0 });
+}
 
 /** 각 테스트가 독립적으로 쓸 서버 저장소 역할의 세션을 만든다. */
 function makeSession(fossil = 1000): Session {
@@ -26,6 +33,45 @@ function makeSession(fossil = 1000): Session {
 }
 
 describe("FakeServer", () => {
+  it("강화 요청의 선택 정보만 받아 서버 난수·골드 차감·룬 갱신을 함께 확정한다", async () => {
+    const state = makeSession(); state.wallet.gold = 100; state.runeInventory = [makeRune()];
+    const statId = state.runeInventory[0].mainStats[0].key;
+    const server = new FakeServer(state, { latencyMs: 0, random: () => 0 });
+    const response = await server.enhanceRune({ runeInstanceId: "rune-1", statId });
+    expect(response).toMatchObject({ succeeded: true, goldSpent: 100, nextSuccessChance: 0.65 });
+    expect(state.wallet.gold).toBe(0);
+    expect(state.runeInventory[0].enhancementHistory[statId]).toHaveLength(1);
+  });
+
+  it("강화는 옵션 잔여 횟수와 골드를 판정 전에 검사해 실패 시 상태를 보존한다", async () => {
+    const state = makeSession(); state.wallet.gold = 99; state.runeInventory = [makeRune()];
+    const before = JSON.stringify(state.runeInventory);
+    const statId = state.runeInventory[0].mainStats[0].key;
+    const server = new FakeServer(state, { latencyMs: 0, random: () => { throw new Error("검증 전에 난수를 부르면 안 됩니다."); } });
+    await expect(server.enhanceRune({ runeInstanceId: "rune-1", statId })).rejects.toMatchObject({ code: "INSUFFICIENT_GOLD" });
+    expect(state.wallet.gold).toBe(99); expect(JSON.stringify(state.runeInventory)).toBe(before);
+  });
+
+  it("이름 정책과 전역 장착 중복을 서버 경계에서 구분해 거부한다", async () => {
+    const state = makeSession(); state.runeInventory = [makeRune()];
+    const server = new FakeServer(state, { latencyMs: 0 });
+    await expect(server.renameRune({ runeInstanceId: "rune-1", name: " \u0001 " })).rejects.toMatchObject({ code: "INVALID_RUNE_NAME" });
+    const renamed = await server.renameRune({ runeInstanceId: "rune-1", name: "  새 이름  " });
+    expect(renamed.rune.customName).toBe("새 이름");
+    await server.equipRune({ runeInstanceId: "rune-1", relicId: "anky", slotIndex: 0 });
+    await expect(server.equipRune({ runeInstanceId: "rune-1", relicId: "rex", slotIndex: 2 })).rejects.toMatchObject({ code: "RUNE_ALREADY_EQUIPPED" });
+    expect(state.runeSlotsByRelicId?.anky).toEqual(["rune-1", null, null]);
+  });
+
+  it("모든 일반 강화 뒤에만 대상 옵션 각인을 정확히 하나 저장한다", async () => {
+    const state = makeSession(); let rune = makeRune();
+    for (const { key } of rune.mainStats) for (let count = 0; count < 3; count += 1) rune = applyRuneEnhancement(rune, key, 1, 0);
+    state.runeInventory = [rune];
+    const server = new FakeServer(state, { latencyMs: 0, random: () => 0 });
+    const response = await server.engraveRune({ runeInstanceId: "rune-1", statId: rune.mainStats[0].key });
+    expect(response.rune.engravings).toEqual([{ statKey: rune.mainStats[0].key, grade: "perfect", valueAdded: 3 }]);
+    await expect(server.engraveRune({ runeInstanceId: "rune-1", statId: rune.mainStats[0].key })).rejects.toMatchObject({ code: "RUNE_ENGRAVING_NOT_ALLOWED" });
+  });
   it("급여 재화를 검사·차감하고 오른 레벨을 서버 상태에 반영한다", async () => {
     const state = makeSession(); state.wallet.cheesecake = 25;
     const server = new FakeServer(state, { latencyMs: 0 });

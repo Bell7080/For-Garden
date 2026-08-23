@@ -6,6 +6,7 @@ import { BANNERS } from "../data/banners";
 import { STAGES } from "../data/stages";
 import { BOND_XP_REWARD, grantBondXp } from "../core/bond";
 import type { MissionState } from "../core/missions";
+import type { RuneInstance } from "../core/runes";
 
 /** 처음 시작할 때 쥐어 주는 렐릭. 셋이면 바로 출격할 수 있다. */
 // 전용 원화와 SD 전투 Puppet까지 개발된 첫 세 캐릭터를 초기 체험 풀로 연다.
@@ -35,6 +36,10 @@ export interface Session {
   relicProgress: Record<string, RelicProgress>;
   /** 보유 Heart Gem id 목록이다. 중복 없는 직렬화 가능한 배열로 유지한다. */
   ownedHeartGemIds: string[];
+  /** 신규 인스턴스형 룬 인벤토리다. optional은 v12 테스트/호출자의 점진적 이전만 허용한다. */
+  runeInventory?: RuneInstance[];
+  /** 장착의 단일 기준인 렐릭별 세 슬롯이다. 룬에는 역참조를 저장하지 않는다. */
+  runeSlotsByRelicId?: Record<string, [string | null, string | null, string | null]>;
   /** 날짜가 바뀔 때 서버 시간 기준으로 교체할 일일 콘텐츠 진행이다. */
   dailyContent: DailyContentState;
   /** 서버 UTC 일자·주차에 묶인 직렬화 가능한 임무 진행과 수령 기록이다. */
@@ -85,6 +90,8 @@ export interface SaveData {
   gachaPityByGroup: Record<string, GachaPityState>;
   relicProgress: Record<string, RelicProgress>;
   ownedHeartGemIds: string[];
+  runeInventory: RuneInstance[];
+  runeSlotsByRelicId: Record<string, [string | null, string | null, string | null]>;
   dailyContent: DailyContentState;
   missions: MissionState;
   productPurchases: Record<string, { periodKey: string; count: number }>;
@@ -114,6 +121,8 @@ export function createDefaultSession(): Session {
     gachaPityByGroup: Object.fromEntries([...new Set(BANNERS.map(({ pityGroupId }) => pityGroupId))].map((id) => [id, { pullsSinceSsr: 0, pickupGuaranteed: false }])),
     relicProgress: Object.fromEntries(STARTER_RELICS.map((id) => [id, createStarterProgress()])),
     ownedHeartGemIds: ["vital-seed", "fang-core", "ancient-pulse"],
+    runeInventory: [],
+    runeSlotsByRelicId: {},
     dailyContent: { date: "", restorationEntries: 0, completedIds: [], claimedRewardIds: [] },
     missions: { dailyKey: "", weeklyKey: "", progress: {}, claimedIds: [] },
     productPurchases: {},

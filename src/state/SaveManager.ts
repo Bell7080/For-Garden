@@ -5,10 +5,11 @@ import { BANNERS } from "../data/banners";
 import { BREAKTHROUGH_CAP } from "../core/relicProgression";
 import type { RelicProgress } from "../core/types";
 import { createDefaultSession, type SaveData, type Session } from "./session";
+import { assertValidRuneInstance, type RuneInstance } from "../core/runes";
 
 /** 키는 계정 연동 저장소와 충돌하지 않도록 로컬 프로토타입임을 명시한다. */
 export const SAVE_STORAGE_KEY = "eternal-city.local-save";
-export const CURRENT_SAVE_VERSION = 12;
+export const CURRENT_SAVE_VERSION = 13;
 
 type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
@@ -17,6 +18,17 @@ export class SaveDataError extends Error {}
 
 function cloneProgress(progress: RelicProgress): RelicProgress {
   return { ...progress, heartGemSlots: [...progress.heartGemSlots] as RelicProgress["heartGemSlots"] };
+}
+
+/** 룬의 중첩 옵션과 이력을 모두 복사해 저장/응답 호출자의 참조 변경을 막는다. */
+function cloneRune(rune: RuneInstance): RuneInstance {
+  return {
+    ...rune,
+    mainStats: [{ ...rune.mainStats[0] }, { ...rune.mainStats[1] }],
+    subStats: rune.subStats.map((stat) => ({ ...stat })),
+    enhancementHistory: Object.fromEntries(Object.entries(rune.enhancementHistory).map(([key, history]) => [key, history?.map((record) => ({ ...record }))])),
+    engravings: rune.engravings.map((engraving) => ({ ...engraving })),
+  };
 }
 
 /** 저장/로드/마이그레이션을 독점해 씬과 localStorage의 의존을 끊는다. */
@@ -54,6 +66,8 @@ export class SaveManager {
       gachaPityByGroup: Object.fromEntries(Object.entries(state.gachaPityByGroup).map(([id, pity]) => [id, { ...pity }])),
       relicProgress: Object.fromEntries(Object.entries(state.relicProgress).map(([id, value]) => [id, cloneProgress(value)])),
       ownedHeartGemIds: [...state.ownedHeartGemIds],
+      runeInventory: (state.runeInventory ?? []).map(cloneRune),
+      runeSlotsByRelicId: Object.fromEntries(Object.entries(state.runeSlotsByRelicId ?? {}).map(([id, slots]) => [id, [...slots]])),
       dailyContent: { ...state.dailyContent, completedIds: [...state.dailyContent.completedIds], claimedRewardIds: [...state.dailyContent.claimedRewardIds] },
       // 임무 진행 객체와 수령 배열도 호출자가 저장 후 바꾸지 못하도록 복사한다.
       missions: { ...state.missions, progress: { ...state.missions.progress }, claimedIds: [...state.missions.claimedIds] },
@@ -101,6 +115,9 @@ export class SaveManager {
     const missions = { dailyKey: savedMissions?.dailyKey ?? "", weeklyKey: savedMissions?.weeklyKey ?? "", progress: savedMissions?.progress ?? {}, claimedIds: savedMissions?.claimedIds ?? [] };
     // 상품 도입 전 저장에는 구매 이력이 없으므로 빈 기록으로 안전하게 시작한다.
     const productPurchases = legacy.productPurchases && typeof legacy.productPurchases === "object" ? legacy.productPurchases : {};
+    // v13 이전에는 인스턴스형 룬이 없었으므로 기존 정적 Heart Gem을 억지로 변환하지 않는다.
+    const runeInventory = Array.isArray(legacy.runeInventory) ? legacy.runeInventory : [];
+    const runeSlotsByRelicId = legacy.runeSlotsByRelicId && typeof legacy.runeSlotsByRelicId === "object" ? legacy.runeSlotsByRelicId : {};
     // 스토리 저장 도입 전 계정은 미완료로 두어 다음 타이틀 진입에서 오프닝을 한 번 재생한다.
     const completedStoryIds = Array.isArray(legacy.completedStoryIds) ? legacy.completedStoryIds : [];
     // 관찰 인터뷰 도입 전 저장에는 일지가 없으며, 완료 스토리에서 내용을 추측해 만들지 않는다.
@@ -125,11 +142,11 @@ export class SaveManager {
       breakthrough: progress.breakthrough ?? 0,
     }]));
     if (legacy.saveVersion === undefined) {
-      return { ...legacy, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, gachaPityByGroup: normalizedPity, dailyContent, missions, productPurchases } as unknown as SaveData;
+      return { ...legacy, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, gachaPityByGroup: normalizedPity, dailyContent, missions, productPurchases, runeInventory, runeSlotsByRelicId } as unknown as SaveData;
     }
-    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, CURRENT_SAVE_VERSION];
+    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, CURRENT_SAVE_VERSION];
     if (!supported.includes(legacy.saveVersion as number)) throw new SaveDataError(`지원하지 않는 저장 버전입니다: ${String(legacy.saveVersion)}`);
-    return { ...legacy, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, missions, productPurchases, gachaPityByGroup: normalizedPity } as unknown as SaveData;
+    return { ...legacy, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, runeSlotsByRelicId } as unknown as SaveData;
   }
 
   /** 콘텐츠 ID와 교차 필드 불변식까지 검사해 부분 손상을 조용히 전파하지 않는다. */
@@ -158,6 +175,16 @@ export class SaveManager {
       if (progress.heartGemSlots.some((id) => id !== null && !gemIds.has(id))) fail("Heart Gem 장착 정보가 올바르지 않습니다.");
     }
     if (!Array.isArray(data.ownedHeartGemIds) || data.ownedHeartGemIds.some((id) => !gemIds.has(id))) fail("Heart Gem 보유 정보가 올바르지 않습니다.");
+    if (!Array.isArray(data.runeInventory)) fail("룬 인벤토리가 올바르지 않습니다.");
+    try { data.runeInventory.forEach(assertValidRuneInstance); } catch { fail("룬 인벤토리에 손상된 인스턴스가 있습니다."); }
+    const runeIds = data.runeInventory.map(({ instanceId }) => instanceId);
+    if (new Set(runeIds).size !== runeIds.length) fail("룬 인스턴스 ID가 중복되었습니다.");
+    if (!data.runeSlotsByRelicId || typeof data.runeSlotsByRelicId !== "object") fail("룬 장착표가 올바르지 않습니다.");
+    const equipped = Object.entries(data.runeSlotsByRelicId).flatMap(([relicId, slots]) => {
+      if (!data.ownedRelicIds.includes(relicId) || !Array.isArray(slots) || slots.length !== 3) fail("룬 장착 슬롯이 올바르지 않습니다.");
+      return slots.filter((id): id is string => id !== null);
+    });
+    if (equipped.some((id) => !runeIds.includes(id)) || new Set(equipped).size !== equipped.length) fail("룬 장착 소유권 또는 중복이 올바르지 않습니다.");
     if (!data.dailyContent || typeof data.dailyContent.date !== "string" || !Number.isInteger(data.dailyContent.restorationEntries) || data.dailyContent.restorationEntries < 0 || data.dailyContent.restorationEntries > 3 || !Array.isArray(data.dailyContent.completedIds) || !Array.isArray(data.dailyContent.claimedRewardIds)) fail("일일 콘텐츠 정보가 올바르지 않습니다.");
     if (!data.missions || typeof data.missions.dailyKey !== "string" || typeof data.missions.weeklyKey !== "string" || !data.missions.progress || typeof data.missions.progress !== "object" || Object.values(data.missions.progress).some((value) => !Number.isInteger(value) || value < 0) || !Array.isArray(data.missions.claimedIds) || new Set(data.missions.claimedIds).size !== data.missions.claimedIds.length) fail("임무 진행 정보가 올바르지 않습니다.");
     if (!data.productPurchases || typeof data.productPurchases !== "object" || Object.values(data.productPurchases).some((value) => typeof value.periodKey !== "string" || !Number.isInteger(value.count) || value.count < 0)) fail("상품 구매 제한 정보가 올바르지 않습니다.");
@@ -169,6 +196,8 @@ export class SaveManager {
       observationRecords: data.observationRecords.map((record) => ({ ...record })),
       selectedStageId: data.selectedStageId, party: [...data.party], cleared: new Set(data.clearedStageIds), owned: new Set(data.ownedRelicIds), favorite: data.favorite, bookmarked: new Set(data.bookmarkedRelicIds),
       wallet: { ...data.wallet }, relicProgress: Object.fromEntries(Object.entries(data.relicProgress).map(([id, value]) => [id, cloneProgress(value)])), ownedHeartGemIds: [...data.ownedHeartGemIds],
+      runeInventory: data.runeInventory.map(cloneRune),
+      runeSlotsByRelicId: Object.fromEntries(Object.entries(data.runeSlotsByRelicId).map(([id, slots]) => [id, [...slots] as [string | null, string | null, string | null]])),
       gachaPityByGroup: Object.fromEntries(Object.entries(data.gachaPityByGroup).map(([id, pity]) => [id, { ...pity }])),
       dailyContent: { ...data.dailyContent, completedIds: [...data.dailyContent.completedIds], claimedRewardIds: [...data.dailyContent.claimedRewardIds] },
       missions: { ...data.missions, progress: { ...data.missions.progress }, claimedIds: [...data.missions.claimedIds] },

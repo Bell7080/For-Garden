@@ -16,6 +16,12 @@ import { DNA_EXCHANGE_OFFERS, WALLET_CAPS } from "../data/economy";
 import { EVENTS, findEventByProductId, findEventByStageId } from "../data/events";
 import type { EventDefinition } from "../data/events/types";
 import type { EnterEventStageResponse, EventListResponse } from "./contracts";
+import { assertValidRuneInstance, canEngraveRune, canEnhanceRune, engraveRune as applyRuneEngraving, enhanceRune as applyRuneEnhancement, runeEnhancementAttempts, type RuneInstance } from "../core/runes";
+import { runeEnhancementGoldCost } from "../data/runes";
+import type { EngraveRuneRequest, EngraveRuneResponse, EnhanceRuneRequest, EnhanceRuneResponse, EquipRuneRequest, EquipRuneResponse, RenameRuneRequest, RenameRuneResponse, RuneInventoryDto, UnequipRuneRequest, UnequipRuneResponse } from "./contracts";
+
+/** 사용자 룬 이름의 서버 정책이다. UI 글자 수와 무관하게 API 경계가 최종 권한을 가진다. */
+export const MAX_RUNE_NAME_LENGTH = 20;
 
 /** FakeServer의 지연과 난수원을 테스트에서 결정적으로 바꾸기 위한 선택 설정이다. */
 export interface FakeServerOptions {
@@ -304,6 +310,95 @@ export class FakeServer implements GameApi {
     return { ...this.snapshot(), offerId: offer.id, rewardKind: offer.kind, relicId: offer.kind === "relic_awakening" ? request.relicId : undefined };
   }
 
+  /** 검증 뒤 서버 난수로 한 번 판정하고 골드·룬을 새 상태에 함께 저장한다. */
+  async enhanceRune(request: EnhanceRuneRequest): Promise<EnhanceRuneResponse> {
+    await this.delay();
+    const current = this.ownedRune(request.runeInstanceId);
+    const optionExists = [...current.mainStats, ...current.subStats].some(({ key }) => key === request.statId);
+    if (!optionExists) throw new GameApiError("RUNE_STAT_EXHAUSTED", "룬에 존재하지 않는 능력치입니다.");
+    if (current.enhancementComplete) throw new GameApiError("RUNE_ENHANCEMENT_COMPLETE", "모든 일반 강화를 완료한 룬입니다.");
+    if (!canEnhanceRune(current, request.statId)) throw new GameApiError("RUNE_STAT_EXHAUSTED", "이 능력치의 강화 횟수를 모두 사용했습니다.");
+    const goldSpent = runeEnhancementGoldCost(current.rarity, runeEnhancementAttempts(current));
+    if (this.state.wallet.gold < goldSpent) throw new GameApiError("INSUFFICIENT_GOLD", "룬 강화에 필요한 골드가 부족합니다.");
+
+    // 성공 여부는 요청에 존재하지 않으며 서버 난수만 사용한다. 증가량 1은 현재 프로토타입의 서버 운영값이다.
+    const rune = applyRuneEnhancement(current, request.statId, 1, this.random());
+    const nextRunes = (this.state.runeInventory ?? []).map((candidate) => candidate.instanceId === rune.instanceId ? rune : candidate);
+    const nextWallet = { ...this.state.wallet, gold: this.state.wallet.gold - goldSpent };
+    const nextState = { ...this.state, wallet: nextWallet, runeInventory: nextRunes };
+    this.persist(nextState);
+    this.state.wallet = nextWallet;
+    this.state.runeInventory = nextRunes;
+    const latest = rune.enhancementHistory[request.statId]?.at(-1);
+    return { succeeded: latest?.succeeded === true, goldSpent, nextSuccessChance: rune.currentSuccessChance, rune: this.cloneRune(rune), inventory: this.runeInventoryDto() };
+  }
+
+  /** 일반 강화 완료와 미각인 상태를 확인하고 대상 옵션에 각인 결과 하나만 추가한다. */
+  async engraveRune(request: EngraveRuneRequest): Promise<EngraveRuneResponse> {
+    await this.delay();
+    const current = this.ownedRune(request.runeInstanceId);
+    if (!canEngraveRune(current)) throw new GameApiError("RUNE_ENGRAVING_NOT_ALLOWED", "모든 일반 강화 완료 후 각인 전 룬만 각인할 수 있습니다.");
+    if (![...current.mainStats, ...current.subStats].some(({ key }) => key === request.statId)) throw new GameApiError("RUNE_ENGRAVING_NOT_ALLOWED", "룬에 존재하지 않는 능력치입니다.");
+    // 서버 난수를 등급과 증가량으로 환산하며 도메인 함수가 각인 스택을 정확히 하나만 추가한다.
+    const roll = this.random();
+    if (!Number.isFinite(roll) || roll < 0 || roll >= 1) throw new GameApiError("INVALID_STATE", "서버 룬 난수가 올바르지 않습니다.");
+    const engraving = roll < 0.1 ? { statKey: request.statId, grade: "perfect" as const, valueAdded: 3 } : roll < 0.4 ? { statKey: request.statId, grade: "great" as const, valueAdded: 2 } : { statKey: request.statId, grade: "normal" as const, valueAdded: 1 };
+    const rune = applyRuneEngraving(current, engraving);
+    const nextRunes = (this.state.runeInventory ?? []).map((candidate) => candidate.instanceId === rune.instanceId ? rune : candidate);
+    const nextState = { ...this.state, runeInventory: nextRunes };
+    this.persist(nextState);
+    this.state.runeInventory = nextRunes;
+    return { rune: this.cloneRune(rune), inventory: this.runeInventoryDto() };
+  }
+
+  /** 이름을 trim한 뒤 빈 값·길이·제어문자를 서버 경계에서 거부한다. */
+  async renameRune(request: RenameRuneRequest): Promise<RenameRuneResponse> {
+    await this.delay();
+    const current = this.ownedRune(request.runeInstanceId);
+    const name = request.name.trim();
+    if (!name || [...name].length > MAX_RUNE_NAME_LENGTH || /[\u0000-\u001F\u007F-\u009F]/u.test(name)) throw new GameApiError("INVALID_RUNE_NAME", `룬 이름은 제어문자 없이 1~${MAX_RUNE_NAME_LENGTH}글자여야 합니다.`);
+    const rune = { ...current, customName: name };
+    assertValidRuneInstance(rune);
+    const nextRunes = (this.state.runeInventory ?? []).map((candidate) => candidate.instanceId === rune.instanceId ? rune : candidate);
+    const nextState = { ...this.state, runeInventory: nextRunes };
+    this.persist(nextState);
+    this.state.runeInventory = nextRunes;
+    return { rune: this.cloneRune(rune), inventory: this.runeInventoryDto() };
+  }
+
+  /** 전체 렐릭 슬롯을 조회해 다른 슬롯에 이미 장착된 룬을 거부한다. */
+  async equipRune(request: EquipRuneRequest): Promise<EquipRuneResponse> {
+    await this.delay();
+    this.ownedRune(request.runeInstanceId);
+    if (!this.state.owned.has(request.relicId)) throw new GameApiError("RELIC_NOT_FOUND", "보유하지 않은 렐릭입니다.");
+    this.assertRuneSlot(request.slotIndex);
+    const currentSlots = this.state.runeSlotsByRelicId ?? {};
+    if (Object.values(currentSlots).some((slots) => slots.includes(request.runeInstanceId))) throw new GameApiError("RUNE_ALREADY_EQUIPPED", "이미 다른 렐릭 또는 슬롯에 장착된 룬입니다.");
+    const slots = [...(currentSlots[request.relicId] ?? [null, null, null])] as [string | null, string | null, string | null];
+    slots[request.slotIndex] = request.runeInstanceId;
+    const nextSlots = { ...currentSlots, [request.relicId]: slots };
+    const nextState = { ...this.state, runeSlotsByRelicId: nextSlots };
+    this.persist(nextState);
+    this.state.runeSlotsByRelicId = nextSlots;
+    return { inventory: this.runeInventoryDto() };
+  }
+
+  /** 인스턴스 역참조 없이 지정한 렐릭 슬롯을 단일 장착표에서 비운다. */
+  async unequipRune(request: UnequipRuneRequest): Promise<UnequipRuneResponse> {
+    await this.delay();
+    if (!this.state.owned.has(request.relicId)) throw new GameApiError("RELIC_NOT_FOUND", "보유하지 않은 렐릭입니다.");
+    this.assertRuneSlot(request.slotIndex);
+    const currentSlots = this.state.runeSlotsByRelicId ?? {};
+    const slots = [...(currentSlots[request.relicId] ?? [null, null, null])] as [string | null, string | null, string | null];
+    if (slots[request.slotIndex] === null) throw new GameApiError("RUNE_SLOT_EMPTY", "이미 비어 있는 룬 슬롯입니다.");
+    slots[request.slotIndex] = null;
+    const nextSlots = { ...currentSlots, [request.relicId]: slots };
+    const nextState = { ...this.state, runeSlotsByRelicId: nextSlots };
+    this.persist(nextState);
+    this.state.runeSlotsByRelicId = nextSlots;
+    return { inventory: this.runeInventoryDto() };
+  }
+
   /** 노출 판정은 클라이언트 시간이 아니라 주입 가능한 서버 시간만 사용한다. */
   private isVisible(product: ProductDefinition, now: Date): boolean { return now >= new Date(product.visibleFrom) && now < new Date(product.visibleUntil); }
 
@@ -352,6 +447,38 @@ export class FakeServer implements GameApi {
       clearedStageIds: [...this.state.cleared],
       dailyContent: { date: normalizeDailyContent(this.state.dailyContent, this.now()).date, restorationEntries: normalizeDailyContent(this.state.dailyContent, this.now()).restorationEntries },
       missions: this.missionDtos(),
+      runeInventory: this.runeInventoryDto(),
+    };
+  }
+
+  /** 보유 인벤토리에서만 룬을 찾아 존재 여부와 소유권을 한 번에 확정한다. */
+  private ownedRune(instanceId: string): RuneInstance {
+    const rune = (this.state.runeInventory ?? []).find((candidate) => candidate.instanceId === instanceId);
+    if (!rune) throw new GameApiError("RUNE_NOT_FOUND", "보유하지 않거나 존재하지 않는 룬입니다.");
+    return rune;
+  }
+
+  /** 슬롯 번호 검증을 장착과 해제에서 공유한다. */
+  private assertRuneSlot(slotIndex: number): void {
+    if (!Number.isInteger(slotIndex) || slotIndex < 0 || slotIndex >= 3) throw new GameApiError("INVALID_RUNE_SLOT", "룬 슬롯은 0~2의 정수여야 합니다.");
+  }
+
+  /** 외부가 서버 상태를 바꾸지 못하도록 룬의 모든 중첩 배열을 복사한다. */
+  private cloneRune(rune: RuneInstance): RuneInstance {
+    return {
+      ...rune,
+      mainStats: [{ ...rune.mainStats[0] }, { ...rune.mainStats[1] }],
+      subStats: rune.subStats.map((stat) => ({ ...stat })),
+      enhancementHistory: Object.fromEntries(Object.entries(rune.enhancementHistory).map(([key, history]) => [key, history?.map((record) => ({ ...record }))])),
+      engravings: rune.engravings.map((engraving) => ({ ...engraving })),
+    };
+  }
+
+  /** 룬에 역참조를 넣지 않고 렐릭 슬롯 맵을 전송용 행 배열로 바꾼다. */
+  private runeInventoryDto(): RuneInventoryDto {
+    return {
+      runes: (this.state.runeInventory ?? []).map((rune) => this.cloneRune(rune)),
+      equipment: Object.entries(this.state.runeSlotsByRelicId ?? {}).map(([relicId, slots]) => ({ relicId, slots: [...slots] as [string | null, string | null, string | null] })),
     };
   }
 
@@ -377,6 +504,13 @@ export class FakeServer implements GameApi {
       if (amount > cap) throw new GameApiError("CURRENCY_LIMIT_EXCEEDED", `${currency} 재화 상한을 초과했습니다.`);
     }
     if (new Set(next.ownedHeartGemIds).size !== next.ownedHeartGemIds.length) throw new GameApiError("DUPLICATE_GRANT", "Heart Gem 중복 지급이 감지되었습니다.");
+    const runeIds = (next.runeInventory ?? []).map((rune) => { try { assertValidRuneInstance(rune); } catch { throw new GameApiError("INVALID_STATE", "손상된 룬 인스턴스가 있습니다."); } return rune.instanceId; });
+    if (new Set(runeIds).size !== runeIds.length) throw new GameApiError("INVALID_STATE", "룬 인스턴스 ID가 중복되었습니다.");
+    const equipped = Object.entries(next.runeSlotsByRelicId ?? {}).flatMap(([relicId, slots]) => {
+      if (!next.owned.has(relicId) || slots.length !== 3) throw new GameApiError("INVALID_STATE", "룬 장착 대상 또는 슬롯 수가 올바르지 않습니다.");
+      return slots.filter((id): id is string => id !== null);
+    });
+    if (equipped.some((id) => !runeIds.includes(id)) || new Set(equipped).size !== equipped.length) throw new GameApiError("INVALID_STATE", "룬 장착 소유권 또는 중복이 올바르지 않습니다.");
     if (Object.values(next.relicProgress).some((progress) => progress.awakening < 0 || progress.awakening > 5)) throw new GameApiError("INVALID_STATE", "렐릭 각성 상한을 벗어났습니다.");
   }
 

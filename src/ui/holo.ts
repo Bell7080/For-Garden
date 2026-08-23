@@ -321,6 +321,55 @@ export function drawShapeEdge(
   return graphics;
 }
 
+/**
+ * 도형 둘레를 한 줄로 두른다.
+ *
+ * 화면의 판때기에는 쓰지 않는다(윗변 한 줄이 원칙이다). **액자**에만 쓴다 — 스킬 아이콘처럼
+ * 그림 한 장을 담는 칸은 어디까지가 그림인지 사방이 알려 줘야 배경 원화 위에서 흐물거리지 않는다.
+ */
+export function drawShapeOutline(
+  scene: Phaser.Scene,
+  x: number,
+  y: number,
+  shape: number[],
+  options: { color?: number; alpha?: number; width?: number } = {},
+): Phaser.GameObjects.Graphics {
+  const graphics = scene.add.graphics({ x, y });
+  graphics.lineStyle(options.width ?? HOLO.lineWidth, options.color ?? COLOR.accent, options.alpha ?? 0.8);
+  graphics.strokePoints(toPoints(shape), true);
+  return graphics;
+}
+
+/**
+ * 테두리 안쪽으로 스며드는 어둠.
+ *
+ * 다각형 채우기에는 그라데이션이 없으므로, 같은 도형을 조금씩 줄여 여러 겹 겹친다. 바깥쪽
+ * 겹이 여러 번 포개져 가장자리가 진하고 가운데로 갈수록 사라진다 — 그림이 액자 안으로
+ * 들어앉아 보이게 하는 최소한의 깊이다.
+ */
+export function drawInnerVignette(
+  scene: Phaser.Scene,
+  x: number,
+  y: number,
+  shape: number[],
+  options: { strength?: number; bands?: number; depth?: number } = {},
+): Phaser.GameObjects.Graphics {
+  const bands = options.bands ?? 8;
+  const depth = options.depth ?? 0.3;
+  const strength = options.strength ?? 0.5;
+  const points = toPoints(shape);
+  const graphics = scene.add.graphics({ x, y });
+  // 채우기를 겹치면 가운데가 가장 진해진다. 그래서 채우지 않고 **줄여 가며 두른다** —
+  // 바깥 줄이 가장 진하고 안쪽으로 갈수록 옅어져, 가장자리만 어두워진다.
+  for (let i = 0; i < bands; i += 1) {
+    const factor = 1 - (depth * i) / bands;
+    const fade = 1 - i / bands;
+    graphics.lineStyle(Math.max(2, (depth * 100) / bands), 0x000000, strength * fade * fade);
+    graphics.strokePoints(points.map((point) => new Phaser.Geom.Point(point.x * factor, point.y * factor)), true);
+  }
+  return graphics;
+}
+
 /** 얇은 구분선. 그라데이션 바 위쪽처럼 경계만 알려야 하는 자리에 쓴다. */
 export function drawHairline(
   scene: Phaser.Scene,

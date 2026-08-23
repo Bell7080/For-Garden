@@ -28,10 +28,10 @@ import { drawGlassFade, drawHairline, HoloBar } from "../ui/holo";
 import { PortraitCard, relicCardTint, starsForRarity } from "../ui/PortraitCard";
 import { COLOR, textStyle } from "../ui/theme";
 import { setDebugBattle, setDebugScene } from "../debug";
-import { EnemyStatusWindow } from "../ui/EnemyStatusWindow";
+import { CharacterInfoManager } from "../managers/CharacterInfoManager";
+import { UltimateCutIn } from "../ui/UltimateCutIn";
 import { nextBattleSpeed, type BattleSpeed } from "../core/battleControls";
 import { ControlChip } from "../ui/ControlChip";
-import { UltimateCutIn } from "../ui/UltimateCutIn";
 import {
   beginNextUltimate, cancelUltimateSequence, createUltimateSequenceState, enqueueUltimate, releaseUltimate,
   type UltimateSequenceState,
@@ -113,14 +113,14 @@ export class BattleScene extends Phaser.Scene {
   private ultimateSequenceActive = false;
   /** 자동 동시 준비를 직렬화하고 오래된 async 완료를 구분하는 순수 상태다. */
   private ultimateSequence: UltimateSequenceState = createUltimateSequenceState();
-  /** 현재 컷인을 즉시 제거하기 위한 참조. shutdown/전투 종료 정리에서 사용한다. */
+  /** 현재 컷인. 전투·씬 종료 정리에서 즉시 거두기 위한 참조다. */
   private activeCutIn?: UltimateCutIn;
   /** 잠금 중에도 연출 주인공 카드만 밝게 남기기 위한 현재 전투원 id다. */
   private currentUltimateFighterId: string | null = null;
   private speedChip!: ControlChip;
   private autoChip!: ControlChip;
   /** 적 상세는 플레이어 성장 입력을 만들지 않는 전투 읽기 전용 창이다. */
-  private info!: EnemyStatusWindow;
+  private info!: CharacterInfoManager;
 
   constructor() {
     super("battle");
@@ -146,7 +146,8 @@ export class BattleScene extends Phaser.Scene {
     this.ultimateSequenceActive = false;
     this.ultimateSequence = createUltimateSequenceState();
     this.currentUltimateFighterId = null;
-    this.info = new EnemyStatusWindow(this);
+    // 적도 같은 정보창을 쓴다. 문맥만 "enemy"라 급여·돌파·유대·룬이 빠지고 현재 전투 줄이 붙는다.
+    this.info = new CharacterInfoManager(this, 1001, "enemy");
 
     // 편성 화면에서 본 6번 전장을 그대로 이어 실제 전투의 공간으로 사용한다.
     addSceneBackground(this, BACKGROUND.combat, -30);
@@ -211,7 +212,7 @@ export class BattleScene extends Phaser.Scene {
       const infoHit = fighter.side === "enemy"
         ? this.add.rectangle(fighter.x, fighter.y - UNIT_HEIGHT / 2, 190, UNIT_HEIGHT + 70, 0xffffff, 0)
           .setInteractive({ useHandCursor: true })
-          .on("pointerup", () => this.info.show(fighter))
+          .on("pointerup", () => this.info.showEnemy(fighter.def, { live: fighter }))
         : undefined;
       const shadow = this.add.ellipse(fighter.x, fighter.y + 4, 132, 24, 0x000000, 0.38);
       const barColor = fighter.side === "player" ? COLOR.hpFill : COLOR.hpEnemy;
@@ -281,6 +282,18 @@ export class BattleScene extends Phaser.Scene {
     if (enqueueUltimate(this.ultimateSequence, fighter.id)) void this.pumpUltimateQueue();
   }
 
+  /**
+   * Phaser tween을 await 가능한 한 단계로 바꿔 궁극기 순서를 읽는 차례 그대로 유지한다.
+   *
+   * 끝났을 때뿐 아니라 **끊겼을 때도** 푼다. 전투 종료·씬 종료가 트윈을 죽이면 완료 콜백이
+   * 영영 오지 않는데, 그 자리에서 await가 멈추면 뒤따르는 잠금 해제까지 함께 묶인다.
+   */
+  private tween(config: Phaser.Types.Tweens.TweenBuilderConfig): Promise<void> {
+    return new Promise((resolve) => {
+      this.tweens.add({ ...config, onComplete: () => resolve(), onStop: () => resolve() });
+    });
+  }
+
   /** 입력 잠금부터 정상 복구까지 한 곳에서 소유하는 유일한 궁극기 비동기 시퀀스다. */
   private async pumpUltimateQueue(): Promise<void> {
     const next = beginNextUltimate(this.ultimateSequence);
@@ -291,35 +304,47 @@ export class BattleScene extends Phaser.Scene {
     this.refreshDebug();
     const fighter = this.state.fighters.find((item) => item.id === next.fighterId);
     try {
-      // 컷인 동안 코어 시간은 update에서 완전히 멈춘다. 사용자의 포효/공격 Puppet은 정상 속도다.
+      // 연출 동안 코어 시간은 update에서 완전히 멈춘다. 발돋움·공격 Puppet은 씬의 정상 속도다.
       if (!fighter || !this.sequenceValid(next.token, fighter)) return;
       const view = this.views.get(fighter.id);
       if (!view) return;
       // 씬은 ID별 값을 판단하지 않고 정적 프리셋(또는 공용 기본값)만 소비한다.
       const presentation = ultimatePresentationFor(fighter.def.id);
+      // 전신 컷인 한 장으로 "누가 무엇을 쓰는가"를 알린다. 다만 포효를 기다리지 않고 컷인이
+      // 빠지는 즉시 친다 — 전투 중 여러 번 반복되는 연출이라 길이가 곧 기다림이다.
       this.activeCutIn = await UltimateCutIn.create(this, fighter.def, presentation);
       if (!this.sequenceValid(next.token, fighter)) return;
-      const roar = playMotion(this, view.creature, presentation.roarMotion);
-      await Promise.all([roar.completed, this.activeCutIn.play()]);
+      await this.activeCutIn.play();
       this.activeCutIn.destroy();
       this.activeCutIn = undefined;
-
-      // 컷인과 피해 판정 사이의 호흡 및 충격도 프리셋에 두되 흔들림 시간은 공용으로 유지한다.
-      await new Promise<void>((resolve) => this.time.delayedCall(presentation.preAttackDelayMs, resolve));
+      if (!this.sequenceValid(next.token, fighter)) return;
+      const base = view.creature.scaleX;
+      await this.tween({ targets: view.creature, scale: base * presentation.zoomScale, duration: presentation.zoomMs, ease: "Back.Out" });
       if (!this.sequenceValid(next.token, fighter)) return;
       this.cameras.main.shake(180, presentation.cameraShakeIntensity);
 
-      // 입력 순간이 아니라 포효가 끝난 바로 이 시점의 생존/게이지/전투 결과를 코어에 재검증한다.
+      // 입력 순간이 아니라 발돋움이 끝난 바로 이 시점의 생존/게이지/전투 결과를 코어에 재검증한다.
       if (!this.sequenceValid(next.token, fighter) || !canFireUltimate(this.state, fighter)) return;
       const events = fireUltimate(this.state, fighter.id, () => Math.random());
+      // 첫 공격 동작만 기다리되 나머지 사건(사망·종료)도 전부 연출로 옮긴다. `??=`의 오른쪽을
+      // 조건부로 두면 첫 동작 이후의 사망 사건이 통째로 버려져 쓰러진 적이 계속 서 있었다.
       let attackMotion: MotionPlayback | undefined;
-      events.forEach((event) => { attackMotion ??= this.playEvent(event); });
+      events.forEach((event) => {
+        const playback = this.playEvent(event);
+        attackMotion ??= playback;
+      });
       await attackMotion?.completed;
+      // 커진 몸은 제자리로 돌려놓고 바로 전투를 잇는다.
+      await this.tween({ targets: view.creature, scale: base, duration: presentation.zoomMs, ease: "Quad.Out" });
       this.syncViews();
       this.refreshDebug();
     } finally {
       this.activeCutIn?.destroy();
       this.activeCutIn = undefined;
+      // 중간에 멈춘 발돋움 트윈은 여기서 끊는다. 남겨 두면 다음 프레임의 배치와 서로 다투다
+      // SD가 커진 채로 떨린다. 제 크기 복구는 syncViews가 맡는다.
+      const view = this.views.get(next.fighterId);
+      if (view) this.tweens.killTweensOf(view.creature);
       // 토큰 일치 때만 정상 속도/입력을 복구해 종료 후의 오래된 Promise가 새 연출을 풀지 못하게 한다.
       if (releaseUltimate(this.ultimateSequence, next.token)) {
         this.ultimateSequenceActive = false;
@@ -354,7 +379,7 @@ export class BattleScene extends Phaser.Scene {
     const now = performance.now();
     const dt = (now - this.lastStepAt) / 1000;
     this.lastStepAt = now;
-    // 코어 시간과 전투 배속을 컷인과 분리한다. 연출 Puppet/tween은 씬의 정상 시계로 계속 돈다.
+    // 코어 시간과 전투 배속을 궁극기 연출과 분리한다. 연출 Puppet/tween은 씬의 정상 시계로 돈다.
     if (this.ultimateSequenceActive) return;
     // 실제 프레임 간격에 선택 배율을 곱해 이동·공격 간격·게이지가 모두 같은 시간축을 쓴다.
     const events = stepSkirmish(this.state, dt * this.battleSpeed, () => Math.random());
@@ -618,13 +643,16 @@ export class BattleScene extends Phaser.Scene {
     } }).setDepth(101);
   }
 
-  /** 종료 경로마다 컷인·큐·트윈·입력 잠금을 같은 방식으로 정리한다. */
+  /** 종료 경로마다 큐·트윈·입력 잠금을 같은 방식으로 정리한다. */
   private cancelUltimatePresentation(): void {
     cancelUltimateSequence(this.ultimateSequence);
     this.ultimateSequenceActive = false;
     this.currentUltimateFighterId = null;
     this.activeCutIn?.destroy();
     this.activeCutIn = undefined;
+    // 발돋움 도중 전투가 끝나면 커진 채로 굳는다. 다음 syncViews가 제 크기로 되돌리도록
+    // 남은 트윈만 걷어 낸다.
+    this.views.forEach((view) => this.tweens.killTweensOf(view.creature));
     this.profiles.forEach((profile) => {
       profile.pulse?.remove();
       profile.sweepTween?.remove();

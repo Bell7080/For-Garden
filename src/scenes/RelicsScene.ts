@@ -22,7 +22,7 @@ import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
  */
 export class RelicsScene extends Phaser.Scene {
   private info!: CharacterInfoManager;
-  /** 정보창의 급여·돌파가 지갑을 바꾸면 같은 씬이 소유한 상단 표시도 즉시 다시 그린다. */
+  /** 상단 줄은 재화 칸 없이 프로필·설정만 세운다. 지갑이 바뀌면 디버그 표시만 다시 읽는다. */
   private topBar!: TopBar;
   private cards = new Map<string, PortraitCard>();
   /** 스토리 배열 순서와 분리된 도감 표시 정렬 기준이다. */
@@ -41,7 +41,8 @@ export class RelicsScene extends Phaser.Scene {
     addSceneBackground(this, BACKGROUND.relics);
     // 밝은 원화 위에서도 카드와 본문을 읽을 수 있도록 기존 void 색을 얇게 덮는다.
     this.add.rectangle(cx, 960, BASE_WIDTH, 1920, COLOR.void, 0.48).setDepth(-29);
-    this.topBar = new TopBar(this, 40, { currencies: "relic" });
+    // 도감에서 재화를 쓰는 곳은 정보창뿐이고, 거기서 급여 버튼이 치즈케이크 수를 직접 말한다.
+    this.topBar = new TopBar(this, 40, { currencies: "none" });
 
     const ownedCount = relicCollection.owned.length;
     this.add

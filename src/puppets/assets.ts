@@ -42,6 +42,13 @@ export interface PuppetAsset {
    * 캐릭터마다 다르게 만들지 않고, 원화 쪽에 보정값을 달아 한 그리드에서 크기가 맞게 한다.
    */
   cardZoom?: number;
+  /**
+   * 정보창 전신 배율. 1이면 공용 높이 그대로다.
+   *
+   * 적 원화는 아군보다 캔버스 안의 그림 영역이 작아, 같은 높이로 세우면 화면 밖으로 넘칠 만큼
+   * 확대된다. 화면이 개체마다 다른 높이를 정하지 않도록 보정값을 원화 쪽에 붙인다.
+   */
+  portraitZoom?: number;
 }
 
 const base = import.meta.env.BASE_URL;
@@ -80,6 +87,33 @@ export const LUKA_ASSET: PuppetAsset = {
   content: { left: 32, top: 22, right: 1728, bottom: 2396 },
 };
 
+/** 1번 적 토비. 적 전용 Puppet 번호와 스테이지 고정 편성 번호를 일치시킨다. */
+export const TOBY_ASSET: PuppetAsset = {
+  url: `${base}puppets/enemy_001.zip`,
+  imageWidth: 1254,
+  imageHeight: 1254,
+  content: { left: 352, top: 155, right: 993, bottom: 1082 },
+  portraitZoom: 0.5,
+};
+
+/** 2번 적 아모. 현재 적 ZIP들이 같은 캔버스 규격을 사용해 동일한 가시 영역 기준을 공유한다. */
+export const AMO_ASSET: PuppetAsset = {
+  url: `${base}puppets/enemy_002.zip`,
+  imageWidth: 1254,
+  imageHeight: 1254,
+  content: { left: 352, top: 155, right: 993, bottom: 1082 },
+  portraitZoom: 0.5,
+};
+
+/** 3번 적 리파. 파일명의 기존 표기(enemy003)를 실제 공개 에셋 경로대로 연결한다. */
+export const RIPA_ASSET: PuppetAsset = {
+  url: `${base}puppets/enemy_003.zip`,
+  imageWidth: 1254,
+  imageHeight: 1254,
+  content: { left: 352, top: 155, right: 993, bottom: 1082 },
+  portraitZoom: 0.5,
+};
+
 /**
  * 렐릭 데이터가 참조하는 원화 레지스트리. 새 원화는 여기에 한 번 등록한 뒤 데이터 키로 연결한다.
  * placeholder 키는 같은 임시 파일을 쓰되 화면에서 렐릭별 tint를 적용할 수 있게 별도로 둔다.
@@ -89,6 +123,12 @@ const PORTRAIT_ASSETS = {
   lexia: { asset: LEXIA_ASSET, usesRelicTint: false },
   seira: { asset: SEIRA_ASSET, usesRelicTint: false },
   luka: { asset: LUKA_ASSET, usesRelicTint: false },
+  // 적도 전용 전신을 가진다. 초상 레지스트리에 함께 두면 정보창이 아군·적을 가르지 않고
+  // 같은 경로로 원화를 찾는다 — 화면마다 "적이면 다른 함수"를 두면 한 곳을 고칠 때 다른
+  // 곳이 임시 원화로 남는다.
+  toby: { asset: TOBY_ASSET, usesRelicTint: false },
+  amo: { asset: AMO_ASSET, usesRelicTint: false },
+  ripa: { asset: RIPA_ASSET, usesRelicTint: false },
   "torika-placeholder": { asset: TORIKA_ASSET, usesRelicTint: true },
 } as const satisfies Record<PortraitAssetId, { asset: PuppetAsset; usesRelicTint: boolean }>;
 
@@ -100,38 +140,6 @@ export function portraitAssetFor(assetId: PortraitAssetId): PuppetAsset {
 /** 임시 공유 원화인지 판별해 기존 렐릭 구분 tint를 유지한다. */
 export function portraitUsesRelicTint(assetId: PortraitAssetId): boolean {
   return PORTRAIT_ASSETS[assetId].usesRelicTint;
-}
-
-/** 1번 적 토비. 적 전용 Puppet 번호와 스테이지 고정 편성 번호를 일치시킨다. */
-export const TOBY_ASSET: PuppetAsset = {
-  url: `${base}puppets/enemy_001.zip`,
-  imageWidth: 1254,
-  imageHeight: 1254,
-  content: { left: 352, top: 155, right: 993, bottom: 1082 },
-};
-
-/** 2번 적 아모. 현재 적 ZIP들이 같은 캔버스 규격을 사용해 동일한 가시 영역 기준을 공유한다. */
-export const AMO_ASSET: PuppetAsset = {
-  url: `${base}puppets/enemy_002.zip`,
-  imageWidth: 1254,
-  imageHeight: 1254,
-  content: { left: 352, top: 155, right: 993, bottom: 1082 },
-};
-
-/** 3번 적 리파. 파일명의 기존 표기(enemy003)를 실제 공개 에셋 경로대로 연결한다. */
-export const RIPA_ASSET: PuppetAsset = {
-  url: `${base}puppets/enemy_003.zip`,
-  imageWidth: 1254,
-  imageHeight: 1254,
-  content: { left: 352, top: 155, right: 993, bottom: 1082 },
-};
-
-/** 적 상세창은 임시 아군 초상이 아니라 번호가 일치하는 적 전용 전신 묶음을 사용한다. */
-export function enemyPortraitAssetFor(relicId: string): PuppetAsset {
-  if (relicId === "husk-raptor") return TOBY_ASSET;
-  if (relicId === "husk-shell") return AMO_ASSET;
-  if (relicId === "husk-wing") return RIPA_ASSET;
-  throw new Error(`적 전신 원화가 등록되지 않은 렐릭 id: ${relicId}`);
 }
 
 /** 전투용 적 SD 1~3번은 정보창용 전신 원화와 파일을 섞지 않는다. */
@@ -212,7 +220,7 @@ export const MOTION = {
    * 주고받는 동안 캐릭터가 계속 튀어 보이고, 무엇보다 자기 공격 모션이 매번 잘린다.
    */
   hit: { names: ["hit", "idle"], returnsToIdle: true, priority: 1, speed: 2.2, strength: 0.4 },
-  /** 궁극기 컷인의 독립 포효. 일반 공격보다 높아 연출 중 피격/공격에 잘리지 않는다. */
+  /** 포효. 지금은 궁극기가 쓰지 않지만 동작 자체는 묶음에 남아 있어 연출용으로 부를 수 있다. */
   roar: { names: ["roar", "shout", "attack", "idle"], returnsToIdle: true, priority: 3 },
   /** 공격 동작이 따로 없어 포효로 대신한다. 재생 중에는 어떤 동작도 이걸 끊지 못한다. */
   attack: { names: ["attack", "slam", "roar", "idle"], returnsToIdle: true, priority: 2 },

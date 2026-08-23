@@ -463,6 +463,19 @@ describe("궁극기", () => {
     expect(ultimateState.fighters[0].energy).toBe(0);
   });
 
+  it("는 상대를 쓰러뜨리면 같은 호출에서 공격 뒤에 사망까지 알린다", () => {
+    // 씬은 이 배열을 한 번만 훑어 연출로 옮긴다. 공격 뒤의 사망이 같은 호출에 담기지 않으면
+    // 궁극기로 잡은 적이 쓰러지지 않고 계속 서 있게 된다.
+    const state = charged();
+    const foe = state.fighters[1];
+    foe.hp = 1;
+    const events = fireUltimate(state, "player-0");
+    const kinds = events.map((event) => event.kind);
+    expect(kinds.indexOf("attack")).toBeGreaterThanOrEqual(0);
+    expect(kinds.indexOf("death")).toBeGreaterThan(kinds.indexOf("attack"));
+    expect(events.some((event) => event.kind === "death" && event.fighterId === foe.id)).toBe(true);
+  });
+
   it("는 게이지가 모자라면 아무것도 하지 않는다", () => {
     const state = charged();
     state.fighters[0].energy = state.fighters[0].def.ultimate.cost - 1;

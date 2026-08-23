@@ -16,6 +16,11 @@ const BASE_HEIGHT = 1920;
  */
 const SORTIE: [number, number] = [BASE_WIDTH - 290, BASE_HEIGHT - 180 - 245];
 
+/** 지도의 적 편성 팝업 첫 칸(왼쪽 적)의 한가운데. 팝업은 고른 노드 아래에 붙어 내려온다. */
+const MAP_ENEMY_SLOT: [number, number] = [278, 1238];
+/** 편성 미리보기에서 첫 적 옆에 붙는 `?` 뱃지. SD 자체는 입력을 받지 않는다. */
+const PARTY_ENEMY_HELP: [number, number] = [366, 230];
+
 const ROSTER = { startX: 116, startY: 1080, stepX: 212, stepY: 244, cols: 5 };
 function card(index: number): [number, number] {
   return [
@@ -197,6 +202,27 @@ test("실시간 자동 전투는 입력 없이 서로 붙어 체력을 깎는다
   await expect.poll(async () => (await battle(page))?.elapsed).toBeGreaterThan(0);
 });
 
+test("출전 전 지도와 편성에서도 같은 적 분석창이 열린다", async ({ page }) => {
+  await startAfterOpening(page);
+  await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
+  await tap(page, ...SORTIE);
+  await expect.poll(() => scene(page)).toBe("stageMap");
+
+  // 지도의 적 편성 팝업에서 첫 칸을 누른다. 성장 입력이 없는 적 전용 창이 떠야 한다.
+  await tap(page, MAP_ENEMY_SLOT[0], MAP_ENEMY_SLOT[1]);
+  await expect.poll(() => infoOpen(page)).toBe(true);
+  await page.screenshot({ path: `test-results/${test.info().project.name}-map-enemy-info.png`, fullPage: true });
+
+  await tap(page, BASE_WIDTH - 120, BASE_HEIGHT - 120); // 뒤로가기 — 분석창만 닫힌다
+  await expect.poll(() => infoOpen(page)).toBe(false);
+  expect(await scene(page)).toBe("stageMap");
+
+  await tap(page, BASE_WIDTH / 2, BASE_HEIGHT - 180); // 출전 → 편성
+  await expect.poll(() => scene(page)).toBe("party");
+  await tap(page, PARTY_ENEMY_HELP[0], PARTY_ENEMY_HELP[1]);
+  await expect.poll(() => infoOpen(page)).toBe(true);
+});
+
 test("전투 중 움직이는 적을 누르면 적 전용 정보창과 일러스트가 열린다", async ({ page }) => {
   await enterBattle(page);
   await expect.poll(async () => (await battle(page))?.enemyTargets?.length).toBe(3);
@@ -224,7 +250,7 @@ test("전투 조작 칩으로 1·2·3배속과 자동 궁극기를 전환한다"
   await page.screenshot({ path: `test-results/${test.info().project.name}-battle-controls.png`, fullPage: true });
 });
 
-test("동시에 준비된 두 궁극기는 컷인 하나씩 직렬 실행한다", async ({ page }) => {
+test("동시에 준비된 두 궁극기는 연출 하나씩 직렬 실행한다", async ({ page }) => {
   await enterBattle(page);
   // 빠르게 게이지를 모으되 자동 발동은 두 명이 준비될 때까지 켜지 않는다.
   await tap(page, BASE_WIDTH - 335, 150);
@@ -232,10 +258,10 @@ test("동시에 준비된 두 궁극기는 컷인 하나씩 직렬 실행한다"
   await expect.poll(async () => (await battle(page))?.ultimateReady.length ?? 0, { timeout: 35_000 }).toBeGreaterThanOrEqual(2);
   await tap(page, BASE_WIDTH - 130, 150);
 
-  // 첫 컷인 활성 중 다음 전투원이 큐에 남는 것이 곧 겹치지 않고 직렬화됐다는 관찰 계약이다.
+  // 첫 연출 활성 중 다음 전투원이 큐에 남는 것이 곧 겹치지 않고 직렬화됐다는 관찰 계약이다.
   await expect.poll(async () => (await battle(page))?.ultimateSequenceActive, { timeout: 5_000 }).toBe(true);
   await expect.poll(async () => (await battle(page))?.ultimateQueue?.length ?? 0).toBeGreaterThanOrEqual(1);
-  await page.screenshot({ path: `test-results/${test.info().project.name}-ultimate-cutin-serialized.png`, fullPage: true });
+  await page.screenshot({ path: `test-results/${test.info().project.name}-ultimate-serialized.png`, fullPage: true });
   // 두 연출이 모두 끝나면 큐와 입력 잠금이 함께 풀린다.
   await expect.poll(async () => (await battle(page))?.ultimateSequenceActive, { timeout: 10_000 }).toBe(false);
   await expect.poll(async () => (await battle(page))?.ultimateQueue ?? []).toEqual([]);
@@ -250,7 +276,7 @@ test("전투는 한쪽이 전멸하면 끝난다", async ({ page }) => {
 });
 
 
-test("하단 탭으로 발굴 · 렐릭 · 로비 · 연구소 · 상점을 오간다", async ({ page }) => {
+test("하단 탭으로 고고학 · 렐릭 · 로비 · 연구소 · 상점을 오간다", async ({ page }) => {
   await startAfterOpening(page);
   await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => scene(page)).toBe("lobby");
@@ -260,8 +286,8 @@ test("하단 탭으로 발굴 · 렐릭 · 로비 · 연구소 · 상점을 오�
   await tap(page, (BASE_WIDTH * 3) / 10, navY); // 렐릭
   await expect.poll(() => scene(page)).toBe("relics");
 
-  await tap(page, BASE_WIDTH / 10, navY); // 발굴
-  await expect.poll(() => scene(page)).toBe("excavation");
+  await tap(page, BASE_WIDTH / 10, navY); // 고고학
+  await expect.poll(() => scene(page)).toBe("archaeology");
 
   await tap(page, BASE_WIDTH / 2, navY); // 로비
   await expect.poll(() => scene(page)).toBe("lobby");

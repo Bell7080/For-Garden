@@ -9,8 +9,8 @@ describe("정보창 권한", () => {
     expect(capabilitiesFor("enemy").mutateProgress).toBe(false);
   });
 
-  it("친구와 적은 유대 정보를 공개하지 않는다", () => {
-    expect(capabilitiesFor("friend").showBond).toBe(false);
-    expect(capabilitiesFor("enemy")).toMatchObject({ showBond: false, showGrowth: false, showRuntimeCombat: true });
+  it("친구와 적은 유대를 공개하지 않고 능력치는 그대로 보여 준다", () => {
+    expect(capabilitiesFor("friend")).toMatchObject({ showBond: false, showGrowth: true, showRuntimeCombat: false });
+    expect(capabilitiesFor("enemy")).toMatchObject({ showBond: false, showGrowth: true, showRuntimeCombat: true });
   });
 });

@@ -1,18 +1,28 @@
-/** Phaser와 무관하게 직렬화할 수 있는 궁극기 컷인 연출 값이다. */
+/** Phaser와 무관하게 직렬화할 수 있는 궁극기 연출 값이다. */
 export interface UltimatePresentation {
-  /** 원화가 화면 안으로 들어오는 수평 방향이다. */
+  /** 전신 컷인이 화면 안으로 들어오는 수평 방향이다. */
   enterFrom: "left" | "right";
   /** 1280px 공용 원화 높이에 곱할 배율이다. */
   artworkScale: number;
   /** Puppet의 core 관절을 놓을 컷인 기준점이다. */
   artworkOrigin: { x: number; y: number };
-  /** 전장 Puppet에 요청할 포효 계열 모션 키다. */
-  roarMotion: "roar" | "attack";
-  /** 진입 완료 뒤 원화와 이름을 보여 주는 시간이다. */
-  cutInDurationMs: number;
-  /** 컷인이 퇴장한 뒤 공격 판정을 내기 전의 여백이다. */
-  preAttackDelayMs: number;
-  /** 공격 직전 카메라 흔들림의 정규화된 강도다. */
+  /**
+   * 진입을 마친 컷인이 이름을 보여 주며 머무는 시간(ms).
+   *
+   * 컷인은 "누가 무엇을 쓰는가"를 알리는 한 장이다. 여기서 길어지면 전투가 매번 그만큼
+   * 멈추므로, 읽을 수 있는 최소한만 머문다. 포효 같은 별도 대기는 두지 않는다.
+   */
+  cutInHoldMs: number;
+  /**
+   * 때리기 직전 SD가 커지는 배율.
+   *
+   * 전신 원화 컷인과 포효를 걷어낸 자리를 이 한 뼘이 대신한다. 화면을 덮는 연출은 한 번은
+   * 멋있지만 전투 내내 반복되면 기다림이 된다. "누가 지금 크게 때리는가"만 알리면 충분하다.
+   */
+  zoomScale: number;
+  /** 커지고 다시 돌아오는 데 각각 걸리는 시간(ms). */
+  zoomMs: number;
+  /** 공격 판정 직전 카메라 흔들림의 정규화된 강도다. */
   cameraShakeIntensity: number;
 }
 
@@ -21,24 +31,24 @@ export const DEFAULT_ULTIMATE_PRESENTATION: Readonly<UltimatePresentation> = Obj
   enterFrom: "left",
   artworkScale: 1,
   artworkOrigin: Object.freeze({ x: 650, y: 810 }),
-  roarMotion: "roar",
-  cutInDurationMs: 430,
-  preAttackDelayMs: 90,
-  cameraShakeIntensity: 0.006,
+  cutInHoldMs: 240,
+  zoomScale: 1.22,
+  zoomMs: 130,
+  cameraShakeIntensity: 0.009,
 });
 
 /** 현재 출시 렐릭의 개성을 조정하는 유일한 프레젠테이션 표다. */
 export const ULTIMATE_PRESENTATIONS: Readonly<Record<string, UltimatePresentation>> = Object.freeze({
-  rex: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 1.08, cameraShakeIntensity: 0.012 },
-  anky: { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkScale: 0.96, preAttackDelayMs: 130, cameraShakeIntensity: 0.009 },
-  spino: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 1.04, artworkOrigin: { x: 680, y: 820 }, cameraShakeIntensity: 0.011 },
-  luka: { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkOrigin: { x: 620, y: 800 }, cutInDurationMs: 390 },
-  dodo: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.9, artworkOrigin: { x: 640, y: 790 }, cameraShakeIntensity: 0.005 },
-  smilo: { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkScale: 1.06, cutInDurationMs: 380, cameraShakeIntensity: 0.01 },
-  quetz: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.94, artworkOrigin: { x: 650, y: 760 }, cutInDurationMs: 470 },
-  "husk-raptor": { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", cutInDurationMs: 360, cameraShakeIntensity: 0.008 },
-  "husk-shell": { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.94, preAttackDelayMs: 120, cameraShakeIntensity: 0.008 },
-  "husk-wing": { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkScale: 0.92, artworkOrigin: { x: 650, y: 770 } },
+  rex: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 1.08, zoomScale: 1.3, cameraShakeIntensity: 0.013 },
+  anky: { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkScale: 0.96, zoomScale: 1.26, zoomMs: 150, cameraShakeIntensity: 0.012 },
+  spino: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 1.04, artworkOrigin: { x: 680, y: 820 }, zoomScale: 1.28, cameraShakeIntensity: 0.012 },
+  luka: { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkOrigin: { x: 620, y: 800 }, cutInHoldMs: 220, zoomScale: 1.18, zoomMs: 110 },
+  dodo: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.9, artworkOrigin: { x: 640, y: 790 }, zoomScale: 1.14, cameraShakeIntensity: 0.006 },
+  smilo: { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkScale: 1.06, cutInHoldMs: 220, zoomScale: 1.24, zoomMs: 115, cameraShakeIntensity: 0.011 },
+  quetz: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.94, artworkOrigin: { x: 650, y: 760 }, cutInHoldMs: 260, zoomScale: 1.16, cameraShakeIntensity: 0.008 },
+  "husk-raptor": { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", cutInHoldMs: 210, zoomScale: 1.2, zoomMs: 110, cameraShakeIntensity: 0.008 },
+  "husk-shell": { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.94, zoomScale: 1.24, zoomMs: 150, cameraShakeIntensity: 0.009 },
+  "husk-wing": { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkScale: 0.92, artworkOrigin: { x: 650, y: 770 }, zoomScale: 1.16, cameraShakeIntensity: 0.007 },
 });
 
 /** 표에 아직 없는 ID는 공용 기본값을 반환해 콘텐츠 추가가 전투를 깨뜨리지 않게 한다. */

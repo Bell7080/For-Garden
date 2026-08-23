@@ -107,6 +107,21 @@ export class LobbyScene extends Phaser.Scene {
       onClick: () => this.notReady("교류"),
     });
 
+    // 발굴 — 출격과 같은 줄에 서지만 크기는 교류와 같다. 왼쪽은 서브 콘텐츠 자리라, 오른쪽의
+    // 큰 주황 버튼과 크기로 위계를 가른다. 색도 교류와 같은 푸른 계열로 묶는다.
+    new Button(this, 250, NAV_TOP - 245, {
+      width: 292,
+      height: 106,
+      label: "발굴",
+      sub: "EXCAVATION",
+      fontSize: 34,
+      perspective: "left",
+      tilt: 6,
+      accentColor: EXCHANGE_BLUE,
+      accentTextColor: "#9fd0f0",
+      onClick: () => this.notReady("발굴"),
+    });
+
     new BottomNav(this, "lobby");
     void this.showFavorite();
   }

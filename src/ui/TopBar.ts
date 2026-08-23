@@ -27,10 +27,13 @@ interface CurrencySlot {
  * 화면별 재화 조합.
  *
  * 로비는 "지금 얼마나 가졌나"(보석·골드·스테미나), 모집은 "무엇으로 뽑을 수 있나"
- * (다이아·화석·호박석), 렐릭은 "어떻게 성장시키나"(다이아·치즈케이크·DNA)를 묻는다.
- * 화면마다 다른 것을 보여 주되 자리와 생김새는 같다.
+ * (다이아·화석·호박석)를 묻는다. 화면마다 다른 것을 보여 주되 자리와 생김새는 같다.
+ *
+ * 도감처럼 **그 화면에서 재화를 쓰지 않는 곳은 아무것도 세우지 않는다**(`none`). 급여에 드는
+ * 치즈케이크는 정보창의 급여 버튼이 "가진 수/드는 수"로 직접 말하므로, 위에 또 적으면 같은
+ * 값을 두 곳에서 읽게 되고 정작 봐야 할 카드 그리드의 자리만 좁아진다.
  */
-export type TopBarCurrencyContext = "default" | "recruit" | "relic";
+export type TopBarCurrencyContext = "default" | "recruit" | "none";
 
 const SLOTS: Record<TopBarCurrencyContext, readonly CurrencySlot[]> = {
   default: [
@@ -43,12 +46,7 @@ const SLOTS: Record<TopBarCurrencyContext, readonly CurrencySlot[]> = {
     { icon: "currency-fossil", read: () => session.wallet.fossil, compact: true, color: "#e6dcc4" },
     { icon: "currency-amber", read: () => session.wallet.amber, color: "#ffc98a" },
   ],
-  // 급여와 돌파에 바로 쓰는 두 재화를 모집 화면과 같은 위계의 세 칸 안에 배치한다.
-  relic: [
-    { icon: "currency-gems", read: () => session.wallet.gems, color: "#cfe6ff" },
-    { icon: "currency-cheesecake", read: () => session.wallet.cheesecake, compact: true, color: "#ffe0d5" },
-    { icon: "currency-dna", read: () => session.wallet.dnaFragments, color: "#ffb5c1" },
-  ],
+  none: [],
 };
 
 /**

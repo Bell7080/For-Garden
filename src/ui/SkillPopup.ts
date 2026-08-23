@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import type { KeywordManager } from "../managers/KeywordManager";
 import type { EffectType, SkillIconAssetId } from "../core/types";
-import { chipPoints, drawHairline, drawLayer, HOLO } from "./holo";
+import { chipPoints, drawHairline, drawInnerVignette, drawLayer, drawShapeOutline } from "./holo";
 import type { PopupLayer } from "./PopupLayer";
 import { FALLBACK_SKILL_ICON } from "./skillIcons";
 import { SKILL_ART_WASH_ALPHA } from "./skillArt";
@@ -69,13 +69,16 @@ export function openSkillPopup(
     const chip = chipPoints(iconSize, iconSize, {
       bevel: { topLeft: iconSize * 0.26, topRight: 0, bottomRight: iconSize * 0.26, bottomLeft: 0 },
     });
-    body.add(drawLayer(scene, iconX, iconY, chip, { fill: 0x1a1f27, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.6 }));
+    // 도감 아이콘과 같은 액자다 — 불투명한 판, 안쪽으로 스미는 어둠, 사방 한 줄.
+    body.add(drawLayer(scene, iconX, iconY, chip, { fill: 0x11161d, alpha: 1, edge: COLOR.accent, edgeAlpha: 0.6 }));
     const art = skill.art && scene.textures.exists(skill.art) ? skill.art : undefined;
-    if (art && skill.tint !== undefined) body.add(drawLayer(scene, iconX, iconY, chip, { fill: skill.tint, alpha: SKILL_ART_WASH_ALPHA }));
+    if (art && skill.tint !== undefined) body.add(drawLayer(scene, iconX, iconY, chip, { fill: skill.tint, alpha: SKILL_ART_WASH_ALPHA, shadow: false }));
+    body.add(drawInnerVignette(scene, iconX, iconY, chip, { strength: 0.55 }));
     const texture = art ?? (scene.textures.exists(skill.iconAssetId) ? skill.iconAssetId : FALLBACK_SKILL_ICON);
     const image = scene.add.image(iconX, iconY, texture).setDisplaySize(iconSize * (art ? 0.82 : 0.62), iconSize * (art ? 0.82 : 0.62));
     if (art && skill.tint !== undefined) image.setTint(skill.tint);
     body.add(image);
+    body.add(drawShapeOutline(scene, iconX, iconY, chip, { color: COLOR.accent, alpha: 0.55, width: 3 }));
 
     // 분류와 이름. 궁극기는 소비 게이지를 분류 옆에 붙여 "얼마를 쓰는 기술인지"를 먼저 알린다.
     const textLeft = iconX + iconSize / 2 + 28;

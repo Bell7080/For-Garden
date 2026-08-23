@@ -23,7 +23,7 @@ import {
 import { mixWhite, tintFor } from "../puppets/tints";
 import { addSceneBackground, BACKGROUND } from "./backgrounds";
 import { addBackButton } from "./IconButton";
-import { chipPoints, drawGlassFade, drawHairline, drawLayer, drawShapeEdge, drawVignette, HOLO, perspectiveRect, slantedRect, toPoints } from "./holo";
+import { chipPoints, drawGlassFade, drawHairline, drawInnerVignette, drawLayer, drawShapeEdge, drawShapeOutline, drawVignette, HOLO, perspectiveRect, slantedRect, toPoints } from "./holo";
 import { drawGlyph } from "./glyphs";
 import { PopupLayer } from "./PopupLayer";
 import { AffinityBadge } from "./AffinityBadge";
@@ -158,16 +158,22 @@ function feedCostRow(
   width: number,
   height: number,
   size: number,
-): { container: Phaser.GameObjects.Container; text: Phaser.GameObjects.Text } {
+): { container: Phaser.GameObjects.Container; text: Phaser.GameObjects.Text; layout: () => void } {
   const container = scene.add.container(x, y);
   container.add(drawLayer(scene, 0, 0, slantedRect(width, height, 8), { fill: 0x0b1410, alpha: 0.66, edge: FEED_GREEN, edgeAlpha: 0.22 }));
   const icon = Math.round(height * 0.86);
-  container.add(cheesecakeIcon(scene, -width / 2 + icon * 0.62, 0, icon));
-  const text = scene.add
-    .text(-width / 2 + icon * 1.16, 1, "", textStyle({ role: "display", size, color: FEED_TEXT }))
-    .setOrigin(0, 0.5);
-  container.add(text);
-  return { container, text };
+  const gap = Math.round(icon * 0.22);
+  // 아이콘과 수를 한 덩어리로 담아 통째로 가운데에 세운다. 아이콘을 판 왼쪽 끝에 붙이면
+  // 자릿수가 적을 때 값이 왼쪽으로 쏠려 판 오른쪽이 휑하게 빈다.
+  const group = scene.add.container(0, 0);
+  group.add(cheesecakeIcon(scene, 0, 0, icon));
+  const text = scene.add.text(icon / 2 + gap, 1, "", textStyle({ role: "display", size, color: FEED_TEXT })).setOrigin(0, 0.5);
+  group.add(text);
+  container.add(group);
+  // 값이 바뀌면 폭도 바뀌므로 다시 부른다. 덩어리의 왼쪽 끝은 아이콘 반쪽이다.
+  const layout = (): void => { group.setX(-(gap + text.width) / 2); };
+  layout();
+  return { container, text, layout };
 }
 /**
  * 유대로 하나씩 열리는 이야기 네 편.
@@ -324,10 +330,19 @@ export class InfoManager {
   private portrait?: PuppetCreature;
   private portraitWanted = false;
   private portraitRequest = 0;
+  /**
+   * 원화가 정보창에서 서 있어야 할 제자리.
+   *
+   * 전신 감상에서 돌아올 때 **지금 값**을 되돌리면 안 된다. 되돌아오는 도중에 다시 감상을 열면
+   * 그 순간의 커진 값이 "제자리"로 굳어, 열고 닫을 때마다 원화가 조금씩 커진다.
+   */
+  private portraitHome?: { x: number; y: number; scale: number };
   private figure?: PuppetCreature;
   private figureRequest = 0;
   /** 전신 감상 중일 때 화면을 덮는 종료 판. 없으면 감상 중이 아니다. */
   private gallery?: Phaser.GameObjects.Rectangle;
+  /** 감상을 연 돋보기를 눌린 크기에서 되돌리는 콜백. */
+  private galleryReturn?: () => void;
   /** 좌우 넘김이 진행 중인지. 연달아 밀어도 한 번에 한 명씩만 넘어간다. */
   private sliding = false;
   /** 급여 버튼의 켜짐·꺼짐 판 두 장. */
@@ -336,11 +351,15 @@ export class InfoManager {
   private feedPlate?: { on: Phaser.GameObjects.Graphics; off: Phaser.GameObjects.Graphics };
   /** 급여 버튼의 치즈케이크 값줄 — `가진 수/한 번에 드는 수`. */
   private feedCost?: Phaser.GameObjects.Text;
+  /** 값이 바뀔 때마다 아이콘과 수를 다시 가운데로 모은다. */
+  private feedCostLayout?: () => void;
   private feedHold?: Phaser.Time.TimerEvent;
   private feeding = false;
   /** 생성 시 고정한 문맥 덕분에 읽기 전용 창이 도중에 소유자 권한으로 승격되지 않는다. */
   private readonly capabilities: Readonly<InfoCapabilities>;
   private publicProfile?: PublicRelicProfileDto;
+  /** 전투 중인 적에게만 붙는 현재 체력·게이지·상태이상 한 줄. */
+  private readonly combatLine: Phaser.GameObjects.Text;
 
   /** 정보창이 닫힐 때 목록 화면이 카드 표시를 다시 맞출 수 있게 알린다. */
   onClose?: () => void;
@@ -381,7 +400,12 @@ export class InfoManager {
     this.nameShadow = scene.add.text(52, 112, "", textStyle({ role: "display", size: 84, color: "#05070a" })).setOrigin(0, 0).setAlpha(0.85);
     this.nameText = scene.add.text(46, 104, "", textStyle({ role: "display", size: 84 })).setOrigin(0, 0);
     this.roleText = scene.add.text(50, 206, "", textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0, 0);
-    this.chrome.add([this.rarityGlow, this.rarityText, this.nameShadow, this.nameText, this.roleText]);
+    // 개체번호 줄 바로 아래다. 지금 값이라 붉게 쓰고, 전투 밖에서는 아예 감춘다.
+    this.combatLine = scene.add
+      .text(50, 240, "", textStyle({ role: "emphasis", size: 23, color: COLOR.dangerText }))
+      .setOrigin(0, 0)
+      .setVisible(false);
+    this.chrome.add([this.rarityGlow, this.rarityText, this.nameShadow, this.nameText, this.roleText, this.combatLine]);
     // 이름 오른쪽에 속성과 직군을 세운다. 이름 줄에 붙어 있어야 "이 개체가 무엇인지"가 한
     // 덩어리로 읽힌다. 카드와 마찬가지로 속성이 크고 직군이 조금 작다.
     this.elementBadge = new AffinityBadge(scene, 0, 152, ELEMENT_ICON.fire, AFFINITY.main);
@@ -390,8 +414,9 @@ export class InfoManager {
 
     this.bookmarkBadge = this.addBadge(84, 300, "bookmark", BOOKMARK_ON, () => this.toggleBookmark());
     this.favoriteBadge = this.addBadge(176, 300, "heart", FAVORITE_ON, () => this.toggleFavorite());
-    this.addJournalButton(268, 300);
-    this.addMagnifier(84, 392, () => this.enterGallery());
+    // 관찰 일지와 옷장은 내 렐릭에게만 있다. 친구·적 창에서는 아예 세우지 않는다.
+    if (this.capabilities.mutateProgress) this.addJournalButton(268, 300);
+    this.addMagnifier(84, 392, (from) => this.enterGallery(from.onClose));
 
     this.starRow = scene.add.container(COLUMN.x, 150);
     this.chrome.add(this.starRow);
@@ -399,14 +424,17 @@ export class InfoManager {
 
     // 오른쪽 수치는 칸마다 판을 따로 깐다. 대신 칸의 내용물을 그 판 **안에** 넣어 판과 같은
     // 각도로 함께 기운다. 판만 기울고 글자가 반듯하면 판 위에 종이를 얹어 둔 것처럼 어긋난다.
-    const levelPanel = this.addPanel(COLUMN.x, 442, COLUMN.width, 332);
+    // 급여·돌파·경험치가 빠지는 읽기 전용 창에서는 레벨 판도 숫자에 맞춰 줄인다. 판만 남고
+    // 속이 비면 "여기 뭔가 빠졌다"로 읽힌다.
+    const levelPanel = this.capabilities.mutateProgress
+      ? this.addPanel(COLUMN.x, 442, COLUMN.width, 332)
+      : this.addPanel(COLUMN.x, 360, COLUMN.width, 168);
     const bondPanel = this.addPanel(COLUMN.x, 706, COLUMN.width, 144);
     const statPanel = this.addPanel(COLUMN.x, 1024, COLUMN.width, 396);
     const gemPanel = this.addPanel(COLUMN.x, 1398, COLUMN.width, 292);
-    // 친구에게는 유대/룬 판을, 적에게는 성장 기둥 전체를 노출하지 않는다.
+    // 친구·적에게는 유대와 룬 판을 세우지 않는다.
     bondPanel.setVisible(this.capabilities.showBond);
     gemPanel.setVisible(this.capabilities.mutateProgress);
-    if (this.capabilities.showRuntimeCombat) this.column.setVisible(false);
 
     // 레벨 · 경험치 · 급여.
     this.addSectionTitle("레벨", 442 - 166);
@@ -420,6 +448,12 @@ export class InfoManager {
     this.expBar = new Gauge(scene, COLUMN.x, 452, COLUMN.width - 88, 16, COLOR.accent);
     this.expLabel = scene.add.text(COLUMN.x, 470, "", textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0.5, 0);
     attach(levelPanel, this.levelValue, this.levelCap, ...this.expBar.objects, this.expLabel);
+    // 경험치는 내가 키우는 렐릭에게만 있는 값이다. 친구·적에게 빈 눈금을 보여 주면 없는
+    // 정보를 있는 것처럼 읽게 된다 — 레벨 숫자만 남긴다.
+    if (!this.capabilities.mutateProgress) {
+      this.expBar.objects.forEach((object) => object.setVisible(false));
+      this.expLabel.setVisible(false);
+    }
     this.breakButton = this.addBreakButton(COLUMN.x + COLUMN.width / 2 - 96, 330, levelPanel);
     const feed = this.addFeedButton(COLUMN.x, 546, COLUMN.width - 130, 98, levelPanel);
     this.feedButton = feed.container;
@@ -450,7 +484,7 @@ export class InfoManager {
     for (let index = 0; index < 3; index += 1) this.gemSlots.push(this.addGemSlot(index, gemPanel));
 
     this.buildFigureStand();
-    this.addCostumeButton(FIGURE.x + 152, FIGURE.y - 206);
+    if (this.capabilities.mutateProgress) this.addCostumeButton(FIGURE.x + 152, FIGURE.y - 206);
     this.chrome.add(addBackButton(scene, () => this.hide()));
   }
 
@@ -598,6 +632,7 @@ export class InfoManager {
     container.add(label);
     const row = feedCostRow(this.scene, 0, 16, width - 40, 54, 36);
     this.feedCost = row.text;
+    this.feedCostLayout = row.layout;
     container.add(row.container);
     const hit = this.scene.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
     let heldFrom = 0;
@@ -751,6 +786,7 @@ export class InfoManager {
         const price = feedCostRow(this.scene, bx, 32, 184, 48, 28);
         price.text.setText(formatCurrency(session.wallet.cheesecake) + "/" + formatCurrency(cost));
         price.text.setColor(enough ? FEED_TEXT : COLOR.dangerText);
+        price.layout();
         body.add(price.container);
         if (!enough) return;
         const hit = this.scene.add.rectangle(bx, 12, 212, 116, 0xffffff, 0).setInteractive({ useHandCursor: true });
@@ -1059,16 +1095,18 @@ export class InfoManager {
    * 수치를 읽는 화면과 인물을 보는 화면은 목적이 다르다. 판을 흐리게 지우는 대신 **화면
    * 바깥으로 밀어내고** 원화만 가운데로 옮겨 크게 세운다. 아무 데나 누르면 되돌아온다.
    */
-  private enterGallery(): void {
+  private enterGallery(onClose?: () => void): void {
     const def = this.currentDef;
     if (!def || this.gallery || !this.portrait) return;
     const asset = portraitAssetFor(def.portraitAssetId);
     const portrait = this.portrait;
-    // 되돌릴 때 쓸 원래 자리. 화면 크기가 바뀌지 않으므로 값 하나면 충분하다.
-    const before = { x: portrait.x, y: portrait.y, scale: portrait.scaleX };
+    // 되돌아오는 트윈이 아직 돌고 있으면 여기서 끊는다. 그대로 두면 감상 중에도 원화가
+    // 제자리를 향해 계속 움직인다.
+    this.scene.tweens.killTweensOf(portrait);
+    this.galleryReturn = onClose;
     placePuppet(portrait, asset, {
       focus: { anchor: "core", x: BASE_WIDTH / 2, y: BASE_HEIGHT * 0.52 },
-      height: BASE_HEIGHT * 1.02,
+      height: BASE_HEIGHT * 1.02 * (asset.portraitZoom ?? 1),
     });
     portrait.setAlpha(0.001);
     this.scene.tweens.add({ targets: portrait, alpha: 1, duration: 260 });
@@ -1080,17 +1118,24 @@ export class InfoManager {
       .rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, 0xffffff, 0)
       .setDepth(1600)
       .setInteractive({ useHandCursor: true });
-    exit.on("pointerup", () => this.leaveGallery(before));
+    exit.on("pointerup", () => this.leaveGallery());
     this.gallery = exit;
   }
 
   /** 감상에서 나온다. 판이 다시 제자리로 미끄러져 들어온다. */
-  private leaveGallery(before: { x: number; y: number; scale: number }): void {
+  private leaveGallery(): void {
     const portrait = this.portrait;
     this.gallery?.destroy();
     this.gallery = undefined;
-    if (portrait) {
-      this.scene.tweens.add({ targets: portrait, x: before.x, y: before.y, scale: before.scale, duration: 320, ease: "Cubic.Out" });
+    // 부른 돋보기를 눌린 크기에서 풀어 준다.
+    this.galleryReturn?.();
+    this.galleryReturn = undefined;
+    // 돌아갈 곳은 지금 값이 아니라 **처음 세운 자리**다. 자세히 보기를 몇 번을 여닫아도
+    // 원화 크기가 그대로인 이유가 여기에 있다.
+    const home = this.portraitHome;
+    if (portrait && home) {
+      this.scene.tweens.killTweensOf(portrait);
+      this.scene.tweens.add({ targets: portrait, x: home.x, y: home.y, scale: home.scale, duration: 320, ease: "Cubic.Out" });
     }
     this.scene.tweens.add({ targets: this.chrome, x: 0, alpha: 1, duration: 320, ease: "Cubic.Out" });
     this.figure?.setVisible(this.portraitWanted && this.root.visible);
@@ -1297,12 +1342,15 @@ export class InfoManager {
     const asset = portraitAssetFor(def.portraitAssetId);
     const portrait = await spawnPuppet(this.scene, asset, {
       focus: { anchor: "core", x: PORTRAIT_FOCUS.x, y: PORTRAIT_FOCUS.y },
-      height: PORTRAIT_FOCUS.height,
+      // 그림 영역이 작은 원화는 공용 높이 그대로 세우면 혼자 화면을 넘는다. 보정값은 원화에 있다.
+      height: PORTRAIT_FOCUS.height * (asset.portraitZoom ?? 1),
       depth: Math.max(this.portraitDepth, 1001),
     });
     if (request !== this.portraitRequest) { portrait.destroy(); return; }
     this.portrait?.destroy();
     this.portrait = portrait;
+    // 세운 그 자리가 곧 제자리다. 전신 감상은 여기로만 되돌아온다.
+    this.portraitHome = { x: portrait.x, y: portrait.y, scale: portrait.scaleX };
     // 화면 아무 데나 눌러도 통통 튀면 정신이 없다. 코어 관절 둘레의 몸통에서만 반응한다.
     portrait.disableInteractive();
     if (portraitUsesRelicTint(def.portraitAssetId)) tintPuppet(portrait, mixWhite(tintFor(def.id), 0.55));
@@ -1341,10 +1389,12 @@ export class InfoManager {
       const size = SKILL_ICON.size;
       const container = this.scene.add.container(SKILL_ICON.x + index * SKILL_ICON.step, BASE_HEIGHT - 196);
       const bevel = { topLeft: size * 0.26, topRight: 0, bottomRight: size * 0.26, bottomLeft: 0 };
-      // 바깥 칩이 액자, 안쪽 칩이 그림 자리다. 나중에 들어올 SVG 일러스트가 액자 안에 앉는다.
-      container.add(drawLayer(this.scene, 0, 0, chipPoints(size, size, { bevel }), {
-        fill: index === 2 ? 0x2a2418 : 0x141a22,
-        alpha: 0.94,
+      const chip = chipPoints(size, size, { bevel });
+      // 아이콘은 **액자**다. 배경 원화가 비쳐 보이면 그림 두 장이 겹쳐 무엇이 스킬인지 흐려지므로
+      // 판을 불투명하게 채우고 사방을 한 줄로 두른다(화면의 다른 판과 다른 이유가 이것이다).
+      container.add(drawLayer(this.scene, 0, 0, chip, {
+        fill: index === 2 ? 0x241f16 : 0x11161d,
+        alpha: 1,
         edge: COLOR.accent,
         edgeAlpha: index === 2 ? 0.9 : 0.45,
       }));
@@ -1352,16 +1402,20 @@ export class InfoManager {
       const inner = chipPoints(innerSize, innerSize - 14, {
         bevel: { topLeft: innerSize * 0.22, topRight: 0, bottomRight: innerSize * 0.22, bottomLeft: 0 },
       });
-      container.add(drawLayer(this.scene, 0, -6, inner, { fill: 0x05080c, alpha: 0.55 }));
+      container.add(drawLayer(this.scene, 0, -6, inner, { fill: 0x05080c, alpha: 1, shadow: false }));
       const art = skillArtFor(def.id, slot);
       // 그림 자리에 같은 색을 아주 옅게 한 겹 깔아 아이콘이 색판 위에 앉은 것처럼 보이게 한다.
-      if (art) container.add(drawLayer(this.scene, 0, -6, inner, { fill: tint, alpha: SKILL_ART_WASH_ALPHA }));
+      if (art) container.add(drawLayer(this.scene, 0, -6, inner, { fill: tint, alpha: SKILL_ART_WASH_ALPHA, shadow: false }));
+      // 테두리 안쪽으로 스며드는 어둠. 그림이 액자 안으로 들어앉아 보인다.
+      container.add(drawInnerVignette(this.scene, 0, -6, inner, { strength: 0.55 }));
       const texture = art ?? (this.scene.textures.exists(skill.iconAssetId) ? skill.iconAssetId : FALLBACK_SKILL_ICON);
       const image = this.scene.add.image(0, -8, texture).setDisplaySize(size * (art ? 0.74 : 0.52), size * (art ? 0.74 : 0.52));
       // 전용 일러스트는 흰 실루엣이라 여기서 속성·직군을 섞은 색을 입는다.
       if (art) image.setTint(tint);
       container.add(image);
       container.add(this.scene.add.text(0, size / 2 - 26, kindLabel, textStyle({ role: "emphasis", size: 19, color: index === 2 ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5));
+      // 액자 테두리. 채운 판 위에 한 줄을 얹어 배경 원화와 확실히 갈라 놓는다.
+      container.add(drawShapeOutline(this.scene, 0, 0, chip, { color: COLOR.accent, alpha: index === 2 ? 0.75 : 0.42, width: 3 }));
       const hit = this.scene.add.rectangle(0, 0, size, size, 0xffffff, 0).setInteractive({ useHandCursor: true });
       hit.on("pointerdown", () => container.setScale(1.08));
       hit.on("pointerout", () => { if (!this.popups.isOpen) container.setScale(1); });
@@ -1376,7 +1430,7 @@ export class InfoManager {
       });
       container.add(hit);
       // 패시브 위에만 이 개체의 피버 발현을 작게 얹는다. 야성은 벌이 아니라 상이라는 표시다.
-      if (index === 0) this.addFerocityBadge(container.x, container.y - size / 2 - 56, def);
+      if (index === 0) this.addFerocityBadge(container.x, container.y - size / 2 - 64, def);
       this.chrome.add(container);
       this.skillIcons.push(container);
     });
@@ -1391,12 +1445,15 @@ export class InfoManager {
   private addFerocityBadge(x: number, y: number, def: RelicDef): void {
     // 스킬 아이콘의 자식으로 두면 아이콘을 눌러 커질 때 뱃지까지 함께 커져, 패시브를 눌렀는데
     // 야성까지 눌린 것처럼 보인다. 자리만 아이콘 위로 잡고 층은 따로 세운다.
-    const badgeSize = 72;
+    // 스킬 아이콘(150)보다는 작게 두되, 그림이 무엇인지 알아볼 만큼은 키운다. 너무 작으면
+    // 폭주 일러스트가 점처럼 뭉갠다.
+    const badgeSize = 96;
     const badge = this.scene.add.container(x, y);
     const shape = chipPoints(badgeSize, badgeSize, {
       bevel: { topLeft: badgeSize * 0.34, topRight: 0, bottomRight: badgeSize * 0.34, bottomLeft: 0 },
     });
-    badge.add(drawLayer(this.scene, 0, 0, shape, { fill: FEROCITY_BADGE, alpha: 0.96, edge: 0xf0a58a, edgeAlpha: 0.8 }));
+    badge.add(drawLayer(this.scene, 0, 0, shape, { fill: FEROCITY_BADGE, alpha: 1, edge: 0xf0a58a, edgeAlpha: 0.8 }));
+    badge.add(drawInnerVignette(this.scene, 0, 0, shape, { strength: 0.4 }));
     // 폭주도 스킬 넷 중 하나라 전용 일러스트를 쓴다. 다만 붉은 판 위에서는 속성 색을 그대로
     // 얹으면 판에 묻히므로, 여기서만 야성의 살구빛을 쓴다 — 이 뱃지는 개체 구분이 아니라
     // "야성이 이렇게 터진다"를 알리는 자리이기 때문이다.
@@ -1414,6 +1471,7 @@ export class InfoManager {
       badge.setScale(1.1);
       this.openFerocityTrait(def, { x, y: y - badgeSize / 2 - 12, onClose: () => badge.setScale(1) });
     });
+    badge.add(drawShapeOutline(this.scene, 0, 0, shape, { color: 0xf0a58a, alpha: 0.65, width: 3 }));
     badge.add(hit);
     this.chrome.add(badge);
     // 스킬 아이콘과 같은 목록에 담아 미보유 개체에서 함께 숨고 다시 그릴 때 함께 지워진다.
@@ -1467,6 +1525,7 @@ export class InfoManager {
   /** 도감은 보유 여부를 전달해 정적 기록과 성장 정보의 잠금을 한곳에서 적용한다. */
   showRelic(def: RelicDef, owned = true): void {
     this.publicProfile = undefined;
+    this.combatLine.setVisible(false);
     this.openCharacter(def, owned);
   }
 
@@ -1475,15 +1534,33 @@ export class InfoManager {
     this.publicProfile = profile;
     const def = RELICS.find((relic) => relic.id === profile.relicId);
     if (!def) throw new Error(`알 수 없는 공개 렐릭 id: ${profile.relicId}`);
+    this.combatLine.setVisible(false);
     this.openCharacter(def, true);
   }
 
-  /** 전투 스냅샷에서 허용된 현재 게이지와 상태이상만 헤더에 붙이는 적 전용 진입점이다. */
-  showEnemy(fighter: Fighter): void {
-    this.publicProfile = { relicId: fighter.def.id, level: 1, stars: 0, stats: { ...fighter.def.stats }, skillIds: [fighter.def.basic.id, fighter.def.passive.id, fighter.def.ultimate.id] };
-    this.openCharacter(fighter.def, true);
-    const ailment = fighter.bleed ? `  ·  출혈 ${Math.ceil(fighter.bleed.remaining)}초` : "  ·  상태이상 없음";
-    this.roleText.setText(`${ELEMENT_LABEL[fighter.def.element]} · ${ROLE_LABEL[fighter.def.role]}  ·  HP ${Math.ceil(fighter.hp)}/${fighter.maxHp}  ·  궁극 ${Math.round(fighter.energy)}  ·  야성 ${Math.round(fighter.ferocity)}${ailment}`);
+  /**
+   * 적 하나를 연다.
+   *
+   * 친구 창과 같은 판을 쓰고 급여·돌파·유대·룬만 빠진다. 적을 위한 화면을 따로 만들지 않는
+   * 이유는, 정보창이 좋아질 때 그 화면만 옛 모습으로 남기 때문이다.
+   *
+   * `def.stats`는 이미 스테이지 레벨이 반영된 값이다(`getStageEnemies`). 창이 레벨 보정을
+   * 다시 하지 않아야 지도·편성·전투가 같은 수치를 보여 준다.
+   */
+  showEnemy(def: RelicDef, options: { level?: number; live?: Fighter } = {}): void {
+    this.publicProfile = {
+      relicId: def.id,
+      level: options.level ?? 1,
+      stars: 0,
+      stats: { ...def.stats },
+      skillIds: [def.passive.id, def.basic.id, def.ultimate.id],
+    };
+    this.openCharacter(def, true);
+    const live = options.live;
+    this.combatLine.setVisible(this.capabilities.showRuntimeCombat && live !== undefined);
+    if (!live) return;
+    const ailment = live.bleed ? `출혈 ${Math.ceil(live.bleed.remaining)}초` : "상태이상 없음";
+    this.combatLine.setText(`HP ${Math.ceil(live.hp)} / ${live.maxHp}   ·   궁극 ${Math.round(live.energy)}   ·   야성 ${Math.round(live.ferocity)}   ·   ${ailment}`);
   }
 
   /** 정적 렐릭 정의만 받아 읽기 전용 상세 화면의 상태를 교체한다. */
@@ -1572,6 +1649,7 @@ export class InfoManager {
     this.feedCost?.setText(formatCurrency(session.wallet.cheesecake) + "/" + (maxed ? "—" : String(FEED_UNIT.cheesecake)));
     // 모자라면 줄 전체가 붉어진다. 두 수 중 하나만 물들이면 어느 쪽이 모자란 것인지 되레 헷갈린다.
     this.feedCost?.setColor(!maxed && session.wallet.cheesecake < FEED_UNIT.cheesecake ? COLOR.dangerText : FEED_TEXT);
+    this.feedCostLayout?.();
     this.paintBreakButton(progress);
 
     const bondMaxed = progress.bondLevel >= BOND_LEVEL_CAP;

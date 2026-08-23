@@ -3,9 +3,9 @@ import { BASE_WIDTH, BASE_HEIGHT } from "../config/gameConfig";
 import { drawGlassFade, drawHairline, HOLO } from "./holo";
 import { COLOR, textStyle } from "./theme";
 
-/** 핵심 화면 다섯 개. 로비를 중심으로 발굴과 상점이 양 끝에서 서로 균형을 이룬다. */
+/** 핵심 화면 다섯 개. 로비를 중심으로 고고학과 상점이 양 끝에서 서로 균형을 이룬다. */
 export const NAV_TABS = [
-  { key: "excavation", scene: "excavation", label: "발굴" },
+  { key: "archaeology", scene: "archaeology", label: "고고학" },
   { key: "relics", scene: "relics", label: "렐릭" },
   { key: "lobby", scene: "lobby", label: "로비" },
   { key: "lab", scene: "lab", label: "연구소" },
@@ -24,8 +24,8 @@ function drawIcon(scene: Phaser.Scene, key: NavKey, x: number, y: number, color:
   const g = scene.add.graphics({ x, y });
   g.lineStyle(3, color, 1);
   switch (key) {
-    case "excavation":
-      // 아래를 향한 드릴 — 땅속 자원과 장기 탐사를 찾는 발굴 입구다.
+    case "archaeology":
+      // 아래를 향한 드릴 — 땅속 자원과 장기 탐사를 파는 고고학 입구다.
       g.strokePoints([
         new Phaser.Geom.Point(-15, -20), new Phaser.Geom.Point(15, -20),
         new Phaser.Geom.Point(10, 6), new Phaser.Geom.Point(0, 23),

@@ -116,7 +116,7 @@ export class StageMapScene extends Phaser.Scene {
     this.sortieButton.setDepth(CHROME_DEPTH);
     addBackButton(this, () => this.scene.start("lobby")).setDepth(CHROME_DEPTH);
 
-    this.info = new CharacterInfoManager(this);
+    this.info = new CharacterInfoManager(this, 1001, "enemy");
     // 들어오면 가장 최근에 열린 스테이지로 올라가 그 스테이지를 고른 상태로 시작한다.
     this.select(this.latestUnlocked(), true);
   }
@@ -306,7 +306,7 @@ export class StageMapScene extends Phaser.Scene {
       // 지도에서도 실제 전투에 투입될 레벨 보정 체력을 미리 보여준다.
       view.detail.setText(`LV.${stage.enemyLevel}  ${ROLE_LABEL[def.role]}  HP ${def.stats.hp}`);
       view.hit.removeAllListeners("pointerup");
-      view.hit.on("pointerup", () => this.info.showRelic(def));
+      view.hit.on("pointerup", () => this.info.showEnemy(def, { level: stage.enemyLevel }));
       view.creature?.destroy();
       view.creature = undefined;
       void this.standEnemy(def.id, slot, request);

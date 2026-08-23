@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { BASE_WIDTH, BASE_HEIGHT } from "../config/gameConfig";
-import { setDebugScene } from "../debug";
+import { setDebugParty, setDebugScene } from "../debug";
 import type { RelicDef } from "../core/types";
 import { getRelic } from "../data/relics";
 import { relicCollection } from "../managers/RelicCollectionManager";
@@ -16,8 +16,9 @@ import { PortraitCard, relicCardTint, starsForRarity } from "../ui/PortraitCard"
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { COLOR, textStyle } from "../ui/theme";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
-import { autoPickParty, elementDistribution, partyAffinitySummary } from "../core/partyAffinity";
+import { autoPickParty, elementDistribution, relicAffinityDirection } from "../core/partyAffinity";
 import type { SetPartyFailureReason } from "../managers/RelicCollectionManager";
+import { AffinityDirection } from "../ui/AffinityDirection";
 
 /** 이만큼 누르고 있으면 정보창이 열린다. 짧게 누르면 편성 토글이다. */
 const LONG_PRESS_MS = 420;
@@ -44,6 +45,8 @@ interface AllySlot {
   platform: Phaser.GameObjects.Ellipse;
   name: Phaser.GameObjects.Text;
   slotLabel: Phaser.GameObjects.Text;
+  /** SD/받침의 왼쪽 아래에 고정되는 상성 방향 표식. 빈 자리와 중립에서는 숨긴다. */
+  affinityDirection: AffinityDirection;
   /** 이 자리에 서 있는 SD. 편성이 바뀔 때마다 갈아 세운다. */
   creature?: PuppetCreature;
   /** 지금 이 자리가 보여 주고 있는 렐릭. 같은 렐릭이면 다시 세우지 않는다. */
@@ -64,9 +67,7 @@ export class PartyScene extends Phaser.Scene {
   private allySlots: AllySlot[] = [];
   private startButton!: Button;
   private hint!: Phaser.GameObjects.Text;
-  /** 현재 선택과 적 전체의 교차 상성을 한 줄로 요약한다. */
-  private affinityHint!: Phaser.GameObjects.Text;
-  /** 자동 배치와 상성 요약이 함께 참조하는 이번 스테이지의 적 정의다. */
+  /** 자동 배치와 자리별 방향 표식이 함께 참조하는 이번 스테이지의 적 정의다. */
   private enemies: RelicDef[] = [];
   private info!: CharacterInfoManager;
   private pressTimer?: Phaser.Time.TimerEvent;
@@ -103,10 +104,12 @@ export class PartyScene extends Phaser.Scene {
     this.buildPreview(stage.enemies);
     this.buildRoster();
 
-    // 자동 배치는 직업 보정 없이 이번 적에게 유리한 속성 합만 비교한다.
-    new Button(this, BASE_WIDTH - 190, 912, {
-      width: 300,
-      height: 82,
+    // 제목/속성 안내의 가운데와 첫 도움말(x=366) 사이를 피해, 미리보기 상단 왼쪽 조작 영역에 둔다.
+    // 1080×1920과 좁은 모바일 화면 모두 게임 좌표가 동일하므로 이 안전 여백도 그대로 유지된다.
+    const autoButtonPosition = { x: 180, y: 190 } as const;
+    new Button(this, autoButtonPosition.x, autoButtonPosition.y, {
+      width: 260,
+      height: 64,
       label: "자동 배치",
       fontSize: 30,
       onClick: () => {
@@ -114,9 +117,8 @@ export class PartyScene extends Phaser.Scene {
         this.refresh();
       },
     });
-    this.affinityHint = this.add
-      .text(54, 888, "", textStyle({ role: "emphasis", size: 25, color: COLOR.ink }))
-      .setOrigin(0, 0);
+    // E2E는 캔버스 DOM에서 내부 오브젝트를 찾을 수 없어, 실제 버튼 중심만 읽기 전용으로 노출한다.
+    setDebugParty({ autoButton: autoButtonPosition, visibleAffinityDirections: 0 });
 
     this.hint = this.add
       .text(cx, 1560, "", textStyle({ role: "body", size: 28, color: COLOR.inkDim }))
@@ -200,7 +202,9 @@ export class PartyScene extends Phaser.Scene {
       const slotLabel = this.add
         .text(x, ALLY_ROW + 62, `${slot + 1}번 자리`, textStyle({ role: "body", size: 22, color: COLOR.inkDim }))
         .setOrigin(0.5, 0);
-      this.allySlots.push({ platform, name, slotLabel, request: 0 });
+      // 플랫폼의 좌측 하단에 붙여 SD가 비동기로 도착해도 표식 위치가 흔들리지 않게 한다.
+      const affinityDirection = new AffinityDirection(this, x - 82, ALLY_ROW - 20).setDepth(2);
+      this.allySlots.push({ platform, name, slotLabel, affinityDirection, request: 0 });
     });
   }
 
@@ -349,16 +353,19 @@ export class PartyScene extends Phaser.Scene {
       slot.name.setColor(id ? COLOR.ink : COLOR.inkDim);
       slot.platform.setAlpha(id ? 1 : 0.55);
       slot.slotLabel.setAlpha(id ? 1 : 0.75);
+      // 빈 슬롯 및 전체 관계가 상쇄된 중립은 텍스트 대신 표식 자체를 완전히 숨긴다.
+      slot.affinityDirection.setDirection(id ? relicAffinityDirection(getRelic(id), this.enemies) : "neutral");
       // 이미 그 렐릭이 서 있으면 다시 세우지 않는다.
       if (!id || !standing || slot.currentId !== id) void this.fillAllySlot(slot, i, id);
       slot.currentId = id;
     });
 
     this.refreshButtonState();
-    const affinity = partyAffinitySummary(this.picked.map(getRelic), this.enemies);
-    // 아직 고르지 않았을 때도 0으로 보여 줘 지표가 무엇을 뜻하는지 먼저 학습하게 한다.
-    this.affinityHint.setText(`상성 미리보기  유리 ${affinity.advantage}  /  불리 ${affinity.disadvantage}  /  중립 ${affinity.neutral}`);
-    this.affinityHint.setColor(affinity.advantage >= affinity.disadvantage ? COLOR.accentText : COLOR.dangerText);
+    // 자동 배치 직후 방향 표식이 실제로 나타났는지 캔버스 밖 E2E가 판별하는 읽기 전용 수치다.
+    setDebugParty({
+      autoButton: { x: 180, y: 190 },
+      visibleAffinityDirections: this.allySlots.filter((slot) => slot.affinityDirection.visible).length,
+    });
     this.hint.setText(
       this.picked.length === 3 ? "편성 완료" : `${3 - this.picked.length}명 더 골라야 한다`,
     );

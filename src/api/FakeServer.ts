@@ -1,5 +1,6 @@
 import { canPull, pull, resolveAcquisitions, spend } from "../core/gacha";
 import { BANNERS } from "../data/banners";
+import { findAdRewardSlot } from "../data/adRewards";
 import { consumeRestorationEntry, normalizeDailyContent } from "../core/dailyContent";
 import { canBreakThrough, canFeedRelic, feedRelic as calculateFeed, FEED_UNIT, nextBreakthrough, relicLevelCap } from "../core/relicProgression";
 import { BOND_XP_REWARD, grantBondXp, grantDailyLobbyBondXp } from "../core/bond";
@@ -7,7 +8,7 @@ import { MISSIONS, applyMissionEvent, claimableMissionIds, normalizeMissions } f
 import { DAILY_RESTORATION, getStage } from "../data/stages";
 import { createInitialRelicProgress, session, type Session } from "../state/session";
 import { saveManager } from "../state/SaveManager";
-import { GameApiError, type BreakThroughResponse, type ClaimMissionRewardsResponse, type CompleteStageResponse, type EnterDailyRestorationResponse, type FeedRelicResponse, type GameApi, type LobbyInteractionResponse, type MissionListResponse, type PlayerStateDto, type PullRequest, type PullResponse } from "./contracts";
+import { GameApiError, type BreakThroughResponse, type ClaimMissionRewardsResponse, type CompleteStageResponse, type EnterDailyRestorationResponse, type FeedRelicResponse, type GameApi, type LobbyInteractionResponse, type MissionListResponse, type PlayerStateDto, type ClaimAdRewardRequest, type ClaimAdRewardResponse, type PullRequest, type PullResponse } from "./contracts";
 import type { ProductDefinition } from "../data/products";
 import { PRODUCTS } from "../data/products";
 import type { ProductListResponse, PurchaseProductResponse } from "./contracts";
@@ -29,6 +30,8 @@ export interface FakeServerOptions {
   random?: () => number;
   /** 실제 서버 시각 대신 테스트에서 UTC 경계를 주입하는 날짜 공급자다. */
   now?: () => Date;
+  /** 실제 백엔드에서는 광고 사업자 SSV에 위임하는 완료 토큰 검증기다. */
+  verifyAdToken?: (token: string, slotId: string) => boolean | Promise<boolean>;
 }
 
 /** 백엔드가 생기기 전까지 메모리 상태를 서버처럼 독점 변경하는 임시 어댑터다. */
@@ -36,6 +39,7 @@ export class FakeServer implements GameApi {
   private readonly latencyMs: number;
   private readonly random: () => number;
   private readonly now: () => Date;
+  private readonly verifyAdToken: (token: string, slotId: string) => boolean | Promise<boolean>;
   /** 같은 밀리초 안의 연속 발급도 구분하는 서버 인스턴스 로컬 순번이다. */
   private runeIssueSequence = 0;
 
@@ -46,12 +50,39 @@ export class FakeServer implements GameApi {
     this.latencyMs = options.latencyMs ?? 180;
     this.random = options.random ?? Math.random;
     this.now = options.now ?? (() => new Date());
+    // FakeServer 기본값은 테스트용 서명 형식이며 프로덕션 HTTP 서버는 반드시 SSV 검증기를 주입한다.
+    this.verifyAdToken = options.verifyAdToken ?? ((token, slotId) => token === `verified:${slotId}`);
   }
 
   /** 실제 통신처럼 다음 비동기 구간을 거친 뒤 직렬화 가능한 복사본을 돌려준다. */
   async getPlayerState(): Promise<PlayerStateDto> {
     await this.delay();
     return this.snapshot();
+  }
+
+  /** 광고 완료, 멱등 키, UTC 일일 제한을 검사한 뒤 지급과 저장을 한 번에 확정한다. */
+  async claimAdReward(request: ClaimAdRewardRequest): Promise<ClaimAdRewardResponse> {
+    await this.delay();
+    const slot = findAdRewardSlot(request.slotId);
+    if (!slot) throw new GameApiError("AD_SLOT_NOT_FOUND", "존재하지 않는 광고 슬롯입니다.");
+    if (!request.requestId || this.state.dailyAdRewards.requestIds.includes(request.requestId)) throw new GameApiError("AD_REQUEST_DUPLICATE", "이미 처리한 광고 요청입니다.");
+    if (!request.verificationToken || !(await this.verifyAdToken(request.verificationToken, slot.id))) throw new GameApiError("AD_TOKEN_INVALID", "광고 완료를 확인할 수 없습니다.");
+
+    // 앱 재실행이 아니라 서버 UTC 키 변경에만 카운터와 멱등 목록을 초기화한다.
+    const date = this.now().toISOString().slice(0, 10);
+    const current = this.state.dailyAdRewards.date === date ? this.state.dailyAdRewards : { date, claimsBySlot: {}, requestIds: [] };
+    const dailyClaims = current.claimsBySlot[slot.id] ?? 0;
+    if (dailyClaims >= slot.dailyLimitUtc) throw new GameApiError("AD_DAILY_LIMIT", "오늘 받을 수 있는 광고 보상을 모두 받았습니다.");
+
+    const nextClaims = dailyClaims + 1;
+    const nextAds = { date, claimsBySlot: { ...current.claimsBySlot, [slot.id]: nextClaims }, requestIds: [...current.requestIds, request.requestId] };
+    const nextWallet = { ...this.state.wallet, [slot.reward.currency]: this.state.wallet[slot.reward.currency] + slot.reward.amount };
+    const nextState = { ...this.state, wallet: nextWallet, dailyAdRewards: nextAds };
+    // 상한 검증과 영속화가 성공하기 전에는 메모리 세션을 변경하지 않는다.
+    this.persist(nextState);
+    this.state.wallet = nextWallet;
+    this.state.dailyAdRewards = nextAds;
+    return { ...this.snapshot(), slotId: slot.id, reward: { ...slot.reward }, dailyClaims: nextClaims, dailyRemaining: slot.dailyLimitUtc - nextClaims };
   }
 
   /** 비용 검사, 재화 차감, 난수 결과, 보유 반영을 모두 서버 경계 안에서 원자적으로 처리한다. */
@@ -448,6 +479,7 @@ export class FakeServer implements GameApi {
       dailyContent: { date: normalizeDailyContent(this.state.dailyContent, this.now()).date, restorationEntries: normalizeDailyContent(this.state.dailyContent, this.now()).restorationEntries },
       missions: this.missionDtos(),
       runeInventory: this.runeInventoryDto(),
+      dailyAdRewards: { date: this.state.dailyAdRewards.date, claimsBySlot: { ...this.state.dailyAdRewards.claimsBySlot } },
     };
   }
 

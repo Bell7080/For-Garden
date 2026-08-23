@@ -212,7 +212,7 @@ export const MOTION = {
    * 주고받는 동안 캐릭터가 계속 튀어 보이고, 무엇보다 자기 공격 모션이 매번 잘린다.
    */
   hit: { names: ["hit", "idle"], returnsToIdle: true, priority: 1, speed: 2.2, strength: 0.4 },
-  /** 궁극기 컷인의 독립 포효. 일반 공격보다 높아 연출 중 피격/공격에 잘리지 않는다. */
+  /** 포효. 지금은 궁극기가 쓰지 않지만 동작 자체는 묶음에 남아 있어 연출용으로 부를 수 있다. */
   roar: { names: ["roar", "shout", "attack", "idle"], returnsToIdle: true, priority: 3 },
   /** 공격 동작이 따로 없어 포효로 대신한다. 재생 중에는 어떤 동작도 이걸 끊지 못한다. */
   attack: { names: ["attack", "slam", "roar", "idle"], returnsToIdle: true, priority: 2 },

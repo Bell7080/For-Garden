@@ -46,7 +46,6 @@ import { getRelicCatalogDisclosure } from "../core/relicCatalog";
 import { observations } from "../managers/ObservationManager";
 import { observationQuestionForDate } from "../data/observations";
 import type { PublicRelicProfileDto } from "../api/contracts";
-import type { Fighter } from "../core/skirmish";
 import { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../core/infoCapabilities";
 
 export type { SkillInfoViewModel } from "./SkillPopup";
@@ -406,7 +405,6 @@ export class InfoManager {
     // 친구에게는 유대/룬 판을, 적에게는 성장 기둥 전체를 노출하지 않는다.
     bondPanel.setVisible(this.capabilities.showBond);
     gemPanel.setVisible(this.capabilities.mutateProgress);
-    if (this.capabilities.showRuntimeCombat) this.column.setVisible(false);
 
     // 레벨 · 경험치 · 급여.
     this.addSectionTitle("레벨", 442 - 166);
@@ -1476,14 +1474,6 @@ export class InfoManager {
     const def = RELICS.find((relic) => relic.id === profile.relicId);
     if (!def) throw new Error(`알 수 없는 공개 렐릭 id: ${profile.relicId}`);
     this.openCharacter(def, true);
-  }
-
-  /** 전투 스냅샷에서 허용된 현재 게이지와 상태이상만 헤더에 붙이는 적 전용 진입점이다. */
-  showEnemy(fighter: Fighter): void {
-    this.publicProfile = { relicId: fighter.def.id, level: 1, stars: 0, stats: { ...fighter.def.stats }, skillIds: [fighter.def.basic.id, fighter.def.passive.id, fighter.def.ultimate.id] };
-    this.openCharacter(fighter.def, true);
-    const ailment = fighter.bleed ? `  ·  출혈 ${Math.ceil(fighter.bleed.remaining)}초` : "  ·  상태이상 없음";
-    this.roleText.setText(`${ELEMENT_LABEL[fighter.def.element]} · ${ROLE_LABEL[fighter.def.role]}  ·  HP ${Math.ceil(fighter.hp)}/${fighter.maxHp}  ·  궁극 ${Math.round(fighter.energy)}  ·  야성 ${Math.round(fighter.ferocity)}${ailment}`);
   }
 
   /** 정적 렐릭 정의만 받아 읽기 전용 상세 화면의 상태를 교체한다. */

@@ -5,10 +5,11 @@ import type { RelicDef } from "../core/types";
 import { getRelic } from "../data/relics";
 import { relicCollection } from "../managers/RelicCollectionManager";
 import { CharacterInfoManager, ELEMENT_LABEL, ROLE_LABEL, addHelpBadge } from "../managers/CharacterInfoManager";
+import { EnemyStatusWindow } from "../ui/EnemyStatusWindow";
 import type { PuppetCreature } from "../puppets/assets";
 import { battleAssetFor, spawnPuppet } from "../puppets/assets";
 import { tintFor } from "../puppets/tints";
-import { getStage } from "../data/stages";
+import { getStage, getStageEnemies } from "../data/stages";
 import { session } from "../state/session";
 import { Button } from "../ui/Button";
 import { addBackButton } from "../ui/IconButton";
@@ -70,6 +71,8 @@ export class PartyScene extends Phaser.Scene {
   /** 자동 배치와 자리별 방향 표식이 함께 참조하는 이번 스테이지의 적 정의다. */
   private enemies: RelicDef[] = [];
   private info!: CharacterInfoManager;
+  /** 적은 성장 입력이 없는 전용 분석창으로 연다. 아군 정보창과 섞지 않는다. */
+  private enemyInfo!: EnemyStatusWindow;
   private pressTimer?: Phaser.Time.TimerEvent;
   private pressStartedAt = 0;
   private longPressFired = false;
@@ -95,13 +98,15 @@ export class PartyScene extends Phaser.Scene {
     this.add.rectangle(cx, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.42).setDepth(-29);
 
     const stage = getStage(session.selectedStageId ?? "1-1");
-    this.enemies = stage.enemies.map(getRelic);
+    // 전투와 같은 함수로 적을 만든다. 여기서만 기본 수치를 읽으면 미리보기의 체력이 실제
+    // 전투보다 낮게 보인다 — 스테이지 레벨 보정은 `getStageEnemies` 한 곳에만 있다.
+    this.enemies = getStageEnemies(stage);
     this.add.text(cx, 70, `${stage.id}  ${stage.name}`, textStyle({ role: "display", size: 46 })).setOrigin(0.5, 0);
     this.add
       .text(cx, 132, "렐릭 3명 편성 — 고른 순서대로 왼쪽부터 선다", textStyle({ role: "body", size: 28, color: COLOR.inkDim }))
       .setOrigin(0.5, 0);
 
-    this.buildPreview(stage.enemies);
+    this.buildPreview(this.enemies, stage.enemyLevel);
     this.buildRoster();
 
     // 제목/속성 안내의 가운데와 첫 도움말(x=366) 사이를 피해, 미리보기 상단 왼쪽 조작 영역에 둔다.
@@ -158,15 +163,16 @@ export class PartyScene extends Phaser.Scene {
     addBackButton(this, () => this.scene.start("stageMap"));
 
     this.info = new CharacterInfoManager(this);
+    this.enemyInfo = new EnemyStatusWindow(this);
     this.refresh();
   }
 
   /** 위쪽 시작 배치 미리보기. 적은 위에, 아군은 아래에 나란히 선다. */
-  private buildPreview(enemyIds: readonly string[]): void {
+  private buildPreview(enemies: readonly RelicDef[], stageLevel: number): void {
     this.add
       .text(BASE_WIDTH - 40, 210, "적", textStyle({ role: "emphasis", size: 30, color: COLOR.dangerText }))
       .setOrigin(1, 0);
-    const distribution = elementDistribution(enemyIds.map(getRelic))
+    const distribution = elementDistribution(enemies)
       .map(({ element, count }) => `${ELEMENT_LABEL[element]} ${count}`)
       .join("  ·  ");
     this.add
@@ -179,8 +185,7 @@ export class PartyScene extends Phaser.Scene {
       .setLineWidth(2)
       .setAlpha(0.45);
 
-    enemyIds.forEach((id, slot) => {
-      const def = getRelic(id);
+    enemies.forEach((def, slot) => {
       const x = PREVIEW_COLUMNS[slot];
       // 받침은 SD(-10)보다 뒤에 둬야 발을 덮지 않는다.
       this.add.ellipse(x, ENEMY_ROW + 4, 190, 34, COLOR.void, 0.45).setDepth(-12);
@@ -191,7 +196,7 @@ export class PartyScene extends Phaser.Scene {
         .text(x, ENEMY_ROW + 62, `${ELEMENT_LABEL[def.element]} · ${ROLE_LABEL[def.role]}  HP ${def.stats.hp}`, textStyle({ role: "body", size: 22, color: COLOR.inkDim }))
         .setOrigin(0.5, 0);
       // SD 자체는 그림이라 입력을 받지 않는다. 상세는 옆의 ?로 연다.
-      addHelpBadge(this, x + 96, ENEMY_ROW - PREVIEW_HEIGHT + 10, () => this.info.showRelic(def), 24);
+      addHelpBadge(this, x + 96, ENEMY_ROW - PREVIEW_HEIGHT + 10, () => this.enemyInfo.show(def, { level: stageLevel }), 24);
     });
 
     this.add.text(40, FRONT_LINE + 28, "아군", textStyle({ role: "emphasis", size: 30 })).setOrigin(0, 0);

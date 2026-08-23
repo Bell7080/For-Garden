@@ -1504,12 +1504,12 @@ export class InfoManager {
     // "야성이 이렇게 터진다"를 알리는 자리이기 때문이다.
     const art = skillArtFor(def.id, "ferocity");
     if (art) {
-      badge.add(this.scene.add.image(0, -8, art).setDisplaySize(badgeSize * 0.74, badgeSize * 0.74).setTint(0xffd9c4));
+      badge.add(this.scene.add.image(0, -13, art).setDisplaySize(badgeSize * 0.64, badgeSize * 0.64).setTint(0xffd9c4));
     } else {
-      badge.add(drawGlyph(this.scene, "ferocity", 0, -8, badgeSize * 0.5, 0xffd9c4));
+      badge.add(drawGlyph(this.scene, "ferocity", 0, -13, badgeSize * 0.46, 0xffd9c4));
     }
     // 스킬 액자와 같은 방식으로 이름을 안쪽 아래에 단다. 셋과 나란히 읽히려면 이름이 있어야 한다.
-    badge.add(this.scene.add.text(0, badgeSize / 2 - 19, "폭주", textStyle({ role: "display", size: 20, color: "#ffd9c4" })).setOrigin(0.5));
+    badge.add(this.scene.add.text(0, badgeSize / 2 - 23, "폭주", textStyle({ role: "display", size: 19, color: "#ffd9c4" })).setOrigin(0.5));
     // 입력 영역도 뱃지 크기에 딱 맞춘다. 넓게 잡으면 아래 아이콘의 터치를 가로챈다.
     const hit = this.scene.add.rectangle(0, 0, badgeSize, badgeSize, 0xffffff, 0).setInteractive({ useHandCursor: true });
     hit.on("pointerdown", () => badge.setScale(1.1));

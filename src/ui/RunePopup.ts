@@ -184,7 +184,8 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
       const half = CRAFT.width / 2;
       content.add(addRuneIcon(scene, -half + 86, top + 122, 92, rune!.rarity));
       content.add(scene.add.text(-half + 148, top + 78, rarity, textStyle({ role: "emphasis", size: 22, color: hex(accent) })).setOrigin(0, 0));
-      content.add(scene.add.text(-half + 148, top + 108, displayName, textStyle({ role: "display", size: 32 })).setOrigin(0, 0).setWordWrapWidth(420));
+      const nameText = scene.add.text(-half + 148, top + 108, displayName, textStyle({ role: "display", size: 32 })).setOrigin(0, 0).setWordWrapWidth(300);
+      content.add(nameText);
       content.add(scene.add.text(-half + 148, top + 154, equippedLine(rune!.instanceId), textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0, 0));
       // 보유 골드는 로비 상단과 같은 칸으로 세운다. 세공은 골드를 쓰는 화면이라 지갑이 늘
       // 보여야 하고, 같은 값이 화면마다 다른 모양으로 보이지 않게 한다.
@@ -194,9 +195,10 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
         color: "#ffdf9a",
         parent: content,
       }).setText(formatCurrency(session.wallet.gold));
-      // 연필은 씬에서 직접 작도하지 않고 glyph 공용 시스템의 edit 표식을 쓴다.
-      const pencilX = half - 62;
-      const pencilY = top + 170;
+      // 연필은 씬에서 직접 작도하지 않고 glyph 공용 시스템의 edit 표식을 쓴다. 이름 바로
+      // 옆에 서야 무엇을 고치는 단추인지 읽힌다 — 오른쪽 끝에 두면 그 아래 확률 글자와 겹친다.
+      const pencilX = Math.min(-half + 148 + nameText.width + 34, half - 288);
+      const pencilY = top + 128;
       content.add(drawGlyph(scene, "edit", pencilX, pencilY, 32, accent));
       const renameHit = scene.add.rectangle(pencilX, pencilY, 74, 74, 0xffffff, 0).setInteractive({ useHandCursor: true });
       renameHit.on("pointerup", () => requestRuneName(scene, rune!.customName ?? "", async (value) => {

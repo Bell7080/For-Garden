@@ -6,3 +6,5 @@ dist/
 playwright-report/
 test-results/
 .vercel
+# 화면 확인용으로 임시로 찍는 스크린샷. 저장소에 남기지 않는다.
+shot-*.png

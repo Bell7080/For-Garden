@@ -3,13 +3,20 @@ import {
   applyRuneFerocityGain,
   applyRuneLifeSteal,
   assertValidRuneInstance,
+  calculateRuneEnhancementSuccessChance,
+  canEngraveRune,
+  canEnhanceRune,
   createRuneInstance,
+  engraveRune,
+  enhanceRune,
+  RUNE_ENHANCEMENT_RULES,
   RUNE_RARITY_LABELS,
   RUNE_SUB_STAT_COUNTS,
   runeCombatModifiers,
   type RuneRarity,
   type RuneStatKey,
 } from "../../src/core/runes";
+import { runeEnhancementGoldCost } from "../../src/data/runes";
 
 /** 모든 생성 가능 키에 같은 값을 넣어 이 테스트가 선택 결과가 아니라 불변 규칙만 검증하게 한다. */
 const STAT_VALUES: Record<RuneStatKey, number> = {
@@ -26,7 +33,7 @@ function sequenceRandom(): () => number {
 
 /** 희귀도만 바꾸고 나머지 생성 계약은 공유하는 테스트 픽스처다. */
 function makeRune(rarity: RuneRarity) {
-  return createRuneInstance({ instanceId: `rune-${rarity}`, baseName: "테스트 룬", rarity, statValues: STAT_VALUES, random: sequenceRandom(), initialSuccessChance: 0.8 });
+  return createRuneInstance({ instanceId: `rune-${rarity}`, baseName: "테스트 룬", rarity, statValues: STAT_VALUES, random: sequenceRandom() });
 }
 
 describe("룬 도메인", () => {
@@ -56,5 +63,58 @@ describe("룬 도메인", () => {
     const modifiers = runeCombatModifiers(customized);
     expect(applyRuneLifeSteal(50, 100, 200, modifiers)).toBe(70);
     expect(applyRuneFerocityGain(12, modifiers)).toBe(15);
+  });
+
+  it("고정 난수의 성공과 실패에 따라 수치와 다음 확률만 알맞게 바꾼다", () => {
+    const rune = makeRune("uncommon");
+    const key = rune.mainStats[0].key;
+    const originalValue = rune.mainStats[0].value;
+    const success = enhanceRune(rune, key, 2, 0.74);
+    expect(success.mainStats[0].value).toBe(originalValue + 2);
+    expect(success.currentSuccessChance).toBeCloseTo(0.65);
+
+    // 0.99는 조정된 확률보다 크므로 실패하며 옵션 수치는 그대로다.
+    const failure = enhanceRune(success, key, 2, 0.99);
+    expect(failure.mainStats[0].value).toBe(originalValue + 2);
+    expect(failure.currentSuccessChance).toBeCloseTo(0.75);
+    expect(failure.enhancementHistory[key]?.map(({ succeeded }) => succeeded)).toEqual([true, false]);
+  });
+
+  it("다음 성공률을 25~75% 범위로 제한한다", () => {
+    expect(calculateRuneEnhancementSuccessChance(0.25, true)).toBe(RUNE_ENHANCEMENT_RULES.minimumSuccessChance);
+    expect(calculateRuneEnhancementSuccessChance(0.75, false)).toBe(RUNE_ENHANCEMENT_RULES.maximumSuccessChance);
+  });
+
+  it("옵션별 세 번 제한과 존재하지 않는 옵션 강화를 거부한다", () => {
+    let rune = makeRune("uncommon");
+    const key = rune.mainStats[0].key;
+    for (let attempt = 0; attempt < 3; attempt += 1) rune = enhanceRune(rune, key, 1, 0);
+    expect(canEnhanceRune(rune, key)).toBe(false);
+    expect(() => enhanceRune(rune, key, 1, 0)).toThrow(/세 번/);
+    expect(() => enhanceRune(rune, "lifeSteal", 1, 0)).toThrow(/존재하지/);
+  });
+
+  it.each(Object.keys(RUNE_SUB_STAT_COUNTS) as RuneRarity[])("%s 등급은 모든 옵션을 세 번 시도한 뒤 완료된다", (rarity) => {
+    let rune = makeRune(rarity);
+    const keys = [...rune.mainStats, ...rune.subStats].map(({ key }) => key);
+    for (const key of keys) {
+      for (let attempt = 0; attempt < 3; attempt += 1) rune = enhanceRune(rune, key, 1, 0.99);
+    }
+    expect(rune.enhancementComplete).toBe(true);
+    expect(Object.values(rune.enhancementHistory).flat()).toHaveLength(RUNE_ENHANCEMENT_RULES.totalAttempts[rarity]);
+    expect(() => runeEnhancementGoldCost(rarity, RUNE_ENHANCEMENT_RULES.totalAttempts[rarity])).toThrow(/다음 비용/);
+  });
+
+  it("완료 전 각인을 막고 완료 후 확정 각인을 한 번만 허용한다", () => {
+    let rune = makeRune("uncommon");
+    const result = { statKey: rune.mainStats[0].key, grade: "perfect" as const, valueAdded: 5 };
+    expect(canEngraveRune(rune)).toBe(false);
+    expect(() => engraveRune(rune, result)).toThrow(/모든 강화/);
+    for (const { key } of rune.mainStats) {
+      for (let attempt = 0; attempt < 3; attempt += 1) rune = enhanceRune(rune, key, 1, 0);
+    }
+    const engraved = engraveRune(rune, result);
+    expect(engraved.engravings).toEqual([result]);
+    expect(() => engraveRune(engraved, result)).toThrow(/각인 전/);
   });
 });

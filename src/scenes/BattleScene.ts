@@ -278,9 +278,16 @@ export class BattleScene extends Phaser.Scene {
     if (enqueueUltimate(this.ultimateSequence, fighter.id)) void this.pumpUltimateQueue();
   }
 
-  /** Phaser tween을 await 가능한 한 단계로 바꿔 궁극기 순서를 읽는 차례 그대로 유지한다. */
+  /**
+   * Phaser tween을 await 가능한 한 단계로 바꿔 궁극기 순서를 읽는 차례 그대로 유지한다.
+   *
+   * 끝났을 때뿐 아니라 **끊겼을 때도** 푼다. 전투 종료·씬 종료가 트윈을 죽이면 완료 콜백이
+   * 영영 오지 않는데, 그 자리에서 await가 멈추면 뒤따르는 잠금 해제까지 함께 묶인다.
+   */
   private tween(config: Phaser.Types.Tweens.TweenBuilderConfig): Promise<void> {
-    return new Promise((resolve) => this.tweens.add({ ...config, onComplete: () => resolve() }));
+    return new Promise((resolve) => {
+      this.tweens.add({ ...config, onComplete: () => resolve(), onStop: () => resolve() });
+    });
   }
 
   /** 입력 잠금부터 정상 복구까지 한 곳에서 소유하는 유일한 궁극기 비동기 시퀀스다. */

@@ -2,6 +2,7 @@ import { createDefaultSettings, normalizeSettings } from "../core/settings";
 import { saveManager, type SaveManager } from "../state/SaveManager";
 import { session, type GameSettings, type Session } from "../state/session";
 import { platformFeedback, type HapticPattern, type PlatformFeedback, type ScheduledNotification } from "../api/PlatformFeedback";
+import { setTextScale } from "../ui/textScale";
 
 /** 설정 변경자가 저장과 알림을 빠뜨리지 않도록 한 공개 변경 경계다. */
 export class SettingsManager extends EventTarget {
@@ -14,13 +15,15 @@ export class SettingsManager extends EventTarget {
   update(patch: { [K in keyof GameSettings]?: Partial<GameSettings[K]> }): GameSettings {
     const merged = Object.fromEntries(Object.entries(this.get()).map(([key, value]) => [key, { ...value, ...(patch[key as keyof GameSettings] ?? {}) }])) as unknown as GameSettings;
     this.state.settings = normalizeSettings(merged);
+    // 새로 그리는 모든 글자가 공용 스타일 배율을 사용하도록 한곳에서 동기화한다.
+    setTextScale(this.state.settings.accessibility.textScale);
     this.saves.save(this.state);
     this.dispatchEvent(new CustomEvent<GameSettings>("change", { detail: this.get() }));
     return this.get();
   }
 
   /** 진행 데이터에는 손대지 않고 환경설정만 초기 상태로 되돌린다. */
-  reset(): GameSettings { this.state.settings = createDefaultSettings(); this.saves.save(this.state); this.dispatchEvent(new CustomEvent<GameSettings>("change", { detail: this.get() })); return this.get(); }
+  reset(): GameSettings { this.state.settings = createDefaultSettings(); setTextScale(this.state.settings.accessibility.textScale); this.saves.save(this.state); this.dispatchEvent(new CustomEvent<GameSettings>("change", { detail: this.get() })); return this.get(); }
 
   /** 개별/전체 설정이 모두 켜진 경우에만 의미 기반 햅틱을 플랫폼으로 전달한다. */
   haptic(pattern: HapticPattern): boolean {

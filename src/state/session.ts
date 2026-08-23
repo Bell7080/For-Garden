@@ -13,7 +13,7 @@ import { createDefaultSettings } from "../core/settings";
 export interface GameSettings {
   sound: { masterVolume: number; musicVolume: number; effectsVolume: number; voiceVolume: number; masterMuted: boolean; musicMuted: boolean; effectsMuted: boolean; voiceMuted: boolean };
   vibration: { enabled: boolean; combatHit: boolean; ultimate: boolean; excavationResult: boolean; uiInput: boolean };
-  notifications: { staminaFull: boolean; freeRecruit: boolean; dailyMission: boolean; event: boolean; mail: boolean; quietHours: boolean };
+  notifications: { enabled: boolean; staminaFull: boolean; freeRecruit: boolean; dailyMission: boolean; event: boolean; mail: boolean; quietHours: boolean; quietHoursStart: string; quietHoursEnd: string; lastScheduledIds: Partial<Record<"staminaFull" | "freeRecruit" | "dailyMission", string>> };
   presentation: { ultimateCutIn: boolean; screenShake: boolean; damageNumbers: boolean; shortenExcavation: boolean; lowSpecMode: boolean };
   game: { battleSpeed: 1 | 1.5 | 2; autoUltimate: boolean; textSpeed: 0.5 | 1 | 2; language: "ko" | "en" | "ja" };
   account: { provider: "guest" | "google" | "apple"; displayId: string };

@@ -9,6 +9,7 @@ import { SettingsSelectRow } from "../ui/SettingsSelectRow";
 import { SettingsSlider } from "../ui/SettingsSlider";
 import { SettingsToggle } from "../ui/SettingsToggle";
 import { COLOR, textStyle } from "../ui/theme";
+import { platformFeedback } from "../api/PlatformFeedback";
 
 /** 설정 씬은 배치와 입력 연결만 맡고 값 보정·저장·알림은 SettingsManager에 위임한다. */
 export class SettingsScene extends Phaser.Scene {
@@ -36,7 +37,14 @@ export class SettingsScene extends Phaser.Scene {
     section("사운드", 850); ([['전체 음량','masterVolume'],['배경음','musicVolume'],['효과음','effectsVolume'],['보이스','voiceVolume']] as const).forEach(([label,key]) => { this.content.add(new SettingsSlider(this, 90, y, label, s.sound[key], value => settingsManager.update({ sound: { [key]: value } }))); y += 88; });
     ([['전체 음소거','masterMuted'],['배경음 음소거','musicMuted'],['효과음 음소거','effectsMuted'],['보이스 음소거','voiceMuted']] as const).forEach(([label,key]) => { this.content.add(new SettingsToggle(this,90,y,label,s.sound[key],value=>settingsManager.update({sound:{[key]:value}}))); y+=90; divider(); }); y += 30;
     section("진동", 560); ([['전체 진동','enabled'],['전투 타격','combatHit'],['궁극기','ultimate'],['발굴 결과','excavationResult'],['UI 입력','uiInput']] as const).forEach(([a,b]) => toggle(a,'vibration',b)); y += 28;
-    section("알림", 650); ([['스테미나 충전 완료','staminaFull'],['무료 모집','freeRecruit'],['일일 임무','dailyMission'],['이벤트','event'],['우편','mail'],['야간 알림 제한','quietHours']] as const).forEach(([a,b]) => toggle(a,'notifications',b)); y += 28;
+    section("알림", 820);
+    // 권한 요청은 일반 토글과 분리된 이 명시적 확인 버튼에서만 시작한다.
+    const permission = platformFeedback.getNotificationPermission();
+    const activate = this.add.text(90, y, s.notifications.enabled ? "알림 활성화됨" : "알림 활성화 확인", textStyle({ role: "emphasis", size: 28, color: COLOR.accentText })).setInteractive({ useHandCursor: true });
+    activate.on("pointerup", async () => { const granted = await settingsManager.confirmNotifications(); activate.setText(granted ? "알림 활성화됨" : "알림 권한을 사용할 수 없음"); }); this.content.add(activate); y += 52;
+    const support = platformFeedback.notificationScheduling === "persistent" ? "백그라운드 예약 지원" : platformFeedback.notificationScheduling === "foreground-only" ? "웹에서는 탭이 열려 있을 때만 예약 알림을 보장합니다." : "이 브라우저는 예약 알림을 지원하지 않습니다.";
+    this.content.add(this.add.text(90, y, `${support} (현재 권한: ${permission})`, textStyle({ role: "body", size: 21, color: COLOR.inkDim }))); y += 70; divider();
+    ([['스테미나 충전 완료','staminaFull'],['무료 모집','freeRecruit'],['일일 임무','dailyMission'],['이벤트','event'],['우편','mail'],['야간 알림 제한','quietHours']] as const).forEach(([a,b]) => toggle(a,'notifications',b)); y += 28;
     section("연출 · 게임", 920); ([['궁극기 컷인','ultimateCutIn'],['화면 흔들림','screenShake'],['피해 숫자','damageNumbers'],['발굴 연출 단축','shortenExcavation'],['저사양 모드','lowSpecMode']] as const).forEach(([a,b]) => toggle(a,'presentation',b)); this.content.add(new SettingsSelectRow(this,90,y,'전투 배속',s.game.battleSpeed,[1,1.5,2] as const,v=>settingsManager.update({game:{battleSpeed:v}}))); y+=90; toggle('자동 궁극기','game','autoUltimate'); this.content.add(new SettingsSelectRow(this,90,y,'텍스트 속도',s.game.textSpeed,[0.5,1,2] as const,v=>settingsManager.update({game:{textSpeed:v}}))); y+=90; this.content.add(new SettingsSelectRow(this,90,y,'언어',s.game.language,['ko','en','ja'] as const,v=>settingsManager.update({game:{language:v}}))); y+=125;
     section("계정", 230); this.content.add(this.add.text(90, y, `${s.account.provider.toUpperCase()} · ${s.account.displayId}`, textStyle({ role: "body", size: 28 }))); y += 140;
     section("고객지원", 250); this.content.add(this.add.text(90, y, "문의 · 이용약관 · 개인정보 처리방침", textStyle({ role: "body", size: 27, color: COLOR.inkDim }))); y += 150; this.content.setData("height", y);

@@ -3,8 +3,7 @@ import { BASE_WIDTH, BASE_HEIGHT } from "../config/gameConfig";
 import type { StageDef } from "../core/types";
 import { setDebugScene } from "../debug";
 import { STAGES, getStageEnemies } from "../data/stages";
-import { ROLE_LABEL } from "../managers/CharacterInfoManager";
-import { EnemyStatusWindow } from "../ui/EnemyStatusWindow";
+import { CharacterInfoManager, ROLE_LABEL } from "../managers/CharacterInfoManager";
 import type { PuppetCreature } from "../puppets/assets";
 import { battleAssetFor, spawnPuppet } from "../puppets/assets";
 import { isStageUnlocked, session } from "../state/session";
@@ -44,7 +43,7 @@ const NODE_FOCUS_Y = (WINDOW.top + WINDOW.bottom) / 2;
  * 자동으로 올라간다. 스테이지를 고르면 그 스테이지의 적이 위에서 내려온다.
  */
 export class StageMapScene extends Phaser.Scene {
-  private info!: EnemyStatusWindow;
+  private info!: CharacterInfoManager;
   /** 스크롤되는 지도 본체. 노드와 경로선이 전부 이 안에 있다. */
   private map!: Phaser.GameObjects.Container;
   private nodes = new Map<string, { ring: Phaser.GameObjects.Arc; label: Phaser.GameObjects.Text }>();
@@ -117,7 +116,7 @@ export class StageMapScene extends Phaser.Scene {
     this.sortieButton.setDepth(CHROME_DEPTH);
     addBackButton(this, () => this.scene.start("lobby")).setDepth(CHROME_DEPTH);
 
-    this.info = new EnemyStatusWindow(this);
+    this.info = new CharacterInfoManager(this, 1001, "enemy");
     // 들어오면 가장 최근에 열린 스테이지로 올라가 그 스테이지를 고른 상태로 시작한다.
     this.select(this.latestUnlocked(), true);
   }
@@ -307,7 +306,7 @@ export class StageMapScene extends Phaser.Scene {
       // 지도에서도 실제 전투에 투입될 레벨 보정 체력을 미리 보여준다.
       view.detail.setText(`LV.${stage.enemyLevel}  ${ROLE_LABEL[def.role]}  HP ${def.stats.hp}`);
       view.hit.removeAllListeners("pointerup");
-      view.hit.on("pointerup", () => this.info.show(def, { level: stage.enemyLevel }));
+      view.hit.on("pointerup", () => this.info.showEnemy(def, { level: stage.enemyLevel }));
       view.creature?.destroy();
       view.creature = undefined;
       void this.standEnemy(def.id, slot, request);

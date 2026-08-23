@@ -5,7 +5,6 @@ import type { RelicDef } from "../core/types";
 import { getRelic } from "../data/relics";
 import { relicCollection } from "../managers/RelicCollectionManager";
 import { CharacterInfoManager, ELEMENT_LABEL, ROLE_LABEL, addHelpBadge } from "../managers/CharacterInfoManager";
-import { EnemyStatusWindow } from "../ui/EnemyStatusWindow";
 import type { PuppetCreature } from "../puppets/assets";
 import { battleAssetFor, spawnPuppet } from "../puppets/assets";
 import { tintFor } from "../puppets/tints";
@@ -71,8 +70,8 @@ export class PartyScene extends Phaser.Scene {
   /** 자동 배치와 자리별 방향 표식이 함께 참조하는 이번 스테이지의 적 정의다. */
   private enemies: RelicDef[] = [];
   private info!: CharacterInfoManager;
-  /** 적은 성장 입력이 없는 전용 분석창으로 연다. 아군 정보창과 섞지 않는다. */
-  private enemyInfo!: EnemyStatusWindow;
+  /** 같은 정보창을 적 문맥으로 하나 더 둔다. 아군 창과 문맥이 섞이지 않게 창을 나눈다. */
+  private enemyInfo!: CharacterInfoManager;
   private pressTimer?: Phaser.Time.TimerEvent;
   private pressStartedAt = 0;
   private longPressFired = false;
@@ -163,7 +162,7 @@ export class PartyScene extends Phaser.Scene {
     addBackButton(this, () => this.scene.start("stageMap"));
 
     this.info = new CharacterInfoManager(this);
-    this.enemyInfo = new EnemyStatusWindow(this);
+    this.enemyInfo = new CharacterInfoManager(this, 1001, "enemy");
     this.refresh();
   }
 
@@ -196,7 +195,7 @@ export class PartyScene extends Phaser.Scene {
         .text(x, ENEMY_ROW + 62, `${ELEMENT_LABEL[def.element]} · ${ROLE_LABEL[def.role]}  HP ${def.stats.hp}`, textStyle({ role: "body", size: 22, color: COLOR.inkDim }))
         .setOrigin(0.5, 0);
       // SD 자체는 그림이라 입력을 받지 않는다. 상세는 옆의 ?로 연다.
-      addHelpBadge(this, x + 96, ENEMY_ROW - PREVIEW_HEIGHT + 10, () => this.enemyInfo.show(def, { level: stageLevel }), 24);
+      addHelpBadge(this, x + 96, ENEMY_ROW - PREVIEW_HEIGHT + 10, () => this.enemyInfo.showEnemy(def, { level: stageLevel }), 24);
     });
 
     this.add.text(40, FRONT_LINE + 28, "아군", textStyle({ role: "emphasis", size: 30 })).setOrigin(0, 0);

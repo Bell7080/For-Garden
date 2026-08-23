@@ -28,7 +28,8 @@ import { drawGlassFade, drawHairline, HoloBar } from "../ui/holo";
 import { PortraitCard, relicCardTint, starsForRarity } from "../ui/PortraitCard";
 import { COLOR, textStyle } from "../ui/theme";
 import { setDebugBattle, setDebugScene } from "../debug";
-import { EnemyStatusWindow } from "../ui/EnemyStatusWindow";
+import { CharacterInfoManager } from "../managers/CharacterInfoManager";
+import { UltimateCutIn } from "../ui/UltimateCutIn";
 import { nextBattleSpeed, type BattleSpeed } from "../core/battleControls";
 import { ControlChip } from "../ui/ControlChip";
 import {
@@ -112,12 +113,14 @@ export class BattleScene extends Phaser.Scene {
   private ultimateSequenceActive = false;
   /** 자동 동시 준비를 직렬화하고 오래된 async 완료를 구분하는 순수 상태다. */
   private ultimateSequence: UltimateSequenceState = createUltimateSequenceState();
+  /** 현재 컷인. 전투·씬 종료 정리에서 즉시 거두기 위한 참조다. */
+  private activeCutIn?: UltimateCutIn;
   /** 잠금 중에도 연출 주인공 카드만 밝게 남기기 위한 현재 전투원 id다. */
   private currentUltimateFighterId: string | null = null;
   private speedChip!: ControlChip;
   private autoChip!: ControlChip;
   /** 적 상세는 플레이어 성장 입력을 만들지 않는 전투 읽기 전용 창이다. */
-  private info!: EnemyStatusWindow;
+  private info!: CharacterInfoManager;
 
   constructor() {
     super("battle");
@@ -143,7 +146,8 @@ export class BattleScene extends Phaser.Scene {
     this.ultimateSequenceActive = false;
     this.ultimateSequence = createUltimateSequenceState();
     this.currentUltimateFighterId = null;
-    this.info = new EnemyStatusWindow(this);
+    // 적도 같은 정보창을 쓴다. 문맥만 "enemy"라 급여·돌파·유대·룬이 빠지고 현재 전투 줄이 붙는다.
+    this.info = new CharacterInfoManager(this, 1001, "enemy");
 
     // 편성 화면에서 본 6번 전장을 그대로 이어 실제 전투의 공간으로 사용한다.
     addSceneBackground(this, BACKGROUND.combat, -30);
@@ -208,7 +212,7 @@ export class BattleScene extends Phaser.Scene {
       const infoHit = fighter.side === "enemy"
         ? this.add.rectangle(fighter.x, fighter.y - UNIT_HEIGHT / 2, 190, UNIT_HEIGHT + 70, 0xffffff, 0)
           .setInteractive({ useHandCursor: true })
-          .on("pointerup", () => this.info.showFighter(fighter))
+          .on("pointerup", () => this.info.showEnemy(fighter.def, { live: fighter }))
         : undefined;
       const shadow = this.add.ellipse(fighter.x, fighter.y + 4, 132, 24, 0x000000, 0.38);
       const barColor = fighter.side === "player" ? COLOR.hpFill : COLOR.hpEnemy;
@@ -306,8 +310,14 @@ export class BattleScene extends Phaser.Scene {
       if (!view) return;
       // 씬은 ID별 값을 판단하지 않고 정적 프리셋(또는 공용 기본값)만 소비한다.
       const presentation = ultimatePresentationFor(fighter.def.id);
-      // 화면을 덮는 컷인도 포효도 없다. 때리는 개체가 한 뼘 커지는 것으로 "지금 큰 게 온다"를
-      // 알리고 곧바로 친다 — 전투 중 여러 번 반복되는 연출이라 길이가 곧 기다림이다.
+      // 전신 컷인 한 장으로 "누가 무엇을 쓰는가"를 알린다. 다만 포효를 기다리지 않고 컷인이
+      // 빠지는 즉시 친다 — 전투 중 여러 번 반복되는 연출이라 길이가 곧 기다림이다.
+      this.activeCutIn = await UltimateCutIn.create(this, fighter.def, presentation);
+      if (!this.sequenceValid(next.token, fighter)) return;
+      await this.activeCutIn.play();
+      this.activeCutIn.destroy();
+      this.activeCutIn = undefined;
+      if (!this.sequenceValid(next.token, fighter)) return;
       const base = view.creature.scaleX;
       await this.tween({ targets: view.creature, scale: base * presentation.zoomScale, duration: presentation.zoomMs, ease: "Back.Out" });
       if (!this.sequenceValid(next.token, fighter)) return;
@@ -329,6 +339,8 @@ export class BattleScene extends Phaser.Scene {
       this.syncViews();
       this.refreshDebug();
     } finally {
+      this.activeCutIn?.destroy();
+      this.activeCutIn = undefined;
       // 중간에 멈춘 발돋움 트윈은 여기서 끊는다. 남겨 두면 다음 프레임의 배치와 서로 다투다
       // SD가 커진 채로 떨린다. 제 크기 복구는 syncViews가 맡는다.
       const view = this.views.get(next.fighterId);
@@ -636,6 +648,8 @@ export class BattleScene extends Phaser.Scene {
     cancelUltimateSequence(this.ultimateSequence);
     this.ultimateSequenceActive = false;
     this.currentUltimateFighterId = null;
+    this.activeCutIn?.destroy();
+    this.activeCutIn = undefined;
     // 발돋움 도중 전투가 끝나면 커진 채로 굳는다. 다음 syncViews가 제 크기로 되돌리도록
     // 남은 트윈만 걷어 낸다.
     this.views.forEach((view) => this.tweens.killTweensOf(view.creature));

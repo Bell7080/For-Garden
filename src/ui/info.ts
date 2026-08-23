@@ -46,6 +46,7 @@ import { getRelicCatalogDisclosure } from "../core/relicCatalog";
 import { observations } from "../managers/ObservationManager";
 import { observationQuestionForDate } from "../data/observations";
 import type { PublicRelicProfileDto } from "../api/contracts";
+import type { Fighter } from "../core/skirmish";
 import { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../core/infoCapabilities";
 
 export type { SkillInfoViewModel } from "./SkillPopup";
@@ -323,10 +324,19 @@ export class InfoManager {
   private portrait?: PuppetCreature;
   private portraitWanted = false;
   private portraitRequest = 0;
+  /**
+   * 원화가 정보창에서 서 있어야 할 제자리.
+   *
+   * 전신 감상에서 돌아올 때 **지금 값**을 되돌리면 안 된다. 되돌아오는 도중에 다시 감상을 열면
+   * 그 순간의 커진 값이 "제자리"로 굳어, 열고 닫을 때마다 원화가 조금씩 커진다.
+   */
+  private portraitHome?: { x: number; y: number; scale: number };
   private figure?: PuppetCreature;
   private figureRequest = 0;
   /** 전신 감상 중일 때 화면을 덮는 종료 판. 없으면 감상 중이 아니다. */
   private gallery?: Phaser.GameObjects.Rectangle;
+  /** 감상을 연 돋보기를 눌린 크기에서 되돌리는 콜백. */
+  private galleryReturn?: () => void;
   /** 좌우 넘김이 진행 중인지. 연달아 밀어도 한 번에 한 명씩만 넘어간다. */
   private sliding = false;
   /** 급여 버튼의 켜짐·꺼짐 판 두 장. */
@@ -340,6 +350,8 @@ export class InfoManager {
   /** 생성 시 고정한 문맥 덕분에 읽기 전용 창이 도중에 소유자 권한으로 승격되지 않는다. */
   private readonly capabilities: Readonly<InfoCapabilities>;
   private publicProfile?: PublicRelicProfileDto;
+  /** 전투 중인 적에게만 붙는 현재 체력·게이지·상태이상 한 줄. */
+  private readonly combatLine: Phaser.GameObjects.Text;
 
   /** 정보창이 닫힐 때 목록 화면이 카드 표시를 다시 맞출 수 있게 알린다. */
   onClose?: () => void;
@@ -380,7 +392,12 @@ export class InfoManager {
     this.nameShadow = scene.add.text(52, 112, "", textStyle({ role: "display", size: 84, color: "#05070a" })).setOrigin(0, 0).setAlpha(0.85);
     this.nameText = scene.add.text(46, 104, "", textStyle({ role: "display", size: 84 })).setOrigin(0, 0);
     this.roleText = scene.add.text(50, 206, "", textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0, 0);
-    this.chrome.add([this.rarityGlow, this.rarityText, this.nameShadow, this.nameText, this.roleText]);
+    // 개체번호 줄 바로 아래다. 지금 값이라 붉게 쓰고, 전투 밖에서는 아예 감춘다.
+    this.combatLine = scene.add
+      .text(50, 240, "", textStyle({ role: "emphasis", size: 23, color: COLOR.dangerText }))
+      .setOrigin(0, 0)
+      .setVisible(false);
+    this.chrome.add([this.rarityGlow, this.rarityText, this.nameShadow, this.nameText, this.roleText, this.combatLine]);
     // 이름 오른쪽에 속성과 직군을 세운다. 이름 줄에 붙어 있어야 "이 개체가 무엇인지"가 한
     // 덩어리로 읽힌다. 카드와 마찬가지로 속성이 크고 직군이 조금 작다.
     this.elementBadge = new AffinityBadge(scene, 0, 152, ELEMENT_ICON.fire, AFFINITY.main);
@@ -389,8 +406,9 @@ export class InfoManager {
 
     this.bookmarkBadge = this.addBadge(84, 300, "bookmark", BOOKMARK_ON, () => this.toggleBookmark());
     this.favoriteBadge = this.addBadge(176, 300, "heart", FAVORITE_ON, () => this.toggleFavorite());
-    this.addJournalButton(268, 300);
-    this.addMagnifier(84, 392, () => this.enterGallery());
+    // 관찰 일지와 옷장은 내 렐릭에게만 있다. 친구·적 창에서는 아예 세우지 않는다.
+    if (this.capabilities.mutateProgress) this.addJournalButton(268, 300);
+    this.addMagnifier(84, 392, (from) => this.enterGallery(from.onClose));
 
     this.starRow = scene.add.container(COLUMN.x, 150);
     this.chrome.add(this.starRow);
@@ -398,11 +416,15 @@ export class InfoManager {
 
     // 오른쪽 수치는 칸마다 판을 따로 깐다. 대신 칸의 내용물을 그 판 **안에** 넣어 판과 같은
     // 각도로 함께 기운다. 판만 기울고 글자가 반듯하면 판 위에 종이를 얹어 둔 것처럼 어긋난다.
-    const levelPanel = this.addPanel(COLUMN.x, 442, COLUMN.width, 332);
+    // 급여·돌파·경험치가 빠지는 읽기 전용 창에서는 레벨 판도 숫자에 맞춰 줄인다. 판만 남고
+    // 속이 비면 "여기 뭔가 빠졌다"로 읽힌다.
+    const levelPanel = this.capabilities.mutateProgress
+      ? this.addPanel(COLUMN.x, 442, COLUMN.width, 332)
+      : this.addPanel(COLUMN.x, 360, COLUMN.width, 168);
     const bondPanel = this.addPanel(COLUMN.x, 706, COLUMN.width, 144);
     const statPanel = this.addPanel(COLUMN.x, 1024, COLUMN.width, 396);
     const gemPanel = this.addPanel(COLUMN.x, 1398, COLUMN.width, 292);
-    // 친구에게는 유대/룬 판을, 적에게는 성장 기둥 전체를 노출하지 않는다.
+    // 친구·적에게는 유대와 룬 판을 세우지 않는다.
     bondPanel.setVisible(this.capabilities.showBond);
     gemPanel.setVisible(this.capabilities.mutateProgress);
 
@@ -418,6 +440,12 @@ export class InfoManager {
     this.expBar = new Gauge(scene, COLUMN.x, 452, COLUMN.width - 88, 16, COLOR.accent);
     this.expLabel = scene.add.text(COLUMN.x, 470, "", textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0.5, 0);
     attach(levelPanel, this.levelValue, this.levelCap, ...this.expBar.objects, this.expLabel);
+    // 경험치는 내가 키우는 렐릭에게만 있는 값이다. 친구·적에게 빈 눈금을 보여 주면 없는
+    // 정보를 있는 것처럼 읽게 된다 — 레벨 숫자만 남긴다.
+    if (!this.capabilities.mutateProgress) {
+      this.expBar.objects.forEach((object) => object.setVisible(false));
+      this.expLabel.setVisible(false);
+    }
     this.breakButton = this.addBreakButton(COLUMN.x + COLUMN.width / 2 - 96, 330, levelPanel);
     const feed = this.addFeedButton(COLUMN.x, 546, COLUMN.width - 130, 98, levelPanel);
     this.feedButton = feed.container;
@@ -448,7 +476,7 @@ export class InfoManager {
     for (let index = 0; index < 3; index += 1) this.gemSlots.push(this.addGemSlot(index, gemPanel));
 
     this.buildFigureStand();
-    this.addCostumeButton(FIGURE.x + 152, FIGURE.y - 206);
+    if (this.capabilities.mutateProgress) this.addCostumeButton(FIGURE.x + 152, FIGURE.y - 206);
     this.chrome.add(addBackButton(scene, () => this.hide()));
   }
 
@@ -1057,16 +1085,18 @@ export class InfoManager {
    * 수치를 읽는 화면과 인물을 보는 화면은 목적이 다르다. 판을 흐리게 지우는 대신 **화면
    * 바깥으로 밀어내고** 원화만 가운데로 옮겨 크게 세운다. 아무 데나 누르면 되돌아온다.
    */
-  private enterGallery(): void {
+  private enterGallery(onClose?: () => void): void {
     const def = this.currentDef;
     if (!def || this.gallery || !this.portrait) return;
     const asset = portraitAssetFor(def.portraitAssetId);
     const portrait = this.portrait;
-    // 되돌릴 때 쓸 원래 자리. 화면 크기가 바뀌지 않으므로 값 하나면 충분하다.
-    const before = { x: portrait.x, y: portrait.y, scale: portrait.scaleX };
+    // 되돌아오는 트윈이 아직 돌고 있으면 여기서 끊는다. 그대로 두면 감상 중에도 원화가
+    // 제자리를 향해 계속 움직인다.
+    this.scene.tweens.killTweensOf(portrait);
+    this.galleryReturn = onClose;
     placePuppet(portrait, asset, {
       focus: { anchor: "core", x: BASE_WIDTH / 2, y: BASE_HEIGHT * 0.52 },
-      height: BASE_HEIGHT * 1.02,
+      height: BASE_HEIGHT * 1.02 * (asset.portraitZoom ?? 1),
     });
     portrait.setAlpha(0.001);
     this.scene.tweens.add({ targets: portrait, alpha: 1, duration: 260 });
@@ -1078,17 +1108,24 @@ export class InfoManager {
       .rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, 0xffffff, 0)
       .setDepth(1600)
       .setInteractive({ useHandCursor: true });
-    exit.on("pointerup", () => this.leaveGallery(before));
+    exit.on("pointerup", () => this.leaveGallery());
     this.gallery = exit;
   }
 
   /** 감상에서 나온다. 판이 다시 제자리로 미끄러져 들어온다. */
-  private leaveGallery(before: { x: number; y: number; scale: number }): void {
+  private leaveGallery(): void {
     const portrait = this.portrait;
     this.gallery?.destroy();
     this.gallery = undefined;
-    if (portrait) {
-      this.scene.tweens.add({ targets: portrait, x: before.x, y: before.y, scale: before.scale, duration: 320, ease: "Cubic.Out" });
+    // 부른 돋보기를 눌린 크기에서 풀어 준다.
+    this.galleryReturn?.();
+    this.galleryReturn = undefined;
+    // 돌아갈 곳은 지금 값이 아니라 **처음 세운 자리**다. 자세히 보기를 몇 번을 여닫아도
+    // 원화 크기가 그대로인 이유가 여기에 있다.
+    const home = this.portraitHome;
+    if (portrait && home) {
+      this.scene.tweens.killTweensOf(portrait);
+      this.scene.tweens.add({ targets: portrait, x: home.x, y: home.y, scale: home.scale, duration: 320, ease: "Cubic.Out" });
     }
     this.scene.tweens.add({ targets: this.chrome, x: 0, alpha: 1, duration: 320, ease: "Cubic.Out" });
     this.figure?.setVisible(this.portraitWanted && this.root.visible);
@@ -1295,12 +1332,15 @@ export class InfoManager {
     const asset = portraitAssetFor(def.portraitAssetId);
     const portrait = await spawnPuppet(this.scene, asset, {
       focus: { anchor: "core", x: PORTRAIT_FOCUS.x, y: PORTRAIT_FOCUS.y },
-      height: PORTRAIT_FOCUS.height,
+      // 그림 영역이 작은 원화는 공용 높이 그대로 세우면 혼자 화면을 넘는다. 보정값은 원화에 있다.
+      height: PORTRAIT_FOCUS.height * (asset.portraitZoom ?? 1),
       depth: Math.max(this.portraitDepth, 1001),
     });
     if (request !== this.portraitRequest) { portrait.destroy(); return; }
     this.portrait?.destroy();
     this.portrait = portrait;
+    // 세운 그 자리가 곧 제자리다. 전신 감상은 여기로만 되돌아온다.
+    this.portraitHome = { x: portrait.x, y: portrait.y, scale: portrait.scaleX };
     // 화면 아무 데나 눌러도 통통 튀면 정신이 없다. 코어 관절 둘레의 몸통에서만 반응한다.
     portrait.disableInteractive();
     if (portraitUsesRelicTint(def.portraitAssetId)) tintPuppet(portrait, mixWhite(tintFor(def.id), 0.55));
@@ -1465,6 +1505,7 @@ export class InfoManager {
   /** 도감은 보유 여부를 전달해 정적 기록과 성장 정보의 잠금을 한곳에서 적용한다. */
   showRelic(def: RelicDef, owned = true): void {
     this.publicProfile = undefined;
+    this.combatLine.setVisible(false);
     this.openCharacter(def, owned);
   }
 
@@ -1473,7 +1514,33 @@ export class InfoManager {
     this.publicProfile = profile;
     const def = RELICS.find((relic) => relic.id === profile.relicId);
     if (!def) throw new Error(`알 수 없는 공개 렐릭 id: ${profile.relicId}`);
+    this.combatLine.setVisible(false);
     this.openCharacter(def, true);
+  }
+
+  /**
+   * 적 하나를 연다.
+   *
+   * 친구 창과 같은 판을 쓰고 급여·돌파·유대·룬만 빠진다. 적을 위한 화면을 따로 만들지 않는
+   * 이유는, 정보창이 좋아질 때 그 화면만 옛 모습으로 남기 때문이다.
+   *
+   * `def.stats`는 이미 스테이지 레벨이 반영된 값이다(`getStageEnemies`). 창이 레벨 보정을
+   * 다시 하지 않아야 지도·편성·전투가 같은 수치를 보여 준다.
+   */
+  showEnemy(def: RelicDef, options: { level?: number; live?: Fighter } = {}): void {
+    this.publicProfile = {
+      relicId: def.id,
+      level: options.level ?? 1,
+      stars: 0,
+      stats: { ...def.stats },
+      skillIds: [def.passive.id, def.basic.id, def.ultimate.id],
+    };
+    this.openCharacter(def, true);
+    const live = options.live;
+    this.combatLine.setVisible(this.capabilities.showRuntimeCombat && live !== undefined);
+    if (!live) return;
+    const ailment = live.bleed ? `출혈 ${Math.ceil(live.bleed.remaining)}초` : "상태이상 없음";
+    this.combatLine.setText(`HP ${Math.ceil(live.hp)} / ${live.maxHp}   ·   궁극 ${Math.round(live.energy)}   ·   야성 ${Math.round(live.ferocity)}   ·   ${ailment}`);
   }
 
   /** 정적 렐릭 정의만 받아 읽기 전용 상세 화면의 상태를 교체한다. */

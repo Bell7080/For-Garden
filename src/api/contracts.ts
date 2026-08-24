@@ -13,9 +13,18 @@ export interface IdleExcavationResponse { excavation: IdleExcavationState; serve
 /** 편성 저장 재시도는 요청 ID로 같은 결과를 받으며 슬롯 위치를 보존한다. */
 export interface SaveExcavationFormationRequest { requestId: string; assignedRelicIds: [string | null, string | null, string | null]; }
 /** 수확 요청 ID는 네트워크 재전송의 중복 지급을 막는 서버 멱등 키다. */
-export interface HarvestExcavationRequest { requestId: string; }
-/** 상한 때문에 버린 양까지 공개해 화면이 지급량을 추측하지 않게 한다. */
-export interface HarvestExcavationResponse extends IdleExcavationResponse { wallet: Wallet; granted: Record<ExcavationCurrency, number>; discarded: Record<ExcavationCurrency, number>; }
+export interface HarvestExcavationRequest { readonly requestId: string; }
+/** 상한 때문에 버린 양과 소수 잔량까지 공개해 화면이 지급량을 추측하지 않게 한다. */
+export interface HarvestExcavationResponse extends IdleExcavationResponse {
+  /** 서버가 지갑에 실제 반영한 자원별 정수 수량이다. */
+  granted: Record<ExcavationCurrency, number>;
+  /** 지갑 상한 때문에 지급하지 못하고 소멸한 자원별 정수 수량이다. */
+  discarded: Record<ExcavationCurrency, number>;
+  /** 수확 뒤 지갑의 서버 확정 스냅샷이다. */
+  wallet: Wallet;
+  /** 정수 수확 뒤 다음 수확으로 이월한 자원별 소수 누적량이다. */
+  remaining: Record<ExcavationCurrency, number>;
+}
 
 /** 룬 장착 위치다. 슬롯 값은 정적 정의 ID가 아닌 룬 인스턴스 ID다. */
 export interface RuneEquipmentDto { relicId: string; slots: [string | null, string | null, string | null]; }

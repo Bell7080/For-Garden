@@ -20,17 +20,16 @@ ROOT = Path(__file__).resolve().parent.parent
 PUBLIC = ROOT / "public"
 SOURCE = Path(sys.argv[1]) if len(sys.argv) > 1 else PUBLIC
 
-# 원본 번호와 렐릭 id. Puppet 묶음(char_00N.zip)과 같은 번호를 쓴다.
+# 원본 이름 머리말과 렐릭 id. Puppet 묶음(char_00N.zip · enemy_00N.zip)과 같은 번호를 쓴다.
 RELICS = {
-    1: "anky",
-    2: "rex",
-    3: "spino",
-    4: "luka",
-    # 적도 같은 파이프라인을 쓴다. 번호만 200번대로 올리면 폴더가 자동으로 갈린다
-    # (char201skill_001.png → husk-raptor/passive.webp).
-    201: "husk-raptor",
-    202: "husk-shell",
-    203: "husk-wing",
+    "char001": "anky",
+    "char002": "rex",
+    "char003": "spino",
+    "char004": "luka",
+    # 적도 같은 파이프라인을 쓴다. 원본 이름의 머리말만 다르고(enemy00N) 나머지 규칙은 같다.
+    "enemy001": "husk-raptor",
+    "enemy002": "husk-shell",
+    "enemy003": "husk-wing",
 }
 
 # 원본의 자리 번호와 스킬 칸. 1 패시브 · 2 일반 공격 · 3 궁극기 · 4 폭주(야성 발현) 순이다.
@@ -76,19 +75,29 @@ def framed(art: Image.Image) -> Image.Image:
     return canvas
 
 
-def find(number: int, slot: int) -> Path:
-    """원본 확장자는 올린 사람마다 다르다(png·jpeg). 번호로만 찾고 확장자는 묻지 않는다."""
+def exists(stem: str, slot: int) -> bool:
+    """굽지 않은 원본이 남아 있는지만 본다."""
+    return any((SOURCE / f"{stem}skill_{slot:03d}{suffix}").exists() for suffix in (".png", ".jpeg", ".jpg", ".webp"))
+
+
+def find(stem: str, slot: int) -> Path:
+    """원본 확장자는 올린 사람마다 다르다(png·jpeg). 이름으로만 찾고 확장자는 묻지 않는다."""
     for suffix in (".png", ".jpeg", ".jpg", ".webp"):
-        path = SOURCE / f"char{number:03d}skill_{slot:03d}{suffix}"
+        path = SOURCE / f"{stem}skill_{slot:03d}{suffix}"
         if path.exists():
             return path
-    raise FileNotFoundError(f"원본을 찾지 못했다: char{number:03d}skill_{slot:03d}")
+    raise FileNotFoundError(f"원본을 찾지 못했다: {stem}skill_{slot:03d}")
 
 
 def main() -> None:
-    for number, relic in RELICS.items():
+    for stem, relic in RELICS.items():
+        # 원본은 구운 뒤 저장소에서 지운다. 그래서 이미 구운 개체는 원본이 없는 것이 정상이고,
+        # 그때는 조용히 건너뛴다 — 없다고 멈추면 새로 올린 개체 하나를 굽지 못한다.
+        if not any(exists(stem, slot) for slot in SLOTS):
+            print(f"{stem}: 원본 없음 — 건너뜀")
+            continue
         for slot, name in SLOTS.items():
-            source = find(number, slot)
+            source = find(stem, slot)
             target = PUBLIC / "sprites" / "skills" / relic / f"{name}.webp"
             target.parent.mkdir(parents=True, exist_ok=True)
             framed(silhouette(Image.open(source).convert("RGB"))).save(target, "WEBP", quality=92, method=6)

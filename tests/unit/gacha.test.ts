@@ -92,16 +92,24 @@ describe("재화와 보유 반영", () => {
     expect(wallet.fossil).toBe(1000);
   });
 
-  it("처음 획득과 중복을 분리한다", () => {
+  it("처음 획득은 파편을 주지 않고 중복만 그 개체의 파편으로 쌓는다", () => {
     const outcome = resolveAcquisitions(new Set(["r-a"]), { "r-a": 4 }, ["r-b", "r-b", "r-a", "r-a"]);
     expect(outcome.slots).toEqual([
-      { relicId: "r-b", kind: "new", dnaBefore: 0, dnaAfter: 0, overflowFragments: 0 },
-      { relicId: "r-b", kind: "mastery", dnaBefore: 0, dnaAfter: 1, overflowFragments: 0 },
-      { relicId: "r-a", kind: "mastery", dnaBefore: 4, dnaAfter: 5, overflowFragments: 0 },
-      { relicId: "r-a", kind: "overflow", dnaBefore: 5, dnaAfter: 5, overflowFragments: 1 },
+      { relicId: "r-b", kind: "new", fragments: 0, overflowFragments: 0 },
+      { relicId: "r-b", kind: "fragment", fragments: 1, overflowFragments: 0 },
+      { relicId: "r-a", kind: "fragment", fragments: 1, overflowFragments: 0 },
+      { relicId: "r-a", kind: "fragment", fragments: 1, overflowFragments: 0 },
     ]);
+    expect(outcome.fragmentsById).toEqual({ "r-a": 6, "r-b": 1 });
     expect(outcome.newRelicIds).toEqual(["r-b"]);
     expect(outcome.duplicateRelicIds).toEqual(["r-b", "r-a", "r-a"]);
+  });
+
+  it("별 다섯에 닿은 개체의 중복만 공용 DNA 조각으로 바뀐다", () => {
+    const outcome = resolveAcquisitions(new Set(["r-a"]), {}, ["r-a", "r-a"], { "r-a": 5 });
+    expect(outcome.slots.every(({ kind }) => kind === "overflow")).toBe(true);
+    expect(outcome.overflowFragments).toBe(2);
+    expect(outcome.fragmentsById["r-a"]).toBeUndefined();
   });
 });
 

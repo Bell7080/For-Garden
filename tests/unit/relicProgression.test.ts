@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { awakeningBonus, BREAKTHROUGH_STEPS, calculateFinalStats, canBreakThrough, canFeedRelic, canLevelUpRelic, feedRelic, FEED_UNIT, levelUpRelic, nextBreakthrough, relicLevelCap, RELIC_LEVEL_CAP, relicExpToNext, relicLevelUpCost } from "../../src/core/relicProgression";
+import { breakthroughBonus, BREAKTHROUGH_STEPS, calculateFinalStats, canBreakThrough, canFeedRelic, canLevelUpRelic, feedRelic, FEED_UNIT, levelUpRelic, nextBreakthrough, relicLevelCap, RELIC_LEVEL_CAP, RELIC_STAR_CAP, relicExpToNext, relicLevelUpCost, relicStars } from "../../src/core/relicProgression";
 import type { RelicProgress, Stats } from "../../src/core/types";
 import { RelicProgressionManager } from "../../src/managers/RelicProgressionManager";
 import type { Session } from "../../src/state/session";
@@ -26,8 +26,8 @@ function makeSession(): Session {
     gachaPityByGroup: { "standard-fossil": { pullsSinceSsr: 0, pickupGuaranteed: false }, "limited-pickup": { pullsSinceSsr: 0, pickupGuaranteed: false } },
     // 보유 렐릭과 성장 레코드는 실제 저장 계약처럼 항상 한 쌍으로 구성한다.
     wallet: { fossil: 0, amber: 0, gems: 0, gold: 0, stamina: 0, dnaFragments: 0, cheesecake: 0 }, relicProgress: {
-      rex: { level: 1, exp: 0, awakening: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] },
-    }, runeInventory: [testRune("vital-seed"), testRune("fang-core")],
+      rex: { level: 1, exp: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] },
+    }, relicFragments: {}, runeInventory: [testRune("vital-seed"), testRune("fang-core")],
     dailyContent: { date: "", restorationEntries: 0, completedIds: [], claimedRewardIds: [] },
     missions: { dailyKey: "", weeklyKey: "", progress: {}, claimedIds: [] },
     // 상품 테스트가 아닌 세션도 최신 저장 계약의 빈 구매 이력을 명시한다.
@@ -39,7 +39,7 @@ function makeSession(): Session {
 
 describe("렐릭 성장 규칙", () => {
   it("현재 레벨 비용의 정확한 경계에서만 레벨업하고 원본을 변경하지 않는다", () => {
-    const progress: RelicProgress = { level: 2, exp: 0, awakening: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] };
+    const progress: RelicProgress = { level: 2, exp: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] };
     expect(relicLevelUpCost(2)).toBe(20);
     expect(canLevelUpRelic(progress, 19)).toBe(false);
     expect(levelUpRelic(progress, 20)).toMatchObject({ progress: { level: 3 }, cheesecake: 0, cost: 20 });
@@ -47,27 +47,27 @@ describe("렐릭 성장 규칙", () => {
   });
 
   it("최대 레벨과 재화 부족에서는 성장 상태를 만들지 않는다", () => {
-    const base: RelicProgress = { level: 1, exp: 0, awakening: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] };
+    const base: RelicProgress = { level: 1, exp: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] };
     expect(() => levelUpRelic(base, 9)).toThrow("치즈케이크가 부족");
     expect(() => levelUpRelic({ ...base, level: RELIC_LEVEL_CAP }, 9999)).toThrow("최대 레벨");
   });
-  it("기본 능력치에 레벨, 각성, Heart Gem 순으로 단계별 반올림해 적용한다", () => {
-    // 각성은 3·4단계에서만 능력치를 올린다. 1단계는 일반 공격 피해만 바꾸므로 수치는 그대로다.
-    const early: RelicProgress = { level: 2, exp: 0, awakening: 1, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: ["vital-seed", null, null] };
+  it("기본 능력치에 레벨, 별, Heart Gem 순으로 단계별 반올림해 적용한다", () => {
+    // 별 둘(돌파 1단계)은 일반 공격 피해만 바꾸므로 능력치 수치는 그대로다.
+    const early: RelicProgress = { level: 2, exp: 0, breakthrough: 1, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: ["vital-seed", null, null] };
     const rune = testRune("growth");
-    // 101 → 레벨 2%(103) → 각성 0%(103) → 룬 표의 HP 기본 8%(111) 순서다.
+    // 101 → 레벨 2%(103) → 별 0%(103) → 룬 표의 HP 기본 8%(111) 순서다.
     expect(calculateFinalStats(BASE, early, [rune]).hp).toBe(111);
 
-    // 3단계부터 15%씩 붙는다. 103 → 각성 15%(118) → Heart Gem 10%(130).
-    const awakened: RelicProgress = { ...early, awakening: 3 };
-    expect(calculateFinalStats(BASE, awakened, [rune]).hp).toBe(127);
+    // 셋째 돌파부터 15%가 붙는다. 103 → 별 15%(118) → Heart Gem 8%(127).
+    const broken: RelicProgress = { ...early, breakthrough: 3 };
+    expect(calculateFinalStats(BASE, broken, [rune]).hp).toBe(127);
   });
 
   it("룬 교체 계산은 렐릭 기본 객체를 변경하지 않고 실패 강화는 수치를 올리지 않는다", () => {
     const baseSnapshot = structuredClone(BASE);
     const rune = testRune("immutable");
     const failed = enhanceRune(rune, "hp", 999, 0.99);
-    const progress: RelicProgress = { level: 1, exp: 0, awakening: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [rune.instanceId, null, null] };
+    const progress: RelicProgress = { level: 1, exp: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [rune.instanceId, null, null] };
     expect(calculateFinalStats(BASE, progress, [failed]).hp).toBe(calculateFinalStats(BASE, progress, [rune]).hp);
     expect(BASE).toEqual(baseSnapshot);
   });
@@ -77,24 +77,25 @@ describe("렐릭 성장 규칙", () => {
     // 고급 룬은 두 주력 옵션에 세 번씩 시도하면 완료된다. 실패 난수로 일반 강화 증가는 배제한다.
     for (const key of ["hp", "atk"] as const) for (let attempt = 0; attempt < 3; attempt += 1) rune = enhanceRune(rune, key, 999, 0.99);
     const engraved = engraveRune(rune, { statKey: "hp", grade: "perfect", valueAdded: 999 });
-    const progress: RelicProgress = { level: 1, exp: 0, awakening: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [rune.instanceId, null, null] };
+    const progress: RelicProgress = { level: 1, exp: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [rune.instanceId, null, null] };
     const before = calculateFinalStats(BASE, progress, [rune]);
     const after = calculateFinalStats(BASE, progress, [engraved]);
     expect(after.hp).toBeGreaterThan(before.hp);
     expect(after.atk).toBe(before.atk);
   });
 
-  it("각성 단계 효과는 열린 단계까지만 합쳐진다", () => {
-    expect(awakeningBonus(0)).toEqual({ statPercent: 0, basicDamage: 0, ultimateDamage: 0, readyUltimate: false });
-    expect(awakeningBonus(2)).toMatchObject({ basicDamage: 0.25, ultimateDamage: 0.25, statPercent: 0 });
-    expect(awakeningBonus(5)).toMatchObject({ statPercent: 30, readyUltimate: true });
+  it("별 효과는 지금까지 뚫은 단계까지만 합쳐진다", () => {
+    expect(breakthroughBonus(0)).toEqual({ statPercent: 0, basicDamage: 0, ultimateDamage: 0, readyUltimate: false });
+    expect(breakthroughBonus(2)).toMatchObject({ basicDamage: 0.25, ultimateDamage: 0.25, statPercent: 0 });
+    expect(breakthroughBonus(BREAKTHROUGH_STEPS.length)).toMatchObject({ statPercent: 15, readyUltimate: true });
   });
 
-  it("각성 단계의 0과 5는 허용하고 범위 밖과 소수는 거부한다", () => {
+  it("별은 돌파 단계 + 1이고 모든 개체가 하나에서 시작한다", () => {
     const manager = new RelicProgressionManager(makeSession());
-    expect(() => manager.setAwakening("rex", 0)).not.toThrow();
-    expect(() => manager.setAwakening("rex", 5)).not.toThrow();
-    for (const invalid of [-1, 6, 2.5]) expect(() => manager.setAwakening("rex", invalid)).toThrow(RangeError);
+    expect(manager.getStars("rex")).toBe(1);
+    expect(manager.getFragments("rex")).toBe(0);
+    expect(relicStars(BREAKTHROUGH_STEPS.length)).toBe(RELIC_STAR_CAP);
+    for (const invalid of [-1, BREAKTHROUGH_STEPS.length + 1, 2.5]) expect(() => relicStars(invalid)).toThrow(RangeError);
   });
 
   it("장착과 해제는 API 응답의 전체 장착표를 세션에 적용한다", async () => {
@@ -109,7 +110,7 @@ describe("렐릭 성장 규칙", () => {
 });
 
 describe("급여", () => {
-  const base = (): RelicProgress => ({ level: 1, exp: 0, awakening: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] });
+  const base = (): RelicProgress => ({ level: 1, exp: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] });
 
   it("는 치즈케이크를 쓴 만큼만 경험치를 올리고 넘친 경험치는 다음 레벨로 이월한다", () => {
     // 레벨 1은 60 EXP가 필요하다. 한 번에 20씩 오르므로 네 번 먹이면 한 번 오르고 20이 남는다.
@@ -138,7 +139,7 @@ describe("급여", () => {
 });
 
 describe("돌파", () => {
-  const base = (): RelicProgress => ({ level: 1, exp: 0, awakening: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] });
+  const base = (): RelicProgress => ({ level: 1, exp: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] });
 
   it("는 단계마다 레벨 상한을 표대로 연다", () => {
     expect(relicLevelCap(0)).toBe(RELIC_LEVEL_CAP);
@@ -147,13 +148,13 @@ describe("돌파", () => {
     expect(() => relicLevelCap(BREAKTHROUGH_STEPS.length + 1)).toThrow(RangeError);
   });
 
-  it("는 레벨을 상한까지 채우고 재료가 있어야 할 수 있다", () => {
+  it("는 레벨을 상한까지 채우고 그 개체의 파편이 있어야 할 수 있다", () => {
     const step = nextBreakthrough(0)!;
-    const wallet = { dnaFragments: step.dnaFragments, cheesecake: step.cheesecake };
-    expect(canBreakThrough(base(), wallet)).toBe(false); // 레벨이 상한에 못 미친다
+    expect(canBreakThrough(base(), step.fragments, step.cheesecake)).toBe(false); // 레벨이 상한에 못 미친다
     const maxed = { ...base(), level: RELIC_LEVEL_CAP };
-    expect(canBreakThrough(maxed, wallet)).toBe(true);
-    expect(canBreakThrough(maxed, { ...wallet, dnaFragments: step.dnaFragments - 1 })).toBe(false);
+    expect(canBreakThrough(maxed, step.fragments, step.cheesecake)).toBe(true);
+    expect(canBreakThrough(maxed, step.fragments - 1, step.cheesecake)).toBe(false);
+    expect(canBreakThrough(maxed, step.fragments, step.cheesecake - 1)).toBe(false);
   });
 
   it("뒤에는 열린 상한까지 다시 급여할 수 있다", () => {

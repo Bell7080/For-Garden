@@ -1,6 +1,6 @@
 import { elementMultiplier } from "./element";
 import { ferocityDamageBonus } from "./ferocity";
-import { awakeningBonus } from "./relicProgression";
+import { breakthroughBonus } from "./relicProgression";
 import type { Skill } from "./types";
 import type { Combatant, DamageInput } from "./combatTypes";
 
@@ -20,7 +20,7 @@ export function computeDamage(attacker: Combatant, target: Combatant, input: Dam
   const offense = input.damageType === "physical" ? attacker.def.stats.atk : attacker.def.stats.ap;
   const defense = input.damageType === "physical" ? target.def.stats.def : target.def.stats.res;
   const critical = input.isCritical ? attacker.def.stats.critDamage / 100 : 1;
-  const opened = awakeningBonus(attacker.awakening);
+  const opened = breakthroughBonus(attacker.breakthrough);
   const awakened = 1 + (input.kind === "ultimate" ? opened.ultimateDamage : input.kind === "basic" ? opened.basicDamage : 0);
   const raw = ((offense * input.power) / 100) * critical * awakened * (1 + ferocityDamageBonus(attacker.ferocity));
   const afterDefense = (raw * 100) / (100 + defense);

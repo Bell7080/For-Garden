@@ -39,6 +39,7 @@ import {
 import type { MotionPlayback } from "../puppets/assets";
 import { ultimatePresentationFor } from "../data/ultimatePresentations";
 import { relicProgression } from "../managers/RelicProgressionManager";
+import { relicStars } from "../core/relicProgression";
 
 /**
  * 여섯이 돌아다닐 수 있는 범위.
@@ -133,10 +134,10 @@ export class BattleScene extends Phaser.Scene {
     // 유대는 정적 RelicDef가 아니라 현재 플레이어의 저장 진행에서 전투 스냅샷으로 넘긴다.
     const bonds = Object.fromEntries(session.party.map((id) => [id, session.relicProgress[id]?.bondLevel ?? 0]));
     // 각성 단계도 같은 방식으로 스냅샷을 넘긴다. 전투 코어는 저장 상태를 직접 읽지 않는다.
-    const awakenings = Object.fromEntries(session.party.map((id) => [id, session.relicProgress[id]?.awakening ?? 0]));
+    const breakthroughs = Object.fromEntries(session.party.map((id) => [id, session.relicProgress[id]?.breakthrough ?? 0]));
     // UI와 같은 성장 계산기의 스냅샷을 복사해 전투가 룬 수치를 다시 계산하지 않게 한다.
     const players = session.party.map((id) => ({ ...getRelic(id), stats: relicProgression.getFinalStats(id) }));
-    this.state = createSkirmish(players, getStageEnemies(stage), ARENA, bonds, awakenings);
+    this.state = createSkirmish(players, getStageEnemies(stage), ARENA, bonds, breakthroughs);
     this.views.clear();
     this.profiles = [];
     this.finished = false;
@@ -255,6 +256,7 @@ export class BattleScene extends Phaser.Scene {
         label: fighter.def.name,
         sub: `각성 · ${fighter.def.ultimate.name}`,
         rarity: fighter.def.rarity,
+        stars: relicStars(fighter.breakthrough),
       });
       card.hit.on("pointerdown", () => {
         // 기존 입력 규칙대로 누른 순간만 추가 확대하고, 잠금 카드는 반응하지 않는다.

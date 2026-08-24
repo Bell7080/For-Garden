@@ -2,7 +2,7 @@ import { canPull, pull, resolveAcquisitions, spend } from "../core/gacha";
 import { BANNERS } from "../data/banners";
 import { findAdRewardSlot } from "../data/adRewards";
 import { consumeRestorationEntry, normalizeDailyContent } from "../core/dailyContent";
-import { canBreakThrough, canFeedRelic, feedRelic as calculateFeed, FEED_UNIT, nextBreakthrough, relicLevelCap } from "../core/relicProgression";
+import { BREAKTHROUGH_CAP, canBreakThrough, canFeedRelic, feedRelic as calculateFeed, FEED_UNIT, nextBreakthrough, relicLevelCap, RELIC_STAR_CAP, relicStars } from "../core/relicProgression";
 import { BOND_XP_REWARD, grantBondXp, grantDailyLobbyBondXp } from "../core/bond";
 import { MISSIONS, applyMissionEvent, claimableMissionIds, normalizeMissions } from "../core/missions";
 import { DAILY_RESTORATION, getStage } from "../data/stages";
@@ -184,20 +184,20 @@ export class FakeServer implements GameApi {
 
     // 원본을 전혀 건드리지 않은 복제 상태에서 비용·천장·보유 결과를 모두 먼저 계산한다.
     const pulled = pull(banner, request.count, this.state.gachaPityByGroup[banner.pityGroupId] ?? { pullsSinceSsr: 0, pickupGuaranteed: false }, this.random);
-    const masteryById = Object.fromEntries(Object.entries(this.state.relicProgress).map(([id, value]) => [id, value.awakening]));
-    const outcome = resolveAcquisitions(this.state.owned, masteryById, pulled.relicIds);
+    const starsById = Object.fromEntries(Object.entries(this.state.relicProgress).map(([id, value]) => [id, relicStars(value.breakthrough)]));
+    const outcome = resolveAcquisitions(this.state.owned, this.state.relicFragments, pulled.relicIds, starsById, RELIC_STAR_CAP);
     // 최초 획득은 반드시 기본 성장 레코드를 만들고, 중복 변화도 같은 복제본에 반영한다.
     const nextProgress = Object.fromEntries(Object.entries(this.state.relicProgress).map(([id, value]) => [id, { ...value, heartGemSlots: [...value.heartGemSlots] as typeof value.heartGemSlots }]));
     for (const result of outcome.slots) {
-      // 최초 획득만 유대 경험치를 지급하며 중복 획득은 DNA 처리만 수행한다.
+      // 최초 획득만 유대 경험치를 지급한다. 중복은 파편(또는 DNA)으로만 남고 성장 레코드를
+      // 건드리지 않는다 — 별은 플레이어가 파편을 써서 스스로 올린다.
       if (!nextProgress[result.relicId]) nextProgress[result.relicId] = grantBondXp(createInitialRelicProgress(), BOND_XP_REWARD.firstAcquisition).progress;
-      nextProgress[result.relicId].awakening = result.dnaAfter;
     }
     const nextWallet = { ...spend(this.state.wallet, banner, request.count), dnaFragments: this.state.wallet.dnaFragments + outcome.overflowFragments };
     const nextPity = { ...this.state.gachaPityByGroup, [banner.pityGroupId]: pulled.pity };
     // 발굴 성공 이벤트는 결과 확정 뒤 이 API 경계에서만 임무로 환산한다.
     const nextMissions = applyMissionEvent(this.state.missions, { type: "excavation_completed", count: request.count }, this.now());
-    const nextState: Session = { ...this.state, wallet: nextWallet, owned: outcome.ownedRelicIds, relicProgress: nextProgress, gachaPityByGroup: nextPity, missions: nextMissions };
+    const nextState: Session = { ...this.state, wallet: nextWallet, owned: outcome.ownedRelicIds, relicProgress: nextProgress, relicFragments: outcome.fragmentsById, gachaPityByGroup: nextPity, missions: nextMissions };
 
     // 저장 실패도 원본 메모리에 부분 반영되지 않도록 저장을 먼저 성공시킨 뒤 필드를 일괄 교체한다.
     this.validateState(nextState);
@@ -205,6 +205,7 @@ export class FakeServer implements GameApi {
     this.state.wallet = nextWallet;
     this.state.owned = outcome.ownedRelicIds;
     this.state.relicProgress = nextProgress;
+    this.state.relicFragments = outcome.fragmentsById;
     this.state.gachaPityByGroup = nextPity;
     this.state.missions = nextMissions;
     return {
@@ -243,17 +244,16 @@ export class FakeServer implements GameApi {
     const step = nextBreakthrough(current.breakthrough);
     if (!step) throw new GameApiError("RELIC_MAX_LEVEL", "더 뚫을 천장이 없습니다.");
     if (current.level < relicLevelCap(current.breakthrough)) throw new GameApiError("RELIC_MAX_LEVEL", "레벨을 상한까지 올려야 돌파할 수 있습니다.");
-    if (!canBreakThrough(current, this.state.wallet)) throw new GameApiError("INSUFFICIENT_CURRENCY", "돌파 재료가 부족합니다.");
+    const held = this.state.relicFragments[relicId] ?? 0;
+    if (!canBreakThrough(current, held, this.state.wallet.cheesecake)) throw new GameApiError("INSUFFICIENT_CURRENCY", "돌파 재료가 부족합니다.");
     const breakthrough = current.breakthrough + 1;
     const nextProgress = { ...this.state.relicProgress, [relicId]: { ...current, breakthrough } };
-    const nextWallet = {
-      ...this.state.wallet,
-      dnaFragments: this.state.wallet.dnaFragments - step.dnaFragments,
-      cheesecake: this.state.wallet.cheesecake - step.cheesecake,
-    };
-    this.persist({ ...this.state, relicProgress: nextProgress, wallet: nextWallet });
-    this.state.relicProgress = nextProgress; this.state.wallet = nextWallet;
-    return { ...this.snapshot(), relicId, breakthrough, levelCap: relicLevelCap(breakthrough) };
+    // 파편은 그 개체의 것만 줄어든다. 공용 재화가 아니므로 다른 개체의 진행에 영향이 없다.
+    const nextFragments = { ...this.state.relicFragments, [relicId]: held - step.fragments };
+    const nextWallet = { ...this.state.wallet, cheesecake: this.state.wallet.cheesecake - step.cheesecake };
+    this.persist({ ...this.state, relicProgress: nextProgress, relicFragments: nextFragments, wallet: nextWallet });
+    this.state.relicProgress = nextProgress; this.state.relicFragments = nextFragments; this.state.wallet = nextWallet;
+    return { ...this.snapshot(), relicId, breakthrough, levelCap: relicLevelCap(breakthrough), stars: relicStars(breakthrough), fragments: nextFragments[relicId] };
   }
 
   /** 승리 결과 확인 시 최초/반복 보상을 판정하고 클리어와 지갑을 함께 저장한다. */
@@ -407,15 +407,16 @@ export class FakeServer implements GameApi {
 
     const nextWallet = { ...this.state.wallet, dnaFragments: this.state.wallet.dnaFragments - offer.dnaCost };
     const nextProgress = { ...this.state.relicProgress };
+    const nextFragments = { ...this.state.relicFragments };
     const nextRunes = [...this.state.runeInventory];
     let grantedRune: RuneInstance | undefined;
-    if (offer.kind === "relic_awakening") {
+    if (offer.kind === "relic_fragment") {
       const target = request.relicId ? this.state.relicProgress[request.relicId] : undefined;
-      if (!request.relicId || !this.state.owned.has(request.relicId) || !target || target.awakening >= 5) {
-        throw new GameApiError("INVALID_EXCHANGE_TARGET", "각성할 수 있는 보유 렐릭을 선택해야 합니다.");
+      if (!request.relicId || !this.state.owned.has(request.relicId) || !target) {
+        throw new GameApiError("INVALID_EXCHANGE_TARGET", "보유한 렐릭을 선택해야 합니다.");
       }
-      // 선택한 한 렐릭만 복사해 각성 1단계를 확정하며 다른 렐릭 진행은 건드리지 않는다.
-      nextProgress[request.relicId] = { ...target, heartGemSlots: [...target.heartGemSlots] as typeof target.heartGemSlots, awakening: target.awakening + 1 };
+      // 마일리지는 파편으로 돌아온다. 별을 올릴지는 플레이어가 정보창에서 정한다.
+      nextFragments[request.relicId] = (nextFragments[request.relicId] ?? 0) + 1;
     } else if (offer.kind === "rune") {
       grantedRune = this.createGrantedRune(offer.rarity, nextRunes);
       nextRunes.push(grantedRune);
@@ -423,10 +424,10 @@ export class FakeServer implements GameApi {
       nextWallet.fossil += offer.fossilAmount;
     }
 
-    const nextState = { ...this.state, wallet: nextWallet, relicProgress: nextProgress, runeInventory: nextRunes };
+    const nextState = { ...this.state, wallet: nextWallet, relicProgress: nextProgress, relicFragments: nextFragments, runeInventory: nextRunes };
     this.persist(nextState);
-    this.state.wallet = nextWallet; this.state.relicProgress = nextProgress; this.state.runeInventory = nextRunes;
-    return { ...this.snapshot(), offerId: offer.id, rewardKind: offer.kind, relicId: offer.kind === "relic_awakening" ? request.relicId : undefined, grantedRune: grantedRune ? this.cloneRune(grantedRune) : undefined };
+    this.state.wallet = nextWallet; this.state.relicProgress = nextProgress; this.state.relicFragments = nextFragments; this.state.runeInventory = nextRunes;
+    return { ...this.snapshot(), offerId: offer.id, rewardKind: offer.kind, relicId: offer.kind === "relic_fragment" ? request.relicId : undefined, grantedRune: grantedRune ? this.cloneRune(grantedRune) : undefined };
   }
 
   /** 검증 뒤 서버 난수로 한 번 판정하고 골드·룬을 새 상태에 함께 저장한다. */
@@ -560,6 +561,7 @@ export class FakeServer implements GameApi {
       gachaPityByGroup: Object.fromEntries(Object.entries(this.state.gachaPityByGroup).map(([id, pity]) => [id, { ...pity }])),
       ownedRelicIds: [...this.state.owned],
       relicProgress,
+      relicFragments: { ...this.state.relicFragments },
       party: [...this.state.party],
       favorite: this.state.favorite,
       clearedStageIds: [...this.state.cleared],
@@ -636,7 +638,7 @@ export class FakeServer implements GameApi {
     // 성장 레코드의 세 슬롯만 장착 기준으로 사용해 별도 장착표와의 불일치를 없앤다.
     const equipped = Object.values(next.relicProgress).flatMap(({ heartGemSlots }) => heartGemSlots.filter((id): id is string => id !== null));
     if (equipped.some((id) => !runeIds.includes(id)) || new Set(equipped).size !== equipped.length) throw new GameApiError("INVALID_STATE", "룬 장착 소유권 또는 중복이 올바르지 않습니다.");
-    if (Object.values(next.relicProgress).some((progress) => progress.awakening < 0 || progress.awakening > 5)) throw new GameApiError("INVALID_STATE", "렐릭 각성 상한을 벗어났습니다.");
+    if (Object.values(next.relicProgress).some((progress) => progress.breakthrough < 0 || progress.breakthrough > BREAKTHROUGH_CAP)) throw new GameApiError("INVALID_STATE", "렐릭 한계 돌파 상한을 벗어났습니다.");
   }
 
   private delay(): Promise<void> {

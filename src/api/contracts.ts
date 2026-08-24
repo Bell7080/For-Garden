@@ -56,6 +56,8 @@ export interface PlayerStateDto {
   ownedRelicIds: string[];
   /** 렐릭 id별 성장과 Heart Gem 3슬롯 장착 상태다. */
   relicProgress: Record<string, RelicProgress>;
+  /** 개체별 파편 보유량. 중복 발굴로 쌓이고 한계 돌파에 쓴다. */
+  relicFragments: Record<string, number>;
   /** 서버 동기화 대상인 편성, 애착, 클리어 진행이다. 로컬 SaveData와 버전 책임은 분리한다. */
   party: string[];
   favorite: string;
@@ -207,7 +209,7 @@ export type ApiErrorCode = "AD_SLOT_NOT_FOUND" | "AD_TOKEN_INVALID" | "AD_REQUES
  */
 export interface FeedRelicResponse extends PlayerStateDto { relicId: string; feeds: number; cheesecakeSpent: number; levelsGained: number; }
 /** 돌파 결과. 열린 상한을 함께 돌려줘 화면이 표를 다시 뒤지지 않게 한다. */
-export interface BreakThroughResponse extends PlayerStateDto { relicId: string; breakthrough: number; levelCap: number; }
+export interface BreakThroughResponse extends PlayerStateDto { relicId: string; breakthrough: number; levelCap: number; /** 돌파 뒤의 별(1~5). */ stars: number; /** 남은 그 개체의 파편. */ fragments: number; }
 /** 전투 확인 시 저장되는 보상으로 최초 여부와 획득 치즈케이크를 결과 UI에 그대로 전달한다. */
 export interface CompleteStageResponse extends PlayerStateDto { stageId: string; firstClear: boolean; cheesecakeEarned: number; }
 /** 로비 터치 결과는 중복 여부와 대사 UI가 표시할 유대 변화량을 돌려준다. */

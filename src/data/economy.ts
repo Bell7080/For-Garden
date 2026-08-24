@@ -23,11 +23,11 @@ export const FREE_MONTHLY_TARGETS: Readonly<Record<"daily" | "weekly" | "event" 
 };
 
 /** DNA 교환 결과는 무작위 추첨 없이 요청에서 고른 보상으로 확정된다. */
-export type DnaExchangeKind = "relic_awakening" | "rune" | "past_event_currency";
+export type DnaExchangeKind = "relic_fragment" | "rune" | "past_event_currency";
 
 /** DNA 조각 교환소의 운영 카탈로그다. targetRequired 항목만 요청에서 대상을 받는다. */
 export const DNA_EXCHANGE_OFFERS = [
-  { id: "dna-awakening", kind: "relic_awakening", name: "보유 렐릭 각성 조각", dnaCost: 10, targetRequired: true },
+  { id: "dna-fragment", kind: "relic_fragment", name: "보유 렐릭 파편", dnaCost: 10, targetRequired: true },
   // 교환품은 특정 정적 ID가 아니라 서버가 옵션을 생성하는 희귀도 계약만 지정한다.
   { id: "dna-rune", kind: "rune", name: "고급 룬 제작 재료", dnaCost: 15, targetRequired: false, rarity: "uncommon" },
   { id: "dna-past-event", kind: "past_event_currency", name: "과거 탐사 기록 교환권", dnaCost: 5, targetRequired: false, fossilAmount: 300 },

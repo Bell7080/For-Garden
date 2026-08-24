@@ -9,7 +9,7 @@ export interface Combatant {
   ferocity: number;
   bondLevel: number;
   ferocityFever: boolean;
-  awakening: number;
+  breakthrough: number;
 }
 
 /** 피해 계산기가 난수나 스킬 데이터 저장소에 직접 의존하지 않도록 확정한 입력이다. */

@@ -23,8 +23,8 @@ describe("발굴 연출 상태", () => {
 
   it("서버 결과의 최고 등급과 다중 신규 첫 대면 순서를 보존한다", () => {
     expect(highestRarity(["R", "SSR", "SR"])).toBe("SSR");
-    const slot = (relicId: string, kind: "new" | "mastery") => ({ relicId, kind, dnaBefore: 0, dnaAfter: 0, overflowFragments: 0 });
-    expect(firstMeetingRelicIds([slot("rex", "new"), slot("anky", "new"), slot("rex", "new"), slot("spino", "mastery")]))
+    const slot = (relicId: string, kind: "new" | "fragment") => ({ relicId, kind, fragments: kind === "fragment" ? 1 : 0, overflowFragments: 0 });
+    expect(firstMeetingRelicIds([slot("rex", "new"), slot("anky", "new"), slot("rex", "new"), slot("spino", "fragment")]))
       .toEqual(["rex", "anky"]);
   });
 });

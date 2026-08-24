@@ -81,13 +81,15 @@ describe("SaveManager", () => {
     legacy.saveVersion = 5;
     const progress = legacy.relicProgress as Record<string, Record<string, unknown>>;
     for (const value of Object.values(progress)) {
-      delete value.awakening; delete value.exp;
-      value.dnaMastery = 3;
+      delete value.exp;
+      value.awakening = 3;
     }
 
     const migrated = manager.migrate(legacy);
     expect(migrated.saveVersion).toBe(CURRENT_SAVE_VERSION);
-    expect(migrated.relicProgress.anky).toMatchObject({ awakening: 3, exp: 0 });
+    expect(migrated.relicProgress.anky).toMatchObject({ exp: 0 });
+    // 예전 각성 횟수는 같은 수의 파편으로 돌아온다. 이미 치른 중복이 사라지지 않아야 한다.
+    expect(migrated.relicFragments.anky).toBe(3);
   });
 
   it("신규 획득 성장 정보와 DNA 조각을 저장 후 그대로 복구한다", () => {
@@ -95,13 +97,13 @@ describe("SaveManager", () => {
     const manager = new SaveManager(storage);
     const source = createDefaultSession();
     source.owned.add("dodo");
-    source.relicProgress.dodo = { level: 1, exp: 0, awakening: 5, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] };
+    source.relicProgress.dodo = { level: 1, exp: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] };
     source.wallet.dnaFragments = 3;
 
     manager.save(source);
     const loaded = manager.load()!;
     expect(loaded.owned.has("dodo")).toBe(true);
-    expect(loaded.relicProgress.dodo).toMatchObject({ level: 1, awakening: 5 });
+    expect(loaded.relicProgress.dodo).toMatchObject({ level: 1, breakthrough: 0 });
     expect(loaded.wallet.dnaFragments).toBe(3);
   });
 
@@ -187,9 +189,9 @@ describe("SaveManager", () => {
     expect(() => new SaveManager(new MemoryStorage()).validate(data)).toThrow("서로 다른 보유 렐릭");
   });
 
-  it("범위를 벗어난 DNA 숙련도를 거부한다", () => {
+  it("범위를 벗어난 한계 돌파 단계를 거부한다", () => {
     const data = validData();
-    data.relicProgress.anky.awakening = 6;
+    data.relicProgress.anky.breakthrough = 9;
     expect(() => new SaveManager(new MemoryStorage()).validate(data)).toThrow("성장 정보");
   });
 

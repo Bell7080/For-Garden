@@ -25,6 +25,7 @@ import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { PortraitCard } from "../ui/PortraitCard";
 import { firstMeetingLine } from "../data/relicFirstMeetings";
 import { audioManager, type AudioScope } from "../managers/AudioManager";
+import { relicProgression } from "../managers/RelicProgressionManager";
 
 /** 마일리지 상점 버튼의 황금빛. 다른 버튼과 갈라 놓아 "쌓아 두었다 쓰는 곳"임을 알린다. */
 const MILEAGE_EDGE = 0xf2c744;
@@ -412,14 +413,14 @@ export class LabScene extends Phaser.Scene {
       const def = getRelic(result.relicId);
       const badge = result.kind === "new"
         ? "신규"
-        : result.kind === "mastery"
-          ? `DNA ${result.dnaBefore}→${result.dnaAfter}`
+        : result.kind === "fragment"
+          ? `파편 +${result.fragments}`
           : `DNA 조각 +${result.overflowFragments}`;
       const columns = results.length === 1 ? 1 : 2;
       const card = new PortraitCard(this, columns === 1 ? cx : 285 + (index % 2) * 510, results.length === 1 ? 850 : 390 + Math.floor(index / 2) * 230, {
         width: results.length === 1 ? 520 : 440, height: results.length === 1 ? 720 : 210,
         portraitAssetId: def.portraitAssetId, tint: portraitUsesRelicTint(def.portraitAssetId) ? mixWhite(tintFor(def.id), 0.55) : undefined,
-        label: def.name, sub: badge, rarity: def.rarity,
+        label: def.name, sub: badge, rarity: def.rarity, stars: relicProgression.getStars(def.id),
       });
       card.setDepth(902);
       content.add(card);

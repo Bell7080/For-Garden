@@ -24,7 +24,7 @@ function migrateV12Rune(definitionId: string): RuneInstance {
 
 /** 키는 계정 연동 저장소와 충돌하지 않도록 로컬 프로토타입임을 명시한다. */
 export const SAVE_STORAGE_KEY = "eternal-city.local-save";
-export const CURRENT_SAVE_VERSION = 16;
+export const CURRENT_SAVE_VERSION = 17;
 
 type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
@@ -81,6 +81,7 @@ export class SaveManager {
       wallet: { ...state.wallet },
       gachaPityByGroup: Object.fromEntries(Object.entries(state.gachaPityByGroup).map(([id, pity]) => [id, { ...pity }])),
       relicProgress: Object.fromEntries(Object.entries(state.relicProgress).map(([id, value]) => [id, cloneProgress(value)])),
+      relicFragments: { ...state.relicFragments },
       runeInventory: state.runeInventory.map(cloneRune),
       dailyContent: { ...state.dailyContent, completedIds: [...state.dailyContent.completedIds], claimedRewardIds: [...state.dailyContent.claimedRewardIds] },
       // 임무 진행 객체와 수령 배열도 호출자가 저장 후 바꾸지 못하도록 복사한다.
@@ -160,21 +161,29 @@ export class SaveManager {
       bondLevel: progress.bondLevel ?? 0,
       bondXp: progress.bondXp ?? 0,
       lastLobbyInteractionDate: progress.lastLobbyInteractionDate ?? "",
-      // DNA 숙련도는 이름만 각성으로 바뀌었다. 같은 렐릭을 다시 만난 횟수라는 뜻이 그대로다.
-      awakening: progress.awakening ?? (progress as unknown as { dnaMastery?: number }).dnaMastery ?? 0,
       // 급여로 쌓는 경험치는 v5까지 없었다. 지금 레벨의 시작점에서 다시 시작한다.
       exp: progress.exp ?? 0,
-      // 돌파는 v7에서 생겼다. 예전 저장은 아직 천장을 뚫지 않은 상태로 본다.
-      breakthrough: progress.breakthrough ?? 0,
+      // 돌파는 v7에서 생겼다. 예전 저장은 아직 천장을 뚫지 않은 상태로 본다(별 하나).
+      breakthrough: Math.min(BREAKTHROUGH_CAP, progress.breakthrough ?? 0),
       // v12 슬롯의 정적 ID와 임시 v13 장착표를 최종 단일 기준인 RelicProgress 슬롯으로 합친다.
       heartGemSlots: (v13Slots[id] ?? progress.heartGemSlots ?? [null, null, null]).map((slot) => slot === null ? null : (legacyIdMap.get(slot) ?? slot)) as RelicProgress["heartGemSlots"],
     }]));
+    // 중복 발굴은 v16까지 "각성" 수치로 곧바로 쌓였다. 지금은 파편을 모아 스스로 돌파하는
+    // 방식이라, 예전에 쌓인 각성 횟수를 같은 수의 파편으로 돌려준다 — 이미 치른 중복이
+    // 사라지지 않아야 한다.
+    // v17부터만 파편 표를 저장한다. 그 이전 저장에 같은 이름의 필드가 남아 있어도 각성
+    // 횟수에서 다시 만든다 — 옛 저장이 스스로 채웠을 리 없는 값이라 신뢰할 수 없다.
+    const savedFragments = Number(legacy.saveVersion) >= 17 && legacy.relicFragments && typeof legacy.relicFragments === "object"
+      ? legacy.relicFragments as Record<string, number> : undefined;
+    const relicFragments = savedFragments ?? Object.fromEntries(Object.entries(savedProgress)
+      .map(([id, progress]) => [id, (progress as unknown as { awakening?: number }).awakening ?? 0])
+      .filter(([, count]) => (count as number) > 0));
     // 반환 전 폐기 필드를 구조 분해해 현재 저장 JSON에 다시 섞이지 않게 한다.
     const { ownedHeartGemIds: _oldOwned, runeSlotsByRelicId: _oldSlots, ...current } = legacy;
-    if (legacy.saveVersion === undefined) return { ...current, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, gachaPityByGroup: normalizedPity, dailyContent, dailyAdRewards, missions, productPurchases, runeInventory } as unknown as SaveData;
-    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, CURRENT_SAVE_VERSION];
+    if (legacy.saveVersion === undefined) return { ...current, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, dailyAdRewards, missions, productPurchases, runeInventory } as unknown as SaveData;
+    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, CURRENT_SAVE_VERSION];
     if (!supported.includes(legacy.saveVersion as number)) throw new SaveDataError(`지원하지 않는 저장 버전입니다: ${String(legacy.saveVersion)}`);
-    return { ...current, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory } as unknown as SaveData;
+    return { ...current, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory } as unknown as SaveData;
   }
 
   /** 콘텐츠 ID와 교차 필드 불변식까지 검사해 부분 손상을 조용히 전파하지 않는다. */
@@ -200,8 +209,12 @@ export class SaveManager {
     // 보유 목록과 성장 레코드는 항상 정확히 같은 렐릭 집합이어야 한다.
     if (data.ownedRelicIds.some((id) => !data.relicProgress[id]) || Object.keys(data.relicProgress).some((id) => !data.ownedRelicIds.includes(id))) fail("보유 렐릭과 성장 정보가 일치하지 않습니다.");
     for (const [id, progress] of Object.entries(data.relicProgress)) {
-      if (!relicIds.has(id) || !Number.isInteger(progress.awakening) || progress.awakening < 0 || progress.awakening > 5 || !Number.isInteger(progress.breakthrough) || progress.breakthrough < 0 || progress.breakthrough > BREAKTHROUGH_CAP || !Number.isInteger(progress.exp) || progress.exp < 0 || !Number.isInteger(progress.bondLevel) || progress.bondLevel < 0 || progress.bondLevel > 10 || !Number.isInteger(progress.bondXp) || progress.bondXp < 0 || progress.bondXp > 650 || typeof progress.lastLobbyInteractionDate !== "string" || !Number.isInteger(progress.level) || progress.level < 1 || !Array.isArray(progress.heartGemSlots) || progress.heartGemSlots.length !== 3) fail("렐릭 성장 정보가 올바르지 않습니다.");
+      if (!relicIds.has(id) || !Number.isInteger(progress.breakthrough) || progress.breakthrough < 0 || progress.breakthrough > BREAKTHROUGH_CAP || !Number.isInteger(progress.exp) || progress.exp < 0 || !Number.isInteger(progress.bondLevel) || progress.bondLevel < 0 || progress.bondLevel > 10 || !Number.isInteger(progress.bondXp) || progress.bondXp < 0 || progress.bondXp > 650 || typeof progress.lastLobbyInteractionDate !== "string" || !Number.isInteger(progress.level) || progress.level < 1 || !Array.isArray(progress.heartGemSlots) || progress.heartGemSlots.length !== 3) fail("렐릭 성장 정보가 올바르지 않습니다.");
     }
+    // 파편은 보유 렐릭의 것만, 음이 아닌 정수로만 남는다. 보유하지 않은 개체의 파편이
+    // 섞이면 어디에도 쓸 수 없는 값이 저장에 남는다.
+    if (!data.relicFragments || typeof data.relicFragments !== "object"
+      || Object.entries(data.relicFragments).some(([id, count]) => !data.ownedRelicIds.includes(id) || !Number.isInteger(count) || count < 0)) fail("렐릭 파편 정보가 올바르지 않습니다.");
     if (!Array.isArray(data.runeInventory)) fail("룬 인벤토리가 올바르지 않습니다.");
     try { data.runeInventory.forEach(assertValidRuneInstance); } catch { fail("룬 인벤토리에 손상된 인스턴스가 있습니다."); }
     const runeIds = data.runeInventory.map(({ instanceId }) => instanceId);
@@ -224,6 +237,7 @@ export class SaveManager {
       observationRecords: data.observationRecords.map((record) => ({ ...record })),
       selectedStageId: data.selectedStageId, party: [...data.party], cleared: new Set(data.clearedStageIds), owned: new Set(data.ownedRelicIds), favorite: data.favorite, bookmarked: new Set(data.bookmarkedRelicIds),
       wallet: { ...data.wallet }, relicProgress: Object.fromEntries(Object.entries(data.relicProgress).map(([id, value]) => [id, cloneProgress(value)])),
+      relicFragments: { ...data.relicFragments },
       runeInventory: data.runeInventory.map(cloneRune),
       gachaPityByGroup: Object.fromEntries(Object.entries(data.gachaPityByGroup).map(([id, pity]) => [id, { ...pity }])),
       dailyContent: { ...data.dailyContent, completedIds: [...data.dailyContent.completedIds], claimedRewardIds: [...data.dailyContent.claimedRewardIds] },

@@ -49,6 +49,8 @@ export interface Session {
   gachaPityByGroup: Record<string, GachaPityState>;
   /** 렐릭 id별 성장/장착 상태다. 객체와 배열만 사용해 그대로 직렬화할 수 있다. */
   relicProgress: Record<string, RelicProgress>;
+  /** 개체별 파편. 중복 발굴로 쌓이고 한계 돌파에 쓴다. 공용 DNA 조각과 섞지 않는다. */
+  relicFragments: Record<string, number>;
   /** 보유 룬 인스턴스다. 정적 정의 ID가 아니라 각 개체의 고유 ID로 구분한다. */
   runeInventory: RuneInstance[];
   /** 날짜가 바뀔 때 서버 시간 기준으로 교체할 일일 콘텐츠 진행이다. */
@@ -110,6 +112,13 @@ export interface SaveData {
   /** 배너 교체에도 유지되는 그룹 ID를 키로 쓰며 개별 배너 ID에는 귀속하지 않는다. */
   gachaPityByGroup: Record<string, GachaPityState>;
   relicProgress: Record<string, RelicProgress>;
+  /**
+   * 개체별 파편 보유량.
+   *
+   * 같은 개체를 다시 발굴하면 그 개체의 일러스트가 박힌 파편이 쌓이고, 파편으로 한계를
+   * 돌파해 별을 올린다. 공용 DNA 조각과 섞지 않는다 — DNA는 별 다섯에 닿은 뒤의 마일리지다.
+   */
+  relicFragments: Record<string, number>;
   runeInventory: RuneInstance[];
   dailyContent: DailyContentState;
   missions: MissionState;
@@ -120,7 +129,7 @@ export interface SaveData {
 /** 신규 렐릭에 부여하는 독립 복사 가능한 기본 성장 상태다. */
 export function createInitialRelicProgress(): RelicProgress {
   // 유대는 플레이어별 진행 값이며 신규/마이그레이션 계정 모두 0에서 시작한다.
-  return { level: 1, exp: 0, awakening: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] };
+  return { level: 1, exp: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] };
 }
 
 /** 새 계정의 시작 렐릭도 최초 획득 경로를 거친 것으로 동일한 유대 보상을 받는다. */
@@ -143,6 +152,7 @@ export function createDefaultSession(): Session {
     wallet: { fossil: 1200, amber: 10, gems: 120, gold: 25_400, stamina: 60, dnaFragments: 0, cheesecake: 0 },
     gachaPityByGroup: Object.fromEntries([...new Set(BANNERS.map(({ pityGroupId }) => pityGroupId))].map((id) => [id, { pullsSinceSsr: 0, pickupGuaranteed: false }])),
     relicProgress: Object.fromEntries(STARTER_RELICS.map((id) => [id, createStarterProgress()])),
+    relicFragments: {},
     // 신규 계정은 정적 정의 ID가 아니라 서버 지급 계약을 통해 룬 인스턴스를 얻는다.
     runeInventory: [],
     dailyContent: { date: "", restorationEntries: 0, completedIds: [], claimedRewardIds: [] },

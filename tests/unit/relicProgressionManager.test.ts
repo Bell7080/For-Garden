@@ -9,7 +9,7 @@ describe("RelicProgressionManager", () => {
     const manager = new RelicProgressionManager(state);
 
     expect(state.owned.has("dodo")).toBe(false);
-    expect(manager.getProgress("dodo")).toMatchObject({ level: 1, awakening: 0 });
+    expect(manager.getProgress("dodo")).toMatchObject({ level: 1, breakthrough: 0 });
     expect(state.relicProgress).not.toHaveProperty("dodo");
   });
 

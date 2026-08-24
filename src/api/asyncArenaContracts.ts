@@ -17,7 +17,7 @@ export interface DefenseUnitSnapshot {
   /** 전투 보너스를 복원하기 위한 유대 단계다. */
   bondLevel: number;
   /** 시작 궁극기 등 전투 보너스를 복원하기 위한 각성 단계다. */
-  awakening: number;
+  breakthrough: number;
   /** 서버가 게시 시점에 확정한 룬 보정치다. 변경 가능한 인벤토리 객체나 인스턴스 ID를 노출하지 않는다. */
   runeStats: Readonly<Partial<Record<import("../core/runes").RuneStatKey, number>>>;
 }

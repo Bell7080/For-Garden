@@ -25,7 +25,7 @@ function makeSession(fossil = 1000): Session {
     bookmarked: new Set<string>(),
     gachaPityByGroup: { "standard-fossil": { pullsSinceSsr: 0, pickupGuaranteed: false }, "limited-pickup": { pullsSinceSsr: 0, pickupGuaranteed: false } },
     wallet: { fossil, amber: 10, gems: 0, gold: 0, stamina: 0, dnaFragments: 0, cheesecake: 0 },
-    relicProgress: Object.fromEntries(["anky", "rex", "dodo"].map((id) => [id, { level: id === "anky" ? 2 : 1, exp: 0, awakening: id === "anky" ? 1 : 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] }])),
+    relicFragments: {}, relicProgress: Object.fromEntries(["anky", "rex", "dodo"].map((id) => [id, { level: id === "anky" ? 2 : 1, exp: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] }])),
     runeInventory: [],
     dailyContent: { date: "", restorationEntries: 0, completedIds: [], claimedRewardIds: [] },
     missions: { dailyKey: "", weeklyKey: "", progress: {}, claimedIds: [] },
@@ -86,16 +86,17 @@ describe("FakeServer", () => {
     await expect(server.feedRelic("anky")).rejects.toMatchObject({ code: "INSUFFICIENT_CURRENCY" });
   });
 
-  it("돌파는 재료를 차감하고 상한을 연 뒤에만 다시 급여할 수 있다", async () => {
+  it("한계 돌파는 그 개체의 파편을 차감하고 별과 상한을 함께 올린다", async () => {
     const state = makeSession();
     const step = BREAKTHROUGH_STEPS[0];
     state.relicProgress.anky = { ...state.relicProgress.anky, level: RELIC_LEVEL_CAP, exp: 0 };
-    state.wallet.dnaFragments = step.dnaFragments; state.wallet.cheesecake = step.cheesecake;
+    state.relicFragments.anky = step.fragments; state.wallet.cheesecake = step.cheesecake;
     const server = new FakeServer(state, { latencyMs: 0 });
     await expect(server.feedRelic("anky")).rejects.toMatchObject({ code: "RELIC_MAX_LEVEL" });
     const response = await server.breakThroughRelic("anky");
-    expect(response).toMatchObject({ relicId: "anky", breakthrough: 1, levelCap: step.levelCap });
-    expect(state.wallet).toMatchObject({ dnaFragments: 0, cheesecake: 0 });
+    expect(response).toMatchObject({ relicId: "anky", breakthrough: 1, levelCap: step.levelCap, stars: 2, fragments: 0 });
+    expect(state.relicFragments.anky).toBe(0);
+    expect(state.wallet).toMatchObject({ cheesecake: 0 });
     await expect(server.breakThroughRelic("anky")).rejects.toMatchObject({ code: "RELIC_MAX_LEVEL" });
   });
 
@@ -139,7 +140,7 @@ describe("FakeServer", () => {
     const response = await server.pullRelics({ bannerId: "fossil", count: 1 });
 
     expect(response.wallet.fossil).toBe(900);
-    expect(response.results).toEqual([{ relicId: "rex", kind: "mastery", dnaBefore: 0, dnaAfter: 1, overflowFragments: 0 }]);
+    expect(response.results).toEqual([{ relicId: "rex", kind: "fragment", fragments: 1, overflowFragments: 0 }]);
     expect(response.duplicateRelicIds).toEqual(["rex"]);
     expect(state.wallet.fossil).toBe(900);
     expect(state.gachaPityByGroup["standard-fossil"].pullsSinceSsr).toBe(0);
@@ -152,10 +153,12 @@ describe("FakeServer", () => {
     delete state.relicProgress.rex;
     const response = await new FakeServer(state, { latencyMs: 0, random: () => 0 }).pullRelics({ bannerId: "fossil", count: 10 });
     expect(response.results[0].kind).toBe("new");
-    expect(response.results[1]).toMatchObject({ kind: "mastery", dnaBefore: 0, dnaAfter: 1 });
-    expect(state.relicProgress.rex).toMatchObject({ level: 1, awakening: 5 });
+    expect(response.results[1]).toMatchObject({ kind: "fragment", fragments: 1 });
+    // 중복 아홉 장은 모두 그 개체의 파편이다. 별은 파편을 써서 플레이어가 직접 올린다.
+    expect(state.relicProgress.rex).toMatchObject({ level: 1, breakthrough: 0 });
+    expect(state.relicFragments.rex).toBe(9);
     expect(state.relicProgress.rex).toMatchObject({ bondLevel: 1, bondXp: 20 });
-    expect(state.wallet.dnaFragments).toBe(4);
+    expect(state.wallet.dnaFragments).toBe(0);
   });
 
   it("재화가 부족하면 상태를 변경하지 않는다", async () => {
@@ -256,18 +259,18 @@ describe("FakeServer 상품 카탈로그", () => {
 });
 
 describe("FakeServer DNA 조각 교환소와 경제 경계", () => {
-  it("선택한 보유 렐릭만 각성시키고 DNA를 차감한다", async () => {
+  it("선택한 보유 렐릭의 파편만 늘리고 DNA를 차감한다", async () => {
     const state = makeSession(); state.wallet.dnaFragments = 10;
-    const response = await new FakeServer(state, { latencyMs: 0 }).exchangeDna({ offerId: "dna-awakening", relicId: "rex" });
-    expect(response).toMatchObject({ offerId: "dna-awakening", rewardKind: "relic_awakening", wallet: { dnaFragments: 0 } });
-    expect(state.relicProgress.rex.awakening).toBe(1);
-    expect(state.relicProgress.anky.awakening).toBe(1);
+    const response = await new FakeServer(state, { latencyMs: 0 }).exchangeDna({ offerId: "dna-fragment", relicId: "rex" });
+    expect(response).toMatchObject({ offerId: "dna-fragment", rewardKind: "relic_fragment", wallet: { dnaFragments: 0 } });
+    expect(state.relicFragments.rex).toBe(1);
+    expect(state.relicFragments.anky ?? 0).toBe(0);
   });
 
   it("잘못된 대상은 거부하고 같은 정의의 룬도 서로 다른 인스턴스로 지급한다", async () => {
     const state = makeSession(); state.wallet.dnaFragments = 30;
     const server = new FakeServer(state, { latencyMs: 0 });
-    await expect(server.exchangeDna({ offerId: "dna-awakening", relicId: "not-owned" })).rejects.toMatchObject({ code: "INVALID_EXCHANGE_TARGET" });
+    await expect(server.exchangeDna({ offerId: "dna-fragment", relicId: "not-owned" })).rejects.toMatchObject({ code: "INVALID_EXCHANGE_TARGET" });
     const first = await server.exchangeDna({ offerId: "dna-rune" });
     expect(first.runeInventory.runes).toHaveLength(1);
     expect(first.grantedRune).toEqual(first.runeInventory.runes[0]);

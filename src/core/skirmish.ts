@@ -2,7 +2,7 @@ import { amplifyFerocityGain } from "./bond";
 import type { Combatant } from "./combatTypes";
 import { computeDamage, isCriticalHit } from "./damage";
 import { drainFerocityFever, FEROCITY_RULES } from "./ferocity";
-import { awakeningBonus } from "./relicProgression";
+import { breakthroughBonus } from "./relicProgression";
 import type { RelicDef, Side, Skill } from "./types";
 import { canUseUltimate, ULTIMATE_ENERGY_MAX } from "./ultimate";
 
@@ -151,8 +151,8 @@ export const BLEED = {
 /** 항상 같은 결과를 원하는 호출부(테스트)를 위한 기본 판정값 — 치명타가 나지 않는다. */
 const NO_CRIT = (): number => 0.999999;
 
-function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: number, bondLevel = 0, awakening = 0): Fighter {
-  const opened = awakeningBonus(awakening);
+function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: number, bondLevel = 0, breakthrough = 0): Fighter {
+  const opened = breakthroughBonus(breakthrough);
   return {
     def,
     hp: def.stats.hp,
@@ -161,7 +161,7 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     energy: opened.readyUltimate ? def.ultimate.cost : 0,
     ferocity: 0,
     bondLevel,
-    awakening,
+    breakthrough,
     ferocityFever: false,
     id: `${side}-${index}`,
     side,
@@ -206,13 +206,13 @@ export function createSkirmish(
   enemyDefs: RelicDef[],
   arena: Arena,
   playerBondLevels: Readonly<Record<string, number>> = {},
-  playerAwakenings: Readonly<Record<string, number>> = {},
+  playerBreakthroughs: Readonly<Record<string, number>> = {},
 ): SkirmishState {
   const playerSpots = spawnSpots(arena, "player");
   const enemySpots = spawnSpots(arena, "enemy");
   return {
     fighters: [
-      ...playerDefs.map((def, i) => makeFighter(def, "player", i, playerSpots[i].x, playerSpots[i].y, playerBondLevels[def.id] ?? 0, playerAwakenings[def.id] ?? 0)),
+      ...playerDefs.map((def, i) => makeFighter(def, "player", i, playerSpots[i].x, playerSpots[i].y, playerBondLevels[def.id] ?? 0, playerBreakthroughs[def.id] ?? 0)),
       ...enemyDefs.map((def, i) => makeFighter(def, "enemy", i, enemySpots[i].x, enemySpots[i].y)),
     ],
     arena,

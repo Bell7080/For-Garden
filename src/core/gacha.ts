@@ -128,14 +128,15 @@ export function spend(wallet: Wallet, banner: Banner, count: number): Wallet {
   return { ...wallet, [banner.currency]: wallet[banner.currency] - pullCost(banner, count) };
 }
 
-export type AcquisitionKind = "new" | "mastery" | "overflow";
+export type AcquisitionKind = "new" | "fragment" | "overflow";
 
 /** 한 슬롯이 실제 수집 상태에 준 변화를 UI까지 손실 없이 전달한다. */
 export interface AcquisitionResult {
   relicId: string;
   kind: AcquisitionKind;
-  dnaBefore: number;
-  dnaAfter: number;
+  /** 이 슬롯으로 늘어난 그 개체의 파편 수(중복 한 장 = 1). */
+  fragments: number;
+  /** 이 슬롯이 공용 DNA 조각으로 바뀐 수. 별 다섯에 닿은 개체의 중복만 여기로 간다. */
   overflowFragments: number;
 }
 
@@ -145,40 +146,48 @@ export interface AcquisitionOutcome {
   duplicateRelicIds: string[];
   /** 호출자가 원본 상태를 건드리지 않고 한 번에 커밋할 수 있는 다음 값이다. */
   ownedRelicIds: Set<string>;
-  awakeningById: Record<string, number>;
+  /** 개체별 파편 보유량의 다음 값. 늘지 않은 개체도 그대로 담아 통째로 교체할 수 있다. */
+  fragmentsById: Record<string, number>;
   overflowFragments: number;
 }
 
-/** 슬롯 순서대로 신규/숙련/상한 보상을 계산하는 Phaser 비의존 순수 규칙이다. */
+/**
+ * 슬롯 순서대로 신규/파편/마일리지를 계산하는 Phaser 비의존 순수 규칙이다.
+ *
+ * 중복 한 장은 **그 개체의 파편** 한 개다. 별이 이미 다섯인 개체(`starsById`가 상한)만
+ * 공용 DNA 조각으로 바뀐다 — 더 올릴 별이 없는 파편은 쓸 곳이 없기 때문이다.
+ */
 export function resolveAcquisitions(
   ownedRelicIds: ReadonlySet<string>,
-  awakeningById: Readonly<Record<string, number>>,
+  fragmentsById: Readonly<Record<string, number>>,
   results: readonly string[],
+  /** 개체별 현재 별(1~5). 주지 않은 개체는 별 하나로 본다. */
+  starsById: Readonly<Record<string, number>> = {},
+  maxStars = 5,
 ): AcquisitionOutcome {
   const owned = new Set(ownedRelicIds);
-  const mastery = { ...awakeningById };
+  const fragments = { ...fragmentsById };
   const slots: AcquisitionResult[] = [];
   const newRelicIds: string[] = [];
   const duplicateRelicIds: string[] = [];
   let overflowFragments = 0;
 
   for (const relicId of results) {
-    const before = mastery[relicId] ?? 0;
     if (!owned.has(relicId)) {
       owned.add(relicId);
-      mastery[relicId] = before;
       newRelicIds.push(relicId);
-      slots.push({ relicId, kind: "new", dnaBefore: before, dnaAfter: before, overflowFragments: 0 });
-    } else if (before < 5) {
-      mastery[relicId] = before + 1;
-      duplicateRelicIds.push(relicId);
-      slots.push({ relicId, kind: "mastery", dnaBefore: before, dnaAfter: before + 1, overflowFragments: 0 });
-    } else {
-      // 상한 중복 한 장은 공용 DNA 조각 한 개로 바뀐다.
+      slots.push({ relicId, kind: "new", fragments: 0, overflowFragments: 0 });
+      continue;
+    }
+    duplicateRelicIds.push(relicId);
+    if ((starsById[relicId] ?? 1) >= maxStars) {
+      // 별 다섯에 닿은 개체의 중복 한 장은 공용 DNA 조각 한 개(마일리지)로 바뀐다.
       overflowFragments += 1;
-      duplicateRelicIds.push(relicId);
-      slots.push({ relicId, kind: "overflow", dnaBefore: before, dnaAfter: before, overflowFragments: 1 });
+      slots.push({ relicId, kind: "overflow", fragments: 0, overflowFragments: 1 });
+    } else {
+      fragments[relicId] = (fragments[relicId] ?? 0) + 1;
+      slots.push({ relicId, kind: "fragment", fragments: 1, overflowFragments: 0 });
     }
   }
-  return { slots, newRelicIds, duplicateRelicIds, ownedRelicIds: owned, awakeningById: mastery, overflowFragments };
+  return { slots, newRelicIds, duplicateRelicIds, ownedRelicIds: owned, fragmentsById: fragments, overflowFragments };
 }

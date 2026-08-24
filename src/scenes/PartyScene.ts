@@ -278,6 +278,7 @@ export class PartyScene extends Phaser.Scene {
         label: relic.name,
         level: relicProgression.getProgress(relic.id).level,
         rarity: relic.rarity,
+        stars: relicProgression.getStars(relic.id),
         affinity: { element: relic.element, role: relic.role },
       });
 

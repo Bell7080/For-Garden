@@ -29,7 +29,7 @@ import { PopupLayer } from "./PopupLayer";
 import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
 import { addStar } from "./stars";
-import { addRarityMark } from "./rarityMark";
+import { addStarMark } from "./rarityMark";
 import { addRuneIcon, RUNE_ACCENT, RUNE_CENTER_Y, runeTexture } from "./runeIcons";
 import { openRuneInfoPopup, RUNE_STAT_LABEL } from "./RunePopup";
 import { StatRadar } from "./StatRadar";
@@ -39,7 +39,7 @@ import { COLOR, textStyle } from "./theme";
 import { FALLBACK_SKILL_ICON } from "./skillIcons";
 import { skillArtFor, skillArtTint, SKILL_ART_WASH_ALPHA, type SkillArtSlot } from "./skillArt";
 import { gameApi } from "../api/FakeServer";
-import { AWAKENING_CAP, AWAKENING_STEPS, canBreakThrough, canFeedRelic, FEED_UNIT, nextBreakthrough, relicExpToNext, relicLevelCap } from "../core/relicProgression";
+import { BREAKTHROUGH_STEPS, canBreakThrough, canFeedRelic, FEED_UNIT, nextBreakthrough, relicExpToNext, relicLevelCap, RELIC_STAR_CAP, relicStars } from "../core/relicProgression";
 import { session } from "../state/session";
 import { BOND_FEROCITY_MULTIPLIER, BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL, BOND_XP_REWARD } from "../core/bond";
 import { getRelicCatalogDisclosure } from "../core/relicCatalog";
@@ -350,7 +350,7 @@ export class InfoManager {
   private sliding = false;
   /** 급여 버튼의 켜짐·꺼짐 판 두 장. */
   /** 돌파 버튼. 레벨 옆에 붙어 지금 뚫을 수 있는지를 진하기로 알린다. */
-  private breakButton?: { container: Phaser.GameObjects.Container; label: Phaser.GameObjects.Text };
+  private breakButton?: { container: Phaser.GameObjects.Container; label: Phaser.GameObjects.Text; cost: Phaser.GameObjects.Text };
   private feedPlate?: { on: Phaser.GameObjects.Graphics; off: Phaser.GameObjects.Graphics };
   /** 급여 버튼의 치즈케이크 값줄 — `가진 수/한 번에 드는 수`. */
   private feedCost?: Phaser.GameObjects.Text;
@@ -423,7 +423,7 @@ export class InfoManager {
 
     this.starRow = scene.add.container(COLUMN.x, 150);
     this.chrome.add(this.starRow);
-    this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 30, 158, (from) => this.openAwakening(from));
+    this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 30, 158, (from) => this.openBreakthroughSteps(from));
 
     // 오른쪽 수치는 칸마다 판을 따로 깐다. 대신 칸의 내용물을 그 판 **안에** 넣어 판과 같은
     // 각도로 함께 기운다. 판만 기울고 글자가 반듯하면 판 위에 종이를 얹어 둔 것처럼 어긋난다.
@@ -457,7 +457,9 @@ export class InfoManager {
       this.expBar.objects.forEach((object) => object.setVisible(false));
       this.expLabel.setVisible(false);
     }
-    this.breakButton = this.addBreakButton(COLUMN.x + COLUMN.width / 2 - 96, 330, levelPanel);
+    // 한계 돌파는 별을 올리는 일이라 레벨 칸이 아니라 **별 옆**에 선다. 파편이 모였는지도
+    // 그 자리에서 읽혀야 "지금 초월할 수 있는가"가 한눈에 들어온다.
+    this.breakButton = this.addBreakButton(COLUMN.x + 108, 150, this.chrome);
     const feed = this.addFeedButton(COLUMN.x, 546, COLUMN.width - 130, 98, levelPanel);
     this.feedButton = feed.container;
     this.feedLabel = feed.label;
@@ -670,36 +672,43 @@ export class InfoManager {
   }
 
   /**
-   * 돌파 버튼.
+   * 한계 돌파 버튼.
    *
-   * 레벨 옆에 붙는다 — 천장을 여는 일이라 레벨과 같은 칸에 있어야 "여기까지가 끝"이라는
-   * 맥락이 이어진다. 누르면 필요한 재료를 먼저 보여 주고, 거기서 확정한다.
+   * **별 바로 옆**에 붙는다 — 올리는 것이 별이라 별과 같은 줄에 있어야 무엇이 오르는지가
+   * 눌러 보기 전에 읽힌다. 아래 줄에는 지금 가진 파편과 다음 별에 드는 파편을 함께 적고,
+   * 누르면 남은 재료를 마저 보여 준 뒤 거기서 확정한다.
    */
-  private addBreakButton(x: number, y: number, panel: Phaser.GameObjects.Container): { container: Phaser.GameObjects.Container; label: Phaser.GameObjects.Text } {
+  private addBreakButton(x: number, y: number, panel: Phaser.GameObjects.Container): { container: Phaser.GameObjects.Container; label: Phaser.GameObjects.Text; cost: Phaser.GameObjects.Text } {
     const container = this.scene.add.container(x, y);
-    const shape = slantedRect(150, 62, 12);
+    const shape = slantedRect(196, 74, 12);
     container.add(drawLayer(this.scene, 0, 0, shape, { fill: 0x24202f, alpha: 0.94, edge: BREAK_EDGE, edgeAlpha: 0.9, glow: { color: BREAK_EDGE, strength: 0.4, height: 0.6 } }));
-    const label = this.scene.add.text(0, 0, "돌파", textStyle({ role: "display", size: 30 })).setOrigin(0.5);
-    container.add(label);
-    const hit = this.scene.add.rectangle(0, 0, 158, 74, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    const label = this.scene.add.text(0, -12, "한계 돌파", textStyle({ role: "display", size: 26 })).setOrigin(0.5);
+    const cost = this.scene.add.text(0, 18, "", textStyle({ role: "emphasis", size: 20, color: COLOR.accentText })).setOrigin(0.5);
+    container.add([label, cost]);
+    const hit = this.scene.add.rectangle(0, 0, 204, 86, 0xffffff, 0).setInteractive({ useHandCursor: true });
     hit.on("pointerdown", () => container.setScale(1.08));
     hit.on("pointerout", () => { if (!this.popups.isOpen) container.setScale(1); });
     hit.on("pointerup", () => {
       container.setScale(1.08);
-      this.openBreakthrough({ x, y: y - 40, onClose: () => container.setScale(1) });
+      this.openBreakthrough({ x, y: y + 60, onClose: () => container.setScale(1) });
     });
     container.add(hit);
     attach(panel, container);
-    return { container, label };
+    return { container, label, cost };
   }
 
   /** 돌파할 수 있는 상태인지 알린다. 재료가 모자라도 눌러 무엇이 필요한지 볼 수 있다. */
   private paintBreakButton(progress: RelicProgress): void {
+    const def = this.currentDef;
     const step = nextBreakthrough(progress.breakthrough);
-    const ready = this.ownedNow && canBreakThrough(progress, session.wallet);
+    const held = def ? relicProgression.getFragments(def.id) : 0;
+    const ready = this.ownedNow && canBreakThrough(progress, held, session.wallet.cheesecake);
     this.breakButton?.container.setAlpha(step ? (ready ? 1 : 0.62) : 0.35);
-    this.breakButton?.label.setText(step ? "돌파" : "최대");
+    this.breakButton?.label.setText(step ? "한계 돌파" : "별 최대");
     this.breakButton?.label.setColor(ready ? COLOR.ink : COLOR.inkDim);
+    // 파편이 몇 개 모였는지는 버튼이 직접 말한다. 눌러 보고서야 아는 값이면 늦다.
+    this.breakButton?.cost.setText(step ? held + " / " + step.fragments : "");
+    this.breakButton?.cost.setColor(step && held < step.fragments ? COLOR.dangerText : COLOR.accentText);
   }
 
   /** 돌파에 드는 재료와 열리는 상한을 보여 주고 그 자리에서 확정한다. */
@@ -709,19 +718,24 @@ export class InfoManager {
     if (!def) return;
     const progress = relicProgression.getProgress(def.id);
     const step = nextBreakthrough(progress.breakthrough);
-    this.popups.open({ width: 720, height: 460, title: "돌파", tilt: -1.2, ...anchorOf(from) }, (body, close) => {
+    this.popups.open({ width: 720, height: 460, title: "한계 돌파", tilt: -1.2, ...anchorOf(from) }, (body, close) => {
       if (!step) {
-        body.add(this.scene.add.text(0, 20, "더 뚫을 천장이 없다.", textStyle({ role: "body", size: 28, color: COLOR.inkDim })).setOrigin(0.5));
+        body.add(this.scene.add.text(0, 20, "이미 별 다섯이다. 중복은 DNA 조각으로 쌓인다.", textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0.5).setWordWrapWidth(600));
         return;
       }
       const cap = relicLevelCap(progress.breakthrough);
       body.add(
         this.scene.add
-          .text(0, -120, "레벨 상한 " + cap + "  →  " + step.levelCap, textStyle({ role: "display", size: 34, color: COLOR.accentText }))
+          .text(0, -150, "별 " + relicStars(progress.breakthrough) + "  →  " + (relicStars(progress.breakthrough) + 1), textStyle({ role: "display", size: 34, color: COLOR.accentText }))
+          .setOrigin(0.5),
+      );
+      body.add(
+        this.scene.add
+          .text(0, -104, "레벨 상한 " + cap + "  →  " + step.levelCap + "   ·   " + step.label, textStyle({ role: "body", size: 23, color: COLOR.inkDim }))
           .setOrigin(0.5),
       );
       const rows: [string, number, number][] = [
-        ["DNA 조각", step.dnaFragments, session.wallet.dnaFragments],
+        [def.name + " 파편", step.fragments, relicProgression.getFragments(def.id)],
         ["치즈케이크", step.cheesecake, session.wallet.cheesecake],
       ];
       rows.forEach(([label, need, have], index) => {
@@ -734,7 +748,7 @@ export class InfoManager {
             .setOrigin(1, 0.5),
         );
       });
-      const ready = canBreakThrough(progress, session.wallet);
+      const ready = canBreakThrough(progress, relicProgression.getFragments(def.id), session.wallet.cheesecake);
       const reason = progress.level < cap ? "레벨을 " + cap + "까지 올려야 한다." : ready ? "" : "재료가 부족하다.";
       body.add(drawLayer(this.scene, 0, 130, slantedRect(360, 76, 14), {
         fill: ready ? 0x2d2440 : 0x161a20,
@@ -1037,32 +1051,47 @@ export class InfoManager {
     });
   }
 
-  /** 각성 단계 테크트리. 0~5단계를 세우고 지금 어디까지 왔는지 알린다. */
-  private openAwakening(from: PopupSource): void {
+  /**
+   * 한계 돌파 테크트리.
+   *
+   * 별 하나에서 시작해 다섯까지 오르는 길을 한 장에 세운다. 단계마다 드는 **그 개체의 파편**과
+   * 열리는 효과·레벨 상한을 함께 적어, 중복 발굴이 무엇으로 돌아오는지 여기서 다 읽히게 한다.
+   */
+  private openBreakthroughSteps(from: PopupSource): void {
     const def = this.currentDef;
     if (!def) return;
-    const awakening = relicProgression.getProgress(def.id).awakening;
-    this.popups.open({ width: 900, height: 640, title: "각성", tilt: -1.2, ...anchorOf(from) }, (body) => {
-      body.add(this.scene.add.text(-390, -226, "같은 렐릭을 다시 발굴하면 한 단계씩 깨어난다.", textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0, 0));
-      for (const entry of AWAKENING_STEPS) {
-        const step = entry.step;
-        const y = -160 + step * 84;
-        const reached = step <= awakening;
+    const progress = relicProgression.getProgress(def.id);
+    const stars = this.publicProfile ? Math.max(1, this.publicProfile.stars) : relicStars(progress.breakthrough);
+    const held = this.publicProfile ? 0 : relicProgression.getFragments(def.id);
+    this.popups.open({ width: 900, height: 700, title: "한계 돌파", tilt: -1.2, ...anchorOf(from) }, (body) => {
+      body.add(this.scene.add.text(-390, -262, "같은 개체를 다시 발굴하면 그 개체의 파편이 쌓인다.", textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0, 0));
+      body.add(this.scene.add.text(-390, -226, "파편으로 한계를 돌파할 때마다 별이 하나 오른다.", textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0, 0));
+      BREAKTHROUGH_STEPS.forEach((entry, index) => {
+        // 돌파 한 번이 별 하나다. 표의 첫 줄이 곧 "별 둘로 가는 길"이다.
+        const star = index + 2;
+        const y = -140 + index * 84;
+        const reached = stars >= star;
         body.add(drawLayer(this.scene, 0, y, slantedRect(700, 70, 14), {
           fill: reached ? 0x2a2418 : 0x121820,
           alpha: reached ? 0.95 : 0.7,
           edge: COLOR.accent,
           edgeAlpha: reached ? 0.9 : 0.2,
         }));
-        const star = this.scene.add.star(-306, y, 4, 7, 17, reached ? COLOR.accent : 0x000000, reached ? 1 : 0.4);
-        if (!reached) star.setStrokeStyle(2, BADGE_OFF, 0.85);
-        body.add(star);
-        body.add(this.scene.add.text(-274, y, step + "단계", textStyle({ role: "display", size: 26, color: reached ? COLOR.accentText : COLOR.inkDim })).setOrigin(0, 0.5));
+        const mark = this.scene.add.container(-306, y);
+        addStarMark(this.scene, mark, 0, 0, 30, star);
+        mark.setAlpha(reached ? 1 : 0.45);
+        body.add(mark);
+        body.add(this.scene.add.text(-268, y, "파편 " + entry.fragments, textStyle({ role: "display", size: 24, color: reached ? COLOR.accentText : COLOR.inkDim })).setOrigin(0, 0.5));
         // 단계 효과 문구는 core의 표 하나에서만 온다. 화면이 따로 적어 두면 수치가 갈라진다.
-        const note = entry.readyUltimate ? entry.label + "   ·   준비 중" : entry.label;
-        body.add(this.scene.add.text(-160, y, note, textStyle({ role: "body", size: 22, color: reached ? COLOR.ink : COLOR.inkDim })).setOrigin(0, 0.5));
+        body.add(this.scene.add.text(-140, y, entry.label + "   ·   레벨 " + entry.levelCap, textStyle({ role: "body", size: 22, color: reached ? COLOR.ink : COLOR.inkDim })).setOrigin(0, 0.5));
+      });
+      const line = this.publicProfile
+        ? "별 " + stars + " / " + RELIC_STAR_CAP
+        : "별 " + stars + " / " + RELIC_STAR_CAP + "   ·   가진 파편 " + held;
+      body.add(this.scene.add.text(0, 250, line, textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0.5));
+      if (stars >= RELIC_STAR_CAP) {
+        body.add(this.scene.add.text(0, 288, "별 다섯 뒤의 중복은 DNA 조각으로 쌓인다.", textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0.5));
       }
-      body.add(this.scene.add.text(0, 256, "현재 " + awakening + " / " + AWAKENING_CAP + " 단계", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0.5));
     });
   }
 
@@ -1549,7 +1578,7 @@ export class InfoManager {
     const attacker: Combatant | undefined = this.currentDef && {
       def: this.currentDef, hp: this.currentDef.stats.hp, maxHp: this.currentDef.stats.hp,
       energy: 0, ferocity: 0, bondLevel: 0, ferocityFever: false,
-      awakening: relicProgression.getProgress(this.currentDef.id).awakening,
+      breakthrough: relicProgression.getProgress(this.currentDef.id).breakthrough,
     };
     const preview = attacker && kindLabel !== "패시브" ? previewSkillDamage(attacker, skill) : undefined;
     const valueLabel = preview?.kind === "scaling"
@@ -1663,10 +1692,18 @@ export class InfoManager {
     this.rarityText.setFill(gradient);
   }
 
-  /** 등급은 별 다섯 칸이 아니라 로마자 한 글자다. 모양과 색은 `rarityMark.ts`가 정한다. */
+  /**
+   * 별은 다섯 칸이 아니라 로마자 한 글자다. 모양과 색은 `rarityMark.ts`가 정한다.
+   *
+   * 세는 것은 희귀도가 아니라 한계 돌파 단계다. 친구·적처럼 공개 프로필로 여는 창은 그쪽이
+   * 알려 준 별을 그대로 쓰고, 값이 없으면 모든 개체의 시작인 별 하나로 본다.
+   */
   private paintStars(def: RelicDef): void {
     this.starRow.removeAll(true);
-    addRarityMark(this.scene, this.starRow, 0, 0, STAR_SIZE * 2, def.rarity);
+    const stars = this.publicProfile
+      ? Math.max(1, this.publicProfile.stars)
+      : relicStars(relicProgression.getProgress(def.id).breakthrough);
+    addStarMark(this.scene, this.starRow, 0, 0, STAR_SIZE * 2, stars);
   }
 
   /** 레벨·경험치·유대·능력치·젬을 지금 상태로 다시 칠한다. */
@@ -1675,7 +1712,7 @@ export class InfoManager {
     if (!def) return;
     // 공개 프로필은 필요한 표시용 기본값도 DTO로부터 만들며 플레이어 저장을 건드리지 않는다.
     const progress: RelicProgress = this.publicProfile
-      ? { level: this.publicProfile.level, exp: 0, awakening: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] }
+      ? { level: this.publicProfile.level, exp: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] }
       : relicProgression.getProgress(def.id);
     const finalStats = this.publicProfile?.stats ?? relicProgression.getFinalStats(def.id);
     const cap = relicLevelCap(progress.breakthrough);
@@ -1685,6 +1722,9 @@ export class InfoManager {
     this.levelCap.setText("/ " + cap);
     // 숫자 폭이 자리 수에 따라 달라지므로 붙는 자리도 그릴 때마다 다시 잡는다.
     this.levelCap.setX(this.levelValue.x + this.levelValue.displayWidth + 14);
+    // 상한은 숫자의 **발치**에 붙는다. 숫자 높이는 자리 수와 무관하게 늘 같지만, 글꼴이
+    // 늦게 도착하면 처음 그린 높이가 다르므로 그릴 때마다 다시 맞춘다.
+    this.levelCap.setY(this.levelValue.y + this.levelValue.displayHeight - 4);
     const need = maxed ? 0 : relicExpToNext(progress.level);
     this.expBar.setValue(maxed ? 1 : progress.exp / need);
     // 경험치 줄은 "얼마나 컸는가"만 말한다. 급여에 드는 치즈케이크는 바로 아래 버튼이 맡는다.

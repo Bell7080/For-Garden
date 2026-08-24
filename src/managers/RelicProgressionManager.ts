@@ -1,4 +1,4 @@
-import { AWAKENING_CAP, calculateFinalStats } from "../core/relicProgression";
+import { calculateFinalStats, relicStars } from "../core/relicProgression";
 import type { RelicProgress, Stats } from "../core/types";
 import { getRelic } from "../data/relics";
 import { createStarterRunes } from "../data/runes";
@@ -32,11 +32,14 @@ export class RelicProgressionManager {
     this.persistSharedSession();
   }
 
-  /** 각성 단계는 정수 0~5일 때만 저장한다. */
-  setAwakening(relicId: string, awakening: number): void {
-    if (!Number.isInteger(awakening) || awakening < 0 || awakening > AWAKENING_CAP) throw new RangeError("각성 단계는 0~5의 정수여야 합니다.");
-    this.ownedProgress(relicId).awakening = awakening;
-    this.persistSharedSession();
+  /** 지금 별(1~5). 화면은 돌파 단계가 아니라 이 값을 읽는다. */
+  getStars(relicId: string): number {
+    return relicStars(this.getProgress(relicId).breakthrough);
+  }
+
+  /** 그 개체의 파편 보유량. 없으면 0이다 — 없는 개체를 위해 표를 만들지 않는다. */
+  getFragments(relicId: string): number {
+    return this.state.relicFragments[relicId] ?? 0;
   }
 
   /**

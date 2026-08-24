@@ -22,10 +22,10 @@ export const RUNE_BAKE_SIZE = 256;
 
 /** 룬 등급 색. 초록 고급 → 파랑 희귀 → 보라 영웅 → 빨강 전설 순으로 오른다. */
 export const RUNE_ACCENT: Record<HeartGemRarity, number> = {
-  uncommon: 0x3fbb56,
-  rare: 0x3d90e2,
-  epic: 0xa24ee0,
-  legendary: 0xe0343c,
+  uncommon: 0x4fd66a,
+  rare: 0x5fd4ff,
+  epic: 0xe070f5,
+  legendary: 0xff4a54,
 };
 
 export function runeTexture(rarity: HeartGemRarity | undefined, index: number): string {

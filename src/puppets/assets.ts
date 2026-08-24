@@ -209,6 +209,15 @@ export function battleAssetFor(relicId: string): PuppetAsset {
   return TORIKA_SD_ASSET;
 }
 
+/** 비전투 화면의 아군 SD 선택도 전투와 같은 공개 레지스트리를 사용하되 적 ID는 받지 않는다. */
+export function sdAssetFor(relicId: string): PuppetAsset {
+  if (relicId === "rex") return LEXIA_SD_ASSET;
+  if (relicId === "spino") return SEIRA_SD_ASSET;
+  if (relicId === "luka") return LUKA_SD_ASSET;
+  // anky와 아직 전용 SD가 없는 렐릭은 기존 공용 토리카 SD로 안전하게 폴백한다.
+  return TORIKA_SD_ASSET;
+}
+
 /**
  * 전장에서 쓰는 동작. 묶음마다 가진 동작이 달라서 쓸 이름을 순서대로 적어 둔다 —
  * 앞에서부터 있는 것을 쓰고, 하나도 없으면 그냥 넘어간다.

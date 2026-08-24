@@ -7,6 +7,7 @@ import { storyManager } from "../managers/StoryManager";
 import { Button } from "../ui/Button";
 import { LoadingDiamonds } from "../ui/LoadingDiamonds";
 import { LOADING_STEPS, refreshTextTextures, runLoadingSteps } from "./loadingSteps";
+import packageInfo from "../../package.json";
 
 /**
  * 타이틀이자 로딩 화면.
@@ -46,6 +47,13 @@ export class TitleScene extends Phaser.Scene {
         .setOrigin(0.5);
       this.registry.remove("saveRecoveryNotice");
     }
+
+    // 버전 표기. 어느 빌드에서나 반드시 지나는 화면이라 스크린샷 한 장으로 빌드를 알 수 있다.
+    // 문자열의 단일 출처는 package.json이고 VERSION.md가 같은 값을 쓴다.
+    this.add
+      .text(48, BASE_HEIGHT - 48, `v${packageInfo.version}`, textStyle({ role: "body", size: 24, color: COLOR.inkDim }))
+      .setOrigin(0, 1)
+      .setAlpha(0.7);
 
     const diamonds = new LoadingDiamonds(this, cx, BASE_HEIGHT * 0.5, LOADING_STEPS.length);
 

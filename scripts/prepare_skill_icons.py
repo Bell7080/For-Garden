@@ -21,7 +21,17 @@ PUBLIC = ROOT / "public"
 SOURCE = Path(sys.argv[1]) if len(sys.argv) > 1 else PUBLIC
 
 # 원본 번호와 렐릭 id. Puppet 묶음(char_00N.zip)과 같은 번호를 쓴다.
-RELICS = {1: "anky", 2: "rex", 3: "spino", 4: "luka"}
+RELICS = {
+    1: "anky",
+    2: "rex",
+    3: "spino",
+    4: "luka",
+    # 적도 같은 파이프라인을 쓴다. 번호만 200번대로 올리면 폴더가 자동으로 갈린다
+    # (char201skill_001.png → husk-raptor/passive.webp).
+    201: "husk-raptor",
+    202: "husk-shell",
+    203: "husk-wing",
+}
 
 # 원본의 자리 번호와 스킬 칸. 1 패시브 · 2 일반 공격 · 3 궁극기 · 4 폭주(야성 발현) 순이다.
 SLOTS = {1: "passive", 2: "basic", 3: "ultimate", 4: "ferocity"}

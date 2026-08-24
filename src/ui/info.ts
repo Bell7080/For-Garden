@@ -1496,7 +1496,9 @@ export class InfoManager {
       container.add(drawLayer(this.scene, 0, -6, inner, { fill: 0x05080c, alpha: 1, shadow: false }));
       const art = skillArtFor(def.id, slot);
       // 그림 자리에 같은 색을 아주 옅게 한 겹 깔아 아이콘이 색판 위에 앉은 것처럼 보이게 한다.
-      if (art) container.add(drawLayer(this.scene, 0, -6, inner, { fill: tint, alpha: SKILL_ART_WASH_ALPHA, shadow: false }));
+      // 전용 아트가 아직 없는 개체(적 등)도 같은 색판을 깐다 — 그림만 공용 아이콘일 뿐 액자는
+      // 같은 체계여야, 아군 창과 적 창이 서로 다른 화면처럼 보이지 않는다.
+      container.add(drawLayer(this.scene, 0, -6, inner, { fill: tint, alpha: art ? SKILL_ART_WASH_ALPHA : SKILL_ART_WASH_ALPHA * 0.7, shadow: false }));
       // 테두리 안쪽으로 스며드는 어둠. 그림이 액자 안으로 들어앉아 보인다.
       container.add(drawInnerVignette(this.scene, 0, -6, inner, { strength: 0.55 }));
       const texture = art ?? (this.scene.textures.exists(skill.iconAssetId) ? skill.iconAssetId : FALLBACK_SKILL_ICON);

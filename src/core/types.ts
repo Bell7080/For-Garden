@@ -155,6 +155,19 @@ export interface Passive {
   desc: string;
 }
 
+/** 방치 발굴이 초기에 생산할 수 있는 일반 성장 재화의 폐쇄 집합이다. */
+export type ExcavationProductionCurrency = "gold" | "cheesecake";
+
+/** 전투 능력치와 독립적으로 운영 밸런스를 조정하는 렐릭별 발굴 특화다. */
+export interface ExcavationTrait {
+  /** 이 렐릭이 생산하는 주력 재화이며 희소 가챠/유료 재화는 허용하지 않는다. */
+  primaryCurrency: ExcavationProductionCurrency;
+  /** 성장 보정 전, 레벨 1·한계 돌파 0단계에서 한 시간 동안 생산하는 수량이다. */
+  baseProductionPerHour: number;
+  /** 같은 재화의 기본 생산량에 적용하는 렐릭 고유 효율 배율이다. */
+  efficiencyMultiplier: number;
+}
+
 /** 렐릭 한 명의 불변 정의. 플레이어별 성장 값은 RelicProgress에만 둔다. */
 export interface RelicDef {
   id: string;
@@ -181,6 +194,8 @@ export interface RelicDef {
   element: Element;
   /** 편성 이해를 돕는 특화 태그이며 별도의 고정 보정치는 주지 않는다. */
   role: Role;
+  /** 전투 수치나 장착 룬과 섞이지 않는 정적 방치 발굴 특화다. */
+  excavationTrait: ExcavationTrait;
   stats: Stats;
   passive: Passive;
   /**

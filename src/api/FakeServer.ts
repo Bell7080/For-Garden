@@ -21,6 +21,8 @@ import { assertValidRuneInstance, canEngraveRune, canEnhanceRune, generateRune, 
 import { runeEnhancementGoldCost } from "../data/runes";
 import type { EngraveRuneRequest, EngraveRuneResponse, EnhanceRuneRequest, EnhanceRuneResponse, EquipRuneRequest, EquipRuneResponse, RenameRuneRequest, RenameRuneResponse, RuneInventoryDto, UnequipRuneRequest, UnequipRuneResponse } from "./contracts";
 import type { ActivatePassRequest, ActivatePassResponse, ClaimInstantAdRewardRequest, ClaimInstantAdRewardResponse, PassEntitlementDto, VerifyPurchaseReceiptRequest, VerifyPurchaseReceiptResponse } from "./contracts";
+import { harvestIdleExcavation, settleIdleExcavation } from "../core/idleExcavation";
+import type { HarvestExcavationRequest, HarvestExcavationResponse, IdleExcavationResponse, SaveExcavationFormationRequest } from "./contracts";
 
 /** 사용자 룬 이름의 서버 정책이다. UI 글자 수와 무관하게 API 경계가 최종 권한을 가진다. */
 export const MAX_RUNE_NAME_LENGTH = 20;
@@ -51,6 +53,9 @@ export class FakeServer implements GameApi {
   private readonly entitlements = new Map<string, PassEntitlementDto>();
   private readonly instantClaimResults = new Map<string, ClaimInstantAdRewardResponse>();
   private readonly bonusClaimDates = new Map<string, string>();
+  /** 실제 서버의 멱등 테이블을 흉내 내며 성공한 발굴 변경 응답만 보관한다. */
+  private readonly excavationFormationResults = new Map<string, IdleExcavationResponse>();
+  private readonly excavationHarvestResults = new Map<string, HarvestExcavationResponse>();
   /** 같은 밀리초 안의 연속 발급도 구분하는 서버 인스턴스 로컬 순번이다. */
   private runeIssueSequence = 0;
 
@@ -70,6 +75,39 @@ export class FakeServer implements GameApi {
   async getPlayerState(): Promise<PlayerStateDto> {
     await this.delay();
     return this.snapshot();
+  }
+
+  /** 서버의 단일 now 값을 캡처해 조회 정산과 응답 시각이 어긋나지 않게 한다. */
+  async getIdleExcavation(): Promise<IdleExcavationResponse> {
+    await this.delay(); const now = this.now();
+    const next = settleIdleExcavation(this.state.idleExcavation, now);
+    this.persist({ ...this.state, idleExcavation: next }); this.state.idleExcavation = next;
+    return { excavation: this.cloneExcavation(next), serverTime: now.toISOString() };
+  }
+
+  /** 기존 편성의 생산을 먼저 정산한 뒤 새 세 칸을 같은 저장 처리로 확정한다. */
+  async saveExcavationFormation(request: SaveExcavationFormationRequest): Promise<IdleExcavationResponse> {
+    await this.delay(); const cached = this.excavationFormationResults.get(request.requestId);
+    if (cached) return { excavation: this.cloneExcavation(cached.excavation), serverTime: cached.serverTime };
+    const ids = request.assignedRelicIds.filter((id): id is string => id !== null);
+    if (!request.requestId || new Set(ids).size !== ids.length || ids.some((id) => !this.state.owned.has(id))) throw new GameApiError("INVALID_STATE", "발굴 편성이 올바르지 않습니다.");
+    const now = this.now(); const settled = settleIdleExcavation(this.state.idleExcavation, now);
+    const next = { ...settled, assignedRelicIds: [...request.assignedRelicIds] as [string | null, string | null, string | null] };
+    this.persist({ ...this.state, idleExcavation: next }); this.state.idleExcavation = next;
+    const response = { excavation: this.cloneExcavation(next), serverTime: now.toISOString() };
+    this.excavationFormationResults.set(request.requestId, response); return response;
+  }
+
+  /** 정산·정수화·지갑 상한·미수확 차감을 한 번 저장한 뒤에만 성공 응답을 캐시한다. */
+  async harvestExcavation(request: HarvestExcavationRequest): Promise<HarvestExcavationResponse> {
+    await this.delay(); const cached = this.excavationHarvestResults.get(request.requestId);
+    if (cached) return { ...cached, excavation: this.cloneExcavation(cached.excavation), wallet: { ...cached.wallet }, granted: { ...cached.granted }, discarded: { ...cached.discarded } };
+    if (!request.requestId) throw new GameApiError("INVALID_STATE", "수확 요청 ID가 필요합니다.");
+    const now = this.now(); const settled = settleIdleExcavation(this.state.idleExcavation, now);
+    const result = harvestIdleExcavation(settled, this.state.wallet); const nextState = { ...this.state, idleExcavation: result.state, wallet: result.wallet };
+    this.persist(nextState); this.state.idleExcavation = result.state; this.state.wallet = result.wallet;
+    const response = { excavation: this.cloneExcavation(result.state), serverTime: now.toISOString(), wallet: { ...result.wallet }, granted: { ...result.granted }, discarded: { ...result.discarded } };
+    this.excavationHarvestResults.set(request.requestId, response); return response;
   }
 
   /** 광고 완료, 멱등 키, UTC 일일 제한을 검사한 뒤 지급과 저장을 한 번에 확정한다. */
@@ -606,6 +644,11 @@ export class FakeServer implements GameApi {
       enhancementHistory: Object.fromEntries(Object.entries(rune.enhancementHistory).map(([key, history]) => [key, history?.map((record) => ({ ...record }))])),
       engravings: rune.engravings.map((engraving) => ({ ...engraving })),
     };
+  }
+
+  /** 응답 호출자가 서버의 슬롯·미수확 객체를 직접 바꾸지 못하도록 복사한다. */
+  private cloneExcavation(value: Session["idleExcavation"]): Session["idleExcavation"] {
+    return { ...value, assignedRelicIds: [...value.assignedRelicIds], unclaimed: { ...value.unclaimed } };
   }
 
   /** 룬에 역참조를 넣지 않고 렐릭 슬롯 맵을 전송용 행 배열로 바꾼다. */

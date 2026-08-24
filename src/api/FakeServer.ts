@@ -103,12 +103,13 @@ export class FakeServer implements GameApi {
   /** 정산·정수화·지갑 상한·미수확 차감을 한 번 저장한 뒤에만 성공 응답을 캐시한다. */
   async harvestExcavation(request: HarvestExcavationRequest): Promise<HarvestExcavationResponse> {
     await this.delay(); const cached = this.excavationHarvestResults.get(request.requestId);
-    if (cached) return { ...cached, excavation: this.cloneExcavation(cached.excavation), wallet: { ...cached.wallet }, granted: { ...cached.granted }, discarded: { ...cached.discarded } };
+    if (cached) return { ...cached, excavation: this.cloneExcavation(cached.excavation), wallet: { ...cached.wallet }, granted: { ...cached.granted }, discarded: { ...cached.discarded }, remaining: { ...cached.remaining } };
     if (!request.requestId) throw new GameApiError("INVALID_STATE", "수확 요청 ID가 필요합니다.");
     const now = this.now(); const settled = settleIdleExcavation(this.state.idleExcavation, now, RELICS, this.state.relicProgress);
     const result = harvestIdleExcavation(settled, this.state.wallet); const nextState = { ...this.state, idleExcavation: result.state, wallet: result.wallet };
     this.persist(nextState); this.state.idleExcavation = result.state; this.state.wallet = result.wallet;
-    const response = { excavation: this.cloneExcavation(result.state), serverTime: now.toISOString(), wallet: { ...result.wallet }, granted: { ...result.granted }, discarded: { ...result.discarded } };
+    // 응답의 기준 시각·잔량·지갑은 같은 persist가 성공한 바로 그 트랜잭션 스냅샷이다.
+    const response = { excavation: this.cloneExcavation(result.state), serverTime: now.toISOString(), wallet: { ...result.wallet }, granted: { ...result.granted }, discarded: { ...result.discarded }, remaining: { ...result.state.unclaimed } };
     this.excavationHarvestResults.set(request.requestId, response); return response;
   }
 

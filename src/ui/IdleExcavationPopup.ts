@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import type { GameApi, IdleExcavationResponse } from "../api/contracts";
+import type { GameApi, HarvestExcavationResponse, IdleExcavationResponse } from "../api/contracts";
 import { excavationProductionDisplayModel, placeExcavationRelic, type ExcavationCurrency, type IdleExcavationState } from "../core/idleExcavation";
 import { formatCurrency } from "../core/formatCurrency";
 import { RELICS } from "../data/relics";
@@ -47,6 +47,11 @@ export class IdleExcavationPopup {
   private gridPointerMoveHandler?: (pointer: Phaser.Input.Pointer) => void;
   private gridPointerUpHandler?: () => void;
   private saving = false;
+  /** 전송 실패 재시도에서도 같은 멱등 키를 유지하고 성공한 뒤에만 비운다. */
+  private harvestRequestId?: string;
+  /** 성공 결과는 다음 현황 렌더 한 번에만 안내·연출하고 즉시 소비한다. */
+  private harvestResult?: HarvestExcavationResponse;
+  private harvestError?: string;
   private ticker?: Phaser.Time.TimerEvent;
   private requestGeneration = 0;
 
@@ -111,6 +116,7 @@ export class IdleExcavationPopup {
     this.addSlots(content, formation, false);
     const rate = excavationProductionDisplayModel(formation, RELICS, session.relicProgress).totalsPerHour;
     const baseServerMs = new Date(response.serverTime).getTime();
+    let harvestButton: Button | undefined;
     const rows = (["gold", "cheesecake"] as ExcavationCurrency[]).map((currency, index) => {
       const y = 20 + index * 105;
       const label = currency === "gold" ? "골드" : "치즈케이크";
@@ -123,15 +129,43 @@ export class IdleExcavationPopup {
       // 서버 응답 이후의 로컬 경과분만 더하는 표시용 예상치이며 정산 기준 시각은 절대 갱신하지 않는다.
       const elapsedHours = Math.max(0, Date.now() - baseServerMs) / 3_600_000;
       for (const row of rows) row.amount.setText(`예상 ${formatCurrency(Math.floor(response.excavation.unclaimed[row.currency] + rate[row.currency] * elapsedHours))}`);
+      // 창을 열어 둔 사이 정수 1개가 쌓이는 순간에도 새 조회 없이 버튼 상태만 정확히 갱신한다.
+      const harvestable = (["gold", "cheesecake"] as ExcavationCurrency[]).some((currency) => Math.floor(response.excavation.unclaimed[currency] + rate[currency] * elapsedHours) > 0);
+      harvestButton?.setEnabled(harvestable && !this.saving);
     };
     refreshEstimate();
     this.ticker?.remove(false);
     this.ticker = this.scene.time.addEvent({ delay: 1000, loop: true, callback: refreshEstimate });
     content.add(drawHairline(this.scene, 0, 235, 760, { color: COLOR.accent, alpha: 0.25 }));
-    content.add(this.scene.add.text(0, 285, "빈 슬롯은 허용되며 생산량 0으로 계산됩니다.", textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0.5));
+    const result = this.harvestResult;
+    const discarded = result ? result.discarded.gold + result.discarded.cheesecake : 0;
+    const notice = this.harvestError
+      ?? (discarded > 0 ? `지갑 상한으로 골드 ${formatCurrency(result!.discarded.gold)}, 치즈케이크 ${formatCurrency(result!.discarded.cheesecake)}을(를) 받지 못했습니다.`
+        : result ? `수확 완료 · 골드 +${formatCurrency(result.granted.gold)} · 치즈케이크 +${formatCurrency(result.granted.cheesecake)}`
+          : "빈 슬롯은 허용되며 생산량 0으로 계산됩니다.");
+    content.add(this.scene.add.text(0, 285, notice, textStyle({ role: "body", size: 21, color: discarded > 0 || this.harvestError ? COLOR.dangerText : COLOR.inkDim, align: "center" })).setOrigin(0.5));
     content.add(new Button(this.scene, -205, 515, { width: 350, height: 92, label: "편성 변경", onClick: () => this.beginEdit() }));
-    content.add(new Button(this.scene, 205, 515, { width: 350, height: 92, label: "수확", variant: "primary", onClick: () => void this.harvest() }));
-    this.setState("ready");
+    harvestButton = new Button(this.scene, 205, 515, { width: 350, height: 92, label: this.saving ? "수확 중…" : "수확", variant: "primary", onClick: () => void this.harvest() });
+    // 서버 확정 누적량이 1 미만이거나 요청 중이면 지급할 것이 없으므로 입력부터 막는다.
+    refreshEstimate(); content.add(harvestButton);
+    this.setState(this.saving ? "saving" : "ready");
+    if (result) { this.playHarvestSuccess(content, rows.map((row) => row.amount), result); this.harvestResult = undefined; }
+  }
+
+  /** 서버 성공 뒤에만 재화가 우상단 지갑 쪽으로 흐르며, 모션 감소 시 숫자 강조로 대체한다. */
+  private playHarvestSuccess(content: Phaser.GameObjects.Container, amounts: Phaser.GameObjects.Text[], result: HarvestExcavationResponse): void {
+    const hasGrant = result.granted.gold + result.granted.cheesecake > 0;
+    if (!hasGrant) return;
+    for (const amount of amounts) {
+      this.scene.tweens.add({ targets: amount, scale: 1.12, duration: 110, yoyo: true });
+    }
+    if (session.settings.accessibility.reduceMotion) return;
+    // 작은 단색 점은 기존 홀로그램 강조색을 재사용하며 별도 이미지 자산을 만들지 않는다.
+    for (let index = 0; index < 8; index += 1) {
+      const particle = this.scene.add.circle(180 + index * 12, 90 + (index % 2) * 35, 5, COLOR.accent, 0.8);
+      content.add(particle);
+      this.scene.tweens.add({ targets: particle, x: 410, y: -620, alpha: 0, duration: 360 + index * 35, onComplete: () => particle.destroy() });
+    }
   }
 
   /** 편집을 열 때에만 확정 배열을 복사하므로 취소/닫기가 서버 편성을 건드릴 수 없다. */
@@ -277,16 +311,18 @@ export class IdleExcavationPopup {
   /** 현황 화면의 수확만 서버를 거치며 편집 중에는 완료 버튼이 같은 최하단 자리를 대신한다. */
   private async harvest(): Promise<void> {
     if (this.saving) return;
-    this.saving = true;
+    this.saving = true; this.harvestError = undefined; this.renderStatus();
+    // 네트워크 실패 뒤 사용자가 다시 누르면 최초 요청의 ID를 그대로 재전송한다.
+    this.harvestRequestId ??= requestId();
     try {
-      const result = await this.api.harvestExcavation({ requestId: requestId() });
+      const result = await this.api.harvestExcavation({ requestId: this.harvestRequestId });
       if (!this.body) return;
       session.wallet = { ...result.wallet };
       session.idleExcavation = { ...result.excavation, assignedRelicIds: copyFormation(result.excavation.assignedRelicIds), unclaimed: { ...result.excavation.unclaimed } };
-      this.confirmed = result; this.saving = false; this.renderStatus();
+      this.confirmed = result; this.saving = false; this.harvestRequestId = undefined; this.harvestResult = result; this.renderStatus();
     } catch {
       if (!this.body) return;
-      this.saving = false; this.showMessage("수확하지 못했습니다. 다시 시도해 주세요.", "error", true);
+      this.saving = false; this.harvestError = "수확하지 못했습니다. 같은 요청으로 다시 시도해 주세요."; this.renderStatus();
     }
   }
 

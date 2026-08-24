@@ -59,6 +59,42 @@ describe("FakeServer", () => {
     const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-20T00:00:00Z") });
     const request = { requestId: "harvest-1" }; const first = await server.harvestExcavation(request); const repeated = await server.harvestExcavation(request);
     expect(repeated).toEqual(first); expect(state.wallet.gold).toBe(999_999_999); expect(first.discarded.gold).toBe(4);
+    expect(first.remaining).toEqual({ gold: 0, cheesecake: 0 });
+  });
+
+  it("두 기기의 연속 수확처럼 서로 다른 요청은 첫 호출만 기존 누적량을 받는다", async () => {
+    const state = makeSession(); state.idleExcavation.unclaimed = { gold: 20, cheesecake: 3 };
+    const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-20T00:00:00Z") });
+    const firstDevice = await server.harvestExcavation({ requestId: "device-a" });
+    const secondDevice = await server.harvestExcavation({ requestId: "device-b" });
+    expect(firstDevice.granted).toEqual({ gold: 20, cheesecake: 3 });
+    expect(secondDevice.granted).toEqual({ gold: 0, cheesecake: 0 });
+    expect(state.wallet).toMatchObject({ gold: 20, cheesecake: 3 });
+  });
+
+  it("지갑이 이미 상한이면 지급량 0과 유실량을 구분해 반환한다", async () => {
+    const state = makeSession(); state.wallet.gold = 999_999_999; state.wallet.cheesecake = 9_999_999;
+    state.idleExcavation.unclaimed = { gold: 7, cheesecake: 2 };
+    const result = await new FakeServer(state, { latencyMs: 0 }).harvestExcavation({ requestId: "full-wallet" });
+    expect(result.granted).toEqual({ gold: 0, cheesecake: 0 });
+    expect(result.discarded).toEqual({ gold: 7, cheesecake: 2 });
+  });
+
+  it("누적량 0 수확은 지갑을 바꾸지 않고 새 기준 시각을 확정한다", async () => {
+    const state = makeSession(); const now = new Date("2026-08-20T05:00:00Z");
+    const result = await new FakeServer(state, { latencyMs: 0, now: () => now }).harvestExcavation({ requestId: "empty" });
+    expect(result.granted).toEqual({ gold: 0, cheesecake: 0 });
+    expect(result.wallet).toEqual(state.wallet); expect(result.serverTime).toBe(now.toISOString());
+    expect(result.excavation.lastSettledAt).toBe(now.toISOString());
+  });
+
+  it("장시간 미접속 생산은 저장 시간 상한까지만 정산한 뒤 한 번에 지급한다", async () => {
+    const state = makeSession(); state.idleExcavation.assignedRelicIds = ["anky", null, null];
+    state.idleExcavation.lastSettledAt = "2026-01-01T00:00:00Z";
+    const result = await new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-20T00:00:00Z") }).harvestExcavation({ requestId: "long-away" });
+    // 기본 저장 시간은 4시간이므로 수개월 경과를 그대로 곱하지 않는다.
+    expect(result.granted.gold).toBe(428); expect(result.remaining.gold).toBe(0.4);
+    expect(result.excavation.lastSettledAt).toBe("2026-08-20T00:00:00.000Z");
   });
   it("강화 요청의 선택 정보만 받아 서버 난수·골드 차감·룬 갱신을 함께 확정한다", async () => {
     const state = makeSession(); state.wallet.gold = 100; state.runeInventory = [makeRune()];

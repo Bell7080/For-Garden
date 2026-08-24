@@ -19,12 +19,13 @@ import {
 import { getRelic } from "../data/relics";
 import { getStage, getStageEnemies } from "../data/stages";
 import type { PuppetCreature, PuppetAsset } from "../puppets/assets";
-import { battleAssetFor, flashHit, placePuppet, playMotion, spawnPuppet } from "../puppets/assets";
+import { battleAssetFor, flashHit, placePuppet, playMotion, spawnPuppet, tintPuppet } from "../puppets/assets";
 import { session } from "../state/session";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { Button } from "../ui/Button";
 import { drawGlassFade, drawHairline, HoloBar } from "../ui/holo";
 import { PortraitCard, relicCardTint } from "../ui/PortraitCard";
+import { UnitHealthBar } from "../ui/UnitHealthBar";
 import { skillArtTint } from "../ui/skillArt";
 import { COLOR, textStyle } from "../ui/theme";
 import { setDebugBattle, setDebugScene } from "../debug";
@@ -63,7 +64,13 @@ const BAR_WIDTH = 300;
 const CHARGE_VEIL_RADIUS = 240;
 const CHARGE_VEIL_ALPHA = 0.58;
 /** 아직 다 차지 않은 카드의 불투명도. 다 차면 1이 되어 그림이 온전히 선다. */
-const CHARGE_CARD_ALPHA = 0.78;
+const CHARGE_CARD_ALPHA = 0.62;
+
+/** 야성 수치의 글자색. 게이지의 청록과 같은 계열이라 어느 수인지 색으로 먼저 읽힌다. */
+const FEROCITY_TEXT = "#70d6cb";
+
+/** 게이지와 수치가 실제 값을 따라잡는 빠르기(초당 비율). */
+const METER_EASE = 6;
 
 /**
  * 폭주 연출.
@@ -71,7 +78,7 @@ const CHARGE_CARD_ALPHA = 0.78;
  * SD가 한 뼘 커지고 몸 안팎이 같은 색으로 물든다. 발광은 도형이 아니라 **가장자리가 흐린
  * 한 장**이다(`FEVER_GLOW_TEXTURE`) — 타원을 겹쳐 쌓으면 테두리가 비눗방울처럼 남는다.
  */
-const FEVER = { scale: 1.1, outer: 2, core: 1.05, outerAlpha: 0.7, coreAlpha: 0.36 } as const;
+const FEVER = { scale: 1.1, outer: 2, core: 1.05, outerAlpha: 0.7, coreAlpha: 0.36, bodyMix: 0.32 } as const;
 
 /** 폭주 발광 한 장. 가운데가 진하고 가장자리로 갈수록 사라지는 흰 원이라 tint로 색만 갈아 쓴다. */
 const FEVER_GLOW_TEXTURE = "fever-glow";
@@ -89,6 +96,14 @@ function ensureGlowTexture(scene: Phaser.Scene): void {
   context.fillStyle = gradient;
   context.fillRect(0, 0, size, size);
   canvas.refresh();
+}
+
+/** 두 색을 비율대로 섞는다. 폭주 중 몸에 제 색을 옅게 얹을 때 쓴다. */
+function mixTint(base: number, other: number, amount: number): number {
+  const blend = (shift: number): number => Math.round(
+    (((base >> shift) & 0xff) * (1 - amount)) + (((other >> shift) & 0xff) * amount),
+  );
+  return (blend(16) << 16) | (blend(8) << 8) | blend(0);
 }
 
 /** 색을 어둡게 눌러 "밝게 번지는" 대신 "짙게 감도는" 발광으로 만든다. */
@@ -114,8 +129,8 @@ interface FighterView {
   /** 움직이는 Puppet의 메시 입력 경계 대신 몸통을 따라가는 안정적인 전투 클릭 영역이다. */
   infoHit?: Phaser.GameObjects.Rectangle;
   shadow: Phaser.GameObjects.Ellipse;
-  hpBack: Phaser.GameObjects.Rectangle;
-  hpFill: Phaser.GameObjects.Rectangle;
+  /** 머리 위 체력 바. 깎일 때 스르륵 따라오는 것은 프리팹이 맡는다. */
+  hpBar: UnitHealthBar;
   /** 걸린 상태이상을 알리는 작은 뱃지. 체력 바 옆에 붙는다. */
   bleedBadge: Phaser.GameObjects.Container;
   /** 폭주 중에만 켜지는 발광. 몸 뒤에 넓게 번지는 겹과 몸 위에 얹히는 좁은 겹 둘이다. */
@@ -125,6 +140,8 @@ interface FighterView {
   feverTint: number;
   /** 피격 섬광이 끝난 뒤 되돌릴 원래 색. */
   tint: number;
+  /** 지금 몸이 폭주 색으로 물들어 있는지. 상태가 바뀔 때만 다시 칠한다. */
+  feverTinted: boolean;
   dead: boolean;
 }
 
@@ -145,6 +162,9 @@ interface ProfileView {
   ferocityLabel: Phaser.GameObjects.Text;
   /** 카드를 덮는 어둠. 궁극기가 찰수록 시계 방향으로 걷혀 그림이 밝아진다. */
   charge: Phaser.GameObjects.Graphics;
+  /** 화면에 지금 적힌 값. 실제 값으로 스르륵 따라가며 숫자가 굴러간다. */
+  hpShown: number;
+  ferocityShown: number;
   ready: boolean;
   pulse?: Phaser.Tweens.Tween;
   /** 입력 가능한 카드 위만 주기적으로 지나는 얇은 황동 사선이다. */
@@ -285,10 +305,9 @@ export class BattleScene extends Phaser.Scene {
       const feverCore = glowImage(FEVER.core, FEVER.coreAlpha);
       const shadow = this.add.ellipse(fighter.x, fighter.y + 4, 132, 24, 0x000000, 0.38);
       const barColor = fighter.side === "player" ? COLOR.hpFill : COLOR.hpEnemy;
-      const hpBack = this.add.rectangle(fighter.x, 0, 96, 10, COLOR.void, 0.75);
-      const hpFill = this.add.rectangle(fighter.x, 0, 96, 10, barColor).setOrigin(0, 0.5);
+      const hpBar = new UnitHealthBar(this, barColor).snap(1);
       const bleedBadge = this.makeBleedBadge();
-      this.views.set(fighter.id, { creature, asset, fighter, infoHit, shadow, hpBack, hpFill, bleedBadge, feverGlow, feverCore, feverTint, tint, dead: false });
+      this.views.set(fighter.id, { creature, asset, fighter, infoHit, shadow, hpBar, bleedBadge, feverGlow, feverCore, feverTint, feverTinted: false, tint, dead: false });
     }
     this.syncViews();
     // 마지막 한 명까지 서고 나서 시간을 흘려야 먼저 뜬 캐릭터만 앞서 달려가지 않는다.
@@ -341,13 +360,17 @@ export class BattleScene extends Phaser.Scene {
       card.hit.on("pointerout", () => card.setScale(profileScale(canFireUltimate(this.state, fighter))));
       card.hit.on("pointerup", () => this.useUltimate(fighter));
       // 두 게이지는 굵기만 다르고 모양이 같다. 위가 체력, 아래가 폭주다.
+      // 수치는 제 게이지와 같은 색으로, 굵게, 아래로 한 겹 복제한 그림자를 달고 선다.
+      // 밝은 배경 원화 위에서 흐린 회색 글자는 게이지 옆에 있어도 읽히지 않는다.
       const label = (y: number, color: string) =>
-        this.add.text(x - BAR_WIDTH / 2, y, "", textStyle({ role: "emphasis", size: 24, color })).setOrigin(0, 1);
-      const hpLabel = label(1800, COLOR.inkDim);
+        this.add.text(x - BAR_WIDTH / 2, y, "", textStyle({ role: "display", size: 26, color }))
+          .setOrigin(0, 1)
+          .setShadow(3, 4, "#05070a", 0, true, true);
+      const hpLabel = label(1800, COLOR.accentText);
       const hpBar = new HoloBar(this, x, 1814, BAR_WIDTH, 20, { color: COLOR.hpFill });
-      const ferocityLabel = label(1872, COLOR.inkDim);
+      const ferocityLabel = label(1872, FEROCITY_TEXT);
       const ferocityBar = new HoloBar(this, x, 1886, BAR_WIDTH, 16, { color: COLOR.ferocityLow });
-      this.profiles.push({ fighter, card, glow, sweep, charge, hpBar, hpLabel, ferocityBar, ferocityLabel, ready: false });
+      this.profiles.push({ fighter, card, glow, sweep, charge, hpBar, hpLabel, ferocityBar, ferocityLabel, hpShown: fighter.hp, ferocityShown: fighter.ferocity, ready: false });
     });
   }
 
@@ -453,8 +476,11 @@ export class BattleScene extends Phaser.Scene {
   update(): void {
     if (!this.spawned || this.finished) return;
     const now = performance.now();
-    const dt = (now - this.lastStepAt) / 1000;
+    const elapsed = now - this.lastStepAt;
+    const dt = elapsed / 1000;
     this.lastStepAt = now;
+    // 게이지는 연출 중에도 계속 따라붙는다. 여기서 멈추면 연출이 끝나는 순간 값이 점프한다.
+    this.stepMeters(elapsed);
     // 코어 시간과 전투 배속을 궁극기 연출과 분리한다. 연출 Puppet/tween은 씬의 정상 시계로 돈다.
     if (this.ultimateSequenceActive) return;
     // 실제 프레임 간격에 선택 배율을 곱해 이동·공격 간격·게이지가 모두 같은 시간축을 쓴다.
@@ -491,7 +517,7 @@ export class BattleScene extends Phaser.Scene {
       if (!view) return undefined;
       if (event.started) {
         // 상처가 열리는 순간에만 한 번 붉게 번쩍인다. 이후 초당 피해는 숫자로만 뜬다.
-        flashHit(this, view.creature, view.tint);
+        flashHit(this, view.creature, this.bodyTint(view));
         return undefined;
       }
       this.popDamage(view.fighter, event.amount, false, false);
@@ -503,7 +529,7 @@ export class BattleScene extends Phaser.Scene {
     const playback = attacker ? playMotion(this, attacker.creature, "attack") : undefined;
     if (target) {
       // 붉은 섬광이 피격을 알리고, 동작은 공격을 끊지 않는 선에서 얕게만 얹힌다.
-      flashHit(this, target.creature, target.tint);
+      flashHit(this, target.creature, this.bodyTint(target));
       playMotion(this, target.creature, "hit");
       this.popDamage(target.fighter, event.amount, event.skill === "ultimate", event.critical);
     }
@@ -543,8 +569,7 @@ export class BattleScene extends Phaser.Scene {
     if (!view || view.dead) return;
     view.dead = true;
     view.shadow.setVisible(false);
-    view.hpBack.setVisible(false);
-    view.hpFill.setVisible(false);
+    view.hpBar.setVisible(false);
     view.bleedBadge.setVisible(false);
     // 쓰러진 적의 빈자리가 계속 정보창을 열지 않도록 입력도 함께 닫는다.
     view.infoHit?.disableInteractive().setVisible(false);
@@ -609,6 +634,12 @@ export class BattleScene extends Phaser.Scene {
         view.feverGlow.setAlpha(FEVER.outerAlpha * breath);
         view.feverCore.setAlpha(FEVER.coreAlpha * breath);
       }
+      // 몸도 같은 색으로 옅게 물든다. 발광만 두르면 캐릭터는 그대로인 채 빛만 켜진 것 같다.
+      // 상태가 바뀔 때만 칠한다 — 매 프레임 칠하면 피격 섬광이 그 프레임에 지워진다.
+      if (fever !== view.feverTinted) {
+        view.feverTinted = fever;
+        tintPuppet(view.creature, this.bodyTint(view));
+      }
       // SD의 발 위치보다 몸통 중앙을 누르는 편이 자연스러우므로 클릭 영역은 반 높이만큼 올린다.
       view.infoHit
         ?.setPosition(pose.x, pose.y - UNIT_HEIGHT / 2)
@@ -617,11 +648,7 @@ export class BattleScene extends Phaser.Scene {
       const lift = 1 - Math.min(pose.hop / 60, 0.45);
       view.shadow.setPosition(pose.shadowX, pose.shadowY + 4).setDisplaySize(132 * lift, 24 * lift).setAlpha(0.38 * lift);
       const barY = pose.y - UNIT_HEIGHT - 26;
-      view.hpBack.setPosition(pose.x, barY).setDepth(DEPTH.hpBar);
-      view.hpFill
-        .setPosition(pose.x - 48, barY)
-        .setDepth(DEPTH.hpBar + 1)
-        .setDisplaySize(96 * Math.max(0, fighter.hp / fighter.maxHp), 10);
+      view.hpBar.setPosition(pose.x, barY).setDepth(DEPTH.hpBar).setValue(fighter.hp / fighter.maxHp);
       // 출혈 중인 동안만 체력 바 왼쪽에 붉은 물방울이 붙는다.
       view.bleedBadge.setPosition(pose.x - 62, barY).setDepth(DEPTH.hpBar + 2).setVisible(fighter.bleed !== null);
     });
@@ -631,9 +658,6 @@ export class BattleScene extends Phaser.Scene {
     for (const profile of this.profiles) {
       const { fighter } = profile;
       const alive = isFighterAlive(fighter);
-      profile.hpBar.setValue(alive ? fighter.hp / fighter.maxHp : 0);
-      profile.hpLabel.setText(alive ? `HP ${fighter.hp} / ${fighter.maxHp}` : "전투 불능");
-      profile.hpLabel.setColor(alive ? COLOR.inkDim : COLOR.dangerText);
       // 궁극기는 숫자가 아니라 그림이 말한다. 쓸 수 있게 되기까지의 몫만큼 어둠이 걷힌다.
       const ready = canFireUltimate(this.state, fighter);
       const charge = alive ? Math.min(1, fighter.energy / fighter.def.ultimate.cost) : 0;
@@ -642,15 +666,44 @@ export class BattleScene extends Phaser.Scene {
       profile.card.setAlpha(alive ? (charge >= 1 ? 1 : CHARGE_CARD_ALPHA) : 0.45);
       // 연출 중에는 사용자 외 모든 카드가 잠겼다는 것을 명도로 즉시 알린다.
       if (this.ultimateSequenceActive && this.currentUltimateFighterId !== fighter.id) profile.card.setAlpha(alive ? 0.32 : 0.2);
-      const ferocityColor = fighter.ferocityFever ? COLOR.accent
-        : fighter.ferocity >= 80 ? COLOR.ferocityWarning : COLOR.ferocityLow;
-      profile.ferocityBar.setValue(fighter.ferocity / FEROCITY_RULES.max, ferocityColor);
-      // 피버 중에는 보상 상태와 자동 감소를 함께 알려 별도 진압 입력을 찾지 않게 한다.
-      profile.ferocityLabel.setText(fighter.ferocityFever ? `폭주 ${Math.ceil(fighter.ferocity)}` : `야성 ${Math.ceil(fighter.ferocity)}`);
-      profile.ferocityLabel.setColor(fighter.ferocityFever ? COLOR.accentText : fighter.ferocity >= 80 ? COLOR.accentText : "#70d6cb");
       if (ready !== profile.ready) this.setUltimateReady(profile, ready);
       // 준비 상태가 유지된 채 다른 궁극기가 시작되어도 잠긴 카드의 반복 광선은 즉시 감춘다.
       if (this.ultimateSequenceActive) profile.sweep.setAlpha(0);
+    }
+  }
+
+  /** 지금 몸에 입혀야 할 색. 폭주 중에는 원래 색에 그 개체의 폭주색을 옅게 섞는다. */
+  private bodyTint(view: FighterView): number {
+    return view.feverTinted ? mixTint(view.tint, view.feverTint, FEVER.bodyMix) : view.tint;
+  }
+
+  /**
+   * 게이지와 수치를 실제 값으로 **스르륵** 따라붙인다.
+   *
+   * 깎이는 순간이 보이지 않으면 얼마나 아팠는지 알 수 없다. 그래서 바도 숫자도 목표로 곧장
+   * 튀지 않고 매 프레임 조금씩 다가가며, 숫자는 그 사이 굴러간다. 궁극기 연출 중에도 돌아야
+   * 연출이 끝난 순간 값이 통째로 점프하지 않는다.
+   */
+  private stepMeters(deltaMs: number): void {
+    for (const view of this.views.values()) if (!view.dead) view.hpBar.step(deltaMs);
+    const k = Math.min(1, (deltaMs / 1000) * METER_EASE);
+    for (const profile of this.profiles) {
+      const { fighter } = profile;
+      const alive = isFighterAlive(fighter);
+      const hp = alive ? fighter.hp : 0;
+      profile.hpShown = Math.abs(profile.hpShown - hp) < 0.6 ? hp : profile.hpShown + (hp - profile.hpShown) * k;
+      profile.ferocityShown = Math.abs(profile.ferocityShown - fighter.ferocity) < 0.4
+        ? fighter.ferocity
+        : profile.ferocityShown + (fighter.ferocity - profile.ferocityShown) * k;
+      profile.hpBar.setValue(profile.hpShown / fighter.maxHp);
+      profile.hpLabel.setText(alive ? `HP ${Math.round(profile.hpShown)} / ${fighter.maxHp}` : "전투 불능");
+      profile.hpLabel.setColor(alive ? COLOR.accentText : COLOR.dangerText);
+      const fever = fighter.ferocityFever;
+      const ferocityColor = fever ? COLOR.accent : fighter.ferocity >= 80 ? COLOR.ferocityWarning : COLOR.ferocityLow;
+      profile.ferocityBar.setValue(profile.ferocityShown / FEROCITY_RULES.max, ferocityColor);
+      // 피버 중에는 보상 상태와 자동 감소를 함께 알려 별도 진압 입력을 찾지 않게 한다.
+      profile.ferocityLabel.setText(`${fever ? "폭주" : "야성"} ${Math.round(profile.ferocityShown)}`);
+      profile.ferocityLabel.setColor(fever || fighter.ferocity >= 80 ? COLOR.accentText : FEROCITY_TEXT);
     }
   }
 

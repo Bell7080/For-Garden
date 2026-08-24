@@ -116,13 +116,13 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
   // 쪽지는 작다. 무엇을 가진 룬인지만 읽는 창이라 옵션 줄도 바짝 붙여, 이름과 수치가 한
   // 덩어리로 눈에 들어오게 한다. 크게 벌려 두면 몇 줄 안 되는 내용이 넓은 판에 흩어진다.
   const height = 312 + stats.length * 40;
-  popups.open({ width: 520, height, title: "룬", anchor: options.anchor, dim: true, onClose: options.onClose }, (body, close) => {
+  popups.open({ width: 448, height, title: "룬", anchor: options.anchor, dim: true, onClose: options.onClose }, (body, close) => {
     const top = -height / 2;
-    body.add(addRuneFrame(scene, -172, top + 96, 96, rune.rarity, rune.part));
-    body.add(scene.add.text(-112, top + 56, rarity + "  ·  " + RUNE_PART_LABELS[rune.part], textStyle({ role: "emphasis", size: 19, color: hex(accent) })).setOrigin(0, 0));
-    body.add(scene.add.text(-112, top + 82, rune.customName ?? `${rarity} 룬`, textStyle({ role: "display", size: 27 })).setOrigin(0, 0).setWordWrapWidth(280));
-    body.add(scene.add.text(-112, top + 120, equippedLine(rune.instanceId), textStyle({ role: "body", size: 19, color: COLOR.inkDim })).setOrigin(0, 0));
-    body.add(drawHairline(scene, 0, top + 156, 424, { color: accent, alpha: 0.45 }));
+    body.add(addRuneFrame(scene, -142, top + 96, 88, rune.rarity, rune.part));
+    body.add(scene.add.text(-88, top + 56, rarity + "  ·  " + RUNE_PART_LABELS[rune.part], textStyle({ role: "emphasis", size: 18, color: hex(accent) })).setOrigin(0, 0));
+    body.add(scene.add.text(-88, top + 80, rune.customName ?? `${rarity} 룬`, textStyle({ role: "display", size: 25 })).setOrigin(0, 0).setWordWrapWidth(216));
+    body.add(scene.add.text(-88, top + 118, equippedLine(rune.instanceId), textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0, 0));
+    body.add(drawHairline(scene, 0, top + 156, 356, { color: accent, alpha: 0.45 }));
 
     stats.forEach((stat, index) => {
       const y = top + 188 + index * 40;
@@ -131,8 +131,8 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
       const nameStyle = main
         ? textStyle({ role: "emphasis", size: 22, color: COLOR.ink })
         : textStyle({ role: "body", size: 21, color: COLOR.inkDim });
-      body.add(scene.add.text(-204, y, RUNE_STAT_LABEL[stat.key], nameStyle).setOrigin(0, 0.5));
-      body.add(scene.add.text(204, y, `+${stat.value}%`, textStyle({ role: "display", size: 23, color: main ? hex(accent) : COLOR.ink })).setOrigin(1, 0.5));
+      body.add(scene.add.text(-168, y, RUNE_STAT_LABEL[stat.key], nameStyle).setOrigin(0, 0.5));
+      body.add(scene.add.text(168, y, `+${stat.value}%`, textStyle({ role: "display", size: 22, color: main ? hex(accent) : COLOR.ink })).setOrigin(1, 0.5));
     });
 
     // 세공 진행은 숫자 하나로만 알린다. 자세한 결과 표식은 세공 화면이 맡는다.
@@ -144,17 +144,17 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
     const buttonY = height / 2 - 56;
     const equip = options.equip;
     // 장착은 정보창에서 연 룬에만 있다. 가방을 어디서 열었는지에 따라 할 수 있는 일이 다르다.
-    const craftX = equip ? -116 : 0;
+    const craftX = equip ? -100 : 0;
     body.add(new Button(scene, craftX, buttonY, {
-      width: equip ? 212 : 260, height: 68, label: "세공", fontSize: 27, variant: "primary", accentColor: accent,
+      width: equip ? 184 : 240, height: 68, label: "세공", fontSize: 26, variant: "primary", accentColor: accent,
       onClick: () => {
         close();
         openRunePopup(scene, popups, options);
       },
     }));
     if (equip) {
-      body.add(new Button(scene, 116, buttonY, {
-        width: 212, height: 68, label: "장착", fontSize: 27,
+      body.add(new Button(scene, 100, buttonY, {
+        width: 184, height: 68, label: "장착", fontSize: 26,
         onClick: () => {
           void relicProgression.equipRune(equip.relicId, equip.slotIndex, rune.instanceId).then(() => {
             close();

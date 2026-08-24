@@ -46,6 +46,14 @@ describe("FakeServer", () => {
     expect(state.idleExcavation.unclaimed).toEqual({ gold: 956.4, cheesecake: 31.36 });
   });
 
+  it("미보유·중복 렐릭 편성 저장 실패는 서버 확정 편성을 유지한다", async () => {
+    const state = makeSession(); state.idleExcavation.assignedRelicIds = ["anky", null, null];
+    const server = new FakeServer(state, { latencyMs: 0 });
+    await expect(server.saveExcavationFormation({ requestId: "unowned", assignedRelicIds: ["spino", null, null] })).rejects.toMatchObject({ code: "INVALID_STATE" });
+    await expect(server.saveExcavationFormation({ requestId: "duplicate", assignedRelicIds: ["rex", "rex", null] })).rejects.toMatchObject({ code: "INVALID_STATE" });
+    expect(state.idleExcavation.assignedRelicIds).toEqual(["anky", null, null]);
+  });
+
   it("같은 수확 요청을 반복해도 한 번만 지급하고 지갑 상한을 넘기지 않는다", async () => {
     const state = makeSession(); state.wallet.gold = 999_999_998; state.idleExcavation.unclaimed = { gold: 5, cheesecake: 1 };
     const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-20T00:00:00Z") });

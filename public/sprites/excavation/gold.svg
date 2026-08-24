@@ -1,0 +1,8 @@
+<!-- 골드 발굴 특화: 각진 곡괭이와 광맥 조각. 바탕은 PortraitCard가 담당하며 선 끝을 둥글리지 않는다. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96">
+  <g fill="none" stroke="#ffffff" stroke-width="7" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="8">
+    <path d="M22 25 48 15l27 12-8 10-19-8-18 8z"/>
+    <path d="m52 29-8 47"/>
+    <path d="m25 72 13-13 11 13-12 10z"/>
+  </g>
+</svg>

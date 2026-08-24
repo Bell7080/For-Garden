@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { excavationProductionDisplayModel, createIdleExcavationState, harvestIdleExcavation, settleIdleExcavation, validateExcavationFormation } from "../../src/core/idleExcavation";
+import { excavationProductionDisplayModel, createIdleExcavationState, harvestIdleExcavation, placeExcavationRelic, settleIdleExcavation, validateExcavationFormation } from "../../src/core/idleExcavation";
 import { WALLET_CAPS } from "../../src/data/economy";
 import { RELICS } from "../../src/data/relics";
 import type { RelicProgress } from "../../src/core/types";
@@ -23,6 +23,20 @@ describe("방치 발굴 순수 규칙", () => {
 
   it("미보유 캐릭터 배치를 차단한다", () => {
     expect(validateExcavationFormation(["rex", "dodo", null], new Set(["rex"]))).toEqual({ valid: false, reason: "unowned" });
+  });
+
+  it("배치된 렐릭을 빈 슬롯으로 옮기고 중복을 만들지 않는다", () => {
+    expect(placeExcavationRelic(["rex", null, "spino"], 1, "rex")).toEqual([null, "rex", "spino"]);
+  });
+
+  it("차 있는 슬롯으로 옮기면 두 슬롯을 교체한다", () => {
+    expect(placeExcavationRelic(["rex", "anky", null], 1, "rex")).toEqual(["anky", "rex", null]);
+  });
+
+  it("같은 슬롯을 다시 고르면 빈 슬롯으로 만들며 3칸 미완성도 유효하다", () => {
+    const incomplete = placeExcavationRelic(["rex", "anky", null], 0, "rex");
+    expect(incomplete).toEqual([null, "anky", null]);
+    expect(validateExcavationFormation(incomplete, new Set(["rex", "anky"]))).toEqual({ valid: true });
   });
 
   it("서로 다른 자원 특화를 자원별로 합산한다", () => {

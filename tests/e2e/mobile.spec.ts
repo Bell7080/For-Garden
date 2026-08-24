@@ -88,6 +88,27 @@ test("방치 발굴 팝업은 좁은 로비 위 한 장으로 열리고 뒤 입�
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
 });
 
+test("방치 발굴 편집은 슬롯 이동·중복 방지·빈 편성 취소를 확정 상태와 분리한다", async ({ page }) => {
+  await startAfterOpening(page);
+  await page.locator("canvas").click();
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+  await tapGame(page, 250, BASE_HEIGHT - 445);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationPopup)).toBe("ready");
+
+  // 현황의 수확 버튼 자리를 편집 중에는 완료가 대신하며, 시작 편성은 3칸 모두 비어 있어도 유효하다.
+  await tapGame(page, BASE_WIDTH / 2 - 205, BASE_HEIGHT / 2 + 515);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationPopup)).toBe("editing");
+  // 첫 보유 카드를 1번에 놓고 2번 슬롯을 선택한 뒤 같은 카드를 눌러 이동한다. 복제 대신 원래 칸이 빈다.
+  await tapGame(page, BASE_WIDTH / 2 - 250, BASE_HEIGHT / 2 - 15);
+  await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2 - 385);
+  await tapGame(page, BASE_WIDTH / 2 - 250, BASE_HEIGHT / 2 - 15);
+  // 같은 카드를 다시 누르면 빈 슬롯 허용 정책에 따라 해제되고, 취소는 서버 확정 배열을 저장하지 않는다.
+  await tapGame(page, BASE_WIDTH / 2 - 250, BASE_HEIGHT / 2 - 15);
+  await page.screenshot({ path: `test-results/${test.info().project.name}-idle-excavation-editor.png` });
+  await tapGame(page, BASE_WIDTH / 2 - 205, BASE_HEIGHT / 2 + 540);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationPopup)).toBe("ready");
+});
+
 test("설정 탭은 텍스트 확대·스크롤·두 단계 초기화를 좁은 모바일에서 안전하게 처리한다", async ({ page }) => {
   await startAfterOpening(page); await page.locator("canvas").click();
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");

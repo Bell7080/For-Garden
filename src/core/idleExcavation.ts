@@ -33,6 +33,32 @@ export interface RelicExcavationProduction {
 /** 편성 검증 결과를 예외 없이 전달해 API와 UI가 같은 거절 이유를 사용할 수 있게 한다. */
 export type ExcavationFormationValidation = { valid: true } | { valid: false; reason: "duplicate" | "unowned" };
 
+/**
+ * 편집 그리드에서 렐릭을 목표 슬롯에 놓는다.
+ *
+ * 렐릭이 다른 슬롯에 있으면 빈 목표로는 이동하고, 차 있는 목표로는 두 렐릭의 자리를 바꾼다.
+ * 같은 슬롯의 렐릭을 다시 누르면 빈 슬롯 정책에 따라 해제한다. 항상 새 튜플을 반환하므로
+ * 서버 확정 편성과 UI 임시 편성이 같은 배열 참조를 공유하지 않는다.
+ */
+export function placeExcavationRelic(
+  formation: IdleExcavationState["assignedRelicIds"],
+  targetSlot: number,
+  relicId: string,
+): IdleExcavationState["assignedRelicIds"] {
+  const next = [...formation] as IdleExcavationState["assignedRelicIds"];
+  if (targetSlot < 0 || targetSlot >= next.length) return next;
+  const sourceSlot = next.indexOf(relicId);
+  if (sourceSlot === targetSlot) {
+    // 빈 슬롯을 허용하므로 현재 슬롯의 카드를 다시 누르면 명시적으로 배치를 해제한다.
+    next[targetSlot] = null;
+    return next;
+  }
+  const displaced = next[targetSlot];
+  next[targetSlot] = relicId;
+  if (sourceSlot >= 0) next[sourceSlot] = displaced;
+  return next;
+}
+
 /** 빈 슬롯은 허용하되 같은 렐릭의 중복 및 미보유 렐릭은 차단한다. */
 export function validateExcavationFormation(assignedRelicIds: IdleExcavationState["assignedRelicIds"], ownedRelicIds: ReadonlySet<string>): ExcavationFormationValidation {
   const ids = assignedRelicIds.filter((id): id is string => id !== null);

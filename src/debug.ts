@@ -34,7 +34,7 @@ export interface DebugState {
   /** 정보창이 떠 있는지. `?`와 꾹 누르기를 확인하는 데 쓴다. */
   infoOpen?: boolean;
   /** 로비 위 발굴 쪽지의 상태. 씬 전환 없이 열리고 입력을 막는 계약을 E2E가 확인한다. */
-  idleExcavationPopup?: "loading" | "ready" | "error";
+  idleExcavationPopup?: "loading" | "ready" | "error" | "editing" | "saving" | "save-error";
   /** 재화와 보유 렐릭. 뽑기가 실제로 반영됐는지 확인하는 데 쓴다. */
   wallet?: { fossil: number; amber: number };
   owned?: string[];

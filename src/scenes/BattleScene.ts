@@ -2,7 +2,6 @@ import Phaser from "phaser";
 import { gameApi } from "../api/FakeServer";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { FEROCITY_RULES } from "../core/ferocity";
-import { ULTIMATE_ENERGY_MAX } from "../core/ultimate";
 import {
   aliveFighters,
   canFireUltimate,
@@ -26,6 +25,7 @@ import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { Button } from "../ui/Button";
 import { drawGlassFade, drawHairline, HoloBar } from "../ui/holo";
 import { PortraitCard, relicCardTint } from "../ui/PortraitCard";
+import { skillArtTint } from "../ui/skillArt";
 import { COLOR, textStyle } from "../ui/theme";
 import { setDebugBattle, setDebugScene } from "../debug";
 import { CharacterInfoManager } from "../managers/CharacterInfoManager";
@@ -51,8 +51,53 @@ const ARENA: Arena = { left: 130, right: 950, top: 600, bottom: 1360 };
 /** SD 한 명의 화면 높이. 여섯이 겹치지 않도록 기존 300에서 0.7배로 줄였다. */
 const UNIT_HEIGHT = 210;
 const PROFILE_TOP = 1430;
-/** 프로필 게이지 셋의 공통 폭. 카드 폭과 같아야 한 칸으로 읽힌다. */
+/** 프로필 게이지 둘의 공통 폭. 카드 폭과 같아야 한 칸으로 읽힌다. */
 const BAR_WIDTH = 300;
+
+/**
+ * 카드를 덮는 궁극기 가림막.
+ *
+ * 반지름은 300 카드의 모서리까지 덮을 만큼이고, 진하기는 **비쳐 보일 만큼**만이다. 새까맣게
+ * 덮으면 누가 서 있는지조차 읽히지 않아 "아직 못 쓴다"가 아니라 "빈 칸"으로 보인다.
+ */
+const CHARGE_VEIL_RADIUS = 240;
+const CHARGE_VEIL_ALPHA = 0.58;
+/** 아직 다 차지 않은 카드의 불투명도. 다 차면 1이 되어 그림이 온전히 선다. */
+const CHARGE_CARD_ALPHA = 0.78;
+
+/**
+ * 폭주 연출.
+ *
+ * SD가 한 뼘 커지고 몸 안팎이 같은 색으로 물든다. 발광은 도형이 아니라 **가장자리가 흐린
+ * 한 장**이다(`FEVER_GLOW_TEXTURE`) — 타원을 겹쳐 쌓으면 테두리가 비눗방울처럼 남는다.
+ */
+const FEVER = { scale: 1.1, outer: 2, core: 1.05, outerAlpha: 0.7, coreAlpha: 0.36 } as const;
+
+/** 폭주 발광 한 장. 가운데가 진하고 가장자리로 갈수록 사라지는 흰 원이라 tint로 색만 갈아 쓴다. */
+const FEVER_GLOW_TEXTURE = "fever-glow";
+
+function ensureGlowTexture(scene: Phaser.Scene): void {
+  if (scene.textures.exists(FEVER_GLOW_TEXTURE)) return;
+  const size = 256;
+  const canvas = scene.textures.createCanvas(FEVER_GLOW_TEXTURE, size, size);
+  const context = canvas?.context;
+  if (!canvas || !context) return;
+  const gradient = context.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+  gradient.addColorStop(0, "rgba(255,255,255,1)");
+  gradient.addColorStop(0.45, "rgba(255,255,255,0.55)");
+  gradient.addColorStop(1, "rgba(255,255,255,0)");
+  context.fillStyle = gradient;
+  context.fillRect(0, 0, size, size);
+  canvas.refresh();
+}
+
+/** 색을 어둡게 눌러 "밝게 번지는" 대신 "짙게 감도는" 발광으로 만든다. */
+function darken(color: number, amount: number): number {
+  const keep = 1 - amount;
+  return (Math.round(((color >> 16) & 0xff) * keep) << 16)
+    | (Math.round(((color >> 8) & 0xff) * keep) << 8)
+    | Math.round((color & 0xff) * keep);
+}
 
 /**
  * 전장 안에서의 앞뒤 순서.
@@ -73,6 +118,11 @@ interface FighterView {
   hpFill: Phaser.GameObjects.Rectangle;
   /** 걸린 상태이상을 알리는 작은 뱃지. 체력 바 옆에 붙는다. */
   bleedBadge: Phaser.GameObjects.Container;
+  /** 폭주 중에만 켜지는 발광. 몸 뒤에 넓게 번지는 겹과 몸 위에 얹히는 좁은 겹 둘이다. */
+  feverGlow: Phaser.GameObjects.Image;
+  feverCore: Phaser.GameObjects.Image;
+  /** 그 개체의 속성·직군을 섞은 색. 발광과 폭주 중 몸 색이 여기서 나온다. */
+  feverTint: number;
   /** 피격 섬광이 끝난 뒤 되돌릴 원래 색. */
   tint: number;
   dead: boolean;
@@ -83,13 +133,18 @@ interface ProfileView {
   fighter: Fighter;
   card: PortraitCard;
   glow: Phaser.GameObjects.Rectangle;
-  /** 체력·각성·야성을 같은 모양의 바 셋으로 보여 준다. 숫자는 바 위 작은 글자로만 남긴다. */
+  /**
+   * 전투 중에는 **체력과 폭주** 둘만 세운다.
+   *
+   * 궁극기 충전은 바가 아니라 카드 그림 자체가 말한다(`charge`) — 바가 셋이면 어느 것이
+   * 지금 급한 값인지 읽히지 않고, 정작 글자는 작아진다. 남긴 둘은 대신 굵고 크게 적는다.
+   */
   hpBar: HoloBar;
   hpLabel: Phaser.GameObjects.Text;
-  energyBar: HoloBar;
-  energyLabel: Phaser.GameObjects.Text;
   ferocityBar: HoloBar;
   ferocityLabel: Phaser.GameObjects.Text;
+  /** 카드를 덮는 어둠. 궁극기가 찰수록 시계 방향으로 걷혀 그림이 밝아진다. */
+  charge: Phaser.GameObjects.Graphics;
   ready: boolean;
   pulse?: Phaser.Tweens.Tween;
   /** 입력 가능한 카드 위만 주기적으로 지나는 얇은 황동 사선이다. */
@@ -193,6 +248,7 @@ export class BattleScene extends Phaser.Scene {
 
   /** 여섯을 각자의 시작 자리에 세운다. 전부 준비된 뒤에야 시간이 흐르기 시작한다. */
   private async spawnFighters(): Promise<void> {
+    ensureGlowTexture(this);
     for (const fighter of this.state.fighters) {
       const asset = battleAssetFor(fighter.def.id);
       // 번호별 전용 적 SD도 원화 색을 보존하므로 더 이상 임시 허스크 tint를 입히지 않는다.
@@ -215,12 +271,24 @@ export class BattleScene extends Phaser.Scene {
           .setInteractive({ useHandCursor: true })
           .on("pointerup", () => this.info.showEnemy(fighter.def, { live: fighter }))
         : undefined;
+      // 폭주 발광. 스킬 아이콘과 같은 속성·직군 색을 어둡게 눌러 쓴다. 한두 겹으로는 테두리가
+      // 또렷한 비눗방울처럼 보이므로, 크기를 줄여 가며 여러 겹을 포개 가장자리를 흐린다.
+      const feverTint = skillArtTint(fighter.def.element, fighter.def.role);
+      const glowImage = (scale: number, alpha: number): Phaser.GameObjects.Image => this.add
+        .image(fighter.x, fighter.y, FEVER_GLOW_TEXTURE)
+        .setDisplaySize(UNIT_HEIGHT * scale, UNIT_HEIGHT * scale * 0.92)
+        .setTint(darken(feverTint, 0.35))
+        .setAlpha(alpha)
+        .setBlendMode(Phaser.BlendModes.ADD)
+        .setVisible(false);
+      const feverGlow = glowImage(FEVER.outer, FEVER.outerAlpha);
+      const feverCore = glowImage(FEVER.core, FEVER.coreAlpha);
       const shadow = this.add.ellipse(fighter.x, fighter.y + 4, 132, 24, 0x000000, 0.38);
       const barColor = fighter.side === "player" ? COLOR.hpFill : COLOR.hpEnemy;
       const hpBack = this.add.rectangle(fighter.x, 0, 96, 10, COLOR.void, 0.75);
       const hpFill = this.add.rectangle(fighter.x, 0, 96, 10, barColor).setOrigin(0, 0.5);
       const bleedBadge = this.makeBleedBadge();
-      this.views.set(fighter.id, { creature, asset, fighter, infoHit, shadow, hpBack, hpFill, bleedBadge, tint, dead: false });
+      this.views.set(fighter.id, { creature, asset, fighter, infoHit, shadow, hpBack, hpFill, bleedBadge, feverGlow, feverCore, feverTint, tint, dead: false });
     }
     this.syncViews();
     // 마지막 한 명까지 서고 나서 시간을 흘려야 먼저 뜬 캐릭터만 앞서 달려가지 않는다.
@@ -254,26 +322,32 @@ export class BattleScene extends Phaser.Scene {
         portraitAssetId: fighter.def.portraitAssetId,
         tint: relicCardTint(fighter.def),
         label: fighter.def.name,
-        sub: `각성 · ${fighter.def.ultimate.name}`,
+        sub: fighter.def.ultimate.name,
         rarity: fighter.def.rarity,
         stars: relicStars(fighter.breakthrough),
       });
+      // 궁극기 게이지는 카드 위에 덮인 어둠이다. 시계 방향으로 걷히다가 다 차면 사라져
+      // 그림이 온전히 밝아진다 — 준비됐는지를 바가 아니라 얼굴이 말한다.
+      //
+      // 가림막은 카드의 **그려진 픽셀**에만 얹는다(BitmapMask). 실루엣 도형으로 자르면 칩
+      // 위로 머리가 빠져나오는 윗부분처럼 그림이 없는 투명한 자리까지 검게 칠해져, 카드
+      // 밖에 검은 부채꼴이 떠 있는 것처럼 보인다.
+      const charge = this.add.graphics({ x, y: 1620 }).setDepth(1);
+      charge.setMask(new Phaser.Display.Masks.BitmapMask(this, card));
       card.hit.on("pointerdown", () => {
         // 기존 입력 규칙대로 누른 순간만 추가 확대하고, 잠금 카드는 반응하지 않는다.
         if (!this.ultimateSequenceActive && canFireUltimate(this.state, fighter)) card.setScale(1.14);
       });
       card.hit.on("pointerout", () => card.setScale(profileScale(canFireUltimate(this.state, fighter))));
       card.hit.on("pointerup", () => this.useUltimate(fighter));
-      // 세 게이지는 굵기만 다르고 모양이 같다. 위에서부터 체력 · 각성 · 야성 순이다.
+      // 두 게이지는 굵기만 다르고 모양이 같다. 위가 체력, 아래가 폭주다.
       const label = (y: number, color: string) =>
-        this.add.text(x - BAR_WIDTH / 2, y, "", textStyle({ role: "body", size: 18, color })).setOrigin(0, 1);
-      const hpLabel = label(1782, COLOR.inkDim);
-      const hpBar = new HoloBar(this, x, 1792, BAR_WIDTH, 14, { color: COLOR.hpFill });
-      const energyLabel = label(1834, COLOR.inkDim);
-      const energyBar = new HoloBar(this, x, 1844, BAR_WIDTH, 10, { color: COLOR.energy });
-      const ferocityLabel = label(1886, COLOR.inkDim);
-      const ferocityBar = new HoloBar(this, x, 1896, BAR_WIDTH, 10, { color: COLOR.ferocityLow });
-      this.profiles.push({ fighter, card, glow, sweep, hpBar, hpLabel, energyBar, energyLabel, ferocityBar, ferocityLabel, ready: false });
+        this.add.text(x - BAR_WIDTH / 2, y, "", textStyle({ role: "emphasis", size: 24, color })).setOrigin(0, 1);
+      const hpLabel = label(1800, COLOR.inkDim);
+      const hpBar = new HoloBar(this, x, 1814, BAR_WIDTH, 20, { color: COLOR.hpFill });
+      const ferocityLabel = label(1872, COLOR.inkDim);
+      const ferocityBar = new HoloBar(this, x, 1886, BAR_WIDTH, 16, { color: COLOR.ferocityLow });
+      this.profiles.push({ fighter, card, glow, sweep, charge, hpBar, hpLabel, ferocityBar, ferocityLabel, ready: false });
     });
   }
 
@@ -521,8 +595,20 @@ export class BattleScene extends Phaser.Scene {
         height: UNIT_HEIGHT,
         flipX: fighter.facing < 0,
       });
+      // 폭주 중에는 한 뼘 커진다. 자리를 다시 잡은 뒤에 곱해야 매 프레임 배율이 되돌아가지 않는다.
+      if (fighter.ferocityFever) view.creature.setScale(view.creature.scaleX * FEVER.scale, view.creature.scaleY * FEVER.scale);
       // 아래에 선 캐릭터가 앞에 오도록 발 높이로 앞뒤를 정한다.
       view.creature.setDepth(Math.round(fighter.y / 10) + DEPTH.unitBase);
+      // 넓은 겹은 몸 뒤에, 좁은 겹은 몸 위에 얹혀 안팎이 함께 물든다. 숨 쉬듯 진하기가 오간다.
+      const fever = fighter.ferocityFever;
+      const depth = Math.round(fighter.y / 10) + DEPTH.unitBase;
+      const breath = 0.82 + Math.sin(this.time.now / 220) * 0.18;
+      view.feverGlow.setVisible(fever).setPosition(pose.x, pose.y - UNIT_HEIGHT * 0.42).setDepth(depth - 1);
+      view.feverCore.setVisible(fever).setPosition(pose.x, pose.y - UNIT_HEIGHT * 0.46).setDepth(depth + 1);
+      if (fever) {
+        view.feverGlow.setAlpha(FEVER.outerAlpha * breath);
+        view.feverCore.setAlpha(FEVER.coreAlpha * breath);
+      }
       // SD의 발 위치보다 몸통 중앙을 누르는 편이 자연스러우므로 클릭 영역은 반 높이만큼 올린다.
       view.infoHit
         ?.setPosition(pose.x, pose.y - UNIT_HEIGHT / 2)
@@ -546,25 +632,43 @@ export class BattleScene extends Phaser.Scene {
       const { fighter } = profile;
       const alive = isFighterAlive(fighter);
       profile.hpBar.setValue(alive ? fighter.hp / fighter.maxHp : 0);
-      profile.hpLabel.setText(alive ? `HP ${fighter.hp}` : "전투 불능");
+      profile.hpLabel.setText(alive ? `HP ${fighter.hp} / ${fighter.maxHp}` : "전투 불능");
       profile.hpLabel.setColor(alive ? COLOR.inkDim : COLOR.dangerText);
-      // 분자는 저장량, 분모는 코어가 정한 공용 저장 상한이며 괄호로 궁극기의 소비 비용을 구분한다.
+      // 궁극기는 숫자가 아니라 그림이 말한다. 쓸 수 있게 되기까지의 몫만큼 어둠이 걷힌다.
       const ready = canFireUltimate(this.state, fighter);
-      profile.energyBar.setValue(fighter.energy / ULTIMATE_ENERGY_MAX, ready ? COLOR.accent : COLOR.energy);
-      profile.energyLabel.setText(`각성 ${fighter.energy} / ${ULTIMATE_ENERGY_MAX} (비용 ${fighter.def.ultimate.cost})`);
-      profile.energyLabel.setColor(ready ? COLOR.accentText : COLOR.inkDim);
-      profile.card.setAlpha(alive ? 1 : 0.45);
+      const charge = alive ? Math.min(1, fighter.energy / fighter.def.ultimate.cost) : 0;
+      this.paintCharge(profile, charge);
+      // 아직이면 카드째 반투명하다. 뒤가 비쳐야 "잠깐 꺼 둔 칸"으로 읽히고, 다 차면 또렷해진다.
+      profile.card.setAlpha(alive ? (charge >= 1 ? 1 : CHARGE_CARD_ALPHA) : 0.45);
       // 연출 중에는 사용자 외 모든 카드가 잠겼다는 것을 명도로 즉시 알린다.
       if (this.ultimateSequenceActive && this.currentUltimateFighterId !== fighter.id) profile.card.setAlpha(alive ? 0.32 : 0.2);
       const ferocityColor = fighter.ferocityFever ? COLOR.accent
         : fighter.ferocity >= 80 ? COLOR.ferocityWarning : COLOR.ferocityLow;
       profile.ferocityBar.setValue(fighter.ferocity / FEROCITY_RULES.max, ferocityColor);
       // 피버 중에는 보상 상태와 자동 감소를 함께 알려 별도 진압 입력을 찾지 않게 한다.
-      profile.ferocityLabel.setText(fighter.ferocityFever ? `폭주 중 · 피버 ${Math.ceil(fighter.ferocity)} / ${FEROCITY_RULES.max}` : `야성 ${Math.ceil(fighter.ferocity)} / ${FEROCITY_RULES.max}`);
+      profile.ferocityLabel.setText(fighter.ferocityFever ? `폭주 ${Math.ceil(fighter.ferocity)}` : `야성 ${Math.ceil(fighter.ferocity)}`);
       profile.ferocityLabel.setColor(fighter.ferocityFever ? COLOR.accentText : fighter.ferocity >= 80 ? COLOR.accentText : "#70d6cb");
       if (ready !== profile.ready) this.setUltimateReady(profile, ready);
       // 준비 상태가 유지된 채 다른 궁극기가 시작되어도 잠긴 카드의 반복 광선은 즉시 감춘다.
       if (this.ultimateSequenceActive) profile.sweep.setAlpha(0);
+    }
+  }
+
+  /**
+   * 카드를 덮은 어둠을 지금 충전량만큼 걷어낸다.
+   *
+   * 아직 차지 않은 몫을 **시계 방향의 부채꼴**로 남긴다. 12시에서 시작해 시곗바늘을 따라
+   * 걷히므로, 얼마나 남았는지가 밝아진 넓이로 읽힌다. 다 차면 아무것도 덮지 않는다.
+   */
+  private paintCharge(profile: ProfileView, ratio: number): void {
+    profile.charge.clear();
+    if (ratio >= 1) return;
+    profile.charge.fillStyle(0x060a10, CHARGE_VEIL_ALPHA);
+    // 0일 때는 부채꼴 대신 원이다. 시작각과 끝각이 같으면 아무것도 그려지지 않는다.
+    if (ratio <= 0) profile.charge.fillCircle(0, 0, CHARGE_VEIL_RADIUS);
+    else {
+      profile.charge.slice(0, 0, CHARGE_VEIL_RADIUS, Phaser.Math.DegToRad(-90 + ratio * 360), Phaser.Math.DegToRad(270), false);
+      profile.charge.fillPath();
     }
   }
 
@@ -592,7 +696,7 @@ export class BattleScene extends Phaser.Scene {
       repeat: -1,
     });
     // 게이지 완료 플래시는 한 번, 사선 스윕은 입력 가능 동안 낮은 빈도로 반복한다.
-    this.tweens.add({ targets: profile.energyBar, alpha: { from: 1, to: 0.35 }, duration: 110, yoyo: true, repeat: 1 });
+    this.tweens.add({ targets: profile.charge, alpha: { from: 0.2, to: 1 }, duration: 110, yoyo: true, repeat: 1 });
     profile.sweepTween = this.tweens.add({
       targets: profile.sweep, x: profile.sweep.x + 250, alpha: { from: 0, to: 0.42 },
       duration: 520, hold: 80, repeat: -1, repeatDelay: 900, yoyo: true,

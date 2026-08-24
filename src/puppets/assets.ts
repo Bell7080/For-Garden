@@ -507,7 +507,13 @@ export function playMotion(
 
 /** 맞은 순간 붉게 물드는 시간(ms)과 색. 동작을 크게 흔들지 않아도 피격이 눈에 띄게 한다. */
 const HIT_FLASH_MS = 120;
-const HIT_FLASH_TINT = 0xff8a7a;
+/**
+ * 피격 섬광.
+ *
+ * 붉게 물들이되 **아주 옅게** 한다. 진하게 칠하면 난전에서 여섯이 번갈아 빨개져 화면이
+ * 계속 깜빡이고, 정작 봐야 할 체력 바와 피해 숫자가 그 뒤로 밀린다.
+ */
+const HIT_FLASH_TINT = 0xffc9c0;
 const flashTimers = new WeakMap<PuppetCreature, Phaser.Time.TimerEvent>();
 
 /**

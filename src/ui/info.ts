@@ -39,7 +39,6 @@ import { COLOR, textStyle } from "./theme";
 import { FALLBACK_SKILL_ICON } from "./skillIcons";
 import { skillArtFor, skillArtTint, SKILL_ART_WASH_ALPHA, type SkillArtSlot } from "./skillArt";
 import { gameApi } from "../api/FakeServer";
-import { combatPower } from "../core/combatPower";
 import { BREAKTHROUGH_STEPS, canBreakThrough, canFeedRelic, FEED_UNIT, nextBreakthrough, relicExpToNext, relicLevelCap, RELIC_STAR_CAP, relicStars } from "../core/relicProgression";
 import { session } from "../state/session";
 import { BOND_FEROCITY_MULTIPLIER, BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL, BOND_XP_REWARD } from "../core/bond";
@@ -494,9 +493,12 @@ export class InfoManager {
     this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 30, 876, (from) => this.openExtraStats(from), statPanel);
     // 칸에는 숫자가 아니라 **오각형**이 선다. 다섯 축의 균형은 숫자 다섯 줄보다 한눈에 읽히고,
     // 정확한 값이 필요할 때만 돋보기로 연다. 축 이름은 굵게 키우고 능력치 색을 입힌다.
-    this.statRadar = new StatRadar(this.scene, COLUMN.x, 1030, STAT_RADAR_RADIUS, {
-      size: 25,
+    this.statRadar = new StatRadar(this.scene, COLUMN.x, 1024, STAT_RADAR_RADIUS, {
+      size: 24,
       colors: Object.fromEntries(STAT_CHIPS.map((chip) => [chip.key, `#${chip.color.toString(16).padStart(6, "0")}`])),
+      // 축마다 실제 수치를 같은 색으로 적고, 면 안에는 전투력을 옅게 깐다.
+      values: true,
+      power: true,
     });
     attach(statPanel, this.statRadar);
 
@@ -1313,19 +1315,8 @@ export class InfoManager {
       // 칸에는 오각형이 서 있으므로 여기서는 **숫자**를 맡는다. 다섯 축의 정확한 값과 기본값
       // 대비 상승분이 먼저 오고, 그 아래에 오각형에 들어가지 않는 세부 수치가 온다.
       const top = -height / 2;
-      // 전투력은 능력치 열두 개를 한 숫자로 줄인 값이라 숫자를 읽는 이 창의 맨 앞에 선다.
-      // 늘 떠 있어야 하는 값이 아니라 물어볼 때 답하는 값이다 — 칸에는 오각형만 남긴다.
-      body.add(drawLayer(this.scene, 0, top + 86, slantedRect(660, 74, 12), { fill: 0x141a24, alpha: 0.95, edge: COLOR.accent, edgeAlpha: 0.8 }));
-      body.add(this.scene.add.text(-300, top + 86, "전투력", textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0, 0.5));
-      body.add(
-        this.scene.add
-          .text(300, top + 86, combatPower(stats).toLocaleString(), textStyle({ role: "display", size: 38, color: COLOR.accentText }))
-          .setOrigin(1, 0.5)
-          .setScale(1, 1.12)
-          .setShadow(2, 5, "#05070a", 6, false, true),
-      );
       STAT_CHIPS.forEach((chip, index) => {
-        const y = top + 208 + index * 80;
+        const y = top + 132 + index * 80;
         const base = def.stats[chip.key];
         const gain = stats[chip.key] - base;
         // 칸의 축 이름과 같은 색이라 그래프에서 본 축을 그대로 따라 읽는다.
@@ -1340,11 +1331,11 @@ export class InfoManager {
       });
       body.add(
         this.scene.add
-          .text(-330, top + 642, "세부 능력치", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText }))
+          .text(-330, top + 566, "세부 능력치", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText }))
           .setOrigin(0, 0),
       );
       EXTRA_STATS.forEach((row, index) => {
-        const y = top + 716 + index * 74;
+        const y = top + 640 + index * 74;
         body.add(this.scene.add.text(-330, y, row.label, textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0, 0.5));
         body.add(this.scene.add.text(330, y, stats[row.key].toLocaleString() + (row.suffix ?? ""), textStyle({ role: "display", size: 30 })).setOrigin(1, 0.5));
         if (index < EXTRA_STATS.length - 1) body.add(drawHairline(this.scene, 0, y + 37, 660, { color: COLOR.accent, alpha: 0.14 }));

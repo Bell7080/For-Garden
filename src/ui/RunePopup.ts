@@ -115,17 +115,19 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
   const stats = [...rune.mainStats, ...rune.subStats];
   // 쪽지는 작다. 무엇을 가진 룬인지만 읽는 창이라 옵션 줄도 바짝 붙여, 이름과 수치가 한
   // 덩어리로 눈에 들어오게 한다. 크게 벌려 두면 몇 줄 안 되는 내용이 넓은 판에 흩어진다.
-  const height = 312 + stats.length * 40;
+  const height = 336 + stats.length * 40;
   popups.open({ width: 448, height, title: "룬", anchor: options.anchor, dim: true, onClose: options.onClose }, (body, close) => {
     const top = -height / 2;
-    body.add(addRuneFrame(scene, -142, top + 96, 88, rune.rarity, rune.part));
-    body.add(scene.add.text(-88, top + 56, rarity + "  ·  " + RUNE_PART_LABELS[rune.part], textStyle({ role: "emphasis", size: 18, color: hex(accent) })).setOrigin(0, 0));
-    body.add(scene.add.text(-88, top + 80, rune.customName ?? `${rarity} 룬`, textStyle({ role: "display", size: 25 })).setOrigin(0, 0).setWordWrapWidth(216));
-    body.add(scene.add.text(-88, top + 118, equippedLine(rune.instanceId), textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0, 0));
-    body.add(drawHairline(scene, 0, top + 156, 356, { color: accent, alpha: 0.45 }));
+    // 머리글("룬")이 창 맨 위에 서므로 그 아래로 한 줄 비우고 시작한다. 액자를 위로 붙이면
+    // 조각이 머리글에 잘려 무엇인지 알아볼 수 없다.
+    body.add(addRuneFrame(scene, -140, top + 122, 108, rune.rarity, rune.part));
+    body.add(scene.add.text(-76, top + 78, rarity + "  ·  " + RUNE_PART_LABELS[rune.part], textStyle({ role: "emphasis", size: 18, color: hex(accent) })).setOrigin(0, 0));
+    body.add(scene.add.text(-76, top + 102, rune.customName ?? `${rarity} 룬`, textStyle({ role: "display", size: 25 })).setOrigin(0, 0).setWordWrapWidth(204));
+    body.add(scene.add.text(-76, top + 140, equippedLine(rune.instanceId), textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0, 0));
+    body.add(drawHairline(scene, 0, top + 180, 356, { color: accent, alpha: 0.45 }));
 
     stats.forEach((stat, index) => {
-      const y = top + 188 + index * 40;
+      const y = top + 212 + index * 40;
       const main = index < rune.mainStats.length;
       // 주 옵션은 강조, 보조는 본문이다. 역할은 조건식이 아니라 두 갈래로 명시해서 고른다.
       const nameStyle = main
@@ -139,7 +141,7 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
     const attempts = runeEnhancementAttempts(rune);
     const total = runeTotalEnhancementAttempts(rune.rarity);
     const progress = rune.engravings.length > 0 ? "각인 완료" : `세공 ${attempts} / ${total}`;
-    body.add(scene.add.text(0, top + 188 + stats.length * 40 + 2, progress, textStyle({ role: "body", size: 19, color: COLOR.inkDim })).setOrigin(0.5, 0));
+    body.add(scene.add.text(0, top + 212 + stats.length * 40 + 2, progress, textStyle({ role: "body", size: 19, color: COLOR.inkDim })).setOrigin(0.5, 0));
 
     const buttonY = height / 2 - 56;
     const equip = options.equip;
@@ -190,14 +192,14 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
       const displayName = rune!.customName ?? `${rarity} 룬`;
       const top = -CRAFT.height / 2;
       const half = CRAFT.width / 2;
-      content.add(addRuneFrame(scene, -half + 78, top + 106, 96, rune!.rarity, rune!.part));
-      content.add(scene.add.text(-half + 134, top + 66, rarity + "  ·  " + RUNE_PART_LABELS[rune!.part], textStyle({ role: "emphasis", size: 20, color: hex(accent) })).setOrigin(0, 0));
-      const nameText = scene.add.text(-half + 134, top + 94, displayName, textStyle({ role: "display", size: 28 })).setOrigin(0, 0).setWordWrapWidth(260);
+      content.add(addRuneFrame(scene, -half + 82, top + 118, 112, rune!.rarity, rune!.part));
+      content.add(scene.add.text(-half + 146, top + 78, rarity + "  ·  " + RUNE_PART_LABELS[rune!.part], textStyle({ role: "emphasis", size: 20, color: hex(accent) })).setOrigin(0, 0));
+      const nameText = scene.add.text(-half + 146, top + 104, displayName, textStyle({ role: "display", size: 28 })).setOrigin(0, 0).setWordWrapWidth(260);
       content.add(nameText);
-      content.add(scene.add.text(-half + 134, top + 136, equippedLine(rune!.instanceId), textStyle({ role: "body", size: 19, color: COLOR.inkDim })).setOrigin(0, 0));
+      content.add(scene.add.text(-half + 146, top + 146, equippedLine(rune!.instanceId), textStyle({ role: "body", size: 19, color: COLOR.inkDim })).setOrigin(0, 0));
       // 보유 골드는 로비 상단과 같은 칸으로 세운다. 세공은 골드를 쓰는 화면이라 지갑이 늘
       // 보여야 하고, 같은 값이 화면마다 다른 모양으로 보이지 않게 한다.
-      addCurrencyChip(scene, half - 122, top + 84, "currency-gold", {
+      addCurrencyChip(scene, half - 122, top + 92, "currency-gold", {
         width: 156,
         height: 56,
         color: "#ffdf9a",
@@ -205,8 +207,8 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
       }).setText(formatCurrency(session.wallet.gold));
       // 연필은 씬에서 직접 작도하지 않고 glyph 공용 시스템의 edit 표식을 쓴다. 이름 바로
       // 옆에 서야 무엇을 고치는 단추인지 읽힌다 — 오른쪽 끝에 두면 그 아래 확률 글자와 겹친다.
-      const pencilX = Math.min(-half + 134 + nameText.width + 30, half - 244);
-      const pencilY = top + 112;
+      const pencilX = Math.min(-half + 146 + nameText.width + 30, half - 244);
+      const pencilY = top + 122;
       content.add(drawGlyph(scene, "edit", pencilX, pencilY, 32, accent));
       const renameHit = scene.add.rectangle(pencilX, pencilY, 74, 74, 0xffffff, 0).setInteractive({ useHandCursor: true });
       renameHit.on("pointerup", () => requestRuneName(scene, rune!.customName ?? "", async (value) => {
@@ -219,10 +221,10 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
       // 확률 줄 — 한 줄을 성공과 실패가 나눠 가진다. 시도할 때마다 가르는 지점이 움직인다.
       const completed = rune!.enhancementComplete;
       const chance = rune!.currentSuccessChance;
-      const chanceY = top + 216;
+      const chanceY = top + 230;
       if (!completed) {
-        content.add(scene.add.text(-half + 36, chanceY - 26, `성공 ${Math.round(chance * 100)}%`, textStyle({ role: "emphasis", size: 21, color: hex(RUNE_MARK.success.body) })).setOrigin(0, 1));
-        content.add(scene.add.text(half - 36, chanceY - 26, `실패 ${Math.round((1 - chance) * 100)}%`, textStyle({ role: "emphasis", size: 21, color: hex(RUNE_MARK.fail.halo) })).setOrigin(1, 1));
+        content.add(scene.add.text(-half + 36, chanceY - 24, `성공 ${Math.round(chance * 100)}%`, textStyle({ role: "emphasis", size: 21, color: hex(RUNE_MARK.success.body) })).setOrigin(0, 1));
+        content.add(scene.add.text(half - 36, chanceY - 24, `실패 ${Math.round((1 - chance) * 100)}%`, textStyle({ role: "emphasis", size: 21, color: hex(RUNE_MARK.fail.halo) })).setOrigin(1, 1));
         addChanceLine(scene, content, 0, chanceY, CRAFT.width - 88, chance);
       } else {
         const done = rune!.engravings.length > 0 ? "세공과 각인을 모두 마쳤다" : "모든 세공을 마쳤다 · 각인만 남았다";
@@ -266,7 +268,7 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
         content.add(hit);
       };
 
-      let y = top + 268;
+      let y = top + 282;
       content.add(scene.add.text(-CRAFT.width / 2 + 44, y, "주 옵션", textStyle({ role: "emphasis", size: 20, color: hex(accent) })).setOrigin(0, 0.5));
       y += 58;
       rune!.mainStats.forEach((stat) => { drawRow(stat, y, 76, true); y += 86; });

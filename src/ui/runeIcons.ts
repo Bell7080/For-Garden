@@ -148,10 +148,12 @@ export function addChanceLine(
 ): void {
   const clamped = Math.max(0, Math.min(1, chance));
   const height = 16;
-  const bevel = height * 0.9;
-  // 빗금의 기울기. 조각 둘 사이에 이만큼의 틈을 두어 `/` 한 줄이 살아 있게 한다.
-  const slant = height * 0.72;
-  const gap = 5;
+  // 양 끝의 깎임과 가운데 빗금은 **살짝만** 준다. 크게 깎으면 막대가 두 조각으로 부러진
+  // 것처럼 보여, 두 값이 한 줄을 나눠 가진다는 것이 오히려 읽히지 않는다.
+  const bevel = height * 0.5;
+  /** 빗금의 기울기. 조각 둘 사이에 이만큼의 틈을 두어 `/` 한 줄이 살아 있게 한다. */
+  const slant = height * 0.38;
+  const gap = 3;
   const left = x - width / 2;
   const right = x + width / 2;
   const split = left + width * clamped;
@@ -188,7 +190,7 @@ export function addChanceLine(
   graphics.fillStyle(RUNE_MARK.fail.body, 1);
   graphics.fillPoints(toPolygon(fail), true);
   // 가르는 빗금 한 줄. 어디까지가 성공인지 숫자를 읽기 전에 보인다.
-  graphics.lineStyle(3, 0xffffff, 0.9);
-  graphics.lineBetween(split - slant / 2, bottomY + 3, split + slant / 2, topY - 3);
+  graphics.lineStyle(2, 0xffffff, 0.75);
+  graphics.lineBetween(split - slant / 2, bottomY + 2, split + slant / 2, topY - 2);
   parent.add(graphics);
 }

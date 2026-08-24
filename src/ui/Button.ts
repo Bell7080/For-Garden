@@ -164,16 +164,18 @@ export class Button extends Phaser.GameObjects.Container {
       // 라벨과 비용을 한 덩어리로 보고 판 가운데에 세운다. 값이 길어져도 덩어리째 가운데다.
       const coin = fontSize * 1.06;
       const gap = fontSize * 0.42;
-      const costStyle = textStyle({ role: "display", size: fontSize * 0.9, color: opts.cost.affordable === false ? COLOR.dangerText : COLOR.ink });
-      const amount = scene.add.text(0, hasSub ? -14 : 0, opts.cost.amount.toLocaleString(), costStyle).setOrigin(0, 0.5);
-      const total = label.width + gap + coin + gap * 0.5 + amount.width;
+      // 재화 수는 라벨보다 굵고 크게, 그러나 **세로로만** 늘인다. 가로로 키우면 자릿수가
+      // 늘었을 때 덩어리가 판을 넘는다. 아이콘과는 손가락 하나가 아니라 한 뼘만 띄운다.
+      const costStyle = textStyle({ role: "display", size: fontSize * 0.96, color: opts.cost.affordable === false ? COLOR.dangerText : COLOR.ink });
+      const amount = scene.add.text(0, hasSub ? -14 : 0, opts.cost.amount.toLocaleString(), costStyle).setOrigin(0, 0.5).setScale(1, 1.14);
+      const total = label.width + gap + coin + gap * 0.24 + amount.width;
       const left = -total / 2;
       label.setX(left + label.width / 2);
       const coinX = left + label.width + gap + coin / 2;
       // 그림자를 한 겹 깔아 상단 재화 줄과 같은 방식으로 앉는다.
       plate.add(scene.add.image(coinX + 3, (hasSub ? -14 : 0) + 4, opts.cost.icon).setDisplaySize(coin, coin).setTint(0x05070a).setAlpha(0.55));
       plate.add(scene.add.image(coinX, hasSub ? -14 : 0, opts.cost.icon).setDisplaySize(coin, coin));
-      amount.setX(coinX + coin / 2 + gap * 0.5);
+      amount.setX(coinX + coin / 2 + gap * 0.24);
       plate.add(amount);
     }
     if (opts.decorDots) plate.add(dotPattern(scene, shape, accent));

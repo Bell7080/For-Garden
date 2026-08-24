@@ -12,7 +12,15 @@ import { COLOR, textStyle } from "./theme";
  * 판때기 대신 살짝 어두운 둥근 유리 조각 하나를 깔고, 아이콘은 그 왼쪽 안쪽에 넉넉히 앉는다.
  * 이 줄만 기울이지 않고 둥근 면을 쓰는 이유는 `drawRoundedLayer`에 적어 두었다.
  */
-export const CURRENCY_CHIP = { width: 196, height: 74, icon: 62, gap: 24 } as const;
+export const CURRENCY_CHIP = { width: 168, height: 74, icon: 62, gap: 24 } as const;
+
+/**
+ * 값 글자의 크기와 세로 늘임.
+ *
+ * 재화는 화면에서 가장 자주 훑는 수라 다른 라벨보다 굵고 커야 한다. 가로로 키우면 칸이
+ * 함께 넓어지므로 **세로로만** 늘여 자릿수는 그대로 두고 눈에는 크게 잡히게 한다.
+ */
+const VALUE = { ratio: 0.44, stretch: 1.14, inset: 14 } as const;
 
 export interface CurrencyChipOptions {
   /** 칸의 가로 폭. 좁은 팝업에서는 줄여 쓴다. */
@@ -36,12 +44,15 @@ export function addCurrencyChip(
   const iconSize = Math.round(height * (CURRENCY_CHIP.icon / CURRENCY_CHIP.height));
   const plate = drawRoundedLayer(scene, x, y, width, height, { fill: 0x05070a, alpha: 0.46, radius: height / 2 });
   // 아이콘은 칸 안쪽에 온전히 들어간다. 잘린 모서리에 걸치면 그림이 반쯤 잘려 보인다.
-  const iconX = x - width / 2 + iconSize * 0.56;
+  // 칸을 좁힌 만큼 아이콘도 왼쪽 끝에 더 붙어, 그림과 수가 한 덩어리로 읽힌다.
+  const iconX = x - width / 2 + iconSize * 0.52;
   const shadow = scene.add.image(iconX + 3, y + 4, icon).setDisplaySize(iconSize, iconSize).setTint(0x05070a).setAlpha(0.55);
   const image = scene.add.image(iconX, y, icon).setDisplaySize(iconSize, iconSize);
   const value = scene.add
-    .text(x + width / 2 - 20, y, "", textStyle({ role: "emphasis", size: Math.round(height * 0.38), color: options.color ?? COLOR.ink }))
-    .setOrigin(1, 0.5);
+    .text(x + width / 2 - VALUE.inset, y, "", textStyle({ role: "display", size: Math.round(height * VALUE.ratio), color: options.color ?? COLOR.ink }))
+    .setOrigin(1, 0.5)
+    .setScale(1, VALUE.stretch)
+    .setShadow(2, 5, "#05070a", 6, false, true);
   options.parent?.add([plate, shadow, image, value]);
   return value;
 }

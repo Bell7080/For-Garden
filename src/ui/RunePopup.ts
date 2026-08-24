@@ -196,7 +196,7 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
       // 보유 골드는 로비 상단과 같은 칸으로 세운다. 세공은 골드를 쓰는 화면이라 지갑이 늘
       // 보여야 하고, 같은 값이 화면마다 다른 모양으로 보이지 않게 한다.
       addCurrencyChip(scene, half - 148, top + 96, "currency-gold", {
-        width: 196,
+        width: 172,
         height: 62,
         color: "#ffdf9a",
         parent: content,

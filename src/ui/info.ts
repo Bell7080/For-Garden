@@ -170,12 +170,14 @@ function feedCostRow(
   const container = scene.add.container(x, y);
   container.add(drawLayer(scene, 0, 0, slantedRect(width, height, 8), { fill: 0x0b1410, alpha: 0.66, edge: FEED_GREEN, edgeAlpha: 0.22 }));
   const icon = Math.round(height * 0.86);
-  const gap = Math.round(icon * 0.22);
+  // 아이콘과 수는 바짝 붙는다. 멀리 떼면 "치즈케이크"와 "숫자"가 두 정보로 읽힌다.
+  const gap = Math.round(icon * 0.12);
   // 아이콘과 수를 한 덩어리로 담아 통째로 가운데에 세운다. 아이콘을 판 왼쪽 끝에 붙이면
   // 자릿수가 적을 때 값이 왼쪽으로 쏠려 판 오른쪽이 휑하게 빈다.
   const group = scene.add.container(0, 0);
   group.add(cheesecakeIcon(scene, 0, 0, icon));
-  const text = scene.add.text(icon / 2 + gap, 1, "", textStyle({ role: "display", size, color: FEED_TEXT })).setOrigin(0, 0.5);
+  // 세로로만 늘여 굵고 크게 보이게 한다. 가로까지 키우면 자릿수가 늘 때 판을 넘는다.
+  const text = scene.add.text(icon / 2 + gap, 1, "", textStyle({ role: "display", size, color: FEED_TEXT })).setOrigin(0, 0.5).setScale(1, 1.14);
   group.add(text);
   container.add(group);
   // 값이 바뀌면 폭도 바뀌므로 다시 부른다. 덩어리의 왼쪽 끝은 아이콘 반쪽이다.

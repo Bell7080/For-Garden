@@ -21,6 +21,8 @@ function testRune(instanceId: string) {
 /** manager 검증 테스트마다 독립된 저장 상태를 만든다. */
 function makeSession(): Session {
   return {
+    // 성장 테스트용 세션에도 직렬화 가능한 기본 발굴 상태를 둔다.
+    idleExcavation: { assignedRelicIds: [null, null, null], lastSettledAt: null, unclaimed: { fossil: 0, gold: 0, cheesecake: 0 }, baseStorageSeconds: 14_400, activeProductionMultiplier: 1, storageExtensionExpiresAt: null },
     settings: createDefaultSettings(),
     completedStoryIds: new Set(), observationRecords: [],
     selectedStageId: null, party: ["rex"], cleared: new Set(), owned: new Set(["rex"]), favorite: "rex", bookmarked: new Set<string>(),

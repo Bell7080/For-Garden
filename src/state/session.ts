@@ -8,6 +8,7 @@ import { BOND_XP_REWARD, grantBondXp } from "../core/bond";
 import type { MissionState } from "../core/missions";
 import type { RuneInstance } from "../core/runes";
 import { createDefaultSettings } from "../core/settings";
+import { createIdleExcavationState, type IdleExcavationState } from "../core/idleExcavation";
 
 /** 로컬에 저장 가능한 사용자 환경설정이다. 계정에는 표시 정보만 두며 인증 비밀은 서버 경계에 남긴다. */
 export interface GameSettings {
@@ -26,6 +27,8 @@ export interface GameSettings {
 const STARTER_RELICS = ["anky", "rex", "spino"];
 
 export interface Session {
+  /** 서버 정산 전용 방치 발굴 상태다. 씬은 이 객체를 직접 변경하지 않는다. */
+  idleExcavation: IdleExcavationState;
   /** 씬은 직접 쓰지 않고 SettingsManager를 거쳐 저장·이벤트와 한 처리로 변경한다. */
   settings: GameSettings;
   /** 완료한 스토리 ID. 첫 실행 진입과 회상 보상 차단에 함께 사용한다. */
@@ -98,6 +101,8 @@ export interface ObservationRecord {
  * 계정 연동 시에도 이 형태를 업로드 모델로 오해하지 않고 SaveManager 경계에서만 사용한다.
  */
 export interface SaveData {
+  /** 서버와 동기화할 수 있는 순수 JSON 발굴 상태다. */
+  idleExcavation: IdleExcavationState;
   saveVersion: number;
   settings: GameSettings;
   completedStoryIds: string[];
@@ -140,6 +145,8 @@ export function createDefaultSession(): Session {
   // 순수 설정 팩토리는 지연 require 대신 정적 import로 의존 방향을 core→state 타입에만 제한한다.
   const settings = createDefaultSettings();
   return {
+    // 서버 첫 조회가 현재 시각을 기준점으로 확정하며 기본 보관 시간은 4시간이다.
+    idleExcavation: createIdleExcavationState(),
     settings,
     completedStoryIds: new Set<string>(),
     observationRecords: [],

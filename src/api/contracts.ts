@@ -6,6 +6,16 @@ import type { DnaExchangeKind } from "../data/economy";
 import type { StageDef } from "../core/types";
 import type { EventDefinition } from "../data/events/types";
 import type { RuneInstance, RuneStatKey } from "../core/runes";
+import type { ExcavationCurrency, IdleExcavationState } from "../core/idleExcavation";
+
+/** 조회는 서버가 정산한 상태와 동일 기준 시각을 함께 돌려준다. */
+export interface IdleExcavationResponse { excavation: IdleExcavationState; serverTime: string; }
+/** 편성 저장 재시도는 요청 ID로 같은 결과를 받으며 슬롯 위치를 보존한다. */
+export interface SaveExcavationFormationRequest { requestId: string; assignedRelicIds: [string | null, string | null, string | null]; }
+/** 수확 요청 ID는 네트워크 재전송의 중복 지급을 막는 서버 멱등 키다. */
+export interface HarvestExcavationRequest { requestId: string; }
+/** 상한 때문에 버린 양까지 공개해 화면이 지급량을 추측하지 않게 한다. */
+export interface HarvestExcavationResponse extends IdleExcavationResponse { wallet: Wallet; granted: Record<ExcavationCurrency, number>; discarded: Record<ExcavationCurrency, number>; }
 
 /** 룬 장착 위치다. 슬롯 값은 정적 정의 ID가 아닌 룬 인스턴스 ID다. */
 export interface RuneEquipmentDto { relicId: string; slots: [string | null, string | null, string | null]; }
@@ -224,6 +234,10 @@ export interface EnterEventStageResponse { eventId: string; stage: StageDef; ser
 
 /** 실제 HTTP API로 교체할 때도 씬이 의존할 단 하나의 통신 인터페이스다. */
 export interface GameApi {
+  /** 조회 자체가 서버 시각까지의 생산분을 원자적으로 정산한다. */
+  getIdleExcavation(): Promise<IdleExcavationResponse>;
+  saveExcavationFormation(request: SaveExcavationFormationRequest): Promise<IdleExcavationResponse>;
+  harvestExcavation(request: HarvestExcavationRequest): Promise<HarvestExcavationResponse>;
   getPlayerState(): Promise<PlayerStateDto>;
   /** 광고 완료 증명을 검증하고 멱등성·UTC 제한·지급·저장을 한 처리로 확정한다. */
   claimAdReward(request: ClaimAdRewardRequest): Promise<ClaimAdRewardResponse>;

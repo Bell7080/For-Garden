@@ -52,3 +52,61 @@ export function addSceneBackground(
   const coverScale = Math.max(BASE_WIDTH / image.width, BASE_HEIGHT / image.height);
   return image.setScale(coverScale);
 }
+
+/** 팝업 안에서만 쓰는 배경 원화의 이미지·마스크·페이드 수명주기 묶음이다. */
+export interface PopupBackgroundImage {
+  image: Phaser.GameObjects.Image;
+  mask: Phaser.Display.Masks.GeometryMask;
+  maskGraphics: Phaser.GameObjects.Graphics;
+  fade: Phaser.GameObjects.Graphics;
+  destroy: () => void;
+}
+
+/**
+ * 공용 배경 키를 팝업의 제한된 히어로 영역에 cover 배치한다.
+ * 전체 화면 연출을 복제하지 않고 같은 비율 계산을 쓰되, 외곽 액자 대신 직사각 마스크와
+ * 아래로 짙어지는 어두운 페이드만 더해 뒤의 정보가 자연스럽게 이어지게 한다.
+ */
+export function addPopupBackgroundImage(
+  scene: Phaser.Scene,
+  parent: Phaser.GameObjects.Container,
+  texture: string,
+  bounds: { x: number; y: number; width: number; height: number },
+): PopupBackgroundImage {
+  // 원화는 슬롯 뒤 한 겹에만 놓고 원본 비율을 유지한 채 히어로 영역을 빈틈없이 채운다.
+  const image = scene.add.image(bounds.x, bounds.y, texture);
+  image.setScale(Math.max(bounds.width / image.width, bounds.height / image.height));
+  parent.add(image);
+
+  // GeometryMask는 Container 변환을 자동 상속하지 않으므로 렌더 직전마다 월드 좌표를 맞춘다.
+  const maskGraphics = scene.make.graphics({});
+  const mask = maskGraphics.createGeometryMask();
+  image.setMask(mask);
+  const syncMask = (): void => {
+    if (!parent.active || !maskGraphics.active) return;
+    const matrix = parent.getWorldTransformMatrix();
+    const topLeft = matrix.transformPoint(bounds.x - bounds.width / 2, bounds.y - bounds.height / 2);
+    maskGraphics.clear().fillStyle(0xffffff, 1).fillRect(topLeft.x, topLeft.y, bounds.width * matrix.scaleX, bounds.height * matrix.scaleY);
+  };
+  scene.events.on(Phaser.Scenes.Events.PRE_RENDER, syncMask);
+  syncMask();
+
+  // 하단의 어두운 페이드는 원화를 검은 판으로 끊지 않고 정보 영역의 유리면으로 녹여 보낸다.
+  const fade = scene.add.graphics();
+  fade.fillGradientStyle(0x080b10, 0x080b10, 0x080b10, 0x080b10, 0.04, 0.04, 0.94, 0.94);
+  fade.fillRect(bounds.x - bounds.width / 2, bounds.y - bounds.height / 2, bounds.width, bounds.height);
+  parent.add(fade);
+
+  return {
+    image, mask, maskGraphics, fade,
+    destroy: () => {
+      // 마스크는 표시 객체의 자식이 아니므로 이벤트, Mask, Graphics, 이미지 순으로 명시 정리한다.
+      scene.events.off(Phaser.Scenes.Events.PRE_RENDER, syncMask);
+      if (image.active) image.clearMask(false);
+      mask.destroy();
+      if (maskGraphics.active) maskGraphics.destroy();
+      if (fade.active) fade.destroy();
+      if (image.active) image.destroy();
+    },
+  };
+}

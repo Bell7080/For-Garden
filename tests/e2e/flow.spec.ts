@@ -304,7 +304,7 @@ test("하단 탭으로 고고학 · 렐릭 · 로비 · 연구소 · 상점을 �
   await page.screenshot({ path: `test-results/${test.info().project.name}-shop-patron-pass.png`, fullPage: true });
 });
 
-test("연구소에서 화석을 사용하면 렐릭 발굴 결과가 뜬다", async ({ page }) => {
+test("연구소에서 화석을 사용하면 렐릭 연구 결과가 뜬다", async ({ page }) => {
   await startAfterOpening(page);
   await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await tap(page, (BASE_WIDTH * 7) / 10, BASE_HEIGHT - 180 + 90);
@@ -313,14 +313,14 @@ test("연구소에서 화석을 사용하면 렐릭 발굴 결과가 뜬다", as
   const before = await page.evaluate(() => window.__PF_DEBUG?.wallet?.fossil);
   expect(before).toBe(1200);
 
-  await tap(page, 300, BASE_HEIGHT - 180 - 250); // 1회 발굴
+  await tap(page, 300, BASE_HEIGHT - 180 - 250); // 1회 연구
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.wallet?.fossil)).toBe(1100);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.owned)).not.toBeUndefined();
   // 슬롯별 신규/DNA 배지가 모바일 안전 영역에 표시되는 모습을 회귀 자료로 남긴다.
   await page.screenshot({ path: `test-results/${test.info().project.name}-lab-pull-result.png`, fullPage: true });
 });
 
-test("연구소 발굴 확률 정보에서 현재 천장과 픽업·이월·중복 정책을 함께 확인한다", async ({ page }) => {
+test("연구소 연구 확률 정보에서 현재 천장과 픽업·이월·중복 정책을 함께 확인한다", async ({ page }) => {
   await page.setViewportSize({ width: BASE_WIDTH, height: BASE_HEIGHT });
   await startAfterOpening(page);
   await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);

@@ -52,7 +52,7 @@ export interface Session {
   gachaPityByGroup: Record<string, GachaPityState>;
   /** 렐릭 id별 성장/장착 상태다. 객체와 배열만 사용해 그대로 직렬화할 수 있다. */
   relicProgress: Record<string, RelicProgress>;
-  /** 개체별 파편. 중복 발굴로 쌓이고 한계 돌파에 쓴다. 공용 DNA 조각과 섞지 않는다. */
+  /** 개체별 파편. 연구소 중복 획득으로 쌓이고 한계 돌파에 쓴다. 공용 DNA 조각과 섞지 않는다. */
   relicFragments: Record<string, number>;
   /** 보유 룬 인스턴스다. 정적 정의 ID가 아니라 각 개체의 고유 ID로 구분한다. */
   runeInventory: RuneInstance[];
@@ -120,7 +120,7 @@ export interface SaveData {
   /**
    * 개체별 파편 보유량.
    *
-   * 같은 개체를 다시 발굴하면 그 개체의 일러스트가 박힌 파편이 쌓이고, 파편으로 한계를
+   * 연구소에서 같은 개체를 다시 획득하면 그 개체의 일러스트가 박힌 파편이 쌓이고, 파편으로 한계를
    * 돌파해 별을 올린다. 공용 DNA 조각과 섞지 않는다 — DNA는 별 다섯에 닿은 뒤의 마일리지다.
    */
   relicFragments: Record<string, number>;

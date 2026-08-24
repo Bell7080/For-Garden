@@ -76,7 +76,7 @@ export interface PlayerStateDto {
   ownedRelicIds: string[];
   /** 렐릭 id별 성장과 Heart Gem 3슬롯 장착 상태다. */
   relicProgress: Record<string, RelicProgress>;
-  /** 개체별 파편 보유량. 중복 발굴로 쌓이고 한계 돌파에 쓴다. */
+  /** 개체별 파편 보유량. 연구소 중복 획득으로 쌓이고 한계 돌파에 쓴다. */
   relicFragments: Record<string, number>;
   /** 서버 동기화 대상인 편성, 애착, 클리어 진행이다. 로컬 SaveData와 버전 책임은 분리한다. */
   party: string[];
@@ -213,7 +213,7 @@ export interface PullRequest {
   count: 1 | 10;
 }
 
-/** 서버가 확정한 발굴 결과와 그 직후 상태다. */
+/** 서버가 확정한 캐릭터 연구 결과와 그 직후 상태다. */
 export interface PullResponse extends PlayerStateDto {
   /** 추첨 순서를 보존하며 각 슬롯의 신규/숙련/상한 변화를 명시한다. */
   results: AcquisitionResult[];

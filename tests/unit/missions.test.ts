@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyMissionEvent, missionPeriodKeys, normalizeMissions, type MissionState } from "../../src/core/missions";
+import { applyMissionEvent, MISSIONS, missionPeriodKeys, normalizeMissions, type MissionState } from "../../src/core/missions";
 
 /** 기간 경계 테스트가 공유하는 직렬화 가능한 진행 스냅샷이다. */
 const progressed = (): MissionState => ({
@@ -31,5 +31,14 @@ describe("mission rules", () => {
     expect(state.progress).toEqual({});
     for (let count = 0; count < 8; count += 1) state = applyMissionEvent(state, { type: "battle_completed", victory: true }, now);
     expect(state.progress).toMatchObject({ "daily-battle": 1, "weekly-battle": 5 });
+  });
+
+  it("연구소 캐릭터 연구 이벤트만 기존 발굴 저장 ID의 임무를 올린다", () => {
+    const now = new Date("2026-08-20T12:00:00Z");
+    const state: MissionState = { dailyKey: "", weeklyKey: "", progress: {}, claimedIds: [] };
+    const next = applyMissionEvent(state, { type: "relic_research_completed", count: 3 }, now);
+    // ID는 마이그레이션 없이 유지하고 사용자 제목만 방치 발굴과 구별한다.
+    expect(MISSIONS.find((mission) => mission.id === "daily-excavate")?.title).toBe("연구소 캐릭터 연구 1회");
+    expect(next.progress).toMatchObject({ "daily-excavate": 1, "weekly-excavate": 3 });
   });
 });

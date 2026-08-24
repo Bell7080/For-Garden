@@ -219,7 +219,7 @@ export class FakeServer implements GameApi {
   async pullRelics(request: PullRequest): Promise<PullResponse> {
     await this.delay();
     if (request.count !== 1 && request.count !== 10) {
-      throw new GameApiError("INVALID_PULL_COUNT", "발굴 횟수는 1회 또는 10회여야 합니다.");
+      throw new GameApiError("INVALID_PULL_COUNT", "연구 횟수는 1회 또는 10회여야 합니다.");
     }
 
     const banner = BANNERS.find((candidate) => candidate.id === request.bannerId);
@@ -241,8 +241,8 @@ export class FakeServer implements GameApi {
     }
     const nextWallet = { ...spend(this.state.wallet, banner, request.count), dnaFragments: this.state.wallet.dnaFragments + outcome.overflowFragments };
     const nextPity = { ...this.state.gachaPityByGroup, [banner.pityGroupId]: pulled.pity };
-    // 발굴 성공 이벤트는 결과 확정 뒤 이 API 경계에서만 임무로 환산한다.
-    const nextMissions = applyMissionEvent(this.state.missions, { type: "excavation_completed", count: request.count }, this.now());
+    // 연구소의 캐릭터 연구 성공만 임무로 환산하며 방치 발굴 수확과 섞지 않는다.
+    const nextMissions = applyMissionEvent(this.state.missions, { type: "relic_research_completed", count: request.count }, this.now());
     const nextState: Session = { ...this.state, wallet: nextWallet, owned: outcome.ownedRelicIds, relicProgress: nextProgress, relicFragments: outcome.fragmentsById, gachaPityByGroup: nextPity, missions: nextMissions };
 
     // 저장 실패도 원본 메모리에 부분 반영되지 않도록 저장을 먼저 성공시킨 뒤 필드를 일괄 교체한다.

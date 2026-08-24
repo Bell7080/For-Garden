@@ -1059,7 +1059,7 @@ export class InfoManager {
    * 한계 돌파 테크트리.
    *
    * 별 하나에서 시작해 다섯까지 오르는 길을 한 장에 세운다. 단계마다 드는 **그 개체의 파편**과
-   * 열리는 효과·레벨 상한을 함께 적어, 중복 발굴이 무엇으로 돌아오는지 여기서 다 읽히게 한다.
+   * 열리는 효과·레벨 상한을 함께 적어, 연구소 중복 획득이 무엇으로 돌아오는지 여기서 다 읽히게 한다.
    */
   private openBreakthroughSteps(from: PopupSource): void {
     const def = this.currentDef;
@@ -1068,7 +1068,7 @@ export class InfoManager {
     const stars = this.publicProfile ? Math.max(1, this.publicProfile.stars) : relicStars(progress.breakthrough);
     const held = this.publicProfile ? 0 : relicProgression.getFragments(def.id);
     this.popups.open({ width: 900, height: 700, title: "한계 돌파", tilt: -1.2, ...anchorOf(from) }, (body) => {
-      body.add(this.scene.add.text(-390, -262, "같은 개체를 다시 발굴하면 그 개체의 파편이 쌓인다.", textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0, 0));
+      body.add(this.scene.add.text(-390, -262, "연구소에서 같은 개체를 다시 획득하면 그 개체의 파편이 쌓인다.", textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0, 0));
       body.add(this.scene.add.text(-390, -226, "파편으로 한계를 돌파할 때마다 별이 하나 오른다.", textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0, 0));
       BREAKTHROUGH_STEPS.forEach((entry, index) => {
         // 돌파 한 번이 별 하나다. 표의 첫 줄이 곧 "별 둘로 가는 길"이다.

@@ -3,7 +3,7 @@ import type { AdOperationsConfigResponse, AdPresentationResult, AdSlotOperations
 import { excavationProductionDisplayModel, placeExcavationRelic, type ExcavationCurrency, type IdleExcavationState } from "../core/idleExcavation";
 import { formatCurrency } from "../core/formatCurrency";
 import { RELICS } from "../data/relics";
-import { portraitUsesRelicTint } from "../puppets/assets";
+import { portraitUsesRelicTint, sdAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
 import { tintFor } from "../puppets/tints";
 import { session } from "../state/session";
 import { setDebugIdleExcavationPopup } from "../debug";
@@ -38,6 +38,12 @@ function copyFormation(value: Formation): Formation { return [...value] as Forma
 export class IdleExcavationPopup {
   private body?: Phaser.GameObjects.Container;
   private content?: Phaser.GameObjects.Container;
+  /** 현황 SD만 담아 카드/편집 UI와 비동기 수명을 분리하는 전용 레이어다. */
+  private sdContainer?: Phaser.GameObjects.Container;
+  private readonly sdPuppets = new Set<PuppetCreature>();
+  private readonly sdTweens = new Set<Phaser.Tweens.Tween>();
+  /** 재렌더나 닫기 전 시작된 Puppet 로딩 결과가 새 현황에 섞이지 않게 하는 세대 번호다. */
+  private sdLoadGeneration = 0;
   /** Container 밖 GeometryMask까지 재렌더/닫기 때 빠짐없이 정리하는 히어로 원화 핸들이다. */
   private hero?: PopupBackgroundImage;
   private confirmed?: IdleExcavationResponse;
@@ -94,6 +100,8 @@ export class IdleExcavationPopup {
 
   /** 다시 그릴 때 히어로 이미지와 PortraitCard의 외부 마스크까지 명시적으로 함께 정리한다. */
   private resetContent(): Phaser.GameObjects.Container | undefined {
+    // SD는 content 바깥 GPU 자원과 tween을 가지므로 화면 자식 파괴에 기대지 않고 한 번만 정리한다.
+    this.clearStatusSD();
     // 히어로의 GeometryMask와 렌더 이벤트는 content 자식이 아니므로 Container보다 먼저 폐기한다.
     this.hero?.destroy(); this.hero = undefined;
     // 편집 그리드의 GeometryMask와 씬 입력 리스너는 content 자식이 아니므로 화면 교체 전에 직접 뗀다.
@@ -130,7 +138,9 @@ export class IdleExcavationPopup {
     const content = this.resetContent();
     if (!response || !content) return;
     const formation = response.excavation.assignedRelicIds;
-    this.addSlots(content, formation, false);
+    const slotCards = this.addSlots(content, formation, false);
+    // draft 편집에는 SD를 만들지 않는다. 서버 확정값을 그리는 현황에서만 비동기 세대를 시작한다.
+    this.loadStatusSD(content, formation, slotCards);
     // 첫 진입을 포함해 언제 열어도 획득형 연구와 배치형 생산의 차이를 한 문장으로 확인시킨다.
     content.add(this.scene.add.text(0, -250, "연구소는 캐릭터 획득 연구, 이곳은 배치형 자원 발굴입니다.", textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0.5));
     const rate = excavationProductionDisplayModel(formation, RELICS, session.relicProgress).totalsPerHour;
@@ -317,7 +327,8 @@ export class IdleExcavationPopup {
   }
 
   /** 슬롯은 빈 면과 PortraitCard를 구분하고 어느 칸이 편집 대상인지 확대/발광으로 알린다. */
-  private addSlots(parent: Phaser.GameObjects.Container, formation: Formation, editable: boolean): void {
+  private addSlots(parent: Phaser.GameObjects.Container, formation: Formation, editable: boolean): Array<Phaser.GameObjects.Container | undefined> {
+    const cards: Array<Phaser.GameObjects.Container | undefined> = [];
     parent.add(this.scene.add.text(-360, -550, editable ? `편집 슬롯 ${this.selectedSlot + 1}` : `확정 편성 ${formation.filter(Boolean).length} / 3`, textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0.5));
     formation.forEach((id, index) => {
       const x = -250 + index * 250;
@@ -327,7 +338,7 @@ export class IdleExcavationPopup {
         const progress = session.relicProgress[relic.id];
         const card = new PortraitCard(this.scene, x, -385, { width: 210, height: 245, portraitAssetId: relic.portraitAssetId, tint: portraitUsesRelicTint(relic.portraitAssetId) ? tintFor(relic.id) : undefined, label: relic.name, level: progress?.level ?? 1, rarity: relic.rarity, stars: (progress?.breakthrough ?? 0) + 1 });
         card.setSelected(editable && index === this.selectedSlot);
-        parent.add(card); hit = card.hit;
+        parent.add(card); hit = card.hit; cards[index] = card;
       } else {
         const empty = this.scene.add.container(x, -385);
         empty.add(drawLayer(this.scene, 0, 0, slantedRect(210, 245), { fill: 0x151a22, alpha: 0.45, edge: index === this.selectedSlot && editable ? COLOR.accent : 0x6f7884, edgeAlpha: 0.55 }));
@@ -338,6 +349,54 @@ export class IdleExcavationPopup {
       }
       if (editable) hit.on("pointerup", () => { if (!this.saving) { this.selectedSlot = index; this.renderEditor(); } });
     });
+    return cards;
+  }
+
+  /** 현황 전용 Puppet/tween을 중복 파괴 없이 비우고 진행 중 로딩도 무효화한다. */
+  private clearStatusSD(): void {
+    this.sdLoadGeneration += 1;
+    for (const tween of this.sdTweens) tween.stop();
+    this.sdTweens.clear();
+    // Container의 destroy(true)가 같은 Puppet을 다시 순회하지 않도록 먼저 소유권에서 떼고 폐기한다.
+    for (const puppet of this.sdPuppets) { this.sdContainer?.remove(puppet, false); puppet.destroy(); }
+    this.sdPuppets.clear();
+    this.sdContainer?.destroy(true); this.sdContainer = undefined;
+  }
+
+  /** 확정 슬롯의 카드 위에 SD가 준비된 자리만 교체하며 실패한 자리는 카드 미리보기를 보존한다. */
+  private loadStatusSD(parent: Phaser.GameObjects.Container, formation: Formation, cards: Array<Phaser.GameObjects.Container | undefined>): void {
+    const generation = this.sdLoadGeneration;
+    const layer = this.scene.add.container(0, 0).setName("idle-excavation-confirmed-sd");
+    this.sdContainer = layer; parent.add(layer);
+    formation.forEach((relicId, index) => {
+      if (!relicId) return;
+      const x = -250 + index * 250;
+      const groundY = -275;
+      // 사방 테두리나 입체 판 대신 얇은 홀로그램 투영 그림자만 발 아래에 둔다.
+      layer.add(this.scene.add.ellipse(x, groundY + 2, 172, 25, COLOR.accent, 0.16));
+      void this.loadStatusPuppet(relicId, index, x, groundY, generation, layer, cards[index]);
+    });
+  }
+
+  /** 로딩 완료 시 현재 세대인지 재검증하며, 늦게 도착한 결과는 컨테이너에 넣지 않고 즉시 폐기한다. */
+  private async loadStatusPuppet(relicId: string, index: number, x: number, groundY: number, generation: number, layer: Phaser.GameObjects.Container, fallback?: Phaser.GameObjects.Container): Promise<void> {
+    try {
+      const puppet = await spawnPuppet(this.scene, sdAssetFor(relicId), { x, groundY, height: 205, depth: 1 });
+      if (!this.body || generation !== this.sdLoadGeneration || layer !== this.sdContainer) { puppet.destroy(); return; }
+      layer.add(puppet); this.sdPuppets.add(puppet);
+      // 성공한 자리만 카드를 감춘다. ZIP/텍스처 실패 시 catch가 카드를 그대로 남긴다.
+      fallback?.setVisible(false);
+      const reduced = session.settings.accessibility.reduceMotion;
+      const delays = [180, 570, 930];
+      const heights = [11, 17, 8];
+      const waits = [760, 1130, 910];
+      const tween = this.scene.tweens.add(reduced
+        ? { targets: puppet, scaleX: puppet.scaleX * 1.025, scaleY: puppet.scaleY * 1.025, alpha: 0.9, duration: 420, delay: delays[index], hold: waits[index], yoyo: true, repeat: -1 }
+        : { targets: puppet, y: groundY - heights[index], duration: 250 + index * 45, delay: delays[index], hold: 90 + index * 35, yoyo: true, repeat: -1, repeatDelay: waits[index], ease: "Sine.easeOut" });
+      this.sdTweens.add(tween);
+    } catch {
+      // Puppet 실패는 슬롯 전체의 실패가 아니다. 카드가 확정 편성을 계속 설명한다.
+    }
   }
 
   /** 완료는 한 요청 동안 모든 입력을 막고 성공 응답을 받은 뒤에만 확정 편성과 세션을 바꾼다. */
@@ -382,7 +441,7 @@ export class IdleExcavationPopup {
 
   /** 타이머와 임시 편성을 버리며 서버에서 받은 confirmed 객체는 외부 상태에 역으로 쓰지 않는다. */
   private dispose(): void {
-    this.requestGeneration++; this.ticker?.remove(false); this.ticker = undefined;
+    this.requestGeneration++; this.clearStatusSD(); this.ticker?.remove(false); this.ticker = undefined;
     // PopupLayer가 자식을 먼저 파괴한 경우에도 외부 마스크와 PRE_RENDER 구독은 히어로 핸들이 정리한다.
     this.hero?.destroy(); this.hero = undefined;
     // PopupLayer가 본체를 먼저 파괴하므로 씬에 직접 등록한 스크롤 자원은 종료 콜백에서 별도로 치운다.

@@ -64,7 +64,7 @@ export class IdleExcavationPopup {
   /** 연타는 기존 한 장을 유지하며 닫기는 저장되지 않은 draft를 버린다. */
   open(): void {
     if (this.body) return;
-    this.body = this.popups.open({ width: PANEL.width, height: PANEL.height, title: "방치 발굴", dim: true, closeOnBackdrop: false, onClose: () => this.dispose() }, (body) => {
+    this.body = this.popups.open({ width: PANEL.width, height: PANEL.height, title: "발굴 · 자원 수집", dim: true, closeOnBackdrop: false, onClose: () => this.dispose() }, (body) => {
       body.setName("idle-excavation-popup");
       this.showMessage("발굴 현황을 정산하고 있습니다…", "loading");
     });
@@ -120,6 +120,8 @@ export class IdleExcavationPopup {
     if (!response || !content) return;
     const formation = response.excavation.assignedRelicIds;
     this.addSlots(content, formation, false);
+    // 첫 진입을 포함해 언제 열어도 획득형 연구와 배치형 생산의 차이를 한 문장으로 확인시킨다.
+    content.add(this.scene.add.text(0, -250, "연구소는 캐릭터 획득 연구, 이곳은 배치형 자원 발굴입니다.", textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0.5));
     const rate = excavationProductionDisplayModel(formation, RELICS, session.relicProgress).totalsPerHour;
     const baseServerMs = new Date(response.serverTime).getTime();
     let harvestButton: Button | undefined;

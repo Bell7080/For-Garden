@@ -3,7 +3,7 @@
 /** 임무 갱신을 일으키는, API 처리 성공 이후의 도메인 이벤트다. */
 export type MissionEvent =
   | { type: "battle_completed"; victory: boolean }
-  | { type: "excavation_completed"; count: number }
+  | { type: "relic_research_completed"; count: number }
   | { type: "salary_given"; count: number }
   | { type: "lobby_interaction" };
 
@@ -30,11 +30,12 @@ export interface MissionDefinition {
 // 운영 데이터가 붙기 전의 최소 임무 묶음이며, 보상과 목표를 한곳에서만 정의한다.
 export const MISSIONS: readonly MissionDefinition[] = [
   { id: "daily-battle", period: "daily", title: "전투 완료 1회", target: 1, rewardCheesecake: 20, event: "battle_completed" },
-  { id: "daily-excavate", period: "daily", title: "발굴 1회", target: 1, rewardCheesecake: 20, event: "excavation_completed" },
+  // 저장 ID는 기존 세이브와 호환하되 제목과 이벤트는 연구소의 확률형 획득임을 드러낸다.
+  { id: "daily-excavate", period: "daily", title: "연구소 캐릭터 연구 1회", target: 1, rewardCheesecake: 20, event: "relic_research_completed" },
   { id: "daily-salary", period: "daily", title: "급여 1회", target: 1, rewardCheesecake: 20, event: "salary_given" },
   { id: "daily-lobby", period: "daily", title: "로비 교류 1회", target: 1, rewardCheesecake: 20, event: "lobby_interaction" },
   { id: "weekly-battle", period: "weekly", title: "전투 완료 5회", target: 5, rewardCheesecake: 100, event: "battle_completed" },
-  { id: "weekly-excavate", period: "weekly", title: "발굴 10회", target: 10, rewardCheesecake: 100, event: "excavation_completed" },
+  { id: "weekly-excavate", period: "weekly", title: "연구소 캐릭터 연구 10회", target: 10, rewardCheesecake: 100, event: "relic_research_completed" },
 ];
 
 /** UTC 날짜와 그 날짜가 속한 월요일을 안정적인 기간 키로 만든다. */
@@ -65,7 +66,7 @@ export function applyMissionEvent(state: MissionState, event: MissionEvent, now:
   const next = normalizeMissions(state, now);
   // 패배는 전투 완료 임무의 성공 행동으로 세지 않는다.
   if (event.type === "battle_completed" && !event.victory) return next;
-  const amount = event.type === "excavation_completed" || event.type === "salary_given" ? event.count : 1;
+  const amount = event.type === "relic_research_completed" || event.type === "salary_given" ? event.count : 1;
   for (const mission of MISSIONS) {
     if (mission.event === event.type) next.progress[mission.id] = Math.min(mission.target, (next.progress[mission.id] ?? 0) + amount);
   }

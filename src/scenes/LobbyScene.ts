@@ -120,7 +120,7 @@ export class LobbyScene extends Phaser.Scene {
       width: 292,
       height: 106,
       label: "발굴",
-      sub: "EXCAVATION",
+      sub: "자원 수집",
       fontSize: 34,
       perspective: "left",
       tilt: 6,

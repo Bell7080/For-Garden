@@ -76,7 +76,7 @@ const LEVEL_STRETCH = 1.26;
  *
  * 위쪽 모서리를 잘라낸 칩 한 장에 원화를 머리 관절 기준으로 크게 채우고, 머리는 칩 위로
  * 빠져나오게 둔다. 아래에는 살짝 넓은 레이어를 겹쳐 레벨과 이름을 얹고, 오른쪽 위에는 로마자 등급을
- * 찍는다. 도감·편성·전투 프로필·발굴 결과가 모두 이 한 장을 공유한다.
+ * 찍는다. 도감·편성·전투 프로필·연구 결과가 모두 이 한 장을 공유한다.
  */
 export class PortraitCard extends Phaser.GameObjects.Container {
   /** 씬이 pointerdown·pointerup을 붙이는 카드 전체 입력 영역이다. */

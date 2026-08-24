@@ -8,6 +8,7 @@ import { CURRENCY_ICON_ASSETS } from "../ui/currencyIcons";
 import { RUNE_ICON_ASSETS } from "../ui/runeIcons";
 import { SKILL_ICON_ASSETS } from "../ui/skillIcons";
 import { SKILL_ART_ASSETS } from "../ui/skillArt";
+import { EXCAVATION_TRAIT_ICON_ASSETS } from "../ui/excavationIcons";
 
 /**
  * 타이틀 화면이 지불하는 로딩 비용의 전부.
@@ -68,6 +69,8 @@ export const LOADING_STEPS: ReadonlyArray<LoadingStep> = [
         CURRENCY_ICON_ASSETS.forEach(([key, path]) => scene.load.image(key, path));
         RUNE_ICON_ASSETS.forEach(([key, path]) => scene.load.image(key, path));
         UI_ICON_ASSETS.forEach(([key, path, size]) => scene.load.svg(key, path, { width: size * SVG_BAKE.uiScale, height: size * SVG_BAKE.uiScale }));
+        // 발굴 특화는 카드 보조 정보 크기의 단색 SVG라 UI 아이콘과 같은 배율로 미리 굽는다.
+        EXCAVATION_TRAIT_ICON_ASSETS.forEach(([key, path]) => scene.load.svg(key, path, { width: 64, height: 64 }));
       }),
   },
   {

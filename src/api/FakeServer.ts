@@ -1,7 +1,7 @@
 import { canPull, pull, resolveAcquisitions, spend } from "../core/gacha";
 import { BANNERS } from "../data/banners";
 import { RELICS } from "../data/relics";
-import { findAdRewardSlot } from "../data/adRewards";
+import { AD_REWARD_SLOTS, findAdRewardSlot, type AdReward } from "../data/adRewards";
 import { consumeRestorationEntry, normalizeDailyContent } from "../core/dailyContent";
 import { BREAKTHROUGH_CAP, canBreakThrough, canFeedRelic, feedRelic as calculateFeed, FEED_UNIT, nextBreakthrough, relicLevelCap, RELIC_STAR_CAP, relicStars } from "../core/relicProgression";
 import { BOND_XP_REWARD, grantBondXp, grantDailyLobbyBondXp } from "../core/bond";
@@ -9,7 +9,7 @@ import { MISSIONS, applyMissionEvent, claimableMissionIds, normalizeMissions } f
 import { DAILY_RESTORATION, getStage } from "../data/stages";
 import { createInitialRelicProgress, session, type Session } from "../state/session";
 import { saveManager } from "../state/SaveManager";
-import { GameApiError, type BreakThroughResponse, type ClaimMissionRewardsResponse, type CompleteStageResponse, type EnterDailyRestorationResponse, type FeedRelicResponse, type GameApi, type LobbyInteractionResponse, type MissionListResponse, type PlayerStateDto, type ClaimAdRewardRequest, type ClaimAdRewardResponse, type PullRequest, type PullResponse } from "./contracts";
+import { GameApiError, type AdOperationsConfigResponse, type BreakThroughResponse, type ClaimMissionRewardsResponse, type CompleteStageResponse, type EnterDailyRestorationResponse, type FeedRelicResponse, type GameApi, type LobbyInteractionResponse, type MissionListResponse, type PlayerStateDto, type ClaimAdRewardRequest, type ClaimAdRewardResponse, type PullRequest, type PullResponse } from "./contracts";
 import type { ProductDefinition } from "../data/products";
 import { PRODUCTS } from "../data/products";
 import type { ProductListResponse, PurchaseProductResponse } from "./contracts";
@@ -78,6 +78,12 @@ export class FakeServer implements GameApi {
     return this.snapshot();
   }
 
+  /** Fake 운영 서버도 번들의 표시 fallback 없이 인증된 설정 DTO를 명시적으로 제공한다. */
+  async getAdOperationsConfig(): Promise<AdOperationsConfigResponse> {
+    await this.delay(); const now = this.now();
+    return { configVersion: "fake-2026-08-24", serverTime: now.toISOString(), expiresAt: new Date(now.getTime() + 300_000).toISOString(), slots: AD_REWARD_SLOTS.map((slot) => ({ slotId: slot.id, enabled: true, dailyLimitUtc: slot.dailyLimitUtc, displayText: slot.displayText, reward: slot.reward })) };
+  }
+
   /** 서버의 단일 now 값을 캡처해 조회 정산과 응답 시각이 어긋나지 않게 한다. */
   async getIdleExcavation(): Promise<IdleExcavationResponse> {
     await this.delay(); const now = this.now();
@@ -103,12 +109,13 @@ export class FakeServer implements GameApi {
   /** 정산·정수화·지갑 상한·미수확 차감을 한 번 저장한 뒤에만 성공 응답을 캐시한다. */
   async harvestExcavation(request: HarvestExcavationRequest): Promise<HarvestExcavationResponse> {
     await this.delay(); const cached = this.excavationHarvestResults.get(request.requestId);
-    if (cached) return { ...cached, excavation: this.cloneExcavation(cached.excavation), wallet: { ...cached.wallet }, granted: { ...cached.granted }, discarded: { ...cached.discarded } };
+    if (cached) return { ...cached, excavation: this.cloneExcavation(cached.excavation), wallet: { ...cached.wallet }, granted: { ...cached.granted }, discarded: { ...cached.discarded }, remaining: { ...cached.remaining } };
     if (!request.requestId) throw new GameApiError("INVALID_STATE", "수확 요청 ID가 필요합니다.");
     const now = this.now(); const settled = settleIdleExcavation(this.state.idleExcavation, now, RELICS, this.state.relicProgress);
     const result = harvestIdleExcavation(settled, this.state.wallet); const nextState = { ...this.state, idleExcavation: result.state, wallet: result.wallet };
     this.persist(nextState); this.state.idleExcavation = result.state; this.state.wallet = result.wallet;
-    const response = { excavation: this.cloneExcavation(result.state), serverTime: now.toISOString(), wallet: { ...result.wallet }, granted: { ...result.granted }, discarded: { ...result.discarded } };
+    // 응답의 기준 시각·잔량·지갑은 같은 persist가 성공한 바로 그 트랜잭션 스냅샷이다.
+    const response = { excavation: this.cloneExcavation(result.state), serverTime: now.toISOString(), wallet: { ...result.wallet }, granted: { ...result.granted }, discarded: { ...result.discarded }, remaining: { ...result.state.unclaimed } };
     this.excavationHarvestResults.set(request.requestId, response); return response;
   }
 
@@ -121,20 +128,19 @@ export class FakeServer implements GameApi {
     if (!request.verificationToken || !(await this.verifyAdToken(request.verificationToken, slot.id))) throw new GameApiError("AD_TOKEN_INVALID", "광고 완료를 확인할 수 없습니다.");
 
     // 앱 재실행이 아니라 서버 UTC 키 변경에만 카운터와 멱등 목록을 초기화한다.
-    const date = this.now().toISOString().slice(0, 10);
+    const now = this.now(); const date = now.toISOString().slice(0, 10);
     const current = this.state.dailyAdRewards.date === date ? this.state.dailyAdRewards : { date, claimsBySlot: {}, requestIds: [] };
     const dailyClaims = current.claimsBySlot[slot.id] ?? 0;
     if (dailyClaims >= slot.dailyLimitUtc) throw new GameApiError("AD_DAILY_LIMIT", "오늘 받을 수 있는 광고 보상을 모두 받았습니다.");
 
     const nextClaims = dailyClaims + 1;
     const nextAds = { date, claimsBySlot: { ...current.claimsBySlot, [slot.id]: nextClaims }, requestIds: [...current.requestIds, request.requestId] };
-    const nextWallet = { ...this.state.wallet, [slot.reward.currency]: this.state.wallet[slot.reward.currency] + slot.reward.amount };
-    const nextState = { ...this.state, wallet: nextWallet, dailyAdRewards: nextAds };
+    const applied = this.applyAdReward(slot.reward, now);
+    const nextState = { ...this.state, wallet: applied.wallet, idleExcavation: applied.excavation, dailyAdRewards: nextAds };
     // 상한 검증과 영속화가 성공하기 전에는 메모리 세션을 변경하지 않는다.
     this.persist(nextState);
-    this.state.wallet = nextWallet;
-    this.state.dailyAdRewards = nextAds;
-    return { ...this.snapshot(), slotId: slot.id, reward: { ...slot.reward }, dailyClaims: nextClaims, dailyRemaining: slot.dailyLimitUtc - nextClaims };
+    this.state.wallet = applied.wallet; this.state.idleExcavation = applied.excavation; this.state.dailyAdRewards = nextAds;
+    return { ...this.snapshot(), slotId: slot.id, reward: slot.reward, dailyClaims: nextClaims, dailyRemaining: slot.dailyLimitUtc - nextClaims, excavation: this.cloneExcavation(applied.excavation), serverTime: now.toISOString() };
   }
 
   /** 요청 ID와 플랫폼 거래 ID를 모두 고유 키로 취급해 같은 영수증 검증을 반복 실행하지 않는다. */
@@ -196,15 +202,15 @@ export class FakeServer implements GameApi {
     const dailyClaims = current.claimsBySlot[slot.id] ?? 0;
     if (dailyClaims >= slot.dailyLimitUtc) throw new GameApiError("AD_DAILY_LIMIT", "오늘 받을 수 있는 광고 보상을 모두 받았습니다.");
     const bonus = this.bonusClaimDates.get(stored.entitlementId) === date ? undefined : product.passBenefit.dailyBonus;
-    const nextWallet = { ...this.state.wallet, [slot.reward.currency]: this.state.wallet[slot.reward.currency] + slot.reward.amount };
+    const applied = this.applyAdReward(slot.reward, now); const nextWallet = applied.wallet;
     if (bonus) nextWallet.gems += bonus.amount;
     const nextClaims = dailyClaims + 1;
     const nextAds = { date, claimsBySlot: { ...current.claimsBySlot, [slot.id]: nextClaims }, requestIds: [...current.requestIds, request.requestId] };
-    this.persist({ ...this.state, wallet: nextWallet, dailyAdRewards: nextAds });
-    this.state.wallet = nextWallet; this.state.dailyAdRewards = nextAds;
+    this.persist({ ...this.state, wallet: nextWallet, idleExcavation: applied.excavation, dailyAdRewards: nextAds });
+    this.state.wallet = nextWallet; this.state.idleExcavation = applied.excavation; this.state.dailyAdRewards = nextAds;
     if (bonus) this.bonusClaimDates.set(stored.entitlementId, date);
     const entitlement = { ...stored, active: true, serverTime: now.toISOString() };
-    const result: ClaimInstantAdRewardResponse = { ...this.snapshot(), slotId: slot.id, reward: { ...slot.reward }, dailyClaims: nextClaims, dailyRemaining: slot.dailyLimitUtc - nextClaims, entitlement, dailyBonus: bonus ? { ...bonus } : undefined };
+    const result: ClaimInstantAdRewardResponse = { ...this.snapshot(), slotId: slot.id, reward: slot.reward, dailyClaims: nextClaims, dailyRemaining: slot.dailyLimitUtc - nextClaims, entitlement, dailyBonus: bonus ? { ...bonus } : undefined, excavation: this.cloneExcavation(applied.excavation), serverTime: now.toISOString() };
     this.instantClaimResults.set(request.requestId, result);
     return result;
   }
@@ -213,7 +219,7 @@ export class FakeServer implements GameApi {
   async pullRelics(request: PullRequest): Promise<PullResponse> {
     await this.delay();
     if (request.count !== 1 && request.count !== 10) {
-      throw new GameApiError("INVALID_PULL_COUNT", "발굴 횟수는 1회 또는 10회여야 합니다.");
+      throw new GameApiError("INVALID_PULL_COUNT", "연구 횟수는 1회 또는 10회여야 합니다.");
     }
 
     const banner = BANNERS.find((candidate) => candidate.id === request.bannerId);
@@ -235,8 +241,8 @@ export class FakeServer implements GameApi {
     }
     const nextWallet = { ...spend(this.state.wallet, banner, request.count), dnaFragments: this.state.wallet.dnaFragments + outcome.overflowFragments };
     const nextPity = { ...this.state.gachaPityByGroup, [banner.pityGroupId]: pulled.pity };
-    // 발굴 성공 이벤트는 결과 확정 뒤 이 API 경계에서만 임무로 환산한다.
-    const nextMissions = applyMissionEvent(this.state.missions, { type: "excavation_completed", count: request.count }, this.now());
+    // 연구소의 캐릭터 연구 성공만 임무로 환산하며 방치 발굴 수확과 섞지 않는다.
+    const nextMissions = applyMissionEvent(this.state.missions, { type: "relic_research_completed", count: request.count }, this.now());
     const nextState: Session = { ...this.state, wallet: nextWallet, owned: outcome.ownedRelicIds, relicProgress: nextProgress, relicFragments: outcome.fragmentsById, gachaPityByGroup: nextPity, missions: nextMissions };
 
     // 저장 실패도 원본 메모리에 부분 반영되지 않도록 저장을 먼저 성공시킨 뒤 필드를 일괄 교체한다.
@@ -630,6 +636,27 @@ export class FakeServer implements GameApi {
     const rune = this.state.runeInventory.find((candidate) => candidate.instanceId === instanceId);
     if (!rune) throw new GameApiError("RUNE_NOT_FOUND", "보유하지 않거나 존재하지 않는 룬입니다.");
     return rune;
+  }
+
+  /** 광고 효과를 복제 상태에 계산해 카운터·지갑·발굴 상태를 한 persist로 커밋하게 한다. */
+  private applyAdReward(reward: AdReward, now: Date): { wallet: Session["wallet"]; excavation: Session["idleExcavation"] } {
+    const wallet = { ...this.state.wallet };
+    let excavation = this.cloneExcavation(this.state.idleExcavation);
+    if (reward.kind === "currency") {
+      wallet[reward.currency] += reward.amount;
+      return { wallet, excavation };
+    }
+    // 효과 적용 직전까지를 먼저 정산해야 새 배율이 과거 생산에 소급되지 않는다.
+    excavation = settleIdleExcavation(excavation, now, RELICS, this.state.relicProgress);
+    const effect = reward.effect;
+    if (effect.kind === "harvest_multiplier") excavation.pendingHarvestMultiplier = effect.multiplier;
+    if (effect.kind === "storage_extension") excavation.storageExtensionExpiresAt = new Date(now.getTime() + effect.maxStorageSeconds * 1000).toISOString();
+    if (effect.kind === "production_speed") {
+      excavation.activeProductionMultiplier = effect.multiplier;
+      // 중첩 곱셈이나 남은 시간 가산 없이 수령 시점 기준 만료로 갱신한다.
+      excavation.productionMultiplierExpiresAt = new Date(now.getTime() + effect.durationSeconds * 1000).toISOString();
+    }
+    return { wallet, excavation };
   }
 
   /** 슬롯 번호 검증을 장착과 해제에서 공유한다. */

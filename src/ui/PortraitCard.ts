@@ -20,6 +20,8 @@ export interface PortraitCardOptions {
   label?: string;
   /** 이름 아래 한 줄. 역할·등급처럼 짧은 문구를 넣는다. */
   sub?: string;
+  /** 보조 문구 왼쪽의 작은 단색 아이콘. 얼굴·이름보다 강해지지 않도록 보조 줄 크기에 맞춘다. */
+  subIcon?: string;
   /** 이름 앞에 붙는 레벨. 없으면 이름만 보인다. */
   level?: number;
   /** 희귀도. 칩 바탕색이 여기서 나온다(SSR 황금 호박 · SR 보랏빛 · R 하늘빛). */
@@ -74,7 +76,7 @@ const LEVEL_STRETCH = 1.26;
  *
  * 위쪽 모서리를 잘라낸 칩 한 장에 원화를 머리 관절 기준으로 크게 채우고, 머리는 칩 위로
  * 빠져나오게 둔다. 아래에는 살짝 넓은 레이어를 겹쳐 레벨과 이름을 얹고, 오른쪽 위에는 로마자 등급을
- * 찍는다. 도감·편성·전투 프로필·발굴 결과가 모두 이 한 장을 공유한다.
+ * 찍는다. 도감·편성·전투 프로필·연구 결과가 모두 이 한 장을 공유한다.
  */
 export class PortraitCard extends Phaser.GameObjects.Container {
   /** 씬이 pointerdown·pointerup을 붙이는 카드 전체 입력 영역이다. */
@@ -204,10 +206,17 @@ export class PortraitCard extends Phaser.GameObjects.Container {
       this.add(this.nameText);
 
       if (options.sub) {
+        // 아이콘과 문구를 한 덩어리로 두되 이름 시작선은 유지한다. 전용 색은 화면이 tint로 넘기지
+        // 않고 공용 강조색 하나만 써서 얼굴과 이름보다 먼저 읽히지 않게 한다.
+        const subIconSize = Math.min(24, width / 10);
+        const subLeft = nameLeft + (options.subIcon ? subIconSize + 7 : 0);
         this.subText = scene.add
-          .text(nameLeft, baseline + 10, options.sub, textStyle({ role: "emphasis", size: Math.min(22, width / 12), color: COLOR.accentText }))
+          .text(subLeft, baseline + 10, options.sub, textStyle({ role: "emphasis", size: Math.min(22, width / 12), color: COLOR.accentText }))
           .setOrigin(0, 0);
         this.add(this.subText);
+        if (options.subIcon && scene.textures.exists(options.subIcon)) {
+          this.add(scene.add.image(nameLeft + subIconSize / 2, baseline + 10 + subIconSize / 2, options.subIcon).setDisplaySize(subIconSize, subIconSize).setTint(COLOR.accent).setAlpha(0.72));
+        }
       }
     }
 

@@ -7,15 +7,25 @@ import type { StageDef } from "../core/types";
 import type { EventDefinition } from "../data/events/types";
 import type { RuneInstance, RuneStatKey } from "../core/runes";
 import type { ExcavationCurrency, IdleExcavationState } from "../core/idleExcavation";
+import type { AdReward } from "../data/adRewards";
 
 /** 조회는 서버가 정산한 상태와 동일 기준 시각을 함께 돌려준다. */
 export interface IdleExcavationResponse { excavation: IdleExcavationState; serverTime: string; }
 /** 편성 저장 재시도는 요청 ID로 같은 결과를 받으며 슬롯 위치를 보존한다. */
 export interface SaveExcavationFormationRequest { requestId: string; assignedRelicIds: [string | null, string | null, string | null]; }
 /** 수확 요청 ID는 네트워크 재전송의 중복 지급을 막는 서버 멱등 키다. */
-export interface HarvestExcavationRequest { requestId: string; }
-/** 상한 때문에 버린 양까지 공개해 화면이 지급량을 추측하지 않게 한다. */
-export interface HarvestExcavationResponse extends IdleExcavationResponse { wallet: Wallet; granted: Record<ExcavationCurrency, number>; discarded: Record<ExcavationCurrency, number>; }
+export interface HarvestExcavationRequest { readonly requestId: string; }
+/** 상한 때문에 버린 양과 소수 잔량까지 공개해 화면이 지급량을 추측하지 않게 한다. */
+export interface HarvestExcavationResponse extends IdleExcavationResponse {
+  /** 서버가 지갑에 실제 반영한 자원별 정수 수량이다. */
+  granted: Record<ExcavationCurrency, number>;
+  /** 지갑 상한 때문에 지급하지 못하고 소멸한 자원별 정수 수량이다. */
+  discarded: Record<ExcavationCurrency, number>;
+  /** 수확 뒤 지갑의 서버 확정 스냅샷이다. */
+  wallet: Wallet;
+  /** 정수 수확 뒤 다음 수확으로 이월한 자원별 소수 누적량이다. */
+  remaining: Record<ExcavationCurrency, number>;
+}
 
 /** 룬 장착 위치다. 슬롯 값은 정적 정의 ID가 아닌 룬 인스턴스 ID다. */
 export interface RuneEquipmentDto { relicId: string; slots: [string | null, string | null, string | null]; }
@@ -66,7 +76,7 @@ export interface PlayerStateDto {
   ownedRelicIds: string[];
   /** 렐릭 id별 성장과 Heart Gem 3슬롯 장착 상태다. */
   relicProgress: Record<string, RelicProgress>;
-  /** 개체별 파편 보유량. 중복 발굴로 쌓이고 한계 돌파에 쓴다. */
+  /** 개체별 파편 보유량. 연구소 중복 획득으로 쌓이고 한계 돌파에 쓴다. */
   relicFragments: Record<string, number>;
   /** 서버 동기화 대상인 편성, 애착, 클리어 진행이다. 로컬 SaveData와 버전 책임은 분리한다. */
   party: string[];
@@ -85,7 +95,7 @@ export interface PlayerStateDto {
 /** 광고 SDK 완료 증명과 요청 재시도 멱등 키를 서버로 전달하는 요청이다. */
 export interface ClaimAdRewardRequest { slotId: string; verificationToken: string; requestId: string; }
 /** 검증·중복·일일 제한 확인 후 지급과 저장까지 확정된 광고 보상 결과다. */
-export interface ClaimAdRewardResponse extends PlayerStateDto { slotId: string; reward: { currency: "stamina" | "cheesecake"; amount: number }; dailyClaims: number; dailyRemaining: number; }
+export interface ClaimAdRewardResponse extends PlayerStateDto { slotId: string; reward: AdReward; dailyClaims: number; dailyRemaining: number; excavation?: IdleExcavationState; serverTime: string; }
 
 /** 인증된 서버 응답에서만 내려오는 슬롯별 운영 정책이며 앱 번들의 정적 표를 운영 기준으로 쓰지 않는다. */
 export interface AdSlotOperationsDto {
@@ -96,7 +106,10 @@ export interface AdSlotOperationsDto {
   /** 서버 UTC 날짜 하나에 검증·지급할 수 있는 최대 완료 횟수다. */
   dailyLimitUtc: number;
   /** 표시와 실제 지급이 같은 서버 값을 사용하도록 화폐와 수량을 함께 전달한다. */
-  reward: { currency: "stamina" | "cheesecake"; amount: number };
+  /** 허용된 판별 합집합 그대로 내려 UI가 임의 효과를 만들 수 없게 한다. */
+  reward: AdReward;
+  /** 운영 문구는 번들 기본값이 아니라 서버가 확정해 전달한다. */
+  displayText: string;
 }
 
 /** 로그인된 API 채널이 전달하는 광고 운영 설정의 버전·유효 기간 포함 계약이다. */
@@ -200,7 +213,7 @@ export interface PullRequest {
   count: 1 | 10;
 }
 
-/** 서버가 확정한 발굴 결과와 그 직후 상태다. */
+/** 서버가 확정한 캐릭터 연구 결과와 그 직후 상태다. */
 export interface PullResponse extends PlayerStateDto {
   /** 추첨 순서를 보존하며 각 슬롯의 신규/숙련/상한 변화를 명시한다. */
   results: AcquisitionResult[];
@@ -239,6 +252,8 @@ export interface GameApi {
   saveExcavationFormation(request: SaveExcavationFormationRequest): Promise<IdleExcavationResponse>;
   harvestExcavation(request: HarvestExcavationRequest): Promise<HarvestExcavationResponse>;
   getPlayerState(): Promise<PlayerStateDto>;
+  /** 광고 제안은 조회 성공한 서버 운영 설정만 표시 기준으로 사용한다. */
+  getAdOperationsConfig(): Promise<AdOperationsConfigResponse>;
   /** 광고 완료 증명을 검증하고 멱등성·UTC 제한·지급·저장을 한 처리로 확정한다. */
   claimAdReward(request: ClaimAdRewardRequest): Promise<ClaimAdRewardResponse>;
   /** 실제 결제 서버가 플랫폼 원본 영수증을 검증하며 요청 ID 재시도에는 같은 결과를 반환한다. */

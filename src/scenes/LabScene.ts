@@ -115,7 +115,7 @@ export class LabScene extends Phaser.Scene {
     this.oneButton = new Button(this, 300, NAV_TOP - 250, {
       width: 440,
       height: 150,
-      label: "1회 발굴",
+      label: "1회 연구",
       sub: "",
       fontSize: 36,
       onClick: () => this.doPull(1),
@@ -123,7 +123,7 @@ export class LabScene extends Phaser.Scene {
     this.tenButton = new Button(this, 780, NAV_TOP - 250, {
       width: 440,
       height: 150,
-      label: "10회 발굴",
+      label: "10회 연구",
       sub: "",
       fontSize: 36,
       onClick: () => this.doPull(10),
@@ -140,7 +140,7 @@ export class LabScene extends Phaser.Scene {
       )
       .setOrigin(0.5, 0);
 
-    // 기존 발굴 배너와 마일리지 기능은 연구소에 남고, 새 발굴 콘텐츠만 첫 슬롯으로 분리한다.
+    // 캐릭터 획득 연구와 마일리지는 연구소에 남고, 배치형 자원 발굴은 로비 기능으로 분리한다.
     new BottomNav(this, "lab");
     // 씬을 떠난 뒤 끝나는 비동기 로딩도 무효화하고 현재 Puppet을 정리한다.
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
@@ -255,7 +255,7 @@ export class LabScene extends Phaser.Scene {
       fill: 0x141920, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.3,
     });
     overlay.add([shade, panel]);
-    overlay.add(this.add.text(cx, 390, "발굴 확률 · 보장 정책", textStyle({ role: "display", size: 42 })).setOrigin(0.5));
+    overlay.add(this.add.text(cx, 390, "연구 확률 · 보장 정책", textStyle({ role: "display", size: 42 })).setOrigin(0.5));
     const rates = (["SSR", "SR", "R"] as const)
       .map((rarity) => `${rarity}  ${(banner.rarityRates[rarity] * 100).toFixed(1)}%`)
       .join("\n");
@@ -318,7 +318,7 @@ export class LabScene extends Phaser.Scene {
     } });
     layer.add(skip);
 
-    content.add(this.add.text(BASE_WIDTH / 2, 660, "화석층 탐사 중", textStyle({ role: "display", size: 48, color: COLOR.inkDim })).setOrigin(0.5));
+    content.add(this.add.text(BASE_WIDTH / 2, 660, "화석 DNA 연구 중", textStyle({ role: "display", size: 48, color: COLOR.inkDim })).setOrigin(0.5));
     await this.waitForStage(650, request);
     if (!this.presentation.isCurrent(request)) return;
     if (!this.presentation.wasSkipped) this.presentation.advance();
@@ -410,7 +410,7 @@ export class LabScene extends Phaser.Scene {
   private showResultCards(content: Phaser.GameObjects.Container, layer: Phaser.GameObjects.Container, results: AcquisitionResult[]): void {
     const cx = BASE_WIDTH / 2;
     content.removeAll(true);
-    content.add(this.add.text(cx, 210, "발굴 결과", textStyle({ role: "display", size: 52 })).setOrigin(0.5));
+    content.add(this.add.text(cx, 210, "연구 결과", textStyle({ role: "display", size: 52 })).setOrigin(0.5));
 
     results.forEach((result, index) => {
       const def = getRelic(result.relicId);

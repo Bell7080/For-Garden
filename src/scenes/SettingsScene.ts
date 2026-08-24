@@ -86,7 +86,7 @@ export class SettingsScene extends Phaser.Scene {
       section("사운드", 850);
       ([['전체 음량','masterVolume'],['배경음','musicVolume'],['효과음','effectsVolume'],['보이스','voiceVolume']] as const).forEach(([label,key]) => { this.content.add(new SettingsSlider(this, 90, y, label, s.sound[key], value => settingsManager.update({ sound: { [key]: value } }))); y += 92; });
       ([['전체 음소거','masterMuted'],['배경음 음소거','musicMuted'],['효과음 음소거','effectsMuted'],['보이스 음소거','voiceMuted']] as const).forEach(([label,key]) => { this.content.add(new SettingsToggle(this,90,y,label,s.sound[key],value=>settingsManager.update({sound:{[key]:value}}))); y+=94; divider(); });
-      section("진동", 560); ([['전체 진동','enabled'],['전투 타격','combatHit'],['궁극기','ultimate'],['발굴 결과','excavationResult'],['UI 입력','uiInput']] as const).forEach(([a,b]) => toggle(a,'vibration',b));
+      section("진동", 560); ([['전체 진동','enabled'],['전투 타격','combatHit'],['궁극기','ultimate'],['연구 결과','excavationResult'],['UI 입력','uiInput']] as const).forEach(([a,b]) => toggle(a,'vibration',b));
     } else if (this.activeTab === "alerts") {
       section("알림", 850);
       const permission = platformFeedback.getNotificationPermission();
@@ -95,7 +95,7 @@ export class SettingsScene extends Phaser.Scene {
       ([['스테미나 충전 완료','staminaFull'],['무료 모집','freeRecruit'],['일일 임무','dailyMission'],['이벤트','event'],['우편','mail'],['야간 알림 제한','quietHours']] as const).forEach(([a,b]) => toggle(a,'notifications',b));
     } else if (this.activeTab === "play") {
       section("연출 · 게임", 1050);
-      ([['궁극기 컷인','ultimateCutIn'],['화면 흔들림','screenShake'],['피해 숫자','damageNumbers'],['발굴 연출 단축','shortenExcavation'],['저사양 모드','lowSpecMode']] as const).forEach(([a,b]) => toggle(a,'presentation',b));
+      ([['궁극기 컷인','ultimateCutIn'],['화면 흔들림','screenShake'],['피해 숫자','damageNumbers'],['연구 연출 단축','shortenExcavation'],['저사양 모드','lowSpecMode']] as const).forEach(([a,b]) => toggle(a,'presentation',b));
       this.content.add(new SettingsSelectRow(this,90,y,'전투 배속',s.game.battleSpeed,[1,1.5,2] as const,v=>settingsManager.update({game:{battleSpeed:v}}))); y+=94;
       toggle('자동 궁극기','game','autoUltimate');
       this.content.add(new SettingsSelectRow(this,90,y,'텍스트 속도',s.game.textSpeed,[0.5,1,2] as const,v=>settingsManager.update({game:{textSpeed:v}}))); y+=94;

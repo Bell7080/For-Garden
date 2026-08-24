@@ -1,0 +1,8 @@
+<!-- 보급 식량 특화: 잘린 모서리의 보급 상자와 배급 표식. 둥근 외곽선이나 자체 배경판은 두지 않는다. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96">
+  <g fill="none" stroke="#ffffff" stroke-width="7" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="8">
+    <path d="M20 31 31 20h45v56H20z"/>
+    <path d="M20 42h56M48 42v34"/>
+    <path d="M39 29h18"/>
+  </g>
+</svg>

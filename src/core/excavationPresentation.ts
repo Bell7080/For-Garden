@@ -1,7 +1,7 @@
 import type { AcquisitionResult } from "./gacha";
 import type { RelicRarity } from "./types";
 
-/** 서버 확정 뒤 재생되는 발굴 연출 순서. 결과 화면 전에는 카드 내용을 노출하지 않는다. */
+/** 서버 확정 뒤 재생되는 연구 연출 순서. 결과 화면 전에는 카드 내용을 노출하지 않는다. */
 export const EXCAVATION_STAGES = ["excavation", "crack", "rarityReveal", "firstMeeting", "cards"] as const;
 export type ExcavationStage = typeof EXCAVATION_STAGES[number];
 

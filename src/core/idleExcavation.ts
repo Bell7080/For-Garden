@@ -14,7 +14,11 @@ export interface IdleExcavationState {
   unclaimed: Record<ExcavationCurrency, number>;
   baseStorageSeconds: number;
   activeProductionMultiplier: number;
+  /** 2배 생산이 끝나는 서버 UTC 시각이며 null이면 기본 속도다. */
+  productionMultiplierExpiresAt?: string | null;
   storageExtensionExpiresAt: string | null;
+  /** 현재 확정 미수확량에만 적용될 다음 수확의 일회성 배율이다. */
+  pendingHarvestMultiplier?: number;
 }
 
 /** 레벨 하나와 한계 돌파 한 단계가 주는 명시적인 생산 증가율이다. */
@@ -32,6 +36,32 @@ export interface RelicExcavationProduction {
 
 /** 편성 검증 결과를 예외 없이 전달해 API와 UI가 같은 거절 이유를 사용할 수 있게 한다. */
 export type ExcavationFormationValidation = { valid: true } | { valid: false; reason: "duplicate" | "unowned" };
+
+/**
+ * 편집 그리드에서 렐릭을 목표 슬롯에 놓는다.
+ *
+ * 렐릭이 다른 슬롯에 있으면 빈 목표로는 이동하고, 차 있는 목표로는 두 렐릭의 자리를 바꾼다.
+ * 같은 슬롯의 렐릭을 다시 누르면 빈 슬롯 정책에 따라 해제한다. 항상 새 튜플을 반환하므로
+ * 서버 확정 편성과 UI 임시 편성이 같은 배열 참조를 공유하지 않는다.
+ */
+export function placeExcavationRelic(
+  formation: IdleExcavationState["assignedRelicIds"],
+  targetSlot: number,
+  relicId: string,
+): IdleExcavationState["assignedRelicIds"] {
+  const next = [...formation] as IdleExcavationState["assignedRelicIds"];
+  if (targetSlot < 0 || targetSlot >= next.length) return next;
+  const sourceSlot = next.indexOf(relicId);
+  if (sourceSlot === targetSlot) {
+    // 빈 슬롯을 허용하므로 현재 슬롯의 카드를 다시 누르면 명시적으로 배치를 해제한다.
+    next[targetSlot] = null;
+    return next;
+  }
+  const displaced = next[targetSlot];
+  next[targetSlot] = relicId;
+  if (sourceSlot >= 0) next[sourceSlot] = displaced;
+  return next;
+}
 
 /** 빈 슬롯은 허용하되 같은 렐릭의 중복 및 미보유 렐릭은 차단한다. */
 export function validateExcavationFormation(assignedRelicIds: IdleExcavationState["assignedRelicIds"], ownedRelicIds: ReadonlySet<string>): ExcavationFormationValidation {
@@ -69,7 +99,7 @@ export const STORAGE_EXTENSION_MULTIPLIER = 2;
 
 /** 신규 계정과 구버전 마이그레이션이 공유하는 독립 상태를 만든다. */
 export function createIdleExcavationState(lastSettledAt: string | null = null): IdleExcavationState {
-  return { assignedRelicIds: [null, null, null], lastSettledAt, unclaimed: { gold: 0, cheesecake: 0 }, baseStorageSeconds: 4 * 60 * 60, activeProductionMultiplier: 1, storageExtensionExpiresAt: null };
+  return { assignedRelicIds: [null, null, null], lastSettledAt, unclaimed: { gold: 0, cheesecake: 0 }, baseStorageSeconds: 4 * 60 * 60, activeProductionMultiplier: 1, productionMultiplierExpiresAt: null, storageExtensionExpiresAt: null, pendingHarvestMultiplier: 1 };
 }
 
 /** 부동소수 누적 오차가 정수 지급 경계를 넘지 않도록 소수 여섯 자리로 고정한다. */
@@ -82,14 +112,19 @@ export function settleIdleExcavation(state: IdleExcavationState, serverNow: Date
   const previousMs = new Date(state.lastSettledAt).getTime();
   // 시계가 역행하면 생산하지 않고 기준점도 뒤로 옮기지 않아 이후 시간이 이중 계산되지 않게 한다.
   if (!Number.isFinite(previousMs) || serverNow.getTime() <= previousMs) return { ...state, assignedRelicIds: [...state.assignedRelicIds], unclaimed: { ...state.unclaimed } };
-  const extensionActive = state.storageExtensionExpiresAt !== null && serverNow.getTime() < new Date(state.storageExtensionExpiresAt).getTime();
+  const extensionActive = state.storageExtensionExpiresAt !== null && previousMs < new Date(state.storageExtensionExpiresAt).getTime();
   const storageLimit = state.baseStorageSeconds * (extensionActive ? STORAGE_EXTENSION_MULTIPLIER : 1);
   // 앱 종료 시간 전체가 아니라 min(서버 경과 시간, 현재 보관 한도)만 생산한다.
   const elapsedSeconds = Math.min((serverNow.getTime() - previousMs) / 1000, storageLimit);
   const production = excavationProductionDisplayModel(state.assignedRelicIds, relics, progressByRelicId).totalsPerHour;
   const unclaimed = { ...state.unclaimed };
-  for (const currency of Object.keys(production) as ExcavationCurrency[]) unclaimed[currency] = fixedAmount(unclaimed[currency] + elapsedSeconds / 3600 * production[currency] * state.activeProductionMultiplier);
-  return { ...state, lastSettledAt: serverNow.toISOString(), assignedRelicIds: [...state.assignedRelicIds], unclaimed };
+  // 만료 경계를 가로지르면 활성 구간과 기본 구간을 나눠 계산해 1ms도 과다 지급하지 않는다.
+  const speedExpiryMs = state.productionMultiplierExpiresAt ? new Date(state.productionMultiplierExpiresAt).getTime() : previousMs;
+  const effectiveEndMs = previousMs + elapsedSeconds * 1000;
+  const boostedSeconds = Math.max(0, Math.min(effectiveEndMs, speedExpiryMs) - previousMs) / 1000;
+  const normalSeconds = elapsedSeconds - boostedSeconds;
+  for (const currency of Object.keys(production) as ExcavationCurrency[]) unclaimed[currency] = fixedAmount(unclaimed[currency] + production[currency] / 3600 * (boostedSeconds * state.activeProductionMultiplier + normalSeconds));
+  return { ...state, lastSettledAt: serverNow.toISOString(), assignedRelicIds: [...state.assignedRelicIds], unclaimed, activeProductionMultiplier: speedExpiryMs > serverNow.getTime() ? state.activeProductionMultiplier : 1, productionMultiplierExpiresAt: speedExpiryMs > serverNow.getTime() ? state.productionMultiplierExpiresAt : null, storageExtensionExpiresAt: extensionActive ? null : state.storageExtensionExpiresAt };
 }
 
 /** 정수 부분만 지갑에 옮기며 지갑 상한 밖의 정수는 버리고 소수 잔량만 보존한다. */
@@ -98,9 +133,9 @@ export function harvestIdleExcavation(state: IdleExcavationState, wallet: Wallet
   const granted = { gold: 0, cheesecake: 0 }; const discarded = { gold: 0, cheesecake: 0 };
   for (const currency of Object.keys(granted) as ExcavationCurrency[]) {
     // Math.floor로 재화별 정수 지급을 고정하고 1 미만 생산분은 다음 수확으로 이월한다.
-    const harvestable = Math.floor(unclaimed[currency]); const room = Math.max(0, WALLET_CAPS[currency] - nextWallet[currency]);
+    const harvestable = Math.floor(unclaimed[currency] * (state.pendingHarvestMultiplier ?? 1)); const room = Math.max(0, WALLET_CAPS[currency] - nextWallet[currency]);
     granted[currency] = Math.min(harvestable, room); discarded[currency] = harvestable - granted[currency];
-    nextWallet[currency] += granted[currency]; unclaimed[currency] = fixedAmount(unclaimed[currency] - harvestable);
+    nextWallet[currency] += granted[currency]; unclaimed[currency] = fixedAmount(unclaimed[currency] - Math.floor(unclaimed[currency]));
   }
-  return { state: { ...state, assignedRelicIds: [...state.assignedRelicIds], unclaimed }, wallet: nextWallet, granted, discarded };
+  return { state: { ...state, assignedRelicIds: [...state.assignedRelicIds], unclaimed, pendingHarvestMultiplier: 1 }, wallet: nextWallet, granted, discarded };
 }

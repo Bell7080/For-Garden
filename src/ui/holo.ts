@@ -395,11 +395,15 @@ export class HoloBar {
   private readonly fill: Phaser.GameObjects.Graphics;
   /** 홈도 채움과 같은 생명주기로 제거해 탭 재구성 시 잔상이 남지 않게 한다. */
   private readonly track: Phaser.GameObjects.Graphics;
+  /** 최대치 테두리와 칸 나눔. 켜지 않은 게이지에는 없다. */
+  private readonly frame?: Phaser.GameObjects.Graphics;
   private ratio = 1;
   private color: number;
 
   /** 복합 UI가 게이지 두 겹을 자신의 컨테이너 생명주기에 함께 묶을 때 쓰는 표시 객체다. */
-  get objects(): readonly Phaser.GameObjects.Graphics[] { return [this.track, this.fill]; }
+  get objects(): readonly Phaser.GameObjects.Graphics[] {
+    return this.frame ? [this.track, this.fill, this.frame] : [this.track, this.fill];
+  }
 
   constructor(
     scene: Phaser.Scene,
@@ -407,7 +411,20 @@ export class HoloBar {
     y: number,
     private readonly width: number,
     private readonly height: number,
-    options: { color: number; trackAlpha?: number; slant?: number },
+    options: {
+      color: number;
+      trackAlpha?: number;
+      slant?: number;
+      /**
+       * 최대치를 흰 선으로 둘러 배경에서 떼어 놓는다.
+       *
+       * 밝은 배경 원화 위에서는 채움만으로 "어디까지가 이 게이지인가"가 보이지 않는다.
+       * 판때기 위에 놓이는 게이지(설정·임무)는 그럴 일이 없으므로 켜지 않는다.
+       */
+      outline?: boolean;
+      /** 칸을 나누는 흰 선의 개수. 얼마나 남았는지를 눈금으로 셈하게 한다. */
+      ticks?: number;
+    },
   ) {
     this.color = options.color;
     const slant = options.slant ?? Math.min(HOLO.slant, height);
@@ -415,6 +432,20 @@ export class HoloBar {
     this.track.fillStyle(0x000000, options.trackAlpha ?? 0.55);
     this.track.fillPoints(toPoints(slantedRect(width, height, slant)), true);
     this.fill = scene.add.graphics({ x, y });
+    // 테두리와 눈금은 채움 위에 얹혀야 채워진 자리에서도 칸이 보인다.
+    this.frame = options.outline || options.ticks ? scene.add.graphics({ x, y }) : undefined;
+    if (this.frame) {
+      const half = { w: width / 2, h: height / 2 };
+      for (let i = 1; i <= (options.ticks ?? 0); i += 1) {
+        const tick = -half.w + (width * i) / ((options.ticks ?? 0) + 1);
+        this.frame.lineStyle(2, 0xffffff, 0.45);
+        this.frame.lineBetween(tick + slant / 2, -half.h, tick - slant / 2, half.h);
+      }
+      if (options.outline) {
+        this.frame.lineStyle(2, 0xffffff, 0.72);
+        this.frame.strokePoints(toPoints(slantedRect(width, height, slant)), true);
+      }
+    }
     this.redraw();
   }
 
@@ -434,7 +465,7 @@ export class HoloBar {
 
   /** 팝업 같은 컨테이너 프리팹 안에서도 홈과 채움을 한 묶음으로 이동시킨다. */
   addTo(container: Phaser.GameObjects.Container): this {
-    container.add([this.track, this.fill]);
+    container.add([...this.objects]);
     return this;
   }
 
@@ -461,5 +492,6 @@ export class HoloBar {
   destroy(): void {
     this.track.destroy();
     this.fill.destroy();
+    this.frame?.destroy();
   }
 }

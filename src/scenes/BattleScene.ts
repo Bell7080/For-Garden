@@ -367,9 +367,10 @@ export class BattleScene extends Phaser.Scene {
           .setOrigin(0, 1)
           .setShadow(3, 4, "#05070a", 0, true, true);
       const hpLabel = label(1800, COLOR.hpText);
-      const hpBar = new HoloBar(this, x, 1814, BAR_WIDTH, 20, { color: COLOR.hpFill });
+      // 하단 게이지도 머리 위 바와 같은 결이다 — 흰 테두리로 최대치를 두르고 빗금으로 칸을 나눈다.
+      const hpBar = new HoloBar(this, x, 1814, BAR_WIDTH, 20, { color: COLOR.hpFill, outline: true, ticks: 3 });
       const ferocityLabel = label(1872, FEROCITY_TEXT);
-      const ferocityBar = new HoloBar(this, x, 1886, BAR_WIDTH, 16, { color: COLOR.ferocityLow });
+      const ferocityBar = new HoloBar(this, x, 1886, BAR_WIDTH, 16, { color: COLOR.ferocityLow, outline: true, ticks: 3 });
       this.profiles.push({ fighter, card, glow, sweep, charge, hpBar, hpLabel, ferocityBar, ferocityLabel, hpShown: fighter.hp, ferocityShown: fighter.ferocity, ready: false });
     });
   }
@@ -702,7 +703,8 @@ export class BattleScene extends Phaser.Scene {
       const ferocityColor = fever ? COLOR.ferocityFever : fighter.ferocity >= 80 ? COLOR.ferocityWarning : COLOR.ferocityLow;
       profile.ferocityBar.setValue(profile.ferocityShown / FEROCITY_RULES.max, ferocityColor);
       // 피버 중에는 보상 상태와 자동 감소를 함께 알려 별도 진압 입력을 찾지 않게 한다.
-      profile.ferocityLabel.setText(`${fever ? "폭주" : "야성"} ${Math.round(profile.ferocityShown)}`);
+      // 최대치를 함께 적는다. 야성은 100에 닿는 순간 폭주로 바뀌므로 남은 거리가 곧 예고다.
+      profile.ferocityLabel.setText(`${fever ? "폭주" : "야성"} ${Math.round(profile.ferocityShown)} / ${FEROCITY_RULES.max}`);
       profile.ferocityLabel.setColor(fever || fighter.ferocity >= 80 ? COLOR.ferocityHotText : FEROCITY_TEXT);
     }
   }

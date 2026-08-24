@@ -24,7 +24,9 @@ export class ShopScene extends Phaser.Scene {
 
   create(): void {
     setDebugScene("shop");
-    addSceneBackground(this, BACKGROUND.lab);
+    // 유료 상점은 흰 쇼케이스, 인게임 교환소는 연구소 설비 앞이다. 두 탭은 같은 화면이지만
+    // 파는 것이 다르므로 서 있는 자리도 다르다.
+    addSceneBackground(this, this.section === "premium" ? BACKGROUND.premiumShop : BACKGROUND.lab);
     drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { depth: -20, strength: 0.72 });
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.5).setDepth(-19);
     new TopBar(this);

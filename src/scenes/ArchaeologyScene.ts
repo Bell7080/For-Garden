@@ -21,7 +21,7 @@ export class ArchaeologyScene extends Phaser.Scene {
   create(): void {
     setDebugScene("archaeology");
     // 야외 유적 원화와 기존 홀로그램 토큰을 조합해 연구소 내부와 공간의 성격을 구분한다.
-    addSceneBackground(this, BACKGROUND.relics);
+    addSceneBackground(this, BACKGROUND.archaeology);
     drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { depth: -20, strength: 0.72 });
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.5).setDepth(-19);
     new TopBar(this);

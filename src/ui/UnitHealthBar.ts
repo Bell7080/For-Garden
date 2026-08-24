@@ -105,6 +105,9 @@ export class UnitHealthBar extends Phaser.GameObjects.Container {
       const x = -width / 2 + (width * i) / (ticks + 1);
       this.graph.lineBetween(x + slant / 2, -height / 2, x - slant / 2, height / 2);
     }
+    // 최대치를 두르는 흰 테두리. 채움이 줄어도 "여기까지가 이 바"가 남아 배경과 갈린다.
+    this.graph.lineStyle(2, 0xffffff, 0.72);
+    this.graph.strokePoints(body, true);
     // 왼쪽 끝의 두꺼운 빗금. 바가 어디서 시작하는지 못을 박아 준다.
     const capShape = toPoints(slantedRect(cap.width, height * cap.height, slant));
     this.graph.fillStyle(0x05070a, 0.85);

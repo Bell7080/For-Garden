@@ -12,6 +12,12 @@ export const BACKGROUND = {
   combat: "background-combat",
   /** 스테이지 진행과 함께 아래에서 위로 움직이는 장축 지도 원화다. */
   stageMap: "background-stage-map",
+  /** 화석을 손질하는 작업실. 장기 탐사(고고학) 전용이다. */
+  archaeology: "background-archaeology",
+  /** 유료 상점의 흰 쇼케이스. 인게임 재화 교환소(무역)와는 다른 자리다. */
+  premiumShop: "background-premium-shop",
+  /** 발굴 연출이 덮는 발굴장. 검은 판 대신 이 원화를 깔고 그 위를 눌러 어둡게 한다. */
+  excavation: "background-excavation",
 } as const;
 
 /** BootScene이 모든 화면 배경을 한 번에 적재할 때 사용하는 경로 목록이다. */
@@ -25,6 +31,9 @@ export const BACKGROUND_ASSETS = [
   [BACKGROUND.lab, "sprites/background/background_005.webp"],
   [BACKGROUND.combat, "sprites/background/background_006.webp"],
   [BACKGROUND.stageMap, "sprites/background/map_001.webp"],
+  [BACKGROUND.archaeology, "sprites/background/background_007.webp"],
+  [BACKGROUND.premiumShop, "sprites/background/background_008.webp"],
+  [BACKGROUND.excavation, "sprites/background/background_009.webp"],
 ] as const;
 
 /**

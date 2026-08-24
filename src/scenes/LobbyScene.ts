@@ -16,6 +16,8 @@ import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { gameApi } from "../api/FakeServer";
 import { bondDialogue } from "../data/bonds";
 import { DAILY_RESTORATION } from "../data/stages";
+import { PopupLayer } from "../ui/PopupLayer";
+import { IdleExcavationPopup } from "../ui/IdleExcavationPopup";
 
 /** 확대된 애착 렐릭의 골반 아래가 내비게이션 뒤로 자연스럽게 이어지는 기준선. */
 const STAGE_FLOOR = 1660;
@@ -43,6 +45,9 @@ export class LobbyScene extends Phaser.Scene {
   /** 같은 방문 중 반복 터치의 대사 변형 순번이며 보상 중복 판정은 서버 날짜가 담당한다. */
   private interactionIndex = 0;
   private interactionPending = false;
+  /** 로비 위 팝업은 씬을 바꾸지 않으며 한 번에 한 발굴 쪽지만 소유한다. */
+  private popupLayer?: PopupLayer;
+  private idleExcavationPopup?: IdleExcavationPopup;
 
   constructor() {
     super("lobby");
@@ -50,6 +55,7 @@ export class LobbyScene extends Phaser.Scene {
 
   create(): void {
     setDebugScene("lobby");
+    this.popupLayer = new PopupLayer(this);
 
     this.buildPlaza();
     // 설정 아이콘은 준비 중 토스트가 아니라 등록된 환경 설정 씬으로 곧바로 이동한다.
@@ -120,11 +126,20 @@ export class LobbyScene extends Phaser.Scene {
       tilt: 6,
       accentColor: EXCHANGE_BLUE,
       accentTextColor: "#9fd0f0",
-      onClick: () => this.notReady("발굴"),
+      onClick: () => this.openIdleExcavation(),
     });
 
     new BottomNav(this, "lobby");
     void this.showFavorite();
+  }
+
+  /** 연타 중에는 같은 인스턴스의 open 가드가 기존 쪽지를 유지한다. */
+  private openIdleExcavation(): void {
+    if (!this.popupLayer) return;
+    this.idleExcavationPopup ??= new IdleExcavationPopup(this, this.popupLayer, gameApi, () => {
+      this.idleExcavationPopup = undefined;
+    });
+    this.idleExcavationPopup.open();
   }
 
   /** 저장된 UTC 일일 입장 횟수를 로비 원정 버튼의 짧은 상태 문구로 바꾼다. */

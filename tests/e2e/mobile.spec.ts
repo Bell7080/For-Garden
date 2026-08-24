@@ -3,6 +3,9 @@ import { startAfterOpening } from "./openingSave";
 
 const BASE_WIDTH = 1080;
 const BASE_HEIGHT = 1920;
+/** 900×1320 발굴 판의 중심에서 PopupLayer 공용 닫기 버튼까지의 오프셋이다. */
+const PANEL_CLOSE_X = 410;
+const PANEL_CLOSE_Y = 620;
 
 /** 기준 게임 좌표를 FIT 스케일이 적용된 모바일 캔버스 좌표로 바꿔 누른다. */
 async function tapGame(page: import("@playwright/test").Page, x: number, y: number): Promise<void> {
@@ -62,6 +65,27 @@ test("오프닝을 이미 본 저장이면 타이틀에서 로비로 바로 간�
   await expect
     .poll(() => page.evaluate(() => window.__PF_DEBUG?.scene))
     .toBe("lobby");
+});
+
+test("방치 발굴 팝업은 좁은 로비 위 한 장으로 열리고 뒤 입력을 차단한 뒤 닫힌다", async ({ page }) => {
+  await startAfterOpening(page);
+  await page.locator("canvas").click();
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+
+  // 왼쪽 하단 발굴 입구를 연타해도 조회 상태를 공유하는 팝업 한 장만 유지한다.
+  await tapGame(page, 250, BASE_HEIGHT - 445);
+  await tapGame(page, 250, BASE_HEIGHT - 445);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationPopup)).toBe("ready");
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+  await page.screenshot({ path: `test-results/${test.info().project.name}-idle-excavation-popup.png` });
+
+  // 어두운 backdrop이 출격 좌표의 입력을 먹으므로 로비와 애착 캐릭터가 그대로 남는다.
+  await tapGame(page, BASE_WIDTH - 290, BASE_HEIGHT - 425);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+  // 기준 1080×1920의 우상단 닫기는 작은 viewport에서도 FIT 안전 영역 안에 있다.
+  await tapGame(page, BASE_WIDTH / 2 + PANEL_CLOSE_X, BASE_HEIGHT / 2 - PANEL_CLOSE_Y);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationPopup)).toBeUndefined();
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
 });
 
 test("설정 탭은 텍스트 확대·스크롤·두 단계 초기화를 좁은 모바일에서 안전하게 처리한다", async ({ page }) => {

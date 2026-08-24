@@ -15,21 +15,37 @@ const BAR = {
   height: 11,
   /** `/` 기울기. 몸통·복제·칸 나눔이 모두 같은 각을 쓴다. */
   slant: 7,
-  /** 왼쪽 끝 빗금의 두께와 몸통에서 띄우는 간격. */
-  cap: { width: 7, gap: 5 },
+  /**
+   * 왼쪽 끝 빗금.
+   *
+   * 몸통보다 **크고 훨씬 짙다.** 같은 색·같은 높이로 두면 체력 바가 거기서 잘린 것처럼 보여
+   * 조각 둘이 아니라 끊긴 하나로 읽힌다. 색과 크기를 함께 갈라야 "따로 박힌 못"이 된다.
+   */
+  cap: { width: 9, gap: 6, height: 1.34, darken: 0.55 },
   /** 칸을 나누는 흰 선의 개수(칸 수는 이보다 하나 많다). */
   ticks: 3,
   /** 값이 목표를 따라잡는 빠르기(초당 비율). 클수록 빨리 붙는다. */
   ease: 6,
 } as const;
 
+/** 색을 눌러 짙게 만든다. 끝 빗금이 몸통과 같은 색이면 잘린 조각처럼 보인다. */
+function darken(color: number, amount: number): number {
+  const keep = 1 - amount;
+  return (Math.round(((color >> 16) & 0xff) * keep) << 16)
+    | (Math.round(((color >> 8) & 0xff) * keep) << 8)
+    | Math.round((color & 0xff) * keep);
+}
+
 export class UnitHealthBar extends Phaser.GameObjects.Container {
   private readonly graph: Phaser.GameObjects.Graphics;
   private target = 1;
   private shown = 1;
 
+  private readonly capColor: number;
+
   constructor(scene: Phaser.Scene, private readonly color: number) {
     super(scene, 0, 0);
+    this.capColor = darken(color, BAR.cap.darken);
     this.graph = scene.add.graphics();
     this.add(this.graph);
     scene.add.existing(this);
@@ -90,11 +106,12 @@ export class UnitHealthBar extends Phaser.GameObjects.Container {
       this.graph.lineBetween(x + slant / 2, -height / 2, x - slant / 2, height / 2);
     }
     // 왼쪽 끝의 두꺼운 빗금. 바가 어디서 시작하는지 못을 박아 준다.
-    this.graph.fillStyle(0x05070a, 0.8);
-    this.graph.fillPoints(toPoints(slantedRect(cap.width, height, slant)).map((point) =>
+    const capShape = toPoints(slantedRect(cap.width, height * cap.height, slant));
+    this.graph.fillStyle(0x05070a, 0.85);
+    this.graph.fillPoints(capShape.map((point) =>
       new Phaser.Geom.Point(point.x - width / 2 - cap.gap + 2, point.y + 4)), true);
-    this.graph.fillStyle(this.color, 1);
-    this.graph.fillPoints(toPoints(slantedRect(cap.width, height, slant)).map((point) =>
+    this.graph.fillStyle(this.capColor, 1);
+    this.graph.fillPoints(capShape.map((point) =>
       new Phaser.Geom.Point(point.x - width / 2 - cap.gap, point.y)), true);
   }
 }

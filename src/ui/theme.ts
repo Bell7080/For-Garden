@@ -19,7 +19,10 @@ export const COLOR = {
   danger: 0xb03a3a,
   dangerText: "#e07a7a",
   ally: 0x5b86a3,
-  hpFill: 0xd8b978,
+  /** 체력은 능력치 색과 같은 연두다. 어느 화면에서 보든 "체력은 초록"이 흔들리지 않는다. */
+  hpFill: 0x6fc47f,
+  /** 같은 값을 적는 글자색. 게이지보다 한 톤 밝아야 배경 원화 위에서 읽힌다. */
+  hpText: "#8fd89b",
   hpEnemy: 0xb03a3a,
   energy: 0x7ea8d8,
   /** 출격·출전처럼 "나가서 싸운다"를 뜻하는 입구의 강조색. 금색보다 붉다. */
@@ -31,9 +34,12 @@ export const COLOR = {
   raritySRAlt: 0x9b78c7,
   raritySSR: 0xe0a83e,
   raritySSRLight: 0xffd37a,
-  /** 야성 단계색은 청록→황색으로 차오르고 피버에서는 공용 황동 강조색을 사용한다. */
-  ferocityLow: 0x42b8ad,
-  ferocityWarning: 0xd6a83d,
+  /** 야성은 연붉은색에서 시작해 차오를수록 짙어지고, 피버에서 가장 붉다. 한 계열로 묶는다. */
+  ferocityLow: 0xe09a94,
+  ferocityWarning: 0xe8675e,
+  ferocityFever: 0xff5a4a,
+  ferocityText: "#f0a49c",
+  ferocityHotText: "#ff9184",
 } as const;
 
 export { FONT_FAMILY, type TextRole } from "./fonts";

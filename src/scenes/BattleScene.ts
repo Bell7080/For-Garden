@@ -66,8 +66,8 @@ const CHARGE_VEIL_ALPHA = 0.58;
 /** 아직 다 차지 않은 카드의 불투명도. 다 차면 1이 되어 그림이 온전히 선다. */
 const CHARGE_CARD_ALPHA = 0.62;
 
-/** 야성 수치의 글자색. 게이지의 청록과 같은 계열이라 어느 수인지 색으로 먼저 읽힌다. */
-const FEROCITY_TEXT = "#70d6cb";
+/** 야성 수치의 글자색. 게이지의 붉은 계열과 같아 어느 수인지 색으로 먼저 읽힌다. */
+const FEROCITY_TEXT = COLOR.ferocityText;
 
 /** 게이지와 수치가 실제 값을 따라잡는 빠르기(초당 비율). */
 const METER_EASE = 6;
@@ -366,7 +366,7 @@ export class BattleScene extends Phaser.Scene {
         this.add.text(x - BAR_WIDTH / 2, y, "", textStyle({ role: "display", size: 26, color }))
           .setOrigin(0, 1)
           .setShadow(3, 4, "#05070a", 0, true, true);
-      const hpLabel = label(1800, COLOR.accentText);
+      const hpLabel = label(1800, COLOR.hpText);
       const hpBar = new HoloBar(this, x, 1814, BAR_WIDTH, 20, { color: COLOR.hpFill });
       const ferocityLabel = label(1872, FEROCITY_TEXT);
       const ferocityBar = new HoloBar(this, x, 1886, BAR_WIDTH, 16, { color: COLOR.ferocityLow });
@@ -697,13 +697,13 @@ export class BattleScene extends Phaser.Scene {
         : profile.ferocityShown + (fighter.ferocity - profile.ferocityShown) * k;
       profile.hpBar.setValue(profile.hpShown / fighter.maxHp);
       profile.hpLabel.setText(alive ? `HP ${Math.round(profile.hpShown)} / ${fighter.maxHp}` : "전투 불능");
-      profile.hpLabel.setColor(alive ? COLOR.accentText : COLOR.dangerText);
+      profile.hpLabel.setColor(alive ? COLOR.hpText : COLOR.dangerText);
       const fever = fighter.ferocityFever;
-      const ferocityColor = fever ? COLOR.accent : fighter.ferocity >= 80 ? COLOR.ferocityWarning : COLOR.ferocityLow;
+      const ferocityColor = fever ? COLOR.ferocityFever : fighter.ferocity >= 80 ? COLOR.ferocityWarning : COLOR.ferocityLow;
       profile.ferocityBar.setValue(profile.ferocityShown / FEROCITY_RULES.max, ferocityColor);
       // 피버 중에는 보상 상태와 자동 감소를 함께 알려 별도 진압 입력을 찾지 않게 한다.
       profile.ferocityLabel.setText(`${fever ? "폭주" : "야성"} ${Math.round(profile.ferocityShown)}`);
-      profile.ferocityLabel.setColor(fever || fighter.ferocity >= 80 ? COLOR.accentText : FEROCITY_TEXT);
+      profile.ferocityLabel.setColor(fever || fighter.ferocity >= 80 ? COLOR.ferocityHotText : FEROCITY_TEXT);
     }
   }
 

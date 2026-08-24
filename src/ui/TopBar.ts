@@ -69,11 +69,13 @@ const CLUSTER_CENTER = 0.57;
 export class TopBar {
   private readonly slots: { slot: CurrencySlot; text: Phaser.GameObjects.Text }[] = [];
 
-  constructor(scene: Phaser.Scene, y = 40, options: { onSettings?: () => void; currencies?: TopBarCurrencyContext } = {}) {
+  constructor(scene: Phaser.Scene, y = 40, options: { onSettings?: () => void; currencies?: TopBarCurrencyContext; profile?: boolean } = {}) {
     drawGlassFade(scene, BASE_WIDTH / 2, y + 30, BASE_WIDTH, 150, { topAlpha: 0.92, bottomAlpha: 0 });
     drawHairline(scene, BASE_WIDTH / 2, y + 96, BASE_WIDTH, { color: COLOR.accent, alpha: 0.18 });
 
-    this.buildProfile(scene, 28, y + 4);
+    // 프로필은 "지금 나"를 묻는 화면(로비·모집)의 것이다. 목록만 훑는 화면에서는 세우지
+    // 않는다 — 볼 일 없는 이름표가 목록 제목과 같은 높이에서 자리를 다툰다.
+    if (options.profile !== false) this.buildProfile(scene, 28, y + 4);
 
     // 재화는 오른쪽에서 왼쪽으로 쌓는다. 설정 아이콘이 오른쪽 끝을 차지하기 때문이다.
     const slots = SLOTS[options.currencies ?? "default"];

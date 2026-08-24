@@ -96,6 +96,7 @@ export interface ButtonOptions {
 export class Button extends Phaser.GameObjects.Container {
   private readonly bg: Phaser.GameObjects.Rectangle;
   private readonly subText?: Phaser.GameObjects.Text;
+  private readonly labelText: Phaser.GameObjects.Text;
   private enabledState = true;
   /** 누른 동일 포인터만 클릭을 끝낼 수 있게 기억하는 포인터 ID다. */
   private pressedPointerId?: number;
@@ -153,6 +154,7 @@ export class Button extends Phaser.GameObjects.Container {
       .text(0, hasSub ? -14 : 0, opts.label, textStyle({ role: "display", size: fontSize }))
       .setOrigin(0.5);
     plate.add(label);
+    this.labelText = label;
     if (opts.icon) {
       // 아이콘은 글자 왼쪽에 붙고, 둘을 합친 폭이 판 가운데에 오도록 함께 민다.
       const gap = fontSize * 0.5;
@@ -239,6 +241,12 @@ export class Button extends Phaser.GameObjects.Container {
   }
 
   /** 보조 문구를 갈아끼운다. 진형이 바뀌면 버튼이 가리키는 대상도 바뀐다. */
+  /** 라벨을 바꾼다. 한 버튼이 기준을 돌아가며 맡는 정렬 같은 곳에서 쓴다. */
+  setLabel(text: string): this {
+    this.labelText.setText(text);
+    return this;
+  }
+
   setSub(text: string): this {
     this.subText?.setText(text);
     return this;

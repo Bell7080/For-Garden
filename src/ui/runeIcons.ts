@@ -75,10 +75,11 @@ export function addRuneFrame(
   frame.add(plate);
   frame.add(drawInnerVignette(scene, 0, 0, shape, { strength: 0.55 }));
   frame.add(drawShapeOutline(scene, 0, 0, shape, { color: accent, alpha: rarity ? 0.9 : 0.35, width: 3 }));
-  // 조각은 액자보다 조금 작게 담긴다. 꽉 채우면 테두리와 붙어 액자가 사라져 보인다.
+  // 조각은 액자를 가득 채운다. 조각 원화에 이미 여백이 있어, 여기서 더 줄이면 그림이 칸
+  // 한가운데에 작게 떠 액자만 커 보인다.
   frame.add(rarity
-    ? addRuneIcon(scene, 0, 0, size * 0.72, rarity, part)
-    : scene.add.image(0, 0, runeTexture(undefined, part)).setOrigin(0.5, RUNE_CENTER_Y).setDisplaySize(size * 0.72, size * 0.72).setAlpha(0.5));
+    ? addRuneIcon(scene, 0, 0, size * 0.98, rarity, part)
+    : scene.add.image(0, 0, runeTexture(undefined, part)).setOrigin(0.5, RUNE_CENTER_Y).setDisplaySize(size * 0.98, size * 0.98).setAlpha(0.5));
   return frame;
 }
 

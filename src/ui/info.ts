@@ -39,6 +39,7 @@ import { COLOR, textStyle } from "./theme";
 import { FALLBACK_SKILL_ICON } from "./skillIcons";
 import { skillArtFor, skillArtTint, SKILL_ART_WASH_ALPHA, type SkillArtSlot } from "./skillArt";
 import { gameApi } from "../api/FakeServer";
+import { combatPower } from "../core/combatPower";
 import { BREAKTHROUGH_STEPS, canBreakThrough, canFeedRelic, FEED_UNIT, nextBreakthrough, relicExpToNext, relicLevelCap, RELIC_STAR_CAP, relicStars } from "../core/relicProgression";
 import { session } from "../state/session";
 import { BOND_FEROCITY_MULTIPLIER, BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL, BOND_XP_REWARD } from "../core/bond";
@@ -132,9 +133,18 @@ const FEROCITY_BADGE = 0x4b2f2b;
 const BOND_HEART = 0xe23a46;
 /** 하트 안쪽에 한 겹 더 얹는 밝은 심지. */
 const BOND_HEART_CORE = 0xff8a7a;
-const FEED_GREEN = 0x7fc47f;
-/** 치즈케이크 수를 적는 색. 케이크 그림의 따뜻한 크림빛을 그대로 가져온다. */
-const FEED_TEXT = "#ffe0d5";
+/**
+ * 급여 버튼의 색.
+ *
+ * 치즈케이크의 노란빛을 그대로 쓴다. 무엇을 먹이는 버튼인지가 글자를 읽기 전에 보여야 해서,
+ * 판을 **불투명하게** 채우고 기울이지 않는다 — 화면에서 가장 자주 누르는 버튼이라 유리처럼
+ * 비치면 배경 원화에 묻히고, 기울면 그 안의 큰 숫자까지 비뚤어 보인다.
+ */
+const FEED_AMBER = 0xf0b429;
+/** 노란 판 위에 얹는 글자색. 판이 밝으므로 글자는 어둡다. */
+const FEED_INK = "#3a2606";
+/** 판 안쪽에 파인 자리의 치즈케이크 수. 그 자리는 어둡게 눌러 두므로 크림빛으로 적는다. */
+const FEED_TEXT = "#ffe9c9";
 
 /**
  * 급여에 쓰는 치즈케이크 한 조각.
@@ -168,7 +178,8 @@ function feedCostRow(
   size: number,
 ): { container: Phaser.GameObjects.Container; text: Phaser.GameObjects.Text; layout: () => void } {
   const container = scene.add.container(x, y);
-  container.add(drawLayer(scene, 0, 0, slantedRect(width, height, 8), { fill: 0x0b1410, alpha: 0.66, edge: FEED_GREEN, edgeAlpha: 0.22 }));
+  // 노란 판 안에 한 겹 파인 자리. 어둡게 눌러야 그 위의 큰 수가 판과 갈라져 읽힌다.
+  container.add(drawLayer(scene, 0, 0, slantedRect(width, height, 0), { fill: 0x2a1c06, alpha: 0.86, edge: 0xffe08a, edgeAlpha: 0.3, shadow: false }));
   const icon = Math.round(height * 0.86);
   // 아이콘과 수는 바짝 붙는다. 멀리 떼면 "치즈케이크"와 "숫자"가 두 정보로 읽힌다.
   const gap = Math.round(icon * 0.12);
@@ -312,6 +323,8 @@ export class InfoManager {
   private readonly favoriteBadge: BadgeHandle;
 
   private readonly starRow: Phaser.GameObjects.Container;
+  /** 능력치 칸 아래에 걸치는 전투력. 표시와 정렬에만 쓰는 값이다. */
+  private readonly powerValue: Phaser.GameObjects.Text;
   private readonly levelValue: Phaser.GameObjects.Text;
   private readonly levelCap: Phaser.GameObjects.Text;
   private readonly expBar: Gauge;
@@ -423,7 +436,8 @@ export class InfoManager {
     if (this.capabilities.mutateProgress) this.addJournalButton(268, 300);
     this.addMagnifier(84, 392, (from) => this.enterGallery(from.onClose));
 
-    this.starRow = scene.add.container(COLUMN.x, 150);
+    // 별은 기둥 왼쪽 끝에 선다. 가운데에 두면 오른쪽의 돌파 버튼·돋보기와 자리를 다툰다.
+    this.starRow = scene.add.container(COLUMN.x - COLUMN.width / 2 + 44, 150);
     this.chrome.add(this.starRow);
     this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 30, 158, (from) => this.openBreakthroughSteps(from));
 
@@ -461,7 +475,7 @@ export class InfoManager {
     }
     // 한계 돌파는 별을 올리는 일이라 레벨 칸이 아니라 **별 옆**에 선다. 파편이 모였는지도
     // 그 자리에서 읽혀야 "지금 초월할 수 있는가"가 한눈에 들어온다.
-    this.breakButton = this.addBreakButton(COLUMN.x + 108, 150, this.chrome);
+    this.breakButton = this.addBreakButton(COLUMN.x + 62, 150, this.chrome);
     const feed = this.addFeedButton(COLUMN.x, 546, COLUMN.width - 130, 98, levelPanel);
     this.feedButton = feed.container;
     this.feedLabel = feed.label;
@@ -490,6 +504,19 @@ export class InfoManager {
       colors: Object.fromEntries(STAT_CHIPS.map((chip) => [chip.key, `#${chip.color.toString(16).padStart(6, "0")}`])),
     });
     attach(statPanel, this.statRadar);
+    // 전투력은 능력치 칸의 **아래 변에 걸쳐** 앉는다. 오각형을 가리지 않으면서도 "이 개체가
+    // 지금 얼마나 센가"라는 한 줄 답이 능력치와 같은 덩어리로 읽힌다. 판은 기울지만 이 칸은
+    // 기울지 않는다 — 그 안의 큰 수가 비뚤어 보이지 않아야 한다.
+    const powerChip = scene.add.container(COLUMN.x, 1202);
+    powerChip.add(drawLayer(scene, 0, 0, slantedRect(300, 76, 12), { fill: 0x141a24, alpha: 0.98, edge: COLOR.accent, edgeAlpha: 0.9, glow: { color: COLOR.accent, strength: 0.3, height: 0.7 } }));
+    powerChip.add(scene.add.text(-108, 0, "전투력", textStyle({ role: "emphasis", size: 21, color: COLOR.inkDim })).setOrigin(0, 0.5));
+    this.powerValue = scene.add
+      .text(126, 0, "", textStyle({ role: "display", size: 38, color: COLOR.accentText }))
+      .setOrigin(1, 0.5)
+      .setScale(1, 1.12)
+      .setShadow(2, 5, "#05070a", 6, false, true);
+    powerChip.add(this.powerValue);
+    this.column.add(powerChip);
 
     // 하트 젬 — 하트 하나를 셋으로 가른 자리.
     this.addSectionTitle("룬", 1398 - 146).setVisible(this.capabilities.mutateProgress);
@@ -628,20 +655,22 @@ export class InfoManager {
    */
   private addFeedButton(x: number, y: number, width: number, height: number, panel: Phaser.GameObjects.Container): { container: Phaser.GameObjects.Container; label: Phaser.GameObjects.Text } {
     const container = this.scene.add.container(x, y);
-    const shape = slantedRect(width, height, 16);
-    // 켜진 상태와 꺼진 상태를 판 두 장으로 나눠 둔다. 켜진 쪽만 진하게 차오르고 빛나서,
+    // 기울이지 않는다. 안에 화면에서 가장 큰 수가 들어가는 버튼이라 판이 기울면 그 수까지
+    // 비뚤어 보인다.
+    const shape = slantedRect(width, height, 0);
+    // 켜진 상태와 꺼진 상태를 판 두 장으로 나눠 둔다. 켜진 쪽만 불투명한 노랑으로 차올라
     // 지금 누를 수 있는지가 글자를 읽기 전에 보인다.
-    const off = drawLayer(this.scene, 0, 0, shape, { fill: 0x10160f, alpha: 0.55, edge: FEED_GREEN, edgeAlpha: 0.3 });
+    const off = drawLayer(this.scene, 0, 0, shape, { fill: 0x2a2418, alpha: 0.7, edge: FEED_AMBER, edgeAlpha: 0.3 });
     const on = drawLayer(this.scene, 0, 0, shape, {
-      fill: 0x1f3a24,
-      alpha: 0.98,
-      edge: 0x9ee6a0,
+      fill: FEED_AMBER,
+      alpha: 1,
+      edge: 0xffe08a,
       edgeAlpha: 1,
       edgeWidth: 4,
-      glow: { color: FEED_GREEN, strength: 0.45, height: 0.7 },
+      glow: { color: FEED_AMBER, strength: 0.5, height: 0.7 },
     });
     container.add([off, on]);
-    const label = this.scene.add.text(0, -height / 2 + 22, "급여하기", textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0.5);
+    const label = this.scene.add.text(0, -height / 2 + 22, "급여하기", textStyle({ role: "emphasis", size: 22, color: FEED_INK })).setOrigin(0.5);
     container.add(label);
     const row = feedCostRow(this.scene, 0, 16, width - 40, 54, 36);
     this.feedCost = row.text;
@@ -805,8 +834,8 @@ export class InfoManager {
         const bx = index === 0 ? -118 : 118;
         const cost = this.feedsForLevels(levels) * FEED_UNIT.cheesecake;
         const enough = session.wallet.cheesecake >= cost;
-        body.add(drawLayer(this.scene, bx, 12, slantedRect(212, 116, 14), { fill: 0x18261c, alpha: 0.92, edge: FEED_GREEN, edgeAlpha: enough ? 0.8 : 0.3 }));
-        body.add(this.scene.add.text(bx, -22, label, textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0.5));
+        body.add(drawLayer(this.scene, bx, 12, slantedRect(212, 116, 0), { fill: enough ? FEED_AMBER : 0x2a2418, alpha: enough ? 1 : 0.8, edge: 0xffe08a, edgeAlpha: enough ? 1 : 0.3 }));
+        body.add(this.scene.add.text(bx, -22, label, textStyle({ role: "emphasis", size: 22, color: enough ? FEED_INK : COLOR.inkDim })).setOrigin(0.5));
         // 버튼과 같은 값줄이다. 여기서 바뀌는 것은 오른쪽 수(한 번에 나가는 양)뿐이다.
         const price = feedCostRow(this.scene, bx, 32, 184, 48, 28);
         price.text.setText(formatCurrency(session.wallet.cheesecake) + "/" + formatCurrency(cost));
@@ -1726,6 +1755,7 @@ export class InfoManager {
       ? { level: this.publicProfile.level, exp: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] }
       : relicProgression.getProgress(def.id);
     const finalStats = this.publicProfile?.stats ?? relicProgression.getFinalStats(def.id);
+    this.powerValue.setText(combatPower(finalStats).toLocaleString());
     const cap = relicLevelCap(progress.breakthrough);
     const maxed = progress.level >= cap;
 

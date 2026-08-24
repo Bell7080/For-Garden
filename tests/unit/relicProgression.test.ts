@@ -14,7 +14,7 @@ const BASE: Stats = { hp: 101, def: 101, res: 101, atk: 101, ap: 101, attackSpee
 /** 장착 테스트에서 정적 정의 ID와 인스턴스 ID가 우연히 같다고 가정하지 않게 룬을 만든다. */
 function testRune(instanceId: string) {
   const values = Object.fromEntries(["hp", "atk", "ap", "def", "res", "moveSpeed", "attackSpeed", "lifeSteal", "critChance", "critDamage", "ferocityGain", "energyGain"].map((key) => [key, 1])) as Record<RuneStatKey, number>;
-  return createRuneInstance({ instanceId, baseName: instanceId, rarity: "uncommon", statValues: values, random: () => 0 });
+  return createRuneInstance({ instanceId, baseName: instanceId, rarity: "uncommon", part: 0, statValues: values, random: () => 0 });
 }
 
 /** manager 검증 테스트마다 독립된 저장 상태를 만든다. */
@@ -102,9 +102,11 @@ describe("렐릭 성장 규칙", () => {
     const state = makeSession();
     const manager = new RelicProgressionManager(state);
     const api = new FakeServer(state, { latencyMs: 0 });
-    await manager.equipRune("rex", 1, "fang-core", api);
-    expect(state.relicProgress.rex.heartGemSlots).toEqual([null, "fang-core", null]);
-    await manager.unequipRune("rex", 1, api);
+    // 테스트 룬은 모두 0번 조각이므로 0번 칸에만 들어간다. 자리 규칙은 서버가 지킨다.
+    await expect(manager.equipRune("rex", 1, "fang-core", api)).rejects.toMatchObject({ code: "RUNE_SLOT_MISMATCH" });
+    await manager.equipRune("rex", 0, "fang-core", api);
+    expect(state.relicProgress.rex.heartGemSlots).toEqual(["fang-core", null, null]);
+    await manager.unequipRune("rex", 0, api);
     expect(state.relicProgress.rex.heartGemSlots).toEqual([null, null, null]);
   });
 });

@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import type { GameApi } from "../api/contracts";
 import { gameApi } from "../api/FakeServer";
-import { canEngraveRune, canEnhanceRune, RUNE_RARITY_LABELS, runeEnhancementAttempts, runeTotalEnhancementAttempts, type RuneInstance, type RuneStatKey } from "../core/runes";
+import { canEngraveRune, canEnhanceRune, RUNE_PART_LABELS, RUNE_RARITY_LABELS, runeEnhancementAttempts, runeTotalEnhancementAttempts, type RuneInstance, type RuneStatKey } from "../core/runes";
 import { runeEnhancementGoldCost } from "../data/runes";
 import { RELICS } from "../data/relics";
 import { relicProgression } from "../managers/RelicProgressionManager";
@@ -10,7 +10,7 @@ import { Button } from "./Button";
 import { drawGlyph } from "./glyphs";
 import { drawHairline, drawLayer, slantedRect } from "./holo";
 import { PopupLayer } from "./PopupLayer";
-import { addChanceLine, addEmptyRuneMark, addRuneIcon, addRuneMark, RUNE_ACCENT, RUNE_MARK } from "./runeIcons";
+import { addChanceLine, addEmptyRuneMark, addRuneFrame, addRuneMark, RUNE_ACCENT, RUNE_MARK } from "./runeIcons";
 import { addCurrencyChip } from "./CurrencyChip";
 import { formatCurrency } from "../core/formatCurrency";
 import { COLOR, textStyle } from "./theme";
@@ -61,10 +61,16 @@ export interface RuneInfoPopupOptions extends RunePopupOptions {
 }
 
 /** 저장의 단일 장착표에서 이 룬이 어디에 끼워져 있는지 한 줄로 만든다. */
-function equippedLine(instanceId: string): string {
+export function equippedLine(instanceId: string): string {
   const entry = Object.entries(session.relicProgress).find(([, progress]) => progress.heartGemSlots.includes(instanceId));
   if (!entry) return "장착 안 함";
-  return `장착 · ${RELICS.find(({ id }) => id === entry[0])?.name ?? entry[0]}`;
+  return `장착 중 · ${RELICS.find(({ id }) => id === entry[0])?.name ?? entry[0]}`;
+}
+
+/** 이 룬을 지금 끼고 있는 렐릭 이름. 아무도 끼지 않았으면 undefined다. */
+export function equippedRelicName(instanceId: string): string | undefined {
+  const entry = Object.entries(session.relicProgress).find(([, progress]) => progress.heartGemSlots.includes(instanceId));
+  return entry ? (RELICS.find(({ id }) => id === entry[0])?.name ?? entry[0]) : undefined;
 }
 
 /** 등급색을 텍스트 스타일이 받는 `#rrggbb` 문자열로 바꾼다. */
@@ -110,8 +116,8 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
   const height = 470 + stats.length * 54;
   popups.open({ width: 760, height, title: "룬", anchor: options.anchor, dim: true, onClose: options.onClose }, (body, close) => {
     const top = -height / 2;
-    body.add(addRuneIcon(scene, -250, top + 128, 118, rune.rarity));
-    body.add(scene.add.text(-172, top + 78, rarity, textStyle({ role: "emphasis", size: 24, color: hex(accent) })).setOrigin(0, 0));
+    body.add(addRuneFrame(scene, -250, top + 128, 132, rune.rarity, rune.part));
+    body.add(scene.add.text(-172, top + 78, rarity + "  ·  " + RUNE_PART_LABELS[rune.part], textStyle({ role: "emphasis", size: 24, color: hex(accent) })).setOrigin(0, 0));
     body.add(scene.add.text(-172, top + 114, rune.customName ?? `${rarity} 룬`, textStyle({ role: "display", size: 36 })).setOrigin(0, 0).setWordWrapWidth(420));
     body.add(scene.add.text(-172, top + 166, equippedLine(rune.instanceId), textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0, 0));
     body.add(drawHairline(scene, 0, top + 214, 640, { color: accent, alpha: 0.45 }));
@@ -182,8 +188,8 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
       const displayName = rune!.customName ?? `${rarity} 룬`;
       const top = -CRAFT.height / 2;
       const half = CRAFT.width / 2;
-      content.add(addRuneIcon(scene, -half + 86, top + 122, 92, rune!.rarity));
-      content.add(scene.add.text(-half + 148, top + 78, rarity, textStyle({ role: "emphasis", size: 22, color: hex(accent) })).setOrigin(0, 0));
+      content.add(addRuneFrame(scene, -half + 86, top + 122, 104, rune!.rarity, rune!.part));
+      content.add(scene.add.text(-half + 148, top + 78, rarity + "  ·  " + RUNE_PART_LABELS[rune!.part], textStyle({ role: "emphasis", size: 22, color: hex(accent) })).setOrigin(0, 0));
       const nameText = scene.add.text(-half + 148, top + 108, displayName, textStyle({ role: "display", size: 32 })).setOrigin(0, 0).setWordWrapWidth(300);
       content.add(nameText);
       content.add(scene.add.text(-half + 148, top + 154, equippedLine(rune!.instanceId), textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0, 0));

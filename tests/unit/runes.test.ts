@@ -15,6 +15,8 @@ import {
   RUNE_RARITY_LABELS,
   RUNE_SUB_STAT_COUNTS,
   runeCombatModifiers,
+  validateRuneInstance,
+  type RuneInstance,
   type RuneRarity,
   type RuneStatKey,
 } from "../../src/core/runes";
@@ -35,14 +37,14 @@ function sequenceRandom(): () => number {
 
 /** 희귀도만 바꾸고 나머지 생성 계약은 공유하는 테스트 픽스처다. */
 function makeRune(rarity: RuneRarity) {
-  return createRuneInstance({ instanceId: `rune-${rarity}`, baseName: "테스트 룬", rarity, statValues: STAT_VALUES, random: sequenceRandom() });
+  return createRuneInstance({ instanceId: `rune-${rarity}`, baseName: "테스트 룬", rarity, part: 0, statValues: STAT_VALUES, random: sequenceRandom() });
 }
 
 describe("룬 도메인", () => {
   it("같은 seed는 같은 옵션을 재현하고 수치는 등급 고정표만 따른다", () => {
     /** 간단한 선형 합동 생성기로 seed와 난수 열의 관계를 테스트 내에 고정한다. */
     const seeded = (seed: number) => () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 0x100000000);
-    const make = (random: () => number) => generateRune({ instanceId: "seeded", baseName: "재현 룬", rarity: "legendary", random });
+    const make = (random: () => number) => generateRune({ instanceId: "seeded", baseName: "재현 룬", rarity: "legendary", part: 1, random });
     const first = make(seeded(42)); const replay = make(seeded(42));
     expect(replay).toEqual(first);
     expect(first.mainStats).toHaveLength(2); expect(first.subStats).toHaveLength(3);
@@ -130,5 +132,14 @@ describe("룬 도메인", () => {
     const engraved = engraveRune(rune, result);
     expect(engraved.engravings).toEqual([result]);
     expect(() => engraveRune(engraved, result)).toThrow(/각인 전/);
+  });
+});
+
+describe("룬 파츠", () => {
+  it("는 0~2만 허용하고 그 밖의 값은 저장 불변식에서 거부한다", () => {
+    const rune = makeRune("uncommon");
+    expect(rune.part).toBe(0);
+    expect(validateRuneInstance({ ...rune, part: 2 })).toBe(true);
+    expect(validateRuneInstance({ ...rune, part: 3 as RuneInstance["part"] })).toBe(false);
   });
 });

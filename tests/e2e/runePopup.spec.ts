@@ -33,7 +33,7 @@ async function openFirstRune(page: Page): Promise<void> {
 test("세로 화면에서 전설 5행×3칸, 긴 옵션명, 키보드 이름 입력과 바깥 닫기가 함께 동작한다", async ({ page }) => {
   await startAfterOpening(page, (session) => {
     const values = Object.fromEntries(["hp", "atk", "ap", "def", "res", "moveSpeed", "attackSpeed", "lifeSteal", "critChance", "critDamage", "ferocityGain", "energyGain"].map((key) => [key, 1])) as Record<RuneStatKey, number>;
-    const rune = createRuneInstance({ instanceId: "e2e-legendary", baseName: "전설 테스트", rarity: "legendary", statValues: values, random: () => 0 });
+    const rune = createRuneInstance({ instanceId: "e2e-legendary", baseName: "전설 테스트", rarity: "legendary", part: 0, statValues: values, random: () => 0 });
     session.runeInventory = [rune];
     session.relicProgress[session.favorite].heartGemSlots[0] = rune.instanceId;
   });
@@ -52,7 +52,7 @@ test("세로 화면에서 전설 5행×3칸, 긴 옵션명, 키보드 이름 입
 test("골드 부족이면 능력치를 골라도 강화 요청을 잠근다", async ({ page }) => {
   await startAfterOpening(page, (session) => {
     const values = Object.fromEntries(["hp", "atk", "ap", "def", "res", "moveSpeed", "attackSpeed", "lifeSteal", "critChance", "critDamage", "ferocityGain", "energyGain"].map((key) => [key, 1])) as Record<RuneStatKey, number>;
-    const rune = createRuneInstance({ instanceId: "e2e-poor", baseName: "골드 부족", rarity: "uncommon", statValues: values, random: () => 0 });
+    const rune = createRuneInstance({ instanceId: "e2e-poor", baseName: "골드 부족", rarity: "uncommon", part: 0, statValues: values, random: () => 0 });
     session.wallet.gold = 0;
     session.runeInventory = [rune];
     session.relicProgress[session.favorite].heartGemSlots[0] = rune.instanceId;

@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import type { PuppetCreature } from "../puppets/assets";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import type { Combatant } from "../core/combatTypes";
-import { RUNE_RARITY_LABELS } from "../core/runes";
+import { RUNE_PART_LABELS, RUNE_RARITY_LABELS, type RunePart } from "../core/runes";
 import { previewSkillDamage } from "../core/damage";
 import type { Element, RelicDef, RelicProgress, RelicRarity, Role, Skill, SkillIconAssetId, Stats } from "../core/types";
 import { setDebugInfoOpen } from "../debug";
@@ -30,8 +30,8 @@ import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
 import { addStar } from "./stars";
 import { addStarMark } from "./rarityMark";
-import { addRuneIcon, RUNE_ACCENT, RUNE_CENTER_Y, runeTexture } from "./runeIcons";
-import { openRuneInfoPopup, RUNE_STAT_LABEL } from "./RunePopup";
+import { addRuneFrame, addRuneIcon, RUNE_ACCENT, RUNE_CENTER_Y, runeTexture } from "./runeIcons";
+import { equippedRelicName, openRuneInfoPopup, RUNE_STAT_LABEL } from "./RunePopup";
 import { StatRadar } from "./StatRadar";
 import { openSkillPopup, type SkillInfoViewModel } from "./SkillPopup";
 import { relicCollection } from "../managers/RelicCollectionManager";
@@ -935,14 +935,15 @@ export class InfoManager {
     if (!this.capabilities.mutateProgress) return;
     const def = this.currentDef;
     if (!def || !this.ownedNow) return;
-    const runes = session.runeInventory;
+    // 룬은 제 자리에만 들어간다. 다른 조각까지 늘어놓으면 고를 수 없는 것을 고르게 된다.
+    const runes = session.runeInventory.filter((rune) => rune.part === index);
     const columns = 2;
     const cell = { width: 372, height: 206, gapX: 24, gapY: 18 };
     const rows = Math.ceil(runes.length / columns);
     const pickerWidth = columns * cell.width + (columns - 1) * cell.gapX + 96;
     // 판 높이는 가진 룬 수를 따르되 화면을 넘지 않는다. 못으로 박아 두면 룬이 늘어난 만큼 잘린다.
     const pickerHeight = Math.min(BASE_HEIGHT - 120, 268 + rows * (cell.height + cell.gapY));
-    this.popups.open({ width: pickerWidth, height: pickerHeight, title: "룬 가방 · " + (index + 1) + "번 칸", dim: true }, (body, close) => {
+    this.popups.open({ width: pickerWidth, height: pickerHeight, title: "룬 가방 · " + RUNE_PART_LABELS[index as RunePart], dim: true }, (body, close) => {
       const top = -pickerHeight / 2;
       // 비우기는 격자 위 한 줄이다. 룬 카드와 섞이면 실수로 누르기 쉽다.
       body.add(drawLayer(this.scene, 0, top + 128, slantedRect(pickerWidth - 96, 66, 12), { fill: 0x141a22, alpha: 0.92, edge: COLOR.accent, edgeAlpha: 0.3 }));
@@ -961,11 +962,11 @@ export class InfoManager {
         card.add(drawLayer(this.scene, 0, 0, chipPoints(cell.width, cell.height, {
           bevel: { topLeft: cell.height * 0.24, topRight: 0, bottomRight: cell.height * 0.24, bottomLeft: 0 },
         }), { fill: 0x101720, alpha: 0.96, edge: accent, edgeAlpha: engraved ? 1 : 0.5, glow: engraved ? { color: accent, strength: 0.35 } : undefined }));
-        const icon = addRuneIcon(this.scene, -cell.width / 2 + 70, -14, 108, rune.rarity);
+        const icon = addRuneFrame(this.scene, -cell.width / 2 + 70, -14, 124, rune.rarity, rune.part);
         card.add(icon);
         // 각인까지 마친 룬은 다 자란 보석이다. 조각 뒤에서 숨 쉬듯 빛나 한눈에 골라진다.
         if (engraved) {
-          const halo = addRuneIcon(this.scene, -cell.width / 2 + 70, -14, 142, rune.rarity);
+          const halo = addRuneIcon(this.scene, -cell.width / 2 + 70, -14, 128, rune.rarity, rune.part);
           halo.setAlpha(0.35).setBlendMode(Phaser.BlendModes.ADD);
           card.addAt(halo, 1);
           this.scene.tweens.add({ targets: halo, alpha: { from: 0.16, to: 0.5 }, scale: { from: 0.94, to: 1.06 }, duration: 1100, yoyo: true, repeat: -1, ease: "Sine.InOut" });
@@ -980,6 +981,12 @@ export class InfoManager {
         const lines = [...rune.mainStats, ...rune.subStats].map(({ key, value }) => RUNE_STAT_LABEL[key] + " +" + value + "%");
         card.add(this.scene.add.text(-cell.width / 2 + 140, -10, lines.join("\n"), textStyle({ role: "body", size: 17, color: COLOR.accentText })).setOrigin(0, 0));
         if (engraved) card.add(this.scene.add.text(cell.width / 2 - 22, -cell.height / 2 + 22, "각인", textStyle({ role: "emphasis", size: 19, color: "#ffc233" })).setOrigin(1, 0));
+        // 누가 끼고 있는지 카드에서 바로 읽힌다. 끼운 룬을 다시 골라 헛걸음하지 않게 한다.
+        const holder = equippedRelicName(rune.instanceId);
+        if (holder) {
+          card.add(this.scene.add.text(cell.width / 2 - 22, cell.height / 2 - 20, "장착 중 · " + holder, textStyle({ role: "emphasis", size: 18, color: COLOR.accentText })).setOrigin(1, 1));
+          card.setAlpha(0.72);
+        }
         const hit = this.scene.add.rectangle(0, 0, cell.width, cell.height, 0xffffff, 0).setInteractive({ useHandCursor: true });
         hit.on("pointerdown", () => card.setScale(1.04));
         hit.on("pointerout", () => { if (!this.popups.isOpen) card.setScale(1); });
@@ -1263,10 +1270,12 @@ export class InfoManager {
           edge: gem ? RUNE_ACCENT[gem.rarity] : COLOR.accent,
           edgeAlpha: gem ? 0.7 : 0.16,
         }));
-        body.add(this.scene.add.text(-306, y - 26, index + 1 + "번 칸", textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0, 0));
+        // 자리마다 들어갈 조각이 정해져 있으므로 빈 칸도 제 조각을 옅게 세워 둔다.
+        body.add(addRuneFrame(this.scene, -272, y, 92, gem?.rarity, index as RunePart));
+        body.add(this.scene.add.text(-206, y - 26, RUNE_PART_LABELS[index as RunePart], textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0, 0));
         body.add(
           this.scene.add
-            .text(-306, y + 2, gem ? (gem.customName ?? `${RUNE_RARITY_LABELS[gem.rarity]} 룬`) : "빈 자리", textStyle({ role: "display", size: 28, color: gem ? COLOR.ink : COLOR.inkDim }))
+            .text(-206, y + 2, gem ? (gem.customName ?? `${RUNE_RARITY_LABELS[gem.rarity]} 룬`) : "빈 자리", textStyle({ role: "display", size: 28, color: gem ? COLOR.ink : COLOR.inkDim }))
             .setOrigin(0, 0),
         );
         if (gem) {

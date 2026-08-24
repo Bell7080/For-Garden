@@ -4,6 +4,22 @@
  * 난수는 호출자가 주입하며, 생성된 인스턴스는 JSON으로 그대로 직렬화할 수 있다.
  */
 
+/**
+ * 룬이 들어가는 자리(파츠).
+ *
+ * 하트 원화 한 장을 셋으로 가른 조각과 같은 번호다. 아무 룬이나 아무 칸에 끼울 수 있으면
+ * 세 칸이 사실상 한 칸이라, 룬은 처음부터 **자기 자리를 갖고** 나온다 — 1번 조각은 1번
+ * 칸에만 들어간다. 그래야 어떤 자리를 파밍할지가 목표가 된다.
+ */
+export type RunePart = 0 | 1 | 2;
+
+/** 파츠의 한국어 표시명. 자리 번호를 화면마다 다시 짓지 않는다. */
+export const RUNE_PART_LABELS: Readonly<Record<RunePart, string>> = {
+  0: "1번 조각",
+  1: "2번 조각",
+  2: "3번 조각",
+};
+
 /** 룬 희귀도다. 낮은 단계부터 고급·희귀·영웅·전설 순이며 한국어 표기는 `RUNE_RARITY_LABELS`만 소유한다. */
 export type RuneRarity = "uncommon" | "rare" | "epic" | "legendary";
 
@@ -71,6 +87,8 @@ export interface RuneInstance {
   customName: string | null;
   /** 보조 옵션 개수를 결정하는 희귀도다. */
   rarity: RuneRarity;
+  /** 이 룬이 들어갈 수 있는 유일한 칸. 다른 칸에는 장착되지 않는다. */
+  part: RunePart;
   /** 중복되지 않는 정확히 두 개의 주력 옵션이다. */
   mainStats: readonly [RuneStatOption<RuneMainStatKey>, RuneStatOption<RuneMainStatKey>];
   /** 희귀도에 맞는 개수의 중복되지 않는 보조 옵션이다. */
@@ -138,6 +156,8 @@ export interface CreateRuneInput {
   instanceId: string;
   baseName: string;
   rarity: RuneRarity;
+  /** 들어갈 칸. 획득처가 정한다 — 룬 스스로 자리를 고르지 않는다. */
+  part: RunePart;
   /** 각 키의 생성 수치(%). 생성 가능한 모든 키가 있어야 한다. */
   statValues: Readonly<Record<RuneStatKey, number>>;
   /** [0, 1) 값을 반환하는 난수 함수다. 테스트와 서버가 결과를 재현할 수 있도록 주입한다. */
@@ -171,6 +191,7 @@ export function createRuneInstance(input: CreateRuneInput): RuneInstance {
     baseName: input.baseName,
     customName: null,
     rarity: input.rarity,
+    part: input.part,
     mainStats,
     subStats,
     enhancementHistory: {},
@@ -215,6 +236,7 @@ export function validateRuneInstance(rune: RuneInstance): boolean {
 /** 인스턴스의 모든 불변 조건을 검사하고 위반 시 원인을 담은 오류를 던진다. */
 export function assertValidRuneInstance(rune: RuneInstance): void {
   if (!rune.instanceId.trim() || !rune.baseName.trim()) throw new Error("룬 ID와 기본 이름은 비어 있을 수 없습니다.");
+  if (![0, 1, 2].includes(rune.part)) throw new RangeError("룬 파츠는 0~2 중 하나여야 합니다.");
   if (rune.customName !== null && !rune.customName.trim()) throw new Error("룬 사용자 이름은 빈 문자열일 수 없습니다.");
   if (rune.mainStats.length !== 2) throw new RangeError("룬 메인 옵션은 정확히 2개여야 합니다.");
   if (rune.subStats.length !== RUNE_SUB_STAT_COUNTS[rune.rarity]) throw new RangeError("룬 보조 옵션 수가 희귀도 규칙과 다릅니다.");

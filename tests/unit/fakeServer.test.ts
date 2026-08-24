@@ -9,7 +9,7 @@ import { createDefaultSettings } from "../../src/core/settings";
 /** API 테스트에서 같은 옵션 구성을 재현하는 보유 룬을 만든다. */
 function makeRune(instanceId = "rune-1"): RuneInstance {
   const values = Object.fromEntries(["hp", "atk", "ap", "def", "res", "moveSpeed", "attackSpeed", "lifeSteal", "critChance", "critDamage", "ferocityGain", "energyGain"].map((key) => [key, 1])) as Record<RuneStatKey, number>;
-  return createRuneInstance({ instanceId, baseName: "서버 테스트 룬", rarity: "uncommon", statValues: values, random: () => 0 });
+  return createRuneInstance({ instanceId, baseName: "서버 테스트 룬", rarity: "uncommon", part: 0, statValues: values, random: () => 0 });
 }
 
 /** 각 테스트가 독립적으로 쓸 서버 저장소 역할의 세션을 만든다. */
@@ -63,7 +63,9 @@ describe("FakeServer", () => {
     const renamed = await server.renameRune({ runeInstanceId: "rune-1", name: "  새 이름  " });
     expect(renamed.rune.customName).toBe("새 이름");
     await server.equipRune({ runeInstanceId: "rune-1", relicId: "anky", slotIndex: 0 });
-    await expect(server.equipRune({ runeInstanceId: "rune-1", relicId: "rex", slotIndex: 2 })).rejects.toMatchObject({ code: "RUNE_ALREADY_EQUIPPED" });
+    // 자리가 맞아도 이미 다른 렐릭이 끼고 있으면 거부한다. 자리 불일치와는 다른 이유다.
+    await expect(server.equipRune({ runeInstanceId: "rune-1", relicId: "rex", slotIndex: 0 })).rejects.toMatchObject({ code: "RUNE_ALREADY_EQUIPPED" });
+    await expect(server.equipRune({ runeInstanceId: "rune-1", relicId: "rex", slotIndex: 2 })).rejects.toMatchObject({ code: "RUNE_SLOT_MISMATCH" });
     expect(state.relicProgress.anky.heartGemSlots).toEqual(["rune-1", null, null]);
   });
 

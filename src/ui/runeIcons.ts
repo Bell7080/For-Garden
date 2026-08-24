@@ -1,5 +1,7 @@
 import type { HeartGemRarity } from "../data/heartGems";
 import Phaser from "phaser";
+import type { RunePart } from "../core/runes";
+import { chipPoints, drawInnerVignette, drawShapeOutline } from "./holo";
 import { addGlowStar, type StarTones } from "./stars";
 
 /**
@@ -31,17 +33,60 @@ export function runeTexture(rarity: HeartGemRarity | undefined, index: number): 
 }
 
 /**
- * 목록에서 쓰는 완성 룬 아이콘이다.
+ * 목록에서 쓰는 룬 아이콘이다.
  *
- * 세 자산은 굽기 단계에서 같은 중심을 공유하므로 여기서도 정확히 같은 좌표에 포갠다. 가방과
- * 정보창이 별도 합성 이미지를 만들지 않고 이 컨테이너 하나를 공유하도록 공개 함수로 둔다.
+ * 룬 하나는 하트 한 장이 아니라 **자기 조각 하나**다. 어느 칸에 들어가는 룬인지가 생김새로
+ * 먼저 읽혀야 하기 때문이다. 세 칸을 다 채우면 세 조각이 같은 중심에서 만나 하트 한 장이
+ * 된다 — 조각들은 굽기 단계에서 같은 중심을 공유한다.
  */
-export function addRuneIcon(scene: Phaser.Scene, x: number, y: number, size: number, rarity: HeartGemRarity): Phaser.GameObjects.Container {
+export function addRuneIcon(scene: Phaser.Scene, x: number, y: number, size: number, rarity: HeartGemRarity, part: RunePart): Phaser.GameObjects.Container {
   const icon = scene.add.container(x, y);
-  for (let index = 0; index < 3; index += 1) {
-    icon.add(scene.add.image(0, 0, runeTexture(rarity, index)).setOrigin(0.5, RUNE_CENTER_Y).setDisplaySize(size, size));
-  }
+  // 조각 하나만 그리므로 그림자를 함께 깔아야 액자 위에 떠 있는 것처럼 보인다.
+  icon.add(scene.add.image(size * 0.04, size * 0.05, runeTexture(rarity, part)).setOrigin(0.5, RUNE_CENTER_Y).setDisplaySize(size, size).setTint(0x05070a).setAlpha(0.5));
+  icon.add(scene.add.image(0, 0, runeTexture(rarity, part)).setOrigin(0.5, RUNE_CENTER_Y).setDisplaySize(size, size));
   return icon;
+}
+
+/**
+ * 액자에 담긴 룬 한 칸.
+ *
+ * 조각 하나만 덩그러니 놓으면 어디까지가 그림인지 알 수 없어 바탕 원화 위에서 떠 보였다.
+ * 그림 한 장을 담는 칸이라 화면의 **액자 예외**를 그대로 쓴다 — 불투명하게 채우고 사방을
+ * 두른 뒤 테두리 안쪽만 눌러, 조각이 그 안에서 한 뼘 떠 있게 한다. 판때기가 아니라 액자다.
+ */
+export function addRuneFrame(
+  scene: Phaser.Scene,
+  x: number,
+  y: number,
+  size: number,
+  rarity: HeartGemRarity | undefined,
+  part: RunePart,
+): Phaser.GameObjects.Container {
+  const accent = rarity ? RUNE_ACCENT[rarity] : 0x5a636e;
+  const frame = scene.add.container(x, y);
+  const shape = chipPoints(size, size, { bevel: { topLeft: size * 0.2, topRight: 0, bottomRight: size * 0.2, bottomLeft: 0 } });
+  const plate = scene.add.graphics();
+  plate.fillStyle(0x000000, 0.5);
+  plate.translateCanvas(4, 6);
+  plate.fillPoints(toGeomPoints(shape), true);
+  plate.translateCanvas(-4, -6);
+  plate.fillStyle(rarity ? 0x0d131b : 0x0a0d12, 1);
+  plate.fillPoints(toGeomPoints(shape), true);
+  frame.add(plate);
+  frame.add(drawInnerVignette(scene, 0, 0, shape, { strength: 0.55 }));
+  frame.add(drawShapeOutline(scene, 0, 0, shape, { color: accent, alpha: rarity ? 0.9 : 0.35, width: 3 }));
+  // 조각은 액자보다 조금 작게 담긴다. 꽉 채우면 테두리와 붙어 액자가 사라져 보인다.
+  frame.add(rarity
+    ? addRuneIcon(scene, 0, 0, size * 0.72, rarity, part)
+    : scene.add.image(0, 0, runeTexture(undefined, part)).setOrigin(0.5, RUNE_CENTER_Y).setDisplaySize(size * 0.72, size * 0.72).setAlpha(0.5));
+  return frame;
+}
+
+/** 평평한 좌표 배열을 Phaser가 받는 점 목록으로 바꾼다. */
+function toGeomPoints(flat: number[]): Phaser.Geom.Point[] {
+  const points: Phaser.Geom.Point[] = [];
+  for (let i = 0; i < flat.length; i += 2) points.push(new Phaser.Geom.Point(flat[i], flat[i + 1]));
+  return points;
 }
 
 export const RUNE_ICON_ASSETS: ReadonlyArray<readonly [string, string]> = [

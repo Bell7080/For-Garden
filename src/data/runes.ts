@@ -1,4 +1,4 @@
-import { generateRune, type RuneInstance, type RuneRarity, type RuneStatKey } from "../core/runes";
+import { generateRune, RUNE_PART_LABELS, type RuneInstance, type RunePart, type RuneRarity, type RuneStatKey } from "../core/runes";
 
 /** 옵션 수치 단위. percent는 기존 수치에 곱하고 percentagePoint는 게이지/확률에 그대로 더한다. */
 export type RuneStatUnit = "percent" | "percentagePoint";
@@ -52,12 +52,21 @@ export const STARTER_RUNE_RARITIES: readonly RuneRarity[] = [
   "legendary", "legendary",
 ];
 
+/**
+ * 시작 룬의 자리 구성(임시).
+ *
+ * 세 칸을 모두 채워 볼 수 있도록 자리를 고루 섞는다. 한 자리에 몰리면 나머지 두 칸이
+ * 비어 있는 채로 장착 규칙을 시험할 수 없다.
+ */
+export const STARTER_RUNE_PARTS: readonly RunePart[] = [0, 1, 2, 0, 1, 2, 0, 1, 2, 0];
+
 /** 등급표와 주입된 난수만으로 시작 룬을 만든다. 상태를 읽지도 바꾸지도 않는다. */
 export function createStarterRunes(random: () => number): RuneInstance[] {
   return STARTER_RUNE_RARITIES.map((rarity, index) => generateRune({
     instanceId: `starter-rune-${index + 1}`,
-    baseName: "발굴 룬",
+    baseName: `${RUNE_PART_LABELS[STARTER_RUNE_PARTS[index]]} 룬`,
     rarity,
+    part: STARTER_RUNE_PARTS[index],
     random,
   }));
 }

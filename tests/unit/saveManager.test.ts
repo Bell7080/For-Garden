@@ -6,7 +6,7 @@ import { createRuneInstance, type RuneStatKey } from "../../src/core/runes";
 /** 저장 왕복과 손상 검증에 쓰는 결정적 신규 룬이다. */
 function testRune(instanceId = "rune-save-1") {
   const values = Object.fromEntries(["hp", "atk", "ap", "def", "res", "moveSpeed", "attackSpeed", "lifeSteal", "critChance", "critDamage", "ferocityGain", "energyGain"].map((key) => [key, 1])) as Record<RuneStatKey, number>;
-  return createRuneInstance({ instanceId, baseName: "저장 테스트 룬", rarity: "uncommon", statValues: values, random: () => 0 });
+  return createRuneInstance({ instanceId, baseName: "저장 테스트 룬", rarity: "uncommon", part: 0, statValues: values, random: () => 0 });
 }
 
 /** 브라우저 전역을 건드리지 않고 직렬화 경계를 검증하는 최소 Storage 대역이다. */

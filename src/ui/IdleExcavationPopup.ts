@@ -12,9 +12,14 @@ import { drawHairline, drawLayer, slantedRect } from "./holo";
 import { PortraitCard } from "./PortraitCard";
 import type { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
+import { EXCAVATION_TRAIT_ICON } from "./excavationIcons";
 
 /** 한 팝업 안에서 현황과 편집 그리드가 교대하므로 모바일 안전 영역을 넘지 않는 고정 크기를 쓴다. */
 const PANEL = { width: 900, height: 1320 } as const;
+/** 보유 렐릭은 이 창 안에서만 세로로 흐르며 상단 슬롯과 하단 완료 버튼을 침범하지 않는다. */
+const GRID_VIEW = { left: -370, right: 370, top: -145, bottom: 425, columnGap: 250, rowGap: 280, cardWidth: 215, cardHeight: 235 } as const;
+/** 손가락이 이 거리 이상 움직여야 카드 선택이 아니라 스크롤로 판정한다. */
+const GRID_DRAG_SLOP = 12;
 type Formation = IdleExcavationState["assignedRelicIds"];
 
 /** 서버 요청을 재시도해도 같은 입력만 한 번 처리하도록 브라우저 난수와 시각을 함께 쓴다. */
@@ -32,6 +37,15 @@ export class IdleExcavationPopup {
   private confirmed?: IdleExcavationResponse;
   private draft?: Formation;
   private selectedSlot = 0;
+  private gridScrollY = 0;
+  private gridDragging = false;
+  private gridDragOrigin = 0;
+  private gridDragMoved = 0;
+  private gridMask?: Phaser.GameObjects.Graphics;
+  private gridWheelHandler?: (_pointer: Phaser.Input.Pointer, objects: Phaser.GameObjects.GameObject[], deltaX: number, deltaY: number) => void;
+  private gridPointerDownHandler?: (pointer: Phaser.Input.Pointer) => void;
+  private gridPointerMoveHandler?: (pointer: Phaser.Input.Pointer) => void;
+  private gridPointerUpHandler?: () => void;
   private saving = false;
   private ticker?: Phaser.Time.TimerEvent;
   private requestGeneration = 0;
@@ -64,6 +78,15 @@ export class IdleExcavationPopup {
 
   /** 다시 그릴 때 PortraitCard의 외부 마스크까지 Container destroy 경로로 함께 정리한다. */
   private resetContent(): Phaser.GameObjects.Container | undefined {
+    // 편집 그리드의 GeometryMask와 씬 입력 리스너는 content 자식이 아니므로 화면 교체 전에 직접 뗀다.
+    this.gridMask?.destroy(); this.gridMask = undefined;
+    if (this.gridWheelHandler) this.scene.input.off("wheel", this.gridWheelHandler);
+    if (this.gridPointerDownHandler) this.scene.input.off("pointerdown", this.gridPointerDownHandler);
+    if (this.gridPointerMoveHandler) this.scene.input.off("pointermove", this.gridPointerMoveHandler);
+    if (this.gridPointerUpHandler) this.scene.input.off("pointerup", this.gridPointerUpHandler);
+    this.gridWheelHandler = undefined;
+    this.gridPointerDownHandler = undefined; this.gridPointerMoveHandler = undefined; this.gridPointerUpHandler = undefined;
+    this.ticker?.remove(false); this.ticker = undefined;
     this.content?.destroy(true);
     if (!this.body) return undefined;
     this.content = this.scene.add.container(0, 0);
@@ -116,6 +139,7 @@ export class IdleExcavationPopup {
     if (!this.confirmed || this.saving) return;
     this.draft = copyFormation(this.confirmed.excavation.assignedRelicIds);
     this.selectedSlot = 0;
+    this.gridScrollY = 0;
     this.renderEditor();
   }
 
@@ -128,23 +152,85 @@ export class IdleExcavationPopup {
     content.add(this.scene.add.text(-360, -185, "보유 렐릭 · 선택한 슬롯에 배치", textStyle({ role: "emphasis", size: 23, color: COLOR.accentText })).setOrigin(0, 0.5));
     content.add(this.scene.add.text(360, -185, "빈 칸 이동 · 찬 칸 자리 교체 · 같은 카드 재선택 해제", textStyle({ role: "body", size: 17, color: COLOR.inkDim })).setOrigin(1, 0.5));
     const owned = RELICS.filter((relic) => session.owned.has(relic.id));
+    const grid = this.scene.add.container(0, GRID_VIEW.top + this.gridScrollY);
     owned.forEach((relic, index) => {
-      const x = -250 + (index % 3) * 250;
-      const y = -15 + Math.floor(index / 3) * 280;
+      const x = -250 + (index % 3) * GRID_VIEW.columnGap;
+      const y = GRID_VIEW.cardHeight / 2 + Math.floor(index / 3) * GRID_VIEW.rowGap;
       const detail = excavationProductionDisplayModel([relic.id, null, null], RELICS, session.relicProgress).relics[0];
       const progress = session.relicProgress[relic.id];
-      const icon = relic.excavationTrait.primaryCurrency === "gold" ? "◈" : "◇";
-      const card = new PortraitCard(this.scene, x, y, { width: 215, height: 235, portraitAssetId: relic.portraitAssetId, tint: portraitUsesRelicTint(relic.portraitAssetId) ? tintFor(relic.id) : undefined, label: relic.name, level: progress?.level ?? 1, rarity: relic.rarity, stars: (progress?.breakthrough ?? 0) + 1, sub: `${icon} ${Math.floor(detail?.totalPerHour ?? 0)}/시간` });
+      const card = new PortraitCard(this.scene, x, y, { width: GRID_VIEW.cardWidth, height: GRID_VIEW.cardHeight, portraitAssetId: relic.portraitAssetId, tint: portraitUsesRelicTint(relic.portraitAssetId) ? tintFor(relic.id) : undefined, label: relic.name, level: progress?.level ?? 1, rarity: relic.rarity, stars: (progress?.breakthrough ?? 0) + 1, subIcon: EXCAVATION_TRAIT_ICON[relic.excavationTrait.primaryCurrency], sub: `${Math.floor(detail?.totalPerHour ?? 0)}/시간` });
       card.setSelected(this.draft!.includes(relic.id));
-      card.hit.on("pointerup", () => { if (this.saving || !this.draft) return; this.draft = placeExcavationRelic(this.draft, this.selectedSlot, relic.id); this.renderEditor(); });
-      content.add(card);
+      card.hit.on("pointerup", () => { if (this.saving || !this.draft || this.gridDragMoved > GRID_DRAG_SLOP) return; this.draft = placeExcavationRelic(this.draft, this.selectedSlot, relic.id); this.renderEditor(); });
+      grid.add(card);
     });
-    if (error) content.add(this.scene.add.text(0, 430, error, textStyle({ role: "body", size: 22, color: COLOR.dangerText })).setOrigin(0.5));
+    content.add(grid);
+    this.addGridScroll(content, grid, owned.length);
+    if (error) content.add(this.scene.add.text(0, 455, error, textStyle({ role: "body", size: 22, color: COLOR.dangerText })).setOrigin(0.5));
     const cancel = new Button(this.scene, -205, 540, { width: 350, height: 88, label: "취소", onClick: () => { if (!this.saving) { this.draft = undefined; this.renderStatus(); } } });
     const done = new Button(this.scene, 205, 540, { width: 350, height: 88, label: this.saving ? "저장 중…" : "완료", variant: "primary", onClick: () => void this.saveDraft() });
     cancel.setEnabled(!this.saving); done.setEnabled(!this.saving);
     content.add([cancel, done]);
     this.setState(this.saving ? "saving" : error ? "save-error" : "editing");
+  }
+
+  /** 보유 카드가 두 줄을 넘으면 드래그와 휠이 같은 연속 스크롤 값을 갱신한다. */
+  private addGridScroll(parent: Phaser.GameObjects.Container, grid: Phaser.GameObjects.Container, relicCount: number): void {
+    const viewportHeight = GRID_VIEW.bottom - GRID_VIEW.top;
+    const rows = Math.ceil(relicCount / 3);
+    const contentHeight = rows > 0 ? (rows - 1) * GRID_VIEW.rowGap + GRID_VIEW.cardHeight : 0;
+    const minScroll = Math.min(0, viewportHeight - contentHeight);
+    this.gridScrollY = Phaser.Math.Clamp(this.gridScrollY, minScroll, 0);
+    grid.setY(GRID_VIEW.top + this.gridScrollY);
+
+    // 마스크는 부모 Container의 등장 배율을 물려받지 않으므로 매 프레임 월드 좌표에 동기화한다.
+    this.gridMask = this.scene.make.graphics({});
+    grid.setMask(this.gridMask.createGeometryMask());
+    const syncMask = (): void => {
+      if (!this.content || !this.gridMask) return;
+      const matrix = parent.getWorldTransformMatrix();
+      const topLeft = matrix.transformPoint(GRID_VIEW.left, GRID_VIEW.top);
+      this.gridMask.clear().fillStyle(0xffffff, 1).fillRect(topLeft.x, topLeft.y, (GRID_VIEW.right - GRID_VIEW.left) * matrix.scaleX, viewportHeight * matrix.scaleY);
+    };
+    this.ticker?.remove(false);
+    this.ticker = this.scene.time.addEvent({ delay: 16, loop: true, callback: syncMask });
+    syncMask();
+
+    // 얇은 홈과 짧은 채움만 써 기존 HoloBar 계열처럼 외곽 판 없이 현재 위치를 보여 준다.
+    const railX = GRID_VIEW.right + 8;
+    // Phaser 도형은 CSS 문자열이 아니라 숫자 색을 받으므로 흐린 잉크와 같은 중성 회색을 사용한다.
+    const rail = this.scene.add.rectangle(railX, (GRID_VIEW.top + GRID_VIEW.bottom) / 2, 3, viewportHeight, 0x8d939d, 0.22);
+    const thumbHeight = contentHeight > viewportHeight ? Math.max(54, viewportHeight * viewportHeight / contentHeight) : viewportHeight;
+    const thumb = this.scene.add.rectangle(railX, GRID_VIEW.top + thumbHeight / 2, 7, thumbHeight, COLOR.accent, contentHeight > viewportHeight ? 0.7 : 0.18);
+    parent.add([rail, thumb]);
+    const scrollTo = (value: number): void => {
+      this.gridScrollY = Phaser.Math.Clamp(value, minScroll, 0);
+      grid.setY(GRID_VIEW.top + this.gridScrollY);
+      const progress = minScroll < 0 ? this.gridScrollY / minScroll : 0;
+      thumb.setY(GRID_VIEW.top + thumbHeight / 2 + progress * (viewportHeight - thumbHeight));
+    };
+    scrollTo(this.gridScrollY);
+
+    const inViewport = (pointer: Phaser.Input.Pointer): boolean => {
+      const matrix = parent.getWorldTransformMatrix();
+      const topLeft = matrix.transformPoint(GRID_VIEW.left, GRID_VIEW.top);
+      const bottomRight = matrix.transformPoint(GRID_VIEW.right, GRID_VIEW.bottom);
+      return pointer.x >= topLeft.x && pointer.x <= bottomRight.x && pointer.y >= topLeft.y && pointer.y <= bottomRight.y;
+    };
+    // 전역 포인터를 쓰면 카드 위에서 시작한 손짓도 자연스럽게 스크롤로 승격할 수 있다.
+    this.gridPointerDownHandler = (pointer: Phaser.Input.Pointer) => {
+      if (!inViewport(pointer) || minScroll === 0) return;
+      this.gridDragging = true; this.gridDragMoved = 0; this.gridDragOrigin = this.gridScrollY - pointer.y;
+    };
+    this.gridPointerMoveHandler = (pointer: Phaser.Input.Pointer) => {
+      if (!this.gridDragging || !pointer.isDown) return;
+      this.gridDragMoved += Math.abs(pointer.velocity.y); scrollTo(this.gridDragOrigin + pointer.y);
+    };
+    this.gridPointerUpHandler = () => { this.gridDragging = false; this.scene.time.delayedCall(0, () => { this.gridDragMoved = 0; }); };
+    this.scene.input.on("pointerdown", this.gridPointerDownHandler);
+    this.scene.input.on("pointermove", this.gridPointerMoveHandler);
+    this.scene.input.on("pointerup", this.gridPointerUpHandler);
+    this.gridWheelHandler = (pointer, _objects, _deltaX, deltaY) => { if (inViewport(pointer)) scrollTo(this.gridScrollY - deltaY); };
+    this.scene.input.on("wheel", this.gridWheelHandler);
   }
 
   /** 슬롯은 빈 면과 PortraitCard를 구분하고 어느 칸이 편집 대상인지 확대/발광으로 알린다. */
@@ -212,6 +298,13 @@ export class IdleExcavationPopup {
   /** 타이머와 임시 편성을 버리며 서버에서 받은 confirmed 객체는 외부 상태에 역으로 쓰지 않는다. */
   private dispose(): void {
     this.requestGeneration++; this.ticker?.remove(false); this.ticker = undefined;
+    // PopupLayer가 본체를 먼저 파괴하므로 씬에 직접 등록한 스크롤 자원은 종료 콜백에서 별도로 치운다.
+    this.gridMask?.destroy(); this.gridMask = undefined;
+    if (this.gridWheelHandler) this.scene.input.off("wheel", this.gridWheelHandler);
+    if (this.gridPointerDownHandler) this.scene.input.off("pointerdown", this.gridPointerDownHandler);
+    if (this.gridPointerMoveHandler) this.scene.input.off("pointermove", this.gridPointerMoveHandler);
+    if (this.gridPointerUpHandler) this.scene.input.off("pointerup", this.gridPointerUpHandler);
+    this.gridWheelHandler = undefined; this.gridPointerDownHandler = undefined; this.gridPointerMoveHandler = undefined; this.gridPointerUpHandler = undefined;
     this.draft = undefined; this.body = undefined; this.content = undefined;
     setDebugIdleExcavationPopup(undefined); this.onClosed?.();
   }

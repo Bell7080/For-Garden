@@ -7,6 +7,7 @@ import type { StageDef } from "../core/types";
 import type { EventDefinition } from "../data/events/types";
 import type { RuneInstance, RuneStatKey } from "../core/runes";
 import type { ExcavationCurrency, IdleExcavationState } from "../core/idleExcavation";
+import type { AdReward } from "../data/adRewards";
 
 /** 조회는 서버가 정산한 상태와 동일 기준 시각을 함께 돌려준다. */
 export interface IdleExcavationResponse { excavation: IdleExcavationState; serverTime: string; }
@@ -94,7 +95,7 @@ export interface PlayerStateDto {
 /** 광고 SDK 완료 증명과 요청 재시도 멱등 키를 서버로 전달하는 요청이다. */
 export interface ClaimAdRewardRequest { slotId: string; verificationToken: string; requestId: string; }
 /** 검증·중복·일일 제한 확인 후 지급과 저장까지 확정된 광고 보상 결과다. */
-export interface ClaimAdRewardResponse extends PlayerStateDto { slotId: string; reward: { currency: "stamina" | "cheesecake"; amount: number }; dailyClaims: number; dailyRemaining: number; }
+export interface ClaimAdRewardResponse extends PlayerStateDto { slotId: string; reward: AdReward; dailyClaims: number; dailyRemaining: number; excavation?: IdleExcavationState; serverTime: string; }
 
 /** 인증된 서버 응답에서만 내려오는 슬롯별 운영 정책이며 앱 번들의 정적 표를 운영 기준으로 쓰지 않는다. */
 export interface AdSlotOperationsDto {
@@ -105,7 +106,10 @@ export interface AdSlotOperationsDto {
   /** 서버 UTC 날짜 하나에 검증·지급할 수 있는 최대 완료 횟수다. */
   dailyLimitUtc: number;
   /** 표시와 실제 지급이 같은 서버 값을 사용하도록 화폐와 수량을 함께 전달한다. */
-  reward: { currency: "stamina" | "cheesecake"; amount: number };
+  /** 허용된 판별 합집합 그대로 내려 UI가 임의 효과를 만들 수 없게 한다. */
+  reward: AdReward;
+  /** 운영 문구는 번들 기본값이 아니라 서버가 확정해 전달한다. */
+  displayText: string;
 }
 
 /** 로그인된 API 채널이 전달하는 광고 운영 설정의 버전·유효 기간 포함 계약이다. */
@@ -248,6 +252,8 @@ export interface GameApi {
   saveExcavationFormation(request: SaveExcavationFormationRequest): Promise<IdleExcavationResponse>;
   harvestExcavation(request: HarvestExcavationRequest): Promise<HarvestExcavationResponse>;
   getPlayerState(): Promise<PlayerStateDto>;
+  /** 광고 제안은 조회 성공한 서버 운영 설정만 표시 기준으로 사용한다. */
+  getAdOperationsConfig(): Promise<AdOperationsConfigResponse>;
   /** 광고 완료 증명을 검증하고 멱등성·UTC 제한·지급·저장을 한 처리로 확정한다. */
   claimAdReward(request: ClaimAdRewardRequest): Promise<ClaimAdRewardResponse>;
   /** 실제 결제 서버가 플랫폼 원본 영수증을 검증하며 요청 ID 재시도에는 같은 결과를 반환한다. */

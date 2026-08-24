@@ -1,7 +1,7 @@
 import { canPull, pull, resolveAcquisitions, spend } from "../core/gacha";
 import { BANNERS } from "../data/banners";
 import { RELICS } from "../data/relics";
-import { findAdRewardSlot } from "../data/adRewards";
+import { AD_REWARD_SLOTS, findAdRewardSlot, type AdReward } from "../data/adRewards";
 import { consumeRestorationEntry, normalizeDailyContent } from "../core/dailyContent";
 import { BREAKTHROUGH_CAP, canBreakThrough, canFeedRelic, feedRelic as calculateFeed, FEED_UNIT, nextBreakthrough, relicLevelCap, RELIC_STAR_CAP, relicStars } from "../core/relicProgression";
 import { BOND_XP_REWARD, grantBondXp, grantDailyLobbyBondXp } from "../core/bond";
@@ -9,7 +9,7 @@ import { MISSIONS, applyMissionEvent, claimableMissionIds, normalizeMissions } f
 import { DAILY_RESTORATION, getStage } from "../data/stages";
 import { createInitialRelicProgress, session, type Session } from "../state/session";
 import { saveManager } from "../state/SaveManager";
-import { GameApiError, type BreakThroughResponse, type ClaimMissionRewardsResponse, type CompleteStageResponse, type EnterDailyRestorationResponse, type FeedRelicResponse, type GameApi, type LobbyInteractionResponse, type MissionListResponse, type PlayerStateDto, type ClaimAdRewardRequest, type ClaimAdRewardResponse, type PullRequest, type PullResponse } from "./contracts";
+import { GameApiError, type AdOperationsConfigResponse, type BreakThroughResponse, type ClaimMissionRewardsResponse, type CompleteStageResponse, type EnterDailyRestorationResponse, type FeedRelicResponse, type GameApi, type LobbyInteractionResponse, type MissionListResponse, type PlayerStateDto, type ClaimAdRewardRequest, type ClaimAdRewardResponse, type PullRequest, type PullResponse } from "./contracts";
 import type { ProductDefinition } from "../data/products";
 import { PRODUCTS } from "../data/products";
 import type { ProductListResponse, PurchaseProductResponse } from "./contracts";
@@ -78,6 +78,12 @@ export class FakeServer implements GameApi {
     return this.snapshot();
   }
 
+  /** Fake 운영 서버도 번들의 표시 fallback 없이 인증된 설정 DTO를 명시적으로 제공한다. */
+  async getAdOperationsConfig(): Promise<AdOperationsConfigResponse> {
+    await this.delay(); const now = this.now();
+    return { configVersion: "fake-2026-08-24", serverTime: now.toISOString(), expiresAt: new Date(now.getTime() + 300_000).toISOString(), slots: AD_REWARD_SLOTS.map((slot) => ({ slotId: slot.id, enabled: true, dailyLimitUtc: slot.dailyLimitUtc, displayText: slot.displayText, reward: slot.reward })) };
+  }
+
   /** 서버의 단일 now 값을 캡처해 조회 정산과 응답 시각이 어긋나지 않게 한다. */
   async getIdleExcavation(): Promise<IdleExcavationResponse> {
     await this.delay(); const now = this.now();
@@ -122,20 +128,19 @@ export class FakeServer implements GameApi {
     if (!request.verificationToken || !(await this.verifyAdToken(request.verificationToken, slot.id))) throw new GameApiError("AD_TOKEN_INVALID", "광고 완료를 확인할 수 없습니다.");
 
     // 앱 재실행이 아니라 서버 UTC 키 변경에만 카운터와 멱등 목록을 초기화한다.
-    const date = this.now().toISOString().slice(0, 10);
+    const now = this.now(); const date = now.toISOString().slice(0, 10);
     const current = this.state.dailyAdRewards.date === date ? this.state.dailyAdRewards : { date, claimsBySlot: {}, requestIds: [] };
     const dailyClaims = current.claimsBySlot[slot.id] ?? 0;
     if (dailyClaims >= slot.dailyLimitUtc) throw new GameApiError("AD_DAILY_LIMIT", "오늘 받을 수 있는 광고 보상을 모두 받았습니다.");
 
     const nextClaims = dailyClaims + 1;
     const nextAds = { date, claimsBySlot: { ...current.claimsBySlot, [slot.id]: nextClaims }, requestIds: [...current.requestIds, request.requestId] };
-    const nextWallet = { ...this.state.wallet, [slot.reward.currency]: this.state.wallet[slot.reward.currency] + slot.reward.amount };
-    const nextState = { ...this.state, wallet: nextWallet, dailyAdRewards: nextAds };
+    const applied = this.applyAdReward(slot.reward, now);
+    const nextState = { ...this.state, wallet: applied.wallet, idleExcavation: applied.excavation, dailyAdRewards: nextAds };
     // 상한 검증과 영속화가 성공하기 전에는 메모리 세션을 변경하지 않는다.
     this.persist(nextState);
-    this.state.wallet = nextWallet;
-    this.state.dailyAdRewards = nextAds;
-    return { ...this.snapshot(), slotId: slot.id, reward: { ...slot.reward }, dailyClaims: nextClaims, dailyRemaining: slot.dailyLimitUtc - nextClaims };
+    this.state.wallet = applied.wallet; this.state.idleExcavation = applied.excavation; this.state.dailyAdRewards = nextAds;
+    return { ...this.snapshot(), slotId: slot.id, reward: slot.reward, dailyClaims: nextClaims, dailyRemaining: slot.dailyLimitUtc - nextClaims, excavation: this.cloneExcavation(applied.excavation), serverTime: now.toISOString() };
   }
 
   /** 요청 ID와 플랫폼 거래 ID를 모두 고유 키로 취급해 같은 영수증 검증을 반복 실행하지 않는다. */
@@ -197,15 +202,15 @@ export class FakeServer implements GameApi {
     const dailyClaims = current.claimsBySlot[slot.id] ?? 0;
     if (dailyClaims >= slot.dailyLimitUtc) throw new GameApiError("AD_DAILY_LIMIT", "오늘 받을 수 있는 광고 보상을 모두 받았습니다.");
     const bonus = this.bonusClaimDates.get(stored.entitlementId) === date ? undefined : product.passBenefit.dailyBonus;
-    const nextWallet = { ...this.state.wallet, [slot.reward.currency]: this.state.wallet[slot.reward.currency] + slot.reward.amount };
+    const applied = this.applyAdReward(slot.reward, now); const nextWallet = applied.wallet;
     if (bonus) nextWallet.gems += bonus.amount;
     const nextClaims = dailyClaims + 1;
     const nextAds = { date, claimsBySlot: { ...current.claimsBySlot, [slot.id]: nextClaims }, requestIds: [...current.requestIds, request.requestId] };
-    this.persist({ ...this.state, wallet: nextWallet, dailyAdRewards: nextAds });
-    this.state.wallet = nextWallet; this.state.dailyAdRewards = nextAds;
+    this.persist({ ...this.state, wallet: nextWallet, idleExcavation: applied.excavation, dailyAdRewards: nextAds });
+    this.state.wallet = nextWallet; this.state.idleExcavation = applied.excavation; this.state.dailyAdRewards = nextAds;
     if (bonus) this.bonusClaimDates.set(stored.entitlementId, date);
     const entitlement = { ...stored, active: true, serverTime: now.toISOString() };
-    const result: ClaimInstantAdRewardResponse = { ...this.snapshot(), slotId: slot.id, reward: { ...slot.reward }, dailyClaims: nextClaims, dailyRemaining: slot.dailyLimitUtc - nextClaims, entitlement, dailyBonus: bonus ? { ...bonus } : undefined };
+    const result: ClaimInstantAdRewardResponse = { ...this.snapshot(), slotId: slot.id, reward: slot.reward, dailyClaims: nextClaims, dailyRemaining: slot.dailyLimitUtc - nextClaims, entitlement, dailyBonus: bonus ? { ...bonus } : undefined, excavation: this.cloneExcavation(applied.excavation), serverTime: now.toISOString() };
     this.instantClaimResults.set(request.requestId, result);
     return result;
   }
@@ -631,6 +636,27 @@ export class FakeServer implements GameApi {
     const rune = this.state.runeInventory.find((candidate) => candidate.instanceId === instanceId);
     if (!rune) throw new GameApiError("RUNE_NOT_FOUND", "보유하지 않거나 존재하지 않는 룬입니다.");
     return rune;
+  }
+
+  /** 광고 효과를 복제 상태에 계산해 카운터·지갑·발굴 상태를 한 persist로 커밋하게 한다. */
+  private applyAdReward(reward: AdReward, now: Date): { wallet: Session["wallet"]; excavation: Session["idleExcavation"] } {
+    const wallet = { ...this.state.wallet };
+    let excavation = this.cloneExcavation(this.state.idleExcavation);
+    if (reward.kind === "currency") {
+      wallet[reward.currency] += reward.amount;
+      return { wallet, excavation };
+    }
+    // 효과 적용 직전까지를 먼저 정산해야 새 배율이 과거 생산에 소급되지 않는다.
+    excavation = settleIdleExcavation(excavation, now, RELICS, this.state.relicProgress);
+    const effect = reward.effect;
+    if (effect.kind === "harvest_multiplier") excavation.pendingHarvestMultiplier = effect.multiplier;
+    if (effect.kind === "storage_extension") excavation.storageExtensionExpiresAt = new Date(now.getTime() + effect.maxStorageSeconds * 1000).toISOString();
+    if (effect.kind === "production_speed") {
+      excavation.activeProductionMultiplier = effect.multiplier;
+      // 중첩 곱셈이나 남은 시간 가산 없이 수령 시점 기준 만료로 갱신한다.
+      excavation.productionMultiplierExpiresAt = new Date(now.getTime() + effect.durationSeconds * 1000).toISOString();
+    }
+    return { wallet, excavation };
   }
 
   /** 슬롯 번호 검증을 장착과 해제에서 공유한다. */

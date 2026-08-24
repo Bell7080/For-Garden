@@ -32,7 +32,9 @@ import { addStar } from "./stars";
 import { addStarMark } from "./rarityMark";
 import { addRuneFrame, addRuneIcon, RUNE_ACCENT, RUNE_CENTER_Y, runeTexture } from "./runeIcons";
 import { equippedRelicName, openRuneInfoPopup, RUNE_STAT_LABEL } from "./RunePopup";
+import { combatPower } from "../core/combatPower";
 import { StatRadar } from "./StatRadar";
+import { addSectionTitle } from "./SectionTitle";
 import { openSkillPopup, type SkillInfoViewModel } from "./SkillPopup";
 import { relicCollection } from "../managers/RelicCollectionManager";
 import { COLOR, textStyle } from "./theme";
@@ -537,26 +539,8 @@ export class InfoManager {
    * 왼쪽의 짧은 막대와 아래로 흐르는 얇은 선이 제목을 판에 묶어 준다.
    */
   private addSectionTitle(text: string, panelTop: number): Phaser.GameObjects.Container {
-    // 제목은 판의 왼쪽 끝에서 시작해 윗변에 걸터앉는다. 판 안으로 들여놓으면 아래 수치와
-    // 한 덩어리로 읽히고, 어중간하게 띄우면 어느 판의 제목인지 흐려진다.
-    const left = COLUMN.x - COLUMN.width / 2;
-    const y = panelTop - 4;
-    const label = this.scene.add
-      .text(left + 34, y, text, textStyle({ role: "display", size: 34, color: COLOR.accentText }))
-      .setOrigin(0, 0.5);
-    const width = label.width + 62;
-    const plate = drawLayer(this.scene, left + width / 2 + 8, y, slantedRect(width, 52, 16), {
-      fill: 0x05070a,
-      alpha: 0.92,
-      edge: COLOR.accent,
-      edgeAlpha: 0.55,
-    });
-    const bar = this.scene.add.graphics();
-    bar.fillStyle(COLOR.accent, 0.95);
-    bar.fillPoints(toPoints(slantedRect(9, 36, 7)).map((point) => new Phaser.Geom.Point(point.x + left + 16, point.y + y)), true);
-    const title = this.scene.add.container(0, 0, [plate, bar, label]);
-    this.column.add(title);
-    return title;
+    // 모양은 `SectionTitle`이 정한다 — 정보창의 칸 제목과 팝업 머리글이 같은 표를 쓴다.
+    return addSectionTitle(this.scene, COLUMN.x - COLUMN.width / 2, panelTop - 4, text, { parent: this.column });
   }
 
   /** 즐겨찾기(별)와 애착(하트). 켜짐은 저마다의 색, 꺼짐은 회색이다. */
@@ -1310,35 +1294,49 @@ export class InfoManager {
     const def = this.currentDef;
     if (!def) return;
     const stats = relicProgression.getFinalStats(def.id);
-    const height = 1080;
-    this.popups.open({ width: 800, height, title: "능력치 상세", tilt: -1.2, ...anchorOf(from) }, (body) => {
-      // 칸에는 오각형이 서 있으므로 여기서는 **숫자**를 맡는다. 다섯 축의 정확한 값과 기본값
-      // 대비 상승분이 먼저 오고, 그 아래에 오각형에 들어가지 않는 세부 수치가 온다.
+    // 판은 글자가 들어가는 만큼만 넓다. 남는 여백은 읽는 데 도움이 되지 않고 뒤 화면만 가린다.
+    const width = 640;
+    const edge = width / 2 - 34;
+    const height = 1010;
+    this.popups.open({ width, height, title: "능력치 상세", tilt: -1.2, ...anchorOf(from) }, (body) => {
+      // 칸에는 오각형이 서 있으므로 여기서는 **숫자**를 맡는다. 총 전투력이 먼저 오고, 다섯
+      // 축의 정확한 값과 기본값 대비 상승분, 그 아래에 오각형에 없는 세부 수치가 온다.
       const top = -height / 2;
+      // 총 전투력은 판때기 없이 맨 글자로 선다. 이 창에서 가장 굵고 큰 수라 판을 깔지 않아도
+      // 저절로 맨 앞에 읽히고, 판을 깔면 아래 목록과 다른 종류의 값처럼 보인다.
+      body.add(this.scene.add.text(-edge, top + 96, "전투력", textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5));
+      body.add(
+        this.scene.add
+          .text(edge, top + 96, combatPower(stats).toLocaleString(), textStyle({ role: "display", size: 52 }))
+          .setOrigin(1, 0.5)
+          .setScale(1, 1.12)
+          .setShadow(3, 6, "#05070a", 8, false, true),
+      );
+      body.add(drawHairline(this.scene, 0, top + 136, width - 68, { color: COLOR.accent, alpha: 0.3 }));
       STAT_CHIPS.forEach((chip, index) => {
-        const y = top + 132 + index * 80;
+        const y = top + 194 + index * 80;
         const base = def.stats[chip.key];
         const gain = stats[chip.key] - base;
         // 칸의 축 이름과 같은 색이라 그래프에서 본 축을 그대로 따라 읽는다.
-        body.add(this.scene.add.text(-330, y, chip.label, textStyle({ role: "display", size: 27, color: `#${chip.color.toString(16).padStart(6, "0")}` })).setOrigin(0, 0.5));
-        body.add(this.scene.add.text(330, y - 12, stats[chip.key].toLocaleString(), textStyle({ role: "display", size: 32 })).setOrigin(1, 0.5));
+        body.add(this.scene.add.text(-edge, y, chip.label, textStyle({ role: "display", size: 30, color: `#${chip.color.toString(16).padStart(6, "0")}` })).setOrigin(0, 0.5));
+        body.add(this.scene.add.text(edge, y - 12, stats[chip.key].toLocaleString(), textStyle({ role: "display", size: 36 })).setOrigin(1, 0.5));
         const detail = gain > 0 ? `기본 ${base.toLocaleString()}   +${gain.toLocaleString()}` : `기본 ${base.toLocaleString()}`;
         const detailStyle = gain > 0
-          ? textStyle({ role: "body", size: 19, color: COLOR.accentText })
-          : textStyle({ role: "body", size: 19, color: COLOR.inkDim });
-        body.add(this.scene.add.text(330, y + 20, detail, detailStyle).setOrigin(1, 0.5));
-        body.add(drawHairline(this.scene, 0, y + 40, 660, { color: COLOR.accent, alpha: 0.14 }));
+          ? textStyle({ role: "body", size: 21, color: COLOR.accentText })
+          : textStyle({ role: "body", size: 21, color: COLOR.inkDim });
+        body.add(this.scene.add.text(edge, y + 22, detail, detailStyle).setOrigin(1, 0.5));
+        body.add(drawHairline(this.scene, 0, y + 42, width - 68, { color: COLOR.accent, alpha: 0.14 }));
       });
       body.add(
         this.scene.add
-          .text(-330, top + 566, "세부 능력치", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText }))
+          .text(-edge, top + 628, "세부 능력치", textStyle({ role: "emphasis", size: 26, color: COLOR.accentText }))
           .setOrigin(0, 0),
       );
       EXTRA_STATS.forEach((row, index) => {
-        const y = top + 640 + index * 74;
-        body.add(this.scene.add.text(-330, y, row.label, textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0, 0.5));
-        body.add(this.scene.add.text(330, y, stats[row.key].toLocaleString() + (row.suffix ?? ""), textStyle({ role: "display", size: 30 })).setOrigin(1, 0.5));
-        if (index < EXTRA_STATS.length - 1) body.add(drawHairline(this.scene, 0, y + 37, 660, { color: COLOR.accent, alpha: 0.14 }));
+        const y = top + 700 + index * 72;
+        body.add(this.scene.add.text(-edge, y, row.label, textStyle({ role: "body", size: 28, color: COLOR.inkDim })).setOrigin(0, 0.5));
+        body.add(this.scene.add.text(edge, y, stats[row.key].toLocaleString() + (row.suffix ?? ""), textStyle({ role: "display", size: 33 })).setOrigin(1, 0.5));
+        if (index < EXTRA_STATS.length - 1) body.add(drawHairline(this.scene, 0, y + 36, width - 68, { color: COLOR.accent, alpha: 0.14 }));
       });
     });
   }

@@ -8,7 +8,7 @@ import { relicProgression } from "../managers/RelicProgressionManager";
 import { session } from "../state/session";
 import { Button } from "./Button";
 import { drawGlyph } from "./glyphs";
-import { drawHairline, drawLayer, slantedRect } from "./holo";
+import { drawHairline, drawLayer, slantedRect, toPoints } from "./holo";
 import { PopupLayer } from "./PopupLayer";
 import { addChanceLine, addEmptyRuneMark, addRuneFrame, addRuneMark, RUNE_ACCENT, RUNE_MARK } from "./runeIcons";
 import { addCurrencyChip } from "./CurrencyChip";
@@ -175,6 +175,24 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
  * 성공은 푸른 별, 실패는 다크체리, 맨 뒤 빈 자리는 각인의 노란 별 몫이다. 시도할 때마다 다시
  * 그리므로 확률 선이 곧바로 좌우로 밀린다.
  */
+/**
+ * 다음으로 세공할 줄.
+ *
+ * 한 번 고른 줄은 **계속 고른 채로 남는다.** 세공은 한 줄에 세 번씩 반복하는 일이라, 누를
+ * 때마다 다시 고르게 하면 같은 줄을 세 번 고르는 손이 그대로 낭비다. 그 줄이 다 차면 다음
+ * 줄로 저절로 넘어가고, 다른 줄을 하고 싶으면 그때 눌러서 바꾼다.
+ */
+function nextCraftTarget(rune: RuneInstance, current?: RuneStatKey): RuneStatKey | undefined {
+  const keys = [...rune.mainStats, ...rune.subStats].map(({ key }) => key);
+  if (current && canEnhanceRune(rune, current)) return current;
+  const start = current ? keys.indexOf(current) + 1 : 0;
+  for (let step = 0; step < keys.length; step += 1) {
+    const key = keys[(start + step) % keys.length];
+    if (canEnhanceRune(rune, key)) return key;
+  }
+  return undefined;
+}
+
 export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: RunePopupOptions): void {
   const api = options.api ?? gameApi;
   let rune = session.runeInventory.find(({ instanceId }) => instanceId === options.runeInstanceId);
@@ -242,16 +260,25 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
         const chosen = selected === stat.key;
         const width = CRAFT.width - 88;
         content.add(drawLayer(scene, 0, y, slantedRect(width, height, 12), {
-          fill: chosen ? 0x17212a : main ? 0x121a23 : 0x0e141b,
-          alpha: 0.95,
+          fill: chosen ? 0x223243 : main ? 0x121a23 : 0x0e141b,
+          alpha: 0.98,
           edge: accent,
-          edgeAlpha: chosen ? 0.95 : main ? 0.4 : 0.16,
-          glow: chosen ? { color: accent, strength: 0.25 } : undefined,
+          edgeAlpha: chosen ? 1 : main ? 0.4 : 0.16,
+          edgeWidth: chosen ? 4 : undefined,
+          glow: chosen ? { color: accent, strength: 0.55, height: 0.8 } : undefined,
         }));
+        // 고른 줄은 왼쪽에 빗금 하나를 더 세운다. 색만 밝히면 판이 여럿일 때 어느 줄이
+        // 골라진 것인지 한눈에 잡히지 않는다.
+        if (chosen) {
+          const bar = scene.add.graphics();
+          bar.fillStyle(accent, 1);
+          bar.fillPoints(toPoints(slantedRect(10, height - 18, 6)).map((point) => new Phaser.Geom.Point(point.x - width / 2 + 14, point.y + y)), true);
+          content.add(bar);
+        }
         const labelStyle = main
-          ? textStyle({ role: "display", size: 27 })
-          : textStyle({ role: "emphasis", size: 21, color: COLOR.inkDim });
-        content.add(scene.add.text(-width / 2 + 22, y, `${RUNE_STAT_LABEL[stat.key]}  +${stat.value}%`, labelStyle).setOrigin(0, 0.5).setWordWrapWidth(300));
+          ? textStyle({ role: "display", size: 27, color: chosen ? COLOR.accentText : COLOR.ink })
+          : textStyle({ role: "emphasis", size: 21, color: chosen ? COLOR.accentText : COLOR.inkDim });
+        content.add(scene.add.text(-width / 2 + (chosen ? 36 : 22), y, `${RUNE_STAT_LABEL[stat.key]}  +${stat.value}%`, labelStyle).setOrigin(0, 0.5).setWordWrapWidth(290));
         const history = rune!.enhancementHistory[stat.key] ?? [];
         const outer = main ? MARK.outer : MARK.outer - 3;
         for (let slot = 0; slot < 3; slot += 1) {
@@ -303,7 +330,12 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
         pending = true; action.setEnabled(false);
         try {
           const response = completed ? await api.engraveRune({ runeInstanceId: rune!.instanceId, statId: selected }) : await api.enhanceRune({ runeInstanceId: rune!.instanceId, statId: selected });
-          rune = response.rune; options.onChanged?.(rune); selected = undefined; render(completed ? "각인이 완료되었습니다." : ("succeeded" in response && response.succeeded ? "세공 성공" : "세공 실패"));
+          rune = response.rune; options.onChanged?.(rune);
+          // 세공은 고른 줄을 그대로 이어 간다. 그 줄이 다 차면 다음 줄로 넘어가고, 모든
+          // 세공이 끝나 각인만 남으면 손을 뗀다 — 각인은 되돌릴 수 없는 한 번의 선택이라
+          // 무엇에 새길지는 반드시 사람이 다시 고른다.
+          selected = rune.enhancementComplete ? undefined : nextCraftTarget(rune, selected);
+          render(completed ? "각인이 완료되었습니다." : ("succeeded" in response && response.succeeded ? "세공 성공" : "세공 실패"));
         } catch (error) { render(error instanceof Error ? error.message : "요청을 완료하지 못했습니다."); }
         finally { pending = false; }
       }}).setEnabled(allowed);

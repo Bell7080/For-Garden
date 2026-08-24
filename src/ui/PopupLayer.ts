@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { chipPoints, drawLayer, drawShapeEdge, HOLO } from "./holo";
+import { addSectionTitle } from "./SectionTitle";
 import { COLOR, textStyle } from "./theme";
 
 /** 팝업 한 장을 여는 데 필요한 것. 내용은 콜백이 컨테이너에 직접 채운다. */
@@ -97,11 +98,9 @@ export class PopupLayer {
       options.onClose?.();
     };
     if (options.title) {
-      body.add(
-        this.scene.add
-          .text(-width / 2 + unit * 0.12, -height / 2 + 24, options.title, textStyle({ role: "display", size: 30 }))
-          .setOrigin(0, 0),
-      );
+      // 머리글은 판 안이 아니라 **윗변에 걸터앉는다.** 정보창의 칸 제목(유대·능력치·룬)과
+      // 같은 표를 써서, 어느 화면에서나 제목이 같은 무게와 같은 모양으로 읽히게 한다.
+      addSectionTitle(this.scene, -width / 2 + unit * 0.1, -height / 2, options.title, { size: 26, parent: body });
       // 닫기는 오른쪽 위 구석. 어느 팝업에서나 같은 자리에 둔다.
       const closeButton = this.scene.add.container(width / 2 - 40, -height / 2 + 40);
       const mark = this.scene.add.graphics();

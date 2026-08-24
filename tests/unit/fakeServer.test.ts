@@ -310,7 +310,7 @@ describe("FakeServer 상품 카탈로그", () => {
     const request = { entitlementId: entitlement.entitlementId, slotId: "daily-stamina", requestId: "instant-1" };
     const first = await server.claimInstantAdReward(request);
     await expect(server.claimInstantAdReward(request)).resolves.toMatchObject({ dailyClaims: 1, wallet: first.wallet });
-    expect(first).toMatchObject({ reward: { currency: "stamina", amount: 10 }, dailyBonus: { currency: "gems", amount: 5 }, dailyRemaining: 2 });
+    expect(first).toMatchObject({ reward: { kind: "currency", currency: "stamina", amount: 10 }, dailyBonus: { currency: "gems", amount: 5 }, dailyRemaining: 2 });
     await server.claimInstantAdReward({ ...request, requestId: "instant-2" });
     await server.claimInstantAdReward({ ...request, requestId: "instant-3" });
     await expect(server.claimInstantAdReward({ ...request, requestId: "instant-4" })).rejects.toMatchObject({ code: "AD_DAILY_LIMIT" });
@@ -365,7 +365,7 @@ describe("FakeServer 광고 보상 경계", () => {
     const state = makeSession();
     const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-22T23:59:00Z") });
     const result = await server.claimAdReward({ slotId: "daily-stamina", verificationToken: "verified:daily-stamina", requestId: "ad-request-1" });
-    expect(result).toMatchObject({ reward: { currency: "stamina", amount: 10 }, dailyClaims: 1, dailyRemaining: 2 });
+    expect(result).toMatchObject({ reward: { kind: "currency", currency: "stamina", amount: 10 }, dailyClaims: 1, dailyRemaining: 2 });
     expect(state.dailyAdRewards).toEqual({ date: "2026-08-22", claimsBySlot: { "daily-stamina": 1 }, requestIds: ["ad-request-1"] });
   });
 
@@ -380,5 +380,38 @@ describe("FakeServer 광고 보상 경계", () => {
     expect(state.wallet.cheesecake).toBe(before);
     now = new Date("2026-08-23T00:00:00Z");
     await expect(server.claimAdReward({ slotId: "daily-cheesecake", verificationToken: "verified:daily-cheesecake", requestId: "next-day" })).resolves.toMatchObject({ dailyClaims: 1 });
+  });
+
+  it("1.5배는 현재 확정 수확에 한 번만 적용하고 다음 수확에는 남지 않는다", async () => {
+    const state = makeSession(); state.idleExcavation.unclaimed = { gold: 10, cheesecake: 2 };
+    const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-22T12:00:00Z") });
+    await server.claimAdReward({ slotId: "excavation-harvest", verificationToken: "verified:excavation-harvest", requestId: "boost-harvest" });
+    const boosted = await server.harvestExcavation({ requestId: "boosted-harvest" });
+    expect(boosted.granted).toEqual({ gold: 15, cheesecake: 3 });
+    state.idleExcavation.unclaimed = { gold: 10, cheesecake: 2 };
+    const normal = await server.harvestExcavation({ requestId: "normal-harvest" });
+    expect(normal.granted).toEqual({ gold: 10, cheesecake: 2 });
+  });
+
+  it("생산 2배는 중첩하지 않고 재수령 시 만료를 교체하며 만료 경계를 나눠 정산한다", async () => {
+    const state = makeSession(); state.idleExcavation.assignedRelicIds = ["anky", null, null]; state.idleExcavation.lastSettledAt = "2026-08-22T12:00:00.000Z";
+    let now = new Date("2026-08-22T12:00:00Z"); const server = new FakeServer(state, { latencyMs: 0, now: () => now });
+    await server.claimAdReward({ slotId: "excavation-speed", verificationToken: "verified:excavation-speed", requestId: "speed-1" });
+    now = new Date("2026-08-22T12:30:00Z");
+    await server.claimAdReward({ slotId: "excavation-speed", verificationToken: "verified:excavation-speed", requestId: "speed-2" });
+    expect(state.idleExcavation.activeProductionMultiplier).toBe(2);
+    expect(state.idleExcavation.productionMultiplierExpiresAt).toBe("2026-08-22T13:30:00.000Z");
+    now = new Date("2026-08-22T14:00:00Z"); await server.getIdleExcavation();
+    expect(state.idleExcavation.activeProductionMultiplier).toBe(1);
+    expect(state.idleExcavation.productionMultiplierExpiresAt).toBeNull();
+  });
+
+  it("패스 즉시 수령도 발굴 효과와 슬롯별 UTC 제한을 그대로 적용한다", async () => {
+    const state = makeSession(); const now = () => new Date("2026-08-22T12:00:00Z"); const server = new FakeServer(state, { latencyMs: 0, now });
+    const verified = await server.verifyPurchaseReceipt({ productId: "premium-monthly", platform: "test", receipt: "verified-receipt:premium-monthly:boost", requestId: "verify-boost" });
+    const { entitlement } = await server.activatePass({ verificationId: verified.verificationId, requestId: "activate-boost" });
+    const result = await server.claimInstantAdReward({ entitlementId: entitlement.entitlementId, slotId: "excavation-storage", requestId: "instant-storage" });
+    expect(result.reward).toMatchObject({ kind: "excavation_effect", effect: { kind: "storage_extension", maxStorageSeconds: 28_800 } });
+    expect(state.idleExcavation.storageExtensionExpiresAt).toBe("2026-08-22T20:00:00.000Z");
   });
 });

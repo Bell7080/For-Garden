@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import type { GameApi, HarvestExcavationResponse, IdleExcavationResponse } from "../api/contracts";
+import type { AdOperationsConfigResponse, AdPresentationResult, AdSlotOperationsDto, GameApi, HarvestExcavationResponse, IdleExcavationResponse } from "../api/contracts";
 import { excavationProductionDisplayModel, placeExcavationRelic, type ExcavationCurrency, type IdleExcavationState } from "../core/idleExcavation";
 import { formatCurrency } from "../core/formatCurrency";
 import { RELICS } from "../data/relics";
@@ -13,6 +13,7 @@ import { PortraitCard } from "./PortraitCard";
 import type { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
 import { EXCAVATION_TRAIT_ICON } from "./excavationIcons";
+import { completedAdToken } from "../data/adRewards";
 
 /** 한 팝업 안에서 현황과 편집 그리드가 교대하므로 모바일 안전 영역을 넘지 않는 고정 크기를 쓴다. */
 const PANEL = { width: 900, height: 1320 } as const;
@@ -51,11 +52,14 @@ export class IdleExcavationPopup {
   private harvestRequestId?: string;
   /** 성공 결과는 다음 현황 렌더 한 번에만 안내·연출하고 즉시 소비한다. */
   private harvestResult?: HarvestExcavationResponse;
+  /** 조회 실패 시 undefined를 유지해 번들 표로 광고를 임의 노출하지 않는다. */
+  private adOperations?: AdOperationsConfigResponse;
+  private adMessage?: string;
   private harvestError?: string;
   private ticker?: Phaser.Time.TimerEvent;
   private requestGeneration = 0;
 
-  constructor(private readonly scene: Phaser.Scene, private readonly popups: PopupLayer, private readonly api: GameApi, private readonly onClosed?: () => void) {}
+  constructor(private readonly scene: Phaser.Scene, private readonly popups: PopupLayer, private readonly api: GameApi, private readonly onClosed?: () => void, private readonly presentAd?: (slotId: string) => Promise<AdPresentationResult>) {}
 
   /** 연타는 기존 한 장을 유지하며 닫기는 저장되지 않은 draft를 버린다. */
   open(): void {
@@ -72,6 +76,8 @@ export class IdleExcavationPopup {
     const generation = ++this.requestGeneration;
     try {
       const response = await this.api.getIdleExcavation();
+      // 운영 설정 실패는 선택 광고만 숨기며 기본 4시간 생산과 일반 수확 진입은 그대로 계속한다.
+      try { this.adOperations = await this.api.getAdOperationsConfig(); } catch { this.adOperations = undefined; }
       if (!this.body || generation !== this.requestGeneration) return;
       this.confirmed = response;
       this.renderStatus();
@@ -144,12 +150,42 @@ export class IdleExcavationPopup {
         : result ? `수확 완료 · 골드 +${formatCurrency(result.granted.gold)} · 치즈케이크 +${formatCurrency(result.granted.cheesecake)}`
           : "빈 슬롯은 허용되며 생산량 0으로 계산됩니다.");
     content.add(this.scene.add.text(0, 285, notice, textStyle({ role: "body", size: 21, color: discarded > 0 || this.harvestError ? COLOR.dangerText : COLOR.inkDim, align: "center" })).setOrigin(0.5));
+    this.addAdOffers(content, response.serverTime);
     content.add(new Button(this.scene, -205, 515, { width: 350, height: 92, label: "편성 변경", onClick: () => this.beginEdit() }));
     harvestButton = new Button(this.scene, 205, 515, { width: 350, height: 92, label: this.saving ? "수확 중…" : "수확", variant: "primary", onClick: () => void this.harvest() });
     // 서버 확정 누적량이 1 미만이거나 요청 중이면 지급할 것이 없으므로 입력부터 막는다.
     refreshEstimate(); content.add(harvestButton);
     this.setState(this.saving ? "saving" : "ready");
     if (result) { this.playHarvestSuccess(content, rows.map((row) => row.amount), result); this.harvestResult = undefined; }
+  }
+
+  /** 좌우 제안은 유효한 서버 설정에서 활성인 발굴 슬롯만 남은 횟수와 효과를 직접 말한다. */
+  private addAdOffers(content: Phaser.GameObjects.Container, serverTime: string): void {
+    const config = this.adOperations;
+    if (!config || new Date(config.expiresAt).getTime() <= new Date(serverTime).getTime()) return;
+    const slots = ["excavation-harvest", "excavation-storage"].map((id) => config.slots.find((slot) => slot.slotId === id && slot.enabled)).filter((slot): slot is AdSlotOperationsDto => Boolean(slot));
+    slots.forEach((slot, index) => {
+      const sameUtcDay = session.dailyAdRewards.date === serverTime.slice(0, 10);
+      const remaining = Math.max(0, slot.dailyLimitUtc - (sameUtcDay ? session.dailyAdRewards.claimsBySlot[slot.slotId] ?? 0 : 0));
+      if (remaining === 0) return;
+      const label = `${slot.displayText} · 오늘 ${remaining}회`;
+      content.add(new Button(this.scene, index === 0 ? -205 : 205, 390, { width: 350, height: 78, label, onClick: () => void this.claimAdEffect(slot) }));
+    });
+    if (this.adMessage) content.add(this.scene.add.text(0, 445, this.adMessage, textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0.5));
+  }
+
+  /** 취소·동의 거부·SDK/재고 실패는 메시지만 바꾸며 일반 수확 버튼과 발굴 상태를 건드리지 않는다. */
+  private async claimAdEffect(slot: AdSlotOperationsDto): Promise<void> {
+    if (!this.presentAd || this.saving) { this.adMessage = "광고를 이용할 수 없어도 일반 수확은 계속할 수 있습니다."; this.renderStatus(); return; }
+    const presentation = await this.presentAd(slot.slotId);
+    const verificationToken = completedAdToken(presentation);
+    if (!verificationToken) { this.adMessage = "광고가 취소되었거나 준비되지 않았습니다. 일반 수확을 이용해 주세요."; this.renderStatus(); return; }
+    try {
+      const result = await this.api.claimAdReward({ slotId: slot.slotId, verificationToken, requestId: requestId() });
+      if (result.excavation) session.idleExcavation = { ...result.excavation, assignedRelicIds: copyFormation(result.excavation.assignedRelicIds), unclaimed: { ...result.excavation.unclaimed } };
+      session.dailyAdRewards = { date: result.dailyAdRewards.date, claimsBySlot: { ...result.dailyAdRewards.claimsBySlot }, requestIds: session.dailyAdRewards.requestIds };
+      this.confirmed = { excavation: result.excavation ?? session.idleExcavation, serverTime: result.serverTime }; this.adMessage = "발굴 효과가 적용되었습니다."; this.renderStatus();
+    } catch { this.adMessage = "광고 검증에 실패했습니다. 일반 수확은 그대로 가능합니다."; this.renderStatus(); }
   }
 
   /** 서버 성공 뒤에만 재화가 우상단 지갑 쪽으로 흐르며, 모션 감소 시 숫자 강조로 대체한다. */

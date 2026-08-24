@@ -15,7 +15,7 @@ function makeRune(instanceId = "rune-1"): RuneInstance {
 /** 각 테스트가 독립적으로 쓸 서버 저장소 역할의 세션을 만든다. */
 function makeSession(fossil = 1000): Session {
   return {
-    idleExcavation: { assignedRelicIds: [null, null, null], lastSettledAt: null, unclaimed: { fossil: 0, gold: 0, cheesecake: 0 }, baseStorageSeconds: 14_400, activeProductionMultiplier: 1, storageExtensionExpiresAt: null },
+    idleExcavation: { assignedRelicIds: [null, null, null], lastSettledAt: null, unclaimed: { gold: 0, cheesecake: 0 }, baseStorageSeconds: 14_400, activeProductionMultiplier: 1, storageExtensionExpiresAt: null },
     settings: createDefaultSettings(),
     completedStoryIds: new Set(), observationRecords: [],
     selectedStageId: null,
@@ -43,14 +43,14 @@ describe("FakeServer", () => {
     await server.getIdleExcavation();
     await server.saveExcavationFormation({ requestId: "formation-1", assignedRelicIds: ["anky", "rex", "dodo"] });
     now = new Date("2026-08-20T04:00:00Z"); await server.getIdleExcavation();
-    expect(state.idleExcavation.unclaimed).toEqual({ fossil: 720, gold: 7200, cheesecake: 72 });
+    expect(state.idleExcavation.unclaimed).toEqual({ gold: 956.4, cheesecake: 31.36 });
   });
 
   it("같은 수확 요청을 반복해도 한 번만 지급하고 지갑 상한을 넘기지 않는다", async () => {
-    const state = makeSession(); state.wallet.fossil = 9_999_998; state.idleExcavation.unclaimed = { fossil: 5, gold: 2, cheesecake: 1 };
+    const state = makeSession(); state.wallet.gold = 999_999_998; state.idleExcavation.unclaimed = { gold: 5, cheesecake: 1 };
     const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-20T00:00:00Z") });
     const request = { requestId: "harvest-1" }; const first = await server.harvestExcavation(request); const repeated = await server.harvestExcavation(request);
-    expect(repeated).toEqual(first); expect(state.wallet.fossil).toBe(9_999_999); expect(first.discarded.fossil).toBe(4);
+    expect(repeated).toEqual(first); expect(state.wallet.gold).toBe(999_999_999); expect(first.discarded.gold).toBe(4);
   });
   it("강화 요청의 선택 정보만 받아 서버 난수·골드 차감·룬 갱신을 함께 확정한다", async () => {
     const state = makeSession(); state.wallet.gold = 100; state.runeInventory = [makeRune()];

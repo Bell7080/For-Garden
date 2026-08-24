@@ -18,6 +18,8 @@ export const RELICS: RelicDef[] = [
     origin: "티라노사우루스",
     element: "fire",
     role: "warrior",
+    // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 120, efficiencyMultiplier: 1.10 },
     stats: {
       hp: 820,
       def: 42,
@@ -75,6 +77,8 @@ export const RELICS: RelicDef[] = [
     origin: "트리케라톱스",
     element: "earth",
     role: "tank",
+    // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 100, efficiencyMultiplier: 1.05 },
     stats: {
       hp: 1420,
       def: 128,
@@ -132,6 +136,8 @@ export const RELICS: RelicDef[] = [
     origin: "스피노사우루스",
     element: "water",
     role: "tank",
+    // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
+    excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 8, efficiencyMultiplier: 1.10 },
     stats: {
       hp: 1260,
       def: 104,
@@ -190,6 +196,8 @@ export const RELICS: RelicDef[] = [
     origin: "벨로키랍토르",
     element: "grass",
     role: "assassin",
+    // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 110, efficiencyMultiplier: 1.08 },
     stats: {
       hp: 810,
       def: 50,
@@ -247,6 +255,8 @@ export const RELICS: RelicDef[] = [
     origin: "도도새",
     element: "wind",
     role: "support",
+    // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
+    excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 7, efficiencyMultiplier: 1.12 },
     stats: {
       hp: 760,
       def: 48,
@@ -304,6 +314,8 @@ export const RELICS: RelicDef[] = [
     origin: "스밀로돈",
     element: "grass",
     role: "assassin",
+    // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 105, efficiencyMultiplier: 1.06 },
     stats: {
       hp: 840,
       def: 56,
@@ -361,6 +373,8 @@ export const RELICS: RelicDef[] = [
     origin: "케찰코아틀루스",
     element: "wind",
     role: "support",
+    // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
+    excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 9, efficiencyMultiplier: 1.04 },
     stats: {
       hp: 780,
       def: 44,
@@ -420,6 +434,8 @@ export const RELICS: RelicDef[] = [
     origin: "실패한 벨로키랍토르 개체",
     element: "fire",
     role: "assassin",
+    // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 90, efficiencyMultiplier: 1.00 },
     stats: {
       hp: 620,
       def: 38,
@@ -477,6 +493,8 @@ export const RELICS: RelicDef[] = [
     origin: "실패한 갑주 개체",
     element: "earth",
     role: "tank",
+    // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 85, efficiencyMultiplier: 1.00 },
     stats: {
       hp: 980,
       def: 92,
@@ -534,6 +552,8 @@ export const RELICS: RelicDef[] = [
     origin: "실패한 익룡 개체",
     element: "water",
     role: "support",
+    // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
+    excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 6, efficiencyMultiplier: 1.00 },
     stats: {
       hp: 580,
       def: 34,

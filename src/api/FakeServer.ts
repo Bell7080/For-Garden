@@ -1,5 +1,6 @@
 import { canPull, pull, resolveAcquisitions, spend } from "../core/gacha";
 import { BANNERS } from "../data/banners";
+import { RELICS } from "../data/relics";
 import { findAdRewardSlot } from "../data/adRewards";
 import { consumeRestorationEntry, normalizeDailyContent } from "../core/dailyContent";
 import { BREAKTHROUGH_CAP, canBreakThrough, canFeedRelic, feedRelic as calculateFeed, FEED_UNIT, nextBreakthrough, relicLevelCap, RELIC_STAR_CAP, relicStars } from "../core/relicProgression";
@@ -21,7 +22,7 @@ import { assertValidRuneInstance, canEngraveRune, canEnhanceRune, generateRune, 
 import { runeEnhancementGoldCost } from "../data/runes";
 import type { EngraveRuneRequest, EngraveRuneResponse, EnhanceRuneRequest, EnhanceRuneResponse, EquipRuneRequest, EquipRuneResponse, RenameRuneRequest, RenameRuneResponse, RuneInventoryDto, UnequipRuneRequest, UnequipRuneResponse } from "./contracts";
 import type { ActivatePassRequest, ActivatePassResponse, ClaimInstantAdRewardRequest, ClaimInstantAdRewardResponse, PassEntitlementDto, VerifyPurchaseReceiptRequest, VerifyPurchaseReceiptResponse } from "./contracts";
-import { harvestIdleExcavation, settleIdleExcavation } from "../core/idleExcavation";
+import { harvestIdleExcavation, settleIdleExcavation, validateExcavationFormation } from "../core/idleExcavation";
 import type { HarvestExcavationRequest, HarvestExcavationResponse, IdleExcavationResponse, SaveExcavationFormationRequest } from "./contracts";
 
 /** 사용자 룬 이름의 서버 정책이다. UI 글자 수와 무관하게 API 경계가 최종 권한을 가진다. */
@@ -80,7 +81,7 @@ export class FakeServer implements GameApi {
   /** 서버의 단일 now 값을 캡처해 조회 정산과 응답 시각이 어긋나지 않게 한다. */
   async getIdleExcavation(): Promise<IdleExcavationResponse> {
     await this.delay(); const now = this.now();
-    const next = settleIdleExcavation(this.state.idleExcavation, now);
+    const next = settleIdleExcavation(this.state.idleExcavation, now, RELICS, this.state.relicProgress);
     this.persist({ ...this.state, idleExcavation: next }); this.state.idleExcavation = next;
     return { excavation: this.cloneExcavation(next), serverTime: now.toISOString() };
   }
@@ -89,9 +90,10 @@ export class FakeServer implements GameApi {
   async saveExcavationFormation(request: SaveExcavationFormationRequest): Promise<IdleExcavationResponse> {
     await this.delay(); const cached = this.excavationFormationResults.get(request.requestId);
     if (cached) return { excavation: this.cloneExcavation(cached.excavation), serverTime: cached.serverTime };
-    const ids = request.assignedRelicIds.filter((id): id is string => id !== null);
-    if (!request.requestId || new Set(ids).size !== ids.length || ids.some((id) => !this.state.owned.has(id))) throw new GameApiError("INVALID_STATE", "발굴 편성이 올바르지 않습니다.");
-    const now = this.now(); const settled = settleIdleExcavation(this.state.idleExcavation, now);
+    const validation = validateExcavationFormation(request.assignedRelicIds, this.state.owned);
+    // 요청 ID와 순수 모델의 보유/중복 검증을 모두 통과한 편성만 저장한다.
+    if (!request.requestId || !validation.valid) throw new GameApiError("INVALID_STATE", "발굴 편성이 올바르지 않습니다.");
+    const now = this.now(); const settled = settleIdleExcavation(this.state.idleExcavation, now, RELICS, this.state.relicProgress);
     const next = { ...settled, assignedRelicIds: [...request.assignedRelicIds] as [string | null, string | null, string | null] };
     this.persist({ ...this.state, idleExcavation: next }); this.state.idleExcavation = next;
     const response = { excavation: this.cloneExcavation(next), serverTime: now.toISOString() };
@@ -103,7 +105,7 @@ export class FakeServer implements GameApi {
     await this.delay(); const cached = this.excavationHarvestResults.get(request.requestId);
     if (cached) return { ...cached, excavation: this.cloneExcavation(cached.excavation), wallet: { ...cached.wallet }, granted: { ...cached.granted }, discarded: { ...cached.discarded } };
     if (!request.requestId) throw new GameApiError("INVALID_STATE", "수확 요청 ID가 필요합니다.");
-    const now = this.now(); const settled = settleIdleExcavation(this.state.idleExcavation, now);
+    const now = this.now(); const settled = settleIdleExcavation(this.state.idleExcavation, now, RELICS, this.state.relicProgress);
     const result = harvestIdleExcavation(settled, this.state.wallet); const nextState = { ...this.state, idleExcavation: result.state, wallet: result.wallet };
     this.persist(nextState); this.state.idleExcavation = result.state; this.state.wallet = result.wallet;
     const response = { excavation: this.cloneExcavation(result.state), serverTime: now.toISOString(), wallet: { ...result.wallet }, granted: { ...result.granted }, discarded: { ...result.discarded } };

@@ -33,9 +33,9 @@ describe("SaveManager", () => {
 
   it("발굴 편성과 미수확 소수 생산량을 저장 왕복한다", () => {
     const storage = new MemoryStorage(); const source = createDefaultSession();
-    source.idleExcavation.assignedRelicIds = ["anky", null, "rex"]; source.idleExcavation.unclaimed.fossil = 0.75;
+    source.idleExcavation.assignedRelicIds = ["anky", null, "rex"]; source.idleExcavation.unclaimed.gold = 0.75;
     new SaveManager(storage).save(source);
-    expect(new SaveManager(storage).load()?.idleExcavation).toMatchObject({ assignedRelicIds: ["anky", null, "rex"], unclaimed: { fossil: 0.75 } });
+    expect(new SaveManager(storage).load()?.idleExcavation).toMatchObject({ assignedRelicIds: ["anky", null, "rex"], unclaimed: { gold: 0.75 } });
   });
   it("v14 진행을 유지하면서 누락 설정만 기본값으로 마이그레이션한다", () => {
     const legacy = validData() as unknown as Record<string, unknown>; legacy.saveVersion = 14; delete legacy.settings;

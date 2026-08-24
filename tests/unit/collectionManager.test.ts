@@ -7,7 +7,7 @@ import { createDefaultSettings } from "../../src/core/settings";
 function makeSession(): Session {
   return {
     // 이 테스트는 발굴을 다루지 않지만 최신 Session 계약의 빈 서버 정산 상태를 명시한다.
-    idleExcavation: { assignedRelicIds: [null, null, null], lastSettledAt: null, unclaimed: { fossil: 0, gold: 0, cheesecake: 0 }, baseStorageSeconds: 14_400, activeProductionMultiplier: 1, storageExtensionExpiresAt: null },
+    idleExcavation: { assignedRelicIds: [null, null, null], lastSettledAt: null, unclaimed: { gold: 0, cheesecake: 0 }, baseStorageSeconds: 14_400, activeProductionMultiplier: 1, storageExtensionExpiresAt: null },
     settings: createDefaultSettings(),
     completedStoryIds: new Set(), observationRecords: [],
     selectedStageId: null,

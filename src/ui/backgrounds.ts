@@ -18,6 +18,8 @@ export const BACKGROUND = {
   premiumShop: "background-premium-shop",
   /** 발굴 연출이 덮는 발굴장. 검은 판 대신 이 원화를 깔고 그 위를 눌러 어둡게 한다. */
   excavation: "background-excavation",
+  /** 캐릭터 카드 안, 인물 뒤에 깔리는 원화. 등급색 필터를 통과해 은은하게만 남는다. */
+  cardBackdrop: "background-card-backdrop",
 } as const;
 
 /** BootScene이 모든 화면 배경을 한 번에 적재할 때 사용하는 경로 목록이다. */
@@ -34,6 +36,7 @@ export const BACKGROUND_ASSETS = [
   [BACKGROUND.archaeology, "sprites/background/background_007.webp"],
   [BACKGROUND.premiumShop, "sprites/background/background_008.webp"],
   [BACKGROUND.excavation, "sprites/background/background_009.webp"],
+  [BACKGROUND.cardBackdrop, "sprites/background/background_010.webp"],
 ] as const;
 
 /**

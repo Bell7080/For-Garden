@@ -3,6 +3,7 @@ import type { Element, PortraitAssetId, RelicDef, RelicRarity, Role } from "../c
 import { headCardFrame, loadPortraitTexture, portraitAssetFor, portraitUsesRelicTint } from "../puppets/assets";
 import { mixWhite, tintFor } from "../puppets/tints";
 import { chipPoints, HOLO } from "./holo";
+import { BACKGROUND } from "./backgrounds";
 import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
 import { addStarMark, RARITY_TONE } from "./rarityMark";
@@ -54,6 +55,14 @@ const CHIP_INSET = 6;
  */
 const CHIP_BEVEL = { topLeft: 0.18, topRight: 0.07, bottomRight: 0.14, bottomLeft: 0.05 };
 
+/**
+ * 카드 안 배경 원화.
+ *
+ * `lift`는 등급색을 흰색 쪽으로 얼마나 끌어올릴지다 — 칩 색을 그대로 씌우면 그림이 통째로
+ * 어두워져 결이 사라진다. `alpha`는 그 위에서 다시 한 번 눌러 인물보다 뒤로 물리는 몫이다.
+ */
+const BACKDROP = { lift: 0.42, alpha: 0.72, lockedAlpha: 0.3 } as const;
+
 /** 이름이 얹히는 아래쪽 어둠이 차지하는 높이 비율. */
 const SHADE_RATIO = 0.46;
 
@@ -73,6 +82,8 @@ export class PortraitCard extends Phaser.GameObjects.Container {
   private readonly chip: Phaser.GameObjects.Graphics;
   private readonly glow: Phaser.GameObjects.Graphics;
   private readonly portraits: Phaser.GameObjects.Image[] = [];
+  /** 인물 뒤에 깔린 배경 원화. 없을 수도 있으므로 원화를 끼울 자리는 이 값으로 찾는다. */
+  private backdrop?: Phaser.GameObjects.Image;
   private readonly nameText?: Phaser.GameObjects.Text;
   private readonly subText?: Phaser.GameObjects.Text;
   private readonly options: PortraitCardOptions;
@@ -113,7 +124,8 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     // 칩 본체. 카드는 이 한 장뿐이라 그림자도 하나만 진다. 바탕은 등급색이다 — 원화가
     // 칩을 거의 채우므로 가장자리에만 남지만, 그 한 줄로 등급이 먼저 읽힌다.
     this.chip = scene.add.graphics({ x: 0, y: bodyCenter });
-    this.paintChip(options.rarity && !options.locked ? RARITY_TONE[options.rarity].chip : CHIP_FILL);
+    const tone = options.rarity && !options.locked ? RARITY_TONE[options.rarity].chip : CHIP_FILL;
+    this.paintChip(tone);
     this.add(this.chip);
 
     // 원화는 칩 안에 갇히되 윗변 가운데만 열어 머리가 빠져나오게 한다.
@@ -129,6 +141,21 @@ export class PortraitCard extends Phaser.GameObjects.Container {
       toGeomPoints(chipPoints(chipWidth, this.bodyHeight, { bevel, openWidth: chipWidth * 0.58, openHeight: this.overhang })),
       true,
     );
+
+    // 인물 뒤에 깔리는 배경 원화. 빈 색면만 두면 카드가 심심하고, 그대로 두면 인물보다
+    // 먼저 읽힌다. 그래서 **등급색으로 물들여** 한 겹 눌러 둔다 — 색은 여전히 등급이 정하고
+    // 그림은 그 색 아래에서 결만 남는다.
+    if (scene.textures.exists(BACKGROUND.cardBackdrop)) {
+      const backdrop = scene.add.image(0, bodyCenter, BACKGROUND.cardBackdrop);
+      const cover = Math.max(chipWidth / backdrop.width, (this.bodyHeight + this.overhang) / backdrop.height);
+      backdrop
+        .setScale(cover)
+        .setTint(mixWhite(tone, BACKDROP.lift))
+        .setAlpha(options.locked ? BACKDROP.lockedAlpha : BACKDROP.alpha)
+        .setMask(this.portraitMask.createGeometryMask());
+      this.backdrop = backdrop;
+      this.add(backdrop);
+    }
 
     if (options.label) {
       // 이름은 별도의 레이어가 아니라 칩 안쪽 아래에 깔린 어둠 위에 얹힌다. 투명에서 검정으로
@@ -301,7 +328,7 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     this.portraits.push(shadow, portrait);
     // 칩 바로 위, 아래 어둠보다 아래에 끼운다. 자리를 숫자로 박아 두면 발광 같은 레이어가
     // 하나 늘 때마다 그림이 칩 밑으로 숨는다. 칩을 기준으로 찾는다.
-    const above = this.getIndex(this.chip) + 1;
+    const above = this.getIndex(this.backdrop ?? this.chip) + 1;
     this.addAt(shadow, above);
     this.addAt(portrait, above + 1);
   }

@@ -109,9 +109,9 @@ const BOND_HEART_SIZE = 59;
  * 청량한 푸른빛이다. 등급은 화면마다 다른 색으로 칠하지 않는다.
  */
 const RARITY_GEM: Record<RelicRarity, readonly [string, string, string]> = {
-  SSR: ["#fff3c4", "#f5a623", "#a25c0c"],
-  SR: ["#ffd6f5", "#c07cff", "#6d4bd8"],
-  R: ["#d6f2ff", "#63c4f2", "#2a6fd0"],
+  SSR: ["#fff3c4", "#ffc247", "#c78a1c"],
+  SR: ["#ffe2ff", "#e070f5", "#9b3fc0"],
+  R: ["#e8fbff", "#5fd4ff", "#2f9ad4"],
 };
 
 /** 이름 옆 속성·직군 뱃지의 크기와 이름에서 띄우는 간격. */

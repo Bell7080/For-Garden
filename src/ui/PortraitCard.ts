@@ -91,6 +91,8 @@ export class PortraitCard extends Phaser.GameObjects.Container {
   private readonly overhang: number;
   private readonly chipShape: number[];
   private readonly portraitMask: Phaser.GameObjects.Graphics;
+  /** 윗변이 닫힌 칩 모양. 배경 원화처럼 머리 자리로 새면 안 되는 것에 씌운다. */
+  private readonly bodyMask: Phaser.GameObjects.Graphics;
   private readonly maskOffsetY: number;
   private readonly shadeHeight: number;
   private selected = false;
@@ -141,6 +143,11 @@ export class PortraitCard extends Phaser.GameObjects.Container {
       toGeomPoints(chipPoints(chipWidth, this.bodyHeight, { bevel, openWidth: chipWidth * 0.58, openHeight: this.overhang })),
       true,
     );
+    // 배경 원화는 **윗변이 닫힌** 칩 안에만 머문다. 인물과 같은 마스크를 쓰면 머리가
+    // 빠져나오라고 열어 둔 윗변 홈까지 그림이 채워져, 카드 밖에 배경 조각이 떠 보인다.
+    this.bodyMask = scene.make.graphics({});
+    this.bodyMask.fillStyle(0xffffff, 1);
+    this.bodyMask.fillPoints(toGeomPoints(this.chipShape), true);
 
     // 인물 뒤에 깔리는 배경 원화. 빈 색면만 두면 카드가 심심하고, 그대로 두면 인물보다
     // 먼저 읽힌다. 그래서 **등급색으로 물들여** 한 겹 눌러 둔다 — 색은 여전히 등급이 정하고
@@ -152,7 +159,7 @@ export class PortraitCard extends Phaser.GameObjects.Container {
         .setScale(cover)
         .setTint(mixWhite(tone, BACKDROP.lift))
         .setAlpha(options.locked ? BACKDROP.lockedAlpha : BACKDROP.alpha)
-        .setMask(this.portraitMask.createGeometryMask());
+        .setMask(this.bodyMask.createGeometryMask());
       this.backdrop = backdrop;
       this.add(backdrop);
     }
@@ -228,6 +235,7 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     this.once(Phaser.GameObjects.Events.DESTROY, () => {
       this.disposed = true;
       this.portraitMask.destroy();
+      this.bodyMask.destroy();
     });
     void this.loadPortrait().catch(() => {
       if (this.disposed) return;
@@ -337,9 +345,11 @@ export class PortraitCard extends Phaser.GameObjects.Container {
   private syncMask(): void {
     const matrix = this.getWorldTransformMatrix();
     const decomposed = matrix.decomposeMatrix() as { translateX: number; translateY: number; scaleX: number; scaleY: number };
-    this.portraitMask
-      .setPosition(decomposed.translateX, decomposed.translateY + this.maskOffsetY * decomposed.scaleY)
-      .setScale(decomposed.scaleX, decomposed.scaleY);
+    for (const mask of [this.portraitMask, this.bodyMask]) {
+      mask
+        .setPosition(decomposed.translateX, decomposed.translateY + this.maskOffsetY * decomposed.scaleY)
+        .setScale(decomposed.scaleX, decomposed.scaleY);
+    }
   }
 
   /**

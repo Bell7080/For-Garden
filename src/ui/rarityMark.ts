@@ -25,10 +25,17 @@ export interface RarityTone {
   halo: string;
 }
 
+/**
+ * 카드 바탕색은 **밝게** 잡는다.
+ *
+ * 어둡게 누르면 세 등급이 다 같은 잿빛 판으로 보이고, 원화가 칩을 거의 채우므로 가장자리에
+ * 남는 한 줄로는 등급이 읽히지 않는다. SR과 R이 같은 남보라 계열이던 것도 함께 벌린다 —
+ * SR은 분홍에 가까운 보라, R은 하늘빛이다(룬 등급색과 같은 결).
+ */
 export const RARITY_TONE: Record<RelicRarity, RarityTone> = {
-  SSR: { chip: 0x6b4a12, ink: "#ffeaa8", halo: "#f5a623" },
-  SR: { chip: 0x452a63, ink: "#f0d6ff", halo: "#c07cff" },
-  R: { chip: 0x1b4a70, ink: "#d9f3ff", halo: "#63c4f2" },
+  SSR: { chip: 0xc78a1c, ink: "#fff3c4", halo: "#ffc247" },
+  SR: { chip: 0xa749c9, ink: "#ffe2ff", halo: "#e070f5" },
+  R: { chip: 0x2f9ad4, ink: "#e8fbff", halo: "#5fd4ff" },
 };
 
 /**

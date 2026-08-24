@@ -14,6 +14,7 @@ import type { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
 import { EXCAVATION_TRAIT_ICON } from "./excavationIcons";
 import { completedAdToken } from "../data/adRewards";
+import { addPopupBackgroundImage, BACKGROUND, type PopupBackgroundImage } from "./backgrounds";
 
 /** 한 팝업 안에서 현황과 편집 그리드가 교대하므로 모바일 안전 영역을 넘지 않는 고정 크기를 쓴다. */
 const PANEL = { width: 900, height: 1320 } as const;
@@ -21,6 +22,8 @@ const PANEL = { width: 900, height: 1320 } as const;
 const GRID_VIEW = { left: -370, right: 370, top: -145, bottom: 425, columnGap: 250, rowGap: 280, cardWidth: 215, cardHeight: 235 } as const;
 /** 손가락이 이 거리 이상 움직여야 카드 선택이 아니라 스크롤로 판정한다. */
 const GRID_DRAG_SLOP = 12;
+/** 원화는 편성 슬롯 뒤까지만 보이고 이 선 아래의 생산/편집 정보는 평평한 유리면으로 남긴다. */
+const HERO = { x: 0, y: -405, width: 820, height: 410 } as const;
 type Formation = IdleExcavationState["assignedRelicIds"];
 
 /** 서버 요청을 재시도해도 같은 입력만 한 번 처리하도록 브라우저 난수와 시각을 함께 쓴다. */
@@ -35,6 +38,8 @@ function copyFormation(value: Formation): Formation { return [...value] as Forma
 export class IdleExcavationPopup {
   private body?: Phaser.GameObjects.Container;
   private content?: Phaser.GameObjects.Container;
+  /** Container 밖 GeometryMask까지 재렌더/닫기 때 빠짐없이 정리하는 히어로 원화 핸들이다. */
+  private hero?: PopupBackgroundImage;
   private confirmed?: IdleExcavationResponse;
   private draft?: Formation;
   private selectedSlot = 0;
@@ -87,8 +92,10 @@ export class IdleExcavationPopup {
     }
   }
 
-  /** 다시 그릴 때 PortraitCard의 외부 마스크까지 Container destroy 경로로 함께 정리한다. */
+  /** 다시 그릴 때 히어로 이미지와 PortraitCard의 외부 마스크까지 명시적으로 함께 정리한다. */
   private resetContent(): Phaser.GameObjects.Container | undefined {
+    // 히어로의 GeometryMask와 렌더 이벤트는 content 자식이 아니므로 Container보다 먼저 폐기한다.
+    this.hero?.destroy(); this.hero = undefined;
     // 편집 그리드의 GeometryMask와 씬 입력 리스너는 content 자식이 아니므로 화면 교체 전에 직접 뗀다.
     this.gridMask?.destroy(); this.gridMask = undefined;
     if (this.gridWheelHandler) this.scene.input.off("wheel", this.gridWheelHandler);
@@ -102,13 +109,17 @@ export class IdleExcavationPopup {
     if (!this.body) return undefined;
     this.content = this.scene.add.container(0, 0);
     this.body.add(this.content);
+    // 로딩·오류·현황·편집 모두 같은 원화를 먼저 깔아 상태 전환 때 검은 판으로 튀지 않게 한다.
+    this.hero = addPopupBackgroundImage(this.scene, this.content, BACKGROUND.excavation, HERO);
+    this.content.add(drawHairline(this.scene, HERO.x, HERO.y + HERO.height / 2, HERO.width, { color: COLOR.accent, alpha: 0.34 }));
     return this.content;
   }
 
   private showMessage(message: string, state: "loading" | "error", retry = false): void {
     const content = this.resetContent();
     if (!content || !this.body) return;
-    content.add(this.scene.add.text(0, -40, message, textStyle({ role: "body", size: 28, color: state === "error" ? COLOR.dangerText : COLOR.inkDim })).setOrigin(0.5));
+    // 상태 문구는 유지되는 히어로 아래 정보 영역에 두어 원화와 로딩 피드백이 서로 가리지 않는다.
+    content.add(this.scene.add.text(0, 20, message, textStyle({ role: "body", size: 28, color: state === "error" ? COLOR.dangerText : COLOR.inkDim })).setOrigin(0.5));
     if (retry) content.add(new Button(this.scene, 0, 65, { width: 260, height: 82, label: "다시 시도", onClick: () => { this.showMessage("발굴 현황을 정산하고 있습니다…", "loading"); void this.fetch(); } }));
     this.setState(state);
   }
@@ -372,6 +383,8 @@ export class IdleExcavationPopup {
   /** 타이머와 임시 편성을 버리며 서버에서 받은 confirmed 객체는 외부 상태에 역으로 쓰지 않는다. */
   private dispose(): void {
     this.requestGeneration++; this.ticker?.remove(false); this.ticker = undefined;
+    // PopupLayer가 자식을 먼저 파괴한 경우에도 외부 마스크와 PRE_RENDER 구독은 히어로 핸들이 정리한다.
+    this.hero?.destroy(); this.hero = undefined;
     // PopupLayer가 본체를 먼저 파괴하므로 씬에 직접 등록한 스크롤 자원은 종료 콜백에서 별도로 치운다.
     this.gridMask?.destroy(); this.gridMask = undefined;
     if (this.gridWheelHandler) this.scene.input.off("wheel", this.gridWheelHandler);

@@ -303,9 +303,7 @@ export class LabScene extends Phaser.Scene {
     this.presentationLayer?.destroy(true);
     const layer = this.add.container(0, 0).setDepth(900);
     this.presentationLayer = layer;
-    // 연출은 검은 판이 아니라 **발굴장 위**에서 벌어진다. 원화를 깔고 그 위를 눌러 어둡게
-    // 하면 글자 대비는 그대로면서 "지금 어디에서 캐고 있는가"가 화면에 남는다.
-    layer.add(addSceneBackground(this, BACKGROUND.excavation, 899));
+    // 캐릭터 획득 연구는 현재 연구소 배경 위에서 이어지며, 자원 발굴 원화는 팝업과 혼동하지 않게 배제한다.
     const shade = this.add.rectangle(BASE_WIDTH / 2, 960, BASE_WIDTH, 1920, COLOR.void, 0.82).setInteractive();
     layer.add(shade);
     // 단계 콘텐츠만 교체해 고정 입력면과 건너뛰기 버튼을 실수로 파괴하지 않는다.

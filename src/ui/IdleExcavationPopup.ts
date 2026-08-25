@@ -8,13 +8,14 @@ import { tintFor } from "../puppets/tints";
 import { session } from "../state/session";
 import { setDebugIdleExcavationPopup } from "../debug";
 import { Button } from "./Button";
-import { drawHairline, drawLayer, slantedRect } from "./holo";
+import { chipPoints, drawHairline, drawLayer, drawShapeOutline, slantedRect } from "./holo";
 import { PortraitCard } from "./PortraitCard";
 import type { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
 import { EXCAVATION_TRAIT_ICON } from "./excavationIcons";
 import { completedAdToken } from "../data/adRewards";
-import { addPopupBackgroundImage, BACKGROUND, type PopupBackgroundImage } from "./backgrounds";
+import { addCurrencyChip } from "./CurrencyChip";
+import type { CurrencyIconKey } from "./currencyIcons";
 
 /** 한 팝업 안에서 현황과 편집 그리드가 교대하므로 모바일 안전 영역을 넘지 않는 고정 크기를 쓴다. */
 const PANEL = { width: 900, height: 1320 } as const;
@@ -22,9 +23,17 @@ const PANEL = { width: 900, height: 1320 } as const;
 const GRID_VIEW = { left: -370, right: 370, top: -145, bottom: 425, columnGap: 250, rowGap: 280, cardWidth: 215, cardHeight: 235 } as const;
 /** 손가락이 이 거리 이상 움직여야 카드 선택이 아니라 스크롤로 판정한다. */
 const GRID_DRAG_SLOP = 12;
-/** 원화는 편성 슬롯 뒤까지만 보이고 이 선 아래의 생산/편집 정보는 평평한 유리면으로 남긴다. */
-const HERO = { x: 0, y: -405, width: 820, height: 410 } as const;
+/** 팝업 자체는 원화를 품지 않고 현재 청흑색 면과 굵은 액자선으로 로비 배경에서 분리한다. */
+const POPUP_FRAME = chipPoints(PANEL.width - 24, PANEL.height - 24, { bevel: { topLeft: 118, bottomRight: 118 } });
+/** 두 재화 칩은 같은 고정 폭을 공유해 값의 자릿수가 늘어도 하단 요약부의 열이 움직이지 않는다. */
+const SUMMARY_CHIP = { width: 350, height: 108, x: 190 } as const;
 type Formation = IdleExcavationState["assignedRelicIds"];
+
+/** 발굴 지급 재화는 생산 특성 표식과 달리 다색 공용 재화 이미지를 직접 사용한다. */
+const EXCAVATION_CURRENCY_ICON: Record<ExcavationCurrency, CurrencyIconKey> = {
+  gold: "currency-gold",
+  cheesecake: "currency-cheesecake",
+};
 
 /** 서버 요청을 재시도해도 같은 입력만 한 번 처리하도록 브라우저 난수와 시각을 함께 쓴다. */
 function requestId(): string {
@@ -44,8 +53,6 @@ export class IdleExcavationPopup {
   private readonly sdTweens = new Set<Phaser.Tweens.Tween>();
   /** 재렌더나 닫기 전 시작된 Puppet 로딩 결과가 새 현황에 섞이지 않게 하는 세대 번호다. */
   private sdLoadGeneration = 0;
-  /** Container 밖 GeometryMask까지 재렌더/닫기 때 빠짐없이 정리하는 히어로 원화 핸들이다. */
-  private hero?: PopupBackgroundImage;
   private confirmed?: IdleExcavationResponse;
   private draft?: Formation;
   private selectedSlot = 0;
@@ -98,12 +105,10 @@ export class IdleExcavationPopup {
     }
   }
 
-  /** 다시 그릴 때 히어로 이미지와 PortraitCard의 외부 마스크까지 명시적으로 함께 정리한다. */
+  /** 다시 그릴 때 PortraitCard의 외부 마스크까지 명시적으로 함께 정리한다. */
   private resetContent(): Phaser.GameObjects.Container | undefined {
     // SD는 content 바깥 GPU 자원과 tween을 가지므로 화면 자식 파괴에 기대지 않고 한 번만 정리한다.
     this.clearStatusSD();
-    // 히어로의 GeometryMask와 렌더 이벤트는 content 자식이 아니므로 Container보다 먼저 폐기한다.
-    this.hero?.destroy(); this.hero = undefined;
     // 편집 그리드의 GeometryMask와 씬 입력 리스너는 content 자식이 아니므로 화면 교체 전에 직접 뗀다.
     this.gridMask?.destroy(); this.gridMask = undefined;
     if (this.gridWheelHandler) this.scene.input.off("wheel", this.gridWheelHandler);
@@ -117,16 +122,15 @@ export class IdleExcavationPopup {
     if (!this.body) return undefined;
     this.content = this.scene.add.container(0, 0);
     this.body.add(this.content);
-    // 로딩·오류·현황·편집 모두 같은 원화를 먼저 깔아 상태 전환 때 검은 판으로 튀지 않게 한다.
-    this.hero = addPopupBackgroundImage(this.scene, this.content, BACKGROUND.excavation, HERO);
-    this.content.add(drawHairline(this.scene, HERO.x, HERO.y + HERO.height / 2, HERO.width, { color: COLOR.accent, alpha: 0.34 }));
+    // 원화 대신 팝업 색의 굵은 안쪽 액자를 유지해 뒤 화면의 일러스트와 조작면을 명확히 가른다.
+    this.content.add(drawShapeOutline(this.scene, 0, 0, POPUP_FRAME, { color: COLOR.accent, alpha: 0.62, width: 5 }));
     return this.content;
   }
 
   private showMessage(message: string, state: "loading" | "error", retry = false): void {
     const content = this.resetContent();
     if (!content || !this.body) return;
-    // 상태 문구는 유지되는 히어로 아래 정보 영역에 두어 원화와 로딩 피드백이 서로 가리지 않는다.
+    // 상태 문구는 비워 둔 액자 중앙에 놓아 로딩 피드백이 제목이나 닫기 조작을 가리지 않는다.
     content.add(this.scene.add.text(0, 20, message, textStyle({ role: "body", size: 28, color: state === "error" ? COLOR.dangerText : COLOR.inkDim })).setOrigin(0.5));
     if (retry) content.add(new Button(this.scene, 0, 65, { width: 260, height: 82, label: "다시 시도", onClick: () => { this.showMessage("발굴 현황을 정산하고 있습니다…", "loading"); void this.fetch(); } }));
     this.setState(state);
@@ -146,18 +150,20 @@ export class IdleExcavationPopup {
     const rate = excavationProductionDisplayModel(formation, RELICS, session.relicProgress).totalsPerHour;
     const baseServerMs = new Date(response.serverTime).getTime();
     let harvestButton: Button | undefined;
+    // 공용 CurrencyChip은 아이콘과 가장 큰 누적값만 책임지고, 발굴 전용 보조 라벨이 생산 속도를 설명한다.
+    content.add(drawLayer(this.scene, 0, 74, slantedRect(800, 220), { fill: 0x05070a, alpha: 0.9, edge: COLOR.accent, edgeAlpha: 0.42 }));
     const rows = (["gold", "cheesecake"] as ExcavationCurrency[]).map((currency, index) => {
-      const y = 20 + index * 105;
-      const label = currency === "gold" ? "골드" : "치즈케이크";
-      content.add(this.scene.add.text(-350, y, `${label} · 시간당 ${formatCurrency(Math.floor(rate[currency]))}`, textStyle({ role: "body", size: 23, color: COLOR.inkDim })).setOrigin(0, 0.5));
-      const amount = this.scene.add.text(350, y, "", textStyle({ role: "display", size: 30 })).setOrigin(1, 0.5);
-      content.add(amount);
+      const x = index === 0 ? -SUMMARY_CHIP.x : SUMMARY_CHIP.x;
+      const amount = addCurrencyChip(this.scene, x, 45, EXCAVATION_CURRENCY_ICON[currency], { parent: content, width: SUMMARY_CHIP.width, height: SUMMARY_CHIP.height });
+      // 이름을 되풀이하지 않고 칩 바로 아래에 같은 단위의 생산 속도만 작게 붙인다.
+      content.add(this.scene.add.text(x, 130, `+${formatCurrency(Math.floor(rate[currency]))} /시간`, textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0.5));
       return { currency, amount };
     });
     const refreshEstimate = (): void => {
       // 서버 응답 이후의 로컬 경과분만 더하는 표시용 예상치이며 정산 기준 시각은 절대 갱신하지 않는다.
       const elapsedHours = Math.max(0, Date.now() - baseServerMs) / 3_600_000;
-      for (const row of rows) row.amount.setText(`예상 ${formatCurrency(Math.floor(response.excavation.unclaimed[row.currency] + rate[row.currency] * elapsedHours))}`);
+      // 틱에서는 CurrencyChip이 돌려준 값 Text만 바꾼다. 이미지와 불투명 요약 레이어는 재생성하지 않는다.
+      for (const row of rows) row.amount.setText(formatCurrency(Math.floor(response.excavation.unclaimed[row.currency] + rate[row.currency] * elapsedHours)));
       // 창을 열어 둔 사이 정수 1개가 쌓이는 순간에도 새 조회 없이 버튼 상태만 정확히 갱신한다.
       const harvestable = (["gold", "cheesecake"] as ExcavationCurrency[]).some((currency) => Math.floor(response.excavation.unclaimed[currency] + rate[currency] * elapsedHours) > 0);
       harvestButton?.setEnabled(harvestable && !this.saving);
@@ -165,14 +171,23 @@ export class IdleExcavationPopup {
     refreshEstimate();
     this.ticker?.remove(false);
     this.ticker = this.scene.time.addEvent({ delay: 1000, loop: true, callback: refreshEstimate });
-    content.add(drawHairline(this.scene, 0, 235, 760, { color: COLOR.accent, alpha: 0.25 }));
+    content.add(drawHairline(this.scene, 0, 205, 760, { color: COLOR.accent, alpha: 0.25 }));
     const result = this.harvestResult;
     const discarded = result ? result.discarded.gold + result.discarded.cheesecake : 0;
-    const notice = this.harvestError
-      ?? (discarded > 0 ? `지갑 상한으로 골드 ${formatCurrency(result!.discarded.gold)}, 치즈케이크 ${formatCurrency(result!.discarded.cheesecake)}을(를) 받지 못했습니다.`
-        : result ? `수확 완료 · 골드 +${formatCurrency(result.granted.gold)} · 치즈케이크 +${formatCurrency(result.granted.cheesecake)}`
-          : "빈 슬롯은 허용되며 생산량 0으로 계산됩니다.");
-    content.add(this.scene.add.text(0, 285, notice, textStyle({ role: "body", size: 21, color: discarded > 0 || this.harvestError ? COLOR.dangerText : COLOR.inkDim, align: "center" })).setOrigin(0.5));
+    const notice = this.harvestError ?? (discarded > 0 ? "수확 완료 · 지갑 상한 손실" : result ? "수확이 완료되었습니다." : "빈 슬롯은 허용되며 생산량 0으로 계산됩니다.");
+    content.add(this.scene.add.text(0, 250, notice, textStyle({ role: "body", size: 21, color: discarded > 0 || this.harvestError ? COLOR.dangerText : COLOR.inkDim, align: "center" })).setOrigin(0.5));
+    if (result) {
+      // 실제 지급은 공용 칩 값으로, 같은 재화의 손실은 그 아이콘 아래 위험색 보조 숫자로 분리한다.
+      (["gold", "cheesecake"] as ExcavationCurrency[]).forEach((currency, index) => {
+        const granted = result.granted[currency];
+        const lost = result.discarded[currency];
+        if (granted <= 0 && lost <= 0) return;
+        const x = index === 0 ? -150 : 150;
+        const amount = addCurrencyChip(this.scene, x, 305, EXCAVATION_CURRENCY_ICON[currency], { parent: content, width: 260, height: 66 });
+        amount.setText(`+${formatCurrency(granted)}`);
+        if (lost > 0) content.add(this.scene.add.text(x + 35, 337, `손실 -${formatCurrency(lost)}`, textStyle({ role: "emphasis", size: 17, color: COLOR.dangerText })).setOrigin(0.5, 1));
+      });
+    }
     this.addAdOffers(content, response.serverTime);
     content.add(new Button(this.scene, -205, 515, { width: 350, height: 92, label: "편성 변경", onClick: () => this.beginEdit() }));
     harvestButton = new Button(this.scene, 205, 515, { width: 350, height: 92, label: this.saving ? "수확 중…" : "수확", variant: "primary", onClick: () => void this.harvest() });
@@ -442,8 +457,6 @@ export class IdleExcavationPopup {
   /** 타이머와 임시 편성을 버리며 서버에서 받은 confirmed 객체는 외부 상태에 역으로 쓰지 않는다. */
   private dispose(): void {
     this.requestGeneration++; this.clearStatusSD(); this.ticker?.remove(false); this.ticker = undefined;
-    // PopupLayer가 자식을 먼저 파괴한 경우에도 외부 마스크와 PRE_RENDER 구독은 히어로 핸들이 정리한다.
-    this.hero?.destroy(); this.hero = undefined;
     // PopupLayer가 본체를 먼저 파괴하므로 씬에 직접 등록한 스크롤 자원은 종료 콜백에서 별도로 치운다.
     this.gridMask?.destroy(); this.gridMask = undefined;
     if (this.gridWheelHandler) this.scene.input.off("wheel", this.gridWheelHandler);

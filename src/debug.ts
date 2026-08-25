@@ -35,6 +35,8 @@ export interface DebugState {
   infoOpen?: boolean;
   /** 로비 위 발굴 쪽지의 상태. 씬 전환 없이 열리고 입력을 막는 계약을 E2E가 확인한다. */
   idleExcavationPopup?: "loading" | "ready" | "error" | "editing" | "saving" | "save-error";
+  /** 로비 무역 팝업의 표시 단계와 카드 입력 계약만 E2E에 공개한다. */
+  tradePopup?: { state: "loading" | "ready" | "error" | "purchasing"; productCount: number; remaining?: Record<string, number>; productButtons?: Array<{ id: string; x: number; y: number }> };
   /** 슬롯별 공용 입력면의 중심과 크기. 좁은 화면의 입력 겹침만 검사하며 편성 데이터는 담지 않는다. */
   idleExcavationSlots?: Array<{ index: number; x: number; y: number; width: number; height: number }>;
   /** 편집 진입 시 선택된 슬롯 번호. Canvas 입력 회귀 검증용이며 렐릭 ID는 노출하지 않는다. */
@@ -101,6 +103,11 @@ export function setDebugInfoOpen(open: boolean): void {
 /** Canvas 내부 팝업의 사용자 가시 상태만 노출하며 게임 진행값에는 사용하지 않는다. */
 export function setDebugIdleExcavationPopup(state: DebugState["idleExcavationPopup"]): void {
   ensure().idleExcavationPopup = state;
+}
+
+/** 구매 내용 대신 사용자에게 보이는 팝업 단계와 남은 횟수만 복사한다. */
+export function setDebugTradePopup(state: DebugState["tradePopup"]): void {
+  ensure().tradePopup = state;
 }
 
 /** Canvas 슬롯의 사용자 입력 계약만 E2E에 복사한다. */

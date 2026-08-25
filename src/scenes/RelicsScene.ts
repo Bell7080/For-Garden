@@ -10,10 +10,11 @@ import { BottomNav } from "../ui/BottomNav";
 import { Button } from "../ui/Button";
 import { CharacterInfoManager } from "../managers/CharacterInfoManager";
 import { TopBar } from "../ui/TopBar";
-import { PortraitCard, relicCardTint } from "../ui/PortraitCard";
+import { PortraitCard, portraitCardOverhang, relicCardTint } from "../ui/PortraitCard";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { COLOR, textStyle } from "../ui/theme";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
+import { SectionDivider } from "../ui/SectionDivider";
 
 /**
  * 렐릭 — 보유 중인 렐릭을 훑어보는 화면.
@@ -36,8 +37,8 @@ export class RelicsScene extends Phaser.Scene {
   private sortMode: SortMode = "number";
   /** 정렬 버튼 하나가 세 기준을 돌아가며 맡는다. 라벨을 바꿔 지금 기준을 알린다. */
   private sortButton!: Button;
-  /** 그리드와 함께 지웠다 다시 그리는 구분 제목들. */
-  private sectionLabels: Phaser.GameObjects.Text[] = [];
+  /** 정렬 때 제목·개수·구분선을 한 번에 지우는 미보유 섹션 장식 컨테이너다. */
+  private lockedSection?: Phaser.GameObjects.Container;
 
   constructor() {
     super("relics");
@@ -123,10 +124,23 @@ export class RelicsScene extends Phaser.Scene {
     });
     place(owned, startY);
     if (locked.length > 0) {
-      const labelY = ownedBottom + 108;
-      this.sectionLabels.push(this.add.text(40, labelY, "미보유 렐릭", textStyle({ role: "display", size: 40, color: COLOR.inkDim })).setOrigin(0, 1));
-      this.sectionLabels.push(this.add.text(BASE_WIDTH - 40, labelY - 4, String(locked.length), textStyle({ role: "emphasis", size: 26, color: COLOR.inkDim })).setOrigin(1, 1));
-      place(locked, labelY + 44 + cardH / 2);
+      // 미보유 항목이 있을 때만 구분선과 제목을 같은 컨테이너에 만든다. 빈 섹션에는 장식도 없다.
+      const section = this.add.container(0, 0);
+      const dividerY = ownedBottom + Math.round(gapY * 0.72);
+      section.add(new SectionDivider(this, BASE_WIDTH / 2, dividerY, BASE_WIDTH - 80));
+
+      // 실제 접근성 글꼴 배율이 반영된 displayHeight를 읽어 첫 카드의 윗경계를 계산한다.
+      // 카드 본체 높이뿐 아니라 머리 원화의 돌출 높이도 포함해 제목·등급 표식과 겹치지 않게 한다.
+      const labelTop = dividerY + Math.round(gapY * 0.48);
+      const label = this.add.text(40, labelTop, "미보유 렐릭", textStyle({ role: "display", size: 40, color: COLOR.inkDim })).setOrigin(0, 0);
+      const count = this.add.text(BASE_WIDTH - 40, labelTop, String(locked.length), textStyle({ role: "emphasis", size: 26, color: COLOR.inkDim })).setOrigin(1, 0);
+      section.add([label, count]);
+      this.lockedSection = section;
+
+      const labelHeight = Math.max(label.displayHeight, count.displayHeight);
+      const labelToCardGap = Math.round(labelHeight * 0.7);
+      const firstCardY = labelTop + labelHeight + labelToCardGap + portraitCardOverhang(cardH) + cardH / 2;
+      place(locked, firstCardY);
     }
   }
 
@@ -171,8 +185,9 @@ export class RelicsScene extends Phaser.Scene {
     this.sortButton.setLabel(SORT_LABELS[mode]);
     for (const card of this.cards.values()) card.destroy();
     this.cards.clear();
-    for (const label of this.sectionLabels) label.destroy();
-    this.sectionLabels = [];
+    // 컨테이너가 소유한 제목·개수·구분선을 함께 파괴해 정렬 변경 뒤 장식 잔상을 막는다.
+    this.lockedSection?.destroy(true);
+    this.lockedSection = undefined;
     this.buildGrid();
     this.refresh();
   }

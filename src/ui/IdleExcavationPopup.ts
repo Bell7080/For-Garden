@@ -28,6 +28,8 @@ const GRID_DRAG_SLOP = 12;
 const POPUP_FRAME = chipPoints(PANEL.width - 24, PANEL.height - 24, { bevel: { topLeft: 118, bottomRight: 118 } });
 /** 두 재화 칩은 같은 고정 폭을 공유해 값의 자릿수가 늘어도 하단 요약부의 열이 움직이지 않는다. */
 const SUMMARY_CHIP = { width: 350, height: 108, x: 190 } as const;
+/** 좁은 안전 영역에서도 팝업 제목·닫기와 겹치지 않는 현황 히어로의 고정 세로 범위다. */
+const STATUS_HERO = { x: 0, y: -385, width: 800, height: 300, headerY: -570, slotY: -385 } as const;
 type Formation = IdleExcavationState["assignedRelicIds"];
 
 /** 발굴 지급 재화는 생산 특성 표식과 달리 다색 공용 재화 이미지를 직접 사용한다. */
@@ -48,6 +50,8 @@ function copyFormation(value: Formation): Formation { return [...value] as Forma
 export class IdleExcavationPopup {
   private body?: Phaser.GameObjects.Container;
   private content?: Phaser.GameObjects.Container;
+  /** 히어로 원화의 컨테이너 밖 마스크/이벤트까지 reset 때 함께 폐기한다. */
+  private statusBackground?: PopupBackgroundImage;
   /** 현황 SD만 담아 카드/편집 UI와 비동기 수명을 분리하는 전용 레이어다. */
   private sdContainer?: Phaser.GameObjects.Container;
   private readonly sdPuppets = new Set<PuppetCreature>();
@@ -108,6 +112,8 @@ export class IdleExcavationPopup {
 
   /** 다시 그릴 때 PortraitCard의 외부 마스크까지 명시적으로 함께 정리한다. */
   private resetContent(): Phaser.GameObjects.Container | undefined {
+    // 팝업 배경 helper의 GeometryMask는 content 자식이 아니므로 자식 파괴보다 먼저 정리한다.
+    this.statusBackground?.destroy(); this.statusBackground = undefined;
     // SD는 content 바깥 GPU 자원과 tween을 가지므로 화면 자식 파괴에 기대지 않고 한 번만 정리한다.
     this.clearStatusSD();
     // 편집 그리드의 GeometryMask와 씬 입력 리스너는 content 자식이 아니므로 화면 교체 전에 직접 뗀다.
@@ -143,23 +149,35 @@ export class IdleExcavationPopup {
     const content = this.resetContent();
     if (!response || !content) return;
     const formation = response.excavation.assignedRelicIds;
+    const rate = excavationProductionDisplayModel(formation, RELICS, session.relicProgress).totalsPerHour;
+    // 1순위 발굴대 상태: 전용 발굴장 원화를 슬롯/SD와 같은 히어로에 묶어 배경-캐릭터 연동을 보존한다.
+    if (this.scene.textures.exists(BACKGROUND.excavation)) {
+      this.statusBackground = addPopupBackgroundImage(this.scene, content, BACKGROUND.excavation, STATUS_HERO);
+    }
+    const headerState = this.saving ? "수확 처리 중…" : "발굴 진행 중";
+    addSectionTitle(this.scene, -380, STATUS_HERO.headerY, `${headerState} · 배치 ${formation.filter(Boolean).length}/3`, { size: 23, parent: content });
+    content.add(this.scene.add.text(380, STATUS_HERO.headerY, `총 효율  ${formatCurrency(Math.floor(rate.gold))}G · ${formatCurrency(Math.floor(rate.cheesecake))}보급 /시간`, textStyle({ role: "emphasis", size: 19, color: COLOR.accentText })).setOrigin(1, 0.5));
+    content.add(drawHairline(this.scene, 0, -535, 760, { color: COLOR.accent, alpha: 0.42 }));
+    // 2순위 작업 중 SD/슬롯: 현황에서도 칸 자체가 편성 그리드의 유일한 진입점이다.
     const slotCards = this.addSlots(content, formation, false);
     // draft 편집에는 SD를 만들지 않는다. 서버 확정값을 그리는 현황에서만 비동기 세대를 시작한다.
     this.loadStatusSD(content, formation, slotCards);
-    // 첫 진입을 포함해 언제 열어도 획득형 연구와 배치형 생산의 차이를 한 문장으로 확인시킨다.
-    content.add(this.scene.add.text(0, -250, "연구소는 캐릭터 획득 연구, 이곳은 배치형 자원 발굴입니다.", textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0.5));
-    const rate = excavationProductionDisplayModel(formation, RELICS, session.relicProgress).totalsPerHour;
+    // 기능 차이는 핵심 현황 뒤의 작은 정보 문구로 낮춰 반복 진입 때 먼저 읽히지 않게 한다.
+    content.add(this.scene.add.text(0, -205, "ℹ 연구소는 캐릭터 획득 연구 · 발굴은 배치형 자원 생산", textStyle({ role: "body", size: 17, color: COLOR.inkDim })).setOrigin(0.5));
     const baseServerMs = new Date(response.serverTime).getTime();
     let harvestButton: Button | undefined;
     // 공용 CurrencyChip은 아이콘과 가장 큰 누적값만 책임지고, 발굴 전용 보조 라벨이 생산 속도를 설명한다.
-    content.add(drawLayer(this.scene, 0, 74, slantedRect(800, 220), { fill: 0x05070a, alpha: 0.9, edge: COLOR.accent, edgeAlpha: 0.42 }));
+    // 3순위 누적 보상: SD 아래에서 현재 수확량과 시간당 생산량을 한 번에 훑는다.
+    content.add(drawLayer(this.scene, 0, 30, slantedRect(800, 205), { fill: 0x05070a, alpha: 0.9, edge: COLOR.accent, edgeAlpha: 0.42 }));
     const rows = (["gold", "cheesecake"] as ExcavationCurrency[]).map((currency, index) => {
       const x = index === 0 ? -SUMMARY_CHIP.x : SUMMARY_CHIP.x;
-      const amount = addCurrencyChip(this.scene, x, 45, EXCAVATION_CURRENCY_ICON[currency], { parent: content, width: SUMMARY_CHIP.width, height: SUMMARY_CHIP.height });
+      const amount = addCurrencyChip(this.scene, x, 5, EXCAVATION_CURRENCY_ICON[currency], { parent: content, width: SUMMARY_CHIP.width, height: SUMMARY_CHIP.height });
       // 이름을 되풀이하지 않고 칩 바로 아래에 같은 단위의 생산 속도만 작게 붙인다.
-      content.add(this.scene.add.text(x, 130, `+${formatCurrency(Math.floor(rate[currency]))} /시간`, textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0.5));
+      content.add(this.scene.add.text(x, 88, `+${formatCurrency(Math.floor(rate[currency]))} /시간`, textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0.5));
       return { currency, amount };
     });
+    const availability = this.scene.add.text(0, 145, "", textStyle({ role: "body", size: 19, color: COLOR.inkDim })).setOrigin(0.5);
+    content.add(availability);
     const refreshEstimate = (): void => {
       // 서버 응답 이후의 로컬 경과분만 더하는 표시용 예상치이며 정산 기준 시각은 절대 갱신하지 않는다.
       const elapsedHours = Math.max(0, Date.now() - baseServerMs) / 3_600_000;
@@ -168,18 +186,25 @@ export class IdleExcavationPopup {
       // 창을 열어 둔 사이 정수 1개가 쌓이는 순간에도 새 조회 없이 버튼 상태만 정확히 갱신한다.
       const harvestable = (["gold", "cheesecake"] as ExcavationCurrency[]).some((currency) => Math.floor(response.excavation.unclaimed[currency] + rate[currency] * elapsedHours) > 0);
       harvestButton?.setEnabled(harvestable && !this.saving);
+      // 비활성 이유를 누적 0 또는 가장 빠른 재화의 다음 정수 생산 시각으로 짧게 설명한다.
+      const seconds = (["gold", "cheesecake"] as ExcavationCurrency[]).map((currency) => {
+        const current = response.excavation.unclaimed[currency] + rate[currency] * elapsedHours;
+        return rate[currency] > 0 ? Math.max(0, Math.ceil((1 - current) / rate[currency] * 3600)) : Number.POSITIVE_INFINITY;
+      });
+      const next = Math.min(...seconds);
+      availability.setText(harvestable ? "현재 누적 보상을 수확할 수 있습니다." : Number.isFinite(next) ? `현재 누적 0 · 다음 수확까지 약 ${Math.max(1, Math.ceil(next / 60))}분` : "현재 누적 0 · 렐릭을 배치하면 생산이 시작됩니다.");
     };
     refreshEstimate();
     this.ticker?.remove(false);
     this.ticker = this.scene.time.addEvent({ delay: 1000, loop: true, callback: refreshEstimate });
-    content.add(drawHairline(this.scene, 0, 205, 760, { color: COLOR.accent, alpha: 0.25 }));
+    content.add(drawHairline(this.scene, 0, 180, 760, { color: COLOR.accent, alpha: 0.25 }));
     const result = this.harvestResult;
     const discarded = result ? result.discarded.gold + result.discarded.cheesecake : 0;
     const notice = this.harvestError ?? (discarded > 0 ? "수확 완료 · 지갑 상한 손실" : result ? "수확이 완료되었습니다." : "빈 슬롯은 허용되며 생산량 0으로 계산됩니다.");
     content.add(this.scene.add.text(0, 250, notice, textStyle({ role: "body", size: 21, color: discarded > 0 || this.harvestError ? COLOR.dangerText : COLOR.inkDim, align: "center" })).setOrigin(0.5));
     this.addAdOffers(content, response.serverTime);
-    content.add(new Button(this.scene, -205, 515, { width: 350, height: 92, label: "편성 변경", onClick: () => this.beginEdit() }));
-    harvestButton = new Button(this.scene, 205, 515, { width: 350, height: 92, label: this.saving ? "수확 중…" : "수확", variant: "primary", onClick: () => void this.harvest() });
+    // 5순위 주요 행동: 별도 편성 버튼은 없애고, 하단 전체 폭은 수확 primary 하나에만 준다.
+    harvestButton = new Button(this.scene, 0, 545, { width: 520, height: 98, label: this.saving ? "수확 중…" : "수확", variant: "primary", onClick: () => void this.harvest() });
     // 서버 확정 누적량이 1 미만이거나 요청 중이면 지급할 것이 없으므로 입력부터 막는다.
     refreshEstimate(); content.add(harvestButton);
     this.setState(this.saving ? "saving" : "ready");
@@ -206,9 +231,10 @@ export class IdleExcavationPopup {
       const remaining = Math.max(0, slot.dailyLimitUtc - (sameUtcDay ? session.dailyAdRewards.claimsBySlot[slot.slotId] ?? 0 : 0));
       if (remaining === 0) return;
       const label = `${slot.displayText} · 오늘 ${remaining}회`;
-      content.add(new Button(this.scene, index === 0 ? -205 : 205, 390, { width: 350, height: 78, label, onClick: () => void this.claimAdEffect(slot) }));
+      // 4순위 보조 혜택: 광고는 primary와 거리를 두고 더 낮고 작은 보조 버튼으로만 제안한다.
+      content.add(new Button(this.scene, index === 0 ? -205 : 205, 385, { width: 350, height: 72, label, onClick: () => void this.claimAdEffect(slot) }));
     });
-    if (this.adMessage) content.add(this.scene.add.text(0, 445, this.adMessage, textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0.5));
+    if (this.adMessage) content.add(this.scene.add.text(0, 438, this.adMessage, textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0.5));
   }
 
   /** 취소·동의 거부·SDK/재고 실패는 메시지만 바꾸며 일반 수확 버튼과 발굴 상태를 건드리지 않는다. */
@@ -226,10 +252,10 @@ export class IdleExcavationPopup {
   }
 
   /** 편집을 열 때에만 확정 배열을 복사하므로 취소/닫기가 서버 편성을 건드릴 수 없다. */
-  private beginEdit(): void {
+  private beginEdit(slot = 0): void {
     if (!this.confirmed || this.saving) return;
     this.draft = copyFormation(this.confirmed.excavation.assignedRelicIds);
-    this.selectedSlot = 0;
+    this.selectedSlot = slot;
     this.gridScrollY = 0;
     this.renderEditor();
   }
@@ -239,6 +265,9 @@ export class IdleExcavationPopup {
     const content = this.resetContent();
     if (!content || !this.draft) return;
     this.ticker?.remove(false); this.ticker = undefined;
+    // 편집 헤더도 현황과 같은 위치를 써 저장 네트워크 상태가 화면 위에서 즉시 보인다.
+    addSectionTitle(this.scene, -380, STATUS_HERO.headerY, this.saving ? "편성 저장 중…" : `배치 편집 · 슬롯 ${this.selectedSlot + 1}/3`, { size: 23, parent: content });
+    content.add(drawHairline(this.scene, 0, -535, 760, { color: COLOR.accent, alpha: 0.42 }));
     this.addSlots(content, this.draft, true);
     content.add(this.scene.add.text(-360, -185, "보유 렐릭 · 선택한 슬롯에 배치", textStyle({ role: "emphasis", size: 23, color: COLOR.accentText })).setOrigin(0, 0.5));
     content.add(this.scene.add.text(360, -185, "빈 칸 이동 · 찬 칸 자리 교체 · 같은 카드 재선택 해제", textStyle({ role: "body", size: 17, color: COLOR.inkDim })).setOrigin(1, 0.5));
@@ -257,8 +286,9 @@ export class IdleExcavationPopup {
     content.add(grid);
     this.addGridScroll(content, grid, owned.length);
     if (error) content.add(this.scene.add.text(0, 455, error, textStyle({ role: "body", size: 22, color: COLOR.dangerText })).setOrigin(0.5));
-    const cancel = new Button(this.scene, -205, 540, { width: 350, height: 88, label: "취소", onClick: () => { if (!this.saving) { this.draft = undefined; this.renderStatus(); } } });
-    const done = new Button(this.scene, 205, 540, { width: 350, height: 88, label: this.saving ? "저장 중…" : "완료", variant: "primary", onClick: () => void this.saveDraft() });
+    // 현황의 수확 자리와 같은 primary가 편집 중에만 '배치 완료' 역할로 전환된다.
+    const cancel = new Button(this.scene, -280, 540, { width: 220, height: 82, label: "취소", onClick: () => { if (!this.saving) { this.draft = undefined; this.renderStatus(); } } });
+    const done = new Button(this.scene, 125, 540, { width: 500, height: 92, label: this.saving ? "저장 중…" : "배치 완료", variant: "primary", onClick: () => void this.saveDraft() });
     cancel.setEnabled(!this.saving); done.setEnabled(!this.saving);
     content.add([cancel, done]);
     this.setState(this.saving ? "saving" : error ? "save-error" : "editing");
@@ -327,25 +357,29 @@ export class IdleExcavationPopup {
   /** 슬롯은 빈 면과 PortraitCard를 구분하고 어느 칸이 편집 대상인지 확대/발광으로 알린다. */
   private addSlots(parent: Phaser.GameObjects.Container, formation: Formation, editable: boolean): Array<Phaser.GameObjects.Container | undefined> {
     const cards: Array<Phaser.GameObjects.Container | undefined> = [];
-    parent.add(this.scene.add.text(-360, -550, editable ? `편집 슬롯 ${this.selectedSlot + 1}` : `확정 편성 ${formation.filter(Boolean).length} / 3`, textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0.5));
     formation.forEach((id, index) => {
       const x = -250 + index * 250;
       const relic = id ? RELICS.find((item) => item.id === id) : undefined;
       let hit: Phaser.GameObjects.GameObject;
       if (relic) {
         const progress = session.relicProgress[relic.id];
-        const card = new PortraitCard(this.scene, x, -385, { width: 210, height: 245, portraitAssetId: relic.portraitAssetId, tint: portraitUsesRelicTint(relic.portraitAssetId) ? tintFor(relic.id) : undefined, label: relic.name, level: progress?.level ?? 1, rarity: relic.rarity, stars: (progress?.breakthrough ?? 0) + 1 });
+        const card = new PortraitCard(this.scene, x, STATUS_HERO.slotY, { width: 210, height: 245, portraitAssetId: relic.portraitAssetId, tint: portraitUsesRelicTint(relic.portraitAssetId) ? tintFor(relic.id) : undefined, label: relic.name, level: progress?.level ?? 1, rarity: relic.rarity, stars: (progress?.breakthrough ?? 0) + 1 });
         card.setSelected(editable && index === this.selectedSlot);
         parent.add(card); hit = card.hit; cards[index] = card;
       } else {
-        const empty = this.scene.add.container(x, -385);
+        const empty = this.scene.add.container(x, STATUS_HERO.slotY);
         empty.add(drawLayer(this.scene, 0, 0, slantedRect(210, 245), { fill: 0x151a22, alpha: 0.45, edge: index === this.selectedSlot && editable ? COLOR.accent : 0x6f7884, edgeAlpha: 0.55 }));
         empty.add(this.scene.add.text(0, 0, `빈 슬롯\n${index + 1}`, textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim, align: "center" })).setOrigin(0.5));
-        const area = this.scene.add.rectangle(0, 0, 210, 245, 0xffffff, 0).setInteractive({ useHandCursor: editable }); empty.add(area);
+        const area = this.scene.add.rectangle(0, 0, 210, 245, 0xffffff, 0).setInteractive({ useHandCursor: true }); empty.add(area);
         if (editable && index === this.selectedSlot) empty.setScale(1.06);
         parent.add(empty); hit = area;
       }
-      if (editable) hit.on("pointerup", () => { if (!this.saving) { this.selectedSlot = index; this.renderEditor(); } });
+      // 현황 칸을 누르면 그 칸이 선택된 편집 그리드가 열리고, 편집 중에는 선택 칸만 바뀐다.
+      hit.on("pointerup", () => {
+        if (this.saving) return;
+        if (!editable) { this.beginEdit(index); return; }
+        this.selectedSlot = index; this.renderEditor();
+      });
     });
     return cards;
   }
@@ -439,7 +473,7 @@ export class IdleExcavationPopup {
 
   /** 타이머와 임시 편성을 버리며 서버에서 받은 confirmed 객체는 외부 상태에 역으로 쓰지 않는다. */
   private dispose(): void {
-    this.requestGeneration++; this.clearStatusSD(); this.ticker?.remove(false); this.ticker = undefined;
+    this.requestGeneration++; this.statusBackground?.destroy(); this.statusBackground = undefined; this.clearStatusSD(); this.ticker?.remove(false); this.ticker = undefined;
     // PopupLayer가 본체를 먼저 파괴하므로 씬에 직접 등록한 스크롤 자원은 종료 콜백에서 별도로 치운다.
     this.gridMask?.destroy(); this.gridMask = undefined;
     if (this.gridWheelHandler) this.scene.input.off("wheel", this.gridWheelHandler);

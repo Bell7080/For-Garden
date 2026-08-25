@@ -24,11 +24,21 @@ export const EXPEDITION_MAP_BALANCE = {
 /** 밸런스 표가 허용하는 전투 종류다. 보스는 마지막 층 전용이라 추첨에서 제외한다. */
 export const EXPEDITION_COMBAT_TYPES = ["normal", "elite", "horde"] as const;
 
+/** 노드별 적 수와 능력치/렌더 배율의 단일 밸런스 표다. 스토리 전투의 기존 3대3에는 관여하지 않는다. */
+export const EXPEDITION_COMBAT_BALANCE = {
+  normal: { enemyCount: 3, statScale: 1, bodyScale: 1 },
+  elite: { enemyCount: 1, statScale: 1.65, bodyScale: 1.1 },
+  horde: { enemyCount: 5, statScale: 0.82, bodyScale: 0.94 },
+} as const;
+
+/** 휴식은 생존자를 최대 HP의 30%만큼 회복하고, 전멸 전이라면 사망자 한 기를 25% HP로 부활시킨다. */
+export const EXPEDITION_REST_RULES = { healPercent: 30, revivePercent: 25, maxRevives: 1, cannotReviveAfterWipe: true } as const;
+
 /** 휴식과 보물은 전투가 아닌 경로 보조 노드다. */
 export const EXPEDITION_NON_COMBAT_TYPES = ["rest", "treasure"] as const;
 
 /** 저장 데이터가 임의 문자열로 전투 규칙을 주입하지 못하게 하는 원정 증강 ID 목록이다. */
-export const EXPEDITION_AUGMENT_IDS = ["reinforced-core", "predator-instinct", "field-repair"] as const;
+export const EXPEDITION_AUGMENT_IDS = ["reinforced-core", "predator-instinct", "blood-edge", "field-repair"] as const;
 
 /** 노드 완료 전까지 런 안에 보류할 수 있는 보상 종류다. */
 export const EXPEDITION_REWARD_IDS = ["gold", "fossil", "amber", "gems", "cheesecake"] as const;

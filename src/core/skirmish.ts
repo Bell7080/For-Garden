@@ -3,6 +3,7 @@ import type { Combatant } from "./combatTypes";
 import { computeDamage, isCriticalHit } from "./damage";
 import { drainFerocityFever, FEROCITY_RULES } from "./ferocity";
 import { breakthroughBonus } from "./relicProgression";
+import { attackPowerMultiplier, bleedOnAttackEffect, type ExpeditionAugmentEffect } from "./expeditionAugments";
 import type { RelicDef, Side, Skill } from "./types";
 import { canUseUltimate, ULTIMATE_ENERGY_MAX } from "./ultimate";
 
@@ -74,6 +75,19 @@ export interface SkirmishState {
   /** 전투가 시작된 뒤 흐른 시간(초). */
   elapsed: number;
   log: string[];
+  /** 원정에서만 주입되는 순수 효과 목록이다. 일반 스토리 전투는 빈 배열이다. */
+  augmentEffects: readonly ExpeditionAugmentEffect[];
+}
+
+/** 원정 저장 상태를 전투 시작 값으로 옮길 때 쓰는 렐릭별 스냅샷이다. currentHp는 0~100 비율이다. */
+export interface FighterInitialState { relicId: string; currentHp: number; alive: boolean }
+
+/** 전투 종료 후 저장 경계가 소비하는 렐릭별 생존 결과다. */
+export interface SkirmishRelicResult { relicId: string; currentHp: number; alive: boolean }
+
+export interface CreateSkirmishOptions {
+  playerInitialStates?: readonly FighterInitialState[];
+  augmentEffects?: readonly ExpeditionAugmentEffect[];
 }
 
 /** 씬이 모션·피격 숫자·사망 연출을 붙일 수 있도록 이번 프레임에 일어난 일만 모아 돌려준다. */
@@ -190,11 +204,13 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
  * 아군은 아래쪽 끝에서 출발한다. 맵을 넓게 쓰면서 위쪽 적진까지 달려 올라가는 그림을 만들기
  * 위해서다. 같은 팀 셋도 한 줄로 세우지 않고 앞뒤로 어긋나게 둔다.
  */
-function spawnSpots(arena: Arena, side: Side): { x: number; y: number }[] {
+export function spawnSpots(arena: Arena, side: Side, count = 3): { x: number; y: number }[] {
+  if (!Number.isInteger(count) || count < 1 || count > 5) throw new RangeError("팀 인원은 1~5기여야 합니다.");
   const width = arena.right - arena.left;
-  // 세 갈래로 넓게 벌려 세운다. 같은 열끼리 맞붙으면 세 싸움이 전장 곳곳에서 따로 벌어진다.
-  const columns = [0.08, 0.5, 0.92].map((ratio) => arena.left + width * ratio);
-  const stagger = [0, -70, 0];
+  // 3기는 기존 좌표를 정확히 보존하고, 나머지는 같은 안전 여백 안에 균등 배치한다.
+  const ratios = count === 3 ? [0.08, 0.5, 0.92] : Array.from({ length: count }, (_, index) => count === 1 ? 0.5 : 0.08 + (0.84 * index) / (count - 1));
+  const columns = ratios.map((ratio) => arena.left + width * ratio);
+  const stagger = count === 3 ? [0, -70, 0] : columns.map((_, index) => index % 2 === 0 ? 0 : -70);
   return columns.map((x, index) => ({
     x,
     y: side === "player" ? arena.bottom + stagger[index] : arena.top - stagger[index],
@@ -207,19 +223,39 @@ export function createSkirmish(
   arena: Arena,
   playerBondLevels: Readonly<Record<string, number>> = {},
   playerBreakthroughs: Readonly<Record<string, number>> = {},
+  options: CreateSkirmishOptions = {},
 ): SkirmishState {
-  const playerSpots = spawnSpots(arena, "player");
-  const enemySpots = spawnSpots(arena, "enemy");
+  if (playerDefs.length < 1 || playerDefs.length > 5 || enemyDefs.length < 1 || enemyDefs.length > 5) throw new RangeError("난전은 팀별 1~5기를 지원합니다.");
+  const playerSpots = spawnSpots(arena, "player", playerDefs.length);
+  const enemySpots = spawnSpots(arena, "enemy", enemyDefs.length);
+  const initialById = new Map(options.playerInitialStates?.map((snapshot) => [snapshot.relicId, snapshot]));
+  const players = playerDefs.map((def, i) => {
+    const fighter = makeFighter(def, "player", i, playerSpots[i].x, playerSpots[i].y, playerBondLevels[def.id] ?? 0, playerBreakthroughs[def.id] ?? 0);
+    const saved = initialById.get(def.id);
+    if (saved) fighter.hp = saved.alive ? fighter.maxHp * Math.min(100, Math.max(0, saved.currentHp)) / 100 : 0;
+    return fighter;
+  });
   return {
     fighters: [
-      ...playerDefs.map((def, i) => makeFighter(def, "player", i, playerSpots[i].x, playerSpots[i].y, playerBondLevels[def.id] ?? 0, playerBreakthroughs[def.id] ?? 0)),
+      ...players,
       ...enemyDefs.map((def, i) => makeFighter(def, "enemy", i, enemySpots[i].x, enemySpots[i].y)),
     ],
     arena,
     phase: "fight",
     elapsed: 0,
     log: [],
+    augmentEffects: options.augmentEffects ?? [],
   };
+}
+
+/** 전투 상태의 변경 가능한 Fighter를 노출하지 않고 원정 저장용 결과만 복사한다. */
+export function skirmishRelicResults(state: SkirmishState): SkirmishRelicResult[] {
+  return state.fighters.filter(({ side }) => side === "player").map((fighter) => ({
+    relicId: fighter.def.id,
+    // 저장은 서로 다른 최대 HP를 같은 휴식 규칙으로 다룰 수 있도록 백분율을 유지한다.
+    currentHp: Math.max(0, Math.min(100, (fighter.hp / fighter.maxHp) * 100)),
+    alive: isFighterAlive(fighter),
+  }));
 }
 
 export function isFighterAlive(fighter: Fighter): boolean {
@@ -400,7 +436,8 @@ function strike(
     + (attackingInFever && critTrait.effectId === "criticalChanceBonus" ? critTrait.chancePercent : 0);
   const critical = isCriticalHit(Math.min(100, criticalChance), rng());
   const damageInput = { ...skill, isCritical: critical, kind: useUltimate ? "ultimate" as const : "basic" as const };
-  const rawAmount = computeDamage(attacker, target, damageInput, true);
+  // 공용 피해 공식을 그대로 통과한 뒤 원정 공격력 증강만 최종 배율로 한 번 적용한다.
+  const rawAmount = Math.max(1, Math.round(computeDamage(attacker, target, damageInput, true) * attackPowerMultiplier(state.augmentEffects, attacker.def.id)));
   const guardTrait = target.def.ferocityTrait;
   // 개별 경감은 방어·패시브·상성까지 끝난 공용 피해의 마지막에 한 번만 적용한다.
   const amount = target.ferocityFever && guardTrait.effectId === "damageReduction"
@@ -435,6 +472,12 @@ function strike(
   target.dashY = (dy / gap) * SKIRMISH.knockback * power;
 
   applyStreak(attacker, target, events);
+  const augmentBleed = bleedOnAttackEffect(state.augmentEffects, attacker.def.id);
+  if (augmentBleed && isFighterAlive(target)) {
+    // 출혈은 단일 슬롯 정책이다. 재적용 시 더 센 비율과 더 긴 남은 시간을 보존해 약한 효과가 덮지 않는다.
+    target.bleed = { remaining: Math.max(target.bleed?.remaining ?? 0, augmentBleed.seconds), tickIn: target.bleed?.tickIn ?? 1, percent: Math.max(target.bleed?.percent ?? 0, augmentBleed.percent) };
+    events.push({ kind: "bleed", fighterId: target.id, amount: 0, started: true });
+  }
 
   events.push({
     kind: "attack",
@@ -451,7 +494,8 @@ function strike(
     for (const secondary of state.fighters) {
       if (secondary.side === attacker.side || secondary.id === target.id || !isFighterAlive(secondary)
         || distance(target, secondary) > splashTrait.radius) continue;
-      const secondaryBase = computeDamage(attacker, secondary, damageInput, true);
+      // 광역도 같은 공격의 일부이므로 주 대상과 동일한 원정 공격력 배율을 거친다.
+      const secondaryBase = computeDamage(attacker, secondary, damageInput, true) * attackPowerMultiplier(state.augmentEffects, attacker.def.id);
       const secondaryGuard = secondary.def.ferocityTrait;
       const reduced = secondary.ferocityFever && secondaryGuard.effectId === "damageReduction"
         ? secondaryBase * (1 - secondaryGuard.reductionPercent / 100)

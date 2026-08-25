@@ -100,31 +100,34 @@ export const LUKA_ASSET: PuppetAsset = {
 /**
  * 1번 적 토비. 적 전용 Puppet 번호와 스테이지 고정 편성 번호를 일치시킨다.
  *
- * 적 셋은 캔버스 크기가 서로 다르다. 한때 셋이 같은 1254 정사각 규격을 쓴다고 적어 두었지만
- * 실제 묶음은 그렇지 않았고, 그래서 그림 영역이 실제보다 작게 잡혀 정보창에서 지나치게
- * 확대되었다. 값은 원본 알파(>16) 경계 그대로다 — 임의로 줄인 배율로 덮지 않는다.
+ * 적 셋은 캔버스 크기가 서로 다르다. ZIP 안 WebP의 VP8X 헤더로 원본 픽셀 크기를 확인하고,
+ * 기존 알파 경계도 같은 비율로 원본 좌표계에 환산했다. 관절과 원화를 한 좌표계로 적어야
+ * `중심1` 기준 배치가 별도 확대 보정 없이 맞는다.
  */
 export const TOBY_ASSET: PuppetAsset = {
   url: `${base}puppets/enemy_001.zip`,
-  imageWidth: 1448,
-  imageHeight: 2048,
-  content: { left: 24, top: 76, right: 1424, bottom: 1968 },
+  imageWidth: 2000,
+  imageHeight: 2828,
+  // 기존 알파 경계를 실제 2000×2828 WebP 좌표로 환산해 투명 여백을 확대 높이에 포함하지 않는다.
+  content: { left: 33, top: 105, right: 1967, bottom: 2718 },
 };
 
 /** 2번 적 아모. */
 export const AMO_ASSET: PuppetAsset = {
   url: `${base}puppets/enemy_002.zip`,
-  imageWidth: 2172,
-  imageHeight: 2898,
-  content: { left: 201, top: 44, right: 1972, bottom: 2854 },
+  imageWidth: 1086,
+  imageHeight: 1449,
+  // 이전 값은 실제 WebP 크기를 정확히 2배로 적어 중심1과 원화의 좌표계를 어긋나게 했다.
+  content: { left: 100, top: 22, right: 986, bottom: 1427 },
 };
 
 /** 3번 적 리파. 파일명의 기존 표기(enemy003)를 실제 공개 에셋 경로대로 연결한다. */
 export const RIPA_ASSET: PuppetAsset = {
   url: `${base}puppets/enemy_003.zip`,
-  imageWidth: 2892,
-  imageHeight: 4096,
-  content: { left: 44, top: 249, right: 2849, bottom: 3844 },
+  imageWidth: 2000,
+  imageHeight: 2833,
+  // ZIP 안 원화의 실제 크기에 맞춰 알파 경계도 같은 좌표계로 환산한다.
+  content: { left: 30, top: 172, right: 1970, bottom: 2659 },
 };
 
 /**
@@ -350,6 +353,7 @@ export async function loadPuppetAnchors(asset: PuppetAsset): Promise<Record<Anch
   const cached = anchorCache.get(asset.url);
   if (cached) return cached;
   const template = await loadPuppet(asset);
+  // 에셋 메타데이터와 관절은 모두 원본 WebP 픽셀 좌표계이므로 별도 개체별 배율 없이 해석한다.
   const anchors = resolveAnchors(template.project.bones, asset);
   anchorCache.set(asset.url, anchors);
   return anchors;

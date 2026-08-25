@@ -1,12 +1,12 @@
 import Phaser from "phaser";
 import { BASE_WIDTH } from "../config/gameConfig";
-import { setDebugScene } from "../debug";
+import { setDebugRelicScroll, setDebugScene } from "../debug";
 import { sortRelicsByRarity, sortRelicsBySpecimenNumber } from "../data/relics";
 import { combatPower } from "../core/combatPower";
 import type { RelicDef } from "../core/types";
 import { relicCollection } from "../managers/RelicCollectionManager";
 import { session } from "../state/session";
-import { BottomNav } from "../ui/BottomNav";
+import { BottomNav, NAV_TOP } from "../ui/BottomNav";
 import { Button } from "../ui/Button";
 import { CharacterInfoManager } from "../managers/CharacterInfoManager";
 import { TopBar } from "../ui/TopBar";
@@ -16,6 +16,12 @@ import { COLOR, textStyle } from "../ui/theme";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { SectionDivider } from "../ui/SectionDivider";
 import { compareBookmarkedOwnedRelics } from "../core/relicCatalog";
+import { drawGlassFade } from "../ui/holo";
+
+/** 제목/정렬 조작과 하단 탭 사이만 목록에 내주는 고정 화면 경계다. */
+const VIEWPORT_TOP = 340;
+const VIEWPORT_BOTTOM = NAV_TOP;
+const DRAG_SLOP = 18;
 
 /**
  * 렐릭 — 보유 중인 렐릭을 훑어보는 화면.
@@ -38,8 +44,36 @@ export class RelicsScene extends Phaser.Scene {
   private sortMode: SortMode = "number";
   /** 정렬 버튼 하나가 세 기준을 돌아가며 맡는다. 라벨을 바꿔 지금 기준을 알린다. */
   private sortButton!: Button;
-  /** 정렬 때 제목·개수·구분선을 한 번에 지우는 미보유 섹션 장식 컨테이너다. */
-  private lockedSection?: Phaser.GameObjects.Container;
+  /** 카드·구분선·미보유 제목을 함께 움직이고 한 번에 잘라 내는 유일한 콘텐츠 계층이다. */
+  private content!: Phaser.GameObjects.Container;
+  private viewportMask?: Phaser.GameObjects.Graphics;
+  private contentBottom = VIEWPORT_TOP;
+  private minScrollY = 0;
+  private velocityY = 0;
+  private pointerDown = false;
+  private pointerY = 0;
+  private draggedDistance = 0;
+  private readonly onPointerDown = (pointer: Phaser.Input.Pointer): void => {
+    if (pointer.y < VIEWPORT_TOP || pointer.y >= VIEWPORT_BOTTOM) return;
+    // 스크롤이 불필요한 소수 카드에서도 이전 제스처의 이동량이 카드 탭을 막지 않게 초기화한다.
+    this.draggedDistance = 0;
+    if (!this.scrollEnabled()) return;
+    this.pointerDown = true;
+    this.pointerY = pointer.y;
+    this.velocityY = 0;
+  };
+  private readonly onPointerMove = (pointer: Phaser.Input.Pointer): void => {
+    if (!this.pointerDown || !pointer.isDown) return;
+    const delta = pointer.y - this.pointerY;
+    this.pointerY = pointer.y;
+    this.draggedDistance += Math.abs(delta);
+    this.velocityY = delta * 60;
+    this.scrollTo(this.content.y + delta);
+  };
+  private readonly onPointerUp = (): void => { this.pointerDown = false; };
+  private readonly onWheel = (_pointer: Phaser.Input.Pointer, _objects: Phaser.GameObjects.GameObject[], _dx: number, dy: number): void => {
+    if (this.scrollEnabled()) this.scrollTo(this.content.y - dy * 0.8);
+  };
 
   constructor() {
     super("relics");
@@ -48,6 +82,11 @@ export class RelicsScene extends Phaser.Scene {
   create(): void {
     setDebugScene("relics");
     this.cards.clear();
+    this.content = this.add.container(0, 0);
+    // GeometryMask는 화면 좌표에 고정되어 콘텐츠가 움직여도 제목·탭 영역을 절대 침범하지 않는다.
+    this.viewportMask = this.make.graphics();
+    this.viewportMask.fillStyle(0xffffff).fillRect(0, VIEWPORT_TOP, BASE_WIDTH, VIEWPORT_BOTTOM - VIEWPORT_TOP);
+    this.content.setMask(this.viewportMask.createGeometryMask());
 
     const cx = BASE_WIDTH / 2;
     // background_002를 렐릭 탭의 야외 유적 전경으로 사용한다.
@@ -82,13 +121,26 @@ export class RelicsScene extends Phaser.Scene {
       onClick: () => this.setSortMode(SORT_ORDER[(SORT_ORDER.indexOf(this.sortMode) + 1) % SORT_ORDER.length]),
     });
 
-    new BottomNav(this, "relics");
     this.info = new CharacterInfoManager(this);
     // 정보창 안에서 애착·즐겨찾기가 바뀔 수 있으므로 닫힐 때 표시와 정렬을 함께 다시 맞춘다.
     this.info.onClose = () => this.refresh();
     // 서버가 재화 차감을 확정한 직후 정보창과 상단 줄이 같은 세션 지갑을 다시 읽는다.
     this.info.onWalletChange = () => this.topBar.refresh();
     this.refresh();
+    this.installScrollInput();
+
+    // 상단은 어두움→투명 한 겹으로 카드를 감추고, 하단은 BottomNav 자체 페이드를 재사용한다.
+    drawGlassFade(this, BASE_WIDTH / 2, VIEWPORT_TOP + 70, BASE_WIDTH, 140, { topAlpha: 0.88, bottomAlpha: 0 }).setDepth(20);
+    new BottomNav(this, "relics");
+  }
+
+  /** 모바일 관성은 프레임 시간으로 감쇠하며, 이동한 프레임마다 카드 내부 마스크도 동기화한다. */
+  update(_time: number, delta: number): void {
+    if (!this.pointerDown && Math.abs(this.velocityY) > 4 && this.scrollEnabled()) {
+      this.scrollTo(this.content.y + this.velocityY * Math.min(delta, 34) / 1000);
+      this.velocityY *= Math.pow(0.9, delta / 16.67);
+    }
+    this.syncCardMasks();
   }
 
   /**
@@ -141,13 +193,16 @@ export class RelicsScene extends Phaser.Scene {
       const label = this.add.text(40, labelTop, "미보유 렐릭", textStyle({ role: "display", size: 40, color: COLOR.inkDim })).setOrigin(0, 0);
       const count = this.add.text(BASE_WIDTH - 40, labelTop, String(locked.length), textStyle({ role: "emphasis", size: 26, color: COLOR.inkDim })).setOrigin(1, 0);
       section.add([label, count]);
-      this.lockedSection = section;
+      this.content.add(section);
 
       const labelHeight = Math.max(label.displayHeight, count.displayHeight);
       const labelToCardGap = Math.round(labelHeight * 0.7);
       const firstCardY = labelTop + labelHeight + labelToCardGap + portraitCardOverhang(cardH) + cardH / 2;
       place(locked, firstCardY);
     }
+    // 마지막 카드의 몸체 아래가 실제 콘텐츠 끝이다. 항목이 적으면 min=max=0이 되어 입력도 꺼진다.
+    const cards = [...this.cards.values()];
+    this.contentBottom = cards.reduce((bottom, card) => Math.max(bottom, card.y + cardH / 2), VIEWPORT_TOP);
   }
 
   /** 지금 기준으로 목록을 정렬한다. 기준이 무엇이든 같은 카드 조립을 쓴다. */
@@ -179,8 +234,12 @@ export class RelicsScene extends Phaser.Scene {
         affinity: { element: relic.element, role: relic.role },
         locked: !owned,
       });
+      this.content.add(card);
       // 카드를 누르면 바로 정보창이 열린다. 애착 설정도 그 안의 뱃지가 맡는다.
-      card.hit.on("pointerup", () => this.info.showRelic(relic, relicCollection.owns(relic.id)));
+      card.hit.on("pointerup", () => {
+        // 드래그 종료가 카드 선택으로 새지 않도록 포인터 이동 허용치를 넘은 탭은 버린다.
+        if (this.draggedDistance <= DRAG_SLOP) this.info.showRelic(relic, relicCollection.owns(relic.id));
+      });
       this.cards.set(relic.id, card);
     }
   }
@@ -198,13 +257,49 @@ export class RelicsScene extends Phaser.Scene {
     // 카드 자체를 다시 만들지 않으면 새 즐겨찾기 표식만 바뀌고 기존 좌표는 그대로 남는다.
     for (const card of this.cards.values()) card.destroy();
     this.cards.clear();
-    // 컨테이너가 소유한 제목·개수·구분선을 함께 파괴해 재구성 뒤 장식 잔상을 막는다.
-    this.lockedSection?.destroy(true);
-    this.lockedSection = undefined;
+    // 정렬 전 콘텐츠 자식을 모두 없애 이전 장식·카드 입력면·마스크 참조가 남지 않게 한다.
+    this.content.removeAll(true);
     this.buildGrid();
     for (const [id, card] of this.cards) {
       card.setSelected(relicCollection.owns(id) && id === session.favorite);
     }
-
+    // 새 콘텐츠 높이로 범위를 다시 계산하고 이전 정렬의 위치를 가장 가까운 안전 경계로 접는다.
+    this.minScrollY = Math.min(0, VIEWPORT_BOTTOM - this.contentBottom - 28);
+    this.velocityY = 0;
+    this.scrollTo(this.content.y);
   }
+
+  /** 씬 단위 핸들러는 종료 때 정확히 같은 함수 참조로 제거해 재진입 중복 입력을 막는다. */
+  private installScrollInput(): void {
+    this.input.on("pointerdown", this.onPointerDown);
+    this.input.on("pointermove", this.onPointerMove);
+    this.input.on("pointerup", this.onPointerUp);
+    this.input.on("pointerupoutside", this.onPointerUp);
+    this.input.on("wheel", this.onWheel);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.input.off("pointerdown", this.onPointerDown);
+      this.input.off("pointermove", this.onPointerMove);
+      this.input.off("pointerup", this.onPointerUp);
+      this.input.off("pointerupoutside", this.onPointerUp);
+      this.input.off("wheel", this.onWheel);
+      this.viewportMask?.destroy();
+      this.viewportMask = undefined;
+      setDebugRelicScroll(undefined);
+    });
+  }
+
+  /** 휠·드래그·관성이 공유하는 유일한 clamp 경로다. */
+  private scrollTo(y: number): void {
+    this.content.y = Phaser.Math.Clamp(y, this.minScrollY, 0);
+    if (this.content.y === this.minScrollY || this.content.y === 0) this.velocityY = 0;
+    this.syncCardMasks();
+    setDebugRelicScroll({ y: this.content.y, minY: this.minScrollY, maxY: 0, enabled: this.scrollEnabled(), viewportTop: VIEWPORT_TOP, viewportBottom: VIEWPORT_BOTTOM });
+  }
+
+  /** PortraitCard의 자체 마스크는 부모 이동을 상속하지 않으므로 월드 변환을 명시적으로 갱신한다. */
+  private syncCardMasks(): void {
+    for (const card of this.cards.values()) card.syncMask();
+  }
+
+  private scrollEnabled(): boolean { return this.minScrollY < 0; }
 }

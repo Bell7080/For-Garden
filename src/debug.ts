@@ -65,6 +65,8 @@ export interface DebugState {
   party?: { autoButton: { x: number; y: number }; visibleAffinityDirections: number };
   /** 설정 왕복 E2E가 상점의 사용자 표시 섹션까지 복원됐는지 확인하는 최소 상태다. */
   shopSection?: "premium";
+  /** 도감 스크롤의 표시 범위와 현재 제한값. Canvas E2E가 경계·입력 분리를 검증하는 용도다. */
+  relicScroll?: { y: number; minY: number; maxY: number; enabled: boolean; viewportTop: number; viewportBottom: number };
 }
 
 declare global {
@@ -101,6 +103,11 @@ export function setDebugParty(party: DebugState["party"]): void {
 /** 상점의 현재 표시 섹션만 공개하며 상품이나 결제 상태는 포함하지 않는다. */
 export function setDebugShopSection(section: DebugState["shopSection"]): void {
   ensure().shopSection = section;
+}
+
+/** 게임 상태가 아닌 도감 스크롤의 현재 렌더 지오메트리만 E2E에 공개한다. */
+export function setDebugRelicScroll(scroll: DebugState["relicScroll"]): void {
+  ensure().relicScroll = scroll;
 }
 
 export function setDebugInfoOpen(open: boolean): void {

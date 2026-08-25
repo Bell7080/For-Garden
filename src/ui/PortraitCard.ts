@@ -364,7 +364,8 @@ export class PortraitCard extends Phaser.GameObjects.Container {
   }
 
   /** 마스크를 카드의 현재 화면 위치·배율에 맞춘다. 카드를 옮기거나 키운 뒤에 부른다. */
-  private syncMask(): void {
+  // 컨테이너를 스크롤하는 화면도 내부 기하 마스크를 월드 좌표에 다시 맞출 수 있어야 한다.
+  public syncMask(): void {
     const matrix = this.getWorldTransformMatrix();
     const decomposed = matrix.decomposeMatrix() as { translateX: number; translateY: number; scaleX: number; scaleY: number };
     for (const mask of [this.portraitMask, this.bodyMask]) {

@@ -155,12 +155,15 @@ export interface Passive {
   desc: string;
 }
 
-/** 방치 발굴이 초기에 생산할 수 있는 일반 성장 재화의 폐쇄 집합이다. */
-export type ExcavationProductionCurrency = "gold" | "cheesecake";
+/**
+ * 방치 발굴 생산 재화의 실제 Wallet 저장 키다.
+ * UI의 일반 화석은 `fossil`, UI의 다이아는 `gems`에 저장되며 표시 용어를 키로 쓰지 않는다.
+ */
+export type ExcavationProductionCurrency = "gold" | "cheesecake" | "fossil" | "gems";
 
 /** 전투 능력치와 독립적으로 운영 밸런스를 조정하는 렐릭별 발굴 특화다. */
 export interface ExcavationTrait {
-  /** 이 렐릭이 생산하는 주력 재화이며 희소 가챠/유료 재화는 허용하지 않는다. */
+  /** 이 렐릭이 생산하는 주력 재화다. 다이아(`gems`)는 별도의 낮은 생산/성장률을 적용한다. */
   primaryCurrency: ExcavationProductionCurrency;
   /** 성장 보정 전, 레벨 1·한계 돌파 0단계에서 한 시간 동안 생산하는 수량이다. */
   baseProductionPerHour: number;

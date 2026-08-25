@@ -15,7 +15,7 @@ function makeRune(instanceId = "rune-1"): RuneInstance {
 /** 각 테스트가 독립적으로 쓸 서버 저장소 역할의 세션을 만든다. */
 function makeSession(fossil = 1000): Session {
   return {
-    idleExcavation: { assignedRelicIds: [null, null, null], lastSettledAt: null, unclaimed: { gold: 0, cheesecake: 0 }, baseStorageSeconds: 14_400, activeProductionMultiplier: 1, storageExtensionExpiresAt: null },
+    idleExcavation: { assignedRelicIds: [null, null, null], lastSettledAt: null, unclaimed: { gold: 0, cheesecake: 0, fossil: 0, gems: 0 }, baseStorageSeconds: 14_400, activeProductionMultiplier: 1, storageExtensionExpiresAt: null, retroactiveExcavationGrantVersion: 1 },
     settings: createDefaultSettings(),
     completedStoryIds: new Set(), observationRecords: [],
     selectedStageId: null,
@@ -43,7 +43,22 @@ describe("FakeServer", () => {
     await server.getIdleExcavation();
     await server.saveExcavationFormation({ requestId: "formation-1", assignedRelicIds: ["anky", "rex", "dodo"] });
     now = new Date("2026-08-20T04:00:00Z"); await server.getIdleExcavation();
-    expect(state.idleExcavation.unclaimed).toEqual({ gold: 956.4, cheesecake: 31.36 });
+    expect(state.idleExcavation.unclaimed).toEqual({ gold: 428.4, cheesecake: 0, fossil: 105.6, gems: 0.8064 });
+  });
+
+  it("v18 신규 재화 소급분은 서버 기준 시각과 보관 상한으로 한 번만 정산한다", async () => {
+    const state = makeSession();
+    state.idleExcavation.assignedRelicIds = ["rex", "dodo", "anky"];
+    state.idleExcavation.lastSettledAt = "2026-08-19T00:00:00.000Z";
+    state.idleExcavation.retroactiveExcavationGrantVersion = 0;
+    const now = new Date("2026-08-20T00:00:00.000Z");
+    const server = new FakeServer(state, { latencyMs: 0, now: () => now });
+    const first = await server.getIdleExcavation();
+    const repeated = await server.getIdleExcavation();
+    // 24시간 미접속이어도 4시간만 계산하며, 같은 서버 시각의 재조회는 다시 지급하지 않는다.
+    expect(first.excavation.unclaimed).toEqual(repeated.excavation.unclaimed);
+    expect(first.excavation.unclaimed).toMatchObject({ fossil: 105.6, gems: 0.8064 });
+    expect(first.excavation.retroactiveExcavationGrantVersion).toBe(1);
   });
 
   it("미보유·중복 렐릭 편성 저장 실패는 서버 확정 편성을 유지한다", async () => {
@@ -55,35 +70,35 @@ describe("FakeServer", () => {
   });
 
   it("같은 수확 요청을 반복해도 한 번만 지급하고 지갑 상한을 넘기지 않는다", async () => {
-    const state = makeSession(); state.wallet.gold = 999_999_998; state.idleExcavation.unclaimed = { gold: 5, cheesecake: 1 };
+    const state = makeSession(); state.wallet.gold = 999_999_998; state.idleExcavation.unclaimed = { gold: 5, cheesecake: 1, fossil: 0, gems: 0 };
     const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-20T00:00:00Z") });
     const request = { requestId: "harvest-1" }; const first = await server.harvestExcavation(request); const repeated = await server.harvestExcavation(request);
     expect(repeated).toEqual(first); expect(state.wallet.gold).toBe(999_999_999); expect(first.discarded.gold).toBe(4);
-    expect(first.remaining).toEqual({ gold: 0, cheesecake: 0 });
+    expect(first.remaining).toEqual({ gold: 0, cheesecake: 0, fossil: 0, gems: 0 });
   });
 
   it("두 기기의 연속 수확처럼 서로 다른 요청은 첫 호출만 기존 누적량을 받는다", async () => {
-    const state = makeSession(); state.idleExcavation.unclaimed = { gold: 20, cheesecake: 3 };
+    const state = makeSession(); state.idleExcavation.unclaimed = { gold: 20, cheesecake: 3, fossil: 0, gems: 0 };
     const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-20T00:00:00Z") });
     const firstDevice = await server.harvestExcavation({ requestId: "device-a" });
     const secondDevice = await server.harvestExcavation({ requestId: "device-b" });
-    expect(firstDevice.granted).toEqual({ gold: 20, cheesecake: 3 });
-    expect(secondDevice.granted).toEqual({ gold: 0, cheesecake: 0 });
-    expect(state.wallet).toMatchObject({ gold: 20, cheesecake: 3 });
+    expect(firstDevice.granted).toEqual({ gold: 20, cheesecake: 3, fossil: 0, gems: 0 });
+    expect(secondDevice.granted).toEqual({ gold: 0, cheesecake: 0, fossil: 0, gems: 0 });
+    expect(state.wallet).toMatchObject({ gold: 20, cheesecake: 3, fossil: 1000, gems: 0 });
   });
 
   it("지갑이 이미 상한이면 지급량 0과 유실량을 구분해 반환한다", async () => {
     const state = makeSession(); state.wallet.gold = 999_999_999; state.wallet.cheesecake = 9_999_999;
-    state.idleExcavation.unclaimed = { gold: 7, cheesecake: 2 };
+    state.idleExcavation.unclaimed = { gold: 7, cheesecake: 2, fossil: 0, gems: 0 };
     const result = await new FakeServer(state, { latencyMs: 0 }).harvestExcavation({ requestId: "full-wallet" });
-    expect(result.granted).toEqual({ gold: 0, cheesecake: 0 });
-    expect(result.discarded).toEqual({ gold: 7, cheesecake: 2 });
+    expect(result.granted).toEqual({ gold: 0, cheesecake: 0, fossil: 0, gems: 0 });
+    expect(result.discarded).toEqual({ gold: 7, cheesecake: 2, fossil: 0, gems: 0 });
   });
 
   it("누적량 0 수확은 지갑을 바꾸지 않고 새 기준 시각을 확정한다", async () => {
     const state = makeSession(); const now = new Date("2026-08-20T05:00:00Z");
     const result = await new FakeServer(state, { latencyMs: 0, now: () => now }).harvestExcavation({ requestId: "empty" });
-    expect(result.granted).toEqual({ gold: 0, cheesecake: 0 });
+    expect(result.granted).toEqual({ gold: 0, cheesecake: 0, fossil: 0, gems: 0 });
     expect(result.wallet).toEqual(state.wallet); expect(result.serverTime).toBe(now.toISOString());
     expect(result.excavation.lastSettledAt).toBe(now.toISOString());
   });
@@ -383,14 +398,14 @@ describe("FakeServer 광고 보상 경계", () => {
   });
 
   it("1.5배는 현재 확정 수확에 한 번만 적용하고 다음 수확에는 남지 않는다", async () => {
-    const state = makeSession(); state.idleExcavation.unclaimed = { gold: 10, cheesecake: 2 };
+    const state = makeSession(); state.idleExcavation.unclaimed = { gold: 10, cheesecake: 2, fossil: 0, gems: 0 };
     const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-22T12:00:00Z") });
     await server.claimAdReward({ slotId: "excavation-harvest", verificationToken: "verified:excavation-harvest", requestId: "boost-harvest" });
     const boosted = await server.harvestExcavation({ requestId: "boosted-harvest" });
-    expect(boosted.granted).toEqual({ gold: 15, cheesecake: 3 });
-    state.idleExcavation.unclaimed = { gold: 10, cheesecake: 2 };
+    expect(boosted.granted).toEqual({ gold: 15, cheesecake: 3, fossil: 0, gems: 0 });
+    state.idleExcavation.unclaimed = { gold: 10, cheesecake: 2, fossil: 0, gems: 0 };
     const normal = await server.harvestExcavation({ requestId: "normal-harvest" });
-    expect(normal.granted).toEqual({ gold: 10, cheesecake: 2 });
+    expect(normal.granted).toEqual({ gold: 10, cheesecake: 2, fossil: 0, gems: 0 });
   });
 
   it("생산 2배는 중첩하지 않고 재수령 시 만료를 교체하며 만료 경계를 나눠 정산한다", async () => {

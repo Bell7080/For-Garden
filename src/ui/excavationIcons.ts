@@ -4,6 +4,9 @@ import type { ExcavationCurrency } from "../core/idleExcavation";
 export const EXCAVATION_TRAIT_ICON: Record<ExcavationCurrency, "excavation-trait-gold" | "excavation-trait-supplies"> = {
   gold: "excavation-trait-gold",
   cheesecake: "excavation-trait-supplies",
+  // 전용 선화가 추가되기 전까지 저장 키에 가장 가까운 기존 자원 계열 선화를 재사용한다.
+  fossil: "excavation-trait-gold",
+  gems: "excavation-trait-supplies",
 };
 
 /** 타이틀 로딩 단계가 SVG를 한 번만 래스터화하도록 키·경로를 한 표에서 관리한다. */

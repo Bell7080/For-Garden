@@ -31,6 +31,17 @@ describe("SaveManager", () => {
     expect(migrated.idleExcavation).toMatchObject({ assignedRelicIds: [null, null, null], lastSettledAt: null, baseStorageSeconds: 14_400 });
   });
 
+  it("v18 발굴을 보존하면서 화석·다이아 키와 미완료 소급 표식을 보충한다", () => {
+    const legacy = validData() as unknown as Record<string, unknown>;
+    legacy.saveVersion = 18;
+    const excavation = legacy.idleExcavation as { unclaimed: Record<string, number>; retroactiveExcavationGrantVersion?: number };
+    excavation.unclaimed = { gold: 4.5, cheesecake: 2 };
+    delete excavation.retroactiveExcavationGrantVersion;
+    const migrated = new SaveManager(new MemoryStorage()).migrate(legacy);
+    expect(migrated.idleExcavation.unclaimed).toEqual({ gold: 4.5, cheesecake: 2, fossil: 0, gems: 0 });
+    expect(migrated.idleExcavation.retroactiveExcavationGrantVersion).toBe(0);
+  });
+
   it("발굴 편성과 미수확 소수 생산량을 저장 왕복한다", () => {
     const storage = new MemoryStorage(); const source = createDefaultSession();
     source.idleExcavation.assignedRelicIds = ["anky", null, "rex"]; source.idleExcavation.unclaimed.gold = 0.75;

@@ -7,7 +7,7 @@ import { createDefaultSession, type SaveData, type Session } from "./session";
 import { assertValidRuneInstance, type RuneInstance } from "../core/runes";
 import { normalizeSettings } from "../core/settings";
 import { AD_REWARD_SLOTS } from "../data/adRewards";
-import { createIdleExcavationState } from "../core/idleExcavation";
+import { createIdleExcavationState, EXCAVATION_CURRENCIES, RETROACTIVE_EXCAVATION_GRANT_VERSION } from "../core/idleExcavation";
 
 /** v12에서만 존재했던 정적 젬을 저장 마이그레이션용 인스턴스로 재현하는 폐쇄된 표다. */
 const LEGACY_V12_RUNES: Readonly<Record<string, RuneInstance>> = {
@@ -25,7 +25,7 @@ function migrateV12Rune(definitionId: string): RuneInstance {
 
 /** 키는 계정 연동 저장소와 충돌하지 않도록 로컬 프로토타입임을 명시한다. */
 export const SAVE_STORAGE_KEY = "eternal-city.local-save";
-export const CURRENT_SAVE_VERSION = 18;
+export const CURRENT_SAVE_VERSION = 19;
 
 type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
@@ -106,8 +106,19 @@ export class SaveManager {
   migrate(input: unknown): SaveData {
     if (!input || typeof input !== "object") throw new SaveDataError("저장 데이터가 객체가 아닙니다.");
     const legacy = input as Record<string, unknown>;
-    // v18 이전에는 기준 시각이 없으므로 현재 시각을 꾸며 넣지 않고 서버 첫 조회 초기화 표식을 둔다.
-    const idleExcavation = Number(legacy.saveVersion) >= 18 && legacy.idleExcavation ? legacy.idleExcavation : createIdleExcavationState();
+    // v18 이전에는 기준 시각이 없으므로 현재 시각을 꾸며 넣지 않는다. v18은 기존 기준 시각과
+    // 편성을 보존하되 신규 키를 0으로 보충하고, 서버가 소급 정산할 일회성 버전만 미완료로 둔다.
+    const savedExcavation = Number(legacy.saveVersion) >= 18 && legacy.idleExcavation && typeof legacy.idleExcavation === "object"
+      ? legacy.idleExcavation as Partial<SaveData["idleExcavation"]> : undefined;
+    const excavationDefaults = createIdleExcavationState();
+    const idleExcavation = savedExcavation ? {
+      ...excavationDefaults,
+      ...savedExcavation,
+      assignedRelicIds: savedExcavation.assignedRelicIds ?? excavationDefaults.assignedRelicIds,
+      unclaimed: Object.fromEntries(EXCAVATION_CURRENCIES.map((currency) => [currency, savedExcavation.unclaimed?.[currency] ?? 0])),
+      // v18에는 표식이 없었으므로 마지막 정상 정산 시각부터 서버가 딱 한 번 계산한다.
+      retroactiveExcavationGrantVersion: savedExcavation.retroactiveExcavationGrantVersion ?? 0,
+    } : excavationDefaults;
     // v15 이전 진행은 그대로 펼쳐 보존하고 새 설정 필드만 기본값/정규화 값으로 보충한다.
     const settings = normalizeSettings(legacy.settings);
     // 현재 이월 그룹만 정규화하며 삭제된 그룹 키는 버리고 새 그룹은 기본 상태로 만든다.
@@ -190,7 +201,7 @@ export class SaveManager {
     // 반환 전 폐기 필드를 구조 분해해 현재 저장 JSON에 다시 섞이지 않게 한다.
     const { ownedHeartGemIds: _oldOwned, runeSlotsByRelicId: _oldSlots, ...current } = legacy;
     if (legacy.saveVersion === undefined) return { ...current, idleExcavation, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, dailyAdRewards, missions, productPurchases, runeInventory } as unknown as SaveData;
-    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, CURRENT_SAVE_VERSION];
+    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, CURRENT_SAVE_VERSION];
     if (!supported.includes(legacy.saveVersion as number)) throw new SaveDataError(`지원하지 않는 저장 버전입니다: ${String(legacy.saveVersion)}`);
     return { ...current, idleExcavation, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory } as unknown as SaveData;
   }
@@ -201,7 +212,7 @@ export class SaveManager {
     const stageIds = new Set(STAGES.map(({ id }) => id));
     const fail = (message: string): never => { throw new SaveDataError(message); };
     const excavation = data.idleExcavation;
-    if (!excavation || !Array.isArray(excavation.assignedRelicIds) || excavation.assignedRelicIds.length !== 3 || excavation.assignedRelicIds.some((id) => id !== null && (!relicIds.has(id) || !data.ownedRelicIds.includes(id))) || excavation.assignedRelicIds.filter(Boolean).length !== new Set(excavation.assignedRelicIds.filter(Boolean)).size || (excavation.lastSettledAt !== null && !Number.isFinite(Date.parse(excavation.lastSettledAt))) || !excavation.unclaimed || Object.values(excavation.unclaimed).some((amount) => !Number.isFinite(amount) || amount < 0) || !Number.isFinite(excavation.baseStorageSeconds) || excavation.baseStorageSeconds <= 0 || !Number.isFinite(excavation.activeProductionMultiplier) || excavation.activeProductionMultiplier <= 0 || (excavation.storageExtensionExpiresAt !== null && !Number.isFinite(Date.parse(excavation.storageExtensionExpiresAt)))) fail("발굴 상태가 올바르지 않습니다.");
+    if (!excavation || !Array.isArray(excavation.assignedRelicIds) || excavation.assignedRelicIds.length !== 3 || excavation.assignedRelicIds.some((id) => id !== null && (!relicIds.has(id) || !data.ownedRelicIds.includes(id))) || excavation.assignedRelicIds.filter(Boolean).length !== new Set(excavation.assignedRelicIds.filter(Boolean)).size || (excavation.lastSettledAt !== null && !Number.isFinite(Date.parse(excavation.lastSettledAt))) || !excavation.unclaimed || EXCAVATION_CURRENCIES.some((currency) => !Number.isFinite(excavation.unclaimed[currency]) || excavation.unclaimed[currency] < 0) || !Number.isInteger(excavation.retroactiveExcavationGrantVersion) || excavation.retroactiveExcavationGrantVersion < 0 || excavation.retroactiveExcavationGrantVersion > RETROACTIVE_EXCAVATION_GRANT_VERSION || !Number.isFinite(excavation.baseStorageSeconds) || excavation.baseStorageSeconds <= 0 || !Number.isFinite(excavation.activeProductionMultiplier) || excavation.activeProductionMultiplier <= 0 || (excavation.storageExtensionExpiresAt !== null && !Number.isFinite(Date.parse(excavation.storageExtensionExpiresAt)))) fail("발굴 상태가 올바르지 않습니다.");
     if (data.saveVersion !== CURRENT_SAVE_VERSION || !Array.isArray(data.ownedRelicIds) || data.ownedRelicIds.some((id) => !relicIds.has(id))) fail("존재하지 않는 렐릭 ID가 있습니다.");
     // 설정은 저장 전에 정규화되므로 검증 시 값이 바뀐다면 현재 계약이 아닌 손상 데이터다.
     if (JSON.stringify(data.settings) !== JSON.stringify(normalizeSettings(data.settings))) fail("설정 정보가 올바르지 않습니다.");

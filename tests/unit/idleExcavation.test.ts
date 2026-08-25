@@ -41,27 +41,37 @@ describe("방치 발굴 순수 규칙", () => {
 
   it("서로 다른 자원 특화를 자원별로 합산한다", () => {
     const model = excavationProductionDisplayModel(activeState().assignedRelicIds, RELICS, starterProgress);
-    expect(model.totalsPerHour).toEqual({ gold: 237, cheesecake: 8.8 });
-    expect(model.relics.map(({ currency }) => currency)).toEqual(["gold", "gold", "cheesecake"]);
+    expect(model.totalsPerHour).toEqual({ gold: 105, cheesecake: 8.8, fossil: 26.4, gems: 0 });
+    expect(model.relics.map(({ currency }) => currency)).toEqual(["gold", "fossil", "cheesecake"]);
+  });
+
+  it("네 발굴 재화가 실제 렐릭 데이터에서 모두 생산된다", () => {
+    const ids = ["anky", "spino", "rex", "dodo"];
+    const model = excavationProductionDisplayModel(["anky", "spino", "rex"], RELICS, { anky: progress(), spino: progress(), rex: progress() });
+    const diamond = excavationProductionDisplayModel(["dodo", null, null], RELICS, { dodo: progress(50, 4) });
+    expect(new Set([...model.relics.map(({ currency }) => currency), diamond.relics[0].currency])).toEqual(new Set(["gold", "cheesecake", "fossil", "gems"]));
+    // 다이아는 높은 성장에서도 시간당 1개 미만이며 정수 수확 전까지 소수로 남는다.
+    expect(diamond.totalsPerHour.gems).toBeLessThan(1);
+    expect(ids).toHaveLength(4);
   });
 
   it("레벨과 한계 돌파만 생산 성장값에 반영한다", () => {
     const model = excavationProductionDisplayModel(["rex", null, null], RELICS, { rex: progress(11, 2) });
-    expect(model.relics[0]).toMatchObject({ basePerHour: 132, levelIncreasePerHour: 26.4, breakthroughIncreasePerHour: 26.4, totalPerHour: 184.8 });
+    expect(model.relics[0]).toMatchObject({ basePerHour: 26.4, levelIncreasePerHour: 5.28, breakthroughIncreasePerHour: 5.28, totalPerHour: 36.96 });
   });
 
   it("빈 슬롯은 생산 상세와 합산에서 제외한다", () => {
-    expect(excavationProductionDisplayModel([null, "rex", null], RELICS, { rex: progress() })).toMatchObject({ relics: [{ relicId: "rex" }], totalsPerHour: { gold: 132, cheesecake: 0 } });
+    expect(excavationProductionDisplayModel([null, "rex", null], RELICS, { rex: progress() })).toMatchObject({ relics: [{ relicId: "rex" }], totalsPerHour: { gold: 0, cheesecake: 0, fossil: 26.4, gems: 0 } });
   });
 
   it("앱을 종료한 4시간 동안 세 렐릭 생산량을 누적한다", () => {
     const result = settleIdleExcavation(activeState(), new Date("2026-08-20T04:00:00.000Z"), RELICS, starterProgress);
-    expect(result.unclaimed).toEqual({ gold: 948, cheesecake: 35.2 });
+    expect(result.unclaimed).toEqual({ gold: 420, cheesecake: 35.2, fossil: 105.6, gems: 0 });
   });
 
   it("보관 상한을 넘긴 서버 경과 시간은 기본 4시간까지만 계산한다", () => {
     const result = settleIdleExcavation(activeState(), new Date("2026-08-21T00:00:00.000Z"), RELICS, starterProgress);
-    expect(result.unclaimed.gold).toBe(948);
+    expect(result.unclaimed.gold).toBe(420);
   });
 
   it("서버 시계가 역행하면 생산량과 마지막 정상 정산 시각을 유지한다", () => {
@@ -70,11 +80,11 @@ describe("방치 발굴 순수 규칙", () => {
   });
 
   it("재화별 소수는 이월하고 지갑 상한 밖의 정수는 명시적으로 버린다", () => {
-    const state = { ...activeState(), unclaimed: { gold: 2.25, cheesecake: 1.5 } };
-    const wallet = { fossil: 0, gold: WALLET_CAPS.gold, cheesecake: 0, amber: 0, gems: 0, stamina: 0, dnaFragments: 0 };
+    const state = { ...activeState(), unclaimed: { gold: 2.25, cheesecake: 1.5, fossil: 3.75, gems: 2.9 } };
+    const wallet = { fossil: WALLET_CAPS.fossil - 1, gold: WALLET_CAPS.gold, cheesecake: 0, amber: 0, gems: WALLET_CAPS.gems, stamina: 0, dnaFragments: 0 };
     const result = harvestIdleExcavation(state, wallet);
-    expect(result.granted).toEqual({ gold: 0, cheesecake: 1 });
-    expect(result.discarded).toEqual({ gold: 2, cheesecake: 0 });
-    expect(result.state.unclaimed).toEqual({ gold: 0.25, cheesecake: 0.5 });
+    expect(result.granted).toEqual({ gold: 0, cheesecake: 1, fossil: 1, gems: 0 });
+    expect(result.discarded).toEqual({ gold: 2, cheesecake: 0, fossil: 2, gems: 2 });
+    expect(result.state.unclaimed).toEqual({ gold: 0.25, cheesecake: 0.5, fossil: 0.75, gems: 0.9 });
   });
 });

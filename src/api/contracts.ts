@@ -10,6 +10,7 @@ import type { ExcavationCurrency, IdleExcavationState } from "../core/idleExcava
 import type { AdReward } from "../data/adRewards";
 
 /** 조회는 서버가 정산한 상태와 동일 기준 시각을 함께 돌려준다. */
+/** 네 발굴 재화 레코드와 서버 정산 시각을 함께 보내 클라이언트 추측 지급을 막는다. */
 export interface IdleExcavationResponse { excavation: IdleExcavationState; serverTime: string; }
 /** 편성 저장 재시도는 요청 ID로 같은 결과를 받으며 슬롯 위치를 보존한다. */
 export interface SaveExcavationFormationRequest { requestId: string; assignedRelicIds: [string | null, string | null, string | null]; }

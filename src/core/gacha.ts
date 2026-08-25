@@ -3,9 +3,10 @@ import type { RelicRarity } from "./types";
 
 /** 재화. 화석은 흔하고, 호박석은 귀하다. */
 export interface Wallet {
+  /** UI의 일반 화석이 저장되는 키이며 발굴 수확도 이 값을 직접 올린다. */
   fossil: number;
   amber: number;
-  /** 상단 줄의 첫 칸. 유료 결제와 상점의 기준이 되는 귀한 재화다. */
+  /** UI의 다이아 저장 키다. 상단 줄·유료 결제·발굴 수확이 모두 이 값을 사용한다. */
   gems: number;
   /** 상단 줄의 둘째 칸. 성장과 교환에 두루 쓰는 흔한 재화라 자릿수가 크게 늘어난다. */
   gold: number;

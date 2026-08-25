@@ -43,7 +43,6 @@ export class LabScene extends Phaser.Scene {
   private topBar!: TopBar;
   private bannerIndex = 0;
   private bannerName!: Phaser.GameObjects.Text;
-  private bannerDesc!: Phaser.GameObjects.Text;
   private pickupText!: Phaser.GameObjects.Text;
   private pityText!: Phaser.GameObjects.Text;
   private oneButton!: Button;
@@ -85,11 +84,8 @@ export class LabScene extends Phaser.Scene {
     this.addMileageButton(BASE_WIDTH - 246, 178);
 
     this.bannerName = this.add.text(cx, 170, "", textStyle({ role: "display", size: 44 })).setOrigin(0.5, 0);
-    this.bannerDesc = this.add
-      .text(cx, 228, "", textStyle({ role: "body", size: 26, color: COLOR.inkDim, align: "center", wrap: BASE_WIDTH - 120 }))
-      .setOrigin(0.5, 0);
-
-    this.pickupText = this.add.text(cx, 310, "", textStyle({ role: "emphasis", size: 28, color: COLOR.accentText })).setOrigin(0.5, 0);
+    // 기능을 풀어 쓴 개발 메모 대신 현재 픽업처럼 선택에 필요한 정보만 제목 아래에 남긴다.
+    this.pickupText = this.add.text(cx, 250, "", textStyle({ role: "emphasis", size: 28, color: COLOR.accentText })).setOrigin(0.5, 0);
     // 기존 Button/패널 토큰을 재사용해 확률 정보가 별도 웹 UI처럼 보이지 않게 한다.
     new Button(this, cx, 390, {
       width: 300, height: 82, label: "확률 정보", fontSize: 28,
@@ -130,15 +126,6 @@ export class LabScene extends Phaser.Scene {
     });
 
     this.pityText = this.add.text(cx, NAV_TOP - 355, "", textStyle({ role: "emphasis", size: 28, color: COLOR.accentText })).setOrigin(0.5);
-
-    this.add
-      .text(
-        cx,
-        NAV_TOP - 130,
-        "화석은 흔한 재화, 호박석은 귀한 재화다.",
-        textStyle({ role: "body", size: 24, color: COLOR.inkDim }),
-      )
-      .setOrigin(0.5, 0);
 
     // 캐릭터 획득 연구와 마일리지는 연구소에 남고, 배치형 자원 발굴은 로비 기능으로 분리한다.
     new BottomNav(this, "lab");
@@ -443,7 +430,6 @@ export class LabScene extends Phaser.Scene {
   private refresh(): void {
     const banner = this.banner;
     this.bannerName.setText(banner.name);
-    this.bannerDesc.setText(banner.desc);
     const pickupNames = Object.values(banner.pickupRelicIds).flat().map((id) => getRelic(id).name);
     this.pickupText.setText(`PICK UP  ${pickupNames.join(" · ")}`);
     const currentPity = session.gachaPityByGroup[banner.pityGroupId] ?? { pullsSinceSsr: 0, pickupGuaranteed: false };

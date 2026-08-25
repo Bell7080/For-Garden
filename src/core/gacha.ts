@@ -27,7 +27,6 @@ export interface Banner {
   /** 교체되어도 천장과 픽업 확정을 함께 이월하는 운영 정책 단위다. */
   pityGroupId: string;
   name: string;
-  desc: string;
   /** 배너 대표 그림에 쓰며 pickupRelicIds에도 반드시 포함되는 렐릭이다. */
   featuredRelicId: string;
   currency: Currency;

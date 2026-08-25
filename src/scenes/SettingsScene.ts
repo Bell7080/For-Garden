@@ -17,7 +17,8 @@ import { PopupLayer } from "../ui/PopupLayer";
 /** 상단 탭은 긴 설정을 의미 단위로 나눠 좁은 화면에서도 한 섹션만 스크롤하게 한다. */
 const TABS = [
   { id: "sound", label: "사운드" }, { id: "alerts", label: "알림" },
-  { id: "play", label: "게임" }, { id: "access", label: "접근성" }, { id: "support", label: "지원·데이터" },
+  // 좁은 화면에서 텍스트 배율을 키워도 이웃 탭과 겹치지 않도록 상세 범위는 본문 섹션에서 설명한다.
+  { id: "play", label: "게임" }, { id: "access", label: "접근성" }, { id: "support", label: "지원" },
 ] as const;
 type SettingsTab = typeof TABS[number]["id"];
 
@@ -73,8 +74,12 @@ export class SettingsScene extends Phaser.Scene {
   private buildRows(): void {
     this.content.removeAll(true);
     const s = settingsManager.get(); let y = 18;
+    let previousPanelBottom = 0;
     const section = (title: string, height: number): void => {
+      // 앞 섹션의 패널 아래에 안전 여백을 확보해 계정과 데이터 패널의 면·입력 영역이 겹치지 않게 한다.
+      y = Math.max(y, previousPanelBottom + 24);
       const panel = drawLayer(this, BASE_WIDTH / 2, y + height / 2, slantedRect(980, height, 14), { fill: COLOR.panel, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.42 });
+      previousPanelBottom = y + height;
       this.content.add(panel); this.content.add(this.add.text(72, y + 24, title, textStyle({ role: "emphasis", size: 32, color: COLOR.accentText }))); y += 88;
     };
     const divider = (): void => { this.content.add(drawHairline(this, BASE_WIDTH / 2, y, 890, { alpha: 0.16 })); };

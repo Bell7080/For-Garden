@@ -16,7 +16,7 @@ import { COLOR, textStyle } from "../ui/theme";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { SectionDivider } from "../ui/SectionDivider";
 import { compareBookmarkedOwnedRelics } from "../core/relicCatalog";
-import { drawGlassFade } from "../ui/holo";
+import { drawGlassFade, drawVignette } from "../ui/holo";
 
 /** 제목/정렬 조작과 하단 탭 사이만 목록에 내주는 고정 화면 경계다. */
 const VIEWPORT_TOP = 340;
@@ -91,6 +91,9 @@ export class RelicsScene extends Phaser.Scene {
     const cx = BASE_WIDTH / 2;
     // background_002를 렐릭 탭의 야외 유적 전경으로 사용한다.
     addSceneBackground(this, BACKGROUND.relics);
+    // 비네팅은 스크롤 content가 아니라 씬 좌표에 둔다. 그래야 그리드 마스크 안에서 함께
+    // 움직이거나 잘리지 않고 배경 원화의 화면 가장자리만 안정적으로 누른다.
+    drawVignette(this, BASE_WIDTH, 1920, { depth: -28, strength: 0.62 });
     // 밝은 원화 위에서도 카드와 본문을 읽을 수 있도록 기존 void 색을 얇게 덮는다.
     this.add.rectangle(cx, 960, BASE_WIDTH, 1920, COLOR.void, 0.48).setDepth(-29);
     // 도감에서 재화를 쓰는 곳은 정보창뿐이고, 거기서 급여 버튼이 치즈케이크 수를 직접 말한다.

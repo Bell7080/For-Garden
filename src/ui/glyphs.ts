@@ -10,6 +10,12 @@ import Phaser from "phaser";
 export type GlyphName =
   | "sortie"
   | "expedition"
+  | "expedition-normal"
+  | "expedition-elite"
+  | "expedition-horde"
+  | "expedition-rest"
+  | "expedition-treasure"
+  | "expedition-boss"
   | "shop"
   | "mail"
   | "friends"
@@ -48,6 +54,36 @@ export function drawGlyph(
   const r = size / 2;
   g.lineStyle(lineWidth ?? Math.max(2, size * 0.09), color, alpha);
   switch (name) {
+    case "expedition-normal":
+      // 교차한 발굴 도구는 일반 조우를 뜻한다.
+      g.lineBetween(-r * 0.72, -r * 0.72, r * 0.72, r * 0.72);
+      g.lineBetween(r * 0.72, -r * 0.72, -r * 0.72, r * 0.72);
+      break;
+    case "expedition-elite":
+      // 겹친 각진 창끝으로 일반 조우보다 강한 적을 구분한다.
+      g.strokePoints(points(0, -r, r * 0.72, r * 0.62, 0, r * 0.28, -r * 0.72, r * 0.62), true);
+      g.strokePoints(points(0, -r * 0.42, r * 0.4, r * 0.82, 0, r * 0.58, -r * 0.4, r * 0.82), true);
+      break;
+    case "expedition-horde":
+      // 세 갈래 톱니는 여러 무리가 밀려오는 전투다.
+      [-0.56, 0, 0.56].forEach((offset) => g.strokePoints(points((offset - 0.22) * r, -r * 0.75, offset * r, r * 0.7, (offset + 0.22) * r, -r * 0.75), false));
+      break;
+    case "expedition-rest":
+      // 의료 십자는 회복과 부활을 제공하는 휴식 지점이다.
+      g.strokeRect(-r * 0.22, -r * 0.78, r * 0.44, r * 1.56);
+      g.strokeRect(-r * 0.78, -r * 0.22, r * 1.56, r * 0.44);
+      break;
+    case "expedition-treasure":
+      // 뚜껑과 잠금 표식만 남긴 각진 보상 상자다.
+      g.strokeRect(-r * 0.82, -r * 0.38, r * 1.64, r * 1.12);
+      g.strokePoints(points(-r * 0.82, -r * 0.38, -r * 0.5, -r * 0.76, r * 0.5, -r * 0.76, r * 0.82, -r * 0.38), false);
+      g.lineBetween(0, -r * 0.05, 0, r * 0.34);
+      break;
+    case "expedition-boss":
+      // 큰 뿔과 중앙 눈으로 최종 보스를 다른 전투 노드와 즉시 가른다.
+      g.strokePoints(points(-r * 0.9, -r * 0.68, -r * 0.45, r * 0.58, 0, r * 0.82, r * 0.45, r * 0.58, r * 0.9, -r * 0.68), false);
+      g.strokePoints(points(-r * 0.38, 0, 0, -r * 0.28, r * 0.38, 0, 0, r * 0.28), true);
+      break;
     case "edit":
       // 각진 연필과 짧은 밑줄. 이름 변경 조작은 모든 씬에서 이 표식만 사용한다.
       g.lineBetween(-r * 0.72, r * 0.5, r * 0.48, -r * 0.7);

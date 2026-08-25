@@ -5,7 +5,7 @@ import { setDebugScene } from "../debug";
 import { gameApi } from "../api/FakeServer";
 import { GameApiError } from "../api/contracts";
 import { canPull, pullCost, type AcquisitionResult, type Banner } from "../core/gacha";
-import { ExcavationPresentationController, firstMeetingRelicIds, highestRarity } from "../core/excavationPresentation";
+import { ResearchPresentationController, firstMeetingRelicIds, highestRarity } from "../core/researchPresentation";
 import { BANNERS } from "../data/banners";
 import { getRelic } from "../data/relics";
 import {
@@ -54,7 +54,7 @@ export class LabScene extends Phaser.Scene {
   /** 연속 터치로 같은 재화가 두 번 결제되는 요청 중복을 클라이언트에서도 막는다. */
   private pullPending = false;
   /** 결과 저장 뒤의 시각 연출만 소유하며, 씬 종료 시 반드시 invalidate/destroy한다. */
-  private readonly presentation = new ExcavationPresentationController();
+  private readonly presentation = new ResearchPresentationController();
   private presentationLayer?: Phaser.GameObjects.Container;
   /** 단계 넘기기가 현재 기다리는 타이머를 즉시 깨우는 훅이다. */
   private finishStage?: () => void;
@@ -269,7 +269,8 @@ export class LabScene extends Phaser.Scene {
       `이월 그룹  ${banner.pityGroupId}`,
       "같은 그룹의 교체 배너로 천장·픽업 확정 이월",
       "10연 마지막 슬롯 SR 이상 보장 (SSR 천장 우선)",
-      "중복 보상  각성 +1 · 각성 5 이후 공용 DNA 조각 +1",
+      "중복 보상  해당 렐릭 파편 +1 · 파편을 모아 한계 돌파",
+      "별 V 달성 이후 중복은 공용 DNA 조각 +1",
     ].join("\n");
     overlay.add(this.add.text(cx, 700, policy, textStyle({ role: "body", size: 25, color: COLOR.inkDim, align: "center", lineSpacing: 13, wrap: 760 })).setOrigin(0.5, 0));
     const close = new Button(this, cx, 1190, { width: 320, height: 100, label: "확인", fontSize: 32, onClick: () => overlay.destroy() });
@@ -326,7 +327,7 @@ export class LabScene extends Phaser.Scene {
       this.drawCrack(content, rarity);
       this.cameras.main.shake(rarity === "SSR" ? 420 : 260, rarity === "SSR" ? 0.012 : 0.006);
       // 등급은 시각 연출에만 쓰며 사운드는 의미 키와 중앙 버스 설정으로 일관되게 재생한다.
-      this.audioScope?.play("excavation.crack");
+      this.audioScope?.play("research.crack");
       await this.waitForStage(700, request);
       this.presentation.advance();
     }

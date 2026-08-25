@@ -1,9 +1,12 @@
 import type { AcquisitionResult } from "./gacha";
 import type { RelicRarity } from "./types";
 
-/** 서버 확정 뒤 재생되는 연구 연출 순서. 결과 화면 전에는 카드 내용을 노출하지 않는다. */
-export const EXCAVATION_STAGES = ["excavation", "crack", "rarityReveal", "firstMeeting", "cards"] as const;
-export type ExcavationStage = typeof EXCAVATION_STAGES[number];
+/**
+ * 서버 확정 뒤 재생되는 연구소 획득 연구의 연출 순서. 결과 화면 전에는 카드 내용을 노출하지 않는다.
+ * CLAUDE.md의 용어 경계에 따라 이 런타임 전용 단계는 배치형 자원 `idleExcavation`과 이름을 공유하지 않는다.
+ */
+export const RESEARCH_PRESENTATION_STAGES = ["research", "crack", "rarityReveal", "firstMeeting", "cards"] as const;
+export type ResearchPresentationStage = typeof RESEARCH_PRESENTATION_STAGES[number];
 
 const RARITY_WEIGHT: Record<RelicRarity, number> = { R: 0, SR: 1, SSR: 2 };
 
@@ -24,7 +27,7 @@ export function firstMeetingRelicIds(results: readonly AcquisitionResult[]): str
  * Phaser와 분리한 작은 상태 기계. `request`는 showcaseRequest처럼 늦게 끝난 비동기 단계가
  * 새 연출을 덮지 못하게 하며, invalidate 책임은 새 요청 시작과 씬 종료에 있다.
  */
-export class ExcavationPresentationController {
+export class ResearchPresentationController {
   private request = 0;
   private index = 0;
   private skipped = false;
@@ -36,19 +39,19 @@ export class ExcavationPresentationController {
     return this.request;
   }
 
-  get stage(): ExcavationStage { return EXCAVATION_STAGES[this.index]; }
+  get stage(): ResearchPresentationStage { return RESEARCH_PRESENTATION_STAGES[this.index]; }
   isCurrent(request: number): boolean { return request === this.request; }
 
   /** 현재 대기만 끝내고 다음 단계로 이동한다. 마지막 단계에서는 그대로 머문다. */
-  advance(): ExcavationStage {
-    this.index = Math.min(this.index + 1, EXCAVATION_STAGES.length - 1);
+  advance(): ResearchPresentationStage {
+    this.index = Math.min(this.index + 1, RESEARCH_PRESENTATION_STAGES.length - 1);
     return this.stage;
   }
 
   /** 저장된 결과에는 손대지 않고 남은 연출만 카드 단계까지 생략한다. */
-  skipAll(): ExcavationStage {
+  skipAll(): ResearchPresentationStage {
     this.skipped = true;
-    this.index = EXCAVATION_STAGES.length - 1;
+    this.index = RESEARCH_PRESENTATION_STAGES.length - 1;
     return this.stage;
   }
 

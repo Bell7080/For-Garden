@@ -17,6 +17,8 @@ import { completedAdToken } from "../data/adRewards";
 import { addCurrencyChip } from "./CurrencyChip";
 import type { CurrencyIconKey } from "./currencyIcons";
 import { openRewardPopup } from "./RewardPopup";
+import { addPopupBackgroundImage, BACKGROUND, type PopupBackgroundImage } from "./backgrounds";
+import { addSectionTitle } from "./SectionTitle";
 
 /** 한 팝업 안에서 현황과 편집 그리드가 교대하므로 모바일 안전 영역을 넘지 않는 고정 크기를 쓴다. */
 const PANEL = { width: 900, height: 1320 } as const;

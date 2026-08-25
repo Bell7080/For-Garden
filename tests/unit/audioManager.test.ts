@@ -50,7 +50,7 @@ describe("AudioManager", () => {
 
   it("설정 변경 이벤트를 활성 사운드에 즉시 반영한다", () => {
     const { audio, settings, backend } = setup();
-    audio.createScope().play("excavation.crack");
+    audio.createScope().play("research.crack");
     settings.update({ sound: { masterVolume: 0.5, effectsVolume: 0.2 } });
     expect(backend.sounds[0].volume).toBeCloseTo(0.1);
   });
@@ -58,17 +58,17 @@ describe("AudioManager", () => {
   it("씬 범위 해제 후 사운드를 정리하고 오래된 요청을 거부한다", () => {
     const { audio, backend } = setup();
     const scope = audio.createScope();
-    expect(scope.play("excavation.crack")).toBe(true);
+    expect(scope.play("research.crack")).toBe(true);
     scope.release();
     expect(backend.sounds[0]).toMatchObject({ stopped: true, destroyed: true });
-    expect(scope.play("excavation.crack")).toBe(false);
+    expect(scope.play("research.crack")).toBe(false);
     expect(backend.sounds).toHaveLength(1);
   });
 
   it("없는 에셋은 무음 폴백하고 음소거 중 시작한 음악은 0을 유지한다", () => {
     const { audio, settings, backend } = setup();
     backend.available = false;
-    expect(audio.createScope().play("excavation.crack")).toBe(false);
+    expect(audio.createScope().play("research.crack")).toBe(false);
     expect(backend.sounds).toHaveLength(0);
     backend.available = true;
     settings.update({ sound: { musicMuted: true } });

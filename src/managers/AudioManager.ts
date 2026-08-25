@@ -6,7 +6,7 @@ import { settingsManager, type SettingsManager } from "./SettingsManager";
 export type AudioBus = "music" | "sfx" | "voice";
 
 /** 실제 에셋이 추가되기 전에도 호출부가 의미만 전달하도록 고정한 지원 사운드 목록이다. */
-export type AudioCue = "excavation.crack";
+export type AudioCue = "research.crack";
 
 /** Phaser 사운드를 테스트 대역으로 바꿀 수 있게 하는 최소 재생 인스턴스 계약이다. */
 export interface ManagedSound {
@@ -37,8 +37,8 @@ export interface AudioScope {
 }
 
 const CUES: Record<AudioCue, { key: string; bus: AudioBus }> = {
-  // 실제 파일이 들어오면 로딩 목록에 이 키를 등록한다. 지금은 has=false일 때 의도적으로 무음 폴백한다.
-  "excavation.crack": { key: "sfx-excavation-crack", bus: "sfx" },
+  // 연구소 획득 연구의 균열음이다. 배치형 자원 발굴과 분리하며, 에셋이 없을 때는 의도적으로 무음 폴백한다.
+  "research.crack": { key: "sfx-research-crack", bus: "sfx" },
 };
 
 /** master × category × mute 공식을 유일하게 계산하고 Phaser Sound 수명을 소유한다. */

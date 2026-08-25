@@ -5,7 +5,7 @@ import { RELICS } from "../data/relics";
 import { portraitUsesRelicTint, sdAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
 import { tintFor } from "../puppets/tints";
 import { session } from "../state/session";
-import { setDebugIdleExcavationPopup } from "../debug";
+import { setDebugExcavationAdOffers, setDebugIdleExcavationPopup } from "../debug";
 import { Button } from "./Button";
 import { chipPoints, drawHairline, drawLayer, HOLO, slantedRect } from "./holo";
 import { PortraitCard } from "./PortraitCard";
@@ -19,6 +19,7 @@ import { addPopupBackgroundImage, BACKGROUND, type PopupBackgroundImage } from "
 import { addSectionTitle } from "./SectionTitle";
 import { excavationDisplayModel } from "./excavationDisplayModel";
 import { ExcavationCurrencyFrame } from "./ExcavationCurrencyFrame";
+import { excavationAdOfferDisplayModel, type ExcavationAdOfferId } from "./excavationAdOfferModel";
 
 /** 한 팝업 안에서 현황과 편집 그리드가 교대하므로 모바일 안전 영역을 넘지 않는 고정 크기를 쓴다. */
 const PANEL = { width: 900, height: 1320 } as const;
@@ -235,16 +236,31 @@ export class IdleExcavationPopup {
   /** 좌우 제안은 유효한 서버 설정에서 활성인 발굴 슬롯만 남은 횟수와 효과를 직접 말한다. */
   private addAdOffers(content: Phaser.GameObjects.Container, serverTime: string): void {
     const config = this.adOperations;
-    if (!config || new Date(config.expiresAt).getTime() <= new Date(serverTime).getTime()) return;
-    const slots = ["excavation-harvest", "excavation-storage"].map((id) => config.slots.find((slot) => slot.slotId === id && slot.enabled)).filter((slot): slot is AdSlotOperationsDto => Boolean(slot));
+    if (!config || new Date(config.expiresAt).getTime() <= new Date(serverTime).getTime()) { setDebugExcavationAdOffers([]); return; }
+    const slotIds: readonly ExcavationAdOfferId[] = ["excavation-harvest", "excavation-storage"];
+    const slots = slotIds.map((id) => config.slots.find((slot) => slot.slotId === id && slot.enabled)).filter((slot): slot is AdSlotOperationsDto & { slotId: ExcavationAdOfferId } => Boolean(slot));
+    const debugOffers: NonNullable<Window["__PF_DEBUG"]>["excavationAdOffers"] = [];
     slots.forEach((slot, index) => {
       const sameUtcDay = session.dailyAdRewards.date === serverTime.slice(0, 10);
       const remaining = Math.max(0, slot.dailyLimitUtc - (sameUtcDay ? session.dailyAdRewards.claimsBySlot[slot.slotId] ?? 0 : 0));
-      if (remaining === 0) return;
-      const label = `${slot.displayText} · 오늘 ${remaining}회`;
+      // 서버 displayText 대신 슬롯별 표시 모델을 사용하고, 남은 횟수에서 실제 사용 횟수를 구한다.
+      const offer = excavationAdOfferDisplayModel(slot.slotId, slot.dailyLimitUtc, remaining);
+      const production = slot.slotId === "excavation-harvest";
+      // E2E에는 Canvas에서 사용자가 읽는 값만 노출하고 서버 displayText와 광고 토큰은 제외한다.
+      debugOffers.push({ slotId: slot.slotId, label: offer.label, usage: offer.usage, enabled: offer.enabled && !this.saving });
       // 4순위 보조 혜택: 광고는 primary와 거리를 두고 더 낮고 작은 보조 버튼으로만 제안한다.
-      content.add(new Button(this.scene, index === 0 ? -205 : 205, 385, { width: 350, height: 72, label, onClick: () => void this.claimAdEffect(slot) }));
+      const button = new Button(this.scene, index === 0 ? -205 : 205, 385, {
+        width: 350, height: 78, label: offer.label, sub: offer.usage, fontSize: 27, subFontSize: 17,
+        // 생산은 청록/푸른 강조, 보관은 보라 강조와 어두운 호박 면으로 기존 토큰의 채도를 따른다.
+        accentColor: production ? COLOR.excavationProduction : COLOR.excavationStorage,
+        fill: production ? COLOR.panel : COLOR.excavationStorageFill,
+        onClick: () => void this.claimAdEffect(slot),
+      });
+      // 한도를 다 쓴 2/2 같은 상태도 진행 정보로 남기되 입력과 손 모양은 비활성화한다.
+      button.setEnabled(offer.enabled && !this.saving);
+      content.add(button);
     });
+    setDebugExcavationAdOffers(debugOffers);
     if (this.adMessage) content.add(this.scene.add.text(0, 438, this.adMessage, textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0.5));
   }
 

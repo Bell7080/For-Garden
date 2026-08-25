@@ -408,13 +408,13 @@ describe("FakeServer 광고 보상 경계", () => {
     expect(normal.granted).toEqual({ gold: 10, cheesecake: 2, fossil: 0, gems: 0 });
   });
 
-  it("생산 2배는 중첩하지 않고 재수령 시 만료를 교체하며 만료 경계를 나눠 정산한다", async () => {
+  it("생산 1.5배는 중첩하지 않고 재수령 시 만료를 교체하며 만료 경계를 나눠 정산한다", async () => {
     const state = makeSession(); state.idleExcavation.assignedRelicIds = ["anky", null, null]; state.idleExcavation.lastSettledAt = "2026-08-22T12:00:00.000Z";
     let now = new Date("2026-08-22T12:00:00Z"); const server = new FakeServer(state, { latencyMs: 0, now: () => now });
     await server.claimAdReward({ slotId: "excavation-speed", verificationToken: "verified:excavation-speed", requestId: "speed-1" });
     now = new Date("2026-08-22T12:30:00Z");
     await server.claimAdReward({ slotId: "excavation-speed", verificationToken: "verified:excavation-speed", requestId: "speed-2" });
-    expect(state.idleExcavation.activeProductionMultiplier).toBe(2);
+    expect(state.idleExcavation.activeProductionMultiplier).toBe(1.5);
     expect(state.idleExcavation.productionMultiplierExpiresAt).toBe("2026-08-22T13:30:00.000Z");
     now = new Date("2026-08-22T14:00:00Z"); await server.getIdleExcavation();
     expect(state.idleExcavation.activeProductionMultiplier).toBe(1);

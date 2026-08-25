@@ -35,6 +35,8 @@ export interface DebugState {
   infoOpen?: boolean;
   /** 로비 위 발굴 쪽지의 상태. 씬 전환 없이 열리고 입력을 막는 계약을 E2E가 확인한다. */
   idleExcavationPopup?: "loading" | "ready" | "error" | "editing" | "saving" | "save-error";
+  /** Canvas 안 광고 버튼의 실제 라벨·사용량·활성 상태만 E2E가 읽는 표시 계약이다. */
+  excavationAdOffers?: Array<{ slotId: string; label: string; usage: string; enabled: boolean }>;
   /** 지급 확정 뒤 공용 획득 팝업이 입력을 기다리는지 E2E가 확인하는 사용자 가시 상태다. */
   rewardPopup?: boolean;
   /** 재화와 보유 렐릭. 뽑기가 실제로 반영됐는지 확인하는 데 쓴다. */
@@ -82,6 +84,11 @@ export function setDebugInfoOpen(open: boolean): void {
 /** Canvas 내부 팝업의 사용자 가시 상태만 노출하며 게임 진행값에는 사용하지 않는다. */
 export function setDebugIdleExcavationPopup(state: DebugState["idleExcavationPopup"]): void {
   ensure().idleExcavationPopup = state;
+}
+
+/** 광고 토큰이나 서버 원문 없이 사용자가 보는 발굴 버튼 상태만 복사한다. */
+export function setDebugExcavationAdOffers(offers: DebugState["excavationAdOffers"]): void {
+  ensure().excavationAdOffers = offers;
 }
 
 /** 보상 내용은 노출하지 않고 확인 팝업의 열림 여부만 Canvas E2E에 전달한다. */

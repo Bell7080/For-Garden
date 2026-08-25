@@ -25,6 +25,12 @@ export const COLOR = {
   hpText: "#8fd89b",
   hpEnemy: 0xb03a3a,
   energy: 0x7ea8d8,
+  /** 발굴 생산 광고는 기존 SR 청록보다 어두운 저채도 청록으로 일반 수확과 구분한다. */
+  excavationProduction: 0x5f9fa3,
+  /** 발굴 보관 광고는 SSR 금색보다 차분한 보랏빛으로 용량 계열 효과를 구분한다. */
+  excavationStorage: 0x8b72a6,
+  /** 보관 버튼의 유리 면은 호박색을 아주 어둡게 눌러 보라 강조선과 따뜻한 대비만 남긴다. */
+  excavationStorageFill: 0x302a24,
   /** 출격·출전처럼 "나가서 싸운다"를 뜻하는 입구의 강조색. 금색보다 붉다. */
   sortie: 0xd85f34,
   sortieText: "#f08b62",

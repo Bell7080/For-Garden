@@ -69,7 +69,10 @@ test("오프닝을 이미 본 저장이면 타이틀에서 로비로 바로 간�
 });
 
 test("방치 발굴 팝업은 좁은 로비 위 한 장으로 열리고 뒤 입력을 차단한 뒤 닫힌다", async ({ page }) => {
-  await startAfterOpening(page);
+  await startAfterOpening(page, (session) => {
+    // 성공 뒤 다시 그려진 사용량과 같은 저장 상태를 만들고, 한도 소진 버튼도 남는 정책을 검증한다.
+    session.dailyAdRewards = { date: new Date().toISOString().slice(0, 10), claimsBySlot: { "excavation-harvest": 1, "excavation-storage": 2 }, requestIds: ["e2e-harvest", "e2e-storage-1", "e2e-storage-2"] };
+  });
   await page.locator("canvas").click();
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
 
@@ -77,6 +80,11 @@ test("방치 발굴 팝업은 좁은 로비 위 한 장으로 열리고 뒤 입�
   await tapGame(page, 250, BASE_HEIGHT - 445);
   await tapGame(page, 250, BASE_HEIGHT - 445);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationPopup)).toBe("ready");
+  // 성공 상태는 사용/한도로 다시 그려지고, 소진된 보관 버튼은 2/2인 채 비활성으로 남는다.
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.excavationAdOffers)).toEqual([
+    { slotId: "excavation-harvest", label: "생산량 ×1.5", usage: "1/3", enabled: true },
+    { slotId: "excavation-storage", label: "보관량 ×2", usage: "2/2", enabled: false },
+  ]);
   // 디버그 계약은 화면의 "발굴 진행 중" 문구가 아니라 기존 자동화용 상태명 ready를 계속 쓴다.
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   await page.screenshot({ path: `test-results/${test.info().project.name}-idle-excavation-popup.png` });

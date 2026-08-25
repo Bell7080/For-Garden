@@ -16,6 +16,7 @@ import { EXCAVATION_TRAIT_ICON } from "./excavationIcons";
 import { completedAdToken } from "../data/adRewards";
 import { addCurrencyChip } from "./CurrencyChip";
 import type { CurrencyIconKey } from "./currencyIcons";
+import { openRewardPopup } from "./RewardPopup";
 
 /** 한 팝업 안에서 현황과 편집 그리드가 교대하므로 모바일 안전 영역을 넘지 않는 고정 크기를 쓴다. */
 const PANEL = { width: 900, height: 1320 } as const;
@@ -176,25 +177,23 @@ export class IdleExcavationPopup {
     const discarded = result ? result.discarded.gold + result.discarded.cheesecake : 0;
     const notice = this.harvestError ?? (discarded > 0 ? "수확 완료 · 지갑 상한 손실" : result ? "수확이 완료되었습니다." : "빈 슬롯은 허용되며 생산량 0으로 계산됩니다.");
     content.add(this.scene.add.text(0, 250, notice, textStyle({ role: "body", size: 21, color: discarded > 0 || this.harvestError ? COLOR.dangerText : COLOR.inkDim, align: "center" })).setOrigin(0.5));
-    if (result) {
-      // 실제 지급은 공용 칩 값으로, 같은 재화의 손실은 그 아이콘 아래 위험색 보조 숫자로 분리한다.
-      (["gold", "cheesecake"] as ExcavationCurrency[]).forEach((currency, index) => {
-        const granted = result.granted[currency];
-        const lost = result.discarded[currency];
-        if (granted <= 0 && lost <= 0) return;
-        const x = index === 0 ? -150 : 150;
-        const amount = addCurrencyChip(this.scene, x, 305, EXCAVATION_CURRENCY_ICON[currency], { parent: content, width: 260, height: 66 });
-        amount.setText(`+${formatCurrency(granted)}`);
-        if (lost > 0) content.add(this.scene.add.text(x + 35, 337, `손실 -${formatCurrency(lost)}`, textStyle({ role: "emphasis", size: 17, color: COLOR.dangerText })).setOrigin(0.5, 1));
-      });
-    }
     this.addAdOffers(content, response.serverTime);
     content.add(new Button(this.scene, -205, 515, { width: 350, height: 92, label: "편성 변경", onClick: () => this.beginEdit() }));
     harvestButton = new Button(this.scene, 205, 515, { width: 350, height: 92, label: this.saving ? "수확 중…" : "수확", variant: "primary", onClick: () => void this.harvest() });
     // 서버 확정 누적량이 1 미만이거나 요청 중이면 지급할 것이 없으므로 입력부터 막는다.
     refreshEstimate(); content.add(harvestButton);
     this.setState(this.saving ? "saving" : "ready");
-    if (result) { this.playHarvestSuccess(content, rows.map((row) => row.amount), result); this.harvestResult = undefined; }
+    if (result) {
+      // 서버 확정 지급분만 공용 획득 팝업에 넘긴다. 지갑 상한 손실은 현황 경고로 남기고 보상처럼 꾸미지 않는다.
+      openRewardPopup(this.scene, this.popups, {
+        title: "발굴 보상 획득",
+        items: (["gold", "cheesecake"] as ExcavationCurrency[]).map((currency) => ({
+          icon: EXCAVATION_CURRENCY_ICON[currency],
+          amount: result.granted[currency],
+        })),
+      });
+      this.harvestResult = undefined;
+    }
   }
 
   /** 좌우 제안은 유효한 서버 설정에서 활성인 발굴 슬롯만 남은 횟수와 효과를 직접 말한다. */
@@ -224,22 +223,6 @@ export class IdleExcavationPopup {
       session.dailyAdRewards = { date: result.dailyAdRewards.date, claimsBySlot: { ...result.dailyAdRewards.claimsBySlot }, requestIds: session.dailyAdRewards.requestIds };
       this.confirmed = { excavation: result.excavation ?? session.idleExcavation, serverTime: result.serverTime }; this.adMessage = "발굴 효과가 적용되었습니다."; this.renderStatus();
     } catch { this.adMessage = "광고 검증에 실패했습니다. 일반 수확은 그대로 가능합니다."; this.renderStatus(); }
-  }
-
-  /** 서버 성공 뒤에만 재화가 우상단 지갑 쪽으로 흐르며, 모션 감소 시 숫자 강조로 대체한다. */
-  private playHarvestSuccess(content: Phaser.GameObjects.Container, amounts: Phaser.GameObjects.Text[], result: HarvestExcavationResponse): void {
-    const hasGrant = result.granted.gold + result.granted.cheesecake > 0;
-    if (!hasGrant) return;
-    for (const amount of amounts) {
-      this.scene.tweens.add({ targets: amount, scale: 1.12, duration: 110, yoyo: true });
-    }
-    if (session.settings.accessibility.reduceMotion) return;
-    // 작은 단색 점은 기존 홀로그램 강조색을 재사용하며 별도 이미지 자산을 만들지 않는다.
-    for (let index = 0; index < 8; index += 1) {
-      const particle = this.scene.add.circle(180 + index * 12, 90 + (index % 2) * 35, 5, COLOR.accent, 0.8);
-      content.add(particle);
-      this.scene.tweens.add({ targets: particle, x: 410, y: -620, alpha: 0, duration: 360 + index * 35, onComplete: () => particle.destroy() });
-    }
   }
 
   /** 편집을 열 때에만 확정 배열을 복사하므로 취소/닫기가 서버 편성을 건드릴 수 없다. */

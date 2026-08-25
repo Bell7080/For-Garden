@@ -17,7 +17,7 @@ export const PITY_GROUP = { STANDARD: "standard-fossil", LIMITED_PICKUP: "limite
 export const BANNERS: Banner[] = [
   {
     id: "fossil", pityGroupId: PITY_GROUP.STANDARD, name: "화석 연구", featuredRelicId: "anky",
-    desc: "굳은 화석의 DNA를 연구해 렐릭을 복원한다. 토리카 픽업 진행 중.",
+    // 연구 방식과 픽업 대상은 각각 기능명·픽업 표식으로 이미 전달하므로 설명형 문구를 노출하지 않는다.
     currency: "fossil", costOne: 100, costTen: 900,
     rarityRates: { R: 0.9, SR: 0.09, SSR: 0.01 },
     relicPools: POOLS, pickupRelicIds: { SR: ["anky"] }, pickupRate: 0.5,
@@ -25,7 +25,7 @@ export const BANNERS: Banner[] = [
   },
   {
     id: "amber", pityGroupId: PITY_GROUP.LIMITED_PICKUP, name: "호박석 연구", featuredRelicId: "rex",
-    desc: "호박에 보존된 DNA를 연구해 렐릭을 복원한다. 렉시아 픽업 진행 중.",
+    // 재화의 희소도 같은 설계 메모도 배너 카피로 옮기지 않고 운영 데이터와 주석에만 남긴다.
     currency: "amber", costOne: 2, costTen: 18,
     rarityRates: { R: 0.8, SR: 0.17, SSR: 0.03 },
     relicPools: POOLS, pickupRelicIds: { SSR: ["rex"] }, pickupRate: 0.5,

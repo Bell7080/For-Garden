@@ -31,7 +31,7 @@ export class ShopScene extends Phaser.Scene {
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.5).setDepth(-19);
     new TopBar(this);
     this.add.text(60, 185, this.section === "trade" ? "무  역" : "상  점", textStyle({ role: "display", size: 52 })).setOrigin(0, 0);
-    this.add.text(62, 252, this.section === "trade" ? "인게임 재화 교환소" : "패키지 · 유료 BM 미리보기", textStyle({ role: "body", size: 27, color: COLOR.inkDim })).setOrigin(0, 0);
+    // 제목과 탭이 화면의 용도를 이미 말하므로 구현 의도를 풀이하는 부제는 플레이어에게 노출하지 않는다.
     // 별도 화면을 복제하지 않고 확대·강조색만으로 현재 카탈로그 탭을 구분한다.
     ([{ section: "trade", label: "교환" }, { section: "premium", label: "후원" }] as const).forEach(({ section, label }, index) => {
       const selected = this.section === section;

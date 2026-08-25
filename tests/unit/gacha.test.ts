@@ -4,7 +4,7 @@ import { BANNERS } from "../../src/data/banners";
 
 /** 모든 분기와 난수 소비 순서를 눈으로 추적할 수 있는 최소 3등급 배너다. */
 const banner: Banner = {
-  id: "test", pityGroupId: "test-group", name: "시험 발굴", desc: "", featuredRelicId: "ssr-pick",
+  id: "test", pityGroupId: "test-group", name: "시험 발굴", featuredRelicId: "ssr-pick",
   currency: "fossil", costOne: 100, costTen: 900,
   rarityRates: { SSR: 0.1, SR: 0.2, R: 0.7 },
   relicPools: { SSR: ["ssr-pick", "ssr-normal"], SR: ["sr-pick", "sr-normal"], R: ["r-a", "r-b"] },

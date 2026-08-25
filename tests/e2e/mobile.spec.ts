@@ -3,10 +3,6 @@ import { startAfterOpening } from "./openingSave";
 
 const BASE_WIDTH = 1080;
 const BASE_HEIGHT = 1920;
-/** PopupLayer 공식(width / 2 - 40, -height / 2 + 40)로 발굴 판의 닫기 좌표를 계산한다. */
-const EXCAVATION_PANEL = { width: 900, height: 1320 } as const;
-const PANEL_CLOSE_X = EXCAVATION_PANEL.width / 2 - 40;
-const PANEL_CLOSE_Y = EXCAVATION_PANEL.height / 2 - 40;
 
 /** 기준 게임 좌표를 FIT 스케일이 적용된 모바일 캔버스 좌표로 바꿔 누른다. */
 async function tapGame(page: import("@playwright/test").Page, x: number, y: number): Promise<void> {
@@ -92,10 +88,37 @@ test("방치 발굴 팝업은 좁은 로비 위 한 장으로 열리고 뒤 입�
   // 어두운 backdrop이 출격 좌표의 입력을 먹으므로 로비와 애착 캐릭터가 그대로 남는다.
   await tapGame(page, BASE_WIDTH - 290, BASE_HEIGHT - 425);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
-  // 기준 1080×1920의 우상단 닫기는 작은 viewport에서도 FIT 안전 영역 안에 있다.
-  await tapGame(page, BASE_WIDTH / 2 + PANEL_CLOSE_X, BASE_HEIGHT / 2 - PANEL_CLOSE_Y);
+  // 팝업 X 대신 다른 화면과 같은 아이콘 양식의 발굴 전용 좌하단 돌아가기를 사용한다.
+  await tapGame(page, 106, BASE_HEIGHT - 120);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationPopup)).toBeUndefined();
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+});
+
+test("SD 완료 뒤 세 슬롯의 공용 입력면이 각각 올바른 편집 슬롯으로 진입한다", async ({ page }) => {
+  await startAfterOpening(page, (session) => {
+    // 작은 모바일과 1.15 텍스트 확대 조합에서도 슬롯 입력면의 고정 안전 영역을 검증한다.
+    session.settings.accessibility.textScale = 1.15;
+  });
+  await page.locator("canvas").click();
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+  await tapGame(page, 250, BASE_HEIGHT - 445);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationPopup)).toBe("ready");
+  // 세 SD가 실제 텍스처/크기 검증까지 끝난 다음 장식 Puppet 위의 입력 순서를 확인한다.
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationSdReady?.slice().sort())).toEqual([0, 1, 2]);
+  const slots = await page.evaluate(() => window.__PF_DEBUG?.idleExcavationSlots ?? []);
+  expect(slots).toHaveLength(3);
+  for (const slot of slots) {
+    expect(slot.width).toBeGreaterThanOrEqual(210); expect(slot.height).toBeGreaterThanOrEqual(245);
+    // 슬롯 하단은 다음 현황 행(게임 y=990) 위, 좌하단 돌아가기(중심 106,1800)와도 멀리 떨어진다.
+    expect(slot.y + slot.height / 2).toBeLessThan(990);
+    await tapGame(page, slot.x, slot.y);
+    await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationPopup)).toBe("editing");
+    await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationSelectedSlot)).toBe(slot.index);
+    // 편집의 취소로 현황에 돌아가 다음 슬롯도 동일한 입력면으로 다시 검증한다.
+    await tapGame(page, BASE_WIDTH / 2 - 205, BASE_HEIGHT / 2 + 540);
+    await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationPopup)).toBe("ready");
+  }
+  await page.screenshot({ path: `test-results/${test.info().project.name}-idle-excavation-slot-hit-areas.png` });
 });
 
 test("방치 발굴 편집은 슬롯 이동·중복 방지·빈 편성 취소를 확정 상태와 분리한다", async ({ page }) => {

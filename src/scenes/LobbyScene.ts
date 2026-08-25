@@ -18,6 +18,8 @@ import { bondDialogue } from "../data/bonds";
 import { DAILY_RESTORATION } from "../data/stages";
 import { PopupLayer } from "../ui/PopupLayer";
 import { IdleExcavationPopup } from "../ui/IdleExcavationPopup";
+import { IconButton } from "../ui/IconButton";
+import { UI_ICON } from "../ui/icons";
 
 /** 확대된 애착 렐릭의 골반 아래가 내비게이션 뒤로 자연스럽게 이어지는 기준선. */
 const STAGE_FLOOR = 1660;
@@ -48,6 +50,8 @@ export class LobbyScene extends Phaser.Scene {
   /** 로비 위 팝업은 씬을 바꾸지 않으며 한 번에 한 발굴 쪽지만 소유한다. */
   private popupLayer?: PopupLayer;
   private idleExcavationPopup?: IdleExcavationPopup;
+  /** 발굴은 화면 크기의 작업판이므로 팝업 X 대신 로비 좌하단의 공용 아이콘 양식을 쓴다. */
+  private excavationBackButton?: IconButton;
 
   constructor() {
     super("lobby");
@@ -138,8 +142,13 @@ export class LobbyScene extends Phaser.Scene {
     if (!this.popupLayer) return;
     this.idleExcavationPopup ??= new IdleExcavationPopup(this, this.popupLayer, gameApi, () => {
       this.idleExcavationPopup = undefined;
+      this.excavationBackButton?.destroy(); this.excavationBackButton = undefined;
     });
     this.idleExcavationPopup.open();
+    if (!this.excavationBackButton) {
+      // 사용자 요청에 따라 발굴만 좌하단에 두되 모양과 누름 피드백은 다른 씬의 IconButton을 공유한다.
+      this.excavationBackButton = new IconButton(this, 106, BASE_HEIGHT - 120, { icon: UI_ICON.back, onClick: () => this.idleExcavationPopup?.close() }).setDepth(2100);
+    }
   }
 
   /** 저장된 UTC 일일 입장 횟수를 로비 원정 버튼의 짧은 상태 문구로 바꾼다. */

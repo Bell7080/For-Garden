@@ -1,5 +1,7 @@
 import { generateExpeditionMap } from "../core/expeditionMap";
-import { EXPEDITION_AUGMENT_IDS, EXPEDITION_REWARD_IDS } from "../data/expedition";
+import { applyExpeditionRest } from "../core/expeditionAugments";
+import type { SkirmishRelicResult } from "../core/skirmish";
+import { EXPEDITION_AUGMENT_IDS, EXPEDITION_REST_RULES, EXPEDITION_REWARD_IDS } from "../data/expedition";
 import { saveManager, type SaveManager } from "../state/SaveManager";
 import { session, type ExpeditionRunState, type Session } from "../state/session";
 
@@ -70,7 +72,26 @@ export class ExpeditionManager {
     if (update.augmentId && !next.selectedAugmentIds.includes(update.augmentId)) next.selectedAugmentIds.push(update.augmentId);
     for (const [id, amount] of Object.entries(update.rewards ?? {})) next.pendingRewards[id] = (next.pendingRewards[id] ?? 0) + amount;
     next.bossDamage += update.bossDamage ?? 0; next.bestScore = Math.max(next.bestScore, update.score ?? 0);
+    // 마지막 생존자가 쓰러지면 해당 전투 결과와 함께 런도 즉시 종료 상태로 확정한다.
+    if (next.relics.every(({ alive }) => !alive)) next.settled = true;
     this.commit({ ...this.state.expedition, run: next }); return true;
+  }
+
+  /** 난전 결과 DTO의 ID 순서를 검증한 뒤 기존 노드 완료 경계로 전달한다. */
+  completeBattle(nodeId: string, results: readonly SkirmishRelicResult[]): boolean {
+    const run = this.state.expedition.run;
+    if (!run || results.length !== run.relics.length || results.some((result, index) => result.relicId !== run.relics[index].relicId || result.alive !== (result.currentHp > 0))) return false;
+    return this.completeNode(nodeId, { relicHp: results.map(({ currentHp }) => currentHp) });
+  }
+
+  /** 휴식 노드는 전멸하지 않은 런에만 정적 회복/부활 규칙을 적용한다. */
+  rest(): boolean {
+    const run = this.state.expedition.run;
+    if (!run || run.settled || run.relics.every(({ alive }) => !alive)) return false;
+    const next = structuredClone(run);
+    next.relics = applyExpeditionRest(next.relics, EXPEDITION_REST_RULES.healPercent, EXPEDITION_REST_RULES.revivePercent) as ExpeditionRunState["relics"];
+    this.commit({ ...this.state.expedition, run: next });
+    return true;
   }
 
   /** 포기는 미정산 보상을 버리고 런을 닫는다. */

@@ -16,6 +16,7 @@ import {
   type SkirmishEvent,
   type SkirmishState,
 } from "../../src/core/skirmish";
+import { applyExpeditionRest, type ExpeditionAugmentEffect } from "../../src/core/expeditionAugments";
 import { getRelic } from "../../src/data/relics";
 import { FEROCITY_RULES } from "../../src/core/ferocity";
 import { ULTIMATE_ENERGY_MAX } from "../../src/core/ultimate";
@@ -611,5 +612,59 @@ describe("각성", () => {
     const plain = createSkirmish([getRelic("rex")], [getRelic("husk-shell")], ARENA);
     expect(ready.fighters[0].energy).toBe(getRelic("rex").ultimate.cost);
     expect(plain.fighters[0].energy).toBe(0);
+  });
+});
+
+describe("원정 난전 확장", () => {
+  it("은 3대1과 3대5를 전장 안에 서로 다른 시작점으로 배치한다", () => {
+    for (const enemies of [["husk-shell"], ["husk-shell", "husk-wing", "husk-raptor", "husk-shell", "husk-wing"]]) {
+      const state = newSkirmish(undefined, enemies);
+      expect(state.fighters).toHaveLength(3 + enemies.length);
+      expect(new Set(state.fighters.filter(({ side }) => side === "enemy").map(({ x, y }) => `${x}:${y}`)).size).toBe(enemies.length);
+      expect(state.fighters.every(({ x, y }) => x >= ARENA.left && x <= ARENA.right && y >= ARENA.top && y <= ARENA.bottom)).toBe(true);
+    }
+  });
+
+  it("은 저장 HP와 사망 상태를 시작값으로 주입하고 전멸을 즉시 판정한다", () => {
+    const state = createSkirmish([getRelic("rex"), getRelic("anky"), getRelic("dodo")], [getRelic("husk-shell")], ARENA, {}, {}, {
+      playerInitialStates: [{ relicId: "rex", currentHp: 17, alive: true }, { relicId: "anky", currentHp: 0, alive: false }, { relicId: "dodo", currentHp: 0, alive: false }],
+    });
+    expect(state.fighters.slice(0, 3).map(({ hp, maxHp }) => hp / maxHp)).toEqual([0.17, 0, 0]);
+    state.fighters[0].hp = 0;
+    stepSkirmish(state, 1 / 60);
+    expect(state.phase).toBe("defeat");
+  });
+
+  it("은 전체/지정 공격 증강의 대상 범위를 구분한다", () => {
+    const effects: ExpeditionAugmentEffect[] = [
+      { kind: "attackPowerPercent", percent: 10, scope: { kind: "all" } },
+      { kind: "attackPowerPercent", percent: 20, scope: { kind: "relic", relicId: "rex" } },
+    ];
+    const state = createSkirmish([getRelic("rex"), getRelic("anky")], [getRelic("husk-shell")], ARENA, {}, {}, { augmentEffects: effects });
+    // 같은 정의로 한 번씩 때려 지정 대상에게만 추가 20%가 붙는지 공용 공격 이벤트에서 확인한다.
+    const [rex, anky, foe] = state.fighters;
+    rex.x = anky.x = 400; rex.y = anky.y = 1000; foe.x = 450; foe.y = 1000;
+    rex.attackCooldown = 0; anky.attackCooldown = foe.attackCooldown = 99;
+    const boosted = stepSkirmish(state, 1 / 60).find((event) => event.kind === "attack")?.amount ?? 0;
+    rex.attackCooldown = 99; anky.attackCooldown = 0; anky.def = { ...rex.def, id: "anky" };
+    const globalOnly = stepSkirmish(state, 1 / 60).find((event) => event.kind === "attack")?.amount ?? 0;
+    expect(boosted).toBeGreaterThan(globalOnly);
+  });
+
+  it("은 공격 출혈을 단일 슬롯에 중첩하고 약한 재적용이 비율을 낮추지 않는다", () => {
+    const effect: ExpeditionAugmentEffect = { kind: "bleedOnAttack", percent: 4, seconds: 4, scope: { kind: "all" } };
+    const state = createSkirmish([getRelic("rex")], [getRelic("husk-shell")], ARENA, {}, {}, { augmentEffects: [effect] });
+    const [ally, foe] = state.fighters;
+    ally.x = 400; ally.y = 1000; foe.x = 450; foe.y = 1000; ally.attackCooldown = 0; foe.attackCooldown = 99;
+    foe.bleed = { remaining: 5, tickIn: 0.5, percent: 6 };
+    stepSkirmish(state, 1 / 60);
+    expect(foe.bleed).toMatchObject({ percent: 6, tickIn: expect.any(Number) });
+    expect(foe.bleed?.remaining).toBeGreaterThan(4.9);
+  });
+
+  it("은 휴식 시 생존자를 회복하고 한 기만 부활시키되 전멸 뒤에는 부활시키지 않는다", () => {
+    const party = [{ relicId: "rex", currentHp: 40, alive: true }, { relicId: "anky", currentHp: 0, alive: false }, { relicId: "dodo", currentHp: 0, alive: false }];
+    expect(applyExpeditionRest(party).map(({ currentHp }) => currentHp)).toEqual([70, 25, 0]);
+    expect(applyExpeditionRest(party.map((relic) => ({ ...relic, currentHp: 0, alive: false }))).every(({ alive }) => !alive)).toBe(true);
   });
 });

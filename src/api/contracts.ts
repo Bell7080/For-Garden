@@ -9,6 +9,7 @@ import type { RuneInstance, RuneStatKey } from "../core/runes";
 import type { ExcavationCurrency, IdleExcavationState } from "../core/idleExcavation";
 import type { AdReward } from "../data/adRewards";
 import type { ItemCategory, ItemDefinition, ItemUseEffect } from "../data/items";
+import type { ExpeditionBossAction } from "../core/expeditionBoss";
 
 /** 서로 다른 저장 소유자를 서버가 한 목록으로 합성한 인벤토리 조회 행이다. */
 export interface InventoryItemDto { id: string; definitionId: string; category: ItemCategory; quantity: number; /** API 경계를 건너도 카드가 manager를 재생성하지 않도록 한 안전한 정적 표시 메타데이터다. */ definition: ItemDefinition; rune?: RuneInstance; }
@@ -238,7 +239,7 @@ export interface PullResponse extends PlayerStateDto {
 }
 
 /** UI가 서버 실패 원인을 문구로 바꿀 수 있게 고정한 오류 코드다. */
-export type ApiErrorCode = "ITEM_NOT_FOUND" | "ITEM_NOT_USABLE" | "INVALID_ITEM_QUANTITY" | "INSUFFICIENT_ITEMS" | "STAMINA_FULL" | "AD_SLOT_NOT_FOUND" | "AD_TOKEN_INVALID" | "AD_REQUEST_DUPLICATE" | "AD_DAILY_LIMIT" | "RECEIPT_INVALID" | "PASS_NOT_FOUND" | "PASS_EXPIRED" | "BANNER_NOT_FOUND" | "INSUFFICIENT_CURRENCY" | "INSUFFICIENT_GOLD" | "INVALID_PULL_COUNT" | "RELIC_NOT_FOUND" | "RELIC_MAX_LEVEL" | "RUNE_NOT_FOUND" | "RUNE_ENHANCEMENT_COMPLETE" | "RUNE_STAT_EXHAUSTED" | "RUNE_ENGRAVING_NOT_ALLOWED" | "INVALID_RUNE_NAME" | "INVALID_RUNE_SLOT" | "RUNE_ALREADY_EQUIPPED" | "RUNE_SLOT_MISMATCH" | "RUNE_SLOT_EMPTY" | "STAGE_NOT_FOUND" | "DAILY_ENTRY_LIMIT" | "MISSION_NOT_FOUND" | "MISSION_NOT_COMPLETE" | "MISSION_ALREADY_CLAIMED" | "PRODUCT_NOT_FOUND" | "PRODUCT_NOT_VISIBLE" | "PURCHASE_LIMIT_REACHED" | "PLATFORM_PAYMENT_REQUIRED" | "DNA_OFFER_NOT_FOUND" | "INVALID_EXCHANGE_TARGET" | "DUPLICATE_GRANT" | "INVALID_STATE" | "CURRENCY_LIMIT_EXCEEDED" | "EVENT_NOT_FOUND" | "EVENT_NOT_ACTIVE";
+export type ApiErrorCode = "EXPEDITION_SCORE_REJECTED" | "EXPEDITION_REWARD_NOT_FOUND" | "EXPEDITION_REWARD_NOT_EARNED" | "ITEM_NOT_FOUND" | "ITEM_NOT_USABLE" | "INVALID_ITEM_QUANTITY" | "INSUFFICIENT_ITEMS" | "STAMINA_FULL" | "AD_SLOT_NOT_FOUND" | "AD_TOKEN_INVALID" | "AD_REQUEST_DUPLICATE" | "AD_DAILY_LIMIT" | "RECEIPT_INVALID" | "PASS_NOT_FOUND" | "PASS_EXPIRED" | "BANNER_NOT_FOUND" | "INSUFFICIENT_CURRENCY" | "INSUFFICIENT_GOLD" | "INVALID_PULL_COUNT" | "RELIC_NOT_FOUND" | "RELIC_MAX_LEVEL" | "RUNE_NOT_FOUND" | "RUNE_ENHANCEMENT_COMPLETE" | "RUNE_STAT_EXHAUSTED" | "RUNE_ENGRAVING_NOT_ALLOWED" | "INVALID_RUNE_NAME" | "INVALID_RUNE_SLOT" | "RUNE_ALREADY_EQUIPPED" | "RUNE_SLOT_MISMATCH" | "RUNE_SLOT_EMPTY" | "STAGE_NOT_FOUND" | "DAILY_ENTRY_LIMIT" | "MISSION_NOT_FOUND" | "MISSION_NOT_COMPLETE" | "MISSION_ALREADY_CLAIMED" | "PRODUCT_NOT_FOUND" | "PRODUCT_NOT_VISIBLE" | "PURCHASE_LIMIT_REACHED" | "PLATFORM_PAYMENT_REQUIRED" | "DNA_OFFER_NOT_FOUND" | "INVALID_EXCHANGE_TARGET" | "DUPLICATE_GRANT" | "INVALID_STATE" | "CURRENCY_LIMIT_EXCEEDED" | "EVENT_NOT_FOUND" | "EVENT_NOT_ACTIVE";
 
 /**
  * 급여 응답.
@@ -261,8 +262,29 @@ export interface EventListResponse { events: EventDto[]; serverTime: string; }
 /** 입장 허가 뒤에도 기존 StageDef로 같은 전투 엔진을 사용한다. */
 export interface EnterEventStageResponse { eventId: string; stage: StageDef; serverTime: string; }
 
+/** 클라이언트 점수가 아니라 재연산 가능한 동작열만 받는 주간 보스 제출 계약이다. */
+export interface SubmitExpeditionBossScoreRequest { requestId: string; actions: ExpeditionBossAction[]; }
+/** 전멸 순간 서버가 확정한 점수와 최고/누적 기록이다. */
+export interface SubmitExpeditionBossScoreResponse { weekKey: string; score: number; bestScore: number; cumulativeScore: number; improved: boolean; endedAtMs: number; }
+/** 주간 최고 점수와 월요일 00:00 UTC 초기화 경계를 함께 전달한다. */
+export interface ExpeditionWeeklyBestResponse { weekKey: string; bestScore: number; cumulativeScore: number; resetsAt: string; }
+/** 누적 단계는 정적 표 ID로 요청하고 실제 서버가 달성 및 기존 수령을 다시 검사한다. */
+export interface ClaimExpeditionRewardRequest { requestId: string; stageId: string; }
+export interface ClaimExpeditionRewardResponse { weekKey: string; stageId: string; claimedStageIds: string[]; reward: { currency: "gold" | "fossil" | "gems"; amount: number }; alreadyClaimed: boolean; }
+/** 동점은 최고 점수 달성 시각이 빠른 이용자를 우선하며 그 뒤 안정적인 playerId 순으로 정렬한다. */
+export interface ExpeditionLeaderboardEntry { rank: number; playerId: string; displayName: string; score: number; achievedAt: string; }
+export interface ExpeditionLeaderboardResponse { weekKey: string; tieBreakPolicy: "earliest-achieved-at"; entries: ExpeditionLeaderboardEntry[]; }
+
 /** 실제 HTTP API로 교체할 때도 씬이 의존할 단 하나의 통신 인터페이스다. */
 export interface GameApi {
+  /** 서버 UTC 주차의 최고/누적 기록을 조회한다. */
+  getExpeditionWeeklyBest(): Promise<ExpeditionWeeklyBestResponse>;
+  /** 동작열을 서버 편성으로 재현하고 전멸 결과만 점수로 제출한다. */
+  submitExpeditionBossScore(request: SubmitExpeditionBossScoreRequest): Promise<SubmitExpeditionBossScoreResponse>;
+  /** 달성한 누적 단계 보상을 서버 멱등 기록으로 수령한다. */
+  claimExpeditionCumulativeReward(request: ClaimExpeditionRewardRequest): Promise<ClaimExpeditionRewardResponse>;
+  /** 서버가 소유한 주간 순위표를 동점 정책에 따라 조회한다. */
+  getExpeditionLeaderboard(limit?: number): Promise<ExpeditionLeaderboardResponse>;
   /** 룬·지갑·스택을 저장 모델 변경 없이 합성해 조회한다. */
   getInventory(): Promise<InventoryResponse>;
   /** 검증·효과·차감·저장을 하나의 서버 처리로 확정한다. */

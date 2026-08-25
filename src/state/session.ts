@@ -27,6 +27,8 @@ export interface GameSettings {
 const STARTER_RELICS = ["anky", "rex", "spino"];
 
 export interface Session {
+  /** 룬·지갑과 분리된 중첩 아이템. 0개 행은 저장하지 않는다. */
+  itemInventory: ItemStack[];
   /** 서버 정산 전용 방치 발굴 상태다. 씬은 이 객체를 직접 변경하지 않는다. */
   idleExcavation: IdleExcavationState;
   /** 씬은 직접 쓰지 않고 SettingsManager를 거쳐 저장·이벤트와 한 처리로 변경한다. */
@@ -101,6 +103,8 @@ export interface ObservationRecord {
  * 계정 연동 시에도 이 형태를 업로드 모델로 오해하지 않고 SaveManager 경계에서만 사용한다.
  */
 export interface SaveData {
+  /** 정적 아이템 ID와 양만 저장하는 JSON 안전 스택이다. */
+  itemInventory: ItemStack[];
   /** 서버와 동기화할 수 있는 순수 JSON 발굴 상태다. */
   idleExcavation: IdleExcavationState;
   saveVersion: number;
@@ -131,6 +135,9 @@ export interface SaveData {
   dailyAdRewards: DailyAdRewardState;
 }
 
+/** 개별 옵션이 없는 소비품·재료만 같은 ID끼리 중첩한다. */
+export interface ItemStack { itemId: string; quantity: number; }
+
 /** 신규 렐릭에 부여하는 독립 복사 가능한 기본 성장 상태다. */
 export function createInitialRelicProgress(): RelicProgress {
   // 유대는 플레이어별 진행 값이며 신규/마이그레이션 계정 모두 0에서 시작한다.
@@ -145,6 +152,7 @@ export function createDefaultSession(): Session {
   // 순수 설정 팩토리는 지연 require 대신 정적 import로 의존 방향을 core→state 타입에만 제한한다.
   const settings = createDefaultSettings();
   return {
+    itemInventory: [{ itemId: "stamina-tonic", quantity: 3 }],
     // 서버 첫 조회가 현재 시각을 기준점으로 확정하며 기본 보관 시간은 4시간이다.
     idleExcavation: createIdleExcavationState(),
     settings,

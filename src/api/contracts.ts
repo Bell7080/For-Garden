@@ -8,6 +8,16 @@ import type { EventDefinition } from "../data/events/types";
 import type { RuneInstance, RuneStatKey } from "../core/runes";
 import type { ExcavationCurrency, IdleExcavationState } from "../core/idleExcavation";
 import type { AdReward } from "../data/adRewards";
+import type { ItemCategory, ItemUseEffect } from "../data/items";
+
+/** 서로 다른 저장 소유자를 서버가 한 목록으로 합성한 인벤토리 조회 행이다. */
+export interface InventoryItemDto { id: string; definitionId: string; category: ItemCategory; quantity: number; rune?: RuneInstance; }
+/** 지갑은 조회 순간 표시 행으로만 합성된다. */
+export interface InventoryResponse { items: InventoryItemDto[]; }
+/** 수량은 양의 정수만 허용하며 서버가 보유량과 상한을 다시 검증한다. */
+export interface UseConsumableRequest { itemId: string; quantity: number; }
+/** 실제 적용량을 반환해 상한에서 버려진 회복을 UI가 추측하지 않게 한다. */
+export interface UseConsumableResponse extends InventoryResponse { itemId: string; quantityUsed: number; effect: ItemUseEffect; appliedAmount: number; wallet: Wallet; }
 
 /** 조회는 서버가 정산한 상태와 동일 기준 시각을 함께 돌려준다. */
 /** 네 발굴 재화 레코드와 서버 정산 시각을 함께 보내 클라이언트 추측 지급을 막는다. */
@@ -223,7 +233,7 @@ export interface PullResponse extends PlayerStateDto {
 }
 
 /** UI가 서버 실패 원인을 문구로 바꿀 수 있게 고정한 오류 코드다. */
-export type ApiErrorCode = "AD_SLOT_NOT_FOUND" | "AD_TOKEN_INVALID" | "AD_REQUEST_DUPLICATE" | "AD_DAILY_LIMIT" | "RECEIPT_INVALID" | "PASS_NOT_FOUND" | "PASS_EXPIRED" | "BANNER_NOT_FOUND" | "INSUFFICIENT_CURRENCY" | "INSUFFICIENT_GOLD" | "INVALID_PULL_COUNT" | "RELIC_NOT_FOUND" | "RELIC_MAX_LEVEL" | "RUNE_NOT_FOUND" | "RUNE_ENHANCEMENT_COMPLETE" | "RUNE_STAT_EXHAUSTED" | "RUNE_ENGRAVING_NOT_ALLOWED" | "INVALID_RUNE_NAME" | "INVALID_RUNE_SLOT" | "RUNE_ALREADY_EQUIPPED" | "RUNE_SLOT_MISMATCH" | "RUNE_SLOT_EMPTY" | "STAGE_NOT_FOUND" | "DAILY_ENTRY_LIMIT" | "MISSION_NOT_FOUND" | "MISSION_NOT_COMPLETE" | "MISSION_ALREADY_CLAIMED" | "PRODUCT_NOT_FOUND" | "PRODUCT_NOT_VISIBLE" | "PURCHASE_LIMIT_REACHED" | "PLATFORM_PAYMENT_REQUIRED" | "DNA_OFFER_NOT_FOUND" | "INVALID_EXCHANGE_TARGET" | "DUPLICATE_GRANT" | "INVALID_STATE" | "CURRENCY_LIMIT_EXCEEDED" | "EVENT_NOT_FOUND" | "EVENT_NOT_ACTIVE";
+export type ApiErrorCode = "ITEM_NOT_FOUND" | "ITEM_NOT_USABLE" | "INVALID_ITEM_QUANTITY" | "INSUFFICIENT_ITEMS" | "STAMINA_FULL" | "AD_SLOT_NOT_FOUND" | "AD_TOKEN_INVALID" | "AD_REQUEST_DUPLICATE" | "AD_DAILY_LIMIT" | "RECEIPT_INVALID" | "PASS_NOT_FOUND" | "PASS_EXPIRED" | "BANNER_NOT_FOUND" | "INSUFFICIENT_CURRENCY" | "INSUFFICIENT_GOLD" | "INVALID_PULL_COUNT" | "RELIC_NOT_FOUND" | "RELIC_MAX_LEVEL" | "RUNE_NOT_FOUND" | "RUNE_ENHANCEMENT_COMPLETE" | "RUNE_STAT_EXHAUSTED" | "RUNE_ENGRAVING_NOT_ALLOWED" | "INVALID_RUNE_NAME" | "INVALID_RUNE_SLOT" | "RUNE_ALREADY_EQUIPPED" | "RUNE_SLOT_MISMATCH" | "RUNE_SLOT_EMPTY" | "STAGE_NOT_FOUND" | "DAILY_ENTRY_LIMIT" | "MISSION_NOT_FOUND" | "MISSION_NOT_COMPLETE" | "MISSION_ALREADY_CLAIMED" | "PRODUCT_NOT_FOUND" | "PRODUCT_NOT_VISIBLE" | "PURCHASE_LIMIT_REACHED" | "PLATFORM_PAYMENT_REQUIRED" | "DNA_OFFER_NOT_FOUND" | "INVALID_EXCHANGE_TARGET" | "DUPLICATE_GRANT" | "INVALID_STATE" | "CURRENCY_LIMIT_EXCEEDED" | "EVENT_NOT_FOUND" | "EVENT_NOT_ACTIVE";
 
 /**
  * 급여 응답.
@@ -248,6 +258,10 @@ export interface EnterEventStageResponse { eventId: string; stage: StageDef; ser
 
 /** 실제 HTTP API로 교체할 때도 씬이 의존할 단 하나의 통신 인터페이스다. */
 export interface GameApi {
+  /** 룬·지갑·스택을 저장 모델 변경 없이 합성해 조회한다. */
+  getInventory(): Promise<InventoryResponse>;
+  /** 검증·효과·차감·저장을 하나의 서버 처리로 확정한다. */
+  useConsumable(request: UseConsumableRequest): Promise<UseConsumableResponse>;
   /** 조회 자체가 서버 시각까지의 생산분을 원자적으로 정산한다. */
   getIdleExcavation(): Promise<IdleExcavationResponse>;
   saveExcavationFormation(request: SaveExcavationFormationRequest): Promise<IdleExcavationResponse>;

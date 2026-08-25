@@ -20,10 +20,12 @@ import type { EventDefinition } from "../data/events/types";
 import type { EnterEventStageResponse, EventListResponse } from "./contracts";
 import { assertValidRuneInstance, canEngraveRune, canEnhanceRune, generateRune, RUNE_PART_LABELS, type RunePart, engraveRune as applyRuneEngraving, enhanceRune as applyRuneEnhancement, runeEnhancementAttempts, runeEnhancementIncrease, type RuneInstance, type RuneRarity } from "../core/runes";
 import { runeEnhancementGoldCost } from "../data/runes";
+import { findItem, STAMINA_CAP } from "../data/items";
+import { InventoryManager } from "../managers/InventoryManager";
 import type { EngraveRuneRequest, EngraveRuneResponse, EnhanceRuneRequest, EnhanceRuneResponse, EquipRuneRequest, EquipRuneResponse, RenameRuneRequest, RenameRuneResponse, RuneInventoryDto, UnequipRuneRequest, UnequipRuneResponse } from "./contracts";
 import type { ActivatePassRequest, ActivatePassResponse, ClaimInstantAdRewardRequest, ClaimInstantAdRewardResponse, PassEntitlementDto, VerifyPurchaseReceiptRequest, VerifyPurchaseReceiptResponse } from "./contracts";
 import { harvestIdleExcavation, settleIdleExcavation, validateExcavationFormation } from "../core/idleExcavation";
-import type { HarvestExcavationRequest, HarvestExcavationResponse, IdleExcavationResponse, SaveExcavationFormationRequest } from "./contracts";
+import type { HarvestExcavationRequest, HarvestExcavationResponse, IdleExcavationResponse, SaveExcavationFormationRequest, InventoryResponse, UseConsumableRequest, UseConsumableResponse } from "./contracts";
 
 /** 사용자 룬 이름의 서버 정책이다. UI 글자 수와 무관하게 API 경계가 최종 권한을 가진다. */
 export const MAX_RUNE_NAME_LENGTH = 20;
@@ -82,6 +84,34 @@ export class FakeServer implements GameApi {
   async getAdOperationsConfig(): Promise<AdOperationsConfigResponse> {
     await this.delay(); const now = this.now();
     return { configVersion: "fake-2026-08-24", serverTime: now.toISOString(), expiresAt: new Date(now.getTime() + 300_000).toISOString(), slots: AD_REWARD_SLOTS.map((slot) => ({ slotId: slot.id, enabled: true, dailyLimitUtc: slot.dailyLimitUtc, displayText: slot.displayText, reward: slot.reward })) };
+  }
+
+  /** 세 저장 소유자를 읽기 전용 DTO로만 합성한다. */
+  async getInventory(): Promise<InventoryResponse> {
+    await this.delay();
+    const manager = new InventoryManager(this.state);
+    return { items: (["rune", "currency", "consumable", "material"] as const).flatMap((category) => manager.list(category).map((item) => ({ id: item.id, definitionId: item.definition.id, category: item.category, quantity: item.quantity, ...(item.kind === "rune" ? { rune: this.cloneRune(item.rune) } : {}) }))) };
+  }
+
+  /** 보유량과 상한을 복제 상태에서 검증한 뒤 차감·효과·저장을 한 번에 확정한다. */
+  async useConsumable(request: UseConsumableRequest): Promise<UseConsumableResponse> {
+    await this.delay();
+    const definition = findItem(request.itemId);
+    if (!definition) throw new GameApiError("ITEM_NOT_FOUND", "존재하지 않는 아이템입니다.");
+    if (definition.category !== "consumable" || definition.useEffect.kind === "none") throw new GameApiError("ITEM_NOT_USABLE", "사용할 수 없는 아이템입니다.");
+    if (!Number.isInteger(request.quantity) || request.quantity <= 0) throw new GameApiError("INVALID_ITEM_QUANTITY", "사용 수량이 올바르지 않습니다.");
+    const stack = this.state.itemInventory.find(({ itemId }) => itemId === request.itemId);
+    if (!stack || stack.quantity < request.quantity) throw new GameApiError("INSUFFICIENT_ITEMS", "아이템 수량이 부족합니다.");
+    if (definition.useEffect.kind === "restore_stamina" && this.state.wallet.stamina >= STAMINA_CAP) throw new GameApiError("STAMINA_FULL", "스테미나가 이미 가득 찼습니다.");
+    const requested = definition.useEffect.amount * request.quantity;
+    const appliedAmount = Math.min(requested, STAMINA_CAP - this.state.wallet.stamina);
+    const nextWallet = { ...this.state.wallet, stamina: this.state.wallet.stamina + appliedAmount };
+    const left = stack.quantity - request.quantity;
+    const nextItems = this.state.itemInventory.flatMap((entry) => entry.itemId === request.itemId ? (left > 0 ? [{ ...entry, quantity: left }] : []) : [{ ...entry }]);
+    this.persist({ ...this.state, wallet: nextWallet, itemInventory: nextItems });
+    this.state.wallet = nextWallet; this.state.itemInventory = nextItems;
+    const inventory = await this.getInventory();
+    return { ...inventory, itemId: request.itemId, quantityUsed: request.quantity, effect: definition.useEffect, appliedAmount, wallet: { ...nextWallet } };
   }
 
   /** 서버의 단일 now 값을 캡처해 조회 정산과 응답 시각이 어긋나지 않게 한다. */

@@ -104,10 +104,11 @@ export class PopupLayer {
       this.close(layer);
       options.onClose?.();
     };
+    const titleChrome: Phaser.GameObjects.GameObject[] = [];
     if (options.title) {
       // 머리글은 판 안이 아니라 **윗변에 걸터앉는다.** 정보창의 칸 제목(유대·능력치·룬)과
       // 같은 표를 써서, 어느 화면에서나 제목이 같은 무게와 같은 모양으로 읽히게 한다.
-      addSectionTitle(this.scene, -width / 2 + unit * 0.1, -height / 2, options.title, { size: options.titleSize ?? 26, parent: body });
+      titleChrome.push(addSectionTitle(this.scene, -width / 2 + unit * 0.1, -height / 2, options.title, { size: options.titleSize ?? 26, parent: body }));
       // 닫기는 기본적으로 오른쪽 위에 두되, 화면 chrome이 닫기를 맡으면 중복 조작을 만들지 않는다.
       if (!options.hideCloseButton) {
         const closeButton = this.scene.add.container(width / 2 - 40, -height / 2 + 40);
@@ -121,11 +122,14 @@ export class PopupLayer {
         hit.on("pointerout", () => closeButton.setScale(1));
         hit.on("pointerup", () => close());
         body.add([closeButton, hit]);
+        titleChrome.push(closeButton, hit);
       }
     }
     if (options.closeOnBackdrop !== false) backdrop.on("pointerup", () => close());
 
     build(body, close);
+    // 배경 원화를 까는 큰 팝업은 내용이 제목 뒤로 들어오므로, 채운 뒤 머리글을 한 번 더 맨 위로 올린다.
+    for (const chrome of titleChrome) body.bringToTop(chrome);
 
     // 살짝 커지며 떠오른다. 정보창의 다른 판과 같은 등장 방식이다.
     layer.setAlpha(0);

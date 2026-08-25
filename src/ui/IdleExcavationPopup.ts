@@ -18,7 +18,7 @@ import { openRewardPopup } from "./RewardPopup";
 import { addPopupBackgroundImage, BACKGROUND, type PopupBackgroundImage } from "./backgrounds";
 import { addSectionTitle } from "./SectionTitle";
 import { excavationDisplayModel } from "./excavationDisplayModel";
-import { ExcavationCurrencyFrame } from "./ExcavationCurrencyFrame";
+import { ExcavationCurrencyFrame, formatRate } from "./ExcavationCurrencyFrame";
 import { excavationAdOfferDisplayModel, type ExcavationAdOfferId } from "./excavationAdOfferModel";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { loadOwnedPuppet } from "./statusPuppetLoad";
@@ -29,6 +29,8 @@ const PANEL = { width: 900, height: 1320 } as const;
 const GRID_VIEW = { left: -370, right: 370, top: -145, bottom: 425, columnGap: 250, rowGap: 280, cardWidth: 215, cardHeight: 235 } as const;
 /** 손가락이 이 거리 이상 움직여야 카드 선택이 아니라 스크롤로 판정한다. */
 const GRID_DRAG_SLOP = 12;
+/** 팝업 판(PopupLayer 기본 2000) 바로 위. 그 위에 열리는 보상 팝업(2002)보다는 아래에 남는다. */
+const SD_DEPTH = 2001;
 /** 원화는 별도 액자를 만들지 않고 PopupLayer 판의 비대칭 실루엣에 직접 맞춘다. */
 const POPUP_ART_SHAPE = chipPoints(PANEL.width - 24, PANEL.height - 24, { bevel: { topLeft: 118, bottomRight: 118 } });
 /** 좁은 안전 영역에서도 팝업 제목·닫기와 겹치지 않는 현황 히어로의 고정 세로 범위다. */
@@ -182,7 +184,7 @@ export class IdleExcavationPopup {
     // 2순위 작업 중 SD/슬롯: 현황에서도 칸 자체가 편성 그리드의 유일한 진입점이다.
     const slotCards = this.addSlots(content, formation, false);
     // draft 편집에는 SD를 만들지 않는다. 서버 확정값을 그리는 현황에서만 비동기 세대를 시작한다.
-    this.loadStatusSD(content, formation, slotCards);
+    this.loadStatusSD(formation, slotCards);
     const baseServerMs = new Date(response.serverTime).getTime();
     let harvestButton: Button | undefined;
     // 발굴 전용 액자는 큰 누적값을, 아래의 독립 칩은 같은 아이콘과 생산 속도만 책임진다.
@@ -237,9 +239,8 @@ export class IdleExcavationPopup {
       // 서버 확정 지급분만 공용 획득 팝업에 넘긴다. 지갑 상한 손실은 현황 경고로 남기고 보상처럼 꾸미지 않는다.
       openRewardPopup(this.scene, this.popups, {
         title: "발굴 보상 획득",
-        // 수확 결과는 일반 영수증보다 한 단계 큰 제목과 얕은 중첩 암전으로 완료감을 준다.
+        // 수확 결과는 일반 영수증보다 한 단계 큰 제목을 쓰고, 암전은 공용 기본값(짙은 검정)을 그대로 받는다.
         titleSize: 30,
-        dimAlpha: 0.18,
         items: EXCAVATION_CURRENCIES.map((currency) => ({
           icon: EXCAVATION_CURRENCY_ICON[currency],
           amount: result.granted[currency],
@@ -321,7 +322,7 @@ export class IdleExcavationPopup {
       const y = GRID_VIEW.cardHeight / 2 + Math.floor(index / 3) * GRID_VIEW.rowGap;
       const detail = excavationProductionDisplayModel([relic.id, null, null], RELICS, session.relicProgress).relics[0];
       const progress = session.relicProgress[relic.id];
-      const card = new PortraitCard(this.scene, x, y, { width: GRID_VIEW.cardWidth, height: GRID_VIEW.cardHeight, portraitAssetId: relic.portraitAssetId, tint: portraitUsesRelicTint(relic.portraitAssetId) ? tintFor(relic.id) : undefined, label: relic.name, level: progress?.level ?? 1, rarity: relic.rarity, stars: (progress?.breakthrough ?? 0) + 1, subIcon: EXCAVATION_TRAIT_ICON[relic.excavationTrait.primaryCurrency], sub: `${Math.floor(detail?.totalPerHour ?? 0)}/시간` });
+      const card = new PortraitCard(this.scene, x, y, { width: GRID_VIEW.cardWidth, height: GRID_VIEW.cardHeight, portraitAssetId: relic.portraitAssetId, tint: portraitUsesRelicTint(relic.portraitAssetId) ? tintFor(relic.id) : undefined, label: relic.name, level: progress?.level ?? 1, rarity: relic.rarity, stars: (progress?.breakthrough ?? 0) + 1, subIcon: EXCAVATION_TRAIT_ICON[relic.excavationTrait.primaryCurrency], sub: formatRate(detail?.totalPerHour ?? 0) });
       card.setSelected(this.draft!.includes(relic.id));
       card.hit.on("pointerup", () => { if (this.saving || !this.draft || this.gridDragMoved > GRID_DRAG_SLOP) return; this.draft = placeExcavationRelic(this.draft, this.selectedSlot, relic.id); this.renderEditor(); });
       grid.add(card);
@@ -448,16 +449,25 @@ export class IdleExcavationPopup {
     this.sdContainer?.destroy(true); this.sdContainer = undefined;
   }
 
-  /** 확정 슬롯의 카드 위에 SD가 준비된 자리만 교체하며 실패한 자리는 카드 미리보기를 보존한다. */
-  private loadStatusSD(parent: Phaser.GameObjects.Container, formation: Formation, cards: Array<Phaser.GameObjects.Container | undefined>): void {
+  /**
+   * 확정 슬롯의 카드 위에 SD가 준비된 자리만 교체하며 실패한 자리는 카드 미리보기를 보존한다.
+   *
+   * Puppet은 자신의 **화면 좌표**로 직접 그리는 GPU 개체라 컨테이너 이동·배율을 물려받지 않는다.
+   * 팝업 본문(화면 가운데로 옮겨진 컨테이너) 안에 넣으면 국소 좌표 그대로 화면 왼쪽 위 바깥에
+   * 그려져 아무것도 보이지 않는다. 그래서 SD만 원점에 선 별도 레이어에 세우고 좌표도 팝업 판의
+   * 중심을 더한 화면 좌표로 넘긴다.
+   */
+  private loadStatusSD(formation: Formation, cards: Array<Phaser.GameObjects.Container | undefined>): void {
     // 로드 시작 자체가 새 세대다. clear 호출 횟수와 무관하게 이전 render와 같은 번호를 공유하지 않는다.
     const generation = ++this.sdLoadGeneration;
-    const layer = this.scene.add.container(0, 0).setName("idle-excavation-confirmed-sd");
-    this.sdContainer = layer; parent.add(layer);
+    const body = this.body;
+    if (!body) return;
+    const layer = this.scene.add.container(0, 0).setName("idle-excavation-confirmed-sd").setDepth(SD_DEPTH);
+    this.sdContainer = layer;
     formation.forEach((relicId, index) => {
       if (!relicId) return;
-      const x = -250 + index * 250;
-      const groundY = -275;
+      const x = body.x - 250 + index * 250;
+      const groundY = body.y - 275;
       // 사방 테두리나 입체 판 대신 얇은 홀로그램 투영 그림자만 발 아래에 둔다.
       layer.add(this.scene.add.ellipse(x, groundY + 2, 172, 25, COLOR.accent, 0.16));
       void this.loadStatusPuppet(relicId, index, x, groundY, generation, layer, cards[index]);
@@ -472,10 +482,10 @@ export class IdleExcavationPopup {
       return;
     }
     const result = await loadOwnedPuppet({
-      spawn: () => this.puppetLoader.spawn(this.scene, asset, { x, groundY, height: 205, depth: 1 }),
+      spawn: () => this.puppetLoader.spawn(this.scene, asset, { x, groundY, height: 205, depth: SD_DEPTH }),
       isCurrent: () => Boolean(this.body) && generation === this.sdLoadGeneration && layer === this.sdContainer,
-      // 생성 성공만으로 카드가 사라지지 않는다. 실제 텍스처와 양수 표시 크기를 가진 가시 루트만 채택한다.
-      isDisplayable: (puppet) => Boolean(puppet.active && puppet.visible && puppet.alpha > 0 && puppet.texture?.key && this.scene.textures.exists(puppet.texture.key) && Number.isFinite(puppet.displayWidth) && puppet.displayWidth > 0 && Number.isFinite(puppet.displayHeight) && puppet.displayHeight > 0),
+      // ZIP은 열렸는데 텍스처가 없는 묶음만 걸러 낸다. 그 뒤의 가시성은 이 레이어가 통째로 책임진다.
+      isDisplayable: (puppet) => Boolean(puppet.active && puppet.texture?.key && this.scene.textures.exists(puppet.texture.key)),
       adopt: (puppet) => {
         // Puppet는 장식 레이어다. 내부 Image가 향후 interactive로 내보내져도 슬롯 입력면을 가로채지 않는다.
         puppet.disableInteractive();

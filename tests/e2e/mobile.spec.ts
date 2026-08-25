@@ -88,14 +88,16 @@ test("방치 발굴 팝업은 좁은 로비 위 한 장으로 열리고 뒤 입�
   // 어두운 backdrop이 출격 좌표의 입력을 먹으므로 로비와 애착 캐릭터가 그대로 남는다.
   await tapGame(page, BASE_WIDTH - 290, BASE_HEIGHT - 425);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
-  // 팝업 X 대신 다른 화면과 같은 아이콘 양식의 발굴 전용 좌하단 돌아가기를 사용한다.
-  await tapGame(page, 106, BASE_HEIGHT - 120);
+  // 팝업 X 대신 다른 화면과 같은 우하단 자리의 돌아가기 아이콘을 사용한다.
+  await tapGame(page, BASE_WIDTH - 106, BASE_HEIGHT - 120);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationPopup)).toBeUndefined();
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
 });
 
 test("SD 완료 뒤 세 슬롯의 공용 입력면이 각각 올바른 편집 슬롯으로 진입한다", async ({ page }) => {
   await startAfterOpening(page, (session) => {
+    // 기본 저장의 편성은 비어 있으므로 SD가 실제로 서는 세 자리를 명시적으로 채운다.
+    session.idleExcavation.assignedRelicIds = ["anky", "rex", "spino"];
     // 작은 모바일과 1.15 텍스트 확대 조합에서도 슬롯 입력면의 고정 안전 영역을 검증한다.
     session.settings.accessibility.textScale = 1.15;
   });
@@ -109,7 +111,7 @@ test("SD 완료 뒤 세 슬롯의 공용 입력면이 각각 올바른 편집 �
   expect(slots).toHaveLength(3);
   for (const slot of slots) {
     expect(slot.width).toBeGreaterThanOrEqual(210); expect(slot.height).toBeGreaterThanOrEqual(245);
-    // 슬롯 하단은 다음 현황 행(게임 y=990) 위, 좌하단 돌아가기(중심 106,1800)와도 멀리 떨어진다.
+    // 슬롯 하단은 다음 현황 행(게임 y=990) 위, 우하단 돌아가기(중심 974,1800)와도 멀리 떨어진다.
     expect(slot.y + slot.height / 2).toBeLessThan(990);
     await tapGame(page, slot.x, slot.y);
     await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationPopup)).toBe("editing");
@@ -158,14 +160,11 @@ test("발굴 수확은 액자 아이콘과 숫자를 공용 획득 팝업으로 
   await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2 + 545);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.rewardPopup)).toBe(true);
   await page.screenshot({ path: `test-results/${test.info().project.name}-excavation-reward-popup.png` });
-  // 보상창의 얕은 암전 입력면이 뒤 발굴창과 로비 출격 좌표를 모두 막아 중첩 상태를 유지한다.
+  // 영수증이므로 팝업 밖(로비 출격 좌표)을 눌러도 닫히되, 그 누름이 뒤 화면으로 새지는 않는다.
   await tapGame(page, BASE_WIDTH - 290, BASE_HEIGHT - 425);
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.rewardPopup)).toBe(true);
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationPopup)).toBe("ready");
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
-  await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.rewardPopup)).toBeUndefined();
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationPopup)).toBe("ready");
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
 });
 
 test("설정 탭은 텍스트 확대·스크롤·두 단계 초기화를 좁은 모바일에서 안전하게 처리한다", async ({ page }) => {

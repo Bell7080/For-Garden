@@ -18,7 +18,7 @@ import { bondDialogue } from "../data/bonds";
 import { DAILY_RESTORATION } from "../data/stages";
 import { PopupLayer } from "../ui/PopupLayer";
 import { IdleExcavationPopup } from "../ui/IdleExcavationPopup";
-import { IconButton } from "../ui/IconButton";
+import { BACK_SLOT, IconButton } from "../ui/IconButton";
 import { UI_ICON } from "../ui/icons";
 
 /** 확대된 애착 렐릭의 골반 아래가 내비게이션 뒤로 자연스럽게 이어지는 기준선. */
@@ -146,8 +146,8 @@ export class LobbyScene extends Phaser.Scene {
     });
     this.idleExcavationPopup.open();
     if (!this.excavationBackButton) {
-      // 사용자 요청에 따라 발굴만 좌하단에 두되 모양과 누름 피드백은 다른 씬의 IconButton을 공유한다.
-      this.excavationBackButton = new IconButton(this, 106, BASE_HEIGHT - 120, { icon: UI_ICON.back, onClick: () => this.idleExcavationPopup?.close() }).setDepth(2100);
+      // 발굴도 다른 화면과 같은 우하단 뒤로가기 자리를 쓴다. 자리와 생김새를 화면마다 다시 정하지 않는다.
+      this.excavationBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: () => this.idleExcavationPopup?.close() }).setDepth(2100);
     }
   }
 

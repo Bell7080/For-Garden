@@ -1,5 +1,7 @@
 import Phaser from "phaser";
+import { gameApi } from "../api/FakeServer";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
+import type { ExpeditionMapNode, ExpeditionNodeType } from "../core/expeditionMap";
 import { getRelic } from "../data/relics";
 import { getExpeditionAugment } from "../data/expeditionAugments";
 import { setDebugScene } from "../debug";
@@ -9,9 +11,13 @@ import { session } from "../state/session";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { Button } from "../ui/Button";
 import { addBackButton } from "../ui/IconButton";
+import { addCurrencyChip } from "../ui/CurrencyChip";
+import { drawGlyph, type GlyphName } from "../ui/glyphs";
 import { PortraitCard, relicCardTint } from "../ui/PortraitCard";
+import { PopupLayer } from "../ui/PopupLayer";
 import { COLOR, textStyle } from "../ui/theme";
-import { chipPoints, drawHairline, drawLayer, drawVignette, HOLO } from "../ui/holo";
+import { chipPoints, drawHairline, drawInnerVignette, drawLayer, drawShapeOutline, drawVignette, HoloBar, HOLO } from "../ui/holo";
+import { EXPEDITION_LAYOUT } from "../ui/expeditionLayout";
 import type { ExpeditionAugmentSelection } from "../core/expeditionRewards";
 
 /** 원정 준비 카드의 고정 그리드 규격이다. 다른 편성과 달리 세 칸씩 읽게 한다. */
@@ -27,6 +33,8 @@ export class ExpeditionScene extends Phaser.Scene {
   private cards = new Map<string, PortraitCard>();
   private hint!: Phaser.GameObjects.Text;
   private startButton?: Button;
+  /** 확인 팝업은 씬의 다른 입력 위에 한 장만 쌓이도록 공용 레이어가 소유한다. */
+  private popups!: PopupLayer;
 
   constructor() {
     super("expedition");
@@ -36,6 +44,7 @@ export class ExpeditionScene extends Phaser.Scene {
     setDebugScene("expedition");
     this.selected = [];
     this.cards.clear();
+    this.popups = new PopupLayer(this);
 
     // 장기 고고학과 다른 콘텐츠지만 야외 조사 분위기를 잇기 위해 기존 탐사 원화만 재사용한다.
     addSceneBackground(this, BACKGROUND.archaeology);
@@ -43,25 +52,75 @@ export class ExpeditionScene extends Phaser.Scene {
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.42).setDepth(-25);
 
     const status = expeditionManager.status();
-    this.add.text(54, 70, "주간 원정", textStyle({ role: "display", size: 52 })).setOrigin(0, 0);
-    this.add.text(54, 144, `이번 주 ${status.playsThisWeek}회  ·  최고 ${status.bestScore.toLocaleString()}`, textStyle({ role: "emphasis", size: 27, color: COLOR.accentText })).setOrigin(0, 0);
-    drawHairline(this, BASE_WIDTH / 2, 210, BASE_WIDTH - 108, { color: COLOR.accent, alpha: 0.34 });
+    this.add.text(54, 34, "주간 원정", textStyle({ role: "display", size: 48 })).setOrigin(0, 0);
+    this.add.text(54, 94, `이번 주 ${status.playsThisWeek}회  ·  최고 ${status.bestScore.toLocaleString()}`, textStyle({ role: "emphasis", size: 25, color: COLOR.accentText })).setOrigin(0, 0);
+    drawHairline(this, BASE_WIDTH / 2, 224, BASE_WIDTH - 108, { color: COLOR.accent, alpha: 0.34 });
 
-    if (status.active) this.buildActive(status.active.relicIds, status.active.score, status.run?.selectedAugments ?? []);
+    if (status.active) this.buildActive(status.active.score, status.run?.selectedAugments ?? []);
     else this.buildPreparation(status.quickAvailable);
 
     // 화면을 벗어나는 조작은 공용 우하단 슬롯만 사용한다.
     addBackButton(this, () => this.scene.start("lobby"));
   }
 
-  /** 진행 중 원정은 새 편성으로 덮지 않고 저장된 세 렐릭과 현재 점수만 보여 준다. */
-  private buildActive(relicIds: readonly string[], score: number, augments: readonly ExpeditionAugmentSelection[]): void {
-    this.add.text(BASE_WIDTH / 2, 330, "원정 진행 중", textStyle({ role: "display", size: 44, color: COLOR.sortieText })).setOrigin(0.5);
-    this.add.text(BASE_WIDTH / 2, 400, relicIds.map((id) => getRelic(id).name).join("  ·  "), textStyle({ role: "emphasis", size: 30 })).setOrigin(0.5);
-    this.add.text(BASE_WIDTH / 2, 470, `현재 점수 ${score.toLocaleString()}`, textStyle({ role: "body", size: 28, color: COLOR.inkDim })).setOrigin(0.5);
+  /** 진행 중 원정은 보상·상승 지도·증강·생존 HUD를 서로 겹치지 않는 안전 구역에 배치한다. */
+  private buildActive(score: number, augments: readonly ExpeditionAugmentSelection[]): void {
+    const run = expeditionManager.status().run;
+    if (!run) return;
+    // 현재 점수는 주간 최고와 같은 상태 줄에 짧게 붙여 지도 공간을 침범하지 않는다.
+    this.add.text(BASE_WIDTH - 54, 94, `런 ${score.toLocaleString()}`, textStyle({ role: "emphasis", size: 25, color: COLOR.sortieText })).setOrigin(1, 0);
+    this.buildRewardBar(run.pendingRewards);
+    this.buildMap(run.nodes, run.currentNodeId, run.visitedNodeIds);
     this.buildAugmentChips(augments);
-    // 전투/보상 API가 연결되기 전에는 임의 완료나 지급 버튼을 만들지 않아 진행 소유권을 보존한다.
+    this.buildRelicHud(run.relics);
+    // 포기는 돌아가기보다 작게 두어 파괴 조작의 위계를 낮추고, 공용 팝업에서 결과를 재확인한다.
+    new Button(this, BASE_WIDTH - 170, 1750, { width: 230, height: 72, label: "포기하기", fontSize: 24, onClick: () => this.confirmAbandon() });
   }
+
+  /** 런에서만 누적되는 네 재화를 CurrencyChip 한 줄로 고정한다. */
+  private buildRewardBar(rewards: Readonly<Record<string, number>>): void {
+    const items = [
+      ["currency-cheesecake", "cheesecake"], ["currency-gold", "gold"],
+      ["currency-fossil", "fossil"], ["currency-gems", "gems"],
+    ] as const;
+    items.forEach(([icon, key], index) => {
+      const value = addCurrencyChip(this, 178 + index * 242, 170, icon, { width: 220, height: 70 });
+      value.setText(Math.floor(rewards[key] ?? 0).toLocaleString());
+    });
+  }
+
+  /** 아래 1층에서 위 20층으로 오르는 경로와 현재 도달 가능한 입력면만 만든다. */
+  private buildMap(nodes: readonly ExpeditionMapNode[], currentNodeId: string | null, visitedIds: readonly string[]): void {
+    const byId = new Map(nodes.map((node) => [node.id, node]));
+    const reachable = new Set(currentNodeId === null ? nodes.filter(({ floor }) => floor === 1).map(({ id }) => id) : byId.get(currentNodeId)?.successorIds ?? []);
+    const visited = new Set(visitedIds);
+    const top = EXPEDITION_LAYOUT.map.top + 34; const bottom = EXPEDITION_LAYOUT.map.bottom - 30;
+    const position = (node: ExpeditionMapNode) => ({ x: 170 + node.column * 185, y: bottom - ((node.floor - 1) / 19) * (bottom - top) });
+    const paths = this.add.graphics();
+    paths.lineStyle(3, COLOR.accent, 0.22);
+    nodes.forEach((node) => node.successorIds.forEach((id) => { const next = byId.get(id); if (next) { const a = position(node); const b = position(next); paths.lineBetween(a.x, a.y, b.x, b.y); } }));
+    nodes.forEach((node) => {
+      const { x, y } = position(node); const enabled = reachable.has(node.id); const done = visited.has(node.id);
+      // 액자 예외 규칙을 노드 아이콘에만 적용하고, 아이콘 자체 조립은 drawGlyph에 위임한다.
+      const frame = chipPoints(node.type === "boss" ? 64 : 50, node.type === "boss" ? 54 : 44, { bevel: { topLeft: 12, bottomRight: 10 } });
+      drawLayer(this, x, y, frame, { fill: done ? COLOR.panel : 0x131820, alpha: enabled ? 0.96 : 0.5 });
+      drawInnerVignette(this, x, y, frame, { strength: 0.5 });
+      drawShapeOutline(this, x, y, frame, { color: enabled ? COLOR.sortie : COLOR.accent, alpha: enabled ? 0.95 : 0.24, width: enabled ? 3 : 2 });
+      drawGlyph(this, this.nodeGlyph(node.type), x, y, node.type === "boss" ? 36 : 27, enabled ? COLOR.sortie : COLOR.inkDimHex, enabled ? 1 : 0.52, 3);
+      const hit = this.add.rectangle(x, y, 78, 58, 0xffffff, 0);
+      if (enabled) {
+        hit.setInteractive({ useHandCursor: true });
+        // 전투 연결 전에도 선택 피드백을 주되, 진행 상태는 매니저의 완료 경계 밖에서 변경하지 않는다.
+        hit.on("pointerdown", () => hit.setScale(1.12));
+        hit.on("pointerout", () => hit.setScale(1));
+        hit.on("pointerup", () => { hit.setScale(1); this.children.getByName("expedition-node-hint")?.destroy(); this.add.text(BASE_WIDTH / 2, 1210, `${node.floor}층 · ${this.nodeLabel(node.type)}`, textStyle({ role: "emphasis", size: 22, color: COLOR.sortieText })).setName("expedition-node-hint").setOrigin(0.5); });
+      }
+    });
+  }
+
+  /** 노드 종류와 공용 글리프 이름의 대응은 씬의 위치 계산과 분리한다. */
+  private nodeGlyph(type: ExpeditionNodeType): GlyphName { return `expedition-${type}` as GlyphName; }
+  private nodeLabel(type: ExpeditionNodeType): string { return ({ normal: "일반 전투", elite: "정예 전투", horde: "군집 전투", rest: "휴식", treasure: "보물", boss: "최종 보스" } as const)[type]; }
 
   /** 하단 증강은 공용 비대칭 chipPoints로 표시하고, 다섯 개부터 +N으로 줄여 화면 폭을 지킨다. */
   private buildAugmentChips(augments: readonly ExpeditionAugmentSelection[]): void {
@@ -77,8 +136,31 @@ export class ExpeditionScene extends Phaser.Scene {
     const total = labels.length * width + (labels.length - 1) * gap;
     labels.forEach((label, index) => {
       const x = (BASE_WIDTH - total) / 2 + width / 2 + index * (width + gap);
-      drawLayer(this, x, 1470, chipPoints(width, 62, { bevel: { topLeft: 18, bottomRight: 14 } }), { fill: COLOR.panel, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.48 });
-      this.add.text(x, 1470, label, textStyle({ role: "emphasis", size: 20, color: COLOR.accentText })).setOrigin(0.5);
+      const targeted = visible[index]?.targetRelicId !== undefined;
+      drawLayer(this, x, 1260, chipPoints(width, 62, { bevel: { topLeft: 18, bottomRight: 14 } }), { fill: targeted ? 0x302238 : COLOR.panel, alpha: HOLO.glass, edge: targeted ? COLOR.sortie : COLOR.accent, edgeAlpha: 0.66 });
+      this.add.text(x, 1260, `${targeted ? "개인" : "전체"} · ${label}`, textStyle({ role: "emphasis", size: 18, color: targeted ? COLOR.sortieText : COLOR.accentText })).setOrigin(0.5);
+    });
+  }
+
+  /** 세 렐릭의 초상, 사망 문구, 현재 HP를 공용 HoloBar와 함께 표시한다. */
+  private buildRelicHud(relics: readonly { relicId: string; currentHp: number; alive: boolean }[]): void {
+    relics.forEach((state, index) => {
+      const def = getRelic(state.relicId); const x = 220 + index * 320;
+      new PortraitCard(this, x, 1455, { width: 190, height: 190, portraitAssetId: def.portraitAssetId, tint: relicCardTint(def), label: def.name, rarity: def.rarity });
+      const hp = Math.max(0, Math.min(100, state.currentHp));
+      this.add.text(x, 1600, state.alive ? `HP ${Math.ceil(hp)} / 100` : "사망", textStyle({ role: "emphasis", size: 22, color: state.alive ? COLOR.ink : "#ff8c88" })).setOrigin(0.5);
+      const bar = new HoloBar(this, x, 1640, 238, 18, { color: state.alive ? COLOR.hpFill : 0x6c7078, outline: true });
+      bar.setValue(hp / 100);
+    });
+  }
+
+  /** 임시 보상과 포기 결과를 먼저 보여 준 뒤 서버 원자 정산만 호출한다. */
+  private confirmAbandon(): void {
+    const run = expeditionManager.status().run; if (!run) return;
+    const reward = Object.values(run.pendingRewards).reduce((sum, amount) => sum + Math.floor(amount), 0);
+    this.popups.confirm({ title: "원정 포기", message: `임시 보상 ${reward.toLocaleString()}개가 지갑으로 이전됩니다.\n이번 런의 최고 점수는 주간 기록에 반영되지 않습니다.`, confirmLabel: "포기 확정", destructive: true }, async () => {
+      await gameApi.settleExpeditionRun({ runId: run.runId, settlementId: `${run.runId}:abandon`, outcome: "abandoned" });
+      this.scene.start("lobby");
     });
   }
 

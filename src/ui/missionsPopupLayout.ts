@@ -1,7 +1,8 @@
 /** 임무 팝업의 세로 영역은 팝업 본문 원점(화면 중앙)을 기준으로 한 표에서 관리한다. */
 export const MISSIONS_POPUP_LAYOUT = {
   popup: { widthInset: 70, heightInset: 210 },
-  header: { statusX: 450, statusY: -770 },
+  // 대형 제목의 글자 높이 아래에 숨 쉴 틈을 두되, 상태 줄은 탭 입력면 위에서 끝난다.
+  header: { statusX: 450, statusY: -755 },
   tabs: { centerY: -665, centerX: 245, width: 420, height: 82 },
   research: { barX: -390, barY: -455, barWidth: 780, barHeight: 24, frameOffsetY: -70, frameSize: 82, frameOutlineWidth: 4, labelX: -440, labelOffsetY: 56 },
   list: { firstCardY: -255, cardGap: 190, cardWidth: 900, cardHeight: 150 },

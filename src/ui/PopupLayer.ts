@@ -3,6 +3,12 @@ import { chipPoints, drawLayer, drawShapeEdge, HOLO } from "./holo";
 import { addSectionTitle } from "./SectionTitle";
 import { COLOR, textStyle } from "./theme";
 
+/** 쪽지와 화면을 대부분 차지하는 작업판이 공유하는 제목 위계다. */
+export const POPUP_TITLE_SIZE = {
+  note: 26,
+  workboard: 34,
+} as const;
+
 /** 팝업 한 장을 여는 데 필요한 것. 내용은 콜백이 컨테이너에 직접 채운다. */
 export interface PopupOptions {
   width: number;
@@ -26,7 +32,7 @@ export interface PopupOptions {
   dim?: boolean;
   /** `dim`을 켰을 때의 암전 불투명도. 중첩 팝업은 낮은 값으로 화면의 깊이만 더한다. */
   dimAlpha?: number;
-  /** 공용 26px보다 더 강한 결과 제목처럼, 제목의 시각적 위계가 달라야 할 때만 지정한다. */
+  /** 공용 쪽지 제목보다 더 강한 결과·작업판 제목처럼 시각적 위계가 달라야 할 때만 지정한다. */
   titleSize?: number;
   /** 화면 자체의 뒤로가기 조작을 쓰는 큰 패널은 팝업 모서리의 중복 X를 숨긴다. */
   hideCloseButton?: boolean;
@@ -108,7 +114,7 @@ export class PopupLayer {
     if (options.title) {
       // 머리글은 판 안이 아니라 **윗변에 걸터앉는다.** 정보창의 칸 제목(유대·능력치·룬)과
       // 같은 표를 써서, 어느 화면에서나 제목이 같은 무게와 같은 모양으로 읽히게 한다.
-      titleChrome.push(addSectionTitle(this.scene, -width / 2 + unit * 0.1, -height / 2, options.title, { size: options.titleSize ?? 26, parent: body }));
+      titleChrome.push(addSectionTitle(this.scene, -width / 2 + unit * 0.1, -height / 2, options.title, { size: options.titleSize ?? POPUP_TITLE_SIZE.note, parent: body }));
       // 닫기는 기본적으로 오른쪽 위에 두되, 화면 chrome이 닫기를 맡으면 중복 조작을 만들지 않는다.
       if (!options.hideCloseButton) {
         const closeButton = this.scene.add.container(width / 2 - 40, -height / 2 + 40);

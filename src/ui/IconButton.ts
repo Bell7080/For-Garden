@@ -74,3 +74,17 @@ export const BACK_SLOT = { x: BASE_WIDTH - 106, y: BASE_HEIGHT - 120 } as const;
 export function addBackButton(scene: Phaser.Scene, onClick: () => void): IconButton {
   return new IconButton(scene, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick });
 }
+
+/** 큰 팝업 안에서도 화면과 같은 뒤로가기 모양을 우하단 안전 여백에 고정한다. */
+export function addPopupBackButton(
+  scene: Phaser.Scene,
+  parent: Phaser.GameObjects.Container,
+  width: number,
+  height: number,
+  onClick: () => void,
+): IconButton {
+  // 버튼 전체가 판 안에 머물도록 반지름과 여백을 합친 72px을 각 변에서 뗀다.
+  const button = new IconButton(scene, width / 2 - 72, height / 2 - 72, { icon: UI_ICON.back, onClick });
+  parent.add(button);
+  return button;
+}

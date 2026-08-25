@@ -50,9 +50,9 @@ export function openRewardPopup(scene: Phaser.Scene, popups: PopupLayer, options
     height: REWARD_POPUP.height,
     title: options.title ?? "획득 보상",
     titleSize: options.titleSize,
-    // 뒤 화면(발굴 현황)과 확실히 갈리도록 짙은 검정을 깐다. 얕은 암전은 두 화면이 한 겹으로 읽힌다.
+    // 아래 작업판의 돌아가기까지 완전히 가려 영수증에 무의미한 다른 조작이 비치지 않게 한다.
     dim: true,
-    dimAlpha: options.dimAlpha ?? 0.72,
+    dimAlpha: options.dimAlpha ?? 1,
     // 영수증이므로 팝업 안이든 밖이든 화면 아무 곳이나 누르면 닫힌다.
     closeOnBackdrop: true,
     // 화면 어디를 눌러도 닫히므로 오른쪽 위 X는 중복 조작이다.

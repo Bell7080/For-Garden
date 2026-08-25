@@ -125,6 +125,11 @@ test("발굴 수확은 액자 아이콘과 숫자를 공용 획득 팝업으로 
   await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2 + 545);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.rewardPopup)).toBe(true);
   await page.screenshot({ path: `test-results/${test.info().project.name}-excavation-reward-popup.png` });
+  // 보상창의 얕은 암전 입력면이 뒤 발굴창과 로비 출격 좌표를 모두 막아 중첩 상태를 유지한다.
+  await tapGame(page, BASE_WIDTH - 290, BASE_HEIGHT - 425);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.rewardPopup)).toBe(true);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationPopup)).toBe("ready");
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.rewardPopup)).toBeUndefined();
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationPopup)).toBe("ready");

@@ -118,7 +118,11 @@ export class SaveManager {
       unclaimed: Object.fromEntries(EXCAVATION_CURRENCIES.map((currency) => [currency, savedExcavation.unclaimed?.[currency] ?? 0])),
       // v18에는 표식이 없었으므로 마지막 정상 정산 시각부터 서버가 딱 한 번 계산한다.
       retroactiveExcavationGrantVersion: savedExcavation.retroactiveExcavationGrantVersion ?? 0,
-    } : excavationDefaults;
+    } : {
+      ...excavationDefaults,
+      // 발굴 상태 자체가 없던 저장도 서버 소급 지급을 아직 받지 않은 계정으로 명시한다.
+      retroactiveExcavationGrantVersion: 0,
+    };
     // v15 이전 진행은 그대로 펼쳐 보존하고 새 설정 필드만 기본값/정규화 값으로 보충한다.
     const settings = normalizeSettings(legacy.settings);
     // 현재 이월 그룹만 정규화하며 삭제된 그룹 키는 버리고 새 그룹은 기본 상태로 만든다.

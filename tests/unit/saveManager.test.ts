@@ -42,6 +42,13 @@ describe("SaveManager", () => {
     expect(migrated.idleExcavation.retroactiveExcavationGrantVersion).toBe(0);
   });
 
+  it("발굴 도입 전 v17 저장은 네 미수확 키와 미완료 소급 표식으로 이관한다", () => {
+    const legacy = validData() as unknown as Record<string, unknown>; legacy.saveVersion = 17; delete legacy.idleExcavation;
+    const migrated = new SaveManager(new MemoryStorage()).migrate(legacy);
+    expect(migrated.idleExcavation.unclaimed).toEqual({ gold: 0, cheesecake: 0, fossil: 0, gems: 0 });
+    expect(migrated.idleExcavation.retroactiveExcavationGrantVersion).toBe(0);
+  });
+
   it("발굴 편성과 미수확 소수 생산량을 저장 왕복한다", () => {
     const storage = new MemoryStorage(); const source = createDefaultSession();
     source.idleExcavation.assignedRelicIds = ["anky", null, "rex"]; source.idleExcavation.unclaimed.gold = 0.75;

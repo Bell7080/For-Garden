@@ -201,13 +201,16 @@ export interface ClaimInstantAdRewardRequest { entitlementId: string; slotId: st
 export interface ClaimInstantAdRewardResponse extends ClaimAdRewardResponse { entitlement: PassEntitlementDto; dailyBonus?: { currency: "gems"; amount: number }; }
 
 /** 임무 화면에 필요한 진행·보상·수령 상태를 한 행으로 전달한다. */
-export interface MissionDto { id: string; period: MissionPeriod; title: string; progress: number; target: number; rewardCheesecake: number; claimed: boolean; }
+export interface MissionDto { id: string; period: MissionPeriod; title: string; progress: number; target: number; rewardCheesecake: number; researchPoints: number; claimed: boolean; }
+/** 연구도 마디는 정적 보상과 서버가 확정한 달성·수령 상태를 함께 전달한다. */
+export interface ResearchRewardStageDto { id: string; threshold: number; rewardCheesecake: number; achieved: boolean; claimed: boolean; }
+export interface PeriodResearchDto { points: number; maxPoints: number; stages: ResearchRewardStageDto[]; }
 /** 목록 응답은 로비 배지에서 바로 쓸 미수령 개수를 포함한다. */
-export interface MissionListResponse { missions: MissionDto[]; claimableCount: number; }
+export interface MissionListResponse { missions: MissionDto[]; claimableCount: number; research: Record<MissionPeriod, PeriodResearchDto>; }
 /** 받은 편지함 데이터가 없는 화면이 상태를 추측하지 않도록 마련한 명시적 서버 계약이다. */
 export interface NotificationSignalsResponse { pendingFriendRequestCount: number; unseenEventCount: number; unreadMailCount: number; }
 /** 일괄 또는 선택 수령 뒤 지급 총액과 최신 상태를 반환한다. */
-export interface ClaimMissionRewardsResponse extends PlayerStateDto { claimedIds: string[]; cheesecakeEarned: number; }
+export interface ClaimMissionRewardsResponse extends PlayerStateDto { claimedIds: string[]; claimedResearchStageIds: string[]; rewards: { missionCheesecake: number; researchCheesecake: number; cheesecake: number }; cheesecakeEarned: number; }
 
 /** 상품 목록은 정적 정의에 서버가 계산한 현재 구매 가능 횟수를 결합한다. */
 export interface ProductDto { id: string; storefront: "trade" | "premium"; name: string; description: string; price: { currency: ProductCurrency; amount: number; display?: string }; grants: readonly ProductGrant[]; passBenefit?: PassBenefitDefinition; purchaseLimit: number; refresh: ProductRefresh; remaining: number; purchasable: boolean; disabledReason?: string; }
@@ -296,7 +299,7 @@ export interface GameApi {
   /** 친구 요청·새 이벤트·우편의 실제 읽음 상태를 한 번에 조회한다. */
   getNotificationSignals(): Promise<NotificationSignalsResponse>;
   /** ID를 생략하면 현재 완료된 모든 미수령 임무를 한 저장 처리로 받는다. */
-  claimMissionRewards(missionIds?: string[]): Promise<ClaimMissionRewardsResponse>;
+  claimMissionRewards(missionIds?: string[], researchPeriod?: MissionPeriod, researchStageIds?: string[]): Promise<ClaimMissionRewardsResponse>;
   /** 서버 시각과 구매 이력을 반영한 공용 카탈로그를 조회한다. */
   getProducts(): Promise<ProductListResponse>;
   /** 인게임 재화 상품만 구매한다. 유료 상품은 플랫폼 결제/영수증 검증 경계를 사용해야 한다. */

@@ -4,7 +4,7 @@ import { MissionClaimController, missionDisplayModel } from "../../src/ui/missio
 
 /** UI 수령 테스트에는 서버 확정 필드 중 분기에서 읽는 값만 작은 계약 더블로 만든다. */
 const response = (claimedIds: string[], cheesecakeEarned = 20): ClaimMissionRewardsResponse => ({ claimedIds, cheesecakeEarned } as ClaimMissionRewardsResponse);
-const mission = (overrides: Partial<MissionDto> = {}): MissionDto => ({ id: "daily-one", period: "daily", title: "한 번 완료", progress: 1, target: 1, rewardCheesecake: 20, claimed: false, ...overrides });
+const mission = (overrides: Partial<MissionDto> = {}): MissionDto => ({ id: "daily-one", period: "daily", title: "한 번 완료", progress: 1, target: 1, rewardCheesecake: 20, researchPoints: 20, claimed: false, ...overrides });
 
 describe("MissionsPopup 표시 모델", () => {
   it("목표 0을 안전하게 표시하고 진행률을 100%에서 제한한다", () => {

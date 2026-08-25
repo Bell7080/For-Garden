@@ -30,7 +30,7 @@ function makeSession(fossil = 1000): Session {
     itemInventory: [],
     runeInventory: [],
     dailyContent: { date: "", restorationEntries: 0, completedIds: [], claimedRewardIds: [] },
-    missions: { dailyKey: "", weeklyKey: "", progress: {}, claimedIds: [] },
+    missions: { dailyKey: "", weeklyKey: "", progress: {}, claimedIds: [], researchPoints: { daily: 0, weekly: 0 }, claimedResearchStageIds: [] },
     // 상품 테스트가 아닌 세션도 최신 저장 계약의 빈 구매 이력을 명시한다.
     productPurchases: {},
     // 테스트 계정은 광고 수령 이력이 없는 UTC 일일 상태로 시작한다.
@@ -270,10 +270,20 @@ describe("FakeServer", () => {
     const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-20T12:00:00Z") });
     await expect(server.claimMissionRewards(["daily-battle"])).rejects.toMatchObject({ code: "MISSION_NOT_COMPLETE" });
     await server.completeStage("1-1", true);
-    await expect(server.claimMissionRewards(["daily-battle"])).resolves.toMatchObject({ claimedIds: ["daily-battle"], cheesecakeEarned: 20 });
+    await expect(server.claimMissionRewards(["daily-battle"])).resolves.toMatchObject({ claimedIds: ["daily-battle"], cheesecakeEarned: 30 });
     const afterFirstClaim = state.wallet.cheesecake;
     await expect(server.claimMissionRewards(["daily-battle"])).rejects.toMatchObject({ code: "MISSION_ALREADY_CLAIMED" });
     expect(state.wallet.cheesecake).toBe(afterFirstClaim);
+  });
+
+  it("임무와 새 연구도 단계를 한 처리로 지급하고 단계 재요청은 0원으로 멱등 처리한다", async () => {
+    const state = makeSession(); const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-20T12:00:00Z") });
+    await server.completeStage("1-1", true);
+    const claimed = await server.claimMissionRewards(["daily-battle"]);
+    expect(claimed).toMatchObject({ claimedIds: ["daily-battle"], claimedResearchStageIds: ["daily:research-20"], rewards: { missionCheesecake: 20, researchCheesecake: 10, cheesecake: 30 } });
+    const before = state.wallet.cheesecake;
+    await expect(server.claimMissionRewards([], "daily", ["research-20"])).resolves.toMatchObject({ cheesecakeEarned: 0, claimedResearchStageIds: [] });
+    expect(state.wallet.cheesecake).toBe(before);
   });
 
   it("발굴·급여·로비 성공을 각 API 경계에서 임무에 한 번 반영한다", async () => {
@@ -283,7 +293,7 @@ describe("FakeServer", () => {
     await server.feedRelic("anky", 1);
     await server.interactInLobby("anky");
     expect(state.missions.progress).toMatchObject({ "daily-excavate": 1, "daily-salary": 1, "daily-lobby": 1 });
-    await expect(server.getMissions()).resolves.toMatchObject({ claimableCount: 3 });
+    await expect(server.getMissions()).resolves.toMatchObject({ claimableCount: 6 });
   });
 });
 

@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import type { GameApi, MissionDto, ClaimMissionRewardsResponse } from "../api/contracts";
+import type { GameApi, MissionDto, ClaimMissionRewardsResponse, MissionListResponse } from "../api/contracts";
 import { gameApi } from "../api/FakeServer";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { notificationManager } from "../managers/NotificationManager";
@@ -16,6 +16,7 @@ import { MissionClaimController, missionDisplayModel } from "./missionsPopupMode
 export class MissionsPopup {
   private period: "daily" | "weekly" = "daily";
   private missions: MissionDto[] = [];
+  private research?: MissionListResponse["research"];
   private body?: Phaser.GameObjects.Container;
   private list?: Phaser.GameObjects.Container;
   private status?: Phaser.GameObjects.Text;
@@ -40,35 +41,61 @@ export class MissionsPopup {
   }
 
   private select(period: "daily" | "weekly"): void { this.period = period; this.render(); }
-  private async refresh(): Promise<void> { const result = await this.api.getMissions(); this.missions = result.missions; this.status?.setText(`미수령 ${result.claimableCount}`); this.render(); }
-  private destroyContent(): void { this.list?.destroy(); this.list = undefined; this.bars.forEach((bar) => bar.destroy()); this.bars = []; }
+  private async refresh(): Promise<void> { const result = await this.api.getMissions(); this.missions = result.missions; this.research = result.research; this.status?.setText(`미수령 ${result.claimableCount}`); this.render(); }
+  private destroyContent(): void { this.bars.forEach((bar) => bar.destroy()); this.bars = []; this.list?.destroy(); this.list = undefined; }
 
   /** 카드와 보상 액자 모두 같은 콜백을 받으며 수령 완료 행은 명확히 흐리게 남긴다. */
   private render(): void {
     this.destroyContent(); if (!this.body) return;
     this.list = this.scene.add.container(0, 0); this.body.add(this.list);
+    this.renderResearch();
     this.missions.filter((mission) => mission.period === this.period).forEach((raw, index) => {
-      const mission = missionDisplayModel(raw); const y = -520 + index * 190;
+      const mission = missionDisplayModel(raw); const y = -350 + index * 190;
       const panel = drawLayer(this.scene, 0, y, chipPoints(900, 150, { bevel: { topLeft: 28, topRight: 0, bottomRight: 28, bottomLeft: 0 } }), { fill: mission.claimed ? 0x171b20 : mission.claimable ? 0x3b2b13 : 0x1a1f27, alpha: mission.claimed ? 0.52 : HOLO.glass, edge: mission.claimable ? COLOR.missionClaim : COLOR.accent, edgeAlpha: mission.claimed ? 0.16 : 0.55 });
       const title = this.scene.add.text(-400, y - 52, mission.title, textStyle({ role: "emphasis", size: 28, color: mission.claimed ? COLOR.inkDim : COLOR.ink })).setOrigin(0, 0);
-      const bar = new HoloBar(this.scene, -390, y + 35, 520, 18, { color: mission.claimable ? COLOR.missionClaim : COLOR.accent }); bar.setValue(mission.ratio); this.bars.push(bar);
+      const bar = new HoloBar(this.scene, -390, y + 35, 520, 18, { color: mission.claimable ? COLOR.missionClaim : COLOR.accent }).addTo(this.list!); bar.setValue(mission.ratio); this.bars.push(bar);
       // 진행 수는 게이지 끝에 바로 붙여 시선이 카드 반대편까지 왕복하지 않게 한다.
       const progress = this.scene.add.text(150, y + 18, mission.progressLabel, textStyle({ role: "emphasis", size: 24, color: mission.claimed ? COLOR.inkDim : COLOR.ink })).setOrigin(0, 0);
+      // 기존 미수령 숫자 자리에는 이 임무가 완료 순간 확정하는 연구도를 직접 보여 준다.
+      const research = this.scene.add.text(150, y - 50, `연구도 +${mission.researchPoints}`, textStyle({ role: "emphasis", size: 22, color: COLOR.accentText })).setOrigin(0, 0);
       const reward = new RewardFrame(this.scene, 365, y, { icon: "currency-cheesecake", amount: mission.rewardCheesecake, size: 116, state: mission.state, onClick: mission.claimable ? () => void this.claimOne(mission.id) : undefined });
       const state = this.scene.add.text(275, y + 60, mission.claimed ? "수령 완료" : mission.claimable ? "수령 가능" : "진행 중", textStyle({ role: "body", size: 19, color: mission.claimable ? "#ffbf66" : COLOR.inkDim })).setOrigin(0.5, 0);
-      this.list?.add([panel, title, progress, reward, state]);
+      this.list?.add([panel, title, progress, research, reward, state]);
       if (mission.claimable) { const hit = this.scene.add.rectangle(0, y, 900, 150, 0xffffff, 0).setInteractive({ useHandCursor: true }); hit.on("pointerup", () => void this.claimOne(mission.id)); this.list?.add(hit); this.list?.bringToTop(reward); }
     });
   }
 
+  /** 탭 바로 아래에 HoloBar와 여섯 개 액자를 겹쳐 임계값을 실제 마디로 읽히게 한다. */
+  private renderResearch(): void {
+    const research = this.research?.[this.period]; if (!research || !this.list) return;
+    const x = -390; const y = -535; const width = 780;
+    const bar = new HoloBar(this.scene, x, y, width, 24, { color: COLOR.missionClaim }).addTo(this.list); bar.setValue(research.points / Math.max(1, research.maxPoints)); this.bars.push(bar);
+    this.list.add(this.scene.add.text(-440, y + 56, `연구도 ${research.points}/${research.maxPoints}`, textStyle({ role: "emphasis", size: 23, color: COLOR.ink })).setOrigin(0, 0.5));
+    research.stages.forEach((stage) => {
+      const stageX = x + width * (stage.threshold / research.maxPoints);
+      // 세로 눈금이 게이지 홈을 끊어 각 임계값이 별개의 마디로 보이게 한다.
+      this.list?.add(this.scene.add.rectangle(stageX, y, 3, 36, 0x0b1018, 0.95));
+      const state = stage.claimed ? "claimed" : stage.achieved ? "claimable" : "normal";
+      const frame = new RewardFrame(this.scene, stageX, y - 70, { icon: "currency-cheesecake", amount: stage.rewardCheesecake, size: 82, state, onClick: stage.achieved && !stage.claimed ? () => void this.claimStage(stage.id) : undefined });
+      this.list?.add(frame);
+    });
+  }
+
   private async claimOne(id: string): Promise<void> { const result = await this.claims.claim([id]); if (result) await this.applyClaim(result); }
-  private async claimAll(): Promise<void> { const ids = this.missions.map(missionDisplayModel).filter((mission) => mission.claimable).map((mission) => mission.id); const result = await this.claims.claim(ids); if (result) await this.applyClaim(result); }
+  private async claimAll(): Promise<void> { const ids = this.missions.map(missionDisplayModel).filter((mission) => mission.claimable).map((mission) => mission.id); const result = await this.claims.claim(ids, this.period); if (result) await this.applyClaim(result); }
+  private async claimStage(id: string): Promise<void> { const result = await this.claims.claim([], this.period, [id]); if (result) await this.applyClaim(result); }
 
   /** 응답 스냅샷으로 목록·알림·지갑을 함께 갱신한 뒤 서버가 확정한 지급분만 영수증에 싣는다. */
   private async applyClaim(result: ClaimMissionRewardsResponse): Promise<void> {
     this.missions = result.missions; session.wallet = { ...result.wallet }; this.onWalletChanged?.();
-    this.status?.setText(result.claimedIds.length ? `수령 ${result.claimedIds.length}건` : "수령할 보상 없음"); this.render();
+    // 서버 응답의 단계 상태까지 다시 조회해 그래프와 알림 점이 같은 틱에 갱신되게 한다.
+    const latest = await this.api.getMissions(); this.missions = latest.missions; this.research = latest.research;
+    const count = result.claimedIds.length + result.claimedResearchStageIds.length;
+    this.status?.setText(count ? `수령 ${count}건` : "수령할 보상 없음"); this.render();
     await notificationManager.refresh();
-    openRewardPopup(this.scene, this.popups, { title: "임무 보상", items: result.cheesecakeEarned > 0 ? [{ icon: "currency-cheesecake", amount: result.cheesecakeEarned }] : [] });
+    openRewardPopup(this.scene, this.popups, { title: "임무 보상", items: [
+      { icon: "currency-cheesecake", amount: result.rewards.missionCheesecake, label: "임무" },
+      { icon: "currency-cheesecake", amount: result.rewards.researchCheesecake, label: "연구도 단계" },
+    ] });
   }
 }

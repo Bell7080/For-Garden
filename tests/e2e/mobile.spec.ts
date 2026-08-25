@@ -109,6 +109,26 @@ test("방치 발굴 편집은 슬롯 이동·중복 방지·빈 편성 취소를
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationPopup)).toBe("ready");
 });
 
+test("발굴 수확은 액자 아이콘과 숫자를 공용 획득 팝업으로 확인한다", async ({ page }) => {
+  await startAfterOpening(page, (session) => {
+    // 서버가 다시 정산해도 보존되는 확정 누적분을 넣어 수확 성공 UI만 안정적으로 검증한다.
+    session.idleExcavation.unclaimed = { gold: 1234, cheesecake: 56 };
+    session.idleExcavation.lastSettledAt = new Date().toISOString();
+  });
+  await page.locator("canvas").click();
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+  await tapGame(page, 250, BASE_HEIGHT - 445);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationPopup)).toBe("ready");
+
+  // 수확 성공 뒤 별도 확인 팝업이 열리고, 본문 아무 곳이나 누르면 발굴 현황으로 즉시 돌아온다.
+  await tapGame(page, BASE_WIDTH / 2 + 205, BASE_HEIGHT / 2 + 515);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.rewardPopup)).toBe(true);
+  await page.screenshot({ path: `test-results/${test.info().project.name}-excavation-reward-popup.png` });
+  await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.rewardPopup)).toBeUndefined();
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationPopup)).toBe("ready");
+});
+
 test("설정 탭은 텍스트 확대·스크롤·두 단계 초기화를 좁은 모바일에서 안전하게 처리한다", async ({ page }) => {
   await startAfterOpening(page); await page.locator("canvas").click();
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");

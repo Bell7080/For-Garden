@@ -1,9 +1,37 @@
 import { describe, expect, it } from "vitest";
 import type { RelicDef } from "../../src/core/types";
-import { getRelicCatalogDisclosure } from "../../src/core/relicCatalog";
+import { compareBookmarkedOwnedRelics, getRelicCatalogDisclosure } from "../../src/core/relicCatalog";
 import { PLAYABLE_RELICS, sortRelicsBySpecimenNumber, validateSpecimenNumbers } from "../../src/data/relics";
 
 describe("relic catalog", () => {
+  /** 실제 정의 전체를 복제하지 않고 순수 비교 함수에 필요한 식별자만 만든다. */
+  const relics = [{ id: "a" }, { id: "b" }, { id: "c" }, { id: "d" }];
+  /** 테스트마다 같은 선택 정렬을 쓰되 즐겨찾기 상태와 유대 기록만 바꿔 회귀 원인을 좁힌다. */
+  const sortedWith = (bookmarked: readonly string[], bonds: Record<string, { bondLevel: number; bondXp: number }>) => {
+    const base = new Map(["a", "b", "c", "d"].map((id, index) => [id, index]));
+    return [...relics].sort((a, b) => compareBookmarkedOwnedRelics(a, b, {
+      bookmarked: new Set(bookmarked),
+      bondOf: (relic) => bonds[relic.id] ?? { bondLevel: 1, bondXp: 0 },
+      fallback: (left, right) => base.get(left.id)! - base.get(right.id)!,
+    })).map((relic) => relic.id);
+  };
+
+  it("즐겨찾기 렐릭을 일반 보유 렐릭보다 먼저 둔다", () => {
+    expect(sortedWith(["c"], {})).toEqual(["c", "a", "b", "d"]);
+  });
+
+  it("여러 즐겨찾기를 유대 레벨과 유대 경험치 내림차순으로 둔다", () => {
+    expect(sortedWith(["a", "b", "c"], { a: { bondLevel: 2, bondXp: 90 }, b: { bondLevel: 3, bondXp: 1 }, c: { bondLevel: 2, bondXp: 120 } })).toEqual(["b", "c", "a", "d"]);
+  });
+
+  it("즐겨찾기 유대가 동률이면 현재 선택 정렬 순서를 유지한다", () => {
+    expect(sortedWith(["b", "c"], { b: { bondLevel: 4, bondXp: 20 }, c: { bondLevel: 4, bondXp: 20 } })).toEqual(["b", "c", "a", "d"]);
+  });
+
+  it("즐겨찾기를 해제하면 기존 선택 정렬 위치로 복귀한다", () => {
+    expect(sortedWith([], {})).toEqual(["a", "b", "c", "d"]);
+  });
+
   it("중복 개체번호를 콘텐츠 로드 검증에서 거부한다", () => {
     const duplicate = [{ ...PLAYABLE_RELICS[0], specimenNumber: "001" }, { ...PLAYABLE_RELICS[1], specimenNumber: "001" }];
     expect(() => validateSpecimenNumbers(duplicate)).toThrow("중복 개체번호: 001");

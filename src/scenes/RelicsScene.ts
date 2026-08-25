@@ -15,6 +15,7 @@ import { relicProgression } from "../managers/RelicProgressionManager";
 import { COLOR, textStyle } from "../ui/theme";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { SectionDivider } from "../ui/SectionDivider";
+import { compareBookmarkedOwnedRelics } from "../core/relicCatalog";
 
 /**
  * 렐릭 — 보유 중인 렐릭을 훑어보는 화면.
@@ -81,11 +82,9 @@ export class RelicsScene extends Phaser.Scene {
       onClick: () => this.setSortMode(SORT_ORDER[(SORT_ORDER.indexOf(this.sortMode) + 1) % SORT_ORDER.length]),
     });
 
-    this.buildGrid();
-
     new BottomNav(this, "relics");
     this.info = new CharacterInfoManager(this);
-    // 정보창 안에서 애착 렐릭이 바뀔 수 있으므로 닫힐 때 카드 표시를 다시 맞춘다.
+    // 정보창 안에서 애착·즐겨찾기가 바뀔 수 있으므로 닫힐 때 표시와 정렬을 함께 다시 맞춘다.
     this.info.onClose = () => this.refresh();
     // 서버가 재화 차감을 확정한 직후 정보창과 상단 줄이 같은 세션 지갑을 다시 읽는다.
     this.info.onWalletChange = () => this.topBar.refresh();
@@ -111,7 +110,14 @@ export class RelicsScene extends Phaser.Scene {
     // 보유와 미보유를 섞지 않는다. 가진 것을 먼저 다 보여 준 뒤, 아직 없는 것을 아래로
     // 몰아 따로 세운다 — 정렬 기준이 무엇이든 "내 것"이 위에 모여 있어야 훑기 쉽다.
     const sorted = this.sortRelics(relicCollection.catalog);
-    const owned = sorted.filter((relic) => relicCollection.owns(relic.id));
+    // 선택 정렬의 정확한 결과 순위를 fallback으로 주입해 씬에는 즐겨찾기 세부 규칙을 복제하지 않는다.
+    const selectedOrder = new Map(sorted.map((relic, index) => [relic.id, index]));
+    const owned = sorted.filter((relic) => relicCollection.owns(relic.id)).sort((a, b) => compareBookmarkedOwnedRelics(a, b, {
+      bookmarked: session.bookmarked,
+      bondOf: (relic) => relicProgression.getProgress(relic.id),
+      fallback: (left, right) => (selectedOrder.get(left.id) ?? 0) - (selectedOrder.get(right.id) ?? 0),
+    }));
+    // 미보유는 즐겨찾기 비교에 넣지 않아 기존 하단 구역과 선택 정렬 결과를 그대로 유지한다.
     const locked = sorted.filter((relic) => !relicCollection.owns(relic.id));
     const ownedRows = Math.max(1, Math.ceil(owned.length / cols));
     // 보유 그리드의 마지막 줄 아래에서 제목 한 줄을 두고 다시 시작한다. 붙여 놓으면 제목이
@@ -169,6 +175,7 @@ export class RelicsScene extends Phaser.Scene {
         level: owned ? relicProgression.getProgress(relic.id).level : undefined,
         rarity: relic.rarity,
         stars: owned ? relicProgression.getStars(relic.id) : undefined,
+        bookmarked: owned && relicCollection.isBookmarked(relic.id),
         affinity: { element: relic.element, role: relic.role },
         locked: !owned,
       });
@@ -183,17 +190,18 @@ export class RelicsScene extends Phaser.Scene {
     if (this.sortMode === mode) return;
     this.sortMode = mode;
     this.sortButton.setLabel(SORT_LABELS[mode]);
-    for (const card of this.cards.values()) card.destroy();
-    this.cards.clear();
-    // 컨테이너가 소유한 제목·개수·구분선을 함께 파괴해 정렬 변경 뒤 장식 잔상을 막는다.
-    this.lockedSection?.destroy(true);
-    this.lockedSection = undefined;
-    this.buildGrid();
     this.refresh();
   }
 
-  /** 애착 렐릭만 카드에 표시를 남긴다. 정보창에서 바꾸고 나오면 다시 부른다. */
+  /** 정보창 변경을 반영해 카드 표식과 즐겨찾기 우선순위를 한 번에 다시 구성한다. */
   private refresh(): void {
+    // 카드 자체를 다시 만들지 않으면 새 즐겨찾기 표식만 바뀌고 기존 좌표는 그대로 남는다.
+    for (const card of this.cards.values()) card.destroy();
+    this.cards.clear();
+    // 컨테이너가 소유한 제목·개수·구분선을 함께 파괴해 재구성 뒤 장식 잔상을 막는다.
+    this.lockedSection?.destroy(true);
+    this.lockedSection = undefined;
+    this.buildGrid();
     for (const [id, card] of this.cards) {
       card.setSelected(relicCollection.owns(id) && id === session.favorite);
     }

@@ -10,7 +10,7 @@ async function tap(page: import("@playwright/test").Page, x: number, y: number):
   await canvas.click({ position: { x: x / WIDTH * box.width, y: y / HEIGHT * box.height } });
 }
 
-test("임무 버튼은 로비 씬을 유지한 채 공용 팝업을 연다", async ({ page }) => {
+test("임무 버튼은 로비 씬을 유지하고 일일·주간 탭을 각각 렌더링한다", async ({ page }) => {
   await startAfterOpening(page);
   await tap(page, WIDTH / 2, HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
@@ -18,5 +18,11 @@ test("임무 버튼은 로비 씬을 유지한 채 공용 팝업을 연다", asy
   await tap(page, WIDTH - 106, 1248);
   expect(await page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   await page.waitForTimeout(300);
-  await page.screenshot({ path: `test-results/${test.info().project.name}-missions-popup.png`, fullPage: true });
+  // 일일 탭의 연구도와 네 장 목록을 첫 번째 시각 회귀 자료로 남긴다.
+  await tap(page, WIDTH / 2 - 245, HEIGHT / 2 - 665);
+  await page.screenshot({ path: `test-results/${test.info().project.name}-missions-popup-daily.png`, fullPage: true });
+  // 같은 팝업에서 주간 탭을 골라 연구도 액자와 짧은 목록의 별도 배치도 검증한다.
+  await tap(page, WIDTH / 2 + 245, HEIGHT / 2 - 665);
+  await page.waitForTimeout(100);
+  await page.screenshot({ path: `test-results/${test.info().project.name}-missions-popup-weekly.png`, fullPage: true });
 });

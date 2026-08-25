@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { ClaimMissionRewardsResponse, MissionDto } from "../../src/api/contracts";
 import { MissionClaimController, missionDisplayModel } from "../../src/ui/missionsPopupModel";
+import { boundsIntersect, MISSIONS_POPUP_LAYOUT, missionsPopupCollisionBounds } from "../../src/ui/missionsPopupLayout";
 
 /** UI 수령 테스트에는 서버 확정 필드 중 분기에서 읽는 값만 작은 계약 더블로 만든다. */
 const response = (claimedIds: string[], cheesecakeEarned = 20): ClaimMissionRewardsResponse => ({ claimedIds, cheesecakeEarned } as ClaimMissionRewardsResponse);
@@ -10,6 +11,21 @@ describe("MissionsPopup 표시 모델", () => {
   it("목표 0을 안전하게 표시하고 진행률을 100%에서 제한한다", () => {
     expect(missionDisplayModel(mission({ progress: 0, target: 0 }))).toMatchObject({ ratio: 0, progressLabel: "0/0", claimable: false });
     expect(missionDisplayModel(mission({ progress: 9, target: 2 }))).toMatchObject({ ratio: 1, progressLabel: "9/2", claimable: true });
+  });
+});
+
+describe("MissionsPopup 영역 배치", () => {
+  it("보상 액자의 외곽선 반지름까지 포함한 bounds가 일일·주간 탭과 교차하지 않는다", () => {
+    const { tabs, researchFrames } = missionsPopupCollisionBounds();
+    // 양 끝 액자를 양쪽 탭 모두와 비교해 향후 크기나 기준점 변경도 즉시 회귀로 드러낸다.
+    expect(researchFrames.every((frame) => tabs.every((tab) => !boundsIntersect(frame, tab)))).toBe(true);
+  });
+
+  it("연구도 라벨과 첫 임무 카드 사이에 고정 여백을 둔다", () => {
+    const { research, list } = MISSIONS_POPUP_LAYOUT;
+    const labelBaseline = research.barY + research.labelOffsetY;
+    const firstCardTop = list.firstCardY - list.cardHeight / 2;
+    expect(firstCardTop - labelBaseline).toBeGreaterThanOrEqual(50);
   });
 });
 

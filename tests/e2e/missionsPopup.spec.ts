@@ -17,8 +17,8 @@ test("임무 버튼은 로비 씬을 유지하고 일일·주간 탭을 각각 �
   });
   await tap(page, WIDTH / 2, HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
-  // 오른쪽 레일의 임무 입력점은 기존 레일 배치를 그대로 사용한다.
-  await tap(page, WIDTH - 106, 1248);
+  // 중앙 캐릭터와 하단 행동을 비운 왼쪽 가장자리의 새 임무 진입점을 누른다.
+  await tap(page, 106, 1120);
   expect(await page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   await page.waitForTimeout(300);
   // 일일 탭의 연구도와 네 장 목록을 첫 번째 시각 회귀 자료로 남긴다.

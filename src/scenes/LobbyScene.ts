@@ -25,6 +25,7 @@ import { InventoryPopup } from "../ui/InventoryPopup";
 import { bindNotificationDot } from "../ui/NotificationDot";
 import { notificationManager } from "../managers/NotificationManager";
 import { MissionsPopup } from "../ui/MissionsPopup";
+import { LOBBY_ACTION_BOUNDS, LOBBY_MISSION_ENTRY } from "../ui/lobbyLayout";
 
 /** 확대된 애착 렐릭의 골반 아래가 내비게이션 뒤로 자연스럽게 이어지는 기준선. */
 const STAGE_FLOOR = 1660;
@@ -79,13 +80,14 @@ export class LobbyScene extends Phaser.Scene {
     // 설정 아이콘은 준비 중 토스트가 아니라 등록된 환경 설정 씬으로 곧바로 이동한다.
     this.topBar = new TopBar(this, 40, { onSettings: () => this.scene.start("settings") });
     this.buildPromo();
-    this.buildSideRail();
+    this.buildUtilityRail();
+    this.buildMissionEntry();
 
     // 원정 — 지도 위를 가리던 일일 복원을 로비의 독립된 일일 콘텐츠 입구로 옮긴다.
     // 자리와 기울기는 출격과 한 벌이라 같은 원근을 쓴다.
-    const expeditionButton = new Button(this, BASE_WIDTH - 250, NAV_TOP - 400, {
-      width: 292,
-      height: 106,
+    const expeditionButton = new Button(this, LOBBY_ACTION_BOUNDS.expedition.x, LOBBY_ACTION_BOUNDS.expedition.y, {
+      width: LOBBY_ACTION_BOUNDS.expedition.width,
+      height: LOBBY_ACTION_BOUNDS.expedition.height,
       label: "원정",
       sub: this.expeditionStatus(),
       fontSize: 34,
@@ -103,9 +105,9 @@ export class LobbyScene extends Phaser.Scene {
     });
 
     // 출격 — 로비에서 가장 큰 버튼이다. 주황빛 강조로 다른 입구와 구분한다.
-    new Button(this, BASE_WIDTH - 290, NAV_TOP - 245, {
-      width: 520,
-      height: 170,
+    new Button(this, LOBBY_ACTION_BOUNDS.sortie.x, LOBBY_ACTION_BOUNDS.sortie.y, {
+      width: LOBBY_ACTION_BOUNDS.sortie.width,
+      height: LOBBY_ACTION_BOUNDS.sortie.height,
       label: "출  격",
       sub: "SORTIE",
       fontSize: 52,
@@ -221,7 +223,7 @@ export class LobbyScene extends Phaser.Scene {
    * 늘 쓰지만 화면의 주인공은 아닌 편의 기능들이다. 캐릭터를 가리지 않도록 가장자리에 세우고
    * 크기도 출격·교류보다 한참 작게 둔다.
    */
-  private buildSideRail(): void {
+  private buildUtilityRail(): void {
     const x = BASE_WIDTH - 106;
     const rail = [
       // 로비의 옛 상점은 현금 상품과 분리된 인게임 재화 전용 "무역"으로 개편한다.
@@ -238,8 +240,22 @@ export class LobbyScene extends Phaser.Scene {
       const key = item.icon === "mail" ? "mail" : item.icon === "friends" ? "friendRequest" : undefined;
       if (key) bindNotificationDot(this, button, { x: 42, y: -42 }, (listener) => notificationManager.subscribe(key, listener));
     });
-    // 임무 입구는 숫자 텍스트 대신 다른 버튼과 같은 공용 점 하나만 사용한다.
-    const missionButton = new RailButton(this, x, 1248, { icon: "scroll", label: "임무", accent: true, onClick: () => this.openMissions() });
+  }
+
+  /**
+   * 임무는 오른쪽 편의 레일이 아니라 왼쪽 가장자리의 독립된 콘텐츠 진입점이다.
+   * 프로필·홍보 아래와 교류·발굴 위 사이를 택해 중앙 캐릭터 무대 및 하단 행동 입력면을 비운다.
+   */
+  private buildMissionEntry(): void {
+    // 전용 좌표 상자는 단위 테스트와 공유해 원정·출격·하단 내비게이션과의 안전 간격을 고정한다.
+    const missionButton = new RailButton(this, LOBBY_MISSION_ENTRY.x, LOBBY_MISSION_ENTRY.y, {
+      icon: "mission",
+      label: "임무",
+      size: LOBBY_MISSION_ENTRY.width,
+      accent: true,
+      onClick: () => this.openMissions(),
+    });
+    // 보상 상태의 단일 구독과 기존 팝업 연결은 위치 분리 뒤에도 그대로 유지한다.
     bindNotificationDot(this, missionButton, { x: 42, y: -42 }, (listener) => notificationManager.subscribe("missionReward", listener));
   }
 

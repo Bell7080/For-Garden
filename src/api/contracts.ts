@@ -21,7 +21,7 @@ export interface UseConsumableResponse extends InventoryResponse { itemId: strin
 
 /** 조회는 서버가 정산한 상태와 동일 기준 시각을 함께 돌려준다. */
 /** 네 발굴 재화 레코드와 서버 정산 시각을 함께 보내 클라이언트 추측 지급을 막는다. */
-export interface IdleExcavationResponse { excavation: IdleExcavationState; serverTime: string; }
+export interface IdleExcavationResponse { excavation: IdleExcavationState; serverTime: string; /** 조회 정산 직전 보관 시간이 상한에 닿았는지 서버가 확정한다. */ storageFull?: boolean; }
 /** 편성 저장 재시도는 요청 ID로 같은 결과를 받으며 슬롯 위치를 보존한다. */
 export interface SaveExcavationFormationRequest { requestId: string; assignedRelicIds: [string | null, string | null, string | null]; }
 /** 수확 요청 ID는 네트워크 재전송의 중복 지급을 막는 서버 멱등 키다. */
@@ -204,6 +204,8 @@ export interface ClaimInstantAdRewardResponse extends ClaimAdRewardResponse { en
 export interface MissionDto { id: string; period: MissionPeriod; title: string; progress: number; target: number; rewardCheesecake: number; claimed: boolean; }
 /** 목록 응답은 로비 배지에서 바로 쓸 미수령 개수를 포함한다. */
 export interface MissionListResponse { missions: MissionDto[]; claimableCount: number; }
+/** 받은 편지함 데이터가 없는 화면이 상태를 추측하지 않도록 마련한 명시적 서버 계약이다. */
+export interface NotificationSignalsResponse { pendingFriendRequestCount: number; unseenEventCount: number; unreadMailCount: number; }
 /** 일괄 또는 선택 수령 뒤 지급 총액과 최신 상태를 반환한다. */
 export interface ClaimMissionRewardsResponse extends PlayerStateDto { claimedIds: string[]; cheesecakeEarned: number; }
 
@@ -291,6 +293,8 @@ export interface GameApi {
   /** 종료된 이벤트 전투의 입장을 API 경계에서 차단한다. */
   enterEventStage(eventId: string, stageId: string): Promise<EnterEventStageResponse>;
   getMissions(): Promise<MissionListResponse>;
+  /** 친구 요청·새 이벤트·우편의 실제 읽음 상태를 한 번에 조회한다. */
+  getNotificationSignals(): Promise<NotificationSignalsResponse>;
   /** ID를 생략하면 현재 완료된 모든 미수령 임무를 한 저장 처리로 받는다. */
   claimMissionRewards(missionIds?: string[]): Promise<ClaimMissionRewardsResponse>;
   /** 서버 시각과 구매 이력을 반영한 공용 카탈로그를 조회한다. */

@@ -11,6 +11,15 @@ export const EXCAVATION_CURRENCIES = ["gold", "cheesecake", "fossil", "gems"] as
 /** 신규 재화 소급 정산을 저장 단위로 한 번만 실행하게 하는 서버 규칙 버전이다. */
 export const RETROACTIVE_EXCAVATION_GRANT_VERSION = 1;
 
+/** 마지막 정산 이후 서버 시간이 실제 보관 한계에 닿았는지 생산 슬롯까지 포함해 판정한다. */
+export function isExcavationStorageFull(state: IdleExcavationState, serverNow: Date): boolean {
+  if (state.lastSettledAt === null || state.assignedRelicIds.every((id) => id === null)) return false;
+  const previousMs = new Date(state.lastSettledAt).getTime();
+  const extensionActive = state.storageExtensionExpiresAt !== null && previousMs < new Date(state.storageExtensionExpiresAt).getTime();
+  const limitSeconds = state.baseStorageSeconds * (extensionActive ? 2 : 1);
+  return Math.max(0, serverNow.getTime() - previousMs) / 1000 >= limitSeconds;
+}
+
 /** JSON으로 그대로 저장할 수 있는 방치 발굴의 단일 상태다. */
 export interface IdleExcavationState {
   /** 세 칸은 위치를 보존하며 빈 칸은 null이다. */

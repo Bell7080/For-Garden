@@ -1,7 +1,6 @@
 import Phaser from "phaser";
 import type { AdOperationsConfigResponse, AdPresentationResult, AdSlotOperationsDto, GameApi, HarvestExcavationResponse, IdleExcavationResponse } from "../api/contracts";
 import { EXCAVATION_CURRENCIES, excavationProductionDisplayModel, placeExcavationRelic, type ExcavationCurrency, type IdleExcavationState } from "../core/idleExcavation";
-import { formatCurrency } from "../core/formatCurrency";
 import { RELICS } from "../data/relics";
 import { portraitUsesRelicTint, sdAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
 import { tintFor } from "../puppets/tints";
@@ -14,11 +13,12 @@ import type { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
 import { EXCAVATION_TRAIT_ICON } from "./excavationIcons";
 import { completedAdToken } from "../data/adRewards";
-import { addCurrencyChip } from "./CurrencyChip";
 import type { CurrencyIconKey } from "./currencyIcons";
 import { openRewardPopup } from "./RewardPopup";
 import { addPopupBackgroundImage, BACKGROUND, type PopupBackgroundImage } from "./backgrounds";
 import { addSectionTitle } from "./SectionTitle";
+import { excavationDisplayModel } from "./excavationDisplayModel";
+import { ExcavationCurrencyFrame } from "./ExcavationCurrencyFrame";
 
 /** 한 팝업 안에서 현황과 편집 그리드가 교대하므로 모바일 안전 영역을 넘지 않는 고정 크기를 쓴다. */
 const PANEL = { width: 900, height: 1320 } as const;
@@ -28,8 +28,6 @@ const GRID_VIEW = { left: -370, right: 370, top: -145, bottom: 425, columnGap: 2
 const GRID_DRAG_SLOP = 12;
 /** 팝업 자체는 원화를 품지 않고 현재 청흑색 면과 굵은 액자선으로 로비 배경에서 분리한다. */
 const POPUP_FRAME = chipPoints(PANEL.width - 24, PANEL.height - 24, { bevel: { topLeft: 118, bottomRight: 118 } });
-/** 네 재화 칩은 같은 고정 폭을 공유해 값의 자릿수가 늘어도 하단 요약부의 열이 움직이지 않는다. */
-const SUMMARY_CHIP = { width: 180, height: 108, gap: 190 } as const;
 /** 좁은 안전 영역에서도 팝업 제목·닫기와 겹치지 않는 현황 히어로의 고정 세로 범위다. */
 const STATUS_HERO = { x: 0, y: -385, width: 800, height: 300, headerY: -570, slotY: -385 } as const;
 type Formation = IdleExcavationState["assignedRelicIds"];
@@ -60,6 +58,8 @@ export class IdleExcavationPopup {
   /** 현황 SD만 담아 카드/편집 UI와 비동기 수명을 분리하는 전용 레이어다. */
   private sdContainer?: Phaser.GameObjects.Container;
   private readonly sdPuppets = new Set<PuppetCreature>();
+  /** 생산 틱 연출이 해당 기여 렐릭을 바로 찾도록 ID별 SD 참조를 보관한다. */
+  private readonly sdPuppetByRelicId = new Map<string, PuppetCreature>();
   private readonly sdTweens = new Set<Phaser.Tweens.Tween>();
   /** 재렌더나 닫기 전 시작된 Puppet 로딩 결과가 새 현황에 섞이지 않게 하는 세대 번호다. */
   private sdLoadGeneration = 0;
@@ -171,23 +171,29 @@ export class IdleExcavationPopup {
     content.add(this.scene.add.text(0, -205, "ℹ 연구소는 캐릭터 획득 연구 · 발굴은 배치형 자원 생산", textStyle({ role: "body", size: 17, color: COLOR.inkDim })).setOrigin(0.5));
     const baseServerMs = new Date(response.serverTime).getTime();
     let harvestButton: Button | undefined;
-    // 공용 CurrencyChip은 아이콘과 가장 큰 누적값만 책임지고, 발굴 전용 보조 라벨이 생산 속도를 설명한다.
+    // 발굴 전용 액자는 큰 누적값을, 아래의 독립 칩은 같은 아이콘과 생산 속도만 책임진다.
     // 3순위 누적 보상: SD 아래에서 현재 수확량과 시간당 생산량을 한 번에 훑는다.
     content.add(drawLayer(this.scene, 0, 30, slantedRect(800, 205), { fill: 0x05070a, alpha: 0.9, edge: COLOR.accent, edgeAlpha: 0.42 }));
-    const rows = EXCAVATION_CURRENCIES.map((currency, index) => {
-      const x = (index - (EXCAVATION_CURRENCIES.length - 1) / 2) * SUMMARY_CHIP.gap;
-      const amount = addCurrencyChip(this.scene, x, 5, EXCAVATION_CURRENCY_ICON[currency], { parent: content, width: SUMMARY_CHIP.width, height: SUMMARY_CHIP.height });
-      // 이름을 되풀이하지 않고 칩 바로 아래에 같은 단위의 생산 속도만 작게 붙인다.
-      content.add(this.scene.add.text(x, 88, `+${formatCurrency(Math.floor(rate[currency]))} /시간`, textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0.5));
-      return { currency, amount };
+    const display = excavationDisplayModel(response.excavation.unclaimed, rate);
+    // 상단 CurrencyChip을 늘리지 않고 발굴 전용 불투명 액자와 별도 생산 칩을 한 줄로 세운다.
+    const rows = display.map((item) => {
+      const frame = new ExcavationCurrencyFrame(this.scene, item.x, 26, EXCAVATION_CURRENCY_ICON[item.currency]);
+      frame.setValues(item.unclaimed, item.rate); content.add(frame);
+      return { ...item, frame, previousAmount: Math.floor(item.unclaimed) };
     });
     const availability = this.scene.add.text(0, 145, "", textStyle({ role: "body", size: 19, color: COLOR.inkDim })).setOrigin(0.5);
     content.add(availability);
     const refreshEstimate = (): void => {
       // 서버 응답 이후의 로컬 경과분만 더하는 표시용 예상치이며 정산 기준 시각은 절대 갱신하지 않는다.
       const elapsedHours = Math.max(0, Date.now() - baseServerMs) / 3_600_000;
-      // 틱에서는 CurrencyChip이 돌려준 값 Text만 바꾼다. 이미지와 불투명 요약 레이어는 재생성하지 않는다.
-      for (const row of rows) row.amount.setText(formatCurrency(Math.floor(response.excavation.unclaimed[row.currency] + rate[row.currency] * elapsedHours)));
+      // 틱에서는 프리팹의 Text만 바꾼다. 이미지와 불투명 요약 레이어는 재생성하지 않는다.
+      for (const row of rows) {
+        const amount = response.excavation.unclaimed[row.currency] + rate[row.currency] * elapsedHours;
+        row.frame.setValues(amount, row.rate);
+        // 정수 단위가 실제로 증가한 틱에만 기여 렐릭의 SD와 자원 아이콘으로 생산 피드백을 준다.
+        if (Math.floor(amount) > row.previousAmount) this.playProductionTick(row.currency);
+        row.previousAmount = Math.floor(amount);
+      }
       // 창을 열어 둔 사이 정수 1개가 쌓이는 순간에도 새 조회 없이 버튼 상태만 정확히 갱신한다.
       const harvestable = EXCAVATION_CURRENCIES.some((currency) => Math.floor(response.excavation.unclaimed[currency] + rate[currency] * elapsedHours) > 0);
       harvestButton?.setEnabled(harvestable && !this.saving);
@@ -397,6 +403,7 @@ export class IdleExcavationPopup {
     // Container의 destroy(true)가 같은 Puppet을 다시 순회하지 않도록 먼저 소유권에서 떼고 폐기한다.
     for (const puppet of this.sdPuppets) { this.sdContainer?.remove(puppet, false); puppet.destroy(); }
     this.sdPuppets.clear();
+    this.sdPuppetByRelicId.clear();
     this.sdContainer?.destroy(true); this.sdContainer = undefined;
   }
 
@@ -421,6 +428,7 @@ export class IdleExcavationPopup {
       const puppet = await spawnPuppet(this.scene, sdAssetFor(relicId), { x, groundY, height: 205, depth: 1 });
       if (!this.body || generation !== this.sdLoadGeneration || layer !== this.sdContainer) { puppet.destroy(); return; }
       layer.add(puppet); this.sdPuppets.add(puppet);
+      this.sdPuppetByRelicId.set(relicId, puppet);
       // 성공한 자리만 카드를 감춘다. ZIP/텍스처 실패 시 catch가 카드를 그대로 남긴다.
       fallback?.setVisible(false);
       const reduced = session.settings.accessibility.reduceMotion;
@@ -433,6 +441,20 @@ export class IdleExcavationPopup {
       this.sdTweens.add(tween);
     } catch {
       // Puppet 실패는 슬롯 전체의 실패가 아니다. 카드가 확정 편성을 계속 설명한다.
+    }
+  }
+
+  /** 해당 재화 생산에 기여한 SD가 통 튀고 머리 위 기존 이미지 아이콘이 떠올랐다 사라진다. */
+  private playProductionTick(currency: ExcavationCurrency): void {
+    const contributors = excavationProductionDisplayModel(this.confirmed?.excavation.assignedRelicIds ?? [null, null, null], RELICS, session.relicProgress).relics.filter((item) => item.currency === currency);
+    for (const contributor of contributors) {
+      const puppet = this.sdPuppetByRelicId.get(contributor.relicId);
+      if (!puppet || !this.sdContainer) continue;
+      const icon = this.scene.add.image(puppet.x, puppet.y - 165, EXCAVATION_CURRENCY_ICON[currency]).setDisplaySize(42, 42).setAlpha(0);
+      this.sdContainer.add(icon);
+      const reduced = session.settings.accessibility.reduceMotion;
+      this.scene.tweens.add({ targets: puppet, scaleX: puppet.scaleX * 1.1, scaleY: puppet.scaleY * 1.1, duration: reduced ? 90 : 130, yoyo: true, ease: "Back.easeOut" });
+      this.scene.tweens.add({ targets: icon, y: icon.y - (reduced ? 20 : 55), alpha: { from: 1, to: 0 }, duration: reduced ? 420 : 720, ease: "Sine.easeOut", onComplete: () => icon.destroy() });
     }
   }
 

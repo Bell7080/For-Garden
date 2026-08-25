@@ -58,6 +58,9 @@ function cloneExpeditionRun(run: ExpeditionRunState): ExpeditionRunState { retur
 function normalizeExpeditionRun(value: unknown, ownedIds: readonly string[]): ExpeditionRunState | null {
   if (!value || typeof value !== "object") return null;
   const run = value as ExpeditionRunState;
+  // v22 런에는 대상형 결과가 없으므로 빈 목록을 보충한다. 당시 UI는 증강 선택을 확정하지 않았다.
+  run.selectedAugments ??= [];
+  run.pendingAugmentReward ??= null;
   const nodeIds = Array.isArray(run.nodes) ? run.nodes.map(({ id }) => id) : [];
   const rewardsValid = run.pendingRewards && Object.entries(run.pendingRewards).every(([id, amount]) => EXPEDITION_REWARD_IDS.includes(id as never) && Number.isFinite(amount) && amount >= 0);
   const relicIds = Array.isArray(run.relics) ? run.relics.map(({ relicId }) => relicId) : [];
@@ -66,7 +69,9 @@ function normalizeExpeditionRun(value: unknown, ownedIds: readonly string[]): Ex
     && (run.currentNodeId === null || nodeIds.includes(run.currentNodeId)) && Array.isArray(run.visitedNodeIds) && run.visitedNodeIds.every((id) => nodeIds.includes(id)) && new Set(run.visitedNodeIds).size === run.visitedNodeIds.length
     && relicIds.length === 3 && new Set(relicIds).size === 3 && relicIds.every((id) => ownedIds.includes(id))
     && run.relics.every(({ currentHp, alive }) => Number.isFinite(currentHp) && currentHp >= 0 && typeof alive === "boolean" && alive === (currentHp > 0))
-    && Array.isArray(run.selectedAugmentIds) && new Set(run.selectedAugmentIds).size === run.selectedAugmentIds.length && run.selectedAugmentIds.every((id) => EXPEDITION_AUGMENT_IDS.includes(id as never))
+    && Array.isArray(run.selectedAugmentIds) && run.selectedAugmentIds.every((id) => EXPEDITION_AUGMENT_IDS.includes(id as never))
+    && Array.isArray(run.selectedAugments) && run.selectedAugments.every(({ augmentId, targetRelicId }) => EXPEDITION_AUGMENT_IDS.includes(augmentId as never) && (targetRelicId === undefined || relicIds.includes(targetRelicId)))
+    && (run.pendingAugmentReward === null || (typeof run.pendingAugmentReward.seed === "string" && nodeIds.includes(run.pendingAugmentReward.nodeId) && Number.isInteger(run.pendingAugmentReward.round) && run.pendingAugmentReward.round > 0 && Number.isInteger(run.pendingAugmentReward.totalRounds) && run.pendingAugmentReward.totalRounds >= run.pendingAugmentReward.round && Array.isArray(run.pendingAugmentReward.offers)))
     && rewardsValid && Number.isFinite(run.bossDamage) && run.bossDamage >= 0 && Number.isFinite(run.bestScore) && run.bestScore >= 0 && typeof run.settled === "boolean";
   return valid ? cloneExpeditionRun(run) : null;
 }

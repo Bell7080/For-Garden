@@ -38,7 +38,10 @@ export const EXPEDITION_REST_RULES = { healPercent: 30, revivePercent: 25, maxRe
 export const EXPEDITION_NON_COMBAT_TYPES = ["rest", "treasure"] as const;
 
 /** 저장 데이터가 임의 문자열로 전투 규칙을 주입하지 못하게 하는 원정 증강 ID 목록이다. */
-export const EXPEDITION_AUGMENT_IDS = ["reinforced-core", "predator-instinct", "blood-edge", "field-repair"] as const;
+/** @deprecated 증강 상세 정의는 expeditionAugments.ts가 소유하며 이 목록은 저장 호환 조회만 제공한다. */
+export { EXPEDITION_AUGMENTS } from "./expeditionAugments";
+import { EXPEDITION_AUGMENTS } from "./expeditionAugments";
+export const EXPEDITION_AUGMENT_IDS = EXPEDITION_AUGMENTS.map(({ id }) => id);
 
 /** 노드 완료 전까지 런 안에 보류할 수 있는 보상 종류다. */
 export const EXPEDITION_REWARD_IDS = ["gold", "fossil", "amber", "gems", "cheesecake"] as const;

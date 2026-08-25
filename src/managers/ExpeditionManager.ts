@@ -1,5 +1,7 @@
 import { generateExpeditionMap } from "../core/expeditionMap";
 import { applyExpeditionRest } from "../core/expeditionAugments";
+import { expeditionRewardRandom, expeditionRewardRule, generateExpeditionAugmentOffers, validateExpeditionAugmentChoice, type ExpeditionAugmentSelection } from "../core/expeditionRewards";
+import type { ExpeditionNodeType } from "../core/expeditionMap";
 import type { SkirmishRelicResult } from "../core/skirmish";
 import { EXPEDITION_AUGMENT_IDS, EXPEDITION_REST_RULES, EXPEDITION_REWARD_IDS } from "../data/expedition";
 import { saveManager, type SaveManager } from "../state/SaveManager";
@@ -54,7 +56,7 @@ export class ExpeditionManager {
     const weekKey = expeditionWeekKey(this.serverNow());
     const mapSeed = `${weekKey}:${this.state.expedition.playsThisWeek + 1}`;
     const map = generateExpeditionMap({ seed: mapSeed, random: seededRandom(mapSeed) });
-    const run: ExpeditionRunState = { weekKey, mapSeed, nodes: map.nodes, currentNodeId: null, visitedNodeIds: [], relics: relicIds.map((relicId) => ({ relicId, currentHp: 100, alive: true })) as ExpeditionRunState["relics"], selectedAugmentIds: [], pendingRewards: {}, bossDamage: 0, bestScore: 0, settled: false };
+    const run: ExpeditionRunState = { weekKey, mapSeed, nodes: map.nodes, currentNodeId: null, visitedNodeIds: [], relics: relicIds.map((relicId) => ({ relicId, currentHp: 100, alive: true })) as ExpeditionRunState["relics"], selectedAugmentIds: [], selectedAugments: [], pendingAugmentReward: null, pendingRewards: {}, bossDamage: 0, bestScore: 0, settled: false };
     this.commit({ ...this.state.expedition, run });
     return { ok: true, run: structuredClone(run) };
   }
@@ -82,6 +84,42 @@ export class ExpeditionManager {
     const run = this.state.expedition.run;
     if (!run || results.length !== run.relics.length || results.some((result, index) => result.relicId !== run.relics[index].relicId || result.alive !== (result.currentHp > 0))) return false;
     return this.completeNode(nodeId, { relicHp: results.map(({ currentHp }) => currentHp) });
+  }
+
+  /** 전투 노드의 첫 제안을 한 번만 만들고 seed와 결과를 같은 저장 트랜잭션에 고정한다. */
+  beginAugmentReward(nodeId: string, nodeType: ExpeditionNodeType): ExpeditionRunState["pendingAugmentReward"] {
+    const run = this.state.expedition.run;
+    const rule = expeditionRewardRule(nodeType);
+    // 비전투 노드와 이미 열린 제안은 RNG를 소비하지 않는다.
+    if (!run || run.settled || rule.selections === 0 || !rule.rarity) return null;
+    if (run.pendingAugmentReward) return structuredClone(run.pendingAugmentReward);
+    const seed = `${run.mapSeed}:${nodeId}:augment:1`;
+    const offers = generateExpeditionAugmentOffers({ rarity: rule.rarity, relics: run.relics, selections: run.selectedAugments, random: expeditionRewardRandom(seed) });
+    const pending = { nodeId, seed, round: 1, totalRounds: rule.selections, offers };
+    const next = { ...structuredClone(run), pendingAugmentReward: pending };
+    this.commit({ ...this.state.expedition, run: next });
+    return structuredClone(pending);
+  }
+
+  /** 제안에 포함된 증강만 확정하며 무리 전투는 첫 결과를 저장한 뒤 두 번째 제안을 연속 생성한다. */
+  chooseAugment(selection: ExpeditionAugmentSelection): boolean {
+    const run = this.state.expedition.run;
+    const pending = run?.pendingAugmentReward;
+    const offer = pending?.offers.find(({ augmentId }) => augmentId === selection.augmentId);
+    if (!run || !pending || !offer || !validateExpeditionAugmentChoice(offer, selection, run.selectedAugments)) return false;
+    const next = structuredClone(run);
+    next.selectedAugments.push({ ...selection });
+    next.selectedAugmentIds.push(selection.augmentId);
+    if (pending.round < pending.totalRounds) {
+      const nodeType = next.nodes.find(({ id }) => id === pending.nodeId)?.type;
+      const rule = nodeType ? expeditionRewardRule(nodeType) : { selections: 0, rarity: null };
+      if (!rule.rarity) return false;
+      const round = pending.round + 1;
+      const seed = `${run.mapSeed}:${pending.nodeId}:augment:${round}`;
+      next.pendingAugmentReward = { nodeId: pending.nodeId, seed, round, totalRounds: pending.totalRounds, offers: generateExpeditionAugmentOffers({ rarity: rule.rarity, relics: next.relics, selections: next.selectedAugments, random: expeditionRewardRandom(seed) }) };
+    } else next.pendingAugmentReward = null;
+    this.commit({ ...this.state.expedition, run: next });
+    return true;
   }
 
   /** 휴식 노드는 전멸하지 않은 런에만 정적 회복/부활 규칙을 적용한다. */

@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { getRelic } from "../data/relics";
+import { getExpeditionAugment } from "../data/expeditionAugments";
 import { setDebugScene } from "../debug";
 import { expeditionManager, type StartExpeditionFailure } from "../managers/ExpeditionManager";
 import { relicProgression } from "../managers/RelicProgressionManager";
@@ -10,7 +11,8 @@ import { Button } from "../ui/Button";
 import { addBackButton } from "../ui/IconButton";
 import { PortraitCard, relicCardTint } from "../ui/PortraitCard";
 import { COLOR, textStyle } from "../ui/theme";
-import { drawHairline, drawVignette } from "../ui/holo";
+import { chipPoints, drawHairline, drawLayer, drawVignette, HOLO } from "../ui/holo";
+import type { ExpeditionAugmentSelection } from "../core/expeditionRewards";
 
 /** 원정 준비 카드의 고정 그리드 규격이다. 다른 편성과 달리 세 칸씩 읽게 한다. */
 const ROSTER = { columns: 3, width: 250, height: 310, gapX: 56, gapY: 50, top: 470 } as const;
@@ -45,7 +47,7 @@ export class ExpeditionScene extends Phaser.Scene {
     this.add.text(54, 144, `이번 주 ${status.playsThisWeek}회  ·  최고 ${status.bestScore.toLocaleString()}`, textStyle({ role: "emphasis", size: 27, color: COLOR.accentText })).setOrigin(0, 0);
     drawHairline(this, BASE_WIDTH / 2, 210, BASE_WIDTH - 108, { color: COLOR.accent, alpha: 0.34 });
 
-    if (status.active) this.buildActive(status.active.relicIds, status.active.score);
+    if (status.active) this.buildActive(status.active.relicIds, status.active.score, status.run?.selectedAugments ?? []);
     else this.buildPreparation(status.quickAvailable);
 
     // 화면을 벗어나는 조작은 공용 우하단 슬롯만 사용한다.
@@ -53,11 +55,31 @@ export class ExpeditionScene extends Phaser.Scene {
   }
 
   /** 진행 중 원정은 새 편성으로 덮지 않고 저장된 세 렐릭과 현재 점수만 보여 준다. */
-  private buildActive(relicIds: readonly string[], score: number): void {
+  private buildActive(relicIds: readonly string[], score: number, augments: readonly ExpeditionAugmentSelection[]): void {
     this.add.text(BASE_WIDTH / 2, 330, "원정 진행 중", textStyle({ role: "display", size: 44, color: COLOR.sortieText })).setOrigin(0.5);
     this.add.text(BASE_WIDTH / 2, 400, relicIds.map((id) => getRelic(id).name).join("  ·  "), textStyle({ role: "emphasis", size: 30 })).setOrigin(0.5);
     this.add.text(BASE_WIDTH / 2, 470, `현재 점수 ${score.toLocaleString()}`, textStyle({ role: "body", size: 28, color: COLOR.inkDim })).setOrigin(0.5);
+    this.buildAugmentChips(augments);
     // 전투/보상 API가 연결되기 전에는 임의 완료나 지급 버튼을 만들지 않아 진행 소유권을 보존한다.
+  }
+
+  /** 하단 증강은 공용 비대칭 chipPoints로 표시하고, 다섯 개부터 +N으로 줄여 화면 폭을 지킨다. */
+  private buildAugmentChips(augments: readonly ExpeditionAugmentSelection[]): void {
+    if (augments.length === 0) return;
+    const visible = augments.slice(0, 4);
+    const labels = visible.map(({ augmentId, targetRelicId }) => {
+      const name = getExpeditionAugment(augmentId)?.name ?? augmentId;
+      return targetRelicId ? `${name} · ${getRelic(targetRelicId).name}` : name;
+    });
+    if (augments.length > visible.length) labels.push(`+${augments.length - visible.length}`);
+    const width = 190;
+    const gap = 16;
+    const total = labels.length * width + (labels.length - 1) * gap;
+    labels.forEach((label, index) => {
+      const x = (BASE_WIDTH - total) / 2 + width / 2 + index * (width + gap);
+      drawLayer(this, x, 1470, chipPoints(width, 62, { bevel: { topLeft: 18, bottomRight: 14 } }), { fill: COLOR.panel, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.48 });
+      this.add.text(x, 1470, label, textStyle({ role: "emphasis", size: 20, color: COLOR.accentText })).setOrigin(0.5);
+    });
   }
 
   /** 보유 렐릭에서 정확히 세 기를 고르는 신규 원정 준비 화면을 만든다. */

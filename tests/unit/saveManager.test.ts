@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { CURRENT_SAVE_VERSION, SAVE_STORAGE_KEY, SaveDataError, SaveManager } from "../../src/state/SaveManager";
 import { createDefaultSession, type SaveData } from "../../src/state/session";
 import { createRuneInstance, type RuneStatKey } from "../../src/core/runes";
+import { ExpeditionManager } from "../../src/managers/ExpeditionManager";
 
 /** 저장 왕복과 손상 검증에 쓰는 결정적 신규 룬이다. */
 function testRune(instanceId = "rune-save-1") {
@@ -25,6 +26,42 @@ function validData(): SaveData {
 }
 
 describe("SaveManager", () => {
+  it("v22 원정 준비 저장은 완전한 런을 꾸며내지 않고 빈 런으로 마이그레이션한다", () => {
+    const legacy = validData() as unknown as Record<string, unknown>;
+    legacy.saveVersion = 22;
+    legacy.expedition = { weekKey: "2026-08-24", playsThisWeek: 2, bestScore: 400, active: { relicIds: ["anky", "rex", "spino"], startedAt: "2026-08-25T00:00:00Z", score: 30 } };
+    expect(new SaveManager(new MemoryStorage()).migrate(legacy).expedition).toEqual({ weekKey: "2026-08-24", playsThisWeek: 2, bestScore: 400, run: null });
+  });
+
+  it("진행 중 원정의 맵·생존·증강·보상·점수를 독립 객체로 왕복한다", () => {
+    const storage = new MemoryStorage(); const source = createDefaultSession();
+    const manager = new ExpeditionManager(source, new SaveManager(storage), () => new Date("2026-08-25T12:00:00Z"));
+    manager.start(["anky", "rex", "spino"]);
+    const firstNode = source.expedition.run!.nodes.find(({ floor }) => floor === 1)!;
+    expect(manager.completeNode(firstNode.id, { relicHp: [90, 0, 75], augmentId: "field-repair", rewards: { gold: 12 }, bossDamage: 3, score: 80 })).toBe(true);
+    const loaded = new SaveManager(storage).load()!;
+    expect(loaded.expedition.run).toEqual(source.expedition.run);
+    expect(loaded.expedition.run).not.toBe(source.expedition.run);
+    expect(loaded.expedition.run?.relics[1]).toMatchObject({ relicId: "rex", currentHp: 0, alive: false });
+  });
+
+  it.each([
+    ["잘못된 노드", (run: any) => { run.currentNodeId = "missing-node"; }],
+    ["미보유 렐릭", (run: any) => { run.relics[0].relicId = "dodo"; }],
+    ["중복 렐릭", (run: any) => { run.relics[1].relicId = run.relics[0].relicId; }],
+    ["음수 HP", (run: any) => { run.relics[0].currentHp = -1; }],
+    ["음수 점수", (run: any) => { run.bestScore = -1; }],
+    ["음수 보상", (run: any) => { run.pendingRewards.gold = -1; }],
+    ["없는 증강", (run: any) => { run.selectedAugmentIds = ["missing-augment"]; }],
+  ])("손상된 원정(%s)은 주간 기록만 남기고 런을 복구하지 않는다", (_label, corrupt) => {
+    const storage = new MemoryStorage(); const source = createDefaultSession();
+    new ExpeditionManager(source, new SaveManager(storage), () => new Date("2026-08-25T12:00:00Z")).start(["anky", "rex", "spino"]);
+    const data = JSON.parse(storage.getItem(SAVE_STORAGE_KEY)!) as SaveData;
+    corrupt(data.expedition.run);
+    storage.setItem(SAVE_STORAGE_KEY, JSON.stringify(data));
+    expect(new SaveManager(storage).load()?.expedition.run).toBeNull();
+  });
+
   it("v17 저장은 임의 현재 시각 없이 서버 첫 조회 초기화 상태로 마이그레이션한다", () => {
     const legacy = validData() as unknown as Record<string, unknown>; legacy.saveVersion = 17; delete legacy.idleExcavation;
     const migrated = new SaveManager(new MemoryStorage()).migrate(legacy);

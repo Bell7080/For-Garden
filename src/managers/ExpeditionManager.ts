@@ -1,82 +1,86 @@
+import { generateExpeditionMap } from "../core/expeditionMap";
+import { EXPEDITION_AUGMENT_IDS, EXPEDITION_REWARD_IDS } from "../data/expedition";
 import { saveManager, type SaveManager } from "../state/SaveManager";
-import { session, type ActiveExpedition, type Session } from "../state/session";
+import { session, type ExpeditionRunState, type Session } from "../state/session";
 
-/** 로비와 원정 화면이 공유하는 읽기 전용 요약이다. UI는 저장 모델을 직접 해석하지 않는다. */
+/** UI가 소비하는 원정 요약이며 변경 가능한 Session 참조는 노출하지 않는다. */
 export interface ExpeditionStatus {
   weekKey: string;
   playsThisWeek: number;
   bestScore: number;
-  active: ActiveExpedition | null;
+  active: { relicIds: [string, string, string]; score: number } | null;
+  run: ExpeditionRunState | null;
   quickAvailable: boolean;
 }
 
-/** 신규 원정 편성 검증이 실패한 이유다. 씬은 이 값만 플레이어 문구로 번역한다. */
 export type StartExpeditionFailure = "exactlyThree" | "duplicate" | "notOwned" | "alreadyActive";
+export type StartExpeditionResult = { ok: true; run: ExpeditionRunState } | { ok: false; reason: StartExpeditionFailure };
 
-/** 시작 상태 전이 결과다. 성공한 경우 저장까지 확정된 진행 스냅샷을 돌려준다. */
-export type StartExpeditionResult = { ok: true; active: ActiveExpedition } | { ok: false; reason: StartExpeditionFailure };
-
-/** UTC 월요일을 기준으로 주간 기록을 묶는 안정적인 키를 만든다. */
-export function expeditionWeekKey(now: Date): string {
-  const date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-  const daysFromMonday = (date.getUTCDay() + 6) % 7;
-  date.setUTCDate(date.getUTCDate() - daysFromMonday);
+/** FakeServer가 주입하는 UTC 시각에서 월요일 시작 주간 키를 계산한다. */
+export function expeditionWeekKey(serverNow: Date): string {
+  const date = new Date(Date.UTC(serverNow.getUTCFullYear(), serverNow.getUTCMonth(), serverNow.getUTCDate()));
+  date.setUTCDate(date.getUTCDate() - ((date.getUTCDay() + 6) % 7));
   return date.toISOString().slice(0, 10);
 }
 
-/**
- * 원정 편성·주간 기록의 단일 쓰기 경계다.
- *
- * 씬은 선택 표시만 소유한다. 보유 여부 검증, 진행 중 상태 전이, 저장은 이 매니저가 한 번에 맡는다.
- * 실제 전투 점수와 보상 확정은 향후 서버 API가 소유하며 이 준비 매니저에서 임의 지급하지 않는다.
- */
-export class ExpeditionManager {
-  constructor(
-    private readonly state: Session = session,
-    private readonly saves: Pick<SaveManager, "save"> = saveManager,
-    private readonly now: () => Date = () => new Date(),
-  ) {}
+/** 문자열 시드만으로 맵을 재현하는 작은 결정적 난수원이다. */
+function seededRandom(seed: string): () => number {
+  let value = 2166136261;
+  for (const character of seed) value = Math.imul(value ^ character.charCodeAt(0), 16777619);
+  return () => { value += 0x6d2b79f5; let next = value; next = Math.imul(next ^ next >>> 15, next | 1); next ^= next + Math.imul(next ^ next >>> 7, next | 61); return ((next ^ next >>> 14) >>> 0) / 4294967296; };
+}
 
-  /** 주차 변경을 정규화한 현재 상태의 독립 사본을 반환한다. */
+/** 원정 생성·노드 완료·포기·최종 정산의 유일한 상태 쓰기 경계다. */
+export class ExpeditionManager {
+  constructor(private readonly state: Session = session, private readonly saves: Pick<SaveManager, "save"> = saveManager, private readonly serverNow: () => Date = () => new Date()) {}
+
+  /** 주차를 서버 UTC에 맞춘 뒤 UI용 독립 사본을 반환한다. */
   status(): ExpeditionStatus {
     this.normalizeWeek();
-    const active = this.state.expedition.active;
-    return {
-      ...this.state.expedition,
-      active: active ? { ...active, relicIds: [...active.relicIds] as [string, string, string] } : null,
-      // 빠른 원정은 이번 주 정상 원정 점수가 있고 이어 할 진행이 없을 때만 열린다.
-      quickAvailable: this.state.expedition.bestScore > 0 && active === null,
-    };
+    const run = this.state.expedition.run;
+    const copy = run ? structuredClone(run) : null;
+    return { ...this.state.expedition, run: copy, active: copy ? { relicIds: copy.relics.map(({ relicId }) => relicId) as [string, string, string], score: copy.bestScore } : null, quickAvailable: this.state.expedition.bestScore > 0 && run === null };
   }
 
-  /** 정확히 세 보유 렐릭을 검증한 뒤 신규→진행 중 상태 전이를 저장한다. */
+  /** 정확히 세 보유 렐릭을 검증하고 서버 주간 키가 포함된 결정적 맵을 생성한다. */
   start(relicIds: readonly string[]): StartExpeditionResult {
     this.normalizeWeek();
-    if (this.state.expedition.active) return { ok: false, reason: "alreadyActive" };
+    if (this.state.expedition.run) return { ok: false, reason: "alreadyActive" };
     if (relicIds.length !== 3) return { ok: false, reason: "exactlyThree" };
     if (new Set(relicIds).size !== 3) return { ok: false, reason: "duplicate" };
     if (relicIds.some((id) => !this.state.owned.has(id))) return { ok: false, reason: "notOwned" };
-
-    const active: ActiveExpedition = {
-      relicIds: [...relicIds] as [string, string, string],
-      startedAt: this.now().toISOString(),
-      score: 0,
-    };
-    // 상태 전이의 소유자는 이 지점이다. 검증을 모두 통과한 뒤 공유 Session과 저장을 함께 확정한다.
-    this.state.expedition = { ...this.state.expedition, active };
-    this.saves.save(this.state);
-    return { ok: true, active: { ...active, relicIds: [...active.relicIds] as [string, string, string] } };
+    const weekKey = expeditionWeekKey(this.serverNow());
+    const mapSeed = `${weekKey}:${this.state.expedition.playsThisWeek + 1}`;
+    const map = generateExpeditionMap({ seed: mapSeed, random: seededRandom(mapSeed) });
+    const run: ExpeditionRunState = { weekKey, mapSeed, nodes: map.nodes, currentNodeId: null, visitedNodeIds: [], relics: relicIds.map((relicId) => ({ relicId, currentHp: 100, alive: true })) as ExpeditionRunState["relics"], selectedAugmentIds: [], pendingRewards: {}, bossDamage: 0, bestScore: 0, settled: false };
+    this.commit({ ...this.state.expedition, run });
+    return { ok: true, run: structuredClone(run) };
   }
 
-  /** 주차가 바뀌면 주간 횟수·최고점만 초기화하고 진행 중 원정은 이어가게 보존한다. */
-  private normalizeWeek(): void {
-    const weekKey = expeditionWeekKey(this.now());
-    if (this.state.expedition.weekKey === weekKey) return;
-    // 주간 경계 전이는 매니저만 수행한다. 진행 중 스냅샷을 지우면 로비의 이어하기 계약이 깨진다.
-    this.state.expedition = { ...this.state.expedition, weekKey, playsThisWeek: 0, bestScore: 0 };
-    this.saves.save(this.state);
+  /** 도달한 노드의 결과만 반영하며 씬이 HP·보상·점수를 직접 쓸 필요가 없게 한다. */
+  completeNode(nodeId: string, update: { relicHp: readonly number[]; augmentId?: string; rewards?: Record<string, number>; bossDamage?: number; score?: number }): boolean {
+    const run = this.state.expedition.run;
+    const node = run?.nodes.find(({ id }) => id === nodeId);
+    if (!run || run.settled || !node || run.visitedNodeIds.includes(nodeId) || (run.currentNodeId !== null && !run.nodes.find(({ id }) => id === run.currentNodeId)?.successorIds.includes(nodeId)) || update.relicHp.length !== 3) return false;
+    if (update.augmentId && !EXPEDITION_AUGMENT_IDS.includes(update.augmentId as never)) return false;
+    if (Object.entries(update.rewards ?? {}).some(([id, amount]) => !EXPEDITION_REWARD_IDS.includes(id as never) || !Number.isFinite(amount) || amount < 0)) return false;
+    if (update.relicHp.some((hp) => !Number.isFinite(hp) || hp < 0) || [update.bossDamage ?? 0, update.score ?? 0].some((value) => !Number.isFinite(value) || value < 0)) return false;
+    const next = structuredClone(run); next.currentNodeId = nodeId; next.visitedNodeIds.push(nodeId);
+    next.relics.forEach((relic, index) => { relic.currentHp = update.relicHp[index]; relic.alive = relic.currentHp > 0; });
+    if (update.augmentId && !next.selectedAugmentIds.includes(update.augmentId)) next.selectedAugmentIds.push(update.augmentId);
+    for (const [id, amount] of Object.entries(update.rewards ?? {})) next.pendingRewards[id] = (next.pendingRewards[id] ?? 0) + amount;
+    next.bossDamage += update.bossDamage ?? 0; next.bestScore = Math.max(next.bestScore, update.score ?? 0);
+    this.commit({ ...this.state.expedition, run: next }); return true;
   }
+
+  /** 포기는 미정산 보상을 버리고 런을 닫는다. */
+  abandon(): boolean { if (!this.state.expedition.run) return false; this.commit({ ...this.state.expedition, playsThisWeek: this.state.expedition.playsThisWeek + 1, run: null }); return true; }
+
+  /** 최종 점수와 정산 플래그를 한 번만 확정한 뒤 주간 기록을 갱신한다. */
+  settle(): boolean { const run = this.state.expedition.run; if (!run || run.settled) return false; const settled = { ...run, settled: true }; this.commit({ ...this.state.expedition, playsThisWeek: this.state.expedition.playsThisWeek + 1, bestScore: Math.max(this.state.expedition.bestScore, run.bestScore), run: settled }); return true; }
+
+  private commit(expedition: Session["expedition"]): void { this.state.expedition = expedition; this.saves.save(this.state); }
+  private normalizeWeek(): void { const weekKey = expeditionWeekKey(this.serverNow()); if (this.state.expedition.weekKey !== weekKey) this.commit({ ...this.state.expedition, weekKey, playsThisWeek: 0, bestScore: 0 }); }
 }
 
-/** 앱 전체가 공유하는 원정 준비 경계다. 테스트는 독립 Session과 시계를 주입한다. */
 export const expeditionManager = new ExpeditionManager();

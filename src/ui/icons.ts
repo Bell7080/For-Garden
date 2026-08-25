@@ -1,6 +1,8 @@
 /** 화면 조작에 쓰는 공용 아이콘. 스킬 아이콘과 달리 캐릭터 데이터와 무관하다. */
 export const UI_ICON = {
   back: "ui-icon-back",
+  /** 로비 가방과 인벤토리 작업판을 잇는 전용 홀로그램 픽토그램. */
+  bag: "ui-icon-bag",
 } as const;
 
 export type UiIconKey = (typeof UI_ICON)[keyof typeof UI_ICON];
@@ -13,4 +15,5 @@ export type UiIconKey = (typeof UI_ICON)[keyof typeof UI_ICON];
  */
 export const UI_ICON_ASSETS: ReadonlyArray<readonly [UiIconKey, string, number]> = [
   [UI_ICON.back, "sprites/ui/back.svg", 96],
+  [UI_ICON.bag, "sprites/ui/bag.svg", 96],
 ];

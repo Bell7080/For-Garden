@@ -188,7 +188,7 @@ export class LobbyScene extends Phaser.Scene {
     if (!this.popupLayer) return;
     this.inventoryPopup ??= new InventoryPopup(this, this.popupLayer, gameApi, () => {
       this.inventoryPopup = undefined; this.inventoryBackButton?.destroy(); this.inventoryBackButton = undefined;
-    });
+    }, () => this.topBar?.refresh());
     this.inventoryPopup.open();
     if (!this.inventoryBackButton) this.inventoryBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: () => this.inventoryPopup?.close() }).setDepth(2100);
   }
@@ -232,7 +232,7 @@ export class LobbyScene extends Phaser.Scene {
       // 친구는 더 이상 준비 중 토스트가 아니라 목록과 공개 프로필 화면으로 연결된다.
       { icon: "friends", label: "친구", onClick: () => this.scene.start("friends") },
       // 가방은 씬 전환 없이 현재 로비 위에서 열린다.
-      { icon: "scroll", label: "가방", onClick: () => this.openInventory() },
+      { icon: UI_ICON.bag, label: "가방", onClick: () => this.openInventory() },
     ] as const;
     rail.forEach((item, i) => {
       const button = new RailButton(this, x, 640 + i * 152, { icon: item.icon, label: item.label, onClick: "onClick" in item ? item.onClick : () => this.notReady(item.label) });

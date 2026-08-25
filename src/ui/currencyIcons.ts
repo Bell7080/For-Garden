@@ -22,3 +22,10 @@ export const CURRENCY_ICON_ASSETS: ReadonlyArray<readonly [CurrencyIconKey, stri
   ["currency-cheesecake", "/sprites/currency/cake.webp"],
   ["currency-dna", "/sprites/currency/heart.webp"],
 ];
+
+/** 저장 지갑 키를 실제 구운 WebP 텍스처로 바꾸는 공용 단일 매핑이다. */
+export const CURRENCY_ICON_BY_WALLET = {
+  gems: "currency-gems", gold: "currency-gold", stamina: "currency-stamina",
+  fossil: "currency-fossil", amber: "currency-amber", cheesecake: "currency-cheesecake",
+  dnaFragments: "currency-dna",
+} as const satisfies Record<import("../data/items").WalletItemKey, CurrencyIconKey>;

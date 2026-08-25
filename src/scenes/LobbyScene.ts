@@ -21,6 +21,7 @@ import { IdleExcavationPopup } from "../ui/IdleExcavationPopup";
 import { BACK_SLOT, IconButton } from "../ui/IconButton";
 import { UI_ICON } from "../ui/icons";
 import { TradePopup } from "../ui/TradePopup";
+import { InventoryPopup } from "../ui/InventoryPopup";
 
 /** 확대된 애착 렐릭의 골반 아래가 내비게이션 뒤로 자연스럽게 이어지는 기준선. */
 const STAGE_FLOOR = 1660;
@@ -56,6 +57,9 @@ export class LobbyScene extends Phaser.Scene {
   /** 무역도 발굴과 같은 공유 레이어와 외부 뒤로가기 슬롯을 사용한다. */
   private tradePopup?: TradePopup;
   private tradeBackButton?: IconButton;
+  /** 인벤토리는 로비 세션을 유지하는 공용 팝업이며 상태 변경은 API에만 위임한다. */
+  private inventoryPopup?: InventoryPopup;
+  private inventoryBackButton?: IconButton;
 
   constructor() {
     super("lobby");
@@ -167,6 +171,16 @@ export class LobbyScene extends Phaser.Scene {
     if (!this.tradeBackButton) this.tradeBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: () => this.tradePopup?.close() }).setDepth(2100);
   }
 
+  /** 오른쪽 레일에서 로비를 떠나지 않고 가방 작업판을 연다. */
+  private openInventory(): void {
+    if (!this.popupLayer) return;
+    this.inventoryPopup ??= new InventoryPopup(this, this.popupLayer, gameApi, () => {
+      this.inventoryPopup = undefined; this.inventoryBackButton?.destroy(); this.inventoryBackButton = undefined;
+    });
+    this.inventoryPopup.open();
+    if (!this.inventoryBackButton) this.inventoryBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: () => this.inventoryPopup?.close() }).setDepth(2100);
+  }
+
   /** 저장된 UTC 일일 입장 횟수를 로비 원정 버튼의 짧은 상태 문구로 바꾼다. */
   private expeditionStatus(): string {
     const remaining = Math.max(0, DAILY_RESTORATION.maxEntriesPerUtcDay - session.dailyContent.restorationEntries);
@@ -205,14 +219,16 @@ export class LobbyScene extends Phaser.Scene {
       { icon: "mail", label: "우편" },
       // 친구는 더 이상 준비 중 토스트가 아니라 목록과 공개 프로필 화면으로 연결된다.
       { icon: "friends", label: "친구", onClick: () => this.scene.start("friends") },
+      // 가방은 씬 전환 없이 현재 로비 위에서 열린다.
+      { icon: "scroll", label: "가방", onClick: () => this.openInventory() },
     ] as const;
     rail.forEach((item, i) => {
       new RailButton(this, x, 640 + i * 152, { icon: item.icon, label: item.label, onClick: "onClick" in item ? item.onClick : () => this.notReady(item.label) });
     });
     // 임무 입구는 상세 내용을 복제하지 않고 서버가 계산한 미수령 개수만 짧게 표시한다.
-    const missionButton = new RailButton(this, x, 1096, { icon: "scroll", label: "임무", accent: true, onClick: () => this.scene.start("missions") });
+    const missionButton = new RailButton(this, x, 1248, { icon: "scroll", label: "임무", accent: true, onClick: () => this.scene.start("missions") });
     void gameApi.getMissions().then(({ claimableCount }) => {
-      if (claimableCount > 0) this.add.text(x + 42, 1050, String(claimableCount), textStyle({ role: "emphasis", size: 24, color: COLOR.sortieText })).setOrigin(0.5).setDepth(missionButton.depth + 1);
+      if (claimableCount > 0) this.add.text(x + 42, 1202, String(claimableCount), textStyle({ role: "emphasis", size: 24, color: COLOR.sortieText })).setOrigin(0.5).setDepth(missionButton.depth + 1);
     });
   }
 

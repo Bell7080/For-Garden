@@ -8,6 +8,7 @@ import { assertValidRuneInstance, type RuneInstance } from "../core/runes";
 import { normalizeSettings } from "../core/settings";
 import { AD_REWARD_SLOTS } from "../data/adRewards";
 import { createIdleExcavationState, EXCAVATION_CURRENCIES, RETROACTIVE_EXCAVATION_GRANT_VERSION } from "../core/idleExcavation";
+import { findItem } from "../data/items";
 
 /** v12에서만 존재했던 정적 젬을 저장 마이그레이션용 인스턴스로 재현하는 폐쇄된 표다. */
 const LEGACY_V12_RUNES: Readonly<Record<string, RuneInstance>> = {
@@ -25,7 +26,7 @@ function migrateV12Rune(definitionId: string): RuneInstance {
 
 /** 키는 계정 연동 저장소와 충돌하지 않도록 로컬 프로토타입임을 명시한다. */
 export const SAVE_STORAGE_KEY = "eternal-city.local-save";
-export const CURRENT_SAVE_VERSION = 19;
+export const CURRENT_SAVE_VERSION = 20;
 
 type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
@@ -69,6 +70,7 @@ export class SaveManager {
   /** 상태 확정 경계에서 Set을 배열로 바꾸고 한 번에 교체 저장한다. */
   save(state: Session): void {
     const data: SaveData = {
+      itemInventory: state.itemInventory.map((stack) => ({ ...stack })),
       idleExcavation: { ...state.idleExcavation, assignedRelicIds: [...state.idleExcavation.assignedRelicIds], unclaimed: { ...state.idleExcavation.unclaimed } },
       saveVersion: CURRENT_SAVE_VERSION,
       settings: normalizeSettings(state.settings),
@@ -203,11 +205,13 @@ export class SaveManager {
       .map(([id, progress]) => [id, (progress as unknown as { awakening?: number }).awakening ?? 0])
       .filter(([, count]) => (count as number) > 0));
     // 반환 전 폐기 필드를 구조 분해해 현재 저장 JSON에 다시 섞이지 않게 한다.
+    // v20 이전에는 중첩 가방이 없었다. 지갑과 룬은 기존 단일 기준에 남겨 빈 스택만 보충한다.
+    const itemInventory = Array.isArray(legacy.itemInventory) ? legacy.itemInventory : [];
     const { ownedHeartGemIds: _oldOwned, runeSlotsByRelicId: _oldSlots, ...current } = legacy;
-    if (legacy.saveVersion === undefined) return { ...current, idleExcavation, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, dailyAdRewards, missions, productPurchases, runeInventory } as unknown as SaveData;
-    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, CURRENT_SAVE_VERSION];
+    if (legacy.saveVersion === undefined) return { ...current, idleExcavation, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory } as unknown as SaveData;
+    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, CURRENT_SAVE_VERSION];
     if (!supported.includes(legacy.saveVersion as number)) throw new SaveDataError(`지원하지 않는 저장 버전입니다: ${String(legacy.saveVersion)}`);
-    return { ...current, idleExcavation, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory } as unknown as SaveData;
+    return { ...current, idleExcavation, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory } as unknown as SaveData;
   }
 
   /** 콘텐츠 ID와 교차 필드 불변식까지 검사해 부분 손상을 조용히 전파하지 않는다. */
@@ -242,6 +246,8 @@ export class SaveManager {
     if (!data.relicFragments || typeof data.relicFragments !== "object"
       || Object.entries(data.relicFragments).some(([id, count]) => !data.ownedRelicIds.includes(id) || !Number.isInteger(count) || count < 0)) fail("렐릭 파편 정보가 올바르지 않습니다.");
     if (!Array.isArray(data.runeInventory)) fail("룬 인벤토리가 올바르지 않습니다.");
+    if (!Array.isArray(data.itemInventory) || new Set(data.itemInventory.map(({ itemId }) => itemId)).size !== data.itemInventory.length
+      || data.itemInventory.some(({ itemId, quantity }) => { const item = findItem(itemId); return !item || item.category === "rune" || item.category === "currency" || !Number.isInteger(quantity) || quantity <= 0 || quantity > item.maxStack; })) fail("중첩 아이템 인벤토리가 올바르지 않습니다.");
     try { data.runeInventory.forEach(assertValidRuneInstance); } catch { fail("룬 인벤토리에 손상된 인스턴스가 있습니다."); }
     const runeIds = data.runeInventory.map(({ instanceId }) => instanceId);
     if (new Set(runeIds).size !== runeIds.length) fail("룬 인스턴스 ID가 중복되었습니다.");
@@ -258,6 +264,7 @@ export class SaveManager {
 
   private toSession(data: SaveData): Session {
     return {
+      itemInventory: data.itemInventory.map((stack) => ({ ...stack })),
       idleExcavation: { ...data.idleExcavation, assignedRelicIds: [...data.idleExcavation.assignedRelicIds], unclaimed: { ...data.idleExcavation.unclaimed } },
       settings: normalizeSettings(data.settings),
       completedStoryIds: new Set(data.completedStoryIds),

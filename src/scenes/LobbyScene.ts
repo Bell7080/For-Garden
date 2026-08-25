@@ -24,6 +24,7 @@ import { TradePopup } from "../ui/TradePopup";
 import { InventoryPopup } from "../ui/InventoryPopup";
 import { bindNotificationDot } from "../ui/NotificationDot";
 import { notificationManager } from "../managers/NotificationManager";
+import { MissionsPopup } from "../ui/MissionsPopup";
 
 /** 확대된 애착 렐릭의 골반 아래가 내비게이션 뒤로 자연스럽게 이어지는 기준선. */
 const STAGE_FLOOR = 1660;
@@ -62,6 +63,9 @@ export class LobbyScene extends Phaser.Scene {
   /** 인벤토리는 로비 세션을 유지하는 공용 팝업이며 상태 변경은 API에만 위임한다. */
   private inventoryPopup?: InventoryPopup;
   private inventoryBackButton?: IconButton;
+  /** 임무도 로비 상태를 보존하는 공용 팝업이며 상단 지갑은 수령 응답과 동시에 갱신한다. */
+  private missionsPopup?: MissionsPopup;
+  private topBar?: TopBar;
 
   constructor() {
     super("lobby");
@@ -73,7 +77,7 @@ export class LobbyScene extends Phaser.Scene {
 
     this.buildPlaza();
     // 설정 아이콘은 준비 중 토스트가 아니라 등록된 환경 설정 씬으로 곧바로 이동한다.
-    new TopBar(this, 40, { onSettings: () => this.scene.start("settings") });
+    this.topBar = new TopBar(this, 40, { onSettings: () => this.scene.start("settings") });
     this.buildPromo();
     this.buildSideRail();
 
@@ -235,8 +239,15 @@ export class LobbyScene extends Phaser.Scene {
       if (key) bindNotificationDot(this, button, { x: 42, y: -42 }, (listener) => notificationManager.subscribe(key, listener));
     });
     // 임무 입구는 숫자 텍스트 대신 다른 버튼과 같은 공용 점 하나만 사용한다.
-    const missionButton = new RailButton(this, x, 1248, { icon: "scroll", label: "임무", accent: true, onClick: () => this.scene.start("missions") });
+    const missionButton = new RailButton(this, x, 1248, { icon: "scroll", label: "임무", accent: true, onClick: () => this.openMissions() });
     bindNotificationDot(this, missionButton, { x: 42, y: -42 }, (listener) => notificationManager.subscribe("missionReward", listener));
+  }
+
+  /** 씬 전환 없이 같은 PopupLayer에 임무 작업판 한 장만 연다. */
+  private openMissions(): void {
+    if (!this.popupLayer) return;
+    this.missionsPopup ??= new MissionsPopup(this, this.popupLayer, gameApi, () => this.topBar?.refresh(), () => { this.missionsPopup = undefined; });
+    this.missionsPopup.open();
   }
 
   /** 왼쪽 위, 프로필 줄 바로 아래의 홍보 칸. 기간 상품과 공지가 들어갈 자리다. */

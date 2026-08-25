@@ -10,13 +10,15 @@ export type ExcavationAdEffect =
 /** kind로 즉시 재화와 상태 변경을 안전하게 분기하는 광고 보상 합집합이다. */
 export type AdReward =
   | { readonly kind: "currency"; readonly currency: AdRewardCurrency; readonly amount: number }
-  | { readonly kind: "excavation_effect"; readonly effect: ExcavationAdEffect };
+  | { readonly kind: "excavation_effect"; readonly effect: ExcavationAdEffect }
+  /** 실제 점수와 지급량은 광고 검증 뒤 서버 기록만으로 계산한다. */
+  | { readonly kind: "quick_expedition"; readonly scoreRatio: number };
 
 /** 광고 노출 위치는 일반 보급과 발굴 화면만 허용한다. */
-export type AdPlacement = "shop_free_supplies" | "daily_mission_rewards" | "idle_excavation";
+export type AdPlacement = "shop_free_supplies" | "daily_mission_rewards" | "idle_excavation" | "quick_expedition";
 
 /** 서버 운영 설정의 원본이 되는 허용 슬롯 정의다. */
-export interface AdRewardSlot { readonly id: string; readonly displayText: string; readonly reward: AdReward; readonly dailyLimitUtc: number; readonly placement: AdPlacement; }
+export interface AdRewardSlot { readonly id: string; readonly displayText: string; readonly reward: AdReward; readonly dailyLimitUtc: number; readonly weeklyLimitUtc?: number; readonly placement: AdPlacement; }
 
 export const AD_REWARD_SLOTS = [
   { id: "daily-stamina", displayText: "스테미나 10", reward: { kind: "currency", currency: "stamina", amount: 10 }, dailyLimitUtc: 3, placement: "shop_free_supplies" },
@@ -27,6 +29,8 @@ export const AD_REWARD_SLOTS = [
   { id: "excavation-storage", displayText: "다음 정산 보관 최대 8시간", reward: { kind: "excavation_effect", effect: { kind: "storage_extension", maxStorageSeconds: 28_800, appliesTo: "next_settlement_window" } }, dailyLimitUtc: 2, placement: "idle_excavation" },
   // 같은 효과 재수령은 배율을 곱하지 않고, 수확과 같은 1.5배로 서버 시각부터 만료만 교체한다.
   { id: "excavation-speed", displayText: "생산 1.5배 · 60분", reward: { kind: "excavation_effect", effect: { kind: "production_speed", multiplier: 1.5, durationSeconds: 3_600, refresh: "replace_expiry" } }, dailyLimitUtc: 2, placement: "idle_excavation" },
+  // 기준 점수가 없거나 광고 검증이 실패하면 서버가 지급을 거절하며 횟수도 소비하지 않는다.
+  { id: "quick-expedition", displayText: "빠른 원정", reward: { kind: "quick_expedition", scoreRatio: 0.25 }, dailyLimitUtc: 2, weeklyLimitUtc: 5, placement: "quick_expedition" },
 ] as const satisfies readonly AdRewardSlot[];
 
 /** 요청 슬롯을 서버 허용 목록과 대조한다. */

@@ -46,6 +46,17 @@ export const EXPEDITION_AUGMENT_IDS = EXPEDITION_AUGMENTS.map(({ id }) => id);
 /** 노드 완료 전까지 런 안에 보류할 수 있는 보상 종류다. */
 export const EXPEDITION_REWARD_IDS = ["gold", "fossil", "amber", "gems", "cheesecake"] as const;
 
+/** 노드 완료 재화의 서버 추첨 범위와 한 런 누적 상한이다. 희귀 재화인 호박석은 원정 노드에서 지급하지 않는다. */
+export const EXPEDITION_NODE_REWARD_BALANCE = {
+  cheesecake: { perNode: { min: 4, max: 12 }, runCap: 180 },
+  gold: { perNode: { min: 120, max: 420 }, runCap: 7_500 },
+  fossil: { perNode: { min: 3, max: 12 }, runCap: 220 },
+  gems: { perNode: { min: 0, max: 2 }, runCap: 24 },
+} as const;
+
+/** 빠른 원정은 서버가 보유한 유효 최고 점수의 이 비율만 보상 점수로 환산한다. */
+export const QUICK_EXPEDITION_POLICY = { scoreRatio: 0.25, dailyLimitUtc: 2, weeklyLimitUtc: 5 } as const;
+
 /** 불사 보스의 시간 경과 강화 표다. 마지막 처형 단계는 어떤 정상 편성도 버티지 못하게 한다. */
 export const EXPEDITION_BOSS_BALANCE = {
   /** 서버 검증이 허용하는 전투 길이와 입력량 상한이다. */

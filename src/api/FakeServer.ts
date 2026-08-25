@@ -26,9 +26,9 @@ import type { EngraveRuneRequest, EngraveRuneResponse, EnhanceRuneRequest, Enhan
 import type { ActivatePassRequest, ActivatePassResponse, ClaimInstantAdRewardRequest, ClaimInstantAdRewardResponse, PassEntitlementDto, VerifyPurchaseReceiptRequest, VerifyPurchaseReceiptResponse } from "./contracts";
 import { harvestIdleExcavation, isExcavationStorageFull, settleIdleExcavation, validateExcavationFormation } from "../core/idleExcavation";
 import type { HarvestExcavationRequest, HarvestExcavationResponse, IdleExcavationResponse, SaveExcavationFormationRequest, InventoryResponse, UseConsumableRequest, UseConsumableResponse } from "./contracts";
-import type { ClaimExpeditionRewardRequest, ClaimExpeditionRewardResponse, ExpeditionLeaderboardResponse, ExpeditionWeeklyBestResponse, SubmitExpeditionBossScoreRequest, SubmitExpeditionBossScoreResponse } from "./contracts";
+import type { ClaimExpeditionRewardRequest, ClaimExpeditionRewardResponse, ExpeditionLeaderboardResponse, ExpeditionWeeklyBestResponse, SettleExpeditionRunRequest, SettleExpeditionRunResponse, SubmitExpeditionBossScoreRequest, SubmitExpeditionBossScoreResponse } from "./contracts";
 import { expeditionWeekKey, resolveExpeditionBossBattle } from "../core/expeditionBoss";
-import { EXPEDITION_BOSS_BALANCE, EXPEDITION_CUMULATIVE_REWARD_STAGES } from "../data/expedition";
+import { EXPEDITION_BOSS_BALANCE, EXPEDITION_CUMULATIVE_REWARD_STAGES, QUICK_EXPEDITION_POLICY } from "../data/expedition";
 
 /** 사용자 룬 이름의 서버 정책이다. UI 글자 수와 무관하게 API 경계가 최종 권한을 가진다. */
 export const MAX_RUNE_NAME_LENGTH = 20;
@@ -66,6 +66,10 @@ export class FakeServer implements GameApi {
   private bossWeek = { weekKey: "", bestScore: 0, cumulativeScore: 0, achievedAt: "", claimedStageIds: [] as string[] };
   private readonly bossSubmissionResults = new Map<string, SubmitExpeditionBossScoreResponse>();
   private readonly bossRewardResults = new Map<string, ClaimExpeditionRewardResponse>();
+  /** 운영 DB의 런 ID/정산 ID 고유 제약과 빠른 원정 주간 카운터를 흉내 낸다. */
+  private readonly expeditionSettlementResults = new Map<string, SettleExpeditionRunResponse>();
+  private previousBossBest = 0;
+  private quickWeek = { weekKey: "", claims: 0 };
   /** 같은 밀리초 안의 연속 발급도 구분하는 서버 인스턴스 로컬 순번이다. */
   private runeIssueSequence = 0;
 
@@ -129,10 +133,33 @@ export class FakeServer implements GameApi {
     return { weekKey: this.bossWeek.weekKey, tieBreakPolicy: "earliest-achieved-at", entries: entries.slice(0, Math.max(0, limit)) };
   }
 
+  /** 정상 종료와 포기를 같은 트랜잭션으로 처리하며 런당 최초 정산만 지갑에 반영한다. */
+  async settleExpeditionRun(request: SettleExpeditionRunRequest): Promise<SettleExpeditionRunResponse> {
+    await this.delay();
+    const cached = this.expeditionSettlementResults.get(request.settlementId);
+    if (cached) return structuredClone(cached);
+    const run = this.state.expedition.run;
+    if (!request.settlementId || !run || run.runId !== request.runId) throw new GameApiError("EXPEDITION_RUN_NOT_FOUND", "정산할 원정 런이 없습니다.");
+    if (run.settled || run.settlementId) throw new GameApiError("EXPEDITION_ALREADY_SETTLED", "이미 정산한 원정 런입니다.");
+    const wallet = { ...this.state.wallet }; const granted: Record<string, number> = {};
+    // 임시 보상은 계정 지갑 상한까지의 정수만 이전하고 초과분은 지급하지 않는다.
+    for (const [currency, raw] of Object.entries(run.pendingRewards)) {
+      if (!(currency in WALLET_CAPS)) continue;
+      const key = currency as keyof Session["wallet"]; const amount = Math.max(0, Math.floor(raw));
+      const applied = Math.min(amount, WALLET_CAPS[key] - wallet[key]); wallet[key] += applied; granted[currency] = applied;
+    }
+    const settledRun = { ...structuredClone(run), pendingRewards: {}, settled: true, settlementId: request.settlementId };
+    const expedition = { ...this.state.expedition, playsThisWeek: this.state.expedition.playsThisWeek + 1, bestScore: request.outcome === "completed" ? Math.max(this.state.expedition.bestScore, run.bestScore) : this.state.expedition.bestScore, run: settledRun };
+    this.persist({ ...this.state, wallet, expedition }); this.state.wallet = wallet; this.state.expedition = expedition;
+    const response = { ...this.snapshot(), runId: run.runId, settlementId: request.settlementId, outcome: request.outcome, granted };
+    this.expeditionSettlementResults.set(request.settlementId, response); return structuredClone(response);
+  }
+
   /** Fake 운영 서버도 번들의 표시 fallback 없이 인증된 설정 DTO를 명시적으로 제공한다. */
   async getAdOperationsConfig(): Promise<AdOperationsConfigResponse> {
     await this.delay(); const now = this.now();
-    return { configVersion: "fake-2026-08-24", serverTime: now.toISOString(), expiresAt: new Date(now.getTime() + 300_000).toISOString(), slots: AD_REWARD_SLOTS.map((slot) => ({ slotId: slot.id, enabled: true, dailyLimitUtc: slot.dailyLimitUtc, displayText: slot.displayText, reward: slot.reward })) };
+    this.normalizeBossWeek(now); const quickScore = this.bossWeek.bestScore || this.previousBossBest;
+    return { configVersion: "fake-2026-08-25", serverTime: now.toISOString(), expiresAt: new Date(now.getTime() + 300_000).toISOString(), slots: AD_REWARD_SLOTS.map((slot) => ({ slotId: slot.id, enabled: slot.placement !== "quick_expedition" || quickScore > 0, dailyLimitUtc: slot.dailyLimitUtc, displayText: slot.displayText, reward: slot.reward })) };
   }
 
   /** 세 저장 소유자를 읽기 전용 DTO로만 합성한다. */
@@ -213,6 +240,11 @@ export class FakeServer implements GameApi {
     const current = this.state.dailyAdRewards.date === date ? this.state.dailyAdRewards : { date, claimsBySlot: {}, requestIds: [] };
     const dailyClaims = current.claimsBySlot[slot.id] ?? 0;
     if (dailyClaims >= slot.dailyLimitUtc) throw new GameApiError("AD_DAILY_LIMIT", "오늘 받을 수 있는 광고 보상을 모두 받았습니다.");
+    if (slot.reward.kind === "quick_expedition") {
+      const weekKey = expeditionWeekKey(now); if (this.quickWeek.weekKey !== weekKey) this.quickWeek = { weekKey, claims: 0 };
+      if (this.quickWeek.claims >= QUICK_EXPEDITION_POLICY.weeklyLimitUtc) throw new GameApiError("AD_WEEKLY_LIMIT", "이번 주 빠른 원정 횟수를 모두 사용했습니다.");
+      if (!(this.bossWeek.bestScore || this.previousBossBest)) throw new GameApiError("EXPEDITION_SCORE_REQUIRED", "빠른 원정의 기준 점수가 없습니다.");
+    }
 
     const nextClaims = dailyClaims + 1;
     const nextAds = { date, claimsBySlot: { ...current.claimsBySlot, [slot.id]: nextClaims }, requestIds: [...current.requestIds, request.requestId] };
@@ -221,6 +253,7 @@ export class FakeServer implements GameApi {
     // 상한 검증과 영속화가 성공하기 전에는 메모리 세션을 변경하지 않는다.
     this.persist(nextState);
     this.state.wallet = applied.wallet; this.state.idleExcavation = applied.excavation; this.state.dailyAdRewards = nextAds;
+    if (slot.reward.kind === "quick_expedition") this.quickWeek.claims += 1;
     return { ...this.snapshot(), slotId: slot.id, reward: slot.reward, dailyClaims: nextClaims, dailyRemaining: slot.dailyLimitUtc - nextClaims, excavation: this.cloneExcavation(applied.excavation), serverTime: now.toISOString() };
   }
 
@@ -742,6 +775,12 @@ export class FakeServer implements GameApi {
       wallet[reward.currency] += reward.amount;
       return { wallet, excavation };
     }
+    if (reward.kind === "quick_expedition") {
+      // 기준 점수와 비율은 모두 서버 소유이며 클라이언트 요청에는 어느 값도 없다.
+      const referenceScore = this.bossWeek.bestScore || this.previousBossBest;
+      wallet.gold = Math.min(WALLET_CAPS.gold, wallet.gold + Math.floor(referenceScore * reward.scoreRatio));
+      return { wallet, excavation };
+    }
     // 효과 적용 직전까지를 먼저 정산해야 새 배율이 과거 생산에 소급되지 않는다.
     excavation = settleIdleExcavation(excavation, now, RELICS, this.state.relicProgress);
     const effect = reward.effect;
@@ -804,7 +843,7 @@ export class FakeServer implements GameApi {
   /** 주차가 달라지면 점수·누적·수령 단계를 함께 버려 지난주 보상이 새 주에 새지 않게 한다. */
   private normalizeBossWeek(now: Date): void {
     const weekKey = expeditionWeekKey(now);
-    if (this.bossWeek.weekKey !== weekKey) this.bossWeek = { weekKey, bestScore: 0, cumulativeScore: 0, achievedAt: "", claimedStageIds: [] };
+    if (this.bossWeek.weekKey !== weekKey) { this.previousBossBest = this.bossWeek.bestScore; this.bossWeek = { weekKey, bestScore: 0, cumulativeScore: 0, achievedAt: "", claimedStageIds: [] }; }
   }
 
   /** 공유 세션일 때만 브라우저 저장을 수행해 단위 테스트의 독립 세션에는 부작용을 만들지 않는다. */

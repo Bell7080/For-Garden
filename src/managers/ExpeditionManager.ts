@@ -56,7 +56,7 @@ export class ExpeditionManager {
     const weekKey = expeditionWeekKey(this.serverNow());
     const mapSeed = `${weekKey}:${this.state.expedition.playsThisWeek + 1}`;
     const map = generateExpeditionMap({ seed: mapSeed, random: seededRandom(mapSeed) });
-    const run: ExpeditionRunState = { weekKey, mapSeed, nodes: map.nodes, currentNodeId: null, visitedNodeIds: [], relics: relicIds.map((relicId) => ({ relicId, currentHp: 100, alive: true })) as ExpeditionRunState["relics"], selectedAugmentIds: [], selectedAugments: [], pendingAugmentReward: null, pendingRewards: {}, bossDamage: 0, bestScore: 0, settled: false };
+    const run: ExpeditionRunState = { runId: `run:${mapSeed}`, weekKey, mapSeed, nodes: map.nodes, currentNodeId: null, visitedNodeIds: [], relics: relicIds.map((relicId) => ({ relicId, currentHp: 100, alive: true })) as ExpeditionRunState["relics"], selectedAugmentIds: [], selectedAugments: [], pendingAugmentReward: null, pendingRewards: {}, bossDamage: 0, bestScore: 0, settled: false, settlementId: null };
     this.commit({ ...this.state.expedition, run });
     return { ok: true, run: structuredClone(run) };
   }
@@ -75,7 +75,7 @@ export class ExpeditionManager {
     for (const [id, amount] of Object.entries(update.rewards ?? {})) next.pendingRewards[id] = (next.pendingRewards[id] ?? 0) + amount;
     next.bossDamage += update.bossDamage ?? 0; next.bestScore = Math.max(next.bestScore, update.score ?? 0);
     // 마지막 생존자가 쓰러지면 해당 전투 결과와 함께 런도 즉시 종료 상태로 확정한다.
-    if (next.relics.every(({ alive }) => !alive)) next.settled = true;
+    // 전멸도 정산 API 호출 전에는 보상 이전이 끝난 상태가 아니므로 런을 열어 둔다.
     this.commit({ ...this.state.expedition, run: next }); return true;
   }
 
@@ -132,11 +132,8 @@ export class ExpeditionManager {
     return true;
   }
 
-  /** 포기는 미정산 보상을 버리고 런을 닫는다. */
-  abandon(): boolean { if (!this.state.expedition.run) return false; this.commit({ ...this.state.expedition, playsThisWeek: this.state.expedition.playsThisWeek + 1, run: null }); return true; }
-
-  /** 최종 점수와 정산 플래그를 한 번만 확정한 뒤 주간 기록을 갱신한다. */
-  settle(): boolean { const run = this.state.expedition.run; if (!run || run.settled) return false; const settled = { ...run, settled: true }; this.commit({ ...this.state.expedition, playsThisWeek: this.state.expedition.playsThisWeek + 1, bestScore: Math.max(this.state.expedition.bestScore, run.bestScore), run: settled }); return true; }
+  // 종료와 포기는 로컬 쓰기 메서드를 두지 않는다. 호출자는 GameApi.settleExpeditionRun만 사용해
+  // 임시 보상 이전과 완료 표식이 서로 갈라지는 부분 저장을 만들 수 없게 한다.
 
   private commit(expedition: Session["expedition"]): void { this.state.expedition = expedition; this.saves.save(this.state); }
   private normalizeWeek(): void { const weekKey = expeditionWeekKey(this.serverNow()); if (this.state.expedition.weekKey !== weekKey) this.commit({ ...this.state.expedition, weekKey, playsThisWeek: 0, bestScore: 0 }); }

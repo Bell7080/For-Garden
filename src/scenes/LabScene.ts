@@ -86,7 +86,10 @@ export class LabScene extends Phaser.Scene {
     this.add.rectangle(cx, BANNER_FLOOR, BASE_WIDTH, 3, COLOR.panelEdge).setDepth(-28);
 
     // 모집 화면은 "무엇으로 뽑을 수 있나"를 묻는다. 상단 줄도 다이아·화석·호박석으로 바꾼다.
-    this.topBar = new TopBar(this, 40, { currencies: "recruit" });
+    this.topBar = new TopBar(this, 40, {
+      currencies: "recruit",
+      onSettings: () => this.scene.start("settings", { returnScene: "lab" }),
+    });
     this.addMileageButton(BASE_WIDTH - 246, 178);
 
     this.bannerName = this.add.text(cx, 170, "", textStyle({ role: "display", size: 44 })).setOrigin(0.5, 0);

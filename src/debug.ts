@@ -63,6 +63,8 @@ export interface DebugState {
   owned?: string[];
   /** 캔버스 내부 편성 UI의 위치/표시 상태를 모바일 E2E가 읽는 최소 정보다. */
   party?: { autoButton: { x: number; y: number }; visibleAffinityDirections: number };
+  /** 설정 왕복 E2E가 상점의 사용자 표시 섹션까지 복원됐는지 확인하는 최소 상태다. */
+  shopSection?: "premium";
 }
 
 declare global {
@@ -94,6 +96,11 @@ export function setDebugBattle(battle: DebugBattle | undefined): void {
 /** 편성 UI의 실제 렌더 상태만 복사해 노출하고 게임 규칙 입력에는 사용하지 않는다. */
 export function setDebugParty(party: DebugState["party"]): void {
   ensure().party = party;
+}
+
+/** 상점의 현재 표시 섹션만 공개하며 상품이나 결제 상태는 포함하지 않는다. */
+export function setDebugShopSection(section: DebugState["shopSection"]): void {
+  ensure().shopSection = section;
 }
 
 export function setDebugInfoOpen(open: boolean): void {

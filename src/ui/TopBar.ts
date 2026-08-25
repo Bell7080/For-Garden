@@ -85,16 +85,16 @@ export class TopBar {
       this.slots.push({ slot, text: this.buildSlot(scene, first + index * (SLOT.width + SLOT.gap), y + 46, slot) });
     });
 
-    // 설정 — 오른쪽 끝. 재화보다 뒤에 두어 손이 먼저 닿지 않게 한다.
+    // 설정 — 오른쪽 끝. 콜백이 없는 장면에서는 장식만 남기고 보이지 않는 입력면을 만들지
+    // 않는다. 눌러도 반응 없는 아이콘을 인터랙티브 컨트롤처럼 노출하지 않기 위해서다.
     const settings = scene.add.container(BASE_WIDTH - 58, y + 46);
     settings.add(drawGlyph(scene, "settings", 0, 0, 42, 0xc9ccd2));
-    const hit = scene.add.rectangle(BASE_WIDTH - 58, y + 46, 84, 84, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    hit.on("pointerdown", () => settings.setScale(1.12));
-    hit.on("pointerout", () => settings.setScale(1));
-    hit.on("pointerup", () => {
-      settings.setScale(1);
-      options.onSettings?.();
-    });
+    if (options.onSettings) {
+      const hit = scene.add.rectangle(BASE_WIDTH - 58, y + 46, 84, 84, 0xffffff, 0).setInteractive({ useHandCursor: true });
+      hit.on("pointerdown", () => settings.setScale(1.12));
+      hit.on("pointerout", () => settings.setScale(1));
+      hit.on("pointerup", () => { settings.setScale(1); options.onSettings?.(); });
+    } else settings.setAlpha(0.38);
 
     this.refresh();
   }

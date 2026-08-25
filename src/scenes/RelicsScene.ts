@@ -54,7 +54,11 @@ export class RelicsScene extends Phaser.Scene {
     this.add.rectangle(cx, 960, BASE_WIDTH, 1920, COLOR.void, 0.48).setDepth(-29);
     // 도감에서 재화를 쓰는 곳은 정보창뿐이고, 거기서 급여 버튼이 치즈케이크 수를 직접 말한다.
     // 목록을 훑는 화면이라 상단 줄에는 설정만 남긴다. 프로필도 재화도 여기서는 볼 일이 없다.
-    this.topBar = new TopBar(this, 40, { currencies: "none", profile: false });
+    this.topBar = new TopBar(this, 40, {
+      currencies: "none", profile: false,
+      // 설정을 닫으면 목록의 현재 정렬 상태를 가진 이 씬 인스턴스로 돌아온다.
+      onSettings: () => this.scene.start("settings", { returnScene: "relics" }),
+    });
 
     const ownedCount = relicCollection.owned.length;
     this.add

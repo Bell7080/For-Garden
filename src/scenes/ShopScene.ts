@@ -2,27 +2,40 @@ import Phaser from "phaser";
 import { gameApi } from "../api/FakeServer";
 import type { ProductDto } from "../api/contracts";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
-import { setDebugScene } from "../debug";
+import { setDebugScene, setDebugShopSection } from "../debug";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { BottomNav, NAV_TOP } from "../ui/BottomNav";
 import { chipPoints, drawLayer, drawVignette, HOLO } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
 import { TopBar } from "../ui/TopBar";
+import type { ShopSection } from "./settingsNavigation";
 
 /** 유료 카탈로그만 전시하는 상점. 인게임 무역은 로비 팝업이 소유한다. */
 export class ShopScene extends Phaser.Scene {
   private content?: Phaser.GameObjects.Container;
   private pending = false;
+  /** 설정 왕복 시 복원할 상점 섹션. 현재는 유료 쇼케이스 하나지만 반환 계약은 확장 가능하게 둔다. */
+  private activeSection: ShopSection = "premium";
 
   constructor() { super("shop"); }
 
+  init(data: { section?: ShopSection }): void {
+    // 다른 씬이나 개발 콘솔이 넘긴 값은 상점이 실제 지원하는 섹션으로 안전하게 제한한다.
+    this.activeSection = data?.section === "premium" ? data.section : "premium";
+  }
+
   create(): void {
     setDebugScene("shop");
+    setDebugShopSection(this.activeSection);
     // 유료 상품만 남았으므로 항상 흰 쇼케이스 배경을 사용한다.
     addSceneBackground(this, BACKGROUND.premiumShop);
     drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { depth: -20, strength: 0.72 });
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.5).setDepth(-19);
-    new TopBar(this);
+    new TopBar(this, 40, {
+      onSettings: () => this.scene.start("settings", {
+        returnScene: "shop", returnData: { section: this.activeSection },
+      }),
+    });
     this.add.text(60, 185, "상  점", textStyle({ role: "display", size: 52 })).setOrigin(0, 0);
     // 상점은 더 이상 연구소의 보조 버튼이 아니므로 모든 핵심 화면과 같은 하단 슬롯을 유지한다.
     new BottomNav(this, "shop");

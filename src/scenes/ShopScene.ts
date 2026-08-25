@@ -9,37 +9,21 @@ import { chipPoints, drawLayer, drawVignette, HOLO } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
 import { TopBar } from "../ui/TopBar";
 
-/** 로비 무역과 연구소 BM 전시가 공유하는 진입 데이터다. */
-export interface ShopSceneData { section?: "trade" | "premium"; }
-
-/** 정적 카탈로그를 보여 주는 공용 상점. 유료 탭은 영수증 검증 전까지 읽기 전용이다. */
+/** 유료 카탈로그만 전시하는 상점. 인게임 무역은 로비 팝업이 소유한다. */
 export class ShopScene extends Phaser.Scene {
-  private section: "trade" | "premium" = "trade";
   private content?: Phaser.GameObjects.Container;
   private pending = false;
 
   constructor() { super("shop"); }
 
-  init(data: ShopSceneData): void { this.section = data.section ?? "trade"; }
-
   create(): void {
     setDebugScene("shop");
-    // 유료 상점은 흰 쇼케이스, 인게임 교환소는 연구소 설비 앞이다. 두 탭은 같은 화면이지만
-    // 파는 것이 다르므로 서 있는 자리도 다르다.
-    addSceneBackground(this, this.section === "premium" ? BACKGROUND.premiumShop : BACKGROUND.lab);
+    // 유료 상품만 남았으므로 항상 흰 쇼케이스 배경을 사용한다.
+    addSceneBackground(this, BACKGROUND.premiumShop);
     drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { depth: -20, strength: 0.72 });
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.5).setDepth(-19);
     new TopBar(this);
-    this.add.text(60, 185, this.section === "trade" ? "무  역" : "상  점", textStyle({ role: "display", size: 52 })).setOrigin(0, 0);
-    // 제목과 탭이 화면의 용도를 이미 말하므로 구현 의도를 풀이하는 부제는 플레이어에게 노출하지 않는다.
-    // 별도 화면을 복제하지 않고 확대·강조색만으로 현재 카탈로그 탭을 구분한다.
-    ([{ section: "trade", label: "교환" }, { section: "premium", label: "후원" }] as const).forEach(({ section, label }, index) => {
-      const selected = this.section === section;
-      const tab = this.add.text(780 + index * 120, 225, label, textStyle({ role: "emphasis", size: 27, color: selected ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5).setScale(selected ? 1.12 : 1).setInteractive({ useHandCursor: true });
-      tab.on("pointerdown", () => tab.setScale(1.16));
-      tab.on("pointerout", () => tab.setScale(selected ? 1.12 : 1));
-      tab.on("pointerup", () => { if (!selected) this.scene.restart({ section }); });
-    });
+    this.add.text(60, 185, "상  점", textStyle({ role: "display", size: 52 })).setOrigin(0, 0);
     // 상점은 더 이상 연구소의 보조 버튼이 아니므로 모든 핵심 화면과 같은 하단 슬롯을 유지한다.
     new BottomNav(this, "shop");
     void this.refresh();
@@ -50,7 +34,8 @@ export class ShopScene extends Phaser.Scene {
     const response = await gameApi.getProducts();
     this.content?.destroy(true);
     this.content = this.add.container(0, 0);
-    response.products.filter((product) => product.section === this.section).forEach((product, index) => this.addProduct(product, index));
+    // ProductDto의 storefront가 화면 경계를 명시하므로 유료 행만 이 씬에 들어온다.
+    response.products.filter((product) => product.storefront === "premium").forEach((product, index) => this.addProduct(product, index));
   }
 
   /** 플랫 반투명 면, 윗변 강조선, 확대 선택 상태를 기존 홀로그램 규칙 그대로 쓴다. */

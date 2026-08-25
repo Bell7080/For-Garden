@@ -26,6 +26,8 @@ import { PortraitCard } from "../ui/PortraitCard";
 import { firstMeetingLine } from "../data/relicFirstMeetings";
 import { audioManager, type AudioScope } from "../managers/AudioManager";
 import { relicProgression } from "../managers/RelicProgressionManager";
+import { PopupLayer } from "../ui/PopupLayer";
+import { MileagePopup } from "../ui/MileagePopup";
 
 /** 마일리지 상점 버튼의 황금빛. 다른 버튼과 갈라 놓아 "쌓아 두었다 쓰는 곳"임을 알린다. */
 const MILEAGE_EDGE = 0xf2c744;
@@ -59,6 +61,9 @@ export class LabScene extends Phaser.Scene {
   private finishStage?: () => void;
   /** 씬 종료 뒤 비동기 연출의 늦은 효과음 요청이 재생되지 않게 하는 오디오 수명 범위다. */
   private audioScope?: AudioScope;
+  /** 마일리지 교환은 유료 상점 씬과 분리된 연구소 로컬 레이어에만 열린다. */
+  private popupLayer?: PopupLayer;
+  private mileagePopup?: MileagePopup;
 
   constructor() {
     super("lab");
@@ -72,6 +77,7 @@ export class LabScene extends Phaser.Scene {
     setDebugScene("lab");
     this.bannerIndex = 0;
     this.audioScope = audioManager?.createScope();
+    this.popupLayer = new PopupLayer(this, 2400);
 
     const cx = BASE_WIDTH / 2;
     // 배경 5번의 연구 설비 원화를 쓰고, 얇은 암막으로 기존 청록색 UI 대비를 유지한다.
@@ -140,6 +146,7 @@ export class LabScene extends Phaser.Scene {
       this.presentationLayer = undefined;
       this.audioScope?.release();
       this.audioScope = undefined;
+      this.popupLayer?.closeAll(); this.popupLayer = undefined; this.mileagePopup = undefined;
     });
     void this.showcaseRelic();
     this.refresh();
@@ -168,7 +175,10 @@ export class LabScene extends Phaser.Scene {
     hit.on("pointerout", () => container.setScale(1));
     hit.on("pointerup", () => {
       container.setScale(1);
-      this.scene.start("shop", { section: "trade" });
+      // 임시 마일리지 목록은 연구소 탭 위에 머물며 유료 상점 씬으로 이동하지 않는다.
+      if (!this.popupLayer) return;
+      this.mileagePopup ??= new MileagePopup(this, this.popupLayer, () => { this.mileagePopup = undefined; });
+      this.mileagePopup.open();
     });
   }
 

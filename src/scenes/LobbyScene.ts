@@ -20,6 +20,7 @@ import { PopupLayer } from "../ui/PopupLayer";
 import { IdleExcavationPopup } from "../ui/IdleExcavationPopup";
 import { BACK_SLOT, IconButton } from "../ui/IconButton";
 import { UI_ICON } from "../ui/icons";
+import { TradePopup } from "../ui/TradePopup";
 
 /** 확대된 애착 렐릭의 골반 아래가 내비게이션 뒤로 자연스럽게 이어지는 기준선. */
 const STAGE_FLOOR = 1660;
@@ -52,6 +53,9 @@ export class LobbyScene extends Phaser.Scene {
   private idleExcavationPopup?: IdleExcavationPopup;
   /** 발굴은 화면 크기의 작업판이므로 팝업 X 대신 로비 좌하단의 공용 아이콘 양식을 쓴다. */
   private excavationBackButton?: IconButton;
+  /** 무역도 발굴과 같은 공유 레이어와 외부 뒤로가기 슬롯을 사용한다. */
+  private tradePopup?: TradePopup;
+  private tradeBackButton?: IconButton;
 
   constructor() {
     super("lobby");
@@ -151,6 +155,18 @@ export class LobbyScene extends Phaser.Scene {
     }
   }
 
+  /** 연타로 중복 레이어를 만들지 않고 로비 위에 무역 카탈로그 한 장만 연다. */
+  private openTrade(): void {
+    if (!this.popupLayer) return;
+    this.tradePopup ??= new TradePopup(this, this.popupLayer, gameApi, () => {
+      this.tradePopup = undefined;
+      // 팝업이 어떤 경로로 닫혀도 외부 입력면을 남기지 않는다.
+      this.tradeBackButton?.destroy(); this.tradeBackButton = undefined;
+    });
+    this.tradePopup.open();
+    if (!this.tradeBackButton) this.tradeBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: () => this.tradePopup?.close() }).setDepth(2100);
+  }
+
   /** 저장된 UTC 일일 입장 횟수를 로비 원정 버튼의 짧은 상태 문구로 바꾼다. */
   private expeditionStatus(): string {
     const remaining = Math.max(0, DAILY_RESTORATION.maxEntriesPerUtcDay - session.dailyContent.restorationEntries);
@@ -185,7 +201,7 @@ export class LobbyScene extends Phaser.Scene {
     const x = BASE_WIDTH - 106;
     const rail = [
       // 로비의 옛 상점은 현금 상품과 분리된 인게임 재화 전용 "무역"으로 개편한다.
-      { icon: "shop", label: "무역", onClick: () => this.scene.start("shop", { section: "trade" }) },
+      { icon: "shop", label: "무역", onClick: () => this.openTrade() },
       { icon: "mail", label: "우편" },
       // 친구는 더 이상 준비 중 토스트가 아니라 목록과 공개 프로필 화면으로 연결된다.
       { icon: "friends", label: "친구", onClick: () => this.scene.start("friends") },

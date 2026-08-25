@@ -1,5 +1,7 @@
 import Phaser from "phaser";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
+import { HOLO } from "./holo";
+import { COLOR } from "./theme";
 
 /** 화면 용도별 배경 키. 파일 번호와 실제 사용처의 대응을 한 곳에서 관리한다. */
 export const BACKGROUND = {
@@ -63,17 +65,17 @@ export interface PopupBackgroundImage {
 }
 
 /**
- * 공용 배경 키를 팝업의 제한된 히어로 영역에 cover 배치한다.
- * 전체 화면 연출을 복제하지 않고 같은 비율 계산을 쓰되, 외곽 액자 대신 직사각 마스크와
- * 아래로 짙어지는 어두운 페이드만 더해 뒤의 정보가 자연스럽게 이어지게 한다.
+ * 공용 배경 키를 팝업 내부에 cover 배치한다.
+ * 원화를 별도 판처럼 자르지 않고 한 장으로 이으며, 상단은 옅고 하단은 짙은 청흑색 막과
+ * 가장자리 비네트만 더해 히어로와 조작면의 대비를 동시에 확보한다.
  */
 export function addPopupBackgroundImage(
   scene: Phaser.Scene,
   parent: Phaser.GameObjects.Container,
   texture: string,
-  bounds: { x: number; y: number; width: number; height: number },
+  bounds: { x: number; y: number; width: number; height: number; maskShape?: readonly number[] },
 ): PopupBackgroundImage {
-  // 원화는 슬롯 뒤 한 겹에만 놓고 원본 비율을 유지한 채 히어로 영역을 빈틈없이 채운다.
+  // 원화는 원본 비율을 유지한 채 지정된 팝업 내부를 빈틈없이 채운다.
   const image = scene.add.image(bounds.x, bounds.y, texture);
   image.setScale(Math.max(bounds.width / image.width, bounds.height / image.height));
   parent.add(image);
@@ -85,16 +87,36 @@ export function addPopupBackgroundImage(
   const syncMask = (): void => {
     if (!parent.active || !maskGraphics.active) return;
     const matrix = parent.getWorldTransformMatrix();
-    const topLeft = matrix.transformPoint(bounds.x - bounds.width / 2, bounds.y - bounds.height / 2);
-    maskGraphics.clear().fillStyle(0xffffff, 1).fillRect(topLeft.x, topLeft.y, bounds.width * matrix.scaleX, bounds.height * matrix.scaleY);
+    maskGraphics.clear().fillStyle(0xffffff, 1);
+    if (bounds.maskShape) {
+      // 팝업 실루엣을 받으면 원화를 별도 직사각 판으로 보이게 하는 모서리 돌출까지 잘라 낸다.
+      const points: Phaser.Geom.Point[] = [];
+      for (let index = 0; index < bounds.maskShape.length; index += 2) {
+        const point = matrix.transformPoint(bounds.x + bounds.maskShape[index], bounds.y + bounds.maskShape[index + 1]);
+        points.push(new Phaser.Geom.Point(point.x, point.y));
+      }
+      maskGraphics.fillPoints(points, true);
+    } else {
+      const topLeft = matrix.transformPoint(bounds.x - bounds.width / 2, bounds.y - bounds.height / 2);
+      maskGraphics.fillRect(topLeft.x, topLeft.y, bounds.width * matrix.scaleX, bounds.height * matrix.scaleY);
+    }
   };
   scene.events.on(Phaser.Scenes.Events.PRE_RENDER, syncMask);
   syncMask();
 
-  // 하단의 어두운 페이드는 원화를 검은 판으로 끊지 않고 정보 영역의 유리면으로 녹여 보낸다.
+  // HOLO 유리 토큰을 기준으로 상단 히어로는 밝게 남기고 하단 조작부만 더 눌러 한 장으로 잇는다.
   const fade = scene.add.graphics();
-  fade.fillGradientStyle(0x080b10, 0x080b10, 0x080b10, 0x080b10, 0.04, 0.04, 0.94, 0.94);
+  fade.fillGradientStyle(COLOR.void, COLOR.void, COLOR.void, COLOR.void, HOLO.glassLight * 0.34, HOLO.glassLight * 0.34, HOLO.glass, HOLO.glass);
   fade.fillRect(bounds.x - bounds.width / 2, bounds.y - bounds.height / 2, bounds.width, bounds.height);
+  // 사각 띠를 겹쳐 중앙으로 갈수록 옅게 만들어 새 색을 만들지 않고 청흑색 비네트를 표현한다.
+  const vignetteBands = 9;
+  for (let band = 0; band < vignetteBands; band += 1) {
+    const inset = band * 12;
+    fade.lineStyle(24, COLOR.void, (HOLO.glassLight * (vignetteBands - band)) / vignetteBands / 2);
+    fade.strokeRect(bounds.x - bounds.width / 2 + inset, bounds.y - bounds.height / 2 + inset, bounds.width - inset * 2, bounds.height - inset * 2);
+  }
+  // 오버레이도 원화와 같은 마스크를 공유해 팝업 모서리 밖에 청흑색 사각형이 남지 않게 한다.
+  fade.setMask(mask);
   parent.add(fade);
 
   return {
@@ -103,6 +125,7 @@ export function addPopupBackgroundImage(
       // 마스크는 표시 객체의 자식이 아니므로 이벤트, Mask, Graphics, 이미지 순으로 명시 정리한다.
       scene.events.off(Phaser.Scenes.Events.PRE_RENDER, syncMask);
       if (image.active) image.clearMask(false);
+      if (fade.active) fade.clearMask(false);
       mask.destroy();
       if (maskGraphics.active) maskGraphics.destroy();
       if (fade.active) fade.destroy();

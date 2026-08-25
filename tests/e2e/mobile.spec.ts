@@ -3,9 +3,10 @@ import { startAfterOpening } from "./openingSave";
 
 const BASE_WIDTH = 1080;
 const BASE_HEIGHT = 1920;
-/** 900×1320 발굴 판의 중심에서 PopupLayer 공용 닫기 버튼까지의 오프셋이다. */
-const PANEL_CLOSE_X = 410;
-const PANEL_CLOSE_Y = 620;
+/** PopupLayer 공식(width / 2 - 40, -height / 2 + 40)로 발굴 판의 닫기 좌표를 계산한다. */
+const EXCAVATION_PANEL = { width: 900, height: 1320 } as const;
+const PANEL_CLOSE_X = EXCAVATION_PANEL.width / 2 - 40;
+const PANEL_CLOSE_Y = EXCAVATION_PANEL.height / 2 - 40;
 
 /** 기준 게임 좌표를 FIT 스케일이 적용된 모바일 캔버스 좌표로 바꿔 누른다. */
 async function tapGame(page: import("@playwright/test").Page, x: number, y: number): Promise<void> {
@@ -76,6 +77,7 @@ test("방치 발굴 팝업은 좁은 로비 위 한 장으로 열리고 뒤 입�
   await tapGame(page, 250, BASE_HEIGHT - 445);
   await tapGame(page, 250, BASE_HEIGHT - 445);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationPopup)).toBe("ready");
+  // 디버그 계약은 화면의 "발굴 진행 중" 문구가 아니라 기존 자동화용 상태명 ready를 계속 쓴다.
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   await page.screenshot({ path: `test-results/${test.info().project.name}-idle-excavation-popup.png` });
 

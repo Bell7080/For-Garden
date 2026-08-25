@@ -28,6 +28,8 @@ export interface PopupOptions {
   dimAlpha?: number;
   /** 공용 26px보다 더 강한 결과 제목처럼, 제목의 시각적 위계가 달라야 할 때만 지정한다. */
   titleSize?: number;
+  /** 화면 자체의 뒤로가기 조작을 쓰는 큰 패널은 팝업 모서리의 중복 X를 숨긴다. */
+  hideCloseButton?: boolean;
   /**
    * 누른 자리. 주면 그 위(자리가 없으면 아래)에 붙는다.
    * 화면 밖으로 나가지 않도록 가장자리에서 안쪽으로 밀어 넣는다.
@@ -106,18 +108,20 @@ export class PopupLayer {
       // 머리글은 판 안이 아니라 **윗변에 걸터앉는다.** 정보창의 칸 제목(유대·능력치·룬)과
       // 같은 표를 써서, 어느 화면에서나 제목이 같은 무게와 같은 모양으로 읽히게 한다.
       addSectionTitle(this.scene, -width / 2 + unit * 0.1, -height / 2, options.title, { size: options.titleSize ?? 26, parent: body });
-      // 닫기는 오른쪽 위 구석. 어느 팝업에서나 같은 자리에 둔다.
-      const closeButton = this.scene.add.container(width / 2 - 40, -height / 2 + 40);
-      const mark = this.scene.add.graphics();
-      mark.lineStyle(HOLO.lineWidth + 1, 0xc9ccd2, 0.9);
-      mark.lineBetween(-13, -13, 13, 13);
-      mark.lineBetween(13, -13, -13, 13);
-      closeButton.add(mark);
-      const hit = this.scene.add.rectangle(width / 2 - 40, -height / 2 + 40, 84, 84, 0xffffff, 0).setInteractive({ useHandCursor: true });
-      hit.on("pointerdown", () => closeButton.setScale(1.15));
-      hit.on("pointerout", () => closeButton.setScale(1));
-      hit.on("pointerup", () => close());
-      body.add([closeButton, hit]);
+      // 닫기는 기본적으로 오른쪽 위에 두되, 화면 chrome이 닫기를 맡으면 중복 조작을 만들지 않는다.
+      if (!options.hideCloseButton) {
+        const closeButton = this.scene.add.container(width / 2 - 40, -height / 2 + 40);
+        const mark = this.scene.add.graphics();
+        mark.lineStyle(HOLO.lineWidth + 1, 0xc9ccd2, 0.9);
+        mark.lineBetween(-13, -13, 13, 13);
+        mark.lineBetween(13, -13, -13, 13);
+        closeButton.add(mark);
+        const hit = this.scene.add.rectangle(width / 2 - 40, -height / 2 + 40, 84, 84, 0xffffff, 0).setInteractive({ useHandCursor: true });
+        hit.on("pointerdown", () => closeButton.setScale(1.15));
+        hit.on("pointerout", () => closeButton.setScale(1));
+        hit.on("pointerup", () => close());
+        body.add([closeButton, hit]);
+      }
     }
     if (options.closeOnBackdrop !== false) backdrop.on("pointerup", () => close());
 

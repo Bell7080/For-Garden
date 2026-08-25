@@ -35,6 +35,12 @@ export interface DebugState {
   infoOpen?: boolean;
   /** 로비 위 발굴 쪽지의 상태. 씬 전환 없이 열리고 입력을 막는 계약을 E2E가 확인한다. */
   idleExcavationPopup?: "loading" | "ready" | "error" | "editing" | "saving" | "save-error";
+  /** 슬롯별 공용 입력면의 중심과 크기. 좁은 화면의 입력 겹침만 검사하며 편성 데이터는 담지 않는다. */
+  idleExcavationSlots?: Array<{ index: number; x: number; y: number; width: number; height: number }>;
+  /** 편집 진입 시 선택된 슬롯 번호. Canvas 입력 회귀 검증용이며 렐릭 ID는 노출하지 않는다. */
+  idleExcavationSelectedSlot?: number;
+  /** 실제 표시 검증을 통과한 SD 슬롯 번호만 기록해 비동기 완료 뒤 입력 E2E를 시작한다. */
+  idleExcavationSdReady?: number[];
   /** Canvas 안 광고 버튼의 실제 라벨·사용량·활성 상태만 E2E가 읽는 표시 계약이다. */
   excavationAdOffers?: Array<{ slotId: string; label: string; usage: string; enabled: boolean }>;
   /** 지급 확정 뒤 공용 획득 팝업이 입력을 기다리는지 E2E가 확인하는 사용자 가시 상태다. */
@@ -84,6 +90,18 @@ export function setDebugInfoOpen(open: boolean): void {
 /** Canvas 내부 팝업의 사용자 가시 상태만 노출하며 게임 진행값에는 사용하지 않는다. */
 export function setDebugIdleExcavationPopup(state: DebugState["idleExcavationPopup"]): void {
   ensure().idleExcavationPopup = state;
+}
+
+/** Canvas 슬롯의 사용자 입력 계약만 E2E에 복사한다. */
+export function setDebugIdleExcavationSlots(slots: DebugState["idleExcavationSlots"], selectedSlot?: number): void {
+  const state = ensure(); state.idleExcavationSlots = slots; state.idleExcavationSelectedSlot = selectedSlot;
+  // 새 현황 렌더는 SD 완료 목록도 새로 시작해 이전 세대가 E2E 성공으로 오인되지 않게 한다.
+  if (!slots || selectedSlot === undefined) state.idleExcavationSdReady = undefined;
+}
+
+/** SD의 렌더 가능 검증을 통과한 슬롯만 누적한다. */
+export function setDebugIdleExcavationSdReady(index: number): void {
+  const state = ensure(); state.idleExcavationSdReady = [...new Set([...(state.idleExcavationSdReady ?? []), index])];
 }
 
 /** 광고 토큰이나 서버 원문 없이 사용자가 보는 발굴 버튼 상태만 복사한다. */

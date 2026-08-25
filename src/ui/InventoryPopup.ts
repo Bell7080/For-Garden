@@ -5,7 +5,8 @@ import { InventoryManager, inventoryScrollMetrics } from "../managers/InventoryM
 import { session } from "../state/session";
 import { drawGlyph } from "./glyphs";
 import { chipPoints, drawInnerVignette, drawLayer, drawShapeOutline } from "./holo";
-import { PopupLayer } from "./PopupLayer";
+import { addPopupBackButton } from "./IconButton";
+import { POPUP_TITLE_SIZE, PopupLayer } from "./PopupLayer";
 import { openRuneInfoPopup } from "./RunePopup";
 import { COLOR, textStyle } from "./theme";
 
@@ -26,9 +27,12 @@ export class InventoryPopup {
   /** 중복 열기를 막고 조회가 끝난 뒤 현재 탭을 그린다. */
   open(): void {
     if (this.body) return;
-    this.body = this.popups.open({ width: 900, height: 1510, title: "인벤토리", dim: true, closeOnBackdrop: false, onClose: () => { this.body = undefined; this.view = undefined; this.onClose?.(); } }, (body) => {
+    const width = 900; const height = 1510;
+    this.body = this.popups.open({ width, height, title: "가방", titleSize: POPUP_TITLE_SIZE.workboard, dim: true, closeOnBackdrop: false, hideCloseButton: true, onClose: () => { this.body = undefined; this.view = undefined; this.onClose?.(); } }, (body, close) => {
       // 공용 팝업 판과 제목은 보존하고 교체 가능한 내용 전용 컨테이너만 다시 그린다.
       const view = this.scene.add.container(0, 0); this.view = view; body.add(view);
+      // 확대된 제목과 첫 카드 사이를 비우고, 탭보다 아래인 우하단에는 공용 돌아가기를 고정한다.
+      addPopupBackButton(this.scene, body, width, height, close);
       void this.api.getInventory().then(({ items }) => { this.items = items; this.render(view); });
     });
   }
@@ -39,19 +43,21 @@ export class InventoryPopup {
   private render(body: Phaser.GameObjects.Container): void {
     body.removeAll(true);
     const visible = this.items.filter(({ category }) => category === this.category);
-    const content = this.scene.add.container(-GRID.cellWidth, -600);
+    // 첫 카드가 큰 작업판 제목의 세로 영역을 침범하지 않도록 기존 목록을 50px 내린다.
+    const content = this.scene.add.container(-GRID.cellWidth, -550);
     const maskShape = this.scene.add.rectangle(540, 960, 740, GRID.viewportHeight, 0xffffff).setVisible(false);
     content.setMask(maskShape.createGeometryMask()); body.add(content);
     visible.forEach((item, index) => this.addCard(content, item, index));
     const metrics = inventoryScrollMetrics(visible.length); let offset = 0; let dragY = 0;
-    const move = (delta: number): void => { offset = Phaser.Math.Clamp(offset + delta, metrics.minY, 0); content.y = -600 + offset; };
+    const move = (delta: number): void => { offset = Phaser.Math.Clamp(offset + delta, metrics.minY, 0); content.y = -550 + offset; };
     const hit = this.scene.add.rectangle(0, -85, 760, GRID.viewportHeight, 0xffffff, 0).setInteractive({ draggable: true, useHandCursor: true });
     hit.on("dragstart", (pointer: Phaser.Input.Pointer) => { dragY = pointer.y; });
     hit.on("drag", (pointer: Phaser.Input.Pointer) => { move(pointer.y - dragY); dragY = pointer.y; });
     hit.on("wheel", (_pointer: Phaser.Input.Pointer, _dx: number, dy: number) => move(-dy * 0.65)); body.add(hit);
     CATEGORIES.forEach((tab, index) => {
       const selected = tab.id === this.category;
-      const label = this.scene.add.text(-285 + index * 190, 650, tab.label, textStyle({ role: "emphasis", size: 27, color: selected ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5).setScale(selected ? 1.14 : 1).setInteractive({ useHandCursor: true });
+      // 탭 줄은 돌아가기 버튼의 입력면과 겹치지 않도록 하단 안전 여백 위에 둔다.
+      const label = this.scene.add.text(-285 + index * 190, 590, tab.label, textStyle({ role: "emphasis", size: 27, color: selected ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5).setScale(selected ? 1.14 : 1).setInteractive({ useHandCursor: true });
       label.on("pointerup", () => { this.category = tab.id; this.render(body); }); body.add(label);
     });
   }

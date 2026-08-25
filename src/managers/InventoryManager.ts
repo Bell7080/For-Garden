@@ -1,4 +1,5 @@
 import type { Wallet } from "../core/gacha";
+import type { InventoryItemDto } from "../api/contracts";
 import type { RuneInstance } from "../core/runes";
 import { findItem, ITEMS, type ItemCategory, type ItemDefinition, type WalletItemKey } from "../data/items";
 import type { Session } from "../state/session";
@@ -7,6 +8,11 @@ import type { Session } from "../state/session";
 export function inventoryScrollMetrics(itemCount: number): { contentHeight: number; minY: number } {
   const contentHeight = Math.ceil(itemCount / 2) * 210;
   return { contentHeight, minY: Math.min(0, 1030 - contentHeight) };
+}
+
+/** 홀수 마지막 행도 왼쪽으로 치우치지 않도록 팝업 원점 양쪽의 열 중심을 고정한다. */
+export function inventoryGridPosition(index: number): { x: number; y: number } {
+  return { x: index % 2 === 0 ? -175 : 175, y: Math.floor(index / 2) * 210 };
 }
 
 /** UI가 룬·지갑·스택의 저장 위치를 몰라도 그릴 수 있는 읽기 전용 한 칸이다. */
@@ -18,6 +24,14 @@ export type InventoryDisplayItem =
 /** 씬의 직접 상태 변경을 막고 세 저장 모델을 표시 모델로만 합성한다. */
 export class InventoryManager {
   constructor(private readonly state: Session) {}
+
+  /** API가 확정한 소비 결과만 세션에 반영해 UI가 저장 구조를 직접 조립하지 않게 한다. */
+  applyConsumableResult(wallet: Wallet, items: readonly InventoryItemDto[]): void {
+    this.state.wallet = { ...wallet };
+    this.state.itemInventory = items
+      .filter((item) => item.category === "consumable" || item.category === "material")
+      .map((item) => ({ itemId: item.definitionId, quantity: item.quantity }));
+  }
 
   /** 카테고리 전환과 테스트가 같은 순수 필터 결과를 사용한다. */
   list(category: ItemCategory): readonly InventoryDisplayItem[] {

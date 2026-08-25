@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" fill="none">
+  <!-- 배경판 없이 각진 절단면과 miter 이음만 사용해 UI 카드의 홀로그램 면을 비춘다. -->
+  <path d="M20 35H76L82 82H14L20 35Z" stroke="#D7F5FF" stroke-width="5" stroke-linejoin="miter"/>
+  <path d="M32 35V25L39 14H57L64 25V35" stroke="#7EDFFF" stroke-width="5" stroke-linejoin="miter"/>
+  <path d="M23 48H73M28 62H68" stroke="#7EDFFF" stroke-width="3" stroke-linejoin="miter"/>
+  <path d="M14 82L25 71M82 82L71 71" stroke="#D7F5FF" stroke-width="4" stroke-linejoin="miter"/>
+</svg>

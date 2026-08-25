@@ -2,9 +2,11 @@ import Phaser from "phaser";
 import { drawGlyph, type GlyphName } from "./glyphs";
 import { chipPoints, drawLayer, HOLO } from "./holo";
 import { COLOR, textStyle } from "./theme";
+import { UI_ICON, type UiIconKey } from "./icons";
 
 export interface RailButtonOptions {
-  icon: GlyphName;
+  /** 작은 선 glyph와 로딩된 전용 SVG가 동일한 카드 경로를 공유한다. */
+  icon: GlyphName | UiIconKey;
   label: string;
   size?: number;
   /** 강조 버튼은 강조색 면과 밝은 선을 쓴다. 교류처럼 새 화면으로 나가는 입구에 쓴다. */
@@ -33,7 +35,10 @@ export class RailButton extends Phaser.GameObjects.Container {
       edgeAlpha: options.accent ? 0.85 : 0.35,
     }));
     // 글자는 칩 안 아래쪽에 둔다. 칩 밖으로 내리면 배경 원화 위에 놓여 읽히지 않는다.
-    this.add(drawGlyph(scene, options.icon, 0, -size * 0.12, size * 0.42, color));
+    // UI SVG 키는 등록 목록으로 판별해 GlyphName 문자열과 우연히 겹쳐도 렌더 경계가 흔들리지 않는다.
+    const isUiIcon = (Object.values(UI_ICON) as string[]).includes(options.icon);
+    if (isUiIcon) this.add(scene.add.image(0, -size * 0.12, options.icon).setDisplaySize(size * 0.5, size * 0.5));
+    else this.add(drawGlyph(scene, options.icon as GlyphName, 0, -size * 0.12, size * 0.42, color));
     this.add(
       scene.add
         .text(0, size * 0.2, options.label, textStyle({ role: "emphasis", size: 19, color: options.accent ? COLOR.accentText : COLOR.ink }))

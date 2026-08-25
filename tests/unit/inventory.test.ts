@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { FakeServer } from "../../src/api/FakeServer";
 import { GameApiError } from "../../src/api/contracts";
-import { InventoryManager, inventoryScrollMetrics } from "../../src/managers/InventoryManager";
+import { InventoryManager, inventoryGridPosition, inventoryScrollMetrics } from "../../src/managers/InventoryManager";
 import { SaveManager } from "../../src/state/SaveManager";
 import { createDefaultSession } from "../../src/state/session";
 
@@ -12,6 +12,16 @@ describe("inventory", () => {
     const manager = new SaveManager({ getItem: (key) => memory.get(key) ?? null, setItem: (key, value) => { memory.set(key, value); }, removeItem: (key) => { memory.delete(key); } });
     const state = createDefaultSession(); state.itemInventory = [{ itemId: "stamina-tonic", quantity: 7 }]; manager.save(state);
     const loaded = manager.load()!; expect(loaded.itemInventory).toEqual(state.itemInventory); expect(loaded.itemInventory).not.toBe(state.itemInventory);
+  });
+
+  it("빈 목록과 홀수·짝수 카드의 대칭 열 및 스크롤 범위를 유지한다", () => {
+    // 열 중심은 팝업 원점의 좌우에 같은 거리로 있고 홀수 마지막 카드는 왼쪽 열 규칙을 따른다.
+    expect(inventoryGridPosition(0)).toEqual({ x: -175, y: 0 });
+    expect(inventoryGridPosition(1)).toEqual({ x: 175, y: 0 });
+    expect(inventoryGridPosition(2)).toEqual({ x: -175, y: 210 });
+    expect(inventoryScrollMetrics(0)).toEqual({ contentHeight: 0, minY: 0 });
+    expect(inventoryScrollMetrics(5)).toEqual({ contentHeight: 630, minY: 0 });
+    expect(inventoryScrollMetrics(12)).toEqual({ contentHeight: 1260, minY: -230 });
   });
 
   it("0·소수·초과 사용량을 거부하고 스테미나 상한까지만 회복한다", async () => {

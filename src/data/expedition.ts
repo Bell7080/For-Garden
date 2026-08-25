@@ -1,0 +1,28 @@
+/** 원정 맵에서 보스 외 노드를 뽑을 때 사용하는 정적 밸런스 한 벌이다. */
+export const EXPEDITION_MAP_BALANCE = {
+  /** 시작과 보스 사이의 층 수 및 각 층의 가로 노드 범위다. */
+  routeFloors: 19,
+  bossFloor: 20,
+  columns: 5,
+  nodesPerFloor: { min: 2, max: 4 },
+  /** 가중치는 상대값이며 생성기가 합계를 직접 가정하지 않는다. */
+  typeWeights: {
+    normal: 48,
+    elite: 12,
+    horde: 14,
+    rest: 14,
+    treasure: 12,
+  },
+  /** 같은 종류와 비전투 노드가 한 세로 흐름에 지나치게 몰리지 않게 하는 상한이다. */
+  maxConsecutiveSameType: 2,
+  maxConsecutiveNonCombat: 1,
+  /** 이 층은 모든 갈래를 전투로 만들어 어느 경로든 최소 전투 수를 만족시킨다. */
+  requiredCombatFloors: [1, 4, 7, 10, 13, 16, 19],
+  minimumCombatsPerRoute: 7,
+} as const;
+
+/** 밸런스 표가 허용하는 전투 종류다. 보스는 마지막 층 전용이라 추첨에서 제외한다. */
+export const EXPEDITION_COMBAT_TYPES = ["normal", "elite", "horde"] as const;
+
+/** 휴식과 보물은 전투가 아닌 경로 보조 노드다. */
+export const EXPEDITION_NON_COMBAT_TYPES = ["rest", "treasure"] as const;

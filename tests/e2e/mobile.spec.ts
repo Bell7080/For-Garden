@@ -232,6 +232,28 @@ test("설정 탭은 텍스트 확대·스크롤·두 단계 초기화를 좁은 
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
 });
 
+test("핵심 콘텐츠의 설정은 고고학·렐릭·연구소·상점 섹션으로 되돌아간다", async ({ page }) => {
+  await startAfterOpening(page); await page.locator("canvas").click();
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+  // 하단 내비게이션의 네 콘텐츠를 순회하며 각 TopBar 설정과 공용 뒤로가기의 왕복을 검증한다.
+  const destinations = [
+    { scene: "archaeology", x: 108 }, { scene: "relics", x: 324 },
+    { scene: "lab", x: 756 }, { scene: "shop", x: 972 },
+  ] as const;
+  for (const destination of destinations) {
+    await tapGame(page, destination.x, BASE_HEIGHT - 90);
+    await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe(destination.scene);
+    await tapGame(page, BASE_WIDTH - 58, 86);
+    await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("settings");
+    await tapGame(page, BASE_WIDTH - 106, BASE_HEIGHT - 120);
+    await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe(destination.scene);
+    if (destination.scene === "shop") {
+      // 씬 이름뿐 아니라 설정 진입 데이터로 되돌린 상점 섹션도 그대로여야 한다.
+      await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.shopSection)).toBe("premium");
+    }
+  }
+});
+
 test("가로로 눕히면 세로로 돌려달라는 안내가 뜬다", async ({ page }) => {
   const viewport = page.viewportSize();
   if (viewport) {

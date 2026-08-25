@@ -24,7 +24,7 @@ export class ArchaeologyScene extends Phaser.Scene {
     addSceneBackground(this, BACKGROUND.archaeology);
     drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { depth: -20, strength: 0.72 });
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.5).setDepth(-19);
-    new TopBar(this);
+    new TopBar(this, 40, { onSettings: () => this.scene.start("settings", { returnScene: "archaeology" }) });
 
     this.add.text(60, 185, "고 고 학", textStyle({ role: "display", size: 52 })).setOrigin(0, 0);
     this.add.text(62, 252, "장기 탐사 · 에너지 · 희귀 자원", textStyle({ role: "body", size: 27, color: COLOR.inkDim })).setOrigin(0, 0);

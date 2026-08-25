@@ -13,6 +13,7 @@ import { COLOR, textStyle } from "../ui/theme";
 import { platformFeedback } from "../api/PlatformFeedback";
 import { accountApi, type AccountFailureCode, type AccountState } from "../api/AccountApi";
 import { PopupLayer } from "../ui/PopupLayer";
+import { validateSettingsReturn, type SettingsEntryData, type SettingsReturnScene } from "./settingsNavigation";
 
 /** 상단 탭은 긴 설정을 의미 단위로 나눠 좁은 화면에서도 한 섹션만 스크롤하게 한다. */
 const TABS = [
@@ -31,6 +32,9 @@ export class SettingsScene extends Phaser.Scene {
   private readonly popups = new PopupLayer(this, 3000);
   private accountState: AccountState = { kind: "guest", provider: "guest", maskedId: "GUEST-••••" };
   private accountBusy = false;
+  /** 검증을 마친 반환 경로만 보관해 탭 재시작 뒤에도 원래 화면을 잃지 않는다. */
+  private returnScene: SettingsReturnScene = "lobby";
+  private returnData?: SettingsEntryData["returnData"];
 
   constructor() { super("settings"); }
 
@@ -51,7 +55,7 @@ export class SettingsScene extends Phaser.Scene {
     zone.on("dragstart", (pointer: Phaser.Input.Pointer) => { this.dragStartY = pointer.y - this.scrollY; });
     zone.on("drag", (pointer: Phaser.Input.Pointer) => this.scrollTo(pointer.y - this.dragStartY));
     this.input.on("wheel", (_p: unknown, _o: unknown, _dx: number, dy: number) => this.scrollTo(this.scrollY - dy));
-    addBackButton(this, () => this.scene.start("lobby")).setDepth(30);
+    addBackButton(this, () => this.scene.start(this.returnScene, this.returnData)).setDepth(30);
   }
 
   /** 탭은 화면 폭 안에서 균등 배치하며 96px 높이의 터치 영역을 공유한다. */
@@ -62,13 +66,17 @@ export class SettingsScene extends Phaser.Scene {
       const label = this.add.text(x, 210, tab.label, textStyle({ role: "emphasis", size: 23, color: tab.id === this.activeTab ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5);
       const hit = this.add.rectangle(x, 210, width, 96, 0xffffff, 0).setInteractive({ useHandCursor: true });
       hit.on("pointerdown", () => label.setScale(1.08));
-      hit.on("pointerup", () => { this.activeTab = tab.id; this.scrollY = 0; this.scene.restart({ tab: tab.id }); });
+      hit.on("pointerup", () => { this.activeTab = tab.id; this.scrollY = 0; this.scene.restart({ tab: tab.id, returnScene: this.returnScene, returnData: this.returnData }); });
     });
     this.add.rectangle(BASE_WIDTH / 2, 260, BASE_WIDTH - 80, 2, COLOR.accent, 0.28);
   }
 
   /** 재시작으로 탭의 고정 헤더와 확대된 글자까지 깨끗하게 다시 만들되 선택 탭은 유지한다. */
-  init(data: { tab?: SettingsTab }): void { if (data.tab && TABS.some(tab => tab.id === data.tab)) this.activeTab = data.tab; }
+  init(data: SettingsEntryData): void {
+    if (data?.tab && TABS.some(tab => tab.id === data.tab)) this.activeTab = data.tab;
+    const route = validateSettingsReturn(data);
+    this.returnScene = route.returnScene; this.returnData = route.returnData;
+  }
 
   /** 현재 탭에 종속된 행만 생성해 다른 탭의 입력면이 마스크 뒤에 남지 않게 한다. */
   private buildRows(): void {

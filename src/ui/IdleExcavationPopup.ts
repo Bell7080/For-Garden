@@ -7,7 +7,7 @@ import { tintFor } from "../puppets/tints";
 import { session } from "../state/session";
 import { setDebugIdleExcavationPopup } from "../debug";
 import { Button } from "./Button";
-import { chipPoints, drawHairline, drawLayer, drawShapeOutline, slantedRect } from "./holo";
+import { chipPoints, drawHairline, drawLayer, HOLO, slantedRect } from "./holo";
 import { PortraitCard } from "./PortraitCard";
 import type { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
@@ -26,8 +26,8 @@ const PANEL = { width: 900, height: 1320 } as const;
 const GRID_VIEW = { left: -370, right: 370, top: -145, bottom: 425, columnGap: 250, rowGap: 280, cardWidth: 215, cardHeight: 235 } as const;
 /** 손가락이 이 거리 이상 움직여야 카드 선택이 아니라 스크롤로 판정한다. */
 const GRID_DRAG_SLOP = 12;
-/** 팝업 자체는 원화를 품지 않고 현재 청흑색 면과 굵은 액자선으로 로비 배경에서 분리한다. */
-const POPUP_FRAME = chipPoints(PANEL.width - 24, PANEL.height - 24, { bevel: { topLeft: 118, bottomRight: 118 } });
+/** 원화는 별도 액자를 만들지 않고 PopupLayer 판의 비대칭 실루엣에 직접 맞춘다. */
+const POPUP_ART_SHAPE = chipPoints(PANEL.width - 24, PANEL.height - 24, { bevel: { topLeft: 118, bottomRight: 118 } });
 /** 좁은 안전 영역에서도 팝업 제목·닫기와 겹치지 않는 현황 히어로의 고정 세로 범위다. */
 const STATUS_HERO = { x: 0, y: -385, width: 800, height: 300, headerY: -570, slotY: -385 } as const;
 type Formation = IdleExcavationState["assignedRelicIds"];
@@ -92,7 +92,7 @@ export class IdleExcavationPopup {
   /** 연타는 기존 한 장을 유지하며 닫기는 저장되지 않은 draft를 버린다. */
   open(): void {
     if (this.body) return;
-    this.body = this.popups.open({ width: PANEL.width, height: PANEL.height, title: "발굴 · 자원 수집", dim: true, closeOnBackdrop: false, onClose: () => this.dispose() }, (body) => {
+    this.body = this.popups.open({ width: PANEL.width, height: PANEL.height, title: "발굴", titleSize: 34, dim: true, closeOnBackdrop: false, onClose: () => this.dispose() }, (body) => {
       body.setName("idle-excavation-popup");
       this.showMessage("발굴 현황을 정산하고 있습니다…", "loading");
     });
@@ -134,8 +134,6 @@ export class IdleExcavationPopup {
     if (!this.body) return undefined;
     this.content = this.scene.add.container(0, 0);
     this.body.add(this.content);
-    // 원화 대신 팝업 색의 굵은 안쪽 액자를 유지해 뒤 화면의 일러스트와 조작면을 명확히 가른다.
-    this.content.add(drawShapeOutline(this.scene, 0, 0, POPUP_FRAME, { color: COLOR.accent, alpha: 0.62, width: 5 }));
     return this.content;
   }
 
@@ -155,27 +153,26 @@ export class IdleExcavationPopup {
     if (!response || !content) return;
     const formation = response.excavation.assignedRelicIds;
     const rate = excavationProductionDisplayModel(formation, RELICS, session.relicProgress).totalsPerHour;
-    // 1순위 발굴대 상태: 전용 발굴장 원화를 슬롯/SD와 같은 히어로에 묶어 배경-캐릭터 연동을 보존한다.
+    // 1순위 발굴대 상태: 전용 원화를 팝업 전체에 한 장으로 깔아 히어로와 조작부를 끊지 않는다.
     if (this.scene.textures.exists(BACKGROUND.excavation)) {
-      this.statusBackground = addPopupBackgroundImage(this.scene, content, BACKGROUND.excavation, STATUS_HERO);
+      this.statusBackground = addPopupBackgroundImage(this.scene, content, BACKGROUND.excavation, { x: 0, y: 0, width: PANEL.width - 24, height: PANEL.height - 24, maskShape: POPUP_ART_SHAPE });
     }
     const headerState = this.saving ? "수확 처리 중…" : "발굴 진행 중";
-    addSectionTitle(this.scene, -380, STATUS_HERO.headerY, `${headerState} · 배치 ${formation.filter(Boolean).length}/3`, { size: 23, parent: content });
-    content.add(this.scene.add.text(380, STATUS_HERO.headerY, "골드 · 보급 · 화석 · 다이아 생산", textStyle({ role: "emphasis", size: 19, color: COLOR.accentText })).setOrigin(1, 0.5));
+    // 진행 문구는 일반 강조, 배치 수는 같은 행의 얇은 보조 정보로 두어 제목 위계를 만들지 않는다.
+    content.add(this.scene.add.text(-360, STATUS_HERO.headerY, headerState, textStyle({ role: "emphasis", size: 27, color: COLOR.accentText })).setOrigin(0, 0.5));
+    content.add(this.scene.add.text(-160, STATUS_HERO.headerY, `배치 ${formation.filter(Boolean).length}/3`, textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0, 0.5));
     content.add(drawHairline(this.scene, 0, -535, 760, { color: COLOR.accent, alpha: 0.42 }));
     // 2순위 작업 중 SD/슬롯: 현황에서도 칸 자체가 편성 그리드의 유일한 진입점이다.
     const slotCards = this.addSlots(content, formation, false);
     // draft 편집에는 SD를 만들지 않는다. 서버 확정값을 그리는 현황에서만 비동기 세대를 시작한다.
     this.loadStatusSD(content, formation, slotCards);
-    // 기능 차이는 핵심 현황 뒤의 작은 정보 문구로 낮춰 반복 진입 때 먼저 읽히지 않게 한다.
-    content.add(this.scene.add.text(0, -205, "ℹ 연구소는 캐릭터 획득 연구 · 발굴은 배치형 자원 생산", textStyle({ role: "body", size: 17, color: COLOR.inkDim })).setOrigin(0.5));
     const baseServerMs = new Date(response.serverTime).getTime();
     let harvestButton: Button | undefined;
     // 발굴 전용 액자는 큰 누적값을, 아래의 독립 칩은 같은 아이콘과 생산 속도만 책임진다.
     // 3순위 누적 보상: SD 아래에서 현재 수확량과 시간당 생산량을 한 번에 훑는다.
-    content.add(drawLayer(this.scene, 0, 30, slantedRect(800, 205), { fill: 0x05070a, alpha: 0.9, edge: COLOR.accent, edgeAlpha: 0.42 }));
+    content.add(drawLayer(this.scene, 0, 30, slantedRect(800, 205), { fill: COLOR.panel, alpha: HOLO.glassLight, edge: COLOR.accent, edgeAlpha: 0.42 }));
     const display = excavationDisplayModel(response.excavation.unclaimed, rate);
-    // 상단 CurrencyChip을 늘리지 않고 발굴 전용 불투명 액자와 별도 생산 칩을 한 줄로 세운다.
+    // 상단 CurrencyChip을 늘리지 않고 발굴 전용 반투명 액자와 별도 생산 칩을 한 줄로 세운다.
     const rows = display.map((item) => {
       const frame = new ExcavationCurrencyFrame(this.scene, item.x, 26, EXCAVATION_CURRENCY_ICON[item.currency]);
       frame.setValues(item.unclaimed, item.rate); content.add(frame);
@@ -382,7 +379,7 @@ export class IdleExcavationPopup {
         parent.add(card); hit = card.hit; cards[index] = card;
       } else {
         const empty = this.scene.add.container(x, STATUS_HERO.slotY);
-        empty.add(drawLayer(this.scene, 0, 0, slantedRect(210, 245), { fill: 0x151a22, alpha: 0.45, edge: index === this.selectedSlot && editable ? COLOR.accent : 0x6f7884, edgeAlpha: 0.55 }));
+        empty.add(drawLayer(this.scene, 0, 0, slantedRect(210, 245), { fill: COLOR.panel, alpha: HOLO.glassLight, edge: index === this.selectedSlot && editable ? COLOR.accent : COLOR.inkDimHex, edgeAlpha: 0.55 }));
         empty.add(this.scene.add.text(0, 0, `빈 슬롯\n${index + 1}`, textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim, align: "center" })).setOrigin(0.5));
         const area = this.scene.add.rectangle(0, 0, 210, 245, 0xffffff, 0).setInteractive({ useHandCursor: true }); empty.add(area);
         if (editable && index === this.selectedSlot) empty.setScale(1.06);

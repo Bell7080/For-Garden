@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { formatCurrency } from "../core/formatCurrency";
-import { chipPoints, drawInnerVignette, drawLayer, drawShapeOutline } from "./holo";
+import { chipPoints, drawInnerVignette, drawLayer, drawShapeOutline, HOLO } from "./holo";
 import type { CurrencyIconKey } from "./currencyIcons";
 import { COLOR, textStyle } from "./theme";
 
@@ -13,8 +13,8 @@ export class ExcavationCurrencyFrame extends Phaser.GameObjects.Container {
     super(scene, x, y);
     scene.add.existing(this);
     const frame = chipPoints(width, 116, { bevel: { topLeft: 22, bottomRight: 18 } });
-    // 그림 한 장을 담는 액자 예외이므로 불투명 면, 사방 외곽선, 안쪽 비네트를 모두 적용한다.
-    this.add(drawLayer(scene, 0, -26, frame, { fill: 0x090e16, alpha: 1, shadow: true }));
+    // 원화와 분리되되 끊어진 판처럼 보이지 않도록 액자 예외의 외곽선 안을 반투명 유리로 채운다.
+    this.add(drawLayer(scene, 0, -26, frame, { fill: COLOR.panel, alpha: HOLO.glass, shadow: true }));
     this.add(drawShapeOutline(scene, 0, -26, frame, { color: COLOR.accent, alpha: 0.72, width: 3 }));
     this.add(drawInnerVignette(scene, 0, -26, frame, { strength: 0.52 }));
     this.add(scene.add.image(-34, -27, iconKey).setDisplaySize(64, 64));
@@ -23,7 +23,7 @@ export class ExcavationCurrencyFrame extends Phaser.GameObjects.Container {
       .setOrigin(0.5).setShadow(3, 4, "#000000", 1, false, true);
     this.add(this.amountText);
     const rateChip = chipPoints(width - 20, 42, { bevel: { topLeft: 12, bottomRight: 10 } });
-    this.add(drawLayer(scene, 0, 67, rateChip, { fill: 0x101923, alpha: 0.96, edge: COLOR.accent, edgeAlpha: 0.35 }));
+    this.add(drawLayer(scene, 0, 67, rateChip, { fill: COLOR.panel, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.35 }));
     this.add(scene.add.image(-38, 67, iconKey).setDisplaySize(28, 28));
     this.rateText = scene.add.text(10, 67, "0/시간", textStyle({ role: "emphasis", size: 18, color: COLOR.accentText })).setOrigin(0.5);
     this.add(this.rateText);

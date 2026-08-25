@@ -71,6 +71,11 @@ const SHADE_RATIO = 0.46;
 /** 레벨 숫자를 세로로 늘리는 비율. 계기판 숫자처럼 보이게 하는 최소한의 왜곡이다. */
 const LEVEL_STRETCH = 1.26;
 
+/** 카드 본체 위로 실제 원화가 빠져나오는 높이. 목록 배치도 같은 시각 경계를 사용한다. */
+export function portraitCardOverhang(height: number): number {
+  return Math.round(Math.min(height * 0.22, 54));
+}
+
 /**
  * 캐릭터 카드.
  *
@@ -107,7 +112,7 @@ export class PortraitCard extends Phaser.GameObjects.Container {
 
     this.bodyHeight = height;
     // 머리가 칩 위로 빠져나올 여유. 카드가 납작할수록 조금만 내민다.
-    this.overhang = Math.round(Math.min(this.bodyHeight * 0.22, 54));
+    this.overhang = portraitCardOverhang(this.bodyHeight);
     const chipWidth = width - CHIP_INSET * 2;
     // 깎는 길이는 카드 크기를 따라간다. 작은 카드에서 모서리만 크게 잘려 나가지 않게 한다.
     const unit = Math.min(chipWidth, this.bodyHeight);

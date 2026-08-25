@@ -15,10 +15,9 @@ import { COLOR, textStyle } from "../ui/theme";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { gameApi } from "../api/FakeServer";
 import { bondDialogue } from "../data/bonds";
-import { DAILY_RESTORATION } from "../data/stages";
 import { PopupLayer } from "../ui/PopupLayer";
 import { IdleExcavationPopup } from "../ui/IdleExcavationPopup";
-import { BACK_SLOT, IconButton } from "../ui/IconButton";
+import { addPopupBackButton, BACK_SLOT, IconButton } from "../ui/IconButton";
 import { UI_ICON } from "../ui/icons";
 import { TradePopup } from "../ui/TradePopup";
 import { InventoryPopup } from "../ui/InventoryPopup";
@@ -26,6 +25,7 @@ import { bindNotificationDot } from "../ui/NotificationDot";
 import { notificationManager } from "../managers/NotificationManager";
 import { MissionsPopup } from "../ui/MissionsPopup";
 import { LOBBY_ACTION_BOUNDS, LOBBY_MISSION_ENTRY } from "../ui/lobbyLayout";
+import { expeditionManager } from "../managers/ExpeditionManager";
 
 /** 확대된 애착 렐릭의 골반 아래가 내비게이션 뒤로 자연스럽게 이어지는 기준선. */
 const STAGE_FLOOR = 1660;
@@ -83,25 +83,17 @@ export class LobbyScene extends Phaser.Scene {
     this.buildUtilityRail();
     this.buildMissionEntry();
 
-    // 원정 — 지도 위를 가리던 일일 복원을 로비의 독립된 일일 콘텐츠 입구로 옮긴다.
-    // 자리와 기울기는 출격과 한 벌이라 같은 원근을 쓴다.
-    const expeditionButton = new Button(this, LOBBY_ACTION_BOUNDS.expedition.x, LOBBY_ACTION_BOUNDS.expedition.y, {
+    // 결투 — 기존 원정 자리는 추후 PvP가 들어올 독립 입구로 보존한다.
+    new Button(this, LOBBY_ACTION_BOUNDS.expedition.x, LOBBY_ACTION_BOUNDS.expedition.y, {
       width: LOBBY_ACTION_BOUNDS.expedition.width,
       height: LOBBY_ACTION_BOUNDS.expedition.height,
-      label: "원정",
-      sub: this.expeditionStatus(),
+      label: "결투",
+      sub: "준비 중",
       fontSize: 34,
       // 출격과 성격이 다른 입구라 강조 양식을 쓰지 않는다. 같은 원근만 공유한다.
       perspective: "right",
       tilt: -6,
-      onClick: () => {
-        expeditionButton.setEnabled(false);
-        // 입장 소비와 보상 지급은 기존처럼 API가 한 처리 단위로 저장하며 로비는 결과만 표시한다.
-        void gameApi.enterDailyRestoration().then((result) => {
-          expeditionButton.setSub(`치즈케이크 +${result.cheesecakeEarned} · 남은 ${result.entriesRemaining}/${DAILY_RESTORATION.maxEntriesPerUtcDay}`);
-          expeditionButton.setEnabled(result.entriesRemaining > 0);
-        }).catch(() => expeditionButton.setSub("오늘의 원정 완료"));
-      },
+      onClick: () => this.notReady("결투"),
     });
 
     // 출격 — 로비에서 가장 큰 버튼이다. 주황빛 강조로 다른 입구와 구분한다.
@@ -117,7 +109,7 @@ export class LobbyScene extends Phaser.Scene {
       accentColor: COLOR.sortie,
       accentTextColor: COLOR.sortieText,
       decorDots: true,
-      onClick: () => this.scene.start("stageMap"),
+      onClick: () => this.openSortieMenu(),
     });
 
     // 교류 — 맞은편이라 기울기와 원근을 뒤집어 `\` 방향으로 눕힌다.
@@ -193,10 +185,45 @@ export class LobbyScene extends Phaser.Scene {
     if (!this.inventoryBackButton) this.inventoryBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: () => this.inventoryPopup?.close() }).setDepth(2100);
   }
 
-  /** 저장된 UTC 일일 입장 횟수를 로비 원정 버튼의 짧은 상태 문구로 바꾼다. */
-  private expeditionStatus(): string {
-    const remaining = Math.max(0, DAILY_RESTORATION.maxEntriesPerUtcDay - session.dailyContent.restorationEntries);
-    return `일일 복원 · 남은 ${remaining}/${DAILY_RESTORATION.maxEntriesPerUtcDay}`;
+  /** 출격의 잔잔한 콘텐츠 선택판을 열고 우하단 공용 돌아가기로만 닫는다. */
+  private openSortieMenu(): void {
+    if (!this.popupLayer || this.popupLayer.isOpen) return;
+    const status = expeditionManager.status();
+    // 일반 작업판보다 암전을 옅게 해 로비의 애착 렐릭이 뒤에서 계속 보이도록 한다.
+    this.popupLayer.open({ width: 870, height: 850, title: "출격", titleSize: 34, dim: true, dimAlpha: 0.24, closeOnBackdrop: false, hideCloseButton: true }, (body, close) => {
+      const storyButton = new Button(this, 0, -190, {
+        width: 650,
+        height: 150,
+        label: "스토리",
+        sub: "메인 작전",
+        fontSize: 42,
+        accentColor: EXCHANGE_BLUE,
+        accentTextColor: "#9fd0f0",
+        onClick: () => { close(); this.scene.start("stageMap"); },
+      });
+      body.add(storyButton);
+      const expeditionButton = new Button(this, 0, 35, {
+        width: 650,
+        height: 170,
+        label: "원정",
+        sub: this.expeditionStatus(status),
+        fontSize: 42,
+        variant: "primary",
+        accentColor: COLOR.sortie,
+        accentTextColor: COLOR.sortieText,
+        onClick: () => { close(); this.scene.start("expedition"); },
+      });
+      body.add(expeditionButton);
+      // 향후 일일 던전이 늘어날 영역은 빈 공간으로 남기고, 닫기는 공용 우하단 슬롯에 고정한다.
+      addPopupBackButton(this, body, 870, 850, close);
+    });
+  }
+
+  /** 주간 횟수·진행·최고점·빠른 가능 여부를 한 줄의 짧은 원정 상태로 합친다. */
+  private expeditionStatus(status = expeditionManager.status()): string {
+    if (status.active) return `이어하기 · ${status.playsThisWeek}회 · 최고 ${status.bestScore.toLocaleString()}`;
+    const quick = status.quickAvailable ? "빠른 가능" : "빠른 잠김";
+    return `주간 ${status.playsThisWeek}회 · 최고 ${status.bestScore.toLocaleString()} · ${quick}`;
   }
 
   /** 연구소에서 옮긴 채광 설비·식물 원화를 로비 광장 배경으로 사용한다. */

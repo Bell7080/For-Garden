@@ -27,6 +27,8 @@ function makeSession(): Session {
     productPurchases: {},
     // 테스트 계정은 광고 수령 이력이 없는 UTC 일일 상태로 시작한다.
     dailyAdRewards: { date: "", claimsBySlot: {}, requestIds: [] },
+    // 수집 테스트는 원정 진행이 없는 새 주간 상태를 사용한다.
+    expedition: { weekKey: "", playsThisWeek: 0, bestScore: 0, active: null },
   };
 }
 

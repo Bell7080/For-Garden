@@ -66,6 +66,23 @@ export interface Session {
   productPurchases: Record<string, { periodKey: string; count: number }>;
   /** 서버 UTC 날짜에 귀속된 광고 수령 횟수와 멱등 요청 ID만 저장한다. */
   dailyAdRewards: DailyAdRewardState;
+  /** 주간 원정의 편성·진행·기록이다. 씬은 ExpeditionManager를 통해서만 변경한다. */
+  expedition: ExpeditionState;
+}
+
+/** 진행 중인 한 원정의 저장 가능한 최소 스냅샷이다. 전투 세부 상태가 생기면 매니저가 확장한다. */
+export interface ActiveExpedition {
+  relicIds: [string, string, string];
+  startedAt: string;
+  score: number;
+}
+
+/** 주간 교체와 이어하기를 한 경계에서 판정하기 위한 공개 원정 상태다. */
+export interface ExpeditionState {
+  weekKey: string;
+  playsThisWeek: number;
+  bestScore: number;
+  active: ActiveExpedition | null;
 }
 
 /** 광고 SDK 토큰은 저장하지 않고 지급 재실행 방지에 필요한 값만 담는 일일 상태다. */
@@ -133,6 +150,7 @@ export interface SaveData {
   missions: MissionState;
   productPurchases: Record<string, { periodKey: string; count: number }>;
   dailyAdRewards: DailyAdRewardState;
+  expedition: ExpeditionState;
 }
 
 /** 개별 옵션이 없는 소비품·재료만 같은 ID끼리 중첩한다. */
@@ -176,6 +194,8 @@ export function createDefaultSession(): Session {
     productPurchases: {},
     // 검증 토큰은 일회성 서버 입력이므로 신규 저장에는 일일 카운터만 둔다.
     dailyAdRewards: { date: "", claimsBySlot: {}, requestIds: [] },
+    // 빈 주차 키는 첫 원정 조회에서 서버와 같은 UTC 주차로 정규화된다.
+    expedition: { weekKey: "", playsThisWeek: 0, bestScore: 0, active: null },
   };
 }
 

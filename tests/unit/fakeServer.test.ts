@@ -36,7 +36,7 @@ function makeSession(fossil = 1000): Session {
     // 테스트 계정은 광고 수령 이력이 없는 UTC 일일 상태로 시작한다.
     dailyAdRewards: { date: "", claimsBySlot: {}, requestIds: [] },
     // API 테스트의 원정 저장 계약은 빈 상태로 명시한다.
-    expedition: { weekKey: "", playsThisWeek: 0, bestScore: 0, active: null },
+    expedition: { weekKey: "", playsThisWeek: 0, bestScore: 0, run: null },
   };
 }
 

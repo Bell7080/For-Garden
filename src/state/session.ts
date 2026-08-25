@@ -9,6 +9,7 @@ import type { MissionState } from "../core/missions";
 import type { RuneInstance } from "../core/runes";
 import { createDefaultSettings } from "../core/settings";
 import { createIdleExcavationState, type IdleExcavationState } from "../core/idleExcavation";
+import type { ExpeditionMapNode } from "../core/expeditionMap";
 
 /** 로컬에 저장 가능한 사용자 환경설정이다. 계정에는 표시 정보만 두며 인증 비밀은 서버 경계에 남긴다. */
 export interface GameSettings {
@@ -70,11 +71,22 @@ export interface Session {
   expedition: ExpeditionState;
 }
 
-/** 진행 중인 한 원정의 저장 가능한 최소 스냅샷이다. 전투 세부 상태가 생기면 매니저가 확장한다. */
-export interface ActiveExpedition {
-  relicIds: [string, string, string];
-  startedAt: string;
-  score: number;
+/** 런 도중 저장되는 렐릭 한 기의 생존 스냅샷이다. */
+export interface ExpeditionRelicState { relicId: string; currentHp: number; alive: boolean; }
+
+/** 앱 재실행 뒤에도 한 노드 단위로 그대로 이어갈 수 있는 완전한 원정 런이다. */
+export interface ExpeditionRunState {
+  weekKey: string;
+  mapSeed: string;
+  nodes: ExpeditionMapNode[];
+  currentNodeId: string | null;
+  visitedNodeIds: string[];
+  relics: [ExpeditionRelicState, ExpeditionRelicState, ExpeditionRelicState];
+  selectedAugmentIds: string[];
+  pendingRewards: Record<string, number>;
+  bossDamage: number;
+  bestScore: number;
+  settled: boolean;
 }
 
 /** 주간 교체와 이어하기를 한 경계에서 판정하기 위한 공개 원정 상태다. */
@@ -82,7 +94,7 @@ export interface ExpeditionState {
   weekKey: string;
   playsThisWeek: number;
   bestScore: number;
-  active: ActiveExpedition | null;
+  run: ExpeditionRunState | null;
 }
 
 /** 광고 SDK 토큰은 저장하지 않고 지급 재실행 방지에 필요한 값만 담는 일일 상태다. */
@@ -195,7 +207,7 @@ export function createDefaultSession(): Session {
     // 검증 토큰은 일회성 서버 입력이므로 신규 저장에는 일일 카운터만 둔다.
     dailyAdRewards: { date: "", claimsBySlot: {}, requestIds: [] },
     // 빈 주차 키는 첫 원정 조회에서 서버와 같은 UTC 주차로 정규화된다.
-    expedition: { weekKey: "", playsThisWeek: 0, bestScore: 0, active: null },
+    expedition: { weekKey: "", playsThisWeek: 0, bestScore: 0, run: null },
   };
 }
 

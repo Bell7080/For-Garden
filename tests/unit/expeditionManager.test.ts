@@ -24,25 +24,28 @@ describe("ExpeditionManager", () => {
 
     const result = manager.start(["anky", "rex", "spino"]);
     expect(result.ok).toBe(true);
-    expect(state.expedition.active?.relicIds).toEqual(["anky", "rex", "spino"]);
+    expect(state.expedition.run?.relics.map(({ relicId }) => relicId)).toEqual(["anky", "rex", "spino"]);
     expect(save).toHaveBeenCalledTimes(1);
   });
 
   it("preserves an active expedition across weekly rollover and blocks replacement", () => {
     const state = createDefaultSession();
-    state.expedition = { weekKey: "2026-08-17", playsThisWeek: 4, bestScore: 9200, active: { relicIds: ["anky", "rex", "spino"], startedAt: "2026-08-23T12:00:00Z", score: 300 } };
+    const setup = new ExpeditionManager(state, { save: vi.fn() }, () => new Date("2026-08-23T12:00:00Z"));
+    setup.start(["anky", "rex", "spino"]);
+    state.expedition = { ...state.expedition, weekKey: "2026-08-17", playsThisWeek: 4, bestScore: 9200 };
+    if (state.expedition.run) state.expedition.run.bestScore = 300;
     const manager = new ExpeditionManager(state, { save: vi.fn() }, () => new Date("2026-08-25T12:00:00Z"));
 
     const status = manager.status();
     expect(status.playsThisWeek).toBe(0);
     expect(status.bestScore).toBe(0);
-    expect(status.active?.score).toBe(300);
+    expect(status.run?.bestScore).toBe(300);
     expect(manager.start(["anky", "rex", "spino"])).toEqual({ ok: false, reason: "alreadyActive" });
   });
 
   it("exposes quick expedition only after a weekly score and without active progress", () => {
     const state = createDefaultSession();
-    state.expedition = { weekKey: "2026-08-24", playsThisWeek: 1, bestScore: 1200, active: null };
+    state.expedition = { weekKey: "2026-08-24", playsThisWeek: 1, bestScore: 1200, run: null };
     const manager = new ExpeditionManager(state, { save: vi.fn() }, () => new Date("2026-08-25T12:00:00Z"));
     expect(manager.status().quickAvailable).toBe(true);
   });

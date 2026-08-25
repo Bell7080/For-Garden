@@ -223,6 +223,9 @@ export class IdleExcavationPopup {
       // 서버 확정 지급분만 공용 획득 팝업에 넘긴다. 지갑 상한 손실은 현황 경고로 남기고 보상처럼 꾸미지 않는다.
       openRewardPopup(this.scene, this.popups, {
         title: "발굴 보상 획득",
+        // 수확 결과는 일반 영수증보다 한 단계 큰 제목과 얕은 중첩 암전으로 완료감을 준다.
+        titleSize: 30,
+        dimAlpha: 0.18,
         items: EXCAVATION_CURRENCIES.map((currency) => ({
           icon: EXCAVATION_CURRENCY_ICON[currency],
           amount: result.granted[currency],

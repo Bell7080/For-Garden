@@ -11,7 +11,10 @@ async function tap(page: import("@playwright/test").Page, x: number, y: number):
 }
 
 test("임무 버튼은 로비 씬을 유지하고 일일·주간 탭을 각각 렌더링한다", async ({ page }) => {
-  await startAfterOpening(page);
+  await startAfterOpening(page, (saved) => {
+    // FIT 모바일 캡처에서 마지막 수령 가능 액자가 가장 밝게 드러나도록 양쪽 연구도를 최대로 둔다.
+    saved.missions.researchPoints = { daily: 120, weekly: 120 };
+  });
   await tap(page, WIDTH / 2, HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   // 오른쪽 레일의 임무 입력점은 기존 레일 배치를 그대로 사용한다.

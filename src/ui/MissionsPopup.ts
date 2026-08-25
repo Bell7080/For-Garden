@@ -12,7 +12,7 @@ import { RewardFrame } from "./RewardFrame";
 import { openRewardPopup } from "./RewardPopup";
 import { COLOR, textStyle } from "./theme";
 import { MissionClaimController, missionDisplayModel } from "./missionsPopupModel";
-import { MISSIONS_POPUP_LAYOUT } from "./missionsPopupLayout";
+import { MISSIONS_POPUP_LAYOUT, researchTrackLayout } from "./missionsPopupLayout";
 
 /** 로비 씬을 유지한 채 일일·주간 임무와 실제 확정 보상을 표시하는 공용 작업판이다. */
 export class MissionsPopup {
@@ -79,11 +79,13 @@ export class MissionsPopup {
   private renderResearch(): void {
     const research = this.research?.[this.period]; if (!research || !this.list) return;
     const { research: layout } = MISSIONS_POPUP_LAYOUT;
-    // 연구도 기준점은 게이지 중심이며 액자는 위쪽, 라벨은 아래쪽에 같은 간격으로 매단다.
-    const bar = new HoloBar(this.scene, layout.barX, layout.barY, layout.barWidth, layout.barHeight, { color: COLOR.missionClaim, outline: true }).addTo(this.list); bar.setValue(research.points / Math.max(1, research.maxPoints)); this.bars.push(bar);
-    this.list.add(this.scene.add.text(layout.labelX, layout.barY + layout.labelOffsetY, `연구도 ${research.points}/${research.maxPoints}`, textStyle({ role: "emphasis", size: 23, color: COLOR.ink })).setOrigin(0, 0.5));
-    research.stages.forEach((stage) => {
-      const stageX = layout.barX + layout.barWidth * (stage.threshold / research.maxPoints);
+    const popupWidth = BASE_WIDTH - MISSIONS_POPUP_LAYOUT.popup.widthInset;
+    // 팝업 안전 너비를 먼저 정해 게이지·양끝 액자·라벨이 모두 같은 왼쪽 기준선을 공유하게 한다.
+    const track = researchTrackLayout(popupWidth, research.stages.map((stage) => stage.threshold));
+    const bar = new HoloBar(this.scene, track.barX, layout.barY, track.barWidth, layout.barHeight, { color: COLOR.missionClaim, outline: true }).addTo(this.list); bar.setValue(research.points / Math.max(1, research.maxPoints)); this.bars.push(bar);
+    this.list.add(this.scene.add.text(track.labelX, layout.barY + layout.labelOffsetY, `연구도 ${research.points}/${research.maxPoints}`, textStyle({ role: "emphasis", size: 23, color: COLOR.ink })).setOrigin(0, 0.5));
+    research.stages.forEach((stage, index) => {
+      const stageX = track.stageXs[index];
       // 세로 눈금이 게이지 홈을 끊어 각 임계값이 별개의 마디로 보이게 한다.
       this.list?.add(this.scene.add.rectangle(stageX, layout.barY, 3, 36, 0x0b1018, 0.95));
       const state = stage.claimed ? "claimed" : stage.achieved ? "claimable" : "normal";

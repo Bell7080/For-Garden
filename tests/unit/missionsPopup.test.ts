@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { ClaimMissionRewardsResponse, MissionDto } from "../../src/api/contracts";
 import { MissionClaimController, missionDisplayModel } from "../../src/ui/missionsPopupModel";
-import { boundsIntersect, MISSIONS_POPUP_LAYOUT, missionsPopupCollisionBounds } from "../../src/ui/missionsPopupLayout";
+import { boundsIntersect, MISSIONS_POPUP_LAYOUT, missionsPopupCollisionBounds, researchTrackLayout } from "../../src/ui/missionsPopupLayout";
 
 /** UI 수령 테스트에는 서버 확정 필드 중 분기에서 읽는 값만 작은 계약 더블로 만든다. */
 const response = (claimedIds: string[], cheesecakeEarned = 20): ClaimMissionRewardsResponse => ({ claimedIds, cheesecakeEarned } as ClaimMissionRewardsResponse);
@@ -15,6 +15,16 @@ describe("MissionsPopup 표시 모델", () => {
 });
 
 describe("MissionsPopup 영역 배치", () => {
+  it("최소·최대 임계값 액자와 게이지 bounds가 팝업 안전 영역 안에 머문다", () => {
+    const track = researchTrackLayout(1080 - MISSIONS_POPUP_LAYOUT.popup.widthInset, [20, 40, 60, 80, 100, 120]);
+    const insideSafeWidth = (bounds: { left: number; right: number }): boolean => bounds.left >= track.safeBounds.left && bounds.right <= track.safeBounds.right;
+    // 극단 액자를 명시적으로 검사해 프레임 크기나 외곽선이 커질 때 좌우 돌출을 회귀로 잡는다.
+    expect(insideSafeWidth(track.frameBounds[0])).toBe(true);
+    expect(insideSafeWidth(track.frameBounds.at(-1)!)).toBe(true);
+    expect(insideSafeWidth(track.barBounds)).toBe(true);
+    expect(track.labelX).toBe(track.barX);
+  });
+
   it("보상 액자의 외곽선 반지름까지 포함한 bounds가 일일·주간 탭과 교차하지 않는다", () => {
     const { tabs, researchFrames } = missionsPopupCollisionBounds();
     // 양 끝 액자를 양쪽 탭 모두와 비교해 향후 크기나 기준점 변경도 즉시 회귀로 드러낸다.

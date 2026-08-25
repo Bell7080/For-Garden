@@ -27,6 +27,8 @@ async function enterParty(page: import("@playwright/test").Page): Promise<void> 
   await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   await tapGame(page, BASE_WIDTH - 290, BASE_HEIGHT - 425);
+  // 출격 선택판의 스토리 항목을 거쳐 메인 작전 지도로 이동한다.
+  await tapGame(page, BASE_WIDTH / 2, 770);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("stageMap");
   await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT - 180);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("party");
@@ -71,6 +73,28 @@ test("오프닝을 이미 본 저장이면 타이틀에서 로비로 바로 간�
   await expect
     .poll(() => page.evaluate(() => window.__PF_DEBUG?.scene))
     .toBe("lobby");
+});
+
+test("출격 선택판에서 원정대 3기를 골라 진행 중 상태로 저장한다", async ({ page }) => {
+  await startAfterOpening(page);
+  await page.locator("canvas").click();
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+
+  // 잔잔한 출격 선택판에서 원정을 고르면 별도 준비 씬으로 이동한다.
+  await tapGame(page, BASE_WIDTH - 290, BASE_HEIGHT - 425);
+  await tapGame(page, BASE_WIDTH / 2, 995);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("expedition");
+  await page.screenshot({ path: `test-results/${test.info().project.name}-expedition-preparation.png` });
+
+  // 초기 보유 세 기를 모두 고른 뒤 시작하면 매니저 저장을 거쳐 같은 씬의 이어하기 상태가 된다.
+  for (const x of [234, 540, 846]) await tapGame(page, x, 470);
+  await tapGame(page, BASE_WIDTH / 2, 1680);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("expedition");
+  await expect.poll(() => page.evaluate(() => {
+    const raw = window.localStorage.getItem("eternal-city.local-save");
+    return raw ? JSON.parse(raw).expedition?.active?.relicIds?.length : 0;
+  })).toBe(3);
+  await page.screenshot({ path: `test-results/${test.info().project.name}-expedition-active.png` });
 });
 
 test("방치 발굴 팝업은 좁은 로비 위 한 장으로 열리고 뒤 입력을 차단한 뒤 닫힌다", async ({ page }) => {

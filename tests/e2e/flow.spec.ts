@@ -88,6 +88,8 @@ async function enterParty(page: Page): Promise<void> {
   await expect.poll(() => scene(page)).toBe("lobby");
 
   await tap(page, ...SORTIE); // 출격 버튼
+  // 출격 선택판에서 스토리를 골라 기존 메인 작전 지도로 이어 간다.
+  await tap(page, BASE_WIDTH / 2, 770);
   await expect.poll(() => scene(page)).toBe("stageMap");
 
   // 지도는 열려 있는 가장 뒤쪽 스테이지를 이미 골라 둔다. 출전만 누르면 편성으로 넘어간다.
@@ -206,6 +208,8 @@ test("출전 전 지도와 편성에서도 같은 적 분석창이 열린다", a
   await startAfterOpening(page);
   await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await tap(page, ...SORTIE);
+  // 출격 선택판은 스토리와 원정을 분리하므로 지도 검증은 스토리를 명시해 들어간다.
+  await tap(page, BASE_WIDTH / 2, 770);
   await expect.poll(() => scene(page)).toBe("stageMap");
 
   // 지도의 적 편성 팝업에서 첫 칸을 누른다. 성장 입력이 없는 적 전용 창이 떠야 한다.

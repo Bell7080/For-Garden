@@ -5,6 +5,7 @@ import { chipPoints, drawHairline, drawInnerVignette, drawLayer, drawShapeOutlin
 import type { CurrencyIconKey } from "./currencyIcons";
 import type { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
+import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 
 /** 상자 개봉·임무 수령·발굴 수확이 공유할 수 있는 한 개의 확정 보상 표기다. */
 export interface RewardPopupItem {
@@ -40,7 +41,8 @@ export function openRewardPopup(scene: Phaser.Scene, popups: PopupLayer, options
     return;
   }
 
-  setDebugRewardPopup(true);
+  // 팝업 중심은 기준 게임 화면 중심이며 E2E에는 내용 대신 표시 칸 수와 확인 입력점만 알린다.
+  setDebugRewardPopup(true, items.length, { x: BASE_WIDTH / 2, y: BASE_HEIGHT / 2 });
   // 확인 안내는 팝업 안이 아니라 화면 하단에 둔다. "어디를 눌러도 넘어간다"는 말은 팝업 밖의 말이다.
   let hint: Phaser.GameObjects.Text | undefined;
   popups.open({

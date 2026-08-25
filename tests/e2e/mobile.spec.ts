@@ -12,6 +12,15 @@ async function tapGame(page: import("@playwright/test").Page, x: number, y: numb
   await canvas.click({ position: { x: (x / BASE_WIDTH) * box.width, y: (y / BASE_HEIGHT) * box.height } });
 }
 
+/** Canvas 팝업이 노출한 실제 입력 중심을 읽어 레이아웃 숫자를 테스트에 복제하지 않는다. */
+async function excavationControl(page: import("@playwright/test").Page, key: "close" | "harvest" | "cancelEdit"): Promise<{ x: number; y: number }> {
+  return page.evaluate((control) => {
+    const point = window.__PF_DEBUG?.idleExcavationControls?.[control];
+    if (!point) throw new Error(`발굴 ${control} 입력 좌표가 준비되지 않았다`);
+    return point;
+  }, key);
+}
+
 /** 모바일 저장 상태에서 타이틀과 지도만 통과해 편성 미리보기를 연다. */
 async function enterParty(page: import("@playwright/test").Page): Promise<void> {
   await startAfterOpening(page);
@@ -81,6 +90,10 @@ test("방치 발굴 팝업은 좁은 로비 위 한 장으로 열리고 뒤 입�
     { slotId: "excavation-harvest", label: "생산량 ×1.5", usage: "1/3", enabled: true },
     { slotId: "excavation-storage", label: "보관량 ×2", usage: "2/2", enabled: false },
   ]);
+  // 광고 버튼도 팝업이 제공한 새 중심 좌표를 가지며 좌우 순서가 슬롯 계약과 일치한다.
+  const adControls = await page.evaluate(() => window.__PF_DEBUG?.idleExcavationControls?.ads ?? []);
+  expect(adControls.map(({ slotId }) => slotId)).toEqual(["excavation-harvest", "excavation-storage"]);
+  expect(adControls[0].x).toBeLessThan(adControls[1].x);
   // 디버그 계약은 화면의 "발굴 진행 중" 문구가 아니라 기존 자동화용 상태명 ready를 계속 쓴다.
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   await page.screenshot({ path: `test-results/${test.info().project.name}-idle-excavation-popup.png` });
@@ -88,8 +101,9 @@ test("방치 발굴 팝업은 좁은 로비 위 한 장으로 열리고 뒤 입�
   // 어두운 backdrop이 출격 좌표의 입력을 먹으므로 로비와 애착 캐릭터가 그대로 남는다.
   await tapGame(page, BASE_WIDTH - 290, BASE_HEIGHT - 425);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
-  // 팝업 X 대신 다른 화면과 같은 우하단 자리의 돌아가기 아이콘을 사용한다.
-  await tapGame(page, BASE_WIDTH - 106, BASE_HEIGHT - 120);
+  // 팝업 X 대신 다른 화면과 같은 아이콘 양식의 발굴 전용 좌하단 돌아가기를 사용한다.
+  const close = await excavationControl(page, "close");
+  await tapGame(page, close.x, close.y);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationPopup)).toBeUndefined();
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
 });
@@ -111,13 +125,14 @@ test("SD 완료 뒤 세 슬롯의 공용 입력면이 각각 올바른 편집 �
   expect(slots).toHaveLength(3);
   for (const slot of slots) {
     expect(slot.width).toBeGreaterThanOrEqual(210); expect(slot.height).toBeGreaterThanOrEqual(245);
-    // 슬롯 하단은 다음 현황 행(게임 y=990) 위, 우하단 돌아가기(중심 974,1800)와도 멀리 떨어진다.
+    // 슬롯 하단은 다음 현황 행(게임 y=990) 위, 좌하단 돌아가기(중심 106,1800)와도 멀리 떨어진다.
     expect(slot.y + slot.height / 2).toBeLessThan(990);
     await tapGame(page, slot.x, slot.y);
     await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationPopup)).toBe("editing");
     await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationSelectedSlot)).toBe(slot.index);
     // 편집의 취소로 현황에 돌아가 다음 슬롯도 동일한 입력면으로 다시 검증한다.
-    await tapGame(page, BASE_WIDTH / 2 - 205, BASE_HEIGHT / 2 + 540);
+    const cancel = await excavationControl(page, "cancelEdit");
+    await tapGame(page, cancel.x, cancel.y);
     await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationPopup)).toBe("ready");
   }
   await page.screenshot({ path: `test-results/${test.info().project.name}-idle-excavation-slot-hit-areas.png` });
@@ -131,7 +146,8 @@ test("방치 발굴 편집은 슬롯 이동·중복 방지·빈 편성 취소를
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationPopup)).toBe("ready");
 
   // 별도 편성 버튼 없이 첫 슬롯 자체가 그 슬롯을 대상으로 한 편집 그리드를 연다.
-  await tapGame(page, BASE_WIDTH / 2 - 250, BASE_HEIGHT / 2 - 385);
+  const firstSlot = (await page.evaluate(() => window.__PF_DEBUG?.idleExcavationSlots?.[0]))!;
+  await tapGame(page, firstSlot.x, firstSlot.y);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationPopup)).toBe("editing");
   // 첫 보유 카드를 1번에 놓고 2번 슬롯을 선택한 뒤 같은 카드를 눌러 이동한다. 복제 대신 원래 칸이 빈다.
   await tapGame(page, BASE_WIDTH / 2 - 250, BASE_HEIGHT / 2 - 15);
@@ -140,11 +156,12 @@ test("방치 발굴 편집은 슬롯 이동·중복 방지·빈 편성 취소를
   // 같은 카드를 다시 누르면 빈 슬롯 허용 정책에 따라 해제되고, 취소는 서버 확정 배열을 저장하지 않는다.
   await tapGame(page, BASE_WIDTH / 2 - 250, BASE_HEIGHT / 2 - 15);
   await page.screenshot({ path: `test-results/${test.info().project.name}-idle-excavation-editor.png` });
-  await tapGame(page, BASE_WIDTH / 2 - 205, BASE_HEIGHT / 2 + 540);
+  const cancel = await excavationControl(page, "cancelEdit");
+  await tapGame(page, cancel.x, cancel.y);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationPopup)).toBe("ready");
 });
 
-test("발굴 수확은 액자 아이콘과 숫자를 공용 획득 팝업으로 확인한다", async ({ page }) => {
+test("발굴 수확 보상은 0 지급 자원을 제외하고 뒤 입력을 막은 뒤 현황 입력을 복구한다", async ({ page }) => {
   await startAfterOpening(page, (session) => {
     // 서버가 다시 정산해도 보존되는 확정 누적분을 넣어 수확 성공 UI만 안정적으로 검증한다.
     session.idleExcavation.unclaimed = { gold: 1234, cheesecake: 56, fossil: 0, gems: 0 };
@@ -157,14 +174,37 @@ test("발굴 수확은 액자 아이콘과 숫자를 공용 획득 팝업으로 
 
   // 수확 성공 뒤 별도 확인 팝업이 열리고, 본문 아무 곳이나 누르면 발굴 현황으로 즉시 돌아온다.
   // 현황 재배치에서 주요 수확 버튼이 하단 중앙으로 합쳐졌으므로 실제 입력 좌표도 같이 고정한다.
-  await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2 + 545);
+  const harvest = await excavationControl(page, "harvest");
+  await tapGame(page, harvest.x, harvest.y);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.rewardPopup)).toBe(true);
+  // 화석·다이아의 0 지급 칸은 만들지 않아 실제 한 줄에는 두 자원만 남는다.
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.rewardPopupItemCount)).toBe(2);
   await page.screenshot({ path: `test-results/${test.info().project.name}-excavation-reward-popup.png` });
   // 영수증이므로 팝업 밖(로비 출격 좌표)을 눌러도 닫히되, 그 누름이 뒤 화면으로 새지는 않는다.
   await tapGame(page, BASE_WIDTH - 290, BASE_HEIGHT - 425);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.rewardPopup)).toBeUndefined();
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationPopup)).toBe("ready");
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+  // 확인 뒤 현황의 슬롯 입력이 다시 편집으로 전환되어 입력 계층 복구까지 증명한다.
+  const slot = (await page.evaluate(() => window.__PF_DEBUG?.idleExcavationSlots?.[0]))!;
+  await tapGame(page, slot.x, slot.y);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationPopup)).toBe("editing");
+});
+
+test("발굴 보상 팝업은 최대 네 생산 자원을 한 줄에 표시한다", async ({ page }) => {
+  await startAfterOpening(page, (session) => {
+    // 네 생산 재화가 모두 양수인 서버 확정분으로 팝업의 최대 한 줄 계약을 검증한다.
+    session.idleExcavation.unclaimed = { gold: 1, cheesecake: 2, fossil: 3, gems: 4 };
+    session.idleExcavation.lastSettledAt = new Date().toISOString();
+  });
+  await page.locator("canvas").click();
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+  await tapGame(page, 250, BASE_HEIGHT - 445);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationPopup)).toBe("ready");
+  const harvest = await excavationControl(page, "harvest");
+  await tapGame(page, harvest.x, harvest.y);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.rewardPopupItemCount)).toBe(4);
+  await page.screenshot({ path: `test-results/${test.info().project.name}-excavation-four-rewards.png` });
 });
 
 test("설정 탭은 텍스트 확대·스크롤·두 단계 초기화를 좁은 모바일에서 안전하게 처리한다", async ({ page }) => {

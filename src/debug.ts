@@ -43,8 +43,19 @@ export interface DebugState {
   idleExcavationSdReady?: number[];
   /** Canvas 안 광고 버튼의 실제 라벨·사용량·활성 상태만 E2E가 읽는 표시 계약이다. */
   excavationAdOffers?: Array<{ slotId: string; label: string; usage: string; enabled: boolean }>;
+  /** 발굴 팝업의 실제 입력 중심만 노출한다. 재화·편성 내용 없이 레이아웃 변경을 E2E가 따라간다. */
+  idleExcavationControls?: {
+    close: { x: number; y: number };
+    harvest: { x: number; y: number };
+    cancelEdit: { x: number; y: number };
+    ads: Array<{ slotId: string; x: number; y: number }>;
+  };
   /** 지급 확정 뒤 공용 획득 팝업이 입력을 기다리는지 E2E가 확인하는 사용자 가시 상태다. */
   rewardPopup?: boolean;
+  /** 0 지급분이 빠진 뒤 실제 한 줄에 그려진 보상 칸 수만 노출한다. */
+  rewardPopupItemCount?: number;
+  /** 보상 팝업의 넓은 확인 입력면 중심으로, 지급 내용은 포함하지 않는다. */
+  rewardPopupConfirm?: { x: number; y: number };
   /** 재화와 보유 렐릭. 뽑기가 실제로 반영됐는지 확인하는 데 쓴다. */
   wallet?: { fossil: number; amber: number };
   owned?: string[];
@@ -109,9 +120,17 @@ export function setDebugExcavationAdOffers(offers: DebugState["excavationAdOffer
   ensure().excavationAdOffers = offers;
 }
 
-/** 보상 내용은 노출하지 않고 확인 팝업의 열림 여부만 Canvas E2E에 전달한다. */
-export function setDebugRewardPopup(open: boolean): void {
-  ensure().rewardPopup = open || undefined;
+/** 발굴 UI의 렌더 좌표만 복사하며 실제 지갑이나 편성은 의도적으로 받지 않는다. */
+export function setDebugIdleExcavationControls(controls: DebugState["idleExcavationControls"]): void {
+  ensure().idleExcavationControls = controls;
+}
+
+/** 보상 내용은 숨기고 팝업 열림·표시 칸 수·확인 입력점만 Canvas E2E에 전달한다. */
+export function setDebugRewardPopup(open: boolean, itemCount?: number, confirm?: { x: number; y: number }): void {
+  const state = ensure();
+  state.rewardPopup = open || undefined;
+  state.rewardPopupItemCount = open ? itemCount : undefined;
+  state.rewardPopupConfirm = open ? confirm : undefined;
 }
 
 export function setDebugProgress(wallet: { fossil: number; amber: number }, owned: Set<string>): void {

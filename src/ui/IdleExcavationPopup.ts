@@ -5,7 +5,7 @@ import { RELICS } from "../data/relics";
 import { portraitUsesRelicTint, sdAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
 import { tintFor } from "../puppets/tints";
 import { session } from "../state/session";
-import { setDebugExcavationAdOffers, setDebugIdleExcavationPopup, setDebugIdleExcavationSdReady, setDebugIdleExcavationSlots } from "../debug";
+import { setDebugExcavationAdOffers, setDebugIdleExcavationControls, setDebugIdleExcavationPopup, setDebugIdleExcavationSdReady, setDebugIdleExcavationSlots } from "../debug";
 import { Button } from "./Button";
 import { chipPoints, drawHairline, drawLayer, HOLO, slantedRect } from "./holo";
 import { PortraitCard } from "./PortraitCard";
@@ -22,6 +22,7 @@ import { ExcavationCurrencyFrame, formatRate } from "./ExcavationCurrencyFrame";
 import { excavationAdOfferDisplayModel, type ExcavationAdOfferId } from "./excavationAdOfferModel";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { loadOwnedPuppet } from "./statusPuppetLoad";
+import { BACK_SLOT } from "./IconButton";
 
 /** 한 팝업 안에서 현황과 편집 그리드가 교대하므로 모바일 안전 영역을 넘지 않는 고정 크기를 쓴다. */
 const PANEL = { width: 900, height: 1320 } as const;
@@ -35,6 +36,8 @@ const SD_DEPTH = 2001;
 const POPUP_ART_SHAPE = chipPoints(PANEL.width - 24, PANEL.height - 24, { bevel: { topLeft: 118, bottomRight: 118 } });
 /** 좁은 안전 영역에서도 팝업 제목·닫기와 겹치지 않는 현황 히어로의 고정 세로 범위다. */
 const STATUS_HERO = { x: 0, y: -385, width: 800, height: 300, headerY: -570, slotY: -385 } as const;
+/** 팝업 로컬 좌표를 게임 좌표로 바꾸는 디버그 입력 계약이다. */
+const POPUP_CENTER = { x: BASE_WIDTH / 2, y: BASE_HEIGHT / 2 } as const;
 type Formation = IdleExcavationState["assignedRelicIds"];
 
 /** SD 비동기 경계를 테스트에서 성공·실패·지연 완료로 바꿀 수 있게 좁게 주입한다. */
@@ -111,6 +114,16 @@ export class IdleExcavationPopup {
       this.closeAction = close;
       body.setName("idle-excavation-popup");
       this.showMessage("발굴 현황을 정산하고 있습니다…", "loading");
+    });
+    // E2E는 새 레이아웃의 실제 입력 중심을 사용하고 게임 데이터에는 접근하지 않는다.
+    setDebugIdleExcavationControls({
+      close: { ...BACK_SLOT },
+      harvest: { x: POPUP_CENTER.x, y: POPUP_CENTER.y + 545 },
+      cancelEdit: { x: POPUP_CENTER.x - 280, y: POPUP_CENTER.y + 540 },
+      ads: [
+        { slotId: "excavation-harvest", x: POPUP_CENTER.x - 205, y: POPUP_CENTER.y + 385 },
+        { slotId: "excavation-storage", x: POPUP_CENTER.x + 205, y: POPUP_CENTER.y + 385 },
+      ],
     });
     void this.fetch();
   }
@@ -574,6 +587,6 @@ export class IdleExcavationPopup {
     if (this.gridPointerUpHandler) this.scene.input.off("pointerup", this.gridPointerUpHandler);
     this.gridWheelHandler = undefined; this.gridPointerDownHandler = undefined; this.gridPointerMoveHandler = undefined; this.gridPointerUpHandler = undefined;
     this.draft = undefined; this.body = undefined; this.content = undefined; this.closeAction = undefined;
-    setDebugIdleExcavationPopup(undefined); setDebugIdleExcavationSlots(undefined); this.onClosed?.();
+    setDebugIdleExcavationPopup(undefined); setDebugIdleExcavationSlots(undefined); setDebugIdleExcavationControls(undefined); this.onClosed?.();
   }
 }

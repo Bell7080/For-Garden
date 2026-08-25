@@ -20,7 +20,7 @@ export interface IdleExcavationState {
   unclaimed: Record<ExcavationCurrency, number>;
   baseStorageSeconds: number;
   activeProductionMultiplier: number;
-  /** 2배 생산이 끝나는 서버 UTC 시각이며 null이면 기본 속도다. */
+  /** 1.5배 생산이 끝나는 서버 UTC 시각이며 null이면 기본 속도다. */
   productionMultiplierExpiresAt?: string | null;
   storageExtensionExpiresAt: string | null;
   /** 현재 확정 미수확량에만 적용될 다음 수확의 일회성 배율이다. */

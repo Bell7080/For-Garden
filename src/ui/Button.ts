@@ -49,6 +49,8 @@ export interface ButtonOptions {
   label: string;
   /** 아래에 작게 붙는 보조 문구. */
   sub?: string;
+  /** 보조 문구 크기. 낮은 버튼에서도 주 라벨과 위계를 분명히 할 때만 조절한다. */
+  subFontSize?: number;
   fontSize?: number;
   fill?: number;
   /** 라벨 왼쪽에 붙는 선 아이콘. */
@@ -182,8 +184,9 @@ export class Button extends Phaser.GameObjects.Container {
     }
     if (opts.decorDots) plate.add(dotPattern(scene, shape, accent));
     if (hasSub) {
+      // 보조 문구는 본문 굵기를 유지하고 크기만 선택할 수 있어 주 라벨보다 먼저 읽히지 않는다.
       this.subText = scene.add
-        .text(label.x, 26, opts.sub ?? "", textStyle({ role: "body", size: 26, color: primary ? accentText : COLOR.inkDim }))
+        .text(label.x, height * 0.24, opts.sub ?? "", textStyle({ role: "body", size: opts.subFontSize ?? 26, color: primary ? accentText : COLOR.inkDim }))
         .setOrigin(0.5);
       plate.add(this.subText);
     }
@@ -255,6 +258,8 @@ export class Button extends Phaser.GameObjects.Container {
   setEnabled(enabled: boolean): this {
     this.enabledState = enabled;
     this.setAlpha(enabled ? 1 : 0.35);
+    // 비활성 버튼은 흐리기만 하지 않고 hit area와 손 커서도 함께 내려 실제 입력 상태와 맞춘다.
+    if (enabled) this.bg.setInteractive({ useHandCursor: true }); else this.bg.disableInteractive();
     return this;
   }
 }

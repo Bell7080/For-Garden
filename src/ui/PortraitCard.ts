@@ -8,6 +8,7 @@ import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
 import { addStarMark, RARITY_TONE } from "./rarityMark";
 import { COLOR, textStyle } from "./theme";
+import { addBookmarkMark } from "./bookmarkMark";
 
 /** 카드 한 장의 조립 옵션. 크기와 라벨만 주면 나머지 연출은 프리팹이 맞춘다. */
 export interface PortraitCardOptions {
@@ -33,6 +34,8 @@ export interface PortraitCardOptions {
    * 개체가 원래 얼마나 귀한지다. 그래서 색(바탕)과 글자(별)가 서로 다른 값에서 나온다.
    */
   stars?: number;
+  /** 보유 렐릭 즐겨찾기. 한계 돌파 로마자 아래에 전용 별표로만 표시한다. */
+  bookmarked?: boolean;
   /** 미발굴 카드. 원화를 실루엣으로 덮고 이름을 감춘다. */
   locked?: boolean;
   /** 칩 오른쪽 위의 작은 표식. 등급을 주면 그 자리는 로마자 표식이 가져간다. */
@@ -237,6 +240,11 @@ export class PortraitCard extends Phaser.GameObjects.Container {
           .text(width / 2 - CHIP_INSET - 12, -height / 2 + 28, options.badge, textStyle({ role: "emphasis", size: Math.min(20, width / 14), color: COLOR.accentText }))
           .setOrigin(1, 0.5),
       );
+    }
+
+    // 즐겨찾기는 등급 로마자 아래에 별도 표식으로 세워 한계 돌파와 같은 값처럼 읽히지 않게 한다.
+    if (options.bookmarked && !options.locked) {
+      addBookmarkMark(scene, this, width / 2 - CHIP_INSET - 31, -height / 2 + 84, Math.min(30, width / 9));
     }
 
     this.hit = scene.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });

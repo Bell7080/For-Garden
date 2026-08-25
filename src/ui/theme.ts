@@ -16,6 +16,8 @@ export const COLOR = {
   inkDimHex: 0xa9a7a2,
   accent: 0xd8b978,
   accentText: "#d8b978",
+  /** 완료했지만 아직 받지 않은 보상만 쓰는 밝은 호박색 신호다. */
+  missionClaim: 0xe0a83e,
   danger: 0xb03a3a,
   dangerText: "#e07a7a",
   ally: 0x5b86a3,

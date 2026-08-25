@@ -112,7 +112,7 @@ test("방치 발굴 편집은 슬롯 이동·중복 방지·빈 편성 취소를
 test("발굴 수확은 액자 아이콘과 숫자를 공용 획득 팝업으로 확인한다", async ({ page }) => {
   await startAfterOpening(page, (session) => {
     // 서버가 다시 정산해도 보존되는 확정 누적분을 넣어 수확 성공 UI만 안정적으로 검증한다.
-    session.idleExcavation.unclaimed = { gold: 1234, cheesecake: 56 };
+    session.idleExcavation.unclaimed = { gold: 1234, cheesecake: 56, fossil: 0, gems: 0 };
     session.idleExcavation.lastSettledAt = new Date().toISOString();
   });
   await page.locator("canvas").click();

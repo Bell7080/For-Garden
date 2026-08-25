@@ -19,7 +19,7 @@ export const RELICS: RelicDef[] = [
     element: "fire",
     role: "warrior",
     // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
-    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 120, efficiencyMultiplier: 1.10 },
+    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 24, efficiencyMultiplier: 1.10 },
     stats: {
       hp: 820,
       def: 42,
@@ -255,8 +255,8 @@ export const RELICS: RelicDef[] = [
     origin: "도도새",
     element: "wind",
     role: "support",
-    // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
-    excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 7, efficiencyMultiplier: 1.12 },
+    // 다이아는 희소 재화라 1시간 생산량을 1 미만으로 두고 수확 시에만 내림한다.
+    excavationTrait: { primaryCurrency: "gems", baseProductionPerHour: 0.18, efficiencyMultiplier: 1.12 },
     stats: {
       hp: 760,
       def: 48,
@@ -315,7 +315,7 @@ export const RELICS: RelicDef[] = [
     element: "grass",
     role: "assassin",
     // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
-    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 105, efficiencyMultiplier: 1.06 },
+    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 22, efficiencyMultiplier: 1.06 },
     stats: {
       hp: 840,
       def: 56,
@@ -374,7 +374,7 @@ export const RELICS: RelicDef[] = [
     element: "wind",
     role: "support",
     // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
-    excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 9, efficiencyMultiplier: 1.04 },
+    excavationTrait: { primaryCurrency: "gems", baseProductionPerHour: 0.16, efficiencyMultiplier: 1.04 },
     stats: {
       hp: 780,
       def: 44,
@@ -494,7 +494,7 @@ export const RELICS: RelicDef[] = [
     element: "earth",
     role: "tank",
     // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
-    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 85, efficiencyMultiplier: 1.00 },
+    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 20, efficiencyMultiplier: 1.00 },
     stats: {
       hp: 980,
       def: 92,

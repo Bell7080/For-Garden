@@ -5,6 +5,12 @@ import { WALLET_CAPS } from "../data/economy";
 /** 발굴로 생산하는 재화만 좁혀 다른 지갑 키가 실수로 늘지 않게 한다. */
 export type ExcavationCurrency = ExcavationProductionCurrency;
 
+/** 발굴의 모든 초기화·정산·수확이 공유하는 유일한 재화 키 목록이다. */
+export const EXCAVATION_CURRENCIES = ["gold", "cheesecake", "fossil", "gems"] as const satisfies readonly ExcavationCurrency[];
+
+/** 신규 재화 소급 정산을 저장 단위로 한 번만 실행하게 하는 서버 규칙 버전이다. */
+export const RETROACTIVE_EXCAVATION_GRANT_VERSION = 1;
+
 /** JSON으로 그대로 저장할 수 있는 방치 발굴의 단일 상태다. */
 export interface IdleExcavationState {
   /** 세 칸은 위치를 보존하며 빈 칸은 null이다. */
@@ -19,10 +25,18 @@ export interface IdleExcavationState {
   storageExtensionExpiresAt: string | null;
   /** 현재 확정 미수확량에만 적용될 다음 수확의 일회성 배율이다. */
   pendingHarvestMultiplier?: number;
+  /** 서버가 신규 재화 소급 정산을 완료한 규칙 버전이며 클라이언트는 변경하지 않는다. */
+  retroactiveExcavationGrantVersion: number;
 }
 
 /** 레벨 하나와 한계 돌파 한 단계가 주는 명시적인 생산 증가율이다. */
 export const EXCAVATION_GROWTH = { perLevel: 0.02, perBreakthrough: 0.1 } as const;
+
+/** UI의 다이아는 희소하므로 일반 재화보다 레벨/돌파 성장률을 낮게 제한한다. */
+const EXCAVATION_GROWTH_BY_CURRENCY: Readonly<Record<ExcavationCurrency, { perLevel: number; perBreakthrough: number }>> = {
+  gold: EXCAVATION_GROWTH, cheesecake: EXCAVATION_GROWTH, fossil: EXCAVATION_GROWTH,
+  gems: { perLevel: 0.005, perBreakthrough: 0.025 },
+};
 
 /** UI가 공식이나 자원 합계를 복제하지 않고 그대로 표시할 렐릭별 생산 상세다. */
 export interface RelicExcavationProduction {
@@ -74,9 +88,10 @@ export function validateExcavationFormation(assignedRelicIds: IdleExcavationStat
 /** 허용된 성장값만으로 한 렐릭의 시간당 생산 상세를 계산한다. */
 export function relicExcavationProduction(def: RelicDef, progress: Pick<RelicProgress, "level" | "breakthrough">): RelicExcavationProduction {
   const basePerHour = def.excavationTrait.baseProductionPerHour * def.excavationTrait.efficiencyMultiplier;
+  const growth = EXCAVATION_GROWTH_BY_CURRENCY[def.excavationTrait.primaryCurrency];
   // 표시 단계에서도 정산과 같은 소수 정규화를 사용해 UI에 부동소수 오차가 새지 않게 한다.
-  const levelIncreasePerHour = fixedAmount(basePerHour * Math.max(0, progress.level - 1) * EXCAVATION_GROWTH.perLevel);
-  const breakthroughIncreasePerHour = fixedAmount(basePerHour * Math.max(0, progress.breakthrough) * EXCAVATION_GROWTH.perBreakthrough);
+  const levelIncreasePerHour = fixedAmount(basePerHour * Math.max(0, progress.level - 1) * growth.perLevel);
+  const breakthroughIncreasePerHour = fixedAmount(basePerHour * Math.max(0, progress.breakthrough) * growth.perBreakthrough);
   return { relicId: def.id, currency: def.excavationTrait.primaryCurrency, basePerHour: fixedAmount(basePerHour), levelIncreasePerHour, breakthroughIncreasePerHour, totalPerHour: fixedAmount(basePerHour + levelIncreasePerHour + breakthroughIncreasePerHour) };
 }
 
@@ -88,7 +103,7 @@ export function excavationProductionDisplayModel(assignedRelicIds: IdleExcavatio
     // 정의나 성장 정보가 없는 저장 슬롯은 생산하지 않는 빈 슬롯처럼 안전하게 취급한다.
     return definition && progress ? [relicExcavationProduction(definition, progress)] : [];
   });
-  const totalsPerHour: Record<ExcavationCurrency, number> = { gold: 0, cheesecake: 0 };
+  const totalsPerHour = emptyExcavationAmounts();
   // 여러 렐릭의 소수를 더할 때도 표시값을 여섯 자리로 고정한다.
   for (const detail of details) totalsPerHour[detail.currency] = fixedAmount(totalsPerHour[detail.currency] + detail.totalPerHour);
   return { relics: details, totalsPerHour };
@@ -99,7 +114,12 @@ export const STORAGE_EXTENSION_MULTIPLIER = 2;
 
 /** 신규 계정과 구버전 마이그레이션이 공유하는 독립 상태를 만든다. */
 export function createIdleExcavationState(lastSettledAt: string | null = null): IdleExcavationState {
-  return { assignedRelicIds: [null, null, null], lastSettledAt, unclaimed: { gold: 0, cheesecake: 0 }, baseStorageSeconds: 4 * 60 * 60, activeProductionMultiplier: 1, productionMultiplierExpiresAt: null, storageExtensionExpiresAt: null, pendingHarvestMultiplier: 1 };
+  return { assignedRelicIds: [null, null, null], lastSettledAt, unclaimed: emptyExcavationAmounts(), baseStorageSeconds: 4 * 60 * 60, activeProductionMultiplier: 1, productionMultiplierExpiresAt: null, storageExtensionExpiresAt: null, pendingHarvestMultiplier: 1, retroactiveExcavationGrantVersion: RETROACTIVE_EXCAVATION_GRANT_VERSION };
+}
+
+/** 새 Record를 만들어 응답과 저장 상태가 같은 객체를 공유하지 않게 한다. */
+export function emptyExcavationAmounts(): Record<ExcavationCurrency, number> {
+  return Object.fromEntries(EXCAVATION_CURRENCIES.map((currency) => [currency, 0])) as Record<ExcavationCurrency, number>;
 }
 
 /** 부동소수 누적 오차가 정수 지급 경계를 넘지 않도록 소수 여섯 자리로 고정한다. */
@@ -123,15 +143,15 @@ export function settleIdleExcavation(state: IdleExcavationState, serverNow: Date
   const effectiveEndMs = previousMs + elapsedSeconds * 1000;
   const boostedSeconds = Math.max(0, Math.min(effectiveEndMs, speedExpiryMs) - previousMs) / 1000;
   const normalSeconds = elapsedSeconds - boostedSeconds;
-  for (const currency of Object.keys(production) as ExcavationCurrency[]) unclaimed[currency] = fixedAmount(unclaimed[currency] + production[currency] / 3600 * (boostedSeconds * state.activeProductionMultiplier + normalSeconds));
-  return { ...state, lastSettledAt: serverNow.toISOString(), assignedRelicIds: [...state.assignedRelicIds], unclaimed, activeProductionMultiplier: speedExpiryMs > serverNow.getTime() ? state.activeProductionMultiplier : 1, productionMultiplierExpiresAt: speedExpiryMs > serverNow.getTime() ? state.productionMultiplierExpiresAt : null, storageExtensionExpiresAt: extensionActive ? null : state.storageExtensionExpiresAt };
+  for (const currency of EXCAVATION_CURRENCIES) unclaimed[currency] = fixedAmount((unclaimed[currency] ?? 0) + production[currency] / 3600 * (boostedSeconds * state.activeProductionMultiplier + normalSeconds));
+  return { ...state, lastSettledAt: serverNow.toISOString(), assignedRelicIds: [...state.assignedRelicIds], unclaimed, activeProductionMultiplier: speedExpiryMs > serverNow.getTime() ? state.activeProductionMultiplier : 1, productionMultiplierExpiresAt: speedExpiryMs > serverNow.getTime() ? state.productionMultiplierExpiresAt : null, storageExtensionExpiresAt: extensionActive ? null : state.storageExtensionExpiresAt, retroactiveExcavationGrantVersion: RETROACTIVE_EXCAVATION_GRANT_VERSION };
 }
 
 /** 정수 부분만 지갑에 옮기며 지갑 상한 밖의 정수는 버리고 소수 잔량만 보존한다. */
 export function harvestIdleExcavation(state: IdleExcavationState, wallet: Wallet): { state: IdleExcavationState; wallet: Wallet; granted: Record<ExcavationCurrency, number>; discarded: Record<ExcavationCurrency, number> } {
   const nextWallet = { ...wallet }; const unclaimed = { ...state.unclaimed };
-  const granted = { gold: 0, cheesecake: 0 }; const discarded = { gold: 0, cheesecake: 0 };
-  for (const currency of Object.keys(granted) as ExcavationCurrency[]) {
+  const granted = emptyExcavationAmounts(); const discarded = emptyExcavationAmounts();
+  for (const currency of EXCAVATION_CURRENCIES) {
     // Math.floor로 재화별 정수 지급을 고정하고 1 미만 생산분은 다음 수확으로 이월한다.
     const harvestable = Math.floor(unclaimed[currency] * (state.pendingHarvestMultiplier ?? 1)); const room = Math.max(0, WALLET_CAPS[currency] - nextWallet[currency]);
     granted[currency] = Math.min(harvestable, room); discarded[currency] = harvestable - granted[currency];

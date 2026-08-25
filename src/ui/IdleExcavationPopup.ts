@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import type { AdOperationsConfigResponse, AdPresentationResult, AdSlotOperationsDto, GameApi, HarvestExcavationResponse, IdleExcavationResponse } from "../api/contracts";
-import { excavationProductionDisplayModel, placeExcavationRelic, type ExcavationCurrency, type IdleExcavationState } from "../core/idleExcavation";
+import { EXCAVATION_CURRENCIES, excavationProductionDisplayModel, placeExcavationRelic, type ExcavationCurrency, type IdleExcavationState } from "../core/idleExcavation";
 import { formatCurrency } from "../core/formatCurrency";
 import { RELICS } from "../data/relics";
 import { portraitUsesRelicTint, sdAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
@@ -28,8 +28,8 @@ const GRID_VIEW = { left: -370, right: 370, top: -145, bottom: 425, columnGap: 2
 const GRID_DRAG_SLOP = 12;
 /** 팝업 자체는 원화를 품지 않고 현재 청흑색 면과 굵은 액자선으로 로비 배경에서 분리한다. */
 const POPUP_FRAME = chipPoints(PANEL.width - 24, PANEL.height - 24, { bevel: { topLeft: 118, bottomRight: 118 } });
-/** 두 재화 칩은 같은 고정 폭을 공유해 값의 자릿수가 늘어도 하단 요약부의 열이 움직이지 않는다. */
-const SUMMARY_CHIP = { width: 350, height: 108, x: 190 } as const;
+/** 네 재화 칩은 같은 고정 폭을 공유해 값의 자릿수가 늘어도 하단 요약부의 열이 움직이지 않는다. */
+const SUMMARY_CHIP = { width: 180, height: 108, gap: 190 } as const;
 /** 좁은 안전 영역에서도 팝업 제목·닫기와 겹치지 않는 현황 히어로의 고정 세로 범위다. */
 const STATUS_HERO = { x: 0, y: -385, width: 800, height: 300, headerY: -570, slotY: -385 } as const;
 type Formation = IdleExcavationState["assignedRelicIds"];
@@ -38,6 +38,9 @@ type Formation = IdleExcavationState["assignedRelicIds"];
 const EXCAVATION_CURRENCY_ICON: Record<ExcavationCurrency, CurrencyIconKey> = {
   gold: "currency-gold",
   cheesecake: "currency-cheesecake",
+  // UI 명칭 다이아/일반 화석은 실제 Wallet 키 gems/fossil에 대응한다.
+  fossil: "currency-fossil",
+  gems: "currency-gems",
 };
 
 /** 서버 요청을 재시도해도 같은 입력만 한 번 처리하도록 브라우저 난수와 시각을 함께 쓴다. */
@@ -158,7 +161,7 @@ export class IdleExcavationPopup {
     }
     const headerState = this.saving ? "수확 처리 중…" : "발굴 진행 중";
     addSectionTitle(this.scene, -380, STATUS_HERO.headerY, `${headerState} · 배치 ${formation.filter(Boolean).length}/3`, { size: 23, parent: content });
-    content.add(this.scene.add.text(380, STATUS_HERO.headerY, `총 효율  ${formatCurrency(Math.floor(rate.gold))}G · ${formatCurrency(Math.floor(rate.cheesecake))}보급 /시간`, textStyle({ role: "emphasis", size: 19, color: COLOR.accentText })).setOrigin(1, 0.5));
+    content.add(this.scene.add.text(380, STATUS_HERO.headerY, "골드 · 보급 · 화석 · 다이아 생산", textStyle({ role: "emphasis", size: 19, color: COLOR.accentText })).setOrigin(1, 0.5));
     content.add(drawHairline(this.scene, 0, -535, 760, { color: COLOR.accent, alpha: 0.42 }));
     // 2순위 작업 중 SD/슬롯: 현황에서도 칸 자체가 편성 그리드의 유일한 진입점이다.
     const slotCards = this.addSlots(content, formation, false);
@@ -171,8 +174,8 @@ export class IdleExcavationPopup {
     // 공용 CurrencyChip은 아이콘과 가장 큰 누적값만 책임지고, 발굴 전용 보조 라벨이 생산 속도를 설명한다.
     // 3순위 누적 보상: SD 아래에서 현재 수확량과 시간당 생산량을 한 번에 훑는다.
     content.add(drawLayer(this.scene, 0, 30, slantedRect(800, 205), { fill: 0x05070a, alpha: 0.9, edge: COLOR.accent, edgeAlpha: 0.42 }));
-    const rows = (["gold", "cheesecake"] as ExcavationCurrency[]).map((currency, index) => {
-      const x = index === 0 ? -SUMMARY_CHIP.x : SUMMARY_CHIP.x;
+    const rows = EXCAVATION_CURRENCIES.map((currency, index) => {
+      const x = (index - (EXCAVATION_CURRENCIES.length - 1) / 2) * SUMMARY_CHIP.gap;
       const amount = addCurrencyChip(this.scene, x, 5, EXCAVATION_CURRENCY_ICON[currency], { parent: content, width: SUMMARY_CHIP.width, height: SUMMARY_CHIP.height });
       // 이름을 되풀이하지 않고 칩 바로 아래에 같은 단위의 생산 속도만 작게 붙인다.
       content.add(this.scene.add.text(x, 88, `+${formatCurrency(Math.floor(rate[currency]))} /시간`, textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0.5));
@@ -186,10 +189,10 @@ export class IdleExcavationPopup {
       // 틱에서는 CurrencyChip이 돌려준 값 Text만 바꾼다. 이미지와 불투명 요약 레이어는 재생성하지 않는다.
       for (const row of rows) row.amount.setText(formatCurrency(Math.floor(response.excavation.unclaimed[row.currency] + rate[row.currency] * elapsedHours)));
       // 창을 열어 둔 사이 정수 1개가 쌓이는 순간에도 새 조회 없이 버튼 상태만 정확히 갱신한다.
-      const harvestable = (["gold", "cheesecake"] as ExcavationCurrency[]).some((currency) => Math.floor(response.excavation.unclaimed[currency] + rate[currency] * elapsedHours) > 0);
+      const harvestable = EXCAVATION_CURRENCIES.some((currency) => Math.floor(response.excavation.unclaimed[currency] + rate[currency] * elapsedHours) > 0);
       harvestButton?.setEnabled(harvestable && !this.saving);
       // 비활성 이유를 누적 0 또는 가장 빠른 재화의 다음 정수 생산 시각으로 짧게 설명한다.
-      const seconds = (["gold", "cheesecake"] as ExcavationCurrency[]).map((currency) => {
+      const seconds = EXCAVATION_CURRENCIES.map((currency) => {
         const current = response.excavation.unclaimed[currency] + rate[currency] * elapsedHours;
         return rate[currency] > 0 ? Math.max(0, Math.ceil((1 - current) / rate[currency] * 3600)) : Number.POSITIVE_INFINITY;
       });
@@ -201,7 +204,7 @@ export class IdleExcavationPopup {
     this.ticker = this.scene.time.addEvent({ delay: 1000, loop: true, callback: refreshEstimate });
     content.add(drawHairline(this.scene, 0, 180, 760, { color: COLOR.accent, alpha: 0.25 }));
     const result = this.harvestResult;
-    const discarded = result ? result.discarded.gold + result.discarded.cheesecake : 0;
+    const discarded = result ? EXCAVATION_CURRENCIES.reduce((sum, currency) => sum + result.discarded[currency], 0) : 0;
     const notice = this.harvestError ?? (discarded > 0 ? "수확 완료 · 지갑 상한 손실" : result ? "수확이 완료되었습니다." : "빈 슬롯은 허용되며 생산량 0으로 계산됩니다.");
     content.add(this.scene.add.text(0, 250, notice, textStyle({ role: "body", size: 21, color: discarded > 0 || this.harvestError ? COLOR.dangerText : COLOR.inkDim, align: "center" })).setOrigin(0.5));
     this.addAdOffers(content, response.serverTime);
@@ -214,7 +217,7 @@ export class IdleExcavationPopup {
       // 서버 확정 지급분만 공용 획득 팝업에 넘긴다. 지갑 상한 손실은 현황 경고로 남기고 보상처럼 꾸미지 않는다.
       openRewardPopup(this.scene, this.popups, {
         title: "발굴 보상 획득",
-        items: (["gold", "cheesecake"] as ExcavationCurrency[]).map((currency) => ({
+        items: EXCAVATION_CURRENCIES.map((currency) => ({
           icon: EXCAVATION_CURRENCY_ICON[currency],
           amount: result.granted[currency],
         })),

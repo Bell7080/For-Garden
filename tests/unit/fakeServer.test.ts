@@ -469,3 +469,41 @@ describe("FakeServer 광고 보상 경계", () => {
     expect(state.idleExcavation.storageExtensionExpiresAt).toBe("2026-08-22T20:00:00.000Z");
   });
 });
+
+/** 원정 임시 보상과 빠른 원정은 서버 소유 값만으로 원자 지급된다. */
+describe("FakeServer 원정 정산", () => {
+  it("지갑 상한까지 한 번만 정산하고 다른 정산 ID의 중복 지급을 막는다", async () => {
+    const state = makeSession();
+    state.wallet.gold = 999_999_998;
+    const manager = new (await import("../../src/managers/ExpeditionManager")).ExpeditionManager(state, { save: () => undefined }, () => new Date("2026-08-25T12:00:00Z"));
+    const started = manager.start(["anky", "rex", "dodo"]); expect(started.ok).toBe(true);
+    state.expedition.run!.pendingRewards = { gold: 50, fossil: 7 };
+    const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-25T12:00:00Z") });
+    const first = await server.settleExpeditionRun({ runId: state.expedition.run!.runId, settlementId: "settlement-1", outcome: "abandoned" });
+    expect(first.granted).toEqual({ gold: 1, fossil: 7 }); expect(state.expedition.run).toMatchObject({ settled: true, settlementId: "settlement-1", pendingRewards: {} });
+    await expect(server.settleExpeditionRun({ runId: first.runId, settlementId: "settlement-2", outcome: "completed" })).rejects.toMatchObject({ code: "EXPEDITION_ALREADY_SETTLED" });
+    expect(state.wallet).toMatchObject({ gold: 999_999_999, fossil: 1007 });
+  });
+
+  it("기준 점수가 없으면 비활성·무보상이고 서버 최고 점수 비율과 일일 제한을 적용한다", async () => {
+    const state = makeSession(); let now = new Date("2026-08-25T12:00:00Z");
+    const server = new FakeServer(state, { latencyMs: 0, now: () => now });
+    expect((await server.getAdOperationsConfig()).slots.find(({ slotId }) => slotId === "quick-expedition")?.enabled).toBe(false);
+    await expect(server.claimAdReward({ slotId: "quick-expedition", verificationToken: "failed", requestId: "quick-fail" })).rejects.toMatchObject({ code: "AD_TOKEN_INVALID" });
+    expect(state.wallet.gold).toBe(0);
+    await server.submitExpeditionBossScore({ requestId: "quick-score", actions: Array.from({ length: 10 }, (_, second) => ["anky", "rex", "dodo"].map((actorId) => ({ elapsedMs: second * 1_000, actorId, kind: "basic" as const }))).flat() });
+    const reference = (await server.getExpeditionWeeklyBest()).bestScore;
+    await server.claimAdReward({ slotId: "quick-expedition", verificationToken: "verified:quick-expedition", requestId: "quick-1" });
+    await server.claimAdReward({ slotId: "quick-expedition", verificationToken: "verified:quick-expedition", requestId: "quick-2" });
+    expect(state.wallet.gold).toBe(Math.floor(reference * 0.25) * 2);
+    await expect(server.claimAdReward({ slotId: "quick-expedition", verificationToken: "verified:quick-expedition", requestId: "quick-3" })).rejects.toMatchObject({ code: "AD_DAILY_LIMIT" });
+    // 같은 UTC 주의 다음 날짜에도 누적 다섯 번을 넘을 수 없다.
+    now = new Date("2026-08-26T12:00:00Z");
+    await server.claimAdReward({ slotId: "quick-expedition", verificationToken: "verified:quick-expedition", requestId: "quick-3" });
+    await server.claimAdReward({ slotId: "quick-expedition", verificationToken: "verified:quick-expedition", requestId: "quick-4" });
+    now = new Date("2026-08-27T12:00:00Z");
+    await server.claimAdReward({ slotId: "quick-expedition", verificationToken: "verified:quick-expedition", requestId: "quick-5" });
+    await expect(server.claimAdReward({ slotId: "quick-expedition", verificationToken: "verified:quick-expedition", requestId: "quick-6" })).rejects.toMatchObject({ code: "AD_WEEKLY_LIMIT" });
+    expect(state.wallet.gold).toBe(Math.floor(reference * 0.25) * 5);
+  });
+});

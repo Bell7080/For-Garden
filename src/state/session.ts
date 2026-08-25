@@ -77,6 +77,8 @@ export interface ExpeditionRelicState { relicId: string; currentHp: number; aliv
 
 /** 앱 재실행 뒤에도 한 노드 단위로 그대로 이어갈 수 있는 완전한 원정 런이다. */
 export interface ExpeditionRunState {
+  /** 서버가 발급한 런 고유 키다. */
+  runId: string;
   weekKey: string;
   mapSeed: string;
   nodes: ExpeditionMapNode[];
@@ -92,6 +94,8 @@ export interface ExpeditionRunState {
   bossDamage: number;
   bestScore: number;
   settled: boolean;
+  /** 성공한 정산 요청의 고유 키이며 null이면 아직 지갑 이전 전이다. */
+  settlementId: string | null;
 }
 
 /** 주간 교체와 이어하기를 한 경계에서 판정하기 위한 공개 원정 상태다. */

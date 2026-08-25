@@ -121,7 +121,8 @@ test("발굴 수확은 액자 아이콘과 숫자를 공용 획득 팝업으로 
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationPopup)).toBe("ready");
 
   // 수확 성공 뒤 별도 확인 팝업이 열리고, 본문 아무 곳이나 누르면 발굴 현황으로 즉시 돌아온다.
-  await tapGame(page, BASE_WIDTH / 2 + 205, BASE_HEIGHT / 2 + 515);
+  // 현황 재배치에서 주요 수확 버튼이 하단 중앙으로 합쳐졌으므로 실제 입력 좌표도 같이 고정한다.
+  await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2 + 545);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.rewardPopup)).toBe(true);
   await page.screenshot({ path: `test-results/${test.info().project.name}-excavation-reward-popup.png` });
   await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);

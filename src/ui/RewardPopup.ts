@@ -20,8 +20,8 @@ export interface RewardPopupOptions {
   onConfirm?: () => void;
 }
 
-/** 최대 세 개 보상을 한 줄에 놓아 모바일에서도 액자와 숫자가 먼저 읽히게 하는 고정 규격이다. */
-const REWARD_POPUP = { width: 760, height: 610, frame: 190, gap: 230 } as const;
+/** 최대 세 개 보상을 한 줄에 놓아 모바일에서도 액자와 숫자가 먼저 읽히게 하는 간결한 고정 규격이다. */
+const REWARD_POPUP = { width: 720, height: 500, frame: 170, gap: 210 } as const;
 
 /**
  * 서버에서 이미 지급이 확정된 결과를 짧게 확인시키는 공용 팝업이다.
@@ -41,7 +41,8 @@ export function openRewardPopup(scene: Phaser.Scene, popups: PopupLayer, options
     width: REWARD_POPUP.width,
     height: REWARD_POPUP.height,
     title: options.title ?? "획득 보상",
-    dim: true,
+    // 확인 영수증은 선택을 막는 모달이 아니므로, 발굴장 배경과 작업 중 SD를 두 번 어둡게 덮지 않는다.
+    dim: false,
     closeOnBackdrop: true,
     onClose: () => {
       setDebugRewardPopup(false);
@@ -55,16 +56,16 @@ export function openRewardPopup(scene: Phaser.Scene, popups: PopupLayer, options
       const frame = chipPoints(REWARD_POPUP.frame, REWARD_POPUP.frame, {
         bevel: { topLeft: 34, topRight: 0, bottomRight: 34, bottomLeft: 0 },
       });
-      body.add(drawLayer(scene, x, -45, frame, { fill: 0x101722, alpha: 0.98 }));
-      body.add(scene.add.image(x, -45, item.icon).setDisplaySize(142, 142));
-      body.add(drawInnerVignette(scene, x, -45, frame, { strength: 0.48 }));
-      body.add(drawShapeOutline(scene, x, -45, frame, { color: COLOR.accent, alpha: 0.82, width: 3 }));
-      body.add(scene.add.text(x, 105, `+${formatCurrency(item.amount)}`, textStyle({ role: "display", size: 42, color: COLOR.accentText })).setOrigin(0.5));
-      if (item.label) body.add(scene.add.text(x, 154, item.label, textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0.5));
+      body.add(drawLayer(scene, x, -35, frame, { fill: 0x101722, alpha: 0.98 }));
+      body.add(scene.add.image(x, -35, item.icon).setDisplaySize(124, 124));
+      body.add(drawInnerVignette(scene, x, -35, frame, { strength: 0.48 }));
+      body.add(drawShapeOutline(scene, x, -35, frame, { color: COLOR.accent, alpha: 0.82, width: 3 }));
+      body.add(scene.add.text(x, 92, `+${formatCurrency(item.amount)}`, textStyle({ role: "display", size: 38, color: COLOR.accentText })).setOrigin(0.5));
+      if (item.label) body.add(scene.add.text(x, 132, item.label, textStyle({ role: "body", size: 19, color: COLOR.inkDim })).setOrigin(0.5));
     });
 
-    body.add(drawHairline(scene, 0, 205, 610, { color: COLOR.accent, alpha: 0.3 }));
-    body.add(scene.add.text(0, 248, "화면을 눌러 확인", textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0.5));
+    body.add(drawHairline(scene, 0, 155, 570, { color: COLOR.accent, alpha: 0.3 }));
+    body.add(scene.add.text(0, 194, "화면을 눌러 확인", textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0.5));
 
     // 가장 위의 투명 입력면이 아이콘과 문구까지 포함하므로 팝업 안 어느 위치를 눌러도 확인된다.
     body.add(scene.add.rectangle(0, 0, REWARD_POPUP.width, REWARD_POPUP.height, 0xffffff, 0).setInteractive({ useHandCursor: true }).on("pointerup", close));

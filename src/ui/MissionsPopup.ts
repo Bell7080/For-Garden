@@ -11,6 +11,7 @@ import { RewardFrame } from "./RewardFrame";
 import { openRewardPopup } from "./RewardPopup";
 import { COLOR, textStyle } from "./theme";
 import { MissionClaimController, missionDisplayModel } from "./missionsPopupModel";
+import { MISSIONS_POPUP_LAYOUT } from "./missionsPopupLayout";
 
 /** 로비 씬을 유지한 채 일일·주간 임무와 실제 확정 보상을 표시하는 공용 작업판이다. */
 export class MissionsPopup {
@@ -30,12 +31,14 @@ export class MissionsPopup {
 
   open(): void {
     if (this.body) return;
-    this.popups.open({ width: BASE_WIDTH - 70, height: BASE_HEIGHT - 210, title: "임무 기록", dim: true, dimAlpha: 0.72, onClose: () => { this.destroyContent(); this.body = undefined; this.onClose?.(); } }, (body) => {
+    const { popup, header, tabs, footer } = MISSIONS_POPUP_LAYOUT;
+    this.popups.open({ width: BASE_WIDTH - popup.widthInset, height: BASE_HEIGHT - popup.heightInset, title: "임무 기록", dim: true, dimAlpha: 0.72, onClose: () => { this.destroyContent(); this.body = undefined; this.onClose?.(); } }, (body) => {
       this.body = body;
-      this.status = this.scene.add.text(450, -770, "동기화 중", textStyle({ role: "body", size: 23, color: COLOR.inkDim })).setOrigin(1, 0); body.add(this.status);
-      body.add(new Button(this.scene, -245, -665, { width: 420, height: 82, label: "일일", onClick: () => this.select("daily") }));
-      body.add(new Button(this.scene, 245, -665, { width: 420, height: 82, label: "주간", onClick: () => this.select("weekly") }));
-      body.add(new Button(this.scene, 0, 720, { width: 650, height: 105, label: "완료 보상 일괄 수령", variant: "primary", onClick: () => void this.claimAll() }));
+      // 헤더 상태는 우측 기준, 탭은 그 아래 한 줄, 하단 수령 버튼은 목록과 분리된 고정 기준점이다.
+      this.status = this.scene.add.text(header.statusX, header.statusY, "동기화 중", textStyle({ role: "body", size: 23, color: COLOR.inkDim })).setOrigin(1, 0); body.add(this.status);
+      body.add(new Button(this.scene, -tabs.centerX, tabs.centerY, { width: tabs.width, height: tabs.height, label: "일일", onClick: () => this.select("daily") }));
+      body.add(new Button(this.scene, tabs.centerX, tabs.centerY, { width: tabs.width, height: tabs.height, label: "주간", onClick: () => this.select("weekly") }));
+      body.add(new Button(this.scene, 0, footer.buttonY, { width: footer.buttonWidth, height: footer.buttonHeight, label: "완료 보상 일괄 수령", variant: "primary", onClick: () => void this.claimAll() }));
       void this.refresh();
     });
   }
@@ -50,8 +53,10 @@ export class MissionsPopup {
     this.list = this.scene.add.container(0, 0); this.body.add(this.list);
     this.renderResearch();
     this.missions.filter((mission) => mission.period === this.period).forEach((raw, index) => {
-      const mission = missionDisplayModel(raw); const y = -350 + index * 190;
-      const panel = drawLayer(this.scene, 0, y, chipPoints(900, 150, { bevel: { topLeft: 28, topRight: 0, bottomRight: 28, bottomLeft: 0 } }), { fill: mission.claimed ? 0x171b20 : mission.claimable ? 0x3b2b13 : 0x1a1f27, alpha: mission.claimed ? 0.52 : HOLO.glass, edge: mission.claimable ? COLOR.missionClaim : COLOR.accent, edgeAlpha: mission.claimed ? 0.16 : 0.55 });
+      const { list } = MISSIONS_POPUP_LAYOUT;
+      // 첫 카드는 연구도 라벨 아래 고정 여백을 두고 시작하며 이후 카드는 같은 간격으로 흐른다.
+      const mission = missionDisplayModel(raw); const y = list.firstCardY + index * list.cardGap;
+      const panel = drawLayer(this.scene, 0, y, chipPoints(list.cardWidth, list.cardHeight, { bevel: { topLeft: 28, topRight: 0, bottomRight: 28, bottomLeft: 0 } }), { fill: mission.claimed ? 0x171b20 : mission.claimable ? 0x3b2b13 : 0x1a1f27, alpha: mission.claimed ? 0.52 : HOLO.glass, edge: mission.claimable ? COLOR.missionClaim : COLOR.accent, edgeAlpha: mission.claimed ? 0.16 : 0.55 });
       const title = this.scene.add.text(-400, y - 52, mission.title, textStyle({ role: "emphasis", size: 28, color: mission.claimed ? COLOR.inkDim : COLOR.ink })).setOrigin(0, 0);
       const bar = new HoloBar(this.scene, -390, y + 35, 520, 18, { color: mission.claimable ? COLOR.missionClaim : COLOR.accent }).addTo(this.list!); bar.setValue(mission.ratio); this.bars.push(bar);
       // 진행 수는 게이지 끝에 바로 붙여 시선이 카드 반대편까지 왕복하지 않게 한다.
@@ -61,22 +66,23 @@ export class MissionsPopup {
       const reward = new RewardFrame(this.scene, 365, y, { icon: "currency-cheesecake", amount: mission.rewardCheesecake, size: 116, state: mission.state, onClick: mission.claimable ? () => void this.claimOne(mission.id) : undefined });
       const state = this.scene.add.text(275, y + 60, mission.claimed ? "수령 완료" : mission.claimable ? "수령 가능" : "진행 중", textStyle({ role: "body", size: 19, color: mission.claimable ? "#ffbf66" : COLOR.inkDim })).setOrigin(0.5, 0);
       this.list?.add([panel, title, progress, research, reward, state]);
-      if (mission.claimable) { const hit = this.scene.add.rectangle(0, y, 900, 150, 0xffffff, 0).setInteractive({ useHandCursor: true }); hit.on("pointerup", () => void this.claimOne(mission.id)); this.list?.add(hit); this.list?.bringToTop(reward); }
+      if (mission.claimable) { const hit = this.scene.add.rectangle(0, y, list.cardWidth, list.cardHeight, 0xffffff, 0).setInteractive({ useHandCursor: true }); hit.on("pointerup", () => void this.claimOne(mission.id)); this.list?.add(hit); this.list?.bringToTop(reward); }
     });
   }
 
-  /** 탭 바로 아래에 HoloBar와 여섯 개 액자를 겹쳐 임계값을 실제 마디로 읽히게 한다. */
+  /** 탭 아래 안전 여백부터 HoloBar와 여섯 개 액자를 겹쳐 임계값을 실제 마디로 읽히게 한다. */
   private renderResearch(): void {
     const research = this.research?.[this.period]; if (!research || !this.list) return;
-    const x = -390; const y = -535; const width = 780;
-    const bar = new HoloBar(this.scene, x, y, width, 24, { color: COLOR.missionClaim }).addTo(this.list); bar.setValue(research.points / Math.max(1, research.maxPoints)); this.bars.push(bar);
-    this.list.add(this.scene.add.text(-440, y + 56, `연구도 ${research.points}/${research.maxPoints}`, textStyle({ role: "emphasis", size: 23, color: COLOR.ink })).setOrigin(0, 0.5));
+    const { research: layout } = MISSIONS_POPUP_LAYOUT;
+    // 연구도 기준점은 게이지 중심이며 액자는 위쪽, 라벨은 아래쪽에 같은 간격으로 매단다.
+    const bar = new HoloBar(this.scene, layout.barX, layout.barY, layout.barWidth, layout.barHeight, { color: COLOR.missionClaim, outline: true }).addTo(this.list); bar.setValue(research.points / Math.max(1, research.maxPoints)); this.bars.push(bar);
+    this.list.add(this.scene.add.text(layout.labelX, layout.barY + layout.labelOffsetY, `연구도 ${research.points}/${research.maxPoints}`, textStyle({ role: "emphasis", size: 23, color: COLOR.ink })).setOrigin(0, 0.5));
     research.stages.forEach((stage) => {
-      const stageX = x + width * (stage.threshold / research.maxPoints);
+      const stageX = layout.barX + layout.barWidth * (stage.threshold / research.maxPoints);
       // 세로 눈금이 게이지 홈을 끊어 각 임계값이 별개의 마디로 보이게 한다.
-      this.list?.add(this.scene.add.rectangle(stageX, y, 3, 36, 0x0b1018, 0.95));
+      this.list?.add(this.scene.add.rectangle(stageX, layout.barY, 3, 36, 0x0b1018, 0.95));
       const state = stage.claimed ? "claimed" : stage.achieved ? "claimable" : "normal";
-      const frame = new RewardFrame(this.scene, stageX, y - 70, { icon: "currency-cheesecake", amount: stage.rewardCheesecake, size: 82, state, onClick: stage.achieved && !stage.claimed ? () => void this.claimStage(stage.id) : undefined });
+      const frame = new RewardFrame(this.scene, stageX, layout.barY + layout.frameOffsetY, { icon: "currency-cheesecake", amount: stage.rewardCheesecake, size: layout.frameSize, state, onClick: stage.achieved && !stage.claimed ? () => void this.claimStage(stage.id) : undefined });
       this.list?.add(frame);
     });
   }

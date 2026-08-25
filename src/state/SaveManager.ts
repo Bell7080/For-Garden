@@ -26,7 +26,7 @@ function migrateV12Rune(definitionId: string): RuneInstance {
 
 /** 키는 계정 연동 저장소와 충돌하지 않도록 로컬 프로토타입임을 명시한다. */
 export const SAVE_STORAGE_KEY = "eternal-city.local-save";
-export const CURRENT_SAVE_VERSION = 20;
+export const CURRENT_SAVE_VERSION = 21;
 
 type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
@@ -89,7 +89,7 @@ export class SaveManager {
       runeInventory: state.runeInventory.map(cloneRune),
       dailyContent: { ...state.dailyContent, completedIds: [...state.dailyContent.completedIds], claimedRewardIds: [...state.dailyContent.claimedRewardIds] },
       // 임무 진행 객체와 수령 배열도 호출자가 저장 후 바꾸지 못하도록 복사한다.
-      missions: { ...state.missions, progress: { ...state.missions.progress }, claimedIds: [...state.missions.claimedIds] },
+      missions: { ...state.missions, progress: { ...state.missions.progress }, claimedIds: [...state.missions.claimedIds], researchPoints: { ...state.missions.researchPoints }, claimedResearchStageIds: [...state.missions.claimedResearchStageIds] },
       // 구매 제한도 지급과 같은 저장 단위에 포함해 재실행으로 제한이 풀리지 않게 한다.
       productPurchases: Object.fromEntries(Object.entries(state.productPurchases).map(([id, value]) => [id, { ...value }])),
       // 광고 검증 토큰은 제외하고 UTC 일자·횟수·멱등 ID만 독립 복사한다.
@@ -152,7 +152,8 @@ export class SaveManager {
     const dailyContent = { date: savedDaily?.date ?? "", restorationEntries: savedDaily?.restorationEntries ?? 0, completedIds: savedDaily?.completedIds ?? [], claimedRewardIds: savedDaily?.claimedRewardIds ?? [] };
     // 임무 도입 전 저장은 기간 키가 비어 있어 다음 서버 접근에서 현재 UTC 기간으로 정규화된다.
     const savedMissions = legacy.missions as Partial<SaveData["missions"]> | undefined;
-    const missions = { dailyKey: savedMissions?.dailyKey ?? "", weeklyKey: savedMissions?.weeklyKey ?? "", progress: savedMissions?.progress ?? {}, claimedIds: savedMissions?.claimedIds ?? [] };
+    // 구버전 저장은 이미 완료된 임무를 다시 연구도로 환산하지 않고 0에서 안전하게 시작한다.
+    const missions = { dailyKey: savedMissions?.dailyKey ?? "", weeklyKey: savedMissions?.weeklyKey ?? "", progress: savedMissions?.progress ?? {}, claimedIds: savedMissions?.claimedIds ?? [], researchPoints: savedMissions?.researchPoints ?? { daily: 0, weekly: 0 }, claimedResearchStageIds: savedMissions?.claimedResearchStageIds ?? [] };
     // 상품 도입 전 저장에는 구매 이력이 없으므로 빈 기록으로 안전하게 시작한다.
     const productPurchases = legacy.productPurchases && typeof legacy.productPurchases === "object" ? legacy.productPurchases : {};
     // v16 이전 저장은 광고를 한 번도 받지 않은 상태에서 안전하게 시작한다.
@@ -209,7 +210,7 @@ export class SaveManager {
     const itemInventory = Array.isArray(legacy.itemInventory) ? legacy.itemInventory : [];
     const { ownedHeartGemIds: _oldOwned, runeSlotsByRelicId: _oldSlots, ...current } = legacy;
     if (legacy.saveVersion === undefined) return { ...current, idleExcavation, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory } as unknown as SaveData;
-    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, CURRENT_SAVE_VERSION];
+    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, CURRENT_SAVE_VERSION];
     if (!supported.includes(legacy.saveVersion as number)) throw new SaveDataError(`지원하지 않는 저장 버전입니다: ${String(legacy.saveVersion)}`);
     return { ...current, idleExcavation, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory } as unknown as SaveData;
   }
@@ -255,7 +256,7 @@ export class SaveManager {
     const equipped = Object.values(data.relicProgress).flatMap(({ heartGemSlots }) => heartGemSlots.filter((id): id is string => id !== null));
     if (equipped.some((id) => !runeIds.includes(id)) || new Set(equipped).size !== equipped.length) fail("룬 장착 소유권 또는 중복이 올바르지 않습니다.");
     if (!data.dailyContent || typeof data.dailyContent.date !== "string" || !Number.isInteger(data.dailyContent.restorationEntries) || data.dailyContent.restorationEntries < 0 || data.dailyContent.restorationEntries > 3 || !Array.isArray(data.dailyContent.completedIds) || !Array.isArray(data.dailyContent.claimedRewardIds)) fail("일일 콘텐츠 정보가 올바르지 않습니다.");
-    if (!data.missions || typeof data.missions.dailyKey !== "string" || typeof data.missions.weeklyKey !== "string" || !data.missions.progress || typeof data.missions.progress !== "object" || Object.values(data.missions.progress).some((value) => !Number.isInteger(value) || value < 0) || !Array.isArray(data.missions.claimedIds) || new Set(data.missions.claimedIds).size !== data.missions.claimedIds.length) fail("임무 진행 정보가 올바르지 않습니다.");
+    if (!data.missions || typeof data.missions.dailyKey !== "string" || typeof data.missions.weeklyKey !== "string" || !data.missions.progress || typeof data.missions.progress !== "object" || Object.values(data.missions.progress).some((value) => !Number.isInteger(value) || value < 0) || !Array.isArray(data.missions.claimedIds) || new Set(data.missions.claimedIds).size !== data.missions.claimedIds.length || !data.missions.researchPoints || [data.missions.researchPoints.daily, data.missions.researchPoints.weekly].some((value) => !Number.isInteger(value) || value < 0 || value > 120) || !Array.isArray(data.missions.claimedResearchStageIds) || data.missions.claimedResearchStageIds.some((id) => typeof id !== "string") || new Set(data.missions.claimedResearchStageIds).size !== data.missions.claimedResearchStageIds.length) fail("임무 진행 정보가 올바르지 않습니다.");
     if (!data.productPurchases || typeof data.productPurchases !== "object" || Object.values(data.productPurchases).some((value) => typeof value.periodKey !== "string" || !Number.isInteger(value.count) || value.count < 0)) fail("상품 구매 제한 정보가 올바르지 않습니다.");
     const adLimits = Object.fromEntries(AD_REWARD_SLOTS.map(({ id, dailyLimitUtc }) => [id, dailyLimitUtc]));
     // 삭제/변조된 슬롯과 정적 UTC 제한을 넘긴 저장은 서버 지급 이력으로 신뢰하지 않는다.
@@ -275,7 +276,7 @@ export class SaveManager {
       runeInventory: data.runeInventory.map(cloneRune),
       gachaPityByGroup: Object.fromEntries(Object.entries(data.gachaPityByGroup).map(([id, pity]) => [id, { ...pity }])),
       dailyContent: { ...data.dailyContent, completedIds: [...data.dailyContent.completedIds], claimedRewardIds: [...data.dailyContent.claimedRewardIds] },
-      missions: { ...data.missions, progress: { ...data.missions.progress }, claimedIds: [...data.missions.claimedIds] },
+      missions: { ...data.missions, progress: { ...data.missions.progress }, claimedIds: [...data.missions.claimedIds], researchPoints: { ...data.missions.researchPoints }, claimedResearchStageIds: [...data.missions.claimedResearchStageIds] },
       productPurchases: Object.fromEntries(Object.entries(data.productPurchases).map(([id, value]) => [id, { ...value }])),
       dailyAdRewards: { ...data.dailyAdRewards, claimsBySlot: { ...data.dailyAdRewards.claimsBySlot }, requestIds: [...data.dailyAdRewards.requestIds] },
     };

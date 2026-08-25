@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyMissionEvent, MISSIONS, missionPeriodKeys, normalizeMissions, type MissionState } from "../../src/core/missions";
+import { applyMissionEvent, claimResearchStages, MISSIONS, missionPeriodKeys, normalizeMissions, type MissionState } from "../../src/core/missions";
 
 /** 기간 경계 테스트가 공유하는 직렬화 가능한 진행 스냅샷이다. */
 const progressed = (): MissionState => ({
@@ -7,6 +7,8 @@ const progressed = (): MissionState => ({
   weeklyKey: "2026-08-17",
   progress: { "daily-battle": 1, "weekly-battle": 3 },
   claimedIds: ["daily-battle"],
+  researchPoints: { daily: 20, weekly: 60 },
+  claimedResearchStageIds: ["daily:research-20"],
 });
 
 describe("mission rules", () => {
@@ -26,7 +28,7 @@ describe("mission rules", () => {
 
   it("성공한 도메인 이벤트만 목표 상한까지 관련 일일·주간 임무에 반영한다", () => {
     const now = new Date("2026-08-20T12:00:00Z");
-    let state: MissionState = { dailyKey: "", weeklyKey: "", progress: {}, claimedIds: [] };
+    let state: MissionState = { dailyKey: "", weeklyKey: "", progress: {}, claimedIds: [], researchPoints: { daily: 0, weekly: 0 }, claimedResearchStageIds: [] };
     state = applyMissionEvent(state, { type: "battle_completed", victory: false }, now);
     expect(state.progress).toEqual({});
     for (let count = 0; count < 8; count += 1) state = applyMissionEvent(state, { type: "battle_completed", victory: true }, now);
@@ -35,10 +37,26 @@ describe("mission rules", () => {
 
   it("연구소 캐릭터 연구 이벤트만 기존 발굴 저장 ID의 임무를 올린다", () => {
     const now = new Date("2026-08-20T12:00:00Z");
-    const state: MissionState = { dailyKey: "", weeklyKey: "", progress: {}, claimedIds: [] };
+    const state: MissionState = { dailyKey: "", weeklyKey: "", progress: {}, claimedIds: [], researchPoints: { daily: 0, weekly: 0 }, claimedResearchStageIds: [] };
     const next = applyMissionEvent(state, { type: "relic_research_completed", count: 3 }, now);
     // ID는 마이그레이션 없이 유지하고 사용자 제목만 방치 발굴과 구별한다.
     expect(MISSIONS.find((mission) => mission.id === "daily-excavate")?.title).toBe("연구소 캐릭터 연구 1회");
     expect(next.progress).toMatchObject({ "daily-excavate": 1, "weekly-excavate": 3 });
+  });
+
+  it("임계값에 정확히 도달한 완료 전이에서만 연구도를 한 번 확정한다", () => {
+    const now = new Date("2026-08-20T12:00:00Z");
+    let state: MissionState = { dailyKey: "2026-08-20", weeklyKey: "2026-08-17", progress: {}, claimedIds: [], researchPoints: { daily: 0, weekly: 0 }, claimedResearchStageIds: [] };
+    state = applyMissionEvent(state, { type: "battle_completed", victory: true }, now);
+    expect(state.researchPoints).toEqual({ daily: 20, weekly: 0 });
+    state = applyMissionEvent(state, { type: "battle_completed", victory: true }, now);
+    expect(state.researchPoints.daily).toBe(20);
+  });
+
+  it("여러 임무가 동시에 완료되면 통과한 여러 연구도 단계를 한 번씩 수령한다", () => {
+    const state: MissionState = { dailyKey: "2026-08-20", weeklyKey: "2026-08-17", progress: {}, claimedIds: [], researchPoints: { daily: 80, weekly: 0 }, claimedResearchStageIds: [] };
+    const first = claimResearchStages(state, "daily");
+    expect(first.claimedStageIds).toEqual(["research-20", "research-40", "research-60", "research-80"]);
+    expect(claimResearchStages(first.state, "daily").cheesecakeEarned).toBe(0);
   });
 });

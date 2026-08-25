@@ -171,7 +171,8 @@ export function createDefaultSession(): Session {
     // 신규 계정은 정적 정의 ID가 아니라 서버 지급 계약을 통해 룬 인스턴스를 얻는다.
     runeInventory: [],
     dailyContent: { date: "", restorationEntries: 0, completedIds: [], claimedRewardIds: [] },
-    missions: { dailyKey: "", weeklyKey: "", progress: {}, claimedIds: [] },
+    // 기간별 연구도와 단계 수령 기록은 임무 수령 기록과 독립적으로 초기화한다.
+    missions: { dailyKey: "", weeklyKey: "", progress: {}, claimedIds: [], researchPoints: { daily: 0, weekly: 0 }, claimedResearchStageIds: [] },
     productPurchases: {},
     // 검증 토큰은 일회성 서버 입력이므로 신규 저장에는 일일 카운터만 둔다.
     dailyAdRewards: { date: "", claimsBySlot: {}, requestIds: [] },

@@ -5,7 +5,7 @@ import { AD_REWARD_SLOTS, findAdRewardSlot, type AdReward } from "../data/adRewa
 import { consumeRestorationEntry, normalizeDailyContent } from "../core/dailyContent";
 import { BREAKTHROUGH_CAP, canBreakThrough, canFeedRelic, feedRelic as calculateFeed, FEED_UNIT, nextBreakthrough, relicLevelCap, RELIC_STAR_CAP, relicStars } from "../core/relicProgression";
 import { BOND_XP_REWARD, grantBondXp, grantDailyLobbyBondXp } from "../core/bond";
-import { MISSIONS, applyMissionEvent, claimableMissionIds, normalizeMissions } from "../core/missions";
+import { MAX_RESEARCH_POINTS, MISSIONS, RESEARCH_REWARD_STAGES, applyMissionEvent, claimResearchStages, claimableMissionIds, normalizeMissions, researchStageClaimId, type MissionPeriod } from "../core/missions";
 import { DAILY_RESTORATION, getStage } from "../data/stages";
 import { createInitialRelicProgress, session, type Session } from "../state/session";
 import { saveManager } from "../state/SaveManager";
@@ -408,7 +408,7 @@ export class FakeServer implements GameApi {
     // 기간 전환 자체도 재실행 뒤 되살아나지 않도록 서버 상태에 확정한다.
     this.persist({ ...this.state, missions: normalized });
     this.state.missions = normalized;
-    return { missions: this.missionDtos(), claimableCount: claimableMissionIds(normalized).length };
+    return this.missionListDto(normalized);
   }
 
   /** 실제 받은 편지함 저장 모델이 생기기 전에는 계약만 제공하고 임의 알림은 만들지 않는다. */
@@ -418,7 +418,7 @@ export class FakeServer implements GameApi {
   }
 
   /** 검증·보상 지급·수령 표시를 하나의 저장으로 확정해 재요청 중복 지급을 막는다. */
-  async claimMissionRewards(missionIds?: string[]): Promise<ClaimMissionRewardsResponse> {
+  async claimMissionRewards(missionIds?: string[], researchPeriod?: MissionPeriod, researchStageIds?: string[]): Promise<ClaimMissionRewardsResponse> {
     await this.delay();
     const normalized = normalizeMissions(this.state.missions, this.now());
     const ids = missionIds ?? claimableMissionIds(normalized);
@@ -429,12 +429,21 @@ export class FakeServer implements GameApi {
       if (normalized.claimedIds.includes(id)) throw new GameApiError("MISSION_ALREADY_CLAIMED", "이미 수령한 임무입니다.");
       if ((normalized.progress[id] ?? 0) < mission.target) throw new GameApiError("MISSION_NOT_COMPLETE", "완료하지 않은 임무입니다.");
     }
-    const cheesecakeEarned = uniqueIds.reduce((sum, id) => sum + (MISSIONS.find((mission) => mission.id === id)?.rewardCheesecake ?? 0), 0);
-    const nextMissions = { ...normalized, claimedIds: [...normalized.claimedIds, ...uniqueIds] };
+    const missionCheesecake = uniqueIds.reduce((sum, id) => sum + (MISSIONS.find((mission) => mission.id === id)?.rewardCheesecake ?? 0), 0);
+    let nextMissions = { ...normalized, claimedIds: [...normalized.claimedIds, ...uniqueIds] };
+    const periods = researchPeriod ? [researchPeriod] : [...new Set(uniqueIds.map((id) => MISSIONS.find((mission) => mission.id === id)?.period).filter((period): period is MissionPeriod => period !== undefined))];
+    const claimedResearchStageIds: string[] = [];
+    let researchCheesecake = 0;
+    for (const period of periods) {
+      const result = claimResearchStages(nextMissions, period, researchPeriod === period ? researchStageIds : undefined);
+      nextMissions = result.state; researchCheesecake += result.cheesecakeEarned;
+      claimedResearchStageIds.push(...result.claimedStageIds.map((id) => researchStageClaimId(period, id)));
+    }
+    const cheesecakeEarned = missionCheesecake + researchCheesecake;
     const nextWallet = { ...this.state.wallet, cheesecake: this.state.wallet.cheesecake + cheesecakeEarned };
     this.persist({ ...this.state, missions: nextMissions, wallet: nextWallet });
     this.state.missions = nextMissions; this.state.wallet = nextWallet;
-    return { ...this.snapshot(), claimedIds: uniqueIds, cheesecakeEarned };
+    return { ...this.snapshot(), claimedIds: uniqueIds, claimedResearchStageIds, rewards: { missionCheesecake, researchCheesecake, cheesecake: cheesecakeEarned }, cheesecakeEarned };
   }
 
   /** 서버 시각의 노출 기간과 현재 제한 주기를 반영해 공용 카탈로그를 조회한다. */
@@ -731,6 +740,16 @@ export class FakeServer implements GameApi {
     const normalized = normalizeMissions(this.state.missions, this.now());
     return MISSIONS.map((mission) => ({ ...mission, progress: normalized.progress[mission.id] ?? 0, claimed: normalized.claimedIds.includes(mission.id) }))
       .map(({ event: _event, ...dto }) => dto);
+  }
+
+  /** 두 탭이 같은 스냅샷을 그리도록 기간별 연구도와 마디 상태를 한 응답에 묶는다. */
+  private missionListDto(normalized = normalizeMissions(this.state.missions, this.now())): MissionListResponse {
+    const research = Object.fromEntries((["daily", "weekly"] as const).map((period) => [period, {
+      points: normalized.researchPoints[period], maxPoints: MAX_RESEARCH_POINTS,
+      stages: RESEARCH_REWARD_STAGES.map((stage) => ({ ...stage, achieved: normalized.researchPoints[period] >= stage.threshold, claimed: normalized.claimedResearchStageIds.includes(researchStageClaimId(period, stage.id)) })),
+    }])) as MissionListResponse["research"];
+    const stageClaimable = Object.values(research).reduce((sum, value) => sum + value.stages.filter((stage) => stage.achieved && !stage.claimed).length, 0);
+    return { missions: this.missionDtos(), claimableCount: claimableMissionIds(normalized).length + stageClaimable, research };
   }
 
   /** 공유 세션일 때만 브라우저 저장을 수행해 단위 테스트의 독립 세션에는 부작용을 만들지 않는다. */

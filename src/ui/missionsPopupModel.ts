@@ -1,4 +1,5 @@
 import type { ClaimMissionRewardsResponse, GameApi, MissionDto } from "../api/contracts";
+import type { MissionPeriod } from "../core/missions";
 import type { RewardFrameState } from "./RewardFrame";
 
 /** 표시 모델에서 0 목표 방어와 100% 상한을 끝내 렌더러가 잘못된 비율을 만들지 않게 한다. */
@@ -14,11 +15,14 @@ export function missionDisplayModel(mission: MissionDto): MissionDto & { ratio: 
 export class MissionClaimController {
   private readonly pending = new Set<string>();
   constructor(private readonly api: Pick<GameApi, "claimMissionRewards">) {}
-  async claim(ids: readonly string[]): Promise<ClaimMissionRewardsResponse | undefined> {
+  async claim(ids: readonly string[], period?: MissionPeriod, stageIds?: readonly string[]): Promise<ClaimMissionRewardsResponse | undefined> {
     const unique = [...new Set(ids)];
     if (unique.some((id) => this.pending.has(id))) return undefined;
     unique.forEach((id) => this.pending.add(id));
-    try { return await this.api.claimMissionRewards(unique); }
+    try {
+      // 기존 임무 수령은 인자를 하나만 보내 계약 더블과 실제 HTTP 어댑터의 호환을 보존한다.
+      return period === undefined ? await this.api.claimMissionRewards(unique) : await this.api.claimMissionRewards(unique, period, stageIds ? [...stageIds] : undefined);
+    }
     finally { unique.forEach((id) => this.pending.delete(id)); }
   }
 }

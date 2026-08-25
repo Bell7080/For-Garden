@@ -20,6 +20,7 @@ export type GlyphName =
   | "heart"
   | "bookmark"
   | "scroll"
+  | "mission"
   | "magnifier"
   | "costume"
   | "ferocity"
@@ -164,6 +165,15 @@ export function drawGlyph(
       g.strokePath();
       g.lineBetween(-r * 0.28, -r * 0.28, r * 0.28, -r * 0.28);
       g.lineBetween(-r * 0.28, r * 0.06, r * 0.28, r * 0.06);
+      break;
+    case "mission":
+      // 각진 클립보드와 체크 목록. 두루마리인 가방과 달리 완료할 임무임을 즉시 구분한다.
+      g.strokePoints(points(-r * 0.72, -r * 0.72, -r * 0.72, r * 0.88, r * 0.72, r * 0.88, r * 0.72, -r * 0.72), false);
+      g.strokePoints(points(-r * 0.34, -r * 0.72, -r * 0.22, -r, r * 0.22, -r, r * 0.34, -r * 0.72), false);
+      g.strokePoints(points(-r * 0.48, -r * 0.18, -r * 0.3, 0, -r * 0.04, -r * 0.32), false);
+      g.lineBetween(r * 0.08, -r * 0.12, r * 0.48, -r * 0.12);
+      g.strokePoints(points(-r * 0.48, r * 0.34, -r * 0.3, r * 0.52, -r * 0.04, r * 0.2), false);
+      g.lineBetween(r * 0.08, r * 0.4, r * 0.48, r * 0.4);
       break;
     case "magnifier":
       // 돋보기 — 더 볼 것이 있다는 표시. 렌즈 안의 +가 "펼쳐 본다"를 알린다.

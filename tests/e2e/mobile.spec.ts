@@ -95,8 +95,8 @@ test("방치 발굴 편집은 슬롯 이동·중복 방지·빈 편성 취소를
   await tapGame(page, 250, BASE_HEIGHT - 445);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationPopup)).toBe("ready");
 
-  // 현황의 수확 버튼 자리를 편집 중에는 완료가 대신하며, 시작 편성은 3칸 모두 비어 있어도 유효하다.
-  await tapGame(page, BASE_WIDTH / 2 - 205, BASE_HEIGHT / 2 + 515);
+  // 별도 편성 버튼 없이 첫 슬롯 자체가 그 슬롯을 대상으로 한 편집 그리드를 연다.
+  await tapGame(page, BASE_WIDTH / 2 - 250, BASE_HEIGHT / 2 - 385);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationPopup)).toBe("editing");
   // 첫 보유 카드를 1번에 놓고 2번 슬롯을 선택한 뒤 같은 카드를 눌러 이동한다. 복제 대신 원래 칸이 빈다.
   await tapGame(page, BASE_WIDTH / 2 - 250, BASE_HEIGHT / 2 - 15);

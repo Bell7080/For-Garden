@@ -10,6 +10,7 @@ import type { RuneInstance } from "../core/runes";
 import { createDefaultSettings } from "../core/settings";
 import { createIdleExcavationState, type IdleExcavationState } from "../core/idleExcavation";
 import type { ExpeditionMapNode } from "../core/expeditionMap";
+import type { ExpeditionAugmentOffer, ExpeditionAugmentSelection } from "../core/expeditionRewards";
 
 /** 로컬에 저장 가능한 사용자 환경설정이다. 계정에는 표시 정보만 두며 인증 비밀은 서버 경계에 남긴다. */
 export interface GameSettings {
@@ -83,6 +84,10 @@ export interface ExpeditionRunState {
   visitedNodeIds: string[];
   relics: [ExpeditionRelicState, ExpeditionRelicState, ExpeditionRelicState];
   selectedAugmentIds: string[];
+  /** 대상까지 포함한 확정 결과다. 같은 ID의 허용 중첩을 배열 항목 수로 보존한다. */
+  selectedAugments: ExpeditionAugmentSelection[];
+  /** 생성 seed와 후보 자체를 함께 저장해 앱 재실행으로 제안을 다시 뽑지 못하게 한다. */
+  pendingAugmentReward: { nodeId: string; seed: string; round: number; totalRounds: number; offers: ExpeditionAugmentOffer[] } | null;
   pendingRewards: Record<string, number>;
   bossDamage: number;
   bestScore: number;

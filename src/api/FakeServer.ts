@@ -24,7 +24,7 @@ import { findItem, STAMINA_CAP } from "../data/items";
 import { InventoryManager } from "../managers/InventoryManager";
 import type { EngraveRuneRequest, EngraveRuneResponse, EnhanceRuneRequest, EnhanceRuneResponse, EquipRuneRequest, EquipRuneResponse, RenameRuneRequest, RenameRuneResponse, RuneInventoryDto, UnequipRuneRequest, UnequipRuneResponse } from "./contracts";
 import type { ActivatePassRequest, ActivatePassResponse, ClaimInstantAdRewardRequest, ClaimInstantAdRewardResponse, PassEntitlementDto, VerifyPurchaseReceiptRequest, VerifyPurchaseReceiptResponse } from "./contracts";
-import { harvestIdleExcavation, settleIdleExcavation, validateExcavationFormation } from "../core/idleExcavation";
+import { harvestIdleExcavation, isExcavationStorageFull, settleIdleExcavation, validateExcavationFormation } from "../core/idleExcavation";
 import type { HarvestExcavationRequest, HarvestExcavationResponse, IdleExcavationResponse, SaveExcavationFormationRequest, InventoryResponse, UseConsumableRequest, UseConsumableResponse } from "./contracts";
 
 /** 사용자 룬 이름의 서버 정책이다. UI 글자 수와 무관하게 API 경계가 최종 권한을 가진다. */
@@ -117,9 +117,11 @@ export class FakeServer implements GameApi {
   /** 서버의 단일 now 값을 캡처해 조회 정산과 응답 시각이 어긋나지 않게 한다. */
   async getIdleExcavation(): Promise<IdleExcavationResponse> {
     await this.delay(); const now = this.now();
+    // 정산 뒤에는 기준 시각이 현재로 바뀌므로 상한 도달 여부를 먼저 보존한다.
+    const storageFull = isExcavationStorageFull(this.state.idleExcavation, now);
     const next = settleIdleExcavation(this.state.idleExcavation, now, RELICS, this.state.relicProgress);
     this.persist({ ...this.state, idleExcavation: next }); this.state.idleExcavation = next;
-    return { excavation: this.cloneExcavation(next), serverTime: now.toISOString() };
+    return { excavation: this.cloneExcavation(next), serverTime: now.toISOString(), storageFull };
   }
 
   /** 기존 편성의 생산을 먼저 정산한 뒤 새 세 칸을 같은 저장 처리로 확정한다. */
@@ -407,6 +409,12 @@ export class FakeServer implements GameApi {
     this.persist({ ...this.state, missions: normalized });
     this.state.missions = normalized;
     return { missions: this.missionDtos(), claimableCount: claimableMissionIds(normalized).length };
+  }
+
+  /** 실제 받은 편지함 저장 모델이 생기기 전에는 계약만 제공하고 임의 알림은 만들지 않는다. */
+  async getNotificationSignals() {
+    await this.delay();
+    return { pendingFriendRequestCount: 0, unseenEventCount: 0, unreadMailCount: 0 };
   }
 
   /** 검증·보상 지급·수령 표시를 하나의 저장으로 확정해 재요청 중복 지급을 막는다. */

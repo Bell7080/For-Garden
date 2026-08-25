@@ -22,6 +22,8 @@ import { BACK_SLOT, IconButton } from "../ui/IconButton";
 import { UI_ICON } from "../ui/icons";
 import { TradePopup } from "../ui/TradePopup";
 import { InventoryPopup } from "../ui/InventoryPopup";
+import { bindNotificationDot } from "../ui/NotificationDot";
+import { notificationManager } from "../managers/NotificationManager";
 
 /** 확대된 애착 렐릭의 골반 아래가 내비게이션 뒤로 자연스럽게 이어지는 기준선. */
 const STAGE_FLOOR = 1660;
@@ -128,7 +130,7 @@ export class LobbyScene extends Phaser.Scene {
 
     // 발굴 — 출격과 같은 줄에 서지만 크기는 교류와 같다. 왼쪽은 서브 콘텐츠 자리라, 오른쪽의
     // 큰 주황 버튼과 크기로 위계를 가른다. 색도 교류와 같은 푸른 계열로 묶는다.
-    new Button(this, 250, NAV_TOP - 245, {
+    const excavationButton = new Button(this, 250, NAV_TOP - 245, {
       width: 292,
       height: 106,
       label: "발굴",
@@ -140,8 +142,12 @@ export class LobbyScene extends Phaser.Scene {
       accentTextColor: "#9fd0f0",
       onClick: () => this.openIdleExcavation(),
     });
+    // 발굴 저장 상한 판정은 manager가 API 결과로 합성하며 버튼은 공용 점만 구독한다.
+    bindNotificationDot(this, excavationButton, { x: 132, y: -46 }, (listener) => notificationManager.subscribe("excavationFull", listener));
 
     new BottomNav(this, "lobby");
+    // 한 번의 공용 조회가 모든 버튼을 갱신하며 실패 시 기존의 안전한 꺼짐 상태를 유지한다.
+    void notificationManager.refresh().catch(() => undefined);
     void this.showFavorite();
   }
 
@@ -223,13 +229,14 @@ export class LobbyScene extends Phaser.Scene {
       { icon: "scroll", label: "가방", onClick: () => this.openInventory() },
     ] as const;
     rail.forEach((item, i) => {
-      new RailButton(this, x, 640 + i * 152, { icon: item.icon, label: item.label, onClick: "onClick" in item ? item.onClick : () => this.notReady(item.label) });
+      const button = new RailButton(this, x, 640 + i * 152, { icon: item.icon, label: item.label, onClick: "onClick" in item ? item.onClick : () => this.notReady(item.label) });
+      // 실제 서버 계약이 준비된 우편·친구 요청만 연결하고 Fake 데이터에서는 임의로 켜지 않는다.
+      const key = item.icon === "mail" ? "mail" : item.icon === "friends" ? "friendRequest" : undefined;
+      if (key) bindNotificationDot(this, button, { x: 42, y: -42 }, (listener) => notificationManager.subscribe(key, listener));
     });
-    // 임무 입구는 상세 내용을 복제하지 않고 서버가 계산한 미수령 개수만 짧게 표시한다.
+    // 임무 입구는 숫자 텍스트 대신 다른 버튼과 같은 공용 점 하나만 사용한다.
     const missionButton = new RailButton(this, x, 1248, { icon: "scroll", label: "임무", accent: true, onClick: () => this.scene.start("missions") });
-    void gameApi.getMissions().then(({ claimableCount }) => {
-      if (claimableCount > 0) this.add.text(x + 42, 1202, String(claimableCount), textStyle({ role: "emphasis", size: 24, color: COLOR.sortieText })).setOrigin(0.5).setDepth(missionButton.depth + 1);
-    });
+    bindNotificationDot(this, missionButton, { x: 42, y: -42 }, (listener) => notificationManager.subscribe("missionReward", listener));
   }
 
   /** 왼쪽 위, 프로필 줄 바로 아래의 홍보 칸. 기간 상품과 공지가 들어갈 자리다. */

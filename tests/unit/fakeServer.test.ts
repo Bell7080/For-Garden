@@ -41,6 +41,32 @@ function makeSession(fossil = 1000): Session {
 }
 
 describe("FakeServer", () => {
+  /** 실제 피해량 없이 서버가 재현할 수 있는 매초 기본 공격 입력이다. */
+  const bossActions = (seconds: number) => Array.from({ length: seconds }, (_, second) => ["anky", "rex", "dodo"].flatMap((actorId) => [
+    { elapsedMs: second * 1_000, actorId, kind: "basic" as const },
+    // 8초 주기의 궁극기도 서버 쿨다운에 맞춰 포함해 첫 보상 단계까지 도달한다.
+    ...(second % 8 === 0 ? [{ elapsedMs: second * 1_000, actorId, kind: "ultimate" as const }] : []),
+  ])).flat();
+
+  it("보스 점수는 최고 기록만 갱신하고 더 낮은 제출은 최고 기록을 내리지 않는다", async () => {
+    const server = new FakeServer(makeSession(), { latencyMs: 0, now: () => new Date("2026-08-25T12:00:00Z") });
+    const high = await server.submitExpeditionBossScore({ requestId: "boss-high", actions: bossActions(30) });
+    const low = await server.submitExpeditionBossScore({ requestId: "boss-low", actions: [] });
+    expect(high.improved).toBe(true); expect(low.improved).toBe(false); expect(low.bestScore).toBe(high.score); expect(low.score).toBe(0);
+  });
+
+  it("누적 단계 보상은 다른 요청 ID로 재요청해도 한 번만 지급한다", async () => {
+    const state = makeSession(); const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-25T12:00:00Z") });
+    await server.submitExpeditionBossScore({ requestId: "boss-reward-score", actions: bossActions(30) });
+    const first = await server.claimExpeditionCumulativeReward({ requestId: "reward-a", stageId: "damage-10k" }); const gold = state.wallet.gold;
+    const repeated = await server.claimExpeditionCumulativeReward({ requestId: "reward-b", stageId: "damage-10k" });
+    expect(first.alreadyClaimed).toBe(false); expect(repeated.alreadyClaimed).toBe(true); expect(state.wallet.gold).toBe(gold);
+  });
+
+  it("피해 숫자를 제출할 필드가 없고 비정상 입력은 API 경계에서 거부한다", async () => {
+    const server = new FakeServer(makeSession(), { latencyMs: 0 });
+    await expect(server.submitExpeditionBossScore({ requestId: "forged", actions: [{ elapsedMs: 0, actorId: "hacker", kind: "ultimate" }] })).rejects.toMatchObject({ code: "EXPEDITION_SCORE_REJECTED" });
+  });
   it("발굴 조회는 첫 서버 시각을 초기화하고 편성 변경 전 생산을 원자적으로 정산한다", async () => {
     const state = makeSession(); let now = new Date("2026-08-20T00:00:00Z"); const server = new FakeServer(state, { latencyMs: 0, now: () => now });
     await server.getIdleExcavation();

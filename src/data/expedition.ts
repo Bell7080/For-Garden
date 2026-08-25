@@ -45,3 +45,31 @@ export const EXPEDITION_AUGMENT_IDS = EXPEDITION_AUGMENTS.map(({ id }) => id);
 
 /** 노드 완료 전까지 런 안에 보류할 수 있는 보상 종류다. */
 export const EXPEDITION_REWARD_IDS = ["gold", "fossil", "amber", "gems", "cheesecake"] as const;
+
+/** 불사 보스의 시간 경과 강화 표다. 마지막 처형 단계는 어떤 정상 편성도 버티지 못하게 한다. */
+export const EXPEDITION_BOSS_BALANCE = {
+  /** 서버 검증이 허용하는 전투 길이와 입력량 상한이다. */
+  maximumDurationMs: 180_000,
+  maximumActions: 2_000,
+  maximumAcceptedScore: 100_000_000,
+  /** 입력에는 동작만 담기며 피해량은 이 서버 소유 배율로 다시 계산한다. */
+  actionPower: { basic: 1, ultimate: 3 } as const,
+  actionCooldownMs: { basic: 900, ultimate: 8_000 } as const,
+  /** 초당 광역 피해와 마지막 처형 피해를 단계화해 전투가 반드시 아군 전멸로 끝나게 한다. */
+  phases: [
+    { startsAtMs: 0, attackPerSecond: 18, label: "관측" },
+    { startsAtMs: 30_000, attackPerSecond: 45, label: "과부하" },
+    { startsAtMs: 60_000, attackPerSecond: 110, label: "붕괴" },
+    { startsAtMs: 90_000, attackPerSecond: 1_000_000_000, label: "종말" },
+  ],
+} as const;
+
+/** 주간 누적 피해 보상은 이 표 하나만 읽으며 단계 ID가 서버의 중복 수령 키가 된다. */
+export const EXPEDITION_CUMULATIVE_REWARD_STAGES = [
+  { id: "damage-10k", threshold: 10_000, reward: { currency: "gold", amount: 5_000 } },
+  { id: "damage-50k", threshold: 50_000, reward: { currency: "fossil", amount: 100 } },
+  { id: "damage-100k", threshold: 100_000, reward: { currency: "gems", amount: 100 } },
+] as const;
+
+/** 주차는 월요일 00:00 UTC에 초기화하며 동점은 최고 점수를 먼저 달성한 기록이 앞선다. */
+export const EXPEDITION_WEEKLY_POLICY = { resetWeekdayUtc: 1, resetHourUtc: 0, tieBreak: "earliest-achieved-at" } as const;

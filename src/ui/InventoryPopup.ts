@@ -5,7 +5,6 @@ import { InventoryManager, inventoryGridPosition, inventoryScrollMetrics } from 
 import { session } from "../state/session";
 import { drawGlyph } from "./glyphs";
 import { chipPoints, drawInnerVignette, drawLayer, drawShapeOutline } from "./holo";
-import { addPopupBackButton } from "./IconButton";
 import { POPUP_TITLE_SIZE, PopupLayer } from "./PopupLayer";
 import { openRuneInfoPopup } from "./RunePopup";
 import { COLOR, textStyle } from "./theme";
@@ -33,11 +32,10 @@ export class InventoryPopup {
   open(): void {
     if (this.body) return;
     const width = 900; const height = 1510;
-    this.body = this.popups.open({ width, height, title: "가방", titleSize: POPUP_TITLE_SIZE.workboard, dim: true, closeOnBackdrop: false, hideCloseButton: true, onClose: () => { this.destroyMask(); this.body = undefined; this.view = undefined; this.onClose?.(); } }, (body, close) => {
+    this.body = this.popups.open({ width, height, title: "가방", titleSize: POPUP_TITLE_SIZE.workboard, dim: true, closeOnBackdrop: false, hideCloseButton: true, onClose: () => { this.destroyMask(); this.body = undefined; this.view = undefined; this.onClose?.(); } }, (body) => {
       // 공용 팝업 판과 제목은 보존하고 교체 가능한 내용 전용 컨테이너만 다시 그린다.
       const view = this.scene.add.container(0, 0); this.view = view; body.add(view);
-      // 확대된 제목과 첫 카드 사이를 비우고, 탭보다 아래인 우하단에는 공용 돌아가기를 고정한다.
-      addPopupBackButton(this.scene, body, width, height, close);
+      // 닫기는 LobbyScene의 화면 우하단 공용 버튼 하나가 맡아 팝업에 붙은 중복 버튼을 만들지 않는다.
       void this.api.getInventory().then(({ items }) => { this.items = items; this.render(view); });
     });
   }

@@ -26,6 +26,9 @@ import type { EngraveRuneRequest, EngraveRuneResponse, EnhanceRuneRequest, Enhan
 import type { ActivatePassRequest, ActivatePassResponse, ClaimInstantAdRewardRequest, ClaimInstantAdRewardResponse, PassEntitlementDto, VerifyPurchaseReceiptRequest, VerifyPurchaseReceiptResponse } from "./contracts";
 import { harvestIdleExcavation, isExcavationStorageFull, settleIdleExcavation, validateExcavationFormation } from "../core/idleExcavation";
 import type { HarvestExcavationRequest, HarvestExcavationResponse, IdleExcavationResponse, SaveExcavationFormationRequest, InventoryResponse, UseConsumableRequest, UseConsumableResponse } from "./contracts";
+import type { ClaimExpeditionRewardRequest, ClaimExpeditionRewardResponse, ExpeditionLeaderboardResponse, ExpeditionWeeklyBestResponse, SubmitExpeditionBossScoreRequest, SubmitExpeditionBossScoreResponse } from "./contracts";
+import { expeditionWeekKey, resolveExpeditionBossBattle } from "../core/expeditionBoss";
+import { EXPEDITION_BOSS_BALANCE, EXPEDITION_CUMULATIVE_REWARD_STAGES } from "../data/expedition";
 
 /** 사용자 룬 이름의 서버 정책이다. UI 글자 수와 무관하게 API 경계가 최종 권한을 가진다. */
 export const MAX_RUNE_NAME_LENGTH = 20;
@@ -59,6 +62,10 @@ export class FakeServer implements GameApi {
   /** 실제 서버의 멱등 테이블을 흉내 내며 성공한 발굴 변경 응답만 보관한다. */
   private readonly excavationFormationResults = new Map<string, IdleExcavationResponse>();
   private readonly excavationHarvestResults = new Map<string, HarvestExcavationResponse>();
+  /** 개발용 결정론적 메모리 기록이다. 운영 서버가 점수·순위·보상 수령을 최종 소유해야 한다. */
+  private bossWeek = { weekKey: "", bestScore: 0, cumulativeScore: 0, achievedAt: "", claimedStageIds: [] as string[] };
+  private readonly bossSubmissionResults = new Map<string, SubmitExpeditionBossScoreResponse>();
+  private readonly bossRewardResults = new Map<string, ClaimExpeditionRewardResponse>();
   /** 같은 밀리초 안의 연속 발급도 구분하는 서버 인스턴스 로컬 순번이다. */
   private runeIssueSequence = 0;
 
@@ -78,6 +85,48 @@ export class FakeServer implements GameApi {
   async getPlayerState(): Promise<PlayerStateDto> {
     await this.delay();
     return this.snapshot();
+  }
+
+  /** FakeServer도 서버 UTC 월요일 경계에서만 주간 기록을 초기화한다. */
+  async getExpeditionWeeklyBest(): Promise<ExpeditionWeeklyBestResponse> {
+    await this.delay(); const now = this.now(); this.normalizeBossWeek(now); const reset = new Date(`${this.bossWeek.weekKey}T00:00:00.000Z`); reset.setUTCDate(reset.getUTCDate() + 7);
+    return { weekKey: this.bossWeek.weekKey, bestScore: this.bossWeek.bestScore, cumulativeScore: this.bossWeek.cumulativeScore, resetsAt: reset.toISOString() };
+  }
+
+  /** 제출된 피해 숫자를 신뢰하지 않고 서버 편성의 정적 전투력으로 동작열을 완전히 재생한다. */
+  async submitExpeditionBossScore(request: SubmitExpeditionBossScoreRequest): Promise<SubmitExpeditionBossScoreResponse> {
+    await this.delay(); const cached = this.bossSubmissionResults.get(request.requestId); if (cached) return { ...cached };
+    if (!request.requestId) throw new GameApiError("EXPEDITION_SCORE_REJECTED", "점수 제출 요청 ID가 필요합니다.");
+    const now = this.now(); this.normalizeBossWeek(now);
+    try {
+      const allies = this.state.party.map((id) => { const relic = RELICS.find((entry) => entry.id === id); if (!relic || !this.state.owned.has(id)) throw new Error("INVALID_PARTY"); return { id, attack: Math.max(relic.stats.atk, relic.stats.ap), maxHp: relic.stats.hp }; });
+      const result = resolveExpeditionBossBattle(allies, request.actions);
+      if (result.totalDamage > EXPEDITION_BOSS_BALANCE.maximumAcceptedScore) throw new Error("ABNORMAL_SCORE");
+      const improved = result.totalDamage > this.bossWeek.bestScore;
+      this.bossWeek.cumulativeScore += result.totalDamage;
+      if (improved) { this.bossWeek.bestScore = result.totalDamage; this.bossWeek.achievedAt = now.toISOString(); }
+      const response = { weekKey: this.bossWeek.weekKey, score: result.totalDamage, bestScore: this.bossWeek.bestScore, cumulativeScore: this.bossWeek.cumulativeScore, improved, endedAtMs: result.endedAtMs };
+      this.bossSubmissionResults.set(request.requestId, response); return { ...response };
+    } catch { throw new GameApiError("EXPEDITION_SCORE_REJECTED", "검증할 수 없거나 비정상적으로 큰 보스 점수입니다."); }
+  }
+
+  /** 단계 ID와 누적 점수를 다시 확인하며 같은 요청과 다른 요청 모두 중복 지급하지 않는다. */
+  async claimExpeditionCumulativeReward(request: ClaimExpeditionRewardRequest): Promise<ClaimExpeditionRewardResponse> {
+    await this.delay(); const cached = this.bossRewardResults.get(request.requestId); if (cached) return { ...cached, claimedStageIds: [...cached.claimedStageIds] };
+    if (!request.requestId) throw new GameApiError("INVALID_STATE", "보상 수령 요청 ID가 필요합니다.");
+    this.normalizeBossWeek(this.now()); const stage = EXPEDITION_CUMULATIVE_REWARD_STAGES.find(({ id }) => id === request.stageId);
+    if (!stage) throw new GameApiError("EXPEDITION_REWARD_NOT_FOUND", "존재하지 않는 누적 보상 단계입니다.");
+    if (this.bossWeek.cumulativeScore < stage.threshold) throw new GameApiError("EXPEDITION_REWARD_NOT_EARNED", "아직 달성하지 않은 누적 보상입니다.");
+    const alreadyClaimed = this.bossWeek.claimedStageIds.includes(stage.id);
+    if (!alreadyClaimed) { this.bossWeek.claimedStageIds.push(stage.id); this.state.wallet[stage.reward.currency] += stage.reward.amount; this.persist(this.state); }
+    const response = { weekKey: this.bossWeek.weekKey, stageId: stage.id, claimedStageIds: [...this.bossWeek.claimedStageIds], reward: { ...stage.reward }, alreadyClaimed };
+    this.bossRewardResults.set(request.requestId, response); return response;
+  }
+
+  /** 단일 개발 계정도 운영과 같은 점수 내림차순/최초 달성 오름차순 정책을 명시한다. */
+  async getExpeditionLeaderboard(limit = 100): Promise<ExpeditionLeaderboardResponse> {
+    await this.delay(); this.normalizeBossWeek(this.now()); const entries = this.bossWeek.bestScore > 0 ? [{ rank: 1, playerId: "local-player", displayName: "연구원", score: this.bossWeek.bestScore, achievedAt: this.bossWeek.achievedAt }] : [];
+    return { weekKey: this.bossWeek.weekKey, tieBreakPolicy: "earliest-achieved-at", entries: entries.slice(0, Math.max(0, limit)) };
   }
 
   /** Fake 운영 서버도 번들의 표시 fallback 없이 인증된 설정 DTO를 명시적으로 제공한다. */
@@ -750,6 +799,12 @@ export class FakeServer implements GameApi {
     }])) as MissionListResponse["research"];
     const stageClaimable = Object.values(research).reduce((sum, value) => sum + value.stages.filter((stage) => stage.achieved && !stage.claimed).length, 0);
     return { missions: this.missionDtos(), claimableCount: claimableMissionIds(normalized).length + stageClaimable, research };
+  }
+
+  /** 주차가 달라지면 점수·누적·수령 단계를 함께 버려 지난주 보상이 새 주에 새지 않게 한다. */
+  private normalizeBossWeek(now: Date): void {
+    const weekKey = expeditionWeekKey(now);
+    if (this.bossWeek.weekKey !== weekKey) this.bossWeek = { weekKey, bestScore: 0, cumulativeScore: 0, achievedAt: "", claimedStageIds: [] };
   }
 
   /** 공유 세션일 때만 브라우저 저장을 수행해 단위 테스트의 독립 세션에는 부작용을 만들지 않는다. */

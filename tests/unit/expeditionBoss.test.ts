@@ -17,6 +17,13 @@ describe("expedition boss rules", () => {
     expect(expeditionBossPhaseAt(90_000).label).toBe("종말"); expect(result.allAlliesDead).toBe(true); expect(result.endedAtMs).toBe(90_000); expect(result.remainingHpByAlly.tank).toBe(0);
   });
 
+  it("런에서 이어진 현재 HP를 서버 전멸 시각에 적용한다", () => {
+    const full = resolveExpeditionBossBattle([{ id: "ally", attack: 10, maxHp: 1_000 }], basicActions(["ally"]));
+    const wounded = resolveExpeditionBossBattle([{ id: "ally", attack: 10, maxHp: 1_000, initialHp: 100 }], basicActions(["ally"]));
+    expect(wounded.endedAtMs).toBeLessThan(full.endedAtMs);
+    expect(wounded.totalDamage).toBeLessThan(full.totalDamage);
+  });
+
   it("주간 초기화 키는 월요일 00:00 UTC를 경계로 바뀐다", () => {
     expect(expeditionWeekKey(new Date("2026-08-30T23:59:59Z"))).toBe("2026-08-24");
     expect(expeditionWeekKey(new Date("2026-08-31T00:00:00Z"))).toBe("2026-08-31");

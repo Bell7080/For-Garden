@@ -19,7 +19,7 @@ import { chipPoints, drawGlassFade, drawHairline, drawLayer, drawVignette, HoloB
 import { EXPEDITION_LAYOUT } from "../ui/expeditionLayout";
 import { ExpeditionMapView } from "../ui/ExpeditionMapView";
 import type { ExpeditionAugmentSelection } from "../core/expeditionRewards";
-import type { ExpeditionBattleInputDto } from "../core/expeditionBattle";
+import type { ExpeditionBattleInputDto, ExpeditionBossBattleInputDto } from "../core/expeditionBattle";
 import { ExpeditionAugmentPopup, expeditionAugmentEffectLabel, expeditionAugmentMetaLabel } from "../ui/ExpeditionAugmentPopup";
 import { EXPEDITION_NODE_REWARD_BALANCE } from "../data/expedition";
 
@@ -124,7 +124,12 @@ export class ExpeditionScene extends Phaser.Scene {
     const run = expeditionManager.status().run;
     if (!run || run.relics.every(({ alive }) => !alive) || run.pendingAugmentReward) return;
     this.nodeTransitionPending = true;
-    if (["normal", "elite", "horde", "boss"].includes(node.type)) {
+    if (node.type === "boss") {
+      // 20층은 증강 선택/일반 난전을 거치지 않고 저장된 HP와 모든 증강을 전용 모드로 넘긴다.
+      this.enterBossBattle(node);
+      return;
+    }
+    if (["normal", "elite", "horde"].includes(node.type)) {
       // 증강은 승리 영수증이 아니라 전투 진입 준비다. 후보가 없는 보스만 곧바로 전장으로 간다.
       const pending = expeditionManager.beginAugmentReward(node.id, node.type);
       if (pending) this.scene.restart();
@@ -149,6 +154,15 @@ export class ExpeditionScene extends Phaser.Scene {
     const run = expeditionManager.status().run;
     if (!run) { this.nodeTransitionPending = false; return; }
     const input: ExpeditionBattleInputDto = { mode: "expedition", runId: run.runId, nodeId: node.id, nodeType: node.type as ExpeditionBattleInputDto["nodeType"], floor: node.floor, relics: run.relics.map(({ relicId, currentHp, alive }) => ({ relicId, currentHp, alive })), augments: run.selectedAugments };
+    this.scene.start("battle", input);
+  }
+
+  /** 서버 제출과 완료 정산의 멱등 키를 먼저 런에 고정한 뒤 불사 보스 전장으로 이동한다. */
+  private enterBossBattle(node: ExpeditionMapNode): void {
+    const run = expeditionManager.status().run;
+    const ids = expeditionManager.prepareBossRequests(node.id);
+    if (!run || !ids || node.floor !== 20) { this.nodeTransitionPending = false; return; }
+    const input: ExpeditionBossBattleInputDto = { mode: "expeditionBoss", runId: run.runId, nodeId: node.id, floor: 20, relics: run.relics.map(({ relicId, currentHp, alive }) => ({ relicId, currentHp, alive })), augments: run.selectedAugments, ...ids };
     this.scene.start("battle", input);
   }
 

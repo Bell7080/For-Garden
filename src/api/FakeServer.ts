@@ -30,6 +30,9 @@ import type { ClaimExpeditionRewardRequest, ClaimExpeditionRewardResponse, Compl
 import { expeditionWeekKey, resolveExpeditionBossBattle } from "../core/expeditionBoss";
 import { EXPEDITION_BOSS_BALANCE, EXPEDITION_CUMULATIVE_REWARD_STAGES, EXPEDITION_NODE_REWARD_BALANCE, QUICK_EXPEDITION_POLICY } from "../data/expedition";
 import { calculateExpeditionNodeRewards } from "../core/expeditionRewards";
+import { RelicProgressionManager } from "../managers/RelicProgressionManager";
+import { expeditionBattleEffects } from "../core/expeditionBattle";
+import { attackPowerMultiplier } from "../core/expeditionAugments";
 
 /** 사용자 룬 이름의 서버 정책이다. UI 글자 수와 무관하게 API 경계가 최종 권한을 가진다. */
 export const MAX_RUNE_NAME_LENGTH = 20;
@@ -106,13 +109,27 @@ export class FakeServer implements GameApi {
     if (!request.requestId) throw new GameApiError("EXPEDITION_SCORE_REJECTED", "점수 제출 요청 ID가 필요합니다.");
     const now = this.now(); this.normalizeBossWeek(now);
     try {
-      const allies = this.state.party.map((id) => { const relic = RELICS.find((entry) => entry.id === id); if (!relic || !this.state.owned.has(id)) throw new Error("INVALID_PARTY"); return { id, attack: Math.max(relic.stats.atk, relic.stats.ap), maxHp: relic.stats.hp }; });
+      // 런 제출은 현재 파티가 아니라 서버에 저장된 원정 편성·HP·증강을 사용한다. 독립 보스 API
+      // 테스트의 레거시 호출만 runId가 없을 때 기존 파티 스냅샷으로 되돌아간다.
+      const run = request.runId ? this.state.expedition.run : null;
+      if (request.runId && (!run || run.runId !== request.runId || !run.nodes.some(({ id, type }) => id === request.nodeId && type === "boss"))) throw new Error("INVALID_RUN");
+      const roster = run?.relics ?? this.state.party.map((relicId) => ({ relicId, currentHp: 100, alive: true }));
+      const effects = expeditionBattleEffects(run?.selectedAugments ?? []);
+      const progression = new RelicProgressionManager(this.state);
+      const allies = roster.map(({ relicId: id, currentHp }) => {
+        const relic = RELICS.find((entry) => entry.id === id);
+        if (!relic || !this.state.owned.has(id)) throw new Error("INVALID_PARTY");
+        const stats = progression.getFinalStats(id);
+        return { id, attack: Math.max(stats.atk, stats.ap) * attackPowerMultiplier(effects, id), maxHp: stats.hp, initialHp: stats.hp * currentHp / 100 };
+      });
       const result = resolveExpeditionBossBattle(allies, request.actions);
       if (result.totalDamage > EXPEDITION_BOSS_BALANCE.maximumAcceptedScore) throw new Error("ABNORMAL_SCORE");
       const improved = result.totalDamage > this.bossWeek.bestScore;
       this.bossWeek.cumulativeScore += result.totalDamage;
       if (improved) { this.bossWeek.bestScore = result.totalDamage; this.bossWeek.achievedAt = now.toISOString(); }
-      const response = { weekKey: this.bossWeek.weekKey, score: result.totalDamage, bestScore: this.bossWeek.bestScore, cumulativeScore: this.bossWeek.cumulativeScore, improved, endedAtMs: result.endedAtMs };
+      // 단일 개발 계정은 기록 전 미등재(null), 제출 뒤 1위다. 운영 구현은 같은 필드에 실제 변화를 넣는다.
+      const response = { weekKey: this.bossWeek.weekKey, score: result.totalDamage, bestScore: this.bossWeek.bestScore, cumulativeScore: this.bossWeek.cumulativeScore, improved, endedAtMs: result.endedAtMs, rankBefore: this.previousBossBest > 0 ? 1 : null, rankAfter: 1 };
+      this.previousBossBest = this.bossWeek.bestScore;
       this.bossSubmissionResults.set(request.requestId, response); return { ...response };
     } catch { throw new GameApiError("EXPEDITION_SCORE_REJECTED", "검증할 수 없거나 비정상적으로 큰 보스 점수입니다."); }
   }

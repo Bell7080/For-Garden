@@ -98,6 +98,9 @@ export interface ExpeditionRunState {
   settled: boolean;
   /** 성공한 정산 요청의 고유 키이며 null이면 아직 지갑 이전 전이다. */
   settlementId: string | null;
+  /** 보스 제출과 정산 사이 재접속도 같은 서버 멱등 키로 복구한다. */
+  bossSubmissionId: string | null;
+  bossSettlementId: string | null;
 }
 
 /** 주간 교체와 이어하기를 한 경계에서 판정하기 위한 공개 원정 상태다. */

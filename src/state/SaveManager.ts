@@ -29,7 +29,7 @@ function migrateV12Rune(definitionId: string): RuneInstance {
 
 /** 키는 계정 연동 저장소와 충돌하지 않도록 로컬 프로토타입임을 명시한다. */
 export const SAVE_STORAGE_KEY = "eternal-city.local-save";
-export const CURRENT_SAVE_VERSION = 23;
+export const CURRENT_SAVE_VERSION = 24;
 
 type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
@@ -64,6 +64,9 @@ function normalizeExpeditionRun(value: unknown, ownedIds: readonly string[]): Ex
   // 식별자 도입 전 저장은 결정적 맵 시드로 런 ID를 보충하고 미정산으로 취급한다.
   run.runId ??= `run:${run.mapSeed}`;
   run.settlementId ??= null;
+  // v23 런은 보스 비동기 멱등 키가 없으므로 아직 시작하지 않은 상태로 보충한다.
+  run.bossSubmissionId ??= null;
+  run.bossSettlementId ??= null;
   const nodeIds = Array.isArray(run.nodes) ? run.nodes.map(({ id }) => id) : [];
   const rewardsValid = run.pendingRewards && Object.entries(run.pendingRewards).every(([id, amount]) => EXPEDITION_REWARD_IDS.includes(id as never) && Number.isFinite(amount) && amount >= 0);
   const relicIds = Array.isArray(run.relics) ? run.relics.map(({ relicId }) => relicId) : [];
@@ -75,7 +78,8 @@ function normalizeExpeditionRun(value: unknown, ownedIds: readonly string[]): Ex
     && Array.isArray(run.selectedAugmentIds) && run.selectedAugmentIds.every((id) => EXPEDITION_AUGMENT_IDS.includes(id as never))
     && Array.isArray(run.selectedAugments) && run.selectedAugments.every(({ augmentId, targetRelicId }) => EXPEDITION_AUGMENT_IDS.includes(augmentId as never) && (targetRelicId === undefined || relicIds.includes(targetRelicId)))
     && (run.pendingAugmentReward === null || (typeof run.pendingAugmentReward.seed === "string" && nodeIds.includes(run.pendingAugmentReward.nodeId) && Number.isInteger(run.pendingAugmentReward.round) && run.pendingAugmentReward.round > 0 && Number.isInteger(run.pendingAugmentReward.totalRounds) && run.pendingAugmentReward.totalRounds >= run.pendingAugmentReward.round && Array.isArray(run.pendingAugmentReward.offers)))
-    && rewardsValid && Number.isFinite(run.bossDamage) && run.bossDamage >= 0 && Number.isFinite(run.bestScore) && run.bestScore >= 0 && typeof run.settled === "boolean" && (run.settlementId === null || typeof run.settlementId === "string");
+    && rewardsValid && Number.isFinite(run.bossDamage) && run.bossDamage >= 0 && Number.isFinite(run.bestScore) && run.bestScore >= 0 && typeof run.settled === "boolean" && (run.settlementId === null || typeof run.settlementId === "string")
+    && (run.bossSubmissionId === null || typeof run.bossSubmissionId === "string") && (run.bossSettlementId === null || typeof run.bossSettlementId === "string");
   return valid ? cloneExpeditionRun(run) : null;
 }
 

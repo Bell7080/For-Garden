@@ -67,4 +67,14 @@ describe("ExpeditionManager", () => {
     expect(state.expedition.run!.relics[0].currentHp).toBe(healed);
     expect(save).toHaveBeenCalledTimes(1);
   });
+
+  it("보스 제출과 정산 ID를 전투 진입 전에 한 번만 저장한다", () => {
+    const state = createDefaultSession(); const save = vi.fn();
+    const manager = new ExpeditionManager(state, { save }, () => new Date("2026-08-25T12:00:00Z"));
+    manager.start(["anky", "rex", "spino"]);
+    const boss = state.expedition.run!.nodes.find(({ type }) => type === "boss")!;
+    const first = manager.prepareBossRequests(boss.id); const repeated = manager.prepareBossRequests(boss.id);
+    expect(repeated).toEqual(first);
+    expect(state.expedition.run).toMatchObject({ bossSubmissionId: first?.requestId, bossSettlementId: first?.settlementId });
+  });
 });

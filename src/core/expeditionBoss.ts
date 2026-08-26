@@ -3,7 +3,7 @@ import { EXPEDITION_BOSS_BALANCE } from "../data/expedition";
 /** 클라이언트가 제출할 수 있는 것은 시각과 동작뿐이며 피해 숫자는 필드로 존재하지 않는다. */
 export interface ExpeditionBossAction { elapsedMs: number; actorId: string; kind: "basic" | "ultimate"; }
 /** 서버가 편성과 성장 상태에서 만든 전투원 스냅샷이다. */
-export interface ExpeditionBossAlly { id: string; attack: number; maxHp: number; }
+export interface ExpeditionBossAlly { id: string; attack: number; maxHp: number; initialHp?: number; }
 /** 전멸한 정상 종료만 점수로 확정할 수 있는 검증 결과다. */
 export interface ExpeditionBossResult { totalDamage: number; endedAtMs: number; allAlliesDead: true; bossDefeated: false; remainingHpByAlly: Record<string, number>; }
 
@@ -22,7 +22,9 @@ export function expeditionWeekKey(now: Date): string {
 /** 입력 순서·쿨다운·생존을 검증하고 불사 보스가 받은 피해만 누적한다. */
 export function resolveExpeditionBossBattle(allies: readonly ExpeditionBossAlly[], actions: readonly ExpeditionBossAction[]): ExpeditionBossResult {
   if (!allies.length || actions.length > EXPEDITION_BOSS_BALANCE.maximumActions) throw new Error("INVALID_BOSS_BATTLE_INPUT");
-  const hp = Object.fromEntries(allies.map((ally) => [ally.id, ally.maxHp]));
+  // 원정 도중 깎인 HP도 서버 재현의 시작점으로 사용하며 범위를 벗어난 스냅샷은 거부한다.
+  if (allies.some((ally) => !Number.isFinite(ally.initialHp ?? ally.maxHp) || (ally.initialHp ?? ally.maxHp) < 0 || (ally.initialHp ?? ally.maxHp) > ally.maxHp)) throw new Error("INVALID_BOSS_BATTLE_INPUT");
+  const hp = Object.fromEntries(allies.map((ally) => [ally.id, ally.initialHp ?? ally.maxHp]));
   const byId = new Map(allies.map((ally) => [ally.id, ally])); const lastAction = new Map<string, number>();
   let actionIndex = 0; let totalDamage = 0;
   // 1초 서버 틱마다 그 이전 입력을 적용한 뒤 현재 단계의 광역 공격을 확정한다.

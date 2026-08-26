@@ -272,9 +272,9 @@ export interface EventListResponse { events: EventDto[]; serverTime: string; }
 export interface EnterEventStageResponse { eventId: string; stage: StageDef; serverTime: string; }
 
 /** 클라이언트 점수가 아니라 재연산 가능한 동작열만 받는 주간 보스 제출 계약이다. */
-export interface SubmitExpeditionBossScoreRequest { requestId: string; actions: ExpeditionBossAction[]; }
+export interface SubmitExpeditionBossScoreRequest { requestId: string; runId?: string; nodeId?: string; actions: ExpeditionBossAction[]; }
 /** 전멸 순간 서버가 확정한 점수와 최고/누적 기록이다. */
-export interface SubmitExpeditionBossScoreResponse { weekKey: string; score: number; bestScore: number; cumulativeScore: number; improved: boolean; endedAtMs: number; }
+export interface SubmitExpeditionBossScoreResponse { weekKey: string; score: number; bestScore: number; cumulativeScore: number; improved: boolean; endedAtMs: number; rankBefore: number | null; rankAfter: number; }
 /** 주간 최고 점수와 월요일 00:00 UTC 초기화 경계를 함께 전달한다. */
 export interface ExpeditionWeeklyBestResponse { weekKey: string; bestScore: number; cumulativeScore: number; resetsAt: string; }
 /** 누적 단계는 정적 표 ID로 요청하고 실제 서버가 달성 및 기존 수령을 다시 검사한다. */

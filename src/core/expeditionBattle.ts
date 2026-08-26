@@ -11,10 +11,22 @@ export interface ExpeditionBattleInputDto {
   mode: "expedition";
   runId: string;
   nodeId: string;
-  nodeType: Extract<ExpeditionNodeType, "normal" | "elite" | "horde" | "boss">;
+  nodeType: Extract<ExpeditionNodeType, "normal" | "elite" | "horde">;
   floor: number;
   relics: readonly FighterInitialState[];
   augments: readonly ExpeditionAugmentSelection[];
+}
+
+/** 20층 불사 보스는 일반 난전과 종료 조건이 달라 입력부터 명시적으로 분리한다. */
+export interface ExpeditionBossBattleInputDto {
+  mode: "expeditionBoss";
+  runId: string;
+  nodeId: string;
+  floor: 20;
+  relics: readonly FighterInitialState[];
+  augments: readonly ExpeditionAugmentSelection[];
+  requestId: string;
+  settlementId: string;
 }
 
 /** 원정 노드가 기존 난전 표현에 주입하는 순수 전투 스냅샷이다. */
@@ -29,8 +41,8 @@ export interface ExpeditionSkirmishConfig {
 /** 정적 밸런스를 적 스냅샷과 Puppet 배율로 한 번만 해석한다. */
 export function createExpeditionSkirmishConfig(input: ExpeditionBattleInputDto, playerDefs: readonly RelicDef[], enemyPool: readonly RelicDef[]): ExpeditionSkirmishConfig {
   if (enemyPool.length === 0) throw new RangeError("원정 적 원본이 비어 있습니다.");
-  // 보스 전용 진행기가 연결되기 전까지 기존 3대3을 보존하되, 요청된 세 노드만 밸런스 표를 읽는다.
-  const balance = input.nodeType === "boss" ? { enemyCount: 3, statScale: 1, bodyScale: 1 } : EXPEDITION_COMBAT_BALANCE[input.nodeType];
+  // 전용 보스 입력은 이 경계에 도달하지 않으므로 세 일반 전투의 표만 읽는다.
+  const balance = EXPEDITION_COMBAT_BALANCE[input.nodeType];
   const activeIds = new Set(input.relics.filter(({ alive, currentHp }) => alive && currentHp > 0).map(({ relicId }) => relicId));
   const scaleStats = (def: RelicDef): RelicDef => ({ ...def, stats: Object.fromEntries(Object.entries(def.stats).map(([key, value]) => [key, value * balance.statScale])) as unknown as RelicDef["stats"] });
   return {
@@ -49,7 +61,7 @@ export function expeditionBattleResults(input: ExpeditionBattleInputDto, activeR
 }
 
 /** 일반 스테이지 진입과 원정 진입을 명시적으로 구분하는 전투 씬 입력 계약이다. */
-export type BattleSceneInputDto = ExpeditionBattleInputDto | { mode?: "stage" };
+export type BattleSceneInputDto = ExpeditionBattleInputDto | ExpeditionBossBattleInputDto | { mode?: "stage" };
 
 /** 저장 선택을 전투 코어가 소비하는 효과로 바꾸며 비전투 회복 효과는 이 목록에서 제외한다. */
 export function expeditionBattleEffects(selections: readonly ExpeditionAugmentSelection[]): ExpeditionAugmentEffect[] {

@@ -42,7 +42,12 @@ import type { MotionPlayback } from "../puppets/assets";
 import { ultimatePresentationFor } from "../data/ultimatePresentations";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { relicStars } from "../core/relicProgression";
-import { createExpeditionSkirmishConfig, expeditionBattleResults, type BattleSceneInputDto, type ExpeditionBattleInputDto } from "../core/expeditionBattle";
+import { createExpeditionSkirmishConfig, expeditionBattleEffects, expeditionBattleResults, type BattleSceneInputDto, type ExpeditionBattleInputDto, type ExpeditionBossBattleInputDto } from "../core/expeditionBattle";
+import { expeditionBossPhaseAt, type ExpeditionBossAction } from "../core/expeditionBoss";
+import { attackPowerMultiplier } from "../core/expeditionAugments";
+import { EXPEDITION_BOSS_BALANCE } from "../data/expedition";
+import { expeditionManager } from "../managers/ExpeditionManager";
+import type { SettleExpeditionRunResponse, SubmitExpeditionBossScoreResponse } from "../api/contracts";
 
 /**
  * 여섯이 돌아다닐 수 있는 범위.
@@ -211,6 +216,8 @@ export class BattleScene extends Phaser.Scene {
 
   create(): void {
     setDebugScene("battle");
+    // 20층은 HP 승리가 없는 전용 시간축이므로 일반 난전 상태를 만들기 전에 완전히 분기한다.
+    if (this.battleInput.mode === "expeditionBoss") { this.createExpeditionBossBattle(this.battleInput); return; }
     const stage = getStage(session.selectedStageId ?? "1-1");
     // 적은 스테이지별 임시 레벨 성장치를 적용한 복사본으로 전투에 투입한다.
     // 유대는 정적 RelicDef가 아니라 현재 플레이어의 저장 진행에서 전투 스냅샷으로 넘긴다.
@@ -256,6 +263,76 @@ export class BattleScene extends Phaser.Scene {
       this.views.forEach((view) => view.creature.destroy());
       this.views.clear();
     });
+  }
+
+  /** 불사 보스는 행동만 기록하고, 광역 피해로 전멸한 뒤 서버 재현 결과를 정산한다. */
+  private createExpeditionBossBattle(input: ExpeditionBossBattleInputDto): void {
+    addSceneBackground(this, BACKGROUND.expeditionField, -30);
+    this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.52).setDepth(-29);
+    this.add.text(BASE_WIDTH / 2, 90, "20층 · 원정 보스", textStyle({ role: "display", size: 54, color: COLOR.sortieText })).setOrigin(0.5);
+    this.add.text(BASE_WIDTH / 2, 180, "불사 관측체", textStyle({ role: "display", size: 72, color: COLOR.dangerText })).setOrigin(0.5);
+    const phaseLabel = this.add.text(BASE_WIDTH / 2, 275, "", textStyle({ role: "emphasis", size: 28, color: COLOR.accentText })).setOrigin(0.5);
+    const timerLabel = this.add.text(BASE_WIDTH / 2, 350, "00:00", textStyle({ role: "display", size: 48 })).setOrigin(0.5);
+    // 보스 HP 대신 누적 관측 피해를 보여 불사 규칙을 시각적으로도 오해하지 않게 한다.
+    const damageLabel = this.add.text(BASE_WIDTH / 2, 520, "관측 피해 0", textStyle({ role: "display", size: 50, color: COLOR.sortieText })).setOrigin(0.5);
+    const effects = expeditionBattleEffects(input.augments);
+    const allies = input.relics.map((saved, index) => {
+      const def = getRelic(saved.relicId); const stats = relicProgression.getFinalStats(saved.relicId); const x = 200 + index * 340;
+      new PortraitCard(this, x, 1450, { width: 270, height: 270, portraitAssetId: def.portraitAssetId, tint: relicCardTint(def), label: def.name, rarity: def.rarity });
+      const hp = stats.hp * Math.max(0, saved.currentHp) / 100;
+      const label = this.add.text(x, 1660, "", textStyle({ role: "emphasis", size: 23, color: COLOR.hpText })).setOrigin(0.5);
+      const bar = new HoloBar(this, x, 1700, 270, 20, { color: COLOR.hpFill, outline: true, ticks: 3 });
+      return { id: saved.relicId, attack: Math.max(stats.atk, stats.ap) * attackPowerMultiplier(effects, saved.relicId), maxHp: stats.hp, hp, label, bar };
+    });
+    const actions: ExpeditionBossAction[] = [];
+    let elapsedMs = 0; let estimatedDamage = 0; let submitting = false;
+    const recordActions = (): void => allies.forEach((ally) => {
+      if (ally.hp <= 0) return;
+      // 피해 숫자는 로컬 표시용 추정에만 쓰고 제출 DTO에는 동작 종류와 시각만 남긴다.
+      actions.push({ elapsedMs, actorId: ally.id, kind: "basic" }); estimatedDamage += Math.max(1, Math.round(ally.attack * EXPEDITION_BOSS_BALANCE.actionPower.basic));
+      if (elapsedMs % EXPEDITION_BOSS_BALANCE.actionCooldownMs.ultimate === 0) { actions.push({ elapsedMs, actorId: ally.id, kind: "ultimate" }); estimatedDamage += Math.max(1, Math.round(ally.attack * EXPEDITION_BOSS_BALANCE.actionPower.ultimate)); }
+    });
+    const refresh = (): void => {
+      const phase = expeditionBossPhaseAt(elapsedMs);
+      phaseLabel.setText(`${phase.label} · 광역 ${phase.attackPerSecond.toLocaleString()}/초`);
+      timerLabel.setText(`${String(Math.floor(elapsedMs / 60_000)).padStart(2, "0")}:${String(Math.floor(elapsedMs / 1_000) % 60).padStart(2, "0")}`);
+      damageLabel.setText(`관측 피해 ${estimatedDamage.toLocaleString()}`);
+      allies.forEach((ally) => { ally.label.setText(ally.hp > 0 ? `HP ${Math.ceil(ally.hp).toLocaleString()}` : "전투 불능"); ally.bar.setValue(ally.hp / ally.maxHp); });
+    };
+    recordActions(); refresh();
+    this.time.addEvent({ delay: 1_000, loop: true, callback: () => {
+      if (submitting) return;
+      elapsedMs += 1_000; recordActions();
+      const aoe = expeditionBossPhaseAt(elapsedMs).attackPerSecond;
+      allies.forEach((ally) => { if (ally.hp > 0) ally.hp = Math.max(0, ally.hp - aoe); });
+      refresh();
+      if (allies.every(({ hp }) => hp <= 0)) { submitting = true; void this.submitAndSettleBoss(input, actions); }
+    } });
+  }
+
+  /** 점수 제출 → 로컬 노드 반영 → completed 정산을 고정 ID로 직렬화한다. */
+  private async submitAndSettleBoss(input: ExpeditionBossBattleInputDto, actions: ExpeditionBossAction[]): Promise<void> {
+    try {
+      const score = await gameApi.submitExpeditionBossScore({ requestId: input.requestId, runId: input.runId, nodeId: input.nodeId, actions });
+      // 서버가 확정한 피해만 노드에 반영하며 클라이언트 추정 피해는 상태에 쓰지 않는다.
+      const completed = expeditionManager.completeNode(input.nodeId, { relicHp: [0, 0, 0], bossDamage: score.score, score: score.score });
+      if (!completed && !expeditionManager.status().run?.visitedNodeIds.includes(input.nodeId)) throw new Error("BOSS_NODE_SAVE_FAILED");
+      const settlement = await gameApi.settleExpeditionRun({ runId: input.runId, settlementId: input.settlementId, outcome: "completed" });
+      this.showBossResult(score, settlement);
+    } catch {
+      // 같은 버튼은 저장된 요청 ID로 전체 체인을 재시도하므로 성공한 서버 제출도 중복 누적되지 않는다.
+      new Button(this, BASE_WIDTH / 2, 1050, { width: 460, height: 100, label: "정산 다시 시도", onClick: () => this.scene.restart(input) }).setDepth(201);
+    }
+  }
+
+  /** 서버 기록과 정산 재화를 한 장의 최종 영수증으로 보여 준다. */
+  private showBossResult(score: SubmitExpeditionBossScoreResponse, settlement: SettleExpeditionRunResponse): void {
+    this.add.rectangle(BASE_WIDTH / 2, 960, BASE_WIDTH - 90, 850, COLOR.void, 0.94).setDepth(200);
+    this.add.text(BASE_WIDTH / 2, 620, "원정 관측 완료", textStyle({ role: "display", size: 60, color: COLOR.accentText })).setOrigin(0.5).setDepth(201);
+    const rank = score.rankBefore === null ? `신규 → ${score.rankAfter}위` : `${score.rankBefore}위 → ${score.rankAfter}위`;
+    const rewards = Object.entries(settlement.granted).filter(([, amount]) => amount > 0).map(([id, amount]) => `${id} +${amount.toLocaleString()}`).join("  ·  ") || "정산 재화 없음";
+    this.add.text(BASE_WIDTH / 2, 875, `이번 점수  ${score.score.toLocaleString()}\n주간 최고  ${score.bestScore.toLocaleString()}  ${score.improved ? "· 최고점 갱신" : "· 기존 기록 유지"}\n누적 점수  ${score.cumulativeScore.toLocaleString()}\n순위  ${rank}\n\n런 정산  ${rewards}`, textStyle({ role: "body", size: 31, color: COLOR.ink, align: "center", lineSpacing: 16 })).setOrigin(0.5).setDepth(201);
+    new Button(this, BASE_WIDTH / 2, 1260, { width: 430, height: 105, label: "로비로", onClick: () => this.scene.start("lobby") }).setDepth(201);
   }
 
   /** 전장 위쪽 가장자리에 배속과 자동 궁극기 토글을 같은 홀로그램 칩으로 나란히 둔다. */
@@ -835,8 +912,8 @@ export class BattleScene extends Phaser.Scene {
       const results = expeditionBattleResults(input, skirmishRelicResults(this.state));
       // 서버에는 HP만 제출하고 재화 필드는 계약에 존재하지 않아 임의 보상 주입을 막는다.
       void gameApi.completeExpeditionNode({ requestId: `${input.runId}:${input.nodeId}`, runId: input.runId, nodeId: input.nodeId, relicHp: results.map(({ currentHp }) => currentHp) }).then(() => {
-        if (!won || input.nodeType === "boss") {
-          // 전멸과 20층 보스는 추가 지도 입력을 거치지 않고 같은 멱등 정산 경계로 끝낸다.
+        if (!won) {
+          // 전멸은 추가 지도 입력을 거치지 않고 같은 멱등 정산 경계로 끝낸다.
           void gameApi.settleExpeditionRun({ runId: input.runId, settlementId: `${input.runId}:${won ? "complete" : "defeat"}`, outcome: won ? "completed" : "abandoned" }).then(() => this.scene.start("lobby")).catch(() => { saving = false; });
           return;
         }

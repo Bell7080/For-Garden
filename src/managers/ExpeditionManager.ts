@@ -56,7 +56,7 @@ export class ExpeditionManager {
     const weekKey = expeditionWeekKey(this.serverNow());
     const mapSeed = `${weekKey}:${this.state.expedition.playsThisWeek + 1}`;
     const map = generateExpeditionMap({ seed: mapSeed, random: seededRandom(mapSeed) });
-    const run: ExpeditionRunState = { runId: `run:${mapSeed}`, weekKey, mapSeed, nodes: map.nodes, currentNodeId: null, visitedNodeIds: [], relics: relicIds.map((relicId) => ({ relicId, currentHp: 100, alive: true })) as ExpeditionRunState["relics"], selectedAugmentIds: [], selectedAugments: [], pendingAugmentReward: null, pendingRewards: {}, lastNodeRewards: null, bossDamage: 0, bestScore: 0, settled: false, settlementId: null };
+    const run: ExpeditionRunState = { runId: `run:${mapSeed}`, weekKey, mapSeed, nodes: map.nodes, currentNodeId: null, visitedNodeIds: [], relics: relicIds.map((relicId) => ({ relicId, currentHp: 100, alive: true })) as ExpeditionRunState["relics"], selectedAugmentIds: [], selectedAugments: [], pendingAugmentReward: null, pendingRewards: {}, lastNodeRewards: null, bossDamage: 0, bestScore: 0, settled: false, settlementId: null, bossSubmissionId: null, bossSettlementId: null };
     this.commit({ ...this.state.expedition, run });
     return { ok: true, run: structuredClone(run) };
   }
@@ -85,6 +85,18 @@ export class ExpeditionManager {
     // 점수는 결과 DTO와 서버 생성 맵의 층만으로 계산해 씬이 임의 점수를 주입하지 못하게 한다.
     const score = node ? node.floor * 1_000 + Math.round(results.reduce((sum, { currentHp }) => sum + currentHp, 0) * 10) : 0;
     return this.completeNode(nodeId, { relicHp: results.map(({ currentHp }) => currentHp), score });
+  }
+
+  /** 보스를 누르는 순간 두 멱등 키를 먼저 저장해 어느 비동기 경계에서 종료돼도 복원한다. */
+  prepareBossRequests(nodeId: string): { requestId: string; settlementId: string } | null {
+    const run = this.state.expedition.run;
+    const node = run?.nodes.find(({ id }) => id === nodeId);
+    if (!run || node?.type !== "boss" || run.settled) return null;
+    const next = structuredClone(run);
+    next.bossSubmissionId ??= `${run.runId}:${nodeId}:boss-score`;
+    next.bossSettlementId ??= `${run.runId}:boss-completed`;
+    this.commit({ ...this.state.expedition, run: next });
+    return { requestId: next.bossSubmissionId, settlementId: next.bossSettlementId };
   }
 
   /** 전투 노드의 첫 제안을 한 번만 만들고 seed와 결과를 같은 저장 트랜잭션에 고정한다. */

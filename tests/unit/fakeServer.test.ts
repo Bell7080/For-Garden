@@ -472,6 +472,21 @@ describe("FakeServer 광고 보상 경계", () => {
 
 /** 원정 임시 보상과 빠른 원정은 서버 소유 값만으로 원자 지급된다. */
 describe("FakeServer 원정 정산", () => {
+  it("노드 재요청은 멱등이며 서버 보상만 pendingRewards에 저장한다", async () => {
+    const state = makeSession();
+    const manager = new (await import("../../src/managers/ExpeditionManager")).ExpeditionManager(state, { save: () => undefined }, () => new Date("2026-08-25T12:00:00Z"));
+    manager.start(["anky", "rex", "dodo"]);
+    const node = state.expedition.run!.nodes.find(({ floor }) => floor === 1)!;
+    const server = new FakeServer(state, { latencyMs: 0, random: () => 0 });
+    const request = { requestId: "node-once", runId: state.expedition.run!.runId, nodeId: node.id, relicHp: [100, 90, 80] };
+    const first = await server.completeExpeditionNode(request);
+    const repeated = await server.completeExpeditionNode(request);
+    expect(repeated).toEqual(first);
+    expect(state.expedition.run!.visitedNodeIds.filter((id) => id === node.id)).toHaveLength(1);
+    expect(state.expedition.run!.pendingRewards).toEqual(first.pendingRewards);
+    await expect(server.completeExpeditionNode({ ...request, requestId: "node-forged-retry" })).rejects.toMatchObject({ code: "EXPEDITION_RUN_NOT_FOUND" });
+  });
+
   it("지갑 상한까지 한 번만 정산하고 다른 정산 ID의 중복 지급을 막는다", async () => {
     const state = makeSession();
     state.wallet.gold = 999_999_998;

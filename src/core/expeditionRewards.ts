@@ -1,5 +1,38 @@
 import { EXPEDITION_AUGMENTS, type ExpeditionAugmentDef, type ExpeditionAugmentRarity } from "../data/expeditionAugments";
 import type { ExpeditionNodeType } from "./expeditionMap";
+import { EXPEDITION_COMBAT_REWARD_MULTIPLIERS, EXPEDITION_NODE_REWARD_BALANCE, EXPEDITION_TREASURE_REWARD_BALANCE } from "../data/expedition";
+
+/** 서버가 런 상태에 더할 수 있는 정수 재화 결과다. */
+export type ExpeditionNodeRewards = Partial<Record<keyof typeof EXPEDITION_NODE_REWARD_BALANCE, number>>;
+
+/** 주입 난수를 범위의 양끝을 포함한 정수로 변환한다. */
+function rollInteger(min: number, max: number, random: () => number): number {
+  const normalized = Math.min(1 - Number.EPSILON, Math.max(0, random()));
+  return min + Math.floor(normalized * (max - min + 1));
+}
+
+/**
+ * 노드 종류·현재 런 누적량·서버 난수만으로 이번 보상을 계산하는 순수 규칙이다.
+ * 잘못된 누적 재화는 조용히 무시하지 않고 거부해 서버 저장 오염을 드러낸다.
+ */
+export function calculateExpeditionNodeRewards(input: { nodeType: ExpeditionNodeType; accumulated: Readonly<Record<string, number>>; random: () => number }): ExpeditionNodeRewards {
+  for (const [currency, amount] of Object.entries(input.accumulated)) {
+    if (!(currency in EXPEDITION_NODE_REWARD_BALANCE) || !Number.isFinite(amount) || amount < 0) throw new Error("INVALID_EXPEDITION_REWARD_STATE");
+  }
+  if (input.nodeType === "rest" || input.nodeType === "boss") return {};
+  const source = input.nodeType === "treasure"
+    ? EXPEDITION_TREASURE_REWARD_BALANCE
+    : Object.fromEntries(Object.entries(EXPEDITION_NODE_REWARD_BALANCE).map(([currency, rule]) => [currency, rule.perNode]));
+  const multiplier = input.nodeType === "treasure" ? 1 : EXPEDITION_COMBAT_REWARD_MULTIPLIERS[input.nodeType];
+  const result: ExpeditionNodeRewards = {};
+  for (const [currency, range] of Object.entries(source)) {
+    const key = currency as keyof typeof EXPEDITION_NODE_REWARD_BALANCE;
+    const remaining = EXPEDITION_NODE_REWARD_BALANCE[key].runCap - (input.accumulated[key] ?? 0);
+    const rolled = Math.floor(rollInteger(range.min, range.max, input.random) * multiplier);
+    result[key] = Math.max(0, Math.min(remaining, rolled));
+  }
+  return result;
+}
 
 /** 저장 가능한 증강 확정 결과다. 전체 증강에는 대상 ID를 두지 않는다. */
 export interface ExpeditionAugmentSelection { augmentId: string; targetRelicId?: string }

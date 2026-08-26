@@ -46,12 +46,30 @@ export const EXPEDITION_AUGMENT_IDS = EXPEDITION_AUGMENTS.map(({ id }) => id);
 /** 노드 완료 전까지 런 안에 보류할 수 있는 보상 종류다. */
 export const EXPEDITION_REWARD_IDS = ["gold", "fossil", "amber", "gems", "cheesecake"] as const;
 
-/** 노드 완료 재화의 서버 추첨 범위와 한 런 누적 상한이다. 희귀 재화인 호박석은 원정 노드에서 지급하지 않는다. */
+/** 노드 완료 재화의 서버 추첨 범위와 한 런 누적 상한이다. */
 export const EXPEDITION_NODE_REWARD_BALANCE = {
   cheesecake: { perNode: { min: 4, max: 12 }, runCap: 180 },
   gold: { perNode: { min: 120, max: 420 }, runCap: 7_500 },
   fossil: { perNode: { min: 3, max: 12 }, runCap: 220 },
   gems: { perNode: { min: 0, max: 2 }, runCap: 24 },
+} as const;
+
+/** 일반·정예·무리는 같은 기초 표에 배율만 적용해 난이도 대비 보상을 비교할 수 있게 한다. */
+export const EXPEDITION_COMBAT_REWARD_MULTIPLIERS = {
+  normal: 1,
+  elite: 1.75,
+  horde: 1.4,
+} as const;
+
+/**
+ * 보물은 증강을 포기하는 대신 특별한 재화 선택을 주는 별도 표다.
+ * 보장 보석과 높은 전투 재화 기대값은 직접 경로를 누른 플레이어에게만 제공한다. 따라서 원정 스킵은 이 보물을
+ * 얻지 못해, 소기액 재화 획득(소위 '쌀먹')과 증강·편의성 사이에 아쉬움이 남는 선택지를 만든다.
+ */
+export const EXPEDITION_TREASURE_REWARD_BALANCE = {
+  gold: { min: 520, max: 900 },
+  fossil: { min: 14, max: 28 },
+  gems: { min: 3, max: 5 },
 } as const;
 
 /** 빠른 원정은 서버가 보유한 유효 최고 점수의 이 비율만 보상 점수로 환산한다. */

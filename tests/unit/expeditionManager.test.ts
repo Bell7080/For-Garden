@@ -49,4 +49,22 @@ describe("ExpeditionManager", () => {
     const manager = new ExpeditionManager(state, { save: vi.fn() }, () => new Date("2026-08-25T12:00:00Z"));
     expect(manager.status().quickAvailable).toBe(true);
   });
+
+  it("heals and completes a rest node in one save so retry cannot heal twice", () => {
+    const state = createDefaultSession();
+    const save = vi.fn();
+    const manager = new ExpeditionManager(state, { save }, () => new Date("2026-08-25T12:00:00Z"));
+    manager.start(["anky", "rex", "spino"]);
+    const node = state.expedition.run!.nodes.find(({ type }) => type === "rest")!;
+    state.expedition.run!.relics[0].currentHp = 20;
+    save.mockClear();
+
+    expect(manager.completeRestNode(node.id)).toBe(true);
+    const healed = state.expedition.run!.relics[0].currentHp;
+    expect(state.expedition.run!.visitedNodeIds).toContain(node.id);
+    expect(save).toHaveBeenCalledTimes(1);
+    expect(manager.completeRestNode(node.id)).toBe(false);
+    expect(state.expedition.run!.relics[0].currentHp).toBe(healed);
+    expect(save).toHaveBeenCalledTimes(1);
+  });
 });

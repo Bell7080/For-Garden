@@ -19,6 +19,7 @@ import { chipPoints, drawGlassFade, drawHairline, drawLayer, drawVignette, HoloB
 import { EXPEDITION_LAYOUT } from "../ui/expeditionLayout";
 import { ExpeditionMapView } from "../ui/ExpeditionMapView";
 import type { ExpeditionAugmentSelection } from "../core/expeditionRewards";
+import type { ExpeditionBattleInputDto } from "../core/expeditionBattle";
 
 /** 원정 준비 카드의 고정 그리드 규격이다. 다른 편성과 달리 세 칸씩 읽게 한다. */
 const ROSTER = { columns: 3, width: 250, height: 310, gapX: 56, gapY: 50, top: 470 } as const;
@@ -35,6 +36,8 @@ export class ExpeditionScene extends Phaser.Scene {
   private startButton?: Button;
   /** 확인 팝업은 씬의 다른 입력 위에 한 장만 쌓이도록 공용 레이어가 소유한다. */
   private popups!: PopupLayer;
+  /** 지도 입력부터 저장/씬 전환 완료까지의 단일 잠금은 이 씬이 소유한다. */
+  private nodeTransitionPending = false;
 
   constructor() {
     super("expedition");
@@ -45,6 +48,7 @@ export class ExpeditionScene extends Phaser.Scene {
     this.selected = [];
     this.cards.clear();
     this.popups = new PopupLayer(this);
+    this.nodeTransitionPending = false;
 
     const status = expeditionManager.status();
     // 활성 런은 전용 지도 원화를 쓰고, 편성 단계만 기존 야외 조사 배경을 유지한다.
@@ -78,6 +82,7 @@ export class ExpeditionScene extends Phaser.Scene {
     this.buildMap(run.nodes, run.currentNodeId, run.visitedNodeIds);
     this.buildAugmentChips(augments);
     this.buildRelicHud(run.relics);
+    if (run.pendingAugmentReward) this.openAugmentReward();
     // 포기는 돌아가기보다 작게 두어 파괴 조작의 위계를 낮추고, 공용 팝업에서 결과를 재확인한다.
     new Button(this, BASE_WIDTH - 170, 1750, { width: 230, height: 72, label: "포기하기", fontSize: 24, onClick: () => this.confirmAbandon() });
   }
@@ -102,36 +107,63 @@ export class ExpeditionScene extends Phaser.Scene {
       nodes,
       currentNodeId,
       visitedIds,
-      onSelect: (node) => {
-        // 교전 노드는 전용 필드로, 비전투 노드는 현재 선택 안내로 연결한다.
-        if (["normal", "elite", "horde", "boss"].includes(node.type)) this.openBattleField(node);
-        else {
-          this.children.getByName("expedition-node-hint")?.destroy();
-          this.add.text(BASE_WIDTH / 2, 1210, `${node.floor}층 · ${this.nodeLabel(node.type)}`, textStyle({ role: "emphasis", size: 22, color: COLOR.sortieText })).setName("expedition-node-hint").setOrigin(0.5);
-        }
-      },
+      onSelect: (node) => this.handleNodeSelection(node),
     });
   }
 
-  /** 지도에서 고른 교전의 전용 전투 필드를 열어 배경과 전투 HUD의 시각 경계를 먼저 세운다. */
-  private openBattleField(node: ExpeditionMapNode): void {
-    const layer = this.add.container(0, 0).setDepth(3000);
-    const field = this.add.image(BASE_WIDTH / 2, BASE_HEIGHT / 2, BACKGROUND.expeditionField);
-    field.setScale(Math.max(BASE_WIDTH / field.width, BASE_HEIGHT / field.height));
-    layer.add(field);
-    // 전투 유닛이 설 중앙은 밝게 남기고 상하 정보대만 공용 유리 토큰으로 눌러 가독성을 확보한다.
-    layer.add(drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { strength: 0.7 }));
-    layer.add(drawGlassFade(this, BASE_WIDTH / 2, 130, BASE_WIDTH, 260, { topAlpha: HOLO.glass, bottomAlpha: 0 }));
-    layer.add(drawGlassFade(this, BASE_WIDTH / 2, BASE_HEIGHT - 220, BASE_WIDTH, 440, { topAlpha: 0, bottomAlpha: HOLO.glass }));
-    layer.add(this.add.text(54, 44, `${node.floor}층 · ${this.nodeLabel(node.type)}`, textStyle({ role: "display", size: 42, color: COLOR.sortieText })).setOrigin(0, 0));
-    layer.add(this.add.text(54, 104, "교전 준비", textStyle({ role: "emphasis", size: 24, color: COLOR.ink })).setOrigin(0, 0));
-    // 전투 규칙 연결 전에도 사용자가 지도 선택을 취소할 수 있는 실제 입력 경계를 제공한다.
-    const back = new Button(this, BASE_WIDTH / 2, BASE_HEIGHT - 130, { width: 420, height: 92, label: "지도로 돌아가기", fontSize: 28, accentColor: COLOR.sortie, accentTextColor: COLOR.sortieText, onClick: () => layer.destroy(true) });
-    layer.add(back);
+  /** 노드 종류별 전이를 한 진입점에서 직렬화하며 저장 성공 전에는 다른 노드를 받지 않는다. */
+  private handleNodeSelection(node: ExpeditionMapNode): void {
+    if (this.nodeTransitionPending) return;
+    const run = expeditionManager.status().run;
+    if (!run || run.relics.every(({ alive }) => !alive) || run.pendingAugmentReward) return;
+    this.nodeTransitionPending = true;
+    if (["normal", "elite", "horde", "boss"].includes(node.type)) {
+      const input: ExpeditionBattleInputDto = { mode: "expedition", runId: run.runId, nodeId: node.id, nodeType: node.type as ExpeditionBattleInputDto["nodeType"], floor: node.floor, relics: run.relics.map(({ relicId, currentHp }) => ({ relicId, currentHp })), augments: run.selectedAugments };
+      this.scene.start("battle", input);
+      return;
+    }
+    if (node.type === "rest") {
+      this.popups.confirm({ title: "휴식", message: "원정대를 회복하고 이 휴식 지점을 완료합니다.", confirmLabel: "휴식하기" }, () => {
+        this.nodeTransitionPending = true;
+        // 매니저의 단일 저장이 실패하면 잠금을 풀 뿐, 부분 회복 상태는 존재하지 않는다.
+        if (expeditionManager.completeRestNode(node.id)) this.scene.restart();
+        else this.nodeTransitionPending = false;
+      });
+      this.nodeTransitionPending = false;
+      return;
+    }
+    void this.completeTreasureNode(node);
   }
 
-  /** 노드 종류와 공용 글리프 이름의 대응은 씬의 위치 계산과 분리한다. */
-  private nodeLabel(type: ExpeditionMapNode["type"]): string { return ({ normal: "일반 전투", elite: "정예 전투", horde: "군집 전투", rest: "휴식", treasure: "보물", boss: "최종 보스" } as const)[type]; }
+  /** Fake 서버가 정한 보상 DTO를 받은 뒤에만 보물 노드를 완료하며 증강 경로는 열지 않는다. */
+  private async completeTreasureNode(node: ExpeditionMapNode): Promise<void> {
+    const run = expeditionManager.status().run;
+    if (!run) { this.nodeTransitionPending = false; return; }
+    try {
+      const reward = await gameApi.getExpeditionTreasureReward({ runId: run.runId, nodeId: node.id });
+      if (expeditionManager.completeNode(node.id, { relicHp: run.relics.map(({ currentHp }) => currentHp), rewards: reward.rewards })) this.scene.restart();
+      else this.nodeTransitionPending = false;
+    } catch { this.nodeTransitionPending = false; }
+  }
+
+  /** 저장된 제안만 표시하며 선택 성공 뒤 재시작해서 다음 라운드 또는 지도를 활성화한다. */
+  private openAugmentReward(): void {
+    const pending = expeditionManager.status().run?.pendingAugmentReward;
+    if (!pending) return;
+    const layer = this.add.container(0, 0).setDepth(4000);
+    layer.add(this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.9));
+    layer.add(this.add.text(BASE_WIDTH / 2, 620, `증강 선택 ${pending.round} / ${pending.totalRounds}`, textStyle({ role: "display", size: 46, color: COLOR.sortieText })).setOrigin(0.5));
+    pending.offers.forEach((offer, index) => {
+      const def = getExpeditionAugment(offer.augmentId);
+      layer.add(new Button(this, BASE_WIDTH / 2, 790 + index * 150, { width: 700, height: 112, label: def?.name ?? offer.augmentId, onClick: () => {
+        if (this.nodeTransitionPending) return;
+        this.nodeTransitionPending = true;
+        const targetRelicId = offer.eligibleTargetRelicIds[0];
+        if (expeditionManager.chooseAugment({ augmentId: offer.augmentId, ...(targetRelicId ? { targetRelicId } : {}) })) this.scene.restart();
+        else this.nodeTransitionPending = false;
+      } }));
+    });
+  }
 
   /** 하단 증강은 공용 비대칭 chipPoints로 표시하고, 다섯 개부터 +N으로 줄여 화면 폭을 지킨다. */
   private buildAugmentChips(augments: readonly ExpeditionAugmentSelection[]): void {

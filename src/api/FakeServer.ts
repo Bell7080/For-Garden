@@ -26,7 +26,7 @@ import type { EngraveRuneRequest, EngraveRuneResponse, EnhanceRuneRequest, Enhan
 import type { ActivatePassRequest, ActivatePassResponse, ClaimInstantAdRewardRequest, ClaimInstantAdRewardResponse, PassEntitlementDto, VerifyPurchaseReceiptRequest, VerifyPurchaseReceiptResponse } from "./contracts";
 import { harvestIdleExcavation, isExcavationStorageFull, settleIdleExcavation, validateExcavationFormation } from "../core/idleExcavation";
 import type { HarvestExcavationRequest, HarvestExcavationResponse, IdleExcavationResponse, SaveExcavationFormationRequest, InventoryResponse, UseConsumableRequest, UseConsumableResponse } from "./contracts";
-import type { ClaimExpeditionRewardRequest, ClaimExpeditionRewardResponse, ExpeditionLeaderboardResponse, ExpeditionWeeklyBestResponse, SettleExpeditionRunRequest, SettleExpeditionRunResponse, SubmitExpeditionBossScoreRequest, SubmitExpeditionBossScoreResponse } from "./contracts";
+import type { ClaimExpeditionRewardRequest, ClaimExpeditionRewardResponse, ExpeditionLeaderboardResponse, ExpeditionTreasureRequest, ExpeditionTreasureResponse, ExpeditionWeeklyBestResponse, SettleExpeditionRunRequest, SettleExpeditionRunResponse, SubmitExpeditionBossScoreRequest, SubmitExpeditionBossScoreResponse } from "./contracts";
 import { expeditionWeekKey, resolveExpeditionBossBattle } from "../core/expeditionBoss";
 import { EXPEDITION_BOSS_BALANCE, EXPEDITION_CUMULATIVE_REWARD_STAGES, QUICK_EXPEDITION_POLICY } from "../data/expedition";
 
@@ -153,6 +153,16 @@ export class FakeServer implements GameApi {
     this.persist({ ...this.state, wallet, expedition }); this.state.wallet = wallet; this.state.expedition = expedition;
     const response = { ...this.snapshot(), runId: run.runId, settlementId: request.settlementId, outcome: request.outcome, granted };
     this.expeditionSettlementResults.set(request.settlementId, response); return structuredClone(response);
+  }
+
+  /** 운영 서버의 loot table 대신 결정적 Fake 규칙을 쓰되 요청이 실제 미완료 보물인지 검증한다. */
+  async getExpeditionTreasureReward(request: ExpeditionTreasureRequest): Promise<ExpeditionTreasureResponse> {
+    await this.delay();
+    const run = this.state.expedition.run;
+    const node = run?.nodes.find(({ id }) => id === request.nodeId);
+    if (!run || run.runId !== request.runId || node?.type !== "treasure" || run.visitedNodeIds.includes(node.id)) throw new GameApiError("EXPEDITION_RUN_NOT_FOUND", "수령 가능한 보물 노드가 없습니다.");
+    // floor만 사용하는 결정적 응답은 재요청에도 같으며 클라이언트가 보상 값을 조작할 수 없다.
+    return { runId: run.runId, nodeId: node.id, rewards: { gold: 80 + node.floor * 20 } };
   }
 
   /** Fake 운영 서버도 번들의 표시 fallback 없이 인증된 설정 DTO를 명시적으로 제공한다. */

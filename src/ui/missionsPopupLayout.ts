@@ -16,6 +16,7 @@ export interface LayoutBounds { left: number; top: number; right: number; bottom
 export interface ResearchTrackLayout {
   safeBounds: LayoutBounds;
   barBounds: LayoutBounds;
+  /** HoloBar가 요구하는 중심 좌표다. 왼쪽 경계를 중심으로 넘기면 폭의 절반이 팝업 밖으로 샌다. */
   barX: number;
   barWidth: number;
   labelX: number;
@@ -34,18 +35,19 @@ export function researchTrackLayout(popupWidth: number, thresholds: readonly num
   // RewardFrame 외곽선은 도형 밖으로 선의 절반만큼 뻗으므로 그 반폭도 실제 반지름에 포함한다.
   const frameRadius = research.frameSize / 2 + research.frameOutlineWidth / 2;
   const endpointReserve = frameRadius + research.endpointGap;
-  const barX = safeLeft + endpointReserve;
+  const barLeft = safeLeft + endpointReserve;
   const barWidth = Math.max(0, safeRight - safeLeft - endpointReserve * 2);
+  const barX = barLeft + barWidth / 2;
   const minimum = Math.min(...thresholds);
   const maximum = Math.max(...thresholds);
   // 단계가 하나뿐인 비정상/축소 데이터도 왼쪽 끝이라는 예측 가능한 위치에 안전하게 둔다.
-  const stageXs = thresholds.map((threshold) => barX + barWidth * (maximum === minimum ? 0 : (threshold - minimum) / (maximum - minimum)));
+  const stageXs = thresholds.map((threshold) => barLeft + barWidth * (maximum === minimum ? 0 : (threshold - minimum) / (maximum - minimum)));
   const frameY = research.barY + research.frameOffsetY;
   const frameBounds = stageXs.map((centerX) => ({ left: centerX - frameRadius, top: frameY - frameRadius, right: centerX + frameRadius, bottom: frameY + frameRadius }));
   return {
     safeBounds: { left: safeLeft, top: Number.NEGATIVE_INFINITY, right: safeRight, bottom: Number.POSITIVE_INFINITY },
-    barBounds: { left: barX, top: research.barY - research.barHeight / 2, right: barX + barWidth, bottom: research.barY + research.barHeight / 2 },
-    barX, barWidth, labelX: barX, stageXs, frameBounds,
+    barBounds: { left: barLeft, top: research.barY - research.barHeight / 2, right: barLeft + barWidth, bottom: research.barY + research.barHeight / 2 },
+    barX, barWidth, labelX: barLeft, stageXs, frameBounds,
   };
 }
 

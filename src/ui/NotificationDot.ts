@@ -1,8 +1,8 @@
 import Phaser from "phaser";
-import { NOTIFICATION_DOT_STYLE } from "./notificationDotStyle";
+import { NOTIFICATION_DOT_STYLE, rotatedNotificationAnchor, type NotificationAnchorOptions } from "./notificationDotStyle";
 export { NOTIFICATION_DOT_STYLE } from "./notificationDotStyle";
 
-export interface NotificationDotOptions {
+export interface NotificationDotOptions extends NotificationAnchorOptions {
   /** 대상 컨테이너 원점 기준 앵커만 받으며 색·크기는 화면에서 바꿀 수 없다. */
   x: number;
   y: number;
@@ -11,7 +11,8 @@ export interface NotificationDotOptions {
 /** 숫자 없이 붉은 원·흰 외곽선·짙은 그림자를 한곳에서 그리는 공용 프리팹이다. */
 export class NotificationDot extends Phaser.GameObjects.Container {
   constructor(scene: Phaser.Scene, target: Phaser.GameObjects.Container, options: NotificationDotOptions) {
-    super(scene, options.x, options.y);
+    // super 호출 전에 this를 만들 수 없으므로 같은 순수 계산의 두 축을 생성자 인자로 바로 넘긴다.
+    super(scene, rotatedNotificationAnchor(options).x, rotatedNotificationAnchor(options).y);
     const style = NOTIFICATION_DOT_STYLE;
     // 그림자를 아래로 분리해 밝고 복잡한 로비 원화에서도 흰 외곽선이 묻히지 않게 한다.
     this.add(scene.add.circle(0, style.shadowOffsetY, style.radius + 2, style.shadow, style.shadowAlpha));

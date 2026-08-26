@@ -142,7 +142,8 @@ export class LobbyScene extends Phaser.Scene {
       onClick: () => this.openIdleExcavation(),
     });
     // 발굴 저장 상한 판정은 manager가 API 결과로 합성하며 버튼은 공용 점만 구독한다.
-    bindNotificationDot(this, excavationButton, { x: 132, y: -46 }, (listener) => notificationManager.subscribe("excavationFull", listener));
+    // 판과 별도 자식인 알림점에도 같은 6° 회전을 적용해 실제 기울어진 우상단에 붙인다.
+    bindNotificationDot(this, excavationButton, { x: 132, y: -46, rotation: Phaser.Math.DegToRad(6) }, (listener) => notificationManager.subscribe("excavationFull", listener));
 
     new BottomNav(this, "lobby");
     // 한 번의 공용 조회가 모든 버튼을 갱신하며 실패 시 기존의 안전한 꺼짐 상태를 유지한다.

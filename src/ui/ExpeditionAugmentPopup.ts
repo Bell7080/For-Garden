@@ -46,12 +46,13 @@ export class ExpeditionAugmentPopup {
 
   /** 지도보다 위에 닫을 수 없는 선택판을 열어 저장된 보상을 건너뛸 입력을 없앤다. */
   open(): void {
-    this.popup.open({ width: 940, height: 1330, y: 970, title: `증강 선택 ${this.options.round} / ${this.options.totalRounds}`, dim: true, dimAlpha: 0.86, closeOnBackdrop: false, hideCloseButton: true, titleSize: 40 }, (body) => {
-      body.add(this.scene.add.text(0, -565, "전투 프로토콜", textStyle({ role: "emphasis", size: 24, color: COLOR.sortieText })).setOrigin(0.5));
-      this.options.offers.forEach((offer, index) => this.addOffer(body, offer, -390 + index * 285));
-      body.add(this.scene.add.text(0, 160, "개인 증강 대상을 선택하세요", textStyle({ role: "emphasis", size: 25, color: COLOR.inkDim })).setOrigin(0.5));
+    this.popup.open({ width: 940, height: 1450, y: 970, title: `증강 선택 ${this.options.round} / ${this.options.totalRounds}`, dim: true, dimAlpha: 0.86, closeOnBackdrop: false, hideCloseButton: true, titleSize: 40 }, (body) => {
+      // 후보 세 장, 대상 안내, 초상 행을 독립 구역으로 내려 세 번째 후보의 설명과 얼굴이 겹치지 않게 한다.
+      body.add(this.scene.add.text(0, -625, "전투 프로토콜", textStyle({ role: "emphasis", size: 24, color: COLOR.sortieText })).setOrigin(0.5));
+      this.options.offers.forEach((offer, index) => this.addOffer(body, offer, -475 + index * 265));
+      body.add(this.scene.add.text(0, 190, "개인 증강 대상을 선택하세요", textStyle({ role: "emphasis", size: 25, color: COLOR.inkDim })).setOrigin(0.5));
       this.addTargets(body);
-      this.confirmButton = new Button(this.scene, 0, 535, { width: 500, height: 104, label: "대상 확정", variant: "primary", accentColor: COLOR.sortie, accentTextColor: COLOR.sortieText, onClick: () => this.confirmPersonal() });
+      this.confirmButton = new Button(this.scene, 0, 625, { width: 500, height: 104, label: "대상 확정", variant: "primary", accentColor: COLOR.sortie, accentTextColor: COLOR.sortieText, onClick: () => this.confirmPersonal() });
       this.confirmButton.setEnabled(false);
       body.add(this.confirmButton);
     });
@@ -77,7 +78,7 @@ export class ExpeditionAugmentPopup {
   private addTargets(body: Phaser.GameObjects.Container): void {
     this.options.relics.forEach((state, index) => {
       const def = getRelic(state.relicId);
-      const card = new PortraitCard(this.scene, -280 + index * 280, 350, {
+      const card = new PortraitCard(this.scene, -280 + index * 280, 405, {
         width: 210, height: 230, portraitAssetId: def.portraitAssetId, tint: relicCardTint(def),
         label: def.name, sub: state.alive ? "활동 중" : "휴식 부활 가능", rarity: def.rarity,
       });
@@ -115,4 +116,3 @@ export class ExpeditionAugmentPopup {
     this.options.onChoose({ augmentId: this.selectedOffer.augmentId, targetRelicId: this.selectedTargetRelicId });
   }
 }
-

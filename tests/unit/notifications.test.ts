@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { GameApi } from "../../src/api/contracts";
 import { deriveNotificationState, NOTIFICATION_KEYS } from "../../src/core/notifications";
 import { NotificationManager } from "../../src/managers/NotificationManager";
-import { NOTIFICATION_DOT_STYLE } from "../../src/ui/notificationDotStyle";
+import { NOTIFICATION_DOT_STYLE, rotatedNotificationAnchor } from "../../src/ui/notificationDotStyle";
 
 /** 알림별 조건과 공용 시각 규격이 화면별 구현으로 다시 갈라지지 않게 고정한다. */
 describe("notifications", () => {
@@ -16,6 +16,12 @@ describe("notifications", () => {
 
   it("keeps one red, white-outlined, dark-shadow specification for every button", () => {
     expect(NOTIFICATION_DOT_STYLE).toEqual({ radius: 13, fill: 0xd92f45, outline: 0xffffff, outlineWidth: 4, shadow: 0x090b10, shadowAlpha: 0.82, shadowOffsetY: 7 });
+  });
+
+  it("기울어진 발굴 판의 우상단을 같은 각도로 따라간다", () => {
+    // 90°로 단순화해 판과 별도 레이어인 점의 좌표 회전을 오차 없이 검증한다.
+    const anchor = rotatedNotificationAnchor({ x: 10, y: -4, rotation: Math.PI / 2 });
+    expect(anchor.x).toBeCloseTo(4); expect(anchor.y).toBeCloseTo(10);
   });
 
   it("composes APIs once and emits only changed key values", async () => {

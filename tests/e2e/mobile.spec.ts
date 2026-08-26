@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { startAfterOpening } from "./openingSave";
+import { ExpeditionManager } from "../../src/managers/ExpeditionManager";
 
 const BASE_WIDTH = 1080;
 const BASE_HEIGHT = 1920;
@@ -95,6 +96,23 @@ test("출격 선택판에서 원정대 3기를 골라 진행 중 상태로 저�
     return raw ? JSON.parse(raw).expedition?.active?.relicIds?.length : 0;
   })).toBe(3);
   await page.screenshot({ path: `test-results/${test.info().project.name}-expedition-active.png` });
+});
+
+test("저장된 전투 전 증강 후보는 지도보다 먼저 복원된다", async ({ page }) => {
+  await startAfterOpening(page, (session) => {
+    // 실제 매니저 경계로 런과 후보를 만들어 저장 스키마나 RNG 결과를 E2E가 복제하지 않는다.
+    const manager = new ExpeditionManager(session, { save: () => undefined }, () => new Date());
+    manager.start([...session.owned].slice(0, 3));
+    const node = session.expedition.run!.nodes.find(({ floor, type }) => floor === 1 && ["normal", "elite", "horde"].includes(type))!;
+    manager.beginAugmentReward(node.id, node.type);
+  });
+  await page.locator("canvas").click();
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+  await tapGame(page, BASE_WIDTH - 290, BASE_HEIGHT - 425);
+  await tapGame(page, BASE_WIDTH / 2, 995);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("expedition");
+  // 닫기 없는 선택 작업판과 세 후보가 복원된 상태를 시각 회귀 자료로 남긴다.
+  await page.screenshot({ path: `test-results/${test.info().project.name}-expedition-augment-popup.png` });
 });
 
 test("방치 발굴 팝업은 좁은 로비 위 한 장으로 열리고 뒤 입력을 차단한 뒤 닫힌다", async ({ page }) => {

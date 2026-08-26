@@ -20,6 +20,7 @@ import { EXPEDITION_LAYOUT } from "../ui/expeditionLayout";
 import { ExpeditionMapView } from "../ui/ExpeditionMapView";
 import type { ExpeditionAugmentSelection } from "../core/expeditionRewards";
 import type { ExpeditionBattleInputDto } from "../core/expeditionBattle";
+import { ExpeditionAugmentPopup, expeditionAugmentEffectLabel, expeditionAugmentMetaLabel } from "../ui/ExpeditionAugmentPopup";
 
 /** 원정 준비 카드의 고정 그리드 규격이다. 다른 편성과 달리 세 칸씩 읽게 한다. */
 const ROSTER = { columns: 3, width: 250, height: 310, gapX: 56, gapY: 50, top: 470 } as const;
@@ -118,8 +119,10 @@ export class ExpeditionScene extends Phaser.Scene {
     if (!run || run.relics.every(({ alive }) => !alive) || run.pendingAugmentReward) return;
     this.nodeTransitionPending = true;
     if (["normal", "elite", "horde", "boss"].includes(node.type)) {
-      const input: ExpeditionBattleInputDto = { mode: "expedition", runId: run.runId, nodeId: node.id, nodeType: node.type as ExpeditionBattleInputDto["nodeType"], floor: node.floor, relics: run.relics.map(({ relicId, currentHp, alive }) => ({ relicId, currentHp, alive })), augments: run.selectedAugments };
-      this.scene.start("battle", input);
+      // 증강은 승리 영수증이 아니라 전투 진입 준비다. 후보가 없는 보스만 곧바로 전장으로 간다.
+      const pending = expeditionManager.beginAugmentReward(node.id, node.type);
+      if (pending) this.scene.restart();
+      else this.enterBattle(node);
       return;
     }
     if (node.type === "rest") {
@@ -135,6 +138,14 @@ export class ExpeditionScene extends Phaser.Scene {
     void this.completeTreasureNode(node);
   }
 
+  /** 선택이 모두 저장된 바로 그 노드로 진입해, 후보 확정 뒤 다른 지도 노드를 누를 틈을 만들지 않는다. */
+  private enterBattle(node: ExpeditionMapNode): void {
+    const run = expeditionManager.status().run;
+    if (!run) { this.nodeTransitionPending = false; return; }
+    const input: ExpeditionBattleInputDto = { mode: "expedition", runId: run.runId, nodeId: node.id, nodeType: node.type as ExpeditionBattleInputDto["nodeType"], floor: node.floor, relics: run.relics.map(({ relicId, currentHp, alive }) => ({ relicId, currentHp, alive })), augments: run.selectedAugments };
+    this.scene.start("battle", input);
+  }
+
   /** Fake 서버가 정한 보상 DTO를 받은 뒤에만 보물 노드를 완료하며 증강 경로는 열지 않는다. */
   private async completeTreasureNode(node: ExpeditionMapNode): Promise<void> {
     const run = expeditionManager.status().run;
@@ -148,24 +159,24 @@ export class ExpeditionScene extends Phaser.Scene {
 
   /** 저장된 제안만 표시하며 선택 성공 뒤 재시작해서 다음 라운드 또는 지도를 활성화한다. */
   private openAugmentReward(): void {
-    const pending = expeditionManager.status().run?.pendingAugmentReward;
-    if (!pending) return;
-    const layer = this.add.container(0, 0).setDepth(4000);
-    layer.add(this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.9));
-    layer.add(this.add.text(BASE_WIDTH / 2, 620, `증강 선택 ${pending.round} / ${pending.totalRounds}`, textStyle({ role: "display", size: 46, color: COLOR.sortieText })).setOrigin(0.5));
-    pending.offers.forEach((offer, index) => {
-      const def = getExpeditionAugment(offer.augmentId);
-      layer.add(new Button(this, BASE_WIDTH / 2, 790 + index * 150, { width: 700, height: 112, label: def?.name ?? offer.augmentId, onClick: () => {
-        if (this.nodeTransitionPending) return;
-        this.nodeTransitionPending = true;
-        const targetRelicId = offer.eligibleTargetRelicIds[0];
-        if (expeditionManager.chooseAugment({ augmentId: offer.augmentId, ...(targetRelicId ? { targetRelicId } : {}) })) this.scene.restart();
-        else this.nodeTransitionPending = false;
-      } }));
-    });
+    const run = expeditionManager.status().run;
+    const pending = run?.pendingAugmentReward;
+    if (!run || !pending) return;
+    // 저장된 nodeId가 전투 후보와 함께 복원되므로 앱 재시작 뒤에도 재추첨이나 지도 우회가 없다.
+    const node = run.nodes.find(({ id }) => id === pending.nodeId);
+    if (!node) return;
+    new ExpeditionAugmentPopup(this, { round: pending.round, totalRounds: pending.totalRounds, offers: pending.offers, relics: run.relics, onChoose: (selection) => {
+      if (this.nodeTransitionPending) return;
+      this.nodeTransitionPending = true;
+      // 확정은 UI가 Session을 쓰지 않고 매니저의 후보·대상·중첩 검증을 반드시 통과한다.
+      if (!expeditionManager.chooseAugment(selection)) { this.nodeTransitionPending = false; return; }
+      const next = expeditionManager.status().run?.pendingAugmentReward;
+      if (next) this.scene.restart();
+      else this.enterBattle(node);
+    } }).open();
   }
 
-  /** 하단 증강은 공용 비대칭 chipPoints로 표시하고, 다섯 개부터 +N으로 줄여 화면 폭을 지킨다. */
+  /** 하단 요약을 누르면 축약되지 않은 전체 증강과 개인 대상을 공용 상세 쪽지에서 확인한다. */
   private buildAugmentChips(augments: readonly ExpeditionAugmentSelection[]): void {
     if (augments.length === 0) return;
     const visible = augments.slice(0, 4);
@@ -182,6 +193,38 @@ export class ExpeditionScene extends Phaser.Scene {
       const targeted = visible[index]?.targetRelicId !== undefined;
       drawLayer(this, x, 1260, chipPoints(width, 62, { bevel: { topLeft: 18, bottomRight: 14 } }), { fill: targeted ? 0x302238 : COLOR.panel, alpha: HOLO.glass, edge: targeted ? COLOR.sortie : COLOR.accent, edgeAlpha: 0.66 });
       this.add.text(x, 1260, `${targeted ? "개인" : "전체"} · ${label}`, textStyle({ role: "emphasis", size: 18, color: targeted ? COLOR.sortieText : COLOR.accentText })).setOrigin(0.5);
+    });
+    // +N뿐 아니라 보이는 칩을 눌러도 같은 전체 목록이 열려 발견 가능성을 높인다.
+    const hit = this.add.rectangle(BASE_WIDTH / 2, 1260, Math.min(BASE_WIDTH - 100, total), 76, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    hit.on("pointerup", () => this.openAugmentDetails(augments));
+  }
+
+  /** 선택 순서대로 이름·등급·범위·수치와 개인 대상을 모두 펼쳐 보여 준다. */
+  private openAugmentDetails(augments: readonly ExpeditionAugmentSelection[]): void {
+    // 한 장에 열 개씩 넘겨 작은 화면에서도 모든 항목과 닫기 조작이 판 안에 머물게 한다.
+    const pageSize = 10;
+    const pageCount = Math.ceil(augments.length / pageSize);
+    const height = Math.min(1120, 250 + Math.min(pageSize, augments.length) * 82);
+    this.popups.open({ width: 850, height, title: `확정 증강 ${augments.length}`, dim: true }, (body) => {
+      const list = this.add.container(0, 0); body.add(list);
+      const pageLabel = this.add.text(0, height / 2 - 58, "", textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0.5); body.add(pageLabel);
+      let page = 0;
+      const render = (): void => {
+        list.removeAll(true);
+        augments.slice(page * pageSize, (page + 1) * pageSize).forEach(({ augmentId, targetRelicId }, index) => {
+          const def = getExpeditionAugment(augmentId);
+          if (!def) return;
+          const target = targetRelicId ? ` · ${getRelic(targetRelicId).name}` : "";
+          list.add(this.add.text(-355, -height / 2 + 105 + index * 82, `${def.name}  ${expeditionAugmentMetaLabel(def)}${target}\n${expeditionAugmentEffectLabel(def)}`, textStyle({ role: "body", size: 22, color: COLOR.ink })).setOrigin(0, 0.5));
+        });
+        pageLabel.setText(`${page + 1} / ${pageCount}`);
+      };
+      if (pageCount > 1) {
+        // 페이지 이동은 목록을 닫지 않아 4개 이후의 개인 대상도 연속해서 대조할 수 있다.
+        body.add(new Button(this, -170, height / 2 - 58, { width: 180, height: 58, label: "이전", fontSize: 20, onClick: () => { page = (page - 1 + pageCount) % pageCount; render(); } }));
+        body.add(new Button(this, 170, height / 2 - 58, { width: 180, height: 58, label: "다음", fontSize: 20, onClick: () => { page = (page + 1) % pageCount; render(); } }));
+      }
+      render();
     });
   }
 

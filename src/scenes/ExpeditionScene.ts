@@ -118,7 +118,7 @@ export class ExpeditionScene extends Phaser.Scene {
     if (!run || run.relics.every(({ alive }) => !alive) || run.pendingAugmentReward) return;
     this.nodeTransitionPending = true;
     if (["normal", "elite", "horde", "boss"].includes(node.type)) {
-      const input: ExpeditionBattleInputDto = { mode: "expedition", runId: run.runId, nodeId: node.id, nodeType: node.type as ExpeditionBattleInputDto["nodeType"], floor: node.floor, relics: run.relics.map(({ relicId, currentHp }) => ({ relicId, currentHp })), augments: run.selectedAugments };
+      const input: ExpeditionBattleInputDto = { mode: "expedition", runId: run.runId, nodeId: node.id, nodeType: node.type as ExpeditionBattleInputDto["nodeType"], floor: node.floor, relics: run.relics.map(({ relicId, currentHp, alive }) => ({ relicId, currentHp, alive })), augments: run.selectedAugments };
       this.scene.start("battle", input);
       return;
     }

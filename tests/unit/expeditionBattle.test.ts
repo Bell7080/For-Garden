@@ -1,0 +1,59 @@
+import { describe, expect, it } from "vitest";
+import { createExpeditionSkirmishConfig, expeditionBattleResults, type ExpeditionBattleInputDto } from "../../src/core/expeditionBattle";
+import { createSkirmish, spawnSpots, skirmishRelicResults, type Arena } from "../../src/core/skirmish";
+import { EXPEDITION_COMBAT_BALANCE } from "../../src/data/expedition";
+import { getRelic } from "../../src/data/relics";
+
+// 실제 씬과 같은 안전 영역으로 5기 배치의 비겹침까지 순수 규칙에서 검증한다.
+const ARENA: Arena = { left: 130, right: 950, top: 600, bottom: 1360 };
+const players = ["anky", "rex", "dodo"].map(getRelic);
+const enemies = ["husk-raptor", "husk-shell", "husk-wing"].map(getRelic);
+
+function input(nodeType: "normal" | "elite" | "horde"): ExpeditionBattleInputDto {
+  return {
+    mode: "expedition", runId: "run-1", nodeId: `node-${nodeType}`, nodeType, floor: 1,
+    relics: [
+      { relicId: "anky", currentHp: 40, alive: true },
+      { relicId: "rex", currentHp: 0, alive: false },
+      { relicId: "dodo", currentHp: 75, alive: true },
+    ],
+    augments: [{ augmentId: "predator-instinct", targetRelicId: "anky" }, { augmentId: "reinforced-core" }],
+  };
+}
+
+describe("원정 난전 입력 모델", () => {
+  it.each(["normal", "elite", "horde"] as const)("%s 적 수와 수치·몸 배율을 정적 표대로 만든다", (nodeType) => {
+    const config = createExpeditionSkirmishConfig(input(nodeType), players, enemies);
+    const balance = EXPEDITION_COMBAT_BALANCE[nodeType];
+    expect(config.enemyDefs).toHaveLength(balance.enemyCount);
+    expect(config.enemyDefs[0].stats.hp).toBeCloseTo(enemies[0].stats.hp * balance.statScale);
+    expect(config.enemyBodyScale).toBe(balance.bodyScale);
+  });
+
+  it("사망 아군을 제외하고 HP와 대상·파티 증강을 난전에 계승한다", () => {
+    const config = createExpeditionSkirmishConfig(input("normal"), players, enemies);
+    const state = createSkirmish(config.playerDefs, config.enemyDefs, ARENA, {}, {}, config);
+    expect(state.fighters.filter(({ side }) => side === "player").map(({ def }) => def.id)).toEqual(["anky", "dodo"]);
+    expect(state.fighters.find(({ def }) => def.id === "anky")?.hp).toBeCloseTo(players[0].stats.hp * 0.4);
+    expect(config.augmentEffects).toEqual(expect.arrayContaining([
+      expect.objectContaining({ kind: "attackPowerPercent", percent: 18, scope: { kind: "relic", relicId: "anky" } }),
+      expect.objectContaining({ kind: "attackPowerPercent", percent: 8, scope: { kind: "all" } }),
+    ]));
+  });
+
+  it("불참 사망자의 ID·HP·생존 여부를 종료 DTO에 보존한다", () => {
+    const config = createExpeditionSkirmishConfig(input("horde"), players, enemies);
+    const state = createSkirmish(config.playerDefs, config.enemyDefs, ARENA, {}, {}, config);
+    expect(expeditionBattleResults(input("horde"), skirmishRelicResults(state))).toEqual([
+      expect.objectContaining({ relicId: "anky", currentHp: 40, alive: true }),
+      { relicId: "rex", currentHp: 0, alive: false },
+      expect.objectContaining({ relicId: "dodo", currentHp: 75, alive: true }),
+    ]);
+  });
+
+  it("5기 좌표가 모두 다르고 안전 영역에 균등하게 놓인다", () => {
+    const spots = spawnSpots(ARENA, "enemy", 5);
+    expect(new Set(spots.map(({ x, y }) => `${x}:${y}`)).size).toBe(5);
+    expect(spots.every(({ x }) => x >= ARENA.left && x <= ARENA.right)).toBe(true);
+  });
+});

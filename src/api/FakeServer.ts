@@ -26,9 +26,10 @@ import type { EngraveRuneRequest, EngraveRuneResponse, EnhanceRuneRequest, Enhan
 import type { ActivatePassRequest, ActivatePassResponse, ClaimInstantAdRewardRequest, ClaimInstantAdRewardResponse, PassEntitlementDto, VerifyPurchaseReceiptRequest, VerifyPurchaseReceiptResponse } from "./contracts";
 import { harvestIdleExcavation, isExcavationStorageFull, settleIdleExcavation, validateExcavationFormation } from "../core/idleExcavation";
 import type { HarvestExcavationRequest, HarvestExcavationResponse, IdleExcavationResponse, SaveExcavationFormationRequest, InventoryResponse, UseConsumableRequest, UseConsumableResponse } from "./contracts";
-import type { ClaimExpeditionRewardRequest, ClaimExpeditionRewardResponse, ExpeditionLeaderboardResponse, ExpeditionTreasureRequest, ExpeditionTreasureResponse, ExpeditionWeeklyBestResponse, SettleExpeditionRunRequest, SettleExpeditionRunResponse, SubmitExpeditionBossScoreRequest, SubmitExpeditionBossScoreResponse } from "./contracts";
+import type { ClaimExpeditionRewardRequest, ClaimExpeditionRewardResponse, CompleteExpeditionNodeRequest, CompleteExpeditionNodeResponse, ExpeditionLeaderboardResponse, ExpeditionWeeklyBestResponse, SettleExpeditionRunRequest, SettleExpeditionRunResponse, SubmitExpeditionBossScoreRequest, SubmitExpeditionBossScoreResponse } from "./contracts";
 import { expeditionWeekKey, resolveExpeditionBossBattle } from "../core/expeditionBoss";
-import { EXPEDITION_BOSS_BALANCE, EXPEDITION_CUMULATIVE_REWARD_STAGES, QUICK_EXPEDITION_POLICY } from "../data/expedition";
+import { EXPEDITION_BOSS_BALANCE, EXPEDITION_CUMULATIVE_REWARD_STAGES, EXPEDITION_NODE_REWARD_BALANCE, QUICK_EXPEDITION_POLICY } from "../data/expedition";
+import { calculateExpeditionNodeRewards } from "../core/expeditionRewards";
 
 /** 사용자 룬 이름의 서버 정책이다. UI 글자 수와 무관하게 API 경계가 최종 권한을 가진다. */
 export const MAX_RUNE_NAME_LENGTH = 20;
@@ -68,6 +69,8 @@ export class FakeServer implements GameApi {
   private readonly bossRewardResults = new Map<string, ClaimExpeditionRewardResponse>();
   /** 운영 DB의 런 ID/정산 ID 고유 제약과 빠른 원정 주간 카운터를 흉내 낸다. */
   private readonly expeditionSettlementResults = new Map<string, SettleExpeditionRunResponse>();
+  /** 운영 DB의 requestId 고유 제약을 흉내 내 동일 노드 재요청을 같은 응답으로 돌린다. */
+  private readonly expeditionNodeResults = new Map<string, CompleteExpeditionNodeResponse>();
   private previousBossBest = 0;
   private quickWeek = { weekKey: "", claims: 0 };
   /** 같은 밀리초 안의 연속 발급도 구분하는 서버 인스턴스 로컬 순번이다. */
@@ -155,14 +158,30 @@ export class FakeServer implements GameApi {
     this.expeditionSettlementResults.set(request.settlementId, response); return structuredClone(response);
   }
 
-  /** 운영 서버의 loot table 대신 결정적 Fake 규칙을 쓰되 요청이 실제 미완료 보물인지 검증한다. */
-  async getExpeditionTreasureReward(request: ExpeditionTreasureRequest): Promise<ExpeditionTreasureResponse> {
+  /** 도달성과 HP를 검증한 뒤 서버 난수로 보상과 방문을 한 번에 저장한다. */
+  async completeExpeditionNode(request: CompleteExpeditionNodeRequest): Promise<CompleteExpeditionNodeResponse> {
     await this.delay();
+    const cached = this.expeditionNodeResults.get(request.requestId);
+    if (cached) return structuredClone(cached);
     const run = this.state.expedition.run;
     const node = run?.nodes.find(({ id }) => id === request.nodeId);
-    if (!run || run.runId !== request.runId || node?.type !== "treasure" || run.visitedNodeIds.includes(node.id)) throw new GameApiError("EXPEDITION_RUN_NOT_FOUND", "수령 가능한 보물 노드가 없습니다.");
-    // floor만 사용하는 결정적 응답은 재요청에도 같으며 클라이언트가 보상 값을 조작할 수 없다.
-    return { runId: run.runId, nodeId: node.id, rewards: { gold: 80 + node.floor * 20 } };
+    const predecessor = run?.currentNodeId ? run.nodes.find(({ id }) => id === run.currentNodeId) : null;
+    if (!request.requestId || !run || run.runId !== request.runId || !node || run.settled || run.visitedNodeIds.includes(node.id)
+      || (!predecessor && node.floor !== 1) || (predecessor && !predecessor.successorIds.includes(node.id)) || request.relicHp.length !== 3
+      || request.relicHp.some((hp) => !Number.isFinite(hp) || hp < 0)) throw new GameApiError("EXPEDITION_RUN_NOT_FOUND", "완료할 수 없는 원정 노드입니다.");
+    // 전멸은 노드 종료만 기록하고 승리 재화는 생성하지 않는다.
+    const rewards = request.relicHp.every((hp) => hp === 0) ? {} : calculateExpeditionNodeRewards({ nodeType: node.type, accumulated: run.pendingRewards, random: this.random });
+    const next = structuredClone(run);
+    next.currentNodeId = node.id; next.visitedNodeIds.push(node.id);
+    next.relics.forEach((relic, index) => { relic.currentHp = request.relicHp[index]; relic.alive = relic.currentHp > 0; });
+    for (const [currency, amount] of Object.entries(rewards)) next.pendingRewards[currency] = (next.pendingRewards[currency] ?? 0) + amount;
+    const cappedCurrencies = Object.keys(EXPEDITION_NODE_REWARD_BALANCE).filter((currency) => (next.pendingRewards[currency] ?? 0) >= EXPEDITION_NODE_REWARD_BALANCE[currency as keyof typeof EXPEDITION_NODE_REWARD_BALANCE].runCap);
+    next.lastNodeRewards = { nodeId: node.id, rewards, cappedCurrencies };
+    const expedition = { ...this.state.expedition, run: next };
+    this.persist({ ...this.state, expedition }); this.state.expedition = expedition;
+    const response = { runId: run.runId, nodeId: node.id, rewards, pendingRewards: { ...next.pendingRewards }, cappedCurrencies, alreadyCompleted: false };
+    this.expeditionNodeResults.set(request.requestId, response);
+    return structuredClone(response);
   }
 
   /** Fake 운영 서버도 번들의 표시 fallback 없이 인증된 설정 DTO를 명시적으로 제공한다. */

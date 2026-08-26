@@ -21,6 +21,7 @@ import { ExpeditionMapView } from "../ui/ExpeditionMapView";
 import type { ExpeditionAugmentSelection } from "../core/expeditionRewards";
 import type { ExpeditionBattleInputDto } from "../core/expeditionBattle";
 import { ExpeditionAugmentPopup, expeditionAugmentEffectLabel, expeditionAugmentMetaLabel } from "../ui/ExpeditionAugmentPopup";
+import { EXPEDITION_NODE_REWARD_BALANCE } from "../data/expedition";
 
 /** 원정 준비 카드의 고정 그리드 규격이다. 다른 편성과 달리 세 칸씩 읽게 한다. */
 const ROSTER = { columns: 3, width: 250, height: 310, gapX: 56, gapY: 50, top: 470 } as const;
@@ -79,7 +80,7 @@ export class ExpeditionScene extends Phaser.Scene {
     if (!run) return;
     // 현재 점수는 주간 최고와 같은 상태 줄에 짧게 붙여 지도 공간을 침범하지 않는다.
     this.add.text(BASE_WIDTH - 54, 94, `런 ${score.toLocaleString()}`, textStyle({ role: "emphasis", size: 25, color: COLOR.sortieText })).setOrigin(1, 0);
-    this.buildRewardBar(run.pendingRewards);
+    this.buildRewardBar(run.pendingRewards, run.lastNodeRewards);
     this.buildMap(run.nodes, run.currentNodeId, run.visitedNodeIds);
     this.buildAugmentChips(augments);
     this.buildRelicHud(run.relics);
@@ -89,14 +90,19 @@ export class ExpeditionScene extends Phaser.Scene {
   }
 
   /** 런에서만 누적되는 네 재화를 CurrencyChip 한 줄로 고정한다. */
-  private buildRewardBar(rewards: Readonly<Record<string, number>>): void {
+  private buildRewardBar(rewards: Readonly<Record<string, number>>, last: { rewards: Record<string, number>; cappedCurrencies: string[] } | null): void {
     const items = [
       ["currency-cheesecake", "cheesecake"], ["currency-gold", "gold"],
       ["currency-fossil", "fossil"], ["currency-gems", "gems"],
     ] as const;
     items.forEach(([icon, key], index) => {
       const value = addCurrencyChip(this, 178 + index * 242, 170, icon, { width: 220, height: 70 });
-      value.setText(Math.floor(rewards[key] ?? 0).toLocaleString());
+      const total = Math.floor(rewards[key] ?? 0);
+      const capped = last?.cappedCurrencies.includes(key) ?? total >= EXPEDITION_NODE_REWARD_BALANCE[key].runCap;
+      // 상한은 따뜻한 경고색과 MAX로, 방금 증가분은 푸른 +N 보조문구로 서로 다른 시각 채널을 쓴다.
+      value.setText(`${total.toLocaleString()}${capped ? " MAX" : ""}`).setColor(capped ? "#ffd27a" : "#ffffff");
+      const gained = Math.floor(last?.rewards[key] ?? 0);
+      if (gained > 0) this.add.text(178 + index * 242, 208, `+ ${gained.toLocaleString()}`, textStyle({ role: "emphasis", size: 18, color: COLOR.accentText })).setOrigin(0.5);
     });
   }
 
@@ -151,9 +157,9 @@ export class ExpeditionScene extends Phaser.Scene {
     const run = expeditionManager.status().run;
     if (!run) { this.nodeTransitionPending = false; return; }
     try {
-      const reward = await gameApi.getExpeditionTreasureReward({ runId: run.runId, nodeId: node.id });
-      if (expeditionManager.completeNode(node.id, { relicHp: run.relics.map(({ currentHp }) => currentHp), rewards: reward.rewards })) this.scene.restart();
-      else this.nodeTransitionPending = false;
+      // 보상 필드가 없는 완료 계약이므로 재화 종류나 수량을 위조할 수 없다.
+      await gameApi.completeExpeditionNode({ requestId: `${run.runId}:${node.id}`, runId: run.runId, nodeId: node.id, relicHp: run.relics.map(({ currentHp }) => currentHp) });
+      this.scene.restart();
     } catch { this.nodeTransitionPending = false; }
   }
 

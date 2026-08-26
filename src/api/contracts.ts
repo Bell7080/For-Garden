@@ -113,10 +113,10 @@ export interface ClaimAdRewardResponse extends PlayerStateDto { slotId: string; 
 export interface SettleExpeditionRunRequest { runId: string; settlementId: string; outcome: "completed" | "abandoned"; }
 /** 지갑 상한 적용 뒤 실제 이전량을 돌려주는 원자 정산 결과다. */
 export interface SettleExpeditionRunResponse extends PlayerStateDto { runId: string; settlementId: string; outcome: "completed" | "abandoned"; granted: Record<string, number>; }
-/** 보물 내용은 클라이언트가 제시하지 않고 런과 노드 식별자만 서버에 보낸다. */
-export interface ExpeditionTreasureRequest { runId: string; nodeId: string; }
-/** 서버가 맵 seed와 노드를 검증한 뒤 계산한 임시 원정 보상이다. */
-export interface ExpeditionTreasureResponse { runId: string; nodeId: string; rewards: Record<string, number>; }
+/** 클라이언트는 실제 보상이 아닌 전투 결과만 제출하며, requestId는 재시도를 묶는다. */
+export interface CompleteExpeditionNodeRequest { requestId: string; runId: string; nodeId: string; relicHp: number[]; }
+/** 서버가 결정한 증가분과 상한 상태를 돌려줘 HUD가 저장 결과를 그대로 그린다. */
+export interface CompleteExpeditionNodeResponse { runId: string; nodeId: string; rewards: Record<string, number>; pendingRewards: Record<string, number>; cappedCurrencies: string[]; alreadyCompleted: boolean; }
 
 /** 인증된 서버 응답에서만 내려오는 슬롯별 운영 정책이며 앱 번들의 정적 표를 운영 기준으로 쓰지 않는다. */
 export interface AdSlotOperationsDto {
@@ -309,8 +309,8 @@ export interface GameApi {
   claimAdReward(request: ClaimAdRewardRequest): Promise<ClaimAdRewardResponse>;
   /** 임시 보상 이전과 런 완료 표시를 하나의 원자 저장으로 확정한다. */
   settleExpeditionRun(request: SettleExpeditionRunRequest): Promise<SettleExpeditionRunResponse>;
-  /** 보물 노드의 보상 수량과 종류는 서버만 결정한다. */
-  getExpeditionTreasureReward(request: ExpeditionTreasureRequest): Promise<ExpeditionTreasureResponse>;
+  /** 모든 노드의 방문·HP·보상을 서버가 한 처리로 확정한다. */
+  completeExpeditionNode(request: CompleteExpeditionNodeRequest): Promise<CompleteExpeditionNodeResponse>;
   /** 실제 결제 서버가 플랫폼 원본 영수증을 검증하며 요청 ID 재시도에는 같은 결과를 반환한다. */
   verifyPurchaseReceipt(request: VerifyPurchaseReceiptRequest): Promise<VerifyPurchaseReceiptResponse>;
   /** 검증된 거래를 기간 권리로 한 번만 활성화한다. */

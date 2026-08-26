@@ -1,11 +1,23 @@
 import { describe, expect, it, vi } from "vitest";
-import { expeditionRewardRandom, expeditionRewardRule, generateExpeditionAugmentOffers, validateExpeditionAugmentChoice } from "../../src/core/expeditionRewards";
+import { calculateExpeditionNodeRewards, expeditionRewardRandom, expeditionRewardRule, generateExpeditionAugmentOffers, validateExpeditionAugmentChoice } from "../../src/core/expeditionRewards";
+import { EXPEDITION_NODE_REWARD_BALANCE } from "../../src/data/expedition";
 import { EXPEDITION_AUGMENTS } from "../../src/data/expeditionAugments";
 import { ExpeditionManager } from "../../src/managers/ExpeditionManager";
 import { createDefaultSession } from "../../src/state/session";
 
 /** 전투별 증강 제안/대상/저장 불변식을 한 파일에서 고정한다. */
 describe("expedition augment rewards", () => {
+  it("런 상한을 넘지 않고 음수·미등록 누적 재화를 거부한다", () => {
+    const almostCapped = { gold: EXPEDITION_NODE_REWARD_BALANCE.gold.runCap - 2 };
+    expect(calculateExpeditionNodeRewards({ nodeType: "elite", accumulated: almostCapped, random: () => 0.999 }).gold).toBe(2);
+    expect(() => calculateExpeditionNodeRewards({ nodeType: "normal", accumulated: { gold: -1 }, random: () => 0 })).toThrow("INVALID_EXPEDITION_REWARD_STATE");
+    expect(() => calculateExpeditionNodeRewards({ nodeType: "normal", accumulated: { hacked: 1 }, random: () => 0 })).toThrow("INVALID_EXPEDITION_REWARD_STATE");
+  });
+
+  it("보물은 보석을 보장하고 증강을 제공하지 않는다", () => {
+    expect(calculateExpeditionNodeRewards({ nodeType: "treasure", accumulated: {}, random: () => 0 }).gems).toBeGreaterThanOrEqual(3);
+    expect(expeditionRewardRule("treasure")).toEqual({ selections: 0, rarity: null });
+  });
   it("assigns one normal, two consecutive horde, one advanced elite selection and none to route tradeoffs", () => {
     expect(expeditionRewardRule("normal")).toEqual({ selections: 1, rarity: "common" });
     expect(expeditionRewardRule("horde")).toEqual({ selections: 2, rarity: "common" });

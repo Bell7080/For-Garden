@@ -43,7 +43,6 @@ import { ultimatePresentationFor } from "../data/ultimatePresentations";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { relicStars } from "../core/relicProgression";
 import { createExpeditionSkirmishConfig, expeditionBattleResults, type BattleSceneInputDto, type ExpeditionBattleInputDto } from "../core/expeditionBattle";
-import { expeditionManager } from "../managers/ExpeditionManager";
 
 /**
  * 여섯이 돌아다닐 수 있는 범위.
@@ -834,16 +833,16 @@ export class BattleScene extends Phaser.Scene {
       saving = true;
       // 시작부터 사망해 불참한 렐릭도 원래 ID·HP·생존 상태로 종료 DTO에 다시 합친다.
       const results = expeditionBattleResults(input, skirmishRelicResults(this.state));
-      if (!expeditionManager.completeBattle(input.nodeId, results)) { saving = false; return; }
-      const run = expeditionManager.status().run;
-      if (!run) { saving = false; return; }
-      if (!won || input.nodeType === "boss") {
-        // 전멸과 20층 보스는 추가 지도 입력을 거치지 않고 같은 멱등 정산 경계로 끝낸다.
-        void gameApi.settleExpeditionRun({ runId: input.runId, settlementId: `${input.runId}:${won ? "complete" : "defeat"}`, outcome: won ? "completed" : "abandoned" }).then(() => this.scene.start("lobby")).catch(() => { saving = false; });
-        return;
-      }
-      // 증강은 전투 진입 전에 이미 확정되므로 승리 결과에서는 HP와 노드 완료만 저장한다.
-      this.scene.start("expedition");
+      // 서버에는 HP만 제출하고 재화 필드는 계약에 존재하지 않아 임의 보상 주입을 막는다.
+      void gameApi.completeExpeditionNode({ requestId: `${input.runId}:${input.nodeId}`, runId: input.runId, nodeId: input.nodeId, relicHp: results.map(({ currentHp }) => currentHp) }).then(() => {
+        if (!won || input.nodeType === "boss") {
+          // 전멸과 20층 보스는 추가 지도 입력을 거치지 않고 같은 멱등 정산 경계로 끝낸다.
+          void gameApi.settleExpeditionRun({ runId: input.runId, settlementId: `${input.runId}:${won ? "complete" : "defeat"}`, outcome: won ? "completed" : "abandoned" }).then(() => this.scene.start("lobby")).catch(() => { saving = false; });
+          return;
+        }
+        // 증강은 전투 진입 전에 이미 확정되므로 승리 결과에서는 HP와 노드 완료만 저장한다.
+        this.scene.start("expedition");
+      }).catch(() => { saving = false; });
     } }).setDepth(101);
   }
 

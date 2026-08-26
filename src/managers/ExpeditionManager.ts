@@ -3,7 +3,7 @@ import { applyExpeditionRest } from "../core/expeditionAugments";
 import { expeditionRewardRandom, expeditionRewardRule, generateExpeditionAugmentOffers, validateExpeditionAugmentChoice, type ExpeditionAugmentSelection } from "../core/expeditionRewards";
 import type { ExpeditionNodeType } from "../core/expeditionMap";
 import type { SkirmishRelicResult } from "../core/skirmish";
-import { EXPEDITION_AUGMENT_IDS, EXPEDITION_REST_RULES, EXPEDITION_REWARD_IDS } from "../data/expedition";
+import { EXPEDITION_AUGMENT_IDS, EXPEDITION_REST_RULES } from "../data/expedition";
 import { saveManager, type SaveManager } from "../state/SaveManager";
 import { session, type ExpeditionRunState, type Session } from "../state/session";
 
@@ -56,23 +56,21 @@ export class ExpeditionManager {
     const weekKey = expeditionWeekKey(this.serverNow());
     const mapSeed = `${weekKey}:${this.state.expedition.playsThisWeek + 1}`;
     const map = generateExpeditionMap({ seed: mapSeed, random: seededRandom(mapSeed) });
-    const run: ExpeditionRunState = { runId: `run:${mapSeed}`, weekKey, mapSeed, nodes: map.nodes, currentNodeId: null, visitedNodeIds: [], relics: relicIds.map((relicId) => ({ relicId, currentHp: 100, alive: true })) as ExpeditionRunState["relics"], selectedAugmentIds: [], selectedAugments: [], pendingAugmentReward: null, pendingRewards: {}, bossDamage: 0, bestScore: 0, settled: false, settlementId: null };
+    const run: ExpeditionRunState = { runId: `run:${mapSeed}`, weekKey, mapSeed, nodes: map.nodes, currentNodeId: null, visitedNodeIds: [], relics: relicIds.map((relicId) => ({ relicId, currentHp: 100, alive: true })) as ExpeditionRunState["relics"], selectedAugmentIds: [], selectedAugments: [], pendingAugmentReward: null, pendingRewards: {}, lastNodeRewards: null, bossDamage: 0, bestScore: 0, settled: false, settlementId: null };
     this.commit({ ...this.state.expedition, run });
     return { ok: true, run: structuredClone(run) };
   }
 
   /** 도달한 노드의 결과만 반영하며 씬이 HP·보상·점수를 직접 쓸 필요가 없게 한다. */
-  completeNode(nodeId: string, update: { relicHp: readonly number[]; augmentId?: string; rewards?: Record<string, number>; bossDamage?: number; score?: number }): boolean {
+  completeNode(nodeId: string, update: { relicHp: readonly number[]; augmentId?: string; bossDamage?: number; score?: number }): boolean {
     const run = this.state.expedition.run;
     const node = run?.nodes.find(({ id }) => id === nodeId);
     if (!run || run.settled || !node || run.visitedNodeIds.includes(nodeId) || (run.currentNodeId !== null && !run.nodes.find(({ id }) => id === run.currentNodeId)?.successorIds.includes(nodeId)) || update.relicHp.length !== 3) return false;
     if (update.augmentId && !EXPEDITION_AUGMENT_IDS.includes(update.augmentId as never)) return false;
-    if (Object.entries(update.rewards ?? {}).some(([id, amount]) => !EXPEDITION_REWARD_IDS.includes(id as never) || !Number.isFinite(amount) || amount < 0)) return false;
     if (update.relicHp.some((hp) => !Number.isFinite(hp) || hp < 0) || [update.bossDamage ?? 0, update.score ?? 0].some((value) => !Number.isFinite(value) || value < 0)) return false;
     const next = structuredClone(run); next.currentNodeId = nodeId; next.visitedNodeIds.push(nodeId);
     next.relics.forEach((relic, index) => { relic.currentHp = update.relicHp[index]; relic.alive = relic.currentHp > 0; });
     if (update.augmentId && !next.selectedAugmentIds.includes(update.augmentId)) next.selectedAugmentIds.push(update.augmentId);
-    for (const [id, amount] of Object.entries(update.rewards ?? {})) next.pendingRewards[id] = (next.pendingRewards[id] ?? 0) + amount;
     next.bossDamage += update.bossDamage ?? 0; next.bestScore = Math.max(next.bestScore, update.score ?? 0);
     // 마지막 생존자가 쓰러지면 해당 전투 결과와 함께 런도 즉시 종료 상태로 확정한다.
     // 전멸도 정산 API 호출 전에는 보상 이전이 끝난 상태가 아니므로 런을 열어 둔다.

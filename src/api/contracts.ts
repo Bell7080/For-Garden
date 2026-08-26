@@ -107,7 +107,7 @@ export interface PlayerStateDto {
 /** 광고 SDK 완료 증명과 요청 재시도 멱등 키를 서버로 전달하는 요청이다. */
 export interface ClaimAdRewardRequest { slotId: string; verificationToken: string; requestId: string; }
 /** 검증·중복·일일 제한 확인 후 지급과 저장까지 확정된 광고 보상 결과다. */
-export interface ClaimAdRewardResponse extends PlayerStateDto { slotId: string; reward: AdReward; dailyClaims: number; dailyRemaining: number; excavation?: IdleExcavationState; serverTime: string; }
+export interface ClaimAdRewardResponse extends PlayerStateDto { slotId: string; reward: AdReward; dailyClaims: number; dailyRemaining: number; /** 서버 지갑 스냅샷의 전후 차이만 담아 UI가 실제 지급량을 재계산하지 않게 한다. */ granted: Partial<Record<keyof Wallet, number>>; /** 주간 제한 슬롯만 서버가 확정한 잔여 횟수를 돌려준다. */ weeklyRemaining?: number; excavation?: IdleExcavationState; serverTime: string; }
 
 /** 클라이언트는 런/정산 식별자와 종료 사유만 보내며 보상 수치는 보낼 수 없다. */
 export interface SettleExpeditionRunRequest { runId: string; settlementId: string; outcome: "completed" | "abandoned"; }
@@ -126,6 +126,11 @@ export interface AdSlotOperationsDto {
   enabled: boolean;
   /** 서버 UTC 날짜 하나에 검증·지급할 수 있는 최대 완료 횟수다. */
   dailyLimitUtc: number;
+  /** 주간 제한이 있는 슬롯은 현재 서버 주차의 한도와 사용량을 함께 내려준다. */
+  weeklyLimitUtc?: number;
+  weeklyClaims?: number;
+  /** 빠른 원정처럼 서버 기록을 환산하는 슬롯만 현재 유효 기준값을 공개한다. */
+  referenceScore?: number;
   /** 표시와 실제 지급이 같은 서버 값을 사용하도록 화폐와 수량을 함께 전달한다. */
   /** 허용된 판별 합집합 그대로 내려 UI가 임의 효과를 만들 수 없게 한다. */
   reward: AdReward;

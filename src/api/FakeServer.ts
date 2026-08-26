@@ -205,7 +205,8 @@ export class FakeServer implements GameApi {
   async getAdOperationsConfig(): Promise<AdOperationsConfigResponse> {
     await this.delay(); const now = this.now();
     this.normalizeBossWeek(now); const quickScore = this.bossWeek.bestScore || this.previousBossBest;
-    return { configVersion: "fake-2026-08-25", serverTime: now.toISOString(), expiresAt: new Date(now.getTime() + 300_000).toISOString(), slots: AD_REWARD_SLOTS.map((slot) => ({ slotId: slot.id, enabled: slot.placement !== "quick_expedition" || quickScore > 0, dailyLimitUtc: slot.dailyLimitUtc, displayText: slot.displayText, reward: slot.reward })) };
+    const weekKey = expeditionWeekKey(now); if (this.quickWeek.weekKey !== weekKey) this.quickWeek = { weekKey, claims: 0 };
+    return { configVersion: "fake-2026-08-25", serverTime: now.toISOString(), expiresAt: new Date(now.getTime() + 300_000).toISOString(), slots: AD_REWARD_SLOTS.map((slot) => ({ slotId: slot.id, enabled: slot.placement !== "quick_expedition" || quickScore > 0, dailyLimitUtc: slot.dailyLimitUtc, displayText: slot.displayText, reward: slot.reward, ...("weeklyLimitUtc" in slot ? { weeklyLimitUtc: slot.weeklyLimitUtc, weeklyClaims: this.quickWeek.claims, referenceScore: quickScore } : {}) })) };
   }
 
   /** 세 저장 소유자를 읽기 전용 DTO로만 합성한다. */
@@ -294,13 +295,20 @@ export class FakeServer implements GameApi {
 
     const nextClaims = dailyClaims + 1;
     const nextAds = { date, claimsBySlot: { ...current.claimsBySlot, [slot.id]: nextClaims }, requestIds: [...current.requestIds, request.requestId] };
+    const walletBefore = { ...this.state.wallet };
     const applied = this.applyAdReward(slot.reward, now);
     const nextState = { ...this.state, wallet: applied.wallet, idleExcavation: applied.excavation, dailyAdRewards: nextAds };
     // 상한 검증과 영속화가 성공하기 전에는 메모리 세션을 변경하지 않는다.
     this.persist(nextState);
     this.state.wallet = applied.wallet; this.state.idleExcavation = applied.excavation; this.state.dailyAdRewards = nextAds;
     if (slot.reward.kind === "quick_expedition") this.quickWeek.claims += 1;
-    return { ...this.snapshot(), slotId: slot.id, reward: slot.reward, dailyClaims: nextClaims, dailyRemaining: slot.dailyLimitUtc - nextClaims, excavation: this.cloneExcavation(applied.excavation), serverTime: now.toISOString() };
+    // 실제 지갑 증가분과 주간 잔량은 저장 성공 뒤의 서버 스냅샷에서만 만든다.
+    const granted: Partial<Record<keyof Session["wallet"], number>> = {};
+    for (const key of Object.keys(applied.wallet) as (keyof Session["wallet"])[]) {
+      const amount = applied.wallet[key] - walletBefore[key]; if (amount > 0) granted[key] = amount;
+    }
+    const weeklyRemaining = slot.weeklyLimitUtc === undefined ? undefined : Math.max(0, slot.weeklyLimitUtc - this.quickWeek.claims);
+    return { ...this.snapshot(), slotId: slot.id, reward: slot.reward, dailyClaims: nextClaims, dailyRemaining: slot.dailyLimitUtc - nextClaims, granted, weeklyRemaining, excavation: this.cloneExcavation(applied.excavation), serverTime: now.toISOString() };
   }
 
   /** 요청 ID와 플랫폼 거래 ID를 모두 고유 키로 취급해 같은 영수증 검증을 반복 실행하지 않는다. */
@@ -362,6 +370,7 @@ export class FakeServer implements GameApi {
     const dailyClaims = current.claimsBySlot[slot.id] ?? 0;
     if (dailyClaims >= slot.dailyLimitUtc) throw new GameApiError("AD_DAILY_LIMIT", "오늘 받을 수 있는 광고 보상을 모두 받았습니다.");
     const bonus = this.bonusClaimDates.get(stored.entitlementId) === date ? undefined : product.passBenefit.dailyBonus;
+    const walletBefore = { ...this.state.wallet };
     const applied = this.applyAdReward(slot.reward, now); const nextWallet = applied.wallet;
     if (bonus) nextWallet.gems += bonus.amount;
     const nextClaims = dailyClaims + 1;
@@ -370,7 +379,9 @@ export class FakeServer implements GameApi {
     this.state.wallet = nextWallet; this.state.idleExcavation = applied.excavation; this.state.dailyAdRewards = nextAds;
     if (bonus) this.bonusClaimDates.set(stored.entitlementId, date);
     const entitlement = { ...stored, active: true, serverTime: now.toISOString() };
-    const result: ClaimInstantAdRewardResponse = { ...this.snapshot(), slotId: slot.id, reward: slot.reward, dailyClaims: nextClaims, dailyRemaining: slot.dailyLimitUtc - nextClaims, entitlement, dailyBonus: bonus ? { ...bonus } : undefined, excavation: this.cloneExcavation(applied.excavation), serverTime: now.toISOString() };
+    const granted: Partial<Record<keyof Session["wallet"], number>> = {};
+    for (const key of Object.keys(nextWallet) as (keyof Session["wallet"])[]) { const amount = nextWallet[key] - walletBefore[key]; if (amount > 0) granted[key] = amount; }
+    const result: ClaimInstantAdRewardResponse = { ...this.snapshot(), slotId: slot.id, reward: slot.reward, dailyClaims: nextClaims, dailyRemaining: slot.dailyLimitUtc - nextClaims, granted, entitlement, dailyBonus: bonus ? { ...bonus } : undefined, excavation: this.cloneExcavation(applied.excavation), serverTime: now.toISOString() };
     this.instantClaimResults.set(request.requestId, result);
     return result;
   }

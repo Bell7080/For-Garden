@@ -87,6 +87,12 @@ test("출격 선택판에서 원정대 3기를 골라 진행 중 상태로 저�
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("expedition");
   await page.screenshot({ path: `test-results/${test.info().project.name}-expedition-preparation.png` });
 
+  // 준비 화면의 공용 진입점은 씬을 떠나지 않고 서버 주간 기록판을 연다.
+  await tapGame(page, BASE_WIDTH - 190, 292);
+  await page.waitForTimeout(500);
+  await page.screenshot({ path: `test-results/${test.info().project.name}-expedition-ranking-popup.png` });
+  await tapGame(page, BASE_WIDTH - 106, BASE_HEIGHT - 120);
+
   // 초기 보유 세 기를 모두 고른 뒤 시작하면 매니저 저장을 거쳐 같은 씬의 이어하기 상태가 된다.
   for (const x of [234, 540, 846]) await tapGame(page, x, 470);
   await tapGame(page, BASE_WIDTH / 2, 1680);

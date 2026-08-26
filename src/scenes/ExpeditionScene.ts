@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { gameApi } from "../api/FakeServer";
+import { GameApiError, type AdSlotOperationsDto } from "../api/contracts";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import type { ExpeditionMapNode } from "../core/expeditionMap";
 import { getRelic } from "../data/relics";
@@ -22,6 +23,9 @@ import type { ExpeditionAugmentSelection } from "../core/expeditionRewards";
 import type { ExpeditionBattleInputDto, ExpeditionBossBattleInputDto } from "../core/expeditionBattle";
 import { ExpeditionAugmentPopup, expeditionAugmentEffectLabel, expeditionAugmentMetaLabel } from "../ui/ExpeditionAugmentPopup";
 import { EXPEDITION_NODE_REWARD_BALANCE } from "../data/expedition";
+import { completedAdToken } from "../data/adRewards";
+import { presentRewardedAd } from "../platform/rewardedAds";
+import { openRewardPopup } from "../ui/RewardPopup";
 
 /** 원정 준비 카드의 고정 그리드 규격이다. 다른 편성과 달리 세 칸씩 읽게 한다. */
 const ROSTER = { columns: 3, width: 250, height: 310, gapX: 56, gapY: 50, top: 470 } as const;
@@ -40,6 +44,10 @@ export class ExpeditionScene extends Phaser.Scene {
   private popups!: PopupLayer;
   /** 지도 입력부터 저장/씬 전환 완료까지의 단일 잠금은 이 씬이 소유한다. */
   private nodeTransitionPending = false;
+  /** 광고 표시부터 서버 확정까지 연타를 막는 빠른 원정 전용 잠금이다. */
+  private quickClaimPending = false;
+  private quickButton?: Button;
+  private quickStatus?: Phaser.GameObjects.Text;
 
   constructor() {
     super("expedition");
@@ -68,7 +76,7 @@ export class ExpeditionScene extends Phaser.Scene {
     drawHairline(this, BASE_WIDTH / 2, 224, BASE_WIDTH - 108, { color: COLOR.accent, alpha: 0.34 });
 
     if (status.active) this.buildActive(status.active.score, status.run?.selectedAugments ?? []);
-    else this.buildPreparation(status.quickAvailable);
+    else this.buildPreparation();
 
     // 화면을 벗어나는 조작은 공용 우하단 슬롯만 사용한다.
     addBackButton(this, () => this.scene.start("lobby"));
@@ -271,9 +279,11 @@ export class ExpeditionScene extends Phaser.Scene {
   }
 
   /** 보유 렐릭에서 정확히 세 기를 고르는 신규 원정 준비 화면을 만든다. */
-  private buildPreparation(quickAvailable: boolean): void {
+  private buildPreparation(): void {
     this.add.text(BASE_WIDTH / 2, 292, "원정대 3기 선택", textStyle({ role: "emphasis", size: 32 })).setOrigin(0.5);
-    this.add.text(BASE_WIDTH / 2, 348, quickAvailable ? "빠른 원정 가능" : "0 / 3", textStyle({ role: "body", size: 26, color: quickAvailable ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5);
+    // 로컬 quickAvailable은 표시·지급 권한으로 쓰지 않고 서버 운영 설정을 기다리는 자리만 만든다.
+    this.quickStatus = this.add.text(BASE_WIDTH / 2, 348, "빠른 원정 확인 중…", textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0.5);
+    void this.loadQuickExpeditionOffer();
 
     const owned = [...session.owned].map(getRelic);
     const gridWidth = ROSTER.columns * ROSTER.width + (ROSTER.columns - 1) * ROSTER.gapX;
@@ -308,6 +318,58 @@ export class ExpeditionScene extends Phaser.Scene {
       onClick: () => this.startExpedition(),
     });
     this.startButton.setEnabled(false);
+  }
+
+  /** 서버가 활성화한 슬롯의 문구·비율·일일/주간 한도만 준비 화면에 결합한다. */
+  private async loadQuickExpeditionOffer(): Promise<void> {
+    try {
+      const config = await gameApi.getAdOperationsConfig();
+      if (!this.scene.isActive()) return;
+      const slot = config.slots.find((candidate): candidate is AdSlotOperationsDto & { reward: { readonly kind: "quick_expedition"; readonly scoreRatio: number } } => candidate.slotId === "quick-expedition" && candidate.enabled && candidate.reward.kind === "quick_expedition");
+      if (!slot) { this.quickStatus?.setText("기준 점수를 먼저 기록하세요"); return; }
+      const sameDay = session.dailyAdRewards.date === config.serverTime.slice(0, 10);
+      const dailyUsed = sameDay ? session.dailyAdRewards.claimsBySlot[slot.slotId] ?? 0 : 0;
+      const dailyRemaining = Math.max(0, slot.dailyLimitUtc - dailyUsed);
+      const weeklyRemaining = Math.max(0, (slot.weeklyLimitUtc ?? 0) - (slot.weeklyClaims ?? 0));
+      const reference = Math.max(0, Math.floor(slot.referenceScore ?? 0));
+      const expected = Math.floor(reference * slot.reward.scoreRatio);
+      this.quickStatus?.setText(`기준 최고 ${reference.toLocaleString()} · 예상 골드 ${expected.toLocaleString()} · 오늘 ${dailyRemaining}회 / 이번 주 ${weeklyRemaining}회`);
+      // 주 행동과 떨어진 낮고 작은 중립 버튼으로 위계를 명확히 나눈다.
+      this.quickButton?.destroy();
+      this.quickButton = new Button(this, 230, 1800, { width: 300, height: 72, label: slot.displayText, fontSize: 25, onClick: () => void this.claimQuickExpedition(slot) });
+      this.quickButton.setEnabled(reference > 0 && expected > 0 && dailyRemaining > 0 && weeklyRemaining > 0);
+    } catch { this.quickStatus?.setText("빠른 원정을 불러오지 못했습니다"); }
+  }
+
+  /** 기존 발굴 광고와 같은 토큰 추출·연타 잠금·고유 요청 ID 흐름으로 서버 지급을 요청한다. */
+  private async claimQuickExpedition(slot: AdSlotOperationsDto): Promise<void> {
+    if (this.quickClaimPending) return;
+    this.quickClaimPending = true; this.quickButton?.setEnabled(false);
+    try {
+      const token = completedAdToken(await presentRewardedAd(slot.slotId));
+      if (!token) { this.quickStatus?.setText("광고가 취소되었습니다 · 다시 눌러 시도하세요"); this.quickButton?.setEnabled(true); return; }
+      const requestId = globalThis.crypto?.randomUUID?.() ?? `quick-expedition-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const result = await gameApi.claimAdReward({ slotId: "quick-expedition", verificationToken: token, requestId });
+      const gained = Math.max(0, result.granted.gold ?? 0);
+      // 응답 스냅샷으로 로컬 준비 화면과 상단 지갑의 다음 방문 상태를 함께 갱신한다.
+      session.wallet = { ...result.wallet };
+      session.dailyAdRewards = { date: result.dailyAdRewards.date, claimsBySlot: { ...result.dailyAdRewards.claimsBySlot }, requestIds: session.dailyAdRewards.requestIds };
+      await this.loadQuickExpeditionOffer();
+      if (gained === 0) this.quickStatus?.setText("골드 지갑이 가득 찼습니다 · 먼저 골드를 사용하세요");
+      else openRewardPopup(this, this.popups, { title: "빠른 원정 완료", items: [{ icon: "currency-gold", amount: gained, label: "실제 지갑 증가" }] });
+    } catch (error) {
+      const code = error instanceof GameApiError ? error.code : undefined;
+      const message: Partial<Record<string, string>> = {
+        AD_TOKEN_INVALID: "광고 검증에 실패했습니다 · 다시 시도하세요",
+        AD_DAILY_LIMIT: "오늘 횟수를 모두 사용했습니다 · 내일 다시 오세요",
+        AD_WEEKLY_LIMIT: "이번 주 횟수를 모두 사용했습니다 · 다음 주에 다시 오세요",
+        EXPEDITION_SCORE_REQUIRED: "기준 점수가 없습니다 · 원정 최고점을 먼저 기록하세요",
+      };
+      this.quickStatus?.setText(message[code ?? ""] ?? "지급에 실패했습니다 · 잠시 후 다시 시도하세요");
+      this.quickButton?.setEnabled(!["AD_DAILY_LIMIT", "AD_WEEKLY_LIMIT", "EXPEDITION_SCORE_REQUIRED"].includes(code ?? ""));
+    } finally {
+      this.quickClaimPending = false;
+    }
   }
 
   /** 네 번째 선택은 받지 않고 카드 발광과 선택 수만 동기화한다. */

@@ -842,7 +842,7 @@ export class BattleScene extends Phaser.Scene {
         void gameApi.settleExpeditionRun({ runId: input.runId, settlementId: `${input.runId}:${won ? "complete" : "defeat"}`, outcome: won ? "completed" : "abandoned" }).then(() => this.scene.start("lobby")).catch(() => { saving = false; });
         return;
       }
-      expeditionManager.beginAugmentReward(input.nodeId, input.nodeType);
+      // 증강은 전투 진입 전에 이미 확정되므로 승리 결과에서는 HP와 노드 완료만 저장한다.
       this.scene.start("expedition");
     } }).setDepth(101);
   }

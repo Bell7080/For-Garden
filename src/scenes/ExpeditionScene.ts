@@ -16,7 +16,7 @@ import { drawGlyph, type GlyphName } from "../ui/glyphs";
 import { PortraitCard, relicCardTint } from "../ui/PortraitCard";
 import { PopupLayer } from "../ui/PopupLayer";
 import { COLOR, textStyle } from "../ui/theme";
-import { chipPoints, drawHairline, drawInnerVignette, drawLayer, drawShapeOutline, drawVignette, HoloBar, HOLO } from "../ui/holo";
+import { chipPoints, drawGlassFade, drawHairline, drawInnerVignette, drawLayer, drawShapeOutline, drawVignette, HoloBar, HOLO } from "../ui/holo";
 import { EXPEDITION_LAYOUT } from "../ui/expeditionLayout";
 import type { ExpeditionAugmentSelection } from "../core/expeditionRewards";
 
@@ -46,12 +46,17 @@ export class ExpeditionScene extends Phaser.Scene {
     this.cards.clear();
     this.popups = new PopupLayer(this);
 
-    // 장기 고고학과 다른 콘텐츠지만 야외 조사 분위기를 잇기 위해 기존 탐사 원화만 재사용한다.
-    addSceneBackground(this, BACKGROUND.archaeology);
+    const status = expeditionManager.status();
+    // 활성 런은 전용 지도 원화를 쓰고, 편성 단계만 기존 야외 조사 배경을 유지한다.
+    addSceneBackground(this, status.active ? BACKGROUND.expeditionMap : BACKGROUND.archaeology);
     drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { depth: -26, strength: 0.72 });
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.42).setDepth(-25);
+    if (status.active) {
+      // 가장자리 HUD 뒤만 유리 페이드로 눌러 지도 지형과 중앙 경로는 그대로 보존한다.
+      drawGlassFade(this, BASE_WIDTH / 2, 110, BASE_WIDTH, 220, { topAlpha: HOLO.glass, bottomAlpha: 0 }).setDepth(-24);
+      drawGlassFade(this, BASE_WIDTH / 2, BASE_HEIGHT - 180, BASE_WIDTH, 360, { topAlpha: 0, bottomAlpha: HOLO.glass }).setDepth(-24);
+    }
 
-    const status = expeditionManager.status();
     this.add.text(54, 34, "주간 원정", textStyle({ role: "display", size: 48 })).setOrigin(0, 0);
     this.add.text(54, 94, `이번 주 ${status.playsThisWeek}회  ·  최고 ${status.bestScore.toLocaleString()}`, textStyle({ role: "emphasis", size: 25, color: COLOR.accentText })).setOrigin(0, 0);
     drawHairline(this, BASE_WIDTH / 2, 224, BASE_WIDTH - 108, { color: COLOR.accent, alpha: 0.34 });
@@ -113,9 +118,31 @@ export class ExpeditionScene extends Phaser.Scene {
         // 전투 연결 전에도 선택 피드백을 주되, 진행 상태는 매니저의 완료 경계 밖에서 변경하지 않는다.
         hit.on("pointerdown", () => hit.setScale(1.12));
         hit.on("pointerout", () => hit.setScale(1));
-        hit.on("pointerup", () => { hit.setScale(1); this.children.getByName("expedition-node-hint")?.destroy(); this.add.text(BASE_WIDTH / 2, 1210, `${node.floor}층 · ${this.nodeLabel(node.type)}`, textStyle({ role: "emphasis", size: 22, color: COLOR.sortieText })).setName("expedition-node-hint").setOrigin(0.5); });
+        hit.on("pointerup", () => {
+          hit.setScale(1);
+          // 교전 노드는 전용 필드 화면으로 넘기고 비전투 노드는 기존 짧은 선택 안내를 유지한다.
+          if (["normal", "elite", "horde", "boss"].includes(node.type)) this.openBattleField(node);
+          else { this.children.getByName("expedition-node-hint")?.destroy(); this.add.text(BASE_WIDTH / 2, 1210, `${node.floor}층 · ${this.nodeLabel(node.type)}`, textStyle({ role: "emphasis", size: 22, color: COLOR.sortieText })).setName("expedition-node-hint").setOrigin(0.5); }
+        });
       }
     });
+  }
+
+  /** 지도에서 고른 교전의 전용 전투 필드를 열어 배경과 전투 HUD의 시각 경계를 먼저 세운다. */
+  private openBattleField(node: ExpeditionMapNode): void {
+    const layer = this.add.container(0, 0).setDepth(3000);
+    const field = this.add.image(BASE_WIDTH / 2, BASE_HEIGHT / 2, BACKGROUND.expeditionField);
+    field.setScale(Math.max(BASE_WIDTH / field.width, BASE_HEIGHT / field.height));
+    layer.add(field);
+    // 전투 유닛이 설 중앙은 밝게 남기고 상하 정보대만 공용 유리 토큰으로 눌러 가독성을 확보한다.
+    layer.add(drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { strength: 0.7 }));
+    layer.add(drawGlassFade(this, BASE_WIDTH / 2, 130, BASE_WIDTH, 260, { topAlpha: HOLO.glass, bottomAlpha: 0 }));
+    layer.add(drawGlassFade(this, BASE_WIDTH / 2, BASE_HEIGHT - 220, BASE_WIDTH, 440, { topAlpha: 0, bottomAlpha: HOLO.glass }));
+    layer.add(this.add.text(54, 44, `${node.floor}층 · ${this.nodeLabel(node.type)}`, textStyle({ role: "display", size: 42, color: COLOR.sortieText })).setOrigin(0, 0));
+    layer.add(this.add.text(54, 104, "교전 준비", textStyle({ role: "emphasis", size: 24, color: COLOR.ink })).setOrigin(0, 0));
+    // 전투 규칙 연결 전에도 사용자가 지도 선택을 취소할 수 있는 실제 입력 경계를 제공한다.
+    const back = new Button(this, BASE_WIDTH / 2, BASE_HEIGHT - 130, { width: 420, height: 92, label: "지도로 돌아가기", fontSize: 28, accentColor: COLOR.sortie, accentTextColor: COLOR.sortieText, onClick: () => layer.destroy(true) });
+    layer.add(back);
   }
 
   /** 노드 종류와 공용 글리프 이름의 대응은 씬의 위치 계산과 분리한다. */

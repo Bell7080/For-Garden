@@ -45,6 +45,12 @@ function loadWithPhaser(scene: Phaser.Scene, queue: () => void): Promise<void> {
  */
 const SVG_BAKE = { skill: 256, uiScale: 2 } as const;
 
+/** 배경이 아닌 콘텐츠 원화의 중앙 로딩 표. 각 키는 원정 진입 버튼에서만 사용한다. */
+const CONTENT_ART_ASSETS = [
+  // Content2_001은 로비 출격 메뉴에서 원정 진입점을 구별하는 버튼 일러스트다.
+  ["content-expedition-entry", "Content2_001.webp"],
+] as const;
+
 export const LOADING_STEPS: ReadonlyArray<LoadingStep> = [
   {
     label: "글꼴",
@@ -53,7 +59,12 @@ export const LOADING_STEPS: ReadonlyArray<LoadingStep> = [
   {
     label: "배경 원화",
     run: (scene) =>
-      loadWithPhaser(scene, () => BACKGROUND_ASSETS.forEach(([key, path]) => scene.load.image(key, path))),
+      loadWithPhaser(scene, () => {
+        // 지도(Content2_001map)와 전투 필드(Content2_001field)는 backgrounds.ts의 화면 배경 표가 소유한다.
+        BACKGROUND_ASSETS.forEach(([key, path]) => scene.load.image(key, path));
+        // 진입 버튼(Content2_001)은 화면 배경이 아니므로 이 중앙 콘텐츠 표에서 함께 적재한다.
+        CONTENT_ART_ASSETS.forEach(([key, path]) => scene.load.image(key, path));
+      }),
   },
   {
     label: "조작·스킬 아이콘",

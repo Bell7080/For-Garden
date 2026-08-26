@@ -26,6 +26,7 @@ import { notificationManager } from "../managers/NotificationManager";
 import { MissionsPopup } from "../ui/MissionsPopup";
 import { LOBBY_ACTION_BOUNDS, LOBBY_MISSION_ENTRY } from "../ui/lobbyLayout";
 import { expeditionManager } from "../managers/ExpeditionManager";
+import { ExpeditionEntryButton } from "../ui/ExpeditionEntryButton";
 
 /** 확대된 애착 렐릭의 골반 아래가 내비게이션 뒤로 자연스럽게 이어지는 기준선. */
 const STAGE_FLOOR = 1660;
@@ -202,15 +203,11 @@ export class LobbyScene extends Phaser.Scene {
         onClick: () => { close(); this.scene.start("stageMap"); },
       });
       body.add(storyButton);
-      const expeditionButton = new Button(this, 0, 35, {
+      // 전용 프리팹이 Content2_001 원화, 주황 출격 위계, 확대 피드백을 한 입력면으로 유지한다.
+      const expeditionButton = new ExpeditionEntryButton(this, 0, 35, {
         width: 650,
         height: 170,
-        label: "원정",
-        sub: this.expeditionStatus(status),
-        fontSize: 42,
-        variant: "primary",
-        accentColor: COLOR.sortie,
-        accentTextColor: COLOR.sortieText,
+        status: this.expeditionStatus(status),
         onClick: () => { close(); this.scene.start("expedition"); },
       });
       body.add(expeditionButton);

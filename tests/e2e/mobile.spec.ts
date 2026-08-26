@@ -94,7 +94,8 @@ test("출격 선택판에서 원정대 3기를 골라 진행 중 상태로 저�
   await tapGame(page, BASE_WIDTH - 106, BASE_HEIGHT - 120);
 
   // 초기 보유 세 기를 모두 고른 뒤 시작하면 매니저 저장을 거쳐 같은 씬의 이어하기 상태가 된다.
-  for (const x of [234, 540, 846]) await tapGame(page, x, 470);
+  // 상단 1/2/3 SD 편성 미리보기 아래로 이동한 보유 카드 그리드를 누른다.
+  for (const x of [234, 540, 846]) await tapGame(page, x, 850);
   await tapGame(page, BASE_WIDTH / 2, 1680);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("expedition");
   await expect.poll(() => page.evaluate(() => {

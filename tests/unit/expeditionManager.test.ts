@@ -50,6 +50,22 @@ describe("ExpeditionManager", () => {
     expect(manager.status().quickAvailable).toBe(true);
   });
 
+  it("기존 settled 런을 비활성으로 정리해 재진입에서 새 편성을 허용한다", () => {
+    const state = createDefaultSession(); const save = vi.fn();
+    const manager = new ExpeditionManager(state, { save }, () => new Date("2026-08-25T12:00:00Z"));
+    manager.start(["anky", "rex", "spino"]);
+    state.expedition.run!.settled = true;
+    state.expedition.run!.settlementId = "legacy-settlement";
+    save.mockClear();
+
+    const status = manager.status();
+    expect(status.active).toBeNull();
+    expect(status.run).toBeNull();
+    expect(state.expedition.run).toBeNull();
+    expect(save).toHaveBeenCalledTimes(1);
+    expect(manager.start(["anky", "rex", "spino"]).ok).toBe(true);
+  });
+
   it("heals and completes a rest node in one save so retry cannot heal twice", () => {
     const state = createDefaultSession();
     const save = vi.fn();

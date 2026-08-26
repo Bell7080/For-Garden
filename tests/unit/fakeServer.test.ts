@@ -490,17 +490,47 @@ describe("FakeServer 원정 정산", () => {
     await expect(server.completeExpeditionNode({ ...request, requestId: "node-forged-retry" })).rejects.toMatchObject({ code: "EXPEDITION_RUN_NOT_FOUND" });
   });
 
-  it("지갑 상한까지 한 번만 정산하고 다른 정산 ID의 중복 지급을 막는다", async () => {
+  it("정산 뒤 새 편성을 열고 같은 정산 ID는 지갑을 다시 늘리지 않는다", async () => {
     const state = makeSession();
     state.wallet.gold = 999_999_998;
     const manager = new (await import("../../src/managers/ExpeditionManager")).ExpeditionManager(state, { save: () => undefined }, () => new Date("2026-08-25T12:00:00Z"));
     const started = manager.start(["anky", "rex", "dodo"]); expect(started.ok).toBe(true);
     state.expedition.run!.pendingRewards = { gold: 50, fossil: 7 };
     const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-25T12:00:00Z") });
-    const first = await server.settleExpeditionRun({ runId: state.expedition.run!.runId, settlementId: "settlement-1", outcome: "abandoned" });
-    expect(first.granted).toEqual({ gold: 1, fossil: 7 }); expect(state.expedition.run).toMatchObject({ settled: true, settlementId: "settlement-1", pendingRewards: {} });
-    await expect(server.settleExpeditionRun({ runId: first.runId, settlementId: "settlement-2", outcome: "completed" })).rejects.toMatchObject({ code: "EXPEDITION_ALREADY_SETTLED" });
+    const runId = state.expedition.run!.runId;
+    const request = { runId, settlementId: "settlement-1", outcome: "abandoned" as const };
+    const first = await server.settleExpeditionRun(request);
+    expect(first.granted).toEqual({ gold: 1, fossil: 7 }); expect(state.expedition.run).toBeNull();
+    const walletAfterFirst = { ...state.wallet };
+    expect(await server.settleExpeditionRun(request)).toEqual(first);
+    expect(state.wallet).toEqual(walletAfterFirst);
+    // 활성 run이 null이므로 화면이 사용하는 동일 매니저 계약에서 곧바로 새 편성을 시작할 수 있다.
+    expect(manager.status().active).toBeNull();
+    expect(manager.start(["anky", "rex", "dodo"]).ok).toBe(true);
+    await expect(server.settleExpeditionRun({ runId: first.runId, settlementId: "settlement-2", outcome: "completed" })).rejects.toMatchObject({ code: "EXPEDITION_RUN_NOT_FOUND" });
     expect(state.wallet).toMatchObject({ gold: 999_999_999, fossil: 1007 });
+  });
+
+  it("포기 정산은 런 점수를 주간 최고점에 반영하지 않는다", async () => {
+    const state = makeSession();
+    const manager = new (await import("../../src/managers/ExpeditionManager")).ExpeditionManager(state, { save: () => undefined }, () => new Date("2026-08-25T12:00:00Z"));
+    manager.start(["anky", "rex", "dodo"]); state.expedition.run!.bestScore = 88_000; state.expedition.bestScore = 12_000;
+    const server = new FakeServer(state, { latencyMs: 0 });
+
+    await server.settleExpeditionRun({ runId: state.expedition.run!.runId, settlementId: "abandon-score", outcome: "abandoned" });
+    expect(state.expedition.bestScore).toBe(12_000);
+    expect(state.expedition.run).toBeNull();
+  });
+
+  it("20층 정상 완료 정산에서만 런 최고점을 주간 최고점으로 갱신한다", async () => {
+    const state = makeSession();
+    const manager = new (await import("../../src/managers/ExpeditionManager")).ExpeditionManager(state, { save: () => undefined }, () => new Date("2026-08-25T12:00:00Z"));
+    manager.start(["anky", "rex", "dodo"]); state.expedition.run!.bestScore = 88_000; state.expedition.bestScore = 12_000;
+    const server = new FakeServer(state, { latencyMs: 0 });
+
+    await server.settleExpeditionRun({ runId: state.expedition.run!.runId, settlementId: "boss-complete", outcome: "completed" });
+    expect(state.expedition.bestScore).toBe(88_000);
+    expect(state.expedition.run).toBeNull();
   });
 
   it("기준 점수가 없으면 비활성·무보상이고 서버 최고 점수 비율과 일일 제한을 적용한다", async () => {

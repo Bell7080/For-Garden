@@ -27,9 +27,13 @@ import { completedAdToken } from "../data/adRewards";
 import { presentRewardedAd } from "../platform/rewardedAds";
 import { openRewardPopup } from "../ui/RewardPopup";
 import { ExpeditionRankingPopup } from "../ui/ExpeditionRankingPopup";
+import { sdAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
+import { loadOwnedPuppet } from "../ui/statusPuppetLoad";
 
 /** 원정 준비 카드의 고정 그리드 규격이다. 다른 편성과 달리 세 칸씩 읽게 한다. */
-const ROSTER = { columns: 3, width: 250, height: 310, gapX: 56, gapY: 50, top: 470 } as const;
+const ROSTER = { columns: 3, width: 250, height: 310, gapX: 56, gapY: 50, top: 850 } as const;
+/** 발굴 편성처럼 화면 상단에서 순서를 먼저 읽는 1/2/3 슬롯 규격이다. */
+const FORMATION = { y: 540, firstX: 230, stepX: 310, width: 250, height: 290 } as const;
 
 /**
  * 주간 원정 준비/이어하기 화면.
@@ -49,6 +53,10 @@ export class ExpeditionScene extends Phaser.Scene {
   private quickClaimPending = false;
   private quickButton?: Button;
   private quickStatus?: Phaser.GameObjects.Text;
+  /** 선택 미리보기와 비동기 SD는 매 선택마다 함께 폐기해 이전 편성이 겹치지 않게 한다. */
+  private formationPreview?: Phaser.GameObjects.Container;
+  private formationPuppets = new Set<PuppetCreature>();
+  private formationGeneration = 0;
 
   constructor() {
     super("expedition");
@@ -60,6 +68,7 @@ export class ExpeditionScene extends Phaser.Scene {
     this.cards.clear();
     this.popups = new PopupLayer(this);
     this.nodeTransitionPending = false;
+    this.clearFormationPreview();
 
     const status = expeditionManager.status();
     // 활성 런은 전용 지도 원화를 쓰고, 편성 단계만 기존 야외 조사 배경을 유지한다.
@@ -287,6 +296,7 @@ export class ExpeditionScene extends Phaser.Scene {
     // 로컬 quickAvailable은 표시·지급 권한으로 쓰지 않고 서버 운영 설정을 기다리는 자리만 만든다.
     this.quickStatus = this.add.text(BASE_WIDTH / 2, 348, "빠른 원정 확인 중…", textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0.5);
     void this.loadQuickExpeditionOffer();
+    this.renderFormationPreview();
 
     const owned = [...session.owned].map(getRelic);
     const gridWidth = ROSTER.columns * ROSTER.width + (ROSTER.columns - 1) * ROSTER.gapX;
@@ -375,11 +385,51 @@ export class ExpeditionScene extends Phaser.Scene {
     }
   }
 
+  /** 1/2/3 슬롯과 선택 렐릭 SD를 한 번에 다시 그리며 로딩 실패 시에는 초상 카드를 유지한다. */
+  private renderFormationPreview(): void {
+    this.clearFormationPreview();
+    const generation = ++this.formationGeneration;
+    const layer = this.add.container(0, 0).setName("expedition-formation-preview");
+    this.formationPreview = layer;
+    for (let index = 0; index < 3; index += 1) {
+      const x = FORMATION.firstX + index * FORMATION.stepX;
+      // 번호는 카드 위 독립 표식으로 두어 SD가 나타나도 편성 순서를 잃지 않는다.
+      layer.add(this.add.text(x, FORMATION.y - 172, `${index + 1}`, textStyle({ role: "display", size: 30, color: COLOR.sortieText })).setOrigin(0.5));
+      const relicId = this.selected[index];
+      if (!relicId) {
+        layer.add(drawLayer(this, x, FORMATION.y, chipPoints(FORMATION.width, FORMATION.height, { bevel: { topLeft: 24, bottomRight: 18 } }), { fill: COLOR.panel, alpha: HOLO.glassLight, edge: COLOR.inkDimHex, edgeAlpha: 0.42 }));
+        layer.add(this.add.text(x, FORMATION.y, "선택 대기", textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0.5));
+        continue;
+      }
+      const relic = getRelic(relicId);
+      const fallback = new PortraitCard(this, x, FORMATION.y, { width: FORMATION.width, height: FORMATION.height, portraitAssetId: relic.portraitAssetId, tint: relicCardTint(relic), label: relic.name, level: relicProgression.getProgress(relic.id).level, rarity: relic.rarity, stars: relicProgression.getStars(relic.id) });
+      fallback.hit.disableInteractive(); layer.add(fallback);
+      layer.add(this.add.ellipse(x, FORMATION.y + 120, 190, 28, COLOR.sortie, 0.18));
+      void loadOwnedPuppet({
+        spawn: () => spawnPuppet(this, sdAssetFor(relicId), { x, groundY: FORMATION.y + 120, height: 250, depth: 2 }),
+        isCurrent: () => generation === this.formationGeneration && layer === this.formationPreview,
+        isDisplayable: (puppet) => Boolean(puppet.active && puppet.texture?.key && this.textures.exists(puppet.texture.key)),
+        adopt: (puppet) => { puppet.disableInteractive(); layer.add(puppet); this.formationPuppets.add(puppet); fallback.setVisible(false); },
+      });
+    }
+  }
+
+  /** 컨테이너 밖 GPU 자원을 포함한 이전 SD 미리보기를 선택 변경 전에 명시적으로 정리한다. */
+  private clearFormationPreview(): void {
+    this.formationGeneration += 1;
+    for (const puppet of this.formationPuppets) { this.formationPreview?.remove(puppet, false); puppet.destroy(); }
+    this.formationPuppets.clear();
+    this.formationPreview?.destroy(true);
+    this.formationPreview = undefined;
+  }
+
   /** 네 번째 선택은 받지 않고 카드 발광과 선택 수만 동기화한다. */
   private toggle(relicId: string): void {
     const index = this.selected.indexOf(relicId);
     if (index >= 0) this.selected.splice(index, 1);
     else if (this.selected.length < 3) this.selected.push(relicId);
+    // 상단 슬롯은 배열 순서를 그대로 사용해 전방부터 1/2/3번 편성을 즉시 확인시킨다.
+    this.renderFormationPreview();
     this.cards.forEach((card, id) => card.setSelected(this.selected.includes(id), COLOR.sortie));
     this.startButton?.setSub(`${this.selected.length} / 3`).setEnabled(this.selected.length === 3);
     this.hint.setText(this.selected.length === 3 ? "출발 준비 완료" : "3기를 선택하세요");

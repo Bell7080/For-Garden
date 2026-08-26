@@ -41,6 +41,9 @@ export class ExpeditionManager {
   /** 주차를 서버 UTC에 맞춘 뒤 UI용 독립 사본을 반환한다. */
   status(): ExpeditionStatus {
     this.normalizeWeek();
+    // 이전 버전이 성공 정산 뒤 settled 런을 남긴 저장도 활성 진행으로 복구하지 않는다.
+    // 정리 저장까지 수행해 다음 앱 실행부터는 새 run 계약만 남긴다.
+    if (this.state.expedition.run?.settled) this.commit({ ...this.state.expedition, run: null });
     const run = this.state.expedition.run;
     const copy = run ? structuredClone(run) : null;
     return { ...this.state.expedition, run: copy, active: copy ? { relicIds: copy.relics.map(({ relicId }) => relicId) as [string, string, string], score: copy.bestScore } : null, quickAvailable: this.state.expedition.bestScore > 0 && run === null };

@@ -168,8 +168,9 @@ export class FakeServer implements GameApi {
       const key = currency as keyof Session["wallet"]; const amount = Math.max(0, Math.floor(raw));
       const applied = Math.min(amount, WALLET_CAPS[key] - wallet[key]); wallet[key] += applied; granted[currency] = applied;
     }
-    const settledRun = { ...structuredClone(run), pendingRewards: {}, settled: true, settlementId: request.settlementId };
-    const expedition = { ...this.state.expedition, playsThisWeek: this.state.expedition.playsThisWeek + 1, bestScore: request.outcome === "completed" ? Math.max(this.state.expedition.bestScore, run.bestScore) : this.state.expedition.bestScore, run: settledRun };
+    // 완료 런은 활성 슬롯에서 즉시 제거한다. 멱등 재응답은 아래 정산 결과 캐시가 소유하므로
+    // settled 표식을 활성 run에 남겨 다음 진입을 가로막지 않는다.
+    const expedition = { ...this.state.expedition, playsThisWeek: this.state.expedition.playsThisWeek + 1, bestScore: request.outcome === "completed" ? Math.max(this.state.expedition.bestScore, run.bestScore) : this.state.expedition.bestScore, run: null };
     this.persist({ ...this.state, wallet, expedition }); this.state.wallet = wallet; this.state.expedition = expedition;
     const response = { ...this.snapshot(), runId: run.runId, settlementId: request.settlementId, outcome: request.outcome, granted };
     this.expeditionSettlementResults.set(request.settlementId, response); return structuredClone(response);

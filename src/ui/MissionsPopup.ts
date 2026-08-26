@@ -63,7 +63,10 @@ export class MissionsPopup {
       const mission = missionDisplayModel(raw); const y = list.firstCardY + index * list.cardGap;
       const panel = drawLayer(this.scene, 0, y, chipPoints(list.cardWidth, list.cardHeight, { bevel: { topLeft: 28, topRight: 0, bottomRight: 28, bottomLeft: 0 } }), { fill: mission.claimed ? 0x171b20 : mission.claimable ? 0x3b2b13 : 0x1a1f27, alpha: mission.claimed ? 0.52 : HOLO.glass, edge: mission.claimable ? COLOR.missionClaim : COLOR.accent, edgeAlpha: mission.claimed ? 0.16 : 0.55 });
       const title = this.scene.add.text(-400, y - 52, mission.title, textStyle({ role: "emphasis", size: 28, color: mission.claimed ? COLOR.inkDim : COLOR.ink })).setOrigin(0, 0);
-      const bar = new HoloBar(this.scene, -390, y + 35, 520, 18, { color: mission.claimable ? COLOR.missionClaim : COLOR.accent }).addTo(this.list!); bar.setValue(mission.ratio); this.bars.push(bar);
+      // HoloBar의 x는 왼쪽 끝이 아니라 중심이다. 카드 안쪽 -390에서 시작해 우측 정보 앞에서 끝낸다.
+      const barWidth = 520;
+      const barLeft = -390;
+      const bar = new HoloBar(this.scene, barLeft + barWidth / 2, y + 35, barWidth, 18, { color: mission.claimable ? COLOR.missionClaim : COLOR.accent }).addTo(this.list!); bar.setValue(mission.ratio); this.bars.push(bar);
       // 진행 수는 게이지 끝에 바로 붙여 시선이 카드 반대편까지 왕복하지 않게 한다.
       const progress = this.scene.add.text(150, y + 18, mission.progressLabel, textStyle({ role: "emphasis", size: 24, color: mission.claimed ? COLOR.inkDim : COLOR.ink })).setOrigin(0, 0);
       // 기존 미수령 숫자 자리에는 이 임무가 완료 순간 확정하는 연구도를 직접 보여 준다.
@@ -87,7 +90,8 @@ export class MissionsPopup {
     research.stages.forEach((stage, index) => {
       const stageX = track.stageXs[index];
       // 세로 눈금이 게이지 홈을 끊어 각 임계값이 별개의 마디로 보이게 한다.
-      this.list?.add(this.scene.add.rectangle(stageX, layout.barY, 3, 36, 0x0b1018, 0.95));
+      // 어두운 홈 위에서도 달성 마디가 또렷하도록 단계 눈금은 테마의 흰색 계열로 통일한다.
+      this.list?.add(this.scene.add.rectangle(stageX, layout.barY, 3, 36, 0xffffff, 0.72));
       const state = stage.claimed ? "claimed" : stage.achieved ? "claimable" : "normal";
       const frame = new RewardFrame(this.scene, stageX, layout.barY + layout.frameOffsetY, { icon: "currency-cheesecake", amount: stage.rewardCheesecake, size: layout.frameSize, state, onClick: stage.achieved && !stage.claimed ? () => void this.claimStage(stage.id) : undefined });
       this.list?.add(frame);

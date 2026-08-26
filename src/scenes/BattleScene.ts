@@ -19,6 +19,7 @@ import {
 } from "../core/skirmish";
 import { getRelic } from "../data/relics";
 import { getStage, getStageEnemies } from "../data/stages";
+import { getExpeditionNodeEnemies } from "../data/expeditionEnemies";
 import type { PuppetCreature, PuppetAsset } from "../puppets/assets";
 import { battleAssetFor, flashHit, placePuppet, playMotion, spawnPuppet, tintPuppet } from "../puppets/assets";
 import { session } from "../state/session";
@@ -50,6 +51,7 @@ import { attackPowerMultiplier } from "../core/expeditionAugments";
 import { EXPEDITION_BOSS_BALANCE } from "../data/expedition";
 import { expeditionManager } from "../managers/ExpeditionManager";
 import type { SettleExpeditionRunResponse, SubmitExpeditionBossScoreResponse } from "../api/contracts";
+import { currencyRecordToRewardItems, openRewardPopup } from "../ui/RewardPopup";
 
 /**
  * 여섯이 돌아다닐 수 있는 범위.
@@ -214,7 +216,11 @@ export class BattleScene extends Phaser.Scene {
   }
 
   /** Phaser scene data를 명시 DTO로 받아 일반 스테이지와 원정 결과 경계를 분리한다. */
-  init(input: BattleSceneInputDto = { mode: "stage" }): void { this.battleInput = input; }
+  init(input?: BattleSceneInputDto): void {
+    // Phaser가 이전 scene.start data를 재사용할 수 있으므로 매 진입마다 명시적으로 stage 기본값을
+    // 새로 넣는다. 원정 뒤 스토리 전투가 남은 원정 DTO로 실행되는 것을 이 경계에서 차단한다.
+    this.battleInput = input?.mode === "expedition" || input?.mode === "expeditionBoss" ? input : { mode: "stage" };
+  }
 
   create(): void {
     setDebugScene("battle");
@@ -229,7 +235,10 @@ export class BattleScene extends Phaser.Scene {
     const breakthroughs = Object.fromEntries(partyIds.map((id) => [id, session.relicProgress[id]?.breakthrough ?? 0]));
     // UI와 같은 성장 계산기의 스냅샷을 복사해 전투가 룬 수치를 다시 계산하지 않게 한다.
     const players = partyIds.map((id) => ({ ...getRelic(id), stats: relicProgression.getFinalStats(id) }));
-    const stageEnemies = getStageEnemies(stage);
+    // 원정은 노드 정보창과 같은 정적 편성/레벨 정의를 읽고, 스토리만 스테이지 적을 읽는다.
+    const stageEnemies = this.battleInput.mode === "expedition"
+      ? getExpeditionNodeEnemies(this.battleInput.nodeType, this.battleInput.floor)
+      : getStageEnemies(stage);
     const expeditionConfig = this.battleInput.mode === "expedition" ? createExpeditionSkirmishConfig(this.battleInput, players, stageEnemies) : null;
     this.state = createSkirmish(expeditionConfig?.playerDefs ?? players, expeditionConfig?.enemyDefs ?? stageEnemies, ARENA, bonds, breakthroughs, expeditionConfig ? {
       // 원정 입력 모델이 HP·증강·크기까지 만들고 씬은 공용 난전을 연결하기만 한다.
@@ -320,7 +329,8 @@ export class BattleScene extends Phaser.Scene {
       const completed = expeditionManager.completeNode(input.nodeId, { relicHp: [0, 0, 0], bossDamage: score.score, score: score.score });
       if (!completed && !expeditionManager.status().run?.visitedNodeIds.includes(input.nodeId)) throw new Error("BOSS_NODE_SAVE_FAILED");
       const settlement = await gameApi.settleExpeditionRun({ runId: input.runId, settlementId: input.settlementId, outcome: "completed" });
-      this.showBossResult(score, settlement);
+      // 보스 완료도 공용 지급 영수증을 먼저 확인한 뒤 점수 결과판으로 이어진다.
+      openRewardPopup(this, new PopupLayer(this, 2200), { title: "원정 완료 전리품", items: currencyRecordToRewardItems(settlement.granted), onConfirm: () => this.showBossResult(score, settlement) });
     } catch {
       // 같은 버튼은 저장된 요청 ID로 전체 체인을 재시도하므로 성공한 서버 제출도 중복 누적되지 않는다.
       new Button(this, BASE_WIDTH / 2, 1050, { width: 460, height: 100, label: "정산 다시 시도", onClick: () => this.scene.restart(input) }).setDepth(201);
@@ -916,14 +926,16 @@ export class BattleScene extends Phaser.Scene {
       // 시작부터 사망해 불참한 렐릭도 원래 ID·HP·생존 상태로 종료 DTO에 다시 합친다.
       const results = expeditionBattleResults(input, skirmishRelicResults(this.state));
       // 서버에는 HP만 제출하고 재화 필드는 계약에 존재하지 않아 임의 보상 주입을 막는다.
-      void gameApi.completeExpeditionNode({ requestId: `${input.runId}:${input.nodeId}`, runId: input.runId, nodeId: input.nodeId, relicHp: results.map(({ currentHp }) => currentHp) }).then(() => {
+      void gameApi.completeExpeditionNode({ requestId: `${input.runId}:${input.nodeId}`, runId: input.runId, nodeId: input.nodeId, relicHp: results.map(({ currentHp }) => currentHp) }).then((nodeResult) => {
         if (!won) {
           // 전멸은 추가 지도 입력을 거치지 않고 같은 멱등 정산 경계로 끝낸다.
-          void gameApi.settleExpeditionRun({ runId: input.runId, settlementId: `${input.runId}:${won ? "complete" : "defeat"}`, outcome: won ? "completed" : "abandoned" }).then(() => this.scene.start("lobby")).catch(() => { saving = false; });
+          void gameApi.settleExpeditionRun({ runId: input.runId, settlementId: `${input.runId}:defeat`, outcome: "abandoned" }).then((settlement) => {
+            openRewardPopup(this, new PopupLayer(this, 2200), { title: "패배 전리품 정산", items: currencyRecordToRewardItems(settlement.granted), onConfirm: () => this.scene.start("lobby") });
+          }).catch(() => { saving = false; });
           return;
         }
-        // 증강은 전투 진입 전에 이미 확정되므로 승리 결과에서는 HP와 노드 완료만 저장한다.
-        this.scene.start("expedition");
+        // 승리 노드에서 서버가 새로 만든 전리품만 영수증에 표시하고, 확인 뒤 지도로 돌아간다.
+        openRewardPopup(this, new PopupLayer(this, 2200), { title: "교전 획득 전리품", items: currencyRecordToRewardItems(nodeResult.rewards), onConfirm: () => this.scene.start("expedition") });
       }).catch(() => { saving = false; });
     } }).setDepth(101);
   }

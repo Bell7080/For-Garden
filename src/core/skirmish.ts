@@ -29,6 +29,8 @@ export interface Arena {
 export interface Fighter extends Combatant {
   id: string;
   side: Side;
+  /** 전투 입력이 정한 Puppet 표시 배율이다. 전투 수치에는 영향을 주지 않는다. */
+  bodyScale: number;
   /** 발이 닿아 있는 바닥 좌표. 씬은 이 점을 기준으로 SD를 세운다. */
   x: number;
   y: number;
@@ -88,6 +90,8 @@ export interface SkirmishRelicResult { relicId: string; currentHp: number; alive
 export interface CreateSkirmishOptions {
   playerInitialStates?: readonly FighterInitialState[];
   augmentEffects?: readonly ExpeditionAugmentEffect[];
+  /** 적 종류별 크기 표현을 씬이 재해석하지 않도록 입력 모델에서 전달한다. */
+  enemyBodyScale?: number;
 }
 
 /** 씬이 모션·피격 숫자·사망 연출을 붙일 수 있도록 이번 프레임에 일어난 일만 모아 돌려준다. */
@@ -165,7 +169,7 @@ export const BLEED = {
 /** 항상 같은 결과를 원하는 호출부(테스트)를 위한 기본 판정값 — 치명타가 나지 않는다. */
 const NO_CRIT = (): number => 0.999999;
 
-function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: number, bondLevel = 0, breakthrough = 0): Fighter {
+function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: number, bondLevel = 0, breakthrough = 0, bodyScale = 1): Fighter {
   const opened = breakthroughBonus(breakthrough);
   return {
     def,
@@ -179,6 +183,7 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     ferocityFever: false,
     id: `${side}-${index}`,
     side,
+    bodyScale,
     x,
     y,
     facing: side === "player" ? 1 : -1,
@@ -238,7 +243,7 @@ export function createSkirmish(
   return {
     fighters: [
       ...players,
-      ...enemyDefs.map((def, i) => makeFighter(def, "enemy", i, enemySpots[i].x, enemySpots[i].y)),
+      ...enemyDefs.map((def, i) => makeFighter(def, "enemy", i, enemySpots[i].x, enemySpots[i].y, 0, 0, options.enemyBodyScale ?? 1)),
     ],
     arena,
     phase: "fight",

@@ -42,7 +42,7 @@ import type { MotionPlayback } from "../puppets/assets";
 import { ultimatePresentationFor } from "../data/ultimatePresentations";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { relicStars } from "../core/relicProgression";
-import { expeditionBattleEffects, type BattleSceneInputDto, type ExpeditionBattleInputDto } from "../core/expeditionBattle";
+import { createExpeditionSkirmishConfig, expeditionBattleResults, type BattleSceneInputDto, type ExpeditionBattleInputDto } from "../core/expeditionBattle";
 import { expeditionManager } from "../managers/ExpeditionManager";
 
 /**
@@ -221,10 +221,13 @@ export class BattleScene extends Phaser.Scene {
     const breakthroughs = Object.fromEntries(partyIds.map((id) => [id, session.relicProgress[id]?.breakthrough ?? 0]));
     // UI와 같은 성장 계산기의 스냅샷을 복사해 전투가 룬 수치를 다시 계산하지 않게 한다.
     const players = partyIds.map((id) => ({ ...getRelic(id), stats: relicProgression.getFinalStats(id) }));
-    this.state = createSkirmish(players, getStageEnemies(stage), ARENA, bonds, breakthroughs, this.battleInput.mode === "expedition" ? {
-      // 전투 코어가 백분율 HP를 적용하므로 씬은 전투원 내부 수치를 직접 고치지 않는다.
-      playerInitialStates: this.battleInput.relics.map(({ relicId, currentHp }) => ({ relicId, currentHp, alive: currentHp > 0 })),
-      augmentEffects: expeditionBattleEffects(this.battleInput.augments),
+    const stageEnemies = getStageEnemies(stage);
+    const expeditionConfig = this.battleInput.mode === "expedition" ? createExpeditionSkirmishConfig(this.battleInput, players, stageEnemies) : null;
+    this.state = createSkirmish(expeditionConfig?.playerDefs ?? players, expeditionConfig?.enemyDefs ?? stageEnemies, ARENA, bonds, breakthroughs, expeditionConfig ? {
+      // 원정 입력 모델이 HP·증강·크기까지 만들고 씬은 공용 난전을 연결하기만 한다.
+      playerInitialStates: expeditionConfig.playerInitialStates,
+      augmentEffects: expeditionConfig.augmentEffects,
+      enemyBodyScale: expeditionConfig.enemyBodyScale,
     } : {});
     this.views.clear();
     this.profiles = [];
@@ -239,7 +242,7 @@ export class BattleScene extends Phaser.Scene {
     this.info = new CharacterInfoManager(this, 1001, "enemy");
 
     // 편성 화면에서 본 6번 전장을 그대로 이어 실제 전투의 공간으로 사용한다.
-    addSceneBackground(this, BACKGROUND.combat, -30);
+    addSceneBackground(this, this.battleInput.mode === "expedition" ? BACKGROUND.expeditionField : BACKGROUND.combat, -30);
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.28).setDepth(-29);
     this.add.text(42, 48, `${stage.id} · ${stage.name} · 적 LV.${stage.enemyLevel}`, textStyle({ role: "body", size: 30, color: COLOR.inkDim }));
     this.add.text(BASE_WIDTH / 2, 160, "AUTO BATTLE", textStyle({ role: "emphasis", size: 28, color: COLOR.accentText })).setOrigin(0.5);
@@ -283,13 +286,15 @@ export class BattleScene extends Phaser.Scene {
   private async spawnFighters(): Promise<void> {
     ensureGlowTexture(this);
     for (const fighter of this.state.fighters) {
+      // 표시 배율은 코어 입력에 들어 있으며 씬은 모든 Puppet 부속 표현에 같은 높이만 적용한다.
+      const unitHeight = UNIT_HEIGHT * fighter.bodyScale;
       const asset = battleAssetFor(fighter.def.id);
       // 번호별 전용 적 SD도 원화 색을 보존하므로 더 이상 임시 허스크 tint를 입히지 않는다.
       const tint = 0xffffff;
       const creature = await spawnPuppet(this, asset, {
         x: fighter.x,
         groundY: fighter.y,
-        height: UNIT_HEIGHT,
+        height: unitHeight,
         flipX: fighter.facing < 0,
         tint,
       });
@@ -300,7 +305,7 @@ export class BattleScene extends Phaser.Scene {
       // Puppet Mesh의 기본 입력 경계는 비동기 생성 시점의 로컬 크기에 묶여 이동·배율 적용 뒤
       // 실제 SD와 어긋날 수 있다. 투명 몸통 영역을 따로 두고 매 프레임 발 위치를 따라가게 한다.
       const infoHit = fighter.side === "enemy"
-        ? this.add.rectangle(fighter.x, fighter.y - UNIT_HEIGHT / 2, 190, UNIT_HEIGHT + 70, 0xffffff, 0)
+        ? this.add.rectangle(fighter.x, fighter.y - unitHeight / 2, 190 * fighter.bodyScale, unitHeight + 70, 0xffffff, 0)
           .setInteractive({ useHandCursor: true })
           .on("pointerup", () => this.info.showEnemy(fighter.def, { live: fighter }))
         : undefined;
@@ -309,7 +314,7 @@ export class BattleScene extends Phaser.Scene {
       const feverTint = skillArtTint(fighter.def.element, fighter.def.role);
       const glowImage = (scale: number, alpha: number): Phaser.GameObjects.Image => this.add
         .image(fighter.x, fighter.y, FEVER_GLOW_TEXTURE)
-        .setDisplaySize(UNIT_HEIGHT * scale, UNIT_HEIGHT * scale * 0.92)
+        .setDisplaySize(unitHeight * scale, unitHeight * scale * 0.92)
         .setTint(darken(feverTint, 0.35))
         .setAlpha(alpha)
         .setBlendMode(Phaser.BlendModes.ADD)
@@ -626,12 +631,13 @@ export class BattleScene extends Phaser.Scene {
     this.views.forEach((view) => {
       if (view.dead) return;
       const { fighter } = view;
+      const unitHeight = UNIT_HEIGHT * fighter.bodyScale;
       // 돌진·피격으로 밀린 거리와 뛰어오른 높이까지 코어가 계산해 둔 값을 그대로 쓴다.
       const pose = renderPose(fighter);
       placePuppet(view.creature, view.asset, {
         x: pose.x,
         groundY: pose.y,
-        height: UNIT_HEIGHT,
+        height: unitHeight,
         flipX: fighter.facing < 0,
       });
       // 폭주 중에는 한 뼘 커진다. 자리를 다시 잡은 뒤에 곱해야 매 프레임 배율이 되돌아가지 않는다.
@@ -642,8 +648,8 @@ export class BattleScene extends Phaser.Scene {
       const fever = fighter.ferocityFever;
       const depth = Math.round(fighter.y / 10) + DEPTH.unitBase;
       const breath = 0.82 + Math.sin(this.time.now / 220) * 0.18;
-      view.feverGlow.setVisible(fever).setPosition(pose.x, pose.y - UNIT_HEIGHT * 0.42).setDepth(depth - 1);
-      view.feverCore.setVisible(fever).setPosition(pose.x, pose.y - UNIT_HEIGHT * 0.46).setDepth(depth + 1);
+      view.feverGlow.setVisible(fever).setPosition(pose.x, pose.y - unitHeight * 0.42).setDepth(depth - 1);
+      view.feverCore.setVisible(fever).setPosition(pose.x, pose.y - unitHeight * 0.46).setDepth(depth + 1);
       if (fever) {
         view.feverGlow.setAlpha(FEVER.outerAlpha * breath);
         view.feverCore.setAlpha(FEVER.coreAlpha * breath);
@@ -656,12 +662,12 @@ export class BattleScene extends Phaser.Scene {
       }
       // SD의 발 위치보다 몸통 중앙을 누르는 편이 자연스러우므로 클릭 영역은 반 높이만큼 올린다.
       view.infoHit
-        ?.setPosition(pose.x, pose.y - UNIT_HEIGHT / 2)
+        ?.setPosition(pose.x, pose.y - unitHeight / 2)
         .setDepth(Math.round(fighter.y / 10) + DEPTH.unitBase + 1);
       // 떠 있는 동안 그림자는 땅에 남되 작고 옅어진다.
       const lift = 1 - Math.min(pose.hop / 60, 0.45);
       view.shadow.setPosition(pose.shadowX, pose.shadowY + 4).setDisplaySize(132 * lift, 24 * lift).setAlpha(0.38 * lift);
-      const barY = pose.y - UNIT_HEIGHT - 26;
+      const barY = pose.y - unitHeight - 26;
       view.hpBar.setPosition(pose.x, barY).setDepth(DEPTH.hpBar).setValue(fighter.hp / fighter.maxHp);
       // 출혈 중인 동안만 체력 바 왼쪽에 붉은 물방울이 붙는다.
       view.bleedBadge.setPosition(pose.x - 62, barY).setDepth(DEPTH.hpBar + 2).setVisible(fighter.bleed !== null);
@@ -826,7 +832,8 @@ export class BattleScene extends Phaser.Scene {
     new Button(this, BASE_WIDTH / 2, 1030, { width: 440, height: 110, label: won ? "결과 저장" : "종료 정산", onClick: () => {
       if (saving) return;
       saving = true;
-      const results = skirmishRelicResults(this.state);
+      // 시작부터 사망해 불참한 렐릭도 원래 ID·HP·생존 상태로 종료 DTO에 다시 합친다.
+      const results = expeditionBattleResults(input, skirmishRelicResults(this.state));
       if (!expeditionManager.completeBattle(input.nodeId, results)) { saving = false; return; }
       const run = expeditionManager.status().run;
       if (!run) { saving = false; return; }

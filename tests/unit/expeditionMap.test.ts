@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { generateExpeditionMap, validateExpeditionMap, type ExpeditionNodeType } from "../../src/core/expeditionMap";
+import { expeditionNodePosition } from "../../src/ui/expeditionLayout";
 
 /** 저장 seed로 앱 재실행을 흉내 내는 테스트 전용 결정적 RNG다. 제품 코드는 RNG를 주입받는다. */
 function seededRandom(seedText: string): () => number {
@@ -34,5 +35,14 @@ describe("expedition map", () => {
     const map = makeMap();
     expect(map.nodes.every((node) => allowed.includes(node.type))).toBe(true);
     expect(map.nodes.filter((node) => node.type === "boss")).toHaveLength(1);
+  });
+
+  it("floor와 column은 1~20층 상승 순서와 좌우 열 순서를 그대로 만든다", () => {
+    // 낮은 층은 월드 아래, 큰 column은 오른쪽이라는 렌더 계약을 모든 생성 층에서 검증한다.
+    const map = makeMap();
+    const floorY = Array.from({ length: 20 }, (_, index) => expeditionNodePosition(index + 1, 0).y);
+    expect(floorY.every((y, index) => index === 0 || y < floorY[index - 1])).toBe(true);
+    expect(new Set(map.nodes.map((node) => expeditionNodePosition(node.floor, node.column).y))).toHaveLength(20);
+    expect(expeditionNodePosition(5, 4).x).toBeGreaterThan(expeditionNodePosition(5, 0).x);
   });
 });

@@ -18,6 +18,15 @@ export class ExpeditionEntryButton extends Phaser.GameObjects.Container {
     this.add(drawLayer(scene, 0, 0, shape, { fill: 0x0d1219, alpha: HOLO.glass, edge: COLOR.sortie, edgeAlpha: 0.95 }));
     const art = scene.add.image(0, 0, EXPEDITION_ENTRY_ART);
     art.setScale(Math.max(options.width / art.width, options.height / art.height)).setAlpha(0.68);
+    // 원화는 버튼 비율로 cover하므로 반드시 칩 실루엣에 마스킹한다. 그렇지 않으면 확대된
+    // 사각 이미지가 크게 깎인 좌상단과 우하단 밖으로 삐져나온다.
+    const artMask = scene.make.graphics({ x, y });
+    artMask.fillStyle(0xffffff).fillPoints(shape.reduce<Phaser.Geom.Point[]>((points, value, index) => {
+      if (index % 2 === 0) points.push(new Phaser.Geom.Point(value, shape[index + 1]));
+      return points;
+    }, []), true);
+    art.setMask(artMask.createGeometryMask());
+    this.once(Phaser.GameObjects.Events.DESTROY, () => artMask.destroy());
     // 사각 원화의 가장자리는 비네트와 주황 액자가 눌러 기존 홀로그램 판 안의 이미지로 읽히게 한다.
     this.add(art);
     this.add(drawInnerVignette(scene, 0, 0, shape, { strength: 0.74 }));

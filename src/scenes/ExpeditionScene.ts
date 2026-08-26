@@ -12,7 +12,6 @@ import { session } from "../state/session";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { Button } from "../ui/Button";
 import { addBackButton } from "../ui/IconButton";
-import { addCurrencyChip } from "../ui/CurrencyChip";
 import { PortraitCard, relicCardTint } from "../ui/PortraitCard";
 import { PopupLayer } from "../ui/PopupLayer";
 import { COLOR, textStyle } from "../ui/theme";
@@ -29,6 +28,9 @@ import { openRewardPopup } from "../ui/RewardPopup";
 import { ExpeditionRankingPopup } from "../ui/ExpeditionRankingPopup";
 import { sdAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
 import { loadOwnedPuppet } from "../ui/statusPuppetLoad";
+import { FIXED_STAGE_ENEMIES } from "../data/stages";
+import { formatCurrency } from "../core/formatCurrency";
+import { drawInnerVignette, drawShapeOutline } from "../ui/holo";
 
 /** 원정 준비 카드의 고정 그리드 규격이다. 다른 편성과 달리 세 칸씩 읽게 한다. */
 const ROSTER = { columns: 3, width: 250, height: 310, gapX: 56, gapY: 50, top: 940 } as const;
@@ -103,24 +105,32 @@ export class ExpeditionScene extends Phaser.Scene {
     this.buildAugmentChips(augments);
     this.buildRelicHud(run.relics);
     if (run.pendingAugmentReward) this.openAugmentReward();
-    // 포기는 돌아가기보다 작게 두어 파괴 조작의 위계를 낮추고, 공용 팝업에서 결과를 재확인한다.
-    new Button(this, BASE_WIDTH - 170, 1750, { width: 230, height: 72, label: "포기하기", fontSize: 24, onClick: () => this.confirmAbandon() });
+    // 포기는 전리품 판의 우상단 정보 흐름 바로 아래에 붙이고, 작고 붉은 파괴 조작으로 분리한다.
+    new Button(this, BASE_WIDTH - 155, 286, { width: 190, height: 56, label: "포기하기", fontSize: 20, fill: 0x431d20, accentColor: COLOR.danger, accentTextColor: COLOR.dangerText, onClick: () => this.confirmAbandon() });
   }
 
-  /** 런에서만 누적되는 네 재화를 CurrencyChip 한 줄로 고정한다. */
+  /** 런에서만 누적되는 네 재화를 보상 팝업과 같은 액자·우하단 수량 문법으로 묶는다. */
   private buildRewardBar(rewards: Readonly<Record<string, number>>, last: { rewards: Record<string, number>; cappedCurrencies: string[] } | null): void {
     const items = [
       ["currency-cheesecake", "cheesecake"], ["currency-gold", "gold"],
       ["currency-fossil", "fossil"], ["currency-gems", "gems"],
     ] as const;
+    // 지도 위에 떠 있는 하나의 전리품 레이어로 읽히도록 제목과 얇은 상단선을 먼저 놓는다.
+    drawLayer(this, BASE_WIDTH / 2, 194, chipPoints(972, 142, { bevel: { topLeft: 30, bottomRight: 22 } }), { fill: 0x0d131b, alpha: 0.82, edge: COLOR.accent, edgeAlpha: 0.55 });
+    this.add.text(86, 137, "획득 전리품", textStyle({ role: "display", size: 25, color: COLOR.accentText })).setOrigin(0, 0.5);
     items.forEach(([icon, key], index) => {
-      const value = addCurrencyChip(this, 178 + index * 242, 170, icon, { width: 220, height: 70 });
+      const x = 180 + index * 225; const y = 207; const size = 96;
+      const frame = chipPoints(size, size, { bevel: { topLeft: 20, bottomRight: 18 } });
+      drawLayer(this, x, y, frame, { fill: 0x101722, alpha: 0.98 });
+      this.add.image(x, y, icon).setDisplaySize(72, 72);
+      drawInnerVignette(this, x, y, frame, { strength: 0.58 });
+      drawShapeOutline(this, x, y, frame, { color: COLOR.accent, alpha: 0.74, width: 2 });
       const total = Math.floor(rewards[key] ?? 0);
       const capped = last?.cappedCurrencies.includes(key) ?? total >= EXPEDITION_NODE_REWARD_BALANCE[key].runCap;
-      // 상한은 따뜻한 경고색과 MAX로, 방금 증가분은 푸른 +N 보조문구로 서로 다른 시각 채널을 쓴다.
-      value.setText(`${total.toLocaleString()}${capped ? " MAX" : ""}`).setColor(capped ? "#ffd27a" : "#ffffff");
+      // 수량은 보상 팝업처럼 액자 우하단에 겹치고 검은 스트로크로 아이콘에서 떼어 낸다.
+      this.add.text(x + 42, y + 40, `${formatCurrency(total)}${capped ? " MAX" : ""}`, textStyle({ role: "display", size: 20, color: capped ? "#ffd27a" : "#ffffff" })).setOrigin(1, 1).setStroke("#000000", 5);
       const gained = Math.floor(last?.rewards[key] ?? 0);
-      if (gained > 0) this.add.text(178 + index * 242, 208, `+ ${gained.toLocaleString()}`, textStyle({ role: "emphasis", size: 18, color: COLOR.accentText })).setOrigin(0.5);
+      if (gained > 0) this.add.text(x, 263, `+ ${formatCurrency(gained)}`, textStyle({ role: "emphasis", size: 16, color: COLOR.accentText })).setOrigin(0.5);
     });
   }
 
@@ -141,19 +151,9 @@ export class ExpeditionScene extends Phaser.Scene {
     if (this.nodeTransitionPending) return;
     const run = expeditionManager.status().run;
     if (!run || run.relics.every(({ alive }) => !alive) || run.pendingAugmentReward) return;
+    // 전투 노드는 스토리 지도처럼 적 정보를 먼저 열며, 팝업의 출전 버튼 전에는 상태를 바꾸지 않는다.
+    if (["normal", "elite", "horde", "boss"].includes(node.type)) { this.openNodeIntel(node); return; }
     this.nodeTransitionPending = true;
-    if (node.type === "boss") {
-      // 20층은 증강 선택/일반 난전을 거치지 않고 저장된 HP와 모든 증강을 전용 모드로 넘긴다.
-      this.enterBossBattle(node);
-      return;
-    }
-    if (["normal", "elite", "horde"].includes(node.type)) {
-      // 증강은 승리 영수증이 아니라 전투 진입 준비다. 후보가 없는 보스만 곧바로 전장으로 간다.
-      const pending = expeditionManager.beginAugmentReward(node.id, node.type);
-      if (pending) this.scene.restart();
-      else this.enterBattle(node);
-      return;
-    }
     if (node.type === "rest") {
       this.popups.confirm({ title: "휴식", message: "원정대를 회복하고 이 휴식 지점을 완료합니다.", confirmLabel: "휴식하기" }, () => {
         this.nodeTransitionPending = true;
@@ -165,6 +165,30 @@ export class ExpeditionScene extends Phaser.Scene {
       return;
     }
     void this.completeTreasureNode(node);
+  }
+
+  /** 적 세 기와 층 정보를 먼저 제시하고 명시적인 출전 입력에서만 기존 진입 흐름을 이어 간다. */
+  private openNodeIntel(node: ExpeditionMapNode): void {
+    const names: Record<string, string> = { normal: "일반 조우", elite: "정예 조우", horde: "군집 조우", boss: "원정 보스" };
+    this.popups.open({ width: 900, height: 780, title: `${node.floor}층 · ${names[node.type] ?? "조우"}`, dim: true }, (body, close) => {
+      body.add(this.add.text(0, -282, "적 캐릭터 정보", textStyle({ role: "emphasis", size: 24, color: COLOR.dangerText })).setOrigin(0.5));
+      FIXED_STAGE_ENEMIES.forEach((enemyId, index) => {
+        const enemy = getRelic(enemyId); const x = -270 + index * 270;
+        const card = new PortraitCard(this, x, -80, { width: 210, height: 250, portraitAssetId: enemy.portraitAssetId, tint: relicCardTint(enemy), label: enemy.name, sub: node.type === "boss" ? "보스 호위" : `${node.floor}층`, rarity: enemy.rarity });
+        card.hit.disableInteractive(); body.add(card); card.syncMask();
+      });
+      // 스토리 출전 버튼의 주황색·큰 사선 판을 따라 세 캐릭터 그리드 바로 아래에 둔다.
+      body.add(new Button(this, 0, 292, { width: 560, height: 112, label: "출격하기", icon: "sortie", variant: "primary", accentColor: COLOR.sortie, accentTextColor: COLOR.sortieText, decorDots: true, onClick: () => { close(); this.confirmNodeSortie(node); } }));
+    });
+  }
+
+  /** 정보 확인 뒤 출전을 누른 경우에만 증강 선택 또는 실제 전장으로 전이한다. */
+  private confirmNodeSortie(node: ExpeditionMapNode): void {
+    if (this.nodeTransitionPending) return;
+    this.nodeTransitionPending = true;
+    if (node.type === "boss") { this.enterBossBattle(node); return; }
+    const pending = expeditionManager.beginAugmentReward(node.id, node.type);
+    if (pending) this.scene.restart(); else this.enterBattle(node);
   }
 
   /** 선택이 모두 저장된 바로 그 노드로 진입해, 후보 확정 뒤 다른 지도 노드를 누를 틈을 만들지 않는다. */

@@ -22,7 +22,9 @@ describe("MissionsPopup 영역 배치", () => {
     expect(insideSafeWidth(track.frameBounds[0])).toBe(true);
     expect(insideSafeWidth(track.frameBounds.at(-1)!)).toBe(true);
     expect(insideSafeWidth(track.barBounds)).toBe(true);
-    expect(track.labelX).toBe(track.barX);
+    // HoloBar는 중심 좌표를 받지만 라벨은 실제 왼쪽 경계에서 시작해야 한다.
+    expect(track.barX).toBe((track.barBounds.left + track.barBounds.right) / 2);
+    expect(track.labelX).toBe(track.barBounds.left);
   });
 
   it("보상 액자의 외곽선 반지름까지 포함한 bounds가 일일·주간 탭과 교차하지 않는다", () => {

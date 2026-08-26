@@ -25,6 +25,18 @@ export interface RewardPopupOptions {
   onConfirm?: () => void;
 }
 
+/** 서버 재화 레코드를 공용 보상 액자 키로 바꾼다. 알 수 없는 운영 재화는 안전하게 생략한다. */
+export function currencyRecordToRewardItems(rewards: Readonly<Record<string, number>>): RewardPopupItem[] {
+  const icons: Partial<Record<string, CurrencyIconKey>> = {
+    cheesecake: "currency-cheesecake", gold: "currency-gold", fossil: "currency-fossil",
+    gems: "currency-gems", amber: "currency-amber", stamina: "currency-stamina",
+  };
+  return Object.entries(rewards).flatMap(([currency, amount]) => {
+    const icon = icons[currency];
+    return icon && amount > 0 ? [{ icon, amount: Math.floor(amount) }] : [];
+  });
+}
+
 /** 모바일 안전 여백 안에서 네 칸까지 한 줄에 담고, 그 이상은 같은 줄을 가로로 훑는 낮은 규격이다. */
 const REWARD_POPUP = { width: 920, height: 360, viewport: 820, frame: 158, gap: 198, frameY: -8 } as const;
 

@@ -195,12 +195,12 @@ export class LobbyScene extends Phaser.Scene {
     const status = expeditionManager.status();
     // 일반 작업판보다 암전을 옅게 해 로비의 애착 렐릭이 뒤에서 계속 보이도록 한다.
     this.popupLayer.open({ width: 870, height: 850, title: "출격", titleSize: 34, dim: true, dimAlpha: 0.24, closeOnBackdrop: false, hideCloseButton: true }, (body, close) => {
-      const storyButton = new Button(this, 0, -190, {
+      const storyButton = new ExpeditionEntryButton(this, 0, -190, {
         width: 650,
         height: 150,
         label: "스토리",
-        sub: "메인 작전",
-        fontSize: 42,
+        status: "메인 작전",
+        artKey: "content-story-entry",
         accentColor: EXCHANGE_BLUE,
         accentTextColor: "#9fd0f0",
         onClick: () => { close(); this.scene.start("stageMap"); },

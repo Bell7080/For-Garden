@@ -24,11 +24,11 @@ import { ExpeditionAugmentPopup, expeditionAugmentEffectLabel, expeditionAugment
 import { EXPEDITION_NODE_REWARD_BALANCE } from "../data/expedition";
 import { completedAdToken } from "../data/adRewards";
 import { presentRewardedAd } from "../platform/rewardedAds";
-import { openRewardPopup } from "../ui/RewardPopup";
+import { currencyRecordToRewardItems, openRewardPopup } from "../ui/RewardPopup";
 import { ExpeditionRankingPopup } from "../ui/ExpeditionRankingPopup";
 import { sdAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
 import { loadOwnedPuppet } from "../ui/statusPuppetLoad";
-import { FIXED_STAGE_ENEMIES } from "../data/stages";
+import { expeditionEnemyLevel, getExpeditionNodeEnemies } from "../data/expeditionEnemies";
 import { formatCurrency } from "../core/formatCurrency";
 import { drawInnerVignette, drawShapeOutline } from "../ui/holo";
 
@@ -73,8 +73,8 @@ export class ExpeditionScene extends Phaser.Scene {
     this.clearFormationPreview();
 
     const status = expeditionManager.status();
-    // 활성 런은 전용 지도 원화를 쓰고, 편성 단계만 기존 야외 조사 배경을 유지한다.
-    addSceneBackground(this, status.active ? BACKGROUND.expeditionMap : BACKGROUND.archaeology);
+    // 활성 런은 전용 지도, 편성 단계는 요청된 Content2 전투 필드 원화로 흐름을 잇는다.
+    addSceneBackground(this, status.active ? BACKGROUND.expeditionMap : BACKGROUND.expeditionField);
     drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { depth: -26, strength: 0.72 });
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.42).setDepth(-25);
     if (status.active) {
@@ -172,9 +172,10 @@ export class ExpeditionScene extends Phaser.Scene {
     const names: Record<string, string> = { normal: "일반 조우", elite: "정예 조우", horde: "군집 조우", boss: "원정 보스" };
     this.popups.open({ width: 900, height: 780, title: `${node.floor}층 · ${names[node.type] ?? "조우"}`, dim: true }, (body, close) => {
       body.add(this.add.text(0, -282, "적 캐릭터 정보", textStyle({ role: "emphasis", size: 24, color: COLOR.dangerText })).setOrigin(0.5));
-      FIXED_STAGE_ENEMIES.forEach((enemyId, index) => {
-        const enemy = getRelic(enemyId); const x = -270 + index * 270;
-        const card = new PortraitCard(this, x, -80, { width: 210, height: 250, portraitAssetId: enemy.portraitAssetId, tint: relicCardTint(enemy), label: enemy.name, sub: node.type === "boss" ? "보스 호위" : `${node.floor}층`, rarity: enemy.rarity });
+      const enemyLevel = expeditionEnemyLevel(node.type, node.floor);
+      getExpeditionNodeEnemies(node.type, node.floor).forEach((enemy, index) => {
+        const x = -270 + index * 270;
+        const card = new PortraitCard(this, x, -80, { width: 210, height: 250, portraitAssetId: enemy.portraitAssetId, tint: relicCardTint(enemy), label: enemy.name, sub: `LV.${enemyLevel}`, rarity: enemy.rarity, affinity: { element: enemy.element, role: enemy.role } });
         card.hit.disableInteractive(); body.add(card); card.syncMask();
       });
       // 스토리 출전 버튼의 주황색·큰 사선 판을 따라 세 캐릭터 그리드 바로 아래에 둔다.
@@ -307,8 +308,9 @@ export class ExpeditionScene extends Phaser.Scene {
     const run = expeditionManager.status().run; if (!run) return;
     const reward = Object.values(run.pendingRewards).reduce((sum, amount) => sum + Math.floor(amount), 0);
     this.popups.confirm({ title: "원정 포기", message: `임시 보상 ${reward.toLocaleString()}개가 지갑으로 이전됩니다.\n이번 런의 최고 점수는 주간 기록에 반영되지 않습니다.`, confirmLabel: "포기 확정", destructive: true }, async () => {
-      await gameApi.settleExpeditionRun({ runId: run.runId, settlementId: `${run.runId}:abandon`, outcome: "abandoned" });
-      this.scene.start("lobby");
+      const settlement = await gameApi.settleExpeditionRun({ runId: run.runId, settlementId: `${run.runId}:abandon`, outcome: "abandoned" });
+      // 지갑 상한 적용 뒤 실제 들어온 양만 영수증에 표시하고 확인 후 로비로 돌아간다.
+      openRewardPopup(this, this.popups, { title: "포기 전리품 정산", items: currencyRecordToRewardItems(settlement.granted), onConfirm: () => this.scene.start("lobby") });
     });
   }
 

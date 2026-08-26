@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { gameApi } from "../api/FakeServer";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
-import type { ExpeditionMapNode, ExpeditionNodeType } from "../core/expeditionMap";
+import type { ExpeditionMapNode } from "../core/expeditionMap";
 import { getRelic } from "../data/relics";
 import { getExpeditionAugment } from "../data/expeditionAugments";
 import { setDebugScene } from "../debug";
@@ -12,12 +12,12 @@ import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { Button } from "../ui/Button";
 import { addBackButton } from "../ui/IconButton";
 import { addCurrencyChip } from "../ui/CurrencyChip";
-import { drawGlyph, type GlyphName } from "../ui/glyphs";
 import { PortraitCard, relicCardTint } from "../ui/PortraitCard";
 import { PopupLayer } from "../ui/PopupLayer";
 import { COLOR, textStyle } from "../ui/theme";
-import { chipPoints, drawGlassFade, drawHairline, drawInnerVignette, drawLayer, drawShapeOutline, drawVignette, HoloBar, HOLO } from "../ui/holo";
+import { chipPoints, drawGlassFade, drawHairline, drawLayer, drawVignette, HoloBar, HOLO } from "../ui/holo";
 import { EXPEDITION_LAYOUT } from "../ui/expeditionLayout";
+import { ExpeditionMapView } from "../ui/ExpeditionMapView";
 import type { ExpeditionAugmentSelection } from "../core/expeditionRewards";
 
 /** 원정 준비 카드의 고정 그리드 규격이다. 다른 편성과 달리 세 칸씩 읽게 한다. */
@@ -94,37 +94,22 @@ export class ExpeditionScene extends Phaser.Scene {
     });
   }
 
-  /** 아래 1층에서 위 20층으로 오르는 경로와 현재 도달 가능한 입력면만 만든다. */
+  /** 전용 프리팹에 지도 월드와 입력 수명을 넘기고 씬은 선택 결과만 연결한다. */
   private buildMap(nodes: readonly ExpeditionMapNode[], currentNodeId: string | null, visitedIds: readonly string[]): void {
-    const byId = new Map(nodes.map((node) => [node.id, node]));
-    const reachable = new Set(currentNodeId === null ? nodes.filter(({ floor }) => floor === 1).map(({ id }) => id) : byId.get(currentNodeId)?.successorIds ?? []);
-    const visited = new Set(visitedIds);
-    const top = EXPEDITION_LAYOUT.map.top + 34; const bottom = EXPEDITION_LAYOUT.map.bottom - 30;
-    const position = (node: ExpeditionMapNode) => ({ x: 170 + node.column * 185, y: bottom - ((node.floor - 1) / 19) * (bottom - top) });
-    const paths = this.add.graphics();
-    paths.lineStyle(3, COLOR.accent, 0.22);
-    nodes.forEach((node) => node.successorIds.forEach((id) => { const next = byId.get(id); if (next) { const a = position(node); const b = position(next); paths.lineBetween(a.x, a.y, b.x, b.y); } }));
-    nodes.forEach((node) => {
-      const { x, y } = position(node); const enabled = reachable.has(node.id); const done = visited.has(node.id);
-      // 액자 예외 규칙을 노드 아이콘에만 적용하고, 아이콘 자체 조립은 drawGlyph에 위임한다.
-      const frame = chipPoints(node.type === "boss" ? 64 : 50, node.type === "boss" ? 54 : 44, { bevel: { topLeft: 12, bottomRight: 10 } });
-      drawLayer(this, x, y, frame, { fill: done ? COLOR.panel : 0x131820, alpha: enabled ? 0.96 : 0.5 });
-      drawInnerVignette(this, x, y, frame, { strength: 0.5 });
-      drawShapeOutline(this, x, y, frame, { color: enabled ? COLOR.sortie : COLOR.accent, alpha: enabled ? 0.95 : 0.24, width: enabled ? 3 : 2 });
-      drawGlyph(this, this.nodeGlyph(node.type), x, y, node.type === "boss" ? 36 : 27, enabled ? COLOR.sortie : COLOR.inkDimHex, enabled ? 1 : 0.52, 3);
-      const hit = this.add.rectangle(x, y, 78, 58, 0xffffff, 0);
-      if (enabled) {
-        hit.setInteractive({ useHandCursor: true });
-        // 전투 연결 전에도 선택 피드백을 주되, 진행 상태는 매니저의 완료 경계 밖에서 변경하지 않는다.
-        hit.on("pointerdown", () => hit.setScale(1.12));
-        hit.on("pointerout", () => hit.setScale(1));
-        hit.on("pointerup", () => {
-          hit.setScale(1);
-          // 교전 노드는 전용 필드 화면으로 넘기고 비전투 노드는 기존 짧은 선택 안내를 유지한다.
-          if (["normal", "elite", "horde", "boss"].includes(node.type)) this.openBattleField(node);
-          else { this.children.getByName("expedition-node-hint")?.destroy(); this.add.text(BASE_WIDTH / 2, 1210, `${node.floor}층 · ${this.nodeLabel(node.type)}`, textStyle({ role: "emphasis", size: 22, color: COLOR.sortieText })).setName("expedition-node-hint").setOrigin(0.5); }
-        });
-      }
+    new ExpeditionMapView(this, {
+      top: EXPEDITION_LAYOUT.map.top,
+      bottom: EXPEDITION_LAYOUT.map.bottom,
+      nodes,
+      currentNodeId,
+      visitedIds,
+      onSelect: (node) => {
+        // 교전 노드는 전용 필드로, 비전투 노드는 현재 선택 안내로 연결한다.
+        if (["normal", "elite", "horde", "boss"].includes(node.type)) this.openBattleField(node);
+        else {
+          this.children.getByName("expedition-node-hint")?.destroy();
+          this.add.text(BASE_WIDTH / 2, 1210, `${node.floor}층 · ${this.nodeLabel(node.type)}`, textStyle({ role: "emphasis", size: 22, color: COLOR.sortieText })).setName("expedition-node-hint").setOrigin(0.5);
+        }
+      },
     });
   }
 
@@ -146,8 +131,7 @@ export class ExpeditionScene extends Phaser.Scene {
   }
 
   /** 노드 종류와 공용 글리프 이름의 대응은 씬의 위치 계산과 분리한다. */
-  private nodeGlyph(type: ExpeditionNodeType): GlyphName { return `expedition-${type}` as GlyphName; }
-  private nodeLabel(type: ExpeditionNodeType): string { return ({ normal: "일반 전투", elite: "정예 전투", horde: "군집 전투", rest: "휴식", treasure: "보물", boss: "최종 보스" } as const)[type]; }
+  private nodeLabel(type: ExpeditionMapNode["type"]): string { return ({ normal: "일반 전투", elite: "정예 전투", horde: "군집 전투", rest: "휴식", treasure: "보물", boss: "최종 보스" } as const)[type]; }
 
   /** 하단 증강은 공용 비대칭 chipPoints로 표시하고, 다섯 개부터 +N으로 줄여 화면 폭을 지킨다. */
   private buildAugmentChips(augments: readonly ExpeditionAugmentSelection[]): void {

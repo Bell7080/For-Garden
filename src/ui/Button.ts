@@ -4,6 +4,9 @@ import type { CurrencyIconKey } from "./currencyIcons";
 import { chipPoints, drawLayer, HOLO, perspectiveRect, slantedRect } from "./holo";
 import { COLOR, textStyle } from "./theme";
 
+/** 버튼 탭과 스크롤 드래그를 구분하는 공용 게임 좌표 거리다. */
+export const BUTTON_DRAG_CANCEL_DISTANCE = 24;
+
 /**
  * 판 양 끝에서 안쪽으로 사라지는 점 패턴.
  *
@@ -198,7 +201,6 @@ export class Button extends Phaser.GameObjects.Container {
 
     this.bg.setInteractive({ useHandCursor: true });
     // 손떨림은 허용하되 스크롤/드래그 의도는 클릭으로 오인하지 않는 게임 좌표 거리다.
-    const dragCancelDistance = 24;
     const finishPress = (pointer: Phaser.Input.Pointer): void => {
       if (pointer.id !== this.pressedPointerId) return;
       const shouldClick = this.enabledState && !this.pressDragged;
@@ -214,7 +216,7 @@ export class Button extends Phaser.GameObjects.Container {
     const trackPressMove = (pointer: Phaser.Input.Pointer): void => {
       if (pointer.id !== this.pressedPointerId) return;
       // 경계를 살짝 벗어나도 작은 이동이면 유지하고, 누적 거리가 임계값을 넘으면 실제 드래그로 취소한다.
-      if (Phaser.Math.Distance.Between(this.pressX, this.pressY, pointer.worldX, pointer.worldY) > dragCancelDistance) {
+      if (Phaser.Math.Distance.Between(this.pressX, this.pressY, pointer.worldX, pointer.worldY) > BUTTON_DRAG_CANCEL_DISTANCE) {
         this.pressDragged = true;
         this.setScale(1);
       }

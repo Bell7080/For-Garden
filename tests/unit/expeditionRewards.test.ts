@@ -45,12 +45,17 @@ describe("expedition augment rewards", () => {
     expect(generateExpeditionAugmentOffers({ rarity: "common", relics: relics.map((relic) => ({ ...relic, currentHp: 0, alive: false })), selections: [], random: () => 0 }).every(({ eligibleTargetRelicIds }) => eligibleTargetRelicIds.length === 0)).toBe(true);
   });
 
-  it("enforces non-stackable and per-target maximum stacks", () => {
-    const prior = [{ augmentId: "predator-instinct", targetRelicId: "anky" }, { augmentId: "predator-instinct", targetRelicId: "anky" }];
+  it("keeps party and personal augments available after repeated identical selections", () => {
+    const prior = Array.from({ length: 20 }, () => ({ augmentId: "predator-instinct", targetRelicId: "anky" }));
     const offers = generateExpeditionAugmentOffers({ rarity: "common", relics: party(), selections: prior, random: () => 0, candidateCount: 9 });
-    expect(offers.find(({ augmentId }) => augmentId === "predator-instinct")?.eligibleTargetRelicIds).toEqual(["rex", "spino"]);
-    const repairUsed = generateExpeditionAugmentOffers({ rarity: "common", relics: party(), selections: [{ augmentId: "field-repair" }], random: () => 0, candidateCount: 9 });
-    expect(repairUsed.some(({ augmentId }) => augmentId === "field-repair")).toBe(false);
+    const personal = offers.find(({ augmentId }) => augmentId === "predator-instinct")!;
+    expect(personal.eligibleTargetRelicIds).toEqual(["anky", "rex", "spino"]);
+    expect(validateExpeditionAugmentChoice(personal, { augmentId: "predator-instinct", targetRelicId: "anky" }, prior)).toBe(true);
+    const repeatedParty = Array.from({ length: 20 }, () => ({ augmentId: "field-repair" }));
+    const partyOffers = generateExpeditionAugmentOffers({ rarity: "common", relics: party(), selections: repeatedParty, random: () => 0, candidateCount: 9 });
+    const partyOffer = partyOffers.find(({ augmentId }) => augmentId === "field-repair")!;
+    expect(partyOffer).toBeDefined();
+    expect(validateExpeditionAugmentChoice(partyOffer, { augmentId: "field-repair" }, repeatedParty)).toBe(true);
   });
 
   it("stores generated seed and offers so reconnecting cannot reroll candidates", () => {

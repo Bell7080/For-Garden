@@ -42,6 +42,8 @@ export interface PortraitCardOptions {
   badge?: string;
   /** 카드 왼쪽에 세로로 서는 속성·직군. 속성이 크고 직군이 조금 작다. */
   affinity?: { element: Element; role: Role };
+  /** 선택 시 카드 안을 누르는 반투명 검정. 편성처럼 명시적인 눌림 피드백이 필요할 때만 켠다. */
+  selectedOverlayAlpha?: number;
 }
 
 /** 칩 바탕. 검은 유리에 가깝게 두고 원화가 빛을 담당한다. */
@@ -103,6 +105,8 @@ export class PortraitCard extends Phaser.GameObjects.Container {
   private readonly portraitMask: Phaser.GameObjects.Graphics;
   /** 윗변이 닫힌 칩 모양. 배경 원화처럼 머리 자리로 새면 안 되는 것에 씌운다. */
   private readonly bodyMask: Phaser.GameObjects.Graphics;
+  /** 발광·확대와 함께 선택이 '눌린 면'으로 읽히게 하는 선택형 어두운 면이다. */
+  private readonly selectedOverlay: Phaser.GameObjects.Graphics;
   private readonly maskOffsetY: number;
   private readonly shadeHeight: number;
   private selected = false;
@@ -247,6 +251,12 @@ export class PortraitCard extends Phaser.GameObjects.Container {
       addBookmarkMark(scene, this, width / 2 - CHIP_INSET - 31, -height / 2 + 84, Math.min(30, width / 9));
     }
 
+    // 입력면 바로 아래에 두어 초상·이름·표식을 함께 은은하게 누르되 카드 바깥으로 번지지 않는다.
+    this.selectedOverlay = scene.add.graphics().setVisible(false);
+    this.selectedOverlay.fillStyle(0x000000, Phaser.Math.Clamp(options.selectedOverlayAlpha ?? 0, 0, 1));
+    this.selectedOverlay.fillPoints(toGeomPoints(this.chipShape), true);
+    this.add(this.selectedOverlay);
+
     this.hit = scene.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
     this.add(this.hit);
 
@@ -386,6 +396,7 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     this.selected = selected;
     if (selected) this.paintGlow(accent);
     this.glow.setVisible(selected);
+    this.selectedOverlay.setVisible(selected && (this.options.selectedOverlayAlpha ?? 0) > 0);
     this.setScale(selected ? 1.06 : 1);
     this.syncMask();
     return this;

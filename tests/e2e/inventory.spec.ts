@@ -22,4 +22,14 @@ test("가방은 로비를 유지하고 카테고리 탭과 많은 항목 스크�
   expect(await page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   await page.mouse.wheel(0, 1200);
   await page.screenshot({ path: `test-results/${test.info().project.name}-inventory-popup.png`, fullPage: true });
+
+  // 외부 뒤로가기로 닫은 뒤 버튼과 팝업 인스턴스가 함께 정리되어 같은 가방을 다시 열 수 있어야 한다.
+  await tap(page, WIDTH - 106, HEIGHT - 120);
+  await tap(page, WIDTH - 106, 1096);
+  await page.waitForTimeout(150);
+  await page.screenshot({ path: `test-results/${test.info().project.name}-inventory-popup-reopened.png`, fullPage: true });
+  // 다시 열린 가방의 뒤로가기도 한 번만 동작하고, 닫힌 뒤 하단 로비 탭 입력을 가로채지 않는다.
+  await tap(page, WIDTH - 106, HEIGHT - 120);
+  await tap(page, WIDTH * 0.3, HEIGHT - 90);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("relics");
 });

@@ -19,12 +19,11 @@ import { compareBookmarkedOwnedRelics } from "../core/relicCatalog";
 import { drawVignette } from "../ui/holo";
 
 /** 제목/정렬 조작과 하단 탭 사이만 목록에 내주는 고정 화면 경계다. */
-const VIEWPORT_TOP = 340;
+const VIEWPORT_TOP = 390;
 const VIEWPORT_BOTTOM = NAV_TOP;
 /** 첫 줄의 돌출된 머리가 상단 마스크에 닿지 않도록 확보하는 그리드 시작 여백이다. */
 const GRID_FIRST_ROW_Y = 640;
-/** 카드 자체가 배경으로 스며들도록 위·아래에서 알파를 단계적으로 낮추는 높이다. */
-const GRID_FADE_HEIGHT = 150;
+/** 드래그와 카드 탭을 구분하는 최소 이동 거리다. */
 const DRAG_SLOP = 18;
 
 /**
@@ -89,18 +88,10 @@ export class RelicsScene extends Phaser.Scene {
     this.content = this.add.container(0, 0);
     // 화면 좌표에 고정된 마스크는 콘텐츠가 움직여도 제목·탭 영역을 절대 침범하지 않는다.
     this.viewportMask = this.make.graphics();
-    // BitmapMask의 알파를 여러 띠로 보간해 검은 비네트를 덧씌우지 않고 카드 자체를 은은하게 숨긴다.
-    const fadeBands = 12;
-    const solidTop = VIEWPORT_TOP + GRID_FADE_HEIGHT;
-    const solidBottom = VIEWPORT_BOTTOM - GRID_FADE_HEIGHT;
-    for (let band = 0; band < fadeBands; band += 1) {
-      const alpha = (band + 1) / fadeBands;
-      const bandHeight = GRID_FADE_HEIGHT / fadeBands;
-      this.viewportMask.fillStyle(0xffffff, alpha).fillRect(0, VIEWPORT_TOP + band * bandHeight, BASE_WIDTH, bandHeight + 1);
-      this.viewportMask.fillStyle(0xffffff, alpha).fillRect(0, VIEWPORT_BOTTOM - (band + 1) * bandHeight, BASE_WIDTH, bandHeight + 1);
-    }
-    this.viewportMask.fillStyle(0xffffff, 1).fillRect(0, solidTop, BASE_WIDTH, solidBottom - solidTop);
-    this.content.setMask(this.viewportMask.createBitmapMask());
+    // 단일 기하 마스크가 정렬 조작 아래와 BottomNav 위에서 그리드를 확실히 끊는다.
+    // BitmapMask의 반투명 띠는 일부 렌더러에서 씬 배경까지 사라진 듯 보이게 하므로 사용하지 않는다.
+    this.viewportMask.fillStyle(0xffffff, 1).fillRect(0, VIEWPORT_TOP, BASE_WIDTH, VIEWPORT_BOTTOM - VIEWPORT_TOP);
+    this.content.setMask(this.viewportMask.createGeometryMask());
 
     const cx = BASE_WIDTH / 2;
     // background_002를 렐릭 탭의 야외 유적 전경으로 사용한다.
@@ -146,7 +137,7 @@ export class RelicsScene extends Phaser.Scene {
     this.refresh();
     this.installScrollInput();
 
-    // 그리드의 위·아래 전환은 알파 마스크가 맡으므로 하단에 중복되던 검은 비네트는 두지 않는다.
+    // 그리드는 BottomNav 경계에서 잘리고 배경 원화는 하단 탭 뒤까지 이어진다.
     new BottomNav(this, "relics");
   }
 

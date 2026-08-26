@@ -22,6 +22,10 @@ export const BACKGROUND = {
   excavation: "background-excavation",
   /** 캐릭터 카드 안, 인물 뒤에 깔리는 원화. 등급색 필터를 통과해 은은하게만 남는다. */
   cardBackdrop: "background-card-backdrop",
+  /** 진행 중인 원정에서 층과 분기를 고르는 전용 상승 지도다(Content2_001map). */
+  expeditionMap: "background-expedition-map",
+  /** 원정 노드에 진입한 뒤 교전 UI 아래에 까는 전용 전투 필드다(Content2_001field). */
+  expeditionField: "background-expedition-field",
 } as const;
 
 /** BootScene이 모든 화면 배경을 한 번에 적재할 때 사용하는 경로 목록이다. */
@@ -39,6 +43,10 @@ export const BACKGROUND_ASSETS = [
   [BACKGROUND.premiumShop, "sprites/background/background_008.webp"],
   [BACKGROUND.excavation, "sprites/background/background_009.webp"],
   [BACKGROUND.cardBackdrop, "sprites/background/background_010.webp"],
+  // 원정 지도 WebP는 화면 배경 표가 키와 경로를 단독 소유하며 원본 복제본을 만들지 않는다.
+  [BACKGROUND.expeditionMap, "Content2_001map.webp"],
+  // 원정 전투 필드 WebP도 이미 배포 형식이므로 public 루트의 원본을 그대로 적재한다.
+  [BACKGROUND.expeditionField, "Content2_001field.webp"],
 ] as const;
 
 /**

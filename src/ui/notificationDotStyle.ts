@@ -18,3 +18,28 @@ export function rotatedNotificationAnchor(options: NotificationAnchorOptions): {
   const cosine = Math.cos(rotation); const sine = Math.sin(rotation);
   return { x: options.x * cosine - options.y * sine, y: options.x * sine + options.y * cosine };
 }
+
+/**
+ * 원근 사다리꼴 버튼의 실제 우상단 변 안쪽을 찾은 뒤 판의 회전까지 적용한다.
+ *
+ * 발굴처럼 판만 별도 자식 컨테이너에서 회전하는 버튼은 바깥 컨테이너의 사각 bounds를 앵커로
+ * 쓰면 점이 허공에 남는다. 이 계산은 Button의 `perspectiveRect` 규격과 같은 taper를 사용한다.
+ */
+export function perspectiveButtonNotificationAnchor(options: {
+  width: number;
+  height: number;
+  tall: "left" | "right";
+  rotation: number;
+  inset: number;
+}): { x: number; y: number } {
+  const halfWidth = options.width / 2;
+  const halfHeight = options.height / 2;
+  const shortHalfHeight = halfHeight * (1 - 0.42);
+  // 오른쪽 변이 짧은 왼쪽 버튼은 그 실제 윗점을, 오른쪽 버튼은 온전한 윗점을 기준으로 삼는다.
+  const cornerY = options.tall === "left" ? -shortHalfHeight : -halfHeight;
+  return rotatedNotificationAnchor({
+    x: halfWidth - options.inset,
+    y: cornerY + options.inset,
+    rotation: options.rotation,
+  });
+}

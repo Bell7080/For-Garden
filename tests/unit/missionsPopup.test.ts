@@ -25,6 +25,9 @@ describe("MissionsPopup 영역 배치", () => {
     // HoloBar는 중심 좌표를 받지만 라벨은 실제 왼쪽 경계에서 시작해야 한다.
     expect(track.barX).toBe((track.barBounds.left + track.barBounds.right) / 2);
     expect(track.labelX).toBe(track.barBounds.left);
+    // 기울어진 HoloBar의 실제 좌우 돌출까지 포함한 bounds도 양끝 보상 액자보다 안쪽에 남는다.
+    expect(track.barBounds.left).toBeGreaterThan(track.frameBounds[0].left);
+    expect(track.barBounds.right).toBeLessThan(track.frameBounds.at(-1)!.right);
   });
 
   it("보상 액자의 외곽선 반지름까지 포함한 bounds가 일일·주간 탭과 교차하지 않는다", () => {

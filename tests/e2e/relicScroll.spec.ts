@@ -51,3 +51,11 @@ test("도감 스크롤 입력은 BottomNav 탭 영역을 가로채지 않는다"
   await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT - 90);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
 });
+
+test("도감 하단 카드는 탭 경계에서 자연스럽게 페이드된다", async ({ page }) => {
+  await openRelics(page);
+  // 최하단 카드가 마스크 끝에 접근한 상태를 캡처해 단단한 절단선과 중복 비네트의 회귀를 함께 본다.
+  await page.mouse.wheel(0, 20_000);
+  await page.waitForTimeout(150);
+  await page.screenshot({ path: `test-results/relic-bottom-fade-${test.info().project.name}.png`, fullPage: true });
+});

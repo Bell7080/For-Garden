@@ -132,8 +132,10 @@ export class RelicsScene extends Phaser.Scene {
     this.refresh();
     this.installScrollInput();
 
-    // 상단은 어두움→투명 한 겹으로 카드를 감추고, 하단은 BottomNav 자체 페이드를 재사용한다.
-    drawGlassFade(this, BASE_WIDTH / 2, VIEWPORT_TOP + 70, BASE_WIDTH, 140, { topAlpha: 0.88, bottomAlpha: 0 }).setDepth(20);
+    // 카드 레이어 위에는 별도 상단 비네트를 얹지 않는다. 화면 전체 비네트만 배경 뒤에서 유지한다.
+    // 하단은 마스크의 단단한 절단선이 보이기 전에 투명→암부로 넘겨 BottomNav 페이드에 잇는다.
+    const bottomFadeHeight = 180;
+    drawGlassFade(this, BASE_WIDTH / 2, VIEWPORT_BOTTOM - bottomFadeHeight / 2, BASE_WIDTH, bottomFadeHeight, { topAlpha: 0, bottomAlpha: 0.94 }).setDepth(20);
     new BottomNav(this, "relics");
   }
 

@@ -35,8 +35,10 @@ export function researchTrackLayout(popupWidth: number, thresholds: readonly num
   // RewardFrame 외곽선은 도형 밖으로 선의 절반만큼 뻗으므로 그 반폭도 실제 반지름에 포함한다.
   const frameRadius = research.frameSize / 2 + research.frameOutlineWidth / 2;
   const endpointReserve = frameRadius + research.endpointGap;
-  const barLeft = safeLeft + endpointReserve;
-  const barWidth = Math.max(0, safeRight - safeLeft - endpointReserve * 2);
+  // HoloBar의 평행사변형은 명목 폭보다 양쪽에 slant/2만큼 더 뻗으므로 실제 도형 외곽도 예약한다.
+  const barVisualInset = Math.min(12, research.barHeight) / 2;
+  const barLeft = safeLeft + endpointReserve + barVisualInset;
+  const barWidth = Math.max(0, safeRight - safeLeft - (endpointReserve + barVisualInset) * 2);
   const barX = barLeft + barWidth / 2;
   const minimum = Math.min(...thresholds);
   const maximum = Math.max(...thresholds);
@@ -46,8 +48,9 @@ export function researchTrackLayout(popupWidth: number, thresholds: readonly num
   const frameBounds = stageXs.map((centerX) => ({ left: centerX - frameRadius, top: frameY - frameRadius, right: centerX + frameRadius, bottom: frameY + frameRadius }));
   return {
     safeBounds: { left: safeLeft, top: Number.NEGATIVE_INFINITY, right: safeRight, bottom: Number.POSITIVE_INFINITY },
-    barBounds: { left: barLeft, top: research.barY - research.barHeight / 2, right: barLeft + barWidth, bottom: research.barY + research.barHeight / 2 },
-    barX, barWidth, labelX: barLeft, stageXs, frameBounds,
+    // bounds는 중심선 폭이 아니라 기울어진 홈/채움이 차지하는 실제 가로 외곽이다.
+    barBounds: { left: barLeft - barVisualInset, top: research.barY - research.barHeight / 2, right: barLeft + barWidth + barVisualInset, bottom: research.barY + research.barHeight / 2 },
+    barX, barWidth, labelX: barLeft - barVisualInset, stageXs, frameBounds,
   };
 }
 

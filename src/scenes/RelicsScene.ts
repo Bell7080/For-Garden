@@ -16,11 +16,15 @@ import { COLOR, textStyle } from "../ui/theme";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { SectionDivider } from "../ui/SectionDivider";
 import { compareBookmarkedOwnedRelics } from "../core/relicCatalog";
-import { drawGlassFade, drawVignette } from "../ui/holo";
+import { drawVignette } from "../ui/holo";
 
 /** 제목/정렬 조작과 하단 탭 사이만 목록에 내주는 고정 화면 경계다. */
 const VIEWPORT_TOP = 340;
 const VIEWPORT_BOTTOM = NAV_TOP;
+/** 첫 줄의 돌출된 머리가 상단 마스크에 닿지 않도록 확보하는 그리드 시작 여백이다. */
+const GRID_FIRST_ROW_Y = 640;
+/** 카드 자체가 배경으로 스며들도록 위·아래에서 알파를 단계적으로 낮추는 높이다. */
+const GRID_FADE_HEIGHT = 150;
 const DRAG_SLOP = 18;
 
 /**
@@ -83,10 +87,20 @@ export class RelicsScene extends Phaser.Scene {
     setDebugScene("relics");
     this.cards.clear();
     this.content = this.add.container(0, 0);
-    // GeometryMask는 화면 좌표에 고정되어 콘텐츠가 움직여도 제목·탭 영역을 절대 침범하지 않는다.
+    // 화면 좌표에 고정된 마스크는 콘텐츠가 움직여도 제목·탭 영역을 절대 침범하지 않는다.
     this.viewportMask = this.make.graphics();
-    this.viewportMask.fillStyle(0xffffff).fillRect(0, VIEWPORT_TOP, BASE_WIDTH, VIEWPORT_BOTTOM - VIEWPORT_TOP);
-    this.content.setMask(this.viewportMask.createGeometryMask());
+    // BitmapMask의 알파를 여러 띠로 보간해 검은 비네트를 덧씌우지 않고 카드 자체를 은은하게 숨긴다.
+    const fadeBands = 12;
+    const solidTop = VIEWPORT_TOP + GRID_FADE_HEIGHT;
+    const solidBottom = VIEWPORT_BOTTOM - GRID_FADE_HEIGHT;
+    for (let band = 0; band < fadeBands; band += 1) {
+      const alpha = (band + 1) / fadeBands;
+      const bandHeight = GRID_FADE_HEIGHT / fadeBands;
+      this.viewportMask.fillStyle(0xffffff, alpha).fillRect(0, VIEWPORT_TOP + band * bandHeight, BASE_WIDTH, bandHeight + 1);
+      this.viewportMask.fillStyle(0xffffff, alpha).fillRect(0, VIEWPORT_BOTTOM - (band + 1) * bandHeight, BASE_WIDTH, bandHeight + 1);
+    }
+    this.viewportMask.fillStyle(0xffffff, 1).fillRect(0, solidTop, BASE_WIDTH, solidBottom - solidTop);
+    this.content.setMask(this.viewportMask.createBitmapMask());
 
     const cx = BASE_WIDTH / 2;
     // background_002를 렐릭 탭의 야외 유적 전경으로 사용한다.
@@ -132,10 +146,7 @@ export class RelicsScene extends Phaser.Scene {
     this.refresh();
     this.installScrollInput();
 
-    // 카드 레이어 위에는 별도 상단 비네트를 얹지 않는다. 화면 전체 비네트만 배경 뒤에서 유지한다.
-    // 하단은 마스크의 단단한 절단선이 보이기 전에 투명→암부로 넘겨 BottomNav 페이드에 잇는다.
-    const bottomFadeHeight = 180;
-    drawGlassFade(this, BASE_WIDTH / 2, VIEWPORT_BOTTOM - bottomFadeHeight / 2, BASE_WIDTH, bottomFadeHeight, { topAlpha: 0, bottomAlpha: 0.94 }).setDepth(20);
+    // 그리드의 위·아래 전환은 알파 마스크가 맡으므로 하단에 중복되던 검은 비네트는 두지 않는다.
     new BottomNav(this, "relics");
   }
 
@@ -162,7 +173,7 @@ export class RelicsScene extends Phaser.Scene {
     const gapY = 74;
     const gridW = cols * cardW + (cols - 1) * gapX;
     const startX = (BASE_WIDTH - gridW) / 2 + cardW / 2;
-    const startY = 580;
+    const startY = GRID_FIRST_ROW_Y;
 
     // 보유와 미보유를 섞지 않는다. 가진 것을 먼저 다 보여 준 뒤, 아직 없는 것을 아래로
     // 몰아 따로 세운다 — 정렬 기준이 무엇이든 "내 것"이 위에 모여 있어야 훑기 쉽다.

@@ -26,6 +26,7 @@ import { EXPEDITION_NODE_REWARD_BALANCE } from "../data/expedition";
 import { completedAdToken } from "../data/adRewards";
 import { presentRewardedAd } from "../platform/rewardedAds";
 import { openRewardPopup } from "../ui/RewardPopup";
+import { ExpeditionRankingPopup } from "../ui/ExpeditionRankingPopup";
 
 /** 원정 준비 카드의 고정 그리드 규격이다. 다른 편성과 달리 세 칸씩 읽게 한다. */
 const ROSTER = { columns: 3, width: 250, height: 310, gapX: 56, gapY: 50, top: 470 } as const;
@@ -281,6 +282,8 @@ export class ExpeditionScene extends Phaser.Scene {
   /** 보유 렐릭에서 정확히 세 기를 고르는 신규 원정 준비 화면을 만든다. */
   private buildPreparation(): void {
     this.add.text(BASE_WIDTH / 2, 292, "원정대 3기 선택", textStyle({ role: "emphasis", size: 32 })).setOrigin(0.5);
+    // 준비 중에도 결과 화면과 같은 서버 기록판을 열어 보상 목표와 동점 순서를 미리 확인한다.
+    new Button(this, BASE_WIDTH - 190, 292, { width: 260, height: 68, label: "주간 기록", fontSize: 22, onClick: () => new ExpeditionRankingPopup(this, this.popups).open() });
     // 로컬 quickAvailable은 표시·지급 권한으로 쓰지 않고 서버 운영 설정을 기다리는 자리만 만든다.
     this.quickStatus = this.add.text(BASE_WIDTH / 2, 348, "빠른 원정 확인 중…", textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0.5);
     void this.loadQuickExpeditionOffer();

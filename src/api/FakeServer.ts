@@ -100,7 +100,7 @@ export class FakeServer implements GameApi {
   /** FakeServer도 서버 UTC 월요일 경계에서만 주간 기록을 초기화한다. */
   async getExpeditionWeeklyBest(): Promise<ExpeditionWeeklyBestResponse> {
     await this.delay(); const now = this.now(); this.normalizeBossWeek(now); const reset = new Date(`${this.bossWeek.weekKey}T00:00:00.000Z`); reset.setUTCDate(reset.getUTCDate() + 7);
-    return { weekKey: this.bossWeek.weekKey, bestScore: this.bossWeek.bestScore, cumulativeScore: this.bossWeek.cumulativeScore, resetsAt: reset.toISOString() };
+    return { weekKey: this.bossWeek.weekKey, bestScore: this.bossWeek.bestScore, cumulativeScore: this.bossWeek.cumulativeScore, resetsAt: reset.toISOString(), rewardStages: EXPEDITION_CUMULATIVE_REWARD_STAGES.map((stage) => ({ ...stage, reward: { ...stage.reward }, claimed: this.bossWeek.claimedStageIds.includes(stage.id) })) };
   }
 
   /** 제출된 피해 숫자를 신뢰하지 않고 서버 편성의 정적 전투력으로 동작열을 완전히 재생한다. */
@@ -135,7 +135,7 @@ export class FakeServer implements GameApi {
   }
 
   /** 단계 ID와 누적 점수를 다시 확인하며 같은 요청과 다른 요청 모두 중복 지급하지 않는다. */
-  async claimExpeditionCumulativeReward(request: ClaimExpeditionRewardRequest): Promise<ClaimExpeditionRewardResponse> {
+  async claimExpeditionReward(request: ClaimExpeditionRewardRequest): Promise<ClaimExpeditionRewardResponse> {
     await this.delay(); const cached = this.bossRewardResults.get(request.requestId); if (cached) return { ...cached, claimedStageIds: [...cached.claimedStageIds] };
     if (!request.requestId) throw new GameApiError("INVALID_STATE", "보상 수령 요청 ID가 필요합니다.");
     this.normalizeBossWeek(this.now()); const stage = EXPEDITION_CUMULATIVE_REWARD_STAGES.find(({ id }) => id === request.stageId);
@@ -143,13 +143,13 @@ export class FakeServer implements GameApi {
     if (this.bossWeek.cumulativeScore < stage.threshold) throw new GameApiError("EXPEDITION_REWARD_NOT_EARNED", "아직 달성하지 않은 누적 보상입니다.");
     const alreadyClaimed = this.bossWeek.claimedStageIds.includes(stage.id);
     if (!alreadyClaimed) { this.bossWeek.claimedStageIds.push(stage.id); this.state.wallet[stage.reward.currency] += stage.reward.amount; this.persist(this.state); }
-    const response = { weekKey: this.bossWeek.weekKey, stageId: stage.id, claimedStageIds: [...this.bossWeek.claimedStageIds], reward: { ...stage.reward }, alreadyClaimed };
+    const response = { weekKey: this.bossWeek.weekKey, stageId: stage.id, claimedStageIds: [...this.bossWeek.claimedStageIds], reward: { ...stage.reward }, alreadyClaimed, wallet: { ...this.state.wallet } };
     this.bossRewardResults.set(request.requestId, response); return response;
   }
 
   /** 단일 개발 계정도 운영과 같은 점수 내림차순/최초 달성 오름차순 정책을 명시한다. */
   async getExpeditionLeaderboard(limit = 100): Promise<ExpeditionLeaderboardResponse> {
-    await this.delay(); this.normalizeBossWeek(this.now()); const entries = this.bossWeek.bestScore > 0 ? [{ rank: 1, playerId: "local-player", displayName: "연구원", score: this.bossWeek.bestScore, achievedAt: this.bossWeek.achievedAt }] : [];
+    await this.delay(); this.normalizeBossWeek(this.now()); const entries = this.bossWeek.bestScore > 0 ? [{ rank: 1, playerId: "local-player", displayName: "연구원", score: this.bossWeek.bestScore, achievedAt: this.bossWeek.achievedAt, isMe: true }] : [];
     return { weekKey: this.bossWeek.weekKey, tieBreakPolicy: "earliest-achieved-at", entries: entries.slice(0, Math.max(0, limit)) };
   }
 

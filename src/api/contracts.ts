@@ -281,12 +281,14 @@ export interface SubmitExpeditionBossScoreRequest { requestId: string; runId?: s
 /** 전멸 순간 서버가 확정한 점수와 최고/누적 기록이다. */
 export interface SubmitExpeditionBossScoreResponse { weekKey: string; score: number; bestScore: number; cumulativeScore: number; improved: boolean; endedAtMs: number; rankBefore: number | null; rankAfter: number; }
 /** 주간 최고 점수와 월요일 00:00 UTC 초기화 경계를 함께 전달한다. */
-export interface ExpeditionWeeklyBestResponse { weekKey: string; bestScore: number; cumulativeScore: number; resetsAt: string; }
+/** 운영 보상 수치와 수령 상태는 서버 스냅샷만 화면의 기준으로 삼는다. */
+export interface ExpeditionRewardStageDto { id: string; threshold: number; reward: { currency: "gold" | "fossil" | "gems"; amount: number }; claimed: boolean; }
+export interface ExpeditionWeeklyBestResponse { weekKey: string; bestScore: number; cumulativeScore: number; resetsAt: string; rewardStages: ExpeditionRewardStageDto[]; }
 /** 누적 단계는 정적 표 ID로 요청하고 실제 서버가 달성 및 기존 수령을 다시 검사한다. */
 export interface ClaimExpeditionRewardRequest { requestId: string; stageId: string; }
-export interface ClaimExpeditionRewardResponse { weekKey: string; stageId: string; claimedStageIds: string[]; reward: { currency: "gold" | "fossil" | "gems"; amount: number }; alreadyClaimed: boolean; }
+export interface ClaimExpeditionRewardResponse { weekKey: string; stageId: string; claimedStageIds: string[]; reward: { currency: "gold" | "fossil" | "gems"; amount: number }; alreadyClaimed: boolean; wallet: PlayerStateDto["wallet"]; }
 /** 동점은 최고 점수 달성 시각이 빠른 이용자를 우선하며 그 뒤 안정적인 playerId 순으로 정렬한다. */
-export interface ExpeditionLeaderboardEntry { rank: number; playerId: string; displayName: string; score: number; achievedAt: string; }
+export interface ExpeditionLeaderboardEntry { rank: number; playerId: string; displayName: string; score: number; achievedAt: string; isMe: boolean; }
 export interface ExpeditionLeaderboardResponse { weekKey: string; tieBreakPolicy: "earliest-achieved-at"; entries: ExpeditionLeaderboardEntry[]; }
 
 /** 실제 HTTP API로 교체할 때도 씬이 의존할 단 하나의 통신 인터페이스다. */
@@ -296,7 +298,7 @@ export interface GameApi {
   /** 동작열을 서버 편성으로 재현하고 전멸 결과만 점수로 제출한다. */
   submitExpeditionBossScore(request: SubmitExpeditionBossScoreRequest): Promise<SubmitExpeditionBossScoreResponse>;
   /** 달성한 누적 단계 보상을 서버 멱등 기록으로 수령한다. */
-  claimExpeditionCumulativeReward(request: ClaimExpeditionRewardRequest): Promise<ClaimExpeditionRewardResponse>;
+  claimExpeditionReward(request: ClaimExpeditionRewardRequest): Promise<ClaimExpeditionRewardResponse>;
   /** 서버가 소유한 주간 순위표를 동점 정책에 따라 조회한다. */
   getExpeditionLeaderboard(limit?: number): Promise<ExpeditionLeaderboardResponse>;
   /** 룬·지갑·스택을 저장 모델 변경 없이 합성해 조회한다. */

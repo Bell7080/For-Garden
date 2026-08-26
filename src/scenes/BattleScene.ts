@@ -42,6 +42,8 @@ import type { MotionPlayback } from "../puppets/assets";
 import { ultimatePresentationFor } from "../data/ultimatePresentations";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { relicStars } from "../core/relicProgression";
+import { PopupLayer } from "../ui/PopupLayer";
+import { ExpeditionRankingPopup } from "../ui/ExpeditionRankingPopup";
 import { createExpeditionSkirmishConfig, expeditionBattleEffects, expeditionBattleResults, type BattleSceneInputDto, type ExpeditionBattleInputDto, type ExpeditionBossBattleInputDto } from "../core/expeditionBattle";
 import { expeditionBossPhaseAt, type ExpeditionBossAction } from "../core/expeditionBoss";
 import { attackPowerMultiplier } from "../core/expeditionAugments";
@@ -332,7 +334,10 @@ export class BattleScene extends Phaser.Scene {
     const rank = score.rankBefore === null ? `신규 → ${score.rankAfter}위` : `${score.rankBefore}위 → ${score.rankAfter}위`;
     const rewards = Object.entries(settlement.granted).filter(([, amount]) => amount > 0).map(([id, amount]) => `${id} +${amount.toLocaleString()}`).join("  ·  ") || "정산 재화 없음";
     this.add.text(BASE_WIDTH / 2, 875, `이번 점수  ${score.score.toLocaleString()}\n주간 최고  ${score.bestScore.toLocaleString()}  ${score.improved ? "· 최고점 갱신" : "· 기존 기록 유지"}\n누적 점수  ${score.cumulativeScore.toLocaleString()}\n순위  ${rank}\n\n런 정산  ${rewards}`, textStyle({ role: "body", size: 31, color: COLOR.ink, align: "center", lineSpacing: 16 })).setOrigin(0.5).setDepth(201);
-    new Button(this, BASE_WIDTH / 2, 1260, { width: 430, height: 105, label: "로비로", onClick: () => this.scene.start("lobby") }).setDepth(201);
+    // 제출 직후 서버 순위를 다시 조회하는 공용 기록판으로 새 최고점과 해금 단계를 한 번에 잇는다.
+    const popups = new PopupLayer(this, 2200);
+    new Button(this, BASE_WIDTH / 2 - 235, 1260, { width: 400, height: 105, label: "주간 기록 확인", onClick: () => new ExpeditionRankingPopup(this, popups).open() }).setDepth(201);
+    new Button(this, BASE_WIDTH / 2 + 235, 1260, { width: 400, height: 105, label: "로비로", onClick: () => this.scene.start("lobby") }).setDepth(201);
   }
 
   /** 전장 위쪽 가장자리에 배속과 자동 궁극기 토글을 같은 홀로그램 칩으로 나란히 둔다. */

@@ -58,9 +58,12 @@ describe("FakeServer", () => {
   it("누적 단계 보상은 다른 요청 ID로 재요청해도 한 번만 지급한다", async () => {
     const state = makeSession(); const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-25T12:00:00Z") });
     await server.submitExpeditionBossScore({ requestId: "boss-reward-score", actions: bossActions(30) });
-    const first = await server.claimExpeditionCumulativeReward({ requestId: "reward-a", stageId: "damage-10k" }); const gold = state.wallet.gold;
-    const repeated = await server.claimExpeditionCumulativeReward({ requestId: "reward-b", stageId: "damage-10k" });
-    expect(first.alreadyClaimed).toBe(false); expect(repeated.alreadyClaimed).toBe(true); expect(state.wallet.gold).toBe(gold);
+    const first = await server.claimExpeditionReward({ requestId: "reward-a", stageId: "damage-10k" }); const gold = state.wallet.gold;
+    const repeated = await server.claimExpeditionReward({ requestId: "reward-b", stageId: "damage-10k" });
+    const weekly = await server.getExpeditionWeeklyBest();
+    // 공개 DTO가 운영 단계와 수령 스냅샷을 함께 반환해 클라이언트 정적 표를 UI 권한으로 쓰지 않게 한다.
+    expect(first.alreadyClaimed).toBe(false); expect(first.wallet.gold).toBe(gold); expect(repeated.alreadyClaimed).toBe(true);
+    expect(weekly.rewardStages.find(({ id }) => id === "damage-10k")?.claimed).toBe(true); expect(state.wallet.gold).toBe(gold);
   });
 
   it("피해 숫자를 제출할 필드가 없고 비정상 입력은 API 경계에서 거부한다", async () => {

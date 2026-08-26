@@ -83,7 +83,10 @@ export class ExpeditionManager {
   completeBattle(nodeId: string, results: readonly SkirmishRelicResult[]): boolean {
     const run = this.state.expedition.run;
     if (!run || results.length !== run.relics.length || results.some((result, index) => result.relicId !== run.relics[index].relicId || result.alive !== (result.currentHp > 0))) return false;
-    return this.completeNode(nodeId, { relicHp: results.map(({ currentHp }) => currentHp) });
+    const node = run.nodes.find(({ id }) => id === nodeId);
+    // 점수는 결과 DTO와 서버 생성 맵의 층만으로 계산해 씬이 임의 점수를 주입하지 못하게 한다.
+    const score = node ? node.floor * 1_000 + Math.round(results.reduce((sum, { currentHp }) => sum + currentHp, 0) * 10) : 0;
+    return this.completeNode(nodeId, { relicHp: results.map(({ currentHp }) => currentHp), score });
   }
 
   /** 전투 노드의 첫 제안을 한 번만 만들고 seed와 결과를 같은 저장 트랜잭션에 고정한다. */
@@ -128,6 +131,21 @@ export class ExpeditionManager {
     if (!run || run.settled || run.relics.every(({ alive }) => !alive)) return false;
     const next = structuredClone(run);
     next.relics = applyExpeditionRest(next.relics, EXPEDITION_REST_RULES.healPercent, EXPEDITION_REST_RULES.revivePercent) as ExpeditionRunState["relics"];
+    this.commit({ ...this.state.expedition, run: next });
+    return true;
+  }
+
+  /** 휴식 효과와 노드 방문 완료를 한 번만 저장한다. 이 메서드가 휴식 재시도의 상태 소유자다. */
+  completeRestNode(nodeId: string): boolean {
+    const run = this.state.expedition.run;
+    const node = run?.nodes.find(({ id }) => id === nodeId);
+    if (!run || node?.type !== "rest" || run.settled || run.visitedNodeIds.includes(nodeId)
+      || (run.currentNodeId !== null && !run.nodes.find(({ id }) => id === run.currentNodeId)?.successorIds.includes(nodeId))
+      || run.relics.every(({ alive }) => !alive)) return false;
+    const next = structuredClone(run);
+    next.relics = applyExpeditionRest(next.relics, EXPEDITION_REST_RULES.healPercent, EXPEDITION_REST_RULES.revivePercent) as ExpeditionRunState["relics"];
+    next.currentNodeId = nodeId;
+    next.visitedNodeIds.push(nodeId);
     this.commit({ ...this.state.expedition, run: next });
     return true;
   }

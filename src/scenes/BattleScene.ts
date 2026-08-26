@@ -15,6 +15,7 @@ import {
   type Fighter,
   type SkirmishEvent,
   type SkirmishState,
+  skirmishRelicResults,
 } from "../core/skirmish";
 import { getRelic } from "../data/relics";
 import { getStage, getStageEnemies } from "../data/stages";
@@ -41,6 +42,8 @@ import type { MotionPlayback } from "../puppets/assets";
 import { ultimatePresentationFor } from "../data/ultimatePresentations";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { relicStars } from "../core/relicProgression";
+import { expeditionBattleEffects, type BattleSceneInputDto, type ExpeditionBattleInputDto } from "../core/expeditionBattle";
+import { expeditionManager } from "../managers/ExpeditionManager";
 
 /**
  * 여섯이 돌아다닐 수 있는 범위.
@@ -174,6 +177,8 @@ interface ProfileView {
 
 /** SD 여섯이 실시간으로 뒤엉켜 싸우는 자동 전투 화면이다. */
 export class BattleScene extends Phaser.Scene {
+  /** init 입력은 씬 한 생명주기 동안 고정되며 원정 진행 상태는 매니저만 저장한다. */
+  private battleInput: BattleSceneInputDto = { mode: "stage" };
   private state!: SkirmishState;
   private views = new Map<string, FighterView>();
   private profiles: ProfileView[] = [];
@@ -202,17 +207,25 @@ export class BattleScene extends Phaser.Scene {
     super("battle");
   }
 
+  /** Phaser scene data를 명시 DTO로 받아 일반 스테이지와 원정 결과 경계를 분리한다. */
+  init(input: BattleSceneInputDto = { mode: "stage" }): void { this.battleInput = input; }
+
   create(): void {
     setDebugScene("battle");
     const stage = getStage(session.selectedStageId ?? "1-1");
     // 적은 스테이지별 임시 레벨 성장치를 적용한 복사본으로 전투에 투입한다.
     // 유대는 정적 RelicDef가 아니라 현재 플레이어의 저장 진행에서 전투 스냅샷으로 넘긴다.
-    const bonds = Object.fromEntries(session.party.map((id) => [id, session.relicProgress[id]?.bondLevel ?? 0]));
+    const partyIds = this.battleInput.mode === "expedition" ? this.battleInput.relics.map(({ relicId }) => relicId) : session.party;
+    const bonds = Object.fromEntries(partyIds.map((id) => [id, session.relicProgress[id]?.bondLevel ?? 0]));
     // 각성 단계도 같은 방식으로 스냅샷을 넘긴다. 전투 코어는 저장 상태를 직접 읽지 않는다.
-    const breakthroughs = Object.fromEntries(session.party.map((id) => [id, session.relicProgress[id]?.breakthrough ?? 0]));
+    const breakthroughs = Object.fromEntries(partyIds.map((id) => [id, session.relicProgress[id]?.breakthrough ?? 0]));
     // UI와 같은 성장 계산기의 스냅샷을 복사해 전투가 룬 수치를 다시 계산하지 않게 한다.
-    const players = session.party.map((id) => ({ ...getRelic(id), stats: relicProgression.getFinalStats(id) }));
-    this.state = createSkirmish(players, getStageEnemies(stage), ARENA, bonds, breakthroughs);
+    const players = partyIds.map((id) => ({ ...getRelic(id), stats: relicProgression.getFinalStats(id) }));
+    this.state = createSkirmish(players, getStageEnemies(stage), ARENA, bonds, breakthroughs, this.battleInput.mode === "expedition" ? {
+      // 전투 코어가 백분율 HP를 적용하므로 씬은 전투원 내부 수치를 직접 고치지 않는다.
+      playerInitialStates: this.battleInput.relics.map(({ relicId, currentHp }) => ({ relicId, currentHp, alive: currentHp > 0 })),
+      augmentEffects: expeditionBattleEffects(this.battleInput.augments),
+    } : {});
     this.views.clear();
     this.profiles = [];
     this.finished = false;
@@ -787,6 +800,7 @@ export class BattleScene extends Phaser.Scene {
     this.syncViews();
     this.refreshDebug();
     const won = phase === "victory";
+    if (this.battleInput.mode === "expedition") { this.finishExpeditionBattle(this.battleInput, won); return; }
     const stage = getStage(session.selectedStageId ?? "1-1");
     // 결과 화면은 정적 스테이지 보상만 미리 읽고, 실제 상태 변경은 확인 버튼의 API 요청에 맡긴다.
     const firstClear = !session.cleared.has(stage.id);
@@ -801,6 +815,28 @@ export class BattleScene extends Phaser.Scene {
       confirming = true;
       // API 완료 뒤에만 이동하므로 사용자가 지도를 본 시점에는 보상과 최초 클리어가 저장되어 있다.
       void gameApi.completeStage(stage.id).then(() => this.scene.start("stageMap")).catch(() => { confirming = false; });
+    } }).setDepth(101);
+  }
+
+  /** 결과 확인 탭을 직렬화하고 HP 저장, 증강 또는 정산이 끝난 뒤에만 다음 화면을 연다. */
+  private finishExpeditionBattle(input: ExpeditionBattleInputDto, won: boolean): void {
+    this.add.rectangle(BASE_WIDTH / 2, 930, BASE_WIDTH, 420, COLOR.void, 0.84).setDepth(100);
+    this.add.text(BASE_WIDTH / 2, 850, won ? "원정 교전 승리" : "원정대 전멸", textStyle({ role: "display", size: 62, color: won ? COLOR.accentText : COLOR.dangerText })).setOrigin(0.5).setDepth(101);
+    let saving = false;
+    new Button(this, BASE_WIDTH / 2, 1030, { width: 440, height: 110, label: won ? "결과 저장" : "종료 정산", onClick: () => {
+      if (saving) return;
+      saving = true;
+      const results = skirmishRelicResults(this.state);
+      if (!expeditionManager.completeBattle(input.nodeId, results)) { saving = false; return; }
+      const run = expeditionManager.status().run;
+      if (!run) { saving = false; return; }
+      if (!won || input.nodeType === "boss") {
+        // 전멸과 20층 보스는 추가 지도 입력을 거치지 않고 같은 멱등 정산 경계로 끝낸다.
+        void gameApi.settleExpeditionRun({ runId: input.runId, settlementId: `${input.runId}:${won ? "complete" : "defeat"}`, outcome: won ? "completed" : "abandoned" }).then(() => this.scene.start("lobby")).catch(() => { saving = false; });
+        return;
+      }
+      expeditionManager.beginAugmentReward(input.nodeId, input.nodeType);
+      this.scene.start("expedition");
     } }).setDepth(101);
   }
 

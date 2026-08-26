@@ -19,7 +19,7 @@ export interface RewardPopupOptions {
   title?: string;
   /** 결과의 중요도에 따라 공용 26px 제목보다 한 단계 크게 요청할 수 있다. */
   titleSize?: number;
-  /** 뒤 화면을 누르는 암전 강도. 기본은 뒤 화면과 확실히 분리되는 짙은 검정이다. */
+  /** 뒤 화면을 누르는 암전 강도. 기본은 원래 화면의 맥락이 남는 은은한 검정이다. */
   dimAlpha?: number;
   items: readonly RewardPopupItem[];
   onConfirm?: () => void;
@@ -50,9 +50,9 @@ export function openRewardPopup(scene: Phaser.Scene, popups: PopupLayer, options
     height: REWARD_POPUP.height,
     title: options.title ?? "획득 보상",
     titleSize: options.titleSize,
-    // 아래 작업판의 돌아가기까지 완전히 가려 영수증에 무의미한 다른 조작이 비치지 않게 한다.
+    // 영수증은 원래 화면의 맥락을 남기되, 아래 작업판보다 높은 층에서 불필요한 돌아가기를 가린다.
     dim: true,
-    dimAlpha: options.dimAlpha ?? 1,
+    dimAlpha: options.dimAlpha ?? 0.46,
     // 영수증이므로 팝업 안이든 밖이든 화면 아무 곳이나 누르면 닫힌다.
     closeOnBackdrop: true,
     // 화면 어디를 눌러도 닫히므로 오른쪽 위 X는 중복 조작이다.
@@ -63,6 +63,8 @@ export function openRewardPopup(scene: Phaser.Scene, popups: PopupLayer, options
       options.onConfirm?.();
     },
   }, (body, close) => {
+    // 로비가 별도로 만든 우하단 뒤로가기(depth 2100)도 보상 확인 중에는 보이거나 눌리지 않는다.
+    body.parentContainer?.setDepth(4000);
     const strip = scene.add.container(0, 0);
     const contentWidth = (items.length - 1) * REWARD_POPUP.gap + REWARD_POPUP.frame;
     const overflow = Math.max(0, contentWidth - REWARD_POPUP.viewport);

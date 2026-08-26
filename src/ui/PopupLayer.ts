@@ -54,6 +54,8 @@ export interface PopupOptions {
  */
 export class PopupLayer {
   private readonly stack: Phaser.GameObjects.Container[] = [];
+  /** 외부 뒤로가기가 `closeTop`을 호출해도 팝업 소유자의 정리 콜백을 빠뜨리지 않는다. */
+  private readonly onCloseByLayer = new Map<Phaser.GameObjects.Container, (() => void) | undefined>();
 
   constructor(private readonly scene: Phaser.Scene, private readonly depth = 2000) {}
 
@@ -106,10 +108,9 @@ export class PopupLayer {
     body.add(drawShapeEdge(this.scene, 0, 0, shape, "bottom", { color: COLOR.accent, alpha: 0.3, inset: 12 }));
     layer.add(body);
 
-    const close = (): void => {
-      this.close(layer);
-      options.onClose?.();
-    };
+    // 닫기 경로(내부 X·배경·외부 뒤로가기)에 관계없이 정리 콜백은 close() 한 곳에서 정확히 한 번 돈다.
+    this.onCloseByLayer.set(layer, options.onClose);
+    const close = (): void => { this.close(layer); };
     const titleChrome: Phaser.GameObjects.GameObject[] = [];
     if (options.title) {
       // 머리글은 판 안이 아니라 **윗변에 걸터앉는다.** 정보창의 칸 제목(유대·능력치·룬)과
@@ -178,6 +179,9 @@ export class PopupLayer {
     const index = this.stack.indexOf(layer);
     if (index === -1) return;
     this.stack.splice(index, 1);
+    const onClose = this.onCloseByLayer.get(layer);
+    this.onCloseByLayer.delete(layer);
     layer.destroy();
+    onClose?.();
   }
 }

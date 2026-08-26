@@ -85,13 +85,15 @@ export class MissionsPopup {
     const popupWidth = BASE_WIDTH - MISSIONS_POPUP_LAYOUT.popup.widthInset;
     // 팝업 안전 너비를 먼저 정해 게이지·양끝 액자·라벨이 모두 같은 왼쪽 기준선을 공유하게 한다.
     const track = researchTrackLayout(popupWidth, research.stages.map((stage) => stage.threshold));
-    const bar = new HoloBar(this.scene, track.barX, layout.barY, track.barWidth, layout.barHeight, { color: COLOR.missionClaim, outline: true }).addTo(this.list); bar.setValue(research.points / Math.max(1, research.maxPoints)); this.bars.push(bar);
+    // 미달성 홈은 검정을 더 진하게 하고, 달성/미달성 전체 외곽은 흰 선으로 같은 최대 범위를 보여 준다.
+    const bar = new HoloBar(this.scene, track.barX, layout.barY, track.barWidth, layout.barHeight, { color: COLOR.missionClaim, trackAlpha: 0.82, outline: true }).addTo(this.list); bar.setValue(research.points / Math.max(1, research.maxPoints)); this.bars.push(bar);
     this.list.add(this.scene.add.text(track.labelX, layout.barY + layout.labelOffsetY, `연구도 ${research.points}/${research.maxPoints}`, textStyle({ role: "emphasis", size: 23, color: COLOR.ink })).setOrigin(0, 0.5));
     research.stages.forEach((stage, index) => {
       const stageX = track.stageXs[index];
-      // 세로 눈금이 게이지 홈을 끊어 각 임계값이 별개의 마디로 보이게 한다.
-      // 어두운 홈 위에서도 달성 마디가 또렷하도록 단계 눈금은 테마의 흰색 계열로 통일한다.
-      this.list?.add(this.scene.add.rectangle(stageX, layout.barY, 3, 36, 0xffffff, 0.72));
+      // 게이지 자체의 기울기와 같은 / 눈금을 써 임계값이 수직 구분선이 아니라 그래프 마디로 읽힌다.
+      const tick = this.scene.add.graphics({ x: stageX, y: layout.barY });
+      tick.lineStyle(3, 0xffffff, 0.86).lineBetween(-7, 18, 7, -18);
+      this.list?.add(tick);
       const state = stage.claimed ? "claimed" : stage.achieved ? "claimable" : "normal";
       const frame = new RewardFrame(this.scene, stageX, layout.barY + layout.frameOffsetY, { icon: "currency-cheesecake", amount: stage.rewardCheesecake, size: layout.frameSize, state, onClick: stage.achieved && !stage.claimed ? () => void this.claimStage(stage.id) : undefined });
       this.list?.add(frame);

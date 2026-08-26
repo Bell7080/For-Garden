@@ -31,7 +31,7 @@ import { sdAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets"
 import { loadOwnedPuppet } from "../ui/statusPuppetLoad";
 
 /** 원정 준비 카드의 고정 그리드 규격이다. 다른 편성과 달리 세 칸씩 읽게 한다. */
-const ROSTER = { columns: 3, width: 250, height: 310, gapX: 56, gapY: 50, top: 850 } as const;
+const ROSTER = { columns: 3, width: 250, height: 310, gapX: 56, gapY: 50, top: 940 } as const;
 /** 발굴 편성처럼 화면 상단에서 순서를 먼저 읽는 1/2/3 슬롯 규격이다. */
 const FORMATION = { y: 540, firstX: 230, stepX: 310, width: 250, height: 290 } as const;
 
@@ -312,6 +312,8 @@ export class ExpeditionScene extends Phaser.Scene {
         rarity: relic.rarity,
         stars: relicProgression.getStars(relic.id),
         affinity: { element: relic.element, role: relic.role },
+        // 상단 편성 슬롯과 구분되도록 선택 카드는 발광뿐 아니라 눌린 듯한 검정 면도 함께 쓴다.
+        selectedOverlayAlpha: 0.28,
       });
       // 카드는 선택만 바꾸며 Session을 쓰지 않는다. 시작 버튼에서 매니저가 최종 소유 검증을 반복한다.
       card.hit.on("pointerup", () => this.toggle(relic.id));

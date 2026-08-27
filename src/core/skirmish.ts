@@ -74,6 +74,8 @@ export interface Fighter extends Combatant {
   passiveTriggered: boolean;
   /** 진행 중인 지속 회복. remaining과 tickIn은 초, percentPerTick은 최대 HP 대비 %이며 저장하지 않는다. */
   regeneration: { remaining: number; tickIn: number; percentPerTick: number } | null;
+  /** 시간 기반 패시브로 누적된 추가 주문력. 정적 정의를 변경하지 않는 전투 상태다. */
+  bonusAp: number;
 }
 
 export type SkirmishPhase = "fight" | "victory" | "defeat";
@@ -102,6 +104,9 @@ export interface SkirmishBossState {
   phases: readonly SkirmishBossPhase[];
   limitSeconds: number;
   damageRemainder: number;
+  /** 리미트가 좁혀 오는 현재 안전 반경과 다음 해일 예고 여부다. 씬은 이 값만 그린다. */
+  pressureRadius: number;
+  tideWarning: boolean;
 }
 
 /** 원정 저장 상태를 전투 시작 값으로 옮길 때 쓰는 렐릭별 스냅샷이다. currentHp는 0~100 비율이다. */
@@ -243,6 +248,7 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     // 저장 스냅샷의 HP만 반영하고, 전투 한정 발동권과 지속 효과는 매 전투 새로 만든다.
     passiveTriggered: false,
     regeneration: null,
+    bonusAp: 0,
   };
 }
 
@@ -294,7 +300,7 @@ export function createSkirmish(
     elapsed: 0,
     log: [],
     augmentEffects: options.augmentEffects ?? [],
-    boss: options.boss ? { score: 0, survivedFor: 0, phaseIndex: 0, limitReached: false, phases: options.boss.phases, limitSeconds: options.boss.limitSeconds, damageRemainder: 0 } : undefined,
+    boss: options.boss ? { score: 0, survivedFor: 0, phaseIndex: 0, limitReached: false, phases: options.boss.phases, limitSeconds: options.boss.limitSeconds, damageRemainder: 0, pressureRadius: Math.max(arena.right - arena.left, arena.bottom - arena.top) / 2, tideWarning: false } : undefined,
   };
 }
 
@@ -547,6 +553,21 @@ export function tickRegeneration(fighter: Fighter, dt: number): SkirmishEvent[] 
   return events;
 }
 
+/** 폰투스의 잃은 체력 경감을 포함해 모든 HP 피해가 마지막으로 통과하는 공용 경계다. */
+export function receivedDamage(target: Fighter, rawAmount: number): number {
+  const passive = target.def.passive;
+  let reduction = 0;
+  if (passive.kind === "abyssalPressure") {
+    const missingHpPercent = target.maxHp <= 0 ? 0 : (1 - target.hp / target.maxHp) * 100;
+    reduction = Math.min(passive.maxReductionPercent ?? 0, missingHpPercent * (passive.reductionPerMissingHpPercent ?? 0));
+  }
+  // 기존 야성 경감도 같은 최종 경계에 합치되 중복 호출 없이 곱연산 한 번으로 확정한다.
+  if (target.ferocityFever && target.def.ferocityTrait.effectId === "damageReduction") {
+    reduction = 100 - (100 - reduction) * (1 - target.def.ferocityTrait.reductionPercent / 100);
+  }
+  return Math.max(1, Math.round(rawAmount * (1 - Math.min(100, Math.max(0, reduction)) / 100)));
+}
+
 /** 걸린 출혈을 1초 간격으로 깎는다. 방어력을 거치지 않는 고정 피해다. */
 function tickBleed(fighter: Fighter, dt: number, state: SkirmishState, events: SkirmishEvent[]): void {
   const bleed = fighter.bleed;
@@ -554,7 +575,7 @@ function tickBleed(fighter: Fighter, dt: number, state: SkirmishState, events: S
   bleed.remaining -= dt;
   bleed.tickIn -= dt;
   while (bleed.tickIn <= 0 && isFighterAlive(fighter)) {
-    const amount = Math.max(1, Math.round((fighter.maxHp * bleed.percent) / 100));
+    const amount = receivedDamage(fighter, Math.max(1, Math.round((fighter.maxHp * bleed.percent) / 100)));
     fighter.hp = Math.max(0, fighter.hp - amount);
     events.push({ kind: "bleed", fighterId: fighter.id, amount, started: false });
     // 출혈도 직접 공격과 동일한 HP 변경 경계를 통과해야 패시브 발동 시점이 일관된다.
@@ -580,8 +601,8 @@ function strike(
   useUltimate: boolean,
 ): void {
   const skill: Skill = useUltimate ? attacker.def.ultimate : attacker.def.basic;
-  if (useUltimate && attacker.def.ultimate.targeting === "nearbyEnemies") {
-    strikeNearbyUltimate(attacker, rng, state, events);
+  if ((useUltimate && attacker.def.ultimate.targeting !== "single") || (!useUltimate && attacker.def.basic.targeting === "nearbyEnemies")) {
+    strikeAreaAttack(attacker, rng, state, events, useUltimate);
     return;
   }
   // 이번 타격 시작 시점의 피버만 본다. 이 공격으로 100에 도달했다면 다음 공격부터 발현한다.
@@ -605,11 +626,8 @@ function strike(
     : 0;
   // 공용 피해 공식을 그대로 통과한 뒤 원정 공격력 증강만 최종 배율로 한 번 적용한다.
   const rawAmount = Math.max(1, Math.round((computeDamage(attacker, target, damageInput, true) + defenseBonus) * attackPowerMultiplier(state.augmentEffects, attacker.def.id)));
-  const guardTrait = target.def.ferocityTrait;
-  // 개별 경감은 방어·패시브·상성까지 끝난 공용 피해의 마지막에 한 번만 적용한다.
-  const amount = target.ferocityFever && guardTrait.effectId === "damageReduction"
-    ? Math.max(1, Math.round(rawAmount * (1 - guardTrait.reductionPercent / 100)))
-    : rawAmount;
+  // 방어·패시브·상성 뒤의 모든 개별 경감은 공용 HP 피해 경계에서 한 번만 적용한다.
+  const amount = receivedDamage(target, rawAmount);
 
   const targetHpBefore = target.hp;
   target.hp = Math.max(0, target.hp - amount);
@@ -677,11 +695,7 @@ function strike(
       }, true);
       const secondaryBase = (computeDamage(attacker, secondary, damageInput, true) * splashTrait.damagePercent / 100 + secondaryDefenseBonus)
         * attackPowerMultiplier(state.augmentEffects, attacker.def.id);
-      const secondaryGuard = secondary.def.ferocityTrait;
-      const reduced = secondary.ferocityFever && secondaryGuard.effectId === "damageReduction"
-        ? secondaryBase * (1 - secondaryGuard.reductionPercent / 100)
-        : secondaryBase;
-      const splashAmount = Math.max(1, Math.round(reduced));
+      const splashAmount = receivedDamage(secondary, secondaryBase);
       const secondaryHpBefore = secondary.hp;
       secondary.hp = Math.max(0, secondary.hp - splashAmount);
       tryTriggerEmergencyRecovery(secondary);
@@ -704,20 +718,20 @@ function strike(
 }
 
 /**
- * 시전자 주위 궁극기를 한 번 실행한다.
+ * 원형 광역 기본 공격 또는 궁극기를 한 번 실행한다.
  *
- * "주위"는 시전자 중심의 정적 px 반경이며 전장 전체를 뜻하지 않는다. 공격 시작 전에 대상을
+ * "주위"는 시전자 중심 px 반경이고, battlefieldEnemies만 좌표와 무관한 전장 전체다. 공격 시작 전에 대상을
  * 복사하므로 앞선 대상이 죽어도 뒤 대상의 피해·흡혈·상태·사망 처리는 빠지지 않는다.
  */
-function strikeNearbyUltimate(attacker: Fighter, rng: () => number, state: SkirmishState, events: SkirmishEvent[]): void {
-  const skill = attacker.def.ultimate;
-  if (skill.targeting !== "nearbyEnemies") return;
-  const targets = state.fighters.filter((fighter) => fighter.side !== attacker.side
-    && isFighterAlive(fighter) && distance(attacker, fighter) <= skill.radius);
+function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishState, events: SkirmishEvent[], useUltimate: boolean): void {
+  const skill = useUltimate ? attacker.def.ultimate : attacker.def.basic;
+  const targets = state.fighters.filter((fighter) => fighter.side !== attacker.side && isFighterAlive(fighter)
+    && (skill.targeting === "battlefieldEnemies" || (skill.targeting === "nearbyEnemies" && distance(attacker, fighter) <= (skill.radius ?? 0))));
   if (targets.length === 0) return;
 
   // 소비·팀 보조·야성 획득은 명중 수가 아니라 기술 사용 횟수에 묶는다.
-  attacker.energy -= skill.cost;
+  if (useUltimate) attacker.energy -= attacker.def.ultimate.cost;
+  else gainEnergy(attacker);
   grantFerocityTeamEnergy(attacker, state);
   // 공격자 야성은 이번 공격의 모든 피해가 같은 시작 시점 배율을 쓰도록 대상 처리 뒤에 얻는다.
   const attackingInFever = attacker.ferocityFever;
@@ -728,13 +742,10 @@ function strikeNearbyUltimate(attacker: Fighter, rng: () => number, state: Skirm
     const criticalChance = Math.min(100, attacker.def.stats.critChance
       + (attackingInFever && critTrait.effectId === "criticalChanceBonus" ? critTrait.chancePercent : 0));
     const critical = isCriticalHit(criticalChance, rng());
-    const damageInput = { ...skill, isCritical: critical, kind: "ultimate" as const };
+    const damageInput = { ...skill, isCritical: critical, kind: useUltimate ? "ultimate" as const : "basic" as const };
     const rawAmount = Math.max(1, Math.round(computeDamage(attacker, target, damageInput, true)
       * attackPowerMultiplier(state.augmentEffects, attacker.def.id)));
-    const guardTrait = target.def.ferocityTrait;
-    const amount = target.ferocityFever && guardTrait.effectId === "damageReduction"
-      ? Math.max(1, Math.round(rawAmount * (1 - guardTrait.reductionPercent / 100)))
-      : rawAmount;
+    const amount = receivedDamage(target, rawAmount);
     const hpBefore = target.hp;
     target.hp = Math.max(0, target.hp - amount);
     tryTriggerEmergencyRecovery(target);
@@ -751,7 +762,7 @@ function strikeNearbyUltimate(attacker: Fighter, rng: () => number, state: Skirm
     }
     target.dashX = (dx / gap) * SKIRMISH.knockback * 1.4;
     target.dashY = (dy / gap) * SKIRMISH.knockback * 1.4;
-    events.push({ kind: "attack", attackerId: attacker.id, targetId: target.id, skill: "ultimate", amount, critical, animate: index === 0 });
+    events.push({ kind: "attack", attackerId: attacker.id, targetId: target.id, skill: useUltimate ? "ultimate" : "basic", amount, critical, animate: index === 0 });
 
     // 죽은 대상에는 지속 상태와 상태 UI 시작 사건을 절대 남기지 않는다.
     if (isFighterAlive(target)) {
@@ -763,7 +774,7 @@ function strikeNearbyUltimate(attacker: Fighter, rng: () => number, state: Skirm
     }
     state.log.push(`${attacker.def.name} → ${target.def.name} ${amount}`);
   }
-  gainFerocity(attacker, FEROCITY_RULES.ultimateGain, state);
+  gainFerocity(attacker, useUltimate ? FEROCITY_RULES.ultimateGain : FEROCITY_RULES.basicGain, state);
 }
 
 /**
@@ -827,19 +838,33 @@ function settle(state: SkirmishState, events: SkirmishEvent[]): void {
 function advance(state: SkirmishState, dt: number, rng: () => number, events: SkirmishEvent[]): void {
   state.elapsed += dt;
 
+  // 누적치는 프레임 횟수가 아니라 완전히 경과한 전투 초로 재계산해 배속·프레임 분할과 무관하다.
+  for (const fighter of state.fighters) if (fighter.def.passive.kind === "abyssalPressure") {
+    fighter.bonusAp = Math.floor(state.elapsed + EMERGENCY_RECOVERY.epsilon) * (fighter.def.passive.apPerSecond ?? 0);
+  }
+
   if (state.boss) {
     const boss = state.boss;
     boss.survivedFor = state.elapsed;
     // ES2022 빌드에서도 동작하도록 뒤에서 직접 찾아 현재 단계를 고른다.
     for (let index = boss.phases.length - 1; index >= 0; index -= 1) if (state.elapsed >= boss.phases[index].startsAt) { boss.phaseIndex = index; break; }
     boss.limitReached = state.elapsed >= boss.limitSeconds;
+    // 리미트는 순수 시간/좌표 규칙이다. 시간이 갈수록 안전 반경이 좁고 폰투스가 중앙으로 압박한다.
+    const progress = Math.min(1, state.elapsed / boss.limitSeconds);
+    boss.pressureRadius = Math.max(120, Math.max(state.arena.right - state.arena.left, state.arena.bottom - state.arena.top) * (1 - progress) / 2);
+    boss.tideWarning = boss.phases[boss.phaseIndex + 1] !== undefined && boss.phases[boss.phaseIndex + 1].startsAt - state.elapsed <= 3;
+    for (const pontus of aliveFighters(state, "enemy").filter(({ def }) => def.passive.kind === "abyssalPressure")) {
+      const centerX = (state.arena.left + state.arena.right) / 2; const centerY = (state.arena.top + state.arena.bottom) / 2;
+      pontus.x += (centerX - pontus.x) * Math.min(1, dt * (0.08 + progress * 0.22));
+      pontus.y += (centerY - pontus.y) * Math.min(1, dt * (0.08 + progress * 0.22));
+    }
     // 프레임 크기와 무관하게 같은 누적 광역 피해가 되도록 소수 나머지를 다음 스텝에 보존한다.
     boss.damageRemainder += boss.phases[boss.phaseIndex].damagePerSecond * dt;
     const pulse = Math.floor(boss.damageRemainder);
     if (pulse > 0) {
       boss.damageRemainder -= pulse;
       for (const fighter of aliveFighters(state, "player")) {
-        fighter.hp = Math.max(0, fighter.hp - pulse);
+        fighter.hp = Math.max(0, fighter.hp - receivedDamage(fighter, pulse));
         if (!isFighterAlive(fighter)) { clearDefeatedStatuses(fighter); events.push({ kind: "death", fighterId: fighter.id }); }
       }
     }

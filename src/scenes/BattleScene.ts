@@ -200,6 +200,8 @@ export class BattleScene extends Phaser.Scene {
   private bossScoreLabel?: Phaser.GameObjects.Text;
   private bossPhaseLabel?: Phaser.GameObjects.Text;
   private bossBestLabel?: Phaser.GameObjects.Text;
+  /** 코어가 계산한 리미트 경고선만 그리며 범위나 시간을 씬에서 재계산하지 않는다. */
+  private bossWarningLine?: Phaser.GameObjects.Graphics;
   private spawned = false;
   /** 마지막으로 시뮬레이션을 굴린 실제 시각(ms). */
   private lastStepAt = 0;
@@ -231,6 +233,8 @@ export class BattleScene extends Phaser.Scene {
     this.bossScoreLabel = this.add.text(42, 92, "관측 피해 0", textStyle({ role: "display", size: 38, color: COLOR.sortieText })).setDepth(90);
     this.bossPhaseLabel = this.add.text(42, 140, "관측 · 00:00", textStyle({ role: "emphasis", size: 25, color: COLOR.accentText })).setDepth(90);
     this.bossBestLabel = this.add.text(42, 180, "주간 최고 0", textStyle({ role: "emphasis", size: 25, color: COLOR.ink })).setDepth(90);
+    // 선은 전투 좌표에 놓되 실제 리미트 판정은 전적으로 코어 상태가 소유한다.
+    this.bossWarningLine = this.add.graphics().setDepth(35);
     // 최고 기록은 서버 스냅샷만 표시하고 실패하면 0 표기를 유지해 로컬 추정치를 권한으로 쓰지 않는다.
     void gameApi.getExpeditionWeeklyBest().then(({ bestScore }) => this.bossBestLabel?.setText(`주간 최고 ${bestScore.toLocaleString()}`));
   }
@@ -591,7 +595,11 @@ export class BattleScene extends Phaser.Scene {
     if (this.state.boss) {
       const boss = this.state.boss; const phase = boss.phases[boss.phaseIndex];
       this.bossScoreLabel?.setText(`관측 피해 ${boss.score.toLocaleString()}`);
-      this.bossPhaseLabel?.setText(`${phase.label}${boss.limitReached ? " · LIMIT" : ""} · ${String(Math.floor(boss.survivedFor / 60)).padStart(2, "0")}:${String(Math.floor(boss.survivedFor) % 60).padStart(2, "0")}`);
+      this.bossPhaseLabel?.setText(`${phase.label}${boss.tideWarning ? " · 해일 예고" : boss.limitReached ? " · LIMIT" : ""} · ${String(Math.floor(boss.survivedFor / 60)).padStart(2, "0")}:${String(Math.floor(boss.survivedFor) % 60).padStart(2, "0")}`);
+      const centerX = (this.state.arena.left + this.state.arena.right) / 2;
+      const centerY = (this.state.arena.top + this.state.arena.bottom) / 2;
+      this.bossWarningLine?.clear().lineStyle(boss.tideWarning ? 6 : 3, boss.tideWarning ? 0xff8a63 : 0x59d9ff, boss.tideWarning ? 0.9 : 0.42)
+        .strokeCircle(centerX, centerY, boss.pressureRadius);
     }
     // 상태 종료와 좌표를 먼저 Puppet에 동기화한 뒤 공격 사건을 재생해야, 기절이 풀린 같은 스텝의
     // 공격 모션을 뒤늦은 idle 전환이 덮어쓰지 않는다.

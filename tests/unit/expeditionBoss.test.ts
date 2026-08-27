@@ -12,9 +12,16 @@ describe("expedition boss rules", () => {
     expect(result.bossDefeated).toBe(false); expect(result.totalDamage).toBeGreaterThan(0);
   });
 
-  it("시간 단계가 강해져 결국 아군 전멸 순간에 종료한다", () => {
-    const result = resolveExpeditionBossBattle([{ id: "tank", attack: 10, maxHp: 1_000_000 }], basicActions(["tank"], 91));
-    expect(expeditionBossPhaseAt(90_000).label).toBe("종말"); expect(result.allAlliesDead).toBe(true); expect(result.endedAtMs).toBe(90_000); expect(result.remainingHpByAlly.tank).toBe(0);
+  it("전장 전체 해일 단계가 생존한 모든 아군을 판정해 결국 최종 전멸 순간에만 종료한다", () => {
+    const party = [
+      { id: "tank", attack: 10, maxHp: 1_000_000 },
+      { id: "dealer", attack: 30, maxHp: 900_000 },
+      { id: "support", attack: 20, maxHp: 800_000 },
+    ];
+    const result = resolveExpeditionBossBattle(party, basicActions(party.map(({ id }) => id), 91));
+    expect(expeditionBossPhaseAt(90_000).label).toBe("종말"); expect(result.allAlliesDead).toBe(true); expect(result.endedAtMs).toBe(90_000);
+    // 마지막 해일은 한 명만 고르는 대신 그 시점의 생존 파티 전원을 0으로 만든다.
+    expect(Object.values(result.remainingHpByAlly)).toEqual([0, 0, 0]);
   });
 
   it("런에서 이어진 현재 HP를 서버 전멸 시각에 적용한다", () => {

@@ -25,7 +25,7 @@ import { battleAssetFor, flashHit, placePuppet, playMotion, spawnPuppet, tintPup
 import { session } from "../state/session";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { Button } from "../ui/Button";
-import { drawGlassFade, drawHairline, HoloBar } from "../ui/holo";
+import { drawGlassFade, drawHairline, HOLO, HoloBar } from "../ui/holo";
 import { PortraitCard, relicCardTint } from "../ui/PortraitCard";
 import { UnitHealthBar } from "../ui/UnitHealthBar";
 import { skillArtTint } from "../ui/skillArt";
@@ -53,6 +53,7 @@ import { expeditionManager } from "../managers/ExpeditionManager";
 import { settingsManager } from "../managers/SettingsManager";
 import type { SettleExpeditionRunResponse, SubmitExpeditionBossScoreResponse } from "../api/contracts";
 import { currencyRecordToRewardItems, openRewardPopup } from "../ui/RewardPopup";
+import { BATTLE_STATUS_LAYOUT, statusBadgeOffsets } from "../ui/battleStatusLayout";
 
 /**
  * 여섯이 돌아다닐 수 있는 범위.
@@ -145,7 +146,7 @@ interface FighterView {
   hpBar: UnitHealthBar;
   /** 걸린 상태이상을 알리는 작은 뱃지. 체력 바 옆에 붙는다. */
   bleedBadge: Phaser.GameObjects.Container;
-  /** 기절 중 체력 바 옆에 붙는 각진 번개 표식이다. */
+  /** 상태 소유자인 src/core/skirmish.ts의 기절 결과를 체력 바 옆에 그리는 각진 번개 표식이다. */
   stunBadge: Phaser.GameObjects.Container;
   /** 코어 상태 전환 때만 Puppet 모션을 바꾸기 위한 마지막 기절 표시값이다. */
   stunShown: boolean;
@@ -201,6 +202,8 @@ export class BattleScene extends Phaser.Scene {
   private lastStepAt = 0;
   /** 시뮬레이션 시간에만 곱하는 현재 전투 배속이다. */
   private battleSpeed: BattleSpeed = 1;
+  /** E2E가 Canvas의 짧은 회복 표시 수명을 관찰하기 위한 개수이며 게임 상태에는 관여하지 않는다. */
+  private healPopups = 0;
   /** 켜져 있으면 게이지가 찬 아군 궁극기를 다음 프레임에 자동 발동한다. */
   private autoUltimate = false;
   /** 공개적으로 읽기 쉬운 입력 잠금. 토큰 큐와 항상 함께 갱신한다. */
@@ -255,6 +258,8 @@ export class BattleScene extends Phaser.Scene {
     this.profiles = [];
     this.finished = false;
     this.spawned = false;
+    // 이전 씬의 tween 종료보다 재진입이 빠르더라도 표시 관찰값은 새 전투에서 0부터 시작한다.
+    this.healPopups = 0;
     // 이전 전투/환경설정에서 저장한 조작 상태를 새 판의 시작값으로 그대로 복원한다.
     const battleSettings = settingsManager.get().game;
     this.battleSpeed = battleSettings.battleSpeed;
@@ -691,20 +696,26 @@ export class BattleScene extends Phaser.Scene {
     const big = critical || ultimate;
     const label = this.add
       // 소수 HP가 생겨도 전투 숫자는 읽기 쉬운 정수로 표시하되 사건 자체의 실제 회복량은 보존한다.
-      .text(fighter.x + Phaser.Math.Between(-26, 26), fighter.y - UNIT_HEIGHT * 0.72, `${healing ? "+" : ""}${Math.round(amount)}`, textStyle({ role: "display", size: big ? 40 : 30, color }))
+      // 상태의 실제 소유자는 src/core/skirmish.ts다. 씬은 확정된 사건의 수치와 종류만 그린다.
+      .text(fighter.x + Phaser.Math.Between(-26, 26), fighter.y - UNIT_HEIGHT * BATTLE_STATUS_LAYOUT.popupBodyOffsetRatio, `${healing ? "+" : ""}${Math.round(amount)}`, textStyle({ role: "display", size: big ? 40 : 30, color }))
       .setOrigin(0.5)
       .setDepth(DEPTH.damage)
       .setStroke("#14171a", 7)
       .setScale(0.6);
+    // 상태의 실제 소유자는 src/core/skirmish.ts다. 이 개수는 표시 중인 회복 숫자만 센다.
+    if (healing) this.healPopups += 1;
     this.tweens.add({ targets: label, scale: 1, duration: 130, ease: "Back.Out" });
     this.tweens.add({
       targets: label,
-      y: label.y - 86,
+      y: label.y - BATTLE_STATUS_LAYOUT.popupRise,
       alpha: 0,
       delay: 130,
       duration: 620,
       ease: "Quad.Out",
-      onComplete: () => label.destroy(),
+      onComplete: () => {
+        label.destroy();
+        if (healing) this.healPopups = Math.max(0, this.healPopups - 1);
+      },
     });
   }
 
@@ -717,6 +728,9 @@ export class BattleScene extends Phaser.Scene {
     view.hpBar.setVisible(false);
     view.bleedBadge.setVisible(false);
     view.stunBadge.setVisible(false);
+    // 사망 뒤에는 코어가 상태를 비우므로 표시 객체도 컨테이너와 자식까지 즉시 폐기한다.
+    view.bleedBadge.destroy(true);
+    view.stunBadge.destroy(true);
     // 쓰러진 적의 빈자리가 계속 정보창을 열지 않도록 입력도 함께 닫는다.
     view.infoHit?.disableInteractive().setVisible(false);
     const burst = this.add.star(view.creature.x, view.creature.y, 10, 24, 66, COLOR.accent, 0.9).setDepth(DEPTH.burst);
@@ -748,7 +762,7 @@ export class BattleScene extends Phaser.Scene {
       new Phaser.Geom.Point(0, 10),
       new Phaser.Geom.Point(-7, 3),
     ], true);
-    badge.add(this.add.circle(0, 0, 13, COLOR.void, 0.7));
+    badge.add(this.add.circle(0, 0, BATTLE_STATUS_LAYOUT.badgeRadius, COLOR.void, HOLO.glass));
     badge.add(mark);
     return badge;
   }
@@ -758,6 +772,7 @@ export class BattleScene extends Phaser.Scene {
    * 번개 두 조각으로 상태 종류만 구분한다. 전투 HUD에 새 판이나 설명 문구를 늘리지 않는다.
    */
   private makeStunBadge(): Phaser.GameObjects.Container {
+    // 상태의 실제 소유자는 src/core/skirmish.ts다. 이 표식은 stunnedFor 결과만 그린다.
     const badge = this.add.container(0, 0).setVisible(false);
     const mark = this.add.graphics();
     mark.fillStyle(COLOR.accent, 0.95);
@@ -770,7 +785,7 @@ export class BattleScene extends Phaser.Scene {
       new Phaser.Geom.Point(-1, 3),
       new Phaser.Geom.Point(-8, 3),
     ], true);
-    badge.add(this.add.circle(0, 0, 13, COLOR.void, 0.7));
+    badge.add(this.add.circle(0, 0, BATTLE_STATUS_LAYOUT.badgeRadius, COLOR.void, HOLO.glass));
     badge.add(mark);
     return badge;
   }
@@ -819,6 +834,7 @@ export class BattleScene extends Phaser.Scene {
       const barY = pose.y - unitHeight - 26;
       view.hpBar.setPosition(pose.x, barY).setDepth(DEPTH.hpBar).setValue(fighter.hp / fighter.maxHp);
       const stunned = fighter.stunnedFor > 0;
+      // 상태의 실제 소유자는 src/core/skirmish.ts이며 Phaser 시계는 표시 여부를 결정하지 않는다.
       // 상태가 바뀐 프레임에만 유지 모션을 전환한다. 매 프레임 play하면 Puppet 재생 시각이 0으로
       // 되감겨 모션이 떨리므로, 종료도 별도 사건이 아니라 Fighter 타이머의 전환으로 감지한다.
       if (stunned !== view.stunShown) {
@@ -826,8 +842,9 @@ export class BattleScene extends Phaser.Scene {
         playMotion(this, view.creature, stunned ? "stun" : "idle");
       }
       // 여러 상태는 체력 바 왼쪽에서 안쪽부터 기절, 출혈 순서로 나란히 세워 서로 겹치지 않는다.
-      view.stunBadge.setPosition(pose.x - 62, barY).setDepth(DEPTH.hpBar + 2).setVisible(stunned);
-      view.bleedBadge.setPosition(pose.x - (stunned ? 92 : 62), barY).setDepth(DEPTH.hpBar + 2).setVisible(fighter.bleed !== null);
+      const badgeOffsets = statusBadgeOffsets(stunned);
+      view.stunBadge.setPosition(pose.x + badgeOffsets.stunX, barY).setDepth(DEPTH.hpBar + 2).setVisible(stunned);
+      view.bleedBadge.setPosition(pose.x + badgeOffsets.bleedX, barY).setDepth(DEPTH.hpBar + 2).setVisible(fighter.bleed !== null);
     });
   }
 
@@ -950,6 +967,9 @@ export class BattleScene extends Phaser.Scene {
       enemyTargets: [...this.views.values()]
         .filter((view) => view.fighter.side === "enemy" && !view.dead)
         .map((view) => ({ x: view.infoHit?.x ?? view.fighter.x, y: view.infoHit?.y ?? view.fighter.y })),
+      // 상태의 실제 소유자는 src/core/skirmish.ts다. 디버그 모델도 씬 타이머 없이 같은 값만 읽는다.
+      stunned: this.state.fighters.filter((fighter) => fighter.stunnedFor > 0).map((fighter) => fighter.def.name),
+      healPopups: this.healPopups,
     });
   }
 

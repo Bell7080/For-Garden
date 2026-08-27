@@ -23,6 +23,10 @@ export interface DebugBattle {
   ultimateQueue?: string[];
   /** 실제 이동 중인 적 클릭 영역 중심. E2E가 고정 좌표 대신 렌더 입력 계약을 누르는 데만 쓴다. */
   enemyTargets?: Array<{ x: number; y: number }>;
+  /** 코어의 stunnedFor가 양수여서 씬이 실제 기절 뱃지를 보이는 전투원 이름이다. */
+  stunned?: string[];
+  /** 현재 떠 있는 회복 숫자 수다. 코어 사건을 다시 계산하지 않고 표시 수명만 관찰한다. */
+  healPopups?: number;
 }
 
 export interface DebugState {

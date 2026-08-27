@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import PREPARE_ICONS from "../../scripts/prepare_icons.py?raw";
 import { RELICS } from "../../src/data/relics";
 import { ELEMENT_TINT, ROLE_TINT, SKILL_ART_ASSETS, SKILL_ART_SLOTS, skillArtFor, skillArtKey, skillArtTint } from "../../src/ui/skillArt";
-import { recoveryLabel, statusEffectLabel, targetingLabel } from "../../src/ui/skillPresentation";
+import { ferocityTraitDescription, recoveryLabel, statusEffectLabel, targetingLabel } from "../../src/ui/skillPresentation";
 
 /** 구워 둔 스킬 일러스트. 코드가 가리키는 파일이 실제로 있는지 확인한다. */
 const ART_FILES = import.meta.glob("../../public/sprites/skills/*/*.webp");
@@ -70,6 +70,7 @@ describe("토리카 스킬 표시 계약", () => {
     expect(`${torika.passive.durationSeconds}초 동안 ${recoveryLabel(torika.passive.value)}`).toBe("5초 동안 매초 최대 체력의 7% 회복");
     expect(targetingLabel(torika.ultimate.targeting)).toBe("자신의 주위 모든 적");
     expect(statusEffectLabel(torika.ultimate.statusEffects?.[0])).toBe("[[stun|기절]] 2초");
+    expect(ferocityTraitDescription(torika.ferocityTrait)).toBe("기본 공격이 대상 주위의 모든 적에게 원래 피해의 100%와 방어력의 60%의 물리 피해를 주고, 2초간 [[stagger|경직]]시킨다.");
     // 설명 원문에는 구조화된 수치나 개발 좌표를 복제하지 않아 값이 갈라질 여지를 없앤다.
     expect(torika.ultimate.desc).not.toMatch(/220px|2초/);
   });

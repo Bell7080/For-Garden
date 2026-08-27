@@ -472,6 +472,14 @@ describe("효과 ID별 야성 특성", () => {
     const hits = stepSkirmish(state, 1 / 60).filter((event) => event.kind === "attack");
     expect(hits).toHaveLength(2);
     expect(hits.some((event) => event.kind === "attack" && event.targetId === nearby.id)).toBe(true);
+    // 주 대상과 주변 대상은 모두 공격력 100% + 방어력 60% 계수를 각 대상의 방어력으로 계산한다.
+    const attackEvents = hits.filter((event) => event.kind === "attack");
+    const primaryHit = attackEvents.find((event) => event.targetId === primary.id)!;
+    const nearbyHit = attackEvents.find((event) => event.targetId === nearby.id)!;
+    // 계수의 단일 출처를 고정하고, 실제 타격이 기존 공격력 피해보다 커졌는지 각 대상에서 검증한다.
+    expect(torika.def.ferocityTrait).toMatchObject({ damagePercent: 100, defenseDamagePercent: 60 });
+    expect(primaryHit.amount).toBeGreaterThan(computeDamage(torika, primary, { ...torika.def.basic, isCritical: primaryHit.critical, kind: "basic" }, true));
+    expect(nearbyHit.amount).toBeGreaterThan(computeDamage(torika, nearby, { ...torika.def.basic, isCritical: nearbyHit.critical, kind: "basic" }, true));
     // 기존 설명의 경직은 공용 2초 기절이며 주 대상과 범위에 맞은 대상 모두 같은 상태를 쓴다.
     expect(primary.stunnedFor).toBeCloseTo(2);
     expect(nearby.stunnedFor).toBeCloseTo(2);

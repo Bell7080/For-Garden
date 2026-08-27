@@ -50,6 +50,7 @@ import { observationQuestionForRelicAndDate } from "../data/observations";
 import type { PublicRelicProfileDto } from "../api/contracts";
 import type { Fighter } from "../core/skirmish";
 import { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../core/infoCapabilities";
+import { ferocityTraitDescription } from "./skillPresentation";
 
 export type { SkillInfoViewModel } from "./SkillPopup";
 
@@ -1596,7 +1597,8 @@ export class InfoManager {
       tint: skillArtTint(def.element, def.role),
       effectType: "buff",
       valueLabel: "야성 발현",
-      description: "[[ferocity|야성 게이지]]가 가득 차면 폭주한다. " + def.ferocityTrait.desc,
+      // 설명 수치는 전투가 읽는 특성 필드에서 생성해 정적 문구와 실제 효과가 갈라지지 않는다.
+      description: "[[ferocity|야성 게이지]]가 가득 차면 폭주한다. " + ferocityTraitDescription(def.ferocityTrait),
     }, from);
   }
 

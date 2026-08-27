@@ -145,6 +145,10 @@ interface FighterView {
   hpBar: UnitHealthBar;
   /** 걸린 상태이상을 알리는 작은 뱃지. 체력 바 옆에 붙는다. */
   bleedBadge: Phaser.GameObjects.Container;
+  /** 기절 중 체력 바 옆에 붙는 각진 번개 표식이다. */
+  stunBadge: Phaser.GameObjects.Container;
+  /** 코어 상태 전환 때만 Puppet 모션을 바꾸기 위한 마지막 기절 표시값이다. */
+  stunShown: boolean;
   /** 폭주 중에만 켜지는 발광. 몸 뒤에 넓게 번지는 겹과 몸 위에 얹히는 좁은 겹 둘이다. */
   feverGlow: Phaser.GameObjects.Image;
   feverCore: Phaser.GameObjects.Image;
@@ -426,7 +430,8 @@ export class BattleScene extends Phaser.Scene {
       const barColor = fighter.side === "player" ? COLOR.hpFill : COLOR.hpEnemy;
       const hpBar = new UnitHealthBar(this, barColor).snap(1);
       const bleedBadge = this.makeBleedBadge();
-      this.views.set(fighter.id, { creature, asset, fighter, infoHit, shadow, hpBar, bleedBadge, feverGlow, feverCore, feverTint, feverTinted: false, tint, dead: false });
+      const stunBadge = this.makeStunBadge();
+      this.views.set(fighter.id, { creature, asset, fighter, infoHit, shadow, hpBar, bleedBadge, stunBadge, stunShown: false, feverGlow, feverCore, feverTint, feverTinted: false, tint, dead: false });
     }
     this.syncViews();
     // 마지막 한 명까지 서고 나서 시간을 흘려야 먼저 뜬 캐릭터만 앞서 달려가지 않는다.
@@ -609,9 +614,11 @@ export class BattleScene extends Phaser.Scene {
     if (this.ultimateSequenceActive) return;
     // 실제 프레임 간격에 선택 배율을 곱해 이동·공격 간격·게이지가 모두 같은 시간축을 쓴다.
     const events = stepSkirmish(this.state, dt * this.battleSpeed, () => Math.random());
+    // 상태 종료와 좌표를 먼저 Puppet에 동기화한 뒤 공격 사건을 재생해야, 기절이 풀린 같은 스텝의
+    // 공격 모션을 뒤늦은 idle 전환이 덮어쓰지 않는다.
+    this.syncViews();
     events.forEach((event) => this.playEvent(event));
     if (this.autoUltimate && !this.finished) this.fireReadyUltimates();
-    this.syncViews();
     this.refreshProfiles();
     this.refreshDebug();
   }
@@ -653,6 +660,11 @@ export class BattleScene extends Phaser.Scene {
       if (view) this.popDamage(view.fighter, event.amount, false, false, true);
       return undefined;
     }
+    if (event.kind === "status") {
+      // 시작 사건은 향후 전용 연출의 훅으로만 소비한다. 활성/종료 표시는 매 프레임 Fighter의
+      // stunnedFor를 읽어 동기화하므로, 종료 사건이 누락되어 UI가 남는 구조를 만들지 않는다.
+      return undefined;
+    }
 
     const attacker = this.views.get(event.attackerId);
     const target = this.views.get(event.targetId);
@@ -660,7 +672,8 @@ export class BattleScene extends Phaser.Scene {
     if (target) {
       // 붉은 섬광이 피격을 알리고, 동작은 공격을 끊지 않는 선에서 얕게만 얹힌다.
       flashHit(this, target.creature, this.bodyTint(target));
-      playMotion(this, target.creature, "hit");
+      // 기절 유지 자세는 일반 피격보다 우선한다. 섬광과 피해 숫자는 그대로 보여 타격감은 보존한다.
+      if (target.fighter.stunnedFor <= 0) playMotion(this, target.creature, "hit");
       this.popDamage(target.fighter, event.amount, event.skill === "ultimate", event.critical);
     }
     return playback;
@@ -702,6 +715,7 @@ export class BattleScene extends Phaser.Scene {
     view.shadow.setVisible(false);
     view.hpBar.setVisible(false);
     view.bleedBadge.setVisible(false);
+    view.stunBadge.setVisible(false);
     // 쓰러진 적의 빈자리가 계속 정보창을 열지 않도록 입력도 함께 닫는다.
     view.infoHit?.disableInteractive().setVisible(false);
     const burst = this.add.star(view.creature.x, view.creature.y, 10, 24, 66, COLOR.accent, 0.9).setDepth(DEPTH.burst);
@@ -732,6 +746,28 @@ export class BattleScene extends Phaser.Scene {
       new Phaser.Geom.Point(7, 3),
       new Phaser.Geom.Point(0, 10),
       new Phaser.Geom.Point(-7, 3),
+    ], true);
+    badge.add(this.add.circle(0, 0, 13, COLOR.void, 0.7));
+    badge.add(mark);
+    return badge;
+  }
+
+  /**
+   * 기절 뱃지. 기존 출혈 표식과 같은 26px 무테 원형 바탕을 공유하고, 홀로그램 강조색의 각진
+   * 번개 두 조각으로 상태 종류만 구분한다. 전투 HUD에 새 판이나 설명 문구를 늘리지 않는다.
+   */
+  private makeStunBadge(): Phaser.GameObjects.Container {
+    const badge = this.add.container(0, 0).setVisible(false);
+    const mark = this.add.graphics();
+    mark.fillStyle(COLOR.accent, 0.95);
+    mark.fillPoints([
+      new Phaser.Geom.Point(-3, -11),
+      new Phaser.Geom.Point(7, -11),
+      new Phaser.Geom.Point(1, -1),
+      new Phaser.Geom.Point(8, -1),
+      new Phaser.Geom.Point(-6, 12),
+      new Phaser.Geom.Point(-1, 3),
+      new Phaser.Geom.Point(-8, 3),
     ], true);
     badge.add(this.add.circle(0, 0, 13, COLOR.void, 0.7));
     badge.add(mark);
@@ -781,8 +817,16 @@ export class BattleScene extends Phaser.Scene {
       view.shadow.setPosition(pose.shadowX, pose.shadowY + 4).setDisplaySize(132 * lift, 24 * lift).setAlpha(0.38 * lift);
       const barY = pose.y - unitHeight - 26;
       view.hpBar.setPosition(pose.x, barY).setDepth(DEPTH.hpBar).setValue(fighter.hp / fighter.maxHp);
-      // 출혈 중인 동안만 체력 바 왼쪽에 붉은 물방울이 붙는다.
-      view.bleedBadge.setPosition(pose.x - 62, barY).setDepth(DEPTH.hpBar + 2).setVisible(fighter.bleed !== null);
+      const stunned = fighter.stunnedFor > 0;
+      // 상태가 바뀐 프레임에만 유지 모션을 전환한다. 매 프레임 play하면 Puppet 재생 시각이 0으로
+      // 되감겨 모션이 떨리므로, 종료도 별도 사건이 아니라 Fighter 타이머의 전환으로 감지한다.
+      if (stunned !== view.stunShown) {
+        view.stunShown = stunned;
+        playMotion(this, view.creature, stunned ? "stun" : "idle");
+      }
+      // 여러 상태는 체력 바 왼쪽에서 안쪽부터 기절, 출혈 순서로 나란히 세워 서로 겹치지 않는다.
+      view.stunBadge.setPosition(pose.x - 62, barY).setDepth(DEPTH.hpBar + 2).setVisible(stunned);
+      view.bleedBadge.setPosition(pose.x - (stunned ? 92 : 62), barY).setDepth(DEPTH.hpBar + 2).setVisible(fighter.bleed !== null);
     });
   }
 

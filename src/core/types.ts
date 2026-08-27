@@ -97,8 +97,14 @@ export interface Skill {
   scalingStat?: "atk" | "def";
   /** 물리는 atk/def, 마법은 ap/res를 참조한다. */
   damageType: DamageType;
+  /** 명중 뒤 적용할 작은 공용 상태 효과 목록이다. 현재는 기절만 지원하며 빈 스킬은 생략한다. */
+  statusEffects?: readonly CombatStatusEffect[];
   desc: string;
 }
+
+/** 스킬과 야성 특성이 공유하는 최소 상태 효과 계약이다. 새 상태가 실제로 생길 때만 union을 늘린다. */
+export type CombatStatusEffect =
+  | { kind: "stun"; /** 저항 계산 전 기본 지속 시간(초). */ seconds: number };
 
 export interface Ultimate extends Skill {
   /** 사용 시 소비하는 궁극기 게이지. 저장 상한과 독립된 스킬별 값이다. */
@@ -140,7 +146,7 @@ export type FerocityTrait = {
 } & (
   | { effectId: "attackIntervalReduction"; reductionPercent: number }
   | { effectId: "damageReduction"; reductionPercent: number }
-  | { effectId: "splashDamage"; damagePercent: number; radius: number }
+  | { effectId: "splashDamage"; damagePercent: number; radius: number; /** 범위 명중에 함께 적용할 선택 상태 효과다. */ statusEffect?: CombatStatusEffect }
   | { effectId: "allyEnergyGain"; energy: number }
   | { effectId: "criticalChanceBonus"; chancePercent: number }
   | { effectId: "teamMoveSpeedBonus"; bonusPercent: number }
@@ -178,6 +184,8 @@ export interface ExcavationTrait {
 /** 렐릭 한 명의 불변 정의. 플레이어별 성장 값은 RelicProgress에만 둔다. */
 export interface RelicDef {
   id: string;
+  /** 기절 지속 시간을 줄이는 비율(%). 정의하지 않으면 저항이 없고 100 이상이면 면역이다. */
+  stunResistancePercent?: number;
   name: string;
   /** 도감에서 쓰는 개체번호. 앞자리 0을 보존하기 위해 숫자가 아닌 문자열로 저장한다. */
   specimenNumber: string;

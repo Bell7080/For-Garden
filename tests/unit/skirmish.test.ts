@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   aliveFighters,
+  applyStun,
   BLEED,
   EMERGENCY_RECOVERY,
   attackInterval,
   canFireUltimate,
+  clearStun,
   createSkirmish,
   fireUltimate,
   findFighter,
@@ -242,6 +244,102 @@ describe("실시간 진행", () => {
   });
 });
 
+describe("기절 상태", () => {
+  /** 두 전투원을 붙이고 다른 우연한 행동 없이 기절 정책만 관찰할 결투를 만든다. */
+  function stunnedDuel(): SkirmishState {
+    const state = newSkirmish(["rex"], ["husk-shell"]);
+    const [ally, foe] = state.fighters;
+    ally.x = 400; ally.y = 1000; ally.targetId = foe.id; ally.engaged = true;
+    foe.x = 460; foe.y = 1000; foe.targetId = ally.id; foe.engaged = true;
+    ally.attackCooldown = 0.4;
+    foe.attackCooldown = 99;
+    return state;
+  }
+
+  it("는 이동·평타와 공격 쿨다운을 멈추고 정확히 2초 뒤 기존 행동을 재개한다", () => {
+    const state = stunnedDuel();
+    const ally = state.fighters[0];
+    // 추적 이동도 함께 검증하도록 잠시 교전 상태와 사거리 밖 위치로 바꾼다.
+    ally.engaged = false;
+    state.fighters[1].x = 900;
+    const start = { x: ally.x, y: ally.y, cooldown: ally.attackCooldown };
+    expect(applyStun(ally, 2)).toEqual([{ kind: "status", fighterId: ally.id, status: "stun", active: true }]);
+
+    const beforeEnd = Array.from({ length: 7 }, () => stepSkirmish(state, 0.25)).flat();
+    expect(beforeEnd.some((event) => event.kind === "attack" && event.attackerId === ally.id)).toBe(false);
+    expect({ x: ally.x, y: ally.y, cooldown: ally.attackCooldown }).toEqual(start);
+    const resumed = stepSkirmish(state, 0.25);
+    expect(ally.stunnedFor).toBe(0);
+    expect(ally.y).not.toBe(start.y); // 2초 경계가 된 스텝부터 대상 추적 이동을 다시 시작한다.
+    expect(resumed.some((event) => event.kind === "attack" && event.attackerId === ally.id)).toBe(false);
+    expect(ally.attackCooldown).toBeLessThan(start.cooldown); // 쿨다운도 2초 동안 멈춘 값에서 이어진다.
+  });
+
+  it("는 기절 중 적 자동 궁극기와 플레이어 수동 궁극기를 같은 규칙으로 차단한다", () => {
+    const playerState = stunnedDuel();
+    const player = playerState.fighters[0];
+    player.energy = player.def.ultimate.cost;
+    applyStun(player, 2);
+    expect(canFireUltimate(playerState, player)).toBe(false);
+    expect(fireUltimate(playerState, player.id)).toEqual([]);
+
+    const enemyState = stunnedDuel();
+    const enemy = enemyState.fighters[1];
+    enemy.attackCooldown = 0;
+    enemy.energy = enemy.def.ultimate.cost;
+    applyStun(enemy, 2);
+    const blocked = Array.from({ length: 7 }, () => stepSkirmish(enemyState, 0.25)).flat();
+    expect(blocked.some((event) => event.kind === "attack" && event.attackerId === enemy.id)).toBe(false);
+    const resumed = stepSkirmish(enemyState, 0.25);
+    expect(resumed).toContainEqual(expect.objectContaining({ kind: "attack", attackerId: enemy.id, skill: "ultimate" }));
+  });
+
+  it("는 재적용 때 긴 잔여 시간을 보존하고 사망하면 즉시 정리한다", () => {
+    const state = stunnedDuel();
+    const [ally, foe] = state.fighters;
+    applyStun(foe, 2);
+    // 한 호출의 catch-up 상한은 0.25초이므로 실제 0.5초는 두 프레임으로 진행한다.
+    stepSkirmish(state, 0.25);
+    stepSkirmish(state, 0.25);
+    expect(applyStun(foe, 1)).toEqual([]); // 이미 활성인 상태는 시작 사건을 프레임마다 반복하지 않는다.
+    expect(foe.stunnedFor).toBeCloseTo(1.5);
+    expect(applyStun(foe, 3)).toEqual([]);
+    expect(foe.stunnedFor).toBe(3);
+
+    foe.hp = 1;
+    ally.attackCooldown = 0;
+    const events = stepSkirmish(state, 1 / 60);
+    expect(events).toContainEqual({ kind: "death", fighterId: foe.id });
+    expect(foe.stunnedFor).toBe(0);
+  });
+
+  it("는 저항으로 지속 시간을 줄이고 100% 면역과 해제를 같은 Fighter 상태에 반영한다", () => {
+    const state = stunnedDuel();
+    const foe = state.fighters[1];
+    // 정적 콘텐츠 계약만 복제해 실제 캐릭터 밸런스를 바꾸지 않고 50% 저항 경계를 검증한다.
+    foe.def = { ...foe.def, stunResistancePercent: 50 };
+    expect(applyStun(foe, 2)).toHaveLength(1);
+    expect(foe.stunnedFor).toBe(1);
+    clearStun(foe);
+    expect(foe.stunnedFor).toBe(0);
+
+    foe.def = { ...foe.def, stunResistancePercent: 100 };
+    expect(applyStun(foe, 2)).toEqual([]);
+    expect(foe.stunnedFor).toBe(0);
+  });
+
+  it("는 개별 스킬의 상태 효과도 공용 기절 규칙으로 적용한다", () => {
+    const state = stunnedDuel();
+    const [ally, foe] = state.fighters;
+    // 테스트 전투원 한 명의 기본 공격에만 상태 정의를 붙여 운영 데이터에는 영향을 주지 않는다.
+    ally.def = { ...ally.def, basic: { ...ally.def.basic, statusEffects: [{ kind: "stun", seconds: 1.25 }] } };
+    ally.attackCooldown = 0;
+    const events = stepSkirmish(state, 1 / 60);
+    expect(events).toContainEqual({ kind: "status", fighterId: foe.id, status: "stun", active: true });
+    expect(foe.stunnedFor).toBe(1.25);
+  });
+});
+
 describe("능력치 반영", () => {
   it("은 공격 속도가 빠를수록 공격 간격이 짧다", () => {
     const base = newSkirmish().fighters[0];
@@ -373,6 +471,9 @@ describe("효과 ID별 야성 특성", () => {
     const hits = stepSkirmish(state, 1 / 60).filter((event) => event.kind === "attack");
     expect(hits).toHaveLength(2);
     expect(hits.some((event) => event.kind === "attack" && event.targetId === nearby.id)).toBe(true);
+    // 기존 설명의 경직은 공용 2초 기절이며 주 대상과 범위에 맞은 대상 모두 같은 상태를 쓴다.
+    expect(primary.stunnedFor).toBeCloseTo(2);
+    expect(nearby.stunnedFor).toBeCloseTo(2);
   });
 
   it("splashDamage는 세이라의 피버 타격을 220px 안의 주변 적에게 35%로 번지게 한다", () => {

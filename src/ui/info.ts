@@ -21,7 +21,7 @@ import {
   tintPuppet,
 } from "../puppets/assets";
 import { mixWhite, tintFor } from "../puppets/tints";
-import { addSceneBackground, BACKGROUND } from "./backgrounds";
+import { addPopupBackgroundImage, addSceneBackground, BACKGROUND } from "./backgrounds";
 import { addBackButton } from "./IconButton";
 import { chipPoints, drawGlassFade, drawHairline, drawInnerVignette, drawLayer, drawShapeEdge, drawShapeOutline, drawVignette, HOLO, perspectiveRect, slantedRect, toPoints } from "./holo";
 import { drawGlyph } from "./glyphs";
@@ -1011,6 +1011,13 @@ export class InfoManager {
     if (!def) return;
     const disclosure = getRelicCatalogDisclosure(def, this.ownedNow);
     this.popups.open({ width: 880, height: 980, title: "관찰 일지", tilt: -1.2, ...anchorOf(from) }, (body, close) => {
+      // 원본이 팝업보다 커도 확대/축소하지 않고 중앙을 클리핑해 종이 질감이 뭉개지지 않게 한다.
+      // 액자 테두리 안쪽으로만 보이며 공용 PopupLayer가 제목표를 최상단에 유지한다.
+      if (this.scene.textures.exists("content-observation-journal")) {
+        const journalArt = addPopupBackgroundImage(this.scene, body, "content-observation-journal", { x: 0, y: 0, width: 856, height: 956, nativeSize: true });
+        journalArt.image.setAlpha(0.18);
+        journalArt.fade.setAlpha(0.34);
+      }
       const lines = disclosure.access === "full"
         ? [
             "개체번호   NO." + disclosure.specimenNumber,
@@ -1054,7 +1061,8 @@ export class InfoManager {
         question.choices.forEach((choice, index) => {
           const buttonY = y + 64 + index * 54;
           body.add(drawLayer(this.scene, 0, buttonY, slantedRect(740, 44, 12), { fill: 0x141a22, alpha: 0.92, edge: COLOR.accent, edgeAlpha: 0.4 }));
-          body.add(this.scene.add.text(-350, buttonY, choice.label, textStyle({ role: "body", size: 20 })).setOrigin(0, 0.5));
+          // 선택 결과를 읽는 핵심 입력이므로 기존 본문보다 한 단계 큰 글자로 접근성을 높인다.
+          body.add(this.scene.add.text(-350, buttonY, choice.label, textStyle({ role: "emphasis", size: 24 })).setOrigin(0, 0.5));
           const hit = this.scene.add.rectangle(0, buttonY, 740, 44, 0xffffff, 0).setInteractive({ useHandCursor: true });
           hit.on("pointerup", () => { observations.complete(def.id, utcDate, choice.id); close(); this.openJournal(from); this.refreshGrowth(); });
           body.add(hit);

@@ -63,6 +63,8 @@ export class MissionsPopup {
       const mission = missionDisplayModel(raw); const y = list.firstCardY + index * list.cardGap;
       const panel = drawLayer(this.scene, 0, y, chipPoints(list.cardWidth, list.cardHeight, { bevel: { topLeft: 28, topRight: 0, bottomRight: 28, bottomLeft: 0 } }), { fill: mission.claimed ? 0x171b20 : mission.claimable ? 0x3b2b13 : 0x1a1f27, alpha: mission.claimed ? 0.52 : HOLO.glass, edge: mission.claimable ? COLOR.missionClaim : COLOR.accent, edgeAlpha: mission.claimed ? 0.16 : 0.55 });
       const title = this.scene.add.text(-400, y - 52, mission.title, textStyle({ role: "emphasis", size: 28, color: mission.claimed ? COLOR.inkDim : COLOR.ink })).setOrigin(0, 0);
+      // 카드 면을 먼저 컨테이너에 넣어 이후 생성하는 게이지가 임무 레이어 뒤로 숨지 않게 한다.
+      this.list?.add([panel, title]);
       // HoloBar의 x는 왼쪽 끝이 아니라 중심이다. 카드 안쪽 -390에서 시작해 우측 정보 앞에서 끝낸다.
       const barWidth = 520;
       const barLeft = -390;
@@ -73,7 +75,7 @@ export class MissionsPopup {
       const research = this.scene.add.text(150, y - 50, `연구도 +${mission.researchPoints}`, textStyle({ role: "emphasis", size: 22, color: COLOR.accentText })).setOrigin(0, 0);
       const reward = new RewardFrame(this.scene, 365, y, { icon: "currency-cheesecake", amount: mission.rewardCheesecake, size: 116, state: mission.state, onClick: mission.claimable ? () => void this.claimOne(mission.id) : undefined });
       const state = this.scene.add.text(275, y + 60, mission.claimed ? "수령 완료" : mission.claimable ? "수령 가능" : "진행 중", textStyle({ role: "body", size: 19, color: mission.claimable ? "#ffbf66" : COLOR.inkDim })).setOrigin(0.5, 0);
-      this.list?.add([panel, title, progress, research, reward, state]);
+      this.list?.add([progress, research, reward, state]);
       if (mission.claimable) { const hit = this.scene.add.rectangle(0, y, list.cardWidth, list.cardHeight, 0xffffff, 0).setInteractive({ useHandCursor: true }); hit.on("pointerup", () => void this.claimOne(mission.id)); this.list?.add(hit); this.list?.bringToTop(reward); }
     });
   }

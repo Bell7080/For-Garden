@@ -20,6 +20,9 @@ const EXPEDITION_ENEMY_FORMATIONS: Record<ExpeditionNodeType, readonly [string, 
   treasure: ["husk-raptor", "husk-shell", "husk-wing"],
 };
 
+/** 최종층 보스는 일반 boss fallback 표와 섞지 않아 다른 층의 임시 보스 편성을 바꾸지 않는다. */
+const FINAL_FLOOR_BOSS_ID = "pontus";
+
 /** 층과 조우 난도를 함께 반영한 표시/전투 공용 적 레벨이다. */
 export function expeditionEnemyLevel(type: ExpeditionNodeType, floor: number): number {
   const difficulty = type === "boss" ? 5 : type === "elite" ? 3 : type === "horde" ? 2 : 0;
@@ -27,17 +30,24 @@ export function expeditionEnemyLevel(type: ExpeditionNodeType, floor: number): n
 }
 
 /** 정보창과 실제 난전이 같은 ID·레벨·속성 정의를 소비하도록 성장 적용 사본을 만든다. */
-export function getExpeditionNodeEnemies(type: ExpeditionNodeType, floor: number): [RelicDef, RelicDef, RelicDef] {
+export function getExpeditionNodeEnemies(type: ExpeditionNodeType, floor: number): RelicDef[] {
   const level = expeditionEnemyLevel(type, floor);
-  return EXPEDITION_ENEMY_FORMATIONS[type].map((id) => {
+  // 20층 boss 노드만 폰투스 단독 편성이고, 그 밖의 boss 호출은 기존 3인 fallback을 유지한다.
+  const ids: readonly string[] = type === "boss" && floor === 20
+    ? [FINAL_FLOOR_BOSS_ID]
+    : EXPEDITION_ENEMY_FORMATIONS[type];
+  return ids.map((id) => {
     const enemy = getRelic(id);
     return { ...enemy, stats: applyLevelGrowth(enemy.stats, level) };
-  }) as [RelicDef, RelicDef, RelicDef];
+  });
 }
 
 /** 정보판에는 실제 전투 수(일반 3·정예 1·무리 5)를 그대로 펼쳐 미리보기와 출격 결과를 일치시킨다. */
 export function getExpeditionEncounterEnemies(type: ExpeditionNodeType, floor: number): RelicDef[] {
   const pool = getExpeditionNodeEnemies(type, floor);
-  const count = type === "normal" || type === "elite" || type === "horde" ? EXPEDITION_COMBAT_BALANCE[type].enemyCount : 3;
+  // 최종층 boss는 단독 조우이며, 일반 boss fallback만 기존 세 자리를 유지한다.
+  const count = type === "boss" && floor === 20
+    ? 1
+    : type === "normal" || type === "elite" || type === "horde" ? EXPEDITION_COMBAT_BALANCE[type].enemyCount : 3;
   return Array.from({ length: count }, (_, index) => pool[index % pool.length]);
 }

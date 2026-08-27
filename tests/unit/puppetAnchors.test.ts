@@ -8,6 +8,7 @@ import {
   resolveAnchors,
   type AnchorFrame,
 } from "../../src/puppets/anchors";
+import { PONTUS_PORTRAIT_METADATA, PONTUS_SD_METADATA } from "../../src/puppets/assetMetadata";
 
 /** 실제 char_001.zip과 같은 구성 — 머리 태그를 눈·입이 함께 가지고 있다. */
 function bone(name: string, x: number, y: number, tags: string[], parentId: string | null = "root"): PuppetBone {
@@ -120,4 +121,23 @@ describe("머리 카드 잘라내기", () => {
     expect(card.cropX + card.cropWidth).toBeLessThanOrEqual(FRAME.imageWidth);
     expect(card.cropY + card.cropHeight).toBeLessThanOrEqual(FRAME.imageHeight);
   });
+});
+
+describe("폰투스 에셋 앵커 메타데이터", () => {
+  it("는 ZIP 원본 크기와 alpha > 16 경계를 전신·SD에 그대로 고정한다", () => {
+    // 투명 캔버스 끝을 content로 되돌리는 실수는 카드 배율과 전투 바닥선을 동시에 어긋나게 한다.
+    expect(PONTUS_PORTRAIT_METADATA).toMatchObject({
+      imageWidth: 1024,
+      imageHeight: 1536,
+      content: { left: 1, top: 3, right: 1024, bottom: 1481 },
+      portraitZoom: 0.82,
+      portraitOffsetY: 48,
+    });
+    expect(PONTUS_SD_METADATA).toMatchObject({
+      imageWidth: 1254,
+      imageHeight: 1254,
+      content: { left: 32, top: 25, right: 1218, bottom: 1238 },
+    });
+  });
+
 });

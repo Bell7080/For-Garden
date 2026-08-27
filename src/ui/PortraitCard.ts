@@ -340,11 +340,13 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     const card = headCardFrame(asset, anchors, {
       width,
       height: frameHeight,
-      fillRatio: 0.56 / (asset.cardZoom ?? 1),
+      // 전신 정보창과 같은 원화 배율 보정을 적용해 폰투스가 카드에서만 다시 커지지 않게 한다.
+      fillRatio: 0.56 / ((asset.cardZoom ?? 1) * (asset.portraitZoom ?? 1)),
       headroom: 0.04,
     });
     const originX = -width / 2 - card.cropX * card.scale;
-    const originY = -height / 2 - this.overhang - card.cropY * card.scale;
+    // 전신과 같은 세로 보정을 써 코어 관절이 높은 원화의 시각 중심을 카드에서도 유지한다.
+    const originY = -height / 2 - this.overhang - card.cropY * card.scale + (asset.portraitOffsetY ?? 0);
 
     this.syncMask();
     const shadow = this.scene.add

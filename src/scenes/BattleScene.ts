@@ -626,7 +626,7 @@ export class BattleScene extends Phaser.Scene {
     void this.pumpUltimateQueue();
   }
 
-  /** 공격·사망·종료를 각각의 연출로 옮긴다. */
+  /** 공격·회복·사망·종료를 각각 구분되는 연출로 옮긴다. */
   private playEvent(event: SkirmishEvent, motionSpeedMultiplier = 1): MotionPlayback | undefined {
     if (event.kind === "finish") {
       this.finishBattle(event.phase);
@@ -645,6 +645,12 @@ export class BattleScene extends Phaser.Scene {
         return undefined;
       }
       this.popDamage(view.fighter, event.amount, false, false);
+      return undefined;
+    }
+    if (event.kind === "heal") {
+      const view = this.views.get(event.fighterId);
+      // 회복은 HP와 같은 연두색 및 + 접두어로 피해 숫자와 즉시 구분한다.
+      if (view) this.popDamage(view.fighter, event.amount, false, false, true);
       return undefined;
     }
 
@@ -666,11 +672,12 @@ export class BattleScene extends Phaser.Scene {
    * 아군이 받은 피해는 붉게, 적에게 준 피해는 흰색, 궁극기는 황동색이다. 배경과 SD 위에서도
    * 읽히도록 어두운 외곽선을 두르고, 뜨는 순간 살짝 커졌다 제 크기로 돌아온다.
    */
-  private popDamage(fighter: Fighter, amount: number, ultimate: boolean, critical: boolean): void {
-    const color = ultimate ? COLOR.accentText : fighter.side === "player" ? COLOR.dangerText : COLOR.ink;
+  private popDamage(fighter: Fighter, amount: number, ultimate: boolean, critical: boolean, healing = false): void {
+    const color = healing ? COLOR.hpText : ultimate ? COLOR.accentText : fighter.side === "player" ? COLOR.dangerText : COLOR.ink;
     const big = critical || ultimate;
     const label = this.add
-      .text(fighter.x + Phaser.Math.Between(-26, 26), fighter.y - UNIT_HEIGHT * 0.72, `${amount}`, textStyle({ role: "display", size: big ? 40 : 30, color }))
+      // 소수 HP가 생겨도 전투 숫자는 읽기 쉬운 정수로 표시하되 사건 자체의 실제 회복량은 보존한다.
+      .text(fighter.x + Phaser.Math.Between(-26, 26), fighter.y - UNIT_HEIGHT * 0.72, `${healing ? "+" : ""}${Math.round(amount)}`, textStyle({ role: "display", size: big ? 40 : 30, color }))
       .setOrigin(0.5)
       .setDepth(DEPTH.damage)
       .setStroke("#14171a", 7)

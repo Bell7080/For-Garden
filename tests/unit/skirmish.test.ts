@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   aliveFighters,
   BLEED,
+  EMERGENCY_RECOVERY,
   attackInterval,
   canFireUltimate,
   createSkirmish,
@@ -12,6 +13,8 @@ import {
   SKIRMISH,
   stepSkirmish,
   teamHp,
+  tickRegeneration,
+  tryTriggerEmergencyRecovery,
   type Arena,
   type SkirmishEvent,
   type SkirmishState,
@@ -74,6 +77,111 @@ function run(state: SkirmishState, seconds: number, rng?: () => number) {
   for (let t = 0; t < seconds; t += 1 / 60) events.push(...stepSkirmish(state, 1 / 60, rng));
   return events;
 }
+
+/**
+ * 토리카의 전투당 1회 회복을 독립 관찰한다. 발동권은 저장 데이터가 아니라 Fighter가 소유하며,
+ * 테스트는 공격 행동을 늦춰 초 단위 지속 효과만 진행되게 한다.
+ */
+function emergencyRecoveryFighter() {
+  const state = newSkirmish(["anky"], ["husk-shell"]);
+  for (const fighter of state.fighters) fighter.attackCooldown = 999;
+  return { state, fighter: state.fighters[0] };
+}
+
+describe("긴급 회복 패시브", () => {
+  it("는 50% 초과 HP에서 발동하지 않고 정확히 50%인 최초 진입은 포함한다", () => {
+    const { fighter } = emergencyRecoveryFighter();
+    fighter.hp = fighter.maxHp * 0.5 + 0.001;
+    expect(tryTriggerEmergencyRecovery(fighter)).toBe(false);
+    fighter.hp = fighter.maxHp * 0.5;
+    expect(tryTriggerEmergencyRecovery(fighter)).toBe(true);
+    expect(fighter.regeneration).toMatchObject({
+      remaining: EMERGENCY_RECOVERY.seconds,
+      tickIn: EMERGENCY_RECOVERY.tickSeconds,
+      percentPerTick: 7,
+    });
+  });
+
+  it("는 직접 피해와 출혈 피해가 처음 50% 이하로 내린 직후 공통 발동 경계를 지난다", () => {
+    /** 피해 종류 하나만 발생시키고 Fighter가 소유한 전투당 발동권 변화를 반환한다. */
+    const afterDamage = (kind: "direct" | "bleed") => {
+      const { state, fighter } = emergencyRecoveryFighter();
+      const enemy = state.fighters[1];
+      fighter.hp = fighter.maxHp * 0.51;
+      if (kind === "direct") {
+        fighter.x = 460; fighter.y = 1000;
+        enemy.x = 400; enemy.y = 1000; enemy.attackCooldown = 0;
+      } else {
+        // 다음 출혈 틱이 즉시 발생해 51%에서 50% 이하로 진입하도록 최대 HP의 2%를 적용한다.
+        fighter.bleed = { remaining: 1, tickIn: 0, percent: 2 };
+      }
+      stepSkirmish(state, 1 / 60);
+      return fighter;
+    };
+    expect(afterDamage("direct").passiveTriggered).toBe(true);
+    expect(afterDamage("bleed").passiveTriggered).toBe(true);
+  });
+
+  it("는 5초 동안 1초마다 최대 HP의 7%만 실제 회복량으로 기록한다", () => {
+    const { fighter } = emergencyRecoveryFighter();
+    fighter.hp = fighter.maxHp * 0.5;
+    tryTriggerEmergencyRecovery(fighter);
+    const events = tickRegeneration(fighter, 5).filter((event) => event.kind === "heal");
+    expect(events).toHaveLength(5);
+    for (const event of events) expect(event.amount).toBeCloseTo(fighter.maxHp * 0.07);
+    expect(fighter.hp).toBeCloseTo(fighter.maxHp * 0.85);
+    expect(fighter.regeneration).toBeNull();
+  });
+
+  it("는 최대 HP를 넘기지 않고 UI 사건에는 실제 증가분만 담는다", () => {
+    const { fighter } = emergencyRecoveryFighter();
+    fighter.hp = fighter.maxHp * 0.5;
+    tryTriggerEmergencyRecovery(fighter);
+    fighter.hp = fighter.maxHp * 0.98;
+    const [event] = tickRegeneration(fighter, 1);
+    expect(fighter.hp).toBe(fighter.maxHp);
+    expect(event).toMatchObject({ kind: "heal", fighterId: fighter.id, source: "passive" });
+    if (event?.kind === "heal") expect(event.amount).toBeCloseTo(fighter.maxHp * 0.02);
+  });
+
+  it("는 회복이 끝난 뒤 다시 50% 이하가 되어도 같은 전투에서 재발동하지 않는다", () => {
+    const { fighter } = emergencyRecoveryFighter();
+    fighter.hp = fighter.maxHp * 0.5;
+    expect(tryTriggerEmergencyRecovery(fighter)).toBe(true);
+    tickRegeneration(fighter, 5);
+    fighter.hp = fighter.maxHp * 0.4;
+    expect(tryTriggerEmergencyRecovery(fighter)).toBe(false);
+    expect(fighter.regeneration).toBeNull();
+  });
+
+  it("는 사망 상태에서 발동하거나 남은 회복 틱을 처리하지 않는다", () => {
+    const { fighter } = emergencyRecoveryFighter();
+    fighter.hp = fighter.maxHp * 0.5;
+    tryTriggerEmergencyRecovery(fighter);
+    fighter.hp = 0;
+    expect(tickRegeneration(fighter, 1)).toEqual([]);
+    expect(fighter.regeneration).toBeNull();
+    expect(tryTriggerEmergencyRecovery(fighter)).toBe(false);
+  });
+
+  it("는 큰 프레임과 maxStep 분할 모두 5초 끝 경계에서 정확히 다섯 틱으로 결정된다", () => {
+    /** 같은 시작 HP에서 지정한 프레임 조각을 적용해 분할 방식별 결과를 비교한다. */
+    const simulate = (frames: readonly number[]) => {
+      const { state, fighter } = emergencyRecoveryFighter();
+      fighter.hp = fighter.maxHp * 0.5;
+      tryTriggerEmergencyRecovery(fighter);
+      const heals: SkirmishEvent[] = [];
+      for (const dt of frames) heals.push(...stepSkirmish(state, dt).filter((event) => event.kind === "heal"));
+      return { hp: fighter.hp, amounts: heals.map((event) => event.kind === "heal" ? event.amount : 0) };
+    };
+    // stepSkirmish의 catch-up 상한 안에서 0.25초 프레임과 1/60초 프레임이 모두 정확히 5초를 센다.
+    const coarse = simulate(Array.from({ length: 20 }, () => 0.25));
+    const fine = simulate(Array.from({ length: 300 }, () => 1 / 60));
+    expect(coarse.amounts).toHaveLength(5);
+    expect(fine.amounts).toHaveLength(5);
+    expect(coarse).toEqual(fine);
+  });
+});
 
 describe("난전 시작 진형", () => {
   it("은 아군을 아래쪽, 적을 위쪽에 세운다", () => {

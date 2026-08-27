@@ -97,7 +97,10 @@ export function openSkillPopup(
 
     // 효과 분류와 수치는 한 줄에 둔다. 둘 다 "얼마나 세게, 어떤 식으로"를 말한다.
     const summary = [EFFECT_LABEL[skill.effectType], skill.valueLabel].filter(Boolean).join("   ·   ");
-    body.add(scene.add.text(textLeft, top + 156, summary, textStyle({ role: "emphasis", size: 24 })).setOrigin(0, 0));
+    // 실제 수치도 설명문과 같은 키워드 레이아웃을 써서, 누르면 산출 근거를 확인할 수 있게 한다.
+    const summaryText = keywords.layout(summary, { width: 560, size: 24, lineSpacing: 4 });
+    summaryText.setPosition(textLeft, top + 156);
+    body.add(summaryText);
 
     body.add(drawHairline(scene, 0, top + 232, POPUP.width - 96, { color: COLOR.accent, alpha: 0.35 }));
 

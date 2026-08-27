@@ -256,16 +256,15 @@ describe("효과 ID별 야성 특성", () => {
     expect(attackInterval(rex)).toBeCloseTo(before * 0.8);
   });
 
-  it("damageReduction은 토리카가 피버일 때 최종 피해를 18% 줄인다", () => {
-    const hit = (fever: boolean, ferocity: number) => {
-      const state = prepareHit("husk-raptor", ["anky"]);
-      const target = state.fighters[1];
-      target.ferocity = ferocity; target.ferocityFever = fever;
-      return (stepSkirmish(state, 1 / 60).find((event) => event.kind === "attack") as Extract<SkirmishEvent, { kind: "attack" }>).amount;
-    };
-    const before = hit(false, 0);
-    expect(hit(false, 99)).toBe(before); // 게이지만 99로 둔 상태에는 경감이 없다.
-    expect(hit(true, 100)).toBe(Math.max(1, Math.round(before * 0.82)));
+  it("토리카의 폭주는 기본 공격을 주변 적에게 번지게 한다", () => {
+    const state = prepareHit("anky", ["husk-shell", "husk-raptor"]);
+    const [torika, primary, nearby] = state.fighters;
+    nearby.x = primary.x + 100; nearby.y = primary.y;
+    torika.ferocity = 100; torika.ferocityFever = true;
+    // 폭주 설명과 실제 전투가 갈라지지 않도록 주 대상과 주변 대상 모두 공격 사건을 남긴다.
+    const hits = stepSkirmish(state, 1 / 60).filter((event) => event.kind === "attack");
+    expect(hits).toHaveLength(2);
+    expect(hits.some((event) => event.kind === "attack" && event.targetId === nearby.id)).toBe(true);
   });
 
   it("splashDamage는 세이라의 피버 타격을 220px 안의 주변 적에게 35%로 번지게 한다", () => {

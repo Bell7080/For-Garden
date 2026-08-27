@@ -194,7 +194,7 @@ export class LobbyScene extends Phaser.Scene {
     if (!this.popupLayer || this.popupLayer.isOpen) return;
     const status = expeditionManager.status();
     // 일반 작업판보다 암전을 옅게 해 로비의 애착 렐릭이 뒤에서 계속 보이도록 한다.
-    this.popupLayer.open({ width: 870, height: 850, title: "출격", titleSize: 34, dim: true, dimAlpha: 0.24, closeOnBackdrop: false, hideCloseButton: true }, (body, close) => {
+    this.popupLayer.open({ width: 870, height: 1250, title: "출격", titleSize: 34, dim: true, dimAlpha: 0.24, closeOnBackdrop: false, hideCloseButton: true }, (body, close) => {
       const storyButton = new ExpeditionEntryButton(this, 0, -190, {
         width: 650,
         height: 150,
@@ -206,16 +206,31 @@ export class LobbyScene extends Phaser.Scene {
         onClick: () => { close(); this.scene.start("stageMap"); },
       });
       body.add(storyButton);
+      // 두 일일 던전은 같은 위계와 같은 폭으로 나란히 놓아 어느 쪽도 기본 선택처럼 보이지 않게 한다.
+      const dailyEntries = [
+        { x: -180, label: "케이크 대작전", status: "3 WAVE · 성장 재화", mode: "cake" as const },
+        { x: 180, label: "현상수배", status: "태그 3회 · 골드", mode: "bounty" as const },
+      ];
+      dailyEntries.forEach((entry) => body.add(new ExpeditionEntryButton(this, entry.x, 0, {
+        width: 340, height: 135, label: entry.label, labelSize: 27, status: entry.status,
+        artKey: "content-story-entry", accentColor: EXCHANGE_BLUE, accentTextColor: "#9fd0f0",
+        onClick: () => { close(); this.scene.start("sortiePreview", { mode: entry.mode }); },
+      })));
+      // 레이드는 일일 던전 아래에서 독립된 전체 폭 콘텐츠로 읽히게 한다.
+      body.add(new ExpeditionEntryButton(this, 0, 190, {
+        width: 650, height: 145, label: "레이드", status: "협동 작전 · 준비 중",
+        onClick: () => { close(); this.scene.start("sortiePreview", { mode: "raid" }); },
+      }));
       // 전용 프리팹이 Content2_001 원화, 주황 출격 위계, 확대 피드백을 한 입력면으로 유지한다.
-      const expeditionButton = new ExpeditionEntryButton(this, 0, 35, {
+      const expeditionButton = new ExpeditionEntryButton(this, 0, 385, {
         width: 650,
         height: 170,
         status: this.expeditionStatus(status),
         onClick: () => { close(); this.scene.start("expedition"); },
       });
       body.add(expeditionButton);
-      // 향후 일일 던전이 늘어날 영역은 빈 공간으로 남기고, 닫기는 공용 우하단 슬롯에 고정한다.
-      addPopupBackButton(this, body, 870, 850, close);
+      // 다섯 콘텐츠 아래의 공용 우하단 슬롯은 기존 팝업 닫기 계약을 그대로 따른다.
+      addPopupBackButton(this, body, 870, 1250, close);
     });
   }
 

@@ -81,11 +81,11 @@ export function addPopupBackgroundImage(
   scene: Phaser.Scene,
   parent: Phaser.GameObjects.Container,
   texture: string,
-  bounds: { x: number; y: number; width: number; height: number; maskShape?: readonly number[] },
+  bounds: { x: number; y: number; width: number; height: number; maskShape?: readonly number[]; nativeSize?: boolean },
 ): PopupBackgroundImage {
-  // 원화는 원본 비율을 유지한 채 지정된 팝업 내부를 빈틈없이 채운다.
+  // 기본 배경은 영역을 cover하고, 일지처럼 인쇄 크기가 중요한 원화는 원본 1:1 크기로 잘라 쓴다.
   const image = scene.add.image(bounds.x, bounds.y, texture);
-  image.setScale(Math.max(bounds.width / image.width, bounds.height / image.height));
+  if (!bounds.nativeSize) image.setScale(Math.max(bounds.width / image.width, bounds.height / image.height));
   parent.add(image);
 
   // GeometryMask는 Container 변환을 자동 상속하지 않으므로 렌더 직전마다 월드 좌표를 맞춘다.

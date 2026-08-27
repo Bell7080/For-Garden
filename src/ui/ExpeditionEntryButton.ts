@@ -15,6 +15,8 @@ export interface IllustratedSortieButtonOptions {
   artKey?: string;
   accentColor?: number;
   accentTextColor?: string;
+  /** 한 줄 폭이 좁은 병렬 던전만 제목 크기를 낮춰 같은 버튼 비율을 유지한다. */
+  labelSize?: number;
 }
 
 /** 원정 일러스트와 출격 계열의 주황 강조를 한 입력면으로 묶는 재사용 진입 버튼이다. */
@@ -59,7 +61,7 @@ export class ExpeditionEntryButton extends Phaser.GameObjects.Container {
     this.add(art);
     this.add(drawInnerVignette(scene, 0, 0, shape, { strength: 0.74 }));
     this.add(drawShapeOutline(scene, 0, 0, shape, { color: accent, alpha: 0.92, width: 3 }));
-    this.add(scene.add.text(-options.width / 2 + 78, -18, options.label ?? "원정", textStyle({ role: "display", size: 42, color: accentText })).setOrigin(0, 0.5));
+    this.add(scene.add.text(-options.width / 2 + Math.min(78, options.width * 0.12), -18, options.label ?? "원정", textStyle({ role: "display", size: options.labelSize ?? 42, color: accentText })).setOrigin(0, 0.5));
     this.add(scene.add.text(-options.width / 2 + 80, 40, options.status, textStyle({ role: "emphasis", size: 20, color: COLOR.ink })).setOrigin(0, 0.5));
 
     // 투명 입력면 하나가 그림과 글자를 함께 확대해 공용 Button과 같은 눌림 피드백을 낸다.

@@ -34,7 +34,7 @@ export const RELICS: RelicDef[] = [
       lifeSteal: 0,
       ferocityGain: 0,
     },
-    ferocityTrait: { name: "폭주", effectId: "attackIntervalReduction", reductionPercent: 20, desc: "피버 중 공격 간격이 20% 짧아진다." },
+    ferocityTrait: { name: "폭주", effectId: "attackIntervalReduction", reductionPercent: 20 },
     passive: {
       id: "rex-passive",
       name: "포식 본능",
@@ -103,8 +103,8 @@ export const RELICS: RelicDef[] = [
       lifeSteal: 0,
       ferocityGain: 0,
     },
-    // 경직은 별도 특수 규칙이 아니라 공용 기절을 2초 적용한다. 다른 스킬도 같은 필드를 재사용한다.
-    ferocityTrait: { name: "다들 그만해!", effectId: "splashDamage", damagePercent: 100, radius: 220, statusEffect: { kind: "stun", seconds: 2 }, desc: "기본 공격이 범위 공격으로 바뀌며 방어력의 일부만큼 추가 피해를 주고, 주위 적을 2초간 [[stagger|경직]]시킨다." },
+    // 3명을 맞혀도 방어력 180% 궁극기의 총 계수를 넘지 않도록 추가 피해를 15%로 제한하고, 대신 공격 속도 20%를 보상으로 준다.
+    ferocityTrait: { name: "다들 그만해!", effectId: "splashDamage", damagePercent: 100, defenseDamagePercent: 15, attackSpeedBonusPercent: 20, radius: 220, statusEffect: { kind: "stagger", seconds: 0.1 } },
     passive: {
       id: "anky-passive",
       name: "온화한 방패",
@@ -170,7 +170,7 @@ export const RELICS: RelicDef[] = [
       lifeSteal: 0,
       ferocityGain: 0,
     },
-    ferocityTrait: { name: "범람", effectId: "splashDamage", damagePercent: 35, radius: 220, desc: "피버 중 타격이 대상 주변 220px의 적에게 원래 피해의 35%를 준다." },
+    ferocityTrait: { name: "범람", effectId: "splashDamage", damagePercent: 35, radius: 220 },
     passive: {
       id: "spino-passive",
       name: "등지느러미 방벽",
@@ -232,7 +232,7 @@ export const RELICS: RelicDef[] = [
       lifeSteal: 0,
       ferocityGain: 0,
     },
-    ferocityTrait: { name: "추적", effectId: "criticalChanceBonus", chancePercent: 22, desc: "피버 중 치명타율이 22%p 오른다." },
+    ferocityTrait: { name: "추적", effectId: "criticalChanceBonus", chancePercent: 22 },
     passive: {
       id: "luka-passive",
       name: "빈틈 포착",
@@ -293,7 +293,7 @@ export const RELICS: RelicDef[] = [
       lifeSteal: 0,
       ferocityGain: 0,
     },
-    ferocityTrait: { name: "소란", effectId: "allyEnergyGain", energy: 6, desc: "피버 중 공격할 때마다 다른 생존 아군이 궁극기 에너지를 6 얻는다." },
+    ferocityTrait: { name: "소란", effectId: "allyEnergyGain", energy: 6 },
     passive: {
       id: "dodo-passive",
       name: "온순한 둥지",
@@ -354,7 +354,7 @@ export const RELICS: RelicDef[] = [
       lifeSteal: 0,
       ferocityGain: 0,
     },
-    ferocityTrait: { name: "사냥", effectId: "criticalChanceBonus", chancePercent: 25, desc: "피버 중 치명타율이 25%p 오른다." },
+    ferocityTrait: { name: "사냥", effectId: "criticalChanceBonus", chancePercent: 25 },
     passive: {
       id: "smilo-passive",
       name: "매복 습성",
@@ -415,7 +415,7 @@ export const RELICS: RelicDef[] = [
       lifeSteal: 0,
       ferocityGain: 0,
     },
-    ferocityTrait: { name: "상승", effectId: "teamMoveSpeedBonus", bonusPercent: 18, desc: "피버 중 생존 아군 전체의 이동 속도가 18% 빨라진다." },
+    ferocityTrait: { name: "상승", effectId: "teamMoveSpeedBonus", bonusPercent: 18 },
     passive: {
       id: "quetz-passive",
       name: "활공 경계",
@@ -478,7 +478,7 @@ export const RELICS: RelicDef[] = [
       lifeSteal: 0,
       ferocityGain: 0,
     },
-    ferocityTrait: { name: "맹추", effectId: "attackIntervalReduction", reductionPercent: 12, desc: "피버 중 공격 간격이 12% 짧아진다." },
+    ferocityTrait: { name: "맹추", effectId: "attackIntervalReduction", reductionPercent: 12 },
     passive: {
       id: "husk-raptor-passive",
       name: "무리 본능",
@@ -539,7 +539,7 @@ export const RELICS: RelicDef[] = [
       lifeSteal: 0,
       ferocityGain: 0,
     },
-    ferocityTrait: { name: "농성", effectId: "damageReduction", reductionPercent: 12, desc: "피버 중 받는 피해가 12% 줄어든다." },
+    ferocityTrait: { name: "농성", effectId: "damageReduction", reductionPercent: 12 },
     passive: {
       id: "husk-shell-passive",
       name: "굳은 껍질",
@@ -600,7 +600,7 @@ export const RELICS: RelicDef[] = [
       lifeSteal: 0,
       ferocityGain: 0,
     },
-    ferocityTrait: { name: "역풍", effectId: "teamMoveSpeedBonus", bonusPercent: 12, desc: "피버 중 생존 아군 전체의 이동 속도가 12% 빨라진다." },
+    ferocityTrait: { name: "역풍", effectId: "teamMoveSpeedBonus", bonusPercent: 12 },
     passive: {
       id: "husk-wing-passive",
       name: "잔존 신호",

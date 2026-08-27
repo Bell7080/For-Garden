@@ -202,6 +202,16 @@ test("1080×1920 캐릭터 상세과 스킬 카드가 안전 영역 안에 표�
   await expect.poll(() => infoOpen(page)).toBe(true);
 });
 
+test("토리카 폭주 설명은 성장 능력치로 환산된 수치를 표시한다", async ({ page }) => {
+  // 토리카 상세의 패시브 위 폭주 뱃지를 누르고, 긴 동적 설명이 1080×1920 쪽지 안에 들어오는지 남긴다.
+  await page.setViewportSize({ width: BASE_WIDTH, height: BASE_HEIGHT });
+  await enterParty(page);
+  await longPress(page, ...TORIKA);
+  await expect.poll(() => infoOpen(page)).toBe(true);
+  await tap(page, 124, 1585);
+  await page.screenshot({ path: `test-results/${test.info().project.name}-torika-ferocity-info-1080x1920.png`, fullPage: true });
+});
+
 test("관찰 일지에서 오늘의 질문과 발견 기록 영역을 확인한다", async ({ page }) => {
   // 기준 해상도에서 기존 두루마리 버튼으로 인터뷰가 자연스럽게 이어지는지 시각 회귀를 남긴다.
   await page.setViewportSize({ width: BASE_WIDTH, height: BASE_HEIGHT });

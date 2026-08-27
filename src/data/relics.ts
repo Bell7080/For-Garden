@@ -103,7 +103,7 @@ export const RELICS: RelicDef[] = [
       lifeSteal: 0,
       ferocityGain: 0,
     },
-    // 3명을 맞혀도 방어력 180% 궁극기의 총 계수를 넘지 않도록 추가 피해를 15%로 제한하고, 대신 공격 속도 20%를 보상으로 준다.
+    // 폭주 기본 공격은 여러 대상을 자주 때리므로, 방어력 300%인 궁극기보다 낮은 15% 추가 피해로 제한한다.
     ferocityTrait: { name: "다들 그만해!", effectId: "splashDamage", damagePercent: 100, defenseDamagePercent: 15, attackSpeedBonusPercent: 20, radius: 220, statusEffect: { kind: "stagger", seconds: 0.1 } },
     passive: {
       id: "anky-passive",
@@ -127,7 +127,8 @@ export const RELICS: RelicDef[] = [
     ultimate: {
       id: "anky-ult",
       name: "지각 붕괴",
-      power: 180,
+      // 방어형 성장의 보상을 분명히 하기 위해 방어력 계수를 300%로 사용한다.
+      power: 300,
       scalingStat: "def",
       iconAssetId: "skill-icon-physical",
       effectType: "physical",

@@ -2,6 +2,7 @@ import { applyLevelGrowth } from "../core/relicProgression";
 import type { ExpeditionNodeType } from "../core/expeditionMap";
 import type { RelicDef } from "../core/types";
 import { getRelic } from "./relics";
+import { EXPEDITION_COMBAT_BALANCE } from "./expedition";
 
 /**
  * 원정 노드별 적 편성의 단일 정적 경계다.
@@ -32,4 +33,11 @@ export function getExpeditionNodeEnemies(type: ExpeditionNodeType, floor: number
     const enemy = getRelic(id);
     return { ...enemy, stats: applyLevelGrowth(enemy.stats, level) };
   }) as [RelicDef, RelicDef, RelicDef];
+}
+
+/** 정보판에는 실제 전투 수(일반 3·정예 1·무리 5)를 그대로 펼쳐 미리보기와 출격 결과를 일치시킨다. */
+export function getExpeditionEncounterEnemies(type: ExpeditionNodeType, floor: number): RelicDef[] {
+  const pool = getExpeditionNodeEnemies(type, floor);
+  const count = type === "normal" || type === "elite" || type === "horde" ? EXPEDITION_COMBAT_BALANCE[type].enemyCount : 3;
+  return Array.from({ length: count }, (_, index) => pool[index % pool.length]);
 }

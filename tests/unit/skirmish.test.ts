@@ -717,8 +717,8 @@ describe("궁극기", () => {
     // 같은 유리 속성에서도 대상 방어가 적용되고, 같은 무방어 대상도 속성 상성에 따라 달라진다.
     expect(expected[0]).toBeGreaterThan(expected[1]);
     expect(expected[0]).toBeGreaterThan(expected[2]);
-    // 기대값 자체가 토리카의 atk가 아니라 def 180%를 원천으로 썼는지도 수치로 고정한다.
-    expect(expected[0]).toBe(Math.round((torika.def.stats.def * 1.8) * 1.25));
+    // 기대값 자체가 토리카의 atk가 아니라 상향된 def 300%를 원천으로 썼는지도 수치로 고정한다.
+    expect(expected[0]).toBe(Math.round((torika.def.stats.def * 3) * 1.25));
     expect(first.stunnedFor).toBe(0);
     expect(armored.stunnedFor).toBe(2);
     expect(disadvantaged.stunnedFor).toBe(2);

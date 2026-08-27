@@ -633,6 +633,69 @@ export const RELICS: RelicDef[] = [
       desc: "굉음을 퍼뜨린다.",
     },
   },
+  {
+    // 원정 최종층의 단독 보스. 리바이어던 멜빌레이의 거대한 턱과 심해 포식자 모티브를 담는다.
+    id: "pontus",
+    name: "폰투스",
+    specimenNumber: "220",
+    projectName: "ABYSSAL CROWN",
+    excavationSite: "페루 피스코 분지 심해 퇴적층",
+    catalogSummary: "리바이어던 멜빌레이를 모티브로 복원된 거대 고래형 심해 개체.",
+    unlockRecord: { status: "sealed", reason: "restricted" },
+    rarity: "SSR",
+    portraitAssetId: "pontus",
+    origin: "리바이어던 멜빌레이",
+    element: "water",
+    role: "tank",
+    // 적 전용 정의도 RelicDef의 완전한 정적 계약을 지켜 공용 정보창이 예외 없이 표시한다.
+    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 0, efficiencyMultiplier: 1.00 },
+    stats: {
+      hp: 1900,
+      def: 118,
+      res: 104,
+      atk: 132,
+      ap: 96,
+      attackSpeed: 68,
+      moveSpeed: 58,
+      critChance: 8,
+      critDamage: 150,
+      energyGain: 20,
+      lifeSteal: 0,
+      ferocityGain: 0,
+    },
+    // 네 번째 스킬 표시는 공용 정보창이 이 야성 특성을 패시브 뱃지와 함께 읽어 구성한다.
+    ferocityTrait: { name: "해구", effectId: "damageReduction", reductionPercent: 20 },
+    passive: {
+      id: "pontus-passive",
+      name: "심해의 압력",
+      kind: "frontGuard",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      value: 20,
+      desc: "전방에서 받는 피해가 20% 줄어든다.",
+    },
+    basic: {
+      id: "pontus-basic",
+      name: "멜빌레이의 턱",
+      power: 115,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      desc: "거대한 턱으로 목표를 짓누른다.",
+    },
+    ultimate: {
+      id: "pontus-ult",
+      name: "리바이어던 해일",
+      power: 210,
+      iconAssetId: "skill-icon-magical",
+      effectType: "magical",
+      damageType: "magical",
+      cost: 100,
+      // 단독 보스의 궁극기도 현재 전투 코어가 지원하는 명시적 단일 대상 계약을 따른다.
+      targeting: "single",
+      desc: "심해의 수압을 해일처럼 방출한다.",
+    },
+  },
 ];
 
 /** 콘텐츠 로드 시 잘못된 형식과 중복 번호를 즉시 실패시켜 저장 데이터와 UI 순서를 보호한다. */
@@ -667,5 +730,5 @@ export function getRelic(id: string): RelicDef {
   return found;
 }
 
-/** 플레이어가 파티에 넣을 수 있는 렐릭. 적 개체(허스크)는 빠진다. */
-export const PLAYABLE_RELICS = RELICS.filter((r) => !r.id.startsWith("husk-"));
+/** 플레이어가 파티에 넣을 수 있는 렐릭. 일반 허스크와 전용 보스 폰투스는 빠진다. */
+export const PLAYABLE_RELICS = RELICS.filter((r) => !r.id.startsWith("husk-") && r.id !== "pontus");

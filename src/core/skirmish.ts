@@ -109,6 +109,8 @@ export type SkirmishEvent =
       skill: "basic" | "ultimate";
       amount: number;
       critical: boolean;
+      /** 광역 한 번에서 첫 피해 사건만 공격 모션을 재생한다. 생략하면 기존처럼 재생한다. */
+      animate?: boolean;
     }
   | { kind: "bleed"; fighterId: string; amount: number; started: boolean }
   | { kind: "heal"; fighterId: string; amount: number; source: "passive" }
@@ -542,6 +544,10 @@ function strike(
   useUltimate: boolean,
 ): void {
   const skill: Skill = useUltimate ? attacker.def.ultimate : attacker.def.basic;
+  if (useUltimate && attacker.def.ultimate.targeting === "nearbyEnemies") {
+    strikeNearbyUltimate(attacker, rng, state, events);
+    return;
+  }
   // 이번 타격 시작 시점의 피버만 본다. 이 공격으로 100에 도달했다면 다음 공격부터 발현한다.
   const attackingInFever = attacker.ferocityFever;
   const critTrait = attacker.def.ferocityTrait;
@@ -642,6 +648,69 @@ function strike(
     events.push({ kind: "death", fighterId: target.id });
     state.log.push(`${target.def.name} 전투 불능`);
   }
+}
+
+/**
+ * 시전자 주위 궁극기를 한 번 실행한다.
+ *
+ * "주위"는 시전자 중심의 정적 px 반경이며 전장 전체를 뜻하지 않는다. 공격 시작 전에 대상을
+ * 복사하므로 앞선 대상이 죽어도 뒤 대상의 피해·흡혈·상태·사망 처리는 빠지지 않는다.
+ */
+function strikeNearbyUltimate(attacker: Fighter, rng: () => number, state: SkirmishState, events: SkirmishEvent[]): void {
+  const skill = attacker.def.ultimate;
+  if (skill.targeting !== "nearbyEnemies") return;
+  const targets = state.fighters.filter((fighter) => fighter.side !== attacker.side
+    && isFighterAlive(fighter) && distance(attacker, fighter) <= skill.radius);
+  if (targets.length === 0) return;
+
+  // 소비·팀 보조·야성 획득은 명중 수가 아니라 기술 사용 횟수에 묶는다.
+  attacker.energy -= skill.cost;
+  grantFerocityTeamEnergy(attacker, state);
+  // 공격자 야성은 이번 공격의 모든 피해가 같은 시작 시점 배율을 쓰도록 대상 처리 뒤에 얻는다.
+  const attackingInFever = attacker.ferocityFever;
+  const critTrait = attacker.def.ferocityTrait;
+
+  for (const [index, target] of targets.entries()) {
+    // 각 대상은 자기 방어력·속성·피버 경감을 사용하며 치명타도 독립 판정한다.
+    const criticalChance = Math.min(100, attacker.def.stats.critChance
+      + (attackingInFever && critTrait.effectId === "criticalChanceBonus" ? critTrait.chancePercent : 0));
+    const critical = isCriticalHit(criticalChance, rng());
+    const damageInput = { ...skill, isCritical: critical, kind: "ultimate" as const };
+    const rawAmount = Math.max(1, Math.round(computeDamage(attacker, target, damageInput, true)
+      * attackPowerMultiplier(state.augmentEffects, attacker.def.id)));
+    const guardTrait = target.def.ferocityTrait;
+    const amount = target.ferocityFever && guardTrait.effectId === "damageReduction"
+      ? Math.max(1, Math.round(rawAmount * (1 - guardTrait.reductionPercent / 100)))
+      : rawAmount;
+    const hpBefore = target.hp;
+    target.hp = Math.max(0, target.hp - amount);
+    tryTriggerEmergencyRecovery(target);
+    // 흡혈은 대상별 실제 HP 감소량만 더해 과잉 피해를 회복량으로 만들지 않는다.
+    attacker.hp = Math.min(attacker.maxHp, attacker.hp + (hpBefore - target.hp) * attacker.def.stats.lifeSteal / 100);
+    gainFerocity(target, FEROCITY_RULES.hitGain, state);
+
+    const dx = target.x - attacker.x;
+    const dy = target.y - attacker.y;
+    const gap = Math.hypot(dx, dy) || 1;
+    if (index === 0) {
+      attacker.dashX = (dx / gap) * SKIRMISH.lunge * 1.4;
+      attacker.dashY = (dy / gap) * SKIRMISH.lunge * 1.4;
+    }
+    target.dashX = (dx / gap) * SKIRMISH.knockback * 1.4;
+    target.dashY = (dy / gap) * SKIRMISH.knockback * 1.4;
+    events.push({ kind: "attack", attackerId: attacker.id, targetId: target.id, skill: "ultimate", amount, critical, animate: index === 0 });
+
+    // 죽은 대상에는 지속 상태와 상태 UI 시작 사건을 절대 남기지 않는다.
+    if (isFighterAlive(target)) {
+      for (const effect of skill.statusEffects ?? []) applyCombatStatusEffect(target, effect, events);
+    } else {
+      clearDefeatedStatuses(target);
+      events.push({ kind: "death", fighterId: target.id });
+      state.log.push(`${target.def.name} 전투 불능`);
+    }
+    state.log.push(`${attacker.def.name} → ${target.def.name} ${amount}`);
+  }
+  gainFerocity(attacker, FEROCITY_RULES.ultimateGain, state);
 }
 
 /**

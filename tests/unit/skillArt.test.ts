@@ -54,3 +54,18 @@ describe("스킬 일러스트 파일", () => {
     }
   });
 });
+
+describe("궁극기 정적 표시 계약", () => {
+  it("은 모든 정의에 대상을 명시하고 토리카의 설명·반경·기절 수치를 함께 보존한다", () => {
+    // UI가 ID별 예외 없이 같은 정적 데이터를 읽을 수 있도록 모든 궁극기의 계약을 검사한다.
+    for (const def of RELICS) expect(["single", "nearbyEnemies"]).toContain(def.ultimate.targeting);
+    const torika = RELICS.find((def) => def.id === "anky")!;
+    expect(torika.ultimate).toMatchObject({
+      targeting: "nearbyEnemies",
+      radius: 220,
+      statusEffects: [{ kind: "stun", seconds: 2 }],
+    });
+    expect(torika.ultimate.desc).toContain("주위 반경 220px");
+    expect(torika.ultimate.desc).toContain("2초 동안 기절");
+  });
+});

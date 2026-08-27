@@ -106,10 +106,19 @@ export interface Skill {
 export type CombatStatusEffect =
   | { kind: "stun"; /** 저항 계산 전 기본 지속 시간(초). */ seconds: number };
 
-export interface Ultimate extends Skill {
+/** 궁극기의 대상 선택은 ID나 설명문 대신 코어가 검증할 수 있는 정적 계약으로 선언한다. */
+export type Ultimate = Skill & {
   /** 사용 시 소비하는 궁극기 게이지. 저장 상한과 독립된 스킬별 값이다. */
   cost: number;
-}
+} & (
+  | { /** 현재 선택한 한 적만 공격한다. */ targeting: "single" }
+  | {
+      /** 시전자 주위 반경 안의 모든 생존 적을 공격 시작 시점에 확정한다. */
+      targeting: "nearbyEnemies";
+      /** 거리 단위는 난전 좌표와 같은 px이며, 시전자 중심에서 잰다. */
+      radius: number;
+    }
+);
 
 /** 패시브는 종류별로 전투 엔진이 직접 해석한다. 새 패시브는 여기에 종류를 늘려 추가한다. */
 export type PassiveKind =

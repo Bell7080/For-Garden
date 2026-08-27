@@ -61,6 +61,8 @@ export const RELICS: RelicDef[] = [
       effectType: "physical",
       damageType: "physical",
       cost: 100,
+      // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
+      targeting: "single",
       desc: "적 전방에 큰 피해를 준다.",
     },
   },
@@ -130,7 +132,12 @@ export const RELICS: RelicDef[] = [
       effectType: "physical",
       damageType: "physical",
       cost: 120,
-      desc: "주위 모든 적에게 [[def|방어력]]의 180%에 해당하는 피해를 주고 2초 동안 기절시킨다.",
+      // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
+      targeting: "nearbyEnemies",
+      // "주위"는 시전자 중심 220px이며 전장 전체 대상이나 최초 대상 중심 범위가 아니다.
+      radius: 220,
+      statusEffects: [{ kind: "stun", seconds: 2 }],
+      desc: "자신의 주위 반경 220px 내 모든 적에게 [[def|방어력]]의 180%에 해당하는 피해를 주고, 생존한 적을 2초 동안 기절시킨다.",
     },
   },
   {
@@ -189,6 +196,8 @@ export const RELICS: RelicDef[] = [
       effectType: "physical",
       damageType: "physical",
       cost: 100,
+      // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
+      targeting: "single",
       desc: "격류를 가르며 돌진해 적 전방을 밀어붙인다.",
     },
   },
@@ -249,6 +258,8 @@ export const RELICS: RelicDef[] = [
       effectType: "physical",
       damageType: "physical",
       cost: 100,
+      // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
+      targeting: "single",
       desc: "시야에서 사라진 뒤 적의 빈틈으로 뛰어들어 연속 공격한다.",
     },
   },
@@ -308,6 +319,8 @@ export const RELICS: RelicDef[] = [
       effectType: "magical",
       damageType: "magical",
       cost: 100,
+      // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
+      targeting: "single",
       desc: "사라진 종의 노래로 적을 뒤흔든다.",
     },
   },
@@ -367,6 +380,8 @@ export const RELICS: RelicDef[] = [
       effectType: "physical",
       damageType: "physical",
       cost: 100,
+      // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
+      targeting: "single",
       desc: "숨 돌릴 틈 없이 적 전방을 몰아친다.",
     },
   },
@@ -426,6 +441,8 @@ export const RELICS: RelicDef[] = [
       effectType: "magical",
       damageType: "magical",
       cost: 100,
+      // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
+      targeting: "single",
       desc: "하늘을 덮어 적 전방을 찍어누른다.",
     },
   },
@@ -487,6 +504,8 @@ export const RELICS: RelicDef[] = [
       effectType: "physical",
       damageType: "physical",
       cost: 100,
+      // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
+      targeting: "single",
       desc: "떼지어 달려든다.",
     },
   },
@@ -546,6 +565,8 @@ export const RELICS: RelicDef[] = [
       effectType: "physical",
       damageType: "physical",
       cost: 100,
+      // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
+      targeting: "single",
       desc: "무너지듯 짓누른다.",
     },
   },
@@ -605,6 +626,8 @@ export const RELICS: RelicDef[] = [
       effectType: "magical",
       damageType: "magical",
       cost: 100,
+      // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
+      targeting: "single",
       desc: "굉음을 퍼뜨린다.",
     },
   },

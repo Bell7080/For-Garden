@@ -557,8 +557,19 @@ function strike(
     + (attackingInFever && critTrait.effectId === "criticalChanceBonus" ? critTrait.chancePercent : 0);
   const critical = isCriticalHit(Math.min(100, criticalChance), rng());
   const damageInput = { ...skill, isCritical: critical, kind: useUltimate ? "ultimate" as const : "basic" as const };
+  const splashTrait = attacker.def.ferocityTrait;
+  // 토리카의 방어력 추가 피해도 일반 물리 피해 공식(속성·대상 방어력·치명타)을 거친다.
+  const defenseBonus = attackingInFever && !useUltimate && splashTrait.effectId === "splashDamage"
+    && splashTrait.defenseDamagePercent !== undefined
+    ? computeDamage(attacker, target, {
+        ...damageInput,
+        power: splashTrait.defenseDamagePercent,
+        scalingStat: "def",
+        damageType: "physical",
+      }, true)
+    : 0;
   // 공용 피해 공식을 그대로 통과한 뒤 원정 공격력 증강만 최종 배율로 한 번 적용한다.
-  const rawAmount = Math.max(1, Math.round(computeDamage(attacker, target, damageInput, true) * attackPowerMultiplier(state.augmentEffects, attacker.def.id)));
+  const rawAmount = Math.max(1, Math.round((computeDamage(attacker, target, damageInput, true) + defenseBonus) * attackPowerMultiplier(state.augmentEffects, attacker.def.id)));
   const guardTrait = target.def.ferocityTrait;
   // 개별 경감은 방어·패시브·상성까지 끝난 공용 피해의 마지막에 한 번만 적용한다.
   const amount = target.ferocityFever && guardTrait.effectId === "damageReduction"
@@ -616,7 +627,6 @@ function strike(
   }
 
   // 광역 피해는 주 대상 타격의 부가 결과이며 에너지·야성·연속 공격을 추가 획득하지 않는다.
-  const splashTrait = attacker.def.ferocityTrait;
   if (attackingInFever && splashTrait.effectId === "splashDamage") {
     // 토리카의 경직처럼 피해 특성이 기절 시간을 선언하면 주 대상도 같은 공용 상태 규칙을 지난다.
     if (splashTrait.statusEffect && isFighterAlive(target)) applyCombatStatusEffect(target, splashTrait.statusEffect, events);
@@ -624,12 +634,19 @@ function strike(
       if (secondary.side === attacker.side || secondary.id === target.id || !isFighterAlive(secondary)
         || distance(target, secondary) > splashTrait.radius) continue;
       // 광역도 같은 공격의 일부이므로 주 대상과 동일한 원정 공격력 배율을 거친다.
-      const secondaryBase = computeDamage(attacker, secondary, damageInput, true) * attackPowerMultiplier(state.augmentEffects, attacker.def.id);
+      const secondaryDefenseBonus = splashTrait.defenseDamagePercent === undefined ? 0 : computeDamage(attacker, secondary, {
+        ...damageInput,
+        power: splashTrait.defenseDamagePercent,
+        scalingStat: "def",
+        damageType: "physical",
+      }, true);
+      const secondaryBase = (computeDamage(attacker, secondary, damageInput, true) * splashTrait.damagePercent / 100 + secondaryDefenseBonus)
+        * attackPowerMultiplier(state.augmentEffects, attacker.def.id);
       const secondaryGuard = secondary.def.ferocityTrait;
       const reduced = secondary.ferocityFever && secondaryGuard.effectId === "damageReduction"
         ? secondaryBase * (1 - secondaryGuard.reductionPercent / 100)
         : secondaryBase;
-      const splashAmount = Math.max(1, Math.round(reduced * splashTrait.damagePercent / 100));
+      const splashAmount = Math.max(1, Math.round(reduced));
       const secondaryHpBefore = secondary.hp;
       secondary.hp = Math.max(0, secondary.hp - splashAmount);
       tryTriggerEmergencyRecovery(secondary);

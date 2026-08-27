@@ -150,12 +150,19 @@ export type FerocityEffectId =
 export type FerocityTrait = {
   /** 뱃지에 찍히는 짧은 이름. 두세 글자를 넘기지 않는다. */
   name: string;
-  /** UI가 그대로 읽는 설명이며 아래 수치 파라미터와 반드시 같은 값을 적는다. */
-  desc: string;
 } & (
   | { effectId: "attackIntervalReduction"; reductionPercent: number }
   | { effectId: "damageReduction"; reductionPercent: number }
-  | { effectId: "splashDamage"; damagePercent: number; radius: number; /** 범위 명중에 함께 적용할 선택 상태 효과다. */ statusEffect?: CombatStatusEffect }
+  | {
+      effectId: "splashDamage";
+      /** 기본 타격 피해 중 주변 대상에게 전달할 비율이다. */
+      damagePercent: number;
+      radius: number;
+      /** 방어력 기반 물리 추가 피해 비율이며, 없으면 추가 피해를 계산하지 않는다. */
+      defenseDamagePercent?: number;
+      /** 범위 명중에 함께 적용할 선택 상태 효과다. */
+      statusEffect?: CombatStatusEffect;
+    }
   | { effectId: "allyEnergyGain"; energy: number }
   | { effectId: "criticalChanceBonus"; chancePercent: number }
   | { effectId: "teamMoveSpeedBonus"; bonusPercent: number }

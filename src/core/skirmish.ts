@@ -66,6 +66,10 @@ export interface Fighter extends Combatant {
   streakCount: number;
   /** 걸려 있는 출혈. 없으면 null이다. */
   bleed: { remaining: number; tickIn: number; percent: number } | null;
+  /** 이 전투에서 긴급 회복 패시브를 이미 발동했는지. 저장하지 않는 "전투당 1회" 소유 상태다. */
+  passiveTriggered: boolean;
+  /** 진행 중인 지속 회복. remaining과 tickIn은 초, percentPerTick은 최대 HP 대비 %이며 저장하지 않는다. */
+  regeneration: { remaining: number; tickIn: number; percentPerTick: number } | null;
 }
 
 export type SkirmishPhase = "fight" | "victory" | "defeat";
@@ -105,6 +109,7 @@ export type SkirmishEvent =
       critical: boolean;
     }
   | { kind: "bleed"; fighterId: string; amount: number; started: boolean }
+  | { kind: "heal"; fighterId: string; amount: number; source: "passive" }
   | { kind: "death"; fighterId: string }
   | { kind: "finish"; phase: "victory" | "defeat" };
 
@@ -166,6 +171,16 @@ export const BLEED = {
   percentPerSecond: 2,
 } as const;
 
+/** 긴급 회복의 공용 시간 규칙. 캐릭터 데이터의 value만 틱당 최대 HP 비율(%)로 해석한다. */
+export const EMERGENCY_RECOVERY = {
+  /** 회복이 유지되는 총 시간(초). 1초 경계를 포함해 정확히 다섯 번 틱한다. */
+  seconds: 5,
+  /** 회복 틱 사이의 시간(초). */
+  tickSeconds: 1,
+  /** 초 단위 누적 오차가 5초 마지막 경계를 누락시키지 않게 하는 비교 여유다. */
+  epsilon: 1e-9,
+} as const;
+
 /** 항상 같은 결과를 원하는 호출부(테스트)를 위한 기본 판정값 — 치명타가 나지 않는다. */
 const NO_CRIT = (): number => 0.999999;
 
@@ -200,6 +215,9 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     streakTargetId: null,
     streakCount: 0,
     bleed: null,
+    // 저장 스냅샷의 HP만 반영하고, 전투 한정 발동권과 지속 효과는 매 전투 새로 만든다.
+    passiveTriggered: false,
+    regeneration: null,
   };
 }
 
@@ -402,6 +420,57 @@ function applyStreak(attacker: Fighter, target: Fighter, events: SkirmishEvent[]
   events.push({ kind: "bleed", fighterId: target.id, amount: 0, started: true });
 }
 
+/**
+ * HP 변경 직후 긴급 회복의 단일 발동 경계를 검사한다.
+ *
+ * 외부 시계나 난수를 읽지 않는 결정적 헬퍼이며, `passiveTriggered`가 전투당 한 번뿐인 발동권을
+ * Fighter 안에서 소유한다. 정확히 최대 HP의 50%인 순간도 발동 경계에 포함한다.
+ */
+export function tryTriggerEmergencyRecovery(fighter: Fighter): boolean {
+  if (fighter.def.passive.kind !== "emergencyRecovery" || !isFighterAlive(fighter)
+    || fighter.hp > fighter.maxHp * 0.5 || fighter.passiveTriggered) return false;
+
+  fighter.passiveTriggered = true;
+  fighter.regeneration = {
+    remaining: EMERGENCY_RECOVERY.seconds,
+    tickIn: EMERGENCY_RECOVERY.tickSeconds,
+    // 패시브 value의 단위는 1초 틱마다 회복하는 최대 HP 비율(%)이다.
+    percentPerTick: fighter.def.passive.value,
+  };
+  return true;
+}
+
+/**
+ * 한 전투 스텝의 지속 회복 시계를 전진하고 실제 HP 증가분만 사건으로 반환한다.
+ *
+ * 먼저 이번 효과의 남은 시간까지만 소비한 뒤 틱 경계를 처리한다. 따라서 큰 dt가 들어오거나
+ * maxStep으로 잘려도 1~5초 경계를 같은 순서로 지나며, epsilon은 5초 경계의 부동소수점 누락만
+ * 보정한다. 사망자는 시계를 즉시 버려 이후 되살아나는 회복 사건을 만들지 않는다.
+ */
+export function tickRegeneration(fighter: Fighter, dt: number): SkirmishEvent[] {
+  const regeneration = fighter.regeneration;
+  if (!regeneration || dt <= 0) return [];
+  if (!isFighterAlive(fighter)) {
+    fighter.regeneration = null;
+    return [];
+  }
+
+  const elapsed = Math.min(dt, Math.max(0, regeneration.remaining));
+  regeneration.remaining = Math.max(0, regeneration.remaining - elapsed);
+  regeneration.tickIn -= elapsed;
+  const events: SkirmishEvent[] = [];
+  while (regeneration.tickIn <= EMERGENCY_RECOVERY.epsilon) {
+    const before = fighter.hp;
+    fighter.hp = Math.min(fighter.maxHp, fighter.hp + fighter.maxHp * regeneration.percentPerTick / 100);
+    const amount = fighter.hp - before;
+    // 최대 HP에서 발생한 0 회복은 UI에 숫자를 띄울 실제 사건이 아니므로 생략한다.
+    if (amount > 0) events.push({ kind: "heal", fighterId: fighter.id, amount, source: "passive" });
+    regeneration.tickIn += EMERGENCY_RECOVERY.tickSeconds;
+  }
+  if (regeneration.remaining <= EMERGENCY_RECOVERY.epsilon) fighter.regeneration = null;
+  return events;
+}
+
 /** 걸린 출혈을 1초 간격으로 깎는다. 방어력을 거치지 않는 고정 피해다. */
 function tickBleed(fighter: Fighter, dt: number, state: SkirmishState, events: SkirmishEvent[]): void {
   const bleed = fighter.bleed;
@@ -412,6 +481,8 @@ function tickBleed(fighter: Fighter, dt: number, state: SkirmishState, events: S
     const amount = Math.max(1, Math.round((fighter.maxHp * bleed.percent) / 100));
     fighter.hp = Math.max(0, fighter.hp - amount);
     events.push({ kind: "bleed", fighterId: fighter.id, amount, started: false });
+    // 출혈도 직접 공격과 동일한 HP 변경 경계를 통과해야 패시브 발동 시점이 일관된다.
+    tryTriggerEmergencyRecovery(fighter);
     state.log.push(`${fighter.def.name} 출혈 ${amount}`);
     bleed.tickIn += 1;
     if (!isFighterAlive(fighter)) {
@@ -451,6 +522,7 @@ function strike(
 
   const targetHpBefore = target.hp;
   target.hp = Math.max(0, target.hp - amount);
+  tryTriggerEmergencyRecovery(target);
   /**
    * 흡혈 규칙: 보호막을 통과한 뒤 실제 HP에서 빠진 직접/광역 피해에만 적용한다.
    * 과잉 피해는 제외하고, 출혈 같은 별도 고정 피해에는 적용하지 않는다. 현재 보호막 모델이
@@ -508,6 +580,7 @@ function strike(
       const splashAmount = Math.max(1, Math.round(reduced * splashTrait.damagePercent / 100));
       const secondaryHpBefore = secondary.hp;
       secondary.hp = Math.max(0, secondary.hp - splashAmount);
+      tryTriggerEmergencyRecovery(secondary);
       // 광역 피해도 공격자가 실제로 입힌 HP 피해이므로 같은 흡혈 규칙에 포함한다.
       healFromDamage(secondaryHpBefore - secondary.hp);
       events.push({ kind: "attack", attackerId: attacker.id, targetId: secondary.id, skill: useUltimate ? "ultimate" : "basic", amount: splashAmount, critical });
@@ -585,10 +658,14 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     fighter.dashY *= recovery;
   }
 
+  // 지속 회복은 행동 순서와 분리해 모든 전투원이 같은 스텝의 시간 경계를 먼저 지나게 한다.
+  for (const fighter of state.fighters) events.push(...tickRegeneration(fighter, dt));
+
   for (const fighter of state.fighters) {
     if (!isFighterAlive(fighter)) {
       fighter.hop *= recovery;
       fighter.bleed = null;
+      fighter.regeneration = null;
       continue;
     }
     // 출혈은 붙어 있든 달려가든 흐르는 시간만큼 깎는다.

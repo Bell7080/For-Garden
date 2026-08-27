@@ -21,7 +21,7 @@ import {
   tintPuppet,
 } from "../puppets/assets";
 import { mixWhite, tintFor } from "../puppets/tints";
-import { addSceneBackground, BACKGROUND } from "./backgrounds";
+import { addPopupBackgroundImage, addSceneBackground, BACKGROUND } from "./backgrounds";
 import { addBackButton } from "./IconButton";
 import { chipPoints, drawGlassFade, drawHairline, drawInnerVignette, drawLayer, drawShapeEdge, drawShapeOutline, drawVignette, HOLO, perspectiveRect, slantedRect, toPoints } from "./holo";
 import { drawGlyph } from "./glyphs";
@@ -1011,6 +1011,19 @@ export class InfoManager {
     if (!def) return;
     const disclosure = getRelicCatalogDisclosure(def, this.ownedNow);
     this.popups.open({ width: 880, height: 980, title: "관찰 일지", tilt: -1.2, ...anchorOf(from) }, (body, close) => {
+      // 팝업 판보다 12px 안쪽인 같은 비대칭 칩 형태로 잘라, 직사각 원화 모서리가 홀로그램 판의
+      // 좌상단/우하단 사선 밖으로 튀어나오지 않게 한다. body 회전을 공유하므로 원화도 -1.2°를 따른다.
+      if (this.scene.textures.exists("content-observation-journal")) {
+        const artWidth = 856; const artHeight = 956;
+        const journalMask = chipPoints(artWidth, artHeight, { bevel: { topLeft: artWidth * 0.14, topRight: 0, bottomRight: artWidth * 0.14, bottomLeft: 0 } });
+        // 세로 원화는 1:1 크기를 유지하고 위쪽 클립/프레임이 먼저 보이도록 아래로 민다.
+        // 따라서 팝업보다 긴 하단은 요청대로 액자 끝에서 자연스럽게 잘리고 제목표는 원화 위에 남는다.
+        const journalArt = addPopupBackgroundImage(this.scene, body, "content-observation-journal", {
+          x: 0, y: 0, width: artWidth, height: artHeight, maskShape: journalMask, nativeSize: true, imageOffsetY: 340,
+        });
+        journalArt.image.setAlpha(0.26);
+        journalArt.fade.setAlpha(0.34);
+      }
       const lines = disclosure.access === "full"
         ? [
             "개체번호   NO." + disclosure.specimenNumber,
@@ -1054,7 +1067,8 @@ export class InfoManager {
         question.choices.forEach((choice, index) => {
           const buttonY = y + 64 + index * 54;
           body.add(drawLayer(this.scene, 0, buttonY, slantedRect(740, 44, 12), { fill: 0x141a22, alpha: 0.92, edge: COLOR.accent, edgeAlpha: 0.4 }));
-          body.add(this.scene.add.text(-350, buttonY, choice.label, textStyle({ role: "body", size: 20 })).setOrigin(0, 0.5));
+          // 선택 결과를 읽는 핵심 입력이므로 기존 본문보다 한 단계 큰 글자로 접근성을 높인다.
+          body.add(this.scene.add.text(-350, buttonY, choice.label, textStyle({ role: "emphasis", size: 24 })).setOrigin(0, 0.5));
           const hit = this.scene.add.rectangle(0, buttonY, 740, 44, 0xffffff, 0).setInteractive({ useHandCursor: true });
           hit.on("pointerup", () => { observations.complete(def.id, utcDate, choice.id); close(); this.openJournal(from); this.refreshGrowth(); });
           body.add(hit);

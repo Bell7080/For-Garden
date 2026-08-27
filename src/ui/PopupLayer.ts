@@ -115,7 +115,9 @@ export class PopupLayer {
     if (options.title) {
       // 머리글은 판 안이 아니라 **윗변에 걸터앉는다.** 정보창의 칸 제목(유대·능력치·룬)과
       // 같은 표를 써서, 어느 화면에서나 제목이 같은 무게와 같은 모양으로 읽히게 한다.
-      titleChrome.push(addSectionTitle(this.scene, -width / 2 + unit * 0.1, -height / 2, options.title, { size: options.titleSize ?? POPUP_TITLE_SIZE.note, parent: body }));
+      // 비동기 조회가 끝난 뒤 본문이 추가되어도 머리글보다 앞에 그려지지 않도록 자식 depth를 고정한다.
+      // 발굴 원화처럼 늦게 생성되는 큰 이미지가 `/발굴` 제목표를 덮던 문제도 이 한 규칙으로 막는다.
+      titleChrome.push(addSectionTitle(this.scene, -width / 2 + unit * 0.1, -height / 2, options.title, { size: options.titleSize ?? POPUP_TITLE_SIZE.note, parent: body }).setDepth(1000));
       // 닫기는 기본적으로 오른쪽 위에 두되, 화면 chrome이 닫기를 맡으면 중복 조작을 만들지 않는다.
       if (!options.hideCloseButton) {
         const closeButton = this.scene.add.container(width / 2 - 40, -height / 2 + 40);
@@ -129,6 +131,7 @@ export class PopupLayer {
         hit.on("pointerout", () => closeButton.setScale(1));
         hit.on("pointerup", () => close());
         body.add([closeButton, hit]);
+        closeButton.setDepth(1000); hit.setDepth(1000);
         titleChrome.push(closeButton, hit);
       }
     }

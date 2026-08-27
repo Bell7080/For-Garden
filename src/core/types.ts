@@ -93,6 +93,8 @@ export interface Skill {
   effectType: EffectType;
   /** 공격력 배율(%). 100이면 공격력 그대로. 회복·버프 스킬은 회복량/버프량으로 쓴다. */
   power: number;
+  /** 공격력 대신 자신의 방어력을 기준으로 삼는 기술만 명시한다. */
+  scalingStat?: "atk" | "def";
   /** 물리는 atk/def, 마법은 ap/res를 참조한다. */
   damageType: DamageType;
   desc: string;
@@ -111,6 +113,8 @@ export type PassiveKind =
   | "swapMomentum"
   /** 후방에 있을 때 매 턴 전방 아군을 조금씩 회복 */
   | "rearMend"
+  /** 체력이 절반 이하가 되면 전투당 한 번 지속 회복 */
+  | "emergencyRecovery"
   /** 같은 상대를 연속으로 때리면 출혈을 남긴다 */
   | "bleedStreak";
 
@@ -181,6 +185,15 @@ export interface RelicDef {
   projectName: string;
   /** 표본을 발견한 장소이며 생물학적 기원(origin)과 구분한다. */
   excavationSite: string;
+  /** 관찰 일지에만 쓰는 복원 표본의 생애·신체 기록이다. 없는 개체는 기존 항목만 표시한다. */
+  observationProfile?: {
+    originYear: string;
+    restorationYear: string;
+    restorationAge: number;
+    lifeStage: string;
+    height: string;
+    weight: string;
+  };
   /** 미보유 상태에서도 공개할 수 있는 외형 중심의 짧은 도감 요약이다. */
   catalogSummary: string;
   /** 설정 확정 여부를 문자열 임시 문구가 아니라 판별 가능한 데이터로 표현한다. */

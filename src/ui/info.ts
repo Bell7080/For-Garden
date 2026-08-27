@@ -1016,13 +1016,19 @@ export class InfoManager {
             "프로젝트   " + disclosure.projectName,
             "기원         " + disclosure.origin,
             "발굴지      " + disclosure.excavationSite,
+            ...(def.observationProfile ? [
+              "기원 연대   " + def.observationProfile.originYear,
+              `복원 연도   ${def.observationProfile.restorationYear} · 복원 ${def.observationProfile.restorationAge}년차`,
+              `성장 단계   ${def.observationProfile.lifeStage} · 키 ${def.observationProfile.height} · 몸무게 ${def.observationProfile.weight}`,
+            ] : []),
           ]
         : ["개체번호   NO." + disclosure.specimenNumber, "프로젝트   기록 없음", "기원         미상", "발굴지      미상"];
-      body.add(this.scene.add.text(-380, -386, lines.join("\n"), textStyle({ role: "body", size: 26, lineSpacing: 14 })).setOrigin(0, 0));
-      body.add(drawHairline(this.scene, 0, -194, 760, { color: COLOR.accent, alpha: 0.35 }));
+      body.add(this.scene.add.text(-380, -386, lines.join("\n"), textStyle({ role: "body", size: 24, lineSpacing: 10 })).setOrigin(0, 0));
+      const recordDividerY = def.observationProfile ? -104 : -194;
+      body.add(drawHairline(this.scene, 0, recordDividerY, 760, { color: COLOR.accent, alpha: 0.35 }));
       const record = disclosure.access === "full" ? disclosure.record : def.catalogSummary + "\n\n상세 기록은 개체 획득 후 해제됩니다.";
       const text = this.keywords.layout(record, { width: 760, size: 26, lineSpacing: 10 });
-      text.setPosition(-380, -158);
+      text.setPosition(-380, recordDividerY + 36);
       body.add(text);
 
       // 기존 일지 아래에 날짜·질문·답변·발견 습성을 같은 쪽지 안에서 시간순으로 보여 준다.
@@ -1579,20 +1585,18 @@ export class InfoManager {
 
   /** 개체별 피버 발현 설명. 야성 규칙 자체는 강조된 말을 눌러 다시 열 수 있다. */
   private openFerocityTrait(def: RelicDef, from: PopupSource): void {
-    this.popups.open({ width: 720, height: 340, title: def.ferocityTrait.name, tilt: -1.2, ...anchorOf(from) }, (body) => {
-      body.add(
-        this.scene.add
-          .text(-720 / 2 + 52, -340 / 2 + 74, "야성 발현", textStyle({ role: "emphasis", size: 22, color: COLOR.accentText }))
-          .setOrigin(0, 0),
-      );
-      const text = this.keywords.layout("[[ferocity|야성]]이 가득 차면 피버에 들어간다. " + def.ferocityTrait.desc, {
-        width: 610,
-        size: 25,
-        lineSpacing: 8,
-      });
-      text.setPosition(-720 / 2 + 52, -340 / 2 + 118);
-      body.add(text);
-    });
+    // 폭주도 패시브와 같은 정형 상세창을 사용한다. 별도 제목 레이어 없이 아이콘 옆에서
+    // 스킬 종류·이름·발현 유형을 한 번에 읽게 한다.
+    openSkillPopup(this.scene, this.popups, this.keywords, {
+      name: def.ferocityTrait.name,
+      kindLabel: "폭주",
+      iconAssetId: "skill-icon-buff",
+      art: skillArtFor(def.id, "ferocity"),
+      tint: skillArtTint(def.element, def.role),
+      effectType: "buff",
+      valueLabel: "야성 발현",
+      description: "[[ferocity|야성 게이지]]가 가득 차면 폭주한다. " + def.ferocityTrait.desc,
+    }, from);
   }
 
   /** 읽기 전용 도감에 실제 방어력을 가정하지 않은 스킬 능력치 배율을 만든다. */
@@ -1603,8 +1607,9 @@ export class InfoManager {
       breakthrough: relicProgression.getProgress(this.currentDef.id).breakthrough,
     };
     const preview = attacker && kindLabel !== "패시브" ? previewSkillDamage(attacker, skill) : undefined;
+    const statKeyword = preview?.kind === "scaling" ? (preview.stat === "방어력" ? "def" : preview.stat === "공격력" ? "atk" : undefined) : undefined;
     const valueLabel = preview?.kind === "scaling"
-      ? preview.label + "  " + preview.stat + " " + preview.power + "% (도감 기준)"
+      ? `${preview.label}  [[${statKeyword ?? "atk"}|${preview.amount}]]   ·   ${preview.stat} ${preview.power}%`
       : undefined;
     return {
       name: skill.name,

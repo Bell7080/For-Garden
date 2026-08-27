@@ -3,8 +3,9 @@ import type { ExpeditionAugmentSelection } from "./expeditionRewards";
 import { getExpeditionAugment } from "../data/expeditionAugments";
 import type { ExpeditionAugmentEffect } from "./expeditionAugments";
 import { EXPEDITION_COMBAT_BALANCE } from "../data/expedition";
+import { EXPEDITION_BOSS_BALANCE } from "../data/expedition";
 import type { RelicDef } from "./types";
-import type { FighterInitialState, SkirmishRelicResult } from "./skirmish";
+import type { FighterInitialState, SkirmishBossPhase, SkirmishRelicResult } from "./skirmish";
 
 /** 원정 씬이 전투 씬에 넘기는 직렬화 가능한 입력이다. 전투 씬은 Session 편성을 추측하지 않는다. */
 export interface ExpeditionBattleInputDto {
@@ -51,6 +52,24 @@ export function createExpeditionSkirmishConfig(input: ExpeditionBattleInputDto, 
     playerInitialStates: input.relics.filter(({ relicId }) => activeIds.has(relicId)).map((state) => ({ ...state })),
     augmentEffects: expeditionBattleEffects(input.augments),
     enemyBodyScale: balance.bodyScale,
+  };
+}
+
+/** 20층도 공용 난전에 넣되 보스 HP만 표시상 충분히 크게 만들어 사망 연출이 끼어들지 않게 한다. */
+export function createExpeditionBossSkirmishConfig(input: ExpeditionBossBattleInputDto, playerDefs: readonly RelicDef[], enemyPool: readonly RelicDef[]): ExpeditionSkirmishConfig & { boss: { phases: SkirmishBossPhase[]; limitSeconds: number } } {
+  if (!enemyPool[0]) throw new RangeError("원정 보스 원본이 비어 있습니다.");
+  const activeIds = new Set(input.relics.filter(({ alive, currentHp }) => alive && currentHp > 0).map(({ relicId }) => relicId));
+  const boss = enemyPool[0];
+  return {
+    playerDefs: playerDefs.filter(({ id }) => activeIds.has(id)),
+    enemyDefs: [{ ...boss, stats: { ...boss.stats, hp: Number.MAX_SAFE_INTEGER } }],
+    playerInitialStates: input.relics.filter(({ relicId }) => activeIds.has(relicId)),
+    augmentEffects: expeditionBattleEffects(input.augments),
+    enemyBodyScale: 1.25,
+    boss: {
+      phases: EXPEDITION_BOSS_BALANCE.phases.map((phase) => ({ startsAt: phase.startsAtMs / 1_000, damagePerSecond: phase.attackPerSecond, label: phase.label })),
+      limitSeconds: EXPEDITION_BOSS_BALANCE.maximumDurationMs / 1_000,
+    },
   };
 }
 

@@ -45,10 +45,8 @@ import { relicProgression } from "../managers/RelicProgressionManager";
 import { relicStars } from "../core/relicProgression";
 import { PopupLayer } from "../ui/PopupLayer";
 import { ExpeditionRankingPopup } from "../ui/ExpeditionRankingPopup";
-import { createExpeditionSkirmishConfig, expeditionBattleEffects, expeditionBattleResults, type BattleSceneInputDto, type ExpeditionBattleInputDto, type ExpeditionBossBattleInputDto } from "../core/expeditionBattle";
-import { expeditionBossPhaseAt, type ExpeditionBossAction } from "../core/expeditionBoss";
-import { attackPowerMultiplier } from "../core/expeditionAugments";
-import { EXPEDITION_BOSS_BALANCE } from "../data/expedition";
+import { createExpeditionBossSkirmishConfig, createExpeditionSkirmishConfig, expeditionBattleResults, type BattleSceneInputDto, type ExpeditionBattleInputDto, type ExpeditionBossBattleInputDto } from "../core/expeditionBattle";
+import type { ExpeditionBossAction } from "../core/expeditionBoss";
 import { expeditionManager } from "../managers/ExpeditionManager";
 import { settingsManager } from "../managers/SettingsManager";
 import type { SettleExpeditionRunResponse, SubmitExpeditionBossScoreResponse } from "../api/contracts";
@@ -197,6 +195,11 @@ export class BattleScene extends Phaser.Scene {
   private views = new Map<string, FighterView>();
   private profiles: ProfileView[] = [];
   private finished = false;
+  /** 보스 제출에는 코어가 실제로 낸 공격 종류와 시각만 기록하며 피해 숫자는 넣지 않는다. */
+  private bossActions: ExpeditionBossAction[] = [];
+  private bossScoreLabel?: Phaser.GameObjects.Text;
+  private bossPhaseLabel?: Phaser.GameObjects.Text;
+  private bossBestLabel?: Phaser.GameObjects.Text;
   private spawned = false;
   /** 마지막으로 시뮬레이션을 굴린 실제 시각(ms). */
   private lastStepAt = 0;
@@ -223,6 +226,15 @@ export class BattleScene extends Phaser.Scene {
     super("battle");
   }
 
+  /** 기존 상단 안전 영역에 보스 점수·단계·최고 기록을 고정하고 전장 입력을 가리지 않는다. */
+  private buildBossScoreHud(): void {
+    this.bossScoreLabel = this.add.text(42, 92, "관측 피해 0", textStyle({ role: "display", size: 38, color: COLOR.sortieText })).setDepth(90);
+    this.bossPhaseLabel = this.add.text(42, 140, "관측 · 00:00", textStyle({ role: "emphasis", size: 25, color: COLOR.accentText })).setDepth(90);
+    this.bossBestLabel = this.add.text(42, 180, "주간 최고 0", textStyle({ role: "emphasis", size: 25, color: COLOR.ink })).setDepth(90);
+    // 최고 기록은 서버 스냅샷만 표시하고 실패하면 0 표기를 유지해 로컬 추정치를 권한으로 쓰지 않는다.
+    void gameApi.getExpeditionWeeklyBest().then(({ bestScore }) => this.bossBestLabel?.setText(`주간 최고 ${bestScore.toLocaleString()}`));
+  }
+
   /** Phaser scene data를 명시 DTO로 받아 일반 스테이지와 원정 결과 경계를 분리한다. */
   init(input?: BattleSceneInputDto): void {
     // Phaser가 이전 scene.start data를 재사용할 수 있으므로 매 진입마다 명시적으로 stage 기본값을
@@ -232,12 +244,10 @@ export class BattleScene extends Phaser.Scene {
 
   create(): void {
     setDebugScene("battle");
-    // 20층은 HP 승리가 없는 전용 시간축이므로 일반 난전 상태를 만들기 전에 완전히 분기한다.
-    if (this.battleInput.mode === "expeditionBoss") { this.createExpeditionBossBattle(this.battleInput); return; }
     const stage = getStage(session.selectedStageId ?? "1-1");
     // 적은 스테이지별 임시 레벨 성장치를 적용한 복사본으로 전투에 투입한다.
     // 유대는 정적 RelicDef가 아니라 현재 플레이어의 저장 진행에서 전투 스냅샷으로 넘긴다.
-    const partyIds = this.battleInput.mode === "expedition" ? this.battleInput.relics.map(({ relicId }) => relicId) : session.party;
+    const partyIds = this.battleInput.mode === "expedition" || this.battleInput.mode === "expeditionBoss" ? this.battleInput.relics.map(({ relicId }) => relicId) : session.party;
     const bonds = Object.fromEntries(partyIds.map((id) => [id, session.relicProgress[id]?.bondLevel ?? 0]));
     // 각성 단계도 같은 방식으로 스냅샷을 넘긴다. 전투 코어는 저장 상태를 직접 읽지 않는다.
     const breakthroughs = Object.fromEntries(partyIds.map((id) => [id, session.relicProgress[id]?.breakthrough ?? 0]));
@@ -246,13 +256,15 @@ export class BattleScene extends Phaser.Scene {
     // 원정은 노드 정보창과 같은 정적 편성/레벨 정의를 읽고, 스토리만 스테이지 적을 읽는다.
     const stageEnemies = this.battleInput.mode === "expedition"
       ? getExpeditionNodeEnemies(this.battleInput.nodeType, this.battleInput.floor)
-      : getStageEnemies(stage);
-    const expeditionConfig = this.battleInput.mode === "expedition" ? createExpeditionSkirmishConfig(this.battleInput, players, stageEnemies) : null;
+      : this.battleInput.mode === "expeditionBoss" ? getExpeditionNodeEnemies("boss", 20) : getStageEnemies(stage);
+    const expeditionConfig = this.battleInput.mode === "expedition" ? createExpeditionSkirmishConfig(this.battleInput, players, stageEnemies)
+      : this.battleInput.mode === "expeditionBoss" ? createExpeditionBossSkirmishConfig(this.battleInput, players, stageEnemies) : null;
     this.state = createSkirmish(expeditionConfig?.playerDefs ?? players, expeditionConfig?.enemyDefs ?? stageEnemies, ARENA, bonds, breakthroughs, expeditionConfig ? {
       // 원정 입력 모델이 HP·증강·크기까지 만들고 씬은 공용 난전을 연결하기만 한다.
       playerInitialStates: expeditionConfig.playerInitialStates,
       augmentEffects: expeditionConfig.augmentEffects,
       enemyBodyScale: expeditionConfig.enemyBodyScale,
+      ...(this.battleInput.mode === "expeditionBoss" ? { boss: (expeditionConfig as ReturnType<typeof createExpeditionBossSkirmishConfig>).boss } : {}),
     } : {});
     this.views.clear();
     this.profiles = [];
@@ -260,6 +272,7 @@ export class BattleScene extends Phaser.Scene {
     this.spawned = false;
     // 이전 씬의 tween 종료보다 재진입이 빠르더라도 표시 관찰값은 새 전투에서 0부터 시작한다.
     this.healPopups = 0;
+    this.bossActions = [];
     // 이전 전투/환경설정에서 저장한 조작 상태를 새 판의 시작값으로 그대로 복원한다.
     const battleSettings = settingsManager.get().game;
     this.battleSpeed = battleSettings.battleSpeed;
@@ -271,10 +284,11 @@ export class BattleScene extends Phaser.Scene {
     this.info = new CharacterInfoManager(this, 1001, "enemy");
 
     // 편성 화면에서 본 6번 전장을 그대로 이어 실제 전투의 공간으로 사용한다.
-    addSceneBackground(this, this.battleInput.mode === "expedition" ? BACKGROUND.expeditionField : BACKGROUND.combat, -30);
+    addSceneBackground(this, this.battleInput.mode === "expedition" || this.battleInput.mode === "expeditionBoss" ? BACKGROUND.expeditionField : BACKGROUND.combat, -30);
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.28).setDepth(-29);
     this.add.text(42, 48, `${stage.id} · ${stage.name} · 적 LV.${stage.enemyLevel}`, textStyle({ role: "body", size: 30, color: COLOR.inkDim }));
     this.add.text(BASE_WIDTH / 2, 160, "AUTO BATTLE", textStyle({ role: "emphasis", size: 28, color: COLOR.accentText })).setOrigin(0.5);
+    if (this.battleInput.mode === "expeditionBoss") this.buildBossScoreHud();
 
     this.buildBattleControls();
 
@@ -286,51 +300,6 @@ export class BattleScene extends Phaser.Scene {
       this.views.forEach((view) => view.creature.destroy());
       this.views.clear();
     });
-  }
-
-  /** 불사 보스는 행동만 기록하고, 광역 피해로 전멸한 뒤 서버 재현 결과를 정산한다. */
-  private createExpeditionBossBattle(input: ExpeditionBossBattleInputDto): void {
-    addSceneBackground(this, BACKGROUND.expeditionField, -30);
-    this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.52).setDepth(-29);
-    this.add.text(BASE_WIDTH / 2, 90, "20층 · 원정 보스", textStyle({ role: "display", size: 54, color: COLOR.sortieText })).setOrigin(0.5);
-    this.add.text(BASE_WIDTH / 2, 180, "불사 관측체", textStyle({ role: "display", size: 72, color: COLOR.dangerText })).setOrigin(0.5);
-    const phaseLabel = this.add.text(BASE_WIDTH / 2, 275, "", textStyle({ role: "emphasis", size: 28, color: COLOR.accentText })).setOrigin(0.5);
-    const timerLabel = this.add.text(BASE_WIDTH / 2, 350, "00:00", textStyle({ role: "display", size: 48 })).setOrigin(0.5);
-    // 보스 HP 대신 누적 관측 피해를 보여 불사 규칙을 시각적으로도 오해하지 않게 한다.
-    const damageLabel = this.add.text(BASE_WIDTH / 2, 520, "관측 피해 0", textStyle({ role: "display", size: 50, color: COLOR.sortieText })).setOrigin(0.5);
-    const effects = expeditionBattleEffects(input.augments);
-    const allies = input.relics.map((saved, index) => {
-      const def = getRelic(saved.relicId); const stats = relicProgression.getFinalStats(saved.relicId); const x = 200 + index * 340;
-      new PortraitCard(this, x, 1450, { width: 270, height: 270, portraitAssetId: def.portraitAssetId, tint: relicCardTint(def), label: def.name, rarity: def.rarity });
-      const hp = stats.hp * Math.max(0, saved.currentHp) / 100;
-      const label = this.add.text(x, 1660, "", textStyle({ role: "emphasis", size: 23, color: COLOR.hpText })).setOrigin(0.5);
-      const bar = new HoloBar(this, x, 1700, 270, 20, { color: COLOR.hpFill, outline: true, ticks: 3 });
-      return { id: saved.relicId, attack: Math.max(stats.atk, stats.ap) * attackPowerMultiplier(effects, saved.relicId), maxHp: stats.hp, hp, label, bar };
-    });
-    const actions: ExpeditionBossAction[] = [];
-    let elapsedMs = 0; let estimatedDamage = 0; let submitting = false;
-    const recordActions = (): void => allies.forEach((ally) => {
-      if (ally.hp <= 0) return;
-      // 피해 숫자는 로컬 표시용 추정에만 쓰고 제출 DTO에는 동작 종류와 시각만 남긴다.
-      actions.push({ elapsedMs, actorId: ally.id, kind: "basic" }); estimatedDamage += Math.max(1, Math.round(ally.attack * EXPEDITION_BOSS_BALANCE.actionPower.basic));
-      if (elapsedMs % EXPEDITION_BOSS_BALANCE.actionCooldownMs.ultimate === 0) { actions.push({ elapsedMs, actorId: ally.id, kind: "ultimate" }); estimatedDamage += Math.max(1, Math.round(ally.attack * EXPEDITION_BOSS_BALANCE.actionPower.ultimate)); }
-    });
-    const refresh = (): void => {
-      const phase = expeditionBossPhaseAt(elapsedMs);
-      phaseLabel.setText(`${phase.label} · 광역 ${phase.attackPerSecond.toLocaleString()}/초`);
-      timerLabel.setText(`${String(Math.floor(elapsedMs / 60_000)).padStart(2, "0")}:${String(Math.floor(elapsedMs / 1_000) % 60).padStart(2, "0")}`);
-      damageLabel.setText(`관측 피해 ${estimatedDamage.toLocaleString()}`);
-      allies.forEach((ally) => { ally.label.setText(ally.hp > 0 ? `HP ${Math.ceil(ally.hp).toLocaleString()}` : "전투 불능"); ally.bar.setValue(ally.hp / ally.maxHp); });
-    };
-    recordActions(); refresh();
-    this.time.addEvent({ delay: 1_000, loop: true, callback: () => {
-      if (submitting) return;
-      elapsedMs += 1_000; recordActions();
-      const aoe = expeditionBossPhaseAt(elapsedMs).attackPerSecond;
-      allies.forEach((ally) => { if (ally.hp > 0) ally.hp = Math.max(0, ally.hp - aoe); });
-      refresh();
-      if (allies.every(({ hp }) => hp <= 0)) { submitting = true; void this.submitAndSettleBoss(input, actions); }
-    } });
   }
 
   /** 점수 제출 → 로컬 노드 반영 → completed 정산을 고정 ID로 직렬화한다. */
@@ -619,6 +588,11 @@ export class BattleScene extends Phaser.Scene {
     if (this.ultimateSequenceActive) return;
     // 실제 프레임 간격에 선택 배율을 곱해 이동·공격 간격·게이지가 모두 같은 시간축을 쓴다.
     const events = stepSkirmish(this.state, dt * this.battleSpeed, () => Math.random());
+    if (this.state.boss) {
+      const boss = this.state.boss; const phase = boss.phases[boss.phaseIndex];
+      this.bossScoreLabel?.setText(`관측 피해 ${boss.score.toLocaleString()}`);
+      this.bossPhaseLabel?.setText(`${phase.label}${boss.limitReached ? " · LIMIT" : ""} · ${String(Math.floor(boss.survivedFor / 60)).padStart(2, "0")}:${String(Math.floor(boss.survivedFor) % 60).padStart(2, "0")}`);
+    }
     // 상태 종료와 좌표를 먼저 Puppet에 동기화한 뒤 공격 사건을 재생해야, 기절이 풀린 같은 스텝의
     // 공격 모션을 뒤늦은 idle 전환이 덮어쓰지 않는다.
     this.syncViews();
@@ -673,6 +647,10 @@ export class BattleScene extends Phaser.Scene {
 
     const attacker = this.views.get(event.attackerId);
     const target = this.views.get(event.targetId);
+    if (this.state.boss && attacker?.fighter.side === "player" && target?.fighter.side === "enemy" && event.animate !== false) {
+      // 서버가 성장 스냅샷으로 재현할 수 있도록 ID·종류·코어 시각만 남기고 event.amount는 버린다.
+      this.bossActions.push({ elapsedMs: Math.round(this.state.elapsed * 1_000), actorId: attacker.fighter.def.id, kind: event.skill });
+    }
     // 한 광역 기술의 후속 피해 사건은 피격 표현만 만들고 시전자 모션은 첫 사건에서 한 번만 튼다.
     const playback = attacker && event.animate !== false ? playMotion(this, attacker.creature, "attack", motionSpeedMultiplier) : undefined;
     if (target) {
@@ -983,6 +961,7 @@ export class BattleScene extends Phaser.Scene {
     this.syncViews();
     this.refreshDebug();
     const won = phase === "victory";
+    if (this.battleInput.mode === "expeditionBoss") { void this.submitAndSettleBoss(this.battleInput, this.bossActions); return; }
     if (this.battleInput.mode === "expedition") { this.finishExpeditionBattle(this.battleInput, won); return; }
     const stage = getStage(session.selectedStageId ?? "1-1");
     // 결과 화면은 정적 스테이지 보상만 미리 읽고, 실제 상태 변경은 확인 버튼의 API 요청에 맡긴다.

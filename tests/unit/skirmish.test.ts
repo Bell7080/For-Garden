@@ -81,6 +81,33 @@ function run(state: SkirmishState, seconds: number, rng?: () => number) {
   return events;
 }
 
+describe("단일 난전의 원정 보스 옵션", () => {
+  /** 보스 옵션도 별도 타이머가 아니라 createSkirmish 상태에 함께 주입한다. */
+  function bossBattle(damagePerSecond: number) {
+    const state = createSkirmish([getRelic("anky")], [getRelic("husk-shell")], ARENA, {}, {}, {
+      boss: { phases: [{ startsAt: 0, damagePerSecond, label: "관측" }], limitSeconds: 1 },
+    });
+    const [ally, boss] = state.fighters;
+    ally.x = boss.x = 400; ally.y = boss.y = 900; ally.attackCooldown = 0; boss.attackCooldown = 999;
+    return state;
+  }
+
+  it("는 보스 HP가 소진되어도 승리하지 않고 실제 공격 피해를 점수로 누적한다", () => {
+    const state = bossBattle(0); state.fighters[1].hp = 1;
+    stepSkirmish(state, 1 / 60);
+    expect(state.phase).toBe("fight"); expect(state.fighters[1].hp).toBe(state.fighters[1].maxHp); expect(state.boss?.score).toBeGreaterThan(0);
+  });
+
+  it("는 생존 시간·리미트를 갱신하고 아군 전멸 때만 패배로 끝낸다", () => {
+    const state = bossBattle(stateHp(getRelic("anky")) * 2);
+    const events = run(state, 2);
+    expect(state.phase).toBe("defeat"); expect(state.boss?.survivedFor).toBeGreaterThan(0); expect(events).toContainEqual({ kind: "finish", phase: "defeat" });
+  });
+});
+
+/** 테스트 정의의 HP를 읽는 짧은 헬퍼로 밸런스 숫자를 복제하지 않는다. */
+function stateHp(def: ReturnType<typeof getRelic>): number { return def.stats.hp; }
+
 /**
  * 토리카의 전투당 1회 회복을 독립 관찰한다. 발동권은 저장 데이터가 아니라 Fighter가 소유하며,
  * 테스트는 공격 행동을 늦춰 초 단위 지속 효과만 진행되게 한다.

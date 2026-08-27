@@ -12,6 +12,7 @@ import {
   findFighter,
   moveSpeed,
   renderPose,
+  receivedDamage,
   SKIRMISH,
   stepSkirmish,
   teamHp,
@@ -972,5 +973,62 @@ describe("원정 난전 확장", () => {
     const party = [{ relicId: "rex", currentHp: 40, alive: true }, { relicId: "anky", currentHp: 0, alive: false }, { relicId: "dodo", currentHp: 0, alive: false }];
     expect(applyExpeditionRest(party).map(({ currentHp }) => currentHp)).toEqual([70, 25, 0]);
     expect(applyExpeditionRest(party.map((relic) => ({ ...relic, currentHp: 0, alive: false }))).every(({ alive }) => !alive)).toBe(true);
+  });
+});
+
+describe("폰투스 실전 스킬과 심해 압력", () => {
+  /** 공격 행동만 관찰하도록 전투원을 같은 위치에 고정한 폰투스 보스전을 만든다. */
+  function pontusBattle() {
+    const state = newSkirmish(["anky", "rex", "dodo"], ["pontus"]);
+    const pontus = state.fighters[3];
+    for (const fighter of state.fighters) { fighter.x = 400; fighter.y = 900; fighter.attackCooldown = 999; }
+    return { state, pontus, allies: state.fighters.slice(0, 3) };
+  }
+
+  it("는 넓은 원형 마법 기본 공격으로 반경 안의 모든 아군만 타격한다", () => {
+    const { state, pontus, allies } = pontusBattle();
+    allies[2].x = ARENA.right;
+    pontus.attackCooldown = 0;
+    const events = stepSkirmish(state, 1 / 60).filter((event) => event.kind === "attack" && event.attackerId === pontus.id);
+    expect(events.map((event) => event.kind === "attack" ? event.targetId : "")).toEqual([allies[0].id, allies[1].id]);
+    expect(pontus.def.basic).toMatchObject({ damageType: "magical", targeting: "nearbyEnemies", radius: 520 });
+  });
+
+  it("는 해일 궁극기로 거리에 관계없이 생존한 모든 아군을 타격한다", () => {
+    const { state, pontus, allies } = pontusBattle();
+    allies[0].x = ARENA.left; allies[1].x = ARENA.right; allies[2].hp = 0;
+    pontus.energy = pontus.def.ultimate.cost;
+    const events = fireUltimate(state, pontus.id).filter((event) => event.kind === "attack");
+    expect(events.map((event) => event.kind === "attack" ? event.targetId : "").sort()).toEqual([allies[0].id, allies[1].id].sort());
+    expect(pontus.def.ultimate.targeting).toBe("battlefieldEnemies");
+  });
+
+  it("는 경과한 매 1초마다 주문력을 올리고 프레임 분할과 배속 입력에 같은 값을 만든다", () => {
+    const simulate = (frames: readonly number[]) => {
+      const { state, pontus } = pontusBattle();
+      frames.forEach((dt) => stepSkirmish(state, dt));
+      return pontus.bonusAp;
+    };
+    expect(simulate(Array.from({ length: 20 }, () => 0.25))).toBe(60);
+    expect(simulate(Array.from({ length: 300 }, () => 1 / 60))).toBe(60);
+  });
+
+  it("는 잃은 체력에 비례한 모든 피해 감소를 40% 상한에서 공용 경계로 적용한다", () => {
+    const { pontus } = pontusBattle();
+    pontus.hp = pontus.maxHp * 0.6;
+    expect(receivedDamage(pontus, 100)).toBe(80); // 체력 40% 손실 × 0.5%p = 20% 감소.
+    pontus.hp = pontus.maxHp * 0.1;
+    expect(receivedDamage(pontus, 100)).toBe(60); // 45% 계산값은 명시된 40% 상한으로 제한한다.
+  });
+
+  it("는 시간이 흐를수록 리미트 안전 반경을 좁히고 폰투스를 전장 중앙으로 접근시킨다", () => {
+    const state = createSkirmish([getRelic("anky")], [getRelic("pontus")], ARENA, {}, {}, {
+      boss: { phases: [{ startsAt: 0, damagePerSecond: 0, label: "관측" }, { startsAt: 1, damagePerSecond: 0, label: "해일" }], limitSeconds: 10 },
+    });
+    const pontus = state.fighters[1]; pontus.x = ARENA.left; pontus.stunnedFor = 999; pontus.attackCooldown = 999; state.fighters[0].attackCooldown = 999;
+    const startRadius = state.boss!.pressureRadius; const startX = pontus.x;
+    stepSkirmish(state, 0.25);
+    expect(state.boss!.pressureRadius).toBeLessThan(startRadius);
+    expect(Math.abs(pontus.x - (ARENA.left + ARENA.right) / 2)).toBeLessThan(Math.abs(startX - (ARENA.left + ARENA.right) / 2));
   });
 });

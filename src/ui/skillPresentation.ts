@@ -4,6 +4,7 @@ import type { CombatStatusEffect, FerocityTrait, Ultimate } from "../core/types"
 export function targetingLabel(targeting?: Ultimate["targeting"]): string | undefined {
   if (targeting === "single") return "적 한 명";
   if (targeting === "nearbyEnemies") return "자신의 주위 모든 적";
+  if (targeting === "battlefieldEnemies") return "전장의 모든 적";
   return undefined;
 }
 

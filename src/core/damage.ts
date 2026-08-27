@@ -20,7 +20,7 @@ export function computeDamage(attacker: Combatant, target: Combatant, input: Dam
   // 방어형 탱커의 공격은 방어력을 직접 피해 원천으로 쓸 수 있다.
   const offense = input.scalingStat === "def"
     ? attacker.def.stats.def
-    : input.damageType === "physical" ? attacker.def.stats.atk : attacker.def.stats.ap;
+    : input.damageType === "physical" ? attacker.def.stats.atk : attacker.def.stats.ap + (attacker.bonusAp ?? 0);
   const defense = input.damageType === "physical" ? target.def.stats.def : target.def.stats.res;
   const critical = input.isCritical ? attacker.def.stats.critDamage / 100 : 1;
   const opened = breakthroughBonus(attacker.breakthrough);

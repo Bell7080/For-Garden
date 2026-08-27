@@ -99,6 +99,9 @@ export interface Skill {
   damageType: DamageType;
   /** 명중 뒤 적용할 작은 공용 상태 효과 목록이다. 기절·경직이 없는 스킬은 생략한다. */
   statusEffects?: readonly CombatStatusEffect[];
+  /** 기본 공격이 원형 광역일 때만 시전자 중심 대상 계약과 반경을 선언한다. */
+  targeting?: "single" | "nearbyEnemies" | "battlefieldEnemies";
+  radius?: number;
   desc: string;
 }
 
@@ -119,6 +122,7 @@ export type Ultimate = Skill & {
       /** 거리 단위는 난전 좌표와 같은 px이며, 시전자 중심에서 잰다. */
       radius: number;
     }
+  | { /** 거리에 상관없이 전장의 모든 생존 적을 공격한다. */ targeting: "battlefieldEnemies" }
 );
 
 /** 패시브는 종류별로 전투 엔진이 직접 해석한다. 새 패시브는 여기에 종류를 늘려 추가한다. */
@@ -132,7 +136,9 @@ export type PassiveKind =
   /** 체력이 절반 이하가 되면 전투당 한 번 지속 회복 */
   | "emergencyRecovery"
   /** 같은 상대를 연속으로 때리면 출혈을 남긴다 */
-  | "bleedStreak";
+  | "bleedStreak"
+  /** 폰투스의 시간 누적 주문력·잃은 체력 경감 규칙을 식별한다. */
+  | "abyssalPressure";
 
 /** 전투 엔진이 판별하는 야성 특성 효과 ID다. 새 효과는 수치 계약과 함께 명시적으로 추가한다. */
 export type FerocityEffectId =
@@ -183,6 +189,12 @@ export interface Passive {
   value: number;
   /** 지속 효과인 패시브만 갖는 유지 시간(초). 전투와 표시가 함께 읽는 단일 계약이다. */
   durationSeconds?: number;
+  /** 심해 압력 전용: 전투 경과 1초마다 더하는 주문력이다. */
+  apPerSecond?: number;
+  /** 심해 압력 전용: 잃은 체력 1%당 받는 피해 감소율(%p)이다. */
+  reductionPerMissingHpPercent?: number;
+  /** 심해 압력 전용: 받는 피해 감소율 상한이다. */
+  maxReductionPercent?: number;
   desc: string;
 }
 

@@ -10,6 +10,8 @@ export interface Combatant {
   bondLevel: number;
   ferocityFever: boolean;
   breakthrough: number;
+  /** 전투 중 시간 기반 효과로 누적된 추가 주문력이다. */
+  bonusAp?: number;
 }
 
 /** 피해 계산기가 난수나 스킬 데이터 저장소에 직접 의존하지 않도록 확정한 입력이다. */

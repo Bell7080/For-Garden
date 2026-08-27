@@ -1,10 +1,11 @@
 import Phaser from "phaser";
 import type { KeywordManager } from "../managers/KeywordManager";
-import type { EffectType, SkillIconAssetId } from "../core/types";
+import type { CombatStatusEffect, EffectType, SkillIconAssetId, Ultimate } from "../core/types";
 import { chipPoints, drawHairline, drawInnerVignette, drawLayer, drawShapeOutline } from "./holo";
 import type { PopupLayer } from "./PopupLayer";
 import { FALLBACK_SKILL_ICON } from "./skillIcons";
 import { SKILL_ART_WASH_ALPHA } from "./skillArt";
+import { recoveryLabel, statusEffectLabel, targetingLabel } from "./skillPresentation";
 import { COLOR, textStyle } from "./theme";
 
 /** 데이터 효과 분류를 플레이어가 읽는 고정 라벨로 바꾼다. */
@@ -29,6 +30,14 @@ export interface SkillInfoViewModel {
   effectType: EffectType;
   /** 배율이나 예상 피해처럼 한 줄로 읽는 수치. */
   valueLabel?: string;
+  /** 코어의 대상 선택 계약. 반경 같은 개발 단위는 표시하지 않는다. */
+  targeting?: Ultimate["targeting"];
+  /** 코어가 실제 적용하는 상태 효과와 지속 시간이다. */
+  statusEffects?: readonly CombatStatusEffect[];
+  /** 지속 회복처럼 상태 효과 목록 밖에 있는 유지 시간이다. */
+  durationSeconds?: number;
+  /** 매초 회복하는 최대 체력 비율이다. 패시브 정의의 현재 값을 전달받는다. */
+  recoveryPercent?: number;
   /** 궁극기만 갖는 소비 게이지. */
   gaugeCost?: number;
   /** `[[keyword]]` 문법을 쓸 수 있는 설명문. */
@@ -96,7 +105,12 @@ export function openSkillPopup(
     body.add(scene.add.text(textLeft, top + 96, skill.name, textStyle({ role: "display", size: 46 })).setOrigin(0, 0));
 
     // 효과 분류와 수치는 한 줄에 둔다. 둘 다 "얼마나 세게, 어떤 식으로"를 말한다.
-    const summary = [EFFECT_LABEL[skill.effectType], skill.valueLabel].filter(Boolean).join("   ·   ");
+    const summary = [
+      EFFECT_LABEL[skill.effectType], skill.valueLabel, targetingLabel(skill.targeting),
+      ...((skill.statusEffects ?? []).map(statusEffectLabel)),
+      skill.durationSeconds === undefined ? undefined : `${skill.durationSeconds}초 동안`,
+      recoveryLabel(skill.recoveryPercent),
+    ].filter(Boolean).join("   ·   ");
     // 실제 수치도 설명문과 같은 키워드 레이아웃을 써서, 누르면 산출 근거를 확인할 수 있게 한다.
     const summaryText = keywords.layout(summary, { width: 560, size: 24, lineSpacing: 4 });
     summaryText.setPosition(textLeft, top + 156);

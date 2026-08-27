@@ -176,10 +176,8 @@ export const BLEED = {
   percentPerSecond: 2,
 } as const;
 
-/** 긴급 회복의 공용 시간 규칙. 캐릭터 데이터의 value만 틱당 최대 HP 비율(%)로 해석한다. */
+/** 긴급 회복의 공용 틱 규칙. 유지 시간과 회복량은 캐릭터 정의가 소유한다. */
 export const EMERGENCY_RECOVERY = {
-  /** 회복이 유지되는 총 시간(초). 1초 경계를 포함해 정확히 다섯 번 틱한다. */
-  seconds: 5,
   /** 회복 틱 사이의 시간(초). */
   tickSeconds: 1,
   /** 초 단위 누적 오차가 5초 마지막 경계를 누락시키지 않게 하는 비교 여유다. */
@@ -470,9 +468,12 @@ export function tryTriggerEmergencyRecovery(fighter: Fighter): boolean {
   if (fighter.def.passive.kind !== "emergencyRecovery" || !isFighterAlive(fighter)
     || fighter.hp > fighter.maxHp * 0.5 || fighter.passiveTriggered) return false;
 
+  // 표시와 전투가 같은 값을 읽도록 지속 시간을 패시브 정의에서 가져온다.
+  const duration = fighter.def.passive.durationSeconds;
+  if (duration === undefined || duration <= 0) return false;
   fighter.passiveTriggered = true;
   fighter.regeneration = {
-    remaining: EMERGENCY_RECOVERY.seconds,
+    remaining: duration,
     tickIn: EMERGENCY_RECOVERY.tickSeconds,
     // 패시브 value의 단위는 1초 틱마다 회복하는 최대 HP 비율(%)이다.
     percentPerTick: fighter.def.passive.value,

@@ -1010,11 +1010,13 @@ export class InfoManager {
     const def = this.currentDef;
     if (!def) return;
     const disclosure = getRelicCatalogDisclosure(def, this.ownedNow);
-    this.popups.open({ width: 880, height: 980, title: "관찰 일지", tilt: -1.2, ...anchorOf(from) }, (body, close) => {
+    // 인터뷰 질문과 선택지가 기록 본문에 붙어 보이지 않도록 세로 여백을 확보한 일지 규격을 쓴다.
+    this.popups.open({ width: 880, height: 1140, title: "관찰 일지", tilt: -1.2, ...anchorOf(from) }, (body, close) => {
       // 팝업 판보다 12px 안쪽인 같은 비대칭 칩 형태로 잘라, 직사각 원화 모서리가 홀로그램 판의
       // 좌상단/우하단 사선 밖으로 튀어나오지 않게 한다. body 회전을 공유하므로 원화도 -1.2°를 따른다.
       if (this.scene.textures.exists("content-observation-journal")) {
-        const artWidth = 856; const artHeight = 956;
+        // 팝업이 길어진 만큼 원화 클립도 함께 늘려 하단에 직사각 배경 끝이 드러나지 않게 한다.
+        const artWidth = 856; const artHeight = 1116;
         const journalMask = chipPoints(artWidth, artHeight, { bevel: { topLeft: artWidth * 0.14, topRight: 0, bottomRight: artWidth * 0.14, bottomLeft: 0 } });
         // 세로 원화는 1:1 크기를 유지하고 위쪽 클립/프레임이 먼저 보이도록 아래로 민다.
         // 따라서 팝업보다 긴 하단은 요청대로 액자 끝에서 자연스럽게 잘리고 제목표는 원화 위에 남는다.
@@ -1037,22 +1039,23 @@ export class InfoManager {
             ] : []),
           ]
         : ["개체번호   NO." + disclosure.specimenNumber, "프로젝트   기록 없음", "기원         미상", "발굴지      미상"];
-      body.add(this.scene.add.text(-380, -386, lines.join("\n"), textStyle({ role: "body", size: 24, lineSpacing: 10 })).setOrigin(0, 0));
-      const recordDividerY = def.observationProfile ? -104 : -194;
+      body.add(this.scene.add.text(-380, -446, lines.join("\n"), textStyle({ role: "body", size: 24, lineSpacing: 10 })).setOrigin(0, 0));
+      // 상단 표본 설명과 일기 내용 사이에 이전보다 넓은 숨 쉴 틈을 둔다.
+      const recordDividerY = def.observationProfile ? -138 : -228;
       body.add(drawHairline(this.scene, 0, recordDividerY, 760, { color: COLOR.accent, alpha: 0.35 }));
       const record = disclosure.access === "full" ? disclosure.record : def.catalogSummary + "\n\n상세 기록은 개체 획득 후 해제됩니다.";
       const text = this.keywords.layout(record, { width: 760, size: 26, lineSpacing: 10 });
-      text.setPosition(-380, recordDividerY + 36);
+      text.setPosition(-380, recordDividerY + 42);
       body.add(text);
 
       // 기존 일지 아래에 날짜·질문·답변·발견 습성을 같은 쪽지 안에서 시간순으로 보여 준다.
       // 작은 쪽지에는 가장 최근 한 건만 두고 전체 이력은 저장에 유지해 내용이 겹치지 않게 한다.
       const entries = observations.recordFor(def.id).slice(-1).reverse();
-      body.add(drawHairline(this.scene, 0, 92, 760, { color: COLOR.accent, alpha: 0.35 }));
-      body.add(this.scene.add.text(-380, 116, "관찰 인터뷰", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0));
-      if (!entries.length) body.add(this.scene.add.text(-380, 158, "아직 기록된 인터뷰가 없습니다.", textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0, 0));
+      body.add(drawHairline(this.scene, 0, 108, 760, { color: COLOR.accent, alpha: 0.35 }));
+      body.add(this.scene.add.text(-380, 138, "관찰 인터뷰", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0));
+      if (!entries.length) body.add(this.scene.add.text(-380, 184, "아직 기록된 인터뷰가 없습니다.", textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0, 0));
       entries.forEach((entry, index) => {
-        const y = 158 + index * 128;
+        const y = 184 + index * 128;
         const copy = `${entry.date}  ·  #${entry.personalityTag}\nQ. ${entry.question}\nA. ${entry.answer}\n발견  ${entry.discoveredHabit}`;
         body.add(this.scene.add.text(-380, y, copy, textStyle({ role: "body", size: 20, color: COLOR.ink, lineSpacing: 4 })).setOrigin(0, 0));
       });
@@ -1062,14 +1065,16 @@ export class InfoManager {
       if (this.ownedNow && observations.canStart(def.id, utcDate)) {
         // 화면 표시와 완료 시 저장 검증이 같은 렐릭별 결정 함수를 공유한다.
         const question = observationQuestionForRelicAndDate(def.id, utcDate);
-        const y = entries.length ? 300 : 238;
-        body.add(this.scene.add.text(-380, y, "오늘의 질문  " + question.prompt, textStyle({ role: "emphasis", size: 21, color: COLOR.accentText })).setOrigin(0, 0));
+        // 저장된 문답(있을 때)과 오늘의 질문 사이에도 독립된 문단으로 읽힐 만큼 간격을 둔다.
+        const y = entries.length ? 342 : 270;
+        body.add(this.scene.add.text(-380, y, "오늘의 질문  " + question.prompt, textStyle({ role: "emphasis", size: 23, color: COLOR.accentText })).setOrigin(0, 0));
         question.choices.forEach((choice, index) => {
-          const buttonY = y + 64 + index * 54;
-          body.add(drawLayer(this.scene, 0, buttonY, slantedRect(740, 44, 12), { fill: 0x141a22, alpha: 0.92, edge: COLOR.accent, edgeAlpha: 0.4 }));
-          // 선택 결과를 읽는 핵심 입력이므로 기존 본문보다 한 단계 큰 글자로 접근성을 높인다.
-          body.add(this.scene.add.text(-350, buttonY, choice.label, textStyle({ role: "emphasis", size: 24 })).setOrigin(0, 0.5));
-          const hit = this.scene.add.rectangle(0, buttonY, 740, 44, 0xffffff, 0).setInteractive({ useHandCursor: true });
+          // 두꺼운 선택 면과 12px의 버튼 사이 간격으로 각 답변을 별도 조작으로 또렷하게 구분한다.
+          const buttonY = y + 70 + index * 66;
+          body.add(drawLayer(this.scene, 0, buttonY, slantedRect(740, 54, 12), { fill: 0x141a22, alpha: 0.92, edge: COLOR.accent, edgeAlpha: 0.4 }));
+          // 답변은 버튼 한가운데에 두고 글자 크기와 강조 두께를 함께 높여 빠르게 비교하게 한다.
+          body.add(this.scene.add.text(0, buttonY, choice.label, textStyle({ role: "emphasis", size: 26 })).setOrigin(0.5));
+          const hit = this.scene.add.rectangle(0, buttonY, 740, 54, 0xffffff, 0).setInteractive({ useHandCursor: true });
           hit.on("pointerup", () => { observations.complete(def.id, utcDate, choice.id); close(); this.openJournal(from); this.refreshGrowth(); });
           body.add(hit);
         });

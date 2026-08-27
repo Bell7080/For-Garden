@@ -81,10 +81,17 @@ export function addPopupBackgroundImage(
   scene: Phaser.Scene,
   parent: Phaser.GameObjects.Container,
   texture: string,
-  bounds: { x: number; y: number; width: number; height: number; maskShape?: readonly number[]; nativeSize?: boolean },
+  bounds: {
+    x: number; y: number; width: number; height: number;
+    maskShape?: readonly number[];
+    nativeSize?: boolean;
+    /** 클리핑 액자는 그대로 두고 원화에서 보여 줄 부분만 옮길 때 쓰는 로컬 오프셋이다. */
+    imageOffsetX?: number;
+    imageOffsetY?: number;
+  },
 ): PopupBackgroundImage {
   // 기본 배경은 영역을 cover하고, 일지처럼 인쇄 크기가 중요한 원화는 원본 1:1 크기로 잘라 쓴다.
-  const image = scene.add.image(bounds.x, bounds.y, texture);
+  const image = scene.add.image(bounds.x + (bounds.imageOffsetX ?? 0), bounds.y + (bounds.imageOffsetY ?? 0), texture);
   if (!bounds.nativeSize) image.setScale(Math.max(bounds.width / image.width, bounds.height / image.height));
   parent.add(image);
 
@@ -105,8 +112,16 @@ export function addPopupBackgroundImage(
       }
       maskGraphics.fillPoints(points, true);
     } else {
-      const topLeft = matrix.transformPoint(bounds.x - bounds.width / 2, bounds.y - bounds.height / 2);
-      maskGraphics.fillRect(topLeft.x, topLeft.y, bounds.width * matrix.scaleX, bounds.height * matrix.scaleY);
+      // 회전된 팝업에 axis-aligned fillRect를 쓰면 원화만 기울기를 무시한 사각형으로 잘린다.
+      // 네 꼭짓점을 모두 월드 변환해 팝업의 회전·스케일을 그대로 따르는 닫힌 면을 만든다.
+      const corners = [
+        [-bounds.width / 2, -bounds.height / 2], [bounds.width / 2, -bounds.height / 2],
+        [bounds.width / 2, bounds.height / 2], [-bounds.width / 2, bounds.height / 2],
+      ].map(([x, y]) => {
+        const point = matrix.transformPoint(bounds.x + x, bounds.y + y);
+        return new Phaser.Geom.Point(point.x, point.y);
+      });
+      maskGraphics.fillPoints(corners, true);
     }
   };
   scene.events.on(Phaser.Scenes.Events.PRE_RENDER, syncMask);

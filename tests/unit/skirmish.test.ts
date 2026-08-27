@@ -25,6 +25,7 @@ import { applyExpeditionRest, type ExpeditionAugmentEffect } from "../../src/cor
 import { getRelic } from "../../src/data/relics";
 import { FEROCITY_RULES } from "../../src/core/ferocity";
 import { ULTIMATE_ENERGY_MAX } from "../../src/core/ultimate";
+import { computeDamage } from "../../src/core/damage";
 import {
   beginNextUltimate, cancelUltimateSequence, createUltimateSequenceState, enqueueUltimate, releaseUltimate,
 } from "../../src/core/ultimateSequence";
@@ -670,6 +671,61 @@ describe("궁극기", () => {
     const damage = (event?: SkirmishEvent) => (event?.kind === "attack" ? event.amount : 0);
     expect(damage(ultimateHit)).toBeGreaterThan(damage(basicHit));
     expect(ultimateState.fighters[0].energy).toBe(0);
+  });
+
+  it("토리카는 시전자 주위의 세 적을 각자 방어·속성으로 계산하고 생존자만 기절시킨다", () => {
+    const state = newSkirmish(["anky"], ["husk-raptor", "husk-shell", "husk-wing"]);
+    const [torika, first, armored, disadvantaged] = state.fighters;
+    torika.x = 500; torika.y = 900;
+    // 셋 모두 시전자 중심 220px 계약 안에 두되 서로 다른 방어·속성 입력을 준다.
+    [first, armored, disadvantaged].forEach((target, index) => {
+      target.x = 560 + index * 45;
+      target.y = 900;
+      target.attackCooldown = 99;
+    });
+    first.def = { ...first.def, element: "fire", stats: { ...first.def.stats, def: 0 } };
+    armored.def = { ...armored.def, element: "fire", stats: { ...armored.def.stats, def: 300 } };
+    disadvantaged.def = { ...disadvantaged.def, element: "water", stats: { ...disadvantaged.def.stats, def: 0 } };
+    first.hp = 1; // 첫 처리 대상이 죽어도 뒤의 두 대상을 계속 정산해야 한다.
+    torika.energy = torika.def.ultimate.cost;
+
+    const expected = [first, armored, disadvantaged].map((target) => computeDamage(
+      torika,
+      target,
+      { ...torika.def.ultimate, isCritical: false, kind: "ultimate" },
+      true,
+    ));
+    const events = fireUltimate(state, torika.id);
+    const hits = events.filter((event) => event.kind === "attack");
+
+    expect(hits.map((event) => event.amount)).toEqual(expected);
+    // 같은 유리 속성에서도 대상 방어가 적용되고, 같은 무방어 대상도 속성 상성에 따라 달라진다.
+    expect(expected[0]).toBeGreaterThan(expected[1]);
+    expect(expected[0]).toBeGreaterThan(expected[2]);
+    // 기대값 자체가 토리카의 atk가 아니라 def 180%를 원천으로 썼는지도 수치로 고정한다.
+    expect(expected[0]).toBe(Math.round((torika.def.stats.def * 1.8) * 1.25));
+    expect(first.stunnedFor).toBe(0);
+    expect(armored.stunnedFor).toBe(2);
+    expect(disadvantaged.stunnedFor).toBe(2);
+    expect(events.filter((event) => event.kind === "status")).toHaveLength(2);
+    expect(torika.energy).toBe(0);
+    expect(hits.filter((event) => event.animate !== false)).toHaveLength(1);
+  });
+
+  it("토리카의 주위 궁극기는 전장 전체가 아니라 시전자 중심 반경만 맞힌다", () => {
+    const state = newSkirmish(["anky"], ["husk-shell", "husk-wing"]);
+    const [torika, nearby, outside] = state.fighters;
+    if (torika.def.ultimate.targeting !== "nearbyEnemies") throw new Error("토리카 궁극기 반경 계약이 필요합니다.");
+    torika.x = 400; torika.y = 900;
+    nearby.x = 400 + torika.def.ultimate.radius; nearby.y = 900;
+    outside.x = nearby.x + 1; outside.y = 900;
+    torika.energy = torika.def.ultimate.cost;
+    const outsideHp = outside.hp;
+
+    const hits = fireUltimate(state, torika.id).filter((event) => event.kind === "attack");
+    expect(hits.map((event) => event.targetId)).toEqual([nearby.id]);
+    expect(outside.hp).toBe(outsideHp);
+    expect(outside.stunnedFor).toBe(0);
   });
 
   it("는 상대를 쓰러뜨리면 같은 호출에서 공격 뒤에 사망까지 알린다", () => {

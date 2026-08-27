@@ -668,7 +668,8 @@ export class BattleScene extends Phaser.Scene {
 
     const attacker = this.views.get(event.attackerId);
     const target = this.views.get(event.targetId);
-    const playback = attacker ? playMotion(this, attacker.creature, "attack", motionSpeedMultiplier) : undefined;
+    // 한 광역 기술의 후속 피해 사건은 피격 표현만 만들고 시전자 모션은 첫 사건에서 한 번만 튼다.
+    const playback = attacker && event.animate !== false ? playMotion(this, attacker.creature, "attack", motionSpeedMultiplier) : undefined;
     if (target) {
       // 붉은 섬광이 피격을 알리고, 동작은 공격을 끊지 않는 선에서 얕게만 얹힌다.
       flashHit(this, target.creature, this.bodyTint(target));

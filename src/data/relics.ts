@@ -101,7 +101,8 @@ export const RELICS: RelicDef[] = [
       lifeSteal: 0,
       ferocityGain: 0,
     },
-    ferocityTrait: { name: "다들 그만해!", effectId: "splashDamage", damagePercent: 100, radius: 220, desc: "기본 공격이 범위 공격으로 바뀌며 방어력의 일부만큼 추가 피해를 주고, 주위 적을 [[stagger|경직]]시킨다." },
+    // 경직은 별도 특수 규칙이 아니라 공용 기절을 2초 적용한다. 다른 스킬도 같은 필드를 재사용한다.
+    ferocityTrait: { name: "다들 그만해!", effectId: "splashDamage", damagePercent: 100, radius: 220, statusEffect: { kind: "stun", seconds: 2 }, desc: "기본 공격이 범위 공격으로 바뀌며 방어력의 일부만큼 추가 피해를 주고, 주위 적을 2초간 [[stagger|경직]]시킨다." },
     passive: {
       id: "anky-passive",
       name: "온화한 방패",

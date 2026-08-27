@@ -245,6 +245,11 @@ export const MOTION = {
    * 주고받는 동안 캐릭터가 계속 튀어 보이고, 무엇보다 자기 공격 모션이 매번 잘린다.
    */
   hit: { names: ["hit", "idle"], returnsToIdle: true, priority: 1, speed: 2.2, strength: 0.4 },
+  /**
+   * 기절 유지 자세. 최신 전투 SD는 `stun`을 사용하고, 아직 동작이 없는 구형 아군 SD는 피격
+   * 자세에 멈춰 행동 불능을 표현한다. 상태 종료는 BattleScene이 `idle`을 명시해 해제한다.
+   */
+  stun: { names: ["stun", "hit", "idle"], priority: 4 },
   /** 포효. 지금은 궁극기가 쓰지 않지만 동작 자체는 묶음에 남아 있어 연출용으로 부를 수 있다. */
   roar: { names: ["roar", "shout", "attack", "idle"], returnsToIdle: true, priority: 3 },
   /** 공격 동작이 따로 없어 포효로 대신한다. 재생 중에는 어떤 동작도 이걸 끊지 못한다. */

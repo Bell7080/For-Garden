@@ -4,7 +4,7 @@ import { computeDamage, isCriticalHit } from "./damage";
 import { drainFerocityFever, FEROCITY_RULES } from "./ferocity";
 import { breakthroughBonus } from "./relicProgression";
 import { attackPowerMultiplier, bleedOnAttackEffect, type ExpeditionAugmentEffect } from "./expeditionAugments";
-import type { RelicDef, Side, Skill } from "./types";
+import type { CombatStatusEffect, RelicDef, Side, Skill } from "./types";
 import { canUseUltimate, ULTIMATE_ENERGY_MAX } from "./ultimate";
 
 /**
@@ -64,6 +64,8 @@ export interface Fighter extends Combatant {
   streakTargetId: string | null;
   /** 같은 상대를 몇 번 이어서 때렸는지. */
   streakCount: number;
+  /** 남은 기절 시간(초). 별도 boolean 없이 `stunnedFor > 0`만 행동 차단 기준으로 삼는다. */
+  stunnedFor: number;
   /** 걸려 있는 출혈. 없으면 null이다. */
   bleed: { remaining: number; tickIn: number; percent: number } | null;
   /** 이 전투에서 긴급 회복 패시브를 이미 발동했는지. 저장하지 않는 "전투당 1회" 소유 상태다. */
@@ -110,6 +112,7 @@ export type SkirmishEvent =
     }
   | { kind: "bleed"; fighterId: string; amount: number; started: boolean }
   | { kind: "heal"; fighterId: string; amount: number; source: "passive" }
+  | { kind: "status"; fighterId: string; status: "stun"; active: true }
   | { kind: "death"; fighterId: string }
   | { kind: "finish"; phase: "victory" | "defeat" };
 
@@ -214,6 +217,8 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     hopPhase: index * 1.3 + (side === "player" ? 0 : 0.65),
     streakTargetId: null,
     streakCount: 0,
+    // 전투 시작 시 모든 행동 가능 상태이며, 기절은 전투 한정 상태라 저장 스냅샷에서 복원하지 않는다.
+    stunnedFor: 0,
     bleed: null,
     // 저장 스냅샷의 HP만 반영하고, 전투 한정 발동권과 지속 효과는 매 전투 새로 만든다.
     passiveTriggered: false,
@@ -283,6 +288,39 @@ export function skirmishRelicResults(state: SkirmishState): SkirmishRelicResult[
 
 export function isFighterAlive(fighter: Fighter): boolean {
   return fighter.hp > 0;
+}
+
+/**
+ * 공용 기절 재적용 경계. 짧은 효과가 이미 남은 긴 효과를 덮지 않도록 둘 중 큰 시간을 보존한다.
+ * UI는 시작 사건으로 연출을 열고, 종료 여부는 매 프레임 사건 대신 Fighter의 남은 시간을 읽는다.
+ */
+export function applyStun(fighter: Fighter, seconds: number): SkirmishEvent[] {
+  if (!isFighterAlive(fighter) || !Number.isFinite(seconds) || seconds <= 0) return [];
+  // 콘텐츠 정의의 저항은 지속 시간만 줄이며 100% 이상은 같은 경계에서 완전 면역으로 처리한다.
+  const resistance = Math.min(100, Math.max(0, fighter.def.stunResistancePercent ?? 0));
+  const resistedSeconds = seconds * (1 - resistance / 100);
+  if (resistedSeconds <= 0) return [];
+  const wasStunned = fighter.stunnedFor > 0;
+  fighter.stunnedFor = Math.max(fighter.stunnedFor, resistedSeconds);
+  return wasStunned ? [] : [{ kind: "status", fighterId: fighter.id, status: "stun", active: true }];
+}
+
+/** 해제 스킬이 사용할 공용 경계. 종료 사건은 만들지 않고 Fighter 상태를 즉시 단일 진실로 갱신한다. */
+export function clearStun(fighter: Fighter): void {
+  fighter.stunnedFor = 0;
+}
+
+/** 개별 스킬과 야성 특성에서 같은 판별 가능한 상태 효과를 적용한다. */
+function applyCombatStatusEffect(fighter: Fighter, effect: CombatStatusEffect, events: SkirmishEvent[]): void {
+  if (effect.kind === "stun") events.push(...applyStun(fighter, effect.seconds));
+}
+
+/** 사망한 전투원에게서 이후 되살아날 수 있는 전투 한정 지속 상태를 한곳에서 정리한다. */
+function clearDefeatedStatuses(fighter: Fighter): void {
+  fighter.targetId = null;
+  fighter.bleed = null;
+  fighter.regeneration = null;
+  fighter.stunnedFor = 0;
 }
 
 /** 한쪽 편에서 살아 있는 캐릭터만 고른다. */
@@ -486,7 +524,7 @@ function tickBleed(fighter: Fighter, dt: number, state: SkirmishState, events: S
     state.log.push(`${fighter.def.name} 출혈 ${amount}`);
     bleed.tickIn += 1;
     if (!isFighterAlive(fighter)) {
-      fighter.targetId = null;
+      clearDefeatedStatuses(fighter);
       events.push({ kind: "death", fighterId: fighter.id });
       state.log.push(`${fighter.def.name} 전투 불능`);
     }
@@ -565,9 +603,16 @@ function strike(
     critical,
   });
 
+  // 개별 기본 공격·궁극기가 선언한 상태도 피해 처리 뒤 공용 저항/재적용 규칙을 그대로 사용한다.
+  if (isFighterAlive(target)) {
+    for (const effect of skill.statusEffects ?? []) applyCombatStatusEffect(target, effect, events);
+  }
+
   // 광역 피해는 주 대상 타격의 부가 결과이며 에너지·야성·연속 공격을 추가 획득하지 않는다.
   const splashTrait = attacker.def.ferocityTrait;
   if (attackingInFever && splashTrait.effectId === "splashDamage") {
+    // 토리카의 경직처럼 피해 특성이 기절 시간을 선언하면 주 대상도 같은 공용 상태 규칙을 지난다.
+    if (splashTrait.statusEffect && isFighterAlive(target)) applyCombatStatusEffect(target, splashTrait.statusEffect, events);
     for (const secondary of state.fighters) {
       if (secondary.side === attacker.side || secondary.id === target.id || !isFighterAlive(secondary)
         || distance(target, secondary) > splashTrait.radius) continue;
@@ -584,12 +629,16 @@ function strike(
       // 광역 피해도 공격자가 실제로 입힌 HP 피해이므로 같은 흡혈 규칙에 포함한다.
       healFromDamage(secondaryHpBefore - secondary.hp);
       events.push({ kind: "attack", attackerId: attacker.id, targetId: secondary.id, skill: useUltimate ? "ultimate" : "basic", amount: splashAmount, critical });
-      if (!isFighterAlive(secondary)) events.push({ kind: "death", fighterId: secondary.id });
+      if (isFighterAlive(secondary) && splashTrait.statusEffect) applyCombatStatusEffect(secondary, splashTrait.statusEffect, events);
+      if (!isFighterAlive(secondary)) {
+        clearDefeatedStatuses(secondary);
+        events.push({ kind: "death", fighterId: secondary.id });
+      }
     }
   }
   state.log.push(`${attacker.def.name} → ${target.def.name} ${amount}`);
   if (!isFighterAlive(target)) {
-    target.targetId = null;
+    clearDefeatedStatuses(target);
     events.push({ kind: "death", fighterId: target.id });
     state.log.push(`${target.def.name} 전투 불능`);
   }
@@ -615,7 +664,8 @@ function separate(state: SkirmishState, dt: number): void {
       const angle = gap > 0.001 ? Math.atan2(dy, dx) : a.wander;
       // 겹친 양을 한 번에 없애지 않고 시간에 비례해 조금씩 푼다.
       // 한쪽만 움직일 수 있으면 그쪽이 겹친 양을 전부 감당한다.
-      const movable = [!a.engaged, !b.engaged];
+      // 기절은 위치 행동도 멈추므로 충돌 해소가 기절한 전투원을 밀어내지 않는다.
+      const movable = [!a.engaged && a.stunnedFor <= 0, !b.engaged && b.stunnedFor <= 0];
       if (!movable[0] && !movable[1]) continue;
       const share = movable[0] && movable[1] ? 0.5 : 1;
       const push = (SKIRMISH.spacing - gap) * share * Math.min(1, SKIRMISH.separationRate * dt);
@@ -660,17 +710,27 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
 
   // 지속 회복은 행동 순서와 분리해 모든 전투원이 같은 스텝의 시간 경계를 먼저 지나게 한다.
   for (const fighter of state.fighters) events.push(...tickRegeneration(fighter, dt));
+  // 기절 시계도 행동 전에 한 번만 전진한다. 이번 스텝의 공격으로 새로 걸린 기절까지 즉시
+  // 깎으면 배열상 뒤에 선 대상만 지속 시간이 짧아지므로, 모든 기존 상태를 먼저 동기화한다.
+  for (const fighter of state.fighters) {
+    if (isFighterAlive(fighter) && fighter.stunnedFor > 0) fighter.stunnedFor = Math.max(0, fighter.stunnedFor - dt);
+  }
 
   for (const fighter of state.fighters) {
     if (!isFighterAlive(fighter)) {
       fighter.hop *= recovery;
-      fighter.bleed = null;
-      fighter.regeneration = null;
+      clearDefeatedStatuses(fighter);
       continue;
     }
     // 출혈은 붙어 있든 달려가든 흐르는 시간만큼 깎는다.
     tickBleed(fighter, dt, state, events);
     if (!isFighterAlive(fighter)) continue;
+    // 기절 시간은 위에서 흐르지만 행동 시계인 공격 쿨다운은 멈춘다. 즉 이동·추적·평타·자동
+    // 궁극기와 함께 행동 자체가 정지하며, 정확히 0이 된 스텝부터 기존 쿨다운을 이어서 처리한다.
+    if (fighter.stunnedFor > 0) {
+      fighter.hop *= recovery;
+      continue;
+    }
     const target = resolveTarget(state, fighter);
     if (!target) continue;
 
@@ -705,7 +765,8 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
 
     if (fighter.attackCooldown <= 0) {
       // 아군 궁극기는 자동으로 나가지 않는다. 화면에서 누를 때만 fireUltimate로 들어온다.
-      strike(fighter, target, rng, state, events, fighter.side === "enemy" && canUseUltimate(fighter));
+      // 적 자동 궁극기도 수동 입력과 같은 생존·기절·게이지 코어 규칙을 통과한다.
+      strike(fighter, target, rng, state, events, fighter.side === "enemy" && canFireUltimate(state, fighter));
       fighter.attackCooldown = attackInterval(fighter);
     }
   }
@@ -717,7 +778,8 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
 
 /** 지금 궁극기를 쓸 수 있는지. 게이지가 찼고, 살아 있고, 때릴 상대가 남아 있어야 한다. */
 export function canFireUltimate(state: SkirmishState, fighter: Fighter): boolean {
-  if (state.phase !== "fight" || !isFighterAlive(fighter) || !canUseUltimate(fighter)) return false;
+  // 수동 입력과 적 자동 시전이 모두 이 코어 경계를 공유해 기절 우회 경로를 만들지 않는다.
+  if (state.phase !== "fight" || !isFighterAlive(fighter) || fighter.stunnedFor > 0 || !canUseUltimate(fighter)) return false;
   return state.fighters.some((other) => other.side !== fighter.side && isFighterAlive(other));
 }
 

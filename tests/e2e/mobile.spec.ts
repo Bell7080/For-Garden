@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { startAfterOpening } from "./openingSave";
 import { ExpeditionManager } from "../../src/managers/ExpeditionManager";
+import { expeditionNodePosition } from "../../src/ui/expeditionLayout";
 
 const BASE_WIDTH = 1080;
 const BASE_HEIGHT = 1920;
@@ -120,6 +121,30 @@ test("저장된 전투 전 증강 후보는 지도보다 먼저 복원된다", a
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("expedition");
   // 닫기 없는 선택 작업판과 세 후보가 복원된 상태를 시각 회귀 자료로 남긴다.
   await page.screenshot({ path: `test-results/${test.info().project.name}-expedition-augment-popup.png` });
+});
+
+test("원정 전투 노드는 지도 안 공용 편성판을 붙이고 적 상세 정보창으로 진입한다", async ({ page }) => {
+  let reachableX = BASE_WIDTH / 2;
+  await startAfterOpening(page, (session) => {
+    // 실제 매니저가 만든 1층 전투 노드를 사용해 저장 구조와 지도 열 배치를 테스트가 위조하지 않는다.
+    const manager = new ExpeditionManager(session, { save: () => undefined }, () => new Date());
+    manager.start([...session.owned].slice(0, 3));
+    const node = session.expedition.run!.nodes.find(({ floor, type }) => floor === 1 && ["normal", "elite", "horde"].includes(type))!;
+    reachableX = expeditionNodePosition(node.floor, node.column).x;
+  });
+  await page.locator("canvas").click();
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+  await tapGame(page, BASE_WIDTH - 290, BASE_HEIGHT - 425); await tapGame(page, BASE_WIDTH / 2, 995);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("expedition");
+  // 최초 도달 층은 지도 마스크 중앙에 포커스되므로 실제 열 좌표의 노드를 선택한다.
+  await tapGame(page, reachableX, (316 + 1138) / 2);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.enemyPreview)).not.toBeUndefined();
+  const geometry = await page.evaluate(() => window.__PF_DEBUG!.enemyPreview!);
+  expect(geometry.panelTop).toBeGreaterThanOrEqual(geometry.top); expect(geometry.panelBottom).toBeLessThanOrEqual(geometry.bottom);
+  expect([1, 3, 5]).toContain(geometry.enemyTargets.length);
+  await page.screenshot({ path: `test-results/${test.info().project.name}-expedition-node-enemy-preview.png` });
+  await tapGame(page, geometry.enemyTargets[0].x, geometry.enemyTargets[0].y);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.infoOpen)).toBe(true);
 });
 
 test("방치 발굴 팝업은 좁은 로비 위 한 장으로 열리고 뒤 입력을 차단한 뒤 닫힌다", async ({ page }) => {

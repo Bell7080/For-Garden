@@ -103,9 +103,8 @@ export const RELICS: RelicDef[] = [
       lifeSteal: 0,
       ferocityGain: 0,
     },
-    // 경직은 별도 특수 규칙이 아니라 공용 기절을 2초 적용한다. 다른 스킬도 같은 필드를 재사용한다.
-    // 탱커가 공격력 대신 성장시킨 방어력을 공격으로 환원하되, 60%로 제한해 궁극기의 방어력 180% 계수를 침범하지 않는다.
-    ferocityTrait: { name: "다들 그만해!", effectId: "splashDamage", damagePercent: 100, defenseDamagePercent: 60, radius: 220, statusEffect: { kind: "stun", seconds: 2 } },
+    // 3명을 맞혀도 방어력 180% 궁극기의 총 계수를 넘지 않도록 추가 피해를 15%로 제한하고, 대신 공격 속도 20%를 보상으로 준다.
+    ferocityTrait: { name: "다들 그만해!", effectId: "splashDamage", damagePercent: 100, defenseDamagePercent: 15, attackSpeedBonusPercent: 20, radius: 220, statusEffect: { kind: "stagger", seconds: 0.1 } },
     passive: {
       id: "anky-passive",
       name: "온화한 방패",

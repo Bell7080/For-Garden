@@ -1598,16 +1598,19 @@ export class InfoManager {
       effectType: "buff",
       valueLabel: "야성 발현",
       // 설명 수치는 전투가 읽는 특성 필드에서 생성해 정적 문구와 실제 효과가 갈라지지 않는다.
-      description: "[[ferocity|야성 게이지]]가 가득 차면 폭주한다. " + ferocityTraitDescription(def.ferocityTrait),
+      description: "[[ferocity|야성 게이지]]가 가득 차면 폭주한다. "
+        + ferocityTraitDescription(def.ferocityTrait, relicProgression.getFinalStats(def.id).def),
     }, from);
   }
 
   /** 읽기 전용 도감에 실제 방어력을 가정하지 않은 스킬 능력치 배율을 만든다. */
   private skillViewModel(kindLabel: string, skill: Skill, gaugeCost?: number, slot?: SkillArtSlot): SkillInfoViewModel {
-    const attacker: Combatant | undefined = this.currentDef && {
-      def: this.currentDef, hp: this.currentDef.stats.hp, maxHp: this.currentDef.stats.hp,
+    // 레벨·돌파·장착 룬을 모두 반영한 정의를 미리보기에 넘겨 74 같은 기본치가 성장 후에 남지 않게 한다.
+    const finalDef = this.currentDef && { ...this.currentDef, stats: relicProgression.getFinalStats(this.currentDef.id) };
+    const attacker: Combatant | undefined = finalDef && {
+      def: finalDef, hp: finalDef.stats.hp, maxHp: finalDef.stats.hp,
       energy: 0, ferocity: 0, bondLevel: 0, ferocityFever: false,
-      breakthrough: relicProgression.getProgress(this.currentDef.id).breakthrough,
+      breakthrough: relicProgression.getProgress(finalDef.id).breakthrough,
     };
     const preview = attacker && kindLabel !== "패시브" ? previewSkillDamage(attacker, skill) : undefined;
     const statKeyword = preview?.kind === "scaling" ? (preview.stat === "방어력" ? "def" : preview.stat === "공격력" ? "atk" : undefined) : undefined;

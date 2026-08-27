@@ -472,17 +472,24 @@ describe("효과 ID별 야성 특성", () => {
     const hits = stepSkirmish(state, 1 / 60).filter((event) => event.kind === "attack");
     expect(hits).toHaveLength(2);
     expect(hits.some((event) => event.kind === "attack" && event.targetId === nearby.id)).toBe(true);
-    // 주 대상과 주변 대상은 모두 공격력 100% + 방어력 60% 계수를 각 대상의 방어력으로 계산한다.
+    // 주 대상과 주변 대상은 모두 원래 타격에 방어력 15% 추가 피해를 각 대상의 방어력으로 계산한다.
     const attackEvents = hits.filter((event) => event.kind === "attack");
     const primaryHit = attackEvents.find((event) => event.targetId === primary.id)!;
     const nearbyHit = attackEvents.find((event) => event.targetId === nearby.id)!;
     // 계수의 단일 출처를 고정하고, 실제 타격이 기존 공격력 피해보다 커졌는지 각 대상에서 검증한다.
-    expect(torika.def.ferocityTrait).toMatchObject({ damagePercent: 100, defenseDamagePercent: 60 });
+    expect(torika.def.ferocityTrait).toMatchObject({ damagePercent: 100, defenseDamagePercent: 15, attackSpeedBonusPercent: 20 });
     expect(primaryHit.amount).toBeGreaterThan(computeDamage(torika, primary, { ...torika.def.basic, isCritical: primaryHit.critical, kind: "basic" }, true));
     expect(nearbyHit.amount).toBeGreaterThan(computeDamage(torika, nearby, { ...torika.def.basic, isCritical: nearbyHit.critical, kind: "basic" }, true));
-    // 기존 설명의 경직은 공용 2초 기절이며 주 대상과 범위에 맞은 대상 모두 같은 상태를 쓴다.
-    expect(primary.stunnedFor).toBeCloseTo(2);
-    expect(nearby.stunnedFor).toBeCloseTo(2);
+    // 경직은 기절 상태를 오용하지 않고 주·주변 대상의 행동만 0.1초 순간 차단한다.
+    expect(primary.stunnedFor).toBe(0);
+    expect(nearby.stunnedFor).toBe(0);
+    expect(primary.staggeredFor).toBeCloseTo(0.1);
+    expect(nearby.staggeredFor).toBeCloseTo(0.1);
+    // 공격 속도 20% 증가는 기본 공격 간격을 1.2로 나눈 값이다.
+    torika.ferocityFever = false;
+    const calmInterval = attackInterval(torika);
+    torika.ferocityFever = true;
+    expect(attackInterval(torika)).toBeCloseTo(calmInterval / 1.2);
   });
 
   it("splashDamage는 세이라의 피버 타격을 220px 안의 주변 적에게 35%로 번지게 한다", () => {

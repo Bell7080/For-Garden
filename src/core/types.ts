@@ -97,14 +97,15 @@ export interface Skill {
   scalingStat?: "atk" | "def";
   /** 물리는 atk/def, 마법은 ap/res를 참조한다. */
   damageType: DamageType;
-  /** 명중 뒤 적용할 작은 공용 상태 효과 목록이다. 현재는 기절만 지원하며 빈 스킬은 생략한다. */
+  /** 명중 뒤 적용할 작은 공용 상태 효과 목록이다. 기절·경직이 없는 스킬은 생략한다. */
   statusEffects?: readonly CombatStatusEffect[];
   desc: string;
 }
 
 /** 스킬과 야성 특성이 공유하는 최소 상태 효과 계약이다. 새 상태가 실제로 생길 때만 union을 늘린다. */
 export type CombatStatusEffect =
-  | { kind: "stun"; /** 저항 계산 전 기본 지속 시간(초). */ seconds: number };
+  | { kind: "stun"; /** 저항 계산 전 기본 지속 시간(초). */ seconds: number }
+  | { kind: "stagger"; /** 기절 저항을 무시하는 순간 행동 차단 시간(초). */ seconds: number };
 
 /** 궁극기의 대상 선택은 ID나 설명문 대신 코어가 검증할 수 있는 정적 계약으로 선언한다. */
 export type Ultimate = Skill & {
@@ -160,6 +161,8 @@ export type FerocityTrait = {
       radius: number;
       /** 방어력 기반 물리 추가 피해 비율이며, 없으면 추가 피해를 계산하지 않는다. */
       defenseDamagePercent?: number;
+      /** 폭주 중 기본 공격 속도 증가율이다. */
+      attackSpeedBonusPercent?: number;
       /** 범위 명중에 함께 적용할 선택 상태 효과다. */
       statusEffect?: CombatStatusEffect;
     }

@@ -50,6 +50,7 @@ import { expeditionBossPhaseAt, type ExpeditionBossAction } from "../core/expedi
 import { attackPowerMultiplier } from "../core/expeditionAugments";
 import { EXPEDITION_BOSS_BALANCE } from "../data/expedition";
 import { expeditionManager } from "../managers/ExpeditionManager";
+import { settingsManager } from "../managers/SettingsManager";
 import type { SettleExpeditionRunResponse, SubmitExpeditionBossScoreResponse } from "../api/contracts";
 import { currencyRecordToRewardItems, openRewardPopup } from "../ui/RewardPopup";
 
@@ -250,8 +251,10 @@ export class BattleScene extends Phaser.Scene {
     this.profiles = [];
     this.finished = false;
     this.spawned = false;
-    this.battleSpeed = 1;
-    this.autoUltimate = false;
+    // 이전 전투/환경설정에서 저장한 조작 상태를 새 판의 시작값으로 그대로 복원한다.
+    const battleSettings = settingsManager.get().game;
+    this.battleSpeed = battleSettings.battleSpeed;
+    this.autoUltimate = battleSettings.autoUltimate;
     this.ultimateSequenceActive = false;
     this.ultimateSequence = createUltimateSequenceState();
     this.currentUltimateFighterId = null;
@@ -354,23 +357,30 @@ export class BattleScene extends Phaser.Scene {
   private buildBattleControls(): void {
     this.speedChip = new ControlChip(this, BASE_WIDTH - 335, 150, {
       icon: "speed",
-      label: "1배속",
+      label: `${this.battleSpeed}배속`,
       onClick: () => {
         this.battleSpeed = nextBattleSpeed(this.battleSpeed);
+        // 판이 바뀌거나 앱을 다시 열어도 마지막 선택을 유지하도록 공용 저장 경계를 통과한다.
+        settingsManager.update({ game: { battleSpeed: this.battleSpeed } });
         this.speedChip.setLabel(`${this.battleSpeed}배속`).setActive(this.battleSpeed > 1);
         this.refreshDebug();
       },
     });
     this.autoChip = new ControlChip(this, BASE_WIDTH - 130, 150, {
       icon: "auto",
-      label: "궁극 OFF",
+      label: this.autoUltimate ? "궁극 ON" : "궁극 OFF",
       width: 170,
       onClick: () => {
         this.autoUltimate = !this.autoUltimate;
+        // 자동 궁극기도 배속과 같은 플레이 습관이므로 토글하는 즉시 저장한다.
+        settingsManager.update({ game: { autoUltimate: this.autoUltimate } });
         this.autoChip.setLabel(this.autoUltimate ? "궁극 ON" : "궁극 OFF").setActive(this.autoUltimate);
         this.refreshDebug();
       },
     });
+    // 복원된 값도 첫 클릭 전부터 켜짐 색으로 읽히게 한다.
+    this.speedChip.setActive(this.battleSpeed > 1);
+    this.autoChip.setActive(this.autoUltimate);
   }
 
   /** 여섯을 각자의 시작 자리에 세운다. 전부 준비된 뒤에야 시간이 흐르기 시작한다. */
@@ -535,11 +545,15 @@ export class BattleScene extends Phaser.Scene {
       // 입력 순간이 아니라 발돋움이 끝난 바로 이 시점의 생존/게이지/전투 결과를 코어에 재검증한다.
       if (!this.sequenceValid(next.token, fighter) || !canFireUltimate(this.state, fighter)) return;
       const events = fireUltimate(this.state, fighter.id, () => Math.random());
+      // 코어가 바꾼 HP를 즉시 게이지 목표로 전달한다. 연출을 기다리는 동안 stepMeters가
+      // 매 프레임 목표를 따라가므로 적 체력이 한 번에 점프하지 않고 실제로 깎여 보인다.
+      this.views.forEach((fighterView) => fighterView.hpBar.setValue(fighterView.fighter.hp / fighterView.fighter.maxHp));
       // 첫 공격 동작만 기다리되 나머지 사건(사망·종료)도 전부 연출로 옮긴다. `??=`의 오른쪽을
       // 조건부로 두면 첫 동작 이후의 사망 사건이 통째로 버려져 쓰러진 적이 계속 서 있었다.
       let attackMotion: MotionPlayback | undefined;
       events.forEach((event) => {
-        const playback = this.playEvent(event);
+        // 컷인 뒤의 결정타만 빠르게 재생해 멈춘 전투가 즉시 이어지도록 한다.
+        const playback = this.playEvent(event, 2);
         attackMotion ??= playback;
       });
       await attackMotion?.completed;
@@ -613,7 +627,7 @@ export class BattleScene extends Phaser.Scene {
   }
 
   /** 공격·사망·종료를 각각의 연출로 옮긴다. */
-  private playEvent(event: SkirmishEvent): MotionPlayback | undefined {
+  private playEvent(event: SkirmishEvent, motionSpeedMultiplier = 1): MotionPlayback | undefined {
     if (event.kind === "finish") {
       this.finishBattle(event.phase);
       return undefined;
@@ -636,7 +650,7 @@ export class BattleScene extends Phaser.Scene {
 
     const attacker = this.views.get(event.attackerId);
     const target = this.views.get(event.targetId);
-    const playback = attacker ? playMotion(this, attacker.creature, "attack") : undefined;
+    const playback = attacker ? playMotion(this, attacker.creature, "attack", motionSpeedMultiplier) : undefined;
     if (target) {
       // 붉은 섬광이 피격을 알리고, 동작은 공격을 끊지 않는 선에서 얕게만 얹힌다.
       flashHit(this, target.creature, this.bodyTint(target));

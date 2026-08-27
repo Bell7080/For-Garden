@@ -472,6 +472,7 @@ export function playMotion(
   scene: Phaser.Scene,
   creature: PuppetCreature,
   motion: MotionName,
+  speedMultiplier = 1,
 ): MotionPlayback {
   const config: MotionConfig = MOTION[motion];
   // 더 중요한 동작이 아직 재생 중이면 그대로 둔다. 공격은 끝까지 휘두르고, 피격이 자른다.
@@ -480,7 +481,9 @@ export function playMotion(
     return { playedName: null, durationMs: 0, completed: Promise.resolve() };
   }
 
-  const options = { speed: config.speed, strength: config.strength };
+  // 궁극기처럼 후속 진행을 재촉해야 하는 호출만 원본 동작 속도를 높이고 일반 공격은 그대로 둔다.
+  const configuredSpeed = config.speed ?? 1;
+  const options = { speed: configuredSpeed * Math.max(speedMultiplier, 0.01), strength: config.strength };
   const playedName = config.names.find((name) => creature.play(name, options));
   if (!playedName) return { playedName: null, durationMs: 0, completed: Promise.resolve() };
 
@@ -497,7 +500,8 @@ export function playMotion(
   // PuppetForge의 내보내기 speed/strength/secondary는 play()가 그대로 적용한다. 복귀 시각도
   // 고정 숫자가 아니라 내보낸 duration과 실제 재생 속도로 계산해 동작이 중간에 잘리지 않게 한다.
   const exportedMotion = creature.core.project.animations[playedName];
-  const speed = Math.max((config.speed ?? exportedMotion.speed) ?? 1, 0.01);
+  // 완료 Promise도 실제 전달한 배율을 반영해야 빠른 궁극기 동작 뒤 시퀀스가 바로 풀린다.
+  const speed = Math.max(((config.speed ?? exportedMotion.speed) ?? 1) * Math.max(speedMultiplier, 0.01), 0.01);
   const holdMs = (exportedMotion.duration / speed) * 1000;
   motionHold.set(creature, { priority: config.priority, until: scene.time.now + holdMs });
   let resolveCompletion!: () => void;

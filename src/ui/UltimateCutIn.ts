@@ -7,7 +7,8 @@ import { COLOR, textStyle } from "./theme";
 import type { UltimatePresentation } from "../data/ultimatePresentations";
 
 /** 컷인이 화면을 점유하는 짧은 구간. 공격 판정 시각은 이 프리팹이 아니라 BattleScene이 소유한다. */
-const CUT_IN = { enterMs: 170, exitMs: 140, depth: 900 } as const;
+// 전장을 가리는 이동 시간을 짧게 묶어 반복 궁극기에서도 흐름이 오래 끊기지 않게 한다.
+const CUT_IN = { enterMs: 120, exitMs: 90, depth: 900 } as const;
 
 /** Phaser tween을 await 가능한 한 번의 단계로 바꿔 궁극기 시퀀스를 읽는 순서 그대로 유지한다. */
 function tween(scene: Phaser.Scene, config: Phaser.Types.Tweens.TweenBuilderConfig): Promise<void> {

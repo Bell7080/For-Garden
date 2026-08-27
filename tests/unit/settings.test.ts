@@ -29,6 +29,15 @@ describe("settings", () => {
     manager.reset(); expect(manager.get()).toEqual(createDefaultSettings()); expect(state.wallet.gold).toBe(77); expect(save).toHaveBeenCalledTimes(2);
   });
 
+  it("전투의 3배속과 자동 궁극기를 다음 판에 복원할 설정으로 함께 저장한다", () => {
+    const state = createDefaultSession(); const save = vi.fn(); const manager = new SettingsManager(state, { save });
+    manager.update({ game: { battleSpeed: 3, autoUltimate: true } });
+    // 전투 씬은 이 정규화된 스냅샷을 읽으므로 판을 새로 만들어도 두 선택이 유지된다.
+    expect(manager.get().game).toMatchObject({ battleSpeed: 3, autoUltimate: true });
+    expect(state.settings.game).toMatchObject({ battleSpeed: 3, autoUltimate: true });
+    expect(save).toHaveBeenCalledOnce();
+  });
+
   it("미지원 햅틱과 설정 비활성화는 플랫폼 호출 없이 조용히 실패한다", () => {
     const state = createDefaultSession(); const platform = fakePlatform(); const manager = new SettingsManager(state, { save: vi.fn() }, platform);
     manager.update({ vibration: { enabled: false } }); expect(manager.haptic("battleHit")).toBe(false); expect(platform.haptic).not.toHaveBeenCalled();

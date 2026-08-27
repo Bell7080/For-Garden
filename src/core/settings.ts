@@ -1,7 +1,8 @@
 import type { GameSettings } from "../state/session";
 
 /** Phaser나 저장소 없이도 서버·테스트가 함께 쓸 수 있는 설정 허용값이다. */
-export const BATTLE_SPEEDS = [1, 1.5, 2] as const;
+// 실제 전투 조작의 1→2→3배 순환과 저장 허용값을 같은 표로 맞춘다.
+export const BATTLE_SPEEDS = [1, 2, 3] as const;
 export const TEXT_SPEEDS = [0.5, 1, 2] as const;
 /** 글자가 화면을 밀어내지 않는 범위에서 제공하는 공용 텍스트 배율이다. */
 export const TEXT_SCALES = [1, 1.15, 1.3] as const;

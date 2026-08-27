@@ -24,6 +24,8 @@ export class InventoryPopup {
   private items: InventoryItemDto[] = [];
   private maskShape?: Phaser.GameObjects.Rectangle;
   private geometryMask?: Phaser.Display.Masks.GeometryMask;
+  /** 중첩 상세 팝업 유무와 무관하게 가방 자체를 닫는 전용 콜백이다. */
+  private closePopup?: () => void;
   private readonly inventory = new InventoryManager(session);
 
   constructor(private readonly scene: Phaser.Scene, private readonly popups: PopupLayer, private readonly api: GameApi, private readonly onClose?: () => void, private readonly onWalletChanged?: () => void) {}
@@ -32,7 +34,9 @@ export class InventoryPopup {
   open(): void {
     if (this.body) return;
     const width = 900; const height = 1510;
-    this.body = this.popups.open({ width, height, title: "가방", titleSize: POPUP_TITLE_SIZE.workboard, dim: true, closeOnBackdrop: false, hideCloseButton: true, onClose: () => { this.destroyMask(); this.body = undefined; this.view = undefined; this.onClose?.(); } }, (body) => {
+    this.body = this.popups.open({ width, height, title: "가방", titleSize: POPUP_TITLE_SIZE.workboard, dim: true, closeOnBackdrop: false, hideCloseButton: true, onClose: () => { this.destroyMask(); this.body = undefined; this.view = undefined; this.closePopup = undefined; this.onClose?.(); } }, (body, close) => {
+      // 외부 돌아가기 버튼은 stack 최상단이 아니라 이 가방 판을 정확히 가리켜야 한다.
+      this.closePopup = close;
       // 공용 팝업 판과 제목은 보존하고 교체 가능한 내용 전용 컨테이너만 다시 그린다.
       const view = this.scene.add.container(0, 0); this.view = view; body.add(view);
       // 닫기는 LobbyScene의 화면 우하단 공용 버튼 하나가 맡아 팝업에 붙은 중복 버튼을 만들지 않는다.
@@ -40,7 +44,7 @@ export class InventoryPopup {
     });
   }
 
-  close(): void { if (this.body) this.popups.closeTop(); }
+  close(): void { this.closePopup?.(); }
 
   /** 탭과 목록만 다시 만들어 서버/세션 상태를 UI 객체가 직접 수정하지 않게 한다. */
   private render(body: Phaser.GameObjects.Container): void {
@@ -49,13 +53,15 @@ export class InventoryPopup {
     body.removeAll(true);
     const visible = this.items.filter(({ category }) => category === this.category);
     // 첫 카드가 큰 작업판 제목의 세로 영역을 침범하지 않도록 기존 목록을 50px 내린다.
-    const content = this.scene.add.container(0, -550);
+    // 첫 카드의 윗변을 마스크 윗변에 맞춰 아이콘/액자가 절반 잘리지 않게 한다.
+    const contentStartY = VIEWPORT.y - VIEWPORT.height / 2 + GRID.cellHeight / 2;
+    const content = this.scene.add.container(0, contentStartY);
     // 입력면과 마스크는 같은 팝업 로컬 사각형에서 만들어 좌표계 불일치를 차단한다.
     this.maskShape = this.scene.add.rectangle((this.body?.x ?? 0) + VIEWPORT.x, (this.body?.y ?? 0) + VIEWPORT.y, VIEWPORT.width, VIEWPORT.height, 0xffffff).setVisible(false);
     this.geometryMask = this.maskShape.createGeometryMask(); content.setMask(this.geometryMask); body.add(content);
     visible.forEach((item, index) => this.addCard(content, item, index));
     const metrics = inventoryScrollMetrics(visible.length); let offset = 0; let dragY = 0;
-    const move = (delta: number): void => { offset = Phaser.Math.Clamp(offset + delta, metrics.minY, 0); content.y = -550 + offset; };
+    const move = (delta: number): void => { offset = Phaser.Math.Clamp(offset + delta, metrics.minY, 0); content.y = contentStartY + offset; };
     const hit = this.scene.add.rectangle(VIEWPORT.x, VIEWPORT.y, VIEWPORT.width, VIEWPORT.height, 0xffffff, 0).setInteractive({ draggable: true, useHandCursor: true });
     hit.on("dragstart", (pointer: Phaser.Input.Pointer) => { dragY = pointer.y; });
     hit.on("drag", (pointer: Phaser.Input.Pointer) => { move(pointer.y - dragY); dragY = pointer.y; });

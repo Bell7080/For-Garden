@@ -109,7 +109,8 @@ export class SettingsScene extends Phaser.Scene {
     } else if (this.activeTab === "play") {
       section("연출 · 게임", 1050);
       ([['궁극기 컷인','ultimateCutIn'],['화면 흔들림','screenShake'],['피해 숫자','damageNumbers'],['연구 연출 단축','shortenExcavation'],['저사양 모드','lowSpecMode']] as const).forEach(([a,b]) => toggle(a,'presentation',b));
-      this.content.add(new SettingsSelectRow(this,90,y,'전투 배속',s.game.battleSpeed,[1,1.5,2] as const,v=>settingsManager.update({game:{battleSpeed:v}}))); y+=94;
+      // 인게임 배속 칩과 같은 1·2·3배 선택지를 보여 주며 SettingsManager가 즉시 저장한다.
+      this.content.add(new SettingsSelectRow(this,90,y,'전투 배속',s.game.battleSpeed,[1,2,3] as const,v=>settingsManager.update({game:{battleSpeed:v}}))); y+=94;
       toggle('자동 궁극기','game','autoUltimate');
       this.content.add(new SettingsSelectRow(this,90,y,'텍스트 속도',s.game.textSpeed,[0.5,1,2] as const,v=>settingsManager.update({game:{textSpeed:v}}))); y+=94;
       this.content.add(new SettingsSelectRow(this,90,y,'언어',s.game.language,['ko','en','ja'] as const,v=>settingsManager.update({game:{language:v}}))); y+=110;

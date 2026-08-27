@@ -22,6 +22,6 @@ describe("ultimate presentation presets", () => {
     expect(DEFAULT_ULTIMATE_PRESENTATION.zoomScale).toBeLessThanOrEqual(1.35);
     expect(DEFAULT_ULTIMATE_PRESENTATION.zoomMs).toBeLessThanOrEqual(200);
     // 컷인은 이름을 읽을 만큼만 머문다. 여기가 늘면 전투가 매번 그만큼 멈춘다.
-    expect(DEFAULT_ULTIMATE_PRESENTATION.cutInHoldMs).toBeLessThanOrEqual(300);
+    expect(DEFAULT_ULTIMATE_PRESENTATION.cutInHoldMs).toBeLessThanOrEqual(160);
   });
 });

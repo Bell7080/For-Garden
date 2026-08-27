@@ -20,7 +20,7 @@ export interface GameSettings {
   presentation: { ultimateCutIn: boolean; screenShake: boolean; damageNumbers: boolean; shortenExcavation: boolean; lowSpecMode: boolean };
   /** 읽기 편의 옵션은 장면 좌표가 아니라 공용 텍스트/연출 계층에서 소비한다. */
   accessibility: { textScale: 1 | 1.15 | 1.3; reduceMotion: boolean; reduceFlashes: boolean; colorAssist: boolean; subtitles: boolean };
-  game: { battleSpeed: 1 | 1.5 | 2; autoUltimate: boolean; textSpeed: 0.5 | 1 | 2; language: "ko" | "en" | "ja" };
+  game: { battleSpeed: 1 | 2 | 3; autoUltimate: boolean; textSpeed: 0.5 | 1 | 2; language: "ko" | "en" | "ja" };
   account: { provider: "guest" | "google" | "apple"; displayId: string };
 }
 

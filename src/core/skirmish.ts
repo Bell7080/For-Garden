@@ -87,6 +87,21 @@ export interface SkirmishState {
   log: string[];
   /** 원정에서만 주입되는 순수 효과 목록이다. 일반 스토리 전투는 빈 배열이다. */
   augmentEffects: readonly ExpeditionAugmentEffect[];
+  /** 보스전에서만 존재하는 누적 피해·생존 시간·단계 상태다. 같은 진행기가 함께 갱신한다. */
+  boss?: SkirmishBossState;
+}
+
+/** 불사 원정 보스의 시간 단계다. 초당 피해는 아군 전체에 동일하게 적용된다. */
+export interface SkirmishBossPhase { startsAt: number; damagePerSecond: number; label: string }
+/** 화면과 정산이 읽는 보스 런타임 상태이며 점수는 실제 attack 사건의 피해만 누적한다. */
+export interface SkirmishBossState {
+  score: number;
+  survivedFor: number;
+  phaseIndex: number;
+  limitReached: boolean;
+  phases: readonly SkirmishBossPhase[];
+  limitSeconds: number;
+  damageRemainder: number;
 }
 
 /** 원정 저장 상태를 전투 시작 값으로 옮길 때 쓰는 렐릭별 스냅샷이다. currentHp는 0~100 비율이다. */
@@ -100,6 +115,8 @@ export interface CreateSkirmishOptions {
   augmentEffects?: readonly ExpeditionAugmentEffect[];
   /** 적 종류별 크기 표현을 씬이 재해석하지 않도록 입력 모델에서 전달한다. */
   enemyBodyScale?: number;
+  /** 지정하면 적은 불사이며 아군 전멸만 패배 종료가 되는 보스 규칙을 켠다. */
+  boss?: { phases: readonly SkirmishBossPhase[]; limitSeconds: number };
 }
 
 /** 씬이 모션·피격 숫자·사망 연출을 붙일 수 있도록 이번 프레임에 일어난 일만 모아 돌려준다. */
@@ -257,6 +274,7 @@ export function createSkirmish(
   options: CreateSkirmishOptions = {},
 ): SkirmishState {
   if (playerDefs.length < 1 || playerDefs.length > 5 || enemyDefs.length < 1 || enemyDefs.length > 5) throw new RangeError("난전은 팀별 1~5기를 지원합니다.");
+  if (options.boss && (!options.boss.phases.length || options.boss.limitSeconds <= 0)) throw new RangeError("보스 단계와 리미트는 유효해야 합니다.");
   const playerSpots = spawnSpots(arena, "player", playerDefs.length);
   const enemySpots = spawnSpots(arena, "enemy", enemyDefs.length);
   const initialById = new Map(options.playerInitialStates?.map((snapshot) => [snapshot.relicId, snapshot]));
@@ -276,6 +294,7 @@ export function createSkirmish(
     elapsed: 0,
     log: [],
     augmentEffects: options.augmentEffects ?? [],
+    boss: options.boss ? { score: 0, survivedFor: 0, phaseIndex: 0, limitReached: false, phases: options.boss.phases, limitSeconds: options.boss.limitSeconds, damageRemainder: 0 } : undefined,
   };
 }
 
@@ -796,7 +815,10 @@ function settle(state: SkirmishState, events: SkirmishEvent[]): void {
   if (state.phase !== "fight") return;
   const playersLeft = aliveFighters(state, "player").length;
   const enemiesLeft = aliveFighters(state, "enemy").length;
-  if (enemiesLeft === 0) state.phase = "victory";
+  // 불사 보스는 적 HP와 무관하게 아군 전멸만 정상 종료로 인정한다.
+  if (state.boss && playersLeft === 0) state.phase = "defeat";
+  else if (state.boss) return;
+  else if (enemiesLeft === 0) state.phase = "victory";
   else if (playersLeft === 0) state.phase = "defeat";
   else return;
   events.push({ kind: "finish", phase: state.phase });
@@ -804,6 +826,24 @@ function settle(state: SkirmishState, events: SkirmishEvent[]): void {
 
 function advance(state: SkirmishState, dt: number, rng: () => number, events: SkirmishEvent[]): void {
   state.elapsed += dt;
+
+  if (state.boss) {
+    const boss = state.boss;
+    boss.survivedFor = state.elapsed;
+    // ES2022 빌드에서도 동작하도록 뒤에서 직접 찾아 현재 단계를 고른다.
+    for (let index = boss.phases.length - 1; index >= 0; index -= 1) if (state.elapsed >= boss.phases[index].startsAt) { boss.phaseIndex = index; break; }
+    boss.limitReached = state.elapsed >= boss.limitSeconds;
+    // 프레임 크기와 무관하게 같은 누적 광역 피해가 되도록 소수 나머지를 다음 스텝에 보존한다.
+    boss.damageRemainder += boss.phases[boss.phaseIndex].damagePerSecond * dt;
+    const pulse = Math.floor(boss.damageRemainder);
+    if (pulse > 0) {
+      boss.damageRemainder -= pulse;
+      for (const fighter of aliveFighters(state, "player")) {
+        fighter.hp = Math.max(0, fighter.hp - pulse);
+        if (!isFighterAlive(fighter)) { clearDefeatedStatuses(fighter); events.push({ kind: "death", fighterId: fighter.id }); }
+      }
+    }
+  }
 
   // 돌진·피격 변위는 시간이 지나면 제자리로 돌아온다. 죽은 캐릭터도 마지막 밀림은 마저 푼다.
   const recovery = Math.exp(-SKIRMISH.recover * dt);
@@ -872,6 +912,12 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
       // 아군 궁극기는 자동으로 나가지 않는다. 화면에서 누를 때만 fireUltimate로 들어온다.
       // 적 자동 궁극기도 수동 입력과 같은 생존·기절·게이지 코어 규칙을 통과한다.
       strike(fighter, target, rng, state, events, fighter.side === "enemy" && canFireUltimate(state, fighter));
+      // 보스가 실제로 받은 공격 사건을 점수로 옮긴 뒤 HP를 즉시 복구해 사망 경로를 차단한다.
+      if (state.boss && target.side === "enemy") {
+        const scored = [...events].reverse().find((event): event is Extract<SkirmishEvent, { kind: "attack" }> => event.kind === "attack" && event.attackerId === fighter.id && event.targetId === target.id);
+        state.boss.score += scored?.amount ?? 0;
+        target.hp = target.maxHp;
+      }
       fighter.attackCooldown = attackInterval(fighter);
     }
   }
@@ -907,6 +953,11 @@ export function fireUltimate(
   if (!target) return events;
 
   strike(attacker, target, rng, state, events, true);
+  // 수동 궁극기도 평타와 동일한 실제 피해 사건을 점수화하고 불사 HP를 복구한다.
+  if (state.boss && target.side === "enemy") {
+    state.boss.score += events.reduce((sum, event) => sum + (event.kind === "attack" && event.attackerId === attacker.id ? event.amount : 0), 0);
+    state.fighters.filter(({ side }) => side === "enemy").forEach((enemy) => { enemy.hp = enemy.maxHp; });
+  }
   // 방금 크게 휘둘렀으니 다음 평타까지의 간격도 새로 센다.
   attacker.attackCooldown = attackInterval(attacker);
   settle(state, events);

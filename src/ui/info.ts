@@ -4,7 +4,7 @@ import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import type { Combatant } from "../core/combatTypes";
 import { RUNE_PART_LABELS, RUNE_RARITY_LABELS, type RunePart } from "../core/runes";
 import { previewSkillDamage } from "../core/damage";
-import type { Element, RelicDef, RelicProgress, RelicRarity, Role, Skill, SkillIconAssetId, Stats } from "../core/types";
+import type { Element, RelicDef, RelicProgress, RelicRarity, Role, Skill, SkillIconAssetId, Stats, Ultimate } from "../core/types";
 import { setDebugInfoOpen } from "../debug";
 import { formatCurrency } from "../core/formatCurrency";
 import { RELICS } from "../data/relics";
@@ -1610,7 +1610,7 @@ export class InfoManager {
     const preview = attacker && kindLabel !== "패시브" ? previewSkillDamage(attacker, skill) : undefined;
     const statKeyword = preview?.kind === "scaling" ? (preview.stat === "방어력" ? "def" : preview.stat === "공격력" ? "atk" : undefined) : undefined;
     const valueLabel = preview?.kind === "scaling"
-      ? `${preview.label}  [[${statKeyword ?? "atk"}|${preview.amount}]]   ·   ${preview.stat} ${preview.power}%`
+      ? `${preview.label} [[${statKeyword ?? "atk"}|${preview.amount}]]`
       : undefined;
     return {
       name: skill.name,
@@ -1622,6 +1622,13 @@ export class InfoManager {
       tint: this.currentDef && skillArtTint(this.currentDef.element, this.currentDef.role),
       effectType: skill.effectType,
       valueLabel,
+      // 정적 문장에서 수치를 재해석하지 않고 전투 정의를 그대로 팝업에 넘긴다.
+      targeting: "targeting" in skill ? skill.targeting as Ultimate["targeting"] : undefined,
+      statusEffects: skill.statusEffects,
+      durationSeconds: "durationSeconds" in skill ? skill.durationSeconds as number : undefined,
+      recoveryPercent: "kind" in skill && skill.kind === "emergencyRecovery" && "value" in skill
+        ? skill.value as number
+        : undefined,
       gaugeCost,
       description: skill.desc,
     };

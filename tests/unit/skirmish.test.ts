@@ -99,7 +99,7 @@ describe("긴급 회복 패시브", () => {
     fighter.hp = fighter.maxHp * 0.5;
     expect(tryTriggerEmergencyRecovery(fighter)).toBe(true);
     expect(fighter.regeneration).toMatchObject({
-      remaining: EMERGENCY_RECOVERY.seconds,
+      remaining: fighter.def.passive.durationSeconds,
       tickIn: EMERGENCY_RECOVERY.tickSeconds,
       percentPerTick: 7,
     });

@@ -46,16 +46,24 @@ export const KEYWORDS: readonly KeywordDef[] = [
     description: "약 0.1초 동안 행동을 멈춘다. 짧지만 진행 중인 시전을 끊을 수 있다.",
   },
   {
+    id: "regeneration", term: "지속 회복", kind: "버프",
+    description: "정해진 시간 동안 일정한 간격으로 체력을 회복한다.",
+  },
+  {
+    id: "stun", term: "기절", kind: "디버프",
+    description: "지속되는 동안 이동하거나 공격하거나 스킬을 사용할 수 없다.",
+  },
+  {
     id: "hp", term: "체력", kind: "규칙",
-    description: "전투에서 버틸 수 있는 생명력이다. 토리카의 최대 체력은 1,420이며 회복량 계산의 기준이 된다.",
+    description: "전투에서 버틸 수 있는 생명력이다. 모두 소진되면 전투할 수 없다.",
   },
   {
     id: "atk", term: "공격력", kind: "규칙",
-    description: "물리 공격의 기초 수치다. 토리카의 도감 기준 공격력은 74다.",
+    description: "기본 공격과 일부 스킬의 실제 피해량을 정하는 수치다.",
   },
   {
     id: "def", term: "방어력", kind: "규칙",
-    description: "물리 피해를 줄이고 일부 방어형 기술의 위력을 정한다. 토리카의 도감 기준 방어력은 128이다.",
+    description: "받는 물리 피해를 줄이고 일부 방어형 스킬의 실제 피해량을 정한다.",
   },
 ];
 

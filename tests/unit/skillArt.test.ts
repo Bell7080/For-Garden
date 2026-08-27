@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import PREPARE_ICONS from "../../scripts/prepare_icons.py?raw";
 import { RELICS } from "../../src/data/relics";
 import { ELEMENT_TINT, ROLE_TINT, SKILL_ART_ASSETS, SKILL_ART_SLOTS, skillArtFor, skillArtKey, skillArtTint } from "../../src/ui/skillArt";
+import { recoveryLabel, statusEffectLabel, targetingLabel } from "../../src/ui/skillPresentation";
 
 /** 구워 둔 스킬 일러스트. 코드가 가리키는 파일이 실제로 있는지 확인한다. */
 const ART_FILES = import.meta.glob("../../public/sprites/skills/*/*.webp");
@@ -55,8 +56,8 @@ describe("스킬 일러스트 파일", () => {
   });
 });
 
-describe("궁극기 정적 표시 계약", () => {
-  it("은 모든 정의에 대상을 명시하고 토리카의 설명·반경·기절 수치를 함께 보존한다", () => {
+describe("토리카 스킬 표시 계약", () => {
+  it("은 구조화된 5초·7%·전체 적·2초 값을 실제 표시 문구로 만든다", () => {
     // UI가 ID별 예외 없이 같은 정적 데이터를 읽을 수 있도록 모든 궁극기의 계약을 검사한다.
     for (const def of RELICS) expect(["single", "nearbyEnemies"]).toContain(def.ultimate.targeting);
     const torika = RELICS.find((def) => def.id === "anky")!;
@@ -65,7 +66,11 @@ describe("궁극기 정적 표시 계약", () => {
       radius: 220,
       statusEffects: [{ kind: "stun", seconds: 2 }],
     });
-    expect(torika.ultimate.desc).toContain("주위 반경 220px");
-    expect(torika.ultimate.desc).toContain("2초 동안 기절");
+    expect(torika.passive).toMatchObject({ value: 7, durationSeconds: 5 });
+    expect(`${torika.passive.durationSeconds}초 동안 ${recoveryLabel(torika.passive.value)}`).toBe("5초 동안 매초 최대 체력의 7% 회복");
+    expect(targetingLabel(torika.ultimate.targeting)).toBe("자신의 주위 모든 적");
+    expect(statusEffectLabel(torika.ultimate.statusEffects?.[0])).toBe("[[stun|기절]] 2초");
+    // 설명 원문에는 구조화된 수치나 개발 좌표를 복제하지 않아 값이 갈라질 여지를 없앤다.
+    expect(torika.ultimate.desc).not.toMatch(/220px|2초/);
   });
 });

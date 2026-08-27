@@ -112,7 +112,8 @@ export const RELICS: RelicDef[] = [
       iconAssetId: "skill-icon-buff",
       effectType: "healing",
       value: 7,
-      desc: "전투당 1번, 현재 [[hp|체력]]이 50% 이하가 되면 발동한다. 5초 동안 매 초 최대 체력의 7%를 회복한다.",
+      durationSeconds: 5,
+      desc: "전투당 한 번, 체력이 절반 이하가 되면 [[regeneration|지속 회복]]한다.",
     },
     basic: {
       id: "anky-basic",
@@ -121,7 +122,7 @@ export const RELICS: RelicDef[] = [
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
-      desc: "적에게 [[atk|공격력]]의 100%에 해당하는 물리 피해를 입힌다.",
+      desc: "적 한 명에게 물리 피해를 준다.",
     },
     ultimate: {
       id: "anky-ult",
@@ -134,10 +135,10 @@ export const RELICS: RelicDef[] = [
       cost: 120,
       // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
       targeting: "nearbyEnemies",
-      // "주위"는 시전자 중심 220px이며 전장 전체 대상이나 최초 대상 중심 범위가 아니다.
+      // 반경은 전투 엔진의 대상 판정용 값이며 플레이어에게는 이해하기 쉬운 대상 범위로 바꿔 표시한다.
       radius: 220,
       statusEffects: [{ kind: "stun", seconds: 2 }],
-      desc: "자신의 주위 반경 220px 내 모든 적에게 [[def|방어력]]의 180%에 해당하는 피해를 주고, 생존한 적을 2초 동안 기절시킨다.",
+      desc: "자신의 주위에 있는 모든 적에게 물리 피해를 주고 [[stun|기절]]시킨다.",
     },
   },
   {

@@ -171,6 +171,8 @@ export interface Passive {
   kind: PassiveKind;
   /** 종류에 따른 수치(피해 감소 %, 공격 증가 %, 회복량 등). */
   value: number;
+  /** 지속 효과인 패시브만 갖는 유지 시간(초). 전투와 표시가 함께 읽는 단일 계약이다. */
+  durationSeconds?: number;
   desc: string;
 }
 

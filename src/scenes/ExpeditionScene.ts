@@ -28,9 +28,10 @@ import { currencyRecordToRewardItems, openRewardPopup } from "../ui/RewardPopup"
 import { ExpeditionRankingPopup } from "../ui/ExpeditionRankingPopup";
 import { sdAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
 import { loadOwnedPuppet } from "../ui/statusPuppetLoad";
-import { expeditionEnemyLevel, getExpeditionNodeEnemies } from "../data/expeditionEnemies";
+import { expeditionEnemyLevel, getExpeditionEncounterEnemies } from "../data/expeditionEnemies";
 import { formatCurrency } from "../core/formatCurrency";
 import { drawInnerVignette, drawShapeOutline } from "../ui/holo";
+import { CharacterInfoManager } from "../managers/CharacterInfoManager";
 
 /** 원정 준비 카드의 고정 그리드 규격이다. 다른 편성과 달리 세 칸씩 읽게 한다. */
 const ROSTER = { columns: 3, width: 250, height: 310, gapX: 56, gapY: 50, top: 940 } as const;
@@ -59,6 +60,10 @@ export class ExpeditionScene extends Phaser.Scene {
   private formationPreview?: Phaser.GameObjects.Container;
   private formationPuppets = new Set<PuppetCreature>();
   private formationGeneration = 0;
+  /** 지도에서 마지막으로 확인한 전투 노드다. 하단 출격 버튼은 이 선택만 소비한다. */
+  private selectedNode?: ExpeditionMapNode;
+  /** 적 상세는 실제 전투와 같은 공용 읽기 전용 상태창을 사용한다. */
+  private enemyInfo?: CharacterInfoManager;
 
   constructor() {
     super("expedition");
@@ -70,6 +75,7 @@ export class ExpeditionScene extends Phaser.Scene {
     this.cards.clear();
     this.popups = new PopupLayer(this);
     this.nodeTransitionPending = false;
+    this.selectedNode = undefined;
     this.clearFormationPreview();
 
     const status = expeditionManager.status();
@@ -104,6 +110,10 @@ export class ExpeditionScene extends Phaser.Scene {
     this.buildMap(run.nodes, run.currentNodeId, run.visitedNodeIds);
     this.buildAugmentChips(augments);
     this.buildRelicHud(run.relics);
+    this.enemyInfo = new CharacterInfoManager(this, 3001, "enemy");
+    // 스토리 지도처럼 출격은 팝업 안이 아니라 화면 하단의 고정 행동선에 한 번만 둔다.
+    this.startButton = new Button(this, BASE_WIDTH / 2, 1810, { width: 340, height: 108, label: "출  격", variant: "primary", accentColor: COLOR.sortie, accentTextColor: COLOR.sortieText, onClick: () => this.selectedNode && this.confirmNodeSortie(this.selectedNode) });
+    this.startButton.setEnabled(false);
     if (run.pendingAugmentReward) this.openAugmentReward();
     // 포기는 전리품 판의 우상단 정보 흐름 바로 아래에 붙이고, 작고 붉은 파괴 조작으로 분리한다.
     new Button(this, BASE_WIDTH - 155, 286, { width: 190, height: 56, label: "포기하기", fontSize: 20, fill: 0x431d20, accentColor: COLOR.danger, accentTextColor: COLOR.dangerText, onClick: () => this.confirmAbandon() });
@@ -167,19 +177,28 @@ export class ExpeditionScene extends Phaser.Scene {
     void this.completeTreasureNode(node);
   }
 
-  /** 적 세 기와 층 정보를 먼저 제시하고 명시적인 출전 입력에서만 기존 진입 흐름을 이어 간다. */
+  /** 실제 조우 수와 층 정보를 먼저 제시하고 하단 출격 입력에서만 기존 진입 흐름을 이어 간다. */
   private openNodeIntel(node: ExpeditionMapNode): void {
     const names: Record<string, string> = { normal: "일반 조우", elite: "정예 조우", horde: "군집 조우", boss: "원정 보스" };
-    this.popups.open({ width: 900, height: 780, title: `${node.floor}층 · ${names[node.type] ?? "조우"}`, dim: true }, (body, close) => {
-      body.add(this.add.text(0, -282, "적 캐릭터 정보", textStyle({ role: "emphasis", size: 24, color: COLOR.dangerText })).setOrigin(0.5));
+    this.selectedNode = node;
+    this.startButton?.setEnabled(true);
+    this.popups.open({ width: 900, height: 650, title: `${node.floor}층 · ${names[node.type] ?? "조우"}`, dim: false }, (body) => {
+      // 스토리 노드의 적 편성 판처럼 제목·얇은 구분선·클릭 가능한 편성 칸만 남긴다.
+      body.add(this.add.text(340, -258, "적 편성", textStyle({ role: "emphasis", size: 24, color: COLOR.dangerText })).setOrigin(1, 0.5));
+      body.add(drawHairline(this, 0, -220, 760, { color: COLOR.accent, alpha: 0.35 }));
       const enemyLevel = expeditionEnemyLevel(node.type, node.floor);
-      getExpeditionNodeEnemies(node.type, node.floor).forEach((enemy, index) => {
-        const x = -270 + index * 270;
-        const card = new PortraitCard(this, x, -80, { width: 210, height: 250, portraitAssetId: enemy.portraitAssetId, tint: relicCardTint(enemy), label: enemy.name, sub: `LV.${enemyLevel}`, rarity: enemy.rarity, affinity: { element: enemy.element, role: enemy.role } });
-        card.hit.disableInteractive(); body.add(card); card.syncMask();
+      const enemies = getExpeditionEncounterEnemies(node.type, node.floor);
+      // 정예 한 기는 크게, 무리 다섯 기는 같은 폭 안에 촘촘히 세워 조우 성격을 수량으로 먼저 읽힌다.
+      const cardWidth = enemies.length > 3 ? 140 : 210;
+      const cardHeight = enemies.length > 3 ? 210 : 250;
+      const gap = enemies.length > 3 ? 158 : 270;
+      enemies.forEach((enemy, index) => {
+        const x = (index - (enemies.length - 1) / 2) * gap;
+        const card = new PortraitCard(this, x, 10, { width: cardWidth, height: cardHeight, portraitAssetId: enemy.portraitAssetId, tint: relicCardTint(enemy), label: enemy.name, sub: `LV.${enemyLevel}`, rarity: enemy.rarity, affinity: { element: enemy.element, role: enemy.role } });
+        // 전투 전에도 적을 눌러 실제 전투와 동일한 능력치·스킬 상태창을 열 수 있다.
+        card.hit.on("pointerup", () => this.enemyInfo?.showEnemy(enemy, { level: enemyLevel })); body.add(card); card.syncMask();
       });
-      // 스토리 출전 버튼의 주황색·큰 사선 판을 따라 세 캐릭터 그리드 바로 아래에 둔다.
-      body.add(new Button(this, 0, 292, { width: 560, height: 112, label: "출격하기", icon: "sortie", variant: "primary", accentColor: COLOR.sortie, accentTextColor: COLOR.sortieText, decorDots: true, onClick: () => { close(); this.confirmNodeSortie(node); } }));
+      body.add(this.add.text(0, 238, "적을 눌러 상세 정보를 확인할 수 있습니다", textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0.5));
     });
   }
 
@@ -291,15 +310,20 @@ export class ExpeditionScene extends Phaser.Scene {
     });
   }
 
-  /** 세 렐릭의 초상, 사망 문구, 현재 HP를 공용 HoloBar와 함께 표시한다. */
+  /** 실제 전투 프로필처럼 초상 아래에 현재 체력과 0부터 시작할 야성 게이지를 함께 표시한다. */
   private buildRelicHud(relics: readonly { relicId: string; currentHp: number; alive: boolean }[]): void {
     relics.forEach((state, index) => {
       const def = getRelic(state.relicId); const x = 220 + index * 320;
-      new PortraitCard(this, x, 1455, { width: 190, height: 190, portraitAssetId: def.portraitAssetId, tint: relicCardTint(def), label: def.name, rarity: def.rarity });
-      const hp = Math.max(0, Math.min(100, state.currentHp));
-      this.add.text(x, 1600, state.alive ? `HP ${Math.ceil(hp)} / 100` : "사망", textStyle({ role: "emphasis", size: 22, color: state.alive ? COLOR.ink : "#ff8c88" })).setOrigin(0.5);
-      const bar = new HoloBar(this, x, 1640, 238, 18, { color: state.alive ? COLOR.hpFill : 0x6c7078, outline: true });
-      bar.setValue(hp / 100);
+      new PortraitCard(this, x, 1450, { width: 190, height: 190, portraitAssetId: def.portraitAssetId, tint: relicCardTint(def), label: def.name, level: relicProgression.getProgress(def.id).level, rarity: def.rarity, stars: relicProgression.getStars(def.id) });
+      const hpRatio = Math.max(0, Math.min(100, state.currentHp)) / 100;
+      const maxHp = Math.round(relicProgression.getFinalStats(def.id).hp);
+      const currentHp = state.alive ? Math.round(maxHp * hpRatio) : 0;
+      this.add.text(x, 1584, state.alive ? `${currentHp} / ${maxHp}` : "사망", textStyle({ role: "display", size: 20, color: state.alive ? COLOR.hpText : "#ff8c88" })).setOrigin(0.5);
+      const hpBar = new HoloBar(this, x, 1618, 238, 18, { color: state.alive ? COLOR.hpFill : 0x6c7078, outline: true, ticks: 4 });
+      hpBar.setValue(hpRatio);
+      this.add.text(x, 1651, "야성 0", textStyle({ role: "emphasis", size: 18, color: COLOR.ferocityText })).setOrigin(0.5);
+      const ferocityBar = new HoloBar(this, x, 1678, 238, 14, { color: COLOR.ferocityLow, outline: true, ticks: 4 });
+      ferocityBar.setValue(0);
     });
   }
 

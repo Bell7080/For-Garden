@@ -46,7 +46,7 @@ import { session } from "../state/session";
 import { BOND_FEROCITY_MULTIPLIER, BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL, BOND_XP_REWARD } from "../core/bond";
 import { getRelicCatalogDisclosure } from "../core/relicCatalog";
 import { observations } from "../managers/ObservationManager";
-import { observationQuestionForDate } from "../data/observations";
+import { observationQuestionForRelicAndDate } from "../data/observations";
 import type { PublicRelicProfileDto } from "../api/contracts";
 import type { Fighter } from "../core/skirmish";
 import { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../core/infoCapabilities";
@@ -1046,7 +1046,8 @@ export class InfoManager {
       // 초기 버전은 공용 질문을 일지에서 바로 답하게 해 별도 대형 화면 제작을 피한다.
       const utcDate = new Date().toISOString().slice(0, 10);
       if (this.ownedNow && observations.canStart(def.id, utcDate)) {
-        const question = observationQuestionForDate(utcDate);
+        // 화면 표시와 완료 시 저장 검증이 같은 렐릭별 결정 함수를 공유한다.
+        const question = observationQuestionForRelicAndDate(def.id, utcDate);
         const y = entries.length ? 300 : 238;
         body.add(this.scene.add.text(-380, y, "오늘의 질문  " + question.prompt, textStyle({ role: "emphasis", size: 21, color: COLOR.accentText })).setOrigin(0, 0));
         question.choices.forEach((choice, index) => {

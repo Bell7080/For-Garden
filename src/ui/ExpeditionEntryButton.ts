@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { chipPoints, drawInnerVignette, drawLayer, drawShapeOutline, HOLO } from "./holo";
+import { chipPoints, drawFrameVignette, drawLayer, drawShapeOutline, HOLO } from "./holo";
 import { COLOR, textStyle } from "./theme";
 
 /** 로컬 좌표 도형을 지금의 월드 좌표로 옮긴다. 팝업 안에서 마스크가 엉뚱한 자리에 남지 않게 한다. */
@@ -117,14 +117,17 @@ export class ExpeditionEntryButton extends Phaser.GameObjects.Container {
     };
     scene.events.on(Phaser.Scenes.Events.PRE_RENDER, syncMask);
     syncMask();
-    art.setMask(artMask.createGeometryMask());
+    // 원화와 비네팅이 같은 칩 마스크를 나눠 쓴다. 마스크를 두 개 만들면 같은 도형을 두 번 그린다.
+    const chipMask = artMask.createGeometryMask();
+    art.setMask(chipMask);
     this.once(Phaser.GameObjects.Events.DESTROY, () => {
       scene.events.off(Phaser.Scenes.Events.PRE_RENDER, syncMask);
       artMask.destroy();
     });
     // 사각 원화의 가장자리는 비네트와 주황 액자가 눌러 기존 홀로그램 판 안의 이미지로 읽히게 한다.
+    // 줄여 가며 두르는 옛 비네트는 가로로 긴 칸에서 검은 테두리 잔상을 남기므로 쓰지 않는다.
     this.add(art);
-    this.add(drawInnerVignette(scene, 0, 0, shape, { strength: 0.74 }));
+    this.add(drawFrameVignette(scene, 0, 0, options.width, options.height, { strength: 0.66, spread: 0.26 }).setMask(chipMask));
     this.add(drawShapeOutline(scene, 0, 0, shape, { color: accent, alpha: 0.92, width: 3 }));
     // 글자는 SD 반대쪽 아래 구석에 모인다. 원화 위에 얹히므로 진한 그림자를 한 겹 깔아
     // 밝은 그림 위에서도 이름과 상태가 먼저 읽히게 한다.

@@ -370,6 +370,41 @@ export function drawInnerVignette(
   return graphics;
 }
 
+/**
+ * 판 하나의 가장자리만 고르게 눌러 주는 비네팅.
+ *
+ * 같은 도형을 조금씩 줄여 여러 번 두르는 방식(`drawInnerVignette`)은 가로로 긴 판에서 좌우가
+ * 세로보다 훨씬 많이 줄어들어, 검은 줄이 여러 겹 어긋나 **테두리 잔상**으로 남는다. 화면
+ * 비네트와 같이 네 변에서 안쪽으로 빠지는 그라데이션 네 장을 쓰면 어느 비율에서도 고르게
+ * 어두워지고 선이 남지 않는다. 도형 밖으로 새지 않도록 부르는 쪽이 마스크를 씌운다.
+ */
+export function drawFrameVignette(
+  scene: Phaser.Scene,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  options: { strength?: number; spread?: number } = {},
+): Phaser.GameObjects.Graphics {
+  const strength = options.strength ?? 0.6;
+  const spread = options.spread ?? 0.3;
+  const bandX = Math.round(width * spread);
+  const bandY = Math.round(height * spread);
+  const left = -width / 2;
+  const top = -height / 2;
+  const black = 0x000000;
+  const g = scene.add.graphics({ x, y });
+  g.fillGradientStyle(black, black, black, black, strength, strength, 0, 0);
+  g.fillRect(left, top, width, bandY);
+  g.fillGradientStyle(black, black, black, black, 0, 0, strength, strength);
+  g.fillRect(left, top + height - bandY, width, bandY);
+  g.fillGradientStyle(black, black, black, black, strength, 0, strength, 0);
+  g.fillRect(left, top, bandX, height);
+  g.fillGradientStyle(black, black, black, black, 0, strength, 0, strength);
+  g.fillRect(left + width - bandX, top, bandX, height);
+  return g;
+}
+
 /** 얇은 구분선. 그라데이션 바 위쪽처럼 경계만 알려야 하는 자리에 쓴다. */
 export function drawHairline(
   scene: Phaser.Scene,

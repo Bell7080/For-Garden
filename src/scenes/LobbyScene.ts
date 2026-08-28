@@ -72,6 +72,8 @@ interface SortieEntry {
   sdSide?: "left" | "right";
   sd?: PuppetAsset;
   split?: "left" | "right";
+  /** 개체마다 원화 크기가 달라 혼자 커 보이는 SD만 이 배율로 줄인다. */
+  sdScale?: number;
 }
 
 /**
@@ -240,19 +242,19 @@ export class LobbyScene extends Phaser.Scene {
       const entries: SortieEntry[] = [
         {
           y: -410, width: 800, height: 220, label: "스토리", status: "메인 작전", artKey: "content-story-entry",
-          accentColor: EXCHANGE_BLUE, accentTextColor: "#9fd0f0", sd: ENEMY_SD_ASSETS[0],
+          accentColor: EXCHANGE_BLUE, accentTextColor: "#9fd0f0", sd: ENEMY_SD_ASSETS[0], sdScale: 0.9,
           onClick: () => { close(); this.scene.start("stageMap"); },
         },
         // 두 일일 던전은 같은 위계와 같은 폭으로 나란히 놓아 어느 쪽도 기본 선택처럼 보이지 않게 한다.
         // 두 던전은 각자의 전용 원화를 칩 실루엣에 물려 세운다. 같은 그림을 나눠 쓰면 나란히 선
         // 두 버튼이 한 콘텐츠의 두 갈래처럼 읽힌다.
         {
-          x: -200, y: -124, width: 400, height: 200, label: "케이크 대작전", labelSize: 38, status: "3 WAVE · 성장 재화", split: "left",
+          x: -204, y: -124, width: 392, height: 200, label: "케이크 대작전", labelSize: 38, status: "3 WAVE · 성장 재화", split: "left",
           artKey: "content-cake-entry", accentColor: EXCHANGE_BLUE, accentTextColor: "#9fd0f0",
           onClick: () => { close(); this.scene.start("sortiePreview", { mode: "cake" }); },
         },
         {
-          x: 200, y: -124, width: 400, height: 200, label: "현상수배", labelSize: 38, status: "태그 3회 · 골드", split: "right",
+          x: 204, y: -124, width: 392, height: 200, label: "현상수배", labelSize: 38, status: "태그 3회 · 골드", split: "right",
           artKey: "content-bounty-entry", accentColor: EXCHANGE_BLUE, accentTextColor: "#9fd0f0",
           onClick: () => { close(); this.scene.start("sortiePreview", { mode: "bounty" }); },
         },
@@ -283,15 +285,12 @@ export class LobbyScene extends Phaser.Scene {
         void this.spawnSortieSd(entry.sd, {
           x: BASE_WIDTH / 2 + x + spot.x,
           groundY: BASE_HEIGHT / 2 + entry.y + spot.groundY,
-          height: spot.height,
+          height: Math.round(spot.height * (entry.sdScale ?? 1)),
           shadowOffsetX: spot.shadowOffsetX,
           shadowOffsetY: spot.shadowOffsetY,
           mask: button.sdMask,
         });
       });
-      // 두 일일 던전은 한 판을 둘로 나눈 것처럼 맞닿고, 그 사이만 곧은 선 하나가 끊는다.
-      const divider = entries[1];
-      body.add(this.add.rectangle(0, divider.y, 3, divider.height - 24, EXCHANGE_BLUE, 0.85));
       // 돌아가기는 판 안이 아니라 다른 팝업과 같은 화면 우하단 슬롯에 선다.
       this.sortieBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: close }).setDepth(SORTIE_SD_DEPTH + 1);
       // 세워 둔 SD가 가끔 한 번씩 움직인다. 다섯 칸이 동시에 뛰면 무엇을 고르는 화면인지 흐려지므로

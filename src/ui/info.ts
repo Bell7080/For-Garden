@@ -4,7 +4,7 @@ import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import type { Combatant } from "../core/combatTypes";
 import { RUNE_PART_LABELS, RUNE_RARITY_LABELS, type RunePart } from "../core/runes";
 import { previewSkillDamage } from "../core/damage";
-import type { Element, RelicDef, RelicProgress, RelicRarity, Role, Skill, SkillIconAssetId, Stats, Ultimate } from "../core/types";
+import type { Element, RelicDef, RelicProgress, RelicRarity, Role, Passive, Skill, SkillIconAssetId, Stats, Ultimate } from "../core/types";
 import { setDebugInfoOpen } from "../debug";
 import { formatCurrency } from "../core/formatCurrency";
 import { RELICS } from "../data/relics";
@@ -50,7 +50,7 @@ import { observationQuestionForRelicAndDate } from "../data/observations";
 import type { PublicRelicProfileDto } from "../api/contracts";
 import type { Fighter } from "../core/skirmish";
 import { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../core/infoCapabilities";
-import { damageKeyword, ferocityTraitDescription } from "./skillPresentation";
+import { damageKeyword, ferocityTraitDescription, passiveDescription } from "./skillPresentation";
 
 export type { SkillInfoViewModel } from "./SkillPopup";
 
@@ -1638,7 +1638,7 @@ export class InfoManager {
   }
 
   /** 읽기 전용 도감에 실제 방어력을 가정하지 않은 스킬 능력치 배율을 만든다. */
-  private skillViewModel(kindLabel: string, skill: Skill, gaugeCost?: number, slot?: SkillArtSlot): SkillInfoViewModel {
+  private skillViewModel(kindLabel: string, skill: Skill | Passive, gaugeCost?: number, slot?: SkillArtSlot): SkillInfoViewModel {
     // 레벨·돌파·장착 룬을 모두 반영한 정의를 미리보기에 넘겨 74 같은 기본치가 성장 후에 남지 않게 한다.
     const finalDef = this.currentDef && { ...this.currentDef, stats: relicProgression.getFinalStats(this.currentDef.id) };
     const attacker: Combatant | undefined = finalDef && {
@@ -1646,7 +1646,7 @@ export class InfoManager {
       energy: 0, ferocity: 0, bondLevel: 0, ferocityFever: false,
       breakthrough: relicProgression.getProgress(finalDef.id).breakthrough,
     };
-    const preview = attacker && kindLabel !== "패시브" ? previewSkillDamage(attacker, skill) : undefined;
+    const preview = attacker && kindLabel !== "패시브" ? previewSkillDamage(attacker, skill as Skill) : undefined;
     const damageDetail = damageKeyword(preview);
     const valueLabel = preview?.kind === "scaling"
       ? `${preview.label} [[damage-value|${preview.amount}]]`
@@ -1664,13 +1664,14 @@ export class InfoManager {
       contextualKeywords: damageDetail ? [damageDetail] : undefined,
       // 정적 문장에서 수치를 재해석하지 않고 전투 정의를 그대로 팝업에 넘긴다.
       targeting: "targeting" in skill ? skill.targeting as Ultimate["targeting"] : undefined,
-      statusEffects: skill.statusEffects,
+      statusEffects: "statusEffects" in skill ? skill.statusEffects : undefined,
       durationSeconds: "durationSeconds" in skill ? skill.durationSeconds as number : undefined,
       recoveryPercent: "kind" in skill && skill.kind === "emergencyRecovery" && "value" in skill
         ? skill.value as number
         : undefined,
+      damageHealingPercent: "damageHealingPercent" in skill ? skill.damageHealingPercent as number : undefined,
       gaugeCost,
-      description: skill.desc,
+      description: "kind" in skill ? passiveDescription(skill as Passive) : skill.desc,
     };
   }
 

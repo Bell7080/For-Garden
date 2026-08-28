@@ -25,4 +25,9 @@ describe("스킬 설명 키워드", () => {
     const [segment] = parseKeywordText("[[damage-value|384]]", contextual);
     expect(segment.keyword).toEqual(contextual[0]);
   });
+
+  it("는 렉시아의 데이터 기반 출혈 표기를 기존 키워드 사전에 연결한다", () => {
+    const linked = parseKeywordText("[[bleed|출혈]] 3초 · 매초 최대 체력 2%");
+    expect(linked.find((segment) => segment.keyword)?.keyword).toMatchObject({ id: "bleed", kind: "디버프" });
+  });
 });

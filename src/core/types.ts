@@ -99,6 +99,8 @@ export interface Skill {
   damageType: DamageType;
   /** 명중 뒤 적용할 작은 공용 상태 효과 목록이다. 기절·경직이 없는 스킬은 생략한다. */
   statusEffects?: readonly CombatStatusEffect[];
+  /** 실제 HP에서 감소한 피해의 이 비율(%)을 시전자가 회복한다. 과잉 피해는 계산하지 않으며 능력치·폭주 흡혈과 합산한다. */
+  damageHealingPercent?: number;
   /** 기본 공격이 원형 광역일 때만 시전자 중심 대상 계약과 반경을 선언한다. */
   targeting?: "single" | "nearbyEnemies" | "battlefieldEnemies";
   radius?: number;
@@ -108,7 +110,14 @@ export interface Skill {
 /** 스킬과 야성 특성이 공유하는 최소 상태 효과 계약이다. 새 상태가 실제로 생길 때만 union을 늘린다. */
 export type CombatStatusEffect =
   | { kind: "stun"; /** 저항 계산 전 기본 지속 시간(초). */ seconds: number }
-  | { kind: "stagger"; /** 기절 저항을 무시하는 순간 행동 차단 시간(초). */ seconds: number };
+  | { kind: "stagger"; /** 기절 저항을 무시하는 순간 행동 차단 시간(초). */ seconds: number }
+  | {
+      kind: "bleed";
+      /** 출혈이 유지되는 시간(초). 매초 틱과 별개인 갱신 기준이다. */
+      seconds: number;
+      /** 매 틱 대상 최대 체력에서 차감하는 비율(%). 방어력을 무시하는 지속 피해다. */
+      maxHpPercentPerSecond: number;
+    };
 
 /** 궁극기의 대상 선택은 ID나 설명문 대신 코어가 검증할 수 있는 정적 계약으로 선언한다. */
 export type Ultimate = Skill & {
@@ -137,6 +146,8 @@ export type PassiveKind =
   | "emergencyRecovery"
   /** 같은 상대를 연속으로 때리면 출혈을 남긴다 */
   | "bleedStreak"
+  /** 렉시아 전용: 공격 속도·공격력·치명타 확률·치명타 피해를 함께 강화한다. */
+  | "battleMaidMastery"
   /** 폰투스의 시간 누적 주문력·잃은 체력 경감 규칙을 식별한다. */
   | "abyssalPressure";
 
@@ -174,6 +185,13 @@ export type FerocityTrait = {
     }
   | { effectId: "allyEnergyGain"; energy: number }
   | { effectId: "criticalChanceBonus"; chancePercent: number }
+  | {
+      effectId: "rexBattleQueen";
+      /** 기존 확률에 그대로 더하는 치명타 확률(%p)이다. 25%p는 20%를 45%로 만든다. */
+      criticalChancePoints: number;
+      /** 실제 HP 피해에 더해지는 모든 피해 흡혈(%p)이다. 기본 능력치·스킬 흡혈과 덧셈한다. */
+      allDamageLifeStealPoints: number;
+    }
   | { effectId: "teamMoveSpeedBonus"; bonusPercent: number }
 );
 
@@ -187,6 +205,14 @@ export interface Passive {
   kind: PassiveKind;
   /** 종류에 따른 수치(피해 감소 %, 공격 증가 %, 회복량 등). */
   value: number;
+  /** 기본 공격 속도에 곱하는 증가율(%). 25% 증가는 공격 간격 25% 감소가 아니라 속도를 1.25배 한다. */
+  attackSpeedPercent?: number;
+  /** 피해 계산에 쓰는 공격력을 곱하는 증가율(%). 25% 증가는 현재 공격력의 1.25배다. */
+  attackPowerPercent?: number;
+  /** 기존 치명타 확률에 곱하는 증가율(%). %p 증가와 달리 20%에서 25% 증가하면 25%다. */
+  criticalChancePercent?: number;
+  /** 기존 치명타 피해 배율에 곱하는 증가율(%). 160%에서 25% 증가하면 200%다. */
+  criticalDamagePercent?: number;
   /** 지속 효과인 패시브만 갖는 유지 시간(초). 전투와 표시가 함께 읽는 단일 계약이다. */
   durationSeconds?: number;
   /** 심해 압력 전용: 전투 경과 1초마다 더하는 주문력이다. */

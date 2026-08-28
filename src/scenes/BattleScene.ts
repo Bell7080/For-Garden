@@ -221,6 +221,7 @@ export class BattleScene extends Phaser.Scene {
   private currentUltimateFighterId: string | null = null;
   private speedChip!: ControlChip;
   private autoChip!: ControlChip;
+  private presentationChip!: ControlChip;
   /** 적 상세는 플레이어 성장 입력을 만들지 않는 전투 읽기 전용 창이다. */
   private info!: CharacterInfoManager;
 
@@ -335,11 +336,14 @@ export class BattleScene extends Phaser.Scene {
     new Button(this, BASE_WIDTH / 2 + 235, 1260, { width: 400, height: 105, label: "로비로", onClick: () => this.scene.start("lobby") }).setDepth(201);
   }
 
-  /** 전장 위쪽 가장자리에 배속과 자동 궁극기 토글을 같은 홀로그램 칩으로 나란히 둔다. */
+  /** 전장 위쪽 안전 영역에 세 전투 조작을 같은 폭과 공용 간격의 홀로그램 칩으로 나란히 둔다. */
   private buildBattleControls(): void {
-    this.speedChip = new ControlChip(this, BASE_WIDTH - 335, 150, {
+    const width = 170; const gap = 20; const right = BASE_WIDTH - 45;
+    const centers = [right - width * 2.5 - gap * 2, right - width * 1.5 - gap, right - width / 2];
+    this.speedChip = new ControlChip(this, centers[0], 150, {
       icon: "speed",
       label: `${this.battleSpeed}배속`,
+      width,
       onClick: () => {
         this.battleSpeed = nextBattleSpeed(this.battleSpeed);
         // 판이 바뀌거나 앱을 다시 열어도 마지막 선택을 유지하도록 공용 저장 경계를 통과한다.
@@ -348,10 +352,10 @@ export class BattleScene extends Phaser.Scene {
         this.refreshDebug();
       },
     });
-    this.autoChip = new ControlChip(this, BASE_WIDTH - 130, 150, {
+    this.autoChip = new ControlChip(this, centers[1], 150, {
       icon: "auto",
       label: this.autoUltimate ? "궁극 ON" : "궁극 OFF",
-      width: 170,
+      width,
       onClick: () => {
         this.autoUltimate = !this.autoUltimate;
         // 자동 궁극기도 배속과 같은 플레이 습관이므로 토글하는 즉시 저장한다.
@@ -360,9 +364,22 @@ export class BattleScene extends Phaser.Scene {
         this.refreshDebug();
       },
     });
+    const refreshPresentationChip = (): void => {
+      const skipped = settingsManager.get().game.skipUltimatePresentation;
+      this.presentationChip.setLabel(skipped ? "연출 스킵" : "연출 ON").setActive(skipped);
+    };
+    this.presentationChip = new ControlChip(this, centers[2], 150, {
+      icon: "auto", label: "연출 ON", width,
+      onClick: () => {
+        // 전투 흐름을 바꾸는 값은 세션을 직접 고치지 않고 공용 manager 경계에서 즉시 영속화한다.
+        settingsManager.update({ game: { skipUltimatePresentation: !settingsManager.get().game.skipUltimatePresentation } });
+        refreshPresentationChip(); this.refreshDebug();
+      },
+    });
     // 복원된 값도 첫 클릭 전부터 켜짐 색으로 읽히게 한다.
     this.speedChip.setActive(this.battleSpeed > 1);
     this.autoChip.setActive(this.autoUltimate);
+    refreshPresentationChip();
   }
 
   /** 여섯을 각자의 시작 자리에 세운다. 전부 준비된 뒤에야 시간이 흐르기 시작한다. */
@@ -495,23 +512,26 @@ export class BattleScene extends Phaser.Scene {
       const presentation = ultimatePresentationFor(fighter.def.id);
       // 전신 컷인 한 장으로 "누가 무엇을 쓰는가"를 알린다. 다만 포효를 기다리지 않고 컷인이
       // 빠지는 즉시 친다 — 전투 중 여러 번 반복되는 연출이라 길이가 곧 기다림이다.
-      this.activeCutIn = await UltimateCutIn.create(this, fighter.def, presentation);
-      if (!this.sequenceValid(next.token, fighter)) return;
-      await this.activeCutIn.play();
-      this.activeCutIn.destroy();
-      this.activeCutIn = undefined;
-      if (!this.sequenceValid(next.token, fighter)) return;
       const base = view.creature.scaleX;
-      await this.tween({ targets: view.creature, scale: base * presentation.zoomScale, duration: presentation.zoomMs, ease: "Back.Out" });
-      if (!this.sequenceValid(next.token, fighter)) return;
-      this.cameras.main.shake(180, presentation.cameraShakeIntensity);
+      const skipPresentation = settingsManager.get().game.skipUltimatePresentation;
+      if (!skipPresentation) {
+        this.activeCutIn = await UltimateCutIn.create(this, fighter.def, presentation);
+        if (!this.sequenceValid(next.token, fighter)) return;
+        await this.activeCutIn.play();
+        this.activeCutIn.destroy(); this.activeCutIn = undefined;
+        if (!this.sequenceValid(next.token, fighter)) return;
+        await this.tween({ targets: view.creature, scale: base * presentation.zoomScale, duration: presentation.zoomMs, ease: "Back.Out" });
+        if (!this.sequenceValid(next.token, fighter)) return;
+        this.cameras.main.shake(180, presentation.cameraShakeIntensity);
+      }
 
-      // 입력 순간이 아니라 발돋움이 끝난 바로 이 시점의 생존/게이지/전투 결과를 코어에 재검증한다.
+      // 스킵도 입력 순간의 낡은 상태를 믿지 않는다. 컷인 유무와 무관하게 발사 직전 생존·게이지·종료를 재검증한다.
       if (!this.sequenceValid(next.token, fighter) || !canFireUltimate(this.state, fighter)) return;
       const events = fireUltimate(this.state, fighter.id, () => Math.random());
       // 코어가 바꾼 HP를 즉시 게이지 목표로 전달한다. 연출을 기다리는 동안 stepMeters가
       // 매 프레임 목표를 따라가므로 적 체력이 한 번에 점프하지 않고 실제로 깎여 보인다.
       this.views.forEach((fighterView) => fighterView.hpBar.setValue(fighterView.fighter.hp / fighterView.fighter.maxHp));
+      // 스킵에서도 같은 events 배열 전체를 전달한다. 전신 컷인만 빠지고 공격→피해→사망→종료 책임은 playEvent에 남는다.
       // 첫 공격 동작만 기다리되 나머지 사건(사망·종료)도 전부 연출로 옮긴다. `??=`의 오른쪽을
       // 조건부로 두면 첫 동작 이후의 사망 사건이 통째로 버려져 쓰러진 적이 계속 서 있었다.
       let attackMotion: MotionPlayback | undefined;
@@ -522,7 +542,7 @@ export class BattleScene extends Phaser.Scene {
       });
       await attackMotion?.completed;
       // 커진 몸은 제자리로 돌려놓고 바로 전투를 잇는다.
-      await this.tween({ targets: view.creature, scale: base, duration: presentation.zoomMs, ease: "Quad.Out" });
+      if (!skipPresentation) await this.tween({ targets: view.creature, scale: base, duration: presentation.zoomMs, ease: "Quad.Out" });
       this.syncViews();
       this.refreshDebug();
     } finally {
@@ -928,6 +948,7 @@ export class BattleScene extends Phaser.Scene {
       enemyHp: teamHp(this.state, "enemy"),
       speed: this.battleSpeed,
       autoUltimate: this.autoUltimate,
+      skipUltimatePresentation: settingsManager.get().game.skipUltimatePresentation,
       ultimateSequenceActive: this.ultimateSequenceActive,
       ultimateQueue: [...this.ultimateSequence.queue],
       // E2E도 사용자가 보는 이동 중 클릭 영역의 중심을 그대로 눌러 입력 회귀를 확인한다.

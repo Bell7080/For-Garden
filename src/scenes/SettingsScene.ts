@@ -108,7 +108,8 @@ export class SettingsScene extends Phaser.Scene {
       ([['스테미나 충전 완료','staminaFull'],['무료 모집','freeRecruit'],['일일 임무','dailyMission'],['이벤트','event'],['우편','mail'],['야간 알림 제한','quietHours']] as const).forEach(([a,b]) => toggle(a,'notifications',b));
     } else if (this.activeTab === "play") {
       section("연출 · 게임", 1050);
-      ([['궁극기 컷인','ultimateCutIn'],['화면 흔들림','screenShake'],['피해 숫자','damageNumbers'],['연구 연출 단축','shortenExcavation'],['저사양 모드','lowSpecMode']] as const).forEach(([a,b]) => toggle(a,'presentation',b));
+      // 궁극기 연출 스킵은 전투 HUD의 즉시 조작으로 옮겼으므로 여기에는 화면 품질 옵션만 남긴다.
+      ([['화면 흔들림','screenShake'],['피해 숫자','damageNumbers'],['연구 연출 단축','shortenExcavation'],['저사양 모드','lowSpecMode']] as const).forEach(([a,b]) => toggle(a,'presentation',b));
       // 인게임 배속 칩과 같은 1·2·3배 선택지를 보여 주며 SettingsManager가 즉시 저장한다.
       this.content.add(new SettingsSelectRow(this,90,y,'전투 배속',s.game.battleSpeed,[1,2,3] as const,v=>settingsManager.update({game:{battleSpeed:v}}))); y+=94;
       toggle('자동 궁극기','game','autoUltimate');

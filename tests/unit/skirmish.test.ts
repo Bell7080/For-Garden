@@ -784,6 +784,17 @@ describe("궁극기", () => {
     expect(events.some((event) => event.kind === "death" && event.fighterId === foe.id)).toBe(true);
   });
 
+  it("스킵 시 컷인을 기다리지 않아도 결정타의 공격·사망·종료 사건을 순서대로 전달한다", () => {
+    const state = charged(); const foe = state.fighters[1]; foe.hp = 1;
+    const played: string[] = []; let presentationCalls = 0;
+    // BattleScene의 스킵 분기처럼 create/play 없이 즉시 코어를 재검증하고 반환 사건 전체를 넘긴다.
+    const skipPresentation = true;
+    if (!skipPresentation) presentationCalls += 1;
+    if (canFireUltimate(state, state.fighters[0])) fireUltimate(state, "player-0").forEach((event) => played.push(event.kind));
+    expect(presentationCalls).toBe(0);
+    expect(played).toEqual(["attack", "death", "finish"]);
+  });
+
   it("는 게이지가 모자라면 아무것도 하지 않는다", () => {
     const state = charged();
     state.fighters[0].energy = state.fighters[0].def.ultimate.cost - 1;

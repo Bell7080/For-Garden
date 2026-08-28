@@ -10,8 +10,9 @@ export const PONTUS_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1024,
   imageHeight: 1536,
   content: { left: 1, top: 3, right: 1024, bottom: 1481 },
-  portraitZoom: 0.82,
-  portraitOffsetY: 48,
+  // 정보창에서 하단에 처지던 전신을 한 단계 키우고 코어 기준점을 위로 되돌린다.
+  portraitZoom: 0.88,
+  portraitOffsetY: 0,
 };
 
 /** 폰투스 SD ZIP의 1254px 정사각 원본과 alpha > 16 경계다. */

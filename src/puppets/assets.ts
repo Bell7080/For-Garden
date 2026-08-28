@@ -226,6 +226,8 @@ export function battleAssetFor(relicId: string): PuppetAsset {
   if (relicId === "rex") return LEXIA_SD_ASSET;
   if (relicId === "spino") return SEIRA_SD_ASSET;
   if (relicId === "luka") return LUKA_SD_ASSET;
+  // 도디의 임시 전신이 토리카 기반이므로 SD도 같은 토리카 묶음으로 명시해 서로 다른 캐릭터가 되지 않게 한다.
+  if (relicId === "dodo") return TORIKA_SD_ASSET;
   return TORIKA_SD_ASSET;
 }
 
@@ -234,6 +236,8 @@ export function sdAssetFor(relicId: string): PuppetAsset {
   if (relicId === "rex") return LEXIA_SD_ASSET;
   if (relicId === "spino") return SEIRA_SD_ASSET;
   if (relicId === "luka") return LUKA_SD_ASSET;
+  // 전투 밖 SD도 정보창의 도디 임시 캐릭터와 같은 토리카 기반을 유지한다.
+  if (relicId === "dodo") return TORIKA_SD_ASSET;
   // anky와 아직 전용 SD가 없는 렐릭은 기존 공용 토리카 SD로 안전하게 폴백한다.
   return TORIKA_SD_ASSET;
 }

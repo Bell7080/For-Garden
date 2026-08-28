@@ -32,6 +32,7 @@ import { expeditionEnemyLevel, getExpeditionEncounterEnemies } from "../data/exp
 import { formatCurrency } from "../core/formatCurrency";
 import { drawInnerVignette, drawShapeOutline } from "../ui/holo";
 import { CharacterInfoManager } from "../managers/CharacterInfoManager";
+import { NodeEnemyPreview } from "../ui/NodeEnemyPreview";
 
 /** 원정 준비 카드의 고정 그리드 규격이다. 다른 편성과 달리 세 칸씩 읽게 한다. */
 const ROSTER = { columns: 3, width: 250, height: 310, gapX: 56, gapY: 50, top: 940 } as const;
@@ -64,6 +65,10 @@ export class ExpeditionScene extends Phaser.Scene {
   private selectedNode?: ExpeditionMapNode;
   /** 적 상세는 실제 전투와 같은 공용 읽기 전용 상태창을 사용한다. */
   private enemyInfo?: CharacterInfoManager;
+  /** 전투 노드 선택은 모달 대신 지도에 붙는 공용 SD 편성판 하나만 갱신한다. */
+  private enemyPreview?: NodeEnemyPreview;
+  /** 선택 해제와 스크롤 추적을 같은 지도 인스턴스에 전달한다. */
+  private mapView?: ExpeditionMapView;
 
   constructor() {
     super("expedition");
@@ -76,6 +81,8 @@ export class ExpeditionScene extends Phaser.Scene {
     this.popups = new PopupLayer(this);
     this.nodeTransitionPending = false;
     this.selectedNode = undefined;
+    this.enemyPreview?.destroy(); this.enemyPreview = undefined;
+    this.mapView = undefined;
     this.clearFormationPreview();
 
     const status = expeditionManager.status();
@@ -111,6 +118,16 @@ export class ExpeditionScene extends Phaser.Scene {
     this.buildAugmentChips(augments);
     this.buildRelicHud(run.relics);
     this.enemyInfo = new CharacterInfoManager(this, 3001, "enemy");
+    this.enemyPreview = new NodeEnemyPreview(this, { title: "", level: 1, enemies: [], top: EXPEDITION_LAYOUT.map.top, bottom: EXPEDITION_LAYOUT.map.bottom, depth: 20, onEnemyClick: () => undefined });
+    // 지도 영역 밖 입력은 편성판 내부가 아닌 경우 현재 노드 선택만 닫는다.
+    const dismissOutsideMap = (pointer: Phaser.Input.Pointer): void => {
+      const outsideMap = pointer.worldY < EXPEDITION_LAYOUT.map.top || pointer.worldY > EXPEDITION_LAYOUT.map.bottom;
+      const outsideActions = pointer.worldY < EXPEDITION_LAYOUT.actions.top;
+      // 출격·뒤로가기 행동선은 현재 선택을 소비하므로 빈 배경 취소 대상에서 제외한다.
+      if (outsideMap && outsideActions && !this.enemyPreview?.containsScreenPoint(pointer.worldX, pointer.worldY)) this.mapView?.clearSelection();
+    };
+    this.input.on("pointerdown", dismissOutsideMap);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.input.off("pointerdown", dismissOutsideMap));
     // 스토리 지도처럼 출격은 팝업 안이 아니라 화면 하단의 고정 행동선에 한 번만 둔다.
     this.startButton = new Button(this, BASE_WIDTH / 2, 1810, { width: 340, height: 108, label: "출  격", variant: "primary", accentColor: COLOR.sortie, accentTextColor: COLOR.sortieText, onClick: () => this.selectedNode && this.confirmNodeSortie(this.selectedNode) });
     this.startButton.setEnabled(false);
@@ -146,23 +163,39 @@ export class ExpeditionScene extends Phaser.Scene {
 
   /** 전용 프리팹에 지도 월드와 입력 수명을 넘기고 씬은 선택 결과만 연결한다. */
   private buildMap(nodes: readonly ExpeditionMapNode[], currentNodeId: string | null, visitedIds: readonly string[]): void {
-    new ExpeditionMapView(this, {
+    this.mapView = new ExpeditionMapView(this, {
       top: EXPEDITION_LAYOUT.map.top,
       bottom: EXPEDITION_LAYOUT.map.bottom,
       nodes,
       currentNodeId,
       visitedIds,
-      onSelect: (node) => this.handleNodeSelection(node),
+      onSelect: (node, point) => this.handleNodeSelection(node, point.y),
+      onSelectedMove: (_node, point, visible) => this.enemyPreview?.trackNode(point.y, visible),
+      onDismiss: () => this.dismissNodeSelection(),
+      shouldDismissAt: (point) => !this.enemyPreview?.containsScreenPoint(point.x, point.y),
     });
   }
 
+  /** 지도 선택 취소는 미리보기와 출격 대상/버튼을 함께 초기화한다. */
+  private dismissNodeSelection(): void {
+    this.enemyPreview?.dismiss(); this.selectedNode = undefined; this.startButton?.setEnabled(false);
+  }
+
   /** 노드 종류별 전이를 한 진입점에서 직렬화하며 저장 성공 전에는 다른 노드를 받지 않는다. */
-  private handleNodeSelection(node: ExpeditionMapNode): void {
+  private handleNodeSelection(node: ExpeditionMapNode, nodeY: number): void {
     if (this.nodeTransitionPending) return;
     const run = expeditionManager.status().run;
     if (!run || run.relics.every(({ alive }) => !alive) || run.pendingAugmentReward) return;
     // 전투 노드는 스토리 지도처럼 적 정보를 먼저 열며, 팝업의 출전 버튼 전에는 상태를 바꾸지 않는다.
-    if (["normal", "elite", "horde", "boss"].includes(node.type)) { this.openNodeIntel(node); return; }
+    if (["normal", "elite", "horde", "boss"].includes(node.type)) {
+      const names: Record<string, string> = { normal: "일반 조우", elite: "정예 조우", horde: "군집 조우", boss: "원정 보스" };
+      const level = expeditionEnemyLevel(node.type, node.floor);
+      const enemies = getExpeditionEncounterEnemies(node.type, node.floor);
+      this.selectedNode = node; this.startButton?.setEnabled(true);
+      // 선택 세대가 바뀌면 프리팹이 기존 SD와 늦게 끝난 로드 요청을 함께 폐기한다.
+      this.enemyPreview?.showAt(nodeY, { title: `${node.floor}층 · ${names[node.type]}`, level, enemies, onEnemyClick: (enemy) => this.enemyInfo?.showEnemy(enemy, { level }) });
+      return;
+    }
     this.nodeTransitionPending = true;
     if (node.type === "rest") {
       this.popups.confirm({ title: "휴식", message: "원정대를 회복하고 이 휴식 지점을 완료합니다.", confirmLabel: "휴식하기" }, () => {
@@ -175,31 +208,6 @@ export class ExpeditionScene extends Phaser.Scene {
       return;
     }
     void this.completeTreasureNode(node);
-  }
-
-  /** 실제 조우 수와 층 정보를 먼저 제시하고 하단 출격 입력에서만 기존 진입 흐름을 이어 간다. */
-  private openNodeIntel(node: ExpeditionMapNode): void {
-    const names: Record<string, string> = { normal: "일반 조우", elite: "정예 조우", horde: "군집 조우", boss: "원정 보스" };
-    this.selectedNode = node;
-    this.startButton?.setEnabled(true);
-    this.popups.open({ width: 900, height: 650, title: `${node.floor}층 · ${names[node.type] ?? "조우"}`, dim: false }, (body) => {
-      // 스토리 노드의 적 편성 판처럼 제목·얇은 구분선·클릭 가능한 편성 칸만 남긴다.
-      body.add(this.add.text(340, -258, "적 편성", textStyle({ role: "emphasis", size: 24, color: COLOR.dangerText })).setOrigin(1, 0.5));
-      body.add(drawHairline(this, 0, -220, 760, { color: COLOR.accent, alpha: 0.35 }));
-      const enemyLevel = expeditionEnemyLevel(node.type, node.floor);
-      const enemies = getExpeditionEncounterEnemies(node.type, node.floor);
-      // 정예 한 기는 크게, 무리 다섯 기는 같은 폭 안에 촘촘히 세워 조우 성격을 수량으로 먼저 읽힌다.
-      const cardWidth = enemies.length > 3 ? 140 : 210;
-      const cardHeight = enemies.length > 3 ? 210 : 250;
-      const gap = enemies.length > 3 ? 158 : 270;
-      enemies.forEach((enemy, index) => {
-        const x = (index - (enemies.length - 1) / 2) * gap;
-        const card = new PortraitCard(this, x, 10, { width: cardWidth, height: cardHeight, portraitAssetId: enemy.portraitAssetId, tint: relicCardTint(enemy), label: enemy.name, sub: `LV.${enemyLevel}`, rarity: enemy.rarity, affinity: { element: enemy.element, role: enemy.role } });
-        // 전투 전에도 적을 눌러 실제 전투와 동일한 능력치·스킬 상태창을 열 수 있다.
-        card.hit.on("pointerup", () => this.enemyInfo?.showEnemy(enemy, { level: enemyLevel })); body.add(card); card.syncMask();
-      });
-      body.add(this.add.text(0, 238, "적을 눌러 상세 정보를 확인할 수 있습니다", textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0.5));
-    });
   }
 
   /** 정보 확인 뒤 출전을 누른 경우에만 증강 선택 또는 실제 전장으로 전이한다. */

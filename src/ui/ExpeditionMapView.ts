@@ -4,6 +4,7 @@ import { BUTTON_DRAG_CANCEL_DISTANCE } from "./Button";
 import { drawGlyph, type GlyphName } from "./glyphs";
 import { chipPoints, drawInnerVignette, drawLayer } from "./holo";
 import { COLOR } from "./theme";
+import { isEnemyPreviewNodeVisible } from "./nodeEnemyPreviewLayout";
 import {
   clampExpeditionMapOffset,
   EXPEDITION_MAP_LAYOUT,
@@ -18,7 +19,14 @@ export interface ExpeditionMapViewOptions {
   nodes: readonly ExpeditionMapNode[];
   currentNodeId: string | null;
   visitedIds: readonly string[];
-  onSelect: (node: ExpeditionMapNode) => void;
+  /** 선택 시 현재 스크롤이 반영된 화면 좌표도 넘겨 부착 UI가 노드를 다시 찾지 않게 한다. */
+  onSelect: (node: ExpeditionMapNode, screenPoint: { x: number; y: number }) => void;
+  /** 선택 노드가 스크롤될 때 앵커 UI가 같은 화면 좌표를 계속 따라간다. */
+  onSelectedMove?: (node: ExpeditionMapNode, screenPoint: { x: number; y: number }, visible: boolean) => void;
+  /** 지도 빈 곳 탭은 현재 노드 선택을 취소한다. */
+  onDismiss?: () => void;
+  /** 편성판처럼 지도 위에 뜬 UI 내부 탭은 빈 지도 취소로 오인하지 않는다. */
+  shouldDismissAt?: (screenPoint: { x: number; y: number }) => boolean;
 }
 
 /** 경로, 노드, 입력면과 스크롤을 한 좌표계에서 소유하는 원정 지도 전용 프리팹이다. */
@@ -32,10 +40,13 @@ export class ExpeditionMapView extends Phaser.GameObjects.Container {
   private dragged = false;
   private pressedNode?: ExpeditionMapNode;
   private pressedVisual?: { object: Phaser.GameObjects.Container; scale: number };
-  private pressedCallback?: (node: ExpeditionMapNode) => void;
+  private pressedCallback?: (node: ExpeditionMapNode, screenPoint: { x: number; y: number }) => void;
+  private selectedNode?: ExpeditionMapNode;
+  private readonly options: ExpeditionMapViewOptions;
 
   constructor(scene: Phaser.Scene, options: ExpeditionMapViewOptions) {
     super(scene, 0, options.top);
+    this.options = options;
     scene.add.existing(this);
     this.viewportHeight = options.bottom - options.top;
     this.world = scene.add.container(0, 0);
@@ -86,7 +97,7 @@ export class ExpeditionMapView extends Phaser.GameObjects.Container {
   }
 
   /** 테두리 대신 크기, 발광, 명도로 완료/선택 가능/잠김 상태를 구분한다. */
-  private addNode(node: ExpeditionMapNode, reachable: boolean, visited: boolean, onSelect: (node: ExpeditionMapNode) => void): void {
+  private addNode(node: ExpeditionMapNode, reachable: boolean, visited: boolean, onSelect: ExpeditionMapViewOptions["onSelect"]): void {
     const point = expeditionNodePosition(node.floor, node.column);
     const baseSize = node.type === "boss" ? EXPEDITION_MAP_LAYOUT.bossSize : EXPEDITION_MAP_LAYOUT.nodeSize;
     const scale = reachable ? 1.16 : visited ? 0.92 : 0.78;
@@ -146,7 +157,11 @@ export class ExpeditionMapView extends Phaser.GameObjects.Container {
     this.pressedNode = undefined;
     this.pressedVisual = undefined;
     this.pressedCallback = undefined;
-    if (!this.dragged && node && callback) callback(node);
+    if (!this.dragged && node && callback) {
+      const point = expeditionNodePosition(node.floor, node.column);
+      this.selectedNode = node;
+      callback(node, { x: point.x, y: this.y + this.offset + point.y });
+    } else if (!this.dragged && !node && (this.options.shouldDismissAt?.({ x: pointer.worldX, y: pointer.worldY }) ?? true)) this.clearSelection();
   }
 
   /** 캔버스가 포인터를 잃으면 선택 없이 제스처 상태를 폐기한다. */
@@ -169,5 +184,17 @@ export class ExpeditionMapView extends Phaser.GameObjects.Container {
   private setOffset(offset: number): void {
     this.offset = clampExpeditionMapOffset(offset, this.viewportHeight, expeditionMapWorldHeight());
     this.world.setY(this.offset);
+    if (this.selectedNode) {
+      const point = expeditionNodePosition(this.selectedNode.floor, this.selectedNode.column);
+      const screenPoint = { x: point.x, y: this.y + this.offset + point.y };
+      const visible = isEnemyPreviewNodeVisible(screenPoint.y, this.y, this.y + this.viewportHeight);
+      this.options.onSelectedMove?.(this.selectedNode, screenPoint, visible);
+    }
+  }
+
+  /** 빈 지도나 바깥 UI 탭에서 지도와 씬의 선택 상태를 한 번에 해제한다. */
+  clearSelection(): void {
+    if (!this.selectedNode) return;
+    this.selectedNode = undefined; this.options.onDismiss?.();
   }
 }

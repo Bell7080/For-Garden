@@ -7,6 +7,7 @@ import {
   expeditionNodePosition,
   focusExpeditionFloor,
 } from "../../src/ui/expeditionLayout";
+import { anchorEnemyPreview, enemyPreviewColumns, isEnemyPreviewNodeVisible, NODE_ENEMY_PREVIEW } from "../../src/ui/nodeEnemyPreviewLayout";
 
 describe("expedition portrait layout", () => {
   it("keeps rewards, nodes, augments, relic HUD, and actions in separate vertical regions", () => {
@@ -33,5 +34,32 @@ describe("expedition portrait layout", () => {
     expect(expeditionNodePosition(middleFloor, 0).y + middleOffset).toBe(viewport / 2);
     expect(focusExpeditionFloor(1, viewport)).toBe(viewport - expeditionMapWorldHeight());
     expect(focusExpeditionFloor(20, viewport)).toBe(0);
+  });
+
+  it("지도 마스크 안에서 편성판을 위아래로 뒤집고 꼬리는 선택 노드를 향한다", () => {
+    // 상단 노드는 아래 배치, 하단 노드는 위 배치가 되며 판 전체가 지도 안전 영역을 넘지 않는다.
+    const nearTop = anchorEnemyPreview(EXPEDITION_LAYOUT.map.top + 80, EXPEDITION_LAYOUT.map.top, EXPEDITION_LAYOUT.map.bottom);
+    const nearBottom = anchorEnemyPreview(EXPEDITION_LAYOUT.map.bottom - 80, EXPEDITION_LAYOUT.map.top, EXPEDITION_LAYOUT.map.bottom);
+    expect(nearTop.above).toBe(false); expect(nearBottom.above).toBe(true);
+    for (const anchor of [nearTop, nearBottom]) {
+      expect(anchor.y - NODE_ENEMY_PREVIEW.height / 2).toBeGreaterThanOrEqual(EXPEDITION_LAYOUT.map.top);
+      expect(anchor.y + NODE_ENEMY_PREVIEW.height / 2).toBeLessThanOrEqual(EXPEDITION_LAYOUT.map.bottom);
+    }
+  });
+
+  it.each([1, 3, 5])("%i기 SD 편성이 판 안에서 대칭이고 서로 겹치지 않는다", (count) => {
+    // 정예/일반/군집 및 단독 폰투스가 같은 계산을 써도 가장자리와 슬롯 간격을 보존한다.
+    const columns = enemyPreviewColumns(count);
+    expect(columns).toHaveLength(count); expect(columns[0] + columns[count - 1]).toBe(0);
+    expect(columns.every((x) => Math.abs(x) <= NODE_ENEMY_PREVIEW.width / 2 - 60)).toBe(true);
+    expect(columns.slice(1).every((x, index) => x > columns[index])).toBe(true);
+  });
+
+  it("스크롤된 선택 노드가 지도 마스크를 벗어난 동안 미리보기를 숨긴다", () => {
+    // 경계선 위는 보이고 한 픽셀이라도 바깥으로 나간 노드는 판과 SD 모두 숨기는 계약이다.
+    expect(isEnemyPreviewNodeVisible(EXPEDITION_LAYOUT.map.top, EXPEDITION_LAYOUT.map.top, EXPEDITION_LAYOUT.map.bottom)).toBe(true);
+    expect(isEnemyPreviewNodeVisible(EXPEDITION_LAYOUT.map.bottom, EXPEDITION_LAYOUT.map.top, EXPEDITION_LAYOUT.map.bottom)).toBe(true);
+    expect(isEnemyPreviewNodeVisible(EXPEDITION_LAYOUT.map.top - 1, EXPEDITION_LAYOUT.map.top, EXPEDITION_LAYOUT.map.bottom)).toBe(false);
+    expect(isEnemyPreviewNodeVisible(EXPEDITION_LAYOUT.map.bottom + 1, EXPEDITION_LAYOUT.map.top, EXPEDITION_LAYOUT.map.bottom)).toBe(false);
   });
 });

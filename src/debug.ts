@@ -71,6 +71,8 @@ export interface DebugState {
   shopSection?: "premium";
   /** 도감 스크롤의 표시 범위와 현재 제한값. Canvas E2E가 경계·입력 분리를 검증하는 용도다. */
   relicScroll?: { y: number; minY: number; maxY: number; enabled: boolean; viewportTop: number; viewportBottom: number };
+  /** 노드 편성판의 안전 영역·꼬리 방향·적 입력 중심만 노출하는 모바일 시각 회귀 계약이다. */
+  enemyPreview?: { top: number; bottom: number; panelTop: number; panelBottom: number; above: boolean; enemyTargets: Array<{ x: number; y: number }> };
 }
 
 declare global {
@@ -116,6 +118,11 @@ export function setDebugRelicScroll(scroll: DebugState["relicScroll"]): void {
 
 export function setDebugInfoOpen(open: boolean): void {
   ensure().infoOpen = open;
+}
+
+/** Canvas 밖 E2E가 공용 노드 편성판의 실제 렌더 지오메트리만 읽게 한다. */
+export function setDebugEnemyPreview(preview: DebugState["enemyPreview"]): void {
+  ensure().enemyPreview = preview;
 }
 
 /** Canvas 내부 팝업의 사용자 가시 상태만 노출하며 게임 진행값에는 사용하지 않는다. */

@@ -3,15 +3,15 @@ import { BASE_WIDTH, BASE_HEIGHT } from "../config/gameConfig";
 import type { StageDef } from "../core/types";
 import { setDebugScene } from "../debug";
 import { STAGES, getStageEnemies } from "../data/stages";
-import { CharacterInfoManager, ROLE_LABEL } from "../managers/CharacterInfoManager";
-import type { PuppetCreature } from "../puppets/assets";
-import { battleAssetFor, spawnPuppet } from "../puppets/assets";
+import { CharacterInfoManager } from "../managers/CharacterInfoManager";
 import { isStageUnlocked, session } from "../state/session";
 import { Button } from "../ui/Button";
 import { addBackButton } from "../ui/IconButton";
-import { chipPoints, drawHairline, drawLayer, drawVignette } from "../ui/holo";
+import { chipPoints, drawLayer, drawVignette } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
 import { BACKGROUND } from "../ui/backgrounds";
+import { NodeEnemyPreview } from "../ui/NodeEnemyPreview";
+import { isEnemyPreviewNodeVisible } from "../ui/nodeEnemyPreviewLayout";
 
 /** 지도가 보이는 세로 구간. 위쪽 제목과 아래쪽 버튼을 침범하지 않는다. */
 const WINDOW = { top: 500, bottom: 1560 } as const;
@@ -20,20 +20,8 @@ const NODE_GAP = 230;
 /** 드래그를 스크롤로 볼지 탭으로 볼지 가르는 거리. */
 const DRAG_SLOP = 14;
 
-/**
- * 고른 스테이지 바로 위에 뜨는 적 편성 팝업.
- *
- * 화면 위쪽에 붙은 큰 패널은 구역 제목과 자리를 다퉜다. 고른 노드는 언제나 창 한가운데로
- * 올라오므로, 그 바로 위에 작은 팝업을 띄우면 어느 스테이지의 적인지도 함께 읽힌다.
- */
-const POPUP = { width: 840, height: 320, sdHeight: 168 } as const;
-/** 팝업 가운데를 기준으로 한 세 칸의 가로 위치. */
-const POPUP_COLUMNS = [-256, 0, 256];
 /** 제목·출전·뒤로가기가 앉는 깊이. 비네트(40)보다 위, 적 편성 팝업(60)보다 아래다. */
 const CHROME_DEPTH = 50;
-
-/** 고른 노드가 멈추는 화면 높이. 팝업은 이 위에 뜬다. */
-const NODE_FOCUS_Y = (WINDOW.top + WINDOW.bottom) / 2;
 
 /**
  * 스테이지 지도.
@@ -50,20 +38,8 @@ export class StageMapScene extends Phaser.Scene {
   private selected!: string;
   private sortieButton!: Button;
 
-  /** 적 편성 팝업. */
-  private panel!: Phaser.GameObjects.Container;
-  private panelTitle!: Phaser.GameObjects.Text;
-  private panelTail!: Phaser.GameObjects.Graphics;
-  private panelSlots: {
-    name: Phaser.GameObjects.Text;
-    detail: Phaser.GameObjects.Text;
-    hit: Phaser.GameObjects.Rectangle;
-    creature?: PuppetCreature;
-  }[] = [];
-  private panelRequest = 0;
-  private panelShown = false;
-  /** 패널이 완전히 내려왔는지. SD는 그때부터 보인다. */
-  private panelDown = false;
+  /** 노드 편성의 렌더와 비동기 SD 수명은 공용 프리팹이 소유한다. */
+  private enemyPreview!: NodeEnemyPreview;
 
   private scrollMin = 0;
   private scrollMax = 0;
@@ -78,10 +54,6 @@ export class StageMapScene extends Phaser.Scene {
   create(): void {
     setDebugScene("stageMap");
     this.nodes.clear();
-    this.panelSlots = [];
-    this.panelShown = false;
-    this.panelDown = false;
-    this.panelRequest = 0;
 
     const cx = BASE_WIDTH / 2;
     // 장축 지도 밖의 여백만 어둡게 남기고, 실제 원화는 노드와 같은 컨테이너에서 함께 스크롤한다.
@@ -98,7 +70,7 @@ export class StageMapScene extends Phaser.Scene {
       .setDepth(CHROME_DEPTH);
 
     this.buildMap();
-    this.buildPanel();
+    this.enemyPreview = new NodeEnemyPreview(this, { title: "", level: 1, enemies: [], top: WINDOW.top - 40, bottom: WINDOW.bottom + 40, onEnemyClick: () => undefined });
 
     this.sortieButton = new Button(this, cx, BASE_HEIGHT - 180, {
       width: 340,
@@ -201,6 +173,9 @@ export class StageMapScene extends Phaser.Scene {
       // 정보창이 떠 있으면 그 위에서의 손짓은 뒤의 지도를 건드리지 않는다.
       if (this.info?.isOpen) return;
       if (pointer.y < WINDOW.top || pointer.y > WINDOW.bottom) return;
+      // 편성판 밖 지도 탭은 현재 판을 먼저 닫고, 노드 탭이면 pointerup에서 새 판을 연다.
+      if (this.enemyPreview?.containsScreenPoint(pointer.worldX, pointer.worldY)) return;
+      this.enemyPreview?.dismiss();
       this.dragging = true;
       this.dragMoved = 0;
       this.dragOrigin = this.map.y - pointer.y;
@@ -220,138 +195,40 @@ export class StageMapScene extends Phaser.Scene {
     const clamped = Phaser.Math.Clamp(y, this.scrollMin, this.scrollMax);
     if (!tween) {
       this.map.y = clamped;
+      this.trackSelectedPreview();
       return;
     }
-    this.tweens.add({ targets: this.map, y: clamped, duration: 420, ease: "Cubic.Out" });
+    this.tweens.add({ targets: this.map, y: clamped, duration: 420, ease: "Cubic.Out", onUpdate: () => this.trackSelectedPreview() });
   }
 
-  /** 고른 노드 위에 뜨는 적 편성 팝업. 내용만 갈아 끼우고 한 번만 만든다. */
-  private buildPanel(): void {
-    // 노드보다 위, 지도보다 앞. 팝업 가운데가 원점이라 자리를 옮겨도 안쪽 좌표는 그대로다.
-    this.panel = this.add.container(BASE_WIDTH / 2, NODE_FOCUS_Y - POPUP.height / 2 - 96).setDepth(60).setVisible(false);
-    const unit = Math.min(POPUP.width, POPUP.height);
-    const bevel = unit * 0.16;
-    this.panel.add(drawLayer(this, 0, 0, chipPoints(POPUP.width, POPUP.height, {
-      bevel: { topLeft: bevel, topRight: 0, bottomRight: bevel, bottomLeft: 0 },
-    }), { fill: 0x0b0f15, alpha: 0.92, edge: COLOR.accent, edgeAlpha: 0.55 }));
-    // 팝업이 어느 노드에 붙은 것인지 짧은 선이 알려 준다. 방향은 붙는 자리에 따라 바뀐다.
-    this.panelTail = this.add.graphics();
-    this.panel.add(this.panelTail);
-
-    // 제목도 잘린 왼쪽 위를 피해 안쪽에서 시작한다.
-    this.panelTitle = this.add.text(-POPUP.width / 2 + bevel * 0.7, -POPUP.height / 2 + 24, "", textStyle({ role: "display", size: 32 })).setOrigin(0, 0);
-    this.panel.add(this.panelTitle);
-    this.panel.add(this.add.text(POPUP.width / 2 - 30, -POPUP.height / 2 + 28, "적 편성", textStyle({ role: "emphasis", size: 22, color: COLOR.dangerText })).setOrigin(1, 0));
-    this.panel.add(drawHairline(this, 0, -POPUP.height / 2 + 74, POPUP.width - 60, { color: COLOR.accent, alpha: 0.35 }));
-
-    POPUP_COLUMNS.forEach((x) => {
-      const ground = POPUP.height / 2 - 70;
-      this.panel.add(this.add.ellipse(x, ground + 4, 150, 26, COLOR.void, 0.5));
-      const name = this.add.text(x, ground + 14, "", textStyle({ role: "display", size: 24 })).setOrigin(0.5, 0);
-      const detail = this.add.text(x, ground + 44, "", textStyle({ role: "body", size: 19, color: COLOR.inkDim })).setOrigin(0.5, 0);
-      // SD는 그림이라 입력을 받지 않는다. 칸 전체를 눌러 상세를 연다.
-      const hit = this.add.rectangle(x, ground - POPUP.sdHeight / 2, 230, POPUP.sdHeight + 100, 0xffffff, 0).setInteractive({ useHandCursor: true });
-      this.panel.add([name, detail, hit]);
-      this.panelSlots.push({ name, detail, hit });
-    });
+  /** 지도 이동 중 선택 노드의 실제 화면 Y를 계산해 판과 SD를 계속 같은 노드에 붙인다. */
+  private trackSelectedPreview(): void {
+    if (!this.enemyPreview || !this.selected) return;
+    const index = STAGES.findIndex((stage) => stage.id === this.selected);
+    const nodeY = this.map.y - index * NODE_GAP;
+    this.enemyPreview.trackNode(nodeY, isEnemyPreviewNodeVisible(nodeY, WINDOW.top, WINDOW.bottom));
   }
 
-  /** 스테이지를 고른다. 지도를 그 자리로 굴리고, 적 패널을 채워 내린다. */
+  /** 고른 스테이지를 중앙으로 옮기고 공용 노드 미리보기의 내용과 꼬리를 함께 갱신한다. */
   private select(stage: StageDef, instant = false): void {
     this.selected = stage.id;
     session.selectedStageId = stage.id;
-    const index = STAGES.findIndex((s) => s.id === stage.id);
-
+    const index = STAGES.findIndex((candidate) => candidate.id === stage.id);
     for (const [id, node] of this.nodes) {
       const chosen = id === stage.id;
-      // 고른 노드는 테두리가 아니라 크기와 색으로 알린다.
+      // 선택은 외곽선 추가가 아니라 기존 홀로그램 규칙의 확대와 글자색으로만 알린다.
       node.label.setScale(chosen ? 1.25 : 1);
       node.label.setColor(chosen ? COLOR.accentText : session.cleared.has(id) ? COLOR.ink : COLOR.inkDim);
     }
-
-    // 고른 노드를 창 한가운데로 올린다. 지도 끝에서는 더 굴러가지 않으므로 실제로 노드가
-    // 멈추는 자리를 미리 계산해 팝업을 그 위에 붙인다.
     const scroll = Phaser.Math.Clamp((WINDOW.top + WINDOW.bottom) / 2 + index * NODE_GAP, this.scrollMin, this.scrollMax);
     this.scrollTo(scroll, !instant);
-    this.anchorPanel(scroll - index * NODE_GAP);
     this.sortieButton.setSub("");
-    this.showPanel(stage);
-  }
-
-  /**
-   * 팝업을 노드 바로 위(자리가 없으면 아래)에 붙인다.
-   *
-   * 지도 위쪽 끝에서는 팝업이 구역 제목을 덮으므로, 그때만 노드 아래로 내려 붙인다.
-   */
-  private anchorPanel(nodeY: number): void {
-    const above = nodeY - POPUP.height / 2 - 96;
-    const fitsAbove = above >= WINDOW.top - 40;
-    this.panel.setY(fitsAbove ? above : nodeY + POPUP.height / 2 + 96);
-    // 꼬리는 팝업에서 노드 쪽으로 뻗는다. 컨테이너를 뒤집으면 글자까지 뒤집히므로 다시 긋는다.
-    const edge = fitsAbove ? POPUP.height / 2 : -POPUP.height / 2;
-    this.panelTail.clear();
-    this.panelTail.lineStyle(3, COLOR.accent, 0.55);
-    this.panelTail.lineBetween(0, edge, 0, edge + (fitsAbove ? 52 : -52));
-  }
-
-  /** 패널 내용을 지금 스테이지의 적으로 바꾸고, 아직 올라가 있으면 내린다. */
-  private showPanel(stage: StageDef): void {
-    const request = ++this.panelRequest;
-    this.panelTitle.setText(`${stage.id}  ${stage.name}  ·  적 LV.${stage.enemyLevel}`);
-    // 팝업이 새로 뜰 때마다 SD도 다시 세운다. 이전 스테이지의 SD는 여기서 지운다.
-
-    getStageEnemies(stage).forEach((def, slot) => {
-      const view = this.panelSlots[slot];
-      view.name.setText(def.name);
-      // 지도에서도 실제 전투에 투입될 레벨 보정 체력을 미리 보여준다.
-      view.detail.setText(`LV.${stage.enemyLevel}  ${ROLE_LABEL[def.role]}  HP ${def.stats.hp}`);
-      view.hit.removeAllListeners("pointerup");
-      view.hit.on("pointerup", () => this.info.showEnemy(def, { level: stage.enemyLevel }));
-      view.creature?.destroy();
-      view.creature = undefined;
-      void this.standEnemy(def.id, slot, request);
-    });
-
-    if (this.panelShown) return;
-    this.panelShown = true;
-    // 노드에서 솟아오르듯 살짝 커지며 뜬다.
-    this.panel.setVisible(true).setAlpha(0).setScale(0.94);
-    this.tweens.add({
-      targets: this.panel,
-      alpha: 1,
-      scale: 1,
-      duration: 260,
-      ease: "Cubic.Out",
-      onComplete: () => {
-        this.panelDown = true;
-        this.panelSlots.forEach((view) => view.creature?.setVisible(true));
-      },
+    const enemies = getStageEnemies(stage);
+    this.enemyPreview.showAt(scroll - index * NODE_GAP, {
+      title: `${stage.id}  ${stage.name}`, level: stage.enemyLevel, enemies,
+      // 전투 전에도 전투와 동일한 공용 적 정보창으로 연결한다.
+      onEnemyClick: (enemy) => this.info.showEnemy(enemy, { level: stage.enemyLevel }),
     });
   }
 
-  /**
-   * 팝업 안 SD 하나.
-   *
-   * Puppet은 자체 GPU 경로로 그려서 컨테이너의 이동을 따라가지 않는다. 그래서 팝업이 자리
-   * 잡은 화면 좌표에 직접 세우고, 떠오르는 동안에는 감춰 둔다. 늦게 도착한 로딩이 다른
-   * 스테이지의 적을 세우지 않도록 요청 번호도 확인한다.
-   */
-  private async standEnemy(relicId: string, slot: number, request: number): Promise<void> {
-    const creature = await spawnPuppet(this, battleAssetFor(relicId), {
-      x: BASE_WIDTH / 2 + POPUP_COLUMNS[slot],
-      groundY: this.panel.y + POPUP.height / 2 - 70,
-      height: POPUP.sdHeight,
-      flipX: true,
-      // 적 번호별 원본 색을 그대로 보여 줘 토비·아모·리파 외형을 명확히 구분한다.
-      tint: 0xffffff,
-      depth: 61,
-    });
-    if (!this.scene.isActive() || request !== this.panelRequest) {
-      creature.destroy();
-      return;
-    }
-    creature.setVisible(this.panelDown);
-    this.panelSlots[slot].creature = creature;
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => creature.destroy());
-  }
 }

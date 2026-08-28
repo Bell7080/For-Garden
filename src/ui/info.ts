@@ -50,7 +50,7 @@ import { observationQuestionForRelicAndDate } from "../data/observations";
 import type { PublicRelicProfileDto } from "../api/contracts";
 import type { Fighter } from "../core/skirmish";
 import { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../core/infoCapabilities";
-import { ferocityTraitDescription } from "./skillPresentation";
+import { damageKeyword, ferocityTraitDescription } from "./skillPresentation";
 
 export type { SkillInfoViewModel } from "./SkillPopup";
 
@@ -1609,8 +1609,12 @@ export class InfoManager {
     this.skillIcons.push(badge);
   }
 
-  /** 개체별 피버 발현 설명. 야성 규칙 자체는 강조된 말을 눌러 다시 열 수 있다. */
+  /** 개체별 폭주 발현 설명. 야성 규칙 자체는 강조된 말을 눌러 다시 열 수 있다. */
   private openFerocityTrait(def: RelicDef, from: PopupSource): void {
+    const defense = relicProgression.getFinalStats(def.id).def;
+    const defensePercent = def.ferocityTrait.effectId === "splashDamage" ? def.ferocityTrait.defenseDamagePercent : undefined;
+    // 폭주 추가 피해도 일반 스킬과 같은 수치 링크를 써서 캐릭터가 늘어도 별도 팝업을 만들지 않는다.
+    const convertedDamage = defensePercent === undefined ? undefined : Math.round(defense * defensePercent / 100);
     // 폭주도 패시브와 같은 정형 상세창을 사용한다. 별도 제목 레이어 없이 아이콘 옆에서
     // 스킬 종류·이름·발현 유형을 한 번에 읽게 한다.
     openSkillPopup(this.scene, this.popups, this.keywords, {
@@ -1621,9 +1625,15 @@ export class InfoManager {
       tint: skillArtTint(def.element, def.role),
       effectType: "buff",
       valueLabel: "야성 발현",
+      contextualKeywords: convertedDamage === undefined ? undefined : [{
+        id: "damage-value",
+        term: String(convertedDamage),
+        kind: "규칙",
+        description: `현재 방어력에서 ${defensePercent}%를 받아 계산한 추가 피해 수치다.`,
+      }],
       // 설명 수치는 전투가 읽는 특성 필드에서 생성해 정적 문구와 실제 효과가 갈라지지 않는다.
       description: "[[ferocity|야성 게이지]]가 가득 차면 폭주한다. "
-        + ferocityTraitDescription(def.ferocityTrait, relicProgression.getFinalStats(def.id).def),
+        + ferocityTraitDescription(def.ferocityTrait, defense),
     }, from);
   }
 
@@ -1637,9 +1647,9 @@ export class InfoManager {
       breakthrough: relicProgression.getProgress(finalDef.id).breakthrough,
     };
     const preview = attacker && kindLabel !== "패시브" ? previewSkillDamage(attacker, skill) : undefined;
-    const statKeyword = preview?.kind === "scaling" ? (preview.stat === "방어력" ? "def" : preview.stat === "공격력" ? "atk" : undefined) : undefined;
+    const damageDetail = damageKeyword(preview);
     const valueLabel = preview?.kind === "scaling"
-      ? `${preview.label} [[${statKeyword ?? "atk"}|${preview.amount}]]`
+      ? `${preview.label} [[damage-value|${preview.amount}]]`
       : undefined;
     return {
       name: skill.name,
@@ -1651,6 +1661,7 @@ export class InfoManager {
       tint: this.currentDef && skillArtTint(this.currentDef.element, this.currentDef.role),
       effectType: skill.effectType,
       valueLabel,
+      contextualKeywords: damageDetail ? [damageDetail] : undefined,
       // 정적 문장에서 수치를 재해석하지 않고 전투 정의를 그대로 팝업에 넘긴다.
       targeting: "targeting" in skill ? skill.targeting as Ultimate["targeting"] : undefined,
       statusEffects: skill.statusEffects,

@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import type { KeywordManager } from "../managers/KeywordManager";
+import type { KeywordDef } from "../data/keywords";
 import type { CombatStatusEffect, EffectType, SkillIconAssetId, Ultimate } from "../core/types";
 import { chipPoints, drawHairline, drawInnerVignette, drawLayer, drawShapeOutline } from "./holo";
 import type { PopupLayer } from "./PopupLayer";
@@ -30,6 +31,8 @@ export interface SkillInfoViewModel {
   effectType: EffectType;
   /** 배율이나 예상 피해처럼 한 줄로 읽는 수치. */
   valueLabel?: string;
+  /** 표시 수치를 눌렀을 때 해당 스킬의 능력치 출처와 배율을 설명한다. */
+  contextualKeywords?: readonly KeywordDef[];
   /** 코어의 대상 선택 계약. 반경 같은 개발 단위는 표시하지 않는다. */
   targeting?: Ultimate["targeting"];
   /** 코어가 실제 적용하는 상태 효과와 지속 시간이다. */
@@ -112,7 +115,9 @@ export function openSkillPopup(
       recoveryLabel(skill.recoveryPercent),
     ].filter(Boolean).join("   ·   ");
     // 실제 수치도 설명문과 같은 키워드 레이아웃을 써서, 누르면 산출 근거를 확인할 수 있게 한다.
-    const summaryText = keywords.layout(summary, { width: 560, size: 24, lineSpacing: 4 });
+    const summaryText = keywords.layout(summary, {
+      width: 560, size: 24, lineSpacing: 4, contextualKeywords: skill.contextualKeywords,
+    });
     summaryText.setPosition(textLeft, top + 156);
     body.add(summaryText);
 

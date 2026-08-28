@@ -1,3 +1,5 @@
+import type { DamagePreview } from "../core/damage";
+import type { KeywordDef } from "../data/keywords";
 import type { CombatStatusEffect, FerocityTrait, Ultimate } from "../core/types";
 
 /** 전투 좌표 수치 대신 플레이어가 전장에서 찾을 수 있는 대상 범위를 말한다. */
@@ -21,6 +23,17 @@ export function recoveryLabel(percent?: number): string | undefined {
   return percent === undefined ? undefined : `매초 최대 체력의 ${percent}% 회복`;
 }
 
+/** 어느 캐릭터나 같은 양식으로 피해 수치의 능력치 출처와 적용 배율을 열어 볼 수 있게 한다. */
+export function damageKeyword(preview?: DamagePreview): KeywordDef | undefined {
+  if (preview?.kind !== "scaling") return undefined;
+  return {
+    id: "damage-value",
+    term: String(preview.amount),
+    kind: "규칙",
+    description: `현재 ${preview.stat}에서 ${preview.power}%를 받아 계산한 피해 수치다.`,
+  };
+}
+
 /** 폭주 설명의 모든 수치를 실제 전투 계약에서 만들어 밸런스 조정 후 문구가 남지 않게 한다. */
 export function ferocityTraitDescription(trait: FerocityTrait, defense?: number): string {
   if (trait.effectId === "attackIntervalReduction") return `공격 간격이 ${trait.reductionPercent}% 짧아진다.`;
@@ -32,11 +45,11 @@ export function ferocityTraitDescription(trait: FerocityTrait, defense?: number)
   // 방어력 계수는 토리카처럼 추가 피해가 있는 범위 타격만 노출하고, 일반 전이 특성은 원래 피해 비율만 보여 준다.
   const speed = trait.attackSpeedBonusPercent === undefined ? "" : `공격 속도가 ${trait.attackSpeedBonusPercent}% 증가한다. `;
   const converted = trait.defenseDamagePercent === undefined || defense === undefined
-    ? ""
-    : `([[def|${Math.round(defense * trait.defenseDamagePercent / 100)}]])`;
+    ? undefined
+    : Math.round(defense * trait.defenseDamagePercent / 100);
   const bonus = trait.defenseDamagePercent === undefined
     ? `원래 피해의 ${trait.damagePercent}%`
-    : `방어력의 ${trait.defenseDamagePercent}%${converted}만큼 추가 물리 피해`;
+    : `${converted === undefined ? "추가" : `[[damage-value|${converted}]]만큼 추가`} 물리 피해`;
   const ending = trait.statusEffect?.kind === "stagger"
     ? `${bonus}를 입히고 [[stagger|경직]]시킨다.`
     : `${bonus}를 입힌다.`;

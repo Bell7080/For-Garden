@@ -33,7 +33,7 @@ export const KEYWORDS: readonly KeywordDef[] = [
     id: "ferocity",
     term: "야성",
     kind: "규칙",
-    description: "전투 중 쌓이는 원종의 본능이다. 가득 차면 피버에 들어가 피해가 크게 오르고, 그 상태에서도 궁극기를 쓸 수 있다. 유대 레벨이 높을수록 빨리 쌓인다. 관제탑은 필요할 때 진압으로 게이지를 비워 되돌릴 수 있다.",
+    description: "전투 중 쌓이는 원종의 본능이다. 가득 차면 폭주해 피해가 크게 오르고, 그 상태에서도 궁극기를 쓸 수 있다. 유대 레벨이 높을수록 빨리 쌓인다. 관제탑은 필요할 때 진압으로 게이지를 비워 되돌릴 수 있다.",
   },
   {
     id: "bleed",
@@ -84,13 +84,14 @@ export interface KeywordSegment {
  * UI가 문자열을 직접 파싱하면 화면마다 규칙이 갈라지므로, 자르는 일은 여기서만 한다.
  * 사전에 없는 id는 링크로 만들지 않고 표기만 남긴다 — 오타 하나로 설명이 사라지지 않게.
  */
-export function parseKeywordText(text: string): KeywordSegment[] {
+export function parseKeywordText(text: string, contextualKeywords: readonly KeywordDef[] = []): KeywordSegment[] {
   const segments: KeywordSegment[] = [];
   const pattern = /\[\[([a-z0-9-]+)(?:\|([^\]]+))?\]\]/g;
   let cursor = 0;
   for (let match = pattern.exec(text); match !== null; match = pattern.exec(text)) {
     if (match.index > cursor) segments.push({ text: text.slice(cursor, match.index) });
-    const keyword = findKeyword(match[1]);
+    // 피해 수치처럼 스킬마다 설명이 달라지는 용어는 호출 화면이 넘긴 정의를 먼저 사용한다.
+    const keyword = contextualKeywords.find((candidate) => candidate.id === match[1]) ?? findKeyword(match[1]);
     segments.push({ text: match[2] ?? keyword?.term ?? match[1], keyword });
     cursor = match.index + match[0].length;
   }

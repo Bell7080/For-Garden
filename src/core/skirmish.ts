@@ -391,9 +391,10 @@ export function findFighter(state: SkirmishState, id: string): Fighter | undefin
 /** 공격 속도가 정하는 공격 간격(초). 100이 기준이다. */
 export function attackInterval(fighter: Fighter): number {
   const trait = fighter.def.ferocityTrait;
-  const passiveSpeed = fighter.def.passive.kind === "battleMaidMastery"
-    ? 1 + (fighter.def.passive.attackSpeedPercent ?? 0) / 100
-    : 1;
+  // 공격 속도는 이미 백분율 척도인 추가 능력치이므로 패시브 수치를 %p로 더한다.
+  const passiveSpeedPoints = fighter.def.passive.kind === "battleMaidMastery"
+    ? fighter.def.passive.attackSpeedPercent ?? 0
+    : 0;
   // 개별 공속은 공용 야성 피해 보너스를 다시 건드리지 않고 재사용 대기시간에만 곱한다.
   const feverMultiplier = fighter.ferocityFever && trait.effectId === "attackIntervalReduction"
     ? 1 - trait.reductionPercent / 100
@@ -401,7 +402,7 @@ export function attackInterval(fighter: Fighter): number {
       // 공격 속도 +20%는 공격 간격 -20%와 다르므로 증가된 속도로 간격을 나눈다.
       ? 1 / (1 + trait.attackSpeedBonusPercent / 100)
       : 1;
-  return ((SKIRMISH.attackInterval * 100) / Math.max(1, fighter.def.stats.attackSpeed * passiveSpeed)) * feverMultiplier;
+  return ((SKIRMISH.attackInterval * 100) / Math.max(1, fighter.def.stats.attackSpeed + passiveSpeedPoints)) * feverMultiplier;
 }
 
 /** 이동 속도와 현재 편의 피버 오라가 정하는 초당 이동 거리(px). */
@@ -512,14 +513,14 @@ function applyStreak(attacker: Fighter, target: Fighter, events: SkirmishEvent[]
   refreshBleed(target, BLEED.seconds, BLEED.percentPerSecond, events);
 }
 
-/** 네 능력치 패시브를 피해 공식에 넘길 임시 정의에만 반영해 원본 콘텐츠 데이터를 보존한다. */
+/** 공격력은 배율로, 백분율 척도인 치명타 피해는 %p로 임시 정의에 반영한다. */
 function offensiveDefinition(attacker: Fighter): RelicDef {
   const passive = attacker.def.passive;
   if (passive.kind !== "battleMaidMastery") return attacker.def;
   return { ...attacker.def, stats: {
     ...attacker.def.stats,
     atk: attacker.def.stats.atk * (1 + (passive.attackPowerPercent ?? 0) / 100),
-    critDamage: attacker.def.stats.critDamage * (1 + (passive.criticalDamagePercent ?? 0) / 100),
+    critDamage: attacker.def.stats.critDamage + (passive.criticalDamagePercent ?? 0),
   } };
 }
 
@@ -639,10 +640,10 @@ function strike(
   // 이번 타격 시작 시점의 피버만 본다. 이 공격으로 100에 도달했다면 다음 공격부터 발현한다.
   const attackingInFever = attacker.ferocityFever;
   const critTrait = attacker.def.ferocityTrait;
-  const passiveCritMultiplier = attacker.def.passive.kind === "battleMaidMastery"
-    ? 1 + (attacker.def.passive.criticalChancePercent ?? 0) / 100 : 1;
-  // 패시브의 % 배율을 먼저 적용하고 폭주의 %p를 더한 뒤 유효한 확률로 제한한다.
-  const criticalChance = attacker.def.stats.critChance * passiveCritMultiplier
+  // 패시브와 폭주의 %p를 모두 더한 뒤, 난수 판정 직전에만 유효 확률을 100%로 제한한다.
+  const passiveCritPoints = attacker.def.passive.kind === "battleMaidMastery"
+    ? attacker.def.passive.criticalChancePercent ?? 0 : 0;
+  const criticalChance = attacker.def.stats.critChance + passiveCritPoints
     + (attackingInFever && critTrait.effectId === "criticalChanceBonus" ? critTrait.chancePercent : 0)
     + (attackingInFever && critTrait.effectId === "rexBattleQueen" ? critTrait.criticalChancePoints : 0);
   const critical = isCriticalHit(Math.min(100, criticalChance), rng());
@@ -770,13 +771,14 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
   // 공격자 야성은 이번 공격의 모든 피해가 같은 시작 시점 배율을 쓰도록 대상 처리 뒤에 얻는다.
   const attackingInFever = attacker.ferocityFever;
   const critTrait = attacker.def.ferocityTrait;
-  const passiveCritMultiplier = attacker.def.passive.kind === "battleMaidMastery"
-    ? 1 + (attacker.def.passive.criticalChancePercent ?? 0) / 100 : 1;
+  // 광역 궁극기도 단일 타격과 동일하게 패시브 치명타 확률을 %p로 취급한다.
+  const passiveCritPoints = attacker.def.passive.kind === "battleMaidMastery"
+    ? attacker.def.passive.criticalChancePercent ?? 0 : 0;
   const damageAttacker = { ...attacker, def: offensiveDefinition(attacker) };
 
   for (const [index, target] of targets.entries()) {
     // 각 대상은 자기 방어력·속성·피버 경감을 사용하며 치명타도 독립 판정한다.
-    const criticalChance = Math.min(100, attacker.def.stats.critChance * passiveCritMultiplier
+    const criticalChance = Math.min(100, attacker.def.stats.critChance + passiveCritPoints
       + (attackingInFever && critTrait.effectId === "criticalChanceBonus" ? critTrait.chancePercent : 0)
       + (attackingInFever && critTrait.effectId === "rexBattleQueen" ? critTrait.criticalChancePoints : 0));
     const critical = isCriticalHit(criticalChance, rng());

@@ -135,7 +135,7 @@ describe("스피나 스킬 표시 계약", () => {
     expect(spino.passive).toMatchObject({ name: "전투의 환희", kind: "basicHitAttackSpeedStack", value: 3 });
     expect(passiveDescription(spino.passive)).toContain("공격 속도가 3 증가");
     expect(spino.basic).toMatchObject({ name: "악어턱 물어뜯기", power: 80, combo: { chancePercent: 40, hitCount: 2, missingHpHealingPercentPerHit: 10 } });
-    expect(spino.ultimate).toMatchObject({ name: "범람의 포식자", power: 200, attackSpeedPower: 300, cost: 300, statusEffects: [{ kind: "stun", seconds: 3 }] });
-    expect(spino.ultimate.desc).toContain("현재 공격 속도의 300%");
+    expect(spino.ultimate).toMatchObject({ name: "범람의 포식자", power: 200, attackSpeedPower: 150, cost: 300, statusEffects: [{ kind: "stun", seconds: 3 }] });
+    expect(spino.ultimate.desc).toContain("현재 공격 속도의 150%");
   });
 });

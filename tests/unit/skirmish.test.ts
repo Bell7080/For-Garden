@@ -91,15 +91,50 @@ describe("스피나 전투 계약", () => {
     expect(attackInterval(spino)).toBe(SKIRMISH.minimumAttackInterval);
   });
 
-  it("은 궁극기에 공격력 200%와 현재 공속 300%를 합산하고 생존자에게 3초 기절을 준다", () => {
+  it("은 궁극기에 공격력 200%와 현재 공속 150%를 합산하고 생존자에게 3초 기절을 준다", () => {
     const { state, spino, target } = readySpino(); spino.energy = 300; spino.bonusAttackSpeed = 6;
     const speed = currentAttackSpeed(spino);
-    const equivalentPower = 200 + speed * 300 / spino.def.stats.atk;
+    // 실제 피해는 아래 공용 함수에서 방어 적용 후 정수로 반올림하므로, 복합 원피해 산식과 구분한다.
+    const equivalentPower = 200 + speed * 150 / spino.def.stats.atk;
     const expected = computeDamage(spino, target, { ...spino.def.ultimate, power: equivalentPower, kind: "ultimate", isCritical: false }, true);
     const hit = fireUltimate(state, spino.id).find((event) => event.kind === "attack");
     expect(hit).toMatchObject({ amount: expected });
     expect(target.stunnedFor).toBe(3);
     expect(spino.energy).toBe(0);
+  });
+
+  it("은 레벨 1 궁극기 원피해 431에서 평타 실제 적중마다 반올림 전 원피해를 4.5씩 높인다", () => {
+    const { state, spino, target } = readySpino();
+    const rawUltimateDamage = () => spino.def.stats.atk * spino.def.ultimate.power / 100
+      + currentAttackSpeed(spino) * spino.def.ultimate.attackSpeedPower! / 100;
+    const actualUltimateDamage = () => computeDamage(spino, target, {
+      ...spino.def.ultimate,
+      power: spino.def.ultimate.power
+        + currentAttackSpeed(spino) * spino.def.ultimate.attackSpeedPower! / spino.def.stats.atk,
+      kind: "ultimate",
+      isCritical: false,
+    }, true);
+
+    // 기본 공격력 124의 200%와 기본 공속 122의 150%를 더한 방어 적용 전 회귀값이다.
+    expect(spino.def.stats.atk).toBe(124);
+    expect(currentAttackSpeed(spino)).toBe(122);
+    const rawBeforeHit = rawUltimateDamage();
+    const actualBeforeHit = actualUltimateDamage();
+    expect(rawBeforeHit).toBe(431);
+
+    // 연격이 나지 않는 평타 한 번을 실제로 적중시켜 패시브 공속 +3을 누적한다.
+    stepSkirmish(state, 1 / 60, () => 0.99);
+    const rawAfterHit = rawUltimateDamage();
+    const actualAfterHit = actualUltimateDamage();
+    expect(rawAfterHit - rawBeforeHit).toBeCloseTo(4.5);
+    // 실제 피해끼리는 방어 계산과 정수 반올림을 거친 값으로 별도 검증한다.
+    expect(actualAfterHit).toBe(computeDamage(spino, target, {
+      ...spino.def.ultimate,
+      power: 200 + 125 * 150 / 124,
+      kind: "ultimate",
+      isCritical: false,
+    }, true));
+    expect(Number.isInteger(actualAfterHit - actualBeforeHit)).toBe(true);
   });
 
   it("은 동일 성장 렉시아보다 느리게 시작해 장기 적중 뒤 공격 빈도를 앞서고 궁극기 한 번에 동급 탱커를 처치하지 않는다", () => {

@@ -11,9 +11,16 @@ describe("relic catalog", () => {
     expect(rex.catalogSummary).toContain("체중 54kg");
     expect(rex.unlockRecord.status === "recorded" && rex.unlockRecord.text).toContain("체중 54kg");
   });
-  it("스피노사우루스 렐릭의 표시 이름을 스피나로 유지한다", () => {
-    // 내부 ID와 에셋 키를 바꾸지 않고 모든 화면이 읽는 데이터 이름만 고정한다.
-    expect(PLAYABLE_RELICS.find((relic) => relic.id === "spino")?.name).toBe("스피나");
+  it("스피나는 표시 정보와 관찰 신체 수치를 단일 값으로 공개한다", () => {
+    const spina = PLAYABLE_RELICS.find((relic) => relic.id === "spino");
+    // 저장 호환 ID로 찾은 하나의 정의가 도감의 이름·등급·속성·역할·관찰값을 모두 공급하도록 고정한다.
+    expect(spina).toMatchObject({
+      name: "스피나",
+      rarity: "SSR",
+      element: "water",
+      role: "assassin",
+      observationProfile: { height: "1.74 m", weight: "61 kg", lifeStage: "성체 초기" },
+    });
   });
 
   /** 실제 정의 전체를 복제하지 않고 순수 비교 함수에 필요한 식별자만 만든다. */

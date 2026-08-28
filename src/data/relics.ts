@@ -1,4 +1,4 @@
-import type { RelicDef } from "../core/types";
+import type { BasicAttack, RelicDef } from "../core/types";
 
 /**
  * 렐릭 정의. 최종 30종을 목표로 하되, 지금은 파티 편성과 전투 규칙을 검증할 만큼만 둔다.
@@ -212,6 +212,7 @@ export const RELICS: RelicDef[] = [
       value: 3,
       desc: "기본 공격이 적중할 때마다 이번 전투 동안 공격 속도가 3 증가한다.",
     },
+    // 스피나의 기본 공격 데이터는 중복 키 없이 BasicAttack 계약을 직접 검증한다.
     basic: {
       id: "spino-basic",
       name: "악어턱 물어뜯기",
@@ -221,7 +222,7 @@ export const RELICS: RelicDef[] = [
       damageType: "physical",
       combo: { chancePercent: 40, hitCount: 2, missingHpHealingPercentPerHit: 10 },
       desc: "공격력의 80% 물리 피해를 주며, 40% 확률로 두 번 적중한다. 연격 적중마다 잃은 체력의 10%를 회복한다.",
-    },
+    } satisfies BasicAttack,
     ultimate: {
       id: "spino-ult",
       name: "범람의 포식자",

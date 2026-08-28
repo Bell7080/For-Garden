@@ -76,6 +76,10 @@ export interface Fighter extends Combatant {
   regeneration: { remaining: number; tickIn: number; percentPerTick: number } | null;
   /** 시간 기반 패시브로 누적된 추가 주문력. 정적 정의를 변경하지 않는 전투 상태다. */
   bonusAp: number;
+  /** 기본 공격 실제 적중으로 쌓인 전투 한정 공격 속도다. 저장 모델에는 존재하지 않는다. */
+  bonusAttackSpeed: number;
+  /** 0보다 크면 단일 대상 선택의 중심이 될 수 없는 은신 상태다. */
+  stealthFor: number;
 }
 
 export type SkirmishPhase = "fight" | "victory" | "defeat";
@@ -185,6 +189,8 @@ export const SKIRMISH = {
   maxStep: 0.05,
   /** 탭 전환 등으로 프레임이 통째로 밀렸을 때 한꺼번에 진행할 상한(초). */
   maxCatchUp: 0.25,
+  /** 무한 공속 누적이 0초 간격과 한 프레임 무한 공격을 만들지 않게 하는 안전 하한이다. */
+  minimumAttackInterval: 0.12,
 } as const;
 
 /**
@@ -249,6 +255,8 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     passiveTriggered: false,
     regeneration: null,
     bonusAp: 0,
+    bonusAttackSpeed: 0,
+    stealthFor: 0,
   };
 }
 
@@ -389,12 +397,16 @@ export function findFighter(state: SkirmishState, id: string): Fighter | undefin
 }
 
 /** 공격 속도가 정하는 공격 간격(초). 100이 기준이다. */
+export function currentAttackSpeed(fighter: Fighter): number {
+  // 전투의 환희 누적과 영구 패시브만 포함한다. 폭주처럼 시간이 정해진 임시 배율은 궁극기 계수에서 제외한다.
+  const passiveSpeedPoints = fighter.def.passive.kind === "battleMaidMastery"
+    ? fighter.def.passive.attackSpeedPercent ?? 0 : 0;
+  return fighter.def.stats.attackSpeed + passiveSpeedPoints + fighter.bonusAttackSpeed;
+}
+
 export function attackInterval(fighter: Fighter): number {
   const trait = fighter.def.ferocityTrait;
   // 공격 속도는 이미 백분율 척도인 추가 능력치이므로 패시브 수치를 %p로 더한다.
-  const passiveSpeedPoints = fighter.def.passive.kind === "battleMaidMastery"
-    ? fighter.def.passive.attackSpeedPercent ?? 0
-    : 0;
   // 개별 공속은 공용 야성 피해 보너스를 다시 건드리지 않고 재사용 대기시간에만 곱한다.
   const feverMultiplier = fighter.ferocityFever && trait.effectId === "attackIntervalReduction"
     ? 1 - trait.reductionPercent / 100
@@ -402,7 +414,7 @@ export function attackInterval(fighter: Fighter): number {
       // 공격 속도 +20%는 공격 간격 -20%와 다르므로 증가된 속도로 간격을 나눈다.
       ? 1 / (1 + trait.attackSpeedBonusPercent / 100)
       : 1;
-  return ((SKIRMISH.attackInterval * 100) / Math.max(1, fighter.def.stats.attackSpeed + passiveSpeedPoints)) * feverMultiplier;
+  return Math.max(SKIRMISH.minimumAttackInterval, ((SKIRMISH.attackInterval * 100) / Math.max(1, currentAttackSpeed(fighter))) * feverMultiplier);
 }
 
 /** 이동 속도와 현재 편의 피버 오라가 정하는 초당 이동 거리(px). */
@@ -447,14 +459,15 @@ function distance(a: Fighter, b: Fighter): number {
 /** 지금 노릴 상대. 이미 잡은 상대가 살아 있으면 바꾸지 않고 계속 붙는다. */
 function resolveTarget(state: SkirmishState, fighter: Fighter): Fighter | undefined {
   const current = fighter.targetId ? findFighter(state, fighter.targetId) : undefined;
-  if (current && isFighterAlive(current)) return current;
+  if (current && isFighterAlive(current) && current.stealthFor <= 0) return current;
 
   // 가장 가깝더라도 이미 아군이 붙어 있는 상대는 뒤로 미룬다. 셋이 한 명을 둘러싸는 대신
   // 서로 다른 상대와 맞붙어 전장 곳곳에서 싸우는 그림이 된다.
   let chosen: Fighter | undefined;
   let bestScore = Infinity;
   for (const other of state.fighters) {
-    if (other.side === fighter.side || !isFighterAlive(other)) continue;
+    // 은신자는 단일 대상 기술의 중심이 될 수 없다. 다른 중심의 범위 피해 판정에서는 별도로 포함한다.
+    if (other.side === fighter.side || !isFighterAlive(other) || other.stealthFor > 0) continue;
     const crowd = state.fighters.filter(
       (mate) => mate.side === fighter.side && mate.id !== fighter.id && isFighterAlive(mate) && mate.targetId === other.id,
     ).length;
@@ -492,7 +505,25 @@ function gainFerocity(fighter: Fighter, base: number, state: SkirmishState): voi
   const adjusted = amplifyFerocityGain(base, fighter.bondLevel) * (1 + fighter.def.stats.ferocityGain / 100);
   fighter.ferocity = Math.min(FEROCITY_RULES.max, before + adjusted);
   // 처음 최대치에 닿은 순간 피버 카운트다운을 켠다.
-  if (before < FEROCITY_RULES.max && fighter.ferocity >= FEROCITY_RULES.max) fighter.ferocityFever = true;
+  if (before < FEROCITY_RULES.max && fighter.ferocity >= FEROCITY_RULES.max) {
+    fighter.ferocityFever = true;
+    const trait = fighter.def.ferocityTrait;
+    if (trait.effectId === "stealthLeap") {
+      fighter.stealthFor = trait.durationSeconds;
+      // 현재 HP 비율, 절대 HP, 배열 순서로 최저 체력 적을 결정해 리플레이를 안정적으로 유지한다.
+      const target = state.fighters.filter((other) => other.side !== fighter.side && isFighterAlive(other))
+        .map((other, index) => ({ other, index }))
+        .sort((a, b) => a.other.hp / a.other.maxHp - b.other.hp / b.other.maxHp || a.other.hp - b.other.hp || a.index - b.index)[0]?.other;
+      if (target) {
+        const dx = fighter.x - target.x; const dy = fighter.y - target.y; const gap = Math.hypot(dx, dy) || 1;
+        fighter.x = Math.min(state.arena.right, Math.max(state.arena.left, target.x + dx / gap * trait.landingDistance));
+        fighter.y = Math.min(state.arena.bottom, Math.max(state.arena.top, target.y + dy / gap * trait.landingDistance));
+        fighter.targetId = target.id;
+      }
+      // 이미 스피나를 추적하던 모든 상대도 즉시 대기/재탐색 상태로 돌린다.
+      for (const other of state.fighters) if (other.targetId === fighter.id) { other.targetId = null; other.engaged = false; }
+    }
+  }
   for (const { value } of FEROCITY_RULES.thresholds) {
     if (before < value && fighter.ferocity >= value) state.log.push(`${fighter.def.name} 야성 ${value} 진입`);
   }
@@ -631,8 +662,19 @@ function strike(
   state: SkirmishState,
   events: SkirmishEvent[],
   useUltimate: boolean,
+  /** 연격 내부 타격이면 행동 단위 자원은 첫 타에서만 처리한다. */
+  comboHit?: { grantActionResources: boolean },
 ): void {
   const skill: Skill = useUltimate ? attacker.def.ultimate : attacker.def.basic;
+  const combo = !useUltimate ? attacker.def.basic.combo : undefined;
+  if (combo && comboHit === undefined) {
+    // 난수 순서는 연격 판정 1회 뒤 실제로 발생한 각 타격의 치명타 순서로 고정한다.
+    const hitCount = rng() < combo.chancePercent / 100 ? combo.hitCount : 1;
+    for (let hit = 0; hit < hitCount && isFighterAlive(target); hit += 1) {
+      strike(attacker, target, rng, state, events, false, { grantActionResources: hit === 0 });
+    }
+    return;
+  }
   if ((useUltimate && attacker.def.ultimate.targeting !== "single") || (!useUltimate && attacker.def.basic.targeting === "nearbyEnemies")) {
     strikeAreaAttack(attacker, rng, state, events, useUltimate);
     return;
@@ -647,7 +689,12 @@ function strike(
     + (attackingInFever && critTrait.effectId === "criticalChanceBonus" ? critTrait.chancePercent : 0)
     + (attackingInFever && critTrait.effectId === "rexBattleQueen" ? critTrait.criticalChancePoints : 0);
   const critical = isCriticalHit(Math.min(100, criticalChance), rng());
-  const damageInput = { ...skill, isCritical: critical, kind: useUltimate ? "ultimate" as const : "basic" as const };
+  // 공속 복합 계수는 현재 기본 공속과 전투의 환희 누적을 읽되 폭주 임시 배율은 포함하지 않는다.
+  const attackSpeedPower = useUltimate ? attacker.def.ultimate.attackSpeedPower ?? 0 : 0;
+  const compositePower = attackSpeedPower > 0
+    ? skill.power + currentAttackSpeed(attacker) * attackSpeedPower / Math.max(1, attacker.def.stats.atk)
+    : skill.power;
+  const damageInput = { ...skill, power: compositePower, isCritical: critical, kind: useUltimate ? "ultimate" as const : "basic" as const };
   const damageAttacker = { ...attacker, def: offensiveDefinition(attacker) };
   const splashTrait = attacker.def.ferocityTrait;
   // 토리카의 방어력 추가 피해도 일반 물리 피해 공식(속성·대상 방어력·치명타)을 거친다.
@@ -677,11 +724,23 @@ function strike(
     attacker.hp = Math.min(attacker.maxHp, attacker.hp + dealt * damageHealingRate(attacker, skill, attackingInFever) / 100);
   };
   healFromDamage(targetHpBefore - target.hp);
-  if (useUltimate) attacker.energy -= attacker.def.ultimate.cost;
-  else gainEnergy(attacker);
-  grantFerocityTeamEnergy(attacker, state);
-  gainFerocity(attacker, useUltimate ? FEROCITY_RULES.ultimateGain : FEROCITY_RULES.basicGain, state);
+  if (comboHit?.grantActionResources !== false) {
+    if (useUltimate) attacker.energy -= attacker.def.ultimate.cost;
+    else gainEnergy(attacker);
+    grantFerocityTeamEnergy(attacker, state);
+    gainFerocity(attacker, useUltimate ? FEROCITY_RULES.ultimateGain : FEROCITY_RULES.basicGain, state);
+  }
   gainFerocity(target, FEROCITY_RULES.hitGain, state);
+  if (!useUltimate && attacker.def.passive.kind === "basicHitAttackSpeedStack") {
+    // 적중 사건마다 +3을 더하므로 연격 두 타는 각각 누적되며 전투 생성 시 0으로 초기화된다.
+    attacker.bonusAttackSpeed += attacker.def.passive.value;
+  }
+  if (!useUltimate && combo) {
+    const missing = attacker.maxHp - attacker.hp;
+    const healed = missing * combo.missingHpHealingPercentPerHit / 100;
+    attacker.hp = Math.min(attacker.maxHp, attacker.hp + healed);
+    if (healed > 0) events.push({ kind: "heal", fighterId: attacker.id, amount: healed, source: "passive" });
+  }
 
   // 때린 쪽은 상대 쪽으로 쿵 들어가고, 맞은 쪽은 같은 방향으로 밀려난다.
   const dx = target.x - attacker.x;
@@ -760,7 +819,7 @@ function strike(
  */
 function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishState, events: SkirmishEvent[], useUltimate: boolean): void {
   const skill = useUltimate ? attacker.def.ultimate : attacker.def.basic;
-  const targets = state.fighters.filter((fighter) => fighter.side !== attacker.side && isFighterAlive(fighter)
+  const targets = state.fighters.filter((fighter) => fighter.side !== attacker.side && isFighterAlive(fighter) && fighter.stealthFor <= 0
     && (skill.targeting === "battlefieldEnemies" || (skill.targeting === "nearbyEnemies" && distance(attacker, fighter) <= (skill.radius ?? 0))));
   if (targets.length === 0) return;
 
@@ -839,7 +898,7 @@ function separate(state: SkirmishState, dt: number): void {
       // 한쪽만 움직일 수 있으면 그쪽이 겹친 양을 전부 감당한다.
       // 기절은 위치 행동도 멈추므로 충돌 해소가 기절한 전투원을 밀어내지 않는다.
       // 기절과 경직 모두 순간 이동을 막아 밀집 정리가 행동 차단을 우회하지 않게 한다.
-      const movable = [!a.engaged && a.stunnedFor <= 0 && a.staggeredFor <= 0, !b.engaged && b.stunnedFor <= 0 && b.staggeredFor <= 0];
+      const movable = [!a.engaged && a.targetId !== null && a.stunnedFor <= 0 && a.staggeredFor <= 0, !b.engaged && b.targetId !== null && b.stunnedFor <= 0 && b.staggeredFor <= 0];
       if (!movable[0] && !movable[1]) continue;
       const share = movable[0] && movable[1] ? 0.5 : 1;
       const push = (SKIRMISH.spacing - gap) * share * Math.min(1, SKIRMISH.separationRate * dt);
@@ -924,6 +983,11 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
   for (const fighter of state.fighters) {
     if (isFighterAlive(fighter) && fighter.stunnedFor > 0) fighter.stunnedFor = Math.max(0, fighter.stunnedFor - dt);
     if (isFighterAlive(fighter) && fighter.staggeredFor > 0) fighter.staggeredFor = Math.max(0, fighter.staggeredFor - dt);
+    // 은신 시계도 행동 여부와 무관한 공용 전투 시계로 흐른다. 정확히 0이 된 스텝부터 재지정 가능하다.
+    if (isFighterAlive(fighter) && fighter.stealthFor > 0) {
+      const remaining = fighter.stealthFor - dt;
+      fighter.stealthFor = remaining <= EMERGENCY_RECOVERY.epsilon ? 0 : remaining;
+    }
   }
 
   for (const fighter of state.fighters) {
@@ -996,7 +1060,7 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
 export function canFireUltimate(state: SkirmishState, fighter: Fighter): boolean {
   // 수동 입력과 적 자동 시전이 모두 이 코어 경계를 공유해 기절 우회 경로를 만들지 않는다.
   if (state.phase !== "fight" || !isFighterAlive(fighter) || fighter.stunnedFor > 0 || fighter.staggeredFor > 0 || !canUseUltimate(fighter)) return false;
-  return state.fighters.some((other) => other.side !== fighter.side && isFighterAlive(other));
+  return state.fighters.some((other) => other.side !== fighter.side && isFighterAlive(other) && other.stealthFor <= 0);
 }
 
 /**

@@ -8,6 +8,7 @@ import {
   canFireUltimate,
   clearStun,
   createSkirmish,
+  currentAttackSpeed,
   fireUltimate,
   findFighter,
   moveSpeed,
@@ -30,6 +31,89 @@ import { computeDamage } from "../../src/core/damage";
 import {
   beginNextUltimate, cancelUltimateSequence, createUltimateSequenceState, enqueueUltimate, releaseUltimate,
 } from "../../src/core/ultimateSequence";
+
+describe("스피나 전투 계약", () => {
+  /** 스피나와 대상을 즉시 교전시키고 다른 행동을 멈추는 공용 준비다. */
+  function readySpino(enemies = ["husk-shell"]) {
+    const state = newSkirmish(["spino"], enemies);
+    const [spino, target] = state.fighters;
+    spino.x = 400; spino.y = 900; target.x = 450; target.y = 900;
+    spino.attackCooldown = 0;
+    for (const enemy of state.fighters.slice(1)) enemy.attackCooldown = 99;
+    return { state, spino, target };
+  }
+
+  it("은 40% 연격의 두 적중을 독립 사건으로 만들고 각각 공속과 잃은 체력 회복을 쌓는다", () => {
+    const { state, spino } = readySpino();
+    spino.hp = spino.maxHp / 2;
+    // 연격(0.39), 첫/둘째 치명타 실패 순으로 소비한다.
+    const rolls = [0.39, 0.99, 0.99];
+    const events = stepSkirmish(state, 1 / 60, () => rolls.shift() ?? 0.99);
+    expect(events.filter((event) => event.kind === "attack")).toHaveLength(2);
+    expect(spino.bonusAttackSpeed).toBe(6);
+    expect(spino.hp).toBeCloseTo(spino.maxHp * (1 - 0.5 * 0.9 * 0.9));
+  });
+
+  it("은 연격 첫 타로 대상이 죽으면 후속타와 두 번째 누적을 취소한다", () => {
+    const { state, spino, target } = readySpino(); target.hp = 1;
+    const events = stepSkirmish(state, 1 / 60, () => 0);
+    expect(events.filter((event) => event.kind === "attack")).toHaveLength(1);
+    expect(spino.bonusAttackSpeed).toBe(3);
+  });
+
+  it("은 은신자를 단일 대상으로 삼지 않고 1대1 상대의 행동만 대기시킨다", () => {
+    const { state, spino, target: enemy } = readySpino();
+    spino.stealthFor = 3; enemy.targetId = spino.id; enemy.attackCooldown = 0;
+    const before = { x: enemy.x, y: enemy.y, energy: enemy.energy };
+    expect(stepSkirmish(state, 0.25).filter((event) => event.kind === "attack" && event.attackerId === enemy.id)).toEqual([]);
+    expect(enemy.targetId).toBeNull();
+    expect({ x: enemy.x, y: enemy.y, energy: enemy.energy }).toEqual(before);
+    expect(state.elapsed).toBeCloseTo(0.25);
+  });
+
+  it("은 다른 적을 중심으로 번진 범위 피해에는 은신 중에도 맞는다", () => {
+    const state = newSkirmish(["anky"], ["husk-shell", "spino"]);
+    const [anky, center, spino] = state.fighters;
+    anky.x = 400; anky.y = center.y = spino.y = 900; center.x = 450; spino.x = 500;
+    anky.attackCooldown = 0; anky.ferocityFever = true; anky.ferocity = 100;
+    center.attackCooldown = spino.attackCooldown = 99; spino.stealthFor = 3;
+    const events = stepSkirmish(state, 1 / 60);
+    expect(events).toContainEqual(expect.objectContaining({ kind: "attack", targetId: spino.id }));
+  });
+
+  it("은 정확히 3초 뒤 다시 지정되며 공용 최소 공격 간격 아래로 내려가지 않는다", () => {
+    const { state, spino, target: enemy } = readySpino(); spino.stealthFor = 3; spino.attackCooldown = 99;
+    for (let i = 0; i < 11; i += 1) stepSkirmish(state, 0.25);
+    expect(enemy.targetId).toBeNull();
+    stepSkirmish(state, 0.25);
+    expect(enemy.targetId).toBe(spino.id);
+    spino.bonusAttackSpeed = 1_000_000;
+    expect(attackInterval(spino)).toBe(SKIRMISH.minimumAttackInterval);
+  });
+
+  it("은 궁극기에 공격력 200%와 현재 공속 300%를 합산하고 생존자에게 3초 기절을 준다", () => {
+    const { state, spino, target } = readySpino(); spino.energy = 300; spino.bonusAttackSpeed = 6;
+    const speed = currentAttackSpeed(spino);
+    const equivalentPower = 200 + speed * 300 / spino.def.stats.atk;
+    const expected = computeDamage(spino, target, { ...spino.def.ultimate, power: equivalentPower, kind: "ultimate", isCritical: false }, true);
+    const hit = fireUltimate(state, spino.id).find((event) => event.kind === "attack");
+    expect(hit).toMatchObject({ amount: expected });
+    expect(target.stunnedFor).toBe(3);
+    expect(spino.energy).toBe(0);
+  });
+
+  it("은 동일 성장 렉시아보다 느리게 시작해 장기 적중 뒤 공격 빈도를 앞서고 궁극기 한 번에 동급 탱커를 처치하지 않는다", () => {
+    const rexState = newSkirmish(["rex"], ["husk-shell"]);
+    const { state, spino, target: tank } = readySpino();
+    expect(attackInterval(spino)).toBeGreaterThan(attackInterval(rexState.fighters[0]));
+    // 세 번의 확정 연격은 여섯 실제 적중이므로 +18을 얻어 140 공속이 된다.
+    for (let action = 0; action < 3; action += 1) { spino.attackCooldown = 0; stepSkirmish(state, 1 / 60, () => 0); }
+    expect(attackInterval(spino)).toBeLessThan(attackInterval(rexState.fighters[0]));
+    tank.hp = tank.maxHp; spino.energy = spino.def.ultimate.cost;
+    fireUltimate(state, spino.id);
+    expect(tank.hp).toBeGreaterThan(0);
+  });
+});
 
 describe("궁극기 연출 직렬 상태", () => {
   it("는 중복 발동을 막고 올바른 토큰만 잠금을 해제한다", () => {
@@ -427,7 +511,7 @@ describe("능력치 반영", () => {
   });
 
   it("은 광역 실제 피해에는 흡혈하고 별도 고정 출혈 피해에는 흡혈하지 않는다", () => {
-    const state = newSkirmish(["spino"], ["husk-shell", "husk-raptor"]);
+    const state = newSkirmish(["anky"], ["husk-shell", "husk-raptor"]);
     const [attacker, primary, secondary] = state.fighters;
     attacker.def = { ...attacker.def, stats: { ...attacker.def.stats, lifeSteal: 100 } };
     attacker.hp = 1; attacker.ferocity = 100; attacker.ferocityFever = true;
@@ -522,19 +606,15 @@ describe("효과 ID별 야성 특성", () => {
     expect(attackInterval(torika)).toBeCloseTo(calmInterval / 1.2);
   });
 
-  it("splashDamage는 스피나의 피버 타격을 220px 안의 주변 적에게 35%로 번지게 한다", () => {
+  it("stealthLeap는 최저 체력 적에게 도약하고 기존 추적을 모두 해제한다", () => {
     const state = prepareHit("spino", ["husk-shell", "husk-raptor"]);
-    const [attacker, primary, nearby] = state.fighters;
-    nearby.x = primary.x + 100; nearby.y = primary.y;
-    attacker.ferocity = 99;
-    expect(stepSkirmish(state, 1 / 60).filter((event) => event.kind === "attack")).toHaveLength(1);
-
-    const fever = prepareHit("spino", ["husk-shell", "husk-raptor"]);
-    fever.fighters[2].x = fever.fighters[1].x + 100; fever.fighters[2].y = fever.fighters[1].y;
-    fever.fighters[0].ferocity = 100; fever.fighters[0].ferocityFever = true;
-    const hits = stepSkirmish(fever, 1 / 60).filter((event) => event.kind === "attack");
-    expect(hits).toHaveLength(2);
-    expect(hits.some((event) => event.kind === "attack" && event.targetId === fever.fighters[2].id)).toBe(true);
+    const [spino, first, lowest] = state.fighters;
+    lowest.hp = lowest.maxHp * 0.2; lowest.x = 700; lowest.y = 900;
+    first.targetId = spino.id; lowest.targetId = spino.id; spino.ferocity = 99;
+    stepSkirmish(state, 1 / 60, () => 0.99);
+    expect(spino.stealthFor).toBe(3);
+    expect(Math.hypot(spino.x - lowest.x, spino.y - lowest.y)).toBeCloseTo(SKIRMISH.reach);
+    expect([first.targetId, lowest.targetId]).toEqual([null, null]);
   });
 
   it("allyEnergyGain은 도도의 피버 공격마다 다른 아군에게 에너지 6을 준다", () => {

@@ -107,6 +107,18 @@ export interface Skill {
   desc: string;
 }
 
+/** 기본 공격만 가질 수 있는 추가 타격 계약이다. 일반 단타는 불필요한 확률 필드를 갖지 않는다. */
+export type BasicAttack = Skill & ({ combo?: undefined } | {
+  combo: {
+    /** 한 공격 행동에서 추가 적중이 발생할 확률(%)이다. */
+    chancePercent: number;
+    /** 성공했을 때 순서대로 적용할 총 적중 횟수다. */
+    hitCount: number;
+    /** 각 적중 직후 현재 잃은 체력을 기준으로 회복하는 비율(%)이다. */
+    missingHpHealingPercentPerHit: number;
+  };
+});
+
 /** 스킬과 야성 특성이 공유하는 최소 상태 효과 계약이다. 새 상태가 실제로 생길 때만 union을 늘린다. */
 export type CombatStatusEffect =
   | { kind: "stun"; /** 저항 계산 전 기본 지속 시간(초). */ seconds: number }
@@ -123,6 +135,8 @@ export type CombatStatusEffect =
 export type Ultimate = Skill & {
   /** 사용 시 소비하는 궁극기 게이지. 저장 상한과 독립된 스킬별 값이다. */
   cost: number;
+  /** 공격력 피해와 더해지는 현재 공격 속도 배율(%). 없으면 공속 복합 계수를 사용하지 않는다. */
+  attackSpeedPower?: number;
 } & (
   | { /** 현재 선택한 한 적만 공격한다. */ targeting: "single" }
   | {
@@ -148,6 +162,8 @@ export type PassiveKind =
   | "bleedStreak"
   /** 렉시아 전용: 공격 속도·공격력·치명타 확률·치명타 피해를 함께 강화한다. */
   | "battleMaidMastery"
+  /** 스피나 전용: 기본 공격의 실제 적중마다 공속을 전투 한정으로 영구 누적한다. */
+  | "basicHitAttackSpeedStack"
   /** 폰투스의 시간 누적 주문력·잃은 체력 경감 규칙을 식별한다. */
   | "abyssalPressure";
 
@@ -158,7 +174,8 @@ export type FerocityEffectId =
   | "splashDamage"
   | "allyEnergyGain"
   | "criticalChanceBonus"
-  | "teamMoveSpeedBonus";
+  | "teamMoveSpeedBonus"
+  | "stealthLeap";
 
 /**
  * 개체별 피버 발현 정적 데이터다.
@@ -193,6 +210,15 @@ export type FerocityTrait = {
       allDamageLifeStealPoints: number;
     }
   | { effectId: "teamMoveSpeedBonus"; bonusPercent: number }
+  | {
+      effectId: "stealthLeap";
+      /** 단일 대상 선택에서 제외되는 시간이다. */
+      durationSeconds: number;
+      /** 도약 대상은 문구나 렐릭 ID 대신 결정 가능한 선택 규칙으로 고정한다. */
+      leapTarget: "lowestHpEnemy";
+      /** 목표의 일반 공격 사거리 가장자리로 즉시 배치할 거리다. */
+      landingDistance: number;
+    }
 );
 
 export interface Passive {
@@ -288,7 +314,7 @@ export interface RelicDef {
    * 다르므로 정적 정의로 두고, 정보창은 패시브 아이콘 위에 작은 뱃지로 이것만 알린다.
    */
   ferocityTrait: FerocityTrait;
-  basic: Skill;
+  basic: BasicAttack;
   ultimate: Ultimate;
 }
 

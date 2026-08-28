@@ -19,6 +19,8 @@ export interface ExpeditionStatus {
 
 export type StartExpeditionFailure = "exactlyThree" | "duplicate" | "notOwned" | "alreadyActive";
 export type StartExpeditionResult = { ok: true; run: ExpeditionRunState } | { ok: false; reason: StartExpeditionFailure };
+export type DevelopmentBossShortcutFailure = StartExpeditionFailure | "developmentOnly";
+export type DevelopmentBossShortcutResult = { ok: true; run: ExpeditionRunState } | { ok: false; reason: DevelopmentBossShortcutFailure };
 
 /** FakeServer가 주입하는 UTC 시각에서 월요일 시작 주간 키를 계산한다. */
 export function expeditionWeekKey(serverNow: Date): string {
@@ -36,7 +38,13 @@ function seededRandom(seed: string): () => number {
 
 /** 원정 생성·노드 완료·포기·최종 정산의 유일한 상태 쓰기 경계다. */
 export class ExpeditionManager {
-  constructor(private readonly state: Session = session, private readonly saves: Pick<SaveManager, "save"> = saveManager, private readonly serverNow: () => Date = () => new Date()) {}
+  constructor(
+    private readonly state: Session = session,
+    private readonly saves: Pick<SaveManager, "save"> = saveManager,
+    private readonly serverNow: () => Date = () => new Date(),
+    /** 테스트가 production 경계를 검증할 수 있게 주입하되, 실제 빌드는 Vite의 제거 가능한 DEV 플래그만 따른다. */
+    private readonly developmentToolsEnabled: boolean = import.meta.env?.DEV === true,
+  ) {}
 
   /** 주차를 서버 UTC에 맞춘 뒤 UI용 독립 사본을 반환한다. */
   status(): ExpeditionStatus {
@@ -60,6 +68,46 @@ export class ExpeditionManager {
     const mapSeed = `${weekKey}:${this.state.expedition.playsThisWeek + 1}`;
     const map = generateExpeditionMap({ seed: mapSeed, random: seededRandom(mapSeed) });
     const run: ExpeditionRunState = { runId: `run:${mapSeed}`, weekKey, mapSeed, nodes: map.nodes, currentNodeId: null, visitedNodeIds: [], relics: relicIds.map((relicId) => ({ relicId, currentHp: 100, alive: true })) as ExpeditionRunState["relics"], selectedAugmentIds: [], selectedAugments: [], pendingAugmentReward: null, pendingRewards: {}, lastNodeRewards: null, bossDamage: 0, bestScore: 0, settled: false, settlementId: null, bossSubmissionId: null, bossSettlementId: null };
+    this.commit({ ...this.state.expedition, run });
+    return { ok: true, run: structuredClone(run) };
+  }
+
+  /**
+   * 임시 개발 도구: 정식 노드 완료·점수 제출을 흉내 내지 않고 20층 보스 직전의 저장 스냅샷만 원자적으로 만든다.
+   * production에서는 직접 호출해도 거부하며, 이후 출격은 일반 보스 DTO/서버 정산 규칙을 그대로 통과한다.
+   */
+  prepareDevelopmentBossShortcut(relicIds: readonly string[]): DevelopmentBossShortcutResult {
+    if (!this.developmentToolsEnabled) return { ok: false, reason: "developmentOnly" };
+    this.normalizeWeek();
+    if (this.state.expedition.run) return { ok: false, reason: "alreadyActive" };
+    if (relicIds.length !== 3) return { ok: false, reason: "exactlyThree" };
+    if (new Set(relicIds).size !== 3) return { ok: false, reason: "duplicate" };
+    if (relicIds.some((id) => !this.state.owned.has(id))) return { ok: false, reason: "notOwned" };
+
+    const weekKey = expeditionWeekKey(this.serverNow());
+    const mapSeed = `${weekKey}:${this.state.expedition.playsThisWeek + 1}:dev-boss`;
+    const map = generateExpeditionMap({ seed: mapSeed, random: seededRandom(mapSeed) });
+    const boss = map.nodes.find(({ type, floor }) => type === "boss" && floor === 20)!;
+    // 보스에서 역으로 한 갈래만 골라 방문 순서를 만들면 지도 전체의 연결은 보존하면서 19층 도달 상태가 된다.
+    const route = [boss];
+    while (route[0].floor > 1) {
+      const predecessor = map.nodes.find(({ id }) => id === route[0].predecessorIds[0]);
+      if (!predecessor) throw new Error("개발용 보스 경로를 생성할 수 없습니다.");
+      route.unshift(predecessor);
+    }
+    const reached = route.at(-2)!;
+    const runId = `run:${mapSeed}`;
+    const run: ExpeditionRunState = {
+      runId, weekKey, mapSeed, nodes: map.nodes, currentNodeId: reached.id,
+      visitedNodeIds: route.slice(0, -1).map(({ id }) => id),
+      relics: relicIds.map((relicId) => ({ relicId, currentHp: 100, alive: true })) as ExpeditionRunState["relics"],
+      selectedAugmentIds: [], selectedAugments: [], pendingAugmentReward: null,
+      pendingRewards: {}, lastNodeRewards: null, bossDamage: 0, bestScore: 0,
+      settled: false, settlementId: null,
+      bossSubmissionId: `${runId}:${boss.id}:boss-score`,
+      bossSettlementId: `${runId}:boss-completed`,
+    };
+    // 런·편성·도달점·멱등 ID는 한 번의 저장으로 함께 확정해 중간 상태를 복원할 수 없게 한다.
     this.commit({ ...this.state.expedition, run });
     return { ok: true, run: structuredClone(run) };
   }

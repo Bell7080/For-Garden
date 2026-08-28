@@ -351,6 +351,10 @@ export class ExpeditionScene extends Phaser.Scene {
     this.add.text(BASE_WIDTH / 2, 292, "원정대 3기 선택", textStyle({ role: "emphasis", size: 32 })).setOrigin(0.5);
     // 준비 중에도 결과 화면과 같은 서버 기록판을 열어 보상 목표와 동점 순서를 미리 확인한다.
     new Button(this, BASE_WIDTH - 190, 292, { width: 260, height: 68, label: "주간 기록", fontSize: 22, onClick: () => new ExpeditionRankingPopup(this, this.popups).open() });
+    if (import.meta.env.DEV) {
+      // 임시 개발 도구: Session을 건드리지 않고 매니저가 만든 실제 20층 노드를 열어 미리보기와 출격 흐름을 그대로 검수한다.
+      new Button(this, 170, 292, { width: 230, height: 68, label: "DEV · 20층", fontSize: 21, fill: 0x3b2330, accentColor: COLOR.sortie, accentTextColor: COLOR.sortieText, onClick: () => this.openDevelopmentBossShortcut() });
+    }
     // 로컬 quickAvailable은 표시·지급 권한으로 쓰지 않고 서버 운영 설정을 기다리는 자리만 만든다.
     this.quickStatus = this.add.text(BASE_WIDTH / 2, 348, "빠른 원정 확인 중…", textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0.5);
     void this.loadQuickExpeditionOffer();
@@ -391,6 +395,18 @@ export class ExpeditionScene extends Phaser.Scene {
       onClick: () => this.startExpedition(),
     });
     this.startButton.setEnabled(false);
+  }
+
+  /** 개발 빌드의 임시 버튼은 현재 편성을 우선 보존하고, 비어 있으면 보유 목록의 첫 세 기만 편성 후보로 넘긴다. */
+  private openDevelopmentBossShortcut(): void {
+    const relicIds = this.selected.length === 3 ? [...this.selected] : [...session.owned].slice(0, 3);
+    const result = expeditionManager.prepareDevelopmentBossShortcut(relicIds);
+    if (result.ok) {
+      // 재시작 뒤 실제 보스 노드를 눌러 적 미리보기를 확인하고, 기존 enterBossBattle 출격 DTO로 진입한다.
+      this.scene.restart();
+      return;
+    }
+    this.hint?.setText(result.reason === "developmentOnly" ? "개발 빌드에서만 사용할 수 있습니다" : this.failureMessage(result.reason));
   }
 
   /** 서버가 활성화한 슬롯의 문구·비율·일일/주간 한도만 준비 화면에 결합한다. */

@@ -167,7 +167,7 @@ export type Ultimate = Skill & {
   | { /** 거리에 상관없이 전장의 모든 생존 적을 공격한다. */ targeting: "battlefieldEnemies" }
   | { /** 거리에 상관없이 모든 생존 아군에게 비공격 효과를 적용한다. */ targeting: "battlefieldAllies" }
   | {
-      /** 사용자가 지정한 위치를 중심으로 적 피해와 아군 회복을 함께 판정한다. */
+      /** 사용자가 전장 사각형의 경계를 포함해 지정한 위치를 중심으로 판정한다. 범위 밖 입력은 전장 경계로 보정한다. */
       targeting: "targetedCircle";
       /** 난전 좌표와 같은 px 단위의 원 반경이며 경계선 위 대상도 포함한다. */
       radius: number;

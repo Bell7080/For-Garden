@@ -367,7 +367,11 @@ export function applyStagger(fighter: Fighter, seconds: number, state?: Skirmish
   return events;
 }
 
-/** 새 제어가 적용된 순간, 준비된 생존 메테 한 명이 즉시 정화하고 자기 atk 기반 보호막을 준다. */
+/**
+ * 새 제어가 적용된 순간, 편성 순서상 첫 준비된 생존 메테가 즉시 정화하고 자기 atk 기반 보호막을 준다.
+ * 쿨타임은 제공자 개체가 소유하며 기존 보호막에는 새 보호막을 합산한다. 같은 스텝의 여러 제어는
+ * 전투원 처리 순서상 먼저 실제 적용된 대상이 먼저 정화되므로 동시 입력도 결정적으로 재현된다.
+ */
 function cleanseControlWithAdagio(state: SkirmishState, target: Fighter, events: SkirmishEvent[]): void {
   const provider = state.fighters.find((ally) => ally.side === target.side && isFighterAlive(ally)
     && ally.def.passive.kind === "adagioWeight" && ally.adagioCooldownRemaining <= 0);
@@ -619,7 +623,8 @@ function triggerCrescendoStaccato(state: SkirmishState, target: Fighter, events:
     const trait = mette.def.ferocityTrait;
     if (mette.side === target.side || !isFighterAlive(mette) || !mette.ferocityFever || trait.effectId !== "crescendoStaccato"
       || !isFighterAlive(target)) continue;
-    // 사건 skill이 staccato라서 이 함수의 호출 조건인 실제 기본 공격과 구별되며 재귀하지 않는다.
+    // 추가타는 치명타를 판정하지 않고 궁극기·야성 게이지도 충전하지 않는다. 사건 skill이 staccato라서
+    // 이 함수의 호출 조건인 실제 기본 공격과 구별되며, 추가 스타카토가 다시 재귀하지 않는다.
     const raw = computeDamage(mette, defensiveDefinition(target, state), {
       power: trait.damagePercent, damageType: "magical", scalingStat: "atk", isCritical: false, kind: "basic",
     }, true);
@@ -921,10 +926,15 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
   if (!("damageType" in skill) || skill.damageType === undefined || skill.power === undefined) return;
   const ultimate = useUltimate ? attacker.def.ultimate : undefined;
   // 지정점이 생략된 기존 호출은 현재 추적 대상 위치를 사용해 자동 전투와 저장 리플레이를 호환한다.
-  const center = skill.targeting === "targetedCircle" ? targetPoint ?? (() => {
+  const requestedCenter = targetPoint ?? (() => {
     const tracked = attacker.targetId ? findFighter(state, attacker.targetId) : undefined;
     return tracked ? { x: tracked.x, y: tracked.y } : { x: attacker.x, y: attacker.y };
-  })() : { x: attacker.x, y: attacker.y };
+  })();
+  // 지정 가능 범위는 경계를 포함한 전장 사각형이다. 포인터 오차나 외부 호출도 같은 경계점으로 보정한다.
+  const center = skill.targeting === "targetedCircle" ? {
+    x: Math.min(state.arena.right, Math.max(state.arena.left, requestedCenter.x)),
+    y: Math.min(state.arena.bottom, Math.max(state.arena.top, requestedCenter.y)),
+  } : { x: attacker.x, y: attacker.y };
   const inCircle = (fighter: Fighter): boolean => Math.hypot(fighter.x - center.x, fighter.y - center.y) <= (skill.radius ?? 0);
   const targets = state.fighters.filter((fighter) => fighter.side !== attacker.side && isFighterAlive(fighter) && fighter.stealthFor <= 0
     && (skill.targeting === "battlefieldEnemies" || (skill.targeting === "nearbyEnemies" && distance(attacker, fighter) <= (skill.radius ?? 0))

@@ -520,7 +520,7 @@ describe("효과 ID별 야성 특성", () => {
     expect(attackInterval(torika)).toBeCloseTo(calmInterval / 1.2);
   });
 
-  it("splashDamage는 세이라의 피버 타격을 220px 안의 주변 적에게 35%로 번지게 한다", () => {
+  it("splashDamage는 스피나의 피버 타격을 220px 안의 주변 적에게 35%로 번지게 한다", () => {
     const state = prepareHit("spino", ["husk-shell", "husk-raptor"]);
     const [attacker, primary, nearby] = state.fighters;
     nearby.x = primary.x + 100; nearby.y = primary.y;

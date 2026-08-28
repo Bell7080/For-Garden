@@ -115,6 +115,10 @@ export class PortraitCard extends Phaser.GameObjects.Container {
   private readonly portraitMask: Phaser.GameObjects.Graphics;
   /** 윗변이 닫힌 칩 모양. 배경 원화처럼 머리 자리로 새면 안 되는 것에 씌운다. */
   private readonly bodyMask: Phaser.GameObjects.Graphics;
+  /** 칩 윗변 밖 머리 홈만 남기는 마스크. 선택 표시가 머리 픽셀만 누르게 한다. */
+  private readonly notchMask: Phaser.GameObjects.Graphics;
+  /** 원화를 검게 복제해 머리만 눌러 주는 선택 표시다. 원화가 늦게 오면 그때 만들어진다. */
+  private selectedHeadShade?: Phaser.GameObjects.Image;
   /** 발광·확대와 함께 선택이 '눌린 면'으로 읽히게 하는 선택형 어두운 면이다. */
   private readonly selectedOverlay: Phaser.GameObjects.Graphics;
   private readonly maskOffsetY: number;
@@ -171,6 +175,10 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     this.bodyMask = scene.make.graphics({});
     this.bodyMask.fillStyle(0xffffff, 1);
     this.bodyMask.fillPoints(toGeomPoints(this.chipShape), true);
+    // 윗변 밖 홈만 남기는 마스크. 선택 표시의 머리 몫이 몸통까지 겹쳐 두 번 어두워지지 않게 한다.
+    this.notchMask = scene.make.graphics({});
+    this.notchMask.fillStyle(0xffffff, 1);
+    this.notchMask.fillRect(-chipWidth * CHIP_NOTCH_WIDTH / 2, -this.bodyHeight / 2 - this.overhang, chipWidth * CHIP_NOTCH_WIDTH, this.overhang);
 
     // 인물 뒤에 깔리는 배경 원화. 빈 색면만 두면 카드가 심심하고, 그대로 두면 인물보다
     // 먼저 읽힌다. 그래서 **등급색으로 물들여** 한 겹 눌러 둔다 — 색은 여전히 등급이 정하고
@@ -263,8 +271,9 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     // 입력면 바로 아래에 두어 초상·이름·표식을 함께 은은하게 누르되 카드 바깥으로 번지지 않는다.
     this.selectedOverlay = scene.add.graphics().setVisible(false);
     this.selectedOverlay.fillStyle(0x000000, Phaser.Math.Clamp(options.selectedOverlayAlpha ?? 0, 0, 1));
-    // 칩 몸통만 덮으면 빠져나온 머리만 밝게 남아 목이 잘린 것처럼 보인다. 머리 홈까지 덮는다.
-    this.selectedOverlay.fillPoints(toGeomPoints(this.portraitShape), true);
+    // 칩 몸통만 덮는다. 윗변 밖으로 빠져나온 머리는 도형이 아니라 **원화 자체를 검게 겹쳐**
+    // 눌러야 한다 — 홈을 통째로 칠하면 머리 옆의 투명한 빈자리까지 어두워진다.
+    this.selectedOverlay.fillPoints(toGeomPoints(this.chipShape), true);
     this.add(this.selectedOverlay);
 
     this.hit = scene.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
@@ -278,6 +287,7 @@ export class PortraitCard extends Phaser.GameObjects.Container {
       this.disposed = true;
       this.portraitMask.destroy();
       this.bodyMask.destroy();
+      this.notchMask.destroy();
     });
     void this.loadPortrait().catch(() => {
       if (this.disposed) return;
@@ -382,12 +392,25 @@ export class PortraitCard extends Phaser.GameObjects.Container {
       shadow.setVisible(false);
     }
 
+    // 선택 표시의 머리 몫. 같은 원화를 검게 복제해 홈 안에서만 보이게 하면, 머리 모양 그대로
+    // 눌리고 그 옆의 투명한 빈자리는 밝게 남는다.
+    const overlayAlpha = Phaser.Math.Clamp(this.options.selectedOverlayAlpha ?? 0, 0, 1);
+    if (overlayAlpha > 0) {
+      const shade = this.scene.add.image(originX, originY, key).setOrigin(0, 0).setScale(card.scale).setTint(0x000000).setAlpha(overlayAlpha).setVisible(this.selected);
+      shade.setCrop(card.cropX, card.cropY, card.cropWidth, card.cropHeight);
+      shade.setMask(this.notchMask.createGeometryMask());
+      this.selectedHeadShade?.destroy();
+      this.selectedHeadShade = shade;
+      this.portraits.push(shade);
+    }
+
     this.portraits.push(shadow, portrait);
     // 칩 바로 위, 아래 어둠보다 아래에 끼운다. 자리를 숫자로 박아 두면 발광 같은 레이어가
     // 하나 늘 때마다 그림이 칩 밑으로 숨는다. 칩을 기준으로 찾는다.
     const above = this.getIndex(this.backdrop ?? this.chip) + 1;
     this.addAt(shadow, above);
     this.addAt(portrait, above + 1);
+    if (this.selectedHeadShade) this.addAt(this.selectedHeadShade, above + 2);
   }
 
   /**
@@ -405,7 +428,7 @@ export class PortraitCard extends Phaser.GameObjects.Container {
   public syncMask(): void {
     const matrix = this.getWorldTransformMatrix();
     const decomposed = matrix.decomposeMatrix() as { translateX: number; translateY: number; scaleX: number; scaleY: number };
-    for (const mask of [this.portraitMask, this.bodyMask]) {
+    for (const mask of [this.portraitMask, this.bodyMask, this.notchMask]) {
       mask
         .setPosition(decomposed.translateX, decomposed.translateY + this.maskOffsetY * decomposed.scaleY)
         .setScale(decomposed.scaleX, decomposed.scaleY);
@@ -424,6 +447,7 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     if (selected) this.paintGlow(accent);
     this.glow.setVisible(selected);
     this.selectedOverlay.setVisible(selected && (this.options.selectedOverlayAlpha ?? 0) > 0);
+    this.selectedHeadShade?.setVisible(selected);
     this.setScale(selected ? 1.06 : 1);
     this.syncMask();
     return this;

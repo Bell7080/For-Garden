@@ -11,6 +11,7 @@ import { chipPoints, drawLayer, drawVignette } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
 import { BACKGROUND } from "../ui/backgrounds";
 import { NodeEnemyPreview } from "../ui/NodeEnemyPreview";
+import { isEnemyPreviewNodeVisible } from "../ui/nodeEnemyPreviewLayout";
 
 /** 지도가 보이는 세로 구간. 위쪽 제목과 아래쪽 버튼을 침범하지 않는다. */
 const WINDOW = { top: 500, bottom: 1560 } as const;
@@ -172,6 +173,9 @@ export class StageMapScene extends Phaser.Scene {
       // 정보창이 떠 있으면 그 위에서의 손짓은 뒤의 지도를 건드리지 않는다.
       if (this.info?.isOpen) return;
       if (pointer.y < WINDOW.top || pointer.y > WINDOW.bottom) return;
+      // 편성판 밖 지도 탭은 현재 판을 먼저 닫고, 노드 탭이면 pointerup에서 새 판을 연다.
+      if (this.enemyPreview?.containsScreenPoint(pointer.worldX, pointer.worldY)) return;
+      this.enemyPreview?.dismiss();
       this.dragging = true;
       this.dragMoved = 0;
       this.dragOrigin = this.map.y - pointer.y;
@@ -191,9 +195,18 @@ export class StageMapScene extends Phaser.Scene {
     const clamped = Phaser.Math.Clamp(y, this.scrollMin, this.scrollMax);
     if (!tween) {
       this.map.y = clamped;
+      this.trackSelectedPreview();
       return;
     }
-    this.tweens.add({ targets: this.map, y: clamped, duration: 420, ease: "Cubic.Out" });
+    this.tweens.add({ targets: this.map, y: clamped, duration: 420, ease: "Cubic.Out", onUpdate: () => this.trackSelectedPreview() });
+  }
+
+  /** 지도 이동 중 선택 노드의 실제 화면 Y를 계산해 판과 SD를 계속 같은 노드에 붙인다. */
+  private trackSelectedPreview(): void {
+    if (!this.enemyPreview || !this.selected) return;
+    const index = STAGES.findIndex((stage) => stage.id === this.selected);
+    const nodeY = this.map.y - index * NODE_GAP;
+    this.enemyPreview.trackNode(nodeY, isEnemyPreviewNodeVisible(nodeY, WINDOW.top, WINDOW.bottom));
   }
 
   /** 고른 스테이지를 중앙으로 옮기고 공용 노드 미리보기의 내용과 꼬리를 함께 갱신한다. */

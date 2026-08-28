@@ -67,6 +67,8 @@ export class ExpeditionScene extends Phaser.Scene {
   private enemyInfo?: CharacterInfoManager;
   /** 전투 노드 선택은 모달 대신 지도에 붙는 공용 SD 편성판 하나만 갱신한다. */
   private enemyPreview?: NodeEnemyPreview;
+  /** 선택 해제와 스크롤 추적을 같은 지도 인스턴스에 전달한다. */
+  private mapView?: ExpeditionMapView;
 
   constructor() {
     super("expedition");
@@ -80,6 +82,7 @@ export class ExpeditionScene extends Phaser.Scene {
     this.nodeTransitionPending = false;
     this.selectedNode = undefined;
     this.enemyPreview?.destroy(); this.enemyPreview = undefined;
+    this.mapView = undefined;
     this.clearFormationPreview();
 
     const status = expeditionManager.status();
@@ -116,6 +119,15 @@ export class ExpeditionScene extends Phaser.Scene {
     this.buildRelicHud(run.relics);
     this.enemyInfo = new CharacterInfoManager(this, 3001, "enemy");
     this.enemyPreview = new NodeEnemyPreview(this, { title: "", level: 1, enemies: [], top: EXPEDITION_LAYOUT.map.top, bottom: EXPEDITION_LAYOUT.map.bottom, depth: 20, onEnemyClick: () => undefined });
+    // 지도 영역 밖 입력은 편성판 내부가 아닌 경우 현재 노드 선택만 닫는다.
+    const dismissOutsideMap = (pointer: Phaser.Input.Pointer): void => {
+      const outsideMap = pointer.worldY < EXPEDITION_LAYOUT.map.top || pointer.worldY > EXPEDITION_LAYOUT.map.bottom;
+      const outsideActions = pointer.worldY < EXPEDITION_LAYOUT.actions.top;
+      // 출격·뒤로가기 행동선은 현재 선택을 소비하므로 빈 배경 취소 대상에서 제외한다.
+      if (outsideMap && outsideActions && !this.enemyPreview?.containsScreenPoint(pointer.worldX, pointer.worldY)) this.mapView?.clearSelection();
+    };
+    this.input.on("pointerdown", dismissOutsideMap);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.input.off("pointerdown", dismissOutsideMap));
     // 스토리 지도처럼 출격은 팝업 안이 아니라 화면 하단의 고정 행동선에 한 번만 둔다.
     this.startButton = new Button(this, BASE_WIDTH / 2, 1810, { width: 340, height: 108, label: "출  격", variant: "primary", accentColor: COLOR.sortie, accentTextColor: COLOR.sortieText, onClick: () => this.selectedNode && this.confirmNodeSortie(this.selectedNode) });
     this.startButton.setEnabled(false);
@@ -151,14 +163,22 @@ export class ExpeditionScene extends Phaser.Scene {
 
   /** 전용 프리팹에 지도 월드와 입력 수명을 넘기고 씬은 선택 결과만 연결한다. */
   private buildMap(nodes: readonly ExpeditionMapNode[], currentNodeId: string | null, visitedIds: readonly string[]): void {
-    new ExpeditionMapView(this, {
+    this.mapView = new ExpeditionMapView(this, {
       top: EXPEDITION_LAYOUT.map.top,
       bottom: EXPEDITION_LAYOUT.map.bottom,
       nodes,
       currentNodeId,
       visitedIds,
       onSelect: (node, point) => this.handleNodeSelection(node, point.y),
+      onSelectedMove: (_node, point, visible) => this.enemyPreview?.trackNode(point.y, visible),
+      onDismiss: () => this.dismissNodeSelection(),
+      shouldDismissAt: (point) => !this.enemyPreview?.containsScreenPoint(point.x, point.y),
     });
+  }
+
+  /** 지도 선택 취소는 미리보기와 출격 대상/버튼을 함께 초기화한다. */
+  private dismissNodeSelection(): void {
+    this.enemyPreview?.dismiss(); this.selectedNode = undefined; this.startButton?.setEnabled(false);
   }
 
   /** 노드 종류별 전이를 한 진입점에서 직렬화하며 저장 성공 전에는 다른 노드를 받지 않는다. */

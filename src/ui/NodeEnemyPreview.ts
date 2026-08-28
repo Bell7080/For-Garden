@@ -21,6 +21,8 @@ export interface NodeEnemyPreviewOptions {
 /** 스토리와 원정 지도가 공유하는 노드 부착형 적 SD 편성 프리팹이다. */
 export class NodeEnemyPreview extends Phaser.GameObjects.Container {
   private readonly puppets = new Set<PuppetCreature>();
+  /** 꼬리는 추적 중 위/아래 방향이 바뀔 때 같은 Graphics를 다시 그린다. */
+  private tail?: Phaser.GameObjects.Graphics;
   private generation = 0;
   private shown = false;
   /** 첫 출현 확대가 끝나기 전에는 컨테이너 밖 SD도 따로 감춘다. */
@@ -32,8 +34,6 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
     this.options = options;
     scene.add.existing(this);
     this.setDepth(options.depth ?? 60).setVisible(false);
-    const bevel = Math.min(NODE_ENEMY_PREVIEW.width, NODE_ENEMY_PREVIEW.height) * 0.16;
-    this.add(drawLayer(scene, 0, 0, chipPoints(NODE_ENEMY_PREVIEW.width, NODE_ENEMY_PREVIEW.height, { bevel: { topLeft: bevel, bottomRight: bevel } }), { fill: 0x0b0f15, alpha: 0.92, edge: COLOR.accent, edgeAlpha: 0.55 }));
     // 씬 종료와 선택 변경은 같은 폐기 경로를 사용해 늦은 비동기 로드도 채택되지 않게 한다.
     scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.destroy());
     this.once(Phaser.GameObjects.Events.DESTROY, () => { this.clearPuppets(); setDebugEnemyPreview(undefined); });
@@ -48,9 +48,7 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
     this.setY(y);
     const bevel = Math.min(NODE_ENEMY_PREVIEW.width, NODE_ENEMY_PREVIEW.height) * 0.16;
     this.add(drawLayer(this.scene, 0, 0, chipPoints(NODE_ENEMY_PREVIEW.width, NODE_ENEMY_PREVIEW.height, { bevel: { topLeft: bevel, bottomRight: bevel } }), { fill: 0x0b0f15, alpha: 0.92, edge: COLOR.accent, edgeAlpha: 0.55 }));
-    const tail = this.scene.add.graphics().lineStyle(3, COLOR.accent, 0.55);
-    const edge = above ? NODE_ENEMY_PREVIEW.height / 2 : -NODE_ENEMY_PREVIEW.height / 2;
-    tail.lineBetween(0, edge, 0, edge + (above ? 52 : -52)); this.add(tail);
+    this.tail = this.scene.add.graphics(); this.add(this.tail); this.drawTail(above);
     this.add(this.scene.add.text(-NODE_ENEMY_PREVIEW.width / 2 + bevel * 0.7, -136, `${this.options.title}  ·  적 LV.${this.options.level}`, textStyle({ role: "display", size: 32 })).setOrigin(0, 0));
     this.add(this.scene.add.text(NODE_ENEMY_PREVIEW.width / 2 - 30, -132, "적 편성", textStyle({ role: "emphasis", size: 22, color: COLOR.dangerText })).setOrigin(1, 0));
     this.add(drawHairline(this.scene, 0, -86, NODE_ENEMY_PREVIEW.width - 60, { color: COLOR.accent, alpha: 0.35 }));
@@ -74,6 +72,41 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
         this.revealed = true; for (const puppet of this.puppets) puppet.setVisible(true);
       } });
     } else { this.revealed = true; this.setVisible(true).setAlpha(1).setScale(1); }
+  }
+
+  /** 지도 스크롤을 따라 판과 컨테이너 밖 Puppet을 함께 옮기고 노드가 마스크 밖이면 감춘다. */
+  trackNode(nodeY: number, nodeVisible: boolean): void {
+    if (!this.shown) return;
+    const previousY = this.y;
+    const { y, above } = anchorEnemyPreview(nodeY, this.options.top, this.options.bottom);
+    this.setY(y); this.drawTail(above);
+    for (const puppet of this.puppets) puppet.setY(puppet.y + y - previousY);
+    this.setVisible(nodeVisible);
+    for (const puppet of this.puppets) puppet.setVisible(nodeVisible && this.revealed);
+    if (!nodeVisible) { setDebugEnemyPreview(undefined); return; }
+    const columns = enemyPreviewColumns(this.options.enemies.length); const ground = 90;
+    setDebugEnemyPreview({ top: this.options.top, bottom: this.options.bottom, panelTop: y - NODE_ENEMY_PREVIEW.height / 2, panelBottom: y + NODE_ENEMY_PREVIEW.height / 2, above, enemyTargets: columns.map((x) => ({ x: this.x + x, y: y + ground })) });
+  }
+
+  /** 노드 또는 판 밖 탭은 선택과 비동기 요청을 함께 취소해 다음 선택이 새로 출현하게 한다. */
+  dismiss(): void {
+    if (!this.shown) return;
+    this.scene.tweens.killTweensOf(this); this.removeAll(true); this.clearPuppets();
+    this.tail = undefined; this.shown = false; this.revealed = false; this.setVisible(false);
+    setDebugEnemyPreview(undefined);
+  }
+
+  /** 씬이 지도 밖 입력을 판 내부 입력과 구분할 때 쓰는 화면 좌표 판정이다. */
+  containsScreenPoint(x: number, y: number): boolean {
+    return this.visible && x >= this.x - NODE_ENEMY_PREVIEW.width / 2 && x <= this.x + NODE_ENEMY_PREVIEW.width / 2
+      && y >= this.y - NODE_ENEMY_PREVIEW.height / 2 && y <= this.y + NODE_ENEMY_PREVIEW.height / 2;
+  }
+
+  /** 컨테이너를 뒤집지 않고 꼬리만 현재 노드 방향으로 다시 그린다. */
+  private drawTail(above: boolean): void {
+    if (!this.tail) return;
+    const edge = above ? NODE_ENEMY_PREVIEW.height / 2 : -NODE_ENEMY_PREVIEW.height / 2;
+    this.tail.clear().lineStyle(3, COLOR.accent, 0.55).lineBetween(0, edge, 0, edge + (above ? 52 : -52));
   }
 
   /** Puppet은 화면 좌표에 직접 세우며 세대가 바뀐 로드 결과는 즉시 폐기한다. */

@@ -16,3 +16,8 @@ export function anchorEnemyPreview(nodeY: number, top: number, bottom: number, h
   const intended = above ? aboveY : belowY;
   return { y: Math.min(bottom - height / 2, Math.max(top + height / 2, intended)), above };
 }
+
+/** 선택 노드 중심이 지도 마스크 안에 남아 있는 동안에만 부착 판을 표시한다. */
+export function isEnemyPreviewNodeVisible(nodeY: number, top: number, bottom: number): boolean {
+  return nodeY >= top && nodeY <= bottom;
+}

@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { startAfterOpening } from "./openingSave";
 import { ExpeditionManager } from "../../src/managers/ExpeditionManager";
-import { expeditionNodePosition } from "../../src/ui/expeditionLayout";
+import { expeditionNodePosition, focusExpeditionFloor } from "../../src/ui/expeditionLayout";
 
 const BASE_WIDTH = 1080;
 const BASE_HEIGHT = 1920;
@@ -12,6 +12,15 @@ async function tapGame(page: import("@playwright/test").Page, x: number, y: numb
   const box = await canvas.boundingBox();
   if (!box) throw new Error("캔버스를 찾지 못했다");
   await canvas.click({ position: { x: (x / BASE_WIDTH) * box.width, y: (y / BASE_HEIGHT) * box.height } });
+}
+
+/** 기준 게임 좌표 두 점 사이를 드래그해 지도 추적과 마스크 이탈을 실제 포인터 흐름으로 검증한다. */
+async function dragGame(page: import("@playwright/test").Page, from: { x: number; y: number }, to: { x: number; y: number }): Promise<void> {
+  const box = await page.locator("canvas").boundingBox();
+  if (!box) throw new Error("캔버스를 찾지 못했다");
+  const point = ({ x, y }: { x: number; y: number }) => ({ x: box.x + x / BASE_WIDTH * box.width, y: box.y + y / BASE_HEIGHT * box.height });
+  const start = point(from); const end = point(to);
+  await page.mouse.move(start.x, start.y); await page.mouse.down(); await page.mouse.move(end.x, end.y, { steps: 8 }); await page.mouse.up();
 }
 
 /** Canvas 팝업이 노출한 실제 입력 중심을 읽어 레이아웃 숫자를 테스트에 복제하지 않는다. */
@@ -84,7 +93,7 @@ test("출격 선택판에서 원정대 3기를 골라 진행 중 상태로 저�
 
   // 잔잔한 출격 선택판에서 원정을 고르면 별도 준비 씬으로 이동한다.
   await tapGame(page, BASE_WIDTH - 290, BASE_HEIGHT - 425);
-  await tapGame(page, BASE_WIDTH / 2, 995);
+  await tapGame(page, BASE_WIDTH / 2, 1345);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("expedition");
   await page.screenshot({ path: `test-results/${test.info().project.name}-expedition-preparation.png` });
 
@@ -117,7 +126,7 @@ test("저장된 전투 전 증강 후보는 지도보다 먼저 복원된다", a
   await page.locator("canvas").click();
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   await tapGame(page, BASE_WIDTH - 290, BASE_HEIGHT - 425);
-  await tapGame(page, BASE_WIDTH / 2, 995);
+  await tapGame(page, BASE_WIDTH / 2, 1345);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("expedition");
   // 닫기 없는 선택 작업판과 세 후보가 복원된 상태를 시각 회귀 자료로 남긴다.
   await page.screenshot({ path: `test-results/${test.info().project.name}-expedition-augment-popup.png` });
@@ -125,19 +134,26 @@ test("저장된 전투 전 증강 후보는 지도보다 먼저 복원된다", a
 
 test("원정 전투 노드는 지도 안 공용 편성판을 붙이고 적 상세 정보창으로 진입한다", async ({ page }) => {
   let reachableX = BASE_WIDTH / 2;
+  let reachableY = (316 + 1138) / 2;
   await startAfterOpening(page, (session) => {
     // 실제 매니저가 만든 1층 전투 노드를 사용해 저장 구조와 지도 열 배치를 테스트가 위조하지 않는다.
     const manager = new ExpeditionManager(session, { save: () => undefined }, () => new Date());
     manager.start([...session.owned].slice(0, 3));
     const node = session.expedition.run!.nodes.find(({ floor, type }) => floor === 1 && ["normal", "elite", "horde"].includes(type))!;
-    reachableX = expeditionNodePosition(node.floor, node.column).x;
+    const point = expeditionNodePosition(node.floor, node.column);
+    reachableX = point.x; reachableY = 316 + point.y + focusExpeditionFloor(1, 1138 - 316);
   });
   await page.locator("canvas").click();
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
-  await tapGame(page, BASE_WIDTH - 290, BASE_HEIGHT - 425); await tapGame(page, BASE_WIDTH / 2, 995);
+  // 로비 입장 애니메이션이 입력을 넘겨받은 뒤 출격 버튼을 눌러 저속 모바일 실행을 안정화한다.
+  await page.waitForTimeout(700);
+  await tapGame(page, BASE_WIDTH - 290, BASE_HEIGHT - 425);
+  // 출격 선택판은 로비 위 PopupLayer이므로 씬 이름은 유지된다. 판의 입력 생성만 잠시 기다린다.
+  await page.waitForTimeout(400);
+  await tapGame(page, BASE_WIDTH / 2, 1345);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("expedition");
-  // 최초 도달 층은 지도 마스크 중앙에 포커스되므로 실제 열 좌표의 노드를 선택한다.
-  await tapGame(page, reachableX, (316 + 1138) / 2);
+  // 실제 지도 포커스 계산이 반영된 첫 도달 노드의 화면 좌표를 선택한다.
+  await tapGame(page, reachableX, reachableY);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.enemyPreview)).not.toBeUndefined();
   const geometry = await page.evaluate(() => window.__PF_DEBUG!.enemyPreview!);
   expect(geometry.panelTop).toBeGreaterThanOrEqual(geometry.top); expect(geometry.panelBottom).toBeLessThanOrEqual(geometry.bottom);
@@ -145,6 +161,17 @@ test("원정 전투 노드는 지도 안 공용 편성판을 붙이고 적 상�
   await page.screenshot({ path: `test-results/${test.info().project.name}-expedition-node-enemy-preview.png` });
   await tapGame(page, geometry.enemyTargets[0].x, geometry.enemyTargets[0].y);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.infoOpen)).toBe(true);
+  // 상세창을 닫은 뒤 빈 지도 탭은 선택과 편성판을 취소하고 같은 노드는 다시 새 판을 연다.
+  await tapGame(page, BASE_WIDTH - 106, BASE_HEIGHT - 120);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.infoOpen)).toBe(false);
+  await tapGame(page, 100, 400);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.enemyPreview)).toBeUndefined();
+  await tapGame(page, reachableX, reachableY);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.enemyPreview)).not.toBeUndefined();
+  // 1층에서 위쪽 월드를 내려 보면 선택 노드가 마스크 하단을 벗어나 판과 SD도 함께 사라진다.
+  await dragGame(page, { x: 900, y: 700 }, { x: 900, y: 1070 });
+  await dragGame(page, { x: 900, y: 700 }, { x: 900, y: 1070 });
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.enemyPreview)).toBeUndefined();
 });
 
 test("방치 발굴 팝업은 좁은 로비 위 한 장으로 열리고 뒤 입력을 차단한 뒤 닫힌다", async ({ page }) => {

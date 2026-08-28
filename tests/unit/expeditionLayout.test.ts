@@ -7,7 +7,7 @@ import {
   expeditionNodePosition,
   focusExpeditionFloor,
 } from "../../src/ui/expeditionLayout";
-import { anchorEnemyPreview, enemyPreviewColumns, NODE_ENEMY_PREVIEW } from "../../src/ui/nodeEnemyPreviewLayout";
+import { anchorEnemyPreview, enemyPreviewColumns, isEnemyPreviewNodeVisible, NODE_ENEMY_PREVIEW } from "../../src/ui/nodeEnemyPreviewLayout";
 
 describe("expedition portrait layout", () => {
   it("keeps rewards, nodes, augments, relic HUD, and actions in separate vertical regions", () => {
@@ -53,5 +53,13 @@ describe("expedition portrait layout", () => {
     expect(columns).toHaveLength(count); expect(columns[0] + columns[count - 1]).toBe(0);
     expect(columns.every((x) => Math.abs(x) <= NODE_ENEMY_PREVIEW.width / 2 - 60)).toBe(true);
     expect(columns.slice(1).every((x, index) => x > columns[index])).toBe(true);
+  });
+
+  it("스크롤된 선택 노드가 지도 마스크를 벗어난 동안 미리보기를 숨긴다", () => {
+    // 경계선 위는 보이고 한 픽셀이라도 바깥으로 나간 노드는 판과 SD 모두 숨기는 계약이다.
+    expect(isEnemyPreviewNodeVisible(EXPEDITION_LAYOUT.map.top, EXPEDITION_LAYOUT.map.top, EXPEDITION_LAYOUT.map.bottom)).toBe(true);
+    expect(isEnemyPreviewNodeVisible(EXPEDITION_LAYOUT.map.bottom, EXPEDITION_LAYOUT.map.top, EXPEDITION_LAYOUT.map.bottom)).toBe(true);
+    expect(isEnemyPreviewNodeVisible(EXPEDITION_LAYOUT.map.top - 1, EXPEDITION_LAYOUT.map.top, EXPEDITION_LAYOUT.map.bottom)).toBe(false);
+    expect(isEnemyPreviewNodeVisible(EXPEDITION_LAYOUT.map.bottom + 1, EXPEDITION_LAYOUT.map.top, EXPEDITION_LAYOUT.map.bottom)).toBe(false);
   });
 });

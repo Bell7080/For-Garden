@@ -98,7 +98,7 @@ test("출격 선택판에서 원정대 3기를 골라 진행 중 상태로 저�
   // 원정의 첫 화면은 주간 기록이다. 순위와 기록 보상을 먼저 보고 출격으로 편성을 연다.
   await page.waitForTimeout(900);
   await page.screenshot({ path: `test-results/${test.info().project.name}-expedition-ranking.png` });
-  await tapGame(page, 250, 1330);
+  await tapGame(page, 250, 1200);
   await page.waitForTimeout(700);
   await page.screenshot({ path: `test-results/${test.info().project.name}-expedition-reward-popup.png` });
   // 읽기 판이라 바깥을 누르면 닫힌다.

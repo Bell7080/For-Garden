@@ -74,7 +74,6 @@ export class ExpeditionScene extends Phaser.Scene {
   /** 광고 표시부터 서버 확정까지 연타를 막는 빠른 원정 전용 잠금이다. */
   private quickClaimPending = false;
   private quickButton?: Button;
-  private quickStatus?: Phaser.GameObjects.Text;
   /** 선택 미리보기와 비동기 SD는 매 선택마다 함께 폐기해 이전 편성이 겹치지 않게 한다. */
   private formationPreview?: Phaser.GameObjects.Container;
   private formationPuppets = new Set<PuppetCreature>();
@@ -517,8 +516,8 @@ export class ExpeditionScene extends Phaser.Scene {
       // 임시 개발 도구: Session을 건드리지 않고 매니저가 만든 실제 20층 노드를 열어 미리보기와 출격 흐름을 그대로 검수한다.
       new Button(this, 170, 292, { width: 230, height: 68, label: "DEV · 20층", fontSize: 21, fill: 0x3b2330, accentColor: COLOR.sortie, accentTextColor: COLOR.sortieText, onClick: () => this.openDevelopmentBossShortcut() });
     }
-    // 로컬 quickAvailable은 표시·지급 권한으로 쓰지 않고 서버 운영 설정을 기다리는 자리만 만든다.
-    this.quickStatus = this.add.text(BASE_WIDTH / 2, 348, "빠른 원정 확인 중…", textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0.5);
+    // 서버가 빠른 원정을 열어 두었을 때만 버튼이 생긴다. 조회 중이라거나 열리지 않았다는 말은
+    // 플레이어의 선택을 바꾸지 않으므로 화면에 남기지 않는다.
     void this.loadQuickExpeditionOffer();
     this.renderFormationPreview();
 
@@ -577,19 +576,19 @@ export class ExpeditionScene extends Phaser.Scene {
       const config = await gameApi.getAdOperationsConfig();
       if (!this.scene.isActive()) return;
       const slot = config.slots.find((candidate): candidate is AdSlotOperationsDto & { reward: { readonly kind: "quick_expedition"; readonly scoreRatio: number } } => candidate.slotId === "quick-expedition" && candidate.enabled && candidate.reward.kind === "quick_expedition");
-      if (!slot) { this.quickStatus?.setText("기준 점수를 먼저 기록하세요"); return; }
+      if (!slot) return;
       const sameDay = session.dailyAdRewards.date === config.serverTime.slice(0, 10);
       const dailyUsed = sameDay ? session.dailyAdRewards.claimsBySlot[slot.slotId] ?? 0 : 0;
       const dailyRemaining = Math.max(0, slot.dailyLimitUtc - dailyUsed);
       const weeklyRemaining = Math.max(0, (slot.weeklyLimitUtc ?? 0) - (slot.weeklyClaims ?? 0));
       const reference = Math.max(0, Math.floor(slot.referenceScore ?? 0));
       const expected = Math.floor(reference * slot.reward.scoreRatio);
-      this.quickStatus?.setText(`기준 최고 ${reference.toLocaleString()} · 예상 골드 ${expected.toLocaleString()} · 오늘 ${dailyRemaining}회 / 이번 주 ${weeklyRemaining}회`);
-      // 주 행동과 떨어진 낮고 작은 중립 버튼으로 위계를 명확히 나눈다.
+      if (reference <= 0 || expected <= 0 || dailyRemaining <= 0 || weeklyRemaining <= 0) return;
+      // 주 행동과 떨어진 낮고 작은 중립 버튼으로 위계를 명확히 나눈다. 버튼이 보상과 남은
+      // 횟수를 직접 말하므로 별도 상태 문구를 두지 않는다.
       this.quickButton?.destroy();
-      this.quickButton = new Button(this, 230, 1800, { width: 300, height: 72, label: slot.displayText, fontSize: 25, onClick: () => void this.claimQuickExpedition(slot) });
-      this.quickButton.setEnabled(reference > 0 && expected > 0 && dailyRemaining > 0 && weeklyRemaining > 0);
-    } catch { this.quickStatus?.setText("빠른 원정을 불러오지 못했습니다"); }
+      this.quickButton = new Button(this, 230, 1800, { width: 340, height: 84, label: slot.displayText, sub: `골드 ${expected.toLocaleString()} · 오늘 ${dailyRemaining}회`, fontSize: 25, subFontSize: 18, onClick: () => void this.claimQuickExpedition(slot) });
+    } catch { /* 조회 실패는 그 자리를 비운다. 실패했다는 말은 플레이어가 할 일을 바꾸지 않는다. */ }
   }
 
   /** 기존 발굴 광고와 같은 토큰 추출·연타 잠금·고유 요청 ID 흐름으로 서버 지급을 요청한다. */
@@ -598,7 +597,7 @@ export class ExpeditionScene extends Phaser.Scene {
     this.quickClaimPending = true; this.quickButton?.setEnabled(false);
     try {
       const token = completedAdToken(await presentRewardedAd(slot.slotId));
-      if (!token) { this.quickStatus?.setText("광고가 취소되었습니다 · 다시 눌러 시도하세요"); this.quickButton?.setEnabled(true); return; }
+      if (!token) { this.hint?.setText("광고가 취소되었습니다"); this.quickButton?.setEnabled(true); return; }
       const requestId = globalThis.crypto?.randomUUID?.() ?? `quick-expedition-${Date.now()}-${Math.random().toString(36).slice(2)}`;
       const result = await gameApi.claimAdReward({ slotId: "quick-expedition", verificationToken: token, requestId });
       const gained = Math.max(0, result.granted.gold ?? 0);
@@ -606,7 +605,7 @@ export class ExpeditionScene extends Phaser.Scene {
       session.wallet = { ...result.wallet };
       session.dailyAdRewards = { date: result.dailyAdRewards.date, claimsBySlot: { ...result.dailyAdRewards.claimsBySlot }, requestIds: session.dailyAdRewards.requestIds };
       await this.loadQuickExpeditionOffer();
-      if (gained === 0) this.quickStatus?.setText("골드 지갑이 가득 찼습니다 · 먼저 골드를 사용하세요");
+      if (gained === 0) this.hint?.setText("골드 지갑이 가득 찼습니다");
       else openRewardPopup(this, this.popups, { title: "빠른 원정 완료", items: [{ icon: "currency-gold", amount: gained, label: "실제 지갑 증가" }] });
     } catch (error) {
       const code = error instanceof GameApiError ? error.code : undefined;
@@ -616,7 +615,7 @@ export class ExpeditionScene extends Phaser.Scene {
         AD_WEEKLY_LIMIT: "이번 주 횟수를 모두 사용했습니다 · 다음 주에 다시 오세요",
         EXPEDITION_SCORE_REQUIRED: "기준 점수가 없습니다 · 원정 최고점을 먼저 기록하세요",
       };
-      this.quickStatus?.setText(message[code ?? ""] ?? "지급에 실패했습니다 · 잠시 후 다시 시도하세요");
+      this.hint?.setText(message[code ?? ""] ?? "잠시 후 다시 시도해 주세요");
       this.quickButton?.setEnabled(!["AD_DAILY_LIMIT", "AD_WEEKLY_LIMIT", "EXPEDITION_SCORE_REQUIRED"].includes(code ?? ""));
     } finally {
       this.quickClaimPending = false;

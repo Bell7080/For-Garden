@@ -230,11 +230,12 @@ export const RELICS: RelicDef[] = [
       effectType: "physical",
       damageType: "physical",
       cost: 300,
-      attackSpeedPower: 300,
+      // 공격력 200%에 현재 공격 속도 150%를 더해, 두 성장 축을 함께 쓰되 공속 누적의 비중은 절제한다.
+      attackSpeedPower: 150,
       // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
       targeting: "single",
       statusEffects: [{ kind: "stun", seconds: 3 }],
-      desc: "적 한 명에게 공격력의 200%와 현재 공격 속도의 300%에 해당하는 물리 피해를 주고 3초간 기절시킨다.",
+      desc: "적 한 명에게 공격력의 200%와 현재 공격 속도의 150%에 해당하는 물리 피해를 주고 3초간 기절시킨다.",
     },
   },
   // 4번 Puppet 묶음은 전신과 SD가 모두 완성된 루카의 전용 에셋을 사용한다.

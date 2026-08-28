@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import PREPARE_ICONS from "../../scripts/prepare_icons.py?raw";
 import { RELICS } from "../../src/data/relics";
 import { ELEMENT_TINT, ROLE_TINT, SKILL_ART_ASSETS, SKILL_ART_SLOTS, skillArtFor, skillArtKey, skillArtTint } from "../../src/ui/skillArt";
-import { damageKeyword, ferocityTraitDescription, recoveryLabel, skillKeywordLayoutOptions, statusEffectLabel, targetingLabel } from "../../src/ui/skillPresentation";
+import { damageHealingLabel, damageKeyword, ferocityTraitDescription, passiveDescription, recoveryLabel, skillKeywordLayoutOptions, statusEffectLabel, targetingLabel } from "../../src/ui/skillPresentation";
 import type { SkillInfoViewModel } from "../../src/ui/SkillPopup";
 
 /** 구워 둔 스킬 일러스트. 코드가 가리키는 파일이 실제로 있는지 확인한다. */
@@ -93,5 +93,16 @@ describe("토리카 스킬 표시 계약", () => {
       effectType: "buff", description: "[[damage-value|19]]만큼 추가 피해", contextualKeywords: [damage],
     };
     expect(skillKeywordLayoutOptions(skill, { width: 760, size: 28 }).contextualKeywords).toEqual([damage]);
+  });
+});
+
+describe("렉시아 스킬 표시 계약", () => {
+  it("은 폭주·패시브·출혈·궁극기 회복을 현재 데이터에서 문장화한다", () => {
+    const rex = RELICS.find((def) => def.id === "rex")!;
+    expect(ferocityTraitDescription(rex.ferocityTrait)).toBe("치명타 확률과 모든 피해 흡혈이 각각 25%p, 25%p 증가한다.");
+    expect(passiveDescription(rex.passive)).toContain("각각 25%, 25%, 25%, 25%");
+    expect(statusEffectLabel(rex.basic.statusEffects?.[0])).toBe("[[bleed|출혈]] 3초 · 매초 최대 체력 2%");
+    expect(targetingLabel(rex.ultimate.targeting)).toBe("적 한 명");
+    expect(damageHealingLabel(rex.ultimate.damageHealingPercent)).toBe("실제 피해의 50% 회복");
   });
 });

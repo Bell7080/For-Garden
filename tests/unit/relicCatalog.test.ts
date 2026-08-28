@@ -4,6 +4,12 @@ import { compareBookmarkedOwnedRelics, getRelicCatalogDisclosure } from "../../s
 import { PLAYABLE_RELICS, sortRelicsBySpecimenNumber, validateSpecimenNumbers } from "../../src/data/relics";
 
 describe("relic catalog", () => {
+  it("렉시아 관찰 기록은 확정 키와 성장 단계만 수치화하고 미확정 체중은 보류한다", () => {
+    const rex = PLAYABLE_RELICS.find((relic) => relic.id === "rex")!;
+    expect(rex.observationProfile).toMatchObject({ height: "1.63 m", weight: "기획 확인 중", lifeStage: "성체 초기" });
+    expect(rex.catalogSummary).toContain("160cm 초반");
+    expect(rex.unlockRecord.status === "recorded" && rex.unlockRecord.text).toContain("정확한 체중");
+  });
   it("스피노사우루스 렐릭의 표시 이름을 스피나로 유지한다", () => {
     // 내부 ID와 에셋 키를 바꾸지 않고 모든 화면이 읽는 데이터 이름만 고정한다.
     expect(PLAYABLE_RELICS.find((relic) => relic.id === "spino")?.name).toBe("스피나");

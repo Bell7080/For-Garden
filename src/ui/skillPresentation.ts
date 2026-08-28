@@ -1,7 +1,7 @@
 import type { DamagePreview } from "../core/damage";
 import type { KeywordDef } from "../data/keywords";
 import type { KeywordTextOptions } from "../managers/KeywordManager";
-import type { CombatStatusEffect, FerocityTrait, Ultimate } from "../core/types";
+import type { CombatStatusEffect, FerocityTrait, Passive, Ultimate } from "../core/types";
 
 /** 전투 좌표 수치 대신 플레이어가 전장에서 찾을 수 있는 대상 범위를 말한다. */
 export function targetingLabel(targeting?: Ultimate["targeting"]): string | undefined {
@@ -16,6 +16,7 @@ export function statusEffectLabel(effect?: CombatStatusEffect): string | undefin
   if (effect?.kind === "stun") return `[[stun|기절]] ${effect.seconds}초`;
   // 경직은 항상 0.1초인 용어 규칙을 키워드 설명이 담당하므로 요약줄에서 시간을 중복하지 않는다.
   if (effect?.kind === "stagger") return "[[stagger|경직]]";
+  if (effect?.kind === "bleed") return `[[bleed|출혈]] ${effect.seconds}초 · 매초 최대 체력 ${effect.maxHpPercentPerSecond}%`;
   return undefined;
 }
 
@@ -50,6 +51,7 @@ export function ferocityTraitDescription(trait: FerocityTrait, defense?: number)
   if (trait.effectId === "allyEnergyGain") return `공격할 때마다 다른 생존 아군이 궁극기 에너지를 ${trait.energy} 얻는다.`;
   if (trait.effectId === "criticalChanceBonus") return `치명타 확률이 ${trait.chancePercent}%p 오른다.`;
   if (trait.effectId === "teamMoveSpeedBonus") return `생존 아군 전체의 이동 속도가 ${trait.bonusPercent}% 빨라진다.`;
+  if (trait.effectId === "rexBattleQueen") return `치명타 확률과 모든 피해 흡혈이 각각 ${trait.criticalChancePoints}%p, ${trait.allDamageLifeStealPoints}%p 증가한다.`;
 
   // 방어력 계수는 토리카처럼 추가 피해가 있는 범위 타격만 노출하고, 일반 전이 특성은 원래 피해 비율만 보여 준다.
   const speed = trait.attackSpeedBonusPercent === undefined ? "" : `공격 속도가 ${trait.attackSpeedBonusPercent}% 증가한다. `;
@@ -63,4 +65,15 @@ export function ferocityTraitDescription(trait: FerocityTrait, defense?: number)
     ? `${bonus}를 입히고 [[stagger|경직]]시킨다.`
     : `${bonus}를 입힌다.`;
   return `${speed}기본 공격이 대상 주위의 모든 적에게 적중해 ${ending}`;
+}
+
+/** 복합 능력 패시브를 각 구조화 수치에서 문장화해 데이터 변경이 본문에도 즉시 반영되게 한다. */
+export function passiveDescription(passive: Passive): string {
+  if (passive.kind !== "battleMaidMastery") return passive.desc;
+  return `공격 속도·공격력·치명타 확률·치명타 피해가 각각 ${passive.attackSpeedPercent}%, ${passive.attackPowerPercent}%, ${passive.criticalChancePercent}%, ${passive.criticalDamagePercent}% 증가한다.`;
+}
+
+/** 스킬별 피해 회복은 최대 체력 회복과 다른 계약이므로 실제 피해 기준임을 명시한다. */
+export function damageHealingLabel(percent?: number): string | undefined {
+  return percent === undefined ? undefined : `실제 피해의 ${percent}% 회복`;
 }

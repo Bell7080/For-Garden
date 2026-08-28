@@ -481,14 +481,15 @@ describe("효과 ID별 야성 특성", () => {
     return state;
   }
 
-  it("attackIntervalReduction은 렉시아의 피버 중 공격 간격만 20% 줄인다", () => {
+  it("렉시아 패시브는 공격 속도를 25% 높이고 폭주 종료 뒤 간격을 그대로 유지한다", () => {
     const state = newSkirmish(["rex"], ["husk-shell"]);
     const rex = state.fighters[0];
     const before = attackInterval(rex);
-    rex.ferocity = 99;
-    expect(attackInterval(rex)).toBe(before); // 100 미만 경계에서는 설명 효과가 열리지 않는다.
+    expect(before).toBeCloseTo(SKIRMISH.attackInterval * 100 / (rex.def.stats.attackSpeed * 1.25));
     rex.ferocity = 100; rex.ferocityFever = true;
-    expect(attackInterval(rex)).toBeCloseTo(before * 0.8);
+    expect(attackInterval(rex)).toBe(before); // 렉시아 폭주는 공속이 아니라 치명타와 흡혈만 바꾼다.
+    rex.ferocityFever = false;
+    expect(attackInterval(rex)).toBe(before);
   });
 
   it("토리카의 폭주는 기본 공격을 주변 적에게 번지게 한다", () => {
@@ -888,12 +889,11 @@ describe("출혈", () => {
     return state;
   }
 
-  it("은 같은 상대를 다섯 번 이어서 때린 순간 걸린다", () => {
+  it("은 렉시아 일반 공격이 적중할 때마다 즉시 걸린다", () => {
     const state = duel();
     const [ally, foe] = state.fighters;
-    // 첫 타는 시작하자마자 나가므로 네 번의 간격이면 다섯 번을 때린다.
-    const events = run(state, attackInterval(ally) * 4 + 0.05);
-    expect(ally.streakCount).toBe(0); // 다섯 번을 채우면 셈이 처음으로 돌아간다
+    const events = run(state, 0.05);
+    expect(ally.streakCount).toBe(0); // 5연타 패시브 경로와 일반 공격 출혈은 서로 섞이지 않는다.
     expect(foe.bleed).not.toBeNull();
     expect(events.some((event) => event.kind === "bleed" && event.started)).toBe(true);
   });
@@ -901,6 +901,7 @@ describe("출혈", () => {
   it("은 3초 동안 매 초 최대 체력의 2%를 깎고 스스로 끝난다", () => {
     const state = duel();
     const foe = state.fighters[1];
+    state.fighters[0].attackCooldown = foe.attackCooldown = 99;
     foe.bleed = { remaining: BLEED.seconds, tickIn: 1, percent: BLEED.percentPerSecond };
     const hpBefore = foe.hp;
     const ticks = run(state, 3.2).filter((event): event is Extract<SkirmishEvent, { kind: "bleed" }> => event.kind === "bleed");
@@ -911,16 +912,67 @@ describe("출혈", () => {
     expect(foe.bleed).toBeNull();
   });
 
-  it("은 상대를 바꾸면 셈이 처음으로 돌아간다", () => {
+  it("은 대상별 일반 공격 경로로 적용되어 연속 공격 카운트를 사용하지 않는다", () => {
     const state = createSkirmish([getRelic("rex")], [getRelic("husk-shell"), getRelic("husk-wing")], ARENA);
     const ally = state.fighters[0];
-    ally.streakTargetId = "enemy-0";
-    ally.streakCount = 4;
+    ally.streakTargetId = "enemy-0"; ally.streakCount = 4;
     ally.x = state.fighters[2].x; ally.y = state.fighters[2].y - 60;
     ally.targetId = "enemy-1";
     run(state, 0.05);
-    expect(ally.streakCount).toBe(1);
+    expect(ally.streakCount).toBe(4);
     expect(state.fighters[1].bleed).toBeNull();
+    expect(state.fighters[2].bleed).toMatchObject({ remaining: expect.any(Number), percent: 2 });
+  });
+});
+
+describe("렉시아 전투 계약", () => {
+  /** 양쪽을 즉시 교전시키고 적 행동을 멈춰 렉시아의 한 타격만 관찰한다. */
+  function readyRex() {
+    const state = newSkirmish(["rex"], ["husk-shell"]);
+    const [rex, foe] = state.fighters;
+    rex.x = 500; rex.y = 1000; foe.x = 560; foe.y = 1000;
+    rex.attackCooldown = 0; foe.attackCooldown = 99;
+    return { state, rex, foe };
+  }
+
+  it("은 95% 일반 공격과 패시브의 공격력·치명 확률·치명 피해 25%를 적용한다", () => {
+    const { state, rex, foe } = readyRex();
+    const hit = stepSkirmish(state, 1 / 60, () => 0.26).find((event) => event.kind === "attack")!;
+    const boosted = { ...rex, def: { ...rex.def, stats: { ...rex.def.stats, atk: rex.def.stats.atk * 1.25, critDamage: rex.def.stats.critDamage * 1.25 } } };
+    expect(rex.def.basic.power).toBe(95);
+    // 기본 20%의 25% 증가인 25% 확률이므로 0.26은 치명타가 아니다.
+    expect(hit).toMatchObject({ critical: false, amount: computeDamage(boosted, foe, { ...rex.def.basic, kind: "basic", isCritical: false }, true) });
+  });
+
+  it("은 폭주 중 치명타 25%p와 모든 피해 흡혈 25%p를 적용하고 종료 후 복구한다", () => {
+    const { state, rex } = readyRex();
+    rex.hp = rex.maxHp / 2; rex.ferocity = 100; rex.ferocityFever = true;
+    const before = rex.hp;
+    const hit = stepSkirmish(state, 1 / 60, () => 0.49).find((event) => event.kind === "attack")!;
+    expect(hit).toMatchObject({ critical: true }); // 패시브 25% + 폭주 25%p = 50%
+    expect(rex.hp - before).toBeCloseTo(hit.amount * 0.25);
+    rex.ferocityFever = false; rex.attackCooldown = 0; const hp = rex.hp;
+    stepSkirmish(state, 1 / 60, () => 0.49);
+    expect(rex.hp).toBe(hp);
+  });
+
+  it("은 300% 단일 궁극기에 게이지 110을 쓰고 실제 피해의 50%만 상한까지 회복한다", () => {
+    const { state, rex, foe } = readyRex();
+    expect(rex.def.ultimate).toMatchObject({ power: 300, cost: 110, targeting: "single", damageHealingPercent: 50 });
+    rex.energy = 110; rex.hp = rex.maxHp - 10; foe.hp = 5;
+    const events = fireUltimate(state, rex.id, () => 0.99);
+    const hit = events.find((event) => event.kind === "attack")!;
+    expect(hit.amount).toBeGreaterThan(foe.hp); // 사건의 계산 피해는 남은 HP보다 커도 회복은 실제 5만 본다.
+    expect(rex.hp).toBe(rex.maxHp - 7.5);
+    expect(rex.energy).toBe(0);
+
+    const capped = readyRex();
+    capped.rex.def = { ...capped.rex.def, stats: { ...capped.rex.def.stats, lifeSteal: 10 } };
+    capped.rex.ferocity = 100; capped.rex.ferocityFever = true; capped.rex.energy = 110;
+    capped.rex.hp = capped.rex.maxHp - 1;
+    fireUltimate(capped.state, capped.rex.id, () => 0.99);
+    // 기본 10%p + 폭주 25%p + 궁극기 50%p를 합산해도 최대 체력을 넘지 않는다.
+    expect(capped.rex.hp).toBe(capped.rex.maxHp);
   });
 });
 

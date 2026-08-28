@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { ExpeditionManager, expeditionWeekKey } from "../../src/managers/ExpeditionManager";
 import { createDefaultSession } from "../../src/state/session";
+import { validateExpeditionMap } from "../../src/core/expeditionMap";
 
 /** 원정 매니저 테스트는 브라우저 저장소 대신 호출 횟수만 기록하는 경계를 주입한다. */
 describe("ExpeditionManager", () => {
@@ -92,5 +93,38 @@ describe("ExpeditionManager", () => {
     const first = manager.prepareBossRequests(boss.id); const repeated = manager.prepareBossRequests(boss.id);
     expect(repeated).toEqual(first);
     expect(state.expedition.run).toMatchObject({ bossSubmissionId: first?.requestId, bossSettlementId: first?.settlementId });
+  });
+
+  it("개발 바로가기가 유효한 지도와 선택한 3기 편성을 보스 직전까지 한 번에 보존한다", () => {
+    const state = createDefaultSession(); const save = vi.fn();
+    const manager = new ExpeditionManager(state, { save }, () => new Date("2026-08-25T12:00:00Z"), true);
+    const result = manager.prepareDevelopmentBossShortcut(["spino", "anky", "rex"]);
+    expect(result.ok).toBe(true);
+    const run = state.expedition.run!;
+    expect(validateExpeditionMap({ seed: run.mapSeed, nodes: run.nodes })).toEqual([]);
+    expect(run.relics.map(({ relicId }) => relicId)).toEqual(["spino", "anky", "rex"]);
+    expect(run.nodes.find(({ id }) => id === run.currentNodeId)).toMatchObject({ floor: 19 });
+    expect(run.nodes.find(({ type }) => type === "boss")?.predecessorIds).toContain(run.currentNodeId);
+    expect(save).toHaveBeenCalledTimes(2); // 주차 정규화와 완성된 바로가기 스냅샷만 각각 저장한다.
+  });
+
+  it("production 경계에서는 개발 바로가기를 상태 변경 없이 거부한다", () => {
+    const state = createDefaultSession(); const save = vi.fn();
+    const manager = new ExpeditionManager(state, { save }, () => new Date("2026-08-25T12:00:00Z"), false);
+    expect(manager.prepareDevelopmentBossShortcut(["anky", "rex", "spino"])).toEqual({ ok: false, reason: "developmentOnly" });
+    expect(state.expedition.run).toBeNull();
+    expect(save).not.toHaveBeenCalled();
+  });
+
+  it("개발 바로가기에서 선점한 보스 요청 ID를 재진입해도 중복 생성하지 않는다", () => {
+    const state = createDefaultSession(); const save = vi.fn();
+    const manager = new ExpeditionManager(state, { save }, () => new Date("2026-08-25T12:00:00Z"), true);
+    const shortcut = manager.prepareDevelopmentBossShortcut(["anky", "rex", "spino"]);
+    expect(shortcut.ok).toBe(true);
+    const boss = state.expedition.run!.nodes.find(({ type }) => type === "boss")!;
+    const before = { requestId: state.expedition.run!.bossSubmissionId, settlementId: state.expedition.run!.bossSettlementId };
+    expect(manager.prepareBossRequests(boss.id)).toEqual(before);
+    expect(manager.prepareBossRequests(boss.id)).toEqual(before);
+    expect(new Set([state.expedition.run!.bossSubmissionId]).size).toBe(1);
   });
 });

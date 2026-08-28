@@ -50,6 +50,11 @@ const LOBBY_BOX = { left: 26, right: BASE_WIDTH - 26, top: 190, bottom: BASE_HEI
 const SORTIE_MENU = { panel: { width: 980, height: 1240 }, motionDelay: 2600 } as const;
 /** 팝업 판(2000) 위. 화면에 직접 세우는 SD는 판보다 앞에 서야 버튼 위로 빠져나온다. */
 const SORTIE_SD_DEPTH = 2101;
+/** 복제 그림자의 색과 진하기. 카드 원화의 그림자와 같은 결로 눌러 둔다. */
+const SORTIE_SD_SHADOW = { color: 0x05070a, alpha: 0.42 } as const;
+
+/** 한 자리에 선 SD 두 겹. 그림자는 늦게 도착하거나 실패할 수 있다. */
+interface SortieSdPair { body?: PuppetCreature; shadow?: PuppetCreature }
 
 /** 한 줄에 담기는 출격 콘텐츠 한 칸. 자리·크기·원화·SD를 한 표로 읽는다. */
 interface SortieEntry {
@@ -66,6 +71,7 @@ interface SortieEntry {
   accentTextColor?: string;
   sdSide?: "left" | "right";
   sd?: PuppetAsset;
+  split?: "left" | "right";
 }
 
 /**
@@ -84,6 +90,8 @@ export class LobbyScene extends Phaser.Scene {
   /** 출격 선택판 위에 화면 좌표로 세우는 SD와 그 수명은 이 씬이 직접 소유한다. */
   private sortieSdLayer?: Phaser.GameObjects.Container;
   private readonly sortieSdPuppets = new Set<PuppetCreature>();
+  /** 본체와 복제 그림자를 짝으로 들고 있어야 같은 동작을 함께 재생할 수 있다. */
+  private sortieSdPairs: SortieSdPair[] = [];
   private sortieSdTimer?: Phaser.Time.TimerEvent;
   private sortieBackButton?: IconButton;
   private idleExcavationPopup?: IdleExcavationPopup;
@@ -231,7 +239,7 @@ export class LobbyScene extends Phaser.Scene {
       this.sortieSdLayer = this.add.container(0, 0).setName("sortie-entry-sd").setDepth(SORTIE_SD_DEPTH);
       const entries: SortieEntry[] = [
         {
-          y: -330, width: 800, height: 220, label: "스토리", status: "메인 작전", artKey: "content-story-entry",
+          y: -410, width: 800, height: 220, label: "스토리", status: "메인 작전", artKey: "content-story-entry",
           accentColor: EXCHANGE_BLUE, accentTextColor: "#9fd0f0", sd: ENEMY_SD_ASSETS[0],
           onClick: () => { close(); this.scene.start("stageMap"); },
         },
@@ -239,72 +247,108 @@ export class LobbyScene extends Phaser.Scene {
         // 두 던전은 각자의 전용 원화를 칩 실루엣에 물려 세운다. 같은 그림을 나눠 쓰면 나란히 선
         // 두 버튼이 한 콘텐츠의 두 갈래처럼 읽힌다.
         {
-          x: -205, y: -75, width: 390, height: 200, label: "케이크 대작전", labelSize: 30, status: "3 WAVE · 성장 재화",
-          artKey: "content-cake-entry", accentColor: EXCHANGE_BLUE, accentTextColor: "#9fd0f0", sd: ENEMY_SD_ASSETS[1],
+          x: -200, y: -124, width: 400, height: 200, label: "케이크 대작전", labelSize: 38, status: "3 WAVE · 성장 재화", split: "left",
+          artKey: "content-cake-entry", accentColor: EXCHANGE_BLUE, accentTextColor: "#9fd0f0",
           onClick: () => { close(); this.scene.start("sortiePreview", { mode: "cake" }); },
         },
         {
-          x: 205, y: -75, width: 390, height: 200, label: "현상수배", labelSize: 30, status: "태그 3회 · 골드",
-          artKey: "content-bounty-entry", accentColor: EXCHANGE_BLUE, accentTextColor: "#9fd0f0", sd: ENEMY_SD_ASSETS[2],
+          x: 200, y: -124, width: 400, height: 200, label: "현상수배", labelSize: 38, status: "태그 3회 · 골드", split: "right",
+          artKey: "content-bounty-entry", accentColor: EXCHANGE_BLUE, accentTextColor: "#9fd0f0",
           onClick: () => { close(); this.scene.start("sortiePreview", { mode: "bounty" }); },
         },
         // 레이드는 일일 던전 아래에서 독립된 전체 폭 콘텐츠로 읽히게 한다.
         {
-          y: 150, width: 800, height: 200, label: "레이드", status: "협동 작전 · 준비 중",
+          y: 152, width: 800, height: 200, label: "레이드", status: "협동 작전 · 준비 중",
           onClick: () => { close(); this.scene.start("sortiePreview", { mode: "raid" }); },
         },
         // 전용 프리팹이 Content2_001 원화, 주황 출격 위계, 확대 피드백을 한 입력면으로 유지한다.
         // 원정만 SD가 오른쪽에 서고 글자가 왼쪽 아래로 간다 — 20층 보스가 판 밖을 보는 자리다.
         {
-          y: 395, width: 800, height: 230, status: this.expeditionStatus(status), sdSide: "right", sd: PONTUS_SD_ASSET,
+          y: 443, width: 800, height: 230, status: this.expeditionStatus(status), sdSide: "right", sd: PONTUS_SD_ASSET,
           onClick: () => { close(); this.scene.start("expedition"); },
         },
       ];
       entries.forEach((entry) => {
         const x = entry.x ?? 0;
-        body.add(new ExpeditionEntryButton(this, x, entry.y, {
+        // SD가 서는 칸만 마스크를 만든다. 쪽을 적지 않은 칸은 왼쪽이 기본이다.
+        const sdSide = entry.sd ? entry.sdSide ?? "left" : undefined;
+        const button = new ExpeditionEntryButton(this, x, entry.y, {
           width: entry.width, height: entry.height, label: entry.label, labelSize: entry.labelSize, status: entry.status,
           artKey: entry.artKey, accentColor: entry.accentColor, accentTextColor: entry.accentTextColor,
-          sdSide: entry.sdSide, onClick: entry.onClick,
-        }));
+          sdSide, split: entry.split, onClick: entry.onClick,
+        });
+        body.add(button);
         if (!entry.sd) return;
-        const spot = sortieEntrySdSpot(entry.width, entry.height, entry.sdSide ?? "left");
-        void this.spawnSortieSd(entry.sd, BASE_WIDTH / 2 + x + spot.x, BASE_HEIGHT / 2 + entry.y + spot.groundY, spot.height);
+        const spot = sortieEntrySdSpot(entry.width, entry.height, sdSide ?? "left");
+        void this.spawnSortieSd(entry.sd, {
+          x: BASE_WIDTH / 2 + x + spot.x,
+          groundY: BASE_HEIGHT / 2 + entry.y + spot.groundY,
+          height: spot.height,
+          shadowOffsetX: spot.shadowOffsetX,
+          shadowOffsetY: spot.shadowOffsetY,
+          mask: button.sdMask,
+        });
       });
+      // 두 일일 던전은 한 판을 둘로 나눈 것처럼 맞닿고, 그 사이만 곧은 선 하나가 끊는다.
+      const divider = entries[1];
+      body.add(this.add.rectangle(0, divider.y, 3, divider.height - 24, EXCHANGE_BLUE, 0.85));
       // 돌아가기는 판 안이 아니라 다른 팝업과 같은 화면 우하단 슬롯에 선다.
       this.sortieBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: close }).setDepth(SORTIE_SD_DEPTH + 1);
       // 세워 둔 SD가 가끔 한 번씩 움직인다. 다섯 칸이 동시에 뛰면 무엇을 고르는 화면인지 흐려지므로
       // 한 번에 하나만, 그것도 드문드문 재생한다.
       this.sortieSdTimer = this.time.addEvent({ delay: SORTIE_MENU.motionDelay, loop: true, callback: () => {
-        const puppets = [...this.sortieSdPuppets];
-        const puppet = puppets[Math.floor(Math.random() * puppets.length)];
-        if (puppet) playMotion(this, puppet, Math.random() < 0.5 ? "attack" : "hit");
+        const pair = this.sortieSdPairs[Math.floor(Math.random() * this.sortieSdPairs.length)];
+        if (!pair?.body) return;
+        const motion = Math.random() < 0.5 ? "attack" : "hit";
+        // 본체와 그림자는 같은 동작을 함께 재생한다. 한쪽만 움직이면 그림자가 딴 자세로 남는다.
+        playMotion(this, pair.body, motion);
+        if (pair.shadow) playMotion(this, pair.shadow, motion);
       } });
     });
   }
 
-  /** 늦게 도착한 SD가 이미 닫힌 판 위에 남지 않도록 현재 레이어에만 붙인다. */
-  private async spawnSortieSd(asset: PuppetAsset, x: number, groundY: number, height: number): Promise<void> {
+  /**
+   * SD 한 기를 두 겹으로 세운다.
+   *
+   * 카드의 원화와 같은 규칙이다 — 같은 그림을 칸 가운데 쪽으로 살짝 밀어 어둡게 깔면 SD가
+   * 판에서 떠오른다. 그림자도 같은 동작을 재생해야 두 겹이 어긋나지 않는다. 늦게 도착한
+   * 결과는 이미 닫힌 판 위에 남지 않도록 현재 레이어일 때만 붙인다.
+   */
+  private async spawnSortieSd(asset: PuppetAsset, place: { x: number; groundY: number; height: number; shadowOffsetX: number; shadowOffsetY: number; mask?: Phaser.Display.Masks.GeometryMask }): Promise<void> {
     const layer = this.sortieSdLayer;
     if (!layer) return;
-    await loadOwnedPuppet({
-      spawn: () => spawnPuppet(this, asset, { x, groundY, height, depth: SORTIE_SD_DEPTH }),
+    const pair: SortieSdPair = {};
+    const adopt = (puppet: PuppetCreature, shadow: boolean): void => {
+      // 장식이므로 입력을 받지 않는다. 버튼의 투명 입력면이 그대로 손짓을 가져간다.
+      puppet.disableInteractive();
+      if (place.mask) puppet.setMask(place.mask);
+      if (shadow) { puppet.setTint(SORTIE_SD_SHADOW.color); puppet.setAlpha(SORTIE_SD_SHADOW.alpha); pair.shadow = puppet; }
+      else pair.body = puppet;
+      layer.add(puppet);
+      this.sortieSdPuppets.add(puppet);
+    };
+    const spawn = (shadow: boolean) => loadOwnedPuppet({
+      spawn: () => spawnPuppet(this, asset, {
+        x: place.x + (shadow ? place.shadowOffsetX : 0),
+        groundY: place.groundY + (shadow ? place.shadowOffsetY : 0),
+        height: place.height,
+        depth: shadow ? SORTIE_SD_DEPTH - 1 : SORTIE_SD_DEPTH,
+      }),
       isCurrent: () => this.sortieSdLayer === layer,
       isDisplayable: (puppet) => Boolean(puppet.active && puppet.texture?.key && this.textures.exists(puppet.texture.key)),
-      adopt: (puppet) => {
-        // 장식이므로 입력을 받지 않는다. 버튼의 투명 입력면이 그대로 손짓을 가져간다.
-        puppet.disableInteractive();
-        layer.add(puppet);
-        this.sortieSdPuppets.add(puppet);
-      },
+      adopt: (puppet) => adopt(puppet, shadow),
     });
+    // 그림자를 먼저 세워 본체가 늘 그 위에 오게 한다.
+    await spawn(true);
+    await spawn(false);
+    if (pair.body) this.sortieSdPairs.push(pair);
   }
 
   /** 판이 닫히면 화면에 직접 올린 SD·타이머·돌아가기를 함께 거둔다. */
   private clearSortieChrome(): void {
     this.sortieSdTimer?.remove(false); this.sortieSdTimer = undefined;
     for (const puppet of this.sortieSdPuppets) { this.sortieSdLayer?.remove(puppet, false); puppet.destroy(); }
-    this.sortieSdPuppets.clear();
+    this.sortieSdPuppets.clear(); this.sortieSdPairs = [];
     this.sortieSdLayer?.destroy(true); this.sortieSdLayer = undefined;
     this.sortieBackButton?.destroy(); this.sortieBackButton = undefined;
   }

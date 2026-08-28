@@ -686,6 +686,60 @@ export const RELICS: RelicDef[] = [
     },
   },
   {
+    // 신규 저장 키 `mette`는 표시명이나 에셋 번호와 분리한 안정적인 내부 ID다.
+    id: "mette",
+    name: "메테",
+    specimenNumber: "163",
+    projectName: "ADAGIO COLOSSUS",
+    excavationSite: "아르헨티나 팜파스 로한층",
+    observationProfile: {
+      originYear: "약 1만 년 전",
+      restorationYear: "E.C. 15년",
+      restorationAge: 24,
+      lifeStage: "성체",
+      // 사용자가 허용한 170cm대·70kg대 범위 안에서 도감의 단일 측정값을 확정했다.
+      height: "1.76 m",
+      weight: "74 kg",
+    },
+    catalogSummary: "신장 1.76m의 견고한 체격과 현악 연주에 적합한 섬세한 손끝을 지닌 메가테리움 성체 표본.",
+    unlockRecord: { status: "recorded", text: "메테는 복원 직후부터 바이올린의 울림에 유난히 오래 귀를 기울였다. 거대한 메가테리움의 힘과 섬세한 활놀림은 뜻밖에도 훌륭한 조화를 이룬다. 지금은 연구원을 위한 단 하나뿐인 무대를 준비하며, 자신의 연주가 온전히 닿을 날을 고대하고 있다." },
+    rarity: "SSR",
+    // 전용 원화가 없으므로 기존 인물 원화를 정식 에셋인 것처럼 복제하지 않고 명시적 placeholder를 쓴다.
+    portraitAssetId: "mette-placeholder",
+    origin: "메가테리움",
+    element: "grass",
+    role: "support",
+    // 물리형 지원가의 견고함을 운영에서도 드러내도록 화석 생산 특화를 부여했다.
+    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 26, efficiencyMultiplier: 1.12 },
+    stats: {
+      hp: 1180, def: 104, res: 72, atk: 116, ap: 48,
+      attackSpeed: 88, moveSpeed: 74, critChance: 8, critDamage: 150,
+      energyGain: 24, lifeSteal: 0, ferocityGain: 0,
+    },
+    ferocityTrait: {
+      name: "크레센도", effectId: "crescendoStaccato",
+      // 추가타는 메테 atk 50%의 마법 피해이며 기존 토리카와 같은 0.1초 경직을 사용한다.
+      damagePercent: 50, staggerSeconds: 0.1,
+    },
+    passive: {
+      id: "mette-passive", name: "아다지오의 무게", kind: "adagioWeight",
+      iconAssetId: "skill-icon-buff", effectType: "buff", value: 20,
+      teamAttackSpeedPercent: 20, cleanseShieldAttackPercent: 200, cleanseCooldownSeconds: 7,
+      desc: "생존 중 아군 공격 속도를 20% 높인다. 새 기절·경직을 정화하고 공격력 200% 보호막을 부여한다.",
+    },
+    basic: {
+      id: "mette-basic", name: "스타카토", power: 100, scalingStat: "atk",
+      iconAssetId: "skill-icon-magical", effectType: "magical", damageType: "magical",
+      statusEffects: [{ kind: "stagger", seconds: 0.1 }],
+      desc: "공격력의 100% 마법 피해를 주고 0.1초간 경직시킨다.",
+    },
+    ultimate: {
+      id: "mette-ult", name: "전장의 찬가", iconAssetId: "skill-icon-healing", effectType: "healing",
+      cost: 50, targeting: "battlefieldAllies", healing: { kind: "teamMissingHpPercent", percent: 20 },
+      desc: "모든 생존 아군이 각자 잃은 체력의 20%를 회복한다.",
+    },
+  },
+  {
     // 원정 최종층의 단독 보스. 리바이어던 멜빌레이의 거대한 턱과 심해 포식자 모티브를 담는다.
     id: "pontus",
     name: "폰투스",

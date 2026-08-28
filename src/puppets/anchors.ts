@@ -12,6 +12,9 @@ import type { PuppetBone } from "puppetforge";
 /** 화면 배치의 기준으로 쓰는 관절 종류. */
 export type AnchorKind = "core" | "head" | "body";
 
+/** placeholder도 전용 원화와 동일한 core/head/body 해석을 거쳐 교체 시 화면 좌표를 바꾸지 않는다. */
+export const PLACEHOLDER_ANCHOR_KINDS: readonly AnchorKind[] = ["core", "head", "body"];
+
 /** 텍스처(원본 이미지) 좌표계의 한 점. */
 export interface AnchorPoint {
   x: number;

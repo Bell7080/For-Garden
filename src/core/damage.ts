@@ -18,9 +18,10 @@ export function isCriticalHit(critChance: number, roll: number): boolean {
 /** 실시간 난전의 공격력, 방어, 치명타, 각성, 야성, 속성 순서를 고정한 피해 공식이다. */
 export function computeDamage(attacker: Combatant, target: Combatant, input: DamageInput, targetIsFront: boolean): number {
   // 방어형 탱커의 공격은 방어력을 직접 피해 원천으로 쓸 수 있다.
-  const offense = input.scalingStat === "def"
-    ? attacker.def.stats.def
-    : input.damageType === "physical" ? attacker.def.stats.atk : attacker.def.stats.ap + (attacker.bonusAp ?? 0);
+  const offense = input.scalingStat === "def" ? attacker.def.stats.def
+    : input.scalingStat === "atk" ? attacker.def.stats.atk
+      : input.scalingStat === "ap" ? attacker.def.stats.ap + (attacker.bonusAp ?? 0)
+        : input.damageType === "physical" ? attacker.def.stats.atk : attacker.def.stats.ap + (attacker.bonusAp ?? 0);
   const defense = input.damageType === "physical" ? target.def.stats.def : target.def.stats.res;
   const critical = input.isCritical ? attacker.def.stats.critDamage / 100 : 1;
   const opened = breakthroughBonus(attacker.breakthrough);
@@ -33,9 +34,13 @@ export function computeDamage(attacker: Combatant, target: Combatant, input: Dam
 
 /** 대상이 있으면 실제 방어를 적용하고, 없으면 도감에 표시할 스탯 배율만 반환한다. */
 export function previewSkillDamage(attacker: Combatant, skill: Skill, target?: Combatant, targetIsFront = false): DamagePreview {
+  // 순수 회복기는 피해 미리보기 경계에 들어올 수 없으며 호출부가 healing 계약을 표시해야 한다.
+  if (!("damageType" in skill) || skill.damageType === undefined || skill.power === undefined) {
+    throw new TypeError("비공격 스킬은 피해를 미리 볼 수 없습니다.");
+  }
   if (!target) {
-    const stat = skill.scalingStat === "def" ? "방어력" : skill.damageType === "physical" ? "공격력" : "주문력";
-    const base = skill.scalingStat === "def" ? attacker.def.stats.def : skill.damageType === "physical" ? attacker.def.stats.atk : attacker.def.stats.ap;
+    const stat = skill.scalingStat === "def" ? "방어력" : skill.scalingStat === "atk" || skill.damageType === "physical" ? "공격력" : "주문력";
+    const base = skill.scalingStat === "def" ? attacker.def.stats.def : skill.scalingStat === "atk" || skill.damageType === "physical" ? attacker.def.stats.atk : attacker.def.stats.ap;
     return { kind: "scaling", amount: Math.round(base * skill.power / 100), power: skill.power, stat, label: "피해량" };
   }
   return { kind: "damage", amount: computeDamage(attacker, target, { ...skill, isCritical: false }, targetIsFront), label: "예상 피해" };

@@ -11,6 +11,7 @@ const TINTS: Record<string, number> = {
   dodo: 0xe8d9a0, // 도디 — 저장 호환 ID는 유지하고 바랜 깃털색으로 구분한다.
   smilo: 0xd9a54a, // 스밀로돈 — 황토빛 털
   quetz: 0x6fb3c4, // 케찰 — 창공빛
+  mette: 0x789b68, // 메테 — 초원과 오래된 현악기의 차분한 녹색
 };
 
 const FALLBACK = 0xffffff;

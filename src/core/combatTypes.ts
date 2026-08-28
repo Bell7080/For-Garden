@@ -19,7 +19,7 @@ export interface DamageInput {
   power: number;
   damageType: DamageType;
   /** 생략하면 피해 종류에 따라 공격력 또는 주문력을 사용한다. */
-  scalingStat?: "atk" | "def";
+  scalingStat?: "atk" | "ap" | "def";
   isCritical: boolean;
   kind?: "basic" | "ultimate";
 }

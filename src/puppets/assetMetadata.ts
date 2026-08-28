@@ -1,5 +1,13 @@
 import type { PuppetAsset } from "./assets";
 
+/** 메테 전용 원화가 오기 전 사용하는 명시적 placeholder 프레임이며 토리카 원화의 정식 소유권을 뜻하지 않는다. */
+export const METTE_PLACEHOLDER_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1054,
+  imageHeight: 1492,
+  content: { left: 95, top: 69, right: 894, bottom: 1419 },
+  cardZoom: 0.62,
+};
+
 /**
  * 폰투스 ZIP을 정적으로 검사한 렌더링 메타데이터다.
  *

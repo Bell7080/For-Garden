@@ -68,7 +68,9 @@ export class MissionsPopup {
       // HoloBar의 x는 왼쪽 끝이 아니라 중심이다. 카드 안쪽 -390에서 시작해 우측 정보 앞에서 끝낸다.
       const barWidth = 520;
       const barLeft = -390;
-      const bar = new HoloBar(this.scene, barLeft + barWidth / 2, y + 35, barWidth, 18, { color: mission.claimable ? COLOR.missionClaim : COLOR.accent }).addTo(this.list!); bar.setValue(mission.ratio); this.bars.push(bar);
+      // 달성도는 카드 면 위에서도 또렷해야 한다. 빈 자리는 짙은 검정으로 눌러 두고 최대치는
+      // 흰 선으로 둘러, 채움이 옅어도 "어디까지가 이 게이지인가"가 먼저 읽힌다.
+      const bar = new HoloBar(this.scene, barLeft + barWidth / 2, y + 35, barWidth, 18, { color: mission.claimable ? COLOR.missionClaim : COLOR.accent, trackAlpha: 0.86, outline: true }).addTo(this.list!); bar.setValue(mission.ratio); this.bars.push(bar);
       // 진행 수는 게이지 끝에 바로 붙여 시선이 카드 반대편까지 왕복하지 않게 한다.
       const progress = this.scene.add.text(150, y + 18, mission.progressLabel, textStyle({ role: "emphasis", size: 24, color: mission.claimed ? COLOR.inkDim : COLOR.ink })).setOrigin(0, 0);
       // 기존 미수령 숫자 자리에는 이 임무가 완료 순간 확정하는 연구도를 직접 보여 준다.

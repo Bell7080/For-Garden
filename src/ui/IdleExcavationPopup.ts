@@ -185,6 +185,8 @@ export class IdleExcavationPopup {
     if (!this.body) return undefined;
     this.content = this.scene.add.container(0, 0);
     this.body.add(this.content);
+    // 본문은 판 전체를 덮는 원화를 담으므로, 머리글은 그 위로 다시 올린다.
+    this.popups.raiseChrome(this.body);
     return this.content;
   }
 
@@ -271,6 +273,7 @@ export class IdleExcavationPopup {
     // 1순위 발굴대 상태: 전용 원화를 팝업 전체에 한 장으로 깔아 히어로와 조작부를 끊지 않는다.
     if (!this.statusBackground && this.scene.textures.exists(BACKGROUND.excavation)) {
       this.statusBackground = addPopupBackgroundImage(this.scene, content, BACKGROUND.excavation, { x: 0, y: 0, width: PANEL.width - 24, height: PANEL.height - 24, maskShape: POPUP_ART_SHAPE });
+      if (this.body) this.popups.raiseChrome(this.body);
     }
     // 2순위 작업 중 SD/슬롯: 현황에서도 칸 자체가 편성 그리드의 유일한 진입점이다.
     this.renderUpper(formation, false);

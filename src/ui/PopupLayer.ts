@@ -56,6 +56,8 @@ export class PopupLayer {
   private readonly stack: Phaser.GameObjects.Container[] = [];
   /** 외부 뒤로가기가 `closeTop`을 호출해도 팝업 소유자의 정리 콜백을 빠뜨리지 않는다. */
   private readonly onCloseByLayer = new Map<Phaser.GameObjects.Container, (() => void) | undefined>();
+  /** 판 소유자가 나중에 채운 내용 위로 머리글을 다시 올릴 수 있게 판별 본문마다 보관한다. */
+  private readonly chromeByBody = new Map<Phaser.GameObjects.Container, Phaser.GameObjects.GameObject[]>();
 
   constructor(private readonly scene: Phaser.Scene, private readonly depth = 2000) {}
 
@@ -137,9 +139,14 @@ export class PopupLayer {
     }
     if (options.closeOnBackdrop !== false) backdrop.on("pointerup", () => close());
 
+    // Container는 자식의 depth로 순서를 바꾸지 않고 넣은 순서대로만 그린다. 그래서 머리글은
+    // 판 소유자가 내용을 채울 때마다 다시 맨 위로 올려야 하고, 그 목록을 여기 남겨 둔다.
+    this.chromeByBody.set(body, titleChrome);
+    body.once(Phaser.GameObjects.Events.DESTROY, () => this.chromeByBody.delete(body));
+
     build(body, close);
     // 배경 원화를 까는 큰 팝업은 내용이 제목 뒤로 들어오므로, 채운 뒤 머리글을 한 번 더 맨 위로 올린다.
-    for (const chrome of titleChrome) body.bringToTop(chrome);
+    this.raiseChrome(body);
 
     // 살짝 커지며 떠오른다. 정보창의 다른 판과 같은 등장 방식이다.
     layer.setAlpha(0);
@@ -149,6 +156,16 @@ export class PopupLayer {
 
     this.stack.push(layer);
     return body;
+  }
+
+  /**
+   * 머리글을 다시 맨 위로 올린다.
+   *
+   * `build`가 끝난 뒤에 배경 원화나 큰 이미지를 얹는 판은 그때마다 이걸 부른다. 팝업 안에서
+   * 화면을 갈아 끼우는 발굴처럼, 늦게 만들어진 원화가 `/ 발굴` 제목표를 덮기 때문이다.
+   */
+  raiseChrome(body: Phaser.GameObjects.Container): void {
+    for (const chrome of this.chromeByBody.get(body) ?? []) body.bringToTop(chrome);
   }
 
   /**

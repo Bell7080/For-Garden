@@ -190,6 +190,20 @@ describe("메테 전투 계약", () => {
     expect(ally.staggeredFor).toBe(0);
   });
 
+  it("는 편성 순서의 준비된 메테가 먼저 정화하고 기존 보호막에는 새 보호막을 합산한다", () => {
+    const state = newSkirmish(["mette", "mette", "rex"], ["husk-shell"]);
+    const [first, second, ally] = state.fighters;
+    ally.shield = 10;
+    const firstEvents = applyStun(ally, 1, state);
+    expect(firstEvents).toContainEqual(expect.objectContaining({ kind: "shieldGranted", providerId: first.id, remaining: 242 }));
+    expect(first.adagioCooldownRemaining).toBe(7);
+    expect(second.adagioCooldownRemaining).toBe(0);
+
+    applyStagger(ally, 0.1, state);
+    expect(ally.shield).toBe(474); // 두 번째 메테도 자기 공격력 116의 200%를 기존 총량에 더한다.
+    expect(second.adagioCooldownRemaining).toBe(7);
+  });
+
   it("는 보호막을 HP보다 먼저 흡수하고 흡수·소진 사건을 렌더러에 전달한다", () => {
     const { state, ally, foe } = metteBattle();
     applyStun(ally, 1, state);
@@ -821,6 +835,13 @@ describe("도디 정적 전투 계약", () => {
     expect(events.some((event) => event.kind === "attack" && event.targetId === boundaryEnemy.id)).toBe(true);
     expect(outsideEnemy.hp).toBe(outsideEnemyHp); expect(insideAlly.hp).toBeGreaterThan(insideAlly.maxHp - 300);
     expect(outsideAlly.hp).toBe(outsideAllyHp); expect(dodi.energy).toBe(0);
+  });
+
+  it("도디의 범위 밖 지정점은 경계를 포함한 전장 사각형으로 보정한다", () => {
+    const state = readyDodiBattle(["dodo"], ["husk-shell"]); const [dodi, enemy] = state.fighters;
+    dodi.energy = 250; enemy.x = state.arena.right; enemy.y = state.arena.bottom;
+    const events = fireUltimate(state, dodi.id, () => 0.99, { x: state.arena.right + 999, y: state.arena.bottom + 999 });
+    expect(events).toContainEqual(expect.objectContaining({ kind: "attack", targetId: enemy.id }));
   });
 });
 

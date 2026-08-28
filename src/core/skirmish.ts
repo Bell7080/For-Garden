@@ -350,6 +350,17 @@ export function applyStagger(fighter: Fighter, seconds: number): SkirmishEvent[]
 function applyCombatStatusEffect(fighter: Fighter, effect: CombatStatusEffect, events: SkirmishEvent[]): void {
   if (effect.kind === "stun") events.push(...applyStun(fighter, effect.seconds));
   if (effect.kind === "stagger") events.push(...applyStagger(fighter, effect.seconds));
+  if (effect.kind === "bleed") refreshBleed(fighter, effect.seconds, effect.maxHpPercentPerSecond, events);
+}
+
+/** 모든 출혈 진입점이 공유하는 단일 슬롯 갱신 규칙이다. 약한 재적용은 강도와 틱 시계를 덮지 않는다. */
+function refreshBleed(target: Fighter, seconds: number, percent: number, events: SkirmishEvent[]): void {
+  target.bleed = {
+    remaining: Math.max(target.bleed?.remaining ?? 0, seconds),
+    tickIn: target.bleed?.tickIn ?? 1,
+    percent: Math.max(target.bleed?.percent ?? 0, percent),
+  };
+  events.push({ kind: "bleed", fighterId: target.id, amount: 0, started: true });
 }
 
 /** 사망한 전투원에게서 이후 되살아날 수 있는 전투 한정 지속 상태를 한곳에서 정리한다. */
@@ -380,6 +391,9 @@ export function findFighter(state: SkirmishState, id: string): Fighter | undefin
 /** 공격 속도가 정하는 공격 간격(초). 100이 기준이다. */
 export function attackInterval(fighter: Fighter): number {
   const trait = fighter.def.ferocityTrait;
+  const passiveSpeed = fighter.def.passive.kind === "battleMaidMastery"
+    ? 1 + (fighter.def.passive.attackSpeedPercent ?? 0) / 100
+    : 1;
   // 개별 공속은 공용 야성 피해 보너스를 다시 건드리지 않고 재사용 대기시간에만 곱한다.
   const feverMultiplier = fighter.ferocityFever && trait.effectId === "attackIntervalReduction"
     ? 1 - trait.reductionPercent / 100
@@ -387,7 +401,7 @@ export function attackInterval(fighter: Fighter): number {
       // 공격 속도 +20%는 공격 간격 -20%와 다르므로 증가된 속도로 간격을 나눈다.
       ? 1 / (1 + trait.attackSpeedBonusPercent / 100)
       : 1;
-  return ((SKIRMISH.attackInterval * 100) / Math.max(1, fighter.def.stats.attackSpeed)) * feverMultiplier;
+  return ((SKIRMISH.attackInterval * 100) / Math.max(1, fighter.def.stats.attackSpeed * passiveSpeed)) * feverMultiplier;
 }
 
 /** 이동 속도와 현재 편의 피버 오라가 정하는 초당 이동 거리(px). */
@@ -495,8 +509,25 @@ function applyStreak(attacker: Fighter, target: Fighter, events: SkirmishEvent[]
   attacker.streakTargetId = target.id;
   if (attacker.streakCount < attacker.def.passive.value) return;
   attacker.streakCount = 0;
-  target.bleed = { remaining: BLEED.seconds, tickIn: 1, percent: BLEED.percentPerSecond };
-  events.push({ kind: "bleed", fighterId: target.id, amount: 0, started: true });
+  refreshBleed(target, BLEED.seconds, BLEED.percentPerSecond, events);
+}
+
+/** 네 능력치 패시브를 피해 공식에 넘길 임시 정의에만 반영해 원본 콘텐츠 데이터를 보존한다. */
+function offensiveDefinition(attacker: Fighter): RelicDef {
+  const passive = attacker.def.passive;
+  if (passive.kind !== "battleMaidMastery") return attacker.def;
+  return { ...attacker.def, stats: {
+    ...attacker.def.stats,
+    atk: attacker.def.stats.atk * (1 + (passive.attackPowerPercent ?? 0) / 100),
+    critDamage: attacker.def.stats.critDamage * (1 + (passive.criticalDamagePercent ?? 0) / 100),
+  } };
+}
+
+/** 직접 피해 회복률은 기본 능력치, 현재 폭주, 사용 스킬을 %p 덧셈으로 확정한다. */
+function damageHealingRate(attacker: Fighter, skill: Skill, attackingInFever: boolean): number {
+  const trait = attacker.def.ferocityTrait;
+  const fever = attackingInFever && trait.effectId === "rexBattleQueen" ? trait.allDamageLifeStealPoints : 0;
+  return attacker.def.stats.lifeSteal + fever + (skill.damageHealingPercent ?? 0);
 }
 
 /**
@@ -608,11 +639,15 @@ function strike(
   // 이번 타격 시작 시점의 피버만 본다. 이 공격으로 100에 도달했다면 다음 공격부터 발현한다.
   const attackingInFever = attacker.ferocityFever;
   const critTrait = attacker.def.ferocityTrait;
-  // 수치가 100%를 넘더라도 판정 함수에는 유효한 확률만 전달한다.
-  const criticalChance = attacker.def.stats.critChance
-    + (attackingInFever && critTrait.effectId === "criticalChanceBonus" ? critTrait.chancePercent : 0);
+  const passiveCritMultiplier = attacker.def.passive.kind === "battleMaidMastery"
+    ? 1 + (attacker.def.passive.criticalChancePercent ?? 0) / 100 : 1;
+  // 패시브의 % 배율을 먼저 적용하고 폭주의 %p를 더한 뒤 유효한 확률로 제한한다.
+  const criticalChance = attacker.def.stats.critChance * passiveCritMultiplier
+    + (attackingInFever && critTrait.effectId === "criticalChanceBonus" ? critTrait.chancePercent : 0)
+    + (attackingInFever && critTrait.effectId === "rexBattleQueen" ? critTrait.criticalChancePoints : 0);
   const critical = isCriticalHit(Math.min(100, criticalChance), rng());
   const damageInput = { ...skill, isCritical: critical, kind: useUltimate ? "ultimate" as const : "basic" as const };
+  const damageAttacker = { ...attacker, def: offensiveDefinition(attacker) };
   const splashTrait = attacker.def.ferocityTrait;
   // 토리카의 방어력 추가 피해도 일반 물리 피해 공식(속성·대상 방어력·치명타)을 거친다.
   const defenseBonus = attackingInFever && !useUltimate && splashTrait.effectId === "splashDamage"
@@ -625,7 +660,7 @@ function strike(
       }, true)
     : 0;
   // 공용 피해 공식을 그대로 통과한 뒤 원정 공격력 증강만 최종 배율로 한 번 적용한다.
-  const rawAmount = Math.max(1, Math.round((computeDamage(attacker, target, damageInput, true) + defenseBonus) * attackPowerMultiplier(state.augmentEffects, attacker.def.id)));
+  const rawAmount = Math.max(1, Math.round((computeDamage(damageAttacker, target, damageInput, true) + defenseBonus) * attackPowerMultiplier(state.augmentEffects, attacker.def.id)));
   // 방어·패시브·상성 뒤의 모든 개별 경감은 공용 HP 피해 경계에서 한 번만 적용한다.
   const amount = receivedDamage(target, rawAmount);
 
@@ -638,7 +673,7 @@ function strike(
    * 생기면 이 지점에 도달하는 HP 피해만 넘기면 규칙이 그대로 유지된다.
    */
   const healFromDamage = (dealt: number) => {
-    attacker.hp = Math.min(attacker.maxHp, attacker.hp + dealt * attacker.def.stats.lifeSteal / 100);
+    attacker.hp = Math.min(attacker.maxHp, attacker.hp + dealt * damageHealingRate(attacker, skill, attackingInFever) / 100);
   };
   healFromDamage(targetHpBefore - target.hp);
   if (useUltimate) attacker.energy -= attacker.def.ultimate.cost;
@@ -660,9 +695,8 @@ function strike(
   applyStreak(attacker, target, events);
   const augmentBleed = bleedOnAttackEffect(state.augmentEffects, attacker.def.id);
   if (augmentBleed && isFighterAlive(target)) {
-    // 출혈은 단일 슬롯 정책이다. 재적용 시 더 센 비율과 더 긴 남은 시간을 보존해 약한 효과가 덮지 않는다.
-    target.bleed = { remaining: Math.max(target.bleed?.remaining ?? 0, augmentBleed.seconds), tickIn: target.bleed?.tickIn ?? 1, percent: Math.max(target.bleed?.percent ?? 0, augmentBleed.percent) };
-    events.push({ kind: "bleed", fighterId: target.id, amount: 0, started: true });
+    // 원정 증강도 스킬·연속 공격과 동일한 출혈 갱신 규칙을 공유한다.
+    refreshBleed(target, augmentBleed.seconds, augmentBleed.percent, events);
   }
 
   events.push({
@@ -736,21 +770,25 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
   // 공격자 야성은 이번 공격의 모든 피해가 같은 시작 시점 배율을 쓰도록 대상 처리 뒤에 얻는다.
   const attackingInFever = attacker.ferocityFever;
   const critTrait = attacker.def.ferocityTrait;
+  const passiveCritMultiplier = attacker.def.passive.kind === "battleMaidMastery"
+    ? 1 + (attacker.def.passive.criticalChancePercent ?? 0) / 100 : 1;
+  const damageAttacker = { ...attacker, def: offensiveDefinition(attacker) };
 
   for (const [index, target] of targets.entries()) {
     // 각 대상은 자기 방어력·속성·피버 경감을 사용하며 치명타도 독립 판정한다.
-    const criticalChance = Math.min(100, attacker.def.stats.critChance
-      + (attackingInFever && critTrait.effectId === "criticalChanceBonus" ? critTrait.chancePercent : 0));
+    const criticalChance = Math.min(100, attacker.def.stats.critChance * passiveCritMultiplier
+      + (attackingInFever && critTrait.effectId === "criticalChanceBonus" ? critTrait.chancePercent : 0)
+      + (attackingInFever && critTrait.effectId === "rexBattleQueen" ? critTrait.criticalChancePoints : 0));
     const critical = isCriticalHit(criticalChance, rng());
     const damageInput = { ...skill, isCritical: critical, kind: useUltimate ? "ultimate" as const : "basic" as const };
-    const rawAmount = Math.max(1, Math.round(computeDamage(attacker, target, damageInput, true)
+    const rawAmount = Math.max(1, Math.round(computeDamage(damageAttacker, target, damageInput, true)
       * attackPowerMultiplier(state.augmentEffects, attacker.def.id)));
     const amount = receivedDamage(target, rawAmount);
     const hpBefore = target.hp;
     target.hp = Math.max(0, target.hp - amount);
     tryTriggerEmergencyRecovery(target);
     // 흡혈은 대상별 실제 HP 감소량만 더해 과잉 피해를 회복량으로 만들지 않는다.
-    attacker.hp = Math.min(attacker.maxHp, attacker.hp + (hpBefore - target.hp) * attacker.def.stats.lifeSteal / 100);
+    attacker.hp = Math.min(attacker.maxHp, attacker.hp + (hpBefore - target.hp) * damageHealingRate(attacker, skill, attackingInFever) / 100);
     gainFerocity(target, FEROCITY_RULES.hitGain, state);
 
     const dx = target.x - attacker.x;

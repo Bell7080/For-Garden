@@ -6,7 +6,7 @@ import { chipPoints, drawHairline, drawInnerVignette, drawLayer, drawShapeOutlin
 import type { PopupLayer } from "./PopupLayer";
 import { FALLBACK_SKILL_ICON } from "./skillIcons";
 import { SKILL_ART_WASH_ALPHA } from "./skillArt";
-import { recoveryLabel, skillKeywordLayoutOptions, statusEffectLabel, targetingLabel } from "./skillPresentation";
+import { damageHealingLabel, recoveryLabel, skillKeywordLayoutOptions, statusEffectLabel, targetingLabel } from "./skillPresentation";
 import { COLOR, textStyle } from "./theme";
 
 /** 데이터 효과 분류를 플레이어가 읽는 고정 라벨로 바꾼다. */
@@ -41,6 +41,8 @@ export interface SkillInfoViewModel {
   durationSeconds?: number;
   /** 매초 회복하는 최대 체력 비율이다. 패시브 정의의 현재 값을 전달받는다. */
   recoveryPercent?: number;
+  /** 과잉 피해를 제외한 실제 HP 피해에서 회복하는 비율이다. */
+  damageHealingPercent?: number;
   /** 궁극기만 갖는 소비 게이지. */
   gaugeCost?: number;
   /** `[[keyword]]` 문법을 쓸 수 있는 설명문. */
@@ -113,6 +115,7 @@ export function openSkillPopup(
       ...((skill.statusEffects ?? []).map(statusEffectLabel)),
       skill.durationSeconds === undefined ? undefined : `${skill.durationSeconds}초 동안`,
       recoveryLabel(skill.recoveryPercent),
+      damageHealingLabel(skill.damageHealingPercent),
     ].filter(Boolean).join("   ·   ");
     // 실제 수치도 설명문과 같은 키워드 레이아웃을 써서, 누르면 산출 근거를 확인할 수 있게 한다.
     const summaryText = keywords.layout(summary, skillKeywordLayoutOptions(skill, {

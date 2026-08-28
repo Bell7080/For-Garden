@@ -95,22 +95,32 @@ test("출격 선택판에서 원정대 3기를 골라 진행 중 상태로 저�
   await tapGame(page, BASE_WIDTH - 290, BASE_HEIGHT - 425);
   await tapGame(page, BASE_WIDTH / 2, 1403);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("expedition");
-  await page.screenshot({ path: `test-results/${test.info().project.name}-expedition-preparation.png` });
-
-  // 준비 화면의 공용 진입점은 씬을 떠나지 않고 서버 주간 기록판을 연다.
-  await tapGame(page, BASE_WIDTH - 190, 292);
+  // 원정의 첫 화면은 주간 기록이다. 순위와 기록 보상을 먼저 보고 출격으로 편성을 연다.
+  await page.waitForTimeout(900);
+  await page.screenshot({ path: `test-results/${test.info().project.name}-expedition-ranking.png` });
+  await tapGame(page, 250, 1330);
+  await page.waitForTimeout(700);
+  await page.screenshot({ path: `test-results/${test.info().project.name}-expedition-reward-popup.png` });
+  // 읽기 판이라 바깥을 누르면 닫힌다.
+  await tapGame(page, BASE_WIDTH / 2, 300);
   await page.waitForTimeout(500);
-  await page.screenshot({ path: `test-results/${test.info().project.name}-expedition-ranking-popup.png` });
-  await tapGame(page, BASE_WIDTH - 106, BASE_HEIGHT - 120);
+
+  // 하단 출격 버튼이 편성 단계를 연다. 씬 재시작과 SD 로딩을 기다린 뒤 카드를 누른다.
+  await tapGame(page, BASE_WIDTH / 2, 1700);
+  await page.waitForTimeout(1500);
+  await page.screenshot({ path: `test-results/${test.info().project.name}-expedition-preparation.png` });
 
   // 초기 보유 세 기를 모두 고른 뒤 시작하면 매니저 저장을 거쳐 같은 씬의 이어하기 상태가 된다.
   // 상단 1/2/3 SD 편성 미리보기 아래로 이동한 보유 카드 그리드를 누른다.
   for (const x of [234, 540, 846]) await tapGame(page, x, 850);
+  // 세 번째 선택이 편성 미리보기를 다시 그리는 동안 시작 버튼이 활성으로 바뀐다.
+  await page.waitForTimeout(500);
   await tapGame(page, BASE_WIDTH / 2, 1680);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("expedition");
   await expect.poll(() => page.evaluate(() => {
+    // 저장에는 파생값(active)이 아니라 진행 중 런만 들어간다. 편성 3기는 run.relics가 갖는다.
     const raw = window.localStorage.getItem("eternal-city.local-save");
-    return raw ? JSON.parse(raw).expedition?.active?.relicIds?.length : 0;
+    return raw ? JSON.parse(raw).expedition?.run?.relics?.length : 0;
   })).toBe(3);
   await page.screenshot({ path: `test-results/${test.info().project.name}-expedition-active.png` });
 });

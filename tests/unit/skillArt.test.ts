@@ -64,7 +64,8 @@ describe("스킬 일러스트 파일", () => {
 describe("토리카 스킬 표시 계약", () => {
   it("은 구조화된 5초·7%·전체 적·2초 값을 실제 표시 문구로 만든다", () => {
     // UI가 ID별 예외 없이 같은 정적 데이터를 읽을 수 있도록 모든 궁극기의 계약을 검사한다.
-    for (const def of RELICS) expect(["single", "nearbyEnemies", "battlefieldEnemies", "targetedCircle"]).toContain(def.ultimate.targeting);
+    // 순수 회복 궁극기는 적 대상 네 종류와 분리된 전장 전체 아군 계약을 사용한다.
+    for (const def of RELICS) expect(["single", "nearbyEnemies", "battlefieldEnemies", "battlefieldAllies", "targetedCircle"]).toContain(def.ultimate.targeting);
     const torika = RELICS.find((def) => def.id === "anky")!;
     expect(torika.ultimate).toMatchObject({
       targeting: "nearbyEnemies",

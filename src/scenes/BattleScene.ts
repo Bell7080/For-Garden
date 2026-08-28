@@ -684,12 +684,17 @@ export class BattleScene extends Phaser.Scene {
       // stunnedFor를 읽어 동기화하므로, 종료 사건이 누락되어 UI가 남는 구조를 만들지 않는다.
       return undefined;
     }
+    if (event.kind === "shieldGranted" || event.kind === "shieldAbsorbed" || event.kind === "shieldDepleted") {
+      // 보호막 사건은 현재 HUD가 Fighter.shield 잔량을 읽어 갱신하며, 별도 피해 모션을 재생하지 않는다.
+      return undefined;
+    }
 
     const attacker = this.views.get(event.attackerId);
     const target = this.views.get(event.targetId);
     if (this.state.boss && attacker?.fighter.side === "player" && target?.fighter.side === "enemy" && event.animate !== false) {
       // 서버가 성장 스냅샷으로 재현할 수 있도록 ID·종류·코어 시각만 남기고 event.amount는 버린다.
-      this.bossActions.push({ elapsedMs: Math.round(this.state.elapsed * 1_000), actorId: attacker.fighter.def.id, kind: event.skill });
+      // 스타카토는 원본 기본 공격에 딸린 추가타이므로 보스 리플레이 행동 종류는 basic으로 접는다.
+      this.bossActions.push({ elapsedMs: Math.round(this.state.elapsed * 1_000), actorId: attacker.fighter.def.id, kind: event.skill === "staccato" ? "basic" : event.skill });
     }
     // 한 광역 기술의 후속 피해 사건은 피격 표현만 만들고 시전자 모션은 첫 사건에서 한 번만 튼다.
     const playback = attacker && event.animate !== false ? playMotion(this, attacker.creature, "attack", motionSpeedMultiplier) : undefined;

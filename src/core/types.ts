@@ -12,7 +12,7 @@ export type Role = "warrior" | "tank" | "assassin" | "support";
 export type RelicRarity = "R" | "SR" | "SSR";
 
 /** 전신 Puppet 레지스트리의 안정적인 데이터 키다. 파일 번호를 게임 데이터에 직접 노출하지 않는다. */
-export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "toby" | "amo" | "ripa" | "pontus" | "torika-placeholder";
+export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "toby" | "amo" | "ripa" | "pontus" | "torika-placeholder" | "mette-placeholder";
 
 export interface Stats {
   /** 생존력과 물리·마법 공격의 기반이 되는 주 능력치다. */
@@ -84,7 +84,7 @@ export type SkillIconAssetId =
   | "skill-icon-buff"
   | "skill-icon-fallback";
 
-export interface Skill {
+interface SkillBase {
   id: string;
   name: string;
   /** Phaser 텍스처 캐시에서 찾을 공용 아이콘 키다. */
@@ -92,23 +92,37 @@ export interface Skill {
   /** UI가 피해·회복·강화 의미를 damageType 존재 여부와 무관하게 표현하는 분류다. */
   effectType: EffectType;
   /** 공격력 배율(%). 100이면 공격력 그대로. 회복·버프 스킬은 회복량/버프량으로 쓴다. */
-  power: number;
-  /** 공격력 대신 자신의 방어력을 기준으로 삼는 기술만 명시한다. */
-  scalingStat?: "atk" | "def";
-  /** 물리는 atk/def, 마법은 ap/res를 참조한다. */
-  damageType: DamageType;
   /** 명중 뒤 적용할 작은 공용 상태 효과 목록이다. 기절·경직이 없는 스킬은 생략한다. */
   statusEffects?: readonly CombatStatusEffect[];
   /** 실제 HP에서 감소한 피해의 이 비율(%)을 시전자가 회복한다. 과잉 피해는 계산하지 않으며 능력치·폭주 흡혈과 합산한다. */
   damageHealingPercent?: number;
   /** 기본 공격이 원형 광역일 때만 시전자 중심 대상 계약과 반경을 선언한다. */
-  targeting?: "single" | "nearbyEnemies" | "battlefieldEnemies" | "targetedCircle";
+  targeting?: "single" | "nearbyEnemies" | "battlefieldEnemies" | "battlefieldAllies" | "targetedCircle";
   radius?: number;
   desc: string;
 }
 
+/** 피해 스킬은 피해 종류와 계수를 함께 요구해 비공격 스킬과 안전하게 구별한다. */
+export type AttackSkill = SkillBase & {
+  damageType: DamageType;
+  power: number;
+  /** 마법 피해도 메테처럼 물리 공격력(atk)을 명시적으로 선택할 수 있다. */
+  scalingStat?: "atk" | "ap" | "def";
+};
+
+/** 순수 회복 스킬은 damageType/power를 가질 수 없어 피해 계산에 잘못 전달되지 않는다. */
+export type HealingSkill = SkillBase & {
+  damageType?: never;
+  power?: never;
+  scalingStat?: never;
+  healing: { kind: "teamMissingHpPercent"; percent: number };
+};
+
+/** 모든 스킬의 판별 유니온이며 `damageType in skill`로 공격 여부를 좁힌다. */
+export type Skill = AttackSkill | HealingSkill;
+
 /** 기본 공격만 가질 수 있는 추가 타격 계약이다. 일반 단타는 불필요한 확률 필드를 갖지 않는다. */
-export type BasicAttack = Skill & {
+export type BasicAttack = AttackSkill & {
   /** 실제 감소시킨 적 HP의 이 비율만큼 최저 현재 HP 생존 아군을 회복한다. 자신도 후보이며 동률은 편성 순서다. */
   lowestHpAllyHealingFromDamagePercent?: number;
 } & ({ combo?: undefined } | {
@@ -151,6 +165,7 @@ export type Ultimate = Skill & {
       radius: number;
     }
   | { /** 거리에 상관없이 전장의 모든 생존 적을 공격한다. */ targeting: "battlefieldEnemies" }
+  | { /** 거리에 상관없이 모든 생존 아군에게 비공격 효과를 적용한다. */ targeting: "battlefieldAllies" }
   | {
       /** 사용자가 지정한 위치를 중심으로 적 피해와 아군 회복을 함께 판정한다. */
       targeting: "targetedCircle";
@@ -178,7 +193,9 @@ export type PassiveKind =
   /** 폰투스의 시간 누적 주문력·잃은 체력 경감 규칙을 식별한다. */
   | "abyssalPressure"
   /** 도디 전용: 제공자 생존 여부로 팀 방어와 적 회복을 동시에 조절한다. */
-  | "guardianNestAura";
+  | "guardianNestAura"
+  /** 메테 전용: 생존 중 팀 공속과 제어 정화·보호막을 제공한다. */
+  | "adagioWeight";
 
 /** 전투 엔진이 판별하는 야성 특성 효과 ID다. 새 효과는 수치 계약과 함께 명시적으로 추가한다. */
 export type FerocityEffectId =
@@ -189,7 +206,9 @@ export type FerocityEffectId =
   | "teamMoveSpeedBonus"
   | "stealthLeap"
   /** 폭주 중 자기 공격 속도를 곱하는 명시적 효과다. */
-  | "selfAttackSpeedMultiplier";
+  | "selfAttackSpeedMultiplier"
+  /** 메테 전용: 폭주 중 아군 일반 공격 적중마다 스타카토 추가타를 연주한다. */
+  | "crescendoStaccato";
 
 /**
  * 개체별 피버 발현 정적 데이터다.
@@ -241,6 +260,13 @@ export type FerocityTrait = {
       /** 목표의 일반 공격 사거리 가장자리로 즉시 배치할 거리다. */
       landingDistance: number;
     }
+  | {
+      effectId: "crescendoStaccato";
+      /** 아군의 실제 일반 공격 적중 뒤 메테 공격력으로 계산할 마법 추가타 계수다. */
+      damagePercent: number;
+      /** 스타카토가 적용하는 기존 경직 디버프의 지속 시간이다. */
+      staggerSeconds: number;
+    }
 );
 
 export interface Passive {
@@ -273,6 +299,12 @@ export interface Passive {
   teamDefenseResistancePercent?: number;
   /** 제공자가 살아 있는 동안 반대편이 받는 모든 체력 회복을 줄이는 비율(%). */
   enemyHealingReceivedReductionPercent?: number;
+  /** 생존 제공자가 같은 편 전체에 곱해 주는 공격 속도 증가율이다. */
+  teamAttackSpeedPercent?: number;
+  /** 제어 정화 직후 제공자 atk에 곱해 부여하는 보호막 비율이다. */
+  cleanseShieldAttackPercent?: number;
+  /** 메테 개체가 독립적으로 소유하는 정화·보호막 재사용 대기시간이다. */
+  cleanseCooldownSeconds?: number;
   desc: string;
 }
 

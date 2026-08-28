@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   aliveFighters,
   applyStun,
+  applyStagger,
   BLEED,
   EMERGENCY_RECOVERY,
   attackInterval,
@@ -93,10 +94,12 @@ describe("스피나 전투 계약", () => {
 
   it("은 궁극기에 공격력 200%와 현재 공속 150%를 합산하고 생존자에게 3초 기절을 준다", () => {
     const { state, spino, target } = readySpino(); spino.energy = 300; spino.bonusAttackSpeed = 6;
+    const ultimate = spino.def.ultimate;
+    if (!("damageType" in ultimate) || ultimate.damageType === undefined) throw new Error("스피나 공격 궁극기 계약이 필요합니다.");
     const speed = currentAttackSpeed(spino);
     // 실제 피해는 아래 공용 함수에서 방어 적용 후 정수로 반올림하므로, 복합 원피해 산식과 구분한다.
     const equivalentPower = 200 + speed * 150 / spino.def.stats.atk;
-    const expected = computeDamage(spino, target, { ...spino.def.ultimate, power: equivalentPower, kind: "ultimate", isCritical: false }, true);
+    const expected = computeDamage(spino, target, { ...ultimate, power: equivalentPower, kind: "ultimate", isCritical: false }, true);
     const hit = fireUltimate(state, spino.id).find((event) => event.kind === "attack");
     expect(hit).toMatchObject({ amount: expected });
     expect(target.stunnedFor).toBe(3);
@@ -105,12 +108,14 @@ describe("스피나 전투 계약", () => {
 
   it("은 레벨 1 궁극기 원피해 431에서 평타 실제 적중마다 반올림 전 원피해를 4.5씩 높인다", () => {
     const { state, spino, target } = readySpino();
-    const rawUltimateDamage = () => spino.def.stats.atk * spino.def.ultimate.power / 100
-      + currentAttackSpeed(spino) * spino.def.ultimate.attackSpeedPower! / 100;
+    const ultimate = spino.def.ultimate;
+    if (!("damageType" in ultimate) || ultimate.damageType === undefined) throw new Error("스피나 공격 궁극기 계약이 필요합니다.");
+    const rawUltimateDamage = () => spino.def.stats.atk * ultimate.power / 100
+      + currentAttackSpeed(spino) * ultimate.attackSpeedPower! / 100;
     const actualUltimateDamage = () => computeDamage(spino, target, {
-      ...spino.def.ultimate,
-      power: spino.def.ultimate.power
-        + currentAttackSpeed(spino) * spino.def.ultimate.attackSpeedPower! / spino.def.stats.atk,
+      ...ultimate,
+      power: ultimate.power
+        + currentAttackSpeed(spino) * ultimate.attackSpeedPower! / spino.def.stats.atk,
       kind: "ultimate",
       isCritical: false,
     }, true);
@@ -129,7 +134,7 @@ describe("스피나 전투 계약", () => {
     expect(rawAfterHit - rawBeforeHit).toBeCloseTo(4.5);
     // 실제 피해끼리는 방어 계산과 정수 반올림을 거친 값으로 별도 검증한다.
     expect(actualAfterHit).toBe(computeDamage(spino, target, {
-      ...spino.def.ultimate,
+      ...ultimate,
       power: 200 + 125 * 150 / 124,
       kind: "ultimate",
       isCritical: false,
@@ -147,6 +152,77 @@ describe("스피나 전투 계약", () => {
     tank.hp = tank.maxHp; spino.energy = spino.def.ultimate.cost;
     fireUltimate(state, spino.id);
     expect(tank.hp).toBeGreaterThan(0);
+  });
+});
+
+describe("메테 전투 계약", () => {
+  /** 메테·동료·적을 즉시 교전 가능한 한 점에 모으고 필요 없는 자동 행동은 멈춘다. */
+  function metteBattle() {
+    const state = newSkirmish(["mette", "rex"], ["husk-shell"]);
+    const [mette, ally, foe] = state.fighters;
+    mette.x = ally.x = 400; mette.y = ally.y = foe.y = 900; foe.x = 450;
+    mette.attackCooldown = foe.attackCooldown = 99; ally.attackCooldown = 0;
+    return { state, mette, ally, foe };
+  }
+
+  it("는 생존 중 팀 공격 속도를 20% 높이고 사망하면 즉시 해제한다", () => {
+    const { state, mette, ally } = metteBattle();
+    // 렉시아 자신의 +25 공속을 먼저 합산한 뒤 메테 팀 배율 1.2를 곱한다.
+    expect(currentAttackSpeed(ally, state)).toBeCloseTo((ally.def.stats.attackSpeed + 25) * 1.2);
+    mette.hp = 0;
+    expect(currentAttackSpeed(ally, state)).toBe(ally.def.stats.attackSpeed + 25);
+  });
+
+  it("는 새 기절·경직을 즉시 정화하고 메테 공격력 200% 보호막을 개체별 7초마다 부여한다", () => {
+    const { state, mette, ally } = metteBattle();
+    const first = applyStun(ally, 2, state);
+    expect(ally.stunnedFor).toBe(0);
+    expect(ally.shield).toBe(mette.def.stats.atk * 2);
+    expect(first).toContainEqual(expect.objectContaining({ kind: "shieldGranted", providerId: mette.id }));
+    expect(mette.adagioCooldownRemaining).toBe(7);
+
+    applyStagger(ally, 0.1, state);
+    expect(ally.staggeredFor).toBeCloseTo(0.1); // 쿨타임 중에는 두 번째 제어를 정화하지 않는다.
+    for (let i = 0; i < 28; i += 1) stepSkirmish(state, 0.25);
+    expect(mette.adagioCooldownRemaining).toBe(0);
+    ally.staggeredFor = 0;
+    applyStagger(ally, 0.1, state);
+    expect(ally.staggeredFor).toBe(0);
+  });
+
+  it("는 보호막을 HP보다 먼저 흡수하고 흡수·소진 사건을 렌더러에 전달한다", () => {
+    const { state, ally, foe } = metteBattle();
+    applyStun(ally, 1, state);
+    const shield = ally.shield;
+    ally.attackCooldown = 99; foe.attackCooldown = 0; foe.targetId = ally.id;
+    foe.x = 450; ally.x = 400;
+    const hpBefore = ally.hp;
+    const events = stepSkirmish(state, 1 / 60);
+    expect(events).toContainEqual(expect.objectContaining({ kind: "shieldAbsorbed", fighterId: ally.id }));
+    expect(ally.hp).toBe(hpBefore); // 허스크의 한 타보다 보호막이 커 HP에는 아직 닿지 않는다.
+    expect(ally.shield).toBeLessThan(shield);
+  });
+
+  it("는 폭주 중 아군의 실제 일반 공격 적중마다 스타카토 한 번만 추가하고 종료·사망 뒤 멈춘다", () => {
+    const run = (configure: (mette: ReturnType<typeof metteBattle>["mette"]) => void) => {
+      const battle = metteBattle(); configure(battle.mette);
+      return stepSkirmish(battle.state, 1 / 60).filter((event) => event.kind === "attack");
+    };
+    const feverHits = run((mette) => { mette.ferocityFever = true; mette.ferocity = 100; });
+    expect(feverHits.map((hit) => hit.kind === "attack" ? hit.skill : "")).toEqual(["basic", "staccato"]);
+    expect(feverHits.filter((hit) => hit.kind === "attack" && hit.skill === "staccato")).toHaveLength(1); // 추가타는 재귀하지 않는다.
+    expect(run((mette) => { mette.ferocityFever = false; })).toHaveLength(1);
+    expect(run((mette) => { mette.ferocityFever = true; mette.hp = 0; })).toHaveLength(1);
+  });
+
+  it("는 전장의 찬가로 생존 아군별 잃은 체력 20%를 회복하고 50 게이지를 소비한다", () => {
+    const { state, mette, ally } = metteBattle();
+    mette.hp -= 500; ally.hp -= 300; mette.energy = 50;
+    const events = fireUltimate(state, mette.id);
+    expect(mette.hp).toBe(mette.maxHp - 400);
+    expect(ally.hp).toBe(ally.maxHp - 240);
+    expect(mette.energy).toBe(0);
+    expect(events.filter((event) => event.kind === "heal" && event.source === "ultimate")).toHaveLength(2);
   });
 });
 
@@ -908,11 +984,13 @@ describe("궁극기", () => {
     disadvantaged.def = { ...disadvantaged.def, element: "water", stats: { ...disadvantaged.def.stats, def: 0 } };
     first.hp = 1; // 첫 처리 대상이 죽어도 뒤의 두 대상을 계속 정산해야 한다.
     torika.energy = torika.def.ultimate.cost;
+    const ultimate = torika.def.ultimate;
+    if (!("damageType" in ultimate) || ultimate.damageType === undefined) throw new Error("토리카 공격 궁극기 계약이 필요합니다.");
 
     const expected = [first, armored, disadvantaged].map((target) => computeDamage(
       torika,
       target,
-      { ...torika.def.ultimate, isCritical: false, kind: "ultimate" },
+      { ...ultimate, isCritical: false, kind: "ultimate" },
       true,
     ));
     const events = fireUltimate(state, torika.id);

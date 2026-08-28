@@ -12,7 +12,7 @@ import {
   type FocusOptions,
 } from "./anchors";
 import { ensureTexture, IndexedPuppetCreature } from "./IndexedPuppetCreature";
-import { PONTUS_PORTRAIT_METADATA, PONTUS_SD_METADATA } from "./assetMetadata";
+import { METTE_PLACEHOLDER_METADATA, PONTUS_PORTRAIT_METADATA, PONTUS_SD_METADATA } from "./assetMetadata";
 
 /** 기존 호출부가 렌더러 구현을 몰라도 되도록 인게임 Puppet 타입을 한 곳에서 공개한다. */
 export type PuppetCreature = IndexedPuppetCreature;
@@ -69,6 +69,12 @@ export const TORIKA_ASSET: PuppetAsset = {
   imageHeight: 1492,
   content: { left: 95, top: 69, right: 894, bottom: 1419 },
   cardZoom: 0.62,
+};
+
+/** 전용 ZIP이 없는 메테를 기존 캐릭터로 오인하지 않도록 별도 이름으로 등록한 임시 원화 계약이다. */
+export const METTE_PLACEHOLDER_ASSET: PuppetAsset = {
+  url: `${base}puppets/char_001.zip`,
+  ...METTE_PLACEHOLDER_METADATA,
 };
 
 /** 2번 전신 일러스트: 렉시아(티라노사우루스). */
@@ -155,6 +161,8 @@ const PORTRAIT_ASSETS = {
   ripa: { asset: RIPA_ASSET, usesRelicTint: false },
   pontus: { asset: PONTUS_ASSET, usesRelicTint: false },
   "torika-placeholder": { asset: TORIKA_ASSET, usesRelicTint: true },
+  // 전용 원화가 도착하기 전임을 키 자체로 드러내며 정식 캐릭터 에셋으로 위장하지 않는다.
+  "mette-placeholder": { asset: METTE_PLACEHOLDER_ASSET, usesRelicTint: true },
 } as const satisfies Record<PortraitAssetId, { asset: PuppetAsset; usesRelicTint: boolean }>;
 
 /** 데이터 키로 전신 원화를 찾는다. 캐릭터 내부 id에 의존하지 않는다. */
@@ -228,6 +236,8 @@ export function battleAssetFor(relicId: string): PuppetAsset {
   if (relicId === "luka") return LUKA_SD_ASSET;
   // 도디의 임시 전신이 토리카 기반이므로 SD도 같은 토리카 묶음으로 명시해 서로 다른 캐릭터가 되지 않게 한다.
   if (relicId === "dodo") return TORIKA_SD_ASSET;
+  // 메테도 전용 SD가 없음을 분기에서 숨기지 않고 placeholder tint 경로로 보낸다.
+  if (relicId === "mette") return TORIKA_SD_ASSET;
   return TORIKA_SD_ASSET;
 }
 
@@ -238,6 +248,7 @@ export function sdAssetFor(relicId: string): PuppetAsset {
   if (relicId === "luka") return LUKA_SD_ASSET;
   // 전투 밖 SD도 정보창의 도디 임시 캐릭터와 같은 토리카 기반을 유지한다.
   if (relicId === "dodo") return TORIKA_SD_ASSET;
+  if (relicId === "mette") return TORIKA_SD_ASSET;
   // anky와 아직 전용 SD가 없는 렐릭은 기존 공용 토리카 SD로 안전하게 폴백한다.
   return TORIKA_SD_ASSET;
 }

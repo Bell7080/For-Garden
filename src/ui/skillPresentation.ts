@@ -56,6 +56,7 @@ export function ferocityTraitDescription(trait: FerocityTrait, defense?: number)
   if (trait.effectId === "stealthLeap") return `체력 비율이 가장 낮은 적에게 도약해 ${trait.durationSeconds}초 동안 단일 대상으로 지정되지 않는다.`;
   // +100%는 간격을 100% 줄이는 뜻이 아니라 속도 x2(결과 간격 50%)임을 정보창에서도 분명히 한다.
   if (trait.effectId === "selfAttackSpeedMultiplier") return `공격 속도가 ${trait.bonusPercent}% 증가한다(속도 ×${1 + trait.bonusPercent / 100}).`;
+  if (trait.effectId === "crescendoStaccato") return `폭주 중 아군 기본 공격 적중마다 공격력 ${trait.damagePercent}%의 마법 추가타와 ${trait.staggerSeconds}초 [[stagger|경직]]을 준다.`;
 
   // 방어력 계수는 토리카처럼 추가 피해가 있는 범위 타격만 노출하고, 일반 전이 특성은 원래 피해 비율만 보여 준다.
   const speed = trait.attackSpeedBonusPercent === undefined ? "" : `공격 속도가 ${trait.attackSpeedBonusPercent}% 증가한다. `;

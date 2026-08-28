@@ -22,6 +22,16 @@ export const ULTIMATE_MIN_DURATION_MS = 24;
 export const ULTIMATE_RECOVERY_RATIO = 0.55;
 
 /**
+ * 궁극기 사건을 모두 전달한 뒤 화면 연출을 더 기다릴지 정한다.
+ *
+ * finish는 공격 판정이 이미 끝났다는 코어의 선언이다. 따라서 결정타에서는 공격 Puppet과
+ * 확대 복귀가 결과 UI를 막지 않고, 사망 트윈만 독립적인 배경 시각 효과로 남는다.
+ */
+export function shouldWaitForUltimatePresentation(hasDeathEvent: boolean, hasFinishEvent: boolean): boolean {
+  return !(hasDeathEvent && hasFinishEvent);
+}
+
+/**
  * 1배속부터 기존 공격 배율 2보다 빠른 2.25를 써 반복 궁극기의 정체감을 줄인다.
  * 2·3배속은 3.25에서 막는다. 그 이상은 관절 보간이 건너뛰어져 공격이 순간이동처럼 보인다.
  */

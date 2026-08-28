@@ -652,20 +652,6 @@ describe("효과 ID별 야성 특성", () => {
     expect([first.targetId, lowest.targetId]).toEqual([null, null]);
   });
 
-  it("allyEnergyGain은 도도의 피버 공격마다 다른 아군에게 에너지 6을 준다", () => {
-    const state = newSkirmish(["dodo", "rex"], ["husk-shell"]);
-    const [dodo, ally, target] = state.fighters;
-    dodo.x = 400; dodo.y = 1000; target.x = 460; target.y = 1000;
-    dodo.attackCooldown = 0; ally.attackCooldown = 99; target.attackCooldown = 99;
-    dodo.ferocity = 99;
-    stepSkirmish(state, 1 / 60);
-    expect(ally.energy).toBe(0);
-
-    dodo.attackCooldown = 0; dodo.ferocity = 100; dodo.ferocityFever = true;
-    stepSkirmish(state, 1 / 60);
-    expect(ally.energy).toBe(6);
-  });
-
   it("criticalChanceBonus은 스밀라의 피버 중 치명타율을 25퍼센트포인트 올린다", () => {
     const normal = prepareHit("smilo");
     normal.fighters[0].ferocity = 99;
@@ -685,6 +671,80 @@ describe("효과 ID별 야성 특성", () => {
     expect(moveSpeed(ally, state)).toBe(before);
     quetz.ferocity = 100; quetz.ferocityFever = true;
     expect(moveSpeed(ally, state)).toBeCloseTo(before * 1.18);
+  });
+});
+
+describe("도디 정적 전투 계약", () => {
+  /** 한 명만 행동하게 해 같은 프레임의 부수 공격 없이 도디 규칙을 검증한다. */
+  function readyDodiBattle(allies = ["dodo", "rex", "anky"], enemies = ["husk-shell"]) {
+    const state = newSkirmish(allies, enemies);
+    state.fighters.forEach((fighter) => { fighter.attackCooldown = 99; });
+    return state;
+  }
+
+  it("폭주 중에만 공격 속도 x2, 즉 공격 간격 50%를 적용한다", () => {
+    const [dodi] = readyDodiBattle().fighters;
+    const calm = attackInterval(dodi);
+    dodi.ferocityFever = true;
+    expect(attackInterval(dodi)).toBeCloseTo(calm / 2);
+    dodi.hp = 0;
+    // 사망자는 행동하지 않으며 데이터 배율 자체가 사망 상태를 되살리지 않는다.
+    expect(dodi.hp).toBe(0);
+  });
+
+  it.each(["husk-raptor", "husk-shell"])("생존 제공자는 %s의 물리·마법 피해를 줄이고 사망 즉시 해제한다", (enemyId) => {
+    const damageWithProvider = (alive: boolean) => {
+      const state = readyDodiBattle(["rex", "dodo"], [enemyId]);
+      const [target, dodi, enemy] = state.fighters;
+      dodi.hp = alive ? dodi.maxHp : 0;
+      target.x = enemy.x = 500; target.y = enemy.y = 900; enemy.attackCooldown = 0;
+      return stepSkirmish(state, 1 / 60, () => 0.99)
+        .find((event): event is Extract<SkirmishEvent, { kind: "attack" }> => event.kind === "attack" && event.attackerId === enemy.id)?.amount ?? 0;
+    };
+    expect(damageWithProvider(true)).toBeLessThan(damageWithProvider(false));
+  });
+
+  it("적 회복 감소는 제공자 생존 중 30%만 적용되고 사망 뒤 사라진다", () => {
+    const healed = (alive: boolean) => {
+      const state = readyDodiBattle(["dodo"], ["anky"]);
+      const [dodi, enemy] = state.fighters; dodi.hp = alive ? dodi.maxHp : 0;
+      enemy.hp = 100; enemy.regeneration = { remaining: 1, tickIn: 0, percentPerTick: 10 };
+      const before = enemy.hp; stepSkirmish(state, 1 / 60); return enemy.hp - before;
+    };
+    expect(healed(true)).toBeCloseTo(healed(false) * 0.7);
+  });
+
+  it("일반 공격은 자신을 포함해 현재 HP가 가장 낮은 아군을 편성 순서 동률 규칙으로 회복한다", () => {
+    const state = readyDodiBattle(); const [dodi, first, second, enemy] = state.fighters;
+    dodi.hp = 300; first.hp = second.hp = 200; dodi.x = enemy.x = 500; dodi.y = enemy.y = 900; dodi.attackCooldown = 0;
+    const heals = stepSkirmish(state, 1 / 60).filter((event) => event.kind === "heal");
+    expect(heals[0]?.fighterId).toBe(first.id);
+
+    const selfState = readyDodiBattle(["dodo", "rex"]); const [self, ally, foe] = selfState.fighters;
+    self.hp = 1; ally.hp = ally.maxHp; self.x = foe.x = 500; self.y = foe.y = 900; self.attackCooldown = 0;
+    expect(stepSkirmish(selfState, 1 / 60).some((event) => event.kind === "heal" && event.fighterId === self.id)).toBe(true);
+  });
+
+  it("과잉 피해가 아니라 실제 감소 HP만 일반 공격 회복량으로 사용한다", () => {
+    const state = readyDodiBattle(["dodo", "rex"]); const [dodi, ally, enemy] = state.fighters;
+    ally.hp = 1; enemy.hp = 3; dodi.x = enemy.x = 500; dodi.y = enemy.y = 900; dodi.attackCooldown = 0;
+    const heal = stepSkirmish(state, 1 / 60)
+      .find((event): event is Extract<SkirmishEvent, { kind: "heal" }> => event.kind === "heal" && event.fighterId === ally.id);
+    expect(heal?.amount).toBe(3);
+  });
+
+  it("지정 원의 경계를 포함해 광역 피해·회복을 적용하고 게이지 250을 소비한다", () => {
+    const state = readyDodiBattle(["dodo", "rex", "anky"], ["husk-shell", "husk-raptor"]);
+    const [dodi, insideAlly, outsideAlly, boundaryEnemy, outsideEnemy] = state.fighters;
+    const center = { x: 500, y: 900 }; dodi.energy = 250;
+    insideAlly.hp -= 300; outsideAlly.hp -= 300;
+    insideAlly.x = 500; insideAlly.y = 900; outsideAlly.x = 861; outsideAlly.y = 900;
+    boundaryEnemy.x = 860; boundaryEnemy.y = 900; outsideEnemy.x = 861; outsideEnemy.y = 900;
+    const outsideEnemyHp = outsideEnemy.hp; const outsideAllyHp = outsideAlly.hp;
+    const events = fireUltimate(state, dodi.id, () => 0.99, center);
+    expect(events.some((event) => event.kind === "attack" && event.targetId === boundaryEnemy.id)).toBe(true);
+    expect(outsideEnemy.hp).toBe(outsideEnemyHp); expect(insideAlly.hp).toBeGreaterThan(insideAlly.maxHp - 300);
+    expect(outsideAlly.hp).toBe(outsideAllyHp); expect(dodi.energy).toBe(0);
   });
 });
 

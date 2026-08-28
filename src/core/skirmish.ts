@@ -413,8 +413,42 @@ export function attackInterval(fighter: Fighter): number {
     : fighter.ferocityFever && trait.effectId === "splashDamage" && trait.attackSpeedBonusPercent !== undefined
       // 공격 속도 +20%는 공격 간격 -20%와 다르므로 증가된 속도로 간격을 나눈다.
       ? 1 / (1 + trait.attackSpeedBonusPercent / 100)
+      : fighter.ferocityFever && trait.effectId === "selfAttackSpeedMultiplier"
+        // +100%는 공격 속도 x2이고, 속도의 역수인 공격 간격은 정확히 50%가 된다.
+        ? 1 / (1 + trait.bonusPercent / 100)
       : 1;
   return Math.max(SKIRMISH.minimumAttackInterval, ((SKIRMISH.attackInterval * 100) / Math.max(1, currentAttackSpeed(fighter))) * feverMultiplier);
+}
+
+/** 같은 오라는 합산하지 않고 생존 제공자 중 최댓값 하나만 적용해 다중 도디 편성 폭증을 막는다. */
+function strongestLivingAura(state: SkirmishState, receiverSide: Side, field: "teamDefenseResistancePercent" | "enemyHealingReceivedReductionPercent"): number {
+  return Math.max(0, ...state.fighters
+    .filter((provider) => isFighterAlive(provider) && provider.def.passive.kind === "guardianNestAura"
+      && (field === "teamDefenseResistancePercent" ? provider.side === receiverSide : provider.side !== receiverSide))
+    .map((provider) => provider.def.passive[field] ?? 0));
+}
+
+/** 피해 공식에만 생존 오라의 방어력·저항력 배율을 투영하고 원본 정적 정의는 변경하지 않는다. */
+function defensiveDefinition(target: Fighter, state: SkirmishState): Fighter {
+  const bonus = strongestLivingAura(state, target.side, "teamDefenseResistancePercent");
+  if (bonus <= 0) return target;
+  return { ...target, def: { ...target.def, stats: { ...target.def.stats,
+    def: target.def.stats.def * (1 + bonus / 100), res: target.def.stats.res * (1 + bonus / 100),
+  } } };
+}
+
+/** 모든 체력 회복 경로가 적 생존 오라의 회복 감소와 실제 최대 HP 상한을 공유한다. */
+function applyHealing(state: SkirmishState, target: Fighter, requested: number): number {
+  const reduction = strongestLivingAura(state, target.side, "enemyHealingReceivedReductionPercent");
+  const before = target.hp;
+  target.hp = Math.min(target.maxHp, target.hp + Math.max(0, requested) * (1 - reduction / 100));
+  return target.hp - before;
+}
+
+/** 현재 HP 절대값이 가장 낮은 생존 아군을 고르며 동률은 fighters의 편성 순서로 확정한다. */
+function lowestCurrentHpAlly(state: SkirmishState, side: Side): Fighter | undefined {
+  return aliveFighters(state, side).reduce<Fighter | undefined>((chosen, fighter) =>
+    chosen === undefined || fighter.hp < chosen.hp ? fighter : chosen, undefined);
 }
 
 /** 이동 속도와 현재 편의 피버 오라가 정하는 초당 이동 거리(px). */
@@ -483,17 +517,6 @@ function resolveTarget(state: SkirmishState, fighter: Fighter): Fighter | undefi
 
 function gainEnergy(fighter: Fighter): void {
   fighter.energy = Math.min(ULTIMATE_ENERGY_MAX, fighter.energy + fighter.def.stats.energyGain);
-}
-
-/** 피버 공격이 아군 에너지를 보조한다. 공격자 자신의 기본 획득과는 분리한다. */
-function grantFerocityTeamEnergy(attacker: Fighter, state: SkirmishState): void {
-  const trait = attacker.def.ferocityTrait;
-  if (!attacker.ferocityFever || trait.effectId !== "allyEnergyGain") return;
-  for (const ally of state.fighters) {
-    if (ally.side === attacker.side && ally.id !== attacker.id && isFighterAlive(ally)) {
-      ally.energy = Math.min(ULTIMATE_ENERGY_MAX, ally.energy + trait.energy);
-    }
-  }
 }
 
 /** 실시간 전투도 턴제와 같은 사건별 증가 및 임계 로그 계약을 사용한다. */
@@ -592,7 +615,7 @@ export function tryTriggerEmergencyRecovery(fighter: Fighter): boolean {
  * maxStep으로 잘려도 1~5초 경계를 같은 순서로 지나며, epsilon은 5초 경계의 부동소수점 누락만
  * 보정한다. 사망자는 시계를 즉시 버려 이후 되살아나는 회복 사건을 만들지 않는다.
  */
-export function tickRegeneration(fighter: Fighter, dt: number): SkirmishEvent[] {
+export function tickRegeneration(fighter: Fighter, dt: number, state?: SkirmishState): SkirmishEvent[] {
   const regeneration = fighter.regeneration;
   if (!regeneration || dt <= 0) return [];
   if (!isFighterAlive(fighter)) {
@@ -606,8 +629,8 @@ export function tickRegeneration(fighter: Fighter, dt: number): SkirmishEvent[] 
   const events: SkirmishEvent[] = [];
   while (regeneration.tickIn <= EMERGENCY_RECOVERY.epsilon) {
     const before = fighter.hp;
-    fighter.hp = Math.min(fighter.maxHp, fighter.hp + fighter.maxHp * regeneration.percentPerTick / 100);
-    const amount = fighter.hp - before;
+    const requested = fighter.maxHp * regeneration.percentPerTick / 100;
+    const amount = state ? applyHealing(state, fighter, requested) : (fighter.hp = Math.min(fighter.maxHp, fighter.hp + requested)) - before;
     // 최대 HP에서 발생한 0 회복은 UI에 숫자를 띄울 실제 사건이 아니므로 생략한다.
     if (amount > 0) events.push({ kind: "heal", fighterId: fighter.id, amount, source: "passive" });
     regeneration.tickIn += EMERGENCY_RECOVERY.tickSeconds;
@@ -664,6 +687,8 @@ function strike(
   useUltimate: boolean,
   /** 연격 내부 타격이면 행동 단위 자원은 첫 타에서만 처리한다. */
   comboHit?: { grantActionResources: boolean },
+  /** 지정 원형 궁극기의 사용자 선택 중심점이다. */
+  targetPoint?: { x: number; y: number },
 ): void {
   const skill: Skill = useUltimate ? attacker.def.ultimate : attacker.def.basic;
   const combo = !useUltimate ? attacker.def.basic.combo : undefined;
@@ -676,7 +701,7 @@ function strike(
     return;
   }
   if ((useUltimate && attacker.def.ultimate.targeting !== "single") || (!useUltimate && attacker.def.basic.targeting === "nearbyEnemies")) {
-    strikeAreaAttack(attacker, rng, state, events, useUltimate);
+    strikeAreaAttack(attacker, rng, state, events, useUltimate, targetPoint);
     return;
   }
   // 이번 타격 시작 시점의 피버만 본다. 이 공격으로 100에 도달했다면 다음 공격부터 발현한다.
@@ -696,11 +721,12 @@ function strike(
     : skill.power;
   const damageInput = { ...skill, power: compositePower, isCritical: critical, kind: useUltimate ? "ultimate" as const : "basic" as const };
   const damageAttacker = { ...attacker, def: offensiveDefinition(attacker) };
+  const damageTarget = defensiveDefinition(target, state);
   const splashTrait = attacker.def.ferocityTrait;
   // 토리카의 방어력 추가 피해도 일반 물리 피해 공식(속성·대상 방어력·치명타)을 거친다.
   const defenseBonus = attackingInFever && !useUltimate && splashTrait.effectId === "splashDamage"
     && splashTrait.defenseDamagePercent !== undefined
-    ? computeDamage(attacker, target, {
+    ? computeDamage(attacker, damageTarget, {
         ...damageInput,
         power: splashTrait.defenseDamagePercent,
         scalingStat: "def",
@@ -708,7 +734,7 @@ function strike(
       }, true)
     : 0;
   // 공용 피해 공식을 그대로 통과한 뒤 원정 공격력 증강만 최종 배율로 한 번 적용한다.
-  const rawAmount = Math.max(1, Math.round((computeDamage(damageAttacker, target, damageInput, true) + defenseBonus) * attackPowerMultiplier(state.augmentEffects, attacker.def.id)));
+  const rawAmount = Math.max(1, Math.round((computeDamage(damageAttacker, damageTarget, damageInput, true) + defenseBonus) * attackPowerMultiplier(state.augmentEffects, attacker.def.id)));
   // 방어·패시브·상성 뒤의 모든 개별 경감은 공용 HP 피해 경계에서 한 번만 적용한다.
   const amount = receivedDamage(target, rawAmount);
 
@@ -721,13 +747,20 @@ function strike(
    * 생기면 이 지점에 도달하는 HP 피해만 넘기면 규칙이 그대로 유지된다.
    */
   const healFromDamage = (dealt: number) => {
-    attacker.hp = Math.min(attacker.maxHp, attacker.hp + dealt * damageHealingRate(attacker, skill, attackingInFever) / 100);
+    applyHealing(state, attacker, dealt * damageHealingRate(attacker, skill, attackingInFever) / 100);
   };
   healFromDamage(targetHpBefore - target.hp);
+  if (!useUltimate && attacker.def.basic.lowestHpAllyHealingFromDamagePercent !== undefined) {
+    const ally = lowestCurrentHpAlly(state, attacker.side);
+    if (ally) {
+      // 과잉 피해가 아닌 실제 감소 HP만 회복 원천으로 쓰며 공격자 자신도 정상 후보에 남긴다.
+      const healed = applyHealing(state, ally, (targetHpBefore - target.hp) * attacker.def.basic.lowestHpAllyHealingFromDamagePercent / 100);
+      if (healed > 0) events.push({ kind: "heal", fighterId: ally.id, amount: healed, source: "passive" });
+    }
+  }
   if (comboHit?.grantActionResources !== false) {
     if (useUltimate) attacker.energy -= attacker.def.ultimate.cost;
     else gainEnergy(attacker);
-    grantFerocityTeamEnergy(attacker, state);
     gainFerocity(attacker, useUltimate ? FEROCITY_RULES.ultimateGain : FEROCITY_RULES.basicGain, state);
   }
   gainFerocity(target, FEROCITY_RULES.hitGain, state);
@@ -738,8 +771,8 @@ function strike(
   if (!useUltimate && combo) {
     const missing = attacker.maxHp - attacker.hp;
     const healed = missing * combo.missingHpHealingPercentPerHit / 100;
-    attacker.hp = Math.min(attacker.maxHp, attacker.hp + healed);
-    if (healed > 0) events.push({ kind: "heal", fighterId: attacker.id, amount: healed, source: "passive" });
+    const actualHealing = applyHealing(state, attacker, healed);
+    if (actualHealing > 0) events.push({ kind: "heal", fighterId: attacker.id, amount: actualHealing, source: "passive" });
   }
 
   // 때린 쪽은 상대 쪽으로 쿵 들어가고, 맞은 쪽은 같은 방향으로 밀려난다.
@@ -781,13 +814,14 @@ function strike(
       if (secondary.side === attacker.side || secondary.id === target.id || !isFighterAlive(secondary)
         || distance(target, secondary) > splashTrait.radius) continue;
       // 광역도 같은 공격의 일부이므로 주 대상과 동일한 원정 공격력 배율을 거친다.
-      const secondaryDefenseBonus = splashTrait.defenseDamagePercent === undefined ? 0 : computeDamage(attacker, secondary, {
+      const defensiveSecondary = defensiveDefinition(secondary, state);
+      const secondaryDefenseBonus = splashTrait.defenseDamagePercent === undefined ? 0 : computeDamage(attacker, defensiveSecondary, {
         ...damageInput,
         power: splashTrait.defenseDamagePercent,
         scalingStat: "def",
         damageType: "physical",
       }, true);
-      const secondaryBase = (computeDamage(attacker, secondary, damageInput, true) * splashTrait.damagePercent / 100 + secondaryDefenseBonus)
+      const secondaryBase = (computeDamage(attacker, defensiveSecondary, damageInput, true) * splashTrait.damagePercent / 100 + secondaryDefenseBonus)
         * attackPowerMultiplier(state.augmentEffects, attacker.def.id);
       const splashAmount = receivedDamage(secondary, secondaryBase);
       const secondaryHpBefore = secondary.hp;
@@ -817,16 +851,25 @@ function strike(
  * "주위"는 시전자 중심 px 반경이고, battlefieldEnemies만 좌표와 무관한 전장 전체다. 공격 시작 전에 대상을
  * 복사하므로 앞선 대상이 죽어도 뒤 대상의 피해·흡혈·상태·사망 처리는 빠지지 않는다.
  */
-function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishState, events: SkirmishEvent[], useUltimate: boolean): void {
+function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishState, events: SkirmishEvent[], useUltimate: boolean, targetPoint?: { x: number; y: number }): void {
   const skill = useUltimate ? attacker.def.ultimate : attacker.def.basic;
+  const ultimate = useUltimate ? attacker.def.ultimate : undefined;
+  // 지정점이 생략된 기존 호출은 현재 추적 대상 위치를 사용해 자동 전투와 저장 리플레이를 호환한다.
+  const center = skill.targeting === "targetedCircle" ? targetPoint ?? (() => {
+    const tracked = attacker.targetId ? findFighter(state, attacker.targetId) : undefined;
+    return tracked ? { x: tracked.x, y: tracked.y } : { x: attacker.x, y: attacker.y };
+  })() : { x: attacker.x, y: attacker.y };
+  const inCircle = (fighter: Fighter): boolean => Math.hypot(fighter.x - center.x, fighter.y - center.y) <= (skill.radius ?? 0);
   const targets = state.fighters.filter((fighter) => fighter.side !== attacker.side && isFighterAlive(fighter) && fighter.stealthFor <= 0
-    && (skill.targeting === "battlefieldEnemies" || (skill.targeting === "nearbyEnemies" && distance(attacker, fighter) <= (skill.radius ?? 0))));
-  if (targets.length === 0) return;
+    && (skill.targeting === "battlefieldEnemies" || (skill.targeting === "nearbyEnemies" && distance(attacker, fighter) <= (skill.radius ?? 0))
+      || (skill.targeting === "targetedCircle" && inCircle(fighter))));
+  const healingTargets = ultimate?.targeting === "targetedCircle" && ultimate.allyHealingPower !== undefined
+    ? aliveFighters(state, attacker.side).filter(inCircle) : [];
+  if (targets.length === 0 && healingTargets.length === 0) return;
 
   // 소비·팀 보조·야성 획득은 명중 수가 아니라 기술 사용 횟수에 묶는다.
   if (useUltimate) attacker.energy -= attacker.def.ultimate.cost;
   else gainEnergy(attacker);
-  grantFerocityTeamEnergy(attacker, state);
   // 공격자 야성은 이번 공격의 모든 피해가 같은 시작 시점 배율을 쓰도록 대상 처리 뒤에 얻는다.
   const attackingInFever = attacker.ferocityFever;
   const critTrait = attacker.def.ferocityTrait;
@@ -842,14 +885,14 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
       + (attackingInFever && critTrait.effectId === "rexBattleQueen" ? critTrait.criticalChancePoints : 0));
     const critical = isCriticalHit(criticalChance, rng());
     const damageInput = { ...skill, isCritical: critical, kind: useUltimate ? "ultimate" as const : "basic" as const };
-    const rawAmount = Math.max(1, Math.round(computeDamage(damageAttacker, target, damageInput, true)
+    const rawAmount = Math.max(1, Math.round(computeDamage(damageAttacker, defensiveDefinition(target, state), damageInput, true)
       * attackPowerMultiplier(state.augmentEffects, attacker.def.id)));
     const amount = receivedDamage(target, rawAmount);
     const hpBefore = target.hp;
     target.hp = Math.max(0, target.hp - amount);
     tryTriggerEmergencyRecovery(target);
     // 흡혈은 대상별 실제 HP 감소량만 더해 과잉 피해를 회복량으로 만들지 않는다.
-    attacker.hp = Math.min(attacker.maxHp, attacker.hp + (hpBefore - target.hp) * damageHealingRate(attacker, skill, attackingInFever) / 100);
+    applyHealing(state, attacker, (hpBefore - target.hp) * damageHealingRate(attacker, skill, attackingInFever) / 100);
     gainFerocity(target, FEROCITY_RULES.hitGain, state);
 
     const dx = target.x - attacker.x;
@@ -872,6 +915,11 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
       state.log.push(`${target.def.name} 전투 불능`);
     }
     state.log.push(`${attacker.def.name} → ${target.def.name} ${amount}`);
+  }
+  // 혼합 궁극기의 회복은 같은 원 경계(거리 <= 반경)를 공유하며 주문력 200% 같은 정적 계수를 읽는다.
+  for (const ally of healingTargets) {
+    const healed = applyHealing(state, ally, (attacker.def.stats.ap + attacker.bonusAp) * (ultimate?.allyHealingPower ?? 0) / 100);
+    if (healed > 0) events.push({ kind: "heal", fighterId: ally.id, amount: healed, source: "passive" });
   }
   gainFerocity(attacker, useUltimate ? FEROCITY_RULES.ultimateGain : FEROCITY_RULES.basicGain, state);
 }
@@ -977,7 +1025,7 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
   }
 
   // 지속 회복은 행동 순서와 분리해 모든 전투원이 같은 스텝의 시간 경계를 먼저 지나게 한다.
-  for (const fighter of state.fighters) events.push(...tickRegeneration(fighter, dt));
+  for (const fighter of state.fighters) events.push(...tickRegeneration(fighter, dt, state));
   // 기절·경직 시계도 행동 전에 한 번만 전진한다. 이번 스텝의 공격으로 새로 걸린 상태까지 즉시
   // 깎으면 배열상 뒤에 선 대상만 지속 시간이 짧아지므로, 모든 기존 상태를 먼저 동기화한다.
   for (const fighter of state.fighters) {
@@ -1073,6 +1121,8 @@ export function fireUltimate(
   state: SkirmishState,
   fighterId: string,
   rng: () => number = NO_CRIT,
+  /** targetedCircle만 읽는 사용자 지정 전장 좌표다. */
+  targetPoint?: { x: number; y: number },
 ): SkirmishEvent[] {
   const events: SkirmishEvent[] = [];
   const attacker = findFighter(state, fighterId);
@@ -1081,7 +1131,7 @@ export function fireUltimate(
   const target = resolveTarget(state, attacker);
   if (!target) return events;
 
-  strike(attacker, target, rng, state, events, true);
+  strike(attacker, target, rng, state, events, true, undefined, targetPoint);
   // 수동 궁극기도 평타와 동일한 실제 피해 사건을 점수화하고 불사 HP를 복구한다.
   if (state.boss && target.side === "enemy") {
     state.boss.score += events.reduce((sum, event) => sum + (event.kind === "attack" && event.attackerId === attacker.id ? event.amount : 0), 0);

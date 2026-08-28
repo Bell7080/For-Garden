@@ -102,13 +102,16 @@ export interface Skill {
   /** 실제 HP에서 감소한 피해의 이 비율(%)을 시전자가 회복한다. 과잉 피해는 계산하지 않으며 능력치·폭주 흡혈과 합산한다. */
   damageHealingPercent?: number;
   /** 기본 공격이 원형 광역일 때만 시전자 중심 대상 계약과 반경을 선언한다. */
-  targeting?: "single" | "nearbyEnemies" | "battlefieldEnemies";
+  targeting?: "single" | "nearbyEnemies" | "battlefieldEnemies" | "targetedCircle";
   radius?: number;
   desc: string;
 }
 
 /** 기본 공격만 가질 수 있는 추가 타격 계약이다. 일반 단타는 불필요한 확률 필드를 갖지 않는다. */
-export type BasicAttack = Skill & ({ combo?: undefined } | {
+export type BasicAttack = Skill & {
+  /** 실제 감소시킨 적 HP의 이 비율만큼 최저 현재 HP 생존 아군을 회복한다. 자신도 후보이며 동률은 편성 순서다. */
+  lowestHpAllyHealingFromDamagePercent?: number;
+} & ({ combo?: undefined } | {
   combo: {
     /** 한 공격 행동에서 추가 적중이 발생할 확률(%)이다. */
     chancePercent: number;
@@ -137,6 +140,8 @@ export type Ultimate = Skill & {
   cost: number;
   /** 공격력 피해와 더해지는 현재 공격 속도 배율(%). 없으면 공속 복합 계수를 사용하지 않는다. */
   attackSpeedPower?: number;
+  /** 혼합 궁극기가 범위 안 생존 아군에게 적용할 주문력 회복 배율(%). */
+  allyHealingPower?: number;
 } & (
   | { /** 현재 선택한 한 적만 공격한다. */ targeting: "single" }
   | {
@@ -146,6 +151,12 @@ export type Ultimate = Skill & {
       radius: number;
     }
   | { /** 거리에 상관없이 전장의 모든 생존 적을 공격한다. */ targeting: "battlefieldEnemies" }
+  | {
+      /** 사용자가 지정한 위치를 중심으로 적 피해와 아군 회복을 함께 판정한다. */
+      targeting: "targetedCircle";
+      /** 난전 좌표와 같은 px 단위의 원 반경이며 경계선 위 대상도 포함한다. */
+      radius: number;
+    }
 );
 
 /** 패시브는 종류별로 전투 엔진이 직접 해석한다. 새 패시브는 여기에 종류를 늘려 추가한다. */
@@ -165,17 +176,20 @@ export type PassiveKind =
   /** 스피나 전용: 기본 공격의 실제 적중마다 공속을 전투 한정으로 영구 누적한다. */
   | "basicHitAttackSpeedStack"
   /** 폰투스의 시간 누적 주문력·잃은 체력 경감 규칙을 식별한다. */
-  | "abyssalPressure";
+  | "abyssalPressure"
+  /** 도디 전용: 제공자 생존 여부로 팀 방어와 적 회복을 동시에 조절한다. */
+  | "guardianNestAura";
 
 /** 전투 엔진이 판별하는 야성 특성 효과 ID다. 새 효과는 수치 계약과 함께 명시적으로 추가한다. */
 export type FerocityEffectId =
   | "attackIntervalReduction"
   | "damageReduction"
   | "splashDamage"
-  | "allyEnergyGain"
   | "criticalChanceBonus"
   | "teamMoveSpeedBonus"
-  | "stealthLeap";
+  | "stealthLeap"
+  /** 폭주 중 자기 공격 속도를 곱하는 명시적 효과다. */
+  | "selfAttackSpeedMultiplier";
 
 /**
  * 개체별 피버 발현 정적 데이터다.
@@ -200,7 +214,11 @@ export type FerocityTrait = {
       /** 범위 명중에 함께 적용할 선택 상태 효과다. */
       statusEffect?: CombatStatusEffect;
     }
-  | { effectId: "allyEnergyGain"; energy: number }
+  | {
+      effectId: "selfAttackSpeedMultiplier";
+      /** 100은 속도 +100%, 즉 속도 x2이며 공격 간격을 결과적으로 50%로 만든다. */
+      bonusPercent: number;
+    }
   | {
       effectId: "criticalChanceBonus";
       /** 기존 치명타 확률에 곱하지 않고 그대로 더하는 퍼센트포인트 수치다. */
@@ -251,6 +269,10 @@ export interface Passive {
   reductionPerMissingHpPercent?: number;
   /** 심해 압력 전용: 받는 피해 감소율 상한이다. */
   maxReductionPercent?: number;
+  /** 제공자가 살아 있는 동안 같은 편의 방어력과 저항력에 곱하는 증가율(%). */
+  teamDefenseResistancePercent?: number;
+  /** 제공자가 살아 있는 동안 반대편이 받는 모든 체력 회복을 줄이는 비율(%). */
+  enemyHealingReceivedReductionPercent?: number;
   desc: string;
 }
 

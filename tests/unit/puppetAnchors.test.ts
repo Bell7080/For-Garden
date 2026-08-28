@@ -130,8 +130,8 @@ describe("폰투스 에셋 앵커 메타데이터", () => {
       imageWidth: 1024,
       imageHeight: 1536,
       content: { left: 1, top: 3, right: 1024, bottom: 1481 },
-      portraitZoom: 0.82,
-      portraitOffsetY: 48,
+      portraitZoom: 0.88,
+      portraitOffsetY: 0,
     });
     expect(PONTUS_SD_METADATA).toMatchObject({
       imageWidth: 1254,

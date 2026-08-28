@@ -166,25 +166,38 @@ export const RELICS: RelicDef[] = [
     specimenNumber: "105",
     projectName: "TIDAL SAIL",
     excavationSite: "북아프리카 켐켐층 수로",
-    catalogSummary: "긴 주둥이와 돛 형태의 등 구조를 지닌 반수생 표본.",
-    unlockRecord: { status: "recorded", text: "고대 수로의 퇴적암에서 척추 표본을 발굴했다. 수중 환경 적응 신호가 복원 과정에서도 유지됐다." },
-    rarity: "SR",
+    // 관찰 프로필은 복원 이력과 현재 신체 측정값을 한 계약에서 빠짐없이 공개하도록 보장한다.
+    observationProfile: {
+      originYear: "약 9,500만 년 전",
+      restorationYear: "E.C. 11년",
+      restorationAge: 22,
+      lifeStage: "성체 초기",
+      height: "1.74 m",
+      weight: "61 kg",
+    },
+    // 미보유 도감에는 외형과 수중 적응 체형만 공개하고 신상 및 생활 기록은 노출하지 않는다.
+    catalogSummary: "긴 주둥이와 돛 구조, 수중 활동에 적합한 균형 잡힌 체형이 확인된 표본.",
+    // 해금 기록은 수치 설명을 반복하지 않고 관찰자가 포착한 직업·태도·취미·관계를 기록하도록 보장한다.
+    unlockRecord: { status: "recorded", text: "스피나는 연구소 수중경비대로 근무한다. 과묵한 편이지만 맡은 일은 언제나 정확하게 수행하며, 순찰 경로와 수문 점검 기록에도 빈틈이 없다. 아무도 모른다고 생각하는 듯 근무가 끝난 뒤에는 작은 어항을 오래 꾸민다. 그 습관을 알아챈 연구원 한 명은 아는 체하지 않은 채 주변의 물자국과 모래를 조용히 청소해 준다. 스피나는 여전히 들키지 않았다고 여기지만, 다음 날이면 그 연구원의 책상에 가장 반듯한 조개 하나가 놓여 있다." },
+    rarity: "SSR",
     portraitAssetId: "seira",
     origin: "스피노사우루스",
     element: "water",
-    role: "tank",
-    // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
+    role: "assassin",
+    // 치즈케이크 생산 계약은 수중 발굴 특화이며 전투 역할을 바꿔도 기존 생산성을 보존한다.
     excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 8, efficiencyMultiplier: 1.10 },
+    // 낮은 HP·방어력은 렉시아보다 낮은 생존력을, 높은 공격·공속·이속은 암살자의 선공 능력을 보장한다.
+    // 저항력 46과 주문력 58은 최소 대응력만 남기고, 치명타 15/155는 빠른 공격이 과도하게 폭증하지 않게 한다.
     stats: {
-      hp: 1260,
-      def: 104,
-      res: 108,
-      atk: 88,
-      ap: 60,
-      attackSpeed: 82,
-      moveSpeed: 68,
-      critChance: 5,
-      critDamage: 140,
+      hp: 760,
+      def: 38,
+      res: 46,
+      atk: 124,
+      ap: 58,
+      attackSpeed: 122,
+      moveSpeed: 120,
+      critChance: 15,
+      critDamage: 155,
       energyGain: 22,
       lifeSteal: 0,
       ferocityGain: 0,

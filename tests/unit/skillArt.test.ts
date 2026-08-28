@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import PREPARE_ICONS from "../../scripts/prepare_icons.py?raw";
 import { RELICS } from "../../src/data/relics";
 import { ELEMENT_TINT, ROLE_TINT, SKILL_ART_ASSETS, SKILL_ART_SLOTS, skillArtFor, skillArtKey, skillArtTint } from "../../src/ui/skillArt";
-import { damageKeyword, ferocityTraitDescription, recoveryLabel, statusEffectLabel, targetingLabel } from "../../src/ui/skillPresentation";
+import { damageKeyword, ferocityTraitDescription, recoveryLabel, skillKeywordLayoutOptions, statusEffectLabel, targetingLabel } from "../../src/ui/skillPresentation";
+import type { SkillInfoViewModel } from "../../src/ui/SkillPopup";
 
 /** 구워 둔 스킬 일러스트. 코드가 가리키는 파일이 실제로 있는지 확인한다. */
 const ART_FILES = import.meta.glob("../../public/sprites/skills/*/*.webp");
@@ -82,5 +83,15 @@ describe("토리카 스킬 표시 계약", () => {
       term: "128",
       description: "현재 공격력에서 100%를 받아 계산한 피해 수치다.",
     });
+  });
+
+  it("은 폭주 본문에도 동적 피해 키워드 사전을 전달한다", () => {
+    // 실제 팝업 계약을 최소 구성해 본문 레이아웃에서 피해 수치 링크가 빠지는 회귀를 막는다.
+    const damage = damageKeyword({ kind: "scaling", amount: 19, power: 15, stat: "방어력", label: "피해량" })!;
+    const skill: SkillInfoViewModel = {
+      name: "다들 그만해!", kindLabel: "폭주", iconAssetId: "skill-icon-buff",
+      effectType: "buff", description: "[[damage-value|19]]만큼 추가 피해", contextualKeywords: [damage],
+    };
+    expect(skillKeywordLayoutOptions(skill, { width: 760, size: 28 }).contextualKeywords).toEqual([damage]);
   });
 });

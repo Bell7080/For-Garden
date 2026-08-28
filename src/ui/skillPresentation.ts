@@ -1,5 +1,6 @@
 import type { DamagePreview } from "../core/damage";
 import type { KeywordDef } from "../data/keywords";
+import type { KeywordTextOptions } from "../managers/KeywordManager";
 import type { CombatStatusEffect, FerocityTrait, Ultimate } from "../core/types";
 
 /** 전투 좌표 수치 대신 플레이어가 전장에서 찾을 수 있는 대상 범위를 말한다. */
@@ -32,6 +33,14 @@ export function damageKeyword(preview?: DamagePreview): KeywordDef | undefined {
     kind: "규칙",
     description: `현재 ${preview.stat}에서 ${preview.power}%를 받아 계산한 피해 수치다.`,
   };
+}
+
+/** 요약과 본문이 같은 동적 키워드 사전을 쓰도록 순수 레이아웃 옵션을 한 경계에서 결합한다. */
+export function skillKeywordLayoutOptions(
+  skill: { contextualKeywords?: readonly KeywordDef[] },
+  options: Omit<KeywordTextOptions, "contextualKeywords">,
+): KeywordTextOptions {
+  return { ...options, contextualKeywords: skill.contextualKeywords };
 }
 
 /** 폭주 설명의 모든 수치를 실제 전투 계약에서 만들어 밸런스 조정 후 문구가 남지 않게 한다. */

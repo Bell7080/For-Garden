@@ -201,12 +201,16 @@ export type FerocityTrait = {
       statusEffect?: CombatStatusEffect;
     }
   | { effectId: "allyEnergyGain"; energy: number }
-  | { effectId: "criticalChanceBonus"; chancePercent: number }
+  | {
+      effectId: "criticalChanceBonus";
+      /** 기존 치명타 확률에 곱하지 않고 그대로 더하는 퍼센트포인트 수치다. */
+      chancePercent: number;
+    }
   | {
       effectId: "rexBattleQueen";
-      /** 기존 확률에 그대로 더하는 치명타 확률(%p)이다. 25%p는 20%를 45%로 만든다. */
+      /** 기존 확률에 그대로 더하는 치명타 확률(퍼센트포인트)이다. 25는 20%를 45%로 만든다. */
       criticalChancePoints: number;
-      /** 실제 HP 피해에 더해지는 모든 피해 흡혈(%p)이다. 기본 능력치·스킬 흡혈과 덧셈한다. */
+      /** 실제 HP 피해에 더해지는 모든 피해 흡혈(퍼센트포인트)이다. 기본 능력치·스킬 흡혈과 덧셈한다. */
       allDamageLifeStealPoints: number;
     }
   | { effectId: "teamMoveSpeedBonus"; bonusPercent: number }
@@ -235,7 +239,7 @@ export interface Passive {
   attackSpeedPercent?: number;
   /** 피해 계산에 쓰는 공격력을 곱하는 증가율(%). 25% 증가는 현재 공격력의 1.25배다. */
   attackPowerPercent?: number;
-  /** 기존 치명타 확률에 곱하는 증가율(%). %p 증가와 달리 20%에서 25% 증가하면 25%다. */
+  /** 기존 치명타 확률에 곱하는 증가율(%). 25퍼센트포인트 덧셈과 달리 20%에서 25% 증가하면 25%다. */
   criticalChancePercent?: number;
   /** 기존 치명타 피해 배율에 곱하는 증가율(%). 160%에서 25% 증가하면 200%다. */
   criticalDamagePercent?: number;
@@ -243,7 +247,7 @@ export interface Passive {
   durationSeconds?: number;
   /** 심해 압력 전용: 전투 경과 1초마다 더하는 주문력이다. */
   apPerSecond?: number;
-  /** 심해 압력 전용: 잃은 체력 1%당 받는 피해 감소율(%p)이다. */
+  /** 심해 압력 전용: 잃은 체력 1%당 더하는 받는 피해 감소율(퍼센트포인트)이다. */
   reductionPerMissingHpPercent?: number;
   /** 심해 압력 전용: 받는 피해 감소율 상한이다. */
   maxReductionPercent?: number;

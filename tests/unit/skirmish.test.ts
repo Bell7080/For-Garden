@@ -565,11 +565,11 @@ describe("효과 ID별 야성 특성", () => {
     return state;
   }
 
-  it("렉시아 패시브는 공격 속도를 25%p 높이고 폭주 종료 뒤 간격을 그대로 유지한다", () => {
+  it("렉시아 패시브는 공격 속도를 25퍼센트포인트 높이고 폭주 종료 뒤 간격을 그대로 유지한다", () => {
     const state = newSkirmish(["rex"], ["husk-shell"]);
     const rex = state.fighters[0];
     const before = attackInterval(rex);
-    // 기본 112에 25%p를 더한 137로 나눠 곱연산(140)과 의미가 바뀌지 않게 고정한다.
+    // 기본 112에 25퍼센트포인트를 더한 137로 나눠 곱연산(140)과 의미가 바뀌지 않게 고정한다.
     expect(before).toBeCloseTo(SKIRMISH.attackInterval * 100 / 137);
     rex.ferocity = 100; rex.ferocityFever = true;
     expect(attackInterval(rex)).toBe(before); // 렉시아 폭주는 공속이 아니라 치명타와 흡혈만 바꾼다.
@@ -631,7 +631,7 @@ describe("효과 ID별 야성 특성", () => {
     expect(ally.energy).toBe(6);
   });
 
-  it("criticalChanceBonus은 스밀라의 피버 중 치명타율을 25%p 올린다", () => {
+  it("criticalChanceBonus은 스밀라의 피버 중 치명타율을 25퍼센트포인트 올린다", () => {
     const normal = prepareHit("smilo");
     normal.fighters[0].ferocity = 99;
     const normalHit = stepSkirmish(normal, 1 / 60, () => 0.3).find((event) => event.kind === "attack");
@@ -1016,21 +1016,21 @@ describe("렉시아 전투 계약", () => {
     return { state, rex, foe };
   }
 
-  it("은 공격력 25%와 치명 확률·치명 피해 25%p를 정해진 순서로 적용한다", () => {
+  it("은 공격력 25%와 치명 확률·치명 피해 25퍼센트포인트를 정해진 순서로 적용한다", () => {
     const { state, rex, foe } = readyRex();
     const hit = stepSkirmish(state, 1 / 60, () => 0.44).find((event) => event.kind === "attack")!;
     const boosted = { ...rex, def: { ...rex.def, stats: { ...rex.def.stats, atk: rex.def.stats.atk * 1.25, critDamage: rex.def.stats.critDamage + 25 } } };
     expect(rex.def.basic.power).toBe(95);
-    // 기본 20% + 패시브 25%p = 45%이며, 치명 피해도 160% + 25%p = 185%다.
+    // 기본 20% + 패시브 25퍼센트포인트 = 45%이며, 치명 피해도 160% + 25퍼센트포인트 = 185%다.
     expect(hit).toMatchObject({ critical: true, amount: computeDamage(boosted, foe, { ...rex.def.basic, kind: "basic", isCritical: true }, true) });
   });
 
-  it("은 폭주 중 치명타 25%p와 모든 피해 흡혈 25%p를 적용하고 종료 후 복구한다", () => {
+  it("은 폭주 중 치명타와 모든 피해 흡혈에 각각 25퍼센트포인트를 적용하고 종료 후 복구한다", () => {
     const { state, rex } = readyRex();
     rex.hp = rex.maxHp / 2; rex.ferocity = 100; rex.ferocityFever = true;
     const before = rex.hp;
     const hit = stepSkirmish(state, 1 / 60, () => 0.69).find((event) => event.kind === "attack")!;
-    expect(hit).toMatchObject({ critical: true }); // 기본 20% + 패시브 25%p + 폭주 25%p = 70%
+    expect(hit).toMatchObject({ critical: true }); // 기본 20% + 패시브 25퍼센트포인트 + 폭주 25퍼센트포인트 = 70%
     expect(rex.hp - before).toBeCloseTo(hit.amount * 0.25);
     rex.ferocityFever = false; rex.attackCooldown = 0; const hp = rex.hp;
     stepSkirmish(state, 1 / 60, () => 0.49);
@@ -1039,7 +1039,7 @@ describe("렉시아 전투 계약", () => {
 
   it("은 치명타 보너스를 모두 합산한 뒤 판정 직전에 100%로 제한한다", () => {
     const { state, rex } = readyRex();
-    // 기본 90% + 패시브 25%p + 폭주 25%p = 140%를 마지막에 100%로 제한한다.
+    // 기본 90% + 패시브 25퍼센트포인트 + 폭주 25퍼센트포인트 = 140%를 마지막에 100%로 제한한다.
     rex.def = { ...rex.def, stats: { ...rex.def.stats, critChance: 90 } };
     rex.ferocity = 100; rex.ferocityFever = true;
     const hit = stepSkirmish(state, 1 / 60, () => 0.999).find((event) => event.kind === "attack")!;
@@ -1061,7 +1061,7 @@ describe("렉시아 전투 계약", () => {
     capped.rex.ferocity = 100; capped.rex.ferocityFever = true; capped.rex.energy = 110;
     capped.rex.hp = capped.rex.maxHp - 1;
     fireUltimate(capped.state, capped.rex.id, () => 0.99);
-    // 기본 10%p + 폭주 25%p + 궁극기 50%p를 합산해도 최대 체력을 넘지 않는다.
+    // 기본 10퍼센트포인트 + 폭주 25퍼센트포인트 + 궁극기 50퍼센트포인트를 합산해도 최대 체력을 넘지 않는다.
     expect(capped.rex.hp).toBe(capped.rex.maxHp);
   });
 
@@ -1075,7 +1075,7 @@ describe("렉시아 전투 계약", () => {
     rex.hp = 100; rex.ferocity = 100; rex.ferocityFever = true; rex.energy = 110;
     const hit = fireUltimate(state, rex.id, () => 0.99).find((event) => event.kind === "attack")!;
     expect(hit).toMatchObject({ critical: false, amount: 668 });
-    // 기본 10%p + 폭주 25%p + 궁극기 50%p = 85%이며 회복량 자체는 재반올림하지 않는다.
+    // 기본 10퍼센트포인트 + 폭주 25퍼센트포인트 + 궁극기 50퍼센트포인트 = 85%이며 회복량 자체는 재반올림하지 않는다.
     expect(rex.hp).toBeCloseTo(100 + 668 * 0.85);
   });
 });
@@ -1183,7 +1183,7 @@ describe("폰투스 실전 스킬과 심해 압력", () => {
   it("는 잃은 체력에 비례한 모든 피해 감소를 40% 상한에서 공용 경계로 적용한다", () => {
     const { pontus } = pontusBattle();
     pontus.hp = pontus.maxHp * 0.6;
-    expect(receivedDamage(pontus, 100)).toBe(80); // 체력 40% 손실 × 0.5%p = 20% 감소.
+    expect(receivedDamage(pontus, 100)).toBe(80); // 체력 40% 손실 × 0.5퍼센트포인트 = 20% 감소.
     pontus.hp = pontus.maxHp * 0.1;
     expect(receivedDamage(pontus, 100)).toBe(60); // 45% 계산값은 명시된 40% 상한으로 제한한다.
   });

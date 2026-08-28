@@ -406,7 +406,7 @@ export function currentAttackSpeed(fighter: Fighter): number {
 
 export function attackInterval(fighter: Fighter): number {
   const trait = fighter.def.ferocityTrait;
-  // 공격 속도는 이미 백분율 척도인 추가 능력치이므로 패시브 수치를 %p로 더한다.
+  // 공격 속도는 이미 백분율 척도인 추가 능력치이므로 패시브 수치를 퍼센트포인트로 더한다.
   // 개별 공속은 공용 야성 피해 보너스를 다시 건드리지 않고 재사용 대기시간에만 곱한다.
   const feverMultiplier = fighter.ferocityFever && trait.effectId === "attackIntervalReduction"
     ? 1 - trait.reductionPercent / 100
@@ -544,7 +544,7 @@ function applyStreak(attacker: Fighter, target: Fighter, events: SkirmishEvent[]
   refreshBleed(target, BLEED.seconds, BLEED.percentPerSecond, events);
 }
 
-/** 공격력은 배율로, 백분율 척도인 치명타 피해는 %p로 임시 정의에 반영한다. */
+/** 공격력은 배율로, 백분율 척도인 치명타 피해는 퍼센트포인트로 임시 정의에 반영한다. */
 function offensiveDefinition(attacker: Fighter): RelicDef {
   const passive = attacker.def.passive;
   if (passive.kind !== "battleMaidMastery") return attacker.def;
@@ -555,7 +555,7 @@ function offensiveDefinition(attacker: Fighter): RelicDef {
   } };
 }
 
-/** 직접 피해 회복률은 기본 능력치, 현재 폭주, 사용 스킬을 %p 덧셈으로 확정한다. */
+/** 직접 피해 회복률은 기본 능력치, 현재 폭주, 사용 스킬을 퍼센트포인트 덧셈으로 확정한다. */
 function damageHealingRate(attacker: Fighter, skill: Skill, attackingInFever: boolean): number {
   const trait = attacker.def.ferocityTrait;
   const fever = attackingInFever && trait.effectId === "rexBattleQueen" ? trait.allDamageLifeStealPoints : 0;
@@ -682,7 +682,7 @@ function strike(
   // 이번 타격 시작 시점의 피버만 본다. 이 공격으로 100에 도달했다면 다음 공격부터 발현한다.
   const attackingInFever = attacker.ferocityFever;
   const critTrait = attacker.def.ferocityTrait;
-  // 패시브와 폭주의 %p를 모두 더한 뒤, 난수 판정 직전에만 유효 확률을 100%로 제한한다.
+  // 패시브와 폭주의 퍼센트포인트를 모두 더한 뒤, 난수 판정 직전에만 유효 확률을 100%로 제한한다.
   const passiveCritPoints = attacker.def.passive.kind === "battleMaidMastery"
     ? attacker.def.passive.criticalChancePercent ?? 0 : 0;
   const criticalChance = attacker.def.stats.critChance + passiveCritPoints
@@ -830,7 +830,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
   // 공격자 야성은 이번 공격의 모든 피해가 같은 시작 시점 배율을 쓰도록 대상 처리 뒤에 얻는다.
   const attackingInFever = attacker.ferocityFever;
   const critTrait = attacker.def.ferocityTrait;
-  // 광역 궁극기도 단일 타격과 동일하게 패시브 치명타 확률을 %p로 취급한다.
+  // 광역 궁극기도 단일 타격과 동일하게 패시브 치명타 확률을 퍼센트포인트로 취급한다.
   const passiveCritPoints = attacker.def.passive.kind === "battleMaidMastery"
     ? attacker.def.passive.criticalChancePercent ?? 0 : 0;
   const damageAttacker = { ...attacker, def: offensiveDefinition(attacker) };

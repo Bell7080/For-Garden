@@ -49,9 +49,10 @@ export function ferocityTraitDescription(trait: FerocityTrait, defense?: number)
   if (trait.effectId === "attackIntervalReduction") return `공격 간격이 ${trait.reductionPercent}% 짧아진다.`;
   if (trait.effectId === "damageReduction") return `받는 피해가 ${trait.reductionPercent}% 줄어든다.`;
   if (trait.effectId === "allyEnergyGain") return `공격할 때마다 다른 생존 아군이 궁극기 에너지를 ${trait.energy} 얻는다.`;
-  if (trait.effectId === "criticalChanceBonus") return `치명타 확률이 ${trait.chancePercent}%p 오른다.`;
+  // 덧셈형 확률도 플레이어에게는 일반적인 퍼센트 기호로 보여 주고 내부 산술 단위는 노출하지 않는다.
+  if (trait.effectId === "criticalChanceBonus") return `치명타 확률이 ${trait.chancePercent}% 오른다.`;
   if (trait.effectId === "teamMoveSpeedBonus") return `생존 아군 전체의 이동 속도가 ${trait.bonusPercent}% 빨라진다.`;
-  if (trait.effectId === "rexBattleQueen") return `치명타 확률과 모든 피해 흡혈이 각각 ${trait.criticalChancePoints}%p, ${trait.allDamageLifeStealPoints}%p 증가한다.`;
+  if (trait.effectId === "rexBattleQueen") return `치명타 확률과 모든 피해 흡혈이 각각 ${trait.criticalChancePoints}%, ${trait.allDamageLifeStealPoints}% 증가한다.`;
   if (trait.effectId === "stealthLeap") return `체력 비율이 가장 낮은 적에게 도약해 ${trait.durationSeconds}초 동안 단일 대상으로 지정되지 않는다.`;
 
   // 방어력 계수는 토리카처럼 추가 피해가 있는 범위 타격만 노출하고, 일반 전이 특성은 원래 피해 비율만 보여 준다.

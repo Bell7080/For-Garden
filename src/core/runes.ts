@@ -31,7 +31,7 @@ export const RUNE_RARITY_LABELS: Readonly<Record<RuneRarity, string>> = {
   legendary: "전설",
 };
 
-/** 룬이 올릴 수 있는 전투 수치 키다. 수치의 단위는 모두 백분율(%p 또는 %)이다. */
+/** 룬이 올릴 수 있는 전투 수치 키다. 수치는 덧셈형 퍼센트포인트 또는 곱셈형 증가율(%)이다. */
 export type RuneStatKey =
   | "hp" | "atk" | "ap" | "def" | "res"
   | "moveSpeed" | "attackSpeed" | "lifeSteal" | "critChance" | "critDamage"
@@ -47,7 +47,7 @@ export type RuneSubStatKey = Exclude<RuneStatKey, RuneMainStatKey>;
 export interface RuneStatOption<K extends RuneStatKey = RuneStatKey> {
   /** 적용할 능력치의 안정적인 키다. */
   key: K;
-  /** 적용량(%). 확률 계열은 %p, 나머지는 기존 수치에 대한 % 보정으로 해석한다. */
+  /** 적용량이다. 확률 계열은 덧셈형 퍼센트포인트, 나머지는 기존 수치에 대한 곱셈형 증가율(%)이다. */
   value: number;
 }
 

@@ -17,7 +17,7 @@ import { gameApi } from "../api/FakeServer";
 import { bondDialogue } from "../data/bonds";
 import { PopupLayer } from "../ui/PopupLayer";
 import { IdleExcavationPopup } from "../ui/IdleExcavationPopup";
-import { addPopupBackButton, BACK_SLOT, IconButton } from "../ui/IconButton";
+import { BACK_SLOT, IconButton } from "../ui/IconButton";
 import { UI_ICON } from "../ui/icons";
 import { TradePopup } from "../ui/TradePopup";
 import { InventoryPopup } from "../ui/InventoryPopup";
@@ -27,7 +27,9 @@ import { notificationManager } from "../managers/NotificationManager";
 import { MissionsPopup } from "../ui/MissionsPopup";
 import { LOBBY_ACTION_BOUNDS, LOBBY_MISSION_ENTRY } from "../ui/lobbyLayout";
 import { expeditionManager } from "../managers/ExpeditionManager";
-import { ExpeditionEntryButton } from "../ui/ExpeditionEntryButton";
+import { ExpeditionEntryButton, sortieEntrySdSpot } from "../ui/ExpeditionEntryButton";
+import { ENEMY_SD_ASSETS, PONTUS_SD_ASSET, playMotion, type PuppetAsset } from "../puppets/assets";
+import { loadOwnedPuppet } from "../ui/statusPuppetLoad";
 
 /** 확대된 애착 렐릭의 골반 아래가 내비게이션 뒤로 자연스럽게 이어지는 기준선. */
 const STAGE_FLOOR = 1660;
@@ -44,6 +46,28 @@ const EXCHANGE_BLUE = 0x6fa8d6;
  */
 const LOBBY_BOX = { left: 26, right: BASE_WIDTH - 26, top: 190, bottom: BASE_HEIGHT + 40 } as const;
 
+/** 출격 선택판의 규격. 판 크기와 SD 층·동작 간격을 한 곳에서만 정한다. */
+const SORTIE_MENU = { panel: { width: 980, height: 1240 }, motionDelay: 2600 } as const;
+/** 팝업 판(2000) 위. 화면에 직접 세우는 SD는 판보다 앞에 서야 버튼 위로 빠져나온다. */
+const SORTIE_SD_DEPTH = 2101;
+
+/** 한 줄에 담기는 출격 콘텐츠 한 칸. 자리·크기·원화·SD를 한 표로 읽는다. */
+interface SortieEntry {
+  x?: number;
+  y: number;
+  width: number;
+  height: number;
+  status: string;
+  onClick: () => void;
+  label?: string;
+  labelSize?: number;
+  artKey?: string;
+  accentColor?: number;
+  accentTextColor?: string;
+  sdSide?: "left" | "right";
+  sd?: PuppetAsset;
+}
+
 /**
  * 로비 — 메인 화면.
  *
@@ -57,6 +81,11 @@ export class LobbyScene extends Phaser.Scene {
   private interactionPending = false;
   /** 로비 위 팝업은 씬을 바꾸지 않으며 한 번에 한 발굴 쪽지만 소유한다. */
   private popupLayer?: PopupLayer;
+  /** 출격 선택판 위에 화면 좌표로 세우는 SD와 그 수명은 이 씬이 직접 소유한다. */
+  private sortieSdLayer?: Phaser.GameObjects.Container;
+  private readonly sortieSdPuppets = new Set<PuppetCreature>();
+  private sortieSdTimer?: Phaser.Time.TimerEvent;
+  private sortieBackButton?: IconButton;
   private idleExcavationPopup?: IdleExcavationPopup;
   /** 발굴은 화면 크기의 작업판이므로 팝업 X 대신 로비 좌하단의 공용 아이콘 양식을 쓴다. */
   private excavationBackButton?: IconButton;
@@ -77,6 +106,7 @@ export class LobbyScene extends Phaser.Scene {
   create(): void {
     setDebugScene("lobby");
     this.popupLayer = new PopupLayer(this);
+    this.sortieSdPuppets.clear();
 
     this.buildPlaza();
     // 설정 아이콘은 준비 중 토스트가 아니라 등록된 환경 설정 씬으로 곧바로 이동한다.
@@ -193,47 +223,90 @@ export class LobbyScene extends Phaser.Scene {
   private openSortieMenu(): void {
     if (!this.popupLayer || this.popupLayer.isOpen) return;
     const status = expeditionManager.status();
+    // 다섯 콘텐츠가 저마다 원화와 SD를 세우므로 판을 한 뼘 키워 서로 붙어 보이지 않게 한다.
+    const panel = SORTIE_MENU.panel;
     // 일반 작업판보다 암전을 옅게 해 로비의 애착 렐릭이 뒤에서 계속 보이도록 한다.
-    this.popupLayer.open({ width: 870, height: 1250, title: "출격", titleSize: 34, dim: true, dimAlpha: 0.24, closeOnBackdrop: false, hideCloseButton: true }, (body, close) => {
-      const storyButton = new ExpeditionEntryButton(this, 0, -190, {
-        width: 650,
-        height: 150,
-        label: "스토리",
-        status: "메인 작전",
-        artKey: "content-story-entry",
-        accentColor: EXCHANGE_BLUE,
-        accentTextColor: "#9fd0f0",
-        onClick: () => { close(); this.scene.start("stageMap"); },
-      });
-      body.add(storyButton);
-      // 두 일일 던전은 같은 위계와 같은 폭으로 나란히 놓아 어느 쪽도 기본 선택처럼 보이지 않게 한다.
-      // 두 던전은 각자의 전용 원화를 칩 실루엣에 물려 세운다. 같은 그림을 나눠 쓰면 나란히 선
-      // 두 버튼이 한 콘텐츠의 두 갈래처럼 읽힌다.
-      const dailyEntries = [
-        { x: -180, label: "케이크 대작전", status: "3 WAVE · 성장 재화", mode: "cake" as const, artKey: "content-cake-entry" },
-        { x: 180, label: "현상수배", status: "태그 3회 · 골드", mode: "bounty" as const, artKey: "content-bounty-entry" },
+    this.popupLayer.open({ width: panel.width, height: panel.height, title: "출격", titleSize: 34, dim: true, dimAlpha: 0.24, closeOnBackdrop: false, hideCloseButton: true, onClose: () => this.clearSortieChrome() }, (body, close) => {
+      // Puppet은 컨테이너 변환을 물려받지 않으므로 원점에 선 전용 레이어에 화면 좌표로 세운다.
+      this.sortieSdLayer = this.add.container(0, 0).setName("sortie-entry-sd").setDepth(SORTIE_SD_DEPTH);
+      const entries: SortieEntry[] = [
+        {
+          y: -330, width: 800, height: 220, label: "스토리", status: "메인 작전", artKey: "content-story-entry",
+          accentColor: EXCHANGE_BLUE, accentTextColor: "#9fd0f0", sd: ENEMY_SD_ASSETS[0],
+          onClick: () => { close(); this.scene.start("stageMap"); },
+        },
+        // 두 일일 던전은 같은 위계와 같은 폭으로 나란히 놓아 어느 쪽도 기본 선택처럼 보이지 않게 한다.
+        // 두 던전은 각자의 전용 원화를 칩 실루엣에 물려 세운다. 같은 그림을 나눠 쓰면 나란히 선
+        // 두 버튼이 한 콘텐츠의 두 갈래처럼 읽힌다.
+        {
+          x: -205, y: -75, width: 390, height: 200, label: "케이크 대작전", labelSize: 30, status: "3 WAVE · 성장 재화",
+          artKey: "content-cake-entry", accentColor: EXCHANGE_BLUE, accentTextColor: "#9fd0f0", sd: ENEMY_SD_ASSETS[1],
+          onClick: () => { close(); this.scene.start("sortiePreview", { mode: "cake" }); },
+        },
+        {
+          x: 205, y: -75, width: 390, height: 200, label: "현상수배", labelSize: 30, status: "태그 3회 · 골드",
+          artKey: "content-bounty-entry", accentColor: EXCHANGE_BLUE, accentTextColor: "#9fd0f0", sd: ENEMY_SD_ASSETS[2],
+          onClick: () => { close(); this.scene.start("sortiePreview", { mode: "bounty" }); },
+        },
+        // 레이드는 일일 던전 아래에서 독립된 전체 폭 콘텐츠로 읽히게 한다.
+        {
+          y: 150, width: 800, height: 200, label: "레이드", status: "협동 작전 · 준비 중",
+          onClick: () => { close(); this.scene.start("sortiePreview", { mode: "raid" }); },
+        },
+        // 전용 프리팹이 Content2_001 원화, 주황 출격 위계, 확대 피드백을 한 입력면으로 유지한다.
+        // 원정만 SD가 오른쪽에 서고 글자가 왼쪽 아래로 간다 — 20층 보스가 판 밖을 보는 자리다.
+        {
+          y: 395, width: 800, height: 230, status: this.expeditionStatus(status), sdSide: "right", sd: PONTUS_SD_ASSET,
+          onClick: () => { close(); this.scene.start("expedition"); },
+        },
       ];
-      dailyEntries.forEach((entry) => body.add(new ExpeditionEntryButton(this, entry.x, 0, {
-        width: 340, height: 135, label: entry.label, labelSize: 27, status: entry.status,
-        artKey: entry.artKey, accentColor: EXCHANGE_BLUE, accentTextColor: "#9fd0f0",
-        onClick: () => { close(); this.scene.start("sortiePreview", { mode: entry.mode }); },
-      })));
-      // 레이드는 일일 던전 아래에서 독립된 전체 폭 콘텐츠로 읽히게 한다.
-      body.add(new ExpeditionEntryButton(this, 0, 190, {
-        width: 650, height: 145, label: "레이드", status: "협동 작전 · 준비 중",
-        onClick: () => { close(); this.scene.start("sortiePreview", { mode: "raid" }); },
-      }));
-      // 전용 프리팹이 Content2_001 원화, 주황 출격 위계, 확대 피드백을 한 입력면으로 유지한다.
-      const expeditionButton = new ExpeditionEntryButton(this, 0, 385, {
-        width: 650,
-        height: 170,
-        status: this.expeditionStatus(status),
-        onClick: () => { close(); this.scene.start("expedition"); },
+      entries.forEach((entry) => {
+        const x = entry.x ?? 0;
+        body.add(new ExpeditionEntryButton(this, x, entry.y, {
+          width: entry.width, height: entry.height, label: entry.label, labelSize: entry.labelSize, status: entry.status,
+          artKey: entry.artKey, accentColor: entry.accentColor, accentTextColor: entry.accentTextColor,
+          sdSide: entry.sdSide, onClick: entry.onClick,
+        }));
+        if (!entry.sd) return;
+        const spot = sortieEntrySdSpot(entry.width, entry.height, entry.sdSide ?? "left");
+        void this.spawnSortieSd(entry.sd, BASE_WIDTH / 2 + x + spot.x, BASE_HEIGHT / 2 + entry.y + spot.groundY, spot.height);
       });
-      body.add(expeditionButton);
-      // 다섯 콘텐츠 아래의 공용 우하단 슬롯은 기존 팝업 닫기 계약을 그대로 따른다.
-      addPopupBackButton(this, body, 870, 1250, close);
+      // 돌아가기는 판 안이 아니라 다른 팝업과 같은 화면 우하단 슬롯에 선다.
+      this.sortieBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: close }).setDepth(SORTIE_SD_DEPTH + 1);
+      // 세워 둔 SD가 가끔 한 번씩 움직인다. 다섯 칸이 동시에 뛰면 무엇을 고르는 화면인지 흐려지므로
+      // 한 번에 하나만, 그것도 드문드문 재생한다.
+      this.sortieSdTimer = this.time.addEvent({ delay: SORTIE_MENU.motionDelay, loop: true, callback: () => {
+        const puppets = [...this.sortieSdPuppets];
+        const puppet = puppets[Math.floor(Math.random() * puppets.length)];
+        if (puppet) playMotion(this, puppet, Math.random() < 0.5 ? "attack" : "hit");
+      } });
     });
+  }
+
+  /** 늦게 도착한 SD가 이미 닫힌 판 위에 남지 않도록 현재 레이어에만 붙인다. */
+  private async spawnSortieSd(asset: PuppetAsset, x: number, groundY: number, height: number): Promise<void> {
+    const layer = this.sortieSdLayer;
+    if (!layer) return;
+    await loadOwnedPuppet({
+      spawn: () => spawnPuppet(this, asset, { x, groundY, height, depth: SORTIE_SD_DEPTH }),
+      isCurrent: () => this.sortieSdLayer === layer,
+      isDisplayable: (puppet) => Boolean(puppet.active && puppet.texture?.key && this.textures.exists(puppet.texture.key)),
+      adopt: (puppet) => {
+        // 장식이므로 입력을 받지 않는다. 버튼의 투명 입력면이 그대로 손짓을 가져간다.
+        puppet.disableInteractive();
+        layer.add(puppet);
+        this.sortieSdPuppets.add(puppet);
+      },
+    });
+  }
+
+  /** 판이 닫히면 화면에 직접 올린 SD·타이머·돌아가기를 함께 거둔다. */
+  private clearSortieChrome(): void {
+    this.sortieSdTimer?.remove(false); this.sortieSdTimer = undefined;
+    for (const puppet of this.sortieSdPuppets) { this.sortieSdLayer?.remove(puppet, false); puppet.destroy(); }
+    this.sortieSdPuppets.clear();
+    this.sortieSdLayer?.destroy(true); this.sortieSdLayer = undefined;
+    this.sortieBackButton?.destroy(); this.sortieBackButton = undefined;
   }
 
   /** 주간 횟수·진행·최고점·빠른 가능 여부를 한 줄의 짧은 원정 상태로 합친다. */

@@ -823,6 +823,8 @@ export class BattleScene extends Phaser.Scene {
         height: unitHeight,
         flipX: fighter.facing < 0,
       });
+      // 은신은 무적 표현이 아니다. SD 본체만 반투명하게 두고 피격 숫자·광역 피해 사건은 그대로 유지한다.
+      view.creature.setAlpha(fighter.stealthFor > 0 ? 0.45 : 1);
       // 폭주 중에는 한 뼘 커진다. 자리를 다시 잡은 뒤에 곱해야 매 프레임 배율이 되돌아가지 않는다.
       if (fighter.ferocityFever) view.creature.setScale(view.creature.scaleX * FEVER.scale, view.creature.scaleY * FEVER.scale);
       // 아래에 선 캐릭터가 앞에 오도록 발 높이로 앞뒤를 정한다.

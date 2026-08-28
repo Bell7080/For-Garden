@@ -106,3 +106,16 @@ describe("렉시아 스킬 표시 계약", () => {
     expect(damageHealingLabel(rex.ultimate.damageHealingPercent)).toBe("실제 피해의 50% 회복");
   });
 });
+
+describe("스피나 스킬 표시 계약", () => {
+  it("은 네 슬롯의 이름·요약·구조화 수치를 정적 정의와 함께 유지한다", () => {
+    const spino = RELICS.find((def) => def.id === "spino")!;
+    expect(spino.ferocityTrait).toMatchObject({ name: "잠행", durationSeconds: 3, leapTarget: "lowestHpEnemy", landingDistance: 172 });
+    expect(ferocityTraitDescription(spino.ferocityTrait)).toContain("3초 동안 단일 대상으로 지정되지 않는다");
+    expect(spino.passive).toMatchObject({ name: "전투의 환희", kind: "basicHitAttackSpeedStack", value: 3 });
+    expect(passiveDescription(spino.passive)).toContain("공격 속도가 3 증가");
+    expect(spino.basic).toMatchObject({ name: "악어턱 물어뜯기", power: 80, combo: { chancePercent: 40, hitCount: 2, missingHpHealingPercentPerHit: 10 } });
+    expect(spino.ultimate).toMatchObject({ name: "범람의 포식자", power: 200, attackSpeedPower: 300, cost: 300, statusEffects: [{ kind: "stun", seconds: 3 }] });
+    expect(spino.ultimate.desc).toContain("현재 공격 속도의 300%");
+  });
+});

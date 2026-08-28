@@ -52,6 +52,7 @@ export function ferocityTraitDescription(trait: FerocityTrait, defense?: number)
   if (trait.effectId === "criticalChanceBonus") return `치명타 확률이 ${trait.chancePercent}%p 오른다.`;
   if (trait.effectId === "teamMoveSpeedBonus") return `생존 아군 전체의 이동 속도가 ${trait.bonusPercent}% 빨라진다.`;
   if (trait.effectId === "rexBattleQueen") return `치명타 확률과 모든 피해 흡혈이 각각 ${trait.criticalChancePoints}%p, ${trait.allDamageLifeStealPoints}%p 증가한다.`;
+  if (trait.effectId === "stealthLeap") return `체력 비율이 가장 낮은 적에게 도약해 ${trait.durationSeconds}초 동안 단일 대상으로 지정되지 않는다.`;
 
   // 방어력 계수는 토리카처럼 추가 피해가 있는 범위 타격만 노출하고, 일반 전이 특성은 원래 피해 비율만 보여 준다.
   const speed = trait.attackSpeedBonusPercent === undefined ? "" : `공격 속도가 ${trait.attackSpeedBonusPercent}% 증가한다. `;
@@ -69,6 +70,7 @@ export function ferocityTraitDescription(trait: FerocityTrait, defense?: number)
 
 /** 복합 능력 패시브를 각 구조화 수치에서 문장화해 데이터 변경이 본문에도 즉시 반영되게 한다. */
 export function passiveDescription(passive: Passive): string {
+  if (passive.kind === "basicHitAttackSpeedStack") return `기본 공격이 실제 적중할 때마다 이번 전투 동안 공격 속도가 ${passive.value} 증가한다.`;
   if (passive.kind !== "battleMaidMastery") return passive.desc;
   return `공격 속도·공격력·치명타 확률·치명타 피해가 각각 ${passive.attackSpeedPercent}%, ${passive.attackPowerPercent}%, ${passive.criticalChancePercent}%, ${passive.criticalDamagePercent}% 증가한다.`;
 }

@@ -16,9 +16,10 @@ export const COMMON_OBSERVATION_QUESTIONS: readonly ObservationQuestion[] = [
   ] },
 ] as const;
 
-/** 토리카의 식욕·부끄러움·용기를 답으로 단정하지 않고, 해당 상황의 반응으로 관찰한다. */
+/** 렐릭별 질문은 설정을 답으로 단정하지 않고, 구체적인 상황에서 드러나는 반응으로 검증한다. */
 export const RELIC_OBSERVATION_QUESTIONS: Readonly<Record<string, readonly ObservationQuestion[]>> = {
   anky: [
+    // 먹이 화제에서 토리카의 왕성한 식욕과 동료 배려, 부끄러움 중 어느 면이 앞서는지 검증한다.
     { id: "anky-meal-appetite", prompt: "평소 먹는 양과 좋아하는 먹이를 물으면 어떤 반응을 보여?", choices: [
       { id: "anky-meal-eager", label: "좋아하는 먹이부터 신나게 이야기한다", personalityTag: "왕성한 식욕", habitKey: "ankyMealEager" },
       { id: "anky-meal-share", label: "동료들이 먹을 몫부터 헤아린다", personalityTag: "동료 배려", habitKey: "ankyMealShare" },
@@ -33,6 +34,23 @@ export const RELIC_OBSERVATION_QUESTIONS: Readonly<Record<string, readonly Obser
     { id: "anky-frightened-shield", prompt: "겁이 나는데도 누군가의 앞을 막아서야 할 때 어떤 반응을 보여?", choices: [
       { id: "anky-shield-admit", label: "무섭다고 말한 뒤 한 걸음 물러서 자리를 지킨다", personalityTag: "두려움 인정", habitKey: "ankyShieldAdmit" },
       { id: "anky-shield-protect", label: "떨리는 다리를 버티며 상대의 앞을 가로막는다", personalityTag: "보호본능", habitKey: "ankyShieldProtect" },
+    ] },
+  ],
+  rex: [
+    // 큰 상대를 마주한 렉시아가 격식을 지키는 경쟁심과 체격 자체의 승부욕 중 어느 쪽을 보이는지 검증한다.
+    { id: "rex-size-rivalry", prompt: "자신보다 훨씬 큰 상대가 앞을 막으면 어떻게 반응해?", choices: [
+      { id: "rex-size-formal", label: "자세를 곧게 세우고 먼저 정식으로 승부를 청한다", personalityTag: "격식 있는 경쟁심", habitKey: "rexSizeFormal" },
+      { id: "rex-size-wrestle", label: "체격 차이를 지적하자 곧바로 힘겨루기를 요구한다", personalityTag: "체격 승부욕", habitKey: "rexSizeWrestle" },
+    ] },
+    // 압도적인 강자 앞에서 공정한 조건을 중시하는지, 강자와 즉시 겨루고 싶어 하는지 검증한다.
+    { id: "rex-strong-challenge", prompt: "압도적으로 강한 상대를 발견하면 어떻게 할 거야?", choices: [
+      { id: "rex-strong-fair", label: "상대의 장점을 살핀 뒤 같은 조건으로 겨룬다", personalityTag: "공정한 도전", habitKey: "rexStrongFair" },
+      { id: "rex-strong-eager", label: "눈을 빛내며 당장 어느 쪽이 강한지 확인하려 한다", personalityTag: "강자 선호", habitKey: "rexStrongEager" },
+    ] },
+    // 작은 렐릭의 실수 앞에서 에티켓을 가르치면서도 약자를 위압하지 않는 배려 방식을 검증한다.
+    { id: "rex-small-etiquette", prompt: "작은 렐릭이 실수로 예절을 지키지 못하면?", choices: [
+      { id: "rex-small-guide", label: "먼저 자세를 낮추고 천천히 올바른 인사법을 알려 준다", personalityTag: "온화한 지도", habitKey: "rexSmallGuide" },
+      { id: "rex-small-example", label: "자신이 먼저 정중히 인사해 따라 할 수 있게 기다린다", personalityTag: "솔선하는 예절", habitKey: "rexSmallExample" },
     ] },
   ],
 };
@@ -52,7 +70,18 @@ export const REACTIONS: Readonly<Record<string, ObservationReaction>> = {
     ankyWeightHonest: "몸무게를 말할 때 볏 끝까지 붉어지지만 수치는 또박또박 확인한다.", ankyWeightDeflect: "몸무게가 언급되면 볏 끝까지 붉어진 채 먹이 이야기로 화제를 돌린다.",
     ankyShieldAdmit: "겁이 난다고 인정하고 한 걸음 물러서지만 보호할 대상의 앞은 비우지 않는다.", ankyShieldProtect: "다리가 떨려도 몸을 낮춰 보호할 대상의 앞을 막아선다.",
   } },
-  rex: { intro: "관찰이라니, 재미있는 걸 묻네.", replies: { approach: "숨기 전에 내가 찾아내지.", wait: "바람이 냄새를 가져올 때까지 기다려.", share: "내 무리라면 굶기지 않아.", guard: "강한 순서가 아니라 필요한 순서로 먹어." }, habits: { approach: "소리보다 바람에 실린 냄새를 먼저 좇는다.", wait: "사냥 전 몸을 낮추고 풍향이 바뀌기를 기다린다.", share: "무리의 먹이가 부족하면 자신의 몫을 뒤로 미룬다.", guard: "먹이 주변을 한 바퀴 돈 뒤에야 식사를 시작한다." } },
+  // 경쟁심·강자 선호에는 정중한 승부 절차를, 에티켓·약자 배려에는 위압하지 않는 태도를 대응시킨다.
+  rex: { intro: "관찰이라니, 재미있는 걸 묻네.", replies: {
+    approach: "숨기 전에 내가 찾아내지.", wait: "바람이 냄새를 가져올 때까지 기다려.", share: "내 무리라면 굶기지 않아.", guard: "강한 순서가 아니라 필요한 순서로 먹어.",
+    "rex-size-formal": "훌륭한 체격이군. 이름을 밝히고 정식으로 한 판 청하겠어.", "rex-size-wrestle": "그 체격이 얼마나 대단한지, 괜찮다면 힘으로 겨뤄 보자.",
+    "rex-strong-fair": "네 강점을 충분히 본 뒤 같은 조건에서 정정당당히 도전하겠어.", "rex-strong-eager": "눈을 뗄 수 없는 강함이군. 준비가 됐다면 지금 승부를 청하지.",
+    "rex-small-guide": "놀라지 않아도 돼. 내가 몸을 낮출 테니 천천히 인사부터 해 보자.", "rex-small-example": "내가 먼저 인사할게. 편해지면 같은 방식으로 답해 줘.",
+  }, habits: {
+    approach: "소리보다 바람에 실린 냄새를 먼저 좇는다.", wait: "사냥 전 몸을 낮추고 풍향이 바뀌기를 기다린다.", share: "무리의 먹이가 부족하면 자신의 몫을 뒤로 미룬다.", guard: "먹이 주변을 한 바퀴 돈 뒤에야 식사를 시작한다.",
+    rexSizeFormal: "큰 상대가 다가오면 어깨를 펴고 발끝을 가지런히 맞춘다.", rexSizeWrestle: "체격이 큰 상대 앞에서는 중심을 낮추고 맞잡을 거리를 가늠한다.",
+    rexStrongFair: "강자의 움직임을 끝까지 지켜본 뒤 장비와 출발 위치부터 확인한다.", rexStrongEager: "강한 기척을 알아채면 눈빛이 밝아지고 곧바로 상대의 준비 여부를 살핀다.",
+    rexSmallGuide: "작은 렐릭과 이야기할 때 무릎을 굽혀 시선을 같은 높이에 둔다.", rexSmallExample: "작은 렐릭 앞에서는 목소리를 낮추고 먼저 천천히 고개를 숙인다.",
+  } },
   spino: { intro: "물소리처럼 편하게 물어봐.", replies: { approach: "물결이 어디서 갈라지는지 볼 거야.", wait: "조용해질 때까지 물속에서 기다릴래.", share: "큰 물고기는 나누면 돼.", guard: "물가부터 안전한지 살필게." }, habits: { approach: "수면의 파문 방향으로 주둥이를 천천히 돌린다.", wait: "경계할 때 콧구멍만 수면 위로 내놓는다.", share: "큰 먹이를 물가로 옮긴 뒤 작은 조각부터 떼어 준다.", guard: "먹기 전 얕은 물을 꼬리로 저어 주변을 확인한다." } },
 };
 

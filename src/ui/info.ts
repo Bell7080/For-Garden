@@ -1062,7 +1062,8 @@ export class InfoManager {
       entries.forEach((entry, index) => {
         const y = 184 + index * 128;
         const copy = `${entry.date}  ·  #${entry.personalityTag}\nQ. ${entry.question}\nA. ${entry.answer}\n발견  ${entry.discoveredHabit}`;
-        body.add(this.scene.add.text(-380, y, copy, textStyle({ role: "body", size: 20, color: COLOR.ink, lineSpacing: 4 })).setOrigin(0, 0));
+        // 질문 완료 뒤 다시 열린 연구 일지에서도 모바일 기준 본문과 같은 크기로 기록을 읽게 한다.
+        body.add(this.scene.add.text(-380, y, copy, textStyle({ role: "body", size: 24, color: COLOR.ink, lineSpacing: 6 })).setOrigin(0, 0));
       });
 
       // 초기 버전은 공용 질문을 일지에서 바로 답하게 해 별도 대형 화면 제작을 피한다.

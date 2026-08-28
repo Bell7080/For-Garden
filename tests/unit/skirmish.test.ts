@@ -772,6 +772,17 @@ describe("도디 정적 전투 계약", () => {
     return state;
   }
 
+  it("기획 스킬명과 주문력 70% 일반 공격 계수를 유지한다", () => {
+    const dodi = getRelic("dodo");
+    expect([dodi.ferocityTrait?.name, dodi.passive.name, dodi.basic.name, dodi.ultimate.name]).toEqual([
+      "인비저블 썸띵?",
+      "연구원님, 이것 좀 보세요!",
+      "깃펜 톡톡",
+      "세기의 대발견... 맞죠?!",
+    ]);
+    expect(dodi.basic.power).toBe(70);
+  });
+
   it("폭주 중에만 공격 속도 x2, 즉 공격 간격 50%를 적용한다", () => {
     const [dodi] = readyDodiBattle().fighters;
     const calm = attackInterval(dodi);

@@ -8,7 +8,14 @@ import {
   resolveAnchors,
   type AnchorFrame,
 } from "../../src/puppets/anchors";
-import { PONTUS_PORTRAIT_METADATA, PONTUS_SD_METADATA } from "../../src/puppets/assetMetadata";
+import {
+  DODI_PORTRAIT_METADATA,
+  DODI_SD_METADATA,
+  METTE_PORTRAIT_METADATA,
+  METTE_SD_METADATA,
+  PONTUS_PORTRAIT_METADATA,
+  PONTUS_SD_METADATA,
+} from "../../src/puppets/assetMetadata";
 
 /** 실제 char_001.zip과 같은 구성 — 머리 태그를 눈·입이 함께 가지고 있다. */
 function bone(name: string, x: number, y: number, tags: string[], parentId: string | null = "root"): PuppetBone {
@@ -140,4 +147,16 @@ describe("폰투스 에셋 앵커 메타데이터", () => {
     });
   });
 
+});
+
+describe("도디·메테 전용 에셋 앵커 메타데이터", () => {
+  it("는 5번 도디 전신·SD의 실루엣 경계를 고정한다", () => {
+    expect(DODI_PORTRAIT_METADATA).toMatchObject({ imageWidth: 1086, imageHeight: 1448, content: { left: 100, top: 76, right: 986, bottom: 1352 } });
+    expect(DODI_SD_METADATA).toMatchObject({ imageWidth: 1254, imageHeight: 1254, content: { left: 121, top: 72, right: 1088, bottom: 1207 } });
+  });
+
+  it("는 6번 메테 전신·SD의 실루엣 경계를 고정한다", () => {
+    expect(METTE_PORTRAIT_METADATA).toMatchObject({ imageWidth: 1054, imageHeight: 1492, content: { left: 67, top: 43, right: 1003, bottom: 1463 } });
+    expect(METTE_SD_METADATA).toMatchObject({ imageWidth: 1254, imageHeight: 1254, content: { left: 106, top: 80, right: 1099, bottom: 1207 } });
+  });
 });

@@ -320,7 +320,7 @@ export const RELICS: RelicDef[] = [
     catalogSummary: "신장 1.08m, 체중 20kg의 가벼운 체형과 짧은 날개, 단단한 부리가 확인된 비행 불능 조류 표본.",
     unlockRecord: { status: "recorded", text: "도디는 신장 1.08m, 체중 20kg으로 복원되었다. 보존된 골격과 난각에서 완성한 최초의 안정 표본이며, 낮은 경계성 덕분에 생태 관찰 기준 개체가 됐다." },
     rarity: "R",
-    portraitAssetId: "torika-placeholder",
+    portraitAssetId: "dodi",
     origin: "도도새",
     element: "wind",
     role: "support",
@@ -341,10 +341,10 @@ export const RELICS: RelicDef[] = [
       ferocityGain: 0,
     },
     // 공격 속도 +100%는 속도 x2이며, 계산 결과 공격 간격이 50%가 되는 계약이다.
-    ferocityTrait: { name: "소란", effectId: "selfAttackSpeedMultiplier", bonusPercent: 100 },
+    ferocityTrait: { name: "인비저블 썸띵?", effectId: "selfAttackSpeedMultiplier", bonusPercent: 100 },
     passive: {
       id: "dodo-passive",
-      name: "온순한 둥지",
+      name: "연구원님, 이것 좀 보세요!",
       kind: "guardianNestAura",
       iconAssetId: "skill-icon-buff",
       effectType: "buff",
@@ -355,8 +355,8 @@ export const RELICS: RelicDef[] = [
     },
     basic: {
       id: "dodo-basic",
-      name: "부리 쪼기",
-      power: 100,
+      name: "깃펜 톡톡",
+      power: 70,
       iconAssetId: "skill-icon-magical",
       effectType: "magical",
       damageType: "magical",
@@ -365,7 +365,7 @@ export const RELICS: RelicDef[] = [
     },
     ultimate: {
       id: "dodo-ult",
-      name: "잊힌 노래",
+      name: "세기의 대발견... 맞죠?!",
       power: 200,
       iconAssetId: "skill-icon-magical",
       effectType: "magical",
@@ -704,8 +704,8 @@ export const RELICS: RelicDef[] = [
     catalogSummary: "신장 1.76m의 견고한 체격과 현악 연주에 적합한 섬세한 손끝을 지닌 메가테리움 성체 표본.",
     unlockRecord: { status: "recorded", text: "메테는 복원 직후부터 바이올린의 울림에 유난히 오래 귀를 기울였다. 거대한 메가테리움의 힘과 섬세한 활놀림은 뜻밖에도 훌륭한 조화를 이룬다. 지금은 연구원을 위한 단 하나뿐인 무대를 준비하며, 자신의 연주가 온전히 닿을 날을 고대하고 있다." },
     rarity: "SSR",
-    // 전용 원화가 없으므로 기존 인물 원화를 정식 에셋인 것처럼 복제하지 않고 명시적 placeholder를 쓴다.
-    portraitAssetId: "mette-placeholder",
+    // 6번 전신과 SD를 함께 사용해 도감과 전투에서 같은 메테가 보이도록 한다.
+    portraitAssetId: "mette",
     origin: "메가테리움",
     element: "grass",
     role: "support",

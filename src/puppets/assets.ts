@@ -12,7 +12,14 @@ import {
   type FocusOptions,
 } from "./anchors";
 import { ensureTexture, IndexedPuppetCreature } from "./IndexedPuppetCreature";
-import { METTE_PLACEHOLDER_METADATA, PONTUS_PORTRAIT_METADATA, PONTUS_SD_METADATA } from "./assetMetadata";
+import {
+  DODI_PORTRAIT_METADATA,
+  DODI_SD_METADATA,
+  METTE_PORTRAIT_METADATA,
+  METTE_SD_METADATA,
+  PONTUS_PORTRAIT_METADATA,
+  PONTUS_SD_METADATA,
+} from "./assetMetadata";
 
 /** 기존 호출부가 렌더러 구현을 몰라도 되도록 인게임 Puppet 타입을 한 곳에서 공개한다. */
 export type PuppetCreature = IndexedPuppetCreature;
@@ -71,12 +78,6 @@ export const TORIKA_ASSET: PuppetAsset = {
   cardZoom: 0.62,
 };
 
-/** 전용 ZIP이 없는 메테를 기존 캐릭터로 오인하지 않도록 별도 이름으로 등록한 임시 원화 계약이다. */
-export const METTE_PLACEHOLDER_ASSET: PuppetAsset = {
-  url: `${base}puppets/char_001.zip`,
-  ...METTE_PLACEHOLDER_METADATA,
-};
-
 /** 2번 전신 일러스트: 렉시아(티라노사우루스). */
 export const LEXIA_ASSET: PuppetAsset = {
   url: `${base}puppets/char_002.zip`,
@@ -102,6 +103,18 @@ export const LUKA_ASSET: PuppetAsset = {
   content: { left: 52, top: 44, right: 1683, bottom: 2404 },
   // 코어 관절이 다른 원화보다 아래에 박혀 있어 정보창에서 혼자 내려앉아 보인다.
   portraitOffsetY: -34,
+};
+
+/** 5번 전신 일러스트: 도디(도도새). */
+export const DODI_ASSET: PuppetAsset = {
+  url: `${base}puppets/char_005.zip`,
+  ...DODI_PORTRAIT_METADATA,
+};
+
+/** 6번 전신 일러스트: 메테(메가테리움). */
+export const METTE_ASSET: PuppetAsset = {
+  url: `${base}puppets/char_006.zip`,
+  ...METTE_PORTRAIT_METADATA,
 };
 
 /**
@@ -153,6 +166,8 @@ const PORTRAIT_ASSETS = {
   lexia: { asset: LEXIA_ASSET, usesRelicTint: false },
   seira: { asset: SEIRA_ASSET, usesRelicTint: false },
   luka: { asset: LUKA_ASSET, usesRelicTint: false },
+  dodi: { asset: DODI_ASSET, usesRelicTint: false },
+  mette: { asset: METTE_ASSET, usesRelicTint: false },
   // 적도 전용 전신을 가진다. 초상 레지스트리에 함께 두면 정보창이 아군·적을 가르지 않고
   // 같은 경로로 원화를 찾는다 — 화면마다 "적이면 다른 함수"를 두면 한 곳을 고칠 때 다른
   // 곳이 임시 원화로 남는다.
@@ -161,8 +176,6 @@ const PORTRAIT_ASSETS = {
   ripa: { asset: RIPA_ASSET, usesRelicTint: false },
   pontus: { asset: PONTUS_ASSET, usesRelicTint: false },
   "torika-placeholder": { asset: TORIKA_ASSET, usesRelicTint: true },
-  // 전용 원화가 도착하기 전임을 키 자체로 드러내며 정식 캐릭터 에셋으로 위장하지 않는다.
-  "mette-placeholder": { asset: METTE_PLACEHOLDER_ASSET, usesRelicTint: true },
 } as const satisfies Record<PortraitAssetId, { asset: PuppetAsset; usesRelicTint: boolean }>;
 
 /** 데이터 키로 전신 원화를 찾는다. 캐릭터 내부 id에 의존하지 않는다. */
@@ -223,7 +236,19 @@ export const LUKA_SD_ASSET: PuppetAsset = {
   content: { left: 202, top: 76, right: 1098, bottom: 1197 },
 };
 
-/** 적은 번호별 전용 묶음을 쓰고, 전용 SD가 없는 아군은 요청대로 아군 1번 SD를 공유한다. */
+/** 5번 SD: 도디. */
+export const DODI_SD_ASSET: PuppetAsset = {
+  url: `${base}puppets/charSD_005.zip`,
+  ...DODI_SD_METADATA,
+};
+
+/** 6번 SD: 메테. */
+export const METTE_SD_ASSET: PuppetAsset = {
+  url: `${base}puppets/charSD_006.zip`,
+  ...METTE_SD_METADATA,
+};
+
+/** 적과 전용 아군은 각자 번호 묶음을 쓰고, 아직 전용 SD가 없는 아군만 1번 SD를 공유한다. */
 export function battleAssetFor(relicId: string): PuppetAsset {
   // 최종층 보스는 일반 적 번호 묶음과 별도의 전용 SD를 사용한다.
   if (relicId === "pontus") return PONTUS_SD_ASSET;
@@ -234,10 +259,8 @@ export function battleAssetFor(relicId: string): PuppetAsset {
   if (relicId === "rex") return LEXIA_SD_ASSET;
   if (relicId === "spino") return SEIRA_SD_ASSET;
   if (relicId === "luka") return LUKA_SD_ASSET;
-  // 도디의 임시 전신이 토리카 기반이므로 SD도 같은 토리카 묶음으로 명시해 서로 다른 캐릭터가 되지 않게 한다.
-  if (relicId === "dodo") return TORIKA_SD_ASSET;
-  // 메테도 전용 SD가 없음을 분기에서 숨기지 않고 placeholder tint 경로로 보낸다.
-  if (relicId === "mette") return TORIKA_SD_ASSET;
+  if (relicId === "dodo") return DODI_SD_ASSET;
+  if (relicId === "mette") return METTE_SD_ASSET;
   return TORIKA_SD_ASSET;
 }
 
@@ -246,9 +269,8 @@ export function sdAssetFor(relicId: string): PuppetAsset {
   if (relicId === "rex") return LEXIA_SD_ASSET;
   if (relicId === "spino") return SEIRA_SD_ASSET;
   if (relicId === "luka") return LUKA_SD_ASSET;
-  // 전투 밖 SD도 정보창의 도디 임시 캐릭터와 같은 토리카 기반을 유지한다.
-  if (relicId === "dodo") return TORIKA_SD_ASSET;
-  if (relicId === "mette") return TORIKA_SD_ASSET;
+  if (relicId === "dodo") return DODI_SD_ASSET;
+  if (relicId === "mette") return METTE_SD_ASSET;
   // anky와 아직 전용 SD가 없는 렐릭은 기존 공용 토리카 SD로 안전하게 폴백한다.
   return TORIKA_SD_ASSET;
 }

@@ -1,11 +1,29 @@
 import type { PuppetAsset } from "./assets";
 
-/** 메테 전용 원화가 오기 전 사용하는 명시적 placeholder 프레임이며 토리카 원화의 정식 소유권을 뜻하지 않는다. */
-export const METTE_PLACEHOLDER_METADATA: Omit<PuppetAsset, "url"> = {
+/** 도디 전신·SD ZIP의 원본 크기와 alpha > 16인 실제 실루엣 경계다. */
+export const DODI_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1086,
+  imageHeight: 1448,
+  content: { left: 100, top: 76, right: 986, bottom: 1352 },
+};
+
+export const DODI_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254,
+  imageHeight: 1254,
+  content: { left: 121, top: 72, right: 1088, bottom: 1207 },
+};
+
+/** 메테 전신·SD ZIP의 원본 크기와 alpha > 16인 실제 실루엣 경계다. */
+export const METTE_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1054,
   imageHeight: 1492,
-  content: { left: 95, top: 69, right: 894, bottom: 1419 },
-  cardZoom: 0.62,
+  content: { left: 67, top: 43, right: 1003, bottom: 1463 },
+};
+
+export const METTE_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254,
+  imageHeight: 1254,
+  content: { left: 106, top: 80, right: 1099, bottom: 1207 },
 };
 
 /**

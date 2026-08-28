@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import PREPARE_ICONS from "../../scripts/prepare_icons.py?raw";
 import { RELICS } from "../../src/data/relics";
 import { ELEMENT_TINT, ROLE_TINT, SKILL_ART_ASSETS, SKILL_ART_SLOTS, skillArtFor, skillArtKey, skillArtTint } from "../../src/ui/skillArt";
-import { ferocityTraitDescription, recoveryLabel, statusEffectLabel, targetingLabel } from "../../src/ui/skillPresentation";
+import { damageKeyword, ferocityTraitDescription, recoveryLabel, skillKeywordLayoutOptions, statusEffectLabel, targetingLabel } from "../../src/ui/skillPresentation";
+import type { SkillInfoViewModel } from "../../src/ui/SkillPopup";
 
 /** 구워 둔 스킬 일러스트. 코드가 가리키는 파일이 실제로 있는지 확인한다. */
 const ART_FILES = import.meta.glob("../../public/sprites/skills/*/*.webp");
@@ -70,10 +71,27 @@ describe("토리카 스킬 표시 계약", () => {
     expect(`${torika.passive.durationSeconds}초 동안 ${recoveryLabel(torika.passive.value)}`).toBe("5초 동안 매초 최대 체력의 7% 회복");
     expect(targetingLabel(torika.ultimate.targeting)).toBe("자신의 주위 모든 적");
     expect(statusEffectLabel(torika.ultimate.statusEffects?.[0])).toBe("[[stun|기절]] 2초");
-    expect(ferocityTraitDescription(torika.ferocityTrait, torika.stats.def)).toBe("공격 속도가 20% 증가한다. 기본 공격이 대상 주위의 모든 적에게 적중해 방어력의 15%([[def|19]])만큼 추가 물리 피해를 입히고 [[stagger|경직]]시킨다.");
+    expect(ferocityTraitDescription(torika.ferocityTrait, torika.stats.def)).toBe("공격 속도가 20% 증가한다. 기본 공격이 대상 주위의 모든 적에게 적중해 [[damage-value|19]]만큼 추가 물리 피해를 입히고 [[stagger|경직]]시킨다.");
     // 설명의 환산 피해도 현재 방어력을 다시 읽으므로 레벨·룬으로 능력치가 변하면 같이 변한다.
-    expect(ferocityTraitDescription(torika.ferocityTrait, torika.stats.def * 2)).toContain("[[def|38]]");
+    expect(ferocityTraitDescription(torika.ferocityTrait, torika.stats.def * 2)).toContain("[[damage-value|38]]");
     // 설명 원문에는 구조화된 수치나 개발 좌표를 복제하지 않아 값이 갈라질 여지를 없앤다.
     expect(torika.ultimate.desc).not.toMatch(/220px|2초/);
+  });
+  it("은 일반 공격과 궁극기의 피해 출처를 공용 상세 정의로 만든다", () => {
+    expect(damageKeyword({ kind: "scaling", amount: 128, power: 100, stat: "공격력", label: "피해량" })).toMatchObject({
+      id: "damage-value",
+      term: "128",
+      description: "현재 공격력에서 100%를 받아 계산한 피해 수치다.",
+    });
+  });
+
+  it("은 폭주 본문에도 동적 피해 키워드 사전을 전달한다", () => {
+    // 실제 팝업 계약을 최소 구성해 본문 레이아웃에서 피해 수치 링크가 빠지는 회귀를 막는다.
+    const damage = damageKeyword({ kind: "scaling", amount: 19, power: 15, stat: "방어력", label: "피해량" })!;
+    const skill: SkillInfoViewModel = {
+      name: "다들 그만해!", kindLabel: "폭주", iconAssetId: "skill-icon-buff",
+      effectType: "buff", description: "[[damage-value|19]]만큼 추가 피해", contextualKeywords: [damage],
+    };
+    expect(skillKeywordLayoutOptions(skill, { width: 760, size: 28 }).contextualKeywords).toEqual([damage]);
   });
 });

@@ -1,11 +1,12 @@
 import Phaser from "phaser";
 import type { KeywordManager } from "../managers/KeywordManager";
+import type { KeywordDef } from "../data/keywords";
 import type { CombatStatusEffect, EffectType, SkillIconAssetId, Ultimate } from "../core/types";
 import { chipPoints, drawHairline, drawInnerVignette, drawLayer, drawShapeOutline } from "./holo";
 import type { PopupLayer } from "./PopupLayer";
 import { FALLBACK_SKILL_ICON } from "./skillIcons";
 import { SKILL_ART_WASH_ALPHA } from "./skillArt";
-import { recoveryLabel, statusEffectLabel, targetingLabel } from "./skillPresentation";
+import { recoveryLabel, skillKeywordLayoutOptions, statusEffectLabel, targetingLabel } from "./skillPresentation";
 import { COLOR, textStyle } from "./theme";
 
 /** 데이터 효과 분류를 플레이어가 읽는 고정 라벨로 바꾼다. */
@@ -30,6 +31,8 @@ export interface SkillInfoViewModel {
   effectType: EffectType;
   /** 배율이나 예상 피해처럼 한 줄로 읽는 수치. */
   valueLabel?: string;
+  /** 표시 수치를 눌렀을 때 해당 스킬의 능력치 출처와 배율을 설명한다. */
+  contextualKeywords?: readonly KeywordDef[];
   /** 코어의 대상 선택 계약. 반경 같은 개발 단위는 표시하지 않는다. */
   targeting?: Ultimate["targeting"];
   /** 코어가 실제 적용하는 상태 효과와 지속 시간이다. */
@@ -112,13 +115,18 @@ export function openSkillPopup(
       recoveryLabel(skill.recoveryPercent),
     ].filter(Boolean).join("   ·   ");
     // 실제 수치도 설명문과 같은 키워드 레이아웃을 써서, 누르면 산출 근거를 확인할 수 있게 한다.
-    const summaryText = keywords.layout(summary, { width: 560, size: 24, lineSpacing: 4 });
+    const summaryText = keywords.layout(summary, skillKeywordLayoutOptions(skill, {
+      width: 560, size: 24, lineSpacing: 4,
+    }));
     summaryText.setPosition(textLeft, top + 156);
     body.add(summaryText);
 
     body.add(drawHairline(scene, 0, top + 232, POPUP.width - 96, { color: COLOR.accent, alpha: 0.35 }));
 
-    const description = keywords.layout(skill.description, { width: POPUP.width - 120, size: 28, lineSpacing: 10 });
+    // 토리카 폭주처럼 피해 수치가 본문에 있는 경우에도 요약과 같은 사전을 넘겨 밑줄과 입력을 붙인다.
+    const description = keywords.layout(skill.description, skillKeywordLayoutOptions(skill, {
+      width: POPUP.width - 120, size: 28, lineSpacing: 10,
+    }));
     description.setPosition(left + 60, top + 268);
     body.add(description);
 

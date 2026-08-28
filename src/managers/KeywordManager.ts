@@ -9,6 +9,8 @@ export interface KeywordTextOptions {
   size: number;
   lineSpacing?: number;
   color?: string;
+  /** 현재 스킬의 피해 산식처럼 문맥마다 달라지는 추가 용어 정의다. */
+  contextualKeywords?: readonly KeywordDef[];
 }
 
 /**
@@ -33,7 +35,7 @@ export class KeywordManager {
     let x = 0;
     let y = 0;
 
-    for (const segment of parseKeywordText(text)) {
+    for (const segment of parseKeywordText(text, options.contextualKeywords)) {
       // 줄바꿈 문자는 조각 안에도 들어 있다. 낱말로 자르기 전에 먼저 가른다.
       const lines = segment.text.split("\n");
       lines.forEach((line, lineIndex) => {

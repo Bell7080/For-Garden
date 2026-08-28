@@ -19,4 +19,10 @@ describe("스킬 설명 키워드", () => {
     expect(new Set(KEYWORDS.map((keyword) => keyword.id)).size).toBe(KEYWORDS.length);
     expect(findKeyword("burn")?.kind).toBe("디버프");
   });
+
+  it("는 스킬마다 다른 피해 수치 설명을 같은 링크 문법으로 연결한다", () => {
+    const contextual = [{ id: "damage-value", term: "384", kind: "규칙" as const, description: "현재 방어력에서 300%를 받아 계산했다." }];
+    const [segment] = parseKeywordText("[[damage-value|384]]", contextual);
+    expect(segment.keyword).toEqual(contextual[0]);
+  });
 });

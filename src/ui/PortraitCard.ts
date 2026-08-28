@@ -110,6 +110,8 @@ export class PortraitCard extends Phaser.GameObjects.Container {
   private readonly bodyHeight: number;
   private readonly overhang: number;
   private readonly chipShape: number[];
+  /** 머리 홈까지 열린 실루엣. 카드 전체를 덮어야 하는 표시가 이 모양을 쓴다. */
+  private readonly portraitShape: number[];
   private readonly portraitMask: Phaser.GameObjects.Graphics;
   /** 윗변이 닫힌 칩 모양. 배경 원화처럼 머리 자리로 새면 안 되는 것에 씌운다. */
   private readonly bodyMask: Phaser.GameObjects.Graphics;
@@ -159,12 +161,11 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     // 사라진다. 그래서 카드가 자리를 잡은 뒤 월드 좌표로 옮겨 준다.
     this.maskOffsetY = bodyCenter;
     this.shadeHeight = Math.round(this.bodyHeight * SHADE_RATIO);
+    // 머리가 빠져나오는 홈까지 포함한 실루엣. 원화와 선택 표시가 같은 모양을 나눠 쓴다.
+    this.portraitShape = chipPoints(chipWidth, this.bodyHeight, { bevel, openWidth: chipWidth * CHIP_NOTCH_WIDTH, openHeight: this.overhang });
     this.portraitMask = scene.make.graphics({});
     this.portraitMask.fillStyle(0xffffff, 1);
-    this.portraitMask.fillPoints(
-      toGeomPoints(chipPoints(chipWidth, this.bodyHeight, { bevel, openWidth: chipWidth * CHIP_NOTCH_WIDTH, openHeight: this.overhang })),
-      true,
-    );
+    this.portraitMask.fillPoints(toGeomPoints(this.portraitShape), true);
     // 배경 원화는 **윗변이 닫힌** 칩 안에만 머문다. 인물과 같은 마스크를 쓰면 머리가
     // 빠져나오라고 열어 둔 윗변 홈까지 그림이 채워져, 카드 밖에 배경 조각이 떠 보인다.
     this.bodyMask = scene.make.graphics({});
@@ -262,7 +263,8 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     // 입력면 바로 아래에 두어 초상·이름·표식을 함께 은은하게 누르되 카드 바깥으로 번지지 않는다.
     this.selectedOverlay = scene.add.graphics().setVisible(false);
     this.selectedOverlay.fillStyle(0x000000, Phaser.Math.Clamp(options.selectedOverlayAlpha ?? 0, 0, 1));
-    this.selectedOverlay.fillPoints(toGeomPoints(this.chipShape), true);
+    // 칩 몸통만 덮으면 빠져나온 머리만 밝게 남아 목이 잘린 것처럼 보인다. 머리 홈까지 덮는다.
+    this.selectedOverlay.fillPoints(toGeomPoints(this.portraitShape), true);
     this.add(this.selectedOverlay);
 
     this.hit = scene.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
@@ -386,6 +388,16 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     const above = this.getIndex(this.backdrop ?? this.chip) + 1;
     this.addAt(shadow, above);
     this.addAt(portrait, above + 1);
+  }
+
+  /**
+   * 카드 **몸통**(윗변이 닫힌 칩) 모양의 기하 마스크를 하나 더 만든다.
+   *
+   * 카드 위에 덮개를 얹는 화면(전투 프로필의 궁극기 가림막)이 같은 실루엣을 다시 계산하지
+   * 않게 한다. 카드가 움직이면 `syncMask`가 이 도형도 함께 월드 좌표로 옮긴다.
+   */
+  createBodyMask(): Phaser.Display.Masks.GeometryMask {
+    return this.bodyMask.createGeometryMask();
   }
 
   /** 마스크를 카드의 현재 화면 위치·배율에 맞춘다. 카드를 옮기거나 키운 뒤에 부른다. */

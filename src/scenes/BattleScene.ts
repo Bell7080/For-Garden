@@ -33,7 +33,7 @@ import { COLOR, textStyle } from "../ui/theme";
 import { setDebugBattle, setDebugScene } from "../debug";
 import { CharacterInfoManager } from "../managers/CharacterInfoManager";
 import { UltimateCutIn } from "../ui/UltimateCutIn";
-import { nextBattleSpeed, type BattleSpeed } from "../core/battleControls";
+import { nextBattleSpeed, ultimatePresentationSpeed, type BattleSpeed } from "../core/battleControls";
 import { ControlChip } from "../ui/ControlChip";
 import {
   beginNextUltimate, cancelUltimateSequence, createUltimateSequenceState, enqueueUltimate, releaseUltimate,
@@ -63,6 +63,9 @@ const ARENA: Arena = { left: 130, right: 950, top: 600, bottom: 1360 };
 /** SD 한 명의 화면 높이. 여섯이 겹치지 않도록 기존 300에서 0.7배로 줄였다. */
 const UNIT_HEIGHT = 210;
 const PROFILE_TOP = 1430;
+/** 조작 칩은 프로필 줄 바로 위 우하단에 모인다. 전장을 가리지 않고 엄지가 닿는 자리다. */
+// 전장 아래쪽에 서므로 SD·체력 바보다 앞에 둔다. 컷인(900)보다는 뒤라 연출을 가리지 않는다.
+const BATTLE_CONTROLS = { rowY: 1360, rightX: BASE_WIDTH - 130, speedX: BASE_WIDTH - 335, stackGap: 92, depth: 320 } as const;
 
 /**
  * 카드를 덮는 궁극기 가림막.
@@ -221,6 +224,9 @@ export class BattleScene extends Phaser.Scene {
   private currentUltimateFighterId: string | null = null;
   private speedChip!: ControlChip;
   private autoChip!: ControlChip;
+  private cutInChip!: ControlChip;
+  /** 궁극기 컷인 표시 여부. 환경설정의 연출 항목과 같은 값을 공유한다. */
+  private ultimateCutIn = true;
   /** 적 상세는 플레이어 성장 입력을 만들지 않는 전투 읽기 전용 창이다. */
   private info!: CharacterInfoManager;
 
@@ -281,6 +287,7 @@ export class BattleScene extends Phaser.Scene {
     const battleSettings = settingsManager.get().game;
     this.battleSpeed = battleSettings.battleSpeed;
     this.autoUltimate = battleSettings.autoUltimate;
+    this.ultimateCutIn = session.settings.presentation.ultimateCutIn;
     this.ultimateSequenceActive = false;
     this.ultimateSequence = createUltimateSequenceState();
     this.currentUltimateFighterId = null;
@@ -335,9 +342,14 @@ export class BattleScene extends Phaser.Scene {
     new Button(this, BASE_WIDTH / 2 + 235, 1260, { width: 400, height: 105, label: "로비로", onClick: () => this.scene.start("lobby") }).setDepth(201);
   }
 
-  /** 전장 위쪽 가장자리에 배속과 자동 궁극기 토글을 같은 홀로그램 칩으로 나란히 둔다. */
+  /**
+   * 조작 칩은 전장 위가 아니라 **손이 닿는 우하단**, 프로필 줄 바로 위에 모은다.
+   *
+   * 배속과 자동 궁극기가 한 줄로 서고, 연출 on/off는 자동 궁극기 바로 위에 얹혀 "궁극기와
+   * 관련된 조작"이 한 덩어리로 읽힌다.
+   */
   private buildBattleControls(): void {
-    this.speedChip = new ControlChip(this, BASE_WIDTH - 335, 150, {
+    this.speedChip = new ControlChip(this, BATTLE_CONTROLS.speedX, BATTLE_CONTROLS.rowY, {
       icon: "speed",
       label: `${this.battleSpeed}배속`,
       onClick: () => {
@@ -348,7 +360,7 @@ export class BattleScene extends Phaser.Scene {
         this.refreshDebug();
       },
     });
-    this.autoChip = new ControlChip(this, BASE_WIDTH - 130, 150, {
+    this.autoChip = new ControlChip(this, BATTLE_CONTROLS.rightX, BATTLE_CONTROLS.rowY, {
       icon: "auto",
       label: this.autoUltimate ? "궁극 ON" : "궁극 OFF",
       width: 170,
@@ -360,9 +372,24 @@ export class BattleScene extends Phaser.Scene {
         this.refreshDebug();
       },
     });
+    // 컷인을 끄면 발돋움·타격만 남는다. 반복 전투에서 연출을 건너뛰고 싶을 때 쓰는 조작이라
+    // 환경설정과 같은 값을 그대로 읽고 쓴다.
+    this.cutInChip = new ControlChip(this, BATTLE_CONTROLS.rightX, BATTLE_CONTROLS.rowY - BATTLE_CONTROLS.stackGap, {
+      icon: "auto",
+      label: this.ultimateCutIn ? "연출 ON" : "연출 OFF",
+      width: 170,
+      onClick: () => {
+        this.ultimateCutIn = !this.ultimateCutIn;
+        settingsManager.update({ presentation: { ultimateCutIn: this.ultimateCutIn } });
+        this.cutInChip.setLabel(this.ultimateCutIn ? "연출 ON" : "연출 OFF").setActive(this.ultimateCutIn);
+        this.refreshDebug();
+      },
+    });
+    for (const chip of [this.speedChip, this.autoChip, this.cutInChip]) chip.setDepth(BATTLE_CONTROLS.depth);
     // 복원된 값도 첫 클릭 전부터 켜짐 색으로 읽히게 한다.
     this.speedChip.setActive(this.battleSpeed > 1);
     this.autoChip.setActive(this.autoUltimate);
+    this.cutInChip.setActive(this.ultimateCutIn);
   }
 
   /** 여섯을 각자의 시작 자리에 세운다. 전부 준비된 뒤에야 시간이 흐르기 시작한다. */
@@ -495,14 +522,18 @@ export class BattleScene extends Phaser.Scene {
       const presentation = ultimatePresentationFor(fighter.def.id);
       // 전신 컷인 한 장으로 "누가 무엇을 쓰는가"를 알린다. 다만 포효를 기다리지 않고 컷인이
       // 빠지는 즉시 친다 — 전투 중 여러 번 반복되는 연출이라 길이가 곧 기다림이다.
-      this.activeCutIn = await UltimateCutIn.create(this, fighter.def, presentation);
-      if (!this.sequenceValid(next.token, fighter)) return;
-      await this.activeCutIn.play();
-      this.activeCutIn.destroy();
-      this.activeCutIn = undefined;
+      // 연출은 전투 배속을 그대로 받지 않는다. 같은 배율로 당기면 컷인이 눈에 남지 않는다.
+      const presentationSpeed = ultimatePresentationSpeed(this.battleSpeed);
+      if (this.ultimateCutIn) {
+        this.activeCutIn = await UltimateCutIn.create(this, fighter.def, presentation);
+        if (!this.sequenceValid(next.token, fighter)) return;
+        await this.activeCutIn.play(presentationSpeed);
+        this.activeCutIn.destroy();
+        this.activeCutIn = undefined;
+      }
       if (!this.sequenceValid(next.token, fighter)) return;
       const base = view.creature.scaleX;
-      await this.tween({ targets: view.creature, scale: base * presentation.zoomScale, duration: presentation.zoomMs, ease: "Back.Out" });
+      await this.tween({ targets: view.creature, scale: base * presentation.zoomScale, duration: presentation.zoomMs / presentationSpeed, ease: "Back.Out" });
       if (!this.sequenceValid(next.token, fighter)) return;
       this.cameras.main.shake(180, presentation.cameraShakeIntensity);
 
@@ -517,12 +548,12 @@ export class BattleScene extends Phaser.Scene {
       let attackMotion: MotionPlayback | undefined;
       events.forEach((event) => {
         // 컷인 뒤의 결정타만 빠르게 재생해 멈춘 전투가 즉시 이어지도록 한다.
-        const playback = this.playEvent(event, 2);
+        const playback = this.playEvent(event, presentationSpeed);
         attackMotion ??= playback;
       });
       await attackMotion?.completed;
       // 커진 몸은 제자리로 돌려놓고 바로 전투를 잇는다.
-      await this.tween({ targets: view.creature, scale: base, duration: presentation.zoomMs, ease: "Quad.Out" });
+      await this.tween({ targets: view.creature, scale: base, duration: presentation.zoomMs / presentationSpeed, ease: "Quad.Out" });
       this.syncViews();
       this.refreshDebug();
     } finally {

@@ -39,7 +39,7 @@ async function enterParty(page: import("@playwright/test").Page): Promise<void> 
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   await tapGame(page, BASE_WIDTH - 290, BASE_HEIGHT - 425);
   // 출격 선택판의 스토리 항목을 거쳐 메인 작전 지도로 이동한다.
-  await tapGame(page, BASE_WIDTH / 2, 770);
+  await tapGame(page, BASE_WIDTH / 2, 550);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("stageMap");
   await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT - 180);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("party");
@@ -93,7 +93,7 @@ test("출격 선택판에서 원정대 3기를 골라 진행 중 상태로 저�
 
   // 잔잔한 출격 선택판에서 원정을 고르면 별도 준비 씬으로 이동한다.
   await tapGame(page, BASE_WIDTH - 290, BASE_HEIGHT - 425);
-  await tapGame(page, BASE_WIDTH / 2, 1345);
+  await tapGame(page, BASE_WIDTH / 2, 1403);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("expedition");
   await page.screenshot({ path: `test-results/${test.info().project.name}-expedition-preparation.png` });
 
@@ -126,7 +126,7 @@ test("저장된 전투 전 증강 후보는 지도보다 먼저 복원된다", a
   await page.locator("canvas").click();
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   await tapGame(page, BASE_WIDTH - 290, BASE_HEIGHT - 425);
-  await tapGame(page, BASE_WIDTH / 2, 1345);
+  await tapGame(page, BASE_WIDTH / 2, 1403);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("expedition");
   // 닫기 없는 선택 작업판과 세 후보가 복원된 상태를 시각 회귀 자료로 남긴다.
   await page.screenshot({ path: `test-results/${test.info().project.name}-expedition-augment-popup.png` });
@@ -150,7 +150,7 @@ test("원정 전투 노드는 지도 안 공용 편성판을 붙이고 적 상�
   await tapGame(page, BASE_WIDTH - 290, BASE_HEIGHT - 425);
   // 출격 선택판은 로비 위 PopupLayer이므로 씬 이름은 유지된다. 판의 입력 생성만 잠시 기다린다.
   await page.waitForTimeout(400);
-  await tapGame(page, BASE_WIDTH / 2, 1345);
+  await tapGame(page, BASE_WIDTH / 2, 1403);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("expedition");
   // 실제 지도 포커스 계산이 반영된 첫 도달 노드의 화면 좌표를 선택한다.
   await tapGame(page, reachableX, reachableY);

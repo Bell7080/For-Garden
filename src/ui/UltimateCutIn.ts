@@ -8,7 +8,7 @@ import type { UltimatePresentation } from "../data/ultimatePresentations";
 
 /** 컷인이 화면을 점유하는 짧은 구간. 공격 판정 시각은 이 프리팹이 아니라 BattleScene이 소유한다. */
 // 전장을 가리는 이동 시간을 짧게 묶어 반복 궁극기에서도 흐름이 오래 끊기지 않게 한다.
-const CUT_IN = { enterMs: 120, exitMs: 90, depth: 900 } as const;
+const CUT_IN = { enterMs: 190, exitMs: 140, depth: 900 } as const;
 
 /** Phaser tween을 await 가능한 한 번의 단계로 바꿔 궁극기 시퀀스를 읽는 순서 그대로 유지한다. */
 function tween(scene: Phaser.Scene, config: Phaser.Types.Tweens.TweenBuilderConfig): Promise<void> {
@@ -62,15 +62,17 @@ export class UltimateCutIn extends Phaser.GameObjects.Container {
    *
    * 포효를 기다리지 않는다. 컷인은 이 한 장으로 끝나고, 곧바로 전장의 SD가 커지며 친다.
    */
-  async play(): Promise<void> {
+  async play(speed = 1): Promise<void> {
     if (this.disposed) return;
+    // 배속은 전투 진행의 것이고 연출은 그중 일부만 받는다. 씬이 계산한 몫을 그대로 나눈다.
+    const scale = Math.max(0.2, speed);
     // 진입 방향의 부호를 퇴장에도 재사용해 한 프리셋이 동선 전체를 설명하게 한다.
     const direction = this.presentation.enterFrom === "left" ? -1 : 1;
     this.setX(direction * BASE_WIDTH).setScale(0.82).setAlpha(0);
-    await tween(this.scene, { targets: this, x: 0, scale: 1, alpha: 1, duration: CUT_IN.enterMs, ease: "Cubic.Out" });
-    await new Promise<void>((resolve) => this.scene.time.delayedCall(this.presentation.cutInHoldMs, resolve));
+    await tween(this.scene, { targets: this, x: 0, scale: 1, alpha: 1, duration: CUT_IN.enterMs / scale, ease: "Cubic.Out" });
+    await new Promise<void>((resolve) => this.scene.time.delayedCall(this.presentation.cutInHoldMs / scale, resolve));
     if (this.disposed) return;
-    await tween(this.scene, { targets: this, x: -direction * BASE_WIDTH, alpha: 0, duration: CUT_IN.exitMs, ease: "Cubic.In" });
+    await tween(this.scene, { targets: this, x: -direction * BASE_WIDTH, alpha: 0, duration: CUT_IN.exitMs / scale, ease: "Cubic.In" });
   }
 
   override destroy(fromScene?: boolean): void {

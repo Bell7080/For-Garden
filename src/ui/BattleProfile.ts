@@ -41,9 +41,11 @@ export class BattleProfile extends Phaser.GameObjects.Container {
       tint: relicCardTint(options.relic), label: options.relic.name, level: options.level,
       sub: options.sub, rarity: options.relic.rarity, stars: options.stars,
     });
-    // 궁극기 가림막은 카드의 실제 픽셀만 따라가므로 열린 머리 홈 밖에 검은 조각이 남지 않는다.
-    this.charge = scene.add.graphics().setDepth(1);
-    this.charge.setMask(new Phaser.Display.Masks.BitmapMask(scene, this.card));
+    // 궁극기 가림막은 카드 **몸통**(윗변이 닫힌 칩) 모양만 덮는다. 카드를 통째로 BitmapMask로
+    // 쓰면 카드 안의 기하 마스크와 겹쳐 가림막이 통째로 사라진다 — 시계 방향 연출이 보이지
+    // 않던 원인이다. 몸통 실루엣은 그림이 채워진 자리와 같으므로 결과는 같고 안전하다.
+    this.charge = scene.add.graphics();
+    this.charge.setMask(this.card.createBodyMask());
     const label = (baselineY: number, color: string) => scene.add.text(-L.barWidth / 2, baselineY, "", textStyle({ role: "display", size: 26, color }))
       .setOrigin(0, 1).setShadow(3, 4, "#05070a", 0, true, true);
     this.hpLabel = label(L.hpTextBaselineY, COLOR.hpText);

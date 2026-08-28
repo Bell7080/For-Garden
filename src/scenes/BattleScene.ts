@@ -66,6 +66,9 @@ const ARENA: Arena = { left: 130, right: 950, top: 600, bottom: 1360 };
 /** SD 한 명의 화면 높이. 여섯이 겹치지 않도록 기존 300에서 0.7배로 줄였다. */
 const UNIT_HEIGHT = 210;
 const PROFILE_TOP = 1430;
+/** 조작 칩은 프로필 줄 바로 위 우하단에 모인다. 전장을 가리지 않고 엄지가 닿는 자리다. */
+// 전장 아래쪽에 서므로 SD·체력 바보다 앞에 둔다. 컷인(900)보다는 뒤라 연출을 가리지 않는다.
+const BATTLE_CONTROLS = { rowY: 1360, rightX: BASE_WIDTH - 130, speedX: BASE_WIDTH - 335, stackGap: 92, depth: 320 } as const;
 
 /**
  * 카드를 덮는 궁극기 가림막.
@@ -339,11 +342,15 @@ export class BattleScene extends Phaser.Scene {
     new Button(this, BASE_WIDTH / 2 + 235, 1260, { width: 400, height: 105, label: "로비로", onClick: () => this.scene.start("lobby") }).setDepth(201);
   }
 
-  /** 전장 위쪽 안전 영역에 세 전투 조작을 같은 폭과 공용 간격의 홀로그램 칩으로 나란히 둔다. */
+  /**
+   * 세 전투 조작은 전장 위가 아니라 **손이 닿는 우하단**, 프로필 줄 바로 위에 모인다.
+   *
+   * 배속과 자동 궁극기가 한 줄로 서고, 연출 조작은 자동 궁극기 바로 위에 얹혀 "궁극기와
+   * 관련된 조작"이 한 덩어리로 읽힌다.
+   */
   private buildBattleControls(): void {
-    const width = 170; const gap = 20; const right = BASE_WIDTH - 45;
-    const centers = [right - width * 2.5 - gap * 2, right - width * 1.5 - gap, right - width / 2];
-    this.speedChip = new ControlChip(this, centers[0], 150, {
+    const width = 170;
+    this.speedChip = new ControlChip(this, BATTLE_CONTROLS.speedX, BATTLE_CONTROLS.rowY, {
       icon: "speed",
       label: `${this.battleSpeed}배속`,
       width,
@@ -355,7 +362,7 @@ export class BattleScene extends Phaser.Scene {
         this.refreshDebug();
       },
     });
-    this.autoChip = new ControlChip(this, centers[1], 150, {
+    this.autoChip = new ControlChip(this, BATTLE_CONTROLS.rightX, BATTLE_CONTROLS.rowY, {
       icon: "auto",
       label: this.autoUltimate ? "궁극 ON" : "궁극 OFF",
       width,
@@ -371,7 +378,7 @@ export class BattleScene extends Phaser.Scene {
       const skipped = settingsManager.get().game.skipUltimatePresentation;
       this.presentationChip.setLabel(skipped ? "연출 스킵" : "연출 ON").setActive(skipped);
     };
-    this.presentationChip = new ControlChip(this, centers[2], 150, {
+    this.presentationChip = new ControlChip(this, BATTLE_CONTROLS.rightX, BATTLE_CONTROLS.rowY - BATTLE_CONTROLS.stackGap, {
       icon: "auto", label: "연출 ON", width,
       onClick: () => {
         // 전투 흐름을 바꾸는 값은 세션을 직접 고치지 않고 공용 manager 경계에서 즉시 영속화한다.
@@ -379,6 +386,8 @@ export class BattleScene extends Phaser.Scene {
         refreshPresentationChip(); this.refreshDebug();
       },
     });
+    // 전장 아래쪽에 서므로 SD·체력 바보다 앞에 둔다.
+    for (const chip of [this.speedChip, this.autoChip, this.presentationChip]) chip.setDepth(BATTLE_CONTROLS.depth);
     // 복원된 값도 첫 클릭 전부터 켜짐 색으로 읽히게 한다.
     this.speedChip.setActive(this.battleSpeed > 1);
     this.autoChip.setActive(this.autoUltimate);

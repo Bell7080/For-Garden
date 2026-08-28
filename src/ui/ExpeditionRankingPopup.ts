@@ -6,8 +6,8 @@ import { session } from "../state/session";
 import { Button } from "./Button";
 import { addPopupBackButton } from "./IconButton";
 import { POPUP_TITLE_SIZE, type PopupLayer } from "./PopupLayer";
-import { RewardFrame } from "./RewardFrame";
-import { chipPoints, drawLayer, HoloBar, HOLO } from "./holo";
+import { addExpeditionRewardStage } from "./expeditionRewardStage";
+import { chipPoints, drawLayer, HOLO } from "./holo";
 import { COLOR, textStyle } from "./theme";
 
 /** 서버 주차 스냅샷만 사용해 준비와 결과 화면이 공유하는 원정 기록판을 그린다. */
@@ -48,24 +48,11 @@ export class ExpeditionRankingPopup {
     this.content.add(this.scene.add.text(-410, -700, `최고 ${bestScore.toLocaleString()}  ·  누적 ${cumulativeScore.toLocaleString()}`, textStyle({ role: "display", size: 32, color: COLOR.accentText })).setOrigin(0, 0.5));
     if (message) this.content.add(this.scene.add.text(410, -700, message, textStyle({ role: "emphasis", size: 21, color: COLOR.sortieText })).setOrigin(1, 0.5));
     this.content.add(this.scene.add.text(-410, -630, "누적 보상", textStyle({ role: "emphasis", size: 28 })).setOrigin(0, 0.5));
-    stages.forEach((stage, index) => this.renderStage(stage, cumulativeScore, -500 + index * 170));
+    stages.forEach((stage, index) => this.content && addExpeditionRewardStage(this.scene, this.content, stage, cumulativeScore, -500 + index * 170, (id) => void this.claim(id)));
     this.content.add(this.scene.add.text(-410, 80, "주간 순위", textStyle({ role: "emphasis", size: 28 })).setOrigin(0, 0.5));
     this.content.add(this.scene.add.text(410, 80, "동점: 최고점 최초 달성 순", textStyle({ role: "body", size: 19, color: COLOR.inkDim })).setOrigin(1, 0.5));
     if (!entries.length) this.content.add(this.scene.add.text(0, 190, "아직 등록된 기록이 없습니다", textStyle({ role: "body", size: 25, color: COLOR.inkDim })).setOrigin(0.5));
     entries.slice(0, 6).forEach((entry, index) => this.renderRank(entry, 160 + index * 95));
-  }
-
-  /** 단계 행은 서버가 공개한 임계값·보상·수령 상태를 그대로 표현한다. */
-  private renderStage(stage: ExpeditionRewardStageDto, cumulativeScore: number, y: number): void {
-    if (!this.content) return;
-    const earned = cumulativeScore >= stage.threshold; const claimable = earned && !stage.claimed;
-    const panel = drawLayer(this.scene, 0, y, chipPoints(820, 140), { fill: claimable ? 0x3b2b13 : 0x171d25, alpha: stage.claimed ? 0.5 : HOLO.glass, edge: claimable ? COLOR.sortie : COLOR.accent, edgeAlpha: 0.5 });
-    const label = this.scene.add.text(-370, y - 40, `${stage.threshold.toLocaleString()} 누적 피해`, textStyle({ role: "emphasis", size: 24, color: stage.claimed ? COLOR.inkDim : COLOR.ink })).setOrigin(0, 0.5);
-    const bar = new HoloBar(this.scene, -120, y + 34, 500, 16, { color: claimable ? COLOR.sortie : COLOR.accent }).addTo(this.content); bar.setValue(cumulativeScore / Math.max(1, stage.threshold));
-    const progress = this.scene.add.text(-370, y + 34, `${Math.min(cumulativeScore, stage.threshold).toLocaleString()} / ${stage.threshold.toLocaleString()}`, textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0, 0.5);
-    const icon = `currency-${stage.reward.currency}` as "currency-gold" | "currency-fossil" | "currency-gems";
-    const reward = new RewardFrame(this.scene, 320, y, { icon, amount: stage.reward.amount, size: 100, state: stage.claimed ? "claimed" : claimable ? "claimable" : "normal", onClick: claimable ? () => void this.claim(stage.id) : undefined });
-    this.content.add([panel, label, progress, reward]);
   }
 
   /** 내 행은 기존 강조색과 1.06배 확대만 사용하며 별도 외곽선을 추가하지 않는다. */

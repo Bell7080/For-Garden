@@ -281,6 +281,8 @@ const motionGeneration = new WeakMap<PuppetCreature, number>();
 const motionHold = new WeakMap<PuppetCreature, { priority: number; until: number }>();
 /** 이전 일회성 동작의 idle 복귀 예약. 새 동작이 오면 즉시 해제한다. */
 const motionTimers = new WeakMap<PuppetCreature, Phaser.Time.TimerEvent>();
+/** 강제 종료도 대기자를 풀어 씬의 비동기 연출이 고아 Promise로 남지 않게 한다. */
+const motionCompletions = new WeakMap<PuppetCreature, () => void>();
 
 /** 묶음의 정적 프로젝트와 텍스처는 파일당 한 번만 읽어 재사용한다. */
 const loaded = new Map<string, Promise<Puppet>>();
@@ -514,6 +516,8 @@ export function playMotion(
   const generation = (motionGeneration.get(creature) ?? 0) + 1;
   motionGeneration.set(creature, generation);
   motionTimers.get(creature)?.remove(false);
+  motionCompletions.get(creature)?.();
+  motionCompletions.delete(creature);
   motionTimers.delete(creature);
   motionHold.delete(creature);
 
@@ -534,16 +538,29 @@ export function playMotion(
     // 공격 직후 피격처럼 동작이 겹쳐도 가장 최근 동작의 유지 시간은 온전히 보장한다.
     if (motionGeneration.get(creature) !== generation) { resolveCompletion(); return; }
     motionTimers.delete(creature);
+    motionCompletions.delete(creature);
     motionHold.delete(creature);
     if (creature.active) creature.play("idle");
     resolveCompletion();
   };
   const timer = scene.time.delayedCall(holdMs, finish);
   motionTimers.set(creature, timer);
+  motionCompletions.set(creature, resolveCompletion);
   // shutdown은 Phaser 타이머를 조용히 폐기하므로 Promise도 함께 해제해 비동기 시퀀스를 남기지 않는다.
   scene.events.once("shutdown", resolveCompletion);
   completed.finally(() => scene.events.off("shutdown", resolveCompletion));
   return { playedName, durationMs: holdMs, completed };
+}
+
+/** 종료 UI가 공격 자세를 기다리지 않도록 현재 일회성 동작만 idle로 정리한다. */
+export function cancelMotion(creature: PuppetCreature): void {
+  motionTimers.get(creature)?.remove(false);
+  motionTimers.delete(creature);
+  motionHold.delete(creature);
+  motionGeneration.set(creature, (motionGeneration.get(creature) ?? 0) + 1);
+  motionCompletions.get(creature)?.();
+  motionCompletions.delete(creature);
+  if (creature.active) creature.play("idle");
 }
 
 /** 맞은 순간 붉게 물드는 시간(ms)과 색. 동작을 크게 흔들지 않아도 피격이 눈에 띄게 한다. */

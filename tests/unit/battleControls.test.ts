@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  nextBattleSpeed, scaleUltimateDuration, ultimatePresentationTiming,
+  nextBattleSpeed, scaleUltimateDuration, shouldWaitForUltimatePresentation, ultimatePresentationTiming,
   ULTIMATE_MIN_DURATION_MS, ULTIMATE_RECOVERY_RATIO,
 } from "../../src/core/battleControls";
 
@@ -31,5 +31,12 @@ describe("궁극기 연출 시간축", () => {
     const timing = ultimatePresentationTiming(3, true);
     expect(timing).toEqual({ rate: 3.25, skipLeadIn: true });
     expect(scaleUltimateDuration(160, timing)).toBe(0);
+  });
+
+  it("결정타는 공격 모션과 확대 복귀를 종료 대기 조건으로 삼지 않는다", () => {
+    // 공격 판정은 이미 끝났고 사망은 배경 시각 효과이므로 finish가 결과 진행을 즉시 소유한다.
+    expect(shouldWaitForUltimatePresentation(true, true)).toBe(false);
+    expect(shouldWaitForUltimatePresentation(true, false)).toBe(true);
+    expect(shouldWaitForUltimatePresentation(false, true)).toBe(true);
   });
 });

@@ -21,7 +21,7 @@ import { getRelic } from "../data/relics";
 import { getStage, getStageEnemies } from "../data/stages";
 import { getExpeditionNodeEnemies } from "../data/expeditionEnemies";
 import type { PuppetCreature, PuppetAsset } from "../puppets/assets";
-import { battleAssetFor, flashHit, placePuppet, playMotion, spawnPuppet, tintPuppet } from "../puppets/assets";
+import { battleAssetFor, cancelMotion, flashHit, placePuppet, playMotion, spawnPuppet, tintPuppet } from "../puppets/assets";
 import { session } from "../state/session";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { Button } from "../ui/Button";
@@ -34,7 +34,7 @@ import { setDebugBattle, setDebugScene } from "../debug";
 import { CharacterInfoManager } from "../managers/CharacterInfoManager";
 import { UltimateCutIn } from "../ui/UltimateCutIn";
 import {
-  nextBattleSpeed, scaleUltimateDuration, ultimatePresentationTiming, ULTIMATE_RECOVERY_RATIO,
+  nextBattleSpeed, scaleUltimateDuration, shouldWaitForUltimatePresentation, ultimatePresentationTiming, ULTIMATE_RECOVERY_RATIO,
   type BattleSpeed,
 } from "../core/battleControls";
 import { ControlChip } from "../ui/ControlChip";
@@ -537,6 +537,11 @@ export class BattleScene extends Phaser.Scene {
         ? Promise.resolve()
         : this.tween({ targets: view.creature, scale: base * presentation.zoomScale, duration: scaleUltimateDuration(presentation.zoomMs, timing), ease: "Back.Out" });
       const events = fireUltimate(this.state, fighter.id, () => Math.random());
+      // 공격 판정(core), 시각적 사망(scene tween), 전투 결과(finish)는 서로 다른 책임이다.
+      // 사건 순서는 건드리지 않고, finish가 있는 결정타인지만 종료 대기 정책에 따로 전달한다.
+      const hasDeathEvent = events.some((event) => event.kind === "death");
+      const hasFinishEvent = events.some((event) => event.kind === "finish");
+      const waitForPresentation = shouldWaitForUltimatePresentation(hasDeathEvent, hasFinishEvent);
       // 코어가 바꾼 HP를 즉시 게이지 목표로 전달한다. 연출을 기다리는 동안 stepMeters가
       // 매 프레임 목표를 따라가므로 적 체력이 한 번에 점프하지 않고 실제로 깎여 보인다.
       this.views.forEach((fighterView) => fighterView.hpBar.setValue(fighterView.fighter.hp / fighterView.fighter.maxHp));
@@ -549,6 +554,9 @@ export class BattleScene extends Phaser.Scene {
         const playback = this.playEvent(event, timing.rate);
         attackMotion ??= playback;
       });
+      // 죽음과 finish는 위 순회에서 이미 원래 순서대로 즉시 전달됐다. 결정타의 760ms 사망 트윈은
+      // 배경에서 계속 돌되 공격 완료나 SD 확대 복귀가 결과 UI/다음 장면을 붙잡지 않는다.
+      if (!waitForPresentation) return;
       await Promise.all([zoom, attackMotion?.completed ?? Promise.resolve()]);
       // 커진 몸은 제자리로 돌려놓고 바로 전투를 잇는다.
       if (!skipPresentation) await this.tween({
@@ -736,6 +744,7 @@ export class BattleScene extends Phaser.Scene {
     view.infoHit?.disableInteractive().setVisible(false);
     const burst = this.add.star(view.creature.x, view.creature.y, 10, 24, 66, COLOR.accent, 0.9).setDepth(DEPTH.burst);
     this.tweens.add({ targets: burst, scale: 1.8, alpha: 0, angle: 90, duration: 360, onComplete: () => burst.destroy() });
+    // 사망은 판정이나 결과 정산이 아닌 760ms 시각 효과다. finishBattle은 이 완료를 기다리지 않는다.
     this.tweens.add({
       targets: view.creature,
       y: view.creature.y - 320,
@@ -979,6 +988,7 @@ export class BattleScene extends Phaser.Scene {
   private finishBattle(phase: "victory" | "defeat"): void {
     if (this.finished) return;
     this.finished = true;
+    // finish 사건만 결과 정산을 소유한다. 사망 사건은 앞서 한 번 재생됐으며 정리 과정에서 재호출하지 않는다.
     this.cancelUltimatePresentation();
     // 전투가 끝나면 궁극기 버튼도 함께 꺼진다.
     this.profiles.forEach((profile) => this.setUltimateReady(profile, false));
@@ -1031,14 +1041,19 @@ export class BattleScene extends Phaser.Scene {
 
   /** 종료 경로마다 큐·트윈·입력 잠금을 같은 방식으로 정리한다. */
   private cancelUltimatePresentation(): void {
+    // ID를 잠금 상태보다 먼저 보관해야 아래 정리가 실제 시전자를 찾을 수 있다.
+    const attacker = this.currentUltimateFighterId ? this.views.get(this.currentUltimateFighterId) : undefined;
     cancelUltimateSequence(this.ultimateSequence);
     this.ultimateSequenceActive = false;
     this.currentUltimateFighterId = null;
     this.activeCutIn?.destroy();
     this.activeCutIn = undefined;
-    // 발돋움 도중 전투가 끝나면 커진 채로 굳는다. 다음 syncViews가 제 크기로 되돌리도록
-    // 남은 트윈만 걷어 낸다.
-    this.views.forEach((view) => this.tweens.killTweensOf(view.creature));
+    // 현재 시전자의 확대와 공격만 정리한다. 모든 creature tween을 지우면 별도 책임인 적의
+    // 760ms 사망 비행까지 잘려 버리므로, 사망 사건이나 결과 정산을 여기서 다시 실행하지 않는다.
+    if (attacker) {
+      this.tweens.killTweensOf(attacker.creature);
+      cancelMotion(attacker.creature);
+    }
     this.profiles.forEach((profile) => {
       profile.pulse?.remove();
       profile.sweepTween?.remove();

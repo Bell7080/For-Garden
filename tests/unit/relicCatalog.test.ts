@@ -23,6 +23,16 @@ describe("relic catalog", () => {
     });
   });
 
+  it("스피나 관찰 기록은 별도 연구원 없이 주인공의 직접 관찰로 서술한다", () => {
+    const spina = PLAYABLE_RELICS.find((relic) => relic.id === "spino")!;
+    // 유일한 연구원인 주인공의 1인칭 관찰과 답례가 제3의 인물로 되돌아가지 않도록 핵심 문구를 고정한다.
+    expect(spina.unlockRecord.status).toBe("recorded");
+    if (spina.unlockRecord.status !== "recorded") return;
+    expect(spina.unlockRecord.text).not.toContain("연구원 한 명");
+    expect(spina.unlockRecord.text).toContain("나는 스피나가");
+    expect(spina.unlockRecord.text).toContain("다음 날 내 책상에는 가장 반듯한 조개 하나가 놓여 있었다");
+  });
+
   /** 실제 정의 전체를 복제하지 않고 순수 비교 함수에 필요한 식별자만 만든다. */
   const relics = [{ id: "a" }, { id: "b" }, { id: "c" }, { id: "d" }];
   /** 테스트마다 같은 선택 정렬을 쓰되 즐겨찾기 상태와 유대 기록만 바꿔 회귀 원인을 좁힌다. */

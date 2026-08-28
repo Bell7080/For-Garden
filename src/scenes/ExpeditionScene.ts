@@ -47,10 +47,10 @@ const FORMATION = { y: 540, firstX: 230, stepX: 310, width: 250, height: 290 } a
  * 더 내리면 보스가 공중에 뜬 것처럼 보인다.
  */
 const RANKING = {
-  boss: { groundY: 1240, height: 900 },
-  board: { y: 1220, width: 1000, height: 680 },
+  boss: { groundY: 1300, height: 1000 },
+  board: { y: 1120, width: 1000, height: 880 },
   side: { x: 250 },
-  rows: { x: 730, width: 580, gap: 86, firstY: 962, max: 6 },
+  rows: { x: 730, width: 580, gap: 86, firstY: 766, max: 8 },
   sortie: { y: 1700 },
 } as const;
 
@@ -436,7 +436,8 @@ export class ExpeditionScene extends Phaser.Scene {
    */
   private buildRanking(status = expeditionManager.status()): void {
     void this.loadBossPortrait();
-    const board = drawLayer(this, BASE_WIDTH / 2, RANKING.board.y, chipPoints(RANKING.board.width, RANKING.board.height, { bevel: { topLeft: 74, bottomRight: 74 } }), { fill: 0x0d131b, alpha: 0.9, edge: COLOR.accent, edgeAlpha: 0.6 });
+    // 순위는 훑어 읽는 표라 판을 불투명하게 둔다. 반투명하면 뒤의 보스 옷자락과 글자가 섞인다.
+    const board = drawLayer(this, BASE_WIDTH / 2, RANKING.board.y, chipPoints(RANKING.board.width, RANKING.board.height, { bevel: { topLeft: 74, bottomRight: 74 } }), { fill: 0x0b0f15, alpha: 0.98, edge: COLOR.accent, edgeAlpha: 0.6 });
     board.setDepth(10);
     const header = this.add.container(0, 0).setDepth(11);
     // 제목은 순위 목록 쪽에만 둔다. 왼쪽 기둥의 첫 줄이 이미 "내 최고 순위"라 두 제목이 겹친다.
@@ -468,18 +469,20 @@ export class ExpeditionScene extends Phaser.Scene {
     this.rankingRows?.destroy();
     const rows = this.add.container(0, 0).setDepth(12);
     this.rankingRows = rows;
-    const { side, rows: list } = RANKING;
+    const { side, rows: list, board } = RANKING;
+    // 판 윗변에서 잰 자리만 쓴다. 판 높이가 바뀌어도 기둥과 목록이 같이 따라온다.
+    const top = board.y - board.height / 2;
     // 왼쪽 기둥: 내 최고 순위와 점수, 그 아래 기록 보상 입구.
-    rows.add(this.add.text(side.x, 940, "내 최고 순위", textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0.5));
-    rows.add(this.add.text(side.x, 1010, best?.rank ? `${best.rank}위` : "—", textStyle({ role: "display", size: 66, color: COLOR.accentText })).setOrigin(0.5));
-    rows.add(this.add.text(side.x, 1090, "최고 점수", textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0.5));
-    rows.add(this.add.text(side.x, 1130, (best?.bestScore ?? 0).toLocaleString(), textStyle({ role: "display", size: 34 })).setOrigin(0.5));
-    rows.add(this.add.text(side.x, 1186, "누적 점수", textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0.5));
-    rows.add(this.add.text(side.x, 1224, (best?.cumulativeScore ?? 0).toLocaleString(), textStyle({ role: "emphasis", size: 27, color: COLOR.ink })).setOrigin(0.5));
-    rows.add(new Button(this, side.x, 1330, { width: 300, height: 92, label: "기록 보상", fontSize: 27, onClick: () => void new ExpeditionRewardPopup(this, this.popups).open() }));
+    rows.add(this.add.text(side.x, top + 100, "내 최고 순위", textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0.5));
+    rows.add(this.add.text(side.x, top + 174, best?.rank ? `${best.rank}위` : "—", textStyle({ role: "display", size: 66, color: COLOR.accentText })).setOrigin(0.5));
+    rows.add(this.add.text(side.x, top + 262, "최고 점수", textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0.5));
+    rows.add(this.add.text(side.x, top + 304, (best?.bestScore ?? 0).toLocaleString(), textStyle({ role: "display", size: 34 })).setOrigin(0.5));
+    rows.add(this.add.text(side.x, top + 372, "누적 점수", textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0.5));
+    rows.add(this.add.text(side.x, top + 412, (best?.cumulativeScore ?? 0).toLocaleString(), textStyle({ role: "emphasis", size: 27, color: COLOR.ink })).setOrigin(0.5));
+    rows.add(new Button(this, side.x, top + 520, { width: 300, height: 92, label: "기록 보상", fontSize: 27, onClick: () => void new ExpeditionRewardPopup(this, this.popups).open() }));
 
     if (message) {
-      rows.add(this.add.text(list.x, 1180, message, textStyle({ role: "body", size: 24, color: COLOR.inkDim, align: "center", wrap: list.width - 60 })).setOrigin(0.5));
+      rows.add(this.add.text(list.x, top + 300, message, textStyle({ role: "body", size: 24, color: COLOR.inkDim, align: "center", wrap: list.width - 60 })).setOrigin(0.5));
       return;
     }
     entries.slice(0, list.max).forEach((entry, index) => {

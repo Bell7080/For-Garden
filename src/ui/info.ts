@@ -50,7 +50,7 @@ import { observationQuestionForRelicAndDate } from "../data/observations";
 import type { PublicRelicProfileDto } from "../api/contracts";
 import type { Fighter } from "../core/skirmish";
 import { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../core/infoCapabilities";
-import { damageKeyword, ferocityTraitDescription, passiveDescription } from "./skillPresentation";
+import { damageKeyword, ferocityTraitDescription, passiveDescription, skillDescription } from "./skillPresentation";
 
 export type { SkillInfoViewModel } from "./SkillPopup";
 
@@ -1672,7 +1672,8 @@ export class InfoManager {
         : undefined,
       damageHealingPercent: "damageHealingPercent" in skill ? skill.damageHealingPercent as number : undefined,
       gaugeCost,
-      description: "kind" in skill ? passiveDescription(skill as Passive) : skill.desc,
+      // 구조화된 연격·복합 계수는 정적 설명을 복제하지 않고 키워드가 연결된 공용 문장으로 표시한다.
+      description: "kind" in skill ? passiveDescription(skill as Passive) : skillDescription(skill as Skill),
     };
   }
 

@@ -30,4 +30,12 @@ describe("스킬 설명 키워드", () => {
     const linked = parseKeywordText("[[bleed|출혈]] 3초 · 매초 최대 체력 2%");
     expect(linked.find((segment) => segment.keyword)?.keyword).toMatchObject({ id: "bleed", kind: "디버프" });
   });
+
+  it("는 스피나의 은신·연격·공격 속도 규칙을 모두 설명 팝업에 연결한다", () => {
+    // 스킬 본문에서 실제 사용하는 표기들을 한꺼번에 검증해 일부만 평문으로 되돌아가는 회귀를 막는다.
+    const linked = parseKeywordText("[[stealth|은신]] [[combo|연격]] [[attack-speed|공격 속도]] [[missing-hp|잃은 체력]]");
+    expect(linked.filter((segment) => segment.keyword).map((segment) => segment.keyword?.id)).toEqual([
+      "stealth", "combo", "attack-speed", "missing-hp",
+    ]);
+  });
 });

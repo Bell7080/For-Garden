@@ -86,6 +86,22 @@ export function placeExcavationRelic(
   return next;
 }
 
+/**
+ * 한 칸을 채운 뒤 이어서 채울 칸이다.
+ *
+ * 세 자리를 채우는 일은 보통 연속으로 일어나므로, 카드를 고를 때마다 사람이 다시 칸을 누르게
+ * 하면 그 손이 그대로 낭비다. 뒤쪽 빈 칸을 먼저 보고, 없으면 앞쪽 빈 칸, 그것도 없으면 다음
+ * 칸으로 넘어간다.
+ */
+export function nextExcavationSlot(formation: IdleExcavationState["assignedRelicIds"], placedSlot: number): number {
+  const count = formation.length;
+  for (let step = 1; step <= count; step += 1) {
+    const index = (placedSlot + step) % count;
+    if (formation[index] === null) return index;
+  }
+  return (placedSlot + 1) % count;
+}
+
 /** 빈 슬롯은 허용하되 같은 렐릭의 중복 및 미보유 렐릭은 차단한다. */
 export function validateExcavationFormation(assignedRelicIds: IdleExcavationState["assignedRelicIds"], ownedRelicIds: ReadonlySet<string>): ExcavationFormationValidation {
   const ids = assignedRelicIds.filter((id): id is string => id !== null);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { excavationProductionDisplayModel, createIdleExcavationState, harvestIdleExcavation, placeExcavationRelic, settleIdleExcavation, validateExcavationFormation } from "../../src/core/idleExcavation";
+import { excavationProductionDisplayModel, createIdleExcavationState, harvestIdleExcavation, nextExcavationSlot, placeExcavationRelic, settleIdleExcavation, validateExcavationFormation } from "../../src/core/idleExcavation";
 import { WALLET_CAPS } from "../../src/data/economy";
 import { RELICS } from "../../src/data/relics";
 import type { RelicProgress } from "../../src/core/types";
@@ -126,5 +126,22 @@ describe("방치 발굴 순수 규칙", () => {
     expect(result.granted).toEqual({ gold: 0, cheesecake: 1, fossil: 1, gems: 0 });
     expect(result.discarded).toEqual({ gold: 2, cheesecake: 0, fossil: 2, gems: 2 });
     expect(result.state.unclaimed).toEqual({ gold: 0.25, cheesecake: 0.5, fossil: 0.75, gems: 0.9 });
+  });
+});
+
+describe("배치 뒤 다음 칸", () => {
+  it("바로 뒤의 빈 칸으로 이어진다", () => {
+    expect(nextExcavationSlot(["anky", null, null], 0)).toBe(1);
+    expect(nextExcavationSlot(["anky", "rex", null], 1)).toBe(2);
+  });
+
+  it("뒤가 차 있으면 앞쪽 빈 칸으로 돌아온다", () => {
+    expect(nextExcavationSlot([null, "rex", "spino"], 2)).toBe(0);
+    expect(nextExcavationSlot(["anky", null, "spino"], 2)).toBe(1);
+  });
+
+  it("세 칸이 모두 차면 다음 칸에 그대로 머문다", () => {
+    expect(nextExcavationSlot(["anky", "rex", "spino"], 0)).toBe(1);
+    expect(nextExcavationSlot(["anky", "rex", "spino"], 2)).toBe(0);
   });
 });

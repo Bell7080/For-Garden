@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import type { AdOperationsConfigResponse, AdPresentationResult, AdSlotOperationsDto, GameApi, HarvestExcavationResponse, IdleExcavationResponse } from "../api/contracts";
-import { EXCAVATION_CURRENCIES, excavationProductionDisplayModel, placeExcavationRelic, type ExcavationCurrency, type IdleExcavationState } from "../core/idleExcavation";
+import { EXCAVATION_CURRENCIES, excavationProductionDisplayModel, nextExcavationSlot, placeExcavationRelic, type ExcavationCurrency, type IdleExcavationState } from "../core/idleExcavation";
 import { RELICS } from "../data/relics";
 import { portraitUsesRelicTint, sdAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
 import { tintFor } from "../puppets/tints";
@@ -35,7 +35,24 @@ const SD_DEPTH = 2001;
 /** 원화는 별도 액자를 만들지 않고 PopupLayer 판의 비대칭 실루엣에 직접 맞춘다. */
 const POPUP_ART_SHAPE = chipPoints(PANEL.width - 24, PANEL.height - 24, { bevel: { topLeft: 118, bottomRight: 118 } });
 /** 좁은 안전 영역에서도 팝업 제목·닫기와 겹치지 않는 현황 히어로의 고정 세로 범위다. */
-const STATUS_HERO = { x: 0, y: -385, width: 800, height: 300, headerY: -570, slotY: -385 } as const;
+// 슬롯 줄은 배경 원화의 발굴 벽면 가운데에 서도록 제목 아래로 조금 내려 둔다.
+const STATUS_HERO = { x: 0, y: -310, width: 800, height: 300, headerY: -570, slotY: -310 } as const;
+/** SD가 서는 바닥은 슬롯 칸 안쪽이라 칸 중심에서 늘 같은 거리를 유지한다. */
+const SLOT_GROUND_OFFSET = 110;
+/**
+ * 현황과 배치가 나눠 쓰는 아래 칸의 주요 조작 자리다.
+ *
+ * 슬롯을 눌러도 새 화면이 열리지 않고 이 아래 칸만 그리드로 바뀐다. 그래서 수확과 배치는
+ * 같은 높이에 서고, 취소는 배치 중에만 그 왼쪽에 나타났다 사라진다.
+ */
+const BOTTOM_ACTION = { y: 545, cancelX: -280, primaryX: 125 } as const;
+/**
+ * 통통 튀는 발굴 모션.
+ *
+ * 올라갈 때 감속하고 내려올 때 가속하는 포물선이라야 착지가 보인다. 좌우로 같은 이징을
+ * 되감으면 내려오는 동안에도 느려져 땅으로 가라앉는 것처럼 읽힌다.
+ */
+const HOP = { rise: 42, duration: 460, delays: [180, 570, 930], rests: [520, 780, 640] } as const;
 /** 팝업 로컬 좌표를 게임 좌표로 바꾸는 디버그 입력 계약이다. */
 const POPUP_CENTER = { x: BASE_WIDTH / 2, y: BASE_HEIGHT / 2 } as const;
 type Formation = IdleExcavationState["assignedRelicIds"];
@@ -69,6 +86,14 @@ function copyFormation(value: Formation): Formation { return [...value] as Forma
 export class IdleExcavationPopup {
   private body?: Phaser.GameObjects.Container;
   private content?: Phaser.GameObjects.Container;
+  /** 슬롯 줄과 SD가 사는 위 칸. 현황과 배치가 같은 것을 본다. */
+  private upper?: Phaser.GameObjects.Container;
+  /** 현황 요약과 배치 그리드가 번갈아 사는 아래 칸이다. */
+  private lower?: Phaser.GameObjects.Container;
+  /** 이미 선 SD와 같은 편성이면 다시 세우지 않기 위한 편성 지문이다. */
+  private sdFormationKey?: string;
+  /** 로딩·오류 문구가 떠 있는 동안에는 현황이 본문을 통째로 다시 만든다. */
+  private messageShown = false;
   /** 히어로 원화의 컨테이너 밖 마스크/이벤트까지 reset 때 함께 폐기한다. */
   private statusBackground?: PopupBackgroundImage;
   /** 현황 SD만 담아 카드/편집 UI와 비동기 수명을 분리하는 전용 레이어다. */
@@ -118,8 +143,8 @@ export class IdleExcavationPopup {
     // E2E는 새 레이아웃의 실제 입력 중심을 사용하고 게임 데이터에는 접근하지 않는다.
     setDebugIdleExcavationControls({
       close: { ...BACK_SLOT },
-      harvest: { x: POPUP_CENTER.x, y: POPUP_CENTER.y + 545 },
-      cancelEdit: { x: POPUP_CENTER.x - 280, y: POPUP_CENTER.y + 540 },
+      harvest: { x: POPUP_CENTER.x, y: POPUP_CENTER.y + BOTTOM_ACTION.y },
+      cancelEdit: { x: POPUP_CENTER.x + BOTTOM_ACTION.cancelX, y: POPUP_CENTER.y + BOTTOM_ACTION.y },
       ads: [
         { slotId: "excavation-harvest", x: POPUP_CENTER.x - 205, y: POPUP_CENTER.y + 385 },
         { slotId: "excavation-storage", x: POPUP_CENTER.x + 205, y: POPUP_CENTER.y + 385 },
@@ -147,13 +172,24 @@ export class IdleExcavationPopup {
     }
   }
 
-  /** 다시 그릴 때 PortraitCard의 외부 마스크까지 명시적으로 함께 정리한다. */
+  /** 배경 원화와 SD까지 버리고 본문을 통째로 새로 만든다. 로딩·오류·첫 현황에서만 쓴다. */
   private resetContent(): Phaser.GameObjects.Container | undefined {
     // 팝업 배경 helper의 GeometryMask는 content 자식이 아니므로 자식 파괴보다 먼저 정리한다.
     this.statusBackground?.destroy(); this.statusBackground = undefined;
     // SD는 content 바깥 GPU 자원과 tween을 가지므로 화면 자식 파괴에 기대지 않고 한 번만 정리한다.
     this.clearStatusSD();
-    // 편집 그리드의 GeometryMask와 씬 입력 리스너는 content 자식이 아니므로 화면 교체 전에 직접 뗀다.
+    this.releaseLower();
+    this.upper?.destroy(true); this.upper = undefined;
+    this.lower?.destroy(true); this.lower = undefined;
+    this.content?.destroy(true);
+    if (!this.body) return undefined;
+    this.content = this.scene.add.container(0, 0);
+    this.body.add(this.content);
+    return this.content;
+  }
+
+  /** 아래 칸이 소유하던 타이머와 씬 입력 리스너를 뗀다. 자식이 아니라서 파괴로 사라지지 않는다. */
+  private releaseLower(): void {
     this.gridMask?.destroy(); this.gridMask = undefined;
     if (this.gridWheelHandler) this.scene.input.off("wheel", this.gridWheelHandler);
     if (this.gridPointerDownHandler) this.scene.input.off("pointerdown", this.gridPointerDownHandler);
@@ -162,15 +198,59 @@ export class IdleExcavationPopup {
     this.gridWheelHandler = undefined;
     this.gridPointerDownHandler = undefined; this.gridPointerMoveHandler = undefined; this.gridPointerUpHandler = undefined;
     this.ticker?.remove(false); this.ticker = undefined;
-    this.content?.destroy(true);
-    if (!this.body) return undefined;
-    this.content = this.scene.add.container(0, 0);
-    this.body.add(this.content);
-    return this.content;
+  }
+
+  /**
+   * 아래 칸만 비우고 새 컨테이너를 돌려준다.
+   *
+   * 슬롯을 눌렀을 때 팝업이 통째로 갈리면 새 화면이 열린 것처럼 보인다. 위 칸(슬롯·SD)은
+   * 그대로 두고 이 아래 칸만 현황 요약 ↔ 배치 그리드로 바뀌어야 한 화면 안의 일로 읽힌다.
+   */
+  private resetLower(): Phaser.GameObjects.Container | undefined {
+    this.releaseLower();
+    this.lower?.destroy(true); this.lower = undefined;
+    if (!this.content) return undefined;
+    this.lower = this.scene.add.container(0, 0);
+    this.content.add(this.lower);
+    return this.lower;
+  }
+
+  /**
+   * 슬롯 줄과 그 위의 SD는 현황·배치가 함께 쓰는 위 칸이다.
+   *
+   * 편성이 그대로면 이미 선 SD를 다시 세우지 않는다. 카드 한 장을 옮길 때마다 세 마리를 다시
+   * 읽으면 그 사이 카드가 깜빡이고, 뛰던 박자도 처음으로 되돌아간다.
+   */
+  private renderUpper(formation: Formation, editable: boolean): void {
+    const content = this.content;
+    if (!content) return;
+    this.upper?.destroy(true);
+    const upper = this.scene.add.container(0, 0);
+    this.upper = upper; content.add(upper);
+    if (editable) {
+      addSectionTitle(this.scene, -380, STATUS_HERO.headerY, this.saving ? "편성 저장 중…" : `배치 편집 · 슬롯 ${this.selectedSlot + 1}/3`, { size: 23, parent: upper });
+    } else {
+      // 진행 문구는 일반 강조, 배치 수는 같은 행의 얇은 보조 정보로 두어 제목 위계를 만들지 않는다.
+      upper.add(this.scene.add.text(-360, STATUS_HERO.headerY, this.saving ? "수확 처리 중…" : "발굴 진행 중", textStyle({ role: "emphasis", size: 27, color: COLOR.accentText })).setOrigin(0, 0.5));
+      upper.add(this.scene.add.text(-160, STATUS_HERO.headerY, `배치 ${formation.filter(Boolean).length}/3`, textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0, 0.5));
+    }
+    upper.add(drawHairline(this.scene, 0, -535, 760, { color: COLOR.accent, alpha: 0.42 }));
+    const cards = this.addSlots(upper, formation, editable);
+    const key = formation.join("|");
+    if (key === this.sdFormationKey && this.sdContainer) {
+      // 같은 편성이라 SD는 그대로다. 그 자리의 카드만 다시 감춰 두 겹으로 보이지 않게 한다.
+      formation.forEach((id, index) => { if (id && this.sdPuppetByRelicId.has(id)) cards[index]?.setVisible(false); });
+      return;
+    }
+    // 편성이 달라졌으면 서 있던 SD를 먼저 치운다. 그러지 않으면 옛 자리의 SD가 그대로 남는다.
+    this.clearStatusSD();
+    this.sdFormationKey = key;
+    this.loadStatusSD(formation, cards);
   }
 
   private showMessage(message: string, state: "loading" | "error", retry = false): void {
     const content = this.resetContent();
+    this.messageShown = true;
     if (!content || !this.body) return;
     // 상태 문구는 비워 둔 액자 중앙에 놓아 로딩 피드백이 제목이나 닫기 조작을 가리지 않는다.
     content.add(this.scene.add.text(0, 20, message, textStyle({ role: "body", size: 28, color: state === "error" ? COLOR.dangerText : COLOR.inkDim })).setOrigin(0.5));
@@ -181,23 +261,26 @@ export class IdleExcavationPopup {
   /** 확정 편성 기준 현황이다. 표시 누적량만 매초 예상하고 서버 상태나 세션은 바꾸지 않는다. */
   private renderStatus(): void {
     const response = this.confirmed;
-    const content = this.resetContent();
-    if (!response || !content) return;
+    if (!response) return;
+    // 배경 원화와 SD는 살려 둔다. 배치에서 돌아올 때 화면이 통째로 새로 열리지 않게 하기 위해서다.
+    const content = this.content && !this.messageShown ? this.content : this.resetContent();
+    if (!content) return;
+    this.messageShown = false;
     const formation = response.excavation.assignedRelicIds;
     const rate = excavationProductionDisplayModel(formation, RELICS, session.relicProgress).totalsPerHour;
     // 1순위 발굴대 상태: 전용 원화를 팝업 전체에 한 장으로 깔아 히어로와 조작부를 끊지 않는다.
-    if (this.scene.textures.exists(BACKGROUND.excavation)) {
+    if (!this.statusBackground && this.scene.textures.exists(BACKGROUND.excavation)) {
       this.statusBackground = addPopupBackgroundImage(this.scene, content, BACKGROUND.excavation, { x: 0, y: 0, width: PANEL.width - 24, height: PANEL.height - 24, maskShape: POPUP_ART_SHAPE });
     }
-    const headerState = this.saving ? "수확 처리 중…" : "발굴 진행 중";
-    // 진행 문구는 일반 강조, 배치 수는 같은 행의 얇은 보조 정보로 두어 제목 위계를 만들지 않는다.
-    content.add(this.scene.add.text(-360, STATUS_HERO.headerY, headerState, textStyle({ role: "emphasis", size: 27, color: COLOR.accentText })).setOrigin(0, 0.5));
-    content.add(this.scene.add.text(-160, STATUS_HERO.headerY, `배치 ${formation.filter(Boolean).length}/3`, textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0, 0.5));
-    content.add(drawHairline(this.scene, 0, -535, 760, { color: COLOR.accent, alpha: 0.42 }));
     // 2순위 작업 중 SD/슬롯: 현황에서도 칸 자체가 편성 그리드의 유일한 진입점이다.
-    const slotCards = this.addSlots(content, formation, false);
-    // draft 편집에는 SD를 만들지 않는다. 서버 확정값을 그리는 현황에서만 비동기 세대를 시작한다.
-    this.loadStatusSD(formation, slotCards);
+    this.renderUpper(formation, false);
+    this.renderStatusLower(response, rate);
+  }
+
+  /** 누적·생산·광고·수확은 배치 그리드와 같은 아래 칸을 쓰므로 한 곳에서만 그린다. */
+  private renderStatusLower(response: IdleExcavationResponse, rate: Record<ExcavationCurrency, number>): void {
+    const content = this.resetLower();
+    if (!content) return;
     const baseServerMs = new Date(response.serverTime).getTime();
     let harvestButton: Button | undefined;
     // 발굴 전용 액자는 큰 누적값을, 아래의 독립 칩은 같은 아이콘과 생산 속도만 책임진다.
@@ -244,7 +327,7 @@ export class IdleExcavationPopup {
     content.add(this.scene.add.text(0, 250, notice, textStyle({ role: "body", size: 21, color: discarded > 0 || this.harvestError ? COLOR.dangerText : COLOR.inkDim, align: "center" })).setOrigin(0.5));
     this.addAdOffers(content, response.serverTime);
     // 5순위 주요 행동: 별도 편성 버튼은 없애고, 하단 전체 폭은 수확 primary 하나에만 준다.
-    harvestButton = new Button(this.scene, 0, 545, { width: 520, height: 98, label: this.saving ? "수확 중…" : "수확", variant: "primary", onClick: () => void this.harvest() });
+    harvestButton = new Button(this.scene, 0, BOTTOM_ACTION.y, { width: 520, height: 98, label: this.saving ? "수확 중…" : "수확", variant: "primary", onClick: () => void this.harvest() });
     // 서버 확정 누적량이 1 미만이거나 요청 중이면 지급할 것이 없으므로 입력부터 막는다.
     refreshEstimate(); content.add(harvestButton);
     this.setState(this.saving ? "saving" : "ready");
@@ -317,17 +400,19 @@ export class IdleExcavationPopup {
     this.renderEditor();
   }
 
-  /** 상단 슬롯과 보유 렐릭 그리드는 동일한 draft를 보되 저장 성공 전에는 confirmed에 쓰지 않는다. */
+  /**
+   * 배치는 새 화면이 아니라 아래 칸의 교대다.
+   *
+   * 위 칸의 슬롯과 SD는 그대로 서 있고, 현황 요약이 있던 자리에만 보유 렐릭 그리드가 들어온다.
+   * 수확 자리에는 배치가 서고, 그 왼쪽에 취소가 배치 중에만 나타난다.
+   */
   private renderEditor(error?: string): void {
-    const content = this.resetContent();
-    if (!content || !this.draft) return;
-    this.ticker?.remove(false); this.ticker = undefined;
-    // 편집 헤더도 현황과 같은 위치를 써 저장 네트워크 상태가 화면 위에서 즉시 보인다.
-    addSectionTitle(this.scene, -380, STATUS_HERO.headerY, this.saving ? "편성 저장 중…" : `배치 편집 · 슬롯 ${this.selectedSlot + 1}/3`, { size: 23, parent: content });
-    content.add(drawHairline(this.scene, 0, -535, 760, { color: COLOR.accent, alpha: 0.42 }));
-    this.addSlots(content, this.draft, true);
-    content.add(this.scene.add.text(-360, -185, "보유 렐릭 · 선택한 슬롯에 배치", textStyle({ role: "emphasis", size: 23, color: COLOR.accentText })).setOrigin(0, 0.5));
-    content.add(this.scene.add.text(360, -185, "빈 칸 이동 · 찬 칸 자리 교체 · 같은 카드 재선택 해제", textStyle({ role: "body", size: 17, color: COLOR.inkDim })).setOrigin(1, 0.5));
+    if (!this.draft || !this.content) return;
+    this.renderUpper(this.draft, true);
+    const content = this.resetLower();
+    if (!content) return;
+    content.add(this.scene.add.text(-360, -172, `보유 렐릭 · ${this.selectedSlot + 1}번 칸에 배치`, textStyle({ role: "emphasis", size: 23, color: COLOR.accentText })).setOrigin(0, 0.5));
+    content.add(this.scene.add.text(360, -172, "빈 칸 이동 · 찬 칸 자리 교체 · 같은 카드 재선택 해제", textStyle({ role: "body", size: 17, color: COLOR.inkDim })).setOrigin(1, 0.5));
     const owned = RELICS.filter((relic) => session.owned.has(relic.id));
     const grid = this.scene.add.container(0, GRID_VIEW.top + this.gridScrollY);
     owned.forEach((relic, index) => {
@@ -337,15 +422,23 @@ export class IdleExcavationPopup {
       const progress = session.relicProgress[relic.id];
       const card = new PortraitCard(this.scene, x, y, { width: GRID_VIEW.cardWidth, height: GRID_VIEW.cardHeight, portraitAssetId: relic.portraitAssetId, tint: portraitUsesRelicTint(relic.portraitAssetId) ? tintFor(relic.id) : undefined, label: relic.name, level: progress?.level ?? 1, rarity: relic.rarity, stars: (progress?.breakthrough ?? 0) + 1, subIcon: EXCAVATION_TRAIT_ICON[relic.excavationTrait.primaryCurrency], sub: formatRate(detail?.totalPerHour ?? 0) });
       card.setSelected(this.draft!.includes(relic.id));
-      card.hit.on("pointerup", () => { if (this.saving || !this.draft || this.gridDragMoved > GRID_DRAG_SLOP) return; this.draft = placeExcavationRelic(this.draft, this.selectedSlot, relic.id); this.renderEditor(); });
+      card.hit.on("pointerup", () => {
+        if (this.saving || !this.draft || this.gridDragMoved > GRID_DRAG_SLOP) return;
+        const slot = this.selectedSlot;
+        this.draft = placeExcavationRelic(this.draft, slot, relic.id);
+        // 한 칸을 채우면 선택이 저절로 다음 빈 칸으로 넘어가 세 번의 배치가 끊기지 않는다.
+        // 방금 비운 칸에서는 그대로 머문다 — 비운 자리를 다시 채우려는 손이 대부분이다.
+        this.selectedSlot = this.draft[slot] === null ? slot : nextExcavationSlot(this.draft, slot);
+        this.renderEditor();
+      });
       grid.add(card);
     });
     content.add(grid);
     this.addGridScroll(content, grid, owned.length);
     if (error) content.add(this.scene.add.text(0, 455, error, textStyle({ role: "body", size: 22, color: COLOR.dangerText })).setOrigin(0.5));
-    // 현황의 수확 자리와 같은 primary가 편집 중에만 '배치 완료' 역할로 전환된다.
-    const cancel = new Button(this.scene, -280, 540, { width: 220, height: 82, label: "취소", onClick: () => { if (!this.saving) { this.draft = undefined; this.renderStatus(); } } });
-    const done = new Button(this.scene, 125, 540, { width: 500, height: 92, label: this.saving ? "저장 중…" : "배치 완료", variant: "primary", onClick: () => void this.saveDraft() });
+    // 수확이 서 있던 자리를 배치가 그대로 물려받고, 취소는 배치 중에만 그 왼쪽에 나타난다.
+    const cancel = new Button(this.scene, BOTTOM_ACTION.cancelX, BOTTOM_ACTION.y, { width: 220, height: 82, label: "취소", onClick: () => { if (!this.saving) { this.draft = undefined; this.renderStatus(); } } });
+    const done = new Button(this.scene, BOTTOM_ACTION.primaryX, BOTTOM_ACTION.y, { width: 500, height: 92, label: this.saving ? "저장 중…" : "배 치", variant: "primary", onClick: () => void this.saveDraft() });
     cancel.setEnabled(!this.saving); done.setEnabled(!this.saving);
     content.add([cancel, done]);
     this.setState(this.saving ? "saving" : error ? "save-error" : "editing");
@@ -417,6 +510,8 @@ export class IdleExcavationPopup {
     formation.forEach((id, index) => {
       const x = -250 + index * 250;
       const relic = id ? RELICS.find((item) => item.id === id) : undefined;
+      // 고른 칸은 칸 바깥의 얇은 밑판이 알린다. SD가 카드 위에 서면 카드의 선택 발광이 가려진다.
+      if (editable && index === this.selectedSlot) parent.add(drawLayer(this.scene, x, STATUS_HERO.slotY, slantedRect(236, 271), { fill: COLOR.accent, alpha: 0.22, edge: COLOR.accent, edgeAlpha: 0.95 }));
       if (relic) {
         const progress = session.relicProgress[relic.id];
         const card = new PortraitCard(this.scene, x, STATUS_HERO.slotY, { width: 210, height: 245, portraitAssetId: relic.portraitAssetId, tint: portraitUsesRelicTint(relic.portraitAssetId) ? tintFor(relic.id) : undefined, label: relic.name, level: progress?.level ?? 1, rarity: relic.rarity, stars: (progress?.breakthrough ?? 0) + 1 });
@@ -453,6 +548,7 @@ export class IdleExcavationPopup {
   /** 현황 전용 Puppet/tween을 중복 파괴 없이 비우고 진행 중 로딩도 무효화한다. */
   private clearStatusSD(): void {
     this.sdLoadGeneration += 1;
+    this.sdFormationKey = undefined;
     for (const tween of this.sdTweens) tween.stop();
     this.sdTweens.clear();
     // Container의 destroy(true)가 같은 Puppet을 다시 순회하지 않도록 먼저 소유권에서 떼고 폐기한다.
@@ -480,7 +576,7 @@ export class IdleExcavationPopup {
     formation.forEach((relicId, index) => {
       if (!relicId) return;
       const x = body.x - 250 + index * 250;
-      const groundY = body.y - 275;
+      const groundY = body.y + STATUS_HERO.slotY + SLOT_GROUND_OFFSET;
       // 사방 테두리나 입체 판 대신 얇은 홀로그램 투영 그림자만 발 아래에 둔다.
       layer.add(this.scene.add.ellipse(x, groundY + 2, 172, 25, COLOR.accent, 0.16));
       void this.loadStatusPuppet(relicId, index, x, groundY, generation, layer, cards[index]);
@@ -508,12 +604,22 @@ export class IdleExcavationPopup {
         // 성공한 자리만 카드를 감춘다. ZIP/텍스처 실패 시 카드를 그대로 남긴다.
         fallback?.setVisible(false);
         const reduced = session.settings.accessibility.reduceMotion;
-        const delays = [180, 570, 930];
-        const heights = [11, 17, 8];
-        const waits = [760, 1130, 910];
+        // 포물선 한 번을 직접 그린다. 같은 이징을 되감는 yoyo는 내려오는 동안에도 느려져
+        // 뛰는 것이 아니라 땅으로 가라앉는 것처럼 보인다.
+        // Puppet는 Mesh라 원점이 이미지 한가운데다. `groundY`는 발끝이라 그 값으로 y를 움직이면
+        // 캐릭터가 제 키의 절반만큼 땅으로 꺼진다 — 지금까지 발굴 모션이 내려가 보이던 이유다.
+        const restY = puppet.y;
+        const hop = { progress: 0 };
         const tween = this.scene.tweens.add(reduced
-          ? { targets: puppet, scaleX: puppet.scaleX * 1.025, scaleY: puppet.scaleY * 1.025, alpha: 0.9, duration: 420, delay: delays[index], hold: waits[index], yoyo: true, repeat: -1 }
-          : { targets: puppet, y: groundY - heights[index], duration: 250 + index * 45, delay: delays[index], hold: 90 + index * 35, yoyo: true, repeat: -1, repeatDelay: waits[index], ease: "Sine.easeOut" });
+          ? { targets: puppet, scaleX: puppet.scaleX * 1.025, scaleY: puppet.scaleY * 1.025, alpha: 0.9, duration: 420, delay: HOP.delays[index], hold: HOP.rests[index], yoyo: true, repeat: -1 }
+          : {
+              targets: hop, progress: 1, ease: "Linear",
+              duration: HOP.duration + index * 40, delay: HOP.delays[index],
+              repeat: -1, repeatDelay: HOP.rests[index],
+              onUpdate: () => { puppet.y = restY - HOP.rise * (1 - (2 * hop.progress - 1) ** 2); },
+              // 쉬는 동안에는 정확히 제자리에 서 있어야 다음 도약이 바닥에서 시작한다.
+              onRepeat: () => { puppet.y = restY; },
+            });
         this.sdTweens.add(tween);
       },
     });
@@ -586,7 +692,7 @@ export class IdleExcavationPopup {
     if (this.gridPointerMoveHandler) this.scene.input.off("pointermove", this.gridPointerMoveHandler);
     if (this.gridPointerUpHandler) this.scene.input.off("pointerup", this.gridPointerUpHandler);
     this.gridWheelHandler = undefined; this.gridPointerDownHandler = undefined; this.gridPointerMoveHandler = undefined; this.gridPointerUpHandler = undefined;
-    this.draft = undefined; this.body = undefined; this.content = undefined; this.closeAction = undefined;
+    this.draft = undefined; this.body = undefined; this.content = undefined; this.upper = undefined; this.lower = undefined; this.closeAction = undefined; this.messageShown = false;
     setDebugIdleExcavationPopup(undefined); setDebugIdleExcavationSlots(undefined); setDebugIdleExcavationControls(undefined); this.onClosed?.();
   }
 }

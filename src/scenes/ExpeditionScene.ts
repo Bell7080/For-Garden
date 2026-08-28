@@ -47,7 +47,8 @@ const FORMATION = { y: 540, firstX: 230, stepX: 310, width: 250, height: 290 } a
  * 더 내리면 보스가 공중에 뜬 것처럼 보인다.
  */
 const RANKING = {
-  boss: { groundY: 1300, height: 1000 },
+  // 원화를 크게 세우고 얼굴이 제목 줄 아래에서 시작하도록 위로 올린다. 발끝은 판 뒤에 숨는다.
+  boss: { groundY: 1400, height: 1150 },
   board: { y: 1120, width: 1000, height: 880 },
   side: { x: 250 },
   rows: { x: 730, width: 580, gap: 86, firstY: 766, max: 8 },

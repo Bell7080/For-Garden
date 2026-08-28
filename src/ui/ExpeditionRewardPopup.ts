@@ -7,7 +7,7 @@ import { Button } from "./Button";
 import { POPUP_TITLE_SIZE, type PopupLayer } from "./PopupLayer";
 import { RewardFrame } from "./RewardFrame";
 import { expeditionRewardTrackFillY, expeditionRewardTrackHeight, expeditionRewardTrackNodes, REWARD_TRACK } from "./expeditionRewardTrack";
-import { chipPoints, drawLayer, slantedRect, toPoints } from "./holo";
+import { chipPoints, drawLayer } from "./holo";
 import { COLOR, textStyle } from "./theme";
 
 /** 판 안에서 길이 보이는 창의 규격이다. 길이 더 길면 이 창 안에서만 위아래로 흐른다. */
@@ -130,13 +130,14 @@ export class ExpeditionRewardPopup {
     const base = viewTop + view;
     const at = (y: number): number => base - y;
 
+    // 길은 얇은 실선 한 줄이다. 굵은 판을 세우면 보상 액자와 무게가 같아져 어느 쪽이 길인지
+    // 흐려진다. 지나온 구간만 흰 선분 한 겹으로 덧그어 "여기까지 왔다"를 선 하나로 말한다.
     const rail = this.scene.add.graphics();
-    rail.fillStyle(0x05070a, 0.9);
-    rail.fillPoints(toPoints(slantedRect(REWARD_TRACK.railWidth, height, 0)).map((point) => new Phaser.Geom.Point(point.x, point.y + at(height / 2))), true);
-    // 지나온 길만 강조색으로 채운다. 남은 길은 검게 남아 다음 마디까지가 얼마인지 길이로 읽힌다.
+    rail.lineStyle(3, 0xffffff, 0.22);
+    rail.lineBetween(0, at(0), 0, at(height));
     if (fill > 0) {
-      rail.fillStyle(COLOR.sortie, 0.95);
-      rail.fillPoints(toPoints(slantedRect(REWARD_TRACK.railWidth, fill, 0)).map((point) => new Phaser.Geom.Point(point.x, point.y + at(fill / 2))), true);
+      rail.lineStyle(5, 0xffffff, 0.95);
+      rail.lineBetween(0, at(0), 0, at(fill));
     }
     track.add(rail);
 
@@ -146,25 +147,35 @@ export class ExpeditionRewardPopup {
       const claimable = reached && !stage.claimed;
       const y = at(node.y);
       const branchX = node.side === "right" ? REWARD_TRACK.branch : -REWARD_TRACK.branch;
-      // 가지는 길에서 보상까지 곧게 뻗는다. 지나온 마디만 강조색으로 이어진다.
+      // 가지도 같은 굵기의 실선이다. 지나온 마디만 흰 선으로 이어지고 남은 마디는 옅게 남는다.
       const branch = this.scene.add.graphics();
-      branch.fillStyle(reached ? COLOR.sortie : 0x2a3038, reached ? 0.9 : 0.8);
-      branch.fillRect(Math.min(0, branchX), y - 5, Math.abs(branchX), 10);
+      branch.lineStyle(reached ? 4 : 3, 0xffffff, reached ? 0.9 : 0.22);
+      branch.lineBetween(0, y, branchX, y);
       track.add(branch);
-      // 마디 표식과 임계값. 숫자는 길 반대쪽에 붙어 보상과 겹치지 않는다.
-      track.add(drawLayer(this.scene, 0, y, chipPoints(58, 58, { bevel: { topLeft: 29, bottomRight: 29 } }), { fill: reached ? 0x5a3a12 : 0x121821, alpha: 0.98, edge: reached ? COLOR.sortie : COLOR.accent, edgeAlpha: reached ? 0.95 : 0.5 }));
-      track.add(this.scene.add.text(node.side === "right" ? -46 : 46, y, stage.threshold.toLocaleString(), textStyle({ role: "display", size: 27, color: reached ? COLOR.sortieText : COLOR.ink })).setOrigin(node.side === "right" ? 1 : 0, 0.5).setShadow(3, 4, "#04060a", 0, true, true));
+      // 마디는 선 위에 찍히는 작은 표식이다. 지나온 마디만 속을 채운다.
+      const marker = this.scene.add.graphics();
+      const size = 13;
+      const diamond = [new Phaser.Geom.Point(0, y - size), new Phaser.Geom.Point(size, y), new Phaser.Geom.Point(0, y + size), new Phaser.Geom.Point(-size, y)];
+      if (reached) { marker.fillStyle(0xffffff, 0.95); marker.fillPoints(diamond, true); }
+      marker.lineStyle(3, 0xffffff, reached ? 0.95 : 0.4);
+      marker.strokePoints(diamond, true);
+      track.add(marker);
+      track.add(this.scene.add.text(node.side === "right" ? -34 : 34, y, stage.threshold.toLocaleString(), textStyle({ role: "display", size: 27, color: reached ? COLOR.ink : COLOR.inkDim })).setOrigin(node.side === "right" ? 1 : 0, 0.5).setShadow(3, 4, "#04060a", 0, true, true));
       const icon = `currency-${stage.reward.currency}` as "currency-gold" | "currency-fossil" | "currency-gems";
       const frame = new RewardFrame(this.scene, branchX, y, { icon, amount: stage.reward.amount, size: 132, state: stage.claimed ? "claimed" : claimable ? "claimable" : "normal", onClick: claimable ? () => { if (this.dragMoved <= DRAG_SLOP) void this.claim(stage.id); } : undefined });
       track.add(frame);
     });
 
-    // 지금 어디까지 왔는지 알리는 표식. 길 위에서 채움이 끝나는 자리에 붙되, 바닥에 붙어 잘리지
-    // 않도록 최소 높이는 남긴다.
-    const marker = this.scene.add.container(0, at(Math.max(fill, 46)));
-    marker.add(drawLayer(this.scene, -132, 0, chipPoints(210, 62, { bevel: { topLeft: 18, bottomRight: 18 } }), { fill: 0x5a3a12, alpha: 0.98, edge: COLOR.sortie, edgeAlpha: 0.95 }));
-    marker.add(this.scene.add.text(-132, 0, cumulative.toLocaleString(), textStyle({ role: "display", size: 28, color: COLOR.sortieText })).setOrigin(0.5));
-    track.add(marker);
+    // 지금 어디까지 왔는지는 흰 선이 끝나는 자리에 붙는 짧은 칩 하나가 말한다.
+    const cursorY = at(Math.max(fill, 40));
+    const cursor = this.scene.add.container(0, cursorY);
+    cursor.add(drawLayer(this.scene, -128, 0, chipPoints(196, 56, { bevel: { topLeft: 16, bottomRight: 16 } }), { fill: 0x0b0f15, alpha: 0.96, edge: COLOR.accent, edgeAlpha: 0.9 }));
+    cursor.add(this.scene.add.text(-128, 0, cumulative.toLocaleString(), textStyle({ role: "display", size: 27, color: COLOR.accentText })).setOrigin(0.5));
+    const tail = this.scene.add.graphics();
+    tail.lineStyle(3, 0xffffff, 0.9);
+    tail.lineBetween(-30, cursorY, 0, cursorY);
+    track.add(tail);
+    track.add(cursor);
 
     // 처음 열 때는 지금 자리가 창 가운데 오도록 맞춘다. 위아래로 남은 길은 손으로 흐른다.
     this.scrollY = Phaser.Math.Clamp(fill - view / 2, 0, Math.max(0, height - view));

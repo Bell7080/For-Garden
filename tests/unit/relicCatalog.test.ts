@@ -3,7 +3,34 @@ import type { RelicDef } from "../../src/core/types";
 import { compareBookmarkedOwnedRelics, getRelicCatalogDisclosure } from "../../src/core/relicCatalog";
 import { PLAYABLE_RELICS, sortRelicsBySpecimenNumber, validateSpecimenNumbers } from "../../src/data/relics";
 
+/** 현재 시점의 다른 인간 연구원을 암시하는 표현만 탐지해, 일반적인 '연구원' 용례는 과도하게 막지 않는다. */
+const FORBIDDEN_PRESENT_RESEARCHER_PHRASES = ["연구원 한 명", "다른 연구원", "연구원들"] as const;
+
+/**
+ * 과거 복제 연구원처럼 설정상 필요한 문구가 생길 때, 렐릭 ID와 개별 표현 및 사유만 좁게 허용한다.
+ * 문자열 전체를 면제하지 않으므로 같은 기록에 새로 유입된 금지 표현은 계속 검출된다.
+ */
+const ALLOWED_RESEARCHER_REFERENCES: Readonly<Record<string, Readonly<{
+  phrase: (typeof FORBIDDEN_PRESENT_RESEARCHER_PHRASES)[number];
+  reason: string;
+}[]>>> = {};
+
 describe("relic catalog", () => {
+  it("모든 해금 기록은 주인공 외의 현재 인간 연구원을 암시하지 않는다", () => {
+    // docs/lore.md의 주인공이 “진짜 인간이자 유일한 연구원”이라는 설정을 모든 unlockRecord.text에서 보호한다.
+    const violations = PLAYABLE_RELICS.flatMap((relic) => {
+      if (relic.unlockRecord.status !== "recorded") return [];
+      // 판별된 기록 원문을 지역 상수로 고정해 후속 콜백에서도 recorded 타입을 유지한다.
+      const recordText = relic.unlockRecord.text;
+      const allowed = ALLOWED_RESEARCHER_REFERENCES[relic.id] ?? [];
+      return FORBIDDEN_PRESENT_RESEARCHER_PHRASES
+        .filter((phrase) => recordText.includes(phrase) && !allowed.some((reference) => reference.phrase === phrase))
+        .map((phrase) => ({ relicId: relic.id, phrase }));
+    });
+
+    expect(violations).toEqual([]);
+  });
+
   it("렉시아 관찰 기록은 신장·체중과 성장 단계를 단일 측정값으로 공개한다", () => {
     const rex = PLAYABLE_RELICS.find((relic) => relic.id === "rex")!;
     // 도감 카드와 상세 관찰 기록이 서로 다른 신체 수치를 노출하지 않도록 정적 정의를 함께 고정한다.

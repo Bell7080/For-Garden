@@ -79,7 +79,7 @@ export const LEXIA_ASSET: PuppetAsset = {
   content: { left: 95, top: 69, right: 894, bottom: 1419 },
 };
 
-/** 3번 전신 일러스트: 세이라(스피노사우루스). */
+/** 3번 전신 일러스트: 스피나(스피노사우루스). */
 export const SEIRA_ASSET: PuppetAsset = {
   url: `${base}puppets/char_003.zip`,
   imageWidth: 1085,
@@ -197,7 +197,7 @@ export const LEXIA_SD_ASSET: PuppetAsset = {
   content: { left: 185, top: 105, right: 1080, bottom: 1140 },
 };
 
-/** 3번 SD: 세이라. 알파가 있는 실제 그림 영역으로 발끝을 잡아 투명 여백만큼 뜨지 않게 한다. */
+/** 3번 SD: 스피나. 알파가 있는 실제 그림 영역으로 발끝을 잡아 투명 여백만큼 뜨지 않게 한다. */
 export const SEIRA_SD_ASSET: PuppetAsset = {
   url: `${base}puppets/charSD_003.zip`,
   imageWidth: 1122,

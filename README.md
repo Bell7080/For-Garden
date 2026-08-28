@@ -56,7 +56,7 @@
 
 `public/puppets/`에는 현재 역할별 Puppet ZIP 아홉 개가 있다.
 
-- `char_001.zip`~`char_003.zip` — 토리카·렉시아·세이라의 로비/정보창용 전신
+- `char_001.zip`~`char_003.zip` — 토리카·렉시아·스피나의 로비/정보창용 전신
 - `charSD_001.zip`~`charSD_003.zip` — 세 렐릭의 전투용 SD
 - `enemy_001.zip`, `enemy_002.zip`, `enemy003.zip` — 토비·아모·리파의 전용 적 SD
 

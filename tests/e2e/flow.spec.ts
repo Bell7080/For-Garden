@@ -97,7 +97,7 @@ async function enterParty(page: Page): Promise<void> {
   await expect.poll(() => scene(page)).toBe("party");
 }
 
-/** 파티는 토리카 · 렉시아 · 세이라 순으로 고른다. */
+/** 파티는 토리카 · 렉시아 · 스피나 순으로 고른다. */
 async function enterBattle(page: Page): Promise<void> {
   await enterParty(page);
   await tap(page, ...TORIKA);
@@ -113,7 +113,7 @@ test("출격 → 스테이지 지도 → 파티 편성 → 전투까지 이어�
   const state = await battle(page);
   expect(state?.phase).toBe("fight");
   // 편성한 셋이 그대로 전장에 선다.
-  expect(state?.playerOrder).toEqual(["토리카", "렉시아", "세이라"]);
+  expect(state?.playerOrder).toEqual(["토리카", "렉시아", "스피나"]);
 });
 
 test("토리카 패시브 회복은 1080×1920 전장에서 초록 +수치로 표시된다", async ({ page }, testInfo) => {
@@ -147,7 +147,7 @@ test("전투 시작의 빠른 연속 탭은 한 번만 진입하고 유효 편�
   // 첫 탭이 즉시 잠금을 걸므로 겹쳐 도착한 다음 입력이 저장/전환을 중복 실행하지 않는다.
   await Promise.all([tap(page, BASE_WIDTH / 2, 1700), tap(page, BASE_WIDTH / 2, 1700)]);
   await expect.poll(() => scene(page)).toBe("battle");
-  expect((await battle(page))?.playerOrder).toEqual(["토리카", "렉시아", "세이라"]);
+  expect((await battle(page))?.playerOrder).toEqual(["토리카", "렉시아", "스피나"]);
 });
 
 test("버튼 경계를 향한 작은 이동은 탭이고 큰 드래그는 취소된다", async ({ page }) => {

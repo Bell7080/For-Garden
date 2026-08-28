@@ -144,7 +144,8 @@ export const RELICS: RelicDef[] = [
   },
   {
     id: "spino",
-    name: "세이라",
+    // 저장 데이터와 에셋 키는 유지하고 플레이어에게 표시하는 이름만 스피나로 통일한다.
+    name: "스피나",
     specimenNumber: "105",
     projectName: "TIDAL SAIL",
     excavationSite: "북아프리카 켐켐층 수로",

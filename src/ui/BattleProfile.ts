@@ -82,8 +82,13 @@ export class BattleProfile extends Phaser.GameObjects.Container {
     return this;
   }
 
-  /** 컨테이너 이동이나 전체 배율 뒤 기하 마스크를 즉시 월드 좌표에 다시 맞춘다. */
-  public syncMask(): this { this.card.syncMask(); return this; }
+  /**
+   * 컨테이너 이동이나 전체 배율 뒤 기하 마스크를 즉시 월드 좌표에 다시 맞춘다.
+   *
+   * Phaser Container 생성자가 내부에서 `setPosition`을 부르므로 이 메서드는 카드가 아직
+   * 만들어지기 전에도 한 번 불린다. 그때는 맞출 마스크가 없으므로 조용히 넘어간다.
+   */
+  public syncMask(): this { this.card?.syncMask(); return this; }
 
   public override setPosition(x?: number, y?: number, z?: number, w?: number): this {
     super.setPosition(x, y, z, w); this.syncMask(); return this;

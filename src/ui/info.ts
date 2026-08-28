@@ -56,6 +56,10 @@ export type { SkillInfoViewModel } from "./SkillPopup";
 
 export { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../core/infoCapabilities";
 
+// 일지 원화는 정보보다 먼저 읽히지 않을 만큼 낮추고, 어두운 페이드는 본문 대비를 보존한다.
+const JOURNAL_ART_ALPHA = 0.18;
+const JOURNAL_TEXT_FADE_ALPHA = 0.42;
+
 /** 전신 원화의 코어(`중심1`) 관절이 놓이는 자리와 확대 높이. 정보창의 주인공은 캐릭터다. */
 const PORTRAIT_FOCUS = { x: 336, y: 980, height: 1820 } as const;
 
@@ -1018,13 +1022,14 @@ export class InfoManager {
         // 팝업이 길어진 만큼 원화 클립도 함께 늘려 하단에 직사각 배경 끝이 드러나지 않게 한다.
         const artWidth = 856; const artHeight = 1116;
         const journalMask = chipPoints(artWidth, artHeight, { bevel: { topLeft: artWidth * 0.14, topRight: 0, bottomRight: artWidth * 0.14, bottomLeft: 0 } });
-        // 세로 원화는 1:1 크기를 유지하고 위쪽 클립/프레임이 먼저 보이도록 아래로 민다.
-        // 따라서 팝업보다 긴 하단은 요청대로 액자 끝에서 자연스럽게 잘리고 제목표는 원화 위에 남는다.
+        // 세로 원화는 1:1 크기를 유지하되 원화와 팝업의 시각 중심을 맞춰 상·하단을 대칭으로 자른다.
         const journalArt = addPopupBackgroundImage(this.scene, body, "content-observation-journal", {
-          x: 0, y: 0, width: artWidth, height: artHeight, maskShape: journalMask, nativeSize: true, imageOffsetY: 340,
+          x: 0, y: 0, width: artWidth, height: artHeight, maskShape: journalMask, fit: "native-center",
         });
-        journalArt.image.setAlpha(0.26);
-        journalArt.fade.setAlpha(0.34);
+        journalArt.image.setAlpha(JOURNAL_ART_ALPHA);
+        journalArt.fade.setAlpha(JOURNAL_TEXT_FADE_ALPHA);
+        // PopupLayer가 tilt와 등장 배율을 먼저 적용했으므로 첫 프레임부터 같은 칩 변환을 공유한다.
+        journalArt.syncMask();
       }
       const lines = disclosure.access === "full"
         ? [

@@ -69,8 +69,13 @@ export interface PopupBackgroundImage {
   mask: Phaser.Display.Masks.GeometryMask;
   maskGraphics: Phaser.GameObjects.Graphics;
   fade: Phaser.GameObjects.Graphics;
+  /** 부모 팝업의 이동·회전·배율을 마스크에 즉시 다시 투영한다. */
+  syncMask: () => void;
   destroy: () => void;
 }
+
+/** 팝업 원화를 프레임에 맞추는 두 가지 공용 배치 의도다. */
+export type PopupBackgroundFit = "cover" | "native-center";
 
 /**
  * 공용 배경 키를 팝업 내부에 cover 배치한다.
@@ -84,15 +89,16 @@ export function addPopupBackgroundImage(
   bounds: {
     x: number; y: number; width: number; height: number;
     maskShape?: readonly number[];
-    nativeSize?: boolean;
+    /** `native-center`는 원본 배율을 보존한 채 원화 중심과 팝업 프레임 중심을 일치시켜 자른다. */
+    fit?: PopupBackgroundFit;
     /** 클리핑 액자는 그대로 두고 원화에서 보여 줄 부분만 옮길 때 쓰는 로컬 오프셋이다. */
     imageOffsetX?: number;
     imageOffsetY?: number;
   },
 ): PopupBackgroundImage {
-  // 기본 배경은 영역을 cover하고, 일지처럼 인쇄 크기가 중요한 원화는 원본 1:1 크기로 잘라 쓴다.
+  // 이미지와 마스크 모두 bounds의 같은 로컬 중심을 쓴다. native-center의 crop도 이 중심에서 대칭이다.
   const image = scene.add.image(bounds.x + (bounds.imageOffsetX ?? 0), bounds.y + (bounds.imageOffsetY ?? 0), texture);
-  if (!bounds.nativeSize) image.setScale(Math.max(bounds.width / image.width, bounds.height / image.height));
+  if ((bounds.fit ?? "cover") === "cover") image.setScale(Math.max(bounds.width / image.width, bounds.height / image.height));
   parent.add(image);
 
   // GeometryMask는 Container 변환을 자동 상속하지 않으므로 렌더 직전마다 월드 좌표를 맞춘다.
@@ -143,7 +149,7 @@ export function addPopupBackgroundImage(
   parent.add(fade);
 
   return {
-    image, mask, maskGraphics, fade,
+    image, mask, maskGraphics, fade, syncMask,
     destroy: () => {
       // 마스크는 표시 객체의 자식이 아니므로 이벤트, Mask, Graphics, 이미지 순으로 명시 정리한다.
       scene.events.off(Phaser.Scenes.Events.PRE_RENDER, syncMask);

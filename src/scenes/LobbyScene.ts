@@ -207,13 +207,15 @@ export class LobbyScene extends Phaser.Scene {
       });
       body.add(storyButton);
       // 두 일일 던전은 같은 위계와 같은 폭으로 나란히 놓아 어느 쪽도 기본 선택처럼 보이지 않게 한다.
+      // 두 던전은 각자의 전용 원화를 칩 실루엣에 물려 세운다. 같은 그림을 나눠 쓰면 나란히 선
+      // 두 버튼이 한 콘텐츠의 두 갈래처럼 읽힌다.
       const dailyEntries = [
-        { x: -180, label: "케이크 대작전", status: "3 WAVE · 성장 재화", mode: "cake" as const },
-        { x: 180, label: "현상수배", status: "태그 3회 · 골드", mode: "bounty" as const },
+        { x: -180, label: "케이크 대작전", status: "3 WAVE · 성장 재화", mode: "cake" as const, artKey: "content-cake-entry" },
+        { x: 180, label: "현상수배", status: "태그 3회 · 골드", mode: "bounty" as const, artKey: "content-bounty-entry" },
       ];
       dailyEntries.forEach((entry) => body.add(new ExpeditionEntryButton(this, entry.x, 0, {
         width: 340, height: 135, label: entry.label, labelSize: 27, status: entry.status,
-        artKey: "content-story-entry", accentColor: EXCHANGE_BLUE, accentTextColor: "#9fd0f0",
+        artKey: entry.artKey, accentColor: EXCHANGE_BLUE, accentTextColor: "#9fd0f0",
         onClick: () => { close(); this.scene.start("sortiePreview", { mode: entry.mode }); },
       })));
       // 레이드는 일일 던전 아래에서 독립된 전체 폭 콘텐츠로 읽히게 한다.

@@ -74,6 +74,14 @@ const BACKDROP = { lift: 0.42, alpha: 0.72, lockedAlpha: 0.3 } as const;
 /** 이름이 얹히는 아래쪽 어둠이 차지하는 높이 비율. */
 const SHADE_RATIO = 0.46;
 
+/**
+ * 머리가 빠져나오는 칩 윗변 홈의 폭 비율.
+ *
+ * 좁으면 뿔·모자·땋은 머리가 구멍의 좌우 변에 잘려 머리가 네모난 덩어리로 보인다. 어깨는
+ * 여전히 칩 안에 갇혀야 하므로 칩 폭을 다 열지는 않는다.
+ */
+const CHIP_NOTCH_WIDTH = 0.8;
+
 /** 레벨 숫자를 세로로 늘리는 비율. 계기판 숫자처럼 보이게 하는 최소한의 왜곡이다. */
 const LEVEL_STRETCH = 1.26;
 
@@ -154,7 +162,7 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     this.portraitMask = scene.make.graphics({});
     this.portraitMask.fillStyle(0xffffff, 1);
     this.portraitMask.fillPoints(
-      toGeomPoints(chipPoints(chipWidth, this.bodyHeight, { bevel, openWidth: chipWidth * 0.58, openHeight: this.overhang })),
+      toGeomPoints(chipPoints(chipWidth, this.bodyHeight, { bevel, openWidth: chipWidth * CHIP_NOTCH_WIDTH, openHeight: this.overhang })),
       true,
     );
     // 배경 원화는 **윗변이 닫힌** 칩 안에만 머문다. 인물과 같은 마스크를 쓰면 머리가
@@ -343,6 +351,8 @@ export class PortraitCard extends Phaser.GameObjects.Container {
       // 전신 정보창과 같은 원화 배율 보정을 적용해 폰투스가 카드에서만 다시 커지지 않게 한다.
       fillRatio: 0.56 / ((asset.cardZoom ?? 1) * (asset.portraitZoom ?? 1)),
       headroom: 0.04,
+      // 머리가 구멍보다 크면 구멍에 맞춰 담는다. 개체마다 머리 크기가 달라도 같은 카드가 된다.
+      headOverhang: this.overhang,
     });
     const originX = -width / 2 - card.cropX * card.scale;
     // 전신과 같은 세로 보정을 써 코어 관절이 높은 원화의 시각 중심을 카드에서도 유지한다.

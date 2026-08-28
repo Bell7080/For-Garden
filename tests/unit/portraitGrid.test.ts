@@ -12,9 +12,9 @@ describe("캐릭터 그리드 안전 영역", () => {
   });
 
   it("돌출 높이는 카드가 납작할수록 작고 54에서 멈춘다", () => {
-    expect(portraitGridHeadroom(100)).toBe(22);
-    expect(portraitGridHeadroom(400)).toBe(54);
-    expect(portraitGridHeadroom(2000)).toBe(54);
+    expect(portraitGridHeadroom(100)).toBe(26);
+    expect(portraitGridHeadroom(400)).toBe(64);
+    expect(portraitGridHeadroom(2000)).toBe(64);
   });
 
   it("그리드 세로 길이는 머리 여유를 포함하고 빈 목록은 0이다", () => {

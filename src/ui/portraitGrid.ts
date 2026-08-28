@@ -9,9 +9,14 @@
  * Phaser를 모르는 이 한 곳에서만 계산하고 도감·발굴·앞으로의 그리드가 함께 쓴다.
  */
 
-/** 카드 본체 위로 실제 원화가 빠져나오는 높이. 목록 배치도 같은 시각 경계를 사용한다. */
+/**
+ * 카드 본체 위로 실제 원화가 빠져나오는 높이. 목록 배치도 같은 시각 경계를 사용한다.
+ *
+ * 뿔·모자·묶은 머리까지 담을 만큼은 열어 둔다. 좁게 잡으면 머리가 큰 개체만 정수리가 잘려
+ * 카드마다 다른 높이에서 잘린 것처럼 보인다.
+ */
 export function portraitCardOverhang(height: number): number {
-  return Math.round(Math.min(height * 0.22, 54));
+  return Math.round(Math.min(height * 0.26, 64));
 }
 
 /**

@@ -481,11 +481,12 @@ describe("효과 ID별 야성 특성", () => {
     return state;
   }
 
-  it("렉시아 패시브는 공격 속도를 25% 높이고 폭주 종료 뒤 간격을 그대로 유지한다", () => {
+  it("렉시아 패시브는 공격 속도를 25%p 높이고 폭주 종료 뒤 간격을 그대로 유지한다", () => {
     const state = newSkirmish(["rex"], ["husk-shell"]);
     const rex = state.fighters[0];
     const before = attackInterval(rex);
-    expect(before).toBeCloseTo(SKIRMISH.attackInterval * 100 / (rex.def.stats.attackSpeed * 1.25));
+    // 기본 112에 25%p를 더한 137로 나눠 곱연산(140)과 의미가 바뀌지 않게 고정한다.
+    expect(before).toBeCloseTo(SKIRMISH.attackInterval * 100 / 137);
     rex.ferocity = 100; rex.ferocityFever = true;
     expect(attackInterval(rex)).toBe(before); // 렉시아 폭주는 공속이 아니라 치명타와 흡혈만 바꾼다.
     rex.ferocityFever = false;
@@ -935,25 +936,34 @@ describe("렉시아 전투 계약", () => {
     return { state, rex, foe };
   }
 
-  it("은 95% 일반 공격과 패시브의 공격력·치명 확률·치명 피해 25%를 적용한다", () => {
+  it("은 공격력 25%와 치명 확률·치명 피해 25%p를 정해진 순서로 적용한다", () => {
     const { state, rex, foe } = readyRex();
-    const hit = stepSkirmish(state, 1 / 60, () => 0.26).find((event) => event.kind === "attack")!;
-    const boosted = { ...rex, def: { ...rex.def, stats: { ...rex.def.stats, atk: rex.def.stats.atk * 1.25, critDamage: rex.def.stats.critDamage * 1.25 } } };
+    const hit = stepSkirmish(state, 1 / 60, () => 0.44).find((event) => event.kind === "attack")!;
+    const boosted = { ...rex, def: { ...rex.def, stats: { ...rex.def.stats, atk: rex.def.stats.atk * 1.25, critDamage: rex.def.stats.critDamage + 25 } } };
     expect(rex.def.basic.power).toBe(95);
-    // 기본 20%의 25% 증가인 25% 확률이므로 0.26은 치명타가 아니다.
-    expect(hit).toMatchObject({ critical: false, amount: computeDamage(boosted, foe, { ...rex.def.basic, kind: "basic", isCritical: false }, true) });
+    // 기본 20% + 패시브 25%p = 45%이며, 치명 피해도 160% + 25%p = 185%다.
+    expect(hit).toMatchObject({ critical: true, amount: computeDamage(boosted, foe, { ...rex.def.basic, kind: "basic", isCritical: true }, true) });
   });
 
   it("은 폭주 중 치명타 25%p와 모든 피해 흡혈 25%p를 적용하고 종료 후 복구한다", () => {
     const { state, rex } = readyRex();
     rex.hp = rex.maxHp / 2; rex.ferocity = 100; rex.ferocityFever = true;
     const before = rex.hp;
-    const hit = stepSkirmish(state, 1 / 60, () => 0.49).find((event) => event.kind === "attack")!;
-    expect(hit).toMatchObject({ critical: true }); // 패시브 25% + 폭주 25%p = 50%
+    const hit = stepSkirmish(state, 1 / 60, () => 0.69).find((event) => event.kind === "attack")!;
+    expect(hit).toMatchObject({ critical: true }); // 기본 20% + 패시브 25%p + 폭주 25%p = 70%
     expect(rex.hp - before).toBeCloseTo(hit.amount * 0.25);
     rex.ferocityFever = false; rex.attackCooldown = 0; const hp = rex.hp;
     stepSkirmish(state, 1 / 60, () => 0.49);
     expect(rex.hp).toBe(hp);
+  });
+
+  it("은 치명타 보너스를 모두 합산한 뒤 판정 직전에 100%로 제한한다", () => {
+    const { state, rex } = readyRex();
+    // 기본 90% + 패시브 25%p + 폭주 25%p = 140%를 마지막에 100%로 제한한다.
+    rex.def = { ...rex.def, stats: { ...rex.def.stats, critChance: 90 } };
+    rex.ferocity = 100; rex.ferocityFever = true;
+    const hit = stepSkirmish(state, 1 / 60, () => 0.999).find((event) => event.kind === "attack")!;
+    expect(hit).toMatchObject({ critical: true });
   });
 
   it("은 300% 단일 궁극기에 게이지 110을 쓰고 실제 피해의 50%만 상한까지 회복한다", () => {
@@ -973,6 +983,20 @@ describe("렉시아 전투 계약", () => {
     fireUltimate(capped.state, capped.rex.id, () => 0.99);
     // 기본 10%p + 폭주 25%p + 궁극기 50%p를 합산해도 최대 체력을 넘지 않는다.
     expect(capped.rex.hp).toBe(capped.rex.maxHp);
+  });
+
+  it("은 궁극기 피해에 패시브 공격력과 세 흡혈 원천을 합산하고 피해 반올림 뒤 회복한다", () => {
+    const { state, rex, foe } = readyRex();
+    // 132 × 1.25 × 3 × 1.35 = 668.25를 피해 668로 반올림한 뒤 85%를 회복한다.
+    rex.def = { ...rex.def, stats: { ...rex.def.stats, lifeSteal: 10 } };
+    // 대상의 전방 경감 패시브도 제거해 문서의 방어력 0·동일 속성 산술만 분리한다.
+    foe.def = { ...foe.def, element: "fire", passive: rex.def.passive, stats: { ...foe.def.stats, def: 0 } };
+    foe.hp = foe.maxHp = 2_000;
+    rex.hp = 100; rex.ferocity = 100; rex.ferocityFever = true; rex.energy = 110;
+    const hit = fireUltimate(state, rex.id, () => 0.99).find((event) => event.kind === "attack")!;
+    expect(hit).toMatchObject({ critical: false, amount: 668 });
+    // 기본 10%p + 폭주 25%p + 궁극기 50%p = 85%이며 회복량 자체는 재반올림하지 않는다.
+    expect(rex.hp).toBeCloseTo(100 + 668 * 0.85);
   });
 });
 

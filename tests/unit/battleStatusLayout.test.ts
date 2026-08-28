@@ -24,12 +24,16 @@ describe("공용 전투 프로필 배치", () => {
     expect(BATTLE_PROFILE_LAYOUT.hpTextBaselineY).toBe(180);
   });
 
-  it("원정 지도는 동일 내부 기준선을 유지한 채 전체만 같은 배율로 줄인다", () => {
-    const { centersX, centerY, scale } = BATTLE_PROFILE_LAYOUT.expedition;
-    const bounds = centersX.map((x) => battleProfileBounds(x, centerY, scale));
-    expect(bounds.map(({ right, left }) => right - left)).toEqual([287.28, 287.28, 287.28]);
-    expect(centersX[1] - centersX[0]).toBe(320);
+  it("원정 지도는 전투와 같은 크기·가로 기준선을 쓰고 세로만 출격 줄 위로 올린다", () => {
+    const map = BATTLE_PROFILE_LAYOUT.expedition;
+    const battle = BATTLE_PROFILE_LAYOUT.battle;
+    // 같은 세 칸이 화면마다 다른 크기로 보이지 않도록 배율과 가로 자리를 전투와 공유한다.
+    expect(map.scale).toBe(battle.scale);
+    expect(map.centersX).toEqual(battle.centersX);
+    const bounds = map.centersX.map((x) => battleProfileBounds(x, map.centerY, map.scale));
+    expect(bounds.map(({ right, left }) => right - left)).toEqual([378, 378, 378]);
     // 세 번째 프로필까지 화면 폭 안에 있고 하단 출격 버튼과도 겹치지 않는다.
+    expect(bounds[0].left).toBeGreaterThanOrEqual(0);
     expect(bounds[2].right).toBeLessThanOrEqual(1080);
     expect(Math.max(...bounds.map(({ bottom }) => bottom))).toBeLessThan(BATTLE_PROFILE_LAYOUT.sortieButton.top);
   });

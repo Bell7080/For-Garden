@@ -13,8 +13,14 @@ export const BATTLE_PROFILE_LAYOUT = {
   /** 발광까지 포함한 로컬 bounds다. */
   bounds: { left: -189, right: 189, top: -189, bottom: 274 },
   battle: { centerY: 1620, centersX: [190, 540, 890], scale: 1 },
-  /** 지도는 내부 치수를 바꾸지 않고 완성된 한 칸만 화면 폭에 맞춰 축소한다. */
-  expedition: { centerY: 1450, centersX: [220, 540, 860], scale: 0.76 },
+  /**
+   * 원정 지도의 생존 HUD는 전투와 **같은 크기**로 선다.
+   *
+   * 축소해 두면 같은 세 칸이 화면마다 다른 물건처럼 보이고, 전투에 들어가는 순간 카드가
+   * 커지며 자리를 옮긴다. 가로 기준선은 전투와 완전히 같고 세로만 지도 화면의 출격 줄
+   * 위로 올린다.
+   */
+  expedition: { centerY: 1460, centersX: [190, 540, 890], scale: 1 },
   sortieButton: { top: 1756, bottom: 1864 },
 } as const;
 

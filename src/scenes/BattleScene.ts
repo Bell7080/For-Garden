@@ -26,7 +26,7 @@ import { session } from "../state/session";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { Button } from "../ui/Button";
 import { drawGlassFade, drawHairline, HOLO, HoloBar } from "../ui/holo";
-import { PortraitCard, relicCardTint } from "../ui/PortraitCard";
+import { PortraitCard } from "../ui/PortraitCard";
 import { UnitHealthBar } from "../ui/UnitHealthBar";
 import { skillArtTint } from "../ui/skillArt";
 import { COLOR, textStyle } from "../ui/theme";
@@ -42,7 +42,6 @@ import {
 import type { MotionPlayback } from "../puppets/assets";
 import { ultimatePresentationFor } from "../data/ultimatePresentations";
 import { relicProgression } from "../managers/RelicProgressionManager";
-import { relicStars } from "../core/relicProgression";
 import { PopupLayer } from "../ui/PopupLayer";
 import { ExpeditionRankingPopup } from "../ui/ExpeditionRankingPopup";
 import { createExpeditionBossSkirmishConfig, createExpeditionSkirmishConfig, expeditionBattleResults, type BattleSceneInputDto, type ExpeditionBattleInputDto, type ExpeditionBossBattleInputDto } from "../core/expeditionBattle";
@@ -52,6 +51,7 @@ import { settingsManager } from "../managers/SettingsManager";
 import type { SettleExpeditionRunResponse, SubmitExpeditionBossScoreResponse } from "../api/contracts";
 import { currencyRecordToRewardItems, openRewardPopup } from "../ui/RewardPopup";
 import { BATTLE_STATUS_LAYOUT, statusBadgeOffsets } from "../ui/battleStatusLayout";
+import { BattleProfile } from "../ui/BattleProfile";
 
 /**
  * 여섯이 돌아다닐 수 있는 범위.
@@ -63,8 +63,6 @@ const ARENA: Arena = { left: 130, right: 950, top: 600, bottom: 1360 };
 /** SD 한 명의 화면 높이. 여섯이 겹치지 않도록 기존 300에서 0.7배로 줄였다. */
 const UNIT_HEIGHT = 210;
 const PROFILE_TOP = 1430;
-/** 프로필 게이지 둘의 공통 폭. 카드 폭과 같아야 한 칸으로 읽힌다. */
-const BAR_WIDTH = 300;
 
 /**
  * 카드를 덮는 궁극기 가림막.
@@ -163,6 +161,8 @@ interface FighterView {
 /** 하단 프로필 한 칸. 궁극기가 차면 카드 자체가 발동 버튼이 된다. */
 interface ProfileView {
   fighter: Fighter;
+  /** 카드·게이지·기준선을 함께 소유하는 공용 전투 프로필이다. */
+  prefab: BattleProfile;
   card: PortraitCard;
   glow: Phaser.GameObjects.Rectangle;
   /**
@@ -432,29 +432,19 @@ export class BattleScene extends Phaser.Scene {
     drawHairline(this, BASE_WIDTH / 2, PROFILE_TOP + 20, BASE_WIDTH, { color: COLOR.accent, alpha: 0.2 });
     this.playerFighters().forEach((fighter, index) => {
       const x = 190 + index * 350;
-      // 카드가 불투명해서 뒤에 깐 빛은 테두리처럼만 보인다. 그만큼 넉넉히 키워 둔다.
-      const glow = this.add.rectangle(x, 1620, 378, 378, COLOR.accent, 0);
-      // 카드 마스크 안쪽을 가로지르는 광선. 준비되지 않았거나 잠겼을 때는 숨긴다.
-      const sweep = this.add.rectangle(x - 125, 1620, 34, 320, COLOR.accent, 0).setAngle(18).setDepth(2);
-      // 도감·편성과 같은 카드 규격을 써서 전투 중에도 같은 얼굴 프레임으로 알아보게 한다.
-      const card = new PortraitCard(this, x, 1620, {
-        width: 300,
-        height: 300,
-        portraitAssetId: fighter.def.portraitAssetId,
-        tint: relicCardTint(fighter.def),
-        label: fighter.def.name,
-        sub: fighter.def.ultimate.name,
-        rarity: fighter.def.rarity,
-        stars: relicStars(fighter.breakthrough),
+      // 세 화면은 같은 프리팹을 쓰며 전투 씬은 실시간 입력만 연결한다.
+      const prefab = new BattleProfile(this, x, 1620, {
+        relic: fighter.def, level: relicProgression.getProgress(fighter.def.id).level, stars: fighter.breakthrough + 1,
+        currentHp: fighter.hp, maxHp: fighter.maxHp, ferocity: fighter.ferocity,
+        active: false, readOnly: false, sub: fighter.def.ultimate.name,
       });
+      const { card, glow, sweep, charge, hpLabel, hpBar, ferocityLabel, ferocityBar } = prefab;
       // 궁극기 게이지는 카드 위에 덮인 어둠이다. 시계 방향으로 걷히다가 다 차면 사라져
       // 그림이 온전히 밝아진다 — 준비됐는지를 바가 아니라 얼굴이 말한다.
       //
       // 가림막은 카드의 **그려진 픽셀**에만 얹는다(BitmapMask). 실루엣 도형으로 자르면 칩
       // 위로 머리가 빠져나오는 윗부분처럼 그림이 없는 투명한 자리까지 검게 칠해져, 카드
       // 밖에 검은 부채꼴이 떠 있는 것처럼 보인다.
-      const charge = this.add.graphics({ x, y: 1620 }).setDepth(1);
-      charge.setMask(new Phaser.Display.Masks.BitmapMask(this, card));
       card.hit.on("pointerdown", () => {
         // 기존 입력 규칙대로 누른 순간만 추가 확대하고, 잠금 카드는 반응하지 않는다.
         if (!this.ultimateSequenceActive && canFireUltimate(this.state, fighter)) card.setScale(1.14);
@@ -464,16 +454,7 @@ export class BattleScene extends Phaser.Scene {
       // 두 게이지는 굵기만 다르고 모양이 같다. 위가 체력, 아래가 폭주다.
       // 수치는 제 게이지와 같은 색으로, 굵게, 아래로 한 겹 복제한 그림자를 달고 선다.
       // 밝은 배경 원화 위에서 흐린 회색 글자는 게이지 옆에 있어도 읽히지 않는다.
-      const label = (y: number, color: string) =>
-        this.add.text(x - BAR_WIDTH / 2, y, "", textStyle({ role: "display", size: 26, color }))
-          .setOrigin(0, 1)
-          .setShadow(3, 4, "#05070a", 0, true, true);
-      const hpLabel = label(1800, COLOR.hpText);
-      // 하단 게이지도 머리 위 바와 같은 결이다 — 흰 테두리로 최대치를 두르고 빗금으로 칸을 나눈다.
-      const hpBar = new HoloBar(this, x, 1814, BAR_WIDTH, 20, { color: COLOR.hpFill, outline: true, ticks: 3 });
-      const ferocityLabel = label(1872, FEROCITY_TEXT);
-      const ferocityBar = new HoloBar(this, x, 1886, BAR_WIDTH, 16, { color: COLOR.ferocityLow, outline: true, ticks: 3 });
-      this.profiles.push({ fighter, card, glow, sweep, charge, hpBar, hpLabel, ferocityBar, ferocityLabel, hpShown: fighter.hp, ferocityShown: fighter.ferocity, ready: false });
+      this.profiles.push({ fighter, prefab, card, glow, sweep, charge, hpBar, hpLabel, ferocityBar, ferocityLabel, hpShown: fighter.hp, ferocityShown: fighter.ferocity, ready: false });
     });
   }
 
@@ -875,16 +856,14 @@ export class BattleScene extends Phaser.Scene {
       profile.ferocityShown = Math.abs(profile.ferocityShown - fighter.ferocity) < 0.4
         ? fighter.ferocity
         : profile.ferocityShown + (fighter.ferocity - profile.ferocityShown) * k;
-      profile.hpBar.setValue(profile.hpShown / fighter.maxHp);
-      profile.hpLabel.setText(alive ? `HP ${Math.round(profile.hpShown)} / ${fighter.maxHp}` : "전투 불능");
-      profile.hpLabel.setColor(alive ? COLOR.hpText : COLOR.dangerText);
       const fever = fighter.ferocityFever;
       const ferocityColor = fever ? COLOR.ferocityFever : fighter.ferocity >= 80 ? COLOR.ferocityWarning : COLOR.ferocityLow;
+      // 값과 사망 표현의 최종 소유자는 공용 프리팹이며 폭주 문구만 전투가 덧씌운다.
+      profile.prefab.setMeters(profile.hpShown, fighter.maxHp, profile.ferocityShown, !alive);
       profile.ferocityBar.setValue(profile.ferocityShown / FEROCITY_RULES.max, ferocityColor);
       // 피버 중에는 보상 상태와 자동 감소를 함께 알려 별도 진압 입력을 찾지 않게 한다.
-      // 최대치를 함께 적는다. 야성은 100에 닿는 순간 폭주로 바뀌므로 남은 거리가 곧 예고다.
-      profile.ferocityLabel.setText(`${fever ? "폭주" : "야성"} ${Math.round(profile.ferocityShown)} / ${FEROCITY_RULES.max}`);
-      profile.ferocityLabel.setColor(fever || fighter.ferocity >= 80 ? COLOR.ferocityHotText : FEROCITY_TEXT);
+      profile.ferocityLabel.setText(`${fever ? "폭주" : "야성"} ${Math.round(profile.ferocityShown)} / ${FEROCITY_RULES.max}`)
+        .setColor(fever || fighter.ferocity >= 80 ? COLOR.ferocityHotText : FEROCITY_TEXT);
     }
   }
 
@@ -918,10 +897,12 @@ export class BattleScene extends Phaser.Scene {
     profile.card.setSelected(ready);
     if (!ready) {
       profile.card.setScale(1);
+      profile.card.syncMask();
       profile.glow.setAlpha(0);
       return;
     }
     profile.card.setScale(1.08);
+    profile.card.syncMask();
     profile.pulse = this.tweens.add({
       targets: profile.glow,
       alpha: { from: 0.16, to: 0.52 },

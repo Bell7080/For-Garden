@@ -15,7 +15,7 @@ import { addBackButton } from "../ui/IconButton";
 import { PortraitCard, relicCardTint } from "../ui/PortraitCard";
 import { PopupLayer } from "../ui/PopupLayer";
 import { COLOR, textStyle } from "../ui/theme";
-import { chipPoints, drawGlassFade, drawHairline, drawLayer, drawVignette, HoloBar, HOLO } from "../ui/holo";
+import { chipPoints, drawGlassFade, drawHairline, drawLayer, drawVignette, HOLO } from "../ui/holo";
 import { EXPEDITION_LAYOUT } from "../ui/expeditionLayout";
 import { ExpeditionMapView } from "../ui/ExpeditionMapView";
 import type { ExpeditionAugmentSelection } from "../core/expeditionRewards";
@@ -33,6 +33,8 @@ import { formatCurrency } from "../core/formatCurrency";
 import { drawInnerVignette, drawShapeOutline } from "../ui/holo";
 import { CharacterInfoManager } from "../managers/CharacterInfoManager";
 import { NodeEnemyPreview } from "../ui/NodeEnemyPreview";
+import { BattleProfile } from "../ui/BattleProfile";
+import { BATTLE_PROFILE_LAYOUT } from "../ui/battleStatusLayout";
 
 /** 원정 준비 카드의 고정 그리드 규격이다. 다른 편성과 달리 세 칸씩 읽게 한다. */
 const ROSTER = { columns: 3, width: 250, height: 310, gapX: 56, gapY: 50, top: 940 } as const;
@@ -321,17 +323,15 @@ export class ExpeditionScene extends Phaser.Scene {
   /** 실제 전투 프로필처럼 초상 아래에 현재 체력과 0부터 시작할 야성 게이지를 함께 표시한다. */
   private buildRelicHud(relics: readonly { relicId: string; currentHp: number; alive: boolean }[]): void {
     relics.forEach((state, index) => {
-      const def = getRelic(state.relicId); const x = 220 + index * 320;
-      new PortraitCard(this, x, 1450, { width: 190, height: 190, portraitAssetId: def.portraitAssetId, tint: relicCardTint(def), label: def.name, level: relicProgression.getProgress(def.id).level, rarity: def.rarity, stars: relicProgression.getStars(def.id) });
+      const def = getRelic(state.relicId); const x = BATTLE_PROFILE_LAYOUT.expedition.centersX[index];
       const hpRatio = Math.max(0, Math.min(100, state.currentHp)) / 100;
       const maxHp = Math.round(relicProgression.getFinalStats(def.id).hp);
       const currentHp = state.alive ? Math.round(maxHp * hpRatio) : 0;
-      this.add.text(x, 1584, state.alive ? `${currentHp} / ${maxHp}` : "사망", textStyle({ role: "display", size: 20, color: state.alive ? COLOR.hpText : "#ff8c88" })).setOrigin(0.5);
-      const hpBar = new HoloBar(this, x, 1618, 238, 18, { color: state.alive ? COLOR.hpFill : 0x6c7078, outline: true, ticks: 4 });
-      hpBar.setValue(hpRatio);
-      this.add.text(x, 1651, "야성 0", textStyle({ role: "emphasis", size: 18, color: COLOR.ferocityText })).setOrigin(0.5);
-      const ferocityBar = new HoloBar(this, x, 1678, 238, 14, { color: COLOR.ferocityLow, outline: true, ticks: 4 });
-      ferocityBar.setValue(0);
+      // 지도는 카드·게이지·글자를 개별 축소하지 않고 완성된 전투 프로필 전체만 화면 폭에 맞춘다.
+      new BattleProfile(this, x, BATTLE_PROFILE_LAYOUT.expedition.centerY, {
+        relic: def, level: relicProgression.getProgress(def.id).level, stars: relicProgression.getStars(def.id),
+        currentHp, maxHp, ferocity: 0, active: state.alive, readOnly: true, dead: !state.alive,
+      }).setScale(BATTLE_PROFILE_LAYOUT.expedition.scale);
     });
   }
 

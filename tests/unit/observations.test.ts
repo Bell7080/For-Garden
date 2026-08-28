@@ -91,6 +91,43 @@ describe("관찰 인터뷰", () => {
     }
   });
 
+  it("스피나의 모든 전용 질문만 스피나 날짜 순환에 등장한다", () => {
+    const spinoIds = new Set(RELIC_OBSERVATION_QUESTIONS.spino.map(({ id }) => id));
+    // 한 달은 공용 질문과 세 전용 질문이 교대하는 전체 순환을 넉넉히 포함한다.
+    for (const question of RELIC_OBSERVATION_QUESTIONS.spino) {
+      expect(observationQuestionForRelicAndDate("spino", dateForQuestion("spino", question.id)).id).toBe(question.id);
+    }
+    for (let day = 1; day <= 31; day += 1) {
+      const date = `2026-08-${String(day).padStart(2, "0")}`;
+      expect(spinoIds.has(observationQuestionForRelicAndDate("anky", date).id)).toBe(false);
+      expect(spinoIds.has(observationQuestionForRelicAndDate("rex", date).id)).toBe(false);
+    }
+  });
+
+  it("스피나의 각 선택을 고유한 태그·습성·직접 답변으로 저장하고 제시한다", () => {
+    const allReplies = new Set<string>();
+    const allHabits = new Set<string>();
+    for (const question of RELIC_OBSERVATION_QUESTIONS.spino) {
+      const date = dateForQuestion("spino", question.id);
+      for (const choice of question.choices) {
+        // 새 세션으로 실제 저장 경계를 통과시키고, 대화 노드의 직접 답변도 fallback 문구가 아님을 함께 고정한다.
+        const manager = new ObservationManager(createDefaultSession(), { save: () => undefined });
+        const { record } = manager.complete("spino", date, choice.id);
+        const story = createObservationStory("spino", "스피나", date);
+        const reply = story.nodes.find(({ id }) => id === `reply-${choice.id}`)?.body;
+        expect(record).toMatchObject({ questionId: question.id, choiceId: choice.id, personalityTag: choice.personalityTag });
+        expect(record.discoveredHabit).not.toBe("새로운 반응 양식을 기록했다.");
+        expect(reply).toBeTruthy();
+        expect(reply).not.toBe(choice.label);
+        allHabits.add(record.discoveredHabit);
+        allReplies.add(reply ?? "");
+      }
+    }
+    const choiceCount = RELIC_OBSERVATION_QUESTIONS.spino.flatMap(({ choices }) => choices).length;
+    expect(allHabits.size).toBe(choiceCount);
+    expect(allReplies.size).toBe(choiceCount);
+  });
+
   it("하루 한 명의 첫 완료만 기록과 작은 유대 보상을 지급하고 재관람은 무보상이다", () => {
     const state = createDefaultSession();
     const manager = new ObservationManager(state, { save: () => undefined });

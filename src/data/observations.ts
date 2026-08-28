@@ -53,6 +53,23 @@ export const RELIC_OBSERVATION_QUESTIONS: Readonly<Record<string, readonly Obser
       { id: "rex-small-example", label: "자신이 먼저 정중히 인사해 따라 할 수 있게 기다린다", personalityTag: "솔선하는 예절", habitKey: "rexSmallExample" },
     ] },
   ],
+  spino: [
+    // 동시에 울린 경보 앞에서 스피나의 임무 집중과 과묵한 현장 지휘가 각각 어떻게 드러나는지 관찰한다.
+    { id: "spino-night-alarm", prompt: "야간 순찰 중 수조 경보와 다른 구역의 구조 요청이 동시에 들어오면?", choices: [
+      { id: "spino-alarm-rescue", label: "구조 요청 위치를 짧게 보고하고 즉시 현장으로 향한다", personalityTag: "임무 우선", habitKey: "spinoAlarmRescue" },
+      { id: "spino-alarm-command", label: "가까운 경비대원에게 수조 점검을 맡기고 구조 동선을 확보한다", personalityTag: "침착한 지휘", habitKey: "spinoAlarmCommand" },
+    ] },
+    // 연구원만 이미 아는 어항 장식 취미를 숨기려는 시치미와 물고기를 향한 다정함으로 나누어 관찰한다.
+    { id: "spino-aquarium-decoration", prompt: "연구원이 어항 속에 새로 놓인 장식을 알아보면?", choices: [
+      { id: "spino-decoration-deny", label: "원래 있던 것이라며 시선을 피하고 장식 각도만 바로잡는다", personalityTag: "서투른 시치미", habitKey: "spinoDecorationDeny" },
+      { id: "spino-decoration-shelter", label: "물고기의 은신처가 필요했을 뿐이라고 짧게 설명한다", personalityTag: "숨겨 둔 다정함", habitKey: "spinoDecorationShelter" },
+    ] },
+    // 함께하는 청소에서도 취미가 들키지 않았다고 믿는 스피나의 신뢰와 실무적인 배려를 행동으로 관찰한다.
+    { id: "spino-aquarium-cleaning", prompt: "익숙하지 않은 어항 청소를 연구원이 도와주겠다고 하면?", choices: [
+      { id: "spino-cleaning-gloves", label: "거절하려다 여분의 장갑을 조용히 건넨다", personalityTag: "말없는 신뢰", habitKey: "spinoCleaningGloves" },
+      { id: "spino-cleaning-roles", label: "자신이 수초를 맡겠다며 역할을 정확히 나눈다", personalityTag: "실무적인 배려", habitKey: "spinoCleaningRoles" },
+    ] },
+  ],
 };
 
 interface ObservationReaction { intro: string; replies: Readonly<Record<string, string>>; habits: Readonly<Record<string, string>>; }
@@ -82,7 +99,18 @@ export const REACTIONS: Readonly<Record<string, ObservationReaction>> = {
     rexStrongFair: "강자의 움직임을 끝까지 지켜본 뒤 장비와 출발 위치부터 확인한다.", rexStrongEager: "강한 기척을 알아채면 눈빛이 밝아지고 곧바로 상대의 준비 여부를 살핀다.",
     rexSmallGuide: "작은 렐릭과 이야기할 때 무릎을 굽혀 시선을 같은 높이에 둔다.", rexSmallExample: "작은 렐릭 앞에서는 목소리를 낮추고 먼저 천천히 고개를 숙인다.",
   } },
-  spino: { intro: "물소리처럼 편하게 물어봐.", replies: { approach: "물결이 어디서 갈라지는지 볼 거야.", wait: "조용해질 때까지 물속에서 기다릴래.", share: "큰 물고기는 나누면 돼.", guard: "물가부터 안전한지 살필게." }, habits: { approach: "수면의 파문 방향으로 주둥이를 천천히 돌린다.", wait: "경계할 때 콧구멍만 수면 위로 내놓는다.", share: "큰 먹이를 물가로 옮긴 뒤 작은 조각부터 떼어 준다.", guard: "먹기 전 얕은 물을 꼬리로 저어 주변을 확인한다." } },
+  // 연구원은 어항 취미를 알지만, 스피나는 임무와 물고기 관리라는 짧은 해명으로 아직 감췄다고 믿는다.
+  spino: { intro: "질문은 짧게. 순찰 시간이니까.", replies: {
+    approach: "발신 지점부터 확인한다. 수조 쪽은 아니겠지.", wait: "주변이 잠잠해질 때까지 대기한다. 어항을 보는 건 아니다.", share: "필요한 몫만 나눈다. 물고기 먹이도 같은 원칙이다.", guard: "물가를 먼저 확보한다. 수조 상태는 순찰 항목일 뿐이다.",
+    "spino-alarm-rescue": "구조 요청 위치 보고. 장비 확인했다. 바로 간다.", "spino-alarm-command": "가까운 경비는 수조 확인. 나는 구조 통로를 확보한다.",
+    "spino-decoration-deny": "원래 있던 거다. ...각도가 틀어졌군.", "spino-decoration-shelter": "물고기에게 은신처가 필요했을 뿐이다. 그 이상은 없어.",
+    "spino-cleaning-gloves": "혼자 해도 된다. ...여분 장갑은 거기 있다.", "spino-cleaning-roles": "나는 수초를 맡지. 당신은 유리면. 그게 효율적이다.",
+  }, habits: {
+    approach: "발신지를 좇으면서도 연구원의 시선이 멀어지면 수조 장비 잠금을 한 번 더 확인한다.", wait: "대기 중 어항 쪽을 보지 않는 척하면서 유리에 비친 물고기의 움직임을 확인한다.", share: "배분을 마친 뒤 아무도 보지 않을 때 물고기 먹이의 크기까지 고르게 맞춘다.", guard: "순찰 점검이라고 둘러대며 연구원이 떠난 뒤 수조 가장자리의 물기를 닦는다.",
+    spinoAlarmRescue: "보고를 마치기 전 이미 장비 잠금을 확인하고 구조 현장으로 몸을 돌린다.", spinoAlarmCommand: "필요한 지시만 짧게 남기고 구조 인력이 지날 통로를 비운다.",
+    spinoDecorationDeny: "대화가 끝나 연구원이 물러난 뒤 장식을 다시 어항 중앙에 맞춘다.", spinoDecorationShelter: "관심 없는 척 자리를 뜬 뒤 물고기가 장식을 쓰는지 멀리서 확인한다.",
+    spinoCleaningGloves: "연구원이 닦은 유리의 물자국을 보지 못한 척하다가 몰래 마무리한다.", spinoCleaningRoles: "연구원이 어려워하는 구역을 발견하면 설명 없이 자신의 구역과 바꾸어 맡는다.",
+  } },
 };
 
 /** 날짜 문자열을 UTC 일수로 바꿔 시간대와 런타임에 무관한 순환 기준을 만든다. */

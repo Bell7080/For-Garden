@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
   clampExpeditionMapOffset,
+  EXPEDITION_AUGMENT_POPUP,
   EXPEDITION_LAYOUT,
   expeditionLayoutGaps,
   expeditionMapWorldHeight,
   expeditionNodePosition,
   focusExpeditionFloor,
 } from "../../src/ui/expeditionLayout";
+import { BATTLE_PROFILE_LAYOUT, battleProfileBounds } from "../../src/ui/battleStatusLayout";
 import { anchorEnemyPreview, enemyPreviewColumns, isEnemyPreviewNodeVisible, NODE_ENEMY_PREVIEW } from "../../src/ui/nodeEnemyPreviewLayout";
 
 describe("expedition portrait layout", () => {
@@ -15,6 +17,18 @@ describe("expedition portrait layout", () => {
     expect(expeditionLayoutGaps().every((gap) => gap >= 20)).toBe(true);
     expect(EXPEDITION_LAYOUT.rewards.top).toBeGreaterThanOrEqual(96);
     expect(EXPEDITION_LAYOUT.actions.bottom).toBeLessThanOrEqual(1920);
+    // 생존 HUD 구역은 실제로 세워지는 전투 프로필 세 칸의 bounds와 어긋나지 않는다.
+    const { centersX, centerY, scale } = BATTLE_PROFILE_LAYOUT.expedition;
+    const profiles = centersX.map((x) => battleProfileBounds(x, centerY, scale));
+    expect(Math.min(...profiles.map(({ top }) => top))).toBeGreaterThanOrEqual(EXPEDITION_LAYOUT.relics.top);
+    expect(Math.max(...profiles.map(({ bottom }) => bottom))).toBeLessThanOrEqual(EXPEDITION_LAYOUT.relics.bottom);
+  });
+
+  it("증강 선택판은 생존 HUD를 가리지 않고 그 위에서 멈춘다", () => {
+    // 개인 대상은 판 안이 아니라 아래 HUD에서 고르므로 판이 그 줄을 덮으면 선택 자체가 막힌다.
+    const bottom = EXPEDITION_AUGMENT_POPUP.centerY + EXPEDITION_AUGMENT_POPUP.height / 2;
+    expect(bottom).toBeLessThanOrEqual(EXPEDITION_LAYOUT.relics.top - 20);
+    expect(EXPEDITION_AUGMENT_POPUP.centerY - EXPEDITION_AUGMENT_POPUP.height / 2).toBeGreaterThanOrEqual(EXPEDITION_LAYOUT.rewards.bottom - 60);
   });
 
   it("세로 지도 월드는 뷰포트보다 크고 양 끝 스크롤을 넘지 않는다", () => {

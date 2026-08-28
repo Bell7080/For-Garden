@@ -20,7 +20,7 @@ import { EXPEDITION_LAYOUT } from "../ui/expeditionLayout";
 import { ExpeditionMapView } from "../ui/ExpeditionMapView";
 import type { ExpeditionAugmentSelection } from "../core/expeditionRewards";
 import type { ExpeditionBattleInputDto, ExpeditionBossBattleInputDto } from "../core/expeditionBattle";
-import { ExpeditionAugmentPopup, expeditionAugmentEffectLabel, expeditionAugmentMetaLabel } from "../ui/ExpeditionAugmentPopup";
+import { ExpeditionAugmentPopup, expeditionAugmentEffectLabel, expeditionAugmentMetaLabel, type AugmentTargetPicker } from "../ui/ExpeditionAugmentPopup";
 import { EXPEDITION_NODE_REWARD_BALANCE } from "../data/expedition";
 import { completedAdToken } from "../data/adRewards";
 import { presentRewardedAd } from "../platform/rewardedAds";
@@ -40,6 +40,8 @@ import { BATTLE_PROFILE_LAYOUT } from "../ui/battleStatusLayout";
 const ROSTER = { columns: 3, width: 250, height: 310, gapX: 56, gapY: 50, top: 940 } as const;
 /** 발굴 편성처럼 화면 상단에서 순서를 먼저 읽는 1/2/3 슬롯 규격이다. */
 const FORMATION = { y: 540, firstX: 230, stepX: 310, width: 250, height: 290 } as const;
+/** 증강 팝업의 암전(4000) 바로 위. 고르는 동안만 생존 HUD가 이 층으로 올라온다. */
+const AUGMENT_PICKER_DEPTH = 4001;
 
 /**
  * 주간 원정 준비/이어하기 화면.
@@ -71,6 +73,8 @@ export class ExpeditionScene extends Phaser.Scene {
   private enemyPreview?: NodeEnemyPreview;
   /** 선택 해제와 스크롤 추적을 같은 지도 인스턴스에 전달한다. */
   private mapView?: ExpeditionMapView;
+  /** 증강 팝업이 아군 그리드를 다시 그리지 않고 이 생존 HUD를 그대로 빌려 쓴다. */
+  private relicProfiles = new Map<string, BattleProfile>();
 
   constructor() {
     super("expedition");
@@ -85,6 +89,7 @@ export class ExpeditionScene extends Phaser.Scene {
     this.selectedNode = undefined;
     this.enemyPreview?.destroy(); this.enemyPreview = undefined;
     this.mapView = undefined;
+    this.relicProfiles.clear();
     this.clearFormationPreview();
 
     const status = expeditionManager.status();
@@ -119,7 +124,9 @@ export class ExpeditionScene extends Phaser.Scene {
     this.buildMap(run.nodes, run.currentNodeId, run.visitedNodeIds);
     this.buildAugmentChips(augments);
     this.buildRelicHud(run.relics);
-    this.enemyInfo = new CharacterInfoManager(this, 3001, "enemy");
+    // 원화는 정보창의 판·스킬 아이콘 아래(1001)에 선다. 더 높이면 스테이지와 달리 원화가
+    // 스킬 층 앞으로 튀어나와 아이콘을 가린다.
+    this.enemyInfo = new CharacterInfoManager(this, 1001, "enemy");
     this.enemyPreview = new NodeEnemyPreview(this, { title: "", level: 1, enemies: [], top: EXPEDITION_LAYOUT.map.top, bottom: EXPEDITION_LAYOUT.map.bottom, depth: 20, onEnemyClick: () => undefined });
     // 지도 영역 밖 입력은 편성판 내부가 아닌 경우 현재 노드 선택만 닫는다.
     const dismissOutsideMap = (pointer: Phaser.Input.Pointer): void => {
@@ -257,7 +264,7 @@ export class ExpeditionScene extends Phaser.Scene {
     // 저장된 nodeId가 전투 후보와 함께 복원되므로 앱 재시작 뒤에도 재추첨이나 지도 우회가 없다.
     const node = run.nodes.find(({ id }) => id === pending.nodeId);
     if (!node) return;
-    new ExpeditionAugmentPopup(this, { round: pending.round, totalRounds: pending.totalRounds, offers: pending.offers, relics: run.relics, onChoose: (selection) => {
+    new ExpeditionAugmentPopup(this, { round: pending.round, totalRounds: pending.totalRounds, offers: pending.offers, targets: this.augmentTargetPicker(), onChoose: (selection) => {
       if (this.nodeTransitionPending) return;
       this.nodeTransitionPending = true;
       // 확정은 UI가 Session을 쓰지 않고 매니저의 후보·대상·중첩 검증을 반드시 통과한다.
@@ -271,6 +278,8 @@ export class ExpeditionScene extends Phaser.Scene {
   /** 하단 요약을 누르면 축약되지 않은 전체 증강과 개인 대상을 공용 상세 쪽지에서 확인한다. */
   private buildAugmentChips(augments: readonly ExpeditionAugmentSelection[]): void {
     if (augments.length === 0) return;
+    // 요약 줄은 배치표의 제 구역 가운데에 선다. 아래 생존 HUD가 전투와 같은 크기로 커졌다.
+    const CHIP_Y = (EXPEDITION_LAYOUT.augments.top + EXPEDITION_LAYOUT.augments.bottom) / 2;
     const visible = augments.slice(0, 4);
     const labels = visible.map(({ augmentId, targetRelicId }) => {
       const name = getExpeditionAugment(augmentId)?.name ?? augmentId;
@@ -283,11 +292,11 @@ export class ExpeditionScene extends Phaser.Scene {
     labels.forEach((label, index) => {
       const x = (BASE_WIDTH - total) / 2 + width / 2 + index * (width + gap);
       const targeted = visible[index]?.targetRelicId !== undefined;
-      drawLayer(this, x, 1260, chipPoints(width, 62, { bevel: { topLeft: 18, bottomRight: 14 } }), { fill: targeted ? 0x302238 : COLOR.panel, alpha: HOLO.glass, edge: targeted ? COLOR.sortie : COLOR.accent, edgeAlpha: 0.66 });
-      this.add.text(x, 1260, `${targeted ? "개인" : "전체"} · ${label}`, textStyle({ role: "emphasis", size: 18, color: targeted ? COLOR.sortieText : COLOR.accentText })).setOrigin(0.5);
+      drawLayer(this, x, CHIP_Y, chipPoints(width, 62, { bevel: { topLeft: 18, bottomRight: 14 } }), { fill: targeted ? 0x302238 : COLOR.panel, alpha: HOLO.glass, edge: targeted ? COLOR.sortie : COLOR.accent, edgeAlpha: 0.66 });
+      this.add.text(x, CHIP_Y, `${targeted ? "개인" : "전체"} · ${label}`, textStyle({ role: "emphasis", size: 18, color: targeted ? COLOR.sortieText : COLOR.accentText })).setOrigin(0.5);
     });
     // +N뿐 아니라 보이는 칩을 눌러도 같은 전체 목록이 열려 발견 가능성을 높인다.
-    const hit = this.add.rectangle(BASE_WIDTH / 2, 1260, Math.min(BASE_WIDTH - 100, total), 76, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    const hit = this.add.rectangle(BASE_WIDTH / 2, CHIP_Y, Math.min(BASE_WIDTH - 100, total), 76, 0xffffff, 0).setInteractive({ useHandCursor: true });
     hit.on("pointerup", () => this.openAugmentDetails(augments));
   }
 
@@ -327,12 +336,55 @@ export class ExpeditionScene extends Phaser.Scene {
       const hpRatio = Math.max(0, Math.min(100, state.currentHp)) / 100;
       const maxHp = Math.round(relicProgression.getFinalStats(def.id).hp);
       const currentHp = state.alive ? Math.round(maxHp * hpRatio) : 0;
-      // 지도는 카드·게이지·글자를 개별 축소하지 않고 완성된 전투 프로필 전체만 화면 폭에 맞춘다.
-      new BattleProfile(this, x, BATTLE_PROFILE_LAYOUT.expedition.centerY, {
+      // 지도는 카드·게이지·글자를 개별 축소하지 않고 전투와 같은 한 칸을 그대로 세운다.
+      // 생존은 노란 발광으로 알리지 않는다 — 그 발광은 전투에서 "궁극기가 찼다"는 뜻이다.
+      const profile = new BattleProfile(this, x, BATTLE_PROFILE_LAYOUT.expedition.centerY, {
         relic: def, level: relicProgression.getProgress(def.id).level, stars: relicProgression.getStars(def.id),
-        currentHp, maxHp, ferocity: 0, active: state.alive, readOnly: true, dead: !state.alive,
+        currentHp, maxHp, ferocity: 0, active: false, readOnly: true, dead: !state.alive,
       }).setScale(BATTLE_PROFILE_LAYOUT.expedition.scale);
+      this.relicProfiles.set(state.relicId, profile);
     });
+  }
+
+  /**
+   * 증강 팝업에 아군 선택을 빌려주는 경계다.
+   *
+   * 팝업은 화면을 덮는 암전을 깔므로, 고르는 동안만 HUD를 그 암전 위로 올리고 입력을 연다.
+   * 확정되면 깊이·명도·입력을 모두 되돌려 지도 화면은 원래의 읽기 전용 HUD로 남는다.
+   */
+  private augmentTargetPicker(): AugmentTargetPicker {
+    const profiles = this.relicProfiles;
+    return {
+      attach: (onPick) => {
+        profiles.forEach((profile, relicId) => {
+          profile.setDepth(AUGMENT_PICKER_DEPTH);
+          profile.card.hit.setInteractive({ useHandCursor: true });
+          profile.card.hit.on("pointerup", () => onPick(relicId));
+        });
+      },
+      setEligible: (relicIds) => {
+        profiles.forEach((profile, relicId) => {
+          profile.setAlpha(relicIds === null || relicIds.includes(relicId) ? 1 : 0.3);
+          profile.card.setSelected(false, COLOR.sortie);
+        });
+      },
+      setChosen: (chosenId) => {
+        profiles.forEach((profile, relicId) => {
+          profile.setAlpha(relicId === chosenId ? 1 : 0.42);
+          // 고른 대상만 호박빛으로 남는다. 확정 버튼과 같은 색이라 다음 조작이 이어진다.
+          profile.card.setSelected(relicId === chosenId, COLOR.missionClaim);
+        });
+      },
+      detach: () => {
+        profiles.forEach((profile) => {
+          profile.setDepth(0).setAlpha(1);
+          profile.card.hit.removeAllListeners("pointerup");
+          profile.card.hit.disableInteractive();
+          profile.card.setSelected(false);
+          profile.syncMask();
+        });
+      },
+    };
   }
 
   /** 임시 보상과 포기 결과를 먼저 보여 준 뒤 서버 원자 정산만 호출한다. */

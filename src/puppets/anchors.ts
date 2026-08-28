@@ -154,14 +154,6 @@ export interface CardFrameOptions {
   fillRatio?: number;
   /** 머리 관절 위쪽 여백을 얼마나 남길지. 0이면 머리 관절이 카드 맨 위에 붙는다. */
   headroom?: number;
-  /**
-   * 카드 본체 위로 머리가 나갈 수 있는 **카드 좌표** 높이.
-   *
-   * 카드의 머리 구멍은 이만큼만 열려 있으므로, 원화의 머리가 그보다 크면 구멍의 세 변이
-   * 머리를 네모로 잘라 낸다. 이 값을 주면 잘라내기 시작점을 그만큼 내려 머리가 구멍에
-   * 들어가게 맞춘다 — 정수리만 조금 잘리고 옆머리는 온전히 남는다.
-   */
-  headOverhang?: number;
 }
 
 /**
@@ -186,11 +178,7 @@ export function computeHeadCardFrame(
   const clamp = (value: number, max: number): number => Math.min(Math.max(value, 0), Math.max(max, 0));
   const cropX = clamp(head.x - cropWidth / 2, frame.imageWidth - cropWidth);
   // 머리카락 끝(내용 상자 위)과 머리 관절 사이에서 시작점을 잡아 정수리가 살짝 잘리게 한다.
-  const wanted = frame.content.top + (head.y - frame.content.top) * headroom;
-  // 머리 구멍보다 큰 머리는 시작점을 내려 구멍 안에 담는다. 그러지 않으면 구멍의 좌우 변까지
-  // 머리를 잘라 사각형 덩어리로 보인다.
-  const fits = options.headOverhang === undefined ? wanted : Math.max(wanted, head.y - options.headOverhang / scale);
-  const cropY = clamp(fits, frame.imageHeight - cropHeight);
+  const cropY = clamp(frame.content.top + (head.y - frame.content.top) * headroom, frame.imageHeight - cropHeight);
 
   return { cropX, cropY, cropWidth, cropHeight, scale };
 }

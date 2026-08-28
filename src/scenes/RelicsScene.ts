@@ -11,7 +11,7 @@ import { Button } from "../ui/Button";
 import { CharacterInfoManager } from "../managers/CharacterInfoManager";
 import { TopBar } from "../ui/TopBar";
 import { PortraitCard, relicCardTint } from "../ui/PortraitCard";
-import { portraitGridFirstRowY } from "../ui/portraitGrid";
+import { PORTRAIT_GRID_MASK_GAP, portraitGridFirstRowY } from "../ui/portraitGrid";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { COLOR, textStyle } from "../ui/theme";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
@@ -25,7 +25,7 @@ const VIEWPORT_BOTTOM = NAV_TOP;
 /** 카드 규격은 한 곳에서만 정한다. 첫 줄 자리와 미보유 구역이 같은 값을 읽어야 한다. */
 const GRID_CARD = { width: 300, height: 400, gapX: 40, gapY: 74 } as const;
 /** 첫 줄의 돌출된 머리가 상단 마스크에 닿지 않도록 공용 안전 영역 계산만 쓴다. */
-const GRID_FIRST_ROW_Y = portraitGridFirstRowY(VIEWPORT_TOP, GRID_CARD.height);
+const GRID_FIRST_ROW_Y = portraitGridFirstRowY(VIEWPORT_TOP, GRID_CARD.height, PORTRAIT_GRID_MASK_GAP);
 /** 드래그와 카드 탭을 구분하는 최소 이동 거리다. */
 const DRAG_SLOP = 18;
 

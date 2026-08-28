@@ -9,7 +9,7 @@ import { setDebugExcavationAdOffers, setDebugIdleExcavationControls, setDebugIdl
 import { Button } from "./Button";
 import { chipPoints, drawHairline, drawLayer, HOLO, slantedRect } from "./holo";
 import { PortraitCard } from "./PortraitCard";
-import { portraitGridContentHeight, portraitGridFirstRowY } from "./portraitGrid";
+import { PORTRAIT_GRID_MASK_GAP, portraitGridContentHeight, portraitGridFirstRowY } from "./portraitGrid";
 import type { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
 import { EXCAVATION_TRAIT_ICON } from "./excavationIcons";
@@ -429,7 +429,7 @@ export class IdleExcavationPopup {
     owned.forEach((relic, index) => {
       const x = -250 + (index % 3) * GRID_VIEW.columnGap;
       // 머리는 칩 밖으로 나오므로 첫 줄은 공용 안전 영역만큼 내려 세운다. 그러지 않으면 정수리가 잘린다.
-      const y = portraitGridFirstRowY(0, GRID_VIEW.cardHeight) + Math.floor(index / 3) * GRID_VIEW.rowGap;
+      const y = portraitGridFirstRowY(0, GRID_VIEW.cardHeight, PORTRAIT_GRID_MASK_GAP) + Math.floor(index / 3) * GRID_VIEW.rowGap;
       const detail = excavationProductionDisplayModel([relic.id, null, null], RELICS, session.relicProgress).relics[0];
       const progress = session.relicProgress[relic.id];
       const card = new PortraitCard(this.scene, x, y, { width: GRID_VIEW.cardWidth, height: GRID_VIEW.cardHeight, portraitAssetId: relic.portraitAssetId, tint: portraitUsesRelicTint(relic.portraitAssetId) ? tintFor(relic.id) : undefined, label: relic.name, level: progress?.level ?? 1, rarity: relic.rarity, stars: (progress?.breakthrough ?? 0) + 1, subIcon: EXCAVATION_TRAIT_ICON[relic.excavationTrait.primaryCurrency], sub: formatRate(detail?.totalPerHour ?? 0) });
@@ -460,7 +460,8 @@ export class IdleExcavationPopup {
   private addGridScroll(parent: Phaser.GameObjects.Container, grid: Phaser.GameObjects.Container, relicCount: number): void {
     const viewportHeight = GRID_VIEW.bottom - GRID_VIEW.top;
     const rows = Math.ceil(relicCount / 3);
-    const contentHeight = portraitGridContentHeight(rows, GRID_VIEW.rowGap, GRID_VIEW.cardHeight);
+    // 첫 줄 머리 여유와 마스크 여백까지 넣어야 마지막 줄이 끝까지 올라온다.
+    const contentHeight = rows > 0 ? PORTRAIT_GRID_MASK_GAP + portraitGridContentHeight(rows, GRID_VIEW.rowGap, GRID_VIEW.cardHeight) : 0;
     const minScroll = Math.min(0, viewportHeight - contentHeight);
     this.gridScrollY = Phaser.Math.Clamp(this.gridScrollY, minScroll, 0);
     grid.setY(GRID_VIEW.top + this.gridScrollY);

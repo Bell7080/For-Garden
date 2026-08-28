@@ -33,7 +33,11 @@ export function portraitGridHeadroom(cardHeight: number): number {
  *
  * `viewportTop`은 목록이 잘리는 경계(스크롤 마스크의 윗변, 판의 윗변)다. `gap`은 그 경계와
  * 머리 사이에 더 두고 싶은 숨 쉴 공간이며, 기본은 0 — 머리가 경계에 닿기만 하고 잘리지 않는다.
+ * 실제 마스크가 있는 목록은 가장자리 한 줄이 앤티에일리어싱으로 깎이므로
+ * `PORTRAIT_GRID_MASK_GAP`을 함께 넘긴다.
  */
+export const PORTRAIT_GRID_MASK_GAP = 8;
+
 export function portraitGridFirstRowY(viewportTop: number, cardHeight: number, gap = 0): number {
   return viewportTop + gap + portraitGridHeadroom(cardHeight) + cardHeight / 2;
 }

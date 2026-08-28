@@ -33,7 +33,10 @@ import { COLOR, textStyle } from "../ui/theme";
 import { setDebugBattle, setDebugScene } from "../debug";
 import { CharacterInfoManager } from "../managers/CharacterInfoManager";
 import { UltimateCutIn } from "../ui/UltimateCutIn";
-import { nextBattleSpeed, type BattleSpeed } from "../core/battleControls";
+import {
+  nextBattleSpeed, scaleUltimateDuration, ultimatePresentationTiming, ULTIMATE_RECOVERY_RATIO,
+  type BattleSpeed,
+} from "../core/battleControls";
 import { ControlChip } from "../ui/ControlChip";
 import {
   beginNextUltimate, cancelUltimateSequence, createUltimateSequenceState, enqueueUltimate, releaseUltimate,
@@ -514,19 +517,25 @@ export class BattleScene extends Phaser.Scene {
       // 빠지는 즉시 친다 — 전투 중 여러 번 반복되는 연출이라 길이가 곧 기다림이다.
       const base = view.creature.scaleX;
       const skipPresentation = settingsManager.get().game.skipUltimatePresentation;
+      // 컷인·확대·공격·복귀가 이 한 계산값을 공유한다. 전투 배속과 스킵을 단계마다 다시
+      // 해석하면 서로 다른 시간축이 생기므로 pump 진입 시 한 번만 고정한다.
+      const timing = ultimatePresentationTiming(this.battleSpeed, skipPresentation);
       if (!skipPresentation) {
         this.activeCutIn = await UltimateCutIn.create(this, fighter.def, presentation);
         if (!this.sequenceValid(next.token, fighter)) return;
-        await this.activeCutIn.play();
+        await this.activeCutIn.play(timing);
         this.activeCutIn.destroy(); this.activeCutIn = undefined;
-        if (!this.sequenceValid(next.token, fighter)) return;
-        await this.tween({ targets: view.creature, scale: base * presentation.zoomScale, duration: presentation.zoomMs, ease: "Back.Out" });
         if (!this.sequenceValid(next.token, fighter)) return;
         this.cameras.main.shake(180, presentation.cameraShakeIntensity);
       }
 
       // 스킵도 입력 순간의 낡은 상태를 믿지 않는다. 컷인 유무와 무관하게 발사 직전 생존·게이지·종료를 재검증한다.
       if (!this.sequenceValid(next.token, fighter) || !canFireUltimate(this.state, fighter)) return;
+      // 확대와 공격 모션을 동시에 시작해 확대를 기다리는 별도 턴처럼 보이지 않게 한다.
+      // 스킵에서는 0ms 확대조차 만들지 않아 실제 발사만 아래에서 정확히 한 번 수행한다.
+      const zoom = skipPresentation
+        ? Promise.resolve()
+        : this.tween({ targets: view.creature, scale: base * presentation.zoomScale, duration: scaleUltimateDuration(presentation.zoomMs, timing), ease: "Back.Out" });
       const events = fireUltimate(this.state, fighter.id, () => Math.random());
       // 코어가 바꾼 HP를 즉시 게이지 목표로 전달한다. 연출을 기다리는 동안 stepMeters가
       // 매 프레임 목표를 따라가므로 적 체력이 한 번에 점프하지 않고 실제로 깎여 보인다.
@@ -537,12 +546,16 @@ export class BattleScene extends Phaser.Scene {
       let attackMotion: MotionPlayback | undefined;
       events.forEach((event) => {
         // 컷인 뒤의 결정타만 빠르게 재생해 멈춘 전투가 즉시 이어지도록 한다.
-        const playback = this.playEvent(event, 2);
+        const playback = this.playEvent(event, timing.rate);
         attackMotion ??= playback;
       });
-      await attackMotion?.completed;
+      await Promise.all([zoom, attackMotion?.completed ?? Promise.resolve()]);
       // 커진 몸은 제자리로 돌려놓고 바로 전투를 잇는다.
-      if (!skipPresentation) await this.tween({ targets: view.creature, scale: base, duration: presentation.zoomMs, ease: "Quad.Out" });
+      if (!skipPresentation) await this.tween({
+        targets: view.creature, scale: base,
+        // 복귀는 타격을 설명하지 않으므로 확대보다 짧은 별도 비율로 완료 잠금을 빨리 푼다.
+        duration: scaleUltimateDuration(presentation.zoomMs, timing, ULTIMATE_RECOVERY_RATIO), ease: "Quad.Out",
+      });
       this.syncViews();
       this.refreshDebug();
     } finally {
@@ -591,7 +604,8 @@ export class BattleScene extends Phaser.Scene {
     this.stepMeters(elapsed);
     // 코어 시간과 전투 배속을 궁극기 연출과 분리한다. 연출 Puppet/tween은 씬의 정상 시계로 돈다.
     if (this.ultimateSequenceActive) return;
-    // 실제 프레임 간격에 선택 배율을 곱해 이동·공격 간격·게이지가 모두 같은 시간축을 쓴다.
+    // battleSpeed는 코어 시간에 여기서 정확히 한 번만 곱한다. 궁극기 연출 배율은 tween/Puppet에만
+    // 쓰고 stepSkirmish에 넣지 않으므로 피해량·공격 주기·게이지 충전이 이중 가속되지 않는다.
     const events = stepSkirmish(this.state, dt * this.battleSpeed, () => Math.random());
     if (this.state.boss) {
       const boss = this.state.boss; const phase = boss.phases[boss.phaseIndex];

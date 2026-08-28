@@ -20,7 +20,7 @@ export interface UltimatePresentation {
    * 멋있지만 전투 내내 반복되면 기다림이 된다. "누가 지금 크게 때리는가"만 알리면 충분하다.
    */
   zoomScale: number;
-  /** 커지고 다시 돌아오는 데 각각 걸리는 시간(ms). */
+  /** 확대의 상대적인 무게감(ms). 전투 배속 환산은 BattleScene의 공용 시간축만 담당한다. */
   zoomMs: number;
   /** 공격 판정 직전 카메라 흔들림의 정규화된 강도다. */
   cameraShakeIntensity: number;
@@ -33,24 +33,25 @@ export const DEFAULT_ULTIMATE_PRESENTATION: Readonly<UltimatePresentation> = Obj
   artworkOrigin: Object.freeze({ x: 650, y: 810 }),
   cutInHoldMs: 150,
   zoomScale: 1.22,
-  zoomMs: 130,
+  // 확대는 공격 직전 가장 느리게 체감되므로 기존 130ms보다 짧은 기준을 둔다.
+  zoomMs: 100,
   cameraShakeIntensity: 0.009,
 });
 
 /** 현재 출시 렐릭의 개성을 조정하는 유일한 프레젠테이션 표다. */
 export const ULTIMATE_PRESENTATIONS: Readonly<Record<string, UltimatePresentation>> = Object.freeze({
   rex: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 1.08, zoomScale: 1.3, cameraShakeIntensity: 0.013 },
-  anky: { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkScale: 0.96, zoomScale: 1.26, zoomMs: 150, cameraShakeIntensity: 0.012 },
+  anky: { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkScale: 0.96, zoomScale: 1.26, zoomMs: 115, cameraShakeIntensity: 0.012 },
   spino: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 1.04, artworkOrigin: { x: 680, y: 820 }, zoomScale: 1.28, cameraShakeIntensity: 0.012 },
   luka: { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkOrigin: { x: 620, y: 800 }, cutInHoldMs: 140, zoomScale: 1.18, zoomMs: 110 },
   dodo: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.9, artworkOrigin: { x: 640, y: 790 }, zoomScale: 1.14, cameraShakeIntensity: 0.006 },
   smilo: { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkScale: 1.06, cutInHoldMs: 140, zoomScale: 1.24, zoomMs: 115, cameraShakeIntensity: 0.011 },
   quetz: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.94, artworkOrigin: { x: 650, y: 760 }, cutInHoldMs: 160, zoomScale: 1.16, cameraShakeIntensity: 0.008 },
   "husk-raptor": { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", cutInHoldMs: 135, zoomScale: 1.2, zoomMs: 110, cameraShakeIntensity: 0.008 },
-  "husk-shell": { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.94, zoomScale: 1.24, zoomMs: 150, cameraShakeIntensity: 0.009 },
+  "husk-shell": { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.94, zoomScale: 1.24, zoomMs: 115, cameraShakeIntensity: 0.009 },
   "husk-wing": { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkScale: 0.92, artworkOrigin: { x: 650, y: 770 }, zoomScale: 1.16, cameraShakeIntensity: 0.007 },
   // 넓은 보스 전신은 컷인에서 한 단계 줄이고, 무거운 일격은 SD 확대와 흔들림으로 전달한다.
-  pontus: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.82, artworkOrigin: { x: 650, y: 800 }, zoomScale: 1.3, zoomMs: 160, cameraShakeIntensity: 0.014 },
+  pontus: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.82, artworkOrigin: { x: 650, y: 800 }, zoomScale: 1.3, zoomMs: 120, cameraShakeIntensity: 0.014 },
 });
 
 /** 표에 아직 없는 ID는 공용 기본값을 반환해 콘텐츠 추가가 전투를 깨뜨리지 않게 한다. */

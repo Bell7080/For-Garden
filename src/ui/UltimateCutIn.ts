@@ -5,6 +5,7 @@ import { tintFor } from "../puppets/tints";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { COLOR, textStyle } from "./theme";
 import type { UltimatePresentation } from "../data/ultimatePresentations";
+import { scaleUltimateDuration, type UltimatePresentationTiming } from "../core/battleControls";
 
 /** 컷인이 화면을 점유하는 짧은 구간. 공격 판정 시각은 이 프리팹이 아니라 BattleScene이 소유한다. */
 // 전장을 가리는 이동 시간을 짧게 묶어 반복 궁극기에서도 흐름이 오래 끊기지 않게 한다.
@@ -62,15 +63,16 @@ export class UltimateCutIn extends Phaser.GameObjects.Container {
    *
    * 포효를 기다리지 않는다. 컷인은 이 한 장으로 끝나고, 곧바로 전장의 SD가 커지며 친다.
    */
-  async play(): Promise<void> {
+  async play(timing: UltimatePresentationTiming): Promise<void> {
     if (this.disposed) return;
     // 진입 방향의 부호를 퇴장에도 재사용해 한 프리셋이 동선 전체를 설명하게 한다.
     const direction = this.presentation.enterFrom === "left" ? -1 : 1;
     this.setX(direction * BASE_WIDTH).setScale(0.82).setAlpha(0);
-    await tween(this.scene, { targets: this, x: 0, scale: 1, alpha: 1, duration: CUT_IN.enterMs, ease: "Cubic.Out" });
-    await new Promise<void>((resolve) => this.scene.time.delayedCall(this.presentation.cutInHoldMs, resolve));
+    // 세 구간 모두 같은 궁극기 시간축을 거쳐 한 구간만 유난히 느려지지 않게 한다.
+    await tween(this.scene, { targets: this, x: 0, scale: 1, alpha: 1, duration: scaleUltimateDuration(CUT_IN.enterMs, timing), ease: "Cubic.Out" });
+    await new Promise<void>((resolve) => this.scene.time.delayedCall(scaleUltimateDuration(this.presentation.cutInHoldMs, timing), resolve));
     if (this.disposed) return;
-    await tween(this.scene, { targets: this, x: -direction * BASE_WIDTH, alpha: 0, duration: CUT_IN.exitMs, ease: "Cubic.In" });
+    await tween(this.scene, { targets: this, x: -direction * BASE_WIDTH, alpha: 0, duration: scaleUltimateDuration(CUT_IN.exitMs, timing), ease: "Cubic.In" });
   }
 
   override destroy(fromScene?: boolean): void {

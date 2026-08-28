@@ -251,15 +251,15 @@ test("방치 발굴 편집은 슬롯 이동·중복 방지·빈 편성 취소를
   await tapGame(page, firstSlot.x, firstSlot.y);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationPopup)).toBe("editing");
   // 첫 보유 카드를 1번에 놓으면 선택이 저절로 2번 칸으로 넘어가 다음 배치가 이어진다.
-  await tapGame(page, BASE_WIDTH / 2 - 250, BASE_HEIGHT / 2 - 15);
+  await tapGame(page, BASE_WIDTH / 2 - 250, BASE_HEIGHT / 2 + 95);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationSelectedSlot)).toBe(1);
   // 같은 카드를 다시 누르면 2번으로 이동한다. 복제 대신 원래 칸이 비고 선택은 3번으로 이어진다.
-  await tapGame(page, BASE_WIDTH / 2 - 250, BASE_HEIGHT / 2 - 15);
+  await tapGame(page, BASE_WIDTH / 2 - 250, BASE_HEIGHT / 2 + 95);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationSelectedSlot)).toBe(2);
   // 카드가 든 2번 칸을 다시 고른 뒤 같은 카드를 누르면 빈 슬롯 허용 정책에 따라 해제된다.
   const secondSlot = (await page.evaluate(() => window.__PF_DEBUG?.idleExcavationSlots?.[1]))!;
   await tapGame(page, secondSlot.x, secondSlot.y);
-  await tapGame(page, BASE_WIDTH / 2 - 250, BASE_HEIGHT / 2 - 15);
+  await tapGame(page, BASE_WIDTH / 2 - 250, BASE_HEIGHT / 2 + 95);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationSelectedSlot)).toBe(1);
   await page.screenshot({ path: `test-results/${test.info().project.name}-idle-excavation-editor.png` });
   const cancel = await excavationControl(page, "cancelEdit");

@@ -9,6 +9,7 @@ import { setDebugExcavationAdOffers, setDebugIdleExcavationControls, setDebugIdl
 import { Button } from "./Button";
 import { chipPoints, drawHairline, drawLayer, HOLO, slantedRect } from "./holo";
 import { PortraitCard } from "./PortraitCard";
+import { portraitGridContentHeight, portraitGridFirstRowY } from "./portraitGrid";
 import type { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
 import { EXCAVATION_TRAIT_ICON } from "./excavationIcons";
@@ -26,8 +27,15 @@ import { BACK_SLOT } from "./IconButton";
 
 /** 한 팝업 안에서 현황과 편집 그리드가 교대하므로 모바일 안전 영역을 넘지 않는 고정 크기를 쓴다. */
 const PANEL = { width: 900, height: 1320 } as const;
-/** 보유 렐릭은 이 창 안에서만 세로로 흐르며 상단 슬롯과 하단 완료 버튼을 침범하지 않는다. */
-const GRID_VIEW = { left: -370, right: 370, top: -145, bottom: 425, columnGap: 250, rowGap: 280, cardWidth: 215, cardHeight: 235 } as const;
+/** 현황의 누적 액자 판. 배치 그리드도 같은 윗변에서 시작해 두 화면이 한 자리를 공유한다. */
+const STATUS_SUMMARY = { y: 30, width: 800, height: 205 } as const;
+/**
+ * 보유 렐릭은 이 창 안에서만 세로로 흐르며 상단 슬롯과 하단 완료 버튼을 침범하지 않는다.
+ *
+ * `top`은 현황의 누적 액자 판과 같은 윗변이다. 첫 줄 카드는 그보다 머리 돌출만큼 내려 서므로
+ * 눈에 보이는 그리드의 윗선(머리 끝)이 액자 판의 윗선과 정확히 맞는다.
+ */
+const GRID_VIEW = { left: -370, right: 370, top: STATUS_SUMMARY.y - STATUS_SUMMARY.height / 2, bottom: 425, columnGap: 250, rowGap: 280, cardWidth: 215, cardHeight: 235 } as const;
 /** 손가락이 이 거리 이상 움직여야 카드 선택이 아니라 스크롤로 판정한다. */
 const GRID_DRAG_SLOP = 12;
 /** 팝업 판(PopupLayer 기본 2000) 바로 위. 그 위에 열리는 보상 팝업(2002)보다는 아래에 남는다. */
@@ -288,7 +296,7 @@ export class IdleExcavationPopup {
     let harvestButton: Button | undefined;
     // 발굴 전용 액자는 큰 누적값을, 아래의 독립 칩은 같은 아이콘과 생산 속도만 책임진다.
     // 3순위 누적 보상: SD 아래에서 현재 수확량과 시간당 생산량을 한 번에 훑는다.
-    content.add(drawLayer(this.scene, 0, 30, slantedRect(800, 205), { fill: COLOR.panel, alpha: HOLO.glassLight, edge: COLOR.accent, edgeAlpha: 0.42 }));
+    content.add(drawLayer(this.scene, 0, STATUS_SUMMARY.y, slantedRect(STATUS_SUMMARY.width, STATUS_SUMMARY.height), { fill: COLOR.panel, alpha: HOLO.glassLight, edge: COLOR.accent, edgeAlpha: 0.42 }));
     const display = excavationDisplayModel(response.excavation.unclaimed, rate);
     // 상단 CurrencyChip을 늘리지 않고 발굴 전용 반투명 액자와 별도 생산 칩을 한 줄로 세운다.
     const rows = display.map((item) => {
@@ -414,13 +422,14 @@ export class IdleExcavationPopup {
     this.renderUpper(this.draft, true);
     const content = this.resetLower();
     if (!content) return;
-    content.add(this.scene.add.text(-360, -172, `보유 렐릭 · ${this.selectedSlot + 1}번 칸에 배치`, textStyle({ role: "emphasis", size: 23, color: COLOR.accentText })).setOrigin(0, 0.5));
-    content.add(this.scene.add.text(360, -172, "빈 칸 이동 · 찬 칸 자리 교체 · 같은 카드 재선택 해제", textStyle({ role: "body", size: 17, color: COLOR.inkDim })).setOrigin(1, 0.5));
+    content.add(this.scene.add.text(-360, GRID_VIEW.top - 42, `보유 렐릭 · ${this.selectedSlot + 1}번 칸에 배치`, textStyle({ role: "emphasis", size: 23, color: COLOR.accentText })).setOrigin(0, 0.5));
+    content.add(this.scene.add.text(360, GRID_VIEW.top - 42, "빈 칸 이동 · 찬 칸 자리 교체 · 같은 카드 재선택 해제", textStyle({ role: "body", size: 17, color: COLOR.inkDim })).setOrigin(1, 0.5));
     const owned = RELICS.filter((relic) => session.owned.has(relic.id));
     const grid = this.scene.add.container(0, GRID_VIEW.top + this.gridScrollY);
     owned.forEach((relic, index) => {
       const x = -250 + (index % 3) * GRID_VIEW.columnGap;
-      const y = GRID_VIEW.cardHeight / 2 + Math.floor(index / 3) * GRID_VIEW.rowGap;
+      // 머리는 칩 밖으로 나오므로 첫 줄은 공용 안전 영역만큼 내려 세운다. 그러지 않으면 정수리가 잘린다.
+      const y = portraitGridFirstRowY(0, GRID_VIEW.cardHeight) + Math.floor(index / 3) * GRID_VIEW.rowGap;
       const detail = excavationProductionDisplayModel([relic.id, null, null], RELICS, session.relicProgress).relics[0];
       const progress = session.relicProgress[relic.id];
       const card = new PortraitCard(this.scene, x, y, { width: GRID_VIEW.cardWidth, height: GRID_VIEW.cardHeight, portraitAssetId: relic.portraitAssetId, tint: portraitUsesRelicTint(relic.portraitAssetId) ? tintFor(relic.id) : undefined, label: relic.name, level: progress?.level ?? 1, rarity: relic.rarity, stars: (progress?.breakthrough ?? 0) + 1, subIcon: EXCAVATION_TRAIT_ICON[relic.excavationTrait.primaryCurrency], sub: formatRate(detail?.totalPerHour ?? 0) });
@@ -451,7 +460,7 @@ export class IdleExcavationPopup {
   private addGridScroll(parent: Phaser.GameObjects.Container, grid: Phaser.GameObjects.Container, relicCount: number): void {
     const viewportHeight = GRID_VIEW.bottom - GRID_VIEW.top;
     const rows = Math.ceil(relicCount / 3);
-    const contentHeight = rows > 0 ? (rows - 1) * GRID_VIEW.rowGap + GRID_VIEW.cardHeight : 0;
+    const contentHeight = portraitGridContentHeight(rows, GRID_VIEW.rowGap, GRID_VIEW.cardHeight);
     const minScroll = Math.min(0, viewportHeight - contentHeight);
     this.gridScrollY = Phaser.Math.Clamp(this.gridScrollY, minScroll, 0);
     grid.setY(GRID_VIEW.top + this.gridScrollY);

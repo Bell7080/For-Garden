@@ -10,7 +10,8 @@ import { BottomNav, NAV_TOP } from "../ui/BottomNav";
 import { Button } from "../ui/Button";
 import { CharacterInfoManager } from "../managers/CharacterInfoManager";
 import { TopBar } from "../ui/TopBar";
-import { PortraitCard, portraitCardOverhang, relicCardTint } from "../ui/PortraitCard";
+import { PortraitCard, relicCardTint } from "../ui/PortraitCard";
+import { portraitGridFirstRowY } from "../ui/portraitGrid";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { COLOR, textStyle } from "../ui/theme";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
@@ -21,8 +22,10 @@ import { drawVignette } from "../ui/holo";
 /** 제목/정렬 조작과 하단 탭 사이만 목록에 내주는 고정 화면 경계다. */
 const VIEWPORT_TOP = 390;
 const VIEWPORT_BOTTOM = NAV_TOP;
-/** 첫 줄의 돌출된 머리가 상단 마스크에 닿지 않도록 확보하는 그리드 시작 여백이다. */
-const GRID_FIRST_ROW_Y = 640;
+/** 카드 규격은 한 곳에서만 정한다. 첫 줄 자리와 미보유 구역이 같은 값을 읽어야 한다. */
+const GRID_CARD = { width: 300, height: 400, gapX: 40, gapY: 74 } as const;
+/** 첫 줄의 돌출된 머리가 상단 마스크에 닿지 않도록 공용 안전 영역 계산만 쓴다. */
+const GRID_FIRST_ROW_Y = portraitGridFirstRowY(VIEWPORT_TOP, GRID_CARD.height);
 /** 드래그와 카드 탭을 구분하는 최소 이동 거리다. */
 const DRAG_SLOP = 18;
 
@@ -158,10 +161,7 @@ export class RelicsScene extends Phaser.Scene {
    */
   private buildGrid(): void {
     const cols = 3;
-    const cardW = 300;
-    const cardH = 400;
-    const gapX = 40;
-    const gapY = 74;
+    const { width: cardW, height: cardH, gapX, gapY } = GRID_CARD;
     const gridW = cols * cardW + (cols - 1) * gapX;
     const startX = (BASE_WIDTH - gridW) / 2 + cardW / 2;
     const startY = GRID_FIRST_ROW_Y;
@@ -204,7 +204,7 @@ export class RelicsScene extends Phaser.Scene {
 
       const labelHeight = Math.max(label.displayHeight, count.displayHeight);
       const labelToCardGap = Math.round(labelHeight * 0.7);
-      const firstCardY = labelTop + labelHeight + labelToCardGap + portraitCardOverhang(cardH) + cardH / 2;
+      const firstCardY = portraitGridFirstRowY(labelTop + labelHeight + labelToCardGap, cardH);
       place(locked, firstCardY);
     }
     // 마지막 카드의 몸체 아래가 실제 콘텐츠 끝이다. 항목이 적으면 min=max=0이 되어 입력도 꺼진다.

@@ -8,6 +8,7 @@ import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
 import { addStarMark, RARITY_TONE } from "./rarityMark";
 import { COLOR, textStyle } from "./theme";
+import { portraitCardOverhang } from "./portraitGrid";
 import { addBookmarkMark } from "./bookmarkMark";
 
 /** 카드 한 장의 조립 옵션. 크기와 라벨만 주면 나머지 연출은 프리팹이 맞춘다. */
@@ -76,10 +77,9 @@ const SHADE_RATIO = 0.46;
 /** 레벨 숫자를 세로로 늘리는 비율. 계기판 숫자처럼 보이게 하는 최소한의 왜곡이다. */
 const LEVEL_STRETCH = 1.26;
 
-/** 카드 본체 위로 실제 원화가 빠져나오는 높이. 목록 배치도 같은 시각 경계를 사용한다. */
-export function portraitCardOverhang(height: number): number {
-  return Math.round(Math.min(height * 0.22, 54));
-}
+// 돌출 높이와 그리드 안전 영역은 Phaser를 모르는 순수 모듈이 소유한다. 카드를 쓰는 쪽이
+// 계속 이 이름으로 부를 수 있도록 여기서 그대로 다시 내보낸다.
+export { portraitCardOverhang, portraitGridFirstRowY, portraitGridHeadroom } from "./portraitGrid";
 
 /**
  * 캐릭터 카드.

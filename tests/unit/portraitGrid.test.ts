@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { portraitCardOverhang, portraitGridContentHeight, portraitGridFirstRowY, portraitGridHeadroom } from "../../src/ui/portraitGrid";
+import { portraitCardNotchWidth, portraitCardOverhang, portraitGridContentHeight, portraitGridFirstRowY, portraitGridHeadroom } from "../../src/ui/portraitGrid";
 
 /** 머리가 칩 밖으로 나오는 카드라 그리드 첫 줄은 경계에서 그만큼 떨어져야 한다. */
 describe("캐릭터 그리드 안전 영역", () => {
@@ -21,5 +21,25 @@ describe("캐릭터 그리드 안전 영역", () => {
     expect(portraitGridContentHeight(0, 280, 235)).toBe(0);
     expect(portraitGridContentHeight(1, 280, 235)).toBe(portraitGridHeadroom(235) + 235);
     expect(portraitGridContentHeight(3, 280, 235)).toBe(portraitGridHeadroom(235) + 560 + 235);
+  });
+
+  /** 위쪽 두 모서리를 서로 다르게 깎는 카드에서, 노치가 그 대각선 안쪽까지 넓으면 잘린
+   * 모서리가 홈 밖으로 나온 머리를 가로질러 애매하게 베어 낸다(출격 팝업 SD 자리와 같은 문제). */
+  describe("카드 머리 홈 폭", () => {
+    it("은 기본 비율이 대각선 깎임 안쪽으로 들어오면 깎인 깊이만큼 줄어든다", () => {
+      // chipWidth 198, topLeft 0.18*198≈35.64에서는 80% 비율(158.4)이 두 대각선을 침범한다.
+      const chipWidth = 198;
+      const topLeftBevel = 0.18 * chipWidth;
+      const topRightBevel = 0.07 * chipWidth;
+      const width = portraitCardNotchWidth(chipWidth, topLeftBevel, topRightBevel, 0.8);
+      expect(width).toBeLessThan(chipWidth * 0.8);
+      expect(width).toBeLessThanOrEqual(chipWidth - 2 * topLeftBevel);
+    });
+
+    it("은 모서리가 얕아 기본 비율이 이미 안전하면 그대로 둔다", () => {
+      const chipWidth = 300;
+      const width = portraitCardNotchWidth(chipWidth, 10, 5, 0.8);
+      expect(width).toBe(chipWidth * 0.8);
+    });
   });
 });

@@ -6,6 +6,7 @@ import {
   BLEED,
   EMERGENCY_RECOVERY,
   attackInterval,
+  battleContributionSnapshot,
   canFireUltimate,
   clearStun,
   createSkirmish,
@@ -36,6 +37,23 @@ import { computeDamage } from "../../src/core/damage";
 import {
   beginNextUltimate, cancelUltimateSequence, createUltimateSequenceState, enqueueUltimate, releaseUltimate,
 } from "../../src/core/ultimateSequence";
+
+describe("기여도 프레임 독립성", () => {
+  it("여러 프레임과 한 번의 동일 시간 진행이 최종 기여도 스냅샷을 같게 만든다", () => {
+    const once = createSkirmish([getRelic("anky")], [getRelic("husk-shell")], { left: 0, right: 600, top: 0, bottom: 1_000 });
+    const split = createSkirmish([getRelic("anky")], [getRelic("husk-shell")], { left: 0, right: 600, top: 0, bottom: 1_000 });
+    // 두 전투 모두 즉시 교전하도록 같은 런타임 좌표를 주고, 기본 비치명 난수를 사용한다.
+    for (const state of [once, split]) {
+      state.fighters[0].x = 300; state.fighters[0].y = 500;
+      state.fighters[1].x = 320; state.fighters[1].y = 500;
+    }
+    stepSkirmish(once, 0.2);
+    for (let frame = 0; frame < 4; frame += 1) stepSkirmish(split, 0.05);
+    expect(battleContributionSnapshot(split, "attack")).toEqual(battleContributionSnapshot(once, "attack"));
+    expect(battleContributionSnapshot(split, "defense")).toEqual(battleContributionSnapshot(once, "defense"));
+    expect(battleContributionSnapshot(split, "healing")).toEqual(battleContributionSnapshot(once, "healing"));
+  });
+});
 
 describe("스피나 전투 계약", () => {
   /** 스피나와 대상을 즉시 교전시키고 다른 행동을 멈추는 공용 준비다. */
@@ -182,7 +200,7 @@ describe("메테 전투 계약", () => {
     const { state, mette, ally } = metteBattle();
     const first = applyStun(ally, 2, state);
     expect(ally.stunnedFor).toBe(0);
-    expect(ally.shield).toBe(mette.def.stats.atk * 2);
+    expect(ally.shield.amount).toBe(mette.def.stats.atk * 2);
     expect(first).toContainEqual(expect.objectContaining({ kind: "shieldGranted", providerId: mette.id }));
     expect(mette.adagioCooldownRemaining).toBe(7);
 
@@ -198,28 +216,28 @@ describe("메테 전투 계약", () => {
   it("는 편성 순서의 준비된 메테가 먼저 정화하고 기존 보호막에는 새 보호막을 합산한다", () => {
     const state = newSkirmish(["mette", "mette", "rex"], ["husk-shell"]);
     const [first, second, ally] = state.fighters;
-    ally.shield = 10;
+    ally.shield = { amount: 10, providerId: ally.id };
     const firstEvents = applyStun(ally, 1, state);
     expect(firstEvents).toContainEqual(expect.objectContaining({ kind: "shieldGranted", providerId: first.id, remaining: 242 }));
     expect(first.adagioCooldownRemaining).toBe(7);
     expect(second.adagioCooldownRemaining).toBe(0);
 
     applyStagger(ally, 0.1, state);
-    expect(ally.shield).toBe(474); // 두 번째 메테도 자기 공격력 116의 200%를 기존 총량에 더한다.
+    expect(ally.shield.amount).toBe(474); // 두 번째 메테도 자기 공격력 116의 200%를 기존 총량에 더한다.
     expect(second.adagioCooldownRemaining).toBe(7);
   });
 
   it("는 보호막을 HP보다 먼저 흡수하고 흡수·소진 사건을 렌더러에 전달한다", () => {
     const { state, ally, foe } = metteBattle();
     applyStun(ally, 1, state);
-    const shield = ally.shield;
+    const shield = ally.shield.amount;
     ally.attackCooldown = 99; foe.attackCooldown = 0; foe.targetId = ally.id;
     foe.x = 450; ally.x = 400;
     const hpBefore = ally.hp;
     const events = stepSkirmish(state, 1 / 60);
     expect(events).toContainEqual(expect.objectContaining({ kind: "shieldAbsorbed", fighterId: ally.id }));
     expect(ally.hp).toBe(hpBefore); // 허스크의 한 타보다 보호막이 커 HP에는 아직 닿지 않는다.
-    expect(ally.shield).toBeLessThan(shield);
+    expect(ally.shield.amount).toBeLessThan(shield);
   });
 
   it("는 폭주 중 아군의 실제 일반 공격 적중마다 스타카토 한 번만 추가하고 종료·사망 뒤 멈춘다", () => {
@@ -314,7 +332,7 @@ describe("단일 난전의 원정 보스 옵션", () => {
     expect(state.phase).toBe("fight"); expect(state.fighters[1].hp).toBe(0); expect(state.fighters[1].immortal).toBe(true); expect(state.boss?.score).toBeGreaterThan(0);
   });
 
-  it("는 폰토스가 무효화한 공격도 경감 전 기여를 보스 점수로 기록한다", () => {
+  it("는 폰토스가 완전 무효화한 공격을 공격 기여와 보스 점수에서 제외한다", () => {
     const state = createSkirmish([getRelic("anky")], [getRelic("pontos")], ARENA, {}, {}, {
       boss: { phases: [{ startsAt: 0, damagePerSecond: 0, label: "관측" }], limitSeconds: 1 },
     });
@@ -324,15 +342,15 @@ describe("단일 난전의 원정 보스 옵션", () => {
     ally.def = { ...ally.def, element: boss.def.element, stats: { ...ally.def.stats, atk: 1_000, critChance: 0 }, basic: { ...ally.def.basic, power: 100, scalingStat: "atk", damageType: "physical" } };
     boss.def = { ...boss.def, stats: { ...boss.def.stats, def: 10_000 } };
     boss.hp = boss.maxHp * 0.5;
-    boss.shield = 100;
+    boss.shield = { amount: 100, providerId: boss.id };
     const events = stepSkirmish(state, 1 / 60);
     const attack = events.find((event) => event.kind === "attack" && event.attackerId === ally.id);
     expect(attack).toMatchObject({ kind: "attack", amount: 0 });
     expect(events).toContainEqual({ kind: "damageIgnored", attackerId: ally.id, targetId: boss.id });
     // 무효 공격은 보호막·피격 야성·흡혈 및 피해 기반 회복의 실제 피해 원천을 만들지 않는다.
-    expect(boss.shield).toBe(100); expect(boss.ferocity).toBe(0);
+    expect(boss.shield.amount).toBe(100); expect(boss.ferocity).toBe(0);
     expect(events.filter((event) => event.kind === "shieldAbsorbed" || event.kind === "heal")).toEqual([]);
-    expect(attack?.kind === "attack" ? attack.contributionAmount : 0).toBe(1_000);
+    expect(attack?.kind === "attack" ? attack.contributionAmount : 0).toBe(0);
     expect(state.boss?.score).toBe(attack?.kind === "attack" ? attack.contributionAmount : 0);
   });
 
@@ -367,12 +385,10 @@ describe("단일 난전의 원정 보스 옵션", () => {
     const state = createSkirmish(party, [pontos], ARENA);
     let firstUltimateAt: number | undefined;
     let survivorsAfterFirstUltimate = 0;
-    let cumulativeScore = 0;
     for (let frame = 0; frame < 60 * 40 && state.phase === "fight"; frame += 1) {
       const events = stepSkirmish(state, 1 / 60, () => 0.99);
       for (const event of events) {
         if (event.kind !== "attack") continue;
-        if (event.attackerId.startsWith("player")) cumulativeScore += event.contributionAmount;
         if (event.attackerId === "enemy-0" && event.skill === "ultimate" && firstUltimateAt === undefined) {
           firstUltimateAt = state.elapsed;
           survivorsAfterFirstUltimate = aliveFighters(state, "player").length;
@@ -385,8 +401,11 @@ describe("단일 난전의 원정 보스 옵션", () => {
     expect(survivorsAfterFirstUltimate).toBeGreaterThan(0);
     expect(state.elapsed).toBeGreaterThanOrEqual(24);
     expect(state.elapsed).toBeLessThanOrEqual(30);
-    expect(cumulativeScore).toBeGreaterThanOrEqual(14_000);
-    expect(cumulativeScore).toBeLessThanOrEqual(15_000);
+    // 점수는 경감 뒤 실제로 감소한 HP와 같아 경감 전 계수나 과잉 피해로 부풀지 않는다.
+    const playerAttackTotal = battleContributionSnapshot(state, "attack")
+      .filter(({ fighterId }) => fighterId.startsWith("player"))
+      .reduce((sum, row) => sum + row.total, 0);
+    expect(playerAttackTotal).toBe(pontos.stats.hp - state.fighters.find((fighter) => fighter.side === "enemy")!.hp);
     // 300 비용을 7회 타격으로 채우므로 두 해일 사이의 이론상 최소 간격도 5초 기절보다 충분히 길다.
     const boss = state.fighters.find((fighter) => fighter.side === "enemy")!;
     const minimumUltimateGap = attackInterval(boss, state) * Math.ceil(boss.def.ultimate.cost / boss.def.stats.energyGain);
@@ -1550,11 +1569,11 @@ describe("폰토스 실전 스킬과 심해 압력", () => {
   it("는 기존 고정 피해 정책처럼 보호막을 먼저 소모하고 치명타 틱에는 사망 사건과 로그를 남긴다", () => {
     const { state, pontos, allies } = pontosBattle();
     pontos.ferocity = 100; pontos.ferocityFever = true;
-    allies[0].shield = allies[0].maxHp * 0.01;
+    allies[0].shield = { amount: allies[0].maxHp * 0.01, providerId: allies[0].id };
     allies[1].hp = allies[1].maxHp * 0.01;
     const protectedHp = allies[0].hp;
     const events = Array.from({ length: 4 }, () => stepSkirmish(state, 0.25)).flat();
-    expect(allies[0].shield).toBe(0);
+    expect(allies[0].shield.amount).toBe(0);
     expect(allies[0].hp).toBeCloseTo(protectedHp - allies[0].maxHp * 0.01);
     expect(events.filter((event) => event.kind === "death" && event.fighterId === allies[1].id)).toHaveLength(1);
     expect(state.log).toContain(`${allies[1].def.name} 전투 불능`);

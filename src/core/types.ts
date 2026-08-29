@@ -308,6 +308,8 @@ export interface Passive {
   maxDamageReductionPercent?: number;
   /** 심해 압력 전용: 최대 피해 감소율에 도달하는 현재 체력 비율이다. */
   maxReductionAtHpPercent?: number;
+  /** 심해 압력 전용: 모든 경감과 반올림을 마친 최종 HP 피해가 이 값 이하이면 피해를 무효화한다. */
+  ignoreDamageAtOrBelow?: number;
   /** 제공자가 살아 있는 동안 같은 편의 방어력과 저항력에 곱하는 증가율(%). */
   teamDefenseResistancePercent?: number;
   /** 제공자가 살아 있는 동안 반대편이 받는 모든 체력 회복을 줄이는 비율(%). */

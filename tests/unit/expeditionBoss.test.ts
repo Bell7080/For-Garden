@@ -14,6 +14,20 @@ function basicActions(ids: readonly string[], seconds = 10): ExpeditionBossActio
 }
 
 describe("expedition boss rules", () => {
+  it("경감 전 총 공격량이 같은 단타와 다단히트는 같은 서버 재생 점수를 받는다", () => {
+    const base = getRelic("rex");
+    // 동일 공격자 스냅샷에서 100% 단타와 50% 2연타만 바꿔 방어·무효화 횟수와 점수를 분리한다.
+    const single = { ...base, basic: { ...base.basic, power: 100, combo: undefined } };
+    const multi = { ...base, basic: { ...base.basic, power: 50, combo: { chancePercent: 100, hitCount: 2, missingHpHealingPercentPerHit: 0 } } };
+    const action = [{ elapsedMs: 0, actorId: base.id, kind: "basic" as const }];
+    const singleResult = resolveExpeditionBossBattle({ ...replayInput(), allies: [single] }, action, () => 0.99);
+    const rolls = [0, 0.99, 0.99];
+    const multiResult = resolveExpeditionBossBattle({ ...replayInput(), allies: [multi] }, action, () => rolls.shift() ?? 0.99);
+    expect(multiResult.totalDamage).toBe(singleResult.totalDamage);
+    // 두 1 피해 후보가 폰토스 HP를 깎지 않아도 서버 점수는 공격자의 기여도를 보존한다.
+    expect(multiResult.totalDamage).toBeGreaterThan(0);
+  });
+
   it("보스는 피해를 받아도 죽지 않고 받은 총 피해만 점수로 누적한다", () => {
     const result = resolveExpeditionBossBattle(replayInput(), basicActions(["rex"]));
     expect(result.bossDefeated).toBe(false); expect(result.totalDamage).toBeGreaterThan(0);

@@ -20,6 +20,19 @@ export function currentAbilityPower(combatant: Combatant): number {
   return combatant.def.stats.ap + (combatant.bonusAp ?? 0);
 }
 
+/** 방어·저항·속성·대상 패시브 전, 공격자가 스킬과 버프로 만들어 낸 순수 공격 기여값이다. */
+export function computeDamageContribution(attacker: Combatant, input: DamageInput): number {
+  const offense = input.scalingStat === "def" ? attacker.def.stats.def
+    : input.scalingStat === "atk" ? attacker.def.stats.atk
+      : input.scalingStat === "ap" ? currentAbilityPower(attacker)
+        : input.damageType === "physical" ? attacker.def.stats.atk : currentAbilityPower(attacker);
+  const critical = input.isCritical ? attacker.def.stats.critDamage / 100 : 1;
+  const opened = breakthroughBonus(attacker.breakthrough);
+  const awakened = 1 + (input.kind === "ultimate" ? opened.ultimateDamage : input.kind === "basic" ? opened.basicDamage : 0);
+  // 타격별 반올림은 같은 총 계수의 다단히트를 더 크게 만들므로 기여도에는 소수 정밀도를 보존한다.
+  return Math.max(0, (offense * input.power / 100) * critical * awakened * (1 + ferocityDamageBonus(attacker.ferocity)));
+}
+
 /** 실시간 난전의 공격력, 방어, 치명타, 각성, 야성, 속성 순서를 고정한 피해 공식이다. */
 export function computeDamage(attacker: Combatant, target: Combatant, input: DamageInput, targetIsFront: boolean): number {
   // 방어형 탱커의 공격은 방어력을 직접 피해 원천으로 쓸 수 있다.

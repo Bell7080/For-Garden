@@ -20,15 +20,28 @@ export function isExcavationStorageFull(state: IdleExcavationState, serverNow: D
   return Math.max(0, serverNow.getTime() - previousMs) / 1000 >= limitSeconds;
 }
 
-/** 정산 로직과 같은 확장 배율로 보관 한도를 채운 비율(0~1)만 계산하는 순수 표시값이다. */
-export function excavationStorageFillRatio(state: IdleExcavationState, now: Date): number {
-  if (state.lastSettledAt === null || state.assignedRelicIds.every((id) => id === null)) return 0;
-  const previousMs = new Date(state.lastSettledAt).getTime();
-  const extensionActive = state.storageExtensionExpiresAt !== null && previousMs < new Date(state.storageExtensionExpiresAt).getTime();
-  const limitSeconds = state.baseStorageSeconds * (extensionActive ? 2 : 1);
+/** 정산 로직과 같은 확장 배율로, 지금 시각 기준 보관 한도(초)를 계산한다. */
+export function excavationStorageLimitSeconds(state: IdleExcavationState, now: Date): number {
+  const extensionActive = state.storageExtensionExpiresAt !== null && now.getTime() < new Date(state.storageExtensionExpiresAt).getTime();
+  return state.baseStorageSeconds * (extensionActive ? STORAGE_EXTENSION_MULTIPLIER : 1);
+}
+
+/**
+ * 실제로 쌓인 재화량을 그 재화의 보관 한도(시간당 생산량 × 보관 한도 초)와 비교해 채운
+ * 비율(0~1)을 계산한다.
+ *
+ * 마지막 정산 이후 경과 시간으로 계산하면 조회할 때마다 정산이 일어나 기준 시각이 현재로
+ * 밀리므로, 창을 열 때마다 게이지가 0%로 보이는 문제가 있었다. 실제 누적 재화량 자체를
+ * 기준으로 삼아야 조회 횟수와 무관하게 지금 쌓인 양을 그대로 보여준다.
+ */
+export function excavationStorageFillRatio(unclaimed: Readonly<Record<ExcavationCurrency, number>>, ratePerHour: Readonly<Record<ExcavationCurrency, number>>, limitSeconds: number): number {
   if (limitSeconds <= 0) return 0;
-  const elapsedSeconds = Math.max(0, now.getTime() - previousMs) / 1000;
-  return Math.min(1, elapsedSeconds / limitSeconds);
+  let ratio = 0;
+  for (const currency of EXCAVATION_CURRENCIES) {
+    const capacity = ratePerHour[currency] / 3600 * limitSeconds;
+    if (capacity > 0) ratio = Math.max(ratio, unclaimed[currency] / capacity);
+  }
+  return Math.min(1, ratio);
 }
 
 /** JSON으로 그대로 저장할 수 있는 방치 발굴의 단일 상태다. */

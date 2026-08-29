@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import type { AdOperationsConfigResponse, AdPresentationResult, AdSlotOperationsDto, GameApi, HarvestExcavationResponse, IdleExcavationResponse } from "../api/contracts";
-import { EXCAVATION_CURRENCIES, excavationProductionDisplayModel, excavationStorageFillRatio, nextExcavationSlot, placeExcavationRelic, type ExcavationCurrency, type IdleExcavationState } from "../core/idleExcavation";
+import { emptyExcavationAmounts, EXCAVATION_CURRENCIES, excavationProductionDisplayModel, excavationStorageFillRatio, excavationStorageLimitSeconds, nextExcavationSlot, placeExcavationRelic, type ExcavationCurrency, type IdleExcavationState } from "../core/idleExcavation";
 import { RELICS } from "../data/relics";
 import { portraitUsesRelicTint, sdAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
 import { tintFor } from "../puppets/tints";
@@ -315,25 +315,29 @@ export class IdleExcavationPopup {
     const refreshEstimate = (): void => {
       // 서버 응답 이후의 로컬 경과분만 더하는 표시용 예상치이며 정산 기준 시각은 절대 갱신하지 않는다.
       const elapsedHours = Math.max(0, Date.now() - baseServerMs) / 3_600_000;
+      const liveAmounts = emptyExcavationAmounts();
       // 틱에서는 프리팹의 Text만 바꾼다. 이미지와 불투명 요약 레이어는 재생성하지 않는다.
       for (const row of rows) {
         const amount = response.excavation.unclaimed[row.currency] + rate[row.currency] * elapsedHours;
+        liveAmounts[row.currency] = amount;
         row.frame.setValues(amount, row.rate);
         // 정수 단위가 실제로 증가한 틱에만 기여 렐릭의 SD와 자원 아이콘으로 생산 피드백을 준다.
         if (Math.floor(amount) > row.previousAmount) this.playProductionTick(row.currency);
         row.previousAmount = Math.floor(amount);
       }
       // 창을 열어 둔 사이 정수 1개가 쌓이는 순간에도 새 조회 없이 버튼 상태만 정확히 갱신한다.
-      const harvestable = EXCAVATION_CURRENCIES.some((currency) => Math.floor(response.excavation.unclaimed[currency] + rate[currency] * elapsedHours) > 0);
+      const harvestable = EXCAVATION_CURRENCIES.some((currency) => Math.floor(liveAmounts[currency]) > 0);
       harvestButton?.setEnabled(harvestable && !this.saving);
       // 비활성 이유를 누적 0 또는 가장 빠른 재화의 다음 정수 생산 시각으로 짧게 설명한다.
-      const seconds = EXCAVATION_CURRENCIES.map((currency) => {
-        const current = response.excavation.unclaimed[currency] + rate[currency] * elapsedHours;
-        return rate[currency] > 0 ? Math.max(0, Math.ceil((1 - current) / rate[currency] * 3600)) : Number.POSITIVE_INFINITY;
-      });
+      const seconds = EXCAVATION_CURRENCIES.map((currency) => (
+        rate[currency] > 0 ? Math.max(0, Math.ceil((1 - liveAmounts[currency]) / rate[currency] * 3600)) : Number.POSITIVE_INFINITY
+      ));
       const next = Math.min(...seconds);
       availability.setText(harvestable ? "현재 누적 보상을 수확할 수 있습니다." : Number.isFinite(next) ? `현재 누적 0 · 다음 수확까지 약 ${Math.max(1, Math.ceil(next / 60))}분` : "현재 누적 0 · 렐릭을 배치하면 생산이 시작됩니다.");
-      const storageRatio = excavationStorageFillRatio(response.excavation, new Date());
+      // 실제로 쌓인 재화량 자체를 보관 한도와 비교한다 — 경과 시간 기준으로 계산하면 창을 열
+      // 때마다 서버 정산이 일어나 기준 시각이 현재로 밀리면서 게이지가 늘 0%로 보였다.
+      const limitSeconds = excavationStorageLimitSeconds(response.excavation, new Date());
+      const storageRatio = excavationStorageFillRatio(liveAmounts, rate, limitSeconds);
       storageGauge.setValue(storageRatio);
       storageLabel.setText(`보관량 ${Math.round(storageRatio * 100)}%`);
     };
@@ -441,7 +445,16 @@ export class IdleExcavationPopup {
       const y = portraitGridFirstRowY(0, GRID_VIEW.cardHeight, PORTRAIT_GRID_MASK_GAP) + Math.floor(index / 3) * GRID_VIEW.rowGap;
       const detail = excavationProductionDisplayModel([relic.id, null, null], RELICS, session.relicProgress).relics[0];
       const progress = session.relicProgress[relic.id];
-      const card = new PortraitCard(this.scene, x, y, { width: GRID_VIEW.cardWidth, height: GRID_VIEW.cardHeight, portraitAssetId: relic.portraitAssetId, tint: portraitUsesRelicTint(relic.portraitAssetId) ? tintFor(relic.id) : undefined, label: relic.name, level: progress?.level ?? 1, rarity: relic.rarity, stars: (progress?.breakthrough ?? 0) + 1, subIcon: EXCAVATION_TRAIT_ICON[relic.excavationTrait.primaryCurrency], sub: formatRate(detail?.totalPerHour ?? 0) });
+      const card = new PortraitCard(this.scene, x, y, {
+        width: GRID_VIEW.cardWidth, height: GRID_VIEW.cardHeight, portraitAssetId: relic.portraitAssetId,
+        tint: portraitUsesRelicTint(relic.portraitAssetId) ? tintFor(relic.id) : undefined,
+        label: relic.name, level: progress?.level ?? 1, rarity: relic.rarity, stars: (progress?.breakthrough ?? 0) + 1,
+        subIcon: EXCAVATION_TRAIT_ICON[relic.excavationTrait.primaryCurrency], sub: formatRate(detail?.totalPerHour ?? 0),
+        // 이미 1~3번 칸에 배치된 카드는 발광뿐 아니라 눌린 듯한 검정 면도 함께 써 "이미 골랐다"를
+        // 알린다. 튀어나온 머리 몫은 PortraitCard가 원화 알파 그대로 복제해 겹치므로 여기서는
+        // 값만 켠다.
+        selectedOverlayAlpha: 0.28,
+      });
       card.setSelected(this.draft!.includes(relic.id));
       card.hit.on("pointerup", () => {
         if (this.saving || !this.draft || this.gridDragMoved > GRID_DRAG_SLOP) return;
@@ -483,6 +496,10 @@ export class IdleExcavationPopup {
       const matrix = parent.getWorldTransformMatrix();
       const topLeft = matrix.transformPoint(GRID_VIEW.left, GRID_VIEW.top);
       this.gridMask.clear().fillStyle(0xffffff, 1).fillRect(topLeft.x, topLeft.y, (GRID_VIEW.right - GRID_VIEW.left) * matrix.scaleX, viewportHeight * matrix.scaleY);
+      // PortraitCard의 자체 기하 마스크는 부모(그리드) 이동을 상속하지 않으므로 스크롤 중에도
+      // 매 프레임 월드 좌표로 다시 맞춘다 — 그러지 않으면 카드는 내려가도 원화는 예전 자리에
+      // 그대로 남아 그리드와 어긋나 보인다.
+      for (const card of grid.list as PortraitCard[]) card.syncMask();
     };
     this.ticker?.remove(false);
     this.ticker = this.scene.time.addEvent({ delay: 16, loop: true, callback: syncMask });

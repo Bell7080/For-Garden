@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { excavationProductionDisplayModel, createIdleExcavationState, harvestIdleExcavation, nextExcavationSlot, placeExcavationRelic, settleIdleExcavation, validateExcavationFormation } from "../../src/core/idleExcavation";
+import { emptyExcavationAmounts, excavationProductionDisplayModel, createIdleExcavationState, excavationStorageFillRatio, excavationStorageLimitSeconds, harvestIdleExcavation, nextExcavationSlot, placeExcavationRelic, settleIdleExcavation, validateExcavationFormation } from "../../src/core/idleExcavation";
 import { WALLET_CAPS } from "../../src/data/economy";
 import { RELICS } from "../../src/data/relics";
 import type { RelicProgress } from "../../src/core/types";
@@ -126,6 +126,37 @@ describe("방치 발굴 순수 규칙", () => {
     expect(result.granted).toEqual({ gold: 0, cheesecake: 1, fossil: 1, gems: 0 });
     expect(result.discarded).toEqual({ gold: 2, cheesecake: 0, fossil: 2, gems: 2 });
     expect(result.state.unclaimed).toEqual({ gold: 0.25, cheesecake: 0.5, fossil: 0.75, gems: 0.9 });
+  });
+});
+
+describe("보관량 게이지", () => {
+  it("은 경과 시간이 아니라 실제 쌓인 재화량으로 채운 비율을 계산한다", () => {
+    // 시간당 10씩 4시간(14400초) 채우면 최대 40이 쌓인다. 20이 쌓였으면 절반이다.
+    const rate = { ...emptyExcavationAmounts(), fossil: 10 };
+    const unclaimed = { ...emptyExcavationAmounts(), fossil: 20 };
+    expect(excavationStorageFillRatio(unclaimed, rate, 4 * 3600)).toBeCloseTo(0.5);
+  });
+
+  it("은 조회(정산)를 여러 번 반복해도 값이 그대로다 — 경과 시간 기준의 회귀를 막는다", () => {
+    // 정산은 lastSettledAt을 매번 지금으로 밀지만, 쌓인 재화량 자체는 그대로다.
+    const rate = { ...emptyExcavationAmounts(), gold: 25 };
+    const unclaimed = { ...emptyExcavationAmounts(), gold: 100 };
+    const ratio = excavationStorageFillRatio(unclaimed, rate, 4 * 3600);
+    expect(excavationStorageFillRatio(unclaimed, rate, 4 * 3600)).toBe(ratio);
+    expect(ratio).toBeCloseTo(100 / (25 * 4));
+  });
+
+  it("은 여러 재화 중 가장 많이 찬 재화 기준으로 비율을 잡고 1을 넘지 않는다", () => {
+    const rate = { ...emptyExcavationAmounts(), gold: 10, cheesecake: 10 };
+    const unclaimed = { ...emptyExcavationAmounts(), gold: 100, cheesecake: 10 };
+    expect(excavationStorageFillRatio(unclaimed, rate, 3600)).toBe(1);
+  });
+
+  it("확장권이 활성인 동안에는 한도가 두 배다", () => {
+    const state = { ...activeState(), storageExtensionExpiresAt: "2026-08-20T04:00:00.000Z" };
+    expect(excavationStorageLimitSeconds(state, new Date("2026-08-20T01:00:00.000Z"))).toBe(state.baseStorageSeconds * 2);
+    // 만료 이후에는 원래 한도로 돌아온다.
+    expect(excavationStorageLimitSeconds(state, new Date("2026-08-20T05:00:00.000Z"))).toBe(state.baseStorageSeconds);
   });
 });
 

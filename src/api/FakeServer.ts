@@ -32,7 +32,6 @@ import { EXPEDITION_BOSS_BALANCE, EXPEDITION_CUMULATIVE_REWARD_STAGES, EXPEDITIO
 import { calculateExpeditionNodeRewards } from "../core/expeditionRewards";
 import { RelicProgressionManager } from "../managers/RelicProgressionManager";
 import { expeditionBattleEffects } from "../core/expeditionBattle";
-import { attackPowerMultiplier } from "../core/expeditionAugments";
 
 /** 사용자 룬 이름의 서버 정책이다. UI 글자 수와 무관하게 API 경계가 최종 권한을 가진다. */
 export const MAX_RUNE_NAME_LENGTH = 20;
@@ -116,13 +115,23 @@ export class FakeServer implements GameApi {
       const roster = run?.relics ?? this.state.party.map((relicId) => ({ relicId, currentHp: 100, alive: true }));
       const effects = expeditionBattleEffects(run?.selectedAugments ?? []);
       const progression = new RelicProgressionManager(this.state);
-      const allies = roster.map(({ relicId: id, currentHp }) => {
+      const allies = roster.map(({ relicId: id }) => {
         const relic = RELICS.find((entry) => entry.id === id);
         if (!relic || !this.state.owned.has(id)) throw new Error("INVALID_PARTY");
         const stats = progression.getFinalStats(id);
-        return { id, attack: Math.max(stats.atk, stats.ap) * attackPowerMultiplier(effects, id), maxHp: stats.hp, initialHp: stats.hp * currentHp / 100 };
+        // 스킬·패시브 계약은 정적 정의에서, 계정별 수치만 서버 성장 스냅샷에서 가져온다.
+        return { ...relic, stats };
       });
-      const result = resolveExpeditionBossBattle(allies, request.actions);
+      const boss = RELICS.find(({ id }) => id === "pontos");
+      if (!boss) throw new Error("INVALID_BOSS_DEFINITION");
+      const result = resolveExpeditionBossBattle({
+        allies,
+        boss,
+        initialHpPercentByRelic: Object.fromEntries(roster.map(({ relicId, currentHp }) => [relicId, currentHp])),
+        augmentEffects: effects,
+        // 서버와 BattleScene이 공유하는 논리 전장 크기다. 좌표는 렌더 픽셀이 아니라 순수 난전 입력이다.
+        arena: { left: 130, right: 950, top: 600, bottom: 1360 },
+      }, request.actions);
       if (result.totalDamage > EXPEDITION_BOSS_BALANCE.maximumAcceptedScore) throw new Error("ABNORMAL_SCORE");
       const improved = result.totalDamage > this.bossWeek.bestScore;
       this.bossWeek.cumulativeScore += result.totalDamage;

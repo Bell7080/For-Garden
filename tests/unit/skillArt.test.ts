@@ -198,9 +198,9 @@ describe("스피나 스킬 표시 계약", () => {
     expect(ferocityTraitDescription(spino.ferocityTrait)).toContain("3초 동안 [[stealth|은신]]한다");
     expect(spino.passive).toMatchObject({ name: "전투의 환희", kind: "basicHitAttackSpeedStack", value: 3 });
     expect(passiveDescription(spino.passive)).toContain("[[attack-speed|공격 속도]]가 3 증가");
-    expect(spino.basic).toMatchObject({ name: "악어턱 물어뜯기", power: 80, combo: { chancePercent: 40, hitCount: 2, missingHpHealingPercentPerHit: 10 } });
+    expect(spino.basic).toMatchObject({ name: "악어턱 물어뜯기", power: 80, combo: { chancePercent: 40, hitCount: 2, missingHpHealingPercentPerHit: 5 } });
     expect(skillDescription(spino.basic)).toContain("40% 확률로 [[combo|연격]]하여 총 2회 적중");
-    expect(skillDescription(spino.basic)).toContain("[[missing-hp|잃은 체력]]의 10%를 회복");
+    expect(skillDescription(spino.basic)).toContain("[[missing-hp|잃은 체력]]의 5%를 회복");
     expect(spino.ultimate).toMatchObject({ name: "범람의 포식자", power: 200, attackSpeedPower: 150, cost: 300, statusEffects: [{ kind: "stun", seconds: 3 }] });
     expect(skillDescription(spino.ultimate)).toContain("현재 [[attack-speed|공격 속도]]의 150%");
     expect(skillDescription(spino.ultimate)).toContain("[[stun|기절]]시킨다");

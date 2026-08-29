@@ -41,26 +41,29 @@ function makeSession(fossil = 1000): Session {
 }
 
 describe("FakeServer", () => {
-  /** 실제 피해량 없이 서버가 재현할 수 있는 매초 기본 공격 입력이다. */
-  const bossActions = (seconds: number) => Array.from({ length: seconds }, (_, second) => ["anky", "rex", "dodo"].flatMap((actorId) => [
-    { elapsedMs: second * 1_000, actorId, kind: "basic" as const },
-    // 8초 주기의 궁극기도 서버 쿨다운에 맞춰 포함해 첫 보상 단계까지 도달한다.
-    ...(second % 8 === 0 ? [{ elapsedMs: second * 1_000, actorId, kind: "ultimate" as const }] : []),
-  ])).flat();
+  /** 실제 피해량 없이 각 렐릭의 공용 공속 쿨다운을 만족하는 기본 공격 입력이다. */
+  const bossActions = (seconds: number) => Array.from({ length: Math.ceil(seconds / 2) }, (_, index) => ["anky", "rex", "dodo"].map((actorId) => (
+    { elapsedMs: index * 2_000, actorId, kind: "basic" as const }
+  ))).flat();
 
   it("보스 점수는 최고 기록만 갱신하고 더 낮은 제출은 최고 기록을 내리지 않는다", async () => {
     const server = new FakeServer(makeSession(), { latencyMs: 0, now: () => new Date("2026-08-25T12:00:00Z") });
-    const high = await server.submitExpeditionBossScore({ requestId: "boss-high", actions: bossActions(30) });
+    const high = await server.submitExpeditionBossScore({ requestId: "boss-high", actions: bossActions(10) });
     const low = await server.submitExpeditionBossScore({ requestId: "boss-low", actions: [] });
     expect(high.improved).toBe(true); expect(low.improved).toBe(false); expect(low.bestScore).toBe(high.score); expect(low.score).toBe(0);
   });
 
   it("누적 단계 보상은 다른 요청 ID로 재요청해도 한 번만 지급한다", async () => {
     const state = makeSession(); const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-25T12:00:00Z") });
-    await server.submitExpeditionBossScore({ requestId: "boss-reward-score", actions: bossActions(30) });
+    // 실제 스킬 계수 점수를 여러 정상 런으로 누적해 첫 주간 단계에 도달시킨다.
+    let weekly = await server.getExpeditionWeeklyBest();
+    for (let run = 0; weekly.cumulativeScore < 10_000; run += 1) {
+      await server.submitExpeditionBossScore({ requestId: `boss-reward-score-${run}`, actions: bossActions(10) });
+      weekly = await server.getExpeditionWeeklyBest();
+    }
     const first = await server.claimExpeditionReward({ requestId: "reward-a", stageId: "damage-10k" }); const gold = state.wallet.gold;
     const repeated = await server.claimExpeditionReward({ requestId: "reward-b", stageId: "damage-10k" });
-    const weekly = await server.getExpeditionWeeklyBest();
+    weekly = await server.getExpeditionWeeklyBest();
     // 공개 DTO가 운영 단계와 수령 스냅샷을 함께 반환해 클라이언트 정적 표를 UI 권한으로 쓰지 않게 한다.
     expect(first.alreadyClaimed).toBe(false); expect(first.wallet.gold).toBe(gold); expect(repeated.alreadyClaimed).toBe(true);
     expect(weekly.rewardStages.find(({ id }) => id === "damage-10k")?.claimed).toBe(true); expect(state.wallet.gold).toBe(gold);
@@ -539,7 +542,8 @@ describe("FakeServer 원정 정산", () => {
     expect((await server.getAdOperationsConfig()).slots.find(({ slotId }) => slotId === "quick-expedition")).toMatchObject({ enabled: false, weeklyLimitUtc: 5, weeklyClaims: 0, referenceScore: 0 });
     await expect(server.claimAdReward({ slotId: "quick-expedition", verificationToken: "failed", requestId: "quick-fail" })).rejects.toMatchObject({ code: "AD_TOKEN_INVALID" });
     expect(state.wallet.gold).toBe(0);
-    await server.submitExpeditionBossScore({ requestId: "quick-score", actions: Array.from({ length: 10 }, (_, second) => ["anky", "rex", "dodo"].map((actorId) => ({ elapsedMs: second * 1_000, actorId, kind: "basic" as const }))).flat() });
+    const quickActions = Array.from({ length: 5 }, (_, index) => ["anky", "rex", "dodo"].map((actorId) => ({ elapsedMs: index * 2_000, actorId, kind: "basic" as const }))).flat();
+    await server.submitExpeditionBossScore({ requestId: "quick-score", actions: quickActions });
     const reference = (await server.getExpeditionWeeklyBest()).bestScore;
     const firstQuick = await server.claimAdReward({ slotId: "quick-expedition", verificationToken: "verified:quick-expedition", requestId: "quick-1" });
     expect(firstQuick).toMatchObject({ granted: { gold: Math.floor(reference * 0.25) }, weeklyRemaining: 4 });

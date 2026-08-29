@@ -1378,7 +1378,26 @@ describe("폰토스 실전 스킬과 심해 압력", () => {
     pontos.attackCooldown = 0;
     const events = stepSkirmish(state, 1 / 60).filter((event) => event.kind === "attack" && event.attackerId === pontos.id);
     expect(events.map((event) => event.kind === "attack" ? event.targetId : "")).toEqual([allies[0].id, allies[1].id]);
-    expect(pontos.def.basic).toMatchObject({ damageType: "magical", targeting: "nearbyEnemies", radius: 520 });
+    expect(pontos.def.basic).toMatchObject({ damageType: "magical", power: 100, scalingStat: "ap", targeting: "nearbyEnemies", radius: 520 });
+    // 지름 1,040px은 정적 전장 폭·높이보다 넓되 모서리 전체를 덮지는 않아 "주위"와 전장 전체를 구분한다.
+    expect(pontos.def.basic.radius! * 2).toBeGreaterThan(ARENA.right - ARENA.left);
+    expect(pontos.def.basic.radius! * 2).toBeGreaterThan(ARENA.bottom - ARENA.top);
+    expect(pontos.def.basic.radius).toBeGreaterThan(SKIRMISH.reach * 3);
+  });
+
+  it("는 기본 공격의 범위 내 다중 적에게 현재 주문력 100%를 쓰고 범위 밖 적은 제외한다", () => {
+    const { state, pontos, allies } = pontosBattle();
+    // 방어·속성·치명타 변수를 제거해 이벤트 원피해가 계수 자체를 정확히 드러내게 한다.
+    pontos.def = { ...pontos.def, element: "earth", stats: { ...pontos.def.stats, ap: 137, critChance: 0 } };
+    allies.forEach((ally) => { ally.def = { ...ally.def, element: "earth", stats: { ...ally.def.stats, res: 0 } }; });
+    allies[0].x = 500; allies[1].x = 919;
+    // 물리 분리 보정 한 프레임 뒤에도 확실히 반경 밖이도록 전장 우하단에 둔다.
+    allies[2].x = ARENA.right; allies[2].y = ARENA.bottom;
+    pontos.attackCooldown = 0;
+    const attacks = stepSkirmish(state, 1 / 60, () => 0.99).filter((event) => event.kind === "attack" && event.attackerId === pontos.id);
+    expect(attacks.map((event) => event.kind === "attack" ? [event.targetId, event.scoreAmount] : [])).toEqual([
+      [allies[0].id, 137], [allies[1].id, 137],
+    ]);
   });
 
   it("는 해일 궁극기로 거리에 관계없이 생존한 모든 아군을 타격한다", () => {
@@ -1387,7 +1406,22 @@ describe("폰토스 실전 스킬과 심해 압력", () => {
     pontos.energy = pontos.def.ultimate.cost;
     const events = fireUltimate(state, pontos.id).filter((event) => event.kind === "attack");
     expect(events.map((event) => event.kind === "attack" ? event.targetId : "").sort()).toEqual([allies[0].id, allies[1].id].sort());
-    expect(pontos.def.ultimate.targeting).toBe("battlefieldEnemies");
+    expect(pontos.def.ultimate).toMatchObject({ power: 500, scalingStat: "ap", targeting: "battlefieldEnemies", statusEffects: [{ kind: "stun", seconds: 5 }] });
+    expect(allies[0].stunnedFor).toBe(5);
+    expect(allies[1].stunnedFor).toBe(5);
+  });
+
+  it("는 전장 전체 궁극기에 주문력 500% 피해와 각 대상의 기절 저항을 적용한다", () => {
+    const { state, pontos, allies } = pontosBattle();
+    pontos.def = { ...pontos.def, element: "earth", stats: { ...pontos.def.stats, ap: 120, critChance: 0 } };
+    allies.forEach((ally, index) => {
+      ally.x = index === 0 ? ARENA.left : ARENA.right;
+      ally.def = { ...ally.def, element: "earth", stats: { ...ally.def.stats, res: 0 }, stunResistancePercent: index * 50 };
+    });
+    pontos.energy = pontos.def.ultimate.cost;
+    const attacks = fireUltimate(state, pontos.id, () => 0.99).filter((event) => event.kind === "attack");
+    expect(attacks.map((event) => event.kind === "attack" ? event.scoreAmount : 0)).toEqual([600, 600, 600]);
+    expect(allies.map((ally) => ally.stunnedFor)).toEqual([5, 2.5, 0]);
   });
 
   it("는 0초·1초·여러 초에 기본 주문력 5%를 복리 누적하고 프레임 분할과 무관하다", () => {

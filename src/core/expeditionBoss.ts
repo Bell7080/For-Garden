@@ -13,7 +13,7 @@ export interface ExpeditionBossReplayInput {
   augmentEffects?: readonly ExpeditionAugmentEffect[];
   arena: Arena;
 }
-/** 전멸한 정상 종료만 확정하며 totalDamage는 공용 난전에서 실제 HP에 적용된 점수다. */
+/** 전멸한 정상 종료만 확정하며 totalDamage는 서버가 행동 로그로 재계산한 대상 경감 전 기여도다. */
 export interface ExpeditionBossResult { totalDamage: number; endedAtMs: number; allAlliesDead: true; bossDefeated: false; remainingHpByAlly: Record<string, number>; }
 
 /** 해당 시각에 활성인 마지막 보스 단계를 찾는다. 일반 단계는 표시만 하고 피해는 폰토스 스킬이 소유한다. */

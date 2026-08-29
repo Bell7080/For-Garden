@@ -17,6 +17,7 @@ import {
   moveSpeed,
   renderPose,
   receivedDamage,
+  resolveReceivedDamage,
   SKIRMISH,
   stepSkirmish,
   teamHp,
@@ -313,18 +314,26 @@ describe("단일 난전의 원정 보스 옵션", () => {
     expect(state.phase).toBe("fight"); expect(state.fighters[1].hp).toBe(0); expect(state.fighters[1].immortal).toBe(true); expect(state.boss?.score).toBeGreaterThan(0);
   });
 
-  it("는 폰토스 내구력 경감 후 실제 HP 피해만 점수화한다", () => {
+  it("는 폰토스가 무효화한 공격도 경감 전 기여를 보스 점수로 기록한다", () => {
     const state = createSkirmish([getRelic("anky")], [getRelic("pontos")], ARENA, {}, {}, {
       boss: { phases: [{ startsAt: 0, damagePerSecond: 0, label: "관측" }], limitSeconds: 1 },
     });
     const [ally, boss] = state.fighters;
     ally.x = boss.x = 400; ally.y = boss.y = 900; ally.attackCooldown = 0; boss.attackCooldown = 999;
+    // 공격자는 정확히 1,000을 만들지만 대상 방어와 심해 압력 뒤 최종 피해는 무효 구간에 든다.
+    ally.def = { ...ally.def, element: boss.def.element, stats: { ...ally.def.stats, atk: 1_000, critChance: 0 }, basic: { ...ally.def.basic, power: 100, scalingStat: "atk", damageType: "physical" } };
+    boss.def = { ...boss.def, stats: { ...boss.def.stats, def: 10_000 } };
     boss.hp = boss.maxHp * 0.5;
-    const attack = stepSkirmish(state, 1 / 60).find((event) => event.kind === "attack" && event.attackerId === ally.id);
-    expect(attack).toMatchObject({ kind: "attack", amount: 1 });
-    // 서버 검증기와 같이 방어·내구력·보호막을 넘은 실제 적용량을 점수로 정의한다.
-    expect(attack?.kind === "attack" ? attack.scoreAmount : 0).toBe(1);
-    expect(state.boss?.score).toBe(attack?.kind === "attack" ? attack.scoreAmount : 0);
+    boss.shield = 100;
+    const events = stepSkirmish(state, 1 / 60);
+    const attack = events.find((event) => event.kind === "attack" && event.attackerId === ally.id);
+    expect(attack).toMatchObject({ kind: "attack", amount: 0 });
+    expect(events).toContainEqual({ kind: "damageIgnored", attackerId: ally.id, targetId: boss.id });
+    // 무효 공격은 보호막·피격 야성·흡혈 및 피해 기반 회복의 실제 피해 원천을 만들지 않는다.
+    expect(boss.shield).toBe(100); expect(boss.ferocity).toBe(0);
+    expect(events.filter((event) => event.kind === "shieldAbsorbed" || event.kind === "heal")).toEqual([]);
+    expect(attack?.kind === "attack" ? attack.contributionAmount : 0).toBe(1_000);
+    expect(state.boss?.score).toBe(attack?.kind === "attack" ? attack.contributionAmount : 0);
   });
 
   it("는 명시한 보스만 0 HP에서 전투를 지속하고 적 부속물은 정상 사망시킨다", () => {
@@ -363,7 +372,7 @@ describe("단일 난전의 원정 보스 옵션", () => {
       const events = stepSkirmish(state, 1 / 60, () => 0.99);
       for (const event of events) {
         if (event.kind !== "attack") continue;
-        if (event.attackerId.startsWith("player")) cumulativeScore += event.amount;
+        if (event.attackerId.startsWith("player")) cumulativeScore += event.contributionAmount;
         if (event.attackerId === "enemy-0" && event.skill === "ultimate" && firstUltimateAt === undefined) {
           firstUltimateAt = state.elapsed;
           survivorsAfterFirstUltimate = aliveFighters(state, "player").length;
@@ -374,10 +383,10 @@ describe("단일 난전의 원정 보스 옵션", () => {
     expect(firstUltimateAt).toBeGreaterThanOrEqual(20);
     expect(firstUltimateAt).toBeLessThanOrEqual(21);
     expect(survivorsAfterFirstUltimate).toBeGreaterThan(0);
-    expect(state.elapsed).toBeGreaterThanOrEqual(28);
+    expect(state.elapsed).toBeGreaterThanOrEqual(24);
     expect(state.elapsed).toBeLessThanOrEqual(30);
-    expect(cumulativeScore).toBeGreaterThanOrEqual(1_100);
-    expect(cumulativeScore).toBeLessThanOrEqual(1_400);
+    expect(cumulativeScore).toBeGreaterThanOrEqual(14_000);
+    expect(cumulativeScore).toBeLessThanOrEqual(15_000);
     // 300 비용을 7회 타격으로 채우므로 두 해일 사이의 이론상 최소 간격도 5초 기절보다 충분히 길다.
     const boss = state.fighters.find((fighter) => fighter.side === "enemy")!;
     const minimumUltimateGap = attackInterval(boss, state) * Math.ceil(boss.def.ultimate.cost / boss.def.stats.energyGain);
@@ -1450,7 +1459,7 @@ describe("폰토스 실전 스킬과 심해 압력", () => {
     allies[2].x = ARENA.right; allies[2].y = ARENA.bottom;
     pontos.attackCooldown = 0;
     const attacks = stepSkirmish(state, 1 / 60, () => 0.99).filter((event) => event.kind === "attack" && event.attackerId === pontos.id);
-    expect(attacks.map((event) => event.kind === "attack" ? [event.targetId, event.scoreAmount] : [])).toEqual([
+    expect(attacks.map((event) => event.kind === "attack" ? [event.targetId, event.contributionAmount] : [])).toEqual([
       [allies[0].id, 137], [allies[1].id, 137],
     ]);
   });
@@ -1475,7 +1484,7 @@ describe("폰토스 실전 스킬과 심해 압력", () => {
     });
     pontos.energy = pontos.def.ultimate.cost;
     const attacks = fireUltimate(state, pontos.id, () => 0.99).filter((event) => event.kind === "attack");
-    expect(attacks.map((event) => event.kind === "attack" ? event.scoreAmount : 0)).toEqual([600, 600, 600]);
+    expect(attacks.map((event) => event.kind === "attack" ? event.contributionAmount : 0)).toEqual([600, 600, 600]);
     expect(allies.map((ally) => ally.stunnedFor)).toEqual([5, 2.5, 0]);
   });
 
@@ -1501,9 +1510,17 @@ describe("폰토스 실전 스킬과 심해 압력", () => {
     pontos.hp = pontos.maxHp * 0.75;
     expect(receivedDamage(pontos, 100)).toBe(26); // 74.5% 경감 후 25.5를 반올림한다.
     pontos.hp = pontos.maxHp * 0.5;
-    expect(receivedDamage(pontos, 100)).toBe(1);
+    expect(receivedDamage(pontos, 100)).toBe(0);
     pontos.hp = pontos.maxHp * 0.49;
-    expect(receivedDamage(pontos, 100)).toBe(1); // 99% 경감 상한과 최소 1 피해를 함께 고정한다.
+    expect(receivedDamage(pontos, 100)).toBe(0); // 99% 경감 뒤 최종 1 피해는 폰토스만 무효화한다.
+  });
+
+  it("는 최종 10을 무효화하고 11은 적용하되 일반 전투원의 최소 1 피해를 유지한다", () => {
+    const { pontos, allies } = pontosBattle();
+    pontos.hp = pontos.maxHp;
+    expect(resolveReceivedDamage(pontos, 20)).toEqual({ raw: 20, reduced: 10, applied: 0, ignored: true });
+    expect(resolveReceivedDamage(pontos, 22)).toEqual({ raw: 22, reduced: 11, applied: 11, ignored: false });
+    expect(resolveReceivedDamage(allies[0], 0.01)).toEqual({ raw: 0.01, reduced: 1, applied: 1, ignored: false });
   });
 
   it("는 폭주 1초마다 방어력과 저항력을 무시하고 모든 생존 적의 최대 체력 2%를 깎는다", () => {

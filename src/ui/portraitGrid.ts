@@ -47,3 +47,16 @@ export function portraitGridContentHeight(rows: number, rowGap: number, cardHeig
   if (rows <= 0) return 0;
   return portraitGridHeadroom(cardHeight) + (rows - 1) * rowGap + cardHeight;
 }
+
+/**
+ * 머리가 빠져나오는 윗변 홈의 실제 폭.
+ *
+ * 원하는 비율(`ratio`)이 위쪽 두 모서리의 대각선 깎임 안쪽까지 넓으면, 그 `/` 모서리가 홈
+ * 밖으로 튀어나온 머리를 가로질러 애매하게 잘라 낸다(출격 팝업의 SD 자리도 같은 문제라
+ * `bandBottom`으로 깎인 깊이만큼 띠를 내려 피한다). 여기서는 홈 폭 자체를 깎인 깊이만큼
+ * 줄여 두 대각선 바깥에서 항상 시작하게 한다.
+ */
+export function portraitCardNotchWidth(chipWidth: number, topLeftBevel: number, topRightBevel: number, ratio = 0.8): number {
+  const clearance = 4;
+  return Math.min(chipWidth * ratio, chipWidth - 2 * Math.max(topLeftBevel, topRightBevel) - clearance);
+}

@@ -8,6 +8,10 @@ import { breakthroughBonus } from "./relicProgression";
 import { attackPowerMultiplier, bleedOnAttackEffect, type ExpeditionAugmentEffect } from "./expeditionAugments";
 import type { CombatStatusEffect, RelicDef, Side, Skill } from "./types";
 import { canUseUltimate, ULTIMATE_ENERGY_MAX } from "./ultimate";
+import {
+  accumulateDamageContribution, addContribution, contributionSnapshot, createBattleContributions, type BattleContributionRow, type BattleContributions,
+  type ContributionCategory,
+} from "./battleContribution";
 
 /**
  * 실시간 난전(3 대 3).
@@ -70,12 +74,12 @@ export interface Fighter extends Combatant {
   stunnedFor: number;
   /** 남은 경직 시간(초). 기절과 달리 저항·유지 모션 없이 순간적으로만 행동을 끊는다. */
   staggeredFor: number;
-  /** 모든 피해보다 먼저 소모되는 현재 보호막 잔량이다. */
-  shield: number;
+  /** 모든 피해보다 먼저 소모되며 제공자의 안정적인 런타임 ID를 함께 보존하는 보호막이다. */
+  shield: { amount: number; providerId: string | null };
   /** 아다지오 정화·보호막의 메테 개체별 남은 쿨타임(초)이다. JSON 직렬화 가능한 숫자다. */
   adagioCooldownRemaining: number;
   /** 걸려 있는 출혈. 없으면 null이다. */
-  bleed: { remaining: number; tickIn: number; percent: number } | null;
+  bleed: { remaining: number; tickIn: number; percent: number; sourceId?: string } | null;
   /** 이 전투에서 긴급 회복 패시브를 이미 발동했는지. 저장하지 않는 "전투당 1회" 소유 상태다. */
   passiveTriggered: boolean;
   /** 진행 중인 지속 회복. remaining과 tickIn은 초, percentPerTick은 최대 HP 대비 %이며 저장하지 않는다. */
@@ -96,6 +100,8 @@ export type SkirmishPhase = "fight" | "victory" | "defeat";
 
 export interface SkirmishState {
   fighters: Fighter[];
+  /** 중복 relicId와 무관하게 런타임 ID별로 누적하는 전투 결과의 단일 진실이다. */
+  contributions: BattleContributions;
   arena: Arena;
   phase: SkirmishPhase;
   /** 전투가 시작된 뒤 흐른 시간(초). */
@@ -268,7 +274,7 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     // 전투 시작 시 모든 행동 가능 상태이며, 기절은 전투 한정 상태라 저장 스냅샷에서 복원하지 않는다.
     stunnedFor: 0,
     staggeredFor: 0,
-    shield: 0,
+    shield: { amount: 0, providerId: null },
     adagioCooldownRemaining: 0,
     bleed: null,
     // 저장 스냅샷의 HP만 반영하고, 전투 한정 발동권과 지속 효과는 매 전투 새로 만든다.
@@ -329,8 +335,10 @@ export function createSkirmish(
     return fighter;
   });
   if (options.boss && !enemies.some(({ id }) => id === bossFighterId)) throw new RangeError("보스 전투원 ID는 적 편성에 존재해야 합니다.");
+  const fighters = [...players, ...enemies];
   return {
-    fighters: [...players, ...enemies],
+    fighters,
+    contributions: createBattleContributions(fighters.map(({ id }) => id)),
     arena,
     phase: "fight",
     elapsed: 0,
@@ -348,6 +356,16 @@ export function skirmishRelicResults(state: SkirmishState): SkirmishRelicResult[
     currentHp: Math.max(0, Math.min(100, (fighter.hp / fighter.maxHp) * 100)),
     alive: isFighterAlive(fighter),
   }));
+}
+
+/** 화면에는 전투원 자체나 누적 원본 대신 표시 메타데이터까지 복제한 읽기 전용 성격의 행만 준다. */
+export function battleContributionSnapshot(state: SkirmishState, category: ContributionCategory): BattleContributionRow[] {
+  // 전투 패널은 아군 성과표이므로 사망 여부와 무관하게 최초 편성의 모든 아군만 복사한다.
+  return contributionSnapshot(state.contributions, state.fighters.filter((fighter) => fighter.side === "player").map((fighter, formationOrder) => ({
+    id: fighter.id, formationOrder, name: fighter.def.name,
+    // 현재 데이터 모델에서 초상 에셋의 안정 키는 렐릭 정의 ID이며 누적 키로는 사용하지 않는다.
+    portraitId: fighter.def.id,
+  })), category);
 }
 
 export function isFighterAlive(fighter: Fighter): boolean {
@@ -398,31 +416,33 @@ function cleanseControlWithAdagio(state: SkirmishState, target: Fighter, events:
   target.stunnedFor = 0;
   target.staggeredFor = 0;
   const amount = provider.def.stats.atk * (provider.def.passive.cleanseShieldAttackPercent ?? 0) / 100;
-  target.shield += amount;
+  target.shield.amount += amount;
+  target.shield.providerId = provider.id;
   provider.adagioCooldownRemaining = provider.def.passive.cleanseCooldownSeconds ?? 0;
-  events.push({ kind: "shieldGranted", fighterId: target.id, providerId: provider.id, amount, remaining: target.shield });
+  events.push({ kind: "shieldGranted", fighterId: target.id, providerId: provider.id, amount, remaining: target.shield.amount });
 }
 
 /** 개별 스킬과 야성 특성에서 같은 판별 가능한 상태 효과를 적용한다. */
-function applyCombatStatusEffect(fighter: Fighter, effect: CombatStatusEffect, events: SkirmishEvent[], state: SkirmishState): void {
+function applyCombatStatusEffect(fighter: Fighter, effect: CombatStatusEffect, events: SkirmishEvent[], state: SkirmishState, sourceId?: string): void {
   if (effect.kind === "stun") events.push(...applyStun(fighter, effect.seconds, state));
   if (effect.kind === "stagger") events.push(...applyStagger(fighter, effect.seconds, state));
-  if (effect.kind === "bleed") refreshBleed(fighter, effect.seconds, effect.maxHpPercentPerSecond, events);
+  if (effect.kind === "bleed") refreshBleed(fighter, effect.seconds, effect.maxHpPercentPerSecond, events, sourceId);
 }
 
 /** 한 스킬이 선언한 상태를 생존한 한 적중 대상에게 공용 저항·UI 사건 경로로 적용한다. */
-function applySkillStatuses(target: Fighter, skill: Skill, events: SkirmishEvent[], state: SkirmishState): void {
+function applySkillStatuses(target: Fighter, skill: Skill, events: SkirmishEvent[], state: SkirmishState, sourceId?: string): void {
   // 피해로 쓰러진 대상에는 지속 상태나 UI 뱃지를 새로 만들지 않는다.
   if (!isFighterAlive(target)) return;
-  for (const effect of skill.statusEffects ?? []) applyCombatStatusEffect(target, effect, events, state);
+  for (const effect of skill.statusEffects ?? []) applyCombatStatusEffect(target, effect, events, state, sourceId);
 }
 
 /** 모든 출혈 진입점이 공유하는 단일 슬롯 갱신 규칙이다. 약한 재적용은 강도와 틱 시계를 덮지 않는다. */
-function refreshBleed(target: Fighter, seconds: number, percent: number, events: SkirmishEvent[]): void {
+function refreshBleed(target: Fighter, seconds: number, percent: number, events: SkirmishEvent[], sourceId?: string): void {
   target.bleed = {
     remaining: Math.max(target.bleed?.remaining ?? 0, seconds),
     tickIn: target.bleed?.tickIn ?? 1,
     percent: Math.max(target.bleed?.percent ?? 0, percent),
+    sourceId: percent >= (target.bleed?.percent ?? 0) ? sourceId : target.bleed?.sourceId,
   };
   events.push({ kind: "bleed", fighterId: target.id, amount: 0, started: true });
 }
@@ -502,13 +522,16 @@ function isHealingCancelledByPontus(state: SkirmishState, target: Fighter): bool
 }
 
 /** 모든 체력 회복 경로가 폰토스 차단, 적 생존 오라 감소, 실제 최대 HP 상한을 공유한다. */
-function applyHealing(state: SkirmishState, target: Fighter, requested: number): number {
+function applyHealing(state: SkirmishState, target: Fighter, requested: number, casterId = target.id): number {
   // 폭주 종료나 폰토스 사망은 별도 상태 정리 없이 이 현재 상태 판정만으로 즉시 차단을 해제한다.
   if (isHealingCancelledByPontus(state, target)) return 0;
   const reduction = strongestLivingAura(state, target.side, "enemyHealingReceivedReductionPercent");
   const before = target.hp;
   target.hp = Math.min(target.maxHp, target.hp + Math.max(0, requested) * (1 - reduction / 100));
-  return target.hp - before;
+  const actual = target.hp - before;
+  // 취소·과잉 회복은 actual이 0이므로 누적되지 않으며, 흡혈·자가 재생은 기본 casterId가 자신이다.
+  addContribution(state.contributions, casterId, "healing", actual);
+  return actual;
 }
 
 /** 현재 HP 절대값이 가장 낮은 생존 아군을 고르며 동률은 fighters의 편성 순서로 확정한다. */
@@ -633,7 +656,7 @@ function applyStreak(attacker: Fighter, target: Fighter, events: SkirmishEvent[]
   attacker.streakTargetId = target.id;
   if (attacker.streakCount < attacker.def.passive.value) return;
   attacker.streakCount = 0;
-  refreshBleed(target, BLEED.seconds, BLEED.percentPerSecond, events);
+  refreshBleed(target, BLEED.seconds, BLEED.percentPerSecond, events, attacker.id);
 }
 
 /** 공격력은 배율로, 백분율 척도인 치명타 피해는 퍼센트포인트로 임시 정의에 반영한다. */
@@ -670,8 +693,11 @@ function triggerCrescendoStaccato(state: SkirmishState, target: Fighter, events:
     });
     const resolution = resolveReceivedDamage(target, raw);
     const amount = resolution.applied;
+    const hpBefore = target.hp; const shieldBefore = target.shield.amount; const shieldProviderId = target.shield.providerId;
     applyDamage(target, amount, events);
-    events.push({ kind: "attack", attackerId: mette.id, targetId: target.id, skill: "staccato", amount, contributionAmount, critical: false, animate: false });
+    // 스타카토 추가타도 공격자 귀속이 명확하므로 최종 HP 손실 정책에 포함한다.
+    const credited = recordDamageContribution(state, mette.id, target, "magical", "atk", contributionAmount, resolution, hpBefore, shieldBefore, shieldProviderId);
+    events.push({ kind: "attack", attackerId: mette.id, targetId: target.id, skill: "staccato", amount, contributionAmount: credited, critical: false, animate: false });
     if (resolution.ignored) events.push({ kind: "damageIgnored", attackerId: mette.id, targetId: target.id });
     if (isFighterAlive(target)) events.push(...applyStagger(target, trait.staggerSeconds, state));
   }
@@ -773,15 +799,47 @@ function applyDamage(target: Fighter, amount: number, events: SkirmishEvent[]): 
   const hpBefore = target.hp;
   // 무효화된 0 피해는 보호막 사건조차 만들지 않아 보호막 잔량과 피격 파생 효과를 보존한다.
   if (amount <= 0) return 0;
-  if (target.shield > 0) {
-    const absorbed = Math.min(target.shield, amount);
-    target.shield -= absorbed;
-    events.push({ kind: "shieldAbsorbed", fighterId: target.id, amount: absorbed, remaining: target.shield });
-    if (target.shield <= 0) events.push({ kind: "shieldDepleted", fighterId: target.id });
+  if (target.shield.amount > 0) {
+    const absorbed = Math.min(target.shield.amount, amount);
+    target.shield.amount -= absorbed;
+    events.push({ kind: "shieldAbsorbed", fighterId: target.id, amount: absorbed, remaining: target.shield.amount });
+    if (target.shield.amount <= 0) {
+      events.push({ kind: "shieldDepleted", fighterId: target.id });
+      // 소진된 보호막의 제공자가 다음 보호막에 잘못 이어지지 않도록 함께 비운다.
+      target.shield.providerId = null;
+    }
     amount -= absorbed;
   }
   target.hp = Math.max(0, target.hp - amount);
   return hpBefore - target.hp;
+}
+
+/**
+ * 공격 한 건의 최종 HP 손실과 방지량을 같은 시점에 기록한다.
+ * 공격은 과잉 피해를 제외한 실제 HP 손실만, 방어는 공격 직전 HP·보호막 범위 안에서만 인정한다.
+ * 속성·방어/저항·패시브·폰토스 체력 비례 경감은 피해 타입의 방어 세부값에, 보호막은 제공자에게 간다.
+ */
+function recordDamageContribution(
+  state: SkirmishState,
+  attackerId: string,
+  target: Fighter,
+  damageType: "physical" | "magical",
+  scalingStat: "atk" | "ap" | "def" | undefined,
+  preMitigation: number,
+  resolution: ReceivedDamageResult,
+  hpBefore: number,
+  shieldBefore: number,
+  shieldProviderId: string | null,
+): number {
+  const hpDamage = Math.max(0, hpBefore - target.hp);
+  const attackDetail = scalingStat === "ap" || (scalingStat === undefined && damageType === "magical") ? "abilityPower" : "attackPower";
+  const shieldAbsorbed = Math.max(0, shieldBefore - target.shield.amount);
+  accumulateDamageContribution(state.contributions, {
+    attackerId, targetId: target.id, attackDetail,
+    defenseDetail: damageType === "physical" ? "armor" : "resistance",
+    preMitigation, postMitigation: resolution.applied, hpBefore, shieldBefore, hpDamage, shieldAbsorbed, shieldProviderId,
+  });
+  return hpDamage;
 }
 
 /** 걸린 출혈을 1초 간격으로 깎는다. 방어력을 거치지 않는 고정 피해다. */
@@ -792,7 +850,10 @@ function tickBleed(fighter: Fighter, dt: number, state: SkirmishState, events: S
   bleed.tickIn -= dt;
   while (bleed.tickIn <= 0 && isFighterAlive(fighter)) {
     const amount = receivedDamage(fighter, Math.max(1, Math.round((fighter.maxHp * bleed.percent) / 100)));
+    const hpBefore = fighter.hp;
     applyDamage(fighter, amount, events);
+    // 출혈은 건 공격자가 명확할 때만 고정 피해의 실제 HP 손실을 공격 기여도로 인정한다.
+    if (bleed.sourceId) addContribution(state.contributions, bleed.sourceId, "attack", hpBefore - fighter.hp, "attackPower");
     events.push({ kind: "bleed", fighterId: fighter.id, amount, started: false });
     // 출혈도 직접 공격과 동일한 HP 변경 경계를 통과해야 패시브 발동 시점이 일관된다.
     tryTriggerEmergencyRecovery(fighter);
@@ -875,7 +936,10 @@ function strike(
   const amount = resolution.applied;
 
   const targetHpBefore = target.hp;
+  const shieldBefore = target.shield.amount;
+  const shieldProviderId = target.shield.providerId;
   const dealt = applyDamage(target, amount, events);
+  const credited = recordDamageContribution(state, attacker.id, target, damageInput.damageType, damageInput.scalingStat, contributionAmount, resolution, targetHpBefore, shieldBefore, shieldProviderId);
   tryTriggerEmergencyRecovery(target);
   /**
    * 흡혈 규칙: 보호막을 통과한 뒤 실제 HP에서 빠진 직접/광역 피해에만 적용한다.
@@ -890,7 +954,7 @@ function strike(
     const ally = lowestCurrentHpAlly(state, attacker.side);
     if (ally) {
       // 과잉 피해가 아닌 실제 감소 HP만 회복 원천으로 쓰며 공격자 자신도 정상 후보에 남긴다.
-      const healed = applyHealing(state, ally, (targetHpBefore - target.hp) * attacker.def.basic.lowestHpAllyHealingFromDamagePercent / 100);
+      const healed = applyHealing(state, ally, (targetHpBefore - target.hp) * attacker.def.basic.lowestHpAllyHealingFromDamagePercent / 100, attacker.id);
       if (healed > 0) events.push({ kind: "heal", fighterId: ally.id, amount: healed, source: "passive" });
     }
   }
@@ -926,7 +990,7 @@ function strike(
   const augmentBleed = bleedOnAttackEffect(state.augmentEffects, attacker.def.id);
   if (augmentBleed && isFighterAlive(target)) {
     // 원정 증강도 스킬·연속 공격과 동일한 출혈 갱신 규칙을 공유한다.
-    refreshBleed(target, augmentBleed.seconds, augmentBleed.percent, events);
+    refreshBleed(target, augmentBleed.seconds, augmentBleed.percent, events, attacker.id);
   }
 
   events.push({
@@ -935,7 +999,8 @@ function strike(
     targetId: target.id,
     skill: useUltimate ? "ultimate" : "basic",
     amount,
-    contributionAmount,
+    // 사건과 상태 모두 서버 검증기가 재계산하는 과잉 피해 제한 후 실제 HP 손실을 쓴다.
+    contributionAmount: credited,
     critical,
   });
   if (resolution.ignored) events.push({ kind: "damageIgnored", attackerId: attacker.id, targetId: target.id });
@@ -944,7 +1009,7 @@ function strike(
   if (!useUltimate) triggerCrescendoStaccato(state, target, events);
 
   // 개별 기본 공격·궁극기가 선언한 상태도 피해 처리 뒤 공용 저항/재적용 규칙을 그대로 사용한다.
-  applySkillStatuses(target, skill, events, state);
+  applySkillStatuses(target, skill, events, state, attacker.id);
 
   // 광역 피해는 주 대상 타격의 부가 결과이며 에너지·야성·연속 공격을 추가 획득하지 않는다.
   if (attackingInFever && splashTrait.effectId === "splashDamage") {
@@ -969,11 +1034,13 @@ function strike(
       const splashResolution = resolveReceivedDamage(secondary, secondaryBase);
       const splashAmount = splashResolution.applied;
       const secondaryHpBefore = secondary.hp;
+      const secondaryShieldBefore = secondary.shield.amount; const secondaryShieldProviderId = secondary.shield.providerId;
       applyDamage(secondary, splashAmount, events);
+      const splashCredited = recordDamageContribution(state, attacker.id, secondary, damageInput.damageType, damageInput.scalingStat, splashContribution, splashResolution, secondaryHpBefore, secondaryShieldBefore, secondaryShieldProviderId);
       tryTriggerEmergencyRecovery(secondary);
       // 광역 피해도 공격자가 실제로 입힌 HP 피해이므로 같은 흡혈 규칙에 포함한다.
       healFromDamage(secondaryHpBefore - secondary.hp);
-      events.push({ kind: "attack", attackerId: attacker.id, targetId: secondary.id, skill: useUltimate ? "ultimate" : "basic", amount: splashAmount, contributionAmount: splashContribution, critical });
+      events.push({ kind: "attack", attackerId: attacker.id, targetId: secondary.id, skill: useUltimate ? "ultimate" : "basic", amount: splashAmount, contributionAmount: splashCredited, critical });
       if (splashResolution.ignored) events.push({ kind: "damageIgnored", attackerId: attacker.id, targetId: secondary.id });
       if (isFighterAlive(secondary) && splashTrait.statusEffect) applyCombatStatusEffect(secondary, splashTrait.statusEffect, events, state);
       if (!isFighterAlive(secondary)) {
@@ -1062,7 +1129,9 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     const resolution = resolveReceivedDamage(target, rawAmount);
     const amount = resolution.applied;
     const hpBefore = target.hp;
+    const shieldBefore = target.shield.amount; const shieldProviderId = target.shield.providerId;
     applyDamage(target, amount, events);
+    const credited = recordDamageContribution(state, attacker.id, target, damageInput.damageType, damageInput.scalingStat, contributionAmount, resolution, hpBefore, shieldBefore, shieldProviderId);
     tryTriggerEmergencyRecovery(target);
     // 흡혈은 대상별 실제 HP 감소량만 더해 과잉 피해를 회복량으로 만들지 않는다.
     applyHealing(state, attacker, (hpBefore - target.hp) * damageHealingRate(attacker, skill, attackingInFever) / 100);
@@ -1077,13 +1146,13 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     }
     target.dashX = (dx / gap) * SKIRMISH.knockback * 1.4;
     target.dashY = (dy / gap) * SKIRMISH.knockback * 1.4;
-    events.push({ kind: "attack", attackerId: attacker.id, targetId: target.id, skill: useUltimate ? "ultimate" : "basic", amount, contributionAmount, critical, animate: index === 0 });
+    events.push({ kind: "attack", attackerId: attacker.id, targetId: target.id, skill: useUltimate ? "ultimate" : "basic", amount, contributionAmount: credited, critical, animate: index === 0 });
     if (resolution.ignored) events.push({ kind: "damageIgnored", attackerId: attacker.id, targetId: target.id });
 
     // 죽은 대상에는 지속 상태와 상태 UI 시작 사건을 절대 남기지 않는다.
     if (isFighterAlive(target)) {
       // 광역 공격도 적중 대상을 하나씩 넘겨 기절 저항·행동 중단·UI 사건을 단일 공격과 공유한다.
-      applySkillStatuses(target, skill, events, state);
+      applySkillStatuses(target, skill, events, state, attacker.id);
     } else {
       clearDefeatedStatuses(target);
       events.push({ kind: "death", fighterId: target.id });
@@ -1093,7 +1162,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
   }
   // 혼합 궁극기의 회복은 같은 원 경계(거리 <= 반경)를 공유하며 주문력 200% 같은 정적 계수를 읽는다.
   for (const ally of healingTargets) {
-    const healed = applyHealing(state, ally, currentAbilityPower(attacker) * (ultimate?.allyHealingPower ?? 0) / 100);
+    const healed = applyHealing(state, ally, currentAbilityPower(attacker) * (ultimate?.allyHealingPower ?? 0) / 100, attacker.id);
     if (healed > 0) events.push({ kind: "heal", fighterId: ally.id, amount: healed, source: "passive" });
   }
   gainFerocity(attacker, useUltimate ? FEROCITY_RULES.ultimateGain : FEROCITY_RULES.basicGain, state);
@@ -1172,7 +1241,10 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
       // 고정 피해의 기존 정책대로 보호막은 applyDamage에서 먼저 흡수하지만, 방어·속성·receivedDamage는 건너뛴다.
       for (const target of aliveFighters(state, pontus.side === "player" ? "enemy" : "player")) {
         const amount = target.maxHp * trait.maxHpDamagePercentPerSecond / 100;
+        const hpBefore = target.hp;
         const dealt = applyDamage(target, amount, events);
+        // 폰토스 폭주는 시전자 귀속이 명확한 고정 피해이므로 실제 HP 손실만 공격 기여도에 포함한다.
+        addContribution(state.contributions, pontus.id, "attack", hpBefore - target.hp, "abilityPower");
         state.log.push(`${pontus.def.name} 폭주 → ${target.def.name} ${dealt}`);
         if (!isFighterAlive(target)) {
           clearDefeatedStatuses(target);
@@ -1213,6 +1285,7 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     if (pulse > 0) {
       boss.damageRemainder -= pulse;
       for (const fighter of aliveFighters(state, "player")) {
+        // 원정 시간 제한 해일은 공격 전투원이 없는 environment 피해라 누구의 공격 기여도에도 넣지 않는다.
         applyDamage(fighter, receivedDamage(fighter, pulse), events);
         if (!isFighterAlive(fighter)) { clearDefeatedStatuses(fighter); events.push({ kind: "death", fighterId: fighter.id }); }
       }
@@ -1337,7 +1410,7 @@ export function fireUltimate(
     // 각 대상의 시전 순간 잃은 체력을 따로 계산해 20%씩 회복하고 정확히 50 게이지를 소비한다.
     attacker.energy -= attacker.def.ultimate.cost;
     for (const ally of aliveFighters(state, attacker.side)) {
-      const amount = applyHealing(state, ally, (ally.maxHp - ally.hp) * attacker.def.ultimate.healing.percent / 100);
+      const amount = applyHealing(state, ally, (ally.maxHp - ally.hp) * attacker.def.ultimate.healing.percent / 100, attacker.id);
       if (amount > 0) events.push({ kind: "heal", fighterId: ally.id, amount, source: "ultimate" });
     }
     attacker.attackCooldown = attackInterval(attacker, state);

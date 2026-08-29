@@ -30,7 +30,8 @@ export type GlyphName =
   | "magnifier"
   | "costume"
   | "ferocity"
-  | "edit";
+  | "edit"
+  | "bar-chart";
 
 function points(...pairs: number[]): Phaser.Geom.Point[] {
   const list: Phaser.Geom.Point[] = [];
@@ -54,6 +55,13 @@ export function drawGlyph(
   const r = size / 2;
   g.lineStyle(lineWidth ?? Math.max(2, size * 0.09), color, alpha);
   switch (name) {
+    case "bar-chart":
+      // 서로 다른 높이의 세 막대와 바닥선만으로 작은 크기에서도 기여도 그래프를 읽게 한다.
+      g.lineBetween(-r * 0.9, r * 0.82, r * 0.9, r * 0.82);
+      g.lineBetween(-r * 0.62, r * 0.7, -r * 0.62, r * 0.1);
+      g.lineBetween(0, r * 0.7, 0, -r * 0.4);
+      g.lineBetween(r * 0.62, r * 0.7, r * 0.62, -r * 0.9);
+      break;
     case "expedition-normal":
       // 교차한 발굴 도구는 일반 조우를 뜻한다.
       g.lineBetween(-r * 0.72, -r * 0.72, r * 0.72, r * 0.72);

@@ -70,6 +70,23 @@ export const RELIC_OBSERVATION_QUESTIONS: Readonly<Record<string, readonly Obser
       { id: "spino-cleaning-roles", label: "자신이 수초를 맡겠다며 역할을 정확히 나눈다", personalityTag: "실무적인 배려", habitKey: "spinoCleaningRoles" },
     ] },
   ],
+  luka: [
+    // 소파에서 먼저 말을 건 뒤 루카가 침묵과 대화 중 어느 방식으로 연구원과 휴식을 나누는지 관찰한다.
+    { id: "luka-sofa-conversation", prompt: "연구소 소파에 누운 루카에게 연구원이 말을 걸면 어떻게 반응해?", choices: [
+      { id: "luka-sofa-silence", label: "자리를 내어 주고 나란히 편한 침묵을 즐긴다", personalityTag: "느긋한 친밀감", habitKey: "lukaSofaSilence" },
+      { id: "luka-sofa-chat", label: "소파에 누운 채 새로운 이야깃거리를 계속 꺼낸다", personalityTag: "수다스러운 호의", habitKey: "lukaSofaChat" },
+    ] },
+    // 육식 계열 렐릭과의 단거리 달리기에서 기록 경쟁과 상대를 향한 배려가 행동으로 갈리는 순간을 관찰한다.
+    { id: "luka-sprint-rival", prompt: "다른 육식 계열 렐릭과 단거리 출발선에 서면 어떻게 달려?", choices: [
+      { id: "luka-sprint-compete", label: "출발 신호와 함께 기록을 노리며 전력으로 치고 나간다", personalityTag: "정면 승부욕", habitKey: "lukaSprintCompete" },
+      { id: "luka-sprint-pace", label: "옆 주자의 보폭을 살피며 나란히 결승선을 향한다", personalityTag: "보폭을 맞추는 배려", habitKey: "lukaSprintPace" },
+    ] },
+    // 치즈케이크 뒤의 걱정을 즉시 훈련으로 잇는지, 즐거움을 한 조각 더 누린 뒤 미루는지 관찰한다.
+    { id: "luka-cheesecake-weight", prompt: "치즈케이크를 먹은 루카가 몸무게를 걱정하기 시작하면 어떻게 해?", choices: [
+      { id: "luka-cake-training", label: "남은 접시를 치우고 다음 단거리 훈련 계획을 적는다", personalityTag: "계획적인 자기관리", habitKey: "lukaCakeTraining" },
+      { id: "luka-cake-more", label: "한 조각만 더 접시에 놓고 고민은 식사 뒤로 미룬다", personalityTag: "현재를 즐기는 낙천성", habitKey: "lukaCakeMore" },
+    ] },
+  ],
 };
 
 interface ObservationReaction { intro: string; replies: Readonly<Record<string, string>>; habits: Readonly<Record<string, string>>; }
@@ -110,6 +127,18 @@ export const REACTIONS: Readonly<Record<string, ObservationReaction>> = {
     spinoAlarmRescue: "보고를 마치기 전 이미 장비 잠금을 확인하고 구조 현장으로 몸을 돌린다.", spinoAlarmCommand: "필요한 지시만 짧게 남기고 구조 인력이 지날 통로를 비운다.",
     spinoDecorationDeny: "대화가 끝나 연구원이 물러난 뒤 장식을 다시 어항 중앙에 맞춘다.", spinoDecorationShelter: "관심 없는 척 자리를 뜬 뒤 물고기가 장식을 쓰는지 멀리서 확인한다.",
     spinoCleaningGloves: "연구원이 닦은 유리의 물자국을 보지 못한 척하다가 몰래 마무리한다.", spinoCleaningRoles: "연구원이 어려워하는 구역을 발견하면 설명 없이 자신의 구역과 바꾸어 맡는다.",
+  } },
+  // 유일한 연구원인 플레이어와 나누는 휴식·훈련·간식 반응을 루카의 말투와 관찰 문장에 함께 대응시킨다.
+  luka: { intro: "왔어, 연구원? 여기 앉아서 천천히 물어봐.", replies: {
+    approach: "같이 가 보자. 별일 아니면 산책한 셈 치고.", wait: "조금 누워서 기다리면 무슨 소리인지 알게 될 거야.", share: "네 몫부터 떼어 둘게. 같이 먹는 게 더 맛있잖아.", guard: "내가 보고 있을 테니 연구원부터 편하게 먹어.",
+    "luka-sofa-silence": "말하지 않아도 괜찮아. 연구원이 옆에 있으면 편하거든.", "luka-sofa-chat": "마침 할 이야기가 많았어. 오늘 훈련부터 소파 쿠션 이야기까지 들어 볼래?",
+    "luka-sprint-compete": "달리기라면 봐주기 없지. 결승선에서 먼저 기다리고 있을게.", "luka-sprint-pace": "혼자 앞서면 금방 끝나잖아. 이번에는 옆에서 같이 달릴래.",
+    "luka-cake-training": "접시는 여기까지. 다음 훈련에 질주 한 번을 더 넣으면 되겠어.", "luka-cake-more": "걱정은 다 먹고 해도 늦지 않아. 연구원도 한 조각 더 먹을래?",
+  }, habits: {
+    approach: "낯선 소리가 나면 연구원과 나란히 천천히 발신지를 찾아간다.", wait: "확인할 때까지 소파에 누워 소리의 간격을 세며 기다린다.", share: "간식을 펼치면 연구원의 몫을 먼저 가까운 접시에 덜어 둔다.", guard: "연구원이 식사를 마칠 때까지 주변을 살피면서도 자리를 비우지 않는다.",
+    lukaSofaSilence: "연구원이 곁에 앉으면 소파 한쪽을 비우고 말없이 같은 시간을 보낸다.", lukaSofaChat: "연구원이 소파 곁에 오면 누운 채로도 사소한 이야깃거리를 연달아 꺼낸다.",
+    lukaSprintCompete: "육식 계열 렐릭과 출발선에 서면 자세를 낮추고 자신의 최고 기록부터 노린다.", lukaSprintPace: "함께 달리는 렐릭이 뒤처지면 속도를 낮춰 상대의 보폭 옆에 맞춘다.",
+    lukaCakeTraining: "치즈케이크를 먹고 몸무게가 신경 쓰이면 곧바로 다음 단거리 훈련 횟수를 적는다.", lukaCakeMore: "치즈케이크 뒤에 몸무게를 걱정하면서도 한 조각을 더 나눈 뒤 생각하기로 한다.",
   } },
 };
 

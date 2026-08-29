@@ -12,7 +12,7 @@ export type Role = "warrior" | "tank" | "assassin" | "support";
 export type RelicRarity = "R" | "SR" | "SSR";
 
 /** 전신 Puppet 레지스트리의 안정적인 데이터 키다. 파일 번호를 게임 데이터에 직접 노출하지 않는다. */
-export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "toby" | "amo" | "ripa" | "pontus" | "torika-placeholder";
+export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "toby" | "amo" | "ripa" | "pontos" | "torika-placeholder";
 
 export interface Stats {
   /** 생존력과 물리·마법 공격의 기반이 되는 주 능력치다. */
@@ -190,7 +190,7 @@ export type PassiveKind =
   | "battleMaidMastery"
   /** 스피나 전용: 기본 공격의 실제 적중마다 공속을 전투 한정으로 영구 누적한다. */
   | "basicHitAttackSpeedStack"
-  /** 폰투스의 시간 누적 주문력·잃은 체력 경감 규칙을 식별한다. */
+  /** 폰토스의 시간 누적 주문력·잃은 체력 경감 규칙을 식별한다. */
   | "abyssalPressure"
   /** 도디 전용: 제공자 생존 여부로 팀 방어와 적 회복을 동시에 조절한다. */
   | "guardianNestAura"

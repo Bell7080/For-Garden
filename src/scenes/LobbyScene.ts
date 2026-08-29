@@ -28,7 +28,7 @@ import { MissionsPopup } from "../ui/MissionsPopup";
 import { LOBBY_ACTION_BOUNDS, LOBBY_MISSION_ENTRY } from "../ui/lobbyLayout";
 import { expeditionManager } from "../managers/ExpeditionManager";
 import { ExpeditionEntryButton, sortieEntrySdSpot } from "../ui/ExpeditionEntryButton";
-import { ENEMY_SD_ASSETS, PONTUS_SD_ASSET, playMotion, type PuppetAsset } from "../puppets/assets";
+import { ENEMY_SD_ASSETS, PONTOS_SD_ASSET, playMotion, type PuppetAsset } from "../puppets/assets";
 import { loadOwnedPuppet } from "../ui/statusPuppetLoad";
 
 /** 확대된 애착 렐릭의 골반 아래가 내비게이션 뒤로 자연스럽게 이어지는 기준선. */
@@ -266,7 +266,7 @@ export class LobbyScene extends Phaser.Scene {
         // 전용 프리팹이 Content2_001 원화, 주황 출격 위계, 확대 피드백을 한 입력면으로 유지한다.
         // 원정만 SD가 오른쪽에 서고 글자가 왼쪽 아래로 간다 — 20층 보스가 판 밖을 보는 자리다.
         {
-          y: 443, width: 800, height: 230, status: this.expeditionStatus(status), sdSide: "right", sd: PONTUS_SD_ASSET,
+          y: 443, width: 800, height: 230, status: this.expeditionStatus(status), sdSide: "right", sd: PONTOS_SD_ASSET,
           onClick: () => { close(); this.scene.start("expedition"); },
         },
       ];

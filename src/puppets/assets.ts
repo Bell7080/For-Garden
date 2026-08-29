@@ -17,8 +17,8 @@ import {
   DODI_SD_METADATA,
   METTE_PORTRAIT_METADATA,
   METTE_SD_METADATA,
-  PONTUS_PORTRAIT_METADATA,
-  PONTUS_SD_METADATA,
+  PONTOS_PORTRAIT_METADATA,
+  PONTOS_SD_METADATA,
 } from "./assetMetadata";
 
 /** 기존 호출부가 렌더러 구현을 몰라도 되도록 인게임 Puppet 타입을 한 곳에서 공개한다. */
@@ -150,11 +150,11 @@ export const RIPA_ASSET: PuppetAsset = {
   content: { left: 30, top: 172, right: 1970, bottom: 2659 },
 };
 
-/** 20층 보스 폰투스 전신. ZIP의 WebP와 alpha > 16 경계를 원본 좌표계에서 직접 측정했다. */
-export const PONTUS_ASSET: PuppetAsset = {
-  url: `${base}puppets/enemy_Pontus.zip`,
+/** 20층 보스 폰토스 전신. ZIP의 WebP와 alpha > 16 경계를 원본 좌표계에서 직접 측정했다. */
+export const PONTOS_ASSET: PuppetAsset = {
+  url: `${base}puppets/enemy_Pontos.zip`,
   // 측정값을 순수 모듈과 공유해 브라우저 없이도 알파 경계 회귀를 검증한다.
-  ...PONTUS_PORTRAIT_METADATA,
+  ...PONTOS_PORTRAIT_METADATA,
 };
 
 /**
@@ -174,7 +174,7 @@ const PORTRAIT_ASSETS = {
   toby: { asset: TOBY_ASSET, usesRelicTint: false },
   amo: { asset: AMO_ASSET, usesRelicTint: false },
   ripa: { asset: RIPA_ASSET, usesRelicTint: false },
-  pontus: { asset: PONTUS_ASSET, usesRelicTint: false },
+  pontos: { asset: PONTOS_ASSET, usesRelicTint: false },
   "torika-placeholder": { asset: TORIKA_ASSET, usesRelicTint: true },
 } as const satisfies Record<PortraitAssetId, { asset: PuppetAsset; usesRelicTint: boolean }>;
 
@@ -196,10 +196,10 @@ export const ENEMY_SD_ASSETS: readonly [PuppetAsset, PuppetAsset, PuppetAsset] =
   content: { left: 352, top: 155, right: 993, bottom: 1082 },
 })) as unknown as readonly [PuppetAsset, PuppetAsset, PuppetAsset];
 
-/** 폰투스 전투 SD. 정사각 원본에서 alpha > 16인 실제 실루엣만 바닥 배치에 사용한다. */
-export const PONTUS_SD_ASSET: PuppetAsset = {
-  url: `${base}puppets/enemySD_Pontus.zip`,
-  ...PONTUS_SD_METADATA,
+/** 폰토스 전투 SD. 정사각 원본에서 alpha > 16인 실제 실루엣만 바닥 배치에 사용한다. */
+export const PONTOS_SD_ASSET: PuppetAsset = {
+  url: `${base}puppets/enemySD_Pontos.zip`,
+  ...PONTOS_SD_METADATA,
 };
 
 /** 1번 SD: 토리카. 실제 투명 영역을 제외한 범위로 발 위치와 크기를 잡는다. */
@@ -251,7 +251,7 @@ export const METTE_SD_ASSET: PuppetAsset = {
 /** 적과 전용 아군은 각자 번호 묶음을 쓰고, 아직 전용 SD가 없는 아군만 1번 SD를 공유한다. */
 export function battleAssetFor(relicId: string): PuppetAsset {
   // 최종층 보스는 일반 적 번호 묶음과 별도의 전용 SD를 사용한다.
-  if (relicId === "pontus") return PONTUS_SD_ASSET;
+  if (relicId === "pontos") return PONTOS_SD_ASSET;
   if (relicId === "husk-raptor") return ENEMY_SD_ASSETS[0];
   if (relicId === "husk-shell") return ENEMY_SD_ASSETS[1];
   if (relicId === "husk-wing") return ENEMY_SD_ASSETS[2];
@@ -340,9 +340,9 @@ function loadPuppet(asset: PuppetAsset): Promise<Puppet> {
  */
 export const PUPPET_PRELOAD_GROUPS: ReadonlyArray<readonly PuppetAsset[]> = [
   // 전신은 PortraitCard와 정보창이 처음 열릴 때 파싱하지 않도록 중앙 전신 단계에 둔다.
-  [TORIKA_ASSET, LEXIA_ASSET, SEIRA_ASSET, LUKA_ASSET, PONTUS_ASSET],
+  [TORIKA_ASSET, LEXIA_ASSET, SEIRA_ASSET, LUKA_ASSET, PONTOS_ASSET],
   // SD 역시 씬 로더가 아니라 타이틀의 공용 Puppet 단계에서 미리 해석한다.
-  [TORIKA_SD_ASSET, LEXIA_SD_ASSET, SEIRA_SD_ASSET, LUKA_SD_ASSET, ...ENEMY_SD_ASSETS, PONTUS_SD_ASSET, TOBY_ASSET, AMO_ASSET, RIPA_ASSET],
+  [TORIKA_SD_ASSET, LEXIA_SD_ASSET, SEIRA_SD_ASSET, LUKA_SD_ASSET, ...ENEMY_SD_ASSETS, PONTOS_SD_ASSET, TOBY_ASSET, AMO_ASSET, RIPA_ASSET],
 ];
 
 /**

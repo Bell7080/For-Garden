@@ -747,15 +747,15 @@ export const RELICS: RelicDef[] = [
   },
   {
     // 원정 최종층의 단독 보스. 리바이어던 멜빌레이의 거대한 턱과 심해 포식자 모티브를 담는다.
-    id: "pontus",
-    name: "폰투스",
+    id: "pontos",
+    name: "폰토스",
     specimenNumber: "220",
     projectName: "ABYSSAL CROWN",
     excavationSite: "페루 피스코 분지 심해 퇴적층",
     catalogSummary: "리바이어던 멜빌레이를 모티브로 복원된 거대 고래형 심해 개체.",
     unlockRecord: { status: "sealed", reason: "restricted" },
     rarity: "SSR",
-    portraitAssetId: "pontus",
+    portraitAssetId: "pontos",
     origin: "리바이어던 멜빌레이",
     element: "water",
     role: "tank",
@@ -778,7 +778,7 @@ export const RELICS: RelicDef[] = [
     // 네 번째 스킬 표시는 공용 정보창이 이 야성 특성을 패시브 뱃지와 함께 읽어 구성한다.
     ferocityTrait: { name: "해구", effectId: "damageReduction", reductionPercent: 20 },
     passive: {
-      id: "pontus-passive",
+      id: "pontos-passive",
       name: "심해의 압력",
       kind: "abyssalPressure",
       iconAssetId: "skill-icon-buff",
@@ -792,7 +792,7 @@ export const RELICS: RelicDef[] = [
       desc: "매초 주문력이 12 상승하고, 잃은 체력에 비례해 받는 모든 피해가 최대 40% 감소한다.",
     },
     basic: {
-      id: "pontus-basic",
+      id: "pontos-basic",
       name: "심해 충격파",
       power: 115,
       iconAssetId: "skill-icon-magical",
@@ -803,7 +803,7 @@ export const RELICS: RelicDef[] = [
       desc: "넓은 반경에 심해의 마력 충격파를 일으킨다.",
     },
     ultimate: {
-      id: "pontus-ult",
+      id: "pontos-ult",
       name: "리바이어던 해일",
       power: 210,
       iconAssetId: "skill-icon-magical",
@@ -849,5 +849,5 @@ export function getRelic(id: string): RelicDef {
   return found;
 }
 
-/** 플레이어가 파티에 넣을 수 있는 렐릭. 일반 허스크와 전용 보스 폰투스는 빠진다. */
-export const PLAYABLE_RELICS = RELICS.filter((r) => !r.id.startsWith("husk-") && r.id !== "pontus");
+/** 플레이어가 파티에 넣을 수 있는 렐릭. 일반 허스크와 전용 보스 폰토스는 빠진다. */
+export const PLAYABLE_RELICS = RELICS.filter((r) => !r.id.startsWith("husk-") && r.id !== "pontos");

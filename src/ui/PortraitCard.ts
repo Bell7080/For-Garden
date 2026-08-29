@@ -360,7 +360,7 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     const card = headCardFrame(asset, anchors, {
       width,
       height: frameHeight,
-      // 전신 정보창과 같은 원화 배율 보정을 적용해 폰투스가 카드에서만 다시 커지지 않게 한다.
+      // 전신 정보창과 같은 원화 배율 보정을 적용해 폰토스가 카드에서만 다시 커지지 않게 한다.
       fillRatio: 0.56 / ((asset.cardZoom ?? 1) * (asset.portraitZoom ?? 1)),
       // 정수리를 한 줄도 자르지 않는다. 카드에서는 머리 끝이 곧 그리드의 윗선이라, 몇 px만
       // 잘라도 뿔·리본이 평평하게 깎인 것처럼 읽힌다.

@@ -21,7 +21,7 @@ const EXPEDITION_ENEMY_FORMATIONS: Record<ExpeditionNodeType, readonly [string, 
 };
 
 /** 최종층 보스는 일반 boss fallback 표와 섞지 않아 다른 층의 임시 보스 편성을 바꾸지 않는다. */
-const FINAL_FLOOR_BOSS_ID = "pontus";
+const FINAL_FLOOR_BOSS_ID = "pontos";
 
 /** 층과 조우 난도를 함께 반영한 표시/전투 공용 적 레벨이다. */
 export function expeditionEnemyLevel(type: ExpeditionNodeType, floor: number): number {
@@ -32,7 +32,7 @@ export function expeditionEnemyLevel(type: ExpeditionNodeType, floor: number): n
 /** 정보창과 실제 난전이 같은 ID·레벨·속성 정의를 소비하도록 성장 적용 사본을 만든다. */
 export function getExpeditionNodeEnemies(type: ExpeditionNodeType, floor: number): RelicDef[] {
   const level = expeditionEnemyLevel(type, floor);
-  // 20층 boss 노드만 폰투스 단독 편성이고, 그 밖의 boss 호출은 기존 3인 fallback을 유지한다.
+  // 20층 boss 노드만 폰토스 단독 편성이고, 그 밖의 boss 호출은 기존 3인 fallback을 유지한다.
   const ids: readonly string[] = type === "boss" && floor === 20
     ? [FINAL_FLOOR_BOSS_ID]
     : EXPEDITION_ENEMY_FORMATIONS[type];

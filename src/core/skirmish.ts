@@ -689,7 +689,7 @@ export function tickRegeneration(fighter: Fighter, dt: number, state?: SkirmishS
   return events;
 }
 
-/** 폰투스의 잃은 체력 경감을 포함해 모든 HP 피해가 마지막으로 통과하는 공용 경계다. */
+/** 폰토스의 잃은 체력 경감을 포함해 모든 HP 피해가 마지막으로 통과하는 공용 경계다. */
 export function receivedDamage(target: Fighter, rawAmount: number): number {
   const passive = target.def.passive;
   let reduction = 0;
@@ -1072,14 +1072,14 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     // ES2022 빌드에서도 동작하도록 뒤에서 직접 찾아 현재 단계를 고른다.
     for (let index = boss.phases.length - 1; index >= 0; index -= 1) if (state.elapsed >= boss.phases[index].startsAt) { boss.phaseIndex = index; break; }
     boss.limitReached = state.elapsed >= boss.limitSeconds;
-    // 리미트는 순수 시간/좌표 규칙이다. 시간이 갈수록 안전 반경이 좁고 폰투스가 중앙으로 압박한다.
+    // 리미트는 순수 시간/좌표 규칙이다. 시간이 갈수록 안전 반경이 좁고 폰토스가 중앙으로 압박한다.
     const progress = Math.min(1, state.elapsed / boss.limitSeconds);
     boss.pressureRadius = Math.max(120, Math.max(state.arena.right - state.arena.left, state.arena.bottom - state.arena.top) * (1 - progress) / 2);
     boss.tideWarning = boss.phases[boss.phaseIndex + 1] !== undefined && boss.phases[boss.phaseIndex + 1].startsAt - state.elapsed <= 3;
-    for (const pontus of aliveFighters(state, "enemy").filter(({ def }) => def.passive.kind === "abyssalPressure")) {
+    for (const pontos of aliveFighters(state, "enemy").filter(({ def }) => def.passive.kind === "abyssalPressure")) {
       const centerX = (state.arena.left + state.arena.right) / 2; const centerY = (state.arena.top + state.arena.bottom) / 2;
-      pontus.x += (centerX - pontus.x) * Math.min(1, dt * (0.08 + progress * 0.22));
-      pontus.y += (centerY - pontus.y) * Math.min(1, dt * (0.08 + progress * 0.22));
+      pontos.x += (centerX - pontos.x) * Math.min(1, dt * (0.08 + progress * 0.22));
+      pontos.y += (centerY - pontos.y) * Math.min(1, dt * (0.08 + progress * 0.22));
     }
     // 프레임 크기와 무관하게 같은 누적 광역 피해가 되도록 소수 나머지를 다음 스텝에 보존한다.
     boss.damageRemainder += boss.phases[boss.phaseIndex].damagePerSecond * dt;

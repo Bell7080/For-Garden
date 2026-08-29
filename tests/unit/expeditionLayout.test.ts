@@ -62,7 +62,7 @@ describe("expedition portrait layout", () => {
   });
 
   it.each([1, 3, 5])("%i기 SD 편성이 판 안에서 대칭이고 서로 겹치지 않는다", (count) => {
-    // 정예/일반/군집 및 단독 폰투스가 같은 계산을 써도 가장자리와 슬롯 간격을 보존한다.
+    // 정예/일반/군집 및 단독 폰토스가 같은 계산을 써도 가장자리와 슬롯 간격을 보존한다.
     const columns = enemyPreviewColumns(count);
     expect(columns).toHaveLength(count); expect(columns[0] + columns[count - 1]).toBe(0);
     expect(columns.every((x) => Math.abs(x) <= NODE_ENEMY_PREVIEW.width / 2 - 60)).toBe(true);

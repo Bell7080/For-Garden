@@ -33,7 +33,7 @@ RELICS = {
     "enemy002": "husk-shell",
     "enemy003": "husk-wing",
     # 원정 최종층 단독 보스는 번호 대신 렐릭 id를 그대로 원본 이름 머리말로 쓴다.
-    "pontus": "pontus",
+    "pontos": "pontos",
 }
 
 # 원본의 자리 번호와 스킬 칸. 1 패시브 · 2 일반 공격 · 3 궁극기 · 4 폭주(야성 발현) 순이다.

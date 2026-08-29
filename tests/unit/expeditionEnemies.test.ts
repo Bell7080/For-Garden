@@ -20,10 +20,10 @@ describe("원정 노드 적 편성", () => {
     expect(getExpeditionEncounterEnemies("horde", 4)).toHaveLength(5);
   });
 
-  it("20층 boss만 폰투스 단독 편성을 선택하고 일반 boss fallback은 보존한다", () => {
-    // 최종층 조건이 단순 boss 조건으로 넓어져 이전 층까지 폰투스로 바뀌는 회귀를 함께 막는다.
-    expect(getExpeditionNodeEnemies("boss", 20).map(({ id }) => id)).toEqual(["pontus"]);
-    expect(getExpeditionEncounterEnemies("boss", 20).map(({ id }) => id)).toEqual(["pontus"]);
+  it("20층 boss만 폰토스 단독 편성을 선택하고 일반 boss fallback은 보존한다", () => {
+    // 최종층 조건이 단순 boss 조건으로 넓어져 이전 층까지 폰토스로 바뀌는 회귀를 함께 막는다.
+    expect(getExpeditionNodeEnemies("boss", 20).map(({ id }) => id)).toEqual(["pontos"]);
+    expect(getExpeditionEncounterEnemies("boss", 20).map(({ id }) => id)).toEqual(["pontos"]);
     expect(getExpeditionNodeEnemies("boss", 19).map(({ id }) => id)).toEqual(["husk-shell", "husk-wing", "husk-raptor"]);
   });
 });

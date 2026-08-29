@@ -155,10 +155,10 @@ describe("도디 스킬 표시 계약", () => {
   });
 });
 
-describe("폰투스 스킬 표시 계약", () => {
+describe("폰토스 스킬 표시 계약", () => {
   it("의 패시브는 매초 상승분을 수치로 명시한다(막연한 '상승'만 말하지 않는다)", () => {
-    const pontus = RELICS.find((def) => def.id === "pontus")!;
-    expect(passiveDescription(pontus.passive)).toBe(
+    const pontos = RELICS.find((def) => def.id === "pontos")!;
+    expect(passiveDescription(pontos.passive)).toBe(
       "매초 [[ap|주문력]]이 12 상승하고, [[missing-hp|잃은 체력]]에 비례해 받는 모든 피해가 최대 40% 감소한다.",
     );
   });

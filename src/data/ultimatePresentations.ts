@@ -53,7 +53,7 @@ export const ULTIMATE_PRESENTATIONS: Readonly<Record<string, UltimatePresentatio
   "husk-shell": { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.94, zoomScale: 1.24, zoomMs: 115, cameraShakeIntensity: 0.009 },
   "husk-wing": { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkScale: 0.92, artworkOrigin: { x: 650, y: 770 }, zoomScale: 1.16, cameraShakeIntensity: 0.007 },
   // 넓은 보스 전신은 컷인에서 한 단계 줄이고, 무거운 일격은 SD 확대와 흔들림으로 전달한다.
-  pontus: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.82, artworkOrigin: { x: 650, y: 800 }, zoomScale: 1.3, zoomMs: 120, cameraShakeIntensity: 0.014 },
+  pontos: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.82, artworkOrigin: { x: 650, y: 800 }, zoomScale: 1.3, zoomMs: 120, cameraShakeIntensity: 0.014 },
 });
 
 /** 표에 아직 없는 ID는 공용 기본값을 반환해 콘텐츠 추가가 전투를 깨뜨리지 않게 한다. */

@@ -456,7 +456,7 @@ export class ExpeditionScene extends Phaser.Scene {
 
   /** 보스 전신은 판보다 뒤에 서서 허리 아래를 순위판이 덮게 한다. */
   private async loadBossPortrait(): Promise<void> {
-    const asset = portraitAssetFor("pontus");
+    const asset = portraitAssetFor("pontos");
     const puppet = await spawnPuppet(this, asset, { x: BASE_WIDTH / 2, groundY: RANKING.boss.groundY, height: RANKING.boss.height, depth: 5 });
     if (!this.scene.isActive() || this.stage !== "ranking" || expeditionManager.status().active) { puppet.destroy(); return; }
     puppet.disableInteractive();

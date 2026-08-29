@@ -65,6 +65,10 @@ export const KEYWORDS: readonly KeywordDef[] = [
     id: "def", term: "방어력", kind: "규칙",
     description: "받는 물리 피해를 줄이고 일부 방어형 스킬의 실제 피해량을 정한다.",
   },
+  {
+    id: "ap", term: "주문력", kind: "규칙",
+    description: "마법 스킬과 일부 회복 스킬의 실제 수치를 정하는 능력치다.",
+  },
   // 스피나처럼 하나의 스킬에 여러 전투 규칙이 얽힌 경우에도 짧은 본문에서 세부 규칙을 다시 열어 볼 수 있게 한다.
   {
     id: "basic-attack", term: "기본 공격", kind: "규칙",

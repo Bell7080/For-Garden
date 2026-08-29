@@ -101,6 +101,7 @@ export function passiveDescription(passive: Passive, atk?: number): string {
     const shieldText = shield === undefined ? `공격력 ${passive.cleanseShieldAttackPercent}%` : `[[shield-value|${shield.term}]]`;
     return `생존 중 아군 [[attack-speed|공격 속도]]를 ${passive.teamAttackSpeedPercent}% 높인다. 아군이 [[crowd-control|군중제어]]에 걸리면 즉시 정화하고 ${shieldText} 보호막을 부여한다.`;
   }
+  if (passive.kind === "abyssalPressure") return `매초 [[ap|주문력]]이 ${passive.apPerSecond} 상승하고, [[missing-hp|잃은 체력]]에 비례해 받는 모든 피해가 최대 ${passive.maxReductionPercent}% 감소한다.`;
   if (passive.kind !== "battleMaidMastery") return passive.desc;
   // 네 능력이 모두 같은 비율로 오르므로 값을 한 번만 말한다. 값이 서로 달라지면 다시 나열해야 한다.
   return `전투 시작 시, 공격 속도·공격력·치명타 확률·치명타 피해가 모두 ${passive.attackSpeedPercent}% 오른다.`;

@@ -787,7 +787,9 @@ export const RELICS: RelicDef[] = [
       apPerSecond: 12,
       reductionPerMissingHpPercent: 0.5,
       maxReductionPercent: 40,
-      desc: "매초 주문력이 상승하고, 잃은 체력에 비례해 받는 모든 피해가 최대 40% 감소한다.",
+      // kind가 abyssalPressure인 패시브는 passiveDescription()이 구조화 필드로 다시 문장을
+      // 만들므로 이 원문은 데이터 문서화용일 뿐 화면에는 쓰이지 않는다.
+      desc: "매초 주문력이 12 상승하고, 잃은 체력에 비례해 받는 모든 피해가 최대 40% 감소한다.",
     },
     basic: {
       id: "pontus-basic",

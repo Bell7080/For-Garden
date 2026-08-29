@@ -8,15 +8,16 @@ describe("RelicProgressionManager", () => {
     const state = createDefaultSession();
     const manager = new RelicProgressionManager(state);
 
-    expect(state.owned.has("dodo")).toBe(false);
-    expect(manager.getProgress("dodo")).toMatchObject({ level: 1, breakthrough: 0 });
-    expect(state.relicProgress).not.toHaveProperty("dodo");
+    // 도디 기본 해금 이후에도 잠긴 스밀로를 사용해 미보유 조회 계약을 계속 검증한다.
+    expect(state.owned.has("smilo")).toBe(false);
+    expect(manager.getProgress("smilo")).toMatchObject({ level: 1, breakthrough: 0 });
+    expect(state.relicProgress).not.toHaveProperty("smilo");
   });
 
   it("미보유 렐릭의 성장 상태 변경을 거부한다", () => {
     const manager = new RelicProgressionManager(createDefaultSession());
 
     // 조회용 기본값이 변경 경로로 새어 들어가 저장 불변식을 깨지 못하게 한다.
-    expect(() => manager.setLevel("dodo", 2)).toThrow("보유하지 않은 렐릭");
+    expect(() => manager.setLevel("smilo", 2)).toThrow("보유하지 않은 렐릭");
   });
 });

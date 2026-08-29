@@ -26,9 +26,10 @@ export interface GameSettings {
   account: { provider: "guest" | "google" | "apple"; displayId: string };
 }
 
-/** 처음 시작할 때 쥐어 주는 렐릭. 셋이면 바로 출격할 수 있다. */
-// 전용 원화와 SD 전투 Puppet까지 개발된 첫 세 캐릭터를 초기 체험 풀로 연다.
-const STARTER_RELICS = ["anky", "rex", "spino"];
+/** 처음 시작할 때 쥐어 주는 렐릭. 전용 전신과 SD가 완성된 여섯 명을 기본 도감에 연다. */
+const STARTER_RELICS = ["anky", "rex", "spino", "luka", "dodo", "mette"];
+/** 보유 인원이 늘어나도 저장 검증 계약인 세 자리 기본 편성은 기존 조합으로 유지한다. */
+const STARTER_PARTY = ["anky", "rex", "spino"];
 
 export interface Session {
   /** 룬·지갑과 분리된 중첩 아이템. 0개 행은 저장하지 않는다. */
@@ -205,7 +206,7 @@ export function createDefaultSession(): Session {
     completedStoryIds: new Set<string>(),
     observationRecords: [],
     selectedStageId: null,
-    party: [...STARTER_RELICS],
+    party: [...STARTER_PARTY],
     cleared: new Set<string>(),
     owned: new Set(STARTER_RELICS),
     favorite: STARTER_RELICS[0],

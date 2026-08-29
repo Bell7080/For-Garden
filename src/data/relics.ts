@@ -55,7 +55,9 @@ export const RELICS: RelicDef[] = [
       attackPowerPercent: 25,
       criticalChancePercent: 25,
       criticalDamagePercent: 25,
-      desc: "전투에 필요한 네 가지 능력을 고르게 끌어올린다.",
+      // kind가 battleMaidMastery인 패시브는 passiveDescription()이 실제 능력치로 다시 문장을 만들므로
+      // 이 원문은 데이터 문서화용일 뿐 화면에는 쓰이지 않는다.
+      desc: "전투 시작 시, 전투에 필요한 네 가지 능력이 25% 오른다.",
     },
     basic: {
       id: "rex-basic",
@@ -375,7 +377,9 @@ export const RELICS: RelicDef[] = [
       // 지정점 중심의 넓은 원 경계 안에서 적 피해와 아군 회복을 한 번에 판정한다.
       targeting: "targetedCircle",
       radius: 360,
-      desc: "지정한 넓은 범위의 모든 적에게 주문력 200% 마법 피해를 주고 모든 생존 아군을 주문력 200%만큼 회복한다.",
+      // allyHealingPower가 있는 궁극기는 skillDescription()이 실제 주문력으로 회복량을 다시
+      // 계산하므로 이 원문은 데이터 문서화용일 뿐 화면에는 쓰이지 않는다.
+      desc: "지정한 넓은 범위의 모든 적에게 [[magical-damage|마법 피해]]를 주고 모든 생존 아군의 체력을 회복한다.",
     },
   },
   {
@@ -725,18 +729,20 @@ export const RELICS: RelicDef[] = [
       id: "mette-passive", name: "아다지오의 무게", kind: "adagioWeight",
       iconAssetId: "skill-icon-buff", effectType: "buff", value: 20,
       teamAttackSpeedPercent: 20, cleanseShieldAttackPercent: 200, cleanseCooldownSeconds: 7,
-      desc: "생존 중 아군 공격 속도를 20% 높인다. 새 기절·경직을 정화하고 공격력 200% 보호막을 부여한다.",
+      // kind가 adagioWeight인 패시브는 passiveDescription()이 실제 능력치로 다시 문장을 만들므로
+      // 이 원문은 데이터 문서화용일 뿐 화면에는 쓰이지 않는다.
+      desc: "생존 중 아군 공격 속도를 20% 높인다. 아군이 군중제어에 걸리면 즉시 정화하고 공격력 200% 보호막을 부여한다.",
     },
     basic: {
       id: "mette-basic", name: "스타카토", power: 100, scalingStat: "atk",
       iconAssetId: "skill-icon-magical", effectType: "magical", damageType: "magical",
       statusEffects: [{ kind: "stagger", seconds: 0.1 }],
-      desc: "공격력의 100% 마법 피해를 주고 0.1초간 경직시킨다.",
+      desc: "적 한 명에게 공격력에 비례한 마법 피해를 주고 [[stagger|경직]]시킨다.",
     },
     ultimate: {
       id: "mette-ult", name: "전장의 찬가", iconAssetId: "skill-icon-healing", effectType: "healing",
       cost: 50, targeting: "battlefieldAllies", healing: { kind: "teamMissingHpPercent", percent: 20 },
-      desc: "모든 생존 아군이 각자 잃은 체력의 20%를 회복한다.",
+      desc: "모든 생존 아군이 각자 [[missing-hp|잃은 체력]]의 20%를 회복한다.",
     },
   },
   {

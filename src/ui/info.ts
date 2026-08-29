@@ -50,7 +50,8 @@ import { observationQuestionForRelicAndDate } from "../data/observations";
 import type { PublicRelicProfileDto } from "../api/contracts";
 import type { Fighter } from "../core/skirmish";
 import { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../core/infoCapabilities";
-import { damageKeyword, ferocityTraitDescription, passiveDescription, skillDescription } from "./skillPresentation";
+import { allyHealPowerKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, passiveShieldKeyword, skillDescription } from "./skillPresentation";
+import type { KeywordDef } from "../data/keywords";
 
 export type { SkillInfoViewModel } from "./SkillPopup";
 
@@ -1612,10 +1613,24 @@ export class InfoManager {
 
   /** 개체별 폭주 발현 설명. 야성 규칙 자체는 강조된 말을 눌러 다시 열 수 있다. */
   private openFerocityTrait(def: RelicDef, from: PopupSource): void {
-    const defense = relicProgression.getFinalStats(def.id).def;
+    const { atk: attack, def: defense } = relicProgression.getFinalStats(def.id);
     const defensePercent = def.ferocityTrait.effectId === "splashDamage" ? def.ferocityTrait.defenseDamagePercent : undefined;
+    const attackPercent = def.ferocityTrait.effectId === "crescendoStaccato" ? def.ferocityTrait.damagePercent : undefined;
     // 폭주 추가 피해도 일반 스킬과 같은 수치 링크를 써서 캐릭터가 늘어도 별도 팝업을 만들지 않는다.
-    const convertedDamage = defensePercent === undefined ? undefined : Math.round(defense * defensePercent / 100);
+    const convertedDamage = defensePercent !== undefined ? Math.round(defense * defensePercent / 100)
+      : attackPercent !== undefined ? Math.round(attack * attackPercent / 100)
+      : undefined;
+    const damageSourceLabel = defensePercent !== undefined ? "방어력" : "공격력";
+    const contextualKeywords: KeywordDef[] = [];
+    if (convertedDamage !== undefined) contextualKeywords.push({
+      id: "damage-value", term: String(convertedDamage), kind: "규칙",
+      description: `현재 ${damageSourceLabel}에서 ${defensePercent ?? attackPercent}%를 받아 계산한 추가 피해 수치다.`,
+    });
+    // 메테의 스타카토 추가타는 기본 공격과 같은 효과를 다시 부르는 것이므로 그 뜻을 여기서 짧게 설명한다.
+    if (def.ferocityTrait.effectId === "crescendoStaccato") contextualKeywords.push({
+      id: "mette-staccato", term: "스타카토", kind: "규칙",
+      description: "메테의 [[basic-attack|기본 공격]]과 같은 마법 추가타다. 적중한 대상을 [[stagger|경직]]시킨다.",
+    });
     // 폭주도 패시브와 같은 정형 상세창을 사용한다. 별도 제목 레이어 없이 아이콘 옆에서
     // 스킬 종류·이름·발현 유형을 한 번에 읽게 한다.
     openSkillPopup(this.scene, this.popups, this.keywords, {
@@ -1626,15 +1641,10 @@ export class InfoManager {
       tint: skillArtTint(def.element, def.role),
       effectType: "buff",
       valueLabel: "야성 발현",
-      contextualKeywords: convertedDamage === undefined ? undefined : [{
-        id: "damage-value",
-        term: String(convertedDamage),
-        kind: "규칙",
-        description: `현재 방어력에서 ${defensePercent}%를 받아 계산한 추가 피해 수치다.`,
-      }],
+      contextualKeywords: contextualKeywords.length > 0 ? contextualKeywords : undefined,
       // 설명 수치는 전투가 읽는 특성 필드에서 생성해 정적 문구와 실제 효과가 갈라지지 않는다.
       description: "[[ferocity|야성 게이지]]가 가득 차면 폭주한다. "
-        + ferocityTraitDescription(def.ferocityTrait, defense),
+        + ferocityTraitDescription(def.ferocityTrait, { attack, defense }),
     }, from);
   }
 
@@ -1647,8 +1657,11 @@ export class InfoManager {
       energy: 0, ferocity: 0, bondLevel: 0, ferocityFever: false,
       breakthrough: relicProgression.getProgress(finalDef.id).breakthrough,
     };
-    const preview = attacker && kindLabel !== "패시브" ? previewSkillDamage(attacker, skill as Skill) : undefined;
+    const preview = attacker && canPreviewSkillDamage(skill, kindLabel) ? previewSkillDamage(attacker, skill as Skill) : undefined;
     const damageDetail = damageKeyword(preview);
+    const shieldDetail = "kind" in skill ? passiveShieldKeyword(skill as Passive, attacker?.def.stats.atk) : undefined;
+    const allyHealingPower = "allyHealingPower" in skill ? (skill as Ultimate).allyHealingPower : undefined;
+    const healDetail = allyHealingPower !== undefined ? allyHealPowerKeyword(allyHealingPower, attacker?.def.stats.ap) : undefined;
     const valueLabel = preview?.kind === "scaling"
       ? `${preview.label} [[damage-value|${preview.amount}]]`
       : undefined;
@@ -1662,7 +1675,7 @@ export class InfoManager {
       tint: this.currentDef && skillArtTint(this.currentDef.element, this.currentDef.role),
       effectType: skill.effectType,
       valueLabel,
-      contextualKeywords: damageDetail ? [damageDetail] : undefined,
+      contextualKeywords: [damageDetail, shieldDetail, healDetail].filter((item): item is KeywordDef => item !== undefined),
       // 정적 문장에서 수치를 재해석하지 않고 전투 정의를 그대로 팝업에 넘긴다.
       targeting: "targeting" in skill ? skill.targeting as Ultimate["targeting"] : undefined,
       statusEffects: "statusEffects" in skill ? skill.statusEffects : undefined,
@@ -1673,7 +1686,7 @@ export class InfoManager {
       damageHealingPercent: "damageHealingPercent" in skill ? skill.damageHealingPercent as number : undefined,
       gaugeCost,
       // 구조화된 연격·복합 계수는 정적 설명을 복제하지 않고 키워드가 연결된 공용 문장으로 표시한다.
-      description: "kind" in skill ? passiveDescription(skill as Passive) : skillDescription(skill as Skill),
+      description: "kind" in skill ? passiveDescription(skill as Passive, attacker?.def.stats.atk) : skillDescription(skill as Skill, attacker?.def.stats.ap),
     };
   }
 

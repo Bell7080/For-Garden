@@ -90,6 +90,14 @@ export const KEYWORDS: readonly KeywordDef[] = [
     id: "physical-damage", term: "물리 피해", kind: "규칙",
     description: "공격력 또는 명시된 능력치로 계산하고 대상의 방어력으로 감소하는 피해다.",
   },
+  {
+    id: "magical-damage", term: "마법 피해", kind: "규칙",
+    description: "주문력 또는 명시된 능력치로 계산하고 대상의 저항력으로 감소하는 피해다.",
+  },
+  {
+    id: "crowd-control", term: "군중제어", kind: "규칙",
+    description: "기절·경직처럼 대상의 행동을 막는 효과를 통틀어 부르는 말이다.",
+  },
 ];
 
 /** 저장된 id를 검증하면서 정의를 얻는다. 없는 키워드는 링크로 만들지 않는다. */

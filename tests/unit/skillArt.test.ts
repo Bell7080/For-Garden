@@ -3,7 +3,7 @@ import ts from "typescript";
 import PREPARE_ICONS from "../../scripts/prepare_icons.py?raw";
 import { RELICS } from "../../src/data/relics";
 import { ELEMENT_TINT, ROLE_TINT, SKILL_ART_ASSETS, SKILL_ART_SLOTS, skillArtFor, skillArtKey, skillArtTint } from "../../src/ui/skillArt";
-import { damageHealingLabel, damageKeyword, ferocityTraitDescription, passiveDescription, recoveryLabel, skillDescription, skillKeywordLayoutOptions, statusEffectLabel, targetingLabel } from "../../src/ui/skillPresentation";
+import { allyHealPowerKeyword, canPreviewSkillDamage, damageHealingLabel, damageKeyword, ferocityTraitDescription, passiveDescription, passiveShieldKeyword, recoveryLabel, skillDescription, skillKeywordLayoutOptions, statusEffectLabel, targetingLabel } from "../../src/ui/skillPresentation";
 import type { SkillInfoViewModel } from "../../src/ui/SkillPopup";
 
 /** 구워 둔 스킬 일러스트. 코드가 가리키는 파일이 실제로 있는지 확인한다. */
@@ -76,9 +76,9 @@ describe("토리카 스킬 표시 계약", () => {
     expect(`${torika.passive.durationSeconds}초 동안 ${recoveryLabel(torika.passive.value)}`).toBe("5초 동안 매초 최대 체력의 7% 회복");
     expect(targetingLabel(torika.ultimate.targeting)).toBe("자신의 주위 모든 적");
     expect(statusEffectLabel(torika.ultimate.statusEffects?.[0])).toBe("[[stun|기절]] 2초");
-    expect(ferocityTraitDescription(torika.ferocityTrait, torika.stats.def)).toBe("공격 속도가 20% 증가한다. 기본 공격이 대상 주위의 모든 적에게 적중해 [[damage-value|19]]만큼 추가 물리 피해를 입히고 [[stagger|경직]]시킨다.");
+    expect(ferocityTraitDescription(torika.ferocityTrait, { attack: torika.stats.atk, defense: torika.stats.def })).toBe("공격 속도가 20% 증가한다. 기본 공격이 대상 주위의 모든 적에게 적중해 [[damage-value|19]]만큼 추가 물리 피해를 입히고 [[stagger|경직]]시킨다.");
     // 설명의 환산 피해도 현재 방어력을 다시 읽으므로 레벨·룬으로 능력치가 변하면 같이 변한다.
-    expect(ferocityTraitDescription(torika.ferocityTrait, torika.stats.def * 2)).toContain("[[damage-value|38]]");
+    expect(ferocityTraitDescription(torika.ferocityTrait, { attack: torika.stats.atk, defense: torika.stats.def * 2 })).toContain("[[damage-value|38]]");
     // 설명 원문에는 구조화된 수치나 개발 좌표를 복제하지 않아 값이 갈라질 여지를 없앤다.
     expect(torika.ultimate.desc).not.toMatch(/220px|2초/);
   });
@@ -105,10 +105,53 @@ describe("렉시아 스킬 표시 계약", () => {
   it("은 폭주·패시브·출혈·궁극기 회복을 현재 데이터에서 문장화한다", () => {
     const rex = RELICS.find((def) => def.id === "rex")!;
     expect(ferocityTraitDescription(rex.ferocityTrait)).toBe("치명타 확률과 모든 피해 흡혈이 각각 25%, 25% 증가한다.");
-    expect(passiveDescription(rex.passive)).toContain("각각 25%, 25%, 25%, 25%");
+    expect(passiveDescription(rex.passive)).toBe("전투 시작 시, 공격 속도·공격력·치명타 확률·치명타 피해가 모두 25% 오른다.");
     expect(statusEffectLabel(rex.basic.statusEffects?.[0])).toBe("[[bleed|출혈]] 3초 · 매초 최대 체력 2%");
     expect(targetingLabel(rex.ultimate.targeting)).toBe("적 한 명");
     expect(damageHealingLabel(rex.ultimate.damageHealingPercent)).toBe("실제 피해의 50% 회복");
+  });
+});
+
+describe("메테 스킬 표시 계약", () => {
+  it("은 순수 회복형 궁극기의 피해 미리보기를 만들지 않는다(궁극기 팝업 회귀 방지)", () => {
+    const mette = RELICS.find((def) => def.id === "mette")!;
+    // damageType/power가 없는 궁극기에 previewSkillDamage를 시도하면 예외가 나 정보창
+    // 스킬 팝업이 통째로 열리지 않았다 — 이 판별이 그 앞단 가드다.
+    expect(canPreviewSkillDamage(mette.ultimate, "궁극기")).toBe(false);
+    expect(canPreviewSkillDamage(mette.basic, "일반 공격")).toBe(true);
+    expect(canPreviewSkillDamage(mette.basic, "패시브")).toBe(false);
+  });
+
+  it("은 폭주·패시브의 % 수치를 실제 능력치로 환산한 태그로 만든다", () => {
+    const mette = RELICS.find((def) => def.id === "mette")!;
+    expect(ferocityTraitDescription(mette.ferocityTrait, { attack: 200, defense: 0 })).toBe(
+      "폭주 중 아군 기본 공격 적중마다 [[damage-value|100]]의 피해량을 가진 [[mette-staccato|스타카토]]가 추가로 발동한다.",
+    );
+    expect(passiveShieldKeyword(mette.passive, 200)).toMatchObject({ id: "shield-value", term: "400" });
+    expect(passiveDescription(mette.passive, 200)).toBe(
+      "생존 중 아군 [[attack-speed|공격 속도]]를 20% 높인다. 아군이 [[crowd-control|군중제어]]에 걸리면 즉시 정화하고 [[shield-value|400]] 보호막을 부여한다.",
+    );
+  });
+
+  it("의 기본 공격은 0.1초를 중복해서 적지 않고 경직 태그 하나로 표시한다", () => {
+    const mette = RELICS.find((def) => def.id === "mette")!;
+    expect(mette.basic.desc).not.toContain("0.1초");
+    expect(mette.basic.desc).toContain("[[stagger|경직]]");
+  });
+});
+
+describe("도디 스킬 표시 계약", () => {
+  it("은 궁극기의 아군 회복 %를 실제 주문력 수치로 환산한 태그로 만든다", () => {
+    const dodo = RELICS.find((def) => def.id === "dodo")!;
+    expect(allyHealPowerKeyword(dodo.ultimate.allyHealingPower!, 150)).toMatchObject({ id: "heal-value", term: "300" });
+    expect(skillDescription(dodo.ultimate, 150)).toBe(
+      "지정한 넓은 범위의 모든 적에게 [[magical-damage|마법 피해]]를 주고, 모든 생존 아군의 체력을 [[heal-value|300]]만큼 회복한다.",
+    );
+  });
+
+  it("의 야성 발현은 배속 환산 괄호 없이 상승률만 말한다", () => {
+    const dodo = RELICS.find((def) => def.id === "dodo")!;
+    expect(ferocityTraitDescription(dodo.ferocityTrait)).toBe("공격 속도가 100% 증가한다.");
   });
 });
 

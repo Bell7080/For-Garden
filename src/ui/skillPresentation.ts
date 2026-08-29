@@ -67,6 +67,7 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
   // 내부 효과명은 저장 호환성을 위해 도약으로 유지하지만, 플레이어에게는 실제 좌표 변경 규칙을 정확히 알린다.
   if (trait.effectId === "stealthLeap") return `체력 비율이 가장 낮은 적에게 [[teleport|순간이동]]해 ${trait.durationSeconds}초 동안 [[stealth|은신]]한다.`;
   if (trait.effectId === "selfAttackSpeedMultiplier") return `공격 속도가 ${trait.bonusPercent}% 증가한다.`;
+  if (trait.effectId === "packHunt") return `${trait.stealthDurationSeconds}초 동안 [[stealth|은신]]하고 [[pack-hunt|무리 사냥]]을 다시 발동한다. 폭주 중 자신을 포함해 같은 적을 표적으로 삼은 생존 아군의 [[attack-speed|공격 속도]]가 ${trait.sharedTargetAttackSpeedPercent}% 증가한다.`;
   if (trait.effectId === "crescendoStaccato") {
     const converted = stats === undefined ? undefined : Math.round(stats.attack * trait.damagePercent / 100);
     const damage = converted === undefined ? `공격력 ${trait.damagePercent}%의` : `[[damage-value|${converted}]]의`;
@@ -97,6 +98,7 @@ export function passiveShieldKeyword(passive: Passive, atk?: number): KeywordDef
 
 /** 복합 능력 패시브를 각 구조화 수치에서 문장화해 데이터 변경이 본문에도 즉시 반영되게 한다. */
 export function passiveDescription(passive: Passive, atk?: number): string {
+  if (passive.kind === "followHighestAttackAllyTarget") return `전투 시작 시 아군 중 공격력이 가장 높은 렐릭이 표적으로 삼은 적을 함께 표적으로 삼는다.`;
   if (passive.kind === "basicHitAttackSpeedStack") return `[[basic-attack|기본 공격]]이 실제 적중할 때마다 이번 전투 동안 [[attack-speed|공격 속도]]가 ${passive.value} 증가한다.`;
   if (passive.kind === "adagioWeight") {
     const shield = passiveShieldKeyword(passive, atk);
@@ -118,6 +120,8 @@ export function allyHealPowerKeyword(percent: number, ap?: number): KeywordDef |
 
 /** 추가 타격 계약을 본문용 키워드 문장으로 바꿔 확률·횟수·회복 수치가 데이터와 함께 바뀌게 한다. */
 export function skillDescription(skill: Skill | BasicAttack | Ultimate, ap?: number): string {
+  if ("periodicCritical" in skill && skill.periodicCritical) return `적 한 명에게 공격력의 ${skill.power}% [[physical-damage|물리 피해]]를 준다. 매 ${skill.periodicCritical.every}번째 실제 [[basic-attack|기본 공격]]은 확정 치명타가 된다.`;
+  if ("damageTransfer" in skill && skill.damageTransfer) return `주 대상에게 공격력의 ${skill.power}% [[physical-damage|물리 피해]]를 준다. 주 대상이 실제로 잃은 최종 HP 피해의 ${skill.damageTransfer.percent}%를 주 대상에게서 가장 가까운 다른 적에게 [[transfer|전이]]한다.`;
   const combo = "combo" in skill ? skill.combo : undefined;
   if (combo) {
     // 주 피해량은 스킬 아이콘 위 [[damage-value]] 라벨이 이미 실제 수치로 보여 주므로

@@ -125,6 +125,8 @@ export type Skill = AttackSkill | HealingSkill;
 export type BasicAttack = AttackSkill & {
   /** 실제 감소시킨 적 HP의 이 비율만큼 최저 현재 HP 생존 아군을 회복한다. 자신도 후보이며 동률은 편성 순서다. */
   lowestHpAllyHealingFromDamagePercent?: number;
+  /** 실제 기본 공격 행동 수를 세어 주기 끝 타격을 난수 소비 없이 확정 치명타로 만든다. */
+  periodicCritical?: { every: number };
 } & ({ combo?: undefined } | {
   combo: {
     /** 한 공격 행동에서 추가 적중이 발생할 확률(%)이다. */
@@ -158,6 +160,12 @@ export type Ultimate = Skill & {
   attackSpeedPower?: number;
   /** 혼합 궁극기가 범위 안 생존 아군에게 적용할 주문력 회복 배율(%). */
   allyHealingPower?: number;
+  /** 주 대상의 최종 HP 손실 일부를 주 대상에서 가장 가까운 다른 적에게 옮긴다. */
+  damageTransfer?: {
+    percent: number;
+    /** 거리는 시전자가 아니라 주 대상의 전투 좌표에서 재며, 동률은 fighters 배열 순서다. */
+    distanceOrigin: "primaryTarget";
+  };
 } & (
   | { /** 현재 선택한 한 적만 공격한다. */ targeting: "single" }
   | {
@@ -197,7 +205,9 @@ export type PassiveKind =
   /** 도디 전용: 제공자 생존 여부로 팀 방어와 적 회복을 동시에 조절한다. */
   | "guardianNestAura"
   /** 메테 전용: 생존 중 팀 공속과 제어 정화·보호막을 제공한다. */
-  | "adagioWeight";
+  | "adagioWeight"
+  /** 루카 전용: 전투 시작/폭주 진입 때 최고 공격력 아군의 현재 표적을 복사한다. */
+  | "followHighestAttackAllyTarget";
 
 /** 전투 엔진이 판별하는 야성 특성 효과 ID다. 새 효과는 수치 계약과 함께 명시적으로 추가한다. */
 export type FerocityEffectId =
@@ -213,7 +223,9 @@ export type FerocityEffectId =
   /** 폰토스 전용: 폭주 중 초당 최대 HP 고정 피해와 적 회복 취소를 함께 제공한다. */
   | "pontusRage"
   /** 메테 전용: 폭주 중 아군 일반 공격 적중마다 스타카토 추가타를 연주한다. */
-  | "crescendoStaccato";
+  | "crescendoStaccato"
+  /** 루카 전용: 은신과 무리 사냥 재지정, 동일 표적 팀 공속 오라를 함께 식별한다. */
+  | "packHunt";
 
 /**
  * 개체별 피버 발현 정적 데이터다.
@@ -278,6 +290,15 @@ export type FerocityTrait = {
       maxHpDamagePercentPerSecond: number;
       /** true이면 폭주 중 반대편의 모든 회복 요청을 공용 회복 경계에서 취소한다. */
       cancelEnemyHealing: true;
+    }
+  | {
+      effectId: "packHunt";
+      /** 스피나와 동일하게 단일 대상 추적에서 제외되는 폭주 은신 시간이다. */
+      stealthDurationSeconds: number;
+      /** 폭주 진입 때 무리 사냥 표적 결정을 다시 수행한다. */
+      retriggerPackHunt: true;
+      /** 루카 자신을 포함해 같은 targetId를 가진 생존 아군에게 주는 공속 증가율이다. */
+      sharedTargetAttackSpeedPercent: number;
     }
 );
 

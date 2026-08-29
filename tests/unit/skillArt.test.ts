@@ -215,3 +215,18 @@ describe("스피나 스킬 표시 계약", () => {
     expect(skillDescription(spino.ultimate)).not.toContain("준다고");
   });
 });
+
+describe("루카 스킬 표시 계약", () => {
+  it("은 구조화된 네 슬롯을 키워드가 연결된 문장으로 표시한다", () => {
+    const luka = RELICS.find((def) => def.id === "luka")!;
+    // 루카 자신도 동일 표적 공속 대상이라는 모호한 범위를 폭주 표시 문구에 명시한다.
+    expect(ferocityTraitDescription(luka.ferocityTrait)).toContain("자신을 포함해 같은 적");
+    expect(ferocityTraitDescription(luka.ferocityTrait)).toContain("[[stealth|은신]]");
+    expect(ferocityTraitDescription(luka.ferocityTrait)).toContain("[[attack-speed|공격 속도]]가 25%");
+    expect(passiveDescription(luka.passive)).toContain("공격력이 가장 높은 렐릭");
+    expect(skillDescription(luka.basic)).toContain("매 4번째 실제 [[basic-attack|기본 공격]]");
+    expect(skillDescription(luka.basic)).toContain("[[physical-damage|물리 피해]]");
+    expect(skillDescription(luka.ultimate)).toContain("최종 HP 피해의 75%");
+    expect(skillDescription(luka.ultimate)).toContain("[[transfer|전이]]");
+  });
+});

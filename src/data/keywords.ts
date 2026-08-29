@@ -82,6 +82,11 @@ export const KEYWORDS: readonly KeywordDef[] = [
     id: "stealth", term: "은신", kind: "버프",
     description: "지속되는 동안 적의 단일 대상 선택에서 제외된다. 시간이 끝나면 다시 대상으로 선택될 수 있다.",
   },
+  // 순간이동은 이동 애니메이션처럼 보이더라도 경로·속도·시간 계산을 거치지 않는 좌표 변경 규칙이다.
+  {
+    id: "teleport", term: "순간이동", kind: "규칙",
+    description: "이동 경로를 거치지 않고 즉시 목표 지점으로 위치를 변경한다. 이동 속도나 이동 시간의 영향을 받지 않는다.",
+  },
   {
     id: "combo", term: "연격", kind: "규칙",
     description: "한 번의 기본 공격 행동이 여러 번 적중한다. 각 타격은 적중 효과와 타격 직후 회복을 각각 발동한다.",

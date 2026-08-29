@@ -834,7 +834,10 @@ describe("효과 ID별 야성 특성", () => {
     const [spino, first, lowest] = state.fighters;
     lowest.hp = lowest.maxHp * 0.2; lowest.x = 700; lowest.y = 900;
     first.targetId = spino.id; lowest.targetId = spino.id; spino.ferocity = 99;
+    const takeoff = { x: spino.x, y: spino.y };
+    // 단 한 번의 발동 프레임 호출만으로 출발점과 다른 착지점이 확정되어 중간 이동 상태가 없음을 고정한다.
     stepSkirmish(state, 1 / 60, () => 0.99);
+    expect({ x: spino.x, y: spino.y }).not.toEqual(takeoff);
     expect(spino.stealthFor).toBe(3);
     expect(Math.hypot(spino.x - lowest.x, spino.y - lowest.y)).toBeCloseTo(SKIRMISH.reach);
     expect([first.targetId, lowest.targetId]).toEqual([null, null]);

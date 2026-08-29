@@ -64,7 +64,8 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
   if (trait.effectId === "criticalChanceBonus") return `치명타 확률이 ${trait.chancePercent}% 오른다.`;
   if (trait.effectId === "teamMoveSpeedBonus") return `생존 아군 전체의 이동 속도가 ${trait.bonusPercent}% 빨라진다.`;
   if (trait.effectId === "rexBattleQueen") return `치명타 확률과 모든 피해 흡혈이 각각 ${trait.criticalChancePoints}%, ${trait.allDamageLifeStealPoints}% 증가한다.`;
-  if (trait.effectId === "stealthLeap") return `체력 비율이 가장 낮은 적에게 도약해 ${trait.durationSeconds}초 동안 [[stealth|은신]]한다.`;
+  // 내부 효과명은 저장 호환성을 위해 도약으로 유지하지만, 플레이어에게는 실제 좌표 변경 규칙을 정확히 알린다.
+  if (trait.effectId === "stealthLeap") return `체력 비율이 가장 낮은 적에게 [[teleport|순간이동]]해 ${trait.durationSeconds}초 동안 [[stealth|은신]]한다.`;
   if (trait.effectId === "selfAttackSpeedMultiplier") return `공격 속도가 ${trait.bonusPercent}% 증가한다.`;
   if (trait.effectId === "crescendoStaccato") {
     const converted = stats === undefined ? undefined : Math.round(stats.attack * trait.damagePercent / 100);

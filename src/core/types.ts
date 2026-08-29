@@ -206,6 +206,7 @@ export type FerocityEffectId =
   | "splashDamage"
   | "criticalChanceBonus"
   | "teamMoveSpeedBonus"
+  /** 저장 호환용 이름은 도약이지만, 전투에서는 보간 이동 없이 같은 발동 프레임에 좌표를 즉시 변경한다. */
   | "stealthLeap"
   /** 폭주 중 자기 공격 속도를 곱하는 명시적 효과다. */
   | "selfAttackSpeedMultiplier"
@@ -259,9 +260,9 @@ export type FerocityTrait = {
       effectId: "stealthLeap";
       /** 단일 대상 선택에서 제외되는 시간이다. */
       durationSeconds: number;
-      /** 도약 대상은 문구나 렐릭 ID 대신 결정 가능한 선택 규칙으로 고정한다. */
+      /** 순간이동 대상은 문구나 렐릭 ID 대신 결정 가능한 선택 규칙으로 고정한다(키 이름은 저장 호환용이다). */
       leapTarget: "lowestHpEnemy";
-      /** 목표의 일반 공격 사거리 가장자리로 즉시 배치할 거리다. */
+      /** 보간 이동 없이 같은 발동 프레임에 목표의 일반 공격 사거리 가장자리로 즉시 배치할 거리다. */
       landingDistance: number;
     }
   | {

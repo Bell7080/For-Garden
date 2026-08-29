@@ -19,7 +19,7 @@ export const SKILL_ART_SLOTS: readonly SkillArtSlot[] = ["passive", "basic", "ul
  * 여기 없는 개체는 공용 효과 아이콘(`skillIcons.ts`)으로 남는다. 아트가 도착하면 이 목록에
  * id를 더하고 같은 이름의 폴더만 채우면 된다 — 화면 코드는 손대지 않는다.
  */
-const RELICS_WITH_ART: readonly string[] = ["anky", "rex", "spino", "luka", "husk-raptor", "husk-shell", "husk-wing"];
+const RELICS_WITH_ART: readonly string[] = ["anky", "rex", "spino", "luka", "dodo", "mette", "husk-raptor", "husk-shell", "husk-wing"];
 
 /** Phaser 텍스처 키. 파일 경로가 아니라 이 함수가 만든 키로만 그림을 찾는다. */
 export function skillArtKey(relicId: string, slot: SkillArtSlot): string {

@@ -4,6 +4,7 @@ import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { FEROCITY_RULES } from "../core/ferocity";
 import {
   aliveFighters,
+  battleContributionSnapshot,
   canFireUltimate,
   createSkirmish,
   fireUltimate,
@@ -55,6 +56,8 @@ import type { SettleExpeditionRunResponse, SubmitExpeditionBossScoreResponse } f
 import { currencyRecordToRewardItems, openRewardPopup } from "../ui/RewardPopup";
 import { BATTLE_STATUS_LAYOUT, statusBadgeOffsets } from "../ui/battleStatusLayout";
 import { BattleProfile } from "../ui/BattleProfile";
+import { BattleContributionPanel } from "../ui/BattleContributionPanel";
+import type { ContributionCategory } from "../core/battleContribution";
 
 /**
  * 여섯이 돌아다닐 수 있는 범위.
@@ -230,6 +233,11 @@ export class BattleScene extends Phaser.Scene {
   private presentationChip!: ControlChip;
   /** 적 상세는 플레이어 성장 입력을 만들지 않는 전투 읽기 전용 창이다. */
   private info!: CharacterInfoManager;
+  /** 한 판 안에서만 열림·카테고리를 기억하며 영구 설정에는 쓰지 않는 기여도 프리팹이다. */
+  private contributionPanel?: BattleContributionPanel;
+  private contributionCategory: ContributionCategory = "attack";
+  /** 빠른 타격마다 순위가 흔들리지 않도록 표시 스냅샷은 350ms 간격으로만 교체한다. */
+  private contributionRefreshAt = 0;
 
   constructor() {
     super("battle");
@@ -291,6 +299,8 @@ export class BattleScene extends Phaser.Scene {
     this.ultimateSequenceActive = false;
     this.ultimateSequence = createUltimateSequenceState();
     this.currentUltimateFighterId = null;
+    this.contributionCategory = "attack";
+    this.contributionRefreshAt = 0;
     // 적도 같은 정보창을 쓴다. 문맥만 "enemy"라 급여·돌파·유대·룬이 빠지고 현재 전투 줄이 붙는다.
     this.info = new CharacterInfoManager(this, 1001, "enemy");
 
@@ -303,11 +313,21 @@ export class BattleScene extends Phaser.Scene {
 
     this.buildBattleControls();
 
+    // 씬은 코어 스냅샷을 넘길 뿐 공격·방어·회복 합산을 복제하지 않는다.
+    this.contributionPanel = new BattleContributionPanel(this, (category) => {
+      this.contributionCategory = category;
+      this.refreshContribution(true);
+      this.refreshDebug();
+    });
+    this.refreshContribution(true);
+
     this.buildProfiles();
     void this.spawnFighters();
     this.refreshDebug();
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.cancelUltimatePresentation();
+      this.contributionPanel?.destroy();
+      this.contributionPanel = undefined;
       this.views.forEach((view) => view.creature.destroy());
       this.views.clear();
     });
@@ -530,10 +550,13 @@ export class BattleScene extends Phaser.Scene {
       // 해석하면 서로 다른 시간축이 생기므로 pump 진입 시 한 번만 고정한다.
       const timing = ultimatePresentationTiming(this.battleSpeed, skipPresentation);
       if (!skipPresentation) {
+        // 전투 카드 잠금과 별개로 기여도 판은 컷인이 실제로 덮는 동안에만 입력을 멈춘다.
+        this.contributionPanel?.setInputLocked(true);
         this.activeCutIn = await UltimateCutIn.create(this, fighter.def, presentation);
         if (!this.sequenceValid(next.token, fighter)) return;
         await this.activeCutIn.play(timing);
         this.activeCutIn.destroy(); this.activeCutIn = undefined;
+        this.contributionPanel?.setInputLocked(false);
         if (!this.sequenceValid(next.token, fighter)) return;
         this.cameras.main.shake(180, presentation.cameraShakeIntensity);
       }
@@ -585,6 +608,8 @@ export class BattleScene extends Phaser.Scene {
       // 토큰 일치 때만 정상 속도/입력을 복구해 종료 후의 오래된 Promise가 새 연출을 풀지 못하게 한다.
       if (releaseUltimate(this.ultimateSequence, next.token)) {
         this.ultimateSequenceActive = false;
+        // 컷인이 중단된 경로도 기존 펼침 상태를 건드리지 않고 입력만 확실히 복원한다.
+        this.contributionPanel?.setInputLocked(false);
         this.currentUltimateFighterId = null;
         this.lastStepAt = performance.now();
         this.refreshProfiles();
@@ -619,6 +644,7 @@ export class BattleScene extends Phaser.Scene {
     this.lastStepAt = now;
     // 게이지는 연출 중에도 계속 따라붙는다. 여기서 멈추면 연출이 끝나는 순간 값이 점프한다.
     this.stepMeters(elapsed);
+    this.refreshContribution(false, now);
     // 코어 시간과 전투 배속을 궁극기 연출과 분리한다. 연출 Puppet/tween은 씬의 정상 시계로 돈다.
     if (this.ultimateSequenceActive) return;
     // battleSpeed는 코어 시간에 여기서 정확히 한 번만 곱한다. 궁극기 연출 배율은 tween/Puppet에만
@@ -640,6 +666,13 @@ export class BattleScene extends Phaser.Scene {
     if (this.autoUltimate && !this.finished) this.fireReadyUltimates();
     this.refreshProfiles();
     this.refreshDebug();
+  }
+
+  /** 제한 주기 또는 카테고리 입력 때만 코어의 불변 표시 스냅샷을 프리팹에 전달한다. */
+  private refreshContribution(force = false, now = performance.now()): void {
+    if (!this.contributionPanel || (!force && now < this.contributionRefreshAt)) return;
+    this.contributionRefreshAt = now + 350;
+    this.contributionPanel.update({ category: this.contributionCategory, rows: battleContributionSnapshot(this.state, this.contributionCategory) });
   }
 
   /** 자동 모드에서는 살아 있고 준비된 아군을 편성 순서대로 한 번씩 발동한다. */
@@ -1001,6 +1034,7 @@ export class BattleScene extends Phaser.Scene {
       // 상태의 실제 소유자는 src/core/skirmish.ts다. 디버그 모델도 씬 타이머 없이 같은 값만 읽는다.
       stunned: this.state.fighters.filter((fighter) => fighter.stunnedFor > 0).map((fighter) => fighter.def.name),
       healPopups: this.healPopups,
+      contributionPanel: this.contributionPanel?.state,
     });
   }
 
@@ -1065,6 +1099,7 @@ export class BattleScene extends Phaser.Scene {
     const attacker = this.currentUltimateFighterId ? this.views.get(this.currentUltimateFighterId) : undefined;
     cancelUltimateSequence(this.ultimateSequence);
     this.ultimateSequenceActive = false;
+    this.contributionPanel?.setInputLocked(false);
     this.currentUltimateFighterId = null;
     this.activeCutIn?.destroy();
     this.activeCutIn = undefined;

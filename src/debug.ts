@@ -29,6 +29,8 @@ export interface DebugBattle {
   stunned?: string[];
   /** 현재 떠 있는 회복 숫자 수다. 코어 사건을 다시 계산하지 않고 표시 수명만 관찰한다. */
   healPopups?: number;
+  /** Canvas 기여도 판의 현재 표시·입력 상태만 노출하며 누적 전투값은 내보내지 않는다. */
+  contributionPanel?: { expanded: boolean; category: "attack" | "defense" | "healing"; locked: boolean };
 }
 
 export interface DebugState {

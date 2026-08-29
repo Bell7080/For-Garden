@@ -7,7 +7,7 @@ import { tintFor } from "../puppets/tints";
 import { session } from "../state/session";
 import { setDebugExcavationAdOffers, setDebugIdleExcavationControls, setDebugIdleExcavationPopup, setDebugIdleExcavationSdReady, setDebugIdleExcavationSlots } from "../debug";
 import { Button } from "./Button";
-import { chipPoints, drawHairline, drawLayer, HOLO, HoloBar, slantedRect } from "./holo";
+import { chipPoints, drawGlassFade, drawHairline, drawLayer, HOLO, HoloBar, slantedRect } from "./holo";
 import { PortraitCard } from "./PortraitCard";
 import { PORTRAIT_GRID_MASK_GAP, portraitGridContentHeight, portraitGridFirstRowY } from "./portraitGrid";
 import type { PopupLayer } from "./PopupLayer";
@@ -504,6 +504,15 @@ export class IdleExcavationPopup {
     this.ticker?.remove(false);
     this.ticker = this.scene.time.addEvent({ delay: 16, loop: true, callback: syncMask });
     syncMask();
+
+    // 스크롤할 카드가 있으면 다음 줄이 뷰포트 경계에서 갑자기 잘려 배치 버튼을 침범하는
+    // 것처럼 보인다. 마스크 밖(grid가 아닌 parent)에 검정 그라데이션과 얇은 경계선을 얹어
+    // 카드가 어둠 속으로 자연스럽게 사라지게 하고, 아래 버튼 자리와 분명히 갈라 둔다.
+    if (contentHeight > viewportHeight) {
+      const fadeHeight = 96;
+      parent.add(drawGlassFade(this.scene, (GRID_VIEW.left + GRID_VIEW.right) / 2, GRID_VIEW.bottom - fadeHeight / 2, GRID_VIEW.right - GRID_VIEW.left, fadeHeight, { topAlpha: 0, bottomAlpha: 0.95 }));
+      parent.add(drawHairline(this.scene, (GRID_VIEW.left + GRID_VIEW.right) / 2, GRID_VIEW.bottom, GRID_VIEW.right - GRID_VIEW.left, { color: COLOR.accent, alpha: 0.3 }));
+    }
 
     // 얇은 홈과 짧은 채움만 써 기존 HoloBar 계열처럼 외곽 판 없이 현재 위치를 보여 준다.
     const railX = GRID_VIEW.right + 8;

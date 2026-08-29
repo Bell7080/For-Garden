@@ -178,6 +178,73 @@ describe("스피나 전투 계약", () => {
   });
 });
 
+describe("루카 전투 계약", () => {
+  /** 자동 진행의 위치·쿨다운 변수를 제거하고 루카의 다음 기본 공격 한 번만 실행한다. */
+  function hitOnce(state: SkirmishState, rng: () => number = () => 0.99): SkirmishEvent[] {
+    const luka = state.fighters[0]; const target = state.fighters.find((fighter) => fighter.side === "enemy")!;
+    luka.x = 300; target.x = 440; luka.y = target.y = 700; luka.targetId = target.id; luka.attackCooldown = 0;
+    for (const fighter of state.fighters.slice(1)) fighter.attackCooldown = 99;
+    return stepSkirmish(state, 1 / 60, rng);
+  }
+
+  it("는 최고 전투 시작 공격력 아군의 표적을 따르고 동률이면 편성 순서를 따른다", () => {
+    const leader = { ...getRelic("rex"), stats: { ...getRelic("rex").stats, atk: 500 } };
+    const tied = { ...getRelic("anky"), stats: { ...getRelic("anky").stats, atk: 500 } };
+    const state = createSkirmish([leader, tied, getRelic("luka")], [getRelic("husk-raptor"), getRelic("husk-shell")], { left: 0, right: 600, top: 0, bottom: 1_000 });
+    expect(state.fighters[2].targetId).toBe(state.fighters[0].targetId);
+    // 동률 후순위의 표적을 바꿔도 최초 편성인 leader가 기준이었다는 결과는 변하지 않는다.
+    state.fighters[1].targetId = state.fighters[0].targetId === "enemy-0" ? "enemy-1" : "enemy-0";
+    expect(state.fighters[2].targetId).not.toBe(state.fighters[1].targetId);
+  });
+
+  it("는 폭주 진입 때 은신·재지정·적 추적 해제를 적용하고 도약하지 않는다", () => {
+    const state = newSkirmish(["luka", "rex"], ["husk-shell", "husk-wing"]); const [luka, leader, enemy] = state.fighters;
+    luka.ferocity = 99; leader.targetId = "enemy-1"; enemy.targetId = luka.id; luka.x = 300; luka.y = 700;
+    const position = { x: luka.x, y: luka.y }; hitOnce(state);
+    expect(luka.stealthFor).toBeGreaterThan(2.9); expect(luka.targetId).toBe("enemy-1");
+    expect(enemy.targetId).not.toBe(luka.id); expect({ x: luka.x, y: luka.y }).toEqual(position);
+  });
+
+  it("는 폭주 중 자신과 동일 표적 생존 아군만 공속을 25% 높이고 복수 오라는 중첩하지 않는다", () => {
+    const state = newSkirmish(["luka", "luka", "rex", "anky"], ["husk-shell", "husk-wing"]);
+    const [first, second, same, other] = state.fighters; first.ferocityFever = second.ferocityFever = true;
+    first.targetId = second.targetId = same.targetId = "enemy-0"; other.targetId = "enemy-1";
+    expect(currentAttackSpeed(first, state)).toBeCloseTo(first.def.stats.attackSpeed * 1.25);
+    expect(currentAttackSpeed(same, state)).toBeCloseTo((same.def.stats.attackSpeed + (same.def.passive.attackSpeedPercent ?? 0)) * 1.25);
+    expect(currentAttackSpeed(other, state)).toBe(other.def.stats.attackSpeed);
+    same.hp = 0; expect(currentAttackSpeed(same, state)).toBe(same.def.stats.attackSpeed + (same.def.passive.attackSpeedPercent ?? 0));
+  });
+
+  it("는 네 번째 실제 기본 공격을 난수 소비 없이 확정 치명타로 만들고 주기를 초기화한다", () => {
+    const durable = { ...getRelic("husk-shell"), stats: { ...getRelic("husk-shell").stats, hp: 100_000 } };
+    const state = createSkirmish([getRelic("luka")], [durable], { left: 0, right: 600, top: 0, bottom: 1_000 });
+    let rolls = 0; const criticals: boolean[] = [];
+    for (let index = 0; index < 5; index += 1) criticals.push(hitOnce(state, () => { rolls += 1; return 0.99; }).find((event) => event.kind === "attack")!.critical);
+    expect(criticals).toEqual([false, false, false, true, false]); expect(rolls).toBe(4); expect(state.fighters[0].basicAttackCount).toBe(1);
+  });
+
+  it("는 주 대상 최종 HP 손실의 75%를 주 대상 기준 가장 가까운 다른 적에게만 전이한다", () => {
+    const state = newSkirmish(["luka"], ["husk-shell", "husk-wing", "husk-raptor"]); const [luka, primary, near, far] = state.fighters;
+    primary.x = 100; primary.y = 100; near.x = 110; near.y = 100; far.x = 500; far.y = 900; luka.energy = 90; luka.targetId = primary.id;
+    const primaryBefore = primary.hp; const nearBefore = near.hp;
+    const events = fireUltimate(state, luka.id, () => 0.99);
+    const primaryLoss = primaryBefore - primary.hp; const transfer = events.find((event): event is Extract<SkirmishEvent, { kind: "attack" }> => event.kind === "attack" && event.skill === "transfer");
+    expect(transfer?.targetId).toBe(near.id); expect(nearBefore - near.hp).toBe(Math.round(primaryLoss * 0.75)); expect(far.hp).toBe(far.maxHp);
+    expect(events.filter((event) => event.kind === "attack" && event.skill === "transfer")).toHaveLength(1);
+  });
+
+  it("는 단일 적일 때 전이를 생략하고 보호막·과잉 피해 뒤 실제 HP 손실만 기준으로 삼는다", () => {
+    const solo = newSkirmish(["luka"], ["husk-shell"]); solo.fighters[0].energy = 90;
+    expect(fireUltimate(solo, "player-0").some((event) => event.kind === "attack" && event.skill === "transfer")).toBe(false);
+    const state = newSkirmish(["luka"], ["husk-shell", "husk-wing"]); const [luka, primary, secondary] = state.fighters;
+    luka.energy = 90; luka.targetId = primary.id; primary.hp = 20; primary.shield = { amount: 10, providerId: null }; secondary.shield = { amount: 5, providerId: null };
+    const before = secondary.hp; const events = fireUltimate(state, luka.id, () => 0);
+    // 치명타·방어 계산은 주 피해에만 반영되고 과잉 제한된 20 HP의 75%=15가 전이되어 보호막 5 뒤 10만 HP에 적용된다.
+    expect(before - secondary.hp).toBe(10); expect(events.filter((event) => event.kind === "attack" && event.skill === "transfer")).toHaveLength(1);
+    expect(luka.basicAttackCount).toBe(0);
+  });
+});
+
 describe("메테 전투 계약", () => {
   /** 메테·동료·적을 즉시 교전 가능한 한 점에 모으고 필요 없는 자동 행동은 멈춘다. */
   function metteBattle() {

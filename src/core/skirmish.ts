@@ -90,6 +90,8 @@ export interface Fighter extends Combatant {
   immortal?: boolean;
   /** 기본 공격 실제 적중으로 쌓인 전투 한정 공격 속도다. 저장 모델에는 존재하지 않는다. */
   bonusAttackSpeed: number;
+  /** 루카의 실제 기본 공격 행동 주기만 세며 궁극기·전이·추가타는 포함하지 않는다. */
+  basicAttackCount: number;
   /** 0보다 크면 단일 대상 선택의 중심이 될 수 없는 은신 상태다. */
   stealthFor: number;
   /** 폰토스 폭주의 다음 1초 고정 피해까지 남은 시간이며 비활성 중에는 1초로 초기화한다. */
@@ -152,7 +154,7 @@ export type SkirmishEvent =
       kind: "attack";
       attackerId: string;
       targetId: string;
-      skill: "basic" | "ultimate" | "staccato";
+      skill: "basic" | "ultimate" | "staccato" | "transfer";
       amount: number;
       /** 방어·저항·속성·대상 경감·무효화 전, 공격자가 실제로 만든 점수 기여값이다. */
       contributionAmount: number;
@@ -283,6 +285,7 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     bonusAp: 0,
     immortal: false,
     bonusAttackSpeed: 0,
+    basicAttackCount: 0,
     stealthFor: 0,
     // 폭주가 켜진 뒤 온전한 1초가 지나야 첫 파동이 발생한다.
     pontusRageTickIn: 1,
@@ -336,7 +339,7 @@ export function createSkirmish(
   });
   if (options.boss && !enemies.some(({ id }) => id === bossFighterId)) throw new RangeError("보스 전투원 ID는 적 편성에 존재해야 합니다.");
   const fighters = [...players, ...enemies];
-  return {
+  const state: SkirmishState = {
     fighters,
     contributions: createBattleContributions(fighters.map(({ id }) => id)),
     arena,
@@ -346,6 +349,10 @@ export function createSkirmish(
     augmentEffects: options.augmentEffects ?? [],
     boss: options.boss ? { fighterId: bossFighterId, score: 0, survivedFor: 0, phaseIndex: 0, limitReached: false, phases: options.boss.phases, limitSeconds: options.boss.limitSeconds, damageRemainder: 0, pressureRadius: Math.max(arena.right - arena.left, arena.bottom - arena.top) / 2, tideWarning: false } : undefined,
   };
+  // 무리 사냥이 있는 편만 기준 아군의 정상 최초 표적을 확정한 뒤 루카가 이를 복사한다.
+  triggerPackHunt(state, "player");
+  triggerPackHunt(state, "enemy");
+  return state;
 }
 
 /** 전투 상태의 변경 가능한 Fighter를 노출하지 않고 원정 저장용 결과만 복사한다. */
@@ -479,7 +486,13 @@ export function currentAttackSpeed(fighter: Fighter, state?: SkirmishState): num
     ? fighter.def.passive.attackSpeedPercent ?? 0 : 0;
   const teamPercent = state ? Math.max(0, ...state.fighters.filter((ally) => ally.side === fighter.side && isFighterAlive(ally)
     && ally.def.passive.kind === "adagioWeight").map((ally) => ally.def.passive.teamAttackSpeedPercent ?? 0)) : 0;
-  return (fighter.def.stats.attackSpeed + passiveSpeedPoints + fighter.bonusAttackSpeed) * (1 + teamPercent / 100);
+  // 동일 표적 폭주 루카 오라는 자신도 포함하며, 복수 제공자는 기존 오라 정책대로 최댓값만 쓴다.
+  const packHuntPercent = state && isFighterAlive(fighter) && fighter.targetId ? Math.max(0, ...state.fighters.filter((ally) =>
+    ally.side === fighter.side && isFighterAlive(ally) && ally.ferocityFever && ally.targetId === fighter.targetId
+    && ally.def.ferocityTrait.effectId === "packHunt"
+  ).map((ally) => ally.def.ferocityTrait.effectId === "packHunt" ? ally.def.ferocityTrait.sharedTargetAttackSpeedPercent : 0)) : 0;
+  return (fighter.def.stats.attackSpeed + passiveSpeedPoints + fighter.bonusAttackSpeed)
+    * (1 + teamPercent / 100) * (1 + packHuntPercent / 100);
 }
 
 export function attackInterval(fighter: Fighter, state?: SkirmishState): number {
@@ -604,6 +617,25 @@ function resolveTarget(state: SkirmishState, fighter: Fighter): Fighter | undefi
   return chosen;
 }
 
+/** 실제 전투 시작 공격력이 가장 높은 아군의 표적을 무리 사냥 보유자들이 복사한다. 동률은 편성 순서다. */
+export function triggerPackHunt(state: SkirmishState, side: Side): void {
+  const allies = state.fighters.filter((fighter) => fighter.side === side && isFighterAlive(fighter));
+  const hunters = allies.filter((ally) => ally.def.passive.kind === "followHighestAttackAllyTarget");
+  if (hunters.length === 0) return;
+  const leader = allies.reduce<Fighter | undefined>((best, fighter) => {
+    // 전투 시작부터 적용되는 공격력 패시브까지 반영하고, 같은 값이면 앞선 fighters 순서를 보존한다.
+    const attack = offensiveDefinition(fighter).stats.atk;
+    return !best || attack > offensiveDefinition(best).stats.atk ? fighter : best;
+  }, undefined);
+  if (!leader) return;
+  const leaderTarget = resolveTarget(state, leader);
+  if (!leaderTarget) return;
+  for (const ally of hunters) {
+    ally.targetId = leaderTarget.id;
+    ally.engaged = false;
+  }
+}
+
 function gainEnergy(fighter: Fighter): void {
   const chargeThreshold = fighter.def.ultimate.chargeStartsAtHpPercent;
   // 보스의 체력 단계형 궁극기는 전투 시작부터 미리 충전되지 않도록 적중 순간의 현재 HP를 확인한다.
@@ -637,6 +669,12 @@ function gainFerocity(fighter: Fighter, base: number, state: SkirmishState): voi
       }
       // 이미 스피나를 추적하던 모든 상대도 즉시 대기/재탐색 상태로 돌린다.
       for (const other of state.fighters) if (other.targetId === fighter.id) { other.targetId = null; other.engaged = false; }
+    }
+    if (trait.effectId === "packHunt") {
+      fighter.stealthFor = trait.stealthDurationSeconds;
+      // 루카는 도약하지 않고 현재 좌표를 유지한 채 표적만 다시 정하며, 기존 단일 추적은 즉시 해제한다.
+      for (const other of state.fighters) if (other.targetId === fighter.id) { other.targetId = null; other.engaged = false; }
+      if (trait.retriggerPackHunt) triggerPackHunt(state, fighter.side);
     }
   }
   for (const { value } of FEROCITY_RULES.thresholds) {
@@ -906,7 +944,15 @@ function strike(
   const criticalChance = attacker.def.stats.critChance + passiveCritPoints
     + (attackingInFever && critTrait.effectId === "criticalChanceBonus" ? critTrait.chancePercent : 0)
     + (attackingInFever && critTrait.effectId === "rexBattleQueen" ? critTrait.criticalChancePoints : 0);
-  const critical = isCriticalHit(Math.min(100, criticalChance), rng());
+  const periodicCritical = !useUltimate ? attacker.def.basic.periodicCritical : undefined;
+  if (periodicCritical) {
+    // 행동마다 정확히 한 번 증가시키며 주기 끝은 0으로 되돌려 다음 네 공격을 독립적으로 센다.
+    attacker.basicAttackCount += 1;
+  }
+  const forcedCritical = periodicCritical !== undefined && attacker.basicAttackCount >= periodicCritical.every;
+  if (forcedCritical) attacker.basicAttackCount = 0;
+  // 확정 치명타는 RNG를 호출조차 하지 않아 이후 리플레이 난수열이 밀리지 않는다.
+  const critical = forcedCritical || isCriticalHit(Math.min(100, criticalChance), rng());
   // 공속 복합 계수는 현재 기본 공속과 전투의 환희 누적을 읽되 폭주 임시 배율은 포함하지 않는다.
   const attackSpeedPower = useUltimate ? attacker.def.ultimate.attackSpeedPower ?? 0 : 0;
   const compositePower = attackSpeedPower > 0
@@ -941,6 +987,29 @@ function strike(
   const dealt = applyDamage(target, amount, events);
   const credited = recordDamageContribution(state, attacker.id, target, damageInput.damageType, damageInput.scalingStat, contributionAmount, resolution, targetHpBefore, shieldBefore, shieldProviderId);
   tryTriggerEmergencyRecovery(target);
+
+  const transfer = useUltimate ? attacker.def.ultimate.damageTransfer : undefined;
+  if (transfer && dealt > 0) {
+    // 계약상 거리는 주 대상 기준이며 filter/find 순서를 보존해 동률은 fighters 편성 순서로 결정한다.
+    const secondary = state.fighters.filter((other) => other.side !== attacker.side && other.id !== target.id && isFighterAlive(other))
+      .reduce<Fighter | undefined>((nearest, other) => !nearest || distance(target, other) < distance(target, nearest) ? other : nearest, undefined);
+    if (secondary) {
+      const requested = dealt * transfer.percent / 100;
+      // 전이는 공격 공식을 재계산하지 않지만 공용 받는 피해 경감·무효화와 보호막 경계는 적용한다.
+      const transferResolution = resolveReceivedDamage(secondary, requested);
+      const secondaryHpBefore = secondary.hp;
+      const transferApplied = applyDamage(secondary, transferResolution.applied, events);
+      addContribution(state.contributions, attacker.id, "attack", secondaryHpBefore - secondary.hp, "attackPower");
+      events.push({ kind: "attack", attackerId: attacker.id, targetId: secondary.id, skill: "transfer", amount: transferApplied,
+        contributionAmount: secondaryHpBefore - secondary.hp, critical: false, animate: false });
+      if (transferResolution.ignored) events.push({ kind: "damageIgnored", attackerId: attacker.id, targetId: secondary.id });
+      // 전용 사건은 흡혈·야성·기본 공격 적중·스타카토·재전이를 호출하지 않고 사망 정리만 수행한다.
+      if (!isFighterAlive(secondary)) {
+        clearDefeatedStatuses(secondary);
+        events.push({ kind: "death", fighterId: secondary.id });
+      }
+    }
+  }
   /**
    * 흡혈 규칙: 보호막을 통과한 뒤 실제 HP에서 빠진 직접/광역 피해에만 적용한다.
    * 과잉 피해는 제외하고, 출혈 같은 별도 고정 피해에는 적용하지 않는다. 현재 보호막 모델이

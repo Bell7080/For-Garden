@@ -82,6 +82,14 @@ export const KEYWORDS: readonly KeywordDef[] = [
     id: "stealth", term: "은신", kind: "버프",
     description: "지속되는 동안 적의 단일 대상 선택에서 제외된다. 시간이 끝나면 다시 대상으로 선택될 수 있다.",
   },
+  {
+    id: "transfer", term: "전이", kind: "규칙",
+    description: "처음 계산한 순수 피해가 아니라 치명타·방어·보호막·받는 피해 경감·무효화와 과잉 피해 제한을 모두 거친 뒤 주 대상이 실제로 잃은 최종 HP 피해를 기준으로 일부를 다른 대상에게 옮긴다.",
+  },
+  {
+    id: "pack-hunt", term: "무리 사냥", kind: "버프",
+    description: "아군 중 전투 시작 공격력이 가장 높은 렐릭의 현재 표적을 함께 노린다. 공격력이 같으면 편성 순서가 앞선 렐릭을 따른다.",
+  },
   // 순간이동은 이동 애니메이션처럼 보이더라도 경로·속도·시간 계산을 거치지 않는 좌표 변경 규칙이다.
   {
     id: "teleport", term: "순간이동", kind: "규칙",

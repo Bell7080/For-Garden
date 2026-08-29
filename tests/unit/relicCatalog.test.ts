@@ -110,6 +110,15 @@ describe("relic catalog", () => {
     });
   });
 
+  it("루카의 무리 사냥·치명적인 발톱·약점 관통 수치 계약을 공개한다", () => {
+    const luka = PLAYABLE_RELICS.find((relic) => relic.id === "luka")!;
+    // 이름뿐 아니라 엔진이 판별할 계수·게이지·주기·전이 기준까지 카탈로그 회귀로 함께 고정한다.
+    expect(luka.ferocityTrait).toMatchObject({ name: "폭주", effectId: "packHunt", stealthDurationSeconds: 3, retriggerPackHunt: true, sharedTargetAttackSpeedPercent: 25 });
+    expect(luka.passive).toMatchObject({ name: "무리 사냥", kind: "followHighestAttackAllyTarget" });
+    expect(luka.basic).toMatchObject({ name: "치명적인 발톱", power: 80, periodicCritical: { every: 4 } });
+    expect(luka.ultimate).toMatchObject({ name: "약점 관통", power: 200, cost: 90, damageTransfer: { percent: 75, distanceOrigin: "primaryTarget" } });
+  });
+
   it("루카의 관찰 프로필과 도감은 같은 신체 수치와 단거리 선수 체형을 공개한다", () => {
     const luka = PLAYABLE_RELICS.find((relic) => relic.id === "luka")!;
     // 성인 렐릭의 복원 이력과 신체 수치가 도감 요약의 수치 및 체형 설명과 어긋나지 않도록 함께 고정한다.

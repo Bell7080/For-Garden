@@ -36,6 +36,21 @@ const ALLY_ROW = 830;
 const FRONT_LINE = 556;
 const PREVIEW_HEIGHT = 210;
 
+/** 보유 렐릭 그리드의 배치표. 자동 배치 버튼 자리도 이 값을 그대로 읽어 그리드와 어긋나지 않는다. */
+const ROSTER_GRID = { cols: 5, cardW: 186, cardH: 226, gapX: 26, gapY: 52, startY: 1080 } as const;
+
+/** 그리드 카드 하나의 중심 x좌표. 열 번호(0부터)를 받는다. */
+function rosterColumnX(col: number): number {
+  const gridW = ROSTER_GRID.cols * ROSTER_GRID.cardW + (ROSTER_GRID.cols - 1) * ROSTER_GRID.gapX;
+  const startX = (BASE_WIDTH - gridW) / 2 + ROSTER_GRID.cardW / 2;
+  return startX + col * (ROSTER_GRID.cardW + ROSTER_GRID.gapX);
+}
+
+/** 그리드 오른쪽 바깥 경계. 자동 배치 버튼을 그리드 위 우측에 맞추는 데 쓴다. */
+function rosterRightEdge(): number {
+  return rosterColumnX(ROSTER_GRID.cols - 1) + ROSTER_GRID.cardW / 2;
+}
+
 interface RosterCard {
   card: PortraitCard;
   role: string;
@@ -69,6 +84,8 @@ export class PartyScene extends Phaser.Scene {
   private hint!: Phaser.GameObjects.Text;
   /** 자동 배치와 자리별 방향 표식이 함께 참조하는 이번 스테이지의 적 정의다. */
   private enemies: RelicDef[] = [];
+  /** 자동 배치 버튼의 실제 중심. `create`에서 한 번 계산해 `refresh`가 그대로 다시 쓴다. */
+  private autoButtonPosition = { x: 0, y: 0 };
   private info!: CharacterInfoManager;
   /** 같은 정보창을 적 문맥으로 하나 더 둔다. 아군 창과 문맥이 섞이지 않게 창을 나눈다. */
   private enemyInfo!: CharacterInfoManager;
@@ -108,21 +125,25 @@ export class PartyScene extends Phaser.Scene {
     this.buildPreview(this.enemies, stage.enemyLevel);
     this.buildRoster();
 
-    // 제목/속성 안내의 가운데와 첫 도움말(x=366) 사이를 피해, 미리보기 상단 왼쪽 조작 영역에 둔다.
-    // 1080×1920과 좁은 모바일 화면 모두 게임 좌표가 동일하므로 이 안전 여백도 그대로 유지된다.
-    const autoButtonPosition = { x: 180, y: 190 } as const;
-    new Button(this, autoButtonPosition.x, autoButtonPosition.y, {
-      width: 260,
-      height: 64,
+    // 그리드 위 우측 — 고르는 손이 그리드에 머무는 동안 곧바로 닿는 자리다. 그리드 오른쪽
+    // 경계에 버튼 오른쪽을 맞추고, 셋째 아군 자리 이름표(2번 자리 문구)와 겹치지 않도록 좁혀
+    // 그 오른쪽 빈 자리에만 놓는다.
+    const autoButtonWidth = 200;
+    const autoButtonHeight = 56;
+    this.autoButtonPosition = {
+      x: rosterRightEdge() - autoButtonWidth / 2,
+      y: ROSTER_GRID.startY - ROSTER_GRID.cardH / 2 - 20 - autoButtonHeight / 2,
+    };
+    new Button(this, this.autoButtonPosition.x, this.autoButtonPosition.y, {
+      width: autoButtonWidth,
+      height: autoButtonHeight,
       label: "자동 배치",
-      fontSize: 30,
+      fontSize: 26,
       onClick: () => {
         this.picked = autoPickParty(relicCollection.owned, this.enemies);
         this.refresh();
       },
     });
-    // E2E는 캔버스 DOM에서 내부 오브젝트를 찾을 수 없어, 실제 버튼 중심만 읽기 전용으로 노출한다.
-    setDebugParty({ autoButton: autoButtonPosition, visibleAffinityDirections: 0 });
 
     this.hint = this.add
       .text(cx, 1560, "", textStyle({ role: "body", size: 28, color: COLOR.inkDim }))
@@ -255,19 +276,12 @@ export class PartyScene extends Phaser.Scene {
    * 고른 카드는 띠 문구가 전장에서 설 자리 번호로 바뀐다.
    */
   private buildRoster(): void {
-    const cols = 5;
-    const cardW = 186;
-    const cardH = 226;
-    const gapX = 26;
-    const gapY = 52;
-    const gridW = cols * cardW + (cols - 1) * gapX;
-    const startX = (BASE_WIDTH - gridW) / 2 + cardW / 2;
-    const startY = 1080;
+    const { cols, cardW, cardH, gapY, startY } = ROSTER_GRID;
 
     // 보유한 렐릭만 편성할 수 있다.
     const roster = relicCollection.owned;
     roster.forEach((relic, i) => {
-      const x = startX + (i % cols) * (cardW + gapX);
+      const x = rosterColumnX(i % cols);
       const y = startY + Math.floor(i / cols) * (cardH + gapY);
       const role = ROLE_LABEL[relic.role];
       const card = new PortraitCard(this, x, y, {
@@ -338,6 +352,10 @@ export class PartyScene extends Phaser.Scene {
       this.picked.splice(at, 1);
     } else if (this.picked.length < 3) {
       this.picked.push(relicId);
+    } else {
+      // 자동 배치 등으로 이미 3명이 찬 상태에서 새 카드를 누르면, 아무 반응도 없는 것처럼
+      // 보이지 않도록 마지막 자리를 바로 바꾼다.
+      this.picked[this.picked.length - 1] = relicId;
     }
     this.refresh();
   }
@@ -368,7 +386,7 @@ export class PartyScene extends Phaser.Scene {
     this.refreshButtonState();
     // 자동 배치 직후 방향 표식이 실제로 나타났는지 캔버스 밖 E2E가 판별하는 읽기 전용 수치다.
     setDebugParty({
-      autoButton: { x: 180, y: 190 },
+      autoButton: this.autoButtonPosition,
       visibleAffinityDirections: this.allySlots.filter((slot) => slot.affinityDirection.visible).length,
     });
     this.hint.setText(

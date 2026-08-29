@@ -384,15 +384,15 @@ test("모바일 편성 상단의 자동 배치 버튼과 자리별 상성 화살
   await enterParty(page);
   const before = await page.evaluate(() => window.__PF_DEBUG?.party);
 
-  // 버튼 중심은 화면 안이면서 제목(70)·속성 안내 중앙(178)·첫 도움말(366,230)을 피한 좌측 조작 칸이다.
-  expect(before?.autoButton.x).toBeGreaterThan(0);
-  expect(before?.autoButton.x).toBeLessThan(BASE_WIDTH / 3);
-  expect(before?.autoButton.y).toBeGreaterThan(150);
-  expect(before?.autoButton.y).toBeLessThan(230);
+  // 버튼 중심은 그리드 위 우측 — 그리드 오른쪽 경계에 붙고, 그리드 윗변 바로 위에 뜬다.
+  expect(before?.autoButton.x).toBeGreaterThan((BASE_WIDTH * 2) / 3);
+  expect(before?.autoButton.x).toBeLessThan(BASE_WIDTH);
+  expect(before?.autoButton.y).toBeGreaterThan(800);
+  expect(before?.autoButton.y).toBeLessThan(1080 - 113); // 그리드 카드 윗변(1080 - 카드 높이/2) 위쪽
   expect(before?.visibleAffinityDirections).toBe(0);
 
   await tapGame(page, before!.autoButton.x, before!.autoButton.y);
-  // 고정 적 조합에서는 자동 편성 셋 중 상쇄 중립 한 명을 숨기고 유리/불리 두 방향만 남긴다.
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.party?.visibleAffinityDirections)).toBe(2);
+  // 고정 시작 보유·1-1 적 조합에서는 자동 편성 셋 모두 유리하거나 불리해 중립이 없다.
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.party?.visibleAffinityDirections)).toBe(3);
   await page.screenshot({ path: `test-results/${test.info().project.name}-party-affinity-arrows.png` });
 });

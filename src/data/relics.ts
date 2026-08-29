@@ -783,13 +783,15 @@ export const RELICS: RelicDef[] = [
       kind: "abyssalPressure",
       iconAssetId: "skill-icon-buff",
       effectType: "buff",
-      value: 12,
-      apPerSecond: 12,
-      reductionPerMissingHpPercent: 0.5,
-      maxReductionPercent: 40,
+      value: 5,
+      // 완전히 경과한 매초 기본 주문력의 5%가 복리로 누적된다.
+      apPercentPerSecond: 5,
+      baseDamageReductionPercent: 50,
+      maxDamageReductionPercent: 99,
+      maxReductionAtHpPercent: 50,
       // kind가 abyssalPressure인 패시브는 passiveDescription()이 구조화 필드로 다시 문장을
       // 만들므로 이 원문은 데이터 문서화용일 뿐 화면에는 쓰이지 않는다.
-      desc: "매초 주문력이 12 상승하고, 잃은 체력에 비례해 받는 모든 피해가 최대 40% 감소한다.",
+      desc: "매초 기본 주문력의 5%가 복리로 누적되고, 현재 체력에 따라 받는 모든 피해가 50~99% 감소한다.",
     },
     basic: {
       id: "pontos-basic",

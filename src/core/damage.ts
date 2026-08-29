@@ -15,13 +15,18 @@ export function isCriticalHit(critChance: number, roll: number): boolean {
   return roll < critChance / 100;
 }
 
+/** 표시·회복·마법 피해가 전투 중 누적분을 정확히 한 번 더하도록 현재 주문력을 확정한다. */
+export function currentAbilityPower(combatant: Combatant): number {
+  return combatant.def.stats.ap + (combatant.bonusAp ?? 0);
+}
+
 /** 실시간 난전의 공격력, 방어, 치명타, 각성, 야성, 속성 순서를 고정한 피해 공식이다. */
 export function computeDamage(attacker: Combatant, target: Combatant, input: DamageInput, targetIsFront: boolean): number {
   // 방어형 탱커의 공격은 방어력을 직접 피해 원천으로 쓸 수 있다.
   const offense = input.scalingStat === "def" ? attacker.def.stats.def
     : input.scalingStat === "atk" ? attacker.def.stats.atk
-      : input.scalingStat === "ap" ? attacker.def.stats.ap + (attacker.bonusAp ?? 0)
-        : input.damageType === "physical" ? attacker.def.stats.atk : attacker.def.stats.ap + (attacker.bonusAp ?? 0);
+      : input.scalingStat === "ap" ? currentAbilityPower(attacker)
+        : input.damageType === "physical" ? attacker.def.stats.atk : currentAbilityPower(attacker);
   const defense = input.damageType === "physical" ? target.def.stats.def : target.def.stats.res;
   const critical = input.isCritical ? attacker.def.stats.critDamage / 100 : 1;
   const opened = breakthroughBonus(attacker.breakthrough);

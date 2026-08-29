@@ -298,12 +298,14 @@ export interface Passive {
   criticalDamagePercent?: number;
   /** 지속 효과인 패시브만 갖는 유지 시간(초). 전투와 표시가 함께 읽는 단일 계약이다. */
   durationSeconds?: number;
-  /** 심해 압력 전용: 전투 경과 1초마다 더하는 주문력이다. */
-  apPerSecond?: number;
-  /** 심해 압력 전용: 잃은 체력 1%당 더하는 받는 피해 감소율(퍼센트포인트)이다. */
-  reductionPerMissingHpPercent?: number;
-  /** 심해 압력 전용: 받는 피해 감소율 상한이다. */
-  maxReductionPercent?: number;
+  /** 심해 압력 전용: 완전히 경과한 매초 기본 주문력에 복리로 누적하는 비율이다. */
+  apPercentPerSecond?: number;
+  /** 심해 압력 전용: 최대 체력일 때 적용하는 받는 피해 감소율이다. */
+  baseDamageReductionPercent?: number;
+  /** 심해 압력 전용: 저체력 구간에서 제한할 받는 피해 감소율 상한이다. */
+  maxDamageReductionPercent?: number;
+  /** 심해 압력 전용: 최대 피해 감소율에 도달하는 현재 체력 비율이다. */
+  maxReductionAtHpPercent?: number;
   /** 제공자가 살아 있는 동안 같은 편의 방어력과 저항력에 곱하는 증가율(%). */
   teamDefenseResistancePercent?: number;
   /** 제공자가 살아 있는 동안 반대편이 받는 모든 체력 회복을 줄이는 비율(%). */

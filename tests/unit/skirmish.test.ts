@@ -9,6 +9,7 @@ import {
   canFireUltimate,
   clearStun,
   createSkirmish,
+  currentAbilityPower,
   currentAttackSpeed,
   fireUltimate,
   findFighter,
@@ -305,7 +306,21 @@ describe("단일 난전의 원정 보스 옵션", () => {
   it("는 보스 HP가 소진되어도 승리하지 않고 실제 공격 피해를 점수로 누적한다", () => {
     const state = bossBattle(0); state.fighters[1].hp = 1;
     stepSkirmish(state, 1 / 60);
-    expect(state.phase).toBe("fight"); expect(state.fighters[1].hp).toBe(state.fighters[1].maxHp); expect(state.boss?.score).toBeGreaterThan(0);
+    // 표시 HP는 실제로 0까지 내려가지만 불사 표식이 타깃·승패 처리를 계속 유지한다.
+    expect(state.phase).toBe("fight"); expect(state.fighters[1].hp).toBe(0); expect(state.fighters[1].immortal).toBe(true); expect(state.boss?.score).toBeGreaterThan(0);
+  });
+
+  it("는 폰토스 내구력 이전 관측 피해를 점수화하면서 실제 HP에는 경감 후 최소 1 피해만 적용한다", () => {
+    const state = createSkirmish([getRelic("anky")], [getRelic("pontos")], ARENA, {}, {}, {
+      boss: { phases: [{ startsAt: 0, damagePerSecond: 0, label: "관측" }], limitSeconds: 1 },
+    });
+    const [ally, boss] = state.fighters;
+    ally.x = boss.x = 400; ally.y = boss.y = 900; ally.attackCooldown = 0; boss.attackCooldown = 999;
+    boss.hp = boss.maxHp * 0.5;
+    const attack = stepSkirmish(state, 1 / 60).find((event) => event.kind === "attack" && event.attackerId === ally.id);
+    expect(attack).toMatchObject({ kind: "attack", amount: 1 });
+    expect(attack?.kind === "attack" ? attack.scoreAmount : 0).toBeGreaterThan(1);
+    expect(state.boss?.score).toBe(attack?.kind === "attack" ? attack.scoreAmount : 0);
   });
 
   it("는 생존 시간·리미트를 갱신하고 아군 전멸 때만 패배로 끝낸다", () => {
@@ -1375,22 +1390,29 @@ describe("폰토스 실전 스킬과 심해 압력", () => {
     expect(pontos.def.ultimate.targeting).toBe("battlefieldEnemies");
   });
 
-  it("는 경과한 매 1초마다 주문력을 올리고 프레임 분할과 배속 입력에 같은 값을 만든다", () => {
+  it("는 0초·1초·여러 초에 기본 주문력 5%를 복리 누적하고 프레임 분할과 무관하다", () => {
     const simulate = (frames: readonly number[]) => {
       const { state, pontos } = pontosBattle();
       frames.forEach((dt) => stepSkirmish(state, dt));
-      return pontos.bonusAp;
+      return currentAbilityPower(pontos);
     };
-    expect(simulate(Array.from({ length: 20 }, () => 0.25))).toBe(60);
-    expect(simulate(Array.from({ length: 300 }, () => 1 / 60))).toBe(60);
+    const baseAp = getRelic("pontos").stats.ap;
+    expect(simulate([])).toBe(baseAp);
+    expect(simulate([0.25, 0.25, 0.25, 0.25])).toBeCloseTo(baseAp * 1.05);
+    expect(simulate(Array.from({ length: 20 }, () => 0.25))).toBeCloseTo(baseAp * 1.05 ** 5);
+    expect(simulate(Array.from({ length: 300 }, () => 1 / 60))).toBeCloseTo(baseAp * 1.05 ** 5);
   });
 
-  it("는 잃은 체력에 비례한 모든 피해 감소를 40% 상한에서 공용 경계로 적용한다", () => {
+  it("는 HP 100%·75%·50% 경계를 50~99%로 선형 보간하고 50% 아래를 상한 처리한다", () => {
     const { pontos } = pontosBattle();
-    pontos.hp = pontos.maxHp * 0.6;
-    expect(receivedDamage(pontos, 100)).toBe(80); // 체력 40% 손실 × 0.5퍼센트포인트 = 20% 감소.
-    pontos.hp = pontos.maxHp * 0.1;
-    expect(receivedDamage(pontos, 100)).toBe(60); // 45% 계산값은 명시된 40% 상한으로 제한한다.
+    pontos.hp = pontos.maxHp;
+    expect(receivedDamage(pontos, 100)).toBe(50);
+    pontos.hp = pontos.maxHp * 0.75;
+    expect(receivedDamage(pontos, 100)).toBe(26); // 74.5% 경감 후 25.5를 반올림한다.
+    pontos.hp = pontos.maxHp * 0.5;
+    expect(receivedDamage(pontos, 100)).toBe(1);
+    pontos.hp = pontos.maxHp * 0.49;
+    expect(receivedDamage(pontos, 100)).toBe(1); // 99% 경감 상한과 최소 1 피해를 함께 고정한다.
   });
 
   it("는 폭주 1초마다 방어력과 저항력을 무시하고 모든 생존 적의 최대 체력 2%를 깎는다", () => {

@@ -199,10 +199,17 @@ describe("스피나 스킬 표시 계약", () => {
     expect(spino.passive).toMatchObject({ name: "전투의 환희", kind: "basicHitAttackSpeedStack", value: 3 });
     expect(passiveDescription(spino.passive)).toContain("[[attack-speed|공격 속도]]가 3 증가");
     expect(spino.basic).toMatchObject({ name: "악어턱 물어뜯기", power: 80, combo: { chancePercent: 40, hitCount: 2, missingHpHealingPercentPerHit: 10 } });
-    expect(skillDescription(spino.basic)).toContain("40% 확률로 [[combo|연격]]하여 총 2회 적중");
-    expect(skillDescription(spino.basic)).toContain("[[missing-hp|잃은 체력]]의 10%를 회복");
+    // 주 피해량은 상단 [[damage-value]] 라벨이 이미 실제 수치로 보여 주므로 본문에서 %를
+    // 다시 말하지 않는다 — 토리카 일반 공격과 같은 "적 한 명에게 물리 피해를 준다" 형태다.
+    expect(skillDescription(spino.basic)).toBe(
+      "적 한 명에게 [[physical-damage|물리 피해]]를 준다. 40% 확률로 [[combo|연격]]하여 총 2회 적중하고, "
+      + "매 적중 뒤 [[missing-hp|잃은 체력]]의 10%를 회복한다.",
+    );
     expect(spino.ultimate).toMatchObject({ name: "범람의 포식자", power: 200, attackSpeedPower: 150, cost: 300, statusEffects: [{ kind: "stun", seconds: 3 }] });
     expect(skillDescription(spino.ultimate)).toContain("현재 [[attack-speed|공격 속도]]의 150%");
-    expect(skillDescription(spino.ultimate)).toContain("[[stun|기절]]시킨다");
+    // "준다"에 "고"를 그대로 붙이면 인용형 어미("~라고")로 읽히는 어색한 문장이 된다.
+    // 어간에 연결어미를 붙인 "주고 기절시킨다"여야 자연스럽다.
+    expect(skillDescription(spino.ultimate)).toContain("주고 [[stun|기절]]시킨다");
+    expect(skillDescription(spino.ultimate)).not.toContain("준다고");
   });
 });

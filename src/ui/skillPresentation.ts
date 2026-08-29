@@ -119,15 +119,20 @@ export function allyHealPowerKeyword(percent: number, ap?: number): KeywordDef |
 export function skillDescription(skill: Skill | BasicAttack | Ultimate, ap?: number): string {
   const combo = "combo" in skill ? skill.combo : undefined;
   if (combo) {
-    return `공격력의 ${skill.power}% [[physical-damage|물리 피해]]를 준다. ${combo.chancePercent}% 확률로 `
+    // 주 피해량은 스킬 아이콘 위 [[damage-value]] 라벨이 이미 실제 수치로 보여 주므로
+    // 본문에서는 %를 다시 말하지 않고 대상과 연격 세부만 적는다.
+    return `적 한 명에게 [[physical-damage|물리 피해]]를 준다. ${combo.chancePercent}% 확률로 `
       + `[[combo|연격]]하여 총 ${combo.hitCount}회 적중하고, 매 적중 뒤 [[missing-hp|잃은 체력]]의 `
       + `${combo.missingHpHealingPercentPerHit}%를 회복한다.`;
   }
   // 현재 공격 속도 복합 계수를 가진 궁극기는 스피나의 두 피해 축을 모두 눌러 설명할 수 있게 한다.
+  // 상단 라벨은 power 단일 축만 계산하므로 여기서는 두 축을 합친 값을 그대로 %로 남긴다.
   if ("attackSpeedPower" in skill && skill.attackSpeedPower !== undefined) {
     const stun = skill.statusEffects?.find((effect) => effect.kind === "stun");
-    return `공격력의 ${skill.power}%와 현재 [[attack-speed|공격 속도]]의 ${skill.attackSpeedPower}%를 합친 `
-      + `[[physical-damage|물리 피해]]를 준다${stun ? `고 [[stun|기절]]시킨다` : ""}.`;
+    const damage = `공격력의 ${skill.power}%와 현재 [[attack-speed|공격 속도]]의 ${skill.attackSpeedPower}%를 합친 [[physical-damage|물리 피해]]`;
+    // "준다" 뒤에 그대로 "고"를 붙이면 "~라고 말하며"로 읽히는 인용형 어미가 된다.
+    // 어간(주-)에 연결어미(-고)를 붙인 "주고" 형태로 갈라야 자연스럽다.
+    return stun ? `${damage}를 주고 [[stun|기절]]시킨다.` : `${damage}를 준다.`;
   }
   // 범위 피해 위에 아군 전체 회복을 얹는 궁극기(도디)는 피해 수치를 상단 라벨에 맡기고
   // 여기서는 회복량만 실제 주문력에서 계산한 값으로 보여 준다.

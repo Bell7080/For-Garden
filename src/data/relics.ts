@@ -223,7 +223,9 @@ export const RELICS: RelicDef[] = [
       effectType: "physical",
       damageType: "physical",
       combo: { chancePercent: 40, hitCount: 2, missingHpHealingPercentPerHit: 10 },
-      desc: "공격력의 80% 물리 피해를 주며, 40% 확률로 두 번 적중한다. 연격 적중마다 잃은 체력의 10%를 회복한다.",
+      // combo가 있는 BasicAttack은 skillDescription()이 구조화 필드로 다시 문장을 만들므로
+      // 이 원문은 데이터 문서화용일 뿐 화면에는 쓰이지 않는다.
+      desc: "적 한 명에게 물리 피해를 준다. 40% 확률로 두 번 적중한다. 연격 적중마다 잃은 체력의 10%를 회복한다.",
     } satisfies BasicAttack,
     ultimate: {
       id: "spino-ult",
@@ -238,7 +240,9 @@ export const RELICS: RelicDef[] = [
       // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
       targeting: "single",
       statusEffects: [{ kind: "stun", seconds: 3 }],
-      desc: "적 한 명에게 공격력의 200%와 현재 공격 속도의 150%에 해당하는 물리 피해를 주고 3초간 기절시킨다.",
+      // attackSpeedPower가 있는 궁극기는 skillDescription()이 구조화 필드로 다시 문장을 만들므로
+      // 이 원문은 데이터 문서화용일 뿐 화면에는 쓰이지 않는다.
+      desc: "공격력의 200%와 현재 공격 속도의 150%를 합친 물리 피해를 주고 기절시킨다.",
     },
   },
   // 4번 Puppet 묶음은 전신과 SD가 모두 완성된 루카의 전용 에셋을 사용한다.

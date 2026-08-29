@@ -13,6 +13,7 @@ import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { Button } from "../ui/Button";
 import { addBackButton } from "../ui/IconButton";
 import { PortraitCard, relicCardTint } from "../ui/PortraitCard";
+import { PORTRAIT_GRID_MASK_GAP, portraitGridContentHeight, portraitGridFirstRowY } from "../ui/portraitGrid";
 import { PopupLayer } from "../ui/PopupLayer";
 import { COLOR, textStyle } from "../ui/theme";
 import { chipPoints, drawGlassFade, drawHairline, drawLayer, drawVignette, HOLO } from "../ui/holo";
@@ -37,7 +38,11 @@ import { BattleProfile } from "../ui/BattleProfile";
 import { BATTLE_PROFILE_LAYOUT } from "../ui/battleStatusLayout";
 
 /** 원정 준비 카드의 고정 그리드 규격이다. 다른 편성과 달리 세 칸씩 읽게 한다. */
-const ROSTER = { columns: 3, width: 250, height: 310, gapX: 56, gapY: 50, top: 940 } as const;
+const ROSTER = { columns: 3, width: 250, height: 310, gapX: 56, gapY: 50 } as const;
+/** 보유 렐릭이 늘면 편성판 아래·힌트/출격 버튼 위 사이만 스크롤로 보여준다. */
+const ROSTER_VIEWPORT = { top: 705, bottom: 1500 } as const;
+/** 손가락이 이 거리 이상 움직여야 카드 선택이 아니라 스크롤로 판정한다. */
+const ROSTER_DRAG_SLOP = 12;
 /** 발굴 편성처럼 화면 상단에서 순서를 먼저 읽는 1/2/3 슬롯 규격이다. */
 const FORMATION = { y: 540, firstX: 230, stepX: 310, width: 250, height: 290 } as const;
 /**
@@ -66,6 +71,32 @@ const AUGMENT_PICKER_DEPTH = 4001;
 export class ExpeditionScene extends Phaser.Scene {
   private selected: string[] = [];
   private cards = new Map<string, PortraitCard>();
+  /** 보유 카드가 뷰포트를 넘을 때만 쓰는 스크롤 콘텐츠·마스크·틱커다. */
+  private rosterContent?: Phaser.GameObjects.Container;
+  private rosterMask?: Phaser.GameObjects.Graphics;
+  private rosterTicker?: Phaser.Time.TimerEvent;
+  private rosterScrollY = 0;
+  private rosterMinScroll = 0;
+  private rosterDragging = false;
+  private rosterDragOrigin = 0;
+  /** 카드 탭과 스크롤 드래그를 가르는 누적 이동 거리다. 슬롯을 넘으면 탭으로 보지 않는다. */
+  private rosterDraggedDistance = 0;
+  private readonly onRosterPointerDown = (pointer: Phaser.Input.Pointer): void => {
+    this.rosterDraggedDistance = 0;
+    if (pointer.y < ROSTER_VIEWPORT.top || pointer.y >= ROSTER_VIEWPORT.bottom || this.rosterMinScroll === 0) return;
+    this.rosterDragging = true;
+    this.rosterDragOrigin = this.rosterScrollY - pointer.y;
+  };
+  private readonly onRosterPointerMove = (pointer: Phaser.Input.Pointer): void => {
+    if (!this.rosterDragging || !pointer.isDown) return;
+    this.rosterDraggedDistance += Math.abs(pointer.velocity.y);
+    this.scrollRosterTo(this.rosterDragOrigin + pointer.y);
+  };
+  private readonly onRosterPointerUp = (): void => { this.rosterDragging = false; };
+  private readonly onRosterWheel = (pointer: Phaser.Input.Pointer, _objects: Phaser.GameObjects.GameObject[], _dx: number, dy: number): void => {
+    if (pointer.y < ROSTER_VIEWPORT.top || pointer.y >= ROSTER_VIEWPORT.bottom) return;
+    this.scrollRosterTo(this.rosterScrollY - dy);
+  };
   private hint!: Phaser.GameObjects.Text;
   private startButton?: Button;
   /** 확인 팝업은 씬의 다른 입력 위에 한 장만 쌓이도록 공용 레이어가 소유한다. */
@@ -522,27 +553,7 @@ export class ExpeditionScene extends Phaser.Scene {
     void this.loadQuickExpeditionOffer();
     this.renderFormationPreview();
 
-    const owned = [...session.owned].map(getRelic);
-    const gridWidth = ROSTER.columns * ROSTER.width + (ROSTER.columns - 1) * ROSTER.gapX;
-    const startX = (BASE_WIDTH - gridWidth) / 2 + ROSTER.width / 2;
-    owned.forEach((relic, index) => {
-      const card = new PortraitCard(this, startX + (index % ROSTER.columns) * (ROSTER.width + ROSTER.gapX), ROSTER.top + Math.floor(index / ROSTER.columns) * (ROSTER.height + ROSTER.gapY), {
-        width: ROSTER.width,
-        height: ROSTER.height,
-        portraitAssetId: relic.portraitAssetId,
-        tint: relicCardTint(relic),
-        label: relic.name,
-        level: relicProgression.getProgress(relic.id).level,
-        rarity: relic.rarity,
-        stars: relicProgression.getStars(relic.id),
-        affinity: { element: relic.element, role: relic.role },
-        // 상단 편성 슬롯과 구분되도록 선택 카드는 발광뿐 아니라 눌린 듯한 검정 면도 함께 쓴다.
-        selectedOverlayAlpha: 0.28,
-      });
-      // 카드는 선택만 바꾸며 Session을 쓰지 않는다. 시작 버튼에서 매니저가 최종 소유 검증을 반복한다.
-      card.hit.on("pointerup", () => this.toggle(relic.id));
-      this.cards.set(relic.id, card);
-    });
+    this.buildRosterGrid();
 
     this.hint = this.add.text(BASE_WIDTH / 2, 1550, "3기를 선택하세요", textStyle({ role: "body", size: 27, color: COLOR.inkDim })).setOrigin(0.5);
     this.startButton = new Button(this, BASE_WIDTH / 2, 1680, {
@@ -557,6 +568,82 @@ export class ExpeditionScene extends Phaser.Scene {
       onClick: () => this.startExpedition(),
     });
     this.startButton.setEnabled(false);
+  }
+
+  /**
+   * 보유 렐릭 카드 그리드.
+   *
+   * 편성판 아래·힌트/출격 버튼 위 사이로만 잘라 스크롤한다. 예전에는 고정 좌표에 그대로
+   * 쌓아서 보유 렐릭이 두 줄을 넘으면 아래 카드가 출격 버튼과 겹쳐 보였다.
+   */
+  private buildRosterGrid(): void {
+    const owned = [...session.owned].map(getRelic);
+    const gridWidth = ROSTER.columns * ROSTER.width + (ROSTER.columns - 1) * ROSTER.gapX;
+    const startX = (BASE_WIDTH - gridWidth) / 2 + ROSTER.width / 2;
+    const rowStep = ROSTER.height + ROSTER.gapY;
+    // 머리가 칩 밖으로 나오므로 첫 줄은 도감·발굴과 같은 공용 안전 영역만큼 내려 세운다.
+    const firstRowY = portraitGridFirstRowY(ROSTER_VIEWPORT.top, ROSTER.height, PORTRAIT_GRID_MASK_GAP);
+
+    const content = this.add.container(0, 0);
+    this.rosterContent = content;
+    this.rosterMask = this.make.graphics({});
+    this.rosterMask.fillStyle(0xffffff, 1).fillRect(0, ROSTER_VIEWPORT.top, BASE_WIDTH, ROSTER_VIEWPORT.bottom - ROSTER_VIEWPORT.top);
+    content.setMask(this.rosterMask.createGeometryMask());
+
+    owned.forEach((relic, index) => {
+      const card = new PortraitCard(this, startX + (index % ROSTER.columns) * (ROSTER.width + ROSTER.gapX), firstRowY + Math.floor(index / ROSTER.columns) * rowStep, {
+        width: ROSTER.width,
+        height: ROSTER.height,
+        portraitAssetId: relic.portraitAssetId,
+        tint: relicCardTint(relic),
+        label: relic.name,
+        level: relicProgression.getProgress(relic.id).level,
+        rarity: relic.rarity,
+        stars: relicProgression.getStars(relic.id),
+        affinity: { element: relic.element, role: relic.role },
+        // 상단 편성 슬롯과 구분되도록 선택 카드는 발광뿐 아니라 눌린 듯한 검정 면도 함께 쓴다.
+        selectedOverlayAlpha: 0.28,
+      });
+      // 카드는 선택만 바꾸며 Session을 쓰지 않는다. 시작 버튼에서 매니저가 최종 소유 검증을 반복한다.
+      card.hit.on("pointerup", () => { if (this.rosterDraggedDistance <= ROSTER_DRAG_SLOP) this.toggle(relic.id); });
+      this.cards.set(relic.id, card);
+      content.add(card);
+    });
+
+    const rows = Math.ceil(owned.length / ROSTER.columns);
+    const contentHeight = rows > 0 ? PORTRAIT_GRID_MASK_GAP + portraitGridContentHeight(rows, rowStep, ROSTER.height) : 0;
+    const viewportHeight = ROSTER_VIEWPORT.bottom - ROSTER_VIEWPORT.top;
+    // 도감 그리드와 같은 28px 여유를 아래에도 둬 마지막 줄 밑변이 마스크 경계에 정확히
+    // 겹쳐 앤티에일리어싱으로 깎이지 않게 한다.
+    this.rosterMinScroll = Math.min(0, viewportHeight - contentHeight - 28);
+    this.scrollRosterTo(0);
+
+    this.input.on("pointerdown", this.onRosterPointerDown);
+    this.input.on("pointermove", this.onRosterPointerMove);
+    this.input.on("pointerup", this.onRosterPointerUp);
+    this.input.on("pointerupoutside", this.onRosterPointerUp);
+    this.input.on("wheel", this.onRosterWheel);
+    this.rosterTicker = this.time.addEvent({ delay: 16, loop: true, callback: () => this.syncRosterCardMasks() });
+    this.syncRosterCardMasks();
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.input.off("pointerdown", this.onRosterPointerDown);
+      this.input.off("pointermove", this.onRosterPointerMove);
+      this.input.off("pointerup", this.onRosterPointerUp);
+      this.input.off("pointerupoutside", this.onRosterPointerUp);
+      this.input.off("wheel", this.onRosterWheel);
+      this.rosterTicker?.remove(false); this.rosterTicker = undefined;
+      this.rosterMask?.destroy(); this.rosterMask = undefined;
+    });
+  }
+
+  private scrollRosterTo(value: number): void {
+    this.rosterScrollY = Phaser.Math.Clamp(value, this.rosterMinScroll, 0);
+    this.rosterContent?.setY(this.rosterScrollY);
+  }
+
+  /** PortraitCard의 자체 기하 마스크는 부모(그리드) 이동을 상속하지 않으므로 스크롤마다 다시 맞춘다. */
+  private syncRosterCardMasks(): void {
+    for (const card of this.cards.values()) card.syncMask();
   }
 
   /** 개발 빌드의 임시 버튼은 현재 편성을 우선 보존하고, 비어 있으면 보유 목록의 첫 세 기만 편성 후보로 넘긴다. */

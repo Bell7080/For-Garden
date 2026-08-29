@@ -1,6 +1,6 @@
 import Phaser from "phaser";
-import { formatCurrency } from "../core/formatCurrency";
 import type { BattleContributionRow, ContributionCategory } from "../core/battleContribution";
+import { CONTRIBUTION_CATEGORIES, contributionRenderModel } from "./battleContributionRenderModel";
 import { BATTLE_CONTRIBUTION_LAYOUT as L } from "./battleContributionLayout";
 import { chipPoints, drawLayer, HoloBar, HOLO } from "./holo";
 import { drawGlyph } from "./glyphs";
@@ -13,10 +13,6 @@ export interface BattleContributionSnapshot {
 }
 
 interface RowView { name: Phaser.GameObjects.Text; value: Phaser.GameObjects.Text; bar: HoloBar; lastValue: number }
-
-const CATEGORY: readonly { id: ContributionCategory; label: string }[] = [
-  { id: "attack", label: "공격" }, { id: "defense", label: "방어" }, { id: "healing", label: "회복" },
-];
 
 /** 전투 한 판 동안만 펼침·카테고리 상태를 소유하는 좌측 홀로그램 기여도 판이다. */
 export class BattleContributionPanel {
@@ -42,7 +38,7 @@ export class BattleContributionPanel {
 
   /** 최소 84px 폭의 직접 선택 칩 세 개를 한 줄에 두고 선택은 색·크기로만 알린다. */
   private buildCategories(): void {
-    CATEGORY.forEach((item, index) => {
+    CONTRIBUTION_CATEGORIES.forEach((item, index) => {
       const x = L.categories.left + L.categories.itemWidth * (index + 0.5);
       const label = this.scene.add.text(x, L.categories.top + L.categories.height / 2, item.label, textStyle({ role: "emphasis", size: 23, color: COLOR.inkDim })).setOrigin(0.5);
       const hit = this.scene.add.rectangle(x, L.categories.top + L.categories.height / 2, L.categories.itemWidth, L.categories.height, 0xffffff, 0).setInteractive({ useHandCursor: true });
@@ -86,7 +82,7 @@ export class BattleContributionPanel {
   }
 
   private refreshCategoryStyle(): void {
-    CATEGORY.forEach((item, index) => {
+    CONTRIBUTION_CATEGORIES.forEach((item, index) => {
       const selected = item.id === this.category;
       this.categoryLabels[index].setColor(selected ? COLOR.accentText : COLOR.inkDim).setFontSize(selected ? 26 : 23).setScale(selected ? 1.04 : 1);
     });
@@ -95,13 +91,13 @@ export class BattleContributionPanel {
   /** 최고 기여 행만 100%가 되며 실제 값이 달라진 행만 숫자와 HoloBar를 다시 그린다. */
   update(snapshot: BattleContributionSnapshot): void {
     if (snapshot.category !== this.category) return;
-    const max = Math.max(0, ...snapshot.rows.map((row) => row.total));
-    const color = this.category === "attack" ? COLOR.sortie : this.category === "defense" ? COLOR.contributionDefense : COLOR.hpFill;
+    const model = contributionRenderModel(this.category, snapshot.rows);
     this.rows.forEach((view, index) => {
-      const row = snapshot.rows[index];
+      const rendered = model.rows[index];
+      const row = rendered?.source;
       view.name.setVisible(Boolean(row)); view.value.setVisible(Boolean(row)); view.bar.objects.forEach((object) => object.setVisible(Boolean(row)));
       if (!row || view.lastValue === row.total) return;
-      view.lastValue = row.total; view.name.setText(row.name); view.value.setText(formatCurrency(row.total)); view.bar.setValue(max > 0 ? row.total / max : 0, color);
+      view.lastValue = row.total; view.name.setText(row.name); view.value.setText(rendered.value); view.bar.setValue(rendered.fill, model.color);
     });
   }
 

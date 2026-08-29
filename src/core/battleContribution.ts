@@ -80,6 +80,35 @@ export interface BattleContributionRow extends FighterContribution {
 
 export interface ContributionFighterView { id: string; formationOrder: number; name: string; portraitId: string }
 
+/** 전투 종료 뒤에도 보관하거나 네트워크 요청과 함께 전달할 수 있는 순수 JSON 결과다. */
+export interface BattleContributionResult {
+  side: "player" | "enemy";
+  rows: Record<ContributionCategory, BattleContributionRow[]>;
+  /** 재검증 점수가 행동 재생 합계와 다를 때만 결과 머리글에 병기한다. */
+  confirmedAttackTotal?: number;
+}
+
+/** 변경 가능한 누적표에서 한 진영의 세 분류를 한 번에 깊은 복사해 종료 스냅샷을 확정한다. */
+export function createBattleContributionResult(
+  contributions: BattleContributions,
+  fighters: readonly ContributionFighterView[],
+  side: BattleContributionResult["side"],
+): BattleContributionResult {
+  return {
+    side,
+    rows: {
+      attack: contributionSnapshot(contributions, fighters, "attack"),
+      defense: contributionSnapshot(contributions, fighters, "defense"),
+      healing: contributionSnapshot(contributions, fighters, "healing"),
+    },
+  };
+}
+
+/** 서버 확정 총점만 새 객체에 얹어 이미 확정한 개별 행동 재생 결과는 손대지 않는다. */
+export function withConfirmedAttackTotal(result: BattleContributionResult, total: number): BattleContributionResult {
+  return Number.isFinite(total) && total >= 0 ? { ...result, confirmedAttackTotal: total } : result;
+}
+
 /** 값 내림차순 뒤 편성 순서로 고정해 동률 그래프가 프레임·브라우저 정렬 구현에 흔들리지 않게 한다. */
 export function contributionSnapshot(
   contributions: BattleContributions,

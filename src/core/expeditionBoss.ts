@@ -4,7 +4,7 @@ import { EXPEDITION_BOSS_BALANCE } from "../data/expedition";
 export interface ExpeditionBossAction { elapsedMs: number; actorId: string; kind: "basic" | "ultimate"; }
 /** 서버가 편성과 성장 상태에서 만든 전투원 스냅샷이다. */
 export interface ExpeditionBossAlly { id: string; attack: number; maxHp: number; initialHp?: number; }
-/** 전멸한 정상 종료만 점수로 확정할 수 있는 검증 결과다. */
+/** 전멸한 정상 종료만 확정하며 totalDamage는 경감 후 실제 적용 피해 점수다. */
 export interface ExpeditionBossResult { totalDamage: number; endedAtMs: number; allAlliesDead: true; bossDefeated: false; remainingHpByAlly: Record<string, number>; }
 
 /** 해당 시각에 활성인 마지막 보스 단계를 찾는다. */
@@ -34,6 +34,7 @@ export function resolveExpeditionBossBattle(allies: readonly ExpeditionBossAlly[
       if (!ally || !Number.isInteger(action.elapsedMs) || action.elapsedMs < 0 || action.elapsedMs > EXPEDITION_BOSS_BALANCE.maximumDurationMs || hp[action.actorId] <= 0) throw new Error("INVALID_BOSS_BATTLE_INPUT");
       const key = `${action.actorId}:${action.kind}`; const previous = lastAction.get(key) ?? -Infinity;
       if (action.elapsedMs < previous + EXPEDITION_BOSS_BALANCE.actionCooldownMs[action.kind]) throw new Error("INVALID_BOSS_BATTLE_INPUT");
+      // 서버가 재현한 공격력·스킬 계수는 해당 행동의 모든 경감을 마친 실제 적용량이며 클라이언트도 같은 기준만 누적한다.
       lastAction.set(key, action.elapsedMs); totalDamage += Math.max(1, Math.round(ally.attack * EXPEDITION_BOSS_BALANCE.actionPower[action.kind]));
     }
     if (elapsedMs > 0) for (const ally of allies) if (hp[ally.id] > 0) hp[ally.id] = Math.max(0, hp[ally.id] - expeditionBossPhaseAt(elapsedMs).attackPerSecond);

@@ -152,6 +152,8 @@ export type CombatStatusEffect =
 export type Ultimate = Skill & {
   /** 사용 시 소비하는 궁극기 게이지. 저장 상한과 독립된 스킬별 값이다. */
   cost: number;
+  /** 정의한 경우 현재 HP가 이 비율 이하가 된 뒤에만 기본 공격으로 게이지를 얻는다. */
+  chargeStartsAtHpPercent?: number;
   /** 공격력 피해와 더해지는 현재 공격 속도 배율(%). 없으면 공속 복합 계수를 사용하지 않는다. */
   attackSpeedPower?: number;
   /** 혼합 궁극기가 범위 안 생존 아군에게 적용할 주문력 회복 배율(%). */
@@ -207,6 +209,8 @@ export type FerocityEffectId =
   | "stealthLeap"
   /** 폭주 중 자기 공격 속도를 곱하는 명시적 효과다. */
   | "selfAttackSpeedMultiplier"
+  /** 폰토스 전용: 폭주 중 초당 최대 HP 고정 피해와 적 회복 취소를 함께 제공한다. */
+  | "pontusRage"
   /** 메테 전용: 폭주 중 아군 일반 공격 적중마다 스타카토 추가타를 연주한다. */
   | "crescendoStaccato";
 
@@ -267,6 +271,13 @@ export type FerocityTrait = {
       /** 스타카토가 적용하는 기존 경직 디버프의 지속 시간이다. */
       staggerSeconds: number;
     }
+  | {
+      effectId: "pontusRage";
+      /** 매초 각 생존 적의 최대 체력에서 직접 차감할 비율이다. */
+      maxHpDamagePercentPerSecond: number;
+      /** true이면 폭주 중 반대편의 모든 회복 요청을 공용 회복 경계에서 취소한다. */
+      cancelEnemyHealing: true;
+    }
 );
 
 export interface Passive {
@@ -289,12 +300,14 @@ export interface Passive {
   criticalDamagePercent?: number;
   /** 지속 효과인 패시브만 갖는 유지 시간(초). 전투와 표시가 함께 읽는 단일 계약이다. */
   durationSeconds?: number;
-  /** 심해 압력 전용: 전투 경과 1초마다 더하는 주문력이다. */
-  apPerSecond?: number;
-  /** 심해 압력 전용: 잃은 체력 1%당 더하는 받는 피해 감소율(퍼센트포인트)이다. */
-  reductionPerMissingHpPercent?: number;
-  /** 심해 압력 전용: 받는 피해 감소율 상한이다. */
-  maxReductionPercent?: number;
+  /** 심해 압력 전용: 완전히 경과한 매초 기본 주문력에 복리로 누적하는 비율이다. */
+  apPercentPerSecond?: number;
+  /** 심해 압력 전용: 최대 체력일 때 적용하는 받는 피해 감소율이다. */
+  baseDamageReductionPercent?: number;
+  /** 심해 압력 전용: 저체력 구간에서 제한할 받는 피해 감소율 상한이다. */
+  maxDamageReductionPercent?: number;
+  /** 심해 압력 전용: 최대 피해 감소율에 도달하는 현재 체력 비율이다. */
+  maxReductionAtHpPercent?: number;
   /** 제공자가 살아 있는 동안 같은 편의 방어력과 저항력에 곱하는 증가율(%). */
   teamDefenseResistancePercent?: number;
   /** 제공자가 살아 있는 동안 반대편이 받는 모든 체력 회복을 줄이는 비율(%). */

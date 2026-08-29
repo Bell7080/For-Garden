@@ -9,9 +9,11 @@ import {
   canFireUltimate,
   clearStun,
   createSkirmish,
+  currentAbilityPower,
   currentAttackSpeed,
   fireUltimate,
   findFighter,
+  isFighterAlive,
   moveSpeed,
   renderPose,
   receivedDamage,
@@ -26,6 +28,7 @@ import {
 } from "../../src/core/skirmish";
 import { applyExpeditionRest, type ExpeditionAugmentEffect } from "../../src/core/expeditionAugments";
 import { getRelic } from "../../src/data/relics";
+import { applyLevelGrowth } from "../../src/core/relicProgression";
 import { FEROCITY_RULES } from "../../src/core/ferocity";
 import { ULTIMATE_ENERGY_MAX } from "../../src/core/ultimate";
 import { computeDamage } from "../../src/core/damage";
@@ -305,13 +308,79 @@ describe("단일 난전의 원정 보스 옵션", () => {
   it("는 보스 HP가 소진되어도 승리하지 않고 실제 공격 피해를 점수로 누적한다", () => {
     const state = bossBattle(0); state.fighters[1].hp = 1;
     stepSkirmish(state, 1 / 60);
-    expect(state.phase).toBe("fight"); expect(state.fighters[1].hp).toBe(state.fighters[1].maxHp); expect(state.boss?.score).toBeGreaterThan(0);
+    // 표시 HP는 실제로 0까지 내려가지만 불사 표식이 타깃·승패 처리를 계속 유지한다.
+    expect(state.phase).toBe("fight"); expect(state.fighters[1].hp).toBe(0); expect(state.fighters[1].immortal).toBe(true); expect(state.boss?.score).toBeGreaterThan(0);
+  });
+
+  it("는 폰토스 내구력 경감 후 실제 HP 피해만 점수화한다", () => {
+    const state = createSkirmish([getRelic("anky")], [getRelic("pontos")], ARENA, {}, {}, {
+      boss: { phases: [{ startsAt: 0, damagePerSecond: 0, label: "관측" }], limitSeconds: 1 },
+    });
+    const [ally, boss] = state.fighters;
+    ally.x = boss.x = 400; ally.y = boss.y = 900; ally.attackCooldown = 0; boss.attackCooldown = 999;
+    boss.hp = boss.maxHp * 0.5;
+    const attack = stepSkirmish(state, 1 / 60).find((event) => event.kind === "attack" && event.attackerId === ally.id);
+    expect(attack).toMatchObject({ kind: "attack", amount: 1 });
+    // 서버 검증기와 같이 방어·내구력·보호막을 넘은 실제 적용량을 점수로 정의한다.
+    expect(attack?.kind === "attack" ? attack.scoreAmount : 0).toBe(1);
+    expect(state.boss?.score).toBe(attack?.kind === "attack" ? attack.scoreAmount : 0);
+  });
+
+  it("는 명시한 보스만 0 HP에서 전투를 지속하고 적 부속물은 정상 사망시킨다", () => {
+    const state = createSkirmish([getRelic("anky")], [getRelic("pontos"), getRelic("husk-raptor")], ARENA, {}, {}, {
+      boss: { fighterId: "enemy-0", phases: [{ startsAt: 0, damagePerSecond: 0, label: "관측" }], limitSeconds: 10 },
+    });
+    const [, boss, appendage] = state.fighters;
+    boss.hp = 0; appendage.hp = 0;
+
+    // 생존 판정의 유일한 예외는 boss.fighterId이며 향후 소환물은 이 경계를 얻지 못한다.
+    expect(state.boss?.fighterId).toBe(boss.id);
+    expect(isFighterAlive(boss)).toBe(true);
+    expect(isFighterAlive(appendage)).toBe(false);
   });
 
   it("는 생존 시간·리미트를 갱신하고 아군 전멸 때만 패배로 끝낸다", () => {
     const state = bossBattle(stateHp(getRelic("anky")) * 2);
     const events = run(state, 2);
     expect(state.phase).toBe("defeat"); expect(state.boss?.survivedFor).toBeGreaterThan(0); expect(events).toContainEqual({ kind: "finish", phase: "defeat" });
+  });
+
+  it("표준 5인 파티는 폰토스의 첫 해일을 버티고 고정된 생존·점수 구간에 든다", () => {
+    const partyIds = ["anky", "rex", "spino", "dodo", "mette"];
+    // 플레이어는 통상 1돌파 전 상한인 20레벨, 최종 보스는 20층 boss 보정이 더해진 25레벨이다.
+    const party = partyIds.map((id) => {
+      const relic = getRelic(id);
+      return { ...relic, stats: applyLevelGrowth(relic.stats, 20) };
+    });
+    const basePontos = getRelic("pontos");
+    const pontos = { ...basePontos, stats: applyLevelGrowth(basePontos.stats, 25) };
+    const state = createSkirmish(party, [pontos], ARENA);
+    let firstUltimateAt: number | undefined;
+    let survivorsAfterFirstUltimate = 0;
+    let cumulativeScore = 0;
+    for (let frame = 0; frame < 60 * 40 && state.phase === "fight"; frame += 1) {
+      const events = stepSkirmish(state, 1 / 60, () => 0.99);
+      for (const event of events) {
+        if (event.kind !== "attack") continue;
+        if (event.attackerId.startsWith("player")) cumulativeScore += event.amount;
+        if (event.attackerId === "enemy-0" && event.skill === "ultimate" && firstUltimateAt === undefined) {
+          firstUltimateAt = state.elapsed;
+          survivorsAfterFirstUltimate = aliveFighters(state, "player").length;
+        }
+      }
+    }
+    // 첫 해일은 위협적이지만 즉시 전멸시키지 않고, 전체 전투는 약 30초짜리 최종 관문으로 끝난다.
+    expect(firstUltimateAt).toBeGreaterThanOrEqual(20);
+    expect(firstUltimateAt).toBeLessThanOrEqual(21);
+    expect(survivorsAfterFirstUltimate).toBeGreaterThan(0);
+    expect(state.elapsed).toBeGreaterThanOrEqual(33);
+    expect(state.elapsed).toBeLessThanOrEqual(35);
+    expect(cumulativeScore).toBeGreaterThanOrEqual(1_100);
+    expect(cumulativeScore).toBeLessThanOrEqual(1_400);
+    // 300 비용을 7회 타격으로 채우므로 두 해일 사이의 이론상 최소 간격도 5초 기절보다 충분히 길다.
+    const boss = state.fighters.find((fighter) => fighter.side === "enemy")!;
+    const minimumUltimateGap = attackInterval(boss, state) * Math.ceil(boss.def.ultimate.cost / boss.def.stats.energyGain);
+    expect(minimumUltimateGap).toBeGreaterThanOrEqual(12.5);
   });
 });
 
@@ -1363,7 +1432,26 @@ describe("폰토스 실전 스킬과 심해 압력", () => {
     pontos.attackCooldown = 0;
     const events = stepSkirmish(state, 1 / 60).filter((event) => event.kind === "attack" && event.attackerId === pontos.id);
     expect(events.map((event) => event.kind === "attack" ? event.targetId : "")).toEqual([allies[0].id, allies[1].id]);
-    expect(pontos.def.basic).toMatchObject({ damageType: "magical", targeting: "nearbyEnemies", radius: 520 });
+    expect(pontos.def.basic).toMatchObject({ damageType: "magical", power: 100, scalingStat: "ap", targeting: "nearbyEnemies", radius: 520 });
+    // 지름 1,040px은 정적 전장 폭·높이보다 넓되 모서리 전체를 덮지는 않아 "주위"와 전장 전체를 구분한다.
+    expect(pontos.def.basic.radius! * 2).toBeGreaterThan(ARENA.right - ARENA.left);
+    expect(pontos.def.basic.radius! * 2).toBeGreaterThan(ARENA.bottom - ARENA.top);
+    expect(pontos.def.basic.radius).toBeGreaterThan(SKIRMISH.reach * 3);
+  });
+
+  it("는 기본 공격의 범위 내 다중 적에게 현재 주문력 100%를 쓰고 범위 밖 적은 제외한다", () => {
+    const { state, pontos, allies } = pontosBattle();
+    // 방어·속성·치명타 변수를 제거해 이벤트 원피해가 계수 자체를 정확히 드러내게 한다.
+    pontos.def = { ...pontos.def, element: "earth", stats: { ...pontos.def.stats, ap: 137, critChance: 0 } };
+    allies.forEach((ally) => { ally.def = { ...ally.def, element: "earth", stats: { ...ally.def.stats, res: 0 } }; });
+    allies[0].x = 500; allies[1].x = 919;
+    // 물리 분리 보정 한 프레임 뒤에도 확실히 반경 밖이도록 전장 우하단에 둔다.
+    allies[2].x = ARENA.right; allies[2].y = ARENA.bottom;
+    pontos.attackCooldown = 0;
+    const attacks = stepSkirmish(state, 1 / 60, () => 0.99).filter((event) => event.kind === "attack" && event.attackerId === pontos.id);
+    expect(attacks.map((event) => event.kind === "attack" ? [event.targetId, event.scoreAmount] : [])).toEqual([
+      [allies[0].id, 137], [allies[1].id, 137],
+    ]);
   });
 
   it("는 해일 궁극기로 거리에 관계없이 생존한 모든 아군을 타격한다", () => {
@@ -1372,25 +1460,114 @@ describe("폰토스 실전 스킬과 심해 압력", () => {
     pontos.energy = pontos.def.ultimate.cost;
     const events = fireUltimate(state, pontos.id).filter((event) => event.kind === "attack");
     expect(events.map((event) => event.kind === "attack" ? event.targetId : "").sort()).toEqual([allies[0].id, allies[1].id].sort());
-    expect(pontos.def.ultimate.targeting).toBe("battlefieldEnemies");
+    expect(pontos.def.ultimate).toMatchObject({ power: 500, scalingStat: "ap", targeting: "battlefieldEnemies", statusEffects: [{ kind: "stun", seconds: 5 }] });
+    expect(allies[0].stunnedFor).toBe(5);
+    expect(allies[1].stunnedFor).toBe(5);
   });
 
-  it("는 경과한 매 1초마다 주문력을 올리고 프레임 분할과 배속 입력에 같은 값을 만든다", () => {
+  it("는 전장 전체 궁극기에 주문력 500% 피해와 각 대상의 기절 저항을 적용한다", () => {
+    const { state, pontos, allies } = pontosBattle();
+    pontos.def = { ...pontos.def, element: "earth", stats: { ...pontos.def.stats, ap: 120, critChance: 0 } };
+    allies.forEach((ally, index) => {
+      ally.x = index === 0 ? ARENA.left : ARENA.right;
+      ally.def = { ...ally.def, element: "earth", stats: { ...ally.def.stats, res: 0 }, stunResistancePercent: index * 50 };
+    });
+    pontos.energy = pontos.def.ultimate.cost;
+    const attacks = fireUltimate(state, pontos.id, () => 0.99).filter((event) => event.kind === "attack");
+    expect(attacks.map((event) => event.kind === "attack" ? event.scoreAmount : 0)).toEqual([600, 600, 600]);
+    expect(allies.map((ally) => ally.stunnedFor)).toEqual([5, 2.5, 0]);
+  });
+
+  it("는 0초·1초·여러 초에 기본 주문력 2%를 복리 누적하고 프레임 분할과 무관하다", () => {
     const simulate = (frames: readonly number[]) => {
       const { state, pontos } = pontosBattle();
       frames.forEach((dt) => stepSkirmish(state, dt));
-      return pontos.bonusAp;
+      return currentAbilityPower(pontos);
     };
-    expect(simulate(Array.from({ length: 20 }, () => 0.25))).toBe(60);
-    expect(simulate(Array.from({ length: 300 }, () => 1 / 60))).toBe(60);
+    const definition = getRelic("pontos");
+    const baseAp = definition.stats.ap;
+    const growth = 1 + (definition.passive.kind === "abyssalPressure" ? definition.passive.apPercentPerSecond ?? 0 : 0) / 100;
+    expect(simulate([])).toBe(baseAp);
+    expect(simulate([0.25, 0.25, 0.25, 0.25])).toBeCloseTo(baseAp * growth);
+    expect(simulate(Array.from({ length: 20 }, () => 0.25))).toBeCloseTo(baseAp * growth ** 5);
+    expect(simulate(Array.from({ length: 300 }, () => 1 / 60))).toBeCloseTo(baseAp * growth ** 5);
   });
 
-  it("는 잃은 체력에 비례한 모든 피해 감소를 40% 상한에서 공용 경계로 적용한다", () => {
+  it("는 HP 100%·75%·50% 경계를 50~99%로 선형 보간하고 50% 아래를 상한 처리한다", () => {
     const { pontos } = pontosBattle();
-    pontos.hp = pontos.maxHp * 0.6;
-    expect(receivedDamage(pontos, 100)).toBe(80); // 체력 40% 손실 × 0.5퍼센트포인트 = 20% 감소.
-    pontos.hp = pontos.maxHp * 0.1;
-    expect(receivedDamage(pontos, 100)).toBe(60); // 45% 계산값은 명시된 40% 상한으로 제한한다.
+    pontos.hp = pontos.maxHp;
+    expect(receivedDamage(pontos, 100)).toBe(50);
+    pontos.hp = pontos.maxHp * 0.75;
+    expect(receivedDamage(pontos, 100)).toBe(26); // 74.5% 경감 후 25.5를 반올림한다.
+    pontos.hp = pontos.maxHp * 0.5;
+    expect(receivedDamage(pontos, 100)).toBe(1);
+    pontos.hp = pontos.maxHp * 0.49;
+    expect(receivedDamage(pontos, 100)).toBe(1); // 99% 경감 상한과 최소 1 피해를 함께 고정한다.
+  });
+
+  it("는 폭주 1초마다 방어력과 저항력을 무시하고 모든 생존 적의 최대 체력 2%를 깎는다", () => {
+    const { state, pontos, allies } = pontosBattle();
+    pontos.ferocity = 100; pontos.ferocityFever = true;
+    // 극단적인 방어 수치도 폰토스 고정 피해 경계에는 들어가지 않아야 한다.
+    allies[0].def = { ...allies[0].def, stats: { ...allies[0].def.stats, def: 1_000_000, res: 1_000_000 } };
+    const before = allies.map(({ hp }) => hp);
+    for (let index = 0; index < 3; index += 1) stepSkirmish(state, 0.25);
+    expect(allies.map(({ hp }) => hp)).toEqual(before);
+    stepSkirmish(state, 0.25);
+    allies.forEach((ally, index) => expect(ally.hp).toBeCloseTo(before[index] - ally.maxHp * 0.02));
+  });
+
+  it("는 큰 허용 프레임과 잘게 분할한 프레임에서 같은 수의 폭주 틱을 만든다", () => {
+    const simulate = (frames: readonly number[]) => {
+      const { state, pontos, allies } = pontosBattle();
+      pontos.ferocity = 100; pontos.ferocityFever = true;
+      frames.forEach((dt) => stepSkirmish(state, dt));
+      return allies.map(({ hp }) => hp);
+    };
+    // 0.25초는 엔진이 받아들이는 최대 catch-up 프레임이며 두 입력 모두 총 2초다.
+    expect(simulate(Array.from({ length: 8 }, () => 0.25)))
+      .toEqual(simulate(Array.from({ length: 120 }, () => 1 / 60)));
+  });
+
+  it("는 기존 고정 피해 정책처럼 보호막을 먼저 소모하고 치명타 틱에는 사망 사건과 로그를 남긴다", () => {
+    const { state, pontos, allies } = pontosBattle();
+    pontos.ferocity = 100; pontos.ferocityFever = true;
+    allies[0].shield = allies[0].maxHp * 0.01;
+    allies[1].hp = allies[1].maxHp * 0.01;
+    const protectedHp = allies[0].hp;
+    const events = Array.from({ length: 4 }, () => stepSkirmish(state, 0.25)).flat();
+    expect(allies[0].shield).toBe(0);
+    expect(allies[0].hp).toBeCloseTo(protectedHp - allies[0].maxHp * 0.01);
+    expect(events.filter((event) => event.kind === "death" && event.fighterId === allies[1].id)).toHaveLength(1);
+    expect(state.log).toContain(`${allies[1].def.name} 전투 불능`);
+  });
+
+  it("는 폭주 중 궁극기·지속 회복·흡혈을 공용 경계에서 막고 종료 즉시 회복을 복구한다", () => {
+    const state = newSkirmish(["dodo", "rex"], ["pontos", "husk-shell"]);
+    const [dodo, rex, pontos, victim] = state.fighters;
+    for (const fighter of state.fighters) { fighter.attackCooldown = 999; fighter.x = 400; fighter.y = 900; }
+    pontos.ferocity = 100; pontos.ferocityFever = true;
+    dodo.hp = dodo.maxHp / 2; dodo.energy = dodo.def.ultimate.cost;
+    expect(fireUltimate(state, dodo.id).filter((event) => event.kind === "heal")).toEqual([]);
+    expect(dodo.hp).toBe(dodo.maxHp / 2);
+
+    // 패시브 지속 회복도 같은 applyHealing 경계를 지나므로 틱 자체가 0 회복이 된다.
+    rex.hp = rex.maxHp / 2;
+    rex.regeneration = { remaining: 2, tickIn: 0, percentPerTick: 10 };
+    expect(tickRegeneration(rex, 0.01, state)).toEqual([]);
+    expect(rex.hp).toBe(rex.maxHp / 2);
+
+    // 실제 피해 흡혈 경로를 실행해 요청량이 생겨도 현재 상대 폭주가 이를 취소하는지 확인한다.
+    rex.def = { ...rex.def, stats: { ...rex.def.stats, lifeSteal: 100 } };
+    rex.targetId = victim.id; rex.attackCooldown = 0; victim.attackCooldown = 999;
+    stepSkirmish(state, 1 / 60);
+    expect(rex.hp).toBe(rex.maxHp / 2);
+
+    // 영구 디버프를 남기지 않으므로 현재 fever만 끄면 다음 회복 요청부터 즉시 허용된다.
+    pontos.ferocityFever = false;
+    rex.regeneration = { remaining: 2, tickIn: 0, percentPerTick: 10 };
+    expect(tickRegeneration(rex, 0.01, state)).toContainEqual(expect.objectContaining({ kind: "heal", fighterId: rex.id }));
+    expect(rex.hp).toBeGreaterThan(rex.maxHp / 2);
   });
 
   it("는 시간이 흐를수록 리미트 안전 반경을 좁히고 폰토스를 전장 중앙으로 접근시킨다", () => {

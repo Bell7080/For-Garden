@@ -101,6 +101,17 @@ describe("토리카 스킬 표시 계약", () => {
   });
 });
 
+describe("폰토스 스킬 표시 계약", () => {
+  it("은 구조화된 AP 계수·전장 전체 대상·5초 기절을 공용 문구로 자동 표시한다", () => {
+    const pontos = RELICS.find((def) => def.id === "pontos")!;
+    // 팝업 조립부가 사용하는 세 순수 경계를 검사해 캐릭터 ID 전용 문구가 필요 없음을 고정한다.
+    expect(damageKeyword({ kind: "scaling", amount: 480, power: pontos.ultimate.power!, stat: "주문력", label: "피해량" })?.description)
+      .toBe("현재 주문력에서 500%를 받아 계산한 피해 수치다.");
+    expect(targetingLabel(pontos.ultimate.targeting)).toBe("전장의 모든 적");
+    expect(statusEffectLabel(pontos.ultimate.statusEffects?.[0])).toBe("[[stun|기절]] 5초");
+  });
+});
+
 describe("렉시아 스킬 표시 계약", () => {
   it("은 폭주·패시브·출혈·궁극기 회복을 현재 데이터에서 문장화한다", () => {
     const rex = RELICS.find((def) => def.id === "rex")!;
@@ -156,10 +167,10 @@ describe("도디 스킬 표시 계약", () => {
 });
 
 describe("폰토스 스킬 표시 계약", () => {
-  it("의 패시브는 매초 상승분을 수치로 명시한다(막연한 '상승'만 말하지 않는다)", () => {
+  it("의 패시브는 복리 누적률과 체력별 내구력 경계를 모두 명시한다", () => {
     const pontos = RELICS.find((def) => def.id === "pontos")!;
     expect(passiveDescription(pontos.passive)).toBe(
-      "매초 [[ap|주문력]]이 12 상승하고, [[missing-hp|잃은 체력]]에 비례해 받는 모든 피해가 최대 40% 감소한다.",
+      "완전히 경과한 매초 기본 [[ap|주문력]]의 2%가 복리로 누적된다. 현재 체력이 최대 체력의 100%에서 50%로 낮아질수록 받는 모든 피해 감소가 50%에서 99%까지 선형으로 증가하며, 그 이하에서는 최대치로 제한된다.",
     );
   });
 });

@@ -71,6 +71,7 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
     const damage = converted === undefined ? `공격력 ${trait.damagePercent}%의` : `[[damage-value|${converted}]]의`;
     return `폭주 중 아군 기본 공격 적중마다 ${damage} 피해량을 가진 [[mette-staccato|스타카토]]가 추가로 발동한다.`;
   }
+  if (trait.effectId === "pontusRage") return `폭주 중 매초 모든 적에게 최대 체력 ${trait.maxHpDamagePercentPerSecond}% 고정 피해를 주고, 모든 회복을 취소한다.`;
 
   // 방어력 계수는 토리카처럼 추가 피해가 있는 범위 타격만 노출하고, 일반 전이 특성은 원래 피해 비율만 보여 준다.
   const speed = trait.attackSpeedBonusPercent === undefined ? "" : `공격 속도가 ${trait.attackSpeedBonusPercent}% 증가한다. `;
@@ -101,7 +102,7 @@ export function passiveDescription(passive: Passive, atk?: number): string {
     const shieldText = shield === undefined ? `공격력 ${passive.cleanseShieldAttackPercent}%` : `[[shield-value|${shield.term}]]`;
     return `생존 중 아군 [[attack-speed|공격 속도]]를 ${passive.teamAttackSpeedPercent}% 높인다. 아군이 [[crowd-control|군중제어]]에 걸리면 즉시 정화하고 ${shieldText} 보호막을 부여한다.`;
   }
-  if (passive.kind === "abyssalPressure") return `매초 [[ap|주문력]]이 ${passive.apPerSecond} 상승하고, [[missing-hp|잃은 체력]]에 비례해 받는 모든 피해가 최대 ${passive.maxReductionPercent}% 감소한다.`;
+  if (passive.kind === "abyssalPressure") return `완전히 경과한 매초 기본 [[ap|주문력]]의 ${passive.apPercentPerSecond}%가 복리로 누적된다. 현재 체력이 최대 체력의 100%에서 ${passive.maxReductionAtHpPercent}%로 낮아질수록 받는 모든 피해 감소가 ${passive.baseDamageReductionPercent}%에서 ${passive.maxDamageReductionPercent}%까지 선형으로 증가하며, 그 이하에서는 최대치로 제한된다.`;
   if (passive.kind !== "battleMaidMastery") return passive.desc;
   // 네 능력이 모두 같은 비율로 오르므로 값을 한 번만 말한다. 값이 서로 달라지면 다시 나열해야 한다.
   return `전투 시작 시, 공격 속도·공격력·치명타 확률·치명타 피해가 모두 ${passive.attackSpeedPercent}% 오른다.`;

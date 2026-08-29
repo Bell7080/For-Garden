@@ -13,6 +13,7 @@ import {
   currentAttackSpeed,
   fireUltimate,
   findFighter,
+  isFighterAlive,
   moveSpeed,
   renderPose,
   receivedDamage,
@@ -311,7 +312,7 @@ describe("단일 난전의 원정 보스 옵션", () => {
     expect(state.phase).toBe("fight"); expect(state.fighters[1].hp).toBe(0); expect(state.fighters[1].immortal).toBe(true); expect(state.boss?.score).toBeGreaterThan(0);
   });
 
-  it("는 폰토스 내구력 이전 관측 피해를 점수화하면서 실제 HP에는 경감 후 최소 1 피해만 적용한다", () => {
+  it("는 폰토스 내구력 경감 후 실제 HP 피해만 점수화한다", () => {
     const state = createSkirmish([getRelic("anky")], [getRelic("pontos")], ARENA, {}, {}, {
       boss: { phases: [{ startsAt: 0, damagePerSecond: 0, label: "관측" }], limitSeconds: 1 },
     });
@@ -320,8 +321,22 @@ describe("단일 난전의 원정 보스 옵션", () => {
     boss.hp = boss.maxHp * 0.5;
     const attack = stepSkirmish(state, 1 / 60).find((event) => event.kind === "attack" && event.attackerId === ally.id);
     expect(attack).toMatchObject({ kind: "attack", amount: 1 });
-    expect(attack?.kind === "attack" ? attack.scoreAmount : 0).toBeGreaterThan(1);
+    // 서버 검증기와 같이 방어·내구력·보호막을 넘은 실제 적용량을 점수로 정의한다.
+    expect(attack?.kind === "attack" ? attack.scoreAmount : 0).toBe(1);
     expect(state.boss?.score).toBe(attack?.kind === "attack" ? attack.scoreAmount : 0);
+  });
+
+  it("는 명시한 보스만 0 HP에서 전투를 지속하고 적 부속물은 정상 사망시킨다", () => {
+    const state = createSkirmish([getRelic("anky")], [getRelic("pontos"), getRelic("husk-raptor")], ARENA, {}, {}, {
+      boss: { fighterId: "enemy-0", phases: [{ startsAt: 0, damagePerSecond: 0, label: "관측" }], limitSeconds: 10 },
+    });
+    const [, boss, appendage] = state.fighters;
+    boss.hp = 0; appendage.hp = 0;
+
+    // 생존 판정의 유일한 예외는 boss.fighterId이며 향후 소환물은 이 경계를 얻지 못한다.
+    expect(state.boss?.fighterId).toBe(boss.id);
+    expect(isFighterAlive(boss)).toBe(true);
+    expect(isFighterAlive(appendage)).toBe(false);
   });
 
   it("는 생존 시간·리미트를 갱신하고 아군 전멸 때만 패배로 끝낸다", () => {

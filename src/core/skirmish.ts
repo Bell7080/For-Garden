@@ -82,7 +82,7 @@ export interface Fighter extends Combatant {
   regeneration: { remaining: number; tickIn: number; percentPerTick: number } | null;
   /** 시간 기반 패시브로 누적된 추가 주문력. 정적 정의를 변경하지 않는 전투 상태다. */
   bonusAp: number;
-  /** 점수전 보스는 HP가 0이어도 대상 지정·행동·승패 판정에서 생존한 것으로 취급한다. */
+  /** SkirmishBossState.fighterId와 일치하는 점수전 보스에만 설정되는 불사 경계다. */
   immortal?: boolean;
   /** 기본 공격 실제 적중으로 쌓인 전투 한정 공격 속도다. 저장 모델에는 존재하지 않는다. */
   bonusAttackSpeed: number;
@@ -109,8 +109,10 @@ export interface SkirmishState {
 
 /** 불사 원정 보스의 시간 단계다. 초당 피해는 아군 전체에 동일하게 적용된다. */
 export interface SkirmishBossPhase { startsAt: number; damagePerSecond: number; label: string }
-/** 화면과 정산이 읽는 보스 런타임 상태이며 점수는 실제 attack 사건의 피해만 누적한다. */
+/** 화면과 정산이 읽는 보스 상태로, 점수는 경감·보호막 후 HP에 실제 적용된 피해다. */
 export interface SkirmishBossState {
+  /** 적 부속물을 불사화하지 않도록 유일하게 추적하는 보스 전투원 ID다. */
+  fighterId: string;
   score: number;
   survivedFor: number;
   phaseIndex: number;
@@ -134,8 +136,8 @@ export interface CreateSkirmishOptions {
   augmentEffects?: readonly ExpeditionAugmentEffect[];
   /** 적 종류별 크기 표현을 씬이 재해석하지 않도록 입력 모델에서 전달한다. */
   enemyBodyScale?: number;
-  /** 지정하면 적은 불사이며 아군 전멸만 패배 종료가 되는 보스 규칙을 켠다. */
-  boss?: { phases: readonly SkirmishBossPhase[]; limitSeconds: number };
+  /** 지정한 적 한 명만 불사이며 아군 전멸만 패배 종료가 되는 보스 규칙을 켠다. */
+  boss?: { phases: readonly SkirmishBossPhase[]; limitSeconds: number; fighterId?: string };
 }
 
 /** 씬이 모션·피격 숫자·사망 연출을 붙일 수 있도록 이번 프레임에 일어난 일만 모아 돌려준다. */
@@ -146,7 +148,7 @@ export type SkirmishEvent =
       targetId: string;
       skill: "basic" | "ultimate" | "staccato";
       amount: number;
-      /** 점수전에서 전용 내구력 경감 전, 일반 방어 계산까지 마친 관측 피해다. */
+      /** 경감·보호막·과잉 피해 제한 후 HP에 실제 적용된 점수 피해다. */
       scoreAmount?: number;
       critical: boolean;
       /** 광역 한 번에서 첫 피해 사건만 공격 모션을 재생한다. 생략하면 기존처럼 재생한다. */
@@ -318,22 +320,22 @@ export function createSkirmish(
     if (saved) fighter.hp = saved.alive ? fighter.maxHp * Math.min(100, Math.max(0, saved.currentHp)) / 100 : 0;
     return fighter;
   });
+  const bossFighterId = options.boss?.fighterId ?? "enemy-0";
+  const enemies = enemyDefs.map((def, i) => {
+    const fighter = makeFighter(def, "enemy", i, enemySpots[i].x, enemySpots[i].y, 0, 0, options.enemyBodyScale ?? 1);
+    // 적 편 전체가 아니라 계약에 지정된 한 개체만 불사 경계를 가진다.
+    fighter.immortal = options.boss !== undefined && fighter.id === bossFighterId;
+    return fighter;
+  });
+  if (options.boss && !enemies.some(({ id }) => id === bossFighterId)) throw new RangeError("보스 전투원 ID는 적 편성에 존재해야 합니다.");
   return {
-    fighters: [
-      ...players,
-      ...enemyDefs.map((def, i) => {
-        const fighter = makeFighter(def, "enemy", i, enemySpots[i].x, enemySpots[i].y, 0, 0, options.enemyBodyScale ?? 1);
-        // 점수전 보스는 표시 HP를 실제로 소모하되 0에서도 계속 전투 가능한 명시적 불사 상태다.
-        fighter.immortal = options.boss !== undefined;
-        return fighter;
-      }),
-    ],
+    fighters: [...players, ...enemies],
     arena,
     phase: "fight",
     elapsed: 0,
     log: [],
     augmentEffects: options.augmentEffects ?? [],
-    boss: options.boss ? { score: 0, survivedFor: 0, phaseIndex: 0, limitReached: false, phases: options.boss.phases, limitSeconds: options.boss.limitSeconds, damageRemainder: 0, pressureRadius: Math.max(arena.right - arena.left, arena.bottom - arena.top) / 2, tideWarning: false } : undefined,
+    boss: options.boss ? { fighterId: bossFighterId, score: 0, survivedFor: 0, phaseIndex: 0, limitReached: false, phases: options.boss.phases, limitSeconds: options.boss.limitSeconds, damageRemainder: 0, pressureRadius: Math.max(arena.right - arena.left, arena.bottom - arena.top) / 2, tideWarning: false } : undefined,
   };
 }
 
@@ -663,8 +665,8 @@ function triggerCrescendoStaccato(state: SkirmishState, target: Fighter, events:
       power: trait.damagePercent, damageType: "magical", scalingStat: "atk", isCritical: false, kind: "basic",
     }, true);
     const amount = receivedDamage(target, raw);
-    applyDamage(target, amount, events);
-    events.push({ kind: "attack", attackerId: mette.id, targetId: target.id, skill: "staccato", amount, scoreAmount: raw, critical: false, animate: false });
+    const dealt = applyDamage(target, amount, events);
+    events.push({ kind: "attack", attackerId: mette.id, targetId: target.id, skill: "staccato", amount, scoreAmount: dealt, critical: false, animate: false });
     if (isFighterAlive(target)) events.push(...applyStagger(target, trait.staggerSeconds, state));
   }
 }
@@ -845,7 +847,7 @@ function strike(
   const amount = receivedDamage(target, rawAmount);
 
   const targetHpBefore = target.hp;
-  applyDamage(target, amount, events);
+  const dealt = applyDamage(target, amount, events);
   tryTriggerEmergencyRecovery(target);
   /**
    * 흡혈 규칙: 보호막을 통과한 뒤 실제 HP에서 빠진 직접/광역 피해에만 적용한다.
@@ -855,7 +857,7 @@ function strike(
   const healFromDamage = (dealt: number) => {
     applyHealing(state, attacker, dealt * damageHealingRate(attacker, skill, attackingInFever) / 100);
   };
-  healFromDamage(targetHpBefore - target.hp);
+  healFromDamage(dealt);
   if (!useUltimate && attacker.def.basic.lowestHpAllyHealingFromDamagePercent !== undefined) {
     const ally = lowestCurrentHpAlly(state, attacker.side);
     if (ally) {
@@ -904,7 +906,7 @@ function strike(
     targetId: target.id,
     skill: useUltimate ? "ultimate" : "basic",
     amount,
-    scoreAmount: rawAmount,
+    scoreAmount: dealt,
     critical,
   });
 
@@ -933,11 +935,11 @@ function strike(
         * attackPowerMultiplier(state.augmentEffects, attacker.def.id);
       const splashAmount = receivedDamage(secondary, secondaryBase);
       const secondaryHpBefore = secondary.hp;
-      applyDamage(secondary, splashAmount, events);
+      const splashDealt = applyDamage(secondary, splashAmount, events);
       tryTriggerEmergencyRecovery(secondary);
       // 광역 피해도 공격자가 실제로 입힌 HP 피해이므로 같은 흡혈 규칙에 포함한다.
       healFromDamage(secondaryHpBefore - secondary.hp);
-      events.push({ kind: "attack", attackerId: attacker.id, targetId: secondary.id, skill: useUltimate ? "ultimate" : "basic", amount: splashAmount, scoreAmount: secondaryBase, critical });
+      events.push({ kind: "attack", attackerId: attacker.id, targetId: secondary.id, skill: useUltimate ? "ultimate" : "basic", amount: splashAmount, scoreAmount: splashDealt, critical });
       if (isFighterAlive(secondary) && splashTrait.statusEffect) applyCombatStatusEffect(secondary, splashTrait.statusEffect, events, state);
       if (!isFighterAlive(secondary)) {
         clearDefeatedStatuses(secondary);
@@ -1004,7 +1006,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
       * attackPowerMultiplier(state.augmentEffects, attacker.def.id)));
     const amount = receivedDamage(target, rawAmount);
     const hpBefore = target.hp;
-    applyDamage(target, amount, events);
+    const dealt = applyDamage(target, amount, events);
     tryTriggerEmergencyRecovery(target);
     // 흡혈은 대상별 실제 HP 감소량만 더해 과잉 피해를 회복량으로 만들지 않는다.
     applyHealing(state, attacker, (hpBefore - target.hp) * damageHealingRate(attacker, skill, attackingInFever) / 100);
@@ -1019,7 +1021,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     }
     target.dashX = (dx / gap) * SKIRMISH.knockback * 1.4;
     target.dashY = (dy / gap) * SKIRMISH.knockback * 1.4;
-    events.push({ kind: "attack", attackerId: attacker.id, targetId: target.id, skill: useUltimate ? "ultimate" : "basic", amount, scoreAmount: rawAmount, critical, animate: index === 0 });
+    events.push({ kind: "attack", attackerId: attacker.id, targetId: target.id, skill: useUltimate ? "ultimate" : "basic", amount, scoreAmount: dealt, critical, animate: index === 0 });
 
     // 죽은 대상에는 지속 상태와 상태 UI 시작 사건을 절대 남기지 않는다.
     if (isFighterAlive(target)) {
@@ -1235,8 +1237,8 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
       // 아군 궁극기는 자동으로 나가지 않는다. 화면에서 누를 때만 fireUltimate로 들어온다.
       // 적 자동 궁극기도 수동 입력과 같은 생존·기절·게이지 코어 규칙을 통과한다.
       strike(fighter, target, rng, state, events, fighter.side === "enemy" && canFireUltimate(state, fighter));
-      // 보스 내구력 적용 전 관측 피해를 점수로 옮긴다. 불사 표식이 HP 0의 사망 경로를 차단한다.
-      if (state.boss && target.side === "enemy") {
+      // 보스에게 경감·보호막 후 실제 적용된 피해만 점수로 옮기며 불사 경계는 HP 0의 사망 경로를 차단한다.
+      if (state.boss && target.id === state.boss.fighterId) {
         const scored = [...events].reverse().find((event): event is Extract<SkirmishEvent, { kind: "attack" }> => event.kind === "attack" && event.attackerId === fighter.id && event.targetId === target.id);
         state.boss.score += scored?.scoreAmount ?? scored?.amount ?? 0;
       }
@@ -1289,9 +1291,9 @@ export function fireUltimate(
   if (!target) return events;
 
   strike(attacker, target, rng, state, events, true, undefined, targetPoint);
-  // 수동 궁극기도 평타와 동일하게 내구력 적용 전 관측 피해를 점수화한다.
-  if (state.boss && target.side === "enemy") {
-    state.boss.score += events.reduce((sum, event) => sum + (event.kind === "attack" && event.attackerId === attacker.id ? (event.scoreAmount ?? event.amount) : 0), 0);
+  // 수동 궁극기도 평타와 동일하게 보스에게 실제 적용된 피해만 점수화한다.
+  if (state.boss && target.id === state.boss.fighterId) {
+    state.boss.score += events.reduce((sum, event) => sum + (event.kind === "attack" && event.attackerId === attacker.id && event.targetId === state.boss!.fighterId ? (event.scoreAmount ?? event.amount) : 0), 0);
   }
   // 방금 크게 휘둘렀으니 다음 평타까지의 간격도 새로 센다.
   attacker.attackCooldown = attackInterval(attacker, state);

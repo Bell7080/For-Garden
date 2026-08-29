@@ -84,6 +84,8 @@ export interface Fighter extends Combatant {
   bonusAttackSpeed: number;
   /** 0보다 크면 단일 대상 선택의 중심이 될 수 없는 은신 상태다. */
   stealthFor: number;
+  /** 폰토스 폭주의 다음 1초 고정 피해까지 남은 시간이며 비활성 중에는 1초로 초기화한다. */
+  pontusRageTickIn: number;
 }
 
 export type SkirmishPhase = "fight" | "victory" | "defeat";
@@ -266,6 +268,8 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     bonusAp: 0,
     bonusAttackSpeed: 0,
     stealthFor: 0,
+    // 폭주가 켜진 뒤 온전한 1초가 지나야 첫 파동이 발생한다.
+    pontusRageTickIn: 1,
   };
 }
 
@@ -469,8 +473,16 @@ function defensiveDefinition(target: Fighter, state: SkirmishState): Fighter {
   } } };
 }
 
-/** 모든 체력 회복 경로가 적 생존 오라의 회복 감소와 실제 최대 HP 상한을 공유한다. */
+/** 현재 살아서 폭주 중인 상대 폰토스를 매 요청마다 찾아 영구 디버프 없이 회복 차단 여부를 정한다. */
+function isHealingCancelledByPontus(state: SkirmishState, target: Fighter): boolean {
+  return state.fighters.some((enemy) => enemy.side !== target.side && isFighterAlive(enemy) && enemy.ferocityFever
+    && enemy.def.ferocityTrait.effectId === "pontusRage" && enemy.def.ferocityTrait.cancelEnemyHealing);
+}
+
+/** 모든 체력 회복 경로가 폰토스 차단, 적 생존 오라 감소, 실제 최대 HP 상한을 공유한다. */
 function applyHealing(state: SkirmishState, target: Fighter, requested: number): number {
+  // 폭주 종료나 폰토스 사망은 별도 상태 정리 없이 이 현재 상태 판정만으로 즉시 차단을 해제한다.
+  if (isHealingCancelledByPontus(state, target)) return 0;
   const reduction = strongestLivingAura(state, target.side, "enemyHealingReceivedReductionPercent");
   const before = target.hp;
   target.hp = Math.min(target.maxHp, target.hp + Math.max(0, requested) * (1 - reduction / 100));
@@ -1060,6 +1072,30 @@ function settle(state: SkirmishState, events: SkirmishEvent[]): void {
 
 function advance(state: SkirmishState, dt: number, rng: () => number, events: SkirmishEvent[]): void {
   state.elapsed += dt;
+
+  // 각 폰토스가 소유한 누적 시계로 완전히 경과한 1초만 처리해 프레임 분할과 무관하게 만든다.
+  for (const pontus of state.fighters) {
+    const trait = pontus.def.ferocityTrait;
+    if (!isFighterAlive(pontus) || !pontus.ferocityFever || trait.effectId !== "pontusRage") {
+      pontus.pontusRageTickIn = 1;
+      continue;
+    }
+    pontus.pontusRageTickIn -= dt;
+    while (pontus.pontusRageTickIn <= EMERGENCY_RECOVERY.epsilon) {
+      // 고정 피해의 기존 정책대로 보호막은 applyDamage에서 먼저 흡수하지만, 방어·속성·receivedDamage는 건너뛴다.
+      for (const target of aliveFighters(state, pontus.side === "player" ? "enemy" : "player")) {
+        const amount = target.maxHp * trait.maxHpDamagePercentPerSecond / 100;
+        const dealt = applyDamage(target, amount, events);
+        state.log.push(`${pontus.def.name} 폭주 → ${target.def.name} ${dealt}`);
+        if (!isFighterAlive(target)) {
+          clearDefeatedStatuses(target);
+          events.push({ kind: "death", fighterId: target.id });
+          state.log.push(`${target.def.name} 전투 불능`);
+        }
+      }
+      pontus.pontusRageTickIn += 1;
+    }
+  }
 
   // 누적치는 프레임 횟수가 아니라 완전히 경과한 전투 초로 재계산해 배속·프레임 분할과 무관하다.
   for (const fighter of state.fighters) if (fighter.def.passive.kind === "abyssalPressure") {

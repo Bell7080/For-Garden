@@ -775,8 +775,8 @@ export const RELICS: RelicDef[] = [
       lifeSteal: 0,
       ferocityGain: 0,
     },
-    // 네 번째 스킬 표시는 공용 정보창이 이 야성 특성을 패시브 뱃지와 함께 읽어 구성한다.
-    ferocityTrait: { name: "해구", effectId: "damageReduction", reductionPercent: 20 },
+    // 폭주 파동은 매초 각 적 최대 HP의 2%를 고정 피해로 주고, 살아 있는 동안 모든 적 회복을 취소한다.
+    ferocityTrait: { name: "해구", effectId: "pontusRage", maxHpDamagePercentPerSecond: 2, cancelEnemyHealing: true },
     passive: {
       id: "pontos-passive",
       name: "심해의 압력",

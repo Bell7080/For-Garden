@@ -207,6 +207,8 @@ export type FerocityEffectId =
   | "stealthLeap"
   /** 폭주 중 자기 공격 속도를 곱하는 명시적 효과다. */
   | "selfAttackSpeedMultiplier"
+  /** 폰토스 전용: 폭주 중 초당 최대 HP 고정 피해와 적 회복 취소를 함께 제공한다. */
+  | "pontusRage"
   /** 메테 전용: 폭주 중 아군 일반 공격 적중마다 스타카토 추가타를 연주한다. */
   | "crescendoStaccato";
 
@@ -266,6 +268,13 @@ export type FerocityTrait = {
       damagePercent: number;
       /** 스타카토가 적용하는 기존 경직 디버프의 지속 시간이다. */
       staggerSeconds: number;
+    }
+  | {
+      effectId: "pontusRage";
+      /** 매초 각 생존 적의 최대 체력에서 직접 차감할 비율이다. */
+      maxHpDamagePercentPerSecond: number;
+      /** true이면 폭주 중 반대편의 모든 회복 요청을 공용 회복 경계에서 취소한다. */
+      cancelEnemyHealing: true;
     }
 );
 

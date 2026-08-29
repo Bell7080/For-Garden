@@ -71,6 +71,7 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
     const damage = converted === undefined ? `공격력 ${trait.damagePercent}%의` : `[[damage-value|${converted}]]의`;
     return `폭주 중 아군 기본 공격 적중마다 ${damage} 피해량을 가진 [[mette-staccato|스타카토]]가 추가로 발동한다.`;
   }
+  if (trait.effectId === "pontusRage") return `폭주 중 매초 모든 적에게 최대 체력 ${trait.maxHpDamagePercentPerSecond}% 고정 피해를 주고, 모든 회복을 취소한다.`;
 
   // 방어력 계수는 토리카처럼 추가 피해가 있는 범위 타격만 노출하고, 일반 전이 특성은 원래 피해 비율만 보여 준다.
   const speed = trait.attackSpeedBonusPercent === undefined ? "" : `공격 속도가 ${trait.attackSpeedBonusPercent}% 증가한다. `;

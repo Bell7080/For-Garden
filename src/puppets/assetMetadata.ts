@@ -5,6 +5,8 @@ export const DODI_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1086,
   imageHeight: 1448,
   content: { left: 100, top: 76, right: 986, bottom: 1352 },
+  // 오른쪽으로 뻗은 머리 깃털이 카드에서 대칭 홈의 오른쪽 대각선 모서리에 애매하게 걸렸다.
+  cardHeadEscape: { right: 0.08 },
 };
 
 export const DODI_SD_METADATA: Omit<PuppetAsset, "url"> = {
@@ -18,6 +20,8 @@ export const METTE_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1054,
   imageHeight: 1492,
   content: { left: 67, top: 43, right: 1003, bottom: 1463 },
+  // 왼쪽으로 처진 후드 장식이 카드에서 대칭 홈의 왼쪽 대각선 모서리에 잘렸다.
+  cardHeadEscape: { left: 0.12 },
 };
 
 export const METTE_SD_METADATA: Omit<PuppetAsset, "url"> = {

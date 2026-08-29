@@ -8,7 +8,7 @@ import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
 import { addStarMark, RARITY_TONE } from "./rarityMark";
 import { COLOR, textStyle } from "./theme";
-import { portraitCardNotchWidth, portraitCardOverhang } from "./portraitGrid";
+import { portraitCardHeadWindow, portraitCardNotchWidth, portraitCardOverhang } from "./portraitGrid";
 import { addBookmarkMark } from "./bookmarkMark";
 
 /** 카드 한 장의 조립 옵션. 크기와 라벨만 주면 나머지 연출은 프리팹이 맞춘다. */
@@ -145,7 +145,12 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     };
     const bodyCenter = 0;
     this.chipShape = chipPoints(chipWidth, this.bodyHeight, { bevel });
-    const notchWidth = portraitCardNotchWidth(chipWidth, bevel.topLeft, bevel.topRight, CHIP_NOTCH_WIDTH);
+    // 대부분의 원화는 대칭 홈으로 충분하다. 모자·깃털·후드가 한쪽으로 쏠려 그 쪽만 대각선
+    // 모서리 안쪽에서 잘리는 캐릭터만 asset에 `cardHeadEscape`를 실측해 채운다.
+    const headEscape = portraitAssetFor(options.portraitAssetId).cardHeadEscape;
+    const headWindow = headEscape ? portraitCardHeadWindow(chipWidth, bevel.topLeft, bevel.topRight, CHIP_NOTCH_WIDTH, headEscape) : undefined;
+    const notchWidth = headWindow?.width ?? portraitCardNotchWidth(chipWidth, bevel.topLeft, bevel.topRight, CHIP_NOTCH_WIDTH);
+    const notchOffsetX = headWindow?.offsetX ?? 0;
 
     // 고르거나 애착으로 세운 카드에만 켜지는 발광. 테두리를 두르는 대신 카드 전체가 은은하게 빛난다.
     this.glow = scene.add.graphics({ x: 0, y: bodyCenter }).setVisible(false);
@@ -167,7 +172,7 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     this.maskOffsetY = bodyCenter;
     this.shadeHeight = Math.round(this.bodyHeight * SHADE_RATIO);
     // 머리가 빠져나오는 홈까지 포함한 실루엣. 원화와 선택 표시가 같은 모양을 나눠 쓴다.
-    this.portraitShape = chipPoints(chipWidth, this.bodyHeight, { bevel, openWidth: notchWidth, openHeight: this.overhang });
+    this.portraitShape = chipPoints(chipWidth, this.bodyHeight, { bevel, openWidth: notchWidth, openHeight: this.overhang, openOffsetX: notchOffsetX });
     this.portraitMask = scene.make.graphics({});
     this.portraitMask.fillStyle(0xffffff, 1);
     this.portraitMask.fillPoints(toGeomPoints(this.portraitShape), true);
@@ -179,7 +184,7 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     // 윗변 밖 홈만 남기는 마스크. 선택 표시의 머리 몫이 몸통까지 겹쳐 두 번 어두워지지 않게 한다.
     this.notchMask = scene.make.graphics({});
     this.notchMask.fillStyle(0xffffff, 1);
-    this.notchMask.fillRect(-notchWidth / 2, -this.bodyHeight / 2 - this.overhang, notchWidth, this.overhang);
+    this.notchMask.fillRect(-notchWidth / 2 + notchOffsetX, -this.bodyHeight / 2 - this.overhang, notchWidth, this.overhang);
 
     // 인물 뒤에 깔리는 배경 원화. 빈 색면만 두면 카드가 심심하고, 그대로 두면 인물보다
     // 먼저 읽힌다. 그래서 **등급색으로 물들여** 한 겹 눌러 둔다 — 색은 여전히 등급이 정하고

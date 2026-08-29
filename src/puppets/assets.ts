@@ -65,6 +65,16 @@ export interface PuppetAsset {
    * 적지 않도록 그 차이를 원화 쪽에 적어 둔다.
    */
   portraitOffsetY?: number;
+  /**
+   * 카드 머리 홈이 한쪽으로 더 열려야 하는 정도(칩 폭 대비 비율, 0~1). 비워두면 대칭이다.
+   *
+   * 머리 관절은 항상 카드 가운데를 기준으로 잡지만, 모자·깃털·후드 같은 장식은 포즈에 따라
+   * 한쪽으로 쏠려 그려진다. 대칭 홈만 있으면 그 쪽이 대각선 모서리 안쪽에서 잘린다(스피나의
+   * 뒷머리 오른쪽, 메테의 후드 왼쪽이 그랬다). 새 캐릭터를 추가한 뒤 도감 카드에서 머리 옆이
+   * 애매하게 잘려 보이면, 어느 쪽이 잘리는지 보고 그 방향만 값을 채운다 — 0.05~0.15 사이에서
+   * 시작해 스크린샷으로 확인하며 늘린다.
+   */
+  cardHeadEscape?: { left?: number; right?: number };
 }
 
 const base = import.meta.env.BASE_URL;
@@ -97,6 +107,8 @@ export const SEIRA_ASSET: PuppetAsset = {
   imageWidth: 1085,
   imageHeight: 1450,
   content: { left: 273, top: 82, right: 950, bottom: 1450 },
+  // 뒷머리 뾰족 장식이 오른쪽으로 쏠려 카드에서 대칭 홈의 오른쪽 대각선 모서리에 잘렸다.
+  cardHeadEscape: { right: 0.12 },
 };
 
 /** 4번 전신 일러스트: 루카(벨로키랍토르). 넓은 후드와 꼬리까지 포함한 전용 원화다. */

@@ -67,6 +67,11 @@ export interface ChipOptions {
   openWidth?: number;
   /** 열린 구간이 위로 얼마나 뻗는지. */
   openHeight?: number;
+  /**
+   * 열린 구간의 중심을 좌우로 미는 값. 머리 장식(모자·깃털·후드)이 한쪽으로 쏠린 원화가
+   * 그 쪽 대각선 모서리 안쪽에서 잘리는 것을 막을 때만 쓴다. 0이면 가운데 그대로다.
+   */
+  openOffsetX?: number;
 }
 
 /**
@@ -84,12 +89,13 @@ export function chipPoints(width: number, height: number, options: ChipOptions =
     ? { topLeft: given, topRight: given, bottomRight: 0, bottomLeft: 0 }
     : { topLeft: given.topLeft ?? 0, topRight: given.topRight ?? 0, bottomRight: given.bottomRight ?? 0, bottomLeft: given.bottomLeft ?? 0 };
   const open = options.openWidth ?? 0;
+  const openShift = options.openOffsetX ?? 0;
   const openTop = -height / 2 - (options.openHeight ?? 0);
   const hw = width / 2;
   const hh = height / 2;
   const points = [-hw, -hh + bevels.topLeft, -hw + bevels.topLeft, -hh];
   if (open > 0) {
-    points.push(-open / 2, -hh, -open / 2, openTop, open / 2, openTop, open / 2, -hh);
+    points.push(-open / 2 + openShift, -hh, -open / 2 + openShift, openTop, open / 2 + openShift, openTop, open / 2 + openShift, -hh);
   }
   points.push(
     hw - bevels.topRight, -hh,

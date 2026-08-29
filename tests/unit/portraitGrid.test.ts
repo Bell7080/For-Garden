@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { portraitCardNotchWidth, portraitCardOverhang, portraitGridContentHeight, portraitGridFirstRowY, portraitGridHeadroom } from "../../src/ui/portraitGrid";
+import { portraitCardHeadWindow, portraitCardNotchWidth, portraitCardOverhang, portraitGridContentHeight, portraitGridFirstRowY, portraitGridHeadroom } from "../../src/ui/portraitGrid";
 
 /** 머리가 칩 밖으로 나오는 카드라 그리드 첫 줄은 경계에서 그만큼 떨어져야 한다. */
 describe("캐릭터 그리드 안전 영역", () => {
@@ -40,6 +40,33 @@ describe("캐릭터 그리드 안전 영역", () => {
       const chipWidth = 300;
       const width = portraitCardNotchWidth(chipWidth, 10, 5, 0.8);
       expect(width).toBe(chipWidth * 0.8);
+    });
+  });
+
+  /** 모자·깃털·후드가 한쪽으로 쏠린 원화(스피나 오른쪽, 메테 왼쪽)를 위한 비대칭 홈. */
+  describe("한쪽으로 넓힌 머리 홈", () => {
+    it("은 bias를 준 쪽만 넓히고 중심을 그 쪽으로 민다", () => {
+      const chipWidth = 300;
+      const window = portraitCardHeadWindow(chipWidth, 20, 10, 0.8, { right: 0.1 });
+      const symmetric = portraitCardHeadWindow(chipWidth, 20, 10, 0.8);
+      expect(window.width).toBeGreaterThan(symmetric.width);
+      expect(window.offsetX).toBeGreaterThan(0);
+    });
+
+    it("은 bias가 없으면 대칭이고 offsetX가 0이다", () => {
+      const window = portraitCardHeadWindow(300, 20, 10, 0.8);
+      expect(window.offsetX).toBe(0);
+    });
+
+    it("은 넓혀도 그 쪽 대각선 깎임 안쪽 여유는 넘지 않는다", () => {
+      // v0.29.10에서 고친 자기 교차 문제가 bias로 되돌아오지 않아야 한다.
+      const chipWidth = 198;
+      const topLeftBevel = 0.18 * chipWidth;
+      const topRightBevel = 0.07 * chipWidth;
+      const window = portraitCardHeadWindow(chipWidth, topLeftBevel, topRightBevel, 0.8, { left: 1, right: 1 });
+      const clearance = 4;
+      expect(window.width / 2 - window.offsetX).toBeLessThanOrEqual(chipWidth / 2 - topLeftBevel - clearance + 1e-9);
+      expect(window.width / 2 + window.offsetX).toBeLessThanOrEqual(chipWidth / 2 - topRightBevel - clearance + 1e-9);
     });
   });
 });

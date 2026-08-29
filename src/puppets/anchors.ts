@@ -160,6 +160,18 @@ export interface CardFrameOptions {
 }
 
 /**
+ * 자르기 상자 높이 대비, 머리 관절이 상단에서 최대로 내려갈 수 있는 비율.
+ *
+ * `headroom`은 "내용 상자 맨 위"와 "머리 관절" 사이에서 시작점을 고르는데, 들어 올린 손·망토·
+ * 깃털처럼 머리보다 높이 솟은 부위가 있으면 내용 상자 맨 위가 머리에서 한참 떨어진다(루카가
+ * 손을 들어 올린 포즈). 그러면 자르기가 그 부위에서 시작해 머리는 카드 아래쪽이나 밖으로
+ * 밀려난다. 이 비율은 머리가 그 경우에도 항상 상단 일정 범위 안에 들어오도록 자르기 시작점을
+ * 아래로 더 내릴 수 있는 한계다 — 정상 원화(머리가 이미 내용 상자 맨 위에 가까운 경우)는
+ * 자연스러운 계산값이 이 한계보다 작아 전혀 영향을 받지 않는다.
+ */
+const MAX_HEAD_DROP_RATIO = 0.34;
+
+/**
  * 머리 관절이 카드 상단에 오도록 확대·잘라내기 값을 구한다.
  *
  * 전신 원화를 카드 비율에 그대로 넣으면 얼굴이 손톱만 해지므로, 얼굴이 보이는 상단부만
@@ -181,7 +193,10 @@ export function computeHeadCardFrame(
   const clamp = (value: number, max: number): number => Math.min(Math.max(value, 0), Math.max(max, 0));
   const cropX = clamp(head.x - cropWidth / 2, frame.imageWidth - cropWidth);
   // 머리카락 끝(내용 상자 위)과 머리 관절 사이에서 시작점을 잡아 정수리가 살짝 잘리게 한다.
-  const cropY = clamp(frame.content.top + (head.y - frame.content.top) * headroom, frame.imageHeight - cropHeight);
+  const naturalCropY = frame.content.top + (head.y - frame.content.top) * headroom;
+  // 자연스러운 시작점이 머리를 상단 한계 밖으로 밀어내면(위 주석 참고) 그만큼만 시작점을
+  // 늦춘다 — 정상 원화의 결과보다 시작점을 앞당기지는 않는다.
+  const cropY = clamp(Math.max(naturalCropY, head.y - cropHeight * MAX_HEAD_DROP_RATIO), frame.imageHeight - cropHeight);
 
   return { cropX, cropY, cropWidth, cropHeight, scale };
 }

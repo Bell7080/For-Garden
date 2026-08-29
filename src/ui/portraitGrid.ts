@@ -60,3 +60,37 @@ export function portraitCardNotchWidth(chipWidth: number, topLeftBevel: number, 
   const clearance = 4;
   return Math.min(chipWidth * ratio, chipWidth - 2 * Math.max(topLeftBevel, topRightBevel) - clearance);
 }
+
+/** 좌우 대칭이 아닌 머리 홈의 실제 폭과, 그 중심이 카드 가운데서 얼마나 밀렸는지다. */
+export interface PortraitCardHeadWindow {
+  width: number;
+  offsetX: number;
+}
+
+/**
+ * 한쪽으로 쏠린 머리 장식을 위해 넓힌 머리 홈.
+ *
+ * 관절은 언제나 카드 가운데(대칭)를 기준으로 잡지만, 모자·깃털·후드 같은 장식은 캐릭터 포즈에
+ * 따라 한쪽으로 쏠려 그려진다(스피나의 뒷머리 오른쪽, 메테의 후드 왼쪽). 대칭 홈만으로는 그
+ * 쪽이 대각선 모서리 안쪽에서 잘리므로, 잘리는 캐릭터만 실측해 그 쪽 절반을 `bias`만큼
+ * 넓힌다. 다른 캐릭터는 이 함수를 호출하지 않아 기존 대칭 홈이 그대로 유지된다.
+ *
+ * `bias.left`/`bias.right`는 칩 폭 대비 비율이라 카드 크기가 다른 그리드(발굴·원정·도감)에도
+ * 그대로 옮겨 쓸 수 있다. 넓힌 뒤에도 그 쪽 모서리의 대각선 안쪽 여유는 항상 지킨다 — 그
+ * 안쪽까지 넓히면 v0.29.10에서 고친 것과 같은 자기 교차 문제가 다시 생긴다.
+ */
+export function portraitCardHeadWindow(
+  chipWidth: number,
+  topLeftBevel: number,
+  topRightBevel: number,
+  ratio = 0.8,
+  bias: { left?: number; right?: number } = {},
+): PortraitCardHeadWindow {
+  const clearance = 4;
+  const halfBase = (chipWidth * ratio) / 2;
+  const maxLeft = Math.max(0, chipWidth / 2 - topLeftBevel - clearance);
+  const maxRight = Math.max(0, chipWidth / 2 - topRightBevel - clearance);
+  const left = Math.min(halfBase + chipWidth * Math.max(0, bias.left ?? 0), maxLeft);
+  const right = Math.min(halfBase + chipWidth * Math.max(0, bias.right ?? 0), maxRight);
+  return { width: left + right, offsetX: (right - left) / 2 };
+}

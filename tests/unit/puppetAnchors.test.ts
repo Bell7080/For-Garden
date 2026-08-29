@@ -128,6 +128,36 @@ describe("머리 카드 잘라내기", () => {
     expect(card.cropX + card.cropWidth).toBeLessThanOrEqual(FRAME.imageWidth);
     expect(card.cropY + card.cropHeight).toBeLessThanOrEqual(FRAME.imageHeight);
   });
+
+  /**
+   * 들어 올린 손·망토처럼 머리보다 높이 솟은 부위가 내용 상자 맨 위를 차지하는 포즈(루카).
+   * `headroom: 0`(카드가 실제로 쓰는 값)은 원래 내용 상자 맨 위에서 그대로 자르기 시작해,
+   * 머리 관절이 카드 훨씬 아래로 밀려나거나 잘려 나갔다.
+   */
+  const raisedHandFrame: AnchorFrame = {
+    imageWidth: 1728,
+    imageHeight: 2446,
+    // 내용 상자 맨 위(44)는 들어 올린 손이고, 머리는 그보다 한참 아래에 있다.
+    content: { left: 52, top: 44, right: 1683, bottom: 2404 },
+  };
+  const cardOptions = { width: 300, height: 464, headroom: 0, fillRatio: 0.56 } as const;
+
+  it("는 머리보다 높이 솟은 부위가 있어도 머리를 카드 상단 범위 안에 둔다", () => {
+    const head = { x: 860, y: 900 };
+    const card = computeHeadCardFrame(raisedHandFrame, head, cardOptions);
+    const headFromTop = (head.y - card.cropY) * card.scale;
+    // 카드 높이의 상단 34%(공식이 허용하는 한계) 언저리 안에 머리가 들어와야 얼굴이 보인다.
+    expect(headFromTop).toBeGreaterThan(0);
+    expect(headFromTop).toBeLessThanOrEqual(cardOptions.height * 0.34 + 1e-6);
+    // 자연스러운 계산(내용 상자 맨 위)보다 시작점이 늦춰졌는지로 안전장치가 실제로 작동했는지 확인한다.
+    expect(card.cropY).toBeGreaterThan(raisedHandFrame.content.top);
+  });
+
+  it("는 머리가 이미 내용 상자 맨 위에 가까우면 기존과 같은 시작점을 그대로 쓴다", () => {
+    const head = { x: 860, y: 100 };
+    const card = computeHeadCardFrame(raisedHandFrame, head, cardOptions);
+    expect(card.cropY).toBe(raisedHandFrame.content.top);
+  });
 });
 
 describe("폰토스 에셋 앵커 메타데이터", () => {

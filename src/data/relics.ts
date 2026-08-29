@@ -252,8 +252,19 @@ export const RELICS: RelicDef[] = [
     specimenNumber: "038",
     projectName: "VELOCITY CLAW",
     excavationSite: "몽골 자도흐타층 사구 지대",
-    catalogSummary: "낫 모양의 둘째 발톱과 가벼운 골격이 확인된 소형 포식자 표본.",
-    unlockRecord: { status: "recorded", text: "모래폭풍 뒤 드러난 발 골격에서 복원 가능한 조직을 확보했다. 호기심이 강하고, 동료의 빈틈을 발견하면 누구보다 먼저 파고든다." },
+    // 성인 벨로키랍토르 렐릭의 복원 이력과 현재 신체 측정값을 관찰 프로필의 단일 기준으로 둔다.
+    observationProfile: {
+      originYear: "약 7,500만 년 전",
+      restorationYear: "E.C. 10년",
+      restorationAge: 23,
+      lifeStage: "성체",
+      height: "1.62 m",
+      weight: "59 kg",
+    },
+    // 도감도 관찰 프로필과 같은 수치를 사용하며, 체중은 단거리 선수의 발달한 하체 근육과 함께 설명한다.
+    catalogSummary: "신장 1.62m, 체중 59kg이며 단거리 질주에 적합한 발달한 하체 근육과 가벼운 골격이 확인된 벨로키랍토르 성체 표본.",
+    // 해금 기록은 유일한 연구원인 주인공이 루카의 생활과 관계를 직접 관찰한 1인칭 시점으로 남긴다.
+    unlockRecord: { status: "recorded", text: "나는 루카를 집과 휴식을 무엇보다 좋아하는 단거리 달리기 선수로 관찰하고 있다. 단거리 선수답게 하체 근육량이 탄탄한 루카는 다른 육식 계열 렐릭들과도 대체로 원만하게 지낸다. 연구소 소파에 길게 누워 쉬다가도 내가 지나가면 늘 먼저 말을 걸어 오는 것이 루카의 습관이다. 오늘은 좋아하는 치즈케이크를 먹으면서도 살이 찌면 달리기가 둔해지지 않겠냐며 가볍게 걱정했지만, 이내 한 입 더 먹고는 다음 질주로 충분히 움직이면 된다며 웃었다." },
     rarity: "SR",
     portraitAssetId: "luka",
     origin: "벨로키랍토르",

@@ -20,6 +20,17 @@ export function isExcavationStorageFull(state: IdleExcavationState, serverNow: D
   return Math.max(0, serverNow.getTime() - previousMs) / 1000 >= limitSeconds;
 }
 
+/** 정산 로직과 같은 확장 배율로 보관 한도를 채운 비율(0~1)만 계산하는 순수 표시값이다. */
+export function excavationStorageFillRatio(state: IdleExcavationState, now: Date): number {
+  if (state.lastSettledAt === null || state.assignedRelicIds.every((id) => id === null)) return 0;
+  const previousMs = new Date(state.lastSettledAt).getTime();
+  const extensionActive = state.storageExtensionExpiresAt !== null && previousMs < new Date(state.storageExtensionExpiresAt).getTime();
+  const limitSeconds = state.baseStorageSeconds * (extensionActive ? 2 : 1);
+  if (limitSeconds <= 0) return 0;
+  const elapsedSeconds = Math.max(0, now.getTime() - previousMs) / 1000;
+  return Math.min(1, elapsedSeconds / limitSeconds);
+}
+
 /** JSON으로 그대로 저장할 수 있는 방치 발굴의 단일 상태다. */
 export interface IdleExcavationState {
   /** 세 칸은 위치를 보존하며 빈 칸은 null이다. */

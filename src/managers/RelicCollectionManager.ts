@@ -1,6 +1,7 @@
+import { BOND_XP_REWARD, grantBondXp } from "../core/bond";
 import type { RelicDef } from "../core/types";
 import { PLAYABLE_RELICS } from "../data/relics";
-import { session, type Session } from "../state/session";
+import { createInitialRelicProgress, session, type Session } from "../state/session";
 import { saveManager } from "../state/SaveManager";
 
 /** 편성 실패를 UI와 테스트가 문자열 추측 없이 구분하기 위한 안정적인 사유 코드다. */
@@ -81,6 +82,23 @@ export class RelicCollectionManager {
       throw error;
     }
     return { ok: true };
+  }
+
+  /**
+   * 모든 플레이 가능 렐릭을 즉시 보유 처리한다(임시 지급).
+   *
+   * 신규 스타터 렐릭 추가처럼 저장 마이그레이션이 옛 계정까지 소급하지 않는 변경을 QA가
+   * 즉시 확인할 수 있게 하는 설정 화면 전용 디버그 진입점이다. 정식 획득 경로(연구소)만으로
+   * 충분해지면 이 메서드를 지운다. 이미 보유한 렐릭은 건드리지 않는다.
+   */
+  grantAllForDebug(): number {
+    const newlyOwned = PLAYABLE_RELICS.filter((relic) => !this.state.owned.has(relic.id));
+    for (const relic of newlyOwned) {
+      this.state.owned.add(relic.id);
+      this.state.relicProgress[relic.id] ??= grantBondXp(createInitialRelicProgress(), BOND_XP_REWARD.firstAcquisition).progress;
+    }
+    if (newlyOwned.length > 0) this.persistSharedSession();
+    return newlyOwned.length;
   }
 
   /** 테스트 주입 상태는 디스크에 쓰지 않고 앱 공유 상태의 확정 변경만 저장한다. */

@@ -1,13 +1,13 @@
 import Phaser from "phaser";
 import type { AdOperationsConfigResponse, AdPresentationResult, AdSlotOperationsDto, GameApi, HarvestExcavationResponse, IdleExcavationResponse } from "../api/contracts";
-import { EXCAVATION_CURRENCIES, excavationProductionDisplayModel, nextExcavationSlot, placeExcavationRelic, type ExcavationCurrency, type IdleExcavationState } from "../core/idleExcavation";
+import { EXCAVATION_CURRENCIES, excavationProductionDisplayModel, excavationStorageFillRatio, nextExcavationSlot, placeExcavationRelic, type ExcavationCurrency, type IdleExcavationState } from "../core/idleExcavation";
 import { RELICS } from "../data/relics";
 import { portraitUsesRelicTint, sdAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
 import { tintFor } from "../puppets/tints";
 import { session } from "../state/session";
 import { setDebugExcavationAdOffers, setDebugIdleExcavationControls, setDebugIdleExcavationPopup, setDebugIdleExcavationSdReady, setDebugIdleExcavationSlots } from "../debug";
 import { Button } from "./Button";
-import { chipPoints, drawHairline, drawLayer, HOLO, slantedRect } from "./holo";
+import { chipPoints, drawHairline, drawLayer, HOLO, HoloBar, slantedRect } from "./holo";
 import { PortraitCard } from "./PortraitCard";
 import { PORTRAIT_GRID_MASK_GAP, portraitGridContentHeight, portraitGridFirstRowY } from "./portraitGrid";
 import type { PopupLayer } from "./PopupLayer";
@@ -29,6 +29,8 @@ import { BACK_SLOT } from "./IconButton";
 const PANEL = { width: 900, height: 1320 } as const;
 /** 현황의 누적 액자 판. 배치 그리드도 같은 윗변에서 시작해 두 화면이 한 자리를 공유한다. */
 const STATUS_SUMMARY = { y: 30, width: 800, height: 205 } as const;
+/** SD 발밑과 누적 액자 사이, 보관 한도가 찬 비율을 보여주는 좁은 자리다. */
+const STORAGE_GAUGE = { labelY: -158, y: -128, width: 700, height: 20 } as const;
 /**
  * 보유 렐릭은 이 창 안에서만 세로로 흐르며 상단 슬롯과 하단 완료 버튼을 침범하지 않는다.
  *
@@ -294,6 +296,10 @@ export class IdleExcavationPopup {
     if (!content) return;
     const baseServerMs = new Date(response.serverTime).getTime();
     let harvestButton: Button | undefined;
+    // SD 발밑과 누적 액자 사이: 생산을 이어 담을 수 있는 보관 한도가 지금 몇 % 찼는지 보여 준다.
+    const storageLabel = this.scene.add.text(0, STORAGE_GAUGE.labelY, "", textStyle({ role: "emphasis", size: 20, color: COLOR.accentText })).setOrigin(0.5);
+    content.add(storageLabel);
+    const storageGauge = new HoloBar(this.scene, 0, STORAGE_GAUGE.y, STORAGE_GAUGE.width, STORAGE_GAUGE.height, { color: COLOR.accent, trackAlpha: 0.8, outline: true }).addTo(content);
     // 발굴 전용 액자는 큰 누적값을, 아래의 독립 칩은 같은 아이콘과 생산 속도만 책임진다.
     // 3순위 누적 보상: SD 아래에서 현재 수확량과 시간당 생산량을 한 번에 훑는다.
     content.add(drawLayer(this.scene, 0, STATUS_SUMMARY.y, slantedRect(STATUS_SUMMARY.width, STATUS_SUMMARY.height), { fill: COLOR.panel, alpha: HOLO.glassLight, edge: COLOR.accent, edgeAlpha: 0.42 }));
@@ -327,6 +333,9 @@ export class IdleExcavationPopup {
       });
       const next = Math.min(...seconds);
       availability.setText(harvestable ? "현재 누적 보상을 수확할 수 있습니다." : Number.isFinite(next) ? `현재 누적 0 · 다음 수확까지 약 ${Math.max(1, Math.ceil(next / 60))}분` : "현재 누적 0 · 렐릭을 배치하면 생산이 시작됩니다.");
+      const storageRatio = excavationStorageFillRatio(response.excavation, new Date());
+      storageGauge.setValue(storageRatio);
+      storageLabel.setText(`보관량 ${Math.round(storageRatio * 100)}%`);
     };
     refreshEstimate();
     this.ticker?.remove(false);

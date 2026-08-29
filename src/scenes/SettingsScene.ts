@@ -14,6 +14,7 @@ import { platformFeedback } from "../api/PlatformFeedback";
 import { accountApi, type AccountFailureCode, type AccountState } from "../api/AccountApi";
 import { PopupLayer } from "../ui/PopupLayer";
 import { validateSettingsReturn, type SettingsEntryData, type SettingsReturnScene } from "./settingsNavigation";
+import { relicCollection } from "../managers/RelicCollectionManager";
 
 /** 상단 탭은 긴 설정을 의미 단위로 나눠 좁은 화면에서도 한 섹션만 스크롤하게 한다. */
 const TABS = [
@@ -133,11 +134,13 @@ export class SettingsScene extends Phaser.Scene {
     this.content.add(this.add.text(90, y, `상태  ${account.kind === "guest" ? "게스트" : "연동됨"}\n제공자  ${account.provider.toUpperCase()}\n식별 ID  ${account.maskedId}`, textStyle({ role: "body", size: 26, color: COLOR.inkDim, lineSpacing: 10 }))); y += 150;
     if (account.kind === "guest") { this.addTextAction(90, y, "Google 연동", () => void this.login("google")); this.addTextAction(350, y, "Apple 연동", () => void this.login("apple")); }
     else { this.addTextAction(90, y, "로그아웃", () => this.confirmAccountAction("로그아웃", "계정 연결만 해제합니다. 저장 데이터 초기화와 서버 데이터 삭제는 실행하지 않습니다.", () => accountApi.logout()), true); }
-    y += 120; section("고객지원 · 데이터", 650);
+    y += 120; section("고객지원 · 데이터", 742);
     this.addTextAction(90, y, "캐시 정리", () => void this.clearCache()); y += 92;
     this.addTextAction(90, y, "이용약관", () => this.openPolicy("/terms")); y += 92;
     this.addTextAction(90, y, "개인정보 처리방침", () => this.openPolicy("/privacy")); y += 92;
     this.addTextAction(90, y, "저장 데이터 초기화", () => this.confirmLocalReset(), true); y += 92;
+    // 스타터 렐릭 추가처럼 저장 마이그레이션이 소급하지 않는 변경을 QA가 재설치 없이 확인하는 임시 진입점이다.
+    this.addTextAction(90, y, "모든 캐릭터 획득", () => this.grantAllRelics()); y += 92;
     this.addTextAction(90, y, "계정 탈퇴", () => this.confirmAccountAction("계정 탈퇴", "연동 계정의 서버 진행과 계정 정보 삭제를 요청합니다. 기기의 로컬 저장 초기화와는 별도입니다.", () => accountApi.requestWithdrawal()), true); y += 110;
     return y;
   }
@@ -164,6 +167,12 @@ export class SettingsScene extends Phaser.Scene {
     this.popups.confirm({ title: "저장 데이터 초기화", message: "1단계: 이 기기의 로컬 진행만 삭제합니다. 로그아웃하지 않으며 연동 계정의 서버 데이터는 삭제하지 않습니다.", confirmLabel: "다음", destructive: true }, () => {
       this.popups.confirm({ title: "최종 확인", message: "2단계: 삭제한 로컬 진행은 복구할 수 없습니다. 정말 초기화하시겠습니까?", confirmLabel: "초기화", destructive: true }, () => { saveManager.reset(); this.scene.start("boot"); });
     });
+  }
+
+  /** 미보유 렐릭만 채워 넣고 몇 명이 새로 늘었는지만 짧게 알린다. */
+  private grantAllRelics(): void {
+    const grantedCount = relicCollection.grantAllForDebug();
+    this.popups.confirm({ title: "모든 캐릭터 획득", message: grantedCount > 0 ? `새 캐릭터 ${grantedCount}명을 보유 처리했습니다.` : "이미 모든 캐릭터를 보유하고 있습니다.", confirmLabel: "확인" }, () => undefined);
   }
 
   /** 로그인은 플랫폼 경계만 호출하며 토큰이나 서버 DTO를 Session에 넣지 않는다. */

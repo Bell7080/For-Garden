@@ -128,6 +128,38 @@ describe("관찰 인터뷰", () => {
     expect(allReplies.size).toBe(choiceCount);
   });
 
+  it("루카의 세 상황별 전용 질문이 날짜 순환에서 안정적으로 선택된다", () => {
+    const lukaQuestions = RELIC_OBSERVATION_QUESTIONS.luka;
+    // 각 질문의 날짜를 다시 계산해도 같은 객체를 돌려주며, 다른 렐릭의 전용 풀에는 섞이지 않아야 한다.
+    for (const question of lukaQuestions) {
+      const date = dateForQuestion("luka", question.id);
+      expect(observationQuestionForRelicAndDate("luka", date)).toBe(question);
+      expect(observationQuestionForRelicAndDate("luka", date)).toBe(observationQuestionForRelicAndDate("luka", date));
+      expect(observationQuestionForRelicAndDate("rex", date).id).not.toBe(question.id);
+    }
+    expect(lukaQuestions.map(({ choices }) => choices.length)).toEqual([2, 2, 2]);
+  });
+
+  it("루카의 모든 habitKey가 고유한 습성 문장과 전용 응답으로 이어진다", () => {
+    const discoveredHabits = new Set<string>();
+    for (const question of RELIC_OBSERVATION_QUESTIONS.luka) {
+      const date = dateForQuestion("luka", question.id);
+      for (const choice of question.choices) {
+        // 실제 완료 경계를 통과시켜 habitKey 누락 시 쓰이는 fallback과 선택지 재사용을 동시에 방지한다.
+        const manager = new ObservationManager(createDefaultSession(), { save: () => undefined });
+        const { record } = manager.complete("luka", date, choice.id);
+        const reply = createObservationStory("luka", "루카", date).nodes.find(({ id }) => id === `reply-${choice.id}`)?.body;
+        expect(record).toMatchObject({ questionId: question.id, choiceId: choice.id, personalityTag: choice.personalityTag });
+        expect(record.discoveredHabit).not.toBe("새로운 반응 양식을 기록했다.");
+        expect(reply).toBeTruthy();
+        expect(reply).not.toBe(choice.label);
+        discoveredHabits.add(record.discoveredHabit);
+      }
+      expect(new Set(question.choices.map(({ habitKey }) => habitKey)).size).toBe(question.choices.length);
+    }
+    expect(discoveredHabits.size).toBe(RELIC_OBSERVATION_QUESTIONS.luka.flatMap(({ choices }) => choices).length);
+  });
+
   it("하루 한 명의 첫 완료만 기록과 작은 유대 보상을 지급하고 재관람은 무보상이다", () => {
     const state = createDefaultSession();
     const manager = new ObservationManager(state, { save: () => undefined });

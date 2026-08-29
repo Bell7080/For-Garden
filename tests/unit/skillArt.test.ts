@@ -195,6 +195,8 @@ describe("스피나 스킬 표시 계약", () => {
   it("은 네 슬롯의 이름·요약·구조화 수치를 정적 정의와 함께 유지한다", () => {
     const spino = RELICS.find((def) => def.id === "spino")!;
     expect(spino.ferocityTrait).toMatchObject({ name: "잠행", durationSeconds: 3, leapTarget: "lowestHpEnemy", landingDistance: 172 });
+    // 잠행의 내부 도약 ID와 별개로 플레이어 설명은 실제 규칙인 순간이동 키워드를 제공한다.
+    expect(ferocityTraitDescription(spino.ferocityTrait)).toContain("[[teleport|순간이동]]");
     expect(ferocityTraitDescription(spino.ferocityTrait)).toContain("3초 동안 [[stealth|은신]]한다");
     expect(spino.passive).toMatchObject({ name: "전투의 환희", kind: "basicHitAttackSpeedStack", value: 3 });
     expect(passiveDescription(spino.passive)).toContain("[[attack-speed|공격 속도]]가 3 증가");

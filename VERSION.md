@@ -32,6 +32,14 @@
 
 ## 변경 이력
 
+## v0.29.4 — 2026-08-29
+
+- 원정 최종층 보스 폰투스의 전용 스킬 일러스트를 구워 연결했다. 보스는 번호 대신 렐릭 id를
+  원본 이름 머리말로 그대로 쓰므로 `prepare_skill_icons.py`의 원본 표에 `pontus: pontus`를
+  추가했다. 흰 실루엣 WebP 네 장을 `public/sprites/skills/pontus/`에 구웠고, `skillArt.ts`의
+  `RELICS_WITH_ART`에 `pontus`를 더해 정보창이 전용 그림을 쓰게 했다. 원본 PNG 4장은 굽고 나서
+  저장소에서 지웠다.
+
 ## v0.29.3 — 2026-08-29
 
 - 도디(5번)·메테(6번) 전용 스킬 일러스트를 구워 연결했다. `prepare_skill_icons.py`의 원본 표에

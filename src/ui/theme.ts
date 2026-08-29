@@ -36,6 +36,8 @@ export const COLOR = {
   /** 출격·출전처럼 "나가서 싸운다"를 뜻하는 입구의 강조색. 금색보다 붉다. */
   sortie: 0xd85f34,
   sortieText: "#f08b62",
+  /** 기여도 방어 막대 전용 저채도 청색. 에너지와 구분하면서 같은 냉색 계열을 유지한다. */
+  contributionDefense: 0x7392ad,
   /** 발굴 등급은 기본 금속 패널 위에서만 쓰는 보조 신호색이다. */
   rarityR: 0x7890a3,
   raritySR: 0x6fc4bd,

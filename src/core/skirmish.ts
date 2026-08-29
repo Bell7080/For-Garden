@@ -360,7 +360,8 @@ export function skirmishRelicResults(state: SkirmishState): SkirmishRelicResult[
 
 /** 화면에는 전투원 자체나 누적 원본 대신 표시 메타데이터까지 복제한 읽기 전용 성격의 행만 준다. */
 export function battleContributionSnapshot(state: SkirmishState, category: ContributionCategory): BattleContributionRow[] {
-  return contributionSnapshot(state.contributions, state.fighters.map((fighter, formationOrder) => ({
+  // 전투 패널은 아군 성과표이므로 사망 여부와 무관하게 최초 편성의 모든 아군만 복사한다.
+  return contributionSnapshot(state.contributions, state.fighters.filter((fighter) => fighter.side === "player").map((fighter, formationOrder) => ({
     id: fighter.id, formationOrder, name: fighter.def.name,
     // 현재 데이터 모델에서 초상 에셋의 안정 키는 렐릭 정의 ID이며 누적 키로는 사용하지 않는다.
     portraitId: fighter.def.id,

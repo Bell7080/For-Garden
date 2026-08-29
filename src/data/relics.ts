@@ -762,16 +762,19 @@ export const RELICS: RelicDef[] = [
     // 적 전용 정의도 RelicDef의 완전한 정적 계약을 지켜 공용 정보창이 예외 없이 표시한다.
     excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 0, efficiencyMultiplier: 1.00 },
     stats: {
-      hp: 1900,
-      def: 118,
-      res: 104,
+      // 일반 SSR의 기본치를 기준으로 HP 약 2.4배, 방어·저항 약 1.7배인 유한한 보스 예산이다.
+      // 20층 boss 레벨 25의 48% 성장 적용 뒤에는 HP 4,144 / 방어 266 / 저항 192 / 주문력 148이 된다.
+      hp: 2800,
+      def: 180,
+      res: 130,
       atk: 132,
-      ap: 96,
-      attackSpeed: 68,
+      ap: 100,
+      // 레벨 성장 후 약 1.85초마다 공격하며, 90% HP 이후 7회 적중해야 첫 해일을 쓸 수 있다.
+      attackSpeed: 55,
       moveSpeed: 58,
       critChance: 8,
       critDamage: 150,
-      energyGain: 20,
+      energyGain: 30,
       lifeSteal: 0,
       ferocityGain: 0,
     },
@@ -784,14 +787,14 @@ export const RELICS: RelicDef[] = [
       iconAssetId: "skill-icon-buff",
       effectType: "buff",
       value: 5,
-      // 완전히 경과한 매초 기본 주문력의 5%가 복리로 누적된다.
-      apPercentPerSecond: 5,
+      // 500% 전장 궁극기와 곱해져도 표준 파티를 한 번에 삭제하지 않도록 실전 시뮬레이션에서 2%로 제한했다.
+      apPercentPerSecond: 2,
       baseDamageReductionPercent: 50,
       maxDamageReductionPercent: 99,
       maxReductionAtHpPercent: 50,
       // kind가 abyssalPressure인 패시브는 passiveDescription()이 구조화 필드로 다시 문장을
       // 만들므로 이 원문은 데이터 문서화용일 뿐 화면에는 쓰이지 않는다.
-      desc: "매초 기본 주문력의 5%가 복리로 누적되고, 현재 체력에 따라 받는 모든 피해가 50~99% 감소한다.",
+      desc: "매초 기본 주문력의 2%가 복리로 누적되고, 현재 체력에 따라 받는 모든 피해가 50~99% 감소한다.",
     },
     basic: {
       id: "pontos-basic",
@@ -815,11 +818,13 @@ export const RELICS: RelicDef[] = [
       iconAssetId: "skill-icon-magical",
       effectType: "magical",
       damageType: "magical",
-      cost: 100,
+      // 90% HP 단계가 열린 뒤에만 약 300의 게이지를 모아 5초 전장 기절의 최소 간격을 제한한다.
+      cost: 300,
+      chargeStartsAtHpPercent: 90,
       // 해일은 좌표와 무관하게 공격 시작 시점의 모든 생존 적을 확정한다.
       targeting: "battlefieldEnemies",
       statusEffects: [{ kind: "stun", seconds: 5 }],
-      desc: "전장 전체를 휩쓰는 심해의 해일을 방출한다.",
+      desc: "체력이 90% 이하가 되면 충전을 시작해 전장 전체를 휩쓰는 심해의 해일을 방출한다.",
     },
   },
 ];

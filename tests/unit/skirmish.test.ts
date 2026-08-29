@@ -27,6 +27,7 @@ import {
 } from "../../src/core/skirmish";
 import { applyExpeditionRest, type ExpeditionAugmentEffect } from "../../src/core/expeditionAugments";
 import { getRelic } from "../../src/data/relics";
+import { applyLevelGrowth } from "../../src/core/relicProgression";
 import { FEROCITY_RULES } from "../../src/core/ferocity";
 import { ULTIMATE_ENERGY_MAX } from "../../src/core/ultimate";
 import { computeDamage } from "../../src/core/damage";
@@ -327,6 +328,44 @@ describe("단일 난전의 원정 보스 옵션", () => {
     const state = bossBattle(stateHp(getRelic("anky")) * 2);
     const events = run(state, 2);
     expect(state.phase).toBe("defeat"); expect(state.boss?.survivedFor).toBeGreaterThan(0); expect(events).toContainEqual({ kind: "finish", phase: "defeat" });
+  });
+
+  it("표준 5인 파티는 폰토스의 첫 해일을 버티고 고정된 생존·점수 구간에 든다", () => {
+    const partyIds = ["anky", "rex", "spino", "dodo", "mette"];
+    // 플레이어는 통상 1돌파 전 상한인 20레벨, 최종 보스는 20층 boss 보정이 더해진 25레벨이다.
+    const party = partyIds.map((id) => {
+      const relic = getRelic(id);
+      return { ...relic, stats: applyLevelGrowth(relic.stats, 20) };
+    });
+    const basePontos = getRelic("pontos");
+    const pontos = { ...basePontos, stats: applyLevelGrowth(basePontos.stats, 25) };
+    const state = createSkirmish(party, [pontos], ARENA);
+    let firstUltimateAt: number | undefined;
+    let survivorsAfterFirstUltimate = 0;
+    let cumulativeScore = 0;
+    for (let frame = 0; frame < 60 * 40 && state.phase === "fight"; frame += 1) {
+      const events = stepSkirmish(state, 1 / 60, () => 0.99);
+      for (const event of events) {
+        if (event.kind !== "attack") continue;
+        if (event.attackerId.startsWith("player")) cumulativeScore += event.amount;
+        if (event.attackerId === "enemy-0" && event.skill === "ultimate" && firstUltimateAt === undefined) {
+          firstUltimateAt = state.elapsed;
+          survivorsAfterFirstUltimate = aliveFighters(state, "player").length;
+        }
+      }
+    }
+    // 첫 해일은 위협적이지만 즉시 전멸시키지 않고, 전체 전투는 약 30초짜리 최종 관문으로 끝난다.
+    expect(firstUltimateAt).toBeGreaterThanOrEqual(20);
+    expect(firstUltimateAt).toBeLessThanOrEqual(21);
+    expect(survivorsAfterFirstUltimate).toBeGreaterThan(0);
+    expect(state.elapsed).toBeGreaterThanOrEqual(33);
+    expect(state.elapsed).toBeLessThanOrEqual(35);
+    expect(cumulativeScore).toBeGreaterThanOrEqual(1_100);
+    expect(cumulativeScore).toBeLessThanOrEqual(1_400);
+    // 300 비용을 7회 타격으로 채우므로 두 해일 사이의 이론상 최소 간격도 5초 기절보다 충분히 길다.
+    const boss = state.fighters.find((fighter) => fighter.side === "enemy")!;
+    const minimumUltimateGap = attackInterval(boss, state) * Math.ceil(boss.def.ultimate.cost / boss.def.stats.energyGain);
+    expect(minimumUltimateGap).toBeGreaterThanOrEqual(12.5);
   });
 });
 
@@ -1424,17 +1463,19 @@ describe("폰토스 실전 스킬과 심해 압력", () => {
     expect(allies.map((ally) => ally.stunnedFor)).toEqual([5, 2.5, 0]);
   });
 
-  it("는 0초·1초·여러 초에 기본 주문력 5%를 복리 누적하고 프레임 분할과 무관하다", () => {
+  it("는 0초·1초·여러 초에 기본 주문력 2%를 복리 누적하고 프레임 분할과 무관하다", () => {
     const simulate = (frames: readonly number[]) => {
       const { state, pontos } = pontosBattle();
       frames.forEach((dt) => stepSkirmish(state, dt));
       return currentAbilityPower(pontos);
     };
-    const baseAp = getRelic("pontos").stats.ap;
+    const definition = getRelic("pontos");
+    const baseAp = definition.stats.ap;
+    const growth = 1 + (definition.passive.kind === "abyssalPressure" ? definition.passive.apPercentPerSecond ?? 0 : 0) / 100;
     expect(simulate([])).toBe(baseAp);
-    expect(simulate([0.25, 0.25, 0.25, 0.25])).toBeCloseTo(baseAp * 1.05);
-    expect(simulate(Array.from({ length: 20 }, () => 0.25))).toBeCloseTo(baseAp * 1.05 ** 5);
-    expect(simulate(Array.from({ length: 300 }, () => 1 / 60))).toBeCloseTo(baseAp * 1.05 ** 5);
+    expect(simulate([0.25, 0.25, 0.25, 0.25])).toBeCloseTo(baseAp * growth);
+    expect(simulate(Array.from({ length: 20 }, () => 0.25))).toBeCloseTo(baseAp * growth ** 5);
+    expect(simulate(Array.from({ length: 300 }, () => 1 / 60))).toBeCloseTo(baseAp * growth ** 5);
   });
 
   it("는 HP 100%·75%·50% 경계를 50~99%로 선형 보간하고 50% 아래를 상한 처리한다", () => {

@@ -88,12 +88,19 @@ export const TORIKA_ASSET: PuppetAsset = {
   cardZoom: 0.62,
 };
 
-/** 2번 전신 일러스트: 렉시아(티라노사우루스). */
+/**
+ * 2번 전신 일러스트: 렉시아(티라노사우루스).
+ *
+ * content가 1번 토리카(char_001.zip) 값을 그대로 옮겨 온 것이었다. 왼쪽으로 크게 뻗은
+ * 낫 무기가 실제 alpha 경계 밖으로 잘려 있어, 카드·정보창 배율이 무기 없는 좁은 폭
+ * 기준으로 계산되며 실제보다 확대되어 보였다. ZIP 안 WebP의 alpha > 16 실제 경계로
+ * 다시 측정했다.
+ */
 export const LEXIA_ASSET: PuppetAsset = {
   url: `${base}puppets/char_002.zip`,
   imageWidth: 1054,
   imageHeight: 1492,
-  content: { left: 95, top: 69, right: 894, bottom: 1419 },
+  content: { left: 15, top: 43, right: 1038, bottom: 1455 },
 };
 
 /**

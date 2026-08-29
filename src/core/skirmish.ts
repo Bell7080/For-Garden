@@ -1,6 +1,6 @@
 import { amplifyFerocityGain } from "./bond";
 import type { Combatant } from "./combatTypes";
-import { computeDamage, currentAbilityPower, isCriticalHit } from "./damage";
+import { computeDamage, computeDamageContribution, currentAbilityPower, isCriticalHit } from "./damage";
 // 전투 HUD와 피해 공식이 동일한 현재 주문력 계산을 소비하도록 공용 헬퍼를 다시 노출한다.
 export { currentAbilityPower } from "./damage";
 import { drainFerocityFever, FEROCITY_RULES } from "./ferocity";
@@ -148,12 +148,13 @@ export type SkirmishEvent =
       targetId: string;
       skill: "basic" | "ultimate" | "staccato";
       amount: number;
-      /** 경감·보호막·과잉 피해 제한 후 HP에 실제 적용된 점수 피해다. */
-      scoreAmount?: number;
+      /** 방어·저항·속성·대상 경감·무효화 전, 공격자가 실제로 만든 점수 기여값이다. */
+      contributionAmount: number;
       critical: boolean;
       /** 광역 한 번에서 첫 피해 사건만 공격 모션을 재생한다. 생략하면 기존처럼 재생한다. */
       animate?: boolean;
     }
+  | { kind: "damageIgnored"; attackerId: string; targetId: string }
   | { kind: "bleed"; fighterId: string; amount: number; started: boolean }
   | { kind: "heal"; fighterId: string; amount: number; source: "passive" | "ultimate" }
   | { kind: "status"; fighterId: string; status: "stun" | "stagger"; active: true }
@@ -664,9 +665,14 @@ function triggerCrescendoStaccato(state: SkirmishState, target: Fighter, events:
     const raw = computeDamage(mette, defensiveDefinition(target, state), {
       power: trait.damagePercent, damageType: "magical", scalingStat: "atk", isCritical: false, kind: "basic",
     }, true);
-    const amount = receivedDamage(target, raw);
-    const dealt = applyDamage(target, amount, events);
-    events.push({ kind: "attack", attackerId: mette.id, targetId: target.id, skill: "staccato", amount, scoreAmount: dealt, critical: false, animate: false });
+    const contributionAmount = computeDamageContribution(mette, {
+      power: trait.damagePercent, damageType: "magical", scalingStat: "atk", isCritical: false, kind: "basic",
+    });
+    const resolution = resolveReceivedDamage(target, raw);
+    const amount = resolution.applied;
+    applyDamage(target, amount, events);
+    events.push({ kind: "attack", attackerId: mette.id, targetId: target.id, skill: "staccato", amount, contributionAmount, critical: false, animate: false });
+    if (resolution.ignored) events.push({ kind: "damageIgnored", attackerId: mette.id, targetId: target.id });
     if (isFighterAlive(target)) events.push(...applyStagger(target, trait.staggerSeconds, state));
   }
 }
@@ -725,8 +731,16 @@ export function tickRegeneration(fighter: Fighter, dt: number, state?: SkirmishS
   return events;
 }
 
-/** 폰토스의 잃은 체력 경감을 포함해 모든 HP 피해가 마지막으로 통과하는 공용 경계다. */
-export function receivedDamage(target: Fighter, rawAmount: number): number {
+/** 경감 경계의 각 단계를 노출해 적용 피해와 폰토스 전용 무효화를 호출부가 혼동하지 않게 한다. */
+export interface ReceivedDamageResult {
+  raw: number;
+  reduced: number;
+  applied: number;
+  ignored: boolean;
+}
+
+/** 폰토스의 잃은 체력 경감과 최종 피해 무효화를 판별하는 순수 피해 경계다. */
+export function resolveReceivedDamage(target: Fighter, rawAmount: number): ReceivedDamageResult {
   const passive = target.def.passive;
   let reduction = 0;
   if (passive.kind === "abyssalPressure") {
@@ -743,12 +757,22 @@ export function receivedDamage(target: Fighter, rawAmount: number): number {
   if (target.ferocityFever && target.def.ferocityTrait.effectId === "damageReduction") {
     reduction = 100 - (100 - reduction) * (1 - target.def.ferocityTrait.reductionPercent / 100);
   }
-  return Math.max(1, Math.round(rawAmount * (1 - Math.min(100, Math.max(0, reduction)) / 100)));
+  const reduced = Math.max(1, Math.round(rawAmount * (1 - Math.min(100, Math.max(0, reduction)) / 100)));
+  // 일반 전투원의 최소 1 피해는 그대로 두고, 구조화 필드가 있는 심해 압력만 최종 반올림 뒤 무효화한다.
+  const ignored = passive.kind === "abyssalPressure" && reduced <= (passive.ignoreDamageAtOrBelow ?? -1);
+  return { raw: rawAmount, reduced, applied: ignored ? 0 : reduced, ignored };
+}
+
+/** 기존 숫자 소비자를 위한 얇은 호환 경계이며 신규 공격 처리는 판별 가능한 결과를 직접 사용한다. */
+export function receivedDamage(target: Fighter, rawAmount: number): number {
+  return resolveReceivedDamage(target, rawAmount).applied;
 }
 
 /** 확정 피해를 보호막부터 흡수하고 남은 값만 HP에 적용하는 유일한 피해 적용 경계다. */
 function applyDamage(target: Fighter, amount: number, events: SkirmishEvent[]): number {
   const hpBefore = target.hp;
+  // 무효화된 0 피해는 보호막 사건조차 만들지 않아 보호막 잔량과 피격 파생 효과를 보존한다.
+  if (amount <= 0) return 0;
   if (target.shield > 0) {
     const absorbed = Math.min(target.shield, amount);
     target.shield -= absorbed;
@@ -843,8 +867,12 @@ function strike(
     : 0;
   // 공용 피해 공식을 그대로 통과한 뒤 원정 공격력 증강만 최종 배율로 한 번 적용한다.
   const rawAmount = Math.max(1, Math.round((computeDamage(damageAttacker, damageTarget, damageInput, true) + defenseBonus) * attackPowerMultiplier(state.augmentEffects, attacker.def.id)));
+  const contributionAmount = Math.max(0, (computeDamageContribution(damageAttacker, damageInput)
+    + (defenseBonus > 0 ? computeDamageContribution(attacker, { ...damageInput, power: splashTrait.effectId === "splashDamage" ? splashTrait.defenseDamagePercent ?? 0 : 0, scalingStat: "def", damageType: "physical" }) : 0))
+    * attackPowerMultiplier(state.augmentEffects, attacker.def.id));
   // 방어·패시브·상성 뒤의 모든 개별 경감은 공용 HP 피해 경계에서 한 번만 적용한다.
-  const amount = receivedDamage(target, rawAmount);
+  const resolution = resolveReceivedDamage(target, rawAmount);
+  const amount = resolution.applied;
 
   const targetHpBefore = target.hp;
   const dealt = applyDamage(target, amount, events);
@@ -871,7 +899,8 @@ function strike(
     else gainEnergy(attacker);
     gainFerocity(attacker, useUltimate ? FEROCITY_RULES.ultimateGain : FEROCITY_RULES.basicGain, state);
   }
-  gainFerocity(target, FEROCITY_RULES.hitGain, state);
+  // 무효 공격은 실제 피격이 아니므로 피격 야성과 그에 따른 폭주 전환을 만들지 않는다.
+  if (!resolution.ignored) gainFerocity(target, FEROCITY_RULES.hitGain, state);
   if (!useUltimate && attacker.def.passive.kind === "basicHitAttackSpeedStack") {
     // 적중 사건마다 +3을 더하므로 연격 두 타는 각각 누적되며 전투 생성 시 0으로 초기화된다.
     attacker.bonusAttackSpeed += attacker.def.passive.value;
@@ -906,9 +935,10 @@ function strike(
     targetId: target.id,
     skill: useUltimate ? "ultimate" : "basic",
     amount,
-    scoreAmount: dealt,
+    contributionAmount,
     critical,
   });
+  if (resolution.ignored) events.push({ kind: "damageIgnored", attackerId: attacker.id, targetId: target.id });
 
   // 궁극기·스타카토 사건은 제외하고, 실제 일반 공격의 각 적중(연격 포함)만 크레센도를 울린다.
   if (!useUltimate) triggerCrescendoStaccato(state, target, events);
@@ -933,13 +963,18 @@ function strike(
       }, true);
       const secondaryBase = (computeDamage(attacker, defensiveSecondary, damageInput, true) * splashTrait.damagePercent / 100 + secondaryDefenseBonus)
         * attackPowerMultiplier(state.augmentEffects, attacker.def.id);
-      const splashAmount = receivedDamage(secondary, secondaryBase);
+      const splashContribution = Math.max(0, (computeDamageContribution(attacker, damageInput) * splashTrait.damagePercent / 100
+        + (splashTrait.defenseDamagePercent === undefined ? 0 : computeDamageContribution(attacker, { ...damageInput, power: splashTrait.defenseDamagePercent, scalingStat: "def", damageType: "physical" })))
+        * attackPowerMultiplier(state.augmentEffects, attacker.def.id));
+      const splashResolution = resolveReceivedDamage(secondary, secondaryBase);
+      const splashAmount = splashResolution.applied;
       const secondaryHpBefore = secondary.hp;
-      const splashDealt = applyDamage(secondary, splashAmount, events);
+      applyDamage(secondary, splashAmount, events);
       tryTriggerEmergencyRecovery(secondary);
       // 광역 피해도 공격자가 실제로 입힌 HP 피해이므로 같은 흡혈 규칙에 포함한다.
       healFromDamage(secondaryHpBefore - secondary.hp);
-      events.push({ kind: "attack", attackerId: attacker.id, targetId: secondary.id, skill: useUltimate ? "ultimate" : "basic", amount: splashAmount, scoreAmount: splashDealt, critical });
+      events.push({ kind: "attack", attackerId: attacker.id, targetId: secondary.id, skill: useUltimate ? "ultimate" : "basic", amount: splashAmount, contributionAmount: splashContribution, critical });
+      if (splashResolution.ignored) events.push({ kind: "damageIgnored", attackerId: attacker.id, targetId: secondary.id });
       if (isFighterAlive(secondary) && splashTrait.statusEffect) applyCombatStatusEffect(secondary, splashTrait.statusEffect, events, state);
       if (!isFighterAlive(secondary)) {
         clearDefeatedStatuses(secondary);
@@ -953,6 +988,24 @@ function strike(
     events.push({ kind: "death", fighterId: target.id });
     state.log.push(`${target.def.name} 전투 불능`);
   }
+}
+
+/**
+ * 보스 행동 로그 검증 전용 진입점이다. 클라이언트와 서버가 같은 `strike` 피해·상태·증강 공식을
+ * 호출하게 하며, 제출 DTO에는 피해 숫자를 절대 추가하지 않는다. 호출자는 행동 시각과 쿨다운을
+ * 검증한 뒤 사용해야 한다. 이 계약 덕분에 렐릭 스킬 계수 변경은 양쪽 재생에 동시에 반영된다.
+ */
+export function replayLoggedBossAction(state: SkirmishState, relicId: string, kind: "basic" | "ultimate", rng: () => number = NO_CRIT): SkirmishEvent[] {
+  const attacker = state.fighters.find((fighter) => fighter.side === "player" && fighter.def.id === relicId);
+  const target = state.boss && state.fighters.find((fighter) => fighter.id === state.boss!.fighterId);
+  if (!attacker || !target || !isFighterAlive(attacker) || !isFighterAlive(target)) return [];
+  const events: SkirmishEvent[] = [];
+  // 검증기는 로그에 기록된 행동 자체를 재생하므로 자동 게이지 소비 대신 정적 스킬을 직접 실행한다.
+  if (kind === "ultimate") attacker.energy = Math.max(attacker.energy, attacker.def.ultimate.cost);
+  strike(attacker, target, rng, state, events, kind === "ultimate");
+  // 명시적 보스 ID만 대조해 향후 광역 부속물 피해가 폰토스 점수에 섞이지 않게 한다.
+  if (state.boss) state.boss.score += events.reduce((sum, event) => sum + (event.kind === "attack" && event.attackerId === attacker.id && event.targetId === target.id ? event.contributionAmount : 0), 0);
+  return events;
 }
 
 /**
@@ -1004,13 +1057,16 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     const damageInput = { ...skill, isCritical: critical, kind: useUltimate ? "ultimate" as const : "basic" as const };
     const rawAmount = Math.max(1, Math.round(computeDamage(damageAttacker, defensiveDefinition(target, state), damageInput, true)
       * attackPowerMultiplier(state.augmentEffects, attacker.def.id)));
-    const amount = receivedDamage(target, rawAmount);
+    const contributionAmount = Math.max(0, computeDamageContribution(damageAttacker, damageInput)
+      * attackPowerMultiplier(state.augmentEffects, attacker.def.id));
+    const resolution = resolveReceivedDamage(target, rawAmount);
+    const amount = resolution.applied;
     const hpBefore = target.hp;
-    const dealt = applyDamage(target, amount, events);
+    applyDamage(target, amount, events);
     tryTriggerEmergencyRecovery(target);
     // 흡혈은 대상별 실제 HP 감소량만 더해 과잉 피해를 회복량으로 만들지 않는다.
     applyHealing(state, attacker, (hpBefore - target.hp) * damageHealingRate(attacker, skill, attackingInFever) / 100);
-    gainFerocity(target, FEROCITY_RULES.hitGain, state);
+    if (!resolution.ignored) gainFerocity(target, FEROCITY_RULES.hitGain, state);
 
     const dx = target.x - attacker.x;
     const dy = target.y - attacker.y;
@@ -1021,7 +1077,8 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     }
     target.dashX = (dx / gap) * SKIRMISH.knockback * 1.4;
     target.dashY = (dy / gap) * SKIRMISH.knockback * 1.4;
-    events.push({ kind: "attack", attackerId: attacker.id, targetId: target.id, skill: useUltimate ? "ultimate" : "basic", amount, scoreAmount: dealt, critical, animate: index === 0 });
+    events.push({ kind: "attack", attackerId: attacker.id, targetId: target.id, skill: useUltimate ? "ultimate" : "basic", amount, contributionAmount, critical, animate: index === 0 });
+    if (resolution.ignored) events.push({ kind: "damageIgnored", attackerId: attacker.id, targetId: target.id });
 
     // 죽은 대상에는 지속 상태와 상태 UI 시작 사건을 절대 남기지 않는다.
     if (isFighterAlive(target)) {
@@ -1237,10 +1294,10 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
       // 아군 궁극기는 자동으로 나가지 않는다. 화면에서 누를 때만 fireUltimate로 들어온다.
       // 적 자동 궁극기도 수동 입력과 같은 생존·기절·게이지 코어 규칙을 통과한다.
       strike(fighter, target, rng, state, events, fighter.side === "enemy" && canFireUltimate(state, fighter));
-      // 보스에게 경감·보호막 후 실제 적용된 피해만 점수로 옮기며 불사 경계는 HP 0의 사망 경로를 차단한다.
+      // 명시적 보스 ID에 맞은 경감 전 기여만 점수로 옮겨 실제 HP 피해·부속물 피해와 분리한다.
       if (state.boss && target.id === state.boss.fighterId) {
         const scored = [...events].reverse().find((event): event is Extract<SkirmishEvent, { kind: "attack" }> => event.kind === "attack" && event.attackerId === fighter.id && event.targetId === target.id);
-        state.boss.score += scored?.scoreAmount ?? scored?.amount ?? 0;
+        state.boss.score += scored?.contributionAmount ?? 0;
       }
       fighter.attackCooldown = attackInterval(fighter, state);
     }
@@ -1291,9 +1348,9 @@ export function fireUltimate(
   if (!target) return events;
 
   strike(attacker, target, rng, state, events, true, undefined, targetPoint);
-  // 수동 궁극기도 평타와 동일하게 보스에게 실제 적용된 피해만 점수화한다.
+  // 수동 궁극기도 평타와 동일하게 명시적 보스 ID의 경감 전 기여만 점수화한다.
   if (state.boss && target.id === state.boss.fighterId) {
-    state.boss.score += events.reduce((sum, event) => sum + (event.kind === "attack" && event.attackerId === attacker.id && event.targetId === state.boss!.fighterId ? (event.scoreAmount ?? event.amount) : 0), 0);
+    state.boss.score += events.reduce((sum, event) => sum + (event.kind === "attack" && event.attackerId === attacker.id && event.targetId === state.boss!.fighterId ? event.contributionAmount : 0), 0);
   }
   // 방금 크게 휘둘렀으니 다음 평타까지의 간격도 새로 센다.
   attacker.attackCooldown = attackInterval(attacker, state);

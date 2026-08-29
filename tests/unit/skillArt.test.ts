@@ -170,7 +170,7 @@ describe("폰토스 스킬 표시 계약", () => {
   it("의 패시브는 복리 누적률과 체력별 내구력 경계를 모두 명시한다", () => {
     const pontos = RELICS.find((def) => def.id === "pontos")!;
     expect(passiveDescription(pontos.passive)).toBe(
-      "완전히 경과한 매초 기본 [[ap|주문력]]의 2%가 복리로 누적된다. 현재 체력이 최대 체력의 100%에서 50%로 낮아질수록 받는 모든 피해 감소가 50%에서 99%까지 선형으로 증가하며, 그 이하에서는 최대치로 제한된다.",
+      "완전히 경과한 매초 기본 [[ap|주문력]]의 2%가 복리로 누적된다. 현재 체력이 최대 체력의 100%에서 50%로 낮아질수록 받는 모든 피해 감소가 50%에서 99%까지 선형으로 증가하며, 그 이하에서는 최대치로 제한된다. 최종 받는 피해가 10 이하인 공격은 무효화한다.",
     );
   });
 });
@@ -198,12 +198,12 @@ describe("스피나 스킬 표시 계약", () => {
     expect(ferocityTraitDescription(spino.ferocityTrait)).toContain("3초 동안 [[stealth|은신]]한다");
     expect(spino.passive).toMatchObject({ name: "전투의 환희", kind: "basicHitAttackSpeedStack", value: 3 });
     expect(passiveDescription(spino.passive)).toContain("[[attack-speed|공격 속도]]가 3 증가");
-    expect(spino.basic).toMatchObject({ name: "악어턱 물어뜯기", power: 80, combo: { chancePercent: 40, hitCount: 2, missingHpHealingPercentPerHit: 10 } });
+    expect(spino.basic).toMatchObject({ name: "악어턱 물어뜯기", power: 80, combo: { chancePercent: 40, hitCount: 2, missingHpHealingPercentPerHit: 5 } });
     // 주 피해량은 상단 [[damage-value]] 라벨이 이미 실제 수치로 보여 주므로 본문에서 %를
     // 다시 말하지 않는다 — 토리카 일반 공격과 같은 "적 한 명에게 물리 피해를 준다" 형태다.
     expect(skillDescription(spino.basic)).toBe(
       "적 한 명에게 [[physical-damage|물리 피해]]를 준다. 40% 확률로 [[combo|연격]]하여 총 2회 적중하고, "
-      + "매 적중 뒤 [[missing-hp|잃은 체력]]의 10%를 회복한다.",
+      + "매 적중 뒤 [[missing-hp|잃은 체력]]의 5%를 회복한다.",
     );
     expect(spino.ultimate).toMatchObject({ name: "범람의 포식자", power: 200, attackSpeedPower: 150, cost: 300, statusEffects: [{ kind: "stun", seconds: 3 }] });
     expect(skillDescription(spino.ultimate)).toContain("현재 [[attack-speed|공격 속도]]의 150%");

@@ -48,8 +48,8 @@ export const RELICS: RelicDef[] = [
       id: "rex-passive",
       name: "전투는 메이드의 소양이기에.",
       kind: "battleMaidMastery",
-      iconAssetId: "skill-icon-physical",
-      effectType: "fixed",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
       value: 25,
       attackSpeedPercent: 25,
       attackPowerPercent: 25,
@@ -222,10 +222,10 @@ export const RELICS: RelicDef[] = [
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
-      combo: { chancePercent: 40, hitCount: 2, missingHpHealingPercentPerHit: 10 },
+      combo: { chancePercent: 40, hitCount: 2, missingHpHealingPercentPerHit: 5 },
       // combo가 있는 BasicAttack은 skillDescription()이 구조화 필드로 다시 문장을 만들므로
       // 이 원문은 데이터 문서화용일 뿐 화면에는 쓰이지 않는다.
-      desc: "적 한 명에게 물리 피해를 준다. 40% 확률로 두 번 적중한다. 연격 적중마다 잃은 체력의 10%를 회복한다.",
+      desc: "적 한 명에게 물리 피해를 준다. 40% 확률로 두 번 적중한다. 연격 적중마다 잃은 체력의 5%를 회복한다.",
     } satisfies BasicAttack,
     ultimate: {
       id: "spino-ult",
@@ -796,9 +796,11 @@ export const RELICS: RelicDef[] = [
       baseDamageReductionPercent: 50,
       maxDamageReductionPercent: 99,
       maxReductionAtHpPercent: 50,
+      // 체력 기반 경감과 반올림까지 끝난 최종 받는 피해가 10 이하인 공격만 완전히 무효화한다.
+      ignoreDamageAtOrBelow: 10,
       // kind가 abyssalPressure인 패시브는 passiveDescription()이 구조화 필드로 다시 문장을
       // 만들므로 이 원문은 데이터 문서화용일 뿐 화면에는 쓰이지 않는다.
-      desc: "매초 기본 주문력의 2%가 복리로 누적되고, 현재 체력에 따라 받는 모든 피해가 50~99% 감소한다.",
+      desc: "매초 기본 주문력의 2%가 복리로 누적되고, 현재 체력에 따라 받는 모든 피해가 50~99% 감소한다. 최종 받는 피해가 10 이하인 공격은 무효화한다.",
     },
     basic: {
       id: "pontos-basic",

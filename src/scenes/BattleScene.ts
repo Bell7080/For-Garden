@@ -688,6 +688,10 @@ export class BattleScene extends Phaser.Scene {
       // 보호막 사건은 현재 HUD가 Fighter.shield 잔량을 읽어 갱신하며, 별도 피해 모션을 재생하지 않는다.
       return undefined;
     }
+    if (event.kind === "damageIgnored") {
+      // 무효 공격은 별도 사건으로 소비해 0 숫자와 피격 모션을 반복하지 않는다. 향후 작은 BLOCK 표식의 훅이다.
+      return undefined;
+    }
 
     const attacker = this.views.get(event.attackerId);
     const target = this.views.get(event.targetId);
@@ -698,7 +702,7 @@ export class BattleScene extends Phaser.Scene {
     }
     // 한 광역 기술의 후속 피해 사건은 피격 표현만 만들고 시전자 모션은 첫 사건에서 한 번만 튼다.
     const playback = attacker && event.animate !== false ? playMotion(this, attacker.creature, "attack", motionSpeedMultiplier) : undefined;
-    if (target) {
+    if (target && event.amount > 0) {
       // 붉은 섬광이 피격을 알리고, 동작은 공격을 끊지 않는 선에서 얕게만 얹힌다.
       flashHit(this, target.creature, this.bodyTint(target));
       // 기절 유지 자세는 일반 피격보다 우선한다. 섬광과 피해 숫자는 그대로 보여 타격감은 보존한다.

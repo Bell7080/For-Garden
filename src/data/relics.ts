@@ -48,8 +48,8 @@ export const RELICS: RelicDef[] = [
       id: "rex-passive",
       name: "전투는 메이드의 소양이기에.",
       kind: "battleMaidMastery",
-      iconAssetId: "skill-icon-physical",
-      effectType: "fixed",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
       value: 25,
       attackSpeedPercent: 25,
       attackPowerPercent: 25,
@@ -222,8 +222,8 @@ export const RELICS: RelicDef[] = [
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
-      combo: { chancePercent: 40, hitCount: 2, missingHpHealingPercentPerHit: 10 },
-      desc: "공격력의 80% 물리 피해를 주며, 40% 확률로 두 번 적중한다. 연격 적중마다 잃은 체력의 10%를 회복한다.",
+      combo: { chancePercent: 40, hitCount: 2, missingHpHealingPercentPerHit: 5 },
+      desc: "[[physical|공격력의 80% 물리 피해]]를 주며, 40% 확률로 두 번 적중한다. 연격 적중마다 [[healing|잃은 체력의 5%를 회복]]한다.",
     } satisfies BasicAttack,
     ultimate: {
       id: "spino-ult",
@@ -238,7 +238,7 @@ export const RELICS: RelicDef[] = [
       // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
       targeting: "single",
       statusEffects: [{ kind: "stun", seconds: 3 }],
-      desc: "적 한 명에게 공격력의 200%와 현재 공격 속도의 150%에 해당하는 물리 피해를 주고 3초간 기절시킨다.",
+      desc: "적 한 명에게 [[physical|공격력의 200%와 현재 공격 속도의 150%에 해당하는 물리 피해]]를 주고 [[stun|3초간 기절]]시킨다.",
     },
   },
   // 4번 Puppet 묶음은 전신과 SD가 모두 완성된 루카의 전용 에셋을 사용한다.

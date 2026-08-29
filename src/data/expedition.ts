@@ -81,14 +81,11 @@ export const EXPEDITION_BOSS_BALANCE = {
   maximumDurationMs: 180_000,
   maximumActions: 2_000,
   maximumAcceptedScore: 100_000_000,
-  /** 입력에는 동작만 담기며 피해량은 이 서버 소유 배율로 다시 계산한다. */
-  actionPower: { basic: 1, ultimate: 3 } as const,
-  actionCooldownMs: { basic: 900, ultimate: 8_000 } as const,
-  /** 초당 광역 피해와 마지막 처형 피해를 단계화해 전투가 반드시 아군 전멸로 끝나게 한다. */
+  /** 일반 단계의 공격은 폰토스 정적 스킬만 담당하고, 이 표는 제한 시간 처형만 담당한다. */
   phases: [
-    { startsAtMs: 0, attackPerSecond: 18, label: "관측" },
-    { startsAtMs: 30_000, attackPerSecond: 45, label: "과부하" },
-    { startsAtMs: 60_000, attackPerSecond: 110, label: "붕괴" },
+    { startsAtMs: 0, attackPerSecond: 0, label: "관측" },
+    { startsAtMs: 30_000, attackPerSecond: 0, label: "과부하" },
+    { startsAtMs: 60_000, attackPerSecond: 0, label: "붕괴" },
     { startsAtMs: 90_000, attackPerSecond: 1_000_000_000, label: "종말" },
   ],
 } as const;

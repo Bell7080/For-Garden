@@ -55,7 +55,8 @@ describe("스피나 전투 계약", () => {
     const events = stepSkirmish(state, 1 / 60, () => rolls.shift() ?? 0.99);
     expect(events.filter((event) => event.kind === "attack")).toHaveLength(2);
     expect(spino.bonusAttackSpeed).toBe(6);
-    expect(spino.hp).toBeCloseTo(spino.maxHp * (1 - 0.5 * 0.9 * 0.9));
+    // 연격마다 그 시점의 잃은 체력 5%를 회복하므로 두 번 독립적으로 복리 적용된다.
+    expect(spino.hp).toBeCloseTo(spino.maxHp * (1 - 0.5 * 0.95 * 0.95));
   });
 
   it("은 연격 첫 타로 대상이 죽으면 후속타와 두 번째 누적을 취소한다", () => {
@@ -373,8 +374,8 @@ describe("단일 난전의 원정 보스 옵션", () => {
     expect(firstUltimateAt).toBeGreaterThanOrEqual(20);
     expect(firstUltimateAt).toBeLessThanOrEqual(21);
     expect(survivorsAfterFirstUltimate).toBeGreaterThan(0);
-    expect(state.elapsed).toBeGreaterThanOrEqual(33);
-    expect(state.elapsed).toBeLessThanOrEqual(35);
+    expect(state.elapsed).toBeGreaterThanOrEqual(28);
+    expect(state.elapsed).toBeLessThanOrEqual(30);
     expect(cumulativeScore).toBeGreaterThanOrEqual(1_100);
     expect(cumulativeScore).toBeLessThanOrEqual(1_400);
     // 300 비용을 7회 타격으로 채우므로 두 해일 사이의 이론상 최소 간격도 5초 기절보다 충분히 길다.

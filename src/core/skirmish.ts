@@ -956,6 +956,23 @@ function strike(
 }
 
 /**
+ * 보스 행동 로그 검증 전용 진입점이다. 클라이언트와 서버가 같은 `strike` 피해·상태·증강 공식을
+ * 호출하게 하며, 제출 DTO에는 피해 숫자를 절대 추가하지 않는다. 호출자는 행동 시각과 쿨다운을
+ * 검증한 뒤 사용해야 한다. 이 계약 덕분에 렐릭 스킬 계수 변경은 양쪽 재생에 동시에 반영된다.
+ */
+export function replayLoggedBossAction(state: SkirmishState, relicId: string, kind: "basic" | "ultimate", rng: () => number = NO_CRIT): SkirmishEvent[] {
+  const attacker = state.fighters.find((fighter) => fighter.side === "player" && fighter.def.id === relicId);
+  const target = state.boss && state.fighters.find((fighter) => fighter.id === state.boss!.fighterId);
+  if (!attacker || !target || !isFighterAlive(attacker) || !isFighterAlive(target)) return [];
+  const events: SkirmishEvent[] = [];
+  // 검증기는 로그에 기록된 행동 자체를 재생하므로 자동 게이지 소비 대신 정적 스킬을 직접 실행한다.
+  if (kind === "ultimate") attacker.energy = Math.max(attacker.energy, attacker.def.ultimate.cost);
+  strike(attacker, target, rng, state, events, kind === "ultimate");
+  if (state.boss) state.boss.score += events.reduce((sum, event) => sum + (event.kind === "attack" && event.attackerId === attacker.id && event.targetId === target.id ? (event.scoreAmount ?? event.amount) : 0), 0);
+  return events;
+}
+
+/**
  * 원형 광역 기본 공격 또는 궁극기를 한 번 실행한다.
  *
  * "주위"는 시전자 중심 px 반경이고, battlefieldEnemies만 좌표와 무관한 전장 전체다. 공격 시작 전에 대상을

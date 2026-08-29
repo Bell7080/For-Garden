@@ -152,6 +152,8 @@ export type CombatStatusEffect =
 export type Ultimate = Skill & {
   /** 사용 시 소비하는 궁극기 게이지. 저장 상한과 독립된 스킬별 값이다. */
   cost: number;
+  /** 정의한 경우 현재 HP가 이 비율 이하가 된 뒤에만 기본 공격으로 게이지를 얻는다. */
+  chargeStartsAtHpPercent?: number;
   /** 공격력 피해와 더해지는 현재 공격 속도 배율(%). 없으면 공속 복합 계수를 사용하지 않는다. */
   attackSpeedPower?: number;
   /** 혼합 궁극기가 범위 안 생존 아군에게 적용할 주문력 회복 배율(%). */

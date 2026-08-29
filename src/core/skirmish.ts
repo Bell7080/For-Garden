@@ -579,6 +579,9 @@ function resolveTarget(state: SkirmishState, fighter: Fighter): Fighter | undefi
 }
 
 function gainEnergy(fighter: Fighter): void {
+  const chargeThreshold = fighter.def.ultimate.chargeStartsAtHpPercent;
+  // 보스의 체력 단계형 궁극기는 전투 시작부터 미리 충전되지 않도록 적중 순간의 현재 HP를 확인한다.
+  if (chargeThreshold !== undefined && fighter.hp / fighter.maxHp * 100 > chargeThreshold) return;
   fighter.energy = Math.min(ULTIMATE_ENERGY_MAX, fighter.energy + fighter.def.stats.energyGain);
 }
 

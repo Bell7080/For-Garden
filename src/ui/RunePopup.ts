@@ -231,8 +231,14 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
       const renameHit = scene.add.rectangle(pencilX, pencilY, 74, 74, 0xffffff, 0).setInteractive({ useHandCursor: true });
       renameHit.on("pointerup", () => requestRuneName(scene, rune!.customName ?? "", async (value) => {
         if (pending) return; pending = true;
-        try { const response = await api.renameRune({ runeInstanceId: rune!.instanceId, name: value }); rune = response.rune; options.onChanged?.(rune); render("이름을 저장했습니다."); }
-        finally { pending = false; }
+        try {
+          const response = await api.renameRune({ runeInstanceId: rune!.instanceId, name: value });
+          rune = response.rune; options.onChanged?.(rune);
+          // render()가 세공 버튼을 새로 만들므로, 그 버튼의 allowed 계산이 이 요청을 아직
+          // 진행 중인 것으로 보지 않도록 다시 그리기 전에 먼저 풀어 둔다.
+          pending = false;
+          render("이름을 저장했습니다.");
+        } catch (error) { pending = false; throw error; }
       }));
       content.add(renameHit);
 
@@ -335,9 +341,12 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
           // 세공이 끝나 각인만 남으면 손을 뗀다 — 각인은 되돌릴 수 없는 한 번의 선택이라
           // 무엇에 새길지는 반드시 사람이 다시 고른다.
           selected = rune.enhancementComplete ? undefined : nextCraftTarget(rune, selected);
+          // render()가 새 버튼을 즉시 만들므로, 그 버튼의 allowed 계산이 아직 진행 중인 요청을
+          // 보지 않도록 다시 그리기 전에 먼저 풀어 둔다 — 그러지 않으면 이어지는 세공마다
+          // 방금 만든 버튼이 꺼진 채로 나와 곧바로 다시 누를 수 없었다.
+          pending = false;
           render(completed ? "각인이 완료되었습니다." : ("succeeded" in response && response.succeeded ? "세공 성공" : "세공 실패"));
-        } catch (error) { render(error instanceof Error ? error.message : "요청을 완료하지 못했습니다."); }
-        finally { pending = false; }
+        } catch (error) { pending = false; render(error instanceof Error ? error.message : "요청을 완료하지 못했습니다."); }
       }}).setEnabled(allowed);
       content.add(action);
     };

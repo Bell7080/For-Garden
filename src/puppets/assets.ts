@@ -86,12 +86,17 @@ export const LEXIA_ASSET: PuppetAsset = {
   content: { left: 95, top: 69, right: 894, bottom: 1419 },
 };
 
-/** 3번 전신 일러스트: 스피나(스피노사우루스). */
+/**
+ * 3번 전신 일러스트: 스피나(스피노사우루스).
+ *
+ * content가 잘리지 않은 원본 캔버스 그대로였던 탓에 카드에서 실루엣이 실제보다 작고 왼쪽으로
+ * 치우쳐 보였다. ZIP 안 WebP의 alpha > 16 실제 경계로 다시 측정했다.
+ */
 export const SEIRA_ASSET: PuppetAsset = {
   url: `${base}puppets/char_003.zip`,
   imageWidth: 1085,
   imageHeight: 1450,
-  content: { left: 0, top: 0, right: 1085, bottom: 1450 },
+  content: { left: 273, top: 82, right: 950, bottom: 1450 },
 };
 
 /** 4번 전신 일러스트: 루카(벨로키랍토르). 넓은 후드와 꼬리까지 포함한 전용 원화다. */

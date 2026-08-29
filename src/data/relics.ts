@@ -796,7 +796,9 @@ export const RELICS: RelicDef[] = [
     basic: {
       id: "pontos-basic",
       name: "심해 충격파",
-      power: 115,
+      // 마법 피해의 암묵 기본값에 기대지 않고 주문력 100% 계수를 운영 데이터에 고정한다.
+      power: 100,
+      scalingStat: "ap",
       iconAssetId: "skill-icon-magical",
       effectType: "magical",
       damageType: "magical",
@@ -807,13 +809,16 @@ export const RELICS: RelicDef[] = [
     ultimate: {
       id: "pontos-ult",
       name: "리바이어던 해일",
-      power: 210,
+      // 전장 전체의 각 생존 대상에게 주문력 500% 피해와 공용 기절 계약을 독립 적용한다.
+      power: 500,
+      scalingStat: "ap",
       iconAssetId: "skill-icon-magical",
       effectType: "magical",
       damageType: "magical",
       cost: 100,
       // 해일은 좌표와 무관하게 공격 시작 시점의 모든 생존 적을 확정한다.
       targeting: "battlefieldEnemies",
+      statusEffects: [{ kind: "stun", seconds: 5 }],
       desc: "전장 전체를 휩쓰는 심해의 해일을 방출한다.",
     },
   },

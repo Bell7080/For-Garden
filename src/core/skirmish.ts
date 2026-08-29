@@ -407,6 +407,13 @@ function applyCombatStatusEffect(fighter: Fighter, effect: CombatStatusEffect, e
   if (effect.kind === "bleed") refreshBleed(fighter, effect.seconds, effect.maxHpPercentPerSecond, events);
 }
 
+/** 한 스킬이 선언한 상태를 생존한 한 적중 대상에게 공용 저항·UI 사건 경로로 적용한다. */
+function applySkillStatuses(target: Fighter, skill: Skill, events: SkirmishEvent[], state: SkirmishState): void {
+  // 피해로 쓰러진 대상에는 지속 상태나 UI 뱃지를 새로 만들지 않는다.
+  if (!isFighterAlive(target)) return;
+  for (const effect of skill.statusEffects ?? []) applyCombatStatusEffect(target, effect, events, state);
+}
+
 /** 모든 출혈 진입점이 공유하는 단일 슬롯 갱신 규칙이다. 약한 재적용은 강도와 틱 시계를 덮지 않는다. */
 function refreshBleed(target: Fighter, seconds: number, percent: number, events: SkirmishEvent[]): void {
   target.bleed = {
@@ -902,9 +909,7 @@ function strike(
   if (!useUltimate) triggerCrescendoStaccato(state, target, events);
 
   // 개별 기본 공격·궁극기가 선언한 상태도 피해 처리 뒤 공용 저항/재적용 규칙을 그대로 사용한다.
-  if (isFighterAlive(target)) {
-    for (const effect of skill.statusEffects ?? []) applyCombatStatusEffect(target, effect, events, state);
-  }
+  applySkillStatuses(target, skill, events, state);
 
   // 광역 피해는 주 대상 타격의 부가 결과이며 에너지·야성·연속 공격을 추가 획득하지 않는다.
   if (attackingInFever && splashTrait.effectId === "splashDamage") {
@@ -1015,7 +1020,8 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
 
     // 죽은 대상에는 지속 상태와 상태 UI 시작 사건을 절대 남기지 않는다.
     if (isFighterAlive(target)) {
-      for (const effect of skill.statusEffects ?? []) applyCombatStatusEffect(target, effect, events, state);
+      // 광역 공격도 적중 대상을 하나씩 넘겨 기절 저항·행동 중단·UI 사건을 단일 공격과 공유한다.
+      applySkillStatuses(target, skill, events, state);
     } else {
       clearDefeatedStatuses(target);
       events.push({ kind: "death", fighterId: target.id });

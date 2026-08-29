@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  accumulateDamageContribution, addContribution, contributionSnapshot, contributionValue, createBattleContributions,
+  accumulateDamageContribution, addContribution, contributionSnapshot, contributionValue, createBattleContributionResult, createBattleContributions,
 } from "../../src/core/battleContribution";
 
 /** 서버 재생 입력과 같은 작은 피해 사건을 만들어 정책별 기대값만 드러낸다. */
@@ -69,5 +69,21 @@ describe("전투 기여도 순수 누적 정책", () => {
     expect(rows.map(({ ratio }) => ratio)).toEqual([0.5, 0.5]);
     rows[0].attack.attackPower = 999;
     expect(contributionValue(values, "a")?.attack.attackPower).toBe(0);
+  });
+
+  it("종료 결과는 이후 누적표와 이미 얻은 행을 변경해도 세 분류가 변하지 않는다", () => {
+    const values = createBattleContributions(["player-0"]);
+    addContribution(values, "player-0", "attack", 1200, "attackPower");
+    addContribution(values, "player-0", "healing", 300);
+    const result = createBattleContributionResult(values, [
+      { id: "player-0", formationOrder: 0, name: "아주 긴 이름의 원정 대원", portraitId: "relic-0" },
+    ], "player");
+
+    // 종료 뒤 사망 연출이나 정산 콜백이 원본 상태를 건드리는 상황을 모사한다.
+    addContribution(values, "player-0", "attack", 9999, "abilityPower");
+    values["player-0"].healing = 0;
+    expect(result.side).toBe("player");
+    expect(result.rows.attack[0].total).toBe(1200);
+    expect(result.rows.healing[0].total).toBe(300);
   });
 });

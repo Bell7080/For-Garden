@@ -57,7 +57,8 @@ import { currencyRecordToRewardItems, openRewardPopup } from "../ui/RewardPopup"
 import { BATTLE_STATUS_LAYOUT, statusBadgeOffsets } from "../ui/battleStatusLayout";
 import { BattleProfile } from "../ui/BattleProfile";
 import { BattleContributionPanel } from "../ui/BattleContributionPanel";
-import type { ContributionCategory } from "../core/battleContribution";
+import { createBattleContributionResult, withConfirmedAttackTotal, type BattleContributionResult, type ContributionCategory } from "../core/battleContribution";
+import { BattleContributionPopup } from "../ui/BattleContributionPopup";
 
 /**
  * 여섯이 돌아다닐 수 있는 범위.
@@ -238,6 +239,8 @@ export class BattleScene extends Phaser.Scene {
   private contributionCategory: ContributionCategory = "attack";
   /** 빠른 타격마다 순위가 흔들리지 않도록 표시 스냅샷은 350ms 간격으로만 교체한다. */
   private contributionRefreshAt = 0;
+  /** finishBattle 첫 진입에서만 만든 JSON 스냅샷으로 정산 재시도와 연출 완료가 개별 값을 바꾸지 못한다. */
+  private contributionResult?: BattleContributionResult;
 
   constructor() {
     super("battle");
@@ -301,6 +304,7 @@ export class BattleScene extends Phaser.Scene {
     this.currentUltimateFighterId = null;
     this.contributionCategory = "attack";
     this.contributionRefreshAt = 0;
+    this.contributionResult = undefined;
     // 적도 같은 정보창을 쓴다. 문맥만 "enemy"라 급여·돌파·유대·룬이 빠지고 현재 전투 줄이 붙는다.
     this.info = new CharacterInfoManager(this, 1001, "enemy");
 
@@ -345,12 +349,14 @@ export class BattleScene extends Phaser.Scene {
       openRewardPopup(this, new PopupLayer(this, 2200), { title: "원정 완료 전리품", items: currencyRecordToRewardItems(settlement.granted), onConfirm: () => this.showBossResult(score, settlement) });
     } catch {
       // 같은 버튼은 저장된 요청 ID로 전체 체인을 재시도하므로 성공한 서버 제출도 중복 누적되지 않는다.
-      new Button(this, BASE_WIDTH / 2, 1050, { width: 460, height: 100, label: "정산 다시 시도", onClick: () => this.scene.restart(input) }).setDepth(201);
+      new Button(this, BASE_WIDTH / 2, 1050, { width: 460, height: 100, label: "정산 다시 시도", onClick: () => void this.submitAndSettleBoss(input, actions) }).setDepth(201);
     }
   }
 
   /** 서버 기록과 정산 재화를 한 장의 최종 영수증으로 보여 준다. */
   private showBossResult(score: SubmitExpeditionBossScoreResponse, settlement: SettleExpeditionRunResponse): void {
+    // 서버 재검증 총점은 머리글에만 더하고 확정 당시의 개별 행동 분배는 다시 시뮬레이션하지 않는다.
+    if (this.contributionResult) this.contributionResult = withConfirmedAttackTotal(this.contributionResult, score.score);
     this.add.rectangle(BASE_WIDTH / 2, 960, BASE_WIDTH - 90, 850, COLOR.void, 0.94).setDepth(200);
     this.add.text(BASE_WIDTH / 2, 620, "원정 관측 완료", textStyle({ role: "display", size: 60, color: COLOR.accentText })).setOrigin(0.5).setDepth(201);
     const rank = score.rankBefore === null ? `신규 → ${score.rankAfter}위` : `${score.rankBefore}위 → ${score.rankAfter}위`;
@@ -360,6 +366,13 @@ export class BattleScene extends Phaser.Scene {
     const popups = new PopupLayer(this, 2200);
     new Button(this, BASE_WIDTH / 2 - 235, 1260, { width: 400, height: 105, label: "주간 기록 확인", onClick: () => new ExpeditionRankingPopup(this, popups).open() }).setDepth(201);
     new Button(this, BASE_WIDTH / 2 + 235, 1260, { width: 400, height: 105, label: "로비로", onClick: () => this.scene.start("lobby") }).setDepth(201);
+    // 주요 이동 버튼을 압축하지 않고 둘째 줄의 작은 조회 버튼으로 결과판 위 팝업을 연다.
+    new Button(this, BASE_WIDTH / 2, 1395, { width: 310, height: 78, label: "기여도", fontSize: 27, onClick: () => this.openContributionPopup(popups) }).setDepth(201);
+  }
+
+  /** 같은 PopupLayer 위에 읽기 전용 판을 쌓아 닫은 뒤 기존 결과 조작이 그대로 남게 한다. */
+  private openContributionPopup(popups = new PopupLayer(this, 2200)): void {
+    if (this.contributionResult) new BattleContributionPopup(this, popups).open(this.contributionResult);
   }
 
   /**
@@ -1042,6 +1055,11 @@ export class BattleScene extends Phaser.Scene {
   private finishBattle(phase: "victory" | "defeat"): void {
     if (this.finished) return;
     this.finished = true;
+    // 비동기 정산보다 먼저 아군 세 분류를 깊은 복사해 이후 state 사망 연출·HP 변경과 분리한다.
+    const fighters = this.state.fighters.filter(({ side }) => side === "player").map((fighter, formationOrder) => ({
+      id: fighter.id, formationOrder, name: fighter.def.name, portraitId: fighter.def.id,
+    }));
+    this.contributionResult = createBattleContributionResult(this.state.contributions, fighters, "player");
     // finish 사건만 결과 정산을 소유한다. 사망 사건은 앞서 한 번 재생됐으며 정리 과정에서 재호출하지 않는다.
     this.cancelUltimatePresentation();
     // 전투가 끝나면 궁극기 버튼도 함께 꺼진다.
@@ -1066,6 +1084,8 @@ export class BattleScene extends Phaser.Scene {
       // API 완료 뒤에만 이동하므로 사용자가 지도를 본 시점에는 보상과 최초 클리어가 저장되어 있다.
       void gameApi.completeStage(stage.id).then(() => this.scene.start("stageMap")).catch(() => { confirming = false; });
     } }).setDepth(101);
+    // 일반 스테이지도 보스와 같은 공용 종료 팝업을 사용하며 기존 저장 버튼은 그대로 유지한다.
+    new Button(this, BASE_WIDTH / 2, 1175, { width: 300, height: 76, label: "기여도", fontSize: 27, onClick: () => this.openContributionPopup() }).setDepth(101);
   }
 
   /** 결과 확인 탭을 직렬화하고 HP 저장, 증강 또는 정산이 끝난 뒤에만 다음 화면을 연다. */
@@ -1091,6 +1111,8 @@ export class BattleScene extends Phaser.Scene {
         openRewardPopup(this, new PopupLayer(this, 2200), { title: "교전 획득 전리품", items: currencyRecordToRewardItems(nodeResult.rewards), onConfirm: () => this.scene.start("expedition") });
       }).catch(() => { saving = false; });
     } }).setDepth(101);
+    // 일반 원정 결과에서도 정산 전후와 무관하게 finish 시점의 같은 스냅샷을 확인한다.
+    new Button(this, BASE_WIDTH / 2, 1160, { width: 300, height: 76, label: "기여도", fontSize: 27, onClick: () => this.openContributionPopup() }).setDepth(101);
   }
 
   /** 종료 경로마다 큐·트윈·입력 잠금을 같은 방식으로 정리한다. */

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { FakeServer } from "../../src/api/FakeServer";
 import { GameApiError } from "../../src/api/contracts";
-import { InventoryManager, inventoryGridPosition, inventoryScrollMetrics } from "../../src/managers/InventoryManager";
+import { INVENTORY_LAYOUT, InventoryManager, inventoryGridPosition, inventoryScrollMetrics } from "../../src/managers/InventoryManager";
 import { SaveManager } from "../../src/state/SaveManager";
 import { createDefaultSession } from "../../src/state/session";
 import { INVENTORY_TAB_LAYOUT, inventoryCategoryTabPosition } from "../../src/ui/inventoryTabs";
@@ -16,14 +16,30 @@ describe("inventory", () => {
     const loaded = manager.load()!; expect(loaded.itemInventory).toEqual(state.itemInventory); expect(loaded.itemInventory).not.toBe(state.itemInventory);
   });
 
-  it("빈 목록과 홀수·짝수 카드의 대칭 열 및 스크롤 범위를 유지한다", () => {
-    // 열 중심은 팝업 원점의 좌우에 같은 거리로 있고 홀수 마지막 카드는 왼쪽 열 규칙을 따른다.
-    expect(inventoryGridPosition(0)).toEqual({ x: -175, y: 0 });
-    expect(inventoryGridPosition(1)).toEqual({ x: 175, y: 0 });
-    expect(inventoryGridPosition(2)).toEqual({ x: -175, y: 210 });
-    expect(inventoryScrollMetrics(0)).toEqual({ contentHeight: 0, minY: 0 });
-    expect(inventoryScrollMetrics(5)).toEqual({ contentHeight: 630, minY: 0 });
-    expect(inventoryScrollMetrics(12)).toEqual({ contentHeight: 1260, minY: -230 });
+  it.each([
+    { label: "빈 카테고리", count: 0, rows: 0 },
+    { label: "한 개", count: 1, rows: 1 },
+    { label: "홀수 개", count: 5, rows: 3 },
+    { label: "여러 행", count: 12, rows: 6 },
+  ])("$label 카드가 공용 두 열 계약과 viewport bounds를 지킨다", ({ count, rows }) => {
+    const metrics = inventoryScrollMetrics(count, INVENTORY_LAYOUT);
+    expect(metrics.contentHeight).toBe(rows * INVENTORY_LAYOUT.cellHeight);
+    expect(metrics.minY).toBe(Math.min(0, INVENTORY_LAYOUT.viewportHeight - metrics.contentHeight));
+    // 모든 열의 카드 좌우 끝이 안전 여백으로 확장한 viewport를 넘지 않는지 직접 검증한다.
+    for (let index = 0; index < count; index += 1) {
+      const position = inventoryGridPosition(index, INVENTORY_LAYOUT);
+      expect(position.x - INVENTORY_LAYOUT.cardWidth / 2).toBeGreaterThanOrEqual(-INVENTORY_LAYOUT.viewportWidth / 2);
+      expect(position.x + INVENTORY_LAYOUT.cardWidth / 2).toBeLessThanOrEqual(INVENTORY_LAYOUT.viewportWidth / 2);
+      const visibleY = position.y + metrics.minY;
+      expect(visibleY + INVENTORY_LAYOUT.cardHeight / 2).toBeLessThanOrEqual(INVENTORY_LAYOUT.viewportHeight - INVENTORY_LAYOUT.cellHeight / 2 + INVENTORY_LAYOUT.cardHeight / 2);
+    }
+  });
+
+  it("카드 사이에 24px 간격을 두고 두 열을 본문 폭에 맞춘다", () => {
+    const left = inventoryGridPosition(0); const right = inventoryGridPosition(1);
+    expect(left).toEqual({ x: -207, y: 0 }); expect(right).toEqual({ x: 207, y: 0 });
+    expect(right.x - left.x - INVENTORY_LAYOUT.cardWidth).toBe(INVENTORY_LAYOUT.columnGap);
+    expect(INVENTORY_LAYOUT.cardWidth * 2 + INVENTORY_LAYOUT.columnGap).toBe(INVENTORY_LAYOUT.viewportWidth);
   });
 
   it("네 카테고리 탭의 폭과 간격을 대칭 배치표로 고정한다", () => {
@@ -48,7 +64,7 @@ describe("inventory", () => {
     const state = createDefaultSession(); const inventory = new InventoryManager(state);
     expect(inventory.list("currency").find(({ id }) => id === "gold")?.quantity).toBe(state.wallet.gold);
     expect(inventory.list("consumable")).toHaveLength(1); expect(inventory.list("material")).toHaveLength(0);
-    expect(inventoryScrollMetrics(4).minY).toBe(0); expect(inventoryScrollMetrics(20)).toEqual({ contentHeight: 2100, minY: -1070 });
+    expect(inventoryScrollMetrics(4).minY).toBe(0); expect(inventoryScrollMetrics(20)).toEqual({ contentHeight: 2100, minY: -1025.1 });
   });
 
   it("룬 표시 모델이 인스턴스의 등급·부위·이름을 그대로 보존한다", () => {

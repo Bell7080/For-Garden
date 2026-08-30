@@ -4,15 +4,30 @@ import type { RuneInstance } from "../core/runes";
 import { findItem, ITEMS, type ItemCategory, type ItemDefinition, type WalletItemKey } from "../data/items";
 import type { Session } from "../state/session";
 
-/** 두 열, 210px 행, 1030px 보기 영역의 실제 항목 기반 스크롤 범위다. */
-export function inventoryScrollMetrics(itemCount: number): { contentHeight: number; minY: number } {
-  const contentHeight = Math.ceil(itemCount / 2) * 210;
-  return { contentHeight, minY: Math.min(0, 1030 - contentHeight) };
+/** 가방 UI와 순수 배치 테스트가 공유하는 두 열 카드 계약이다. */
+export const INVENTORY_LAYOUT = {
+  columns: 2,
+  cardWidth: 390,
+  cardHeight: 180,
+  columnGap: 24,
+  cellWidth: 414,
+  cellHeight: 210,
+  viewportWidth: 804,
+  viewportHeight: 1074.9,
+} as const;
+
+export type InventoryGridLayout = Pick<typeof INVENTORY_LAYOUT, "columns" | "cellWidth" | "cellHeight" | "viewportHeight">;
+
+/** 전달받은 열·행·보기 높이만으로 실제 항목 기반 스크롤 범위를 계산한다. */
+export function inventoryScrollMetrics(itemCount: number, layout: InventoryGridLayout = INVENTORY_LAYOUT): { contentHeight: number; minY: number } {
+  const contentHeight = Math.ceil(itemCount / layout.columns) * layout.cellHeight;
+  return { contentHeight, minY: Math.min(0, layout.viewportHeight - contentHeight) };
 }
 
-/** 홀수 마지막 행도 왼쪽으로 치우치지 않도록 팝업 원점 양쪽의 열 중심을 고정한다. */
-export function inventoryGridPosition(index: number): { x: number; y: number } {
-  return { x: index % 2 === 0 ? -175 : 175, y: Math.floor(index / 2) * 210 };
+/** 열 전체를 원점에 맞춰 카드 중심과 행 위치를 레이아웃 값에서 산출한다. */
+export function inventoryGridPosition(index: number, layout: InventoryGridLayout = INVENTORY_LAYOUT): { x: number; y: number } {
+  const column = index % layout.columns;
+  return { x: (column - (layout.columns - 1) / 2) * layout.cellWidth, y: Math.floor(index / layout.columns) * layout.cellHeight };
 }
 
 /** UI가 룬·지갑·스택의 저장 위치를 몰라도 그릴 수 있는 읽기 전용 한 칸이다. */

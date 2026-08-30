@@ -324,7 +324,8 @@ export class FakeServer implements GameApi {
   async getInventory(): Promise<InventoryResponse> {
     await this.delay();
     const manager = new InventoryManager(this.state);
-    return { items: (["rune", "currency", "consumable", "material"] as const).flatMap((category) => manager.list(category).map((item) => ({ id: item.id, definitionId: item.definition.id, category: item.category, quantity: item.quantity, definition: item.definition, ...(item.kind === "rune" ? { rune: this.cloneRune(item.rune) } : {}) }))) };
+    // DTO는 상태 식별자만 운반하고 표시 이름·아이콘은 클라이언트 manager가 로컬 카탈로그로 정규화한다.
+    return { items: (["rune", "currency", "consumable", "material"] as const).flatMap((category) => manager.list(category).map((item) => ({ id: item.id, definitionId: item.definition.id, category: item.category, quantity: item.quantity, ...(item.kind === "rune" ? { rune: this.cloneRune(item.rune) } : {}) }))) };
   }
 
   /** 보유량과 상한을 복제 상태에서 검증한 뒤 차감·효과·저장을 한 번에 확정한다. */

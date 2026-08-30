@@ -8,11 +8,11 @@ import type { EventDefinition } from "../data/events/types";
 import type { RuneInstance, RuneStatKey } from "../core/runes";
 import type { ExcavationCurrency, IdleExcavationState } from "../core/idleExcavation";
 import type { AdReward } from "../data/adRewards";
-import type { ItemCategory, ItemDefinition, ItemUseEffect } from "../data/items";
+import type { ItemCategory, ItemUseEffect } from "../data/items";
 import type { ExpeditionBossAction } from "../core/expeditionBoss";
 
-/** 서로 다른 저장 소유자를 서버가 한 목록으로 합성한 인벤토리 조회 행이다. */
-export interface InventoryItemDto { id: string; definitionId: string; category: ItemCategory; quantity: number; /** API 경계를 건너도 카드가 manager를 재생성하지 않도록 한 안전한 정적 표시 메타데이터다. */ definition: ItemDefinition; rune?: RuneInstance; }
+/** 정적 표시 메타데이터를 중복 전송하지 않고 서버 보유량과 인스턴스만 전달하는 인벤토리 조회 행이다. */
+export interface InventoryItemDto { id: string; definitionId: string; category: ItemCategory; quantity: number; rune?: RuneInstance; }
 /** 지갑은 조회 순간 표시 행으로만 합성된다. */
 export interface InventoryResponse { items: InventoryItemDto[]; }
 

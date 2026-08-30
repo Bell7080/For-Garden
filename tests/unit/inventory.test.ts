@@ -88,4 +88,24 @@ describe("inventory", () => {
     expect(displayed.kind).toBe("rune");
     if (displayed.kind === "rune") expect(displayed.rune).toMatchObject({ rarity: "epic", part: 2, baseName: "황혼의 파편", customName: "저녁별" });
   });
+
+  it("서버 조회 한 번으로 룬·지갑·스택을 함께 반영한 뒤 list만 표시 기준으로 사용한다", async () => {
+    const serverState = createDefaultSession(); serverState.wallet.gold = 4321; serverState.itemInventory = [{ itemId: "rune-dust", quantity: 17 }];
+    const clientState = createDefaultSession(); clientState.wallet.gold = 1; clientState.itemInventory = [{ itemId: "stamina-tonic", quantity: 9 }];
+    const manager = new InventoryManager(clientState);
+    // 실제 API DTO 경계를 통과시켜 세 저장 영역이 같은 응답 스냅샷으로 교체되는지 고정한다.
+    await manager.refresh(new FakeServer(serverState, { latencyMs: 0 }));
+    expect(manager.list("currency").find(({ id }) => id === "gold")?.quantity).toBe(4321);
+    expect(manager.list("consumable")).toEqual([]);
+    expect(manager.list("material")[0]).toMatchObject({ id: "rune-dust", quantity: 17 });
+  });
+
+  it("손상된 전체 스냅샷은 일부 Session 영역도 먼저 바꾸지 않는다", async () => {
+    const state = createDefaultSession(); const before = structuredClone(state); const manager = new InventoryManager(state);
+    // 필수 지갑 행이 빠진 DTO는 원자 적용 전에 거부되어 기존 룬·지갑·스택을 모두 보존해야 한다.
+    const api = new FakeServer(createDefaultSession(), { latencyMs: 0 });
+    api.getInventory = async () => ({ items: (await new FakeServer(createDefaultSession(), { latencyMs: 0 }).getInventory()).items.filter(({ id }) => id !== "gold") });
+    await expect(manager.refresh(api)).rejects.toThrow("INVALID_INVENTORY_RESPONSE");
+    expect(state).toEqual(before);
+  });
 });

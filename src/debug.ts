@@ -75,6 +75,8 @@ export interface DebugState {
   shopSection?: "premium";
   /** 가방 탭 면 입력 뒤 실제로 다시 그려진 카테고리를 Canvas E2E가 확인한다. */
   inventoryCategory?: "rune" | "currency" | "consumable" | "material";
+  /** 가방 카드가 실제 선택한 이미지 texture key다. WebGL 캔버스 안의 선택을 E2E가 검증한다. */
+  inventoryTextureKeys?: string[];
   /** 도감 스크롤의 표시 범위와 현재 제한값. Canvas E2E가 경계·입력 분리를 검증하는 용도다. */
   relicScroll?: { y: number; minY: number; maxY: number; enabled: boolean; viewportTop: number; viewportBottom: number };
   /** 노드 편성판의 안전 영역·꼬리 방향·적 입력 중심만 노출하는 모바일 시각 회귀 계약이다. */
@@ -106,6 +108,11 @@ export function setDebugReady(ready: boolean): void {
 /** 비동기 가방 조회와 탭 재구성이 끝난 시점의 사용자 표시 상태만 공개한다. */
 export function setDebugInventoryCategory(category: DebugState["inventoryCategory"]): void {
   ensure().inventoryCategory = category;
+}
+
+/** 현재 탭을 다시 그릴 때 실제 이미지로 사용한 키만 복사해 이전 렌더의 잔여값을 막는다. */
+export function setDebugInventoryTextureKeys(keys: readonly string[] | undefined): void {
+  ensure().inventoryTextureKeys = keys ? [...keys] : undefined;
 }
 
 export function setDebugBattle(battle: DebugBattle | undefined): void {

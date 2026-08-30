@@ -1,8 +1,8 @@
 import Phaser from "phaser";
-import type { GameApi, InventoryItemDto } from "../api/contracts";
+import type { GameApi } from "../api/contracts";
 import { ITEM_ICON_FALLBACK, type ItemCategory, type ItemIcon } from "../data/items";
 import { setDebugInventoryCategory, setDebugInventoryTextureKeys } from "../debug";
-import { INVENTORY_LAYOUT, InventoryManager, inventoryGridPosition, inventoryScrollMetrics } from "../managers/InventoryManager";
+import { INVENTORY_LAYOUT, InventoryManager, inventoryGridPosition, inventoryScrollMetrics, type InventoryDisplayItem } from "../managers/InventoryManager";
 import { session } from "../state/session";
 import { drawGlyph } from "./glyphs";
 import { chipPoints, drawHairline, drawInnerVignette, drawLayer, drawShapeOutline } from "./holo";
@@ -40,7 +40,6 @@ export class InventoryPopup {
   private body?: Phaser.GameObjects.Container;
   private view?: Phaser.GameObjects.Container;
   private category: ItemCategory = "rune";
-  private items: InventoryItemDto[] = [];
   private maskShape?: Phaser.GameObjects.Rectangle;
   private geometryMask?: Phaser.Display.Masks.GeometryMask;
   /** 중첩 상세 팝업 유무와 무관하게 가방 자체를 닫는 전용 콜백이다. */
@@ -59,7 +58,8 @@ export class InventoryPopup {
       // 공용 팝업 판과 제목은 보존하고 교체 가능한 내용 전용 컨테이너만 다시 그린다.
       const view = this.scene.add.container(0, 0); this.view = view; body.add(view);
       // 닫기는 LobbyScene의 화면 우하단 공용 버튼 하나가 맡아 팝업에 붙은 중복 버튼을 만들지 않는다.
-      void this.api.getInventory().then(({ items }) => { this.items = items; this.render(view); });
+      // Manager가 조회·검증·Session 반영을 끝낸 뒤에만 단일 list 경로를 렌더링한다.
+      void this.inventory.refresh(this.api).then(() => this.render(view));
     });
   }
 
@@ -75,7 +75,7 @@ export class InventoryPopup {
     // 매 렌더마다 비워 실제로 현재 탭에 놓인 이미지 키만 E2E에 남긴다.
     const textureKeys: string[] = [];
     setDebugInventoryTextureKeys(textureKeys);
-    const visible = this.items.filter(({ category }) => category === this.category);
+    const visible = this.inventory.list(this.category);
     // 첫 카드가 큰 작업판 제목의 세로 영역을 침범하지 않도록 기존 목록을 50px 내린다.
     // 첫 카드의 윗변을 마스크 윗변에 맞춰 아이콘/액자가 절반 잘리지 않게 한다.
     const contentStartY = VIEWPORT.y - VIEWPORT.height / 2 + INVENTORY_LAYOUT.cellHeight / 2;
@@ -137,13 +137,13 @@ export class InventoryPopup {
   }
 
   /** 획득 팝업처럼 액자 우하단에 보유량을 겹쳐 한 그림과 한 수로 읽히게 한다. */
-  private addCard(content: Phaser.GameObjects.Container, item: InventoryItemDto, index: number, textureKeys: string[]): void {
+  private addCard(content: Phaser.GameObjects.Container, item: InventoryDisplayItem, index: number, textureKeys: string[]): void {
     const { x, y } = inventoryGridPosition(index, INVENTORY_LAYOUT);
     const { cardWidth, cardHeight } = INVENTORY_LAYOUT;
     const { frameX, textX, textWidth, quantityX } = inventoryCardLayout(cardWidth);
     const shape = chipPoints(cardWidth, cardHeight, { bevel: { topLeft: 34, topRight: 0, bottomRight: 34, bottomLeft: 0 } });
     const card = this.scene.add.container(x, y); card.add(drawLayer(this.scene, 0, 0, shape, { fill: 0x151a21, alpha: 0.96, edge: COLOR.accent, edgeAlpha: 0.35 }));
-    if (item.rune) {
+    if (item.kind === "rune") {
       // 룬은 일반 정의 아이콘보다 먼저 처리해 세공 화면과 동일한 등급 액자·비네팅·조각을 쓴다.
       card.add(addRuneFrame(this.scene, frameX, -12, 102, item.rune.rarity, item.rune.part));
       textureKeys.push(runeTexture(item.rune.rarity, item.rune.part));
@@ -153,7 +153,7 @@ export class InventoryPopup {
       // 액자 안 콘텐츠만 아래 판별 함수에 맡겨 불투명 면·사방 outline·내부 vignette는 항상 유지한다.
       card.add(this.renderDefinitionIcon(item.definition.icon, frameX, -12, textureKeys));
     }
-    const accent = item.rune ? RUNE_ACCENT[item.rune.rarity] : undefined;
+    const accent = item.kind === "rune" ? RUNE_ACCENT[item.rune.rarity] : undefined;
     card.add(this.scene.add.text(textX, -48, this.label(item), textStyle({ role: "display", size: 22, color: accent ? `#${accent.toString(16).padStart(6, "0")}` : COLOR.ink, wrap: textWidth })).setOrigin(0, 0));
     card.add(this.scene.add.text(textX, -10, this.description(item), textStyle({ role: "body", size: 17, color: COLOR.inkDim, wrap: textWidth })).setOrigin(0, 0));
     card.add(this.scene.add.text(quantityX, 58, String(item.quantity), textStyle({ role: "emphasis", size: 24 })).setOrigin(1, 1).setStroke("#05070a", 5));
@@ -176,18 +176,18 @@ export class InventoryPopup {
     return drawGlyph(this.scene, icon.kind === "glyph" ? icon.key : ITEM_ICON_FALLBACK, x, y, 48, COLOR.accent);
   }
 
-  private label(item: InventoryItemDto): string { return item.rune?.customName ?? item.rune?.baseName ?? item.definition.name; }
-  private description(item: InventoryItemDto): string {
-    if (!item.rune) return item.definition.description;
+  private label(item: InventoryDisplayItem): string { return item.kind === "rune" ? item.rune.customName ?? item.rune.baseName : item.definition.name; }
+  private description(item: InventoryDisplayItem): string {
+    if (item.kind !== "rune") return item.definition.description;
     // 카드에는 선택에 필요한 등급·부위·장착 상태만 두고 정적 개발 설명은 반복하지 않는다.
     const equipped = equippedRelicName(item.rune.instanceId);
     return `${RUNE_RARITY_LABELS[item.rune.rarity]} · ${RUNE_PART_LABELS[item.rune.part]}${equipped ? `\n장착 · ${equipped}` : ""}`;
   }
 
   /** 룬은 기존 정보창, 소비품은 확인 후 서버 결과, 재화·재료는 읽기 전용 상세로 연결한다. */
-  private select(item: InventoryItemDto, anchor: { x: number; y: number }): void {
-    if (item.rune) { openRuneInfoPopup(this.scene, this.popups, { runeInstanceId: item.rune.instanceId, anchor, api: this.api }); return; }
+  private select(item: InventoryDisplayItem, anchor: { x: number; y: number }): void {
+    if (item.kind === "rune") { openRuneInfoPopup(this.scene, this.popups, { runeInstanceId: item.rune.instanceId, anchor, api: this.api }); return; }
     if (item.category !== "consumable") { this.popups.open({ width: 440, height: 280, title: this.label(item), anchor, dim: true }, (body) => body.add(this.scene.add.text(0, 0, `${this.description(item)}\n\n보유 ${item.quantity}`, textStyle({ role: "body", size: 22, align: "center", wrap: 340 })).setOrigin(0.5))); return; }
-    this.popups.confirm({ title: this.label(item), message: "아이템을 1개 사용하시겠습니까?", confirmLabel: "사용" }, () => { void this.api.useConsumable({ itemId: item.definitionId, quantity: 1 }).then((result) => { this.inventory.applyConsumableResult(result.wallet, result.items); this.items = result.items; this.onWalletChanged?.(); this.popups.open({ width: 440, height: 250, title: "사용 완료", dim: true }, (body) => body.add(this.scene.add.text(0, 0, `스테미나 +${result.appliedAmount}`, textStyle({ role: "emphasis", size: 26, color: COLOR.accentText })).setOrigin(0.5))); if (this.view) this.render(this.view); }); });
+    this.popups.confirm({ title: this.label(item), message: "아이템을 1개 사용하시겠습니까?", confirmLabel: "사용" }, () => { void this.inventory.useConsumable(this.api, item.id).then((result) => { this.onWalletChanged?.(); this.popups.open({ width: 440, height: 250, title: "사용 완료", dim: true }, (body) => body.add(this.scene.add.text(0, 0, `스테미나 +${result.appliedAmount}`, textStyle({ role: "emphasis", size: 26, color: COLOR.accentText })).setOrigin(0.5))); if (this.view) this.render(this.view); }); });
   }
 }

@@ -18,7 +18,8 @@ function placeholderEntries(bestScore: number): ExpeditionLeaderboardEntry[] {
   const baseline = bestScore > 0 ? bestScore : 1_400;
   const multipliers = [1.42, 0.86, 0.51];
   return PREVIEW_FRIENDS.map((friend, index) => ({
-    rank: 0, playerId: friend.id, displayName: friend.name,
+    // 순위 미리보기 역시 소셜 공개 헤더의 표시 이름만 사용하고 내부 계정 키는 노출하지 않는다.
+    rank: 0, playerId: friend.id, displayName: friend.displayName,
     score: Math.max(1, Math.round(baseline * multipliers[index % multipliers.length])),
     achievedAt: "", isMe: false,
   }));

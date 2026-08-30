@@ -95,6 +95,38 @@ export interface PublicRelicProfileDto {
   skillIds: string[];
 }
 
+/**
+ * 자기 프로필과 친구 프로필이 함께 사용하는 공개 헤더 화이트리스트다.
+ * 인증/계정 키, 재화, 보유 목록, 편성은 표현할 필드 자체를 두지 않아 소셜 응답에서 유출되지 않게 한다.
+ */
+export interface PublicProfileHeaderDto {
+  displayName: string;
+  level: number;
+  /** 공개 아바타 리소스 키이며 계정 식별자나 원본 업로드 경로로 사용하지 않는다. */
+  avatarAssetKey?: string;
+  /** 서버가 획득과 장착을 검증한 공개 수식어만 포함한다. */
+  equippedModifiers: PublicProfileModifierDto[];
+  /** 애착 렐릭 한 명만 공개하며 보유 렐릭이나 편성은 포함하지 않는다. */
+  favoriteRelic: PublicRelicProfileDto;
+  /** 사용자가 공개할 수 있는 경쟁 기록만 선택적으로 전달하며 비어 있는 기록은 생략한다. */
+  competitiveStats: PublicCompetitiveStatsDto;
+}
+
+/** 공개 헤더에서 서버 검증을 마친 수식어의 표시 정보만 전달한다. */
+export interface PublicProfileModifierDto {
+  id: string;
+  displayName: string;
+  rarity: "common" | "rare" | "epic" | "legendary";
+  colorRole: "neutral" | "research" | "expedition" | "prestige";
+}
+
+/** 공개 동의를 받은 기록만 존재할 수 있으며 미기록/비공개 항목은 키 자체를 생략한다. */
+export interface PublicCompetitiveStatsDto {
+  highestStage?: { stageId: string; displayValue: string };
+  arenaTier?: { tierId: string; displayName: string };
+  expeditionScore?: number;
+}
+
 /** 네트워크로 직렬화할 수 있는 플레이어 진행 정보의 최소 규격이다. */
 export interface PlayerStateDto {
   /** 서버가 확정한 계정 연구 레벨·현재 경험치·다음 레벨 요구량의 공개 스냅샷이다. */

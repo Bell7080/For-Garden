@@ -1,10 +1,12 @@
 import Phaser from "phaser";
 import type { GameApi, InventoryItemDto } from "../api/contracts";
 import type { ItemCategory } from "../data/items";
+import { setDebugInventoryCategory } from "../debug";
 import { InventoryManager, inventoryGridPosition, inventoryScrollMetrics } from "../managers/InventoryManager";
 import { session } from "../state/session";
 import { drawGlyph } from "./glyphs";
-import { chipPoints, drawInnerVignette, drawLayer, drawShapeOutline } from "./holo";
+import { chipPoints, drawHairline, drawInnerVignette, drawLayer, drawShapeOutline } from "./holo";
+import { INVENTORY_TAB_LAYOUT, inventoryCategoryTabPosition } from "./inventoryTabs";
 import { POPUP_TITLE_SIZE, PopupLayer } from "./PopupLayer";
 import { openRuneInfoPopup } from "./RunePopup";
 import { COLOR, textStyle } from "./theme";
@@ -34,7 +36,7 @@ export class InventoryPopup {
   open(): void {
     if (this.body) return;
     const width = 900; const height = 1510;
-    this.body = this.popups.open({ width, height, title: "가방", titleSize: POPUP_TITLE_SIZE.workboard, dim: true, closeOnBackdrop: false, hideCloseButton: true, onClose: () => { this.destroyMask(); this.body = undefined; this.view = undefined; this.closePopup = undefined; this.onClose?.(); } }, (body, close) => {
+    this.body = this.popups.open({ width, height, title: "가방", titleSize: POPUP_TITLE_SIZE.workboard, dim: true, closeOnBackdrop: false, hideCloseButton: true, onClose: () => { this.destroyMask(); setDebugInventoryCategory(undefined); this.body = undefined; this.view = undefined; this.closePopup = undefined; this.onClose?.(); } }, (body, close) => {
       // 외부 돌아가기 버튼은 stack 최상단이 아니라 이 가방 판을 정확히 가리켜야 한다.
       this.closePopup = close;
       // 공용 팝업 판과 제목은 보존하고 교체 가능한 내용 전용 컨테이너만 다시 그린다.
@@ -51,6 +53,8 @@ export class InventoryPopup {
     // 탭 전환 전에 display-list 밖의 GeometryMask까지 명시적으로 해제한다.
     this.destroyMask();
     body.removeAll(true);
+    // Canvas DOM만 보는 E2E에는 비동기 조회 완료와 실제 선택 탭을 최소 디버그 상태로 알린다.
+    setDebugInventoryCategory(this.category);
     const visible = this.items.filter(({ category }) => category === this.category);
     // 첫 카드가 큰 작업판 제목의 세로 영역을 침범하지 않도록 기존 목록을 50px 내린다.
     // 첫 카드의 윗변을 마스크 윗변에 맞춰 아이콘/액자가 절반 잘리지 않게 한다.
@@ -66,12 +70,37 @@ export class InventoryPopup {
     hit.on("dragstart", (pointer: Phaser.Input.Pointer) => { dragY = pointer.y; });
     hit.on("drag", (pointer: Phaser.Input.Pointer) => { move(pointer.y - dragY); dragY = pointer.y; });
     hit.on("wheel", (_pointer: Phaser.Input.Pointer, _dx: number, dy: number) => move(-dy * 0.65)); body.add(hit);
-    CATEGORIES.forEach((tab, index) => {
-      const selected = tab.id === this.category;
-      // 탭 줄은 돌아가기 버튼의 입력면과 겹치지 않도록 하단 안전 여백 위에 둔다.
-      const label = this.scene.add.text(-285 + index * 190, 590, tab.label, textStyle({ role: "emphasis", size: 27, color: selected ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5).setScale(selected ? 1.14 : 1).setInteractive({ useHandCursor: true });
-      label.on("pointerup", () => { this.category = tab.id; this.render(body); }); body.add(label);
-    });
+    // 생성과 입력 피드백은 한 헬퍼를 통과시켜 네 탭의 면·클릭 범위가 갈라지지 않게 한다.
+    CATEGORIES.forEach((tab, index) => this.addCategoryTab(body, tab, index));
+  }
+
+  /** 서류철 라벨처럼 돌출된 단색 면과 면 전체 입력을 가진 카테고리 탭을 추가한다. */
+  private addCategoryTab(body: Phaser.GameObjects.Container, tab: (typeof CATEGORIES)[number], index: number): void {
+    const selected = tab.id === this.category;
+    const { x, y } = inventoryCategoryTabPosition(index);
+    const { width, height, selectedScale, pressedScale } = INVENTORY_TAB_LAYOUT;
+    const tabContainer = this.scene.add.container(x, y);
+    // 서로 다른 깎임으로 파일 라벨의 방향성을 만들고, 사방선 대신 그림자와 윗변만 남긴다.
+    const face = chipPoints(width, height, { bevel: { topLeft: 18, topRight: 0, bottomRight: 14, bottomLeft: 4 } });
+    tabContainer.add(drawLayer(this.scene, 0, 0, face, {
+      fill: selected ? 0x3b3326 : 0x2b3037,
+      alpha: selected ? 0.98 : 0.92,
+      edge: selected ? COLOR.accent : COLOR.panelEdge,
+      edgeAlpha: selected ? 0.9 : 0.7,
+    }));
+    tabContainer.add(this.scene.add.text(0, 1, tab.label, textStyle({ role: "emphasis", size: 27, color: selected ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5));
+    if (index < CATEGORIES.length - 1) {
+      // 면 사이의 짧은 세로 머리선만으로 인접 탭의 경계를 보조한다.
+      tabContainer.add(drawHairline(this.scene, width / 2 + INVENTORY_TAB_LAYOUT.gap / 2, 0, height * 0.52, { color: COLOR.panelEdge, alpha: 0.55 }).setRotation(Math.PI / 2));
+    }
+    const restingScale = selected ? selectedScale : 1;
+    tabContainer.setScale(restingScale);
+    // 글자가 아닌 전체 투명 면이 입력을 받아 가장자리에서도 같은 클릭과 눌림 피드백을 준다.
+    const hit = this.scene.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    hit.on("pointerdown", () => tabContainer.setScale(selected ? 1.14 : pressedScale));
+    hit.on("pointerout", () => tabContainer.setScale(restingScale));
+    hit.on("pointerup", () => { tabContainer.setScale(restingScale); this.category = tab.id; this.render(body); });
+    tabContainer.add(hit); body.add(tabContainer);
   }
 
   /** GeometryMask와 원본 도형은 컨테이너 자식이 아니므로 둘 다 소유자가 직접 파괴한다. */

@@ -15,10 +15,15 @@ import { ensureTexture, IndexedPuppetCreature } from "./IndexedPuppetCreature";
 import {
   DODI_PORTRAIT_METADATA,
   DODI_SD_METADATA,
+  LEXIA_PORTRAIT_METADATA,
+  LUKA_PORTRAIT_METADATA,
   METTE_PORTRAIT_METADATA,
   METTE_SD_METADATA,
   PONTOS_PORTRAIT_METADATA,
   PONTOS_SD_METADATA,
+  SEIRA_PORTRAIT_METADATA,
+  TAPEJARA_PORTRAIT_METADATA,
+  TORIKA_PORTRAIT_METADATA,
 } from "./assetMetadata";
 
 /** 기존 호출부가 렌더러 구현을 몰라도 되도록 인게임 Puppet 타입을 한 곳에서 공개한다. */
@@ -75,68 +80,32 @@ export interface PuppetAsset {
    * 시작해 스크린샷으로 확인하며 늘린다.
    */
   cardHeadEscape?: { left?: number; right?: number };
-  /**
-   * 카드에서만 그림을 살짝 내리는 보정(카드 픽셀, +는 아래). 0이 기준이다.
-   *
-   * 모든 카드가 공유하는 상단 여백(`HEAD_TIP_MARGIN_RATIO`, anchors.ts)만으로는 뭉툭한
-   * 장식(토리카의 뿔)이 그리드 허용 범위를 여전히 넘어설 때만 쓴다. `portraitOffsetY`와
-   * 달리 전신 정보창에는 영향을 주지 않는 카드 전용 값이다.
-   */
-  cardHeadDropY?: number;
 }
 
 const base = import.meta.env.BASE_URL;
 
-/** 1번 전신 일러스트: 토리카(트리케라톱스). 다른 둘보다 등신이 낮아 카드에서는 확대를 줄여 얼굴 크기를 맞춘다. */
+/** 1번 전신 일러스트: 토리카(트리케라톱스). */
 export const TORIKA_ASSET: PuppetAsset = {
   url: `${base}puppets/char_001.zip`,
-  imageWidth: 1054,
-  imageHeight: 1492,
-  content: { left: 95, top: 69, right: 894, bottom: 1419 },
-  cardZoom: 0.82,
-  // 뿔 끝이 뭉툭해 공통 상단 여백만으로는 그리드 카드 위로 살짝 넘쳐 보인다.
-  cardHeadDropY: 14,
+  ...TORIKA_PORTRAIT_METADATA,
 };
 
-/**
- * 2번 전신 일러스트: 렉시아(티라노사우루스).
- *
- * content가 1번 토리카(char_001.zip) 값을 그대로 옮겨 온 것이었다. 왼쪽으로 크게 뻗은
- * 낫 무기가 실제 alpha 경계 밖으로 잘려 있어, 카드·정보창 배율이 무기 없는 좁은 폭
- * 기준으로 계산되며 실제보다 확대되어 보였다. ZIP 안 WebP의 alpha > 16 실제 경계로
- * 다시 측정했다.
- */
+/** 2번 전신 일러스트: 렉시아(티라노사우루스). */
 export const LEXIA_ASSET: PuppetAsset = {
   url: `${base}puppets/char_002.zip`,
-  imageWidth: 1054,
-  imageHeight: 1492,
-  content: { left: 15, top: 43, right: 1038, bottom: 1455 },
+  ...LEXIA_PORTRAIT_METADATA,
 };
 
-/**
- * 3번 전신 일러스트: 스피나(스피노사우루스).
- *
- * content가 잘리지 않은 원본 캔버스 그대로였던 탓에 카드에서 실루엣이 실제보다 작고 왼쪽으로
- * 치우쳐 보였다. ZIP 안 WebP의 alpha > 16 실제 경계로 다시 측정했다.
- */
+/** 3번 전신 일러스트: 스피나(스피노사우루스). */
 export const SEIRA_ASSET: PuppetAsset = {
   url: `${base}puppets/char_003.zip`,
-  imageWidth: 1085,
-  imageHeight: 1450,
-  content: { left: 273, top: 82, right: 950, bottom: 1450 },
-  // 뒷머리 뾰족 장식이 오른쪽으로 쏠려 카드에서 대칭 홈의 오른쪽 대각선 모서리에 잘렸다.
-  cardHeadEscape: { right: 0.12 },
+  ...SEIRA_PORTRAIT_METADATA,
 };
 
-/** 4번 전신 일러스트: 루카(벨로키랍토르). 넓은 후드와 꼬리까지 포함한 전용 원화다. */
+/** 4번 전신 일러스트: 루카(벨로키랍토르). */
 export const LUKA_ASSET: PuppetAsset = {
   url: `${base}puppets/char_004.zip`,
-  imageWidth: 1728,
-  imageHeight: 2446,
-  // 원화의 후드·손·발·꼬리를 모두 포함한 가시 영역으로 발 높이와 화면 확대를 맞춘다.
-  content: { left: 52, top: 44, right: 1683, bottom: 2404 },
-  // 코어 관절이 다른 원화보다 아래에 박혀 있어 정보창에서 혼자 내려앉아 보인다.
-  portraitOffsetY: -34,
+  ...LUKA_PORTRAIT_METADATA,
 };
 
 /** 5번 전신 일러스트: 도디(도도새). */
@@ -159,9 +128,7 @@ export const METTE_ASSET: PuppetAsset = {
  */
 export const TAPEJARA_ASSET: PuppetAsset = {
   url: `${base}puppets/char_007.zip`,
-  imageWidth: 1024,
-  imageHeight: 1536,
-  content: { left: 23, top: 37, right: 1007, bottom: 1503 },
+  ...TAPEJARA_PORTRAIT_METADATA,
 };
 
 /**

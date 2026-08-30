@@ -8,7 +8,7 @@ import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
 import { addStarMark, RARITY_TONE } from "./rarityMark";
 import { COLOR, textStyle } from "./theme";
-import { portraitCardHeadWindow, portraitCardNotchWidth, portraitCardOverhang } from "./portraitGrid";
+import { portraitCardHeadWindow, portraitCardOverhang } from "./portraitGrid";
 import { addBookmarkMark } from "./bookmarkMark";
 
 /** 카드 한 장의 조립 옵션. 크기와 라벨만 주면 나머지 연출은 프리팹이 맞춘다. */
@@ -75,10 +75,11 @@ const BACKDROP = { lift: 0.42, alpha: 0.72, lockedAlpha: 0.3 } as const;
 const SHADE_RATIO = 0.46;
 
 /**
- * 머리가 빠져나오는 칩 윗변 홈의 폭 비율.
+ * 머리가 빠져나오는 홈이 **칩 윗변에서** 차지하는 폭 비율.
  *
  * 좁으면 뿔·모자·땋은 머리가 구멍의 좌우 변에 잘려 머리가 네모난 덩어리로 보인다. 어깨는
- * 여전히 칩 안에 갇혀야 하므로 칩 폭을 다 열지는 않는다.
+ * 여전히 칩 안에 갇혀야 하므로 칩 폭을 다 열지는 않는다. 홈은 여기서 위로 갈수록 벌어지므로
+ * 정수리 근처의 실제 폭은 이 값이 아니라 `portraitCardHeadWindow`의 `topWidth`가 정한다.
  */
 const CHIP_NOTCH_WIDTH = 0.8;
 
@@ -145,12 +146,16 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     };
     const bodyCenter = 0;
     this.chipShape = chipPoints(chipWidth, this.bodyHeight, { bevel });
-    // 대부분의 원화는 대칭 홈으로 충분하다. 모자·깃털·후드가 한쪽으로 쏠려 그 쪽만 대각선
-    // 모서리 안쪽에서 잘리는 캐릭터만 asset에 `cardHeadEscape`를 실측해 채운다.
-    const headEscape = portraitAssetFor(options.portraitAssetId).cardHeadEscape;
-    const headWindow = headEscape ? portraitCardHeadWindow(chipWidth, bevel.topLeft, bevel.topRight, CHIP_NOTCH_WIDTH, headEscape) : undefined;
-    const notchWidth = headWindow?.width ?? portraitCardNotchWidth(chipWidth, bevel.topLeft, bevel.topRight, CHIP_NOTCH_WIDTH);
-    const notchOffsetX = headWindow?.offsetX ?? 0;
+    // 홈은 위로 벌어지는 사다리꼴이다 — 잘린 모서리를 피해야 하는 것은 홈이 칩 윗변과 만나는
+    // 한 줄뿐이라, 그보다 위는 넓게 열어 정수리 옆이 세로로 베이지 않게 한다. 그래도 모자란
+    // 원화만 asset의 `cardHeadEscape`로 한쪽을 더 연다.
+    const headWindow = portraitCardHeadWindow(
+      chipWidth,
+      bevel.topLeft,
+      bevel.topRight,
+      CHIP_NOTCH_WIDTH,
+      portraitAssetFor(options.portraitAssetId).cardHeadEscape,
+    );
 
     // 고르거나 애착으로 세운 카드에만 켜지는 발광. 테두리를 두르는 대신 카드 전체가 은은하게 빛난다.
     this.glow = scene.add.graphics({ x: 0, y: bodyCenter }).setVisible(false);
@@ -172,7 +177,14 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     this.maskOffsetY = bodyCenter;
     this.shadeHeight = Math.round(this.bodyHeight * SHADE_RATIO);
     // 머리가 빠져나오는 홈까지 포함한 실루엣. 원화와 선택 표시가 같은 모양을 나눠 쓴다.
-    this.portraitShape = chipPoints(chipWidth, this.bodyHeight, { bevel, openWidth: notchWidth, openHeight: this.overhang, openOffsetX: notchOffsetX });
+    this.portraitShape = chipPoints(chipWidth, this.bodyHeight, {
+      bevel,
+      openWidth: headWindow.width,
+      openHeight: this.overhang,
+      openOffsetX: headWindow.offsetX,
+      openTopWidth: headWindow.topWidth,
+      openTopOffsetX: headWindow.topOffsetX,
+    });
     this.portraitMask = scene.make.graphics({});
     this.portraitMask.fillStyle(0xffffff, 1);
     this.portraitMask.fillPoints(toGeomPoints(this.portraitShape), true);
@@ -184,7 +196,16 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     // 윗변 밖 홈만 남기는 마스크. 선택 표시의 머리 몫이 몸통까지 겹쳐 두 번 어두워지지 않게 한다.
     this.notchMask = scene.make.graphics({});
     this.notchMask.fillStyle(0xffffff, 1);
-    this.notchMask.fillRect(-notchWidth / 2 + notchOffsetX, -this.bodyHeight / 2 - this.overhang, notchWidth, this.overhang);
+    // 홈과 같은 사다리꼴이어야 한다. 사각형으로 덮으면 벌어진 위쪽 모서리에서 선택 표시가
+    // 원화보다 넓게 남아 머리 옆에 검은 삼각형이 생긴다.
+    const notchTop = -this.bodyHeight / 2 - this.overhang;
+    const notchBottom = -this.bodyHeight / 2;
+    this.notchMask.fillPoints(toGeomPoints([
+      -headWindow.topWidth / 2 + headWindow.topOffsetX, notchTop,
+      headWindow.topWidth / 2 + headWindow.topOffsetX, notchTop,
+      headWindow.width / 2 + headWindow.offsetX, notchBottom,
+      -headWindow.width / 2 + headWindow.offsetX, notchBottom,
+    ]), true);
 
     // 인물 뒤에 깔리는 배경 원화. 빈 색면만 두면 카드가 심심하고, 그대로 두면 인물보다
     // 먼저 읽힌다. 그래서 **등급색으로 물들여** 한 겹 눌러 둔다 — 색은 여전히 등급이 정하고
@@ -377,7 +398,7 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     // 전신 정보창의 세로 보정(`portraitOffsetY`)은 코어 관절 기준이라 **위로** 올리는 값이 있다.
     // 카드에서 그대로 올리면 원화의 정수리가 머리 구멍 위로 넘어가 구멍의 윗변에 잘린다.
     // 카드는 머리 끝을 구멍 위에 맞춰 세우므로 위로 올리는 보정만 버리고 내리는 보정은 받는다.
-    const originY = -height / 2 - this.overhang - card.cropY * card.scale + Math.max(0, asset.portraitOffsetY ?? 0) + (asset.cardHeadDropY ?? 0);
+    const originY = -height / 2 - this.overhang - card.cropY * card.scale + Math.max(0, asset.portraitOffsetY ?? 0);
 
     this.syncMask();
     const shadow = this.scene.add

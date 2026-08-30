@@ -36,6 +36,9 @@ test("가방은 로비를 유지하고 카테고리 탭과 많은 항목 스크�
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.inventoryCategory)).toBe("rune");
   // Phaser Canvas의 DOM에는 이미지 노드가 없으므로 렌더가 기록한 실제 texture key를 검증한다.
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.inventoryTextureKeys)).toEqual(["rune-uncommon-0", "rune-rare-1", "rune-legendary-2"]);
+  // 스크롤 전 1080×1920 기준 캡처로 좌우 팝업 가장자리와 목록 하단/파일 탭 사이를 함께 보존한다.
+  await page.setViewportSize({ width: WIDTH, height: HEIGHT });
+  await page.screenshot({ path: `test-results/${test.info().project.name}-inventory-popup-edges-and-tabs.png`, fullPage: true });
   for (const index of [1, 2, 3, 0]) {
     const position = inventoryCategoryTabPosition(index);
     await tap(page, WIDTH / 2 + position.x, HEIGHT / 2 + position.y);

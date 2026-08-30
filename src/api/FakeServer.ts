@@ -596,6 +596,8 @@ export class FakeServer implements GameApi {
     // 입장 뒤 시간이 넘어간 우회 요청도 결과 확정 경계에서 다시 차단한다.
     if (owningEvent) this.assertEventActive(owningEvent, this.now());
     try { stage = owningEvent?.stages.find(({ id }) => id === stageId) ?? getStage(stageId); } catch { throw new GameApiError("STAGE_NOT_FOUND", "존재하지 않는 스테이지입니다."); }
+    // 완료 API는 전투 보상만 정산하며 스토리 완료는 StoryManager가 독점한다.
+    if (stage.kind !== "battle") throw new GameApiError("STAGE_NOT_FOUND", "전투 스테이지가 아닙니다.");
     const firstClear = victory && !this.state.cleared.has(stageId);
     const cheesecakeEarned = victory ? (firstClear ? stage.rewards.firstClearCheesecake : stage.rewards.repeatClearCheesecake) : 0;
     const nextCleared = victory ? new Set(this.state.cleared).add(stageId) : new Set(this.state.cleared);

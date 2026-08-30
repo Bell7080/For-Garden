@@ -3,7 +3,7 @@ import type { ChapterDef, RelicDef, StageDef } from "../core/types";
 import { getRelic } from "./relics";
 
 /** 임시 고정 편성: 1번 토비 · 2번 아모 · 3번 리파 순서로 모든 스테이지에 등장한다. */
-export const FIXED_STAGE_ENEMIES: StageDef["enemies"] = ["husk-raptor", "husk-shell", "husk-wing"];
+export const FIXED_STAGE_ENEMIES: [string, string, string] = ["husk-raptor", "husk-shell", "husk-wing"];
 
 /**
  * 스테이지. 지도에서 아래에서 위로 올라가는 순서 그대로다.
@@ -23,11 +23,12 @@ export const CHAPTERS: readonly ChapterDef[] = CHAPTER_CONTENT.map((content, cha
     const chapterOrder = orderIndex + 1;
     const globalOrder = chapterIndex * 10 + orderIndex;
     return {
+      kind: "battle",
       id: `${chapter}-${chapterOrder}`, name, chapter, chapterOrder,
       // 첫 노드는 이전 챕터 끝을, 나머지는 같은 챕터의 직전 노드를 선행 조건으로 삼는다.
-      prerequisiteStageId: chapterOrder === 1 ? prerequisiteStageId : `${chapter}-${chapterOrder - 1}`,
+      prerequisiteStageIds: chapterOrder === 1 ? (prerequisiteStageId ? [prerequisiteStageId] : []) : [`${chapter}-${chapterOrder - 1}`],
       // 임시 편성도 챕터별 순환을 주어 이후 적 데이터 교체 지점을 명확히 남긴다.
-      enemies: [...FIXED_STAGE_ENEMIES.slice(chapterIndex), ...FIXED_STAGE_ENEMIES.slice(0, chapterIndex)] as StageDef["enemies"],
+      enemies: [...FIXED_STAGE_ENEMIES.slice(chapterIndex), ...FIXED_STAGE_ENEMIES.slice(0, chapterIndex)] as [string, string, string],
       enemyLevel: globalOrder + 1,
       rewards: { firstClearCheesecake: 30 + globalOrder * 5, repeatClearCheesecake: 10 + globalOrder * 2 },
     };
@@ -36,7 +37,14 @@ export const CHAPTERS: readonly ChapterDef[] = CHAPTER_CONTENT.map((content, cha
 });
 
 /** 저장 검증과 전투 조회가 모든 챕터를 같은 ID 공간에서 찾도록 제공하는 평탄 인덱스다. */
-export const STAGES: readonly StageDef[] = CHAPTERS.flatMap(({ stages }) => stages);
+/** 1-5에서 갈라지는 선택 서사는 1-6의 선행 목록에 들어가지 않아 본편을 막지 않는다. */
+export const SIDE_STORY_STAGE: StageDef = {
+  kind: "story", id: "1-5-side-story", name: "온실의 잔향", chapter: 1, chapterOrder: 5,
+  prerequisiteStageIds: ["1-5"], storyId: "stage-1-5-greenhouse-echo",
+};
+
+/** 전투와 서브 스토리가 같은 고유 ID 공간에서 저장 검증과 지도 조회를 공유한다. */
+export const STAGES: readonly StageDef[] = [...CHAPTERS.flatMap(({ stages }) => stages), SIDE_STORY_STAGE];
 const STAGE_BY_ID = new Map(STAGES.map((stage) => [stage.id, stage]));
 
 /** 대규모 던전 대신 하루 세 번만 보상을 받을 수 있는 단일 복원 훈련이다. */
@@ -53,8 +61,15 @@ export function getStage(id: string): StageDef {
   return found;
 }
 
+/** 전투 전용 소비자가 스토리 노드를 실수로 편성에 넘기지 못하게 경계에서 좁힌다. */
+export function getBattleStage(id: string): Extract<StageDef, { kind: "battle" }> {
+  const stage = getStage(id);
+  if (stage.kind !== "battle") throw new Error(`전투 스테이지가 아닌 id: ${id}`);
+  return stage;
+}
+
 /** 기존 레벨당 +2% 성장 규칙을 적용하되 원본 적 데이터는 바꾸지 않는다. */
-export function getStageEnemies(stage: StageDef): [RelicDef, RelicDef, RelicDef] {
+export function getStageEnemies(stage: Extract<StageDef, { kind: "battle" }>): [RelicDef, RelicDef, RelicDef] {
   return stage.enemies.map((id) => {
     const base = getRelic(id);
     return { ...base, stats: applyLevelGrowth(base.stats, stage.enemyLevel) };

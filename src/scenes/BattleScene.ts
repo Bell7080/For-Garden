@@ -19,7 +19,7 @@ import {
   skirmishRelicResults,
 } from "../core/skirmish";
 import { getRelic } from "../data/relics";
-import { getStage, getStageEnemies } from "../data/stages";
+import { getBattleStage, getStageEnemies } from "../data/stages";
 import { getExpeditionNodeEnemies } from "../data/expeditionEnemies";
 import type { PuppetCreature, PuppetAsset } from "../puppets/assets";
 import { battleAssetFor, cancelMotion, flashHit, placePuppet, playMotion, spawnPuppet, tintPuppet } from "../puppets/assets";
@@ -267,7 +267,7 @@ export class BattleScene extends Phaser.Scene {
 
   create(): void {
     setDebugScene("battle");
-    const stage = getStage(session.selectedStageId ?? "1-1");
+    const stage = getBattleStage(session.selectedStageId ?? "1-1");
     // 적은 스테이지별 임시 레벨 성장치를 적용한 복사본으로 전투에 투입한다.
     // 유대는 정적 RelicDef가 아니라 현재 플레이어의 저장 진행에서 전투 스냅샷으로 넘긴다.
     const partyIds = this.battleInput.mode === "expedition" || this.battleInput.mode === "expeditionBoss" ? this.battleInput.relics.map(({ relicId }) => relicId) : session.party;
@@ -1071,7 +1071,7 @@ export class BattleScene extends Phaser.Scene {
     const won = phase === "victory";
     if (this.battleInput.mode === "expeditionBoss") { void this.submitAndSettleBoss(this.battleInput, this.bossActions); return; }
     if (this.battleInput.mode === "expedition") { this.finishExpeditionBattle(this.battleInput, won); return; }
-    const stage = getStage(session.selectedStageId ?? "1-1");
+    const stage = getBattleStage(session.selectedStageId ?? "1-1");
     if (!won) {
       this.add.rectangle(BASE_WIDTH / 2, 930, BASE_WIDTH, 420, COLOR.void, 0.84).setDepth(100);
       this.add.text(BASE_WIDTH / 2, 840, "작전 실패", textStyle({ role: "display", size: 68, color: COLOR.dangerText })).setOrigin(0.5).setDepth(101);
@@ -1092,7 +1092,7 @@ export class BattleScene extends Phaser.Scene {
    * 결과만 `StageCompletePopup`(보상 팝업의 연장선)으로 보여준다 — 그래서 그 팝업은 화면 아무
    * 곳이나 눌러도 닫힌다.
    */
-  private async finishStageVictory(stage: ReturnType<typeof getStage>): Promise<void> {
+  private async finishStageVictory(stage: ReturnType<typeof getBattleStage>): Promise<void> {
     try {
       const result = await gameApi.completeStage(stage.id);
       if (!this.scene.isActive()) return;

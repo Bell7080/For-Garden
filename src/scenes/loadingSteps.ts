@@ -9,6 +9,7 @@ import { RUNE_ICON_ASSETS } from "../ui/runeIcons";
 import { SKILL_ICON_ASSETS } from "../ui/skillIcons";
 import { SKILL_ART_ASSETS } from "../ui/skillArt";
 import { EXCAVATION_TRAIT_ICON_ASSETS } from "../ui/excavationIcons";
+import { ITEM_ICON_ASSETS } from "../ui/itemIcons";
 
 /**
  * 타이틀 화면이 지불하는 로딩 비용의 전부.
@@ -86,6 +87,8 @@ export const LOADING_STEPS: ReadonlyArray<LoadingStep> = [
         AFFINITY_ICON_ASSETS.forEach(([key, path]) => scene.load.image(key, path));
         CURRENCY_ICON_ASSETS.forEach(([key, path]) => scene.load.image(key, path));
         RUNE_ICON_ASSETS.forEach(([key, path]) => scene.load.image(key, path));
+        // 임시 item SVG도 개별 가방 씬이 아니라 공용 단계에서 크게 구운 뒤 축소해 사용한다.
+        ITEM_ICON_ASSETS.forEach(([key, path]) => scene.load.svg(key, path, { width: SVG_BAKE.skill, height: SVG_BAKE.skill }));
         UI_ICON_ASSETS.forEach(([key, path, size]) => scene.load.svg(key, path, { width: size * SVG_BAKE.uiScale, height: size * SVG_BAKE.uiScale }));
         // 발굴 특화는 카드 보조 정보 크기의 단색 SVG라 UI 아이콘과 같은 배율로 미리 굽는다.
         EXCAVATION_TRAIT_ICON_ASSETS.forEach(([key, path]) => scene.load.svg(key, path, { width: 64, height: 64 }));

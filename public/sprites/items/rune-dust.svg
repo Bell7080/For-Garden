@@ -1,0 +1,9 @@
+<!-- 원본 WebP가 전달될 때까지만 사용하는 각진 홀로그램 계열의 임시 룬 가루 아이콘이다. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <g stroke="#d5a8ff" stroke-width="12" stroke-linejoin="miter" stroke-linecap="square">
+    <!-- 중심 결정과 아래 가루 더미를 겹쳐 재료 아이콘임을 단순한 실루엣으로 표현한다. -->
+    <path d="M128 26l55 55-55 91-55-91z" fill="#51336b"/>
+    <path d="M128 26v146M73 81h110" fill="none"/>
+    <path d="M36 220l35-42 31 18 27-19 31 20 27-17 33 40z" fill="#342246"/>
+  </g>
+</svg>

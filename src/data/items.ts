@@ -11,7 +11,10 @@ export type ItemIcon =
   | { readonly kind: "glyph"; readonly key: "scroll" | "heart" }
   | { readonly kind: "currency"; readonly key: WalletItemKey }
   /** 소비품·재료가 구운 전용 이미지를 얻을 때 쓰며, 로드 실패 때만 기존 glyph로 돌아간다. */
-  | { readonly kind: "asset"; readonly key: string; readonly fallback: "scroll" | "heart" };
+  | { readonly kind: "asset"; readonly key: string };
+
+/** 정적 아이콘 파일 하나가 빠져도 가방 전체가 그리기를 계속할 수 있게 하는 공용 표식이다. */
+export const ITEM_ICON_FALLBACK = "scroll" as const;
 
 /** 지갑에서만 소유량을 유지하는 재화 키다. */
 export type WalletItemKey = "fossil" | "amber" | "gems" | "gold" | "stamina" | "dnaFragments" | "cheesecake";
@@ -40,8 +43,8 @@ export const ITEMS = [
   { id: "stamina", name: "스테미나", description: "탐사에 필요한 행동력입니다.", category: "currency", icon: { kind: "currency", key: "stamina" }, maxStack: 9_999, useEffect: { kind: "none" } },
   { id: "dnaFragments", name: "DNA 조각", description: "복원 연구의 교환 재화입니다.", category: "currency", icon: { kind: "currency", key: "dnaFragments" }, maxStack: 99_999, useEffect: { kind: "none" } },
   { id: "cheesecake", name: "치즈케이크", description: "렐릭에게 급여해 성장시킵니다.", category: "currency", icon: { kind: "currency", key: "cheesecake" }, maxStack: 9_999_999, useEffect: { kind: "none" } },
-  { id: "stamina-tonic", name: "활력 토닉", description: "스테미나를 30 회복합니다.", category: "consumable", icon: { kind: "glyph", key: "heart" }, maxStack: 99, useEffect: { kind: "restore_stamina", amount: 30 } },
-  { id: "rune-dust", name: "룬 가루", description: "룬 연구에 쓰이는 정제 재료입니다.", category: "material", icon: { kind: "glyph", key: "scroll" }, maxStack: 999, useEffect: { kind: "none" } },
+  { id: "stamina-tonic", name: "활력 토닉", description: "스테미나를 30 회복합니다.", category: "consumable", icon: { kind: "asset", key: "item-stamina-tonic" }, maxStack: 99, useEffect: { kind: "restore_stamina", amount: 30 } },
+  { id: "rune-dust", name: "룬 가루", description: "룬 연구에 쓰이는 정제 재료입니다.", category: "material", icon: { kind: "asset", key: "item-rune-dust" }, maxStack: 999, useEffect: { kind: "none" } },
 ] as const satisfies readonly ItemDefinition[];
 
 /** 외부 입력 ID는 반드시 정적 카탈로그를 통과한다. */

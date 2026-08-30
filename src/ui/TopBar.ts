@@ -8,6 +8,10 @@ import type { CurrencyIconKey } from "./currencyIcons";
 import { chipPoints, drawGlassFade, drawHairline, drawLayer, HOLO } from "./holo";
 import { addCurrencyChip, CURRENCY_CHIP } from "./CurrencyChip";
 import { COLOR, textStyle } from "./theme";
+import { playerProfileDisplay, profileAvatarContent, type PlayerProfileDisplay } from "../state/playerProfile";
+
+/** 상단 줄에는 공개 표시 모델과 공개 동작만 들어오며 인증 비밀을 받을 자리가 없다. */
+export interface TopBarOptions { onSettings?: () => void; onProfile?: (profile: PlayerProfileDisplay) => void; currencies?: TopBarCurrencyContext; profile?: boolean }
 
 /**
  * 화면 위쪽 줄. 렐릭 · 로비 · 연구소 어디서든 같은 자리에 같은 모양으로 뜬다.
@@ -69,13 +73,13 @@ const CLUSTER_CENTER = 0.57;
 export class TopBar {
   private readonly slots: { slot: CurrencySlot; text: Phaser.GameObjects.Text }[] = [];
 
-  constructor(scene: Phaser.Scene, y = 40, options: { onSettings?: () => void; currencies?: TopBarCurrencyContext; profile?: boolean } = {}) {
+  constructor(scene: Phaser.Scene, y = 40, options: TopBarOptions = {}) {
     drawGlassFade(scene, BASE_WIDTH / 2, y + 30, BASE_WIDTH, 150, { topAlpha: 0.92, bottomAlpha: 0 });
     drawHairline(scene, BASE_WIDTH / 2, y + 96, BASE_WIDTH, { color: COLOR.accent, alpha: 0.18 });
 
     // 프로필은 "지금 나"를 묻는 화면(로비·모집)의 것이다. 목록만 훑는 화면에서는 세우지
     // 않는다 — 볼 일 없는 이름표가 목록 제목과 같은 높이에서 자리를 다툰다.
-    if (options.profile !== false) this.buildProfile(scene, 28, y + 4);
+    if (options.profile !== false) this.buildProfile(scene, 28, y + 4, playerProfileDisplay(session), options.onProfile);
 
     // 재화는 오른쪽에서 왼쪽으로 쌓는다. 설정 아이콘이 오른쪽 끝을 차지하기 때문이다.
     const slots = SLOTS[options.currencies ?? "default"];
@@ -104,17 +108,26 @@ export class TopBar {
     return addCurrencyChip(scene, cx, cy, slot.icon, { color: slot.color });
   }
 
-  /** 왼쪽 위 플레이어 칩. 아직 아바타 아트가 없어 이름 머리글자를 넣는다. */
-  private buildProfile(scene: Phaser.Scene, x: number, y: number): void {
+  /** 왼쪽 위 플레이어 칩. 아바타가 없을 때만 표시 이름 머리글자를 넣는다. */
+  private buildProfile(scene: Phaser.Scene, x: number, y: number, profile: PlayerProfileDisplay, onProfile?: (profile: PlayerProfileDisplay) => void): void {
     const size = 84;
-    drawLayer(scene, x + size / 2, y + size / 2, chipPoints(size, size, {
+    const chip = scene.add.container(0, 0);
+    chip.add(drawLayer(scene, x + size / 2, y + size / 2, chipPoints(size, size, {
       bevel: { topLeft: size * 0.3, topRight: 0, bottomRight: size * 0.3, bottomLeft: 0 },
-    }), { fill: 0x1f2632, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.55 });
-    scene.add.text(x + size / 2, y + size / 2, "R", textStyle({ role: "display", size: 40, color: COLOR.accentText })).setOrigin(0.5);
-    scene.add.text(x + size + 16, y + 14, "연구원", textStyle({ role: "emphasis", size: 26 })).setOrigin(0, 0);
-    scene.add
-      .text(x + size + 16, y + 48, "LV.1  이터널 시티", textStyle({ role: "body", size: 20, color: COLOR.inkDim }))
-      .setOrigin(0, 0);
+    }), { fill: 0x1f2632, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.55 }));
+    const avatar = profileAvatarContent(profile, (key) => scene.textures.exists(key));
+    if (avatar.assetKey) chip.add(scene.add.image(x + size / 2, y + size / 2, avatar.assetKey).setDisplaySize(size - 10, size - 10));
+    else chip.add(scene.add.text(x + size / 2, y + size / 2, avatar.fallback, textStyle({ role: "display", size: 40, color: COLOR.accentText })).setOrigin(0.5));
+    chip.add(scene.add.text(x + size + 16, y + 14, profile.displayName, textStyle({ role: "emphasis", size: 26 })).setOrigin(0, 0));
+    chip.add(scene.add.text(x + size + 16, y + 48, `LV.${profile.level}  ${profile.displayId}`, textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0, 0));
+    if (onProfile) {
+      // 얼굴과 두 텍스트를 하나의 넓은 입력면으로 묶고 기존 홀로그램 규칙대로 눌렀을 때 확대한다.
+      const hit = scene.add.rectangle(176, y + size / 2, 344, 96, 0xffffff, 0).setInteractive({ useHandCursor: true });
+      hit.on("pointerdown", () => chip.setScale(1.07));
+      hit.on("pointerout", () => chip.setScale(1));
+      hit.on("pointerup", () => { chip.setScale(1); onProfile(profile); });
+      chip.add(hit);
+    }
   }
 
   refresh(): void {

@@ -117,7 +117,6 @@ export interface PublicProfileModifierDto {
   id: string;
   displayName: string;
   rarity: "common" | "rare" | "epic" | "legendary";
-  colorRole: "neutral" | "research" | "expedition" | "prestige";
 }
 
 /** 공개 동의를 받은 기록만 존재할 수 있으며 미기록/비공개 항목은 키 자체를 생략한다. */

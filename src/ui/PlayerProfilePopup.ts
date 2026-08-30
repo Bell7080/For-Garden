@@ -2,23 +2,24 @@ import Phaser from "phaser";
 import { profileAvatarContent, type PlayerProfileDisplay, type PublicProfileModifier } from "../state/playerProfile";
 import { HoloBar, chipPoints, drawLayer, HOLO } from "./holo";
 import type { PopupLayer } from "./PopupLayer";
-import { COLOR, textStyle } from "./theme";
+import { COLOR, PROFILE_MODIFIER_RARITY_COLOR, textStyle } from "./theme";
 import { setDebugPlayerProfileOpen } from "../debug";
 import { compactProfileText, PLAYER_PROFILE_LAYOUT } from "./playerProfileLayout";
 import { PortraitCard, relicCardTint } from "./PortraitCard";
 import { getRelic } from "../data/relics";
 import { drawGlyph } from "./glyphs";
+import { Button } from "./Button";
 
-/** rarity는 의미 데이터이고 colorRole은 UI 토큰 선택자이므로 화면은 임의 색상 값을 받지 않는다. */
+/** 희귀도는 theme 의미 토큰 표만 거치므로 DTO가 임의 색 문자열을 주입할 수 없다. */
 function modifierColor(modifier: PublicProfileModifier): number {
-  return { neutral: COLOR.inkDimHex, research: COLOR.raritySR, expedition: COLOR.sortie, prestige: COLOR.raritySSR }[modifier.colorRole];
+  return PROFILE_MODIFIER_RARITY_COLOR[modifier.rarity];
 }
 
 /** 공개 프로필 정보만 공용 PopupLayer에 배치하는 작은 읽기 전용 정보창이다. */
 export class PlayerProfilePopup {
   private opened = false;
 
-  constructor(private readonly scene: Phaser.Scene, private readonly layer: PopupLayer, private readonly profile: PlayerProfileDisplay, private readonly onClose: () => void) {}
+  constructor(private readonly scene: Phaser.Scene, private readonly layer: PopupLayer, private readonly profile: PlayerProfileDisplay, private readonly onClose: () => void, private readonly onEditModifiers?: () => void) {}
 
   /** 아바타→이름/레벨→경험치→수식어 순으로 훑도록 헤더를 한 영역 안에 조립한다. */
   open(): void {
@@ -51,6 +52,8 @@ export class PlayerProfilePopup {
         body.add(drawLayer(this.scene, x, layout.modifiers.y, chipPoints(layout.modifiers.width, layout.modifiers.height, { bevel: { topLeft: 14, topRight: 0, bottomRight: 14, bottomLeft: 0 } }), { fill: 0x202832, alpha: HOLO.glassLight, edge: color, edgeAlpha: 0.72 }));
         body.add(this.scene.add.text(x, layout.modifiers.y, compactProfileText(modifier.displayName, 10), textStyle({ role: "emphasis", size: 18, color: `#${color.toString(16).padStart(6, "0")}` })).setOrigin(0.5));
       });
+      // 자기 프로필만 manager로 이어지는 교체 진입점을 받으며 친구 프로필 DTO에는 이 행동이 존재하지 않는다.
+      if (this.onEditModifiers) body.add(new Button(this.scene, 250, 408, { width: 150, height: 48, label: "수식어 변경", fontSize: 18, onClick: this.onEditModifiers }));
 
       const stats = this.profile.competitiveStats;
       const addStatChip = (x: number, y: number, label: string, value: string, glyph?: "arena-tier", textOffset = -86): void => {

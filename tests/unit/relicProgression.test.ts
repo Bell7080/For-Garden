@@ -21,6 +21,8 @@ function testRune(instanceId: string) {
 /** manager 검증 테스트마다 독립된 저장 상태를 만든다. */
 function makeSession(): Session {
   return {
+    // 수식어 manager 테스트가 아닌 세션은 빈 ID 목록을 명시한다.
+    earnedProfileModifierIds: [], equippedProfileModifierIds: [],
     playerResearch: createInitialPlayerResearchProgress(),
     // 성장 테스트용 세션에도 직렬화 가능한 기본 발굴 상태를 둔다.
     idleExcavation: { assignedRelicIds: [null, null, null], lastSettledAt: null, unclaimed: { gold: 0, cheesecake: 0, fossil: 0, gems: 0 }, baseStorageSeconds: 14_400, activeProductionMultiplier: 1, storageExtensionExpiresAt: null, retroactiveExcavationGrantVersion: 1 },

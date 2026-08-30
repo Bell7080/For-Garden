@@ -4,6 +4,7 @@ import { BANNERS } from "../data/banners";
 import { BREAKTHROUGH_CAP } from "../core/relicProgression";
 import type { RelicProgress } from "../core/types";
 import { createDefaultSession, createInitialPlayerResearchProgress, type SaveData, type Session } from "./session";
+import { PROFILE_MODIFIERS } from "../data/profileModifiers";
 import { assertValidRuneInstance, type RuneInstance } from "../core/runes";
 import { normalizeSettings } from "../core/settings";
 import { AD_REWARD_SLOTS } from "../data/adRewards";
@@ -105,6 +106,9 @@ export class SaveManager {
   /** 상태 확정 경계에서 Set을 배열로 바꾸고 한 번에 교체 저장한다. */
   save(state: Session): void {
     const data: SaveData = {
+      // 표시명은 저장하지 않고 manager가 소유하는 안정적인 ID 목록만 복사한다.
+      earnedProfileModifierIds: [...state.earnedProfileModifierIds],
+      equippedProfileModifierIds: [...state.equippedProfileModifierIds],
       // 서버 확정 연구 진행을 값 복사해 저장 뒤 런타임 변경과 저장 DTO를 분리한다.
       playerResearch: { ...state.playerResearch },
       itemInventory: state.itemInventory.map((stack) => ({ ...stack })),
@@ -146,6 +150,9 @@ export class SaveManager {
   migrate(input: unknown): SaveData {
     if (!input || typeof input !== "object") throw new SaveDataError("저장 데이터가 객체가 아닙니다.");
     const legacy = input as Record<string, unknown>;
+    // 수식어 도입 전 저장은 미획득으로 시작하며 표시 문자열을 ID로 추측하지 않는다.
+    const earnedProfileModifierIds = Array.isArray(legacy.earnedProfileModifierIds) ? legacy.earnedProfileModifierIds : [];
+    const equippedProfileModifierIds = Array.isArray(legacy.equippedProfileModifierIds) ? legacy.equippedProfileModifierIds : [];
     // v25 이전에는 프로필 임시 상수만 있었으므로 모든 기존 저장을 레벨 1, 경험치 0으로 명시 이관한다.
     const playerResearch = Number(legacy.saveVersion) >= 25 && legacy.playerResearch && typeof legacy.playerResearch === "object"
       ? { ...(legacy.playerResearch as SaveData["playerResearch"]) }
@@ -256,15 +263,16 @@ export class SaveManager {
     // v20 이전에는 중첩 가방이 없었다. 지갑과 룬은 기존 단일 기준에 남겨 빈 스택만 보충한다.
     const itemInventory = Array.isArray(legacy.itemInventory) ? legacy.itemInventory : [];
     const { ownedHeartGemIds: _oldOwned, runeSlotsByRelicId: _oldSlots, ...current } = legacy;
-    if (legacy.saveVersion === undefined) return { ...current, playerResearch, idleExcavation, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition } as unknown as SaveData;
+    if (legacy.saveVersion === undefined) return { ...current, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, idleExcavation, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition } as unknown as SaveData;
     const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, CURRENT_SAVE_VERSION];
     if (!supported.includes(legacy.saveVersion as number)) throw new SaveDataError(`지원하지 않는 저장 버전입니다: ${String(legacy.saveVersion)}`);
-    return { ...current, playerResearch, idleExcavation, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition } as unknown as SaveData;
+    return { ...current, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, idleExcavation, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition } as unknown as SaveData;
   }
 
   /** 콘텐츠 ID와 교차 필드 불변식까지 검사해 부분 손상을 조용히 전파하지 않는다. */
   validate(data: SaveData): void {
     const relicIds = new Set(PLAYABLE_RELICS.map(({ id }) => id));
+    const modifierIds = new Set(PROFILE_MODIFIERS.map(({ id }) => id));
     const stageIds = new Set(STAGES.map(({ id }) => id));
     const fail = (message: string): never => { throw new SaveDataError(message); };
     const excavation = data.idleExcavation;
@@ -272,6 +280,8 @@ export class SaveManager {
     if (!data.playerResearch || !Number.isInteger(data.playerResearch.level) || data.playerResearch.level < 1 || !Number.isInteger(data.playerResearch.experience) || data.playerResearch.experience < 0 || !Number.isInteger(data.playerResearch.experienceToNext) || data.playerResearch.experienceToNext <= 0 || data.playerResearch.experience >= data.playerResearch.experienceToNext) fail("플레이어 연구 진행이 올바르지 않습니다.");
     if (!excavation || !Array.isArray(excavation.assignedRelicIds) || excavation.assignedRelicIds.length !== 3 || excavation.assignedRelicIds.some((id) => id !== null && (!relicIds.has(id) || !data.ownedRelicIds.includes(id))) || excavation.assignedRelicIds.filter(Boolean).length !== new Set(excavation.assignedRelicIds.filter(Boolean)).size || (excavation.lastSettledAt !== null && !Number.isFinite(Date.parse(excavation.lastSettledAt))) || !excavation.unclaimed || EXCAVATION_CURRENCIES.some((currency) => !Number.isFinite(excavation.unclaimed[currency]) || excavation.unclaimed[currency] < 0) || !Number.isInteger(excavation.retroactiveExcavationGrantVersion) || excavation.retroactiveExcavationGrantVersion < 0 || excavation.retroactiveExcavationGrantVersion > RETROACTIVE_EXCAVATION_GRANT_VERSION || !Number.isFinite(excavation.baseStorageSeconds) || excavation.baseStorageSeconds <= 0 || !Number.isFinite(excavation.activeProductionMultiplier) || excavation.activeProductionMultiplier <= 0 || (excavation.storageExtensionExpiresAt !== null && !Number.isFinite(Date.parse(excavation.storageExtensionExpiresAt)))) fail("발굴 상태가 올바르지 않습니다.");
     if (data.saveVersion !== CURRENT_SAVE_VERSION || !Array.isArray(data.ownedRelicIds) || data.ownedRelicIds.some((id) => !relicIds.has(id))) fail("존재하지 않는 렐릭 ID가 있습니다.");
+    // 획득 목록은 알려진 고유 ID만, 장착 목록은 그 부분집합과 공용 상한만 허용한다.
+    if (!Array.isArray(data.earnedProfileModifierIds) || !Array.isArray(data.equippedProfileModifierIds) || data.earnedProfileModifierIds.some((id) => !modifierIds.has(id)) || data.equippedProfileModifierIds.some((id) => !data.earnedProfileModifierIds.includes(id)) || new Set(data.earnedProfileModifierIds).size !== data.earnedProfileModifierIds.length || new Set(data.equippedProfileModifierIds).size !== data.equippedProfileModifierIds.length || data.equippedProfileModifierIds.length > 3) fail("프로필 수식어 정보가 올바르지 않습니다.");
     // 설정은 저장 전에 정규화되므로 검증 시 값이 바뀐다면 현재 계약이 아닌 손상 데이터다.
     if (JSON.stringify(data.settings) !== JSON.stringify(normalizeSettings(data.settings))) fail("설정 정보가 올바르지 않습니다.");
     if (!Array.isArray(data.completedStoryIds) || data.completedStoryIds.some((id) => typeof id !== "string") || new Set(data.completedStoryIds).size !== data.completedStoryIds.length) fail("완료 스토리 정보가 올바르지 않습니다.");
@@ -315,6 +325,9 @@ export class SaveManager {
 
   private toSession(data: SaveData): Session {
     return {
+      // 수식어 ID 배열도 독립 복사해 manager 외부 참조 변경을 막는다.
+      earnedProfileModifierIds: [...data.earnedProfileModifierIds],
+      equippedProfileModifierIds: [...data.equippedProfileModifierIds],
       // 검증된 저장 DTO와 런타임 세션이 연구 진행 객체를 공유하지 않도록 복사한다.
       playerResearch: { ...data.playerResearch },
       itemInventory: data.itemInventory.map((stack) => ({ ...stack })),

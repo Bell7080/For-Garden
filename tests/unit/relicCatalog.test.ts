@@ -110,6 +110,45 @@ describe("relic catalog", () => {
     });
   });
 
+  it("루카의 무리 사냥·치명적인 발톱·약점 관통 수치 계약을 공개한다", () => {
+    const luka = PLAYABLE_RELICS.find((relic) => relic.id === "luka")!;
+    // 이름뿐 아니라 엔진이 판별할 계수·게이지·주기·전이 기준까지 카탈로그 회귀로 함께 고정한다.
+    expect(luka.ferocityTrait).toMatchObject({ name: "폭주", effectId: "packHunt", stealthDurationSeconds: 3, retriggerPackHunt: true, sharedTargetAttackSpeedPercent: 25 });
+    expect(luka.passive).toMatchObject({ name: "무리 사냥", kind: "followHighestAttackAllyTarget" });
+    expect(luka.basic).toMatchObject({ name: "치명적인 발톱", power: 80, periodicCritical: { every: 4 } });
+    expect(luka.ultimate).toMatchObject({ name: "약점 관통", power: 200, cost: 90, damageTransfer: { percent: 75, distanceOrigin: "primaryTarget" } });
+  });
+
+  it("루카의 관찰 프로필과 도감은 같은 신체 수치와 단거리 선수 체형을 공개한다", () => {
+    const luka = PLAYABLE_RELICS.find((relic) => relic.id === "luka")!;
+    // 성인 렐릭의 복원 이력과 신체 수치가 도감 요약의 수치 및 체형 설명과 어긋나지 않도록 함께 고정한다.
+    expect(luka.observationProfile).toMatchObject({
+      originYear: "약 7,500만 년 전",
+      restorationYear: "E.C. 10년",
+      restorationAge: 23,
+      lifeStage: "성체",
+      height: "1.62 m",
+      weight: "59 kg",
+    });
+    expect(luka.catalogSummary).toContain("신장 1.62m, 체중 59kg");
+    expect(luka.catalogSummary).toContain("단거리 질주에 적합한 발달한 하체 근육과 가벼운 골격");
+  });
+
+  it("루카의 해금 기록은 주인공이 관찰한 휴식과 교우 및 치즈케이크 습관을 담는다", () => {
+    const luka = PLAYABLE_RELICS.find((relic) => relic.id === "luka")!;
+    // 생활 설정의 핵심 문구를 각각 검증해 이후 문장 다듬기와 설정 누락을 구분할 수 있게 한다.
+    expect(luka.unlockRecord.status).toBe("recorded");
+    if (luka.unlockRecord.status !== "recorded") return;
+    expect(luka.unlockRecord.text).toContain("나는 루카를");
+    expect(luka.unlockRecord.text).toContain("집과 휴식을 무엇보다 좋아하는 단거리 달리기 선수");
+    expect(luka.unlockRecord.text).toContain("다른 육식 계열 렐릭들과도 대체로 원만하게 지낸다");
+    expect(luka.unlockRecord.text).toContain("연구소 소파에 길게 누워");
+    expect(luka.unlockRecord.text).toContain("늘 먼저 말을 걸어 오는");
+    expect(luka.unlockRecord.text).toContain("좋아하는 치즈케이크");
+    expect(luka.unlockRecord.text).toContain("살이 찌면 달리기가 둔해지지 않겠냐며 가볍게 걱정");
+    expect(luka.unlockRecord.text).toContain("하체 근육량이 탄탄한");
+  });
+
   it("미보유 개체에는 번호와 실루엣 요약만 공개한다", () => {
     const relic: RelicDef = PLAYABLE_RELICS[0];
     const locked = getRelicCatalogDisclosure(relic, false);

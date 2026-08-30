@@ -195,6 +195,8 @@ describe("스피나 스킬 표시 계약", () => {
   it("은 네 슬롯의 이름·요약·구조화 수치를 정적 정의와 함께 유지한다", () => {
     const spino = RELICS.find((def) => def.id === "spino")!;
     expect(spino.ferocityTrait).toMatchObject({ name: "잠행", durationSeconds: 3, leapTarget: "lowestHpEnemy", landingDistance: 172 });
+    // 잠행의 내부 도약 ID와 별개로 플레이어 설명은 실제 규칙인 순간이동 키워드를 제공한다.
+    expect(ferocityTraitDescription(spino.ferocityTrait)).toContain("[[teleport|순간이동]]");
     expect(ferocityTraitDescription(spino.ferocityTrait)).toContain("3초 동안 [[stealth|은신]]한다");
     expect(spino.passive).toMatchObject({ name: "전투의 환희", kind: "basicHitAttackSpeedStack", value: 3 });
     expect(passiveDescription(spino.passive)).toContain("[[attack-speed|공격 속도]]가 3 증가");
@@ -211,5 +213,20 @@ describe("스피나 스킬 표시 계약", () => {
     // 어간에 연결어미를 붙인 "주고 기절시킨다"여야 자연스럽다.
     expect(skillDescription(spino.ultimate)).toContain("주고 [[stun|기절]]시킨다");
     expect(skillDescription(spino.ultimate)).not.toContain("준다고");
+  });
+});
+
+describe("루카 스킬 표시 계약", () => {
+  it("은 구조화된 네 슬롯을 키워드가 연결된 문장으로 표시한다", () => {
+    const luka = RELICS.find((def) => def.id === "luka")!;
+    // 루카 자신도 동일 표적 공속 대상이라는 모호한 범위를 폭주 표시 문구에 명시한다.
+    expect(ferocityTraitDescription(luka.ferocityTrait)).toContain("자신을 포함해 같은 적");
+    expect(ferocityTraitDescription(luka.ferocityTrait)).toContain("[[stealth|은신]]");
+    expect(ferocityTraitDescription(luka.ferocityTrait)).toContain("[[attack-speed|공격 속도]]가 25%");
+    expect(passiveDescription(luka.passive)).toContain("공격력이 가장 높은 렐릭");
+    expect(skillDescription(luka.basic)).toContain("매 4번째 실제 [[basic-attack|기본 공격]]");
+    expect(skillDescription(luka.basic)).toContain("[[physical-damage|물리 피해]]");
+    expect(skillDescription(luka.ultimate)).toContain("최종 HP 피해의 75%");
+    expect(skillDescription(luka.ultimate)).toContain("[[transfer|전이]]");
   });
 });

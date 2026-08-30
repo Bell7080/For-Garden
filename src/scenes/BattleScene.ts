@@ -743,8 +743,9 @@ export class BattleScene extends Phaser.Scene {
     const target = this.views.get(event.targetId);
     if (this.state.boss && attacker?.fighter.side === "player" && target?.fighter.side === "enemy" && event.animate !== false) {
       // 서버가 성장 스냅샷으로 재현할 수 있도록 ID·종류·코어 시각만 남기고 event.amount는 버린다.
-      // 스타카토는 원본 기본 공격에 딸린 추가타이므로 보스 리플레이 행동 종류는 basic으로 접는다.
-      this.bossActions.push({ elapsedMs: Math.round(this.state.elapsed * 1_000), actorId: attacker.fighter.def.id, kind: event.skill === "staccato" ? "basic" : event.skill });
+      // 추가 사건은 원본 행동에 접는다. transfer는 animate=false라 정상적으로 별도 기록되지 않지만 타입 경계도 명시한다.
+      const replayKind = event.skill === "staccato" ? "basic" : event.skill === "transfer" ? "ultimate" : event.skill;
+      this.bossActions.push({ elapsedMs: Math.round(this.state.elapsed * 1_000), actorId: attacker.fighter.def.id, kind: replayKind });
     }
     // 한 광역 기술의 후속 피해 사건은 피격 표현만 만들고 시전자 모션은 첫 사건에서 한 번만 튼다.
     const playback = attacker && event.animate !== false ? playMotion(this, attacker.creature, "attack", motionSpeedMultiplier) : undefined;

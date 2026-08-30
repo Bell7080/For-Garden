@@ -9,6 +9,7 @@ import {
   type AnchorFrame,
   type CardFrame,
 } from "../../src/puppets/anchors";
+import type { PuppetAsset } from "../../src/puppets/assets";
 import {
   DODI_PORTRAIT_METADATA,
   DODI_SD_METADATA,
@@ -214,65 +215,124 @@ describe("도디·메테 전용 에셋 앵커 메타데이터", () => {
  *
  * 그래서 **지어낸 값이 아니라 실제 에셋 메타데이터와 ZIP의 `머리1` 관절**로 검사한다.
  */
+/** 도감·발굴·편성 그리드가 실제로 쓰는 카드 규격이다(카드 300×400 + 돌출 64). */
+const REAL_CARD = { width: 300, height: 464, headroom: 0 } as const;
+
+/**
+ * `머리1`과 두 눈 관절의 텍스처 좌표. 각 ZIP의 `puppet.json`에서 읽은 값이라 원화를 교체하면
+ * 함께 다시 적는다(`tags`가 각각 `["head"]`·`["eye"]`인 관절의 x·y).
+ *
+ * 눈을 함께 적는 이유는 아래 "카드 얼굴 크기" 때문이다. 실루엣 폭은 무기·소매·들어 올린 손에
+ * 휘둘리지만 두 눈 사이 거리는 장식이 무엇이든 얼굴 크기만 따라간다.
+ */
+const REAL_PORTRAITS = [
+  { name: "토리카", metadata: TORIKA_PORTRAIT_METADATA, head: { x: 609, y: 395 }, eyes: [{ x: 554, y: 416 }, { x: 638, y: 446 }] },
+  { name: "렉시아", metadata: LEXIA_PORTRAIT_METADATA, head: { x: 613, y: 265 }, eyes: [{ x: 582, y: 265 }, { x: 643, y: 236 }] },
+  { name: "스피나", metadata: SEIRA_PORTRAIT_METADATA, head: { x: 572, y: 250 }, eyes: [{ x: 544, y: 239 }, { x: 597, y: 208 }] },
+  { name: "루카", metadata: LUKA_PORTRAIT_METADATA, head: { x: 882, y: 419 }, eyes: [{ x: 832, y: 425 }, { x: 960, y: 368 }] },
+  { name: "도디", metadata: DODI_PORTRAIT_METADATA, head: { x: 585, y: 370 }, eyes: [{ x: 528, y: 367 }, { x: 632, y: 355 }] },
+  { name: "메테", metadata: METTE_PORTRAIT_METADATA, head: { x: 520, y: 255 }, eyes: [{ x: 472, y: 277 }, { x: 568, y: 242 }] },
+  { name: "타페자라", metadata: TAPEJARA_PORTRAIT_METADATA, head: { x: 549, y: 375 }, eyes: [{ x: 510, y: 386 }, { x: 591, y: 357 }] },
+] as const;
+
+/** PortraitCard가 넘기는 것과 같은 배율 보정으로 실제 카드 잘라내기를 구한다. */
+function realCardFrame(portrait: { metadata: Omit<PuppetAsset, "url">; head: { x: number; y: number } }): CardFrame {
+  return computeHeadCardFrame(portrait.metadata, portrait.head, {
+    ...REAL_CARD,
+    fillRatio: 0.56 / ((portrait.metadata.cardZoom ?? 1) * (portrait.metadata.portraitZoom ?? 1)),
+  });
+}
+
 describe("실제 원화의 카드 잘라내기", () => {
-  // 도감·발굴·편성 그리드가 실제로 쓰는 카드 규격이다(카드 300×400 + 돌출 64).
-  const CARD = { width: 300, height: 464, headroom: 0 } as const;
 
-  /**
-   * `머리1` 관절의 텍스처 좌표. 각 ZIP의 `puppet.json`에서 읽은 값이라 원화를 교체하면 함께
-   * 다시 적는다(`tags: ["head"]`인 관절의 x·y).
-   */
-  const REAL_PORTRAITS = [
-    { name: "토리카", metadata: TORIKA_PORTRAIT_METADATA, head: { x: 609, y: 395 } },
-    { name: "렉시아", metadata: LEXIA_PORTRAIT_METADATA, head: { x: 613, y: 265 } },
-    { name: "스피나", metadata: SEIRA_PORTRAIT_METADATA, head: { x: 572, y: 250 } },
-    { name: "루카", metadata: LUKA_PORTRAIT_METADATA, head: { x: 882, y: 419 } },
-    { name: "도디", metadata: DODI_PORTRAIT_METADATA, head: { x: 585, y: 370 } },
-    { name: "메테", metadata: METTE_PORTRAIT_METADATA, head: { x: 520, y: 255 } },
-    { name: "타페자라", metadata: TAPEJARA_PORTRAIT_METADATA, head: { x: 549, y: 375 } },
-  ] as const;
-
-  // PortraitCard가 넘기는 것과 같은 배율 보정이다.
-  const cardFrameOf = (portrait: (typeof REAL_PORTRAITS)[number]): CardFrame =>
-    computeHeadCardFrame(portrait.metadata, portrait.head, {
-      ...CARD,
-      fillRatio: 0.56 / ((portrait.metadata.cardZoom ?? 1) * (portrait.metadata.portraitZoom ?? 1)),
-    });
 
   it.each(REAL_PORTRAITS.map((portrait) => [portrait.name, portrait] as const))(
     "%s는 정수리를 자르지 않는다",
     (_name, portrait) => {
-      expect(cardFrameOf(portrait).clipsContentTop).toBe(false);
+      expect(realCardFrame(portrait).clipsContentTop).toBe(false);
     },
   );
 
   it.each(REAL_PORTRAITS.map((portrait) => [portrait.name, portrait] as const))(
     "%s는 정수리 위에 숨 쉴 틈을 남긴다",
     (_name, portrait) => {
-      const card = cardFrameOf(portrait);
+      const card = realCardFrame(portrait);
       // 뭉툭한 뿔·깃털이 홈 윗변에 딱 붙어 수평으로 잘린 것처럼 보이지 않을 만큼은 띄운다.
       const margin = (portrait.metadata.content.top - card.cropY) * card.scale;
       expect(margin).toBeGreaterThan(0);
-      expect(margin).toBeLessThan(CARD.height - CARD.width / 2);
+      expect(margin).toBeLessThan(REAL_CARD.height - REAL_CARD.width / 2);
     },
   );
 
   it.each(REAL_PORTRAITS.map((portrait) => [portrait.name, portrait] as const))(
     "%s는 얼굴을 카드 위쪽 절반 안에 세운다",
     (_name, portrait) => {
-      const card = cardFrameOf(portrait);
+      const card = realCardFrame(portrait);
       const headFromTop = (portrait.head.y - card.cropY) * card.scale;
       expect(headFromTop).toBeGreaterThan(0);
-      expect(headFromTop).toBeLessThan(CARD.height / 2);
+      expect(headFromTop).toBeLessThan(REAL_CARD.height / 2);
     },
   );
 
   it("는 한계가 실제 원화의 여백보다 확실히 위에 있다", () => {
     // 가장 머리가 큰 원화도 한계에 여유를 두고 못 미쳐야 다음 캐릭터가 다시 걸리지 않는다.
     const worst = Math.max(...REAL_PORTRAITS.map((portrait) => {
-      const card = cardFrameOf(portrait);
+      const card = realCardFrame(portrait);
       return (portrait.head.y - portrait.metadata.content.top) / card.cropHeight;
     }));
     expect(worst).toBeLessThan(0.42);
+  });
+});
+
+/**
+ * **회귀 테스트다.** "렉시아만 얼굴이 작아 보인다"를 눈대중이 아니라 수치로 고정한다.
+ *
+ * 카드 배율은 `content` **폭**으로 정해지므로, 무기·망토가 좌우로 크게 뻗은 원화는 몸이 그만큼
+ * 넓지 않은데도 함께 축소되어 혼자 얼굴이 작아진다. 렉시아가 그랬다 — 낫이 캔버스를 거의 다
+ * 차지해(1023 / 1054) 중앙값의 72%까지 줄었고, 정작 그 낫은 카드 잘라내기에서 버려졌다.
+ * `cardZoom`으로 되돌린 뒤에도 다음 원화가 같은 함정에 빠지지 않도록 여기서 막는다.
+ *
+ * 크기 대리 지표로 **두 눈 사이 거리**를 쓴다. 실루엣 폭은 무기·소매·들어 올린 손에 휘둘리지만
+ * 눈 간격은 장식이 무엇이든 얼굴 크기만 따라간다.
+ */
+describe("실제 원화의 카드 얼굴 크기", () => {
+  const faceSizeOf = (portrait: (typeof REAL_PORTRAITS)[number]): number => {
+    const [left, right] = portrait.eyes;
+    return Math.hypot(right.x - left.x, right.y - left.y) * realCardFrame(portrait).scale;
+  };
+
+  const median = (values: number[]): number => {
+    const sorted = [...values].sort((a, b) => a - b);
+    const middle = sorted.length / 2;
+    return sorted.length % 2 === 0 ? (sorted[middle - 1] + sorted[middle]) / 2 : sorted[Math.floor(middle)];
+  };
+
+  /**
+   * 한 그리드에 나란히 서는 카드들이라 얼굴 크기가 서로 크게 어긋나면 안 된다.
+   *
+   * 폭이 좁은 이유: 렉시아가 걸렸던 0.72는 확실히 잡아야 하고, 위쪽은 지금 도디(1.29)·메테(1.19)가
+   * 붙어 있다. 둘은 원화 자체가 머리가 큰 디자인이라 이번에는 손대지 않았고, 아트 방향이 더 촘촘한
+   * 정렬을 원하면 그 둘의 `cardZoom`을 낮추면서 이 한계도 함께 좁힌다.
+   */
+  const MIN_RATIO = 0.8;
+  const MAX_RATIO = 1.35;
+
+  it.each(REAL_PORTRAITS.map((portrait) => [portrait.name, portrait] as const))(
+    "%s의 얼굴은 다른 카드와 같은 크기대에 있다",
+    (_name, portrait) => {
+      const center = median(REAL_PORTRAITS.map(faceSizeOf));
+      const ratio = faceSizeOf(portrait) / center;
+      expect(ratio).toBeGreaterThanOrEqual(MIN_RATIO);
+      expect(ratio).toBeLessThanOrEqual(MAX_RATIO);
+    },
+  );
+
+  it("는 렉시아가 낫 무기 때문에 다시 축소되면 실패한다", () => {
+    // cardZoom을 떼면 예전 값(중앙값의 0.72배)으로 돌아가는지 직접 확인한다.
+    const lexia = REAL_PORTRAITS.find((portrait) => portrait.name === "렉시아")!;
+    const withoutZoom = { ...lexia, metadata: { ...lexia.metadata, cardZoom: undefined } };
+    const center = median(REAL_PORTRAITS.map(faceSizeOf));
+    expect(faceSizeOf(withoutZoom) / center).toBeLessThan(MIN_RATIO);
+    expect(faceSizeOf(lexia) / center).toBeGreaterThanOrEqual(MIN_RATIO);
   });
 });

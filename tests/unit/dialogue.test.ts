@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { DialogueFlow, type DialogueStory } from "../../src/core/dialogue";
 import { StoryManager } from "../../src/managers/StoryManager";
 import { createDefaultSession } from "../../src/state/session";
+import { GREENHOUSE_ECHO } from "../../src/data/dialogues/greenhouseEcho";
 
 const STORY: DialogueStory = {
   id: "test-story", startNodeId: "start", nodes: [
@@ -12,6 +13,13 @@ const STORY: DialogueStory = {
 };
 
 describe("DialogueFlow", () => {
+  it("1-5 서브 스토리 원문을 끝까지 순회할 수 있다", () => {
+    const flow = new DialogueFlow(GREENHOUSE_ECHO);
+    expect(flow.current.id).toBe("signal");
+    expect(flow.advance().node?.id).toBe("seed"); flow.unlockInput();
+    expect(flow.advance().node?.id).toBe("promise"); flow.unlockInput();
+    expect(flow.advance().completed).toBe(true);
+  });
   it("선택한 분기로 이동하고 마지막 노드를 완료한다", () => {
     const flow = new DialogueFlow(STORY);
     const branch = flow.advance("left");

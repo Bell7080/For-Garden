@@ -8,7 +8,7 @@ import { CharacterInfoManager, ELEMENT_LABEL, ROLE_LABEL, addHelpBadge } from ".
 import type { PuppetCreature } from "../puppets/assets";
 import { battleAssetFor, spawnPuppet } from "../puppets/assets";
 import { tintFor } from "../puppets/tints";
-import { getStage, getStageEnemies } from "../data/stages";
+import { getBattleStage, getStageEnemies } from "../data/stages";
 import { session } from "../state/session";
 import { Button } from "../ui/Button";
 import { addBackButton } from "../ui/IconButton";
@@ -113,7 +113,7 @@ export class PartyScene extends Phaser.Scene {
     addSceneBackground(this, BACKGROUND.combat);
     this.add.rectangle(cx, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.42).setDepth(-29);
 
-    const stage = getStage(session.selectedStageId ?? "1-1");
+    const stage = getBattleStage(session.selectedStageId ?? "1-1");
     // 전투와 같은 함수로 적을 만든다. 여기서만 기본 수치를 읽으면 미리보기의 체력이 실제
     // 전투보다 낮게 보인다 — 스테이지 레벨 보정은 `getStageEnemies` 한 곳에만 있다.
     this.enemies = getStageEnemies(stage);

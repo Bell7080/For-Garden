@@ -146,6 +146,15 @@ describe("SaveManager", () => {
     expect(manager.migrate(legacy).completedStoryIds).toEqual([]);
   });
 
+  it("서브 스토리 완료 ID를 독립 Set으로 저장하고 복원한다", () => {
+    const storage = new MemoryStorage();
+    const manager = new SaveManager(storage);
+    const source = createDefaultSession();
+    source.completedStoryIds.add("stage-1-5-greenhouse-echo");
+    manager.save(source);
+    expect(manager.load()?.completedStoryIds).toEqual(new Set(["stage-1-5-greenhouse-echo"]));
+  });
+
   it("즐겨찾기를 저장하고 v4 저장은 빈 즐겨찾기로 마이그레이션한다", () => {
     const storage = new MemoryStorage();
     const manager = new SaveManager(storage);

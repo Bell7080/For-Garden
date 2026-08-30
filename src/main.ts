@@ -7,6 +7,7 @@ import { LobbyScene } from "./scenes/LobbyScene";
 import { RelicsScene } from "./scenes/RelicsScene";
 import { LabScene } from "./scenes/LabScene";
 import { StageMapScene } from "./scenes/StageMapScene";
+import { StageStoryScene } from "./scenes/StageStoryScene";
 import { PartyScene } from "./scenes/PartyScene";
 import { BattleScene } from "./scenes/BattleScene";
 import { OpeningScene } from "./scenes/OpeningScene";
@@ -47,7 +48,7 @@ const game = new Phaser.Game({
   },
   // 새 장기 탐사형 발굴과 기존 배너 연구소는 독립 화면이며 상점은 카탈로그 씬을 공유한다.
   // 원정은 로비 출격 선택판에서 진입하며 준비/이어하기 상태를 같은 씬에서 소유한다.
-  scene: [BootScene, TitleScene, OpeningScene, LobbyScene, ExpeditionScene, SortiePreviewScene, SettingsScene, FriendsScene, ShopScene, RelicsScene, LabScene, ArchaeologyScene, StageMapScene, PartyScene, BattleScene],
+  scene: [BootScene, TitleScene, OpeningScene, LobbyScene, ExpeditionScene, SortiePreviewScene, SettingsScene, FriendsScene, ShopScene, RelicsScene, LabScene, ArchaeologyScene, StageMapScene, StageStoryScene, PartyScene, BattleScene],
 });
 
 // Phaser Sound 생성과 브라우저 수명 주기 처리는 씬이 아니라 중앙 오디오 관리자에 연결한다.

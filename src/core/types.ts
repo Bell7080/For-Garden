@@ -413,23 +413,35 @@ export interface RelicDef {
   ultimate: Ultimate;
 }
 
-export interface StageDef {
+/** 지도 노드가 공유하는 식별자와 명시적 경로 조건이다. */
+interface StageBase {
   /** "1-1" 형식. */
   id: string;
   name: string;
-  /** 이 스테이지에 나오는 적 3명의 렐릭 id. */
-  enemies: [string, string, string];
-  /** 임시 밸런스용 적 레벨. 스테이지가 오를 때마다 정확히 1씩 증가한다. */
-  enemyLevel: number;
-  /** 최초/반복 클리어마다 지급할 치즈케이크 수량이며 씬은 이 값을 재정의하지 않는다. */
-  rewards: { firstClearCheesecake: number; repeatClearCheesecake: number };
   /** 본편에서 이 스테이지가 속한 챕터 번호다. 이벤트 스테이지에는 없을 수 있다. */
   chapter?: number;
   /** 지도에 표시할 챕터 내부의 1부터 시작하는 진행 순서다. */
   chapterOrder?: number;
-  /** 해금에 필요한 선행 스테이지 ID다. 없으면 캠페인의 최초 진입점이다. */
-  prerequisiteStageId?: string;
+  /** 모두 완료해야 하는 선행 노드 ID다. 빈 배열이면 캠페인의 최초 진입점이다. */
+  prerequisiteStageIds: readonly string[];
 }
+
+/** 전투 노드만 편성, 적 레벨, 전투 보상을 소유한다. */
+export interface BattleStageDef extends StageBase {
+  kind: "battle";
+  enemies: [string, string, string];
+  enemyLevel: number;
+  rewards: { firstClearCheesecake: number; repeatClearCheesecake: number };
+}
+
+/** 스토리 노드는 DialogueStory를 가리키며 가짜 전투 데이터를 요구하지 않는다. */
+export interface StoryStageDef extends StageBase {
+  kind: "story";
+  storyId: string;
+}
+
+/** kind로 안전하게 좁히는 지도 노드 판별 유니온이다. */
+export type StageDef = BattleStageDef | StoryStageDef;
 
 /** 지도 한 화면을 구성하고 챕터 선택 잠금을 판정하는 본편 챕터 메타데이터다. */
 export interface ChapterDef {

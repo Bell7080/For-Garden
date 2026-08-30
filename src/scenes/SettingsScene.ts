@@ -84,12 +84,13 @@ export class SettingsScene extends Phaser.Scene {
     this.content.removeAll(true);
     const s = settingsManager.get(); let y = 18;
     let previousPanelBottom = 0;
-    const section = (title: string, height: number): void => {
+    const section = (title: string, height: number): number => {
       // 앞 섹션의 패널 아래에 안전 여백을 확보해 계정과 데이터 패널의 면·입력 영역이 겹치지 않게 한다.
       y = Math.max(y, previousPanelBottom + 24);
       const panel = drawLayer(this, BASE_WIDTH / 2, y + height / 2, slantedRect(980, height, 14), { fill: COLOR.panel, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.42 });
       previousPanelBottom = y + height;
       this.content.add(panel); this.content.add(this.add.text(72, y + 24, title, textStyle({ role: "emphasis", size: 32, color: COLOR.accentText }))); y += 88;
+      return y;
     };
     const divider = (): void => { this.content.add(drawHairline(this, BASE_WIDTH / 2, y, 890, { alpha: 0.16 })); };
     const toggle = <K extends "vibration" | "notifications" | "presentation" | "game" | "accessibility">(label: string, group: K, key: keyof typeof s[K]): void => {
@@ -128,13 +129,13 @@ export class SettingsScene extends Phaser.Scene {
   }
 
   /** 지원·데이터 탭은 계정 연결, 정책 문서, 캐시와 저장 삭제를 한곳에서 구분한다. */
-  private buildSupportRows(y: number, section: (title: string, height: number) => void): number {
-    section("계정", 420);
+  private buildSupportRows(y: number, section: (title: string, height: number) => number): number {
+    y = section("계정", 330);
     const account = this.accountState;
     this.content.add(this.add.text(90, y, `상태  ${account.kind === "guest" ? "게스트" : "연동됨"}\n제공자  ${account.provider.toUpperCase()}\n식별 ID  ${account.maskedId}`, textStyle({ role: "body", size: 26, color: COLOR.inkDim, lineSpacing: 10 }))); y += 150;
     if (account.kind === "guest") { this.addTextAction(90, y, "Google 연동", () => void this.login("google")); this.addTextAction(350, y, "Apple 연동", () => void this.login("apple")); }
     else { this.addTextAction(90, y, "로그아웃", () => this.confirmAccountAction("로그아웃", "계정 연결만 해제합니다. 저장 데이터 초기화와 서버 데이터 삭제는 실행하지 않습니다.", () => accountApi.logout()), true); }
-    y += 120; section("고객지원 · 데이터", 742);
+    y += 120; y = section("고객지원 · 데이터", 660);
     this.addTextAction(90, y, "캐시 정리", () => void this.clearCache()); y += 92;
     this.addTextAction(90, y, "이용약관", () => this.openPolicy("/terms")); y += 92;
     this.addTextAction(90, y, "개인정보 처리방침", () => this.openPolicy("/privacy")); y += 92;

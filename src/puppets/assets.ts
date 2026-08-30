@@ -85,7 +85,7 @@ export const TORIKA_ASSET: PuppetAsset = {
   imageWidth: 1054,
   imageHeight: 1492,
   content: { left: 95, top: 69, right: 894, bottom: 1419 },
-  cardZoom: 0.62,
+  cardZoom: 0.82,
 };
 
 /**

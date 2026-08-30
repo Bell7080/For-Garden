@@ -37,7 +37,10 @@ const STORAGE_GAUGE = { labelY: -158, y: -128, width: 700, height: 20 } as const
  * `top`은 현황의 누적 액자 판과 같은 윗변이다. 첫 줄 카드는 그보다 머리 돌출만큼 내려 서므로
  * 눈에 보이는 그리드의 윗선(머리 끝)이 액자 판의 윗선과 정확히 맞는다.
  */
-const GRID_VIEW = { left: -370, right: 370, top: STATUS_SUMMARY.y - STATUS_SUMMARY.height / 2, bottom: 425, columnGap: 250, rowGap: 280, cardWidth: 215, cardHeight: 235 } as const;
+// 카드 비율(세로/가로)을 도감 그리드(300×400)와 맞춰, 머리 관절 기준 잘라내기가 카드 크기와
+// 무관하게 같은 구도로 보이게 한다 — 비율이 다르면 같은 캐릭터도 화면마다 잘리는 범위가
+// 달라진다(`computeHeadCardFrame`은 카드 가로세로비를 그대로 잘라내기 비율로 쓴다).
+const GRID_VIEW = { left: -370, right: 370, top: STATUS_SUMMARY.y - STATUS_SUMMARY.height / 2, bottom: 425, columnGap: 250, rowGap: 313, cardWidth: 215, cardHeight: 268 } as const;
 /** 손가락이 이 거리 이상 움직여야 카드 선택이 아니라 스크롤로 판정한다. */
 const GRID_DRAG_SLOP = 12;
 /** 팝업 판(PopupLayer 기본 2000) 바로 위. 그 위에 열리는 보상 팝업(2002)보다는 아래에 남는다. */

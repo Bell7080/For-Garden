@@ -41,6 +41,8 @@ export interface DebugState {
   battle?: DebugBattle;
   /** 정보창이 떠 있는지. `?`와 꾹 누르기를 확인하는 데 쓴다. */
   infoOpen?: boolean;
+  /** 로비 공개 프로필 정보창의 열림 상태이며 계정 내용 자체는 E2E에 복제하지 않는다. */
+  playerProfileOpen?: boolean;
   /** 로비 위 발굴 쪽지의 상태. 씬 전환 없이 열리고 입력을 막는 계약을 E2E가 확인한다. */
   idleExcavationPopup?: "loading" | "ready" | "error" | "editing" | "saving" | "save-error";
   /** 로비 무역 팝업의 표시 단계와 카드 입력 계약만 E2E에 공개한다. */
@@ -136,6 +138,11 @@ export function setDebugRelicScroll(scroll: DebugState["relicScroll"]): void {
 
 export function setDebugInfoOpen(open: boolean): void {
   ensure().infoOpen = open;
+}
+
+/** Canvas 프로필 칩의 열기·닫기 흐름만 자동화가 관찰하게 한다. */
+export function setDebugPlayerProfileOpen(open: boolean): void {
+  ensure().playerProfileOpen = open || undefined;
 }
 
 /** Canvas 밖 E2E가 공용 노드 편성판의 실제 렌더 지오메트리만 읽게 한다. */

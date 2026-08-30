@@ -30,6 +30,8 @@ import { expeditionManager } from "../managers/ExpeditionManager";
 import { ExpeditionEntryButton, sortieEntrySdSpot } from "../ui/ExpeditionEntryButton";
 import { ENEMY_SD_ASSETS, PONTOS_SD_ASSET, playMotion, type PuppetAsset } from "../puppets/assets";
 import { loadOwnedPuppet } from "../ui/statusPuppetLoad";
+import { PlayerProfilePopup } from "../ui/PlayerProfilePopup";
+import type { PlayerProfileDisplay } from "../state/playerProfile";
 
 /** 확대된 애착 렐릭의 골반 아래가 내비게이션 뒤로 자연스럽게 이어지는 기준선. */
 const STAGE_FLOOR = 1660;
@@ -108,6 +110,8 @@ export class LobbyScene extends Phaser.Scene {
   /** 임무도 로비 상태를 보존하는 공용 팝업이며 상단 지갑은 수령 응답과 동시에 갱신한다. */
   private missionsPopup?: MissionsPopup;
   private topBar?: TopBar;
+  /** 공개 플레이어 정보창은 닫힐 때 참조까지 비워 다음 입력이 새 입력면 한 장만 만든다. */
+  private playerProfilePopup?: PlayerProfilePopup;
 
   constructor() {
     super("lobby");
@@ -120,7 +124,7 @@ export class LobbyScene extends Phaser.Scene {
 
     this.buildPlaza();
     // 설정 아이콘은 준비 중 토스트가 아니라 등록된 환경 설정 씬으로 곧바로 이동한다.
-    this.topBar = new TopBar(this, 40, { onSettings: () => this.scene.start("settings") });
+    this.topBar = new TopBar(this, 40, { onSettings: () => this.scene.start("settings"), onProfile: (profile) => this.openPlayerProfile(profile) });
     this.buildPromo();
     this.buildUtilityRail();
     this.buildMissionEntry();
@@ -191,6 +195,13 @@ export class LobbyScene extends Phaser.Scene {
     // 한 번의 공용 조회가 모든 버튼을 갱신하며 실패 시 기존의 안전한 꺼짐 상태를 유지한다.
     void notificationManager.refresh().catch(() => undefined);
     void this.showFavorite();
+  }
+
+  /** TopBar가 건넨 공개 모델만 사용해 공용 레이어 기반 정보창을 연다. */
+  private openPlayerProfile(profile: PlayerProfileDisplay): void {
+    if (!this.popupLayer || this.playerProfilePopup) return;
+    this.playerProfilePopup = new PlayerProfilePopup(this, this.popupLayer, profile, () => { this.playerProfilePopup = undefined; });
+    this.playerProfilePopup.open();
   }
 
   /** 연타 중에는 같은 인스턴스의 open 가드가 기존 쪽지를 유지한다. */

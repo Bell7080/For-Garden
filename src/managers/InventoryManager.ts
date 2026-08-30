@@ -3,6 +3,7 @@ import type { GameApi, InventoryItemDto, UseConsumableResponse } from "../api/co
 import type { RuneInstance } from "../core/runes";
 import { findItem, ITEMS, type ItemCategory, type ItemDefinition, type WalletItemKey } from "../data/items";
 import type { Session } from "../state/session";
+import { managerEvents, type ManagerEvents } from "./ManagerEvents";
 
 /** 가방 UI와 순수 배치 테스트가 공유하는 두 열 카드 계약이다. */
 export const INVENTORY_LAYOUT = {
@@ -38,7 +39,7 @@ export type InventoryDisplayItem =
 
 /** 씬의 직접 상태 변경을 막고 세 저장 모델을 표시 모델로만 합성한다. */
 export class InventoryManager {
-  constructor(private readonly state: Session) {}
+  constructor(private readonly state: Session, private readonly events: ManagerEvents = managerEvents) {}
 
   /** 조회와 세 저장 소유자의 반영을 한 비동기 경계로 묶어 서로 다른 시점의 행이 섞이지 않게 한다. */
   async refresh(api: GameApi): Promise<void> {
@@ -81,6 +82,9 @@ export class InventoryManager {
     this.state.runeInventory = runes;
     this.state.wallet = wallet;
     this.state.itemInventory = stacks;
+    // 세 영역의 대입이 모두 끝난 뒤에만 UI가 일관된 확정 스냅샷을 읽도록 연달아 발행한다.
+    this.events.publish("wallet", { wallet: this.state.wallet });
+    this.events.publishInventory();
   }
 
   /** 카테고리 전환과 테스트가 같은 순수 필터 결과를 사용한다. */

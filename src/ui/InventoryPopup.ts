@@ -13,6 +13,7 @@ import { RUNE_PART_LABELS, RUNE_RARITY_LABELS } from "../core/runes";
 import { addRuneFrame, runeTexture, RUNE_ACCENT } from "./runeIcons";
 import { COLOR, textStyle } from "./theme";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
+import { managerEvents } from "../managers/ManagerEvents";
 
 const CATEGORIES: readonly { id: ItemCategory; label: string }[] = [
   { id: "rune", label: "룬" }, { id: "currency", label: "재화" }, { id: "consumable", label: "소비품" }, { id: "material", label: "재료" },
@@ -45,21 +46,26 @@ export class InventoryPopup {
   /** 중첩 상세 팝업 유무와 무관하게 가방 자체를 닫는 전용 콜백이다. */
   private closePopup?: () => void;
   private readonly inventory = new InventoryManager(session);
+  private unsubscribeInventory?: () => void;
 
-  constructor(private readonly scene: Phaser.Scene, private readonly popups: PopupLayer, private readonly api: GameApi, private readonly onClose?: () => void, private readonly onWalletChanged?: () => void) {}
+  constructor(private readonly scene: Phaser.Scene, private readonly popups: PopupLayer, private readonly api: GameApi, private readonly onClose?: () => void) {}
 
   /** 중복 열기를 막고 조회가 끝난 뒤 현재 탭을 그린다. */
   open(): void {
     if (this.body) return;
     const width = POPUP_WIDTH; const height = POPUP_HEIGHT;
-    this.body = this.popups.open({ width, height, title: "가방", titleSize: POPUP_TITLE_SIZE.workboard, dim: true, closeOnBackdrop: false, hideCloseButton: true, onClose: () => { this.destroyMask(); setDebugInventoryCategory(undefined); this.body = undefined; this.view = undefined; this.closePopup = undefined; this.onClose?.(); } }, (body, close) => {
+    this.body = this.popups.open({ width, height, title: "가방", titleSize: POPUP_TITLE_SIZE.workboard, dim: true, closeOnBackdrop: false, hideCloseButton: true, onClose: () => { this.unsubscribeInventory?.(); this.unsubscribeInventory = undefined; this.destroyMask(); setDebugInventoryCategory(undefined); this.body = undefined; this.view = undefined; this.closePopup = undefined; this.onClose?.(); } }, (body, close) => {
       // 외부 돌아가기 버튼은 stack 최상단이 아니라 이 가방 판을 정확히 가리켜야 한다.
       this.closePopup = close;
       // 공용 팝업 판과 제목은 보존하고 교체 가능한 내용 전용 컨테이너만 다시 그린다.
       const view = this.scene.add.container(0, 0); this.view = view; body.add(view);
       // 닫기는 LobbyScene의 화면 우하단 공용 버튼 하나가 맡아 팝업에 붙은 중복 버튼을 만들지 않는다.
       // Manager가 조회·검증·Session 반영을 끝낸 뒤에만 단일 list 경로를 렌더링한다.
-      void this.inventory.refresh(this.api).then(() => this.render(view));
+      void this.inventory.refresh(this.api).then(() => {
+        this.render(view);
+        // 초기 응답 이후에는 DTO 대신 manager의 인벤토리 확정 신호만 받아 현재 표시 모델을 다시 읽는다.
+        this.unsubscribeInventory = managerEvents.subscribe("inventory", () => { if (this.view) this.render(this.view); });
+      });
     });
   }
 

@@ -6,10 +6,11 @@ import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { chipPoints, drawHairline, drawInnerVignette, drawLayer, drawShapeOutline } from "./holo";
 import { drawGlyph } from "./glyphs";
 import { Button } from "./Button";
-import { PortraitCard, relicCardTint } from "./PortraitCard";
 import type { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
 import { setDebugRewardPopup } from "../debug";
+import { sdAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
+import { loadOwnedPuppet } from "./statusPuppetLoad";
 
 /** 결과 화면이 넘기는 편성원 한 명. MVP 여부만 알면 카드 크기·발광은 이 프리팹이 정한다. */
 export interface StageCompleteFighter {
@@ -22,14 +23,18 @@ export interface StageCompletePopupOptions {
   firstClear: boolean;
   /** 편성 순서 그대로 셋을 넘긴다. MVP 한 명만 가운데 크게 선다. */
   fighters: readonly StageCompleteFighter[];
-  onOpenContribution: () => void;
+  /** 그래프 팝업을 연 뒤 그 팝업이 닫히면 반드시 `onClosed`를 불러야 버튼이 다시 보인다. */
+  onOpenContribution: (onClosed: () => void) => void;
   onConfirm?: () => void;
 }
 
 const WIDTH = 940;
 const HEIGHT = 1200;
-/** MVP는 크게, 좌우 둘은 작게 — 가운데를 세운 뒤 발끝이 맞도록 두 크기의 차이만큼 다시 올린다. */
-const CARD = { mvp: { width: 220, height: 268 }, side: { width: 156, height: 190 }, gap: 26, y: -170 };
+/**
+ * MVP는 크게, 좌우 둘은 작게 — 가로 간격은 예전 카드 규격을 그대로 빌려 쓰고, 세로는 발끝이
+ * 한 줄에 맞도록 SD 그림 높이만 다르게 잡는다. `groundY`가 모두 같은 값을 쓰는 이유다.
+ */
+const SD = { mvp: { width: 200, height: 300 }, side: { width: 150, height: 220 }, gap: 26, groundY: -30 };
 
 /**
  * 스토리 스테이지 승리 결과.
@@ -44,12 +49,25 @@ export class StageCompletePopup {
   open(options: StageCompletePopupOptions): void {
     const cheesecake = Math.floor(options.cheesecakeEarned);
     let hint: Phaser.GameObjects.Text | undefined;
+    /** Puppet은 컨테이너 변환을 물려받지 않으므로 원점(0,0)에 선 전용 레이어에 화면 좌표로 세운다. */
+    let puppetLayer: Phaser.GameObjects.Container | undefined;
+    const puppets = new Set<PuppetCreature>();
+    let attackButton: Button | undefined;
+    let disposed = false;
     setDebugRewardPopup(true, cheesecake > 0 ? 1 : 0, { x: BASE_WIDTH / 2, y: BASE_HEIGHT / 2 });
     this.popups.open({
       width: WIDTH, height: HEIGHT, dim: true, dimAlpha: 0.5,
       // 영수증과 같은 계약이라 팝업 안팎 어디를 눌러도 닫히고, 별도 닫기 버튼은 두지 않는다.
       closeOnBackdrop: true, hideCloseButton: true,
-      onClose: () => { hint?.destroy(); setDebugRewardPopup(false); options.onConfirm?.(); },
+      onClose: () => {
+        disposed = true;
+        hint?.destroy();
+        for (const puppet of puppets) { puppetLayer?.remove(puppet, false); puppet.destroy(); }
+        puppets.clear();
+        puppetLayer?.destroy(true);
+        setDebugRewardPopup(false);
+        options.onConfirm?.();
+      },
     }, (body, close) => {
       // 기여도 그래프가 같은 popups 위에 한 겹 더 쌓이므로, 이 층의 깊이를 임의로 최상단에
       // 고정하지 않는다 — 고정하면 나중에 여는 팝업이 오히려 이 아래에 가려진다.
@@ -59,11 +77,16 @@ export class StageCompletePopup {
       body.add(closeCatcher);
 
       this.buildTitle(body);
-      this.buildFighters(body, options.fighters);
-      body.add(new Button(this.scene, 0, 90, {
+      // SD는 body 바깥, 팝업 층 바로 위에 화면 좌표로 세운다.
+      puppetLayer = this.scene.add.container(0, 0).setDepth((body.parentContainer?.depth ?? 0) + 1);
+      this.buildFighterPuppets(body, puppetLayer, puppets, () => disposed, options.fighters);
+      attackButton = new Button(this.scene, 0, 90, {
         width: 360, height: 84, label: "공격 · 방어 · 회복", fontSize: 26,
-        onClick: options.onOpenContribution,
-      }));
+        // 그래프를 보는 동안은 이 버튼이 뒤에서 겹쳐 눌리지 않도록 숨겼다가, 그래프를 닫으면
+        // 다시 보여준다.
+        onClick: () => { attackButton?.setVisible(false); options.onOpenContribution(() => { if (!disposed) attackButton?.setVisible(true); }); },
+      });
+      body.add(attackButton);
       body.add(drawHairline(this.scene, 0, 168, WIDTH - 140, { color: COLOR.accent, alpha: 0.3 }));
       this.buildReward(body, cheesecake, options.firstClear);
 
@@ -88,8 +111,18 @@ export class StageCompletePopup {
     body.add([title, starLeft, starRight]);
   }
 
-  /** MVP는 가운데 크게, 나머지 둘은 옆에 작게 — 발끝이 맞도록 중심 y만 다시 맞춘다. */
-  private buildFighters(body: Phaser.GameObjects.Container, fighters: readonly StageCompleteFighter[]): void {
+  /**
+   * MVP는 가운데 크게, 나머지 둘은 옆에 작게 — 그리드 카드 대신 SD가 idle로 서 있는 편성을
+   * 보여준다. Puppet은 컨테이너 변환을 물려받지 않으므로 `puppetLayer`(화면 좌표, body 밖)에
+   * 세우고, 이름표·MVP 표식만 `body`(팝업 로컬 좌표)에 얹는다.
+   */
+  private buildFighterPuppets(
+    body: Phaser.GameObjects.Container,
+    puppetLayer: Phaser.GameObjects.Container,
+    puppets: Set<PuppetCreature>,
+    isDisposed: () => boolean,
+    fighters: readonly StageCompleteFighter[],
+  ): void {
     const centerIndex = fighters.findIndex((fighter) => fighter.isMvp);
     const order = centerIndex < 0 ? fighters : [...fighters.slice(0, centerIndex), ...fighters.slice(centerIndex + 1)];
     // 항상 [왼쪽 보조, MVP, 오른쪽 보조] 순서로 세워 MVP가 어느 슬롯에서 왔든 가운데 자리는 고정한다.
@@ -97,25 +130,37 @@ export class StageCompletePopup {
       ? fighters.map((fighter) => ({ fighter, slot: "side" as const }))
       : [{ fighter: order[0], slot: "side" }, { fighter: fighters[centerIndex], slot: "mvp" }, { fighter: order[1], slot: "side" }];
 
-    const sideDrop = (CARD.mvp.height - CARD.side.height) / 2;
-    const totalWidth = CARD.side.width * 2 + CARD.mvp.width + CARD.gap * 2;
+    const totalWidth = SD.side.width * 2 + SD.mvp.width + SD.gap * 2;
+    const absGroundY = BASE_HEIGHT / 2 + SD.groundY;
     let x = -totalWidth / 2;
     layout.forEach(({ fighter, slot }) => {
-      const size = slot === "mvp" ? CARD.mvp : CARD.side;
+      const size = slot === "mvp" ? SD.mvp : SD.side;
       const cx = x + size.width / 2;
-      const cy = CARD.y + (slot === "mvp" ? 0 : sideDrop);
+      const absX = BASE_WIDTH / 2 + cx;
       const relic = getRelic(fighter.relicId);
-      const card = new PortraitCard(this.scene, cx, cy, {
-        width: size.width, height: size.height,
-        portraitAssetId: relic.portraitAssetId, tint: relicCardTint(relic),
-        label: relic.name, level: relicProgression.getProgress(relic.id).level,
-        badge: slot === "mvp" ? "MVP" : undefined,
+      // 발밑 그림자는 카드 없이 서는 SD가 바닥에 붙어 보이게 하는 최소한의 장치다.
+      puppetLayer.add(this.scene.add.ellipse(absX, absGroundY + 6, size.width * 0.6, size.width * 0.2, 0x000000, 0.32));
+      void loadOwnedPuppet({
+        spawn: () => spawnPuppet(this.scene, sdAssetFor(fighter.relicId), { x: absX, groundY: absGroundY, height: size.height }),
+        isCurrent: () => !isDisposed(),
+        isDisplayable: (puppet) => Boolean(puppet.active),
+        adopt: (puppet) => { puppet.disableInteractive(); puppetLayer.add(puppet); puppets.add(puppet); },
       });
-      card.hit.disableInteractive();
-      if (slot === "mvp") card.setSelected(true);
-      body.add(card);
-      x += size.width + CARD.gap;
+      const level = relicProgression.getProgress(relic.id).level;
+      body.add(this.scene.add.text(cx, SD.groundY + 34, `Lv.${level}  ${relic.name}`, textStyle({ role: "emphasis", size: slot === "mvp" ? 24 : 19, color: slot === "mvp" ? COLOR.accentText : COLOR.ink })).setOrigin(0.5));
+      if (slot === "mvp") this.buildMvpLabel(body, cx, SD.groundY - size.height - 26);
+      x += size.width + SD.gap;
     });
+  }
+
+  /** "MVP!"는 승리 표제처럼 튀어 오르며 살짝 기울어져, 작은 글자여도 눈에 먼저 든다. */
+  private buildMvpLabel(body: Phaser.GameObjects.Container, x: number, y: number): void {
+    const label = this.scene.add.text(x, y, "MVP!", textStyle({ role: "display", size: 42, color: COLOR.accentText })).setOrigin(0.5).setAngle(-6);
+    label.setStroke("#3b2408", 10);
+    label.setShadow(0, 4, "#000000", 4, false, true);
+    label.setScale(0.5);
+    this.scene.tweens.add({ targets: label, scale: 1.18, duration: 260, ease: "Back.Out", delay: 120, onComplete: () => this.scene.tweens.add({ targets: label, scale: 1.04, duration: 140, ease: "Sine.Out" }) });
+    body.add(label);
   }
 
   /** RewardPopup과 같은 액자 하나로, 지금은 치즈케이크 한 종류만 보여 준다. */

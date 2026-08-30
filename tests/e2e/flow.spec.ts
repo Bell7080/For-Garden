@@ -141,16 +141,19 @@ test("일반 전투 결과의 기여도 세 분류를 확인하고 닫은 뒤 �
   await tap(page, BASE_WIDTH - 335, 1360); await tap(page, BASE_WIDTH - 335, 1360);
   await expect.poll(async () => (await battle(page))?.phase, { timeout: 60_000 }).not.toBe("fight");
   // 승리 결과는 StageCompletePopup(보상 팝업의 연장선)이다 — 화면 중심에 뜨는 "공격 · 방어 ·
-  // 회복" 버튼(로컬 (0,90))을 눌러 같은 popups 위에 기여도 그래프를 한 겹 더 연다.
+  // 회복" 버튼(로컬 (0,90))을 눌러 같은 popups 위에 기여도 그래프를 한 겹 더 연다. SD가
+  // 다 뜨기 전에 누르지 않도록 팝업이 실제로 열렸다는 디버그 플래그부터 기다린다.
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.rewardPopup)).toBe(true);
   await tap(page, BASE_WIDTH / 2, 1050);
   // 팝업 중앙 기준 세 탭의 넓은 입력면을 눌러 공격 → 방어 → 회복 전환을 시각 자료로 남긴다.
   for (const [name, x] of [["attack", 290], ["defense", 540], ["healing", 790]] as const) {
     await tap(page, x, 425); await page.waitForTimeout(100);
     await page.screenshot({ path: `test-results/${testInfo.project.name}-battle-result-contribution-${name}-1080x1920.png`, fullPage: true });
   }
-  // 공용 우하단 뒤로가기로 닫으면 뒤에 있던 StageCompletePopup으로 돌아간다 — 그 팝업은 화면
-  // 아무 곳(카드 자리 근처)을 눌러도 지도로 넘어간다.
-  await tap(page, 936, 1548); await tap(page, BASE_WIDTH / 2, 790);
+  // 판 우측 상단의 "돌아가기" 라벨 버튼으로 닫으면 뒤에 있던 StageCompletePopup으로 돌아가고
+  // 숨겨졌던 "공격 · 방어 · 회복" 버튼이 다시 보인다. 그 팝업은 화면 아무 곳(SD 자리 근처)을
+  // 눌러도 지도로 넘어간다.
+  await tap(page, 918, 340); await tap(page, BASE_WIDTH / 2, 790);
   await expect.poll(() => scene(page)).toBe("stageMap");
 });
 

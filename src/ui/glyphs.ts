@@ -31,7 +31,8 @@ export type GlyphName =
   | "costume"
   | "ferocity"
   | "edit"
-  | "bar-chart";
+  | "bar-chart"
+  | "arena-tier";
 
 function points(...pairs: number[]): Phaser.Geom.Point[] {
   const list: Phaser.Geom.Point[] = [];
@@ -55,6 +56,12 @@ export function drawGlyph(
   const r = size / 2;
   g.lineStyle(lineWidth ?? Math.max(2, size * 0.09), color, alpha);
   switch (name) {
+    case "arena-tier":
+      // 공용 각진 방패/계급선으로 티어를 표현해 각 씬이 배지를 다시 조립하지 않게 한다.
+      g.strokePoints(points(-r * 0.75, -r * 0.85, r * 0.75, -r * 0.85, r * 0.58, r * 0.38, 0, r * 0.9, -r * 0.58, r * 0.38), true);
+      g.lineBetween(-r * 0.38, -r * 0.2, r * 0.38, -r * 0.2);
+      g.lineBetween(-r * 0.25, r * 0.18, r * 0.25, r * 0.18);
+      break;
     case "bar-chart":
       // 서로 다른 높이의 세 막대와 바닥선만으로 작은 크기에서도 기여도 그래프를 읽게 한다.
       g.lineBetween(-r * 0.9, r * 0.82, r * 0.9, r * 0.82);

@@ -14,6 +14,7 @@ import { chipPoints, drawHairline, drawLayer, drawShapeEdge, drawVignette, HOLO,
 import { COLOR, textStyle } from "../ui/theme";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { gameApi } from "../api/FakeServer";
+import { loadPlayerProfileDisplay } from "../managers/PlayerProfileManager";
 import { bondDialogue } from "../data/bonds";
 import { PopupLayer } from "../ui/PopupLayer";
 import { IdleExcavationPopup } from "../ui/IdleExcavationPopup";
@@ -203,8 +204,12 @@ export class LobbyScene extends Phaser.Scene {
   /** TopBar가 건넨 공개 모델만 사용해 공용 레이어 기반 정보창을 연다. */
   private openPlayerProfile(profile: PlayerProfileDisplay): void {
     if (!this.popupLayer || this.playerProfilePopup) return;
-    this.playerProfilePopup = new PlayerProfilePopup(this, this.popupLayer, profile, () => { this.playerProfilePopup = undefined; });
-    this.playerProfilePopup.open();
+    // TopBar의 즉시 모델 대신 manager가 서버 확정 티어를 합친 뒤 연다. 실패하면 가짜 티어 없이 로컬 기록만 표시한다.
+    void loadPlayerProfileDisplay(session, gameApi).catch(() => profile).then((resolved) => {
+      if (!this.popupLayer || this.playerProfilePopup) return;
+      this.playerProfilePopup = new PlayerProfilePopup(this, this.popupLayer, resolved, () => { this.playerProfilePopup = undefined; });
+      this.playerProfilePopup.open();
+    });
   }
 
   /** 연타 중에는 같은 인스턴스의 open 가드가 기존 쪽지를 유지한다. */

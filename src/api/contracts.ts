@@ -11,6 +11,7 @@ import type { AdReward } from "../data/adRewards";
 import type { ItemCategory, ItemUseEffect } from "../data/items";
 import type { ExpeditionBossAction } from "../core/expeditionBoss";
 import type { PlayerResearchProgress } from "../state/session";
+import type { AsyncArenaProfileApi } from "./asyncArenaContracts";
 
 /** 정적 표시 메타데이터를 중복 전송하지 않고 서버 보유량과 인스턴스만 전달하는 인벤토리 조회 행이다. */
 export interface InventoryItemDto { id: string; definitionId: string; category: ItemCategory; quantity: number; rune?: RuneInstance; }
@@ -319,7 +320,7 @@ export interface SweepExpeditionRequest { requestId: string; }
 export interface SweepExpeditionResponse extends PlayerStateDto { weekKey: string; scoreGain: number; bestScore: number; cumulativeScore: number; granted: Record<string, number>; playsThisWeek: number; }
 
 /** 실제 HTTP API로 교체할 때도 씬이 의존할 단 하나의 통신 인터페이스다. */
-export interface GameApi {
+export interface GameApi extends AsyncArenaProfileApi {
   /** 서버 시각 기준의 우편 목록과 알림 집계를 조회한다. */
   getMails(): Promise<MailListResponse>;
   /** 지정한 우편 첨부물을 한 트랜잭션과 멱등 키로 수령한다. */

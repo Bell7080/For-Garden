@@ -4,6 +4,9 @@ import { playerProfileDisplay, profileAvatarContent } from "../../src/state/play
 import { validateEquippedProfileModifiers } from "../../src/managers/PlayerProfileManager";
 import { compactProfileText, PLAYER_PROFILE_LAYOUT } from "../../src/ui/playerProfileLayout";
 import { compactTopBarName, TOP_BAR_LAYOUT } from "../../src/ui/topBarLayout";
+import { highestClearedStage } from "../../src/core/stageProgress";
+import { STAGES } from "../../src/data/stages";
+import { loadPlayerProfileDisplay } from "../../src/managers/PlayerProfileManager";
 
 describe("player profile display", () => {
   it("공개 설정과 대표 렐릭만 표시 모델로 모은다", () => {
@@ -13,6 +16,22 @@ describe("player profile display", () => {
     expect(playerProfileDisplay(state)).toMatchObject({ displayName: "연구원", level: 7, experience: 45, experienceToNext: 180, displayId: "PUBLIC-072", representativeRelic: "렉시아" });
     // 표시 모델 계약에는 토큰이나 내부 계정 식별자를 추가할 수 없다.
     expect(Object.keys(playerProfileDisplay(state))).not.toContain("token");
+  });
+
+  it("Set 삽입 순서가 아니라 정적 정의 순서로 최고 스테이지를 고른다", () => {
+    const cleared = new Set([STAGES[8].id, STAGES[1].id, "removed-stage", STAGES[5].id]);
+    expect(highestClearedStage(STAGES, cleared)?.id).toBe(STAGES[8].id);
+    expect(highestClearedStage(STAGES, new Set())).toBeUndefined();
+  });
+
+  it("애착 초상과 역대 원정 기록을 공개하고 서버 티어가 없으면 항목을 숨긴다", async () => {
+    const state = createDefaultSession();
+    state.favorite = "rex"; state.cleared = new Set(["1-3", "1-1"]); state.expedition.allTimeBestScore = 4321; state.expedition.bestScore = 9999;
+    const hidden = await loadPlayerProfileDisplay(state, { getAsyncArenaServerState: async () => null });
+    expect(hidden.competitiveStats).toMatchObject({ favoriteRelic: { relicId: "rex", displayName: "렉시아", portraitAssetId: "lexia" }, highestStage: { stageId: "1-3" }, expedition: { label: "역대 최고", score: 4321 } });
+    expect(hidden.competitiveStats.arenaTier).toBeUndefined();
+    const ranked = await loadPlayerProfileDisplay(state, { getAsyncArenaServerState: async () => ({ seasonTierId: "amber-2", activeDefenseSnapshotId: null, weekly: { weekId: "w", score: 1, wins: 0, losses: 0, updatedAt: "now" }, dailyAttempts: { utcDate: "today", used: 0, limit: 5 }, seasonReward: { seasonId: "s", finalTier: null, rewards: [], claimStatus: "not_eligible" } }) });
+    expect(ranked.competitiveStats.arenaTier).toEqual({ tierId: "amber-2", displayName: "amber-2" });
   });
 
   it("획득한 공개 수식어만 중복 없이 장착 상한까지 허용한다", () => {

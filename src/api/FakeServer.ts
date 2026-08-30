@@ -903,6 +903,8 @@ export class FakeServer implements GameApi {
       Object.entries(this.state.relicProgress).map(([id, progress]) => [id, { ...progress, heartGemSlots: [...progress.heartGemSlots] as typeof progress.heartGemSlots }]),
     );
     return {
+      // 프로필 씬이 공식을 재계산하지 않도록 서버 역할의 확정 연구 진행을 그대로 복사한다.
+      playerResearch: { ...this.state.playerResearch },
       wallet: { ...this.state.wallet },
       gachaPityByGroup: Object.fromEntries(Object.entries(this.state.gachaPityByGroup).map(([id, pity]) => [id, { ...pity }])),
       ownedRelicIds: [...this.state.owned],

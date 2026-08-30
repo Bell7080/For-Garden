@@ -31,7 +31,24 @@ const STARTER_RELICS = ["anky", "rex", "spino", "luka", "dodo", "mette"];
 /** 보유 인원이 늘어나도 저장 검증 계약인 세 자리 기본 편성은 기존 조합으로 유지한다. */
 const STARTER_PARTY = ["anky", "rex", "spino"];
 
+/** 서버가 확정해 저장하고 프로필 UI가 그대로 표시하는 JSON 안전 플레이어 연구 진행이다. */
+export interface PlayerResearchProgress {
+  /** 계정 전체의 현재 연구 레벨이며 렐릭별 레벨과 구분한다. */
+  level: number;
+  /** 현재 연구 레벨 안에서 누적된 경험치다. */
+  experience: number;
+  /** 다음 연구 레벨에 도달하기 위해 현재 구간에서 요구되는 총 경험치다. */
+  experienceToNext: number;
+}
+
+/** 신규 계정과 구버전 저장 마이그레이션이 공유하는 명시적인 연구 진행 시작점이다. */
+export function createInitialPlayerResearchProgress(): PlayerResearchProgress {
+  return { level: 1, experience: 0, experienceToNext: 100 };
+}
+
 export interface Session {
+  /** 서버 응답으로 확정된 계정 전체 연구 진행이며 씬은 수치를 직접 계산하거나 변경하지 않는다. */
+  playerResearch: PlayerResearchProgress;
   /** 룬·지갑과 분리된 중첩 아이템. 0개 행은 저장하지 않는다. */
   itemInventory: ItemStack[];
   /** 서버 정산 전용 방치 발굴 상태다. 씬은 이 객체를 직접 변경하지 않는다. */
@@ -151,6 +168,8 @@ export interface ObservationRecord {
  * 계정 연동 시에도 이 형태를 업로드 모델로 오해하지 않고 SaveManager 경계에서만 사용한다.
  */
 export interface SaveData {
+  /** 서버 확정 연구 진행을 앱 재실행 뒤에도 동일하게 복원하는 JSON 안전 스냅샷이다. */
+  playerResearch: PlayerResearchProgress;
   /** 정적 아이템 ID와 양만 저장하는 JSON 안전 스택이다. */
   itemInventory: ItemStack[];
   /** 서버와 동기화할 수 있는 순수 JSON 발굴 상태다. */
@@ -201,6 +220,8 @@ export function createDefaultSession(): Session {
   // 순수 설정 팩토리는 지연 require 대신 정적 import로 의존 방향을 core→state 타입에만 제한한다.
   const settings = createDefaultSettings();
   return {
+    // 첫 서버 동기화 전에도 프로필이 명시적인 레벨 1 진행을 표시하도록 한다.
+    playerResearch: createInitialPlayerResearchProgress(),
     itemInventory: [{ itemId: "stamina-tonic", quantity: 3 }],
     // 서버 첫 조회가 현재 시각을 기준점으로 확정하며 기본 보관 시간은 4시간이다.
     idleExcavation: createIdleExcavationState(),

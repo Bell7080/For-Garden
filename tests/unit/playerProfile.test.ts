@@ -5,7 +5,9 @@ import { playerProfileDisplay, profileAvatarContent } from "../../src/state/play
 describe("player profile display", () => {
   it("공개 설정과 대표 렐릭만 표시 모델로 모은다", () => {
     const state = createDefaultSession(); state.settings.account.displayId = "PUBLIC-072"; state.favorite = "rex";
-    expect(playerProfileDisplay(state)).toMatchObject({ displayName: "연구원", level: 1, displayId: "PUBLIC-072", representativeRelic: "렉시아" });
+    // 프로필은 임시 상수가 아니라 서버 경계를 통해 세션에 확정된 연구 진행을 읽는다.
+    state.playerResearch = { level: 7, experience: 45, experienceToNext: 180 };
+    expect(playerProfileDisplay(state)).toMatchObject({ displayName: "연구원", level: 7, experience: 45, experienceToNext: 180, displayId: "PUBLIC-072", representativeRelic: "렉시아" });
     // 표시 모델 계약에는 토큰이나 내부 계정 식별자를 추가할 수 없다.
     expect(Object.keys(playerProfileDisplay(state))).not.toContain("token");
   });

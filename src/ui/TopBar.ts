@@ -5,11 +5,12 @@ import { session } from "../state/session";
 import { drawGlyph } from "./glyphs";
 import { formatCurrency } from "../core/formatCurrency";
 import type { CurrencyIconKey } from "./currencyIcons";
-import { chipPoints, drawGlassFade, drawHairline, drawLayer, HOLO } from "./holo";
+import { chipPoints, drawGlassFade, drawHairline, drawLayer, HoloBar, HOLO } from "./holo";
 import { addCurrencyChip, CURRENCY_CHIP } from "./CurrencyChip";
 import { COLOR, textStyle } from "./theme";
 import { playerProfileDisplay, profileAvatarContent, type PlayerProfileDisplay } from "../state/playerProfile";
 import { managerEvents } from "../managers/ManagerEvents";
+import { compactTopBarName, TOP_BAR_LAYOUT } from "./topBarLayout";
 
 /** 상단 줄에는 공개 표시 모델과 공개 동작만 들어오며 인증 비밀을 받을 자리가 없다. */
 export interface TopBarOptions { onSettings?: () => void; onProfile?: (profile: PlayerProfileDisplay) => void; currencies?: TopBarCurrencyContext; profile?: boolean }
@@ -69,13 +70,19 @@ const SLOT = CURRENCY_CHIP;
  * 가운데에 두되 왼쪽 프로필과 오른쪽 설정을 피해 아주 조금 오른쪽으로 민다. 정확히 절반에
  * 두면 프로필의 이름줄과 부딪힌다.
  */
-const CLUSTER_CENTER = 0.57;
+// 1080px에서 세 재화 칸의 왼쪽 끝을 415px에 두어, 최대 390px인 프로필과 25px 안전 간격을
+// 확보한다. 프로필을 억지로 줄이지 않고 묶음을 오른쪽으로 옮겨 SLOTS의 세 칸도 그대로 보존한다.
+const CLUSTER_CENTER = TOP_BAR_LAYOUT.clusterCenter;
 
 export class TopBar {
   private readonly slots: { slot: CurrencySlot; text: Phaser.GameObjects.Text }[] = [];
   private readonly unsubscribe: (() => void)[] = [];
   private profileName?: Phaser.GameObjects.Text;
   private profileDetail?: Phaser.GameObjects.Text;
+  private profileModifier?: Phaser.GameObjects.Text;
+  private profileExperience?: HoloBar;
+  /** 클릭과 manager 이벤트가 항상 같은 최신 공개 스냅샷을 보도록 TopBar가 모델을 소유한다. */
+  private profile?: PlayerProfileDisplay;
 
   constructor(scene: Phaser.Scene, y = 40, options: TopBarOptions = {}) {
     drawGlassFade(scene, BASE_WIDTH / 2, y + 30, BASE_WIDTH, 150, { topAlpha: 0.92, bottomAlpha: 0 });
@@ -122,6 +129,7 @@ export class TopBar {
 
   /** 왼쪽 위 플레이어 칩. 아바타가 없을 때만 표시 이름 머리글자를 넣는다. */
   private buildProfile(scene: Phaser.Scene, x: number, y: number, profile: PlayerProfileDisplay, onProfile?: (profile: PlayerProfileDisplay) => void): void {
+    this.profile = profile;
     const size = 84;
     const chip = scene.add.container(0, 0);
     chip.add(drawLayer(scene, x + size / 2, y + size / 2, chipPoints(size, size, {
@@ -130,15 +138,23 @@ export class TopBar {
     const avatar = profileAvatarContent(profile, (key) => scene.textures.exists(key));
     if (avatar.assetKey) chip.add(scene.add.image(x + size / 2, y + size / 2, avatar.assetKey).setDisplaySize(size - 10, size - 10));
     else chip.add(scene.add.text(x + size / 2, y + size / 2, avatar.fallback, textStyle({ role: "display", size: 40, color: COLOR.accentText })).setOrigin(0.5));
-    this.profileName = scene.add.text(x + size + 16, y + 14, profile.displayName, textStyle({ role: "emphasis", size: 26 })).setOrigin(0, 0);
-    this.profileDetail = scene.add.text(x + size + 16, y + 48, `LV.${profile.level}  ${profile.displayId}`, textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0, 0);
-    chip.add([this.profileName, this.profileDetail]);
+    const contentLeft = x + size + TOP_BAR_LAYOUT.profile.contentGap;
+    const contentRight = TOP_BAR_LAYOUT.profile.maxRight;
+    // 첫 줄은 요청된 이름과 레벨만 양끝에 맞춘다. 공개 ID는 상세 팝업에서만 보여 정보 위계를 지킨다.
+    this.profileName = scene.add.text(contentLeft, y + 11, compactTopBarName(profile.displayName), textStyle({ role: "emphasis", size: 24 })).setOrigin(0, 0);
+    this.profileDetail = scene.add.text(contentRight, y + 13, `LV.${profile.level}`, textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(1, 0);
+    // 가장자리 바에 별도 배경 판을 더하지 않고 공용 HoloBar의 얇은 홈과 채움만 둔다.
+    this.profileExperience = new HoloBar(scene, (contentLeft + contentRight) / 2, y + 51, contentRight - contentLeft, 9, { color: COLOR.accent, trackAlpha: 0.62 }).addTo(chip);
+    this.profileModifier = scene.add.text(contentLeft, y + 63, "", textStyle({ role: "body", size: 16, color: COLOR.accentText })).setOrigin(0, 0);
+    chip.add([this.profileName, this.profileDetail, this.profileModifier]);
+    this.refreshProfile(profile);
     if (onProfile) {
       // 얼굴과 두 텍스트를 하나의 넓은 입력면으로 묶고 기존 홀로그램 규칙대로 눌렀을 때 확대한다.
       const hit = scene.add.rectangle(176, y + size / 2, 344, 96, 0xffffff, 0).setInteractive({ useHandCursor: true });
       hit.on("pointerdown", () => chip.setScale(1.07));
       hit.on("pointerout", () => chip.setScale(1));
-      hit.on("pointerup", () => { chip.setScale(1); onProfile(profile); });
+      // 생성 시 profile 인자를 캡처하지 않고 이벤트로 교체된 최신 멤버 모델을 넘긴다.
+      hit.on("pointerup", () => { chip.setScale(1); if (this.profile) onProfile(this.profile); });
       chip.add(hit);
     }
   }
@@ -151,6 +167,13 @@ export class TopBar {
     setDebugProgress(session.wallet, session.owned);
   }
 
-  /** 공개 프로필 이벤트는 인증 DTO 없이 화면에 허용된 이름·레벨·공개 ID만 교체한다. */
-  private refreshProfile(profile: PlayerProfileDisplay): void { this.profileName?.setText(profile.displayName); this.profileDetail?.setText(`LV.${profile.level}  ${profile.displayId}`); }
+  /** 공개 이벤트 한 번으로 최신 모델과 상단의 이름·레벨·경험치·대표 수식어를 함께 교체한다. */
+  private refreshProfile(profile: PlayerProfileDisplay): void {
+    this.profile = profile;
+    this.profileName?.setText(compactTopBarName(profile.displayName));
+    this.profileDetail?.setText(`LV.${Math.max(1, profile.level).toLocaleString()}`);
+    this.profileExperience?.setValue(profile.experience / Math.max(1, profile.experienceToNext));
+    // 상단에는 대표 하나만 노출하고 전체 장착 목록은 PlayerProfilePopup에 남겨 재화와 충돌하지 않는다.
+    this.profileModifier?.setText(profile.equippedModifiers[0] ? `〈${profile.equippedModifiers[0].displayName}〉` : "");
+  }
 }

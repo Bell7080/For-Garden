@@ -3,6 +3,7 @@ import { createDefaultSession } from "../../src/state/session";
 import { playerProfileDisplay, profileAvatarContent } from "../../src/state/playerProfile";
 import { validateEquippedProfileModifiers } from "../../src/managers/PlayerProfileManager";
 import { compactProfileText, PLAYER_PROFILE_LAYOUT } from "../../src/ui/playerProfileLayout";
+import { compactTopBarName, TOP_BAR_LAYOUT } from "../../src/ui/topBarLayout";
 
 describe("player profile display", () => {
   it("공개 설정과 대표 렐릭만 표시 모델로 모은다", () => {
@@ -31,6 +32,13 @@ describe("player profile display", () => {
     const chipsWidth = PLAYER_PROFILE_LAYOUT.modifiers.width * 3 + PLAYER_PROFILE_LAYOUT.modifiers.gap * 2;
     expect(chipsWidth).toBeLessThan(PLAYER_PROFILE_LAYOUT.popup.width - 100);
     expect(PLAYER_PROFILE_LAYOUT.header.bottom).toBeLessThan(PLAYER_PROFILE_LAYOUT.rows.firstY);
+  });
+
+  it("1080px 상단에서 긴 이름을 줄이고 프로필과 세 재화 칸 사이를 띄운다", () => {
+    // Phaser bounds 없이도 168px 세 칸과 24px 간격의 실제 왼쪽 끝을 계산해 회귀를 막는다.
+    const currencyLeft = 1080 * TOP_BAR_LAYOUT.clusterCenter - (168 * 3 + 24 * 2) / 2;
+    expect(currencyLeft - TOP_BAR_LAYOUT.profile.maxRight).toBeGreaterThanOrEqual(24);
+    expect(compactTopBarName("아주긴플레이어이름입니다")).toBe("아주긴플레이어이름…");
   });
 
   it("아바타가 없을 때만 유니코드 첫 글자를 fallback으로 쓴다", () => {

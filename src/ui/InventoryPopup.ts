@@ -194,6 +194,8 @@ export class InventoryPopup {
   private select(item: InventoryDisplayItem, anchor: { x: number; y: number }): void {
     if (item.kind === "rune") { openRuneInfoPopup(this.scene, this.popups, { runeInstanceId: item.rune.instanceId, anchor, api: this.api }); return; }
     if (item.category !== "consumable") { this.popups.open({ width: 440, height: 280, title: this.label(item), anchor, dim: true }, (body) => body.add(this.scene.add.text(0, 0, `${this.description(item)}\n\n보유 ${item.quantity}`, textStyle({ role: "body", size: 22, align: "center", wrap: 340 })).setOrigin(0.5))); return; }
-    this.popups.confirm({ title: this.label(item), message: "아이템을 1개 사용하시겠습니까?", confirmLabel: "사용" }, () => { void this.inventory.useConsumable(this.api, item.id).then((result) => { this.onWalletChanged?.(); this.popups.open({ width: 440, height: 250, title: "사용 완료", dim: true }, (body) => body.add(this.scene.add.text(0, 0, `스테미나 +${result.appliedAmount}`, textStyle({ role: "emphasis", size: 26, color: COLOR.accentText })).setOrigin(0.5))); if (this.view) this.render(this.view); }); });
+    // 지갑 갱신은 InventoryManager.useConsumable이 이미 managerEvents로 발행하므로(TopBar가 구독)
+    // 여기서 다시 알리지 않는다.
+    this.popups.confirm({ title: this.label(item), message: "아이템을 1개 사용하시겠습니까?", confirmLabel: "사용" }, () => { void this.inventory.useConsumable(this.api, item.id).then((result) => { this.popups.open({ width: 440, height: 250, title: "사용 완료", dim: true }, (body) => body.add(this.scene.add.text(0, 0, `스테미나 +${result.appliedAmount}`, textStyle({ role: "emphasis", size: 26, color: COLOR.accentText })).setOrigin(0.5))); if (this.view) this.render(this.view); }); });
   }
 }

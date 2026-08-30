@@ -372,8 +372,8 @@ export class BattleScene extends Phaser.Scene {
   }
 
   /** 같은 PopupLayer 위에 읽기 전용 판을 쌓아 닫은 뒤 기존 결과 조작이 그대로 남게 한다. */
-  private openContributionPopup(popups = new PopupLayer(this, 2200)): void {
-    if (this.contributionResult) new BattleContributionPopup(this, popups).open(this.contributionResult);
+  private openContributionPopup(popups = new PopupLayer(this, 2200), onClosed?: () => void): void {
+    if (this.contributionResult) new BattleContributionPopup(this, popups).open(this.contributionResult, onClosed);
   }
 
   /**
@@ -1105,7 +1105,7 @@ export class BattleScene extends Phaser.Scene {
         cheesecakeEarned: result.cheesecakeEarned,
         firstClear: result.firstClear,
         fighters,
-        onOpenContribution: () => this.openContributionPopup(popups),
+        onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),
         onConfirm: () => this.scene.start("stageMap"),
       });
     } catch {

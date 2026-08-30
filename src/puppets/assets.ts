@@ -75,6 +75,14 @@ export interface PuppetAsset {
    * 시작해 스크린샷으로 확인하며 늘린다.
    */
   cardHeadEscape?: { left?: number; right?: number };
+  /**
+   * 카드에서만 그림을 살짝 내리는 보정(카드 픽셀, +는 아래). 0이 기준이다.
+   *
+   * 모든 카드가 공유하는 상단 여백(`HEAD_TIP_MARGIN_RATIO`, anchors.ts)만으로는 뭉툭한
+   * 장식(토리카의 뿔)이 그리드 허용 범위를 여전히 넘어설 때만 쓴다. `portraitOffsetY`와
+   * 달리 전신 정보창에는 영향을 주지 않는 카드 전용 값이다.
+   */
+  cardHeadDropY?: number;
 }
 
 const base = import.meta.env.BASE_URL;
@@ -86,6 +94,8 @@ export const TORIKA_ASSET: PuppetAsset = {
   imageHeight: 1492,
   content: { left: 95, top: 69, right: 894, bottom: 1419 },
   cardZoom: 0.82,
+  // 뿔 끝이 뭉툭해 공통 상단 여백만으로는 그리드 카드 위로 살짝 넘쳐 보인다.
+  cardHeadDropY: 14,
 };
 
 /**

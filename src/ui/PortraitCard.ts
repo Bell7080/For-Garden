@@ -377,7 +377,7 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     // 전신 정보창의 세로 보정(`portraitOffsetY`)은 코어 관절 기준이라 **위로** 올리는 값이 있다.
     // 카드에서 그대로 올리면 원화의 정수리가 머리 구멍 위로 넘어가 구멍의 윗변에 잘린다.
     // 카드는 머리 끝을 구멍 위에 맞춰 세우므로 위로 올리는 보정만 버리고 내리는 보정은 받는다.
-    const originY = -height / 2 - this.overhang - card.cropY * card.scale + Math.max(0, asset.portraitOffsetY ?? 0);
+    const originY = -height / 2 - this.overhang - card.cropY * card.scale + Math.max(0, asset.portraitOffsetY ?? 0) + (asset.cardHeadDropY ?? 0);
 
     this.syncMask();
     const shadow = this.scene.add

@@ -4,6 +4,7 @@ import { GameApiError } from "../../src/api/contracts";
 import { InventoryManager, inventoryGridPosition, inventoryScrollMetrics } from "../../src/managers/InventoryManager";
 import { SaveManager } from "../../src/state/SaveManager";
 import { createDefaultSession } from "../../src/state/session";
+import { INVENTORY_TAB_LAYOUT, inventoryCategoryTabPosition } from "../../src/ui/inventoryTabs";
 
 /** 신규 가방의 저장/API/표시/스크롤 불변식을 한 파일에서 회귀 검증한다. */
 describe("inventory", () => {
@@ -22,6 +23,15 @@ describe("inventory", () => {
     expect(inventoryScrollMetrics(0)).toEqual({ contentHeight: 0, minY: 0 });
     expect(inventoryScrollMetrics(5)).toEqual({ contentHeight: 630, minY: 0 });
     expect(inventoryScrollMetrics(12)).toEqual({ contentHeight: 1260, minY: -230 });
+  });
+
+  it("네 카테고리 탭의 폭과 간격을 대칭 배치표로 고정한다", () => {
+    // 인접 중심 차는 면 너비와 간격의 합이며 양끝은 팝업 원점에서 같은 거리여야 한다.
+    const positions = Array.from({ length: INVENTORY_TAB_LAYOUT.count }, (_, index) => inventoryCategoryTabPosition(index));
+    expect(positions.map(({ x }) => x)).toEqual([-276, -92, 92, 276]);
+    expect(positions.every(({ y }) => y === INVENTORY_TAB_LAYOUT.centerY)).toBe(true);
+    expect(positions[1].x - positions[0].x).toBe(INVENTORY_TAB_LAYOUT.width + INVENTORY_TAB_LAYOUT.gap);
+    expect(positions[0].x).toBe(-positions[positions.length - 1].x);
   });
 
   it("0·소수·초과 사용량을 거부하고 스테미나 상한까지만 회복한다", async () => {

@@ -73,6 +73,8 @@ export interface DebugState {
   party?: { autoButton: { x: number; y: number }; visibleAffinityDirections: number };
   /** 설정 왕복 E2E가 상점의 사용자 표시 섹션까지 복원됐는지 확인하는 최소 상태다. */
   shopSection?: "premium";
+  /** 가방 탭 면 입력 뒤 실제로 다시 그려진 카테고리를 Canvas E2E가 확인한다. */
+  inventoryCategory?: "rune" | "currency" | "consumable" | "material";
   /** 도감 스크롤의 표시 범위와 현재 제한값. Canvas E2E가 경계·입력 분리를 검증하는 용도다. */
   relicScroll?: { y: number; minY: number; maxY: number; enabled: boolean; viewportTop: number; viewportBottom: number };
   /** 노드 편성판의 안전 영역·꼬리 방향·적 입력 중심만 노출하는 모바일 시각 회귀 계약이다. */
@@ -99,6 +101,11 @@ export function setDebugScene(scene: string, screenTitle?: string): void {
 
 export function setDebugReady(ready: boolean): void {
   ensure().ready = ready;
+}
+
+/** 비동기 가방 조회와 탭 재구성이 끝난 시점의 사용자 표시 상태만 공개한다. */
+export function setDebugInventoryCategory(category: DebugState["inventoryCategory"]): void {
+  ensure().inventoryCategory = category;
 }
 
 export function setDebugBattle(battle: DebugBattle | undefined): void {

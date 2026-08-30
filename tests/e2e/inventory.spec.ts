@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { startAfterOpening } from "./openingSave";
 import { inventoryCategoryTabPosition } from "../../src/ui/inventoryTabs";
+import { createRuneInstance, type RuneStatKey } from "../../src/core/runes";
 
 const WIDTH = 1080; const HEIGHT = 1920;
 
@@ -18,6 +19,13 @@ test("가방은 로비를 유지하고 카테고리 탭과 많은 항목 스크�
   await startAfterOpening(page, (state) => {
     // 저장 검증을 통과하는 실제 두 스택으로 카테고리 전환과 목록 행을 준비한다.
     state.itemInventory = [{ itemId: "stamina-tonic", quantity: 10 }, { itemId: "rune-dust", quantity: 500 }];
+    // 서로 다른 등급과 조각 위치를 넣어 가방이 일반 하트 glyph가 아닌 개별 WebP를 고르는지 고정한다.
+    const values = Object.fromEntries(["hp", "atk", "ap", "def", "res", "moveSpeed", "attackSpeed", "lifeSteal", "critChance", "critDamage", "ferocityGain", "energyGain"].map((key) => [key, 10])) as Record<RuneStatKey, number>;
+    state.runeInventory = [
+      createRuneInstance({ instanceId: "bag-uncommon-0", baseName: "초록 조각", rarity: "uncommon", part: 0, statValues: values, random: () => 0 }),
+      createRuneInstance({ instanceId: "bag-rare-1", baseName: "푸른 조각", rarity: "rare", part: 1, statValues: values, random: () => 0 }),
+      createRuneInstance({ instanceId: "bag-legendary-2", baseName: "붉은 조각", rarity: "legendary", part: 2, statValues: values, random: () => 0 }),
+    ];
   });
   await tap(page, WIDTH / 2, HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
@@ -26,6 +34,8 @@ test("가방은 로비를 유지하고 카테고리 탭과 많은 항목 스크�
   expect(await page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   // 팝업 원점에 탭 로컬 중심을 더해 글자가 아닌 네 탭 면의 정중앙을 차례로 누른다.
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.inventoryCategory)).toBe("rune");
+  // Phaser Canvas의 DOM에는 이미지 노드가 없으므로 렌더가 기록한 실제 texture key를 검증한다.
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.inventoryTextureKeys)).toEqual(["rune-uncommon-0", "rune-rare-1", "rune-legendary-2"]);
   for (const index of [1, 2, 3, 0]) {
     const position = inventoryCategoryTabPosition(index);
     await tap(page, WIDTH / 2 + position.x, HEIGHT / 2 + position.y);

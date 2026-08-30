@@ -5,6 +5,7 @@ import { InventoryManager, inventoryGridPosition, inventoryScrollMetrics } from 
 import { SaveManager } from "../../src/state/SaveManager";
 import { createDefaultSession } from "../../src/state/session";
 import { INVENTORY_TAB_LAYOUT, inventoryCategoryTabPosition } from "../../src/ui/inventoryTabs";
+import { createRuneInstance, type RuneStatKey } from "../../src/core/runes";
 
 /** 신규 가방의 저장/API/표시/스크롤 불변식을 한 파일에서 회귀 검증한다. */
 describe("inventory", () => {
@@ -48,5 +49,16 @@ describe("inventory", () => {
     expect(inventory.list("currency").find(({ id }) => id === "gold")?.quantity).toBe(state.wallet.gold);
     expect(inventory.list("consumable")).toHaveLength(1); expect(inventory.list("material")).toHaveLength(0);
     expect(inventoryScrollMetrics(4).minY).toBe(0); expect(inventoryScrollMetrics(20)).toEqual({ contentHeight: 2100, minY: -1070 });
+  });
+
+  it("룬 표시 모델이 인스턴스의 등급·부위·이름을 그대로 보존한다", () => {
+    const state = createDefaultSession();
+    // 실제 생성기를 통과한 인스턴스로 표시 모델이 정적 정의값을 덮어쓰지 않는지 확인한다.
+    const values = Object.fromEntries(["hp", "atk", "ap", "def", "res", "moveSpeed", "attackSpeed", "lifeSteal", "critChance", "critDamage", "ferocityGain", "energyGain"].map((key) => [key, 10])) as Record<RuneStatKey, number>;
+    const rune = { ...createRuneInstance({ instanceId: "inventory-epic-part-2", baseName: "황혼의 파편", rarity: "epic", part: 2, statValues: values, random: () => 0 }), customName: "저녁별" };
+    state.runeInventory = [rune];
+    const displayed = new InventoryManager(state).list("rune")[0];
+    expect(displayed.kind).toBe("rune");
+    if (displayed.kind === "rune") expect(displayed.rune).toMatchObject({ rarity: "epic", part: 2, baseName: "황혼의 파편", customName: "저녁별" });
   });
 });

@@ -9,7 +9,9 @@ export type ItemUseEffect =
 /** 아이콘은 기존 glyph 또는 구운 재화 이미지 키를 가리키며 임의 SVG를 만들지 않는다. */
 export type ItemIcon =
   | { readonly kind: "glyph"; readonly key: "scroll" | "heart" }
-  | { readonly kind: "currency"; readonly key: WalletItemKey };
+  | { readonly kind: "currency"; readonly key: WalletItemKey }
+  /** 소비품·재료가 구운 전용 이미지를 얻을 때 쓰며, 로드 실패 때만 기존 glyph로 돌아간다. */
+  | { readonly kind: "asset"; readonly key: string; readonly fallback: "scroll" | "heart" };
 
 /** 지갑에서만 소유량을 유지하는 재화 키다. */
 export type WalletItemKey = "fossil" | "amber" | "gems" | "gold" | "stamina" | "dnaFragments" | "cheesecake";

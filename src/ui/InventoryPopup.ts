@@ -1,14 +1,16 @@
 import Phaser from "phaser";
 import type { GameApi, InventoryItemDto } from "../api/contracts";
 import type { ItemCategory } from "../data/items";
-import { setDebugInventoryCategory } from "../debug";
+import { setDebugInventoryCategory, setDebugInventoryTextureKeys } from "../debug";
 import { InventoryManager, inventoryGridPosition, inventoryScrollMetrics } from "../managers/InventoryManager";
 import { session } from "../state/session";
 import { drawGlyph } from "./glyphs";
 import { chipPoints, drawHairline, drawInnerVignette, drawLayer, drawShapeOutline } from "./holo";
 import { INVENTORY_TAB_LAYOUT, inventoryCategoryTabPosition } from "./inventoryTabs";
 import { POPUP_TITLE_SIZE, PopupLayer } from "./PopupLayer";
-import { openRuneInfoPopup } from "./RunePopup";
+import { equippedRelicName, openRuneInfoPopup } from "./RunePopup";
+import { RUNE_PART_LABELS, RUNE_RARITY_LABELS } from "../core/runes";
+import { addRuneFrame, runeTexture, RUNE_ACCENT } from "./runeIcons";
 import { COLOR, textStyle } from "./theme";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 
@@ -55,6 +57,9 @@ export class InventoryPopup {
     body.removeAll(true);
     // Canvas DOM만 보는 E2E에는 비동기 조회 완료와 실제 선택 탭을 최소 디버그 상태로 알린다.
     setDebugInventoryCategory(this.category);
+    // 매 렌더마다 비워 실제로 현재 탭에 놓인 이미지 키만 E2E에 남긴다.
+    const textureKeys: string[] = [];
+    setDebugInventoryTextureKeys(textureKeys);
     const visible = this.items.filter(({ category }) => category === this.category);
     // 첫 카드가 큰 작업판 제목의 세로 영역을 침범하지 않도록 기존 목록을 50px 내린다.
     // 첫 카드의 윗변을 마스크 윗변에 맞춰 아이콘/액자가 절반 잘리지 않게 한다.
@@ -63,7 +68,8 @@ export class InventoryPopup {
     // 입력면과 마스크는 같은 팝업 로컬 사각형에서 만들어 좌표계 불일치를 차단한다.
     this.maskShape = this.scene.add.rectangle((this.body?.x ?? 0) + VIEWPORT.x, (this.body?.y ?? 0) + VIEWPORT.y, VIEWPORT.width, VIEWPORT.height, 0xffffff).setVisible(false);
     this.geometryMask = this.maskShape.createGeometryMask(); content.setMask(this.geometryMask); body.add(content);
-    visible.forEach((item, index) => this.addCard(content, item, index));
+    visible.forEach((item, index) => this.addCard(content, item, index, textureKeys));
+    setDebugInventoryTextureKeys(textureKeys);
     const metrics = inventoryScrollMetrics(visible.length); let offset = 0; let dragY = 0;
     const move = (delta: number): void => { offset = Phaser.Math.Clamp(offset + delta, metrics.minY, 0); content.y = contentStartY + offset; };
     const hit = this.scene.add.rectangle(VIEWPORT.x, VIEWPORT.y, VIEWPORT.width, VIEWPORT.height, 0xffffff, 0).setInteractive({ draggable: true, useHandCursor: true });
@@ -111,23 +117,40 @@ export class InventoryPopup {
   }
 
   /** 획득 팝업처럼 액자 우하단에 보유량을 겹쳐 한 그림과 한 수로 읽히게 한다. */
-  private addCard(content: Phaser.GameObjects.Container, item: InventoryItemDto, index: number): void {
+  private addCard(content: Phaser.GameObjects.Container, item: InventoryItemDto, index: number, textureKeys: string[]): void {
     const { x, y } = inventoryGridPosition(index);
     const shape = chipPoints(320, 180, { bevel: { topLeft: 34, topRight: 0, bottomRight: 34, bottomLeft: 0 } });
     const card = this.scene.add.container(x, y); card.add(drawLayer(this.scene, 0, 0, shape, { fill: 0x151a21, alpha: 0.96, edge: COLOR.accent, edgeAlpha: 0.35 }));
-    const frame = chipPoints(102, 102, { bevel: { topLeft: 18, topRight: 0, bottomRight: 18, bottomLeft: 0 } });
-    card.add(drawLayer(this.scene, -92, -12, frame, { fill: 0x24282e, alpha: 1 })); card.add(drawShapeOutline(this.scene, -92, -12, frame, { color: COLOR.accent, alpha: 0.7 })); card.add(drawInnerVignette(this.scene, -92, -12, frame));
-    // 정적 정의의 icon 판별값만 사용해 재화 WebP와 전용 glyph가 같은 액자 안에 놓인다.
-    if (item.definition.icon.kind === "currency") card.add(this.scene.add.image(-92, -12, CURRENCY_ICON_BY_WALLET[item.definition.icon.key]).setDisplaySize(70, 70));
-    else card.add(drawGlyph(this.scene, item.definition.icon.key, -92, -12, 48, COLOR.accent));
-    card.add(this.scene.add.text(-42, -48, this.label(item), textStyle({ role: "display", size: 22 })).setOrigin(0, 0));
+    if (item.rune) {
+      // 룬은 일반 정의 아이콘보다 먼저 처리해 세공 화면과 동일한 등급 액자·비네팅·조각을 쓴다.
+      card.add(addRuneFrame(this.scene, -92, -12, 102, item.rune.rarity, item.rune.part));
+      textureKeys.push(runeTexture(item.rune.rarity, item.rune.part));
+    } else {
+      const frame = chipPoints(102, 102, { bevel: { topLeft: 18, topRight: 0, bottomRight: 18, bottomLeft: 0 } });
+      card.add(drawLayer(this.scene, -92, -12, frame, { fill: 0x24282e, alpha: 1 })); card.add(drawShapeOutline(this.scene, -92, -12, frame, { color: COLOR.accent, alpha: 0.7 })); card.add(drawInnerVignette(this.scene, -92, -12, frame));
+      // 전용 asset은 로드된 경우에만 우선하며, 없는 빌드에서는 정의가 지정한 glyph를 유지한다.
+      const icon = item.definition.icon;
+      if (icon.kind === "currency") {
+        const key = CURRENCY_ICON_BY_WALLET[icon.key]; textureKeys.push(key);
+        card.add(this.scene.add.image(-92, -12, key).setDisplaySize(70, 70));
+      } else if (icon.kind === "asset" && this.scene.textures.exists(icon.key)) {
+        textureKeys.push(icon.key); card.add(this.scene.add.image(-92, -12, icon.key).setDisplaySize(70, 70));
+      } else card.add(drawGlyph(this.scene, icon.kind === "asset" ? icon.fallback : icon.key, -92, -12, 48, COLOR.accent));
+    }
+    const accent = item.rune ? RUNE_ACCENT[item.rune.rarity] : undefined;
+    card.add(this.scene.add.text(-42, -48, this.label(item), textStyle({ role: "display", size: 22, color: accent ? `#${accent.toString(16).padStart(6, "0")}` : COLOR.ink })).setOrigin(0, 0));
     card.add(this.scene.add.text(-42, -10, this.description(item), textStyle({ role: "body", size: 17, color: COLOR.inkDim, wrap: 170 })).setOrigin(0, 0));
     card.add(this.scene.add.text(-43, 58, String(item.quantity), textStyle({ role: "emphasis", size: 24 })).setOrigin(1, 1).setStroke("#05070a", 5));
     const hit = this.scene.add.rectangle(0, 0, 320, 180, 0xffffff, 0).setInteractive({ useHandCursor: true }); hit.on("pointerup", () => this.select(item, { x: 540 + content.x + x, y: 960 + content.y + y })); card.add(hit); content.add(card);
   }
 
   private label(item: InventoryItemDto): string { return item.rune?.customName ?? item.rune?.baseName ?? item.definition.name; }
-  private description(item: InventoryItemDto): string { return item.definition.description; }
+  private description(item: InventoryItemDto): string {
+    if (!item.rune) return item.definition.description;
+    // 카드에는 선택에 필요한 등급·부위·장착 상태만 두고 정적 개발 설명은 반복하지 않는다.
+    const equipped = equippedRelicName(item.rune.instanceId);
+    return `${RUNE_RARITY_LABELS[item.rune.rarity]} · ${RUNE_PART_LABELS[item.rune.part]}${equipped ? `\n장착 · ${equipped}` : ""}`;
+  }
 
   /** 룬은 기존 정보창, 소비품은 확인 후 서버 결과, 재화·재료는 읽기 전용 상세로 연결한다. */
   private select(item: InventoryItemDto, anchor: { x: number; y: number }): void {

@@ -423,4 +423,24 @@ export interface StageDef {
   enemyLevel: number;
   /** 최초/반복 클리어마다 지급할 치즈케이크 수량이며 씬은 이 값을 재정의하지 않는다. */
   rewards: { firstClearCheesecake: number; repeatClearCheesecake: number };
+  /** 본편에서 이 스테이지가 속한 챕터 번호다. 이벤트 스테이지에는 없을 수 있다. */
+  chapter?: number;
+  /** 지도에 표시할 챕터 내부의 1부터 시작하는 진행 순서다. */
+  chapterOrder?: number;
+  /** 해금에 필요한 선행 스테이지 ID다. 없으면 캠페인의 최초 진입점이다. */
+  prerequisiteStageId?: string;
+}
+
+/** 지도 한 화면을 구성하고 챕터 선택 잠금을 판정하는 본편 챕터 메타데이터다. */
+export interface ChapterDef {
+  /** 저장과 UI 전환에서 사용하는 안정적인 챕터 번호다. */
+  id: number;
+  /** 지도 상단에 표시하는 세계관 내 구역명이다. */
+  title: string;
+  /** 구역의 위치를 짧게 설명하는 지도 부제다. */
+  subtitle: string;
+  /** 챕터 입장에 필요한 이전 챕터 마지막 스테이지다. 첫 챕터에는 없다. */
+  prerequisiteStageId?: string;
+  /** 이 챕터에 속한 스테이지를 진행 순서대로 보관한다. */
+  stages: readonly StageDef[];
 }

@@ -2,7 +2,8 @@ import Phaser from "phaser";
 import { BASE_WIDTH, BASE_HEIGHT } from "../config/gameConfig";
 import type { StageDef } from "../core/types";
 import { setDebugScene } from "../debug";
-import { STAGES, getStageEnemies } from "../data/stages";
+import { CHAPTERS, STAGES, getStageEnemies } from "../data/stages";
+import { latestUnlockedStage } from "../core/stageProgress";
 import { CharacterInfoManager } from "../managers/CharacterInfoManager";
 import { isStageUnlocked, session } from "../state/session";
 import { Button } from "../ui/Button";
@@ -12,6 +13,7 @@ import { COLOR, textStyle } from "../ui/theme";
 import { BACKGROUND } from "../ui/backgrounds";
 import { NodeEnemyPreview } from "../ui/NodeEnemyPreview";
 import { isEnemyPreviewNodeVisible } from "../ui/nodeEnemyPreviewLayout";
+import { stageChapterNavigationLayout } from "../ui/stageChapterLayout";
 
 /** 지도가 보이는 세로 구간. 위쪽 제목과 아래쪽 버튼을 침범하지 않는다. */
 const WINDOW = { top: 500, bottom: 1560 } as const;
@@ -37,6 +39,12 @@ export class StageMapScene extends Phaser.Scene {
   private nodes = new Map<string, { ring: Phaser.GameObjects.Arc; label: Phaser.GameObjects.Text }>();
   private selected!: string;
   private sortieButton!: Button;
+  /** 다시 그릴 때도 현재 보고 있는 구역을 잃지 않는 명시적 챕터 번호다. */
+  private currentChapter = 1;
+  private chapterTitle!: Phaser.GameObjects.Text;
+  private chapterSubtitle!: Phaser.GameObjects.Text;
+  private previousChapterButton!: Button;
+  private nextChapterButton!: Button;
 
   /** 노드 편성의 렌더와 비동기 SD 수명은 공용 프리팹이 소유한다. */
   private enemyPreview!: NodeEnemyPreview;
@@ -63,13 +71,12 @@ export class StageMapScene extends Phaser.Scene {
     // 이 위에 얹혀 눌리지 않는다(CHROME_DEPTH).
     drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { depth: 40, strength: 0.5 });
 
-    this.add.text(cx, 140, "제 1 구역", textStyle({ role: "display", size: 60 })).setOrigin(0.5).setDepth(CHROME_DEPTH);
-    this.add
-      .text(cx, 202, "격리 구역 — 이터널 시티 외곽", textStyle({ role: "body", size: 28, color: COLOR.inkDim }))
+    this.chapterTitle = this.add.text(cx, 140, "", textStyle({ role: "display", size: 60 })).setOrigin(0.5).setDepth(CHROME_DEPTH);
+    this.chapterSubtitle = this.add
+      .text(cx, 202, "", textStyle({ role: "body", size: 28, color: COLOR.inkDim }))
       .setOrigin(0.5)
       .setDepth(CHROME_DEPTH);
 
-    this.buildMap();
     this.enemyPreview = new NodeEnemyPreview(this, { title: "", level: 1, enemies: [], top: WINDOW.top - 40, bottom: WINDOW.bottom + 40, onEnemyClick: () => undefined });
 
     this.sortieButton = new Button(this, cx, BASE_HEIGHT - 180, {
@@ -86,24 +93,56 @@ export class StageMapScene extends Phaser.Scene {
       },
     });
     this.sortieButton.setDepth(CHROME_DEPTH);
+    const navigation = stageChapterNavigationLayout(BASE_WIDTH, BASE_HEIGHT);
+    this.previousChapterButton = new Button(this, navigation.previous.x, navigation.previous.y, {
+      width: navigation.previous.width, height: navigation.previous.height, label: "이전 구역", fontSize: 28,
+      onClick: () => this.showChapter(this.currentChapter - 1),
+    }).setDepth(CHROME_DEPTH);
+    this.nextChapterButton = new Button(this, navigation.next.x, navigation.next.y, {
+      width: navigation.next.width, height: navigation.next.height, label: "다음 구역", fontSize: 28,
+      onClick: () => this.showChapter(this.currentChapter + 1),
+    }).setDepth(CHROME_DEPTH);
     addBackButton(this, () => this.scene.start("lobby")).setDepth(CHROME_DEPTH);
 
     this.info = new CharacterInfoManager(this, 1001, "enemy");
     // 들어오면 가장 최근에 열린 스테이지로 올라가 그 스테이지를 고른 상태로 시작한다.
-    this.select(this.latestUnlocked(), true);
+    const latest = this.latestUnlocked();
+    this.currentChapter = latest.chapter ?? 1;
+    this.buildMap();
+    this.enableDragScroll();
+    this.select(latest, true);
   }
 
   /** 클리어 상황에서 지금 도전할 수 있는 가장 뒤쪽 스테이지. */
   private latestUnlocked(): StageDef {
-    const unlocked = STAGES.filter((stage) => isStageUnlocked(stage.id));
-    return unlocked[unlocked.length - 1] ?? STAGES[0];
+    return latestUnlockedStage(STAGES, session.cleared) ?? STAGES[0];
+  }
+
+  /** 잠금 검증을 통과한 챕터로만 이동하고 그 챕터의 첫 도전 가능 노드를 선택한다. */
+  private showChapter(chapterId: number): void {
+    const chapter = CHAPTERS.find(({ id }) => id === chapterId);
+    if (!chapter || (chapter.prerequisiteStageId && !session.cleared.has(chapter.prerequisiteStageId))) return;
+    this.currentChapter = chapterId;
+    this.enemyPreview.dismiss();
+    this.map.destroy(true);
+    this.nodes.clear();
+    this.buildMap();
+    const target = [...chapter.stages].reverse().find((stage) => isStageUnlocked(stage.id)) ?? chapter.stages[0];
+    this.select(target, true);
   }
 
   /** 아래에서 위로 이어지는 노드 줄. 창 밖으로 나가는 부분은 잘라 낸다. */
   private buildMap(): void {
     const cx = BASE_WIDTH / 2;
+    const chapter = CHAPTERS.find(({ id }) => id === this.currentChapter) ?? CHAPTERS[0];
+    const chapterStages = chapter.stages;
+    this.chapterTitle.setText(chapter.title);
+    this.chapterSubtitle.setText(chapter.subtitle);
+    this.previousChapterButton?.setEnabled(this.currentChapter > CHAPTERS[0].id);
+    const next = CHAPTERS.find(({ id }) => id === this.currentChapter + 1);
+    this.nextChapterButton?.setEnabled(!!next && (!next.prerequisiteStageId || session.cleared.has(next.prerequisiteStageId)));
     this.map = this.add.container(0, 0);
-    const height = (STAGES.length - 1) * NODE_GAP;
+    const height = (chapterStages.length - 1) * NODE_GAP;
     // 원화 하단을 1-1보다 조금 아래에 고정한다. 위 스테이지로 스크롤할수록 배경도 같은 거리만큼
     // 올라간다. 지도가 화면을 가득 채워야 하므로, 폭에 맞춘 배율로 모자라면 세로를 기준으로 키운다.
     const artBottom = 460;
@@ -116,7 +155,7 @@ export class StageMapScene extends Phaser.Scene {
     this.map.add(this.add.rectangle(cx, -height / 2, BASE_WIDTH, height + BASE_HEIGHT, COLOR.void, 0.22));
     this.map.add(this.add.line(0, 0, cx, 0, cx, -height, COLOR.panelEdge).setOrigin(0).setLineWidth(6));
 
-    STAGES.forEach((stage, index) => {
+    chapterStages.forEach((stage, index) => {
       const y = -index * NODE_GAP;
       // 좌우로 살짝 어긋나게 놓아 단조로운 일자 배치를 피한다.
       const x = cx + (index % 2 === 0 ? -110 : 110);
@@ -164,7 +203,6 @@ export class StageMapScene extends Phaser.Scene {
     // 1-1이 창 아래에 걸릴 때와 마지막 스테이지가 창 위에 걸릴 때가 스크롤의 양 끝이다.
     this.scrollMin = WINDOW.bottom - 90;
     this.scrollMax = Math.max(this.scrollMin, WINDOW.top + 120 + height);
-    this.enableDragScroll();
   }
 
   /** 손가락으로 끌어 지도를 굴린다. 휠도 같은 경로로 처리한다. */
@@ -204,7 +242,8 @@ export class StageMapScene extends Phaser.Scene {
   /** 지도 이동 중 선택 노드의 실제 화면 Y를 계산해 판과 SD를 계속 같은 노드에 붙인다. */
   private trackSelectedPreview(): void {
     if (!this.enemyPreview || !this.selected) return;
-    const index = STAGES.findIndex((stage) => stage.id === this.selected);
+    const chapterStages = CHAPTERS.find(({ id }) => id === this.currentChapter)?.stages ?? [];
+    const index = chapterStages.findIndex((stage) => stage.id === this.selected);
     const nodeY = this.map.y - index * NODE_GAP;
     this.enemyPreview.trackNode(nodeY, isEnemyPreviewNodeVisible(nodeY, WINDOW.top, WINDOW.bottom));
   }
@@ -213,7 +252,8 @@ export class StageMapScene extends Phaser.Scene {
   private select(stage: StageDef, instant = false): void {
     this.selected = stage.id;
     session.selectedStageId = stage.id;
-    const index = STAGES.findIndex((candidate) => candidate.id === stage.id);
+    const chapterStages = CHAPTERS.find(({ id }) => id === this.currentChapter)?.stages ?? [];
+    const index = chapterStages.findIndex((candidate) => candidate.id === stage.id);
     for (const [id, node] of this.nodes) {
       const chosen = id === stage.id;
       // 선택은 외곽선 추가가 아니라 기존 홀로그램 규칙의 확대와 글자색으로만 알린다.

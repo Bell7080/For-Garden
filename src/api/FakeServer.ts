@@ -9,6 +9,7 @@ import { MAX_RESEARCH_POINTS, MISSIONS, RESEARCH_REWARD_STAGES, applyMissionEven
 import { DAILY_RESTORATION, getStage } from "../data/stages";
 import { createInitialRelicProgress, session, type Session } from "../state/session";
 import { saveManager } from "../state/SaveManager";
+import { ProfileModifierManager } from "../managers/ProfileModifierManager";
 import { GameApiError, type AdOperationsConfigResponse, type BreakThroughResponse, type ClaimMissionRewardsResponse, type CompleteStageResponse, type EnterDailyRestorationResponse, type FeedRelicResponse, type GameApi, type LobbyInteractionResponse, type MissionListResponse, type PlayerStateDto, type ClaimAdRewardRequest, type ClaimAdRewardResponse, type PullRequest, type PullResponse } from "./contracts";
 import type { ProductDefinition } from "../data/products";
 import { PRODUCTS } from "../data/products";
@@ -694,8 +695,10 @@ export class FakeServer implements GameApi {
     }
     const cheesecakeEarned = missionCheesecake + researchCheesecake;
     const nextWallet = { ...this.state.wallet, cheesecake: this.state.wallet.cheesecake + cheesecakeEarned };
-    this.persist({ ...this.state, missions: nextMissions, wallet: nextWallet });
-    this.state.missions = nextMissions; this.state.wallet = nextWallet;
+    // 임무/업적 보상과 그 조건으로 열린 수식어를 같은 nextState와 단 한 번의 persist로 확정한다.
+    const nextState = ProfileModifierManager.applyRewardReceipt({ ...this.state, missions: nextMissions, wallet: nextWallet }, { claimedIds: uniqueIds, claimedResearchStageIds });
+    this.persist(nextState);
+    this.state.missions = nextMissions; this.state.wallet = nextWallet; this.state.earnedProfileModifierIds = nextState.earnedProfileModifierIds;
     return { ...this.snapshot(), claimedIds: uniqueIds, claimedResearchStageIds, rewards: { missionCheesecake, researchCheesecake, cheesecake: cheesecakeEarned }, cheesecakeEarned };
   }
 

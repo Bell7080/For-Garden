@@ -32,6 +32,7 @@ import { ExpeditionEntryButton, sortieEntrySdSpot } from "../ui/ExpeditionEntryB
 import { ENEMY_SD_ASSETS, PONTOS_SD_ASSET, playMotion, type PuppetAsset } from "../puppets/assets";
 import { loadOwnedPuppet } from "../ui/statusPuppetLoad";
 import { PlayerProfilePopup } from "../ui/PlayerProfilePopup";
+import { profileModifierManager } from "../managers/ProfileModifierManager";
 import type { PlayerProfileDisplay } from "../state/playerProfile";
 import { MailPopup } from "../ui/MailPopup";
 
@@ -207,7 +208,14 @@ export class LobbyScene extends Phaser.Scene {
     // TopBar의 즉시 모델 대신 manager가 서버 확정 티어를 합친 뒤 연다. 실패하면 가짜 티어 없이 로컬 기록만 표시한다.
     void loadPlayerProfileDisplay(session, gameApi).catch(() => profile).then((resolved) => {
       if (!this.popupLayer || this.playerProfilePopup) return;
-      this.playerProfilePopup = new PlayerProfilePopup(this, this.popupLayer, resolved, () => { this.playerProfilePopup = undefined; });
+      this.playerProfilePopup = new PlayerProfilePopup(this, this.popupLayer, resolved, () => { this.playerProfilePopup = undefined; }, () => {
+        // 임시 선택 UI를 씬에 복제하지 않고 manager의 검증/저장 경계를 통해 다음 획득 조합으로 교체한다.
+        const earned = profileModifierManager.earned().map(({ id }) => id);
+        const current = profileModifierManager.equipped().map(({ id }) => id);
+        const start = earned.length ? (earned.indexOf(current[0] ?? "") + 1) % earned.length : 0;
+        profileModifierManager.equip(earned.slice(start, start + 3));
+        this.playerProfilePopup?.close();
+      });
       this.playerProfilePopup.open();
     });
   }

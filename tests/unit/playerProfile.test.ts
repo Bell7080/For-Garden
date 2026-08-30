@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { createDefaultSession } from "../../src/state/session";
 import { playerProfileDisplay, profileAvatarContent } from "../../src/state/playerProfile";
 import { validateEquippedProfileModifiers } from "../../src/managers/PlayerProfileManager";
@@ -36,10 +36,10 @@ describe("player profile display", () => {
 
   it("획득한 공개 수식어만 중복 없이 장착 상한까지 허용한다", () => {
     const catalog = [
-      { id: "first", displayName: "최초의 복원", rarity: "rare", colorRole: "research" },
-      { id: "deep", displayName: "심층 원정대", rarity: "epic", colorRole: "expedition" },
-      { id: "gold", displayName: "황금 기록", rarity: "legendary", colorRole: "prestige" },
-      { id: "plain", displayName: "관찰자", rarity: "common", colorRole: "neutral" },
+      { id: "first", displayName: "최초의 복원", rarity: "rare" },
+      { id: "deep", displayName: "심층 원정대", rarity: "epic" },
+      { id: "gold", displayName: "황금 기록", rarity: "legendary" },
+      { id: "plain", displayName: "관찰자", rarity: "common" },
     ] as const;
     const result = validateEquippedProfileModifiers(catalog, { earnedModifierIds: ["first", "deep", "gold", "plain"], equippedModifierIds: ["first", "locked", "first", "deep", "gold", "plain"] });
     expect(result.map(({ id }) => id)).toEqual(["first", "deep", "gold"]);
@@ -64,5 +64,26 @@ describe("player profile display", () => {
     const profile = { ...playerProfileDisplay(createDefaultSession()), displayName: "🌿연구원", avatarAssetKey: "avatar-1" };
     expect(profileAvatarContent(profile, () => false)).toEqual({ fallback: "🌿" });
     expect(profileAvatarContent(profile, (key) => key === "avatar-1")).toEqual({ assetKey: "avatar-1", fallback: "🌿" });
+  });
+});
+
+// 수식어 manager는 획득 조건과 장착 저장을 씬 밖의 단일 경계에서 소유한다.
+describe("profile modifier manager", () => {
+  it("보상 영수증과 수식어 획득을 같은 스냅샷에 합친다", async () => {
+    const { ProfileModifierManager } = await import("../../src/managers/ProfileModifierManager");
+    const state = createDefaultSession();
+    const next = ProfileModifierManager.applyRewardReceipt(state, { claimedIds: ["daily-battle"], claimedResearchStageIds: [] });
+    expect(next.earnedProfileModifierIds).toEqual(["field-pioneer"]);
+    // 표시명은 저장 상태에 섞이지 않아 정적 문구 변경과 저장 호환성이 분리된다.
+    expect(JSON.stringify(next)).not.toContain("현장 개척자");
+  });
+
+  it("미획득 장착을 거부하고 유효한 ID 목록만 한 번 저장한다", async () => {
+    const { ProfileModifierManager } = await import("../../src/managers/ProfileModifierManager");
+    const state = createDefaultSession(); state.earnedProfileModifierIds = ["field-pioneer"];
+    const saves = { save: vi.fn() }; const manager = new ProfileModifierManager(state, saves);
+    expect(() => manager.equip(["locked"])).toThrow();
+    manager.equip(["field-pioneer"]);
+    expect(state.equippedProfileModifierIds).toEqual(["field-pioneer"]); expect(saves.save).toHaveBeenCalledOnce();
   });
 });

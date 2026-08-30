@@ -15,6 +15,8 @@ function makeRune(instanceId = "rune-1"): RuneInstance {
 /** 각 테스트가 독립적으로 쓸 서버 저장소 역할의 세션을 만든다. */
 function makeSession(fossil = 1000): Session {
   return {
+    // 수식어 manager 테스트가 아닌 세션은 빈 ID 목록을 명시한다.
+    earnedProfileModifierIds: [], equippedProfileModifierIds: [],
     playerResearch: createInitialPlayerResearchProgress(),
     idleExcavation: { assignedRelicIds: [null, null, null], lastSettledAt: null, unclaimed: { gold: 0, cheesecake: 0, fossil: 0, gems: 0 }, baseStorageSeconds: 14_400, activeProductionMultiplier: 1, storageExtensionExpiresAt: null, retroactiveExcavationGrantVersion: 1 },
     settings: createDefaultSettings(),
@@ -306,6 +308,8 @@ describe("FakeServer", () => {
     await expect(server.claimMissionRewards(["daily-battle"])).rejects.toMatchObject({ code: "MISSION_NOT_COMPLETE" });
     await server.completeStage("1-1", true);
     await expect(server.claimMissionRewards(["daily-battle"])).resolves.toMatchObject({ claimedIds: ["daily-battle"], cheesecakeEarned: 30 });
+    // 보상 수령 표시와 수식어 획득 ID가 같은 서버 확정 상태에 남는다.
+    expect(state.earnedProfileModifierIds).toEqual(["field-pioneer"]);
     const afterFirstClaim = state.wallet.cheesecake;
     await expect(server.claimMissionRewards(["daily-battle"])).rejects.toMatchObject({ code: "MISSION_ALREADY_CLAIMED" });
     expect(state.wallet.cheesecake).toBe(afterFirstClaim);

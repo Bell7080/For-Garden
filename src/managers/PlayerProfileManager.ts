@@ -3,9 +3,11 @@ import type { ProfileModifierSelectionDto } from "../api/contracts";
 import type { AsyncArenaProfileApi } from "../api/asyncArenaContracts";
 import type { Session } from "../state/session";
 import { playerProfileDisplay, type PlayerProfileDisplay } from "../state/playerProfile";
+import { ProfileModifierManager, profileModifierManager, MAX_EQUIPPED_PROFILE_MODIFIERS } from "./ProfileModifierManager";
+import { session } from "../state/session";
 
 /** 좁은 모바일 헤더에서 시각적 위계를 유지하기 위한 공개 장착 상한이다. */
-export const MAX_EQUIPPED_PROFILE_MODIFIERS = 3;
+export { MAX_EQUIPPED_PROFILE_MODIFIERS } from "./ProfileModifierManager";
 
 /**
  * 서버/API 영수증의 획득 목록을 단일 기준으로 삼아 장착 수식어를 검증한다.
@@ -34,5 +36,7 @@ export async function loadPlayerProfileDisplay(state: Session, arenaApi: AsyncAr
   const arena = await arenaApi.getAsyncArenaServerState();
   const tierId = arena?.seasonTierId?.trim();
   // 서버 데이터가 없거나 빈 ID면 항목을 통째로 생략한다. 표시명도 서버 확정 ID를 그대로 쓴다.
-  return playerProfileDisplay(state, [], tierId ? { tierId, displayName: tierId } : undefined);
+  // 공개 표시에는 manager가 검증하고 정적 정의로 해석한 장착 항목만 포함하며 전체 획득 목록은 넘기지 않는다.
+  const equipped = state === session ? profileModifierManager.equipped() : new ProfileModifierManager(state, { save: () => undefined }).equipped();
+  return playerProfileDisplay(state, equipped, tierId ? { tierId, displayName: tierId } : undefined);
 }

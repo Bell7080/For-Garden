@@ -47,6 +47,9 @@ export function createInitialPlayerResearchProgress(): PlayerResearchProgress {
 }
 
 export interface Session {
+  /** 획득/장착은 표시명이 아닌 안정적인 수식어 ID만 저장하며 manager만 변경한다. */
+  earnedProfileModifierIds: string[];
+  equippedProfileModifierIds: string[];
   /** 서버 응답으로 확정된 계정 전체 연구 진행이며 씬은 수치를 직접 계산하거나 변경하지 않는다. */
   playerResearch: PlayerResearchProgress;
   /** 룬·지갑과 분리된 중첩 아이템. 0개 행은 저장하지 않는다. */
@@ -168,6 +171,9 @@ export interface ObservationRecord {
  * 계정 연동 시에도 이 형태를 업로드 모델로 오해하지 않고 SaveManager 경계에서만 사용한다.
  */
 export interface SaveData {
+  /** 문구 변경과 저장 호환성을 분리하는 수식어 ID 전용 저장 필드다. */
+  earnedProfileModifierIds: string[];
+  equippedProfileModifierIds: string[];
   /** 서버 확정 연구 진행을 앱 재실행 뒤에도 동일하게 복원하는 JSON 안전 스냅샷이다. */
   playerResearch: PlayerResearchProgress;
   /** 정적 아이템 ID와 양만 저장하는 JSON 안전 스택이다. */
@@ -220,6 +226,9 @@ export function createDefaultSession(): Session {
   // 순수 설정 팩토리는 지연 require 대신 정적 import로 의존 방향을 core→state 타입에만 제한한다.
   const settings = createDefaultSettings();
   return {
+    // 신규 계정은 보상 수령을 통해서만 수식어를 획득한다.
+    earnedProfileModifierIds: [],
+    equippedProfileModifierIds: [],
     // 첫 서버 동기화 전에도 프로필이 명시적인 레벨 1 진행을 표시하도록 한다.
     playerResearch: createInitialPlayerResearchProgress(),
     itemInventory: [{ itemId: "stamina-tonic", quantity: 3 }],

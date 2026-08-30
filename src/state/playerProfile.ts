@@ -33,7 +33,6 @@ export interface PublicProfileModifier {
   id: string;
   displayName: string;
   rarity: "common" | "rare" | "epic" | "legendary";
-  colorRole: "neutral" | "research" | "expedition" | "prestige";
 }
 
 /** 진행 수치를 제외한 공개 프로필의 비진행 표시 기본값이다. */

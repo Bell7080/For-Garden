@@ -52,6 +52,14 @@ export const COLOR = {
   ferocityHotText: "#ff9184",
 } as const;
 
+/** 프로필 수식어는 외부 색 문자열 대신 희귀도→의미 토큰 표만 거쳐 색을 고른다. */
+export const PROFILE_MODIFIER_RARITY_COLOR = {
+  common: COLOR.inkDimHex,
+  rare: COLOR.raritySR,
+  epic: COLOR.sortie,
+  legendary: COLOR.raritySSR,
+} as const;
+
 export { FONT_FAMILY, type TextRole } from "./fonts";
 
 export interface TextOpts {

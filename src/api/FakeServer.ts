@@ -29,7 +29,7 @@ import type { HarvestExcavationRequest, HarvestExcavationResponse, IdleExcavatio
 import type { ClaimExpeditionRewardRequest, ClaimExpeditionRewardResponse, CompleteExpeditionNodeRequest, CompleteExpeditionNodeResponse, ExpeditionLeaderboardResponse, ExpeditionWeeklyBestResponse, SettleExpeditionRunRequest, SettleExpeditionRunResponse, SubmitExpeditionBossScoreRequest, SubmitExpeditionBossScoreResponse, SweepExpeditionRequest, SweepExpeditionResponse } from "./contracts";
 import { expeditionWeekKey, resolveExpeditionBossBattle } from "../core/expeditionBoss";
 import { EXPEDITION_BOSS_BALANCE, EXPEDITION_CUMULATIVE_REWARD_STAGES, EXPEDITION_NODE_REWARD_BALANCE, EXPEDITION_SWEEP_POLICY, EXPEDITION_WEEKLY_POLICY, QUICK_EXPEDITION_POLICY } from "../data/expedition";
-import { calculateExpeditionNodeRewards } from "../core/expeditionRewards";
+import { calculateExpeditionNodeRewards, expeditionNodeRewardScore } from "../core/expeditionRewards";
 import { RelicProgressionManager } from "../managers/RelicProgressionManager";
 import { expeditionBattleEffects } from "../core/expeditionBattle";
 
@@ -187,9 +187,11 @@ export class FakeServer implements GameApi {
     }
     // 완료 런은 활성 슬롯에서 즉시 제거한다. 멱등 재응답은 아래 정산 결과 캐시가 소유하므로
     // settled 표식을 활성 run에 남겨 다음 진입을 가로막지 않는다.
-    // 주간 랭킹·소탕이 참조하는 역대 최고점은 노드 진행 점수가 아니라 불사 보스에게 입힌
-    // 피해량만 반영한다(submitExpeditionBossScore 참고) — 보스는 처치가 불가능해 "완료"라는
-    // 개념이 없으므로, 여기서는 그 둘을 갱신하지 않는다.
+    // 순위(bossWeek.bestScore)와 소탕이 참조하는 역대 최고점(allTimeBestScore)은 노드 진행
+    // 점수가 아니라 불사 보스에게 입힌 피해량만 반영한다(submitExpeditionBossScore 참고) —
+    // 보스는 처치가 불가능해 "완료"라는 개념이 없으므로, 여기서는 그 둘을 갱신하지 않는다.
+    // 주간 누적 점수(bossWeek.cumulativeScore, 단계 보상 트랙)는 노드 클리어 시점마다
+    // completeExpeditionNode에서 이미 더했으므로 여기서 다시 더하지 않는다.
     const expedition = {
       ...this.state.expedition,
       playsThisWeek: this.state.expedition.playsThisWeek + 1,
@@ -214,6 +216,11 @@ export class FakeServer implements GameApi {
       || request.relicHp.some((hp) => !Number.isFinite(hp) || hp < 0)) throw new GameApiError("EXPEDITION_RUN_NOT_FOUND", "완료할 수 없는 원정 노드입니다.");
     // 전멸은 노드 종료만 기록하고 승리 재화는 생성하지 않는다.
     const rewards = request.relicHp.every((hp) => hp === 0) ? {} : calculateExpeditionNodeRewards({ nodeType: node.type, accumulated: run.pendingRewards, random: this.random });
+    // 일반 노드 클리어 재화도 주간 누적 점수(랭킹 팝업의 단계 보상 트랙)에 조금씩 보탠다.
+    // 보스 피해량과 달리 순위(bestScore)는 바꾸지 않는다 — 순위는 여전히 보스에게 입힌 피해량만
+    // 반영한다(submitExpeditionBossScore 참고).
+    const rewardScore = expeditionNodeRewardScore(rewards);
+    if (rewardScore > 0) { this.normalizeBossWeek(this.now()); this.bossWeek.cumulativeScore += rewardScore; }
     const next = structuredClone(run);
     next.currentNodeId = node.id; next.visitedNodeIds.push(node.id);
     next.relics.forEach((relic, index) => { relic.currentHp = request.relicHp[index]; relic.alive = relic.currentHp > 0; });

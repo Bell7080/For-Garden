@@ -153,10 +153,15 @@ describe("머리 카드 잘라내기", () => {
     expect(card.cropY).toBeGreaterThan(raisedHandFrame.content.top);
   });
 
-  it("는 머리가 이미 내용 상자 맨 위에 가까우면 기존과 같은 시작점을 그대로 쓴다", () => {
-    const head = { x: 860, y: 100 };
-    const card = computeHeadCardFrame(raisedHandFrame, head, cardOptions);
-    expect(card.cropY).toBe(raisedHandFrame.content.top);
+  it("는 머리가 이미 내용 상자 맨 위에 가까우면 공통 여백만큼만 시작점을 앞당긴다", () => {
+    // 내용 상자 맨 위를 충분히 크게 잡아, 여백을 앞당긴 결과가 0에서 잘리지 않게 한다.
+    const tallFrame: AnchorFrame = { ...raisedHandFrame, content: { ...raisedHandFrame.content, top: 400 } };
+    const head = { x: 860, y: 420 };
+    const card = computeHeadCardFrame(tallFrame, head, cardOptions);
+    // 뭉툭한 장식이 자르기 상단에 딱 붙어 수평으로 잘리지 않도록, 내용 상자 맨 위보다 카드
+    // 높이의 3.5%만큼 앞당겨 여백을 둔다(anchors.ts의 HEAD_TIP_MARGIN_RATIO).
+    expect(card.cropY).toBeLessThan(tallFrame.content.top);
+    expect(tallFrame.content.top - card.cropY).toBeCloseTo(card.cropHeight * 0.035, 5);
   });
 });
 

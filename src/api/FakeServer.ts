@@ -51,6 +51,8 @@ export interface FakeServerOptions {
 
 /** 백엔드가 생기기 전까지 메모리 상태를 서버처럼 독점 변경하는 임시 어댑터다. */
 export class FakeServer implements GameApi {
+  /** 임시 서버에는 결투장 백엔드가 없으므로 티어를 합성하지 않고 명시적으로 미제공한다. */
+  async getAsyncArenaServerState(): Promise<null> { return null; }
   private readonly latencyMs: number;
   private readonly random: () => number;
   private readonly now: () => Date;

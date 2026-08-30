@@ -11,6 +11,7 @@ import type { AdReward } from "../data/adRewards";
 import type { ItemCategory, ItemUseEffect } from "../data/items";
 import type { ExpeditionBossAction } from "../core/expeditionBoss";
 import type { PlayerResearchProgress } from "../state/session";
+import type { AsyncArenaProfileApi } from "./asyncArenaContracts";
 
 /** 정적 표시 메타데이터를 중복 전송하지 않고 서버 보유량과 인스턴스만 전달하는 인벤토리 조회 행이다. */
 export interface InventoryItemDto { id: string; definitionId: string; category: ItemCategory; quantity: number; rune?: RuneInstance; }
@@ -92,6 +93,38 @@ export interface PublicRelicProfileDto {
   stats: Stats;
   /** 공개가 허용된 스킬만 id로 전달한다. */
   skillIds: string[];
+}
+
+/**
+ * 자기 프로필과 친구 프로필이 함께 사용하는 공개 헤더 화이트리스트다.
+ * 인증/계정 키, 재화, 보유 목록, 편성은 표현할 필드 자체를 두지 않아 소셜 응답에서 유출되지 않게 한다.
+ */
+export interface PublicProfileHeaderDto {
+  displayName: string;
+  level: number;
+  /** 공개 아바타 리소스 키이며 계정 식별자나 원본 업로드 경로로 사용하지 않는다. */
+  avatarAssetKey?: string;
+  /** 서버가 획득과 장착을 검증한 공개 수식어만 포함한다. */
+  equippedModifiers: PublicProfileModifierDto[];
+  /** 애착 렐릭 한 명만 공개하며 보유 렐릭이나 편성은 포함하지 않는다. */
+  favoriteRelic: PublicRelicProfileDto;
+  /** 사용자가 공개할 수 있는 경쟁 기록만 선택적으로 전달하며 비어 있는 기록은 생략한다. */
+  competitiveStats: PublicCompetitiveStatsDto;
+}
+
+/** 공개 헤더에서 서버 검증을 마친 수식어의 표시 정보만 전달한다. */
+export interface PublicProfileModifierDto {
+  id: string;
+  displayName: string;
+  rarity: "common" | "rare" | "epic" | "legendary";
+  colorRole: "neutral" | "research" | "expedition" | "prestige";
+}
+
+/** 공개 동의를 받은 기록만 존재할 수 있으며 미기록/비공개 항목은 키 자체를 생략한다. */
+export interface PublicCompetitiveStatsDto {
+  highestStage?: { stageId: string; displayValue: string };
+  arenaTier?: { tierId: string; displayName: string };
+  expeditionScore?: number;
 }
 
 /** 네트워크로 직렬화할 수 있는 플레이어 진행 정보의 최소 규격이다. */
@@ -319,7 +352,7 @@ export interface SweepExpeditionRequest { requestId: string; }
 export interface SweepExpeditionResponse extends PlayerStateDto { weekKey: string; scoreGain: number; bestScore: number; cumulativeScore: number; granted: Record<string, number>; playsThisWeek: number; }
 
 /** 실제 HTTP API로 교체할 때도 씬이 의존할 단 하나의 통신 인터페이스다. */
-export interface GameApi {
+export interface GameApi extends AsyncArenaProfileApi {
   /** 서버 시각 기준의 우편 목록과 알림 집계를 조회한다. */
   getMails(): Promise<MailListResponse>;
   /** 지정한 우편 첨부물을 한 트랜잭션과 멱등 키로 수령한다. */

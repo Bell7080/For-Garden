@@ -5,6 +5,9 @@ import type { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
 import { setDebugPlayerProfileOpen } from "../debug";
 import { compactProfileText, PLAYER_PROFILE_LAYOUT } from "./playerProfileLayout";
+import { PortraitCard, relicCardTint } from "./PortraitCard";
+import { getRelic } from "../data/relics";
+import { drawGlyph } from "./glyphs";
 
 /** rarity는 의미 데이터이고 colorRole은 UI 토큰 선택자이므로 화면은 임의 색상 값을 받지 않는다. */
 function modifierColor(modifier: PublicProfileModifier): number {
@@ -49,12 +52,29 @@ export class PlayerProfilePopup {
         body.add(this.scene.add.text(x, layout.modifiers.y, compactProfileText(modifier.displayName, 10), textStyle({ role: "emphasis", size: 18, color: `#${color.toString(16).padStart(6, "0")}` })).setOrigin(0.5));
       });
 
+      const stats = this.profile.competitiveStats;
+      const addStatChip = (x: number, y: number, label: string, value: string, glyph?: "arena-tier", textOffset = -86): void => {
+        // 네 기록은 같은 크기/타이포그래피의 유리 칩으로 두어 어느 콘텐츠도 임의로 우선하지 않는다.
+        body.add(drawLayer(this.scene, x, y, chipPoints(layout.stats.width, layout.stats.height, { bevel: { topLeft: 18, topRight: 0, bottomRight: 18, bottomLeft: 0 } }), { fill: 0x202832, alpha: HOLO.glassLight, edge: COLOR.inkDimHex, edgeAlpha: 0.45 }));
+        if (glyph) body.add(drawGlyph(this.scene, glyph, x - 125, y, 48, COLOR.accent));
+        body.add(this.scene.add.text(x + textOffset, y - 28, label, textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0, 0.5));
+        body.add(this.scene.add.text(x + textOffset, y + 18, compactProfileText(value, 16), textStyle({ role: "emphasis", size: 24 })).setOrigin(0, 0.5));
+      };
+      if (stats.favoriteRelic) {
+        const relic = getRelic(stats.favoriteRelic.relicId);
+        addStatChip(layout.stats.leftX, layout.stats.firstY, "애착 렐릭", stats.favoriteRelic.displayName, undefined, -50);
+        // 안전한 공개 portraitAssetId를 공용 PortraitCard에 전달하며 별도 크롭/원화 fallback을 만들지 않는다.
+        body.add(new PortraitCard(this.scene, layout.stats.leftX - 112, layout.stats.firstY, { width: 92, height: 112, portraitAssetId: stats.favoriteRelic.portraitAssetId, tint: relicCardTint(relic) }));
+      } else addStatChip(layout.stats.leftX, layout.stats.firstY, "애착 렐릭", "미지정");
+      if (stats.arenaTier) addStatChip(layout.stats.rightX, layout.stats.firstY, "결투장 티어", stats.arenaTier.displayName, "arena-tier");
+      addStatChip(layout.stats.leftX, layout.stats.secondY, "최대 클리어", stats.highestStage?.displayValue ?? "기록 없음");
+      addStatChip(layout.stats.rightX, layout.stats.secondY, stats.expedition.label, stats.expedition.score.toLocaleString());
+
       const addValue = (y: number, label: string, value: string): void => {
         body.add(this.scene.add.text(-330, y, label, textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0, 0.5));
         body.add(this.scene.add.text(330, y, compactProfileText(value, 24), textStyle({ role: "emphasis", size: 26 })).setOrigin(1, 0.5));
       };
       addValue(layout.rows.firstY, "공개 ID", this.profile.displayId);
-      addValue(layout.rows.firstY + layout.rows.gap, "대표 렐릭", this.profile.representativeRelic);
     });
   }
 

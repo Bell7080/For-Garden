@@ -4,6 +4,7 @@ import type { GachaPityState, Wallet } from "../core/gacha";
 import type { RelicProgress } from "../core/types";
 import { BANNERS } from "../data/banners";
 import { STAGES } from "../data/stages";
+import { isStageUnlockedByProgress } from "../core/stageProgress";
 import { BOND_XP_REWARD, grantBondXp } from "../core/bond";
 import type { MissionState } from "../core/missions";
 import type { RuneInstance } from "../core/runes";
@@ -269,7 +270,6 @@ export function replaceSession(next: Session): void {
 
 /** 첫 스테이지와, 직전 스테이지를 깬 스테이지만 들어갈 수 있다. */
 export function isStageUnlocked(stageId: string): boolean {
-  const index = STAGES.findIndex((s) => s.id === stageId);
-  if (index <= 0) return index === 0;
-  return session.cleared.has(STAGES[index - 1].id);
+  // 본편 정적 데이터의 명시적 선행 관계만 신뢰하므로 알 수 없는 저장 ID는 열리지 않는다.
+  return isStageUnlockedByProgress(STAGES, stageId, session.cleared);
 }

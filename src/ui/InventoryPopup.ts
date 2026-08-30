@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import type { GameApi, InventoryItemDto } from "../api/contracts";
-import type { ItemCategory } from "../data/items";
+import { ITEM_ICON_FALLBACK, type ItemCategory, type ItemIcon } from "../data/items";
 import { setDebugInventoryCategory, setDebugInventoryTextureKeys } from "../debug";
 import { INVENTORY_LAYOUT, InventoryManager, inventoryGridPosition, inventoryScrollMetrics } from "../managers/InventoryManager";
 import { session } from "../state/session";
@@ -150,14 +150,8 @@ export class InventoryPopup {
     } else {
       const frame = chipPoints(102, 102, { bevel: { topLeft: 18, topRight: 0, bottomRight: 18, bottomLeft: 0 } });
       card.add(drawLayer(this.scene, frameX, -12, frame, { fill: 0x24282e, alpha: 1 })); card.add(drawShapeOutline(this.scene, frameX, -12, frame, { color: COLOR.accent, alpha: 0.7 })); card.add(drawInnerVignette(this.scene, frameX, -12, frame));
-      // 전용 asset은 로드된 경우에만 우선하며, 없는 빌드에서는 정의가 지정한 glyph를 유지한다.
-      const icon = item.definition.icon;
-      if (icon.kind === "currency") {
-        const key = CURRENCY_ICON_BY_WALLET[icon.key]; textureKeys.push(key);
-        card.add(this.scene.add.image(frameX, -12, key).setDisplaySize(70, 70));
-      } else if (icon.kind === "asset" && this.scene.textures.exists(icon.key)) {
-        textureKeys.push(icon.key); card.add(this.scene.add.image(frameX, -12, icon.key).setDisplaySize(70, 70));
-      } else card.add(drawGlyph(this.scene, icon.kind === "asset" ? icon.fallback : icon.key, frameX, -12, 48, COLOR.accent));
+      // 액자 안 콘텐츠만 아래 판별 함수에 맡겨 불투명 면·사방 outline·내부 vignette는 항상 유지한다.
+      card.add(this.renderDefinitionIcon(item.definition.icon, frameX, -12, textureKeys));
     }
     const accent = item.rune ? RUNE_ACCENT[item.rune.rarity] : undefined;
     card.add(this.scene.add.text(textX, -48, this.label(item), textStyle({ role: "display", size: 22, color: accent ? `#${accent.toString(16).padStart(6, "0")}` : COLOR.ink, wrap: textWidth })).setOrigin(0, 0));
@@ -166,6 +160,20 @@ export class InventoryPopup {
     const hit = this.scene.add.rectangle(0, 0, cardWidth, cardHeight, 0xffffff, 0).setInteractive({ useHandCursor: true });
     // 클릭 순간의 월드 변환을 읽어 팝업 이동·배율·스크롤 이후에도 상세창이 카드에 붙게 한다.
     hit.on("pointerup", () => { const anchor = card.getWorldTransformMatrix().transformPoint(0, 0); this.select(item, { x: anchor.x, y: anchor.y }); }); card.add(hit); content.add(card);
+  }
+
+  /** currency → item asset → glyph fallback 순서를 한곳에 고정하고 누락 texture를 국소 복구한다. */
+  private renderDefinitionIcon(icon: ItemIcon, x: number, y: number, textureKeys: string[]): Phaser.GameObjects.GameObject {
+    if (icon.kind === "currency") {
+      const key = CURRENCY_ICON_BY_WALLET[icon.key]; textureKeys.push(key);
+      return this.scene.add.image(x, y, key).setDisplaySize(70, 70);
+    }
+    if (icon.kind === "asset" && this.scene.textures.exists(icon.key)) {
+      textureKeys.push(icon.key);
+      return this.scene.add.image(x, y, icon.key).setDisplaySize(70, 70);
+    }
+    // 정의 glyph와 누락 asset의 공용 glyph를 마지막 경로로만 사용한다.
+    return drawGlyph(this.scene, icon.kind === "glyph" ? icon.key : ITEM_ICON_FALLBACK, x, y, 48, COLOR.accent);
   }
 
   private label(item: InventoryItemDto): string { return item.rune?.customName ?? item.rune?.baseName ?? item.definition.name; }

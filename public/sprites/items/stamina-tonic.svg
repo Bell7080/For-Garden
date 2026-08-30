@@ -1,0 +1,8 @@
+<!-- 원본 WebP가 전달될 때까지만 사용하는 각진 홀로그램 계열의 임시 활력 토닉 아이콘이다. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <g fill="none" stroke="#78e0a0" stroke-width="14" stroke-linejoin="miter" stroke-linecap="square">
+    <!-- 병목과 마개를 분리해 작은 액자에서도 소비품 실루엣이 읽히게 한다. -->
+    <path d="M92 30h72v34l22 28v106l-22 28H92l-22-28V92l22-28z" fill="#173d35"/>
+    <path d="M92 64h72M72 118h112M128 135v58M99 164h58"/>
+  </g>
+</svg>

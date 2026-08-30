@@ -26,6 +26,22 @@ function validData(): SaveData {
 }
 
 describe("SaveManager", () => {
+  it("v24 저장은 플레이어 연구 진행을 명시적인 레벨 1 기본값으로 마이그레이션한다", () => {
+    const legacy = validData() as unknown as Record<string, unknown>;
+    legacy.saveVersion = 24;
+    delete legacy.playerResearch;
+    expect(new SaveManager(new MemoryStorage()).migrate(legacy).playerResearch).toEqual({ level: 1, experience: 0, experienceToNext: 100 });
+  });
+
+  it("플레이어 연구 진행을 왕복하고 완료되지 않은 레벨 구간만 허용한다", () => {
+    const storage = new MemoryStorage(); const source = createDefaultSession();
+    source.playerResearch = { level: 4, experience: 80, experienceToNext: 150 };
+    const manager = new SaveManager(storage); manager.save(source);
+    expect(manager.load()?.playerResearch).toEqual(source.playerResearch);
+    const invalid = validData(); invalid.playerResearch.experience = invalid.playerResearch.experienceToNext;
+    expect(() => manager.validate(invalid)).toThrow("플레이어 연구 진행");
+  });
+
   it("v22 원정 준비 저장은 완전한 런을 꾸며내지 않고 빈 런으로 마이그레이션한다", () => {
     const legacy = validData() as unknown as Record<string, unknown>;
     legacy.saveVersion = 22;

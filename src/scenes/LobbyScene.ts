@@ -32,6 +32,7 @@ import { ENEMY_SD_ASSETS, PONTOS_SD_ASSET, playMotion, type PuppetAsset } from "
 import { loadOwnedPuppet } from "../ui/statusPuppetLoad";
 import { PlayerProfilePopup } from "../ui/PlayerProfilePopup";
 import type { PlayerProfileDisplay } from "../state/playerProfile";
+import { MailPopup } from "../ui/MailPopup";
 
 /** 확대된 애착 렐릭의 골반 아래가 내비게이션 뒤로 자연스럽게 이어지는 기준선. */
 const STAGE_FLOOR = 1660;
@@ -109,6 +110,8 @@ export class LobbyScene extends Phaser.Scene {
   private inventoryBackButton?: IconButton;
   /** 임무도 로비 상태를 보존하는 공용 팝업이며 상단 지갑은 수령 응답과 동시에 갱신한다. */
   private missionsPopup?: MissionsPopup;
+  /** 우편함은 로비를 유지하며 API 읽음·수령 결과만 반영하는 공용 작업판이다. */
+  private mailPopup?: MailPopup;
   private topBar?: TopBar;
   /** 공개 플레이어 정보창은 닫힐 때 참조까지 비워 다음 입력이 새 입력면 한 장만 만든다. */
   private playerProfilePopup?: PlayerProfilePopup;
@@ -239,6 +242,9 @@ export class LobbyScene extends Phaser.Scene {
     this.inventoryPopup.open();
     if (!this.inventoryBackButton) this.inventoryBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: () => this.inventoryPopup?.close() }).setDepth(2100);
   }
+
+  /** 레일 입력을 준비 문구 없이 실제 우편 작업판과 즉시 연결한다. */
+  private openMail(): void { if (!this.popupLayer) return; this.mailPopup ??= new MailPopup(this, this.popupLayer, gameApi, () => { this.topBar?.refresh(); }, () => { this.mailPopup = undefined; }); this.mailPopup.open(); }
 
   /** 출격의 잔잔한 콘텐츠 선택판을 열고 우하단 공용 돌아가기로만 닫는다. */
   private openSortieMenu(): void {
@@ -399,14 +405,14 @@ export class LobbyScene extends Phaser.Scene {
     const rail = [
       // 로비의 옛 상점은 현금 상품과 분리된 인게임 재화 전용 "무역"으로 개편한다.
       { icon: "shop", label: "무역", onClick: () => this.openTrade() },
-      { icon: "mail", label: "우편" },
+      { icon: "mail", label: "우편", onClick: () => this.openMail() },
       // 친구는 더 이상 준비 중 토스트가 아니라 목록과 공개 프로필 화면으로 연결된다.
       { icon: "friends", label: "친구", onClick: () => this.scene.start("friends") },
       // 가방은 씬 전환 없이 현재 로비 위에서 열린다.
       { icon: UI_ICON.bag, label: "가방", onClick: () => this.openInventory() },
     ] as const;
     rail.forEach((item, i) => {
-      const button = new RailButton(this, x, 640 + i * 152, { icon: item.icon, label: item.label, onClick: "onClick" in item ? item.onClick : () => this.notReady(item.label) });
+      const button = new RailButton(this, x, 640 + i * 152, { icon: item.icon, label: item.label, onClick: item.onClick });
       // 실제 서버 계약이 준비된 우편·친구 요청만 연결하고 Fake 데이터에서는 임의로 켜지 않는다.
       const key = item.icon === "mail" ? "mail" : item.icon === "friends" ? "friendRequest" : undefined;
       if (key) bindNotificationDot(this, button, { x: 42, y: -42 }, (listener) => notificationManager.subscribe(key, listener));

@@ -15,6 +15,21 @@ import type { ExpeditionBossAction } from "../core/expeditionBoss";
 export interface InventoryItemDto { id: string; definitionId: string; category: ItemCategory; quantity: number; /** API 경계를 건너도 카드가 manager를 재생성하지 않도록 한 안전한 정적 표시 메타데이터다. */ definition: ItemDefinition; rune?: RuneInstance; }
 /** 지갑은 조회 순간 표시 행으로만 합성된다. */
 export interface InventoryResponse { items: InventoryItemDto[]; }
+
+/** 우편 첨부물은 지갑 재화 또는 중첩 아이템만 허용해 임의 서버 명령이 클라이언트에 들어오지 않게 한다. */
+export type MailRewardDto =
+  | { kind: "currency"; currency: keyof Wallet; amount: number }
+  | { kind: "item"; itemId: string; amount: number };
+/** 목록 한 행이 표시와 행동 가능 여부를 모두 판단할 수 있는 서버 확정 우편 스냅샷이다. */
+export interface MailDto { id: string; title: string; sender: string; body: string; sentAt: string; expiresAt: string | null; read: boolean; claimed: boolean; rewards: MailRewardDto[]; }
+/** 클라이언트 시계 대신 같은 응답의 서버 시각으로 만료를 판단한다. */
+export interface MailListResponse { mails: MailDto[]; serverTime: string; unreadCount: number; claimableCount: number; }
+/** 단일·일괄 수령은 같은 요청 형태를 사용하고 requestId로 재전송을 멱등 처리한다. */
+export interface ClaimMailRewardsRequest { requestId: string; mailIds: string[]; }
+/** 서버가 실제 지급한 첨부물과 최종 지갑·아이템을 함께 반환한다. */
+export interface ClaimMailRewardsResponse extends MailListResponse { claimedMailIds: string[]; granted: MailRewardDto[]; wallet: Wallet; items: InventoryItemDto[]; }
+/** 열람 처리는 보상 수령과 분리하며 여러 행을 한 번에 읽음 처리할 수 있다. */
+export interface MarkMailsReadRequest { mailIds: string[]; }
 /** 수량은 양의 정수만 허용하며 서버가 보유량과 상한을 다시 검증한다. */
 export interface UseConsumableRequest { itemId: string; quantity: number; }
 /** 실제 적용량을 반환해 상한에서 버려진 회복을 UI가 추측하지 않게 한다. */
@@ -296,6 +311,12 @@ export interface SweepExpeditionResponse extends PlayerStateDto { weekKey: strin
 
 /** 실제 HTTP API로 교체할 때도 씬이 의존할 단 하나의 통신 인터페이스다. */
 export interface GameApi {
+  /** 서버 시각 기준의 우편 목록과 알림 집계를 조회한다. */
+  getMails(): Promise<MailListResponse>;
+  /** 지정한 우편 첨부물을 한 트랜잭션과 멱등 키로 수령한다. */
+  claimMailRewards(request: ClaimMailRewardsRequest): Promise<ClaimMailRewardsResponse>;
+  /** 열람한 우편을 읽음으로 확정한다. */
+  markMailsRead(request: MarkMailsReadRequest): Promise<MailListResponse>;
   /** 서버 UTC 주차의 최고/누적 기록을 조회한다. */
   getExpeditionWeeklyBest(): Promise<ExpeditionWeeklyBestResponse>;
   /** 동작열을 서버 편성으로 재현하고 전멸 결과만 점수로 제출한다. */

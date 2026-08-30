@@ -138,6 +138,12 @@ export class FakeServer implements GameApi {
       const improved = result.totalDamage > this.bossWeek.bestScore;
       this.bossWeek.cumulativeScore += result.totalDamage;
       if (improved) { this.bossWeek.bestScore = result.totalDamage; this.bossWeek.achievedAt = now.toISOString(); }
+      // 불사 보스는 처치가 아니라 입힌 피해량 자체가 성과이므로, 승패와 무관하게 이 제출이
+      // 소탕이 참조하는 역대 최고점(allTimeBestScore)의 유일한 갱신 경로다.
+      if (result.totalDamage > this.state.expedition.allTimeBestScore) {
+        const expedition = { ...this.state.expedition, allTimeBestScore: result.totalDamage };
+        this.persist({ ...this.state, expedition }); this.state.expedition = expedition;
+      }
       // 단일 개발 계정은 기록 전 미등재(null), 제출 뒤 1위다. 운영 구현은 같은 필드에 실제 변화를 넣는다.
       const response = { weekKey: this.bossWeek.weekKey, score: result.totalDamage, bestScore: this.bossWeek.bestScore, cumulativeScore: this.bossWeek.cumulativeScore, improved, endedAtMs: result.endedAtMs, rankBefore: this.previousBossBest > 0 ? 1 : null, rankAfter: 1 };
       this.previousBossBest = this.bossWeek.bestScore;
@@ -179,26 +185,15 @@ export class FakeServer implements GameApi {
       const key = currency as keyof Session["wallet"]; const amount = Math.max(0, Math.floor(raw));
       const applied = Math.min(amount, WALLET_CAPS[key] - wallet[key]); wallet[key] += applied; granted[currency] = applied;
     }
-    // 실제로 도달한 노드 점수는 결과(완료/포기)와 무관하게 그 자체로 실제 성과이므로, 보스 피해
-    // 제출과 같은 주간 랭킹·누적 보상 집계에 그대로 합류시킨다 — 랭킹 화면이 보스를 잡은
-    // 런만 반영하고 일반 진행은 반영하지 않던 것을 고친다. 다만 이 런이 이미 보스 점수를
-    // 제출했다면 그 값이 run.bestScore에도 흡수돼 있으므로(completeNode의 max 갱신) 여기서
-    // 다시 더하면 같은 점수를 두 번 반영하게 된다 — 보스 제출 이력이 없을 때만 더한다.
-    const now = this.now();
-    this.normalizeBossWeek(now);
-    const bossAlreadySubmitted = run.bossSubmissionId !== null && this.bossSubmissionResults.has(run.bossSubmissionId);
-    if (!bossAlreadySubmitted && run.bestScore > 0) {
-      this.bossWeek.cumulativeScore += run.bestScore;
-      if (run.bestScore > this.bossWeek.bestScore) { this.bossWeek.bestScore = run.bestScore; this.bossWeek.achievedAt = now.toISOString(); }
-    }
     // 완료 런은 활성 슬롯에서 즉시 제거한다. 멱등 재응답은 아래 정산 결과 캐시가 소유하므로
     // settled 표식을 활성 run에 남겨 다음 진입을 가로막지 않는다.
+    // 주간 랭킹·소탕이 참조하는 역대 최고점은 노드 진행 점수가 아니라 불사 보스에게 입힌
+    // 피해량만 반영한다(submitExpeditionBossScore 참고) — 보스는 처치가 불가능해 "완료"라는
+    // 개념이 없으므로, 여기서는 그 둘을 갱신하지 않는다.
     const expedition = {
       ...this.state.expedition,
       playsThisWeek: this.state.expedition.playsThisWeek + 1,
       bestScore: request.outcome === "completed" ? Math.max(this.state.expedition.bestScore, run.bestScore) : this.state.expedition.bestScore,
-      // 소탕이 참조하는 역대 최고점은 결과와 무관하게 실제 도달한 점수만 늘린다.
-      allTimeBestScore: Math.max(this.state.expedition.allTimeBestScore, run.bestScore),
       run: null,
     };
     this.persist({ ...this.state, wallet, expedition }); this.state.wallet = wallet; this.state.expedition = expedition;

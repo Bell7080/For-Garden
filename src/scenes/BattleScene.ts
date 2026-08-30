@@ -57,8 +57,9 @@ import { currencyRecordToRewardItems, openRewardPopup } from "../ui/RewardPopup"
 import { BATTLE_STATUS_LAYOUT, statusBadgeOffsets } from "../ui/battleStatusLayout";
 import { BattleProfile } from "../ui/BattleProfile";
 import { BattleContributionPanel } from "../ui/BattleContributionPanel";
-import { createBattleContributionResult, withConfirmedAttackTotal, type BattleContributionResult, type ContributionCategory } from "../core/battleContribution";
+import { battleContributionMvp, createBattleContributionResult, withConfirmedAttackTotal, type BattleContributionResult, type ContributionCategory } from "../core/battleContribution";
 import { BattleContributionPopup } from "../ui/BattleContributionPopup";
+import { StageCompletePopup, type StageCompleteFighter } from "../ui/StageCompletePopup";
 
 /**
  * 여섯이 돌아다닐 수 있는 범위.
@@ -1071,22 +1072,48 @@ export class BattleScene extends Phaser.Scene {
     if (this.battleInput.mode === "expeditionBoss") { void this.submitAndSettleBoss(this.battleInput, this.bossActions); return; }
     if (this.battleInput.mode === "expedition") { this.finishExpeditionBattle(this.battleInput, won); return; }
     const stage = getStage(session.selectedStageId ?? "1-1");
-    // 결과 화면은 정적 스테이지 보상만 미리 읽고, 실제 상태 변경은 확인 버튼의 API 요청에 맡긴다.
-    const firstClear = !session.cleared.has(stage.id);
-    const cheesecakeEarned = won ? (firstClear ? stage.rewards.firstClearCheesecake : stage.rewards.repeatClearCheesecake) : 0;
-    this.add.rectangle(BASE_WIDTH / 2, 930, BASE_WIDTH, 420, COLOR.void, 0.84).setDepth(100);
-    this.add.text(BASE_WIDTH / 2, 840, won ? "작전 성공" : "작전 실패", textStyle({ role: "display", size: 68, color: won ? COLOR.accentText : COLOR.dangerText })).setOrigin(0.5).setDepth(101);
-    this.add.text(BASE_WIDTH / 2, 930, won ? `획득 치즈케이크  +${cheesecakeEarned}\n${firstClear ? "최초 클리어 보상" : "반복 클리어 보상"}` : "획득 보상 없음", textStyle({ role: "body", size: 28, color: COLOR.ink, align: "center", lineSpacing: 8 })).setOrigin(0.5).setDepth(101);
-    let confirming = false;
-    new Button(this, BASE_WIDTH / 2, 1050, { width: 400, height: 110, label: won ? "확인 및 저장" : "지도로", fontSize: 34, onClick: () => {
-      if (!won) { void gameApi.completeStage(stage.id, false).finally(() => this.scene.start("stageMap")); return; }
-      if (confirming) return;
-      confirming = true;
-      // API 완료 뒤에만 이동하므로 사용자가 지도를 본 시점에는 보상과 최초 클리어가 저장되어 있다.
-      void gameApi.completeStage(stage.id).then(() => this.scene.start("stageMap")).catch(() => { confirming = false; });
-    } }).setDepth(101);
-    // 일반 스테이지도 보스와 같은 공용 종료 팝업을 사용하며 기존 저장 버튼은 그대로 유지한다.
-    new Button(this, BASE_WIDTH / 2, 1175, { width: 300, height: 76, label: "기여도", fontSize: 27, onClick: () => this.openContributionPopup() }).setDepth(101);
+    if (!won) {
+      this.add.rectangle(BASE_WIDTH / 2, 930, BASE_WIDTH, 420, COLOR.void, 0.84).setDepth(100);
+      this.add.text(BASE_WIDTH / 2, 840, "작전 실패", textStyle({ role: "display", size: 68, color: COLOR.dangerText })).setOrigin(0.5).setDepth(101);
+      this.add.text(BASE_WIDTH / 2, 930, "획득 보상 없음", textStyle({ role: "body", size: 28, color: COLOR.ink, align: "center", lineSpacing: 8 })).setOrigin(0.5).setDepth(101);
+      new Button(this, BASE_WIDTH / 2, 1050, { width: 400, height: 110, label: "지도로", fontSize: 34, onClick: () => {
+        void gameApi.completeStage(stage.id, false).finally(() => this.scene.start("stageMap"));
+      } }).setDepth(101);
+      new Button(this, BASE_WIDTH / 2, 1175, { width: 300, height: 76, label: "기여도", fontSize: 27, onClick: () => this.openContributionPopup() }).setDepth(101);
+      return;
+    }
+    void this.finishStageVictory(stage);
+  }
+
+  /**
+   * 승리 확정과 결과 화면.
+   *
+   * 확인 버튼을 눌러야 저장되던 이전 계약을 버리고, 승리 즉시 서버에 확정한 뒤 이미 지급이 끝난
+   * 결과만 `StageCompletePopup`(보상 팝업의 연장선)으로 보여준다 — 그래서 그 팝업은 화면 아무
+   * 곳이나 눌러도 닫힌다.
+   */
+  private async finishStageVictory(stage: ReturnType<typeof getStage>): Promise<void> {
+    try {
+      const result = await gameApi.completeStage(stage.id);
+      if (!this.scene.isActive()) return;
+      const popups = new PopupLayer(this, 2200);
+      const mvpFighterId = this.contributionResult ? battleContributionMvp(this.contributionResult) : undefined;
+      const fighters: StageCompleteFighter[] = this.state.fighters
+        .filter(({ side }) => side === "player")
+        .map((fighter) => ({ relicId: fighter.def.id, isMvp: fighter.id === mvpFighterId }));
+      new StageCompletePopup(this, popups).open({
+        cheesecakeEarned: result.cheesecakeEarned,
+        firstClear: result.firstClear,
+        fighters,
+        onOpenContribution: () => this.openContributionPopup(popups),
+        onConfirm: () => this.scene.start("stageMap"),
+      });
+    } catch {
+      // 승리는 이미 확정됐으므로 전장으로 되돌리지 않고, 같은 저장 요청만 다시 시도하게 한다.
+      this.add.rectangle(BASE_WIDTH / 2, 930, BASE_WIDTH, 420, COLOR.void, 0.84).setDepth(100);
+      this.add.text(BASE_WIDTH / 2, 900, "결과를 저장하지 못했습니다", textStyle({ role: "body", size: 30, color: COLOR.ink })).setOrigin(0.5).setDepth(101);
+      new Button(this, BASE_WIDTH / 2, 1010, { width: 400, height: 100, label: "다시 시도", onClick: () => void this.finishStageVictory(stage) }).setDepth(101);
+    }
   }
 
   /** 결과 확인 탭을 직렬화하고 HP 저장, 증강 또는 정산이 끝난 뒤에만 다음 화면을 연다. */

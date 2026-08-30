@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  accumulateDamageContribution, addContribution, contributionSnapshot, contributionValue, createBattleContributionResult, createBattleContributions,
+  accumulateDamageContribution, addContribution, battleContributionMvp, contributionSnapshot, contributionValue, createBattleContributionResult, createBattleContributions,
 } from "../../src/core/battleContribution";
 
 /** 서버 재생 입력과 같은 작은 피해 사건을 만들어 정책별 기대값만 드러낸다. */
@@ -85,5 +85,32 @@ describe("전투 기여도 순수 누적 정책", () => {
     expect(result.side).toBe("player");
     expect(result.rows.attack[0].total).toBe(1200);
     expect(result.rows.healing[0].total).toBe(300);
+  });
+
+  it("MVP는 원시 수치가 아니라 분류별 몫의 합으로 고른다 — 회복만 도맡아도 딜러와 경쟁한다", () => {
+    const values = createBattleContributions(["dealer", "healer", "idle"]);
+    // 딜러는 공격을 전부 몰아 받아 규모가 훨씬 크지만, 힐러는 회복을 전부 도맡는다.
+    addContribution(values, "dealer", "attack", 10_000, "attackPower");
+    addContribution(values, "healer", "healing", 50);
+    const fighters = [
+      { id: "dealer", formationOrder: 0, name: "딜러", portraitId: "dealer" },
+      { id: "healer", formationOrder: 1, name: "힐러", portraitId: "healer" },
+      { id: "idle", formationOrder: 2, name: "대기", portraitId: "idle" },
+    ];
+    const result = createBattleContributionResult(values, fighters, "player");
+    // 공격·회복 몫이 각각 1.0으로 동률이라 더 앞선 편성 순서(딜러)가 이긴다.
+    expect(battleContributionMvp(result)).toBe("dealer");
+  });
+
+  it("MVP 동률에서는 편성 순서가 앞선 쪽을 고른다", () => {
+    const values = createBattleContributions(["a", "b"]);
+    addContribution(values, "a", "attack", 100, "attackPower");
+    addContribution(values, "b", "attack", 100, "attackPower");
+    const fighters = [
+      { id: "b", formationOrder: 1, name: "B", portraitId: "b" },
+      { id: "a", formationOrder: 0, name: "A", portraitId: "a" },
+    ];
+    const result = createBattleContributionResult(values, fighters, "player");
+    expect(battleContributionMvp(result)).toBe("a");
   });
 });

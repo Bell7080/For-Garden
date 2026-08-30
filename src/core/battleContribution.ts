@@ -128,3 +128,26 @@ export function contributionSnapshot(
   return totals.map((row) => ({ ...row, ratio: grandTotal > 0 ? row.total / grandTotal : 0 }))
     .sort((a, b) => b.total - a.total || a.formationOrder - b.formationOrder);
 }
+
+/**
+ * 결과 화면의 MVP 한 명을 고른다.
+ *
+ * 원시 수치를 그대로 더하면 규모가 큰 공격이 늘 이겨 방어·회복만 맡은 전투원은 뽑힐 수 없다.
+ * 그래서 분류별 몫(ratio, 그 분류 전체 대비 비중)을 세 분류에 걸쳐 더한 값으로 비교한다 —
+ * 공격을 절반 몰아준 딜러와 회복을 절반 몰아준 힐러가 같은 무게로 경쟁하게 된다.
+ */
+export function battleContributionMvp(result: BattleContributionResult): string | undefined {
+  const scores = new Map<string, { score: number; formationOrder: number }>();
+  (["attack", "defense", "healing"] as const).forEach((category) => {
+    result.rows[category].forEach((row) => {
+      const entry = scores.get(row.fighterId) ?? { score: 0, formationOrder: row.formationOrder };
+      entry.score += row.ratio;
+      scores.set(row.fighterId, entry);
+    });
+  });
+  let best: { fighterId: string; score: number; formationOrder: number } | undefined;
+  for (const [fighterId, value] of scores) {
+    if (!best || value.score > best.score || (value.score === best.score && value.formationOrder < best.formationOrder)) best = { fighterId, ...value };
+  }
+  return best?.fighterId;
+}

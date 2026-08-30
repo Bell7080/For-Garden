@@ -514,7 +514,7 @@ describe("FakeServer 원정 정산", () => {
     expect(state.wallet).toMatchObject({ gold: 999_999_999, fossil: 1007 });
   });
 
-  it("포기 정산은 런 점수를 주간 최고점에 반영하지 않지만 실제 도달 점수는 랭킹에 반영한다", async () => {
+  it("포기 정산은 런 점수를 주간 최고점에 반영하지 않고, 노드 진행 점수는 랭킹에도 반영하지 않는다", async () => {
     const state = makeSession();
     const manager = new (await import("../../src/managers/ExpeditionManager")).ExpeditionManager(state, { save: () => undefined }, () => new Date("2026-08-25T12:00:00Z"));
     manager.start(["anky", "rex", "dodo"]); state.expedition.run!.bestScore = 88_000; state.expedition.bestScore = 12_000;
@@ -523,14 +523,14 @@ describe("FakeServer 원정 정산", () => {
     await server.settleExpeditionRun({ runId: state.expedition.run!.runId, settlementId: "abandon-score", outcome: "abandoned" });
     expect(state.expedition.bestScore).toBe(12_000);
     expect(state.expedition.run).toBeNull();
-    // 편성 화면 헤더용 지역 최고점은 완료 런만 갱신하지만, 랭킹 화면이 읽는 주간 기록은
-    // 보스를 잡지 못한 포기 런의 실제 진행 점수도 반영해야 한다.
+    // 불사 보스는 처치가 불가능해 "완료"가 없다 — 주간 랭킹·역대 최고점은 노드 진행이 아니라
+    // submitExpeditionBossScore가 제출하는 실제 피해량만으로 갱신된다.
     const weekly = await server.getExpeditionWeeklyBest();
-    expect(weekly.bestScore).toBe(88_000); expect(weekly.cumulativeScore).toBe(88_000);
-    expect(state.expedition.allTimeBestScore).toBe(88_000);
+    expect(weekly.bestScore).toBe(0); expect(weekly.cumulativeScore).toBe(0);
+    expect(state.expedition.allTimeBestScore).toBe(0);
   });
 
-  it("보스 점수를 이미 제출한 런은 정산에서 같은 점수를 랭킹에 중복 반영하지 않는다", async () => {
+  it("보스에게 입힌 피해량은 승패와 무관하게 주간 랭킹과 역대 최고점을 갱신한다", async () => {
     const state = makeSession();
     const manager = new (await import("../../src/managers/ExpeditionManager")).ExpeditionManager(state, { save: () => undefined }, () => new Date("2026-08-25T12:00:00Z"));
     manager.start(["anky", "rex", "dodo"]);
@@ -543,10 +543,12 @@ describe("FakeServer 원정 정산", () => {
     const score = await server.submitExpeditionBossScore({ requestId: state.expedition.run!.bossSubmissionId, runId, nodeId: bossNode.id, actions: bossActions });
     manager.completeNode(bossNode.id, { relicHp: [0, 0, 0], score: score.score });
 
-    await server.settleExpeditionRun({ runId, settlementId: "boss-then-settle", outcome: "completed" });
+    // 팀이 전멸해 "패배"로 끝나도(불사 보스는 애초에 이길 수 없다) 이미 입힌 피해는 그대로 남는다.
+    await server.settleExpeditionRun({ runId, settlementId: "boss-then-wipe", outcome: "abandoned" });
     const weekly = await server.getExpeditionWeeklyBest();
-    // 보스 제출이 이미 올린 누적 점수와 같아야 한다 — 정산에서 run.bestScore를 다시 더하지 않는다.
     expect(weekly.cumulativeScore).toBe(score.score);
+    expect(weekly.bestScore).toBe(score.score);
+    expect(state.expedition.allTimeBestScore).toBe(score.score);
   });
 
   it("20층 정상 완료 정산에서만 런 최고점을 주간 최고점으로 갱신한다", async () => {

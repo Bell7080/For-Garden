@@ -493,6 +493,21 @@ describe("FakeServer 원정 정산", () => {
     await expect(server.completeExpeditionNode({ ...request, requestId: "node-forged-retry" })).rejects.toMatchObject({ code: "EXPEDITION_RUN_NOT_FOUND" });
   });
 
+  it("일반 노드 클리어 재화는 주간 순위(bestScore)가 아니라 누적 점수에만 조금씩 쌓인다", async () => {
+    const state = makeSession();
+    const manager = new (await import("../../src/managers/ExpeditionManager")).ExpeditionManager(state, { save: () => undefined }, () => new Date("2026-08-25T12:00:00Z"));
+    manager.start(["anky", "rex", "dodo"]);
+    const node = state.expedition.run!.nodes.find(({ floor }) => floor === 1)!;
+    const server = new FakeServer(state, { latencyMs: 0, random: () => 0.5, now: () => new Date("2026-08-25T12:00:00Z") });
+    const response = await server.completeExpeditionNode({ requestId: "node-score", runId: state.expedition.run!.runId, nodeId: node.id, relicHp: [100, 90, 80] });
+    const expectedScore = Object.values(response.rewards).reduce((sum, amount) => sum + amount, 0);
+    expect(expectedScore).toBeGreaterThan(0);
+    const weekly = await server.getExpeditionWeeklyBest();
+    expect(weekly.cumulativeScore).toBe(expectedScore);
+    // 순위 산정 기준(bestScore)은 여전히 보스 피해량만 반영한다.
+    expect(weekly.bestScore).toBe(0);
+  });
+
   it("정산 뒤 새 편성을 열고 같은 정산 ID는 지갑을 다시 늘리지 않는다", async () => {
     const state = makeSession();
     state.wallet.gold = 999_999_998;

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { calculateExpeditionNodeRewards, expeditionRewardRandom, expeditionRewardRule, generateExpeditionAugmentOffers, validateExpeditionAugmentChoice } from "../../src/core/expeditionRewards";
+import { calculateExpeditionNodeRewards, expeditionNodeRewardScore, expeditionRewardRandom, expeditionRewardRule, generateExpeditionAugmentOffers, validateExpeditionAugmentChoice } from "../../src/core/expeditionRewards";
 import { EXPEDITION_NODE_REWARD_BALANCE } from "../../src/data/expedition";
 import { EXPEDITION_AUGMENTS } from "../../src/data/expeditionAugments";
 import { ExpeditionManager } from "../../src/managers/ExpeditionManager";
@@ -12,6 +12,13 @@ describe("expedition augment rewards", () => {
     expect(calculateExpeditionNodeRewards({ nodeType: "elite", accumulated: almostCapped, random: () => 0.999 }).gold).toBe(2);
     expect(() => calculateExpeditionNodeRewards({ nodeType: "normal", accumulated: { gold: -1 }, random: () => 0 })).toThrow("INVALID_EXPEDITION_REWARD_STATE");
     expect(() => calculateExpeditionNodeRewards({ nodeType: "normal", accumulated: { hacked: 1 }, random: () => 0 })).toThrow("INVALID_EXPEDITION_REWARD_STATE");
+  });
+
+  it("일반 노드 클리어 보상은 종류를 가리지 않고 그대로 더해 주간 누적 점수로 환산한다", () => {
+    expect(expeditionNodeRewardScore({ cheesecake: 8, gold: 260, fossil: 6 })).toBe(274);
+    expect(expeditionNodeRewardScore({})).toBe(0);
+    // 전멸로 보상이 없는 노드는 점수도 없다.
+    expect(expeditionNodeRewardScore({ gold: 0 })).toBe(0);
   });
 
   it("보물은 보석을 보장하고 증강을 제공하지 않는다", () => {

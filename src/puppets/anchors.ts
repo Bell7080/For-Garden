@@ -172,6 +172,15 @@ export interface CardFrameOptions {
 const MAX_HEAD_DROP_RATIO = 0.34;
 
 /**
+ * 내용 상자 맨 위(`content.top`)에 자르기를 딱 붙이면(headroom 0) 뾰족하거나 갈래진 장식은
+ * 자연스럽게 가늘어지며 사라져 눈에 띄지 않지만, 토리카의 뿔처럼 끝이 뭉툭·넓은 장식은 잘린
+ * 단면이 그대로 수평선으로 남아 그리드 허용 범위 밖으로 넘친 것처럼 보인다. 모든 캐릭터에
+ * 공통으로 아주 작은 여백을 얹어 정수리 위에 숨 쉴 틈을 만든다 — 캐릭터마다 다른 값을 주지
+ * 않고 이 한 상수만 조정한다.
+ */
+const HEAD_TIP_MARGIN_RATIO = 0.035;
+
+/**
  * 머리 관절이 카드 상단에 오도록 확대·잘라내기 값을 구한다.
  *
  * 전신 원화를 카드 비율에 그대로 넣으면 얼굴이 손톱만 해지므로, 얼굴이 보이는 상단부만
@@ -193,7 +202,8 @@ export function computeHeadCardFrame(
   const clamp = (value: number, max: number): number => Math.min(Math.max(value, 0), Math.max(max, 0));
   const cropX = clamp(head.x - cropWidth / 2, frame.imageWidth - cropWidth);
   // 머리카락 끝(내용 상자 위)과 머리 관절 사이에서 시작점을 잡아 정수리가 살짝 잘리게 한다.
-  const naturalCropY = frame.content.top + (head.y - frame.content.top) * headroom;
+  // 그 위에 공통 여백을 더 얹어, 뭉툭한 장식이 자르기 상단에 딱 붙어 수평으로 잘리지 않게 한다.
+  const naturalCropY = frame.content.top + (head.y - frame.content.top) * headroom - cropHeight * HEAD_TIP_MARGIN_RATIO;
   // 자연스러운 시작점이 머리를 상단 한계 밖으로 밀어내면(위 주석 참고) 그만큼만 시작점을
   // 늦춘다 — 정상 원화의 결과보다 시작점을 앞당기지는 않는다.
   const cropY = clamp(Math.max(naturalCropY, head.y - cropHeight * MAX_HEAD_DROP_RATIO), frame.imageHeight - cropHeight);

@@ -19,7 +19,7 @@ import { COLOR, textStyle } from "../ui/theme";
 import { chipPoints, drawGlassFade, drawHairline, drawLayer, drawVignette, HOLO } from "../ui/holo";
 import { EXPEDITION_LAYOUT } from "../ui/expeditionLayout";
 import { ExpeditionMapView } from "../ui/ExpeditionMapView";
-import type { ExpeditionAugmentSelection } from "../core/expeditionRewards";
+import { expeditionNodeRewardScore, type ExpeditionAugmentSelection } from "../core/expeditionRewards";
 import type { ExpeditionBattleInputDto, ExpeditionBossBattleInputDto } from "../core/expeditionBattle";
 import { ExpeditionAugmentPopup, expeditionAugmentEffectLabel, expeditionAugmentMetaLabel, type AugmentTargetPicker } from "../ui/ExpeditionAugmentPopup";
 import { EXPEDITION_NODE_REWARD_BALANCE, EXPEDITION_WEEKLY_POLICY } from "../data/expedition";
@@ -209,8 +209,9 @@ export class ExpeditionScene extends Phaser.Scene {
     this.startButton = new Button(this, BASE_WIDTH / 2, 1810, { width: 340, height: 108, label: "출  격", variant: "primary", accentColor: COLOR.sortie, accentTextColor: COLOR.sortieText, onClick: () => this.selectedNode && this.confirmNodeSortie(this.selectedNode) });
     this.startButton.setEnabled(false);
     if (run.pendingAugmentReward) this.openAugmentReward();
-    // 포기는 전리품 판의 우상단 정보 흐름 바로 아래에 붙이고, 작고 붉은 파괴 조작으로 분리한다.
-    new Button(this, BASE_WIDTH - 155, 286, { width: 190, height: 56, label: "포기하기", fontSize: 20, fill: 0x431d20, accentColor: COLOR.danger, accentTextColor: COLOR.dangerText, onClick: () => this.confirmAbandon() });
+    // 포기는 전리품 판(획득 전리품 + 점수) 위, 화면 우상단 구석에 작게 둔다 — 판과 겹치지
+    // 않으면서도 작고 붉은 파괴 조작이라 손이 쉽게 닿지 않게 한다.
+    new Button(this, BASE_WIDTH - 90, 46, { width: 140, height: 44, label: "포기하기", fontSize: 16, fill: 0x431d20, accentColor: COLOR.danger, accentTextColor: COLOR.dangerText, onClick: () => this.confirmAbandon() });
   }
 
   /** 런에서만 누적되는 네 재화를 보상 팝업과 같은 액자·우하단 수량 문법으로 묶는다. */
@@ -220,7 +221,8 @@ export class ExpeditionScene extends Phaser.Scene {
       ["currency-fossil", "fossil"], ["currency-gems", "gems"],
     ] as const;
     // 지도 위에 떠 있는 하나의 전리품 레이어로 읽히도록 제목과 얇은 상단선을 먼저 놓는다.
-    drawLayer(this, BASE_WIDTH / 2, 194, chipPoints(972, 142, { bevel: { topLeft: 30, bottomRight: 22 } }), { fill: 0x0d131b, alpha: 0.82, edge: COLOR.accent, edgeAlpha: 0.55 });
+    // 아래에 점수 한 줄을 더 두는 만큼 판 아래쪽으로만 키운다(위쪽은 기존 자리 그대로).
+    drawLayer(this, BASE_WIDTH / 2, 209, chipPoints(972, 172, { bevel: { topLeft: 30, bottomRight: 22 } }), { fill: 0x0d131b, alpha: 0.82, edge: COLOR.accent, edgeAlpha: 0.55 });
     this.add.text(86, 137, "획득 전리품", textStyle({ role: "display", size: 25, color: COLOR.accentText })).setOrigin(0, 0.5);
     items.forEach(([icon, key], index) => {
       const x = 180 + index * 225; const y = 207; const size = 96;
@@ -236,6 +238,9 @@ export class ExpeditionScene extends Phaser.Scene {
       const gained = Math.floor(last?.rewards[key] ?? 0);
       if (gained > 0) this.add.text(x, 263, `+ ${formatCurrency(gained)}`, textStyle({ role: "emphasis", size: 16, color: COLOR.accentText })).setOrigin(0.5);
     });
+    // 이번 런이 주간 누적 점수에 보탠 몫이다. 판이 아니라 글자와 검은 테두리만으로 눈에 띈다.
+    const score = expeditionNodeRewardScore(rewards);
+    this.add.text(BASE_WIDTH / 2, 282, `점수 ${score.toLocaleString()}`, textStyle({ role: "emphasis", size: 22, color: "#ffffff" })).setOrigin(0.5).setStroke("#000000", 5);
   }
 
   /** 전용 프리팹에 지도 월드와 입력 수명을 넘기고 씬은 선택 결과만 연결한다. */

@@ -34,6 +34,18 @@ export function calculateExpeditionNodeRewards(input: { nodeType: ExpeditionNode
   return result;
 }
 
+/**
+ * 일반 노드 클리어 보상을 주간 랭킹 누적 점수로 환산한다.
+ *
+ * 불사 보스에게 입힌 피해량(수만 단위)에 비하면 한 노드의 재화(수십~수백 단위)는 작지만,
+ * 전투 한 번의 노력을 조금이라도 누적 점수에 보태 주간 보상 단계(EXPEDITION_CUMULATIVE_REWARD_STAGES)에
+ * 기여하게 한다. 재화 종류를 가중하지 않고 그대로 더해, 새 재화가 추가돼도 이 표를 다시 조정할
+ * 필요가 없게 한다.
+ */
+export function expeditionNodeRewardScore(rewards: Readonly<Record<string, number>>): number {
+  return Math.max(0, Math.floor(Object.values(rewards).reduce((sum, amount) => sum + amount, 0)));
+}
+
 /** 저장 가능한 증강 확정 결과다. 전체 증강에는 대상 ID를 두지 않는다. */
 export interface ExpeditionAugmentSelection { augmentId: string; targetRelicId?: string }
 

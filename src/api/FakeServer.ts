@@ -27,6 +27,7 @@ import type { ActivatePassRequest, ActivatePassResponse, ClaimInstantAdRewardReq
 import { harvestIdleExcavation, isExcavationStorageFull, settleIdleExcavation, validateExcavationFormation } from "../core/idleExcavation";
 import type { HarvestExcavationRequest, HarvestExcavationResponse, IdleExcavationResponse, SaveExcavationFormationRequest, InventoryResponse, UseConsumableRequest, UseConsumableResponse } from "./contracts";
 import type { ClaimExpeditionRewardRequest, ClaimExpeditionRewardResponse, CompleteExpeditionNodeRequest, CompleteExpeditionNodeResponse, ExpeditionLeaderboardResponse, ExpeditionWeeklyBestResponse, SettleExpeditionRunRequest, SettleExpeditionRunResponse, SubmitExpeditionBossScoreRequest, SubmitExpeditionBossScoreResponse, SweepExpeditionRequest, SweepExpeditionResponse } from "./contracts";
+import type { ClaimMailRewardsRequest, ClaimMailRewardsResponse, MailDto, MailListResponse, MailRewardDto, MarkMailsReadRequest } from "./contracts";
 import { expeditionWeekKey, resolveExpeditionBossBattle } from "../core/expeditionBoss";
 import { EXPEDITION_BOSS_BALANCE, EXPEDITION_CUMULATIVE_REWARD_STAGES, EXPEDITION_NODE_REWARD_BALANCE, EXPEDITION_SWEEP_POLICY, EXPEDITION_WEEKLY_POLICY, QUICK_EXPEDITION_POLICY } from "../data/expedition";
 import { calculateExpeditionNodeRewards, expeditionNodeRewardScore } from "../core/expeditionRewards";
@@ -79,6 +80,10 @@ export class FakeServer implements GameApi {
   private quickWeek = { weekKey: "", claims: 0 };
   /** 같은 밀리초 안의 연속 발급도 구분하는 서버 인스턴스 로컬 순번이다. */
   private runeIssueSequence = 0;
+  /** 개발 서버 재시작마다 같은 우편 원본에서 시작하되 읽음·수령 상태는 인스턴스 안에서만 변한다. */
+  private readonly mails: MailDto[];
+  /** 네트워크 재전송은 최초 영수증을 그대로 돌려줘 첨부물이 두 번 지급되지 않게 한다. */
+  private readonly mailClaimResults = new Map<string, ClaimMailRewardsResponse>();
 
   constructor(
     private readonly state: Session = session,
@@ -90,7 +95,42 @@ export class FakeServer implements GameApi {
     // FakeServer 기본값은 테스트용 서명 형식이며 프로덕션 HTTP 서버는 반드시 SSV 검증기를 주입한다.
     this.verifyAdToken = options.verifyAdToken ?? ((token, slotId) => token === `verified:${slotId}`);
     this.verifyReceipt = options.verifyPurchaseReceipt ?? ((receipt, productId) => receipt.startsWith(`verified-receipt:${productId}:`) ? receipt.slice(`verified-receipt:${productId}:`.length) : null);
+    // 절대 시각을 고정해 테스트와 개발 빌드에서 내용·순서가 언제나 같게 한다.
+    this.mails = [
+      { id: "welcome-supply", title: "중앙 연구소 보급품", sender: "연구지원국", body: "새로운 조사 활동을 위한 보급품입니다.", sentAt: "2026-08-29T00:00:00.000Z", expiresAt: "2099-12-31T23:59:59.000Z", read: false, claimed: false, rewards: [{ kind: "currency", currency: "gold", amount: 1200 }] },
+      { id: "field-notice", title: "광장 안전 점검 안내", sender: "도시관리국", body: "중앙 광장 안전 점검이 완료되었습니다.", sentAt: "2026-08-28T00:00:00.000Z", expiresAt: null, read: false, claimed: false, rewards: [] },
+      { id: "archive-gift", title: "기록 보존 감사품", sender: "기록보존실", body: "기록 제공에 감사드립니다.", sentAt: "2026-08-27T00:00:00.000Z", expiresAt: null, read: true, claimed: true, rewards: [{ kind: "currency", currency: "gems", amount: 10 }] },
+      { id: "expired-supply", title: "지난 주 현장 보급", sender: "현장지원반", body: "수령 기간이 종료된 보급품입니다.", sentAt: "2026-08-01T00:00:00.000Z", expiresAt: "2026-08-10T00:00:00.000Z", read: true, claimed: false, rewards: [{ kind: "currency", currency: "fossil", amount: 50 }] },
+    ];
   }
+
+  /** 읽음·수령·만료를 현재 서버 시각으로 집계한 복제본만 외부에 제공한다. */
+  async getMails(): Promise<MailListResponse> { await this.delay(); return this.mailListDto(); }
+
+  /** 존재·만료·기수령을 모두 검증한 뒤 지급과 상태 변경을 한 처리로 확정한다. */
+  async claimMailRewards(request: ClaimMailRewardsRequest): Promise<ClaimMailRewardsResponse> {
+    await this.delay(); const cached = this.mailClaimResults.get(request.requestId); if (cached) return structuredClone(cached);
+    if (!request.requestId) throw new GameApiError("INVALID_STATE", "우편 수령 요청 ID가 필요합니다.");
+    const ids = [...new Set(request.mailIds)]; const nowMs = this.now().getTime(); const targets = ids.map((id) => this.mails.find((mail) => mail.id === id));
+    if (targets.some((mail) => !mail)) throw new GameApiError("INVALID_STATE", "존재하지 않는 우편입니다.");
+    const claimable = (targets as MailDto[]).filter((mail) => mail.rewards.length > 0 && !mail.claimed && (!mail.expiresAt || Date.parse(mail.expiresAt) > nowMs));
+    const granted: MailRewardDto[] = [];
+    for (const mail of claimable) for (const reward of mail.rewards) {
+      if (!Number.isInteger(reward.amount) || reward.amount <= 0) throw new GameApiError("INVALID_STATE", "올바르지 않은 우편 보상입니다.");
+      if (reward.kind === "currency") this.state.wallet[reward.currency] = Math.min(WALLET_CAPS[reward.currency], this.state.wallet[reward.currency] + reward.amount);
+      else { const definition = findItem(reward.itemId); if (!definition || definition.category === "rune" || definition.category === "currency") throw new GameApiError("INVALID_STATE", "올바르지 않은 우편 아이템입니다."); const stack = this.state.itemInventory.find(({ itemId }) => itemId === reward.itemId); if (stack) stack.quantity += reward.amount; else this.state.itemInventory.push({ itemId: reward.itemId, quantity: reward.amount }); }
+      granted.push({ ...reward });
+    }
+    claimable.forEach((mail) => { mail.claimed = true; mail.read = true; }); this.persist(this.state);
+    const list = this.mailListDto(); const response = { ...list, claimedMailIds: claimable.map(({ id }) => id), granted, wallet: { ...this.state.wallet }, items: (await this.getInventory()).items };
+    this.mailClaimResults.set(request.requestId, structuredClone(response)); return response;
+  }
+
+  /** 안내 우편도 열람 즉시 점에서 빠지도록 읽음 상태만 안전하게 변경한다. */
+  async markMailsRead(request: MarkMailsReadRequest): Promise<MailListResponse> { await this.delay(); const ids = new Set(request.mailIds); this.mails.forEach((mail) => { if (ids.has(mail.id)) mail.read = true; }); return this.mailListDto(); }
+
+  /** 모든 우편 응답이 동일한 만료·집계 규칙을 공유한다. */
+  private mailListDto(): MailListResponse { const serverTime = this.now().toISOString(); const nowMs = Date.parse(serverTime); const mails = structuredClone(this.mails); return { mails, serverTime, unreadCount: mails.filter((mail) => !mail.read && (!mail.expiresAt || Date.parse(mail.expiresAt) > nowMs)).length, claimableCount: mails.filter((mail) => !mail.claimed && mail.rewards.length > 0 && (!mail.expiresAt || Date.parse(mail.expiresAt) > nowMs)).length }; }
 
   /** 실제 통신처럼 다음 비동기 구간을 거친 뒤 직렬화 가능한 복사본을 돌려준다. */
   async getPlayerState(): Promise<PlayerStateDto> {
@@ -621,10 +661,10 @@ export class FakeServer implements GameApi {
     return this.missionListDto(normalized);
   }
 
-  /** 실제 받은 편지함 저장 모델이 생기기 전에는 계약만 제공하고 임의 알림은 만들지 않는다. */
+  /** 우편의 실제 읽음 상태를 공용 알림 신호에 합성한다. */
   async getNotificationSignals() {
     await this.delay();
-    return { pendingFriendRequestCount: 0, unseenEventCount: 0, unreadMailCount: 0 };
+    return { pendingFriendRequestCount: 0, unseenEventCount: 0, unreadMailCount: this.mailListDto().unreadCount };
   }
 
   /** 검증·보상 지급·수령 표시를 하나의 저장으로 확정해 재요청 중복 지급을 막는다. */

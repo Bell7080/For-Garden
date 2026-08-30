@@ -69,7 +69,9 @@ export interface DebugState {
   /** 보상 팝업의 넓은 확인 입력면 중심으로, 지급 내용은 포함하지 않는다. */
   rewardPopupConfirm?: { x: number; y: number };
   /** 재화와 보유 렐릭. 뽑기가 실제로 반영됐는지 확인하는 데 쓴다. */
-  wallet?: { fossil: number; amber: number };
+  wallet?: { fossil: number; amber: number; gold?: number };
+  /** 우편 점과 작업판 상태를 Canvas 밖에서 중복 계산하지 않고 확인하는 E2E 표시 계약이다. */
+  mailPopup?: { open: boolean; unreadCount: number; claimableCount: number };
   owned?: string[];
   /** 캔버스 내부 편성 UI의 위치/표시 상태를 모바일 E2E가 읽는 최소 정보다. */
   party?: { autoButton: { x: number; y: number }; visibleAffinityDirections: number };
@@ -111,6 +113,9 @@ export function setDebugReady(ready: boolean): void {
 export function setDebugInventoryCategory(category: DebugState["inventoryCategory"]): void {
   ensure().inventoryCategory = category;
 }
+
+/** 실제 우편 응답 집계만 노출해 E2E가 점 해제와 수령 가능 수 변화를 확인한다. */
+export function setDebugMailPopup(state: DebugState["mailPopup"]): void { ensure().mailPopup = state; }
 
 /** 현재 탭을 다시 그릴 때 실제 이미지로 사용한 키만 복사해 이전 렌더의 잔여값을 막는다. */
 export function setDebugInventoryTextureKeys(keys: readonly string[] | undefined): void {
@@ -190,7 +195,7 @@ export function setDebugRewardPopup(open: boolean, itemCount?: number, confirm?:
   state.rewardPopupConfirm = open ? confirm : undefined;
 }
 
-export function setDebugProgress(wallet: { fossil: number; amber: number }, owned: Set<string>): void {
+export function setDebugProgress(wallet: { fossil: number; amber: number; gold?: number }, owned: Set<string>): void {
   const state = ensure();
   state.wallet = { ...wallet };
   state.owned = [...owned];

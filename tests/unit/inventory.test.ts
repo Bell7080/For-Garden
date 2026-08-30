@@ -6,9 +6,20 @@ import { SaveManager } from "../../src/state/SaveManager";
 import { createDefaultSession } from "../../src/state/session";
 import { INVENTORY_TAB_LAYOUT, inventoryCategoryTabPosition } from "../../src/ui/inventoryTabs";
 import { createRuneInstance, type RuneStatKey } from "../../src/core/runes";
+import { ITEMS } from "../../src/data/items";
+import { ITEM_ICON_ASSETS } from "../../src/ui/itemIcons";
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
 
 /** 신규 가방의 저장/API/표시/스크롤 불변식을 한 파일에서 회귀 검증한다. */
 describe("inventory", () => {
+  it("모든 정적 item asset이 공용 로딩 표와 실제 임시 SVG에 일대일 대응한다", () => {
+    // 정적 정의가 늘 때 로더 등록이나 배포 파일 한쪽만 빠지는 회귀를 빌드 전에 잡는다.
+    const definedKeys = ITEMS.flatMap(({ icon }) => icon.kind === "asset" ? [icon.key] : []);
+    const loadedKeys = ITEM_ICON_ASSETS.map(([key]) => key);
+    expect(loadedKeys).toEqual(definedKeys);
+    for (const [, path] of ITEM_ICON_ASSETS) expect(existsSync(resolve("public", path))).toBe(true);
+  });
   it("스택 아이템을 저장 왕복하며 복사한다", () => {
     const memory = new Map<string, string>();
     const manager = new SaveManager({ getItem: (key) => memory.get(key) ?? null, setItem: (key, value) => { memory.set(key, value); }, removeItem: (key) => { memory.delete(key); } });

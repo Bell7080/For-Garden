@@ -176,7 +176,5 @@ def main() -> None:
         if len(entry) == 3:
             art = desaturate(art, entry[2])
         save(art, PUBLIC / out)
-
-
 if __name__ == "__main__":
     main()

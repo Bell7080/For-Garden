@@ -98,4 +98,13 @@ export const EXPEDITION_CUMULATIVE_REWARD_STAGES = [
 ] as const;
 
 /** 주차는 월요일 00:00 UTC에 초기화하며 동점은 최고 점수를 먼저 달성한 기록이 앞선다. */
-export const EXPEDITION_WEEKLY_POLICY = { resetWeekdayUtc: 1, resetHourUtc: 0, tieBreak: "earliest-achieved-at" } as const;
+export const EXPEDITION_WEEKLY_POLICY = { resetWeekdayUtc: 1, resetHourUtc: 0, tieBreak: "earliest-achieved-at", maxPlaysPerWeek: 2 } as const;
+
+/**
+ * 소탕은 직접 플레이하지 않고 지금까지의 최고 기록 일부만 즉시 정산한다.
+ *
+ * 주간 달성도(누적 점수 단계 보상)는 문턱을 처음 넘는 순간에만 지급되므로, 같은 주에 소탕을
+ * 반복해도 이미 넘은 문턱에는 의미가 없다 — 그래도 막지 않는 이유는 아직 넘지 못한 다음 문턱을
+ * 향해 누적 점수를 계속 쌓을 수 있기 때문이다. 소탕도 원정 한 판으로 세어 주간 횟수를 소비한다.
+ */
+export const EXPEDITION_SWEEP_POLICY = { allTimeBestScoreRatio: 0.8, lootRatio: 0.5 } as const;

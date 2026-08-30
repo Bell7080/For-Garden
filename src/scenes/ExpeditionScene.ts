@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { gameApi } from "../api/FakeServer";
-import { GameApiError, type AdSlotOperationsDto, type ExpeditionLeaderboardEntry } from "../api/contracts";
+import { GameApiError, type AdSlotOperationsDto } from "../api/contracts";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import type { ExpeditionMapNode } from "../core/expeditionMap";
 import { getRelic } from "../data/relics";
@@ -22,11 +22,12 @@ import { ExpeditionMapView } from "../ui/ExpeditionMapView";
 import type { ExpeditionAugmentSelection } from "../core/expeditionRewards";
 import type { ExpeditionBattleInputDto, ExpeditionBossBattleInputDto } from "../core/expeditionBattle";
 import { ExpeditionAugmentPopup, expeditionAugmentEffectLabel, expeditionAugmentMetaLabel, type AugmentTargetPicker } from "../ui/ExpeditionAugmentPopup";
-import { EXPEDITION_NODE_REWARD_BALANCE } from "../data/expedition";
+import { EXPEDITION_NODE_REWARD_BALANCE, EXPEDITION_WEEKLY_POLICY } from "../data/expedition";
 import { completedAdToken } from "../data/adRewards";
 import { presentRewardedAd } from "../platform/rewardedAds";
 import { currencyRecordToRewardItems, openRewardPopup } from "../ui/RewardPopup";
 import { ExpeditionRewardPopup } from "../ui/ExpeditionRewardPopup";
+import { ExpeditionRankingPopup } from "../ui/ExpeditionRankingPopup";
 import { portraitAssetFor, sdAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
 import { loadOwnedPuppet } from "../ui/statusPuppetLoad";
 import { expeditionEnemyLevel, getExpeditionEncounterEnemies } from "../data/expeditionEnemies";
@@ -48,16 +49,16 @@ const FORMATION = { y: 540, firstX: 230, stepX: 310, width: 250, height: 290 } a
 /**
  * 원정 첫 화면(주간 기록)의 자리표.
  *
- * 보스가 위에 서고 순위판이 그 **허리 아래를 덮으며** 내려온다. 판을 더 올리면 얼굴이 가려지고
- * 더 내리면 보스가 공중에 뜬 것처럼 보인다.
+ * 순위표는 늘 펼쳐 두지 않고 팝업 버튼 하나로 뺐다. 화면에는 보스 전신을 화면 가득 세우고,
+ * 그 아래로 내 점수 · 랭킹/주간 보상 · 출격/소탕을 층층이 쌓는다.
  */
 const RANKING = {
-  // 원화를 크게 세우고 얼굴이 제목 줄 아래에서 시작하도록 위로 올린다. 발끝은 판 뒤에 숨는다.
-  boss: { groundY: 1400, height: 1150 },
-  board: { y: 1120, width: 1000, height: 880 },
-  side: { x: 250 },
-  rows: { x: 730, width: 580, gap: 86, firstY: 766, max: 8 },
-  sortie: { y: 1700 },
+  // 얼굴이 제목 줄 바로 아래에서 시작하도록 위쪽 여백은 그대로 두고, 발끝은 화면 아래 UI 뒤로
+  // 숨을 만큼 크게 세운다.
+  boss: { groundY: BASE_HEIGHT + 40, height: 1720 },
+  score: { y: 1470, width: 900, height: 190 },
+  utility: { y: 1610, width: 330, height: 82, gap: 24 },
+  actions: { y: 1800, height: 130, sortieWidth: 460, sweepWidth: 250, gap: 24 },
 } as const;
 
 /** 증강 팝업의 암전(4000) 바로 위. 고르는 동안만 생존 HUD가 이 층으로 올라온다. */
@@ -118,14 +119,17 @@ export class ExpeditionScene extends Phaser.Scene {
   private enemyPreview?: NodeEnemyPreview;
   /** 선택 해제와 스크롤 추적을 같은 지도 인스턴스에 전달한다. */
   private mapView?: ExpeditionMapView;
-  /** 기록 화면의 판 위 내용. 서버 응답이 오면 이 층만 통째로 갈아 끼운다. */
-  private rankingRows?: Phaser.GameObjects.Container;
+  /** 기록 화면의 내 점수 패널. 서버 응답이 오면 이 층만 통째로 갈아 끼운다. */
+  private scorePanel?: Phaser.GameObjects.Container;
   /** 첫 화면은 주간 기록이고 출격 버튼을 눌러야 편성으로 넘어간다. */
   private stage: "ranking" | "preparation" = "ranking";
   /** 기록 화면의 보스 전신. 씬을 다시 만들 때 GPU 자원을 반드시 함께 버린다. */
   private bossPortrait?: PuppetCreature;
   /** 증강 팝업이 아군 그리드를 다시 그리지 않고 이 생존 HUD를 그대로 빌려 쓴다. */
   private relicProfiles = new Map<string, BattleProfile>();
+  private sweepButton?: Button;
+  /** 소탕 요청부터 서버 확정까지 연타를 막는다. */
+  private sweepPending = false;
 
   constructor() {
     super("expedition");
@@ -147,6 +151,9 @@ export class ExpeditionScene extends Phaser.Scene {
     this.mapView = undefined;
     this.relicProfiles.clear();
     this.bossPortrait?.destroy(); this.bossPortrait = undefined;
+    this.scorePanel?.destroy(); this.scorePanel = undefined;
+    this.sweepButton = undefined;
+    this.sweepPending = false;
     this.clearFormationPreview();
 
     const status = expeditionManager.status();
@@ -460,32 +467,39 @@ export class ExpeditionScene extends Phaser.Scene {
   }
 
   /**
-   * 원정의 첫 화면. 순위와 기록 보상을 먼저 보여 주고 출격 버튼으로 편성을 연다.
+   * 원정의 첫 화면. 보스를 화면 가득 세우고, 내 점수와 랭킹/보상/출격/소탕 조작만 그 아래에 둔다.
    *
-   * 들어오자마자 편성판이 뜨면 "이번 주에 내가 어디쯤인가"를 볼 자리가 없다. 보스가 위에 서고
-   * 순위판이 그 허리 아래를 덮으며 내려와 한 장의 기록 화면으로 읽힌다.
+   * 순위표는 훑어야 할 때만 팝업으로 펼친다 — 상시로 띄우면 매번 보스 전신을 가리고, 자리도
+   * 좁아 출격 조작과 다투게 된다.
    */
   private buildRanking(status = expeditionManager.status()): void {
     void this.loadBossPortrait();
-    // 순위는 훑어 읽는 표라 판을 불투명하게 둔다. 반투명하면 뒤의 보스 옷자락과 글자가 섞인다.
-    const board = drawLayer(this, BASE_WIDTH / 2, RANKING.board.y, chipPoints(RANKING.board.width, RANKING.board.height, { bevel: { topLeft: 74, bottomRight: 74 } }), { fill: 0x0b0f15, alpha: 0.98, edge: COLOR.accent, edgeAlpha: 0.6 });
-    board.setDepth(10);
-    const header = this.add.container(0, 0).setDepth(11);
-    // 제목은 순위 목록 쪽에만 둔다. 왼쪽 기둥의 첫 줄이 이미 "내 최고 순위"라 두 제목이 겹친다.
-    header.add(this.add.text(RANKING.rows.x, RANKING.board.y - RANKING.board.height / 2 + 46, "주간 순위", textStyle({ role: "emphasis", size: 26, color: COLOR.accentText })).setOrigin(0.5));
-    header.add(this.add.text(RANKING.rows.x, RANKING.board.y + RANKING.board.height / 2 - 36, "동점은 최고점을 먼저 찍은 쪽이 앞선다", textStyle({ role: "body", size: 19, color: COLOR.inkDim })).setOrigin(0.5));
-    this.renderRankingBoard("기록 동기화 중");
-    void this.refreshRanking();
+    this.renderMyScore("기록 동기화 중");
+    void this.refreshMyScore();
 
-    // 출격은 화면 하단의 고정 행동선 하나뿐이다. 편성은 그다음 단계로 열린다.
-    new Button(this, BASE_WIDTH / 2, RANKING.sortie.y, {
-      width: 560, height: 132, label: "출  격", sub: `이번 주 ${status.playsThisWeek}회`, fontSize: 42,
+    const { utility, actions } = RANKING;
+    const utilityTotal = utility.width * 2 + utility.gap;
+    const utilityLeftX = BASE_WIDTH / 2 - utilityTotal / 2 + utility.width / 2;
+    const utilityRightX = BASE_WIDTH / 2 + utilityTotal / 2 - utility.width / 2;
+    // 보스 전신(depth 5)보다 위에 그려야 발끝·옷자락 뒤로 조작이 숨지 않는다.
+    new Button(this, utilityLeftX, utility.y, { width: utility.width, height: utility.height, label: "랭킹", fontSize: 26, onClick: () => new ExpeditionRankingPopup(this, this.popups).open() }).setDepth(12);
+    new Button(this, utilityRightX, utility.y, { width: utility.width, height: utility.height, label: "주간 보상", fontSize: 26, onClick: () => void new ExpeditionRewardPopup(this, this.popups).open() }).setDepth(12);
+
+    const actionsTotal = actions.sortieWidth + actions.sweepWidth + actions.gap;
+    const sortieX = BASE_WIDTH / 2 - actionsTotal / 2 + actions.sortieWidth / 2;
+    const sweepX = BASE_WIDTH / 2 + actionsTotal / 2 - actions.sweepWidth / 2;
+    new Button(this, sortieX, actions.y, {
+      width: actions.sortieWidth, height: actions.height, label: "출  격",
+      sub: `이번 주 ${status.playsThisWeek} / ${EXPEDITION_WEEKLY_POLICY.maxPlaysPerWeek}회`, fontSize: 40,
       variant: "primary", accentColor: COLOR.sortie, accentTextColor: COLOR.sortieText,
       onClick: () => this.scene.restart({ stage: "preparation" }),
-    });
+    }).setEnabled(status.canStartRun).setDepth(12);
+    // 소탕은 원정 기회를 그대로 소비하므로 남은 횟수와 참조할 역대 최고점이 모두 있어야 누를 수 있다.
+    this.sweepButton = new Button(this, sweepX, actions.y, { width: actions.sweepWidth, height: actions.height, label: "소  탕", fontSize: 32, onClick: () => this.confirmSweep() }).setDepth(12);
+    this.sweepButton.setEnabled(status.canStartRun && status.allTimeBestScore > 0);
   }
 
-  /** 보스 전신은 판보다 뒤에 서서 허리 아래를 순위판이 덮게 한다. */
+  /** 보스 전신은 화면 전체에 깔리는 배경 다음 층이라, 아래 UI(내 점수·버튼)보다 먼저 그린다. */
   private async loadBossPortrait(): Promise<void> {
     const asset = portraitAssetFor("pontos");
     const puppet = await spawnPuppet(this, asset, { x: BASE_WIDTH / 2, groundY: RANKING.boss.groundY, height: RANKING.boss.height, depth: 5 });
@@ -496,48 +510,70 @@ export class ExpeditionScene extends Phaser.Scene {
   }
 
   /** 서버 스냅샷이 오기 전에도 자리를 잡아 두어 판이 비어 보이지 않게 한다. */
-  private renderRankingBoard(message: string, best?: { rank?: number; bestScore: number; cumulativeScore: number }, entries: readonly ExpeditionLeaderboardEntry[] = []): void {
-    this.rankingRows?.destroy();
-    const rows = this.add.container(0, 0).setDepth(12);
-    this.rankingRows = rows;
-    const { side, rows: list, board } = RANKING;
-    // 판 윗변에서 잰 자리만 쓴다. 판 높이가 바뀌어도 기둥과 목록이 같이 따라온다.
-    const top = board.y - board.height / 2;
-    // 왼쪽 기둥: 내 최고 순위와 점수, 그 아래 기록 보상 입구.
-    rows.add(this.add.text(side.x, top + 100, "내 최고 순위", textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0.5));
-    rows.add(this.add.text(side.x, top + 174, best?.rank ? `${best.rank}위` : "—", textStyle({ role: "display", size: 66, color: COLOR.accentText })).setOrigin(0.5));
-    rows.add(this.add.text(side.x, top + 262, "최고 점수", textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0.5));
-    rows.add(this.add.text(side.x, top + 304, (best?.bestScore ?? 0).toLocaleString(), textStyle({ role: "display", size: 34 })).setOrigin(0.5));
-    rows.add(this.add.text(side.x, top + 372, "누적 점수", textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0.5));
-    rows.add(this.add.text(side.x, top + 412, (best?.cumulativeScore ?? 0).toLocaleString(), textStyle({ role: "emphasis", size: 27, color: COLOR.ink })).setOrigin(0.5));
-    rows.add(new Button(this, side.x, top + 520, { width: 300, height: 92, label: "기록 보상", fontSize: 27, onClick: () => void new ExpeditionRewardPopup(this, this.popups).open() }));
+  private renderMyScore(message: string, best?: { rank?: number; bestScore: number; cumulativeScore: number }): void {
+    this.scorePanel?.destroy();
+    const { score } = RANKING;
+    const panel = this.add.container(BASE_WIDTH / 2, score.y).setDepth(12);
+    this.scorePanel = panel;
+    const shape = chipPoints(score.width, score.height, { bevel: { topLeft: 40, bottomRight: 40 } });
+    panel.add(drawLayer(this, 0, 0, shape, { fill: 0x0b0f15, alpha: 0.92, edge: COLOR.accent, edgeAlpha: 0.75 }));
+    panel.add(drawInnerVignette(this, 0, 0, shape, { strength: 0.4 }));
 
     if (message) {
-      rows.add(this.add.text(list.x, top + 300, message, textStyle({ role: "body", size: 24, color: COLOR.inkDim, align: "center", wrap: list.width - 60 })).setOrigin(0.5));
+      panel.add(this.add.text(0, 0, message, textStyle({ role: "body", size: 24, color: COLOR.inkDim, align: "center", wrap: score.width - 80 })).setOrigin(0.5));
       return;
     }
-    entries.slice(0, list.max).forEach((entry, index) => {
-      const y = list.firstY + index * list.gap;
-      const row = this.add.container(list.x, y).setScale(entry.isMe ? 1.05 : 1);
-      row.add(drawLayer(this, 0, 0, chipPoints(list.width, 70, { bevel: { topLeft: 16, bottomRight: 16 } }), { fill: entry.isMe ? 0x263844 : 0x171d25, alpha: HOLO.glass, edge: entry.isMe ? COLOR.accent : COLOR.panelEdge, edgeAlpha: entry.isMe ? 0.7 : 0.24 }));
-      row.add(this.add.text(-list.width / 2 + 28, 0, `${entry.rank}위`, textStyle({ role: "emphasis", size: 23, color: entry.isMe ? COLOR.accentText : COLOR.ink })).setOrigin(0, 0.5));
-      row.add(this.add.text(-list.width / 2 + 120, 0, entry.displayName, textStyle({ role: "body", size: 23, color: entry.isMe ? COLOR.accentText : COLOR.ink })).setOrigin(0, 0.5));
-      row.add(this.add.text(list.width / 2 - 28, 0, entry.score.toLocaleString(), textStyle({ role: "emphasis", size: 23 })).setOrigin(1, 0.5));
-      rows.add(row);
-    });
+    const left = -score.width / 2 + 48;
+    const right = score.width / 2 - 48;
+    const top = -score.height / 2 + 40;
+    panel.add(this.add.text(left, top, "내 주간 최고", textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0, 0));
+    panel.add(this.add.text(left, top + 32, (best?.bestScore ?? 0).toLocaleString(), textStyle({ role: "display", size: 52, color: COLOR.accentText })).setOrigin(0, 0));
+    panel.add(this.add.text(right, top, best?.rank ? `주간 ${best.rank}위` : "미등재", textStyle({ role: "emphasis", size: 26, color: COLOR.sortieText })).setOrigin(1, 0));
+    panel.add(this.add.text(right, top + 90, `누적 ${(best?.cumulativeScore ?? 0).toLocaleString()}`, textStyle({ role: "body", size: 22, color: COLOR.ink })).setOrigin(1, 0));
   }
 
-  /** 최고 기록과 순위표는 같은 주차일 때만 함께 보여 준다. */
-  private async refreshRanking(): Promise<void> {
+  /** 내 최고 순위는 순위표에만 있으므로 두 조회를 함께 묶는다. */
+  private async refreshMyScore(): Promise<void> {
     try {
       const [best, leaderboard] = await Promise.all([gameApi.getExpeditionWeeklyBest(), gameApi.getExpeditionLeaderboard(10)]);
       if (!this.scene.isActive() || this.stage !== "ranking") return;
-      if (best.weekKey !== leaderboard.weekKey) { this.renderRankingBoard("주차가 바뀌었습니다. 다시 들어와 주세요."); return; }
+      if (best.weekKey !== leaderboard.weekKey) { this.renderMyScore("주차가 바뀌었습니다. 다시 들어와 주세요."); return; }
       const mine = leaderboard.entries.find((entry) => entry.isMe);
-      this.renderRankingBoard(leaderboard.entries.length ? "" : "아직 등록된 기록이 없습니다", { rank: mine?.rank, bestScore: best.bestScore, cumulativeScore: best.cumulativeScore }, leaderboard.entries);
+      this.renderMyScore("", { rank: mine?.rank, bestScore: best.bestScore, cumulativeScore: best.cumulativeScore });
     } catch {
       if (!this.scene.isActive() || this.stage !== "ranking") return;
-      this.renderRankingBoard("기록을 불러오지 못했습니다");
+      this.renderMyScore("기록을 불러오지 못했습니다");
+    }
+  }
+
+  /** 소탕은 원정 기회를 되돌릴 수 없이 소비하므로 한 번 더 확인을 받는다. */
+  private confirmSweep(): void {
+    if (this.sweepPending) return;
+    this.popups.confirm({
+      title: "소탕",
+      message: "역대 최고 점수의 80%를 주간 기록에, 노드 클리어 전리품의 50%를 즉시 지급합니다.\n이번 주 원정 기회 1회를 사용하며 되돌릴 수 없습니다.",
+      confirmLabel: "소탕하기",
+    }, () => void this.sweep());
+  }
+
+  /** 지급은 서버가 한 처리로 확정하고, 화면은 결과 영수증을 보여 준 뒤 새 상태로 다시 그린다. */
+  private async sweep(): Promise<void> {
+    if (this.sweepPending) return;
+    this.sweepPending = true; this.sweepButton?.setEnabled(false);
+    try {
+      const requestId = globalThis.crypto?.randomUUID?.() ?? `expedition-sweep-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const result = await gameApi.sweepExpedition({ requestId });
+      openRewardPopup(this, this.popups, { title: "소탕 완료", items: currencyRecordToRewardItems(result.granted), onConfirm: () => this.scene.restart() });
+    } catch (error) {
+      const code = error instanceof GameApiError ? error.code : undefined;
+      const message: Partial<Record<string, string>> = {
+        EXPEDITION_SCORE_REQUIRED: "소탕할 기준 점수가 없습니다",
+        EXPEDITION_WEEKLY_LIMIT: "이번 주 원정 기회를 모두 사용했습니다",
+        EXPEDITION_ALREADY_ACTIVE: "진행 중인 원정이 있습니다",
+      };
+      this.renderMyScore(message[code ?? ""] ?? "소탕에 실패했습니다");
+      this.sweepPending = false;
+      this.sweepButton?.setEnabled(true);
     }
   }
 
@@ -775,6 +811,7 @@ export class ExpeditionScene extends Phaser.Scene {
   private failureMessage(reason: StartExpeditionFailure): string {
     if (reason === "alreadyActive") return "진행 중인 원정이 있습니다";
     if (reason === "notOwned") return "보유 렐릭만 선택할 수 있습니다";
+    if (reason === "weeklyLimitReached") return "이번 주 원정 기회를 모두 사용했습니다";
     return "서로 다른 렐릭 3기를 선택하세요";
   }
 }

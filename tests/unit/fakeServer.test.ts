@@ -36,7 +36,7 @@ function makeSession(fossil = 1000): Session {
     // 테스트 계정은 광고 수령 이력이 없는 UTC 일일 상태로 시작한다.
     dailyAdRewards: { date: "", claimsBySlot: {}, requestIds: [] },
     // API 테스트의 원정 저장 계약은 빈 상태로 명시한다.
-    expedition: { weekKey: "", playsThisWeek: 0, bestScore: 0, run: null },
+    expedition: { weekKey: "", playsThisWeek: 0, bestScore: 0, allTimeBestScore: 0, run: null },
   };
 }
 
@@ -514,15 +514,39 @@ describe("FakeServer 원정 정산", () => {
     expect(state.wallet).toMatchObject({ gold: 999_999_999, fossil: 1007 });
   });
 
-  it("포기 정산은 런 점수를 주간 최고점에 반영하지 않는다", async () => {
+  it("포기 정산은 런 점수를 주간 최고점에 반영하지 않지만 실제 도달 점수는 랭킹에 반영한다", async () => {
     const state = makeSession();
     const manager = new (await import("../../src/managers/ExpeditionManager")).ExpeditionManager(state, { save: () => undefined }, () => new Date("2026-08-25T12:00:00Z"));
     manager.start(["anky", "rex", "dodo"]); state.expedition.run!.bestScore = 88_000; state.expedition.bestScore = 12_000;
-    const server = new FakeServer(state, { latencyMs: 0 });
+    const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-25T12:00:00Z") });
 
     await server.settleExpeditionRun({ runId: state.expedition.run!.runId, settlementId: "abandon-score", outcome: "abandoned" });
     expect(state.expedition.bestScore).toBe(12_000);
     expect(state.expedition.run).toBeNull();
+    // 편성 화면 헤더용 지역 최고점은 완료 런만 갱신하지만, 랭킹 화면이 읽는 주간 기록은
+    // 보스를 잡지 못한 포기 런의 실제 진행 점수도 반영해야 한다.
+    const weekly = await server.getExpeditionWeeklyBest();
+    expect(weekly.bestScore).toBe(88_000); expect(weekly.cumulativeScore).toBe(88_000);
+    expect(state.expedition.allTimeBestScore).toBe(88_000);
+  });
+
+  it("보스 점수를 이미 제출한 런은 정산에서 같은 점수를 랭킹에 중복 반영하지 않는다", async () => {
+    const state = makeSession();
+    const manager = new (await import("../../src/managers/ExpeditionManager")).ExpeditionManager(state, { save: () => undefined }, () => new Date("2026-08-25T12:00:00Z"));
+    manager.start(["anky", "rex", "dodo"]);
+    const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-25T12:00:00Z") });
+    const runId = state.expedition.run!.runId;
+    const bossNode = state.expedition.run!.nodes.find(({ type }) => type === "boss")!;
+    state.expedition.run!.bossSubmissionId = `${runId}:${bossNode.id}:boss-score`;
+    // 실제 피해량 없이 각 렐릭의 공용 공속 쿨다운을 만족하는 기본 공격 입력이다.
+    const bossActions = Array.from({ length: 5 }, (_, index) => ["anky", "rex", "dodo"].map((actorId) => ({ elapsedMs: index * 2_000, actorId, kind: "basic" as const }))).flat();
+    const score = await server.submitExpeditionBossScore({ requestId: state.expedition.run!.bossSubmissionId, runId, nodeId: bossNode.id, actions: bossActions });
+    manager.completeNode(bossNode.id, { relicHp: [0, 0, 0], score: score.score });
+
+    await server.settleExpeditionRun({ runId, settlementId: "boss-then-settle", outcome: "completed" });
+    const weekly = await server.getExpeditionWeeklyBest();
+    // 보스 제출이 이미 올린 누적 점수와 같아야 한다 — 정산에서 run.bestScore를 다시 더하지 않는다.
+    expect(weekly.cumulativeScore).toBe(score.score);
   });
 
   it("20층 정상 완료 정산에서만 런 최고점을 주간 최고점으로 갱신한다", async () => {
@@ -534,6 +558,58 @@ describe("FakeServer 원정 정산", () => {
     await server.settleExpeditionRun({ runId: state.expedition.run!.runId, settlementId: "boss-complete", outcome: "completed" });
     expect(state.expedition.bestScore).toBe(88_000);
     expect(state.expedition.run).toBeNull();
+  });
+
+  describe("소탕", () => {
+    it("역대 최고점의 80%를 주간 랭킹에, 노드 보상 상한의 50%를 지갑에 즉시 지급한다", async () => {
+      const state = makeSession();
+      state.expedition.allTimeBestScore = 10_000;
+      const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-25T12:00:00Z") });
+      const goldBefore = state.wallet.gold;
+
+      const result = await server.sweepExpedition({ requestId: "sweep-1" });
+      expect(result.scoreGain).toBe(8_000);
+      expect(result.bestScore).toBe(8_000);
+      expect(result.cumulativeScore).toBe(8_000);
+      expect(result.granted.gold).toBe(3_750); // runCap 7,500의 50%
+      expect(state.wallet.gold).toBe(goldBefore + 3_750);
+      expect(state.expedition.playsThisWeek).toBe(1);
+      const weekly = await server.getExpeditionWeeklyBest();
+      expect(weekly.bestScore).toBe(8_000);
+    });
+
+    it("같은 요청 ID는 두 번째 호출에서도 같은 응답을 반환하고 다시 지급하지 않는다", async () => {
+      const state = makeSession();
+      state.expedition.allTimeBestScore = 10_000;
+      const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-25T12:00:00Z") });
+      const first = await server.sweepExpedition({ requestId: "sweep-idem" });
+      const second = await server.sweepExpedition({ requestId: "sweep-idem" });
+      expect(second).toEqual(first);
+      expect(state.expedition.playsThisWeek).toBe(1);
+    });
+
+    it("참조할 역대 최고점이 없으면 거부한다", async () => {
+      const server = new FakeServer(makeSession(), { latencyMs: 0 });
+      await expect(server.sweepExpedition({ requestId: "sweep-none" })).rejects.toMatchObject({ code: "EXPEDITION_SCORE_REQUIRED" });
+    });
+
+    it("진행 중인 원정이 있으면 거부한다", async () => {
+      const state = makeSession(); state.expedition.allTimeBestScore = 5_000;
+      const manager = new (await import("../../src/managers/ExpeditionManager")).ExpeditionManager(state, { save: () => undefined }, () => new Date("2026-08-25T12:00:00Z"));
+      manager.start(["anky", "rex", "dodo"]);
+      const server = new FakeServer(state, { latencyMs: 0 });
+      await expect(server.sweepExpedition({ requestId: "sweep-active" })).rejects.toMatchObject({ code: "EXPEDITION_ALREADY_ACTIVE" });
+    });
+
+    it("이번 주 원정 기회를 모두 쓰면 소탕도 거부한다", async () => {
+      const state = makeSession();
+      state.expedition.allTimeBestScore = 5_000;
+      // 서버 시각과 같은 주차 키를 맞춰 둬야 소탕이 이 카운트를 새 주차로 착각해 초기화하지 않는다.
+      state.expedition.weekKey = "2026-08-24";
+      state.expedition.playsThisWeek = 2;
+      const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-25T12:00:00Z") });
+      await expect(server.sweepExpedition({ requestId: "sweep-limit" })).rejects.toMatchObject({ code: "EXPEDITION_WEEKLY_LIMIT" });
+    });
   });
 
   it("기준 점수가 없으면 비활성·무보상이고 서버 최고 점수 비율과 일일 제한을 적용한다", async () => {

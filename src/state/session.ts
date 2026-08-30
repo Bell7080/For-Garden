@@ -111,6 +111,8 @@ export interface ExpeditionState {
   weekKey: string;
   playsThisWeek: number;
   bestScore: number;
+  /** 주간과 무관하게 지금까지 달성한 가장 높은 점수다. 소탕이 이 값의 비율만 참조한다. */
+  allTimeBestScore: number;
   run: ExpeditionRunState | null;
 }
 
@@ -224,7 +226,7 @@ export function createDefaultSession(): Session {
     // 검증 토큰은 일회성 서버 입력이므로 신규 저장에는 일일 카운터만 둔다.
     dailyAdRewards: { date: "", claimsBySlot: {}, requestIds: [] },
     // 빈 주차 키는 첫 원정 조회에서 서버와 같은 UTC 주차로 정규화된다.
-    expedition: { weekKey: "", playsThisWeek: 0, bestScore: 0, run: null },
+    expedition: { weekKey: "", playsThisWeek: 0, bestScore: 0, allTimeBestScore: 0, run: null },
   };
 }
 

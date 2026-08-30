@@ -30,7 +30,8 @@ describe("SaveManager", () => {
     const legacy = validData() as unknown as Record<string, unknown>;
     legacy.saveVersion = 22;
     legacy.expedition = { weekKey: "2026-08-24", playsThisWeek: 2, bestScore: 400, active: { relicIds: ["anky", "rex", "spino"], startedAt: "2026-08-25T00:00:00Z", score: 30 } };
-    expect(new SaveManager(new MemoryStorage()).migrate(legacy).expedition).toEqual({ weekKey: "2026-08-24", playsThisWeek: 2, bestScore: 400, run: null });
+    // 소탕 도입 전 저장은 그때까지의 주간 최고점을 역대 최고점 초기값으로 이어받는다.
+    expect(new SaveManager(new MemoryStorage()).migrate(legacy).expedition).toEqual({ weekKey: "2026-08-24", playsThisWeek: 2, bestScore: 400, allTimeBestScore: 400, run: null });
   });
 
   it("진행 중 원정의 맵·생존·증강·보상·점수를 독립 객체로 왕복한다", () => {

@@ -3,7 +3,7 @@ import { applyExpeditionRest } from "../core/expeditionAugments";
 import { expeditionRewardRandom, expeditionRewardRule, generateExpeditionAugmentOffers, validateExpeditionAugmentChoice, type ExpeditionAugmentSelection } from "../core/expeditionRewards";
 import type { ExpeditionNodeType } from "../core/expeditionMap";
 import type { SkirmishRelicResult } from "../core/skirmish";
-import { EXPEDITION_AUGMENT_IDS, EXPEDITION_REST_RULES } from "../data/expedition";
+import { EXPEDITION_AUGMENT_IDS, EXPEDITION_REST_RULES, EXPEDITION_WEEKLY_POLICY } from "../data/expedition";
 import { saveManager, type SaveManager } from "../state/SaveManager";
 import { session, type ExpeditionRunState, type Session } from "../state/session";
 
@@ -12,12 +12,16 @@ export interface ExpeditionStatus {
   weekKey: string;
   playsThisWeek: number;
   bestScore: number;
+  /** 주간과 무관한 역대 최고 점수다. 소탕 가능 여부와 예상 지급량을 화면이 미리 보여줄 때 쓴다. */
+  allTimeBestScore: number;
   active: { relicIds: [string, string, string]; score: number } | null;
   run: ExpeditionRunState | null;
   quickAvailable: boolean;
+  /** 이번 주에 원정을 더 시작할 수 있는지다. 소탕도 같은 횟수를 소비한다. */
+  canStartRun: boolean;
 }
 
-export type StartExpeditionFailure = "exactlyThree" | "duplicate" | "notOwned" | "alreadyActive";
+export type StartExpeditionFailure = "exactlyThree" | "duplicate" | "notOwned" | "alreadyActive" | "weeklyLimitReached";
 export type StartExpeditionResult = { ok: true; run: ExpeditionRunState } | { ok: false; reason: StartExpeditionFailure };
 export type DevelopmentBossShortcutFailure = StartExpeditionFailure | "developmentOnly";
 export type DevelopmentBossShortcutResult = { ok: true; run: ExpeditionRunState } | { ok: false; reason: DevelopmentBossShortcutFailure };
@@ -54,13 +58,14 @@ export class ExpeditionManager {
     if (this.state.expedition.run?.settled) this.commit({ ...this.state.expedition, run: null });
     const run = this.state.expedition.run;
     const copy = run ? structuredClone(run) : null;
-    return { ...this.state.expedition, run: copy, active: copy ? { relicIds: copy.relics.map(({ relicId }) => relicId) as [string, string, string], score: copy.bestScore } : null, quickAvailable: this.state.expedition.bestScore > 0 && run === null };
+    return { ...this.state.expedition, run: copy, active: copy ? { relicIds: copy.relics.map(({ relicId }) => relicId) as [string, string, string], score: copy.bestScore } : null, quickAvailable: this.state.expedition.bestScore > 0 && run === null, canStartRun: this.state.expedition.playsThisWeek < EXPEDITION_WEEKLY_POLICY.maxPlaysPerWeek };
   }
 
   /** 정확히 세 보유 렐릭을 검증하고 서버 주간 키가 포함된 결정적 맵을 생성한다. */
   start(relicIds: readonly string[]): StartExpeditionResult {
     this.normalizeWeek();
     if (this.state.expedition.run) return { ok: false, reason: "alreadyActive" };
+    if (this.state.expedition.playsThisWeek >= EXPEDITION_WEEKLY_POLICY.maxPlaysPerWeek) return { ok: false, reason: "weeklyLimitReached" };
     if (relicIds.length !== 3) return { ok: false, reason: "exactlyThree" };
     if (new Set(relicIds).size !== 3) return { ok: false, reason: "duplicate" };
     if (relicIds.some((id) => !this.state.owned.has(id))) return { ok: false, reason: "notOwned" };

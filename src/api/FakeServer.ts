@@ -26,9 +26,9 @@ import type { EngraveRuneRequest, EngraveRuneResponse, EnhanceRuneRequest, Enhan
 import type { ActivatePassRequest, ActivatePassResponse, ClaimInstantAdRewardRequest, ClaimInstantAdRewardResponse, PassEntitlementDto, VerifyPurchaseReceiptRequest, VerifyPurchaseReceiptResponse } from "./contracts";
 import { harvestIdleExcavation, isExcavationStorageFull, settleIdleExcavation, validateExcavationFormation } from "../core/idleExcavation";
 import type { HarvestExcavationRequest, HarvestExcavationResponse, IdleExcavationResponse, SaveExcavationFormationRequest, InventoryResponse, UseConsumableRequest, UseConsumableResponse } from "./contracts";
-import type { ClaimExpeditionRewardRequest, ClaimExpeditionRewardResponse, CompleteExpeditionNodeRequest, CompleteExpeditionNodeResponse, ExpeditionLeaderboardResponse, ExpeditionWeeklyBestResponse, SettleExpeditionRunRequest, SettleExpeditionRunResponse, SubmitExpeditionBossScoreRequest, SubmitExpeditionBossScoreResponse } from "./contracts";
+import type { ClaimExpeditionRewardRequest, ClaimExpeditionRewardResponse, CompleteExpeditionNodeRequest, CompleteExpeditionNodeResponse, ExpeditionLeaderboardResponse, ExpeditionWeeklyBestResponse, SettleExpeditionRunRequest, SettleExpeditionRunResponse, SubmitExpeditionBossScoreRequest, SubmitExpeditionBossScoreResponse, SweepExpeditionRequest, SweepExpeditionResponse } from "./contracts";
 import { expeditionWeekKey, resolveExpeditionBossBattle } from "../core/expeditionBoss";
-import { EXPEDITION_BOSS_BALANCE, EXPEDITION_CUMULATIVE_REWARD_STAGES, EXPEDITION_NODE_REWARD_BALANCE, QUICK_EXPEDITION_POLICY } from "../data/expedition";
+import { EXPEDITION_BOSS_BALANCE, EXPEDITION_CUMULATIVE_REWARD_STAGES, EXPEDITION_NODE_REWARD_BALANCE, EXPEDITION_SWEEP_POLICY, EXPEDITION_WEEKLY_POLICY, QUICK_EXPEDITION_POLICY } from "../data/expedition";
 import { calculateExpeditionNodeRewards } from "../core/expeditionRewards";
 import { RelicProgressionManager } from "../managers/RelicProgressionManager";
 import { expeditionBattleEffects } from "../core/expeditionBattle";
@@ -73,6 +73,8 @@ export class FakeServer implements GameApi {
   private readonly expeditionSettlementResults = new Map<string, SettleExpeditionRunResponse>();
   /** 운영 DB의 requestId 고유 제약을 흉내 내 동일 노드 재요청을 같은 응답으로 돌린다. */
   private readonly expeditionNodeResults = new Map<string, CompleteExpeditionNodeResponse>();
+  /** 소탕도 정산과 같은 멱등 계약을 흉내 낸다. */
+  private readonly expeditionSweepResults = new Map<string, SweepExpeditionResponse>();
   private previousBossBest = 0;
   private quickWeek = { weekKey: "", claims: 0 };
   /** 같은 밀리초 안의 연속 발급도 구분하는 서버 인스턴스 로컬 순번이다. */
@@ -177,9 +179,28 @@ export class FakeServer implements GameApi {
       const key = currency as keyof Session["wallet"]; const amount = Math.max(0, Math.floor(raw));
       const applied = Math.min(amount, WALLET_CAPS[key] - wallet[key]); wallet[key] += applied; granted[currency] = applied;
     }
+    // 실제로 도달한 노드 점수는 결과(완료/포기)와 무관하게 그 자체로 실제 성과이므로, 보스 피해
+    // 제출과 같은 주간 랭킹·누적 보상 집계에 그대로 합류시킨다 — 랭킹 화면이 보스를 잡은
+    // 런만 반영하고 일반 진행은 반영하지 않던 것을 고친다. 다만 이 런이 이미 보스 점수를
+    // 제출했다면 그 값이 run.bestScore에도 흡수돼 있으므로(completeNode의 max 갱신) 여기서
+    // 다시 더하면 같은 점수를 두 번 반영하게 된다 — 보스 제출 이력이 없을 때만 더한다.
+    const now = this.now();
+    this.normalizeBossWeek(now);
+    const bossAlreadySubmitted = run.bossSubmissionId !== null && this.bossSubmissionResults.has(run.bossSubmissionId);
+    if (!bossAlreadySubmitted && run.bestScore > 0) {
+      this.bossWeek.cumulativeScore += run.bestScore;
+      if (run.bestScore > this.bossWeek.bestScore) { this.bossWeek.bestScore = run.bestScore; this.bossWeek.achievedAt = now.toISOString(); }
+    }
     // 완료 런은 활성 슬롯에서 즉시 제거한다. 멱등 재응답은 아래 정산 결과 캐시가 소유하므로
     // settled 표식을 활성 run에 남겨 다음 진입을 가로막지 않는다.
-    const expedition = { ...this.state.expedition, playsThisWeek: this.state.expedition.playsThisWeek + 1, bestScore: request.outcome === "completed" ? Math.max(this.state.expedition.bestScore, run.bestScore) : this.state.expedition.bestScore, run: null };
+    const expedition = {
+      ...this.state.expedition,
+      playsThisWeek: this.state.expedition.playsThisWeek + 1,
+      bestScore: request.outcome === "completed" ? Math.max(this.state.expedition.bestScore, run.bestScore) : this.state.expedition.bestScore,
+      // 소탕이 참조하는 역대 최고점은 결과와 무관하게 실제 도달한 점수만 늘린다.
+      allTimeBestScore: Math.max(this.state.expedition.allTimeBestScore, run.bestScore),
+      run: null,
+    };
     this.persist({ ...this.state, wallet, expedition }); this.state.wallet = wallet; this.state.expedition = expedition;
     const response = { ...this.snapshot(), runId: run.runId, settlementId: request.settlementId, outcome: request.outcome, granted };
     this.expeditionSettlementResults.set(request.settlementId, response); return structuredClone(response);
@@ -208,6 +229,44 @@ export class FakeServer implements GameApi {
     this.persist({ ...this.state, expedition }); this.state.expedition = expedition;
     const response = { runId: run.runId, nodeId: node.id, rewards, pendingRewards: { ...next.pendingRewards }, cappedCurrencies, alreadyCompleted: false };
     this.expeditionNodeResults.set(request.requestId, response);
+    return structuredClone(response);
+  }
+
+  /**
+   * 소탕: 직접 플레이하지 않고 역대 최고 점수의 일부와 절반의 노드 클리어 전리품만 즉시 정산한다.
+   *
+   * 진행 중인 런이 있으면 그 편성을 침범하지 않도록 거부하고, 이번 주 원정 기회를 이미 모두
+   * 썼다면(소탕도 한 판으로 센다) 거부한다. 참조할 역대 최고점이 없는 신규 계정도 거부한다.
+   */
+  async sweepExpedition(request: SweepExpeditionRequest): Promise<SweepExpeditionResponse> {
+    await this.delay();
+    const cached = this.expeditionSweepResults.get(request.requestId);
+    if (cached) return structuredClone(cached);
+    if (!request.requestId) throw new GameApiError("INVALID_STATE", "소탕 요청 ID가 필요합니다.");
+    if (this.state.expedition.run) throw new GameApiError("EXPEDITION_ALREADY_ACTIVE", "진행 중인 원정이 있어 소탕할 수 없습니다.");
+    const now = this.now();
+    const weekKey = expeditionWeekKey(now);
+    if (this.state.expedition.weekKey !== weekKey) this.state.expedition = { ...this.state.expedition, weekKey, playsThisWeek: 0, bestScore: 0 };
+    if (this.state.expedition.playsThisWeek >= EXPEDITION_WEEKLY_POLICY.maxPlaysPerWeek) throw new GameApiError("EXPEDITION_WEEKLY_LIMIT", "이번 주 원정 기회를 모두 사용했습니다.");
+    const reference = this.state.expedition.allTimeBestScore;
+    if (reference <= 0) throw new GameApiError("EXPEDITION_SCORE_REQUIRED", "소탕할 기준 점수가 없습니다.");
+
+    this.normalizeBossWeek(now);
+    const scoreGain = Math.floor(reference * EXPEDITION_SWEEP_POLICY.allTimeBestScoreRatio);
+    this.bossWeek.cumulativeScore += scoreGain;
+    if (scoreGain > this.bossWeek.bestScore) { this.bossWeek.bestScore = scoreGain; this.bossWeek.achievedAt = now.toISOString(); }
+
+    const wallet = { ...this.state.wallet }; const granted: Record<string, number> = {};
+    for (const [currency, balance] of Object.entries(EXPEDITION_NODE_REWARD_BALANCE)) {
+      const key = currency as keyof Session["wallet"];
+      if (!(key in WALLET_CAPS)) continue;
+      const amount = Math.floor(balance.runCap * EXPEDITION_SWEEP_POLICY.lootRatio);
+      const applied = Math.min(amount, WALLET_CAPS[key] - wallet[key]); wallet[key] += applied; granted[currency] = applied;
+    }
+    const expedition = { ...this.state.expedition, playsThisWeek: this.state.expedition.playsThisWeek + 1 };
+    this.persist({ ...this.state, wallet, expedition }); this.state.wallet = wallet; this.state.expedition = expedition;
+    const response = { ...this.snapshot(), weekKey: this.bossWeek.weekKey, scoreGain, bestScore: this.bossWeek.bestScore, cumulativeScore: this.bossWeek.cumulativeScore, granted, playsThisWeek: expedition.playsThisWeek };
+    this.expeditionSweepResults.set(request.requestId, response);
     return structuredClone(response);
   }
 

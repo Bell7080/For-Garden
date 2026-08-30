@@ -198,7 +198,8 @@ export class SaveManager {
     // 원정 도입 전 저장은 기록과 진행 중 편성을 추측하지 않고 새 주간 0회로 시작한다.
     const savedExpedition = legacy.expedition as Partial<SaveData["expedition"]> | undefined;
     const ownedIds = Array.isArray(legacy.ownedRelicIds) ? legacy.ownedRelicIds.filter((id): id is string => typeof id === "string") : [];
-    const expedition = { weekKey: savedExpedition?.weekKey ?? "", playsThisWeek: savedExpedition?.playsThisWeek ?? 0, bestScore: savedExpedition?.bestScore ?? 0, run: normalizeExpeditionRun(savedExpedition?.run, ownedIds) };
+    // 소탕(전체 시간 최고점) 도입 전 저장은 그때까지의 주간 최고점을 초기값으로 이어받는다.
+    const expedition = { weekKey: savedExpedition?.weekKey ?? "", playsThisWeek: savedExpedition?.playsThisWeek ?? 0, bestScore: savedExpedition?.bestScore ?? 0, allTimeBestScore: savedExpedition?.allTimeBestScore ?? savedExpedition?.bestScore ?? 0, run: normalizeExpeditionRun(savedExpedition?.run, ownedIds) };
     // v12는 정적 정의 ID를 소유권과 슬롯에 함께 썼다. 결정적 ID로 인스턴스를 만들고 모든 슬롯을 같은 표로 치환한다.
     const isV12OrOlder = legacy.saveVersion === undefined || Number(legacy.saveVersion) <= 12;
     const legacyOwned = Array.isArray(legacy.ownedHeartGemIds) ? legacy.ownedHeartGemIds.filter((id): id is string => typeof id === "string") : [];
@@ -301,7 +302,7 @@ export class SaveManager {
     const adLimits = Object.fromEntries(AD_REWARD_SLOTS.map(({ id, dailyLimitUtc }) => [id, dailyLimitUtc]));
     // 삭제/변조된 슬롯과 정적 UTC 제한을 넘긴 저장은 서버 지급 이력으로 신뢰하지 않는다.
     if (!data.dailyAdRewards || typeof data.dailyAdRewards.date !== "string" || !data.dailyAdRewards.claimsBySlot || Object.entries(data.dailyAdRewards.claimsBySlot).some(([id, count]) => !(id in adLimits) || !Number.isInteger(count) || count < 0 || count > adLimits[id]) || !Array.isArray(data.dailyAdRewards.requestIds) || data.dailyAdRewards.requestIds.some((id) => typeof id !== "string" || id.length === 0) || new Set(data.dailyAdRewards.requestIds).size !== data.dailyAdRewards.requestIds.length) fail("일일 광고 수령 정보가 올바르지 않습니다.");
-    if (!data.expedition || typeof data.expedition.weekKey !== "string" || !Number.isInteger(data.expedition.playsThisWeek) || data.expedition.playsThisWeek < 0 || !Number.isInteger(data.expedition.bestScore) || data.expedition.bestScore < 0 || (data.expedition.run !== null && normalizeExpeditionRun(data.expedition.run, data.ownedRelicIds) === null)) fail("원정 진행 정보가 올바르지 않습니다.");
+    if (!data.expedition || typeof data.expedition.weekKey !== "string" || !Number.isInteger(data.expedition.playsThisWeek) || data.expedition.playsThisWeek < 0 || !Number.isInteger(data.expedition.bestScore) || data.expedition.bestScore < 0 || !Number.isInteger(data.expedition.allTimeBestScore) || data.expedition.allTimeBestScore < 0 || (data.expedition.run !== null && normalizeExpeditionRun(data.expedition.run, data.ownedRelicIds) === null)) fail("원정 진행 정보가 올바르지 않습니다.");
   }
 
   private toSession(data: SaveData): Session {

@@ -54,18 +54,23 @@ export class FriendsScene extends Phaser.Scene {
     this.title?.setText("친구");
     this.updateSummary();
     this.friends.forEach((friend, index) => {
-      const relic = getRelic(friend.favoriteRelic.relicId);
       const y = 330 + index * 300;
       const panel = drawLayer(this, BASE_WIDTH / 2, y, chipPoints(930, 236, { bevel: { topLeft: 42, topRight: 0, bottomRight: 42, bottomLeft: 0 } }), { fill: 0x1a1f27, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.42 });
-      const card = new PortraitCard(this, 190, y, { width: 190, height: 200, portraitAssetId: relic.portraitAssetId, label: relic.name, level: friend.favoriteRelic.level, rarity: relic.rarity, stars: friend.favoriteRelic.stars });
-      const name = this.add.text(330, y - 76, `${friend.name}  ·  연구 LV.${friend.researcherLevel}`, textStyle({ role: "emphasis", size: 31 })).setOrigin(0, 0);
+      // 목록은 공개 헤더의 아바타와 표시 정보만 읽으며 애착 렐릭을 프로필 아이콘처럼 대용하지 않는다.
+      const avatar = this.addProfileAvatar(friend, 190, y, 150);
+      const name = this.add.text(310, y - 76, friend.displayName, textStyle({ role: "emphasis", size: 31 })).setOrigin(0, 0);
+      const level = this.add.text(310, y - 30, `연구 LV.${friend.level}`, textStyle({ role: "body", size: 25, color: COLOR.inkDim })).setOrigin(0, 0);
+      const modifier = friend.equippedModifiers[0];
+      // 대표 수식어가 공개되지 않았으면 개발 상태나 빈 칩을 만들지 않고 행 자체를 생략한다.
+      const modifierText = modifier ? this.add.text(310, y + 14, modifier.displayName, textStyle({ role: "emphasis", size: 23, color: COLOR.accentText })).setOrigin(0, 0) : undefined;
       const status = this.add.text(330, y - 20, friend.status, textStyle({ role: "body", size: 27, color: COLOR.inkDim })).setOrigin(0, 0);
+      status.setPosition(570, y - 18);
       const active = this.add.text(900, y + 62, friend.lastActive, textStyle({ role: "body", size: 23, color: COLOR.accentText })).setOrigin(1, 0);
       const hit = this.add.rectangle(BASE_WIDTH / 2, y, 930, 236, 0xffffff, 0).setInteractive({ useHandCursor: true });
-      hit.on("pointerdown", () => card.setScale(1.06));
-      hit.on("pointerout", () => card.setScale(1));
-      hit.on("pointerup", () => { card.setScale(1); this.renderProfile(friend); });
-      this.content?.add([panel, card, name, status, active, hit]);
+      hit.on("pointerdown", () => avatar.setScale(1.06));
+      hit.on("pointerout", () => avatar.setScale(1));
+      hit.on("pointerup", () => { avatar.setScale(1); this.renderProfile(friend); });
+      this.content?.add([panel, avatar, name, level, ...(modifierText ? [modifierText] : []), status, active, hit]);
     });
   }
 
@@ -75,18 +80,35 @@ export class FriendsScene extends Phaser.Scene {
     this.content = this.add.container(0, 0);
     this.title?.setText("친구 프로필");
     this.updateSummary();
-    const relic = getRelic(friend.favoriteRelic.relicId);
-    const card = new PortraitCard(this, BASE_WIDTH / 2, 610, { width: 500, height: 620, portraitAssetId: relic.portraitAssetId, label: relic.name, level: friend.favoriteRelic.level, rarity: relic.rarity, stars: friend.favoriteRelic.stars, affinity: { element: relic.element, role: relic.role } });
+    const avatar = this.addProfileAvatar(friend, 250, 330, 150);
+    const name = this.add.text(360, 292, friend.displayName, textStyle({ role: "display", size: 44, color: COLOR.accentText })).setOrigin(0, 0.5);
+    const meta = this.add.text(360, 350, `연구 LV.${friend.level}  ·  ${friend.lastActive}`, textStyle({ role: "body", size: 27, color: COLOR.inkDim })).setOrigin(0, 0.5);
+    // 자기 프로필과 동일하게 아바타→이름/레벨→수식어 순서를 따르되 친구에게 비공개인 경험치는 만들지 않는다.
+    const modifiers = friend.equippedModifiers.map((entry, index) => this.add.text(360 + index * 190, 405, entry.displayName, textStyle({ role: "emphasis", size: 21, color: COLOR.accentText })).setOrigin(0, 0.5));
+    const favorite = friend.favoriteRelic;
+    const relic = getRelic(favorite.relicId);
+    const card = new PortraitCard(this, BASE_WIDTH / 2, 770, { width: 430, height: 500, portraitAssetId: relic.portraitAssetId, label: relic.name, level: favorite.level, rarity: relic.rarity, stars: favorite.stars, affinity: { element: relic.element, role: relic.role } });
     // 렐릭 카드는 서버 공개 DTO만 넘기는 공용 읽기 전용 정보창의 진입점이다.
-    card.hit.on("pointerup", () => this.info.showFriend(friend.favoriteRelic));
-    const name = this.add.text(BASE_WIDTH / 2, 1020, friend.name, textStyle({ role: "display", size: 48 })).setOrigin(0.5);
-    const meta = this.add.text(BASE_WIDTH / 2, 1088, `연구 LV.${friend.researcherLevel}  ·  ${friend.lastActive}`, textStyle({ role: "body", size: 27, color: COLOR.inkDim })).setOrigin(0.5);
-    const status = this.add.text(BASE_WIDTH / 2, 1160, `“${friend.status}”`, textStyle({ role: "body", size: 30, color: COLOR.ink })).setOrigin(0.5);
-    const line = drawHairline(this, BASE_WIDTH / 2, 1230, 760, { color: COLOR.accent, alpha: 0.4 });
-    const rule = this.add.text(BASE_WIDTH / 2, 1270, "일반 스토리·재료·일일 복원 전용\n대여 시 양쪽 친구 포인트 +10", textStyle({ role: "body", size: 27, color: COLOR.inkDim, align: "center", lineSpacing: 8 })).setOrigin(0.5, 0);
+    card.hit.on("pointerup", () => this.info.showFriend(favorite));
+    const status = this.add.text(BASE_WIDTH / 2, 1050, `“${friend.status}”`, textStyle({ role: "body", size: 30, color: COLOR.ink })).setOrigin(0.5);
+    // 서버가 공개한 경쟁 기록만 렌더링하며 누락 값에는 준비/미구현/기록 없음 문구를 대신 넣지 않는다.
+    const stats = friend.competitiveStats;
+    const records = [stats.highestStage ? `최대 스테이지  ${stats.highestStage.displayValue}` : undefined, stats.arenaTier ? `결투장 티어  ${stats.arenaTier.displayName}` : undefined, stats.expeditionScore !== undefined ? `원정 점수  ${stats.expeditionScore.toLocaleString()}` : undefined].filter((value): value is string => Boolean(value));
+    const recordText = records.map((value, index) => this.add.text(BASE_WIDTH / 2, 1120 + index * 46, value, textStyle({ role: "emphasis", size: 25 })).setOrigin(0.5));
+    const line = drawHairline(this, BASE_WIDTH / 2, 1270, 760, { color: COLOR.accent, alpha: 0.4 });
+    const rule = this.add.text(BASE_WIDTH / 2, 1300, "일반 스토리·재료·일일 복원 전용\n대여 시 양쪽 친구 포인트 +10", textStyle({ role: "body", size: 27, color: COLOR.inkDim, align: "center", lineSpacing: 8 })).setOrigin(0.5, 0);
     const rent = new Button(this, BASE_WIDTH / 2, 1455, { width: 660, height: 112, label: "애착 렐릭 조력자 대여", sub: "고난도·랭킹·공동 보스 사용 불가", variant: "primary", onClick: () => void this.rentHelper(friend, rent) });
     const back = new Button(this, 300, 1690, { width: 360, height: 92, label: "친구 목록", onClick: () => this.renderList() });
-    this.content.add([card, name, meta, status, line, rule, rent, back]);
+    this.content.add([avatar, name, meta, ...modifiers, card, status, ...recordText, line, rule, rent, back]);
+  }
+
+  /** 공개 아바타 키만 해석하고 에셋이 없거나 비공개이면 표시 이름 첫 글자로 안전하게 대체한다. */
+  private addProfileAvatar(friend: FriendProfile, x: number, y: number, size: number): Phaser.GameObjects.Container {
+    const container = this.add.container(0, 0);
+    container.add(drawLayer(this, x, y, chipPoints(size, size, { bevel: { topLeft: 30, topRight: 0, bottomRight: 30, bottomLeft: 0 } }), { fill: 0x1f2632, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.7 }));
+    const fallback = Array.from(friend.displayName.trim())[0] ?? "?";
+    container.add(friend.avatarAssetKey && this.textures.exists(friend.avatarAssetKey) ? this.add.image(x, y, friend.avatarAssetKey).setDisplaySize(size - 16, size - 16) : this.add.text(x, y, fallback, textStyle({ role: "display", size: Math.round(size * 0.42), color: COLOR.accentText })).setOrigin(0.5));
+    return container;
   }
 
   /** 중복 입력을 잠근 뒤 서버 결과만으로 포인트와 남은 횟수를 갱신한다. */

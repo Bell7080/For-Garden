@@ -21,8 +21,9 @@ export class FakeSocialServer {
 
   /** 화면이 내부 배열을 바꾸지 못하도록 친구 프로필을 복사해 반환한다. */
   async getFriends(): Promise<FriendListResponse> {
-    // 중첩 DTO도 복사해 화면이 임시 서버의 공개 원본을 바꾸지 못하게 한다.
-    return { friends: PREVIEW_FRIENDS.map((friend) => ({ ...friend, favoriteRelic: { ...friend.favoriteRelic, stats: { ...friend.favoriteRelic.stats }, skillIds: [...friend.favoriteRelic.skillIds] } })), friendPoints: this.friendPoints, helperUsesToday: this.helperUsesToday };
+    // 공개 화이트리스트의 모든 중첩 값도 복사해 실제 JSON 응답처럼 호출자가 서버 원본을 바꿀 수 없게 한다.
+    const friends = PREVIEW_FRIENDS.map((friend): FriendProfile => ({ ...friend, equippedModifiers: friend.equippedModifiers.map((modifier) => ({ ...modifier })), favoriteRelic: { ...friend.favoriteRelic, stats: { ...friend.favoriteRelic.stats }, skillIds: [...friend.favoriteRelic.skillIds] }, competitiveStats: { ...friend.competitiveStats, highestStage: friend.competitiveStats.highestStage ? { ...friend.competitiveStats.highestStage } : undefined, arenaTier: friend.competitiveStats.arenaTier ? { ...friend.competitiveStats.arenaTier } : undefined } }));
+    return { friends, friendPoints: this.friendPoints, helperUsesToday: this.helperUsesToday };
   }
 
   /** 일일 제한 확인, 양쪽 포인트 지급, 사용 횟수 증가를 실제 서버의 단일 처리처럼 묶는다. */

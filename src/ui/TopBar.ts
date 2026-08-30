@@ -9,6 +9,7 @@ import { chipPoints, drawGlassFade, drawHairline, drawLayer, HOLO } from "./holo
 import { addCurrencyChip, CURRENCY_CHIP } from "./CurrencyChip";
 import { COLOR, textStyle } from "./theme";
 import { playerProfileDisplay, profileAvatarContent, type PlayerProfileDisplay } from "../state/playerProfile";
+import { managerEvents } from "../managers/ManagerEvents";
 
 /** 상단 줄에는 공개 표시 모델과 공개 동작만 들어오며 인증 비밀을 받을 자리가 없다. */
 export interface TopBarOptions { onSettings?: () => void; onProfile?: (profile: PlayerProfileDisplay) => void; currencies?: TopBarCurrencyContext; profile?: boolean }
@@ -72,6 +73,9 @@ const CLUSTER_CENTER = 0.57;
 
 export class TopBar {
   private readonly slots: { slot: CurrencySlot; text: Phaser.GameObjects.Text }[] = [];
+  private readonly unsubscribe: (() => void)[] = [];
+  private profileName?: Phaser.GameObjects.Text;
+  private profileDetail?: Phaser.GameObjects.Text;
 
   constructor(scene: Phaser.Scene, y = 40, options: TopBarOptions = {}) {
     drawGlassFade(scene, BASE_WIDTH / 2, y + 30, BASE_WIDTH, 150, { topAlpha: 0.92, bottomAlpha: 0 });
@@ -101,7 +105,15 @@ export class TopBar {
     } else settings.setAlpha(0.38);
 
     this.refresh();
+    // TopBar는 mutation/API 출처를 구분하지 않고 manager가 확정한 표시 이벤트만 소비한다.
+    this.unsubscribe.push(managerEvents.subscribe("wallet", () => this.refresh()));
+    this.unsubscribe.push(managerEvents.subscribe("publicProfile", ({ profile }) => this.refreshProfile(profile)));
+    // 같은 씬으로 재진입할 때 이전 TopBar가 남지 않도록 shutdown에서 모든 구독을 한 번에 해제한다.
+    scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.destroy());
   }
+
+  /** 명시 호출과 씬 shutdown 모두에서 안전한 구독 정리 경계다. */
+  destroy(): void { this.unsubscribe.splice(0).forEach((unsubscribe) => unsubscribe()); }
 
   /** 재화 한 칸. 생김새는 `CurrencyChip` 한 곳이 정하고 여기서는 자리와 색만 고른다. */
   private buildSlot(scene: Phaser.Scene, cx: number, cy: number, slot: CurrencySlot): Phaser.GameObjects.Text {
@@ -118,8 +130,9 @@ export class TopBar {
     const avatar = profileAvatarContent(profile, (key) => scene.textures.exists(key));
     if (avatar.assetKey) chip.add(scene.add.image(x + size / 2, y + size / 2, avatar.assetKey).setDisplaySize(size - 10, size - 10));
     else chip.add(scene.add.text(x + size / 2, y + size / 2, avatar.fallback, textStyle({ role: "display", size: 40, color: COLOR.accentText })).setOrigin(0.5));
-    chip.add(scene.add.text(x + size + 16, y + 14, profile.displayName, textStyle({ role: "emphasis", size: 26 })).setOrigin(0, 0));
-    chip.add(scene.add.text(x + size + 16, y + 48, `LV.${profile.level}  ${profile.displayId}`, textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0, 0));
+    this.profileName = scene.add.text(x + size + 16, y + 14, profile.displayName, textStyle({ role: "emphasis", size: 26 })).setOrigin(0, 0);
+    this.profileDetail = scene.add.text(x + size + 16, y + 48, `LV.${profile.level}  ${profile.displayId}`, textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0, 0);
+    chip.add([this.profileName, this.profileDetail]);
     if (onProfile) {
       // 얼굴과 두 텍스트를 하나의 넓은 입력면으로 묶고 기존 홀로그램 규칙대로 눌렀을 때 확대한다.
       const hit = scene.add.rectangle(176, y + size / 2, 344, 96, 0xffffff, 0).setInteractive({ useHandCursor: true });
@@ -137,4 +150,7 @@ export class TopBar {
     }
     setDebugProgress(session.wallet, session.owned);
   }
+
+  /** 공개 프로필 이벤트는 인증 DTO 없이 화면에 허용된 이름·레벨·공개 ID만 교체한다. */
+  private refreshProfile(profile: PlayerProfileDisplay): void { this.profileName?.setText(profile.displayName); this.profileDetail?.setText(`LV.${profile.level}  ${profile.displayId}`); }
 }

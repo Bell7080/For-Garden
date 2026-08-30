@@ -238,13 +238,13 @@ export class LobbyScene extends Phaser.Scene {
     if (!this.popupLayer) return;
     this.inventoryPopup ??= new InventoryPopup(this, this.popupLayer, gameApi, () => {
       this.inventoryPopup = undefined; this.inventoryBackButton?.destroy(); this.inventoryBackButton = undefined;
-    }, () => this.topBar?.refresh());
+    });
     this.inventoryPopup.open();
     if (!this.inventoryBackButton) this.inventoryBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: () => this.inventoryPopup?.close() }).setDepth(2100);
   }
 
   /** 레일 입력을 준비 문구 없이 실제 우편 작업판과 즉시 연결한다. */
-  private openMail(): void { if (!this.popupLayer) return; this.mailPopup ??= new MailPopup(this, this.popupLayer, gameApi, () => { this.topBar?.refresh(); }, () => { this.mailPopup = undefined; }); this.mailPopup.open(); }
+  private openMail(): void { if (!this.popupLayer) return; this.mailPopup ??= new MailPopup(this, this.popupLayer, gameApi, () => { this.mailPopup = undefined; }); this.mailPopup.open(); }
 
   /** 출격의 잔잔한 콘텐츠 선택판을 열고 우하단 공용 돌아가기로만 닫는다. */
   private openSortieMenu(): void {

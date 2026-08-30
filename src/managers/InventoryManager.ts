@@ -1,8 +1,9 @@
 import type { Wallet } from "../core/gacha";
-import type { InventoryItemDto } from "../api/contracts";
+import type { GameApi, InventoryItemDto, UseConsumableResponse } from "../api/contracts";
 import type { RuneInstance } from "../core/runes";
 import { findItem, ITEMS, type ItemCategory, type ItemDefinition, type WalletItemKey } from "../data/items";
 import type { Session } from "../state/session";
+import { managerEvents, type ManagerEvents } from "./ManagerEvents";
 
 /** 가방 UI와 순수 배치 테스트가 공유하는 두 열 카드 계약이다. */
 export const INVENTORY_LAYOUT = {
@@ -38,14 +39,52 @@ export type InventoryDisplayItem =
 
 /** 씬의 직접 상태 변경을 막고 세 저장 모델을 표시 모델로만 합성한다. */
 export class InventoryManager {
-  constructor(private readonly state: Session) {}
+  constructor(private readonly state: Session, private readonly events: ManagerEvents = managerEvents) {}
 
-  /** API가 확정한 소비 결과만 세션에 반영해 UI가 저장 구조를 직접 조립하지 않게 한다. */
-  applyConsumableResult(wallet: Wallet, items: readonly InventoryItemDto[]): void {
-    this.state.wallet = { ...wallet };
-    this.state.itemInventory = items
-      .filter((item) => item.category === "consumable" || item.category === "material")
-      .map((item) => ({ itemId: item.definitionId, quantity: item.quantity }));
+  /** 조회와 세 저장 소유자의 반영을 한 비동기 경계로 묶어 서로 다른 시점의 행이 섞이지 않게 한다. */
+  async refresh(api: GameApi): Promise<void> {
+    const response = await api.getInventory();
+    this.applySnapshot(response.items);
+  }
+
+  /** 소비 명령의 최종 서버 스냅샷까지 같은 경계에서 반영해 화면이 DTO를 보관하지 않게 한다. */
+  async useConsumable(api: GameApi, itemId: string): Promise<UseConsumableResponse> {
+    const response = await api.useConsumable({ itemId, quantity: 1 });
+    this.applySnapshot(response.items, response.wallet);
+    return response;
+  }
+
+  /** 전체 DTO를 먼저 검증·정규화하고 모두 성공한 뒤에만 Session 세 영역을 함께 교체한다. */
+  private applySnapshot(items: readonly InventoryItemDto[], expectedWallet?: Wallet): void {
+    const ids = new Set<string>();
+    const wallet = {} as Wallet;
+    const walletKeys = new Set<WalletItemKey>();
+    const runes: RuneInstance[] = [];
+    const stacks: Session["itemInventory"] = [];
+    for (const item of items) {
+      const definition = findItem(item.definitionId);
+      // 서버가 보낸 표시 메타데이터는 신뢰하지 않고 로컬 카탈로그와 행 식별자만 검증한다.
+      if (!definition || definition.category !== item.category || ids.has(item.id) || !Number.isInteger(item.quantity) || item.quantity < 0 || item.quantity > definition.maxStack) throw new Error("INVALID_INVENTORY_RESPONSE");
+      ids.add(item.id);
+      if (item.category === "rune") {
+        if (item.definitionId !== "rune" || item.quantity !== 1 || !item.rune || item.id !== item.rune.instanceId) throw new Error("INVALID_INVENTORY_RESPONSE");
+        runes.push(structuredClone(item.rune));
+      } else if (item.category === "currency") {
+        const walletKey = definition.id as WalletItemKey;
+        walletKeys.add(walletKey); wallet[walletKey] = item.quantity;
+      } else {
+        stacks.push({ itemId: definition.id, quantity: item.quantity });
+      }
+    }
+    const requiredWalletKeys = ITEMS.filter(({ category }) => category === "currency").map(({ id }) => id as WalletItemKey);
+    if (walletKeys.size !== requiredWalletKeys.length || requiredWalletKeys.some((key) => !walletKeys.has(key)) || (expectedWallet && requiredWalletKeys.some((key) => expectedWallet[key] !== wallet[key]))) throw new Error("INVALID_INVENTORY_RESPONSE");
+    // 검증 도중 예외가 나면 기존 세션이 그대로 남도록 실제 대입은 마지막 세 문장에만 둔다.
+    this.state.runeInventory = runes;
+    this.state.wallet = wallet;
+    this.state.itemInventory = stacks;
+    // 세 영역의 대입이 모두 끝난 뒤에만 UI가 일관된 확정 스냅샷을 읽도록 연달아 발행한다.
+    this.events.publish("wallet", { wallet: this.state.wallet });
+    this.events.publishInventory();
   }
 
   /** 카테고리 전환과 테스트가 같은 순수 필터 결과를 사용한다. */

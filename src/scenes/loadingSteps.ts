@@ -49,14 +49,14 @@ const SVG_BAKE = { skill: 256, uiScale: 2 } as const;
 /** 배경이 아닌 콘텐츠 원화의 중앙 로딩 표. 진입 액자와 관찰 일지가 이 표만 사용한다. */
 const CONTENT_ART_ASSETS = [
   // Content1_001은 출격 선택판의 스토리 입구 안에서만 보이는 작전 일러스트다.
-  ["content-story-entry", "Content1_001.webp"],
+  ["content-story-entry", "sprites/content/Content1_001.webp"],
   // Content2_001은 로비 출격 메뉴에서 원정 진입점을 구별하는 버튼 일러스트다.
-  ["content-expedition-entry", "Content2_001.webp"],
+  ["content-expedition-entry", "sprites/content/Content2_001.webp"],
   // Content3_001·Content4_001은 같은 출격 선택판의 두 일일 던전을 구별하는 버튼 일러스트다.
-  ["content-cake-entry", "Content3_001.webp"],
-  ["content-bounty-entry", "Content4_001.webp"],
+  ["content-cake-entry", "sprites/content/Content3_001.webp"],
+  ["content-bounty-entry", "sprites/content/Content4_001.webp"],
   // journal_001은 관찰 일지 판 안에서 원본 크기를 유지한 채 잘라 쓰는 종이 질감 원화다.
-  ["content-observation-journal", "journal_001.webp"],
+  ["content-observation-journal", "sprites/content/journal_001.webp"],
 ] as const;
 
 export const LOADING_STEPS: ReadonlyArray<LoadingStep> = [

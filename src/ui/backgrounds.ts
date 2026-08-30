@@ -52,14 +52,14 @@ export const BACKGROUND_ASSETS = [
   [BACKGROUND.excavation, "sprites/background/background_009.webp"],
   [BACKGROUND.cardBackdrop, "sprites/background/background_010.webp"],
   // 원정 지도 WebP는 화면 배경 표가 키와 경로를 단독 소유하며 원본 복제본을 만들지 않는다.
-  [BACKGROUND.expeditionMap, "Content2_001map.webp"],
-  // 원정 전투 필드 WebP도 이미 배포 형식이므로 public 루트의 원본을 그대로 적재한다.
-  [BACKGROUND.expeditionField, "Content2_001field.webp"],
-  // 아래 세 콘텐츠의 배경 WebP도 같은 이유로 public 루트의 원본을 그대로 적재한다.
-  [BACKGROUND.expeditionRanking, "Content2_001background.webp"],
-  [BACKGROUND.sortieCake, "Content3_001background.webp"],
-  [BACKGROUND.sortieBounty, "Content4_001background.webp"],
-  [BACKGROUND.sortieRaid, "Content5_001background.webp"],
+  [BACKGROUND.expeditionMap, "sprites/content/Content2_001map.webp"],
+  // 원정 전투 필드 WebP도 이미 배포 형식이므로 그대로 적재한다.
+  [BACKGROUND.expeditionField, "sprites/content/Content2_001field.webp"],
+  // 아래 세 콘텐츠의 배경 WebP도 같은 이유로 그대로 적재한다.
+  [BACKGROUND.expeditionRanking, "sprites/content/Content2_001background.webp"],
+  [BACKGROUND.sortieCake, "sprites/content/Content3_001background.webp"],
+  [BACKGROUND.sortieBounty, "sprites/content/Content4_001background.webp"],
+  [BACKGROUND.sortieRaid, "sprites/content/Content5_001background.webp"],
 ] as const;
 
 /**

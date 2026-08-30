@@ -1,6 +1,6 @@
 # 버전 관리
 
-현재 버전: **v0.34.4**
+현재 버전: **v0.34.5**
 
 `VERSION.md`와 `package.json`의 `version`은 항상 같은 값을 쓰고, 타이틀(로딩) 화면 좌측
 하단 표기는 그 값을 그대로 읽는다. 화면에 손으로 적어 두지 않는다.
@@ -32,7 +32,7 @@
 
 ## 변경 이력
 
-## v0.34.4 — 2026-08-30
+## v0.34.5 — 2026-08-30
 
 - **렐릭 탭 그리드에서 토리카·도디의 정수리가 수평으로 잘리던 버그를 고쳤다.** 여러 번 손댔는데도
   낫지 않았던 이유까지 함께 남긴다 — 원인은 카드가 아니라 `src/puppets/anchors.ts`의
@@ -62,6 +62,19 @@
   (`portraitCardNotchWidth`, 삭제)을 대신하게 했다. 도감 카드 기준으로 홈이 180 → 203(칩 윗변)·
   271(꼭대기)로 넓어졌고, 캐릭터별 `cardHeadEscape` 실측 없이도 대부분 해결된다 — 그 필드는
   그래도 모자란 원화를 위한 미세 조정으로 남긴다.
+- **`Session`에 `playerResearch`가 들어오며 깨져 있던 단위 테스트 세 개의 세션 픽스처를 고쳤다.**
+  `collectionManager`·`fakeServer`·`relicProgression` 테스트가 손으로 만든 세션 리터럴을 쓰는데
+  새 필수 필드가 빠져 `npm run typecheck`가 실패하고 있었다. `createInitialPlayerResearchProgress()`를
+  넣어 되살렸다 — 이 변경 자체와는 무관하지만 커밋 전 품질 게이트를 막고 있었다.
+
+## v0.34.4 — 2026-08-30
+
+- **`public/` 바로 아래에 흩어져 있던 콘텐츠 원화 11장을 `public/sprites/content/`로 옮겼다.**
+  `Content1~5_001*.webp`·`journal_001.webp`가 배경(`sprites/background`)·재화
+  (`sprites/currency`) 등 다른 모든 원화와 달리 `public/` 루트에 그대로 남아 있어 정리
+  기준이 어긋나 있었다. `src/ui/backgrounds.ts`·`src/scenes/loadingSteps.ts`의 로딩 경로와
+  `scripts/prepare_backgrounds.py`의 굽는 대상(콘텐츠 원화는 이제 `sprites/content`로 굽는다)을
+  함께 옮겨 `public/` 루트에는 `fonts`·`puppets`·`sprites`만 남는다.
 
 ## v0.34.3 — 2026-08-30
 

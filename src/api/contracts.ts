@@ -10,6 +10,7 @@ import type { ExcavationCurrency, IdleExcavationState } from "../core/idleExcava
 import type { AdReward } from "../data/adRewards";
 import type { ItemCategory, ItemUseEffect } from "../data/items";
 import type { ExpeditionBossAction } from "../core/expeditionBoss";
+import type { PlayerResearchProgress } from "../state/session";
 
 /** 정적 표시 메타데이터를 중복 전송하지 않고 서버 보유량과 인스턴스만 전달하는 인벤토리 조회 행이다. */
 export interface InventoryItemDto { id: string; definitionId: string; category: ItemCategory; quantity: number; rune?: RuneInstance; }
@@ -95,6 +96,8 @@ export interface PublicRelicProfileDto {
 
 /** 네트워크로 직렬화할 수 있는 플레이어 진행 정보의 최소 규격이다. */
 export interface PlayerStateDto {
+  /** 서버가 확정한 계정 연구 레벨·현재 경험치·다음 레벨 요구량의 공개 스냅샷이다. */
+  playerResearch: PlayerResearchProgress;
   /** 서버가 확정한 현재 재화다. */
   wallet: Wallet;
   /** 서버가 확정한 이월 그룹별 천장과 픽업 확정 상태다. */
@@ -117,6 +120,12 @@ export interface PlayerStateDto {
   runeInventory: RuneInventoryDto;
   /** 서버 UTC 날짜로 정규화된 광고 슬롯별 수령 횟수다. 멱등 ID는 공개하지 않는다. */
   dailyAdRewards: { date: string; claimsBySlot: Record<string, number> };
+}
+
+/** 공개 프로필 API가 확정한 업적 획득 목록과 사용자의 장착 선택이며 모두 ID로만 직렬화한다. */
+export interface ProfileModifierSelectionDto {
+  earnedModifierIds: string[];
+  equippedModifierIds: string[];
 }
 
 /** 광고 SDK 완료 증명과 요청 재시도 멱등 키를 서버로 전달하는 요청이다. */

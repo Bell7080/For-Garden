@@ -9,8 +9,8 @@
 이름 규칙만 지키면 표를 고칠 일이 없다: `public/background_00N.png` → 같은 번호의 WebP.
 
 화면 배경이 아닌 콘텐츠 원화(`public/ContentN_00M.png` — 출격 진입 버튼 일러스트 등)도 같은
-이유로 여기서 굽는다. 이쪽은 `sprites/background`가 아니라 `public/` 바로 아래에 같은 이름의
-WebP로 남는다. 로딩 표(`scenes/loadingSteps.ts`)가 그 경로를 그대로 읽기 때문이다.
+이유로 여기서 굽는다. 이쪽은 `sprites/background`가 아니라 `sprites/content`에 같은 이름의
+WebP로 남는다. 다른 원화 스프라이트처럼 `public/` 바로 아래를 비워 두기 위해서다.
 """
 from pathlib import Path
 import sys
@@ -18,7 +18,8 @@ import sys
 from PIL import Image
 
 PUBLIC = Path(__file__).resolve().parent.parent / "public"
-TARGET = PUBLIC / "sprites" / "background"
+BACKGROUND_TARGET = PUBLIC / "sprites" / "background"
+CONTENT_TARGET = PUBLIC / "sprites" / "content"
 QUALITY = 84
 
 
@@ -37,9 +38,9 @@ def main() -> None:
         print("구울 원본이 없다. public/background_00N.png 또는 public/ContentN_00M.png를 올린 뒤 다시 실행한다.")
         return
     for source in backgrounds:
-        bake(source, TARGET / f"{source.stem}.webp")
+        bake(source, BACKGROUND_TARGET / f"{source.stem}.webp")
     for source in contents:
-        bake(source, PUBLIC / f"{source.stem}.webp")
+        bake(source, CONTENT_TARGET / f"{source.stem}.webp")
 
 
 if __name__ == "__main__":

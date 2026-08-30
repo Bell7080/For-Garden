@@ -149,7 +149,7 @@
 - 로비 대사는 이름줄과 대사줄만 덮는 얇은 띠를 쓴다. 판을 키우는 대신 불투명하게 하고,
   경계는 위아래 선 두 줄과 이름 옆으로 이어지는 선이 잡는다. 이름은 금색, 대사는 흰색이다.
 - 배경 원화와 출격 진입 버튼 일러스트(`ContentN_00M`)는 `scripts/prepare_backgrounds.py`가 구운
-  WebP만 둔다 — 배경은 `public/sprites/background`, 버튼 원화는 `public/` 바로 아래다.
+  WebP만 둔다 — 배경은 `public/sprites/background`, 버튼 원화는 `public/sprites/content`다.
   원본 PNG는 한 장에 10MB에 가까워 그대로 두면 첫 로딩이 통째로 그만큼 늘어난다. 굽고 나면
   원본은 저장소에서 지운다. 어느 화면이 몇 번을 쓰는지는 `src/ui/backgrounds.ts`의 표 하나에만 있다.
 - 배경 원화를 쓰는 화면은 `drawVignette`로 가장자리를 눌러 가운데로 눈이 가게 한다.

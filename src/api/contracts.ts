@@ -122,6 +122,12 @@ export interface PlayerStateDto {
   dailyAdRewards: { date: string; claimsBySlot: Record<string, number> };
 }
 
+/** 공개 프로필 API가 확정한 업적 획득 목록과 사용자의 장착 선택이며 모두 ID로만 직렬화한다. */
+export interface ProfileModifierSelectionDto {
+  earnedModifierIds: string[];
+  equippedModifierIds: string[];
+}
+
 /** 광고 SDK 완료 증명과 요청 재시도 멱등 키를 서버로 전달하는 요청이다. */
 export interface ClaimAdRewardRequest { slotId: string; verificationToken: string; requestId: string; }
 /** 검증·중복·일일 제한 확인 후 지급과 저장까지 확정된 광고 보상 결과다. */

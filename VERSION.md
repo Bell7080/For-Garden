@@ -1,6 +1,6 @@
 # 버전 관리
 
-현재 버전: **v0.34.3**
+현재 버전: **v0.34.4**
 
 `VERSION.md`와 `package.json`의 `version`은 항상 같은 값을 쓰고, 타이틀(로딩) 화면 좌측
 하단 표기는 그 값을 그대로 읽는다. 화면에 손으로 적어 두지 않는다.
@@ -31,6 +31,15 @@
   그 이전의 초기 프로토타입 단계는 `v0.1.0` 항목 하나로 묶었다.
 
 ## 변경 이력
+
+## v0.34.4 — 2026-08-30
+
+- **`public/` 바로 아래에 흩어져 있던 콘텐츠 원화 11장을 `public/sprites/content/`로 옮겼다.**
+  `Content1~5_001*.webp`·`journal_001.webp`가 배경(`sprites/background`)·재화
+  (`sprites/currency`) 등 다른 모든 원화와 달리 `public/` 루트에 그대로 남아 있어 정리
+  기준이 어긋나 있었다. `src/ui/backgrounds.ts`·`src/scenes/loadingSteps.ts`의 로딩 경로와
+  `scripts/prepare_backgrounds.py`의 굽는 대상(콘텐츠 원화는 이제 `sprites/content`로 굽는다)을
+  함께 옮겨 `public/` 루트에는 `fonts`·`puppets`·`sprites`만 남는다.
 
 ## v0.34.3 — 2026-08-30
 

@@ -1,5 +1,8 @@
 import type { PublicProfileModifier } from "../state/playerProfile";
 import type { ProfileModifierSelectionDto } from "../api/contracts";
+import type { AsyncArenaProfileApi } from "../api/asyncArenaContracts";
+import type { Session } from "../state/session";
+import { playerProfileDisplay, type PlayerProfileDisplay } from "../state/playerProfile";
 
 /** 좁은 모바일 헤더에서 시각적 위계를 유지하기 위한 공개 장착 상한이다. */
 export const MAX_EQUIPPED_PROFILE_MODIFIERS = 3;
@@ -24,4 +27,12 @@ export function validateEquippedProfileModifiers(
     if (result.length === MAX_EQUIPPED_PROFILE_MODIFIERS) break;
   }
   return result;
+}
+
+/** 서버 확정 티어를 로컬 진행과 합쳐 공개 프로필을 만드는 유일한 manager/API 경계다. */
+export async function loadPlayerProfileDisplay(state: Session, arenaApi: AsyncArenaProfileApi): Promise<PlayerProfileDisplay> {
+  const arena = await arenaApi.getAsyncArenaServerState();
+  const tierId = arena?.seasonTierId?.trim();
+  // 서버 데이터가 없거나 빈 ID면 항목을 통째로 생략한다. 표시명도 서버 확정 ID를 그대로 쓴다.
+  return playerProfileDisplay(state, [], tierId ? { tierId, displayName: tierId } : undefined);
 }

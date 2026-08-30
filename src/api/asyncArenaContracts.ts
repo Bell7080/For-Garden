@@ -70,10 +70,18 @@ export interface ArenaSeasonRewardState {
 
 /** 플레이어별 비동기 방어전 서버 상태의 집계 루트다. */
 export interface AsyncArenaServerState {
+  /** 서버 시즌 규칙이 확정한 공개 티어 ID다. 배치 전 계정은 null이며 클라이언트가 대신 만들지 않는다. */
+  seasonTierId: string | null;
   activeDefenseSnapshotId: string | null;
   weekly: ArenaWeeklyScore;
   dailyAttempts: ArenaDailyAttempts;
   seasonReward: ArenaSeasonRewardState;
+}
+
+/** 프로필 등 읽기 화면이 서버 확정 결투장 상태만 조회하는 최소 API 경계다. */
+export interface AsyncArenaProfileApi {
+  /** 미개방·미배치 계정은 가짜 기본 티어 대신 null을 반환한다. */
+  getAsyncArenaServerState(): Promise<AsyncArenaServerState | null>;
 }
 
 /** 서버가 발급한 전투 한 건이다. 시드와 양쪽 스냅샷이 재현 가능한 입력 전체를 고정한다. */

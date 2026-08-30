@@ -26,6 +26,14 @@ export const BACKGROUND = {
   expeditionMap: "background-expedition-map",
   /** 원정 노드에 진입한 뒤 교전 UI 아래에 까는 전용 전투 필드다(Content2_001field). */
   expeditionField: "background-expedition-field",
+  /** 원정 주간 순위 팝업 전용 배경이다(Content2_001background). 원정 본 화면은 지도·필드가 이미 맡아 여기로 옮겼다. */
+  expeditionRanking: "background-expedition-ranking",
+  /** 케이크 대작전 진입 화면 배경이다(Content3_001background). */
+  sortieCake: "background-sortie-cake",
+  /** 현상수배 진입 화면 배경이다(Content4_001background). */
+  sortieBounty: "background-sortie-bounty",
+  /** 레이드 진입 화면 배경이다(Content5_001background). */
+  sortieRaid: "background-sortie-raid",
 } as const;
 
 /** BootScene이 모든 화면 배경을 한 번에 적재할 때 사용하는 경로 목록이다. */
@@ -47,6 +55,11 @@ export const BACKGROUND_ASSETS = [
   [BACKGROUND.expeditionMap, "Content2_001map.webp"],
   // 원정 전투 필드 WebP도 이미 배포 형식이므로 public 루트의 원본을 그대로 적재한다.
   [BACKGROUND.expeditionField, "Content2_001field.webp"],
+  // 아래 세 콘텐츠의 배경 WebP도 같은 이유로 public 루트의 원본을 그대로 적재한다.
+  [BACKGROUND.expeditionRanking, "Content2_001background.webp"],
+  [BACKGROUND.sortieCake, "Content3_001background.webp"],
+  [BACKGROUND.sortieBounty, "Content4_001background.webp"],
+  [BACKGROUND.sortieRaid, "Content5_001background.webp"],
 ] as const;
 
 /**

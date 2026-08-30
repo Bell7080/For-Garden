@@ -6,6 +6,7 @@ import { PREVIEW_FRIENDS } from "../data/friends";
 import { Button } from "./Button";
 import { addPopupBackButton } from "./IconButton";
 import { POPUP_TITLE_SIZE, type PopupLayer } from "./PopupLayer";
+import { addPopupBackgroundImage, BACKGROUND } from "./backgrounds";
 import { chipPoints, drawLayer, HOLO } from "./holo";
 import { COLOR, textStyle } from "./theme";
 
@@ -35,6 +36,7 @@ export class ExpeditionRankingPopup {
     const width = BASE_WIDTH - 100; const height = BASE_HEIGHT - 180;
     this.popups.open({ width, height, title: "원정 주간 기록", titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: 0.76, closeOnBackdrop: false, hideCloseButton: true, onClose: () => { this.content?.destroy(); this.content = undefined; this.body = undefined; } }, (body, close) => {
       this.body = body;
+      addPopupBackgroundImage(this.scene, body, BACKGROUND.expeditionRanking, { x: 0, y: 0, width, height });
       addPopupBackButton(this.scene, body, width, height, close);
       void this.refresh();
     });

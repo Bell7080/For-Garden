@@ -26,8 +26,10 @@ export class SortiePreviewScene extends Phaser.Scene {
       raid: { title: "레이드", type: "협동 작전", objective: "레이드 작전 정보 준비 중", reward: "보상 정보 준비 중" },
     }[mode];
 
+    const background = { cake: BACKGROUND.sortieCake, bounty: BACKGROUND.sortieBounty, raid: BACKGROUND.sortieRaid }[mode];
+
     setDebugScene("sortiePreview", content.title);
-    addSceneBackground(this, BACKGROUND.stageMap);
+    addSceneBackground(this, background);
     drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { strength: 0.72 });
 
     // 기존 홀로그램 판의 단색 유리, 윗선, 기울기를 그대로 사용해 향후 실제 던전 UI가 들어올 자리를 잡는다.

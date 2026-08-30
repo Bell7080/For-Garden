@@ -152,6 +152,19 @@ export const METTE_ASSET: PuppetAsset = {
 };
 
 /**
+ * 7번 전신 일러스트: 프테라 모티브 신규 캐릭터(가칭 "타페자라", 이름 미확정).
+ *
+ * 렐릭 데이터·스킬·소속 팩션이 아직 정해지지 않아 `PORTRAIT_ASSETS`에는 등록하지 않는다.
+ * 이름과 전투 수치가 정해지면 이 상수를 그대로 그 표에 연결한다.
+ */
+export const TAPEJARA_ASSET: PuppetAsset = {
+  url: `${base}puppets/char_007.zip`,
+  imageWidth: 1024,
+  imageHeight: 1536,
+  content: { left: 23, top: 37, right: 1007, bottom: 1503 },
+};
+
+/**
  * 1번 적 토비. 적 전용 Puppet 번호와 스테이지 고정 편성 번호를 일치시킨다.
  *
  * 적 셋은 캔버스 크기가 서로 다르다. ZIP 안 WebP의 VP8X 헤더로 원본 픽셀 크기를 확인하고,
@@ -192,6 +205,19 @@ export const PONTOS_ASSET: PuppetAsset = {
 };
 
 /**
+ * 4번째 적 전신(가칭, puppet.json 원제 "비늘 후드의 신비한 꼬마 탐험가").
+ *
+ * 스테이지 배치·전투 수치가 아직 없어 `ENEMY_SD_ASSETS`(1~3번 묶음)에는 넣지 않는다.
+ * 콘텐츠가 정해지면 이 상수와 `EXPLORER_SD_ASSET`을 그 자리에 연결한다.
+ */
+export const EXPLORER_ASSET: PuppetAsset = {
+  url: `${base}puppets/enemy_004.zip`,
+  imageWidth: 1086,
+  imageHeight: 1448,
+  content: { left: 278, top: 71, right: 984, bottom: 1398 },
+};
+
+/**
  * 렐릭 데이터가 참조하는 원화 레지스트리. 새 원화는 여기에 한 번 등록한 뒤 데이터 키로 연결한다.
  * placeholder 키는 같은 임시 파일을 쓰되 화면에서 렐릭별 tint를 적용할 수 있게 별도로 둔다.
  */
@@ -229,6 +255,14 @@ export const ENEMY_SD_ASSETS: readonly [PuppetAsset, PuppetAsset, PuppetAsset] =
   imageHeight: 1254,
   content: { left: 352, top: 155, right: 993, bottom: 1082 },
 })) as unknown as readonly [PuppetAsset, PuppetAsset, PuppetAsset];
+
+/** EXPLORER_ASSET과 짝을 이루는 4번째 적 전투 SD. 콘텐츠가 정해지기 전까지는 미사용이다. */
+export const EXPLORER_SD_ASSET: PuppetAsset = {
+  url: `${base}puppets/enemySD_004.zip`,
+  imageWidth: 1254,
+  imageHeight: 1254,
+  content: { left: 290, top: 88, right: 1031, bottom: 1197 },
+};
 
 /** 폰토스 전투 SD. 정사각 원본에서 alpha > 16인 실제 실루엣만 바닥 배치에 사용한다. */
 export const PONTOS_SD_ASSET: PuppetAsset = {
@@ -280,6 +314,14 @@ export const DODI_SD_ASSET: PuppetAsset = {
 export const METTE_SD_ASSET: PuppetAsset = {
   url: `${base}puppets/charSD_006.zip`,
   ...METTE_SD_METADATA,
+};
+
+/** 7번 SD: TAPEJARA_ASSET과 짝을 이루는 신규 캐릭터 전투 SD(이름 미확정, 전투 데이터 없음). */
+export const TAPEJARA_SD_ASSET: PuppetAsset = {
+  url: `${base}puppets/charSD_007.zip`,
+  imageWidth: 1254,
+  imageHeight: 1254,
+  content: { left: 49, top: 83, right: 1175, bottom: 1179 },
 };
 
 /** 적과 전용 아군은 각자 번호 묶음을 쓰고, 아직 전용 SD가 없는 아군만 1번 SD를 공유한다. */

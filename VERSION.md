@@ -1,6 +1,6 @@
 # 버전 관리
 
-현재 버전: **v0.34.0**
+현재 버전: **v0.34.2**
 
 `VERSION.md`와 `package.json`의 `version`은 항상 같은 값을 쓰고, 타이틀(로딩) 화면 좌측
 하단 표기는 그 값을 그대로 읽는다. 화면에 손으로 적어 두지 않는다.
@@ -31,6 +31,30 @@
   그 이전의 초기 프로토타입 단계는 `v0.1.0` 항목 하나로 묶었다.
 
 ## 변경 이력
+
+## v0.34.2 — 2026-08-30
+
+- **퍼블릭에 있었지만 어디에도 연결되지 않았던 재화·Puppet 원화를 정리했다.**
+  `sprites/currency/dna.webp`는 이미 구워져 있었는데도 `currency-dna` 키가 계속
+  `heart.webp`를 임시로 빌려 쓰고 있었다 — `src/ui/currencyIcons.ts`가 제 파일을 가리키게
+  고쳤다. `puppets/char_007.zip`·`charSD_007.zip`(가칭 "타페자라", 프테라 모티브 신규
+  캐릭터)과 `puppets/enemy_004.zip`·`enemySD_004.zip`(puppet.json 원제 "비늘 후드의 신비한
+  꼬마 탐험가")은 렐릭 데이터·전투 수치·소속 팩션이 아직 정해지지 않아 `src/puppets/assets.ts`에
+  측정된 `PuppetAsset`(`TAPEJARA_ASSET`/`TAPEJARA_SD_ASSET`, `EXPLORER_ASSET`/
+  `EXPLORER_SD_ASSET`)로만 등록해 두고, 화면이 실제로 쓰는 표(`PORTRAIT_ASSETS`·
+  `ENEMY_SD_ASSETS`)에는 아직 넣지 않았다. 콘텐츠가 정해지면 이 네 상수를 그 표에 연결하기만
+  하면 된다.
+
+## v0.34.1 — 2026-08-30
+
+- **퍼블릭에 원본 그대로 남아 있던 콘텐츠 배경 4장을 구웠다.** `Content2~5_001background.png`
+  (장당 9MB 안팎)를 `scripts/prepare_backgrounds.py`로 WebP(장당 500KB 이하)로 굽고 원본은
+  저장소에서 지웠다. `Content2`(원정)는 이미 원정 화면이 지도·필드 배경을 따로 갖고 있어,
+  대신 원정 순위 팝업(`ExpeditionRankingPopup`)의 전용 배경으로 붙였다. `Content3`(케이크
+  대작전)·`Content4`(현상수배)·`Content5`(레이드)는 각 콘텐츠 진입 화면(`SortiePreviewScene`)이
+  지금까지 임시로 빌려 쓰던 스테이지 지도 배경 대신 자기 배경으로 갈아입는다. 새 키 네 개
+  (`expeditionRanking`·`sortieCake`·`sortieBounty`·`sortieRaid`)는 `src/ui/backgrounds.ts`
+  한 곳에서만 소유하며 `BACKGROUND_ASSETS`를 통해 타이틀 로딩 단계에서 함께 적재된다.
 
 ## v0.34.0 — 2026-08-30
 

@@ -20,7 +20,7 @@ export const CURRENCY_ICON_ASSETS: ReadonlyArray<readonly [CurrencyIconKey, stri
   ["currency-fossil", "/sprites/currency/fossil.webp"],
   ["currency-amber", "/sprites/currency/amber.webp"],
   ["currency-cheesecake", "/sprites/currency/cake.webp"],
-  ["currency-dna", "/sprites/currency/heart.webp"],
+  ["currency-dna", "/sprites/currency/dna.webp"],
 ];
 
 /** 저장 지갑 키를 실제 구운 WebP 텍스처로 바꾸는 공용 단일 매핑이다. */

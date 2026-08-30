@@ -145,6 +145,14 @@ export interface CardFrame {
   cropWidth: number;
   cropHeight: number;
   scale: number;
+  /**
+   * 자르기 시작점이 그림의 맨 위(`content.top`)보다 아래로 내려갔는지.
+   *
+   * true면 원화의 정수리가 통째로 사라지고 그 단면이 수평선으로 남는다. 들어 올린 손처럼
+   * 머리가 아닌 부위를 일부러 잘라 낼 때만 참이어야 하며, 평범한 전신 원화가 여기에 걸리면
+   * 그건 카드가 머리를 자르고 있다는 뜻이다(`MAX_HEAD_DROP_RATIO` 주석 참고).
+   */
+  clipsContentTop: boolean;
 }
 
 export interface CardFrameOptions {
@@ -163,13 +171,31 @@ export interface CardFrameOptions {
  * 자르기 상자 높이 대비, 머리 관절이 상단에서 최대로 내려갈 수 있는 비율.
  *
  * `headroom`은 "내용 상자 맨 위"와 "머리 관절" 사이에서 시작점을 고르는데, 들어 올린 손·망토·
- * 깃털처럼 머리보다 높이 솟은 부위가 있으면 내용 상자 맨 위가 머리에서 한참 떨어진다(루카가
- * 손을 들어 올린 포즈). 그러면 자르기가 그 부위에서 시작해 머리는 카드 아래쪽이나 밖으로
- * 밀려난다. 이 비율은 머리가 그 경우에도 항상 상단 일정 범위 안에 들어오도록 자르기 시작점을
- * 아래로 더 내릴 수 있는 한계다 — 정상 원화(머리가 이미 내용 상자 맨 위에 가까운 경우)는
- * 자연스러운 계산값이 이 한계보다 작아 전혀 영향을 받지 않는다.
+ * 깃털처럼 **머리가 아닌** 부위가 머리보다 높이 솟아 있으면 내용 상자 맨 위가 머리에서 한참
+ * 떨어진다. 그러면 자르기가 그 부위에서 시작해 머리는 카드 아래쪽이나 밖으로 밀려난다. 이
+ * 비율은 그 경우에만 자르기 시작점을 아래로 더 내릴 수 있는 한계다.
+ *
+ * **이 한계가 걸리는 순간 정수리가 잘린다.** 시작점이 `content.top`보다 아래로 내려가므로
+ * 원화의 맨 윗부분이 통째로 사라지고, 그 단면이 수평선으로 남아 머리가 평평하게 깎여 보인다
+ * (v0.34.3까지 토리카·도디가 그랬다 — 0.34는 등신이 낮아 머리가 큰 원화에게는 너무 좁았다).
+ * 그래서 값은 "실제 원화가 절대 닿지 않는" 자리에 둔다:
+ *
+ * | 원화 | 머리 위 여백 ÷ 자르기 높이 |
+ * | --- | --- |
+ * | 토리카 | 0.386 |
+ * | 도디 | 0.383 |
+ * | 메테 | 0.262 |
+ * | 렉시아 | 0.251 |
+ * | 스피나 | 0.287 |
+ * | 루카 | 0.265 |
+ *
+ * 가장 큰 값이 0.39 언저리이므로 0.46은 그보다 확실히 위이고, 카드 절반(0.5)보다는 아래라
+ * 진짜로 손을 들어 올린 포즈에서는 여전히 얼굴을 카드 상단 절반 안에 붙잡아 둔다. 새 원화를
+ * 넣은 뒤 정수리가 평평하게 잘려 보이면 이 값을 조금씩 내리지 말고, 먼저
+ * `tests/unit/puppetAnchors.test.ts`의 "실제 원화" 회귀 테스트에 그 원화를 더해 한계에
+ * 걸리는지부터 확인한다 — 걸린다면 원인은 카드가 아니라 그 원화의 등신비다.
  */
-const MAX_HEAD_DROP_RATIO = 0.34;
+const MAX_HEAD_DROP_RATIO = 0.46;
 
 /**
  * 내용 상자 맨 위(`content.top`)에 자르기를 딱 붙이면(headroom 0) 뾰족하거나 갈래진 장식은
@@ -208,5 +234,5 @@ export function computeHeadCardFrame(
   // 늦춘다 — 정상 원화의 결과보다 시작점을 앞당기지는 않는다.
   const cropY = clamp(Math.max(naturalCropY, head.y - cropHeight * MAX_HEAD_DROP_RATIO), frame.imageHeight - cropHeight);
 
-  return { cropX, cropY, cropWidth, cropHeight, scale };
+  return { cropX, cropY, cropWidth, cropHeight, scale, clipsContentTop: cropY > frame.content.top };
 }

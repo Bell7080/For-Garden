@@ -1,5 +1,59 @@
 import type { PuppetAsset } from "./assets";
 
+/**
+ * 1번 토리카(트리케라톱스) 전신. 다른 원화보다 등신이 낮아 카드에서는 확대를 줄여 얼굴 크기를 맞춘다.
+ */
+export const TORIKA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1054,
+  imageHeight: 1492,
+  content: { left: 95, top: 69, right: 894, bottom: 1419 },
+  cardZoom: 0.82,
+};
+
+/**
+ * 2번 렉시아(티라노사우루스) 전신.
+ *
+ * content가 1번 토리카 값을 그대로 옮겨 온 것이었다. 왼쪽으로 크게 뻗은 낫 무기가 실제 alpha
+ * 경계 밖으로 잘려 있어, 카드·정보창 배율이 무기 없는 좁은 폭 기준으로 계산되며 실제보다
+ * 확대되어 보였다. ZIP 안 WebP의 alpha > 16 실제 경계로 다시 측정했다.
+ */
+export const LEXIA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1054,
+  imageHeight: 1492,
+  content: { left: 15, top: 43, right: 1038, bottom: 1455 },
+};
+
+/**
+ * 3번 스피나(스피노사우루스) 전신.
+ *
+ * content가 잘리지 않은 원본 캔버스 그대로였던 탓에 카드에서 실루엣이 실제보다 작고 왼쪽으로
+ * 치우쳐 보였다. ZIP 안 WebP의 alpha > 16 실제 경계로 다시 측정했다.
+ */
+export const SEIRA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1085,
+  imageHeight: 1450,
+  content: { left: 273, top: 82, right: 950, bottom: 1450 },
+  // 뒷머리 뾰족 장식이 오른쪽으로 쏠려 카드 홈의 오른쪽 대각선 모서리에 걸렸다.
+  cardHeadEscape: { right: 0.12 },
+};
+
+/** 4번 루카(벨로키랍토르) 전신. 넓은 후드와 꼬리까지 포함한 전용 원화다. */
+export const LUKA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1728,
+  imageHeight: 2446,
+  // 원화의 후드·손·발·꼬리를 모두 포함한 가시 영역으로 발 높이와 화면 확대를 맞춘다.
+  content: { left: 52, top: 44, right: 1683, bottom: 2404 },
+  // 코어 관절이 다른 원화보다 아래에 박혀 있어 정보창에서 혼자 내려앉아 보인다.
+  portraitOffsetY: -34,
+};
+
+/** 7번 프테라 모티브 신규 캐릭터(가칭 "타페자라") 전신. */
+export const TAPEJARA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1024,
+  imageHeight: 1536,
+  content: { left: 23, top: 37, right: 1007, bottom: 1503 },
+};
+
 /** 도디 전신·SD ZIP의 원본 크기와 alpha > 16인 실제 실루엣 경계다. */
 export const DODI_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1086,

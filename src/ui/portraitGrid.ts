@@ -49,35 +49,53 @@ export function portraitGridContentHeight(rows: number, rowGap: number, cardHeig
 }
 
 /**
- * 머리가 빠져나오는 윗변 홈의 실제 폭.
+ * 머리가 빠져나오는 홈의 모양.
  *
- * 원하는 비율(`ratio`)이 위쪽 두 모서리의 대각선 깎임 안쪽까지 넓으면, 그 `/` 모서리가 홈
- * 밖으로 튀어나온 머리를 가로질러 애매하게 잘라 낸다(출격 팝업의 SD 자리도 같은 문제라
- * `bandBottom`으로 깎인 깊이만큼 띠를 내려 피한다). 여기서는 홈 폭 자체를 깎인 깊이만큼
- * 줄여 두 대각선 바깥에서 항상 시작하게 한다.
+ * 홈은 직사각형이 아니라 **위로 갈수록 벌어지는 사다리꼴**이다. 잘린 모서리(`/`)를 피해야
+ * 하는 것은 홈이 칩 윗변과 만나는 **그 한 줄뿐**이고, 그보다 위는 칩이 없어 아무것도 침범하지
+ * 않는다. 그래서 아래는 모서리 안쪽에서 좁게 시작하고 위로 올라가며 넓어진다 — 머리가 가장
+ * 넓은 자리에서 홈도 가장 넓다.
+ *
+ * 예전처럼 위아래 같은 폭으로 뚫으면, 모서리를 피하느라 좁아진 폭이 머리 끝까지 그대로 따라
+ * 올라가 정수리 옆이 세로로 베인다. 캐릭터마다 `cardHeadEscape`를 실측해 메우던 문제가
+ * 대부분 여기서 나왔다.
  */
-export function portraitCardNotchWidth(chipWidth: number, topLeftBevel: number, topRightBevel: number, ratio = 0.8): number {
-  const clearance = 4;
-  return Math.min(chipWidth * ratio, chipWidth - 2 * Math.max(topLeftBevel, topRightBevel) - clearance);
-}
-
-/** 좌우 대칭이 아닌 머리 홈의 실제 폭과, 그 중심이 카드 가운데서 얼마나 밀렸는지다. */
 export interface PortraitCardHeadWindow {
+  /** 칩 윗변에서의 홈 폭. 잘린 모서리 안쪽을 침범하지 않는다. */
   width: number;
+  /** 칩 윗변에서의 홈 중심이 카드 가운데서 밀린 거리. */
   offsetX: number;
+  /** 돌출 꼭대기에서의 홈 폭. 모서리 제약이 없어 더 넓다. */
+  topWidth: number;
+  /** 돌출 꼭대기에서의 홈 중심이 밀린 거리. */
+  topOffsetX: number;
 }
 
 /**
- * 한쪽으로 쏠린 머리 장식을 위해 넓힌 머리 홈.
+ * 홈이 칩 윗변에서 잘린 모서리와 두는 최소 여유.
  *
- * 관절은 언제나 카드 가운데(대칭)를 기준으로 잡지만, 모자·깃털·후드 같은 장식은 캐릭터 포즈에
- * 따라 한쪽으로 쏠려 그려진다(스피나의 뒷머리 오른쪽, 메테의 후드 왼쪽). 대칭 홈만으로는 그
- * 쪽이 대각선 모서리 안쪽에서 잘리므로, 잘리는 캐릭터만 실측해 그 쪽 절반을 `bias`만큼
- * 넓힌다. 다른 캐릭터는 이 함수를 호출하지 않아 기존 대칭 홈이 그대로 유지된다.
+ * 0으로 두면 홈의 옆 변과 대각선이 한 점에서 만나 도형이 스스로 접힌다(v0.29.10에서 고친
+ * 자기 교차 문제). 눈에 보이라고 두는 여백이 아니라 도형이 성립하기 위한 최소값이다.
+ */
+const NOTCH_BEVEL_CLEARANCE = 4;
+
+/**
+ * 돌출 꼭대기에서 홈이 열릴 수 있는 최대 비율(칩 폭 대비).
  *
- * `bias.left`/`bias.right`는 칩 폭 대비 비율이라 카드 크기가 다른 그리드(발굴·원정·도감)에도
- * 그대로 옮겨 쓸 수 있다. 넓힌 뒤에도 그 쪽 모서리의 대각선 안쪽 여유는 항상 지킨다 — 그
- * 안쪽까지 넓히면 v0.29.10에서 고친 것과 같은 자기 교차 문제가 다시 생긴다.
+ * 칩 윗변 위쪽에는 머리밖에 없으므로 거의 다 열어도 어깨가 새지 않는다. 그래도 칩 폭 자체는
+ * 넘지 않아, 머리가 카드 몸통보다 넓어 보이지는 않게 둔다.
+ */
+const HEAD_WINDOW_TOP_RATIO = 0.94;
+
+/**
+ * 머리 홈의 아래(칩 윗변)·위(돌출 꼭대기) 폭을 함께 구한다.
+ *
+ * `ratio`는 칩 윗변에서 열고 싶은 기본 폭이다. 그 폭이 한쪽 모서리의 대각선 안쪽까지 들어오면
+ * **그 쪽만** 줄인다 — 위쪽 두 모서리는 서로 다르게 깎이므로(왼쪽이 훨씬 깊다) 둘 중 깊은
+ * 쪽에 맞춰 양쪽을 함께 줄이면 얕게 깎인 쪽이 이유 없이 좁아진다.
+ *
+ * `bias`는 그래도 모자란 원화만 쓰는 미세 조정이다(칩 폭 대비 비율). 모자·깃털·후드가 한쪽으로
+ * 쏠려 그려진 원화에서 그 쪽만 더 연다. 사다리꼴 홈이 생긴 뒤로는 대부분 필요 없다.
  */
 export function portraitCardHeadWindow(
   chipWidth: number,
@@ -86,11 +104,22 @@ export function portraitCardHeadWindow(
   ratio = 0.8,
   bias: { left?: number; right?: number } = {},
 ): PortraitCardHeadWindow {
-  const clearance = 4;
-  const halfBase = (chipWidth * ratio) / 2;
-  const maxLeft = Math.max(0, chipWidth / 2 - topLeftBevel - clearance);
-  const maxRight = Math.max(0, chipWidth / 2 - topRightBevel - clearance);
-  const left = Math.min(halfBase + chipWidth * Math.max(0, bias.left ?? 0), maxLeft);
-  const right = Math.min(halfBase + chipWidth * Math.max(0, bias.right ?? 0), maxRight);
-  return { width: left + right, offsetX: (right - left) / 2 };
+  const half = chipWidth / 2;
+  const wantLeft = (chipWidth * ratio) / 2 + chipWidth * Math.max(0, bias.left ?? 0);
+  const wantRight = (chipWidth * ratio) / 2 + chipWidth * Math.max(0, bias.right ?? 0);
+
+  // 칩 윗변에서는 그 쪽 대각선 안쪽을 넘을 수 없다.
+  const left = Math.min(wantLeft, Math.max(0, half - topLeftBevel - NOTCH_BEVEL_CLEARANCE));
+  const right = Math.min(wantRight, Math.max(0, half - topRightBevel - NOTCH_BEVEL_CLEARANCE));
+  // 꼭대기는 칩이 없어 모서리를 신경 쓰지 않는다. 다만 아래보다 좁아지지는 않는다.
+  const topLimit = half * HEAD_WINDOW_TOP_RATIO;
+  const topLeft = Math.max(left, Math.min(wantLeft, topLimit));
+  const topRight = Math.max(right, Math.min(wantRight, topLimit));
+
+  return {
+    width: left + right,
+    offsetX: (right - left) / 2,
+    topWidth: topLeft + topRight,
+    topOffsetX: (topRight - topLeft) / 2,
+  };
 }

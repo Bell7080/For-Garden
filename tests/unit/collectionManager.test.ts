@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
-import type { Session } from "../../src/state/session";
+import { createInitialPlayerResearchProgress, type Session } from "../../src/state/session";
 import { RelicCollectionManager } from "../../src/managers/RelicCollectionManager";
 import { createDefaultSettings } from "../../src/core/settings";
 
 /** 테스트끼리 진행 상태를 공유하지 않도록 가장 작은 독립 세션을 만든다. */
 function makeSession(): Session {
   return {
+    playerResearch: createInitialPlayerResearchProgress(),
     // 이 테스트는 발굴을 다루지 않지만 최신 Session 계약의 빈 서버 정산 상태를 명시한다.
     idleExcavation: { assignedRelicIds: [null, null, null], lastSettledAt: null, unclaimed: { gold: 0, cheesecake: 0, fossil: 0, gems: 0 }, baseStorageSeconds: 14_400, activeProductionMultiplier: 1, storageExtensionExpiresAt: null, retroactiveExcavationGrantVersion: 1 },
     settings: createDefaultSettings(),

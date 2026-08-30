@@ -72,6 +72,16 @@ export interface ChipOptions {
    * 그 쪽 대각선 모서리 안쪽에서 잘리는 것을 막을 때만 쓴다. 0이면 가운데 그대로다.
    */
   openOffsetX?: number;
+  /**
+   * 열린 구간의 **꼭대기** 폭. 비우면 `openWidth` 그대로라 옆 변이 수직으로 선다.
+   *
+   * 잘린 모서리를 피해야 하는 것은 홈이 윗변과 만나는 한 줄뿐이고 그보다 위에는 면이 없다.
+   * 그래서 꼭대기를 더 넓게 열면 홈이 위로 벌어지는 사다리꼴이 되어, 좁아진 아랫폭이 머리
+   * 끝까지 따라 올라가 정수리 옆을 세로로 베는 일이 없어진다.
+   */
+  openTopWidth?: number;
+  /** 꼭대기 폭의 중심이 밀린 거리. 비우면 `openOffsetX`를 그대로 쓴다. */
+  openTopOffsetX?: number;
 }
 
 /**
@@ -81,7 +91,8 @@ export interface ChipOptions {
  * 정면에서 찍어 낸 판처럼 보이고, 어긋나게 깎아야 비스듬히 잘린 조각처럼 읽힌다.
  *
  * `openWidth`를 주면 윗변 가운데가 위로 뚫린다. 카드에서 캐릭터 머리만 칩 밖으로 나오게 하는
- * 구멍이라, 잘린 모서리는 그대로 두고 가운데만 연다.
+ * 구멍이라, 잘린 모서리는 그대로 두고 가운데만 연다. `openTopWidth`로 꼭대기를 더 넓히면
+ * 구멍이 위로 벌어지는 사다리꼴이 된다.
  */
 export function chipPoints(width: number, height: number, options: ChipOptions = {}): number[] {
   const given = options.bevel ?? HOLO.bevel;
@@ -90,12 +101,19 @@ export function chipPoints(width: number, height: number, options: ChipOptions =
     : { topLeft: given.topLeft ?? 0, topRight: given.topRight ?? 0, bottomRight: given.bottomRight ?? 0, bottomLeft: given.bottomLeft ?? 0 };
   const open = options.openWidth ?? 0;
   const openShift = options.openOffsetX ?? 0;
+  const openTopHalf = Math.max(open, options.openTopWidth ?? open) / 2;
+  const openTopShift = options.openTopOffsetX ?? openShift;
   const openTop = -height / 2 - (options.openHeight ?? 0);
   const hw = width / 2;
   const hh = height / 2;
   const points = [-hw, -hh + bevels.topLeft, -hw + bevels.topLeft, -hh];
   if (open > 0) {
-    points.push(-open / 2 + openShift, -hh, -open / 2 + openShift, openTop, open / 2 + openShift, openTop, open / 2 + openShift, -hh);
+    points.push(
+      -open / 2 + openShift, -hh,
+      -openTopHalf + openTopShift, openTop,
+      openTopHalf + openTopShift, openTop,
+      open / 2 + openShift, -hh,
+    );
   }
   points.push(
     hw - bevels.topRight, -hh,

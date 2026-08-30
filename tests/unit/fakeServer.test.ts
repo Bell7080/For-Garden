@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { FakeServer } from "../../src/api/FakeServer";
 import { BREAKTHROUGH_STEPS, RELIC_LEVEL_CAP } from "../../src/core/relicProgression";
 import { GameApiError } from "../../src/api/contracts";
-import type { Session } from "../../src/state/session";
+import { createInitialPlayerResearchProgress, type Session } from "../../src/state/session";
 import { createRuneInstance, enhanceRune as applyRuneEnhancement, type RuneInstance, type RuneStatKey } from "../../src/core/runes";
 import { createDefaultSettings } from "../../src/core/settings";
 
@@ -15,6 +15,7 @@ function makeRune(instanceId = "rune-1"): RuneInstance {
 /** 각 테스트가 독립적으로 쓸 서버 저장소 역할의 세션을 만든다. */
 function makeSession(fossil = 1000): Session {
   return {
+    playerResearch: createInitialPlayerResearchProgress(),
     idleExcavation: { assignedRelicIds: [null, null, null], lastSettledAt: null, unclaimed: { gold: 0, cheesecake: 0, fossil: 0, gems: 0 }, baseStorageSeconds: 14_400, activeProductionMultiplier: 1, storageExtensionExpiresAt: null, retroactiveExcavationGrantVersion: 1 },
     settings: createDefaultSettings(),
     completedStoryIds: new Set(), observationRecords: [],

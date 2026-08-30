@@ -7,14 +7,20 @@ import {
   findGroundBones,
   resolveAnchors,
   type AnchorFrame,
+  type CardFrame,
 } from "../../src/puppets/anchors";
 import {
   DODI_PORTRAIT_METADATA,
   DODI_SD_METADATA,
+  LEXIA_PORTRAIT_METADATA,
+  LUKA_PORTRAIT_METADATA,
   METTE_PORTRAIT_METADATA,
   METTE_SD_METADATA,
   PONTOS_PORTRAIT_METADATA,
   PONTOS_SD_METADATA,
+  SEIRA_PORTRAIT_METADATA,
+  TAPEJARA_PORTRAIT_METADATA,
+  TORIKA_PORTRAIT_METADATA,
 } from "../../src/puppets/assetMetadata";
 
 /** 실제 char_001.zip과 같은 구성 — 머리 태그를 눈·입이 함께 가지고 있다. */
@@ -146,9 +152,9 @@ describe("머리 카드 잘라내기", () => {
     const head = { x: 860, y: 900 };
     const card = computeHeadCardFrame(raisedHandFrame, head, cardOptions);
     const headFromTop = (head.y - card.cropY) * card.scale;
-    // 카드 높이의 상단 34%(공식이 허용하는 한계) 언저리 안에 머리가 들어와야 얼굴이 보인다.
+    // 카드 높이의 상단 46%(공식이 허용하는 한계) 언저리 안에 머리가 들어와야 얼굴이 보인다.
     expect(headFromTop).toBeGreaterThan(0);
-    expect(headFromTop).toBeLessThanOrEqual(cardOptions.height * 0.34 + 1e-6);
+    expect(headFromTop).toBeLessThanOrEqual(cardOptions.height * 0.46 + 1e-6);
     // 자연스러운 계산(내용 상자 맨 위)보다 시작점이 늦춰졌는지로 안전장치가 실제로 작동했는지 확인한다.
     expect(card.cropY).toBeGreaterThan(raisedHandFrame.content.top);
   });
@@ -193,5 +199,80 @@ describe("도디·메테 전용 에셋 앵커 메타데이터", () => {
   it("는 6번 메테 전신·SD의 실루엣 경계를 고정한다", () => {
     expect(METTE_PORTRAIT_METADATA).toMatchObject({ imageWidth: 1054, imageHeight: 1492, content: { left: 67, top: 43, right: 1003, bottom: 1463 } });
     expect(METTE_SD_METADATA).toMatchObject({ imageWidth: 1254, imageHeight: 1254, content: { left: 106, top: 80, right: 1099, bottom: 1207 } });
+  });
+});
+
+/**
+ * **회귀 테스트다.** 여기까지의 카드 테스트는 전부 손으로 지어낸 프레임을 썼고, 그래서 실제
+ * 원화가 정수리를 잘리는 문제를 여러 번 고치는 동안에도 한 번도 실패하지 않았다.
+ *
+ * 원인은 `MAX_HEAD_DROP_RATIO`였다. 그 한계가 걸리면 자르기 시작점이 `content.top`보다 아래로
+ * 내려가 원화의 맨 윗부분이 통째로 사라진다. 등신이 낮아 머리가 큰 토리카·도디는 머리 위
+ * 여백이 자르기 높이의 38%여서 예전 한계(0.34)에 걸렸고, 정수리가 수평으로 잘려 나갔다.
+ * 카드 쪽 보정(`cardHeadDropY`)은 이미 잘린 그림을 아래로 옮길 뿐이라 잘린 단면을 되돌리지
+ * 못했다 — 같은 자리를 두 번 고치지 않기 위한 기록이다.
+ *
+ * 그래서 **지어낸 값이 아니라 실제 에셋 메타데이터와 ZIP의 `머리1` 관절**로 검사한다.
+ */
+describe("실제 원화의 카드 잘라내기", () => {
+  // 도감·발굴·편성 그리드가 실제로 쓰는 카드 규격이다(카드 300×400 + 돌출 64).
+  const CARD = { width: 300, height: 464, headroom: 0 } as const;
+
+  /**
+   * `머리1` 관절의 텍스처 좌표. 각 ZIP의 `puppet.json`에서 읽은 값이라 원화를 교체하면 함께
+   * 다시 적는다(`tags: ["head"]`인 관절의 x·y).
+   */
+  const REAL_PORTRAITS = [
+    { name: "토리카", metadata: TORIKA_PORTRAIT_METADATA, head: { x: 609, y: 395 } },
+    { name: "렉시아", metadata: LEXIA_PORTRAIT_METADATA, head: { x: 613, y: 265 } },
+    { name: "스피나", metadata: SEIRA_PORTRAIT_METADATA, head: { x: 572, y: 250 } },
+    { name: "루카", metadata: LUKA_PORTRAIT_METADATA, head: { x: 882, y: 419 } },
+    { name: "도디", metadata: DODI_PORTRAIT_METADATA, head: { x: 585, y: 370 } },
+    { name: "메테", metadata: METTE_PORTRAIT_METADATA, head: { x: 520, y: 255 } },
+    { name: "타페자라", metadata: TAPEJARA_PORTRAIT_METADATA, head: { x: 549, y: 375 } },
+  ] as const;
+
+  // PortraitCard가 넘기는 것과 같은 배율 보정이다.
+  const cardFrameOf = (portrait: (typeof REAL_PORTRAITS)[number]): CardFrame =>
+    computeHeadCardFrame(portrait.metadata, portrait.head, {
+      ...CARD,
+      fillRatio: 0.56 / ((portrait.metadata.cardZoom ?? 1) * (portrait.metadata.portraitZoom ?? 1)),
+    });
+
+  it.each(REAL_PORTRAITS.map((portrait) => [portrait.name, portrait] as const))(
+    "%s는 정수리를 자르지 않는다",
+    (_name, portrait) => {
+      expect(cardFrameOf(portrait).clipsContentTop).toBe(false);
+    },
+  );
+
+  it.each(REAL_PORTRAITS.map((portrait) => [portrait.name, portrait] as const))(
+    "%s는 정수리 위에 숨 쉴 틈을 남긴다",
+    (_name, portrait) => {
+      const card = cardFrameOf(portrait);
+      // 뭉툭한 뿔·깃털이 홈 윗변에 딱 붙어 수평으로 잘린 것처럼 보이지 않을 만큼은 띄운다.
+      const margin = (portrait.metadata.content.top - card.cropY) * card.scale;
+      expect(margin).toBeGreaterThan(0);
+      expect(margin).toBeLessThan(CARD.height - CARD.width / 2);
+    },
+  );
+
+  it.each(REAL_PORTRAITS.map((portrait) => [portrait.name, portrait] as const))(
+    "%s는 얼굴을 카드 위쪽 절반 안에 세운다",
+    (_name, portrait) => {
+      const card = cardFrameOf(portrait);
+      const headFromTop = (portrait.head.y - card.cropY) * card.scale;
+      expect(headFromTop).toBeGreaterThan(0);
+      expect(headFromTop).toBeLessThan(CARD.height / 2);
+    },
+  );
+
+  it("는 한계가 실제 원화의 여백보다 확실히 위에 있다", () => {
+    // 가장 머리가 큰 원화도 한계에 여유를 두고 못 미쳐야 다음 캐릭터가 다시 걸리지 않는다.
+    const worst = Math.max(...REAL_PORTRAITS.map((portrait) => {
+      const card = cardFrameOf(portrait);
+      return (portrait.head.y - portrait.metadata.content.top) / card.cropHeight;
+    }));
+    expect(worst).toBeLessThan(0.42);
   });
 });

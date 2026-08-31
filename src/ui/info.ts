@@ -1077,9 +1077,12 @@ export class InfoManager {
       body.add(this.scene.add.text(-380, -446 - squadStory / 2, lines.join("\n"), textStyle({ role: "body", size: 24, lineSpacing: 10 })).setOrigin(0, 0));
       // 소속은 엠블럼만으로는 이름을 말하지 못한다. 표식 아래에 스쿼드 이름을 짧게 붙인다.
       if (disclosure.access === "full") {
+        // 스쿼드 이름은 설명이 아니라 **이름표**라 `display`로 두껍게 세운다. 뒤에 판이나 복제
+        // 그림자를 두지 않는다 — 엠블럼이 이미 제 어둠을 데리고 있어 겹치면 표식이 두 겹으로
+        // 보인다. 대신 엠블럼과 같은 강조색·같은 중심선에 맞춰 한 덩어리로 읽히게 한다.
         body.add(this.scene.add
-          .text(JOURNAL_SQUAD_MARK.x, markY + JOURNAL_SQUAD_MARK.size / 2 + 14, SQUADS[def.squad].name,
-            textStyle({ role: "emphasis", size: 20, color: COLOR.accentText, align: "center" }))
+          .text(JOURNAL_SQUAD_MARK.x, markY + JOURNAL_SQUAD_MARK.size / 2 + 12, SQUADS[def.squad].name,
+            textStyle({ role: "display", size: 24, color: COLOR.accentText, align: "center" }))
           .setOrigin(0.5, 0));
       }
       // 상단 표본 설명과 일기 내용 사이에 이전보다 넓은 숨 쉴 틈을 둔다.
@@ -1094,7 +1097,9 @@ export class InfoManager {
       // 우러러보는지가 있어야 소속이 이름표가 아니라 성격이 된다. 기록 본문의 길이는 개체마다
       // 다르므로 자리는 눈대중이 아니라 실제로 그려진 높이에서 잰다.
       if (disclosure.access === "full" && def.squadNote) {
-        const admired = def.admiredSquad ? `\n동경  ${SQUADS[def.admiredSquad].name} — ${SQUADS[def.admiredSquad].duty}` : "";
+        // 동경의 1순위는 늘 주인공이라 스쿼드 쪽은 "스쿼드 동경"으로 못 박아 둔다 — 그냥
+        // "동경"이라고만 적으면 본문이 말한 순서와 어긋난 두 문장이 나란히 서게 된다.
+        const admired = def.admiredSquad ? `\n스쿼드 동경  ${SQUADS[def.admiredSquad].name} — ${SQUADS[def.admiredSquad].duty}` : "";
         body.add(this.scene.add
           .text(-380, text.y + text.height + 26, `${def.squadNote}${admired}`,
             textStyle({ role: "body", size: 22, color: COLOR.inkDim, lineSpacing: 8, wrap: 760 }))

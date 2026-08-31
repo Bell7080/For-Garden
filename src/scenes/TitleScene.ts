@@ -16,6 +16,21 @@ const TITLE_LOGOTYPE_KEY = "title-logotype";
 const TITLE_LOGOTYPE_RATIO = 1024 / 1536;
 
 /**
+ * 원본 안에서 **글자가 실제로 차지하는 영역**(0~1 비율).
+ *
+ * 로고타입 파일은 사방에 넉넉한 투명 여백을 두고 있어, 그림 상자를 기준으로 자리를 잡으면
+ * 눈에 보이는 글자와 아래 부제 사이에 190px 넘는 빈틈이 생기고 부제는 그만큼 내려가 배경
+ * 원화의 얼굴을 덮는다. 그래서 상자가 아니라 **보이는 글자**를 기준으로 배치한다.
+ *
+ * 값은 `titlename.webp`의 alpha 경계를 실측했다(1536×1024, bbox 104·321·1462·713).
+ * 아트가 교체되면 같은 방법으로 다시 재서 이 표만 고친다.
+ */
+const TITLE_LOGOTYPE_CONTENT = { top: 0.3135, bottom: 0.6963, left: 0.0677, right: 0.9518 } as const;
+
+/** 보이는 글자의 윗변이 놓일 자리. 좌상단 회상 버튼 아래에서 시작한다. */
+const TITLE_LOGO_TOP = 150;
+
+/**
  * 제목·부제의 **복제 그림자**.
  *
  * 판때기를 뒤에 받치지 않는다 — 밝은 배경 원화 위에서 글자를 읽히게 하려고 검은 판을 깔면
@@ -101,12 +116,16 @@ export class TitleScene extends Phaser.Scene {
     this.revealed = true;
 
     // 배경 원화의 얼굴은 화면 중단에 있으므로, 로고와 부제는 그 위 천장·후드 자리에만 둔다.
-    const logoY = BASE_HEIGHT * 0.155;
-    const logoWidth = 680;
-    const logoHalfHeight = (logoWidth * TITLE_LOGOTYPE_RATIO) / 2;
+    const logoWidth = 884;
+    const logoHeight = logoWidth * TITLE_LOGOTYPE_RATIO;
+    // 그림 상자가 아니라 보이는 글자의 위·아래를 계산해 그 사이에만 자리를 잡는다.
+    const inkHeight = logoHeight * (TITLE_LOGOTYPE_CONTENT.bottom - TITLE_LOGOTYPE_CONTENT.top);
+    const inkOffsetY = ((TITLE_LOGOTYPE_CONTENT.top + TITLE_LOGOTYPE_CONTENT.bottom) / 2 - 0.5) * logoHeight;
+    const logoY = TITLE_LOGO_TOP + inkHeight / 2 - inkOffsetY;
+    const inkBottom = logoY + inkOffsetY + inkHeight / 2;
     // 제목과 부제는 한 덩어리로 읽혀야 하므로 바짝 붙인다. 판때기가 없어진 만큼 사이가
     // 벌어지면 서로 다른 두 정보처럼 보인다.
-    const subtitleY = logoY + logoHalfHeight + 6;
+    const subtitleY = inkBottom + 34;
     const descY = subtitleY + 48;
 
     if (this.textures.exists(BACKGROUND.title)) addSceneBackground(this, BACKGROUND.title, -30);
@@ -120,7 +139,7 @@ export class TitleScene extends Phaser.Scene {
       textStyle({ role: "body", size: 30, color: COLOR.inkDim }),
       textStyle({ role: "body", size: 30, color: "#000000" }));
 
-    if (this.textures.exists(TITLE_LOGOTYPE_KEY)) this.openLogo(cx, logoY, logoWidth, logoHalfHeight * 2);
+    if (this.textures.exists(TITLE_LOGOTYPE_KEY)) this.openLogo(cx, logoY, logoWidth, logoHeight);
 
     const recoveryNotice = this.registry.get("saveRecoveryNotice") as string | undefined;
     if (recoveryNotice) {
@@ -200,8 +219,12 @@ export class TitleScene extends Phaser.Scene {
     shadow.setMask(mask);
 
     // 벌어지는 틈에 얹히는 섬광. 옅게 깔아 로고 글자가 그 속에 묻히지 않게 한다.
+    const inkWidth = width * (TITLE_LOGOTYPE_CONTENT.right - TITLE_LOGOTYPE_CONTENT.left);
+    const inkHeight = height * (TITLE_LOGOTYPE_CONTENT.bottom - TITLE_LOGOTYPE_CONTENT.top);
+    const inkY = cy + ((TITLE_LOGOTYPE_CONTENT.top + TITLE_LOGOTYPE_CONTENT.bottom) / 2 - 0.5) * height;
+    // 섬광은 보이는 글자에 맞춘다. 그림 상자로 잡으면 글자 밖 투명 여백까지 번쩍인다.
     const flash = this.add
-      .rectangle(cx, cy, 4, height * TITLE_REVEAL.flashHeightRatio, 0xffffff, 0.85)
+      .rectangle(cx, inkY, 4, inkHeight * TITLE_REVEAL.flashHeightRatio, 0xffffff, 0.85)
       .setBlendMode(Phaser.BlendModes.ADD)
       .setDepth(-9);
 
@@ -228,7 +251,7 @@ export class TitleScene extends Phaser.Scene {
     });
     this.tweens.add({
       targets: flash,
-      displayWidth: width * 1.12,
+      displayWidth: inkWidth * 1.12,
       alpha: 0,
       duration: TITLE_REVEAL.flashMs,
       ease: "Quad.Out",

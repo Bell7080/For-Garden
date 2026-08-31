@@ -4,6 +4,7 @@ import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { FEROCITY_RULES } from "../core/ferocity";
 import {
   aliveFighters,
+  activeCombatBuffs,
   battleContributionSnapshot,
   canFireUltimate,
   createSkirmish,
@@ -1033,6 +1034,11 @@ export class BattleScene extends Phaser.Scene {
       if (ready !== profile.ready) this.setUltimateReady(profile, ready);
       // 준비 상태가 유지된 채 다른 궁극기가 시작되어도 잠긴 카드의 반복 광선은 즉시 감춘다.
       if (this.ultimateSequenceActive) profile.sweep.setAlpha(0);
+      // 시간과 적용 조건은 코어 셀렉터가 이미 확정한다. 씬은 액자 색에 필요한 제공자 정의만 붙인다.
+      profile.prefab.setBuffs(activeCombatBuffs(this.state, fighter.id).flatMap((buff) => {
+        const source = this.state.fighters.find((candidate) => candidate.id === buff.sourceFighterId);
+        return source ? [{ buff, sourceRelic: source.def }] : [];
+      }));
     }
   }
 

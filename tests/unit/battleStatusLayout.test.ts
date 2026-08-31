@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BATTLE_PROFILE_LAYOUT, BATTLE_STATUS_LAYOUT, battleProfileBounds, statusBadgeOffsets } from "../../src/ui/battleStatusLayout";
+import { BATTLE_PROFILE_LAYOUT, BATTLE_STATUS_LAYOUT, battleBuffChipBounds, battleProfileBounds, statusBadgeOffsets } from "../../src/ui/battleStatusLayout";
 
 /** Phaser 없이 1080×1920 전투 HUD의 상태 뱃지 간격 계약을 고정한다. */
 describe("전투 상태 표시 배치", () => {
@@ -16,6 +16,20 @@ describe("전투 상태 표시 배치", () => {
 
 /** Phaser 없이 세 칸의 실제 bounds와 지도 하단 행동선 사이 계약을 고정한다. */
 describe("공용 전투 프로필 배치", () => {
+  /** 카드·게이지는 서로 다른 정보를 담으므로 버프 액자와 픽셀 하나도 포개지 않게 고정한다. */
+  it.each([1, BATTLE_PROFILE_LAYOUT.buffRow.maxVisible])("버프 %i개가 안전 영역 안에서 카드·HP·야성 게이지와 겹치지 않는다", (count) => {
+    const row = Array.from({ length: count }, (_, slot) => battleBuffChipBounds(slot));
+    const cardTop = -BATTLE_PROFILE_LAYOUT.glowSize / 2;
+    expect(Math.max(...row.map(({ bottom }) => bottom))).toBeLessThan(cardTop);
+    expect(Math.max(...row.map(({ bottom }) => bottom))).toBeLessThan(BATTLE_PROFILE_LAYOUT.hpBarY - BATTLE_PROFILE_LAYOUT.hpBarHeight / 2);
+    expect(Math.max(...row.map(({ bottom }) => bottom))).toBeLessThan(BATTLE_PROFILE_LAYOUT.ferocityBarY - BATTLE_PROFILE_LAYOUT.ferocityBarHeight / 2);
+    for (const centerX of BATTLE_PROFILE_LAYOUT.battle.centersX) {
+      expect(centerX + Math.min(...row.map(({ left }) => left))).toBeGreaterThanOrEqual(0);
+      expect(centerX + Math.max(...row.map(({ right }) => right))).toBeLessThanOrEqual(1080);
+      expect(BATTLE_PROFILE_LAYOUT.battle.centerY + Math.min(...row.map(({ top }) => top))).toBeGreaterThanOrEqual(0);
+    }
+  });
+
   it("전투와 20층 보스의 세 프로필은 같은 크기와 350 간격을 쓴다", () => {
     const { centersX, centerY, scale } = BATTLE_PROFILE_LAYOUT.battle;
     const bounds = centersX.map((x) => battleProfileBounds(x, centerY, scale));

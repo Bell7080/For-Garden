@@ -13,15 +13,15 @@ export const RELICS: RelicDef[] = [
     excavationSite: "몽골 네메그트층 제7구역",
     observationProfile: {
       originYear: "약 6,800만 년 전",
-      // 저장 진행도와 무관한 정적 도감 값으로 렉시아의 소녀기 외형과 당찬 정서를 은유한다.
+      // E.C.는 렉시아의 인간형 신체 나잇대만 나타내며, 아래 성체 초기 화석 단계와 독립된 값이다.
       restorationYear: "E.C. 18년",
       lifeStage: "성체 초기",
       height: "1.63 m",
-      // 163cm 성체 초기의 균형 잡힌 체형을 기준으로 관찰일지에 단일 측정값을 기록한다.
+      // 163cm의 인간형 체격을 기준으로 관찰일지에 단일 측정값을 기록하며, 원종의 성체 여부를 체격에 대입하지 않는다.
       weight: "54 kg",
     },
-    catalogSummary: "신장 1.63m, 체중 54kg의 균형 잡힌 체형과 발달한 턱 구조가 확인된 티라노사우루스 성체 초기 표본.",
-    unlockRecord: { status: "recorded", text: "렉시아는 신장 1.63m, 체중 54kg으로 복원되었으며 성장 단계는 성체 초기에 해당한다. 가벼운 몸놀림에 비해 턱과 하체의 근력이 두드러진다. 먼저 앞장서고 승부를 선언하는 일이 잦지만, 동료의 신호가 들리면 곧바로 보폭을 맞춘다. 전투가 길어질수록 [[ferocity|야성]]이 선명해지고, 스스로를 여왕이라 부르며 전장을 누빈다." },
+    catalogSummary: "신장 1.63m, 체중 54kg의 균형 잡힌 인간형 체격과 발달한 턱 구조가 확인된, 성체 초기 티라노사우루스 화석 기반 표본.",
+    unlockRecord: { status: "recorded", text: "렉시아는 신장 1.63m, 체중 54kg으로 복원되었으며 원종 화석의 성장 단계는 성체 초기에 해당한다. 가벼운 몸놀림에 비해 턱과 하체의 근력이 두드러진다. 먼저 앞장서고 승부를 선언하는 일이 잦지만, 동료의 신호가 들리면 곧바로 보폭을 맞춘다. 전투가 길어질수록 [[ferocity|야성]]이 선명해지고, 스스로를 여왕이라 부르며 전장을 누빈다." },
     rarity: "SSR",
     portraitAssetId: "lexia",
     origin: "티라노사우루스",
@@ -93,8 +93,8 @@ export const RELICS: RelicDef[] = [
     excavationSite: "고비 사막 백악기 퇴적층",
     observationProfile: {
       originYear: "약 6,800만 년 전",
-      // 저장 진행도와 무관한 정적 도감 값으로 토리카의 어린 외형과 또박또박한 말투를 은유한다.
-      restorationYear: "E.C. 9년",
+      // 유치원생 콘셉트의 인간형 신체 나잇대만 나타내며, 해츨링 후기 화석이 암시하는 순수한 성향과 함께 사용한다.
+      restorationYear: "E.C. 6년",
       lifeStage: "해츨링 후기",
       height: "1.08 m",
       weight: "186 kg",
@@ -171,7 +171,7 @@ export const RELICS: RelicDef[] = [
     // 관찰 프로필은 저장 데이터가 아닌 정적 도감 정보로 복원 세계관 값과 현재 신체 측정값을 공개한다.
     observationProfile: {
       originYear: "약 9,500만 년 전",
-      // 과묵한 수중경비대라는 관계·말투를 해치지 않는 소녀기 후반의 정서적 나잇대다.
+      // E.C.는 소녀기 후반의 인간형 신체 나잇대이며, 원종 화석의 성체 초기 단계와 독립된다.
       restorationYear: "E.C. 19년",
       lifeStage: "성체 초기",
       height: "1.74 m",
@@ -252,7 +252,7 @@ export const RELICS: RelicDef[] = [
     specimenNumber: "038",
     projectName: "VELOCITY CLAW",
     excavationSite: "몽골 자도흐타층 사구 지대",
-    // 저장 진행도와 무관한 정적 도감 정보로 루카의 소녀기 외형과 친근한 생활 태도를 함께 나타낸다.
+    // 성체는 벨로키랍토르 화석의 생물학적 성장 단계만 뜻한다. 루카의 인간형 신체는 별도 E.C. 16년이며 인간 사회의 성인이 아니다.
     observationProfile: {
       originYear: "약 7,500만 년 전",
       restorationYear: "E.C. 16년",
@@ -261,7 +261,7 @@ export const RELICS: RelicDef[] = [
       weight: "59 kg",
     },
     // 도감도 관찰 프로필과 같은 수치를 사용하며, 체중은 단거리 선수의 발달한 하체 근육과 함께 설명한다.
-    catalogSummary: "신장 1.62m, 체중 59kg이며 단거리 질주에 적합한 발달한 하체 근육과 가벼운 골격이 확인된 벨로키랍토르 성체 표본.",
+    catalogSummary: "신장 1.62m, 체중 59kg이며 단거리 질주에 적합한 발달한 하체 근육과 가벼운 골격을 지닌, 성체 벨로키랍토르 화석 기반 표본.",
     // 해금 기록은 유일한 연구원인 주인공이 루카의 생활과 관계를 직접 관찰한 1인칭 시점으로 남긴다.
     unlockRecord: { status: "recorded", text: "나는 루카를 집과 휴식을 무엇보다 좋아하는 단거리 달리기 선수로 관찰하고 있다. 단거리 선수답게 하체 근육량이 탄탄한 루카는 다른 육식 계열 렐릭들과도 대체로 원만하게 지낸다. 연구소 소파에 길게 누워 쉬다가도 내가 지나가면 늘 먼저 말을 걸어 오는 것이 루카의 습관이다. 오늘은 좋아하는 치즈케이크를 먹으면서도 살이 찌면 달리기가 둔해지지 않겠냐며 가볍게 걱정했지만, 이내 한 입 더 먹고는 다음 질주로 충분히 움직이면 된다며 웃었다." },
     rarity: "SR",
@@ -330,7 +330,7 @@ export const RELICS: RelicDef[] = [
     excavationSite: "모리셔스 석회동굴 보관층",
     observationProfile: {
       originYear: "약 400년 전",
-      // 저장 진행도와 무관한 정적 도감 값으로 쁘띠 로그의 어린 탐험대원 정서를 은유한다.
+      // E.C.는 어린 탐험대원의 인간형 신체 나잇대이며, 원종 화석의 성체 초기 단계와 독립된다.
       restorationYear: "E.C. 13년",
       lifeStage: "성체 초기",
       // 토리카와 같은 전신 원화 비율을 기준으로 키를 맞추고, 인간형 체격보다 가벼운 조류 골격을 반영했다.
@@ -716,14 +716,14 @@ export const RELICS: RelicDef[] = [
     excavationSite: "아르헨티나 팜파스 로한층",
     observationProfile: {
       originYear: "약 1만 년 전",
-      // 저장 진행도와 무관한 정적 도감 값이며 포근한 누님 말투를 소녀기 상한에서 표현한다.
-      restorationYear: "E.C. 20년",
+      // 성체 화석에서 비롯된 성숙한 성향과 가장 가깝게 맞물리도록, 인간형 신체 나잇대는 허용 상한인 E.C. 19년으로 둔다.
+      restorationYear: "E.C. 19년",
       lifeStage: "성체",
       // 사용자가 허용한 170cm대·70kg대 범위 안에서 도감의 단일 측정값을 확정했다.
       height: "1.76 m",
       weight: "74 kg",
     },
-    catalogSummary: "신장 1.76m의 견고한 체격과 현악 연주에 적합한 섬세한 손끝을 지닌 메가테리움 성체 표본.",
+    catalogSummary: "신장 1.76m의 견고한 인간형 체격과 현악 연주에 적합한 섬세한 손끝을 지닌, 성체 메가테리움 화석 기반 표본.",
     unlockRecord: { status: "recorded", text: "메테는 복원 직후부터 바이올린의 울림에 유난히 오래 귀를 기울였다. 거대한 메가테리움의 힘과 섬세한 활놀림은 뜻밖에도 훌륭한 조화를 이룬다. 지금은 연구원을 위한 단 하나뿐인 무대를 준비하며, 자신의 연주가 온전히 닿을 날을 고대하고 있다." },
     rarity: "SSR",
     // 6번 전신과 SD를 함께 사용해 도감과 전투에서 같은 메테가 보이도록 한다.

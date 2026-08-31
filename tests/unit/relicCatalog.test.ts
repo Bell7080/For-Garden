@@ -16,8 +16,8 @@ const ALLOWED_RESEARCHER_REFERENCES: Readonly<Record<string, Readonly<{
 }[]>>> = {};
 
 describe("relic catalog", () => {
-  it("관찰 프로필의 정적 E.C. 나잇대는 1~20년이며 중복 복원 연차를 정의하지 않는다", () => {
-    // 저장 진행도가 아닌 도감 원본 전체를 검사해 새 렐릭에도 단일 세계관 나잇대 계약을 강제한다.
+  it("관찰 프로필의 인간형 신체 E.C. 나잇대는 1년 이상 20년 미만이다", () => {
+    // 원종 화석의 생물학적 단계(lifeStage)와 독립된 E.C. 신체 나잇대를 도감 원본 전체에서 검사한다.
     const profiles = PLAYABLE_RELICS.flatMap((relic) => relic.observationProfile ? [{ relicId: relic.id, profile: relic.observationProfile }] : []);
 
     expect(profiles.length).toBeGreaterThan(0);
@@ -25,7 +25,7 @@ describe("relic catalog", () => {
       const match = /^E\.C\. (\d+)년$/.exec(profile.restorationYear);
       expect(match, `${relicId} restorationYear 형식`).not.toBeNull();
       expect(Number(match?.[1]), `${relicId} restorationYear 범위`).toBeGreaterThanOrEqual(1);
-      expect(Number(match?.[1]), `${relicId} restorationYear 범위`).toBeLessThanOrEqual(20);
+      expect(Number(match?.[1]), `${relicId} restorationYear 범위`).toBeLessThan(20);
       expect(profile, `${relicId} 중복 복원 연차`).not.toHaveProperty("restorationAge");
     }
   });
@@ -45,12 +45,13 @@ describe("relic catalog", () => {
     expect(violations).toEqual([]);
   });
 
-  it("렉시아 관찰 기록은 신장·체중과 성장 단계를 단일 측정값으로 공개한다", () => {
+  it("렉시아 관찰 기록은 신체 수치와 원종 화석의 성장 단계를 구분해 공개한다", () => {
     const rex = PLAYABLE_RELICS.find((relic) => relic.id === "rex")!;
-    // 도감 카드와 상세 관찰 기록이 서로 다른 신체 수치를 노출하지 않도록 정적 정의를 함께 고정한다.
+    // 성체 초기라는 말이 인간 나이가 아니라 티라노사우루스 화석의 단계로 서술되는지도 함께 고정한다.
     expect(rex.observationProfile).toMatchObject({ height: "1.63 m", weight: "54 kg", lifeStage: "성체 초기" });
     expect(rex.catalogSummary).toContain("체중 54kg");
     expect(rex.unlockRecord.status === "recorded" && rex.unlockRecord.text).toContain("체중 54kg");
+    expect(rex.unlockRecord.status === "recorded" && rex.unlockRecord.text).toContain("원종 화석의 성장 단계는 성체 초기");
   });
   it("스피나는 표시 정보와 관찰 신체 수치를 단일 값으로 공개한다", () => {
     const spina = PLAYABLE_RELICS.find((relic) => relic.id === "spino");
@@ -135,7 +136,7 @@ describe("relic catalog", () => {
 
   it("루카의 관찰 프로필과 도감은 같은 신체 수치와 단거리 선수 체형을 공개한다", () => {
     const luka = PLAYABLE_RELICS.find((relic) => relic.id === "luka")!;
-    // 저장 진행도가 아닌 루카의 정적 도감 나잇대와 신체 수치가 요약의 체형 설명과 어긋나지 않도록 함께 고정한다.
+    // E.C. 신체 나잇대와 성체 벨로키랍토르 화석 단계가 서로 독립된 설정임을 정적 정의로 고정한다.
     expect(luka.observationProfile).toMatchObject({
       originYear: "약 7,500만 년 전",
       restorationYear: "E.C. 16년",
@@ -145,6 +146,7 @@ describe("relic catalog", () => {
     });
     expect(luka.catalogSummary).toContain("신장 1.62m, 체중 59kg");
     expect(luka.catalogSummary).toContain("단거리 질주에 적합한 발달한 하체 근육과 가벼운 골격");
+    expect(luka.catalogSummary).toContain("성체 벨로키랍토르 화석 기반 표본");
   });
 
   it("루카의 해금 기록은 주인공이 관찰한 휴식과 교우 및 치즈케이크 습관을 담는다", () => {

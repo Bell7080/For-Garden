@@ -56,6 +56,11 @@ interface NumberSlot {
   openedAt: number;
 }
 
+/** 실제 Fighter 은신과 함께 사는 약한 각형 스캔 노이즈다. */
+interface StealthSlot { graphics: Phaser.GameObjects.Graphics; tween: Phaser.Tweens.Tween }
+
+export type CombatVisualMethod = "heal" | "shieldGain" | "shieldHit" | "shieldBreak" | "stealthEnter" | "stealthExit";
+
 /** 마름모 파문 한 겹. 원이 아니라 각진 네 꼭짓점이라 SD의 각진 UI와 같은 결로 읽힌다. */
 function strokeDiamond(
   graphics: Phaser.GameObjects.Graphics,
@@ -95,6 +100,8 @@ export class EffectManager {
   private readonly rings: RingSlot[] = [];
   private readonly numbers: NumberSlot[] = [];
   private readonly lastAt = new Map<EffectKind, number>();
+  /** 유지형 표시의 키는 Puppet이 아니라 런타임 Fighter ID라 교체 시 명시적으로 회수할 수 있다. */
+  private readonly stealth = new Map<string, StealthSlot>();
   private frame = -1;
   private openedThisFrame = 0;
 
@@ -284,6 +291,60 @@ export class EffectManager {
     this.burst(kind, x, y, { color: COLOR.accent });
   }
 
+  /**
+   * 전투 태그의 각진 시각 언어. 색은 COLOR 토큰을 받은 값만 쓰며 intensity는 개수 대신 크기에
+   * 적용해 궁극기 여부와 메커니즘 종류를 분리한다.
+   */
+  combat(method: CombatVisualMethod, x: number, y: number, options: { color: number; intensity: number }): void {
+    const scale = Math.max(0.7, options.intensity);
+    if (method === "heal") {
+      // 회복은 위로 뜨는 녹색 조각과 몸 안쪽에서 끝나는 작은 파동이다.
+      this.burst("heal", x, y, { color: options.color, scale });
+      this.openRing(x, y, 54 * scale, 300, 5, options.color);
+      return;
+    }
+    if (method === "shieldGain") {
+      // 새 막은 푸른 각형 막 두 겹이 차례로 형성된다.
+      this.openRing(x, y, 104 * scale, 360, 8, options.color);
+      this.openRing(x, y, 128 * scale, 420, 4, options.color, 70);
+      return;
+    }
+    if (method === "shieldHit") { this.openRing(x, y, 94 * scale, 180, 7, options.color); return; }
+    if (method === "shieldBreak") { this.burst("death", x, y, { color: options.color, scale: scale * 0.8 }); return; }
+    // 진입은 윤곽이 밖으로 분해되고 해제는 작은 윤곽부터 커져 역방향으로 재결합한다.
+    if (method === "stealthEnter") this.burst("passive", x, y, { color: options.color, scale });
+    else {
+      this.openRing(x, y, 108 * scale, 320, 6, options.color);
+      this.openFlash(x, y, 54 * scale, 260, 0.3, options.color);
+    }
+  }
+
+  /** 매 프레임 실제 상태와 좌표를 읽어 은신 스캔을 생성·이동·제거한다. */
+  syncStealth(targets: readonly { id: string; x: number; y: number; active: boolean }[]): void {
+    const seen = new Set<string>();
+    for (const target of targets) {
+      if (!target.active) { this.removeStealth(target.id); continue; }
+      seen.add(target.id);
+      let slot = this.stealth.get(target.id);
+      if (!slot) {
+        const graphics = this.scene.add.graphics().setDepth(this.depth - 1);
+        graphics.lineStyle(2, COLOR.inkDimHex, 0.22).strokePoints(groundDiamond(72), true);
+        const tween = this.scene.tweens.add({ targets: graphics, alpha: { from: 0.18, to: 0.48 }, yoyo: true, repeat: -1, duration: 420 });
+        slot = { graphics, tween };
+        this.stealth.set(target.id, slot);
+      }
+      slot.graphics.setPosition(target.x, target.y);
+    }
+    for (const id of this.stealth.keys()) if (!seen.has(id)) this.removeStealth(id);
+  }
+
+  /** 사망·Puppet 교체에서 무한 tween까지 함께 끊는다. */
+  removeStealth(id: string): void {
+    const slot = this.stealth.get(id);
+    if (!slot) return;
+    slot.tween.stop(); slot.graphics.destroy(); this.stealth.delete(id);
+  }
+
   /** 풀에서 수치 글자 하나를 꺼낸다. 상한을 넘으면 가장 오래된 것을 즉시 회수한다. */
   private acquireNumber(): NumberSlot {
     const free = this.numbers.find((slot) => !slot.label.visible);
@@ -357,6 +418,7 @@ export class EffectManager {
 
   /** 씬이 꺼질 때 emitter와 두 풀을 모두 폐기한다. */
   destroy(): void {
+    for (const id of [...this.stealth.keys()]) this.removeStealth(id);
     this.emitters.forEach((emitter) => emitter.destroy());
     this.emitters.clear();
     this.rings.forEach((slot) => { slot.tween?.stop(); slot.graphics.destroy(); });

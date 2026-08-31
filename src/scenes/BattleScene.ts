@@ -61,6 +61,7 @@ import { battleContributionMvp, createBattleContributionResult, withConfirmedAtt
 import { BattleContributionPopup } from "../ui/BattleContributionPopup";
 import { StageCompletePopup, type StageCompleteFighter } from "../ui/StageCompletePopup";
 import { EffectManager } from "../managers/EffectManager";
+import { CombatEffectPresenter, type CombatEffectTarget } from "../managers/CombatEffectPresenter";
 import { ensureEffectTextures } from "../ui/effectTextures";
 import type { DamageFlavor, DebuffId } from "../ui/damageNumbers";
 
@@ -240,6 +241,8 @@ export class BattleScene extends Phaser.Scene {
    * 씬은 "무슨 일이 일어났는지"만 넘기고 파편 수·색·크기를 직접 고르지 않는다.
    */
   private effects!: EffectManager;
+  /** 태그→EffectManager 변환과 유지형 은신 생명주기를 씬 조건문 밖에서 소유한다. */
+  private combatEffects!: CombatEffectPresenter;
   /** 한 판 안에서만 열림·카테고리를 기억하며 영구 설정에는 쓰지 않는 기여도 프리팹이다. */
   private contributionPanel?: BattleContributionPanel;
   private contributionCategory: ContributionCategory = "attack";
@@ -315,6 +318,7 @@ export class BattleScene extends Phaser.Scene {
     // 파편·파문은 SD보다 앞이되 궁극기 컷인(900)보다는 뒤라 연출을 가리지 않는다.
     // 광역 범위만 배경 원화 위·SD 아래에 깔려 누가 어디 섰는지 가리지 않는다.
     this.effects = new EffectManager(this, { depth: DEPTH.burst, groundDepth: DEPTH.ground });
+    this.combatEffects = new CombatEffectPresenter(this.effects);
 
     // 편성 화면에서 본 6번 전장을 그대로 이어 실제 전투의 공간으로 사용한다.
     addSceneBackground(this, this.battleInput.mode === "expedition" || this.battleInput.mode === "expeditionBoss" ? BACKGROUND.expeditionField : BACKGROUND.combat, -30);
@@ -663,6 +667,7 @@ export class BattleScene extends Phaser.Scene {
     // 게이지는 연출 중에도 계속 따라붙는다. 여기서 멈추면 연출이 끝나는 순간 값이 점프한다.
     this.stepMeters(elapsed);
     this.refreshContribution(false, now);
+    this.syncCombatEffects();
     // 코어 시간과 전투 배속을 궁극기 연출과 분리한다. 연출 Puppet/tween은 씬의 정상 시계로 돈다.
     if (this.ultimateSequenceActive) return;
     // battleSpeed는 코어 시간에 여기서 정확히 한 번만 곱한다. 궁극기 연출 배율은 tween/Puppet에만
@@ -715,6 +720,10 @@ export class BattleScene extends Phaser.Scene {
       this.playDeath(event.fighterId);
       return undefined;
     }
+    const effectTarget = "fighterId" in event ? this.combatEffectTarget(event.fighterId) : undefined;
+    // 태그의 Phaser 번역은 전용 매퍼가 맡고, 순수 표시 사건은 여기서 완전히 소비한다.
+    this.combatEffects.play(event, effectTarget);
+    if (event.kind === "combatEffect") return undefined;
     if (event.kind === "bleed") {
       const view = this.views.get(event.fighterId);
       if (!view) return undefined;
@@ -738,8 +747,6 @@ export class BattleScene extends Phaser.Scene {
       this.popNumber(view.fighter, event.amount, "heal");
       // 스스로 도는 패시브 회복은 파문 없이 위로 떠오르는 몇 조각뿐이고, 궁극기 회복만
       // 제 이펙트를 갖는다 — 둘이 같은 무게로 터지면 어느 것이 큰 기술인지 읽히지 않는다.
-      const height = UNIT_HEIGHT * view.fighter.bodyScale;
-      this.effects.burst(event.source === "passive" ? "passive" : "heal", view.fighter.x, view.fighter.y - height * 0.5, { color: COLOR.hpFill });
       return undefined;
     }
     if (event.kind === "status") {
@@ -751,17 +758,13 @@ export class BattleScene extends Phaser.Scene {
       // 잔량 자체는 HUD가 Fighter.shield를 읽어 갱신한다. 여기서는 순간의 사건만 알린다.
       const view = this.views.get(event.fighterId);
       if (!view || view.dead) return undefined;
-      const height = UNIT_HEIGHT * view.fighter.bodyScale;
-      const centerY = view.fighter.y - height * 0.5;
       if (event.kind === "shieldGranted") {
         // 새로 덮인 막은 얻은 양을 에너지와 같은 푸른빛으로 알린다.
         this.popNumber(view.fighter, event.amount, "shield");
-        this.effects.burst("shield", view.fighter.x, centerY, { color: COLOR.energy });
         return undefined;
       }
       // 흡수는 숫자를 띄우지 않는다 — 같은 타격의 피해 숫자와 겹쳐 두 번 읽히기 때문이다.
       // 막이 몸을 감싸듯 한 겹 파문만 지나가고, 깨지는 순간만 위험색으로 갈린다.
-      this.effects.burst("shield", view.fighter.x, centerY, { color: event.kind === "shieldDepleted" ? COLOR.danger : COLOR.energy });
       return undefined;
     }
     if (event.kind === "areaImpact") {
@@ -859,6 +862,7 @@ export class BattleScene extends Phaser.Scene {
     const view = this.views.get(fighterId);
     if (!view || view.dead) return;
     view.dead = true;
+    this.combatEffects.remove(fighterId);
     view.shadow.setVisible(false);
     view.hpBar.setVisible(false);
     view.bleedBadge.setVisible(false);
@@ -926,6 +930,19 @@ export class BattleScene extends Phaser.Scene {
     badge.add(this.add.circle(0, 0, BATTLE_STATUS_LAYOUT.badgeRadius, COLOR.void, HOLO.glass));
     badge.add(mark);
     return badge;
+  }
+
+  /** 매퍼가 필요로 하는 좌표·생존·실제 은신 상태만 노출한다. */
+  private combatEffectTarget(id: string): CombatEffectTarget | undefined {
+    const view = this.views.get(id);
+    if (!view) return undefined;
+    return { id, x: view.fighter.x, y: view.fighter.y, height: UNIT_HEIGHT * view.fighter.bodyScale,
+      activeStealth: view.fighter.stealthFor > 0, alive: !view.dead && isFighterAlive(view.fighter) };
+  }
+
+  /** 유지형 효과는 모든 Fighter의 현재 상태를 매 프레임 다시 읽어 동기화한다. */
+  private syncCombatEffects(): void {
+    this.combatEffects.sync([...this.views.keys()].map((id) => this.combatEffectTarget(id)).filter((target): target is CombatEffectTarget => Boolean(target)));
   }
 
   /** 좌표·방향·체력 바·앞뒤 순서를 시뮬레이션 상태에 맞춘다. */

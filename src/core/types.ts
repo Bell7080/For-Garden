@@ -376,8 +376,9 @@ export interface RelicDef {
   /** 저장 데이터가 아닌 정적 도감 정보로 쓰는 복원 표본의 생애·신체 기록이다. 없는 개체는 기존 항목만 표시한다. */
   observationProfile?: {
     originYear: string;
-    /** 실제 복원 경과가 아니라 캐릭터의 외형·정서적 나잇대를 은유하는 E.C. 세계관 값이다. */
+    /** 실제 복원 경과나 원종의 성장 단계가 아니라, 복원체의 인간형 신체 나잇대를 20년 미만으로 은유하는 E.C. 세계관 값이다. */
     restorationYear: string;
+    /** 화석에 남은 공룡·고생물 원종의 생물학적 성장 단계다. 복원체의 인간 사회상 성인 여부와 무관하며 정신적 성숙 성향의 근거로만 쓴다. */
     lifeStage: string;
     height: string;
     weight: string;

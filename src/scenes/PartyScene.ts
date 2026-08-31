@@ -169,8 +169,8 @@ export class PartyScene extends Phaser.Scene {
             this.refreshButtonState();
             return;
           }
-          // setParty가 저장까지 정상 완료한 성공 결과를 준 뒤에만 전투 씬으로 넘어간다.
-          this.scene.start("battle");
+          // 호출자도 스토리 전투임을 명시해 Phaser의 직전 원정 data 재사용 여지를 없앤다.
+          this.scene.start("battle", { mode: "stage" });
         } catch {
           // 저장소 용량/보안 오류의 세부 정보 대신 사용자가 재시도할 수 있는 문구를 보여 준다.
           this.isEnteringBattle = false;

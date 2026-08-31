@@ -51,18 +51,25 @@ export class TitleScene extends Phaser.Scene {
       fallback.destroy();
       addSceneBackground(this, BACKGROUND.title, -30);
       drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { depth: -20 });
-      // 로고 그림 하나만 배경 위에 얹으면 밝은 원화에 묻히므로, 검은 그림자를 깐 옅은 유리판을
-      // 뒤에 받쳐 대비를 만든다. alpha는 눈대중이 아니라 이 자리의 실제 배경 원화 픽셀을 재서
-      // 골랐다 — 가장 옅은 글자색(설명 줄의 inkDim)이 WCAG AA 일반 텍스트 기준(4.5:1)을
-      // 넘기는 최소값은 0.4508이었다(scripts/prepare_title.py로 구운 background_011.webp의
-      // 부제·설명 줄 영역 평균을 COLOR.void와 섞어 대비를 계산). 0.46으로 살짝 여유를 둔다.
-      const panelHeight = descY - (logoY - logoHalfHeight) + 60;
-      const panelY = (logoY - logoHalfHeight - 30 + (descY + 30)) / 2;
-      drawLayer(this, cx, panelY, slantedRect(logoWidth + 100, panelHeight), {
+
+      // 로고 판. 그림 하나만 배경 위에 얹으면 밝은 원화에 묻히므로 검은 그림자를 깐 유리판을
+      // 뒤에 받친다. alpha는 이 자리의 실제 배경 원화 픽셀을 재서 골랐다 — 흰 로고가 WCAG AA
+      // 일반 텍스트 기준(4.5:1)을 넘기는 최소값은 0.0933이었다(scripts/prepare_title.py로 구운
+      // background_011.webp의 로고 자리 평균을 COLOR.void와 섞어 계산). 0.1로 살짝 여유를 둔다.
+      drawLayer(this, cx, logoY, slantedRect(logoWidth + 80, logoHalfHeight * 2 + 60), {
+        fill: COLOR.void,
+        alpha: 0.1,
+      }).setDepth(-15);
+      this.add.image(cx, logoY, TITLE_LOGOTYPE_KEY).setDisplaySize(logoWidth, logoHalfHeight * 2).setDepth(-10);
+
+      // 부제 판. 로고 판과 별개인 얕은(낮은) 레이어라 텍스트 두 줄만 딱 감싼다.
+      // alpha 0.46은 그 자리의 배경을 잰 이전 계산값(설명 줄 inkDim 기준 AA 4.5:1)을 그대로 쓴다.
+      const subtitlePanelHeight = descY - subtitleY + 90;
+      const subtitlePanelY = (subtitleY - 45 + (descY + 45)) / 2;
+      drawLayer(this, cx, subtitlePanelY, slantedRect(logoWidth + 40, subtitlePanelHeight), {
         fill: COLOR.void,
         alpha: 0.46,
       }).setDepth(-15);
-      this.add.image(cx, logoY, TITLE_LOGOTYPE_KEY).setDisplaySize(logoWidth, logoHalfHeight * 2).setDepth(-10);
     });
     this.load.start();
 
@@ -91,7 +98,7 @@ export class TitleScene extends Phaser.Scene {
       .setOrigin(0, 1)
       .setAlpha(0.7);
 
-    const diamonds = new LoadingDiamonds(this, cx, BASE_HEIGHT * 0.7, LOADING_STEPS.length);
+    const diamonds = new LoadingDiamonds(this, cx, BASE_HEIGHT * 0.94, LOADING_STEPS.length);
 
     void runLoadingSteps(this, (done) => {
       diamonds.setFilled(done);

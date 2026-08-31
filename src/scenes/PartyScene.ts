@@ -20,6 +20,8 @@ import { autoPickParty, elementDistribution, relicAffinityDirection } from "../c
 import type { SetPartyFailureReason } from "../managers/RelicCollectionManager";
 import { AffinityDirection } from "../ui/AffinityDirection";
 import { removeFormationSlot } from "../core/formationSelection";
+import { moveFormationSlot } from "../core/formation";
+import { bindFormationDrag } from "../ui/formationDrag";
 
 /** 이만큼 누르고 있으면 정보창이 열린다. 짧게 누르면 편성 토글이다. */
 const LONG_PRESS_MS = 420;
@@ -238,17 +240,19 @@ export class PartyScene extends Phaser.Scene {
       // SD와 같은 높이의 투명 슬롯 면이 입력을 소유해 Puppet 로딩 성공 여부가 조작을 바꾸지 않는다.
       const hit = this.add.rectangle(x, ALLY_ROW - PREVIEW_HEIGHT / 2, 210, PREVIEW_HEIGHT, 0xffffff, 0)
         .setName(`party-ally-slot-${slot + 1}`).setDepth(3).setInteractive({ useHandCursor: true });
-      let pressed = false;
-      hit.on("pointerdown", () => { pressed = true; hit.setScale(1.08); });
-      hit.on("pointerout", () => { pressed = false; hit.setScale(1); });
-      hit.on("pointerup", () => {
-        hit.setScale(1);
-        if (!pressed) return;
-        pressed = false;
-        // 화면에서 누른 자리 번호를 그대로 제거해 ID 탐색으로 다른 자리가 빠지는 일을 막는다.
-        if (this.picked[slot] !== undefined && removeFormationSlot(this.picked, slot)) this.refresh();
-      });
       this.allySlots.push({ platform, name, slotLabel, affinityDirection, request: 0, hit });
+    });
+    // 보유 카드의 상세 정보 장기 누름과 겹치지 않도록 드래그 시작점은 이 상단 SD 입력면뿐이다.
+    bindFormationDrag(this, this.allySlots.map((slot, index) => ({ hit: slot.hit, x: PREVIEW_COLUMNS[index], y: ALLY_ROW - PREVIEW_HEIGHT / 2, width: 210, height: PREVIEW_HEIGHT })), {
+      onTap: (slot) => {
+        // 짧은 탭은 화면에 보이는 자리 번호 그대로 해제한다.
+        if (this.picked[slot] !== undefined && removeFormationSlot(this.picked, slot)) this.refresh();
+      },
+      onDrop: (from, to) => {
+        this.picked = moveFormationSlot(this.picked, from, to);
+        // Puppet 원본을 옮기지 않고 확정 뒤 기존 비동기 재배치 경로로 화면을 다시 만든다.
+        this.refresh();
+      },
     });
   }
 

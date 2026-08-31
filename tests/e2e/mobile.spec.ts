@@ -23,6 +23,17 @@ async function dragGame(page: import("@playwright/test").Page, from: { x: number
   await page.mouse.move(start.x, start.y); await page.mouse.down(); await page.mouse.move(end.x, end.y, { steps: 8 }); await page.mouse.up();
 }
 
+/** 상단 SD의 장기 누름 문턱을 넘긴 뒤 이동해 슬롯 드래그 상태기를 실제 모바일 포인터로 통과한다. */
+async function holdDragGame(page: import("@playwright/test").Page, from: { x: number; y: number }, to: { x: number; y: number }): Promise<void> {
+  const box = await page.locator("canvas").boundingBox();
+  if (!box) throw new Error("캔버스를 찾지 못했다");
+  const point = ({ x, y }: { x: number; y: number }) => ({ x: box.x + x / BASE_WIDTH * box.width, y: box.y + y / BASE_HEIGHT * box.height });
+  const start = point(from); const end = point(to);
+  await page.mouse.move(start.x, start.y); await page.mouse.down();
+  await page.waitForTimeout(420);
+  await page.mouse.move(end.x, end.y, { steps: 10 }); await page.mouse.up();
+}
+
 /** Canvas 팝업이 노출한 실제 입력 중심을 읽어 레이아웃 숫자를 테스트에 복제하지 않는다. */
 async function excavationControl(page: import("@playwright/test").Page, key: "close" | "harvest" | "cancelEdit"): Promise<{ x: number; y: number }> {
   return page.evaluate((control) => {
@@ -406,4 +417,16 @@ test("모바일 편성 상단의 자동 배치 버튼과 자리별 상성 화살
   await tapGame(page, secondSlot.x, secondSlot.y);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.party?.selectedCount)).toBe(2);
   await page.screenshot({ path: `test-results/${test.info().project.name}-party-affinity-arrows.png` });
+});
+
+test("모바일에서 1번 SD를 길게 눌러 3번으로 옮기면 실제 전투 아군 순서가 바뀐다", async ({ page }) => {
+  await enterParty(page);
+  const slots = (await page.evaluate(() => window.__PF_DEBUG?.party?.slots))!;
+  expect(slots).toHaveLength(3);
+
+  // 기본 [토리카, 렉시아, 스피나]의 첫째와 셋째를 슬롯 고스트로 교환한다.
+  await holdDragGame(page, slots[0], slots[2]);
+  await tapGame(page, BASE_WIDTH / 2, 1700);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("battle");
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.battle?.playerOrder)).toEqual(["스피나", "렉시아", "토리카"]);
 });

@@ -7,7 +7,13 @@ import { storyManager } from "../managers/StoryManager";
 import { Button } from "../ui/Button";
 import { LoadingDiamonds } from "../ui/LoadingDiamonds";
 import { LOADING_STEPS, refreshTextTextures, runLoadingSteps } from "./loadingSteps";
+import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
+import { drawLayer, drawVignette, slantedRect } from "../ui/holo";
 import packageInfo from "../../package.json";
+
+/** 타이틀 로고타입(글자 대신 쓰는 그림)의 텍스처 키다. 원본은 1536×1024 비율이다. */
+const TITLE_LOGOTYPE_KEY = "title-logotype";
+const TITLE_LOGOTYPE_RATIO = 1024 / 1536;
 
 /**
  * 타이틀이자 로딩 화면.
@@ -26,24 +32,61 @@ export class TitleScene extends Phaser.Scene {
     setDebugReady(false);
 
     const cx = BASE_WIDTH / 2;
-    this.add.rectangle(cx, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void);
+    // 배경 원화의 얼굴은 화면 중단에 있으므로, 로고와 부제는 그 위 천장·후드 자리에만 둔다.
+    const logoY = BASE_HEIGHT * 0.155;
+    const logoWidth = 680;
+    const logoHalfHeight = (logoWidth * TITLE_LOGOTYPE_RATIO) / 2;
+    const subtitleY = logoY + logoHalfHeight + 40;
+    const descY = logoY + logoHalfHeight + 90;
 
-    // 제목 · 부제 · 도시 소개 세 줄이 곧 글꼴 위계 셋의 본보기다.
-    this.add.text(cx, BASE_HEIGHT * 0.34, "For - Garden", textStyle({ role: "display", size: 92 })).setOrigin(0.5);
+    // 배경 원화가 도착하기 전에는 이 판이 자리를 지킨다 — 검은 화면보다 낫다.
+    const fallback = this.add.rectangle(cx, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void);
 
+    // 타이틀 자신의 배경·로고는 다른 화면 배경과 달리 로딩 단계를 기다리지 않고 곧바로 읽는다
+    // — 이 화면 자체가 로딩 화면이라 그 단계가 끝나기 전부터 보여야 하기 때문이다.
+    this.load.image(BACKGROUND.title, "sprites/background/background_011.webp");
+    this.load.image(TITLE_LOGOTYPE_KEY, "sprites/ui/titlename.webp");
+    this.load.once("complete", () => {
+      if (!this.scene.isActive()) return;
+      fallback.destroy();
+      addSceneBackground(this, BACKGROUND.title, -30);
+      drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { depth: -20 });
+
+      // 로고 판. 그림 하나만 배경 위에 얹으면 밝은 원화에 묻히므로 검은 그림자를 깐 유리판을
+      // 뒤에 받친다. alpha는 이 자리의 실제 배경 원화 픽셀을 재서 골랐다 — 흰 로고가 WCAG AA
+      // 일반 텍스트 기준(4.5:1)을 넘기는 최소값은 0.0933이었다(scripts/prepare_title.py로 구운
+      // background_011.webp의 로고 자리 평균을 COLOR.void와 섞어 계산). 0.1로 살짝 여유를 둔다.
+      drawLayer(this, cx, logoY, slantedRect(logoWidth + 80, logoHalfHeight * 2 + 60), {
+        fill: COLOR.void,
+        alpha: 0.1,
+      }).setDepth(-15);
+      this.add.image(cx, logoY, TITLE_LOGOTYPE_KEY).setDisplaySize(logoWidth, logoHalfHeight * 2).setDepth(-10);
+
+      // 부제 판. 로고 판과 별개인 얕은(낮은) 레이어라 텍스트 두 줄만 딱 감싼다.
+      // alpha 0.46은 그 자리의 배경을 잰 이전 계산값(설명 줄 inkDim 기준 AA 4.5:1)을 그대로 쓴다.
+      const subtitlePanelHeight = descY - subtitleY + 90;
+      const subtitlePanelY = (subtitleY - 45 + (descY + 45)) / 2;
+      drawLayer(this, cx, subtitlePanelY, slantedRect(logoWidth + 40, subtitlePanelHeight), {
+        fill: COLOR.void,
+        alpha: 0.46,
+      }).setDepth(-15);
+    });
+    this.load.start();
+
+    // 부제 · 도시 소개 두 줄이 글꼴 위계의 본보기다. 제목 자리는 위 로고 그림이 대신한다.
     this.add
-      .text(cx, BASE_HEIGHT * 0.34 + 96, "ETERNAL CITY", textStyle({ role: "emphasis", size: 40, color: COLOR.accentText }))
+      .text(cx, subtitleY, "ETERNAL CITY", textStyle({ role: "emphasis", size: 40, color: COLOR.accentText }))
       .setOrigin(0.5);
 
     this.add
-      .text(cx, BASE_HEIGHT * 0.34 + 152, "멸종 동물 복원 연구 도시", textStyle({ role: "body", size: 30, color: COLOR.inkDim }))
+      .text(cx, descY, "멸종 동물 복원 연구 도시", textStyle({ role: "body", size: 30, color: COLOR.inkDim }))
       .setOrigin(0.5);
 
     const recoveryNotice = this.registry.get("saveRecoveryNotice") as string | undefined;
     if (recoveryNotice) {
       // 새게임 버튼 대신 자동 복구 사실만 안내해 향후 Google/Apple 계정 복구 흐름을 막지 않는다.
       this.add
-        .text(cx, BASE_HEIGHT * 0.68, recoveryNotice, textStyle({ role: "body", size: 26, color: COLOR.dangerText, align: "center" }))
+        .text(cx, BASE_HEIGHT * 0.63, recoveryNotice, textStyle({ role: "body", size: 26, color: COLOR.dangerText, align: "center" }))
         .setOrigin(0.5);
       this.registry.remove("saveRecoveryNotice");
     }
@@ -55,7 +98,7 @@ export class TitleScene extends Phaser.Scene {
       .setOrigin(0, 1)
       .setAlpha(0.7);
 
-    const diamonds = new LoadingDiamonds(this, cx, BASE_HEIGHT * 0.5, LOADING_STEPS.length);
+    const diamonds = new LoadingDiamonds(this, cx, BASE_HEIGHT * 0.94, LOADING_STEPS.length);
 
     void runLoadingSteps(this, (done) => {
       diamonds.setFilled(done);
@@ -70,8 +113,10 @@ export class TitleScene extends Phaser.Scene {
   /** 다섯 칸이 다 찬 뒤에만 부른다. 이때부터 화면 어디를 눌러도 다음으로 넘어간다. */
   private showEntry(cx: number): void {
     const prompt = this.add
-      .text(cx, BASE_HEIGHT * 0.82, "TAP TO ENTER", textStyle({ role: "emphasis", size: 36 }))
-      .setOrigin(0.5);
+      .text(cx, BASE_HEIGHT * 0.89, "TAP TO ENTER", textStyle({ role: "emphasis", size: 36 }))
+      .setOrigin(0.5)
+      // 이 자리는 배경 원화의 밝은 부분과 겹칠 수 있어 검은 그림자로 대비를 만든다.
+      .setShadow(0, 3, "#000000", 6, true, true);
 
     this.tweens.add({
       targets: prompt,
@@ -83,7 +128,7 @@ export class TitleScene extends Phaser.Scene {
 
     if (storyManager.isCompleted(OPENING_TRAIN.id)) {
       // 회상은 완료 플래그를 지우지 않으므로 선택 보상이 다시 지급되지 않는다.
-      new Button(this, cx, BASE_HEIGHT * 0.72, { width: 360, height: 96, label: "오프닝 회상", fontSize: 30, onClick: () => this.scene.start("opening") });
+      new Button(this, cx, BASE_HEIGHT * 0.8, { width: 360, height: 96, label: "오프닝 회상", fontSize: 30, onClick: () => this.scene.start("opening") });
     }
 
     // 회상 버튼이 먼저 눌리도록 화면 전체 히트영역은 가장 아래 깊이에 깔고 pointerup에서 확정한다.

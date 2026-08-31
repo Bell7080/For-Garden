@@ -109,9 +109,12 @@ export class SettingsScene extends Phaser.Scene {
       this.content.add(this.add.text(90, y, `예약 지원: ${platformFeedback.notificationScheduling} · 권한: ${permission}`, textStyle({ role: "body", size: 22, color: COLOR.inkDim }))); y += 72;
       ([['스테미나 충전 완료','staminaFull'],['무료 모집','freeRecruit'],['일일 임무','dailyMission'],['이벤트','event'],['우편','mail'],['야간 알림 제한','quietHours']] as const).forEach(([a,b]) => toggle(a,'notifications',b));
     } else if (this.activeTab === "play") {
-      section("연출 · 게임", 1050);
+      section("연출 · 게임", 1140);
       // 궁극기 연출 스킵은 전투 HUD의 즉시 조작으로 옮겼으므로 여기에는 화면 품질 옵션만 남긴다.
       ([['화면 흔들림','screenShake'],['피해 숫자','damageNumbers'],['연구 연출 단축','shortenExcavation'],['저사양 모드','lowSpecMode']] as const).forEach(([a,b]) => toggle(a,'presentation',b));
+      // 기존 선택 행의 크기 반응과 강조색을 재사용하고 저장값만 안정적인 영문 ID로 유지한다.
+      const motionLabels = { default: "기본", reduced: "감소", off: "끔" } as const;
+      this.content.add(new SettingsSelectRow(this,90,y,'전투 UI 움직임',s.presentation.battleUiMotion,['default','reduced','off'] as const,v=>settingsManager.update({presentation:{battleUiMotion:v}}),v=>motionLabels[v])); y+=94;
       // 인게임 배속 칩과 같은 1·2·3배 선택지를 보여 주며 SettingsManager가 즉시 저장한다.
       this.content.add(new SettingsSelectRow(this,90,y,'전투 배속',s.game.battleSpeed,[1,2,3] as const,v=>settingsManager.update({game:{battleSpeed:v}}))); y+=94;
       toggle('자동 궁극기','game','autoUltimate');

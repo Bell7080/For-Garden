@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { battleUiMotionFactor, type BattleUiMotion } from "../core/settings";
 import { HoloBar } from "./holo";
 import { COLOR } from "./theme";
 import {
@@ -16,13 +17,17 @@ export class BattleHealthBar {
   public readonly value: HoloBar;
   private health: UnitHealthBarState;
 
-  constructor(scene: Phaser.Scene, x: number, y: number, width: number, height: number, ratio: number) {
+  constructor(scene: Phaser.Scene, x: number, y: number, width: number, height: number, ratio: number, motion: BattleUiMotion = "default") {
     this.health = createUnitHealthBarState(ratio);
+    this.motionFactor = battleUiMotionFactor(motion);
     // 아래 HoloBar가 홈·붉은 층을 그리고, 위 바의 테두리·눈금이 두 채움 모두를 또렷하게 덮는다.
     this.trail = new HoloBar(scene, x, y, width, height, { color: COLOR.danger });
     this.value = new HoloBar(scene, x, y, width, height, { color: COLOR.hpFill, trackAlpha: 0, outline: true, ticks: 3 });
     this.paint();
   }
+
+  /** 머리 위 체력 바와 같은 설정을 쓰는 프로필 전용 반응 배율이다. */
+  private readonly motionFactor: number;
 
   get objects(): readonly Phaser.GameObjects.Graphics[] { return [...this.trail.objects, ...this.value.objects]; }
 
@@ -34,10 +39,10 @@ export class BattleHealthBar {
 
   /** 프로필 숫자와 별개로 실제 목표를 향해 전투 공용 시간 규칙을 진행한다. */
   public step(deltaMs: number): void {
-    this.health = stepUnitHealthBar(this.health, deltaMs);
+    this.health = stepUnitHealthBar(this.health, deltaMs, this.motionFactor);
     const progress = this.health.reactionLeft / HEALTH_BAR_MOTION.reactionSeconds;
     // 고정 HUD는 흔들지 않는다. 궁극기 카드 안전 영역을 침범하지 않는 최대 3% 게이지만 확대한다.
-    const scale = 1 + this.health.reactionLevel * 0.01 * progress;
+    const scale = 1 + this.health.reactionLevel * 0.01 * progress * this.motionFactor;
     this.objects.forEach((object) => object.setScale(scale));
     this.paint();
   }

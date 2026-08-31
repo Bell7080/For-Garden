@@ -3,6 +3,7 @@ import { allowBurst, AREA_IMPACT, EFFECT_BUDGET, EFFECT_PRESETS, type BurstSpec,
 import { EFFECT_TEXTURE, ensureEffectTextures } from "../ui/effectTextures";
 import { damagePopupStyle, risingAlpha, type DamagePopupRequest } from "../ui/damageNumbers";
 import { COLOR, textStyle } from "../ui/theme";
+import { battleUiMotionFactor, type BattleUiMotion } from "../core/settings";
 
 /**
  * 이펙트의 단일 소유자.
@@ -25,6 +26,8 @@ export interface EffectManagerOptions {
   depth?: number;
   /** 큰 한 방에 화면을 흔들지 여부. 지도·로비처럼 조작이 이어지는 화면은 끈다. */
   shake?: boolean;
+  /** 체력 HUD와 같은 저장 선택으로 카메라 흔들림 세기만 조절한다. */
+  battleUiMotion?: BattleUiMotion;
   /**
    * 바닥에 깔리는 범위 표시의 깊이.
    *
@@ -95,6 +98,7 @@ export class EffectManager {
   private readonly scene: Phaser.Scene;
   private readonly depth: number;
   private readonly shakeEnabled: boolean;
+  private readonly shakeFactor: number;
   private readonly groundDepth: number;
   private readonly emitters = new Map<EffectKind, Phaser.GameObjects.Particles.ParticleEmitter>();
   private readonly rings: RingSlot[] = [];
@@ -109,6 +113,7 @@ export class EffectManager {
     this.scene = scene;
     this.depth = options.depth ?? 300;
     this.shakeEnabled = options.shake ?? true;
+    this.shakeFactor = battleUiMotionFactor(options.battleUiMotion ?? "default");
     this.groundDepth = options.groundDepth ?? this.depth - 400;
     ensureEffectTextures(scene);
     // 씬이 꺼질 때 emitter·풀을 함께 정리한다. 씬 재진입마다 쌓이면 텍스처는 하나여도
@@ -409,10 +414,11 @@ export class EffectManager {
       emitter.setEmitterAngle({ min: 0, max: 360 });
       emitter.explode(style.sparks, x, y);
     }
-    if (style.shake > 0 && this.shakeEnabled) {
+    if (style.shake > 0 && this.shakeEnabled && this.shakeFactor > 0) {
       const shake = this.scene.cameras.main.shakeEffect;
       // 이미 더 세게 흔들리는 중이면 덧대지 않는다. 겹쳐 걸면 난전 내내 화면이 멎지 않는다.
-      if (!shake.isRunning || shake.intensity.x < style.shake) this.scene.cameras.main.shake(150, style.shake);
+      const intensity = style.shake * this.shakeFactor;
+      if (!shake.isRunning || shake.intensity.x < intensity) this.scene.cameras.main.shake(150, intensity);
     }
   }
 

@@ -31,6 +31,13 @@ describe("settings", () => {
     expect(normalizeSettings({ presentation: { ultimateCutIn: false }, game: { skipUltimatePresentation: false } }).game.skipUltimatePresentation).toBe(false);
   });
 
+  it("전투 UI 움직임의 세 단계만 허용하고 이전 저장에는 기본 연출을 부여한다", () => {
+    // 필드가 없던 저장과 알 수 없는 값은 모두 기존 체감인 기본 강도로 복구한다.
+    expect(normalizeSettings({ presentation: {} }).presentation.battleUiMotion).toBe("default");
+    expect(normalizeSettings({ presentation: { battleUiMotion: "reduced" } }).presentation.battleUiMotion).toBe("reduced");
+    expect(normalizeSettings({ presentation: { battleUiMotion: "invalid" } }).presentation.battleUiMotion).toBe("default");
+  });
+
   it("부분 변경을 보정해 저장하고 초기화하되 진행은 보존한다", () => {
     const state = createDefaultSession(); state.wallet.gold = 77; const save = vi.fn(); const manager = new SettingsManager(state, { save });
     manager.update({ sound: { musicVolume: 0.25 }, game: { autoUltimate: true } });

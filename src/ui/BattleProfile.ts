@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import type { RelicDef } from "../core/types";
+import type { BattleUiMotion } from "../core/settings";
 import { COLOR, textStyle } from "./theme";
 import { HoloBar } from "./holo";
 import { BattleHealthBar } from "./BattleHealthBar";
@@ -19,6 +20,8 @@ export interface BattleProfileOptions {
   readOnly: boolean;
   dead?: boolean;
   sub?: string;
+  /** 전투 HUD 움직임만 줄이며 체력 색과 피해 잔상은 그대로 둔다. */
+  battleUiMotion?: BattleUiMotion;
 }
 
 /** 전투, 원정 지도, 20층 보스가 공유하는 카드와 상태 게이지 프리팹이다. */
@@ -53,7 +56,7 @@ export class BattleProfile extends Phaser.GameObjects.Container {
     const label = (baselineY: number, color: string) => scene.add.text(-L.barWidth / 2, baselineY, "", textStyle({ role: "display", size: 26, color }))
       .setOrigin(0, 1).setShadow(3, 4, "#05070a", 0, true, true);
     this.hpLabel = label(L.hpTextBaselineY, COLOR.hpText);
-    this.battleHpBar = new BattleHealthBar(scene, 0, L.hpBarY, L.barWidth, L.hpBarHeight, options.currentHp / Math.max(1, options.maxHp));
+    this.battleHpBar = new BattleHealthBar(scene, 0, L.hpBarY, L.barWidth, L.hpBarHeight, options.currentHp / Math.max(1, options.maxHp), options.battleUiMotion);
     // 기존 외부 계약은 실제 초록 채움 HoloBar를 가리키게 유지한다.
     this.hpBar = this.battleHpBar.value;
     this.ferocityLabel = label(L.ferocityTextBaselineY, COLOR.ferocityText);

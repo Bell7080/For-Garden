@@ -782,6 +782,13 @@ export class BattleScene extends Phaser.Scene {
     // 한 광역 기술의 후속 피해 사건은 피격 표현만 만들고 시전자 모션은 첫 사건에서 한 번만 튼다.
     const playback = attacker && event.animate !== false ? playMotion(this, attacker.creature, "attack", motionSpeedMultiplier) : undefined;
     if (target && event.amount > 0) {
+      // 코어가 HP를 반영한 뒤 도착한 사건이므로 실제 피해량을 함께 넘겨 잔상 강도를 계산한다.
+      target.hpBar.setValue({
+        currentHp: target.fighter.hp,
+        maxHp: target.fighter.maxHp,
+        damage: event.amount,
+        cause: "damage",
+      });
       // 붉은 섬광이 피격을 알리고, 동작은 공격을 끊지 않는 선에서 얕게만 얹힌다.
       flashHit(this, target.creature, this.bodyTint(target));
       // 기절 유지 자세는 일반 피격보다 우선한다. 섬광과 피해 숫자는 그대로 보여 타격감은 보존한다.

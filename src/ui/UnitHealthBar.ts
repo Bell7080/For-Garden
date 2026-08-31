@@ -1,5 +1,14 @@
 import Phaser from "phaser";
 import { slantedRect, toPoints } from "./holo";
+import { COLOR } from "./theme";
+import {
+  createUnitHealthBarState,
+  HEALTH_BAR_MOTION,
+  setUnitHealthValue,
+  stepUnitHealthBar,
+  type HealthValueInput,
+  type UnitHealthBarState,
+} from "./unitHealthBarState";
 
 /**
  * 전장의 SD 머리 위에 뜨는 체력 바.
@@ -24,8 +33,10 @@ const BAR = {
   cap: { width: 9, gap: 6, height: 1.34, darken: 0.55 },
   /** 칸을 나누는 흰 선의 개수(칸 수는 이보다 하나 많다). */
   ticks: 3,
-  /** 값이 목표를 따라잡는 빠르기(초당 비율). 클수록 빨리 붙는다. */
-  ease: 6,
+  /** 피격 강도별 확대 상한. 외부 컨테이너가 아니라 내부 그래픽에만 적용한다. */
+  reactionScale: [1, 1.025, 1.05, 1.075],
+  /** 피격 강도별 좌우 흔들림 상한(px). 연타에도 기준 위치가 밀리지 않는다. */
+  reactionShake: [0, 1.5, 3, 4.5],
 } as const;
 
 /** 색을 눌러 짙게 만든다. 끝 빗금이 몸통과 같은 색이면 잘린 조각처럼 보인다. */
@@ -38,8 +49,8 @@ function darken(color: number, amount: number): number {
 
 export class UnitHealthBar extends Phaser.GameObjects.Container {
   private readonly graph: Phaser.GameObjects.Graphics;
-  private target = 1;
-  private shown = 1;
+  /** shown(현재 채움)·damageTrail(붉은 잔상)·target(최종 HP)을 분리한 순수 상태다. */
+  private health: UnitHealthBarState = createUnitHealthBarState();
 
   private readonly capColor: number;
 
@@ -52,28 +63,28 @@ export class UnitHealthBar extends Phaser.GameObjects.Container {
     this.paint();
   }
 
-  /** 목표 비율만 바꾼다. 실제로 그리는 값은 `update`가 따라붙인다. */
-  setValue(ratio: number): this {
-    this.target = Phaser.Math.Clamp(ratio, 0, 1);
+  /** 비율 동기화 또는 HP·피해 원인을 받는다. 회복/동기화 입력은 피격 반응을 만들지 않는다. */
+  setValue(value: number | HealthValueInput): this {
+    this.health = setUnitHealthValue(this.health, value);
     return this;
   }
 
   /** 지금 값을 목표로 즉시 맞춘다. 전투 시작처럼 이어 보일 필요가 없는 순간에만 쓴다. */
   snap(ratio: number): this {
-    this.target = Phaser.Math.Clamp(ratio, 0, 1);
-    this.shown = this.target;
+    this.health = createUnitHealthBarState(ratio);
     this.paint();
     return this;
   }
 
   /** 매 프레임 조금씩 목표에 다가간다. `delta`는 밀리초다. */
   step(delta: number): void {
-    if (Math.abs(this.shown - this.target) < 0.0015) {
-      if (this.shown === this.target) return;
-      this.shown = this.target;
-    } else {
-      this.shown += (this.target - this.shown) * Math.min(1, (delta / 1000) * BAR.ease);
-    }
+    this.health = stepUnitHealthBar(this.health, delta);
+    // syncViews가 부모 위치를 매 프레임 덮으므로 흔들림·확대는 전용 내부 그래픽에만 건다.
+    const progress = this.health.reactionLeft / HEALTH_BAR_MOTION.reactionSeconds;
+    const level = this.health.reactionLevel;
+    const shake = BAR.reactionShake[level] * progress;
+    this.graph.setPosition(Math.sin(this.health.reactionLeft * 105) * shake, 0);
+    this.graph.setScale(1 + (BAR.reactionScale[level] - 1) * progress);
     this.paint();
   }
 
@@ -87,17 +98,12 @@ export class UnitHealthBar extends Phaser.GameObjects.Container {
     this.graph.fillStyle(0x0b1018, 0.92);
     this.graph.fillPoints(body, true);
     // 채움은 왼쪽 끝에서 자란다. 같은 기울기로 잘라야 몸통과 한 조각으로 보인다.
-    const filled = width * this.shown;
+    // 붉은 잔상을 현재 체력 아래에 먼저 칠한다. 색은 홀로그램 공용 danger 토큰만 사용한다.
+    const trailFilled = width * this.health.damageTrail;
+    if (trailFilled > 0.5) this.paintFill(trailFilled, COLOR.danger, 0.95);
+    const filled = width * this.health.shown;
     if (filled > 0.5) {
-      const left = -width / 2;
-      const s = slant / 2;
-      this.graph.fillStyle(this.color, 1);
-      this.graph.fillPoints([
-        new Phaser.Geom.Point(left + s, -height / 2),
-        new Phaser.Geom.Point(left + filled + s, -height / 2),
-        new Phaser.Geom.Point(left + filled - s, height / 2),
-        new Phaser.Geom.Point(left - s, height / 2),
-      ], true);
+      this.paintFill(filled, this.color, 1);
     }
     // 칸을 나누는 흰 선. 얼마나 깎였는지를 눈금으로 셈할 수 있게 한다.
     this.graph.lineStyle(2, 0xffffff, 0.5);
@@ -116,5 +122,18 @@ export class UnitHealthBar extends Phaser.GameObjects.Container {
     this.graph.fillStyle(this.capColor, 1);
     this.graph.fillPoints(capShape.map((point) =>
       new Phaser.Geom.Point(point.x - width / 2 - cap.gap, point.y)), true);
+  }
+
+  /** 홈과 같은 기울기 규칙으로 한 채움층을 그린다. 호출 순서가 곧 레이어 순서다. */
+  private paintFill(filled: number, color: number, alpha: number): void {
+    const left = -BAR.width / 2;
+    const s = BAR.slant / 2;
+    this.graph.fillStyle(color, alpha);
+    this.graph.fillPoints([
+      new Phaser.Geom.Point(left + s, -BAR.height / 2),
+      new Phaser.Geom.Point(left + filled + s, -BAR.height / 2),
+      new Phaser.Geom.Point(left + filled - s, BAR.height / 2),
+      new Phaser.Geom.Point(left - s, BAR.height / 2),
+    ], true);
   }
 }

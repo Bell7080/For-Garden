@@ -710,6 +710,8 @@ export class BattleScene extends Phaser.Scene {
       return undefined;
     }
     if (event.kind === "death") {
+      // 프로필은 화면에 남으므로 머리 위 바와 달리 즉시 0으로 닫아 사라진 잔상을 기다리지 않는다.
+      this.profiles.find((profile) => profile.fighter.id === event.fighterId)?.prefab.setHealthTarget(0, this.views.get(event.fighterId)?.fighter.maxHp ?? 1, "damage", Number.MAX_SAFE_INTEGER);
       this.playDeath(event.fighterId);
       return undefined;
     }
@@ -721,6 +723,8 @@ export class BattleScene extends Phaser.Scene {
         flashHit(this, view.creature, this.bodyTint(view));
         return undefined;
       }
+      // 지속 피해도 코어 사건이다. 매 프레임 HP 차이로 추측하지 않고 실제 양과 최대 체력을 넘긴다.
+      this.profiles.find((profile) => profile.fighter.id === event.fighterId)?.prefab.setHealthTarget(view.fighter.hp, view.fighter.maxHp, "damage", event.amount);
       // 출혈은 지속 상태가 깎는 피해라 그 상태의 색(다크체리)으로 뜬다.
       this.popNumber(view.fighter, event.amount, "debuff", { debuff: "bleed" });
       return undefined;
@@ -728,6 +732,8 @@ export class BattleScene extends Phaser.Scene {
     if (event.kind === "heal") {
       const view = this.views.get(event.fighterId);
       if (!view) return undefined;
+      // 회복 사건은 붉은 잔상을 새 체력에 정리하는 명시적 원인으로 전달한다.
+      this.profiles.find((profile) => profile.fighter.id === event.fighterId)?.prefab.setHealthTarget(view.fighter.hp, view.fighter.maxHp, "heal");
       // 회복은 HP와 같은 연두색 및 + 접두어로 피해 숫자와 즉시 구분한다.
       this.popNumber(view.fighter, event.amount, "heal");
       // 스스로 도는 패시브 회복은 파문 없이 위로 떠오르는 몇 조각뿐이고, 궁극기 회복만
@@ -789,6 +795,8 @@ export class BattleScene extends Phaser.Scene {
         damage: event.amount,
         cause: "damage",
       });
+      // 아군 고정 HUD도 같은 피해 사건과 최대 체력을 받아 머리 위 바와 동일한 단계/시간을 쓴다.
+      this.profiles.find((profile) => profile.fighter.id === target.fighter.id)?.prefab.setHealthTarget(target.fighter.hp, target.fighter.maxHp, "damage", event.amount);
       // 붉은 섬광이 피격을 알리고, 동작은 공격을 끊지 않는 선에서 얕게만 얹힌다.
       flashHit(this, target.creature, this.bodyTint(target));
       // 기절 유지 자세는 일반 피격보다 우선한다. 섬광과 피해 숫자는 그대로 보여 타격감은 보존한다.
@@ -1027,6 +1035,7 @@ export class BattleScene extends Phaser.Scene {
     const k = Math.min(1, (deltaMs / 1000) * METER_EASE);
     for (const profile of this.profiles) {
       const { fighter } = profile;
+      profile.prefab.stepHealth(deltaMs);
       const alive = isFighterAlive(fighter);
       const hp = alive ? fighter.hp : 0;
       profile.hpShown = Math.abs(profile.hpShown - hp) < 0.6 ? hp : profile.hpShown + (hp - profile.hpShown) * k;

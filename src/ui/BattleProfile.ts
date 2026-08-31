@@ -2,6 +2,8 @@ import Phaser from "phaser";
 import type { RelicDef } from "../core/types";
 import { COLOR, textStyle } from "./theme";
 import { HoloBar } from "./holo";
+import { BattleHealthBar } from "./BattleHealthBar";
+import type { HealthChangeCause } from "./unitHealthBarState";
 import { PortraitCard, relicCardTint } from "./PortraitCard";
 import { BATTLE_PROFILE_LAYOUT as L } from "./battleStatusLayout";
 
@@ -25,6 +27,8 @@ export class BattleProfile extends Phaser.GameObjects.Container {
   public readonly glow: Phaser.GameObjects.Rectangle;
   public readonly sweep: Phaser.GameObjects.Rectangle;
   public readonly hpBar: HoloBar;
+  /** 공용 HoloBar 두 장에 전투 전용 잔상 상태를 씌우는 래퍼다. */
+  private readonly battleHpBar: BattleHealthBar;
   public readonly hpLabel: Phaser.GameObjects.Text;
   public readonly ferocityBar: HoloBar;
   public readonly ferocityLabel: Phaser.GameObjects.Text;
@@ -49,12 +53,14 @@ export class BattleProfile extends Phaser.GameObjects.Container {
     const label = (baselineY: number, color: string) => scene.add.text(-L.barWidth / 2, baselineY, "", textStyle({ role: "display", size: 26, color }))
       .setOrigin(0, 1).setShadow(3, 4, "#05070a", 0, true, true);
     this.hpLabel = label(L.hpTextBaselineY, COLOR.hpText);
-    this.hpBar = new HoloBar(scene, 0, L.hpBarY, L.barWidth, L.hpBarHeight, { color: COLOR.hpFill, outline: true, ticks: 3 });
+    this.battleHpBar = new BattleHealthBar(scene, 0, L.hpBarY, L.barWidth, L.hpBarHeight, options.currentHp / Math.max(1, options.maxHp));
+    // 기존 외부 계약은 실제 초록 채움 HoloBar를 가리키게 유지한다.
+    this.hpBar = this.battleHpBar.value;
     this.ferocityLabel = label(L.ferocityTextBaselineY, COLOR.ferocityText);
     this.ferocityBar = new HoloBar(scene, 0, L.ferocityBarY, L.barWidth, L.ferocityBarHeight, { color: COLOR.ferocityLow, outline: true, ticks: 3 });
     this.add([this.glow, this.sweep, this.card, this.charge, this.hpLabel, this.ferocityLabel]);
     // HoloBar는 홈·채움·눈금을 묶는 래퍼이므로 표시 객체 모두를 같은 컨테이너에 귀속한다.
-    this.hpBar.addTo(this);
+    this.battleHpBar.addTo(this);
     this.ferocityBar.addTo(this);
     scene.add.existing(this);
     this.setActiveState(options.active);
@@ -64,8 +70,8 @@ export class BattleProfile extends Phaser.GameObjects.Container {
 
   /** 사망 표현도 화면별 문구가 아니라 공용 옵션과 같은 갱신 경로를 사용한다. */
   public setMeters(currentHp: number, maxHp: number, ferocity: number, dead = false): this {
-    const safeMax = Math.max(1, maxHp);
-    this.hpBar.setValue(dead ? 0 : currentHp / safeMax, dead ? 0x6c7078 : COLOR.hpFill);
+    // 이 메서드는 숫자/야성 표시만 갱신한다. HP 애니메이션은 실제 목표와 사건을 받는 훅이 맡는다.
+    if (dead) this.battleHpBar.snap(0);
     this.hpLabel.setText(dead ? "전투 불능" : `HP ${Math.round(currentHp)} / ${Math.round(maxHp)}`)
       .setColor(dead ? COLOR.dangerText : COLOR.hpText);
     this.ferocityBar.setValue(ferocity / 100, COLOR.ferocityLow);
@@ -74,6 +80,15 @@ export class BattleProfile extends Phaser.GameObjects.Container {
     if (dead) this.card.setAlpha(0.45);
     return this;
   }
+
+  /** 전투 코어 사건이 확정한 실제 HP를 전달해 매 프레임 보간값으로 원인을 추측하지 않게 한다. */
+  public setHealthTarget(currentHp: number, maxHp: number, cause: HealthChangeCause = "sync", damage?: number): this {
+    this.battleHpBar.setHealth({ currentHp, maxHp, cause, damage });
+    return this;
+  }
+
+  /** 피해 잔상·게이지 확대를 프레임 시간으로 진행하며 카드 위치는 고정한다. */
+  public stepHealth(deltaMs: number): this { this.battleHpBar.step(deltaMs); return this; }
 
   /** 활성 상태는 공용 카드 발광으로만 표현하며 읽기 전용 프로필에는 입력을 열지 않는다. */
   public setActiveState(active: boolean): this {

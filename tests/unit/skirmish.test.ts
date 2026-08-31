@@ -95,8 +95,8 @@ describe("스피나 전투 계약", () => {
     expect(state.elapsed).toBeCloseTo(0.25);
   });
 
-  it("은 공격 사건에 씬이 수치 색을 고를 피해 종류와 상성을 함께 싣는다", () => {
-    // 씬이 def를 다시 읽어 물리·마법을 되짚거나 상성을 재계산하면 표시 규칙이 코어와 갈라진다.
+  it("은 공격 사건에 씬이 수치 색을 고를 피해 종류와 경감 여부를 함께 싣는다", () => {
+    // 씬이 def를 다시 읽어 고정 피해를 되짚으면 표시 규칙이 코어와 갈라진다.
     const state = newSkirmish(["anky"], ["husk-shell"]);
     const [anky, target] = state.fighters;
     anky.x = 400; anky.y = target.y = 900; target.x = 450;
@@ -104,9 +104,6 @@ describe("스피나 전투 계약", () => {
     const attack = stepSkirmish(state, 1 / 60).find((event) => event.kind === "attack");
     expect(attack).toMatchObject({ kind: "attack", damageType: anky.def.basic.damageType });
     expect(attack).toHaveProperty("mitigated");
-    if (attack?.kind === "attack" && anky.def.element !== target.def.element) {
-      expect(["advantage", "disadvantage"]).toContain(attack.effectiveness);
-    }
   });
 
   it("은 다른 적을 중심으로 번진 범위 피해에는 은신 중에도 맞는다", () => {

@@ -1,7 +1,7 @@
 import Phaser from "phaser";
-import { allowBurst, EFFECT_BUDGET, EFFECT_PRESETS, type BurstSpec, type EffectKind } from "../ui/effectPresets";
+import { allowBurst, AREA_IMPACT, EFFECT_BUDGET, EFFECT_PRESETS, type BurstSpec, type EffectKind } from "../ui/effectPresets";
 import { EFFECT_TEXTURE, ensureEffectTextures } from "../ui/effectTextures";
-import { damagePopupStyle, type DamagePopupRequest } from "../ui/damageNumbers";
+import { damagePopupStyle, risingAlpha, type DamagePopupRequest } from "../ui/damageNumbers";
 import { COLOR, textStyle } from "../ui/theme";
 
 /**
@@ -25,6 +25,12 @@ export interface EffectManagerOptions {
   depth?: number;
   /** 큰 한 방에 화면을 흔들지 여부. 지도·로비처럼 조작이 이어지는 화면은 끈다. */
   shake?: boolean;
+  /**
+   * 바닥에 깔리는 범위 표시의 깊이.
+   *
+   * SD보다 **뒤**여야 한다. 앞에 두면 범위가 캐릭터를 덮어 누가 어디 섰는지 가린다.
+   */
+  groundDepth?: number;
 }
 
 export interface BurstOptions {
@@ -69,10 +75,22 @@ function strokeDiamond(
   ], true);
 }
 
+/** 바닥에 누운 범위 마름모. 세로를 눌러 위에서 비스듬히 내려다본 원처럼 보이게 한다. */
+function groundDiamond(radius: number): Phaser.Geom.Point[] {
+  const half = radius * AREA_IMPACT.squash;
+  return [
+    new Phaser.Geom.Point(0, -half),
+    new Phaser.Geom.Point(radius, 0),
+    new Phaser.Geom.Point(0, half),
+    new Phaser.Geom.Point(-radius, 0),
+  ];
+}
+
 export class EffectManager {
   private readonly scene: Phaser.Scene;
   private readonly depth: number;
   private readonly shakeEnabled: boolean;
+  private readonly groundDepth: number;
   private readonly emitters = new Map<EffectKind, Phaser.GameObjects.Particles.ParticleEmitter>();
   private readonly rings: RingSlot[] = [];
   private readonly numbers: NumberSlot[] = [];
@@ -84,6 +102,7 @@ export class EffectManager {
     this.scene = scene;
     this.depth = options.depth ?? 300;
     this.shakeEnabled = options.shake ?? true;
+    this.groundDepth = options.groundDepth ?? this.depth - 400;
     ensureEffectTextures(scene);
     // 씬이 꺼질 때 emitter·풀을 함께 정리한다. 씬 재진입마다 쌓이면 텍스처는 하나여도
     // 표시 객체가 배로 늘어난다.
@@ -131,7 +150,7 @@ export class EffectManager {
       oldest.graphics.clear().setVisible(false);
       return oldest;
     }
-    const slot: RingSlot = { graphics: this.scene.add.graphics().setDepth(this.depth).setVisible(false), openedAt: 0 };
+    const slot: RingSlot = { graphics: this.scene.add.graphics().setVisible(false), openedAt: 0 };
     this.rings.push(slot);
     return slot;
   }
@@ -145,7 +164,7 @@ export class EffectManager {
   private openRing(x: number, y: number, radius: number, ms: number, width: number, color: number, delay = 0): void {
     const slot = this.acquireRing();
     slot.openedAt = this.scene.time.now;
-    const graphics = slot.graphics.clear().setPosition(x, y).setAlpha(1).setVisible(true);
+    const graphics = slot.graphics.clear().setPosition(x, y).setAlpha(1).setDepth(this.depth).setVisible(true);
     const state = { t: 0 };
     slot.tween = this.scene.tweens.add({
       targets: state,
@@ -159,6 +178,44 @@ export class EffectManager {
         // 진하기는 끝에서만 급히 빠진다. 시작부터 선형으로 옅어지면 벌어지는 동안 이미 사라져
         // 무엇이 지나갔는지 눈에 남지 않는다.
         strokeDiamond(graphics, grown, Math.max(1, width * (1 - state.t * 0.7)), color, 1 - state.t * state.t);
+      },
+      onComplete: () => {
+        graphics.clear().setVisible(false);
+        slot.tween = undefined;
+      },
+    });
+  }
+
+  /**
+   * 광역이 터진 자리를 **바닥에** 그린다.
+   *
+   * 숫자만 셋이 한꺼번에 뜨면 왜 함께 맞았는지 읽히지 않는다. 눌린 마름모가 한 번 벌어졌다
+   * 꺼지면서 "여기까지가 범위였다"를 한 번에 말한다. SD보다 뒤에 깔려 아무도 가리지 않는다.
+   */
+  groundArea(x: number, y: number, radius: number, options: { color?: number; ultimate?: boolean } = {}): void {
+    const now = this.rollFrame();
+    if (this.openedThisFrame >= EFFECT_BUDGET.perFrame) return;
+    this.openedThisFrame += 1;
+    const color = options.color ?? COLOR.accent;
+    const slot = this.acquireRing();
+    slot.openedAt = now;
+    const graphics = slot.graphics.clear().setPosition(x, y).setAlpha(1).setDepth(this.groundDepth).setVisible(true);
+    const state = { t: 0 };
+    slot.tween = this.scene.tweens.add({
+      targets: state,
+      t: 1,
+      duration: options.ultimate ? AREA_IMPACT.ultimateMs : AREA_IMPACT.ms,
+      ease: "Cubic.Out",
+      onUpdate: () => {
+        const grown = radius * (AREA_IMPACT.growFrom + (1 - AREA_IMPACT.growFrom) * state.t);
+        // 진하기는 끝에서만 급히 빠진다. 처음부터 선형으로 옅어지면 벌어지는 동안 이미 사라진다.
+        const fade = 1 - state.t * state.t;
+        const shape = groundDiamond(grown);
+        graphics.clear();
+        graphics.fillStyle(color, AREA_IMPACT.fillAlpha * fade);
+        graphics.fillPoints(shape, true);
+        graphics.lineStyle(AREA_IMPACT.lineWidth, color, AREA_IMPACT.lineAlpha * fade);
+        graphics.strokePoints(shape, true);
       },
       onComplete: () => {
         graphics.clear().setVisible(false);
@@ -263,7 +320,7 @@ export class EffectManager {
       .setStyle(textStyle({ role: "display", size: style.size, color: style.color }))
       .setStroke(style.stroke, style.strokeWidth)
       .setPosition(x + Phaser.Math.Between(-42, 42), y)
-      .setAlpha(1)
+      .setAlpha(style.nearAlpha)
       .setScale(0.5)
       .setVisible(true);
     slot.tweens = [
@@ -273,10 +330,13 @@ export class EffectManager {
       this.scene.tweens.add({
         targets: label,
         y: label.y - style.rise,
-        alpha: 0,
         delay: style.holdMs,
         duration: style.riseMs,
         ease: "Quad.Out",
+        // 진하기는 tween이 아니라 여기서 높이에 따라 정한다. 캐릭터 위에 있는 동안은 거의
+        // 비쳐 보이고, 몸에서 떠오를수록 또렷해졌다가 끝에서 사라진다 — 예쁜 SD를 가리는
+        // 순간 수치는 정보가 아니라 방해다. 프레임당 곱셈 몇 번이라 부담이 없다.
+        onUpdate: (tween) => label.setAlpha(risingAlpha(tween.progress, style.nearAlpha, style.peakAlpha)),
         onComplete: () => { label.setVisible(false); slot.tweens = []; options.onDone?.(); },
       }),
     ];

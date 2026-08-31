@@ -55,7 +55,8 @@ export interface BurstSpec {
    * 섬광의 진하기.
    *
    * 낮게 잡는다. 겹쳐 밝아지는 합성이라 진하게 두면 밝은 배경 원화 위에서 하얗게 뭉개져
-   * 정작 봐야 할 SD와 피해 숫자가 그 속에 묻힌다.
+   * 정작 봐야 할 SD와 피해 숫자가 그 속에 묻힌다. **예쁜 캐릭터를 가리는 순간 이펙트는
+   * 타격감이 아니라 방해다** — 잦은 일반 공격일수록 더 옅게 둔다.
    */
   flashAlpha: number;
   /** 섬광이 꺼지는 시간(ms). */
@@ -73,11 +74,11 @@ export interface BurstSpec {
 export const EFFECT_PRESETS: Record<EffectKind, BurstSpec> = {
   basic: {
     shards: 5, speed: [260, 460], gravity: 90, life: [220, 340], shardScale: 0.85,
-    rings: 1, ringRadius: 74, ringMs: 240, ringWidth: 5, flash: 52, flashAlpha: 0.5, flashMs: 150, spin: 260,
+    rings: 1, ringRadius: 74, ringMs: 240, ringWidth: 5, flash: 38, flashAlpha: 0.3, flashMs: 150, spin: 260,
   },
   ultimate: {
     shards: 9, speed: [420, 780], gravity: 40, life: [360, 560], shardScale: 1.5,
-    rings: 2, ringRadius: 216, ringMs: 420, ringWidth: 11, flash: 170, flashAlpha: 0.72, flashMs: 300, spin: 200,
+    rings: 2, ringRadius: 216, ringMs: 420, ringWidth: 11, flash: 140, flashAlpha: 0.55, flashMs: 300, spin: 200,
   },
   passive: {
     // 패시브는 스스로 발동하는 조용한 효과라 파문 없이 위로 떠오르는 파편 몇 조각뿐이다.
@@ -87,7 +88,7 @@ export const EFFECT_PRESETS: Record<EffectKind, BurstSpec> = {
   fever: {
     // 폭주는 몸에서 바깥으로 밀려나는 한 겹이다. 파편은 크고 느리게 벌어진다.
     shards: 7, speed: [300, 520], gravity: -60, life: [400, 620], shardScale: 1.2,
-    rings: 1, ringRadius: 168, ringMs: 380, ringWidth: 9, flash: 120, flashAlpha: 0.6, flashMs: 320, spin: 180,
+    rings: 1, ringRadius: 168, ringMs: 380, ringWidth: 9, flash: 96, flashAlpha: 0.42, flashMs: 320, spin: 180,
   },
   heal: {
     shards: 5, speed: [90, 190], gravity: -260, life: [520, 760], shardScale: 0.72,
@@ -100,7 +101,7 @@ export const EFFECT_PRESETS: Record<EffectKind, BurstSpec> = {
   },
   death: {
     shards: 8, speed: [220, 480], gravity: -110, life: [420, 700], shardScale: 1.05,
-    rings: 1, ringRadius: 138, ringMs: 340, ringWidth: 7, flash: 96, flashAlpha: 0.55, flashMs: 260, spin: 300,
+    rings: 1, ringRadius: 138, ringMs: 340, ringWidth: 7, flash: 80, flashAlpha: 0.42, flashMs: 260, spin: 300,
   },
   tap: {
     // 홀로그램 장비를 누른 자리. 파편을 뿌리지 않고 얇은 파문 한 겹만 빠르게 지나간다.
@@ -144,3 +145,28 @@ export function allowBurst(
   if (gap <= 0 || lastAt === undefined) return true;
   return now - lastAt >= gap;
 }
+
+/**
+ * 광역 공격이 터진 자리의 **바닥 표시**.
+ *
+ * 위에서 비스듬히 내려다보는 전장이라 범위는 정원이 아니라 **납작하게 눌린 마름모**다.
+ * 원을 그대로 그리면 바닥에 누운 것이 아니라 캐릭터 앞에 세워 둔 고리처럼 보인다.
+ *
+ * 발밑에 깔리므로 SD보다 뒤에 그리고, 진하기는 배경 원화가 그대로 비칠 만큼만 둔다 —
+ * 여기서 진해지면 정작 봐야 할 SD와 수치가 색판 위에 뜬 것처럼 읽힌다.
+ */
+export const AREA_IMPACT = {
+  /** 세로를 가로의 몇 배로 누를지. 바닥에 누운 원의 원근이다. */
+  squash: 0.42,
+  /** 처음 벌어지기 시작하는 배율. 0에서 자라면 점이 커지는 것처럼 보인다. */
+  growFrom: 0.55,
+  /** 벌어져 꺼지기까지의 시간(ms). */
+  ms: 380,
+  /** 궁극기 범위는 조금 더 오래 남아 무엇이 컸는지 알린다. */
+  ultimateMs: 520,
+  /** 안쪽을 채우는 진하기. */
+  fillAlpha: 0.16,
+  /** 테두리 선의 두께와 진하기. */
+  lineWidth: 5,
+  lineAlpha: 0.75,
+} as const;

@@ -672,6 +672,16 @@ export function flashHit(scene: Phaser.Scene, creature: PuppetCreature, baseTint
   );
 }
 
+/**
+ * 지금 피격 섬광이 켜져 있는지.
+ *
+ * 폭주처럼 몸 색을 계속 바꾸는 표현이 섬광을 덮어쓰지 않도록 확인하는 경계다. 섬광이 도는
+ * 동안 다른 색을 칠하면 맞은 티가 그 프레임에 사라진다.
+ */
+export function isHitFlashing(creature: PuppetCreature): boolean {
+  return flashTimers.has(creature);
+}
+
 /** 전신 일러스트를 누르면 현재 동작을 새 hit 동작으로 교체한다. */
 export function enableHitOnClick(scene: Phaser.Scene, creature: PuppetCreature): void {
   creature.setInteractive({ useHandCursor: true });

@@ -23,9 +23,3 @@ export function elementMultiplier(attacker: Element, defender: Element): number 
     ? ELEMENT_ADVANTAGE_MULTIPLIER
     : ELEMENT_DISADVANTAGE_MULTIPLIER;
 }
-
-/** 상성 결과를 표시용 방향 하나로 줄인다. 중립은 표식이 없으므로 undefined를 준다. */
-export function elementEffectiveness(attacker: Element, defender: Element): "advantage" | "disadvantage" | undefined {
-  const multiplier = elementMultiplier(attacker, defender);
-  return multiplier > 1 ? "advantage" : multiplier < 1 ? "disadvantage" : undefined;
-}

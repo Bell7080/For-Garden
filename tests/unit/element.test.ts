@@ -3,7 +3,6 @@ import {
   ELEMENT_ADVANTAGE_MULTIPLIER,
   ELEMENT_COUNTERS,
   ELEMENT_DISADVANTAGE_MULTIPLIER,
-  elementEffectiveness,
   elementMultiplier,
 } from "../../src/core/element";
 import type { Element } from "../../src/core/types";
@@ -35,13 +34,5 @@ describe("다섯 속성 상성", () => {
     expect(elementMultiplier("grass", "fire")).toBe(ELEMENT_DISADVANTAGE_MULTIPLIER);
     expect(elementMultiplier("fire", "fire")).toBe(1);
     expect(ELEMENT_ADVANTAGE_MULTIPLIER * ELEMENT_DISADVANTAGE_MULTIPLIER).toBe(1);
-  });
-});
-
-describe("표시용 상성 방향", () => {
-  it("같은 속성은 표식이 없고 이기는 쪽과 지는 쪽만 방향을 갖는다", () => {
-    expect(elementEffectiveness("fire", "fire")).toBeUndefined();
-    expect(elementEffectiveness("fire", "grass")).toBe("advantage");
-    expect(elementEffectiveness("grass", "fire")).toBe("disadvantage");
   });
 });

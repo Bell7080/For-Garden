@@ -1,7 +1,6 @@
 import { amplifyFerocityGain } from "./bond";
 import type { Combatant } from "./combatTypes";
 import { computeDamage, computeDamageContribution, currentAbilityPower, isCriticalHit } from "./damage";
-import { elementEffectiveness } from "./element";
 // 전투 HUD와 피해 공식이 동일한 현재 주문력 계산을 소비하도록 공용 헬퍼를 다시 노출한다.
 export { currentAbilityPower } from "./damage";
 import { drainFerocityFever, FEROCITY_RULES } from "./ferocity";
@@ -165,13 +164,16 @@ export type SkirmishEvent =
        * `true`는 방어·저항을 거치지 않는 고정 피해(피해 전이처럼 이미 확정된 값의 복제)다.
        */
       damageType: "physical" | "magical" | "true";
-      /** 속성 상성 결과. 중립이면 생략한다. */
-      effectiveness?: "advantage" | "disadvantage";
       /** 대상의 경감이 실제로 값을 깎았는지. 표시 크기를 한 등급 낮추는 데만 쓴다. */
       mitigated?: boolean;
       /** 광역 한 번에서 첫 피해 사건만 공격 모션을 재생한다. 생략하면 기존처럼 재생한다. */
       animate?: boolean;
     }
+  /**
+   * 광역 공격이 실제로 터진 자리와 범위다. 씬은 그 자리 **바닥**에 범위를 그려 어디까지
+   * 맞았는지 보여 준다 — 숫자만 여럿 뜨면 왜 셋이 함께 맞았는지 읽히지 않는다.
+   */
+  | { kind: "areaImpact"; attackerId: string; x: number; y: number; radius: number; ultimate: boolean }
   | { kind: "damageIgnored"; attackerId: string; targetId: string }
   | { kind: "bleed"; fighterId: string; amount: number; started: boolean }
   | { kind: "heal"; fighterId: string; amount: number; source: "passive" | "ultimate" }
@@ -746,7 +748,7 @@ function triggerCrescendoStaccato(state: SkirmishState, target: Fighter, events:
     // 스타카토 추가타도 공격자 귀속이 명확하므로 최종 HP 손실 정책에 포함한다.
     const credited = recordDamageContribution(state, mette.id, target, "magical", "atk", contributionAmount, resolution, hpBefore, shieldBefore, shieldProviderId);
     events.push({ kind: "attack", attackerId: mette.id, targetId: target.id, skill: "staccato", amount, contributionAmount: credited, critical: false, animate: false,
-      damageType: "magical", effectiveness: elementEffectiveness(mette.def.element, target.def.element), mitigated: resolution.reduced < resolution.raw });
+      damageType: "magical", mitigated: resolution.reduced < resolution.raw });
     if (resolution.ignored) events.push({ kind: "damageIgnored", attackerId: mette.id, targetId: target.id });
     if (isFighterAlive(target)) events.push(...applyStagger(target, trait.staggerSeconds, state));
   }
@@ -1085,7 +1087,7 @@ function strike(
     contributionAmount: credited,
     critical,
     damageType: damageInput.damageType,
-    effectiveness: elementEffectiveness(damageAttacker.def.element, damageTarget.def.element),
+   
     mitigated: resolution.reduced < resolution.raw,
   });
   if (resolution.ignored) events.push({ kind: "damageIgnored", attackerId: attacker.id, targetId: target.id });
@@ -1098,6 +1100,8 @@ function strike(
 
   // 광역 피해는 주 대상 타격의 부가 결과이며 에너지·야성·연속 공격을 추가 획득하지 않는다.
   if (attackingInFever && splashTrait.effectId === "splashDamage") {
+    // 폭주 광역도 같은 범위 표시를 쓴다 — 주 대상 자리에서 반경만큼 번진다.
+    events.push({ kind: "areaImpact", attackerId: attacker.id, x: target.x, y: target.y, radius: splashTrait.radius, ultimate: useUltimate });
     // 토리카의 경직처럼 피해 특성이 기절 시간을 선언하면 주 대상도 같은 공용 상태 규칙을 지난다.
     if (splashTrait.statusEffect && isFighterAlive(target)) applyCombatStatusEffect(target, splashTrait.statusEffect, events, state);
     for (const secondary of state.fighters) {
@@ -1126,7 +1130,7 @@ function strike(
       // 광역 피해도 공격자가 실제로 입힌 HP 피해이므로 같은 흡혈 규칙에 포함한다.
       healFromDamage(secondaryHpBefore - secondary.hp);
       events.push({ kind: "attack", attackerId: attacker.id, targetId: secondary.id, skill: useUltimate ? "ultimate" : "basic", amount: splashAmount, contributionAmount: splashCredited, critical,
-        damageType: damageInput.damageType, effectiveness: elementEffectiveness(attacker.def.element, defensiveSecondary.def.element), mitigated: splashResolution.reduced < splashResolution.raw });
+        damageType: damageInput.damageType, mitigated: splashResolution.reduced < splashResolution.raw });
       if (splashResolution.ignored) events.push({ kind: "damageIgnored", attackerId: attacker.id, targetId: secondary.id });
       if (isFighterAlive(secondary) && splashTrait.statusEffect) applyCombatStatusEffect(secondary, splashTrait.statusEffect, events, state);
       if (!isFighterAlive(secondary)) {
@@ -1190,6 +1194,12 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     ? aliveFighters(state, attacker.side).filter(inCircle) : [];
   if (targets.length === 0 && healingTargets.length === 0) return;
 
+  // 전장 전체를 때리는 기술은 그릴 범위가 없다. 나머지는 실제로 터진 자리와 반경을 그대로
+  // 넘겨 씬이 바닥에 범위를 그리게 한다.
+  if (skill.targeting !== "battlefieldEnemies" && (skill.radius ?? 0) > 0) {
+    events.push({ kind: "areaImpact", attackerId: attacker.id, x: center.x, y: center.y, radius: skill.radius ?? 0, ultimate: useUltimate });
+  }
+
   // 소비·팀 보조·야성 획득은 명중 수가 아니라 기술 사용 횟수에 묶는다.
   if (useUltimate) attacker.energy -= attacker.def.ultimate.cost;
   else gainEnergy(attacker);
@@ -1233,7 +1243,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     target.dashX = (dx / gap) * SKIRMISH.knockback * 1.4;
     target.dashY = (dy / gap) * SKIRMISH.knockback * 1.4;
     events.push({ kind: "attack", attackerId: attacker.id, targetId: target.id, skill: useUltimate ? "ultimate" : "basic", amount, contributionAmount: credited, critical, animate: index === 0,
-      damageType: damageInput.damageType, effectiveness: elementEffectiveness(damageAttacker.def.element, target.def.element), mitigated: resolution.reduced < resolution.raw });
+      damageType: damageInput.damageType, mitigated: resolution.reduced < resolution.raw });
     if (resolution.ignored) events.push({ kind: "damageIgnored", attackerId: attacker.id, targetId: target.id });
 
     // 죽은 대상에는 지속 상태와 상태 UI 시작 사건을 절대 남기지 않는다.

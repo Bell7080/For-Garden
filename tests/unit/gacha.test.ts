@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { canPull, determineRarity, pull, pullCost, resolveAcquisitions, spend, type Banner, type Wallet } from "../../src/core/gacha";
+import { canPull, determineGrade, pull, pullCost, resolveAcquisitions, spend, type Banner, type Wallet } from "../../src/core/gacha";
 import { BANNERS } from "../../src/data/banners";
 
 /** 모든 분기와 난수 소비 순서를 눈으로 추적할 수 있는 최소 3등급 배너다. */
 const banner: Banner = {
   id: "test", pityGroupId: "test-group", name: "시험 발굴", featuredRelicId: "ssr-pick",
   currency: "fossil", costOne: 100, costTen: 900,
-  rarityRates: { SSR: 0.1, SR: 0.2, R: 0.7 },
+  slotRates: { SSR: 0.1, SR: 0.2, R: 0.6, GRAY: 0.1 },
+  grayRewards: [{ kind: "gold", min: 10, max: 20, weight: 1 }, { kind: "cheesecake", min: 2, max: 4, weight: 1 }],
   relicPools: { SSR: ["ssr-pick", "ssr-normal"], SR: ["sr-pick", "sr-normal"], R: ["r-a", "r-b"] },
   pickupRelicIds: { SSR: ["ssr-pick"], SR: ["sr-pick"] },
   pickupRate: 0.5, highestRarityGuarantee: 5,
@@ -28,11 +29,12 @@ describe("뽑기 비용", () => {
 
 describe("등급과 픽업 추첨 순서", () => {
   it("누적 확률 경계값은 다음 등급에 포함한다", () => {
-    expect(determineRarity(banner, 0)).toBe("SSR");
-    expect(determineRarity(banner, 0.099999)).toBe("SSR");
-    expect(determineRarity(banner, 0.1)).toBe("SR");
-    expect(determineRarity(banner, 0.3)).toBe("R");
-    expect(determineRarity(banner, 0.999999)).toBe("R");
+    expect(determineGrade(banner, 0)).toBe("SSR");
+    expect(determineGrade(banner, 0.099999)).toBe("SSR");
+    expect(determineGrade(banner, 0.1)).toBe("SR");
+    expect(determineGrade(banner, 0.3)).toBe("R");
+    expect(determineGrade(banner, 0.899999)).toBe("R");
+    expect(determineGrade(banner, 0.9)).toBe("GRAY");
   });
 
   it("등급 결정 뒤 픽업 성공과 비픽업 성공을 각각 분리한다", () => {
@@ -49,22 +51,42 @@ describe("등급과 픽업 추첨 순서", () => {
 
 describe("보장 우선순위와 천장", () => {
   it("10연 마지막 슬롯의 R을 SR로 올린다", () => {
-    const result = pull({ ...banner, highestRarityGuarantee: 100 }, 10, { pullsSinceSsr: 0, pickupGuaranteed: false }, () => 0.99);
+    const result = pull({ ...banner, highestRarityGuarantee: 100 }, 10, { pullsSinceSsr: 0, pickupGuaranteed: false }, () => 0.8);
     expect(result.rarities.slice(0, 9)).toEqual(Array(9).fill("R"));
     expect(result.rarities[9]).toBe("SR");
   });
 
+  it("10연 마지막 회색 슬롯도 보상 난수를 쓰지 않고 SR로 올린다", () => {
+    let calls = 0;
+    const result = pull({ ...banner, highestRarityGuarantee: 100 }, 10, { pullsSinceSsr: 0, pickupGuaranteed: false }, () => { calls += 1; return 0.95; });
+    expect(result.slots[9]).toMatchObject({ kind: "relic", rarity: "SR" });
+    // 앞선 회색 9칸은 각 3회, 승격 SR은 등급+픽업 판정+렐릭 선택 3회만 소비한다.
+    expect(calls).toBe(30);
+  });
+
+  it("회색 수량은 양 끝을 포함하고 비SSR 천장을 증가시킨다", () => {
+    const minimum = pull(banner, 1, { pullsSinceSsr: 2, pickupGuaranteed: false }, fakeRng([0.95, 0, 0]));
+    const maximum = pull(banner, 1, { pullsSinceSsr: 2, pickupGuaranteed: false }, fakeRng([0.95, 0, 0.999999]));
+    const cakeMinimum = pull(banner, 1, { pullsSinceSsr: 0, pickupGuaranteed: false }, fakeRng([0.95, 0.999999, 0]));
+    const cakeMaximum = pull(banner, 1, { pullsSinceSsr: 0, pickupGuaranteed: false }, fakeRng([0.95, 0.999999, 0.999999]));
+    expect(minimum.slots).toEqual([{ kind: "currency", currency: "gold", amount: 10, grade: "GRAY" }]);
+    expect(maximum.slots).toEqual([{ kind: "currency", currency: "gold", amount: 20, grade: "GRAY" }]);
+    expect(cakeMinimum.slots).toEqual([{ kind: "currency", currency: "cheesecake", amount: 2, grade: "GRAY" }]);
+    expect(cakeMaximum.slots).toEqual([{ kind: "currency", currency: "cheesecake", amount: 4, grade: "GRAY" }]);
+    expect(minimum.pity.pullsSinceSsr).toBe(3);
+  });
+
   it("천장 직전 슬롯은 자연 등급이고 도달 슬롯은 SSR로 강제한다", () => {
-    const before = pull(banner, 1, { pullsSinceSsr: 3, pickupGuaranteed: false }, () => 0.99);
+    const before = pull(banner, 1, { pullsSinceSsr: 3, pickupGuaranteed: false }, () => 0.8);
     expect(before.rarities).toEqual(["R"]);
     expect(before.pity.pullsSinceSsr).toBe(4);
-    const reached = pull(banner, 1, before.pity, () => 0.99);
+    const reached = pull(banner, 1, before.pity, () => 0.8);
     expect(reached.rarities).toEqual(["SSR"]);
     expect(reached.pity.pullsSinceSsr).toBe(0);
   });
 
   it("10연 SR 보장 슬롯이어도 천장 도달이면 SSR이 우선한다", () => {
-    const result = pull(banner, 10, { pullsSinceSsr: 0, pickupGuaranteed: false }, () => 0.99);
+    const result = pull(banner, 10, { pullsSinceSsr: 0, pickupGuaranteed: false }, () => 0.8);
     expect(result.rarities[4]).toBe("SSR");
     expect(result.rarities[9]).toBe("SSR");
     expect(result.pity.pullsSinceSsr).toBe(0);
@@ -120,7 +142,8 @@ describe("운영 배너 데이터", () => {
   });
   it("픽업과 대표 렐릭이 해당 등급 풀에 있고 확률 합계가 1이다", () => {
     for (const candidate of BANNERS) {
-      expect(Object.values(candidate.rarityRates).reduce((sum, rate) => sum + rate, 0)).toBeCloseTo(1);
+      expect(Object.values(candidate.slotRates).reduce((sum, rate) => sum + rate, 0)).toBe(1);
+      for (const reward of candidate.grayRewards) expect(reward.min).toBeLessThanOrEqual(reward.max);
       const allPools = Object.values(candidate.relicPools).flat();
       expect(allPools).toContain(candidate.featuredRelicId);
       for (const ids of Object.values(candidate.pickupRelicIds)) for (const id of ids) expect(allPools).toContain(id);

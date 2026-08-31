@@ -21,6 +21,13 @@ export interface Wallet {
 /** 배너 비용으로 쓸 수 있는 재화만 허용하고 보상 재료는 제외한다. */
 export type Currency = "fossil" | "amber";
 export const RARITIES: readonly RelicRarity[] = ["SSR", "SR", "R"];
+/** 회색은 렐릭 희귀도가 아니라 연구 장치가 찾아낸 비개체 결과의 표시 등급이다. */
+export type ResearchGrade = RelicRarity | "GRAY";
+export type QuantityRewardKind = "gold" | "cheesecake";
+export interface QuantityRewardDefinition { kind: QuantityRewardKind; min: number; max: number; weight: number; }
+export type PullSlot =
+  | { kind: "relic"; relicId: string; rarity: RelicRarity }
+  | { kind: "currency"; currency: QuantityRewardKind; amount: number; grade: "GRAY" };
 
 export interface Banner {
   id: string;
@@ -32,8 +39,10 @@ export interface Banner {
   currency: Currency;
   costOne: number;
   costTen: number;
-  /** 누적 확률은 SSR → SR → R 순서로 판정하며 합계는 1이어야 한다. */
-  rarityRates: Record<RelicRarity, number>;
+  /** 슬롯 확률은 렐릭 희귀도와 회색 연구 결과를 분리하며 네 값의 합은 정확히 1이다. */
+  slotRates: Record<ResearchGrade, number>;
+  /** 회색 슬롯 안에서 고를 보상과 양 끝을 모두 포함하는 정수 수량 범위다. */
+  grayRewards: readonly QuantityRewardDefinition[];
   /** 등급 결정 뒤에만 참조하는 등급별 전체 렐릭 풀이다. */
   relicPools: Record<RelicRarity, string[]>;
   /** 해당 등급이 뽑혔을 때 별도의 픽업 판정을 받을 렐릭 목록이다. */
@@ -45,6 +54,7 @@ export interface Banner {
 }
 
 export interface PullResult {
+  slots: PullSlot[];
   relicIds: string[];
   rarities: RelicRarity[];
   /** 슬롯별 SSR에서 0으로 초기화되고, 비SSR에서 1씩 증가한 최종 천장 카운터다. */
@@ -71,20 +81,24 @@ function choose<T>(values: readonly T[], rng: () => number): T {
   return values[Math.min(values.length - 1, Math.floor(rng() * values.length))];
 }
 
-/** 경계값은 다음 등급으로 넘어가도록 `<`로 비교한다(예: SSR 3%에서 0.03은 SR). */
-export function determineRarity(banner: Banner, random: number): RelicRarity {
+/** SSR→SR→R→회색 순서로 판정하며 경계값은 다음 등급에 포함한다. */
+export function determineGrade(banner: Banner, random: number): ResearchGrade {
   let cumulative = 0;
-  for (const rarity of RARITIES) {
-    // 0.1 + 0.2가 0.30000000000000004가 되는 부동소수 오차로 경계가 뒤집히지 않게 정규화한다.
-    cumulative = Number((cumulative + banner.rarityRates[rarity]).toFixed(12));
-    if (random < cumulative) return rarity;
+  for (const grade of ["SSR", "SR", "R", "GRAY"] as const) {
+    cumulative = Number((cumulative + banner.slotRates[grade]).toFixed(12));
+    if (random < cumulative) return grade;
   }
-  return "R";
+  return "GRAY";
+}
+
+/** 범위 양 끝을 포함한다. RNG가 1에 가까워도 max를 넘지 않는다. */
+function rewardAmount(reward: QuantityRewardDefinition, random: number): number {
+  return reward.min + Math.min(reward.max - reward.min, Math.floor(random * (reward.max - reward.min + 1)));
 }
 
 /**
  * 순서는 반드시 `등급 결정 → 해당 등급 픽업 판정 → 렐릭 선택`이다.
- * 천장은 10연 SR 보장보다 우선하고, 10연 보장은 마지막 슬롯의 자연 등급이 R일 때만 SR로 올린다.
+ * 천장은 10연 SR 보장보다 우선하고, 10연 보장은 마지막 슬롯의 자연 회색/R을 SR로 올린다.
  */
 export function pull(
   banner: Banner,
@@ -94,12 +108,28 @@ export function pull(
 ): PullResult {
   const relicIds: string[] = [];
   const rarities: RelicRarity[] = [];
+  const slots: PullSlot[] = [];
   let pity = { ...currentPity };
 
   for (let slot = 0; slot < count; slot += 1) {
     const pityForcesSsr = pity.pullsSinceSsr + 1 >= banner.highestRarityGuarantee;
-    let rarity = pityForcesSsr ? "SSR" : determineRarity(banner, rng());
-    if (!pityForcesSsr && count === 10 && slot === 9 && rarity === "R") rarity = "SR";
+    let grade: ResearchGrade = pityForcesSsr ? "SSR" : determineGrade(banner, rng());
+    // 10번째 슬롯은 자연 회색/R만 SR로 승격한다. 슬롯 판정 RNG는 이미 한 번 소비했고 보상 RNG는 소비하지 않는다.
+    if (!pityForcesSsr && count === 10 && slot === 9 && (grade === "GRAY" || grade === "R")) grade = "SR";
+
+    if (grade === "GRAY") {
+      // 소비 순서: 슬롯 판정 → 회색 풀 선택 → 수량. 천장 카운터는 다른 비SSR과 똑같이 증가한다.
+      const totalWeight = banner.grayRewards.reduce((sum, reward) => sum + reward.weight, 0);
+      const roll = rng() * totalWeight;
+      let cursor = 0;
+      const reward = banner.grayRewards.find((candidate) => (cursor += candidate.weight) > roll) ?? banner.grayRewards.at(-1);
+      if (!reward) throw new Error("회색 보상 풀이 비어 있습니다.");
+      const amount = rewardAmount(reward, rng());
+      slots.push({ kind: "currency", currency: reward.kind, amount, grade: "GRAY" });
+      pity = { ...pity, pullsSinceSsr: pity.pullsSinceSsr + 1 };
+      continue;
+    }
+    const rarity = grade;
 
     const fullPool = banner.relicPools[rarity];
     const pickupPool = banner.pickupRelicIds[rarity] ?? [];
@@ -109,8 +139,10 @@ export function pull(
     const guaranteesPickup = rarity === "SSR" && pity.pickupGuaranteed && pickupPool.length > 0;
     const pickedUp = guaranteesPickup || (pickupPool.length > 0 && rng() < banner.pickupRate);
     const selectionPool = pickedUp ? pickupPool : (nonPickupPool.length > 0 ? nonPickupPool : fullPool);
-    relicIds.push(choose(selectionPool, rng));
+    const relicId = choose(selectionPool, rng);
+    relicIds.push(relicId);
     rarities.push(rarity);
+    slots.push({ kind: "relic", relicId, rarity });
     if (rarity === "SSR") {
       // SSR 픽업 실패만 다음 SSR 확정을 켜고, 픽업 획득은 기존 확정까지 해제한다.
       pity = { pullsSinceSsr: 0, pickupGuaranteed: pickupPool.length > 0 && !pickedUp };
@@ -119,7 +151,7 @@ export function pull(
     }
   }
 
-  return { relicIds, rarities, pity };
+  return { slots, relicIds, rarities, pity };
 }
 
 /** 비용을 치른 새 지갑. 모자라면 원래 참조를 돌려준다. */

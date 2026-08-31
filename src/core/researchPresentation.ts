@@ -1,5 +1,5 @@
-import type { AcquisitionResult } from "./gacha";
-import type { RelicRarity } from "./types";
+import type { ResearchGrade } from "./gacha";
+import type { PullResultDto } from "../api/contracts";
 
 /**
  * 서버 확정 뒤 재생되는 연구소 획득 연구의 연출 순서. 결과 화면 전에는 카드 내용을 노출하지 않는다.
@@ -8,18 +8,19 @@ import type { RelicRarity } from "./types";
 export const RESEARCH_PRESENTATION_STAGES = ["research", "crack", "rarityReveal", "firstMeeting", "cards"] as const;
 export type ResearchPresentationStage = typeof RESEARCH_PRESENTATION_STAGES[number];
 
-const RARITY_WEIGHT: Record<RelicRarity, number> = { R: 0, SR: 1, SSR: 2 };
+const RARITY_WEIGHT: Record<ResearchGrade, number> = { GRAY: 0, R: 1, SR: 2, SSR: 3 };
 
 /** 서버가 준 렐릭의 등급만 비교한다. 이 함수는 난수를 쓰거나 결과를 다시 추첨하지 않는다. */
-export function highestRarity(rarities: readonly RelicRarity[]): RelicRarity {
-  return rarities.reduce<RelicRarity>((best, rarity) =>
-    RARITY_WEIGHT[rarity] > RARITY_WEIGHT[best] ? rarity : best, "R");
+export function highestRarity(rarities: readonly ResearchGrade[]): ResearchGrade {
+  return rarities.reduce<ResearchGrade>((best, rarity) =>
+    RARITY_WEIGHT[rarity] > RARITY_WEIGHT[best] ? rarity : best, "GRAY");
 }
 
 /** 10연에서 신규 렐릭은 슬롯 순서를 지키고 같은 id의 첫 대면은 한 번만 재생한다. */
-export function firstMeetingRelicIds(results: readonly AcquisitionResult[]): string[] {
+export function firstMeetingRelicIds(results: readonly PullResultDto[]): string[] {
   const seen = new Set<string>();
-  return results.filter((result) => result.kind === "new" && !seen.has(result.relicId) && seen.add(result.relicId))
+  return results.filter((result): result is Extract<PullResultDto, { type: "relic" }> => result.type === "relic")
+    .filter((result) => result.kind === "new" && !seen.has(result.relicId) && seen.add(result.relicId))
     .map((result) => result.relicId);
 }
 

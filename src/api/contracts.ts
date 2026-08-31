@@ -1,4 +1,4 @@
-import type { AcquisitionResult, GachaPityState, Wallet } from "../core/gacha";
+import type { AcquisitionResult, GachaPityState, QuantityRewardKind, Wallet } from "../core/gacha";
 import type { RelicProgress, Stats } from "../core/types";
 import type { MissionPeriod } from "../core/missions";
 import type { PassBenefitDefinition, ProductCurrency, ProductGrant, ProductRefresh } from "../data/products";
@@ -300,10 +300,15 @@ export interface PullRequest {
   count: 1 | 10;
 }
 
+/** 네트워크 슬롯은 렐릭 수집 변화와 수량형 재화를 판별자로 안전하게 분리한다. */
+export type PullResultDto =
+  | ({ type: "relic" } & AcquisitionResult)
+  | { type: "currency"; currency: QuantityRewardKind; amount: number; grade: "GRAY" };
+
 /** 서버가 확정한 캐릭터 연구 결과와 그 직후 상태다. */
 export interface PullResponse extends PlayerStateDto {
   /** 추첨 순서를 보존하며 각 슬롯의 신규/숙련/상한 변화를 명시한다. */
-  results: AcquisitionResult[];
+  results: PullResultDto[];
   newRelicIds: string[];
   duplicateRelicIds: string[];
 }

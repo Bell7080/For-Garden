@@ -6,10 +6,19 @@ import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { COLOR, textStyle } from "./theme";
 import type { UltimatePresentation } from "../data/ultimatePresentations";
 import { scaleUltimateDuration, type UltimatePresentationTiming } from "../core/battleControls";
+import { ultimateCutInMaskLayout, type CutInPoint } from "./ultimateCutInLayout";
 
 /** 컷인이 화면을 점유하는 짧은 구간. 공격 판정 시각은 이 프리팹이 아니라 BattleScene이 소유한다. */
 // 전장을 가리는 이동 시간을 짧게 묶어 반복 궁극기에서도 흐름이 오래 끊기지 않게 한다.
 const CUT_IN = { enterMs: 120, exitMs: 90, depth: 900 } as const;
+
+/** 로컬 배치점을 컨테이너의 회전·배율·이동이 모두 반영된 월드 좌표로 투영한다. */
+function worldPoints(matrix: Phaser.GameObjects.Components.TransformMatrix, points: readonly CutInPoint[]): Phaser.Geom.Point[] {
+  return points.map((point) => {
+    const world = matrix.transformPoint(point.x, point.y);
+    return new Phaser.Geom.Point(world.x, world.y);
+  });
+}
 
 /** Phaser tween을 await 가능한 한 번의 단계로 바꿔 궁극기 시퀀스를 읽는 순서 그대로 유지한다. */
 function tween(scene: Phaser.Scene, config: Phaser.Types.Tweens.TweenBuilderConfig): Promise<void> {
@@ -22,6 +31,10 @@ function tween(scene: Phaser.Scene, config: Phaser.Types.Tweens.TweenBuilderConf
  */
 export class UltimateCutIn extends Phaser.GameObjects.Container {
   private disposed = false;
+  /** Puppet에 연결한 GeometryMask와 그 도형을 명시적으로 소유해 반복 재생 때 함께 정리한다. */
+  private portraitMask?: Phaser.Display.Masks.GeometryMask;
+  private portraitMaskGraphics?: Phaser.GameObjects.Graphics;
+  private syncPortraitMask?: () => void;
 
   private constructor(scene: Phaser.Scene, relic: RelicDef, private readonly presentation: Readonly<UltimatePresentation>) {
     super(scene, 0, 0);
@@ -31,11 +44,10 @@ export class UltimateCutIn extends Phaser.GameObjects.Container {
     // 밝은 전장에서도 이름이 묻히지 않도록 전체를 검정 비네트처럼 한 번 누른다.
     this.add(scene.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, 0x000000, 0.58));
     const glass = scene.add.graphics();
+    // 마스크와 유리면이 서로 어긋나지 않도록 한 순수 배치 결과를 함께 사용한다.
+    const maskLayout = ultimateCutInMaskLayout(BASE_WIDTH);
     glass.fillStyle(COLOR.void, 0.82);
-    glass.fillPoints([
-      new Phaser.Geom.Point(-80, 470), new Phaser.Geom.Point(BASE_WIDTH, 320),
-      new Phaser.Geom.Point(BASE_WIDTH + 80, 1240), new Phaser.Geom.Point(0, 1390),
-    ], true);
+    glass.fillPoints(maskLayout.panel.map((point) => new Phaser.Geom.Point(point.x, point.y)), true);
     // 황동 hairline과 짧은 사선만으로 홀로그램 계층을 만든다.
     glass.lineStyle(3, COLOR.accent, 0.8).beginPath().moveTo(0, 470).lineTo(BASE_WIDTH, 320).strokePath();
     glass.lineStyle(2, COLOR.accent, 0.36).beginPath().moveTo(710, 350).lineTo(1010, 305).strokePath();
@@ -54,6 +66,23 @@ export class UltimateCutIn extends Phaser.GameObjects.Container {
       tint: portraitUsesRelicTint(relic.portraitAssetId) ? tintFor(relic.id) : 0xffffff,
     });
     if (cutIn.disposed || !scene.scene.isActive()) { portrait.destroy(); return cutIn; }
+    const layout = ultimateCutInMaskLayout(BASE_WIDTH);
+    const maskGraphics = scene.make.graphics({});
+    // GeometryMask는 Container 변환을 상속하지 않으므로 렌더 직전 현재 월드 행렬로 두 영역을
+    // 다시 그린다. 같은 Graphics에 두 폴리곤을 채우면 패널과 상단 띠의 합집합이 된다.
+    const syncPortraitMask = (): void => {
+      if (cutIn.disposed || !cutIn.active || !maskGraphics.active) return;
+      const matrix = cutIn.getWorldTransformMatrix();
+      maskGraphics.clear().fillStyle(0xffffff, 1);
+      maskGraphics.fillPoints(worldPoints(matrix, layout.panel), true);
+      maskGraphics.fillPoints(worldPoints(matrix, layout.upperBand), true);
+    };
+    cutIn.portraitMaskGraphics = maskGraphics;
+    cutIn.syncPortraitMask = syncPortraitMask;
+    scene.events.on(Phaser.Scenes.Events.PRE_RENDER, syncPortraitMask);
+    syncPortraitMask();
+    cutIn.portraitMask = maskGraphics.createGeometryMask();
+    portrait.setMask(cutIn.portraitMask);
     cutIn.addAt(portrait, 2);
     return cutIn;
   }
@@ -77,6 +106,13 @@ export class UltimateCutIn extends Phaser.GameObjects.Container {
 
   override destroy(fromScene?: boolean): void {
     this.disposed = true;
+    // Scene 이벤트는 Container 파괴만으로 해제되지 않으므로 등록한 정확한 콜백을 먼저 제거한다.
+    if (this.syncPortraitMask) this.scene.events.off(Phaser.Scenes.Events.PRE_RENDER, this.syncPortraitMask);
+    this.portraitMask?.destroy();
+    this.portraitMaskGraphics?.destroy();
+    this.portraitMask = undefined;
+    this.portraitMaskGraphics = undefined;
+    this.syncPortraitMask = undefined;
     super.destroy(fromScene);
   }
 }

@@ -100,12 +100,38 @@ async function enterParty(page: Page): Promise<void> {
 /** 파티는 토리카 · 렉시아 · 스피나 순으로 고른다. */
 async function enterBattle(page: Page): Promise<void> {
   await enterParty(page);
+  // 준비 화면은 이제 직전 스토리 편성을 복원하므로 기본 세 명을 먼저 해제한 뒤 원하는 순서를 고른다.
+  await tap(page, ...LEXIA);
+  await tap(page, ...TORIKA);
+  await tap(page, ...SEIRA);
   await tap(page, ...TORIKA);
   await tap(page, ...LEXIA);
   await tap(page, ...SEIRA);
   await tap(page, BASE_WIDTH / 2, 1700); // 전투 시작
   await expect.poll(() => scene(page)).toBe("battle");
 }
+
+test("스토리 전투 확정 편성은 다음 스테이지 준비 저장에 유지된다", async ({ page }) => {
+  await enterBattle(page);
+  const savedParty = await page.evaluate(() => JSON.parse(localStorage.getItem("eternal-city.local-save") ?? "null")?.party);
+  // 다음 스테이지 PartyScene도 이 저장 순서를 최초 카드·SD·3/3 상태에 그대로 사용한다.
+  expect(savedParty).toEqual(["rex", "anky", "spino"]);
+});
+
+test("원정 종료 뒤에도 다음 원정 전용 편성 저장은 스토리·발굴과 독립적으로 유지된다", async ({ page }) => {
+  await startAfterOpening(page);
+  const snapshot = await page.evaluate(() => {
+    const value = JSON.parse(localStorage.getItem("eternal-city.local-save") ?? "null");
+    // 실제 종료 저장과 같은 모양으로 run만 닫혀도 마지막 확정 편성이 남는 회귀 계약을 확인한다.
+    value.expedition.lastParty = ["spino", "rex", "anky"];
+    value.expedition.run = null;
+    localStorage.setItem("eternal-city.local-save", JSON.stringify(value));
+    return { lastParty: value.expedition.lastParty, party: value.party, excavation: value.idleExcavation.assignedRelicIds };
+  });
+  expect(snapshot.lastParty).toEqual(["spino", "rex", "anky"]);
+  expect(snapshot.lastParty).not.toEqual(snapshot.party);
+  expect(snapshot.lastParty).not.toEqual(snapshot.excavation);
+});
 
 test("출격 → 스테이지 지도 → 파티 편성 → 전투까지 이어진다", async ({ page }) => {
   await enterBattle(page);

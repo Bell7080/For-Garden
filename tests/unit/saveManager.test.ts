@@ -47,7 +47,20 @@ describe("SaveManager", () => {
     legacy.saveVersion = 22;
     legacy.expedition = { weekKey: "2026-08-24", playsThisWeek: 2, bestScore: 400, active: { relicIds: ["anky", "rex", "spino"], startedAt: "2026-08-25T00:00:00Z", score: 30 } };
     // 소탕 도입 전 저장은 그때까지의 주간 최고점을 역대 최고점 초기값으로 이어받는다.
-    expect(new SaveManager(new MemoryStorage()).migrate(legacy).expedition).toEqual({ weekKey: "2026-08-24", playsThisWeek: 2, bestScore: 400, allTimeBestScore: 400, run: null });
+    expect(new SaveManager(new MemoryStorage()).migrate(legacy).expedition).toEqual({ weekKey: "2026-08-24", playsThisWeek: 2, bestScore: 400, allTimeBestScore: 400, lastParty: [], run: null });
+  });
+
+  it("마지막 원정 편성을 왕복하고 구버전·미보유 항목을 안전하게 정규화한다", () => {
+    const storage = new MemoryStorage(); const source = createDefaultSession();
+    source.expedition.lastParty = ["spino", "anky", "rex"];
+    const manager = new SaveManager(storage); manager.save(source);
+    expect(manager.load()?.expedition.lastParty).toEqual(["spino", "anky", "rex"]);
+
+    const legacy = validData() as unknown as Record<string, any>;
+    legacy.saveVersion = 26;
+    legacy.expedition.lastParty = ["anky", "smilo", "anky"];
+    // 미보유와 중복은 제거하되 스토리 파티나 독립 발굴 배치로 채우지 않는다.
+    expect(manager.migrate(legacy).expedition.lastParty).toEqual(["anky"]);
   });
 
   it("진행 중 원정의 맵·생존·증강·보상·점수를 독립 객체로 왕복한다", () => {

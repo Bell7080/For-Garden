@@ -73,7 +73,8 @@ export class ExpeditionManager {
     const mapSeed = `${weekKey}:${this.state.expedition.playsThisWeek + 1}`;
     const map = generateExpeditionMap({ seed: mapSeed, random: seededRandom(mapSeed) });
     const run: ExpeditionRunState = { runId: `run:${mapSeed}`, weekKey, mapSeed, nodes: map.nodes, currentNodeId: null, visitedNodeIds: [], relics: relicIds.map((relicId) => ({ relicId, currentHp: 100, alive: true })) as ExpeditionRunState["relics"], selectedAugmentIds: [], selectedAugments: [], pendingAugmentReward: null, pendingRewards: {}, lastNodeRewards: null, bossDamage: 0, bestScore: 0, settled: false, settlementId: null, bossSubmissionId: null, bossSettlementId: null };
-    this.commit({ ...this.state.expedition, run });
+    // 출발 검증의 단일 경계에서 런과 마지막 원정 편성을 같은 저장으로 확정한다.
+    this.commit({ ...this.state.expedition, lastParty: [...relicIds], run });
     return { ok: true, run: structuredClone(run) };
   }
 
@@ -113,7 +114,8 @@ export class ExpeditionManager {
       bossSettlementId: `${runId}:boss-completed`,
     };
     // 런·편성·도달점·멱등 ID는 한 번의 저장으로 함께 확정해 중간 상태를 복원할 수 없게 한다.
-    this.commit({ ...this.state.expedition, run });
+    // 개발 바로가기도 성공한 출발이므로 실제 시작과 같은 마지막 편성 계약을 따른다.
+    this.commit({ ...this.state.expedition, lastParty: [...relicIds], run });
     return { ok: true, run: structuredClone(run) };
   }
 

@@ -26,6 +26,7 @@ describe("ExpeditionManager", () => {
     const result = manager.start(["anky", "rex", "spino"]);
     expect(result.ok).toBe(true);
     expect(state.expedition.run?.relics.map(({ relicId }) => relicId)).toEqual(["anky", "rex", "spino"]);
+    expect(state.expedition.lastParty).toEqual(["anky", "rex", "spino"]);
     expect(save).toHaveBeenCalledTimes(1);
   });
 
@@ -46,7 +47,7 @@ describe("ExpeditionManager", () => {
 
   it("exposes quick expedition only after a weekly score and without active progress", () => {
     const state = createDefaultSession();
-    state.expedition = { weekKey: "2026-08-24", playsThisWeek: 1, bestScore: 1200, allTimeBestScore: 1200, run: null };
+    state.expedition = { weekKey: "2026-08-24", playsThisWeek: 1, bestScore: 1200, allTimeBestScore: 1200, lastParty: [], run: null };
     const manager = new ExpeditionManager(state, { save: vi.fn() }, () => new Date("2026-08-25T12:00:00Z"));
     expect(manager.status().quickAvailable).toBe(true);
   });

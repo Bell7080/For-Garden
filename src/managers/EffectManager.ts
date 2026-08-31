@@ -1,9 +1,10 @@
 import Phaser from "phaser";
-import { allowBurst, AREA_IMPACT, EFFECT_BUDGET, EFFECT_PRESETS, type BurstSpec, type EffectKind } from "../ui/effectPresets";
+import { allowBurst, AREA_IMPACT, EFFECT_BUDGET, EFFECT_PRESETS, SUSTAINED_COMBAT_EFFECT, type BurstSpec, type EffectKind } from "../ui/effectPresets";
 import { EFFECT_TEXTURE, ensureEffectTextures } from "../ui/effectTextures";
 import { damagePopupStyle, risingAlpha, type DamagePopupRequest } from "../ui/damageNumbers";
 import { COLOR, textStyle } from "../ui/theme";
 import { battleUiMotionFactor, type BattleUiMotion } from "../core/settings";
+import type { ActiveCombatDisplayEffect } from "../core/combatEffects";
 
 /**
  * 이펙트의 단일 소유자.
@@ -59,8 +60,14 @@ interface NumberSlot {
   openedAt: number;
 }
 
-/** 실제 Fighter 은신과 함께 사는 약한 각형 스캔 노이즈다. */
-interface StealthSlot { graphics: Phaser.GameObjects.Graphics; tween: Phaser.Tweens.Tween }
+type SustainedTag = ActiveCombatDisplayEffect["tag"];
+export interface SustainedEffectTarget {
+  fighterId: string; effectId: string; tag: SustainedTag; x: number; y: number;
+  aimX?: number; aimY?: number; color: number;
+}
+
+/** 코어 활성 목록과 함께 사는 재사용 그래픽이다. 매 프레임 새 객체를 만들지 않아 GC를 피한다. */
+interface SustainedSlot { graphics: Phaser.GameObjects.Graphics; tween?: Phaser.Tweens.Tween; tag: SustainedTag }
 
 export type CombatVisualMethod = "heal" | "shieldGain" | "shieldHit" | "shieldBreak" | "stealthEnter" | "stealthExit";
 
@@ -104,8 +111,8 @@ export class EffectManager {
   private readonly rings: RingSlot[] = [];
   private readonly numbers: NumberSlot[] = [];
   private readonly lastAt = new Map<EffectKind, number>();
-  /** 유지형 표시의 키는 Puppet이 아니라 런타임 Fighter ID라 교체 시 명시적으로 회수할 수 있다. */
-  private readonly stealth = new Map<string, StealthSlot>();
+  /** 같은 전투원의 복수 제공자 효과를 보존하는 런타임 Fighter ID + 효과 ID 복합 키다. */
+  private readonly sustained = new Map<string, SustainedSlot>();
   private frame = -1;
   private openedThisFrame = 0;
 
@@ -324,30 +331,63 @@ export class EffectManager {
     }
   }
 
-  /** 매 프레임 실제 상태와 좌표를 읽어 은신 스캔을 생성·이동·제거한다. */
-  syncStealth(targets: readonly { id: string; x: number; y: number; active: boolean }[]): void {
-    const seen = new Set<string>();
-    for (const target of targets) {
-      if (!target.active) { this.removeStealth(target.id); continue; }
-      seen.add(target.id);
-      let slot = this.stealth.get(target.id);
-      if (!slot) {
-        const graphics = this.scene.add.graphics().setDepth(this.depth - 1);
-        graphics.lineStyle(2, COLOR.inkDimHex, 0.22).strokePoints(groundDiamond(72), true);
-        const tween = this.scene.tweens.add({ targets: graphics, alpha: { from: 0.18, to: 0.48 }, yoyo: true, repeat: -1, duration: 420 });
-        slot = { graphics, tween };
-        this.stealth.set(target.id, slot);
-      }
-      slot.graphics.setPosition(target.x, target.y);
-    }
-    for (const id of this.stealth.keys()) if (!seen.has(id)) this.removeStealth(id);
+  private sustainedKey(fighterId: string, effectId: string): string { return `${fighterId}\u0000${effectId}`; }
+
+  /** 짧은 평행 박자선은 현악기의 빠른 활놀림을 말하며, 낮은 알파라 폭주 필터를 가리지 않는다. */
+  private drawMette(graphics: Phaser.GameObjects.Graphics, color: number): void {
+    const spec = SUSTAINED_COMBAT_EFFECT.mette;
+    graphics.clear().lineStyle(spec.lineWidth, color, spec.alpha);
+    for (let row = -1; row <= 1; row += 1) graphics.lineBetween(-spec.halfWidth, row * spec.spacing - 5, spec.halfWidth, row * spec.spacing + 5);
   }
 
-  /** 사망·Puppet 교체에서 무한 tween까지 함께 끊는다. */
-  removeStealth(id: string): void {
-    const slot = this.stealth.get(id);
+  /** 얇은 질주 궤적은 대상 쪽으로 모이며, 메테의 몸 주변 평행 박자선과 실루엣/방향이 다르다. */
+  private drawLuka(graphics: Phaser.GameObjects.Graphics, color: number, aimX?: number, aimY?: number): void {
+    const spec = SUSTAINED_COMBAT_EFFECT.luka;
+    const angle = Math.atan2((aimY ?? graphics.y) - graphics.y, (aimX ?? graphics.x + 1) - graphics.x);
+    graphics.clear().lineStyle(spec.lineWidth, color, spec.alpha).setRotation(angle);
+    for (let lane = -1; lane <= 1; lane += 1) {
+      const offset = lane * spec.spacing;
+      graphics.lineBetween(-spec.length * 0.55, offset, spec.length * 0.45, offset * 0.35);
+    }
+  }
+
+  /** 활성 목록 전체를 동기화한다. 누락은 사망·표적 변경·폭주 종료를 뜻하므로 즉시 회수한다. */
+  syncSustained(targets: readonly SustainedEffectTarget[]): void {
+    const seen = new Set<string>();
+    for (const target of targets) {
+      const key = this.sustainedKey(target.fighterId, target.effectId);
+      seen.add(key);
+      let slot = this.sustained.get(key);
+      if (!slot) {
+        const graphics = this.scene.add.graphics().setDepth(this.depth - 1);
+        // 모션 감소가 0이면 무한 tween을 만들지 않고 정적인 홀로그램 표식만 유지한다.
+        const duration = target.tag === "lukaSharedTargetHasteActive" ? SUSTAINED_COMBAT_EFFECT.luka.travelMs : SUSTAINED_COMBAT_EFFECT.mette.pulseMs;
+        const tween = this.shakeFactor > 0 ? this.scene.tweens.add({ targets: graphics, alpha: { from: 0.45, to: 1 }, scaleX: target.tag === "lukaSharedTargetHasteActive" ? { from: 0.7, to: 1 } : 1,
+          yoyo: true, repeat: -1, duration: duration / this.shakeFactor }) : undefined;
+        slot = { graphics, tween, tag: target.tag };
+        this.sustained.set(key, slot);
+      }
+      slot.graphics.setPosition(target.x, target.y);
+      if (target.tag === "stealthActive") {
+        slot.graphics.clear().setRotation(0).lineStyle(2, COLOR.inkDimHex, 0.22).strokePoints(groundDiamond(72), true);
+      } else if (target.tag === "metteStaccatoActive") {
+        slot.graphics.setRotation(0); this.drawMette(slot.graphics, target.color);
+      } else this.drawLuka(slot.graphics, target.color, target.aimX, target.aimY);
+    }
+    for (const key of this.sustained.keys()) if (!seen.has(key)) this.removeSustained(key);
+  }
+
+  /** 조건 해제에서 무한 tween과 GPU 객체를 함께 끊는다. */
+  private removeSustained(key: string): void {
+    const slot = this.sustained.get(key);
     if (!slot) return;
-    slot.tween.stop(); slot.graphics.destroy(); this.stealth.delete(id);
+    slot.tween?.stop(); slot.graphics.destroy(); this.sustained.delete(key);
+  }
+
+  /** 사망·Puppet 교체는 해당 런타임 전투원의 모든 제공자 효과를 즉시 회수한다. */
+  removeSustainedForFighter(fighterId: string): void {
+    const prefix = `${fighterId}\u0000`;
+    for (const key of [...this.sustained.keys()]) if (key.startsWith(prefix)) this.removeSustained(key);
   }
 
   /** 풀에서 수치 글자 하나를 꺼낸다. 상한을 넘으면 가장 오래된 것을 즉시 회수한다. */
@@ -424,7 +464,7 @@ export class EffectManager {
 
   /** 씬이 꺼질 때 emitter와 두 풀을 모두 폐기한다. */
   destroy(): void {
-    for (const id of [...this.stealth.keys()]) this.removeStealth(id);
+    for (const key of [...this.sustained.keys()]) this.removeSustained(key);
     this.emitters.forEach((emitter) => emitter.destroy());
     this.emitters.clear();
     this.rings.forEach((slot) => { slot.tween?.stop(); slot.graphics.destroy(); });

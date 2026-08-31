@@ -11,7 +11,22 @@ export type CombatEffectTag =
   | "shieldBreak"
   | "stealthEnter"
   | "stealthActive"
-  | "stealthExit";
+  | "stealthExit"
+  /** 메테 자신의 크레셴도 스타카토 폭주가 유지되는 동안만 존재하는 순수 표시 상태다. */
+  | "metteStaccatoActive"
+  /** 루카와 같은 적을 겨누어 실제 공격 속도 오라를 받는 전투원의 순수 표시 상태다. */
+  | "lukaSharedTargetHasteActive";
+
+/**
+ * 코어가 소유하는 유지 효과 식별자다. 표현 계층은 이 목록을 그대로 동기화할 뿐 지속 시간을
+ * 추측하지 않는다. `id`는 제공자가 여럿인 오라도 서로 덮어쓰지 않게 하는 전투 내 안정 키다.
+ */
+export interface ActiveCombatDisplayEffect {
+  id: string;
+  tag: Extract<CombatEffectTag, "stealthActive" | "metteStaccatoActive" | "lukaSharedTargetHasteActive">;
+  /** 루카 궤적처럼 방향을 표시해야 할 때만 코어의 실제 표적 전투원 ID를 전달한다. */
+  aimTargetId?: string;
+}
 
 export interface CombatEffectCue {
   tag: CombatEffectTag;

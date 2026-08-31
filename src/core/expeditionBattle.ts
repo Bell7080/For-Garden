@@ -79,8 +79,32 @@ export function expeditionBattleResults(input: ExpeditionBattleInputDto, activeR
   return input.relics.map((initial) => ({ ...(byId.get(initial.relicId) ?? initial) }));
 }
 
+/** 스토리 출격도 판별 필드를 반드시 보내 원정 입력과 같은 명시적 계약을 지킨다. */
+export interface StageBattleInputDto {
+  mode: "stage";
+}
+
 /** 일반 스테이지 진입과 원정 진입을 명시적으로 구분하는 전투 씬 입력 계약이다. */
-export type BattleSceneInputDto = ExpeditionBattleInputDto | ExpeditionBossBattleInputDto | { mode?: "stage" };
+export type BattleSceneInputDto = ExpeditionBattleInputDto | ExpeditionBossBattleInputDto | StageBattleInputDto;
+
+/** Phaser가 생략·빈 data 또는 직전 data를 건네도 매 진입의 입력만으로 새 DTO를 만든다. */
+export function normalizeBattleSceneInput(input?: unknown): BattleSceneInputDto {
+  // 원정 판별값만 보존하고 나머지는 새 객체로 만들어 직전 원정 필드가 스토리에 섞이지 않게 한다.
+  if (typeof input === "object" && input !== null && "mode" in input) {
+    const candidate = input as BattleSceneInputDto;
+    if (candidate.mode === "expedition" || candidate.mode === "expeditionBoss") return candidate;
+  }
+  return { mode: "stage" };
+}
+
+/** 모드별 상단 문구를 분리해 원정 화면이 선택된 스토리 이름을 읽지 않게 한다. */
+export function battleHeaderText(input: BattleSceneInputDto, stage: { id: string; name: string; enemyLevel: number }): string {
+  if (input.mode === "stage") return `${stage.id} · ${stage.name} · 적 LV.${stage.enemyLevel}`;
+  if (input.mode === "expeditionBoss") return `원정 ${input.floor}층 · 불사 관측 보스`;
+  // 노드 유형은 저장/정산용 영문값 대신 플레이어가 구분할 수 있는 전투 명칭으로 표시한다.
+  const nodeLabel: Record<ExpeditionBattleInputDto["nodeType"], string> = { normal: "일반 전투", elite: "정예 전투", horde: "군집 전투" };
+  return `원정 ${input.floor}층 · ${nodeLabel[input.nodeType]}`;
+}
 
 /** 저장 선택을 전투 코어가 소비하는 효과로 바꾸며 비전투 회복 효과는 이 목록에서 제외한다. */
 export function expeditionBattleEffects(selections: readonly ExpeditionAugmentSelection[]): ExpeditionAugmentEffect[] {

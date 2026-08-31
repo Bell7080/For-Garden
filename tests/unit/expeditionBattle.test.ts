@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createExpeditionSkirmishConfig, expeditionBattleResults, type ExpeditionBattleInputDto } from "../../src/core/expeditionBattle";
+import { battleHeaderText, createExpeditionSkirmishConfig, expeditionBattleResults, normalizeBattleSceneInput, type BattleSceneInputDto, type ExpeditionBattleInputDto, type ExpeditionBossBattleInputDto } from "../../src/core/expeditionBattle";
 import { createSkirmish, spawnSpots, skirmishRelicResults, type Arena } from "../../src/core/skirmish";
 import { EXPEDITION_COMBAT_BALANCE } from "../../src/data/expedition";
 import { getRelic } from "../../src/data/relics";
@@ -55,5 +55,50 @@ describe("원정 난전 입력 모델", () => {
     const spots = spawnSpots(ARENA, "enemy", 5);
     expect(new Set(spots.map(({ x, y }) => `${x}:${y}`)).size).toBe(5);
     expect(spots.every(({ x }) => x >= ARENA.left && x <= ARENA.right)).toBe(true);
+  });
+});
+
+describe("전투 씬 입력 정규화 회귀", () => {
+  /** 직전 DTO를 함께 보관해도 다음 입력만 정규화되는 실제 씬 재진입 순서를 재현한다. */
+  function transition(previous: BattleSceneInputDto, next?: unknown): [BattleSceneInputDto, BattleSceneInputDto] {
+    return [previous, normalizeBattleSceneInput(next)];
+  }
+
+  const bossInput: ExpeditionBossBattleInputDto = {
+    mode: "expeditionBoss", runId: "run-boss", nodeId: "boss-20", floor: 20,
+    relics: input("normal").relics, augments: input("normal").augments,
+    requestId: "request-1", settlementId: "settlement-1",
+  };
+
+  it.each([
+    ["원정 일반 전투 → 스토리 전투", input("normal"), undefined],
+    ["원정 보스 → 스토리 전투", bossInput, {}],
+  ] as const)("%s에서 원정 전용 필드를 남기지 않는다", (_name, previous, next) => {
+    const [, normalized] = transition(previous, next);
+    expect(normalized).toEqual({ mode: "stage" });
+    expect(normalized).not.toBe(previous);
+    // 잔여 필드 전체를 열거해 새 스토리 DTO가 원정 실행·정산 문맥을 누출하지 않음을 고정한다.
+    expect(normalized).not.toHaveProperty("runId");
+    expect(normalized).not.toHaveProperty("nodeId");
+    expect(normalized).not.toHaveProperty("relics");
+    expect(normalized).not.toHaveProperty("augments");
+  });
+
+  it("{ mode: stage }도 매번 새로운 스토리 DTO를 반환한다", () => {
+    const supplied = { mode: "stage" } as const;
+    expect(normalizeBattleSceneInput(supplied)).toEqual(supplied);
+    expect(normalizeBattleSceneInput(supplied)).not.toBe(supplied);
+  });
+
+  it("스토리 → 원정 순서에서는 새 원정 DTO를 그대로 보존한다", () => {
+    const expedition = input("elite");
+    const [, normalized] = transition({ mode: "stage" }, expedition);
+    expect(normalized).toBe(expedition);
+  });
+
+  it("원정 헤더에 선택된 스토리 이름을 표시하지 않는다", () => {
+    const story = { id: "1-5", name: "남아서는 안 되는 이름", enemyLevel: 12 };
+    expect(battleHeaderText(input("horde"), story)).toBe("원정 1층 · 군집 전투");
+    expect(battleHeaderText({ mode: "stage" }, story)).toContain(story.name);
   });
 });

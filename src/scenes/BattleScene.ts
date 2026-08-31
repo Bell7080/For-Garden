@@ -48,7 +48,7 @@ import { ultimatePresentationFor } from "../data/ultimatePresentations";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { PopupLayer } from "../ui/PopupLayer";
 import { ExpeditionRankingPopup } from "../ui/ExpeditionRankingPopup";
-import { createExpeditionBossSkirmishConfig, createExpeditionSkirmishConfig, expeditionBattleResults, type BattleSceneInputDto, type ExpeditionBattleInputDto, type ExpeditionBossBattleInputDto } from "../core/expeditionBattle";
+import { battleHeaderText, createExpeditionBossSkirmishConfig, createExpeditionSkirmishConfig, expeditionBattleResults, normalizeBattleSceneInput, type BattleSceneInputDto, type ExpeditionBattleInputDto, type ExpeditionBossBattleInputDto } from "../core/expeditionBattle";
 import type { ExpeditionBossAction } from "../core/expeditionBoss";
 import { expeditionManager } from "../managers/ExpeditionManager";
 import { settingsManager } from "../managers/SettingsManager";
@@ -265,9 +265,8 @@ export class BattleScene extends Phaser.Scene {
 
   /** Phaser scene data를 명시 DTO로 받아 일반 스테이지와 원정 결과 경계를 분리한다. */
   init(input?: BattleSceneInputDto): void {
-    // Phaser가 이전 scene.start data를 재사용할 수 있으므로 매 진입마다 명시적으로 stage 기본값을
-    // 새로 넣는다. 원정 뒤 스토리 전투가 남은 원정 DTO로 실행되는 것을 이 경계에서 차단한다.
-    this.battleInput = input?.mode === "expedition" || input?.mode === "expeditionBoss" ? input : { mode: "stage" };
+    // 정규화는 Phaser 비의존 코어가 맡아 생략·빈 객체도 매번 새로운 스토리 DTO로 교체한다.
+    this.battleInput = normalizeBattleSceneInput(input);
   }
 
   create(): void {
@@ -320,7 +319,8 @@ export class BattleScene extends Phaser.Scene {
     // 편성 화면에서 본 6번 전장을 그대로 이어 실제 전투의 공간으로 사용한다.
     addSceneBackground(this, this.battleInput.mode === "expedition" || this.battleInput.mode === "expeditionBoss" ? BACKGROUND.expeditionField : BACKGROUND.combat, -30);
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.28).setDepth(-29);
-    this.add.text(42, 48, `${stage.id} · ${stage.name} · 적 LV.${stage.enemyLevel}`, textStyle({ role: "body", size: 30, color: COLOR.inkDim }));
+    // 원정 헤더는 스토리 선택 상태를 전혀 읽지 않아 잘못된 모드 진입을 화면에서도 드러낸다.
+    this.add.text(42, 48, battleHeaderText(this.battleInput, stage), textStyle({ role: "body", size: 30, color: COLOR.inkDim }));
     this.add.text(BASE_WIDTH / 2, 160, "AUTO BATTLE", textStyle({ role: "emphasis", size: 28, color: COLOR.accentText })).setOrigin(0.5);
     if (this.battleInput.mode === "expeditionBoss") this.buildBossScoreHud();
 
@@ -564,11 +564,17 @@ export class BattleScene extends Phaser.Scene {
       if (!skipPresentation) {
         // 전투 카드 잠금과 별개로 기여도 판은 컷인이 실제로 덮는 동안에만 입력을 멈춘다.
         this.contributionPanel?.setInputLocked(true);
-        this.activeCutIn = await UltimateCutIn.create(this, fighter.def, presentation);
-        if (!this.sequenceValid(next.token, fighter)) return;
-        await this.activeCutIn.play(timing);
-        this.activeCutIn.destroy(); this.activeCutIn = undefined;
-        this.contributionPanel?.setInputLocked(false);
+        try {
+          // create 자체도 Puppet 로딩을 await하므로 생성 실패와 Scene 종료까지 같은 정리 경계로 감싼다.
+          this.activeCutIn = await UltimateCutIn.create(this, fighter.def, presentation);
+          if (!this.sequenceValid(next.token, fighter)) return;
+          await this.activeCutIn.play(timing);
+        } finally {
+          // destroy가 진행 중 play Promise를 먼저 풀기 때문에 어느 단계에서 실패해도 영구 대기하지 않는다.
+          this.activeCutIn?.destroy();
+          this.activeCutIn = undefined;
+          this.contributionPanel?.setInputLocked(false);
+        }
         if (!this.sequenceValid(next.token, fighter)) return;
         this.cameras.main.shake(180, presentation.cameraShakeIntensity);
       }

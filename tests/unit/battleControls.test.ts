@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  nextBattleSpeed, scaleUltimateDuration, shouldWaitForUltimatePresentation, ultimatePresentationTiming,
-  ULTIMATE_MIN_DURATION_MS, ULTIMATE_RECOVERY_RATIO,
+  nextBattleSpeed, scaleUltimateCutInDurations, scaleUltimateDuration, shouldWaitForUltimatePresentation, ultimatePresentationTiming,
+  ULTIMATE_CUT_IN_MIN_VISIBLE_MS, ULTIMATE_MIN_DURATION_MS, ULTIMATE_RECOVERY_RATIO,
 } from "../../src/core/battleControls";
 
 /** 배속 버튼이 허용된 세 단계 밖으로 벗어나지 않는지 검증한다. */
@@ -31,6 +31,14 @@ describe("궁극기 연출 시간축", () => {
     const timing = ultimatePresentationTiming(3, true);
     expect(timing).toEqual({ rate: 3.25, skipLeadIn: true });
     expect(scaleUltimateDuration(160, timing)).toBe(0);
+  });
+
+  it("1·2·3배속은 컷인 전체 가시 시간을 보장하고 스킵만 세 구간을 모두 없앤다", () => {
+    for (const speed of [1, 2, 3] as const) {
+      const durations = scaleUltimateCutInDurations(1, 1, 1, ultimatePresentationTiming(speed, false));
+      expect(durations.reduce((sum, duration) => sum + duration, 0)).toBeGreaterThanOrEqual(ULTIMATE_CUT_IN_MIN_VISIBLE_MS);
+    }
+    expect(scaleUltimateCutInDurations(120, 150, 90, ultimatePresentationTiming(3, true))).toEqual([0, 0, 0]);
   });
 
   it("결정타는 공격 모션과 확대 복귀를 종료 대기 조건으로 삼지 않는다", () => {

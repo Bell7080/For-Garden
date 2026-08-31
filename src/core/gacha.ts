@@ -53,6 +53,44 @@ export interface Banner {
   highestRarityGuarantee: number;
 }
 
+/** 천장·10연 보정을 제외한 독립 슬롯 기준의 배너 기대값이다. */
+export interface BannerExpectations {
+  /** 지정한 추첨 횟수다. 호출자가 결과의 배율을 함께 확인할 수 있게 보존한다. */
+  pulls: number;
+  /** R, SR, SSR 렐릭이 나오는 기대 슬롯 수다. */
+  relicRPlus: number;
+  /** 골드가 지급되는 기대 수량이다. 지급되지 않는 슬롯은 0으로 포함한다. */
+  gold: number;
+  /** 치즈케이크가 지급되는 기대 수량이다. 지급되지 않는 슬롯은 0으로 포함한다. */
+  cheesecake: number;
+}
+
+/**
+ * 정적 배너 정의만으로 독립 추첨의 기대 획득량을 계산하는 Phaser 비의존 분석 함수다.
+ * 보장 효과는 현재 천장 상태와 묶음 내 위치에 따라 달라지므로 포함하지 않아 운영 확률 자체를 비교할 수 있다.
+ */
+export function calculateBannerExpectations(banner: Banner, pulls = 1): BannerExpectations {
+  const totalRewardWeight = banner.grayRewards.reduce((sum, reward) => sum + reward.weight, 0);
+  const expectedRewards: Record<QuantityRewardKind, number> = { gold: 0, cheesecake: 0 };
+
+  // 회색 결과의 조건부 보상 확률과 양 끝을 포함한 균등 정수 수량의 평균을 곱한다.
+  if (totalRewardWeight > 0) {
+    for (const reward of banner.grayRewards) {
+      const averageAmount = (reward.min + reward.max) / 2;
+      expectedRewards[reward.kind] += banner.slotRates.GRAY * (reward.weight / totalRewardWeight) * averageAmount;
+    }
+  }
+
+  // 기대 슬롯/수량은 독립 1회 값을 지정 횟수만큼 선형 합산한다.
+  const relicRPlusRate = banner.slotRates.R + banner.slotRates.SR + banner.slotRates.SSR;
+  return {
+    pulls,
+    relicRPlus: relicRPlusRate * pulls,
+    gold: expectedRewards.gold * pulls,
+    cheesecake: expectedRewards.cheesecake * pulls,
+  };
+}
+
 export interface PullResult {
   slots: PullSlot[];
   relicIds: string[];

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canPull, determineGrade, pull, pullCost, resolveAcquisitions, spend, type Banner, type Wallet } from "../../src/core/gacha";
+import { calculateBannerExpectations, canPull, determineGrade, pull, pullCost, resolveAcquisitions, spend, type Banner, type Wallet } from "../../src/core/gacha";
 import { BANNERS } from "../../src/data/banners";
 
 /** 모든 분기와 난수 소비 순서를 눈으로 추적할 수 있는 최소 3등급 배너다. */
@@ -147,6 +147,40 @@ describe("운영 배너 데이터", () => {
       const allPools = Object.values(candidate.relicPools).flat();
       expect(allPools).toContain(candidate.featuredRelicId);
       for (const ids of Object.values(candidate.pickupRelicIds)) for (const id of ids) expect(allPools).toContain(id);
+    }
+  });
+
+  it("R 이상 렐릭과 회색 보상의 기대값이 운영 목표 범위 안이다", () => {
+    // 범위는 economy-design.md의 독립 슬롯 목표를 허용 오차와 함께 기계적으로 고정한다.
+    const targets = {
+      fossil: { relicRPlus: [0.849, 0.851], gold: [224, 226], cheesecake: [0.37, 0.38] },
+      amber: { relicRPlus: [0.849, 0.851], gold: [549, 551], cheesecake: [1.12, 1.13] },
+    } as const;
+
+    for (const candidate of BANNERS) {
+      const expected = calculateBannerExpectations(candidate);
+      const target = targets[candidate.id as keyof typeof targets];
+      // 새 운영 배너는 목표 범위를 먼저 명시해야 검증을 우회할 수 없다.
+      expect(target).toBeDefined();
+      expect(expected.relicRPlus).toBeGreaterThanOrEqual(target.relicRPlus[0]);
+      expect(expected.relicRPlus).toBeLessThanOrEqual(target.relicRPlus[1]);
+      expect(expected.gold).toBeGreaterThanOrEqual(target.gold[0]);
+      expect(expected.gold).toBeLessThanOrEqual(target.gold[1]);
+      expect(expected.cheesecake).toBeGreaterThanOrEqual(target.cheesecake[0]);
+      expect(expected.cheesecake).toBeLessThanOrEqual(target.cheesecake[1]);
+    }
+  });
+
+  it("1회 기대값을 10회 분석 값으로 선형 합산한다", () => {
+    for (const candidate of BANNERS) {
+      const once = calculateBannerExpectations(candidate, 1);
+      const ten = calculateBannerExpectations(candidate, 10);
+      expect(ten).toEqual({
+        pulls: 10,
+        relicRPlus: once.relicRPlus * 10,
+        gold: once.gold * 10,
+        cheesecake: once.cheesecake * 10,
+      });
     }
   });
 });

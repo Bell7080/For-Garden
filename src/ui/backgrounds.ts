@@ -34,6 +34,12 @@ export const BACKGROUND = {
   sortieBounty: "background-sortie-bounty",
   /** 레이드 진입 화면 배경이다(Content5_001background). */
   sortieRaid: "background-sortie-raid",
+  /**
+   * 타이틀(로딩) 화면 전용 원화다. 화면 자체가 로딩 화면이라 다른 배경처럼 이 표의
+   * `BACKGROUND_ASSETS`(로딩 단계 안에서 읽힘)로 적재할 수 없다 — `TitleScene`이
+   * 씬 진입 직후 이 키로 직접 읽는다.
+   */
+  title: "background-title",
 } as const;
 
 /** BootScene이 모든 화면 배경을 한 번에 적재할 때 사용하는 경로 목록이다. */

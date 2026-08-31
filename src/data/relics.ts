@@ -13,8 +13,8 @@ export const RELICS: RelicDef[] = [
     excavationSite: "몽골 네메그트층 제7구역",
     observationProfile: {
       originYear: "약 6,800만 년 전",
-      restorationYear: "E.C. 13년",
-      restorationAge: 18,
+      // 저장 진행도와 무관한 정적 도감 값으로 렉시아의 소녀기 외형과 당찬 정서를 은유한다.
+      restorationYear: "E.C. 18년",
       lifeStage: "성체 초기",
       height: "1.63 m",
       // 163cm 성체 초기의 균형 잡힌 체형을 기준으로 관찰일지에 단일 측정값을 기록한다.
@@ -93,8 +93,8 @@ export const RELICS: RelicDef[] = [
     excavationSite: "고비 사막 백악기 퇴적층",
     observationProfile: {
       originYear: "약 6,800만 년 전",
-      restorationYear: "E.C. 13년",
-      restorationAge: 13,
+      // 저장 진행도와 무관한 정적 도감 값으로 토리카의 어린 외형과 또박또박한 말투를 은유한다.
+      restorationYear: "E.C. 9년",
       lifeStage: "해츨링 후기",
       height: "1.08 m",
       weight: "186 kg",
@@ -168,11 +168,11 @@ export const RELICS: RelicDef[] = [
     specimenNumber: "105",
     projectName: "TIDAL SAIL",
     excavationSite: "북아프리카 켐켐층 수로",
-    // 관찰 프로필은 복원 이력과 현재 신체 측정값을 한 계약에서 빠짐없이 공개하도록 보장한다.
+    // 관찰 프로필은 저장 데이터가 아닌 정적 도감 정보로 복원 세계관 값과 현재 신체 측정값을 공개한다.
     observationProfile: {
       originYear: "약 9,500만 년 전",
-      restorationYear: "E.C. 11년",
-      restorationAge: 22,
+      // 과묵한 수중경비대라는 관계·말투를 해치지 않는 소녀기 후반의 정서적 나잇대다.
+      restorationYear: "E.C. 19년",
       lifeStage: "성체 초기",
       height: "1.74 m",
       weight: "61 kg",
@@ -252,11 +252,10 @@ export const RELICS: RelicDef[] = [
     specimenNumber: "038",
     projectName: "VELOCITY CLAW",
     excavationSite: "몽골 자도흐타층 사구 지대",
-    // 성인 벨로키랍토르 렐릭의 복원 이력과 현재 신체 측정값을 관찰 프로필의 단일 기준으로 둔다.
+    // 저장 진행도와 무관한 정적 도감 정보로 루카의 소녀기 외형과 친근한 생활 태도를 함께 나타낸다.
     observationProfile: {
       originYear: "약 7,500만 년 전",
-      restorationYear: "E.C. 10년",
-      restorationAge: 23,
+      restorationYear: "E.C. 16년",
       lifeStage: "성체",
       height: "1.62 m",
       weight: "59 kg",
@@ -331,8 +330,8 @@ export const RELICS: RelicDef[] = [
     excavationSite: "모리셔스 석회동굴 보관층",
     observationProfile: {
       originYear: "약 400년 전",
+      // 저장 진행도와 무관한 정적 도감 값으로 쁘띠 로그의 어린 탐험대원 정서를 은유한다.
       restorationYear: "E.C. 13년",
-      restorationAge: 13,
       lifeStage: "성체 초기",
       // 토리카와 같은 전신 원화 비율을 기준으로 키를 맞추고, 인간형 체격보다 가벼운 조류 골격을 반영했다.
       height: "1.08 m",
@@ -717,8 +716,8 @@ export const RELICS: RelicDef[] = [
     excavationSite: "아르헨티나 팜파스 로한층",
     observationProfile: {
       originYear: "약 1만 년 전",
-      restorationYear: "E.C. 15년",
-      restorationAge: 24,
+      // 저장 진행도와 무관한 정적 도감 값이며 포근한 누님 말투를 소녀기 상한에서 표현한다.
+      restorationYear: "E.C. 20년",
       lifeStage: "성체",
       // 사용자가 허용한 170cm대·70kg대 범위 안에서 도감의 단일 측정값을 확정했다.
       height: "1.76 m",

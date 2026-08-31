@@ -1040,7 +1040,8 @@ export class InfoManager {
             "발굴지      " + disclosure.excavationSite,
             ...(def.observationProfile ? [
               "기원 연대   " + def.observationProfile.originYear,
-              `복원 연도   ${def.observationProfile.restorationYear} · 복원 ${def.observationProfile.restorationAge}년차`,
+              // 복원 연도는 저장된 경과 시간이 아니라 정적 도감의 세계관 나잇대만 단독으로 표시한다.
+              `복원 연도   ${def.observationProfile.restorationYear}`,
               `성장 단계   ${def.observationProfile.lifeStage} · 키 ${def.observationProfile.height} · 몸무게 ${def.observationProfile.weight}`,
             ] : []),
           ]

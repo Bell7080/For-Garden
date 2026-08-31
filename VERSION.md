@@ -1,6 +1,6 @@
 # 버전 관리
 
-현재 버전: **v0.39.0**
+현재 버전: **v0.39.1**
 
 `VERSION.md`와 `package.json`의 `version`은 항상 같은 값을 쓰고, 타이틀(로딩) 화면 좌측
 하단 표기는 그 값을 그대로 읽는다. 화면에 손으로 적어 두지 않는다.
@@ -31,6 +31,19 @@
   그 이전의 초기 프로토타입 단계는 `v0.1.0` 항목 하나로 묶었다.
 
 ## 변경 이력
+
+## v0.39.1 — 2026-08-31
+
+- **타이틀(로딩) 화면이 텍스트 제목 대신 로고 그림과 캐릭터 원화 배경을 쓴다.** "For - Garden"
+  텍스트를 `sprites/ui/titlename.webp` 로고 이미지로 바꾸고, 단색 배경 대신
+  `sprites/background/background_011.webp` 캐릭터 원화를 `drawVignette`로 눌러 깐다. 이 화면
+  자체가 로딩 화면이라 두 자산은 `scenes/loadingSteps.ts`의 공용 로딩 단계를 기다리지 않고
+  `TitleScene`이 진입 직후 곧바로 읽는다. 로딩 마름모 칸도 얼굴과 겹치지 않도록 조금 더
+  아래로 내렸다.
+- **5대 자치 스쿼드 엠블럼 원화를 구워 `sprites/factions/{fang,gear,eye,rune,rogue}.webp`로
+  정리했다.** `docs/factions.md`의 1~5번 순서(앱솔루트 팽·나이트 기어·시그널 아이·사일런트
+  룬·쁘띠 로그)에 맞춰 매칭했다. 원본은 저장소에 남기지 않고
+  `scripts/prepare_title.py`가 굽는다.
 
 ## v0.39.0 — 2026-08-31
 

@@ -7,7 +7,13 @@ import { storyManager } from "../managers/StoryManager";
 import { Button } from "../ui/Button";
 import { LoadingDiamonds } from "../ui/LoadingDiamonds";
 import { LOADING_STEPS, refreshTextTextures, runLoadingSteps } from "./loadingSteps";
+import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
+import { drawVignette } from "../ui/holo";
 import packageInfo from "../../package.json";
+
+/** 타이틀 로고타입(글자 대신 쓰는 그림)의 텍스처 키다. 원본은 1536×1024 비율이다. */
+const TITLE_LOGOTYPE_KEY = "title-logotype";
+const TITLE_LOGOTYPE_RATIO = 1024 / 1536;
 
 /**
  * 타이틀이자 로딩 화면.
@@ -26,17 +32,34 @@ export class TitleScene extends Phaser.Scene {
     setDebugReady(false);
 
     const cx = BASE_WIDTH / 2;
-    this.add.rectangle(cx, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void);
+    // 배경 원화의 얼굴은 화면 중단에 있으므로, 로고와 부제는 그 위 천장·후드 자리에만 둔다.
+    const logoY = BASE_HEIGHT * 0.1;
+    const logoWidth = 460;
+    const logoHalfHeight = (logoWidth * TITLE_LOGOTYPE_RATIO) / 2;
 
-    // 제목 · 부제 · 도시 소개 세 줄이 곧 글꼴 위계 셋의 본보기다.
-    this.add.text(cx, BASE_HEIGHT * 0.34, "For - Garden", textStyle({ role: "display", size: 92 })).setOrigin(0.5);
+    // 배경 원화가 도착하기 전에는 이 판이 자리를 지킨다 — 검은 화면보다 낫다.
+    const fallback = this.add.rectangle(cx, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void);
 
+    // 타이틀 자신의 배경·로고는 다른 화면 배경과 달리 로딩 단계를 기다리지 않고 곧바로 읽는다
+    // — 이 화면 자체가 로딩 화면이라 그 단계가 끝나기 전부터 보여야 하기 때문이다.
+    this.load.image(BACKGROUND.title, "sprites/background/background_011.webp");
+    this.load.image(TITLE_LOGOTYPE_KEY, "sprites/ui/titlename.webp");
+    this.load.once("complete", () => {
+      if (!this.scene.isActive()) return;
+      fallback.destroy();
+      addSceneBackground(this, BACKGROUND.title, -30);
+      drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { depth: -20 });
+      this.add.image(cx, logoY, TITLE_LOGOTYPE_KEY).setDisplaySize(logoWidth, logoHalfHeight * 2).setDepth(-10);
+    });
+    this.load.start();
+
+    // 부제 · 도시 소개 두 줄이 글꼴 위계의 본보기다. 제목 자리는 위 로고 그림이 대신한다.
     this.add
-      .text(cx, BASE_HEIGHT * 0.34 + 96, "ETERNAL CITY", textStyle({ role: "emphasis", size: 40, color: COLOR.accentText }))
+      .text(cx, logoY + logoHalfHeight + 40, "ETERNAL CITY", textStyle({ role: "emphasis", size: 40, color: COLOR.accentText }))
       .setOrigin(0.5);
 
     this.add
-      .text(cx, BASE_HEIGHT * 0.34 + 152, "멸종 동물 복원 연구 도시", textStyle({ role: "body", size: 30, color: COLOR.inkDim }))
+      .text(cx, logoY + logoHalfHeight + 90, "멸종 동물 복원 연구 도시", textStyle({ role: "body", size: 30, color: COLOR.inkDim }))
       .setOrigin(0.5);
 
     const recoveryNotice = this.registry.get("saveRecoveryNotice") as string | undefined;
@@ -55,7 +78,7 @@ export class TitleScene extends Phaser.Scene {
       .setOrigin(0, 1)
       .setAlpha(0.7);
 
-    const diamonds = new LoadingDiamonds(this, cx, BASE_HEIGHT * 0.5, LOADING_STEPS.length);
+    const diamonds = new LoadingDiamonds(this, cx, BASE_HEIGHT * 0.58, LOADING_STEPS.length);
 
     void runLoadingSteps(this, (done) => {
       diamonds.setFilled(done);

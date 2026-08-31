@@ -373,11 +373,11 @@ export interface RelicDef {
   projectName: string;
   /** 표본을 발견한 장소이며 생물학적 기원(origin)과 구분한다. */
   excavationSite: string;
-  /** 관찰 일지에만 쓰는 복원 표본의 생애·신체 기록이다. 없는 개체는 기존 항목만 표시한다. */
+  /** 저장 데이터가 아닌 정적 도감 정보로 쓰는 복원 표본의 생애·신체 기록이다. 없는 개체는 기존 항목만 표시한다. */
   observationProfile?: {
     originYear: string;
+    /** 실제 복원 경과가 아니라 캐릭터의 외형·정서적 나잇대를 은유하는 E.C. 세계관 값이다. */
     restorationYear: string;
-    restorationAge: number;
     lifeStage: string;
     height: string;
     weight: string;

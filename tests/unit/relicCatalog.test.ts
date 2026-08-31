@@ -16,6 +16,20 @@ const ALLOWED_RESEARCHER_REFERENCES: Readonly<Record<string, Readonly<{
 }[]>>> = {};
 
 describe("relic catalog", () => {
+  it("관찰 프로필의 정적 E.C. 나잇대는 1~20년이며 중복 복원 연차를 정의하지 않는다", () => {
+    // 저장 진행도가 아닌 도감 원본 전체를 검사해 새 렐릭에도 단일 세계관 나잇대 계약을 강제한다.
+    const profiles = PLAYABLE_RELICS.flatMap((relic) => relic.observationProfile ? [{ relicId: relic.id, profile: relic.observationProfile }] : []);
+
+    expect(profiles.length).toBeGreaterThan(0);
+    for (const { relicId, profile } of profiles) {
+      const match = /^E\.C\. (\d+)년$/.exec(profile.restorationYear);
+      expect(match, `${relicId} restorationYear 형식`).not.toBeNull();
+      expect(Number(match?.[1]), `${relicId} restorationYear 범위`).toBeGreaterThanOrEqual(1);
+      expect(Number(match?.[1]), `${relicId} restorationYear 범위`).toBeLessThanOrEqual(20);
+      expect(profile, `${relicId} 중복 복원 연차`).not.toHaveProperty("restorationAge");
+    }
+  });
+
   it("모든 해금 기록은 주인공 외의 현재 인간 연구원을 암시하지 않는다", () => {
     // docs/lore.md의 주인공이 “진짜 인간이자 유일한 연구원”이라는 설정을 모든 unlockRecord.text에서 보호한다.
     const violations = PLAYABLE_RELICS.flatMap((relic) => {
@@ -121,11 +135,10 @@ describe("relic catalog", () => {
 
   it("루카의 관찰 프로필과 도감은 같은 신체 수치와 단거리 선수 체형을 공개한다", () => {
     const luka = PLAYABLE_RELICS.find((relic) => relic.id === "luka")!;
-    // 성인 렐릭의 복원 이력과 신체 수치가 도감 요약의 수치 및 체형 설명과 어긋나지 않도록 함께 고정한다.
+    // 저장 진행도가 아닌 루카의 정적 도감 나잇대와 신체 수치가 요약의 체형 설명과 어긋나지 않도록 함께 고정한다.
     expect(luka.observationProfile).toMatchObject({
       originYear: "약 7,500만 년 전",
-      restorationYear: "E.C. 10년",
-      restorationAge: 23,
+      restorationYear: "E.C. 16년",
       lifeStage: "성체",
       height: "1.62 m",
       weight: "59 kg",

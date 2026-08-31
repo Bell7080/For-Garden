@@ -84,13 +84,14 @@ export function setUnitHealthValue(state: UnitHealthBarState, input: number | He
 }
 
 /** 한 프레임을 진행한다. 큰 delta도 보간을 초과시키지 않고 잔상을 현재 체력 이상으로 고정한다. */
-export function stepUnitHealthBar(state: UnitHealthBarState, deltaMs: number): UnitHealthBarState {
+export function stepUnitHealthBar(state: UnitHealthBarState, deltaMs: number, motionFactor = 1): UnitHealthBarState {
   const seconds = Math.max(0, deltaMs) / 1000;
-  const shown = state.shown + (state.target - state.shown) * Math.min(1, seconds * HEALTH_BAR_MOTION.shownEase);
+  // 끔은 채움을 즉시 맞추되 붉은 피해 잔상의 색과 대기 시간은 남겨 정보 손실을 막는다.
+  const shown = motionFactor === 0 ? state.target : state.shown + (state.target - state.shown) * Math.min(1, seconds * HEALTH_BAR_MOTION.shownEase * motionFactor);
   const trailHold = Math.max(0, state.trailHold - seconds);
   let damageTrail = Math.max(state.damageTrail, shown, state.target);
   if (trailHold === 0) {
-    damageTrail += (shown - damageTrail) * Math.min(1, seconds * HEALTH_BAR_MOTION.trailEase);
+    damageTrail += (shown - damageTrail) * (motionFactor === 0 ? 1 : Math.min(1, seconds * HEALTH_BAR_MOTION.trailEase * motionFactor));
   }
   // 부동소수점 오차와 저프레임 보간 모두에서 붉은 잔상이 체력 아래로 파고들지 않게 한다.
   damageTrail = Math.max(shown, state.target, damageTrail);

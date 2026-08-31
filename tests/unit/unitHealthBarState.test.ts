@@ -3,6 +3,14 @@ import { createUnitHealthBarState, setUnitHealthValue, stepUnitHealthBar } from 
 
 /** Phaser 없이 체력 표시의 시간 규칙만 검증해 렌더러 변경과 전투 규칙을 분리한다. */
 describe("unit health bar state", () => {
+  it("움직임을 꺼도 피해 잔상과 목표 색상 계층은 한 프레임 보존한다", () => {
+    const hit = setUnitHealthValue(createUnitHealthBarState(1), { currentHp: 60, maxHp: 100, damage: 40, cause: "damage" });
+    const stopped = stepUnitHealthBar(hit, 16, 0);
+    // 초록 채움은 이동 없이 즉시 맞지만 붉은 잔상은 대기 시간 동안 직전 폭을 유지한다.
+    expect(stopped.shown).toBe(0.6);
+    expect(stopped.damageTrail).toBe(1);
+    expect(stopped.reactionLevel).toBe(3);
+  });
   it("단일 피해는 직전 폭을 유지한 뒤 현재 체력을 향해 감소한다", () => {
     let state = setUnitHealthValue(createUnitHealthBarState(1), { currentHp: 70, maxHp: 100, damage: 30, cause: "damage" });
     state = stepUnitHealthBar(state, 100);

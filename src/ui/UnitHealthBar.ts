@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { battleUiMotionFactor, type BattleUiMotion } from "../core/settings";
 import { slantedRect, toPoints } from "./holo";
 import { COLOR } from "./theme";
 import {
@@ -54,14 +55,18 @@ export class UnitHealthBar extends Phaser.GameObjects.Container {
 
   private readonly capColor: number;
 
-  constructor(scene: Phaser.Scene, private readonly color: number) {
+  constructor(scene: Phaser.Scene, private readonly color: number, motion: BattleUiMotion = "default") {
     super(scene, 0, 0);
     this.capColor = darken(color, BAR.cap.darken);
+    this.motionFactor = battleUiMotionFactor(motion);
     this.graph = scene.add.graphics();
     this.add(this.graph);
     scene.add.existing(this);
     this.paint();
   }
+
+  /** 같은 저장 선택이 보간·확대·흔들림에 쓰이도록 생성 시 고정한 공용 배율이다. */
+  private readonly motionFactor: number;
 
   /** 비율 동기화 또는 HP·피해 원인을 받는다. 회복/동기화 입력은 피격 반응을 만들지 않는다. */
   setValue(value: number | HealthValueInput): this {
@@ -78,13 +83,13 @@ export class UnitHealthBar extends Phaser.GameObjects.Container {
 
   /** 매 프레임 조금씩 목표에 다가간다. `delta`는 밀리초다. */
   step(delta: number): void {
-    this.health = stepUnitHealthBar(this.health, delta);
+    this.health = stepUnitHealthBar(this.health, delta, this.motionFactor);
     // syncViews가 부모 위치를 매 프레임 덮으므로 흔들림·확대는 전용 내부 그래픽에만 건다.
     const progress = this.health.reactionLeft / HEALTH_BAR_MOTION.reactionSeconds;
     const level = this.health.reactionLevel;
-    const shake = BAR.reactionShake[level] * progress;
+    const shake = BAR.reactionShake[level] * progress * this.motionFactor;
     this.graph.setPosition(Math.sin(this.health.reactionLeft * 105) * shake, 0);
-    this.graph.setScale(1 + (BAR.reactionScale[level] - 1) * progress);
+    this.graph.setScale(1 + (BAR.reactionScale[level] - 1) * progress * this.motionFactor);
     this.paint();
   }
 

@@ -52,6 +52,7 @@ import { battleHeaderText, createExpeditionBossSkirmishConfig, createExpeditionS
 import type { ExpeditionBossAction } from "../core/expeditionBoss";
 import { expeditionManager } from "../managers/ExpeditionManager";
 import { settingsManager } from "../managers/SettingsManager";
+import { battleUiMotionFactor } from "../core/settings";
 import type { SettleExpeditionRunResponse, SubmitExpeditionBossScoreResponse } from "../api/contracts";
 import { currencyRecordToRewardItems, openRewardPopup } from "../ui/RewardPopup";
 import { BATTLE_STATUS_LAYOUT, statusBadgeOffsets } from "../ui/battleStatusLayout";
@@ -304,7 +305,10 @@ export class BattleScene extends Phaser.Scene {
     this.healPopups = 0;
     this.bossActions = [];
     // 이전 전투/환경설정에서 저장한 조작 상태를 새 판의 시작값으로 그대로 복원한다.
-    const battleSettings = settingsManager.get().game;
+    const currentSettings = settingsManager.get();
+    const battleSettings = currentSettings.game;
+    // 전투 시작 시 하나의 설정 스냅샷을 모든 HUD와 카메라 연출에 동일하게 전달한다.
+    const battleUiMotion = currentSettings.presentation.battleUiMotion;
     this.battleSpeed = battleSettings.battleSpeed;
     this.autoUltimate = battleSettings.autoUltimate;
     this.ultimateSequenceActive = false;
@@ -317,7 +321,7 @@ export class BattleScene extends Phaser.Scene {
     this.info = new CharacterInfoManager(this, 1001, "enemy");
     // 파편·파문은 SD보다 앞이되 궁극기 컷인(900)보다는 뒤라 연출을 가리지 않는다.
     // 광역 범위만 배경 원화 위·SD 아래에 깔려 누가 어디 섰는지 가리지 않는다.
-    this.effects = new EffectManager(this, { depth: DEPTH.burst, groundDepth: DEPTH.ground });
+    this.effects = new EffectManager(this, { depth: DEPTH.burst, groundDepth: DEPTH.ground, shake: currentSettings.presentation.screenShake, battleUiMotion });
     this.combatEffects = new CombatEffectPresenter(this.effects);
 
     // 편성 화면에서 본 6번 전장을 그대로 이어 실제 전투의 공간으로 사용한다.
@@ -471,7 +475,7 @@ export class BattleScene extends Phaser.Scene {
       const feverTint = skillArtTint(fighter.def.element, fighter.def.role);
       const shadow = this.add.ellipse(fighter.x, fighter.y + 4, 132, 24, 0x000000, 0.38);
       const barColor = fighter.side === "player" ? COLOR.hpFill : COLOR.hpEnemy;
-      const hpBar = new UnitHealthBar(this, barColor).snap(1);
+      const hpBar = new UnitHealthBar(this, barColor, settingsManager.get().presentation.battleUiMotion).snap(1);
       const bleedBadge = this.makeBleedBadge();
       const stunBadge = this.makeStunBadge();
       this.views.set(fighter.id, { creature, asset, fighter, infoHit, shadow, hpBar, bleedBadge, stunBadge, stunShown: false, feverTint, feverStep: -1, feverTinted: false, tint, dead: false });
@@ -502,6 +506,7 @@ export class BattleScene extends Phaser.Scene {
         relic: fighter.def, level: relicProgression.getProgress(fighter.def.id).level, stars: fighter.breakthrough + 1,
         currentHp: fighter.hp, maxHp: fighter.maxHp, ferocity: fighter.ferocity,
         active: false, readOnly: false, sub: fighter.def.ultimate.name,
+        battleUiMotion: settingsManager.get().presentation.battleUiMotion,
       });
       const { card, glow, sweep, charge, hpLabel, hpBar, ferocityLabel, ferocityBar } = prefab;
       // 궁극기 게이지는 카드 위에 덮인 어둠이다. 시계 방향으로 걷히다가 다 차면 사라져
@@ -580,7 +585,10 @@ export class BattleScene extends Phaser.Scene {
           this.contributionPanel?.setInputLocked(false);
         }
         if (!this.sequenceValid(next.token, fighter)) return;
-        this.cameras.main.shake(180, presentation.cameraShakeIntensity);
+        const presentationSettings = settingsManager.get().presentation;
+        const shakeFactor = presentationSettings.screenShake ? battleUiMotionFactor(presentationSettings.battleUiMotion) : 0;
+        // 끔에서는 카메라만 멈추고 뒤이어 재생되는 피해 숫자·색상·잔상 사건은 건드리지 않는다.
+        if (shakeFactor > 0) this.cameras.main.shake(180, presentation.cameraShakeIntensity * shakeFactor);
       }
 
       // 스킵도 입력 순간의 낡은 상태를 믿지 않는다. 컷인 유무와 무관하게 발사 직전 생존·게이지·종료를 재검증한다.
@@ -1049,7 +1057,8 @@ export class BattleScene extends Phaser.Scene {
    */
   private stepMeters(deltaMs: number): void {
     for (const view of this.views.values()) if (!view.dead) view.hpBar.step(deltaMs);
-    const k = Math.min(1, (deltaMs / 1000) * METER_EASE);
+    const motionFactor = battleUiMotionFactor(settingsManager.get().presentation.battleUiMotion);
+    const k = motionFactor === 0 ? 1 : Math.min(1, (deltaMs / 1000) * METER_EASE * motionFactor);
     for (const profile of this.profiles) {
       const { fighter } = profile;
       profile.prefab.stepHealth(deltaMs);

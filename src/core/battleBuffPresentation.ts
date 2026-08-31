@@ -9,6 +9,18 @@ export interface BattleBuffProgressModel {
   conditionLabel?: string;
 }
 
+/** 색을 보지 못해도 버프의 주효과를 읽을 수 있게 하는 작은 실루엣 분류다. */
+export type BattleBuffEffectShape = "attack" | "speed" | "support" | "special";
+
+/** 코어가 제공하는 안정적인 효과 ID를 시각 어휘로 바꾸며, 설명 문자열에는 의존하지 않는다. */
+export function battleBuffEffectShape(buff: Pick<ActiveCombatBuff, "id" | "skillId" | "timing">): BattleBuffEffectShape {
+  const key = `${buff.id}:${buff.skillId}`.toLowerCase();
+  if (key.includes("packhunt") || key.includes("pack-hunt") || key.includes("haste")) return "speed";
+  if (key.includes("staccato") || key.includes("crescendo")) return "attack";
+  if (buff.timing.kind === "conditional" || buff.timing.kind === "permanent") return "support";
+  return "special";
+}
+
 /** 잘못된 서버 값도 액자 밖으로 그리지 않도록 남은 시간의 비율을 0~1로 고정한다. */
 export function battleBuffRemainingRatio(remainingSeconds: number, totalSeconds: number): number {
   if (!Number.isFinite(remainingSeconds) || !Number.isFinite(totalSeconds) || totalSeconds <= 0) return 0;

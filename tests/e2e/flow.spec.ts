@@ -116,6 +116,16 @@ test("출격 → 스테이지 지도 → 파티 편성 → 전투까지 이어�
   expect(state?.playerOrder).toEqual(["토리카", "렉시아", "스피나"]);
 });
 
+/** 기준 해상도 한 장에 전장 HP 바와 하단 궁극기 프로필의 실제 간격을 시각 회귀 자료로 남긴다. */
+test("1080×1920 전장 HUD와 궁극기 입력이 겹치지 않는다", async ({ page }, testInfo) => {
+  // 저사양 CI의 Puppet 로딩 뒤에도 캡처 시간을 별도로 확보한다.
+  test.setTimeout(180_000);
+  // 캔버스 자체가 1080×1920 기준 좌표계이므로 기기 프로젝트의 터치 뷰포트는 유지한다.
+  await enterBattle(page);
+  await expect.poll(async () => (await battle(page))?.phase).toBe("fight");
+  await page.screenshot({ path: `test-results/${testInfo.project.name}-battle-hp-buffs-ultimate-safe-area-1080x1920.png`, fullPage: true });
+});
+
 test("전투 기여도 판을 열고 세 분류를 바꾼 뒤 접어 1080×1920 테마를 보존한다", async ({ page }, testInfo) => {
   await page.setViewportSize({ width: BASE_WIDTH, height: BASE_HEIGHT });
   await enterBattle(page);

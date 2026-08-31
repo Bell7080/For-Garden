@@ -67,7 +67,7 @@ import { EffectManager } from "../managers/EffectManager";
 import { CombatEffectPresenter, type CombatEffectTarget } from "../managers/CombatEffectPresenter";
 import { ensureEffectTextures } from "../ui/effectTextures";
 import type { DamageFlavor, DebuffId } from "../ui/damageNumbers";
-import { openBattleBuffPopup, type BattleBuffPopupController } from "../ui/BattleBuffPopup";
+import { openBattleBuffListPopup, openBattleBuffPopup, type BattleBuffListItem, type BattleBuffPopupController } from "../ui/BattleBuffPopup";
 import type { ActiveCombatDisplayEffect } from "../core/combatEffects";
 
 /**
@@ -1053,10 +1053,12 @@ export class BattleScene extends Phaser.Scene {
       // 준비 상태가 유지된 채 다른 궁극기가 시작되어도 잠긴 카드의 반복 광선은 즉시 감춘다.
       if (this.ultimateSequenceActive) profile.sweep.setAlpha(0);
       // 시간과 적용 조건은 코어 셀렉터가 이미 확정한다. 씬은 액자 색에 필요한 제공자 정의만 붙인다.
-      profile.prefab.setBuffs(activeCombatBuffs(this.state, fighter.id).flatMap((buff) => {
+      const models = activeCombatBuffs(this.state, fighter.id).flatMap((buff) => {
         const source = this.state.fighters.find((candidate) => candidate.id === buff.sourceFighterId);
         return source ? [{ buff, sourceRelic: source.def, onPress: () => this.openBuffDetails(buff) }] : [];
-      }));
+      });
+      // 집계 칩은 이 전투원의 최신 전체 목록을 씬의 기존 PopupLayer에 연다.
+      profile.prefab.setBuffs(models, () => this.openBuffList(fighter.id));
     }
     this.refreshOpenBuff();
   }
@@ -1071,6 +1073,15 @@ export class BattleScene extends Phaser.Scene {
       if (this.openBuff?.controller === controller) this.openBuff = undefined;
     });
     this.openBuff = { key, controller };
+  }
+
+  /** 목록을 누른 시점에 코어를 다시 조회해 이미 종료된 버프가 팝업에 남지 않게 한다. */
+  private openBuffList(targetFighterId: string): void {
+    const items: BattleBuffListItem[] = activeCombatBuffs(this.state, targetFighterId).flatMap((buff) => {
+      const source = this.state.fighters.find((fighter) => fighter.id === buff.sourceFighterId);
+      return source ? [{ buff, provider: source.def }] : [];
+    });
+    if (items.length > 0) openBattleBuffListPopup(this, this.buffPopups, items, (buff) => this.openBuffDetails(buff));
   }
 
   /** 열린 동안 전투가 계속되는 정책: 최신 남은 시간을 반영하고 효과가 끝나면 즉시 상세를 닫는다. */

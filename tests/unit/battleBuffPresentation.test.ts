@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { battleBuffProgress, battleBuffRemainingRatio, battleBuffTimingLabel } from "../../src/core/battleBuffPresentation";
+import { battleBuffEffectShape, battleBuffProgress, battleBuffRemainingRatio, battleBuffTimingLabel } from "../../src/core/battleBuffPresentation";
 
 /** Phaser 없이 경계값과 조건부 오라의 의미를 고정해 렌더러가 가짜 시간을 만들지 못하게 한다. */
 describe("전투 버프 진행 표시 모델", () => {
@@ -25,5 +25,12 @@ describe("전투 버프 진행 표시 모델", () => {
       kind: "conditional", remainingRatio: 1, elapsedTurns: 0, conditionLabel: "동일 표적 유지 중",
     });
     expect(battleBuffTimingLabel({ kind: "conditional" })).toBe("동일 표적 유지 중");
+  });
+
+  /** 색상과 독립적인 효과 실루엣이 안정적인 코어 ID로 선택되는지 고정한다. */
+  it("효과 유형별 실루엣을 설명 문구와 무관하게 구분한다", () => {
+    expect(battleBuffEffectShape({ id: "pack-hunt:a", skillId: "packHunt", timing: { kind: "conditional" } })).toBe("speed");
+    expect(battleBuffEffectShape({ id: "crescendo-staccato:a", skillId: "crescendoStaccato", timing: { kind: "ferocity", remainingSeconds: 2, totalSeconds: 10 } })).toBe("attack");
+    expect(battleBuffEffectShape({ id: "aura:a", skillId: "aura", timing: { kind: "permanent" } })).toBe("support");
   });
 });

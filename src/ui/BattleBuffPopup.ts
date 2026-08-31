@@ -14,6 +14,32 @@ export interface BattleBuffPopupController {
   close(): void;
 }
 
+/** 집계 칩이 넘겨주는 최신 버프와 제공자 한 쌍이다. */
+export interface BattleBuffListItem { buff: ActiveCombatBuff; provider: RelicDef }
+
+/** 같은 PopupLayer에 전체 활성 목록을 열고, 64px 이상의 각 행에서 상세 쪽지를 이어서 연다. */
+export function openBattleBuffListPopup(scene: Phaser.Scene, popups: PopupLayer, items: readonly BattleBuffListItem[], onSelect: (buff: ActiveCombatBuff) => void): void {
+  const rowHeight = 82;
+  const height = Math.min(760, 170 + items.length * rowHeight);
+  popups.open({ width: 760, height, title: `활성 버프  ${items.length}`, tilt: -1.2 }, (content, close) => {
+    const top = -height / 2 + 92;
+    items.forEach(({ buff, provider }, index) => {
+      const y = top + index * rowHeight;
+      const tint = skillArtTint(provider.element, provider.role);
+      // 행의 왼쪽 마름모와 밝은 이름/시간을 함께 써 색만으로 제공자를 구별하지 않는다.
+      const marker = scene.add.graphics().fillStyle(tint, 1).fillPoints([{ x: -320, y }, { x: -308, y: y - 12 }, { x: -296, y }, { x: -308, y: y + 12 }], true);
+      const name = scene.add.text(-278, y - 18, buff.name, textStyle({ role: "display", size: 27 })).setOrigin(0, 0);
+      const meta = scene.add.text(250, y - 14, battleBuffTimingLabel(buff.timing), textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(1, 0);
+      const hit = scene.add.rectangle(0, y, 660, 68, 0xffffff, 0).setInteractive({ useHandCursor: true });
+      hit.on("pointerdown", () => hit.setScale(1.03));
+      hit.on("pointerout", () => hit.setScale(1));
+      hit.on("pointerup", () => { close(); onSelect(buff); });
+      content.add([marker, name, meta, hit]);
+      if (index < items.length - 1) content.add(drawHairline(scene, 0, y + 39, 620, { color: COLOR.accent, alpha: 0.2 }));
+    });
+  });
+}
+
 /** SkillPopup과 같은 액자·제목·구분선 위계로 현재 활성 버프의 실제 상태를 보여 준다. */
 export function openBattleBuffPopup(scene: Phaser.Scene, popups: PopupLayer, buff: ActiveCombatBuff, provider: RelicDef, onClose?: () => void): BattleBuffPopupController {
   let closePopup = (): void => undefined;

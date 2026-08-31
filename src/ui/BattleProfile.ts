@@ -22,7 +22,7 @@ export interface BattleBuffRenderModel {
   onPress?: () => void;
 }
 
-interface BuffChipView { container: BattleBuffChip; slot: number; tint: number }
+interface BuffChipView { container: BattleBuffChip; slot: number }
 
 /** 씬이 상태만 넘기고 카드와 두 게이지의 시각 규칙은 다시 정의하지 않게 하는 입력 계약이다. */
 export interface BattleProfileOptions {
@@ -57,6 +57,8 @@ export class BattleProfile extends Phaser.GameObjects.Container {
   public readonly readOnly: boolean;
   private readonly buffChips = new Map<string, BuffChipView>();
   private readonly battleUiMotion: BattleUiMotion;
+  /** 최대 개수를 넘긴 마지막 집계 칩이 전체 목록 열기 의도를 씬으로 전달한다. */
+  private overflowChip?: BattleBuffChip;
 
   constructor(scene: Phaser.Scene, x: number, y: number, options: BattleProfileOptions) {
     super(scene, x, y);
@@ -120,8 +122,10 @@ export class BattleProfile extends Phaser.GameObjects.Container {
    * `id + sourceFighterId`가 같은 액자는 그대로 두고 사라진 액자만 파괴해, 주기적 HUD 갱신이
    * 아이콘과 입력 상태를 매번 새로 만들거나 오래된 버프의 슬롯을 흔들지 않게 한다.
    */
-  public setBuffs(models: readonly BattleBuffRenderModel[]): this {
-    const visible = models.slice(0, L.buffRow.maxVisible);
+  public setBuffs(models: readonly BattleBuffRenderModel[], onOverflowPress?: () => void): this {
+    const overflow = Math.max(0, models.length - L.buffRow.maxVisible + 1);
+    const visibleCount = overflow > 0 ? L.buffRow.maxVisible - 1 : L.buffRow.maxVisible;
+    const visible = models.slice(0, visibleCount);
     const keys = new Set(visible.map(({ buff }) => this.buffKey(buff)));
     for (const [key, view] of this.buffChips) {
       if (!keys.has(key)) { view.container.destroy(true); this.buffChips.delete(key); }
@@ -130,14 +134,23 @@ export class BattleProfile extends Phaser.GameObjects.Container {
       const key = this.buffKey(model.buff);
       const current = this.buffChips.get(key);
       if (current) {
-        current.container.setTiming(model.buff.timing, L.buffRow.chipSize, current.tint);
+        current.container.setTiming(model.buff.timing, L.buffRow.chipSize);
         continue;
       }
       const used = new Set([...this.buffChips.values()].map(({ slot }) => slot));
       const slot = Array.from({ length: L.buffRow.maxVisible }, (_, index) => index).find((index) => !used.has(index));
       if (slot === undefined) continue;
-      const { container, tint } = this.createBuffChip(model, slot);
-      this.buffChips.set(key, { container, slot, tint });
+      const { container } = this.createBuffChip(model, slot);
+      this.buffChips.set(key, { container, slot });
+      this.buffContainer.add(container);
+    }
+    // 집계 칩은 실제 버프와 키/슬롯 생명주기를 섞지 않고 마지막 고정 슬롯만 사용한다.
+    this.overflowChip?.destroy(true);
+    this.overflowChip = undefined;
+    if (overflow > 0) {
+      const model = models[visibleCount];
+      const { container } = this.createBuffChip(model, L.buffRow.maxVisible - 1, `+${overflow}`, onOverflowPress);
+      this.overflowChip = container;
       this.buffContainer.add(container);
     }
     return this;
@@ -146,7 +159,7 @@ export class BattleProfile extends Phaser.GameObjects.Container {
   private buffKey(buff: ActiveCombatBuff): string { return `${buff.id}:${buff.sourceFighterId}`; }
 
   /** 스킬 그림 한 장을 담는 액자이므로 예외적으로 사방선과 안쪽 비네팅을 함께 쓴다. */
-  private createBuffChip(model: BattleBuffRenderModel, slot: number): { container: BattleBuffChip; tint: number } {
+  private createBuffChip(model: BattleBuffRenderModel, slot: number, aggregateLabel?: string, onPress = model.onPress): { container: BattleBuffChip; tint: number } {
     const { chipSize, gap, maxVisible, y } = L.buffRow;
     const rowWidth = maxVisible * chipSize + (maxVisible - 1) * gap;
     const x = -rowWidth / 2 + chipSize / 2 + slot * (chipSize + gap);
@@ -154,7 +167,9 @@ export class BattleProfile extends Phaser.GameObjects.Container {
     const slotName: SkillArtSlot = model.buff.skillId === "luka-passive" ? "passive" : "ferocity";
     const dedicated = skillArtFor(model.sourceRelic.id, slotName);
     const texture = dedicated && this.scene.textures.exists(dedicated) ? dedicated : (model.fallbackIcon ?? FALLBACK_SKILL_ICON);
-    const chip = new BattleBuffChip(this.scene, chipSize, tint, texture, model.buff.timing, this.battleUiMotion, () => model.onPress?.()).setPosition(x, y);
+    const chip = new BattleBuffChip(this.scene, chipSize, tint, texture, model.buff, this.battleUiMotion, () => onPress?.()).setPosition(x, y);
+    // +N은 장식 아이콘보다 우선하는 고대비 숫자로 집계 동작임을 명확히 한다.
+    if (aggregateLabel) chip.add(this.scene.add.text(0, 0, aggregateLabel, textStyle({ role: "display", size: 25, color: "#ffffff" })).setOrigin(0.5).setShadow(2, 3, "#05070a", 1));
     return { container: chip, tint };
   }
 

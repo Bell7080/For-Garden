@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { chipPoints, drawLayer, drawShapeEdge, HOLO } from "./holo";
 import { addSectionTitle } from "./SectionTitle";
 import { COLOR, textStyle } from "./theme";
+import { POPUP_CLOSE_LAYOUT, tiltedPopupSize } from "./popupGeometry";
 
 /** 쪽지와 화면을 대부분 차지하는 작업판이 공유하는 제목 위계다. */
 export const POPUP_TITLE_SIZE = {
@@ -122,13 +123,13 @@ export class PopupLayer {
       titleChrome.push(addSectionTitle(this.scene, -width / 2 + unit * 0.1, -height / 2, options.title, { size: options.titleSize ?? POPUP_TITLE_SIZE.note, parent: body }).setDepth(1000));
       // 닫기는 기본적으로 오른쪽 위에 두되, 화면 chrome이 닫기를 맡으면 중복 조작을 만들지 않는다.
       if (!options.hideCloseButton) {
-        const closeButton = this.scene.add.container(width / 2 - 40, -height / 2 + 40);
+        const closeButton = this.scene.add.container(width / 2 - POPUP_CLOSE_LAYOUT.centerInset, -height / 2 + POPUP_CLOSE_LAYOUT.centerInset);
         const mark = this.scene.add.graphics();
         mark.lineStyle(HOLO.lineWidth + 1, 0xc9ccd2, 0.9);
         mark.lineBetween(-13, -13, 13, 13);
         mark.lineBetween(13, -13, -13, 13);
         closeButton.add(mark);
-        const hit = this.scene.add.rectangle(width / 2 - 40, -height / 2 + 40, 84, 84, 0xffffff, 0).setInteractive({ useHandCursor: true });
+        const hit = this.scene.add.rectangle(width / 2 - POPUP_CLOSE_LAYOUT.centerInset, -height / 2 + POPUP_CLOSE_LAYOUT.centerInset, POPUP_CLOSE_LAYOUT.hitSize, POPUP_CLOSE_LAYOUT.hitSize, 0xffffff, 0).setInteractive({ useHandCursor: true });
         hit.on("pointerdown", () => closeButton.setScale(1.15));
         hit.on("pointerout", () => closeButton.setScale(1));
         hit.on("pointerup", () => close());
@@ -177,11 +178,13 @@ export class PopupLayer {
     if (!options.anchor) return undefined;
     const margin = 24;
     const gap = 34;
-    const above = options.anchor.y - options.height / 2 - gap;
-    const y = above - options.height / 2 >= margin ? above : options.anchor.y + options.height / 2 + gap;
+    // 회전 전 width/height로 제한하면 기울어진 모서리와 그 안의 X 입력면이 안전 영역을 넘는다.
+    const bounds = tiltedPopupSize(options.width, options.height, options.tilt);
+    const above = options.anchor.y - bounds.height / 2 - gap;
+    const y = above - bounds.height / 2 >= margin ? above : options.anchor.y + bounds.height / 2 + gap;
     return {
-      x: Phaser.Math.Clamp(options.anchor.x, options.width / 2 + margin, screen.width - options.width / 2 - margin),
-      y: Phaser.Math.Clamp(y, options.height / 2 + margin, screen.height - options.height / 2 - margin),
+      x: Phaser.Math.Clamp(options.anchor.x, bounds.width / 2 + margin, screen.width - bounds.width / 2 - margin),
+      y: Phaser.Math.Clamp(y, bounds.height / 2 + margin, screen.height - bounds.height / 2 - margin),
     };
   }
 

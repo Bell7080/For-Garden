@@ -15,6 +15,7 @@ import {
   teamHp,
   type Arena,
   type Fighter,
+  type ActiveCombatBuff,
   type SkirmishEvent,
   type SkirmishState,
   skirmishRelicResults,
@@ -66,6 +67,7 @@ import { EffectManager } from "../managers/EffectManager";
 import { CombatEffectPresenter, type CombatEffectTarget } from "../managers/CombatEffectPresenter";
 import { ensureEffectTextures } from "../ui/effectTextures";
 import type { DamageFlavor, DebuffId } from "../ui/damageNumbers";
+import { openBattleBuffPopup, type BattleBuffPopupController } from "../ui/BattleBuffPopup";
 
 /**
  * 여섯이 돌아다닐 수 있는 범위.
@@ -236,6 +238,10 @@ export class BattleScene extends Phaser.Scene {
   private presentationChip!: ControlChip;
   /** 적 상세는 플레이어 성장 입력을 만들지 않는 전투 읽기 전용 창이다. */
   private info!: CharacterInfoManager;
+  /** 버프 상세도 전투 씬의 한 PopupLayer에 쌓아 입력·닫기 순서를 통일한다. */
+  private buffPopups!: PopupLayer;
+  /** 전투는 팝업 중에도 계속되며, 선택 ID로 최신 버프를 찾아 시간 갱신/종료 닫기를 수행한다. */
+  private openBuff?: { key: string; controller: BattleBuffPopupController };
   /**
    * 화면에 터지는 모든 것의 단일 소유자.
    *
@@ -320,6 +326,8 @@ export class BattleScene extends Phaser.Scene {
     this.contributionResult = undefined;
     // 적도 같은 정보창을 쓴다. 문맥만 "enemy"라 급여·돌파·유대·룬이 빠지고 현재 전투 줄이 붙는다.
     this.info = new CharacterInfoManager(this, 1001, "enemy");
+    this.buffPopups = new PopupLayer(this, 2200);
+    this.openBuff = undefined;
     // 파편·파문은 SD보다 앞이되 궁극기 컷인(900)보다는 뒤라 연출을 가리지 않는다.
     // 광역 범위만 배경 원화 위·SD 아래에 깔려 누가 어디 섰는지 가리지 않는다.
     this.effects = new EffectManager(this, { depth: DEPTH.burst, groundDepth: DEPTH.ground, shake: currentSettings.presentation.screenShake, battleUiMotion });
@@ -350,6 +358,8 @@ export class BattleScene extends Phaser.Scene {
       this.cancelUltimatePresentation();
       this.contributionPanel?.destroy();
       this.contributionPanel = undefined;
+      this.buffPopups.closeAll();
+      this.openBuff = undefined;
       this.views.forEach((view) => view.creature.destroy());
       this.views.clear();
     });
@@ -1037,9 +1047,31 @@ export class BattleScene extends Phaser.Scene {
       // 시간과 적용 조건은 코어 셀렉터가 이미 확정한다. 씬은 액자 색에 필요한 제공자 정의만 붙인다.
       profile.prefab.setBuffs(activeCombatBuffs(this.state, fighter.id).flatMap((buff) => {
         const source = this.state.fighters.find((candidate) => candidate.id === buff.sourceFighterId);
-        return source ? [{ buff, sourceRelic: source.def }] : [];
+        return source ? [{ buff, sourceRelic: source.def, onPress: () => this.openBuffDetails(buff) }] : [];
       }));
     }
+    this.refreshOpenBuff();
+  }
+
+  /** 누른 순간의 객체를 보관하지 않고 안정적인 런타임 ID만 선택해 다음 프레임부터 다시 조회한다. */
+  private openBuffDetails(buff: ActiveCombatBuff): void {
+    this.openBuff?.controller.close();
+    const source = this.state.fighters.find((fighter) => fighter.id === buff.sourceFighterId);
+    if (!source) return;
+    const key = `${buff.id}:${buff.sourceFighterId}`;
+    const controller = openBattleBuffPopup(this, this.buffPopups, buff, source.def, () => {
+      if (this.openBuff?.controller === controller) this.openBuff = undefined;
+    });
+    this.openBuff = { key, controller };
+  }
+
+  /** 열린 동안 전투가 계속되는 정책: 최신 남은 시간을 반영하고 효과가 끝나면 즉시 상세를 닫는다. */
+  private refreshOpenBuff(): void {
+    if (!this.openBuff) return;
+    const latest = this.state.fighters.flatMap((fighter) => activeCombatBuffs(this.state, fighter.id))
+      .find((buff) => `${buff.id}:${buff.sourceFighterId}` === this.openBuff?.key);
+    if (latest) this.openBuff.controller.update(latest);
+    else this.openBuff.controller.close();
   }
 
   /**

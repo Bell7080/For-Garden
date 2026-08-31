@@ -3,13 +3,14 @@ import type { RelicDef, SkillIconAssetId } from "../core/types";
 import type { ActiveCombatBuff } from "../core/skirmish";
 import type { BattleUiMotion } from "../core/settings";
 import { COLOR, textStyle } from "./theme";
-import { chipPoints, drawInnerVignette, drawLayer, drawShapeOutline, HoloBar } from "./holo";
+import { HoloBar } from "./holo";
 import { BattleHealthBar } from "./BattleHealthBar";
 import type { HealthChangeCause } from "./unitHealthBarState";
 import { PortraitCard, relicCardTint } from "./PortraitCard";
 import { BATTLE_PROFILE_LAYOUT as L } from "./battleStatusLayout";
 import { skillArtFor, skillArtTint, type SkillArtSlot } from "./skillArt";
 import { FALLBACK_SKILL_ICON } from "./skillIcons";
+import { BattleBuffChip } from "./BattleBuffChip";
 
 /** 씬은 코어 결과에 제공자 정의만 붙이고, 액자 선택·좌표·입력·파괴는 프리팹에 맡긴다. */
 export interface BattleBuffRenderModel {
@@ -17,9 +18,11 @@ export interface BattleBuffRenderModel {
   sourceRelic: RelicDef;
   /** 향후 공용 버프 아이콘이 늘어날 때도 기존 폴백 레지스트리를 통과하게 하는 선택값이다. */
   fallbackIcon?: SkillIconAssetId;
+  /** 칩 상세는 씬이 소유한 PopupLayer를 통해 열어야 하므로 프리팹은 입력 의도만 전달한다. */
+  onPress?: () => void;
 }
 
-interface BuffChipView { container: Phaser.GameObjects.Container; slot: number }
+interface BuffChipView { container: BattleBuffChip; slot: number; tint: number }
 
 /** 씬이 상태만 넘기고 카드와 두 게이지의 시각 규칙은 다시 정의하지 않게 하는 입력 계약이다. */
 export interface BattleProfileOptions {
@@ -53,10 +56,12 @@ export class BattleProfile extends Phaser.GameObjects.Container {
   public readonly buffContainer: Phaser.GameObjects.Container;
   public readonly readOnly: boolean;
   private readonly buffChips = new Map<string, BuffChipView>();
+  private readonly battleUiMotion: BattleUiMotion;
 
   constructor(scene: Phaser.Scene, x: number, y: number, options: BattleProfileOptions) {
     super(scene, x, y);
     this.readOnly = options.readOnly;
+    this.battleUiMotion = options.battleUiMotion ?? "default";
     this.glow = scene.add.rectangle(0, 0, L.glowSize, L.glowSize, COLOR.accent, 0);
     this.sweep = scene.add.rectangle(-125, 0, 34, 320, COLOR.accent, 0).setAngle(18).setDepth(2);
     this.card = new PortraitCard(scene, 0, 0, {
@@ -123,12 +128,16 @@ export class BattleProfile extends Phaser.GameObjects.Container {
     }
     for (const model of visible) {
       const key = this.buffKey(model.buff);
-      if (this.buffChips.has(key)) continue;
+      const current = this.buffChips.get(key);
+      if (current) {
+        current.container.setTiming(model.buff.timing, L.buffRow.chipSize, current.tint);
+        continue;
+      }
       const used = new Set([...this.buffChips.values()].map(({ slot }) => slot));
       const slot = Array.from({ length: L.buffRow.maxVisible }, (_, index) => index).find((index) => !used.has(index));
       if (slot === undefined) continue;
-      const container = this.createBuffChip(model, slot);
-      this.buffChips.set(key, { container, slot });
+      const { container, tint } = this.createBuffChip(model, slot);
+      this.buffChips.set(key, { container, slot, tint });
       this.buffContainer.add(container);
     }
     return this;
@@ -137,26 +146,16 @@ export class BattleProfile extends Phaser.GameObjects.Container {
   private buffKey(buff: ActiveCombatBuff): string { return `${buff.id}:${buff.sourceFighterId}`; }
 
   /** 스킬 그림 한 장을 담는 액자이므로 예외적으로 사방선과 안쪽 비네팅을 함께 쓴다. */
-  private createBuffChip(model: BattleBuffRenderModel, slot: number): Phaser.GameObjects.Container {
+  private createBuffChip(model: BattleBuffRenderModel, slot: number): { container: BattleBuffChip; tint: number } {
     const { chipSize, gap, maxVisible, y } = L.buffRow;
     const rowWidth = maxVisible * chipSize + (maxVisible - 1) * gap;
     const x = -rowWidth / 2 + chipSize / 2 + slot * (chipSize + gap);
-    const chip = this.scene.add.container(x, y);
-    const shape = chipPoints(chipSize, chipSize, { bevel: { topLeft: 12, topRight: 0, bottomRight: 12, bottomLeft: 0 } });
     const tint = skillArtTint(model.sourceRelic.element, model.sourceRelic.role);
-    chip.add(drawLayer(this.scene, 0, 0, shape, { fill: tint, alpha: 0.9 }));
     const slotName: SkillArtSlot = model.buff.skillId === "luka-passive" ? "passive" : "ferocity";
     const dedicated = skillArtFor(model.sourceRelic.id, slotName);
     const texture = dedicated && this.scene.textures.exists(dedicated) ? dedicated : (model.fallbackIcon ?? FALLBACK_SKILL_ICON);
-    const art = this.scene.add.image(0, 0, texture).setDisplaySize(chipSize * 0.72, chipSize * 0.72).setTint(tint);
-    chip.add([art, drawInnerVignette(this.scene, 0, 0, shape, { strength: 0.55 }), drawShapeOutline(this.scene, 0, 0, shape, { color: tint, alpha: 0.9, width: 2 })]);
-    const hit = this.scene.add.rectangle(0, 0, chipSize, chipSize, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    // 카드가 궁극기 버튼이므로 양쪽 입력 단계에서 전파를 막아 칩 탭이 궁극기로 이어지지 않는다.
-    hit.on("pointerdown", (_pointer: Phaser.Input.Pointer, _x: number, _y: number, event: Phaser.Types.Input.EventData) => { event.stopPropagation(); chip.setScale(1.1); });
-    hit.on("pointerup", (_pointer: Phaser.Input.Pointer, _x: number, _y: number, event: Phaser.Types.Input.EventData) => { event.stopPropagation(); chip.setScale(1); });
-    hit.on("pointerout", () => chip.setScale(1));
-    chip.add(hit);
-    return chip;
+    const chip = new BattleBuffChip(this.scene, chipSize, tint, texture, model.buff.timing, this.battleUiMotion, () => model.onPress?.()).setPosition(x, y);
+    return { container: chip, tint };
   }
 
   /** 활성 상태는 공용 카드 발광으로만 표현하며 읽기 전용 프로필에는 입력을 열지 않는다. */

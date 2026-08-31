@@ -244,11 +244,14 @@ export class PartyScene extends Phaser.Scene {
     });
     // 보유 카드의 상세 정보 장기 누름과 겹치지 않도록 드래그 시작점은 이 상단 SD 입력면뿐이다.
     bindFormationDrag(this, this.allySlots.map((slot, index) => ({ hit: slot.hit, x: PREVIEW_COLUMNS[index], y: ALLY_ROW - PREVIEW_HEIGHT / 2, width: 210, height: PREVIEW_HEIGHT })), {
-      onTap: (slot) => {
+      dragStart: () => { /* 슬롯 입력은 편성 배열을 건드리지 않는다. */ },
+      dragMove: () => { /* SD는 드롭 확정 뒤 기존 비동기 렌더러가 다시 세운다. */ },
+      cancel: () => { /* 취소 시 기존 편성과 저장 경계를 유지한다. */ },
+      tap: (slot) => {
         // 짧은 탭은 화면에 보이는 자리 번호 그대로 해제한다.
         if (this.picked[slot] !== undefined && removeFormationSlot(this.picked, slot)) this.refresh();
       },
-      onDrop: (from, to) => {
+      drop: (from, to) => {
         this.picked = moveFormationSlot(this.picked, from, to);
         // Puppet 원본을 옮기지 않고 확정 뒤 기존 비동기 재배치 경로로 화면을 다시 만든다.
         this.refresh();

@@ -2,9 +2,10 @@ import Phaser from "phaser";
 import { BASE_WIDTH, BASE_HEIGHT } from "../config/gameConfig";
 import type { StageDef } from "../core/types";
 import { setDebugScene } from "../debug";
-import { CHAPTERS, STAGES, getStageEnemies } from "../data/stages";
+import { CHAPTERS, SIDE_STORY_STAGE, STAGES, getStageEnemies } from "../data/stages";
 import { latestUnlockedStage } from "../core/stageProgress";
 import { CharacterInfoManager } from "../managers/CharacterInfoManager";
+import { storyManager } from "../managers/StoryManager";
 import { isStageUnlocked, session } from "../state/session";
 import { Button } from "../ui/Button";
 import { addBackButton } from "../ui/IconButton";
@@ -88,8 +89,8 @@ export class StageMapScene extends Phaser.Scene {
       label: "출  전",
       fontSize: 36,
       onClick: () => {
-        session.selectedStageId = this.selected;
-        this.scene.start("party");
+        // 선택 kind에 맞는 한 진입점만 호출해 스토리에서 편성 화면이 열리지 않게 한다.
+        this.enterSelected();
       },
     });
     this.sortieButton.setDepth(CHROME_DEPTH);
@@ -135,7 +136,8 @@ export class StageMapScene extends Phaser.Scene {
   private buildMap(): void {
     const cx = BASE_WIDTH / 2;
     const chapter = CHAPTERS.find(({ id }) => id === this.currentChapter) ?? CHAPTERS[0];
-    const chapterStages = chapter.stages;
+    // 첫 구역만 본편 배열 옆에 선택 서사 노드를 합치며 원본 본편 순서는 그대로 둔다.
+    const chapterStages = this.currentChapter === 1 ? [...chapter.stages, SIDE_STORY_STAGE] : [...chapter.stages];
     this.chapterTitle.setText(chapter.title);
     this.chapterSubtitle.setText(chapter.subtitle);
     this.previousChapterButton?.setEnabled(this.currentChapter > CHAPTERS[0].id);
@@ -156,13 +158,15 @@ export class StageMapScene extends Phaser.Scene {
     this.map.add(this.add.line(0, 0, cx, 0, cx, -height, COLOR.panelEdge).setOrigin(0).setLineWidth(6));
 
     chapterStages.forEach((stage, index) => {
-      const y = -index * NODE_GAP;
-      // 좌우로 살짝 어긋나게 놓아 단조로운 일자 배치를 피한다.
-      const x = cx + (index % 2 === 0 ? -110 : 110);
+      const mainIndex = stage.kind === "story" ? 4 : index;
+      const y = -mainIndex * NODE_GAP;
+      // 서브 칩은 1-5에서 옆으로 뻗고 본편은 기존 세로축의 교차 배치를 유지한다.
+      const x = stage.kind === "story" ? cx + 360 : cx + (index % 2 === 0 ? -110 : 110);
       const unlocked = isStageUnlocked(stage.id);
-      const cleared = session.cleared.has(stage.id);
+      const cleared = stage.kind === "story" ? session.completedStoryIds.has(stage.storyId) : session.cleared.has(stage.id);
 
-      this.map.add(this.add.line(0, 0, cx, y, x, y, COLOR.panelEdge).setOrigin(0).setLineWidth(4));
+      // 가지도 기록 보상 길 규칙처럼 얇은 실선만 써 본편 장축보다 가볍게 보인다.
+      this.map.add(this.add.line(0, 0, cx, y, x, y, COLOR.panelEdge).setOrigin(0).setLineWidth(stage.kind === "story" ? 2 : 4));
       // 노드도 카드와 같은 칩 언어를 쓴다. 원형 테두리 대신 깎인 조각으로 둔다.
       this.map.add(drawLayer(this, x, y, chipPoints(96, 96, {
         bevel: { topLeft: 30, topRight: 0, bottomRight: 30, bottomLeft: 0 },
@@ -242,33 +246,53 @@ export class StageMapScene extends Phaser.Scene {
   /** 지도 이동 중 선택 노드의 실제 화면 Y를 계산해 판과 SD를 계속 같은 노드에 붙인다. */
   private trackSelectedPreview(): void {
     if (!this.enemyPreview || !this.selected) return;
-    const chapterStages = CHAPTERS.find(({ id }) => id === this.currentChapter)?.stages ?? [];
+    const main = CHAPTERS.find(({ id }) => id === this.currentChapter)?.stages ?? [];
+    const chapterStages = this.currentChapter === 1 ? [...main, SIDE_STORY_STAGE] : [...main];
     const index = chapterStages.findIndex((stage) => stage.id === this.selected);
-    const nodeY = this.map.y - index * NODE_GAP;
+    const nodeY = this.map.y - (chapterStages[index]?.kind === "story" ? 4 : index) * NODE_GAP;
     this.enemyPreview.trackNode(nodeY, isEnemyPreviewNodeVisible(nodeY, WINDOW.top, WINDOW.bottom));
   }
 
   /** 고른 스테이지를 중앙으로 옮기고 공용 노드 미리보기의 내용과 꼬리를 함께 갱신한다. */
   private select(stage: StageDef, instant = false): void {
     this.selected = stage.id;
-    session.selectedStageId = stage.id;
-    const chapterStages = CHAPTERS.find(({ id }) => id === this.currentChapter)?.stages ?? [];
+    // 저장의 전투 선택에는 스토리 노드를 넣지 않아 BattleScene이 잘못 열 가능성을 없앤다.
+    session.selectedStageId = stage.kind === "battle" ? stage.id : null;
+    const main = CHAPTERS.find(({ id }) => id === this.currentChapter)?.stages ?? [];
+    const chapterStages = this.currentChapter === 1 ? [...main, SIDE_STORY_STAGE] : [...main];
     const index = chapterStages.findIndex((candidate) => candidate.id === stage.id);
     for (const [id, node] of this.nodes) {
       const chosen = id === stage.id;
       // 선택은 외곽선 추가가 아니라 기존 홀로그램 규칙의 확대와 글자색으로만 알린다.
       node.label.setScale(chosen ? 1.25 : 1);
-      node.label.setColor(chosen ? COLOR.accentText : session.cleared.has(id) ? COLOR.ink : COLOR.inkDim);
+      const nodeStage = STAGES.find((candidate) => candidate.id === id);
+      const completed = nodeStage?.kind === "story" ? session.completedStoryIds.has(nodeStage.storyId) : session.cleared.has(id);
+      node.label.setColor(chosen ? COLOR.accentText : completed ? COLOR.ink : COLOR.inkDim);
     }
-    const scroll = Phaser.Math.Clamp((WINDOW.top + WINDOW.bottom) / 2 + index * NODE_GAP, this.scrollMin, this.scrollMax);
+    const visualIndex = stage.kind === "story" ? 4 : index;
+    const scroll = Phaser.Math.Clamp((WINDOW.top + WINDOW.bottom) / 2 + visualIndex * NODE_GAP, this.scrollMin, this.scrollMax);
     this.scrollTo(scroll, !instant);
     this.sortieButton.setSub("");
+    if (stage.kind === "story") {
+      this.enemyPreview.dismiss();
+      this.sortieButton.setLabel(storyManager.isCompleted(stage.storyId) ? "다시 보기" : "기록 읽기");
+      return;
+    }
+    this.sortieButton.setLabel("출  전");
     const enemies = getStageEnemies(stage);
     this.enemyPreview.showAt(scroll - index * NODE_GAP, {
       title: `${stage.id}  ${stage.name}`, level: stage.enemyLevel, enemies,
       // 전투 전에도 전투와 동일한 공용 적 정보창으로 연결한다.
       onEnemyClick: (enemy) => this.info.showEnemy(enemy, { level: stage.enemyLevel }),
     });
+  }
+
+  /** 버튼 인스턴스와 시각 테마는 재사용하고 선택된 판별 유니온에 따라 목적지만 바꾼다. */
+  private enterSelected(): void {
+    const stage = STAGES.find(({ id }) => id === this.selected);
+    if (!stage) return;
+    if (stage.kind === "story") this.scene.start("stageStory", { storyId: stage.storyId });
+    else { session.selectedStageId = stage.id; this.scene.start("party"); }
   }
 
 }

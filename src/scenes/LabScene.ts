@@ -3,8 +3,8 @@ import type { PuppetCreature } from "../puppets/assets";
 import { BASE_WIDTH } from "../config/gameConfig";
 import { setDebugScene } from "../debug";
 import { gameApi } from "../api/FakeServer";
-import { GameApiError } from "../api/contracts";
-import { canPull, pullCost, type AcquisitionResult, type Banner } from "../core/gacha";
+import { GameApiError, type PullResultDto } from "../api/contracts";
+import { canPull, pullCost, type Banner, type ResearchGrade } from "../core/gacha";
 import { ResearchPresentationController, firstMeetingRelicIds, highestRarity } from "../core/researchPresentation";
 import { BANNERS } from "../data/banners";
 import { getRelic } from "../data/relics";
@@ -23,6 +23,8 @@ import { drawLayer, drawRoundedLayer, HOLO, slantedRect } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { PortraitCard } from "../ui/PortraitCard";
+import { RewardFrame } from "../ui/RewardFrame";
+import { CURRENCY_ICON_BY_WALLET } from "../ui/currencyIcons";
 import { firstMeetingLine } from "../data/relicFirstMeetings";
 import { audioManager, type AudioScope } from "../managers/AudioManager";
 import { relicProgression } from "../managers/RelicProgressionManager";
@@ -256,8 +258,8 @@ export class LabScene extends Phaser.Scene {
     });
     overlay.add([shade, panel]);
     overlay.add(this.add.text(cx, 390, "연구 확률 · 보장 정책", textStyle({ role: "display", size: 42 })).setOrigin(0.5));
-    const rates = (["SSR", "SR", "R"] as const)
-      .map((rarity) => `${rarity}  ${(banner.rarityRates[rarity] * 100).toFixed(1)}%`)
+    const rates = (["SSR", "SR", "R", "GRAY"] as const)
+      .map((rarity) => `${rarity === "GRAY" ? "회색 보상" : rarity}  ${(banner.slotRates[rarity] * 100).toFixed(1)}%`)
       .join("\n");
     overlay.add(this.add.text(cx, 475, rates, textStyle({ role: "body", size: 30, align: "center", lineSpacing: 14 })).setOrigin(0.5, 0));
     const pity = session.gachaPityByGroup[banner.pityGroupId] ?? { pullsSinceSsr: 0, pickupGuaranteed: false };
@@ -297,9 +299,9 @@ export class LabScene extends Phaser.Scene {
   }
 
   /** 서버 확정 등급을 복권처럼 암시한 뒤 균열→첫 대면→카드 순서로 재생한다. */
-  private async playPresentation(results: AcquisitionResult[]): Promise<void> {
+  private async playPresentation(results: PullResultDto[]): Promise<void> {
     const request = this.presentation.begin();
-    const rarity = highestRarity(results.map((result) => getRelic(result.relicId).rarity));
+    const rarity = highestRarity(results.map((result) => result.type === "relic" ? getRelic(result.relicId).rarity : result.grade));
     const meetings = firstMeetingRelicIds(results);
     this.presentationLayer?.destroy(true);
     const layer = this.add.container(0, 0).setDepth(900);
@@ -351,7 +353,7 @@ export class LabScene extends Phaser.Scene {
   }
 
   /** 고비용 영상 대신 Graphics 선과 작은 원 파편 tween으로 균열을 만든다. */
-  private drawCrack(layer: Phaser.GameObjects.Container, rarity: "R" | "SR" | "SSR"): void {
+  private drawCrack(layer: Phaser.GameObjects.Container, rarity: ResearchGrade): void {
     const color = this.rarityColor(rarity);
     const graphics = this.add.graphics();
     graphics.lineStyle(rarity === "SSR" ? 10 : 6, color, 1);
@@ -369,19 +371,19 @@ export class LabScene extends Phaser.Scene {
   }
 
   /** 최고 등급 색만 미리 보여 주고 구체적인 카드 결과는 아직 숨긴다. */
-  private showRarityFlash(layer: Phaser.GameObjects.Container, rarity: "R" | "SR" | "SSR"): void {
+  private showRarityFlash(layer: Phaser.GameObjects.Container, rarity: ResearchGrade): void {
     layer.removeAll(true);
     const flash = this.add.rectangle(BASE_WIDTH / 2, 960, BASE_WIDTH, 1920, this.rarityColor(rarity), 0.18);
     layer.add(flash);
     // SR은 보라 외곽, SSR은 밝은 호박 외곽을 더해 단색 R과 실루엣만으로도 구분한다.
-    if (rarity !== "R") layer.add(this.add.rectangle(BASE_WIDTH / 2, 960, 920, 1240)
+    if (rarity === "SR" || rarity === "SSR") layer.add(this.add.rectangle(BASE_WIDTH / 2, 960, 920, 1240)
       .setStrokeStyle(10, rarity === "SR" ? COLOR.raritySRAlt : COLOR.raritySSRLight, 0.85));
-    layer.add(this.add.text(BASE_WIDTH / 2, 800, rarity === "SSR" ? "호박빛 공명이 폭발한다" : rarity === "SR" ? "청록과 보랏빛이 교차한다" : "회청색 파장이 감지된다", textStyle({ role: "emphasis", size: 42, align: "center", wrap: 820 })).setOrigin(0.5));
+    layer.add(this.add.text(BASE_WIDTH / 2, 800, rarity === "SSR" ? "호박빛 공명이 폭발한다" : rarity === "SR" ? "청록과 보랏빛이 교차한다" : rarity === "R" ? "회청색 파장이 감지된다" : "중립 파장이 응결한다", textStyle({ role: "emphasis", size: 42, align: "center", wrap: 820 })).setOrigin(0.5));
     this.tweens.add({ targets: flash, alpha: 0.55, duration: 180, yoyo: true, repeat: 1 });
   }
 
-  private rarityColor(rarity: "R" | "SR" | "SSR"): number {
-    return rarity === "SSR" ? COLOR.raritySSR : rarity === "SR" ? COLOR.raritySR : COLOR.rarityR;
+  private rarityColor(rarity: ResearchGrade): number {
+    return rarity === "SSR" ? COLOR.raritySSR : rarity === "SR" ? COLOR.raritySR : rarity === "R" ? COLOR.rarityR : COLOR.researchGray;
   }
 
   /** 신규 Puppet 로딩 실패도 연출을 멈추지 않고 이름과 대사 텍스트로 대체한다. */
@@ -406,20 +408,27 @@ export class LabScene extends Phaser.Scene {
   }
 
   /** 한 장과 10연 모두 같은 프로필 카드 그리드로 신규/DNA 결과를 읽게 한다. */
-  private showResultCards(content: Phaser.GameObjects.Container, layer: Phaser.GameObjects.Container, results: AcquisitionResult[]): void {
+  private showResultCards(content: Phaser.GameObjects.Container, layer: Phaser.GameObjects.Container, results: PullResultDto[]): void {
     const cx = BASE_WIDTH / 2;
     content.removeAll(true);
     content.add(this.add.text(cx, 210, "연구 결과", textStyle({ role: "display", size: 52 })).setOrigin(0.5));
 
     results.forEach((result, index) => {
+      const columns = results.length === 1 ? 1 : 2;
+      const x = columns === 1 ? cx : 285 + (index % 2) * 510;
+      const y = results.length === 1 ? 850 : 390 + Math.floor(index / 2) * 230;
+      if (result.type === "currency") {
+        // 공용 액자 문법을 그대로 써 아이콘·비네팅·사방 외곽선·우하단 수량을 중복 구현하지 않는다.
+        const reward = new RewardFrame(this, x, y, { icon: CURRENCY_ICON_BY_WALLET[result.currency], amount: result.amount, size: results.length === 1 ? 420 : 190, color: COLOR.researchGray });
+        reward.setDepth(902); content.add(reward); return;
+      }
       const def = getRelic(result.relicId);
       const badge = result.kind === "new"
         ? "신규"
         : result.kind === "fragment"
           ? `파편 +${result.fragments}`
           : `DNA 조각 +${result.overflowFragments}`;
-      const columns = results.length === 1 ? 1 : 2;
-      const card = new PortraitCard(this, columns === 1 ? cx : 285 + (index % 2) * 510, results.length === 1 ? 850 : 390 + Math.floor(index / 2) * 230, {
+      const card = new PortraitCard(this, x, y, {
         width: results.length === 1 ? 520 : 440, height: results.length === 1 ? 720 : 210,
         portraitAssetId: def.portraitAssetId, tint: portraitUsesRelicTint(def.portraitAssetId) ? mixWhite(tintFor(def.id), 0.55) : undefined,
         label: def.name, sub: badge, rarity: def.rarity, stars: relicProgression.getStars(def.id),

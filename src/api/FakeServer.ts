@@ -517,7 +517,8 @@ export class FakeServer implements GameApi {
     // 원본을 전혀 건드리지 않은 복제 상태에서 비용·천장·보유 결과를 모두 먼저 계산한다.
     const pulled = pull(banner, request.count, this.state.gachaPityByGroup[banner.pityGroupId] ?? { pullsSinceSsr: 0, pickupGuaranteed: false }, this.random);
     const starsById = Object.fromEntries(Object.entries(this.state.relicProgress).map(([id, value]) => [id, relicStars(value.breakthrough)]));
-    const outcome = resolveAcquisitions(this.state.owned, this.state.relicFragments, pulled.relicIds, starsById, RELIC_STAR_CAP);
+    const relicSlots = pulled.slots.filter((slot) => slot.kind === "relic");
+    const outcome = resolveAcquisitions(this.state.owned, this.state.relicFragments, relicSlots.map((slot) => slot.relicId), starsById, RELIC_STAR_CAP);
     // 최초 획득은 반드시 기본 성장 레코드를 만들고, 중복 변화도 같은 복제본에 반영한다.
     const nextProgress = Object.fromEntries(Object.entries(this.state.relicProgress).map(([id, value]) => [id, { ...value, heartGemSlots: [...value.heartGemSlots] as typeof value.heartGemSlots }]));
     for (const result of outcome.slots) {
@@ -526,14 +527,17 @@ export class FakeServer implements GameApi {
       if (!nextProgress[result.relicId]) nextProgress[result.relicId] = grantBondXp(createInitialRelicProgress(), BOND_XP_REWARD.firstAcquisition).progress;
     }
     const nextWallet = { ...spend(this.state.wallet, banner, request.count), dnaFragments: this.state.wallet.dnaFragments + outcome.overflowFragments };
+    // 비용 차감 뒤 회색 보상을 순서대로 더하며 계정 상한에서 버려지는 양은 저장하지 않는다.
+    for (const slot of pulled.slots) if (slot.kind === "currency") {
+      nextWallet[slot.currency] = Math.min(WALLET_CAPS[slot.currency], nextWallet[slot.currency] + slot.amount);
+    }
     const nextPity = { ...this.state.gachaPityByGroup, [banner.pityGroupId]: pulled.pity };
     // 연구소의 캐릭터 연구 성공만 임무로 환산하며 방치 발굴 수확과 섞지 않는다.
     const nextMissions = applyMissionEvent(this.state.missions, { type: "relic_research_completed", count: request.count }, this.now());
     const nextState: Session = { ...this.state, wallet: nextWallet, owned: outcome.ownedRelicIds, relicProgress: nextProgress, relicFragments: outcome.fragmentsById, gachaPityByGroup: nextPity, missions: nextMissions };
 
     // 저장 실패도 원본 메모리에 부분 반영되지 않도록 저장을 먼저 성공시킨 뒤 필드를 일괄 교체한다.
-    this.validateState(nextState);
-    if (this.state === session) saveManager.save(nextState);
+    this.persist(nextState);
     this.state.wallet = nextWallet;
     this.state.owned = outcome.ownedRelicIds;
     this.state.relicProgress = nextProgress;
@@ -542,7 +546,10 @@ export class FakeServer implements GameApi {
     this.state.missions = nextMissions;
     return {
       ...this.snapshot(),
-      results: outcome.slots,
+      // 렐릭 획득 결과를 원래 추첨 위치에 다시 끼워 혼합 10연의 슬롯 순서를 보존한다.
+      results: (() => { let relicIndex = 0; return pulled.slots.map((slot) => slot.kind === "currency"
+        ? { type: "currency" as const, currency: slot.currency, amount: slot.amount, grade: slot.grade }
+        : { type: "relic" as const, ...outcome.slots[relicIndex++] }); })(),
       newRelicIds: outcome.newRelicIds,
       duplicateRelicIds: outcome.duplicateRelicIds,
     };
@@ -596,6 +603,8 @@ export class FakeServer implements GameApi {
     // 입장 뒤 시간이 넘어간 우회 요청도 결과 확정 경계에서 다시 차단한다.
     if (owningEvent) this.assertEventActive(owningEvent, this.now());
     try { stage = owningEvent?.stages.find(({ id }) => id === stageId) ?? getStage(stageId); } catch { throw new GameApiError("STAGE_NOT_FOUND", "존재하지 않는 스테이지입니다."); }
+    // 완료 API는 전투 보상만 정산하며 스토리 완료는 StoryManager가 독점한다.
+    if (stage.kind !== "battle") throw new GameApiError("STAGE_NOT_FOUND", "전투 스테이지가 아닙니다.");
     const firstClear = victory && !this.state.cleared.has(stageId);
     const cheesecakeEarned = victory ? (firstClear ? stage.rewards.firstClearCheesecake : stage.rewards.repeatClearCheesecake) : 0;
     const nextCleared = victory ? new Set(this.state.cleared).add(stageId) : new Set(this.state.cleared);

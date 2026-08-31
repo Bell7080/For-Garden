@@ -6,7 +6,7 @@ import { getRelic } from "../data/relics";
 import { relicCollection } from "../managers/RelicCollectionManager";
 import { CharacterInfoManager, ELEMENT_LABEL, ROLE_LABEL, addHelpBadge } from "../managers/CharacterInfoManager";
 import type { PuppetCreature } from "../puppets/assets";
-import { battleAssetFor, spawnPuppet } from "../puppets/assets";
+import { battleAssetFor, placePuppet, spawnPuppet } from "../puppets/assets";
 import { tintFor } from "../puppets/tints";
 import { getBattleStage, getStageEnemies } from "../data/stages";
 import { session } from "../state/session";
@@ -22,6 +22,9 @@ import { AffinityDirection } from "../ui/AffinityDirection";
 import { removeFormationSlot } from "../core/formationSelection";
 import { moveFormationSlot } from "../core/formation";
 import { bindFormationDrag } from "../ui/formationDrag";
+import { formationDropSlot } from "../ui/formationGestureRules";
+import { FORMATION_DRAG_VISUAL, formationDragPreview, formationZoneStyle } from "../ui/formationDragVisual";
+import { chipPoints } from "../ui/holo";
 
 /** 이만큼 누르고 있으면 정보창이 열린다. 짧게 누르면 편성 토글이다. */
 const LONG_PRESS_MS = 420;
@@ -73,6 +76,8 @@ interface AllySlot {
   request: number;
   /** 비동기 SD 대신 항상 슬롯 크기를 유지하며 짧은 탭 계약을 소유하는 투명 입력면이다. */
   hit: Phaser.GameObjects.Rectangle;
+  /** 끄는 동안에만 뜨는 "여기 놓을 수 있다" 칸. 평소에는 숨어 있다. */
+  zone: Phaser.GameObjects.Graphics;
 }
 
 /**
@@ -99,6 +104,8 @@ export class PartyScene extends Phaser.Scene {
   private longPressFired = false;
   /** 저장을 포함한 전투 진입 처리 중에는 연속 탭이 같은 처리를 다시 시작하지 못하게 한다. */
   private isEnteringBattle = false;
+  /** 지금 손에 들고 있는 자리와 뒤를 덮는 겹. 끌고 있지 않으면 비어 있다. */
+  private drag?: { from: number; dim: Phaser.GameObjects.Rectangle; hovered?: number };
 
   constructor() {
     super("party");
@@ -240,22 +247,122 @@ export class PartyScene extends Phaser.Scene {
       // SD와 같은 높이의 투명 슬롯 면이 입력을 소유해 Puppet 로딩 성공 여부가 조작을 바꾸지 않는다.
       const hit = this.add.rectangle(x, ALLY_ROW - PREVIEW_HEIGHT / 2, 210, PREVIEW_HEIGHT, 0xffffff, 0)
         .setName(`party-ally-slot-${slot + 1}`).setDepth(3).setInteractive({ useHandCursor: true });
-      this.allySlots.push({ platform, name, slotLabel, affinityDirection, request: 0, hit });
+      // 놓을 자리를 알리는 칸. SD보다 뒤(-11)라 캐릭터를 덮지 않고 받침보다는 앞에 선다.
+      const zone = this.add.graphics({ x, y: ALLY_ROW - PREVIEW_HEIGHT / 2 }).setDepth(-11).setVisible(false);
+      this.allySlots.push({ platform, name, slotLabel, affinityDirection, request: 0, hit, zone });
     });
     // 보유 카드의 상세 정보 장기 누름과 겹치지 않도록 드래그 시작점은 이 상단 SD 입력면뿐이다.
     bindFormationDrag(this, this.allySlots.map((slot, index) => ({ hit: slot.hit, x: PREVIEW_COLUMNS[index], y: ALLY_ROW - PREVIEW_HEIGHT / 2, width: 210, height: PREVIEW_HEIGHT })), {
-      dragStart: () => { /* 슬롯 입력은 편성 배열을 건드리지 않는다. */ },
-      dragMove: () => { /* SD는 드롭 확정 뒤 기존 비동기 렌더러가 다시 세운다. */ },
-      cancel: () => { /* 취소 시 기존 편성과 저장 경계를 유지한다. */ },
+      // 배열과 저장은 `drop`에서만 바뀐다. 아래 둘은 화면에만 손대므로 취소해도 편성이 남지 않는다.
+      dragStart: (slot, x, y) => this.beginDrag(slot, x, y),
+      dragMove: (slot, x, y) => this.moveDrag(slot, x, y),
+      cancel: () => this.endDrag(),
       tap: (slot) => {
         // 짧은 탭은 화면에 보이는 자리 번호 그대로 해제한다.
         if (this.picked[slot] !== undefined && removeFormationSlot(this.picked, slot)) this.refresh();
       },
       drop: (from, to) => {
+        this.endDrag();
         this.picked = moveFormationSlot(this.picked, from, to);
-        // Puppet 원본을 옮기지 않고 확정 뒤 기존 비동기 재배치 경로로 화면을 다시 만든다.
+        // 미리보기로 옮겨 둔 SD는 확정 뒤 기존 비동기 재배치 경로가 제자리에 다시 세운다.
         this.refresh();
       },
+    });
+  }
+
+  /**
+   * 자리 하나를 손에 든다.
+   *
+   * 든 것을 숫자나 글자로 알리지 않는다 — 뒤가 어두워지고 **그 캐릭터 자체가 커져 떠오른다.**
+   * 빈 자리는 들 것이 없으므로 시작하지 않는다.
+   */
+  private beginDrag(from: number, x: number, y: number): void {
+    if (this.drag || this.picked[from] === undefined) return;
+    // 판만 덮는다. 화면 전체를 덮으면 아래 보유 그리드까지 어두워져 무엇을 고르는 중인지 흐려진다.
+    const dim = this.add
+      .rectangle(BASE_WIDTH / 2, (FRONT_LINE + ALLY_ROW + 120) / 2, BASE_WIDTH, ALLY_ROW + 120 - FRONT_LINE, 0x000000, 0)
+      .setDepth(-13);
+    this.tweens.add({ targets: dim, fillAlpha: FORMATION_DRAG_VISUAL.boardDimAlpha, duration: 120 });
+    this.drag = { from, dim };
+    this.allySlots.forEach((slot) => {
+      slot.zone.setVisible(true);
+      // 이름·자리 글자는 확정된 편성을 말한다. 미리보기로 SD가 옮겨 다니는 동안 그대로 두면
+      // 다른 캐릭터 밑에 남의 이름이 붙어 거짓말이 되므로, 끄는 동안만 눌러 둔다.
+      slot.name.setAlpha(0.25);
+      slot.slotLabel.setAlpha(0.25);
+    });
+    this.moveDrag(from, x, y);
+  }
+
+  /** 손끝을 따라 든 캐릭터를 옮기고, 지금 놓으면 어떻게 되는지 나머지 자리에 미리 보여 준다. */
+  private moveDrag(from: number, x: number, y: number): void {
+    if (!this.drag || this.drag.from !== from) return;
+    const hovered = formationDropSlot(
+      PREVIEW_COLUMNS.map((column) => ({ x: column, y: ALLY_ROW - PREVIEW_HEIGHT / 2, width: 210, height: PREVIEW_HEIGHT })),
+      x, y,
+    );
+    this.drag.hovered = hovered;
+    this.allySlots.forEach((slot, index) => this.paintDropZone(slot, index === hovered));
+
+    // 미리보기는 확정 규칙을 그대로 통과시킨다 — 따로 계산하면 보여 준 것과 놓은 결과가 갈린다.
+    const preview = formationDragPreview(this.picked, from, hovered, this.allySlots.length);
+    preview.forEach((entry, index) => {
+      const creature = this.allySlots[index].creature;
+      if (!creature) return;
+      const relicId = this.picked[index];
+      if (!relicId) return;
+      if (entry.lifted) {
+        // 든 캐릭터는 손끝에 붙어 커진 채 다른 모든 것 위에 선다.
+        placePuppet(creature, battleAssetFor(relicId), {
+          x, groundY: y + PREVIEW_HEIGHT / 2, height: PREVIEW_HEIGHT * FORMATION_DRAG_VISUAL.liftScale, flipX: false,
+        });
+        creature.setDepth(20).setAlpha(FORMATION_DRAG_VISUAL.liftAlpha);
+        return;
+      }
+      // 자리를 내주는 캐릭터는 바뀔 자리로 미리 옮겨 서되, 확정 전이라 비쳐 보인다.
+      const movesTo = preview.findIndex((other) => other.relicId === relicId);
+      const column = PREVIEW_COLUMNS[movesTo < 0 ? index : movesTo];
+      placePuppet(creature, battleAssetFor(relicId), { x: column, groundY: ALLY_ROW, height: PREVIEW_HEIGHT, flipX: false });
+      creature.setDepth(-10).setAlpha(movesTo === index ? 1 : FORMATION_DRAG_VISUAL.previewAlpha);
+    });
+  }
+
+  /**
+   * 놓을 수 있는 자리 한 칸.
+   *
+   * 노란 섬광 한 번이 아니라 **네 모서리를 어긋나게 깎은 칸**을 끄는 동안 계속 띄운다 —
+   * 번쩍하고 마는 표시는 어디까지가 그 자리인지 말해 주지 못한다.
+   */
+  private paintDropZone(slot: AllySlot, hovered: boolean): void {
+    const style = formationZoneStyle(hovered);
+    const shape = chipPoints(210 * style.scale, PREVIEW_HEIGHT * style.scale, {
+      bevel: { topLeft: FORMATION_DRAG_VISUAL.zone.bevel, bottomRight: FORMATION_DRAG_VISUAL.zone.bevel },
+    });
+    const points = [] as Phaser.Geom.Point[];
+    for (let index = 0; index < shape.length; index += 2) points.push(new Phaser.Geom.Point(shape[index], shape[index + 1]));
+    slot.zone.clear();
+    slot.zone.fillStyle(COLOR.ally, style.fillAlpha);
+    slot.zone.fillPoints(points, true);
+    slot.zone.lineStyle(style.lineWidth, COLOR.ally, style.lineAlpha);
+    slot.zone.strokePoints(points, true);
+  }
+
+  /** 손을 뗐거나 취소됐다. 화면만 되돌리고 편성은 건드리지 않는다. */
+  private endDrag(): void {
+    if (!this.drag) return;
+    this.drag.dim.destroy();
+    this.drag = undefined;
+    this.allySlots.forEach((slot, index) => {
+      slot.zone.clear();
+      slot.zone.setVisible(false);
+      // 진하기는 refresh가 편성에 맞춰 다시 정한다. 여기서는 눌러 둔 것만 되돌린다.
+      slot.name.setAlpha(1);
+      slot.slotLabel.setAlpha(1);
+      const relicId = this.picked[index];
+      if (!slot.creature || !relicId) return;
+      // 미리보기로 옮겨 둔 SD를 제자리·제 크기로 되돌린다. 확정된 편성은 refresh가 다시 세운다.
+      placePuppet(slot.creature, battleAssetFor(relicId), { x: PREVIEW_COLUMNS[index], groundY: ALLY_ROW, height: PREVIEW_HEIGHT, flipX: false });
+      slot.creature.setDepth(-10).setAlpha(1);
     });
   }
 

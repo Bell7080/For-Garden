@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { allowBurst, AREA_IMPACT, EFFECT_BUDGET, EFFECT_PRESETS, SUSTAINED_COMBAT_EFFECT, type EffectKind } from "../../src/ui/effectPresets";
+import { allowBurst, AREA_IMPACT, EFFECT_BUDGET, EFFECT_PRESETS, EFFECT_TAP_COLOR, SUSTAINED_COMBAT_EFFECT, type EffectKind } from "../../src/ui/effectPresets";
 
 const KINDS = Object.keys(EFFECT_PRESETS) as EffectKind[];
 
@@ -53,6 +53,14 @@ describe("이펙트 배치표", () => {
     expect(EFFECT_PRESETS.tap.rings).toBe(1);
     expect(EFFECT_PRESETS.tapBattle.shards).toBeGreaterThan(0);
     expect(EFFECT_PRESETS.tapBattle.rings).toBe(0);
+  });
+
+  it("누른 자리는 강조색이 아니라 푸른빛이다", () => {
+    // 금색은 재화·보상·강조를 뜻하므로 아무 데나 눌러도 뜨는 반응에 쓰면 뜻이 섞인다.
+    const blue = EFFECT_TAP_COLOR & 0xff;
+    const red = (EFFECT_TAP_COLOR >> 16) & 0xff;
+    expect(blue).toBeGreaterThan(red);
+    expect(EFFECT_TAP_COLOR).not.toBe(0xd8b978);
   });
 
   it("한 프레임 예산을 넘기면 열지 않는다", () => {

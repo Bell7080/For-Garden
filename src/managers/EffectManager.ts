@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { allowBurst, AREA_IMPACT, EFFECT_BUDGET, EFFECT_PRESETS, SUSTAINED_COMBAT_EFFECT, type BurstSpec, type EffectKind } from "../ui/effectPresets";
+import { allowBurst, AREA_IMPACT, EFFECT_BUDGET, EFFECT_PRESETS, EFFECT_TAP_COLOR, SUSTAINED_COMBAT_EFFECT, type BurstSpec, type EffectKind } from "../ui/effectPresets";
 import { EFFECT_TEXTURE, ensureEffectTextures } from "../ui/effectTextures";
 import { damagePopupStyle, risingAlpha, type DamagePopupRequest } from "../ui/damageNumbers";
 import { COLOR, textStyle } from "../ui/theme";
@@ -300,7 +300,7 @@ export class EffectManager {
    * 지나간다 — 메뉴에서 누를 때마다 불꽃이 튀면 화면이 장비가 아니라 놀이기구가 된다.
    */
   tap(x: number, y: number, kind: "tap" | "tapBattle" = "tap"): void {
-    this.burst(kind, x, y, { color: COLOR.accent });
+    this.burst(kind, x, y, { color: EFFECT_TAP_COLOR });
   }
 
   /**

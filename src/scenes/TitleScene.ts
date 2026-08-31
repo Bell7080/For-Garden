@@ -8,7 +8,7 @@ import { Button } from "../ui/Button";
 import { LoadingDiamonds } from "../ui/LoadingDiamonds";
 import { LOADING_STEPS, refreshTextTextures, runLoadingSteps } from "./loadingSteps";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
-import { drawVignette } from "../ui/holo";
+import { drawLayer, drawVignette, slantedRect } from "../ui/holo";
 import packageInfo from "../../package.json";
 
 /** 타이틀 로고타입(글자 대신 쓰는 그림)의 텍스처 키다. 원본은 1536×1024 비율이다. */
@@ -33,9 +33,11 @@ export class TitleScene extends Phaser.Scene {
 
     const cx = BASE_WIDTH / 2;
     // 배경 원화의 얼굴은 화면 중단에 있으므로, 로고와 부제는 그 위 천장·후드 자리에만 둔다.
-    const logoY = BASE_HEIGHT * 0.1;
-    const logoWidth = 460;
+    const logoY = BASE_HEIGHT * 0.155;
+    const logoWidth = 680;
     const logoHalfHeight = (logoWidth * TITLE_LOGOTYPE_RATIO) / 2;
+    const subtitleY = logoY + logoHalfHeight + 40;
+    const descY = logoY + logoHalfHeight + 90;
 
     // 배경 원화가 도착하기 전에는 이 판이 자리를 지킨다 — 검은 화면보다 낫다.
     const fallback = this.add.rectangle(cx, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void);
@@ -49,24 +51,32 @@ export class TitleScene extends Phaser.Scene {
       fallback.destroy();
       addSceneBackground(this, BACKGROUND.title, -30);
       drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { depth: -20 });
+      // 로고 그림 하나만 배경 위에 얹으면 밝은 원화에 묻히므로, 검은 그림자를 깐 옅은 유리판을
+      // 뒤에 받쳐 대비를 만든다. 진하게 칠하면 판때기로 보이므로 alpha는 낮게(0.4) 둔다.
+      const panelHeight = descY - (logoY - logoHalfHeight) + 60;
+      const panelY = (logoY - logoHalfHeight - 30 + (descY + 30)) / 2;
+      drawLayer(this, cx, panelY, slantedRect(logoWidth + 100, panelHeight), {
+        fill: COLOR.void,
+        alpha: 0.4,
+      }).setDepth(-15);
       this.add.image(cx, logoY, TITLE_LOGOTYPE_KEY).setDisplaySize(logoWidth, logoHalfHeight * 2).setDepth(-10);
     });
     this.load.start();
 
     // 부제 · 도시 소개 두 줄이 글꼴 위계의 본보기다. 제목 자리는 위 로고 그림이 대신한다.
     this.add
-      .text(cx, logoY + logoHalfHeight + 40, "ETERNAL CITY", textStyle({ role: "emphasis", size: 40, color: COLOR.accentText }))
+      .text(cx, subtitleY, "ETERNAL CITY", textStyle({ role: "emphasis", size: 40, color: COLOR.accentText }))
       .setOrigin(0.5);
 
     this.add
-      .text(cx, logoY + logoHalfHeight + 90, "멸종 동물 복원 연구 도시", textStyle({ role: "body", size: 30, color: COLOR.inkDim }))
+      .text(cx, descY, "멸종 동물 복원 연구 도시", textStyle({ role: "body", size: 30, color: COLOR.inkDim }))
       .setOrigin(0.5);
 
     const recoveryNotice = this.registry.get("saveRecoveryNotice") as string | undefined;
     if (recoveryNotice) {
       // 새게임 버튼 대신 자동 복구 사실만 안내해 향후 Google/Apple 계정 복구 흐름을 막지 않는다.
       this.add
-        .text(cx, BASE_HEIGHT * 0.68, recoveryNotice, textStyle({ role: "body", size: 26, color: COLOR.dangerText, align: "center" }))
+        .text(cx, BASE_HEIGHT * 0.63, recoveryNotice, textStyle({ role: "body", size: 26, color: COLOR.dangerText, align: "center" }))
         .setOrigin(0.5);
       this.registry.remove("saveRecoveryNotice");
     }
@@ -78,7 +88,7 @@ export class TitleScene extends Phaser.Scene {
       .setOrigin(0, 1)
       .setAlpha(0.7);
 
-    const diamonds = new LoadingDiamonds(this, cx, BASE_HEIGHT * 0.58, LOADING_STEPS.length);
+    const diamonds = new LoadingDiamonds(this, cx, BASE_HEIGHT * 0.7, LOADING_STEPS.length);
 
     void runLoadingSteps(this, (done) => {
       diamonds.setFilled(done);
@@ -93,8 +103,10 @@ export class TitleScene extends Phaser.Scene {
   /** 다섯 칸이 다 찬 뒤에만 부른다. 이때부터 화면 어디를 눌러도 다음으로 넘어간다. */
   private showEntry(cx: number): void {
     const prompt = this.add
-      .text(cx, BASE_HEIGHT * 0.82, "TAP TO ENTER", textStyle({ role: "emphasis", size: 36 }))
-      .setOrigin(0.5);
+      .text(cx, BASE_HEIGHT * 0.89, "TAP TO ENTER", textStyle({ role: "emphasis", size: 36 }))
+      .setOrigin(0.5)
+      // 이 자리는 배경 원화의 밝은 부분과 겹칠 수 있어 검은 그림자로 대비를 만든다.
+      .setShadow(0, 3, "#000000", 6, true, true);
 
     this.tweens.add({
       targets: prompt,
@@ -106,7 +118,7 @@ export class TitleScene extends Phaser.Scene {
 
     if (storyManager.isCompleted(OPENING_TRAIN.id)) {
       // 회상은 완료 플래그를 지우지 않으므로 선택 보상이 다시 지급되지 않는다.
-      new Button(this, cx, BASE_HEIGHT * 0.72, { width: 360, height: 96, label: "오프닝 회상", fontSize: 30, onClick: () => this.scene.start("opening") });
+      new Button(this, cx, BASE_HEIGHT * 0.8, { width: 360, height: 96, label: "오프닝 회상", fontSize: 30, onClick: () => this.scene.start("opening") });
     }
 
     // 회상 버튼이 먼저 눌리도록 화면 전체 히트영역은 가장 아래 깊이에 깔고 pointerup에서 확정한다.

@@ -24,6 +24,8 @@ import { excavationAdOfferDisplayModel, type ExcavationAdOfferId } from "./excav
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { loadOwnedPuppet } from "./statusPuppetLoad";
 import { BACK_SLOT } from "./IconButton";
+import { moveFormationSlot } from "../core/formation";
+import { bindFormationDrag, type FormationDragSlot } from "./formationDrag";
 
 /** 한 팝업 안에서 현황과 편집 그리드가 교대하므로 모바일 안전 영역을 넘지 않는 고정 크기를 쓴다. */
 const PANEL = { width: 900, height: 1320 } as const;
@@ -551,6 +553,7 @@ export class IdleExcavationPopup {
   /** 슬롯은 빈 면과 PortraitCard를 구분하고 어느 칸이 편집 대상인지 확대/발광으로 알린다. */
   private addSlots(parent: Phaser.GameObjects.Container, formation: Formation, editable: boolean): Array<Phaser.GameObjects.Container | undefined> {
     const cards: Array<Phaser.GameObjects.Container | undefined> = [];
+    const dragSlots: FormationDragSlot[] = [];
     formation.forEach((id, index) => {
       const x = -250 + index * 250;
       const relic = id ? RELICS.find((item) => item.id === id) : undefined;
@@ -571,22 +574,27 @@ export class IdleExcavationPopup {
       }
       // SD보다 나중에 추가한 투명 전용 입력면이 현황/편집의 동일한 210×245 슬롯 계약을 소유한다.
       const hit = this.scene.add.rectangle(x, STATUS_HERO.slotY, 210, 245, 0xffffff, 0).setName(`idle-excavation-slot-${index + 1}`).setDepth(100).setInteractive({ useHandCursor: true });
-      let pressed = false;
-      hit.on("pointerdown", () => { pressed = true; hit.setScale(1.06); });
-      hit.on("pointerout", () => { pressed = false; hit.setScale(1); });
-      hit.on("pointerup", () => {
-        hit.setScale(1);
-        // 그리드가 스크롤로 승격된 포인터는 pointerup 뒤에 이어지는 클릭으로 슬롯을 바꾸지 않는다.
-        if (!pressed || this.gridDragging || this.gridDragMoved >= GRID_DRAG_SLOP) { pressed = false; return; }
-        pressed = false;
-        if (this.saving) return;
-        if (!editable) { this.beginEdit(index); return; }
-        // 편집 중 채워진 현재 칸을 다시 누르면 ID 탐색 없이 그 자리만 비운다.
-        const draft = this.draft;
-        if (draft && index === this.selectedSlot && draft[index] !== null) draft[index] = null;
-        this.selectedSlot = index; this.renderEditor();
-      });
       parent.add(hit);
+      dragSlots.push({ hit, x: POPUP_CENTER.x - 250 + index * 250, y: POPUP_CENTER.y + STATUS_HERO.slotY, width: 210, height: 245 });
+    });
+    bindFormationDrag(this.scene, dragSlots, {
+      // 현황에서는 짧은 탭만 편집을 열며, 순서 드래그는 draft가 존재하는 편집 중에만 허용한다.
+      enabled: () => !this.saving,
+      canDrag: () => editable,
+      onTap: (index) => {
+        if (this.gridDragging || this.gridDragMoved >= GRID_DRAG_SLOP || this.saving) return;
+        if (!editable) { this.beginEdit(index); return; }
+        // 편집 슬롯의 짧은 탭은 확정값이 아니라 draft의 해당 자리만 해제한다.
+        if (this.draft?.[index] !== null) this.draft![index] = null;
+        this.selectedSlot = index; this.renderEditor();
+      },
+      onDrop: (from, to) => {
+        if (!editable || !this.draft || this.saving) return;
+        this.draft = moveFormationSlot(this.draft, from, to) as Formation;
+        this.selectedSlot = to;
+        // 저장 전에는 서버 응답과 Session을 건드리지 않고 편집 사본만 다시 그린다.
+        this.renderEditor();
+      },
     });
     setDebugIdleExcavationSlots(formation.map((_id, index) => ({ index, x: BASE_WIDTH / 2 - 250 + index * 250, y: BASE_HEIGHT / 2 + STATUS_HERO.slotY, width: 210, height: 245 })), editable ? this.selectedSlot : undefined);
     return cards;

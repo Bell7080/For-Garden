@@ -5,8 +5,9 @@ import { tintFor } from "../puppets/tints";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { COLOR, textStyle } from "./theme";
 import type { UltimatePresentation } from "../data/ultimatePresentations";
-import { scaleUltimateDuration, type UltimatePresentationTiming } from "../core/battleControls";
+import { scaleUltimateCutInDurations, type UltimatePresentationTiming } from "../core/battleControls";
 import { ultimateCutInMaskLayout, type CutInPoint } from "./ultimateCutInLayout";
+import { InterruptibleStep } from "./InterruptibleStep";
 
 /** 컷인이 화면을 점유하는 짧은 구간. 공격 판정 시각은 이 프리팹이 아니라 BattleScene이 소유한다. */
 // 전장을 가리는 이동 시간을 짧게 묶어 반복 궁극기에서도 흐름이 오래 끊기지 않게 한다.
@@ -21,16 +22,14 @@ function worldPoints(matrix: Phaser.GameObjects.Components.TransformMatrix, poin
 }
 
 /** Phaser tween을 await 가능한 한 번의 단계로 바꿔 궁극기 시퀀스를 읽는 순서 그대로 유지한다. */
-function tween(scene: Phaser.Scene, config: Phaser.Types.Tweens.TweenBuilderConfig): Promise<void> {
-  return new Promise((resolve) => scene.tweens.add({ ...config, onComplete: () => resolve() }));
-}
-
 /**
  * 전신 Puppet 캐시를 그대로 쓰는 근미래 궁극기 컷인.
  * 별도 둥근 패널이나 사방 테두리 대신 비네트, 비대칭 사선 유리면과 위 hairline만 겹친다.
  */
 export class UltimateCutIn extends Phaser.GameObjects.Container {
   private disposed = false;
+  /** 현재 tween 또는 hold 하나를 소유해 모든 중단 경로가 같은 Promise를 해제하도록 한다. */
+  private readonly step = new InterruptibleStep();
   /** Puppet에 연결한 GeometryMask와 그 도형을 명시적으로 소유해 반복 재생 때 함께 정리한다. */
   private portraitMask?: Phaser.Display.Masks.GeometryMask;
   private portraitMaskGraphics?: Phaser.GameObjects.Graphics;
@@ -40,6 +39,8 @@ export class UltimateCutIn extends Phaser.GameObjects.Container {
     super(scene, 0, 0);
     scene.add.existing(this);
     this.setDepth(CUT_IN.depth);
+    // create가 Puppet 로딩을 await하는 동안에도 Scene 종료만으로 빈 컨테이너가 남지 않게 한다.
+    scene.events.once(Phaser.Scenes.Events.SHUTDOWN, this.handleSceneShutdown, this);
 
     // 밝은 전장에서도 이름이 묻히지 않도록 전체를 검정 비네트처럼 한 번 누른다.
     this.add(scene.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, 0x000000, 0.58));
@@ -60,11 +61,18 @@ export class UltimateCutIn extends Phaser.GameObjects.Container {
   static async create(scene: Phaser.Scene, relic: RelicDef, presentation: Readonly<UltimatePresentation>): Promise<UltimateCutIn> {
     const cutIn = new UltimateCutIn(scene, relic, presentation);
     const asset = portraitAssetFor(relic.portraitAssetId);
-    const portrait = await spawnPuppet(scene, asset, {
-      // 데이터의 기준점과 배율만 해석하며 렐릭 ID에 따른 UI 분기는 만들지 않는다.
-      focus: { anchor: "core", ...presentation.artworkOrigin }, height: 1280 * presentation.artworkScale,
-      tint: portraitUsesRelicTint(relic.portraitAssetId) ? tintFor(relic.id) : 0xffffff,
-    });
+    let portrait: Awaited<ReturnType<typeof spawnPuppet>>;
+    try {
+      portrait = await spawnPuppet(scene, asset, {
+        // 데이터의 기준점과 배율만 해석하며 렐릭 ID에 따른 UI 분기는 만들지 않는다.
+        focus: { anchor: "core", ...presentation.artworkOrigin }, height: 1280 * presentation.artworkScale,
+        tint: portraitUsesRelicTint(relic.portraitAssetId) ? tintFor(relic.id) : 0xffffff,
+      });
+    } catch (error) {
+      // 로딩 실패는 호출자에게 전달하되 await 전에 만든 빈 컨테이너는 이 경계에서 회수한다.
+      cutIn.destroy();
+      throw error;
+    }
     if (cutIn.disposed || !scene.scene.isActive()) { portrait.destroy(); return cutIn; }
     const layout = ultimateCutInMaskLayout(BASE_WIDTH);
     const maskGraphics = scene.make.graphics({});
@@ -97,15 +105,40 @@ export class UltimateCutIn extends Phaser.GameObjects.Container {
     // 진입 방향의 부호를 퇴장에도 재사용해 한 프리셋이 동선 전체를 설명하게 한다.
     const direction = this.presentation.enterFrom === "left" ? -1 : 1;
     this.setX(direction * BASE_WIDTH).setScale(0.82).setAlpha(0);
-    // 세 구간 모두 같은 궁극기 시간축을 거쳐 한 구간만 유난히 느려지지 않게 한다.
-    await tween(this.scene, { targets: this, x: 0, scale: 1, alpha: 1, duration: scaleUltimateDuration(CUT_IN.enterMs, timing), ease: "Cubic.Out" });
-    await new Promise<void>((resolve) => this.scene.time.delayedCall(scaleUltimateDuration(this.presentation.cutInHoldMs, timing), resolve));
+    // 구간별 한 프레임 하한과 별도로 전체 가시 시간도 보장해 빠른 배속에서 섬광처럼 사라지지 않게 한다.
+    const [enterMs, holdMs, exitMs] = scaleUltimateCutInDurations(CUT_IN.enterMs, this.presentation.cutInHoldMs, CUT_IN.exitMs, timing);
+    await this.tween({ targets: this, x: 0, scale: 1, alpha: 1, duration: enterMs, ease: "Cubic.Out" });
     if (this.disposed) return;
-    await tween(this.scene, { targets: this, x: -direction * BASE_WIDTH, alpha: 0, duration: scaleUltimateDuration(CUT_IN.exitMs, timing), ease: "Cubic.In" });
+    await this.hold(holdMs);
+    if (this.disposed) return;
+    await this.tween({ targets: this, x: -direction * BASE_WIDTH, alpha: 0, duration: exitMs, ease: "Cubic.In" });
   }
 
+  /** tween complete/stop이 모두 같은 멱등 finish를 호출하고 destroy는 실제 Tween까지 제거한다. */
+  private tween(config: Phaser.Types.Tweens.TweenBuilderConfig): Promise<void> {
+    return this.step.wait((finish) => {
+      const activeTween = this.scene.tweens.add({ ...config, onComplete: finish, onStop: finish });
+      return () => { activeTween.stop(); activeTween.remove(); };
+    });
+  }
+
+  /** 홀드 TimerEvent도 tween과 같은 중단 계약 아래 두어 씬 종료 시 대기만 남지 않게 한다. */
+  private hold(duration: number): Promise<void> {
+    return this.step.wait((finish) => {
+      const timer = this.scene.time.delayedCall(duration, finish);
+      return () => timer.remove(false);
+    });
+  }
+
+  /** Phaser EventEmitter의 context까지 고정해 destroy에서 정확히 같은 리스너를 해제한다. */
+  private handleSceneShutdown(): void { this.destroy(true); }
+
   override destroy(fromScene?: boolean): void {
+    if (this.disposed) return;
     this.disposed = true;
+    // resolve가 tween/timer 정리보다 먼저 실행되어 play 호출자의 finally가 반드시 진행된다.
+    this.step.cancel();
+    this.scene.events.off(Phaser.Scenes.Events.SHUTDOWN, this.handleSceneShutdown, this);
     // Scene 이벤트는 Container 파괴만으로 해제되지 않으므로 등록한 정확한 콜백을 먼저 제거한다.
     if (this.syncPortraitMask) this.scene.events.off(Phaser.Scenes.Events.PRE_RENDER, this.syncPortraitMask);
     this.portraitMask?.destroy();

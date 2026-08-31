@@ -19,6 +19,8 @@ export interface UltimatePresentationTiming {
 const ULTIMATE_BASE_RATE = 2.25;
 const ULTIMATE_RATE_CAP = 3.25;
 export const ULTIMATE_MIN_DURATION_MS = 24;
+/** 진입·이름 노출·퇴장을 합쳐 두세 프레임짜리 섬광으로 축소되지 않게 하는 컷인 전체 하한이다. */
+export const ULTIMATE_CUT_IN_MIN_VISIBLE_MS = 96;
 export const ULTIMATE_RECOVERY_RATIO = 0.55;
 
 /**
@@ -43,4 +45,14 @@ export function ultimatePresentationTiming(battleSpeed: BattleSpeed, skipLeadIn:
 export function scaleUltimateDuration(durationMs: number, timing: UltimatePresentationTiming, ratio = 1): number {
   if (timing.skipLeadIn) return 0;
   return Math.max(ULTIMATE_MIN_DURATION_MS, Math.round((durationMs * ratio) / timing.rate));
+}
+
+/** 세 구간의 상대 속도는 유지하되 부족한 전체 가시 시간은 이름을 읽는 가운데 hold에 더한다. */
+export function scaleUltimateCutInDurations(
+  enterMs: number, holdMs: number, exitMs: number, timing: UltimatePresentationTiming,
+): readonly [enter: number, hold: number, exit: number] {
+  if (timing.skipLeadIn) return [0, 0, 0];
+  const durations = [enterMs, holdMs, exitMs].map((duration) => scaleUltimateDuration(duration, timing));
+  const deficit = Math.max(0, ULTIMATE_CUT_IN_MIN_VISIBLE_MS - durations.reduce((sum, duration) => sum + duration, 0));
+  return [durations[0], durations[1] + deficit, durations[2]];
 }

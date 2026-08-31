@@ -568,11 +568,17 @@ export class BattleScene extends Phaser.Scene {
       if (!skipPresentation) {
         // 전투 카드 잠금과 별개로 기여도 판은 컷인이 실제로 덮는 동안에만 입력을 멈춘다.
         this.contributionPanel?.setInputLocked(true);
-        this.activeCutIn = await UltimateCutIn.create(this, fighter.def, presentation);
-        if (!this.sequenceValid(next.token, fighter)) return;
-        await this.activeCutIn.play(timing);
-        this.activeCutIn.destroy(); this.activeCutIn = undefined;
-        this.contributionPanel?.setInputLocked(false);
+        try {
+          // create 자체도 Puppet 로딩을 await하므로 생성 실패와 Scene 종료까지 같은 정리 경계로 감싼다.
+          this.activeCutIn = await UltimateCutIn.create(this, fighter.def, presentation);
+          if (!this.sequenceValid(next.token, fighter)) return;
+          await this.activeCutIn.play(timing);
+        } finally {
+          // destroy가 진행 중 play Promise를 먼저 풀기 때문에 어느 단계에서 실패해도 영구 대기하지 않는다.
+          this.activeCutIn?.destroy();
+          this.activeCutIn = undefined;
+          this.contributionPanel?.setInputLocked(false);
+        }
         if (!this.sequenceValid(next.token, fighter)) return;
         this.cameras.main.shake(180, presentation.cameraShakeIntensity);
       }

@@ -68,6 +68,7 @@ import { CombatEffectPresenter, type CombatEffectTarget } from "../managers/Comb
 import { ensureEffectTextures } from "../ui/effectTextures";
 import type { DamageFlavor, DebuffId } from "../ui/damageNumbers";
 import { openBattleBuffPopup, type BattleBuffPopupController } from "../ui/BattleBuffPopup";
+import type { ActiveCombatDisplayEffect } from "../core/combatEffects";
 
 /**
  * 여섯이 돌아다닐 수 있는 범위.
@@ -951,12 +952,19 @@ export class BattleScene extends Phaser.Scene {
     return badge;
   }
 
-  /** 매퍼가 필요로 하는 좌표·생존·실제 은신 상태만 노출한다. */
+  /** 매퍼가 필요로 하는 좌표와 코어가 판정한 활성 유지 효과만 노출한다. */
   private combatEffectTarget(id: string): CombatEffectTarget | undefined {
     const view = this.views.get(id);
     if (!view) return undefined;
+    const activeEffects: ActiveCombatDisplayEffect[] = [];
+    // 은신 시간과 폭주/동일 표적 조건의 소유자는 모두 skirmish다. 씬은 표시 목록으로 투영만 한다.
+    if (view.fighter.stealthFor > 0) activeEffects.push({ id: "stealth", tag: "stealthActive" });
+    for (const buff of activeCombatBuffs(this.state, id)) {
+      if (buff.skillId === "crescendoStaccato") activeEffects.push({ id: buff.id, tag: "metteStaccatoActive" });
+      if (buff.skillId === "luka-passive") activeEffects.push({ id: buff.id, tag: "lukaSharedTargetHasteActive", aimTargetId: view.fighter.targetId ?? undefined });
+    }
     return { id, x: view.fighter.x, y: view.fighter.y, height: UNIT_HEIGHT * view.fighter.bodyScale,
-      activeStealth: view.fighter.stealthFor > 0, alive: !view.dead && isFighterAlive(view.fighter) };
+      activeEffects, effectTint: skillArtTint(view.fighter.def.element, view.fighter.def.role), alive: !view.dead && isFighterAlive(view.fighter) };
   }
 
   /** 유지형 효과는 모든 Fighter의 현재 상태를 매 프레임 다시 읽어 동기화한다. */

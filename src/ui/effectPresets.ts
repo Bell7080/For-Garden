@@ -170,3 +170,12 @@ export const AREA_IMPACT = {
   lineWidth: 5,
   lineAlpha: 0.75,
 } as const;
+
+/**
+ * 유지 효과의 순수한 도형/움직임 배치표다. 색은 캐릭터의 `skillArtTint()`가 정하므로 이곳에
+ * 넣지 않으며, 낮은 알파로 기존 폭주 실루엣 필터를 가리지 않는다.
+ */
+export const SUSTAINED_COMBAT_EFFECT = {
+  mette: { alpha: 0.24, lineWidth: 3, halfWidth: 38, spacing: 15, pulseMs: 360 },
+  luka: { alpha: 0.2, lineWidth: 2, length: 76, spacing: 14, travelMs: 460 },
+} as const;

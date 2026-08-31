@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { allowBurst, AREA_IMPACT, EFFECT_BUDGET, EFFECT_PRESETS, type EffectKind } from "../../src/ui/effectPresets";
+import { allowBurst, AREA_IMPACT, EFFECT_BUDGET, EFFECT_PRESETS, SUSTAINED_COMBAT_EFFECT, type EffectKind } from "../../src/ui/effectPresets";
 
 const KINDS = Object.keys(EFFECT_PRESETS) as EffectKind[];
 
@@ -71,6 +71,18 @@ describe("이펙트 배치표", () => {
       expect(EFFECT_BUDGET.minGapMs[kind]).toBe(0);
       expect(allowBurst(kind, 1_000, 1_000, 0)).toBe(true);
     }
+  });
+});
+
+describe("캐릭터 유지 효과 배치표", () => {
+  it("두 효과 모두 기존 폭주 필터를 가리지 않는 낮은 알파를 쓴다", () => {
+    expect(SUSTAINED_COMBAT_EFFECT.mette.alpha).toBeLessThanOrEqual(0.25);
+    expect(SUSTAINED_COMBAT_EFFECT.luka.alpha).toBeLessThanOrEqual(0.25);
+  });
+
+  it("메테 박자선과 루카 질주선은 두께와 움직임 주기가 다르다", () => {
+    expect(SUSTAINED_COMBAT_EFFECT.mette.lineWidth).not.toBe(SUSTAINED_COMBAT_EFFECT.luka.lineWidth);
+    expect(SUSTAINED_COMBAT_EFFECT.mette.pulseMs).not.toBe(SUSTAINED_COMBAT_EFFECT.luka.travelMs);
   });
 });
 

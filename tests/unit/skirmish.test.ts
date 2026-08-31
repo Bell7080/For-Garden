@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  activeCombatBuffs,
   aliveFighters,
   applyStun,
   applyStagger,
@@ -226,6 +227,21 @@ describe("루카 전투 계약", () => {
     same.hp = 0; expect(currentAttackSpeed(same, state)).toBe(same.def.stats.attackSpeed + (same.def.passive.attackSpeedPercent ?? 0));
   });
 
+  it("는 자신과 동일 표적 아군에게만 조건부 버프를 노출하고 제공 상태가 끝나면 즉시 해제한다", () => {
+    const state = newSkirmish(["luka", "rex", "anky"], ["husk-shell", "husk-wing"]);
+    const [luka, same, other] = state.fighters;
+    luka.ferocityFever = true; luka.targetId = same.targetId = "enemy-0"; other.targetId = "enemy-1";
+
+    // 지속 초가 없는 오라는 루카 자신을 포함한 동일 표적 아군에게만 조건부 효과로 보인다.
+    expect(activeCombatBuffs(state, luka.id)).toEqual(expect.arrayContaining([expect.objectContaining({ skillId: "luka-passive", timing: { kind: "conditional" } })]));
+    expect(activeCombatBuffs(state, same.id)).toHaveLength(1);
+    expect(activeCombatBuffs(state, other.id)).toHaveLength(0);
+
+    // 제공자가 죽거나 폭주가 끝나면 과거 상태를 저장하지 않는 셀렉터 결과에서 곧바로 빠진다.
+    luka.hp = 0; expect(activeCombatBuffs(state, same.id)).toHaveLength(0);
+    luka.hp = 1; luka.ferocityFever = false; expect(activeCombatBuffs(state, same.id)).toHaveLength(0);
+  });
+
   it("는 네 번째 실제 기본 공격을 난수 소비 없이 확정 치명타로 만들고 주기를 초기화한다", () => {
     const durable = { ...getRelic("husk-shell"), stats: { ...getRelic("husk-shell").stats, hp: 100_000 } };
     const state = createSkirmish([getRelic("luka")], [durable], { left: 0, right: 600, top: 0, bottom: 1_000 });
@@ -253,6 +269,20 @@ describe("루카 전투 계약", () => {
     // 치명타·방어 계산은 주 피해에만 반영되고 과잉 제한된 20 HP의 75%=15가 전이되어 보호막 5 뒤 10만 HP에 적용된다.
     expect(before - secondary.hp).toBe(10); expect(events.filter((event) => event.kind === "attack" && event.skill === "transfer")).toHaveLength(1);
     expect(luka.basicAttackCount).toBe(0);
+  });
+});
+
+describe("전투 활성 버프 셀렉터", () => {
+  it("메테 크레센도의 남은 폭주 시간을 현재 야성에서 감소시킨다", () => {
+    const state = newSkirmish(["mette"], ["husk-shell"]); const mette = state.fighters[0];
+    mette.ferocityFever = true; mette.ferocity = FEROCITY_RULES.max;
+    const full = activeCombatBuffs(state, mette.id)[0];
+    mette.ferocity -= FEROCITY_RULES.feverDrainPerSecond * 2;
+    const drained = activeCombatBuffs(state, mette.id)[0];
+
+    // 코어의 초당 소모 공식을 한 번만 사용해 UI가 정확히 2초 감소한 값을 받는지 고정한다.
+    expect(full.timing).toEqual({ kind: "ferocity", remainingSeconds: FEROCITY_RULES.max / FEROCITY_RULES.feverDrainPerSecond, totalSeconds: FEROCITY_RULES.max / FEROCITY_RULES.feverDrainPerSecond });
+    expect(drained.timing).toEqual({ kind: "ferocity", remainingSeconds: full.timing.kind === "ferocity" ? full.timing.remainingSeconds - 2 : -1, totalSeconds: FEROCITY_RULES.max / FEROCITY_RULES.feverDrainPerSecond });
   });
 });
 

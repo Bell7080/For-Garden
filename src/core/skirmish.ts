@@ -116,6 +116,24 @@ export interface SkirmishState {
   boss?: SkirmishBossState;
 }
 
+/**
+ * 전투 HUD가 표시할 활성 이로운 효과다. Phaser 객체를 넣지 않아 코어와 UI의 의존 방향을 지킨다.
+ * `timing`은 실제 시계가 있는 효과와 조건이 유지되는 동안만 존재하는 효과를 구별한다.
+ */
+export interface ActiveCombatBuff {
+  id: string;
+  sourceFighterId: string;
+  targetFighterId: string;
+  skillId: string;
+  name: string;
+  description: string;
+  timing:
+    | { kind: "timed"; remainingSeconds: number; totalSeconds: number }
+    | { kind: "ferocity"; remainingSeconds: number; totalSeconds: number }
+    | { kind: "conditional" }
+    | { kind: "permanent" };
+}
+
 /** 불사 원정 보스의 시간 단계다. 초당 피해는 아군 전체에 동일하게 적용된다. */
 export interface SkirmishBossPhase { startsAt: number; damagePerSecond: number; label: string }
 /** 화면과 정산이 읽는 보스 상태로, 점수는 경감·보호막 후 HP에 실제 적용된 피해다. */
@@ -493,6 +511,56 @@ export function findFighter(state: SkirmishState, id: string): Fighter | undefin
   return state.fighters.find((fighter) => fighter.id === id);
 }
 
+/**
+ * 같은 표적을 사냥하는 생존 아군에게 적용되는 루카 폭주 오라를 계산한다.
+ * 조건부 오라는 종료 시각이 없으므로 UI를 위해 가짜 남은 시간을 만들지 않고 `conditional`로 반환한다.
+ */
+export function activePackHuntBuffs(state: SkirmishState, targetFighterId: string): ActiveCombatBuff[] {
+  const target = findFighter(state, targetFighterId);
+  if (!target || !isFighterAlive(target) || !target.targetId) return [];
+
+  return state.fighters
+    .filter((source) => source.side === target.side && isFighterAlive(source) && source.ferocityFever
+      && source.targetId === target.targetId && source.def.ferocityTrait.effectId === "packHunt")
+    .map((source) => ({
+      // 런타임 제공자 ID를 포함해 같은 렐릭이 여럿이어도 UI 키가 충돌하지 않게 한다.
+      id: `luka-passive:${source.id}:${target.id}`,
+      sourceFighterId: source.id,
+      targetFighterId: target.id,
+      skillId: "luka-passive",
+      name: "무리 사냥",
+      description: `같은 표적을 공격하는 동안 공격 속도 ${source.def.ferocityTrait.effectId === "packHunt" ? source.def.ferocityTrait.sharedTargetAttackSpeedPercent : 0}% 증가`,
+      timing: { kind: "conditional" as const },
+    }));
+}
+
+/**
+ * 한 전투원에게 현재 적용된 버프만 돌려주는 순수 셀렉터다.
+ * 야성 폭주는 게이지가 초당 일정하게 소모되므로 남은/전체 시간을 게이지에서 직접 환산해 UI의 공식 복제를 막는다.
+ */
+export function activeCombatBuffs(state: SkirmishState, fighterId: string): ActiveCombatBuff[] {
+  const fighter = findFighter(state, fighterId);
+  if (!fighter || !isFighterAlive(fighter)) return [];
+
+  const buffs = activePackHuntBuffs(state, fighterId);
+  if (fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "crescendoStaccato") {
+    buffs.push({
+      id: `crescendo-staccato:${fighter.id}`,
+      sourceFighterId: fighter.id,
+      targetFighterId: fighter.id,
+      skillId: "crescendoStaccato",
+      name: fighter.def.ferocityTrait.name,
+      description: "폭주 중 아군의 기본 공격 적중에 스타카토 추가타를 연주",
+      timing: {
+        kind: "ferocity",
+        remainingSeconds: fighter.ferocity / FEROCITY_RULES.feverDrainPerSecond,
+        totalSeconds: FEROCITY_RULES.max / FEROCITY_RULES.feverDrainPerSecond,
+      },
+    });
+  }
+  return buffs;
+}
+
 /** 공격 속도가 정하는 공격 간격(초). 100이 기준이다. */
 export function currentAttackSpeed(fighter: Fighter, state?: SkirmishState): number {
   // 전투의 환희 누적과 영구 패시브만 포함한다. 폭주처럼 시간이 정해진 임시 배율은 궁극기 계수에서 제외한다.
@@ -500,11 +568,11 @@ export function currentAttackSpeed(fighter: Fighter, state?: SkirmishState): num
     ? fighter.def.passive.attackSpeedPercent ?? 0 : 0;
   const teamPercent = state ? Math.max(0, ...state.fighters.filter((ally) => ally.side === fighter.side && isFighterAlive(ally)
     && ally.def.passive.kind === "adagioWeight").map((ally) => ally.def.passive.teamAttackSpeedPercent ?? 0)) : 0;
-  // 동일 표적 폭주 루카 오라는 자신도 포함하며, 복수 제공자는 기존 오라 정책대로 최댓값만 쓴다.
-  const packHuntPercent = state && isFighterAlive(fighter) && fighter.targetId ? Math.max(0, ...state.fighters.filter((ally) =>
-    ally.side === fighter.side && isFighterAlive(ally) && ally.ferocityFever && ally.targetId === fighter.targetId
-    && ally.def.ferocityTrait.effectId === "packHunt"
-  ).map((ally) => ally.def.ferocityTrait.effectId === "packHunt" ? ally.def.ferocityTrait.sharedTargetAttackSpeedPercent : 0)) : 0;
+  // 적용 여부는 HUD와 공유하는 순수 셀렉터가 판정하고, 복수 제공자의 수치는 기존 오라 정책대로 최댓값만 쓴다.
+  const packHuntPercent = state ? Math.max(0, ...activePackHuntBuffs(state, fighter.id).map((buff) => {
+    const source = findFighter(state, buff.sourceFighterId);
+    return source?.def.ferocityTrait.effectId === "packHunt" ? source.def.ferocityTrait.sharedTargetAttackSpeedPercent : 0;
+  })) : 0;
   return (fighter.def.stats.attackSpeed + passiveSpeedPoints + fighter.bonusAttackSpeed)
     * (1 + teamPercent / 100) * (1 + packHuntPercent / 100);
 }

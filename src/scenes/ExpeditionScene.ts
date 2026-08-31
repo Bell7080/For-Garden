@@ -38,6 +38,8 @@ import { NodeEnemyPreview } from "../ui/NodeEnemyPreview";
 import { BattleProfile } from "../ui/BattleProfile";
 import { BATTLE_PROFILE_LAYOUT } from "../ui/battleStatusLayout";
 import { removeFormationSlot } from "../core/formationSelection";
+import { moveFormationSlot } from "../core/formation";
+import { bindFormationDrag, type FormationDragSlot } from "../ui/formationDrag";
 
 /** 원정 준비 카드의 고정 그리드 규격이다. 다른 편성과 달리 세 칸씩 읽게 한다. */
 const ROSTER = { columns: 3, width: 250, height: 310, gapX: 56, gapY: 50 } as const;
@@ -766,6 +768,7 @@ export class ExpeditionScene extends Phaser.Scene {
     const generation = ++this.formationGeneration;
     const layer = this.add.container(0, 0).setName("expedition-formation-preview");
     this.formationPreview = layer;
+    const dragSlots: FormationDragSlot[] = [];
     for (let index = 0; index < 3; index += 1) {
       const x = FORMATION.firstX + index * FORMATION.stepX;
       // 번호는 카드 위 독립 표식으로 두어 SD가 나타나도 편성 순서를 잃지 않는다.
@@ -789,19 +792,20 @@ export class ExpeditionScene extends Phaser.Scene {
       // 공용 슬롯 면은 카드와 SD보다 위에서 입력을 맡고, SD 자체는 계속 비대화형으로 둔다.
       const hit = this.add.rectangle(x, FORMATION.y, FORMATION.width, FORMATION.height, 0xffffff, 0)
         .setName(`expedition-formation-slot-${index + 1}`).setDepth(4).setInteractive({ useHandCursor: true });
-      let pressed = false;
-      hit.on("pointerdown", () => { pressed = true; hit.setScale(1.08); });
-      hit.on("pointerout", () => { pressed = false; hit.setScale(1); });
-      hit.on("pointerup", () => {
-        hit.setScale(1);
-        // 보유 카드 스크롤로 승격된 포인터는 같은 해제 입력으로 편성까지 지우지 않는다.
-        if (!pressed || this.rosterDragging || this.rosterDraggedDistance > ROSTER_DRAG_SLOP) { pressed = false; return; }
-        pressed = false;
-        if (this.selected[index] === undefined || !removeFormationSlot(this.selected, index)) return;
-        this.refreshPreparationSelection();
-      });
       layer.add(hit);
+      dragSlots.push({ hit, x, y: FORMATION.y, width: FORMATION.width, height: FORMATION.height });
     }
+    // Puppet은 직접 옮기지 않고 번호 고스트만 추적한 뒤 전체 미리보기를 기존 로더로 재생성한다.
+    bindFormationDrag(this, dragSlots, {
+      onTap: (index) => {
+        if (this.rosterDragging || this.rosterDraggedDistance > ROSTER_DRAG_SLOP || this.selected[index] === undefined || !removeFormationSlot(this.selected, index)) return;
+        this.refreshPreparationSelection();
+      },
+      onDrop: (from, to) => {
+        this.selected = moveFormationSlot(this.selected, from, to);
+        this.refreshPreparationSelection();
+      },
+    });
   }
 
   /** 컨테이너 밖 GPU 자원을 포함한 이전 SD 미리보기를 선택 변경 전에 명시적으로 정리한다. */

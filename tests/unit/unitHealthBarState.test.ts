@@ -28,10 +28,18 @@ describe("unit health bar state", () => {
     expect(state.reactionLevel).toBe(0);
   });
 
-  it("사망 피해는 목표를 0으로 제한하면서 잔상을 남긴다", () => {
+  it("사망 피해는 잔상 타이머를 기다리지 않고 최종 0으로 정리한다", () => {
     const state = setUnitHealthValue(createUnitHealthBarState(0.2), { currentHp: -5, maxHp: 100, damage: 25, cause: "damage" });
     expect(state.target).toBe(0);
-    expect(state.damageTrail).toBeGreaterThan(0);
+    expect(state.shown).toBe(0);
+    expect(state.damageTrail).toBe(0);
+    expect(state.trailHold).toBe(0);
+  });
+
+  it("회복 시 붉은 잔상은 새 목표 체력보다 작아지지 않는다", () => {
+    const state = setUnitHealthValue(createUnitHealthBarState(0.3), { currentHp: 80, maxHp: 100, cause: "heal" });
+    expect(state.damageTrail).toBeGreaterThanOrEqual(state.target);
+    expect(state.reactionLevel).toBe(0);
   });
 
   it("낮은 프레임률과 반복 진행에서도 잔상이 현재 체력보다 내려가지 않는다", () => {

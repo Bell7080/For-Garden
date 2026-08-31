@@ -35,13 +35,21 @@ export const HEALTH_BAR_MOTION = {
   reactionSeconds: 0.24,
 } as const;
 
+/**
+ * 머리 위 바와 가장자리 프로필이 함께 쓰는 피격 강도 단계다.
+ *
+ * 두 HUD가 같은 사건을 서로 다른 무게로 말하지 않도록 임계값은 렌더러가 아닌 이 순수 표만
+ * 소유한다. 프로필은 안전 영역 때문에 이 단계의 배율만 더 작게 해석한다.
+ */
+export const HEALTH_DAMAGE_STEPS = [0, 0.08, 0.22] as const;
+
 const clamp01 = (value: number): number => Math.max(0, Math.min(1, Number.isFinite(value) ? value : 0));
 
 /** 최대 체력 대비 피해를 네 단계로 정규화해 절대 공격력과 무관한 타격감을 만든다. */
 export function damageReactionLevel(ratio: number): number {
   if (ratio <= 0) return 0;
-  if (ratio < 0.08) return 1;
-  if (ratio < 0.22) return 2;
+  if (ratio < HEALTH_DAMAGE_STEPS[1]) return 1;
+  if (ratio < HEALTH_DAMAGE_STEPS[2]) return 2;
   return 3;
 }
 
@@ -59,6 +67,10 @@ export function setUnitHealthValue(state: UnitHealthBarState, input: number | He
   const cause = input.cause ?? "sync";
   const damage = input.damage ?? (input.previousHp === undefined ? 0 : Math.max(0, input.previousHp - input.currentHp));
   const level = cause === "damage" ? damageReactionLevel(damage / maxHp) : 0;
+  // 사망은 잔상 대기보다 전투 결과 전달이 우선이다. 세 폭과 반응 타이머를 즉시 0으로 닫는다.
+  if (target === 0 && cause === "damage") return createUnitHealthBarState(0);
+  // 회복에는 붉은 층이 의미가 없으므로 새 체력에 즉시 포갠다. 역방향 잔상도 이 경계에서 막는다.
+  if (cause === "heal") return { ...state, target, damageTrail: Math.max(target, state.shown), trailHold: 0 };
   if (level === 0) return { ...state, target };
   return {
     ...state,

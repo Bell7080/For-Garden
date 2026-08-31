@@ -101,7 +101,8 @@ export class PartyScene extends Phaser.Scene {
 
   create(): void {
     setDebugScene("party");
-    this.picked = [];
+    // 직전 스토리 편성만 복원한다. 원정·발굴은 각 콘텐츠가 소유한 별도 저장 필드를 유지한다.
+    this.picked = relicCollection.validParty;
     this.cards.clear();
     this.allySlots = [];
     this.pressTimer = undefined;
@@ -117,6 +118,8 @@ export class PartyScene extends Phaser.Scene {
     // 전투와 같은 함수로 적을 만든다. 여기서만 기본 수치를 읽으면 미리보기의 체력이 실제
     // 전투보다 낮게 보인다 — 스테이지 레벨 보정은 `getStageEnemies` 한 곳에만 있다.
     this.enemies = getStageEnemies(stage);
+    // 손상된 런타임 파티만 보유 목록 기반 자동 편성으로 안전하게 대체한다.
+    if (this.picked.length !== 3) this.picked = autoPickParty(relicCollection.owned, this.enemies);
     this.add.text(cx, 70, `${stage.id}  ${stage.name}`, textStyle({ role: "display", size: 46 })).setOrigin(0.5, 0);
     this.add
       .text(cx, 132, "렐릭 3명 편성 — 고른 순서대로 왼쪽부터 선다", textStyle({ role: "body", size: 28, color: COLOR.inkDim }))

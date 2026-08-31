@@ -31,7 +31,7 @@ function makeSession(): Session {
     // 테스트 계정은 광고 수령 이력이 없는 UTC 일일 상태로 시작한다.
     dailyAdRewards: { date: "", claimsBySlot: {}, requestIds: [] },
     // 수집 테스트는 원정 진행이 없는 새 주간 상태를 사용한다.
-    expedition: { weekKey: "", playsThisWeek: 0, bestScore: 0, allTimeBestScore: 0, run: null },
+    expedition: { weekKey: "", playsThisWeek: 0, bestScore: 0, allTimeBestScore: 0, lastParty: [], run: null },
   };
 }
 
@@ -84,5 +84,13 @@ describe("RelicCollectionManager", () => {
     // UI가 같은 false를 추측하지 않고 각 원인에 맞는 안내를 표시할 수 있어야 한다.
     expect(manager.setParty(["anky", "rex"])).toEqual({ ok: false, reason: "wrong-size" });
     expect(manager.setParty(["anky", "rex", "quetzal"])).toEqual({ ok: false, reason: "not-owned", relicId: "quetzal" });
+  });
+
+  it("저장 파티에서 미보유 렐릭이 발견되면 초기 편성 후보를 비운다", () => {
+    const state = makeSession();
+    state.party = ["anky", "rex", "quetzal"];
+    const manager = new RelicCollectionManager(state);
+    // 씬은 손상 배열 일부를 이어 쓰지 않고 이 빈 결과만 자동 편성으로 대체한다.
+    expect(manager.validParty).toEqual([]);
   });
 });

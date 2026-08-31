@@ -584,6 +584,9 @@ export class ExpeditionScene extends Phaser.Scene {
 
   /** 보유 렐릭에서 정확히 세 기를 고르는 신규 원정 준비 화면을 만든다. */
   private buildPreparation(): void {
+    // 저장 손상이나 보유 변경으로 세 명이 아니면 현재 보유 목록에서 안전한 기본 편성을 만든다.
+    const saved = session.expedition.lastParty.filter((id, index, ids) => session.owned.has(id) && ids.indexOf(id) === index);
+    this.selected = saved.length === 3 ? [...saved] : [...session.owned].slice(0, 3);
     this.add.text(BASE_WIDTH / 2, 292, "원정대 3기 선택", textStyle({ role: "emphasis", size: 32 })).setOrigin(0.5);
     if (import.meta.env.DEV) {
       // 임시 개발 도구: Session을 건드리지 않고 매니저가 만든 실제 20층 노드를 열어 미리보기와 출격 흐름을 그대로 검수한다.
@@ -609,6 +612,11 @@ export class ExpeditionScene extends Phaser.Scene {
       onClick: () => this.startExpedition(),
     });
     this.startButton.setEnabled(false);
+    // 카드·슬롯 SD·버튼 수를 최초 프레임부터 복원 편성과 일치시킨다.
+    this.renderFormationPreview();
+    this.cards.forEach((card, id) => card.setSelected(this.selected.includes(id), COLOR.sortie));
+    this.startButton.setSub(`${this.selected.length} / 3`).setEnabled(this.selected.length === 3);
+    this.hint.setText(this.selected.length === 3 ? "출발 준비 완료" : "3기를 선택하세요");
   }
 
   /**

@@ -32,6 +32,12 @@ export class RelicCollectionManager {
     return PLAYABLE_RELICS.filter((relic) => this.state.owned.has(relic.id));
   }
 
+  /** 저장 파티가 현재 보유 상태와 맞을 때만 씬 초기 선택용 독립 사본을 돌려준다. */
+  get validParty(): string[] {
+    const party = this.state.party;
+    return party.length === 3 && new Set(party).size === 3 && party.every((id) => this.owns(id)) ? [...party] : [];
+  }
+
   /** 보유 여부 검사를 한곳에서 처리해 잠금 규칙이 UI마다 달라지지 않게 한다. */
   owns(relicId: string): boolean {
     return this.state.owned.has(relicId);

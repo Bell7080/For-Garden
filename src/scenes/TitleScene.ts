@@ -52,12 +52,15 @@ export class TitleScene extends Phaser.Scene {
       addSceneBackground(this, BACKGROUND.title, -30);
       drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { depth: -20 });
       // 로고 그림 하나만 배경 위에 얹으면 밝은 원화에 묻히므로, 검은 그림자를 깐 옅은 유리판을
-      // 뒤에 받쳐 대비를 만든다. 진하게 칠하면 판때기로 보이므로 alpha는 낮게(0.4) 둔다.
+      // 뒤에 받쳐 대비를 만든다. alpha는 눈대중이 아니라 이 자리의 실제 배경 원화 픽셀을 재서
+      // 골랐다 — 가장 옅은 글자색(설명 줄의 inkDim)이 WCAG AA 일반 텍스트 기준(4.5:1)을
+      // 넘기는 최소값은 0.4508이었다(scripts/prepare_title.py로 구운 background_011.webp의
+      // 부제·설명 줄 영역 평균을 COLOR.void와 섞어 대비를 계산). 0.46으로 살짝 여유를 둔다.
       const panelHeight = descY - (logoY - logoHalfHeight) + 60;
       const panelY = (logoY - logoHalfHeight - 30 + (descY + 30)) / 2;
       drawLayer(this, cx, panelY, slantedRect(logoWidth + 100, panelHeight), {
         fill: COLOR.void,
-        alpha: 0.4,
+        alpha: 0.46,
       }).setDepth(-15);
       this.add.image(cx, logoY, TITLE_LOGOTYPE_KEY).setDisplaySize(logoWidth, logoHalfHeight * 2).setDepth(-10);
     });

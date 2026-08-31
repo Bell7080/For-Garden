@@ -10,6 +10,7 @@ import { SKILL_ICON_ASSETS } from "../ui/skillIcons";
 import { SKILL_ART_ASSETS } from "../ui/skillArt";
 import { EXCAVATION_TRAIT_ICON_ASSETS } from "../ui/excavationIcons";
 import { ITEM_ICON_ASSETS } from "../ui/itemIcons";
+import { SQUAD_EMBLEM_ASSETS } from "../data/factions";
 
 /**
  * 타이틀 화면이 지불하는 로딩 비용의 전부.
@@ -86,6 +87,8 @@ export const LOADING_STEPS: ReadonlyArray<LoadingStep> = [
         // 속성·직군은 이미 구워 둔 WebP라 그대로 읽는다.
         AFFINITY_ICON_ASSETS.forEach(([key, path]) => scene.load.image(key, path));
         CURRENCY_ICON_ASSETS.forEach(([key, path]) => scene.load.image(key, path));
+        // 스쿼드 엠블럼도 이미 구워 둔 WebP다. 색은 파일에 들어 있고 화면은 어둠만 덧댄다.
+        SQUAD_EMBLEM_ASSETS.forEach(([key, path]) => scene.load.image(key, path));
         RUNE_ICON_ASSETS.forEach(([key, path]) => scene.load.image(key, path));
         // 임시 item SVG도 개별 가방 씬이 아니라 공용 단계에서 크게 구운 뒤 축소해 사용한다.
         ITEM_ICON_ASSETS.forEach(([key, path]) => scene.load.svg(key, path, { width: SVG_BAKE.skill, height: SVG_BAKE.skill }));

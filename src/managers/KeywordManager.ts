@@ -61,6 +61,9 @@ export class KeywordManager {
         }
       });
     }
+    // 컨테이너는 자식이 늘어도 크기를 스스로 알지 못한다. 실제로 채운 줄 수를 크기로 남겨,
+    // 뒤에 다른 문단을 잇는 화면이 줄 수를 눈대중으로 세지 않게 한다.
+    container.setSize(options.width, y + lineHeight);
     return container;
   }
 

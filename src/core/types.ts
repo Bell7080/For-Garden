@@ -2,6 +2,14 @@
 
 export type Side = "player" | "enemy";
 
+/**
+ * 소속 자치 스쿼드의 id.
+ *
+ * 이름·호칭·엠블럼 같은 내용은 `src/data/factions.ts`가 소유한다. 코어는 데이터 표를 알 필요가
+ * 없으므로 판별 가능한 id만 둔다. 엠블럼 파일 이름도 이 id와 같다.
+ */
+export type SquadId = "fang" | "gear" | "eye" | "rune" | "rogue";
+
 /** 속성. 다섯 속성은 서로 정확히 두 속성을 이기고 나머지 두 속성에 진다. */
 export type Element = "fire" | "water" | "grass" | "earth" | "wind";
 
@@ -383,6 +391,24 @@ export interface RelicDef {
     height: string;
     weight: string;
   };
+  /**
+   * 소속 자치 스쿼드.
+   *
+   * 전투 role·속성처럼 코드가 강제하는 값이 아니라 **서사 값**이다. `docs/factions.md`의
+   * 배정표가 원문이고, 여기 없는 렐릭이 생기면 그 문서에 근거 한 줄과 함께 추가한다.
+   */
+  squad: SquadId;
+  /**
+   * 그 스쿼드 안에서의 이야기 한 줄.
+   *
+   * 소속을 이름표로만 두면 배정표의 칸 하나로 끝난다. 그 무리에서 실제로 무엇을 하고 어떻게
+   * 불리는지가 있어야 소속이 성격이 된다.
+   */
+  squadNote?: string;
+  /** 그 개체가 동경하는 다른 스쿼드. 소속과 다를 때만 채운다. */
+  admiredSquad?: SquadId;
+  /** 그 개체가 주인공을 부르는 말. 비우면 소속 스쿼드의 대표 호칭을 쓴다. */
+  researcherTitle?: string;
   /** 미보유 상태에서도 공개할 수 있는 외형 중심의 짧은 도감 요약이다. */
   catalogSummary: string;
   /** 설정 확정 여부를 문자열 임시 문구가 아니라 판별 가능한 데이터로 표현한다. */

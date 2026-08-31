@@ -52,10 +52,29 @@ import type { Fighter } from "../core/skirmish";
 import { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../core/infoCapabilities";
 import { allyHealPowerKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, passiveShieldKeyword, skillDescription } from "./skillPresentation";
 import type { KeywordDef } from "../data/keywords";
+import { addFactionMark } from "./FactionMark";
+import { SQUADS } from "../data/factions";
 
 export type { SkillInfoViewModel } from "./SkillPopup";
 
 export { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../core/infoCapabilities";
+
+/**
+ * 관찰 일지 우상단의 소속 표식 자리.
+ *
+ * 880×1140 판의 안쪽 모서리다. 일지 원화 클립은 좌상단·우하단만 깎으므로 **우상단은 직각**이라
+ * 표식이 모서리에 바짝 붙어도 사선에 잘리지 않는다. 제목 줄은 판 윗변에 걸터앉으므로 표식은
+ * 그보다 아래로 내려 세운다.
+ */
+const JOURNAL_SQUAD_MARK = { x: 322, y: -462, size: 104 } as const;
+
+/**
+ * 소속 이야기가 있을 때 일지 판이 더 갖는 높이.
+ *
+ * 네 줄(글자 22px + 줄 간격 8px)과 위아래 숨 쉴 틈을 합친 값이다. 문단이 이보다 길어지면
+ * 인터뷰 줄과 겹치므로, `RelicDef.squadNote`는 네 줄 안에 끝나게 쓴다.
+ */
+const JOURNAL_SQUAD_STORY_HEIGHT = 150;
 
 // 일지 원화는 정보보다 먼저 읽히지 않을 만큼 낮추고, 어두운 페이드는 본문 대비를 보존한다.
 const JOURNAL_ART_ALPHA = 0.18;
@@ -1015,13 +1034,16 @@ export class InfoManager {
     const def = this.currentDef;
     if (!def) return;
     const disclosure = getRelicCatalogDisclosure(def, this.ownedNow);
+    // 소속 이야기가 있는 개체는 그만큼 판을 늘린다. 같은 높이에 밀어 넣으면 기록 본문이
+    // 인터뷰 줄과 겹쳐 두 문단이 한 덩어리로 읽힌다.
+    const squadStory = disclosure.access === "full" && def.squadNote ? JOURNAL_SQUAD_STORY_HEIGHT : 0;
     // 인터뷰 질문과 선택지가 기록 본문에 붙어 보이지 않도록 세로 여백을 확보한 일지 규격을 쓴다.
-    this.popups.open({ width: 880, height: 1140, title: "관찰 일지", tilt: -1.2, ...anchorOf(from) }, (body, close) => {
+    this.popups.open({ width: 880, height: 1140 + squadStory, title: "관찰 일지", tilt: -1.2, ...anchorOf(from) }, (body, close) => {
       // 팝업 판보다 12px 안쪽인 같은 비대칭 칩 형태로 잘라, 직사각 원화 모서리가 홀로그램 판의
       // 좌상단/우하단 사선 밖으로 튀어나오지 않게 한다. body 회전을 공유하므로 원화도 -1.2°를 따른다.
       if (this.scene.textures.exists("content-observation-journal")) {
         // 팝업이 길어진 만큼 원화 클립도 함께 늘려 하단에 직사각 배경 끝이 드러나지 않게 한다.
-        const artWidth = 856; const artHeight = 1116;
+        const artWidth = 856; const artHeight = 1116 + squadStory;
         const journalMask = chipPoints(artWidth, artHeight, { bevel: { topLeft: artWidth * 0.14, topRight: 0, bottomRight: artWidth * 0.14, bottomLeft: 0 } });
         // 세로 원화는 1:1 크기를 유지하되 원화와 팝업의 시각 중심을 맞춰 상·하단을 대칭으로 자른다.
         const journalArt = addPopupBackgroundImage(this.scene, body, "content-observation-journal", {
@@ -1032,6 +1054,12 @@ export class InfoManager {
         // PopupLayer가 tilt와 등장 배율을 먼저 적용했으므로 첫 프레임부터 같은 칩 변환을 공유한다.
         journalArt.syncMask();
       }
+      // 소속 표식은 판 **안쪽** 우상단에 앉는다. 밖으로 내밀면 홀로그램 판의 실루엣이 깨져
+      // 표식이 판에 붙은 스티커처럼 보인다. 안에 두면 일지에 찍은 도장으로 읽힌다.
+      const markY = JOURNAL_SQUAD_MARK.y - squadStory / 2;
+      const squadMark = addFactionMark(this.scene, JOURNAL_SQUAD_MARK.x, markY, def.squad, { size: JOURNAL_SQUAD_MARK.size });
+      if (squadMark) body.add(squadMark);
+
       const lines = disclosure.access === "full"
         ? [
             "개체번호   NO." + disclosure.specimenNumber,
@@ -1046,14 +1074,32 @@ export class InfoManager {
             ] : []),
           ]
         : ["개체번호   NO." + disclosure.specimenNumber, "프로젝트   기록 없음", "기원         미상", "발굴지      미상"];
-      body.add(this.scene.add.text(-380, -446, lines.join("\n"), textStyle({ role: "body", size: 24, lineSpacing: 10 })).setOrigin(0, 0));
+      body.add(this.scene.add.text(-380, -446 - squadStory / 2, lines.join("\n"), textStyle({ role: "body", size: 24, lineSpacing: 10 })).setOrigin(0, 0));
+      // 소속은 엠블럼만으로는 이름을 말하지 못한다. 표식 아래에 스쿼드 이름을 짧게 붙인다.
+      if (disclosure.access === "full") {
+        body.add(this.scene.add
+          .text(JOURNAL_SQUAD_MARK.x, markY + JOURNAL_SQUAD_MARK.size / 2 + 14, SQUADS[def.squad].name,
+            textStyle({ role: "emphasis", size: 20, color: COLOR.accentText, align: "center" }))
+          .setOrigin(0.5, 0));
+      }
       // 상단 표본 설명과 일기 내용 사이에 이전보다 넓은 숨 쉴 틈을 둔다.
-      const recordDividerY = def.observationProfile ? -138 : -228;
+      const recordDividerY = (def.observationProfile ? -138 : -228) - squadStory / 2;
       body.add(drawHairline(this.scene, 0, recordDividerY, 760, { color: COLOR.accent, alpha: 0.35 }));
       const record = disclosure.access === "full" ? disclosure.record : def.catalogSummary + "\n\n상세 기록은 개체 획득 후 해제됩니다.";
       const text = this.keywords.layout(record, { width: 760, size: 26, lineSpacing: 10 });
       text.setPosition(-380, recordDividerY + 42);
       body.add(text);
+
+      // 소속에서의 이야기는 표본 기록 **바로 뒤에** 잇는다. 어느 무리에서 무엇을 하고 누구를
+      // 우러러보는지가 있어야 소속이 이름표가 아니라 성격이 된다. 기록 본문의 길이는 개체마다
+      // 다르므로 자리는 눈대중이 아니라 실제로 그려진 높이에서 잰다.
+      if (disclosure.access === "full" && def.squadNote) {
+        const admired = def.admiredSquad ? `\n동경  ${SQUADS[def.admiredSquad].name} — ${SQUADS[def.admiredSquad].duty}` : "";
+        body.add(this.scene.add
+          .text(-380, text.y + text.height + 26, `${def.squadNote}${admired}`,
+            textStyle({ role: "body", size: 22, color: COLOR.inkDim, lineSpacing: 8, wrap: 760 }))
+          .setOrigin(0, 0));
+      }
 
       // 기존 일지 아래에 날짜·질문·답변·발견 습성을 같은 쪽지 안에서 시간순으로 보여 준다.
       // 작은 쪽지에는 가장 최근 한 건만 두고 전체 이력은 저장에 유지해 내용이 겹치지 않게 한다.

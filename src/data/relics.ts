@@ -7,6 +7,7 @@ import type { BasicAttack, RelicDef } from "../core/types";
 export const RELICS: RelicDef[] = [
   {
     id: "rex",
+    squad: "fang",
     name: "렉시아",
     specimenNumber: "072",
     projectName: "APEX CROWN",
@@ -87,6 +88,7 @@ export const RELICS: RelicDef[] = [
   },
   {
     id: "anky",
+    squad: "fang",
     name: "토리카",
     specimenNumber: "014",
     projectName: "BASTION HORN",
@@ -163,6 +165,7 @@ export const RELICS: RelicDef[] = [
   },
   {
     id: "spino",
+    squad: "gear",
     // 저장 데이터와 에셋 키는 유지하고 플레이어에게 표시하는 이름만 스피나로 통일한다.
     name: "스피나",
     specimenNumber: "105",
@@ -248,6 +251,7 @@ export const RELICS: RelicDef[] = [
   // 4번 Puppet 묶음은 전신과 SD가 모두 완성된 루카의 전용 에셋을 사용한다.
   {
     id: "luka",
+    squad: "gear",
     name: "루카",
     specimenNumber: "038",
     projectName: "VELOCITY CLAW",
@@ -323,6 +327,13 @@ export const RELICS: RelicDef[] = [
   },
   {
     id: "dodo",
+    squad: "rogue",
+    // 소속을 이름표로만 두지 않는다. 유치부 탐험대의 결(대장님 맹신·잡동사니 수집)을 그대로
+    // 문장에 담고, 스킬명 "연구원님, 이것 좀 보세요!"와 같은 목소리로 이어 둔다.
+    squadNote: "쁘띠 로그의 막내 기록병. 자칭 이터널 최정예 탐험대의 발견을 전부 받아 적겠다며 깃펜을 놓지 않지만, 일지 절반은 주운 반짝이 목록이다. 대장님을 부르는 목소리가 제일 크다.",
+    // 관제탑에서 내려다보며 훈수를 두는 시그널 아이를 "다 아는 어른들"로 우러러본다.
+    admiredSquad: "eye",
+    researcherTitle: "대장님",
     // 저장·에셋 호환 ID는 dodo로 두고 플레이어에게 보이는 이름만 확정 명칭으로 바꾼다.
     name: "도디",
     specimenNumber: "001",
@@ -402,6 +413,7 @@ export const RELICS: RelicDef[] = [
   },
   {
     id: "smilo",
+    squad: "gear",
     name: "스밀라",
     specimenNumber: "044",
     projectName: "FROST FANG",
@@ -463,6 +475,7 @@ export const RELICS: RelicDef[] = [
   },
   {
     id: "quetz",
+    squad: "eye",
     name: "케찰",
     specimenNumber: "093",
     projectName: "HIGH CURRENT",
@@ -526,6 +539,7 @@ export const RELICS: RelicDef[] = [
   // --- 적 개체. 폭주해 이터널 시티를 위협하는 실패작들이다. ---
   {
     id: "husk-raptor",
+    squad: "gear",
     name: "토비",
     specimenNumber: "201",
     projectName: "SEALED",
@@ -587,6 +601,7 @@ export const RELICS: RelicDef[] = [
   },
   {
     id: "husk-shell",
+    squad: "rogue",
     name: "아모",
     specimenNumber: "202",
     projectName: "SEALED",
@@ -648,6 +663,7 @@ export const RELICS: RelicDef[] = [
   },
   {
     id: "husk-wing",
+    squad: "eye",
     name: "리파",
     specimenNumber: "203",
     projectName: "SEALED",
@@ -710,6 +726,7 @@ export const RELICS: RelicDef[] = [
   {
     // 신규 저장 키 `mette`는 표시명이나 에셋 번호와 분리한 안정적인 내부 ID다.
     id: "mette",
+    squad: "rune",
     name: "메테",
     specimenNumber: "163",
     projectName: "ADAGIO COLOSSUS",
@@ -766,6 +783,7 @@ export const RELICS: RelicDef[] = [
   {
     // 원정 최종층의 단독 보스. 리바이어던 멜빌레이의 거대한 턱과 심해 포식자 모티브를 담는다.
     id: "pontos",
+    squad: "fang",
     name: "폰토스",
     specimenNumber: "220",
     projectName: "ABYSSAL CROWN",

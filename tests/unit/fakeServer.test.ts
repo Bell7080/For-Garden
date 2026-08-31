@@ -254,7 +254,7 @@ describe("FakeServer", () => {
     const response = await server.pullRelics({ bannerId: "fossil", count: 1 });
 
     expect(response.wallet.fossil).toBe(900);
-    expect(response.results).toEqual([{ relicId: "rex", kind: "fragment", fragments: 1, overflowFragments: 0 }]);
+    expect(response.results).toEqual([{ type: "relic", relicId: "rex", kind: "fragment", fragments: 1, overflowFragments: 0 }]);
     expect(response.duplicateRelicIds).toEqual(["rex"]);
     expect(state.wallet.fossil).toBe(900);
     expect(state.gachaPityByGroup["standard-fossil"].pullsSinceSsr).toBe(0);
@@ -266,13 +266,36 @@ describe("FakeServer", () => {
     state.owned.delete("rex");
     delete state.relicProgress.rex;
     const response = await new FakeServer(state, { latencyMs: 0, random: () => 0 }).pullRelics({ bannerId: "fossil", count: 10 });
-    expect(response.results[0].kind).toBe("new");
-    expect(response.results[1]).toMatchObject({ kind: "fragment", fragments: 1 });
+    expect(response.results[0]).toMatchObject({ type: "relic", kind: "new" });
+    expect(response.results[1]).toMatchObject({ type: "relic", kind: "fragment", fragments: 1 });
     // 중복 아홉 장은 모두 그 개체의 파편이다. 별은 파편을 써서 플레이어가 직접 올린다.
     expect(state.relicProgress.rex).toMatchObject({ level: 1, breakthrough: 0 });
     expect(state.relicFragments.rex).toBe(9);
     expect(state.relicProgress.rex).toMatchObject({ bondLevel: 1, bondXp: 20 });
     expect(state.wallet.dnaFragments).toBe(0);
+  });
+
+  it("렐릭과 회색 재화가 섞인 10연을 순서대로 지급하고 지갑 상한을 적용한다", async () => {
+    const state = makeSession();
+    state.wallet.gold = 999_999_999 - 5;
+    const rolls = [0.9, 0, 0, ...Array(40).fill(0)];
+    let index = 0;
+    const response = await new FakeServer(state, { latencyMs: 0, random: () => rolls[index++] ?? 0 }).pullRelics({ bannerId: "fossil", count: 10 });
+    expect(response.results[0]).toEqual({ type: "currency", currency: "gold", amount: 1_000, grade: "GRAY" });
+    expect(response.results.slice(1).every((result) => result.type === "relic")).toBe(true);
+    expect(state.wallet.gold).toBe(999_999_999);
+    expect(state.gachaPityByGroup["standard-fossil"].pullsSinceSsr).toBe(0);
+  });
+
+  it("저장 단위가 실패하면 비용·보상·천장을 메모리에 부분 반영하지 않는다", async () => {
+    const state = makeSession();
+    const before = { wallet: { ...state.wallet }, pity: { ...state.gachaPityByGroup } };
+    const server = new FakeServer(state, { latencyMs: 0, random: () => 0 });
+    // 실제 저장 장애와 같은 위치에서 실패시켜 persist 성공 이후에만 커밋한다는 계약을 검증한다.
+    (server as unknown as { persist: () => void }).persist = () => { throw new Error("save failed"); };
+    await expect(server.pullRelics({ bannerId: "fossil", count: 1 })).rejects.toThrow("save failed");
+    expect(state.wallet).toEqual(before.wallet);
+    expect(state.gachaPityByGroup).toEqual(before.pity);
   });
 
   it("재화가 부족하면 상태를 변경하지 않는다", async () => {

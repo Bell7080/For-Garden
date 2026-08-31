@@ -28,8 +28,11 @@ describe("연구소 획득 연구 연출 상태", () => {
 
   it("서버 결과의 최고 등급과 다중 신규 첫 대면 순서를 보존한다", () => {
     expect(highestRarity(["R", "SSR", "SR"])).toBe("SSR");
-    const slot = (relicId: string, kind: "new" | "fragment") => ({ relicId, kind, fragments: kind === "fragment" ? 1 : 0, overflowFragments: 0 });
+    expect(highestRarity(["GRAY", "GRAY"])).toBe("GRAY");
+    const slot = (relicId: string, kind: "new" | "fragment") => ({ type: "relic" as const, relicId, kind, fragments: kind === "fragment" ? 1 : 0, overflowFragments: 0 });
     expect(firstMeetingRelicIds([slot("rex", "new"), slot("anky", "new"), slot("rex", "new"), slot("spino", "fragment")]))
       .toEqual(["rex", "anky"]);
+    // 수량형 슬롯은 첫 대면 후보에서 구조적으로 제외된다.
+    expect(firstMeetingRelicIds([{ type: "currency", currency: "gold", amount: 10, grade: "GRAY" }])).toEqual([]);
   });
 });

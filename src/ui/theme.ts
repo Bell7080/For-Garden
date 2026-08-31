@@ -39,6 +39,8 @@ export const COLOR = {
   /** 기여도 방어 막대 전용 저채도 청색. 에너지와 구분하면서 같은 냉색 계열을 유지한다. */
   contributionDefense: 0x7392ad,
   /** 발굴 등급은 기본 금속 패널 위에서만 쓰는 보조 신호색이다. */
+  /** 렐릭 R보다 낮은 비개체 연구 결과 전용 중립 회색이다. */
+  researchGray: 0x596169,
   rarityR: 0x7890a3,
   raritySR: 0x6fc4bd,
   raritySRAlt: 0x9b78c7,

@@ -797,11 +797,14 @@ export class ExpeditionScene extends Phaser.Scene {
     }
     // Puppet은 직접 옮기지 않고 번호 고스트만 추적한 뒤 전체 미리보기를 기존 로더로 재생성한다.
     bindFormationDrag(this, dragSlots, {
-      onTap: (index) => {
+      dragStart: () => { /* 슬롯 표현은 기존 렌더 경계가 소유하므로 입력 시작에는 상태을 바꾸지 않는다. */ },
+      dragMove: () => { /* Puppet을 직접 이동하지 않고 드롭 뒤 기존 렌더 경로를 사용한다. */ },
+      cancel: () => { /* 취소는 배열과 저장 상태를 그대로 보존한다. */ },
+      tap: (index) => {
         if (this.rosterDragging || this.rosterDraggedDistance > ROSTER_DRAG_SLOP || this.selected[index] === undefined || !removeFormationSlot(this.selected, index)) return;
         this.refreshPreparationSelection();
       },
-      onDrop: (from, to) => {
+      drop: (from, to) => {
         this.selected = moveFormationSlot(this.selected, from, to);
         this.refreshPreparationSelection();
       },

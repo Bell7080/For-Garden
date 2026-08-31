@@ -579,23 +579,24 @@ export class IdleExcavationPopup {
     });
     bindFormationDrag(this.scene, dragSlots, {
       // 현황에서는 짧은 탭만 편집을 열며, 순서 드래그는 draft가 존재하는 편집 중에만 허용한다.
-      enabled: () => !this.saving,
-      canDrag: () => editable,
-      onTap: (index) => {
+      dragStart: () => { /* 발굴 draft는 실제 드롭 전까지 바꾸지 않는다. */ },
+      dragMove: () => { /* 팝업 Puppet은 화면 좌표 제약 때문에 직접 이동하지 않는다. */ },
+      cancel: () => { /* 닫기·다중 포인터 취소는 서버 확정값과 draft를 보존한다. */ },
+      tap: (index) => {
         if (this.gridDragging || this.gridDragMoved >= GRID_DRAG_SLOP || this.saving) return;
         if (!editable) { this.beginEdit(index); return; }
         // 편집 슬롯의 짧은 탭은 확정값이 아니라 draft의 해당 자리만 해제한다.
         if (this.draft?.[index] !== null) this.draft![index] = null;
         this.selectedSlot = index; this.renderEditor();
       },
-      onDrop: (from, to) => {
+      drop: (from, to) => {
         if (!editable || !this.draft || this.saving) return;
         this.draft = moveFormationSlot(this.draft, from, to) as Formation;
         this.selectedSlot = to;
         // 저장 전에는 서버 응답과 Session을 건드리지 않고 편집 사본만 다시 그린다.
         this.renderEditor();
       },
-    });
+    }, { enabled: () => !this.saving, canDrag: () => editable });
     setDebugIdleExcavationSlots(formation.map((_id, index) => ({ index, x: BASE_WIDTH / 2 - 250 + index * 250, y: BASE_HEIGHT / 2 + STATUS_HERO.slotY, width: 210, height: 245 })), editable ? this.selectedSlot : undefined);
     return cards;
   }

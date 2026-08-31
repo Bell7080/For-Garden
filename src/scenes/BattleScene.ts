@@ -60,6 +60,9 @@ import { BattleContributionPanel } from "../ui/BattleContributionPanel";
 import { battleContributionMvp, createBattleContributionResult, withConfirmedAttackTotal, type BattleContributionResult, type ContributionCategory } from "../core/battleContribution";
 import { BattleContributionPopup } from "../ui/BattleContributionPopup";
 import { StageCompletePopup, type StageCompleteFighter } from "../ui/StageCompletePopup";
+import { EffectManager } from "../managers/EffectManager";
+import { EFFECT_TEXTURE, ensureEffectTextures } from "../ui/effectTextures";
+import type { DamageFlavor } from "../ui/damageNumbers";
 
 /**
  * 여섯이 돌아다닐 수 있는 범위.
@@ -100,23 +103,13 @@ const METER_EASE = 6;
  */
 const FEVER = { scale: 1.1, outer: 2, core: 1.05, outerAlpha: 0.7, coreAlpha: 0.36, bodyMix: 0.32 } as const;
 
-/** 폭주 발광 한 장. 가운데가 진하고 가장자리로 갈수록 사라지는 흰 원이라 tint로 색만 갈아 쓴다. */
-const FEVER_GLOW_TEXTURE = "fever-glow";
-
-function ensureGlowTexture(scene: Phaser.Scene): void {
-  if (scene.textures.exists(FEVER_GLOW_TEXTURE)) return;
-  const size = 256;
-  const canvas = scene.textures.createCanvas(FEVER_GLOW_TEXTURE, size, size);
-  const context = canvas?.context;
-  if (!canvas || !context) return;
-  const gradient = context.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
-  gradient.addColorStop(0, "rgba(255,255,255,1)");
-  gradient.addColorStop(0.45, "rgba(255,255,255,0.55)");
-  gradient.addColorStop(1, "rgba(255,255,255,0)");
-  context.fillStyle = gradient;
-  context.fillRect(0, 0, size, size);
-  canvas.refresh();
-}
+/**
+ * 폭주 발광 한 장.
+ *
+ * 이펙트가 쓰는 것과 **같은 그림**이다(`src/ui/effectTextures.ts`). 같은 발광을 두 곳에서
+ * 따로 구우면 폭주와 타격 섬광이 서로 다른 번짐을 갖게 된다.
+ */
+const FEVER_GLOW_TEXTURE = EFFECT_TEXTURE.glow;
 
 /** 두 색을 비율대로 섞는다. 폭주 중 몸에 제 색을 옅게 얹을 때 쓴다. */
 function mixTint(base: number, other: number, amount: number): number {
@@ -235,6 +228,13 @@ export class BattleScene extends Phaser.Scene {
   private presentationChip!: ControlChip;
   /** 적 상세는 플레이어 성장 입력을 만들지 않는 전투 읽기 전용 창이다. */
   private info!: CharacterInfoManager;
+  /**
+   * 화면에 터지는 모든 것의 단일 소유자.
+   *
+   * 폭주·패시브·일반 공격·궁극기와 회복·보호막·사망·수치 글자가 전부 이 경계를 지난다.
+   * 씬은 "무슨 일이 일어났는지"만 넘기고 파편 수·색·크기를 직접 고르지 않는다.
+   */
+  private effects!: EffectManager;
   /** 한 판 안에서만 열림·카테고리를 기억하며 영구 설정에는 쓰지 않는 기여도 프리팹이다. */
   private contributionPanel?: BattleContributionPanel;
   private contributionCategory: ContributionCategory = "attack";
@@ -308,6 +308,8 @@ export class BattleScene extends Phaser.Scene {
     this.contributionResult = undefined;
     // 적도 같은 정보창을 쓴다. 문맥만 "enemy"라 급여·돌파·유대·룬이 빠지고 현재 전투 줄이 붙는다.
     this.info = new CharacterInfoManager(this, 1001, "enemy");
+    // 파편·파문은 SD보다 앞이되 궁극기 컷인(900)보다는 뒤라 연출을 가리지 않는다.
+    this.effects = new EffectManager(this, { depth: DEPTH.burst });
 
     // 편성 화면에서 본 6번 전장을 그대로 이어 실제 전투의 공간으로 사용한다.
     addSceneBackground(this, this.battleInput.mode === "expedition" || this.battleInput.mode === "expeditionBoss" ? BACKGROUND.expeditionField : BACKGROUND.combat, -30);
@@ -430,7 +432,7 @@ export class BattleScene extends Phaser.Scene {
 
   /** 여섯을 각자의 시작 자리에 세운다. 전부 준비된 뒤에야 시간이 흐르기 시작한다. */
   private async spawnFighters(): Promise<void> {
-    ensureGlowTexture(this);
+    ensureEffectTextures(this);
     for (const fighter of this.state.fighters) {
       // 표시 배율은 코어 입력에 들어 있으며 씬은 모든 Puppet 부속 표현에 같은 높이만 적용한다.
       const unitHeight = UNIT_HEIGHT * fighter.bodyScale;
@@ -717,13 +719,19 @@ export class BattleScene extends Phaser.Scene {
         flashHit(this, view.creature, this.bodyTint(view));
         return undefined;
       }
-      this.popDamage(view.fighter, event.amount, false, false);
+      // 출혈은 방어를 거치지 않는 고정 피해라 물리·마법과 다른 다크체리 색으로 뜬다.
+      this.popNumber(view.fighter, event.amount, "bleed");
       return undefined;
     }
     if (event.kind === "heal") {
       const view = this.views.get(event.fighterId);
+      if (!view) return undefined;
       // 회복은 HP와 같은 연두색 및 + 접두어로 피해 숫자와 즉시 구분한다.
-      if (view) this.popDamage(view.fighter, event.amount, false, false, true);
+      this.popNumber(view.fighter, event.amount, "heal");
+      // 스스로 도는 패시브 회복은 파문 없이 위로 떠오르는 몇 조각뿐이고, 궁극기 회복만
+      // 제 이펙트를 갖는다 — 둘이 같은 무게로 터지면 어느 것이 큰 기술인지 읽히지 않는다.
+      const height = UNIT_HEIGHT * view.fighter.bodyScale;
+      this.effects.burst(event.source === "passive" ? "passive" : "heal", view.fighter.x, view.fighter.y - height * 0.5, { color: COLOR.hpFill });
       return undefined;
     }
     if (event.kind === "status") {
@@ -732,11 +740,26 @@ export class BattleScene extends Phaser.Scene {
       return undefined;
     }
     if (event.kind === "shieldGranted" || event.kind === "shieldAbsorbed" || event.kind === "shieldDepleted") {
-      // 보호막 사건은 현재 HUD가 Fighter.shield 잔량을 읽어 갱신하며, 별도 피해 모션을 재생하지 않는다.
+      // 잔량 자체는 HUD가 Fighter.shield를 읽어 갱신한다. 여기서는 순간의 사건만 알린다.
+      const view = this.views.get(event.fighterId);
+      if (!view || view.dead) return undefined;
+      const height = UNIT_HEIGHT * view.fighter.bodyScale;
+      const centerY = view.fighter.y - height * 0.5;
+      if (event.kind === "shieldGranted") {
+        // 새로 덮인 막은 얻은 양을 에너지와 같은 푸른빛으로 알린다.
+        this.popNumber(view.fighter, event.amount, "shield");
+        this.effects.burst("shield", view.fighter.x, centerY, { color: COLOR.energy });
+        return undefined;
+      }
+      // 흡수는 숫자를 띄우지 않는다 — 같은 타격의 피해 숫자와 겹쳐 두 번 읽히기 때문이다.
+      // 막이 몸을 감싸듯 한 겹 파문만 지나가고, 깨지는 순간만 위험색으로 갈린다.
+      this.effects.burst("shield", view.fighter.x, centerY, { color: event.kind === "shieldDepleted" ? COLOR.danger : COLOR.energy });
       return undefined;
     }
     if (event.kind === "damageIgnored") {
-      // 무효 공격은 별도 사건으로 소비해 0 숫자와 피격 모션을 반복하지 않는다. 향후 작은 BLOCK 표식의 훅이다.
+      // 무효 공격은 0 숫자와 피격 모션을 반복하지 않고, 흐린 표식 하나로 "안 통했다"만 알린다.
+      const view = this.views.get(event.targetId);
+      if (view && !view.dead) this.popNumber(view.fighter, 0, "blocked");
       return undefined;
     }
 
@@ -755,43 +778,55 @@ export class BattleScene extends Phaser.Scene {
       flashHit(this, target.creature, this.bodyTint(target));
       // 기절 유지 자세는 일반 피격보다 우선한다. 섬광과 피해 숫자는 그대로 보여 타격감은 보존한다.
       if (target.fighter.stunnedFor <= 0) playMotion(this, target.creature, "hit");
-      this.popDamage(target.fighter, event.amount, event.skill === "ultimate", event.critical);
+      const ultimate = event.skill === "ultimate";
+      this.popNumber(target.fighter, event.amount, event.damageType, {
+        ultimate, critical: event.critical, effectiveness: event.effectiveness, mitigated: event.mitigated,
+      });
+      // 파편은 때린 쪽에서 맞은 쪽을 향해 부채꼴로 튄다. 사방으로 고르게 뿌리면 누가 때렸는지
+      // 방향이 사라져 여섯이 뒤엉킨 난전에서 타격이 제자리에 선 폭죽처럼 보인다.
+      const height = UNIT_HEIGHT * target.fighter.bodyScale;
+      const direction = attacker
+        ? Phaser.Math.RadToDeg(Math.atan2(target.fighter.y - attacker.fighter.y, target.fighter.x - attacker.fighter.x))
+        : undefined;
+      this.effects.burst(ultimate ? "ultimate" : "basic", target.fighter.x, target.fighter.y - height * 0.5, {
+        color: this.effectColor(attacker),
+        direction,
+        scale: target.fighter.bodyScale,
+      });
     }
     return playback;
   }
 
   /**
-   * 맞은 자리에서 피해량이 떠올랐다 사라진다.
+   * 맞은 자리에서 수치가 떠올랐다 사라진다.
    *
-   * 아군이 받은 피해는 붉게, 적에게 준 피해는 흰색, 궁극기는 황동색이다. 배경과 SD 위에서도
-   * 읽히도록 어두운 외곽선을 두르고, 뜨는 순간 살짝 커졌다 제 크기로 돌아온다.
+   * **씬은 사건의 성격만 넘긴다.** 색·크기·머무는 시간·화면 흔들림은 전부 순수 규칙
+   * (`src/ui/damageNumbers.ts`)이 정한다 — 화면에서 눈대중으로 고르면 같은 세기의 타격이
+   * 화면마다 다른 무게로 읽힌다. 세기는 **대상 최대 체력 대비 비율**로 등급이 매겨지므로,
+   * 성장해서 숫자가 커져도 "한 방에 얼마나 깎였나"가 그대로 글자 크기에 남는다.
    */
-  private popDamage(fighter: Fighter, amount: number, ultimate: boolean, critical: boolean, healing = false): void {
-    const color = healing ? COLOR.hpText : ultimate ? COLOR.accentText : fighter.side === "player" ? COLOR.dangerText : COLOR.ink;
-    const big = critical || ultimate;
-    const label = this.add
-      // 소수 HP가 생겨도 전투 숫자는 읽기 쉬운 정수로 표시하되 사건 자체의 실제 회복량은 보존한다.
-      // 상태의 실제 소유자는 src/core/skirmish.ts다. 씬은 확정된 사건의 수치와 종류만 그린다.
-      .text(fighter.x + Phaser.Math.Between(-26, 26), fighter.y - UNIT_HEIGHT * BATTLE_STATUS_LAYOUT.popupBodyOffsetRatio, `${healing ? "+" : ""}${Math.round(amount)}`, textStyle({ role: "display", size: big ? 40 : 30, color }))
-      .setOrigin(0.5)
-      .setDepth(DEPTH.damage)
-      .setStroke("#14171a", 7)
-      .setScale(0.6);
+  private popNumber(
+    fighter: Fighter,
+    amount: number,
+    flavor: DamageFlavor,
+    extra: { critical?: boolean; ultimate?: boolean; effectiveness?: "advantage" | "disadvantage"; mitigated?: boolean } = {},
+  ): void {
+    const healing = flavor === "heal";
     // 상태의 실제 소유자는 src/core/skirmish.ts다. 이 개수는 표시 중인 회복 숫자만 센다.
     if (healing) this.healPopups += 1;
-    this.tweens.add({ targets: label, scale: 1, duration: 130, ease: "Back.Out" });
-    this.tweens.add({
-      targets: label,
-      y: label.y - BATTLE_STATUS_LAYOUT.popupRise,
-      alpha: 0,
-      delay: 130,
-      duration: 620,
-      ease: "Quad.Out",
-      onComplete: () => {
-        label.destroy();
-        if (healing) this.healPopups = Math.max(0, this.healPopups - 1);
-      },
-    });
+    const height = UNIT_HEIGHT * fighter.bodyScale;
+    this.effects.damage(
+      fighter.x,
+      fighter.y - height * BATTLE_STATUS_LAYOUT.popupBodyOffsetRatio,
+      // 소수 HP가 생겨도 전투 숫자는 정수로 표시하되 사건 자체의 실제 값은 코어에 그대로 남는다.
+      { amount, flavor, incoming: fighter.side === "player", maxHp: fighter.maxHp, ...extra },
+      { onDone: healing ? () => { this.healPopups = Math.max(0, this.healPopups - 1); } : undefined },
+    );
+  }
+
+  /** 그 개체의 속성·직군을 섞은 색. 스킬 아이콘·폭주 발광과 같은 색을 이펙트도 그대로 쓴다. */
+  private effectColor(view: FighterView | undefined): number {
+    return view ? view.feverTint : COLOR.accent;
   }
 
   /** 쓰러진 SD는 별이 되어 화면 위로 날아가고 자리와 체력 바를 지운다. */
@@ -808,8 +843,10 @@ export class BattleScene extends Phaser.Scene {
     view.stunBadge.destroy(true);
     // 쓰러진 적의 빈자리가 계속 정보창을 열지 않도록 입력도 함께 닫는다.
     view.infoHit?.disableInteractive().setVisible(false);
-    const burst = this.add.star(view.creature.x, view.creature.y, 10, 24, 66, COLOR.accent, 0.9).setDepth(DEPTH.burst);
-    this.tweens.add({ targets: burst, scale: 1.8, alpha: 0, angle: 90, duration: 360, onComplete: () => burst.destroy() });
+    // 별 하나가 커지던 자리에 같은 마름모 파편이 터진다. 화면의 다른 타격과 결이 같아야
+    // "쓰러졌다"가 별도의 연출이 아니라 마지막 한 방으로 읽힌다.
+    const height = UNIT_HEIGHT * view.fighter.bodyScale;
+    this.effects.burst("death", view.creature.x, view.fighter.y - height * 0.5, { color: view.feverTint, scale: view.fighter.bodyScale });
     // 사망은 판정이나 결과 정산이 아닌 760ms 시각 효과다. finishBattle은 이 완료를 기다리지 않는다.
     this.tweens.add({
       targets: view.creature,
@@ -901,6 +938,8 @@ export class BattleScene extends Phaser.Scene {
       if (fever !== view.feverTinted) {
         view.feverTinted = fever;
         tintPuppet(view.creature, this.bodyTint(view));
+        // 폭주에 **드는 순간**만 한 겹 밀려난다. 유지되는 동안은 발광이 맡으므로 다시 터뜨리지 않는다.
+        if (fever) this.effects.burst("fever", pose.x, pose.y - unitHeight * 0.5, { color: view.feverTint, scale: fighter.bodyScale });
       }
       // SD의 발 위치보다 몸통 중앙을 누르는 편이 자연스러우므로 클릭 영역은 반 높이만큼 올린다.
       view.infoHit

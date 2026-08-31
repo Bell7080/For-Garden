@@ -41,8 +41,11 @@ export const BATTLE_STATUS_LAYOUT = {
   badgeRadius: 13,
   firstOffsetX: 62,
   badgeGap: 30,
+  /**
+   * 수치가 뜨는 높이. SD 키의 몇 할 위인지만 정하고, **떠오르는 거리와 시간은 세기에 따라
+   * 달라지므로** `src/ui/damageNumbers.ts`가 정한다.
+   */
   popupBodyOffsetRatio: 0.72,
-  popupRise: 86,
 } as const;
 
 export interface StatusBadgeOffsets { stunX: number; bleedX: number }

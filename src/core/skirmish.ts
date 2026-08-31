@@ -1,6 +1,7 @@
 import { amplifyFerocityGain } from "./bond";
 import type { Combatant } from "./combatTypes";
 import { computeDamage, computeDamageContribution, currentAbilityPower, isCriticalHit } from "./damage";
+import { elementEffectiveness } from "./element";
 // 전투 HUD와 피해 공식이 동일한 현재 주문력 계산을 소비하도록 공용 헬퍼를 다시 노출한다.
 export { currentAbilityPower } from "./damage";
 import { drainFerocityFever, FEROCITY_RULES } from "./ferocity";
@@ -159,6 +160,15 @@ export type SkirmishEvent =
       /** 방어·저항·속성·대상 경감·무효화 전, 공격자가 실제로 만든 점수 기여값이다. */
       contributionAmount: number;
       critical: boolean;
+      /**
+       * 무엇이 막는 피해인가. 씬은 이 값으로 수치 색을 고른다.
+       * `true`는 방어·저항을 거치지 않는 고정 피해(피해 전이처럼 이미 확정된 값의 복제)다.
+       */
+      damageType: "physical" | "magical" | "true";
+      /** 속성 상성 결과. 중립이면 생략한다. */
+      effectiveness?: "advantage" | "disadvantage";
+      /** 대상의 경감이 실제로 값을 깎았는지. 표시 크기를 한 등급 낮추는 데만 쓴다. */
+      mitigated?: boolean;
       /** 광역 한 번에서 첫 피해 사건만 공격 모션을 재생한다. 생략하면 기존처럼 재생한다. */
       animate?: boolean;
     }
@@ -735,7 +745,8 @@ function triggerCrescendoStaccato(state: SkirmishState, target: Fighter, events:
     applyDamage(target, amount, events);
     // 스타카토 추가타도 공격자 귀속이 명확하므로 최종 HP 손실 정책에 포함한다.
     const credited = recordDamageContribution(state, mette.id, target, "magical", "atk", contributionAmount, resolution, hpBefore, shieldBefore, shieldProviderId);
-    events.push({ kind: "attack", attackerId: mette.id, targetId: target.id, skill: "staccato", amount, contributionAmount: credited, critical: false, animate: false });
+    events.push({ kind: "attack", attackerId: mette.id, targetId: target.id, skill: "staccato", amount, contributionAmount: credited, critical: false, animate: false,
+      damageType: "magical", effectiveness: elementEffectiveness(mette.def.element, target.def.element), mitigated: resolution.reduced < resolution.raw });
     if (resolution.ignored) events.push({ kind: "damageIgnored", attackerId: mette.id, targetId: target.id });
     if (isFighterAlive(target)) events.push(...applyStagger(target, trait.staggerSeconds, state));
   }
@@ -1000,8 +1011,10 @@ function strike(
       const secondaryHpBefore = secondary.hp;
       const transferApplied = applyDamage(secondary, transferResolution.applied, events);
       addContribution(state.contributions, attacker.id, "attack", secondaryHpBefore - secondary.hp, "attackPower");
+      // 전이는 확정된 피해량을 그대로 옮기므로 방어·저항·상성을 다시 거치지 않는 고정 피해다.
       events.push({ kind: "attack", attackerId: attacker.id, targetId: secondary.id, skill: "transfer", amount: transferApplied,
-        contributionAmount: secondaryHpBefore - secondary.hp, critical: false, animate: false });
+        contributionAmount: secondaryHpBefore - secondary.hp, critical: false, animate: false,
+        damageType: "true", mitigated: transferResolution.reduced < transferResolution.raw });
       if (transferResolution.ignored) events.push({ kind: "damageIgnored", attackerId: attacker.id, targetId: secondary.id });
       // 전용 사건은 흡혈·야성·기본 공격 적중·스타카토·재전이를 호출하지 않고 사망 정리만 수행한다.
       if (!isFighterAlive(secondary)) {
@@ -1071,6 +1084,9 @@ function strike(
     // 사건과 상태 모두 서버 검증기가 재계산하는 과잉 피해 제한 후 실제 HP 손실을 쓴다.
     contributionAmount: credited,
     critical,
+    damageType: damageInput.damageType,
+    effectiveness: elementEffectiveness(damageAttacker.def.element, damageTarget.def.element),
+    mitigated: resolution.reduced < resolution.raw,
   });
   if (resolution.ignored) events.push({ kind: "damageIgnored", attackerId: attacker.id, targetId: target.id });
 
@@ -1109,7 +1125,8 @@ function strike(
       tryTriggerEmergencyRecovery(secondary);
       // 광역 피해도 공격자가 실제로 입힌 HP 피해이므로 같은 흡혈 규칙에 포함한다.
       healFromDamage(secondaryHpBefore - secondary.hp);
-      events.push({ kind: "attack", attackerId: attacker.id, targetId: secondary.id, skill: useUltimate ? "ultimate" : "basic", amount: splashAmount, contributionAmount: splashCredited, critical });
+      events.push({ kind: "attack", attackerId: attacker.id, targetId: secondary.id, skill: useUltimate ? "ultimate" : "basic", amount: splashAmount, contributionAmount: splashCredited, critical,
+        damageType: damageInput.damageType, effectiveness: elementEffectiveness(attacker.def.element, defensiveSecondary.def.element), mitigated: splashResolution.reduced < splashResolution.raw });
       if (splashResolution.ignored) events.push({ kind: "damageIgnored", attackerId: attacker.id, targetId: secondary.id });
       if (isFighterAlive(secondary) && splashTrait.statusEffect) applyCombatStatusEffect(secondary, splashTrait.statusEffect, events, state);
       if (!isFighterAlive(secondary)) {
@@ -1215,7 +1232,8 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     }
     target.dashX = (dx / gap) * SKIRMISH.knockback * 1.4;
     target.dashY = (dy / gap) * SKIRMISH.knockback * 1.4;
-    events.push({ kind: "attack", attackerId: attacker.id, targetId: target.id, skill: useUltimate ? "ultimate" : "basic", amount, contributionAmount: credited, critical, animate: index === 0 });
+    events.push({ kind: "attack", attackerId: attacker.id, targetId: target.id, skill: useUltimate ? "ultimate" : "basic", amount, contributionAmount: credited, critical, animate: index === 0,
+      damageType: damageInput.damageType, effectiveness: elementEffectiveness(damageAttacker.def.element, target.def.element), mitigated: resolution.reduced < resolution.raw });
     if (resolution.ignored) events.push({ kind: "damageIgnored", attackerId: attacker.id, targetId: target.id });
 
     // 죽은 대상에는 지속 상태와 상태 UI 시작 사건을 절대 남기지 않는다.

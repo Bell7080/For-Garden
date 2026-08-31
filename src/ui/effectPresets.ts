@@ -1,0 +1,146 @@
+/**
+ * 이펙트 한 방의 **순수 배치표**.
+ *
+ * 파편 수·속도·수명·파문 크기를 전부 여기서만 정한다. 씬이나 매니저가 값을 눈대중으로 고치면
+ * 같은 종류의 타격이 화면마다 다른 무게로 터진다.
+ *
+ * 두 가지 결을 나눈다.
+ * - **전장(`basic`~`death`)**: 단순한 SD가 뚜따시하는 화면이라, 잔뜩 흩뿌리지 않고 **몇 조각이
+ *   크게 팡 터졌다가 곧 사라진다.** 파편은 원이 아니라 **마름모**이고 중력은 거의 없다 —
+ *   위에서 아래로 떨어지는 불꽃놀이는 위에서 내려다보는 난전과 방향이 맞지 않는다.
+ * - **화면 조작(`tap`)**: 근미래 홀로그램 장비를 누른 손맛이다. 파편을 뿌리지 않고 **얇은
+ *   마름모 파문 한 겹**만 빠르게 벌어졌다 꺼진다.
+ */
+
+/** 매니저가 여는 이펙트의 종류. 캐릭터 슬롯 넷과 전투 사건, 화면 조작이 전부다. */
+export type EffectKind =
+  | "basic"
+  | "ultimate"
+  | "passive"
+  | "fever"
+  | "heal"
+  | "shield"
+  | "death"
+  /** 메뉴에서 화면을 누른 자리. 근미래 홀로그램 장비의 결이다. */
+  | "tap"
+  /** 전장에서 화면을 누른 자리. 같은 조작이라도 전장에서는 작게 튀는 결로 답한다. */
+  | "tapBattle";
+
+export interface BurstSpec {
+  /** 튀어 나가는 마름모 파편 수. 한 자리 수를 넘기지 않는다. */
+  shards: number;
+  /** 파편의 초당 이동 속도 범위(px). */
+  speed: readonly [number, number];
+  /**
+   * 아래로 끌어당기는 힘.
+   *
+   * 0에 가깝게 둔다. 중력이 세면 파편이 발밑으로 쏟아져 "터졌다"가 아니라 "흘렸다"로 보인다.
+   */
+  gravity: number;
+  /** 파편 수명 범위(ms). */
+  life: readonly [number, number];
+  /** 파편의 시작 배율. 수명 동안 0까지 줄어들며 사라지므로 잔해가 남지 않는다. */
+  shardScale: number;
+  /** 마름모 파문 겹 수. 0이면 파문 없이 파편만 튄다. */
+  rings: number;
+  /** 파문이 벌어지는 최대 반지름(px). */
+  ringRadius: number;
+  /** 파문이 벌어져 꺼지기까지의 시간(ms). */
+  ringMs: number;
+  /** 파문 선 두께. */
+  ringWidth: number;
+  /** 가운데 섬광의 지름(px). 0이면 섬광 없이 파문만 남는다. */
+  flash: number;
+  /**
+   * 섬광의 진하기.
+   *
+   * 낮게 잡는다. 겹쳐 밝아지는 합성이라 진하게 두면 밝은 배경 원화 위에서 하얗게 뭉개져
+   * 정작 봐야 할 SD와 피해 숫자가 그 속에 묻힌다.
+   */
+  flashAlpha: number;
+  /** 섬광이 꺼지는 시간(ms). */
+  flashMs: number;
+  /** 파편이 회전하는 초당 각도. 마름모라 돌면 반짝이는 것처럼 보인다. */
+  spin: number;
+}
+
+/**
+ * 종류별 한 방.
+ *
+ * 일반 공격은 작고 잦으므로 가장 얇고, 궁극기만 파문 두 겹에 큰 섬광을 쓴다. 셋 이상이
+ * 같은 무게로 터지면 어느 것이 큰 기술인지 읽히지 않는다.
+ */
+export const EFFECT_PRESETS: Record<EffectKind, BurstSpec> = {
+  basic: {
+    shards: 5, speed: [260, 460], gravity: 90, life: [220, 340], shardScale: 0.85,
+    rings: 1, ringRadius: 74, ringMs: 240, ringWidth: 5, flash: 52, flashAlpha: 0.5, flashMs: 150, spin: 260,
+  },
+  ultimate: {
+    shards: 9, speed: [420, 780], gravity: 40, life: [360, 560], shardScale: 1.5,
+    rings: 2, ringRadius: 216, ringMs: 420, ringWidth: 11, flash: 170, flashAlpha: 0.72, flashMs: 300, spin: 200,
+  },
+  passive: {
+    // 패시브는 스스로 발동하는 조용한 효과라 파문 없이 위로 떠오르는 파편 몇 조각뿐이다.
+    shards: 4, speed: [120, 220], gravity: -150, life: [420, 620], shardScale: 0.7,
+    rings: 0, ringRadius: 0, ringMs: 0, ringWidth: 0, flash: 36, flashAlpha: 0.42, flashMs: 260, spin: 140,
+  },
+  fever: {
+    // 폭주는 몸에서 바깥으로 밀려나는 한 겹이다. 파편은 크고 느리게 벌어진다.
+    shards: 7, speed: [300, 520], gravity: -60, life: [400, 620], shardScale: 1.2,
+    rings: 1, ringRadius: 168, ringMs: 380, ringWidth: 9, flash: 120, flashAlpha: 0.6, flashMs: 320, spin: 180,
+  },
+  heal: {
+    shards: 5, speed: [90, 190], gravity: -260, life: [520, 760], shardScale: 0.72,
+    rings: 0, ringRadius: 0, ringMs: 0, ringWidth: 0, flash: 44, flashAlpha: 0.45, flashMs: 280, spin: 120,
+  },
+  shield: {
+    // 보호막은 흩어지지 않는다. 파편 없이 파문 한 겹만 몸을 감싸듯 벌어졌다 닫힌다.
+    shards: 0, speed: [0, 0], gravity: 0, life: [0, 0], shardScale: 0,
+    rings: 1, ringRadius: 116, ringMs: 340, ringWidth: 8, flash: 60, flashAlpha: 0.5, flashMs: 240, spin: 0,
+  },
+  death: {
+    shards: 8, speed: [220, 480], gravity: -110, life: [420, 700], shardScale: 1.05,
+    rings: 1, ringRadius: 138, ringMs: 340, ringWidth: 7, flash: 96, flashAlpha: 0.55, flashMs: 260, spin: 300,
+  },
+  tap: {
+    // 홀로그램 장비를 누른 자리. 파편을 뿌리지 않고 얇은 파문 한 겹만 빠르게 지나간다.
+    shards: 0, speed: [0, 0], gravity: 0, life: [0, 0], shardScale: 0,
+    rings: 1, ringRadius: 92, ringMs: 320, ringWidth: 6, flash: 40, flashAlpha: 0.6, flashMs: 190, spin: 0,
+  },
+  tapBattle: {
+    // 전장은 단순한 SD가 뚜따시하는 화면이라 조작도 작게 톡 튄다. 파문 없이 조각 셋뿐이다.
+    shards: 3, speed: [140, 260], gravity: -80, life: [200, 300], shardScale: 0.42,
+    rings: 0, ringRadius: 0, ringMs: 0, ringWidth: 0, flash: 30, flashAlpha: 0.45, flashMs: 150, spin: 320,
+  },
+};
+
+/**
+ * 한 프레임·한 자리에 이펙트가 몰리지 않게 하는 예산.
+ *
+ * 난전은 여섯이 동시에 때리므로, 막지 않으면 한 프레임에 열 번 넘게 터져 프레임이 떨어지고
+ * 화면도 하얗게 뭉갠다. **정한 수만 터뜨리고 나머지는 조용히 버린다** — 놓친 한 방보다
+ * 끊긴 프레임이 훨씬 크게 보인다.
+ */
+export const EFFECT_BUDGET = {
+  /** 한 프레임에 여는 최대 이펙트 수. */
+  perFrame: 3,
+  /** 같은 종류를 다시 여는 최소 간격(ms). 궁극기·폭주처럼 드문 것은 막지 않는다. */
+  minGapMs: { basic: 45, heal: 90, shield: 90, passive: 120, tap: 40, tapBattle: 40, ultimate: 0, fever: 0, death: 0 } as Record<EffectKind, number>,
+  /** 살아 있는 파문의 상한. 넘으면 가장 오래된 것을 즉시 회수한다. */
+  maxRings: 14,
+  /** 살아 있는 수치 글자의 상한. */
+  maxNumbers: 26,
+} as const;
+
+/** 이번 프레임에 이 이펙트를 실제로 열지 정한다. 순수 판정이라 테스트가 그대로 고정한다. */
+export function allowBurst(
+  kind: EffectKind,
+  now: number,
+  lastAt: number | undefined,
+  openedThisFrame: number,
+): boolean {
+  if (openedThisFrame >= EFFECT_BUDGET.perFrame) return false;
+  const gap = EFFECT_BUDGET.minGapMs[kind];
+  if (gap <= 0 || lastAt === undefined) return true;
+  return now - lastAt >= gap;
+}

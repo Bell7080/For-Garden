@@ -27,6 +27,8 @@ export const BATTLE_PROFILE_LAYOUT = {
    */
   expedition: { centerY: 1460, centersX: [190, 540, 890], scale: 1 },
   sortieButton: { top: 1756, bottom: 1864 },
+  /** 전장 SD 체력 바와 결과 조작이 점유하는 세로 안전 영역을 회귀 테스트와 공유한다. */
+  collisionZones: { battlefieldHpBottom: 1260, ultimateInputTop: 1334, resultUiTop: 1380 },
 } as const;
 
 /** 고정 슬롯에 놓인 버프 액자의 로컬 bounds다. 정적 배치 테스트도 이 계산을 그대로 쓴다. */

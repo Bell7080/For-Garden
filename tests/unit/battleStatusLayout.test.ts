@@ -38,6 +38,15 @@ describe("공용 전투 프로필 배치", () => {
     expect(BATTLE_PROFILE_LAYOUT.hpTextBaselineY).toBe(180);
   });
 
+  /** 1080×1920 캡처에서 전장 HP, 궁극기 입력, 결과 UI가 서로 침범하지 않는 세로 계약이다. */
+  it("버프 행과 프로필 입력은 전장 HP 바 및 결과 UI 안전 영역과 겹치지 않는다", () => {
+    const { battle, collisionZones } = BATTLE_PROFILE_LAYOUT;
+    const profile = battleProfileBounds(battle.centersX[1], battle.centerY, battle.scale, true);
+    expect(collisionZones.battlefieldHpBottom).toBeLessThan(collisionZones.ultimateInputTop);
+    expect(profile.top).toBeGreaterThanOrEqual(collisionZones.ultimateInputTop);
+    expect(collisionZones.resultUiTop).toBeLessThan(BATTLE_PROFILE_LAYOUT.sortieButton.top);
+  });
+
   it("원정 지도는 전투와 같은 크기·가로 기준선을 쓰고 세로만 출격 줄 위로 올린다", () => {
     const map = BATTLE_PROFILE_LAYOUT.expedition;
     const battle = BATTLE_PROFILE_LAYOUT.battle;

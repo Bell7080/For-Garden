@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import type { ActiveCombatBuff } from "../core/skirmish";
-import { battleBuffProgress } from "../core/battleBuffPresentation";
+import { battleBuffEffectShape, battleBuffProgress, type BattleBuffEffectShape } from "../core/battleBuffPresentation";
 import type { BattleUiMotion } from "../core/settings";
 import { chipPoints, drawInnerVignette, drawLayer, drawShapeOutline } from "./holo";
 
@@ -10,38 +10,54 @@ export class BattleBuffChip extends Phaser.GameObjects.Container {
   private readonly hit: Phaser.GameObjects.Rectangle;
   private timing: ActiveCombatBuff["timing"];
 
-  constructor(scene: Phaser.Scene, size: number, tint: number, texture: string, timing: ActiveCombatBuff["timing"], motion: BattleUiMotion, onPress: () => void) {
+  constructor(scene: Phaser.Scene, size: number, tint: number, texture: string, buff: ActiveCombatBuff, motion: BattleUiMotion, onPress: () => void) {
     super(scene, 0, 0);
-    this.timing = timing;
+    this.timing = buff.timing;
     const shape = chipPoints(size, size, { bevel: { topLeft: 12, topRight: 0, bottomRight: 12, bottomLeft: 0 } });
     this.add(drawLayer(scene, 0, 0, shape, { fill: tint, alpha: 0.9 }));
     this.add(scene.add.image(0, 0, texture).setDisplaySize(size * 0.72, size * 0.72).setTint(tint));
+    // 원화 위의 고대비 실루엣은 색각과 작은 화면에서도 효과 계열을 중복 부호화한다.
+    this.add(this.drawEffectShape(size, battleBuffEffectShape(buff)));
     this.add([drawInnerVignette(scene, 0, 0, shape, { strength: 0.55 }), this.progress]);
-    this.hit = scene.add.rectangle(0, 0, size, size, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    // 보이는 56px 액자보다 입력판을 넓혀 최소 64px 터치 영역을 확보한다.
+    this.hit = scene.add.rectangle(0, 0, Math.max(64, size), Math.max(64, size), 0xffffff, 0).setInteractive({ useHandCursor: true });
     // 진행 정보는 모든 움직임 설정에서 유지하고, reduced/off는 눌림 장식의 크기만 줄인다.
     const pressedScale = motion === "default" ? 1.1 : motion === "reduced" ? 1.04 : 1;
     this.hit.on("pointerdown", (_p: Phaser.Input.Pointer, _x: number, _y: number, event: Phaser.Types.Input.EventData) => { event.stopPropagation(); this.setScale(pressedScale); });
     this.hit.on("pointerup", (_p: Phaser.Input.Pointer, _x: number, _y: number, event: Phaser.Types.Input.EventData) => { event.stopPropagation(); this.setScale(1); onPress(); });
     this.hit.on("pointerout", () => this.setScale(1));
     this.add([drawShapeOutline(scene, 0, 0, shape, { color: tint, alpha: 0.9, width: 2 }), this.hit]);
-    this.redraw(size, tint);
+    this.redraw(size);
     scene.add.existing(this);
   }
 
+  /** 네 가지 각진 문양을 흰색으로 겹쳐 색상 없이도 공격·속도·지원·특수를 구별한다. */
+  private drawEffectShape(size: number, shape: BattleBuffEffectShape): Phaser.GameObjects.Graphics {
+    const glyph = this.scene.add.graphics().setPosition(size * 0.23, -size * 0.23);
+    glyph.lineStyle(3, 0xffffff, 0.96);
+    if (shape === "attack") glyph.beginPath().moveTo(-8, 7).lineTo(7, -8).moveTo(1, -8).lineTo(7, -8).lineTo(7, -2).strokePath();
+    else if (shape === "speed") glyph.beginPath().moveTo(-9, -6).lineTo(-2, 0).lineTo(-9, 6).moveTo(0, -6).lineTo(7, 0).lineTo(0, 6).strokePath();
+    else if (shape === "support") glyph.strokeTriangle(0, -9, 9, 7, -9, 7);
+    else glyph.beginPath().moveTo(0, -9).lineTo(3, -3).lineTo(9, 0).lineTo(3, 3).lineTo(0, 9).lineTo(-3, 3).lineTo(-9, 0).lineTo(-3, -3).closePath().strokePath();
+    return glyph;
+  }
+
   /** 같은 칩 인스턴스의 Graphics만 다시 칠해 매 프레임 표시 객체를 할당하지 않는다. */
-  public setTiming(timing: ActiveCombatBuff["timing"], size: number, tint: number): this {
+  public setTiming(timing: ActiveCombatBuff["timing"], size: number): this {
     this.timing = timing;
-    this.redraw(size, tint);
+    this.redraw(size);
     return this;
   }
 
-  private redraw(size: number, tint: number): void {
+  private redraw(size: number): void {
     const model = battleBuffProgress(this.timing);
     const radius = size / 2 - 3;
     this.progress.clear();
     if (model.kind === "conditional" || model.kind === "permanent") {
-      // 종료 시각이 없는 효과는 빈틈 없는 링으로 현재 활성 상태만 표현한다.
-      this.progress.lineStyle(4, tint, 1).strokeCircle(0, 0, radius);
+      // 조건부는 이중 링, 영구는 점선 링으로 시간형의 어두운 부채꼴과 형태부터 달리한다.
+      this.progress.lineStyle(3, 0xffffff, 0.95);
+      if (model.kind === "conditional") this.progress.strokeCircle(0, 0, radius).strokeCircle(0, 0, radius - 5);
+      else for (let index = 0; index < 8; index += 1) this.progress.arc(0, 0, radius, index * Math.PI / 4, index * Math.PI / 4 + Math.PI / 8).strokePath();
       return;
     }
     if (model.elapsedTurns <= 0) return;

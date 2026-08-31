@@ -74,7 +74,9 @@ export interface DebugState {
   mailPopup?: { open: boolean; unreadCount: number; claimableCount: number };
   owned?: string[];
   /** 캔버스 내부 편성 UI의 위치/표시 상태를 모바일 E2E가 읽는 최소 정보다. */
-  party?: { autoButton: { x: number; y: number }; visibleAffinityDirections: number };
+  party?: { autoButton: { x: number; y: number }; visibleAffinityDirections: number; selectedCount?: number; slots?: Array<{ x: number; y: number }> };
+  /** 원정 준비 슬롯의 실제 입력 중심과 현재 선택 수만 노출하는 모바일 입력 계약이다. */
+  expeditionFormation?: { selectedCount: number; slots: Array<{ x: number; y: number }> };
   /** 설정 왕복 E2E가 상점의 사용자 표시 섹션까지 복원됐는지 확인하는 최소 상태다. */
   shopSection?: "premium";
   /** 가방 탭 면 입력 뒤 실제로 다시 그려진 카테고리를 Canvas E2E가 확인한다. */
@@ -129,6 +131,11 @@ export function setDebugBattle(battle: DebugBattle | undefined): void {
 /** 편성 UI의 실제 렌더 상태만 복사해 노출하고 게임 규칙 입력에는 사용하지 않는다. */
 export function setDebugParty(party: DebugState["party"]): void {
   ensure().party = party;
+}
+
+/** 원정 렐릭 ID 대신 슬롯 좌표와 표시 인원수만 E2E에 전달한다. */
+export function setDebugExpeditionFormation(formation: DebugState["expeditionFormation"]): void {
+  ensure().expeditionFormation = formation;
 }
 
 /** 상점의 현재 표시 섹션만 공개하며 상품이나 결제 상태는 포함하지 않는다. */

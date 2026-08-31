@@ -19,6 +19,7 @@ import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { autoPickParty, elementDistribution, relicAffinityDirection } from "../core/partyAffinity";
 import type { SetPartyFailureReason } from "../managers/RelicCollectionManager";
 import { AffinityDirection } from "../ui/AffinityDirection";
+import { removeFormationSlot } from "../core/formationSelection";
 
 /** 이만큼 누르고 있으면 정보창이 열린다. 짧게 누르면 편성 토글이다. */
 const LONG_PRESS_MS = 420;
@@ -68,6 +69,8 @@ interface AllySlot {
   currentId?: string;
   /** 늦게 도착한 로딩이 최신 편성을 덮지 않게 하는 요청 번호. */
   request: number;
+  /** 비동기 SD 대신 항상 슬롯 크기를 유지하며 짧은 탭 계약을 소유하는 투명 입력면이다. */
+  hit: Phaser.GameObjects.Rectangle;
 }
 
 /**
@@ -232,7 +235,20 @@ export class PartyScene extends Phaser.Scene {
         .setOrigin(0.5, 0);
       // 플랫폼의 좌측 하단에 붙여 SD가 비동기로 도착해도 표식 위치가 흔들리지 않게 한다.
       const affinityDirection = new AffinityDirection(this, x - 82, ALLY_ROW - 20).setDepth(2);
-      this.allySlots.push({ platform, name, slotLabel, affinityDirection, request: 0 });
+      // SD와 같은 높이의 투명 슬롯 면이 입력을 소유해 Puppet 로딩 성공 여부가 조작을 바꾸지 않는다.
+      const hit = this.add.rectangle(x, ALLY_ROW - PREVIEW_HEIGHT / 2, 210, PREVIEW_HEIGHT, 0xffffff, 0)
+        .setName(`party-ally-slot-${slot + 1}`).setDepth(3).setInteractive({ useHandCursor: true });
+      let pressed = false;
+      hit.on("pointerdown", () => { pressed = true; hit.setScale(1.08); });
+      hit.on("pointerout", () => { pressed = false; hit.setScale(1); });
+      hit.on("pointerup", () => {
+        hit.setScale(1);
+        if (!pressed) return;
+        pressed = false;
+        // 화면에서 누른 자리 번호를 그대로 제거해 ID 탐색으로 다른 자리가 빠지는 일을 막는다.
+        if (this.picked[slot] !== undefined && removeFormationSlot(this.picked, slot)) this.refresh();
+      });
+      this.allySlots.push({ platform, name, slotLabel, affinityDirection, request: 0, hit });
     });
   }
 
@@ -391,6 +407,9 @@ export class PartyScene extends Phaser.Scene {
     setDebugParty({
       autoButton: this.autoButtonPosition,
       visibleAffinityDirections: this.allySlots.filter((slot) => slot.affinityDirection.visible).length,
+      selectedCount: this.picked.length,
+      // 입력면 중심을 공개해 E2E가 SD 로딩이나 하드코딩 좌표에 의존하지 않게 한다.
+      slots: PREVIEW_COLUMNS.map((x) => ({ x, y: ALLY_ROW - PREVIEW_HEIGHT / 2 })),
     });
     this.hint.setText(
       this.picked.length === 3 ? "편성 완료" : `${3 - this.picked.length}명 더 골라야 한다`,

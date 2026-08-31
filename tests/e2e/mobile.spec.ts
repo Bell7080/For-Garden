@@ -110,11 +110,14 @@ test("출격 선택판에서 원정대 3기를 골라 진행 중 상태로 저�
   await page.waitForTimeout(1500);
   await page.screenshot({ path: `test-results/${test.info().project.name}-expedition-preparation.png` });
 
-  // 초기 보유 세 기를 모두 고른 뒤 시작하면 매니저 저장을 거쳐 같은 씬의 이어하기 상태가 된다.
-  // 상단 1/2/3 SD 편성 미리보기 아래로 이동한 보유 카드 그리드를 누른다.
-  for (const x of [234, 540, 846]) await tapGame(page, x, 850);
-  // 세 번째 선택이 편성 미리보기를 다시 그리는 동안 시작 버튼이 활성으로 바뀐다.
-  await page.waitForTimeout(500);
+  // 복원된 세 기 중 가운데 슬롯을 직접 해제하면 카드·SD·인원수·버튼 상태가 함께 2기로 바뀐다.
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.expeditionFormation?.selectedCount)).toBe(3);
+  const formationSlot = (await page.evaluate(() => window.__PF_DEBUG?.expeditionFormation?.slots[1]))!;
+  await tapGame(page, formationSlot.x, formationSlot.y);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.expeditionFormation?.selectedCount)).toBe(2);
+  // 빠진 렐릭의 보유 카드를 다시 눌러 세 기로 복구한 뒤 실제 시작 저장까지 이어 간다.
+  await tapGame(page, 540, 850);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.expeditionFormation?.selectedCount)).toBe(3);
   await tapGame(page, BASE_WIDTH / 2, 1680);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("expedition");
   await expect.poll(() => page.evaluate(() => {
@@ -398,5 +401,9 @@ test("모바일 편성 상단의 자동 배치 버튼과 자리별 상성 화살
   await tapGame(page, before!.autoButton.x, before!.autoButton.y);
   // 고정 시작 보유·1-1 적 조합에서는 자동 편성 셋 모두 유리하거나 불리해 중립이 없다.
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.party?.visibleAffinityDirections)).toBe(3);
+  // SD 로딩과 무관한 슬롯 입력면을 누르면 그 화면 자리 하나만 즉시 빠진다.
+  const secondSlot = (await page.evaluate(() => window.__PF_DEBUG?.party?.slots?.[1]))!;
+  await tapGame(page, secondSlot.x, secondSlot.y);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.party?.selectedCount)).toBe(2);
   await page.screenshot({ path: `test-results/${test.info().project.name}-party-affinity-arrows.png` });
 });

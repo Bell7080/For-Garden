@@ -581,6 +581,9 @@ export class IdleExcavationPopup {
         pressed = false;
         if (this.saving) return;
         if (!editable) { this.beginEdit(index); return; }
+        // 편집 중 채워진 현재 칸을 다시 누르면 ID 탐색 없이 그 자리만 비운다.
+        const draft = this.draft;
+        if (draft && index === this.selectedSlot && draft[index] !== null) draft[index] = null;
         this.selectedSlot = index; this.renderEditor();
       });
       parent.add(hit);

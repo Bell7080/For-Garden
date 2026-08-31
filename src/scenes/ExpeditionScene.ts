@@ -5,7 +5,7 @@ import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import type { ExpeditionMapNode } from "../core/expeditionMap";
 import { getRelic } from "../data/relics";
 import { getExpeditionAugment } from "../data/expeditionAugments";
-import { setDebugScene } from "../debug";
+import { setDebugExpeditionFormation, setDebugScene } from "../debug";
 import { expeditionManager, type StartExpeditionFailure } from "../managers/ExpeditionManager";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { session } from "../state/session";
@@ -37,6 +37,7 @@ import { CharacterInfoManager } from "../managers/CharacterInfoManager";
 import { NodeEnemyPreview } from "../ui/NodeEnemyPreview";
 import { BattleProfile } from "../ui/BattleProfile";
 import { BATTLE_PROFILE_LAYOUT } from "../ui/battleStatusLayout";
+import { removeFormationSlot } from "../core/formationSelection";
 
 /** 원정 준비 카드의 고정 그리드 규격이다. 다른 편성과 달리 세 칸씩 읽게 한다. */
 const ROSTER = { columns: 3, width: 250, height: 310, gapX: 56, gapY: 50 } as const;
@@ -773,18 +774,33 @@ export class ExpeditionScene extends Phaser.Scene {
       if (!relicId) {
         layer.add(drawLayer(this, x, FORMATION.y, chipPoints(FORMATION.width, FORMATION.height, { bevel: { topLeft: 24, bottomRight: 18 } }), { fill: COLOR.panel, alpha: HOLO.glassLight, edge: COLOR.inkDimHex, edgeAlpha: 0.42 }));
         layer.add(this.add.text(x, FORMATION.y, "선택 대기", textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0.5));
-        continue;
+      } else {
+        const relic = getRelic(relicId);
+        const fallback = new PortraitCard(this, x, FORMATION.y, { width: FORMATION.width, height: FORMATION.height, portraitAssetId: relic.portraitAssetId, tint: relicCardTint(relic), label: relic.name, level: relicProgression.getProgress(relic.id).level, rarity: relic.rarity, stars: relicProgression.getStars(relic.id) });
+        fallback.hit.disableInteractive(); layer.add(fallback);
+        layer.add(this.add.ellipse(x, FORMATION.y + 120, 190, 28, COLOR.sortie, 0.18));
+        void loadOwnedPuppet({
+          spawn: () => spawnPuppet(this, sdAssetFor(relicId), { x, groundY: FORMATION.y + 120, height: 250, depth: 2 }),
+          isCurrent: () => generation === this.formationGeneration && layer === this.formationPreview,
+          isDisplayable: (puppet) => Boolean(puppet.active && puppet.texture?.key && this.textures.exists(puppet.texture.key)),
+          adopt: (puppet) => { puppet.disableInteractive(); layer.add(puppet); this.formationPuppets.add(puppet); fallback.setVisible(false); },
+        });
       }
-      const relic = getRelic(relicId);
-      const fallback = new PortraitCard(this, x, FORMATION.y, { width: FORMATION.width, height: FORMATION.height, portraitAssetId: relic.portraitAssetId, tint: relicCardTint(relic), label: relic.name, level: relicProgression.getProgress(relic.id).level, rarity: relic.rarity, stars: relicProgression.getStars(relic.id) });
-      fallback.hit.disableInteractive(); layer.add(fallback);
-      layer.add(this.add.ellipse(x, FORMATION.y + 120, 190, 28, COLOR.sortie, 0.18));
-      void loadOwnedPuppet({
-        spawn: () => spawnPuppet(this, sdAssetFor(relicId), { x, groundY: FORMATION.y + 120, height: 250, depth: 2 }),
-        isCurrent: () => generation === this.formationGeneration && layer === this.formationPreview,
-        isDisplayable: (puppet) => Boolean(puppet.active && puppet.texture?.key && this.textures.exists(puppet.texture.key)),
-        adopt: (puppet) => { puppet.disableInteractive(); layer.add(puppet); this.formationPuppets.add(puppet); fallback.setVisible(false); },
+      // 공용 슬롯 면은 카드와 SD보다 위에서 입력을 맡고, SD 자체는 계속 비대화형으로 둔다.
+      const hit = this.add.rectangle(x, FORMATION.y, FORMATION.width, FORMATION.height, 0xffffff, 0)
+        .setName(`expedition-formation-slot-${index + 1}`).setDepth(4).setInteractive({ useHandCursor: true });
+      let pressed = false;
+      hit.on("pointerdown", () => { pressed = true; hit.setScale(1.08); });
+      hit.on("pointerout", () => { pressed = false; hit.setScale(1); });
+      hit.on("pointerup", () => {
+        hit.setScale(1);
+        // 보유 카드 스크롤로 승격된 포인터는 같은 해제 입력으로 편성까지 지우지 않는다.
+        if (!pressed || this.rosterDragging || this.rosterDraggedDistance > ROSTER_DRAG_SLOP) { pressed = false; return; }
+        pressed = false;
+        if (this.selected[index] === undefined || !removeFormationSlot(this.selected, index)) return;
+        this.refreshPreparationSelection();
       });
+      layer.add(hit);
     }
   }
 
@@ -803,10 +819,17 @@ export class ExpeditionScene extends Phaser.Scene {
     if (index >= 0) this.selected.splice(index, 1);
     else if (this.selected.length < 3) this.selected.push(relicId);
     // 상단 슬롯은 배열 순서를 그대로 사용해 전방부터 1/2/3번 편성을 즉시 확인시킨다.
+    this.refreshPreparationSelection();
+  }
+
+  /** 카드, SD, 인원수와 시작 가능 상태를 한 프레임의 동일한 선택 배열로 갱신한다. */
+  private refreshPreparationSelection(): void {
     this.renderFormationPreview();
     this.cards.forEach((card, id) => card.setSelected(this.selected.includes(id), COLOR.sortie));
     this.startButton?.setSub(`${this.selected.length} / 3`).setEnabled(this.selected.length === 3);
     this.hint.setText(this.selected.length === 3 ? "출발 준비 완료" : "3기를 선택하세요");
+    // Canvas 밖 모바일 E2E에는 렐릭 정보 없이 실제 슬롯 입력 중심과 표시 인원수만 공개한다.
+    setDebugExpeditionFormation({ selectedCount: this.selected.length, slots: [0, 1, 2].map((index) => ({ x: FORMATION.firstX + index * FORMATION.stepX, y: FORMATION.y })) });
   }
 
   /** 선택 배열을 직접 저장하지 않고 매니저의 검증 완료 상태 전이만 요청한다. */

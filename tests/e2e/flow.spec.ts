@@ -152,6 +152,25 @@ test("1080×1920 전장 HUD와 궁극기 입력이 겹치지 않는다", async (
   await page.screenshot({ path: `test-results/${testInfo.project.name}-battle-hp-buffs-ultimate-safe-area-1080x1920.png`, fullPage: true });
 });
 
+/** 큰 돌출 머리(스피나)와 좌우로 치우친 얼굴(렉시아)의 충전 가림막 경계를 실제 캔버스로 남긴다. */
+test("궁극기 카드 몸통과 돌출 머리는 0%·50%·100%에서 한 부채꼴로 걷힌다", async ({ page }, testInfo) => {
+  test.setTimeout(180_000);
+  await enterBattle(page);
+  await expect.poll(async () => (await battle(page))?.chargeRatios?.[1] ?? 1).toBeLessThan(0.08);
+  await page.screenshot({ path: `test-results/${testInfo.project.name}-battle-charge-portrait-000.png`, fullPage: true });
+
+  // 정확한 한 프레임 대신 50% 주변의 좁은 구간을 기다려 실시간 전투 속도 차이에도 안정적으로 잡는다.
+  await expect.poll(async () => {
+    const ratio = (await battle(page))?.chargeRatios?.[1] ?? 0;
+    return ratio >= 0.48 && ratio <= 0.56;
+  }, { timeout: 60_000 }).toBe(true);
+  await page.screenshot({ path: `test-results/${testInfo.project.name}-battle-charge-portrait-050.png`, fullPage: true });
+
+  // 수동 궁극기 기본값에서는 100%가 유지되므로 몸통과 머리 복제 모두 완전히 사라진 상태를 캡처한다.
+  await expect.poll(async () => (await battle(page))?.chargeRatios?.[1] ?? 0, { timeout: 60_000 }).toBe(1);
+  await page.screenshot({ path: `test-results/${testInfo.project.name}-battle-charge-portrait-100.png`, fullPage: true });
+});
+
 test("전투 기여도 판을 열고 세 분류를 바꾼 뒤 접어 1080×1920 테마를 보존한다", async ({ page }, testInfo) => {
   await page.setViewportSize({ width: BASE_WIDTH, height: BASE_HEIGHT });
   await enterBattle(page);

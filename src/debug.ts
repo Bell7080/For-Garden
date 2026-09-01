@@ -10,6 +10,8 @@ export interface DebugBattle {
   playerOrder: string[];
   /** 지금 궁극기를 누를 수 있는 아군 이름. */
   ultimateReady: string[];
+  /** 시각 회귀가 0%·중간·100% 프레임을 고를 수 있는 편성 순서별 충전 비율이다. */
+  chargeRatios?: number[];
   /** 편별 남은 체력 합계. 실시간 난전에는 선봉 개념이 없다. */
   enemyHp: number;
   playerHp: number;

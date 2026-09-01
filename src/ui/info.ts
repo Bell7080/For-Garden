@@ -53,7 +53,7 @@ import type { Fighter } from "../core/skirmish";
 import { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../core/infoCapabilities";
 import { allyHealPowerKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, passiveShieldKeyword, skillDescription } from "./skillPresentation";
 import type { KeywordDef } from "../data/keywords";
-import { addFactionMark } from "./FactionMark";
+import { addFactionMark, factionMarkBounds } from "./FactionMark";
 import { SQUADS } from "../data/factions";
 import { OBSERVATION_INTERVIEW_LAYOUT, observationInterviewPanelState, type ObservationInterviewPanelState } from "./observationInterviewPanel";
 
@@ -70,7 +70,15 @@ export { OBSERVATION_JOURNAL_SIZE } from "./observationJournalLayout";
  * 표식이 모서리에 바짝 붙어도 사선에 잘리지 않는다. 제목 줄은 판 윗변에 걸터앉으므로 표식은
  * 그보다 아래로 내려 세운다.
  */
-const JOURNAL_SQUAD_MARK = { x: 350, size: 104 } as const;
+/** 기존 관찰 일지 엠블럼 대비 30% 확대. 배율을 분리해 기준 크기와 의도를 함께 보존한다. */
+const JOURNAL_SQUAD_MARK_SCALE = 1.3;
+const JOURNAL_SQUAD_MARK = {
+  size: 104 * JOURNAL_SQUAD_MARK_SCALE,
+  // 가장 넓은 정사각 엠블럼의 복제 그림자도 본문 오른쪽 안전선 안에 남기는 중심 좌표다.
+  x: 320,
+  nameGap: 12,
+  metadataGap: 24,
+} as const;
 
 // 일지 원화는 정보보다 먼저 읽히지 않을 만큼 낮추고, 어두운 페이드는 본문 대비를 보존한다.
 const JOURNAL_ART_ALPHA = 0.18;
@@ -1047,7 +1055,10 @@ export class InfoManager {
       : ["개체번호   NO." + disclosure.specimenNumber, "프로젝트   기록 없음", "기원         미상", "발굴지      미상"];
 
     // 텍스트를 먼저 만들어 실제 height를 얻는다. 이후 배치는 줄 수나 개체별 문단 길이를 추측하지 않는다.
-    const metadata = this.scene.add.text(0, 0, lines.join("\n"), textStyle({ role: "body", size: journal.font.regular, color: COLOR.inkDim, lineSpacing: journal.spacing.line })).setOrigin(0, 0);
+    const markBounds = factionMarkBounds(JOURNAL_SQUAD_MARK.size);
+    // 상단 정보는 확대된 표식의 실제 왼쪽 외곽(복제 그림자 포함) 전까지만 사용한다.
+    const metadataWidth = JOURNAL_SQUAD_MARK.x + markBounds.left - JOURNAL_SQUAD_MARK.metadataGap - bodyLeft;
+    const metadata = this.scene.add.text(0, 0, lines.join("\n"), textStyle({ role: "body", size: journal.font.regular, color: COLOR.inkDim, lineSpacing: journal.spacing.line, wrap: metadataWidth })).setOrigin(0, 0);
     const rawRecord = disclosure.access === "full" ? disclosure.record : def.catalogSummary + "\n\n상세 기록은 개체 획득 후 해제됩니다.";
     const excavationRecord = withoutRepeatedProfileDetails(rawRecord, def.observationProfile?.height, def.observationProfile?.weight);
     const excavation = this.keywords.layout(excavationRecord, { width: journal.body.width, size: journal.font.large, color: COLOR.inkDim, lineSpacing: journal.spacing.line });
@@ -1085,10 +1096,11 @@ export class InfoManager {
       observation.setPosition(bodyLeft, y(flow.observationY)); content.add(observation);
 
       // 소속 표식은 메타데이터 영역 안에만 앉혀 세 영역의 읽기 순서를 흐리지 않는다.
-      const markY = flow.metadataY + JOURNAL_SQUAD_MARK.size / 2;
+      // 그림자의 위쪽 실제 외곽을 메타데이터 상단에 맞춰 제목 영역으로 번지지 않게 한다.
+      const markY = flow.metadataY - markBounds.top;
       const squadMark = addFactionMark(this.scene, JOURNAL_SQUAD_MARK.x, markY, def.squad, { size: JOURNAL_SQUAD_MARK.size });
       if (squadMark) content.add(squadMark);
-      if (disclosure.access === "full") content.add(this.scene.add.text(JOURNAL_SQUAD_MARK.x, markY + JOURNAL_SQUAD_MARK.size / 2 + 12, SQUADS[def.squad].name, textStyle({ role: "display", size: journal.font.regular, color: COLOR.accentText, align: "center" })).setOrigin(0.5, 0));
+      if (disclosure.access === "full") content.add(this.scene.add.text(JOURNAL_SQUAD_MARK.x, markY + markBounds.bottom + JOURNAL_SQUAD_MARK.nameGap, SQUADS[def.squad].name, textStyle({ role: "display", size: journal.font.regular, color: COLOR.accentText, align: "center" })).setOrigin(0.5, 0));
 
       if (this.ownedNow) {
         const utcDate = new Date().toISOString().slice(0, 10);

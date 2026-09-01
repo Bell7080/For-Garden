@@ -12,6 +12,8 @@ export const RELICS: RelicDef[] = [
     specimenNumber: "072",
     projectName: "APEX CROWN",
     excavationSite: "몽골 네메그트층 제7구역",
+    // 발굴 기록은 장소·보존 상태·복원 연구 특징만 담고, 복원 이후 생활 관찰과 분리한다.
+    fossilRecord: "제7구역의 붉은 사암 경계에서 두개골과 하악이 맞물린 채 발견됐다. 마모된 치아의 미세 흔적까지 복원 연구에 남았다.",
     observationProfile: {
       originYear: "약 6,800만 년 전",
       // E.C.는 렉시아의 인간형 신체 나잇대만 나타내며, 아래 성체 초기 화석 단계와 독립된 값이다.
@@ -22,7 +24,7 @@ export const RELICS: RelicDef[] = [
       weight: "54 kg",
     },
     catalogSummary: "신장 1.63m, 체중 54kg의 균형 잡힌 인간형 체격과 발달한 턱 구조가 확인된, 성체 초기 티라노사우루스 화석 기반 표본.",
-    unlockRecord: { status: "recorded", text: "렉시아는 신장 1.63m, 체중 54kg으로 복원되었으며 원종 화석의 성장 단계는 성체 초기에 해당한다. 가벼운 몸놀림에 비해 턱과 하체의 근력이 두드러진다. 먼저 앞장서고 승부를 선언하는 일이 잦지만, 동료의 신호가 들리면 곧바로 보폭을 맞춘다. 전투가 길어질수록 [[ferocity|야성]]이 선명해지고, 스스로를 여왕이라 부르며 전장을 누빈다." },
+    unlockRecord: { status: "recorded", text: "렉시아는 먼저 앞장서고 승부를 선언하는 일이 잦다. 스스로를 여왕이라 부르는 당당한 말투와 달리, 동료의 신호가 들리면 곧바로 보폭을 맞춘다. 전투가 길어질수록 [[ferocity|야성]]을 즐기면서도 뒤처진 동료를 몇 번이고 돌아보는 모습이 관찰됐다." },
     rarity: "SSR",
     portraitAssetId: "lexia",
     origin: "티라노사우루스",
@@ -93,6 +95,8 @@ export const RELICS: RelicDef[] = [
     specimenNumber: "014",
     projectName: "BASTION HORN",
     excavationSite: "고비 사막 백악기 퇴적층",
+    // 발굴 기록은 장소·보존 상태·복원 연구 특징만 담고, 복원 이후 생활 관찰과 분리한다.
+    fossilRecord: "모래폭풍 뒤 드러난 난각 군집 곁에서 어린 개체의 골격을 수습했다. 눌렸어도 볏과 짧은 뿔의 배열은 또렷했다.",
     observationProfile: {
       originYear: "약 6,800만 년 전",
       // 유치원생 콘셉트의 인간형 신체 나잇대만 나타내며, 해츨링 후기 화석이 암시하는 순수한 성향과 함께 사용한다.
@@ -102,7 +106,7 @@ export const RELICS: RelicDef[] = [
       weight: "186 kg",
     },
     catalogSummary: "유치원생 또래의 키를 지닌 트리케라톱스 해츨링 표본.",
-    unlockRecord: { status: "recorded", text: "토리카는 작은 뿔로도 누군가의 앞을 막아 서려 한다. 겁이 나면 한 걸음 물러서지만, 지켜야 할 일이 생기면 자기 생각을 또박또박 말한다. 식사 시간에는 누구보다 씩씩하고 먹성도 좋다. 몸무게 이야기가 나오면 볏 끝까지 붉어져 얼른 화제를 돌린다. 이름은 ‘방패’를 뜻하는 복원 프로젝트의 옛말에서 따왔다." },
+    unlockRecord: { status: "recorded", text: "토리카는 작은 뿔로도 누군가의 앞을 막아 서려 한다. 겁이 나면 한 걸음 물러서지만, 지켜야 할 일이 생기면 자기 생각을 또박또박 말한다. 식사 시간에는 누구보다 씩씩하고 먹성도 좋아 마지막 접시까지 챙긴다. 칭찬을 받으면 볏 끝까지 붉어진 채 친구 몫부터 슬쩍 내미는 습관이 있다." },
     rarity: "SR",
     portraitAssetId: "torika",
     origin: "트리케라톱스",
@@ -171,6 +175,8 @@ export const RELICS: RelicDef[] = [
     specimenNumber: "105",
     projectName: "TIDAL SAIL",
     excavationSite: "북아프리카 켐켐층 수로",
+    // 발굴 기록은 장소·보존 상태·복원 연구 특징만 담고, 복원 이후 생활 관찰과 분리한다.
+    fossilRecord: "옛 수로의 철분 띠 안에 주둥이와 돛뼈가 흩어지지 않고 보존됐다. 골밀도 분석에서 수중 적응의 흔적을 확인했다.",
     // 관찰 프로필은 저장 데이터가 아닌 정적 도감 정보로 복원 세계관 값과 현재 신체 측정값을 공개한다.
     observationProfile: {
       originYear: "약 9,500만 년 전",
@@ -256,6 +262,8 @@ export const RELICS: RelicDef[] = [
     specimenNumber: "038",
     projectName: "VELOCITY CLAW",
     excavationSite: "몽골 자도흐타층 사구 지대",
+    // 발굴 기록은 장소·보존 상태·복원 연구 특징만 담고, 복원 이후 생활 관찰과 분리한다.
+    fossilRecord: "사구가 무너진 자리에서 꼬리까지 이어진 관절 골격이 모습을 드러냈다. 발가락뼈의 정렬은 짧고 빠른 질주에 특화돼 있었다.",
     // 성체는 벨로키랍토르 화석의 생물학적 성장 단계만 뜻한다. 루카의 인간형 신체는 별도 E.C. 16년이며 인간 사회의 성인이 아니다.
     observationProfile: {
       originYear: "약 7,500만 년 전",
@@ -342,6 +350,8 @@ export const RELICS: RelicDef[] = [
     specimenNumber: "001",
     projectName: "ECHO NEST",
     excavationSite: "모리셔스 석회동굴 보관층",
+    // 발굴 기록은 장소·보존 상태·복원 연구 특징만 담고, 복원 이후 생활 관찰과 분리한다.
+    fossilRecord: "석회동굴의 마른 보관층에서 골격과 난각 조각이 함께 발견됐다. 염분 손상이 적어 최초의 안정 복원 기준이 되었다.",
     observationProfile: {
       originYear: "약 400년 전",
       // E.C.는 어린 탐험대원의 인간형 신체 나잇대이며, 원종 화석의 성체 초기 단계와 독립된다.
@@ -352,7 +362,7 @@ export const RELICS: RelicDef[] = [
       weight: "20 kg",
     },
     catalogSummary: "신장 1.08m, 체중 20kg의 가벼운 체형과 짧은 날개, 단단한 부리가 확인된 비행 불능 조류 표본.",
-    unlockRecord: { status: "recorded", text: "도디는 신장 1.08m, 체중 20kg으로 복원되었다. 보존된 골격과 난각에서 완성한 최초의 안정 표본이며, 낮은 경계성 덕분에 생태 관찰 기준 개체가 됐다." },
+    unlockRecord: { status: "recorded", text: "도디는 새로운 물건만 보면 “대장님, 이것 좀 보세요!”라고 외치며 달려온다. 반짝이는 잡동사니를 발견 기록이라 우기며 모으고, 동료의 사소한 행동까지 깃펜으로 부지런히 받아 적는다. 낯선 상대에게도 먼저 다가가는 붙임성이 관찰됐다." },
     rarity: "R",
     portraitAssetId: "dodi",
     origin: "도도새",
@@ -421,8 +431,10 @@ export const RELICS: RelicDef[] = [
     specimenNumber: "044",
     projectName: "FROST FANG",
     excavationSite: "라브레아 타르피트 북측 갱도",
+    // 발굴 기록은 장소·보존 상태·복원 연구 특징만 담고, 복원 이후 생활 관찰과 분리한다.
+    fossilRecord: "북측 갱도의 짙은 타르층이 송곳니와 두개골 수질부를 봉인하고 있었다. 복원 연구에서 움직임을 좇는 감각 구조가 선명하게 확인됐다.",
     catalogSummary: "길게 발달한 송곳니와 민첩한 골격의 포식성 포유류 표본.",
-    unlockRecord: { status: "recorded", text: "타르층에서 회수한 송곳니 수질부를 복원 기반으로 삼았다. 소리보다 움직임에 먼저 반응한다." },
+    unlockRecord: { status: "recorded", text: "스밀라는 대화 중에도 움직이는 그림자부터 눈으로 좇는다. 말수는 적지만 동료가 사냥 준비를 시작하면 소리 없이 곁에 붙고, 앞서 나간 이를 혼자 두지 않는 습관이 있다." },
     rarity: "R",
     portraitAssetId: "torika-placeholder",
     origin: "스밀로돈",
@@ -483,8 +495,10 @@ export const RELICS: RelicDef[] = [
     specimenNumber: "093",
     projectName: "HIGH CURRENT",
     excavationSite: "텍사스 자벨리나층 절벽",
+    // 발굴 기록은 장소·보존 상태·복원 연구 특징만 담고, 복원 이후 생활 관찰과 분리한다.
+    fossilRecord: "절벽 붕괴면의 얇은 이암층에서 속 빈 날개뼈가 찌그러지지 않은 채 드러났다. 골격 분석은 기압 변화에 민감한 구조를 가리켰다.",
     catalogSummary: "긴 목과 거대한 날개 골격이 확인된 익룡 표본.",
-    unlockRecord: { status: "recorded", text: "절벽 붕괴면에서 날개뼈 조직을 수습했다. 기압 변화에 민감하며 높은 지형을 선호한다." },
+    unlockRecord: { status: "recorded", text: "케찰은 바람이 바뀌기 전에 가장 높은 난간으로 올라가 모두에게 짧게 주의를 건넨다. 평소에는 느긋한 말투를 쓰지만 동료의 발이 미끄러지는 순간 누구보다 먼저 날개를 내민다." },
     rarity: "R",
     portraitAssetId: "torika-placeholder",
     origin: "케찰코아틀루스",
@@ -547,6 +561,8 @@ export const RELICS: RelicDef[] = [
     specimenNumber: "201",
     projectName: "SEALED",
     excavationSite: "비공개",
+    // 발굴 기록은 장소·보존 상태·복원 연구 특징만 담고, 복원 이후 생활 관찰과 분리한다.
+    fossilRecord: "출처가 봉인된 운송함에서 갈고리 발톱과 불완전한 골격을 인계받았다. 복원 흔적이 겹쳐 원래의 매장 상태는 판독할 수 없다.",
     catalogSummary: "날렵한 체형과 갈고리 발톱이 관측된 미확인 개체.",
     unlockRecord: { status: "sealed", reason: "pending-lore" },
     rarity: "R",
@@ -609,6 +625,8 @@ export const RELICS: RelicDef[] = [
     specimenNumber: "202",
     projectName: "SEALED",
     excavationSite: "비공개",
+    // 발굴 기록은 장소·보존 상태·복원 연구 특징만 담고, 복원 이후 생활 관찰과 분리한다.
+    fossilRecord: "출처 불명의 암괴 안에 두꺼운 골판 조각이 층층이 남아 있었다. 복원 연구에서도 외피 결합부의 비정상적인 중첩이 확인됐다.",
     catalogSummary: "두꺼운 외피를 가진 미확인 개체.",
     unlockRecord: { status: "sealed", reason: "pending-lore" },
     rarity: "R",
@@ -671,6 +689,8 @@ export const RELICS: RelicDef[] = [
     specimenNumber: "203",
     projectName: "SEALED",
     excavationSite: "비공개",
+    // 발굴 기록은 장소·보존 상태·복원 연구 특징만 담고, 복원 이후 생활 관찰과 분리한다.
+    fossilRecord: "봉인 구역에서 파손된 날개뼈 묶음을 회수했다. 골편마다 서로 다른 복원 흔적이 남아 단일 표본 여부조차 확정하지 못했다.",
     catalogSummary: "날개 형태의 사지가 관측된 미확인 개체.",
     unlockRecord: { status: "sealed", reason: "restricted" },
     rarity: "R",
@@ -734,6 +754,8 @@ export const RELICS: RelicDef[] = [
     specimenNumber: "163",
     projectName: "ADAGIO COLOSSUS",
     excavationSite: "아르헨티나 팜파스 로한층",
+    // 발굴 기록은 장소·보존 상태·복원 연구 특징만 담고, 복원 이후 생활 관찰과 분리한다.
+    fossilRecord: "팜파스 발굴 갱도 위 임시 무대에서는 때마침 바이올린 콩쿠르가 한창이었다. 선율 아래 드러난 거대 골격은 손끝 관절까지 놀랍도록 온전했다.",
     observationProfile: {
       originYear: "약 1만 년 전",
       // 성체 화석에서 비롯된 성숙한 성향과 가장 가깝게 맞물리도록, 인간형 신체 나잇대는 허용 상한인 E.C. 19년으로 둔다.
@@ -791,6 +813,8 @@ export const RELICS: RelicDef[] = [
     specimenNumber: "220",
     projectName: "ABYSSAL CROWN",
     excavationSite: "페루 피스코 분지 심해 퇴적층",
+    // 발굴 기록은 장소·보존 상태·복원 연구 특징만 담고, 복원 이후 생활 관찰과 분리한다.
+    fossilRecord: "심해 퇴적층의 저산소 점토가 거대한 턱뼈와 척추 마디를 보존했다. 압력 복원 연구에서 고래형 골격의 비정상적인 내구성이 확인됐다.",
     catalogSummary: "리바이어던 멜빌레이를 모티브로 복원된 거대 고래형 심해 개체.",
     unlockRecord: { status: "sealed", reason: "restricted" },
     rarity: "SSR",

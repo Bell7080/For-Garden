@@ -71,6 +71,33 @@ export interface DamagePopupRequest {
   maxHp?: number;
 }
 
+/**
+ * 코어의 공격 사건을 화면 효과가 소비할 최소 표현 모델로 옮긴다.
+ *
+ * `contributionAmount`와 보스 누적 점수는 정산용이고 `maxHp`는 크기 등급용 보조값일 뿐이다.
+ * 따라서 화면에 적을 수치인 `amount`는 언제나 사건의 실제 HP 피해에서만 가져온다.
+ */
+export function attackDamagePopupRequest(
+  event: {
+    amount: number;
+    damageType: "physical" | "magical" | "true";
+    skill: "basic" | "ultimate" | "staccato" | "transfer";
+    critical: boolean;
+    mitigated?: boolean;
+  },
+  target: { side: "player" | "enemy"; maxHp: number },
+): DamagePopupRequest {
+  return {
+    amount: event.amount,
+    flavor: event.damageType === "true" ? "true" : "damage",
+    incoming: target.side === "player",
+    maxHp: target.maxHp,
+    ultimate: event.skill === "ultimate",
+    critical: event.critical,
+    mitigated: event.mitigated,
+  };
+}
+
 /** 씬이 그대로 옮겨 그리는 표시 계약. 여기 없는 값을 화면이 새로 정하지 않는다. */
 export interface DamagePopupStyle {
   /** 최종 문자열. 회복·보호막만 `+`가 붙는다. */

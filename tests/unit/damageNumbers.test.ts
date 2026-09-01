@@ -1,13 +1,28 @@
 import { describe, expect, it } from "vitest";
 import {
   CRITICAL_COLOR, DAMAGE_FLAVOR_COLOR, DAMAGE_TIER_RATIOS, DAMAGE_TIER_SIZES, DEBUFF_TONE,
-  INCOMING_DAMAGE_TONE, MITIGATED_COLOR, damagePopupStyle, formatDamageAmount, risingAlpha,
+  INCOMING_DAMAGE_TONE, MITIGATED_COLOR, attackDamagePopupRequest, damagePopupStyle, formatDamageAmount, risingAlpha,
 } from "../../src/ui/damageNumbers";
 import { COLOR } from "../../src/ui/theme";
 
 const target = { maxHp: 10_000 } as const;
 
 describe("전투 수치 표시 규칙", () => {
+  it("공격 사건의 실제 피해만 화면 숫자로 쓰고 정산 기여도·대상 HP·보스 점수는 섞지 않는다", () => {
+    // 구조적으로 여분 필드를 허용해 실제 SkirmishEvent와 보스 상태가 건너와도 출력값의 출처를 고정한다.
+    const event = {
+      amount: 432, contributionAmount: 8_000_000_000, damageType: "magical" as const,
+      skill: "ultimate" as const, critical: false, bossScore: 9_000_000_000,
+    };
+    const request = attackDamagePopupRequest(event, { side: "enemy", maxHp: 7_000_000_000 });
+    expect(request.amount).toBe(event.amount);
+    expect(damagePopupStyle(request).text).toBe("432");
+    // maxHp는 상대적 크기 등급에만 남고 정산 전용 값들은 표현 모델 자체에 존재하지 않는다.
+    expect(request.maxHp).toBe(7_000_000_000);
+    expect(request).not.toHaveProperty("contributionAmount");
+    expect(request).not.toHaveProperty("bossScore");
+  });
+
   it("세기가 클수록 글자가 커지고 오래 남는다", () => {
     const small = damagePopupStyle({ amount: 50, flavor: "damage", ...target });
     const big = damagePopupStyle({ amount: 3_000, flavor: "damage", ...target });

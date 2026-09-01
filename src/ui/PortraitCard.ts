@@ -48,7 +48,7 @@ export interface PortraitCardOptions {
 }
 
 /** 카드 몸통과 원화 알파를 보존한 돌출 머리를 한 상태값으로 갱신하는 공개 오버레이다. */
-export interface PortraitCardMaskOverlay {
+export interface PortraitAlphaOverlay {
   /** 호출 화면이 카드 바로 뒤 레이어에 넣는 표시 컨테이너다. */
   readonly display: Phaser.GameObjects.Container;
   /** 트윈처럼 표시 객체 알파를 직접 건드려야 하는 기존 연출을 위한 몸통 면이다. */
@@ -65,7 +65,7 @@ interface PortraitPlacement {
   crop: { x: number; y: number; width: number; height: number };
 }
 
-interface ManagedPortraitOverlay extends PortraitCardMaskOverlay {
+interface ManagedPortraitOverlay extends PortraitAlphaOverlay {
   color: number;
   alpha: number;
   radius: number;
@@ -488,7 +488,7 @@ export class PortraitCard extends Phaser.GameObjects.Container {
    * 카드 위에 덮개를 얹는 화면(전투 프로필의 궁극기 가림막)이 같은 실루엣을 다시 계산하지
    * 않게 한다. 카드가 움직이면 `syncMask`가 이 도형도 함께 월드 좌표로 옮긴다.
    */
-  createBodyMask(): Phaser.Display.Masks.GeometryMask {
+  public createBodyOnlyMask(): Phaser.Display.Masks.GeometryMask {
     return this.bodyMask.createGeometryMask();
   }
 
@@ -498,9 +498,12 @@ export class PortraitCard extends Phaser.GameObjects.Container {
    * 단순한 홈 도형을 검게 칠하지 않는다. 머리 복제에는 텍스처 알파가 먼저 적용되고 `alpha`가
    * 명시적으로 곱해지므로 투명 픽셀에는 어떤 색도 생기지 않는다.
    */
-  public createMaskOverlay(color: number, alpha: number, radius: number): PortraitCardMaskOverlay {
-    const display = this.scene.add.container(0, 0);
-    const body = this.scene.add.graphics().setMask(this.createBodyMask());
+  public createPortraitAlphaOverlay(color: number, alpha: number, radius: number): PortraitAlphaOverlay {
+    // 나중에 추가된 효과도 이미 적용된 사망/비활성 카드 전체 알파를 이어받는다.
+    const display = this.scene.add.container(0, 0).setAlpha(this.alpha);
+    // 몸통은 불투명 칩 면만 덮어야 한다. 머리 홈까지 기하로 채우면 실제 초상의 투명 픽셀도
+    // 효과색으로 생기므로, 아래의 원화 알파 머리 복제와 영역을 나누고 몸통 전용 마스크를 쓴다.
+    const body = this.scene.add.graphics().setMask(this.createBodyOnlyMask());
     const headMask = this.scene.make.graphics({});
     display.add(body);
     const overlay: ManagedPortraitOverlay = {
@@ -512,6 +515,20 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     if (this.portraitPlacement) this.attachOverlayHead(overlay);
     this.paintMaskOverlay(overlay, 0);
     return overlay;
+  }
+
+  /**
+   * 사망·비활성처럼 조립이 끝난 카드 전체의 알파를 마지막 단계에서 한 번만 적용한다.
+   *
+   * 충전 오버레이는 카드의 자식이 아니라 같은 부모의 형제이므로 함께 갱신해야 한다. 호출부가
+   * `card`와 오버레이에 따로 값을 주면 머리 복제 또는 몸통 한쪽을 빠뜨리기 쉽다.
+   */
+  public setCompositeAlpha(alpha: number): this {
+    const cardAlpha = Phaser.Math.Clamp(alpha, 0, 1);
+    this.setAlpha(cardAlpha);
+    // 표시 컨테이너에만 마지막 알파를 적용한다. head/body 각각에 주면 부모와 자식에서 두 번 곱해진다.
+    for (const overlay of this.managedOverlays) overlay.display.setAlpha(cardAlpha);
+    return this;
   }
 
   /** 실제 원화와 같은 crop/scale의 검정 복제본을 오버레이에 한 번만 붙인다. */

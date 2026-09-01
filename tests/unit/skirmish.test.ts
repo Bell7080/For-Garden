@@ -35,6 +35,8 @@ import { applyLevelGrowth } from "../../src/core/relicProgression";
 import { FEROCITY_RULES } from "../../src/core/ferocity";
 import { ULTIMATE_ENERGY_MAX } from "../../src/core/ultimate";
 import { computeDamage } from "../../src/core/damage";
+import { createExpeditionBossSkirmishConfig, type ExpeditionBossBattleInputDto } from "../../src/core/expeditionBattle";
+import { getExpeditionNodeEnemies } from "../../src/data/expeditionEnemies";
 import {
   beginNextUltimate, cancelUltimateSequence, createUltimateSequenceState, enqueueUltimate, releaseUltimate,
 } from "../../src/core/ultimateSequence";
@@ -423,6 +425,48 @@ function run(state: SkirmishState, seconds: number, rng?: () => number) {
 }
 
 describe("단일 난전의 원정 보스 옵션", () => {
+  /** 실제 20층 진입과 같은 정의를 사용하되 공격 재현을 위해 양쪽을 즉시 교전시킨다. */
+  function dodoFinalBossBattle(): SkirmishState {
+    const dodo = getRelic("dodo");
+    const input: ExpeditionBossBattleInputDto = {
+      mode: "expeditionBoss", runId: "damage-regression", nodeId: "floor-20-boss", floor: 20,
+      relics: [{ relicId: dodo.id, currentHp: 100, alive: true }], augments: [],
+      requestId: "damage-regression-request", settlementId: "damage-regression-settlement",
+    };
+    const config = createExpeditionBossSkirmishConfig(input, [dodo], getExpeditionNodeEnemies("boss", 20));
+    const state = createSkirmish(config.playerDefs, config.enemyDefs, ARENA, {}, {}, {
+      playerInitialStates: config.playerInitialStates,
+      augmentEffects: config.augmentEffects,
+      enemyBodyScale: config.enemyBodyScale,
+      boss: config.boss,
+    });
+    const [ally, boss] = state.fighters;
+    ally.x = boss.x = 400; ally.y = boss.y = 900; boss.attackCooldown = 999;
+    return state;
+  }
+
+  it("도디의 기본 공격과 궁극기는 20층 폰토스전에서도 유한하고 B 단위로 폭증하지 않는다", () => {
+    const basicState = dodoFinalBossBattle();
+    basicState.fighters[0].attackCooldown = 0;
+    const basicEvents = stepSkirmish(basicState, 1 / 60, () => 0.99).filter((event) => event.kind === "attack");
+
+    const ultimateState = dodoFinalBossBattle();
+    const dodo = ultimateState.fighters[0];
+    dodo.energy = dodo.def.ultimate.cost;
+    const ultimateEvents = fireUltimate(ultimateState, dodo.id, () => 0.99).filter((event) => event.kind === "attack");
+
+    for (const events of [basicEvents, ultimateEvents]) {
+      expect(events.length).toBeGreaterThan(0);
+      for (const event of events) {
+        if (event.kind !== "attack") continue;
+        expect(Number.isFinite(event.amount)).toBe(true);
+        expect(Number.isFinite(event.contributionAmount)).toBe(true);
+        // 현재 성장표의 실제 20층 피해는 백만보다 훨씬 작다. 이 상한은 B(10억) 단위 회귀도 즉시 잡는다.
+        expect(event.amount).toBeLessThan(1_000_000);
+      }
+    }
+  });
+
   /** 보스 옵션도 별도 타이머가 아니라 createSkirmish 상태에 함께 주입한다. */
   function bossBattle(damagePerSecond: number) {
     const state = createSkirmish([getRelic("anky")], [getRelic("husk-shell")], ARENA, {}, {}, {

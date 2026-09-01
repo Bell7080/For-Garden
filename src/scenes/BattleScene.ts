@@ -66,7 +66,7 @@ import { StageCompletePopup, type StageCompleteFighter } from "../ui/StageComple
 import { EffectManager } from "../managers/EffectManager";
 import { CombatEffectPresenter, type CombatEffectTarget } from "../managers/CombatEffectPresenter";
 import { ensureEffectTextures } from "../ui/effectTextures";
-import type { DamageFlavor, DebuffId } from "../ui/damageNumbers";
+import { attackDamagePopupRequest, type DamageFlavor, type DebuffId } from "../ui/damageNumbers";
 import { openBattleBuffListPopup, openBattleBuffPopup, type BattleBuffListItem, type BattleBuffPopupController } from "../ui/BattleBuffPopup";
 import type { ActiveCombatDisplayEffect } from "../core/combatEffects";
 
@@ -820,19 +820,22 @@ export class BattleScene extends Phaser.Scene {
       flashHit(this, target.creature, this.bodyTint(target));
       // 기절 유지 자세는 일반 피격보다 우선한다. 섬광과 피해 숫자는 그대로 보여 타격감은 보존한다.
       if (target.fighter.stunnedFor <= 0) playMotion(this, target.creature, "hit");
-      const ultimate = event.skill === "ultimate";
       // 물리·마법은 색을 가르지 않는다. 갈리는 것은 고정 피해뿐이고, 나머지 구분(치명타·궁극기·
-      // 경감·아군 피격)은 표시 규칙이 사건의 성격만 보고 정한다.
-      this.popNumber(target.fighter, event.amount, event.damageType === "true" ? "true" : "damage", {
-        ultimate, critical: event.critical, mitigated: event.mitigated,
-      });
+      // 경감·아군 피격)은 순수 변환 경계가 사건의 성격만 보고 정한다. 기여도와 보스 점수가
+      // 실수로 화면 숫자에 섞이지 않도록 공격 사건은 완성된 요청 모델로 바로 전달한다.
+      const popupRequest = attackDamagePopupRequest(event, target.fighter);
+      this.effects.damage(
+        target.fighter.x,
+        target.fighter.y - UNIT_HEIGHT * target.fighter.bodyScale * BATTLE_STATUS_LAYOUT.popupBodyOffsetRatio,
+        popupRequest,
+      );
       // 파편은 때린 쪽에서 맞은 쪽을 향해 부채꼴로 튄다. 사방으로 고르게 뿌리면 누가 때렸는지
       // 방향이 사라져 여섯이 뒤엉킨 난전에서 타격이 제자리에 선 폭죽처럼 보인다.
       const height = UNIT_HEIGHT * target.fighter.bodyScale;
       const direction = attacker
         ? Phaser.Math.RadToDeg(Math.atan2(target.fighter.y - attacker.fighter.y, target.fighter.x - attacker.fighter.x))
         : undefined;
-      this.effects.burst(ultimate ? "ultimate" : "basic", target.fighter.x, target.fighter.y - height * 0.5, {
+      this.effects.burst(event.skill === "ultimate" ? "ultimate" : "basic", target.fighter.x, target.fighter.y - height * 0.5, {
         color: this.effectColor(attacker),
         direction,
         scale: target.fighter.bodyScale,

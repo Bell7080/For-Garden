@@ -700,4 +700,33 @@ describe("룬 판매", () => {
     await expect(server.sellRunes({ requestId: "cap", instanceIds: ["equipped-sale"] })).rejects.toMatchObject({ code: "CURRENCY_LIMIT_EXCEEDED" });
     expect(state.runeInventory).toHaveLength(1); expect(state.wallet.gold).toBe(999_999_999);
   });
+
+  it("잠근 룬은 판매를 거부하고 잠금을 푼 뒤에만 팔린다", async () => {
+    const state = makeSession(); state.runeInventory = [makeRune("locked-sale")]; const server = new FakeServer(state, { latencyMs: 0 });
+    await server.markRune({ runeInstanceId: "locked-sale", locked: true });
+    await expect(server.sellRunes({ requestId: "locked", instanceIds: ["locked-sale"] })).rejects.toMatchObject({ code: "RUNE_LOCKED" });
+    expect(state.runeInventory).toHaveLength(1);
+    await server.markRune({ runeInstanceId: "locked-sale", locked: false });
+    await server.sellRunes({ requestId: "unlocked", instanceIds: ["locked-sale"] });
+    expect(state.runeInventory).toEqual([]);
+  });
+});
+
+/** 두 표식이 한 스위치가 되지 않도록 서버 경계에서 부분 갱신을 고정한다. */
+describe("룬 표식", () => {
+  it("주지 않은 표식은 그대로 두고 준 표식만 바꾼다", async () => {
+    const state = makeSession(); state.runeInventory = [makeRune("mark-1")]; const server = new FakeServer(state, { latencyMs: 0 });
+    const locked = await server.markRune({ runeInstanceId: "mark-1", locked: true });
+    expect(locked.rune).toMatchObject({ locked: true, bookmarked: false });
+    const bookmarked = await server.markRune({ runeInstanceId: "mark-1", bookmarked: true });
+    expect(bookmarked.rune).toMatchObject({ locked: true, bookmarked: true });
+    expect(state.runeInventory[0]).toMatchObject({ locked: true, bookmarked: true });
+    const unlocked = await server.markRune({ runeInstanceId: "mark-1", locked: false });
+    expect(unlocked.rune).toMatchObject({ locked: false, bookmarked: true });
+  });
+
+  it("보유하지 않은 룬의 표식은 바꿀 수 없다", async () => {
+    const state = makeSession(); state.runeInventory = [makeRune("mark-2")]; const server = new FakeServer(state, { latencyMs: 0 });
+    await expect(server.markRune({ runeInstanceId: "없는 룬", locked: true })).rejects.toMatchObject({ code: "RUNE_NOT_FOUND" });
+  });
 });

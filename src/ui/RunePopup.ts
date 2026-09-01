@@ -13,6 +13,7 @@ import { drawHairline, drawLayer, slantedRect, toPoints } from "./holo";
 import { PopupLayer } from "./PopupLayer";
 import { addChanceLine, addEmptyRuneMark, addRuneFrame, addRuneMark, RUNE_ACCENT, RUNE_MARK } from "./runeIcons";
 import { addCurrencyChip } from "./CurrencyChip";
+import { addMarkChip } from "./MarkChip";
 import { formatCurrency } from "../core/formatCurrency";
 import { COLOR, textStyle } from "./theme";
 
@@ -102,6 +103,58 @@ function requestRuneName(scene: Phaser.Scene, current: string, commit: (name: st
 }
 
 /**
+ * 쪽지 왼쪽 위의 표식 칩 한 줄.
+ *
+ * `MARK_ROW`는 그 줄이 차지하는 높이라, 칩이 생기면서 아래 내용이 함께 내려간다 —
+ * 판만 키우고 자리를 그대로 두면 칩이 액자 위에 겹친다.
+ */
+const MARK_CHIP = { size: 46, row: 56, x: -180, gap: 56 } as const;
+const MARK_ROW = MARK_CHIP.row;
+/** 잠금은 서늘한 강철빛, 즐겨찾기는 정보창 별과 같은 노랑이다. */
+const MARK_ON = { locked: 0x9fd8ff, bookmarked: 0xf2c744 } as const;
+
+/** 표식 칩 두 장을 다시 칠하는 손잡이. */
+interface RuneMarkChips {
+  paint(rune: RuneInstance): void;
+}
+
+/**
+ * 잠금(자물쇠)과 즐겨찾기(별) 칩 두 장.
+ *
+ * 뒤집는 것은 화면이 아니라 서버다 — 자물쇠는 판매를 실제로 막는 값이라 표시와 거부가 같은
+ * 한 곳에서 갈려야 한다. 응답이 온 뒤에만 칩을 다시 칠하므로, 실패한 요청이 켜진 채로
+ * 남지 않는다.
+ */
+function addRuneMarkChips(
+  scene: Phaser.Scene,
+  body: Phaser.GameObjects.Container,
+  top: number,
+  instanceId: string,
+  api: GameApi,
+  onChanged: (rune: RuneInstance) => void,
+): RuneMarkChips {
+  const inventory = new InventoryManager(session);
+  const y = top + MARK_CHIP.row / 2 + 22;
+  let current = session.runeInventory.find((rune) => rune.instanceId === instanceId);
+  let pending = false;
+  const chips: { key: "locked" | "bookmarked"; handle: ReturnType<typeof addMarkChip> }[] = [];
+  const paint = (rune: RuneInstance): void => {
+    current = rune;
+    for (const { key, handle } of chips) handle.paint(rune[key] === true);
+  };
+  const toggle = (key: "locked" | "bookmarked"): void => {
+    if (pending || !current) return;
+    pending = true;
+    void inventory.markRune(api, instanceId, { [key]: current[key] !== true })
+      .then((rune) => { paint(rune); onChanged(rune); })
+      .finally(() => { pending = false; });
+  };
+  chips.push({ key: "locked", handle: addMarkChip(scene, body, MARK_CHIP.x, y, { glyph: "lock", onColor: MARK_ON.locked, size: MARK_CHIP.size, onToggle: () => toggle("locked") }) });
+  chips.push({ key: "bookmarked", handle: addMarkChip(scene, body, MARK_CHIP.x + MARK_CHIP.gap, y, { glyph: "bookmark", onColor: MARK_ON.bookmarked, size: MARK_CHIP.size, onToggle: () => toggle("bookmarked") }) });
+  return { paint };
+}
+
+/**
  * 룬을 누르면 먼저 열리는 간소한 쪽지.
  *
  * 세공은 골드를 쓰고 결과가 되돌아오지 않는 조작이라, 룬을 눌렀다고 바로 그 화면을 열지
@@ -116,19 +169,28 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
   const stats = [...rune.mainStats, ...rune.subStats];
   // 쪽지는 작다. 무엇을 가진 룬인지만 읽는 창이라 옵션 줄도 바짝 붙여, 이름과 수치가 한
   // 덩어리로 눈에 들어오게 한다. 크게 벌려 두면 몇 줄 안 되는 내용이 넓은 판에 흩어진다.
-  const height = 336 + stats.length * 40;
+  // 표식 칩 한 줄이 머리글 아래에 서므로 그만큼 아래 내용이 내려간다.
+  const height = 336 + MARK_ROW + stats.length * 40;
   popups.open({ width: 448, height, title: "룬", anchor: options.anchor, dim: true, onClose: options.onClose }, (body, close) => {
     const top = -height / 2;
+    // 잠금과 즐겨찾기는 **머리글 아래 왼쪽 위**에 작은 칩 두 장으로 선다. 무엇을 가진
+    // 룬인지 읽기 전에 "골라 둔 것인가"가 먼저 보이는 자리이고, 판매를 막는 자물쇠가
+    // 판매 버튼 옆이 아니라 표식 자리에 있어야 실수로 함께 눌리지 않는다.
+    const marks = addRuneMarkChips(scene, body, top, rune.instanceId, options.api ?? gameApi, (next) => {
+      // 자물쇠가 걸린 동안에는 판매 자체를 막는다. 서버도 같은 이유로 거부한다.
+      sell.setEnabled(!equipped && !next.locked);
+      options.onChanged?.(next);
+    });
     // 머리글("룬")이 창 맨 위에 서므로 그 아래로 한 줄 비우고 시작한다. 액자를 위로 붙이면
     // 조각이 머리글에 잘려 무엇인지 알아볼 수 없다.
-    body.add(addRuneFrame(scene, -140, top + 122, 108, rune.rarity, rune.part, rune.mainStats));
-    body.add(scene.add.text(-76, top + 78, rarity + "  ·  " + RUNE_PART_LABELS[rune.part], textStyle({ role: "emphasis", size: 18, color: hex(accent) })).setOrigin(0, 0));
-    body.add(scene.add.text(-76, top + 102, rune.customName ?? `${rarity} 룬`, textStyle({ role: "display", size: 25 })).setOrigin(0, 0).setWordWrapWidth(204));
-    body.add(scene.add.text(-76, top + 140, equippedLine(rune.instanceId), textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0, 0));
-    body.add(drawHairline(scene, 0, top + 180, 356, { color: accent, alpha: 0.45 }));
+    body.add(addRuneFrame(scene, -140, top + MARK_ROW + 122, 108, rune.rarity, rune.part, { mainStats: rune.mainStats, engraved: rune.engravings.length > 0 }));
+    body.add(scene.add.text(-76, top + MARK_ROW + 78, rarity + "  ·  " + RUNE_PART_LABELS[rune.part], textStyle({ role: "emphasis", size: 18, color: hex(accent) })).setOrigin(0, 0));
+    body.add(scene.add.text(-76, top + MARK_ROW + 102, rune.customName ?? `${rarity} 룬`, textStyle({ role: "display", size: 25 })).setOrigin(0, 0).setWordWrapWidth(204));
+    body.add(scene.add.text(-76, top + MARK_ROW + 140, equippedLine(rune.instanceId), textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0, 0));
+    body.add(drawHairline(scene, 0, top + MARK_ROW + 180, 356, { color: accent, alpha: 0.45 }));
 
     stats.forEach((stat, index) => {
-      const y = top + 212 + index * 40;
+      const y = top + MARK_ROW + 212 + index * 40;
       const main = index < rune.mainStats.length;
       // 주 옵션은 강조, 보조는 본문이다. 역할은 조건식이 아니라 두 갈래로 명시해서 고른다.
       const nameStyle = main
@@ -142,13 +204,18 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
     const attempts = runeEnhancementAttempts(rune);
     const total = runeTotalEnhancementAttempts(rune.rarity);
     const progress = rune.engravings.length > 0 ? "각인 완료" : `세공 ${attempts} / ${total}`;
-    body.add(scene.add.text(0, top + 212 + stats.length * 40 + 2, progress, textStyle({ role: "body", size: 19, color: COLOR.inkDim })).setOrigin(0.5, 0));
+    body.add(scene.add.text(0, top + MARK_ROW + 212 + stats.length * 40 + 2, progress, textStyle({ role: "body", size: 19, color: COLOR.inkDim })).setOrigin(0.5, 0));
 
     const buttonY = height / 2 - 56;
     const equip = options.equip;
     const equipped = equippedRelicName(rune.instanceId) !== undefined;
     // 세공·판매는 모든 진입점에 있고 장착만 대상 슬롯을 알고 있는 정보창에 조건부로 선다.
     const spacing = equip ? 128 : 112;
+    // 판매 버튼은 자물쇠 칩이 다시 칠할 대상이라 먼저 만든다.
+    const sell = new Button(scene, equip ? 0 : spacing / 2, buttonY, {
+      width: equip ? 116 : 200, height: 68, label: "판매", fontSize: 24,
+      onClick: () => { void new InventoryManager(session).sellRunes(options.api ?? gameApi, [rune.instanceId]).then(() => close()); },
+    });
     body.add(new Button(scene, equip ? -spacing : -spacing / 2, buttonY, {
       width: equip ? 116 : 200, height: 68, label: "세공", fontSize: 24, variant: "primary", accentColor: accent,
       onClick: () => {
@@ -156,11 +223,9 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
         openRunePopup(scene, popups, options);
       },
     }));
-    const sell = new Button(scene, equip ? 0 : spacing / 2, buttonY, {
-      width: equip ? 116 : 200, height: 68, label: "판매", fontSize: 24,
-      onClick: () => { void new InventoryManager(session).sellRunes(options.api ?? gameApi, [rune.instanceId]).then(() => close()); },
-    }).setEnabled(!equipped);
     body.add(sell);
+    sell.setEnabled(!equipped && !rune.locked);
+    marks.paint(rune);
     if (equip) {
       body.add(new Button(scene, spacing, buttonY, {
         width: 116, height: 68, label: "장착", fontSize: 24,
@@ -217,7 +282,7 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
       const displayName = rune!.customName ?? `${rarity} 룬`;
       const top = -CRAFT.height / 2;
       const half = CRAFT.width / 2;
-      content.add(addRuneFrame(scene, -half + 82, top + 118, 112, rune!.rarity, rune!.part, rune!.mainStats));
+      content.add(addRuneFrame(scene, -half + 82, top + 118, 112, rune!.rarity, rune!.part, { mainStats: rune!.mainStats, engraved: rune!.engravings.length > 0 }));
       content.add(scene.add.text(-half + 146, top + 78, rarity + "  ·  " + RUNE_PART_LABELS[rune!.part], textStyle({ role: "emphasis", size: 20, color: hex(accent) })).setOrigin(0, 0));
       const nameText = scene.add.text(-half + 146, top + 104, displayName, textStyle({ role: "display", size: 28 })).setOrigin(0, 0).setWordWrapWidth(260);
       content.add(nameText);

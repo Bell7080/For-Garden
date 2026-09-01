@@ -10,7 +10,7 @@ import { INVENTORY_TAB_LAYOUT, inventoryCategoryTabPosition } from "./inventoryT
 import { POPUP_TITLE_SIZE, PopupLayer } from "./PopupLayer";
 import { equippedRelicName, openRuneInfoPopup } from "./RunePopup";
 import { RUNE_PART_LABELS, RUNE_RARITY_LABELS } from "../core/runes";
-import { addRuneFrame, runeTexture } from "./runeIcons";
+import { addRuneCard, runeTexture } from "./runeIcons";
 import { COLOR, textStyle } from "./theme";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { managerEvents } from "../managers/ManagerEvents";
@@ -164,12 +164,15 @@ export class InventoryPopup {
     const { cardWidth, cardHeight } = INVENTORY_LAYOUT;
     const { frameX, textX, textWidth, quantityX } = inventoryCardLayout(cardWidth);
     const shape = chipPoints(cardWidth, cardHeight, { bevel: { topLeft: 34, topRight: 0, bottomRight: 34, bottomLeft: 0 } });
-    const card = this.scene.add.container(x, y); card.add(drawLayer(this.scene, 0, 0, shape, { fill: 0x151a21, alpha: 0.96, edge: COLOR.accent, edgeAlpha: 0.35 }));
+    // 룬은 카드 한 장이 통째로 공용 프리팹이다. 장착용 가방과 같은 한 장을 써야 한쪽만
+    // 옛 모습으로 남지 않는다.
+    const card = item.kind === "rune"
+      ? addRuneCard(this.scene, x, y, cardWidth, cardHeight, item.rune, { dimmed: equippedRelicName(item.rune.instanceId) !== undefined })
+      : this.scene.add.container(x, y);
     if (item.kind === "rune") {
-      // 룬은 일반 정의 아이콘보다 먼저 처리해 세공 화면과 동일한 등급 액자·비네팅·조각을 쓴다.
-      card.add(addRuneFrame(this.scene, 0, 0, 160, item.rune.rarity, item.rune.part, item.rune.mainStats));
       textureKeys.push(runeTexture(item.rune.rarity, item.rune.part));
     } else {
+      card.add(drawLayer(this.scene, 0, 0, shape, { fill: 0x151a21, alpha: 0.96, edge: COLOR.accent, edgeAlpha: 0.35 }));
       const frame = chipPoints(102, 102, { bevel: { topLeft: 18, topRight: 0, bottomRight: 18, bottomLeft: 0 } });
       card.add(drawLayer(this.scene, frameX, -12, frame, { fill: 0x24282e, alpha: 1 })); card.add(drawShapeOutline(this.scene, frameX, -12, frame, { color: COLOR.accent, alpha: 0.7 })); card.add(drawInnerVignette(this.scene, frameX, -12, frame));
       // 액자 안 콘텐츠만 아래 판별 함수에 맡겨 불투명 면·사방 outline·내부 vignette는 항상 유지한다.

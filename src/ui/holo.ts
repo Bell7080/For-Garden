@@ -395,6 +395,35 @@ export function drawInnerVignette(
 }
 
 /**
+ * 액자 안쪽 가장자리에서 번지는 빛.
+ *
+ * `drawInnerVignette`의 반대다 — 어둠 대신 색을 두르고 겹쳐 밝아지는 합성을 쓴다. 같은
+ * 도형을 조금씩 줄여 가며 두르므로 빛이 액자 **안쪽**에 머물고 틀 밖으로 새지 않는다.
+ * 무엇이 다 자란 것인지 표식을 따로 붙이지 않고 액자 자체가 말하게 하는 자리에 쓴다.
+ */
+export function drawShapeInnerGlow(
+  scene: Phaser.Scene,
+  x: number,
+  y: number,
+  shape: number[],
+  options: { color?: number; strength?: number; bands?: number; depth?: number } = {},
+): Phaser.GameObjects.Graphics {
+  const bands = options.bands ?? 7;
+  const depth = options.depth ?? 0.26;
+  const strength = options.strength ?? 0.5;
+  const points = toPoints(shape);
+  const graphics = scene.add.graphics({ x, y });
+  graphics.setBlendMode(Phaser.BlendModes.ADD);
+  for (let i = 0; i < bands; i += 1) {
+    const factor = 1 - (depth * i) / bands;
+    const fade = 1 - i / bands;
+    graphics.lineStyle(Math.max(2, (depth * 100) / bands), options.color ?? COLOR.accent, strength * fade * fade);
+    graphics.strokePoints(points.map((point) => new Phaser.Geom.Point(point.x * factor, point.y * factor)), true);
+  }
+  return graphics;
+}
+
+/**
  * 판 하나의 가장자리만 고르게 눌러 주는 비네팅.
  *
  * 같은 도형을 조금씩 줄여 여러 번 두르는 방식(`drawInnerVignette`)은 가로로 긴 판에서 좌우가

@@ -25,6 +25,7 @@ export type GlyphName =
   | "speed"
   | "heart"
   | "bookmark"
+  | "lock"
   | "scroll"
   | "mission"
   | "magnifier"
@@ -247,6 +248,11 @@ export function drawGlyph(
       // 옷걸이에 걸린 옷 — 코스튬.
       g.strokePoints(points(-r * 0.9, -r * 0.2, -r * 0.35, -r * 0.62, r * 0.35, -r * 0.62, r * 0.9, -r * 0.2, r * 0.5, r * 0.1, r * 0.5, r * 0.85, -r * 0.5, r * 0.85, -r * 0.5, r * 0.1), true);
       g.lineBetween(0, -r * 0.62, 0, -r * 0.9);
+      break;
+    case "lock":
+      // 자물쇠 — 몸통과 고리. 둥근 고리를 쓰지 않고 각지게 꺾어 다른 아이콘과 결을 맞춘다.
+      g.strokeRect(-r * 0.72, -r * 0.06, r * 1.44, r * 0.98);
+      g.strokePoints(points(-r * 0.42, -r * 0.06, -r * 0.42, -r * 0.52, -r * 0.2, -r * 0.78, r * 0.2, -r * 0.78, r * 0.42, -r * 0.52, r * 0.42, -r * 0.06), false);
       break;
     case "bookmark": {
       // 즐겨찾기 — 별. 성급 별과 같은 5각이라 "골라 둔 것"으로 바로 읽힌다.

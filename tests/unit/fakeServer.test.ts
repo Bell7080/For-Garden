@@ -681,3 +681,23 @@ describe("FakeServer 원정 정산", () => {
     expect(state.wallet.gold).toBe(Math.floor(reference * 0.25) * 5);
   });
 });
+
+/** 판매 API의 트랜잭션·멱등·장착표 불변식을 실제 FakeServer 경계에서 고정한다. */
+describe("룬 판매", () => {
+  it("확정 지급 뒤 같은 requestId는 중복 지급하지 않는다", async () => {
+    const state = makeSession(); state.runeInventory = [makeRune("sale-1")]; const server = new FakeServer(state, { latencyMs: 0 });
+    const first = await server.sellRunes({ requestId: "sale-request", instanceIds: ["sale-1"] });
+    const replay = await server.sellRunes({ requestId: "sale-request", instanceIds: ["sale-1"] });
+    expect(replay).toEqual(first); expect(state.wallet.gold).toBe(first.goldAwarded); expect(state.runeInventory).toEqual([]);
+  });
+
+  it("장착 룬과 지갑 상한 초과를 원자적으로 거부해 장착표를 보존한다", async () => {
+    const state = makeSession(); state.runeInventory = [makeRune("equipped-sale")]; state.relicProgress.anky.heartGemSlots[0] = "equipped-sale";
+    const server = new FakeServer(state, { latencyMs: 0 });
+    await expect(server.sellRunes({ requestId: "equipped", instanceIds: ["equipped-sale"] })).rejects.toMatchObject({ code: "RUNE_EQUIPPED" });
+    expect(state.relicProgress.anky.heartGemSlots[0]).toBe("equipped-sale"); expect(state.runeInventory).toHaveLength(1);
+    state.relicProgress.anky.heartGemSlots[0] = null; state.wallet.gold = 999_999_999;
+    await expect(server.sellRunes({ requestId: "cap", instanceIds: ["equipped-sale"] })).rejects.toMatchObject({ code: "CURRENCY_LIMIT_EXCEEDED" });
+    expect(state.runeInventory).toHaveLength(1); expect(state.wallet.gold).toBe(999_999_999);
+  });
+});

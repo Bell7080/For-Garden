@@ -81,6 +81,8 @@ export interface RuneEngravingResult {
 export interface RuneInstance {
   /** 저장과 장착에서 사용하는 인스턴스 고유 ID다. 빈 문자열일 수 없다. */
   instanceId: string;
+  /** 서버가 부여한 직렬화 가능 획득 순번이다. 구 저장은 SaveManager가 결정적으로 보충한다. */
+  sequence?: number;
   /** 밸런스/표시 메타데이터를 찾는 원래 이름이다. 빈 문자열일 수 없다. */
   baseName: string;
   /** 플레이어가 정한 이름이다. 이름을 짓지 않았으면 null이다. */
@@ -236,6 +238,7 @@ export function validateRuneInstance(rune: RuneInstance): boolean {
 /** 인스턴스의 모든 불변 조건을 검사하고 위반 시 원인을 담은 오류를 던진다. */
 export function assertValidRuneInstance(rune: RuneInstance): void {
   if (!rune.instanceId.trim() || !rune.baseName.trim()) throw new Error("룬 ID와 기본 이름은 비어 있을 수 없습니다.");
+  if (rune.sequence !== undefined && (!Number.isSafeInteger(rune.sequence) || rune.sequence < 0)) throw new Error("룬 획득 순번은 0 이상의 안전한 정수여야 합니다.");
   if (![0, 1, 2].includes(rune.part)) throw new RangeError("룬 파츠는 0~2 중 하나여야 합니다.");
   if (rune.customName !== null && !rune.customName.trim()) throw new Error("룬 사용자 이름은 빈 문자열일 수 없습니다.");
   if (rune.mainStats.length !== 2) throw new RangeError("룬 메인 옵션은 정확히 2개여야 합니다.");

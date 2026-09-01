@@ -30,8 +30,8 @@ describe("inventory", () => {
   it.each([
     { label: "빈 카테고리", count: 0, rows: 0 },
     { label: "한 개", count: 1, rows: 1 },
-    { label: "홀수 개", count: 5, rows: 3 },
-    { label: "여러 행", count: 12, rows: 6 },
+    { label: "홀수 개", count: 5, rows: 2 },
+    { label: "여러 행", count: 12, rows: 3 },
   ])("$label 카드가 공용 두 열 계약과 viewport bounds를 지킨다", ({ count, rows }) => {
     const metrics = inventoryScrollMetrics(count, INVENTORY_LAYOUT);
     expect(metrics.contentHeight).toBe(rows * INVENTORY_LAYOUT.cellHeight);
@@ -46,11 +46,11 @@ describe("inventory", () => {
     }
   });
 
-  it("카드 사이에 24px 간격을 두고 두 열을 본문 폭에 맞춘다", () => {
-    const left = inventoryGridPosition(0); const right = inventoryGridPosition(1);
-    expect(left).toEqual({ x: -207, y: 0 }); expect(right).toEqual({ x: 207, y: 0 });
-    expect(right.x - left.x - INVENTORY_LAYOUT.cardWidth).toBe(INVENTORY_LAYOUT.columnGap);
-    expect(INVENTORY_LAYOUT.cardWidth * 2 + INVENTORY_LAYOUT.columnGap).toBe(INVENTORY_LAYOUT.viewportWidth);
+  it("룬 액자 네 열이 본문 폭에 대칭으로 들어간다", () => {
+    const positions = Array.from({ length: 4 }, (_, index) => inventoryGridPosition(index));
+    expect(positions.map(({ x }) => x)).toEqual([-312, -104, 104, 312]);
+    expect(positions[1].x - positions[0].x - INVENTORY_LAYOUT.cardWidth).toBe(INVENTORY_LAYOUT.columnGap);
+    expect(INVENTORY_LAYOUT.cardWidth * 4 + INVENTORY_LAYOUT.columnGap * 3).toBe(INVENTORY_LAYOUT.viewportWidth);
   });
 
   it("네 카테고리 탭의 폭과 간격을 대칭 배치표로 고정한다", () => {
@@ -75,7 +75,7 @@ describe("inventory", () => {
     const state = createDefaultSession(); const inventory = new InventoryManager(state);
     expect(inventory.list("currency").find(({ id }) => id === "gold")?.quantity).toBe(state.wallet.gold);
     expect(inventory.list("consumable")).toHaveLength(1); expect(inventory.list("material")).toHaveLength(0);
-    expect(inventoryScrollMetrics(4).minY).toBe(0); expect(inventoryScrollMetrics(20)).toEqual({ contentHeight: 2100, minY: -1025.1 });
+    expect(inventoryScrollMetrics(4).minY).toBe(0); expect(inventoryScrollMetrics(20)).toEqual({ contentHeight: 1040, minY: 0 });
   });
 
   it("룬 표시 모델이 인스턴스의 등급·부위·이름을 그대로 보존한다", () => {
@@ -108,4 +108,12 @@ describe("inventory", () => {
     await expect(manager.refresh(api)).rejects.toThrow("INVALID_INVENTORY_RESPONSE");
     expect(state).toEqual(before);
   });
+
+  it("동률 정렬은 원본을 바꾸지 않고 instanceId로 안정 결정한다", () => {
+    const state = createDefaultSession(); const first = createRuneInstance({ instanceId: "b", baseName: "B", rarity: "rare", part: 0, statValues: Object.fromEntries(["hp", "atk", "ap", "def", "res", "moveSpeed", "attackSpeed", "lifeSteal", "critChance", "critDamage", "ferocityGain", "energyGain"].map((key) => [key, 10])) as Record<RuneStatKey, number>, random: () => 0 });
+    state.runeInventory = [{ ...first, instanceId: "b", sequence: 1 }, { ...first, instanceId: "a", sequence: 1 }];
+    expect(new InventoryManager(state).list("rune", { key: "rarity", direction: "asc" }).map(({ id }) => id)).toEqual(["a", "b"]);
+    expect(state.runeInventory.map(({ instanceId }) => instanceId)).toEqual(["b", "a"]);
+  });
+
 });

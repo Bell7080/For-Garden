@@ -6,7 +6,7 @@ import { COLOR, textStyle } from "./theme";
 import { HoloBar } from "./holo";
 import { BattleHealthBar } from "./BattleHealthBar";
 import type { HealthChangeCause } from "./unitHealthBarState";
-import { PortraitCard, relicCardTint, type PortraitCardMaskOverlay } from "./PortraitCard";
+import { PortraitCard, relicCardTint, type PortraitAlphaOverlay } from "./PortraitCard";
 import { BATTLE_PROFILE_LAYOUT as L } from "./battleStatusLayout";
 import { skillArtFor, skillArtTint, type SkillArtSlot } from "./skillArt";
 import { FALLBACK_SKILL_ICON } from "./skillIcons";
@@ -58,7 +58,7 @@ export class BattleProfile extends Phaser.GameObjects.Container {
   public readonly ferocityLabel: Phaser.GameObjects.Text;
   public readonly charge: Phaser.GameObjects.Graphics;
   /** 몸통 기하 면과 원화 알파 머리 복제를 같은 진행률로 묶는 카드 공개 API 결과다. */
-  private readonly chargeOverlay: PortraitCardMaskOverlay;
+  private readonly chargeOverlay: PortraitAlphaOverlay;
   /** 버프 액자의 표시 객체를 한곳에 귀속해 프로필 제거 시 함께 정리한다. */
   public readonly buffContainer: Phaser.GameObjects.Container;
   public readonly readOnly: boolean;
@@ -80,7 +80,7 @@ export class BattleProfile extends Phaser.GameObjects.Container {
     });
     // 몸통은 닫힌 칩 기하를 쓰고 돌출 머리는 원화 알파 복제를 쓴다. 카드 전체 도형 하나를
     // 칠하면 머리 옆 투명 공간까지 검은 면이 되므로 두 표시를 카드 공개 API에서만 묶는다.
-    this.chargeOverlay = this.card.createMaskOverlay(0x060a10, CHARGE_VEIL_ALPHA, CHARGE_VEIL_RADIUS);
+    this.chargeOverlay = this.card.createPortraitAlphaOverlay(0x060a10, CHARGE_VEIL_ALPHA, CHARGE_VEIL_RADIUS);
     this.charge = this.chargeOverlay.body;
     const label = (baselineY: number, color: string) => scene.add.text(-L.barWidth / 2, baselineY, "", textStyle({ role: "display", size: 26, color }))
       .setOrigin(0, 1).setShadow(3, 4, "#05070a", 0, true, true);
@@ -109,8 +109,9 @@ export class BattleProfile extends Phaser.GameObjects.Container {
       .setColor(dead ? COLOR.dangerText : COLOR.hpText);
     this.ferocityBar.setValue(ferocity / 100, COLOR.ferocityLow);
     this.ferocityLabel.setText(`야성 ${Math.round(ferocity)} / 100`).setColor(COLOR.ferocityText);
-    // 생존 카드의 알파는 궁극기 충전 연출이 소유하므로 사망일 때만 공용 비활성 명도를 강제한다.
-    if (dead) this.card.setAlpha(0.45);
+    // 사망은 카드와 충전 가림막의 조립이 끝난 뒤 전체 알파를 정확히 한 번 적용한다. 잠금 tint,
+    // 선택 면, 충전 효과의 개별 알파를 여기서 다시 계산하지 않아 중복 감쇠를 피하고 부활 시 복구한다.
+    this.card.setCompositeAlpha(dead ? 0.45 : 1);
     return this;
   }
 

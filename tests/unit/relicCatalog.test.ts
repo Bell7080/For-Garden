@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { RelicDef } from "../../src/core/types";
 import { compareBookmarkedOwnedRelics, getRelicCatalogDisclosure } from "../../src/core/relicCatalog";
-import { PLAYABLE_RELICS, sortRelicsBySpecimenNumber, validateSpecimenNumbers } from "../../src/data/relics";
+import { PLAYABLE_RELICS, RELICS, sortRelicsBySpecimenNumber, validateSpecimenNumbers } from "../../src/data/relics";
 
 /** 현재 시점의 다른 인간 연구원을 암시하는 표현만 탐지해, 일반적인 '연구원' 용례는 과도하게 막지 않는다. */
 const FORBIDDEN_PRESENT_RESEARCHER_PHRASES = ["연구원 한 명", "다른 연구원", "연구원들"] as const;
@@ -16,6 +16,29 @@ const ALLOWED_RESEARCHER_REFERENCES: Readonly<Record<string, Readonly<{
 }[]>>> = {};
 
 describe("relic catalog", () => {
+  it("모든 렐릭의 발굴 기록과 확정된 관찰 기록은 비어 있지 않다", () => {
+    // 적 개체를 포함한 정적 정의 전체가 짧은 발굴 이력을 갖고, recorded 판별 뒤에는 실제 관찰 본문을 제공해야 한다.
+    for (const relic of RELICS) {
+      expect(relic.fossilRecord.trim(), `${relic.id} fossilRecord`).not.toBe("");
+      if (relic.unlockRecord.status === "recorded") {
+        expect(relic.unlockRecord.text.trim(), `${relic.id} unlockRecord.text`).not.toBe("");
+      }
+    }
+  });
+
+  it("복원 이후 관찰 기록에 신장·체중이나 화석 상태가 다시 섞이지 않는다", () => {
+    // 숫자 단위뿐 아니라 수치 없이 쓰인 한국어 신체 측정 명칭도 막아 프로필과 본문의 역할 분리를 고정한다.
+    const forbiddenMeasurement = /(?:키(?:가|는|를|와|\s)|신장|몸무게|체중)|\d+(?:\.\d+)?\s*(?:m|cm|kg)\b/i;
+    // 발굴 전용 어휘가 생활 관찰로 되돌아오는 대표 회귀도 함께 차단한다.
+    const forbiddenFossilState = /(?:화석|난각|골격|골편|두개골|발굴|수습|보존(?:된|되었|됐다|상태)?)/;
+
+    for (const relic of RELICS) {
+      if (relic.unlockRecord.status !== "recorded") continue;
+      expect(relic.unlockRecord.text, `${relic.id} 신체 측정 표현`).not.toMatch(forbiddenMeasurement);
+      expect(relic.unlockRecord.text, `${relic.id} 화석·발굴 표현`).not.toMatch(forbiddenFossilState);
+    }
+  });
+
   it("관찰 프로필의 인간형 신체 E.C. 나잇대는 1년 이상 20년 미만이다", () => {
     // 원종 화석의 생물학적 단계(lifeStage)와 독립된 E.C. 신체 나잇대를 도감 원본 전체에서 검사한다.
     const profiles = PLAYABLE_RELICS.flatMap((relic) => relic.observationProfile ? [{ relicId: relic.id, profile: relic.observationProfile }] : []);
@@ -45,13 +68,13 @@ describe("relic catalog", () => {
     expect(violations).toEqual([]);
   });
 
-  it("렉시아 관찰 기록은 신체 수치와 원종 화석의 성장 단계를 구분해 공개한다", () => {
+  it("렉시아의 신체 수치와 원종 화석 단계는 프로필과 도감에만 공개한다", () => {
     const rex = PLAYABLE_RELICS.find((relic) => relic.id === "rex")!;
     // 성체 초기라는 말이 인간 나이가 아니라 티라노사우루스 화석의 단계로 서술되는지도 함께 고정한다.
     expect(rex.observationProfile).toMatchObject({ height: "1.63 m", weight: "54 kg", lifeStage: "성체 초기" });
     expect(rex.catalogSummary).toContain("체중 54kg");
-    expect(rex.unlockRecord.status === "recorded" && rex.unlockRecord.text).toContain("체중 54kg");
-    expect(rex.unlockRecord.status === "recorded" && rex.unlockRecord.text).toContain("원종 화석의 성장 단계는 성체 초기");
+    expect(rex.unlockRecord.status === "recorded" && rex.unlockRecord.text).not.toContain("54kg");
+    expect(rex.unlockRecord.status === "recorded" && rex.unlockRecord.text).not.toContain("화석");
   });
   it("스피나는 표시 정보와 관찰 신체 수치를 단일 값으로 공개한다", () => {
     const spina = PLAYABLE_RELICS.find((relic) => relic.id === "spino");

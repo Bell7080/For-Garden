@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import type { CurrencyIconKey } from "./currencyIcons";
+import type { WalletItemKey } from "../data/items";
 import { drawRoundedLayer } from "./holo";
 import { COLOR, textStyle } from "./theme";
 
@@ -29,6 +30,9 @@ export interface CurrencyChipOptions {
   color?: string;
   /** 담을 컨테이너. 주지 않으면 씬에 바로 올린다. */
   parent?: Phaser.GameObjects.Container;
+  /** 안내 진입을 원하는 호출부만 키와 콜백을 함께 주며, 없으면 입력면을 만들지 않는다. */
+  currency?: WalletItemKey;
+  onClick?: (currency: WalletItemKey) => void;
 }
 
 /** 값 텍스트를 돌려준다. 갱신은 부르는 쪽이 `setText`로 한다. */
@@ -54,5 +58,14 @@ export function addCurrencyChip(
     .setScale(1, VALUE.stretch)
     .setShadow(2, 5, "#05070a", 6, false, true);
   options.parent?.add([plate, shadow, image, value]);
+  if (options.currency && options.onClick) {
+    // 투명 입력면은 보이는 칩 전체와 일치하고 눌림은 구성 요소를 한 덩어리로 확대해 알린다.
+    const controls = [plate, shadow, image, value];
+    const hit = scene.add.rectangle(x, y, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    const scale = (amount: number): void => controls.forEach((node) => node.setScale(amount));
+    hit.on("pointerdown", () => scale(1.08)); hit.on("pointerout", () => scale(1));
+    hit.on("pointerup", () => { scale(1); options.onClick?.(options.currency!); });
+    options.parent?.add(hit);
+  }
   return value;
 }

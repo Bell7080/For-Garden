@@ -410,8 +410,6 @@ export interface RelicDef {
    * 불리는지가 있어야 소속이 성격이 된다.
    */
   squadNote?: string;
-  /** 그 개체가 동경하는 다른 스쿼드. 소속과 다를 때만 채운다. */
-  admiredSquad?: SquadId;
   /** 그 개체가 주인공을 부르는 말. 비우면 소속 스쿼드의 대표 호칭을 쓴다. */
   researcherTitle?: string;
   /** 미보유 상태에서도 공개할 수 있는 외형 중심의 짧은 도감 요약이다. 발굴 경위나 복원 후 생활 관찰은 넣지 않는다. */

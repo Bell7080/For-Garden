@@ -1,14 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
-import { OBSERVATION_JOURNAL_SIZE } from "../../src/ui/observationJournalLayout";
+import { calculateObservationJournalFlow, OBSERVATION_JOURNAL_SIZE, withoutRepeatedProfileDetails } from "../../src/ui/observationJournalLayout";
 import { POPUP_CLOSE_LAYOUT, tiltedPopupSize } from "../../src/ui/popupGeometry";
 
 describe("observation journal static layout", () => {
   it("keeps the tilted popup, close control, and artwork mask inside the 1080x1920 safe area", () => {
     const layout = OBSERVATION_JOURNAL_SIZE;
     // 가장 긴 소속 문단까지 포함해야 짧은 기본 일지만 검사하는 거짓 안전 판정을 피한다.
-    const squadStoryHeight = 150;
-    const height = layout.popup.minHeight + squadStoryHeight;
+    const height = layout.popup.maxHeight;
     const rotated = tiltedPopupSize(layout.popup.width, height, layout.popup.tilt);
 
     expect(rotated.width + layout.popup.safeInset * 2).toBeLessThanOrEqual(BASE_WIDTH);
@@ -25,6 +24,29 @@ describe("observation journal static layout", () => {
     expect(layout.art.inset).toBeGreaterThan(0);
     expect(layout.popup.width - layout.art.inset * 2).toBeLessThan(layout.popup.width);
     expect(height - layout.art.inset * 2).toBeLessThan(height);
+  });
+
+  it("stacks short sections with the prescribed safe gaps", () => {
+    const flow = calculateObservationJournalFlow({ metadata: 180, excavation: 200, squad: 0, observationHeading: 34, observation: 80, action: 66 });
+    // 소속 기록이 없어도 발굴 기록과 흰 관찰 기록 사이 section 여백은 사라지지 않는다.
+    expect(flow.squadY).toBeUndefined();
+    expect(flow.observationDividerY - (flow.excavationY + 200)).toBe(OBSERVATION_JOURNAL_SIZE.spacing.section);
+    expect(flow.popupHeight).toBe(OBSERVATION_JOURNAL_SIZE.popup.minHeight);
+    expect(flow.scrollable).toBe(false);
+  });
+
+  it("accumulates a squad record and scrolls instead of exceeding the safe popup", () => {
+    const flow = calculateObservationJournalFlow({ metadata: 260, excavation: 920, squad: 180, observationHeading: 40, observation: 740, action: 66 });
+    expect(flow.squadY).toBe(flow.excavationY + 920 + OBSERVATION_JOURNAL_SIZE.spacing.paragraph);
+    expect(flow.observationDividerY).toBeGreaterThan((flow.squadY ?? 0) + 180);
+    expect(flow.popupHeight).toBe(OBSERVATION_JOURNAL_SIZE.popup.maxHeight);
+    expect(flow.scrollable).toBe(true);
+    expect(flow.contentHeight).toBeGreaterThan(flow.popupHeight);
+  });
+
+  it("removes only sentences that repeat exact profile measurements", () => {
+    const record = "신장 1.63 m, 체중 54 kg으로 복원되었다. 몸무게 이야기는 싫어한다. 관찰을 이어 갔다.";
+    expect(withoutRepeatedProfileDetails(record, "1.63 m", "54 kg")).toBe("몸무게 이야기는 싫어한다. 관찰을 이어 갔다.");
   });
 
   it("reserves expanded body padding and a button tall enough for the 30px choice label", () => {

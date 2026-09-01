@@ -2,10 +2,10 @@ import Phaser from "phaser";
 import type { AdOperationsConfigResponse, AdPresentationResult, AdSlotOperationsDto, GameApi, HarvestExcavationResponse, IdleExcavationResponse } from "../api/contracts";
 import { emptyExcavationAmounts, EXCAVATION_CURRENCIES, excavationProductionDisplayModel, excavationStorageFillRatio, excavationStorageLimitSeconds, nextExcavationSlot, placeExcavationRelic, type ExcavationCurrency, type IdleExcavationState } from "../core/idleExcavation";
 import { RELICS } from "../data/relics";
-import { portraitUsesRelicTint, sdAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
+import { placePuppet, portraitUsesRelicTint, sdAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
 import { tintFor } from "../puppets/tints";
 import { session } from "../state/session";
-import { setDebugExcavationAdOffers, setDebugIdleExcavationControls, setDebugIdleExcavationPopup, setDebugIdleExcavationSdReady, setDebugIdleExcavationSlots } from "../debug";
+import { setDebugExcavationAdOffers, setDebugFormationDragVisual, setDebugIdleExcavationControls, setDebugIdleExcavationPopup, setDebugIdleExcavationSdReady, setDebugIdleExcavationSlots } from "../debug";
 import { Button } from "./Button";
 import { chipPoints, drawHairline, drawLayer, HOLO, HoloBar, slantedRect } from "./holo";
 import { PortraitCard } from "./PortraitCard";
@@ -26,6 +26,8 @@ import { loadOwnedPuppet } from "./statusPuppetLoad";
 import { BACK_SLOT } from "./IconButton";
 import { moveFormationSlot } from "../core/formation";
 import { bindFormationDrag, type FormationDragSlot } from "./formationDrag";
+import { FORMATION_DRAG_VISUAL } from "./formationDragVisual";
+import { createFormationDragVisualController, type FormationDragVisualController } from "./formationDragVisualController";
 
 /** 한 팝업 안에서 현황과 편집 그리드가 교대하므로 모바일 안전 영역을 넘지 않는 고정 크기를 쓴다. */
 const PANEL = { width: 900, height: 1320 } as const;
@@ -116,6 +118,8 @@ export class IdleExcavationPopup {
   private readonly sdPuppets = new Set<PuppetCreature>();
   /** 생산 틱 연출이 해당 기여 렐릭을 바로 찾도록 ID별 SD 참조를 보관한다. */
   private readonly sdPuppetByRelicId = new Map<string, PuppetCreature>();
+  /** 팝업 본문 재생성과 함께 취소되는 공용 편성 표현 수명이다. */
+  private formationDragVisual?: FormationDragVisualController;
   private readonly sdTweens = new Set<Phaser.Tweens.Tween>();
   /** 재렌더나 닫기 전 시작된 Puppet 로딩 결과가 새 현황에 섞이지 않게 하는 세대 번호다. */
   private sdLoadGeneration = 0;
@@ -552,6 +556,7 @@ export class IdleExcavationPopup {
 
   /** 슬롯은 빈 면과 PortraitCard를 구분하고 어느 칸이 편집 대상인지 확대/발광으로 알린다. */
   private addSlots(parent: Phaser.GameObjects.Container, formation: Formation, editable: boolean): Array<Phaser.GameObjects.Container | undefined> {
+    this.formationDragVisual?.destroy(); this.formationDragVisual = undefined;
     const cards: Array<Phaser.GameObjects.Container | undefined> = [];
     const dragSlots: FormationDragSlot[] = [];
     formation.forEach((id, index) => {
@@ -577,11 +582,33 @@ export class IdleExcavationPopup {
       parent.add(hit);
       dragSlots.push({ hit, x: POPUP_CENTER.x - 250 + index * 250, y: POPUP_CENTER.y + STATUS_HERO.slotY, width: 210, height: 245 });
     });
+    // 발굴 Puppet도 화면 좌표에 서므로 parent 이동이 아니라 기존 placePuppet 배치기를 주입한다.
+    this.formationDragVisual = createFormationDragVisualController({
+      scene: this.scene, slots: dragSlots, formation: () => formation, color: COLOR.accent,
+      zoneDepth: SD_DEPTH - 1, dimDepth: SD_DEPTH - 2,
+      renderPreview: ({ preview, pointer }) => formation.forEach((relicId, index) => {
+        if (!relicId) return;
+        const puppet = this.sdPuppetByRelicId.get(relicId); if (!puppet) return;
+        const lifted = preview[index]?.lifted;
+        const target = preview.findIndex((entry) => entry.relicId === relicId);
+        const x = lifted ? pointer.x : POPUP_CENTER.x - 250 + (target < 0 ? index : target) * 250;
+        const groundY = lifted ? pointer.y + 245 / 2 : POPUP_CENTER.y + STATUS_HERO.slotY + SLOT_GROUND_OFFSET;
+        placePuppet(puppet, this.puppetLoader.assetFor(relicId), { x, groundY, height: lifted ? 205 * FORMATION_DRAG_VISUAL.liftScale : 205 });
+        puppet.setDepth(lifted ? SD_DEPTH + 2 : SD_DEPTH).setAlpha(lifted ? FORMATION_DRAG_VISUAL.liftAlpha : target === index ? 1 : FORMATION_DRAG_VISUAL.previewAlpha);
+      }),
+      restore: () => formation.forEach((relicId, index) => {
+        if (!relicId) return;
+        const puppet = this.sdPuppetByRelicId.get(relicId); if (!puppet) return;
+        placePuppet(puppet, this.puppetLoader.assetFor(relicId), { x: POPUP_CENTER.x - 250 + index * 250, groundY: POPUP_CENTER.y + STATUS_HERO.slotY + SLOT_GROUND_OFFSET, height: 205 });
+        puppet.setDepth(SD_DEPTH).setAlpha(1);
+      }),
+      onVisualState: (state) => setDebugFormationDragVisual(state ? { owner: "excavation", ...state } : undefined),
+    });
     bindFormationDrag(this.scene, dragSlots, {
       // 현황에서는 짧은 탭만 편집을 열며, 순서 드래그는 draft가 존재하는 편집 중에만 허용한다.
-      dragStart: () => { /* 발굴 draft는 실제 드롭 전까지 바꾸지 않는다. */ },
-      dragMove: () => { /* 팝업 Puppet은 화면 좌표 제약 때문에 직접 이동하지 않는다. */ },
-      cancel: () => { /* 닫기·다중 포인터 취소는 서버 확정값과 draft를 보존한다. */ },
+      dragStart: (slot, x, y) => this.formationDragVisual?.beginDrag(slot, x, y),
+      dragMove: (slot, x, y) => this.formationDragVisual?.moveDrag(slot, x, y),
+      cancel: () => this.formationDragVisual?.endDrag(),
       tap: (index) => {
         if (this.gridDragging || this.gridDragMoved >= GRID_DRAG_SLOP || this.saving) return;
         if (!editable) { this.beginEdit(index); return; }
@@ -590,6 +617,7 @@ export class IdleExcavationPopup {
         this.selectedSlot = index; this.renderEditor();
       },
       drop: (from, to) => {
+        this.formationDragVisual?.endDrag();
         if (!editable || !this.draft || this.saving) return;
         this.draft = moveFormationSlot(this.draft, from, to) as Formation;
         this.selectedSlot = to;
@@ -740,6 +768,7 @@ export class IdleExcavationPopup {
 
   /** 타이머와 임시 편성을 버리며 서버에서 받은 confirmed 객체는 외부 상태에 역으로 쓰지 않는다. */
   private dispose(): void {
+    this.formationDragVisual?.destroy(); this.formationDragVisual = undefined; setDebugFormationDragVisual(undefined);
     this.requestGeneration++; this.statusBackground?.destroy(); this.statusBackground = undefined; this.clearStatusSD(); this.ticker?.remove(false); this.ticker = undefined;
     // PopupLayer가 본체를 먼저 파괴하므로 씬에 직접 등록한 스크롤 자원은 종료 콜백에서 별도로 치운다.
     this.gridMask?.destroy(); this.gridMask = undefined;

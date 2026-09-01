@@ -5,7 +5,7 @@ import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import type { ExpeditionMapNode } from "../core/expeditionMap";
 import { getRelic } from "../data/relics";
 import { getExpeditionAugment } from "../data/expeditionAugments";
-import { setDebugExpeditionFormation, setDebugScene } from "../debug";
+import { setDebugExpeditionFormation, setDebugFormationDragVisual, setDebugScene } from "../debug";
 import { expeditionManager, type StartExpeditionFailure } from "../managers/ExpeditionManager";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { session } from "../state/session";
@@ -28,7 +28,7 @@ import { presentRewardedAd } from "../platform/rewardedAds";
 import { currencyRecordToRewardItems, openRewardPopup } from "../ui/RewardPopup";
 import { ExpeditionRewardPopup } from "../ui/ExpeditionRewardPopup";
 import { ExpeditionRankingPopup } from "../ui/ExpeditionRankingPopup";
-import { portraitAssetFor, sdAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
+import { placePuppet, portraitAssetFor, sdAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
 import { loadOwnedPuppet } from "../ui/statusPuppetLoad";
 import { expeditionEnemyLevel, getExpeditionEncounterEnemies } from "../data/expeditionEnemies";
 import { formatCurrency } from "../core/formatCurrency";
@@ -40,6 +40,8 @@ import { BATTLE_PROFILE_LAYOUT } from "../ui/battleStatusLayout";
 import { removeFormationSlot } from "../core/formationSelection";
 import { moveFormationSlot } from "../core/formation";
 import { bindFormationDrag, type FormationDragSlot } from "../ui/formationDrag";
+import { FORMATION_DRAG_VISUAL } from "../ui/formationDragVisual";
+import { createFormationDragVisualController, type FormationDragVisualController } from "../ui/formationDragVisualController";
 
 /** 원정 준비 카드의 고정 그리드 규격이다. 다른 편성과 달리 세 칸씩 읽게 한다. */
 const ROSTER = { columns: 3, width: 250, height: 310, gapX: 56, gapY: 50 } as const;
@@ -114,6 +116,8 @@ export class ExpeditionScene extends Phaser.Scene {
   private formationPreview?: Phaser.GameObjects.Container;
   private formationPuppets = new Set<PuppetCreature>();
   private formationGeneration = 0;
+  /** 재생성되는 원정 편성판과 함께 폐기되는 공용 드래그 표현 수명이다. */
+  private formationDragVisual?: FormationDragVisualController;
   /** 지도에서 마지막으로 확인한 전투 노드다. 하단 출격 버튼은 이 선택만 소비한다. */
   private selectedNode?: ExpeditionMapNode;
   /** 적 상세는 실제 전투와 같은 공용 읽기 전용 상태창을 사용한다. */
@@ -770,6 +774,7 @@ export class ExpeditionScene extends Phaser.Scene {
     const layer = this.add.container(0, 0).setName("expedition-formation-preview");
     this.formationPreview = layer;
     const dragSlots: FormationDragSlot[] = [];
+    const puppetsByRelicId = new Map<string, PuppetCreature>();
     for (let index = 0; index < 3; index += 1) {
       const x = FORMATION.firstX + index * FORMATION.stepX;
       // 번호는 카드 위 독립 표식으로 두어 SD가 나타나도 편성 순서를 잃지 않는다.
@@ -787,7 +792,7 @@ export class ExpeditionScene extends Phaser.Scene {
           spawn: () => spawnPuppet(this, sdAssetFor(relicId), { x, groundY: FORMATION.y + 120, height: 250, depth: 2 }),
           isCurrent: () => generation === this.formationGeneration && layer === this.formationPreview,
           isDisplayable: (puppet) => Boolean(puppet.active && puppet.texture?.key && this.textures.exists(puppet.texture.key)),
-          adopt: (puppet) => { puppet.disableInteractive(); layer.add(puppet); this.formationPuppets.add(puppet); fallback.setVisible(false); },
+          adopt: (puppet) => { puppet.disableInteractive(); layer.add(puppet); this.formationPuppets.add(puppet); puppetsByRelicId.set(relicId, puppet); fallback.setVisible(false); },
         });
       }
       // 공용 슬롯 면은 카드와 SD보다 위에서 입력을 맡고, SD 자체는 계속 비대화형으로 둔다.
@@ -796,16 +801,38 @@ export class ExpeditionScene extends Phaser.Scene {
       layer.add(hit);
       dragSlots.push({ hit, x, y: FORMATION.y, width: FORMATION.width, height: FORMATION.height });
     }
-    // Puppet은 직접 옮기지 않고 번호 고스트만 추적한 뒤 전체 미리보기를 기존 로더로 재생성한다.
+    // Puppet이 컨테이너 좌표를 물려받지 않으므로 공용 표현기에 기존 화면 좌표 배치기를 주입한다.
+    this.formationDragVisual = createFormationDragVisualController({
+      scene: this, slots: dragSlots, formation: () => this.selected, color: COLOR.sortie,
+      zoneDepth: 3, dimDepth: 1,
+      renderPreview: ({ preview, pointer }) => {
+        this.selected.forEach((relicId, index) => {
+          const puppet = puppetsByRelicId.get(relicId); if (!puppet) return;
+          const lifted = preview[index]?.lifted;
+          const target = preview.findIndex((entry) => entry.relicId === relicId);
+          const x = lifted ? pointer.x : FORMATION.firstX + (target < 0 ? index : target) * FORMATION.stepX;
+          const groundY = lifted ? pointer.y + FORMATION.height / 2 : FORMATION.y + 120;
+          placePuppet(puppet, sdAssetFor(relicId), { x, groundY, height: lifted ? 250 * FORMATION_DRAG_VISUAL.liftScale : 250 });
+          puppet.setDepth(lifted ? 20 : 2).setAlpha(lifted ? FORMATION_DRAG_VISUAL.liftAlpha : target === index ? 1 : FORMATION_DRAG_VISUAL.previewAlpha);
+        });
+      },
+      restore: () => this.selected.forEach((relicId, index) => {
+        const puppet = puppetsByRelicId.get(relicId); if (!puppet) return;
+        placePuppet(puppet, sdAssetFor(relicId), { x: FORMATION.firstX + index * FORMATION.stepX, groundY: FORMATION.y + 120, height: 250 });
+        puppet.setDepth(2).setAlpha(1);
+      }),
+      onVisualState: (state) => setDebugFormationDragVisual(state ? { owner: "expedition", ...state } : undefined),
+    });
     bindFormationDrag(this, dragSlots, {
-      dragStart: () => { /* 슬롯 표현은 기존 렌더 경계가 소유하므로 입력 시작에는 상태을 바꾸지 않는다. */ },
-      dragMove: () => { /* Puppet을 직접 이동하지 않고 드롭 뒤 기존 렌더 경로를 사용한다. */ },
-      cancel: () => { /* 취소는 배열과 저장 상태를 그대로 보존한다. */ },
+      dragStart: (slot, x, y) => this.formationDragVisual?.beginDrag(slot, x, y),
+      dragMove: (slot, x, y) => this.formationDragVisual?.moveDrag(slot, x, y),
+      cancel: () => this.formationDragVisual?.endDrag(),
       tap: (index) => {
         if (this.rosterDragging || this.rosterDraggedDistance > ROSTER_DRAG_SLOP || this.selected[index] === undefined || !removeFormationSlot(this.selected, index)) return;
         this.refreshPreparationSelection();
       },
       drop: (from, to) => {
+        this.formationDragVisual?.endDrag();
         this.selected = moveFormationSlot(this.selected, from, to);
         this.refreshPreparationSelection();
       },
@@ -814,6 +841,7 @@ export class ExpeditionScene extends Phaser.Scene {
 
   /** 컨테이너 밖 GPU 자원을 포함한 이전 SD 미리보기를 선택 변경 전에 명시적으로 정리한다. */
   private clearFormationPreview(): void {
+    this.formationDragVisual?.destroy(); this.formationDragVisual = undefined;
     this.formationGeneration += 1;
     for (const puppet of this.formationPuppets) { this.formationPreview?.remove(puppet, false); puppet.destroy(); }
     this.formationPuppets.clear();

@@ -34,6 +34,18 @@ async function holdDragGame(page: import("@playwright/test").Page, from: { x: nu
   await page.mouse.move(end.x, end.y, { steps: 10 }); await page.mouse.up();
 }
 
+/** 포인터를 든 채 공용 표현 상태를 검사한 다음 놓아, 중간 프레임이 사라진 뒤의 결과와 섞지 않는다. */
+async function inspectFormationDrag(page: import("@playwright/test").Page, from: { x: number; y: number }, to: { x: number; y: number }, owner: "expedition" | "excavation"): Promise<void> {
+  const box = await page.locator("canvas").boundingBox();
+  if (!box) throw new Error("캔버스를 찾지 못했다");
+  const point = ({ x, y }: { x: number; y: number }) => ({ x: box.x + x / BASE_WIDTH * box.width, y: box.y + y / BASE_HEIGHT * box.height });
+  const start = point(from); const end = point(to);
+  await page.mouse.move(start.x, start.y); await page.mouse.down(); await page.waitForTimeout(420); await page.mouse.move(end.x, end.y, { steps: 10 });
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.formationDragVisual)).toMatchObject({ owner, hovered: 1, replacementVisible: true });
+  await page.mouse.up();
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.formationDragVisual)).toBeUndefined();
+}
+
 /** Canvas 팝업이 노출한 실제 입력 중심을 읽어 레이아웃 숫자를 테스트에 복제하지 않는다. */
 async function excavationControl(page: import("@playwright/test").Page, key: "close" | "harvest" | "cancelEdit"): Promise<{ x: number; y: number }> {
   return page.evaluate((control) => {
@@ -123,6 +135,9 @@ test("출격 선택판에서 원정대 3기를 골라 진행 중 상태로 저�
 
   // 복원된 세 기 중 가운데 슬롯을 직접 해제하면 카드·SD·인원수·버튼 상태가 함께 2기로 바뀐다.
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.expeditionFormation?.selectedCount)).toBe(3);
+  // 공용 표현은 대상 네모칸과 자리 내주는 SD 고스트를 포인터를 든 동안 동시에 유지한다.
+  const expeditionSlots = (await page.evaluate(() => window.__PF_DEBUG?.expeditionFormation?.slots))!;
+  await inspectFormationDrag(page, expeditionSlots[0], expeditionSlots[1], "expedition");
   const formationSlot = (await page.evaluate(() => window.__PF_DEBUG?.expeditionFormation?.slots[1]))!;
   await tapGame(page, formationSlot.x, formationSlot.y);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.expeditionFormation?.selectedCount)).toBe(2);
@@ -248,6 +263,12 @@ test("SD 완료 뒤 세 슬롯의 공용 입력면이 각각 올바른 편집 �
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationSdReady?.slice().sort())).toEqual([0, 1, 2]);
   const slots = await page.evaluate(() => window.__PF_DEBUG?.idleExcavationSlots ?? []);
   expect(slots).toHaveLength(3);
+  // 현황 탭으로 편집을 연 뒤 화면 좌표 Puppet에서도 같은 대상 칸·교체 미리보기를 검증한다.
+  await tapGame(page, slots[0].x, slots[0].y);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationPopup)).toBe("editing");
+  await inspectFormationDrag(page, slots[0], slots[1], "excavation");
+  const initialCancel = await excavationControl(page, "cancelEdit"); await tapGame(page, initialCancel.x, initialCancel.y);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationPopup)).toBe("ready");
   for (const slot of slots) {
     expect(slot.width).toBeGreaterThanOrEqual(210); expect(slot.height).toBeGreaterThanOrEqual(245);
     // 슬롯 하단은 다음 현황 행(게임 y=990) 위, 좌하단 돌아가기(중심 106,1800)와도 멀리 떨어진다.

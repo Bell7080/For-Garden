@@ -55,6 +55,7 @@ import { allyHealPowerKeyword, canPreviewSkillDamage, damageKeyword, ferocityTra
 import type { KeywordDef } from "../data/keywords";
 import { addFactionMark } from "./FactionMark";
 import { SQUADS } from "../data/factions";
+import { OBSERVATION_INTERVIEW_LAYOUT, observationInterviewPanelState, type ObservationInterviewPanelState } from "./observationInterviewPanel";
 
 export type { SkillInfoViewModel } from "./SkillPopup";
 
@@ -1125,25 +1126,54 @@ export class InfoManager {
         body.add(this.scene.add.text(bodyLeft, y, copy, textStyle({ role: "body", size: journal.font.regular, color: COLOR.ink, lineSpacing: journal.spacing.compactLine })).setOrigin(0, 0));
       });
 
-      // 초기 버전은 공용 질문을 일지에서 바로 답하게 해 별도 대형 화면 제작을 피한다.
+      // 일지 하단에는 인터뷰를 여는 조작 하나만 둔다. 질문과 답변은 같은 PopupLayer의 한 장에
+      // 모아, 반복 탭으로 둘 이상의 선택 팝업이 쌓이지 않게 지역 열림 상태가 생명주기를 지킨다.
       const utcDate = new Date().toISOString().slice(0, 10);
-      if (this.ownedNow && observations.canStart(def.id, utcDate)) {
-        // 화면 표시와 완료 시 저장 검증이 같은 렐릭별 결정 함수를 공유한다.
-        const question = observationQuestionForRelicAndDate(def.id, utcDate);
-        // 저장된 문답(있을 때)과 오늘의 질문 사이에도 독립된 문단으로 읽힐 만큼 간격을 둔다.
-        const y = entries.length ? 342 : 270;
-        body.add(this.scene.add.text(bodyLeft, y, "오늘의 질문  " + question.prompt, textStyle({ role: "emphasis", size: journal.font.question, color: COLOR.accentText })).setOrigin(0, 0));
-        question.choices.forEach((choice, index) => {
-          // 확장 표의 두꺼운 선택 면과 16px 간격으로 각 답변을 별도 조작으로 또렷하게 구분한다.
-          const buttonY = y + 78 + index * (journal.choice.height + journal.spacing.choiceGap);
-          body.add(drawLayer(this.scene, 0, buttonY, slantedRect(journal.choice.width, journal.choice.height, journal.choice.bevel), { fill: 0x141a22, alpha: 0.92, edge: COLOR.accent, edgeAlpha: 0.4 }));
-          // 답변은 버튼 한가운데에 두고 글자 크기와 강조 두께를 함께 높여 빠르게 비교하게 한다.
-          body.add(this.scene.add.text(0, buttonY, choice.label, textStyle({ role: "emphasis", size: journal.font.large })).setOrigin(0.5));
-          const hit = this.scene.add.rectangle(0, buttonY, journal.choice.width, journal.choice.height, 0xffffff, 0).setInteractive({ useHandCursor: true });
-          hit.on("pointerup", () => { observations.complete(def.id, utcDate, choice.id); close(); this.openJournal(from); this.refreshGrowth(); });
-          body.add(hit);
+      if (!this.ownedNow) return;
+      const interview = OBSERVATION_INTERVIEW_LAYOUT;
+      const canStart = observations.canStart(def.id, utcDate);
+      const trigger = this.scene.add.container(0, interview.trigger.y);
+      trigger.add(drawLayer(this.scene, 0, 0, slantedRect(interview.trigger.width, interview.trigger.height, interview.trigger.bevel), {
+        fill: canStart ? 0x141a22 : 0x10141a, alpha: canStart ? 0.92 : 0.58, edge: COLOR.accent, edgeAlpha: canStart ? 0.4 : 0.16,
+      }));
+      trigger.add(this.scene.add.text(0, 0, canStart ? "관찰 인터뷰 열기" : "오늘의 관찰 인터뷰 완료", textStyle({ role: "emphasis", size: journal.font.large, color: canStart ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5));
+      let interviewState: ObservationInterviewPanelState = { open: false, completedToday: !canStart };
+      if (canStart) {
+        const hit = this.scene.add.rectangle(0, 0, interview.trigger.width, interview.trigger.height, 0xffffff, 0).setInteractive({ useHandCursor: true });
+        hit.on("pointerdown", () => trigger.setScale(1.06));
+        hit.on("pointerout", () => { if (!interviewState.open) trigger.setScale(1); });
+        hit.on("pointerup", () => {
+          trigger.setScale(1);
+          if (interviewState.open) { this.popups.closeTop(); return; }
+          interviewState = observationInterviewPanelState(interviewState, "toggle");
+          const question = observationQuestionForRelicAndDate(def.id, utcDate);
+          this.popups.open({ ...interview.popup, title: "관찰 인터뷰", closeOnBackdrop: false, dim: true, dimAlpha: 0.25, onClose: () => { interviewState = observationInterviewPanelState(interviewState, "close"); trigger.setScale(1); } }, (panel, closeInterview) => {
+            panel.add(this.scene.add.text(interview.question.x, interview.question.y, question.prompt, textStyle({ role: "emphasis", size: journal.font.question, color: COLOR.accentText, wrap: interview.question.width })).setOrigin(0, 0));
+            question.choices.forEach((choice, index) => {
+              const choiceY = interview.choice.firstY + index * interview.choice.step;
+              const choiceButton = this.scene.add.container(0, choiceY);
+              choiceButton.add(drawLayer(this.scene, 0, 0, slantedRect(interview.choice.width, interview.choice.height, interview.choice.bevel), { fill: 0x141a22, alpha: 0.94, edge: COLOR.accent, edgeAlpha: 0.42 }));
+              choiceButton.add(this.scene.add.text(0, 0, choice.label, textStyle({ role: "emphasis", size: journal.font.large })).setOrigin(0.5));
+              const choiceHit = this.scene.add.rectangle(0, 0, interview.choice.width, interview.choice.height, 0xffffff, 0).setInteractive({ useHandCursor: true });
+              choiceHit.on("pointerdown", () => choiceButton.setScale(1.06));
+              choiceHit.on("pointerout", () => choiceButton.setScale(1));
+              choiceHit.on("pointerup", () => {
+                // 일일 제한과 저장은 기존 manager 경계를 그대로 통과한다. 성공한 뒤에만 선택판과
+                // 일지를 닫고 일지만 다시 열어, 성장판 전체를 불필요하게 갱신하지 않는다.
+                observations.complete(def.id, utcDate, choice.id);
+                interviewState = observationInterviewPanelState(interviewState, "complete");
+                closeInterview();
+                close();
+                this.openJournal(from);
+              });
+              choiceButton.add(choiceHit);
+              panel.add(choiceButton);
+            });
+          });
         });
+        trigger.add(hit);
       }
+      body.add(trigger);
     });
   }
 

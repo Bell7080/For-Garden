@@ -32,6 +32,16 @@ export interface FactionMarkOptions {
   depth?: number;
 }
 
+/** 복제 그림자까지 합친 표식의 중심 기준 외곽이다. 팝업 배치는 원본 `size`가 아니라 이 값을 쓴다. */
+export function factionMarkBounds(size: number, aspectRatio = 1): { left: number; right: number; top: number; bottom: number } {
+  // 원화 비율을 유지한 채 긴 변만 size에 맞춰, 가로형·세로형 엠블럼도 찌그러지거나 잘리지 않게 한다.
+  const width = aspectRatio >= 1 ? size : size * aspectRatio;
+  const height = aspectRatio >= 1 ? size / aspectRatio : size;
+  const grow = 1 + FACTION_MARK.shadowGrow * FACTION_MARK.shadowLayers;
+  const offset = size * FACTION_MARK.shadowOffsetRatio;
+  return { left: -width * grow / 2, right: width * grow / 2, top: offset - height * grow / 2, bottom: offset + height * grow / 2 };
+}
+
 /**
  * 엠블럼 한 장과 그 뒤로 번지는 어둠을 한 컨테이너에 담는다.
  *
@@ -42,17 +52,22 @@ export function addFactionMark(scene: Phaser.Scene, x: number, y: number, squad:
   const key = squadEmblemKey(squad);
   if (!scene.textures.exists(key)) return undefined;
   const container = scene.add.container(x, y);
+  const source = scene.textures.get(key).getSourceImage() as { width?: number; height?: number };
+  // 소속별 원화 비율은 달라도 긴 변이 같은 자리 안에 들도록 실제 표시 크기를 먼저 구한다.
+  const aspectRatio = source.width && source.height ? source.width / source.height : 1;
+  const width = aspectRatio >= 1 ? options.size : options.size * aspectRatio;
+  const height = aspectRatio >= 1 ? options.size / aspectRatio : options.size;
   const offset = options.size * FACTION_MARK.shadowOffsetRatio;
   for (let layer = FACTION_MARK.shadowLayers; layer >= 1; layer -= 1) {
     const grow = 1 + FACTION_MARK.shadowGrow * layer;
     container.add(scene.add
       .image(0, offset, key)
-      .setDisplaySize(options.size * grow, options.size * grow)
+      .setDisplaySize(width * grow, height * grow)
       .setTint(0x000000)
       // 안쪽 겹이 가장 진하고 바깥으로 갈수록 옅어져 경계가 번진다.
       .setAlpha(FACTION_MARK.shadowAlpha / layer));
   }
-  container.add(scene.add.image(0, 0, key).setDisplaySize(options.size, options.size).setAlpha(FACTION_MARK.alpha));
+  container.add(scene.add.image(0, 0, key).setDisplaySize(width, height).setAlpha(FACTION_MARK.alpha));
   if (options.depth !== undefined) container.setDepth(options.depth);
   return container;
 }

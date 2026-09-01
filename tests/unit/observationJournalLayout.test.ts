@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
 import { calculateObservationJournalFlow, OBSERVATION_JOURNAL_SIZE, withoutRepeatedProfileDetails } from "../../src/ui/observationJournalLayout";
 import { POPUP_CLOSE_LAYOUT, tiltedPopupSize } from "../../src/ui/popupGeometry";
+import { factionMarkBounds } from "../../src/ui/FactionMark";
 
 describe("observation journal static layout", () => {
   it("keeps the tilted popup, close control, and artwork mask inside the 1080x1920 safe area", () => {
@@ -57,5 +58,26 @@ describe("observation journal static layout", () => {
     expect(layout.choice.height).toBeGreaterThanOrEqual(layout.font.large * 2);
     expect(layout.spacing.choiceGap).toBeGreaterThan(0);
     expect(layout.font).toMatchObject({ small: 26, question: 27, regular: 28, large: 30, title: 30 });
+  });
+
+  it.each([0.5, 1, 2])("keeps a 130%% squad emblem and its cloned shadows clear for aspect ratio %s", (aspectRatio) => {
+    // 세로형·정사각·가로형 원화 모두 긴 변을 135.2px에 맞추며, 그림자 외곽도 본문 폭 안에 남는다.
+    const size = 104 * 1.3;
+    const x = 320;
+    const bounds = factionMarkBounds(size, aspectRatio);
+    const bodyRight = OBSERVATION_JOURNAL_SIZE.body.width / 2;
+    expect(x + bounds.right).toBeLessThanOrEqual(bodyRight);
+    // 메타데이터는 그림자 왼쪽에서 24px 먼저 끝나므로 글자와 표식이 맞닿지 않는다.
+    const metadataRight = x + bounds.left - 24;
+    expect(metadataRight + 24).toBeLessThanOrEqual(x + bounds.left);
+    // 아래 복제 그림자는 해당 비율에서 실제로 표시되는 원본 높이보다 바깥으로 번진다.
+    const displayedHeight = aspectRatio >= 1 ? size / aspectRatio : size;
+    expect(bounds.bottom).toBeGreaterThan(displayedHeight / 2);
+    // 제목 쪽 위 외곽을 body.top에 맞추면 어떤 비율에서도 위로 침범하지 않는다.
+    const centeredY = OBSERVATION_JOURNAL_SIZE.body.top - bounds.top;
+    expect(centeredY + bounds.top).toBeCloseTo(OBSERVATION_JOURNAL_SIZE.body.top);
+    // 이름은 가장 아래 그림자 뒤 12px에서 시작해 어느 원화 비율에서도 겹치지 않는다.
+    const nameY = centeredY + bounds.bottom + 12;
+    expect(nameY).toBeGreaterThanOrEqual(centeredY + bounds.bottom + 12);
   });
 });

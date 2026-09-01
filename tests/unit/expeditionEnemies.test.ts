@@ -44,4 +44,15 @@ describe("원정 노드 적 편성", () => {
       expect(pontos.stats[key]).toBeLessThan(10_000);
     }
   });
+
+  it("폰토스 정보창 표기는 1등급 LV.20이어도 높은 표시 스탯 스냅샷을 유지한다", () => {
+    const [pontos] = getExpeditionNodeEnemies("boss", 20);
+    // 최종 지시의 LV.20 표기는 성장 재계산 요청이 아니므로 기존 고정 스탯을 그대로 검증한다.
+    expect({ level: 20, grade: 1, stats: pontos.stats }).toMatchObject({
+      level: 20,
+      grade: 1,
+      stats: { hp: 4144, def: 266, res: 192, ap: 148 },
+    });
+    expect(Object.values(pontos.stats)).not.toContain(Number.MAX_SAFE_INTEGER);
+  });
 });

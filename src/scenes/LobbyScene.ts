@@ -35,6 +35,8 @@ import { PlayerProfilePopup } from "../ui/PlayerProfilePopup";
 import { profileModifierManager } from "../managers/ProfileModifierManager";
 import type { PlayerProfileDisplay } from "../state/playerProfile";
 import { MailPopup } from "../ui/MailPopup";
+import { CurrencyGuidePopup } from "../ui/CurrencyGuidePopup";
+import type { CurrencyGuideAction } from "../data/currencyGuide";
 
 /** 확대된 애착 렐릭의 골반 아래가 내비게이션 뒤로 자연스럽게 이어지는 기준선. */
 const STAGE_FLOOR = 1660;
@@ -129,7 +131,7 @@ export class LobbyScene extends Phaser.Scene {
 
     this.buildPlaza();
     // 설정 아이콘은 준비 중 토스트가 아니라 등록된 환경 설정 씬으로 곧바로 이동한다.
-    this.topBar = new TopBar(this, 40, { onSettings: () => this.scene.start("settings"), onProfile: (profile) => this.openPlayerProfile(profile) });
+    this.topBar = new TopBar(this, 40, { onSettings: () => this.scene.start("settings"), onProfile: (profile) => this.openPlayerProfile(profile), onCurrency: (currency) => this.openCurrencyGuide(currency) });
     this.buildPromo();
     this.buildUtilityRail();
     this.buildMissionEntry();
@@ -246,12 +248,24 @@ export class LobbyScene extends Phaser.Scene {
     if (!this.tradeBackButton) this.tradeBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: () => this.tradePopup?.close() }).setDepth(2100);
   }
 
+  /** 상단과 가방이 공유하는 안내를 열고, 선택적인 이동만 로비 소유 콜백에서 해석한다. */
+  private openCurrencyGuide(currency: import("../data/items").WalletItemKey): void {
+    if (!this.popupLayer) return;
+    new CurrencyGuidePopup(this, this.popupLayer, (action) => this.handleCurrencyAction(action)).open(currency);
+  }
+
+  /** 안내 프리팹은 이 콜백만 요청하므로 지갑 변경 없이 구현된 씬·로비 팝업으로만 이동한다. */
+  private handleCurrencyAction(action: CurrencyGuideAction): void {
+    if (action.kind === "scene" && action.target === "lab") this.scene.start("lab");
+    if (action.kind === "popup" && action.target === "trade") this.openTrade();
+  }
+
   /** 오른쪽 레일에서 로비를 떠나지 않고 가방 작업판을 연다. */
   private openInventory(): void {
     if (!this.popupLayer) return;
     this.inventoryPopup ??= new InventoryPopup(this, this.popupLayer, gameApi, () => {
       this.inventoryPopup = undefined; this.inventoryBackButton?.destroy(); this.inventoryBackButton = undefined;
-    });
+    }, (action) => this.handleCurrencyAction(action));
     this.inventoryPopup.open();
     if (!this.inventoryBackButton) this.inventoryBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: () => this.inventoryPopup?.close() }).setDepth(2100);
   }

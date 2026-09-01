@@ -6,13 +6,21 @@ import { SaveManager } from "../../src/state/SaveManager";
 import { createDefaultSession } from "../../src/state/session";
 import { INVENTORY_TAB_LAYOUT, inventoryCategoryTabPosition } from "../../src/ui/inventoryTabs";
 import { createRuneInstance, type RuneStatKey } from "../../src/core/runes";
-import { ITEMS } from "../../src/data/items";
+import { ITEMS, type WalletItemKey } from "../../src/data/items";
+import { CURRENCY_GUIDE } from "../../src/data/currencyGuide";
 import { ITEM_ICON_ASSETS } from "../../src/ui/itemIcons";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 
 /** 신규 가방의 저장/API/표시/스크롤 불변식을 한 파일에서 회귀 검증한다. */
 describe("inventory", () => {
+  it("모든 WalletItemKey가 획득처와 사용처를 갖는 안내 카탈로그에 등록된다", () => {
+    // 지갑 정의를 추가하면서 안내만 빠뜨리는 회귀를 정적 아이템 목록과 직접 대조한다.
+    const walletKeys = ITEMS.flatMap(({ icon }) => icon.kind === "currency" ? [icon.key] : []) as WalletItemKey[];
+    expect(Object.keys(CURRENCY_GUIDE).sort()).toEqual([...walletKeys].sort());
+    for (const key of walletKeys) expect(CURRENCY_GUIDE[key]).toMatchObject({ key, sources: expect.any(Array), uses: expect.any(Array) });
+    expect(walletKeys.every((key) => CURRENCY_GUIDE[key].sources.length > 0 && CURRENCY_GUIDE[key].uses.length > 0)).toBe(true);
+  });
   it("모든 정적 item asset이 공용 로딩 표와 실제 임시 SVG에 일대일 대응한다", () => {
     // 정적 정의가 늘 때 로더 등록이나 배포 파일 한쪽만 빠지는 회귀를 빌드 전에 잡는다.
     const definedKeys = ITEMS.flatMap(({ icon }) => icon.kind === "asset" ? [icon.key] : []);

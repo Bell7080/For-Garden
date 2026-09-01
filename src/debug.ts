@@ -79,6 +79,8 @@ export interface DebugState {
   party?: { autoButton: { x: number; y: number }; visibleAffinityDirections: number; selectedCount?: number; slots?: Array<{ x: number; y: number }> };
   /** 원정 준비 슬롯의 실제 입력 중심과 현재 선택 수만 노출하는 모바일 입력 계약이다. */
   expeditionFormation?: { selectedCount: number; slots: Array<{ x: number; y: number }> };
+  /** 공용 드래그 표현의 사용자 가시 상태이며 렐릭 ID나 확정 배열은 포함하지 않는다. */
+  formationDragVisual?: { owner: "party" | "expedition" | "excavation"; hovered?: number; replacementVisible: boolean };
   /** 설정 왕복 E2E가 상점의 사용자 표시 섹션까지 복원됐는지 확인하는 최소 상태다. */
   shopSection?: "premium";
   /** 가방 탭 면 입력 뒤 실제로 다시 그려진 카테고리를 Canvas E2E가 확인한다. */
@@ -138,6 +140,11 @@ export function setDebugParty(party: DebugState["party"]): void {
 /** 원정 렐릭 ID 대신 슬롯 좌표와 표시 인원수만 E2E에 전달한다. */
 export function setDebugExpeditionFormation(formation: DebugState["expeditionFormation"]): void {
   ensure().expeditionFormation = formation;
+}
+
+/** 모바일 E2E가 칸과 교체 고스트가 실제 드래그 동안 함께 뜨는지만 관찰한다. */
+export function setDebugFormationDragVisual(visual: DebugState["formationDragVisual"]): void {
+  ensure().formationDragVisual = visual;
 }
 
 /** 상점의 현재 표시 섹션만 공개하며 상품이나 결제 상태는 포함하지 않는다. */

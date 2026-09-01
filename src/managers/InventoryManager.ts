@@ -1,5 +1,5 @@
 import type { Wallet } from "../core/gacha";
-import type { GameApi, InventoryItemDto, UseConsumableResponse } from "../api/contracts";
+import type { GameApi, InventoryItemDto, SellRunesResponse, UseConsumableResponse } from "../api/contracts";
 import type { RuneInstance } from "../core/runes";
 import { findItem, ITEMS, type ItemCategory, type ItemDefinition, type WalletItemKey } from "../data/items";
 import type { Session } from "../state/session";
@@ -7,15 +7,22 @@ import { managerEvents, type ManagerEvents } from "./ManagerEvents";
 
 /** 가방 UI와 순수 배치 테스트가 공유하는 두 열 카드 계약이다. */
 export const INVENTORY_LAYOUT = {
-  columns: 2,
-  cardWidth: 390,
+  columns: 4,
+  cardWidth: 180,
   cardHeight: 180,
-  columnGap: 24,
-  cellWidth: 414,
-  cellHeight: 210,
+  columnGap: 28,
+  cellWidth: 208,
+  cellHeight: 208,
   viewportWidth: 804,
   viewportHeight: 1074.9,
 } as const;
+
+
+/** 가방 정렬 선택은 UI 상태로 보관하고 Manager만 비교 규칙을 소유한다. */
+export type InventorySortKey = "acquired" | "rarity" | "part" | "enhancement" | "equipped";
+export interface InventorySort { key: InventorySortKey; direction: "asc" | "desc"; }
+export const DEFAULT_INVENTORY_SORT: InventorySort = { key: "acquired", direction: "asc" };
+const RARITY_ORDER = { uncommon: 0, rare: 1, epic: 2, legendary: 3 } as const;
 
 export type InventoryGridLayout = Pick<typeof INVENTORY_LAYOUT, "columns" | "cellWidth" | "cellHeight" | "viewportHeight">;
 
@@ -87,11 +94,25 @@ export class InventoryManager {
     this.events.publishInventory();
   }
 
-  /** 카테고리 전환과 테스트가 같은 순수 필터 결과를 사용한다. */
-  list(category: ItemCategory): readonly InventoryDisplayItem[] {
+  /** 판매 응답의 확정 스냅샷만 Session에 반영하고 모든 상태 소비자에게 같은 시점으로 알린다. */
+  async sellRunes(api: GameApi, instanceIds: string[], requestId = crypto.randomUUID()): Promise<SellRunesResponse> {
+    const response = await api.sellRunes({ requestId, instanceIds });
+    this.state.runeInventory = response.inventory.runes.map((rune) => structuredClone(rune));
+    this.state.wallet = { ...response.wallet };
+    this.events.publish("wallet", { wallet: this.state.wallet });
+    this.events.publishInventory();
+    return response;
+  }
+
+  /** 원본 DTO/Session 배열을 바꾸지 않고 결정적 tie-break를 포함한 안정 정렬 복사본을 만든다. */
+  list(category: ItemCategory, sort: InventorySort = DEFAULT_INVENTORY_SORT): readonly InventoryDisplayItem[] {
     if (category === "rune") {
       const definition = findItem("rune")!;
-      return this.state.runeInventory.map((rune) => ({ kind: "rune", category, id: rune.instanceId, definition, quantity: 1, rune }));
+      const equipped = new Set(Object.values(this.state.relicProgress).flatMap(({ heartGemSlots }) => heartGemSlots.filter((id): id is string => id !== null)));
+      const original = this.state.runeInventory.map((rune, index) => ({ rune, index }));
+      const value = ({ rune, index }: (typeof original)[number]): number => sort.key === "acquired" ? (rune.sequence ?? index) : sort.key === "rarity" ? RARITY_ORDER[rune.rarity] : sort.key === "part" ? rune.part : sort.key === "enhancement" ? Object.values(rune.enhancementHistory).reduce((sum, history) => sum + (history?.length ?? 0), 0) : Number(equipped.has(rune.instanceId));
+      const direction = sort.direction === "asc" ? 1 : -1;
+      return [...original].sort((a, b) => direction * (value(a) - value(b)) || a.rune.instanceId.localeCompare(b.rune.instanceId) || a.index - b.index).map(({ rune }) => ({ kind: "rune" as const, category, id: rune.instanceId, definition, quantity: 1 as const, rune }));
     }
     if (category === "currency") {
       return ITEMS.filter((item) => item.category === "currency").map((definition) => {

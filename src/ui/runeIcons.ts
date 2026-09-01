@@ -1,6 +1,6 @@
 import type { HeartGemRarity } from "../data/heartGems";
 import Phaser from "phaser";
-import type { RunePart } from "../core/runes";
+import type { RuneMainStatKey, RunePart } from "../core/runes";
 import { chipPoints, drawInnerVignette, drawShapeOutline } from "./holo";
 import { addGlowStar, type StarTones } from "./stars";
 
@@ -61,6 +61,8 @@ export function addRuneFrame(
   size: number,
   rarity: HeartGemRarity | undefined,
   part: RunePart,
+  /** 위/아래 대각 면 색을 정하는 두 주 옵션이다. */
+  mainStats?: readonly [{ key: RuneMainStatKey }, { key: RuneMainStatKey }],
 ): Phaser.GameObjects.Container {
   const accent = rarity ? RUNE_ACCENT[rarity] : 0x5a636e;
   const frame = scene.add.container(x, y);
@@ -72,6 +74,14 @@ export function addRuneFrame(
   plate.translateCanvas(-4, -6);
   plate.fillStyle(rarity ? 0x0d131b : 0x0a0d12, 1);
   plate.fillPoints(toGeomPoints(shape), true);
+  if (mainStats) {
+    // `/` 경계로 위 주 옵션과 아래 주 옵션을 나눠 텍스트 없이도 룬 성향을 읽게 한다.
+    const tones: Record<RuneMainStatKey, number> = { hp: 0x8fd65a, atk: 0xd94b4b, ap: 0x7b65d9, def: 0x5a91c9, res: 0xd0b65a };
+    plate.fillStyle(tones[mainStats[0].key], 0.42);
+    plate.fillTriangle(-size / 2, -size / 2, size / 2, -size / 2, -size / 2, size / 2);
+    plate.fillStyle(tones[mainStats[1].key], 0.42);
+    plate.fillTriangle(size / 2, size / 2, size / 2, -size / 2, -size / 2, size / 2);
+  }
   frame.add(plate);
   frame.add(drawInnerVignette(scene, 0, 0, shape, { strength: 0.55 }));
   frame.add(drawShapeOutline(scene, 0, 0, shape, { color: accent, alpha: rarity ? 0.9 : 0.35, width: 3 }));

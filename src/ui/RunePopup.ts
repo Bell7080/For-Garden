@@ -4,6 +4,7 @@ import { gameApi } from "../api/FakeServer";
 import { canEngraveRune, canEnhanceRune, RUNE_PART_LABELS, RUNE_RARITY_LABELS, runeEnhancementAttempts, runeTotalEnhancementAttempts, type RuneInstance, type RuneStatKey } from "../core/runes";
 import { runeEnhancementGoldCost } from "../data/runes";
 import { RELICS } from "../data/relics";
+import { InventoryManager } from "../managers/InventoryManager";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { session } from "../state/session";
 import { Button } from "./Button";
@@ -120,7 +121,7 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
     const top = -height / 2;
     // 머리글("룬")이 창 맨 위에 서므로 그 아래로 한 줄 비우고 시작한다. 액자를 위로 붙이면
     // 조각이 머리글에 잘려 무엇인지 알아볼 수 없다.
-    body.add(addRuneFrame(scene, -140, top + 122, 108, rune.rarity, rune.part));
+    body.add(addRuneFrame(scene, -140, top + 122, 108, rune.rarity, rune.part, rune.mainStats));
     body.add(scene.add.text(-76, top + 78, rarity + "  ·  " + RUNE_PART_LABELS[rune.part], textStyle({ role: "emphasis", size: 18, color: hex(accent) })).setOrigin(0, 0));
     body.add(scene.add.text(-76, top + 102, rune.customName ?? `${rarity} 룬`, textStyle({ role: "display", size: 25 })).setOrigin(0, 0).setWordWrapWidth(204));
     body.add(scene.add.text(-76, top + 140, equippedLine(rune.instanceId), textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0, 0));
@@ -145,18 +146,24 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
 
     const buttonY = height / 2 - 56;
     const equip = options.equip;
-    // 장착은 정보창에서 연 룬에만 있다. 가방을 어디서 열었는지에 따라 할 수 있는 일이 다르다.
-    const craftX = equip ? -100 : 0;
-    body.add(new Button(scene, craftX, buttonY, {
-      width: equip ? 184 : 240, height: 68, label: "세공", fontSize: 26, variant: "primary", accentColor: accent,
+    const equipped = equippedRelicName(rune.instanceId) !== undefined;
+    // 세공·판매는 모든 진입점에 있고 장착만 대상 슬롯을 알고 있는 정보창에 조건부로 선다.
+    const spacing = equip ? 128 : 112;
+    body.add(new Button(scene, equip ? -spacing : -spacing / 2, buttonY, {
+      width: equip ? 116 : 200, height: 68, label: "세공", fontSize: 24, variant: "primary", accentColor: accent,
       onClick: () => {
         close();
         openRunePopup(scene, popups, options);
       },
     }));
+    const sell = new Button(scene, equip ? 0 : spacing / 2, buttonY, {
+      width: equip ? 116 : 200, height: 68, label: "판매", fontSize: 24,
+      onClick: () => { void new InventoryManager(session).sellRunes(options.api ?? gameApi, [rune.instanceId]).then(() => close()); },
+    }).setEnabled(!equipped);
+    body.add(sell);
     if (equip) {
-      body.add(new Button(scene, 100, buttonY, {
-        width: 184, height: 68, label: "장착", fontSize: 26,
+      body.add(new Button(scene, spacing, buttonY, {
+        width: 116, height: 68, label: "장착", fontSize: 24,
         onClick: () => {
           void relicProgression.equipRune(equip.relicId, equip.slotIndex, rune.instanceId).then(() => {
             close();
@@ -210,7 +217,7 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
       const displayName = rune!.customName ?? `${rarity} 룬`;
       const top = -CRAFT.height / 2;
       const half = CRAFT.width / 2;
-      content.add(addRuneFrame(scene, -half + 82, top + 118, 112, rune!.rarity, rune!.part));
+      content.add(addRuneFrame(scene, -half + 82, top + 118, 112, rune!.rarity, rune!.part, rune!.mainStats));
       content.add(scene.add.text(-half + 146, top + 78, rarity + "  ·  " + RUNE_PART_LABELS[rune!.part], textStyle({ role: "emphasis", size: 20, color: hex(accent) })).setOrigin(0, 0));
       const nameText = scene.add.text(-half + 146, top + 104, displayName, textStyle({ role: "display", size: 28 })).setOrigin(0, 0).setWordWrapWidth(260);
       content.add(nameText);

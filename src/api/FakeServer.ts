@@ -20,10 +20,10 @@ import { EVENTS, findEventByProductId, findEventByStageId } from "../data/events
 import type { EventDefinition } from "../data/events/types";
 import type { EnterEventStageResponse, EventListResponse } from "./contracts";
 import { assertValidRuneInstance, canEngraveRune, canEnhanceRune, generateRune, RUNE_PART_LABELS, type RunePart, engraveRune as applyRuneEngraving, enhanceRune as applyRuneEnhancement, runeEnhancementAttempts, runeEnhancementIncrease, type RuneInstance, type RuneRarity } from "../core/runes";
-import { runeEnhancementGoldCost } from "../data/runes";
+import { runeEnhancementGoldCost, runeSellValue } from "../data/runes";
 import { findItem, STAMINA_CAP } from "../data/items";
 import { InventoryManager } from "../managers/InventoryManager";
-import type { EngraveRuneRequest, EngraveRuneResponse, EnhanceRuneRequest, EnhanceRuneResponse, EquipRuneRequest, EquipRuneResponse, RenameRuneRequest, RenameRuneResponse, RuneInventoryDto, UnequipRuneRequest, UnequipRuneResponse } from "./contracts";
+import type { EngraveRuneRequest, EngraveRuneResponse, EnhanceRuneRequest, EnhanceRuneResponse, EquipRuneRequest, EquipRuneResponse, RenameRuneRequest, RenameRuneResponse, RuneInventoryDto, UnequipRuneRequest, UnequipRuneResponse, SellRunesRequest, SellRunesResponse } from "./contracts";
 import type { ActivatePassRequest, ActivatePassResponse, ClaimInstantAdRewardRequest, ClaimInstantAdRewardResponse, PassEntitlementDto, VerifyPurchaseReceiptRequest, VerifyPurchaseReceiptResponse } from "./contracts";
 import { harvestIdleExcavation, isExcavationStorageFull, settleIdleExcavation, validateExcavationFormation } from "../core/idleExcavation";
 import type { HarvestExcavationRequest, HarvestExcavationResponse, IdleExcavationResponse, SaveExcavationFormationRequest, InventoryResponse, UseConsumableRequest, UseConsumableResponse } from "./contracts";
@@ -87,6 +87,8 @@ export class FakeServer implements GameApi {
   private readonly mails: MailDto[];
   /** 네트워크 재전송은 최초 영수증을 그대로 돌려줘 첨부물이 두 번 지급되지 않게 한다. */
   private readonly mailClaimResults = new Map<string, ClaimMailRewardsResponse>();
+  /** 운영 DB의 requestId 고유 제약을 흉내 내 판매 재전송에 최초 확정 영수증을 돌려준다. */
+  private readonly runeSaleResults = new Map<string, SellRunesResponse>();
 
   constructor(
     private readonly state: Session = session,
@@ -844,6 +846,27 @@ export class FakeServer implements GameApi {
     return { rune: this.cloneRune(rune), inventory: this.runeInventoryDto() };
   }
 
+  /** 존재·중복·장착·상한을 모두 복제 상태에서 검증한 뒤 제거와 골드 지급을 한 번만 저장한다. */
+  async sellRunes(request: SellRunesRequest): Promise<SellRunesResponse> {
+    await this.delay();
+    const cached = this.runeSaleResults.get(request.requestId);
+    if (cached) return structuredClone(cached);
+    if (!request.requestId || request.instanceIds.length === 0 || new Set(request.instanceIds).size !== request.instanceIds.length) throw new GameApiError("INVALID_RUNE_SALE", "판매 요청 ID와 중복 없는 룬이 필요합니다.");
+    const selected = request.instanceIds.map((id) => this.ownedRune(id));
+    const equipped = new Set(Object.values(this.state.relicProgress).flatMap(({ heartGemSlots }) => heartGemSlots.filter((id): id is string => id !== null)));
+    if (selected.some(({ instanceId }) => equipped.has(instanceId))) throw new GameApiError("RUNE_EQUIPPED", "장착 중인 룬은 판매할 수 없습니다.");
+    const goldAwarded = selected.reduce((sum, rune) => sum + runeSellValue(rune), 0);
+    if (this.state.wallet.gold + goldAwarded > WALLET_CAPS.gold) throw new GameApiError("CURRENCY_LIMIT_EXCEEDED", "골드 상한을 초과해 판매할 수 없습니다.");
+    const sold = new Set(request.instanceIds);
+    const nextRunes = this.state.runeInventory.filter(({ instanceId }) => !sold.has(instanceId));
+    const nextWallet = { ...this.state.wallet, gold: this.state.wallet.gold + goldAwarded };
+    this.persist({ ...this.state, runeInventory: nextRunes, wallet: nextWallet });
+    this.state.runeInventory = nextRunes; this.state.wallet = nextWallet;
+    const response = { inventory: this.runeInventoryDto(), wallet: { ...nextWallet }, goldAwarded };
+    this.runeSaleResults.set(request.requestId, structuredClone(response));
+    return response;
+  }
+
   /** 전체 렐릭 슬롯을 조회해 다른 슬롯에 이미 장착된 룬을 거부한다. */
   async equipRune(request: EquipRuneRequest): Promise<EquipRuneResponse> {
     await this.delay();
@@ -942,7 +965,7 @@ export class FakeServer implements GameApi {
     do { instanceId = `rune-${this.now().getTime()}-${this.runeIssueSequence++}`; } while (occupied.has(instanceId));
     // 자리도 서버가 정한다. 어느 칸의 룬이 나올지는 획득의 일부다.
     const part = Math.min(2, Math.floor(this.random() * 3)) as RunePart;
-    return generateRune({ instanceId, baseName: `${RUNE_PART_LABELS[part]} 룬`, rarity, part, random: this.random });
+    return { ...generateRune({ instanceId, baseName: `${RUNE_PART_LABELS[part]} 룬`, rarity, part, random: this.random }), sequence: this.now().getTime() * 1000 + this.runeIssueSequence };
   }
 
   /** 보유 인벤토리에서만 룬을 찾아 존재 여부와 소유권을 한 번에 확정한다. */

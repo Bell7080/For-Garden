@@ -30,7 +30,7 @@ function migrateV12Rune(definitionId: string): RuneInstance {
 
 /** 키는 계정 연동 저장소와 충돌하지 않도록 로컬 프로토타입임을 명시한다. */
 export const SAVE_STORAGE_KEY = "eternal-city.local-save";
-export const CURRENT_SAVE_VERSION = 27;
+export const CURRENT_SAVE_VERSION = 28;
 
 type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
@@ -224,9 +224,11 @@ export class SaveManager {
     catch { throw new SaveDataError("v12 Heart Gem 보유 정보가 올바르지 않습니다."); }
     // v17부터 룬은 들어갈 칸(파츠)을 갖는다. 자리가 없던 시절의 룬은 순서대로 세 자리에
     // 나눠 준다 — 전부 1번 자리로 몰면 나머지 두 칸이 영영 비어 있게 된다.
-    runeInventory = runeInventory.map((rune, index) => (
-      [0, 1, 2].includes((rune as { part?: number }).part as number) ? rune : { ...rune, part: (index % 3) as RuneInstance["part"] }
-    ));
+    runeInventory = runeInventory.map((rune, index) => {
+      // v27 이하에는 획득 순번이 없으므로 저장 배열 순서를 영구적이고 직렬화 가능한 순번으로 승격한다.
+      const normalized = [0, 1, 2].includes((rune as { part?: number }).part as number) ? rune : { ...rune, part: (index % 3) as RuneInstance["part"] };
+      return { ...normalized, sequence: Number.isSafeInteger(normalized.sequence) ? normalized.sequence : index };
+    });
     const legacyIdMap = new Map(legacyOwned.map((id) => [id, `legacy-v12-${id}`]));
     // 스토리 저장 도입 전 계정은 미완료로 두어 다음 타이틀 진입에서 오프닝을 한 번 재생한다.
     const completedStoryIds = Array.isArray(legacy.completedStoryIds) ? legacy.completedStoryIds : [];
@@ -267,7 +269,7 @@ export class SaveManager {
     const itemInventory = Array.isArray(legacy.itemInventory) ? legacy.itemInventory : [];
     const { ownedHeartGemIds: _oldOwned, runeSlotsByRelicId: _oldSlots, ...current } = legacy;
     if (legacy.saveVersion === undefined) return { ...current, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, idleExcavation, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition } as unknown as SaveData;
-    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, CURRENT_SAVE_VERSION];
+    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, CURRENT_SAVE_VERSION];
     if (!supported.includes(legacy.saveVersion as number)) throw new SaveDataError(`지원하지 않는 저장 버전입니다: ${String(legacy.saveVersion)}`);
     return { ...current, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, idleExcavation, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition } as unknown as SaveData;
   }

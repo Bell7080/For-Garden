@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import type { GameApi } from "../api/contracts";
 import { ITEM_ICON_FALLBACK, type ItemCategory, type ItemIcon } from "../data/items";
 import { setDebugInventoryCategory, setDebugInventoryTextureKeys } from "../debug";
-import { INVENTORY_LAYOUT, InventoryManager, inventoryGridPosition, inventoryScrollMetrics, type InventoryDisplayItem } from "../managers/InventoryManager";
+import { DEFAULT_INVENTORY_SORT, INVENTORY_LAYOUT, InventoryManager, inventoryGridPosition, inventoryScrollMetrics, type InventoryDisplayItem, type InventorySort } from "../managers/InventoryManager";
 import { session } from "../state/session";
 import { drawGlyph } from "./glyphs";
 import { chipPoints, drawHairline, drawInnerVignette, drawLayer, drawShapeOutline } from "./holo";
@@ -10,7 +10,7 @@ import { INVENTORY_TAB_LAYOUT, inventoryCategoryTabPosition } from "./inventoryT
 import { POPUP_TITLE_SIZE, PopupLayer } from "./PopupLayer";
 import { equippedRelicName, openRuneInfoPopup } from "./RunePopup";
 import { RUNE_PART_LABELS, RUNE_RARITY_LABELS } from "../core/runes";
-import { addRuneFrame, runeTexture, RUNE_ACCENT } from "./runeIcons";
+import { addRuneFrame, runeTexture } from "./runeIcons";
 import { COLOR, textStyle } from "./theme";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { managerEvents } from "../managers/ManagerEvents";
@@ -41,6 +41,8 @@ export class InventoryPopup {
   private body?: Phaser.GameObjects.Container;
   private view?: Phaser.GameObjects.Container;
   private category: ItemCategory = "rune";
+  /** 정렬 선택은 팝업 생명주기 동안 유지하며 변경 렌더는 스크롤을 항상 원점으로 만든다. */
+  private sort: InventorySort = { ...DEFAULT_INVENTORY_SORT };
   private maskShape?: Phaser.GameObjects.Rectangle;
   private geometryMask?: Phaser.Display.Masks.GeometryMask;
   /** 중첩 상세 팝업 유무와 무관하게 가방 자체를 닫는 전용 콜백이다. */
@@ -81,7 +83,7 @@ export class InventoryPopup {
     // 매 렌더마다 비워 실제로 현재 탭에 놓인 이미지 키만 E2E에 남긴다.
     const textureKeys: string[] = [];
     setDebugInventoryTextureKeys(textureKeys);
-    const visible = this.inventory.list(this.category);
+    const visible = this.inventory.list(this.category, this.sort);
     // 첫 카드가 큰 작업판 제목의 세로 영역을 침범하지 않도록 기존 목록을 50px 내린다.
     // 첫 카드의 윗변을 마스크 윗변에 맞춰 아이콘/액자가 절반 잘리지 않게 한다.
     const contentStartY = VIEWPORT.y - VIEWPORT.height / 2 + INVENTORY_LAYOUT.cellHeight / 2;
@@ -101,9 +103,10 @@ export class InventoryPopup {
     const hit = this.scene.add.rectangle(VIEWPORT.x, VIEWPORT.y, VIEWPORT.width, VIEWPORT.height, 0xffffff, 0).setInteractive({ draggable: true, useHandCursor: true });
     hit.on("dragstart", (pointer: Phaser.Input.Pointer) => { dragY = pointer.y; });
     hit.on("drag", (pointer: Phaser.Input.Pointer) => { move(pointer.y - dragY); dragY = pointer.y; });
-    hit.on("wheel", (_pointer: Phaser.Input.Pointer, _dx: number, dy: number) => move(-dy * 0.65)); body.add(hit);
+    hit.on("wheel", (_pointer: Phaser.Input.Pointer, _dx: number, dy: number) => move(-dy * 0.65)); body.add(hit); body.sendToBack(hit);
     // 생성과 입력 피드백은 한 헬퍼를 통과시켜 네 탭의 면·클릭 범위가 갈라지지 않게 한다.
     CATEGORIES.forEach((tab, index) => this.addCategoryTab(body, tab, index));
+    if (this.category === "rune") this.addSortControls(body);
   }
 
   /** 서류철 라벨처럼 돌출된 단색 면과 면 전체 입력을 가진 카테고리 탭을 추가한다. */
@@ -135,6 +138,19 @@ export class InventoryPopup {
     tabContainer.add(hit); body.add(tabContainer);
   }
 
+  /** 기존 탭처럼 크기와 강조색만으로 선택을 알리고 누르면 정렬 및 스크롤 원점을 갱신한다. */
+  private addSortControls(body: Phaser.GameObjects.Container): void {
+    const keys: readonly { key: InventorySort["key"]; label: string }[] = [{ key: "acquired", label: "획득순" }, { key: "rarity", label: "등급" }, { key: "part", label: "부위" }, { key: "enhancement", label: "세공" }, { key: "equipped", label: "장착" }];
+    keys.forEach(({ key, label }, index) => {
+      const selected = this.sort.key === key; const node = this.scene.add.container(-300 + index * 150, -620).setScale(selected ? 1.12 : 1);
+      node.add(this.scene.add.text(0, 0, `${label}${selected ? (this.sort.direction === "asc" ? " ↑" : " ↓") : ""}`, textStyle({ role: "emphasis", size: 20, color: selected ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5));
+      const hit = this.scene.add.rectangle(0, 0, 130, 54, 0xffffff, 0).setInteractive({ useHandCursor: true });
+      hit.on("pointerdown", () => node.setScale(1.16));
+      hit.on("pointerup", () => { this.sort = { key, direction: selected && this.sort.direction === "asc" ? "desc" : "asc" }; this.render(body); });
+      node.add(hit); body.add(node);
+    });
+  }
+
   /** GeometryMask와 원본 도형은 컨테이너 자식이 아니므로 둘 다 소유자가 직접 파괴한다. */
   private destroyMask(): void {
     this.view?.clearMask(true);
@@ -151,7 +167,7 @@ export class InventoryPopup {
     const card = this.scene.add.container(x, y); card.add(drawLayer(this.scene, 0, 0, shape, { fill: 0x151a21, alpha: 0.96, edge: COLOR.accent, edgeAlpha: 0.35 }));
     if (item.kind === "rune") {
       // 룬은 일반 정의 아이콘보다 먼저 처리해 세공 화면과 동일한 등급 액자·비네팅·조각을 쓴다.
-      card.add(addRuneFrame(this.scene, frameX, -12, 102, item.rune.rarity, item.rune.part));
+      card.add(addRuneFrame(this.scene, 0, 0, 160, item.rune.rarity, item.rune.part, item.rune.mainStats));
       textureKeys.push(runeTexture(item.rune.rarity, item.rune.part));
     } else {
       const frame = chipPoints(102, 102, { bevel: { topLeft: 18, topRight: 0, bottomRight: 18, bottomLeft: 0 } });
@@ -159,10 +175,11 @@ export class InventoryPopup {
       // 액자 안 콘텐츠만 아래 판별 함수에 맡겨 불투명 면·사방 outline·내부 vignette는 항상 유지한다.
       card.add(this.renderDefinitionIcon(item.definition.icon, frameX, -12, textureKeys));
     }
-    const accent = item.kind === "rune" ? RUNE_ACCENT[item.rune.rarity] : undefined;
-    card.add(this.scene.add.text(textX, -48, this.label(item), textStyle({ role: "display", size: 22, color: accent ? `#${accent.toString(16).padStart(6, "0")}` : COLOR.ink, wrap: textWidth })).setOrigin(0, 0));
-    card.add(this.scene.add.text(textX, -10, this.description(item), textStyle({ role: "body", size: 17, color: COLOR.inkDim, wrap: textWidth })).setOrigin(0, 0));
-    card.add(this.scene.add.text(quantityX, 58, String(item.quantity), textStyle({ role: "emphasis", size: 24 })).setOrigin(1, 1).setStroke("#05070a", 5));
+    if (item.kind !== "rune") {
+      card.add(this.scene.add.text(textX, -48, this.label(item), textStyle({ role: "display", size: 22, color: COLOR.ink, wrap: textWidth })).setOrigin(0, 0));
+      card.add(this.scene.add.text(textX, -10, this.description(item), textStyle({ role: "body", size: 17, color: COLOR.inkDim, wrap: textWidth })).setOrigin(0, 0));
+      card.add(this.scene.add.text(quantityX, 58, String(item.quantity), textStyle({ role: "emphasis", size: 24 })).setOrigin(1, 1).setStroke("#05070a", 5));
+    }
     const hit = this.scene.add.rectangle(0, 0, cardWidth, cardHeight, 0xffffff, 0).setInteractive({ useHandCursor: true });
     // 클릭 순간의 월드 변환을 읽어 팝업 이동·배율·스크롤 이후에도 상세창이 카드에 붙게 한다.
     hit.on("pointerup", () => { const anchor = card.getWorldTransformMatrix().transformPoint(0, 0); this.select(item, { x: anchor.x, y: anchor.y }); }); card.add(hit); content.add(card);

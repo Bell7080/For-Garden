@@ -32,7 +32,9 @@ export type GlyphName =
   | "ferocity"
   | "edit"
   | "bar-chart"
-  | "arena-tier";
+  | "arena-tier"
+  | "page-prev"
+  | "page-next";
 
 function points(...pairs: number[]): Phaser.Geom.Point[] {
   const list: Phaser.Geom.Point[] = [];
@@ -98,6 +100,14 @@ export function drawGlyph(
       // 큰 뿔과 중앙 눈으로 최종 보스를 다른 전투 노드와 즉시 가른다.
       g.strokePoints(points(-r * 0.9, -r * 0.68, -r * 0.45, r * 0.58, 0, r * 0.82, r * 0.45, r * 0.58, r * 0.9, -r * 0.68), false);
       g.strokePoints(points(-r * 0.38, 0, 0, -r * 0.28, r * 0.38, 0, 0, r * 0.28), true);
+      break;
+    case "page-prev":
+      // 홑화살표 — 관찰 기록 목록을 이전 장으로 넘긴다.
+      g.strokePoints(points(r * 0.28, -r * 0.7, -r * 0.32, 0, r * 0.28, r * 0.7), false);
+      break;
+    case "page-next":
+      // "page-prev"를 좌우로 뒤집은 모양이다.
+      g.strokePoints(points(-r * 0.28, -r * 0.7, r * 0.32, 0, -r * 0.28, r * 0.7), false);
       break;
     case "edit":
       // 각진 연필과 짧은 밑줄. 이름 변경 조작은 모든 씬에서 이 표식만 사용한다.

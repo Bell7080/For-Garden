@@ -40,6 +40,8 @@ export interface DebugState {
   scene: string;
   /** 캔버스 DOM에서 읽을 수 없는 현재 화면 제목을 E2E가 사용자 관점으로 확인할 때 쓴다. */
   screenTitle?: string;
+  /** 지금 열려 있는 팝업 제목을 아래(가장 먼저 연 것)부터 순서대로 쌓아 둔다. E2E가 팝업이 실제로 열렸는지 확인한다. */
+  popupTitles?: string[];
   battle?: DebugBattle;
   /** 정보창이 떠 있는지. `?`와 꾹 누르기를 확인하는 데 쓴다. */
   infoOpen?: boolean;
@@ -215,4 +217,9 @@ export function setDebugProgress(wallet: { fossil: number; amber: number; gold?:
   const state = ensure();
   state.wallet = { ...wallet };
   state.owned = [...owned];
+}
+
+/** 팝업이 열리거나 닫힐 때마다 PopupLayer가 부른다. E2E가 실제로 무엇이 열려 있는지 확인한다. */
+export function setDebugPopupTitles(titles: string[]): void {
+  ensure().popupTitles = titles.length > 0 ? titles : undefined;
 }

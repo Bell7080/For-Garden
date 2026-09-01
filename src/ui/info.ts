@@ -47,11 +47,12 @@ import { session } from "../state/session";
 import { BOND_FEROCITY_MULTIPLIER, BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL, BOND_XP_REWARD } from "../core/bond";
 import { getRelicCatalogDisclosure } from "../core/relicCatalog";
 import { observations } from "../managers/ObservationManager";
+import { clampObservationPage, sortedObservationHistory } from "./observationHistory";
 import { observationQuestionForRelicAndDate } from "../data/observations";
 import type { PublicRelicProfileDto } from "../api/contracts";
 import type { Fighter } from "../core/skirmish";
 import { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../core/infoCapabilities";
-import { allyHealPowerKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, passiveShieldKeyword, skillDescription } from "./skillPresentation";
+import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, passiveShieldKeyword, skillDescription } from "./skillPresentation";
 import type { KeywordDef } from "../data/keywords";
 import { addFactionMark, factionMarkBounds } from "./FactionMark";
 import { SQUADS } from "../data/factions";
@@ -1040,25 +1041,34 @@ export class InfoManager {
     const disclosure = getRelicCatalogDisclosure(def, this.ownedNow);
     const journal = OBSERVATION_JOURNAL_SIZE;
     const bodyLeft = -journal.body.width / 2;
-    const lines = disclosure.access === "full"
+    // 상단 식별 정보는 라벨(회색)과 값(흰색)을 갈라 무엇이 이름표고 무엇이 실제 값인지
+    // 색으로 먼저 읽히게 한다 — 이름표와 같은 무게로 묻히면 "지금 보고 있는 개체가 정확히
+    // 무엇인지"가 느리게 읽힌다.
+    const identityLines: { label: string; value: string }[] = disclosure.access === "full"
       ? [
-          "개체번호   NO." + disclosure.specimenNumber,
-          "프로젝트   " + disclosure.projectName,
-          "기원         " + disclosure.origin,
-          "발굴지      " + disclosure.excavationSite,
+          { label: "개체번호", value: "NO." + disclosure.specimenNumber },
+          { label: "프로젝트", value: disclosure.projectName },
+          { label: "기원", value: disclosure.origin },
+          { label: "발굴지", value: disclosure.excavationSite },
           ...(def.observationProfile ? [
-            "기원 연대   " + def.observationProfile.originYear,
-            `복원 연도   ${def.observationProfile.restorationYear}`,
-            `성장 단계   ${def.observationProfile.lifeStage} · 키 ${def.observationProfile.height} · 몸무게 ${def.observationProfile.weight}`,
+            { label: "기원 연대", value: def.observationProfile.originYear },
+            // 복원 연도는 저장된 경과 시간이 아니라 정적 도감의 세계관 나잇대만 단독으로 표시한다.
+            { label: "복원 연도", value: def.observationProfile.restorationYear },
+            { label: "성장 단계", value: `${def.observationProfile.lifeStage} · 키 ${def.observationProfile.height} · 몸무게 ${def.observationProfile.weight}` },
           ] : []),
         ]
-      : ["개체번호   NO." + disclosure.specimenNumber, "프로젝트   기록 없음", "기원         미상", "발굴지      미상"];
+      : [
+          { label: "개체번호", value: "NO." + disclosure.specimenNumber },
+          { label: "프로젝트", value: "기록 없음" },
+          { label: "기원", value: "미상" },
+          { label: "발굴지", value: "미상" },
+        ];
 
     // 텍스트를 먼저 만들어 실제 height를 얻는다. 이후 배치는 줄 수나 개체별 문단 길이를 추측하지 않는다.
     const markBounds = factionMarkBounds(JOURNAL_SQUAD_MARK.size);
     // 상단 정보는 확대된 표식의 실제 왼쪽 외곽(복제 그림자 포함) 전까지만 사용한다.
     const metadataWidth = JOURNAL_SQUAD_MARK.x + markBounds.left - JOURNAL_SQUAD_MARK.metadataGap - bodyLeft;
-    const metadata = this.scene.add.text(0, 0, lines.join("\n"), textStyle({ role: "body", size: journal.font.regular, color: COLOR.inkDim, lineSpacing: journal.spacing.line, wrap: metadataWidth })).setOrigin(0, 0);
+    const identity = this.buildJournalIdentity(identityLines, metadataWidth, journal.font.regular, journal.spacing.line);
     const rawRecord = disclosure.access === "full" ? disclosure.record : def.catalogSummary + "\n\n상세 기록은 개체 획득 후 해제됩니다.";
     const excavationRecord = withoutRepeatedProfileDetails(rawRecord, def.observationProfile?.height, def.observationProfile?.weight);
     const excavation = this.keywords.layout(excavationRecord, { width: journal.body.width, size: journal.font.large, color: COLOR.inkDim, lineSpacing: journal.spacing.line });
@@ -1067,13 +1077,22 @@ export class InfoManager {
       ? this.scene.add.text(0, 0, def.squadNote, textStyle({ role: "body", size: journal.font.small, color: COLOR.inkDim, lineSpacing: journal.spacing.compactLine, wrap: journal.body.width })).setOrigin(0, 0)
       : undefined;
     const observationHeading = this.scene.add.text(0, 0, "복원 후 관찰 기록", textStyle({ role: "emphasis", size: journal.font.regular, color: COLOR.ink })).setOrigin(0, 0);
-    const entries = observations.recordFor(def.id).slice(-1).reverse();
+    // 이 판에는 가장 최근 관찰 기록 한 건만 둔다. 쌓인 전체 이력은 별도 레이어(관찰 기록)가
+    // 한 건씩 넘겨 보여 준다 — 매일 쌓이는 인터뷰를 전부 여기 밀어 넣으면 캐릭터 소개보다
+    // 로그가 더 길어진다.
+    const allEntries = observations.recordFor(def.id);
+    const entries = allEntries.slice(-1).reverse();
     const observationCopy = entries.length
       ? entries.map((entry) => `${entry.date}  ·  #${entry.personalityTag}\nQ. ${entry.question}\nA. ${entry.answer}\n발견  ${entry.discoveredHabit}`).join("\n\n")
       : "아직 기록된 관찰이 없습니다.";
     const observation = this.scene.add.text(0, 0, observationCopy, textStyle({ role: "body", size: entries.length ? journal.font.regular : journal.font.small, color: COLOR.ink, lineSpacing: journal.spacing.compactLine, wrap: journal.body.width })).setOrigin(0, 0);
+    // 링크 한 줄만큼 흐름 계산에 미리 더해 둔다 — 그러지 않으면 바로 아래 인터뷰 조작과 겹친다.
+    const historyLinkHeight = allEntries.length > 1 ? journal.spacing.compactLine + journal.font.small + 16 : 0;
     const actionHeight = this.ownedNow ? OBSERVATION_INTERVIEW_LAYOUT.trigger.height : 0;
-    const flow = calculateObservationJournalFlow({ metadata: metadata.height, excavation: excavation.height, squad: squad?.height ?? 0, observationHeading: observationHeading.height, observation: observation.height, action: actionHeight });
+    const flow = calculateObservationJournalFlow({
+      metadata: identity.height, excavation: excavation.height, squad: squad?.height ?? 0,
+      observationHeading: observationHeading.height, observation: observation.height + historyLinkHeight, action: actionHeight,
+    });
 
     this.popups.open({ width: journal.popup.width, height: flow.popupHeight, title: "관찰 일지", titleSize: journal.font.title, tilt: journal.popup.tilt, ...anchorOf(from) }, (body, close) => {
       const artWidth = journal.popup.width - journal.art.inset * 2;
@@ -1087,13 +1106,26 @@ export class InfoManager {
       // 흐르는 본문만 별도 컨테이너에 담아, 화면 안전 높이를 넘을 때 판과 배경은 고정한 채 스크롤한다.
       const content = this.scene.add.container(0, -flow.popupHeight / 2);
       const y = (value: number): number => value;
-      metadata.setPosition(bodyLeft, y(flow.metadataY)); content.add(metadata);
+      identity.container.setPosition(bodyLeft, y(flow.metadataY)); content.add(identity.container);
       content.add(drawHairline(this.scene, 0, y(flow.excavationDividerY), journal.body.width, { color: COLOR.accent, alpha: 0.35 }));
       excavation.setPosition(bodyLeft, y(flow.excavationY)); content.add(excavation);
       if (squad && flow.squadY !== undefined) { squad.setPosition(bodyLeft, y(flow.squadY)); content.add(squad); }
       content.add(drawHairline(this.scene, 0, y(flow.observationDividerY), journal.body.width, { color: COLOR.accent, alpha: 0.35 }));
       observationHeading.setPosition(bodyLeft, y(flow.observationHeadingY)); content.add(observationHeading);
       observation.setPosition(bodyLeft, y(flow.observationY)); content.add(observation);
+      if (allEntries.length > 1) {
+        // 이 개체의 다른 날짜 기록은 여기 밀어 넣지 않고 전용 레이어에서 한 건씩 넘겨 본다.
+        const linkY = y(flow.observationY) + observation.height + journal.spacing.compactLine;
+        const link = this.scene.add.text(bodyLeft, linkY, `전체 기록 보기 (${allEntries.length}건)`, textStyle({ role: "emphasis", size: journal.font.small, color: COLOR.accentText })).setOrigin(0, 0);
+        content.add(link);
+        // 글자 자체보다 넉넉한 손끝 크기의 히트 영역을 따로 둔다 — 작은 글자 그대로 입력을
+        // 받으면 모바일에서 자주 빗나간다.
+        const linkHit = this.scene.add.rectangle(bodyLeft + link.width / 2, linkY + link.height / 2, link.width + 80, 96, 0xffffff, 0)
+          .setOrigin(0.5)
+          .setInteractive({ useHandCursor: true });
+        linkHit.on("pointerup", () => this.openObservationHistory(def, from));
+        content.add(linkHit);
+      }
 
       // 소속 표식은 메타데이터 영역 안에만 앉혀 세 영역의 읽기 순서를 흐리지 않는다.
       // 그림자의 위쪽 실제 외곽을 메타데이터 상단에 맞춰 제목 영역으로 번지지 않게 한다.
@@ -1153,6 +1185,81 @@ export class InfoManager {
         viewport.on("pointerdown", (pointer: Phaser.Input.Pointer) => { lastY = pointer.y; });
         viewport.on("pointermove", (pointer: Phaser.Input.Pointer) => { if (pointer.isDown) { move(pointer.y - lastY); lastY = pointer.y; } });
         body.add(viewport);
+      }
+    });
+  }
+
+  /**
+   * 상단 식별 정보 한 줄씩을 라벨(회색)·값(흰색) 두 텍스트로 그린다.
+   *
+   * 값이 길어 줄바꿈되는 경우까지 감안해 각 줄의 실제 렌더 높이를 재고 누적한다 — 눈대중
+   * 상수는 "성장 단계" 줄처럼 긴 값이 두 줄로 접히는 순간 다음 구분선과 겹친다.
+   */
+  private buildJournalIdentity(
+    lines: readonly { label: string; value: string }[],
+    width: number,
+    fontSize: number,
+    lineSpacing: number,
+  ): { container: Phaser.GameObjects.Container; height: number } {
+    const container = this.scene.add.container(0, 0);
+    const labelWidth = 150;
+    let cursor = 0;
+    lines.forEach((line, index) => {
+      if (index > 0) cursor += lineSpacing;
+      const label = this.scene.add.text(0, cursor, line.label, textStyle({ role: "body", size: fontSize, color: COLOR.inkDim })).setOrigin(0, 0);
+      const value = this.scene.add.text(labelWidth, cursor, line.value, textStyle({ role: "body", size: fontSize, color: COLOR.ink, wrap: width - labelWidth })).setOrigin(0, 0);
+      container.add([label, value]);
+      cursor += Math.max(label.height, value.height);
+    });
+    return { container, height: cursor };
+  }
+
+  /**
+   * 관찰 기록 레이어.
+   *
+   * 관찰 일지 쪽지에는 가장 최근 한 건만 두고, 쌓인 전체 이력은 이 팝업이 한 건씩 넘겨
+   * 보여 준다 — 매일 쌓이는 기록을 전부 한 판에 밀어 넣으면 캐릭터 소개보다 인터뷰 로그가
+   * 더 길어진다. 페이지를 넘길 때마다 팝업을 닫고 다시 여는 건 룬 세공 갱신과 같은 경계다.
+   */
+  private openObservationHistory(def: RelicDef, from: PopupSource, page = 0): void {
+    const history = sortedObservationHistory(observations.recordFor(def.id));
+    const index = clampObservationPage(page, history.length);
+    const entry = history[index];
+    // 이 레이어는 눌린 자리 위에 얹히는 쪽지가 아니라 따로 읽는 기록판이다. 관찰 일지와
+    // 같은 자리에 겹쳐 열면 두 판의 닫기 X가 거의 포개져 헷갈린다 — 화면 가운데 그대로 둔다.
+    this.popups.open({ width: 820, height: 620, title: "관찰 기록" }, (body, close) => {
+      if (!entry) {
+        body.add(this.scene.add.text(0, 0, "아직 기록된 인터뷰가 없습니다.", textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0.5));
+        return;
+      }
+      const goTo = (next: number): void => { close(); this.openObservationHistory(def, from, next); };
+      // 날짜·성향 태그는 부가 정보라 옅게, 실제 문답·발견 습성은 잘 보여야 하는 관찰 내용이라
+      // 희다 — 관찰 일지 본문과 같은 색 규칙을 그대로 잇는다.
+      body.add(this.scene.add
+        .text(0, -246, `${entry.date}  ·  #${entry.personalityTag}`, textStyle({ role: "body", size: 22, color: COLOR.inkDim, align: "center" }))
+        .setOrigin(0.5, 0));
+      const copy = `Q. ${entry.question}\n\nA. ${entry.answer}\n\n발견  ${entry.discoveredHabit}`;
+      body.add(this.scene.add
+        .text(0, -196, copy, textStyle({ role: "body", size: 26, color: COLOR.ink, lineSpacing: 10, align: "center", wrap: 720 }))
+        .setOrigin(0.5, 0));
+
+      // 목록은 최신(1)에서 과거로 갈수록 페이지가 커진다. 화살표는 그 순서를 그대로 따라간다
+      // — 왼쪽이 더 최근, 오른쪽이 더 과거다.
+      const pagerY = 240;
+      const hasNewer = index > 0;
+      const hasOlder = index < history.length - 1;
+      body.add(drawGlyph(this.scene, "page-prev", -300, pagerY, 40, hasNewer ? COLOR.inkHex : COLOR.inkDimHex, hasNewer ? 1 : 0.35));
+      if (hasNewer) {
+        const hit = this.scene.add.rectangle(-300, pagerY, 90, 90, 0xffffff, 0).setInteractive({ useHandCursor: true });
+        hit.on("pointerup", () => goTo(index - 1));
+        body.add(hit);
+      }
+      body.add(this.scene.add.text(0, pagerY, `${index + 1} / ${history.length}`, textStyle({ role: "emphasis", size: 24, color: COLOR.ink })).setOrigin(0.5));
+      body.add(drawGlyph(this.scene, "page-next", 300, pagerY, 40, hasOlder ? COLOR.inkHex : COLOR.inkDimHex, hasOlder ? 1 : 0.35));
+      if (hasOlder) {
+        const hit = this.scene.add.rectangle(300, pagerY, 90, 90, 0xffffff, 0).setInteractive({ useHandCursor: true });
+        hit.on("pointerup", () => goTo(index + 1));
+        body.add(hit);
       }
     });
   }
@@ -1725,14 +1832,23 @@ export class InfoManager {
       energy: 0, ferocity: 0, bondLevel: 0, ferocityFever: false,
       breakthrough: relicProgression.getProgress(finalDef.id).breakthrough,
     };
-    const preview = attacker && canPreviewSkillDamage(skill, kindLabel) ? previewSkillDamage(attacker, skill as Skill) : undefined;
-    const damageDetail = damageKeyword(preview);
+    // 공격 속도 복합 궁극기(스피나 등)는 위력만 보는 previewSkillDamage로는 실제 한 방의
+    // 절반만 계산되므로, 상단 라벨과 본문이 같은 하나의 합산 수치를 쓰도록 먼저 따로 구한다.
+    const attackSpeedPower = "attackSpeedPower" in skill ? (skill as Ultimate).attackSpeedPower : undefined;
+    const compositeDamage = attackSpeedPower !== undefined
+      ? attackSpeedCompositeDamageKeyword(skill as Ultimate, attacker?.def.stats.atk, attacker?.def.stats.attackSpeed)
+      : undefined;
+    const preview = !compositeDamage && attacker && canPreviewSkillDamage(skill, kindLabel)
+      ? previewSkillDamage(attacker, skill as Skill) : undefined;
+    const damageDetail = compositeDamage ?? damageKeyword(preview);
     const shieldDetail = "kind" in skill ? passiveShieldKeyword(skill as Passive, attacker?.def.stats.atk) : undefined;
     const allyHealingPower = "allyHealingPower" in skill ? (skill as Ultimate).allyHealingPower : undefined;
     const healDetail = allyHealingPower !== undefined ? allyHealPowerKeyword(allyHealingPower, attacker?.def.stats.ap) : undefined;
-    const valueLabel = preview?.kind === "scaling"
-      ? `${preview.label} [[damage-value|${preview.amount}]]`
-      : undefined;
+    const valueLabel = compositeDamage
+      ? `피해량 [[damage-value|${compositeDamage.term}]]`
+      : preview?.kind === "scaling"
+        ? `${preview.label} [[damage-value|${preview.amount}]]`
+        : undefined;
     return {
       name: skill.name,
       kindLabel,
@@ -1754,7 +1870,9 @@ export class InfoManager {
       damageHealingPercent: "damageHealingPercent" in skill ? skill.damageHealingPercent as number : undefined,
       gaugeCost,
       // 구조화된 연격·복합 계수는 정적 설명을 복제하지 않고 키워드가 연결된 공용 문장으로 표시한다.
-      description: "kind" in skill ? passiveDescription(skill as Passive, attacker?.def.stats.atk) : skillDescription(skill as Skill, attacker?.def.stats.ap),
+      description: "kind" in skill
+        ? passiveDescription(skill as Passive, attacker?.def.stats.atk)
+        : skillDescription(skill as Skill, attacker?.def.stats.ap, attacker && { atk: attacker.def.stats.atk, attackSpeed: attacker.def.stats.attackSpeed }),
     };
   }
 

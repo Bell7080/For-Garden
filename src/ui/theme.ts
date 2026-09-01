@@ -11,6 +11,8 @@ export const COLOR = {
   panel: 0x24282e,
   panelEdge: 0x3a404a,
   ink: "#f2f0ec",
+  /** Graphics API는 CSS 문자열 대신 숫자 색을 요구하므로 같은 흰 잉크를 숫자로도 제공한다. */
+  inkHex: 0xf2f0ec,
   inkDim: "#a9a7a2",
   /** Graphics API는 CSS 문자열 대신 숫자 색을 요구하므로 같은 흐린 잉크를 숫자로도 제공한다. */
   inkDimHex: 0xa9a7a2,

@@ -381,14 +381,19 @@ export interface RelicDef {
   projectName: string;
   /** 표본을 발견한 장소이며 생물학적 기원(origin)과 구분한다. */
   excavationSite: string;
-  /** 저장 데이터가 아닌 정적 도감 정보로 쓰는 복원 표본의 생애·신체 기록이다. 없는 개체는 기존 항목만 표시한다. */
+  /** 발굴 장소의 특이점, 화석·난각·골격의 보존 상태와 복원 연구에서 확인한 특징만 짧게 적는 발굴 기록이다. 복원 이후의 생활 관찰은 넣지 않는다. */
+  fossilRecord: string;
+  /** 저장 데이터가 아닌 정적 도감 정보로 쓰는 복원 표본의 생애·신체 측정 원본이다. 관찰 일지 본문에 이 수치를 반복하지 않는다. */
   observationProfile?: {
+    /** 원종 표본이 살았던 지질학적 시기이며 복원 이후 나이와 구분한다. */
     originYear: string;
     /** `docs/lore.md` 규칙에 따른 0~20의 고정 E.C. 분류다. 실제 나이가 아닌 복원체의 외형·정서적 성장 단계이며 서사 시간이 흘러도 증가하지 않는다. */
     restorationYear: string;
     /** 화석에 남은 공룡·고생물 원종의 생물학적 성장 단계다. 복원체의 인간 사회상 성인 여부와 무관하며 정신적 성숙 성향의 근거로만 쓴다. */
     lifeStage: string;
+    /** 복원된 인간형 신체의 단일 신장 측정값이며 서술형 관찰 기록에 복제하지 않는다. */
     height: string;
+    /** 복원된 인간형 신체의 단일 체중 측정값이며 서술형 관찰 기록에 복제하지 않는다. */
     weight: string;
   };
   /**
@@ -405,13 +410,11 @@ export interface RelicDef {
    * 불리는지가 있어야 소속이 성격이 된다.
    */
   squadNote?: string;
-  /** 그 개체가 동경하는 다른 스쿼드. 소속과 다를 때만 채운다. */
-  admiredSquad?: SquadId;
   /** 그 개체가 주인공을 부르는 말. 비우면 소속 스쿼드의 대표 호칭을 쓴다. */
   researcherTitle?: string;
-  /** 미보유 상태에서도 공개할 수 있는 외형 중심의 짧은 도감 요약이다. */
+  /** 미보유 상태에서도 공개할 수 있는 외형 중심의 짧은 도감 요약이다. 발굴 경위나 복원 후 생활 관찰은 넣지 않는다. */
   catalogSummary: string;
-  /** 설정 확정 여부를 문자열 임시 문구가 아니라 판별 가능한 데이터로 표현한다. */
+  /** 설정 확정 여부를 판별 가능한 데이터로 표현한다. `text`에는 복원 이후 직접 본 성격·말투·습관·관계만 쓰며 신체 수치나 화석 상태를 넣지 않는다. */
   unlockRecord:
     | { status: "recorded"; text: string }
     | { status: "sealed"; reason: "pending-lore" | "restricted" };

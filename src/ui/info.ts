@@ -26,6 +26,7 @@ import { addBackButton } from "./IconButton";
 import { chipPoints, drawGlassFade, drawHairline, drawInnerVignette, drawLayer, drawShapeEdge, drawShapeOutline, drawVignette, HOLO, perspectiveRect, slantedRect, toPoints } from "./holo";
 import { drawGlyph } from "./glyphs";
 import { PopupLayer } from "./PopupLayer";
+import { calculateObservationJournalFlow, OBSERVATION_JOURNAL_SIZE, withoutRepeatedProfileDetails } from "./observationJournalLayout";
 import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
 import { addStar } from "./stars";
@@ -53,29 +54,32 @@ import type { Fighter } from "../core/skirmish";
 import { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../core/infoCapabilities";
 import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, passiveShieldKeyword, skillDescription } from "./skillPresentation";
 import type { KeywordDef } from "../data/keywords";
-import { addFactionMark } from "./FactionMark";
+import { addFactionMark, factionMarkBounds } from "./FactionMark";
 import { SQUADS } from "../data/factions";
+import { OBSERVATION_INTERVIEW_LAYOUT, observationInterviewPanelState, type ObservationInterviewPanelState } from "./observationInterviewPanel";
 
 export type { SkillInfoViewModel } from "./SkillPopup";
 
 export { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../core/infoCapabilities";
+// 관찰 일지 크기 표는 공용 정보 UI의 공개 계약으로 내보내 테스트와 후속 작업이 같은 값을 쓴다.
+export { OBSERVATION_JOURNAL_SIZE } from "./observationJournalLayout";
 
 /**
  * 관찰 일지 우상단의 소속 표식 자리.
  *
- * 880×1140 판의 안쪽 모서리다. 일지 원화 클립은 좌상단·우하단만 깎으므로 **우상단은 직각**이라
+ * 전용 크기 표가 정한 확장 판의 안쪽 모서리다. 원화 클립은 좌상단·우하단만 깎으므로 **우상단은 직각**이라
  * 표식이 모서리에 바짝 붙어도 사선에 잘리지 않는다. 제목 줄은 판 윗변에 걸터앉으므로 표식은
  * 그보다 아래로 내려 세운다.
  */
-const JOURNAL_SQUAD_MARK = { x: 322, y: -462, size: 104 } as const;
-
-/**
- * 소속 이야기가 있을 때 일지 판이 더 갖는 높이.
- *
- * 네 줄(글자 22px + 줄 간격 8px)과 위아래 숨 쉴 틈을 합친 값이다. 문단이 이보다 길어지면
- * 인터뷰 줄과 겹치므로, `RelicDef.squadNote`는 네 줄 안에 끝나게 쓴다.
- */
-const JOURNAL_SQUAD_STORY_HEIGHT = 150;
+/** 기존 관찰 일지 엠블럼 대비 30% 확대. 배율을 분리해 기준 크기와 의도를 함께 보존한다. */
+const JOURNAL_SQUAD_MARK_SCALE = 1.3;
+const JOURNAL_SQUAD_MARK = {
+  size: 104 * JOURNAL_SQUAD_MARK_SCALE,
+  // 가장 넓은 정사각 엠블럼의 복제 그림자도 본문 오른쪽 안전선 안에 남기는 중심 좌표다.
+  x: 320,
+  nameGap: 12,
+  metadataGap: 24,
+} as const;
 
 // 일지 원화는 정보보다 먼저 읽히지 않을 만큼 낮추고, 어두운 페이드는 본문 대비를 보존한다.
 const JOURNAL_ART_ALPHA = 0.18;
@@ -1030,153 +1034,184 @@ export class InfoManager {
     });
   }
 
-  /** 개체번호·프로젝트명·기원·발굴지·기록을 한 장에 모은 관찰 일지. */
+  /** 메타데이터·발굴 기록·복원 후 관찰 기록을 높이 기반으로 잇는 관찰 일지. */
   private openJournal(from: PopupSource): void {
     const def = this.currentDef;
     if (!def) return;
     const disclosure = getRelicCatalogDisclosure(def, this.ownedNow);
-    // 소속 이야기가 있는 개체는 그만큼 판을 늘린다. 같은 높이에 밀어 넣으면 기록 본문이
-    // 인터뷰 줄과 겹쳐 두 문단이 한 덩어리로 읽힌다.
-    const squadStory = disclosure.access === "full" && def.squadNote ? JOURNAL_SQUAD_STORY_HEIGHT : 0;
-    // 인터뷰 질문과 선택지가 기록 본문에 붙어 보이지 않도록 세로 여백을 확보한 일지 규격을 쓴다.
-    this.popups.open({ width: 880, height: 1140 + squadStory, title: "관찰 일지", tilt: -1.2, ...anchorOf(from) }, (body, close) => {
-      // 팝업 판보다 12px 안쪽인 같은 비대칭 칩 형태로 잘라, 직사각 원화 모서리가 홀로그램 판의
-      // 좌상단/우하단 사선 밖으로 튀어나오지 않게 한다. body 회전을 공유하므로 원화도 -1.2°를 따른다.
+    const journal = OBSERVATION_JOURNAL_SIZE;
+    const bodyLeft = -journal.body.width / 2;
+    // 상단 식별 정보는 라벨(회색)과 값(흰색)을 갈라 무엇이 이름표고 무엇이 실제 값인지
+    // 색으로 먼저 읽히게 한다 — 이름표와 같은 무게로 묻히면 "지금 보고 있는 개체가 정확히
+    // 무엇인지"가 느리게 읽힌다.
+    const identityLines: { label: string; value: string }[] = disclosure.access === "full"
+      ? [
+          { label: "개체번호", value: "NO." + disclosure.specimenNumber },
+          { label: "프로젝트", value: disclosure.projectName },
+          { label: "기원", value: disclosure.origin },
+          { label: "발굴지", value: disclosure.excavationSite },
+          ...(def.observationProfile ? [
+            { label: "기원 연대", value: def.observationProfile.originYear },
+            // 복원 연도는 저장된 경과 시간이 아니라 정적 도감의 세계관 나잇대만 단독으로 표시한다.
+            { label: "복원 연도", value: def.observationProfile.restorationYear },
+            { label: "성장 단계", value: `${def.observationProfile.lifeStage} · 키 ${def.observationProfile.height} · 몸무게 ${def.observationProfile.weight}` },
+          ] : []),
+        ]
+      : [
+          { label: "개체번호", value: "NO." + disclosure.specimenNumber },
+          { label: "프로젝트", value: "기록 없음" },
+          { label: "기원", value: "미상" },
+          { label: "발굴지", value: "미상" },
+        ];
+
+    // 텍스트를 먼저 만들어 실제 height를 얻는다. 이후 배치는 줄 수나 개체별 문단 길이를 추측하지 않는다.
+    const markBounds = factionMarkBounds(JOURNAL_SQUAD_MARK.size);
+    // 상단 정보는 확대된 표식의 실제 왼쪽 외곽(복제 그림자 포함) 전까지만 사용한다.
+    const metadataWidth = JOURNAL_SQUAD_MARK.x + markBounds.left - JOURNAL_SQUAD_MARK.metadataGap - bodyLeft;
+    const identity = this.buildJournalIdentity(identityLines, metadataWidth, journal.font.regular, journal.spacing.line);
+    const rawRecord = disclosure.access === "full" ? disclosure.record : def.catalogSummary + "\n\n상세 기록은 개체 획득 후 해제됩니다.";
+    const excavationRecord = withoutRepeatedProfileDetails(rawRecord, def.observationProfile?.height, def.observationProfile?.weight);
+    const excavation = this.keywords.layout(excavationRecord, { width: journal.body.width, size: journal.font.large, color: COLOR.inkDim, lineSpacing: journal.spacing.line });
+    // 다른 스쿼드를 향한 동경은 unlockRecord의 관찰 문장이 담당하므로, 여기서는 소속 메모만 그린다.
+    const squad = disclosure.access === "full" && def.squadNote
+      ? this.scene.add.text(0, 0, def.squadNote, textStyle({ role: "body", size: journal.font.small, color: COLOR.inkDim, lineSpacing: journal.spacing.compactLine, wrap: journal.body.width })).setOrigin(0, 0)
+      : undefined;
+    const observationHeading = this.scene.add.text(0, 0, "복원 후 관찰 기록", textStyle({ role: "emphasis", size: journal.font.regular, color: COLOR.ink })).setOrigin(0, 0);
+    // 이 판에는 가장 최근 관찰 기록 한 건만 둔다. 쌓인 전체 이력은 별도 레이어(관찰 기록)가
+    // 한 건씩 넘겨 보여 준다 — 매일 쌓이는 인터뷰를 전부 여기 밀어 넣으면 캐릭터 소개보다
+    // 로그가 더 길어진다.
+    const allEntries = observations.recordFor(def.id);
+    const entries = allEntries.slice(-1).reverse();
+    const observationCopy = entries.length
+      ? entries.map((entry) => `${entry.date}  ·  #${entry.personalityTag}\nQ. ${entry.question}\nA. ${entry.answer}\n발견  ${entry.discoveredHabit}`).join("\n\n")
+      : "아직 기록된 관찰이 없습니다.";
+    const observation = this.scene.add.text(0, 0, observationCopy, textStyle({ role: "body", size: entries.length ? journal.font.regular : journal.font.small, color: COLOR.ink, lineSpacing: journal.spacing.compactLine, wrap: journal.body.width })).setOrigin(0, 0);
+    // 링크 한 줄만큼 흐름 계산에 미리 더해 둔다 — 그러지 않으면 바로 아래 인터뷰 조작과 겹친다.
+    const historyLinkHeight = allEntries.length > 1 ? journal.spacing.compactLine + journal.font.small + 16 : 0;
+    const actionHeight = this.ownedNow ? OBSERVATION_INTERVIEW_LAYOUT.trigger.height : 0;
+    const flow = calculateObservationJournalFlow({
+      metadata: identity.height, excavation: excavation.height, squad: squad?.height ?? 0,
+      observationHeading: observationHeading.height, observation: observation.height + historyLinkHeight, action: actionHeight,
+    });
+
+    this.popups.open({ width: journal.popup.width, height: flow.popupHeight, title: "관찰 일지", titleSize: journal.font.title, tilt: journal.popup.tilt, ...anchorOf(from) }, (body, close) => {
+      const artWidth = journal.popup.width - journal.art.inset * 2;
+      const artHeight = flow.popupHeight - journal.art.inset * 2;
       if (this.scene.textures.exists("content-observation-journal")) {
-        // 팝업이 길어진 만큼 원화 클립도 함께 늘려 하단에 직사각 배경 끝이 드러나지 않게 한다.
-        const artWidth = 856; const artHeight = 1116 + squadStory;
         const journalMask = chipPoints(artWidth, artHeight, { bevel: { topLeft: artWidth * 0.14, topRight: 0, bottomRight: artWidth * 0.14, bottomLeft: 0 } });
-        // 세로 원화는 1:1 크기를 유지하되 원화와 팝업의 시각 중심을 맞춰 상·하단을 대칭으로 자른다.
-        const journalArt = addPopupBackgroundImage(this.scene, body, "content-observation-journal", {
-          x: 0, y: 0, width: artWidth, height: artHeight, maskShape: journalMask, fit: "native-center",
-        });
-        journalArt.image.setAlpha(JOURNAL_ART_ALPHA);
-        journalArt.fade.setAlpha(JOURNAL_TEXT_FADE_ALPHA);
-        // PopupLayer가 tilt와 등장 배율을 먼저 적용했으므로 첫 프레임부터 같은 칩 변환을 공유한다.
-        journalArt.syncMask();
+        const journalArt = addPopupBackgroundImage(this.scene, body, "content-observation-journal", { x: 0, y: 0, width: artWidth, height: artHeight, maskShape: journalMask, fit: "native-center" });
+        journalArt.image.setAlpha(JOURNAL_ART_ALPHA); journalArt.fade.setAlpha(JOURNAL_TEXT_FADE_ALPHA); journalArt.syncMask();
       }
-      // 소속 표식은 판 **안쪽** 우상단에 앉는다. 밖으로 내밀면 홀로그램 판의 실루엣이 깨져
-      // 표식이 판에 붙은 스티커처럼 보인다. 안에 두면 일지에 찍은 도장으로 읽힌다.
-      const markY = JOURNAL_SQUAD_MARK.y - squadStory / 2;
+
+      // 흐르는 본문만 별도 컨테이너에 담아, 화면 안전 높이를 넘을 때 판과 배경은 고정한 채 스크롤한다.
+      const content = this.scene.add.container(0, -flow.popupHeight / 2);
+      const y = (value: number): number => value;
+      identity.container.setPosition(bodyLeft, y(flow.metadataY)); content.add(identity.container);
+      content.add(drawHairline(this.scene, 0, y(flow.excavationDividerY), journal.body.width, { color: COLOR.accent, alpha: 0.35 }));
+      excavation.setPosition(bodyLeft, y(flow.excavationY)); content.add(excavation);
+      if (squad && flow.squadY !== undefined) { squad.setPosition(bodyLeft, y(flow.squadY)); content.add(squad); }
+      content.add(drawHairline(this.scene, 0, y(flow.observationDividerY), journal.body.width, { color: COLOR.accent, alpha: 0.35 }));
+      observationHeading.setPosition(bodyLeft, y(flow.observationHeadingY)); content.add(observationHeading);
+      observation.setPosition(bodyLeft, y(flow.observationY)); content.add(observation);
+      if (allEntries.length > 1) {
+        // 이 개체의 다른 날짜 기록은 여기 밀어 넣지 않고 전용 레이어에서 한 건씩 넘겨 본다.
+        const linkY = y(flow.observationY) + observation.height + journal.spacing.compactLine;
+        const link = this.scene.add.text(bodyLeft, linkY, `전체 기록 보기 (${allEntries.length}건)`, textStyle({ role: "emphasis", size: journal.font.small, color: COLOR.accentText })).setOrigin(0, 0);
+        content.add(link);
+        // 글자 자체보다 넉넉한 손끝 크기의 히트 영역을 따로 둔다 — 작은 글자 그대로 입력을
+        // 받으면 모바일에서 자주 빗나간다.
+        const linkHit = this.scene.add.rectangle(bodyLeft + link.width / 2, linkY + link.height / 2, link.width + 80, 96, 0xffffff, 0)
+          .setOrigin(0.5)
+          .setInteractive({ useHandCursor: true });
+        linkHit.on("pointerup", () => this.openObservationHistory(def, from));
+        content.add(linkHit);
+      }
+
+      // 소속 표식은 메타데이터 영역 안에만 앉혀 세 영역의 읽기 순서를 흐리지 않는다.
+      // 그림자의 위쪽 실제 외곽을 메타데이터 상단에 맞춰 제목 영역으로 번지지 않게 한다.
+      const markY = flow.metadataY - markBounds.top;
       const squadMark = addFactionMark(this.scene, JOURNAL_SQUAD_MARK.x, markY, def.squad, { size: JOURNAL_SQUAD_MARK.size });
-      if (squadMark) body.add(squadMark);
+      if (squadMark) content.add(squadMark);
+      if (disclosure.access === "full") content.add(this.scene.add.text(JOURNAL_SQUAD_MARK.x, markY + markBounds.bottom + JOURNAL_SQUAD_MARK.nameGap, SQUADS[def.squad].name, textStyle({ role: "display", size: journal.font.regular, color: COLOR.accentText, align: "center" })).setOrigin(0.5, 0));
 
-      // 상단 식별 정보는 라벨(회색)과 값(흰색)을 갈라 무엇이 이름표고 무엇이 실제 내용인지
-      // 색으로 먼저 읽히게 한다 — 잘 보여야 하는 값이 라벨과 같은 무게로 묻히지 않는다.
-      const identity: { label: string; value: string }[] = disclosure.access === "full"
-        ? [
-            { label: "개체번호", value: "NO." + disclosure.specimenNumber },
-            { label: "프로젝트", value: disclosure.projectName },
-            { label: "기원", value: disclosure.origin },
-            { label: "발굴지", value: disclosure.excavationSite },
-            ...(def.observationProfile ? [
-              { label: "기원 연대", value: def.observationProfile.originYear },
-              // 복원 연도는 저장된 경과 시간이 아니라 정적 도감의 세계관 나잇대만 단독으로 표시한다.
-              { label: "복원 연도", value: def.observationProfile.restorationYear },
-              { label: "성장 단계", value: `${def.observationProfile.lifeStage} · 키 ${def.observationProfile.height} · 몸무게 ${def.observationProfile.weight}` },
-            ] : []),
-          ]
-        : [
-            { label: "개체번호", value: "NO." + disclosure.specimenNumber },
-            { label: "프로젝트", value: "기록 없음" },
-            { label: "기원", value: "미상" },
-            { label: "발굴지", value: "미상" },
-          ];
-      const identityTop = -446 - squadStory / 2;
-      const identityRowHeight = 42;
-      identity.forEach((line, index) => {
-        const y = identityTop + index * identityRowHeight;
-        body.add(this.scene.add.text(-380, y, line.label, textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0, 0));
-        body.add(this.scene.add.text(-230, y, line.value, textStyle({ role: "body", size: 24, color: COLOR.ink })).setOrigin(0, 0));
-      });
-      // 소속은 엠블럼만으로는 이름을 말하지 못한다. 표식 아래에 스쿼드 이름을 짧게 붙인다.
-      if (disclosure.access === "full") {
-        // 스쿼드 이름은 설명이 아니라 **이름표**라 `display`로 두껍게 세운다. 뒤에 판이나 복제
-        // 그림자를 두지 않는다 — 엠블럼이 이미 제 어둠을 데리고 있어 겹치면 표식이 두 겹으로
-        // 보인다. 대신 엠블럼과 같은 강조색·같은 중심선에 맞춰 한 덩어리로 읽히게 한다.
-        body.add(this.scene.add
-          .text(JOURNAL_SQUAD_MARK.x, markY + JOURNAL_SQUAD_MARK.size / 2 + 12, SQUADS[def.squad].name,
-            textStyle({ role: "display", size: 24, color: COLOR.accentText, align: "center" }))
-          .setOrigin(0.5, 0));
-      }
-      // 상단 표본 설명과 일기 내용 사이에 넓은 숨 쉴 틈을 둔다. 줄 수가 개체마다 달라 실제로
-      // 그려진 높이에서 잰다 — 눈대중 상수는 표본 정보가 늘거나 줄면 다음 문단과 겹친다.
-      const recordDividerY = identityTop + identity.length * identityRowHeight + 18;
-      body.add(drawHairline(this.scene, 0, recordDividerY, 760, { color: COLOR.accent, alpha: 0.35 }));
-      const record = disclosure.access === "full" ? disclosure.record : def.catalogSummary + "\n\n상세 기록은 개체 획득 후 해제됩니다.";
-      // 관찰 내용은 잘 보여야 하는 본문이라 명시적으로 흰색을 쓴다.
-      const text = this.keywords.layout(record, { width: 760, size: 26, lineSpacing: 10, color: COLOR.ink });
-      text.setPosition(-380, recordDividerY + 42);
-      body.add(text);
-
-      // 소속에서의 이야기는 표본 기록 **바로 뒤에** 잇는다. 어느 무리에서 무엇을 하고 누구를
-      // 우러러보는지가 있어야 소속이 이름표가 아니라 성격이 된다. 기록 본문의 길이는 개체마다
-      // 다르므로 자리는 눈대중이 아니라 실제로 그려진 높이에서 잰다.
-      if (disclosure.access === "full" && def.squadNote) {
-        // 동경의 1순위는 늘 주인공이라 스쿼드 쪽은 "스쿼드 동경"으로 못 박아 둔다 — 그냥
-        // "동경"이라고만 적으면 본문이 말한 순서와 어긋난 두 문장이 나란히 서게 된다.
-        const admired = def.admiredSquad ? `\n스쿼드 동경  ${SQUADS[def.admiredSquad].name} — ${SQUADS[def.admiredSquad].duty}` : "";
-        body.add(this.scene.add
-          .text(-380, text.y + text.height + 26, `${def.squadNote}${admired}`,
-            textStyle({ role: "body", size: 22, color: COLOR.inkDim, lineSpacing: 8, wrap: 760 }))
-          .setOrigin(0, 0));
-      }
-
-      // 이 쪽지에는 가장 최근 관찰 기록 한 건만 둔다. 쌓인 전체 이력은 별도 레이어(관찰
-      // 기록)가 한 건씩 넘겨 보여 준다 — 매일 쌓이는 기록을 전부 여기 밀어 넣으면 캐릭터
-      // 소개보다 인터뷰 로그가 더 길어진다.
-      const allEntries = observations.recordFor(def.id);
-      const latest = sortedObservationHistory(allEntries)[0];
-      body.add(drawHairline(this.scene, 0, 108, 760, { color: COLOR.accent, alpha: 0.35 }));
-      body.add(this.scene.add.text(-380, 138, "관찰 인터뷰", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0));
-      let interviewCursor = 184;
-      if (!latest) {
-        body.add(this.scene.add.text(-380, interviewCursor, "아직 기록된 인터뷰가 없습니다.", textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0, 0));
-        interviewCursor += 30;
-      } else {
-        // 날짜·성향 태그는 부가 정보라 옅게, 실제 문답·발견 습성은 잘 보여야 하는 관찰
-        // 내용이라 희다.
-        body.add(this.scene.add.text(-380, interviewCursor, `${latest.date}  ·  #${latest.personalityTag}`, textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0, 0));
-        interviewCursor += 32;
-        const copy = `Q. ${latest.question}\nA. ${latest.answer}\n발견  ${latest.discoveredHabit}`;
-        const latestText = this.scene.add.text(-380, interviewCursor, copy, textStyle({ role: "body", size: 24, color: COLOR.ink, lineSpacing: 6 })).setOrigin(0, 0);
-        body.add(latestText);
-        interviewCursor += latestText.height + 14;
-        if (allEntries.length > 1) {
-          // 이 개체의 다른 날짜 기록은 여기 밀어 넣지 않고 전용 레이어에서 한 건씩 넘겨 본다.
-          const link = this.scene.add.text(-380, interviewCursor, `전체 기록 보기 (${allEntries.length}건)`, textStyle({ role: "emphasis", size: 21, color: COLOR.accentText })).setOrigin(0, 0);
-          body.add(link);
-          // 글자 자체보다 넉넉한 손끝 크기의 히트 영역을 따로 둔다 — 작은 글자 그대로 입력을
-          // 받으면 모바일에서 자주 빗나간다.
-          const linkHit = this.scene.add.rectangle(-380 + link.width / 2, interviewCursor + link.height / 2, link.width + 80, 96, 0xffffff, 0)
-            .setOrigin(0.5)
-            .setInteractive({ useHandCursor: true });
-          linkHit.on("pointerup", () => this.openObservationHistory(def, from));
-          body.add(linkHit);
-          interviewCursor += 46;
+      if (this.ownedNow) {
+        const utcDate = new Date().toISOString().slice(0, 10);
+        const interview = OBSERVATION_INTERVIEW_LAYOUT;
+        const canStart = observations.canStart(def.id, utcDate);
+        const trigger = this.scene.add.container(0, flow.actionY + actionHeight / 2);
+        trigger.add(drawLayer(this.scene, 0, 0, slantedRect(interview.trigger.width, interview.trigger.height, interview.trigger.bevel), { fill: canStart ? 0x141a22 : 0x10141a, alpha: canStart ? 0.92 : 0.58, edge: COLOR.accent, edgeAlpha: canStart ? 0.4 : 0.16 }));
+        trigger.add(this.scene.add.text(0, 0, canStart ? "관찰 인터뷰 열기" : "오늘의 관찰 인터뷰 완료", textStyle({ role: "emphasis", size: journal.font.large, color: canStart ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5));
+        let interviewState: ObservationInterviewPanelState = { open: false, completedToday: !canStart };
+        if (canStart) {
+          const hit = this.scene.add.rectangle(0, 0, interview.trigger.width, interview.trigger.height, 0xffffff, 0).setInteractive({ useHandCursor: true });
+          hit.on("pointerdown", () => trigger.setScale(1.06)); hit.on("pointerout", () => { if (!interviewState.open) trigger.setScale(1); });
+          hit.on("pointerup", () => {
+            trigger.setScale(1); if (interviewState.open) { this.popups.closeTop(); return; }
+            interviewState = observationInterviewPanelState(interviewState, "toggle");
+            const question = observationQuestionForRelicAndDate(def.id, utcDate);
+            this.popups.open({ ...interview.popup, title: "관찰 인터뷰", closeOnBackdrop: false, dim: true, dimAlpha: 0.25, onClose: () => { interviewState = observationInterviewPanelState(interviewState, "close"); trigger.setScale(1); } }, (panel, closeInterview) => {
+              panel.add(this.scene.add.text(interview.question.x, interview.question.y, question.prompt, textStyle({ role: "emphasis", size: journal.font.question, color: COLOR.accentText, wrap: interview.question.width })).setOrigin(0, 0));
+              question.choices.forEach((choice, index) => {
+                const choiceButton = this.scene.add.container(0, interview.choice.firstY + index * interview.choice.step);
+                choiceButton.add(drawLayer(this.scene, 0, 0, slantedRect(interview.choice.width, interview.choice.height, interview.choice.bevel), { fill: 0x141a22, alpha: 0.94, edge: COLOR.accent, edgeAlpha: 0.42 }));
+                choiceButton.add(this.scene.add.text(0, 0, choice.label, textStyle({ role: "emphasis", size: journal.font.large })).setOrigin(0.5));
+                const choiceHit = this.scene.add.rectangle(0, 0, interview.choice.width, interview.choice.height, 0xffffff, 0).setInteractive({ useHandCursor: true });
+                choiceHit.on("pointerdown", () => choiceButton.setScale(1.06)); choiceHit.on("pointerout", () => choiceButton.setScale(1));
+                choiceHit.on("pointerup", () => { observations.complete(def.id, utcDate, choice.id); interviewState = observationInterviewPanelState(interviewState, "complete"); closeInterview(); close(); this.openJournal(from); });
+                choiceButton.add(choiceHit); panel.add(choiceButton);
+              });
+            });
+          });
+          trigger.add(hit);
         }
+        content.add(trigger);
       }
+      body.add(content);
 
-      // 초기 버전은 공용 질문을 일지에서 바로 답하게 해 별도 대형 화면 제작을 피한다.
-      const utcDate = new Date().toISOString().slice(0, 10);
-      if (this.ownedNow && observations.canStart(def.id, utcDate)) {
-        // 화면 표시와 완료 시 저장 검증이 같은 렐릭별 결정 함수를 공유한다.
-        const question = observationQuestionForRelicAndDate(def.id, utcDate);
-        // 저장된 문답(있을 때)과 오늘의 질문 사이에도 독립된 문단으로 읽힐 만큼 간격을 둔다.
-        const y = interviewCursor + 16;
-        body.add(this.scene.add.text(-380, y, "오늘의 질문  " + question.prompt, textStyle({ role: "emphasis", size: 23, color: COLOR.accentText })).setOrigin(0, 0));
-        question.choices.forEach((choice, index) => {
-          // 두꺼운 선택 면과 12px의 버튼 사이 간격으로 각 답변을 별도 조작으로 또렷하게 구분한다.
-          const buttonY = y + 70 + index * 66;
-          body.add(drawLayer(this.scene, 0, buttonY, slantedRect(740, 54, 12), { fill: 0x141a22, alpha: 0.92, edge: COLOR.accent, edgeAlpha: 0.4 }));
-          // 답변은 버튼 한가운데에 두고 글자 크기와 강조 두께를 함께 높여 빠르게 비교하게 한다.
-          body.add(this.scene.add.text(0, buttonY, choice.label, textStyle({ role: "emphasis", size: 26 })).setOrigin(0.5));
-          const hit = this.scene.add.rectangle(0, buttonY, 740, 54, 0xffffff, 0).setInteractive({ useHandCursor: true });
-          hit.on("pointerup", () => { observations.complete(def.id, utcDate, choice.id); close(); this.openJournal(from); this.refreshGrowth(); });
-          body.add(hit);
-        });
+      if (flow.scrollable) {
+        // 휠과 손가락 드래그가 같은 clamp를 써 콘텐츠가 위아래 안전 여백 밖으로 빠지지 않는다.
+        const viewportTop = -flow.popupHeight / 2 + journal.body.top;
+        const viewport = this.scene.add.rectangle(0, viewportTop + flow.viewportHeight / 2, journal.body.width, flow.viewportHeight, 0xffffff, 0.001).setInteractive({ useHandCursor: true });
+        const minY = flow.popupHeight / 2 - flow.contentHeight;
+        const maxY = -flow.popupHeight / 2;
+        const move = (delta: number): void => { content.setY(Phaser.Math.Clamp(content.y + delta, minY, maxY)); };
+        // GeometryMask는 화면 좌표를 쓰므로 팝업 중심을 더한다. 본문만 잘리고 고정 배경·제목은 남는다.
+        const maskGraphics = this.scene.make.graphics({ x: body.x, y: body.y });
+        maskGraphics.fillStyle(0xffffff).fillRect(-journal.body.width / 2, viewportTop, journal.body.width, flow.viewportHeight);
+        content.setMask(maskGraphics.createGeometryMask());
+        body.once(Phaser.GameObjects.Events.DESTROY, () => maskGraphics.destroy());
+        viewport.on("wheel", (_pointer: Phaser.Input.Pointer, _dx: number, dy: number) => move(-dy));
+        let lastY = 0;
+        viewport.on("pointerdown", (pointer: Phaser.Input.Pointer) => { lastY = pointer.y; });
+        viewport.on("pointermove", (pointer: Phaser.Input.Pointer) => { if (pointer.isDown) { move(pointer.y - lastY); lastY = pointer.y; } });
+        body.add(viewport);
       }
     });
+  }
+
+  /**
+   * 상단 식별 정보 한 줄씩을 라벨(회색)·값(흰색) 두 텍스트로 그린다.
+   *
+   * 값이 길어 줄바꿈되는 경우까지 감안해 각 줄의 실제 렌더 높이를 재고 누적한다 — 눈대중
+   * 상수는 "성장 단계" 줄처럼 긴 값이 두 줄로 접히는 순간 다음 구분선과 겹친다.
+   */
+  private buildJournalIdentity(
+    lines: readonly { label: string; value: string }[],
+    width: number,
+    fontSize: number,
+    lineSpacing: number,
+  ): { container: Phaser.GameObjects.Container; height: number } {
+    const container = this.scene.add.container(0, 0);
+    const labelWidth = 150;
+    let cursor = 0;
+    lines.forEach((line, index) => {
+      if (index > 0) cursor += lineSpacing;
+      const label = this.scene.add.text(0, cursor, line.label, textStyle({ role: "body", size: fontSize, color: COLOR.inkDim })).setOrigin(0, 0);
+      const value = this.scene.add.text(labelWidth, cursor, line.value, textStyle({ role: "body", size: fontSize, color: COLOR.ink, wrap: width - labelWidth })).setOrigin(0, 0);
+      container.add([label, value]);
+      cursor += Math.max(label.height, value.height);
+    });
+    return { container, height: cursor };
   }
 
   /**
@@ -1867,6 +1902,7 @@ export class InfoManager {
    * 다시 하지 않아야 지도·편성·전투가 같은 수치를 보여 준다.
    */
   showEnemy(def: RelicDef, options: { level?: number; live?: Fighter } = {}): void {
+    // 보스도 호출자가 지정한 표시 레벨을 공개 프로필에 보존하며 일반 적의 기본 LV.1은 유지한다.
     this.publicProfile = {
       relicId: def.id,
       level: options.level ?? 1,

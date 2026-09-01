@@ -481,7 +481,11 @@ export class BattleScene extends Phaser.Scene {
       const infoHit = fighter.side === "enemy"
         ? this.add.rectangle(fighter.x, fighter.y - unitHeight / 2, 190 * fighter.bodyScale, unitHeight + 70, 0xffffff, 0)
           .setInteractive({ useHandCursor: true })
-          .on("pointerup", () => this.info.showEnemy(fighter.def, { live: fighter }))
+          .on("pointerup", () => {
+            // 불사 폰토스는 런타임 Fighter가 아니라 지도와 같은 유한 표시 스냅샷을 상세창에 넘긴다.
+            const displayDef = this.battleInput.mode === "expeditionBoss" ? getExpeditionNodeEnemies("boss", 20)[0] : fighter.def;
+            this.info.showEnemy(displayDef, { live: fighter, ...(this.battleInput.mode === "expeditionBoss" ? { level: 20 } : {}) });
+          })
         : undefined;
       // 폭주 필터. 스킬 아이콘과 같은 속성·직군 색을 그대로 쓰며, 발광이 아니라 몸에 입힌다.
       const feverTint = skillArtTint(fighter.def.element, fighter.def.role);

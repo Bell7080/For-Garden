@@ -289,14 +289,17 @@ test("토리카 폭주 설명은 성장 능력치로 환산된 수치를 표시�
   await page.screenshot({ path: `test-results/${test.info().project.name}-torika-ferocity-info-1080x1920.png`, fullPage: true });
 });
 
-test("관찰 일지에서 오늘의 질문과 발견 기록 영역을 확인한다", async ({ page }) => {
-  // 기준 해상도에서 기존 두루마리 버튼으로 인터뷰가 자연스럽게 이어지는지 시각 회귀를 남긴다.
+test("관찰 일지의 단일 조작에서 질문과 모든 답변을 한 선택판으로 연다", async ({ page }) => {
+  // 기준 해상도에서 일지는 질문을 직접 펼치지 않고 하단 조작 하나만 남기는지 기록한다.
   await page.setViewportSize({ width: BASE_WIDTH, height: BASE_HEIGHT });
   await enterParty(page);
   await longPress(page, ...TORIKA);
   await expect.poll(() => infoOpen(page)).toBe(true);
   await tap(page, 268, 300);
   await page.screenshot({ path: `test-results/${test.info().project.name}-observation-journal.png`, fullPage: true });
+  // 앵커에서 화면 안으로 보정된 일지의 하단 조작을 눌러 단일 인터뷰 선택판도 시각 회귀로 남긴다.
+  await tap(page, BASE_WIDTH / 2, 1735);
+  await page.screenshot({ path: `test-results/${test.info().project.name}-observation-interview-popup.png`, fullPage: true });
 });
 
 test("실시간 자동 전투는 입력 없이 서로 붙어 체력을 깎는다", async ({ page }) => {

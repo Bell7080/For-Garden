@@ -6,11 +6,16 @@ import { COLOR, textStyle } from "./theme";
 import { HoloBar } from "./holo";
 import { BattleHealthBar } from "./BattleHealthBar";
 import type { HealthChangeCause } from "./unitHealthBarState";
-import { PortraitCard, relicCardTint } from "./PortraitCard";
+import { PortraitCard, relicCardTint, type PortraitCardMaskOverlay } from "./PortraitCard";
 import { BATTLE_PROFILE_LAYOUT as L } from "./battleStatusLayout";
 import { skillArtFor, skillArtTint, type SkillArtSlot } from "./skillArt";
 import { FALLBACK_SKILL_ICON } from "./skillIcons";
 import { BattleBuffChip } from "./BattleBuffChip";
+
+/** 카드 전체를 덮고도 가장 먼 모서리까지 닿는 충전 부채꼴 반지름이다. */
+const CHARGE_VEIL_RADIUS = 240;
+/** 머리 복제의 최종 알파도 `sourcePixelAlpha × CHARGE_VEIL_ALPHA`가 되게 하는 합성 계수다. */
+export const CHARGE_VEIL_ALPHA = 0.58;
 
 /** 씬은 코어 결과에 제공자 정의만 붙이고, 액자 선택·좌표·입력·파괴는 프리팹에 맡긴다. */
 export interface BattleBuffRenderModel {
@@ -52,6 +57,8 @@ export class BattleProfile extends Phaser.GameObjects.Container {
   public readonly ferocityBar: HoloBar;
   public readonly ferocityLabel: Phaser.GameObjects.Text;
   public readonly charge: Phaser.GameObjects.Graphics;
+  /** 몸통 기하 면과 원화 알파 머리 복제를 같은 진행률로 묶는 카드 공개 API 결과다. */
+  private readonly chargeOverlay: PortraitCardMaskOverlay;
   /** 버프 액자의 표시 객체를 한곳에 귀속해 프로필 제거 시 함께 정리한다. */
   public readonly buffContainer: Phaser.GameObjects.Container;
   public readonly readOnly: boolean;
@@ -71,11 +78,10 @@ export class BattleProfile extends Phaser.GameObjects.Container {
       tint: relicCardTint(options.relic), label: options.relic.name, level: options.level,
       sub: options.sub, rarity: options.relic.rarity, stars: options.stars,
     });
-    // 궁극기 가림막은 카드 **몸통**(윗변이 닫힌 칩) 모양만 덮는다. 카드를 통째로 BitmapMask로
-    // 쓰면 카드 안의 기하 마스크와 겹쳐 가림막이 통째로 사라진다 — 시계 방향 연출이 보이지
-    // 않던 원인이다. 몸통 실루엣은 그림이 채워진 자리와 같으므로 결과는 같고 안전하다.
-    this.charge = scene.add.graphics();
-    this.charge.setMask(this.card.createBodyMask());
+    // 몸통은 닫힌 칩 기하를 쓰고 돌출 머리는 원화 알파 복제를 쓴다. 카드 전체 도형 하나를
+    // 칠하면 머리 옆 투명 공간까지 검은 면이 되므로 두 표시를 카드 공개 API에서만 묶는다.
+    this.chargeOverlay = this.card.createMaskOverlay(0x060a10, CHARGE_VEIL_ALPHA, CHARGE_VEIL_RADIUS);
+    this.charge = this.chargeOverlay.body;
     const label = (baselineY: number, color: string) => scene.add.text(-L.barWidth / 2, baselineY, "", textStyle({ role: "display", size: 26, color }))
       .setOrigin(0, 1).setShadow(3, 4, "#05070a", 0, true, true);
     this.hpLabel = label(L.hpTextBaselineY, COLOR.hpText);
@@ -85,7 +91,7 @@ export class BattleProfile extends Phaser.GameObjects.Container {
     this.ferocityLabel = label(L.ferocityTextBaselineY, COLOR.ferocityText);
     this.ferocityBar = new HoloBar(scene, 0, L.ferocityBarY, L.barWidth, L.ferocityBarHeight, { color: COLOR.ferocityLow, outline: true, ticks: 3 });
     this.buffContainer = scene.add.container(0, 0);
-    this.add([this.glow, this.sweep, this.card, this.charge, this.hpLabel, this.ferocityLabel, this.buffContainer]);
+    this.add([this.glow, this.sweep, this.card, this.chargeOverlay.display, this.hpLabel, this.ferocityLabel, this.buffContainer]);
     // HoloBar는 홈·채움·눈금을 묶는 래퍼이므로 표시 객체 모두를 같은 컨테이너에 귀속한다.
     this.battleHpBar.addTo(this);
     this.ferocityBar.addTo(this);
@@ -116,6 +122,12 @@ export class BattleProfile extends Phaser.GameObjects.Container {
 
   /** 피해 잔상·게이지 확대를 프레임 시간으로 진행하며 카드 위치는 고정한다. */
   public stepHealth(deltaMs: number): this { this.battleHpBar.step(deltaMs); return this; }
+
+  /** 전투 씬이 도형 둘을 따로 칠하지 않도록 몸통·머리의 충전 가림막을 원자적으로 갱신한다. */
+  public setChargeRatio(ratio: number): this {
+    this.chargeOverlay.setRatio(ratio);
+    return this;
+  }
 
   /**
    * 코어가 고른 활성 버프만 받아 액자의 전체 생명주기를 동기화한다.

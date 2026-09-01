@@ -1784,6 +1784,7 @@ export class InfoManager {
    * 다시 하지 않아야 지도·편성·전투가 같은 수치를 보여 준다.
    */
   showEnemy(def: RelicDef, options: { level?: number; live?: Fighter } = {}): void {
+    // 보스도 호출자가 지정한 표시 레벨을 공개 프로필에 보존하며 일반 적의 기본 LV.1은 유지한다.
     this.publicProfile = {
       relicId: def.id,
       level: options.level ?? 1,

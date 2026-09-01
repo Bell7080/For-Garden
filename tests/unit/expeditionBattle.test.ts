@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { battleHeaderText, createExpeditionSkirmishConfig, expeditionBattleResults, normalizeBattleSceneInput, type BattleSceneInputDto, type ExpeditionBattleInputDto, type ExpeditionBossBattleInputDto } from "../../src/core/expeditionBattle";
+import { battleHeaderText, createExpeditionBossSkirmishConfig, createExpeditionSkirmishConfig, expeditionBattleResults, normalizeBattleSceneInput, type BattleSceneInputDto, type ExpeditionBattleInputDto, type ExpeditionBossBattleInputDto } from "../../src/core/expeditionBattle";
 import { createSkirmish, spawnSpots, skirmishRelicResults, type Arena } from "../../src/core/skirmish";
 import { EXPEDITION_COMBAT_BALANCE } from "../../src/data/expedition";
 import { getRelic } from "../../src/data/relics";
+import { getExpeditionNodeEnemies } from "../../src/data/expeditionEnemies";
 
 // 실제 씬과 같은 안전 영역으로 5기 배치의 비겹침까지 순수 규칙에서 검증한다.
 const ARENA: Arena = { left: 130, right: 950, top: 600, bottom: 1360 };
@@ -69,6 +70,20 @@ describe("전투 씬 입력 정규화 회귀", () => {
     relics: input("normal").relics, augments: input("normal").augments,
     requestId: "request-1", settlementId: "settlement-1",
   };
+
+  it("지도와 전투가 같은 유한 폰토스 표시 스탯을 보존하고 불사는 Fighter 계약으로 처리한다", () => {
+    const [mapPreview] = getExpeditionNodeEnemies("boss", 20);
+    const config = createExpeditionBossSkirmishConfig(bossInput, players, [mapPreview]);
+    const state = createSkirmish(config.playerDefs, config.enemyDefs, ARENA, {}, {}, config);
+    const fighter = state.fighters.find(({ side }) => side === "enemy")!;
+    // 상세창은 이 지도 스냅샷과 LV.20을 사용하므로 MAX_SAFE_INTEGER가 어느 표시 경로에도 없다.
+    expect(config.enemyDefs[0].stats).toEqual(mapPreview.stats);
+    expect(fighter.def.stats).toEqual(mapPreview.stats);
+    expect(fighter.maxHp).toBe(mapPreview.stats.hp);
+    expect(fighter.maxHp).not.toBe(Number.MAX_SAFE_INTEGER);
+    expect(fighter.immortal).toBe(true);
+    expect(20).toBe(bossInput.floor);
+  });
 
   it.each([
     ["원정 일반 전투 → 스토리 전투", input("normal"), undefined],

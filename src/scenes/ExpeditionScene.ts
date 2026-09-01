@@ -274,7 +274,8 @@ export class ExpeditionScene extends Phaser.Scene {
     // 전투 노드는 스토리 지도처럼 적 정보를 먼저 열며, 팝업의 출전 버튼 전에는 상태를 바꾸지 않는다.
     if (["normal", "elite", "horde", "boss"].includes(node.type)) {
       const names: Record<string, string> = { normal: "일반 조우", elite: "정예 조우", horde: "군집 조우", boss: "원정 보스" };
-      const level = expeditionEnemyLevel(node.type, node.floor);
+      // 최종 보스는 높은 고정 표시 스탯을 유지하되 정보 등급은 기획 표기인 LV.20으로 통일한다.
+      const level = node.type === "boss" && node.floor === 20 ? 20 : expeditionEnemyLevel(node.type, node.floor);
       const enemies = getExpeditionEncounterEnemies(node.type, node.floor);
       this.selectedNode = node; this.startButton?.setEnabled(true);
       // 선택 세대가 바뀌면 프리팹이 기존 SD와 늦게 끝난 로드 요청을 함께 폐기한다.

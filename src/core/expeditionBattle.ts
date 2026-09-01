@@ -55,14 +55,15 @@ export function createExpeditionSkirmishConfig(input: ExpeditionBattleInputDto, 
   };
 }
 
-/** 20층도 공용 난전에 넣되 보스 HP만 표시상 충분히 크게 만들어 사망 연출이 끼어들지 않게 한다. */
+/** 20층도 공용 난전에 넣고, 생존은 수치 센티널이 아닌 `SkirmishState.boss`의 불사 계약에 맡긴다. */
 export function createExpeditionBossSkirmishConfig(input: ExpeditionBossBattleInputDto, playerDefs: readonly RelicDef[], enemyPool: readonly RelicDef[]): ExpeditionSkirmishConfig & { boss: { phases: SkirmishBossPhase[]; limitSeconds: number } } {
   if (!enemyPool[0]) throw new RangeError("원정 보스 원본이 비어 있습니다.");
   const activeIds = new Set(input.relics.filter(({ alive, currentHp }) => alive && currentHp > 0).map(({ relicId }) => relicId));
   const boss = enemyPool[0];
   return {
     playerDefs: playerDefs.filter(({ id }) => activeIds.has(id)),
-    enemyDefs: [{ ...boss, stats: { ...boss.stats, hp: Number.MAX_SAFE_INTEGER } }],
+    // 표시/밸런스 정의를 그대로 전투원에 보존해 상세창이나 로그가 센티널 HP를 읽지 않게 한다.
+    enemyDefs: [{ ...boss, stats: { ...boss.stats } }],
     playerInitialStates: input.relics.filter(({ relicId }) => activeIds.has(relicId)),
     augmentEffects: expeditionBattleEffects(input.augments),
     enemyBodyScale: 1.25,

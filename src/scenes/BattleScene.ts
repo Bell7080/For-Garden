@@ -84,14 +84,6 @@ const PROFILE_TOP = 1430;
 // 전장 아래쪽에 서므로 SD·체력 바보다 앞에 둔다. 컷인(900)보다는 뒤라 연출을 가리지 않는다.
 const BATTLE_CONTROLS = { rowY: 1360, rightX: BASE_WIDTH - 130, speedX: BASE_WIDTH - 335, stackGap: 92, depth: 320 } as const;
 
-/**
- * 카드를 덮는 궁극기 가림막.
- *
- * 반지름은 300 카드의 모서리까지 덮을 만큼이고, 진하기는 **비쳐 보일 만큼**만이다. 새까맣게
- * 덮으면 누가 서 있는지조차 읽히지 않아 "아직 못 쓴다"가 아니라 "빈 칸"으로 보인다.
- */
-const CHARGE_VEIL_RADIUS = 240;
-const CHARGE_VEIL_ALPHA = 0.58;
 /** 아직 다 차지 않은 카드의 불투명도. 다 차면 1이 되어 그림이 온전히 선다. */
 const CHARGE_CARD_ALPHA = 0.62;
 
@@ -1048,7 +1040,7 @@ export class BattleScene extends Phaser.Scene {
       // 궁극기는 숫자가 아니라 그림이 말한다. 쓸 수 있게 되기까지의 몫만큼 어둠이 걷힌다.
       const ready = canFireUltimate(this.state, fighter);
       const charge = alive ? Math.min(1, fighter.energy / fighter.def.ultimate.cost) : 0;
-      this.paintCharge(profile, charge);
+      profile.prefab.setChargeRatio(charge);
       // 아직이면 카드째 반투명하다. 뒤가 비쳐야 "잠깐 꺼 둔 칸"으로 읽히고, 다 차면 또렷해진다.
       profile.card.setAlpha(alive ? (charge >= 1 ? 1 : CHARGE_CARD_ALPHA) : 0.45);
       // 연출 중에는 사용자 외 모든 카드가 잠겼다는 것을 명도로 즉시 알린다.
@@ -1140,24 +1132,6 @@ export class BattleScene extends Phaser.Scene {
     }
   }
 
-  /**
-   * 카드를 덮은 어둠을 지금 충전량만큼 걷어낸다.
-   *
-   * 아직 차지 않은 몫을 **시계 방향의 부채꼴**로 남긴다. 12시에서 시작해 시곗바늘을 따라
-   * 걷히므로, 얼마나 남았는지가 밝아진 넓이로 읽힌다. 다 차면 아무것도 덮지 않는다.
-   */
-  private paintCharge(profile: ProfileView, ratio: number): void {
-    profile.charge.clear();
-    if (ratio >= 1) return;
-    profile.charge.fillStyle(0x060a10, CHARGE_VEIL_ALPHA);
-    // 0일 때는 부채꼴 대신 원이다. 시작각과 끝각이 같으면 아무것도 그려지지 않는다.
-    if (ratio <= 0) profile.charge.fillCircle(0, 0, CHARGE_VEIL_RADIUS);
-    else {
-      profile.charge.slice(0, 0, CHARGE_VEIL_RADIUS, Phaser.Math.DegToRad(-90 + ratio * 360), Phaser.Math.DegToRad(270), false);
-      profile.charge.fillPath();
-    }
-  }
-
   /** 준비 상태가 바뀔 때만 연출을 갈아 끼운다. 매 프레임 트윈을 다시 만들지 않는다. */
   private setUltimateReady(profile: ProfileView, ready: boolean): void {
     profile.ready = ready;
@@ -1197,6 +1171,8 @@ export class BattleScene extends Phaser.Scene {
       elapsed: Math.round(this.state.elapsed * 10) / 10,
       playerOrder: aliveFighters(this.state, "player").map((fighter) => fighter.def.name),
       ultimateReady: this.playerFighters().filter((fighter) => canFireUltimate(this.state, fighter)).map((fighter) => fighter.def.name),
+      // 렉시아의 치우친 얼굴과 스피나의 큰 돌출 머리를 같은 프레임에서 고정할 수 있게 읽기만 노출한다.
+      chargeRatios: this.playerFighters().map((fighter) => Math.min(1, fighter.energy / fighter.def.ultimate.cost)),
       playerHp: teamHp(this.state, "player"),
       enemyHp: teamHp(this.state, "enemy"),
       speed: this.battleSpeed,

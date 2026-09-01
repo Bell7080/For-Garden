@@ -47,6 +47,33 @@ export interface PortraitCardOptions {
   selectedOverlayAlpha?: number;
 }
 
+/** 카드 몸통과 원화 알파를 보존한 돌출 머리를 한 상태값으로 갱신하는 공개 오버레이다. */
+export interface PortraitCardMaskOverlay {
+  /** 호출 화면이 카드 바로 뒤 레이어에 넣는 표시 컨테이너다. */
+  readonly display: Phaser.GameObjects.Container;
+  /** 트윈처럼 표시 객체 알파를 직접 건드려야 하는 기존 연출을 위한 몸통 면이다. */
+  readonly body: Phaser.GameObjects.Graphics;
+  /** 12시부터 시계 방향으로 걷히는 비율을 몸통과 머리에 동시에 적용한다. */
+  setRatio(ratio: number): void;
+}
+
+interface PortraitPlacement {
+  key: string;
+  x: number;
+  y: number;
+  scale: number;
+  crop: { x: number; y: number; width: number; height: number };
+}
+
+interface ManagedPortraitOverlay extends PortraitCardMaskOverlay {
+  color: number;
+  alpha: number;
+  radius: number;
+  ratio: number;
+  head?: Phaser.GameObjects.Image;
+  headMask: Phaser.GameObjects.Graphics;
+}
+
 /** 칩 바탕. 검은 유리에 가깝게 두고 원화가 빛을 담당한다. */
 const CHIP_FILL = 0x161a20;
 const SILHOUETTE = 0x0b0d10;
@@ -111,6 +138,8 @@ export class PortraitCard extends Phaser.GameObjects.Container {
   private readonly bodyHeight: number;
   private readonly overhang: number;
   private readonly chipShape: number[];
+  /** 돌출 머리만 통과시키는 사다리꼴 좌표를 동적 부채꼴도 공유한다. */
+  private readonly headShape: number[];
   /** 머리 홈까지 열린 실루엣. 카드 전체를 덮어야 하는 표시가 이 모양을 쓴다. */
   private readonly portraitShape: number[];
   private readonly portraitMask: Phaser.GameObjects.Graphics;
@@ -126,6 +155,9 @@ export class PortraitCard extends Phaser.GameObjects.Container {
   private readonly shadeHeight: number;
   private selected = false;
   private disposed = false;
+  /** 원화가 비동기로 도착하기 전에도 오버레이 API를 만들 수 있도록 요청을 보관한다. */
+  private readonly managedOverlays: ManagedPortraitOverlay[] = [];
+  private portraitPlacement?: PortraitPlacement;
 
   constructor(scene: Phaser.Scene, x: number, y: number, options: PortraitCardOptions) {
     super(scene, x, y);
@@ -200,12 +232,13 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     // 원화보다 넓게 남아 머리 옆에 검은 삼각형이 생긴다.
     const notchTop = -this.bodyHeight / 2 - this.overhang;
     const notchBottom = -this.bodyHeight / 2;
-    this.notchMask.fillPoints(toGeomPoints([
+    this.headShape = [
       -headWindow.topWidth / 2 + headWindow.topOffsetX, notchTop,
       headWindow.topWidth / 2 + headWindow.topOffsetX, notchTop,
       headWindow.width / 2 + headWindow.offsetX, notchBottom,
       -headWindow.width / 2 + headWindow.offsetX, notchBottom,
-    ]), true);
+    ];
+    this.notchMask.fillPoints(toGeomPoints(this.headShape), true);
 
     // 인물 뒤에 깔리는 배경 원화. 빈 색면만 두면 카드가 심심하고, 그대로 두면 인물보다
     // 먼저 읽힌다. 그래서 **등급색으로 물들여** 한 겹 눌러 둔다 — 색은 여전히 등급이 정하고
@@ -315,6 +348,8 @@ export class PortraitCard extends Phaser.GameObjects.Container {
       this.portraitMask.destroy();
       this.bodyMask.destroy();
       this.notchMask.destroy();
+      // 마스크 그래픽은 display 컨테이너 밖에 있으므로 카드가 생명주기를 직접 끝낸다.
+      for (const overlay of this.managedOverlays) overlay.headMask.destroy();
     });
     void this.loadPortrait().catch(() => {
       if (this.disposed) return;
@@ -432,6 +467,13 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     }
 
     this.portraits.push(shadow, portrait);
+    // 복제본은 원본 텍스처의 픽셀 알파를 그대로 사용한다. 따라서 복제본의 표시 알파 A를
+    // 곱하면 최종 알파는 정확히 `sourcePixelAlpha × A`이고, 투명한 머리 주변은 계속 0이다.
+    this.portraitPlacement = {
+      key, x: originX, y: originY, scale: card.scale,
+      crop: { x: card.cropX, y: card.cropY, width: card.cropWidth, height: card.cropHeight },
+    };
+    for (const overlay of this.managedOverlays) this.attachOverlayHead(overlay);
     // 칩 바로 위, 아래 어둠보다 아래에 끼운다. 자리를 숫자로 박아 두면 발광 같은 레이어가
     // 하나 늘 때마다 그림이 칩 밑으로 숨는다. 칩을 기준으로 찾는다.
     const above = this.getIndex(this.backdrop ?? this.chip) + 1;
@@ -450,12 +492,75 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     return this.bodyMask.createGeometryMask();
   }
 
+  /**
+   * 몸통 기하 면과 돌출 머리의 실제 원화 알파 복제를 함께 제공한다.
+   *
+   * 단순한 홈 도형을 검게 칠하지 않는다. 머리 복제에는 텍스처 알파가 먼저 적용되고 `alpha`가
+   * 명시적으로 곱해지므로 투명 픽셀에는 어떤 색도 생기지 않는다.
+   */
+  public createMaskOverlay(color: number, alpha: number, radius: number): PortraitCardMaskOverlay {
+    const display = this.scene.add.container(0, 0);
+    const body = this.scene.add.graphics().setMask(this.createBodyMask());
+    const headMask = this.scene.make.graphics({});
+    display.add(body);
+    const overlay: ManagedPortraitOverlay = {
+      display, body, headMask, color, alpha: Phaser.Math.Clamp(alpha, 0, 1), radius,
+      ratio: 0,
+      setRatio: (ratio: number) => this.paintMaskOverlay(overlay, ratio),
+    };
+    this.managedOverlays.push(overlay);
+    if (this.portraitPlacement) this.attachOverlayHead(overlay);
+    this.paintMaskOverlay(overlay, 0);
+    return overlay;
+  }
+
+  /** 실제 원화와 같은 crop/scale의 검정 복제본을 오버레이에 한 번만 붙인다. */
+  private attachOverlayHead(overlay: ManagedPortraitOverlay): void {
+    if (overlay.head || !this.portraitPlacement || this.disposed) return;
+    const placement = this.portraitPlacement;
+    const head = this.scene.add.image(placement.x, placement.y, placement.key)
+      .setOrigin(0, 0).setScale(placement.scale).setTint(overlay.color).setAlpha(overlay.alpha);
+    head.setCrop(placement.crop.x, placement.crop.y, placement.crop.width, placement.crop.height);
+    head.setMask(overlay.headMask.createGeometryMask());
+    overlay.head = head;
+    overlay.display.add(head);
+    this.paintMaskOverlay(overlay, overlay.ratio);
+  }
+
+  /** 몸통과 머리 마스크에 완전히 같은 12시 시작·시계 방향 부채꼴을 그린다. */
+  private paintMaskOverlay(overlay: ManagedPortraitOverlay, ratio: number): void {
+    overlay.ratio = Phaser.Math.Clamp(ratio, 0, 1);
+    overlay.body.clear();
+    overlay.headMask.clear();
+    if (overlay.ratio >= 1) return;
+    overlay.body.fillStyle(overlay.color, overlay.alpha);
+    overlay.headMask.fillStyle(0xffffff, 1);
+    if (overlay.ratio <= 0) {
+      overlay.body.fillCircle(0, 0, overlay.radius);
+      overlay.headMask.fillPoints(toGeomPoints(this.notchShape()), true);
+    } else {
+      const start = Phaser.Math.DegToRad(-90 + overlay.ratio * 360);
+      const end = Phaser.Math.DegToRad(270);
+      overlay.body.slice(0, 0, overlay.radius, start, end, false).fillPath();
+      // 머리도 같은 원의 남은 부채꼴을 쓰되 홈과 교차한 부분만 남긴다.
+      const sector = sectorPolygon(overlay.radius, start, end);
+      const clipped = clipPolygon(sector, toPairs(this.notchShape()));
+      if (clipped.length >= 3) overlay.headMask.fillPoints(clipped.map(([x, y]) => new Phaser.Geom.Point(x, y)), true);
+    }
+    this.syncMask();
+  }
+
+  /** notchMask와 동일한 사다리꼴을 평평한 좌표로 되돌린다. */
+  private notchShape(): number[] {
+    return this.headShape;
+  }
+
   /** 마스크를 카드의 현재 화면 위치·배율에 맞춘다. 카드를 옮기거나 키운 뒤에 부른다. */
   // 컨테이너를 스크롤하는 화면도 내부 기하 마스크를 월드 좌표에 다시 맞출 수 있어야 한다.
   public syncMask(): void {
     const matrix = this.getWorldTransformMatrix();
     const decomposed = matrix.decomposeMatrix() as { translateX: number; translateY: number; scaleX: number; scaleY: number };
-    for (const mask of [this.portraitMask, this.bodyMask, this.notchMask]) {
+    for (const mask of [this.portraitMask, this.bodyMask, this.notchMask, ...this.managedOverlays.map(({ headMask }) => headMask)]) {
       mask
         .setPosition(decomposed.translateX, decomposed.translateY + this.maskOffsetY * decomposed.scaleY)
         .setScale(decomposed.scaleX, decomposed.scaleY);
@@ -492,6 +597,49 @@ function toGeomPoints(flat: number[]): Phaser.Geom.Point[] {
   const points: Phaser.Geom.Point[] = [];
   for (let i = 0; i < flat.length; i += 2) points.push(new Phaser.Geom.Point(flat[i], flat[i + 1]));
   return points;
+}
+
+/** 부채꼴을 충분히 촘촘한 다각형으로 바꾸어 작은 머리 홈에서도 경계가 둥글게 보이게 한다. */
+function sectorPolygon(radius: number, start: number, end: number): Array<[number, number]> {
+  const steps = Math.max(2, Math.ceil((end - start) / (Math.PI / 48)));
+  const points: Array<[number, number]> = [[0, 0]];
+  for (let index = 0; index <= steps; index += 1) {
+    const angle = start + (end - start) * index / steps;
+    points.push([Math.cos(angle) * radius, Math.sin(angle) * radius]);
+  }
+  return points;
+}
+
+/** 평평한 Phaser 좌표를 다각형 연산용 쌍으로 바꾼다. */
+function toPairs(flat: number[]): Array<[number, number]> {
+  const pairs: Array<[number, number]> = [];
+  for (let index = 0; index < flat.length; index += 2) pairs.push([flat[index], flat[index + 1]]);
+  return pairs;
+}
+
+/** 시계 방향으로 적힌 볼록 홈에 부채꼴 다각형을 자르는 Sutherland–Hodgman 클리퍼다. */
+function clipPolygon(subject: Array<[number, number]>, clip: Array<[number, number]>): Array<[number, number]> {
+  let output = subject;
+  const area = clip.reduce((sum, point, index) => {
+    const next = clip[(index + 1) % clip.length];
+    return sum + point[0] * next[1] - next[0] * point[1];
+  }, 0);
+  for (let edge = 0; edge < clip.length; edge += 1) {
+    const a = clip[edge]; const b = clip[(edge + 1) % clip.length]; const input = output;
+    output = [];
+    const inside = (p: [number, number]) => ((b[0] - a[0]) * (p[1] - a[1]) - (b[1] - a[1]) * (p[0] - a[0])) * (area >= 0 ? 1 : -1) >= 0;
+    const intersection = (p: [number, number], q: [number, number]): [number, number] => {
+      const ex = b[0] - a[0]; const ey = b[1] - a[1]; const dx = q[0] - p[0]; const dy = q[1] - p[1];
+      const t = (ex * (a[1] - p[1]) - ey * (a[0] - p[0])) / (ex * dy - ey * dx || 1e-9);
+      return [p[0] + dx * t, p[1] + dy * t];
+    };
+    for (let index = 0; index < input.length; index += 1) {
+      const current = input[index]; const previous = input[(index + input.length - 1) % input.length];
+      if (inside(current)) { if (!inside(previous)) output.push(intersection(previous, current)); output.push(current); }
+      else if (inside(previous)) output.push(intersection(previous, current));
+    }
+  }
+  return output;
 }
 
 /**

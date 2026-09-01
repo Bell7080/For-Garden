@@ -3,7 +3,7 @@ import ts from "typescript";
 import PREPARE_ICONS from "../../scripts/prepare_icons.py?raw";
 import { RELICS } from "../../src/data/relics";
 import { ELEMENT_TINT, ROLE_TINT, SKILL_ART_ASSETS, SKILL_ART_SLOTS, skillArtFor, skillArtKey, skillArtTint } from "../../src/ui/skillArt";
-import { allyHealPowerKeyword, canPreviewSkillDamage, damageHealingLabel, damageKeyword, ferocityTraitDescription, passiveDescription, passiveShieldKeyword, recoveryLabel, skillDescription, skillKeywordLayoutOptions, statusEffectLabel, targetingLabel } from "../../src/ui/skillPresentation";
+import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageHealingLabel, damageKeyword, ferocityTraitDescription, passiveDescription, passiveShieldKeyword, recoveryLabel, skillDescription, skillKeywordLayoutOptions, statusEffectLabel, targetingLabel } from "../../src/ui/skillPresentation";
 import type { SkillInfoViewModel } from "../../src/ui/SkillPopup";
 
 /** 구워 둔 스킬 일러스트. 코드가 가리키는 파일이 실제로 있는지 확인한다. */
@@ -208,11 +208,21 @@ describe("스피나 스킬 표시 계약", () => {
       + "매 적중 뒤 [[missing-hp|잃은 체력]]의 5%를 회복한다.",
     );
     expect(spino.ultimate).toMatchObject({ name: "범람의 포식자", power: 200, attackSpeedPower: 150, cost: 300, statusEffects: [{ kind: "stun", seconds: 3 }] });
+    // 능력치를 모르면(대상 없이 도감만 보는 경우) 옛 %-표기로 되돌아간다.
     expect(skillDescription(spino.ultimate)).toContain("현재 [[attack-speed|공격 속도]]의 150%");
     // "준다"에 "고"를 그대로 붙이면 인용형 어미("~라고")로 읽히는 어색한 문장이 된다.
     // 어간에 연결어미를 붙인 "주고 기절시킨다"여야 자연스럽다.
     expect(skillDescription(spino.ultimate)).toContain("주고 [[stun|기절]]시킨다");
     expect(skillDescription(spino.ultimate)).not.toContain("준다고");
+    // 능력치가 있으면 위력·공격 속도 두 축을 하나의 실제 수치 태그로 합쳐 보여 준다 —
+    // 다른 스킬들과 같은 "%를 실제 값으로 환산" 규칙을 따른다.
+    const composite = skillDescription(spino.ultimate, undefined, { atk: spino.stats.atk, attackSpeed: spino.stats.attackSpeed });
+    expect(composite).toMatch(/\[\[damage-value\|\d+\]\]의 \[\[physical-damage\|물리 피해\]\]를 주고 \[\[stun\|기절\]\]시킨다\./);
+    expect(composite).not.toContain("%");
+    const expectedAmount = Math.round(
+      (spino.stats.atk * (spino.ultimate.power! + (spino.stats.attackSpeed * spino.ultimate.attackSpeedPower!) / spino.stats.atk)) / 100,
+    );
+    expect(composite).toContain(`[[damage-value|${expectedAmount}]]`);
   });
 });
 
@@ -228,5 +238,22 @@ describe("루카 스킬 표시 계약", () => {
     expect(skillDescription(luka.basic)).toContain("[[physical-damage|물리 피해]]");
     expect(skillDescription(luka.ultimate)).toContain("최종 HP 피해의 75%");
     expect(skillDescription(luka.ultimate)).toContain("[[transfer|전이]]");
+  });
+});
+
+describe("공격 속도 복합 궁극기 수치 태그", () => {
+  it("위력과 공격 속도 두 축을 하나의 배율로 합쳐 계산한다", () => {
+    const keyword = attackSpeedCompositeDamageKeyword({ power: 200, attackSpeedPower: 150 }, 100, 120);
+    // compositePower = 200 + 120*150/100 = 380 → amount = 100 * 380 / 100 = 380
+    expect(keyword).toMatchObject({ id: "damage-value", term: "380" });
+  });
+
+  it("능력치가 없으면 계산하지 않는다", () => {
+    expect(attackSpeedCompositeDamageKeyword({ power: 200, attackSpeedPower: 150 })).toBeUndefined();
+    expect(attackSpeedCompositeDamageKeyword({ power: 200, attackSpeedPower: 150 }, 100)).toBeUndefined();
+  });
+
+  it("공격 속도 축이 없는 스킬에는 반응하지 않는다", () => {
+    expect(attackSpeedCompositeDamageKeyword({ power: 200 }, 100, 120)).toBeUndefined();
   });
 });

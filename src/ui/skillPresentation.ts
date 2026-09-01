@@ -111,6 +111,31 @@ export function passiveDescription(passive: Passive, atk?: number): string {
   return `전투 시작 시, 공격 속도·공격력·치명타 확률·치명타 피해가 모두 ${passive.attackSpeedPercent}% 오른다.`;
 }
 
+/**
+ * 공격 속도 복합 궁극기(스피나 등)가 실제 능력치에서 계산하는 피해 수치를 조회 가능한 태그로 만든다.
+ *
+ * 위력(%)과 공격 속도(%) 두 축을 하나의 배율로 합친 뒤 공격력에 적용한다 — 스킬 코어
+ * (`src/core/skirmish.ts`의 `strike`)가 궁극기 한 방을 계산하는 것과 같은 식이다. 이 패널의
+ * 다른 모든 미리보기와 같은 기준으로 **지금 성장한 대로**만 계산하고, 전투 중에만 붙는 실시간
+ * 가산(폭주·아군 버프로 늘어난 공격 속도)은 포함하지 않는다 — 그런 값은 이 정보창의 어떤
+ * 수치도 반영하지 않으므로 이 스킬만 예외로 두면 오히려 다른 수치와 기준이 갈린다.
+ */
+export function attackSpeedCompositeDamageKeyword(
+  skill: { power?: number; attackSpeedPower?: number },
+  atk?: number,
+  attackSpeed?: number,
+): KeywordDef | undefined {
+  if (skill.power === undefined || skill.attackSpeedPower === undefined || atk === undefined || attackSpeed === undefined) return undefined;
+  const compositePower = skill.power + (attackSpeed * skill.attackSpeedPower) / Math.max(1, atk);
+  const amount = Math.round((atk * compositePower) / 100);
+  return {
+    id: "damage-value",
+    term: String(amount),
+    kind: "규칙",
+    description: `현재 공격력의 ${skill.power}%와 공격 속도의 ${skill.attackSpeedPower}%를 하나로 합쳐 계산한 피해 수치다.`,
+  };
+}
+
 /** 아군 전체 회복형 궁극기(도디 등)가 실제 주문력에서 계산하는 회복량을 조회 가능한 태그로 만든다. */
 export function allyHealPowerKeyword(percent: number, ap?: number): KeywordDef | undefined {
   if (ap === undefined) return undefined;
@@ -119,7 +144,12 @@ export function allyHealPowerKeyword(percent: number, ap?: number): KeywordDef |
 }
 
 /** 추가 타격 계약을 본문용 키워드 문장으로 바꿔 확률·횟수·회복 수치가 데이터와 함께 바뀌게 한다. */
-export function skillDescription(skill: Skill | BasicAttack | Ultimate, ap?: number): string {
+export function skillDescription(
+  skill: Skill | BasicAttack | Ultimate,
+  ap?: number,
+  /** 공격 속도 복합 궁극기(스피나 등)만 쓰는 여벌 통계다. 없으면 옛 %-표기로 되돌아간다. */
+  atkStats?: { atk: number; attackSpeed: number },
+): string {
   if ("periodicCritical" in skill && skill.periodicCritical) return `적 한 명에게 공격력의 ${skill.power}% [[physical-damage|물리 피해]]를 준다. 매 ${skill.periodicCritical.every}번째 실제 [[basic-attack|기본 공격]]은 확정 치명타가 된다.`;
   if ("damageTransfer" in skill && skill.damageTransfer) return `주 대상에게 공격력의 ${skill.power}% [[physical-damage|물리 피해]]를 준다. 주 대상이 실제로 잃은 최종 HP 피해의 ${skill.damageTransfer.percent}%를 주 대상에게서 가장 가까운 다른 적에게 [[transfer|전이]]한다.`;
   const combo = "combo" in skill ? skill.combo : undefined;
@@ -130,11 +160,15 @@ export function skillDescription(skill: Skill | BasicAttack | Ultimate, ap?: num
       + `[[combo|연격]]하여 총 ${combo.hitCount}회 적중하고, 매 적중 뒤 [[missing-hp|잃은 체력]]의 `
       + `${combo.missingHpHealingPercentPerHit}%를 회복한다.`;
   }
-  // 현재 공격 속도 복합 계수를 가진 궁극기는 스피나의 두 피해 축을 모두 눌러 설명할 수 있게 한다.
-  // 상단 라벨은 power 단일 축만 계산하므로 여기서는 두 축을 합친 값을 그대로 %로 남긴다.
+  // 현재 공격 속도 복합 계수를 가진 궁극기는 스피나의 두 피해 축을 하나의 실제 수치로 합쳐
+  // 보여 준다 — 상단 [[damage-value]] 라벨도 이제 같은 값을 쓰므로 위아래 숫자가 갈리지 않는다.
   if ("attackSpeedPower" in skill && skill.attackSpeedPower !== undefined) {
     const stun = skill.statusEffects?.find((effect) => effect.kind === "stun");
-    const damage = `공격력의 ${skill.power}%와 현재 [[attack-speed|공격 속도]]의 ${skill.attackSpeedPower}%를 합친 [[physical-damage|물리 피해]]`;
+    const damageTag = skill.damageType === "physical" ? "[[physical-damage|물리 피해]]" : "[[magical-damage|마법 피해]]";
+    const composite = attackSpeedCompositeDamageKeyword(skill, atkStats?.atk, atkStats?.attackSpeed);
+    const damage = composite
+      ? `[[damage-value|${composite.term}]]의 ${damageTag}`
+      : `공격력의 ${skill.power}%와 현재 [[attack-speed|공격 속도]]의 ${skill.attackSpeedPower}%를 합친 ${damageTag}`;
     // "준다" 뒤에 그대로 "고"를 붙이면 "~라고 말하며"로 읽히는 인용형 어미가 된다.
     // 어간(주-)에 연결어미(-고)를 붙인 "주고" 형태로 갈라야 자연스럽다.
     return stun ? `${damage}를 주고 [[stun|기절]]시킨다.` : `${damage}를 준다.`;

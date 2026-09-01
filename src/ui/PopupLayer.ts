@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { chipPoints, drawLayer, drawShapeEdge, HOLO } from "./holo";
 import { addSectionTitle } from "./SectionTitle";
 import { COLOR, textStyle } from "./theme";
+import { setDebugPopupTitles } from "../debug";
 
 /** 쪽지와 화면을 대부분 차지하는 작업판이 공유하는 제목 위계다. */
 export const POPUP_TITLE_SIZE = {
@@ -58,6 +59,8 @@ export class PopupLayer {
   private readonly onCloseByLayer = new Map<Phaser.GameObjects.Container, (() => void) | undefined>();
   /** 판 소유자가 나중에 채운 내용 위로 머리글을 다시 올릴 수 있게 판별 본문마다 보관한다. */
   private readonly chromeByBody = new Map<Phaser.GameObjects.Container, Phaser.GameObjects.GameObject[]>();
+  /** 제목 있는 팝업만 E2E 관찰용으로 기록한다. Canvas 밖에서는 지금 무엇이 열려 있는지 알 방법이 없다. */
+  private readonly titleByLayer = new Map<Phaser.GameObjects.Container, string>();
 
   constructor(private readonly scene: Phaser.Scene, private readonly depth = 2000) {}
 
@@ -154,8 +157,15 @@ export class PopupLayer {
     this.scene.tweens.add({ targets: layer, alpha: 1, duration: 160 });
     this.scene.tweens.add({ targets: body, scale: 1, duration: 200, ease: "Cubic.Out" });
 
+    if (options.title) this.titleByLayer.set(layer, options.title);
     this.stack.push(layer);
+    this.publishDebugTitles();
     return body;
+  }
+
+  /** 지금 스택에 쌓인 제목만 Canvas 밖에 공개한다. 팝업 본문·게임 상태는 노출하지 않는다. */
+  private publishDebugTitles(): void {
+    setDebugPopupTitles(this.stack.map((layer) => this.titleByLayer.get(layer)).filter((title): title is string => title !== undefined));
   }
 
   /**
@@ -199,9 +209,11 @@ export class PopupLayer {
     const index = this.stack.indexOf(layer);
     if (index === -1) return;
     this.stack.splice(index, 1);
+    this.titleByLayer.delete(layer);
     const onClose = this.onCloseByLayer.get(layer);
     this.onCloseByLayer.delete(layer);
     layer.destroy();
     onClose?.();
+    this.publishDebugTitles();
   }
 }

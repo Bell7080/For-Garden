@@ -1,6 +1,6 @@
 import type { Wallet } from "../core/gacha";
-import type { GameApi, InventoryItemDto, SellRunesResponse, UseConsumableResponse } from "../api/contracts";
-import type { RuneInstance } from "../core/runes";
+import type { EngraveRuneResponse, EnhanceRuneResponse, GameApi, InventoryItemDto, RenameRuneResponse, SellRunesResponse, UseConsumableResponse } from "../api/contracts";
+import type { RuneInstance, RuneStatKey } from "../core/runes";
 import { findItem, ITEMS, type ItemCategory, type ItemDefinition, type WalletItemKey } from "../data/items";
 import type { Session } from "../state/session";
 import { managerEvents, type ManagerEvents } from "./ManagerEvents";
@@ -105,6 +105,36 @@ export class InventoryManager {
     this.state.runeInventory = response.inventory.runes.map((rune) => structuredClone(rune));
     this.events.publishInventory();
     return response.rune;
+  }
+
+  /**
+   * 세공·각인·이름 바꾸기의 확정 결과를 Session에 반영하고 목록에도 알린다.
+   *
+   * 세공 화면이 `GameApi`를 직접 부르면 룬은 바뀌는데 **가방이 그 사실을 모른다** — 각인을
+   * 마치고 돌아와도 카드의 금색 테두리가 다시 열 때까지 안 붙었다. 룬을 바꾸는 모든 길은 이
+   * 경계를 지나 `inventory` 신호를 한 번 내보낸다. 골드는 서버가 이미 지갑에서 뺐으므로 그
+   * 확정값을 그대로 다시 알리기만 한다.
+   */
+  private applyRuneMutation<T extends { rune: RuneInstance; inventory: { runes: RuneInstance[] } }>(response: T): T {
+    this.state.runeInventory = response.inventory.runes.map((rune) => structuredClone(rune));
+    this.events.publish("wallet", { wallet: this.state.wallet });
+    this.events.publishInventory();
+    return response;
+  }
+
+  /** 한 옵션을 서버 난수로 한 번 세공한다. */
+  async enhanceRune(api: GameApi, instanceId: string, statId: RuneStatKey): Promise<EnhanceRuneResponse> {
+    return this.applyRuneMutation(await api.enhanceRune({ runeInstanceId: instanceId, statId }));
+  }
+
+  /** 모든 세공을 마친 룬에 한 번뿐인 각인을 새긴다. */
+  async engraveRune(api: GameApi, instanceId: string, statId: RuneStatKey): Promise<EngraveRuneResponse> {
+    return this.applyRuneMutation(await api.engraveRune({ runeInstanceId: instanceId, statId }));
+  }
+
+  /** 서버 이름 정책을 통과한 사용자 이름으로 바꾼다. */
+  async renameRune(api: GameApi, instanceId: string, name: string): Promise<RenameRuneResponse> {
+    return this.applyRuneMutation(await api.renameRune({ runeInstanceId: instanceId, name }));
   }
 
   /** 판매 응답의 확정 스냅샷만 Session에 반영하고 모든 상태 소비자에게 같은 시점으로 알린다. */

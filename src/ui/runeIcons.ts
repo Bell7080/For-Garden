@@ -81,7 +81,7 @@ function addFittedRuneIcon(scene: Phaser.Scene, frameSize: number, rarity: Heart
  * 잘린 모서리와 안쪽 비네트에 그림이 닿지 않는 선에서 최대한 크게 잡는다. 1에 가까우면
  * 조각의 뾰족한 끝이 액자 선을 넘고, 작으면 그림이 큰 칸 한가운데에 떠 액자만 커 보인다.
  */
-const RUNE_FRAME_FILL = 0.72;
+const RUNE_FRAME_FILL = 0.6;
 
 /** 각인까지 마친 룬이 두르는 금빛. 완성된 보석 하나뿐인 색이라 다른 표식과 섞지 않는다. */
 export const RUNE_ENGRAVE_GOLD = 0xffc861;

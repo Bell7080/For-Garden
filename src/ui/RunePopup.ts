@@ -295,6 +295,8 @@ function nextCraftTarget(rune: RuneInstance, current?: RuneStatKey): RuneStatKey
 
 export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: RunePopupOptions): void {
   const api = options.api ?? gameApi;
+  // 룬을 바꾸는 모든 요청은 이 경계를 지나 Session 반영과 목록 갱신 신호를 함께 낸다.
+  const inventory = new InventoryManager(session);
   let rune = session.runeInventory.find(({ instanceId }) => instanceId === options.runeInstanceId);
   if (!rune) return;
   let selected: RuneStatKey | undefined;
@@ -332,7 +334,7 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
       renameHit.on("pointerup", () => requestRuneName(scene, rune!.customName ?? "", async (value) => {
         if (pending) return; pending = true;
         try {
-          const response = await api.renameRune({ runeInstanceId: rune!.instanceId, name: value });
+          const response = await inventory.renameRune(api, rune!.instanceId, value);
           rune = response.rune; options.onChanged?.(rune);
           // render()가 세공 버튼을 새로 만들므로, 그 버튼의 allowed 계산이 이 요청을 아직
           // 진행 중인 것으로 보지 않도록 다시 그리기 전에 먼저 풀어 둔다.
@@ -439,7 +441,8 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
         if (!allowed || !selected || pending) return;
         pending = true; action.setEnabled(false);
         try {
-          const response = completed ? await api.engraveRune({ runeInstanceId: rune!.instanceId, statId: selected }) : await api.enhanceRune({ runeInstanceId: rune!.instanceId, statId: selected });
+          // 세공·각인은 반드시 manager를 지난다 — 그래야 가방 목록도 같은 순간에 다시 그려진다.
+          const response = completed ? await inventory.engraveRune(api, rune!.instanceId, selected) : await inventory.enhanceRune(api, rune!.instanceId, selected);
           rune = response.rune; options.onChanged?.(rune);
           // 세공은 고른 줄을 그대로 이어 간다. 그 줄이 다 차면 다음 줄로 넘어가고, 모든
           // 세공이 끝나 각인만 남으면 손을 뗀다 — 각인은 되돌릴 수 없는 한 번의 선택이라

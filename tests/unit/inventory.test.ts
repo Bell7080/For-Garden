@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { FakeServer } from "../../src/api/FakeServer";
 import { GameApiError } from "../../src/api/contracts";
 import { INVENTORY_LAYOUT, InventoryManager, inventoryGridPosition, inventoryScrollMetrics } from "../../src/managers/InventoryManager";
+import { managerEvents } from "../../src/managers/ManagerEvents";
 import { SaveManager } from "../../src/state/SaveManager";
 import { createDefaultSession } from "../../src/state/session";
 import { INVENTORY_TAB_LAYOUT, inventoryCategoryTabPosition } from "../../src/ui/inventoryTabs";
@@ -106,6 +107,31 @@ describe("inventory", () => {
     expect(manager.list("currency").find(({ id }) => id === "gold")?.quantity).toBe(4321);
     expect(manager.list("consumable")).toEqual([]);
     expect(manager.list("material")[0]).toMatchObject({ id: "rune-dust", quantity: 17 });
+  });
+
+  it("세공·각인·이름 변경도 목록 갱신 신호를 함께 낸다", async () => {
+    // 세공 화면이 API를 직접 부르면 룬은 바뀌는데 가방이 그 사실을 몰라, 각인 뒤에도 금색
+    // 테두리가 다시 열 때까지 붙지 않았다. 그 회귀를 신호 수로 고정한다.
+    const state = createDefaultSession();
+    const values = Object.fromEntries(["hp", "atk", "ap", "def", "res", "moveSpeed", "attackSpeed", "lifeSteal", "critChance", "critDamage", "ferocityGain", "energyGain"].map((key) => [key, 8])) as Record<RuneStatKey, number>;
+    let rune = createRuneInstance({ instanceId: "craft-1", baseName: "세공 테스트", rarity: "uncommon", part: 0, statValues: values, random: () => 0 });
+    state.runeInventory = [rune];
+    state.wallet.gold = 100_000;
+    const api = new FakeServer(state, { latencyMs: 0, random: () => 0 });
+    const manager = new InventoryManager(state);
+    let signals = 0;
+    const unsubscribe = managerEvents.subscribe("inventory", () => { signals += 1; });
+    try {
+      await manager.renameRune(api, rune.instanceId, "이름표");
+      for (const { key } of rune.mainStats) for (let count = 0; count < 3; count += 1) await manager.enhanceRune(api, rune.instanceId, key);
+      const engraved = await manager.engraveRune(api, rune.instanceId, rune.mainStats[0].key);
+      rune = engraved.rune;
+    } finally { unsubscribe(); }
+    // 이름 1 + 세공 6 + 각인 1
+    expect(signals).toBe(8);
+    // 세션의 룬도 서버 확정 결과와 같은 값이라 가방이 다시 그리면 곧바로 각인이 보인다.
+    expect(state.runeInventory[0].engravings).toHaveLength(1);
+    expect(state.runeInventory[0].customName).toBe("이름표");
   });
 
   it("손상된 전체 스냅샷은 일부 Session 영역도 먼저 바꾸지 않는다", async () => {

@@ -2,8 +2,19 @@ import { describe, expect, it } from "vitest";
 import { ABSOLUTE_STAMINA_MAX, settleStamina, staminaMaxForResearchLevel, staminaTiming } from "../../src/core/stamina";
 import { FakeServer } from "../../src/api/FakeServer";
 import { createDefaultSession } from "../../src/state/session";
+import { TIME_ACCRUAL_FIXTURES } from "../fixtures/timeAccrual";
 
 describe("stamina rules", () => {
+  it("shares timezone, regression, long-offline, and boundary clock fixtures with excavation", () => {
+    const fixture = TIME_ACCRUAL_FIXTURES;
+    // 시간대 표기가 달라도 한 시간은 12틱이며, 장기 오프라인은 최대치까지만 회복한다.
+    expect(settleStamina(0, 120, fixture.timezoneChange.lastSettledAt, new Date(fixture.timezoneChange.serverNow))).toMatchObject({ amount: 12, recovered: 12 });
+    expect(settleStamina(0, 120, fixture.longOffline.lastSettledAt, new Date(fixture.longOffline.serverNow))).toMatchObject({ amount: 120, recovered: 120 });
+    // 역행은 기존 기준점을 유지하고 정확한 1시간 경계는 빠짐없이 12틱으로 계산한다.
+    expect(settleStamina(0, 120, fixture.clockRegression.lastSettledAt, new Date(fixture.clockRegression.serverNow))).toMatchObject({ amount: 0, recovered: 0, updatedAt: fixture.clockRegression.lastSettledAt });
+    expect(settleStamina(0, 120, fixture.expiryBoundary.lastSettledAt, new Date(fixture.expiryBoundary.serverNow))).toMatchObject({ amount: 12, recovered: 12 });
+  });
+
   it("calculates research-level maximums and the absolute cap", () => {
     // 레벨 증가와 비정상/극단 입력이 같은 순수 공식으로 정규화되는지 고정한다.
     expect(staminaMaxForResearchLevel(1)).toBe(122);

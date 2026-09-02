@@ -4,6 +4,7 @@ import {
   EXPEDITION_AUGMENT_POPUP,
   EXPEDITION_LAYOUT,
   expeditionLayoutGaps,
+  expeditionBackgroundFor,
   expeditionMapWorldHeight,
   expeditionNodePosition,
   focusExpeditionFloor,
@@ -12,6 +13,21 @@ import { BATTLE_PROFILE_LAYOUT, battleProfileBounds } from "../../src/ui/battleS
 import { anchorEnemyPreview, enemyPreviewColumns, isEnemyPreviewNodeVisible, NODE_ENEMY_PREVIEW } from "../../src/ui/nodeEnemyPreviewLayout";
 import { PONTOS_PORTRAIT_METADATA } from "../../src/puppets/assetMetadata";
 import { groundedPortraitBounds } from "../../src/ui/portraitPlacement";
+
+describe("expedition background flow", () => {
+  it.each([
+    ["ranking", "background-expedition-ranking"],
+    ["preparation", "background-expedition-field"],
+    ["active", "background-expedition-map"],
+  ] as const)("%s 상태는 의도한 원화 키를 고정한다", (state, background) => {
+    // 첫 기록, 편성, 활성 지도 사이의 시각 전환이 조건문 수정으로 다시 합쳐지지 않게 한다.
+    expect(expeditionBackgroundFor(state, {
+      expeditionRanking: "background-expedition-ranking",
+      expeditionField: "background-expedition-field",
+      expeditionMap: "background-expedition-map",
+    })).toBe(background);
+  });
+});
 
 describe("expedition portrait layout", () => {
   it("1080×1920 기록 화면 보스는 제목 아래에서 하단 조작 뒤까지 이어진다", () => {

@@ -67,3 +67,17 @@ export function focusExpeditionFloor(floor: number, viewportHeight: number): num
   const nodeY = expeditionNodePosition(Math.min(EXPEDITION_MAP_LAYOUT.floors, Math.max(1, floor)), 0).y;
   return clampExpeditionMapOffset(viewportHeight / 2 - nodeY, viewportHeight);
 }
+/** 원정 씬이 표현하는 세 화면 상태다. 저장 상태와 표시 단계를 섞지 않고 테스트할 수 있게 분리한다. */
+export type ExpeditionBackgroundState = "ranking" | "preparation" | "active";
+
+/** Phaser 없이 기록 → 편성 → 지도의 배경 역할을 선택해 단위 테스트가 로더에 의존하지 않게 한다. */
+export function expeditionBackgroundFor<T>(state: ExpeditionBackgroundState, backgrounds: {
+  expeditionRanking: T; expeditionField: T; expeditionMap: T;
+}): T {
+  // 기록 화면은 인물이 없는 도시 원경 위에 폰토스 Puppet을 주 피사체로 세운다.
+  if (state === "ranking") return backgrounds.expeditionRanking;
+  // 편성은 이후 교전과 같은 지형을 미리 보여 주어 출격 흐름을 잇는다.
+  if (state === "preparation") return backgrounds.expeditionField;
+  // 활성 런은 길과 노드가 놓일 전용 장축 지도를 사용한다.
+  return backgrounds.expeditionMap;
+}

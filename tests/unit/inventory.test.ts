@@ -75,7 +75,7 @@ describe("inventory", () => {
     const api = new FakeServer(state, { latencyMs: 0 });
     for (const quantity of [0, 1.5, 3]) await expect(api.useConsumable({ itemId: "stamina-tonic", quantity })).rejects.toBeInstanceOf(GameApiError);
     const result = await api.useConsumable({ itemId: "stamina-tonic", quantity: 1 });
-    expect(result.appliedAmount).toBe(10); expect(result.wallet.stamina).toBe(120); expect(state.itemInventory[0].quantity).toBe(1);
+    expect(result.appliedAmount).toBe(12); expect(result.wallet.stamina).toBe(122); expect(state.itemInventory[0].quantity).toBe(1);
     await expect(api.useConsumable({ itemId: "stamina-tonic", quantity: 1 })).rejects.toMatchObject({ code: "STAMINA_FULL" });
   });
 

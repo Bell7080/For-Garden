@@ -12,6 +12,7 @@ import { playerProfileDisplay, profileAvatarContent, type PlayerProfileDisplay }
 import { managerEvents } from "../managers/ManagerEvents";
 import { compactTopBarName, TOP_BAR_LAYOUT } from "./topBarLayout";
 import type { WalletItemKey } from "../data/items";
+import { staminaMaxForPlayer, STAMINA_REGEN_INTERVAL_MS } from "../core/stamina";
 
 /** 상단 줄에는 공개 표시 모델과 공개 동작만 들어오며 인증 비밀을 받을 자리가 없다. */
 export interface TopBarOptions { onSettings?: () => void; onProfile?: (profile: PlayerProfileDisplay) => void; onCurrency?: (currency: WalletItemKey) => void; currencies?: TopBarCurrencyContext; profile?: boolean }
@@ -114,6 +115,8 @@ export class TopBar {
     } else settings.setAlpha(0.38);
 
     this.refresh();
+    // 회복 카운트다운은 표시만 갱신하며 확정 스테미나는 다음 서버 응답만 반영한다.
+    scene.time.addEvent({ delay: 1_000, loop: true, callback: () => this.refresh() });
     // TopBar는 mutation/API 출처를 구분하지 않고 manager가 확정한 표시 이벤트만 소비한다.
     this.unsubscribe.push(managerEvents.subscribe("wallet", () => this.refresh()));
     this.unsubscribe.push(managerEvents.subscribe("publicProfile", ({ profile }) => this.refreshProfile(profile)));
@@ -164,7 +167,13 @@ export class TopBar {
   refresh(): void {
     for (const { slot, text } of this.slots) {
       const amount = slot.read();
-      text.setText(slot.compact ? formatCurrency(amount) : amount.toLocaleString());
+      if (slot.key === "stamina") {
+        const maximum = staminaMaxForPlayer(session);
+        const elapsed = session.staminaUpdatedAt ? Math.max(0, Date.now() - Date.parse(session.staminaUpdatedAt)) : 0;
+        const seconds = amount >= maximum ? null : Math.max(0, Math.ceil((STAMINA_REGEN_INTERVAL_MS - elapsed % STAMINA_REGEN_INTERVAL_MS) / 1_000));
+        // 최대치와 다음 한 칸까지의 시간만 간결하게 보여 작은 상단 칩의 위계를 보존한다.
+        text.setText(`${amount.toLocaleString()}/${maximum.toLocaleString()}${seconds === null ? "" : ` · ${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`}`);
+      } else text.setText(slot.compact ? formatCurrency(amount) : amount.toLocaleString());
     }
     setDebugProgress(session.wallet, session.owned);
   }

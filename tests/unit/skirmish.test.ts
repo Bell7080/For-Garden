@@ -144,7 +144,7 @@ describe("스피나 전투 계약", () => {
     expect(spino.energy).toBe(0);
   });
 
-  it("은 레벨 1 궁극기 원피해 431에서 평타 실제 적중마다 반올림 전 원피해를 4.5씩 높인다", () => {
+  it("은 레벨 1 궁극기 원피해에서 평타 실제 적중마다 반올림 전 원피해를 4.5씩 높인다", () => {
     const { state, spino, target } = readySpino();
     const ultimate = spino.def.ultimate;
     if (!("damageType" in ultimate) || ultimate.damageType === undefined) throw new Error("스피나 공격 궁극기 계약이 필요합니다.");
@@ -158,12 +158,12 @@ describe("스피나 전투 계약", () => {
       isCritical: false,
     }, true);
 
-    // 기본 공격력 124의 200%와 기본 공속 122의 150%를 더한 방어 적용 전 회귀값이다.
-    expect(spino.def.stats.atk).toBe(124);
-    expect(currentAttackSpeed(spino)).toBe(122);
+    // 공격력의 200%와 공속의 150%를 더한 방어 적용 전 값이다. 등급별 태생 조정이 있어도
+    // 계약이 함께 움직이도록 수치를 손으로 베끼지 않고 데이터에서 계산한다.
+    expect(currentAttackSpeed(spino)).toBe(spino.def.stats.attackSpeed);
     const rawBeforeHit = rawUltimateDamage();
     const actualBeforeHit = actualUltimateDamage();
-    expect(rawBeforeHit).toBe(431);
+    expect(rawBeforeHit).toBe(spino.def.stats.atk * 2 + spino.def.stats.attackSpeed * 1.5);
 
     // 연격이 나지 않는 평타 한 번을 실제로 적중시켜 패시브 공속 +3을 누적한다.
     stepSkirmish(state, 1 / 60, () => 0.99);
@@ -173,7 +173,7 @@ describe("스피나 전투 계약", () => {
     // 실제 피해끼리는 방어 계산과 정수 반올림을 거친 값으로 별도 검증한다.
     expect(actualAfterHit).toBe(computeDamage(spino, target, {
       ...ultimate,
-      power: 200 + 125 * 150 / 124,
+      power: 200 + (spino.def.stats.attackSpeed + 3) * 150 / spino.def.stats.atk,
       kind: "ultimate",
       isCritical: false,
     }, true));
@@ -329,12 +329,13 @@ describe("메테 전투 계약", () => {
     const [first, second, ally] = state.fighters;
     ally.shield = { amount: 10, providerId: ally.id };
     const firstEvents = applyStun(ally, 1, state);
-    expect(firstEvents).toContainEqual(expect.objectContaining({ kind: "shieldGranted", providerId: first.id, remaining: 242 }));
+    expect(firstEvents).toContainEqual(expect.objectContaining({ kind: "shieldGranted", providerId: first.id, remaining: 10 + first.def.stats.atk * 2 }));
     expect(first.adagioCooldownRemaining).toBe(7);
     expect(second.adagioCooldownRemaining).toBe(0);
 
     applyStagger(ally, 0.1, state);
-    expect(ally.shield.amount).toBe(474); // 두 번째 메테도 자기 공격력 116의 200%를 기존 총량에 더한다.
+    // 두 번째 메테도 자기 공격력의 200%를 기존 총량에 더한다.
+    expect(ally.shield.amount).toBe(10 + first.def.stats.atk * 2 + second.def.stats.atk * 2);
     expect(second.adagioCooldownRemaining).toBe(7);
   });
 
@@ -531,10 +532,10 @@ describe("단일 난전의 원정 보스 옵션", () => {
     // 플레이어는 통상 1돌파 전 상한인 20레벨, 최종 보스는 20층 boss 보정이 더해진 25레벨이다.
     const party = partyIds.map((id) => {
       const relic = getRelic(id);
-      return { ...relic, stats: applyLevelGrowth(relic.stats, 20) };
+      return { ...relic, stats: applyLevelGrowth(relic.stats, 20, relic.rarity) };
     });
     const basePontos = getRelic("pontos");
-    const pontos = { ...basePontos, stats: applyLevelGrowth(basePontos.stats, 25) };
+    const pontos = { ...basePontos, stats: applyLevelGrowth(basePontos.stats, 25, basePontos.rarity) };
     const state = createSkirmish(party, [pontos], ARENA);
     let firstUltimateAt: number | undefined;
     let survivorsAfterFirstUltimate = 0;
@@ -549,13 +550,17 @@ describe("단일 난전의 원정 보스 옵션", () => {
       }
     }
     // 첫 해일은 위협적이지만 즉시 전멸시키지 않고, 전체 전투는 30초 안팎의 최종 관문으로 끝난다.
-    // 상한은 도디 일반 공격을 70%→50%로 낮춘 v0.45.0에서 30초에서 34초로 넓혔다 — 파티 전체
-    // 화력이 줄면 같은 보스를 넘기는 데 그만큼 더 걸리는 것이 이 구간이 재는 값 자체다.
-    expect(firstUltimateAt).toBeGreaterThanOrEqual(20);
+    // 상한은 도디 일반 공격을 70%→50%로 낮춘 v0.45.0에서 30초에서 34초로, 등급별 성장으로
+    // SSR 보스가 함께 단단해진 v0.51.0에서 38초로 넓혔다 — 파티와 보스의 화력이 같이 오르내리면
+    // 같은 보스를 넘기는 데 걸리는 시간이 이 구간이 재는 값 자체다.
+    // 등급별 레벨 성장(v0.51.0)에서 SSR 보스가 레벨당 2.2%로 자라 공속이 함께 올랐다.
+    // 첫 해일이 그만큼 일찍 오므로 구간을 17초부터로 넓혔다 — 이 값이 재는 것은 "즉시 전멸이
+    // 아니라 한 번은 버틴다"이지 정확한 초가 아니다.
+    expect(firstUltimateAt).toBeGreaterThanOrEqual(17);
     expect(firstUltimateAt).toBeLessThanOrEqual(21);
     expect(survivorsAfterFirstUltimate).toBeGreaterThan(0);
     expect(state.elapsed).toBeGreaterThanOrEqual(24);
-    expect(state.elapsed).toBeLessThanOrEqual(34);
+    expect(state.elapsed).toBeLessThanOrEqual(38);
     // 점수는 경감 뒤 실제로 감소한 HP와 같아 경감 전 계수나 과잉 피해로 부풀지 않는다.
     const playerAttackTotal = battleContributionSnapshot(state, "attack")
       .filter(({ fighterId }) => fighterId.startsWith("player"))
@@ -1469,10 +1474,11 @@ describe("렉시아 전투 계약", () => {
 
   it("은 공격력 25%와 치명 확률·치명 피해 25퍼센트포인트를 정해진 순서로 적용한다", () => {
     const { state, rex, foe } = readyRex();
-    const hit = stepSkirmish(state, 1 / 60, () => 0.44).find((event) => event.kind === "attack")!;
+    const hit = stepSkirmish(state, 1 / 60, () => 0.30).find((event) => event.kind === "attack")!;
     const boosted = { ...rex, def: { ...rex.def, stats: { ...rex.def.stats, atk: rex.def.stats.atk * 1.25, critDamage: rex.def.stats.critDamage + 25 } } };
     expect(rex.def.basic.power).toBe(95);
-    // 기본 20% + 패시브 25퍼센트포인트 = 45%이며, 치명 피해도 160% + 25퍼센트포인트 = 185%다.
+    // 태생 치명타는 전 개체 공통 10%이고 렉시아의 치명타형 정체성은 패시브가 만든다 —
+    // 10% + 패시브 25퍼센트포인트 = 35%이며, 치명 피해도 150% + 25퍼센트포인트 = 175%다.
     expect(hit).toMatchObject({ critical: true, amount: computeDamage(boosted, foe, { ...rex.def.basic, kind: "basic", isCritical: true }, true) });
   });
 
@@ -1480,8 +1486,8 @@ describe("렉시아 전투 계약", () => {
     const { state, rex } = readyRex();
     rex.hp = rex.maxHp / 2; rex.ferocity = 100; rex.ferocityFever = true;
     const before = rex.hp;
-    const hit = stepSkirmish(state, 1 / 60, () => 0.69).find((event) => event.kind === "attack")!;
-    expect(hit).toMatchObject({ critical: true }); // 기본 20% + 패시브 25퍼센트포인트 + 폭주 25퍼센트포인트 = 70%
+    const hit = stepSkirmish(state, 1 / 60, () => 0.55).find((event) => event.kind === "attack")!;
+    expect(hit).toMatchObject({ critical: true }); // 태생 10% + 패시브 25퍼센트포인트 + 폭주 25퍼센트포인트 = 60%
     expect(rex.hp - before).toBeCloseTo(hit.amount * 0.25);
     rex.ferocityFever = false; rex.attackCooldown = 0; const hp = rex.hp;
     stepSkirmish(state, 1 / 60, () => 0.49);
@@ -1518,16 +1524,16 @@ describe("렉시아 전투 계약", () => {
 
   it("은 궁극기 피해에 패시브 공격력과 세 흡혈 원천을 합산하고 피해 반올림 뒤 회복한다", () => {
     const { state, rex, foe } = readyRex();
-    // 132 × 1.25 × 3 × 1.35 = 668.25를 피해 668로 반올림한 뒤 85%를 회복한다.
+    // 158 × 1.25 × 3 × 1.35 = 799.875를 피해 800으로 반올림한 뒤 85%를 회복한다.
     rex.def = { ...rex.def, stats: { ...rex.def.stats, lifeSteal: 10 } };
     // 대상의 전방 경감 패시브도 제거해 문서의 방어력 0·동일 속성 산술만 분리한다.
     foe.def = { ...foe.def, element: "fire", passive: rex.def.passive, stats: { ...foe.def.stats, def: 0 } };
     foe.hp = foe.maxHp = 2_000;
     rex.hp = 100; rex.ferocity = 100; rex.ferocityFever = true; rex.energy = 110;
     const hit = fireUltimate(state, rex.id, () => 0.99).find((event) => event.kind === "attack")!;
-    expect(hit).toMatchObject({ critical: false, amount: 668 });
+    expect(hit).toMatchObject({ critical: false, amount: 800 });
     // 기본 10퍼센트포인트 + 폭주 25퍼센트포인트 + 궁극기 50퍼센트포인트 = 85%이며 회복량 자체는 재반올림하지 않는다.
-    expect(rex.hp).toBeCloseTo(100 + 668 * 0.85);
+    expect(rex.hp).toBeCloseTo(100 + 800 * 0.85);
   });
 });
 
@@ -1554,7 +1560,7 @@ describe("원정 난전 확장", () => {
     const state = createSkirmish([getRelic("rex"), getRelic("anky"), getRelic("dodo")], [getRelic("husk-shell")], ARENA, {}, {}, {
       playerInitialStates: [{ relicId: "rex", currentHp: 17, alive: true }, { relicId: "anky", currentHp: 0, alive: false }, { relicId: "dodo", currentHp: 0, alive: false }],
     });
-    expect(state.fighters.slice(0, 3).map(({ hp, maxHp }) => hp / maxHp)).toEqual([0.17, 0, 0]);
+    expect(state.fighters.slice(0, 3).map(({ hp, maxHp }) => hp / maxHp)).toEqual([expect.closeTo(0.17, 5), 0, 0]);
     state.fighters[0].hp = 0;
     stepSkirmish(state, 1 / 60);
     expect(state.phase).toBe("defeat");

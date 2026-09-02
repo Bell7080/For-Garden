@@ -1,7 +1,8 @@
 import type { HeartGemStatEffect } from "../data/heartGems";
 import { RUNE_STAT_RULES } from "../data/runes";
 import { assertValidRuneInstance, type RuneInstance } from "./runes";
-import type { RelicProgress, Stats } from "./types";
+import { RARITY_LEVEL_GROWTH } from "./rarityScaling";
+import type { RelicProgress, RelicRarity, Stats } from "./types";
 
 /** 한계 돌파를 하지 않은 렐릭의 레벨 상한. 프로토타입에서도 최대 상태를 금방 볼 수 있게 짧다. */
 export const RELIC_LEVEL_CAP = 20;
@@ -190,10 +191,15 @@ export function applyStatPercent(stats: Stats, effect: HeartGemStatEffect): Stat
   return result;
 }
 
-/** 레벨 1은 기본치이며 이후 레벨마다 모든 능력치를 2%씩 높인다. */
-export function applyLevelGrowth(base: Stats, level: number): Stats {
+/**
+ * 레벨 1은 기본치이며 이후 레벨마다 모든 능력치를 **등급이 정한 비율**로 높인다.
+ *
+ * 등급을 받는 자리를 선택이 아니라 필수로 둔 이유는, 기본값을 두면 새 호출부가 등급을
+ * 빠뜨린 채 모두 같은 속도로 자라기 때문이다. 비율은 `RARITY_LEVEL_GROWTH` 한 표에만 있다.
+ */
+export function applyLevelGrowth(base: Stats, level: number, rarity: RelicRarity): Stats {
   if (!Number.isInteger(level) || level < 1) throw new RangeError("레벨은 1 이상의 정수여야 합니다.");
-  const percent = (level - 1) * 2;
+  const percent = (level - 1) * RARITY_LEVEL_GROWTH[rarity];
   return applyStatPercent(base, Object.fromEntries(STAT_KEYS.map((key) => [key, percent])) as HeartGemStatEffect);
 }
 
@@ -225,7 +231,7 @@ export function applyHeartGems(stats: Stats, gems: readonly RuneInstance[]): Sta
 }
 
 /** 최종 능력치는 기본 → 레벨 → 별 → Heart Gem 순서로만 계산한다. */
-export function calculateFinalStats(base: Stats, progress: RelicProgress, gems: readonly RuneInstance[]): Stats {
+export function calculateFinalStats(base: Stats, progress: RelicProgress, gems: readonly RuneInstance[], rarity: RelicRarity): Stats {
   if (progress.heartGemSlots.length !== 3) throw new RangeError("Heart Gem 슬롯은 정확히 3개여야 합니다.");
-  return applyHeartGems(applyBreakthrough(applyLevelGrowth(base, progress.level), progress.breakthrough), gems);
+  return applyHeartGems(applyBreakthrough(applyLevelGrowth(base, progress.level, rarity), progress.breakthrough), gems);
 }

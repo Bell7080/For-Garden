@@ -72,6 +72,6 @@ export function getBattleStage(id: string): Extract<StageDef, { kind: "battle" }
 export function getStageEnemies(stage: Extract<StageDef, { kind: "battle" }>): [RelicDef, RelicDef, RelicDef] {
   return stage.enemies.map((id) => {
     const base = getRelic(id);
-    return { ...base, stats: applyLevelGrowth(base.stats, stage.enemyLevel) };
+    return { ...base, stats: applyLevelGrowth(base.stats, stage.enemyLevel, base.rarity) };
   }) as [RelicDef, RelicDef, RelicDef];
 }

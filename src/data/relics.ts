@@ -85,7 +85,9 @@ export const RELICS: RelicDef[] = [
       damageHealingPercent: 50,
       // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
       targeting: "single",
-      desc: "한 적에게 포효를 집중하고, 입힌 피해로 체력을 회복한다.",
+      // damageHealingPercent가 있는 스킬은 skillDescription()이 대상·피해·회복을 한 문장으로
+      // 다시 만드므로 이 원문은 데이터 문서화용일 뿐 화면에는 쓰이지 않는다.
+      desc: "적 한 명에게 물리 피해를 주고, 입힌 피해의 50%만큼 체력을 회복한다.",
     },
   },
   {
@@ -251,7 +253,7 @@ export const RELICS: RelicDef[] = [
       statusEffects: [{ kind: "stun", seconds: 3 }],
       // attackSpeedPower가 있는 궁극기는 skillDescription()이 구조화 필드로 다시 문장을 만들므로
       // 이 원문은 데이터 문서화용일 뿐 화면에는 쓰이지 않는다.
-      desc: "공격력의 200%와 현재 공격 속도의 150%를 합친 물리 피해를 주고 기절시킨다.",
+      desc: "적 한 명에게 공격력의 200%와 현재 공격 속도의 150%를 합친 물리 피해를 주고 3초 동안 기절시킨다.",
     },
   },
   // 4번 Puppet 묶음은 전신과 SD가 모두 완성된 루카의 전용 에셋을 사용한다.
@@ -395,12 +397,14 @@ export const RELICS: RelicDef[] = [
     basic: {
       id: "dodo-basic",
       name: "깃펜 톡톡",
-      power: 70,
+      power: 50,
       iconAssetId: "skill-icon-magical",
       effectType: "magical",
       damageType: "magical",
-      lowestHpAllyHealingFromDamagePercent: 100,
-      desc: "부리로 쪼고, 실제 피해만큼 현재 체력이 가장 낮은 생존 아군을 회복한다.",
+      lowestHpAllyHealingFromDamagePercent: 50,
+      // lowestHpAllyHealingFromDamagePercent가 있는 스킬은 skillDescription()이 대상·피해·회복을
+      // 한 문장으로 다시 만드므로 이 원문은 데이터 문서화용일 뿐 화면에는 쓰이지 않는다.
+      desc: "적 한 명에게 마법 피해를 주고, 입힌 피해의 50%만큼 현재 체력이 가장 낮은 생존 아군을 회복한다.",
     },
     ultimate: {
       id: "dodo-ult",

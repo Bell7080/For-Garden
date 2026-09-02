@@ -144,14 +144,42 @@ export function allyHealPowerKeyword(percent: number, ap?: number): KeywordDef |
 }
 
 /** 추가 타격 계약을 본문용 키워드 문장으로 바꿔 확률·횟수·회복 수치가 데이터와 함께 바뀌게 한다. */
+export interface SkillDescriptionStats {
+  /** 회복량을 실제 값으로 환산할 때 쓴다. */
+  ap?: number;
+  /** 공격 속도 복합 궁극기(스피나 등)만 쓰는 여벌 통계다. 없으면 옛 %-표기로 되돌아간다. */
+  atk?: { atk: number; attackSpeed: number };
+  /**
+   * 스킬 아이콘 위 라벨과 **같은** 피해 수치.
+   *
+   * 본문이 스스로 다시 계산하지 않고 그 값을 그대로 받는 이유는, 두 곳이 따로 계산하면
+   * 같은 스킬의 피해가 위아래에서 다른 수로 보이기 때문이다.
+   */
+  damage?: number;
+}
+
 export function skillDescription(
   skill: Skill | BasicAttack | Ultimate,
-  ap?: number,
-  /** 공격 속도 복합 궁극기(스피나 등)만 쓰는 여벌 통계다. 없으면 옛 %-표기로 되돌아간다. */
-  atkStats?: { atk: number; attackSpeed: number },
+  stats: SkillDescriptionStats = {},
 ): string {
+  const ap = stats.ap;
+  const atkStats = stats.atk;
   if ("periodicCritical" in skill && skill.periodicCritical) return `적 한 명에게 공격력의 ${skill.power}% [[physical-damage|물리 피해]]를 준다. 매 ${skill.periodicCritical.every}번째 실제 [[basic-attack|기본 공격]]은 확정 치명타가 된다.`;
   if ("damageTransfer" in skill && skill.damageTransfer) return `주 대상에게 공격력의 ${skill.power}% [[physical-damage|물리 피해]]를 준다. 주 대상이 실제로 잃은 최종 HP 피해의 ${skill.damageTransfer.percent}%를 주 대상에게서 가장 가까운 다른 적에게 [[transfer|전이]]한다.`;
+  // 대상과 피해를 한 문장 앞머리로 세운다. 실제 수치는 스킬 아이콘 위 라벨이 쓰는 그 값
+  // 그대로이고, 없을 때만 위력(%)으로 되돌아간다.
+  const damageTag = skill.damageType === "physical" ? "[[physical-damage|물리 피해]]" : "[[magical-damage|마법 피해]]";
+  const dealt = stats.damage === undefined
+    ? `공격력의 ${skill.power}% ${damageTag}`
+    : `[[damage-value|${stats.damage}]]의 ${damageTag}`;
+  // 입힌 피해로 자신을 회복하는 공격(렉시아 궁극기). 대상·피해·회복을 한 문장으로 잇는다.
+  if ("damageHealingPercent" in skill && skill.damageHealingPercent !== undefined) {
+    return `적 한 명에게 ${dealt}를 주고, 입힌 피해의 ${skill.damageHealingPercent}%만큼 체력을 회복한다.`;
+  }
+  // 입힌 피해로 아군을 회복하는 공격(도디 일반 공격).
+  if ("lowestHpAllyHealingFromDamagePercent" in skill && skill.lowestHpAllyHealingFromDamagePercent !== undefined) {
+    return `적 한 명에게 ${dealt}를 주고, 입힌 피해의 ${skill.lowestHpAllyHealingFromDamagePercent}%만큼 현재 체력이 가장 낮은 생존 아군을 회복한다.`;
+  }
   const combo = "combo" in skill ? skill.combo : undefined;
   if (combo) {
     // 주 피해량은 스킬 아이콘 위 [[damage-value]] 라벨이 이미 실제 수치로 보여 주므로
@@ -164,20 +192,22 @@ export function skillDescription(
   // 보여 준다 — 상단 [[damage-value]] 라벨도 이제 같은 값을 쓰므로 위아래 숫자가 갈리지 않는다.
   if ("attackSpeedPower" in skill && skill.attackSpeedPower !== undefined) {
     const stun = skill.statusEffects?.find((effect) => effect.kind === "stun");
-    const damageTag = skill.damageType === "physical" ? "[[physical-damage|물리 피해]]" : "[[magical-damage|마법 피해]]";
     const composite = attackSpeedCompositeDamageKeyword(skill, atkStats?.atk, atkStats?.attackSpeed);
     const damage = composite
       ? `[[damage-value|${composite.term}]]의 ${damageTag}`
       : `공격력의 ${skill.power}%와 현재 [[attack-speed|공격 속도]]의 ${skill.attackSpeedPower}%를 합친 ${damageTag}`;
     // "준다" 뒤에 그대로 "고"를 붙이면 "~라고 말하며"로 읽히는 인용형 어미가 된다.
     // 어간(주-)에 연결어미(-고)를 붙인 "주고" 형태로 갈라야 자연스럽다.
-    return stun ? `${damage}를 주고 [[stun|기절]]시킨다.` : `${damage}를 준다.`;
+    // 기절은 몇 초인지가 곧 이 궁극기의 값이라 본문에서도 시간을 함께 적는다 — 키워드 설명은
+    // 기절이 무엇인지만 말하고 지속 시간은 스킬마다 다르기 때문이다.
+    return stun
+      ? `적 한 명에게 ${damage}를 주고 ${stun.seconds}초 동안 [[stun|기절]]시킨다.`
+      : `적 한 명에게 ${damage}를 준다.`;
   }
   // 범위 피해 위에 아군 전체 회복을 얹는 궁극기(도디)는 피해 수치를 상단 라벨에 맡기고
   // 여기서는 회복량만 실제 주문력에서 계산한 값으로 보여 준다.
   if ("allyHealingPower" in skill && skill.allyHealingPower !== undefined) {
     const heal = allyHealPowerKeyword(skill.allyHealingPower, ap);
-    const damageTag = skill.damageType === "physical" ? "[[physical-damage|물리 피해]]" : "[[magical-damage|마법 피해]]";
     const healText = heal === undefined ? `주문력의 ${skill.allyHealingPower}%` : `[[heal-value|${heal.term}]]`;
     return `지정한 넓은 범위의 모든 적에게 ${damageTag}를 주고, 모든 생존 아군의 체력을 ${healText}만큼 회복한다.`;
   }

@@ -547,12 +547,14 @@ describe("단일 난전의 원정 보스 옵션", () => {
         }
       }
     }
-    // 첫 해일은 위협적이지만 즉시 전멸시키지 않고, 전체 전투는 약 30초짜리 최종 관문으로 끝난다.
+    // 첫 해일은 위협적이지만 즉시 전멸시키지 않고, 전체 전투는 30초 안팎의 최종 관문으로 끝난다.
+    // 상한은 도디 일반 공격을 70%→50%로 낮춘 v0.45.0에서 30초에서 34초로 넓혔다 — 파티 전체
+    // 화력이 줄면 같은 보스를 넘기는 데 그만큼 더 걸리는 것이 이 구간이 재는 값 자체다.
     expect(firstUltimateAt).toBeGreaterThanOrEqual(20);
     expect(firstUltimateAt).toBeLessThanOrEqual(21);
     expect(survivorsAfterFirstUltimate).toBeGreaterThan(0);
     expect(state.elapsed).toBeGreaterThanOrEqual(24);
-    expect(state.elapsed).toBeLessThanOrEqual(30);
+    expect(state.elapsed).toBeLessThanOrEqual(34);
     // 점수는 경감 뒤 실제로 감소한 HP와 같아 경감 전 계수나 과잉 피해로 부풀지 않는다.
     const playerAttackTotal = battleContributionSnapshot(state, "attack")
       .filter(({ fighterId }) => fighterId.startsWith("player"))
@@ -1025,7 +1027,7 @@ describe("도디 정적 전투 계약", () => {
     return state;
   }
 
-  it("기획 스킬명과 주문력 70% 일반 공격 계수를 유지한다", () => {
+  it("기획 스킬명과 주문력 50% 일반 공격 계수를 유지한다", () => {
     const dodi = getRelic("dodo");
     expect([dodi.ferocityTrait?.name, dodi.passive.name, dodi.basic.name, dodi.ultimate.name]).toEqual([
       "인비저블 썸띵?",
@@ -1033,7 +1035,7 @@ describe("도디 정적 전투 계약", () => {
       "깃펜 톡톡",
       "세기의 대발견... 맞죠?!",
     ]);
-    expect(dodi.basic.power).toBe(70);
+    expect(dodi.basic.power).toBe(50);
   });
 
   it("폭주 중에만 공격 속도 x2, 즉 공격 간격 50%를 적용한다", () => {
@@ -1084,7 +1086,8 @@ describe("도디 정적 전투 계약", () => {
     ally.hp = 1; enemy.hp = 3; dodi.x = enemy.x = 500; dodi.y = enemy.y = 900; dodi.attackCooldown = 0;
     const heal = stepSkirmish(state, 1 / 60)
       .find((event): event is Extract<SkirmishEvent, { kind: "heal" }> => event.kind === "heal" && event.fighterId === ally.id);
-    expect(heal?.amount).toBe(3);
+    // 회복 비율은 정의에서 읽는다. 숫자를 박아 두면 밸런스를 조정할 때마다 이 계약이 함께 깨진다.
+    expect(heal?.amount).toBe(3 * getRelic("dodo").basic.lowestHpAllyHealingFromDamagePercent! / 100);
   });
 
   it("지정 원의 경계를 포함해 광역 피해·회복을 적용하고 게이지 250을 소비한다", () => {

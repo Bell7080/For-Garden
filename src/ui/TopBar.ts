@@ -6,7 +6,7 @@ import { drawGlyph } from "./glyphs";
 import { formatCurrency } from "../core/formatCurrency";
 import type { CurrencyIconKey } from "./currencyIcons";
 import { chipPoints, drawGlassFade, drawHairline, drawLayer, HoloBar, HOLO } from "./holo";
-import { addCurrencyChip, CURRENCY_CHIP } from "./CurrencyChip";
+import { addCurrencyChip, CURRENCY_CHIP, type CurrencyChipHandle } from "./CurrencyChip";
 import { COLOR, textStyle } from "./theme";
 import { playerProfileDisplay, profileAvatarContent, type PlayerProfileDisplay } from "../state/playerProfile";
 import { managerEvents } from "../managers/ManagerEvents";
@@ -78,7 +78,7 @@ const SLOT = CURRENCY_CHIP;
 const CLUSTER_CENTER = TOP_BAR_LAYOUT.clusterCenter;
 
 export class TopBar {
-  private readonly slots: { slot: CurrencySlot; text: Phaser.GameObjects.Text }[] = [];
+  private readonly slots: { slot: CurrencySlot; chip: CurrencyChipHandle }[] = [];
   private readonly unsubscribe: (() => void)[] = [];
   private profileName?: Phaser.GameObjects.Text;
   private profileDetail?: Phaser.GameObjects.Text;
@@ -100,7 +100,7 @@ export class TopBar {
     const span = slots.length * SLOT.width + (slots.length - 1) * SLOT.gap;
     const first = BASE_WIDTH * CLUSTER_CENTER - span / 2 + SLOT.width / 2;
     slots.forEach((slot, index) => {
-      this.slots.push({ slot, text: this.buildSlot(scene, first + index * (SLOT.width + SLOT.gap), y + 46, slot, options.onCurrency) });
+      this.slots.push({ slot, chip: this.buildSlot(scene, first + index * (SLOT.width + SLOT.gap), y + 46, slot, options.onCurrency) });
     });
 
     // 설정 — 오른쪽 끝. 콜백이 없는 장면에서는 장식만 남기고 보이지 않는 입력면을 만들지
@@ -128,8 +128,9 @@ export class TopBar {
   destroy(): void { this.unsubscribe.splice(0).forEach((unsubscribe) => unsubscribe()); }
 
   /** 재화 한 칸. 생김새는 `CurrencyChip` 한 곳이 정하고 여기서는 자리와 색만 고른다. */
-  private buildSlot(scene: Phaser.Scene, cx: number, cy: number, slot: CurrencySlot, onCurrency?: (currency: WalletItemKey) => void): Phaser.GameObjects.Text {
-    return addCurrencyChip(scene, cx, cy, slot.icon, { color: slot.color, currency: slot.key, onClick: onCurrency });
+  private buildSlot(scene: Phaser.Scene, cx: number, cy: number, slot: CurrencySlot, onCurrency?: (currency: WalletItemKey) => void): CurrencyChipHandle {
+    // 스테미나만 아래 줄(회복 시간)을 쓰므로 그 칸만 두 줄로 세운다.
+    return addCurrencyChip(scene, cx, cy, slot.icon, { color: slot.color, currency: slot.key, onClick: onCurrency, note: slot.key === "stamina" });
   }
 
   /** 왼쪽 위 플레이어 칩. 아바타가 없을 때만 표시 이름 머리글자를 넣는다. */
@@ -165,15 +166,17 @@ export class TopBar {
   }
 
   refresh(): void {
-    for (const { slot, text } of this.slots) {
+    for (const { slot, chip } of this.slots) {
       const amount = slot.read();
       if (slot.key === "stamina") {
         const maximum = staminaMaxForPlayer(session);
         const elapsed = session.staminaUpdatedAt ? Math.max(0, Date.now() - Date.parse(session.staminaUpdatedAt)) : 0;
         const seconds = amount >= maximum ? null : Math.max(0, Math.ceil((STAMINA_REGEN_INTERVAL_MS - elapsed % STAMINA_REGEN_INTERVAL_MS) / 1_000));
-        // 최대치와 다음 한 칸까지의 시간만 간결하게 보여 작은 상단 칩의 위계를 보존한다.
-        text.setText(`${amount.toLocaleString()}/${maximum.toLocaleString()}${seconds === null ? "" : ` · ${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`}`);
-      } else text.setText(slot.compact ? formatCurrency(amount) : amount.toLocaleString());
+        // 한 줄에 현재·최대·회복 시간을 다 적으면 글자가 칸을 넘는다. 윗줄은 지금 가진 값과
+        // 상한만, 다음 한 칸까지의 시간은 아랫줄에 얇게 둔다.
+        chip.setValue(amount.toLocaleString(), `/${maximum.toLocaleString()}`);
+        chip.setNote(seconds === null ? "" : `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`);
+      } else chip.setValue(slot.compact ? formatCurrency(amount) : amount.toLocaleString());
     }
     setDebugProgress(session.wallet, session.owned);
   }

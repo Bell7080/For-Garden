@@ -1888,7 +1888,12 @@ export class InfoManager {
       // 구조화된 연격·복합 계수는 정적 설명을 복제하지 않고 키워드가 연결된 공용 문장으로 표시한다.
       description: "kind" in skill
         ? passiveDescription(skill as Passive, attacker?.def.stats.atk)
-        : skillDescription(skill as Skill, attacker?.def.stats.ap, attacker && { atk: attacker.def.stats.atk, attackSpeed: attacker.def.stats.attackSpeed }),
+        : skillDescription(skill as Skill, {
+          ap: attacker?.def.stats.ap,
+          atk: attacker && { atk: attacker.def.stats.atk, attackSpeed: attacker.def.stats.attackSpeed },
+          // 본문은 아이콘 위 라벨과 **같은** 수치를 받아 쓴다. 따로 계산하면 위아래가 갈린다.
+          damage: preview?.kind === "scaling" ? preview.amount : undefined,
+        }),
     };
   }
 

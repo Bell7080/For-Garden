@@ -131,6 +131,13 @@ describe("급여", () => {
     expect(result.progress).toMatchObject({ level: 2, exp: 20 });
   });
 
+  it("는 한 번 급여가 경계 경험치를 넘으면 서버 계산 결과에서 정확히 한 레벨 오른다", () => {
+    // UI가 레벨을 추측해 올리지 않도록, 단 한 번의 급여로 경계를 넘는 순수 API 규칙을 고정한다.
+    const result = feedRelic({ ...base(), exp: relicExpToNext(1) - FEED_UNIT.exp }, FEED_UNIT.cheesecake, 1);
+    expect(result).toMatchObject({ feeds: 1, cheesecake: 0, levelsGained: 1 });
+    expect(result.progress).toMatchObject({ level: 2, exp: 0 });
+  });
+
   it("는 치즈케이크가 모자라면 가능한 횟수까지만 먹인다", () => {
     const result = feedRelic(base(), 25, 10);
     expect(result).toMatchObject({ feeds: 2, cheesecake: 5 });

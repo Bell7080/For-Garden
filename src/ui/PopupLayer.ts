@@ -141,7 +141,15 @@ export class PopupLayer {
         titleChrome.push(closeButton, hit);
       }
     }
-    if (options.closeOnBackdrop !== false) backdrop.on("pointerup", () => close());
+    if (options.closeOnBackdrop !== false) {
+      // A popup is commonly created by another object's `pointerup`.  Registering the backdrop in that
+      // same dispatch lets Phaser deliver the opening release to the newly-created backdrop as well, making
+      // the note flash and disappear.  Arm dismissal on the next input frame so only a later outside click
+      // can close it; controls inside the body remain above the backdrop and keep the note open.
+      this.scene.time.delayedCall(0, () => {
+        if (layer.active && backdrop.active) backdrop.on("pointerup", () => close());
+      });
+    }
 
     // Container는 자식의 depth로 순서를 바꾸지 않고 넣은 순서대로만 그린다. 그래서 머리글은
     // 판 소유자가 내용을 채울 때마다 다시 맨 위로 올려야 하고, 그 목록을 여기 남겨 둔다.

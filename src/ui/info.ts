@@ -398,6 +398,8 @@ export class InfoManager {
   private feedCostLayout?: () => void;
   private feedHold?: Phaser.Time.TimerEvent;
   private feeding = false;
+  /** A feed note is a singleton; this also bridges the async feed lock and popup creation. */
+  private feedPopupOpen = false;
   /** 생성 시 고정한 문맥 덕분에 읽기 전용 창이 도중에 소유자 권한으로 승격되지 않는다. */
   private readonly capabilities: Readonly<InfoCapabilities>;
   private publicProfile?: PublicRelicProfileDto;
@@ -674,24 +676,39 @@ export class InfoManager {
     container.add(row.container);
     const hit = this.scene.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
     let heldFrom = 0;
+    let feedStarted: Promise<boolean> | undefined;
+    let repeated = false;
     hit.on("pointerdown", () => {
+      // The first serving belongs to pointerdown for both gestures.  Only pointerup decides whether the
+      // gesture was a tap or a hold, after this server-confirmed request has completed.
+      if (this.feeding || this.feedPopupOpen) return;
       container.setScale(1.04);
       heldFrom = this.scene.time.now;
-      void this.feed(1);
-      this.feedHold = this.scene.time.addEvent({ delay: 260, loop: true, callback: () => void this.feed(1) });
+      repeated = false;
+      feedStarted = this.feed(1);
+      this.feedHold = this.scene.time.addEvent({ delay: 260, loop: true, callback: () => {
+        repeated = true;
+        void this.feed(1);
+      } });
     });
-    const release = (opened: boolean): void => {
+    const release = async (opened: boolean): Promise<void> => {
       container.setScale(1);
       const held = this.scene.time.now - heldFrom;
       this.feedHold?.remove();
       this.feedHold = undefined;
-      // 꾹 누른 손을 뗀 **뒤에** 연다. 누르고 있는 동안 열면 손을 떼는 그 입력이 곧바로
-      // 팝업을 닫아 버려 잠깐 번쩍이고 사라진다.
-      if (opened && heldFrom > 0 && held >= FEED_HOLD_MS) this.openFeedBulk(x, y + height / 2);
+      const started = feedStarted;
+      feedStarted = undefined;
+      // The response is the only proof that EXP changed.  Waiting here also keeps rapid releases behind the
+      // existing `feeding` lock, so several notes cannot be stacked while the network is slow.
+      const changed = await started;
+      const wasHold = repeated || held >= FEED_HOLD_MS;
+      // A short successful tap offers the next currently-valid growth action immediately.  A hold keeps its
+      // repeat behavior and opens the same singleton only after the hand has been released.
+      if (opened && heldFrom > 0 && (wasHold || changed)) this.openFeedBulk(x, y + height / 2);
       heldFrom = 0;
     };
-    hit.on("pointerup", () => release(true));
-    hit.on("pointerout", () => release(false));
+    hit.on("pointerup", () => void release(true));
+    hit.on("pointerout", () => void release(false));
     container.add(hit);
     attach(panel, container);
     this.feedPlate = { on, off };
@@ -823,9 +840,43 @@ export class InfoManager {
    * 수십 번을 먹이는 자리라 지갑이 얼마나 줄어드는지 모르고 누르면 안 된다.
    */
   private openFeedBulk(x: number, y: number): void {
-    if (this.popups.isOpen) return;
-    this.popups.open({ width: 500, height: 250, x, y: y + 150 }, (body, close) => {
-      body.add(this.scene.add.text(0, -86, "한 번에 급여", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0.5));
+    if (this.feedPopupOpen || this.popups.isOpen) return;
+    const def = this.currentDef;
+    if (!def) return;
+    const progress = relicProgression.getProgress(def.id);
+    const canFeed = canFeedRelic(progress, session.wallet.cheesecake);
+    const step = nextBreakthrough(progress.breakthrough);
+    // Growth actions are derived from the current confirmed state, never from “did this tap level up?”.  At
+    // the cap the note becomes an explicit route to breakthrough and explains why it is not yet available.
+    const atCap = progress.level >= relicLevelCap(progress.breakthrough);
+    if (!canFeed && !atCap) return;
+    this.feedPopupOpen = true;
+    this.popups.open({
+      width: 500,
+      height: 250,
+      x,
+      y: y + 150,
+      title: "한 번에 급여",
+      hideCloseButton: true,
+      closeOnBackdrop: true,
+      onClose: () => { this.feedPopupOpen = false; },
+    }, (body, close) => {
+      if (atCap) {
+        const held = relicProgression.getFragments(def.id);
+        const ready = !!step && canBreakThrough(progress, held, session.wallet.cheesecake);
+        body.add(this.scene.add.text(0, -26, step ? "레벨 상한 · 한계 돌파" : "최대 성장", textStyle({ role: "display", size: 28, color: ready ? COLOR.ink : COLOR.inkDim })).setOrigin(0.5));
+        const reason = !step ? "별 최대" : progress.level < relicLevelCap(progress.breakthrough) ? "레벨 상한 필요" : held < step.fragments ? `파편 부족 ${held} / ${step.fragments}` : session.wallet.cheesecake < step.cheesecake ? `치즈케이크 부족 ${session.wallet.cheesecake} / ${step.cheesecake}` : "돌파 가능";
+        body.add(this.scene.add.text(0, 22, reason, textStyle({ role: "body", size: 21, color: ready ? COLOR.accentText : COLOR.dangerText })).setOrigin(0.5));
+        if (step) {
+          const route = this.scene.add.rectangle(0, 72, 300, 64, 0xffffff, 0).setInteractive({ useHandCursor: true });
+          route.on("pointerup", () => {
+            close();
+            this.openBreakthrough({ x, y: y + 80, onClose: () => undefined });
+          });
+          body.add([this.scene.add.text(0, 72, "한계 돌파 보기", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0.5), route]);
+        }
+        return;
+      }
       ([["1 레벨", 1], ["10 레벨", 10]] as const).forEach(([label, levels], index) => {
         const bx = index === 0 ? -118 : 118;
         const cost = this.feedsForLevels(levels) * FEED_UNIT.cheesecake;
@@ -870,13 +921,18 @@ export class InfoManager {
     await this.feed(this.feedsForLevels(levels));
   }
 
-  private async feed(feeds: number): Promise<void> {
+  /** Returns whether the server-confirmed response actually increased EXP or level. */
+  private async feed(feeds: number): Promise<boolean> {
     const def = this.currentDef;
-    if (!def || !this.ownedNow || this.feeding) return;
-    if (!canFeedRelic(relicProgression.getProgress(def.id), session.wallet.cheesecake)) return;
+    if (!def || !this.ownedNow || this.feeding) return false;
+    if (!canFeedRelic(relicProgression.getProgress(def.id), session.wallet.cheesecake)) return false;
+    const before = relicProgression.getProgress(def.id);
     this.feeding = true;
+    let changed = false;
     try {
       await gameApi.feedRelic(def.id, feeds);
+      const after = relicProgression.getProgress(def.id);
+      changed = after.level > before.level || after.exp > before.exp;
       // 정보창과 상단 줄 모두 확정된 단일 세션 지갑을 읽도록 성공 직후 알린다.
       this.onWalletChange?.();
     } catch {
@@ -885,6 +941,7 @@ export class InfoManager {
       this.feeding = false;
       this.refreshGrowth();
     }
+    return changed;
   }
 
 

@@ -103,6 +103,22 @@ function requestRuneName(scene: Phaser.Scene, current: string, commit: (name: st
 }
 
 /**
+ * 쪽지 아래 버튼 줄의 자리.
+ *
+ * 세공(과 장착)이 줄의 주인이고 판매는 작게 오른쪽 끝에 선다. 폭과 x를 한 표에 두는 이유는,
+ * 화면에서 눈대중으로 정하면 장착이 붙는 순간 세 판이 서로 겹치기 때문이다.
+ */
+const RUNE_NOTE_BUTTONS = {
+  plain: { width: 236, craftX: -70, equipX: 0, sellX: 140 },
+  withEquip: { width: 140, craftX: -122, equipX: 28, sellX: 152 },
+  sellWidth: 84,
+  sellHeight: 54,
+  /** 되돌릴 수 없는 조작 하나뿐인 색. 강조색(금)과 갈라 두어 실수로 눌리지 않게 한다. */
+  sellAccent: 0xd9455a,
+  sellText: "#ffc3cb",
+} as const;
+
+/**
  * 쪽지 왼쪽 위의 표식 칩 한 줄.
  *
  * `MARK_ROW`는 그 줄이 차지하는 높이라, 칩이 생기면서 아래 내용이 함께 내려간다 —
@@ -173,6 +189,12 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
   const height = 336 + MARK_ROW + stats.length * 40;
   popups.open({ width: 448, height, title: "룬", anchor: options.anchor, dim: true, onClose: options.onClose }, (body, close) => {
     const top = -height / 2;
+    // 판매 버튼은 자물쇠 칩이 다시 칠할 대상이라 먼저 만들고, 자리는 아래 버튼 줄에서 정한다.
+    const sell = new Button(scene, 0, 0, {
+      width: RUNE_NOTE_BUTTONS.sellWidth, height: RUNE_NOTE_BUTTONS.sellHeight, label: "판매", fontSize: 20,
+      accentColor: RUNE_NOTE_BUTTONS.sellAccent, accentTextColor: RUNE_NOTE_BUTTONS.sellText,
+      onClick: () => { void new InventoryManager(session).sellRunes(options.api ?? gameApi, [rune.instanceId]).then(() => close()); },
+    });
     // 잠금과 즐겨찾기는 **머리글 아래 왼쪽 위**에 작은 칩 두 장으로 선다. 무엇을 가진
     // 룬인지 읽기 전에 "골라 둔 것인가"가 먼저 보이는 자리이고, 판매를 막는 자물쇠가
     // 판매 버튼 옆이 아니라 표식 자리에 있어야 실수로 함께 눌리지 않는다.
@@ -209,26 +231,20 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
     const buttonY = height / 2 - 56;
     const equip = options.equip;
     const equipped = equippedRelicName(rune.instanceId) !== undefined;
-    // 세공·판매는 모든 진입점에 있고 장착만 대상 슬롯을 알고 있는 정보창에 조건부로 선다.
-    const spacing = equip ? 128 : 112;
-    // 판매 버튼은 자물쇠 칩이 다시 칠할 대상이라 먼저 만든다.
-    const sell = new Button(scene, equip ? 0 : spacing / 2, buttonY, {
-      width: equip ? 116 : 200, height: 68, label: "판매", fontSize: 24,
-      onClick: () => { void new InventoryManager(session).sellRunes(options.api ?? gameApi, [rune.instanceId]).then(() => close()); },
-    });
-    body.add(new Button(scene, equip ? -spacing : -spacing / 2, buttonY, {
-      width: equip ? 116 : 200, height: 68, label: "세공", fontSize: 24, variant: "primary", accentColor: accent,
+    // 판매는 **되돌릴 수 없는 다른 성격의 조작**이라 세공·장착과 같은 크기로 나란히 세우지
+    // 않는다. 셋을 같은 폭으로 두면 줄이 넘쳐 서로 겹쳤고, 무엇이 이 쪽지의 주 조작인지도
+    // 읽히지 않았다. 판매만 작고 붉게 오른쪽 끝으로 물러난다.
+    const main = equip ? RUNE_NOTE_BUTTONS.withEquip : RUNE_NOTE_BUTTONS.plain;
+    body.add(new Button(scene, main.craftX, buttonY, {
+      width: main.width, height: 68, label: "세공", fontSize: 24, variant: "primary", accentColor: accent,
       onClick: () => {
         close();
         openRunePopup(scene, popups, options);
       },
     }));
-    body.add(sell);
-    sell.setEnabled(!equipped && !rune.locked);
-    marks.paint(rune);
     if (equip) {
-      body.add(new Button(scene, spacing, buttonY, {
-        width: 116, height: 68, label: "장착", fontSize: 24,
+      body.add(new Button(scene, main.equipX, buttonY, {
+        width: main.width, height: 68, label: "장착", fontSize: 24,
         onClick: () => {
           void relicProgression.equipRune(equip.relicId, equip.slotIndex, rune.instanceId).then(() => {
             close();
@@ -237,6 +253,9 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
         },
       }));
     }
+    body.add(sell.setPosition(main.sellX, buttonY));
+    sell.setEnabled(!equipped && !rune.locked);
+    marks.paint(rune);
   });
 }
 
@@ -294,7 +313,7 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
         height: 56,
         color: "#ffdf9a",
         parent: content,
-      }).setText(formatCurrency(session.wallet.gold));
+      }).setValue(formatCurrency(session.wallet.gold));
       // 연필은 씬에서 직접 작도하지 않고 glyph 공용 시스템의 edit 표식을 쓴다. 이름 바로
       // 옆에 서야 무엇을 고치는 단추인지 읽힌다 — 오른쪽 끝에 두면 그 아래 확률 글자와 겹친다.
       const pencilX = Math.min(-half + 146 + nameText.width + 30, half - 244);

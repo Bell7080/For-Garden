@@ -60,6 +60,6 @@ export function runeBackdropBands(bands = 14): readonly { factor: number; alpha:
   // 눈이 잇지 못할 만큼 잘게 나눈다. 겹은 만들 때 한 번만 그리므로 프레임 비용이 아니다.
   return Array.from({ length: bands }, (_, index) => ({
     factor: 1 - (index * 0.8) / bands,
-    alpha: 0.028,
+    alpha: 0.032,
   }));
 }

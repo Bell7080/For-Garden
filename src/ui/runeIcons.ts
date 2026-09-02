@@ -4,6 +4,7 @@ import type { RuneInstance, RuneMainStatKey, RunePart } from "../core/runes";
 import { drawGlyph } from "./glyphs";
 import { chipPoints, drawInnerVignette, drawLayer, drawShapeInnerGlow, drawShapeOutline } from "./holo";
 import { clipShapeByDiagonal, runeBackdropBands, scaleShape, type RuneBackdropSide } from "./runeBackdrop";
+import { runePieceFit } from "./runePieceContent";
 import { STAT_TONE } from "./statTones";
 import { addGlowStar, type StarTones } from "./stars";
 
@@ -50,6 +51,38 @@ export function addRuneIcon(scene: Phaser.Scene, x: number, y: number, size: num
   return icon;
 }
 
+/**
+ * 액자 한 칸 안에 서는 조각 하나.
+ *
+ * 하트를 이루는 자리(정보창의 젬 슬롯)와 달리, 액자에는 조각 하나만 서므로 캔버스가 아니라
+ * **보이는 그림**을 칸 한가운데에 맞춘다(`runePieceFit`) — 그러지 않으면 1번은 왼쪽 위,
+ * 2번은 오른쪽 위, 3번은 아래로 쏠려 앉고 그만큼 작게 보인다.
+ */
+function addFittedRuneIcon(scene: Phaser.Scene, frameSize: number, rarity: HeartGemRarity | undefined, part: RunePart): Phaser.GameObjects.Container {
+  const fit = runePieceFit(part, frameSize, RUNE_FRAME_FILL);
+  const icon = scene.add.container(0, 0);
+  const place = (image: Phaser.GameObjects.Image, dx: number, dy: number): Phaser.GameObjects.Image =>
+    image.setOrigin(0.5, RUNE_CENTER_Y).setDisplaySize(fit.size, fit.size).setPosition(fit.x + dx, fit.y + dy);
+  // 그림자 거리는 캔버스가 아니라 **보이는 그림**을 따라간다. 캔버스를 따르면 조각마다 여백이
+  // 달라 그림자만 저 혼자 멀리 떨어진다.
+  const offset = fit.content * 0.045;
+  if (rarity) {
+    icon.add(place(scene.add.image(0, 0, runeTexture(rarity, part)), offset, offset * 1.2).setTint(0x05070a).setAlpha(0.5));
+    icon.add(place(scene.add.image(0, 0, runeTexture(rarity, part)), 0, 0));
+  } else {
+    icon.add(place(scene.add.image(0, 0, runeTexture(undefined, part)), 0, 0).setAlpha(0.5));
+  }
+  return icon;
+}
+
+/**
+ * 액자 한 변 대비 조각이 차지하는 비율.
+ *
+ * 잘린 모서리와 안쪽 비네트에 그림이 닿지 않는 선에서 최대한 크게 잡는다. 1에 가까우면
+ * 조각의 뾰족한 끝이 액자 선을 넘고, 작으면 그림이 큰 칸 한가운데에 떠 액자만 커 보인다.
+ */
+const RUNE_FRAME_FILL = 0.8;
+
 /** 각인까지 마친 룬이 두르는 금빛. 완성된 보석 하나뿐인 색이라 다른 표식과 섞지 않는다. */
 export const RUNE_ENGRAVE_GOLD = 0xffc861;
 
@@ -93,13 +126,11 @@ export function addRuneFrame(
   plate.fillPoints(toGeomPoints(shape), true);
   frame.add(plate);
   if (options.mainStats) frame.add(drawRuneBackdrop(scene, shape, size, options.mainStats));
-  frame.add(drawInnerVignette(scene, 0, 0, shape, { strength: 0.55 }));
+  // 안쪽 비네트는 가장자리를 **살짝만** 눌러 준다. 깊게 누르면 뒷배경 색이 액자 안에서
+  // 검게 가라앉아 두 주 옵션이 무슨 색인지 가장자리에서 읽히지 않는다.
+  frame.add(drawInnerVignette(scene, 0, 0, shape, { strength: 0.3, depth: 0.2 }));
   frame.add(drawShapeOutline(scene, 0, 0, shape, { color: accent, alpha: rarity ? 0.9 : 0.35, width: 3 }));
-  // 조각은 액자를 가득 채운다. 조각 원화에 이미 여백이 있어, 여기서 더 줄이면 그림이 칸
-  // 한가운데에 작게 떠 액자만 커 보인다.
-  frame.add(rarity
-    ? addRuneIcon(scene, 0, 0, size * 0.98, rarity, part)
-    : scene.add.image(0, 0, runeTexture(undefined, part)).setOrigin(0.5, RUNE_CENTER_Y).setDisplaySize(size * 0.98, size * 0.98).setAlpha(0.5));
+  frame.add(addFittedRuneIcon(scene, size, rarity, part));
   // 각인 발광은 조각 **위**에 두른다. 아래에 깔면 불투명한 조각이 빛을 가려 액자 가장자리에만
   // 남고, 다 자란 보석이라기보다 테두리를 한 겹 더 두른 것처럼 보인다.
   if (options.engraved) frame.add(drawShapeInnerGlow(scene, 0, 0, shape, { color: RUNE_ENGRAVE_GOLD, strength: 0.42, depth: 0.3 }));
@@ -126,12 +157,21 @@ export function addRuneCard(
   const card = scene.add.container(x, y);
   const shape = chipPoints(width, height, { bevel: { topLeft: width * 0.19, topRight: 0, bottomRight: width * 0.19, bottomLeft: 0 } });
   card.add(drawLayer(scene, 0, 0, shape, { fill: 0x151a21, alpha: 0.96, edge: engraved ? RUNE_ENGRAVE_GOLD : RUNE_ACCENT[rune.rarity], edgeAlpha: engraved ? 0.9 : 0.35 }));
-  card.add(addRuneFrame(scene, 0, 0, Math.min(width, height) * 0.89, rune.rarity, rune.part, { mainStats: rune.mainStats, engraved }));
-  // 잠금·즐겨찾기는 쪽지에서 켜지만 읽는 자리는 목록이다. 켜진 것만 카드 왼쪽 위에 작게
-  // 서고 꺼진 것은 자리를 비운다 — 회색 표식이 카드마다 늘어서면 액자보다 먼저 읽힌다.
-  const markY = -height / 2 + RUNE_CARD_MARK.inset;
-  if (rune.locked) card.add(drawGlyph(scene, "lock", -width / 2 + RUNE_CARD_MARK.inset, markY, RUNE_CARD_MARK.size, RUNE_CARD_MARK.lock));
-  if (rune.bookmarked) card.add(drawGlyph(scene, "bookmark", -width / 2 + RUNE_CARD_MARK.inset + (rune.locked ? RUNE_CARD_MARK.gap : 0), markY, RUNE_CARD_MARK.size, RUNE_CARD_MARK.bookmark));
+  const frameSize = Math.min(width, height) * 0.89;
+  card.add(addRuneFrame(scene, 0, 0, frameSize, rune.rarity, rune.part, { mainStats: rune.mainStats, engraved }));
+  // 잠금·즐겨찾기는 쪽지에서 켜지만 읽는 자리는 목록이다. 켜진 것만 액자 **안쪽** 왼쪽 위에
+  // 작게 서고 꺼진 것은 자리를 비운다 — 회색 표식이 카드마다 늘어서면 액자보다 먼저 읽히고,
+  // 카드 모서리에 붙이면 깎인 모서리 밖으로 반쯤 빠져나가 붙인 스티커처럼 보인다.
+  const marks: number[] = [];
+  if (rune.locked) marks.push(RUNE_CARD_MARK.lock);
+  if (rune.bookmarked) marks.push(RUNE_CARD_MARK.bookmark);
+  marks.forEach((color, index) => {
+    const spot = runeMarkSpot(frameSize, index);
+    card.add(drawLayer(scene, spot.x, spot.y, chipPoints(RUNE_CARD_MARK.plate, RUNE_CARD_MARK.plate, {
+      bevel: { topLeft: RUNE_CARD_MARK.plate * 0.34, topRight: 0, bottomRight: RUNE_CARD_MARK.plate * 0.34, bottomLeft: 0 },
+    }), { fill: 0x05070a, alpha: 0.72 }));
+    card.add(drawGlyph(scene, index === 0 && rune.locked ? "lock" : "bookmark", spot.x, spot.y, RUNE_CARD_MARK.size, color));
+  });
   // 이미 누군가 끼고 있는 룬은 옅어진다. 고르러 들어가는 헛걸음을 카드에서 미리 막는다.
   if (options.dimmed) card.setAlpha(0.72);
   return card;
@@ -140,8 +180,20 @@ export function addRuneCard(
 /** 카드 한 장이 읽는 룬의 최소 모양. 세공 이력이나 이름까지 알 필요가 없다. */
 export type RuneCardModel = Pick<RuneInstance, "rarity" | "part" | "mainStats" | "engravings" | "locked" | "bookmarked">;
 
-/** 카드 위 표식의 크기와 자리. 자물쇠가 먼저 서고 별이 그 옆에 붙는다. */
-const RUNE_CARD_MARK = { size: 24, inset: 22, gap: 30, lock: 0x9fd8ff, bookmark: 0xf2c744 } as const;
+/** 카드 위 표식의 크기와 색. 자물쇠가 먼저 서고 별이 그 옆에 붙는다. */
+const RUNE_CARD_MARK = { size: 20, plate: 30, gap: 34, lock: 0x9fd8ff, bookmark: 0xf2c744 } as const;
+
+/**
+ * 표식 한 장이 서는 자리.
+ *
+ * 액자 왼쪽 위 모서리는 대각선으로 깎여 있어, 두 변에서 같은 만큼만 들어가면 표식의 모서리가
+ * 그 빗변을 넘는다. 깎인 깊이의 절반에 표식 반지름을 더해 **깎임 안쪽**에서 시작한다.
+ */
+function runeMarkSpot(frameSize: number, index: number): { x: number; y: number } {
+  const bevel = frameSize * 0.2;
+  const inset = bevel / 2 + RUNE_CARD_MARK.plate / 2 + 4;
+  return { x: -frameSize / 2 + inset + index * RUNE_CARD_MARK.gap, y: -frameSize / 2 + inset };
+}
 
 /**
  * 두 주 옵션이 대각선으로 나눠 가지는 발광 뒷배경.
@@ -155,19 +207,33 @@ function drawRuneBackdrop(
   shape: number[],
   size: number,
   mainStats: readonly [{ key: RuneMainStatKey }, { key: RuneMainStatKey }],
-): Phaser.GameObjects.Graphics {
-  const graphics = scene.add.graphics();
-  graphics.setBlendMode(Phaser.BlendModes.ADD);
+): Phaser.GameObjects.Container {
+  const backdrop = scene.add.container(0, 0);
   const sides: readonly [RuneBackdropSide, RuneMainStatKey][] = [["upper", mainStats[0].key], ["lower", mainStats[1].key]];
+  // 바닥 한 겹은 **그냥 칠한다.** 겹쳐 밝아지는 합성만으로는 어두운 색(방어·저항)이 검은 판에
+  // 묻혀 두 옵션이 무슨 색인지 갈리지 않는다. 이 한 겹이 색을 세우고, 그 위의 발광이 가운데를
+  // 밝힌다.
+  const base = scene.add.graphics();
+  for (const [side, key] of sides) {
+    base.fillStyle(STAT_TONE[key], RUNE_BACKDROP_BASE_ALPHA);
+    base.fillPoints(toGeomPoints(clipShapeByDiagonal(shape, size, size, side)), true);
+  }
+  backdrop.add(base);
+  const glow = scene.add.graphics();
+  glow.setBlendMode(Phaser.BlendModes.ADD);
   for (const { factor, alpha } of runeBackdropBands()) {
     const band = scaleShape(shape, factor);
     for (const [side, key] of sides) {
-      graphics.fillStyle(STAT_TONE[key], alpha);
-      graphics.fillPoints(toGeomPoints(clipShapeByDiagonal(band, size, size, side)), true);
+      glow.fillStyle(STAT_TONE[key], alpha);
+      glow.fillPoints(toGeomPoints(clipShapeByDiagonal(band, size, size, side)), true);
     }
   }
-  return graphics;
+  backdrop.add(glow);
+  return backdrop;
 }
+
+/** 바닥 한 겹의 진하기. 색을 세우되 조각을 덮지 않는 선이다. */
+const RUNE_BACKDROP_BASE_ALPHA = 0.34;
 
 /** 평평한 좌표 배열을 Phaser가 받는 점 목록으로 바꾼다. */
 function toGeomPoints(flat: number[]): Phaser.Geom.Point[] {

@@ -155,7 +155,7 @@ describe("도디 스킬 표시 계약", () => {
   it("은 궁극기의 아군 회복 %를 실제 주문력 수치로 환산한 태그로 만든다", () => {
     const dodo = RELICS.find((def) => def.id === "dodo")!;
     expect(allyHealPowerKeyword(dodo.ultimate.allyHealingPower!, 150)).toMatchObject({ id: "heal-value", term: "300" });
-    expect(skillDescription(dodo.ultimate, 150)).toBe(
+    expect(skillDescription(dodo.ultimate, { ap: 150 })).toBe(
       "지정한 넓은 범위의 모든 적에게 [[magical-damage|마법 피해]]를 주고, 모든 생존 아군의 체력을 [[heal-value|300]]만큼 회복한다.",
     );
   });
@@ -163,6 +163,29 @@ describe("도디 스킬 표시 계약", () => {
   it("의 야성 발현은 배속 환산 괄호 없이 상승률만 말한다", () => {
     const dodo = RELICS.find((def) => def.id === "dodo")!;
     expect(ferocityTraitDescription(dodo.ferocityTrait)).toBe("공격 속도가 100% 증가한다.");
+  });
+
+  it("의 일반 공격은 묘사 대신 대상·피해·회복 비율을 말한다", () => {
+    const dodo = RELICS.find((def) => def.id === "dodo")!;
+    // 부리로 쪼는 묘사는 전투 결과를 바꾸지 않으므로 화면에 남기지 않는다.
+    expect(skillDescription(dodo.basic)).not.toContain("부리");
+    expect(skillDescription(dodo.basic, { damage: 120 })).toBe(
+      "적 한 명에게 [[damage-value|120]]의 [[magical-damage|마법 피해]]를 주고, 입힌 피해의 "
+      + `${dodo.basic.lowestHpAllyHealingFromDamagePercent}%만큼 현재 체력이 가장 낮은 생존 아군을 회복한다.`,
+    );
+    // 능력치를 모르면(도감만 보는 경우) 위력 %로 되돌아간다.
+    expect(skillDescription(dodo.basic)).toContain(`공격력의 ${dodo.basic.power}%`);
+  });
+});
+
+describe("렉시아 스킬 표시 계약", () => {
+  it("의 궁극기는 포효 묘사 대신 대상·피해·회복 비율을 말한다", () => {
+    const rex = RELICS.find((def) => def.id === "rex")!;
+    expect(skillDescription(rex.ultimate)).not.toContain("포효");
+    expect(skillDescription(rex.ultimate, { damage: 400 })).toBe(
+      "적 한 명에게 [[damage-value|400]]의 [[physical-damage|물리 피해]]를 주고, 입힌 피해의 "
+      + `${rex.ultimate.damageHealingPercent}%만큼 체력을 회복한다.`,
+    );
   });
 });
 
@@ -212,12 +235,15 @@ describe("스피나 스킬 표시 계약", () => {
     expect(skillDescription(spino.ultimate)).toContain("현재 [[attack-speed|공격 속도]]의 150%");
     // "준다"에 "고"를 그대로 붙이면 인용형 어미("~라고")로 읽히는 어색한 문장이 된다.
     // 어간에 연결어미를 붙인 "주고 기절시킨다"여야 자연스럽다.
-    expect(skillDescription(spino.ultimate)).toContain("주고 [[stun|기절]]시킨다");
+    // 대상과 기절 지속 시간도 본문이 함께 말한다 — 기절 키워드는 기절이 무엇인지만 말하고
+    // 몇 초인지는 스킬마다 다르다.
+    expect(skillDescription(spino.ultimate)).toContain("적 한 명에게");
+    expect(skillDescription(spino.ultimate)).toContain("주고 3초 동안 [[stun|기절]]시킨다");
     expect(skillDescription(spino.ultimate)).not.toContain("준다고");
     // 능력치가 있으면 위력·공격 속도 두 축을 하나의 실제 수치 태그로 합쳐 보여 준다 —
     // 다른 스킬들과 같은 "%를 실제 값으로 환산" 규칙을 따른다.
-    const composite = skillDescription(spino.ultimate, undefined, { atk: spino.stats.atk, attackSpeed: spino.stats.attackSpeed });
-    expect(composite).toMatch(/\[\[damage-value\|\d+\]\]의 \[\[physical-damage\|물리 피해\]\]를 주고 \[\[stun\|기절\]\]시킨다\./);
+    const composite = skillDescription(spino.ultimate, { atk: { atk: spino.stats.atk, attackSpeed: spino.stats.attackSpeed } });
+    expect(composite).toMatch(/적 한 명에게 \[\[damage-value\|\d+\]\]의 \[\[physical-damage\|물리 피해\]\]를 주고 3초 동안 \[\[stun\|기절\]\]시킨다\./);
     expect(composite).not.toContain("%");
     const expectedAmount = Math.round(
       (spino.stats.atk * (spino.ultimate.power! + (spino.stats.attackSpeed * spino.ultimate.attackSpeedPower!) / spino.stats.atk)) / 100,

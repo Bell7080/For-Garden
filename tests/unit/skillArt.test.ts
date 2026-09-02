@@ -212,6 +212,35 @@ describe("폰토스 스킬 표시 계약", () => {
   });
 });
 
+describe("티아라 스킬 표시 계약", () => {
+  const tiara = () => RELICS.find((def) => def.id === "tiara")!;
+
+  it("은 두 공격 모두 주문력에서 나오는 광역 마법 피해다", () => {
+    const def = tiara();
+    // 물 전사지만 피해는 주먹이 아니라 물살에서 나온다 — 계수·대상 계약을 데이터로 고정한다.
+    expect(def.basic).toMatchObject({ damageType: "magical", scalingStat: "ap", targeting: "nearbyEnemies" });
+    expect(def.ultimate).toMatchObject({ damageType: "magical", scalingStat: "ap", targeting: "nearbyEnemies" });
+    expect(def.basic.radius).toBeGreaterThan(0);
+    expect(def.ultimate.radius).toBeGreaterThan(def.basic.radius!);
+    // 능력치를 모르는 자리에서도 어느 능력치에서 나오는 배율인지 말한다.
+    expect(skillDescription(def.basic)).toBe(`자신의 주위 모든 적에게 주문력의 ${def.basic.power}% [[magical-damage|마법 피해]]를 준다.`);
+  });
+
+  it("의 궁극기는 대상·피해·경직을 한 문장으로 말한다", () => {
+    const def = tiara();
+    expect(skillDescription(def.ultimate, { damage: 300 })).toBe(
+      "자신의 주위 모든 적에게 [[damage-value|300]]의 [[magical-damage|마법 피해]]를 주고 [[stagger|경직]]시킨다.",
+    );
+  });
+
+  it("의 폭주와 패시브는 앞에 서서 버티는 쪽으로 읽힌다", () => {
+    const def = tiara();
+    expect(ferocityTraitDescription(def.ferocityTrait)).toBe("받는 피해가 30% 줄어든다.");
+    expect(def.passive.kind).toBe("frontGuard");
+    expect(passiveDescription(def.passive)).toContain(`${def.passive.value}%`);
+  });
+});
+
 describe("스킬 설명문 양식 계약", () => {
   /** 새 개체가 늘어도 같은 양식으로 읽히는지 목록 전체를 한 번에 검사한다. */
   const attackSkills = RELICS.flatMap((relic) => [

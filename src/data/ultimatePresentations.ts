@@ -47,6 +47,8 @@ export const ULTIMATE_PRESENTATIONS: Readonly<Record<string, UltimatePresentatio
   dodo: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.9, artworkOrigin: { x: 640, y: 790 }, zoomScale: 1.14, cameraShakeIntensity: 0.006 },
   smilo: { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkScale: 1.06, cutInHoldMs: 140, zoomScale: 1.24, zoomMs: 115, cameraShakeIntensity: 0.011 },
   quetz: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.94, artworkOrigin: { x: 650, y: 760 }, cutInHoldMs: 160, zoomScale: 1.16, cameraShakeIntensity: 0.008 },
+  // 작은 유체라 컷인에서 한 뼘 줄이고, 물살이 퍼지는 광역이라 흔들림은 가볍게 둔다.
+  tiara: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.9, artworkOrigin: { x: 640, y: 790 }, cutInHoldMs: 145, zoomScale: 1.18, cameraShakeIntensity: 0.008 },
   // 비공격 찬가는 강한 흔들림 대신 짧고 차분한 공용 placeholder 컷인을 사용한다.
   mette: { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkScale: 0.96, cutInHoldMs: 170, zoomScale: 1.12, cameraShakeIntensity: 0.004 },
   "husk-raptor": { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", cutInHoldMs: 135, zoomScale: 1.2, zoomMs: 110, cameraShakeIntensity: 0.008 },

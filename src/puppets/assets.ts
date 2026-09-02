@@ -23,6 +23,8 @@ import {
   PONTOS_SD_METADATA,
   SEIRA_PORTRAIT_METADATA,
   TAPEJARA_PORTRAIT_METADATA,
+  TIARA_PORTRAIT_METADATA,
+  TIARA_SD_METADATA,
   TORIKA_PORTRAIT_METADATA,
 } from "./assetMetadata";
 
@@ -131,6 +133,12 @@ export const TAPEJARA_ASSET: PuppetAsset = {
   ...TAPEJARA_PORTRAIT_METADATA,
 };
 
+/** 8번 전신 일러스트: 티아라(이크티오사우루스). */
+export const TIARA_ASSET: PuppetAsset = {
+  url: `${base}puppets/char_008.zip`,
+  ...TIARA_PORTRAIT_METADATA,
+};
+
 /**
  * 1번 적 토비. 적 전용 Puppet 번호와 스테이지 고정 편성 번호를 일치시킨다.
  *
@@ -195,6 +203,7 @@ const PORTRAIT_ASSETS = {
   luka: { asset: LUKA_ASSET, usesRelicTint: false },
   dodi: { asset: DODI_ASSET, usesRelicTint: false },
   mette: { asset: METTE_ASSET, usesRelicTint: false },
+  tiara: { asset: TIARA_ASSET, usesRelicTint: false },
   // 적도 전용 전신을 가진다. 초상 레지스트리에 함께 두면 정보창이 아군·적을 가르지 않고
   // 같은 경로로 원화를 찾는다 — 화면마다 "적이면 다른 함수"를 두면 한 곳을 고칠 때 다른
   // 곳이 임시 원화로 남는다.
@@ -291,6 +300,12 @@ export const TAPEJARA_SD_ASSET: PuppetAsset = {
   content: { left: 49, top: 83, right: 1175, bottom: 1179 },
 };
 
+/** 8번 SD: 티아라. */
+export const TIARA_SD_ASSET: PuppetAsset = {
+  url: `${base}puppets/charSD_008.zip`,
+  ...TIARA_SD_METADATA,
+};
+
 /** 적과 전용 아군은 각자 번호 묶음을 쓰고, 아직 전용 SD가 없는 아군만 1번 SD를 공유한다. */
 export function battleAssetFor(relicId: string): PuppetAsset {
   // 최종층 보스는 일반 적 번호 묶음과 별도의 전용 SD를 사용한다.
@@ -304,6 +319,7 @@ export function battleAssetFor(relicId: string): PuppetAsset {
   if (relicId === "luka") return LUKA_SD_ASSET;
   if (relicId === "dodo") return DODI_SD_ASSET;
   if (relicId === "mette") return METTE_SD_ASSET;
+  if (relicId === "tiara") return TIARA_SD_ASSET;
   return TORIKA_SD_ASSET;
 }
 
@@ -314,6 +330,7 @@ export function sdAssetFor(relicId: string): PuppetAsset {
   if (relicId === "luka") return LUKA_SD_ASSET;
   if (relicId === "dodo") return DODI_SD_ASSET;
   if (relicId === "mette") return METTE_SD_ASSET;
+  if (relicId === "tiara") return TIARA_SD_ASSET;
   // anky와 아직 전용 SD가 없는 렐릭은 기존 공용 토리카 SD로 안전하게 폴백한다.
   return TORIKA_SD_ASSET;
 }

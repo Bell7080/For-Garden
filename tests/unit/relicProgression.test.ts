@@ -31,6 +31,7 @@ function makeSession(): Session {
     selectedStageId: null, party: ["rex"], cleared: new Set(), owned: new Set(["rex"]), favorite: "rex", bookmarked: new Set<string>(),
     gachaPityByGroup: { "standard-fossil": { pullsSinceSsr: 0, pickupGuaranteed: false }, "limited-pickup": { pullsSinceSsr: 0, pickupGuaranteed: false } },
     // 보유 렐릭과 성장 레코드는 실제 저장 계약처럼 항상 한 쌍으로 구성한다.
+    staminaUpdatedAt: "",
     wallet: { fossil: 0, amber: 0, gems: 0, gold: 0, stamina: 0, dnaFragments: 0, cheesecake: 0 }, relicProgress: {
       rex: { level: 1, exp: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] },
     }, relicFragments: {}, itemInventory: [], runeInventory: [testRune("vital-seed"), testRune("fang-core")],

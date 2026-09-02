@@ -10,6 +10,7 @@ import { battleAssetFor, placePuppet, spawnPuppet } from "../puppets/assets";
 import { tintFor } from "../puppets/tints";
 import { getBattleStage, getStageEnemies } from "../data/stages";
 import { session } from "../state/session";
+import { gameApi } from "../api/FakeServer";
 import { Button } from "../ui/Button";
 import { addBackButton } from "../ui/IconButton";
 import { PortraitCard, relicCardTint } from "../ui/PortraitCard";
@@ -166,7 +167,7 @@ export class PartyScene extends Phaser.Scene {
       height: 150,
       label: "전투 시작",
       fontSize: 44,
-      onClick: () => {
+      onClick: async () => {
         // 첫 유효 클릭에서 즉시 잠가 같은 프레임의 빠른 연속 입력도 한 번만 처리한다.
         if (this.isEnteringBattle || this.picked.length !== 3) return;
         this.isEnteringBattle = true;
@@ -181,7 +182,9 @@ export class PartyScene extends Phaser.Scene {
             this.refreshButtonState();
             return;
           }
-          // 호출자도 스토리 전투임을 명시해 Phaser의 직전 원정 data 재사용 여지를 없앤다.
+          // 서버가 입장을 확정한 뒤에만 전투로 전환해 로딩 중 재시도가 비용을 두 번 빼지 않게 한다.
+          const requestId = globalThis.crypto?.randomUUID?.() ?? `stage-entry-${Date.now()}`;
+          await gameApi.enterStage({ stageId: session.selectedStageId!, requestId });
           this.scene.start("battle", { mode: "stage" });
         } catch {
           // 저장소 용량/보안 오류의 세부 정보 대신 사용자가 재시도할 수 있는 문구를 보여 준다.

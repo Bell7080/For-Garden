@@ -20,7 +20,6 @@ export const ITEM_ICON_FALLBACK = "scroll" as const;
 export type WalletItemKey = "fossil" | "amber" | "gems" | "gold" | "stamina" | "dnaFragments" | "cheesecake";
 
 /** 소비품 회복이 넘지 못하는 현재 계정의 행동력 상한이다. */
-export const STAMINA_CAP = 120;
 
 /** 운영 데이터 한 행. maxStack은 서버 수량 검증의 단일 기준이다. */
 export interface ItemDefinition {

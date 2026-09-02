@@ -76,6 +76,8 @@ export interface Session {
   /** 즐겨찾기한 렐릭. 애착과 달리 여러 명을 담을 수 있고 목록 위쪽에 모아 보는 데 쓴다. */
   bookmarked: Set<string>;
   wallet: Wallet;
+  /** 마지막 자연 충전 정산 기준점. 서버 응답으로만 갱신한다. */
+  staminaUpdatedAt: string;
   /** 이월 가능한 배너 그룹별 SSR 카운터와 픽업 확정 상태다. */
   gachaPityByGroup: Record<string, GachaPityState>;
   /** 렐릭 id별 성장/장착 상태다. 객체와 배열만 사용해 그대로 직렬화할 수 있다. */
@@ -194,6 +196,8 @@ export interface SaveData {
   favorite: string;
   bookmarkedRelicIds: string[];
   wallet: Wallet;
+  /** 서버가 확정한 자연 충전 기준 시각이다. */
+  staminaUpdatedAt: string;
   /** 배너 교체에도 유지되는 그룹 ID를 키로 쓰며 개별 배너 ID에는 귀속하지 않는다. */
   gachaPityByGroup: Record<string, GachaPityState>;
   relicProgress: Record<string, RelicProgress>;
@@ -247,6 +251,8 @@ export function createDefaultSession(): Session {
     favorite: STARTER_RELICS[0],
     bookmarked: new Set<string>(),
     wallet: { fossil: 1200, amber: 10, gems: 120, gold: 25_400, stamina: 60, dnaFragments: 0, cheesecake: 0 },
+    // 첫 FakeServer 요청이 서버 시각으로 안전하게 초기화한다.
+    staminaUpdatedAt: "",
     gachaPityByGroup: Object.fromEntries([...new Set(BANNERS.map(({ pityGroupId }) => pityGroupId))].map((id) => [id, { pullsSinceSsr: 0, pickupGuaranteed: false }])),
     relicProgress: Object.fromEntries(STARTER_RELICS.map((id) => [id, createStarterProgress()])),
     relicFragments: {},

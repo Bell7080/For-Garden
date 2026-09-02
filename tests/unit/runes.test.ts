@@ -15,6 +15,7 @@ import {
   RUNE_RARITY_LABELS,
   RUNE_SUB_STAT_COUNTS,
   runeCombatModifiers,
+  runeEnhancementIncrease,
   validateRuneInstance,
   type RuneInstance,
   type RuneRarity,
@@ -141,5 +142,31 @@ describe("룬 파츠", () => {
     expect(rune.part).toBe(0);
     expect(validateRuneInstance({ ...rune, part: 2 })).toBe(true);
     expect(validateRuneInstance({ ...rune, part: 3 as RuneInstance["part"] })).toBe(false);
+  });
+});
+
+describe("각인 규칙", () => {
+  /** 세 번씩 다 채운 뒤 각인만 남은 룬을 만든다. */
+  function completedRune(): RuneInstance {
+    const values = Object.fromEntries(["hp", "atk", "ap", "def", "res", "moveSpeed", "attackSpeed", "lifeSteal", "critChance", "critDamage", "ferocityGain", "energyGain"].map((key) => [key, 8])) as Record<RuneStatKey, number>;
+    let rune = createRuneInstance({ instanceId: "engrave-1", baseName: "각인 테스트", rarity: "uncommon", part: 0, statValues: values, random: () => 0 });
+    for (const { key } of rune.mainStats) for (let count = 0; count < 3; count += 1) rune = enhanceRune(rune, key, runeEnhancementIncrease(rune.rarity, key), 0);
+    return rune;
+  }
+
+  it("은 기록만 남기지 않고 그 옵션의 수치도 함께 올린다", () => {
+    const rune = completedRune();
+    const target = rune.mainStats[0];
+    const engraved = engraveRune(rune, { statKey: target.key, valueAdded: 2 });
+    // 화면에 보이는 값과 전투 계산(각인을 성공 한 번으로 세는 applyHeartGems)이 갈리지 않는다.
+    expect(engraved.mainStats[0].value).toBe(target.value + 2);
+    expect(engraved.mainStats[1].value).toBe(rune.mainStats[1].value);
+    expect(engraved.engravings).toEqual([{ statKey: target.key, valueAdded: 2 }]);
+  });
+
+  it("은 등급 없이도 유효하고 예전 저장의 등급도 그대로 읽는다", () => {
+    const rune = completedRune();
+    expect(validateRuneInstance(engraveRune(rune, { statKey: rune.mainStats[0].key, valueAdded: 2 }))).toBe(true);
+    expect(validateRuneInstance(engraveRune(rune, { statKey: rune.mainStats[0].key, grade: "perfect", valueAdded: 3 }))).toBe(true);
   });
 });

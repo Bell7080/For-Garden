@@ -34,6 +34,7 @@ import { expeditionEnemyLevel, getExpeditionEncounterEnemies } from "../data/exp
 import { formatCurrency } from "../core/formatCurrency";
 import { drawInnerVignette, drawShapeOutline } from "../ui/holo";
 import { CharacterInfoManager } from "../managers/CharacterInfoManager";
+import { groundedPortraitBounds } from "../ui/portraitPlacement";
 import { NodeEnemyPreview } from "../ui/NodeEnemyPreview";
 import { BattleProfile } from "../ui/BattleProfile";
 import { BATTLE_PROFILE_LAYOUT } from "../ui/battleStatusLayout";
@@ -65,6 +66,12 @@ const RANKING = {
   utility: { y: 1610, width: 330, height: 82, gap: 24 },
   actions: { y: 1800, height: 130, sortieWidth: 460, sweepWidth: 250, gap: 24 },
 } as const;
+
+/** 기록 화면은 정보창과 의도 크기가 다르지만 같은 alpha union으로 실제 화면 끝을 계산한다. */
+export function rankingBossBounds() {
+  const asset = portraitAssetFor("pontos");
+  return groundedPortraitBounds(asset, RANKING.boss.groundY, RANKING.boss.height);
+}
 
 /** 증강 팝업의 암전(4000) 바로 위. 고르는 동안만 생존 HUD가 이 층으로 올라온다. */
 const AUGMENT_PICKER_DEPTH = 4001;

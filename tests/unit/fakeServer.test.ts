@@ -5,6 +5,7 @@ import { GameApiError } from "../../src/api/contracts";
 import { createInitialPlayerResearchProgress, type Session } from "../../src/state/session";
 import { createRuneInstance, enhanceRune as applyRuneEnhancement, type RuneInstance, type RuneStatKey } from "../../src/core/runes";
 import { createDefaultSettings } from "../../src/core/settings";
+import { WALLET_CAPS } from "../../src/data/economy";
 
 /** API 테스트에서 같은 옵션 구성을 재현하는 보유 룬을 만든다. */
 function makeRune(instanceId = "rune-1"): RuneInstance {
@@ -82,7 +83,7 @@ describe("FakeServer", () => {
     await server.getIdleExcavation();
     await server.saveExcavationFormation({ requestId: "formation-1", assignedRelicIds: ["anky", "rex", "dodo"] });
     now = new Date("2026-08-20T04:00:00Z"); await server.getIdleExcavation();
-    expect(state.idleExcavation.unclaimed).toEqual({ gold: 428.4, cheesecake: 0, fossil: 105.6, gems: 0.8064 });
+    expect(state.idleExcavation.unclaimed).toEqual({ gold: 107.1, cheesecake: 0, fossil: 1.32, gems: 1.12 });
   });
 
   it("v18 신규 재화 소급분은 서버 기준 시각과 보관 상한으로 한 번만 정산한다", async () => {
@@ -96,7 +97,7 @@ describe("FakeServer", () => {
     const repeated = await server.getIdleExcavation();
     // 24시간 미접속이어도 4시간만 계산하며, 같은 서버 시각의 재조회는 다시 지급하지 않는다.
     expect(first.excavation.unclaimed).toEqual(repeated.excavation.unclaimed);
-    expect(first.excavation.unclaimed).toMatchObject({ fossil: 105.6, gems: 0.8064 });
+    expect(first.excavation.unclaimed).toMatchObject({ fossil: 1.32, gems: 1.12 });
     expect(first.excavation.retroactiveExcavationGrantVersion).toBe(1);
   });
 
@@ -114,6 +115,22 @@ describe("FakeServer", () => {
     const request = { requestId: "harvest-1" }; const first = await server.harvestExcavation(request); const repeated = await server.harvestExcavation(request);
     expect(repeated).toEqual(first); expect(state.wallet.gold).toBe(999_999_999); expect(first.discarded.gold).toBe(4);
     expect(first.remaining).toEqual({ gold: 0, cheesecake: 0, fossil: 0, gems: 0 });
+  });
+
+  it.each([[53.4429, 0.499, false], [53.55, 0.5, true], [107.1, 1, true]] as const)("발굴 저장 비율 %s를 서버 응답의 %s와 알림 %s로 확정한다", async (gold, ratio, notice) => {
+    const state = makeSession(); const now = new Date("2026-08-20T00:00:00Z");
+    state.idleExcavation.assignedRelicIds = ["anky", null, null]; state.idleExcavation.lastSettledAt = now.toISOString();
+    state.idleExcavation.unclaimed = { gold, cheesecake: 0, fossil: 0, gems: 0 };
+    const response = await new FakeServer(state, { latencyMs: 0, now: () => now }).getIdleExcavation();
+    expect(response.storageFillRatio).toBeCloseTo(ratio); expect(response.harvestNotice).toBe(notice);
+  });
+
+  it("수확 성공 응답은 지갑 전량 폐기 뒤에도 새 소수 잔량으로 알림을 해제한다", async () => {
+    const state = makeSession(); const now = new Date("2026-08-20T00:00:00Z");
+    state.wallet.gold = WALLET_CAPS.gold; state.idleExcavation.assignedRelicIds = ["anky", null, null]; state.idleExcavation.lastSettledAt = now.toISOString();
+    state.idleExcavation.unclaimed = { gold: 53.55, cheesecake: 0, fossil: 0, gems: 0 };
+    const response = await new FakeServer(state, { latencyMs: 0, now: () => now }).harvestExcavation({ requestId: "notice-discard" });
+    expect(response.discarded.gold).toBe(53); expect(response.storageFillRatio).toBeCloseTo(0.55 / 107.1); expect(response.harvestNotice).toBe(false);
   });
 
   it("두 기기의 연속 수확처럼 서로 다른 요청은 첫 호출만 기존 누적량을 받는다", async () => {
@@ -147,7 +164,7 @@ describe("FakeServer", () => {
     state.idleExcavation.lastSettledAt = "2026-01-01T00:00:00Z";
     const result = await new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-20T00:00:00Z") }).harvestExcavation({ requestId: "long-away" });
     // 기본 저장 시간은 4시간이므로 수개월 경과를 그대로 곱하지 않는다.
-    expect(result.granted.gold).toBe(428); expect(result.remaining.gold).toBe(0.4);
+    expect(result.granted.gold).toBe(107); expect(result.remaining.gold).toBe(0.1);
     expect(result.excavation.lastSettledAt).toBe("2026-08-20T00:00:00.000Z");
   });
   it("강화 요청의 선택 정보만 받아 서버 난수·골드 차감·룬 갱신을 함께 확정한다", async () => {

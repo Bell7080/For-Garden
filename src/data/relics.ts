@@ -31,7 +31,7 @@ export const RELICS: RelicDef[] = [
     element: "fire",
     role: "warrior",
     // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
-    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 24, efficiencyMultiplier: 1.10 },
+    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 0.30, efficiencyMultiplier: 1.10 },
     stats: {
       hp: 820,
       def: 42,
@@ -115,7 +115,7 @@ export const RELICS: RelicDef[] = [
     element: "earth",
     role: "tank",
     // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
-    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 100, efficiencyMultiplier: 1.05 },
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 25, efficiencyMultiplier: 1.05 },
     stats: {
       hp: 1420,
       def: 128,
@@ -198,7 +198,7 @@ export const RELICS: RelicDef[] = [
     element: "water",
     role: "assassin",
     // 치즈케이크 생산 계약은 수중 발굴 특화이며 전투 역할을 바꿔도 기존 생산성을 보존한다.
-    excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 8, efficiencyMultiplier: 1.10 },
+    excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 0.80, efficiencyMultiplier: 1.10 },
     // 낮은 HP·방어력은 렉시아보다 낮은 생존력을, 높은 공격·공속·이속은 암살자의 선공 능력을 보장한다.
     // 저항력 46과 주문력 58은 최소 대응력만 남기고, 치명타 15/155는 빠른 공격이 과도하게 폭증하지 않게 한다.
     stats: {
@@ -284,7 +284,7 @@ export const RELICS: RelicDef[] = [
     element: "grass",
     role: "assassin",
     // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
-    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 110, efficiencyMultiplier: 1.08 },
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 27.5, efficiencyMultiplier: 1.08 },
     stats: {
       hp: 810,
       def: 50,
@@ -366,7 +366,8 @@ export const RELICS: RelicDef[] = [
     element: "wind",
     role: "support",
     // 다이아는 희소 재화라 1시간 생산량을 1 미만으로 두고 수확 시에만 내림한다.
-    excavationTrait: { primaryCurrency: "gems", baseProductionPerHour: 0.18, efficiencyMultiplier: 1.12 },
+    // 보석은 희소성을 유지하되 기본 보관 4시간에 슬롯 하나가 최소 정수 1개를 만든다.
+    excavationTrait: { primaryCurrency: "gems", baseProductionPerHour: 0.25, efficiencyMultiplier: 1.12 },
     stats: {
       hp: 760,
       def: 48,
@@ -440,7 +441,7 @@ export const RELICS: RelicDef[] = [
     element: "grass",
     role: "assassin",
     // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
-    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 22, efficiencyMultiplier: 1.06 },
+    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 0.30, efficiencyMultiplier: 1.06 },
     stats: {
       hp: 840,
       def: 56,
@@ -504,7 +505,8 @@ export const RELICS: RelicDef[] = [
     element: "wind",
     role: "support",
     // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
-    excavationTrait: { primaryCurrency: "gems", baseProductionPerHour: 0.16, efficiencyMultiplier: 1.04 },
+    // 보석 하한 0.25/h는 일괄 증폭 대신 가장 낮은 효율에서도 4시간 정수 보상을 보장한다.
+    excavationTrait: { primaryCurrency: "gems", baseProductionPerHour: 0.25, efficiencyMultiplier: 1.04 },
     stats: {
       hp: 780,
       def: 44,
@@ -570,7 +572,7 @@ export const RELICS: RelicDef[] = [
     element: "fire",
     role: "assassin",
     // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
-    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 90, efficiencyMultiplier: 1.00 },
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 22.5, efficiencyMultiplier: 1.00 },
     stats: {
       hp: 620,
       def: 38,
@@ -634,7 +636,7 @@ export const RELICS: RelicDef[] = [
     element: "earth",
     role: "tank",
     // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
-    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 20, efficiencyMultiplier: 1.00 },
+    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 0.25, efficiencyMultiplier: 1.00 },
     stats: {
       hp: 980,
       def: 92,
@@ -698,7 +700,7 @@ export const RELICS: RelicDef[] = [
     element: "water",
     role: "support",
     // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
-    excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 6, efficiencyMultiplier: 1.00 },
+    excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 0.60, efficiencyMultiplier: 1.00 },
     stats: {
       hp: 580,
       def: 34,
@@ -773,7 +775,7 @@ export const RELICS: RelicDef[] = [
     element: "grass",
     role: "support",
     // 물리형 지원가의 견고함을 운영에서도 드러내도록 화석 생산 특화를 부여했다.
-    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 26, efficiencyMultiplier: 1.12 },
+    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 0.30, efficiencyMultiplier: 1.12 },
     stats: {
       hp: 1180, def: 104, res: 72, atk: 116, ap: 48,
       attackSpeed: 88, moveSpeed: 74, critChance: 8, critDamage: 150,

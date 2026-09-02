@@ -6,6 +6,7 @@ import { placePuppet, portraitUsesRelicTint, sdAssetFor, spawnPuppet, type Puppe
 import { tintFor } from "../puppets/tints";
 import { session } from "../state/session";
 import { setDebugExcavationAdOffers, setDebugFormationDragVisual, setDebugIdleExcavationControls, setDebugIdleExcavationPopup, setDebugIdleExcavationSdReady, setDebugIdleExcavationSlots } from "../debug";
+import { notificationManager } from "../managers/NotificationManager";
 import { Button } from "./Button";
 import { chipPoints, drawHairline, drawLayer, HOLO, HoloBar, slantedRect } from "./holo";
 import { PortraitCard } from "./PortraitCard";
@@ -420,7 +421,8 @@ export class IdleExcavationPopup {
       const result = await this.api.claimAdReward({ slotId: slot.slotId, verificationToken, requestId: requestId() });
       if (result.excavation) session.idleExcavation = { ...result.excavation, assignedRelicIds: copyFormation(result.excavation.assignedRelicIds), unclaimed: { ...result.excavation.unclaimed } };
       session.dailyAdRewards = { date: result.dailyAdRewards.date, claimsBySlot: { ...result.dailyAdRewards.claimsBySlot }, requestIds: session.dailyAdRewards.requestIds };
-      this.confirmed = { excavation: result.excavation ?? session.idleExcavation, serverTime: result.serverTime }; this.adMessage = "발굴 효과가 적용되었습니다."; this.renderStatus();
+      // 광고 적용 뒤에도 임시 응답을 조립하지 않고 비율·알림이 포함된 발굴 API 스냅샷을 다시 받는다.
+      this.confirmed = await this.api.getIdleExcavation(); this.adMessage = "발굴 효과가 적용되었습니다."; this.renderStatus();
     } catch { this.adMessage = "광고 검증에 실패했습니다. 일반 수확은 그대로 가능합니다."; this.renderStatus(); }
   }
 
@@ -755,6 +757,8 @@ export class IdleExcavationPopup {
       session.wallet = { ...result.wallet };
       session.idleExcavation = { ...result.excavation, assignedRelicIds: copyFormation(result.excavation.assignedRelicIds), unclaimed: { ...result.excavation.unclaimed } };
       this.confirmed = result; this.saving = false; this.harvestRequestId = undefined; this.harvestResult = result; this.renderStatus();
+      // 성공 수확만 알림 해제 계기가 되며 manager가 새 서버 잔량을 즉시 다시 확정한다.
+      void notificationManager.refresh().catch(() => undefined);
     } catch {
       if (!this.body) return;
       this.saving = false; this.harvestError = "수확하지 못했습니다. 같은 요청으로 다시 시도해 주세요."; this.renderStatus();

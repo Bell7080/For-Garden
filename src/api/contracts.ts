@@ -42,7 +42,14 @@ export interface StaminaDto { current: number; maximum: number; serverTime: stri
 
 /** 조회는 서버가 정산한 상태와 동일 기준 시각을 함께 돌려준다. */
 /** 네 발굴 재화 레코드와 서버 정산 시각을 함께 보내 클라이언트 추측 지급을 막는다. */
-export interface IdleExcavationResponse { excavation: IdleExcavationState; serverTime: string; /** 조회 정산 직전 보관 시간이 상한에 닿았는지 서버가 확정한다. */ storageFull?: boolean; }
+export interface IdleExcavationResponse {
+  excavation: IdleExcavationState;
+  serverTime: string;
+  /** 같은 응답의 생산량·보관 한도로 계산한 0~1 서버 확정 비율이다. */
+  storageFillRatio: number;
+  /** 비율이 절반 이상이고 광고 배율까지 적용해 정수 수확량이 있을 때만 true다. */
+  harvestNotice: boolean;
+}
 /** 편성 저장 재시도는 요청 ID로 같은 결과를 받으며 슬롯 위치를 보존한다. */
 export interface SaveExcavationFormationRequest { requestId: string; assignedRelicIds: [string | null, string | null, string | null]; }
 /** 수확 요청 ID는 네트워크 재전송의 중복 지급을 막는 서버 멱등 키다. */

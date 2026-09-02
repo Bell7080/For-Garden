@@ -65,11 +65,11 @@ describe("렐릭 성장 규칙", () => {
     const early: RelicProgress = { level: 2, exp: 0, breakthrough: 1, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: ["vital-seed", null, null] };
     const rune = testRune("growth");
     // 101 → 레벨 2%(103) → 별 0%(103) → 룬 표의 HP 기본 8%(111) 순서다.
-    expect(calculateFinalStats(BASE, early, [rune]).hp).toBe(111);
+    expect(calculateFinalStats(BASE, early, [rune], "SR").hp).toBe(111);
 
     // 셋째 돌파부터 15%가 붙는다. 103 → 별 15%(118) → Heart Gem 8%(127).
     const broken: RelicProgress = { ...early, breakthrough: 3 };
-    expect(calculateFinalStats(BASE, broken, [rune]).hp).toBe(127);
+    expect(calculateFinalStats(BASE, broken, [rune], "SR").hp).toBe(127);
   });
 
   it("룬 교체 계산은 렐릭 기본 객체를 변경하지 않고 실패 강화는 수치를 올리지 않는다", () => {
@@ -77,7 +77,7 @@ describe("렐릭 성장 규칙", () => {
     const rune = testRune("immutable");
     const failed = enhanceRune(rune, "hp", 999, 0.99);
     const progress: RelicProgress = { level: 1, exp: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [rune.instanceId, null, null] };
-    expect(calculateFinalStats(BASE, progress, [failed]).hp).toBe(calculateFinalStats(BASE, progress, [rune]).hp);
+    expect(calculateFinalStats(BASE, progress, [failed], "SR").hp).toBe(calculateFinalStats(BASE, progress, [rune], "SR").hp);
     expect(BASE).toEqual(baseSnapshot);
   });
 
@@ -87,8 +87,8 @@ describe("렐릭 성장 규칙", () => {
     for (const key of ["hp", "atk"] as const) for (let attempt = 0; attempt < 3; attempt += 1) rune = enhanceRune(rune, key, 999, 0.99);
     const engraved = engraveRune(rune, { statKey: "hp", grade: "perfect", valueAdded: 999 });
     const progress: RelicProgress = { level: 1, exp: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [rune.instanceId, null, null] };
-    const before = calculateFinalStats(BASE, progress, [rune]);
-    const after = calculateFinalStats(BASE, progress, [engraved]);
+    const before = calculateFinalStats(BASE, progress, [rune], "SR");
+    const after = calculateFinalStats(BASE, progress, [engraved], "SR");
     expect(after.hp).toBeGreaterThan(before.hp);
     expect(after.atk).toBe(before.atk);
   });

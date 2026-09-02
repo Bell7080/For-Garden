@@ -93,7 +93,8 @@ export class RelicProgressionManager {
       if (!rune) return [];
       return [rune];
     });
-    return calculateFinalStats(getRelic(relicId).stats, progress, gems);
+    const def = getRelic(relicId);
+    return calculateFinalStats(def.stats, progress, gems, def.rarity);
   }
 
   /** 성장 트랜잭션이 끝난 뒤에만 저장해 중간 상태가 남지 않게 한다. */

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import ts from "typescript";
 import PREPARE_ICONS from "../../scripts/prepare_icons.py?raw";
 import { RELICS } from "../../src/data/relics";
+import { KEYWORDS } from "../../src/data/keywords";
 import type { Skill } from "../../src/core/types";
 import { ELEMENT_TINT, ROLE_TINT, SKILL_ART_ASSETS, SKILL_ART_SLOTS, skillArtFor, skillArtKey, skillArtTint } from "../../src/ui/skillArt";
 import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageHealingLabel, damageKeyword, ferocityTraitDescription, passiveDescription, passiveShieldKeyword, recoveryLabel, skillDescription, skillKeywordLayoutOptions, statusEffectLabel, targetingLabel } from "../../src/ui/skillPresentation";
@@ -49,6 +50,15 @@ describe("스킬 일러스트 파일", () => {
     expect(SKILL_ART_ASSETS.length).toBeGreaterThan(0);
     for (const [, path] of SKILL_ART_ASSETS) {
       expect(Object.keys(ART_FILES)).toContain(`../../public${path}`);
+    }
+  });
+
+  it("은 7·8번 원화를 붙인 스테라·티아도 전용 일러스트를 갖는다", () => {
+    // 목록에 id를 더하지 않으면 그림 파일만 저장소에 남고 화면은 공용 아이콘으로 남는다.
+    for (const relicId of ["stella", "tia"]) {
+      for (const slot of SKILL_ART_SLOTS) {
+        expect(skillArtFor(relicId, slot), `${relicId} ${slot}`).toBe(skillArtKey(relicId, slot));
+      }
     }
   });
 
@@ -261,16 +271,31 @@ describe("스테라 스킬 표시 계약", () => {
     );
   });
 
-  it("의 궁극기는 피해가 아니라 순풍과 그 시간만 말한다", () => {
+  it("의 궁극기는 피해가 아니라 순풍과 그 시간, 자기 몫의 회복만 말한다", () => {
     const def = stella();
+    const buff = def.ultimate.teamBuff!;
     expect(def.ultimate).toMatchObject({
       targeting: "battlefieldAllies",
-      teamBuff: { kind: "tailwind", attackSpeedPercent: 20, moveSpeedPercent: 20 },
+      teamBuff: { kind: "tailwind", attackSpeedPercent: 20, moveSpeedPercent: 20, maxHpRegenPercentPerSecond: 2 },
     });
     // 순풍이 무엇인지는 키워드가 말한다 — 본문이 공속·이속을 다시 적으면 같은 말을 두 번 한다.
+    // 지속 회복만은 순풍 태그가 말하지 않는 이 궁극기의 몫이라 본문이 직접 적는다.
     expect(skillDescription(def.ultimate)).toBe(
-      `모든 생존 아군에게 ${def.ultimate.teamBuff!.seconds}초 동안 [[tailwind|순풍]]을 부여한다.`,
+      `모든 생존 아군에게 ${buff.seconds}초 동안 [[tailwind|순풍]]을 부여한다. [[tailwind|순풍]]이 지속되는 동안 매초 최대 체력의 ${buff.maxHpRegenPercentPerSecond}%를 회복시킨다.`,
     );
+  });
+
+  it("의 순풍 수치는 키워드 설명이 말하는 값과 같다", () => {
+    // 키워드가 "각각 20%"라고 적어 두므로, 데이터를 조정하면 그 문장도 함께 고쳐야 한다.
+    const tailwind = KEYWORDS.find(({ id }) => id === "tailwind")!;
+    for (const relic of RELICS) {
+      const buff = relic.ultimate.teamBuff;
+      if (buff?.kind !== "tailwind") continue;
+      expect(tailwind.description, relic.name).toContain(`각각 ${buff.attackSpeedPercent}%`);
+      expect(buff.moveSpeedPercent).toBe(buff.attackSpeedPercent);
+      // 지속 회복은 키워드가 말하지 않는다 — 순풍을 건 스킬만의 몫이기 때문이다.
+      expect(tailwind.description).not.toContain("회복");
+    }
   });
 
   it("의 폭주와 패시브는 아군을 밀어 주는 쪽으로 읽힌다", () => {
@@ -352,6 +377,8 @@ describe("스피나 스킬 표시 계약", () => {
     expect(ferocityTraitDescription(spino.ferocityTrait)).toContain("3초 동안 [[stealth|은신]]한다");
     expect(spino.passive).toMatchObject({ name: "전투의 환희", kind: "basicHitAttackSpeedStack", value: 3 });
     expect(passiveDescription(spino.passive)).toContain("[[attack-speed|공격 속도]]가 3 증가");
+    // 태생 치명타는 전 개체 공통이라, 암살자의 치명타형 정체성을 패시브가 문장으로 말한다.
+    expect(passiveDescription(spino.passive)).toContain(`치명타 확률이 ${spino.passive.criticalChancePercent}% 오른다`);
     expect(spino.basic).toMatchObject({ name: "악어턱 물어뜯기", power: 80, combo: { chancePercent: 40, hitCount: 2, missingHpHealingPercentPerHit: 5 } });
     expect(skillDescription(spino.basic, { damage: 100 })).toBe(
       "적 한 명에게 [[damage-value|100]]의 [[physical-damage|물리 피해]]를 주고, 40% 확률로 [[combo|연격]]하여 총 2회 적중한다. "
@@ -387,6 +414,7 @@ describe("루카 스킬 표시 계약", () => {
     expect(ferocityTraitDescription(luka.ferocityTrait)).toContain("[[stealth|은신]]");
     expect(ferocityTraitDescription(luka.ferocityTrait)).toContain("[[attack-speed|공격 속도]]가 25%");
     expect(passiveDescription(luka.passive)).toContain("공격력이 가장 높은 렐릭");
+    expect(passiveDescription(luka.passive)).toContain(`치명타 확률이 ${luka.passive.criticalChancePercent}% 오른다`);
     expect(skillDescription(luka.basic)).toContain("매 4번째 실제 [[basic-attack|기본 공격]]");
     expect(skillDescription(luka.basic)).toContain("[[physical-damage|물리 피해]]");
     expect(skillDescription(luka.ultimate)).toContain("최종 HP 피해의 75%");

@@ -55,7 +55,7 @@ import type { KeywordDef } from "../data/keywords";
 import { addFactionMark, factionMarkBounds } from "./FactionMark";
 import { SQUADS } from "../data/factions";
 import { OBSERVATION_INTERVIEW_LAYOUT, observationInterviewPanelState, type ObservationInterviewPanelState } from "./observationInterviewPanel";
-import { infoPortraitPlacement } from "./portraitPlacement";
+import { INFO_PORTRAIT_FOCUS, infoPortraitPlacement } from "./portraitPlacement";
 
 export type { SkillInfoViewModel } from "./SkillPopup";
 
@@ -84,8 +84,8 @@ const JOURNAL_SQUAD_MARK = {
 const JOURNAL_ART_ALPHA = 0.18;
 const JOURNAL_TEXT_FADE_ALPHA = 0.42;
 
-/** 전신 원화의 코어(`중심1`) 관절이 놓이는 자리와 확대 높이. 정보창의 주인공은 캐릭터다. */
-const PORTRAIT_FOCUS = { x: 336, y: 980, height: 1820 } as const;
+/** 전신 원화가 서는 자리. 정보창의 주인공은 캐릭터라 값은 순수 배치 모듈이 소유한다. */
+const PORTRAIT_FOCUS = INFO_PORTRAIT_FOCUS;
 
 /** 정보창 구석에 세우는 SD 피규어. 받침 위에서 idle만 재생한다. */
 const FIGURE = { x: 762, y: 1786, height: 240 } as const;

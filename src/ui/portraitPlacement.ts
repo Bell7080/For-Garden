@@ -10,6 +10,14 @@ export const INFO_PORTRAIT_SAFE_AREA = {
   enemy: { titleBottom: 330, controlsTop: 1660 },
 } as const;
 
+/**
+ * 정보창 전신 원화의 코어(`중심1`) 관절이 놓이는 자리와 확대 높이.
+ *
+ * 화면 한가운데(960)보다 아주 조금만 아래에 둔다 — 더 내리면 얼굴이 화면 절반 아래로 내려가
+ * 인물이 판 뒤로 가라앉은 것처럼 보인다. 이 값은 테스트와 화면이 함께 읽는다.
+ */
+export const INFO_PORTRAIT_FOCUS = { x: 336, y: 950, height: 1820 } as const;
+
 /** 모든 정보창이 같은 메타데이터 보정 경로를 지나도록 focus 옵션을 한 곳에서 만든다. */
 export function infoPortraitPlacement(asset: PuppetAsset, focus: { x: number; y: number; height: number }) {
   return { focus: { anchor: "core" as const, x: focus.x, y: focus.y + (asset.portraitOffsetY ?? 0) }, height: focus.height * (asset.portraitZoom ?? 1) };

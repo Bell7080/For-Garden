@@ -38,7 +38,7 @@ export function getExpeditionNodeEnemies(type: ExpeditionNodeType, floor: number
     : EXPEDITION_ENEMY_FORMATIONS[type];
   return ids.map((id) => {
     const enemy = getRelic(id);
-    return { ...enemy, stats: applyLevelGrowth(enemy.stats, level) };
+    return { ...enemy, stats: applyLevelGrowth(enemy.stats, level, enemy.rarity) };
   });
 }
 

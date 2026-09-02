@@ -34,9 +34,9 @@ describe("원정 노드 적 편성", () => {
     const normalEnemies = getExpeditionEncounterEnemies("normal", 20);
     // 같은 25레벨 비교표를 만들어 레벨 차이가 보스 우위를 대신 설명하지 못하게 한다.
     const normalSsr = [getRelic("rex"), getRelic("spino"), getRelic("mette")]
-      .map((relic) => ({ ...relic, stats: applyLevelGrowth(relic.stats, 25) }));
-    // 레벨 25(20층 + boss 5)의 48% 성장을 적용한 실제 전투 수치를 표처럼 고정한다.
-    expect(pontos.stats).toMatchObject({ hp: 4144, def: 266, res: 192, ap: 148, attackSpeed: 81, energyGain: 44 });
+      .map((relic) => ({ ...relic, stats: applyLevelGrowth(relic.stats, 25, relic.rarity) }));
+    // 레벨 25(20층 + boss 5)에 SSR 성장률 2.2%/레벨을 적용한 52.8% 성장의 실제 전투 수치다.
+    expect(pontos.stats).toMatchObject({ hp: 4278, def: 275, res: 199, ap: 153, attackSpeed: 84, energyGain: 46 });
     for (const key of ["hp", "def", "res", "ap"] as const) {
       expect(pontos.stats[key]).toBeGreaterThan(Math.max(...normalEnemies.map((enemy) => enemy.stats[key])));
       expect(pontos.stats[key]).toBeGreaterThan(Math.max(...normalSsr.map((relic) => relic.stats[key])));
@@ -51,7 +51,7 @@ describe("원정 노드 적 편성", () => {
     expect({ level: 20, grade: 1, stats: pontos.stats }).toMatchObject({
       level: 20,
       grade: 1,
-      stats: { hp: 4144, def: 266, res: 192, ap: 148 },
+      stats: { hp: 4278, def: 275, res: 199, ap: 153 },
     });
     expect(Object.values(pontos.stats)).not.toContain(Number.MAX_SAFE_INTEGER);
   });

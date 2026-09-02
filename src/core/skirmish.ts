@@ -81,6 +81,8 @@ export interface Fighter extends Combatant {
   tailwindFor: number;
   /** 지금 걸린 순풍의 수치. 여러 제공자가 겹치면 남은 시간이 긴 쪽의 값을 그대로 쓴다. */
   tailwind: TeamBuff | null;
+  /** 순풍이 데려온 지속 회복의 다음 틱까지 남은 시간(초). */
+  tailwindTickIn: number;
   /** 남은 기절 시간(초). 별도 boolean 없이 `stunnedFor > 0`만 행동 차단 기준으로 삼는다. */
   stunnedFor: number;
   /** 남은 경직 시간(초). 기절과 달리 저항·유지 모션 없이 순간적으로만 행동을 끊는다. */
@@ -320,6 +322,7 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     shimmerMarkTargetId: null,
     tailwindFor: 0,
     tailwind: null,
+    tailwindTickIn: 0,
     // 전투 시작 시 모든 행동 가능 상태이며, 기절은 전투 한정 상태라 저장 스냅샷에서 복원하지 않는다.
     stunnedFor: 0,
     staggeredFor: 0,
@@ -782,6 +785,28 @@ function applyTeamBuff(target: Fighter, buff: TeamBuff): void {
   if (buff.seconds <= target.tailwindFor) return;
   target.tailwindFor = buff.seconds;
   target.tailwind = buff;
+  // 회복 틱은 새로 걸린 순간부터 다시 센다 — 갱신할 때마다 즉시 한 번 터지면 겹쳐 걸어 회복을 뽑을 수 있다.
+  target.tailwindTickIn = EMERGENCY_RECOVERY.tickSeconds;
+}
+
+/**
+ * 순풍이 데려온 지속 회복.
+ *
+ * 회복은 순풍 태그의 효과가 아니라 **그 순풍을 건 스킬이 얹은 값**이라, 값이 없는 순풍은
+ * 아무것도 회복시키지 않는다. 긴급 회복과 같은 1초 틱·같은 회복 경계를 쓴다.
+ */
+function tickTailwind(fighter: Fighter, dt: number, state: SkirmishState): SkirmishEvent[] {
+  const percent = fighter.tailwindFor > 0 ? fighter.tailwind?.maxHpRegenPercentPerSecond : undefined;
+  if (percent === undefined || dt <= 0 || !isFighterAlive(fighter)) return [];
+  fighter.tailwindTickIn -= Math.min(dt, fighter.tailwindFor);
+  const events: SkirmishEvent[] = [];
+  while (fighter.tailwindTickIn <= EMERGENCY_RECOVERY.epsilon) {
+    const amount = applyHealing(state, fighter, fighter.maxHp * percent / 100);
+    // 최대 HP에서 발생한 0 회복은 UI에 숫자를 띄울 실제 사건이 아니므로 생략한다.
+    if (amount > 0) events.push({ kind: "heal", fighterId: fighter.id, amount, source: "passive", effect: { tag: "heal", intensity: 1 } });
+    fighter.tailwindTickIn += EMERGENCY_RECOVERY.tickSeconds;
+  }
+  return events;
 }
 
 /** 실시간 전투도 턴제와 같은 사건별 증가 및 임계 로그 계약을 사용한다. */
@@ -894,7 +919,8 @@ function retargetAfterBasic(attacker: Fighter, target: Fighter, state: SkirmishS
 /** 공격력은 배율로, 백분율 척도인 치명타 피해는 퍼센트포인트로 임시 정의에 반영한다. */
 function offensiveDefinition(attacker: Fighter): RelicDef {
   const passive = attacker.def.passive;
-  if (passive.kind !== "battleMaidMastery") return attacker.def;
+  // 치명타 확률과 마찬가지로 개체 이름이 아니라 적힌 값으로 판별한다.
+  if (passive.attackPowerPercent === undefined && passive.criticalDamagePercent === undefined) return attacker.def;
   return { ...attacker.def, stats: {
     ...attacker.def.stats,
     atk: attacker.def.stats.atk * (1 + (passive.attackPowerPercent ?? 0) / 100),
@@ -1154,8 +1180,10 @@ function strike(
   const attackingInFever = attacker.ferocityFever;
   const critTrait = attacker.def.ferocityTrait;
   // 패시브와 폭주의 퍼센트포인트를 모두 더한 뒤, 난수 판정 직전에만 유효 확률을 100%로 제한한다.
-  const passiveCritPoints = attacker.def.passive.kind === "battleMaidMastery"
-    ? attacker.def.passive.criticalChancePercent ?? 0 : 0;
+  // 치명타 가산은 개체 이름이 아니라 필드 하나로 읽는다 — 태생 치명타가 전 개체 공통이라
+  // "이 개체는 왜 치명타형인가"의 답이 늘 패시브에 있어야 하고, 새 개체가 그 값을 적기만 하면
+  // 전투가 그대로 읽어야 한다.
+  const passiveCritPoints = attacker.def.passive.criticalChancePercent ?? 0;
   const criticalChance = attacker.def.stats.critChance + passiveCritPoints
     + (attackingInFever && critTrait.effectId === "rexBattleQueen" ? critTrait.criticalChancePoints : 0);
   const periodicCritical = !useUltimate ? attacker.def.basic.periodicCritical : undefined;
@@ -1414,8 +1442,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
   const attackingInFever = attacker.ferocityFever;
   const critTrait = attacker.def.ferocityTrait;
   // 광역 궁극기도 단일 타격과 동일하게 패시브 치명타 확률을 퍼센트포인트로 취급한다.
-  const passiveCritPoints = attacker.def.passive.kind === "battleMaidMastery"
-    ? attacker.def.passive.criticalChancePercent ?? 0 : 0;
+  const passiveCritPoints = attacker.def.passive.criticalChancePercent ?? 0;
   const damageAttacker = { ...attacker, def: offensiveDefinition(attacker) };
 
   for (const [index, target] of targets.entries()) {
@@ -1619,9 +1646,11 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     }
     // 순풍도 같은 공용 시계를 쓴다. 다 흐르면 수치까지 비워 남은 값이 다음 전투로 새지 않게 한다.
     if (isFighterAlive(fighter) && fighter.tailwindFor > 0) {
+      // 회복 틱을 먼저 돌려야 남은 시간이 0이 되는 프레임의 마지막 한 틱을 잃지 않는다.
+      events.push(...tickTailwind(fighter, dt, state));
       const remaining = fighter.tailwindFor - dt;
       fighter.tailwindFor = remaining <= EMERGENCY_RECOVERY.epsilon ? 0 : remaining;
-      if (fighter.tailwindFor === 0) fighter.tailwind = null;
+      if (fighter.tailwindFor === 0) { fighter.tailwind = null; fighter.tailwindTickIn = 0; }
     }
   }
 

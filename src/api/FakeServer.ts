@@ -7,6 +7,7 @@ import { BREAKTHROUGH_CAP, canBreakThrough, canFeedRelic, feedRelic as calculate
 import { BOND_XP_REWARD, grantBondXp, grantDailyLobbyBondXp } from "../core/bond";
 import { MAX_RESEARCH_POINTS, MISSIONS, RESEARCH_REWARD_STAGES, applyMissionEvent, claimResearchStages, claimableMissionIds, normalizeMissions, researchStageClaimId, type MissionPeriod } from "../core/missions";
 import { DAILY_RESTORATION, getStage } from "../data/stages";
+import { CONTENT_STAMINA_COSTS } from "../data/contentCosts";
 import { createInitialRelicProgress, session, type Session } from "../state/session";
 import { saveManager } from "../state/SaveManager";
 import { ProfileModifierManager } from "../managers/ProfileModifierManager";
@@ -21,13 +22,15 @@ import type { EventDefinition } from "../data/events/types";
 import type { EnterEventStageResponse, EventListResponse } from "./contracts";
 import { assertValidRuneInstance, canEngraveRune, canEnhanceRune, generateRune, RUNE_PART_LABELS, type RunePart, engraveRune as applyRuneEngraving, enhanceRune as applyRuneEnhancement, runeEnhancementAttempts, runeEnhancementIncrease, type RuneInstance, type RuneRarity } from "../core/runes";
 import { runeEnhancementGoldCost, runeSellValue } from "../data/runes";
-import { findItem, STAMINA_CAP } from "../data/items";
+import { findItem } from "../data/items";
+import { settleStamina, staminaMaxForPlayer, staminaTiming } from "../core/stamina";
 import { InventoryManager } from "../managers/InventoryManager";
 import type { EngraveRuneRequest, EngraveRuneResponse, EnhanceRuneRequest, EnhanceRuneResponse, EquipRuneRequest, EquipRuneResponse, MarkRuneRequest, MarkRuneResponse, RenameRuneRequest, RenameRuneResponse, RuneInventoryDto, UnequipRuneRequest, UnequipRuneResponse, SellRunesRequest, SellRunesResponse } from "./contracts";
 import type { ActivatePassRequest, ActivatePassResponse, ClaimInstantAdRewardRequest, ClaimInstantAdRewardResponse, PassEntitlementDto, VerifyPurchaseReceiptRequest, VerifyPurchaseReceiptResponse } from "./contracts";
 import { harvestIdleExcavation, isExcavationStorageFull, settleIdleExcavation, validateExcavationFormation } from "../core/idleExcavation";
 import type { HarvestExcavationRequest, HarvestExcavationResponse, IdleExcavationResponse, SaveExcavationFormationRequest, InventoryResponse, UseConsumableRequest, UseConsumableResponse } from "./contracts";
 import type { ClaimExpeditionRewardRequest, ClaimExpeditionRewardResponse, CompleteExpeditionNodeRequest, CompleteExpeditionNodeResponse, ExpeditionLeaderboardResponse, ExpeditionWeeklyBestResponse, SettleExpeditionRunRequest, SettleExpeditionRunResponse, SubmitExpeditionBossScoreRequest, SubmitExpeditionBossScoreResponse, SweepExpeditionRequest, SweepExpeditionResponse } from "./contracts";
+import type { EnterStageRequest, EnterStageResponse } from "./contracts";
 import type { ClaimMailRewardsRequest, ClaimMailRewardsResponse, MailDto, MailListResponse, MailRewardDto, MarkMailsReadRequest } from "./contracts";
 import { expeditionWeekKey, resolveExpeditionBossBattle } from "../core/expeditionBoss";
 import { EXPEDITION_BOSS_BALANCE, EXPEDITION_CUMULATIVE_REWARD_STAGES, EXPEDITION_NODE_REWARD_BALANCE, EXPEDITION_SWEEP_POLICY, EXPEDITION_WEEKLY_POLICY, QUICK_EXPEDITION_POLICY } from "../data/expedition";
@@ -89,6 +92,8 @@ export class FakeServer implements GameApi {
   private readonly mailClaimResults = new Map<string, ClaimMailRewardsResponse>();
   /** 운영 DB의 requestId 고유 제약을 흉내 내 판매 재전송에 최초 확정 영수증을 돌려준다. */
   private readonly runeSaleResults = new Map<string, SellRunesResponse>();
+  /** 일반 스테이지 입장 재전송의 이중 차감을 막는 서버 영수증 표다. */
+  private readonly stageAdmissionResults = new Map<string, EnterStageResponse>();
 
   constructor(
     private readonly state: Session = session,
@@ -336,22 +341,24 @@ export class FakeServer implements GameApi {
   /** 보유량과 상한을 복제 상태에서 검증한 뒤 차감·효과·저장을 한 번에 확정한다. */
   async useConsumable(request: UseConsumableRequest): Promise<UseConsumableResponse> {
     await this.delay();
+    // 토닉 검증 전에 오프라인 자연 충전을 서버 시각까지 먼저 확정한다.
+    this.settleStaminaNow();
     const definition = findItem(request.itemId);
     if (!definition) throw new GameApiError("ITEM_NOT_FOUND", "존재하지 않는 아이템입니다.");
     if (definition.category !== "consumable" || definition.useEffect.kind === "none") throw new GameApiError("ITEM_NOT_USABLE", "사용할 수 없는 아이템입니다.");
     if (!Number.isInteger(request.quantity) || request.quantity <= 0) throw new GameApiError("INVALID_ITEM_QUANTITY", "사용 수량이 올바르지 않습니다.");
     const stack = this.state.itemInventory.find(({ itemId }) => itemId === request.itemId);
     if (!stack || stack.quantity < request.quantity) throw new GameApiError("INSUFFICIENT_ITEMS", "아이템 수량이 부족합니다.");
-    if (definition.useEffect.kind === "restore_stamina" && this.state.wallet.stamina >= STAMINA_CAP) throw new GameApiError("STAMINA_FULL", "스테미나가 이미 가득 찼습니다.");
+    if (definition.useEffect.kind === "restore_stamina" && this.state.wallet.stamina >= staminaMaxForPlayer(this.state)) throw new GameApiError("STAMINA_FULL", "스테미나가 이미 가득 찼습니다.");
     const requested = definition.useEffect.amount * request.quantity;
-    const appliedAmount = Math.min(requested, STAMINA_CAP - this.state.wallet.stamina);
+    const appliedAmount = Math.min(requested, staminaMaxForPlayer(this.state) - this.state.wallet.stamina);
     const nextWallet = { ...this.state.wallet, stamina: this.state.wallet.stamina + appliedAmount };
     const left = stack.quantity - request.quantity;
     const nextItems = this.state.itemInventory.flatMap((entry) => entry.itemId === request.itemId ? (left > 0 ? [{ ...entry, quantity: left }] : []) : [{ ...entry }]);
     this.persist({ ...this.state, wallet: nextWallet, itemInventory: nextItems });
     this.state.wallet = nextWallet; this.state.itemInventory = nextItems;
     const inventory = await this.getInventory();
-    return { ...inventory, itemId: request.itemId, quantityUsed: request.quantity, effect: definition.useEffect, appliedAmount, wallet: { ...nextWallet } };
+    return { ...inventory, itemId: request.itemId, quantityUsed: request.quantity, effect: definition.useEffect, appliedAmount, overflowAmount: requested - appliedAmount, wallet: { ...nextWallet }, stamina: this.staminaDto(this.now()) };
   }
 
   /** 서버의 단일 now 값을 캡처해 조회 정산과 응답 시각이 어긋나지 않게 한다. */
@@ -595,6 +602,24 @@ export class FakeServer implements GameApi {
     this.persist({ ...this.state, relicProgress: nextProgress, relicFragments: nextFragments, wallet: nextWallet });
     this.state.relicProgress = nextProgress; this.state.relicFragments = nextFragments; this.state.wallet = nextWallet;
     return { ...this.snapshot(), relicId, breakthrough, levelCap: relicLevelCap(breakthrough), stars: relicStars(breakthrough), fragments: nextFragments[relicId] };
+  }
+
+  /** 입장 허가와 비용 차감을 한 처리로 묶고 requestId 재전송에는 최초 영수증을 반환한다. */
+  async enterStage(request: EnterStageRequest): Promise<EnterStageResponse> {
+    await this.delay();
+    const cached = this.stageAdmissionResults.get(request.requestId);
+    if (cached) return structuredClone(cached);
+    if (!request.requestId) throw new GameApiError("INVALID_STATE", "입장 요청 ID가 필요합니다.");
+    let stage; try { stage = getStage(request.stageId); } catch { throw new GameApiError("STAGE_NOT_FOUND", "존재하지 않는 스테이지입니다."); }
+    if (stage.kind !== "battle") throw new GameApiError("STAGE_NOT_FOUND", "전투 스테이지가 아닙니다.");
+    this.settleStaminaNow();
+    const cost = CONTENT_STAMINA_COSTS.normalStage;
+    if (this.state.wallet.stamina < cost) throw new GameApiError("INSUFFICIENT_STAMINA", "스테미나가 부족합니다.");
+    this.state.wallet.stamina -= cost;
+    this.persist(this.state);
+    const response = { ...this.snapshot(), stageId: request.stageId, requestId: request.requestId, staminaSpent: cost, refundPolicy: "no-refund-after-admission" as const };
+    this.stageAdmissionResults.set(request.requestId, structuredClone(response));
+    return response;
   }
 
   /** 승리 결과 확인 시 최초/반복 보상을 판정하고 클리어와 지갑을 함께 저장한다. */
@@ -957,7 +982,24 @@ export class FakeServer implements GameApi {
     return Math.max(0, product.purchaseLimit - count);
   }
 
+  /** 모든 스테미나 요청이 공유하는 서버 정산 경계다. */
+  private settleStaminaNow(now = this.now()): void {
+    const maximum = staminaMaxForPlayer(this.state);
+    const settled = settleStamina(this.state.wallet.stamina, maximum, this.state.staminaUpdatedAt, now);
+    this.state.wallet.stamina = settled.amount;
+    this.state.staminaUpdatedAt = settled.updatedAt;
+  }
+
+  /** 정산된 현재량과 이후 시각을 클라이언트 표시용 DTO로 묶는다. */
+  private staminaDto(now: Date) {
+    const maximum = staminaMaxForPlayer(this.state);
+    const timing = staminaTiming(this.state.wallet.stamina, maximum, this.state.staminaUpdatedAt);
+    return { current: this.state.wallet.stamina, maximum, serverTime: now.toISOString(), updatedAt: this.state.staminaUpdatedAt, ...timing };
+  }
+
   private snapshot(): PlayerStateDto {
+    const serverNow = this.now();
+    this.settleStaminaNow(serverNow);
     // 중첩 슬롯까지 복사해 응답 변경이 서버 역할의 세션을 오염시키지 않게 한다.
     const relicProgress = Object.fromEntries(
       Object.entries(this.state.relicProgress).map(([id, progress]) => [id, { ...progress, heartGemSlots: [...progress.heartGemSlots] as typeof progress.heartGemSlots }]),
@@ -966,6 +1008,7 @@ export class FakeServer implements GameApi {
       // 프로필 씬이 공식을 재계산하지 않도록 서버 역할의 확정 연구 진행을 그대로 복사한다.
       playerResearch: { ...this.state.playerResearch },
       wallet: { ...this.state.wallet },
+      stamina: this.staminaDto(serverNow),
       gachaPityByGroup: Object.fromEntries(Object.entries(this.state.gachaPityByGroup).map(([id, pity]) => [id, { ...pity }])),
       ownedRelicIds: [...this.state.owned],
       relicProgress,

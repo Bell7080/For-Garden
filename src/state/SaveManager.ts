@@ -13,6 +13,7 @@ import { findItem } from "../data/items";
 import { EXPEDITION_AUGMENT_IDS, EXPEDITION_REWARD_IDS } from "../data/expedition";
 import { validateExpeditionMap } from "../core/expeditionMap";
 import type { ExpeditionRunState } from "./session";
+import { staminaMaxForResearchLevel } from "../core/stamina";
 
 /** v12에서만 존재했던 정적 젬을 저장 마이그레이션용 인스턴스로 재현하는 폐쇄된 표다. */
 const LEGACY_V12_RUNES: Readonly<Record<string, RuneInstance>> = {
@@ -30,7 +31,7 @@ function migrateV12Rune(definitionId: string): RuneInstance {
 
 /** 키는 계정 연동 저장소와 충돌하지 않도록 로컬 프로토타입임을 명시한다. */
 export const SAVE_STORAGE_KEY = "eternal-city.local-save";
-export const CURRENT_SAVE_VERSION = 28;
+export const CURRENT_SAVE_VERSION = 29;
 
 type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
@@ -124,6 +125,8 @@ export class SaveManager {
       favorite: state.favorite,
       bookmarkedRelicIds: [...state.bookmarked],
       wallet: { ...state.wallet },
+      // 로컬에서는 서버가 마지막으로 확정한 기준 시각만 그대로 보존한다.
+      staminaUpdatedAt: state.staminaUpdatedAt,
       gachaPityByGroup: Object.fromEntries(Object.entries(state.gachaPityByGroup).map(([id, pity]) => [id, { ...pity }])),
       relicProgress: Object.fromEntries(Object.entries(state.relicProgress).map(([id, value]) => [id, cloneProgress(value)])),
       relicFragments: { ...state.relicFragments },
@@ -195,7 +198,9 @@ export class SaveManager {
     // 중복 합산을 막고, 구조 분해로 구 키가 현재 저장 모델에 남지 않게 한다.
     const { weeds: _legacyWeeds, ...walletWithoutLegacyCurrency } = savedWallet ?? {};
     const legacyCheesecake = typeof _legacyWeeds === "number" ? _legacyWeeds : 0;
-    const wallet = { ...walletWithoutLegacyCurrency, dnaFragments: savedWallet?.dnaFragments ?? 0, cheesecake: savedWallet?.cheesecake ?? legacyCheesecake, gems: savedWallet?.gems ?? 0, gold: savedWallet?.gold ?? 0, stamina: savedWallet?.stamina ?? 0 };
+    const wallet = { ...walletWithoutLegacyCurrency, dnaFragments: savedWallet?.dnaFragments ?? 0, cheesecake: savedWallet?.cheesecake ?? legacyCheesecake, gems: savedWallet?.gems ?? 0, gold: savedWallet?.gold ?? 0, stamina: Math.min(savedWallet?.stamina ?? 0, staminaMaxForResearchLevel(playerResearch.level)) };
+    // 구 저장은 로컬 시각을 신뢰하지 않고 첫 서버 요청에서 기준점을 세운다.
+    const staminaUpdatedAt = typeof legacy.staminaUpdatedAt === "string" && Number.isFinite(Date.parse(legacy.staminaUpdatedAt)) ? legacy.staminaUpdatedAt : "";
     // 일일 입장 횟수 도입 전 저장은 같은 UTC 키에서 0회로 시작하되 이후 재실행에는 저장값을 유지한다.
     const savedDaily = legacy.dailyContent as Partial<SaveData["dailyContent"]> | undefined;
     const dailyContent = { date: savedDaily?.date ?? "", restorationEntries: savedDaily?.restorationEntries ?? 0, completedIds: savedDaily?.completedIds ?? [], claimedRewardIds: savedDaily?.claimedRewardIds ?? [] };
@@ -227,7 +232,7 @@ export class SaveManager {
     runeInventory = runeInventory.map((rune, index) => {
       // v27 이하에는 획득 순번이 없으므로 저장 배열 순서를 영구적이고 직렬화 가능한 순번으로 승격한다.
       const normalized = [0, 1, 2].includes((rune as { part?: number }).part as number) ? rune : { ...rune, part: (index % 3) as RuneInstance["part"] };
-      return { ...normalized, sequence: Number.isSafeInteger(normalized.sequence) ? normalized.sequence : index };
+      return Number(legacy.saveVersion) <= 27 ? { ...normalized, sequence: Number.isSafeInteger(normalized.sequence) ? normalized.sequence : index } : normalized;
     });
     const legacyIdMap = new Map(legacyOwned.map((id) => [id, `legacy-v12-${id}`]));
     // 스토리 저장 도입 전 계정은 미완료로 두어 다음 타이틀 진입에서 오프닝을 한 번 재생한다.
@@ -268,10 +273,10 @@ export class SaveManager {
     // v20 이전에는 중첩 가방이 없었다. 지갑과 룬은 기존 단일 기준에 남겨 빈 스택만 보충한다.
     const itemInventory = Array.isArray(legacy.itemInventory) ? legacy.itemInventory : [];
     const { ownedHeartGemIds: _oldOwned, runeSlotsByRelicId: _oldSlots, ...current } = legacy;
-    if (legacy.saveVersion === undefined) return { ...current, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, idleExcavation, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition } as unknown as SaveData;
-    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, CURRENT_SAVE_VERSION];
+    if (legacy.saveVersion === undefined) return { ...current, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, idleExcavation, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition } as unknown as SaveData;
+    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, CURRENT_SAVE_VERSION];
     if (!supported.includes(legacy.saveVersion as number)) throw new SaveDataError(`지원하지 않는 저장 버전입니다: ${String(legacy.saveVersion)}`);
-    return { ...current, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, idleExcavation, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition } as unknown as SaveData;
+    return { ...current, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, idleExcavation, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition } as unknown as SaveData;
   }
 
   /** 콘텐츠 ID와 교차 필드 불변식까지 검사해 부분 손상을 조용히 전파하지 않는다. */
@@ -282,6 +287,7 @@ export class SaveManager {
     const fail = (message: string): never => { throw new SaveDataError(message); };
     const excavation = data.idleExcavation;
     // 레벨 구간 경험치는 음수가 될 수 없고 다음 요구량 미만이어야 레벨업 미반영 상태를 차단한다.
+    if (typeof data.staminaUpdatedAt !== "string" || (data.staminaUpdatedAt !== "" && !Number.isFinite(Date.parse(data.staminaUpdatedAt)))) fail("스테미나 정산 시각이 올바르지 않습니다.");
     if (!data.playerResearch || !Number.isInteger(data.playerResearch.level) || data.playerResearch.level < 1 || !Number.isInteger(data.playerResearch.experience) || data.playerResearch.experience < 0 || !Number.isInteger(data.playerResearch.experienceToNext) || data.playerResearch.experienceToNext <= 0 || data.playerResearch.experience >= data.playerResearch.experienceToNext) fail("플레이어 연구 진행이 올바르지 않습니다.");
     if (!excavation || !Array.isArray(excavation.assignedRelicIds) || excavation.assignedRelicIds.length !== 3 || excavation.assignedRelicIds.some((id) => id !== null && (!relicIds.has(id) || !data.ownedRelicIds.includes(id))) || excavation.assignedRelicIds.filter(Boolean).length !== new Set(excavation.assignedRelicIds.filter(Boolean)).size || (excavation.lastSettledAt !== null && !Number.isFinite(Date.parse(excavation.lastSettledAt))) || !excavation.unclaimed || EXCAVATION_CURRENCIES.some((currency) => !Number.isFinite(excavation.unclaimed[currency]) || excavation.unclaimed[currency] < 0) || !Number.isInteger(excavation.retroactiveExcavationGrantVersion) || excavation.retroactiveExcavationGrantVersion < 0 || excavation.retroactiveExcavationGrantVersion > RETROACTIVE_EXCAVATION_GRANT_VERSION || !Number.isFinite(excavation.baseStorageSeconds) || excavation.baseStorageSeconds <= 0 || !Number.isFinite(excavation.activeProductionMultiplier) || excavation.activeProductionMultiplier <= 0 || (excavation.storageExtensionExpiresAt !== null && !Number.isFinite(Date.parse(excavation.storageExtensionExpiresAt)))) fail("발굴 상태가 올바르지 않습니다.");
     if (data.saveVersion !== CURRENT_SAVE_VERSION || !Array.isArray(data.ownedRelicIds) || data.ownedRelicIds.some((id) => !relicIds.has(id))) fail("존재하지 않는 렐릭 ID가 있습니다.");
@@ -341,7 +347,7 @@ export class SaveManager {
       completedStoryIds: new Set(data.completedStoryIds),
       observationRecords: data.observationRecords.map((record) => ({ ...record })),
       selectedStageId: data.selectedStageId, party: [...data.party], cleared: new Set(data.clearedStageIds), owned: new Set(data.ownedRelicIds), favorite: data.favorite, bookmarked: new Set(data.bookmarkedRelicIds),
-      wallet: { ...data.wallet }, relicProgress: Object.fromEntries(Object.entries(data.relicProgress).map(([id, value]) => [id, cloneProgress(value)])),
+      wallet: { ...data.wallet }, staminaUpdatedAt: data.staminaUpdatedAt, relicProgress: Object.fromEntries(Object.entries(data.relicProgress).map(([id, value]) => [id, cloneProgress(value)])),
       relicFragments: { ...data.relicFragments },
       runeInventory: data.runeInventory.map(cloneRune),
       gachaPityByGroup: Object.fromEntries(Object.entries(data.gachaPityByGroup).map(([id, pity]) => [id, { ...pity }])),

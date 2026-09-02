@@ -94,6 +94,19 @@ export class InventoryManager {
     this.events.publishInventory();
   }
 
+  /**
+   * 잠금·즐겨찾기 표시를 서버 확정 결과로만 반영한다.
+   *
+   * 화면이 `RuneInstance`의 플래그를 직접 뒤집지 않는 이유는, 자물쇠가 판매를 실제로 막는
+   * 값이라 표시와 판매 거부가 같은 한 곳에서 갈리지 않아야 하기 때문이다.
+   */
+  async markRune(api: GameApi, instanceId: string, mark: { locked?: boolean; bookmarked?: boolean }): Promise<RuneInstance> {
+    const response = await api.markRune({ runeInstanceId: instanceId, ...mark });
+    this.state.runeInventory = response.inventory.runes.map((rune) => structuredClone(rune));
+    this.events.publishInventory();
+    return response.rune;
+  }
+
   /** 판매 응답의 확정 스냅샷만 Session에 반영하고 모든 상태 소비자에게 같은 시점으로 알린다. */
   async sellRunes(api: GameApi, instanceIds: string[], requestId = crypto.randomUUID()): Promise<SellRunesResponse> {
     const response = await api.sellRunes({ requestId, instanceIds });

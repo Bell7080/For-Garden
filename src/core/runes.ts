@@ -103,6 +103,15 @@ export interface RuneInstance {
   enhancementComplete: boolean;
   /** 완료된 각인 결과다. 룬 하나에 최대 한 번만 각인할 수 있다. */
   engravings: readonly RuneEngravingResult[];
+  /**
+   * 판매 잠금이다.
+   *
+   * 세공까지 마친 룬을 목록에서 쓸어 팔다 잃는 사고를 막는 자물쇠라, 화면이 버튼을 감추는
+   * 것으로 끝내지 않고 판매 경계가 직접 거부한다. 구 저장에는 없으므로 선택 필드다.
+   */
+  locked?: boolean;
+  /** 즐겨찾기다. 잠금과 달리 무엇도 막지 않고 "골라 둔 것"만 나타낸다. */
+  bookmarked?: boolean;
 }
 
 /** 룬 옵션을 실제 전투 계산에 넘기는 계약이다. 모든 값의 단위는 백분율이다. */
@@ -261,6 +270,8 @@ export function assertValidRuneInstance(rune: RuneInstance): void {
   // 성공은 반드시 실제 시도 레코드의 부분집합이어야 하며 손상된 역직렬화 값을 숫자로 묵인하지 않는다.
   const histories = Object.values(rune.enhancementHistory).flatMap((history) => history ?? []);
   if (histories.filter(({ succeeded }) => succeeded).length > histories.length) throw new Error("강화 성공 횟수는 시도 횟수를 넘을 수 없습니다.");
+  if (rune.locked !== undefined && typeof rune.locked !== "boolean") throw new Error("룬 잠금은 boolean이어야 합니다.");
+  if (rune.bookmarked !== undefined && typeof rune.bookmarked !== "boolean") throw new Error("룬 즐겨찾기는 boolean이어야 합니다.");
   if (rune.engravings.length > 1) throw new Error("각인은 룬 하나에 한 번만 적용할 수 있습니다.");
   if (rune.engravings.length > 0 && !rune.enhancementComplete) throw new Error("강화를 완료하기 전에는 각인할 수 없습니다.");
   if (rune.engravings.some(({ statKey, grade, valueAdded }) => !optionKeys.has(statKey) || !["normal", "great", "perfect"].includes(grade) || !Number.isFinite(valueAdded) || valueAdded < 0)) throw new Error("각인 결과가 올바르지 않습니다.");

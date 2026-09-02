@@ -1,7 +1,10 @@
 import type { HeartGemRarity } from "../data/heartGems";
 import Phaser from "phaser";
-import type { RuneMainStatKey, RunePart } from "../core/runes";
-import { chipPoints, drawInnerVignette, drawShapeOutline } from "./holo";
+import type { RuneInstance, RuneMainStatKey, RunePart } from "../core/runes";
+import { drawGlyph } from "./glyphs";
+import { chipPoints, drawInnerVignette, drawLayer, drawShapeInnerGlow, drawShapeOutline } from "./holo";
+import { clipShapeByDiagonal, runeBackdropBands, scaleShape, type RuneBackdropSide } from "./runeBackdrop";
+import { STAT_TONE } from "./statTones";
 import { addGlowStar, type StarTones } from "./stars";
 
 /**
@@ -47,12 +50,27 @@ export function addRuneIcon(scene: Phaser.Scene, x: number, y: number, size: num
   return icon;
 }
 
+/** 각인까지 마친 룬이 두르는 금빛. 완성된 보석 하나뿐인 색이라 다른 표식과 섞지 않는다. */
+export const RUNE_ENGRAVE_GOLD = 0xffc861;
+
+/** 액자 한 칸이 받는 선택 값들. 자리(part)와 등급처럼 반드시 있어야 하는 것만 인자로 둔다. */
+export interface RuneFrameOptions {
+  /** 위/아래 대각 면 색을 정하는 두 주 옵션. 빈 자리에는 없다. */
+  mainStats?: readonly [{ key: RuneMainStatKey }, { key: RuneMainStatKey }];
+  /** 각인까지 마친 룬. 액자 안쪽에 금빛 발광이 돈다. */
+  engraved?: boolean;
+}
+
 /**
  * 액자에 담긴 룬 한 칸.
  *
  * 조각 하나만 덩그러니 놓으면 어디까지가 그림인지 알 수 없어 바탕 원화 위에서 떠 보였다.
  * 그림 한 장을 담는 칸이라 화면의 **액자 예외**를 그대로 쓴다 — 불투명하게 채우고 사방을
  * 두른 뒤 테두리 안쪽만 눌러, 조각이 그 안에서 한 뼘 떠 있게 한다. 판때기가 아니라 액자다.
+ *
+ * 뒷배경은 두 주 옵션의 **실제 능력치 색**(`STAT_TONE`)이고, 평평한 색면이 아니라 가운데로
+ * 갈수록 밝아지는 발광이다 — 한 겹을 진하게 깔면 색이 탁하게 가라앉아 조각까지 함께 흐려진다.
+ * 칠하는 도형은 액자 도형을 대각선으로 잘라 쓰므로 깎인 모서리 밖으로 새지 않는다.
  */
 export function addRuneFrame(
   scene: Phaser.Scene,
@@ -61,8 +79,7 @@ export function addRuneFrame(
   size: number,
   rarity: HeartGemRarity | undefined,
   part: RunePart,
-  /** 위/아래 대각 면 색을 정하는 두 주 옵션이다. */
-  mainStats?: readonly [{ key: RuneMainStatKey }, { key: RuneMainStatKey }],
+  options: RuneFrameOptions = {},
 ): Phaser.GameObjects.Container {
   const accent = rarity ? RUNE_ACCENT[rarity] : 0x5a636e;
   const frame = scene.add.container(x, y);
@@ -74,15 +91,8 @@ export function addRuneFrame(
   plate.translateCanvas(-4, -6);
   plate.fillStyle(rarity ? 0x0d131b : 0x0a0d12, 1);
   plate.fillPoints(toGeomPoints(shape), true);
-  if (mainStats) {
-    // `/` 경계로 위 주 옵션과 아래 주 옵션을 나눠 텍스트 없이도 룬 성향을 읽게 한다.
-    const tones: Record<RuneMainStatKey, number> = { hp: 0x8fd65a, atk: 0xd94b4b, ap: 0x7b65d9, def: 0x5a91c9, res: 0xd0b65a };
-    plate.fillStyle(tones[mainStats[0].key], 0.42);
-    plate.fillTriangle(-size / 2, -size / 2, size / 2, -size / 2, -size / 2, size / 2);
-    plate.fillStyle(tones[mainStats[1].key], 0.42);
-    plate.fillTriangle(size / 2, size / 2, size / 2, -size / 2, -size / 2, size / 2);
-  }
   frame.add(plate);
+  if (options.mainStats) frame.add(drawRuneBackdrop(scene, shape, size, options.mainStats));
   frame.add(drawInnerVignette(scene, 0, 0, shape, { strength: 0.55 }));
   frame.add(drawShapeOutline(scene, 0, 0, shape, { color: accent, alpha: rarity ? 0.9 : 0.35, width: 3 }));
   // 조각은 액자를 가득 채운다. 조각 원화에 이미 여백이 있어, 여기서 더 줄이면 그림이 칸
@@ -90,7 +100,73 @@ export function addRuneFrame(
   frame.add(rarity
     ? addRuneIcon(scene, 0, 0, size * 0.98, rarity, part)
     : scene.add.image(0, 0, runeTexture(undefined, part)).setOrigin(0.5, RUNE_CENTER_Y).setDisplaySize(size * 0.98, size * 0.98).setAlpha(0.5));
+  // 각인 발광은 조각 **위**에 두른다. 아래에 깔면 불투명한 조각이 빛을 가려 액자 가장자리에만
+  // 남고, 다 자란 보석이라기보다 테두리를 한 겹 더 두른 것처럼 보인다.
+  if (options.engraved) frame.add(drawShapeInnerGlow(scene, 0, 0, shape, { color: RUNE_ENGRAVE_GOLD, strength: 0.42, depth: 0.3 }));
   return frame;
+}
+
+/**
+ * 목록에 서는 룬 카드 한 장.
+ *
+ * 가방과 장착용 가방이 같은 한 장을 쓴다 — 화면마다 카드를 다시 만들면 한쪽만 옛 모습으로
+ * 남는다. 카드에 글을 얹지 않는 이유는 룬에서 먼저 읽어야 하는 것이 등급 색·자리 조각·주
+ * 옵션 색이고, 이름과 옵션 수치는 눌러서 여는 쪽지의 몫이기 때문이다.
+ */
+export function addRuneCard(
+  scene: Phaser.Scene,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  rune: RuneCardModel,
+  options: { dimmed?: boolean } = {},
+): Phaser.GameObjects.Container {
+  const engraved = rune.engravings.length > 0;
+  const card = scene.add.container(x, y);
+  const shape = chipPoints(width, height, { bevel: { topLeft: width * 0.19, topRight: 0, bottomRight: width * 0.19, bottomLeft: 0 } });
+  card.add(drawLayer(scene, 0, 0, shape, { fill: 0x151a21, alpha: 0.96, edge: engraved ? RUNE_ENGRAVE_GOLD : RUNE_ACCENT[rune.rarity], edgeAlpha: engraved ? 0.9 : 0.35 }));
+  card.add(addRuneFrame(scene, 0, 0, Math.min(width, height) * 0.89, rune.rarity, rune.part, { mainStats: rune.mainStats, engraved }));
+  // 잠금·즐겨찾기는 쪽지에서 켜지만 읽는 자리는 목록이다. 켜진 것만 카드 왼쪽 위에 작게
+  // 서고 꺼진 것은 자리를 비운다 — 회색 표식이 카드마다 늘어서면 액자보다 먼저 읽힌다.
+  const markY = -height / 2 + RUNE_CARD_MARK.inset;
+  if (rune.locked) card.add(drawGlyph(scene, "lock", -width / 2 + RUNE_CARD_MARK.inset, markY, RUNE_CARD_MARK.size, RUNE_CARD_MARK.lock));
+  if (rune.bookmarked) card.add(drawGlyph(scene, "bookmark", -width / 2 + RUNE_CARD_MARK.inset + (rune.locked ? RUNE_CARD_MARK.gap : 0), markY, RUNE_CARD_MARK.size, RUNE_CARD_MARK.bookmark));
+  // 이미 누군가 끼고 있는 룬은 옅어진다. 고르러 들어가는 헛걸음을 카드에서 미리 막는다.
+  if (options.dimmed) card.setAlpha(0.72);
+  return card;
+}
+
+/** 카드 한 장이 읽는 룬의 최소 모양. 세공 이력이나 이름까지 알 필요가 없다. */
+export type RuneCardModel = Pick<RuneInstance, "rarity" | "part" | "mainStats" | "engravings" | "locked" | "bookmarked">;
+
+/** 카드 위 표식의 크기와 자리. 자물쇠가 먼저 서고 별이 그 옆에 붙는다. */
+const RUNE_CARD_MARK = { size: 24, inset: 22, gap: 30, lock: 0x9fd8ff, bookmark: 0xf2c744 } as const;
+
+/**
+ * 두 주 옵션이 대각선으로 나눠 가지는 발광 뒷배경.
+ *
+ * 같은 조각을 조금씩 줄여 겹겹이 더하면 가운데가 밝고 가장자리는 비쳐, 색이 면을 덮지 않고
+ * 빛으로 남는다. 줄이는 기준이 액자 중심이고 대각선도 그 중심을 지나므로 조각이 줄어도
+ * 두 색의 경계는 같은 자리에 그대로 선다.
+ */
+function drawRuneBackdrop(
+  scene: Phaser.Scene,
+  shape: number[],
+  size: number,
+  mainStats: readonly [{ key: RuneMainStatKey }, { key: RuneMainStatKey }],
+): Phaser.GameObjects.Graphics {
+  const graphics = scene.add.graphics();
+  graphics.setBlendMode(Phaser.BlendModes.ADD);
+  const sides: readonly [RuneBackdropSide, RuneMainStatKey][] = [["upper", mainStats[0].key], ["lower", mainStats[1].key]];
+  for (const { factor, alpha } of runeBackdropBands()) {
+    const band = scaleShape(shape, factor);
+    for (const [side, key] of sides) {
+      graphics.fillStyle(STAT_TONE[key], alpha);
+      graphics.fillPoints(toGeomPoints(clipShapeByDiagonal(band, size, size, side)), true);
+    }
+  }
+  return graphics;
 }
 
 /** 평평한 좌표 배열을 Phaser가 받는 점 목록으로 바꾼다. */

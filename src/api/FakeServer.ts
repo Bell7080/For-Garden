@@ -25,7 +25,7 @@ import { runeEnhancementGoldCost, runeSellValue } from "../data/runes";
 import { findItem } from "../data/items";
 import { settleStamina, staminaMaxForPlayer, staminaTiming } from "../core/stamina";
 import { InventoryManager } from "../managers/InventoryManager";
-import type { EngraveRuneRequest, EngraveRuneResponse, EnhanceRuneRequest, EnhanceRuneResponse, EquipRuneRequest, EquipRuneResponse, RenameRuneRequest, RenameRuneResponse, RuneInventoryDto, UnequipRuneRequest, UnequipRuneResponse, SellRunesRequest, SellRunesResponse } from "./contracts";
+import type { EngraveRuneRequest, EngraveRuneResponse, EnhanceRuneRequest, EnhanceRuneResponse, EquipRuneRequest, EquipRuneResponse, MarkRuneRequest, MarkRuneResponse, RenameRuneRequest, RenameRuneResponse, RuneInventoryDto, UnequipRuneRequest, UnequipRuneResponse, SellRunesRequest, SellRunesResponse } from "./contracts";
 import type { ActivatePassRequest, ActivatePassResponse, ClaimInstantAdRewardRequest, ClaimInstantAdRewardResponse, PassEntitlementDto, VerifyPurchaseReceiptRequest, VerifyPurchaseReceiptResponse } from "./contracts";
 import { harvestIdleExcavation, isExcavationStorageFull, settleIdleExcavation, validateExcavationFormation } from "../core/idleExcavation";
 import type { HarvestExcavationRequest, HarvestExcavationResponse, IdleExcavationResponse, SaveExcavationFormationRequest, InventoryResponse, UseConsumableRequest, UseConsumableResponse } from "./contracts";
@@ -871,6 +871,27 @@ export class FakeServer implements GameApi {
     return { rune: this.cloneRune(rune), inventory: this.runeInventoryDto() };
   }
 
+  /**
+   * 잠금·즐겨찾기 표시를 바꾼다.
+   *
+   * 주지 않은 값은 건드리지 않는다 — 별을 켜는 요청이 자물쇠까지 끄면 두 표시가 한 스위치가
+   * 된다. 자물쇠는 판매를 실제로 막는 값이라 화면이 아니라 이 경계에 남는다.
+   */
+  async markRune(request: MarkRuneRequest): Promise<MarkRuneResponse> {
+    await this.delay();
+    const current = this.ownedRune(request.runeInstanceId);
+    const rune: RuneInstance = {
+      ...current,
+      locked: request.locked ?? current.locked ?? false,
+      bookmarked: request.bookmarked ?? current.bookmarked ?? false,
+    };
+    assertValidRuneInstance(rune);
+    const nextRunes = this.state.runeInventory.map((candidate) => candidate.instanceId === rune.instanceId ? rune : candidate);
+    this.persist({ ...this.state, runeInventory: nextRunes });
+    this.state.runeInventory = nextRunes;
+    return { rune: this.cloneRune(rune), inventory: this.runeInventoryDto() };
+  }
+
   /** 존재·중복·장착·상한을 모두 복제 상태에서 검증한 뒤 제거와 골드 지급을 한 번만 저장한다. */
   async sellRunes(request: SellRunesRequest): Promise<SellRunesResponse> {
     await this.delay();
@@ -880,6 +901,8 @@ export class FakeServer implements GameApi {
     const selected = request.instanceIds.map((id) => this.ownedRune(id));
     const equipped = new Set(Object.values(this.state.relicProgress).flatMap(({ heartGemSlots }) => heartGemSlots.filter((id): id is string => id !== null)));
     if (selected.some(({ instanceId }) => equipped.has(instanceId))) throw new GameApiError("RUNE_EQUIPPED", "장착 중인 룬은 판매할 수 없습니다.");
+    // 자물쇠는 화면이 버튼을 감추는 것으로 끝내지 않는다. 실수로 판 것은 되돌릴 수 없다.
+    if (selected.some(({ locked }) => locked)) throw new GameApiError("RUNE_LOCKED", "잠근 룬은 판매할 수 없습니다.");
     const goldAwarded = selected.reduce((sum, rune) => sum + runeSellValue(rune), 0);
     if (this.state.wallet.gold + goldAwarded > WALLET_CAPS.gold) throw new GameApiError("CURRENCY_LIMIT_EXCEEDED", "골드 상한을 초과해 판매할 수 없습니다.");
     const sold = new Set(request.instanceIds);

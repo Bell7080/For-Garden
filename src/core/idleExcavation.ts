@@ -1,6 +1,7 @@
 import type { Wallet } from "./gacha";
 import type { ExcavationProductionCurrency, RelicDef, RelicProgress } from "./types";
 import { WALLET_CAPS } from "../data/economy";
+import { splitAccrualAt, timeAccrualWindow } from "./timeAccrual";
 
 /** 발굴로 생산하는 재화만 좁혀 다른 지갑 키가 실수로 늘지 않게 한다. */
 export type ExcavationCurrency = ExcavationProductionCurrency;
@@ -178,22 +179,21 @@ function fixedAmount(value: number): number { return Number(value.toFixed(6)); }
 
 /** 서버 시각 하나만 받아 경과분을 미수확 자원에 더한 새 상태를 반환한다. */
 export function settleIdleExcavation(state: IdleExcavationState, serverNow: Date, relics: readonly RelicDef[] = [], progressByRelicId: Readonly<Record<string, Pick<RelicProgress, "level" | "breakthrough">>> = {}): IdleExcavationState {
-  // 첫 조회 상태는 과거 시간을 추측하지 않고 서버의 현재 시각만 기준점으로 기록한다.
-  if (state.lastSettledAt === null) return { ...state, lastSettledAt: serverNow.toISOString(), assignedRelicIds: [...state.assignedRelicIds], unclaimed: { ...state.unclaimed } };
-  const previousMs = new Date(state.lastSettledAt).getTime();
-  // 시계가 역행하면 생산하지 않고 기준점도 뒤로 옮기지 않아 이후 시간이 이중 계산되지 않게 한다.
-  if (!Number.isFinite(previousMs) || serverNow.getTime() <= previousMs) return { ...state, assignedRelicIds: [...state.assignedRelicIds], unclaimed: { ...state.unclaimed } };
-  const extensionActive = state.storageExtensionExpiresAt !== null && previousMs < new Date(state.storageExtensionExpiresAt).getTime();
+  const previousMs = state.lastSettledAt === null ? Number.NaN : Date.parse(state.lastSettledAt);
+  const extensionActive = Number.isFinite(previousMs) && state.storageExtensionExpiresAt !== null && previousMs < Date.parse(state.storageExtensionExpiresAt);
   const storageLimit = state.baseStorageSeconds * (extensionActive ? STORAGE_EXTENSION_MULTIPLIER : 1);
-  // 앱 종료 시간 전체가 아니라 min(서버 경과 시간, 현재 보관 한도)만 생산한다.
-  const elapsedSeconds = Math.min((serverNow.getTime() - previousMs) / 1000, storageLimit);
+  const accrual = timeAccrualWindow(state.lastSettledAt, serverNow, storageLimit * 1000);
+  // 역행 또는 잘못된 서버 시각은 생산과 저장 기준점 모두 그대로 보존한다.
+  if (!accrual.accepted) return { ...state, assignedRelicIds: [...state.assignedRelicIds], unclaimed: { ...state.unclaimed } };
+  // 첫 조회는 과거 생산을 추측하지 않고 검증된 서버 시각만 기준점으로 기록한다.
+  if (accrual.initialized) return { ...state, lastSettledAt: new Date(accrual.window.serverNowMs).toISOString(), assignedRelicIds: [...state.assignedRelicIds], unclaimed: { ...state.unclaimed } };
   const production = excavationProductionDisplayModel(state.assignedRelicIds, relics, progressByRelicId).totalsPerHour;
   const unclaimed = { ...state.unclaimed };
   // 만료 경계를 가로지르면 활성 구간과 기본 구간을 나눠 계산해 1ms도 과다 지급하지 않는다.
-  const speedExpiryMs = state.productionMultiplierExpiresAt ? new Date(state.productionMultiplierExpiresAt).getTime() : previousMs;
-  const effectiveEndMs = previousMs + elapsedSeconds * 1000;
-  const boostedSeconds = Math.max(0, Math.min(effectiveEndMs, speedExpiryMs) - previousMs) / 1000;
-  const normalSeconds = elapsedSeconds - boostedSeconds;
+  const speedExpiryMs = state.productionMultiplierExpiresAt ? Date.parse(state.productionMultiplierExpiresAt) : accrual.window.startMs;
+  const split = splitAccrualAt(accrual.window, state.productionMultiplierExpiresAt);
+  const boostedSeconds = split.beforeMs / 1000;
+  const normalSeconds = split.afterMs / 1000;
   for (const currency of EXCAVATION_CURRENCIES) unclaimed[currency] = fixedAmount((unclaimed[currency] ?? 0) + production[currency] / 3600 * (boostedSeconds * state.activeProductionMultiplier + normalSeconds));
   return { ...state, lastSettledAt: serverNow.toISOString(), assignedRelicIds: [...state.assignedRelicIds], unclaimed, activeProductionMultiplier: speedExpiryMs > serverNow.getTime() ? state.activeProductionMultiplier : 1, productionMultiplierExpiresAt: speedExpiryMs > serverNow.getTime() ? state.productionMultiplierExpiresAt : null, storageExtensionExpiresAt: state.storageExtensionExpiresAt && new Date(state.storageExtensionExpiresAt).getTime() > serverNow.getTime() ? state.storageExtensionExpiresAt : null, retroactiveExcavationGrantVersion: RETROACTIVE_EXCAVATION_GRANT_VERSION };
 }

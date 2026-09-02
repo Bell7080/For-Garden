@@ -37,7 +37,10 @@ export class ExpeditionRankingPopup {
     const width = BASE_WIDTH - 100; const height = BASE_HEIGHT - 180;
     this.popups.open({ width, height, title: "원정 주간 기록", titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: 0.76, closeOnBackdrop: false, hideCloseButton: true, onClose: () => { this.content?.destroy(); this.content = undefined; this.body = undefined; } }, (body, close) => {
       this.body = body;
-      addPopupBackgroundImage(this.scene, body, BACKGROUND.expeditionRanking, { x: 0, y: 0, width, height });
+      // 침수 도시 원경이 팝업의 장소를 정하고, 전투 필드는 낮은 alpha의 질감층으로만 합성한다.
+      addPopupBackgroundImage(this.scene, body, BACKGROUND.expeditionRanking, { x: 0, y: 0, width, height, overlayStrength: 0.72 });
+      // 필드의 넓은 빈 노면은 순위 행 뒤를 복잡하게 만들지 않도록 12%만 남기고 페이드는 중복하지 않는다.
+      addPopupBackgroundImage(this.scene, body, BACKGROUND.expeditionField, { x: 0, y: 0, width, height, imageAlpha: 0.12, overlayStrength: 0 });
       addPopupBackButton(this.scene, body, width, height, close);
       void this.refresh();
     });

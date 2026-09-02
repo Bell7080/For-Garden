@@ -29,7 +29,8 @@ export class NotificationManager {
     if (generation !== this.refreshGeneration) return;
     const next = deriveNotificationState({
       claimableMissionCount: missions.claimableCount,
-      excavationStorageFull: excavation.storageFull === true,
+      // 서버가 정수 수확 가능성까지 확정하므로 클라이언트는 비율을 재계산하지 않는다.
+      excavationHarvestReady: excavation.harvestNotice,
       pendingFriendRequestCount: signals.pendingFriendRequestCount,
       unseenEventCount: signals.unseenEventCount,
       unreadMailCount: signals.unreadMailCount,

@@ -196,7 +196,7 @@ export class LobbyScene extends Phaser.Scene {
     // 발굴 저장 상한 판정은 manager가 API 결과로 합성하며 버튼은 공용 점만 구독한다.
     // 외곽 사각형이 아니라 원근으로 짧아진 실제 우상단 변을 회전해 점이 판 밖 허공에 남지 않게 한다.
     const excavationDot = perspectiveButtonNotificationAnchor({ width: 292, height: 106, tall: "left", rotation: Phaser.Math.DegToRad(6), inset: 10 });
-    bindNotificationDot(this, excavationButton, excavationDot, (listener) => notificationManager.subscribe("excavationFull", listener));
+    bindNotificationDot(this, excavationButton, excavationDot, (listener) => notificationManager.subscribe("excavationHarvestReady", listener));
 
     new BottomNav(this, "lobby");
     // 한 번의 공용 조회가 모든 버튼을 갱신하며 실패 시 기존의 안전한 꺼짐 상태를 유지한다.
@@ -228,6 +228,8 @@ export class LobbyScene extends Phaser.Scene {
     this.idleExcavationPopup ??= new IdleExcavationPopup(this, this.popupLayer, gameApi, () => {
       this.idleExcavationPopup = undefined;
       this.excavationBackButton?.destroy(); this.excavationBackButton = undefined;
+      // 열람 자체로 점을 지우지 않고, 닫힌 직후 서버 잔량으로 다시 확정한다.
+      void notificationManager.refresh().catch(() => undefined);
     });
     this.idleExcavationPopup.open();
     if (!this.excavationBackButton) {

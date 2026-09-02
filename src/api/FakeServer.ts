@@ -27,7 +27,7 @@ import { settleStamina, staminaMaxForPlayer, staminaTiming } from "../core/stami
 import { InventoryManager } from "../managers/InventoryManager";
 import type { EngraveRuneRequest, EngraveRuneResponse, EnhanceRuneRequest, EnhanceRuneResponse, EquipRuneRequest, EquipRuneResponse, MarkRuneRequest, MarkRuneResponse, RenameRuneRequest, RenameRuneResponse, RuneInventoryDto, UnequipRuneRequest, UnequipRuneResponse, SellRunesRequest, SellRunesResponse } from "./contracts";
 import type { ActivatePassRequest, ActivatePassResponse, ClaimInstantAdRewardRequest, ClaimInstantAdRewardResponse, PassEntitlementDto, VerifyPurchaseReceiptRequest, VerifyPurchaseReceiptResponse } from "./contracts";
-import { harvestIdleExcavation, isExcavationStorageFull, settleIdleExcavation, validateExcavationFormation } from "../core/idleExcavation";
+import { excavationHarvestStatus, excavationProductionDisplayModel, excavationStorageLimitSeconds, harvestIdleExcavation, settleIdleExcavation, validateExcavationFormation } from "../core/idleExcavation";
 import type { HarvestExcavationRequest, HarvestExcavationResponse, IdleExcavationResponse, SaveExcavationFormationRequest, InventoryResponse, UseConsumableRequest, UseConsumableResponse } from "./contracts";
 import type { ClaimExpeditionRewardRequest, ClaimExpeditionRewardResponse, CompleteExpeditionNodeRequest, CompleteExpeditionNodeResponse, ExpeditionLeaderboardResponse, ExpeditionWeeklyBestResponse, SettleExpeditionRunRequest, SettleExpeditionRunResponse, SubmitExpeditionBossScoreRequest, SubmitExpeditionBossScoreResponse, SweepExpeditionRequest, SweepExpeditionResponse } from "./contracts";
 import type { EnterStageRequest, EnterStageResponse } from "./contracts";
@@ -364,24 +364,22 @@ export class FakeServer implements GameApi {
   /** 서버의 단일 now 값을 캡처해 조회 정산과 응답 시각이 어긋나지 않게 한다. */
   async getIdleExcavation(): Promise<IdleExcavationResponse> {
     await this.delay(); const now = this.now();
-    // 정산 뒤에는 기준 시각이 현재로 바뀌므로 상한 도달 여부를 먼저 보존한다.
-    const storageFull = isExcavationStorageFull(this.state.idleExcavation, now);
     const next = settleIdleExcavation(this.state.idleExcavation, now, RELICS, this.state.relicProgress);
     this.persist({ ...this.state, idleExcavation: next }); this.state.idleExcavation = next;
-    return { excavation: this.cloneExcavation(next), serverTime: now.toISOString(), storageFull };
+    return this.idleExcavationResponse(next, now);
   }
 
   /** 기존 편성의 생산을 먼저 정산한 뒤 새 세 칸을 같은 저장 처리로 확정한다. */
   async saveExcavationFormation(request: SaveExcavationFormationRequest): Promise<IdleExcavationResponse> {
     await this.delay(); const cached = this.excavationFormationResults.get(request.requestId);
-    if (cached) return { excavation: this.cloneExcavation(cached.excavation), serverTime: cached.serverTime };
+    if (cached) return { ...cached, excavation: this.cloneExcavation(cached.excavation) };
     const validation = validateExcavationFormation(request.assignedRelicIds, this.state.owned);
     // 요청 ID와 순수 모델의 보유/중복 검증을 모두 통과한 편성만 저장한다.
     if (!request.requestId || !validation.valid) throw new GameApiError("INVALID_STATE", "발굴 편성이 올바르지 않습니다.");
     const now = this.now(); const settled = settleIdleExcavation(this.state.idleExcavation, now, RELICS, this.state.relicProgress);
     const next = { ...settled, assignedRelicIds: [...request.assignedRelicIds] as [string | null, string | null, string | null] };
     this.persist({ ...this.state, idleExcavation: next }); this.state.idleExcavation = next;
-    const response = { excavation: this.cloneExcavation(next), serverTime: now.toISOString() };
+    const response = this.idleExcavationResponse(next, now);
     this.excavationFormationResults.set(request.requestId, response); return response;
   }
 
@@ -394,8 +392,15 @@ export class FakeServer implements GameApi {
     const result = harvestIdleExcavation(settled, this.state.wallet); const nextState = { ...this.state, idleExcavation: result.state, wallet: result.wallet };
     this.persist(nextState); this.state.idleExcavation = result.state; this.state.wallet = result.wallet;
     // 응답의 기준 시각·잔량·지갑은 같은 persist가 성공한 바로 그 트랜잭션 스냅샷이다.
-    const response = { excavation: this.cloneExcavation(result.state), serverTime: now.toISOString(), wallet: { ...result.wallet }, granted: { ...result.granted }, discarded: { ...result.discarded }, remaining: { ...result.state.unclaimed } };
+    const response = { ...this.idleExcavationResponse(result.state, now), wallet: { ...result.wallet }, granted: { ...result.granted }, discarded: { ...result.discarded }, remaining: { ...result.state.unclaimed } };
     this.excavationHarvestResults.set(request.requestId, response); return response;
+  }
+
+  /** 응답마다 동일한 순수 판정으로 비율과 정수 수확 알림을 함께 확정한다. */
+  private idleExcavationResponse(excavation: IdleExcavationResponse["excavation"], now: Date): IdleExcavationResponse {
+    const rate = excavationProductionDisplayModel(excavation.assignedRelicIds, RELICS, this.state.relicProgress).totalsPerHour;
+    const notice = excavationHarvestStatus(excavation.unclaimed, rate, excavationStorageLimitSeconds(excavation, now), excavation.pendingHarvestMultiplier ?? 1);
+    return { excavation: this.cloneExcavation(excavation), serverTime: now.toISOString(), ...notice };
   }
 
   /** 광고 완료, 멱등 키, UTC 일일 제한을 검사한 뒤 지급과 저장을 한 번에 확정한다. */

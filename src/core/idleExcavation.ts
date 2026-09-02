@@ -11,14 +11,8 @@ export const EXCAVATION_CURRENCIES = ["gold", "cheesecake", "fossil", "gems"] as
 /** 신규 재화 소급 정산을 저장 단위로 한 번만 실행하게 하는 서버 규칙 버전이다. */
 export const RETROACTIVE_EXCAVATION_GRANT_VERSION = 1;
 
-/** 마지막 정산 이후 서버 시간이 실제 보관 한계에 닿았는지 생산 슬롯까지 포함해 판정한다. */
-export function isExcavationStorageFull(state: IdleExcavationState, serverNow: Date): boolean {
-  if (state.lastSettledAt === null || state.assignedRelicIds.every((id) => id === null)) return false;
-  const previousMs = new Date(state.lastSettledAt).getTime();
-  const extensionActive = state.storageExtensionExpiresAt !== null && previousMs < new Date(state.storageExtensionExpiresAt).getTime();
-  const limitSeconds = state.baseStorageSeconds * (extensionActive ? 2 : 1);
-  return Math.max(0, serverNow.getTime() - previousMs) / 1000 >= limitSeconds;
-}
+/** 절반부터 수확 시점을 알리되 실제 정수 보상이 없으면 점을 켜지 않는 운영 임계값이다. */
+export const EXCAVATION_HARVEST_NOTICE_RATIO = 0.5;
 
 /** 정산 로직과 같은 확장 배율로, 지금 시각 기준 보관 한도(초)를 계산한다. */
 export function excavationStorageLimitSeconds(state: IdleExcavationState, now: Date): number {
@@ -42,6 +36,14 @@ export function excavationStorageFillRatio(unclaimed: Readonly<Record<Excavation
     if (capacity > 0) ratio = Math.max(ratio, unclaimed[currency] / capacity);
   }
   return Math.min(1, ratio);
+}
+
+/** API와 알림 manager가 공유할 서버 확정 보관 비율·수확 가능 판정이다. */
+export function excavationHarvestStatus(unclaimed: Readonly<Record<ExcavationCurrency, number>>, ratePerHour: Readonly<Record<ExcavationCurrency, number>>, limitSeconds: number, harvestMultiplier = 1): { storageFillRatio: number; harvestNotice: boolean } {
+  const storageFillRatio = excavationStorageFillRatio(unclaimed, ratePerHour, limitSeconds);
+  // 광고 배율은 실제 수확 시 정수화 전에 적용되므로 알림의 "받을 수 있음"도 같은 순서를 따른다.
+  const hasIntegerReward = EXCAVATION_CURRENCIES.some((currency) => Math.floor(unclaimed[currency] * harvestMultiplier) >= 1);
+  return { storageFillRatio, harvestNotice: storageFillRatio >= EXCAVATION_HARVEST_NOTICE_RATIO && hasIntegerReward };
 }
 
 /** JSON으로 그대로 저장할 수 있는 방치 발굴의 단일 상태다. */
@@ -193,7 +195,7 @@ export function settleIdleExcavation(state: IdleExcavationState, serverNow: Date
   const boostedSeconds = Math.max(0, Math.min(effectiveEndMs, speedExpiryMs) - previousMs) / 1000;
   const normalSeconds = elapsedSeconds - boostedSeconds;
   for (const currency of EXCAVATION_CURRENCIES) unclaimed[currency] = fixedAmount((unclaimed[currency] ?? 0) + production[currency] / 3600 * (boostedSeconds * state.activeProductionMultiplier + normalSeconds));
-  return { ...state, lastSettledAt: serverNow.toISOString(), assignedRelicIds: [...state.assignedRelicIds], unclaimed, activeProductionMultiplier: speedExpiryMs > serverNow.getTime() ? state.activeProductionMultiplier : 1, productionMultiplierExpiresAt: speedExpiryMs > serverNow.getTime() ? state.productionMultiplierExpiresAt : null, storageExtensionExpiresAt: extensionActive ? null : state.storageExtensionExpiresAt, retroactiveExcavationGrantVersion: RETROACTIVE_EXCAVATION_GRANT_VERSION };
+  return { ...state, lastSettledAt: serverNow.toISOString(), assignedRelicIds: [...state.assignedRelicIds], unclaimed, activeProductionMultiplier: speedExpiryMs > serverNow.getTime() ? state.activeProductionMultiplier : 1, productionMultiplierExpiresAt: speedExpiryMs > serverNow.getTime() ? state.productionMultiplierExpiresAt : null, storageExtensionExpiresAt: state.storageExtensionExpiresAt && new Date(state.storageExtensionExpiresAt).getTime() > serverNow.getTime() ? state.storageExtensionExpiresAt : null, retroactiveExcavationGrantVersion: RETROACTIVE_EXCAVATION_GRANT_VERSION };
 }
 
 /** 정수 부분만 지갑에 옮기며 지갑 상한 밖의 정수는 버리고 소수 잔량만 보존한다. */

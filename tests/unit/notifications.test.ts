@@ -7,11 +7,11 @@ import { NOTIFICATION_DOT_STYLE, perspectiveButtonNotificationAnchor, rotatedNot
 /** 알림별 조건과 공용 시각 규격이 화면별 구현으로 다시 갈라지지 않게 고정한다. */
 describe("notifications", () => {
   it("maps only positive or explicit conditions to each stable key", () => {
-    expect(NOTIFICATION_KEYS).toEqual(["missionReward", "excavationFull", "friendRequest", "newEvent", "mail"]);
-    expect(deriveNotificationState({ claimableMissionCount: 2, excavationStorageFull: true, pendingFriendRequestCount: 1, unseenEventCount: 3, unreadMailCount: 4 }))
-      .toEqual({ missionReward: true, excavationFull: true, friendRequest: true, newEvent: true, mail: true });
-    expect(deriveNotificationState({ claimableMissionCount: 0, excavationStorageFull: false, pendingFriendRequestCount: 0, unseenEventCount: 0, unreadMailCount: 0 }))
-      .toEqual({ missionReward: false, excavationFull: false, friendRequest: false, newEvent: false, mail: false });
+    expect(NOTIFICATION_KEYS).toEqual(["missionReward", "excavationHarvestReady", "friendRequest", "newEvent", "mail"]);
+    expect(deriveNotificationState({ claimableMissionCount: 2, excavationHarvestReady: true, pendingFriendRequestCount: 1, unseenEventCount: 3, unreadMailCount: 4 }))
+      .toEqual({ missionReward: true, excavationHarvestReady: true, friendRequest: true, newEvent: true, mail: true });
+    expect(deriveNotificationState({ claimableMissionCount: 0, excavationHarvestReady: false, pendingFriendRequestCount: 0, unseenEventCount: 0, unreadMailCount: 0 }))
+      .toEqual({ missionReward: false, excavationHarvestReady: false, friendRequest: false, newEvent: false, mail: false });
   });
 
   it("keeps one red, white-outlined, dark-shadow specification for every button", () => {
@@ -34,7 +34,7 @@ describe("notifications", () => {
   it("composes APIs once and emits only changed key values", async () => {
     const api = {
       getMissions: vi.fn().mockResolvedValue({ missions: [], claimableCount: 1 }),
-      getIdleExcavation: vi.fn().mockResolvedValue({ excavation: {}, serverTime: "", storageFull: true }),
+      getIdleExcavation: vi.fn().mockResolvedValue({ excavation: {}, serverTime: "", storageFillRatio: 0.5, harvestNotice: true }),
       getNotificationSignals: vi.fn().mockResolvedValue({ pendingFriendRequestCount: 0, unseenEventCount: 0, unreadMailCount: 0 }),
     } as unknown as GameApi;
     const manager = new NotificationManager(api); const values: boolean[] = [];
@@ -42,5 +42,16 @@ describe("notifications", () => {
     await manager.refresh(); await manager.refresh(); unsubscribe();
     expect(values).toEqual([false, true]);
     expect(api.getMissions).toHaveBeenCalledTimes(2);
+  });
+
+  it("팝업 출입이나 앱 재진입을 읽음 처리하지 않고 서버 확정 수확 상태를 복원한다", async () => {
+    const getIdleExcavation = vi.fn().mockResolvedValue({ excavation: {}, serverTime: "", storageFillRatio: 0.5, harvestNotice: true });
+    const api = { getMissions: vi.fn().mockResolvedValue({ missions: [], claimableCount: 0 }), getIdleExcavation, getNotificationSignals: vi.fn().mockResolvedValue({ pendingFriendRequestCount: 0, unseenEventCount: 0, unreadMailCount: 0 }) } as unknown as GameApi;
+    const firstManager = new NotificationManager(api); const first: boolean[] = [];
+    firstManager.subscribe("excavationHarvestReady", (value) => first.push(value)); await firstManager.refresh(); await firstManager.refresh();
+    // 새 manager는 앱 재진입을 나타내며, 로컬 읽음 플래그 없이 같은 서버 true를 다시 받는다.
+    const restoredManager = new NotificationManager(api); const restored: boolean[] = [];
+    restoredManager.subscribe("excavationHarvestReady", (value) => restored.push(value)); await restoredManager.refresh();
+    expect(first).toEqual([false, true]); expect(restored).toEqual([false, true]); expect(getIdleExcavation).toHaveBeenCalledTimes(3);
   });
 });

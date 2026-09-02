@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { emptyExcavationAmounts, excavationProductionDisplayModel, createIdleExcavationState, excavationStorageFillRatio, excavationStorageLimitSeconds, harvestIdleExcavation, nextExcavationSlot, placeExcavationRelic, settleIdleExcavation, validateExcavationFormation } from "../../src/core/idleExcavation";
+import { emptyExcavationAmounts, excavationProductionDisplayModel, createIdleExcavationState, excavationHarvestStatus, excavationStorageFillRatio, excavationStorageLimitSeconds, harvestIdleExcavation, nextExcavationSlot, placeExcavationRelic, settleIdleExcavation, validateExcavationFormation } from "../../src/core/idleExcavation";
 import { WALLET_CAPS } from "../../src/data/economy";
 import { RELICS } from "../../src/data/relics";
 import type { RelicProgress } from "../../src/core/types";
@@ -41,7 +41,7 @@ describe("방치 발굴 순수 규칙", () => {
 
   it("서로 다른 자원 특화를 자원별로 합산한다", () => {
     const model = excavationProductionDisplayModel(activeState().assignedRelicIds, RELICS, starterProgress);
-    expect(model.totalsPerHour).toEqual({ gold: 105, cheesecake: 8.8, fossil: 26.4, gems: 0 });
+    expect(model.totalsPerHour).toEqual({ gold: 26.25, cheesecake: 0.88, fossil: 0.33, gems: 0 });
     expect(model.relics.map(({ currency }) => currency)).toEqual(["gold", "fossil", "cheesecake"]);
   });
 
@@ -55,28 +55,37 @@ describe("방치 발굴 순수 규칙", () => {
     expect(ids).toHaveLength(4);
   });
 
+  it("생산 가능한 모든 렐릭은 1·중간·최대 성장에서 4시간 정수 하한을 지킨다", () => {
+    for (const relic of RELICS) {
+      const stages = [progress(1, 0), progress(30, 2), progress(60, 4)].map((value) => excavationProductionDisplayModel([relic.id, null, null], RELICS, { [relic.id]: value }).relics[0].totalPerHour);
+      // 적 전용 0 생산 정의는 빈 편성과 같으므로 경제 하한에서 명시적으로 제외한다.
+      if (relic.excavationTrait.baseProductionPerHour === 0) expect(stages).toEqual([0, 0, 0]);
+      else expect(stages.every((perHour) => Math.floor(perHour * 4) >= 1), relic.id).toBe(true);
+    }
+  });
+
   it("레벨과 한계 돌파만 생산 성장값에 반영한다", () => {
     const model = excavationProductionDisplayModel(["rex", null, null], RELICS, { rex: progress(11, 2) });
-    expect(model.relics[0]).toMatchObject({ basePerHour: 26.4, levelIncreasePerHour: 5.28, breakthroughIncreasePerHour: 5.28, totalPerHour: 36.96 });
+    expect(model.relics[0]).toMatchObject({ basePerHour: 0.33, levelIncreasePerHour: 0.066, breakthroughIncreasePerHour: 0.066, totalPerHour: 0.462 });
   });
 
   it("빈 슬롯은 생산 상세와 합산에서 제외한다", () => {
-    expect(excavationProductionDisplayModel([null, "rex", null], RELICS, { rex: progress() })).toMatchObject({ relics: [{ relicId: "rex" }], totalsPerHour: { gold: 0, cheesecake: 0, fossil: 26.4, gems: 0 } });
+    expect(excavationProductionDisplayModel([null, "rex", null], RELICS, { rex: progress() })).toMatchObject({ relics: [{ relicId: "rex" }], totalsPerHour: { gold: 0, cheesecake: 0, fossil: 0.33, gems: 0 } });
   });
 
   it("앱을 종료한 4시간 동안 세 렐릭 생산량을 누적한다", () => {
     const result = settleIdleExcavation(activeState(), new Date("2026-08-20T04:00:00.000Z"), RELICS, starterProgress);
-    expect(result.unclaimed).toEqual({ gold: 420, cheesecake: 35.2, fossil: 105.6, gems: 0 });
+    expect(result.unclaimed).toEqual({ gold: 105, cheesecake: 3.52, fossil: 1.32, gems: 0 });
   });
 
   it("화석 특화 렐릭의 신규 생산량을 독립적으로 정산한다", () => {
     const state = { ...createIdleExcavationState("2026-08-20T00:00:00.000Z"), assignedRelicIds: ["rex", null, null] as [string, null, null] };
-    expect(settleIdleExcavation(state, new Date("2026-08-20T01:00:00.000Z"), RELICS, { rex: progress() }).unclaimed).toEqual({ gold: 0, cheesecake: 0, fossil: 26.4, gems: 0 });
+    expect(settleIdleExcavation(state, new Date("2026-08-20T01:00:00.000Z"), RELICS, { rex: progress() }).unclaimed).toEqual({ gold: 0, cheesecake: 0, fossil: 0.33, gems: 0 });
   });
 
   it("다이아 특화 렐릭의 신규 생산량을 독립적으로 정산한다", () => {
     const state = { ...createIdleExcavationState("2026-08-20T00:00:00.000Z"), assignedRelicIds: ["dodo", null, null] as [string, null, null] };
-    expect(settleIdleExcavation(state, new Date("2026-08-20T01:00:00.000Z"), RELICS, { dodo: progress() }).unclaimed).toEqual({ gold: 0, cheesecake: 0, fossil: 0, gems: 0.2016 });
+    expect(settleIdleExcavation(state, new Date("2026-08-20T01:00:00.000Z"), RELICS, { dodo: progress() }).unclaimed).toEqual({ gold: 0, cheesecake: 0, fossil: 0, gems: 0.28 });
   });
 
   it("수확 뒤 네 재화의 소수 부분을 각각 다음 수확으로 이월한다", () => {
@@ -94,24 +103,24 @@ describe("방치 발굴 순수 규칙", () => {
   it("활성 생산 광고는 만료 전 구간에만 1.5배를 적용한다", () => {
     const state = { ...activeState(), activeProductionMultiplier: 1.5, productionMultiplierExpiresAt: "2026-08-20T01:00:00.000Z" };
     const result = settleIdleExcavation(state, new Date("2026-08-20T02:00:00.000Z"), RELICS, starterProgress);
-    expect(result.unclaimed).toEqual({ gold: 262.5, cheesecake: 22, fossil: 66, gems: 0 });
+    expect(result.unclaimed).toEqual({ gold: 65.625, cheesecake: 2.2, fossil: 0.825, gems: 0 });
   });
 
   it("활성 보관 광고는 오프라인 생산 상한을 4시간에서 8시간으로 늘린다", () => {
     const state = { ...activeState(), storageExtensionExpiresAt: "2026-08-21T00:00:00.000Z" };
-    expect(settleIdleExcavation(state, new Date("2026-08-21T00:00:00.000Z"), RELICS, starterProgress).unclaimed.gold).toBe(840);
+    expect(settleIdleExcavation(state, new Date("2026-08-21T00:00:00.000Z"), RELICS, starterProgress).unclaimed.gold).toBe(210);
   });
 
   it("생산 배율 만료 시각 자체까지는 강화 구간으로 정확히 계산한다", () => {
     const state = { ...activeState(), activeProductionMultiplier: 1.5, productionMultiplierExpiresAt: "2026-08-20T01:00:00.000Z" };
     const result = settleIdleExcavation(state, new Date("2026-08-20T01:00:00.000Z"), RELICS, starterProgress);
-    expect(result.unclaimed.gold).toBe(157.5);
+    expect(result.unclaimed.gold).toBe(39.375);
     expect(result.productionMultiplierExpiresAt).toBeNull();
   });
 
   it("보관 상한을 넘긴 서버 경과 시간은 기본 4시간까지만 계산한다", () => {
     const result = settleIdleExcavation(activeState(), new Date("2026-08-21T00:00:00.000Z"), RELICS, starterProgress);
-    expect(result.unclaimed.gold).toBe(420);
+    expect(result.unclaimed.gold).toBe(105);
   });
 
   it("서버 시계가 역행하면 생산량과 마지막 정상 정산 시각을 유지한다", () => {
@@ -130,6 +139,37 @@ describe("방치 발굴 순수 규칙", () => {
 });
 
 describe("보관량 게이지", () => {
+  it.each([[0.499, false], [0.5, true], [1, true]] as const)("비율 %s에서 정수 보상과 함께 알림을 판정한다", (ratio, expected) => {
+    const rate = { ...emptyExcavationAmounts(), fossil: 10 };
+    const unclaimed = { ...emptyExcavationAmounts(), fossil: 40 * ratio };
+    expect(excavationHarvestStatus(unclaimed, rate, 4 * 3600)).toEqual({ storageFillRatio: ratio, harvestNotice: expected });
+  });
+
+  it("빈 편성과 50%여도 모든 재화가 1 미만인 편성은 알리지 않는다", () => {
+    const empty = emptyExcavationAmounts();
+    expect(excavationHarvestStatus(empty, empty, 4 * 3600)).toEqual({ storageFillRatio: 0, harvestNotice: false });
+    // 보석 0.1/h의 4시간 용량 절반은 0.2라 비율만으로 수확점을 켜면 빈 수확을 유도한다.
+    const rate = { ...empty, gems: 0.1 }; const unclaimed = { ...empty, gems: 0.2 };
+    expect(excavationHarvestStatus(unclaimed, rate, 4 * 3600)).toEqual({ storageFillRatio: 0.5, harvestNotice: false });
+  });
+
+  it("광고 수확 배율로 정수가 되는 보상은 알리고 성공 수확 뒤 소수 잔량에서는 해제한다", () => {
+    const rate = { ...emptyExcavationAmounts(), gems: 0.25 }; const unclaimed = { ...emptyExcavationAmounts(), gems: 0.6 };
+    expect(excavationHarvestStatus(unclaimed, rate, 4 * 3600, 2).harvestNotice).toBe(true);
+    const harvested = harvestIdleExcavation({ ...createIdleExcavationState(), unclaimed, pendingHarvestMultiplier: 2 }, { fossil: 0, gold: 0, cheesecake: 0, amber: 0, gems: 0, stamina: 0, dnaFragments: 0 });
+    expect(excavationHarvestStatus(harvested.state.unclaimed, rate, 4 * 3600).harvestNotice).toBe(false);
+  });
+
+  it("보관 확장 만료 후 기본 용량으로 돌아가며 지갑 전량 폐기도 성공 수확 뒤 알림을 해제한다", () => {
+    const rate = { ...emptyExcavationAmounts(), gold: 10 }; const unclaimed = { ...emptyExcavationAmounts(), gold: 20 };
+    expect(excavationHarvestStatus(unclaimed, rate, 8 * 3600).storageFillRatio).toBe(0.25);
+    expect(excavationHarvestStatus(unclaimed, rate, 4 * 3600).harvestNotice).toBe(true);
+    const fullWallet = { fossil: 0, gold: WALLET_CAPS.gold, cheesecake: 0, amber: 0, gems: 0, stamina: 0, dnaFragments: 0 };
+    const harvested = harvestIdleExcavation({ ...createIdleExcavationState(), unclaimed }, fullWallet);
+    expect(harvested.discarded.gold).toBe(20);
+    expect(excavationHarvestStatus(harvested.state.unclaimed, rate, 4 * 3600).harvestNotice).toBe(false);
+  });
+
   it("은 경과 시간이 아니라 실제 쌓인 재화량으로 채운 비율을 계산한다", () => {
     // 시간당 10씩 4시간(14400초) 채우면 최대 40이 쌓인다. 20이 쌓였으면 절반이다.
     const rate = { ...emptyExcavationAmounts(), fossil: 10 };

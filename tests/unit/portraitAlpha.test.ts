@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { compositePortraitEffectAlpha } from "../../src/core/portraitAlpha";
+import { PONTOS_PORTRAIT_METADATA } from "../../src/puppets/assetMetadata";
+import { INFO_PORTRAIT_SAFE_AREA, portraitScreenBounds, visiblePortraitBounds } from "../../src/ui/portraitPlacement";
 
 /** Phaser/WebGL 없이 초상 오버레이의 세 알파가 각각 한 번만 적용되는지 고정한다. */
 describe("compositePortraitEffectAlpha", () => {
@@ -16,5 +18,18 @@ describe("compositePortraitEffectAlpha", () => {
   it("각 입력을 WebGL 알파 범위로 제한한다", () => {
     // 외부 트윈의 초과값도 두 번 감쇠하거나 불투명도를 1보다 키우지 않는다.
     expect(compositePortraitEffectAlpha({ sourcePixelAlpha: 2, effectAlpha: 0.5, cardAlpha: -1 })).toBe(0);
+  });
+});
+
+describe("폰토스 정보창 alpha 실루엣", () => {
+  it("서로 다른 1080×1920 지도·전투 창에서 같은 top/bottom 안전 계약을 쓴다", () => {
+    // 중심1 y=451과 idle union을 함께 써서 원본 이미지 박스 기준으로 돌아가는 회귀를 막는다.
+    const height = 1820 * PONTOS_PORTRAIT_METADATA.portraitZoom!;
+    const bounds = portraitScreenBounds(PONTOS_PORTRAIT_METADATA as never, 451, { focusY: 980 + PONTOS_PORTRAIT_METADATA.portraitOffsetY!, height });
+    expect(bounds.top).toBeCloseTo(424.7, 1);
+    expect(bounds.bottom).toBeCloseTo(2136, 0);
+    expect(bounds.top).toBeGreaterThan(INFO_PORTRAIT_SAFE_AREA.enemy.titleBottom);
+    // 꼬리 끝은 화면 아래에서 잘리고 성장/스킬 chrome이 그 위 레이어를 점유한다.
+    expect(visiblePortraitBounds(bounds).bottom).toBe(1920);
   });
 });

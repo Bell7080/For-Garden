@@ -58,6 +58,7 @@ import type { KeywordDef } from "../data/keywords";
 import { addFactionMark, factionMarkBounds } from "./FactionMark";
 import { SQUADS } from "../data/factions";
 import { OBSERVATION_INTERVIEW_LAYOUT, observationInterviewPanelState, type ObservationInterviewPanelState } from "./observationInterviewPanel";
+import { infoPortraitPlacement } from "./portraitPlacement";
 
 export type { SkillInfoViewModel } from "./SkillPopup";
 
@@ -1392,10 +1393,8 @@ export class InfoManager {
     // 제자리를 향해 계속 움직인다.
     this.scene.tweens.killTweensOf(portrait);
     this.galleryReturn = onClose;
-    placePuppet(portrait, asset, {
-      focus: { anchor: "core", x: BASE_WIDTH / 2, y: BASE_HEIGHT * 0.52 + (asset.portraitOffsetY ?? 0) },
-      height: BASE_HEIGHT * 1.02 * (asset.portraitZoom ?? 1),
-    });
+    // 감상 모드도 일반 창과 같은 보정을 거쳐 적 전용 우회 좌표를 만들지 않는다.
+    placePuppet(portrait, asset, infoPortraitPlacement(asset, { x: BASE_WIDTH / 2, y: BASE_HEIGHT * 0.52, height: BASE_HEIGHT * 1.02 }));
     portrait.setAlpha(0.001);
     this.scene.tweens.add({ targets: portrait, alpha: 1, duration: 260 });
     // SD는 판이 아니라 따로 선 인형이라 함께 빠지지 않는다. 감상 중에는 접어 둔다.
@@ -1657,9 +1656,8 @@ export class InfoManager {
     const request = ++this.portraitRequest;
     const asset = portraitAssetFor(def.portraitAssetId);
     const portrait = await spawnPuppet(this.scene, asset, {
-      focus: { anchor: "core", x: PORTRAIT_FOCUS.x, y: PORTRAIT_FOCUS.y + (asset.portraitOffsetY ?? 0) },
-      // 그림 영역이 작은 원화는 공용 높이 그대로 세우면 혼자 화면을 넘는다. 보정값은 원화에 있다.
-      height: PORTRAIT_FOCUS.height * (asset.portraitZoom ?? 1),
+      // 지도와 전투의 CharacterInfoManager가 모두 이 경로를 써서 폰토스 보정도 동일하다.
+      ...infoPortraitPlacement(asset, PORTRAIT_FOCUS),
       depth: Math.max(this.portraitDepth, 1001),
     });
     if (request !== this.portraitRequest) { portrait.destroy(); return; }

@@ -20,7 +20,7 @@ export type Role = "warrior" | "tank" | "assassin" | "support";
 export type RelicRarity = "R" | "SR" | "SSR";
 
 /** 전신 Puppet 레지스트리의 안정적인 데이터 키다. 파일 번호를 게임 데이터에 직접 노출하지 않는다. */
-export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "toby" | "amo" | "ripa" | "pontos";
+export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "toby" | "amo" | "ripa" | "pontos";
 
 export interface Stats {
   /** 생존력과 물리·마법 공격의 기반이 되는 주 능력치다. */
@@ -104,6 +104,8 @@ interface SkillBase {
   statusEffects?: readonly CombatStatusEffect[];
   /** 실제 HP에서 감소한 피해의 이 비율(%)을 시전자가 회복한다. 과잉 피해는 계산하지 않으며 능력치·폭주 흡혈과 합산한다. */
   damageHealingPercent?: number;
+  /** 이 스킬을 쓸 때마다 생존 아군 전체가 함께 얻는 궁극기 게이지다. 시전자 자신도 포함한다. */
+  allyEnergyGain?: number;
   /** 기본 공격이 원형 광역일 때만 시전자 중심 대상 계약과 반경을 선언한다. */
   targeting?: "single" | "nearbyEnemies" | "battlefieldEnemies" | "battlefieldAllies" | "targetedCircle";
   radius?: number;
@@ -123,6 +125,8 @@ export type AttackSkill = SkillBase & {
   power: number;
   /** 마법 피해도 메테처럼 물리 공격력(atk)을 명시적으로 선택할 수 있다. */
   scalingStat?: "atk" | "ap" | "def";
+  healing?: never;
+  teamBuff?: never;
 };
 
 /** 순수 회복 스킬은 damageType/power를 가질 수 없어 피해 계산에 잘못 전달되지 않는다. */
@@ -130,11 +134,37 @@ export type HealingSkill = SkillBase & {
   damageType?: never;
   power?: never;
   scalingStat?: never;
+  teamBuff?: never;
   healing: { kind: "teamMissingHpPercent"; percent: number };
 };
 
+/**
+ * 피해도 회복도 없이 아군 전체에 지속 강화만 거는 스킬이다.
+ *
+ * 회복 스킬과 갈라 두는 이유는 두 효과가 같은 슬롯에 들어가면 "회복량"이라는 이름의 값이
+ * 공격 속도 비율을 뜻하게 되어 화면과 전투가 서로 다른 단위를 읽기 때문이다.
+ */
+export type SupportSkill = SkillBase & {
+  damageType?: never;
+  power?: never;
+  scalingStat?: never;
+  healing?: never;
+  teamBuff: TeamBuff;
+};
+
+/** 지속 시간을 가진 아군 전체 강화 계약이다. 새 강화가 생기면 `kind`를 늘린다. */
+export type TeamBuff = {
+  kind: "tailwind";
+  /** 공격 속도에 곱하는 비율(%)이다. */
+  attackSpeedPercent: number;
+  /** 이동 속도에 곱하는 비율(%)이다. */
+  moveSpeedPercent: number;
+  /** 유지 시간(초). 겹쳐 걸면 남은 시간이 더 긴 쪽으로 갱신된다. */
+  seconds: number;
+};
+
 /** 모든 스킬의 판별 유니온이며 `damageType in skill`로 공격 여부를 좁힌다. */
-export type Skill = AttackSkill | HealingSkill;
+export type Skill = AttackSkill | HealingSkill | SupportSkill;
 
 /** 기본 공격만 가질 수 있는 추가 타격 계약이다. 일반 단타는 불필요한 확률 필드를 갖지 않는다. */
 export type BasicAttack = AttackSkill & {
@@ -209,6 +239,8 @@ export type PassiveKind =
   | "bleedStreak"
   /** 티아 전용: 타격한 적에게 표식을 남기고, 표식이 없는 적을 때리면 표식을 옮기며 추가 마법 피해를 준다. */
   | "shimmerMark"
+  /** 체력이 절반 이하가 되면 전투당 한 번 은신해 표적에서 벗어난다 */
+  | "lowHpVanish"
   /** 렉시아 전용: 공격 속도·공격력·치명타 확률·치명타 피해를 함께 강화한다. */
   | "battleMaidMastery"
   /** 스피나 전용: 기본 공격의 실제 적중마다 공속을 전투 한정으로 영구 누적한다. */
@@ -239,7 +271,9 @@ export type FerocityEffectId =
   /** 루카 전용: 은신과 무리 사냥 재지정, 동일 표적 팀 공속 오라를 함께 식별한다. */
   | "packHunt"
   /** 티아 전용: 자기 이동 속도를 올리고 일반 공격마다 표적을 다른 적으로 바꾼다. */
-  | "ichthyoDive";
+  | "ichthyoDive"
+  /** 스테라 전용: 폭주 중 아군 전체의 공격당 야성·궁극기 충전량을 함께 올린다. */
+  | "tailwindRally";
 
 /**
  * 개체별 피버 발현 정적 데이터다.
@@ -268,6 +302,13 @@ export type FerocityTrait = {
       effectId: "selfAttackSpeedMultiplier";
       /** 100은 속도 +100%, 즉 속도 x2이며 공격 간격을 결과적으로 50%로 만든다. */
       bonusPercent: number;
+    }
+  | {
+      effectId: "tailwindRally";
+      /** 아군 한 명이 한 번 공격할 때마다 더해지는 야성 충전량이다. */
+      teamFerocityGain: number;
+      /** 같은 시점에 더해지는 궁극기 게이지다. */
+      teamEnergyGain: number;
     }
   | {
       effectId: "ichthyoDive";

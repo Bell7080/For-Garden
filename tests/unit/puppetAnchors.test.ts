@@ -20,7 +20,7 @@ import {
   PONTOS_PORTRAIT_METADATA,
   PONTOS_SD_METADATA,
   SEIRA_PORTRAIT_METADATA,
-  TAPEJARA_PORTRAIT_METADATA,
+  STELLA_PORTRAIT_METADATA,
   TIA_PORTRAIT_METADATA,
   TORIKA_PORTRAIT_METADATA,
 } from "../../src/puppets/assetMetadata";
@@ -233,7 +233,7 @@ const REAL_PORTRAITS = [
   { name: "루카", metadata: LUKA_PORTRAIT_METADATA, head: { x: 882, y: 419 }, eyes: [{ x: 832, y: 425 }, { x: 960, y: 368 }] },
   { name: "도디", metadata: DODI_PORTRAIT_METADATA, head: { x: 585, y: 370 }, eyes: [{ x: 528, y: 367 }, { x: 632, y: 355 }] },
   { name: "메테", metadata: METTE_PORTRAIT_METADATA, head: { x: 520, y: 255 }, eyes: [{ x: 472, y: 277 }, { x: 568, y: 242 }] },
-  { name: "타페자라", metadata: TAPEJARA_PORTRAIT_METADATA, head: { x: 549, y: 375 }, eyes: [{ x: 510, y: 386 }, { x: 591, y: 357 }] },
+  { name: "스테라", metadata: STELLA_PORTRAIT_METADATA, head: { x: 549, y: 375 }, eyes: [{ x: 510, y: 386 }, { x: 591, y: 357 }] },
   { name: "티아", metadata: TIA_PORTRAIT_METADATA, head: { x: 518, y: 308 }, eyes: [{ x: 480, y: 317 }, { x: 548, y: 265 }] },
 ] as const;
 

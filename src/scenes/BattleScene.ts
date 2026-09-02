@@ -789,6 +789,15 @@ export class BattleScene extends Phaser.Scene {
       this.effects.groundArea(event.x, event.y, event.radius, { color: this.effectColor(caster), ultimate: event.ultimate });
       return undefined;
     }
+    if (event.kind === "teamBuff") {
+      // 순풍은 피해 사건이 아니다 — 받은 쪽에 강화 효과만 한 번 터뜨린다.
+      const view = this.views.get(event.fighterId);
+      if (view && !view.dead) {
+        const height = UNIT_HEIGHT * view.fighter.bodyScale;
+        this.effects.burst("passive", view.fighter.x, view.fighter.y - height * 0.5, { color: COLOR.accent });
+      }
+      return undefined;
+    }
     if (event.kind === "damageIgnored") {
       // 무효 공격은 0 숫자와 피격 모션을 반복하지 않고, 흐린 표식 하나로 "안 통했다"만 알린다.
       const view = this.views.get(event.targetId);

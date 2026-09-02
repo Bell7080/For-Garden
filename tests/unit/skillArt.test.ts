@@ -249,6 +249,43 @@ describe("티아 스킬 표시 계약", () => {
   });
 });
 
+describe("스테라 스킬 표시 계약", () => {
+  const stella = () => RELICS.find((def) => def.id === "stella")!;
+
+  it("의 기본 공격은 피해 뒤에 아군 충전을 제 문장으로 말한다", () => {
+    const def = stella();
+    expect(def.basic).toMatchObject({ damageType: "physical", targeting: "single", power: 50, allyEnergyGain: 2 });
+    // 주어가 시전자에서 아군으로 바뀌는 절이라 "주고"로 잇지 않고 문장을 끊는다.
+    expect(skillDescription(def.basic, { damage: 54 })).toBe(
+      "적 한 명에게 [[damage-value|54]]의 [[physical-damage|물리 피해]]를 준다. 모든 생존 아군의 궁극기 충전량이 2 증가한다.",
+    );
+  });
+
+  it("의 궁극기는 피해가 아니라 순풍과 그 시간만 말한다", () => {
+    const def = stella();
+    expect(def.ultimate).toMatchObject({
+      targeting: "battlefieldAllies",
+      teamBuff: { kind: "tailwind", attackSpeedPercent: 20, moveSpeedPercent: 20 },
+    });
+    // 순풍이 무엇인지는 키워드가 말한다 — 본문이 공속·이속을 다시 적으면 같은 말을 두 번 한다.
+    expect(skillDescription(def.ultimate)).toBe(
+      `모든 생존 아군에게 ${def.ultimate.teamBuff!.seconds}초 동안 [[tailwind|순풍]]을 부여한다.`,
+    );
+  });
+
+  it("의 폭주와 패시브는 아군을 밀어 주는 쪽으로 읽힌다", () => {
+    const def = stella();
+    expect(def.ferocityTrait).toMatchObject({ effectId: "tailwindRally", teamFerocityGain: 5, teamEnergyGain: 5 });
+    expect(ferocityTraitDescription(def.ferocityTrait)).toBe(
+      "모든 아군의 공격당 [[ferocity|야성]] 충전량과 궁극기 충전량이 각각 5, 5씩 증가한다.",
+    );
+    expect(def.passive.kind).toBe("lowHpVanish");
+    expect(passiveDescription(def.passive)).toBe(
+      `전투당 한 번, 체력이 절반 이하가 되면 ${def.passive.durationSeconds}초 동안 [[stealth|은신]]해 표적에서 벗어난다.`,
+    );
+  });
+});
+
 describe("스킬 설명문 양식 계약", () => {
   /** 새 개체가 늘어도 같은 양식으로 읽히는지 목록 전체를 한 번에 검사한다. */
   const attackSkills = RELICS.flatMap((relic) => [

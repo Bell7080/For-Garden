@@ -6,7 +6,7 @@ export { currentAbilityPower } from "./damage";
 import { drainFerocityFever, FEROCITY_RULES } from "./ferocity";
 import { breakthroughBonus } from "./relicProgression";
 import { attackPowerMultiplier, bleedOnAttackEffect, type ExpeditionAugmentEffect } from "./expeditionAugments";
-import type { CombatStatusEffect, RelicDef, Side, Skill } from "./types";
+import type { CombatStatusEffect, RelicDef, Side, Skill, TeamBuff } from "./types";
 import { canUseUltimate, ULTIMATE_ENERGY_MAX } from "./ultimate";
 import { stealthTransition, type CombatEffectCue } from "./combatEffects";
 import {
@@ -77,6 +77,10 @@ export interface Fighter extends Combatant {
    * 표식은 공격자가 소유한다 — 대상에 붙여 두면 티아가 둘일 때 서로의 표식을 지운다.
    */
   shimmerMarkTargetId: string | null;
+  /** 남은 순풍 시간(초). 공격 속도·이동 속도를 함께 올리는 아군 전체 강화다. */
+  tailwindFor: number;
+  /** 지금 걸린 순풍의 수치. 여러 제공자가 겹치면 남은 시간이 긴 쪽의 값을 그대로 쓴다. */
+  tailwind: TeamBuff | null;
   /** 남은 기절 시간(초). 별도 boolean 없이 `stunnedFor > 0`만 행동 차단 기준으로 삼는다. */
   stunnedFor: number;
   /** 남은 경직 시간(초). 기절과 달리 저항·유지 모션 없이 순간적으로만 행동을 끊는다. */
@@ -200,6 +204,8 @@ export type SkirmishEvent =
    */
   | { kind: "areaImpact"; attackerId: string; x: number; y: number; radius: number; ultimate: boolean }
   | { kind: "damageIgnored"; attackerId: string; targetId: string }
+  /** 순풍처럼 시간이 정해진 아군 전체 강화가 걸린 순간이다. 씬은 대상 위에 표식만 띄운다. */
+  | { kind: "teamBuff"; fighterId: string; sourceId: string; buff: TeamBuff }
   | { kind: "bleed"; fighterId: string; amount: number; started: boolean }
   | { kind: "heal"; fighterId: string; amount: number; source: "passive" | "ultimate"; effect: CombatEffectCue }
   | { kind: "status"; fighterId: string; status: "stun" | "stagger"; active: true }
@@ -312,6 +318,8 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     streakTargetId: null,
     streakCount: 0,
     shimmerMarkTargetId: null,
+    tailwindFor: 0,
+    tailwind: null,
     // 전투 시작 시 모든 행동 가능 상태이며, 기절은 전투 한정 상태라 저장 스냅샷에서 복원하지 않는다.
     stunnedFor: 0,
     staggeredFor: 0,
@@ -580,8 +588,10 @@ export function currentAttackSpeed(fighter: Fighter, state?: SkirmishState): num
     const source = findFighter(state, buff.sourceFighterId);
     return source?.def.ferocityTrait.effectId === "packHunt" ? source.def.ferocityTrait.sharedTargetAttackSpeedPercent : 0;
   })) : 0;
+  // 순풍은 시간이 정해진 팀 강화라 아다지오·무리 사냥과 같은 자리에서 곱한다.
+  const tailwindPercent = fighter.tailwindFor > 0 ? fighter.tailwind?.attackSpeedPercent ?? 0 : 0;
   return (fighter.def.stats.attackSpeed + passiveSpeedPoints + fighter.bonusAttackSpeed)
-    * (1 + teamPercent / 100) * (1 + packHuntPercent / 100);
+    * (1 + teamPercent / 100) * (1 + packHuntPercent / 100) * (1 + tailwindPercent / 100);
 }
 
 export function attackInterval(fighter: Fighter, state?: SkirmishState): number {
@@ -654,7 +664,9 @@ export function moveSpeed(fighter: Fighter, state?: SkirmishState): number {
   // 팀 오라와 달리 이크티오 다이브는 폭주한 본인만 빨라진다.
   const selfBonus = fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "ichthyoDive"
     ? fighter.def.ferocityTrait.moveSpeedPercent : 0;
-  return fighter.def.stats.moveSpeed * SKIRMISH.moveRate * (1 + teamBonus / 100) * (1 + selfBonus / 100);
+  const tailwindPercent = fighter.tailwindFor > 0 ? fighter.tailwind?.moveSpeedPercent ?? 0 : 0;
+  return fighter.def.stats.moveSpeed * SKIRMISH.moveRate
+    * (1 + teamBonus / 100) * (1 + selfBonus / 100) * (1 + tailwindPercent / 100);
 }
 
 /** 화면에 그릴 위치. 발 좌표에 돌진·피격 변위와 뛰어오른 높이를 얹은 값이다. */
@@ -728,11 +740,48 @@ export function triggerPackHunt(state: SkirmishState, side: Side): void {
   }
 }
 
-function gainEnergy(fighter: Fighter): void {
+/**
+ * 폭주 중인 아군의 `tailwindRally`가 같은 편 전체에 더해 주는 공격당 충전 보정이다.
+ *
+ * 여러 제공자가 겹쳐도 가장 높은 하나만 쓴다 — 지원가를 여럿 세워 충전을 곱으로 불리는 길을
+ * 만들지 않기 위해, 다른 팀 오라(아다지오·무리 사냥)와 같은 정책을 그대로 따른다.
+ */
+function tailwindRally(state: SkirmishState | undefined, side: Side): { ferocity: number; energy: number } {
+  if (!state) return { ferocity: 0, energy: 0 };
+  let ferocity = 0; let energy = 0;
+  for (const ally of state.fighters) {
+    const trait = ally.def.ferocityTrait;
+    if (ally.side !== side || !isFighterAlive(ally) || !ally.ferocityFever || trait.effectId !== "tailwindRally") continue;
+    ferocity = Math.max(ferocity, trait.teamFerocityGain);
+    energy = Math.max(energy, trait.teamEnergyGain);
+  }
+  return { ferocity, energy };
+}
+
+function gainEnergy(fighter: Fighter, state?: SkirmishState): void {
   const chargeThreshold = fighter.def.ultimate.chargeStartsAtHpPercent;
   // 보스의 체력 단계형 궁극기는 전투 시작부터 미리 충전되지 않도록 적중 순간의 현재 HP를 확인한다.
   if (chargeThreshold !== undefined && fighter.hp / fighter.maxHp * 100 > chargeThreshold) return;
-  fighter.energy = Math.min(ULTIMATE_ENERGY_MAX, fighter.energy + fighter.def.stats.energyGain);
+  const rally = tailwindRally(state, fighter.side).energy;
+  fighter.energy = Math.min(ULTIMATE_ENERGY_MAX, fighter.energy + fighter.def.stats.energyGain + rally);
+}
+
+/** 기본 공격 한 번이 생존 아군 전체에게 나눠 주는 궁극기 게이지다. 시전자 자신도 포함한다. */
+function grantAllyEnergy(attacker: Fighter, skill: Skill, state: SkirmishState): void {
+  const amount = skill.allyEnergyGain ?? 0;
+  if (amount <= 0) return;
+  for (const ally of aliveFighters(state, attacker.side)) {
+    const threshold = ally.def.ultimate.chargeStartsAtHpPercent;
+    if (threshold !== undefined && ally.hp / ally.maxHp * 100 > threshold) continue;
+    ally.energy = Math.min(ULTIMATE_ENERGY_MAX, ally.energy + amount);
+  }
+}
+
+/** 순풍처럼 시간이 정해진 아군 전체 강화를 건다. 겹쳐 걸면 남은 시간이 더 긴 쪽으로 갱신된다. */
+function applyTeamBuff(target: Fighter, buff: TeamBuff): void {
+  if (buff.seconds <= target.tailwindFor) return;
+  target.tailwindFor = buff.seconds;
+  target.tailwind = buff;
 }
 
 /** 실시간 전투도 턴제와 같은 사건별 증가 및 임계 로그 계약을 사용한다. */
@@ -740,8 +789,10 @@ function gainFerocity(fighter: Fighter, base: number, state: SkirmishState): voi
   const before = fighter.ferocity;
   // 피버 중 추가 획득은 무시해 한 번 열린 보상 구간이 정해진 시간 안에 반드시 끝나게 한다.
   if (fighter.ferocityFever) return;
+  // 폭주한 지원가의 팀 보정은 유대·룬 보정 앞에서 사건별 기본 충전량 자체를 키운다.
+  const rallied = base + tailwindRally(state, fighter.side).ferocity;
   // 룬 야성 보정은 유대 보정 뒤의 사건별 충전량에 곱하며 단위는 percent다.
-  const adjusted = amplifyFerocityGain(base, fighter.bondLevel) * (1 + fighter.def.stats.ferocityGain / 100);
+  const adjusted = amplifyFerocityGain(rallied, fighter.bondLevel) * (1 + fighter.def.stats.ferocityGain / 100);
   fighter.ferocity = Math.min(FEROCITY_RULES.max, before + adjusted);
   // 처음 최대치에 닿은 순간 피버 카운트다운을 켠다.
   if (before < FEROCITY_RULES.max && fighter.ferocity >= FEROCITY_RULES.max) {
@@ -883,6 +934,26 @@ function triggerCrescendoStaccato(state: SkirmishState, target: Fighter, events:
     if (resolution.ignored) events.push({ kind: "damageIgnored", attackerId: mette.id, targetId: target.id });
     if (isFighterAlive(target)) events.push(...applyStagger(target, trait.staggerSeconds, state));
   }
+}
+
+/**
+ * HP 변경 직후 저체력 은신의 단일 발동 경계를 검사한다.
+ *
+ * 긴급 회복과 같은 자리에서 같은 방식으로 판정한다 — 외부 시계나 난수를 읽지 않고,
+ * `passiveTriggered`가 전투당 한 번뿐인 발동권을 Fighter 안에서 소유한다. 은신에 들어가는
+ * 순간 이미 이 개체를 노리던 상대의 추적도 함께 풀어야 실제로 표적에서 벗어난다.
+ */
+export function tryTriggerLowHpVanish(fighter: Fighter, state: SkirmishState): boolean {
+  if (fighter.def.passive.kind !== "lowHpVanish" || !isFighterAlive(fighter)
+    || fighter.hp > fighter.maxHp * 0.5 || fighter.passiveTriggered) return false;
+
+  // 표시와 전투가 같은 값을 읽도록 지속 시간을 패시브 정의에서 가져온다.
+  const duration = fighter.def.passive.durationSeconds;
+  if (duration === undefined || duration <= 0) return false;
+  fighter.passiveTriggered = true;
+  fighter.stealthFor = Math.max(fighter.stealthFor, duration);
+  for (const other of state.fighters) if (other.targetId === fighter.id) { other.targetId = null; other.engaged = false; }
+  return true;
 }
 
 /**
@@ -1038,7 +1109,7 @@ function tickBleed(fighter: Fighter, dt: number, state: SkirmishState, events: S
     if (bleed.sourceId) addContribution(state.contributions, bleed.sourceId, "attack", hpBefore - fighter.hp, "attackPower");
     events.push({ kind: "bleed", fighterId: fighter.id, amount, started: false });
     // 출혈도 직접 공격과 동일한 HP 변경 경계를 통과해야 패시브 발동 시점이 일관된다.
-    tryTriggerEmergencyRecovery(fighter);
+    tryTriggerEmergencyRecovery(fighter); tryTriggerLowHpVanish(fighter, state);
     state.log.push(`${fighter.def.name} 출혈 ${amount}`);
     bleed.tickIn += 1;
     if (!isFighterAlive(fighter)) {
@@ -1129,7 +1200,7 @@ function strike(
   const shieldProviderId = target.shield.providerId;
   const dealt = applyDamage(target, amount, events);
   const credited = recordDamageContribution(state, attacker.id, target, damageInput.damageType, damageInput.scalingStat, contributionAmount, resolution, targetHpBefore, shieldBefore, shieldProviderId);
-  tryTriggerEmergencyRecovery(target);
+  tryTriggerEmergencyRecovery(target); tryTriggerLowHpVanish(target, state);
 
   const transfer = useUltimate ? attacker.def.ultimate.damageTransfer : undefined;
   if (transfer && dealt > 0) {
@@ -1174,7 +1245,9 @@ function strike(
   }
   if (comboHit?.grantActionResources !== false) {
     if (useUltimate) attacker.energy -= attacker.def.ultimate.cost;
-    else gainEnergy(attacker);
+    else gainEnergy(attacker, state);
+    // 아군 전체 충전은 시전자 자신의 충전과 같은 경계에서, 한 공격 행동에 한 번만 나눠 준다.
+    grantAllyEnergy(attacker, skill, state);
     gainFerocity(attacker, useUltimate ? FEROCITY_RULES.ultimateGain : FEROCITY_RULES.basicGain, state);
   }
   // 무효 공격은 실제 피격이 아니므로 피격 야성과 그에 따른 폭주 전환을 만들지 않는다.
@@ -1259,7 +1332,7 @@ function strike(
       const secondaryShieldBefore = secondary.shield.amount; const secondaryShieldProviderId = secondary.shield.providerId;
       applyDamage(secondary, splashAmount, events);
       const splashCredited = recordDamageContribution(state, attacker.id, secondary, damageInput.damageType, damageInput.scalingStat, splashContribution, splashResolution, secondaryHpBefore, secondaryShieldBefore, secondaryShieldProviderId);
-      tryTriggerEmergencyRecovery(secondary);
+      tryTriggerEmergencyRecovery(secondary); tryTriggerLowHpVanish(secondary, state);
       // 광역 피해도 공격자가 실제로 입힌 HP 피해이므로 같은 흡혈 규칙에 포함한다.
       healFromDamage(secondaryHpBefore - secondary.hp);
       events.push({ kind: "attack", attackerId: attacker.id, targetId: secondary.id, skill: useUltimate ? "ultimate" : "basic", amount: splashAmount, contributionAmount: splashCredited, critical,
@@ -1335,7 +1408,8 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
 
   // 소비·팀 보조·야성 획득은 명중 수가 아니라 기술 사용 횟수에 묶는다.
   if (useUltimate) attacker.energy -= attacker.def.ultimate.cost;
-  else gainEnergy(attacker);
+  else gainEnergy(attacker, state);
+  grantAllyEnergy(attacker, skill, state);
   // 공격자 야성은 이번 공격의 모든 피해가 같은 시작 시점 배율을 쓰도록 대상 처리 뒤에 얻는다.
   const attackingInFever = attacker.ferocityFever;
   const critTrait = attacker.def.ferocityTrait;
@@ -1360,7 +1434,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     const shieldBefore = target.shield.amount; const shieldProviderId = target.shield.providerId;
     applyDamage(target, amount, events);
     const credited = recordDamageContribution(state, attacker.id, target, damageInput.damageType, damageInput.scalingStat, contributionAmount, resolution, hpBefore, shieldBefore, shieldProviderId);
-    tryTriggerEmergencyRecovery(target);
+    tryTriggerEmergencyRecovery(target); tryTriggerLowHpVanish(target, state);
     // 흡혈은 대상별 실제 HP 감소량만 더해 과잉 피해를 회복량으로 만들지 않는다.
     applyHealing(state, attacker, (hpBefore - target.hp) * damageHealingRate(attacker, skill, attackingInFever) / 100);
     if (!resolution.ignored) gainFerocity(target, FEROCITY_RULES.hitGain, state);
@@ -1543,6 +1617,12 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
       const remaining = fighter.stealthFor - dt;
       fighter.stealthFor = remaining <= EMERGENCY_RECOVERY.epsilon ? 0 : remaining;
     }
+    // 순풍도 같은 공용 시계를 쓴다. 다 흐르면 수치까지 비워 남은 값이 다음 전투로 새지 않게 한다.
+    if (isFighterAlive(fighter) && fighter.tailwindFor > 0) {
+      const remaining = fighter.tailwindFor - dt;
+      fighter.tailwindFor = remaining <= EMERGENCY_RECOVERY.epsilon ? 0 : remaining;
+      if (fighter.tailwindFor === 0) fighter.tailwind = null;
+    }
   }
 
   for (const fighter of state.fighters) {
@@ -1635,11 +1715,22 @@ export function fireUltimate(
   const attacker = findFighter(state, fighterId);
   if (!attacker || !canFireUltimate(state, attacker)) return events;
 
-  if (attacker.def.ultimate.targeting === "battlefieldAllies" && "healing" in attacker.def.ultimate) {
+  const teamUltimate = attacker.def.ultimate;
+  if (teamUltimate.targeting === "battlefieldAllies" && teamUltimate.teamBuff !== undefined) {
+    // 피해도 회복도 없는 지원 궁극기다. 게이지만 쓰고 생존 아군 전체에 지속 강화를 건다.
+    attacker.energy -= teamUltimate.cost;
+    for (const ally of aliveFighters(state, attacker.side)) {
+      applyTeamBuff(ally, teamUltimate.teamBuff);
+      events.push({ kind: "teamBuff", fighterId: ally.id, buff: teamUltimate.teamBuff, sourceId: attacker.id });
+    }
+    attacker.attackCooldown = attackInterval(attacker, state);
+    return events;
+  }
+  if (teamUltimate.targeting === "battlefieldAllies" && teamUltimate.healing !== undefined) {
     // 각 대상의 시전 순간 잃은 체력을 따로 계산해 20%씩 회복하고 정확히 50 게이지를 소비한다.
     attacker.energy -= attacker.def.ultimate.cost;
     for (const ally of aliveFighters(state, attacker.side)) {
-      const amount = applyHealing(state, ally, (ally.maxHp - ally.hp) * attacker.def.ultimate.healing.percent / 100, attacker.id);
+      const amount = applyHealing(state, ally, (ally.maxHp - ally.hp) * teamUltimate.healing.percent / 100, attacker.id);
       if (amount > 0) events.push({ kind: "heal", fighterId: ally.id, amount, source: "ultimate", effect: { tag: "heal", intensity: 1.65 } });
     }
     attacker.attackCooldown = attackInterval(attacker, state);

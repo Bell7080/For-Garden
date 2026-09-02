@@ -497,6 +497,88 @@ export const RELICS: RelicDef[] = [
     },
   },
 
+  {
+    id: "stella",
+    squad: "eye",
+    name: "스테라",
+    specimenNumber: "141",
+    projectName: "UPDRAFT",
+    excavationSite: "니오브라라 백악층 상부 해성 퇴적대",
+    // 발굴 기록은 장소·보존 상태·복원 연구 특징만 담고, 복원 이후 생활 관찰과 분리한다.
+    fossilRecord: "백악층 상부의 고운 이암에서 아직 다 자라지 않은 익수(翼手)가 접힌 채 발견됐다. 볏이 완성되기 전 단계라 성체 표본과 대조해서야 종을 확정할 수 있었다.",
+    observationProfile: {
+      originYear: "약 8천 4백만 년 전",
+      // E.C.는 스테라의 인간형 신체 나잇대이며, 원종 화석의 유체 단계와 독립된 값이다.
+      restorationYear: "E.C. 14년",
+      lifeStage: "유체",
+      height: "1.42 m",
+      weight: "31 kg",
+    },
+    catalogSummary: "신장 1.42m, 체중 31kg의 인간형 체격에 아직 자라는 중인 볏과 넓게 접히는 익수가 확인된 유체 익룡 표본.",
+    // 소속을 옮긴 사정은 라벨이 아니라 연구원이 직접 본 행동으로 남긴다.
+    unlockRecord: { status: "recorded", text: "복원 후 스테라는 관제탑에 올라가 바람의 방향과 세기를 하루에도 몇 번씩 다시 적는다. 계산이 맞아떨어진 날에는 아무렇지 않은 척 보고서만 내밀지만 볏 끝이 서 있다. 배치 첫 주부터 상급 관측 절차를 통째로 외워 와 시그널 아이 선임들을 당황시켰고, 그 이야기를 들은 쁘띠 로그의 어린 개체들이 통로에서 기다렸다가 따라붙으면 귀찮다고 말하면서도 걸음을 늦춰 준다." },
+    squadNote: "시그널 아이의 최연소 관측 담당. 바람길을 미리 읽어 아군이 뜰 자리를 잡아 주며, 아직 새내기라 연구원도 선임처럼 부른다.",
+    // 시그널 아이의 새내기라 연구원을 "선배"라 부른다 — 그 호칭 자체가 이적한 지 얼마 안 됐음을 말한다.
+    researcherTitle: "선배",
+    rarity: "SR",
+    portraitAssetId: "stella",
+    origin: "게오스테른베르기아",
+    element: "wind",
+    role: "support",
+    // 관측 기록을 자산으로 바꾸는 담당이라 발굴 특화도 골드 회수 쪽에 붙인다.
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 31.5, efficiencyMultiplier: 1.10 },
+    // 회복이 아니라 아군의 스킬 회전을 앞당기는 지원가라, 자기 화력보다 생존과 충전에 무게를 둔다.
+    stats: {
+      hp: 880,
+      def: 54,
+      res: 96,
+      atk: 108,
+      ap: 132,
+      attackSpeed: 102,
+      moveSpeed: 104,
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 32,
+      lifeSteal: 0,
+      ferocityGain: 0,
+    },
+    ferocityTrait: { name: "자, 역풍의 시간이다!", effectId: "tailwindRally", teamFerocityGain: 5, teamEnergyGain: 5 },
+    passive: {
+      // kind가 lowHpVanish인 패시브는 passiveDescription()이 구조화 필드로 다시 문장을 만들므로
+      // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
+      id: "stella-passive",
+      name: "선망 받는 루키의 일상",
+      kind: "lowHpVanish",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      // 발동 경계는 긴급 회복과 같은 최대 체력의 50%다. 표시에도 이 값을 그대로 쓴다.
+      value: 50,
+      durationSeconds: 3,
+      desc: "전투당 한 번, 체력이 절반 이하가 되면 3초 동안 은신해 표적에서 벗어난다.",
+    },
+    basic: {
+      id: "stella-basic",
+      name: "산뜻한 바람",
+      power: 50,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      targeting: "single",
+      // 지원가의 값어치는 제 피해가 아니라 아군의 궁극기가 얼마나 빨리 돌아오느냐다.
+      allyEnergyGain: 2,
+    },
+    ultimate: {
+      id: "stella-ult",
+      name: "상승 기류",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      cost: 200,
+      // 피해도 회복도 없는 순수 지원 궁극기다. 코어는 teamBuff 계약만 읽는다.
+      targeting: "battlefieldAllies",
+      teamBuff: { kind: "tailwind", attackSpeedPercent: 20, moveSpeedPercent: 20, seconds: 10 },
+    },
+  },
+
   // --- 적 개체. 폭주해 이터널 시티를 위협하는 실패작들이다. ---
   {
     id: "husk-raptor",

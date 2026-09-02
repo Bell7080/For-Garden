@@ -25,6 +25,7 @@ import {
   teamHp,
   tickRegeneration,
   tryTriggerEmergencyRecovery,
+  tryTriggerLowHpVanish,
   type Arena,
   type SkirmishEvent,
   type SkirmishState,
@@ -1835,5 +1836,102 @@ describe("티아 정적 전투 계약", () => {
     tia.ferocity = 100; tia.ferocityFever = true;
     expect(shimmerHits(state)).toHaveLength(1);
     expect(tia.targetId).toBe(fighters[1].id);
+  });
+});
+
+describe("스테라 정적 전투 계약", () => {
+  /** 스테라와 아군 하나를 세우고 적 행동을 멈춰 지원 효과만 관찰한다. */
+  function stellaBattle(allies = ["stella", "rex"]) {
+    const state = newSkirmish(allies, ["husk-shell"]);
+    const [stella, ...rest] = state.fighters;
+    stella.x = 400; stella.y = 1000; stella.attackCooldown = 0;
+    for (const enemy of state.fighters.filter((fighter) => fighter.side === "enemy")) {
+      enemy.x = 460; enemy.y = 1000; enemy.attackCooldown = 99;
+      enemy.maxHp = 100_000; enemy.hp = 100_000;
+    }
+    for (const ally of rest.filter((fighter) => fighter.side === "player")) ally.attackCooldown = 99;
+    stella.targetId = state.fighters.find((fighter) => fighter.side === "enemy")!.id;
+    return { state, stella, ally: state.fighters[1] };
+  }
+
+  it("의 기본 공격은 생존 아군 전체의 궁극기 게이지를 함께 채운다", () => {
+    const { state, stella, ally } = stellaBattle();
+    const gain = stella.def.basic.allyEnergyGain!;
+    expect(gain).toBe(2);
+    stepSkirmish(state, 1 / 60);
+    // 아군은 때리지 않았는데도 스테라의 한 방으로 정확히 그만큼 찼다.
+    expect(ally.energy).toBe(gain);
+    // 시전자 자신은 제 충전량과 아군 몫을 함께 받는다.
+    expect(stella.energy).toBe(stella.def.stats.energyGain + gain);
+  });
+
+  it("의 궁극기는 피해 없이 생존 아군 전체에 순풍을 건다", () => {
+    const { state, stella, ally } = stellaBattle();
+    const buff = stella.def.ultimate.teamBuff!;
+    const enemy = state.fighters.find((fighter) => fighter.side === "enemy")!;
+    const allySpeedBefore = currentAttackSpeed(ally, state);
+    const allyMoveBefore = moveSpeed(ally, state);
+
+    stella.energy = stella.def.ultimate.cost;
+    const events = fireUltimate(state, stella.id);
+    // 지원 궁극기는 공격 사건을 만들지 않는다.
+    expect(events.filter((event) => event.kind === "attack")).toEqual([]);
+    expect(events.filter((event) => event.kind === "teamBuff").map((event) => event.kind === "teamBuff" && event.fighterId))
+      .toEqual([stella.id, ally.id]);
+    expect(enemy.hp).toBe(enemy.maxHp);
+
+    expect(ally.tailwindFor).toBe(buff.seconds);
+    expect(currentAttackSpeed(ally, state)).toBeCloseTo(allySpeedBefore * (1 + buff.attackSpeedPercent / 100));
+    expect(moveSpeed(ally, state)).toBeCloseTo(allyMoveBefore * (1 + buff.moveSpeedPercent / 100));
+
+    // 시간이 다 흐르면 수치까지 비워 다음 판정이 남은 값을 읽지 않는다.
+    run(state, buff.seconds + 0.5);
+    expect(ally.tailwindFor).toBe(0);
+    expect(ally.tailwind).toBeNull();
+    expect(currentAttackSpeed(ally, state)).toBeCloseTo(allySpeedBefore);
+  });
+
+  it("의 폭주는 아군 전체의 공격당 야성·궁극기 충전량을 함께 올린다", () => {
+    const trait = getRelic("stella").ferocityTrait;
+    if (trait.effectId !== "tailwindRally") throw new Error("스테라의 폭주 특성이 아니다");
+
+    // 두 경우 모두 아군 한 명만 때리게 해, 스테라의 기본 공격이 주는 아군 충전과 섞이지 않게 한다.
+    const plain = stellaBattle();
+    plain.stella.attackCooldown = 99;
+    plain.ally.attackCooldown = 0; plain.ally.targetId = plain.state.fighters[2].id;
+    plain.ally.x = 420; plain.ally.y = 1000;
+    stepSkirmish(plain.state, 1 / 60);
+    const baseEnergy = plain.ally.energy; const baseFerocity = plain.ally.ferocity;
+
+    const rallied = stellaBattle();
+    rallied.stella.ferocity = 100; rallied.stella.ferocityFever = true;
+    rallied.stella.attackCooldown = 99;
+    rallied.ally.attackCooldown = 0; rallied.ally.targetId = rallied.state.fighters[2].id;
+    rallied.ally.x = 420; rallied.ally.y = 1000;
+    stepSkirmish(rallied.state, 1 / 60);
+
+    expect(rallied.ally.energy).toBe(baseEnergy + trait.teamEnergyGain);
+    expect(rallied.ally.ferocity).toBeGreaterThan(baseFerocity);
+  });
+
+  it("의 패시브는 체력이 절반 이하가 된 순간 전투당 한 번만 은신시켜 추적을 푼다", () => {
+    const { state, stella } = stellaBattle(["stella"]);
+    const enemy = state.fighters[1];
+    enemy.targetId = stella.id; enemy.engaged = true;
+    expect(stella.def.passive.kind).toBe("lowHpVanish");
+
+    stella.hp = stella.maxHp * 0.51;
+    expect(tryTriggerLowHpVanish(stella, state)).toBe(false);
+
+    stella.hp = stella.maxHp * 0.5;
+    expect(tryTriggerLowHpVanish(stella, state)).toBe(true);
+    expect(stella.stealthFor).toBe(stella.def.passive.durationSeconds);
+    // 은신은 표적에서 벗어나는 것이므로 이미 붙어 있던 추적도 함께 풀린다.
+    expect(enemy.targetId).toBeNull();
+    expect(enemy.engaged).toBe(false);
+
+    // 전투당 한 번뿐이라 은신이 끝난 뒤 다시 깎여도 발동하지 않는다.
+    stella.stealthFor = 0; stella.hp = stella.maxHp * 0.2;
+    expect(tryTriggerLowHpVanish(stella, state)).toBe(false);
   });
 });

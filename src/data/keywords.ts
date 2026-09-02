@@ -46,6 +46,10 @@ export const KEYWORDS: readonly KeywordDef[] = [
     description: "약 0.1초 동안 행동을 멈춘다. 짧지만 진행 중인 시전을 끊을 수 있다.",
   },
   {
+    id: "tailwind", term: "순풍", kind: "버프",
+    description: "정해진 시간 동안 공격 속도와 이동 속도가 함께 오른다. 같은 순풍을 다시 받으면 남은 시간이 더 긴 쪽으로 갱신된다.",
+  },
+  {
     id: "regeneration", term: "지속 회복", kind: "버프",
     description: "정해진 시간 동안 일정한 간격으로 체력을 회복한다.",
   },

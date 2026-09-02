@@ -58,8 +58,8 @@ export const LUKA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   portraitOffsetY: -34,
 };
 
-/** 7번 프테라 모티브 신규 캐릭터(가칭 "타페자라") 전신. */
-export const TAPEJARA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+/** 7번 스테라(게오스테른베르기아) 전신. */
+export const STELLA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1024,
   imageHeight: 1536,
   content: { left: 23, top: 37, right: 1007, bottom: 1503 },

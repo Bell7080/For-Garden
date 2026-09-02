@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import ts from "typescript";
 import PREPARE_ICONS from "../../scripts/prepare_icons.py?raw";
 import { RELICS } from "../../src/data/relics";
+import type { Skill } from "../../src/core/types";
 import { ELEMENT_TINT, ROLE_TINT, SKILL_ART_ASSETS, SKILL_ART_SLOTS, skillArtFor, skillArtKey, skillArtTint } from "../../src/ui/skillArt";
 import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageHealingLabel, damageKeyword, ferocityTraitDescription, passiveDescription, passiveShieldKeyword, recoveryLabel, skillDescription, skillKeywordLayoutOptions, statusEffectLabel, targetingLabel } from "../../src/ui/skillPresentation";
 import type { SkillInfoViewModel } from "../../src/ui/SkillPopup";
@@ -79,8 +80,11 @@ describe("토리카 스킬 표시 계약", () => {
     expect(ferocityTraitDescription(torika.ferocityTrait, { attack: torika.stats.atk, defense: torika.stats.def })).toBe("공격 속도가 20% 증가한다. 기본 공격이 대상 주위의 모든 적에게 적중해 [[damage-value|19]]만큼 추가 물리 피해를 입히고 [[stagger|경직]]시킨다.");
     // 설명의 환산 피해도 현재 방어력을 다시 읽으므로 레벨·룬으로 능력치가 변하면 같이 변한다.
     expect(ferocityTraitDescription(torika.ferocityTrait, { attack: torika.stats.atk, defense: torika.stats.def * 2 })).toContain("[[damage-value|38]]");
-    // 설명 원문에는 구조화된 수치나 개발 좌표를 복제하지 않아 값이 갈라질 여지를 없앤다.
-    expect(torika.ultimate.desc).not.toMatch(/220px|2초/);
+    // 공격 스킬에는 설명 원문 자체를 두지 않는다 — 문장은 구조화 필드에서만 나온다.
+    expect(torika.ultimate.desc).toBeUndefined();
+    // 전투 엔진의 반경(px) 같은 개발 좌표는 문장에 새지 않고 대상 범위 문구로만 나온다.
+    expect(skillDescription(torika.ultimate)).not.toContain("220");
+    expect(skillDescription(torika.ultimate)).toContain("자신의 주위 모든 적에게");
   });
   it("은 일반 공격과 궁극기의 피해 출처를 공용 상세 정의로 만든다", () => {
     expect(damageKeyword({ kind: "scaling", amount: 128, power: 100, stat: "공격력", label: "피해량" })).toMatchObject({
@@ -146,8 +150,16 @@ describe("메테 스킬 표시 계약", () => {
 
   it("의 기본 공격은 0.1초를 중복해서 적지 않고 경직 태그 하나로 표시한다", () => {
     const mette = RELICS.find((def) => def.id === "mette")!;
-    expect(mette.basic.desc).not.toContain("0.1초");
-    expect(mette.basic.desc).toContain("[[stagger|경직]]");
+    // 경직은 키워드 설명이 "약 0.1초"를 말하므로 본문에서 시간을 다시 적지 않는다.
+    expect(skillDescription(mette.basic)).not.toContain("0.1초");
+    expect(skillDescription(mette.basic)).toContain("[[stagger|경직]]시킨다");
+    // 마법 피해지만 공격력에서 나오는 스킬이라 되돌아가는 표기도 공격력을 말한다.
+    expect(skillDescription(mette.basic)).toBe("적 한 명에게 공격력의 100% [[magical-damage|마법 피해]]를 주고 [[stagger|경직]]시킨다.");
+  });
+
+  it("의 궁극기는 피해가 없는 회복 계약에서 문장을 만든다", () => {
+    const mette = RELICS.find((def) => def.id === "mette")!;
+    expect(skillDescription(mette.ultimate)).toBe("모든 생존 아군이 각자 [[missing-hp|잃은 체력]]의 20%를 회복한다.");
   });
 });
 
@@ -155,8 +167,9 @@ describe("도디 스킬 표시 계약", () => {
   it("은 궁극기의 아군 회복 %를 실제 주문력 수치로 환산한 태그로 만든다", () => {
     const dodo = RELICS.find((def) => def.id === "dodo")!;
     expect(allyHealPowerKeyword(dodo.ultimate.allyHealingPower!, 150)).toMatchObject({ id: "heal-value", term: "300" });
-    expect(skillDescription(dodo.ultimate, { ap: 150 })).toBe(
-      "지정한 넓은 범위의 모든 적에게 [[magical-damage|마법 피해]]를 주고, 모든 생존 아군의 체력을 [[heal-value|300]]만큼 회복한다.",
+    expect(skillDescription(dodo.ultimate, { ap: 150, damage: 400 })).toBe(
+      "지정한 원 안의 모든 적에게 [[damage-value|400]]의 [[magical-damage|마법 피해]]를 주고, "
+      + "모든 생존 아군의 체력을 [[heal-value|300]]만큼 회복한다.",
     );
   });
 
@@ -173,8 +186,9 @@ describe("도디 스킬 표시 계약", () => {
       "적 한 명에게 [[damage-value|120]]의 [[magical-damage|마법 피해]]를 주고, 입힌 피해의 "
       + `${dodo.basic.lowestHpAllyHealingFromDamagePercent}%만큼 현재 체력이 가장 낮은 생존 아군을 회복한다.`,
     );
-    // 능력치를 모르면(도감만 보는 경우) 위력 %로 되돌아간다.
-    expect(skillDescription(dodo.basic)).toContain(`공격력의 ${dodo.basic.power}%`);
+    // 능력치를 모르면(도감만 보는 경우) 위력 %로 되돌아가되, 어느 능력치에서 나오는 배율인지
+    // 함께 말한다 — 마법 피해는 주문력에서 나온다.
+    expect(skillDescription(dodo.basic)).toContain(`주문력의 ${dodo.basic.power}%`);
   });
 });
 
@@ -195,6 +209,47 @@ describe("폰토스 스킬 표시 계약", () => {
     expect(passiveDescription(pontos.passive)).toBe(
       "완전히 경과한 매초 기본 [[ap|주문력]]의 2%가 복리로 누적된다. 현재 체력이 최대 체력의 100%에서 50%로 낮아질수록 받는 모든 피해 감소가 50%에서 99%까지 선형으로 증가하며, 그 이하에서는 최대치로 제한된다. 최종 받는 피해가 10 이하인 공격은 무효화한다.",
     );
+  });
+});
+
+describe("스킬 설명문 양식 계약", () => {
+  /** 새 개체가 늘어도 같은 양식으로 읽히는지 목록 전체를 한 번에 검사한다. */
+  const attackSkills = RELICS.flatMap((relic) => [
+    { relic, slot: "기본", skill: relic.basic as Skill },
+    { relic, slot: "궁극", skill: relic.ultimate as Skill },
+  ]).filter(({ skill }) => skill.damageType !== undefined);
+
+  it.each(attackSkills.map(({ relic, slot, skill }) => [`${relic.name} ${slot} ${skill.name}`, skill] as const))(
+    "%s은 대상 → 피해 → 부가 효과 순서로 읽힌다",
+    (_label, skill) => {
+      // 공격 속도까지 함께 쓰는 스킬(스피나 궁극기)은 두 축을 합쳐 계산하므로 능력치를 함께 준다.
+      const text = skillDescription(skill, { damage: 123, ap: 150, atk: { atk: 120, attackSpeed: 100 } });
+      // 대상이 먼저다. 무엇을 때리는지 모른 채 수치부터 읽게 하지 않는다.
+      expect(text).toMatch(/^(적 한 명|자신의 주위 모든 적|전장의 모든 적|지정한 원 안의 모든 적)에게 /);
+      // 그다음이 피해다. 실제 수치를 알 수 있으면 조회 가능한 태그로 보여 준다.
+      expect(text).toContain("[[damage-value|");
+      expect(text).toMatch(/\[\[(physical|magical)-damage\|(물리|마법) 피해\]\]를 (준다|주고)/);
+      expect(text.endsWith(".")).toBe(true);
+    },
+  );
+
+  it("은 공격·정형 회복 스킬의 설명 원문을 데이터에 남기지 않는다", () => {
+    // 문장은 구조화 필드 하나에서만 나온다. 원문을 함께 두면 수치를 조정한 뒤 옛 문장이 남는다.
+    for (const relic of RELICS) {
+      expect(relic.basic.desc, `${relic.name} 기본 공격`).toBeUndefined();
+      expect(relic.ultimate.desc, `${relic.name} 궁극기`).toBeUndefined();
+    }
+  });
+
+  it("은 전투 결과를 바꾸지 않는 묘사문을 화면 문장에 남기지 않는다", () => {
+    // 한 번씩 실제로 있었던 묘사문들이다. 되살아나면 이 목록에 걸린다.
+    const flavour = ["포효", "부리", "물어", "할퀸다", "내리꽂", "몰아친다", "짓누른다", "퍼뜨린다", "일으킨다", "휩쓰는"];
+    for (const relic of RELICS) {
+      for (const skill of [relic.basic, relic.ultimate] as Skill[]) {
+        const text = skillDescription(skill, { damage: 123, ap: 150, atk: { atk: 120, attackSpeed: 100 } });
+        for (const word of flavour) expect(text, `${relic.name} · ${skill.name}`).not.toContain(word);
+      }
+    }
   });
 });
 
@@ -224,10 +279,8 @@ describe("스피나 스킬 표시 계약", () => {
     expect(spino.passive).toMatchObject({ name: "전투의 환희", kind: "basicHitAttackSpeedStack", value: 3 });
     expect(passiveDescription(spino.passive)).toContain("[[attack-speed|공격 속도]]가 3 증가");
     expect(spino.basic).toMatchObject({ name: "악어턱 물어뜯기", power: 80, combo: { chancePercent: 40, hitCount: 2, missingHpHealingPercentPerHit: 5 } });
-    // 주 피해량은 상단 [[damage-value]] 라벨이 이미 실제 수치로 보여 주므로 본문에서 %를
-    // 다시 말하지 않는다 — 토리카 일반 공격과 같은 "적 한 명에게 물리 피해를 준다" 형태다.
-    expect(skillDescription(spino.basic)).toBe(
-      "적 한 명에게 [[physical-damage|물리 피해]]를 준다. 40% 확률로 [[combo|연격]]하여 총 2회 적중하고, "
+    expect(skillDescription(spino.basic, { damage: 100 })).toBe(
+      "적 한 명에게 [[damage-value|100]]의 [[physical-damage|물리 피해]]를 주고, 40% 확률로 [[combo|연격]]하여 총 2회 적중한다. "
       + "매 적중 뒤 [[missing-hp|잃은 체력]]의 5%를 회복한다.",
     );
     expect(spino.ultimate).toMatchObject({ name: "범람의 포식자", power: 200, attackSpeedPower: 150, cost: 300, statusEffects: [{ kind: "stun", seconds: 3 }] });

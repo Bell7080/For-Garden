@@ -849,11 +849,9 @@ export class FakeServer implements GameApi {
     const current = this.ownedRune(request.runeInstanceId);
     if (!canEngraveRune(current)) throw new GameApiError("RUNE_ENGRAVING_NOT_ALLOWED", "모든 일반 강화 완료 후 각인 전 룬만 각인할 수 있습니다.");
     if (![...current.mainStats, ...current.subStats].some(({ key }) => key === request.statId)) throw new GameApiError("RUNE_ENGRAVING_NOT_ALLOWED", "룬에 존재하지 않는 능력치입니다.");
-    // 서버 난수를 등급과 증가량으로 환산하며 도메인 함수가 각인 스택을 정확히 하나만 추가한다.
-    const roll = this.random();
-    if (!Number.isFinite(roll) || roll < 0 || roll >= 1) throw new GameApiError("INVALID_STATE", "서버 룬 난수가 올바르지 않습니다.");
-    const engraving = roll < 0.1 ? { statKey: request.statId, grade: "perfect" as const, valueAdded: 3 } : roll < 0.4 ? { statKey: request.statId, grade: "great" as const, valueAdded: 2 } : { statKey: request.statId, grade: "normal" as const, valueAdded: 1 };
-    const rune = applyRuneEngraving(current, engraving);
+    // 각인은 한 번뿐인 확정 마무리다. 등급을 난수로 굴리지 않고 **세공 성공 한 번과 같은 값**을
+    // 더한다 — 되돌릴 수 없는 마지막 조작의 결과가 운에 갈리면 무엇을 고를지 정할 수 없다.
+    const rune = applyRuneEngraving(current, { statKey: request.statId, valueAdded: runeEnhancementIncrease(current.rarity, request.statId) });
     const nextRunes = this.state.runeInventory.map((candidate) => candidate.instanceId === rune.instanceId ? rune : candidate);
     const nextState = { ...this.state, runeInventory: nextRunes };
     this.persist(nextState);

@@ -36,6 +36,7 @@ import { profileModifierManager } from "../managers/ProfileModifierManager";
 import type { PlayerProfileDisplay } from "../state/playerProfile";
 import { MailPopup } from "../ui/MailPopup";
 import { CurrencyGuidePopup } from "../ui/CurrencyGuidePopup";
+import { StaminaPopup } from "../ui/StaminaPopup";
 import type { CurrencyGuideAction } from "../data/currencyGuide";
 
 /** 확대된 애착 렐릭의 골반 아래가 내비게이션 뒤로 자연스럽게 이어지는 기준선. */
@@ -253,6 +254,9 @@ export class LobbyScene extends Phaser.Scene {
   /** 상단과 가방이 공유하는 안내를 열고, 선택적인 이동만 로비 소유 콜백에서 해석한다. */
   private openCurrencyGuide(currency: import("../data/items").WalletItemKey): void {
     if (!this.popupLayer) return;
+    // 스테미나만 전용 창이다 — 남은 양·회복 시간·지금 채우는 수단이 다음 조작을 정하므로
+    // 획득처를 글로 읽는 공용 안내로는 모자란다.
+    if (currency === "stamina") { new StaminaPopup(this, this.popupLayer, gameApi).open(); return; }
     new CurrencyGuidePopup(this, this.popupLayer, (action) => this.handleCurrencyAction(action)).open(currency);
   }
 

@@ -67,8 +67,13 @@ export interface RuneEnhancementRecord {
 export interface RuneEngravingResult {
   /** 각인으로 영향을 받은 옵션 키다. 인스턴스에 실제 존재해야 한다. */
   statKey: RuneStatKey;
-  /** 각인 등급. 단계 순서를 숫자로 비교하지 않도록 명시적인 문자열을 쓴다. */
-  grade: "normal" | "great" | "perfect";
+  /**
+   * 각인 등급.
+   *
+   * 각인이 난수로 등급을 굴리던 때의 필드다. 지금은 **세공 성공 한 번과 같은 값**을 확정으로
+   * 더하므로 새로 쓰지 않고, 예전 저장을 그대로 읽기 위해서만 남는다.
+   */
+  grade?: "normal" | "great" | "perfect";
   /** 각인으로 더해진 수치(%). 유한한 0 이상 값이어야 한다. */
   valueAdded: number;
 }
@@ -274,7 +279,7 @@ export function assertValidRuneInstance(rune: RuneInstance): void {
   if (rune.bookmarked !== undefined && typeof rune.bookmarked !== "boolean") throw new Error("룬 즐겨찾기는 boolean이어야 합니다.");
   if (rune.engravings.length > 1) throw new Error("각인은 룬 하나에 한 번만 적용할 수 있습니다.");
   if (rune.engravings.length > 0 && !rune.enhancementComplete) throw new Error("강화를 완료하기 전에는 각인할 수 없습니다.");
-  if (rune.engravings.some(({ statKey, grade, valueAdded }) => !optionKeys.has(statKey) || !["normal", "great", "perfect"].includes(grade) || !Number.isFinite(valueAdded) || valueAdded < 0)) throw new Error("각인 결과가 올바르지 않습니다.");
+  if (rune.engravings.some(({ statKey, grade, valueAdded }) => !optionKeys.has(statKey) || (grade !== undefined && !["normal", "great", "perfect"].includes(grade)) || !Number.isFinite(valueAdded) || valueAdded < 0)) throw new Error("각인 결과가 올바르지 않습니다.");
   if (rune.enhancementComplete !== (runeEnhancementAttempts(rune) === runeTotalEnhancementAttempts(rune.rarity))) throw new Error("강화 완료 상태가 누적 시도와 다릅니다.");
 }
 
@@ -334,7 +339,16 @@ export function engraveRune(rune: RuneInstance, result: RuneEngravingResult): Ru
   assertValidRuneInstance(rune);
   if (!canEngraveRune(rune)) throw new Error("모든 강화를 마친 각인 전 룬만 각인할 수 있습니다.");
   if (![...rune.mainStats, ...rune.subStats].some(({ key }) => key === result.statKey)) throw new Error("존재하지 않는 옵션은 각인할 수 없습니다.");
-  const next = { ...rune, engravings: [result] } satisfies RuneInstance;
+  // 각인도 세공 성공과 똑같이 **그 옵션의 수치를 올린다.** 기록만 남기고 수치를 올리지 않으면
+  // 화면에 보이는 값과 실제 전투 계산(`applyHeartGems`가 각인을 성공 한 번으로 세는 것)이 갈린다.
+  const raise = <K extends RuneStatKey>(option: RuneStatOption<K>): RuneStatOption<K> =>
+    option.key === result.statKey ? { ...option, value: option.value + result.valueAdded } : option;
+  const next: RuneInstance = {
+    ...rune,
+    mainStats: rune.mainStats.map(raise) as [RuneStatOption<RuneMainStatKey>, RuneStatOption<RuneMainStatKey>],
+    subStats: rune.subStats.map(raise) as RuneStatOption<RuneSubStatKey>[],
+    engravings: [result],
+  };
   assertValidRuneInstance(next);
   return next;
 }

@@ -3,7 +3,7 @@ import { FakeServer } from "../../src/api/FakeServer";
 import { BREAKTHROUGH_STEPS, RELIC_LEVEL_CAP } from "../../src/core/relicProgression";
 import { GameApiError } from "../../src/api/contracts";
 import { createInitialPlayerResearchProgress, type Session } from "../../src/state/session";
-import { createRuneInstance, enhanceRune as applyRuneEnhancement, type RuneInstance, type RuneStatKey } from "../../src/core/runes";
+import { createRuneInstance, enhanceRune as applyRuneEnhancement, runeEnhancementIncrease, type RuneInstance, type RuneStatKey } from "../../src/core/runes";
 import { createDefaultSettings } from "../../src/core/settings";
 import { WALLET_CAPS } from "../../src/data/economy";
 
@@ -204,8 +204,13 @@ describe("FakeServer", () => {
     for (const { key } of rune.mainStats) for (let count = 0; count < 3; count += 1) rune = applyRuneEnhancement(rune, key, 1, 0);
     state.runeInventory = [rune];
     const server = new FakeServer(state, { latencyMs: 0, random: () => 0 });
+    const before = rune.mainStats[0].value;
     const response = await server.engraveRune({ runeInstanceId: "rune-1", statId: rune.mainStats[0].key });
-    expect(response.rune.engravings).toEqual([{ statKey: rune.mainStats[0].key, grade: "perfect", valueAdded: 3 }]);
+    // 각인은 난수 등급이 아니라 **세공 성공 한 번과 같은 값**을 확정으로 더한다.
+    const increase = runeEnhancementIncrease(rune.rarity, rune.mainStats[0].key);
+    expect(response.rune.engravings).toEqual([{ statKey: rune.mainStats[0].key, valueAdded: increase }]);
+    // 기록만 남기지 않고 그 옵션의 수치도 함께 오른다 — 화면과 전투 계산이 갈리지 않는다.
+    expect(response.rune.mainStats[0].value).toBe(before + increase);
     await expect(server.engraveRune({ runeInstanceId: "rune-1", statId: rune.mainStats[0].key })).rejects.toMatchObject({ code: "RUNE_ENGRAVING_NOT_ALLOWED" });
   });
   it("급여 재화를 검사·차감하고 오른 레벨을 서버 상태에 반영한다", async () => {

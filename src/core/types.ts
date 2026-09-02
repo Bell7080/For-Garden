@@ -107,7 +107,14 @@ interface SkillBase {
   /** 기본 공격이 원형 광역일 때만 시전자 중심 대상 계약과 반경을 선언한다. */
   targeting?: "single" | "nearbyEnemies" | "battlefieldEnemies" | "battlefieldAllies" | "targetedCircle";
   radius?: number;
-  desc: string;
+  /**
+   * 문장을 만들 수 없는 스킬만 쓰는 설명 원문이다.
+   *
+   * 공격 스킬과 정형 회복 스킬의 설명문은 `skillPresentation.ts`의 `skillDescription()`이
+   * **구조화 필드에서 직접 짓는다** — 캐릭터마다 문장을 새로 적으면 같은 뜻이 화면마다 다른
+   * 무게로 읽히고, 수치를 조정한 뒤 옛 문장이 그대로 남는다. 그래서 그런 스킬에는 적지 않는다.
+   */
+  desc?: string;
 }
 
 /** 피해 스킬은 피해 종류와 계수를 함께 요구해 비공격 스킬과 안전하게 구별한다. */

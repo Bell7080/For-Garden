@@ -158,60 +158,141 @@ export interface SkillDescriptionStats {
   damage?: number;
 }
 
+/**
+ * 스킬 설명문을 만드는 유일한 자리.
+ *
+ * **양식은 `대상 → 피해 → 부가 효과` 한 줄이다.** 어느 개체든 같은 순서로 읽히게 하려고
+ * 문장을 손으로 적지 않고 구조화 필드에서 조립한다 — 캐릭터마다 문장을 새로 지으면 같은 뜻이
+ * 화면마다 다른 무게·다른 단위로 읽히고, 수치를 조정한 뒤 옛 문장이 그대로 남는다.
+ *
+ * 그래서 `relics.ts`의 공격·회복 스킬에는 **설명문을 적지 않는다**(`desc`는 문장을 만들 수
+ * 없는 스킬만 쓰는 선택 필드다). 새 스킬이 새로운 효과를 가지면 문장을 데이터에 적는 대신
+ * 이 함수에 그 효과의 절을 더한다.
+ */
 export function skillDescription(
   skill: Skill | BasicAttack | Ultimate,
   stats: SkillDescriptionStats = {},
 ): string {
-  const ap = stats.ap;
-  const atkStats = stats.atk;
-  if ("periodicCritical" in skill && skill.periodicCritical) return `적 한 명에게 공격력의 ${skill.power}% [[physical-damage|물리 피해]]를 준다. 매 ${skill.periodicCritical.every}번째 실제 [[basic-attack|기본 공격]]은 확정 치명타가 된다.`;
-  if ("damageTransfer" in skill && skill.damageTransfer) return `주 대상에게 공격력의 ${skill.power}% [[physical-damage|물리 피해]]를 준다. 주 대상이 실제로 잃은 최종 HP 피해의 ${skill.damageTransfer.percent}%를 주 대상에게서 가장 가까운 다른 적에게 [[transfer|전이]]한다.`;
-  // 대상과 피해를 한 문장 앞머리로 세운다. 실제 수치는 스킬 아이콘 위 라벨이 쓰는 그 값
-  // 그대로이고, 없을 때만 위력(%)으로 되돌아간다.
-  const damageTag = skill.damageType === "physical" ? "[[physical-damage|물리 피해]]" : "[[magical-damage|마법 피해]]";
-  const dealt = stats.damage === undefined
-    ? `공격력의 ${skill.power}% ${damageTag}`
-    : `[[damage-value|${stats.damage}]]의 ${damageTag}`;
-  // 입힌 피해로 자신을 회복하는 공격(렉시아 궁극기). 대상·피해·회복을 한 문장으로 잇는다.
-  if ("damageHealingPercent" in skill && skill.damageHealingPercent !== undefined) {
-    return `적 한 명에게 ${dealt}를 주고, 입힌 피해의 ${skill.damageHealingPercent}%만큼 체력을 회복한다.`;
+  // 순수 회복기는 때리는 대상이 없어 "대상 → 피해"로 시작할 수 없다. 회복 계약에서 바로 짓는다.
+  if (skill.damageType === undefined || skill.power === undefined) {
+    if ("healing" in skill && skill.healing?.kind === "teamMissingHpPercent") {
+      return `모든 생존 아군이 각자 [[missing-hp|잃은 체력]]의 ${skill.healing.percent}%를 회복한다.`;
+    }
+    return skill.desc ?? "";
   }
-  // 입힌 피해로 아군을 회복하는 공격(도디 일반 공격).
-  if ("lowestHpAllyHealingFromDamagePercent" in skill && skill.lowestHpAllyHealingFromDamagePercent !== undefined) {
-    return `적 한 명에게 ${dealt}를 주고, 입힌 피해의 ${skill.lowestHpAllyHealingFromDamagePercent}%만큼 현재 체력이 가장 낮은 생존 아군을 회복한다.`;
-  }
+  const sentences: string[] = [];
+  const clauses = skillEffectClauses(skill, stats);
+  // 첫 절만 "주고"로 이어 붙이고 나머지는 문장을 끊는다. 셋 이상을 한 문장에 이으면 무엇이
+  // 이 스킬의 주 효과인지 읽히지 않는다.
+  // 주어가 바뀌지 않는 첫 절만 "주고"로 이어 붙인다. 주기 치명타·전이처럼 주어가 다른 절을
+  // 이어 붙이면 한 문장 안에서 말하는 대상이 바뀌어 읽다가 걸린다.
+  const joined = clauses.find(({ standalone }) => standalone !== true);
+  const head = `${skillTargetPhrase(skill)} ${skillDamagePhrase(skill, stats)}를`;
+  // "준다"에 "고"를 그대로 붙이면 인용형 어미("~라고")로 읽힌다. 어간에 연결어미를 붙인
+  // "주고" 형태로 갈라야 자연스럽다.
+  sentences.push(joined === undefined ? `${head} 준다.` : `${head} 주고${joined.joinWithComma ? "," : ""} ${joined.text}.`);
+  for (const clause of clauses) if (clause !== joined) sentences.push(`${clause.text}.`);
+  return sentences.join(" ");
+}
+
+/** 문장에 이어 붙일 부가 효과 한 절. */
+interface SkillEffectClause {
+  text: string;
+  /** "주고" 뒤에 쉼표를 두는가. 상태이상은 쉼표 없이 이어야 자연스럽게 읽힌다. */
+  joinWithComma?: boolean;
+  /** 주어가 이 스킬의 시전자가 아니라 늘 제 문장으로 서는 절인가. */
+  standalone?: boolean;
+}
+
+/**
+ * 부가 효과 절들을 순서대로 모은다.
+ *
+ * 순서는 **때린 결과에 가까운 것부터**다 — 추가 타격, 그 피해로 생기는 회복, 남는 상태이상,
+ * 그 밖의 규칙. 새 효과를 넣을 자리를 이 순서로 정하면 개체가 늘어도 문장 모양이 갈리지 않는다.
+ */
+function skillEffectClauses(skill: Skill | BasicAttack | Ultimate, stats: SkillDescriptionStats): SkillEffectClause[] {
+  const clauses: SkillEffectClause[] = [];
   const combo = "combo" in skill ? skill.combo : undefined;
   if (combo) {
-    // 주 피해량은 스킬 아이콘 위 [[damage-value]] 라벨이 이미 실제 수치로 보여 주므로
-    // 본문에서는 %를 다시 말하지 않고 대상과 연격 세부만 적는다.
-    return `적 한 명에게 [[physical-damage|물리 피해]]를 준다. ${combo.chancePercent}% 확률로 `
-      + `[[combo|연격]]하여 총 ${combo.hitCount}회 적중하고, 매 적중 뒤 [[missing-hp|잃은 체력]]의 `
-      + `${combo.missingHpHealingPercentPerHit}%를 회복한다.`;
+    clauses.push({ text: `${combo.chancePercent}% 확률로 [[combo|연격]]하여 총 ${combo.hitCount}회 적중한다`, joinWithComma: true });
+    clauses.push({ text: `매 적중 뒤 [[missing-hp|잃은 체력]]의 ${combo.missingHpHealingPercentPerHit}%를 회복한다` });
   }
-  // 현재 공격 속도 복합 계수를 가진 궁극기는 스피나의 두 피해 축을 하나의 실제 수치로 합쳐
-  // 보여 준다 — 상단 [[damage-value]] 라벨도 이제 같은 값을 쓰므로 위아래 숫자가 갈리지 않는다.
-  if ("attackSpeedPower" in skill && skill.attackSpeedPower !== undefined) {
-    const stun = skill.statusEffects?.find((effect) => effect.kind === "stun");
-    const composite = attackSpeedCompositeDamageKeyword(skill, atkStats?.atk, atkStats?.attackSpeed);
-    const damage = composite
-      ? `[[damage-value|${composite.term}]]의 ${damageTag}`
-      : `공격력의 ${skill.power}%와 현재 [[attack-speed|공격 속도]]의 ${skill.attackSpeedPower}%를 합친 ${damageTag}`;
-    // "준다" 뒤에 그대로 "고"를 붙이면 "~라고 말하며"로 읽히는 인용형 어미가 된다.
-    // 어간(주-)에 연결어미(-고)를 붙인 "주고" 형태로 갈라야 자연스럽다.
-    // 기절은 몇 초인지가 곧 이 궁극기의 값이라 본문에서도 시간을 함께 적는다 — 키워드 설명은
-    // 기절이 무엇인지만 말하고 지속 시간은 스킬마다 다르기 때문이다.
-    return stun
-      ? `적 한 명에게 ${damage}를 주고 ${stun.seconds}초 동안 [[stun|기절]]시킨다.`
-      : `적 한 명에게 ${damage}를 준다.`;
+  if ("damageHealingPercent" in skill && skill.damageHealingPercent !== undefined) {
+    clauses.push({ text: `입힌 피해의 ${skill.damageHealingPercent}%만큼 체력을 회복한다`, joinWithComma: true });
   }
-  // 범위 피해 위에 아군 전체 회복을 얹는 궁극기(도디)는 피해 수치를 상단 라벨에 맡기고
-  // 여기서는 회복량만 실제 주문력에서 계산한 값으로 보여 준다.
+  if ("lowestHpAllyHealingFromDamagePercent" in skill && skill.lowestHpAllyHealingFromDamagePercent !== undefined) {
+    clauses.push({ text: `입힌 피해의 ${skill.lowestHpAllyHealingFromDamagePercent}%만큼 현재 체력이 가장 낮은 생존 아군을 회복한다`, joinWithComma: true });
+  }
   if ("allyHealingPower" in skill && skill.allyHealingPower !== undefined) {
-    const heal = allyHealPowerKeyword(skill.allyHealingPower, ap);
+    const heal = allyHealPowerKeyword(skill.allyHealingPower, stats.ap);
     const healText = heal === undefined ? `주문력의 ${skill.allyHealingPower}%` : `[[heal-value|${heal.term}]]`;
-    return `지정한 넓은 범위의 모든 적에게 ${damageTag}를 주고, 모든 생존 아군의 체력을 ${healText}만큼 회복한다.`;
+    clauses.push({ text: `모든 생존 아군의 체력을 ${healText}만큼 회복한다`, joinWithComma: true });
   }
-  return skill.desc;
+  for (const effect of skill.statusEffects ?? []) {
+    const text = statusEffectClause(effect);
+    if (text) clauses.push({ text });
+  }
+  if ("damageTransfer" in skill && skill.damageTransfer) {
+    clauses.push({ text: `그 적이 실제로 잃은 최종 HP 피해의 ${skill.damageTransfer.percent}%를 가장 가까운 다른 적에게 [[transfer|전이]]한다`, standalone: true });
+  }
+  if ("periodicCritical" in skill && skill.periodicCritical) {
+    clauses.push({ text: `매 ${skill.periodicCritical.every}번째 실제 [[basic-attack|기본 공격]]은 확정 치명타가 된다`, standalone: true });
+  }
+  if ("chargeStartsAtHpPercent" in skill && skill.chargeStartsAtHpPercent !== undefined) {
+    clauses.push({ text: `체력이 ${skill.chargeStartsAtHpPercent}% 이하가 되면 충전을 시작한다`, standalone: true });
+  }
+  return clauses;
+}
+
+/**
+ * 상태이상 한 절.
+ *
+ * **몇 초인지가 스킬마다 다른 효과만 시간을 적는다.** 경직은 키워드 설명 자체가 "약 0.1초"를
+ * 명시하므로 여기서 다시 말하지 않는다.
+ */
+function statusEffectClause(effect: CombatStatusEffect): string | undefined {
+  if (effect.kind === "stun") return `${effect.seconds}초 동안 [[stun|기절]]시킨다`;
+  if (effect.kind === "stagger") return `[[stagger|경직]]시킨다`;
+  if (effect.kind === "bleed") return `${effect.seconds}초 동안 [[bleed|출혈]]시켜 매초 최대 체력의 ${effect.maxHpPercentPerSecond}%를 잃게 한다`;
+  return undefined;
+}
+
+/**
+ * 문장을 여는 대상.
+ *
+ * 전투 엔진이 읽는 대상 계약(`targeting`)에서 그대로 만든다 — 설명문이 대상을 따로 적으면
+ * 실제로 맞는 범위와 갈린다. 지정 원은 아군도 함께 판정하지만 **피해를 받는 것은 적뿐**이라
+ * 요약줄(`targetingLabel`)과 달리 여기서는 적만 말한다.
+ */
+function skillTargetPhrase(skill: Skill | BasicAttack | Ultimate): string {
+  const targeting = "targeting" in skill ? skill.targeting : undefined;
+  if (targeting === "nearbyEnemies") return "자신의 주위 모든 적에게";
+  if (targeting === "battlefieldEnemies") return "전장의 모든 적에게";
+  if (targeting === "targetedCircle") return "지정한 원 안의 모든 적에게";
+  return "적 한 명에게";
+}
+
+/**
+ * 피해 한 덩어리.
+ *
+ * 실제 수치는 스킬 아이콘 위 라벨이 쓰는 그 값을 그대로 받고(두 곳이 따로 계산하면 같은
+ * 스킬의 피해가 위아래에서 다른 수로 보인다), 능력치를 모르는 자리에서만 위력(%)으로
+ * 되돌아간다. 그때도 어느 능력치에서 나오는 배율인지 함께 말한다.
+ */
+function skillDamagePhrase(skill: Skill | BasicAttack | Ultimate, stats: SkillDescriptionStats): string {
+  const damageTag = skill.damageType === "physical" ? "[[physical-damage|물리 피해]]" : "[[magical-damage|마법 피해]]";
+  // 위력과 현재 공격 속도를 하나의 배율로 합쳐 쓰는 스킬(스피나 궁극기)만 두 축을 합친다.
+  if ("attackSpeedPower" in skill && skill.attackSpeedPower !== undefined) {
+    const composite = attackSpeedCompositeDamageKeyword(skill, stats.atk?.atk, stats.atk?.attackSpeed);
+    return composite === undefined
+      ? `공격력의 ${skill.power}%와 현재 [[attack-speed|공격 속도]]의 ${skill.attackSpeedPower}%를 합친 ${damageTag}`
+      : `[[damage-value|${composite.term}]]의 ${damageTag}`;
+  }
+  if (stats.damage !== undefined) return `[[damage-value|${stats.damage}]]의 ${damageTag}`;
+  const stat = skill.scalingStat === "def" ? "방어력"
+    : skill.scalingStat === "ap" || (skill.scalingStat === undefined && skill.damageType === "magical") ? "주문력"
+      : "공격력";
+  return `${stat}의 ${skill.power}% ${damageTag}`;
 }
 
 /** 스킬별 피해 회복은 최대 체력 회복과 다른 계약이므로 실제 피해 기준임을 명시한다. */

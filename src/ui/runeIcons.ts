@@ -81,7 +81,7 @@ function addFittedRuneIcon(scene: Phaser.Scene, frameSize: number, rarity: Heart
  * 잘린 모서리와 안쪽 비네트에 그림이 닿지 않는 선에서 최대한 크게 잡는다. 1에 가까우면
  * 조각의 뾰족한 끝이 액자 선을 넘고, 작으면 그림이 큰 칸 한가운데에 떠 액자만 커 보인다.
  */
-const RUNE_FRAME_FILL = 0.8;
+const RUNE_FRAME_FILL = 0.72;
 
 /** 각인까지 마친 룬이 두르는 금빛. 완성된 보석 하나뿐인 색이라 다른 표식과 섞지 않는다. */
 export const RUNE_ENGRAVE_GOLD = 0xffc861;
@@ -258,7 +258,8 @@ export const RUNE_MARK: Readonly<Record<"success" | "fail" | "engrave", StarTone
   success: { shadow: 0x04121e, halo: 0x7fd8ff, glow: 0xbdeaff, body: 0x3aa8ff },
   // 다크체리는 빛무리를 줄여 옆의 성공 별보다 뒤로 물러난다.
   fail: { shadow: 0x14040a, halo: 0x8e2038, glow: 0xb03a52, body: 0x6e1526, bloom: 0.45 },
-  engrave: { shadow: 0x1a1200, halo: 0xffd166, glow: 0xffe9a8, body: 0xffc233 },
+  // 각인은 완성을 뜻하는 금빛이라 빛무리를 조금 더 넓게 잡는다 — 크기가 아니라 빛으로 구분한다.
+  engrave: { shadow: 0x1a1200, halo: 0xffd166, glow: 0xffe9a8, body: 0xffc233, bloom: 1.25 },
 };
 
 /** 아직 시도하지 않은 칸. 자리는 지키되 눈에 먼저 들어오지 않게 옅은 테두리만 남긴다. */
@@ -280,7 +281,9 @@ export function addRuneMark(
   outer: number,
   kind: "success" | "fail" | "engrave",
 ): void {
-  addGlowStar(scene, parent, x, y, outer, RUNE_MARK[kind], kind === "engrave" ? 5 : 4);
+  // 각인도 **같은 다이아**다. 모양까지 바꾸면 한 줄 안에서 다른 종류의 표식으로 읽히고, 크게
+  // 키우면 그 칸 하나가 룬 전체보다 먼저 눈에 들어온다. 완성은 색(노란 발광)이 말한다.
+  addGlowStar(scene, parent, x, y, outer, RUNE_MARK[kind], 4);
 }
 
 /**

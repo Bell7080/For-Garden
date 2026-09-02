@@ -29,8 +29,11 @@ export const RUNE_STAT_LABEL: Readonly<Record<RuneStatKey, string>> = {
   ferocityGain: "야성 획득 증가", energyGain: "궁극기 충전량 증가",
 };
 
-/** 세공 표식의 크기. 각인 별만 눈에 띄게 크다 — 한 룬에 한 번뿐인 결과이기 때문이다. */
-const MARK = { outer: 17, engrave: 25, step: 52, firstX: 110, engraveX: 286 } as const;
+/** 쪽지의 옵션 줄에 붙는 각인 표식. 이름을 밀어내지 않을 만큼만 작다. */
+const NOTE_ENGRAVE_MARK = { outer: 10, gap: 16 } as const;
+
+/** 세공 표식의 크기. 각인도 같은 다이아라 크기를 거의 맞추고 색으로만 갈린다. */
+const MARK = { outer: 17, engrave: 18, step: 52, firstX: 110, engraveX: 286 } as const;
 
 /**
  * 세공 화면의 크기와 자리.
@@ -218,7 +221,13 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
       const nameStyle = main
         ? textStyle({ role: "emphasis", size: 22, color: COLOR.ink })
         : textStyle({ role: "body", size: 21, color: COLOR.inkDim });
-      body.add(scene.add.text(-168, y, RUNE_STAT_LABEL[stat.key], nameStyle).setOrigin(0, 0.5));
+      const name = scene.add.text(-168, y, RUNE_STAT_LABEL[stat.key], nameStyle).setOrigin(0, 0.5);
+      body.add(name);
+      // 각인한 옵션은 **이름 옆에서 바로** 읽혀야 한다. 어느 줄이 완성된 줄인지 알려고 세공
+      // 화면을 다시 열게 하지 않는다. 표식은 세공 화면과 같은 다이아이고 크기만 작다.
+      if (rune.engravings.some(({ statKey }) => statKey === stat.key)) {
+        addRuneMark(scene, body, -168 + name.width + NOTE_ENGRAVE_MARK.gap, y, NOTE_ENGRAVE_MARK.outer, "engrave");
+      }
       body.add(scene.add.text(168, y, `+${stat.value}%`, textStyle({ role: "display", size: 22, color: main ? hex(accent) : COLOR.ink })).setOrigin(1, 0.5));
     });
 
@@ -313,7 +322,7 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
         height: 56,
         color: "#ffdf9a",
         parent: content,
-      }).setValue(formatCurrency(session.wallet.gold));
+      }).setText(formatCurrency(session.wallet.gold));
       // 연필은 씬에서 직접 작도하지 않고 glyph 공용 시스템의 edit 표식을 쓴다. 이름 바로
       // 옆에 서야 무엇을 고치는 단추인지 읽힌다 — 오른쪽 끝에 두면 그 아래 확률 글자와 겹친다.
       const pencilX = Math.min(-half + 146 + nameText.width + 30, half - 244);
@@ -342,7 +351,7 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
         content.add(scene.add.text(half - 36, chanceY - 24, `실패 ${Math.round((1 - chance) * 100)}%`, textStyle({ role: "emphasis", size: 21, color: hex(RUNE_MARK.fail.halo) })).setOrigin(1, 1));
         addChanceLine(scene, content, 0, chanceY, CRAFT.width - 88, chance);
       } else {
-        const done = rune!.engravings.length > 0 ? "세공과 각인을 모두 마쳤다" : "모든 세공을 마쳤다 · 각인만 남았다";
+        const done = rune!.engravings.length > 0 ? "모든 세공이 끝났습니다." : "각인을 진행해 룬을 완성해 주세요.";
         content.add(scene.add.text(0, chanceY - 12, done, textStyle({ role: "emphasis", size: 23, color: hex(accent) })).setOrigin(0.5, 0.5));
       }
 
@@ -409,7 +418,11 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
       const engraved = rune!.engravings.length > 0;
       const cost = completed ? 0 : runeEnhancementGoldCost(rune!.rarity, runeEnhancementAttempts(rune!));
       const affordable = completed || session.wallet.gold >= cost;
-      const reason = engraved ? "각인 완료" : completed ? (selected ? "선택한 능력치를 확정 강화합니다." : "각인할 능력치를 선택하세요.") : selected ? "성공하면 다음 확률 ↓ · 실패하면 ↑" : "먼저 세공할 능력치 줄을 선택하세요.";
+      const reason = engraved
+        ? "모든 세공이 끝났습니다."
+        : completed
+          ? (selected ? "고른 능력치에 각인해 룬을 완성합니다." : "각인할 능력치를 골라 주세요.")
+          : selected ? "성공하면 다음 확률 ↓ · 실패하면 ↑" : "먼저 세공할 능력치 줄을 골라 주세요.";
       // 방금 무슨 일이 있었는지는 버튼 바로 위에 크게 박는다. 손이 머무는 자리에서 결과가
       // 나오지 않으면 확률만 바뀐 채 무엇이 성공이었는지 되짚어야 한다.
       const resultStyle = notice.includes("성공")
@@ -436,7 +449,7 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
           // 보지 않도록 다시 그리기 전에 먼저 풀어 둔다 — 그러지 않으면 이어지는 세공마다
           // 방금 만든 버튼이 꺼진 채로 나와 곧바로 다시 누를 수 없었다.
           pending = false;
-          render(completed ? "각인이 완료되었습니다." : ("succeeded" in response && response.succeeded ? "세공 성공" : "세공 실패"));
+          render(completed ? "룬을 완성했습니다." : ("succeeded" in response && response.succeeded ? "세공 성공" : "세공 실패"));
         } catch (error) { pending = false; render(error instanceof Error ? error.message : "요청을 완료하지 못했습니다."); }
       }}).setEnabled(allowed);
       content.add(action);

@@ -1365,7 +1365,7 @@ describe("궁극기", () => {
     const events = fireUltimate(state, ally.id);
     expect(events).toContainEqual(expect.objectContaining({ kind: "attack", attackerId: ally.id, targetId: foe.id, skill: "ultimate" }));
     expect(foe.hp).toBeLessThan(foeHp);
-    // 피버는 별도 진압 입력 없이 전투 시간에 맞춰 0까지 줄어든다.
+    // 피버는 플레이어 입력 없이 전투 시간에 맞춰 0까지 줄어든다.
     // 두 전투원의 공격을 늦춰 피버 카운트다운 자체만 정확히 8초 관찰한다.
     ally.attackCooldown = 99;
     foe.attackCooldown = 99;

@@ -37,10 +37,10 @@ export interface UseConsumableRequest { itemId: string; quantity: number; }
 /** 실제 적용량을 반환해 상한에서 버려진 회복을 UI가 추측하지 않게 한다. */
 export interface UseConsumableResponse extends InventoryResponse { itemId: string; quantityUsed: number; effect: ItemUseEffect; appliedAmount: number; overflowAmount: number; wallet: Wallet; stamina: StaminaDto; }
 
-/** 로컬 시계로 확정량을 만들지 않도록 서버가 완성해 주는 스테미나 시계다. */
+/** 로컬 시계로 확정량을 만들지 않도록 서버가 완성해 주는 스테미나 시계다. 세부 명명 규칙은 docs/server-time-dto.md를 따른다. */
 export interface StaminaDto { current: number; maximum: number; serverTime: string; updatedAt: string; nextRecoveryAt: string | null; fullAt: string | null; }
 
-/** 조회는 서버가 정산한 상태와 동일 기준 시각을 함께 돌려준다. */
+/** 조회는 서버가 정산한 상태와 동일 기준 시각을 함께 돌려준다. 시각 필드는 docs/server-time-dto.md를 따른다. */
 /** 네 발굴 재화 레코드와 서버 정산 시각을 함께 보내 클라이언트 추측 지급을 막는다. */
 export interface IdleExcavationResponse {
   excavation: IdleExcavationState;

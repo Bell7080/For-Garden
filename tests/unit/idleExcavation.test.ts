@@ -3,6 +3,7 @@ import { emptyExcavationAmounts, excavationProductionDisplayModel, createIdleExc
 import { WALLET_CAPS } from "../../src/data/economy";
 import { RELICS } from "../../src/data/relics";
 import type { RelicProgress } from "../../src/core/types";
+import { TIME_ACCRUAL_FIXTURES } from "../fixtures/timeAccrual";
 
 /** 생산 공식과 무관한 성장 필드는 테스트에서 고정해 암묵적 전투 보정을 막는다. */
 function progress(level = 1, breakthrough = 0): RelicProgress {
@@ -17,6 +18,18 @@ function activeState() {
 const starterProgress = { anky: progress(), rex: progress(), spino: progress() };
 
 describe("방치 발굴 순수 규칙", () => {
+  it("공유 시계 fixture에서 시간대·역행·장기 오프라인·만료 경계를 지킨다", () => {
+    const fixture = TIME_ACCRUAL_FIXTURES;
+    const oneGoldPerHour = [{ ...RELICS[0], id: "fixture", excavationTrait: { primaryCurrency: "gold" as const, baseProductionPerHour: 1, efficiencyMultiplier: 1 } }];
+    const settle = (lastSettledAt: string, serverNow: string, extra = {}) => settleIdleExcavation({ ...createIdleExcavationState(lastSettledAt), assignedRelicIds: ["fixture", null, null], ...extra }, new Date(serverNow), oneGoldPerHour, { fixture: progress() });
+    // 오프셋 변경은 절대 시각 1시간, 장기 오프라인은 발굴 보관 상한 4시간까지만 생산한다.
+    expect(settle(fixture.timezoneChange.lastSettledAt, fixture.timezoneChange.serverNow).unclaimed.gold).toBe(1);
+    expect(settle(fixture.longOffline.lastSettledAt, fixture.longOffline.serverNow).unclaimed.gold).toBe(4);
+    // 역행은 기준점을 보존하고 만료 시각까지의 한 시간만 강화 생산으로 센다.
+    expect(settle(fixture.clockRegression.lastSettledAt, fixture.clockRegression.serverNow).lastSettledAt).toBe(fixture.clockRegression.lastSettledAt);
+    expect(settle(fixture.expiryBoundary.lastSettledAt, fixture.expiryBoundary.serverNow, { activeProductionMultiplier: 2, productionMultiplierExpiresAt: fixture.expiryBoundary.expiresAt }).unclaimed.gold).toBe(2);
+  });
+
   it("동일 캐릭터의 중복 배치를 차단한다", () => {
     expect(validateExcavationFormation(["rex", "rex", null], new Set(["rex"]))).toEqual({ valid: false, reason: "duplicate" });
   });

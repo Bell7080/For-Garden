@@ -17,7 +17,7 @@ import { PORTRAIT_GRID_MASK_GAP, portraitGridContentHeight, portraitGridFirstRow
 import { PopupLayer } from "../ui/PopupLayer";
 import { COLOR, textStyle } from "../ui/theme";
 import { chipPoints, drawGlassFade, drawHairline, drawLayer, drawVignette, HOLO } from "../ui/holo";
-import { EXPEDITION_LAYOUT } from "../ui/expeditionLayout";
+import { EXPEDITION_LAYOUT, expeditionBackgroundFor, type ExpeditionBackgroundState } from "../ui/expeditionLayout";
 import { ExpeditionMapView } from "../ui/ExpeditionMapView";
 import { expeditionNodeRewardScore, type ExpeditionAugmentSelection } from "../core/expeditionRewards";
 import type { ExpeditionBattleInputDto, ExpeditionBossBattleInputDto } from "../core/expeditionBattle";
@@ -171,10 +171,14 @@ export class ExpeditionScene extends Phaser.Scene {
     this.clearFormationPreview();
 
     const status = expeditionManager.status();
-    // 활성 런은 전용 지도, 편성 단계는 요청된 Content2 전투 필드 원화로 흐름을 잇는다.
-    addSceneBackground(this, status.active ? BACKGROUND.expeditionMap : BACKGROUND.expeditionField);
-    drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { depth: -26, strength: 0.72 });
-    this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.42).setDepth(-25);
+    // 저장의 활성 런을 우선하고, 비활성 상태에서는 현재 표시 단계가 기록/편성 원화를 가른다.
+    const backgroundState: ExpeditionBackgroundState = status.active ? "active" : this.stage;
+    addSceneBackground(this, expeditionBackgroundFor(backgroundState, BACKGROUND));
+    // 기록 원경은 낮은 대비 환경으로만 남겨 실측 alpha bounds의 폰토스가 유일한 주 피사체가 된다.
+    const environmentStrength = backgroundState === "ranking" ? 0.54 : 0.72;
+    const environmentOverlay = backgroundState === "ranking" ? 0.28 : 0.42;
+    drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { depth: -26, strength: environmentStrength });
+    this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, environmentOverlay).setDepth(-25);
     if (status.active) {
       // 가장자리 HUD 뒤만 유리 페이드로 눌러 지도 지형과 중앙 경로는 그대로 보존한다.
       drawGlassFade(this, BASE_WIDTH / 2, 110, BASE_WIDTH, 220, { topAlpha: HOLO.glass, bottomAlpha: 0 }).setDepth(-24);
@@ -519,7 +523,7 @@ export class ExpeditionScene extends Phaser.Scene {
     this.sweepButton.setEnabled(status.canStartRun && status.allTimeBestScore > 0);
   }
 
-  /** 보스 전신은 화면 전체에 깔리는 배경 다음 층이라, 아래 UI(내 점수·버튼)보다 먼저 그린다. */
+  /** 도시 원경에는 인물이 없으므로 실측 alpha bounds를 쓰는 폰토스를 기록 화면의 유일한 주 피사체로 세운다. */
   private async loadBossPortrait(): Promise<void> {
     const asset = portraitAssetFor("pontos");
     const puppet = await spawnPuppet(this, asset, { x: BASE_WIDTH / 2, groundY: RANKING.boss.groundY, height: RANKING.boss.height, depth: 5 });

@@ -110,6 +110,8 @@ test("오프닝을 이미 본 저장이면 타이틀에서 로비로 바로 간�
 });
 
 test("출격 선택판에서 원정대 3기를 골라 진행 중 상태로 저장한다", async ({ page }) => {
+  // 원정 첫 진입은 보스 전신 ZIP까지 파싱하므로 저사양 CI에서도 네 상태 캡처를 끝낼 시간을 둔다.
+  test.setTimeout(360_000);
   await startAfterOpening(page);
   await page.locator("canvas").click();
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
@@ -121,15 +123,22 @@ test("출격 선택판에서 원정대 3기를 골라 진행 중 상태로 저�
   // 원정의 첫 화면은 주간 기록이다. 순위와 기록 보상을 먼저 보고 출격으로 편성을 연다.
   await page.waitForTimeout(900);
   await page.screenshot({ path: `test-results/${test.info().project.name}-expedition-ranking.png` });
-  await tapGame(page, 250, 1200);
+  // 기록 원경과 별개로 합성된 순위 팝업(도시 원경 + 옅은 필드)을 실제 캔버스에 남긴다.
+  await tapGame(page, 363, 1610);
+  await page.waitForTimeout(700);
+  await page.screenshot({ path: `test-results/${test.info().project.name}-expedition-ranking-popup.png` });
+  // 닫힌 팝업의 우하단 공용 뒤로가기로 기록 화면에 복귀한다.
+  await tapGame(page, 918, 1758);
+  await page.waitForTimeout(500);
+  await tapGame(page, 717, 1610);
   await page.waitForTimeout(700);
   await page.screenshot({ path: `test-results/${test.info().project.name}-expedition-reward-popup.png` });
-  // 읽기 판이라 바깥을 누르면 닫힌다.
-  await tapGame(page, BASE_WIDTH / 2, 300);
+  // 주간 보상 팝업도 공용 뒤로가기로 닫아 편성 전환 입력을 가리지 않게 한다.
+  await tapGame(page, 918, 1758);
   await page.waitForTimeout(500);
 
   // 하단 출격 버튼이 편성 단계를 연다. 씬 재시작과 SD 로딩을 기다린 뒤 카드를 누른다.
-  await tapGame(page, BASE_WIDTH / 2, 1700);
+  await tapGame(page, BASE_WIDTH / 2, 1800);
   await page.waitForTimeout(1500);
   await page.screenshot({ path: `test-results/${test.info().project.name}-expedition-preparation.png` });
 

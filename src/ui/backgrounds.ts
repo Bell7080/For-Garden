@@ -26,7 +26,7 @@ export const BACKGROUND = {
   expeditionMap: "background-expedition-map",
   /** 원정 노드에 진입한 뒤 교전 UI 아래에 까는 전용 전투 필드다(Content2_001field). */
   expeditionField: "background-expedition-field",
-  /** 원정 주간 순위 팝업 전용 배경이다(Content2_001background). 원정 본 화면은 지도·필드가 이미 맡아 여기로 옮겼다. */
+  /** 인물이 없는 침수 도시 원경이다(Content2_001background). 기록 화면과 순위 팝업의 환경층을 맡는다. */
   expeditionRanking: "background-expedition-ranking",
   /** 케이크 대작전 진입 화면 배경이다(Content3_001background). */
   sortieCake: "background-sortie-cake",
@@ -113,11 +113,16 @@ export function addPopupBackgroundImage(
     /** 클리핑 액자는 그대로 두고 원화에서 보여 줄 부분만 옮길 때 쓰는 로컬 오프셋이다. */
     imageOffsetX?: number;
     imageOffsetY?: number;
+    /** 여러 원화를 합성할 때 아래 원경을 남기는 이미지 투명도다. */
+    imageAlpha?: number;
+    /** 행·본문 대비에 맞춰 공용 청흑색 페이드와 비네트의 세기를 조절한다. */
+    overlayStrength?: number;
   },
 ): PopupBackgroundImage {
   // 이미지와 마스크 모두 bounds의 같은 로컬 중심을 쓴다. native-center의 crop도 이 중심에서 대칭이다.
   const image = scene.add.image(bounds.x + (bounds.imageOffsetX ?? 0), bounds.y + (bounds.imageOffsetY ?? 0), texture);
   if ((bounds.fit ?? "cover") === "cover") image.setScale(Math.max(bounds.width / image.width, bounds.height / image.height));
+  image.setAlpha(bounds.imageAlpha ?? 1);
   parent.add(image);
 
   // GeometryMask는 Container 변환을 자동 상속하지 않으므로 렌더 직전마다 월드 좌표를 맞춘다.
@@ -154,13 +159,14 @@ export function addPopupBackgroundImage(
 
   // HOLO 유리 토큰을 기준으로 상단 히어로는 밝게 남기고 하단 조작부만 더 눌러 한 장으로 잇는다.
   const fade = scene.add.graphics();
-  fade.fillGradientStyle(COLOR.void, COLOR.void, COLOR.void, COLOR.void, HOLO.glassLight * 0.34, HOLO.glassLight * 0.34, HOLO.glass, HOLO.glass);
+  const overlayStrength = bounds.overlayStrength ?? 1;
+  fade.fillGradientStyle(COLOR.void, COLOR.void, COLOR.void, COLOR.void, HOLO.glassLight * 0.34 * overlayStrength, HOLO.glassLight * 0.34 * overlayStrength, HOLO.glass * overlayStrength, HOLO.glass * overlayStrength);
   fade.fillRect(bounds.x - bounds.width / 2, bounds.y - bounds.height / 2, bounds.width, bounds.height);
   // 사각 띠를 겹쳐 중앙으로 갈수록 옅게 만들어 새 색을 만들지 않고 청흑색 비네트를 표현한다.
   const vignetteBands = 9;
   for (let band = 0; band < vignetteBands; band += 1) {
     const inset = band * 12;
-    fade.lineStyle(24, COLOR.void, (HOLO.glassLight * (vignetteBands - band)) / vignetteBands / 2);
+    fade.lineStyle(24, COLOR.void, ((HOLO.glassLight * (vignetteBands - band)) / vignetteBands / 2) * overlayStrength);
     fade.strokeRect(bounds.x - bounds.width / 2 + inset, bounds.y - bounds.height / 2 + inset, bounds.width - inset * 2, bounds.height - inset * 2);
   }
   // 오버레이도 원화와 같은 마스크를 공유해 팝업 모서리 밖에 청흑색 사각형이 남지 않게 한다.

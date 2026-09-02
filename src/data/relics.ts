@@ -72,7 +72,6 @@ export const RELICS: RelicDef[] = [
       // 일반 공격도 요약에서 대상을 명시할 수 있도록 단일 대상 계약을 데이터에 둔다.
       targeting: "single",
       statusEffects: [{ kind: "bleed", seconds: 3, maxHpPercentPerSecond: 2 }],
-      desc: "적을 물어 상처를 남긴다.",
     },
     ultimate: {
       id: "rex-ult",
@@ -86,8 +85,6 @@ export const RELICS: RelicDef[] = [
       // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
       targeting: "single",
       // damageHealingPercent가 있는 스킬은 skillDescription()이 대상·피해·회복을 한 문장으로
-      // 다시 만드므로 이 원문은 데이터 문서화용일 뿐 화면에는 쓰이지 않는다.
-      desc: "적 한 명에게 물리 피해를 주고, 입힌 피해의 50%만큼 체력을 회복한다.",
     },
   },
   {
@@ -149,7 +146,6 @@ export const RELICS: RelicDef[] = [
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
-      desc: "적 한 명에게 물리 피해를 준다.",
     },
     ultimate: {
       id: "anky-ult",
@@ -166,7 +162,6 @@ export const RELICS: RelicDef[] = [
       // 반경은 전투 엔진의 대상 판정용 값이며 플레이어에게는 이해하기 쉬운 대상 범위로 바꿔 표시한다.
       radius: 220,
       statusEffects: [{ kind: "stun", seconds: 2 }],
-      desc: "자신의 주위에 있는 모든 적에게 물리 피해를 주고 [[stun|기절]]시킨다.",
     },
   },
   {
@@ -235,8 +230,6 @@ export const RELICS: RelicDef[] = [
       damageType: "physical",
       combo: { chancePercent: 40, hitCount: 2, missingHpHealingPercentPerHit: 5 },
       // combo가 있는 BasicAttack은 skillDescription()이 구조화 필드로 다시 문장을 만들므로
-      // 이 원문은 데이터 문서화용일 뿐 화면에는 쓰이지 않는다.
-      desc: "적 한 명에게 물리 피해를 준다. 40% 확률로 두 번 적중한다. 연격 적중마다 잃은 체력의 5%를 회복한다.",
     } satisfies BasicAttack,
     ultimate: {
       id: "spino-ult",
@@ -252,8 +245,6 @@ export const RELICS: RelicDef[] = [
       targeting: "single",
       statusEffects: [{ kind: "stun", seconds: 3 }],
       // attackSpeedPower가 있는 궁극기는 skillDescription()이 구조화 필드로 다시 문장을 만들므로
-      // 이 원문은 데이터 문서화용일 뿐 화면에는 쓰이지 않는다.
-      desc: "적 한 명에게 공격력의 200%와 현재 공격 속도의 150%를 합친 물리 피해를 주고 3초 동안 기절시킨다.",
     },
   },
   // 4번 Puppet 묶음은 전신과 SD가 모두 완성된 루카의 전용 에셋을 사용한다.
@@ -318,7 +309,6 @@ export const RELICS: RelicDef[] = [
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
-      desc: "공격력 80%의 물리 피해를 주며, 네 번째 실제 기본 공격은 확정 치명타가 된다.",
     },
     ultimate: {
       id: "luka-ult",
@@ -332,7 +322,6 @@ export const RELICS: RelicDef[] = [
       targeting: "single",
       // 주 대상의 최종 HP 손실을 기준으로, 주 대상에게서 가장 가까운 다른 적에게 전이한다.
       damageTransfer: { percent: 75, distanceOrigin: "primaryTarget" },
-      desc: "공격력 200%의 물리 피해를 주고 실제 최종 HP 피해의 75%를 가장 가까운 다른 적에게 전이한다.",
     },
   },
   {
@@ -404,8 +393,6 @@ export const RELICS: RelicDef[] = [
       damageType: "magical",
       lowestHpAllyHealingFromDamagePercent: 50,
       // lowestHpAllyHealingFromDamagePercent가 있는 스킬은 skillDescription()이 대상·피해·회복을
-      // 한 문장으로 다시 만드므로 이 원문은 데이터 문서화용일 뿐 화면에는 쓰이지 않는다.
-      desc: "적 한 명에게 마법 피해를 주고, 입힌 피해의 50%만큼 현재 체력이 가장 낮은 생존 아군을 회복한다.",
     },
     ultimate: {
       id: "dodo-ult",
@@ -420,8 +407,6 @@ export const RELICS: RelicDef[] = [
       targeting: "targetedCircle",
       radius: 360,
       // allyHealingPower가 있는 궁극기는 skillDescription()이 실제 주문력으로 회복량을 다시
-      // 계산하므로 이 원문은 데이터 문서화용일 뿐 화면에는 쓰이지 않는다.
-      desc: "지정한 넓은 범위의 모든 적에게 [[magical-damage|마법 피해]]를 주고 모든 생존 아군의 체력을 회복한다.",
     },
   },
   {
@@ -473,7 +458,6 @@ export const RELICS: RelicDef[] = [
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
-      desc: "긴 송곳니로 벤다.",
     },
     ultimate: {
       id: "smilo-ult",
@@ -485,7 +469,6 @@ export const RELICS: RelicDef[] = [
       cost: 100,
       // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
       targeting: "single",
-      desc: "숨 돌릴 틈 없이 적 전방을 몰아친다.",
     },
   },
   {
@@ -538,7 +521,6 @@ export const RELICS: RelicDef[] = [
       iconAssetId: "skill-icon-magical",
       effectType: "magical",
       damageType: "magical",
-      desc: "하늘에서 내리꽂는다.",
     },
     ultimate: {
       id: "quetz-ult",
@@ -550,7 +532,6 @@ export const RELICS: RelicDef[] = [
       cost: 100,
       // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
       targeting: "single",
-      desc: "하늘을 덮어 적 전방을 찍어누른다.",
     },
   },
 
@@ -604,7 +585,6 @@ export const RELICS: RelicDef[] = [
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
-      desc: "갈퀴로 할퀸다.",
     },
     ultimate: {
       id: "husk-raptor-ult",
@@ -616,7 +596,6 @@ export const RELICS: RelicDef[] = [
       cost: 100,
       // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
       targeting: "single",
-      desc: "떼지어 달려든다.",
     },
   },
   {
@@ -668,7 +647,6 @@ export const RELICS: RelicDef[] = [
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
-      desc: "몸으로 들이받는다.",
     },
     ultimate: {
       id: "husk-shell-ult",
@@ -680,7 +658,6 @@ export const RELICS: RelicDef[] = [
       cost: 100,
       // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
       targeting: "single",
-      desc: "무너지듯 짓누른다.",
     },
   },
   {
@@ -732,7 +709,6 @@ export const RELICS: RelicDef[] = [
       iconAssetId: "skill-icon-magical",
       effectType: "magical",
       damageType: "magical",
-      desc: "날개로 후려친다.",
     },
     ultimate: {
       id: "husk-wing-ult",
@@ -744,7 +720,6 @@ export const RELICS: RelicDef[] = [
       cost: 100,
       // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
       targeting: "single",
-      desc: "굉음을 퍼뜨린다.",
     },
   },
   {
@@ -798,12 +773,10 @@ export const RELICS: RelicDef[] = [
       id: "mette-basic", name: "스타카토", power: 100, scalingStat: "atk",
       iconAssetId: "skill-icon-magical", effectType: "magical", damageType: "magical",
       statusEffects: [{ kind: "stagger", seconds: 0.1 }],
-      desc: "적 한 명에게 공격력에 비례한 마법 피해를 주고 [[stagger|경직]]시킨다.",
     },
     ultimate: {
       id: "mette-ult", name: "전장의 찬가", iconAssetId: "skill-icon-healing", effectType: "healing",
       cost: 50, targeting: "battlefieldAllies", healing: { kind: "teamMissingHpPercent", percent: 20 },
-      desc: "모든 생존 아군이 각자 [[missing-hp|잃은 체력]]의 20%를 회복한다.",
     },
   },
   {
@@ -873,7 +846,6 @@ export const RELICS: RelicDef[] = [
       damageType: "magical",
       targeting: "nearbyEnemies",
       radius: 520,
-      desc: "넓은 반경에 심해의 마력 충격파를 일으킨다.",
     },
     ultimate: {
       id: "pontos-ult",
@@ -890,7 +862,6 @@ export const RELICS: RelicDef[] = [
       // 해일은 좌표와 무관하게 공격 시작 시점의 모든 생존 적을 확정한다.
       targeting: "battlefieldEnemies",
       statusEffects: [{ kind: "stun", seconds: 5 }],
-      desc: "체력이 90% 이하가 되면 충전을 시작해 전장 전체를 휩쓰는 심해의 해일을 방출한다.",
     },
   },
 ];

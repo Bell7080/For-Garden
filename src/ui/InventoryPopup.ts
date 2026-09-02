@@ -5,7 +5,8 @@ import { setDebugInventoryCategory, setDebugInventoryTextureKeys } from "../debu
 import { DEFAULT_INVENTORY_SORT, INVENTORY_LAYOUT, InventoryManager, inventoryGridPosition, inventoryScrollMetrics, type InventoryDisplayItem, type InventorySort } from "../managers/InventoryManager";
 import { session } from "../state/session";
 import { drawGlyph } from "./glyphs";
-import { chipPoints, drawHairline, drawInnerVignette, drawLayer, drawShapeOutline } from "./holo";
+import { chipPoints, drawHairline, drawLayer } from "./holo";
+import { addItemFrame, ITEM_FRAME } from "./itemFrame";
 import { INVENTORY_TAB_LAYOUT, inventoryCategoryTabPosition } from "./inventoryTabs";
 import { POPUP_TITLE_SIZE, PopupLayer } from "./PopupLayer";
 import { equippedRelicName, openRuneInfoPopup } from "./RunePopup";
@@ -31,11 +32,11 @@ const VIEWPORT = {
 } as const;
 
 /**
- * 액자가 카드 한 변에서 차지하는 비율과 그 안의 그림 비율.
+ * 액자가 카드 한 변에서 차지하는 비율.
  *
  * 룬 카드(`addRuneCard`)와 같은 값을 써야 탭을 옮겨도 칸의 무게가 그대로다.
  */
-const INVENTORY_ITEM_FRAME = { ratio: 0.89, icon: 0.6 } as const;
+const INVENTORY_ITEM_FRAME = { ratio: 0.89 } as const;
 
 /** 로비를 유지한 채 서버 확정 인벤토리를 표시하는 홀로그램 작업판이다. */
 export class InventoryPopup {
@@ -180,14 +181,10 @@ export class InventoryPopup {
     const card = this.scene.add.container(x, y);
     const shape = chipPoints(cardWidth, cardHeight, { bevel: { topLeft: 34, topRight: 0, bottomRight: 34, bottomLeft: 0 } });
     card.add(drawLayer(this.scene, 0, 0, shape, { fill: 0x151a21, alpha: 0.96, edge: COLOR.accent, edgeAlpha: 0.35 }));
-    // 그림 한 장을 담는 칸이라 룬 액자와 같은 예외를 쓴다 — 불투명하게 채우고 사방을 두른 뒤
-    // 안쪽만 눌러, 어디까지가 그림인지 알린다.
+    // 그림 한 장을 담는 칸이라 공용 액자 한 장을 쓴다.
     const frameSize = Math.min(cardWidth, cardHeight) * INVENTORY_ITEM_FRAME.ratio;
-    const frame = chipPoints(frameSize, frameSize, { bevel: { topLeft: frameSize * 0.2, topRight: 0, bottomRight: frameSize * 0.2, bottomLeft: 0 } });
-    card.add(drawLayer(this.scene, 0, 0, frame, { fill: 0x24282e, alpha: 1 }));
-    card.add(drawShapeOutline(this.scene, 0, 0, frame, { color: COLOR.accent, alpha: 0.7 }));
-    card.add(drawInnerVignette(this.scene, 0, 0, frame, { strength: 0.3, depth: 0.2 }));
-    card.add(this.renderDefinitionIcon(item.definition.icon, 0, 0, frameSize * INVENTORY_ITEM_FRAME.icon, textureKeys));
+    card.add(addItemFrame(this.scene, 0, 0, frameSize));
+    card.add(this.renderDefinitionIcon(item.definition.icon, 0, 0, frameSize * ITEM_FRAME.icon, textureKeys));
     // 수량은 액자 오른쪽 아래에 겹친다. 보상 액자와 같은 자리라 화면이 달라도 같은 곳을 본다.
     card.add(this.scene.add.text(frameSize / 2 - 6, frameSize / 2 - 2, String(item.quantity), textStyle({ role: "emphasis", size: 24 })).setOrigin(1, 1).setStroke("#05070a", 5));
     this.addCardInput(content, card, item, cardWidth, cardHeight);

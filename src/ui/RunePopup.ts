@@ -313,7 +313,7 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
         height: 56,
         color: "#ffdf9a",
         parent: content,
-      }).setValue(formatCurrency(session.wallet.gold));
+      }).setText(formatCurrency(session.wallet.gold));
       // 연필은 씬에서 직접 작도하지 않고 glyph 공용 시스템의 edit 표식을 쓴다. 이름 바로
       // 옆에 서야 무엇을 고치는 단추인지 읽힌다 — 오른쪽 끝에 두면 그 아래 확률 글자와 겹친다.
       const pencilX = Math.min(-half + 146 + nameText.width + 30, half - 244);

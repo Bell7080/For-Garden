@@ -58,11 +58,33 @@ export const LUKA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   portraitOffsetY: -34,
 };
 
-/** 7번 프테라 모티브 신규 캐릭터(가칭 "타페자라") 전신. */
-export const TAPEJARA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+/** 7번 스테라(게오스테른베르기아) 전신. */
+export const STELLA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1024,
   imageHeight: 1536,
   content: { left: 23, top: 37, right: 1007, bottom: 1503 },
+};
+
+/**
+ * 8번 티아(이크티오사우루스) 전신.
+ *
+ * 반투명한 지느러미 베일이 좌우로 넓게 펼쳐져 실루엣 폭이 캔버스를 거의 다 차지한다(1051 /
+ * 1086). 카드 배율은 그 폭으로 정해지는데 베일은 정작 카드 잘라내기 밖으로 나가므로, 렉시아와
+ * 같은 이유로 얼굴만 다른 카드보다 작아진다(중앙값의 0.89배). 베일이 화면 밖으로 나가는
+ * 만큼만 되돌려 중앙값에 맞췄고, `tests/unit/puppetAnchors.test.ts`의 "카드 얼굴 크기"가 지킨다.
+ */
+export const TIA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1086,
+  imageHeight: 1448,
+  content: { left: 25, top: 21, right: 1076, bottom: 1425 },
+  cardZoom: 1.12,
+};
+
+/** 티아 SD ZIP의 정사각 원본과 alpha > 16 경계다. */
+export const TIA_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254,
+  imageHeight: 1254,
+  content: { left: 98, top: 38, right: 1156, bottom: 1216 },
 };
 
 /** 도디 전신·SD ZIP의 원본 크기와 alpha > 16인 실제 실루엣 경계다. */

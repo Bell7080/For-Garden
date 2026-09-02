@@ -1,7 +1,7 @@
 import Phaser from "phaser";
-import type { Element, PortraitAssetId, RelicDef, RelicRarity, Role } from "../core/types";
-import { headCardFrame, loadPortraitTexture, portraitAssetFor, portraitUsesRelicTint } from "../puppets/assets";
-import { mixWhite, tintFor } from "../puppets/tints";
+import type { Element, PortraitAssetId, RelicRarity, Role } from "../core/types";
+import { headCardFrame, loadPortraitTexture, portraitAssetFor } from "../puppets/assets";
+import { mixWhite } from "../puppets/tints";
 import { chipPoints, HOLO } from "./holo";
 import { BACKGROUND } from "./backgrounds";
 import { AffinityBadge } from "./AffinityBadge";
@@ -657,12 +657,4 @@ function clipPolygon(subject: Array<[number, number]>, clip: Array<[number, numb
     }
   }
   return output;
-}
-
-/**
- * 임시 공유 원화를 쓰는 렐릭만 구분 색을 돌려준다.
- * 전용 원화가 붙은 캐릭터는 카드에서도 원본 색을 그대로 보여 준다.
- */
-export function relicCardTint(def: RelicDef): number | undefined {
-  return portraitUsesRelicTint(def.portraitAssetId) ? mixWhite(tintFor(def.id), 0.55) : undefined;
 }

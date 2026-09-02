@@ -16,11 +16,8 @@ import {
   placePuppet,
   playMotion,
   portraitAssetFor,
-  portraitUsesRelicTint,
   spawnPuppet,
-  tintPuppet,
 } from "../puppets/assets";
-import { mixWhite, tintFor } from "../puppets/tints";
 import { addPopupBackgroundImage, addSceneBackground, BACKGROUND } from "./backgrounds";
 import { addBackButton } from "./IconButton";
 import { chipPoints, drawGlassFade, drawHairline, drawInnerVignette, drawLayer, drawShapeEdge, drawShapeOutline, drawVignette, HOLO, perspectiveRect, slantedRect, toPoints } from "./holo";
@@ -1667,7 +1664,6 @@ export class InfoManager {
     this.portraitHome = { x: portrait.x, y: portrait.y, scale: portrait.scaleX };
     // 화면 아무 데나 눌러도 통통 튀면 정신이 없다. 코어 관절 둘레의 몸통에서만 반응한다.
     portrait.disableInteractive();
-    if (portraitUsesRelicTint(def.portraitAssetId)) tintPuppet(portrait, mixWhite(tintFor(def.id), 0.55));
     portrait.setVisible(this.portraitWanted && this.root.visible);
     // 새 인물은 살짝 떠오르며 나타난다. 좌우로 넘길 때 갈아 끼우는 티가 덜 난다.
     portrait.setAlpha(0);

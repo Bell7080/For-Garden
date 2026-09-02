@@ -22,7 +22,9 @@ import {
   PONTOS_PORTRAIT_METADATA,
   PONTOS_SD_METADATA,
   SEIRA_PORTRAIT_METADATA,
-  TAPEJARA_PORTRAIT_METADATA,
+  STELLA_PORTRAIT_METADATA,
+  TIA_PORTRAIT_METADATA,
+  TIA_SD_METADATA,
   TORIKA_PORTRAIT_METADATA,
 } from "./assetMetadata";
 
@@ -120,15 +122,16 @@ export const METTE_ASSET: PuppetAsset = {
   ...METTE_PORTRAIT_METADATA,
 };
 
-/**
- * 7번 전신 일러스트: 프테라 모티브 신규 캐릭터(가칭 "타페자라", 이름 미확정).
- *
- * 렐릭 데이터·스킬·소속 팩션이 아직 정해지지 않아 `PORTRAIT_ASSETS`에는 등록하지 않는다.
- * 이름과 전투 수치가 정해지면 이 상수를 그대로 그 표에 연결한다.
- */
-export const TAPEJARA_ASSET: PuppetAsset = {
+/** 7번 전신 일러스트: 스테라(게오스테른베르기아). */
+export const STELLA_ASSET: PuppetAsset = {
   url: `${base}puppets/char_007.zip`,
-  ...TAPEJARA_PORTRAIT_METADATA,
+  ...STELLA_PORTRAIT_METADATA,
+};
+
+/** 8번 전신 일러스트: 티아(이크티오사우루스). */
+export const TIA_ASSET: PuppetAsset = {
+  url: `${base}puppets/char_008.zip`,
+  ...TIA_PORTRAIT_METADATA,
 };
 
 /**
@@ -186,33 +189,28 @@ export const EXPLORER_ASSET: PuppetAsset = {
 
 /**
  * 렐릭 데이터가 참조하는 원화 레지스트리. 새 원화는 여기에 한 번 등록한 뒤 데이터 키로 연결한다.
- * placeholder 키는 같은 임시 파일을 쓰되 화면에서 렐릭별 tint를 적용할 수 있게 별도로 둔다.
  */
 const PORTRAIT_ASSETS = {
-  torika: { asset: TORIKA_ASSET, usesRelicTint: false },
-  lexia: { asset: LEXIA_ASSET, usesRelicTint: false },
-  seira: { asset: SEIRA_ASSET, usesRelicTint: false },
-  luka: { asset: LUKA_ASSET, usesRelicTint: false },
-  dodi: { asset: DODI_ASSET, usesRelicTint: false },
-  mette: { asset: METTE_ASSET, usesRelicTint: false },
+  torika: TORIKA_ASSET,
+  lexia: LEXIA_ASSET,
+  seira: SEIRA_ASSET,
+  luka: LUKA_ASSET,
+  dodi: DODI_ASSET,
+  mette: METTE_ASSET,
+  stella: STELLA_ASSET,
+  tia: TIA_ASSET,
   // 적도 전용 전신을 가진다. 초상 레지스트리에 함께 두면 정보창이 아군·적을 가르지 않고
   // 같은 경로로 원화를 찾는다 — 화면마다 "적이면 다른 함수"를 두면 한 곳을 고칠 때 다른
   // 곳이 임시 원화로 남는다.
-  toby: { asset: TOBY_ASSET, usesRelicTint: false },
-  amo: { asset: AMO_ASSET, usesRelicTint: false },
-  ripa: { asset: RIPA_ASSET, usesRelicTint: false },
-  pontos: { asset: PONTOS_ASSET, usesRelicTint: false },
-  "torika-placeholder": { asset: TORIKA_ASSET, usesRelicTint: true },
-} as const satisfies Record<PortraitAssetId, { asset: PuppetAsset; usesRelicTint: boolean }>;
+  toby: TOBY_ASSET,
+  amo: AMO_ASSET,
+  ripa: RIPA_ASSET,
+  pontos: PONTOS_ASSET,
+} as const satisfies Record<PortraitAssetId, PuppetAsset>;
 
 /** 데이터 키로 전신 원화를 찾는다. 캐릭터 내부 id에 의존하지 않는다. */
 export function portraitAssetFor(assetId: PortraitAssetId): PuppetAsset {
-  return PORTRAIT_ASSETS[assetId].asset;
-}
-
-/** 임시 공유 원화인지 판별해 기존 렐릭 구분 tint를 유지한다. */
-export function portraitUsesRelicTint(assetId: PortraitAssetId): boolean {
-  return PORTRAIT_ASSETS[assetId].usesRelicTint;
+  return PORTRAIT_ASSETS[assetId];
 }
 
 /** 전투용 적 SD 1~3번은 정보창용 전신 원화와 파일을 섞지 않는다. */
@@ -283,12 +281,18 @@ export const METTE_SD_ASSET: PuppetAsset = {
   ...METTE_SD_METADATA,
 };
 
-/** 7번 SD: TAPEJARA_ASSET과 짝을 이루는 신규 캐릭터 전투 SD(이름 미확정, 전투 데이터 없음). */
-export const TAPEJARA_SD_ASSET: PuppetAsset = {
+/** 7번 SD: 스테라. */
+export const STELLA_SD_ASSET: PuppetAsset = {
   url: `${base}puppets/charSD_007.zip`,
   imageWidth: 1254,
   imageHeight: 1254,
   content: { left: 49, top: 83, right: 1175, bottom: 1179 },
+};
+
+/** 8번 SD: 티아. */
+export const TIA_SD_ASSET: PuppetAsset = {
+  url: `${base}puppets/charSD_008.zip`,
+  ...TIA_SD_METADATA,
 };
 
 /** 적과 전용 아군은 각자 번호 묶음을 쓰고, 아직 전용 SD가 없는 아군만 1번 SD를 공유한다. */
@@ -304,6 +308,8 @@ export function battleAssetFor(relicId: string): PuppetAsset {
   if (relicId === "luka") return LUKA_SD_ASSET;
   if (relicId === "dodo") return DODI_SD_ASSET;
   if (relicId === "mette") return METTE_SD_ASSET;
+  if (relicId === "tia") return TIA_SD_ASSET;
+  if (relicId === "stella") return STELLA_SD_ASSET;
   return TORIKA_SD_ASSET;
 }
 
@@ -314,6 +320,8 @@ export function sdAssetFor(relicId: string): PuppetAsset {
   if (relicId === "luka") return LUKA_SD_ASSET;
   if (relicId === "dodo") return DODI_SD_ASSET;
   if (relicId === "mette") return METTE_SD_ASSET;
+  if (relicId === "tia") return TIA_SD_ASSET;
+  if (relicId === "stella") return STELLA_SD_ASSET;
   // anky와 아직 전용 SD가 없는 렐릭은 기존 공용 토리카 SD로 안전하게 폴백한다.
   return TORIKA_SD_ASSET;
 }

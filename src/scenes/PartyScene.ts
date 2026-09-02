@@ -7,13 +7,12 @@ import { relicCollection } from "../managers/RelicCollectionManager";
 import { CharacterInfoManager, ELEMENT_LABEL, ROLE_LABEL, addHelpBadge } from "../managers/CharacterInfoManager";
 import type { PuppetCreature } from "../puppets/assets";
 import { battleAssetFor, placePuppet, spawnPuppet } from "../puppets/assets";
-import { tintFor } from "../puppets/tints";
 import { getBattleStage, getStageEnemies } from "../data/stages";
 import { session } from "../state/session";
 import { gameApi } from "../api/FakeServer";
 import { Button } from "../ui/Button";
 import { addBackButton } from "../ui/IconButton";
-import { PortraitCard, relicCardTint } from "../ui/PortraitCard";
+import { PortraitCard } from "../ui/PortraitCard";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { COLOR, textStyle } from "../ui/theme";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
@@ -312,7 +311,6 @@ export class PartyScene extends Phaser.Scene {
       height: PREVIEW_HEIGHT,
       flipX: enemy,
       // 전투 화면과 같은 규칙 — 임시 공용 적만 색으로 구분한다.
-      tint: relicId.startsWith("husk-") ? tintFor(relicId) : undefined,
       depth: -10,
     });
     if (!this.scene.isActive()) {
@@ -359,7 +357,6 @@ export class PartyScene extends Phaser.Scene {
         width: cardW,
         height: cardH,
         portraitAssetId: relic.portraitAssetId,
-        tint: relicCardTint(relic),
         label: relic.name,
         level: relicProgression.getProgress(relic.id).level,
         rarity: relic.rarity,

@@ -212,6 +212,80 @@ describe("폰토스 스킬 표시 계약", () => {
   });
 });
 
+describe("티아 스킬 표시 계약", () => {
+  const tia = () => RELICS.find((def) => def.id === "tia")!;
+
+  it("은 두 공격 모두 주문력에서 나오는 마법 피해다", () => {
+    const def = tia();
+    // 물 전사지만 피해는 주먹이 아니라 물살에서 나온다 — 계수·대상 계약을 데이터로 고정한다.
+    // 표식은 한 번에 한 명만 달 수 있으므로 기본 공격은 한 명을 겨눈다.
+    expect(def.basic).toMatchObject({ damageType: "magical", scalingStat: "ap", targeting: "single" });
+    expect(def.ultimate).toMatchObject({ damageType: "magical", scalingStat: "ap", targeting: "nearbyEnemies" });
+    expect(def.basic.radius).toBeUndefined();
+    expect(def.ultimate.radius).toBeGreaterThan(0);
+    // 능력치를 모르는 자리에서도 어느 능력치에서 나오는 배율인지 말한다.
+    expect(skillDescription(def.basic)).toBe(`적 한 명에게 주문력의 ${def.basic.power}% [[magical-damage|마법 피해]]를 준다.`);
+  });
+
+  it("의 궁극기는 대상·피해·경직을 한 문장으로 말한다", () => {
+    const def = tia();
+    expect(skillDescription(def.ultimate, { damage: 300 })).toBe(
+      "자신의 주위 모든 적에게 [[damage-value|300]]의 [[magical-damage|마법 피해]]를 주고 [[stagger|경직]]시킨다.",
+    );
+  });
+
+  it("의 폭주와 패시브는 표식을 옮겨 다니는 쪽으로 읽힌다", () => {
+    const def = tia();
+    // 두 스킬이 한 덩어리다 — 폭주가 표적을 계속 바꾸고, 바뀐 표적마다 표식이 옮겨가며 터진다.
+    expect(def.ferocityTrait).toMatchObject({ effectId: "ichthyoDive", moveSpeedPercent: 100 });
+    expect(ferocityTraitDescription(def.ferocityTrait)).toBe(
+      "이동 속도가 100% 증가하고, [[basic-attack|기본 공격]] 이후 표적을 다른 적으로 바꾼다.",
+    );
+    expect(def.passive.kind).toBe("shimmerMark");
+    // 추가 피해 계수는 데이터에서 나오고 어느 능력치에서 나오는지도 함께 말한다.
+    expect(passiveDescription(def.passive)).toBe(
+      `적을 타격하면 반짝이는 표식을 남긴다. 표식이 없는 적을 타격하면 표식이 그 적에게 옮겨가며 [[ap|주문력]]의 ${def.passive.value}% [[magical-damage|마법 피해]]를 추가로 입힌다.`,
+    );
+  });
+});
+
+describe("스테라 스킬 표시 계약", () => {
+  const stella = () => RELICS.find((def) => def.id === "stella")!;
+
+  it("의 기본 공격은 피해 뒤에 아군 충전을 제 문장으로 말한다", () => {
+    const def = stella();
+    expect(def.basic).toMatchObject({ damageType: "physical", targeting: "single", power: 50, allyEnergyGain: 2 });
+    // 주어가 시전자에서 아군으로 바뀌는 절이라 "주고"로 잇지 않고 문장을 끊는다.
+    expect(skillDescription(def.basic, { damage: 54 })).toBe(
+      "적 한 명에게 [[damage-value|54]]의 [[physical-damage|물리 피해]]를 준다. 모든 생존 아군의 궁극기 충전량이 2 증가한다.",
+    );
+  });
+
+  it("의 궁극기는 피해가 아니라 순풍과 그 시간만 말한다", () => {
+    const def = stella();
+    expect(def.ultimate).toMatchObject({
+      targeting: "battlefieldAllies",
+      teamBuff: { kind: "tailwind", attackSpeedPercent: 20, moveSpeedPercent: 20 },
+    });
+    // 순풍이 무엇인지는 키워드가 말한다 — 본문이 공속·이속을 다시 적으면 같은 말을 두 번 한다.
+    expect(skillDescription(def.ultimate)).toBe(
+      `모든 생존 아군에게 ${def.ultimate.teamBuff!.seconds}초 동안 [[tailwind|순풍]]을 부여한다.`,
+    );
+  });
+
+  it("의 폭주와 패시브는 아군을 밀어 주는 쪽으로 읽힌다", () => {
+    const def = stella();
+    expect(def.ferocityTrait).toMatchObject({ effectId: "tailwindRally", teamFerocityGain: 5, teamEnergyGain: 5 });
+    expect(ferocityTraitDescription(def.ferocityTrait)).toBe(
+      "모든 아군의 공격당 [[ferocity|야성]] 충전량과 궁극기 충전량이 각각 5, 5씩 증가한다.",
+    );
+    expect(def.passive.kind).toBe("lowHpVanish");
+    expect(passiveDescription(def.passive)).toBe(
+      `전투당 한 번, 체력이 절반 이하가 되면 ${def.passive.durationSeconds}초 동안 [[stealth|은신]]해 표적에서 벗어난다.`,
+    );
+  });
+});
+
 describe("스킬 설명문 양식 계약", () => {
   /** 새 개체가 늘어도 같은 양식으로 읽히는지 목록 전체를 한 번에 검사한다. */
   const attackSkills = RELICS.flatMap((relic) => [

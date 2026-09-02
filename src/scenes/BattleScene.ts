@@ -789,6 +789,15 @@ export class BattleScene extends Phaser.Scene {
       this.effects.groundArea(event.x, event.y, event.radius, { color: this.effectColor(caster), ultimate: event.ultimate });
       return undefined;
     }
+    if (event.kind === "teamBuff") {
+      // 순풍은 피해 사건이 아니다 — 받은 쪽에 강화 효과만 한 번 터뜨린다.
+      const view = this.views.get(event.fighterId);
+      if (view && !view.dead) {
+        const height = UNIT_HEIGHT * view.fighter.bodyScale;
+        this.effects.burst("passive", view.fighter.x, view.fighter.y - height * 0.5, { color: COLOR.accent });
+      }
+      return undefined;
+    }
     if (event.kind === "damageIgnored") {
       // 무효 공격은 0 숫자와 피격 모션을 반복하지 않고, 흐린 표식 하나로 "안 통했다"만 알린다.
       const view = this.views.get(event.targetId);
@@ -801,7 +810,7 @@ export class BattleScene extends Phaser.Scene {
     if (this.state.boss && attacker?.fighter.side === "player" && target?.fighter.side === "enemy" && event.animate !== false) {
       // 서버가 성장 스냅샷으로 재현할 수 있도록 ID·종류·코어 시각만 남기고 event.amount는 버린다.
       // 추가 사건은 원본 행동에 접는다. transfer는 animate=false라 정상적으로 별도 기록되지 않지만 타입 경계도 명시한다.
-      const replayKind = event.skill === "staccato" ? "basic" : event.skill === "transfer" ? "ultimate" : event.skill;
+      const replayKind = event.skill === "staccato" || event.skill === "shimmer" ? "basic" : event.skill === "transfer" ? "ultimate" : event.skill;
       this.bossActions.push({ elapsedMs: Math.round(this.state.elapsed * 1_000), actorId: attacker.fighter.def.id, kind: replayKind });
     }
     // 한 광역 기술의 후속 피해 사건은 피격 표현만 만들고 시전자 모션은 첫 사건에서 한 번만 튼다.
@@ -1129,7 +1138,7 @@ export class BattleScene extends Phaser.Scene {
       // 값과 사망 표현의 최종 소유자는 공용 프리팹이며 폭주 문구만 전투가 덧씌운다.
       profile.prefab.setMeters(profile.hpShown, fighter.maxHp, profile.ferocityShown, !alive);
       profile.ferocityBar.setValue(profile.ferocityShown / FEROCITY_RULES.max, ferocityColor);
-      // 피버 중에는 보상 상태와 자동 감소를 함께 알려 별도 진압 입력을 찾지 않게 한다.
+      // 피버는 플레이어가 끄고 켜는 것이 아니라 스스로 가라앉으므로, 보상 상태와 남은 양만 알린다.
       profile.ferocityLabel.setText(`${fever ? "폭주" : "야성"} ${Math.round(profile.ferocityShown)} / ${FEROCITY_RULES.max}`)
         .setColor(fever || fighter.ferocity >= 80 ? COLOR.ferocityHotText : FEROCITY_TEXT);
     }

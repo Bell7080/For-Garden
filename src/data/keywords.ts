@@ -33,7 +33,7 @@ export const KEYWORDS: readonly KeywordDef[] = [
     id: "ferocity",
     term: "야성",
     kind: "규칙",
-    description: "전투 중 쌓이는 원종의 본능이다. 가득 차면 폭주해 피해가 크게 오르고, 그 상태에서도 궁극기를 쓸 수 있다. 유대 레벨이 높을수록 빨리 쌓인다. 관제탑은 필요할 때 진압으로 게이지를 비워 되돌릴 수 있다.",
+    description: "전투 중 쌓이는 원종의 본능이다. 가득 차면 폭주해 피해가 크게 오르고, 그 상태에서도 궁극기를 쓸 수 있다. 유대 레벨이 높을수록 빨리 쌓이며, 폭주는 시간이 지나면 스스로 가라앉는다.",
   },
   {
     id: "bleed",
@@ -44,6 +44,10 @@ export const KEYWORDS: readonly KeywordDef[] = [
   {
     id: "stagger", term: "경직", kind: "디버프",
     description: "약 0.1초 동안 행동을 멈춘다. 짧지만 진행 중인 시전을 끊을 수 있다.",
+  },
+  {
+    id: "tailwind", term: "순풍", kind: "버프",
+    description: "정해진 시간 동안 공격 속도와 이동 속도가 함께 오른다. 같은 순풍을 다시 받으면 남은 시간이 더 긴 쪽으로 갱신된다.",
   },
   {
     id: "regeneration", term: "지속 회복", kind: "버프",

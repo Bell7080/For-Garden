@@ -12,7 +12,7 @@ import { session } from "../state/session";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { Button } from "../ui/Button";
 import { addBackButton } from "../ui/IconButton";
-import { PortraitCard, relicCardTint } from "../ui/PortraitCard";
+import { PortraitCard } from "../ui/PortraitCard";
 import { PORTRAIT_GRID_MASK_GAP, portraitGridContentHeight, portraitGridFirstRowY } from "../ui/portraitGrid";
 import { PopupLayer } from "../ui/PopupLayer";
 import { COLOR, textStyle } from "../ui/theme";
@@ -663,7 +663,6 @@ export class ExpeditionScene extends Phaser.Scene {
         width: ROSTER.width,
         height: ROSTER.height,
         portraitAssetId: relic.portraitAssetId,
-        tint: relicCardTint(relic),
         label: relic.name,
         level: relicProgression.getProgress(relic.id).level,
         rarity: relic.rarity,
@@ -796,7 +795,7 @@ export class ExpeditionScene extends Phaser.Scene {
         layer.add(this.add.text(x, FORMATION.y, "선택 대기", textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0.5));
       } else {
         const relic = getRelic(relicId);
-        const fallback = new PortraitCard(this, x, FORMATION.y, { width: FORMATION.width, height: FORMATION.height, portraitAssetId: relic.portraitAssetId, tint: relicCardTint(relic), label: relic.name, level: relicProgression.getProgress(relic.id).level, rarity: relic.rarity, stars: relicProgression.getStars(relic.id) });
+        const fallback = new PortraitCard(this, x, FORMATION.y, { width: FORMATION.width, height: FORMATION.height, portraitAssetId: relic.portraitAssetId, label: relic.name, level: relicProgression.getProgress(relic.id).level, rarity: relic.rarity, stars: relicProgression.getStars(relic.id) });
         fallback.hit.disableInteractive(); layer.add(fallback);
         layer.add(this.add.ellipse(x, FORMATION.y + 120, 190, 28, COLOR.sortie, 0.18));
         void loadOwnedPuppet({

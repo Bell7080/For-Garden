@@ -11,10 +11,8 @@ import { getRelic } from "../data/relics";
 import {
   enableHitOnClick,
   portraitAssetFor,
-  portraitUsesRelicTint,
   spawnPuppet,
 } from "../puppets/assets";
-import { mixWhite, tintFor } from "../puppets/tints";
 import { session } from "../state/session";
 import { BottomNav, NAV_TOP } from "../ui/BottomNav";
 import { Button } from "../ui/Button";
@@ -201,9 +199,6 @@ export class LabScene extends Phaser.Scene {
       x: BASE_WIDTH / 2,
       groundY: BANNER_FLOOR,
       height: 860,
-      tint: portraitUsesRelicTint(featured.portraitAssetId)
-        ? mixWhite(tintFor(featured.id), 0.55)
-        : undefined,
       depth: -20,
     });
     // 이미 다른 배너를 골랐다면 방금 완성된 오래된 원화는 화면에 붙이지 않는다.
@@ -392,7 +387,7 @@ export class LabScene extends Phaser.Scene {
     const def = getRelic(relicId);
     let standing: PuppetCreature | undefined;
     try {
-      standing = await spawnPuppet(this, portraitAssetFor(def.portraitAssetId), { x: BASE_WIDTH / 2, groundY: 1260, height: 900, tint: portraitUsesRelicTint(def.portraitAssetId) ? mixWhite(tintFor(def.id), 0.55) : undefined, depth: 905 });
+      standing = await spawnPuppet(this, portraitAssetFor(def.portraitAssetId), { x: BASE_WIDTH / 2, groundY: 1260, height: 900, depth: 905 });
     } catch {
       // 부트 캐시나 WebGL 복제가 실패해도 첫 대면 정보는 텍스트로 온전히 전달한다.
       layer.add(this.add.text(BASE_WIDTH / 2, 650, `[${def.name} 스탠딩을 불러오지 못했습니다]`, textStyle({ role: "body", size: 30, color: COLOR.inkDim })).setOrigin(0.5));
@@ -430,7 +425,7 @@ export class LabScene extends Phaser.Scene {
           : `DNA 조각 +${result.overflowFragments}`;
       const card = new PortraitCard(this, x, y, {
         width: results.length === 1 ? 520 : 440, height: results.length === 1 ? 720 : 210,
-        portraitAssetId: def.portraitAssetId, tint: portraitUsesRelicTint(def.portraitAssetId) ? mixWhite(tintFor(def.id), 0.55) : undefined,
+        portraitAssetId: def.portraitAssetId,
         label: def.name, sub: badge, rarity: def.rarity, stars: relicProgression.getStars(def.id),
       });
       card.setDepth(902);

@@ -58,7 +58,7 @@ describe("SaveManager", () => {
 
     const legacy = validData() as unknown as Record<string, any>;
     legacy.saveVersion = 26;
-    legacy.expedition.lastParty = ["anky", "smilo", "anky"];
+    legacy.expedition.lastParty = ["anky", "tia", "anky"];
     // 미보유와 중복은 제거하되 스토리 파티나 독립 발굴 배치로 채우지 않는다.
     expect(manager.migrate(legacy).expedition.lastParty).toEqual(["anky"]);
   });
@@ -78,8 +78,8 @@ describe("SaveManager", () => {
 
   it.each([
     ["잘못된 노드", (run: any) => { run.currentNodeId = "missing-node"; }],
-    // 도디는 신규 계정 기본 보유가 되었으므로 여전히 미보유인 스밀로로 손상 상태를 만든다.
-    ["미보유 렐릭", (run: any) => { run.relics[0].relicId = "smilo"; }],
+    // 도디는 신규 계정 기본 보유가 되었으므로 여전히 미보유인 티아로 손상 상태를 만든다.
+    ["미보유 렐릭", (run: any) => { run.relics[0].relicId = "tia"; }],
     ["중복 렐릭", (run: any) => { run.relics[1].relicId = run.relics[0].relicId; }],
     ["음수 HP", (run: any) => { run.relics[0].currentHp = -1; }],
     ["음수 점수", (run: any) => { run.bestScore = -1; }],

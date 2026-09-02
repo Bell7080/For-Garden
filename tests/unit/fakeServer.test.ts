@@ -6,6 +6,8 @@ import { createInitialPlayerResearchProgress, type Session } from "../../src/sta
 import { createRuneInstance, enhanceRune as applyRuneEnhancement, runeEnhancementIncrease, type RuneInstance, type RuneStatKey } from "../../src/core/runes";
 import { createDefaultSettings } from "../../src/core/settings";
 import { WALLET_CAPS } from "../../src/data/economy";
+import { staminaCurrencyRecharge } from "../../src/data/staminaRecharge";
+import { staminaMaxForPlayer } from "../../src/core/stamina";
 
 /** API 테스트에서 같은 옵션 구성을 재현하는 보유 룬을 만든다. */
 function makeRune(instanceId = "rune-1"): RuneInstance {
@@ -751,5 +753,52 @@ describe("룬 표식", () => {
   it("보유하지 않은 룬의 표식은 바꿀 수 없다", async () => {
     const state = makeSession(); state.runeInventory = [makeRune("mark-2")]; const server = new FakeServer(state, { latencyMs: 0 });
     await expect(server.markRune({ runeInstanceId: "없는 룬", locked: true })).rejects.toMatchObject({ code: "RUNE_NOT_FOUND" });
+  });
+});
+
+describe("스테미나 충전 경계", () => {
+  const source = staminaCurrencyRecharge("stamina-gems")!;
+
+  it("는 값을 깎고 회복을 한 처리 단위로 확정한다", async () => {
+    const state = makeSession();
+    state.wallet = { ...state.wallet, gems: source.cost + 5, stamina: 0 };
+    const server = new FakeServer(state, { latencyMs: 0 });
+    const response = await server.rechargeStamina({ sourceId: source.id, requestId: "recharge-1" });
+    // 값도 회복량도 화면이 아니라 표에서 나온다.
+    expect(state.wallet.gems).toBe(5);
+    expect(state.wallet.stamina).toBe(source.amount);
+    expect(response).toMatchObject({ sourceId: source.id, appliedAmount: source.amount, overflowAmount: 0, spent: { currency: "gems", amount: source.cost } });
+  });
+
+  it("는 상한을 넘는 몫만 버리고 값은 그대로 받는다", async () => {
+    const state = makeSession();
+    const maximum = staminaMaxForPlayer(state);
+    state.wallet = { ...state.wallet, gems: source.cost, stamina: maximum - 1 };
+    const server = new FakeServer(state, { latencyMs: 0 });
+    const response = await server.rechargeStamina({ sourceId: source.id, requestId: "recharge-2" });
+    expect(state.wallet.stamina).toBe(maximum);
+    expect(response.appliedAmount).toBe(1);
+    expect(response.overflowAmount).toBe(source.amount - 1);
+  });
+
+  it("는 이미 가득 찼거나 재화가 모자라면 아무것도 바꾸지 않는다", async () => {
+    const full = makeSession();
+    full.wallet = { ...full.wallet, gems: source.cost, stamina: staminaMaxForPlayer(full) };
+    // 헛돈을 쓰지 않도록 가득 찬 상태는 차감 전에 거절한다.
+    await expect(new FakeServer(full, { latencyMs: 0 }).rechargeStamina({ sourceId: source.id, requestId: "recharge-3" }))
+      .rejects.toMatchObject({ code: "STAMINA_FULL" });
+    expect(full.wallet.gems).toBe(source.cost);
+
+    const poor = makeSession();
+    poor.wallet = { ...poor.wallet, gems: source.cost - 1, stamina: 0 };
+    await expect(new FakeServer(poor, { latencyMs: 0 }).rechargeStamina({ sourceId: source.id, requestId: "recharge-4" }))
+      .rejects.toMatchObject({ code: "INSUFFICIENT_CURRENCY" });
+    expect(poor.wallet.stamina).toBe(0);
+  });
+
+  it("는 표에 없는 수단 ID를 거부한다", async () => {
+    // 화면이 보낸 문자열을 그대로 믿으면 값 없는 충전이 통과한다.
+    await expect(new FakeServer(makeSession(), { latencyMs: 0 }).rechargeStamina({ sourceId: "stamina-free", requestId: "recharge-5" }))
+      .rejects.toMatchObject({ code: "INVALID_EXCHANGE_TARGET" });
   });
 });

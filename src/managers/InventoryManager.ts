@@ -1,5 +1,5 @@
 import type { Wallet } from "../core/gacha";
-import type { EngraveRuneResponse, EnhanceRuneResponse, GameApi, InventoryItemDto, RenameRuneResponse, SellRunesResponse, UseConsumableResponse } from "../api/contracts";
+import type { ClaimAdRewardRequest, ClaimAdRewardResponse, EngraveRuneResponse, EnhanceRuneResponse, GameApi, InventoryItemDto, RechargeStaminaResponse, RenameRuneResponse, SellRunesResponse, UseConsumableResponse } from "../api/contracts";
 import type { RuneInstance, RuneStatKey } from "../core/runes";
 import { findItem, ITEMS, type ItemCategory, type ItemDefinition, type WalletItemKey } from "../data/items";
 import type { Session } from "../state/session";
@@ -58,6 +58,28 @@ export class InventoryManager {
   async useConsumable(api: GameApi, itemId: string): Promise<UseConsumableResponse> {
     const response = await api.useConsumable({ itemId, quantity: 1 });
     this.applySnapshot(response.items, response.wallet);
+    return response;
+  }
+
+  /**
+   * 재화로 스테미나를 채운다.
+   *
+   * 값과 회복량은 화면이 정하지 않는다 — 수단 ID만 보내고 서버가 표에서 읽어 한 처리 단위로
+   * 확정한 뒤, 그 결과 보유량을 다시 읽어 반영한다. 응답의 지갑을 그대로 대입하지 않는 이유는
+   * 소비품 경로와 같은 검증(카탈로그 대조·행 무결성)을 함께 지나야 하기 때문이다.
+   */
+  async rechargeStamina(api: GameApi, sourceId: string): Promise<RechargeStaminaResponse> {
+    const response = await api.rechargeStamina({ sourceId, requestId: rechargeRequestId() });
+    this.applySnapshot((await api.getInventory()).items, response.wallet);
+    return response;
+  }
+
+  /** 광고 보상도 같은 경계를 지난다. 검증은 서버가 하고 화면은 확정 결과만 다시 읽는다. */
+  async claimAdReward(api: GameApi, request: ClaimAdRewardRequest): Promise<ClaimAdRewardResponse> {
+    const response = await api.claimAdReward(request);
+    // 일일 수령 횟수는 지갑이 아니라 별도 기록이라 서버 확정값을 그대로 옮긴다.
+    this.state.dailyAdRewards = { ...this.state.dailyAdRewards, date: response.dailyAdRewards.date, claimsBySlot: { ...response.dailyAdRewards.claimsBySlot } };
+    this.applySnapshot((await api.getInventory()).items, response.wallet);
     return response;
   }
 
@@ -168,4 +190,9 @@ export class InventoryManager {
       return definition?.category === category ? [{ kind: "stack" as const, category, id: stack.itemId, definition, quantity: stack.quantity }] : [];
     });
   }
+}
+
+/** 재시도해도 같은 충전이 두 번 확정되지 않도록 브라우저 난수와 시각을 함께 쓴다. */
+function rechargeRequestId(): string {
+  return globalThis.crypto?.randomUUID?.() ?? `stamina-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }

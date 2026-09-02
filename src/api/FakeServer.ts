@@ -11,7 +11,7 @@ import { CONTENT_STAMINA_COSTS } from "../data/contentCosts";
 import { createInitialRelicProgress, session, type Session } from "../state/session";
 import { saveManager } from "../state/SaveManager";
 import { ProfileModifierManager } from "../managers/ProfileModifierManager";
-import { GameApiError, type AdOperationsConfigResponse, type BreakThroughResponse, type ClaimMissionRewardsResponse, type CompleteStageResponse, type EnterDailyRestorationResponse, type FeedRelicResponse, type GameApi, type LobbyInteractionResponse, type MissionListResponse, type PlayerStateDto, type ClaimAdRewardRequest, type ClaimAdRewardResponse, type PullRequest, type PullResponse } from "./contracts";
+import { GameApiError, type AdOperationsConfigResponse, type BreakThroughResponse, type ClaimMissionRewardsResponse, type CompleteStageResponse, type EnterDailyRestorationResponse, type FeedRelicResponse, type GameApi, type LobbyInteractionResponse, type MissionListResponse, type PlayerStateDto, type ClaimAdRewardRequest, type ClaimAdRewardResponse, type PullRequest, type PullResponse, type RechargeStaminaRequest, type RechargeStaminaResponse } from "./contracts";
 import type { ProductDefinition } from "../data/products";
 import { PRODUCTS } from "../data/products";
 import type { ProductListResponse, PurchaseProductResponse } from "./contracts";
@@ -23,6 +23,7 @@ import type { EnterEventStageResponse, EventListResponse } from "./contracts";
 import { assertValidRuneInstance, canEngraveRune, canEnhanceRune, generateRune, RUNE_PART_LABELS, type RunePart, engraveRune as applyRuneEngraving, enhanceRune as applyRuneEnhancement, runeEnhancementAttempts, runeEnhancementIncrease, type RuneInstance, type RuneRarity } from "../core/runes";
 import { runeEnhancementGoldCost, runeSellValue } from "../data/runes";
 import { findItem } from "../data/items";
+import { staminaCurrencyRecharge } from "../data/staminaRecharge";
 import { settleStamina, staminaMaxForPlayer, staminaTiming } from "../core/stamina";
 import { InventoryManager } from "../managers/InventoryManager";
 import type { EngraveRuneRequest, EngraveRuneResponse, EnhanceRuneRequest, EnhanceRuneResponse, EquipRuneRequest, EquipRuneResponse, MarkRuneRequest, MarkRuneResponse, RenameRuneRequest, RenameRuneResponse, RuneInventoryDto, UnequipRuneRequest, UnequipRuneResponse, SellRunesRequest, SellRunesResponse } from "./contracts";
@@ -359,6 +360,40 @@ export class FakeServer implements GameApi {
     this.state.wallet = nextWallet; this.state.itemInventory = nextItems;
     const inventory = await this.getInventory();
     return { ...inventory, itemId: request.itemId, quantityUsed: request.quantity, effect: definition.useEffect, appliedAmount, overflowAmount: requested - appliedAmount, wallet: { ...nextWallet }, stamina: this.staminaDto(this.now()) };
+  }
+
+  /**
+   * 재화로 스테미나를 채운다.
+   *
+   * 화면은 값도 회복량도 계산하지 않는다 — 수단 ID만 보내고 서버가 표(`STAMINA_RECHARGE_SOURCES`)에서
+   * 값을 읽어 차감과 회복을 한 처리 단위로 확정한다. 상한을 넘는 몫은 버리되 값은 그대로 받으므로,
+   * 이미 가득 찬 상태에서는 아예 거절해 헛돈을 쓰지 않게 한다.
+   */
+  async rechargeStamina(request: RechargeStaminaRequest): Promise<RechargeStaminaResponse> {
+    await this.delay();
+    // 값을 치르기 전에 오프라인 자연 충전을 서버 시각까지 먼저 확정한다.
+    this.settleStaminaNow();
+    const source = staminaCurrencyRecharge(request.sourceId);
+    if (!source) throw new GameApiError("INVALID_EXCHANGE_TARGET", "존재하지 않는 충전 수단입니다.");
+    const maximum = staminaMaxForPlayer(this.state);
+    if (this.state.wallet.stamina >= maximum) throw new GameApiError("STAMINA_FULL", "스테미나가 이미 가득 찼습니다.");
+    if (this.state.wallet[source.currency] < source.cost) throw new GameApiError("INSUFFICIENT_CURRENCY", "재화가 부족합니다.");
+    const appliedAmount = Math.min(source.amount, maximum - this.state.wallet.stamina);
+    const nextWallet = {
+      ...this.state.wallet,
+      [source.currency]: this.state.wallet[source.currency] - source.cost,
+      stamina: this.state.wallet.stamina + appliedAmount,
+    };
+    this.persist({ ...this.state, wallet: nextWallet });
+    this.state.wallet = nextWallet;
+    return {
+      ...this.snapshot(),
+      sourceId: source.id,
+      spent: { currency: source.currency, amount: source.cost },
+      appliedAmount,
+      overflowAmount: source.amount - appliedAmount,
+      stamina: this.staminaDto(this.now()),
+    };
   }
 
   /** 서버의 단일 now 값을 캡처해 조회 정산과 응답 시각이 어긋나지 않게 한다. */

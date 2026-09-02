@@ -38,6 +38,11 @@ export interface UseConsumableRequest { itemId: string; quantity: number; }
 export interface UseConsumableResponse extends InventoryResponse { itemId: string; quantityUsed: number; effect: ItemUseEffect; appliedAmount: number; overflowAmount: number; wallet: Wallet; stamina: StaminaDto; }
 
 /** 로컬 시계로 확정량을 만들지 않도록 서버가 완성해 주는 스테미나 시계다. 세부 명명 규칙은 docs/server-time-dto.md를 따른다. */
+/** 재화로 스테미나를 채우는 요청. 수단 ID는 서버 표와 대조하고 재전송은 requestId로 막는다. */
+export interface RechargeStaminaRequest { sourceId: string; requestId: string; }
+/** 실제 채운 양과 넘친 양을 함께 돌려줘 화면이 상한을 다시 계산하지 않게 한다. */
+export interface RechargeStaminaResponse extends PlayerStateDto { sourceId: string; spent: { currency: keyof Wallet; amount: number }; appliedAmount: number; overflowAmount: number; stamina: StaminaDto; }
+
 export interface StaminaDto { current: number; maximum: number; serverTime: string; updatedAt: string; nextRecoveryAt: string | null; fullAt: string | null; }
 
 /** 조회는 서버가 정산한 상태와 동일 기준 시각을 함께 돌려준다. 시각 필드는 docs/server-time-dto.md를 따른다. */
@@ -402,6 +407,8 @@ export interface GameApi extends AsyncArenaProfileApi {
   getInventory(): Promise<InventoryResponse>;
   /** 검증·효과·차감·저장을 하나의 서버 처리로 확정한다. */
   useConsumable(request: UseConsumableRequest): Promise<UseConsumableResponse>;
+  /** 재화 차감과 스테미나 회복을 한 처리 단위로 확정한다. 화면은 결과만 다시 읽는다. */
+  rechargeStamina(request: RechargeStaminaRequest): Promise<RechargeStaminaResponse>;
   /** 장착 검증과 지갑 상한을 통과한 룬 판매를 서버가 원자 확정한다. */
   sellRunes(request: SellRunesRequest): Promise<SellRunesResponse>;
   /** 조회 자체가 서버 시각까지의 생산분을 원자적으로 정산한다. */

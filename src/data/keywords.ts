@@ -47,7 +47,7 @@ export const KEYWORDS: readonly KeywordDef[] = [
   },
   {
     id: "tailwind", term: "순풍", kind: "버프",
-    description: "정해진 시간 동안 공격 속도와 이동 속도가 함께 오른다. 같은 순풍을 다시 받으면 남은 시간이 더 긴 쪽으로 갱신된다.",
+    description: "정해진 시간 동안 공격 속도와 이동 속도가 각각 20% 오른다. 같은 순풍을 다시 받으면 남은 시간이 더 긴 쪽으로 갱신된다.",
   },
   {
     id: "regeneration", term: "지속 회복", kind: "버프",

@@ -183,7 +183,12 @@ export function skillDescription(
     }
     // 피해도 회복도 없는 지원 궁극기. 무엇을 얼마나 오래 거는지만 말한다.
     if ("teamBuff" in skill && skill.teamBuff?.kind === "tailwind") {
-      return `모든 생존 아군에게 ${skill.teamBuff.seconds}초 동안 [[tailwind|순풍]]을 부여한다.`;
+      const buff = skill.teamBuff;
+      const head = `모든 생존 아군에게 ${buff.seconds}초 동안 [[tailwind|순풍]]을 부여한다`;
+      // 지속 회복은 순풍 태그가 말하지 않는 이 스킬만의 몫이라 본문이 직접 적는다.
+      return buff.maxHpRegenPercentPerSecond === undefined
+        ? `${head}.`
+        : `${head}. [[tailwind|순풍]]이 지속되는 동안 매초 최대 체력의 ${buff.maxHpRegenPercentPerSecond}%를 회복시킨다.`;
     }
     return skill.desc ?? "";
   }

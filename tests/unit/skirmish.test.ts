@@ -1891,6 +1891,41 @@ describe("스테라 정적 전투 계약", () => {
     expect(currentAttackSpeed(ally, state)).toBeCloseTo(allySpeedBefore);
   });
 
+  it("의 궁극기는 순풍이 도는 동안 매초 최대 체력의 비율만큼 아군을 회복시킨다", () => {
+    const { state, stella, ally } = stellaBattle();
+    const buff = stella.def.ultimate.teamBuff!;
+    // 긴급 회복과 같이 반올림 없이 최대 체력 비율을 그대로 더한다.
+    const perTick = ally.maxHp * buff.maxHpRegenPercentPerSecond! / 100;
+    ally.hp = 1; stella.hp = 1;
+    stella.energy = stella.def.ultimate.cost;
+    fireUltimate(state, stella.id);
+
+    // 걸린 순간에는 아직 회복하지 않는다 — 겹쳐 걸어 회복을 뽑을 수 있으면 안 된다.
+    expect(ally.hp).toBe(1);
+    const first = run(state, 1).filter((event) => event.kind === "heal" && event.fighterId === ally.id);
+    expect(first).toHaveLength(1);
+    expect(ally.hp).toBeCloseTo(1 + perTick);
+    // 시전자 자신도 생존 아군이라 같은 회복을 받는다.
+    expect(stella.hp).toBeCloseTo(1 + stella.maxHp * buff.maxHpRegenPercentPerSecond! / 100);
+
+    // 순풍이 끝나면 회복도 함께 멈추고, 지속 시간만큼만 틱이 돈다.
+    run(state, buff.seconds + 1);
+    expect(ally.tailwindFor).toBe(0);
+    expect(ally.hp).toBeCloseTo(1 + perTick * buff.seconds);
+  });
+
+  it("의 회복은 순풍 태그가 아니라 그 순풍을 건 스킬의 몫이다", () => {
+    const { state, stella, ally } = stellaBattle();
+    stella.energy = stella.def.ultimate.cost;
+    fireUltimate(state, stella.id);
+    ally.hp = 1;
+    // 회복 값이 없는 순풍은 공속·이속만 올리고 아무것도 회복시키지 않는다.
+    ally.tailwind = { ...ally.tailwind!, maxHpRegenPercentPerSecond: undefined };
+    run(state, 2);
+    expect(ally.hp).toBe(1);
+    expect(currentAttackSpeed(ally, state)).toBeGreaterThan(ally.def.stats.attackSpeed);
+  });
+
   it("의 폭주는 아군 전체의 공격당 야성·궁극기 충전량을 함께 올린다", () => {
     const trait = getRelic("stella").ferocityTrait;
     if (trait.effectId !== "tailwindRally") throw new Error("스테라의 폭주 특성이 아니다");

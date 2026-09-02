@@ -161,6 +161,14 @@ export type TeamBuff = {
   moveSpeedPercent: number;
   /** 유지 시간(초). 겹쳐 걸면 남은 시간이 더 긴 쪽으로 갱신된다. */
   seconds: number;
+  /**
+   * 순풍이 도는 동안 매초 회복시킬 최대 체력 비율(%)이다.
+   *
+   * **순풍 자체의 효과가 아니라 이 순풍을 건 스킬이 얹는 값이다.** 키워드에 넣으면 누가 걸어
+   * 준 순풍이든 회복이 따라와 지원가 한 명이 팀 회복까지 겸하게 된다. 여기 두면 스테라가
+   * 건 순풍만 회복을 데려온다.
+   */
+  maxHpRegenPercentPerSecond?: number;
 };
 
 /** 모든 스킬의 판별 유니온이며 `damageType in skill`로 공격 여부를 좁힌다. */

@@ -53,6 +53,15 @@ describe("스킬 일러스트 파일", () => {
     }
   });
 
+  it("은 7·8번 원화를 붙인 스테라·티아도 전용 일러스트를 갖는다", () => {
+    // 목록에 id를 더하지 않으면 그림 파일만 저장소에 남고 화면은 공용 아이콘으로 남는다.
+    for (const relicId of ["stella", "tia"]) {
+      for (const slot of SKILL_ART_SLOTS) {
+        expect(skillArtFor(relicId, slot), `${relicId} ${slot}`).toBe(skillArtKey(relicId, slot));
+      }
+    }
+  });
+
   it("은 렐릭 하나에 네 칸을 모두 채운다", () => {
     const relics = new Set(SKILL_ART_ASSETS.map(([key]) => key));
     for (const def of RELICS) {

@@ -377,6 +377,8 @@ describe("스피나 스킬 표시 계약", () => {
     expect(ferocityTraitDescription(spino.ferocityTrait)).toContain("3초 동안 [[stealth|은신]]한다");
     expect(spino.passive).toMatchObject({ name: "전투의 환희", kind: "basicHitAttackSpeedStack", value: 3 });
     expect(passiveDescription(spino.passive)).toContain("[[attack-speed|공격 속도]]가 3 증가");
+    // 태생 치명타는 전 개체 공통이라, 암살자의 치명타형 정체성을 패시브가 문장으로 말한다.
+    expect(passiveDescription(spino.passive)).toContain(`치명타 확률이 ${spino.passive.criticalChancePercent}% 오른다`);
     expect(spino.basic).toMatchObject({ name: "악어턱 물어뜯기", power: 80, combo: { chancePercent: 40, hitCount: 2, missingHpHealingPercentPerHit: 5 } });
     expect(skillDescription(spino.basic, { damage: 100 })).toBe(
       "적 한 명에게 [[damage-value|100]]의 [[physical-damage|물리 피해]]를 주고, 40% 확률로 [[combo|연격]]하여 총 2회 적중한다. "
@@ -412,6 +414,7 @@ describe("루카 스킬 표시 계약", () => {
     expect(ferocityTraitDescription(luka.ferocityTrait)).toContain("[[stealth|은신]]");
     expect(ferocityTraitDescription(luka.ferocityTrait)).toContain("[[attack-speed|공격 속도]]가 25%");
     expect(passiveDescription(luka.passive)).toContain("공격력이 가장 높은 렐릭");
+    expect(passiveDescription(luka.passive)).toContain(`치명타 확률이 ${luka.passive.criticalChancePercent}% 오른다`);
     expect(skillDescription(luka.basic)).toContain("매 4번째 실제 [[basic-attack|기본 공격]]");
     expect(skillDescription(luka.basic)).toContain("[[physical-damage|물리 피해]]");
     expect(skillDescription(luka.ultimate)).toContain("최종 HP 피해의 75%");

@@ -180,6 +180,17 @@ describe("스피나 전투 계약", () => {
     expect(Number.isInteger(actualAfterHit - actualBeforeHit)).toBe(true);
   });
 
+  it("은 패시브가 올린 치명타 확률을 태생 공통값 위에 퍼센트포인트로 더한다", () => {
+    const { state, spino } = readySpino();
+    const points = spino.def.passive.criticalChancePercent!;
+    const chance = spino.def.stats.critChance + points;
+    expect(points).toBe(10);
+    // 경계 바로 아래 난수는 치명타, 바로 위는 아니다 — 개체 이름이 아니라 적힌 값으로 읽는다.
+    expect(stepSkirmish(state, 1 / 60, () => (chance - 1) / 100).find((event) => event.kind === "attack")).toMatchObject({ critical: true });
+    const miss = readySpino();
+    expect(stepSkirmish(miss.state, 1 / 60, () => (chance + 1) / 100).find((event) => event.kind === "attack")).toMatchObject({ critical: false });
+  });
+
   it("은 동일 성장 렉시아보다 느리게 시작해 장기 적중 뒤 공격 빈도를 앞서고 궁극기 한 번에 동급 탱커를 처치하지 않는다", () => {
     const rexState = newSkirmish(["rex"], ["husk-shell"]);
     const { state, spino, target: tank } = readySpino();

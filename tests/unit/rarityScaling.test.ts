@@ -75,3 +75,17 @@ describe("등급별 레벨 성장", () => {
     expect(ssr / r).toBeLessThan(1.10);
   });
 });
+
+describe("치명타형 정체성", () => {
+  it("은 태생이 아니라 패시브에서 나온다", () => {
+    // 태생 치명타는 전 개체 공통이므로, 암살자·전사의 치명타형 성격은 읽히는 스킬이 만든다.
+    const sources = PLAYABLE_RELICS.filter((relic) => relic.passive.criticalChancePercent !== undefined);
+    expect(sources.map((relic) => [relic.id, relic.passive.criticalChancePercent])).toEqual([
+      ["rex", 25], ["spino", 10], ["luka", 15],
+    ]);
+    // 값이 있는 개체는 태생 공통값 위에 그만큼을 더한 확률로 싸운다.
+    for (const relic of sources) {
+      expect(relic.stats.critChance + relic.passive.criticalChancePercent!, relic.name).toBeGreaterThan(COMMON_SECONDARY_STATS.critChance);
+    }
+  });
+});

@@ -919,7 +919,8 @@ function retargetAfterBasic(attacker: Fighter, target: Fighter, state: SkirmishS
 /** 공격력은 배율로, 백분율 척도인 치명타 피해는 퍼센트포인트로 임시 정의에 반영한다. */
 function offensiveDefinition(attacker: Fighter): RelicDef {
   const passive = attacker.def.passive;
-  if (passive.kind !== "battleMaidMastery") return attacker.def;
+  // 치명타 확률과 마찬가지로 개체 이름이 아니라 적힌 값으로 판별한다.
+  if (passive.attackPowerPercent === undefined && passive.criticalDamagePercent === undefined) return attacker.def;
   return { ...attacker.def, stats: {
     ...attacker.def.stats,
     atk: attacker.def.stats.atk * (1 + (passive.attackPowerPercent ?? 0) / 100),
@@ -1179,8 +1180,10 @@ function strike(
   const attackingInFever = attacker.ferocityFever;
   const critTrait = attacker.def.ferocityTrait;
   // 패시브와 폭주의 퍼센트포인트를 모두 더한 뒤, 난수 판정 직전에만 유효 확률을 100%로 제한한다.
-  const passiveCritPoints = attacker.def.passive.kind === "battleMaidMastery"
-    ? attacker.def.passive.criticalChancePercent ?? 0 : 0;
+  // 치명타 가산은 개체 이름이 아니라 필드 하나로 읽는다 — 태생 치명타가 전 개체 공통이라
+  // "이 개체는 왜 치명타형인가"의 답이 늘 패시브에 있어야 하고, 새 개체가 그 값을 적기만 하면
+  // 전투가 그대로 읽어야 한다.
+  const passiveCritPoints = attacker.def.passive.criticalChancePercent ?? 0;
   const criticalChance = attacker.def.stats.critChance + passiveCritPoints
     + (attackingInFever && critTrait.effectId === "rexBattleQueen" ? critTrait.criticalChancePoints : 0);
   const periodicCritical = !useUltimate ? attacker.def.basic.periodicCritical : undefined;
@@ -1439,8 +1442,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
   const attackingInFever = attacker.ferocityFever;
   const critTrait = attacker.def.ferocityTrait;
   // 광역 궁극기도 단일 타격과 동일하게 패시브 치명타 확률을 퍼센트포인트로 취급한다.
-  const passiveCritPoints = attacker.def.passive.kind === "battleMaidMastery"
-    ? attacker.def.passive.criticalChancePercent ?? 0 : 0;
+  const passiveCritPoints = attacker.def.passive.criticalChancePercent ?? 0;
   const damageAttacker = { ...attacker, def: offensiveDefinition(attacker) };
 
   for (const [index, target] of targets.entries()) {

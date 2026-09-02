@@ -218,6 +218,9 @@ export const RELICS: RelicDef[] = [
       iconAssetId: "skill-icon-buff",
       effectType: "buff",
       value: 3,
+      // 태생 치명타는 전 개체 공통이므로 암살자의 치명타형 정체성은 패시브가 만든다.
+      // 연격이 한 행동에 두 번 판정하므로 렉시아·루카보다 낮은 값으로도 충분히 자주 터진다.
+      criticalChancePercent: 10,
       desc: "기본 공격이 적중할 때마다 이번 전투 동안 공격 속도가 3 증가한다.",
     },
     // 스피나의 기본 공격 데이터는 중복 키 없이 BasicAttack 계약을 직접 검증한다.
@@ -299,6 +302,8 @@ export const RELICS: RelicDef[] = [
       iconAssetId: "skill-icon-buff",
       effectType: "buff",
       value: 0,
+      // 태생 치명타는 전 개체 공통이므로 암살자의 치명타형 정체성은 패시브가 만든다.
+      criticalChancePercent: 15,
       desc: "전투 시작 시 공격력이 가장 높은 아군이 표적으로 삼은 적을 함께 표적으로 삼는다.",
     },
     basic: {

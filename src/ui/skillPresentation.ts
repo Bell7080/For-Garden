@@ -97,8 +97,28 @@ export function passiveShieldKeyword(passive: Passive, atk?: number): KeywordDef
   return { id: "shield-value", term: String(amount), kind: "규칙", description: `현재 공격력에서 ${passive.cleanseShieldAttackPercent}%를 받아 계산한 보호막 수치다.` };
 }
 
-/** 복합 능력 패시브를 각 구조화 수치에서 문장화해 데이터 변경이 본문에도 즉시 반영되게 한다. */
+/**
+ * 복합 능력 패시브를 각 구조화 수치에서 문장화해 데이터 변경이 본문에도 즉시 반영되게 한다.
+ *
+ * 치명타 확률 가산은 종류를 가리지 않고 **적힌 개체마다** 뒤에 한 문장으로 붙는다 — 태생
+ * 치명타가 전 개체 공통이라 "이 개체가 왜 치명타형인가"의 답은 늘 패시브에 있고, 그 답을
+ * 개체마다 손으로 적으면 수치를 조정한 뒤 옛 문장이 남는다.
+ */
 export function passiveDescription(passive: Passive, atk?: number): string {
+  return [passiveHead(passive, atk), passiveCriticalClause(passive)].filter(Boolean).join(" ");
+}
+
+/**
+ * 치명타 확률을 올리는 패시브의 공통 절.
+ *
+ * 렉시아처럼 그 사실을 이미 제 문장에서 말하는 종류는 뺀다 — 같은 말을 두 번 하게 된다.
+ */
+function passiveCriticalClause(passive: Passive): string {
+  if (passive.criticalChancePercent === undefined || passive.kind === "battleMaidMastery") return "";
+  return `치명타 확률이 ${passive.criticalChancePercent}% 오른다.`;
+}
+
+function passiveHead(passive: Passive, atk?: number): string {
   if (passive.kind === "followHighestAttackAllyTarget") return `전투 시작 시 아군 중 공격력이 가장 높은 렐릭이 표적으로 삼은 적을 함께 표적으로 삼는다.`;
   if (passive.kind === "basicHitAttackSpeedStack") return `[[basic-attack|기본 공격]]이 실제 적중할 때마다 이번 전투 동안 [[attack-speed|공격 속도]]가 ${passive.value} 증가한다.`;
   if (passive.kind === "adagioWeight") {

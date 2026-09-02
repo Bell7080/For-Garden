@@ -104,10 +104,11 @@ export const METTE_SD_METADATA: Omit<PuppetAsset, "url"> = {
 export const PONTOS_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1024,
   imageHeight: 1536,
-  content: { left: 1, top: 3, right: 1024, bottom: 1481 },
-  // 정보창에서 하단에 처지던 전신을 한 단계 키우고 코어 기준점을 위로 되돌린다.
-  portraitZoom: 0.88,
-  portraitOffsetY: 0,
+  // alpha > 16 원본과 idle 0~1.6초를 10ms 간격으로 샘플링한 Mesh의 union이다.
+  content: { left: -1, top: 3, right: 1024, bottom: 1589 },
+  // 이미지 캔버스가 아니라 위 union의 머리·꼬리 끝으로 계산해 기존보다 확대·상향한다.
+  portraitZoom: 0.94,
+  portraitOffsetY: -72,
 };
 
 /** 폰토스 SD ZIP의 1254px 정사각 원본과 alpha > 16 경계다. */

@@ -10,8 +10,16 @@ import {
 } from "../../src/ui/expeditionLayout";
 import { BATTLE_PROFILE_LAYOUT, battleProfileBounds } from "../../src/ui/battleStatusLayout";
 import { anchorEnemyPreview, enemyPreviewColumns, isEnemyPreviewNodeVisible, NODE_ENEMY_PREVIEW } from "../../src/ui/nodeEnemyPreviewLayout";
+import { PONTOS_PORTRAIT_METADATA } from "../../src/puppets/assetMetadata";
+import { groundedPortraitBounds } from "../../src/ui/portraitPlacement";
 
 describe("expedition portrait layout", () => {
+  it("1080×1920 기록 화면 보스는 제목 아래에서 하단 조작 뒤까지 이어진다", () => {
+    // 정보창과 별도 의도 높이를 허용하면서도 동일한 alpha union으로 경계를 산출한다.
+    const bounds = groundedPortraitBounds(PONTOS_PORTRAIT_METADATA as never, 1960, 1720);
+    expect(bounds.top).toBe(240);
+    expect(bounds.bottom).toBe(1960);
+  });
   it("keeps rewards, nodes, augments, relic HUD, and actions in separate vertical regions", () => {
     // 실제 씬과 공유하는 배치표를 검사해 텍스트나 노드 크기 변경이 이웃 HUD를 침범하지 않게 한다.
     expect(expeditionLayoutGaps().every((gap) => gap >= 20)).toBe(true);

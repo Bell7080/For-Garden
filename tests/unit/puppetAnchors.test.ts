@@ -178,9 +178,9 @@ describe("폰토스 에셋 앵커 메타데이터", () => {
     expect(PONTOS_PORTRAIT_METADATA).toMatchObject({
       imageWidth: 1024,
       imageHeight: 1536,
-      content: { left: 1, top: 3, right: 1024, bottom: 1481 },
-      portraitZoom: 0.88,
-      portraitOffsetY: 0,
+      content: { left: -1, top: 3, right: 1024, bottom: 1589 },
+      portraitZoom: 0.94,
+      portraitOffsetY: -72,
     });
     expect(PONTOS_SD_METADATA).toMatchObject({
       imageWidth: 1254,

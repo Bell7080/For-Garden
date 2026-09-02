@@ -14,6 +14,8 @@ import { addRuneCard, runeTexture } from "./runeIcons";
 import { COLOR, textStyle } from "./theme";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { managerEvents } from "../managers/ManagerEvents";
+import { CurrencyGuidePopup } from "./CurrencyGuidePopup";
+import type { CurrencyGuideAction } from "../data/currencyGuide";
 
 const CATEGORIES: readonly { id: ItemCategory; label: string }[] = [
   { id: "rune", label: "룬" }, { id: "currency", label: "재화" }, { id: "consumable", label: "소비품" }, { id: "material", label: "재료" },
@@ -50,7 +52,7 @@ export class InventoryPopup {
   private readonly inventory = new InventoryManager(session);
   private unsubscribeInventory?: () => void;
 
-  constructor(private readonly scene: Phaser.Scene, private readonly popups: PopupLayer, private readonly api: GameApi, private readonly onClose?: () => void) {}
+  constructor(private readonly scene: Phaser.Scene, private readonly popups: PopupLayer, private readonly api: GameApi, private readonly onClose?: () => void, private readonly onCurrencyAction?: (action: CurrencyGuideAction) => void) {}
 
   /** 중복 열기를 막고 조회가 끝난 뒤 현재 탭을 그린다. */
   open(): void {
@@ -213,6 +215,8 @@ export class InventoryPopup {
   /** 룬은 기존 정보창, 소비품은 확인 후 서버 결과, 재화·재료는 읽기 전용 상세로 연결한다. */
   private select(item: InventoryDisplayItem, anchor: { x: number; y: number }): void {
     if (item.kind === "rune") { openRuneInfoPopup(this.scene, this.popups, { runeInstanceId: item.rune.instanceId, anchor, api: this.api }); return; }
+    // 재화 카드는 상단 칩과 같은 안내 프리팹을 스택 위에 쌓아 가방 자체를 보존한다.
+    if (item.category === "currency" && item.definition.icon.kind === "currency") { new CurrencyGuidePopup(this.scene, this.popups, this.onCurrencyAction).open(item.definition.icon.key); return; }
     if (item.category !== "consumable") { this.popups.open({ width: 440, height: 280, title: this.label(item), anchor, dim: true }, (body) => body.add(this.scene.add.text(0, 0, `${this.description(item)}\n\n보유 ${item.quantity}`, textStyle({ role: "body", size: 22, align: "center", wrap: 340 })).setOrigin(0.5))); return; }
     // 지갑 갱신은 InventoryManager.useConsumable이 이미 managerEvents로 발행하므로(TopBar가 구독)
     // 여기서 다시 알리지 않는다.

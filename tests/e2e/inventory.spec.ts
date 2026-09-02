@@ -59,3 +59,28 @@ test("가방은 로비를 유지하고 카테고리 탭과 많은 항목 스크�
   await page.screenshot({ path: `test-results/${test.info().project.name}-inventory-popup-reopened.png`, fullPage: true });
   // 재개방 캡처까지 끝나면 테스트가 만든 팝업은 페이지 종료와 함께 정리된다.
 });
+
+test("상단과 가방 재화는 같은 안내를 열고 가방 위 안내만 닫아도 스택을 보존한다", async ({ page }) => {
+  await startAfterOpening(page);
+  await tap(page, WIDTH / 2, HEIGHT / 2);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+  // 기본 상단의 첫 칩(젬)을 눌러 공용 안내 제목이 스택에 기록되는지 확인한다.
+  await tap(page, 500, 86);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual(["젬"]);
+  await tap(page, 880, 556);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual([]);
+
+  await tap(page, WIDTH - 106, 1096);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.inventoryCategory)).toBe("rune");
+  const currencyTab = inventoryCategoryTabPosition(1);
+  await tap(page, WIDTH / 2 + currencyTab.x, HEIGHT / 2 + currencyTab.y);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.inventoryCategory)).toBe("currency");
+  // 첫 재화 카드(화석)는 가방 레이어 위에 동일 안내를 한 장 더 쌓는다.
+  await tap(page, WIDTH / 2 - 312, HEIGHT / 2 - 510);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual(["가방", "화석"]);
+  // 안내 X만 닫으면 아래 가방과 선택된 재화 탭이 그대로 남아야 한다.
+  await tap(page, 880, 556);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual(["가방"]);
+  expect(await page.evaluate(() => window.__PF_DEBUG?.inventoryCategory)).toBe("currency");
+  await page.screenshot({ path: `test-results/${test.info().project.name}-currency-guide-stack.png`, fullPage: true });
+});

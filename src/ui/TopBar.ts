@@ -11,9 +11,10 @@ import { COLOR, textStyle } from "./theme";
 import { playerProfileDisplay, profileAvatarContent, type PlayerProfileDisplay } from "../state/playerProfile";
 import { managerEvents } from "../managers/ManagerEvents";
 import { compactTopBarName, TOP_BAR_LAYOUT } from "./topBarLayout";
+import type { WalletItemKey } from "../data/items";
 
 /** 상단 줄에는 공개 표시 모델과 공개 동작만 들어오며 인증 비밀을 받을 자리가 없다. */
-export interface TopBarOptions { onSettings?: () => void; onProfile?: (profile: PlayerProfileDisplay) => void; currencies?: TopBarCurrencyContext; profile?: boolean }
+export interface TopBarOptions { onSettings?: () => void; onProfile?: (profile: PlayerProfileDisplay) => void; onCurrency?: (currency: WalletItemKey) => void; currencies?: TopBarCurrencyContext; profile?: boolean }
 
 /**
  * 화면 위쪽 줄. 렐릭 · 로비 · 연구소 어디서든 같은 자리에 같은 모양으로 뜬다.
@@ -23,6 +24,7 @@ export interface TopBarOptions { onSettings?: () => void; onProfile?: (profile: 
  */
 /** 상단 줄에 세우는 재화 한 칸. 아이콘과 지갑에서 읽을 값을 함께 정한다. */
 interface CurrencySlot {
+  key: WalletItemKey;
   icon: CurrencyIconKey;
   read: () => number;
   /** 자릿수가 크게 늘어나는 재화만 K·M으로 줄인다. */
@@ -44,14 +46,14 @@ export type TopBarCurrencyContext = "default" | "recruit" | "none";
 
 const SLOTS: Record<TopBarCurrencyContext, readonly CurrencySlot[]> = {
   default: [
-    { icon: "currency-gems", read: () => session.wallet.gems, color: "#cfe6ff" },
-    { icon: "currency-gold", read: () => session.wallet.gold, compact: true, color: "#ffdf9a" },
-    { icon: "currency-stamina", read: () => session.wallet.stamina, color: "#ffe9a3" },
+    { key: "gems", icon: "currency-gems", read: () => session.wallet.gems, color: "#cfe6ff" },
+    { key: "gold", icon: "currency-gold", read: () => session.wallet.gold, compact: true, color: "#ffdf9a" },
+    { key: "stamina", icon: "currency-stamina", read: () => session.wallet.stamina, color: "#ffe9a3" },
   ],
   recruit: [
-    { icon: "currency-gems", read: () => session.wallet.gems, color: "#cfe6ff" },
-    { icon: "currency-fossil", read: () => session.wallet.fossil, compact: true, color: "#e6dcc4" },
-    { icon: "currency-amber", read: () => session.wallet.amber, color: "#ffc98a" },
+    { key: "gems", icon: "currency-gems", read: () => session.wallet.gems, color: "#cfe6ff" },
+    { key: "fossil", icon: "currency-fossil", read: () => session.wallet.fossil, compact: true, color: "#e6dcc4" },
+    { key: "amber", icon: "currency-amber", read: () => session.wallet.amber, color: "#ffc98a" },
   ],
   none: [],
 };
@@ -97,7 +99,7 @@ export class TopBar {
     const span = slots.length * SLOT.width + (slots.length - 1) * SLOT.gap;
     const first = BASE_WIDTH * CLUSTER_CENTER - span / 2 + SLOT.width / 2;
     slots.forEach((slot, index) => {
-      this.slots.push({ slot, text: this.buildSlot(scene, first + index * (SLOT.width + SLOT.gap), y + 46, slot) });
+      this.slots.push({ slot, text: this.buildSlot(scene, first + index * (SLOT.width + SLOT.gap), y + 46, slot, options.onCurrency) });
     });
 
     // 설정 — 오른쪽 끝. 콜백이 없는 장면에서는 장식만 남기고 보이지 않는 입력면을 만들지
@@ -123,8 +125,8 @@ export class TopBar {
   destroy(): void { this.unsubscribe.splice(0).forEach((unsubscribe) => unsubscribe()); }
 
   /** 재화 한 칸. 생김새는 `CurrencyChip` 한 곳이 정하고 여기서는 자리와 색만 고른다. */
-  private buildSlot(scene: Phaser.Scene, cx: number, cy: number, slot: CurrencySlot): Phaser.GameObjects.Text {
-    return addCurrencyChip(scene, cx, cy, slot.icon, { color: slot.color });
+  private buildSlot(scene: Phaser.Scene, cx: number, cy: number, slot: CurrencySlot, onCurrency?: (currency: WalletItemKey) => void): Phaser.GameObjects.Text {
+    return addCurrencyChip(scene, cx, cy, slot.icon, { color: slot.color, currency: slot.key, onClick: onCurrency });
   }
 
   /** 왼쪽 위 플레이어 칩. 아바타가 없을 때만 표시 이름 머리글자를 넣는다. */

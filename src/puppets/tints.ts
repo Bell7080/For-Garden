@@ -1,24 +1,9 @@
 /**
- * 렐릭별 색 필터. **임시다.**
+ * 색 섞기 도우미.
  *
- * 아직 전용 SD가 없는 아군을 1번 SD로 대신 표시할 때 서로 구분하기 위한 임시 색이다.
- * 토비·아모·리파는 전용 적 Puppet을 연결했으므로 이 색 목록을 사용하지 않는다.
+ * 모든 렐릭이 전용 원화를 갖게 되면서 "전용 SD가 없는 개체를 1번 SD로 대신 세우고 색으로
+ * 구분하던" 임시 색 표는 사라졌다. 남은 것은 카드 뒷배경처럼 색을 옅게 눌러야 하는 자리다.
  */
-const TINTS: Record<string, number> = {
-  rex: 0xd86b4a, // 티라노 — 붉은 흙빛
-  anky: 0x8a9a6b, // 안킬로 — 이끼 낀 갑주
-  spino: 0x5b9cad, // 스피노사우루스 — 물빛 청록
-  dodo: 0xe8d9a0, // 도디 — 저장 호환 ID는 유지하고 바랜 깃털색으로 구분한다.
-  smilo: 0xd9a54a, // 스밀로돈 — 황토빛 털
-  quetz: 0x6fb3c4, // 케찰 — 창공빛
-  mette: 0x789b68, // 메테 — 초원과 오래된 현악기의 차분한 녹색
-};
-
-const FALLBACK = 0xffffff;
-
-export function tintFor(relicId: string): number {
-  return TINTS[relicId] ?? FALLBACK;
-}
 
 /**
  * 색을 흰색 쪽으로 섞는다.

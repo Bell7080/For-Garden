@@ -212,32 +212,40 @@ describe("폰토스 스킬 표시 계약", () => {
   });
 });
 
-describe("티아라 스킬 표시 계약", () => {
-  const tiara = () => RELICS.find((def) => def.id === "tiara")!;
+describe("티아 스킬 표시 계약", () => {
+  const tia = () => RELICS.find((def) => def.id === "tia")!;
 
-  it("은 두 공격 모두 주문력에서 나오는 광역 마법 피해다", () => {
-    const def = tiara();
+  it("은 두 공격 모두 주문력에서 나오는 마법 피해다", () => {
+    const def = tia();
     // 물 전사지만 피해는 주먹이 아니라 물살에서 나온다 — 계수·대상 계약을 데이터로 고정한다.
-    expect(def.basic).toMatchObject({ damageType: "magical", scalingStat: "ap", targeting: "nearbyEnemies" });
+    // 표식은 한 번에 한 명만 달 수 있으므로 기본 공격은 한 명을 겨눈다.
+    expect(def.basic).toMatchObject({ damageType: "magical", scalingStat: "ap", targeting: "single" });
     expect(def.ultimate).toMatchObject({ damageType: "magical", scalingStat: "ap", targeting: "nearbyEnemies" });
-    expect(def.basic.radius).toBeGreaterThan(0);
-    expect(def.ultimate.radius).toBeGreaterThan(def.basic.radius!);
+    expect(def.basic.radius).toBeUndefined();
+    expect(def.ultimate.radius).toBeGreaterThan(0);
     // 능력치를 모르는 자리에서도 어느 능력치에서 나오는 배율인지 말한다.
-    expect(skillDescription(def.basic)).toBe(`자신의 주위 모든 적에게 주문력의 ${def.basic.power}% [[magical-damage|마법 피해]]를 준다.`);
+    expect(skillDescription(def.basic)).toBe(`적 한 명에게 주문력의 ${def.basic.power}% [[magical-damage|마법 피해]]를 준다.`);
   });
 
   it("의 궁극기는 대상·피해·경직을 한 문장으로 말한다", () => {
-    const def = tiara();
+    const def = tia();
     expect(skillDescription(def.ultimate, { damage: 300 })).toBe(
       "자신의 주위 모든 적에게 [[damage-value|300]]의 [[magical-damage|마법 피해]]를 주고 [[stagger|경직]]시킨다.",
     );
   });
 
-  it("의 폭주와 패시브는 앞에 서서 버티는 쪽으로 읽힌다", () => {
-    const def = tiara();
-    expect(ferocityTraitDescription(def.ferocityTrait)).toBe("받는 피해가 30% 줄어든다.");
-    expect(def.passive.kind).toBe("frontGuard");
-    expect(passiveDescription(def.passive)).toContain(`${def.passive.value}%`);
+  it("의 폭주와 패시브는 표식을 옮겨 다니는 쪽으로 읽힌다", () => {
+    const def = tia();
+    // 두 스킬이 한 덩어리다 — 폭주가 표적을 계속 바꾸고, 바뀐 표적마다 표식이 옮겨가며 터진다.
+    expect(def.ferocityTrait).toMatchObject({ effectId: "ichthyoDive", moveSpeedPercent: 100 });
+    expect(ferocityTraitDescription(def.ferocityTrait)).toBe(
+      "이동 속도가 100% 증가하고, [[basic-attack|기본 공격]] 이후 표적을 다른 적으로 바꾼다.",
+    );
+    expect(def.passive.kind).toBe("shimmerMark");
+    // 추가 피해 계수는 데이터에서 나오고 어느 능력치에서 나오는지도 함께 말한다.
+    expect(passiveDescription(def.passive)).toBe(
+      `적을 타격하면 반짝이는 표식을 남긴다. 표식이 없는 적을 타격하면 표식이 그 적에게 옮겨가며 [[ap|주문력]]의 ${def.passive.value}% [[magical-damage|마법 피해]]를 추가로 입힌다.`,
+    );
   });
 });
 

@@ -21,7 +21,7 @@ import {
   PONTOS_SD_METADATA,
   SEIRA_PORTRAIT_METADATA,
   TAPEJARA_PORTRAIT_METADATA,
-  TIARA_PORTRAIT_METADATA,
+  TIA_PORTRAIT_METADATA,
   TORIKA_PORTRAIT_METADATA,
 } from "../../src/puppets/assetMetadata";
 
@@ -234,7 +234,7 @@ const REAL_PORTRAITS = [
   { name: "도디", metadata: DODI_PORTRAIT_METADATA, head: { x: 585, y: 370 }, eyes: [{ x: 528, y: 367 }, { x: 632, y: 355 }] },
   { name: "메테", metadata: METTE_PORTRAIT_METADATA, head: { x: 520, y: 255 }, eyes: [{ x: 472, y: 277 }, { x: 568, y: 242 }] },
   { name: "타페자라", metadata: TAPEJARA_PORTRAIT_METADATA, head: { x: 549, y: 375 }, eyes: [{ x: 510, y: 386 }, { x: 591, y: 357 }] },
-  { name: "티아라", metadata: TIARA_PORTRAIT_METADATA, head: { x: 518, y: 308 }, eyes: [{ x: 480, y: 317 }, { x: 548, y: 265 }] },
+  { name: "티아", metadata: TIA_PORTRAIT_METADATA, head: { x: 518, y: 308 }, eyes: [{ x: 480, y: 317 }, { x: 548, y: 265 }] },
 ] as const;
 
 /** PortraitCard가 넘기는 것과 같은 배율 보정으로 실제 카드 잘라내기를 구한다. */

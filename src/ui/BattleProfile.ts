@@ -6,7 +6,7 @@ import { COLOR, textStyle } from "./theme";
 import { HoloBar } from "./holo";
 import { BattleHealthBar } from "./BattleHealthBar";
 import type { HealthChangeCause } from "./unitHealthBarState";
-import { PortraitCard, relicCardTint, type PortraitAlphaOverlay } from "./PortraitCard";
+import { PortraitCard, type PortraitAlphaOverlay } from "./PortraitCard";
 import { BATTLE_PROFILE_LAYOUT as L } from "./battleStatusLayout";
 import { skillArtFor, skillArtTint, type SkillArtSlot } from "./skillArt";
 import { FALLBACK_SKILL_ICON } from "./skillIcons";
@@ -75,7 +75,7 @@ export class BattleProfile extends Phaser.GameObjects.Container {
     this.sweep = scene.add.rectangle(-125, 0, 34, 320, COLOR.accent, 0).setAngle(18).setDepth(2);
     this.card = new PortraitCard(scene, 0, 0, {
       width: L.cardWidth, height: L.cardHeight, portraitAssetId: options.relic.portraitAssetId,
-      tint: relicCardTint(options.relic), label: options.relic.name, level: options.level,
+      label: options.relic.name, level: options.level,
       sub: options.sub, rarity: options.relic.rarity, stars: options.stars,
     });
     // 몸통은 닫힌 칩 기하를 쓰고 돌출 머리는 원화 알파 복제를 쓴다. 카드 전체 도형 하나를

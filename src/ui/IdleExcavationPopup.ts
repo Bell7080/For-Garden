@@ -2,8 +2,7 @@ import Phaser from "phaser";
 import type { AdOperationsConfigResponse, AdPresentationResult, AdSlotOperationsDto, GameApi, HarvestExcavationResponse, IdleExcavationResponse } from "../api/contracts";
 import { emptyExcavationAmounts, EXCAVATION_CURRENCIES, excavationProductionDisplayModel, excavationStorageFillRatio, excavationStorageLimitSeconds, nextExcavationSlot, placeExcavationRelic, type ExcavationCurrency, type IdleExcavationState } from "../core/idleExcavation";
 import { RELICS } from "../data/relics";
-import { placePuppet, portraitUsesRelicTint, sdAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
-import { tintFor } from "../puppets/tints";
+import { placePuppet, sdAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
 import { session } from "../state/session";
 import { setDebugExcavationAdOffers, setDebugFormationDragVisual, setDebugIdleExcavationControls, setDebugIdleExcavationPopup, setDebugIdleExcavationSdReady, setDebugIdleExcavationSlots } from "../debug";
 import { notificationManager } from "../managers/NotificationManager";
@@ -458,7 +457,6 @@ export class IdleExcavationPopup {
       const progress = session.relicProgress[relic.id];
       const card = new PortraitCard(this.scene, x, y, {
         width: GRID_VIEW.cardWidth, height: GRID_VIEW.cardHeight, portraitAssetId: relic.portraitAssetId,
-        tint: portraitUsesRelicTint(relic.portraitAssetId) ? tintFor(relic.id) : undefined,
         label: relic.name, level: progress?.level ?? 1, rarity: relic.rarity, stars: (progress?.breakthrough ?? 0) + 1,
         subIcon: EXCAVATION_TRAIT_ICON[relic.excavationTrait.primaryCurrency], sub: formatRate(detail?.totalPerHour ?? 0),
         // 이미 1~3번 칸에 배치된 카드는 발광뿐 아니라 눌린 듯한 검정 면도 함께 써 "이미 골랐다"를
@@ -568,7 +566,7 @@ export class IdleExcavationPopup {
       if (editable && index === this.selectedSlot) parent.add(drawLayer(this.scene, x, STATUS_HERO.slotY, slantedRect(236, 271), { fill: COLOR.accent, alpha: 0.22, edge: COLOR.accent, edgeAlpha: 0.95 }));
       if (relic) {
         const progress = session.relicProgress[relic.id];
-        const card = new PortraitCard(this.scene, x, STATUS_HERO.slotY, { width: 210, height: 245, portraitAssetId: relic.portraitAssetId, tint: portraitUsesRelicTint(relic.portraitAssetId) ? tintFor(relic.id) : undefined, label: relic.name, level: progress?.level ?? 1, rarity: relic.rarity, stars: (progress?.breakthrough ?? 0) + 1 });
+        const card = new PortraitCard(this.scene, x, STATUS_HERO.slotY, { width: 210, height: 245, portraitAssetId: relic.portraitAssetId, label: relic.name, level: progress?.level ?? 1, rarity: relic.rarity, stars: (progress?.breakthrough ?? 0) + 1 });
         card.setSelected(editable && index === this.selectedSlot);
         // 카드 내부 hit는 카드 자체 용도로 남기되 슬롯 선택은 아래 공용 입력면 하나만 담당한다.
         card.hit.disableInteractive(); parent.add(card); cards[index] = card;

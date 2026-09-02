@@ -866,9 +866,9 @@ describe("능력치 반영", () => {
       target.x = 460; target.y = 1000; target.attackCooldown = 99;
       return stepSkirmish(state, 1 / 60).find((event) => event.kind === "attack")?.amount ?? 0;
     };
-    // 렉시아의 물리 공격과 케찰의 마법 공격 모두 실제 난전 이벤트를 통해 피해를 만든다.
+    // 렉시아의 물리 공격과 티아의 마법 공격 모두 실제 난전 이벤트를 통해 피해를 만든다.
     expect(hit("rex", "husk-shell")).toBeGreaterThan(0);
-    expect(hit("quetz", "husk-shell")).toBeGreaterThan(0);
+    expect(hit("tia", "husk-shell")).toBeGreaterThan(0);
   });
 
   it("은 최종 궁극기·야성 충전 보정과 실제 HP 피해 기준 흡혈을 적용한다", () => {
@@ -997,25 +997,14 @@ describe("효과 ID별 야성 특성", () => {
     expect([first.targetId, lowest.targetId]).toEqual([null, null]);
   });
 
-  it("criticalChanceBonus은 스밀라의 피버 중 치명타율을 25퍼센트포인트 올린다", () => {
-    const normal = prepareHit("smilo");
-    normal.fighters[0].ferocity = 99;
-    const normalHit = stepSkirmish(normal, 1 / 60, () => 0.3).find((event) => event.kind === "attack");
-    const fever = prepareHit("smilo");
-    fever.fighters[0].ferocity = 100; fever.fighters[0].ferocityFever = true;
-    const feverHit = stepSkirmish(fever, 1 / 60, () => 0.3).find((event) => event.kind === "attack");
-    expect(normalHit).toMatchObject({ critical: false });
-    expect(feverHit).toMatchObject({ critical: true });
-  });
-
-  it("teamMoveSpeedBonus은 케찰의 피버 중 생존 아군 이동 속도를 18% 올린다", () => {
-    const state = newSkirmish(["quetz", "rex"], ["husk-shell"]);
-    const [quetz, ally] = state.fighters;
+  it("teamMoveSpeedBonus은 리파의 피버 중 생존 아군 이동 속도를 12% 올린다", () => {
+    const state = newSkirmish(["husk-wing", "rex"], ["husk-shell"]);
+    const [ripa, ally] = state.fighters;
     const before = moveSpeed(ally, state);
-    quetz.ferocity = 99;
+    ripa.ferocity = 99;
     expect(moveSpeed(ally, state)).toBe(before);
-    quetz.ferocity = 100; quetz.ferocityFever = true;
-    expect(moveSpeed(ally, state)).toBeCloseTo(before * 1.18);
+    ripa.ferocity = 100; ripa.ferocityFever = true;
+    expect(moveSpeed(ally, state)).toBeCloseTo(before * 1.12);
   });
 });
 
@@ -1774,5 +1763,77 @@ describe("폰토스 실전 스킬과 심해 압력", () => {
     stepSkirmish(state, 0.25);
     expect(state.boss!.pressureRadius).toBeLessThan(startRadius);
     expect(Math.abs(pontos.x - (ARENA.left + ARENA.right) / 2)).toBeLessThan(Math.abs(startX - (ARENA.left + ARENA.right) / 2));
+  });
+});
+
+describe("티아 정적 전투 계약", () => {
+  /** 티아 한 명과 적 둘만 세워 표식이 옮겨 다니는 것만 관찰한다. */
+  function tiaBattle(enemies = ["husk-shell", "husk-raptor"]) {
+    const state = newSkirmish(["tia"], enemies);
+    const [tia, first] = state.fighters;
+    tia.x = 400; tia.y = 1000; tia.attackCooldown = 0; tia.targetId = first.id;
+    for (const [index, enemy] of state.fighters.slice(1).entries()) {
+      enemy.x = 460 + index * 40; enemy.y = 1000; enemy.attackCooldown = 99;
+      // 표식 추가타 한 번으로 죽지 않도록 넉넉한 체력을 준다.
+      enemy.maxHp = 100_000; enemy.hp = 100_000;
+    }
+    return { state, tia, fighters: state.fighters };
+  }
+
+  /** 이번 프레임에 티아가 만든 표식 추가타 사건만 고른다. */
+  function shimmerHits(state: SkirmishState) {
+    return stepSkirmish(state, 1 / 60, () => 0.99)
+      .filter((event): event is Extract<typeof event, { kind: "attack" }> => event.kind === "attack" && event.skill === "shimmer");
+  }
+
+  it("의 첫 타격은 표식을 붙이며 주문력 계수만큼 추가 마법 피해를 준다", () => {
+    const { state, tia, fighters } = tiaBattle();
+    const target = fighters[1];
+    const [shimmer, ...rest] = shimmerHits(state);
+    expect(rest).toEqual([]);
+    expect(shimmer).toMatchObject({ targetId: target.id, damageType: "magical", critical: false, animate: false });
+    // 값은 데이터에서 나온다 — 계수를 조정하면 이 기대치도 함께 움직인다.
+    expect(shimmer.amount).toBeGreaterThan(0);
+    expect(tia.def.passive.kind).toBe("shimmerMark");
+  });
+
+  it("은 같은 적을 이어서 때리는 동안에는 표식을 다시 터뜨리지 않는다", () => {
+    const { state, tia, fighters } = tiaBattle();
+    expect(shimmerHits(state)).toHaveLength(1);
+    // 폭주가 아니면 표적을 바꾸지 않으므로 다음 공격도 같은 상대다.
+    tia.attackCooldown = 0;
+    expect(shimmerHits(state)).toEqual([]);
+    expect(tia.targetId).toBe(fighters[1].id);
+  });
+
+  it("의 폭주는 일반 공격 뒤 표적을 다른 적으로 바꿔 표식이 계속 옮겨 다니게 한다", () => {
+    const { state, tia, fighters } = tiaBattle();
+    tia.ferocity = 100; tia.ferocityFever = true;
+    const [first] = shimmerHits(state);
+    expect(first.targetId).toBe(fighters[1].id);
+    // 방금 때린 상대가 아닌 다른 적으로 옮겨 붙는다.
+    expect(tia.targetId).toBe(fighters[2].id);
+
+    tia.attackCooldown = 0; tia.x = fighters[2].x - 60;
+    const [second] = shimmerHits(state);
+    expect(second.targetId).toBe(fighters[2].id);
+    expect(tia.targetId).toBe(fighters[1].id);
+  });
+
+  it("의 폭주는 자신만 두 배로 달리고 아군 이동 속도는 건드리지 않는다", () => {
+    const state = newSkirmish(["tia", "rex"], ["husk-shell"]);
+    const [tia, ally] = state.fighters;
+    const before = moveSpeed(tia, state);
+    const allyBefore = moveSpeed(ally, state);
+    tia.ferocity = 100; tia.ferocityFever = true;
+    expect(moveSpeed(tia, state)).toBeCloseTo(before * 2);
+    expect(moveSpeed(ally, state)).toBe(allyBefore);
+  });
+
+  it("은 적이 하나뿐이면 표적을 풀지 않는다", () => {
+    const { state, tia, fighters } = tiaBattle(["husk-shell"]);
+    tia.ferocity = 100; tia.ferocityFever = true;
+    expect(shimmerHits(state)).toHaveLength(1);
+    expect(tia.targetId).toBe(fighters[1].id);
   });
 });

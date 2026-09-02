@@ -71,6 +71,12 @@ export interface Fighter extends Combatant {
   streakTargetId: string | null;
   /** 같은 상대를 몇 번 이어서 때렸는지. */
   streakCount: number;
+  /**
+   * 지금 반짝이는 표식을 달고 있는 상대(`shimmerMark` 패시브 전용).
+   *
+   * 표식은 공격자가 소유한다 — 대상에 붙여 두면 티아가 둘일 때 서로의 표식을 지운다.
+   */
+  shimmerMarkTargetId: string | null;
   /** 남은 기절 시간(초). 별도 boolean 없이 `stunnedFor > 0`만 행동 차단 기준으로 삼는다. */
   stunnedFor: number;
   /** 남은 경직 시간(초). 기절과 달리 저항·유지 모션 없이 순간적으로만 행동을 끊는다. */
@@ -173,7 +179,7 @@ export type SkirmishEvent =
       kind: "attack";
       attackerId: string;
       targetId: string;
-      skill: "basic" | "ultimate" | "staccato" | "transfer";
+      skill: "basic" | "ultimate" | "staccato" | "transfer" | "shimmer";
       amount: number;
       /** 방어·저항·속성·대상 경감·무효화 전, 공격자가 실제로 만든 점수 기여값이다. */
       contributionAmount: number;
@@ -305,6 +311,7 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     hopPhase: index * 1.3 + (side === "player" ? 0 : 0.65),
     streakTargetId: null,
     streakCount: 0,
+    shimmerMarkTargetId: null,
     // 전투 시작 시 모든 행동 가능 상태이며, 기절은 전투 한정 상태라 저장 스냅샷에서 복원하지 않는다.
     stunnedFor: 0,
     staggeredFor: 0,
@@ -644,7 +651,10 @@ export function moveSpeed(fighter: Fighter, state?: SkirmishState): number {
         && ally.def.ferocityTrait.effectId === "teamMoveSpeedBonus")
       .map((ally) => ally.def.ferocityTrait.effectId === "teamMoveSpeedBonus" ? ally.def.ferocityTrait.bonusPercent : 0))
     : 0;
-  return fighter.def.stats.moveSpeed * SKIRMISH.moveRate * (1 + teamBonus / 100);
+  // 팀 오라와 달리 이크티오 다이브는 폭주한 본인만 빨라진다.
+  const selfBonus = fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "ichthyoDive"
+    ? fighter.def.ferocityTrait.moveSpeedPercent : 0;
+  return fighter.def.stats.moveSpeed * SKIRMISH.moveRate * (1 + teamBonus / 100) * (1 + selfBonus / 100);
 }
 
 /** 화면에 그릴 위치. 발 좌표에 돌진·피격 변위와 뛰어오른 높이를 얹은 값이다. */
@@ -777,6 +787,57 @@ function applyStreak(attacker: Fighter, target: Fighter, events: SkirmishEvent[]
   if (attacker.streakCount < attacker.def.passive.value) return;
   attacker.streakCount = 0;
   refreshBleed(target, BLEED.seconds, BLEED.percentPerSecond, events, attacker.id);
+}
+
+/**
+ * 반짝이는 표식을 옮기고, 옮겨 간 순간에만 추가 마법 피해를 준다.
+ *
+ * 표식은 공격자가 소유한다 — 같은 상대를 계속 때리면 표식이 그대로라 아무 일도 없고,
+ * 표식이 없는 새 상대를 때려야 표식이 옮겨가며 한 번 터진다. 그래서 이 패시브는
+ * "여기저기 첨벙거리는" 이동형 전투와 짝을 이루고, 한 명에게 붙어 있으면 이득이 없다.
+ *
+ * 추가타는 치명타를 판정하지 않고 궁극기·야성 게이지도 충전하지 않는다.
+ */
+function applyShimmerMark(attacker: Fighter, target: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
+  const passive = attacker.def.passive;
+  if (passive.kind !== "shimmerMark" || !isFighterAlive(target)) return;
+  // 이미 이 상대에게 표식이 있으면 옮길 것이 없다.
+  if (attacker.shimmerMarkTargetId === target.id) return;
+  attacker.shimmerMarkTargetId = target.id;
+
+  const input = { power: passive.value, damageType: "magical" as const, scalingStat: "ap" as const, isCritical: false, kind: "basic" as const };
+  const raw = computeDamage(attacker, defensiveDefinition(target, state), input, true);
+  const contributionAmount = computeDamageContribution(attacker, input);
+  const resolution = resolveReceivedDamage(target, raw);
+  const amount = resolution.applied;
+  const hpBefore = target.hp; const shieldBefore = target.shield.amount; const shieldProviderId = target.shield.providerId;
+  applyDamage(target, amount, events);
+  const credited = recordDamageContribution(state, attacker.id, target, "magical", "ap", contributionAmount, resolution, hpBefore, shieldBefore, shieldProviderId);
+  events.push({ kind: "attack", attackerId: attacker.id, targetId: target.id, skill: "shimmer", amount, contributionAmount: credited, critical: false, animate: false,
+    damageType: "magical", mitigated: resolution.reduced < resolution.raw });
+  if (resolution.ignored) events.push({ kind: "damageIgnored", attackerId: attacker.id, targetId: target.id });
+  if (!isFighterAlive(target)) {
+    clearDefeatedStatuses(target);
+    events.push({ kind: "death", fighterId: target.id });
+    state.log.push(`${target.def.name} 전투 불능`);
+  }
+}
+
+/**
+ * 이크티오 다이브. 폭주 중 일반 공격을 마치면 표적을 **다른** 적으로 바꾼다.
+ *
+ * 새 표적을 여기서 고르지 않고 추적만 풀어 다음 프레임의 `resolveTarget`에 맡긴다 — 거리와
+ * 아군 몰림까지 보는 규칙이 한 곳에만 있어야 한다. 다만 방금 때린 상대를 다시 고르면 바꾼
+ * 것이 아니므로, 살아 있는 다른 적이 있을 때만 푼다.
+ */
+function retargetAfterBasic(attacker: Fighter, target: Fighter, state: SkirmishState): void {
+  if (!attacker.ferocityFever || attacker.def.ferocityTrait.effectId !== "ichthyoDive") return;
+  const others = state.fighters.filter((other) => other.side !== attacker.side && other.id !== target.id
+    && isFighterAlive(other) && other.stealthFor <= 0);
+  if (others.length === 0) return;
+  // 가장 가까운 다른 적으로 곧바로 옮겨 붙는다. null로 두면 방금 때린 상대가 다시 뽑힐 수 있다.
+  attacker.targetId = others.reduce((best, other) => distance(attacker, other) < distance(attacker, best) ? other : best).id;
+  attacker.engaged = false;
 }
 
 /** 공격력은 배율로, 백분율 척도인 치명타 피해는 퍼센트포인트로 임시 정의에 반영한다. */
@@ -1025,7 +1086,6 @@ function strike(
   const passiveCritPoints = attacker.def.passive.kind === "battleMaidMastery"
     ? attacker.def.passive.criticalChancePercent ?? 0 : 0;
   const criticalChance = attacker.def.stats.critChance + passiveCritPoints
-    + (attackingInFever && critTrait.effectId === "criticalChanceBonus" ? critTrait.chancePercent : 0)
     + (attackingInFever && critTrait.effectId === "rexBattleQueen" ? critTrait.criticalChancePoints : 0);
   const periodicCritical = !useUltimate ? attacker.def.basic.periodicCritical : undefined;
   if (periodicCritical) {
@@ -1168,6 +1228,9 @@ function strike(
   // 개별 기본 공격·궁극기가 선언한 상태도 피해 처리 뒤 공용 저항/재적용 규칙을 그대로 사용한다.
   applySkillStatuses(target, skill, events, state, attacker.id);
 
+  // 표식은 궁극기가 아니라 실제 타격을 따라 옮겨 다닌다.
+  if (!useUltimate) { applyShimmerMark(attacker, target, state, events); retargetAfterBasic(attacker, target, state); }
+
   // 광역 피해는 주 대상 타격의 부가 결과이며 에너지·야성·연속 공격을 추가 획득하지 않는다.
   if (attackingInFever && splashTrait.effectId === "splashDamage") {
     // 폭주 광역도 같은 범위 표시를 쓴다 — 주 대상 자리에서 반경만큼 번진다.
@@ -1284,7 +1347,6 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
   for (const [index, target] of targets.entries()) {
     // 각 대상은 자기 방어력·속성·피버 경감을 사용하며 치명타도 독립 판정한다.
     const criticalChance = Math.min(100, attacker.def.stats.critChance + passiveCritPoints
-      + (attackingInFever && critTrait.effectId === "criticalChanceBonus" ? critTrait.chancePercent : 0)
       + (attackingInFever && critTrait.effectId === "rexBattleQueen" ? critTrait.criticalChancePoints : 0));
     const critical = isCriticalHit(criticalChance, rng());
     const damageInput = { ...skill, isCritical: critical, kind: useUltimate ? "ultimate" as const : "basic" as const };

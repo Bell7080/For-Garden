@@ -93,5 +93,4 @@
 않는다. 정식 대체물이 병합된 항목만 같은 변경에서 참조와 임시 구현을 함께 제거한다.
 
 - `src/api/FakeSocialServer.ts`, `src/data/friends.ts`: 계정·친구 서버와 공개 프로필 DTO 구현 대기.
-- `src/puppets/tints.ts`, `torika-placeholder` 참조: 각 렐릭의 전용 전신/SD 원화 연결 대기.
 - `src/data/stages.ts`의 고정 적 편성: 스테이지별 운영 편성 데이터 연결 대기.

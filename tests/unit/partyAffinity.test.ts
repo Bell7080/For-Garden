@@ -19,13 +19,13 @@ describe("파티 속성 미리보기", () => {
   });
 
   it("자동 배치는 적 전체에 대한 속성 점수가 높은 셋을 안정적으로 고른다", () => {
-    const roster = [getRelic("rex"), getRelic("anky"), getRelic("spino"), getRelic("dodo"), getRelic("smilo")];
+    const roster = [getRelic("rex"), getRelic("anky"), getRelic("spino"), getRelic("dodo"), getRelic("tia")];
     const enemies = [getRelic("husk-raptor"), getRelic("husk-shell"), getRelic("husk-wing")];
-    expect(autoPickParty(roster, enemies)).toEqual(["spino", "smilo", "anky"]);
+    expect(autoPickParty(roster, enemies)).toEqual(["spino", "tia", "anky"]);
   });
 
   it("선택 렐릭이 적 다수에게 유리하면 위 방향이다", () => {
-    expect(relicAffinityDirection(getRelic("rex"), [getRelic("dodo"), getRelic("smilo")])).toBe("up");
+    expect(relicAffinityDirection(getRelic("rex"), [getRelic("dodo"), getRelic("luka")])).toBe("up");
   });
 
   it("선택 렐릭이 적 다수에게 불리하면 아래 방향이다", () => {

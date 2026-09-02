@@ -5,7 +5,6 @@ import { contributionRenderModel, CONTRIBUTION_CATEGORIES } from "./battleContri
 import { Button } from "./Button";
 import { FaceFrame } from "./FaceFrame";
 import { HoloBar } from "./holo";
-import { relicCardTint } from "./PortraitCard";
 import type { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
 
@@ -51,7 +50,7 @@ export class BattleContributionPopup {
           // 이름만으로는 늘어선 다섯 줄에서 누구인지 한눈에 읽히지 않아, 재화 액자와 같은
           // 사각 액자에 얼굴을 담아 이름 앞에 붙인다.
           const relic = getRelic(row.source.portraitId);
-          content.add(new FaceFrame(this.scene, -418, y, { portraitAssetId: relic.portraitAssetId, tint: relicCardTint(relic), size: 88 }));
+          content.add(new FaceFrame(this.scene, -418, y, { portraitAssetId: relic.portraitAssetId, size: 88 }));
           content.add(this.scene.add.text(-350, y, name, textStyle({ role: "body", size: 27, color: COLOR.ink })).setOrigin(0, 0.5).setFixedSize(480, 48));
           content.add(this.scene.add.text(360, y, row.value, textStyle({ role: "display", size: 27, color: COLOR.inkDim })).setOrigin(1, 0.5));
           const bar = new HoloBar(this.scene, 0, y + 55, 720, 18, { color: rows.color, trackAlpha: 0.48 });

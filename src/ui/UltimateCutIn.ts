@@ -1,7 +1,6 @@
 import Phaser from "phaser";
 import type { RelicDef } from "../core/types";
-import { portraitAssetFor, portraitUsesRelicTint, spawnPuppet } from "../puppets/assets";
-import { tintFor } from "../puppets/tints";
+import { portraitAssetFor, spawnPuppet } from "../puppets/assets";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { COLOR, textStyle } from "./theme";
 import type { UltimatePresentation } from "../data/ultimatePresentations";
@@ -66,7 +65,6 @@ export class UltimateCutIn extends Phaser.GameObjects.Container {
       portrait = await spawnPuppet(scene, asset, {
         // 데이터의 기준점과 배율만 해석하며 렐릭 ID에 따른 UI 분기는 만들지 않는다.
         focus: { anchor: "core", ...presentation.artworkOrigin }, height: 1280 * presentation.artworkScale,
-        tint: portraitUsesRelicTint(relic.portraitAssetId) ? tintFor(relic.id) : 0xffffff,
       });
     } catch (error) {
       // 로딩 실패는 호출자에게 전달하되 await 전에 만든 빈 컨테이너는 이 경계에서 회수한다.

@@ -3,8 +3,7 @@ import type { PuppetCreature } from "../puppets/assets";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugScene } from "../debug";
 import { getRelic } from "../data/relics";
-import { enableHitOnClick, portraitAssetFor, portraitUsesRelicTint, spawnPuppet } from "../puppets/assets";
-import { mixWhite, tintFor } from "../puppets/tints";
+import { enableHitOnClick, portraitAssetFor, spawnPuppet } from "../puppets/assets";
 import { session } from "../state/session";
 import { BottomNav, NAV_TOP } from "../ui/BottomNav";
 import { Button } from "../ui/Button";
@@ -508,7 +507,6 @@ export class LobbyScene extends Phaser.Scene {
       groundY: LOBBY_BOX.top + height,
       height,
       // 전용 원화가 연결된 두 캐릭터는 원본 색을 유지한다.
-      tint: portraitUsesRelicTint(def.portraitAssetId) ? mixWhite(tintFor(def.id), 0.55) : undefined,
       depth: -20,
     });
     enableHitOnClick(this, this.favorite);

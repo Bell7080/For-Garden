@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { RelicDef } from "../../src/core/types";
 import { compareBookmarkedOwnedRelics, getRelicCatalogDisclosure } from "../../src/core/relicCatalog";
 import { PLAYABLE_RELICS, RELICS, sortRelicsBySpecimenNumber, validateSpecimenNumbers } from "../../src/data/relics";
-import { TIARA_PORTRAIT_METADATA, TIARA_SD_METADATA } from "../../src/puppets/assetMetadata";
+import { TIA_PORTRAIT_METADATA, TIA_SD_METADATA } from "../../src/puppets/assetMetadata";
 
 /** 현재 시점의 다른 인간 연구원을 암시하는 표현만 탐지해, 일반적인 '연구원' 용례는 과도하게 막지 않는다. */
 const FORBIDDEN_PRESENT_RESEARCHER_PHRASES = ["연구원 한 명", "다른 연구원", "연구원들"] as const;
@@ -136,22 +136,22 @@ describe("relic catalog", () => {
     const sorted = sortRelicsBySpecimenNumber(PLAYABLE_RELICS);
     // 루카를 포함해 배열 등록 순서와 무관하게 도감 번호가 정렬되는지 고정한다.
     // 신규 메테 163번도 기존 앞자리 보존 문자열 순서의 마지막에 안정적으로 정렬된다.
-    expect(sorted.map((relic) => relic.specimenNumber)).toEqual(["001", "014", "038", "044", "072", "093", "105", "118", "163"]);
+    expect(sorted.map((relic) => relic.specimenNumber)).toEqual(["001", "014", "038", "072", "105", "118", "163"]);
   });
 
-  it("8번 Puppet 캐릭터 티아라를 전용 원화·SD와 함께 공개한다", () => {
+  it("8번 Puppet 캐릭터 티아를 전용 원화·SD와 함께 공개한다", () => {
     // 도감·가챠·정보창이 함께 읽는 단일 정적 정의에 전용 원화 키가 연결되어야 한다.
-    expect(PLAYABLE_RELICS.find((relic) => relic.id === "tiara")).toMatchObject({
-      name: "티아라",
+    expect(PLAYABLE_RELICS.find((relic) => relic.id === "tia")).toMatchObject({
+      name: "티아",
       origin: "이크티오사우루스",
-      portraitAssetId: "tiara",
+      portraitAssetId: "tia",
       rarity: "R",
       element: "water",
       role: "warrior",
       squad: "rogue",
     });
     // 실측 alpha 경계가 캔버스를 벗어나거나 0폭으로 적히면 카드·전신 배율이 통째로 틀어진다.
-    for (const metadata of [TIARA_PORTRAIT_METADATA, TIARA_SD_METADATA]) {
+    for (const metadata of [TIA_PORTRAIT_METADATA, TIA_SD_METADATA]) {
       expect(metadata.content.left).toBeGreaterThanOrEqual(0);
       expect(metadata.content.top).toBeGreaterThanOrEqual(0);
       expect(metadata.content.right).toBeLessThanOrEqual(metadata.imageWidth);

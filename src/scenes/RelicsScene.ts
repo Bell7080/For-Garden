@@ -10,7 +10,7 @@ import { BottomNav, NAV_TOP } from "../ui/BottomNav";
 import { Button } from "../ui/Button";
 import { CharacterInfoManager } from "../managers/CharacterInfoManager";
 import { TopBar } from "../ui/TopBar";
-import { PortraitCard, relicCardTint } from "../ui/PortraitCard";
+import { PortraitCard } from "../ui/PortraitCard";
 import { PORTRAIT_GRID_MASK_GAP, portraitGridFirstRowY } from "../ui/portraitGrid";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { COLOR, textStyle } from "../ui/theme";
@@ -232,7 +232,6 @@ export class RelicsScene extends Phaser.Scene {
         width: cardW,
         height: cardH,
         portraitAssetId: relic.portraitAssetId,
-        tint: relicCardTint(relic),
         label: relic.name,
         level: owned ? relicProgression.getProgress(relic.id).level : undefined,
         rarity: relic.rarity,

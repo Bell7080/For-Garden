@@ -5,8 +5,7 @@ import type { PopupLayer } from "./PopupLayer";
 import { COLOR, PROFILE_MODIFIER_RARITY_COLOR, textStyle } from "./theme";
 import { setDebugPlayerProfileOpen } from "../debug";
 import { compactProfileText, PLAYER_PROFILE_LAYOUT } from "./playerProfileLayout";
-import { PortraitCard, relicCardTint } from "./PortraitCard";
-import { getRelic } from "../data/relics";
+import { PortraitCard } from "./PortraitCard";
 import { drawGlyph } from "./glyphs";
 import { Button } from "./Button";
 
@@ -64,10 +63,9 @@ export class PlayerProfilePopup {
         body.add(this.scene.add.text(x + textOffset, y + 18, compactProfileText(value, 16), textStyle({ role: "emphasis", size: 24 })).setOrigin(0, 0.5));
       };
       if (stats.favoriteRelic) {
-        const relic = getRelic(stats.favoriteRelic.relicId);
         addStatChip(layout.stats.leftX, layout.stats.firstY, "애착 렐릭", stats.favoriteRelic.displayName, undefined, -50);
         // 안전한 공개 portraitAssetId를 공용 PortraitCard에 전달하며 별도 크롭/원화 fallback을 만들지 않는다.
-        body.add(new PortraitCard(this.scene, layout.stats.leftX - 112, layout.stats.firstY, { width: 92, height: 112, portraitAssetId: stats.favoriteRelic.portraitAssetId, tint: relicCardTint(relic) }));
+        body.add(new PortraitCard(this.scene, layout.stats.leftX - 112, layout.stats.firstY, { width: 92, height: 112, portraitAssetId: stats.favoriteRelic.portraitAssetId }));
       } else addStatChip(layout.stats.leftX, layout.stats.firstY, "애착 렐릭", "미지정");
       if (stats.arenaTier) addStatChip(layout.stats.rightX, layout.stats.firstY, "결투장 티어", stats.arenaTier.displayName, "arena-tier");
       addStatChip(layout.stats.leftX, layout.stats.secondY, "최대 클리어", stats.highestStage?.displayValue ?? "기록 없음");

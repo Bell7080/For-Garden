@@ -20,7 +20,7 @@ export type Role = "warrior" | "tank" | "assassin" | "support";
 export type RelicRarity = "R" | "SR" | "SSR";
 
 /** 전신 Puppet 레지스트리의 안정적인 데이터 키다. 파일 번호를 게임 데이터에 직접 노출하지 않는다. */
-export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tiara" | "toby" | "amo" | "ripa" | "pontos" | "torika-placeholder";
+export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "toby" | "amo" | "ripa" | "pontos";
 
 export interface Stats {
   /** 생존력과 물리·마법 공격의 기반이 되는 주 능력치다. */
@@ -203,14 +203,12 @@ export type Ultimate = Skill & {
 export type PassiveKind =
   /** 전방에 있을 때 받는 피해 감소 */
   | "frontGuard"
-  /** 스왑으로 막 전방에 나온 직후 첫 공격 강화 */
-  | "swapMomentum"
-  /** 후방에 있을 때 매 턴 전방 아군을 조금씩 회복 */
-  | "rearMend"
   /** 체력이 절반 이하가 되면 전투당 한 번 지속 회복 */
   | "emergencyRecovery"
   /** 같은 상대를 연속으로 때리면 출혈을 남긴다 */
   | "bleedStreak"
+  /** 티아 전용: 타격한 적에게 표식을 남기고, 표식이 없는 적을 때리면 표식을 옮기며 추가 마법 피해를 준다. */
+  | "shimmerMark"
   /** 렉시아 전용: 공격 속도·공격력·치명타 확률·치명타 피해를 함께 강화한다. */
   | "battleMaidMastery"
   /** 스피나 전용: 기본 공격의 실제 적중마다 공속을 전투 한정으로 영구 누적한다. */
@@ -229,7 +227,6 @@ export type FerocityEffectId =
   | "attackIntervalReduction"
   | "damageReduction"
   | "splashDamage"
-  | "criticalChanceBonus"
   | "teamMoveSpeedBonus"
   /** 저장 호환용 이름은 도약이지만, 전투에서는 보간 이동 없이 같은 발동 프레임에 좌표를 즉시 변경한다. */
   | "stealthLeap"
@@ -240,7 +237,9 @@ export type FerocityEffectId =
   /** 메테 전용: 폭주 중 아군 일반 공격 적중마다 스타카토 추가타를 연주한다. */
   | "crescendoStaccato"
   /** 루카 전용: 은신과 무리 사냥 재지정, 동일 표적 팀 공속 오라를 함께 식별한다. */
-  | "packHunt";
+  | "packHunt"
+  /** 티아 전용: 자기 이동 속도를 올리고 일반 공격마다 표적을 다른 적으로 바꾼다. */
+  | "ichthyoDive";
 
 /**
  * 개체별 피버 발현 정적 데이터다.
@@ -271,9 +270,9 @@ export type FerocityTrait = {
       bonusPercent: number;
     }
   | {
-      effectId: "criticalChanceBonus";
-      /** 기존 치명타 확률에 곱하지 않고 그대로 더하는 퍼센트포인트 수치다. */
-      chancePercent: number;
+      effectId: "ichthyoDive";
+      /** 폭주 중 자기 이동 속도에 더하는 퍼센트다. 100이면 두 배로 달린다. */
+      moveSpeedPercent: number;
     }
   | {
       effectId: "rexBattleQueen";

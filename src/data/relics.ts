@@ -441,7 +441,7 @@ export const RELICS: RelicDef[] = [
     element: "water",
     role: "warrior",
     // 물가에서 주워 오는 것이 곧 그 아이의 일이라, 발굴 특화도 화석 회수 쪽에 붙인다.
-    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 18, efficiencyMultiplier: 1.06 },
+    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 0.28, efficiencyMultiplier: 1.06 },
     // 앞으로 뛰어드는 전사지만 피해는 주문력에서 나온다 — 물살 자체가 무기라 공격력이 낮고
     // 주문력이 높으며, 어린 유체라 체력과 방어는 같은 등급의 탱커보다 낮게 잡는다.
     stats: {
@@ -582,6 +582,97 @@ export const RELICS: RelicDef[] = [
       targeting: "battlefieldAllies",
       // 지속 회복은 순풍 태그가 아니라 이 궁극기가 얹는 값이다 — 다른 개체가 건 순풍은 회복을 데려오지 않는다.
       teamBuff: { kind: "tailwind", attackSpeedPercent: 20, moveSpeedPercent: 20, seconds: 10, maxHpRegenPercentPerSecond: 2 },
+    },
+  },
+
+  {
+    id: "meron",
+    squad: "rune",
+    name: "메론",
+    specimenNumber: "047",
+    projectName: "QUIET SKETCH",
+    excavationSite: "피스코 분지 해성 실트암 하부",
+    // 발굴 기록은 장소·보존 상태·복원 연구 특징만 담고, 복원 이후 생활 관찰과 분리한다.
+    fossilRecord: "해성 실트암 하부에서 아직 다 자라지 않은 이빨 열이 턱뼈째 발견됐다. 성체 표본의 절반에도 못 미치는 크기라 처음에는 다른 종으로 분류했다.",
+    observationProfile: {
+      originYear: "약 1천 5백만 년 전",
+      // E.C.는 메론의 인간형 신체 나잇대이며, 원종 화석의 유체 단계와 독립된 값이다.
+      restorationYear: "E.C. 18년",
+      lifeStage: "유체",
+      height: "1.58 m",
+      weight: "44 kg",
+    },
+    catalogSummary: "신장 1.58m, 체중 44kg의 인간형 체격에 등지느러미형 후드와 긴 꼬리가 확인된 유체 상어 표본.",
+    // 유체 화석에서 복원한 이유를 세계관 안의 판단으로 남긴다 — 성체 표본은 복원 자체가 통제 밖이다.
+    unlockRecord: { status: "recorded", text: "성체 표본의 파장은 리바이어던급이라 복원 승인이 나지 않았고, 연구소는 힘이 덜 여문 유체 쪽을 골랐다. 복원 후 메론은 케어실 구석 가장 서늘한 자리에 앉아 하루 종일 무언가를 그린다. 말을 걸면 스케치북을 가슴에 붙이고 앞머리 뒤로 숨지만, 다음 날 아침이면 그 사람의 얼굴이 그려진 스티커가 문 앞에 한 장 붙어 있다. 전장에서도 적을 똑바로 보지 못해 시선을 내린 채 손끝으로만 윤곽을 뜨는데, 그렇게 그려진 자국이 남은 적은 동료들의 타격에 유난히 크게 무너진다." },
+    squadNote: "사일런트 룬의 기록 담당. 케어실을 드나든 렐릭의 얼굴을 한 장씩 그려 벽에 붙여 두고, 정작 자기 그림 이야기가 나오면 후드를 뒤집어쓴다.",
+    researcherTitle: "연구원 씨",
+    rarity: "SSR",
+    portraitAssetId: "meron",
+    origin: "메갈로돈",
+    element: "water",
+    role: "support",
+    // 그림으로 표본을 기록하는 담당이라 발굴 특화도 화석 회수 쪽에 붙인다.
+    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 0.28, efficiencyMultiplier: 1.14 },
+    // 앞에 나서지 못하는 지원가라 화력과 발이 느리고, 대신 오래 서 있도록 체력과 저항이 두껍다.
+    stats: {
+      hp: 1000,
+      def: 74,
+      res: 112,
+      atk: 66,
+      ap: 144,
+      attackSpeed: 92,
+      moveSpeed: 86,
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 0,
+    },
+    // 소심해서 자기가 나서지 못하는 아이라, 폭주는 제 화력이 아니라 아군의 손을 빌리는 쪽으로 발현한다.
+    ferocityTrait: {
+      name: "네? 마음에 안 드신다고요...?",
+      effectId: "sharedOverpaint",
+      overpaint: { kind: "overpaint", seconds: 8, damageTakenPercent: 6, maxStacks: 5 },
+    },
+    passive: {
+      // kind가 overpaintSiphon인 패시브는 passiveDescription()이 구조화 필드로 다시 문장을 만들므로
+      // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
+      id: "meron-passive",
+      name: "스케치 시작",
+      kind: "overpaintSiphon",
+      iconAssetId: "skill-icon-healing",
+      effectType: "healing",
+      // 덧칠된 적에게 입힌 실제 HP 피해 중 때린 본인이 회복하는 비율(%)이다.
+      value: 10,
+      desc: "아군이 덧칠된 적을 맞히면 그 피해의 10%만큼 자신의 체력을 회복한다.",
+    },
+    basic: {
+      id: "meron-basic",
+      name: "러프 크로키",
+      power: 70,
+      // 물살이 아니라 그림이라 계수는 주문력에서 나온다.
+      scalingStat: "ap",
+      iconAssetId: "skill-icon-magical",
+      effectType: "magical",
+      damageType: "magical",
+      targeting: "single",
+      statusEffects: [{ kind: "overpaint", seconds: 8, damageTakenPercent: 6, maxStacks: 5 }],
+    },
+    ultimate: {
+      id: "meron-ult",
+      name: "완성_진짜 마지막(4)",
+      // 폭발형 궁극기라 이 위력은 총량이 아니라 **덧칠 한 겹당** 값이다. 다섯 겹까지 칠한
+      // 적에게는 주문력의 600%가 되고, 한 겹도 없는 적은 대상에서 빠진다.
+      power: 120,
+      overpaintDetonation: true,
+      scalingStat: "ap",
+      iconAssetId: "skill-icon-magical",
+      effectType: "magical",
+      damageType: "magical",
+      cost: 260,
+      // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
+      targeting: "battlefieldEnemies",
     },
   },
 

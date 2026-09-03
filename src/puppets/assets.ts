@@ -22,6 +22,8 @@ import {
   PONTOS_PORTRAIT_METADATA,
   PONTOS_SD_METADATA,
   SEIRA_PORTRAIT_METADATA,
+  MERON_PORTRAIT_METADATA,
+  MERON_SD_METADATA,
   STELLA_PORTRAIT_METADATA,
   TIA_PORTRAIT_METADATA,
   TIA_SD_METADATA,
@@ -128,6 +130,12 @@ export const STELLA_ASSET: PuppetAsset = {
   ...STELLA_PORTRAIT_METADATA,
 };
 
+/** 9번 전신 일러스트: 메론(메갈로돈 유체). */
+export const MERON_ASSET: PuppetAsset = {
+  url: `${base}puppets/char_009.zip`,
+  ...MERON_PORTRAIT_METADATA,
+};
+
 /** 8번 전신 일러스트: 티아(이크티오사우루스). */
 export const TIA_ASSET: PuppetAsset = {
   url: `${base}puppets/char_008.zip`,
@@ -199,6 +207,7 @@ const PORTRAIT_ASSETS = {
   mette: METTE_ASSET,
   stella: STELLA_ASSET,
   tia: TIA_ASSET,
+  meron: MERON_ASSET,
   // 적도 전용 전신을 가진다. 초상 레지스트리에 함께 두면 정보창이 아군·적을 가르지 않고
   // 같은 경로로 원화를 찾는다 — 화면마다 "적이면 다른 함수"를 두면 한 곳을 고칠 때 다른
   // 곳이 임시 원화로 남는다.
@@ -289,6 +298,12 @@ export const STELLA_SD_ASSET: PuppetAsset = {
   content: { left: 49, top: 83, right: 1175, bottom: 1179 },
 };
 
+/** 9번 SD: 메론. */
+export const MERON_SD_ASSET: PuppetAsset = {
+  url: `${base}puppets/charSD_009.zip`,
+  ...MERON_SD_METADATA,
+};
+
 /** 8번 SD: 티아. */
 export const TIA_SD_ASSET: PuppetAsset = {
   url: `${base}puppets/charSD_008.zip`,
@@ -310,6 +325,7 @@ export function battleAssetFor(relicId: string): PuppetAsset {
   if (relicId === "mette") return METTE_SD_ASSET;
   if (relicId === "tia") return TIA_SD_ASSET;
   if (relicId === "stella") return STELLA_SD_ASSET;
+  if (relicId === "meron") return MERON_SD_ASSET;
   return TORIKA_SD_ASSET;
 }
 

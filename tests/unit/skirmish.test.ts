@@ -1987,3 +1987,118 @@ describe("스테라 정적 전투 계약", () => {
     expect(tryTriggerLowHpVanish(stella, state)).toBe(false);
   });
 });
+
+describe("메론 정적 전투 계약", () => {
+  /** 메론과 아군 하나를 세우고 적을 굳혀 덧칠만 관찰한다. */
+  function meronBattle(allies = ["meron", "rex"]) {
+    const state = newSkirmish(allies, ["husk-shell"]);
+    const [meron, ...rest] = state.fighters;
+    meron.x = 400; meron.y = 1000; meron.attackCooldown = 0;
+    for (const enemy of state.fighters.filter((fighter) => fighter.side === "enemy")) {
+      enemy.x = 460; enemy.y = 1000; enemy.attackCooldown = 99;
+      enemy.maxHp = 400_000; enemy.hp = 400_000;
+    }
+    for (const ally of rest.filter((fighter) => fighter.side === "player")) {
+      ally.attackCooldown = 99; ally.x = 420; ally.y = 1000;
+    }
+    const enemy = state.fighters.find((fighter) => fighter.side === "enemy")!;
+    meron.targetId = enemy.id;
+    return { state, meron, ally: state.fighters[1], enemy };
+  }
+
+  it("의 기본 공격은 적에게 덧칠을 쌓고 상한에서 멈춘다", () => {
+    const { state, meron, enemy } = meronBattle(["meron"]);
+    const paint = meron.def.basic.statusEffects![0];
+    if (paint.kind !== "overpaint") throw new Error("메론의 덧칠 효과가 아니다");
+
+    stepSkirmish(state, 1 / 60);
+    expect(enemy.overpaint).toMatchObject({ stacks: 1, percentPerStack: paint.damageTakenPercent, maxStacks: paint.maxStacks });
+
+    // 같은 대상을 계속 때리면 겹치되 상한을 넘지 않는다.
+    run(state, 30);
+    expect(enemy.overpaint!.stacks).toBe(paint.maxStacks);
+    // 다시 칠할 때마다 지속 시간이 처음으로 되돌아간다.
+    expect(enemy.overpaint!.remaining).toBeGreaterThan(0);
+
+    // 아무도 칠하지 않으면 시간이 다 되어 스스로 지워진다.
+    meron.attackCooldown = 999;
+    run(state, paint.seconds + 1);
+    expect(enemy.overpaint).toBeNull();
+  });
+
+  it("덧칠은 겹친 만큼 그 적이 받는 모든 피해를 키운다", () => {
+    const { enemy } = meronBattle(["meron"]);
+    const plain = receivedDamage(enemy, 1000);
+    enemy.overpaint = { remaining: 8, stacks: 3, percentPerStack: 6, maxStacks: 5 };
+    expect(receivedDamage(enemy, 1000)).toBeCloseTo(plain * 1.18);
+    // 시간이 다 된 표식은 남아 있어도 세지 않는다.
+    enemy.overpaint = { ...enemy.overpaint, remaining: 0 };
+    expect(receivedDamage(enemy, 1000)).toBeCloseTo(plain);
+  });
+
+  it("의 패시브는 덧칠된 적을 때린 아군 본인을 그 피해만큼 회복시킨다", () => {
+    const { state, meron, ally, enemy } = meronBattle();
+    expect(meron.def.passive.kind).toBe("overpaintSiphon");
+    const share = meron.def.passive.value!;
+
+    // 첫 타는 덧칠이 없던 순간의 타격이라 회복을 만들지 않는다.
+    meron.hp = 1; ally.hp = 1;
+    const first = stepSkirmish(state, 1 / 60);
+    expect(first.filter((event) => event.kind === "heal")).toEqual([]);
+    expect(enemy.overpaint!.stacks).toBe(1);
+    expect(meron.hp).toBe(1);
+
+    // 이미 칠해진 뒤로는 때린 아군만 회복한다 — 손을 놓은 아군은 받지 않는다.
+    const hpBefore = enemy.hp;
+    const events = stepSkirmish(state, 1 / 60);
+    const dealt = hpBefore - enemy.hp;
+    if (dealt > 0) {
+      const healed = events.filter((event) => event.kind === "heal" && event.fighterId === meron.id);
+      expect(healed).toHaveLength(1);
+      expect(meron.hp).toBeCloseTo(1 + dealt * share / 100);
+    }
+    // 때리지 않은 아군은 그대로다 — 이 패시브는 팀 힐이 아니라 때린 사람의 몫이다.
+    expect(ally.hp).toBe(1);
+  });
+
+  it("의 궁극기는 겹당 위력으로 터지고 칠하지 않은 적은 아예 맞지 않는다", () => {
+    const cast = (stacks: number) => {
+      const { state, meron, enemy } = meronBattle(["meron"]);
+      enemy.overpaint = stacks > 0 ? { remaining: 8, stacks, percentPerStack: 0, maxStacks: 5 } : null;
+      meron.energy = meron.def.ultimate.cost;
+      const hpBefore = enemy.hp;
+      fireUltimate(state, meron.id);
+      return { dealt: hpBefore - enemy.hp, enemy, meron, state };
+    };
+
+    expect(getRelic("meron").ultimate.overpaintDetonation).toBe(true);
+    // 한 겹도 없으면 터뜨릴 그림이 없어 피해도 없고 궁극기 게이지도 그대로다.
+    const bare = cast(0);
+    expect(bare.dealt).toBe(0);
+    expect(bare.meron.energy).toBe(bare.meron.def.ultimate.cost);
+
+    // 겹 수가 곧 배율이라 네 겹은 한 겹의 네 배로 들어간다.
+    const one = cast(1);
+    const four = cast(4);
+    expect(four.dealt / one.dealt).toBeCloseTo(4, 5);
+    // 완성작을 공개한 자리에는 밑그림이 남지 않는다.
+    expect(four.enemy.overpaint).toBeNull();
+  });
+
+  it("의 폭주는 아군 전체의 일반 공격에 덧칠을 얹는다", () => {
+    const { state, meron, ally, enemy } = meronBattle();
+    const trait = getRelic("meron").ferocityTrait;
+    if (trait.effectId !== "sharedOverpaint") throw new Error("메론의 폭주 특성이 아니다");
+
+    // 메론은 손을 놓고 아군만 때린다 — 평소에는 아무것도 칠해지지 않는다.
+    meron.attackCooldown = 999;
+    ally.attackCooldown = 0; ally.targetId = enemy.id;
+    stepSkirmish(state, 1 / 60);
+    expect(enemy.overpaint).toBeNull();
+
+    meron.ferocity = 100; meron.ferocityFever = true;
+    ally.attackCooldown = 0;
+    stepSkirmish(state, 1 / 60);
+    expect(enemy.overpaint).toMatchObject({ stacks: 1, percentPerStack: trait.overpaint.damageTakenPercent });
+  });
+});

@@ -438,3 +438,42 @@ describe("공격 속도 복합 궁극기 수치 태그", () => {
     expect(attackSpeedCompositeDamageKeyword({ power: 200 }, 100, 120)).toBeUndefined();
   });
 });
+
+describe("메론 스킬 표시 계약", () => {
+  const meron = () => RELICS.find((def) => def.id === "meron")!;
+
+  it("의 기본 공격은 덧칠의 겹 상한과 겹당 값을 본문이 직접 말한다", () => {
+    const def = meron();
+    // 겹 상한과 한 겹의 값이 곧 이 스킬의 수치라 키워드가 아니라 본문이 적는다.
+    expect(def.basic.statusEffects).toEqual([{ kind: "overpaint", seconds: 8, damageTakenPercent: 6, maxStacks: 5 }]);
+    expect(skillDescription(def.basic, { damage: 101 })).toBe(
+      "적 한 명에게 [[damage-value|101]]의 [[magical-damage|마법 피해]]를 주고 [[overpaint|덧칠]]을 한 겹 쌓는다(최대 5겹, 겹마다 받는 피해 +6%).",
+    );
+  });
+
+  it("의 궁극기는 총 피해가 아니라 겹당 피해로 말한다", () => {
+    const def = meron();
+    expect(def.ultimate).toMatchObject({ targeting: "battlefieldEnemies", overpaintDetonation: true, power: 120 });
+    // "적 전체에 얼마"로 적으면 한 겹 칠한 적과 다섯 겹 칠한 적이 같은 수를 맞는 것처럼 읽힌다.
+    expect(skillDescription(def.ultimate, { damage: 172 })).toBe(
+      "전장의 모든 적에게 쌓인 [[overpaint|덧칠]]을 터뜨려 한 겹마다 [[damage-value|172]]의 [[magical-damage|마법 피해]]를 주고, 그 덧칠을 지운다.",
+    );
+    // 능력치를 모르는 도감에서는 어느 능력치에서 나오는 배율인지 함께 말한다.
+    expect(skillDescription(def.ultimate)).toContain("주문력의 120%");
+  });
+
+  it("의 패시브와 폭주는 회복 대상과 덧칠의 주인을 분명히 말한다", () => {
+    const def = meron();
+    // 회복은 팀 힐이 아니라 때린 본인의 몫이다.
+    expect(passiveDescription(def.passive, def.stats.atk)).toBe(
+      "모든 아군이 [[overpaint|덧칠]]된 적을 맞히면 그 피해의 10%만큼 자신의 체력을 회복한다.",
+    );
+    expect(ferocityTraitDescription(def.ferocityTrait)).toBe(
+      "폭주 중 모든 아군의 [[basic-attack|기본 공격]]이 [[overpaint|덧칠]]을 함께 쌓는다.",
+    );
+  });
+
+  it("의 덧칠은 전역 키워드로 정의되어 설명문이 뜻을 다시 적지 않는다", () => {
+    expect(KEYWORDS.some((keyword) => keyword.id === "overpaint")).toBe(true);
+  });
+});

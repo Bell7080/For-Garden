@@ -46,6 +46,10 @@ export const KEYWORDS: readonly KeywordDef[] = [
     description: "약 0.1초 동안 행동을 멈춘다. 짧지만 진행 중인 시전을 끊을 수 있다.",
   },
   {
+    id: "overpaint", term: "덧칠", kind: "디버프",
+    description: "겹쳐 칠할수록 그 적이 **받는 모든 피해**가 커진다. 스스로는 피해를 주지 않고 파티 전체의 타격을 키우며, 다시 칠하면 유지 시간이 처음부터 다시 흐른다.",
+  },
+  {
     id: "tailwind", term: "순풍", kind: "버프",
     description: "정해진 시간 동안 공격 속도와 이동 속도가 각각 20% 오른다. 같은 순풍을 다시 받으면 남은 시간이 더 긴 쪽으로 갱신된다.",
   },

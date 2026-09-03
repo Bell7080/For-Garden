@@ -80,6 +80,25 @@ export const TIA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   cardZoom: 1.12,
 };
 
+/**
+ * 9번 메론(메갈로돈) 전신.
+ *
+ * 후드와 꼬리가 오른쪽으로 크게 뻗어 실루엣이 넓지만, 캔버스 왼쪽 186px은 통째로 비어 있다.
+ * 실측 경계를 그대로 적어 두면 배율이 그림 폭을 따라가고 얼굴도 다른 카드와 같은 크기로 선다.
+ */
+export const MERON_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1086,
+  imageHeight: 1448,
+  content: { left: 186, top: 10, right: 1031, bottom: 1440 },
+};
+
+/** 메론 SD ZIP의 정사각 원본과 alpha > 16 경계다. */
+export const MERON_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254,
+  imageHeight: 1254,
+  content: { left: 197, top: 13, right: 1057, bottom: 1241 },
+};
+
 /** 티아 SD ZIP의 정사각 원본과 alpha > 16 경계다. */
 export const TIA_SD_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1254,

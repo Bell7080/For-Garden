@@ -66,10 +66,18 @@ export const BATTLE_STATUS_LAYOUT = {
   popupBodyOffsetRatio: 0.72,
 } as const;
 
-export interface StatusBadgeOffsets { stunX: number; bleedX: number }
+export interface StatusBadgeOffsets { stunX: number; bleedX: number; overpaintX: number }
 
-/** 기절을 체력 바 가까이에 고정하고 출혈은 동시 표시일 때만 한 칸 바깥으로 민다. */
-export function statusBadgeOffsets(stunned: boolean): StatusBadgeOffsets {
+/**
+ * 기절을 체력 바 가까이에 고정하고 나머지는 켜진 것만 한 칸씩 바깥으로 민다.
+ *
+ * 꺼진 상태의 자리를 비워 두지 않는 이유는, 빈칸을 남기면 하나가 사라질 때 남은 뱃지가
+ * 제자리에 있는데도 줄이 비어 보이기 때문이다. 순서는 **행동을 막는 것부터** — 기절, 출혈,
+ * 덧칠 순으로 체력 바에서 멀어진다.
+ */
+export function statusBadgeOffsets(stunned: boolean, bleeding = false): StatusBadgeOffsets {
   const first = -BATTLE_STATUS_LAYOUT.firstOffsetX;
-  return { stunX: first, bleedX: first - (stunned ? BATTLE_STATUS_LAYOUT.badgeGap : 0) };
+  const gap = BATTLE_STATUS_LAYOUT.badgeGap;
+  const bleedX = first - (stunned ? gap : 0);
+  return { stunX: first, bleedX, overpaintX: bleedX - (bleeding ? gap : 0) };
 }

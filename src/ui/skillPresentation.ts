@@ -128,7 +128,7 @@ function passiveHead(passive: Passive, atk?: number): string {
     return `생존 중 아군 [[attack-speed|공격 속도]]를 ${passive.teamAttackSpeedPercent}% 높인다. 아군이 [[crowd-control|군중제어]]에 걸리면 즉시 정화하고 ${shieldText} 보호막을 부여한다.`;
   }
   if (passive.kind === "abyssalPressure") return `완전히 경과한 매초 기본 [[ap|주문력]]의 ${passive.apPercentPerSecond}%가 복리로 누적된다. 현재 체력이 최대 체력의 100%에서 ${passive.maxReductionAtHpPercent}%로 낮아질수록 받는 모든 피해 감소가 ${passive.baseDamageReductionPercent}%에서 ${passive.maxDamageReductionPercent}%까지 선형으로 증가하며, 그 이하에서는 최대치로 제한된다. 최종 받는 피해가 ${passive.ignoreDamageAtOrBelow} 이하인 공격은 무효화한다.`;
-  if (passive.kind === "overpaintSiphon") return `모든 아군이 [[overpaint|덧칠]]된 적을 맞히면 그 피해의 ${passive.value}%만큼 자신의 체력을 회복한다.`;
+  if (passive.kind === "overpaintSiphon") return `모든 아군이 [[overpaint|덧칠]]된 적을 맞히면 그 피해의 ${passive.value}%만큼 자신의 체력을 회복한다. 표적의 [[overpaint|덧칠]]이 최대로 쌓이면 다른 적으로 표적을 옮긴다.`;
   if (passive.kind === "lowHpVanish") return `전투당 한 번, 체력이 절반 이하가 되면 ${passive.durationSeconds}초 동안 [[stealth|은신]]해 표적에서 벗어난다.`;
   if (passive.kind === "shimmerMark") return `적을 타격하면 반짝이는 표식을 남긴다. 표식이 없는 적을 타격하면 표식이 그 적에게 옮겨가며 [[ap|주문력]]의 ${passive.value}% [[magical-damage|마법 피해]]를 추가로 입힌다.`;
   if (passive.kind !== "battleMaidMastery") return passive.desc;
@@ -158,6 +158,25 @@ export function attackSpeedCompositeDamageKeyword(
     term: String(amount),
     kind: "규칙",
     description: `현재 공격력의 ${skill.power}%와 공격 속도의 ${skill.attackSpeedPower}%를 하나로 합쳐 계산한 피해 수치다.`,
+  };
+}
+
+/**
+ * 덧칠을 터뜨리는 궁극기(메론)가 **다 칠했을 때** 뽑는 피해를 조회 가능한 태그로 만든다.
+ *
+ * 이 궁극기의 위력은 총량이 아니라 겹당 값이라, 다른 스킬과 같은 자리에 겹당 수치를 세우면
+ * 혼자만 훨씬 작은 수로 보인다. 상단 라벨은 겹을 다 쌓았을 때의 **예상 최대 피해량**을 말하고,
+ * 본문은 한 겹의 값을 말한다 — 라벨이 "얼마나 세게 터지나", 본문이 "무엇에 비례하나"다.
+ * 겹 상한은 궁극기가 아니라 그 덧칠을 만드는 기본 공격이 갖고 있으므로 호출부가 넘긴다.
+ */
+export function overpaintDetonationDamageKeyword(perStackDamage?: number, maxStacks?: number): KeywordDef | undefined {
+  if (perStackDamage === undefined || maxStacks === undefined) return undefined;
+  const amount = perStackDamage * maxStacks;
+  return {
+    id: "damage-value",
+    term: String(amount),
+    kind: "규칙",
+    description: `[[overpaint|덧칠]]을 상한인 ${maxStacks}겹까지 쌓은 적 하나에게 들어가는 피해다. 겹이 적으면 그만큼 줄어든다.`,
   };
 }
 
@@ -294,7 +313,7 @@ function skillEffectClauses(skill: Skill | BasicAttack | Ultimate, stats: SkillD
  */
 function statusEffectClause(effect: CombatStatusEffect): string | undefined {
   // 덧칠은 몇 겹까지 쌓이고 한 겹이 얼마인지가 곧 이 스킬의 값이라 키워드가 아니라 본문이 적는다.
-  if (effect.kind === "overpaint") return `[[overpaint|덧칠]]을 한 겹 쌓는다(최대 ${effect.maxStacks}겹, 겹마다 받는 피해 +${effect.damageTakenPercent}%)`;
+  if (effect.kind === "overpaint") return `[[overpaint|덧칠]]을 한 겹 쌓는다`;
   if (effect.kind === "stun") return `${effect.seconds}초 동안 [[stun|기절]]시킨다`;
   if (effect.kind === "stagger") return `[[stagger|경직]]시킨다`;
   if (effect.kind === "bleed") return `${effect.seconds}초 동안 [[bleed|출혈]]시켜 매초 최대 체력의 ${effect.maxHpPercentPerSecond}%를 잃게 한다`;

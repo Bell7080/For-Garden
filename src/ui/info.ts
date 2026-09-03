@@ -50,7 +50,7 @@ import { observationQuestionForRelicAndDate } from "../data/observations";
 import type { PublicRelicProfileDto } from "../api/contracts";
 import type { Fighter } from "../core/skirmish";
 import { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../core/infoCapabilities";
-import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, passiveShieldKeyword, skillDescription } from "./skillPresentation";
+import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, overpaintDetonationDamageKeyword, passiveShieldKeyword, skillDescription } from "./skillPresentation";
 import type { KeywordDef } from "../data/keywords";
 import { addFactionMark, factionMarkBounds } from "./FactionMark";
 import { SQUADS } from "../data/factions";
@@ -1850,15 +1850,24 @@ export class InfoManager {
       : undefined;
     const preview = !compositeDamage && attacker && canPreviewSkillDamage(skill, kindLabel)
       ? previewSkillDamage(attacker, skill as Skill) : undefined;
-    const damageDetail = compositeDamage ?? damageKeyword(preview);
+    // 덧칠 폭발 궁극기의 위력은 겹당 값이라, 상단 라벨만 겹을 다 쌓았을 때의 최대 피해를 말한다.
+    // 겹 상한은 궁극기가 아니라 그 덧칠을 만드는 기본 공격이 갖고 있으므로 거기서 읽는다.
+    const overpaintCap = finalDef?.basic.statusEffects?.find((effect) => effect.kind === "overpaint");
+    const detonationDamage = "overpaintDetonation" in skill && (skill as Ultimate).overpaintDetonation === true
+      ? overpaintDetonationDamageKeyword(preview?.kind === "scaling" ? preview.amount : undefined,
+        overpaintCap?.kind === "overpaint" ? overpaintCap.maxStacks : undefined)
+      : undefined;
+    const damageDetail = compositeDamage ?? detonationDamage ?? damageKeyword(preview);
     const shieldDetail = "kind" in skill ? passiveShieldKeyword(skill as Passive, attacker?.def.stats.atk) : undefined;
     const allyHealingPower = "allyHealingPower" in skill ? (skill as Ultimate).allyHealingPower : undefined;
     const healDetail = allyHealingPower !== undefined ? allyHealPowerKeyword(allyHealingPower, attacker?.def.stats.ap) : undefined;
     const valueLabel = compositeDamage
       ? `피해량 [[damage-value|${compositeDamage.term}]]`
-      : preview?.kind === "scaling"
-        ? `${preview.label} [[damage-value|${preview.amount}]]`
-        : undefined;
+      : detonationDamage
+        ? `예상 최대 피해량 [[damage-value|${detonationDamage.term}]]`
+        : preview?.kind === "scaling"
+          ? `${preview.label} [[damage-value|${preview.amount}]]`
+          : undefined;
     return {
       name: skill.name,
       kindLabel,

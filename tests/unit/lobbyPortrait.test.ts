@@ -22,23 +22,32 @@ import { LOBBY_PORTRAIT_SPOT, lobbyPortraitPlacement } from "../../src/ui/portra
  * 예전에는 상자 하나에 원화를 맞춰 넣었더니, 캔버스 여백과 등신이 원화마다 달라 1.08 m
  * 토리카가 1.76 m 메테보다 크게 섰다. 지금은 **관찰 프로필의 키**가 크기를 정한다.
  *
- * 값은 눈대중이 아니라 실제 ZIP에서 잰다 — 각 원화의 `눈1`·`눈2` 관절 y 중간값이 여기 있는
- * 표이고, 발끝은 실측 alpha 경계(`content.bottom`)다. 아트를 다시 구우면 같은 방법으로 다시
- * 재서 이 표와 `lobbyZoom`을 함께 고친다.
+ * **발끝은 관절이 아니라 실측 alpha 경계(`content.bottom`)다.** 관절은 원화 밖에 박혀 있는
+ * 것도 있어(발 관절이 그림보다 아래에 잡힌 묶음이 있었다) 바닥선의 기준으로 삼을 수 없다.
+ * 배율을 재는 눈 관절은 그림 안에 있어야만 뜻이 서므로, 아래 "관절" 검사가 그것을 지킨다.
+ *
+ * 값은 눈대중이 아니라 실제 ZIP에서 잰다 — `눈1`·`눈2`·`중심1` 관절의 텍스처 좌표다.
+ * 아트를 다시 구우면 같은 방법으로 다시 재서 이 표와 `lobbyZoom`을 함께 고친다.
  */
-const EYE_Y: Readonly<Record<string, number>> = {
-  torika: (416 + 446) / 2,
-  lexia: (265 + 236) / 2,
-  seira: (239 + 208) / 2,
-  luka: (425 + 368) / 2,
-  dodi: (367 + 355) / 2,
-  mette: (277 + 242) / 2,
-  stella: (386 + 357) / 2,
-  tia: (317 + 265) / 2,
-  meron: (268 + 242) / 2,
-  pachi: (206 + 172) / 2,
-  maki: (327 + 306) / 2,
+const JOINTS: Readonly<Record<string, { eyes: readonly [readonly [number, number], readonly [number, number]]; core: readonly [number, number] }>> = {
+  torika: { eyes: [[554, 416], [638, 446]], core: [603, 711] },
+  lexia: { eyes: [[582, 265], [643, 236]], core: [629, 396] },
+  seira: { eyes: [[544, 239], [597, 208]], core: [495, 557] },
+  luka: { eyes: [[832, 425], [960, 368]], core: [843, 639] },
+  dodi: { eyes: [[528, 367], [632, 355]], core: [618, 489] },
+  mette: { eyes: [[472, 277], [568, 242]], core: [514, 432] },
+  stella: { eyes: [[510, 386], [591, 357]], core: [581, 475] },
+  tia: { eyes: [[480, 317], [548, 265]], core: [548, 415] },
+  meron: { eyes: [[439, 268], [507, 242]], core: [470, 369] },
+  pachi: { eyes: [[420, 206], [480, 172]], core: [459, 292] },
+  maki: { eyes: [[528, 327], [620, 306]], core: [599, 457] },
 };
+
+/** 눈 관절 두 개의 중간 높이. 배율은 이 점에서 발끝까지의 거리로 잰다. */
+function eyeY(assetId: string): number {
+  const [left, right] = JOINTS[assetId].eyes;
+  return (left[1] + right[1]) / 2;
+}
 
 /** assets.ts는 Phaser를 들여오므로 node 환경에서는 메타데이터만 직접 묶어 읽는다. */
 const PORTRAITS: Readonly<Record<string, Omit<PuppetAsset, "url">>> = {
@@ -65,7 +74,7 @@ function eyeToFootOnScreen(assetId: string): number {
   const asset = { url: "", ...PORTRAITS[assetId] } as PuppetAsset;
   const { height } = lobbyPortraitPlacement(asset);
   const scale = height / (asset.content.bottom - asset.content.top);
-  return (asset.content.bottom - EYE_Y[assetId]) * scale;
+  return (asset.content.bottom - eyeY(assetId)) * scale;
 }
 
 describe("로비 전신의 세로 비율", () => {
@@ -90,6 +99,21 @@ describe("로비 전신의 세로 비율", () => {
     for (const relic of LOBBY_RELICS) {
       const { height, groundY } = lobbyPortraitPlacement({ url: "", ...PORTRAITS[relic.portraitAssetId] });
       expect(groundY - height, relic.name).toBeGreaterThanOrEqual(0);
+    }
+  });
+
+  it("는 그림 안에 있는 관절로만 자리와 배율을 잰다", () => {
+    // 관절은 원화 바깥에 박혀 있을 수 있다. 밖에 있는 관절로 배율을 재면 그 개체만 조용히
+    // 크거나 작아지고, 원인은 값이 아니라 관절에 있어 `lobbyZoom`을 고쳐도 다시 어긋난다.
+    for (const relic of LOBBY_RELICS) {
+      const { content } = PORTRAITS[relic.portraitAssetId];
+      const joints = JOINTS[relic.portraitAssetId];
+      for (const [x, y] of [...joints.eyes, joints.core]) {
+        expect(x, `${relic.name} 관절 x`).toBeGreaterThanOrEqual(content.left);
+        expect(x, `${relic.name} 관절 x`).toBeLessThanOrEqual(content.right);
+        expect(y, `${relic.name} 관절 y`).toBeGreaterThanOrEqual(content.top);
+        expect(y, `${relic.name} 관절 y`).toBeLessThanOrEqual(content.bottom);
+      }
     }
   });
 

@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import type { PuppetCreature } from "../puppets/assets";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
-import { setDebugScene } from "../debug";
+import { setDebugScene, setDebugStorefrontControls } from "../debug";
 import { getRelic } from "../data/relics";
 import { enableHitOnClick, portraitAssetFor, spawnPuppet } from "../puppets/assets";
 import { session } from "../state/session";
@@ -459,6 +459,10 @@ export class LobbyScene extends Phaser.Scene {
       { bounds: LOBBY_RAIL_BOUNDS.content.shop, icon: "shop", label: "상점", accent: false, onClick: () => this.openShop() },
       { bounds: LOBBY_RAIL_BOUNDS.content.trade, icon: "shop", label: "무역", accent: false, onClick: () => this.openTrade() },
     ] as const;
+    // 캔버스 E2E에는 레일의 게임 상태가 아니라 실제 입력 중심만 전달한다.
+    setDebugStorefrontControls({ lobby: {
+      mission: { x: entries[0].bounds.x, y: entries[0].bounds.y }, missionBack: { x: 973, y: 1743 }, shop: { x: entries[1].bounds.x, y: entries[1].bounds.y }, trade: { x: entries[2].bounds.x, y: entries[2].bounds.y },
+    } });
     // 역할별 배치표가 콘텐츠 순서와 크기를 소유하므로 렌더링은 표를 그대로 소비한다.
     const buttons = entries.map((entry) => new RailButton(this, entry.bounds.x, entry.bounds.y, {
       icon: entry.icon, label: entry.label, size: entry.bounds.width, accent: entry.accent, onClick: entry.onClick,

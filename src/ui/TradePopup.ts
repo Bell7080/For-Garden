@@ -6,6 +6,8 @@ import { Button } from "./Button";
 import { PopupLayer } from "./PopupLayer";
 import { PurchasePopup } from "./PurchasePopup";
 import { COLOR, textStyle } from "./theme";
+import { setDebugStorefrontControls } from "../debug";
+import { BACK_SLOT } from "./IconButton";
 
 /** 무역을 씬 전환 없이 로비 위 패키지 레이어로 여는 공개 프리팹이다. */
 export class TradePopup {
@@ -39,6 +41,8 @@ export class TradePopup {
   private render(): void {
     if (!this.body) return;
     this.body.removeAll(true);
+    // 행 버튼과 로비 위 돌아가기만 노출해 E2E가 상품 데이터를 디버그 상태로 읽지 않게 한다.
+    setDebugStorefrontControls({ trade: { products: this.products.map((_, index) => ({ x: 540 + 245, y: 960 - 520 + index * 250 + 20 })), back: { ...BACK_SLOT } } });
     this.products.forEach((product, index) => {
       const y = -520 + index * 250;
       const action = productActionModel(product.acquisition, { remaining: product.remaining, available: product.purchasable });

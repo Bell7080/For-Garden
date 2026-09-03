@@ -4,7 +4,7 @@ import type { ProductDto, PurchaseProductResponse } from "../api/contracts";
 import { formatCurrency } from "../core/formatCurrency";
 import { SHOP_TABS, type ShopCategory } from "../data/shopCatalog";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
-import { setDebugScene } from "../debug";
+import { setDebugScene, setDebugShopView, setDebugStorefrontControls } from "../debug";
 import { TORIKA_ASSET, spawnPuppet } from "../puppets/assets";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { CURRENCY_ICON_BY_WALLET } from "../ui/currencyIcons";
@@ -16,6 +16,7 @@ import { TopBar } from "../ui/TopBar";
 import { PopupLayer } from "../ui/PopupLayer";
 import { PurchasePopup } from "../ui/PurchasePopup";
 import { session } from "../state/session";
+import { productsForShopCategory } from "../ui/shopModel";
 
 /** 상품 목록이 제목 아래에서 뒤로가기 안전 영역 위까지 흐르는 화면 좌표 경계다. */
 const LIST_VIEW = { left: 470, right: BASE_WIDTH - 36, top: 330, bottom: BASE_HEIGHT - 285 } as const;
@@ -52,7 +53,11 @@ export class ShopScene extends Phaser.Scene {
     this.add.text(54, 170, "상점", textStyle({ role: "display", size: 54 })).setOrigin(0, 0);
     this.add.text(LIST_VIEW.left, 246, "교환 목록", textStyle({ role: "emphasis", size: 27, color: COLOR.accentText })).setOrigin(0, 0);
     drawHairline(this, (LIST_VIEW.left + LIST_VIEW.right) / 2, 302, LIST_VIEW.right - LIST_VIEW.left, { color: COLOR.accent, alpha: 0.4 });
-    addBackButton(this, () => this.scene.start("lobby"));
+    // 목록 컨테이너는 비동기 생성되므로 공용 돌아가기를 그보다 높은 고정 계층에 둔다.
+    addBackButton(this, () => this.scene.start("lobby")).setDepth(1000);
+    setDebugStorefrontControls({ shop: { back: { x: BASE_WIDTH - 106, y: BASE_HEIGHT - 120 }, tabs: {
+      general: { x: 0, y: 0 }, enhancement: { x: 0, y: 0 }, rune: { x: 0, y: 0 },
+    }, cards: [], drag: { from: { x: 760, y: LIST_VIEW.bottom - 80 }, to: { x: 760, y: LIST_VIEW.top + 80 } } } });
 
     this.createViewport();
     this.createTabs();
@@ -74,7 +79,8 @@ export class ShopScene extends Phaser.Scene {
   /** 토리카 임시 점원의 코어 관절을 좌측 무대 중심에 맞춰 전신 비율을 보존한다. */
   private async createMerchant(): Promise<void> {
     const merchant = await spawnPuppet(this, TORIKA_ASSET, {
-      focus: { anchor: "core", x: 225, y: 920 }, height: 1280, depth: 2, flipX: true,
+      // 전신은 왼쪽 430px 안에 머물러 470px부터 시작하는 상품 열과 시각적으로 겹치지 않는다.
+      focus: { anchor: "core", x: 160, y: 1000 }, height: 700, depth: 2, flipX: true,
     });
     // 비동기 로딩 사이 씬이 닫혔으면 새 Mesh를 남기지 않는다.
     if (!this.scene.isActive()) { merchant.destroy(); return; }
@@ -99,10 +105,12 @@ export class ShopScene extends Phaser.Scene {
   /** 현재 서버 상태로 세로 상품 카드를 재조립하고 실제 높이에서 스크롤 한계를 계산한다. */
   private renderProducts(): void {
     this.content?.removeAll(true);
-    const visibleProducts = this.products.filter(({ category }) => category === this.selectedCategory);
+    const visibleProducts = productsForShopCategory(this.products, this.selectedCategory);
     visibleProducts.forEach((product, index) => this.addProduct(product, index));
     const contentHeight = Math.max(0, visibleProducts.length * (LIST_LAYOUT.cardHeight + LIST_LAYOUT.gap) - LIST_LAYOUT.gap);
     this.minScrollY = Math.min(0, LIST_VIEW.bottom - LIST_VIEW.top - contentHeight);
+    // 카드 입력점은 현재 탭에서 실제로 생성한 카드 중심만 공개한다.
+    setDebugStorefrontControls({ shop: { back: { x: BASE_WIDTH - 106, y: BASE_HEIGHT - 120 }, tabs: this.tabPoints(), cards: visibleProducts.map((_, index) => ({ x: (LIST_VIEW.left + LIST_VIEW.right) / 2, y: LIST_VIEW.top + LIST_LAYOUT.cardHeight / 2 + index * (LIST_LAYOUT.cardHeight + LIST_LAYOUT.gap) })), drag: { from: { x: 760, y: LIST_VIEW.bottom - 80 }, to: { x: 760, y: LIST_VIEW.top + 80 } } } });
     this.scrollTo(this.content?.y ?? 0);
   }
 
@@ -135,8 +143,10 @@ export class ShopScene extends Phaser.Scene {
     const hit = this.add.rectangle(0, 0, width, LIST_LAYOUT.cardHeight, 0xffffff, 0).setInteractive({ useHandCursor: product.purchasable });
     hit.on("pointerdown", () => card.setScale(1.04));
     hit.on("pointerout", () => card.setScale(1));
-    hit.on("pointerup", () => {
+    hit.on("pointerup", (pointer: Phaser.Input.Pointer) => {
       card.setScale(1);
+      // GeometryMask는 그리기만 자르므로 목록 밖의 숨은 카드 입력도 같은 뷰포트 경계에서 거부한다.
+      if (pointer.x < LIST_VIEW.left || pointer.x > LIST_VIEW.right || pointer.y < LIST_VIEW.top || pointer.y > LIST_VIEW.bottom) return;
       // 스크롤 드래그가 끝난 손을 구매 탭으로 오인하지 않는다.
       if (this.draggedDistance <= LIST_LAYOUT.dragSlop) {
         // 비활성 상품도 이유와 상세 정보를 읽을 수 있으며 카드 탭 자체는 절대 즉시 구매하지 않는다.
@@ -169,6 +179,12 @@ export class ShopScene extends Phaser.Scene {
       return container;
     });
     this.updateTabStyles();
+  }
+
+  /** 런타임 탭 간격과 동일한 계산으로 테스트 입력 중심을 제공한다. */
+  private tabPoints(): Record<ShopCategory, { x: number; y: number }> {
+    const step = (LIST_VIEW.right - LIST_VIEW.left) / SHOP_TABS.length;
+    return Object.fromEntries(SHOP_TABS.map((tab, index) => [tab.id, { x: LIST_VIEW.left + step * (index + 0.5), y: BASE_HEIGHT - 218 }])) as Record<ShopCategory, { x: number; y: number }>;
   }
 
   /** 탭을 바꾸면 이전 스크롤을 버리고 해당 분류의 첫 상품부터 다시 보여 준다. */
@@ -232,6 +248,7 @@ export class ShopScene extends Phaser.Scene {
   /** 콘텐츠 위치를 첫 행과 마지막 행이 각각 뷰포트 경계에 닿는 범위로 고정한다. */
   private scrollTo(y: number): void {
     if (this.content) this.content.y = Phaser.Math.Clamp(y, this.minScrollY, 0);
+    setDebugShopView({ category: this.selectedCategory, scrollY: this.content?.y ?? 0, minScrollY: this.minScrollY });
   }
 
   /** 결과 안내는 목록 마스크 밖의 고정 계층에 두어 스크롤과 함께 움직이지 않게 한다. */

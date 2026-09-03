@@ -5,7 +5,7 @@ import { RELICS } from "../../src/data/relics";
 import { KEYWORDS } from "../../src/data/keywords";
 import type { Skill } from "../../src/core/types";
 import { ELEMENT_TINT, ROLE_TINT, SKILL_ART_ASSETS, SKILL_ART_SLOTS, skillArtFor, skillArtKey, skillArtTint } from "../../src/ui/skillArt";
-import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageHealingLabel, damageKeyword, ferocityTraitDescription, passiveDescription, passiveShieldKeyword, recoveryLabel, skillDescription, skillKeywordLayoutOptions, statusEffectLabel, targetingLabel } from "../../src/ui/skillPresentation";
+import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageHealingLabel, damageKeyword, ferocityTraitDescription, passiveDescription, overpaintDetonationDamageKeyword, passiveShieldKeyword, recoveryLabel, skillDescription, skillKeywordLayoutOptions, statusEffectLabel, targetingLabel } from "../../src/ui/skillPresentation";
 import type { SkillInfoViewModel } from "../../src/ui/SkillPopup";
 
 /** 구워 둔 스킬 일러스트. 코드가 가리키는 파일이 실제로 있는지 확인한다. */
@@ -444,10 +444,10 @@ describe("메론 스킬 표시 계약", () => {
 
   it("의 기본 공격은 덧칠의 겹 상한과 겹당 값을 본문이 직접 말한다", () => {
     const def = meron();
-    // 겹 상한과 한 겹의 값이 곧 이 스킬의 수치라 키워드가 아니라 본문이 적는다.
+    // 겹 상한·지속 시간·겹당 증가율은 태그가 말하므로 본문이 되풀이하지 않는다.
     expect(def.basic.statusEffects).toEqual([{ kind: "overpaint", seconds: 10, damageTakenPercent: 6, maxStacks: 4 }]);
     expect(skillDescription(def.basic, { damage: 101 })).toBe(
-      "적 한 명에게 [[damage-value|101]]의 [[magical-damage|마법 피해]]를 주고 [[overpaint|덧칠]]을 한 겹 쌓는다(최대 4겹, 겹마다 받는 피해 +6%).",
+      "적 한 명에게 [[damage-value|101]]의 [[magical-damage|마법 피해]]를 주고 [[overpaint|덧칠]]을 한 겹 쌓는다.",
     );
   });
 
@@ -477,7 +477,26 @@ describe("메론 스킬 표시 계약", () => {
     );
   });
 
-  it("의 덧칠은 전역 키워드로 정의되어 설명문이 뜻을 다시 적지 않는다", () => {
-    expect(KEYWORDS.some((keyword) => keyword.id === "overpaint")).toBe(true);
+  it("의 덧칠 키워드는 실제 전투 계약과 같은 상한·시간·증가율을 말한다", () => {
+    const effect = meron().basic.statusEffects!.find((status) => status.kind === "overpaint")!;
+    if (effect.kind !== "overpaint") throw new Error("덧칠 효과가 아니다");
+    const keyword = KEYWORDS.find((entry) => entry.id === "overpaint")!;
+    // 수치를 태그가 말하기로 했으므로, 데이터와 갈리면 플레이어가 읽는 유일한 설명이 틀린다.
+    expect(keyword.description).toContain(`${effect.damageTakenPercent}%`);
+    expect(keyword.description).toContain(`최대 ${effect.maxStacks}겹`);
+    expect(keyword.description).toContain(`${effect.seconds}초`);
+  });
+
+  it("의 궁극기 라벨은 겹당 값이 아니라 다 칠했을 때의 최대 피해를 말한다", () => {
+    const def = meron();
+    const effect = def.basic.statusEffects!.find((status) => status.kind === "overpaint")!;
+    if (effect.kind !== "overpaint") throw new Error("덧칠 효과가 아니다");
+    const perStack = Math.round(def.stats.ap * def.ultimate.power! / 100);
+    const keyword = overpaintDetonationDamageKeyword(perStack, effect.maxStacks)!;
+    // 겹당 수치를 다른 스킬과 같은 자리에 세우면 이 궁극기만 혼자 훨씬 약해 보인다.
+    expect(keyword.term).toBe(String(perStack * effect.maxStacks));
+    expect(keyword.description).toContain(`${effect.maxStacks}겹`);
+    // 겹이 없을 수도 있는 값이라 상한을 모르면 라벨을 만들지 않는다.
+    expect(overpaintDetonationDamageKeyword(perStack, undefined)).toBeUndefined();
   });
 });

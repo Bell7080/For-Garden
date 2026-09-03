@@ -161,6 +161,25 @@ export function attackSpeedCompositeDamageKeyword(
   };
 }
 
+/**
+ * 덧칠을 터뜨리는 궁극기(메론)가 **다 칠했을 때** 뽑는 피해를 조회 가능한 태그로 만든다.
+ *
+ * 이 궁극기의 위력은 총량이 아니라 겹당 값이라, 다른 스킬과 같은 자리에 겹당 수치를 세우면
+ * 혼자만 훨씬 작은 수로 보인다. 상단 라벨은 겹을 다 쌓았을 때의 **예상 최대 피해량**을 말하고,
+ * 본문은 한 겹의 값을 말한다 — 라벨이 "얼마나 세게 터지나", 본문이 "무엇에 비례하나"다.
+ * 겹 상한은 궁극기가 아니라 그 덧칠을 만드는 기본 공격이 갖고 있으므로 호출부가 넘긴다.
+ */
+export function overpaintDetonationDamageKeyword(perStackDamage?: number, maxStacks?: number): KeywordDef | undefined {
+  if (perStackDamage === undefined || maxStacks === undefined) return undefined;
+  const amount = perStackDamage * maxStacks;
+  return {
+    id: "damage-value",
+    term: String(amount),
+    kind: "규칙",
+    description: `[[overpaint|덧칠]]을 상한인 ${maxStacks}겹까지 쌓은 적 하나에게 들어가는 피해다. 겹이 적으면 그만큼 줄어든다.`,
+  };
+}
+
 /** 아군 전체 회복형 궁극기(도디 등)가 실제 주문력에서 계산하는 회복량을 조회 가능한 태그로 만든다. */
 export function allyHealPowerKeyword(percent: number, ap?: number): KeywordDef | undefined {
   if (ap === undefined) return undefined;
@@ -294,7 +313,7 @@ function skillEffectClauses(skill: Skill | BasicAttack | Ultimate, stats: SkillD
  */
 function statusEffectClause(effect: CombatStatusEffect): string | undefined {
   // 덧칠은 몇 겹까지 쌓이고 한 겹이 얼마인지가 곧 이 스킬의 값이라 키워드가 아니라 본문이 적는다.
-  if (effect.kind === "overpaint") return `[[overpaint|덧칠]]을 한 겹 쌓는다(최대 ${effect.maxStacks}겹, 겹마다 받는 피해 +${effect.damageTakenPercent}%)`;
+  if (effect.kind === "overpaint") return `[[overpaint|덧칠]]을 한 겹 쌓는다`;
   if (effect.kind === "stun") return `${effect.seconds}초 동안 [[stun|기절]]시킨다`;
   if (effect.kind === "stagger") return `[[stagger|경직]]시킨다`;
   if (effect.kind === "bleed") return `${effect.seconds}초 동안 [[bleed|출혈]]시켜 매초 최대 체력의 ${effect.maxHpPercentPerSecond}%를 잃게 한다`;

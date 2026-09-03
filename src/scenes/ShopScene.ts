@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { gameApi } from "../api/FakeServer";
-import type { ProductDto } from "../api/contracts";
+import type { ProductDto, PurchaseProductResponse } from "../api/contracts";
 import { formatCurrency } from "../core/formatCurrency";
 import { SHOP_TABS, type ShopCategory } from "../data/shopCatalog";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
@@ -29,6 +29,8 @@ export class ShopScene extends Phaser.Scene {
   private selectedCategory: ShopCategory = SHOP_TABS[0].id;
   private tabButtons: Phaser.GameObjects.Container[] = [];
   private content?: Phaser.GameObjects.Container;
+  /** 구매 응답 지갑을 적용한 직후 화면 가장자리 잔액을 같은 프레임에 갱신한다. */
+  private topBar?: TopBar;
   private viewportMask?: Phaser.GameObjects.Graphics;
   /** 상품 목록 위에 재사용 구매 작업판을 쌓는 전용 팝업 계층이다. */
   private readonly popups = new PopupLayer(this, 2600);
@@ -46,7 +48,7 @@ export class ShopScene extends Phaser.Scene {
     addSceneBackground(this, BACKGROUND.shop);
     drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { depth: -20, strength: 0.76 });
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.56).setDepth(-19);
-    new TopBar(this, 40, { onSettings: () => this.scene.start("settings", { returnScene: "lobby" }) });
+    this.topBar = new TopBar(this, 40, { onSettings: () => this.scene.start("settings", { returnScene: "lobby" }) });
     this.add.text(54, 170, "무역소", textStyle({ role: "display", size: 54 })).setOrigin(0, 0);
     this.add.text(LIST_VIEW.left, 246, "교환 목록", textStyle({ role: "emphasis", size: 27, color: COLOR.accentText })).setOrigin(0, 0);
     drawHairline(this, (LIST_VIEW.left + LIST_VIEW.right) / 2, 302, LIST_VIEW.right - LIST_VIEW.left, { color: COLOR.accent, alpha: 0.4 });
@@ -138,11 +140,19 @@ export class ShopScene extends Phaser.Scene {
       // 스크롤 드래그가 끝난 손을 구매 탭으로 오인하지 않는다.
       if (this.draggedDistance <= LIST_LAYOUT.dragSlop) {
         // 비활성 상품도 이유와 상세 정보를 읽을 수 있으며 카드 탭 자체는 절대 즉시 구매하지 않는다.
-        new PurchasePopup(this, this.popups, gameApi, session.wallet).open(product, async () => { this.notice("교환이 완료되었습니다."); await this.refresh(); });
+        new PurchasePopup(this, this.popups, gameApi, session.wallet).open(product, async (result) => { this.applyPurchaseResult(result); this.notice("교환이 완료되었습니다."); await this.refresh(); });
       }
     });
     card.add(hit);
     this.content?.add(card);
+  }
+
+  /** 보상 팝업이 닫힌 뒤 구매 응답의 지갑·잔여 횟수를 먼저 반영하고 카탈로그도 다시 조회한다. */
+  private applyPurchaseResult(result: PurchaseProductResponse): void {
+    session.wallet = { ...result.wallet };
+    this.products = this.products.map((product) => product.id === result.productId ? { ...product, remaining: result.remaining, purchasable: result.remaining > 0 } : product);
+    this.topBar?.refresh();
+    this.renderProducts();
   }
 
   /** 하단 탭은 별도 판이나 밑줄 없이 선택 항목의 강조색과 확대 배율만 바꾼다. */

@@ -1,9 +1,11 @@
 /** 상점의 가격 재화. `real_money`는 플랫폼 영수증 검증 전에는 구매할 수 없다. */
 export type ProductCurrency = "fossil" | "amber" | "cheesecake" | "dnaFragments" | "real_money";
 
-/** 즉시 지급품은 재화와 서버 계정에 귀속되는 프로필 장식만 허용한다. */
+/** 상품 지급품은 수량형 재화·아이템과 서버가 확정하는 개별 룬·계정 장식을 함께 표현한다. */
 export type ProductGrant =
   | { kind: "currency"; currency: Exclude<ProductCurrency, "real_money">; amount: number }
+  | { kind: "item"; itemId: string; name: string; amount: number }
+  | { kind: "rune"; name: string; amount: number; rarity: "uncommon" | "rare" | "epic" | "legendary"; part: 0 | 1 | 2 }
   | { kind: "profile_decoration"; decorationId: string; name: string };
 
 /** 단순 묶음과 구분되는 후원 패스의 기간·일일 권리다. null 기간은 영구 권리를 뜻한다. */

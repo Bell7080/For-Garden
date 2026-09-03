@@ -2,19 +2,16 @@ import Phaser from "phaser";
 import { formatCurrency } from "../core/formatCurrency";
 import { setDebugRewardPopup } from "../debug";
 import { chipPoints, drawHairline, drawInnerVignette, drawLayer, drawShapeOutline } from "./holo";
-import type { CurrencyIconKey } from "./currencyIcons";
 import type { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
+import { drawGlyph } from "./glyphs";
+import type { RewardPopupItem } from "./rewardPopupModel";
+
+// 기존 호출부는 UI 진입점 하나만 알면 되도록 순수 표시 변환도 함께 다시 내보낸다.
+export { currencyRecordToRewardItems, productGrantsToRewardItems, type RewardPopupItem } from "./rewardPopupModel";
 
 /** 상자 개봉·임무 수령·발굴 수확이 공유할 수 있는 한 개의 확정 보상 표기다. */
-export interface RewardPopupItem {
-  icon: CurrencyIconKey;
-  amount: number;
-  /** 이름이 필요한 보상만 짧게 붙인다. 재화는 아이콘과 숫자만으로도 구분되므로 생략할 수 있다. */
-  label?: string;
-}
-
 export interface RewardPopupOptions {
   title?: string;
   /** 결과의 중요도에 따라 공용 26px 제목보다 한 단계 크게 요청할 수 있다. */
@@ -23,18 +20,6 @@ export interface RewardPopupOptions {
   dimAlpha?: number;
   items: readonly RewardPopupItem[];
   onConfirm?: () => void;
-}
-
-/** 서버 재화 레코드를 공용 보상 액자 키로 바꾼다. 알 수 없는 운영 재화는 안전하게 생략한다. */
-export function currencyRecordToRewardItems(rewards: Readonly<Record<string, number>>): RewardPopupItem[] {
-  const icons: Partial<Record<string, CurrencyIconKey>> = {
-    cheesecake: "currency-cheesecake", gold: "currency-gold", fossil: "currency-fossil",
-    gems: "currency-gems", amber: "currency-amber", stamina: "currency-stamina",
-  };
-  return Object.entries(rewards).flatMap(([currency, amount]) => {
-    const icon = icons[currency];
-    return icon && amount > 0 ? [{ icon, amount: Math.floor(amount) }] : [];
-  });
 }
 
 /** 모바일 안전 여백 안에서 네 칸까지 한 줄에 담고, 그 이상은 같은 줄을 가로로 훑는 낮은 규격이다. */
@@ -89,7 +74,9 @@ export function openRewardPopup(scene: Phaser.Scene, popups: PopupLayer, options
         bevel: { topLeft: 34, topRight: 0, bottomRight: 34, bottomLeft: 0 },
       });
       strip.add(drawLayer(scene, x, REWARD_POPUP.frameY, frame, { fill: 0x101722, alpha: 0.98 }));
-      strip.add(scene.add.image(x, REWARD_POPUP.frameY, item.icon).setDisplaySize(120, 120));
+      // 계정 장식처럼 전용 텍스처가 없는 결과만 기존 홀로그램 글리프 체계로 대신한다.
+      if (typeof item.icon === "string") strip.add(scene.add.image(x, REWARD_POPUP.frameY, item.icon).setDisplaySize(120, 120));
+      else strip.add(drawGlyph(scene, item.icon.key, x, REWARD_POPUP.frameY, 100, COLOR.accent));
       // 비네트가 아이콘 가장자리와 숫자 뒤를 눌러 작은 액자에서도 둘을 동시에 식별하게 한다.
       strip.add(drawInnerVignette(scene, x, REWARD_POPUP.frameY, frame, { strength: 0.62 }));
       strip.add(drawShapeOutline(scene, x, REWARD_POPUP.frameY, frame, { color: COLOR.accent, alpha: 0.82, width: 3 }));

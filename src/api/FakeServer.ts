@@ -814,6 +814,7 @@ export class FakeServer implements GameApi {
     const nextWallet = { ...this.state.wallet, [product.price.currency]: this.state.wallet[product.price.currency] - totalPrice };
     const nextRunes = [...this.state.runeInventory];
     const grantedRunes: RuneInstance[] = [];
+    const granted: ProductDefinition["grants"][number][] = [];
     // 상점은 현재 재화만 지급하며, 룬 생성은 DNA의 명시적인 인스턴스 발급 계약으로 분리한다.
     for (const grant of product.grants) {
       // 프로필 장식은 실제 계정 서버 전용 지급품이며 인게임 재화 구매 경로에서는 재화만 반영한다.
@@ -822,6 +823,8 @@ export class FakeServer implements GameApi {
         // 총 지급량과 지갑 상한까지 복제 지갑에서 검증한 뒤에만 값을 써서 부분 지급을 남기지 않는다.
         if (!Number.isSafeInteger(totalGrant) || nextWallet[grant.currency] + totalGrant > WALLET_CAPS[grant.currency]) throw new GameApiError("CURRENCY_LIMIT_EXCEEDED", "지급 후 재화 상한을 초과합니다.");
         nextWallet[grant.currency] += totalGrant;
+        // 응답에는 단위 상품 정의가 아니라 실제 구매 수량이 반영된 확정 총량만 싣는다.
+        granted.push({ ...grant, amount: totalGrant });
       }
     }
     const periodKey = this.productPeriodKey(product, now);
@@ -830,7 +833,7 @@ export class FakeServer implements GameApi {
     const nextPurchases = { ...this.state.productPurchases, [product.id]: { periodKey, count } };
     this.persist({ ...this.state, wallet: nextWallet, runeInventory: nextRunes, productPurchases: nextPurchases });
     this.state.wallet = nextWallet; this.state.runeInventory = nextRunes; this.state.productPurchases = nextPurchases;
-    return { ...this.snapshot(), productId, quantity, grants: product.grants, grantedRunes: grantedRunes.map((rune) => this.cloneRune(rune)), remaining: Math.max(0, product.purchaseLimit - count) };
+    return { ...this.snapshot(), productId, quantity, granted, grantedRunes: grantedRunes.map((rune) => this.cloneRune(rune)), remaining: Math.max(0, product.purchaseLimit - count) };
   }
 
   /** DNA 조각을 무작위 결과가 아닌 명시적으로 고른 렐릭·제작 재료·과거 재화로 교환한다. */

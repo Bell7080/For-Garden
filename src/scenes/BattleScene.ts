@@ -28,7 +28,7 @@ import { battleAssetFor, cancelMotion, flashHit, isHitFlashing, placePuppet, pla
 import { session } from "../state/session";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { Button } from "../ui/Button";
-import { drawGlassFade, drawHairline, HOLO, HoloBar } from "../ui/holo";
+import { drawGlassFade, drawHairline, HoloBar } from "../ui/holo";
 import { PortraitCard } from "../ui/PortraitCard";
 import { UnitHealthBar } from "../ui/UnitHealthBar";
 import { skillArtTint } from "../ui/skillArt";
@@ -57,7 +57,10 @@ import { settingsManager } from "../managers/SettingsManager";
 import { battleUiMotionFactor } from "../core/settings";
 import type { SettleExpeditionRunResponse, SubmitExpeditionBossScoreResponse } from "../api/contracts";
 import { currencyRecordToRewardItems, openRewardPopup } from "../ui/RewardPopup";
-import { BATTLE_STATUS_LAYOUT, statusBadgeOffsets } from "../ui/battleStatusLayout";
+import { BATTLE_STATUS_LAYOUT } from "../ui/battleStatusLayout";
+import { UnitStatusChips } from "../ui/UnitStatusChips";
+import { openUnitStatusPopup } from "../ui/UnitStatusPopup";
+import { unitStatusViews } from "../ui/unitStatusModel";
 import { BattleProfile } from "../ui/BattleProfile";
 import { BattleContributionPanel } from "../ui/BattleContributionPanel";
 import { battleContributionMvp, createBattleContributionResult, withConfirmedAttackTotal, type BattleContributionResult, type ContributionCategory } from "../core/battleContribution";
@@ -123,10 +126,6 @@ const CHARGE_CARD_ALPHA = 0.62;
 
 /** 야성 수치의 글자색. 게이지의 붉은 계열과 같아 어느 수인지 색으로 먼저 읽힌다. */
 const FEROCITY_TEXT = COLOR.ferocityText;
-/** 덧칠 뱃지 색. 물감처럼 밝은 청록이라 붉은 출혈·노란 기절과 한눈에 갈린다. */
-const OVERPAINT_BADGE_COLOR = 0x62c6d8;
-/** 손질 뱃지 색. 피해 수치의 손질 색과 같은 계열이라 뱃지와 숫자가 한 상태로 읽힌다. */
-const BUTCHER_BADGE_COLOR = 0xc07fa4;
 
 /** 게이지와 수치가 실제 값을 따라잡는 빠르기(초당 비율). */
 const METER_EASE = 6;
@@ -186,14 +185,10 @@ interface FighterView {
   shadow: Phaser.GameObjects.Ellipse;
   /** 머리 위 체력 바. 깎일 때 스르륵 따라오는 것은 프리팹이 맡는다. */
   hpBar: UnitHealthBar;
-  /** 걸린 상태이상을 알리는 작은 뱃지. 체력 바 옆에 붙는다. */
-  bleedBadge: Phaser.GameObjects.Container;
-  overpaintBadge: Phaser.GameObjects.Container;
-  overpaintStacks: Phaser.GameObjects.Text;
-  butcherBadge: Phaser.GameObjects.Container;
-  butcherStacks: Phaser.GameObjects.Text;
-  /** 상태 소유자인 src/core/skirmish.ts의 기절 결과를 체력 바 옆에 그리는 각진 번개 표식이다. */
-  stunBadge: Phaser.GameObjects.Container;
+  /** 걸린 상태를 알리는 칩 한 줄. 체력 바 **위**에 서고, 누르면 쪽지가 열린다. */
+  statusChips: UnitStatusChips;
+  /** 체력 바와 칩 줄을 함께 받는 입력면. 둘 중 어디를 눌러도 같은 쪽지가 열린다. */
+  statusHit: Phaser.GameObjects.Rectangle;
   /** 코어 상태 전환 때만 Puppet 모션을 바꾸기 위한 마지막 기절 표시값이다. */
   stunShown: boolean;
   /** 그 개체의 속성·직군을 섞은 색. 폭주 필터와 이펙트 색이 여기서 나온다. */
@@ -536,11 +531,16 @@ export class BattleScene extends Phaser.Scene {
       const shadow = this.add.ellipse(fighter.x, fighter.y + 4, 132, 24, 0x000000, 0.38);
       const barColor = fighter.side === "player" ? COLOR.hpFill : COLOR.hpEnemy;
       const hpBar = new UnitHealthBar(this, barColor, settingsManager.get().presentation.battleUiMotion).snap(1);
-      const bleedBadge = this.makeBleedBadge();
-      const stunBadge = this.makeStunBadge();
-      const { badge: overpaintBadge, stacks: overpaintStacks } = this.makeStackBadge(OVERPAINT_BADGE_COLOR);
-      const { badge: butcherBadge, stacks: butcherStacks } = this.makeStackBadge(BUTCHER_BADGE_COLOR);
-      this.views.set(fighter.id, { creature, asset, fighter, infoHit, shadow, hpBar, bleedBadge, overpaintBadge, overpaintStacks, butcherBadge, butcherStacks, stunBadge, stunShown: false, feverTint, feverStep: -1, feverTinted: false, tint, squashAt: -Infinity, squashDir: 1, spinDir: 1, dead: false });
+      const statusChips = new UnitStatusChips(this);
+      // 체력 바와 칩 줄을 함께 덮는 입력면. 둘 중 어디를 눌러도 지금 걸린 상태를 펼친다 —
+      // 칩은 작아 "무엇이 걸렸나"까지만 말하고, 몇 겹이 얼마나 남았는지는 눌러서 읽는다.
+      const statusHit = this.add.rectangle(fighter.x, fighter.y, 120, 64, 0xffffff, 0)
+        .setInteractive({ useHandCursor: true })
+        .on("pointerup", (_p: Phaser.Input.Pointer, _x: number, _y: number, event: Phaser.Types.Input.EventData) => {
+          event.stopPropagation();
+          this.openStatusList(fighter.id);
+        });
+      this.views.set(fighter.id, { creature, asset, fighter, infoHit, shadow, hpBar, statusChips, statusHit, stunShown: false, feverTint, feverStep: -1, feverTinted: false, tint, squashAt: -Infinity, squashDir: 1, spinDir: 1, dead: false });
     }
     this.syncViews();
     // 마지막 한 명까지 서고 나서 시간을 흘려야 먼저 뜬 캐릭터만 앞서 달려가지 않는다.
@@ -1015,15 +1015,9 @@ export class BattleScene extends Phaser.Scene {
     this.combatEffects.remove(fighterId);
     view.shadow.setVisible(false);
     view.hpBar.setVisible(false);
-    view.bleedBadge.setVisible(false);
-    view.overpaintBadge.setVisible(false);
-    view.butcherBadge.setVisible(false);
-    view.stunBadge.setVisible(false);
     // 사망 뒤에는 코어가 상태를 비우므로 표시 객체도 컨테이너와 자식까지 즉시 폐기한다.
-    view.bleedBadge.destroy(true);
-    view.overpaintBadge.destroy(true);
-    view.butcherBadge.destroy(true);
-    view.stunBadge.destroy(true);
+    view.statusChips.destroy(true);
+    view.statusHit.disableInteractive().setVisible(false);
     // 쓰러진 적의 빈자리가 계속 정보창을 열지 않도록 입력도 함께 닫는다.
     view.infoHit?.disableInteractive().setVisible(false);
     // 별 하나가 커지던 자리에 같은 마름모 파편이 터진다. 화면의 다른 타격과 결이 같아야
@@ -1094,73 +1088,6 @@ export class BattleScene extends Phaser.Scene {
     const rise = -DEATH_FLIGHT.fallbackRise;
     const gap = Math.hypot(away, rise);
     return { x: away / gap, y: rise / gap };
-  }
-
-  /**
-   * 출혈 뱃지.
-   *
-   * 상태이상은 숫자가 아니라 표식으로 알린다 — 전투 중에는 읽을 틈이 없으므로 색과 모양
-   * 하나로 "지금 피가 흐르는 중"만 전한다.
-   */
-  /**
-   * 덧칠 뱃지.
-   *
-   * 출혈처럼 마름모 하나로 두지 않고 **겹 수를 숫자로** 함께 적는다 — 덧칠은 겹칠수록 세지는
-   * 상태라 "걸렸다"만으로는 지금 얼마나 아픈지 읽히지 않는다.
-   */
-  private makeStackBadge(color: number): { badge: Phaser.GameObjects.Container; stacks: Phaser.GameObjects.Text } {
-    const badge = this.add.container(0, 0).setVisible(false);
-    badge.add(this.add.circle(0, 0, BATTLE_STATUS_LAYOUT.badgeRadius, COLOR.void, HOLO.glass));
-    const mark = this.add.graphics();
-    mark.fillStyle(color, 0.95);
-    mark.fillPoints([
-      new Phaser.Geom.Point(0, -11),
-      new Phaser.Geom.Point(8, 2),
-      new Phaser.Geom.Point(0, 11),
-      new Phaser.Geom.Point(-8, 2),
-    ], true);
-    badge.add(mark);
-    const stacks = this.add.text(0, 1, "0", textStyle({ role: "display", size: 16, color: "#0a0d12" })).setOrigin(0.5);
-    badge.add(stacks);
-    return { badge, stacks };
-  }
-
-  private makeBleedBadge(): Phaser.GameObjects.Container {
-    const badge = this.add.container(0, 0).setVisible(false);
-    const mark = this.add.graphics();
-    mark.fillStyle(0xc2303a, 0.95);
-    mark.fillPoints([
-      new Phaser.Geom.Point(0, -11),
-      new Phaser.Geom.Point(7, 3),
-      new Phaser.Geom.Point(0, 10),
-      new Phaser.Geom.Point(-7, 3),
-    ], true);
-    badge.add(this.add.circle(0, 0, BATTLE_STATUS_LAYOUT.badgeRadius, COLOR.void, HOLO.glass));
-    badge.add(mark);
-    return badge;
-  }
-
-  /**
-   * 기절 뱃지. 기존 출혈 표식과 같은 26px 무테 원형 바탕을 공유하고, 홀로그램 강조색의 각진
-   * 번개 두 조각으로 상태 종류만 구분한다. 전투 HUD에 새 판이나 설명 문구를 늘리지 않는다.
-   */
-  private makeStunBadge(): Phaser.GameObjects.Container {
-    // 상태의 실제 소유자는 src/core/skirmish.ts다. 이 표식은 stunnedFor 결과만 그린다.
-    const badge = this.add.container(0, 0).setVisible(false);
-    const mark = this.add.graphics();
-    mark.fillStyle(COLOR.accent, 0.95);
-    mark.fillPoints([
-      new Phaser.Geom.Point(-3, -11),
-      new Phaser.Geom.Point(7, -11),
-      new Phaser.Geom.Point(1, -1),
-      new Phaser.Geom.Point(8, -1),
-      new Phaser.Geom.Point(-6, 12),
-      new Phaser.Geom.Point(-1, 3),
-      new Phaser.Geom.Point(-8, 3),
-    ], true);
-    badge.add(this.add.circle(0, 0, BATTLE_STATUS_LAYOUT.badgeRadius, COLOR.void, HOLO.glass));
-    badge.add(mark);
-    return badge;
   }
 
   /** 매퍼가 필요로 하는 좌표와 코어가 판정한 활성 유지 효과만 노출한다. */
@@ -1255,19 +1182,20 @@ export class BattleScene extends Phaser.Scene {
         view.stunShown = stunned;
         playMotion(this, view.creature, stunned ? "stun" : "idle");
       }
-      // 여러 상태는 체력 바 왼쪽에서 안쪽부터 기절, 출혈, 덧칠, 손질 순서로 세워 겹치지 않는다.
-      const bleeding = fighter.bleed !== null;
-      const overpainted = fighter.overpaint !== null;
-      const badgeOffsets = statusBadgeOffsets(stunned, bleeding, overpainted);
-      view.stunBadge.setPosition(pose.x + badgeOffsets.stunX, barY).setDepth(DEPTH.hpBar + 2).setVisible(stunned);
-      view.bleedBadge.setPosition(pose.x + badgeOffsets.bleedX, barY).setDepth(DEPTH.hpBar + 2).setVisible(bleeding);
-      // 덧칠은 겹 수가 곧 세기라 뱃지 안의 숫자로 몇 겹인지 함께 알린다.
-      view.overpaintBadge.setPosition(pose.x + badgeOffsets.overpaintX, barY).setDepth(DEPTH.hpBar + 2).setVisible(overpainted);
-      view.overpaintStacks.setText(String(fighter.overpaint?.stacks ?? 0));
-      // 손질도 겹 수가 곧 다음 한 방까지 남은 칼질이라 같은 양식으로 몇 겹인지 적는다.
-      const butchered = (fighter.butcher?.stacks ?? 0) > 0;
-      view.butcherBadge.setPosition(pose.x + badgeOffsets.butcherX, barY).setDepth(DEPTH.hpBar + 2).setVisible(butchered);
-      view.butcherStacks.setText(String(fighter.butcher?.stacks ?? 0));
+      // 상태 칩은 체력 바 **위**에 한 줄로 선다. 옆에 늘어놓으면 상태가 둘만 걸려도 바가 밀려
+      // 어디까지가 체력인지 흐려진다. 순서와 색·겹·남은 시간은 순수 모델 하나가 정한다.
+      const statuses = unitStatusViews(fighter);
+      view.statusChips.setPosition(pose.x, barY - BATTLE_STATUS_LAYOUT.chipRowLift)
+        .setDepth(DEPTH.hpBar + 2)
+        .setVisible(statuses.length > 0);
+      view.statusChips.update(statuses);
+      // 입력면은 바와 칩 줄을 함께 덮되, 걸린 것이 없으면 받지 않는다.
+      const rowWidth = Math.max(120, statuses.length * (BATTLE_STATUS_LAYOUT.chipSize + BATTLE_STATUS_LAYOUT.chipGap));
+      view.statusHit.setPosition(pose.x, barY - BATTLE_STATUS_LAYOUT.chipRowLift / 2)
+        .setSize(rowWidth, BATTLE_STATUS_LAYOUT.chipRowLift + BATTLE_STATUS_LAYOUT.chipSize)
+        .setDepth(DEPTH.hpBar + 3);
+      if (statuses.length > 0) view.statusHit.setInteractive({ useHandCursor: true });
+      else view.statusHit.disableInteractive();
     });
   }
 
@@ -1307,6 +1235,18 @@ export class BattleScene extends Phaser.Scene {
       if (this.openBuff?.controller === controller) this.openBuff = undefined;
     });
     this.openBuff = { key, controller };
+  }
+
+  /**
+   * 머리 위 칩이나 체력 바를 누른 순간의 상태 목록을 연다.
+   *
+   * 누른 시점에 코어를 다시 읽는다 — 칩을 그릴 때 만든 목록을 들고 있으면 손이 닿는 사이에
+   * 풀린 상태가 쪽지에 남는다.
+   */
+  private openStatusList(fighterId: string): void {
+    const view = this.views.get(fighterId);
+    if (!view || view.dead) return;
+    openUnitStatusPopup(this, this.buffPopups, view.fighter.def.name, unitStatusViews(view.fighter), { x: view.statusHit.x, y: view.statusHit.y });
   }
 
   /** 목록을 누른 시점에 코어를 다시 조회해 이미 종료된 버프가 팝업에 남지 않게 한다. */
@@ -1418,6 +1358,11 @@ export class BattleScene extends Phaser.Scene {
       skipUltimatePresentation: settingsManager.get().game.skipUltimatePresentation,
       ultimateSequenceActive: this.ultimateSequenceActive,
       ultimateQueue: [...this.ultimateSequence.queue],
+      // 머리 위 칩은 Canvas 안에만 있어 DOM으로 자리를 알 수 없다. 그린 그대로만 노출한다.
+      statusChips: [...this.views.values()]
+        .filter((view) => !view.dead)
+        .map((view) => ({ fighterId: view.fighter.id, x: view.statusHit.x, y: view.statusHit.y, count: unitStatusViews(view.fighter).length }))
+        .filter(({ count }) => count > 0),
       // E2E도 사용자가 보는 이동 중 클릭 영역의 중심을 그대로 눌러 입력 회귀를 확인한다.
       enemyTargets: [...this.views.values()]
         .filter((view) => view.fighter.side === "enemy" && !view.dead)

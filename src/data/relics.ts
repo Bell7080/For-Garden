@@ -835,6 +835,8 @@ export const RELICS: RelicDef[] = [
       // Passive.value는 공용 필수 필드라, 이 패시브에서는 재사용 간격을 그대로 담아 둔다.
       value: 10,
       huntCooldownSeconds: 10,
+      // 첫 도약만 조금 늦춰, 전투가 시작되자마자 사라지는 것처럼 보이지 않게 한다.
+      huntOpeningSeconds: 1.2,
       desc: "전투를 시작할 때 현재 체력이 가장 낮은 적을 표적으로 삼고 그 자리로 도약한다. 적을 처치하면 즉시, 그 밖에는 10초마다 다시 고른다.",
     },
     basic: {
@@ -853,13 +855,13 @@ export const RELICS: RelicDef[] = [
     ultimate: {
       id: "maki-ult",
       name: "오마카세",
-      power: 400,
+      power: 250,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
       cost: 220,
       // 처치했을 때만 돌려받는다. 살아남으면 아무것도 없다.
-      energyRefundOnKill: 100,
+      energyRefundOnKill: 200,
       // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
       targeting: "single",
     },

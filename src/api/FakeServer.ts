@@ -14,7 +14,8 @@ import { ProfileModifierManager } from "../managers/ProfileModifierManager";
 import { GameApiError, type AdOperationsConfigResponse, type BreakThroughResponse, type ClaimMissionRewardsResponse, type CompleteStageResponse, type EnterDailyRestorationResponse, type FeedRelicResponse, type GameApi, type LobbyInteractionResponse, type MissionListResponse, type PlayerStateDto, type ClaimAdRewardRequest, type ClaimAdRewardResponse, type PullRequest, type PullResponse, type RechargeStaminaRequest, type RechargeStaminaResponse } from "./contracts";
 import type { ProductDefinition } from "../data/shopCatalog";
 import { PRODUCTS } from "../data/shopCatalog";
-import type { ProductListResponse, PurchaseProductResponse } from "./contracts";
+import type { ProductListResponse, PurchaseProductRequest, PurchaseProductResponse } from "./contracts";
+import { totalGrantAmount } from "../core/purchase";
 import type { ExchangeDnaRequest, ExchangeDnaResponse } from "./contracts";
 import { DNA_EXCHANGE_OFFERS, WALLET_CAPS } from "../data/economy";
 import { EVENTS, findEventByProductId, findEventByStageId } from "../data/events";
@@ -791,9 +792,12 @@ export class FakeServer implements GameApi {
   }
 
   /** 가격 검증부터 제한 갱신까지 복제 상태에서 끝내고 마지막에 한 번만 확정한다. */
-  async purchaseProduct(productId: string): Promise<PurchaseProductResponse> {
+  async purchaseProduct(request: PurchaseProductRequest): Promise<PurchaseProductResponse> {
     await this.delay();
     const now = this.now();
+    const { productId, quantity } = request;
+    // 수량은 가격과 제한을 곱하기 전에 엄격히 검사해 음수 차감이나 소수 지급을 차단한다.
+    if (!Number.isSafeInteger(quantity) || quantity < 1) throw new GameApiError("INVALID_PURCHASE_QUANTITY", "구매 수량이 올바르지 않습니다.");
     const product = PRODUCTS.find((candidate) => candidate.id === productId);
     if (!product) throw new GameApiError("PRODUCT_NOT_FOUND", "존재하지 않는 상품입니다.");
     const owningEvent = findEventByProductId(productId);
@@ -803,24 +807,30 @@ export class FakeServer implements GameApi {
     // FakeServer는 플랫폼 성공이나 영수증을 만들지 않는다. 유료 지급은 실제 검증 서버의 책임이다.
     if (product.price.currency === "real_money") throw new GameApiError("PLATFORM_PAYMENT_REQUIRED", "플랫폼 영수증 검증이 필요한 상품입니다.");
     const remaining = this.remaining(product, now);
-    if (remaining <= 0) throw new GameApiError("PURCHASE_LIMIT_REACHED", "구매 제한에 도달했습니다.");
-    if (this.state.wallet[product.price.currency] < product.price.amount) throw new GameApiError("INSUFFICIENT_CURRENCY", "재화가 부족합니다.");
+    if (quantity > remaining) throw new GameApiError("PURCHASE_LIMIT_REACHED", "남은 구매 제한을 초과했습니다.");
+    const totalPrice = totalGrantAmount(product.price.amount, quantity);
+    if (!Number.isSafeInteger(totalPrice) || this.state.wallet[product.price.currency] < totalPrice) throw new GameApiError("INSUFFICIENT_CURRENCY", "재화가 부족합니다.");
 
-    const nextWallet = { ...this.state.wallet, [product.price.currency]: this.state.wallet[product.price.currency] - product.price.amount };
+    const nextWallet = { ...this.state.wallet, [product.price.currency]: this.state.wallet[product.price.currency] - totalPrice };
     const nextRunes = [...this.state.runeInventory];
     const grantedRunes: RuneInstance[] = [];
     // 상점은 현재 재화만 지급하며, 룬 생성은 DNA의 명시적인 인스턴스 발급 계약으로 분리한다.
     for (const grant of product.grants) {
       // 프로필 장식은 실제 계정 서버 전용 지급품이며 인게임 재화 구매 경로에서는 재화만 반영한다.
-      if (grant.kind === "currency") nextWallet[grant.currency] += grant.amount;
+      if (grant.kind === "currency") {
+        const totalGrant = totalGrantAmount(grant.amount, quantity);
+        // 총 지급량과 지갑 상한까지 복제 지갑에서 검증한 뒤에만 값을 써서 부분 지급을 남기지 않는다.
+        if (!Number.isSafeInteger(totalGrant) || nextWallet[grant.currency] + totalGrant > WALLET_CAPS[grant.currency]) throw new GameApiError("CURRENCY_LIMIT_EXCEEDED", "지급 후 재화 상한을 초과합니다.");
+        nextWallet[grant.currency] += totalGrant;
+      }
     }
     const periodKey = this.productPeriodKey(product, now);
     const current = this.state.productPurchases[product.id];
-    const count = current?.periodKey === periodKey ? current.count + 1 : 1;
+    const count = (current?.periodKey === periodKey ? current.count : 0) + quantity;
     const nextPurchases = { ...this.state.productPurchases, [product.id]: { periodKey, count } };
     this.persist({ ...this.state, wallet: nextWallet, runeInventory: nextRunes, productPurchases: nextPurchases });
     this.state.wallet = nextWallet; this.state.runeInventory = nextRunes; this.state.productPurchases = nextPurchases;
-    return { ...this.snapshot(), productId, grants: product.grants, grantedRunes: grantedRunes.map((rune) => this.cloneRune(rune)), remaining: Math.max(0, product.purchaseLimit - count) };
+    return { ...this.snapshot(), productId, quantity, grants: product.grants, grantedRunes: grantedRunes.map((rune) => this.cloneRune(rune)), remaining: Math.max(0, product.purchaseLimit - count) };
   }
 
   /** DNA 조각을 무작위 결과가 아닌 명시적으로 고른 렐릭·제작 재료·과거 재화로 교환한다. */

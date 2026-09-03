@@ -65,6 +65,7 @@ import { BattleContributionPopup } from "../ui/BattleContributionPopup";
 import { StageCompletePopup, type StageCompleteFighter } from "../ui/StageCompletePopup";
 import { EffectManager } from "../managers/EffectManager";
 import { CombatEffectPresenter, type CombatEffectTarget } from "../managers/CombatEffectPresenter";
+import { knockbackFlightPath } from "../ui/knockbackFlight";
 import { ensureEffectTextures } from "../ui/effectTextures";
 import { attackDamagePopupRequest, type DamageFlavor, type DebuffId } from "../ui/damageNumbers";
 import { openBattleBuffListPopup, openBattleBuffPopup, type BattleBuffListItem, type BattleBuffPopupController } from "../ui/BattleBuffPopup";
@@ -77,6 +78,23 @@ import type { ActiveCombatDisplayEffect } from "../core/combatEffects";
  * 침범하지 않는 선에서 최대한 넓게 잡아 난전이 한 자리에 뭉치지 않게 한다.
  */
 const ARENA: Arena = { left: 130, right: 950, top: 600, bottom: 1360 };
+
+/**
+ * 쓰러진 SD가 튕겨 다니는 값.
+ *
+ * 한 화면에서 여섯이 함께 쓰러질 수 있으므로 **짧고 얕게** 끊는다 — 길게 두면 결과 화면이
+ * 뜬 뒤에도 시체가 날아다니고, 세게 두면 전장 밖까지 나간 것처럼 보인다.
+ */
+const DEATH_FLIGHT = {
+  seconds: 1.1,
+  riseSpeed: 900,
+  minSpeedX: 260,
+  maxSpeedX: 520,
+  spinPerLeg: 220,
+  vanishMs: 220,
+  /** 살아 있는 SD보다 앞에 띄워 다른 캐릭터 뒤로 숨지 않게 한다. */
+  depth: 60,
+} as const;
 /** SD 한 명의 화면 높이. 여섯이 겹치지 않도록 기존 300에서 0.7배로 줄였다. */
 const UNIT_HEIGHT = 210;
 const PROFILE_TOP = 1430;
@@ -810,6 +828,26 @@ export class BattleScene extends Phaser.Scene {
       return undefined;
     }
 
+    if (event.kind === "concussion") {
+      const view = this.views.get(event.fighterId);
+      if (!view) return undefined;
+      this.profiles.find((profile) => profile.fighter.id === event.fighterId)?.prefab.setHealthTarget(view.fighter.hp, view.fighter.maxHp, "damage", event.amount);
+      // 헬멧이 울리는 소리라 방어를 지나친 고정 피해다 — 출혈처럼 상태의 색으로 뜬다.
+      this.popNumber(view.fighter, event.amount, "debuff", { debuff: "concussion" });
+      flashHit(this, view.creature, this.bodyTint(view));
+      return undefined;
+    }
+    if (event.kind === "knockback") {
+      this.playKnockback(event.fighterId, event.seconds);
+      return undefined;
+    }
+    if (event.kind === "charge") {
+      // 지나간 길에 바닥 자국을 남긴다. 광역과 같은 규칙(눌린 마름모)이라 SD보다 뒤에 깔린다.
+      this.effects.groundArea((event.from.x + event.to.x) / 2, (event.from.y + event.to.y) / 2,
+        Math.hypot(event.to.x - event.from.x, event.to.y - event.from.y) / 2, { ultimate: true });
+      return undefined;
+    }
+
     const attacker = this.views.get(event.attackerId);
     const target = this.views.get(event.targetId);
     if (this.state.boss && attacker?.fighter.side === "player" && target?.fighter.side === "enemy" && event.animate !== false) {
@@ -890,7 +928,29 @@ export class BattleScene extends Phaser.Scene {
     return view ? view.feverTint : COLOR.accent;
   }
 
-  /** 쓰러진 SD는 별이 되어 화면 위로 날아가고 자리와 체력 바를 지운다. */
+  /**
+   * 폭주한 파치에게 맞은 적이 전장을 튕겨 다닌다.
+   *
+   * 좌표는 코어가 소유하므로(`Fighter.knockback`) 여기서는 **그림만** 따라간다 — 씬이 좌표를
+   * 직접 옮기면 리플레이와 화면이 갈린다. 그림자와 체력 바는 평소처럼 SD를 따라오므로 손대지
+   * 않고, 튕기는 순간마다 조각 몇 개와 회전만 얹는다.
+   */
+  private playKnockback(fighterId: string, seconds: number): void {
+    const view = this.views.get(fighterId);
+    if (!view || view.dead) return;
+    const spins = Math.max(1, Math.round(seconds * 3));
+    this.tweens.add({
+      targets: view.creature,
+      angle: view.creature.angle + 360 * spins * (view.fighter.facing >= 0 ? 1 : -1),
+      duration: seconds * 1_000 / this.battleSpeed,
+      ease: "Sine.Out",
+      onComplete: () => view.creature.setAngle(0),
+    });
+    const height = UNIT_HEIGHT * view.fighter.bodyScale;
+    this.effects.burst("fever", view.creature.x, view.fighter.y - height * 0.5, { color: view.feverTint, scale: view.fighter.bodyScale });
+  }
+
+  /** 쓰러진 SD는 펑 하고 튀어올라 전장을 튕겨 다니다 별이 되어 사라진다. */
   private playDeath(fighterId: string): void {
     const view = this.views.get(fighterId);
     if (!view || view.dead) return;
@@ -911,15 +971,45 @@ export class BattleScene extends Phaser.Scene {
     // "쓰러졌다"가 별도의 연출이 아니라 마지막 한 방으로 읽힌다.
     const height = UNIT_HEIGHT * view.fighter.bodyScale;
     this.effects.burst("death", view.creature.x, view.fighter.y - height * 0.5, { color: view.feverTint, scale: view.fighter.bodyScale });
-    // 사망은 판정이나 결과 정산이 아닌 760ms 시각 효과다. finishBattle은 이 완료를 기다리지 않는다.
-    this.tweens.add({
+    // 사망은 판정이나 결과 정산이 아닌 시각 효과다. finishBattle은 이 완료를 기다리지 않는다.
+    //
+    // 위로 조용히 떠오르며 사라지는 대신 **펑 하고 튀어올라 전장을 튕겨 다닌다** — 폭주한
+    // 파치가 적을 날리는 그림과 같은 규칙(`knockbackFlightPath`)을 그대로 써서, "쓰러졌다"가
+    // 화면 안에서 같은 물리로 읽히게 한다. 마지막에 삥 하고 오므라들며 별이 된다.
+    const launch = Phaser.Math.Between(-1, 1) || 1;
+    const legs = knockbackFlightPath({
+      x: view.creature.x,
+      y: view.creature.y,
+      vx: launch * Phaser.Math.Between(DEATH_FLIGHT.minSpeedX, DEATH_FLIGHT.maxSpeedX),
+      vy: -DEATH_FLIGHT.riseSpeed,
+      seconds: DEATH_FLIGHT.seconds,
+      arena: this.state.arena,
+    });
+    view.creature.setDepth(DEATH_FLIGHT.depth);
+    this.tweens.chain({
       targets: view.creature,
-      y: view.creature.y - 320,
-      angle: Phaser.Math.Between(-25, 25),
-      alpha: 0,
-      duration: 760,
-      ease: "Back.In",
-      onComplete: () => view.creature.setVisible(false),
+      tweens: legs.map((leg) => ({
+        x: leg.x,
+        y: leg.y,
+        angle: `+=${DEATH_FLIGHT.spinPerLeg * launch}`,
+        duration: Math.max(1, leg.durationMs),
+        ease: "Sine.InOut",
+        onComplete: () => {
+          // 벽에 닿는 순간에만 조각이 튄다. 구간마다 터뜨리면 날아가는 내내 잔상이 남는다.
+          if (leg.bounced) this.effects.burst("death", leg.x, leg.y, { color: view.feverTint, scale: view.fighter.bodyScale * 0.6 });
+        },
+      })),
+      onComplete: () => {
+        // 삥 하고 한 점으로 오므라들며 별이 된다.
+        this.tweens.add({
+          targets: view.creature,
+          scale: 0,
+          alpha: 0,
+          duration: DEATH_FLIGHT.vanishMs,
+          ease: "Back.In",
+          onComplete: () => view.creature.setVisible(false),
+        });
+      },
     });
   }
 

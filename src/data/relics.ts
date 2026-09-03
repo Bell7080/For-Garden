@@ -677,6 +677,105 @@ export const RELICS: RelicDef[] = [
     },
   },
 
+  {
+    id: "pachi",
+    squad: "gear",
+    name: "파치",
+    specimenNumber: "093",
+    projectName: "HARD HAT",
+    excavationSite: "헬크리크 상부 사암 붕괴면",
+    // 발굴 기록은 장소·보존 상태·복원 연구 특징만 담고, 복원 이후 생활 관찰과 분리한다.
+    fossilRecord: "붕괴면 아래에서 두개골 윗면만 온전한 표본이 나왔다. 뼈가 스무 겹 넘게 겹쳐 굳어 있었고, 같은 자리에서 부러진 뿔 조각 여럿이 함께 수습됐다.",
+    observationProfile: {
+      originYear: "약 6천 6백만 년 전",
+      // E.C.는 파치의 인간형 신체 나잇대이며, 원종 화석의 성장 단계와 독립된 값이다.
+      restorationYear: "E.C. 16년",
+      lifeStage: "아성체",
+      height: "1.55 m",
+      weight: "47 kg",
+    },
+    catalogSummary: "신장 1.55m, 체중 47kg의 인간형 체격에 각질이 두꺼운 꼬리와 단단한 두개골이 확인된 아성체 표본.",
+    // 복원 후 관찰은 성격과 실제로 목격된 행동만 남기고 발굴 기록과 겹치지 않게 쓴다.
+    unlockRecord: { status: "recorded", text: "복원 첫날 파치는 케어실 문틀을 머리로 받아 경첩을 부쉈고, 그 뒤로 안전모를 씌워 두자 벗지 않는다. 잔해 인양 현장에 데려가면 시키지도 않은 벽부터 무너뜨리고 돌아와 \"길 뚫었다\"며 턱을 든다. 말투는 거칠지만 무너질 자리를 먼저 골라 서고, 뒤따라오는 인원이 지나갈 때까지 그 자리를 비키지 않는다." },
+    squadNote: "나이트 기어의 철거 담당. 인양조가 들어갈 길을 먼저 뚫고, 연구원을 이름 대신 \"당신\"이라 부르며 앞장선다.",
+    researcherTitle: "당신",
+    rarity: "R",
+    portraitAssetId: "pachi",
+    origin: "파키케팔로사우루스",
+    element: "earth",
+    role: "warrior",
+    // 잔해를 부수고 다니는 개체라 발굴 특화도 화석 회수 쪽에 붙인다.
+    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 0.26, efficiencyMultiplier: 1.04 },
+    // 머리로 받는 개체라 방어가 두껍고 발이 빠르다. 주문력을 쓰는 스킬이 하나도 없어 낮게 둔다.
+    stats: {
+      hp: 1040,
+      def: 88,
+      res: 50,
+      atk: 132,
+      ap: 45,
+      attackSpeed: 90,
+      moveSpeed: 116,
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 0,
+    },
+    ferocityTrait: {
+      name: "야, 비켜!",
+      effectId: "knockbackSlam",
+      seconds: 1.6,
+      speed: 720,
+    },
+    passive: {
+      // kind가 impactCap인 패시브는 passiveDescription()이 구조화 필드로 다시 문장을 만들므로
+      // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
+      id: "pachi-passive",
+      name: "무면허 안전제일",
+      kind: "impactCap",
+      iconAssetId: "skill-icon-fixed",
+      effectType: "fixed",
+      // 이 비율을 넘는 한 방만 깎기 시작하고, 그렇게 깎아도 원래 피해의 40%보다 더 줄이지 않는다.
+      // Passive.value는 공용 필수 필드라, 이 패시브에서는 상한 비율을 그대로 담아 둔다.
+      value: 40,
+      impactThresholdMaxHpPercent: 40,
+      impactMaxReductionPercent: 40,
+      desc: "최대 체력의 40%를 넘는 한 방은 그 선까지 줄어들되, 원래 피해의 40%보다 더 줄어들지는 않는다.",
+    },
+    basic: {
+      id: "pachi-basic",
+      name: "철거 스윙",
+      power: 90,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      targeting: "single",
+      // 네 번째 배트가 헬멧을 울린다. 확정 치명타(periodicCritical)와 달리 부가 효과의 주기다.
+      statusEffectEvery: 4,
+      statusEffects: [
+        { kind: "stun", seconds: 1 },
+        { kind: "concussion", maxHpPercent: 5, criticalMaxHpPercent: 15 },
+      ],
+    },
+    ultimate: {
+      id: "pachi-ult",
+      name: "저돌맹진!",
+      power: 200,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      cost: 250,
+      // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
+      targeting: "chargeLine",
+      // 뚫고 지나가는 통로의 반폭(px)이다. 나아가는 거리는 이동 속도가 정한다.
+      radius: 110,
+      statusEffects: [
+        { kind: "stun", seconds: 2 },
+        { kind: "concussion", maxHpPercent: 5, criticalMaxHpPercent: 15 },
+      ],
+    },
+  },
+
   // --- 적 개체. 폭주해 이터널 시티를 위협하는 실패작들이다. ---
   {
     id: "husk-raptor",

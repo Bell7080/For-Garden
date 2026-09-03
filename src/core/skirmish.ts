@@ -6,7 +6,7 @@ export { currentAbilityPower } from "./damage";
 import { drainFerocityFever, FEROCITY_RULES } from "./ferocity";
 import { breakthroughBonus } from "./relicProgression";
 import { attackPowerMultiplier, bleedOnAttackEffect, type ExpeditionAugmentEffect } from "./expeditionAugments";
-import type { CombatStatusEffect, RelicDef, Side, Skill, TeamBuff } from "./types";
+import type { CombatStatusEffect, FerocityTrait, RelicDef, Side, Skill, TeamBuff } from "./types";
 import { canUseUltimate, ULTIMATE_ENERGY_MAX } from "./ultimate";
 import { stealthTransition, type CombatEffectCue } from "./combatEffects";
 import {
@@ -84,6 +84,15 @@ export interface Fighter extends Combatant {
    * 계산이 갈린다. 다시 칠하면 시간이 처음부터 다시 돌고 중첩만 하나 오른다.
    */
   overpaint: { remaining: number; stacks: number; percentPerStack: number; maxStacks: number } | null;
+  /**
+   * 지금 튕겨 날아가는 중인 상태. 없으면 null이다.
+   *
+   * 기절과 따로 두는 이유는 **좌표가 실제로 움직이기 때문**이다 — 기절은 제자리에서 멈추는
+   * 것이고, 이쪽은 벽을 튕기며 전장을 가로지른다. 그동안 행동하지 못하는 것만 같다.
+   */
+  knockback: { remaining: number; vx: number; vy: number } | null;
+  /** `statusEffectEvery`가 있는 기본 공격이 실제로 몇 번 나갔는지. 그 주기에만 상태를 건다. */
+  statusHitCount: number;
   /** 남은 순풍 시간(초). 공격 속도·이동 속도를 함께 올리는 아군 전체 강화다. */
   tailwindFor: number;
   /** 지금 걸린 순풍의 수치. 여러 제공자가 겹치면 남은 시간이 긴 쪽의 값을 그대로 쓴다. */
@@ -223,12 +232,25 @@ export type SkirmishEvent =
   | { kind: "shieldDepleted"; fighterId: string; effect: CombatEffectCue }
   | { kind: "combatEffect"; fighterId: string; effect: CombatEffectCue }
   | { kind: "death"; fighterId: string }
+  /** 뇌진탕이 울린 순간의 고정 피해. 방어력을 지나치므로 attack 사건과 따로 센다. */
+  | { kind: "concussion"; fighterId: string; amount: number; critical: boolean }
+  /** 폭주한 파치가 적을 튕겨 날린 순간. 씬은 이 사건으로만 튕기는 연출을 시작한다. */
+  | { kind: "knockback"; fighterId: string; seconds: number }
+  /** 돌진이 실제로 지나간 선분. 씬은 이 두 점 사이에 자국을 그린다. */
+  | { kind: "charge"; fighterId: string; from: { x: number; y: number }; to: { x: number; y: number } }
   | { kind: "finish"; phase: "victory" | "defeat" };
 
 /** 난전의 손맛을 정하는 값. 전부 여기서만 조정한다. */
 export const SKIRMISH = {
   /** 공격 속도 100인 캐릭터의 공격 간격(초). */
   attackInterval: 1.5,
+  /**
+   * 돌진(`chargeLine`)이 밀고 들어가는 시간(초).
+   *
+   * 거리를 직접 적지 않고 시간으로 두는 이유는, 그 시간 × 이동 속도가 곧 거리라 **발이 빠른
+   * 개체가 더 멀리 파고든다**는 규칙이 능력치 하나로 설명되기 때문이다.
+   */
+  chargeSeconds: 0.9,
   /** 이동 속도 100인 캐릭터가 1초에 가는 거리(px). */
   moveRate: 1.45,
   /**
@@ -328,6 +350,8 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     streakCount: 0,
     shimmerMarkTargetId: null,
     overpaint: null,
+    knockback: null,
+    statusHitCount: 0,
     tailwindFor: 0,
     tailwind: null,
     tailwindTickIn: 0,
@@ -488,11 +512,73 @@ function cleanseControlWithAdagio(state: SkirmishState, target: Fighter, events:
 }
 
 /** 개별 스킬과 야성 특성에서 같은 판별 가능한 상태 효과를 적용한다. */
-function applyCombatStatusEffect(fighter: Fighter, effect: CombatStatusEffect, events: SkirmishEvent[], state: SkirmishState, sourceId?: string): void {
+function applyCombatStatusEffect(fighter: Fighter, effect: CombatStatusEffect, events: SkirmishEvent[], state: SkirmishState, sourceId?: string, critical = false): void {
   if (effect.kind === "stun") events.push(...applyStun(fighter, effect.seconds, state));
   if (effect.kind === "stagger") events.push(...applyStagger(fighter, effect.seconds, state));
   if (effect.kind === "bleed") refreshBleed(fighter, effect.seconds, effect.maxHpPercentPerSecond, events, sourceId);
   if (effect.kind === "overpaint") refreshOverpaint(fighter, effect);
+  if (effect.kind === "concussion") applyConcussion(fighter, effect, critical, events, state, sourceId);
+}
+
+/**
+ * 뇌진탕. 방어력·속성·경감을 모두 지나치는 즉발 고정 피해 한 번이다.
+ *
+ * 최대 체력 비율로 재는 이유는 출혈과 같다 — 절대값으로 두면 레벨이 오를수록 "헬멧이 울린다"가
+ * 아무것도 아닌 수가 된다. 치명타였다면 더 크게 울린다.
+ *
+ * 폭주한 파치는 여기서 그 적을 전장 밖으로 날려 버린다. 날리는 것을 스킬이 아니라 **뇌진탕이
+ * 터진 자리**에 두는 이유는, 뇌진탕을 거는 경로가 늘어나도 폭주 규칙을 다시 적을 필요가 없기
+ * 때문이다.
+ */
+function applyConcussion(
+  target: Fighter,
+  effect: Extract<CombatStatusEffect, { kind: "concussion" }>,
+  critical: boolean,
+  events: SkirmishEvent[],
+  state: SkirmishState,
+  sourceId?: string,
+): void {
+  const attacker = sourceId ? findFighter(state, sourceId) : undefined;
+  const slam = attacker?.ferocityFever === true && attacker.def.ferocityTrait.effectId === "knockbackSlam"
+    ? attacker.def.ferocityTrait
+    : undefined;
+  // 폭주 중에는 판정을 다시 굴리지 않고 확정 치명타로 친다 — 날아가는 그림과 수치가 갈리지 않는다.
+  const struck = critical || slam !== undefined;
+  const percent = struck ? effect.criticalMaxHpPercent : effect.maxHpPercent;
+  const amount = Math.max(1, Math.round(target.maxHp * percent / 100));
+  const dealt = applyDamage(target, amount, events);
+  events.push({ kind: "concussion", fighterId: target.id, amount: dealt, critical: struck });
+  if (!isFighterAlive(target)) {
+    clearDefeatedStatuses(target);
+    events.push({ kind: "death", fighterId: target.id });
+    return;
+  }
+  if (slam && attacker) launchKnockback(target, attacker, slam, state, events);
+}
+
+/**
+ * 맞은 적을 전장 안에서 튕겨 다니게 만든다.
+ *
+ * 미리 궤적을 그려 두지 않고 속도만 주는 이유는, 벽에 부딪히는 자리가 그때의 전장 크기와
+ * 위치에서 나와야 하기 때문이다 — 좌표를 미리 정해 두면 원정처럼 전장이 다른 화면에서
+ * 캐릭터가 벽을 뚫고 나간다.
+ */
+function launchKnockback(
+  target: Fighter,
+  attacker: Fighter,
+  trait: Extract<FerocityTrait, { effectId: "knockbackSlam" }>,
+  state: SkirmishState,
+  events: SkirmishEvent[],
+): void {
+  const dx = target.x - attacker.x;
+  const dy = target.y - attacker.y;
+  const gap = Math.hypot(dx, dy) || 1;
+  target.knockback = { remaining: trait.seconds, vx: (dx / gap) * trait.speed, vy: (dy / gap) * trait.speed };
+  // 붙어 있던 추적을 끊어야 날아가는 동안 제자리로 되돌아오지 않는다.
+  target.engaged = false;
+  events.push({ kind: "knockback", fighterId: target.id, seconds: trait.seconds });
+  // 날려 버린 상대는 이제 사거리 밖이므로 파치도 다음 상대를 찾는다.
+  moveToNearestOtherEnemy(attacker, target, state);
 }
 
 /**
@@ -514,10 +600,27 @@ export function overpaintMultiplier(target: Fighter): number {
 }
 
 /** 한 스킬이 선언한 상태를 생존한 한 적중 대상에게 공용 저항·UI 사건 경로로 적용한다. */
-function applySkillStatuses(target: Fighter, skill: Skill, events: SkirmishEvent[], state: SkirmishState, sourceId?: string): void {
+function applySkillStatuses(target: Fighter, skill: Skill, events: SkirmishEvent[], state: SkirmishState, sourceId?: string, critical = false): void {
   // 피해로 쓰러진 대상에는 지속 상태나 UI 뱃지를 새로 만들지 않는다.
   if (!isFighterAlive(target)) return;
-  for (const effect of skill.statusEffects ?? []) applyCombatStatusEffect(target, effect, events, state, sourceId);
+  // 뇌진탕처럼 그 타격의 치명타 여부가 수치를 바꾸는 효과가 있어 판정 결과를 함께 넘긴다.
+  for (const effect of skill.statusEffects ?? []) applyCombatStatusEffect(target, effect, events, state, sourceId, critical);
+}
+
+/**
+ * 이번 타격이 상태 효과를 거는 차례인가.
+ *
+ * `statusEffectEvery`가 없으면 늘 건다. 있으면 **실제로 나간 기본 공격만** 세어 그 주기에만
+ * 건다 — 궁극기는 제 상태를 스스로 걸고 이 셈을 건드리지 않는다. 파치의 배트가 네 번째에만
+ * 헬멧을 울리는 규칙이 이것 하나다.
+ */
+function statusEffectsLandThisHit(attacker: Fighter, skill: Skill, useUltimate: boolean): boolean {
+  const every = useUltimate ? undefined : attacker.def.basic.statusEffectEvery;
+  if (every === undefined || (skill.statusEffects?.length ?? 0) === 0) return true;
+  attacker.statusHitCount += 1;
+  if (attacker.statusHitCount < every) return false;
+  attacker.statusHitCount = 0;
+  return true;
 }
 
 /** 모든 출혈 진입점이 공유하는 단일 슬롯 갱신 규칙이다. 약한 재적용은 강도와 틱 시계를 덮지 않는다. */
@@ -536,6 +639,7 @@ function clearDefeatedStatuses(fighter: Fighter): void {
   fighter.targetId = null;
   fighter.bleed = null;
   fighter.overpaint = null;
+  fighter.knockback = null;
   fighter.regeneration = null;
   fighter.stunnedFor = 0;
   fighter.staggeredFor = 0;
@@ -725,6 +829,40 @@ export function renderPose(fighter: Fighter): RenderPose {
 
 function distance(a: Fighter, b: Fighter): number {
   return Math.hypot(b.x - a.x, b.y - a.y);
+}
+
+/**
+ * 돌진이 지나가는 선분. 지금 보고 있는 방향으로 **이동 속도에 비례해** 밀고 들어간다.
+ *
+ * 거리를 스킬에 적지 않고 이동 속도에서 뽑는 이유는, 그래야 "발이 빠른 개체가 더 멀리
+ * 파고든다"가 능력치 하나로 설명되기 때문이다. 전장 밖으로 나가지 않도록 끝점만 가둔다.
+ */
+function chargePath(attacker: Fighter, state: SkirmishState, aim: { x: number; y: number }): { from: { x: number; y: number }; to: { x: number; y: number } } {
+  const dx = aim.x - attacker.x;
+  const dy = aim.y - attacker.y;
+  const gap = Math.hypot(dx, dy);
+  // 대상이 겹쳐 서 있어 방향이 없으면 바라보는 쪽으로 그냥 달린다.
+  const ux = gap < 1e-3 ? attacker.facing : dx / gap;
+  const uy = gap < 1e-3 ? 0 : dy / gap;
+  const reach = moveSpeed(attacker, state) * SKIRMISH.chargeSeconds;
+  const arena = state.arena;
+  return {
+    from: { x: attacker.x, y: attacker.y },
+    to: {
+      x: Math.min(arena.right, Math.max(arena.left, attacker.x + ux * reach)),
+      y: Math.min(arena.bottom, Math.max(arena.top, attacker.y + uy * reach)),
+    },
+  };
+}
+
+/** 점과 선분 사이의 최단 거리. 통로 안에 들어왔는지를 재는 데만 쓴다. */
+function distanceToSegment(point: { x: number; y: number }, from: { x: number; y: number }, to: { x: number; y: number }): number {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const lengthSquared = dx * dx + dy * dy;
+  if (lengthSquared < 1e-6) return Math.hypot(point.x - from.x, point.y - from.y);
+  const t = Math.min(1, Math.max(0, ((point.x - from.x) * dx + (point.y - from.y) * dy) / lengthSquared));
+  return Math.hypot(point.x - (from.x + dx * t), point.y - (from.y + dy * t));
 }
 
 /** 지금 노릴 상대. 이미 잡은 상대가 살아 있으면 바꾸지 않고 계속 붙는다. */
@@ -926,6 +1064,37 @@ function applyShimmerMark(attacker: Fighter, target: Fighter, state: SkirmishSta
     state.log.push(`${target.def.name} 전투 불능`);
   }
 }
+
+/**
+ * 날아가는 한 프레임. 벽에 닿으면 그 축의 방향만 뒤집는다.
+ *
+ * 궤적을 미리 그려 두지 않는 이유는 화면 쪽 `knockbackFlightPath`와 반대다 — 코어는 매 프레임
+ * 진행하는 것이 이미 자기 일이고, 전장 크기가 화면마다 달라도 같은 코드가 그대로 맞는다.
+ */
+function advanceKnockback(fighter: Fighter, dt: number, arena: Arena): void {
+  const flight = fighter.knockback;
+  if (!flight) return;
+  const remaining = flight.remaining - dt;
+  if (remaining <= 0) {
+    fighter.knockback = null;
+    return;
+  }
+  let { vx, vy } = flight;
+  fighter.x += vx * dt;
+  fighter.y += vy * dt;
+  if (fighter.x <= arena.left || fighter.x >= arena.right) {
+    fighter.x = Math.min(arena.right, Math.max(arena.left, fighter.x));
+    vx = -vx * KNOCKBACK.restitution;
+  }
+  if (fighter.y <= arena.top || fighter.y >= arena.bottom) {
+    fighter.y = Math.min(arena.bottom, Math.max(arena.top, fighter.y));
+    vy = -vy * KNOCKBACK.restitution;
+  }
+  fighter.knockback = { remaining, vx, vy };
+}
+
+/** 튕겨 날아가는 값 중 스킬이 정하지 않는 부분. 화면의 `knockbackFlight`와 같은 감쇠를 쓴다. */
+export const KNOCKBACK = { restitution: 0.86 } as const;
 
 /**
  * 이크티오 다이브. 폭주 중 일반 공격을 마치면 표적을 **다른** 적으로 바꾼다.
@@ -1149,10 +1318,29 @@ export function resolveReceivedDamage(target: Fighter, rawAmount: number): Recei
   // 덧칠은 경감과 같은 최종 경계에서 곱한다 — 여기 두지 않으면 피해 경로마다 따로 곱하게 되고
   // 어느 한 곳을 빠뜨리면 "덧칠했는데 그 스킬만 안 아픈" 상태가 된다.
   const amplified = rawAmount * overpaintMultiplier(target);
-  const reduced = Math.max(1, Math.round(amplified * (1 - Math.min(100, Math.max(0, reduction)) / 100)));
+  const softened = Math.max(1, Math.round(amplified * (1 - Math.min(100, Math.max(0, reduction)) / 100)));
+  const reduced = applyImpactCap(target, softened);
   // 일반 전투원의 최소 1 피해는 그대로 두고, 구조화 필드가 있는 심해 압력만 최종 반올림 뒤 무효화한다.
   const ignored = passive.kind === "abyssalPressure" && reduced <= (passive.ignoreDamageAtOrBelow ?? -1);
   return { raw: rawAmount, reduced, applied: ignored ? 0 : reduced, ignored };
+}
+
+/**
+ * 무면허 안전제일. 한 방이 최대 체력의 정해진 비율을 넘으면 그 위를 깎되, **깎는 폭 자체에도
+ * 상한을 둔다.**
+ *
+ * 두 조건이 함께 있어야 뜻이 선다. 상한만 두면 아무리 센 일격도 늘 같은 값으로 눌려 안전모가
+ * 무적이 되고, 경감률만 두면 큰 한 방일수록 더 크게 들어와 "버틴다"가 되지 않는다. 그래서
+ * **넘친 만큼 깎되 원래 피해의 그 비율보다 더 줄이지는 않는다** — 평범한 타격은 그대로 다
+ * 맞고, 한 방에 죽일 만한 타격만 헬멧이 받아 낸다.
+ */
+function applyImpactCap(target: Fighter, amount: number): number {
+  const passive = target.def.passive;
+  if (passive.kind !== "impactCap") return amount;
+  const threshold = target.maxHp * (passive.impactThresholdMaxHpPercent ?? 0) / 100;
+  if (amount <= threshold) return amount;
+  const floor = amount * (1 - (passive.impactMaxReductionPercent ?? 0) / 100);
+  return Math.max(1, Math.round(Math.max(threshold, floor)));
 }
 
 /** 기존 숫자 소비자를 위한 얇은 호환 경계이며 신규 공격 처리는 판별 가능한 결과를 직접 사용한다. */
@@ -1418,7 +1606,7 @@ function strike(
   if (!useUltimate) { triggerCrescendoStaccato(state, target, events); triggerSharedOverpaint(state, target); }
 
   // 개별 기본 공격·궁극기가 선언한 상태도 피해 처리 뒤 공용 저항/재적용 규칙을 그대로 사용한다.
-  applySkillStatuses(target, skill, events, state, attacker.id);
+  if (statusEffectsLandThisHit(attacker, skill, useUltimate)) applySkillStatuses(target, skill, events, state, attacker.id, critical);
 
   // 표식은 궁극기가 아니라 실제 타격을 따라 옮겨 다닌다.
   if (!useUltimate) {
@@ -1518,13 +1706,17 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     y: Math.min(state.arena.bottom, Math.max(state.arena.top, requestedCenter.y)),
   } : { x: attacker.x, y: attacker.y };
   const inCircle = (fighter: Fighter): boolean => Math.hypot(fighter.x - center.x, fighter.y - center.y) <= (skill.radius ?? 0);
+  // 돌진은 지금 보고 있는 방향으로 이동 속도만큼 밀고 들어가며, 그 통로 안의 적을 모두 뚫는다.
+  const charge = skill.targeting === "chargeLine" ? chargePath(attacker, state, requestedCenter) : undefined;
+  const inCharge = (fighter: Fighter): boolean => charge !== undefined
+    && distanceToSegment(fighter, charge.from, charge.to) <= (skill.radius ?? 0);
   // 덧칠을 터뜨리는 궁극기는 그릴 것이 남은 적만 친다. 한 겹도 없는 적까지 대상에 넣으면
   // 위력 0의 최소 피해 1이 떠서 "터졌다"와 "터뜨릴 게 없었다"가 같은 숫자로 읽힌다.
   const detonation = ultimate?.overpaintDetonation === true;
   const targets = state.fighters.filter((fighter) => fighter.side !== attacker.side && isFighterAlive(fighter) && fighter.stealthFor <= 0
     && (!detonation || (fighter.overpaint?.stacks ?? 0) > 0)
     && (skill.targeting === "battlefieldEnemies" || (skill.targeting === "nearbyEnemies" && distance(attacker, fighter) <= (skill.radius ?? 0))
-      || (skill.targeting === "targetedCircle" && inCircle(fighter))));
+      || (skill.targeting === "targetedCircle" && inCircle(fighter)) || (skill.targeting === "chargeLine" && inCharge(fighter))));
   const healingTargets = ultimate?.targeting === "targetedCircle" && ultimate.allyHealingPower !== undefined
     ? aliveFighters(state, attacker.side).filter(inCircle) : [];
   if (targets.length === 0 && healingTargets.length === 0) return;
@@ -1533,6 +1725,14 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
   // 넘겨 씬이 바닥에 범위를 그리게 한다.
   if (skill.targeting !== "battlefieldEnemies" && (skill.radius ?? 0) > 0) {
     events.push({ kind: "areaImpact", attackerId: attacker.id, x: center.x, y: center.y, radius: skill.radius ?? 0, ultimate: useUltimate });
+  }
+
+  // 돌진은 대상을 고른 뒤 실제로 자리를 옮긴다. 먼저 옮기면 판정 기준선이 이미 지나온 길이 된다.
+  if (charge) {
+    attacker.x = charge.to.x;
+    attacker.y = charge.to.y;
+    attacker.engaged = false;
+    events.push({ kind: "charge", fighterId: attacker.id, from: charge.from, to: charge.to });
   }
 
   // 소비·팀 보조·야성 획득은 명중 수가 아니라 기술 사용 횟수에 묶는다.
@@ -1590,7 +1790,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     // 죽은 대상에는 지속 상태와 상태 UI 시작 사건을 절대 남기지 않는다.
     if (isFighterAlive(target)) {
       // 광역 공격도 적중 대상을 하나씩 넘겨 기절 저항·행동 중단·UI 사건을 단일 공격과 공유한다.
-      applySkillStatuses(target, skill, events, state, attacker.id);
+      applySkillStatuses(target, skill, events, state, attacker.id, critical);
     } else {
       clearDefeatedStatuses(target);
       events.push({ kind: "death", fighterId: target.id });
@@ -1779,6 +1979,11 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     if (!isFighterAlive(fighter)) continue;
     // 기절 시간은 위에서 흐르지만 행동 시계인 공격 쿨다운은 멈춘다. 즉 이동·추적·평타·자동
     // 궁극기와 함께 행동 자체가 정지하며, 정확히 0이 된 스텝부터 기존 쿨다운을 이어서 처리한다.
+    // 날아가는 중에는 벽을 튕기며 실제로 좌표가 움직인다. 기절과 달리 제자리에 서 있지 않다.
+    if (fighter.knockback) {
+      advanceKnockback(fighter, dt, state.arena);
+      continue;
+    }
     if (fighter.stunnedFor > 0 || fighter.staggeredFor > 0) {
       fighter.hop *= recovery;
       continue;

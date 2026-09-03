@@ -2140,3 +2140,117 @@ describe("메론 정적 전투 계약", () => {
     expect(enemy.overpaint).toMatchObject({ stacks: 1, percentPerStack: trait.overpaint.damageTakenPercent });
   });
 });
+
+describe("파치 정적 전투 계약", () => {
+  /** 파치와 적 하나를 붙여 세우고 적 행동을 멈춰 파치의 타격만 관찰한다. */
+  function pachiBattle(enemies = ["husk-shell"]) {
+    const state = newSkirmish(["pachi"], enemies);
+    const pachi = state.fighters[0];
+    pachi.x = 400; pachi.y = 1000; pachi.attackCooldown = 0;
+    const foes = state.fighters.filter((fighter) => fighter.side === "enemy");
+    for (const [index, enemy] of foes.entries()) {
+      enemy.x = 460 + index * 40; enemy.y = 1000; enemy.attackCooldown = 99;
+      enemy.maxHp = 400_000; enemy.hp = 400_000;
+    }
+    pachi.targetId = foes[0].id;
+    return { state, pachi, enemy: foes[0], foes };
+  }
+
+  it("의 패시브는 큰 한 방만 깎되 경감 폭 자체에도 상한을 둔다", () => {
+    const { pachi } = pachiBattle();
+    const passive = pachi.def.passive;
+    if (passive.kind !== "impactCap") throw new Error("파치의 패시브가 아니다");
+    const threshold = pachi.maxHp * passive.impactThresholdMaxHpPercent! / 100;
+
+    // 상한 아래의 평범한 타격은 그대로 다 맞는다 — 안전모가 늘 일하는 것이 아니다.
+    const small = Math.round(threshold * 0.5);
+    expect(receivedDamage(pachi, small)).toBe(small);
+
+    // 상한을 조금 넘는 한 방은 그 선까지 눌린다.
+    expect(receivedDamage(pachi, Math.round(threshold * 1.2))).toBe(Math.round(threshold));
+
+    // 즉사급 한 방은 40%보다 더 깎이지 않는다 — 그러지 않으면 안전모가 무적이 된다.
+    const huge = pachi.maxHp * 5;
+    expect(receivedDamage(pachi, huge)).toBe(Math.round(huge * 0.6));
+  });
+
+  it("의 기본 공격은 네 번째 타격에만 기절과 뇌진탕을 건다", () => {
+    const { state, pachi, enemy } = pachiBattle();
+    const every = pachi.def.basic.statusEffectEvery!;
+    expect(every).toBe(4);
+    const concussion = pachi.def.basic.statusEffects!.find((effect) => effect.kind === "concussion")!;
+    if (concussion.kind !== "concussion") throw new Error("뇌진탕 효과가 아니다");
+
+    const events: SkirmishEvent[] = [];
+    for (let hit = 1; hit <= every; hit += 1) {
+      pachi.attackCooldown = 0;
+      // 기절한 적이 다음 타를 받지 못하는 일이 없도록 매 프레임 기절을 지운다.
+      enemy.stunnedFor = 0;
+      events.push(...stepSkirmish(state, 1 / 60));
+      const rang = events.filter((event) => event.kind === "concussion");
+      // 네 번째 배트에서만 헬멧이 울린다.
+      expect(rang, `${hit}타`).toHaveLength(hit === every ? 1 : 0);
+    }
+    expect(enemy.stunnedFor).toBeGreaterThan(0);
+    // 고정 피해라 방어력·속성을 지나쳐 최대 체력 비율 그대로 들어간다.
+    const rang = events.find((event): event is Extract<SkirmishEvent, { kind: "concussion" }> => event.kind === "concussion")!;
+    const percent = rang.critical ? concussion.criticalMaxHpPercent : concussion.maxHpPercent;
+    expect(rang.amount).toBe(Math.round(enemy.maxHp * percent / 100));
+  });
+
+  it("의 궁극기는 이동 속도만큼 밀고 들어가 길 위의 적을 모두 친다", () => {
+    const { state, pachi, foes } = pachiBattle(["husk-shell", "husk-raptor"]);
+    // 두 적을 같은 직선 위에 세워 통로 안에 함께 들어오게 한다.
+    foes[0].x = 500; foes[0].y = 1000;
+    foes[1].x = 600; foes[1].y = 1000;
+    pachi.targetId = foes[0].id;
+    const startX = pachi.x;
+
+    pachi.energy = pachi.def.ultimate.cost;
+    const events = fireUltimate(state, pachi.id);
+    const charge = events.find((event): event is Extract<SkirmishEvent, { kind: "charge" }> => event.kind === "charge")!;
+    // 나아간 거리는 스킬이 아니라 이동 속도가 정한다.
+    expect(Math.hypot(charge.to.x - charge.from.x, charge.to.y - charge.from.y))
+      .toBeCloseTo(Math.min(moveSpeed(pachi, state) * SKIRMISH.chargeSeconds, state.arena.right - startX), 3);
+    expect(pachi.x).toBeCloseTo(charge.to.x, 5);
+    // 통로 안의 두 적이 함께 맞고 함께 기절한다.
+    const hits = events.filter((event) => event.kind === "attack").map((event) => event.kind === "attack" && event.targetId);
+    expect(hits).toEqual([foes[0].id, foes[1].id]);
+    for (const foe of foes) expect(foe.stunnedFor).toBeGreaterThan(0);
+    // 전장 밖으로는 나가지 않는다.
+    expect(pachi.x).toBeLessThanOrEqual(state.arena.right);
+  });
+
+  it("의 폭주는 뇌진탕을 확정 치명타로 만들고 그 적을 튕겨 날린다", () => {
+    const { state, pachi, enemy, foes } = pachiBattle(["husk-shell", "husk-raptor"]);
+    const trait = getRelic("pachi").ferocityTrait;
+    if (trait.effectId !== "knockbackSlam") throw new Error("파치의 폭주 특성이 아니다");
+    pachi.ferocity = 100; pachi.ferocityFever = true;
+
+    const events: SkirmishEvent[] = [];
+    for (let hit = 0; hit < pachi.def.basic.statusEffectEvery!; hit += 1) {
+      pachi.attackCooldown = 0; enemy.stunnedFor = 0;
+      events.push(...stepSkirmish(state, 1 / 60));
+    }
+    const rang = events.find((event): event is Extract<SkirmishEvent, { kind: "concussion" }> => event.kind === "concussion")!;
+    // 판정을 다시 굴리지 않고 확정 치명타로 친다 — 날아가는 그림과 수치가 갈리지 않는다.
+    expect(rang.critical).toBe(true);
+    expect(events.some((event) => event.kind === "knockback")).toBe(true);
+    expect(enemy.knockback).not.toBeNull();
+    // 날려 버린 상대는 사거리 밖이므로 파치는 다음 상대를 찾는다.
+    expect(pachi.targetId).toBe(foes[1].id);
+
+    // 날아가는 동안에는 좌표가 실제로 움직이고 행동하지 못한다.
+    const before = { x: enemy.x, y: enemy.y };
+    run(state, 0.2);
+    expect(Math.hypot(enemy.x - before.x, enemy.y - before.y)).toBeGreaterThan(0);
+    expect(enemy.x).toBeGreaterThanOrEqual(state.arena.left);
+    expect(enemy.x).toBeLessThanOrEqual(state.arena.right);
+    expect(enemy.y).toBeGreaterThanOrEqual(state.arena.top);
+    expect(enemy.y).toBeLessThanOrEqual(state.arena.bottom);
+
+    // 시간이 다 되면 스스로 풀려 다시 싸운다.
+    run(state, trait.seconds + 0.5);
+    expect(enemy.knockback).toBeNull();
+  });
+});

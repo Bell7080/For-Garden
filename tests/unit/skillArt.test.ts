@@ -76,7 +76,7 @@ describe("토리카 스킬 표시 계약", () => {
   it("은 구조화된 5초·7%·전체 적·2초 값을 실제 표시 문구로 만든다", () => {
     // UI가 ID별 예외 없이 같은 정적 데이터를 읽을 수 있도록 모든 궁극기의 계약을 검사한다.
     // 순수 회복 궁극기는 적 대상 네 종류와 분리된 전장 전체 아군 계약을 사용한다.
-    for (const def of RELICS) expect(["single", "nearbyEnemies", "battlefieldEnemies", "battlefieldAllies", "targetedCircle"]).toContain(def.ultimate.targeting);
+    for (const def of RELICS) expect(["single", "nearbyEnemies", "battlefieldEnemies", "battlefieldAllies", "targetedCircle", "chargeLine"]).toContain(def.ultimate.targeting);
     const torika = RELICS.find((def) => def.id === "anky")!;
     expect(torika.ultimate).toMatchObject({
       targeting: "nearbyEnemies",
@@ -324,7 +324,7 @@ describe("스킬 설명문 양식 계약", () => {
       // 공격 속도까지 함께 쓰는 스킬(스피나 궁극기)은 두 축을 합쳐 계산하므로 능력치를 함께 준다.
       const text = skillDescription(skill, { damage: 123, ap: 150, atk: { atk: 120, attackSpeed: 100 } });
       // 대상이 먼저다. 무엇을 때리는지 모른 채 수치부터 읽게 하지 않는다.
-      expect(text).toMatch(/^(적 한 명|자신의 주위 모든 적|전장의 모든 적|지정한 원 안의 모든 적)에게 /);
+      expect(text).toMatch(/^(적 한 명|자신의 주위 모든 적|전장의 모든 적|지정한 원 안의 모든 적|\[\[charge\|돌진\]\]해 뚫고 지나간 길의 모든 적)에게 /);
       // 그다음이 피해다. 실제 수치를 알 수 있으면 조회 가능한 태그로 보여 준다.
       expect(text).toContain("[[damage-value|");
       expect(text).toMatch(/\[\[(physical|magical)-damage\|(물리|마법) 피해\]\]를 (준다|주고)/);
@@ -498,5 +498,47 @@ describe("메론 스킬 표시 계약", () => {
     expect(keyword.description).toContain(`${effect.maxStacks}겹`);
     // 겹이 없을 수도 있는 값이라 상한을 모르면 라벨을 만들지 않는다.
     expect(overpaintDetonationDamageKeyword(perStack, undefined)).toBeUndefined();
+  });
+});
+
+describe("파치 스킬 표시 계약", () => {
+  const pachi = () => RELICS.find((def) => def.id === "pachi")!;
+
+  it("의 패시브는 두 조건을 함께 말한다", () => {
+    const def = pachi();
+    // 상한만 말하면 안전모가 무적으로, 경감률만 말하면 큰 한 방이 그대로 들어오는 것으로 읽힌다.
+    expect(passiveDescription(def.passive, def.stats.atk)).toBe(
+      "한 번에 받는 피해가 최대 체력의 40%를 넘으면 그 선까지 줄어들되, 원래 피해의 40%보다 더 줄어들지는 않는다.",
+    );
+  });
+
+  it("의 기본 공격은 네 번째 타격에만 걸린다는 사실을 본문이 말한다", () => {
+    const def = pachi();
+    expect(def.basic.statusEffectEvery).toBe(4);
+    // 뇌진탕의 수치와 치명타 배증은 태그가 말하므로 본문이 되풀이하지 않는다.
+    expect(skillDescription(def.basic, { damage: 118 })).toBe(
+      "적 한 명에게 [[damage-value|118]]의 [[physical-damage|물리 피해]]를 주고 1초 동안 [[stun|기절]]시킨다. [[concussion|뇌진탕]]을 입힌다. 위 상태는 매 4번째 [[basic-attack|기본 공격]]에만 걸린다.",
+    );
+  });
+
+  it("의 궁극기는 지나간 길을 대상으로 말한다", () => {
+    const def = pachi();
+    expect(def.ultimate).toMatchObject({ targeting: "chargeLine", power: 200, cost: 250 });
+    expect(skillDescription(def.ultimate, { damage: 264 })).toBe(
+      "[[charge|돌진]]해 뚫고 지나간 길의 모든 적에게 [[damage-value|264]]의 [[physical-damage|물리 피해]]를 주고 2초 동안 [[stun|기절]]시킨다. [[concussion|뇌진탕]]을 입힌다.",
+    );
+  });
+
+  it("의 새 규칙어는 전부 전역 키워드로 정의된다", () => {
+    // 본문이 태그로만 가리키므로, 하나라도 빠지면 플레이어가 뜻을 읽을 곳이 없어진다.
+    for (const id of ["concussion", "knockback", "charge"]) {
+      expect(KEYWORDS.some((keyword) => keyword.id === id), id).toBe(true);
+    }
+    const effect = pachi().basic.statusEffects!.find((status) => status.kind === "concussion")!;
+    if (effect.kind !== "concussion") throw new Error("뇌진탕 효과가 아니다");
+    const keyword = KEYWORDS.find((entry) => entry.id === "concussion")!;
+    // 수치를 태그가 말하기로 했으므로 데이터와 갈리면 유일한 설명이 틀린다.
+    expect(keyword.description).toContain(`${effect.maxHpPercent}%`);
+    expect(keyword.description).toContain(`${effect.criticalMaxHpPercent}%`);
   });
 });

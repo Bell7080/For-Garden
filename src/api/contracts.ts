@@ -14,6 +14,17 @@ import type { ItemCategory, ItemUseEffect } from "../data/items";
 import type { ExpeditionBossAction } from "../core/expeditionBoss";
 import type { PlayerResearchProgress } from "../state/session";
 import type { AsyncArenaProfileApi } from "./asyncArenaContracts";
+import type { InteractionCity } from "../data/interactionCities";
+import type { InteractionDispatchSnapshot } from "../state/session";
+
+/** 도시 조회는 개방 판정과 같은 서버 기준 시각을 제공한다. */
+export interface InteractionCitiesResponse { cities: Array<InteractionCity & { unlocked: boolean }>; serverTime: string; }
+/** 클라이언트는 선택만 보내고 종료 시각·보상은 보낼 수 없다. */
+export interface StartInteractionDispatchRequest { cityId: string; party: string[]; }
+export interface InteractionDispatchResponse { dispatch: InteractionDispatchSnapshot | null; serverTime: string; }
+/** 수령 재전송을 한 지급으로 묶는 멱등 요청이다. */
+export interface ClaimInteractionDispatchRequest { dispatchId: string; requestId: string; }
+export interface ClaimInteractionDispatchResponse extends InteractionDispatchResponse { granted: { currency: keyof Wallet; amount: number }; alreadyClaimed: boolean; wallet: Wallet; }
 
 /** 정적 표시 메타데이터를 중복 전송하지 않고 서버 보유량과 인스턴스만 전달하는 인벤토리 조회 행이다. */
 export interface InventoryItemDto { id: string; definitionId: string; category: ItemCategory; quantity: number; rune?: RuneInstance; }
@@ -393,6 +404,10 @@ export interface SweepExpeditionResponse extends PlayerStateDto { weekKey: strin
 
 /** 실제 HTTP API로 교체할 때도 씬이 의존할 단 하나의 통신 인터페이스다. */
 export interface GameApi extends AsyncArenaProfileApi {
+  getInteractionCities(): Promise<InteractionCitiesResponse>;
+  startInteractionDispatch(request: StartInteractionDispatchRequest): Promise<InteractionDispatchResponse>;
+  getInteractionDispatch(): Promise<InteractionDispatchResponse>;
+  claimInteractionDispatch(request: ClaimInteractionDispatchRequest): Promise<ClaimInteractionDispatchResponse>;
   /** 서버 시각 기준의 우편 목록과 알림 집계를 조회한다. */
   getMails(): Promise<MailListResponse>;
   /** 지정한 우편 첨부물을 한 트랜잭션과 멱등 키로 수령한다. */

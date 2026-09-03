@@ -21,6 +21,8 @@ function testRune(instanceId: string) {
 /** manager 검증 테스트마다 독립된 저장 상태를 만든다. */
 function makeSession(): Session {
   return {
+    // 교류와 무관한 테스트는 비어 있는 서버 파견 슬롯을 사용한다.
+    interaction: { slots: [null], claimedRequestIds: [] },
     // 수식어 manager 테스트가 아닌 세션은 빈 ID 목록을 명시한다.
     earnedProfileModifierIds: [], equippedProfileModifierIds: [],
     playerResearch: createInitialPlayerResearchProgress(),

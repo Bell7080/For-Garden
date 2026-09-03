@@ -176,7 +176,7 @@ export class LobbyScene extends Phaser.Scene {
       tilt: 6,
       accentColor: EXCHANGE_BLUE,
       accentTextColor: "#9fd0f0",
-      onClick: () => this.notReady("교류"),
+      onClick: () => this.scene.start("interaction"),
     });
 
     // 발굴 — 출격과 같은 줄에 서지만 크기는 교류와 같다. 왼쪽은 서브 콘텐츠 자리라, 오른쪽의

@@ -20,6 +20,7 @@ import { ExpeditionScene } from "./scenes/ExpeditionScene";
 import { SortiePreviewScene } from "./scenes/SortiePreviewScene";
 import { EffectOverlayScene } from "./scenes/EffectOverlayScene";
 import { initializeAudioManager } from "./managers/AudioManager";
+import { InteractionScene } from "./scenes/InteractionScene";
 
 const game = new Phaser.Game({
   // Puppet 원본 indexed mesh를 GPU로 직접 그리므로 중복 정점을 만드는 Canvas 폴백은 사용하지 않는다.
@@ -51,7 +52,7 @@ const game = new Phaser.Game({
   // 장기 탐사형 고고학, 배너 연구소, 재화 상점, 유료 프리미엄은 각각 독립 화면이다.
   // 원정은 로비 출격 선택판에서 진입하며 준비/이어하기 상태를 같은 씬에서 소유한다.
   // 누른 자리에 답하는 겹은 모든 화면 위에 서야 하므로 목록의 맨 끝에 둔다.
-  scene: [BootScene, TitleScene, OpeningScene, LobbyScene, ExpeditionScene, SortiePreviewScene, SettingsScene, FriendsScene, ShopScene, PremiumScene, RelicsScene, LabScene, ArchaeologyScene, StageMapScene, StageStoryScene, PartyScene, BattleScene, EffectOverlayScene],
+  scene: [BootScene, TitleScene, OpeningScene, LobbyScene, InteractionScene, ExpeditionScene, SortiePreviewScene, SettingsScene, FriendsScene, ShopScene, PremiumScene, RelicsScene, LabScene, ArchaeologyScene, StageMapScene, StageStoryScene, PartyScene, BattleScene, EffectOverlayScene],
 });
 
 // Phaser Sound 생성과 브라우저 수명 주기 처리는 씬이 아니라 중앙 오디오 관리자에 연결한다.

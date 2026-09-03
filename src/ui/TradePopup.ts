@@ -8,6 +8,7 @@ import { PurchasePopup } from "./PurchasePopup";
 import { COLOR, textStyle } from "./theme";
 import { setDebugStorefrontControls } from "../debug";
 import { BACK_SLOT } from "./IconButton";
+import { TRADE_POPUP_FAILURE_MODEL, TradePopupRequestGate, tradePopupModel } from "./tradePopupModel";
 
 /** 무역을 씬 전환 없이 로비 위 패키지 레이어로 여는 공개 프리팹이다. */
 export class TradePopup {
@@ -17,6 +18,8 @@ export class TradePopup {
   private productList?: Phaser.GameObjects.Container;
   private products: ProductDto[] = [];
   private generation = 0;
+  /** 재시도 버튼 연타가 동일 카탈로그 요청을 겹치지 않게 한다. */
+  private readonly requestGate = new TradePopupRequestGate();
 
   constructor(private readonly scene: Phaser.Scene, private readonly popups: PopupLayer, private readonly api: GameApi, private readonly wallet: Wallet, private readonly onPurchased: (result: PurchaseProductResponse) => void, private readonly onClosed?: () => void) {}
 
@@ -38,12 +41,43 @@ export class TradePopup {
 
   /** 늦은 응답은 세대 번호로 폐기해 닫힌 레이어를 다시 만들지 않는다. */
   private async refresh(): Promise<void> {
-    const generation = ++this.generation;
-    const response = await this.api.getProducts("trade");
-    // 닫힌 뒤 도착한 응답은 세대와 참조뿐 아니라 Phaser 파괴 상태도 확인해 죽은 자식층을 만지지 않는다.
-    if (generation !== this.generation || !this.body?.active || !this.productList?.active) return;
-    this.products = response.products.filter(({ storefront }) => storefront === "trade");
-    this.render();
+    const generation = this.generation + 1;
+    if (!this.requestGate.begin(generation)) return;
+    // 잠금을 얻은 요청만 현재 세대로 승격해 무시된 연타가 진행 중 응답을 낡게 만들지 않게 한다.
+    this.generation = generation;
+    try {
+      // API await는 팝업 종료·새 세대 시작과 경합하므로 응답을 적용하기 전에 수명을 다시 확인한다.
+      const response = await this.api.getProducts("trade");
+      // 닫힌 뒤 또는 다른 세대에 도착한 성공 응답은 파괴된 Phaser 자식층을 만지지 않고 폐기한다.
+      if (!this.isCurrent(generation)) return;
+      this.products = tradePopupModel(response.products);
+      this.render();
+    } catch {
+      // 거절도 늦게 도착할 수 있으므로 현재 열린 세대일 때만 동적 영역을 실패 조작으로 교체한다.
+      if (!this.isCurrent(generation)) return;
+      this.renderFailure();
+    } finally {
+      // 이 요청이 소유한 잠금만 풀어 늦은 finally가 이후 재시도의 중복 방지를 해제하지 않게 한다.
+      this.requestGate.finish(generation);
+    }
+  }
+
+  /** 비동기 결과가 아직 같은 열린 팝업의 살아 있는 동적 영역을 가리키는지 판정한다. */
+  private isCurrent(generation: number): boolean {
+    return generation === this.generation && Boolean(this.closeAction && this.body?.active && this.productList?.active);
+  }
+
+  /** 상품을 비운 자리에 짧은 세계관 상태와 가능한 재시도만 놓고 외곽·뒤로가기는 유지한다. */
+  private renderFailure(): void {
+    if (!this.productList?.active) return;
+    // 서버 응답으로 만든 상품 행만 제거하므로 PopupLayer가 소유한 판과 제목은 그대로 남는다.
+    this.productList.removeAll(true);
+    this.products = [];
+    this.productList.add(this.scene.add.text(0, -70, TRADE_POPUP_FAILURE_MODEL.status, textStyle({ role: "emphasis", size: 30, color: COLOR.inkDim })).setOrigin(0.5));
+    const retry = new Button(this.scene, 0, 55, { width: 300, height: 82, label: TRADE_POPUP_FAILURE_MODEL.retryLabel, onClick: () => { void this.refresh(); } });
+    this.productList.add(retry);
+    // E2E에는 실제로 남은 재시도와 공용 닫기 입력 중심만 공개한다.
+    setDebugStorefrontControls({ trade: { products: [], retry: { x: 540, y: 960 + 55 }, back: { ...BACK_SLOT } } });
   }
 
   /** 패키지 레이어의 각 행은 획득 방식에서 파생한 라벨과 사유만 표시한다. */
@@ -74,5 +108,5 @@ export class TradePopup {
   }
 
   /** 외부 입력면과 늦은 요청을 함께 무효화한다. */
-  private dispose(): void { this.generation += 1; this.closeAction = undefined; this.body = undefined; this.productList = undefined; this.onClosed?.(); }
+  private dispose(): void { this.generation += 1; this.requestGate.reset(); this.closeAction = undefined; this.body = undefined; this.productList = undefined; this.onClosed?.(); }
 }

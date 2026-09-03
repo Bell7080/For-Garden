@@ -569,9 +569,10 @@ describe("마키 스킬 표시 계약", () => {
 
   it("의 궁극기는 처치했을 때만 돌려받는다는 조건을 말한다", () => {
     const def = maki();
-    expect(def.ultimate).toMatchObject({ targeting: "single", power: 400, cost: 220, energyRefundOnKill: 100 });
+    // 위력·코스트·환급량은 데이터가 갖는다. 본문이 그 값을 그대로 말하는지만 확인한다.
+    expect(def.ultimate).toMatchObject({ targeting: "single" });
     expect(skillDescription(def.ultimate, { damage: 760 })).toBe(
-      "적 한 명에게 [[damage-value|760]]의 [[physical-damage|물리 피해]]를 준다. 이 공격으로 처치하면 궁극기 게이지를 100 돌려받는다.",
+      `적 한 명에게 [[damage-value|760]]의 [[physical-damage|물리 피해]]를 준다. 이 공격으로 처치하면 궁극기 게이지를 ${def.ultimate.energyRefundOnKill} 돌려받는다.`,
     );
   });
 

@@ -363,7 +363,8 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     knockback: null,
     statusHitCount: 0,
     butcher: null,
-    huntCooldown: 0,
+    // 첫 도약은 전투가 시작되고 조금 뒤다 — 첫 프레임에 뛰면 순간이동한 것으로만 보인다.
+    huntCooldown: def.passive.kind === "gourmetHunt" ? def.passive.huntOpeningSeconds ?? 0 : 0,
     tailwindFor: 0,
     tailwind: null,
     tailwindTickIn: 0,
@@ -660,9 +661,10 @@ function applyButcher(
 /**
  * 고품격 식재료의 시계. 전투 첫 프레임과 그 뒤 정해진 간격마다 다시 고른다.
  *
- * 쿨다운을 0에서 시작하므로 **첫 프레임에 곧바로** 도약한다 — "전투 시작 시"를 따로 분기하지
- * 않아도 같은 코드 하나가 시작과 재발동을 모두 맡는다. 적을 처치하면 그 자리에서 0으로
- * 되돌려 다음 프레임에 바로 다음 식재료를 고르러 간다.
+ * 시계는 `huntOpeningSeconds`에서 시작해 첫 도약만 조금 늦춘다 — 0에서 시작하면 첫 프레임에
+ * 사라져 플레이어가 전장을 보기도 전에 마키만 다른 자리에 서 있다. "전투 시작 시"를 따로
+ * 분기하지 않아도 같은 코드 하나가 시작과 재발동을 모두 맡는다. 적을 처치하면 그 자리에서
+ * 0으로 되돌려 다음 프레임에 바로 다음 식재료를 고르러 간다.
  */
 function tickGourmetHunt(fighter: Fighter, dt: number, state: SkirmishState): void {
   const passive = fighter.def.passive;

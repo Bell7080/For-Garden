@@ -20,7 +20,7 @@ export type Role = "warrior" | "tank" | "assassin" | "support";
 export type RelicRarity = "R" | "SR" | "SSR";
 
 /** 전신 Puppet 레지스트리의 안정적인 데이터 키다. 파일 번호를 게임 데이터에 직접 노출하지 않는다. */
-export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "toby" | "amo" | "ripa" | "pontos";
+export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "toby" | "amo" | "ripa" | "pontos";
 
 export interface Stats {
   /** 생존력과 물리·마법 공격의 기반이 되는 주 능력치다. */
@@ -106,8 +106,20 @@ interface SkillBase {
   damageHealingPercent?: number;
   /** 이 스킬을 쓸 때마다 생존 아군 전체가 함께 얻는 궁극기 게이지다. 시전자 자신도 포함한다. */
   allyEnergyGain?: number;
+  /**
+   * 선언한 상태 효과를 **매 N번째 타격에만** 건다. 없으면 적중할 때마다 건다.
+   *
+   * 확정 치명타(`periodicCritical`)와 다른 축이다 — 그쪽은 피해를 키우고, 이쪽은 부가 효과의
+   * 주기를 정한다. 파치의 배트가 네 번째에만 헬멧을 울리는 것이 이 값이다.
+   */
+  statusEffectEvery?: number;
   /** 기본 공격이 원형 광역일 때만 시전자 중심 대상 계약과 반경을 선언한다. */
-  targeting?: "single" | "nearbyEnemies" | "battlefieldEnemies" | "battlefieldAllies" | "targetedCircle";
+  /**
+   * `chargeLine`은 지금 보고 있는 방향으로 **뚫고 지나가며** 통로 안의 적을 모두 친다.
+   * 나아가는 거리는 이동 속도에 비례하므로, 발이 빠른 개체일수록 더 멀리 밀고 들어간다.
+   */
+  targeting?: "single" | "nearbyEnemies" | "battlefieldEnemies" | "battlefieldAllies" | "targetedCircle" | "chargeLine";
+  /** 원형 범위의 반경이자, `chargeLine`에서는 지나간 통로의 **반폭**이다. */
   radius?: number;
   /**
    * 문장을 만들 수 없는 스킬만 쓰는 설명 원문이다.
@@ -194,6 +206,32 @@ export type BasicAttack = AttackSkill & {
 /** 스킬과 야성 특성이 공유하는 최소 상태 효과 계약이다. 새 상태가 실제로 생길 때만 union을 늘린다. */
 export type CombatStatusEffect =
   | { kind: "stun"; /** 저항 계산 전 기본 지속 시간(초). */ seconds: number }
+  | {
+      /**
+       * 손질. 겹이 상한에 닿는 순간 **그 자리에서 터지고 겹이 비워진다.**
+       *
+       * 덧칠처럼 쌓아 두고 나중에 쓰는 값이 아니라, 세 번째 칼질이 곧 결과다 — 그래서 상한에
+       * 닿은 프레임에 스스로 터진다. 터지는 피해는 그 순간 칼을 댄 개체의 공격력에서 나온다.
+       */
+      kind: "butcher";
+      /** 이 겹에 닿으면 터진다. 터진 뒤 겹은 0으로 돌아간다. */
+      maxStacks: number;
+      /** 터질 때 시전자 공격력에서 뽑는 물리 피해 비율(%). */
+      burstPower: number;
+    }
+  | {
+      /**
+       * 뇌진탕. 방어력을 무시하는 **즉발 고정 피해** 한 번이며 지속 상태를 남기지 않는다.
+       *
+       * 출혈처럼 시간을 두고 깎지 않는 이유는, 파치의 뇌진탕이 "네 번째 배트가 헬멧을 울린
+       * 순간"이기 때문이다 — 그 순간에 다 들어가야 4타 주기가 손에 잡힌다.
+       */
+      kind: "concussion";
+      /** 대상 최대 체력에서 깎는 비율(%). */
+      maxHpPercent: number;
+      /** 그 타격이 치명타였을 때 대신 쓰는 비율(%). */
+      criticalMaxHpPercent: number;
+    }
   | { kind: "stagger"; /** 기절 저항을 무시하는 순간 행동 차단 시간(초). */ seconds: number }
   | {
       kind: "bleed";
@@ -228,6 +266,8 @@ export type Ultimate = Skill & {
   attackSpeedPower?: number;
   /** 혼합 궁극기가 범위 안 생존 아군에게 적용할 주문력 회복 배율(%). */
   allyHealingPower?: number;
+  /** 이 궁극기로 대상을 처치하면 되돌려받는 궁극기 게이지다. 빗나가거나 살아남으면 없다. */
+  energyRefundOnKill?: number;
   /**
    * 대상에 쌓인 덧칠을 터뜨리는 궁극기인가.
    *
@@ -259,6 +299,17 @@ export type Ultimate = Skill & {
       /** 난전 좌표와 같은 px 단위의 원 반경이며 경계선 위 대상도 포함한다. */
       radius: number;
     }
+  | {
+      /**
+       * 지금 보고 있는 방향으로 **뚫고 지나가며** 통로 안의 적을 모두 친다.
+       *
+       * 나아가는 거리는 스킬이 아니라 **이동 속도**가 정한다(`SKIRMISH.chargeSeconds` × 이동 속도).
+       * 그래야 "발이 빠른 개체가 더 멀리 파고든다"가 능력치 하나로 설명된다.
+       */
+      targeting: "chargeLine";
+      /** 지나간 통로의 반폭(px)이다. 이 안에 든 적만 맞는다. */
+      radius: number;
+    }
 );
 
 /** 패시브는 종류별로 전투 엔진이 직접 해석한다. 새 패시브는 여기에 종류를 늘려 추가한다. */
@@ -271,6 +322,10 @@ export type PassiveKind =
   | "bleedStreak"
   /** 메론 전용: 아군이 덧칠된 적을 때리면 그 피해의 일부만큼 **때린 본인**이 회복한다 */
   | "overpaintSiphon"
+  /** 파치 전용: 한 방에 들어오는 피해에 상한을 둔다 */
+  | "impactCap"
+  /** 마키 전용: 체력이 가장 낮은 적으로 주기적으로 도약해 표적을 갈아탄다 */
+  | "gourmetHunt"
   /** 티아 전용: 타격한 적에게 표식을 남기고, 표식이 없는 적을 때리면 표식을 옮기며 추가 마법 피해를 준다. */
   | "shimmerMark"
   /** 체력이 절반 이하가 되면 전투당 한 번 은신해 표적에서 벗어난다 */
@@ -309,7 +364,11 @@ export type FerocityEffectId =
   /** 메론 전용: 폭주 중 아군 전체의 일반 공격이 덧칠을 함께 쌓는다. */
   | "sharedOverpaint"
   /** 스테라 전용: 폭주 중 아군 전체의 공격당 야성·궁극기 충전량을 함께 올린다. */
-  | "tailwindRally";
+  | "tailwindRally"
+  /** 파치 전용: 폭주 중 뇌진탕이 확정 치명타가 되고 그 적을 전장 밖으로 튕겨 날린다. */
+  | "knockbackSlam"
+  /** 마키 전용: 폭주 중 손질이 터진 피해의 일부를 아군 전체의 회복으로 돌린다. */
+  | "butcherFeast";
 
 /**
  * 개체별 피버 발현 정적 데이터다.
@@ -350,6 +409,18 @@ export type FerocityTrait = {
       effectId: "sharedOverpaint";
       /** 아군의 적중이 대신 걸어 주는 덧칠. 메론의 기본 공격과 같은 계약을 그대로 쓴다. */
       overpaint: Extract<CombatStatusEffect, { kind: "overpaint" }>;
+    }
+  | {
+      effectId: "butcherFeast";
+      /** 터진 손질 피해 중 아군 전체의 회복으로 돌리는 비율(%)이다. */
+      healPercent: number;
+    }
+  | {
+      effectId: "knockbackSlam";
+      /** 튕겨 날아다니는 시간(초). 이 동안 그 적은 행동하지 못한다. */
+      seconds: number;
+      /** 처음 튕겨 나가는 속도(px/s). 벽에 부딪히면 방향만 뒤집고 속도는 유지한다. */
+      speed: number;
     }
   | {
       effectId: "ichthyoDive";
@@ -426,6 +497,15 @@ export interface Passive {
   maxDamageReductionPercent?: number;
   /** 심해 압력 전용: 최대 피해 감소율에 도달하는 현재 체력 비율이다. */
   maxReductionAtHpPercent?: number;
+  /** 고품격 식재료 전용: 다시 표적을 고르고 도약하기까지의 간격(초). 적을 처치하면 즉시 앞당긴다. */
+  huntCooldownSeconds?: number;
+  /**
+   * 무면허 안전제일 전용: 한 방에 들어올 수 있는 피해의 상한(대상 최대 체력 %)이다.
+   *
+   * 이 비율 **이하의 평범한 타격은 그대로 다 맞고**, 넘는 한 방만 이 선까지 눌린다. 즉사급
+   * 일격을 맞아도 체력이 60% 남고, 두 번이면 20%, 세 번째에 쓰러진다.
+   */
+  impactCapMaxHpPercent?: number;
   /** 심해 압력 전용: 모든 경감과 반올림을 마친 최종 HP 피해가 이 값 이하이면 피해를 무효화한다. */
   ignoreDamageAtOrBelow?: number;
   /** 제공자가 살아 있는 동안 같은 편의 방어력과 저항력에 곱하는 증가율(%). */

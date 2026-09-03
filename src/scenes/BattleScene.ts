@@ -65,6 +65,7 @@ import { BattleContributionPopup } from "../ui/BattleContributionPopup";
 import { StageCompletePopup, type StageCompleteFighter } from "../ui/StageCompletePopup";
 import { EffectManager } from "../managers/EffectManager";
 import { CombatEffectPresenter, type CombatEffectTarget } from "../managers/CombatEffectPresenter";
+import { knockbackFlightPath } from "../ui/knockbackFlight";
 import { ensureEffectTextures } from "../ui/effectTextures";
 import { attackDamagePopupRequest, type DamageFlavor, type DebuffId } from "../ui/damageNumbers";
 import { openBattleBuffListPopup, openBattleBuffPopup, type BattleBuffListItem, type BattleBuffPopupController } from "../ui/BattleBuffPopup";
@@ -77,6 +78,23 @@ import type { ActiveCombatDisplayEffect } from "../core/combatEffects";
  * 침범하지 않는 선에서 최대한 넓게 잡아 난전이 한 자리에 뭉치지 않게 한다.
  */
 const ARENA: Arena = { left: 130, right: 950, top: 600, bottom: 1360 };
+
+/**
+ * 쓰러진 SD가 튕겨 다니는 값.
+ *
+ * 한 화면에서 여섯이 함께 쓰러질 수 있으므로 **짧고 얕게** 끊는다 — 길게 두면 결과 화면이
+ * 뜬 뒤에도 시체가 날아다니고, 세게 두면 전장 밖까지 나간 것처럼 보인다.
+ */
+const DEATH_FLIGHT = {
+  seconds: 1.1,
+  riseSpeed: 900,
+  minSpeedX: 260,
+  maxSpeedX: 520,
+  spinPerLeg: 220,
+  vanishMs: 220,
+  /** 살아 있는 SD보다 앞에 띄워 다른 캐릭터 뒤로 숨지 않게 한다. */
+  depth: 60,
+} as const;
 /** SD 한 명의 화면 높이. 여섯이 겹치지 않도록 기존 300에서 0.7배로 줄였다. */
 const UNIT_HEIGHT = 210;
 const PROFILE_TOP = 1430;
@@ -91,6 +109,8 @@ const CHARGE_CARD_ALPHA = 0.62;
 const FEROCITY_TEXT = COLOR.ferocityText;
 /** 덧칠 뱃지 색. 물감처럼 밝은 청록이라 붉은 출혈·노란 기절과 한눈에 갈린다. */
 const OVERPAINT_BADGE_COLOR = 0x62c6d8;
+/** 손질 뱃지 색. 피해 수치의 손질 색과 같은 계열이라 뱃지와 숫자가 한 상태로 읽힌다. */
+const BUTCHER_BADGE_COLOR = 0xc07fa4;
 
 /** 게이지와 수치가 실제 값을 따라잡는 빠르기(초당 비율). */
 const METER_EASE = 6;
@@ -154,6 +174,8 @@ interface FighterView {
   bleedBadge: Phaser.GameObjects.Container;
   overpaintBadge: Phaser.GameObjects.Container;
   overpaintStacks: Phaser.GameObjects.Text;
+  butcherBadge: Phaser.GameObjects.Container;
+  butcherStacks: Phaser.GameObjects.Text;
   /** 상태 소유자인 src/core/skirmish.ts의 기절 결과를 체력 바 옆에 그리는 각진 번개 표식이다. */
   stunBadge: Phaser.GameObjects.Container;
   /** 코어 상태 전환 때만 Puppet 모션을 바꾸기 위한 마지막 기절 표시값이다. */
@@ -490,8 +512,9 @@ export class BattleScene extends Phaser.Scene {
       const hpBar = new UnitHealthBar(this, barColor, settingsManager.get().presentation.battleUiMotion).snap(1);
       const bleedBadge = this.makeBleedBadge();
       const stunBadge = this.makeStunBadge();
-      const { badge: overpaintBadge, stacks: overpaintStacks } = this.makeOverpaintBadge();
-      this.views.set(fighter.id, { creature, asset, fighter, infoHit, shadow, hpBar, bleedBadge, overpaintBadge, overpaintStacks, stunBadge, stunShown: false, feverTint, feverStep: -1, feverTinted: false, tint, dead: false });
+      const { badge: overpaintBadge, stacks: overpaintStacks } = this.makeStackBadge(OVERPAINT_BADGE_COLOR);
+      const { badge: butcherBadge, stacks: butcherStacks } = this.makeStackBadge(BUTCHER_BADGE_COLOR);
+      this.views.set(fighter.id, { creature, asset, fighter, infoHit, shadow, hpBar, bleedBadge, overpaintBadge, overpaintStacks, butcherBadge, butcherStacks, stunBadge, stunShown: false, feverTint, feverStep: -1, feverTinted: false, tint, dead: false });
     }
     this.syncViews();
     // 마지막 한 명까지 서고 나서 시간을 흘려야 먼저 뜬 캐릭터만 앞서 달려가지 않는다.
@@ -810,6 +833,35 @@ export class BattleScene extends Phaser.Scene {
       return undefined;
     }
 
+    if (event.kind === "concussion") {
+      const view = this.views.get(event.fighterId);
+      if (!view) return undefined;
+      this.profiles.find((profile) => profile.fighter.id === event.fighterId)?.prefab.setHealthTarget(view.fighter.hp, view.fighter.maxHp, "damage", event.amount);
+      // 헬멧이 울리는 소리라 방어를 지나친 고정 피해다 — 출혈처럼 상태의 색으로 뜬다.
+      this.popNumber(view.fighter, event.amount, "debuff", { debuff: "concussion" });
+      flashHit(this, view.creature, this.bodyTint(view));
+      return undefined;
+    }
+    if (event.kind === "knockback") {
+      this.playKnockback(event.fighterId, event.seconds);
+      return undefined;
+    }
+    if (event.kind === "butcherBurst") {
+      const view = this.views.get(event.fighterId);
+      if (!view) return undefined;
+      this.profiles.find((profile) => profile.fighter.id === event.fighterId)?.prefab.setHealthTarget(view.fighter.hp, view.fighter.maxHp, "damage", event.amount);
+      // 세 번째 칼질이 터진 자리라 평타와 다른 무게로 읽혀야 한다 — 상태의 색을 쓴다.
+      this.popNumber(view.fighter, event.amount, "debuff", { debuff: "butcher" });
+      flashHit(this, view.creature, this.bodyTint(view));
+      return undefined;
+    }
+    if (event.kind === "charge") {
+      // 지나간 길에 바닥 자국을 남긴다. 광역과 같은 규칙(눌린 마름모)이라 SD보다 뒤에 깔린다.
+      this.effects.groundArea((event.from.x + event.to.x) / 2, (event.from.y + event.to.y) / 2,
+        Math.hypot(event.to.x - event.from.x, event.to.y - event.from.y) / 2, { ultimate: true });
+      return undefined;
+    }
+
     const attacker = this.views.get(event.attackerId);
     const target = this.views.get(event.targetId);
     if (this.state.boss && attacker?.fighter.side === "player" && target?.fighter.side === "enemy" && event.animate !== false) {
@@ -890,7 +942,29 @@ export class BattleScene extends Phaser.Scene {
     return view ? view.feverTint : COLOR.accent;
   }
 
-  /** 쓰러진 SD는 별이 되어 화면 위로 날아가고 자리와 체력 바를 지운다. */
+  /**
+   * 폭주한 파치에게 맞은 적이 전장을 튕겨 다닌다.
+   *
+   * 좌표는 코어가 소유하므로(`Fighter.knockback`) 여기서는 **그림만** 따라간다 — 씬이 좌표를
+   * 직접 옮기면 리플레이와 화면이 갈린다. 그림자와 체력 바는 평소처럼 SD를 따라오므로 손대지
+   * 않고, 튕기는 순간마다 조각 몇 개와 회전만 얹는다.
+   */
+  private playKnockback(fighterId: string, seconds: number): void {
+    const view = this.views.get(fighterId);
+    if (!view || view.dead) return;
+    const spins = Math.max(1, Math.round(seconds * 3));
+    this.tweens.add({
+      targets: view.creature,
+      angle: view.creature.angle + 360 * spins * (view.fighter.facing >= 0 ? 1 : -1),
+      duration: seconds * 1_000 / this.battleSpeed,
+      ease: "Sine.Out",
+      onComplete: () => view.creature.setAngle(0),
+    });
+    const height = UNIT_HEIGHT * view.fighter.bodyScale;
+    this.effects.burst("fever", view.creature.x, view.fighter.y - height * 0.5, { color: view.feverTint, scale: view.fighter.bodyScale });
+  }
+
+  /** 쓰러진 SD는 펑 하고 튀어올라 전장을 튕겨 다니다 별이 되어 사라진다. */
   private playDeath(fighterId: string): void {
     const view = this.views.get(fighterId);
     if (!view || view.dead) return;
@@ -900,10 +974,12 @@ export class BattleScene extends Phaser.Scene {
     view.hpBar.setVisible(false);
     view.bleedBadge.setVisible(false);
     view.overpaintBadge.setVisible(false);
+    view.butcherBadge.setVisible(false);
     view.stunBadge.setVisible(false);
     // 사망 뒤에는 코어가 상태를 비우므로 표시 객체도 컨테이너와 자식까지 즉시 폐기한다.
     view.bleedBadge.destroy(true);
     view.overpaintBadge.destroy(true);
+    view.butcherBadge.destroy(true);
     view.stunBadge.destroy(true);
     // 쓰러진 적의 빈자리가 계속 정보창을 열지 않도록 입력도 함께 닫는다.
     view.infoHit?.disableInteractive().setVisible(false);
@@ -911,15 +987,45 @@ export class BattleScene extends Phaser.Scene {
     // "쓰러졌다"가 별도의 연출이 아니라 마지막 한 방으로 읽힌다.
     const height = UNIT_HEIGHT * view.fighter.bodyScale;
     this.effects.burst("death", view.creature.x, view.fighter.y - height * 0.5, { color: view.feverTint, scale: view.fighter.bodyScale });
-    // 사망은 판정이나 결과 정산이 아닌 760ms 시각 효과다. finishBattle은 이 완료를 기다리지 않는다.
-    this.tweens.add({
+    // 사망은 판정이나 결과 정산이 아닌 시각 효과다. finishBattle은 이 완료를 기다리지 않는다.
+    //
+    // 위로 조용히 떠오르며 사라지는 대신 **펑 하고 튀어올라 전장을 튕겨 다닌다** — 폭주한
+    // 파치가 적을 날리는 그림과 같은 규칙(`knockbackFlightPath`)을 그대로 써서, "쓰러졌다"가
+    // 화면 안에서 같은 물리로 읽히게 한다. 마지막에 삥 하고 오므라들며 별이 된다.
+    const launch = Phaser.Math.Between(-1, 1) || 1;
+    const legs = knockbackFlightPath({
+      x: view.creature.x,
+      y: view.creature.y,
+      vx: launch * Phaser.Math.Between(DEATH_FLIGHT.minSpeedX, DEATH_FLIGHT.maxSpeedX),
+      vy: -DEATH_FLIGHT.riseSpeed,
+      seconds: DEATH_FLIGHT.seconds,
+      arena: this.state.arena,
+    });
+    view.creature.setDepth(DEATH_FLIGHT.depth);
+    this.tweens.chain({
       targets: view.creature,
-      y: view.creature.y - 320,
-      angle: Phaser.Math.Between(-25, 25),
-      alpha: 0,
-      duration: 760,
-      ease: "Back.In",
-      onComplete: () => view.creature.setVisible(false),
+      tweens: legs.map((leg) => ({
+        x: leg.x,
+        y: leg.y,
+        angle: `+=${DEATH_FLIGHT.spinPerLeg * launch}`,
+        duration: Math.max(1, leg.durationMs),
+        ease: "Sine.InOut",
+        onComplete: () => {
+          // 벽에 닿는 순간에만 조각이 튄다. 구간마다 터뜨리면 날아가는 내내 잔상이 남는다.
+          if (leg.bounced) this.effects.burst("death", leg.x, leg.y, { color: view.feverTint, scale: view.fighter.bodyScale * 0.6 });
+        },
+      })),
+      onComplete: () => {
+        // 삥 하고 한 점으로 오므라들며 별이 된다.
+        this.tweens.add({
+          targets: view.creature,
+          scale: 0,
+          alpha: 0,
+          duration: DEATH_FLIGHT.vanishMs,
+          ease: "Back.In",
+          onComplete: () => view.creature.setVisible(false),
+        });
+      },
     });
   }
 
@@ -935,11 +1041,11 @@ export class BattleScene extends Phaser.Scene {
    * 출혈처럼 마름모 하나로 두지 않고 **겹 수를 숫자로** 함께 적는다 — 덧칠은 겹칠수록 세지는
    * 상태라 "걸렸다"만으로는 지금 얼마나 아픈지 읽히지 않는다.
    */
-  private makeOverpaintBadge(): { badge: Phaser.GameObjects.Container; stacks: Phaser.GameObjects.Text } {
+  private makeStackBadge(color: number): { badge: Phaser.GameObjects.Container; stacks: Phaser.GameObjects.Text } {
     const badge = this.add.container(0, 0).setVisible(false);
     badge.add(this.add.circle(0, 0, BATTLE_STATUS_LAYOUT.badgeRadius, COLOR.void, HOLO.glass));
     const mark = this.add.graphics();
-    mark.fillStyle(OVERPAINT_BADGE_COLOR, 0.95);
+    mark.fillStyle(color, 0.95);
     mark.fillPoints([
       new Phaser.Geom.Point(0, -11),
       new Phaser.Geom.Point(8, 2),
@@ -1068,14 +1174,19 @@ export class BattleScene extends Phaser.Scene {
         view.stunShown = stunned;
         playMotion(this, view.creature, stunned ? "stun" : "idle");
       }
-      // 여러 상태는 체력 바 왼쪽에서 안쪽부터 기절, 출혈, 덧칠 순서로 나란히 세워 겹치지 않는다.
+      // 여러 상태는 체력 바 왼쪽에서 안쪽부터 기절, 출혈, 덧칠, 손질 순서로 세워 겹치지 않는다.
       const bleeding = fighter.bleed !== null;
-      const badgeOffsets = statusBadgeOffsets(stunned, bleeding);
+      const overpainted = fighter.overpaint !== null;
+      const badgeOffsets = statusBadgeOffsets(stunned, bleeding, overpainted);
       view.stunBadge.setPosition(pose.x + badgeOffsets.stunX, barY).setDepth(DEPTH.hpBar + 2).setVisible(stunned);
       view.bleedBadge.setPosition(pose.x + badgeOffsets.bleedX, barY).setDepth(DEPTH.hpBar + 2).setVisible(bleeding);
       // 덧칠은 겹 수가 곧 세기라 뱃지 안의 숫자로 몇 겹인지 함께 알린다.
-      view.overpaintBadge.setPosition(pose.x + badgeOffsets.overpaintX, barY).setDepth(DEPTH.hpBar + 2).setVisible(fighter.overpaint !== null);
+      view.overpaintBadge.setPosition(pose.x + badgeOffsets.overpaintX, barY).setDepth(DEPTH.hpBar + 2).setVisible(overpainted);
       view.overpaintStacks.setText(String(fighter.overpaint?.stacks ?? 0));
+      // 손질도 겹 수가 곧 다음 한 방까지 남은 칼질이라 같은 양식으로 몇 겹인지 적는다.
+      const butchered = (fighter.butcher?.stacks ?? 0) > 0;
+      view.butcherBadge.setPosition(pose.x + badgeOffsets.butcherX, barY).setDepth(DEPTH.hpBar + 2).setVisible(butchered);
+      view.butcherStacks.setText(String(fighter.butcher?.stacks ?? 0));
     });
   }
 

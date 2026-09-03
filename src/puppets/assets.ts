@@ -22,8 +22,12 @@ import {
   PONTOS_PORTRAIT_METADATA,
   PONTOS_SD_METADATA,
   SEIRA_PORTRAIT_METADATA,
+  MAKI_PORTRAIT_METADATA,
+  MAKI_SD_METADATA,
   MERON_PORTRAIT_METADATA,
   MERON_SD_METADATA,
+  PACHI_PORTRAIT_METADATA,
+  PACHI_SD_METADATA,
   STELLA_PORTRAIT_METADATA,
   TIA_PORTRAIT_METADATA,
   TIA_SD_METADATA,
@@ -136,6 +140,18 @@ export const MERON_ASSET: PuppetAsset = {
   ...MERON_PORTRAIT_METADATA,
 };
 
+/** 10번 전신 일러스트: 파치(파키케팔로사우루스). */
+export const PACHI_ASSET: PuppetAsset = {
+  url: `${base}puppets/char_010.zip`,
+  ...PACHI_PORTRAIT_METADATA,
+};
+
+/** 11번 전신 일러스트: 마키(스밀로돈). */
+export const MAKI_ASSET: PuppetAsset = {
+  url: `${base}puppets/char_011.zip`,
+  ...MAKI_PORTRAIT_METADATA,
+};
+
 /** 8번 전신 일러스트: 티아(이크티오사우루스). */
 export const TIA_ASSET: PuppetAsset = {
   url: `${base}puppets/char_008.zip`,
@@ -208,6 +224,8 @@ const PORTRAIT_ASSETS = {
   stella: STELLA_ASSET,
   tia: TIA_ASSET,
   meron: MERON_ASSET,
+  pachi: PACHI_ASSET,
+  maki: MAKI_ASSET,
   // 적도 전용 전신을 가진다. 초상 레지스트리에 함께 두면 정보창이 아군·적을 가르지 않고
   // 같은 경로로 원화를 찾는다 — 화면마다 "적이면 다른 함수"를 두면 한 곳을 고칠 때 다른
   // 곳이 임시 원화로 남는다.
@@ -298,6 +316,18 @@ export const STELLA_SD_ASSET: PuppetAsset = {
   content: { left: 49, top: 83, right: 1175, bottom: 1179 },
 };
 
+/** 10번 SD: 파치. */
+export const PACHI_SD_ASSET: PuppetAsset = {
+  url: `${base}puppets/charSD_010.zip`,
+  ...PACHI_SD_METADATA,
+};
+
+/** 11번 SD: 마키. */
+export const MAKI_SD_ASSET: PuppetAsset = {
+  url: `${base}puppets/charSD_011.zip`,
+  ...MAKI_SD_METADATA,
+};
+
 /** 9번 SD: 메론. */
 export const MERON_SD_ASSET: PuppetAsset = {
   url: `${base}puppets/charSD_009.zip`,
@@ -310,36 +340,44 @@ export const TIA_SD_ASSET: PuppetAsset = {
   ...TIA_SD_METADATA,
 };
 
-/** 적과 전용 아군은 각자 번호 묶음을 쓰고, 아직 전용 SD가 없는 아군만 1번 SD를 공유한다. */
-export function battleAssetFor(relicId: string): PuppetAsset {
-  // 최종층 보스는 일반 적 번호 묶음과 별도의 전용 SD를 사용한다.
-  if (relicId === "pontos") return PONTOS_SD_ASSET;
-  if (relicId === "husk-raptor") return ENEMY_SD_ASSETS[0];
-  if (relicId === "husk-shell") return ENEMY_SD_ASSETS[1];
-  if (relicId === "husk-wing") return ENEMY_SD_ASSETS[2];
-  if (relicId === "anky") return TORIKA_SD_ASSET;
-  if (relicId === "rex") return LEXIA_SD_ASSET;
-  if (relicId === "spino") return SEIRA_SD_ASSET;
-  if (relicId === "luka") return LUKA_SD_ASSET;
-  if (relicId === "dodo") return DODI_SD_ASSET;
-  if (relicId === "mette") return METTE_SD_ASSET;
-  if (relicId === "tia") return TIA_SD_ASSET;
-  if (relicId === "stella") return STELLA_SD_ASSET;
-  if (relicId === "meron") return MERON_SD_ASSET;
-  return TORIKA_SD_ASSET;
+/**
+ * 아군 SD의 유일한 표.
+ *
+ * 전투와 비전투(원정·편성·결과 MVP)가 **같은 표 하나**를 읽는다. 예전에는 두 함수가 저마다
+ * `if` 사슬을 갖고 있어, 새 개체를 한쪽에만 적으면 그 화면에서만 조용히 토리카 SD로 되돌아갔다
+ * — 메론이 v0.52.3까지 원정과 승리 MVP에서 그랬다. 표가 하나면 빠뜨릴 자리가 없다.
+ */
+const ALLY_SD_ASSETS: Readonly<Record<string, PuppetAsset>> = {
+  anky: TORIKA_SD_ASSET,
+  rex: LEXIA_SD_ASSET,
+  spino: SEIRA_SD_ASSET,
+  luka: LUKA_SD_ASSET,
+  dodo: DODI_SD_ASSET,
+  mette: METTE_SD_ASSET,
+  tia: TIA_SD_ASSET,
+  stella: STELLA_SD_ASSET,
+  meron: MERON_SD_ASSET,
+  pachi: PACHI_SD_ASSET,
+  maki: MAKI_SD_ASSET,
+};
+
+/** 적 SD는 아군과 번호 묶음이 달라 따로 두고, 최종층 보스만 전용 묶음을 쓴다. */
+const ENEMY_SD_ASSETS_BY_ID: Readonly<Record<string, PuppetAsset>> = {
+  pontos: PONTOS_SD_ASSET,
+  "husk-raptor": ENEMY_SD_ASSETS[0],
+  "husk-shell": ENEMY_SD_ASSETS[1],
+  "husk-wing": ENEMY_SD_ASSETS[2],
+};
+
+/** 비전투 화면의 아군 SD 선택. 적 ID는 받지 않는다. */
+export function sdAssetFor(relicId: string): PuppetAsset {
+  // 표에 없는 렐릭만 기존 공용 토리카 SD로 안전하게 폴백한다.
+  return ALLY_SD_ASSETS[relicId] ?? TORIKA_SD_ASSET;
 }
 
-/** 비전투 화면의 아군 SD 선택도 전투와 같은 공개 레지스트리를 사용하되 적 ID는 받지 않는다. */
-export function sdAssetFor(relicId: string): PuppetAsset {
-  if (relicId === "rex") return LEXIA_SD_ASSET;
-  if (relicId === "spino") return SEIRA_SD_ASSET;
-  if (relicId === "luka") return LUKA_SD_ASSET;
-  if (relicId === "dodo") return DODI_SD_ASSET;
-  if (relicId === "mette") return METTE_SD_ASSET;
-  if (relicId === "tia") return TIA_SD_ASSET;
-  if (relicId === "stella") return STELLA_SD_ASSET;
-  // anky와 아직 전용 SD가 없는 렐릭은 기존 공용 토리카 SD로 안전하게 폴백한다.
-  return TORIKA_SD_ASSET;
+/** 전투는 아군 표에 적 묶음을 얹어 같은 경로로 찾는다. */
+export function battleAssetFor(relicId: string): PuppetAsset {
+  return ENEMY_SD_ASSETS_BY_ID[relicId] ?? sdAssetFor(relicId);
 }
 
 /**

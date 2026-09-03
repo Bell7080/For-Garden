@@ -10,6 +10,9 @@ import {
   type CardFrame,
 } from "../../src/puppets/anchors";
 import type { PuppetAsset } from "../../src/puppets/assets";
+// assets.ts는 Phaser를 들여오므로 node 환경에서는 소스 문자열로만 읽는다.
+import ASSETS_SOURCE from "../../src/puppets/assets.ts?raw";
+import { RELICS } from "../../src/data/relics";
 import {
   DODI_PORTRAIT_METADATA,
   DODI_SD_METADATA,
@@ -17,6 +20,9 @@ import {
   LUKA_PORTRAIT_METADATA,
   METTE_PORTRAIT_METADATA,
   METTE_SD_METADATA,
+  MAKI_PORTRAIT_METADATA,
+  MERON_PORTRAIT_METADATA,
+  PACHI_PORTRAIT_METADATA,
   PONTOS_PORTRAIT_METADATA,
   PONTOS_SD_METADATA,
   SEIRA_PORTRAIT_METADATA,
@@ -235,6 +241,9 @@ const REAL_PORTRAITS = [
   { name: "메테", metadata: METTE_PORTRAIT_METADATA, head: { x: 520, y: 255 }, eyes: [{ x: 472, y: 277 }, { x: 568, y: 242 }] },
   { name: "스테라", metadata: STELLA_PORTRAIT_METADATA, head: { x: 549, y: 375 }, eyes: [{ x: 510, y: 386 }, { x: 591, y: 357 }] },
   { name: "티아", metadata: TIA_PORTRAIT_METADATA, head: { x: 518, y: 308 }, eyes: [{ x: 480, y: 317 }, { x: 548, y: 265 }] },
+  { name: "메론", metadata: MERON_PORTRAIT_METADATA, head: { x: 482, y: 270 }, eyes: [{ x: 439, y: 268 }, { x: 507, y: 242 }] },
+  { name: "파치", metadata: PACHI_PORTRAIT_METADATA, head: { x: 445, y: 199 }, eyes: [{ x: 420, y: 206 }, { x: 480, y: 172 }] },
+  { name: "마키", metadata: MAKI_PORTRAIT_METADATA, head: { x: 578, y: 315 }, eyes: [{ x: 528, y: 327 }, { x: 620, y: 306 }] },
 ] as const;
 
 /** PortraitCard가 넘기는 것과 같은 배율 보정으로 실제 카드 잘라내기를 구한다. */
@@ -337,4 +346,32 @@ describe("실제 원화의 카드 얼굴 크기", () => {
     expect(faceSizeOf(withoutZoom) / center).toBeLessThan(MIN_RATIO);
     expect(faceSizeOf(lexia) / center).toBeGreaterThanOrEqual(MIN_RATIO);
   });
+});
+
+/**
+ * SD 등록 누락은 화면에서 **다른 캐릭터가 대신 서는** 모습으로만 드러나 눈으로 보기 전에는
+ * 알 수 없다. `assets.ts`는 Phaser를 들여와 이 환경에서 import할 수 없으므로, 소스 문자열에서
+ * 표를 읽어 모든 아군 렐릭이 자기 자리를 가졌는지 확인한다.
+ */
+describe("아군 SD 등록", () => {
+  const table = ASSETS_SOURCE.slice(
+    ASSETS_SOURCE.indexOf("const ALLY_SD_ASSETS"),
+    ASSETS_SOURCE.indexOf("const ENEMY_SD_ASSETS_BY_ID"),
+  );
+
+  it("은 전투와 비전투가 같은 표 하나를 읽는다", () => {
+    // 두 벌의 if 사슬이던 시절, 새 개체를 한쪽에만 적으면 그 화면만 조용히 토리카로 되돌아갔다
+    // (메론이 v0.52.3까지 원정·승리 MVP에서 그랬다).
+    expect(ASSETS_SOURCE).toContain("return ALLY_SD_ASSETS[relicId] ?? TORIKA_SD_ASSET;");
+    expect(ASSETS_SOURCE).toContain("return ENEMY_SD_ASSETS_BY_ID[relicId] ?? sdAssetFor(relicId);");
+  });
+
+  it.each(RELICS.filter((def) => !def.id.startsWith("husk-") && def.id !== "pontos").map((def) => def.id))(
+    "%s의 SD가 표에 등록되어 있다",
+    (relicId) => {
+      expect(table).toContain(`${relicId}:`);
+      // 토리카만 1번 SD를 자기 것으로 쓰고, 나머지가 그 자리에 오면 전용 원화가 빠진 것이다.
+      if (relicId !== "anky") expect(table).not.toMatch(new RegExp(`${relicId}: TORIKA_SD_ASSET`));
+    },
+  );
 });

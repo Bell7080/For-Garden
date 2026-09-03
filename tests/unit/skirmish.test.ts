@@ -2140,3 +2140,242 @@ describe("메론 정적 전투 계약", () => {
     expect(enemy.overpaint).toMatchObject({ stacks: 1, percentPerStack: trait.overpaint.damageTakenPercent });
   });
 });
+
+describe("파치 정적 전투 계약", () => {
+  /** 파치와 적 하나를 붙여 세우고 적 행동을 멈춰 파치의 타격만 관찰한다. */
+  function pachiBattle(enemies = ["husk-shell"]) {
+    const state = newSkirmish(["pachi"], enemies);
+    const pachi = state.fighters[0];
+    pachi.x = 400; pachi.y = 1000; pachi.attackCooldown = 0;
+    const foes = state.fighters.filter((fighter) => fighter.side === "enemy");
+    for (const [index, enemy] of foes.entries()) {
+      enemy.x = 460 + index * 40; enemy.y = 1000; enemy.attackCooldown = 99;
+      enemy.maxHp = 400_000; enemy.hp = 400_000;
+    }
+    pachi.targetId = foes[0].id;
+    return { state, pachi, enemy: foes[0], foes };
+  }
+
+  it("의 패시브는 한 방에 들어오는 피해에 상한을 둬 아무리 세도 세 대는 버티게 한다", () => {
+    const { pachi } = pachiBattle();
+    const passive = pachi.def.passive;
+    if (passive.kind !== "impactCap") throw new Error("파치의 패시브가 아니다");
+    const cap = pachi.maxHp * passive.impactCapMaxHpPercent! / 100;
+
+    // 상한 아래의 평범한 타격은 그대로 다 맞는다 — 안전모가 늘 일하는 것이 아니다.
+    const small = Math.round(cap * 0.5);
+    expect(receivedDamage(pachi, small)).toBe(small);
+
+    // 상한을 넘는 한 방은 그 선까지 눌린다. 즉사급이든 조금 넘든 결과는 같다.
+    expect(receivedDamage(pachi, Math.round(cap * 1.2))).toBe(Math.round(cap));
+    expect(receivedDamage(pachi, pachi.maxHp * 5)).toBe(Math.round(cap));
+
+    // 즉사급을 세 번 맞아야 쓰러진다 — 한 번이면 60%, 두 번이면 20%가 남는다.
+    pachi.hp = pachi.maxHp;
+    for (const remaining of [0.6, 0.2]) {
+      pachi.hp -= receivedDamage(pachi, pachi.maxHp * 5);
+      expect(pachi.hp / pachi.maxHp).toBeCloseTo(remaining, 5);
+    }
+    pachi.hp -= receivedDamage(pachi, pachi.maxHp * 5);
+    expect(pachi.hp).toBeLessThanOrEqual(0);
+  });
+
+  it("의 기본 공격은 네 번째 타격에만 기절과 뇌진탕을 건다", () => {
+    const { state, pachi, enemy } = pachiBattle();
+    const every = pachi.def.basic.statusEffectEvery!;
+    expect(every).toBe(4);
+    const concussion = pachi.def.basic.statusEffects!.find((effect) => effect.kind === "concussion")!;
+    if (concussion.kind !== "concussion") throw new Error("뇌진탕 효과가 아니다");
+
+    const events: SkirmishEvent[] = [];
+    for (let hit = 1; hit <= every; hit += 1) {
+      pachi.attackCooldown = 0;
+      // 기절한 적이 다음 타를 받지 못하는 일이 없도록 매 프레임 기절을 지운다.
+      enemy.stunnedFor = 0;
+      events.push(...stepSkirmish(state, 1 / 60));
+      const rang = events.filter((event) => event.kind === "concussion");
+      // 네 번째 배트에서만 헬멧이 울린다.
+      expect(rang, `${hit}타`).toHaveLength(hit === every ? 1 : 0);
+    }
+    expect(enemy.stunnedFor).toBeGreaterThan(0);
+    // 날려버림은 뇌진탕의 일부가 아니라 폭주가 얹는 몫이라, 평소에는 뇌진탕만 울리고 끝난다.
+    expect(events.some((event) => event.kind === "knockback")).toBe(false);
+    expect(enemy.knockback).toBeNull();
+    // 고정 피해라 방어력·속성을 지나쳐 최대 체력 비율 그대로 들어간다.
+    const rang = events.find((event): event is Extract<SkirmishEvent, { kind: "concussion" }> => event.kind === "concussion")!;
+    const percent = rang.critical ? concussion.criticalMaxHpPercent : concussion.maxHpPercent;
+    expect(rang.amount).toBe(Math.round(enemy.maxHp * percent / 100));
+  });
+
+  it("의 궁극기는 이동 속도만큼 밀고 들어가 길 위의 적을 모두 친다", () => {
+    const { state, pachi, foes } = pachiBattle(["husk-shell", "husk-raptor"]);
+    // 두 적을 같은 직선 위에 세워 통로 안에 함께 들어오게 한다.
+    foes[0].x = 500; foes[0].y = 1000;
+    foes[1].x = 600; foes[1].y = 1000;
+    pachi.targetId = foes[0].id;
+    const startX = pachi.x;
+
+    pachi.energy = pachi.def.ultimate.cost;
+    const events = fireUltimate(state, pachi.id);
+    const charge = events.find((event): event is Extract<SkirmishEvent, { kind: "charge" }> => event.kind === "charge")!;
+    // 나아간 거리는 스킬이 아니라 이동 속도가 정한다.
+    expect(Math.hypot(charge.to.x - charge.from.x, charge.to.y - charge.from.y))
+      .toBeCloseTo(Math.min(moveSpeed(pachi, state) * SKIRMISH.chargeSeconds, state.arena.right - startX), 3);
+    expect(pachi.x).toBeCloseTo(charge.to.x, 5);
+    // 통로 안의 두 적이 함께 맞고 함께 기절한다.
+    const hits = events.filter((event) => event.kind === "attack").map((event) => event.kind === "attack" && event.targetId);
+    expect(hits).toEqual([foes[0].id, foes[1].id]);
+    for (const foe of foes) expect(foe.stunnedFor).toBeGreaterThan(0);
+    // 전장 밖으로는 나가지 않는다.
+    expect(pachi.x).toBeLessThanOrEqual(state.arena.right);
+  });
+
+  it("의 폭주는 뇌진탕을 확정 치명타로 만들고 그 적을 튕겨 날린다", () => {
+    const { state, pachi, enemy, foes } = pachiBattle(["husk-shell", "husk-raptor"]);
+    const trait = getRelic("pachi").ferocityTrait;
+    if (trait.effectId !== "knockbackSlam") throw new Error("파치의 폭주 특성이 아니다");
+    pachi.ferocity = 100; pachi.ferocityFever = true;
+
+    const events: SkirmishEvent[] = [];
+    for (let hit = 0; hit < pachi.def.basic.statusEffectEvery!; hit += 1) {
+      pachi.attackCooldown = 0; enemy.stunnedFor = 0;
+      events.push(...stepSkirmish(state, 1 / 60));
+    }
+    const rang = events.find((event): event is Extract<SkirmishEvent, { kind: "concussion" }> => event.kind === "concussion")!;
+    // 판정을 다시 굴리지 않고 확정 치명타로 친다 — 날아가는 그림과 수치가 갈리지 않는다.
+    expect(rang.critical).toBe(true);
+    expect(events.some((event) => event.kind === "knockback")).toBe(true);
+    expect(enemy.knockback).not.toBeNull();
+    // 날려 버린 상대는 사거리 밖이므로 파치는 다음 상대를 찾는다.
+    expect(pachi.targetId).toBe(foes[1].id);
+
+    // 날아가는 동안에는 좌표가 실제로 움직이고 행동하지 못한다.
+    const before = { x: enemy.x, y: enemy.y };
+    run(state, 0.2);
+    expect(Math.hypot(enemy.x - before.x, enemy.y - before.y)).toBeGreaterThan(0);
+    expect(enemy.x).toBeGreaterThanOrEqual(state.arena.left);
+    expect(enemy.x).toBeLessThanOrEqual(state.arena.right);
+    expect(enemy.y).toBeGreaterThanOrEqual(state.arena.top);
+    expect(enemy.y).toBeLessThanOrEqual(state.arena.bottom);
+
+    // 시간이 다 되면 스스로 풀려 다시 싸운다.
+    run(state, trait.seconds + 0.5);
+    expect(enemy.knockback).toBeNull();
+  });
+});
+
+describe("마키 정적 전투 계약", () => {
+  /** 마키와 적들을 세우고 적 행동을 멈춰 마키의 칼질만 관찰한다. */
+  function makiBattle(enemies = ["husk-shell", "husk-raptor"]) {
+    const state = newSkirmish(["maki"], enemies);
+    const maki = state.fighters[0];
+    maki.x = 400; maki.y = 1000; maki.attackCooldown = 0;
+    const foes = state.fighters.filter((fighter) => fighter.side === "enemy");
+    for (const [index, enemy] of foes.entries()) {
+      enemy.x = 460 + index * 200; enemy.y = 1000; enemy.attackCooldown = 99;
+      enemy.maxHp = 400_000; enemy.hp = 400_000;
+    }
+    return { state, maki, foes };
+  }
+
+  it("의 패시브는 전투 첫 프레임에 가장 약해진 적으로 뛴다", () => {
+    const { state, maki, foes } = makiBattle();
+    const passive = maki.def.passive;
+    if (passive.kind !== "gourmetHunt") throw new Error("마키의 패시브가 아니다");
+    // 멀리 있는 쪽이 더 약하면 거리와 무관하게 그쪽을 고른다.
+    foes[1].hp = foes[1].maxHp * 0.1;
+    maki.targetId = foes[0].id;
+    const takeoff = { x: maki.x, y: maki.y };
+
+    stepSkirmish(state, 1 / 60);
+    expect(maki.targetId).toBe(foes[1].id);
+    expect({ x: maki.x, y: maki.y }).not.toEqual(takeoff);
+    // 전장 밖으로는 나가지 않는다.
+    expect(maki.x).toBeGreaterThanOrEqual(state.arena.left);
+    expect(maki.x).toBeLessThanOrEqual(state.arena.right);
+  });
+
+  it("의 패시브는 정해진 간격마다, 그리고 처치한 순간 다시 고른다", () => {
+    const { state, maki, foes } = makiBattle();
+    const passive = maki.def.passive;
+    if (passive.kind !== "gourmetHunt") throw new Error("마키의 패시브가 아니다");
+    stepSkirmish(state, 1 / 60);
+    // 첫 도약 직후에는 시계가 다시 채워져 매 프레임 뛰지 않는다.
+    expect(maki.huntCooldown).toBeGreaterThan(0);
+
+    // 지금 표적보다 약해진 적이 생겨도 시계가 돌기 전에는 갈아타지 않는다.
+    const chosen = maki.targetId;
+    const other = foes.find((foe) => foe.id !== chosen)!;
+    other.hp = other.maxHp * 0.05;
+    run(state, passive.huntCooldownSeconds! - 1);
+    expect(maki.targetId).toBe(chosen);
+    run(state, 1.2);
+    expect(maki.targetId).toBe(other.id);
+  });
+
+  it("의 기본 공격은 세 겹째에 손질을 터뜨리고 겹을 비운다", () => {
+    const { state, maki, foes } = makiBattle(["husk-shell"]);
+    const butcher = maki.def.basic.statusEffects!.find((effect) => effect.kind === "butcher")!;
+    if (butcher.kind !== "butcher") throw new Error("손질 효과가 아니다");
+    const enemy = foes[0];
+
+    const events: SkirmishEvent[] = [];
+    for (let hit = 1; hit <= butcher.maxStacks; hit += 1) {
+      maki.attackCooldown = 0;
+      events.push(...stepSkirmish(state, 1 / 60));
+      const bursts = events.filter((event) => event.kind === "butcherBurst");
+      // 세 번째 칼질에서만 터진다.
+      expect(bursts, `${hit}겹`).toHaveLength(hit === butcher.maxStacks ? 1 : 0);
+      // 터진 뒤에는 겹이 0으로 돌아간다.
+      expect(enemy.butcher!.stacks).toBe(hit === butcher.maxStacks ? 0 : hit);
+    }
+    const burst = events.find((event): event is Extract<SkirmishEvent, { kind: "butcherBurst" }> => event.kind === "butcherBurst")!;
+    expect(burst.amount).toBeGreaterThan(0);
+    // 평타와 별개의 피해라 같은 프레임에 두 사건이 함께 뜬다.
+    expect(events.filter((event) => event.kind === "attack").length).toBe(butcher.maxStacks);
+  });
+
+  it("의 궁극기는 처치했을 때만 게이지를 돌려받는다", () => {
+    const refund = getRelic("maki").ultimate.energyRefundOnKill!;
+    expect(refund).toBe(100);
+
+    // 살아남으면 아무것도 없다.
+    const alive = makiBattle(["husk-shell"]);
+    alive.maki.energy = alive.maki.def.ultimate.cost;
+    fireUltimate(alive.state, alive.maki.id);
+    expect(alive.maki.energy).toBe(0);
+
+    // 처치하면 그 자리에서 돌려받는다.
+    const killed = makiBattle(["husk-shell"]);
+    killed.foes[0].maxHp = 10; killed.foes[0].hp = 10;
+    killed.maki.energy = killed.maki.def.ultimate.cost;
+    killed.maki.targetId = killed.foes[0].id;
+    fireUltimate(killed.state, killed.maki.id);
+    expect(isFighterAlive(killed.foes[0])).toBe(false);
+    expect(killed.maki.energy).toBe(refund);
+  });
+
+  it("의 폭주는 터진 손질의 일부를 아군 전체의 회복으로 돌린다", () => {
+    const state = newSkirmish(["maki", "anky"], ["husk-shell"]);
+    const [maki, ally, enemy] = state.fighters;
+    maki.x = 400; maki.y = 1000; maki.attackCooldown = 0;
+    ally.attackCooldown = 99;
+    enemy.x = 460; enemy.y = 1000; enemy.attackCooldown = 99;
+    enemy.maxHp = 400_000; enemy.hp = 400_000;
+    maki.targetId = enemy.id;
+    const trait = getRelic("maki").ferocityTrait;
+    if (trait.effectId !== "butcherFeast") throw new Error("마키의 폭주 특성이 아니다");
+    maki.ferocity = 100; maki.ferocityFever = true;
+    maki.hp = 1; ally.hp = 1;
+
+    const events: SkirmishEvent[] = [];
+    for (let hit = 0; hit < 3; hit += 1) {
+      maki.attackCooldown = 0;
+      events.push(...stepSkirmish(state, 1 / 60));
+    }
+    const burst = events.find((event): event is Extract<SkirmishEvent, { kind: "butcherBurst" }> => event.kind === "butcherBurst")!;
+    // 때리지 않은 아군까지 함께 회복한다 — 흡혈이 아니라 팀 회복이다.
+    expect(ally.hp).toBeCloseTo(1 + burst.amount * trait.healPercent / 100, 5);
+    expect(maki.hp).toBeGreaterThan(1);
+  });
+});

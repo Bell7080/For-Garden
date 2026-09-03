@@ -20,6 +20,7 @@ export function targetingLabel(targeting?: Ultimate["targeting"]): string | unde
   if (targeting === "nearbyEnemies") return "자신의 주위 모든 적";
   if (targeting === "battlefieldEnemies") return "전장의 모든 적";
   if (targeting === "targetedCircle") return "지정한 원 안의 모든 적과 생존 아군";
+  if (targeting === "chargeLine") return "[[charge|돌진]]해 뚫고 지나간 길의 모든 적";
   return undefined;
 }
 
@@ -76,6 +77,8 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
   if (trait.effectId === "tailwindRally") return `모든 아군의 공격당 [[ferocity|야성]] 충전량과 궁극기 충전량이 각각 ${trait.teamFerocityGain}, ${trait.teamEnergyGain}씩 증가한다.`;
   if (trait.effectId === "sharedOverpaint") return `폭주 중 모든 아군의 [[basic-attack|기본 공격]]이 [[overpaint|덧칠]]을 함께 쌓는다.`;
   if (trait.effectId === "ichthyoDive") return `이동 속도가 ${trait.moveSpeedPercent}% 증가하고, [[basic-attack|기본 공격]] 이후 표적을 다른 적으로 바꾼다.`;
+  if (trait.effectId === "butcherFeast") return `[[butcher|손질]]이 터진 피해의 ${trait.healPercent}%만큼 생존 아군 전체를 회복시킨다.`;
+  if (trait.effectId === "knockbackSlam") return `[[concussion|뇌진탕]]이 확정 치명타가 되고, 그 적을 ${trait.seconds}초 동안 [[knockback|날려버린다]]. 날려버린 뒤에는 가장 가까운 적을 표적으로 다시 지정한다.`;
 
   // 방어력 계수는 토리카처럼 추가 피해가 있는 범위 타격만 노출하고, 일반 전이 특성은 원래 피해 비율만 보여 준다.
   const speed = trait.attackSpeedBonusPercent === undefined ? "" : `공격 속도가 ${trait.attackSpeedBonusPercent}% 증가한다. `;
@@ -128,6 +131,8 @@ function passiveHead(passive: Passive, atk?: number): string {
     return `생존 중 아군 [[attack-speed|공격 속도]]를 ${passive.teamAttackSpeedPercent}% 높인다. 아군이 [[crowd-control|군중제어]]에 걸리면 즉시 정화하고 ${shieldText} 보호막을 부여한다.`;
   }
   if (passive.kind === "abyssalPressure") return `완전히 경과한 매초 기본 [[ap|주문력]]의 ${passive.apPercentPerSecond}%가 복리로 누적된다. 현재 체력이 최대 체력의 100%에서 ${passive.maxReductionAtHpPercent}%로 낮아질수록 받는 모든 피해 감소가 ${passive.baseDamageReductionPercent}%에서 ${passive.maxDamageReductionPercent}%까지 선형으로 증가하며, 그 이하에서는 최대치로 제한된다. 최종 받는 피해가 ${passive.ignoreDamageAtOrBelow} 이하인 공격은 무효화한다.`;
+  if (passive.kind === "gourmetHunt") return `전투를 시작할 때 현재 체력이 가장 낮은 적을 표적으로 삼고 그 자리로 [[teleport|순간이동]]한다. 적을 처치하면 즉시, 그 밖에는 ${passive.huntCooldownSeconds}초마다 다시 고른다.`;
+  if (passive.kind === "impactCap") return `한 번에 받는 피해가 최대 체력의 ${passive.impactCapMaxHpPercent}%를 넘지 않는다.`;
   if (passive.kind === "overpaintSiphon") return `모든 아군이 [[overpaint|덧칠]]된 적을 맞히면 그 피해의 ${passive.value}%만큼 자신의 체력을 회복한다. 표적의 [[overpaint|덧칠]]이 최대로 쌓이면 다른 적으로 표적을 옮긴다.`;
   if (passive.kind === "lowHpVanish") return `전투당 한 번, 체력이 절반 이하가 되면 ${passive.durationSeconds}초 동안 [[stealth|은신]]해 표적에서 벗어난다.`;
   if (passive.kind === "shimmerMark") return `적을 타격하면 반짝이는 표식을 남긴다. 표식이 없는 적을 타격하면 표식이 그 적에게 옮겨가며 [[ap|주문력]]의 ${passive.value}% [[magical-damage|마법 피해]]를 추가로 입힌다.`;
@@ -296,6 +301,12 @@ function skillEffectClauses(skill: Skill | BasicAttack | Ultimate, stats: SkillD
   if ("damageTransfer" in skill && skill.damageTransfer) {
     clauses.push({ text: `그 적이 실제로 잃은 최종 HP 피해의 ${skill.damageTransfer.percent}%를 가장 가까운 다른 적에게 [[transfer|전이]]한다`, standalone: true });
   }
+  if ("statusEffectEvery" in skill && skill.statusEffectEvery !== undefined) {
+    clauses.push({ text: `위 상태는 매 ${skill.statusEffectEvery}번째 [[basic-attack|기본 공격]]에만 걸린다`, standalone: true });
+  }
+  if ("energyRefundOnKill" in skill && skill.energyRefundOnKill !== undefined) {
+    clauses.push({ text: `이 공격으로 처치하면 궁극기 게이지를 ${skill.energyRefundOnKill} 돌려받는다`, standalone: true });
+  }
   if ("periodicCritical" in skill && skill.periodicCritical) {
     clauses.push({ text: `매 ${skill.periodicCritical.every}번째 실제 [[basic-attack|기본 공격]]은 확정 치명타가 된다`, standalone: true });
   }
@@ -315,6 +326,10 @@ function statusEffectClause(effect: CombatStatusEffect): string | undefined {
   // 덧칠은 몇 겹까지 쌓이고 한 겹이 얼마인지가 곧 이 스킬의 값이라 키워드가 아니라 본문이 적는다.
   if (effect.kind === "overpaint") return `[[overpaint|덧칠]]을 한 겹 쌓는다`;
   if (effect.kind === "stun") return `${effect.seconds}초 동안 [[stun|기절]]시킨다`;
+  // 뇌진탕의 수치와 치명타 배증은 키워드가 말하므로 본문은 걸린다는 사실만 적는다.
+  if (effect.kind === "concussion") return `[[concussion|뇌진탕]]을 입힌다`;
+  // 겹 상한과 터지는 위력은 태그가 말하므로 본문은 겹이 쌓인다는 사실만 적는다.
+  if (effect.kind === "butcher") return `[[butcher|손질]]을 한 겹 쌓는다`;
   if (effect.kind === "stagger") return `[[stagger|경직]]시킨다`;
   if (effect.kind === "bleed") return `${effect.seconds}초 동안 [[bleed|출혈]]시켜 매초 최대 체력의 ${effect.maxHpPercentPerSecond}%를 잃게 한다`;
   return undefined;
@@ -332,6 +347,8 @@ function skillTargetPhrase(skill: Skill | BasicAttack | Ultimate): string {
   if (targeting === "nearbyEnemies") return "자신의 주위 모든 적에게";
   if (targeting === "battlefieldEnemies") return "전장의 모든 적에게";
   if (targeting === "targetedCircle") return "지정한 원 안의 모든 적에게";
+  // 돌진은 시전 시점의 자리가 아니라 지나간 길이 대상이라, 원·전장과 다른 말로 적는다.
+  if (targeting === "chargeLine") return "[[charge|돌진]]해 뚫고 지나간 길의 모든 적에게";
   return "적 한 명에게";
 }
 

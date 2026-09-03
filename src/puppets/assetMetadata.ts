@@ -90,6 +90,8 @@ export const MERON_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1086,
   imageHeight: 1448,
   content: { left: 186, top: 10, right: 1031, bottom: 1440 },
+  // 코어 관절이 가시 영역의 25% 지점에 박혀 있어(다른 원화는 28~35%) 정보창에서 혼자 내려앉는다.
+  portraitOffsetY: -50,
 };
 
 /** 메론 SD ZIP의 정사각 원본과 alpha > 16 경계다. */
@@ -97,6 +99,36 @@ export const MERON_SD_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1254,
   imageHeight: 1254,
   content: { left: 197, top: 13, right: 1057, bottom: 1241 },
+};
+
+/** 파치 전신 ZIP의 원본 크기와 alpha > 16 경계다. */
+export const PACHI_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1024,
+  imageHeight: 1536,
+  content: { left: 88, top: 8, right: 1009, bottom: 1515 },
+  // 배트를 어깨에 걸친 자세라 코어가 가시 영역의 19% 지점까지 올라와 있어 더 크게 올린다.
+  portraitOffsetY: -110,
+};
+
+/** 파치 SD ZIP의 정사각 원본과 alpha > 16 경계다. */
+export const PACHI_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254,
+  imageHeight: 1254,
+  content: { left: 155, top: 12, right: 1098, bottom: 1242 },
+};
+
+/** 마키 전신 ZIP의 원본 크기와 alpha > 16 경계다. */
+export const MAKI_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1085,
+  imageHeight: 1449,
+  content: { left: 31, top: 65, right: 1073, bottom: 1392 },
+};
+
+/** 마키 SD ZIP의 정사각 원본과 alpha > 16 경계다. */
+export const MAKI_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254,
+  imageHeight: 1254,
+  content: { left: 61, top: 52, right: 1194, bottom: 1203 },
 };
 
 /** 티아 SD ZIP의 정사각 원본과 alpha > 16 경계다. */

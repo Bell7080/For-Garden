@@ -36,17 +36,20 @@ export type DamageFlavor =
  * **새 디버프는 여기와 아래 색표에만 더한다.** 화면이 상태마다 색을 새로 고르면 같은 계열의
  * 상태가 화면마다 다른 색으로 보인다.
  */
-export type DebuffId = "bleed" | "poison";
+export type DebuffId = "bleed" | "poison" | "concussion" | "butcher";
 
 /**
  * 디버프별 색.
  *
  * 전부 **어둡게 눌러 둔다.** 지속 피해는 잔타로 자주 뜨므로 밝게 두면 정작 봐야 할 큰 한 방과
- * 같은 무게로 읽힌다. 출혈은 다크체리, 중독은 어두운 보랏빛이다.
+ * 같은 무게로 읽힌다. 출혈은 다크체리, 중독은 어두운 보랏빛, 뇌진탕은 안전모의 탁한 황토다 —
+ * 헬멧이 울린 소리라 붉은 계열에 섞이면 그냥 맞은 것처럼 읽힌다. 손질은 자줏빛 살결이다.
  */
 export const DEBUFF_TONE: Record<DebuffId, string> = {
   bleed: "#a8323c",
   poison: "#7a4bab",
+  concussion: "#b8862f",
+  butcher: "#9a5b7a",
 };
 
 export interface DamagePopupRequest {

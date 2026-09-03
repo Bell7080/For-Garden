@@ -1,5 +1,5 @@
 /** 설정에서 닫을 때 되돌아갈 수 있는 씬만 명시해 외부 입력이 임의 씬을 시작하지 못하게 한다. */
-export type SettingsReturnScene = "lobby" | "archaeology" | "relics" | "lab" | "premium";
+export type SettingsReturnScene = "lobby" | "interaction" | "archaeology" | "relics" | "lab" | "premium";
 
 /** 프리미엄 화면은 섹션이 늘어나더라도 이 목록에 등록된 값만 설정 왕복 데이터로 받는다. */
 export type PremiumSection = "premium";
@@ -11,7 +11,7 @@ export interface SettingsEntryData {
   tab?: "sound" | "alerts" | "play" | "access" | "support";
 }
 
-const RETURN_SCENES: readonly SettingsReturnScene[] = ["lobby", "archaeology", "relics", "lab", "premium"];
+const RETURN_SCENES: readonly SettingsReturnScene[] = ["lobby", "interaction", "archaeology", "relics", "lab", "premium"];
 
 /** Phaser 진입 데이터는 신뢰하지 않고 알려진 반환 씬과 프리미엄 섹션만 새 객체로 복사한다. */
 export function validateSettingsReturn(data: unknown): Required<Pick<SettingsEntryData, "returnScene">> & Pick<SettingsEntryData, "returnData"> {

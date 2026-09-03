@@ -10,6 +10,9 @@ import { DAILY_RESTORATION, getStage } from "../data/stages";
 import { CONTENT_STAMINA_COSTS } from "../data/contentCosts";
 import { createInitialRelicProgress, session, type Session } from "../state/session";
 import { saveManager } from "../state/SaveManager";
+import { INTERACTION_CITIES, findInteractionCity } from "../data/interactionCities";
+import { interactionDurationMs, interactionRewardWeights, isInteractionCityUnlocked, isInteractionDispatchComplete, validateInteractionFormation, type InteractionMemberTraits } from "../core/interactionDispatch";
+import type { ClaimInteractionDispatchRequest, ClaimInteractionDispatchResponse, InteractionCitiesResponse, InteractionDispatchResponse, StartInteractionDispatchRequest } from "./contracts";
 import { ProfileModifierManager } from "../managers/ProfileModifierManager";
 import { GameApiError, type AdOperationsConfigResponse, type BreakThroughResponse, type ClaimMissionRewardsResponse, type CompleteStageResponse, type EnterDailyRestorationResponse, type FeedRelicResponse, type GameApi, type LobbyInteractionResponse, type MissionListResponse, type PlayerStateDto, type ClaimAdRewardRequest, type ClaimAdRewardResponse, type PullRequest, type PullResponse, type RechargeStaminaRequest, type RechargeStaminaResponse } from "./contracts";
 import type { ProductDefinition } from "../data/shopCatalog";
@@ -57,6 +60,8 @@ export interface FakeServerOptions {
 
 /** 백엔드가 생기기 전까지 메모리 상태를 서버처럼 독점 변경하는 임시 어댑터다. */
 export class FakeServer implements GameApi {
+  /** 완료 수령 requestId의 최초 응답을 보존해 네트워크 재시도와 연타를 같은 영수증으로 묶는다. */
+  private readonly interactionClaimResults = new Map<string, ClaimInteractionDispatchResponse>();
   /** 임시 서버에는 결투장 백엔드가 없으므로 티어를 합성하지 않고 명시적으로 미제공한다. */
   async getAsyncArenaServerState(): Promise<null> { return null; }
   private readonly latencyMs: number;
@@ -114,6 +119,39 @@ export class FakeServer implements GameApi {
       { id: "archive-gift", title: "기록 보존 감사품", sender: "기록보존실", body: "기록 제공에 감사드립니다.", sentAt: "2026-08-27T00:00:00.000Z", expiresAt: null, read: true, claimed: true, rewards: [{ kind: "currency", currency: "gems", amount: 10 }] },
       { id: "expired-supply", title: "지난 주 현장 보급", sender: "현장지원반", body: "수령 기간이 종료된 보급품입니다.", sentAt: "2026-08-01T00:00:00.000Z", expiresAt: "2026-08-10T00:00:00.000Z", read: true, claimed: false, rewards: [{ kind: "currency", currency: "fossil", amount: 50 }] },
     ];
+  }
+
+  /** 이름 대신 렐릭 정적 태그만 파견 규칙 입력으로 투영한다. */
+  private interactionTraits(ids: readonly string[]): InteractionMemberTraits[] {
+    return ids.map(id => { const relic = RELICS.find(candidate => candidate.id === id)!; return { id, element: relic.element, squad: relic.squad, tags: relic.squad === "gear" ? ["night-gear"] : [] }; });
+  }
+
+  async getInteractionCities(): Promise<InteractionCitiesResponse> { await this.delay(); return { cities: INTERACTION_CITIES.map(city => ({ ...city, unlocked: isInteractionCityUnlocked(city, this.state.playerResearch.level) })), serverTime: this.now().toISOString() }; }
+
+  async getInteractionDispatch(): Promise<InteractionDispatchResponse> { await this.delay(); return { dispatch: structuredClone(this.state.interaction.slots[0]), serverTime: this.now().toISOString() }; }
+
+  /** 출발 순간 서버가 편성·seed·결과와 절대 종료 시각을 함께 확정한다. */
+  async startInteractionDispatch(request: StartInteractionDispatchRequest): Promise<InteractionDispatchResponse> {
+    await this.delay(); const city = findInteractionCity(request.cityId);
+    if (!city || !isInteractionCityUnlocked(city, this.state.playerResearch.level)) throw new GameApiError("INVALID_STATE", "개방되지 않은 교류 도시입니다.");
+    if (this.state.interaction.slots[0] && !this.state.interaction.slots[0].claimed) throw new GameApiError("INVALID_STATE", "사용 가능한 교류 슬롯이 없습니다.");
+    const error = validateInteractionFormation(request.party, this.state.owned); if (error) throw new GameApiError("INVALID_STATE", `교류 편성이 올바르지 않습니다: ${error}`);
+    const now = this.now(); const traits = this.interactionTraits(request.party); const weights = interactionRewardWeights(city.rewards, traits); const roll = this.random() * weights.reduce((a, b) => a + b, 0);
+    let cursor = 0; const rewardIndex = Math.max(0, weights.findIndex(weight => (cursor += weight) > roll)); const reward = city.rewards[rewardIndex];
+    const sequence = `${now.getTime()}-${Math.floor(this.random() * 1e9)}`;
+    const dispatch = { dispatchId: `interaction-${sequence}`, cityId: city.id, startedAt: now.toISOString(), completesAt: new Date(now.getTime() + interactionDurationMs(city, traits)).toISOString(), party: [...request.party], rewardSeed: sequence, reward: { currency: reward.currency, amount: reward.amount }, claimed: false };
+    this.state.interaction.slots[0] = dispatch; saveManager.save(this.state); return { dispatch: structuredClone(dispatch), serverTime: now.toISOString() };
+  }
+
+  /** 완료·ID를 다시 검사하고 지급/claimed/멱등 기록을 한 저장 처리로 확정한다. */
+  async claimInteractionDispatch(request: ClaimInteractionDispatchRequest): Promise<ClaimInteractionDispatchResponse> {
+    await this.delay(); const cached = this.interactionClaimResults.get(request.requestId); if (cached) return structuredClone(cached);
+    if (!request.requestId) throw new GameApiError("INVALID_STATE", "교류 수령 요청 ID가 필요합니다.");
+    const dispatch = this.state.interaction.slots[0]; const now = this.now();
+    if (!dispatch || dispatch.dispatchId !== request.dispatchId || !isInteractionDispatchComplete(dispatch.completesAt, now.getTime())) throw new GameApiError("INVALID_STATE", "완료된 교류 파견이 아닙니다.");
+    const alreadyClaimed = dispatch.claimed; if (!alreadyClaimed) { this.state.wallet[dispatch.reward.currency] += dispatch.reward.amount; dispatch.claimed = true; this.state.interaction.claimedRequestIds.push(request.requestId); }
+    const response = { dispatch: structuredClone(dispatch), serverTime: now.toISOString(), granted: alreadyClaimed ? { ...dispatch.reward, amount: 0 } : { ...dispatch.reward }, alreadyClaimed, wallet: { ...this.state.wallet } };
+    this.interactionClaimResults.set(request.requestId, structuredClone(response)); saveManager.save(this.state); return response;
   }
 
   /** 읽음·수령·만료를 현재 서버 시각으로 집계한 복제본만 외부에 제공한다. */

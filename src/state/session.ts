@@ -48,6 +48,8 @@ export function createInitialPlayerResearchProgress(): PlayerResearchProgress {
 }
 
 export interface Session {
+  /** 교류 서버 응답을 그대로 복원하는 JSON 안전 슬롯이며 씬은 InteractionManager만 사용한다. */
+  interaction: InteractionProgress;
   /** 획득/장착은 표시명이 아닌 안정적인 수식어 ID만 저장하며 manager만 변경한다. */
   earnedProfileModifierIds: string[];
   equippedProfileModifierIds: string[];
@@ -176,6 +178,8 @@ export interface ObservationRecord {
  * 계정 연동 시에도 이 형태를 업로드 모델로 오해하지 않고 SaveManager 경계에서만 사용한다.
  */
 export interface SaveData {
+  /** 구버전은 빈 슬롯으로 이관되는 교류 진행 스냅샷이다. */
+  interaction: InteractionProgress;
   /** 문구 변경과 저장 호환성을 분리하는 수식어 ID 전용 저장 필드다. */
   earnedProfileModifierIds: string[];
   equippedProfileModifierIds: string[];
@@ -219,6 +223,13 @@ export interface SaveData {
 /** 개별 옵션이 없는 소비품·재료만 같은 ID끼리 중첩한다. */
 export interface ItemStack { itemId: string; quantity: number; }
 
+/** 서버가 확정한 결과는 수령 전 재접속에도 바뀌지 않도록 파견과 함께 저장한다. */
+export interface InteractionDispatchSnapshot { dispatchId: string; cityId: string; startedAt: string; completesAt: string; party: string[]; rewardSeed: string; reward: { currency: keyof Wallet; amount: number }; claimed: boolean; }
+/** 배열 계약은 이후 파견 슬롯 확장 때 저장 모양을 깨뜨리지 않는다. */
+export interface InteractionProgress { slots: Array<InteractionDispatchSnapshot | null>; claimedRequestIds: string[]; }
+/** 신규 계정과 마이그레이션이 같은 빈 슬롯 모양을 공유한다. */
+export function createEmptyInteractionProgress(): InteractionProgress { return { slots: [null], claimedRequestIds: [] }; }
+
 /** 신규 렐릭에 부여하는 독립 복사 가능한 기본 성장 상태다. */
 export function createInitialRelicProgress(): RelicProgress {
   // 유대는 플레이어별 진행 값이며 신규/마이그레이션 계정 모두 0에서 시작한다.
@@ -233,6 +244,7 @@ export function createDefaultSession(): Session {
   // 순수 설정 팩토리는 지연 require 대신 정적 import로 의존 방향을 core→state 타입에만 제한한다.
   const settings = createDefaultSettings();
   return {
+    interaction: createEmptyInteractionProgress(),
     // 신규 계정은 보상 수령을 통해서만 수식어를 획득한다.
     earnedProfileModifierIds: [],
     equippedProfileModifierIds: [],

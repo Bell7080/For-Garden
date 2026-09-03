@@ -335,6 +335,32 @@ export function addHelpBadge(scene: Phaser.Scene, x: number, y: number, onClick:
  * 전부 같은 각도로 기울어 있고 반투명이라 인물을 덮지 않는다. 더 자세한 것은 모두 팝업으로
  * 열린다 — 화면에 늘 떠 있는 정보는 "지금 얼마나 컸는가"까지다.
  */
+/**
+ * 씬 하나가 같은 상세 창을 다시 만들지 않게 묶어 두는 보관대.
+ *
+ * 팝업이나 그리드는 열 때마다 새로 만들어지지만 상세 창은 씬에 붙는 무거운 객체다. 열 때마다
+ * 새로 세우면 씬이 살아 있는 동안 창이 겹겹이 쌓인다. 키가 같으면 같은 창을 돌려주고, 씬이
+ * 내려갈 때 보관대도 함께 비운다.
+ */
+const INFO_BY_SCENE = new WeakMap<Phaser.Scene, Map<string, InfoManager>>();
+
+export function sceneInfoManager(
+  scene: Phaser.Scene,
+  options: { key: string; portraitDepth?: number; context?: InfoContext; baseDepth?: number },
+): InfoManager {
+  let byKey = INFO_BY_SCENE.get(scene);
+  if (!byKey) {
+    byKey = new Map();
+    INFO_BY_SCENE.set(scene, byKey);
+    scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => INFO_BY_SCENE.delete(scene));
+  }
+  const found = byKey.get(options.key);
+  if (found) return found;
+  const made = new InfoManager(scene, options.portraitDepth ?? 1001, options.context ?? "owner", options.baseDepth ?? 1000);
+  byKey.set(options.key, made);
+  return made;
+}
+
 export class InfoManager {
   private readonly root: Phaser.GameObjects.Container;
   private readonly chrome: Phaser.GameObjects.Container;
@@ -417,15 +443,20 @@ export class InfoManager {
   /** 급여·돌파가 지갑을 바꾼 직후 소유 씬의 상단 재화 줄을 갱신하는 경계다. */
   onWalletChange?: () => void;
 
-  constructor(private readonly scene: Phaser.Scene, private readonly portraitDepth = 1001, context: InfoContext = "owner") {
+  /**
+   * `baseDepth`는 창 전체가 서는 층이다. 팝업 위에서 여는 창(발굴 배치처럼 팝업 안의 그리드를
+   * 꾹 눌러 여는 경우)은 팝업 층보다 위여야 한다 — 기본값으로 두면 창이 팝업 판 뒤에 가려
+   * 아무것도 열리지 않은 것처럼 보인다.
+   */
+  constructor(private readonly scene: Phaser.Scene, private readonly portraitDepth = 1001, context: InfoContext = "owner", baseDepth = 1000) {
     this.capabilities = capabilitiesFor(context);
-    this.root = scene.add.container(0, 0).setDepth(1000).setVisible(false);
-    this.chrome = scene.add.container(0, 0).setDepth(1002).setVisible(false);
+    this.root = scene.add.container(0, 0).setDepth(baseDepth).setVisible(false);
+    this.chrome = scene.add.container(0, 0).setDepth(baseDepth + 2).setVisible(false);
     // 판과 제목은 이 층에 담아 한꺼번에 옮긴다. 자리를 조금 고칠 때마다 수십 개의 좌표를
     // 다시 계산하지 않기 위해서다.
     this.column = scene.add.container(COLUMN.offsetX, COLUMN.offsetY);
     this.chrome.add(this.column);
-    this.popups = new PopupLayer(scene, 2000);
+    this.popups = new PopupLayer(scene, baseDepth + 1000);
     this.keywords = new KeywordManager(scene, this.popups);
 
     this.root.add(addSceneBackground(scene, BACKGROUND.info, 0));
@@ -1655,7 +1686,7 @@ export class InfoManager {
     const portrait = await spawnPuppet(this.scene, asset, {
       // 지도와 전투의 CharacterInfoManager가 모두 이 경로를 써서 폰토스 보정도 동일하다.
       ...infoPortraitPlacement(asset, PORTRAIT_FOCUS),
-      depth: Math.max(this.portraitDepth, 1001),
+      depth: Math.max(this.portraitDepth, this.root.depth + 1),
     });
     if (request !== this.portraitRequest) { portrait.destroy(); return; }
     this.portrait?.destroy();

@@ -35,6 +35,8 @@ import { skillArtTint } from "../ui/skillArt";
 import { COLOR, textStyle } from "../ui/theme";
 import { setDebugBattle, setDebugScene } from "../debug";
 import { CharacterInfoManager } from "../managers/CharacterInfoManager";
+import { bindLongPress } from "../ui/longPressInfo";
+import { type InfoManager, sceneInfoManager } from "../ui/info";
 import { UltimateCutIn } from "../ui/UltimateCutIn";
 import {
   nextBattleSpeed, scaleUltimateDuration, shouldWaitForUltimatePresentation, ultimatePresentationTiming, ULTIMATE_RECOVERY_RATIO,
@@ -48,7 +50,7 @@ import {
 import type { MotionPlayback } from "../puppets/assets";
 import { ultimatePresentationFor } from "../data/ultimatePresentations";
 import { relicProgression } from "../managers/RelicProgressionManager";
-import { PopupLayer } from "../ui/PopupLayer";
+import { anyPopupOpen, PopupLayer } from "../ui/PopupLayer";
 import { ExpeditionRankingPopup } from "../ui/ExpeditionRankingPopup";
 import { battleHeaderText, createExpeditionBossSkirmishConfig, createExpeditionSkirmishConfig, expeditionBattleResults, normalizeBattleSceneInput, type BattleSceneInputDto, type ExpeditionBattleInputDto, type ExpeditionBossBattleInputDto } from "../core/expeditionBattle";
 import type { ExpeditionBossAction } from "../core/expeditionBoss";
@@ -274,6 +276,8 @@ export class BattleScene extends Phaser.Scene {
   private presentationChip!: ControlChip;
   /** 적 상세는 플레이어 성장 입력을 만들지 않는 전투 읽기 전용 창이다. */
   private info!: CharacterInfoManager;
+  /** 꾹 눌러 처음 열 때만 만들어지는 아군 창. 만들기 전에는 멈춤 판단에서도 없는 셈이다. */
+  private allyInfoRef?: InfoManager;
   /** 버프 상세도 전투 씬의 한 PopupLayer에 쌓아 입력·닫기 순서를 통일한다. */
   private buffPopups!: PopupLayer;
   /** 전투는 팝업 중에도 계속되며, 선택 ID로 최신 버프를 찾아 시간 갱신/종료 닫기를 수행한다. */
@@ -342,6 +346,7 @@ export class BattleScene extends Phaser.Scene {
     } : {});
     this.views.clear();
     this.profiles = [];
+    this.allyInfoRef = undefined;
     this.finished = false;
     this.spawned = false;
     // 이전 씬의 tween 종료보다 재진입이 빠르더라도 표시 관찰값은 새 전투에서 0부터 시작한다.
@@ -582,12 +587,29 @@ export class BattleScene extends Phaser.Scene {
         if (!this.ultimateSequenceActive && canFireUltimate(this.state, fighter)) card.setScale(1.14);
       });
       card.hit.on("pointerout", () => card.setScale(profileScale(canFireUltimate(this.state, fighter))));
-      card.hit.on("pointerup", () => this.useUltimate(fighter));
+      // 짧은 탭은 궁극기, 꾹 누름은 상세다. 다른 그리드와 같은 조작이라 화면마다 다르게 익히지 않는다.
+      bindLongPress(this, card.hit, {
+        onTap: () => this.useUltimate(fighter),
+        onLongPress: () => {
+          card.setScale(profileScale(canFireUltimate(this.state, fighter)));
+          this.allyInfo().showRelic(fighter.def);
+        },
+        depth: 1500,
+      });
       // 두 게이지는 굵기만 다르고 모양이 같다. 위가 체력, 아래가 폭주다.
       // 수치는 제 게이지와 같은 색으로, 굵게, 아래로 한 겹 복제한 그림자를 달고 선다.
       // 밝은 배경 원화 위에서 흐린 회색 글자는 게이지 옆에 있어도 읽히지 않는다.
       this.profiles.push({ fighter, prefab, card, glow, sweep, charge, hpBar, hpLabel, ferocityBar, ferocityLabel, hpShown: fighter.hp, ferocityShown: fighter.ferocity, ready: false });
     });
+  }
+
+  /**
+   * 아군 상세 창. `this.info`는 적 문맥이라 같은 창을 쓸 수 없다 — 유대·급여·룬이 빠진
+   * 읽기 전용 창에 아군을 세우면 정보창이 좋아질 때 전투만 옛 모습으로 남는다.
+   */
+  private allyInfo(): InfoManager {
+    this.allyInfoRef = sceneInfoManager(this, { key: "battle-ally" });
+    return this.allyInfoRef;
   }
 
   /** 카드를 눌렀을 때. 조건이 맞지 않으면 코어가 아무것도 바꾸지 않는다. */
@@ -738,6 +760,10 @@ export class BattleScene extends Phaser.Scene {
     this.stepMeters(elapsed);
     this.refreshContribution(false, now);
     this.syncCombatEffects();
+    // 판이 떠 있는 동안에는 코어 시간만 멈춘다. 화면 tween과 게이지 추격은 그대로 돌아
+    // 판을 닫는 순간 값이 점프하지 않는다. lastStepAt은 위에서 이미 지금으로 밀어 두었으므로
+    // 다시 흐를 때 멈춰 있던 만큼이 한꺼번에 들어가지 않는다.
+    if (this.simulationPaused()) return;
     // 코어 시간과 전투 배속을 궁극기 연출과 분리한다. 연출 Puppet/tween은 씬의 정상 시계로 돈다.
     if (this.ultimateSequenceActive) return;
     // battleSpeed는 코어 시간에 여기서 정확히 한 번만 곱한다. 궁극기 연출 배율은 tween/Puppet에만
@@ -759,6 +785,16 @@ export class BattleScene extends Phaser.Scene {
     if (this.autoUltimate && !this.finished) this.fireReadyUltimates();
     this.refreshProfiles();
     this.refreshDebug();
+  }
+
+  /**
+   * 팝업이나 정보창이 떠 있으면 전투 진행을 멈춘다.
+   *
+   * 멈추는 것은 코어 시간뿐이다 — 컷인·파티클 같은 씬 tween까지 함께 세우면 판을 여는 순간
+   * 화면이 통째로 얼어 버린 것처럼 보인다.
+   */
+  private simulationPaused(): boolean {
+    return anyPopupOpen() || this.info.isOpen || (this.allyInfoRef?.isOpen ?? false);
   }
 
   /** 제한 주기 또는 카테고리 입력 때만 코어의 불변 표시 스냅샷을 프리팹에 전달한다. */

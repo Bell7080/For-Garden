@@ -9,6 +9,8 @@ import { notificationManager } from "../managers/NotificationManager";
 import { Button } from "./Button";
 import { chipPoints, drawHairline, drawLayer, HOLO, HoloBar, slantedRect } from "./holo";
 import { PortraitCard } from "./PortraitCard";
+import { bindLongPress } from "./longPressInfo";
+import { type InfoManager, sceneInfoManager } from "./info";
 import { PORTRAIT_GRID_MASK_GAP, portraitGridContentHeight, portraitGridFirstRowY } from "./portraitGrid";
 import type { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
@@ -440,6 +442,11 @@ export class IdleExcavationPopup {
    * 위 칸의 슬롯과 SD는 그대로 서 있고, 현황 요약이 있던 자리에만 보유 렐릭 그리드가 들어온다.
    * 수확 자리에는 배치가 서고, 그 왼쪽에 취소가 배치 중에만 나타난다.
    */
+  /** 팝업은 열 때마다 새로 만들어지므로 창은 씬 보관대에서 꺼낸다. 팝업 판 위에 서야 해 층을 올린다. */
+  private info(): InfoManager {
+    return sceneInfoManager(this.scene, { key: "excavation-relic", portraitDepth: 2601, baseDepth: 2600 });
+  }
+
   private renderEditor(error?: string): void {
     if (!this.draft || !this.content) return;
     this.renderUpper(this.draft, true);
@@ -465,14 +472,21 @@ export class IdleExcavationPopup {
         selectedOverlayAlpha: 0.28,
       });
       card.setSelected(this.draft!.includes(relic.id));
-      card.hit.on("pointerup", () => {
-        if (this.saving || !this.draft || this.gridDragMoved > GRID_DRAG_SLOP) return;
-        const slot = this.selectedSlot;
-        this.draft = placeExcavationRelic(this.draft, slot, relic.id);
-        // 한 칸을 채우면 선택이 저절로 다음 빈 칸으로 넘어가 세 번의 배치가 끊기지 않는다.
-        // 방금 비운 칸에서는 그대로 머문다 — 비운 자리를 다시 채우려는 손이 대부분이다.
-        this.selectedSlot = this.draft[slot] === null ? slot : nextExcavationSlot(this.draft, slot);
-        this.renderEditor();
+      // 짧은 탭은 배치, 꾹 누름은 상세다. 편성 그리드와 같은 조작이라 화면마다 다르게 익히지 않는다.
+      bindLongPress(this.scene, card.hit, {
+        onTap: () => {
+          if (this.saving || !this.draft) return;
+          const slot = this.selectedSlot;
+          this.draft = placeExcavationRelic(this.draft, slot, relic.id);
+          // 한 칸을 채우면 선택이 저절로 다음 빈 칸으로 넘어가 세 번의 배치가 끊기지 않는다.
+          // 방금 비운 칸에서는 그대로 머문다 — 비운 자리를 다시 채우려는 손이 대부분이다.
+          this.selectedSlot = this.draft[slot] === null ? slot : nextExcavationSlot(this.draft, slot);
+          this.renderEditor();
+        },
+        allowTap: () => this.gridDragMoved <= GRID_DRAG_SLOP,
+        onLongPress: () => this.info().showRelic(relic),
+        // 팝업 판(2000) 위에 게이지가 보여야 한다.
+        depth: 2400,
       });
       grid.add(card);
     });

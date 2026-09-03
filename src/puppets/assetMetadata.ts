@@ -8,6 +8,8 @@ export const TORIKA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageHeight: 1492,
   content: { left: 95, top: 69, right: 894, bottom: 1419 },
   cardZoom: 0.82,
+  /** 로비 세로 비율: 메론 기준. 1.08 m — 등신이 낮아 상자에 맞추면 혼자 가장 크게 섰다. */
+  lobbyZoom: 0.774,
 };
 
 /**
@@ -32,6 +34,8 @@ export const LEXIA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
    * (49.0 ÷ 35.4 ≒ 1.38), `tests/unit/puppetAnchors.test.ts`의 "카드 얼굴 크기"가 지킨다.
    */
   cardZoom: 1.38,
+  /** 로비 세로 비율: 메론 기준. 1.63 m. */
+  lobbyZoom: 1.002,
 };
 
 /**
@@ -46,6 +50,8 @@ export const SEIRA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   content: { left: 273, top: 82, right: 950, bottom: 1450 },
   // 뒷머리 뾰족 장식이 오른쪽으로 쏠려 카드 홈의 오른쪽 대각선 모서리에 걸렸다.
   cardHeadEscape: { right: 0.12 },
+  /** 로비 세로 비율: 메론 기준. 1.74 m. */
+  lobbyZoom: 1.018,
 };
 
 /** 4번 루카(벨로키랍토르) 전신. 넓은 후드와 꼬리까지 포함한 전용 원화다. */
@@ -56,6 +62,8 @@ export const LUKA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   content: { left: 52, top: 44, right: 1683, bottom: 2404 },
   // 코어 관절이 다른 원화보다 아래에 박혀 있어 정보창에서 혼자 내려앉아 보인다.
   portraitOffsetY: -34,
+  /** 로비 세로 비율: 메론 기준. 1.62 m. */
+  lobbyZoom: 0.999,
 };
 
 /** 7번 스테라(게오스테른베르기아) 전신. */
@@ -63,6 +71,8 @@ export const STELLA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1024,
   imageHeight: 1536,
   content: { left: 23, top: 37, right: 1007, bottom: 1503 },
+  /** 로비 세로 비율: 메론 기준. 1.42 m. */
+  lobbyZoom: 0.965,
 };
 
 /**
@@ -78,6 +88,8 @@ export const TIA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageHeight: 1448,
   content: { left: 25, top: 21, right: 1076, bottom: 1425 },
   cardZoom: 1.12,
+  /** 로비 세로 비율: 메론 기준. 1.31 m. */
+  lobbyZoom: 0.851,
 };
 
 /**
@@ -92,6 +104,7 @@ export const MERON_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   content: { left: 186, top: 10, right: 1031, bottom: 1440 },
   // 코어 관절이 가시 영역의 25% 지점에 박혀 있어(다른 원화는 28~35%) 정보창에서 혼자 내려앉는다.
   portraitOffsetY: -50,
+  // 로비 세로 비율의 기준(1.58 m)이라 보정이 없다. 다른 원화의 `lobbyZoom`이 이 크기를 향한다.
 };
 
 /** 메론 SD ZIP의 정사각 원본과 alpha > 16 경계다. */
@@ -108,6 +121,8 @@ export const PACHI_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   content: { left: 88, top: 8, right: 1009, bottom: 1515 },
   // 배트를 어깨에 걸친 자세라 코어가 가시 영역의 19% 지점까지 올라와 있어 더 크게 올린다.
   portraitOffsetY: -110,
+  /** 로비 세로 비율: 메론 기준. 1.55 m. */
+  lobbyZoom: 0.924,
 };
 
 /** 파치 SD ZIP의 정사각 원본과 alpha > 16 경계다. */
@@ -122,6 +137,8 @@ export const MAKI_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1085,
   imageHeight: 1449,
   content: { left: 31, top: 65, right: 1073, bottom: 1392 },
+  /** 로비 세로 비율: 메론 기준. 1.62 m. */
+  lobbyZoom: 1.048,
 };
 
 /** 마키 SD ZIP의 정사각 원본과 alpha > 16 경계다. */
@@ -145,6 +162,8 @@ export const DODI_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   content: { left: 100, top: 76, right: 986, bottom: 1352 },
   // 오른쪽으로 뻗은 머리 깃털이 카드에서 대칭 홈의 오른쪽 대각선 모서리에 애매하게 걸렸다.
   cardHeadEscape: { right: 0.08 },
+  /** 로비 세로 비율: 메론 기준. 1.08 m — 토리카와 같은 키다. */
+  lobbyZoom: 0.729,
 };
 
 export const DODI_SD_METADATA: Omit<PuppetAsset, "url"> = {
@@ -160,6 +179,8 @@ export const METTE_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   content: { left: 67, top: 43, right: 1003, bottom: 1463 },
   // 왼쪽으로 처진 후드 장식이 카드에서 대칭 홈의 왼쪽 대각선 모서리에 잘렸다.
   cardHeadEscape: { left: 0.12 },
+  /** 로비 세로 비율: 메론 기준. 1.76 m — 가장 크다. */
+  lobbyZoom: 1.089,
 };
 
 export const METTE_SD_METADATA: Omit<PuppetAsset, "url"> = {

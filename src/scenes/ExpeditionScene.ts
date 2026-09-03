@@ -34,6 +34,7 @@ import { expeditionEnemyLevel, getExpeditionEncounterEnemies } from "../data/exp
 import { formatCurrency } from "../core/formatCurrency";
 import { drawInnerVignette, drawShapeOutline } from "../ui/holo";
 import { CharacterInfoManager } from "../managers/CharacterInfoManager";
+import { bindLongPress } from "../ui/longPressInfo";
 import { groundedPortraitBounds } from "../ui/portraitPlacement";
 import { NodeEnemyPreview } from "../ui/NodeEnemyPreview";
 import { BattleProfile } from "../ui/BattleProfile";
@@ -129,6 +130,14 @@ export class ExpeditionScene extends Phaser.Scene {
   private selectedNode?: ExpeditionMapNode;
   /** 적 상세는 실제 전투와 같은 공용 읽기 전용 상태창을 사용한다. */
   private enemyInfo?: CharacterInfoManager;
+  /** 아군 상세는 편성과 같은 소유자 문맥 창이다. 문맥이 섞이지 않게 창을 나눈다. */
+  private allyInfo?: CharacterInfoManager;
+
+  /** 기록·편성·지도 어느 화면에서 꾹 눌러도 같은 아군 창 하나를 쓴다. */
+  private ally(): CharacterInfoManager {
+    if (!this.allyInfo) this.allyInfo = new CharacterInfoManager(this, 1001);
+    return this.allyInfo;
+  }
   /** 전투 노드 선택은 모달 대신 지도에 붙는 공용 SD 편성판 하나만 갱신한다. */
   private enemyPreview?: NodeEnemyPreview;
   /** 선택 해제와 스크롤 추적을 같은 지도 인스턴스에 전달한다. */
@@ -159,6 +168,8 @@ export class ExpeditionScene extends Phaser.Scene {
     this.selected = [];
     this.cards.clear();
     this.popups = new PopupLayer(this);
+    // 씬이 다시 서면 이전 창의 게임 오브젝트는 함께 사라졌으므로 만든 기록도 비운다.
+    this.allyInfo = undefined;
     this.nodeTransitionPending = false;
     this.selectedNode = undefined;
     this.enemyPreview?.destroy(); this.enemyPreview = undefined;
@@ -434,6 +445,10 @@ export class ExpeditionScene extends Phaser.Scene {
         relic: def, level: relicProgression.getProgress(def.id).level, stars: relicProgression.getStars(def.id),
         currentHp, maxHp, ferocity: 0, active: false, readOnly: true, dead: !state.alive,
       }).setScale(BATTLE_PROFILE_LAYOUT.expedition.scale);
+      // 지도 HUD의 칸도 편성 그리드와 같은 꾹 누름으로 상세를 연다. 증강 대상 고르기는
+      // 같은 입력면에 짧은 탭만 얹으므로 둘이 부딪히지 않는다.
+      profile.card.hit.setInteractive({ useHandCursor: true });
+      bindLongPress(this, profile.card.hit, { onLongPress: () => this.ally().showRelic(def), depth: 1200 });
       this.relicProfiles.set(state.relicId, profile);
     });
   }
@@ -446,12 +461,16 @@ export class ExpeditionScene extends Phaser.Scene {
    */
   private augmentTargetPicker(): AugmentTargetPicker {
     const profiles = this.relicProfiles;
+    const pickHandlers = new Map<string, () => void>();
     return {
       attach: (onPick) => {
+        pickHandlers.clear();
         profiles.forEach((profile, relicId) => {
           profile.setDepth(AUGMENT_PICKER_DEPTH);
           profile.card.hit.setInteractive({ useHandCursor: true });
-          profile.card.hit.on("pointerup", () => onPick(relicId));
+          const handler = (): void => onPick(relicId);
+          pickHandlers.set(relicId, handler);
+          profile.card.hit.on("pointerup", handler);
         });
       },
       setEligible: (relicIds) => {
@@ -468,13 +487,16 @@ export class ExpeditionScene extends Phaser.Scene {
         });
       },
       detach: () => {
-        profiles.forEach((profile) => {
+        profiles.forEach((profile, relicId) => {
           profile.setDepth(0).setAlpha(1);
-          profile.card.hit.removeAllListeners("pointerup");
-          profile.card.hit.disableInteractive();
+          // 고르기 핸들러만 걷는다. removeAllListeners로 쓸면 같은 입력면에 걸린 꾹 누름까지
+          // 사라져 증강을 한 번 고른 뒤로는 상세가 열리지 않는다.
+          const handler = pickHandlers.get(relicId);
+          if (handler) profile.card.hit.off("pointerup", handler);
           profile.card.setSelected(false);
           profile.syncMask();
         });
+        pickHandlers.clear();
       },
     };
   }
@@ -672,7 +694,13 @@ export class ExpeditionScene extends Phaser.Scene {
         selectedOverlayAlpha: 0.28,
       });
       // 카드는 선택만 바꾸며 Session을 쓰지 않는다. 시작 버튼에서 매니저가 최종 소유 검증을 반복한다.
-      card.hit.on("pointerup", () => { if (this.rosterDraggedDistance <= ROSTER_DRAG_SLOP) this.toggle(relic.id); });
+      // 짧은 탭은 편성 토글, 꾹 누름은 상세다. 끌어서 스크롤한 손가락은 둘 다 아니다.
+      bindLongPress(this, card.hit, {
+        onTap: () => this.toggle(relic.id),
+        onLongPress: () => this.ally().showRelic(relic),
+        allowTap: () => this.rosterDraggedDistance <= ROSTER_DRAG_SLOP,
+        depth: 900,
+      });
       this.cards.set(relic.id, card);
       content.add(card);
     });

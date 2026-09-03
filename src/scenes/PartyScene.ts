@@ -5,6 +5,7 @@ import type { RelicDef } from "../core/types";
 import { getRelic } from "../data/relics";
 import { relicCollection } from "../managers/RelicCollectionManager";
 import { CharacterInfoManager, ELEMENT_LABEL, ROLE_LABEL, addHelpBadge } from "../managers/CharacterInfoManager";
+import { bindLongPress } from "../ui/longPressInfo";
 import type { PuppetCreature } from "../puppets/assets";
 import { battleAssetFor, placePuppet, spawnPuppet } from "../puppets/assets";
 import { getBattleStage, getStageEnemies } from "../data/stages";
@@ -24,9 +25,6 @@ import { moveFormationSlot } from "../core/formation";
 import { bindFormationDrag } from "../ui/formationDrag";
 import { FORMATION_DRAG_VISUAL } from "../ui/formationDragVisual";
 import { createFormationDragVisualController, type FormationDragVisualController } from "../ui/formationDragVisualController";
-
-/** 이만큼 누르고 있으면 정보창이 열린다. 짧게 누르면 편성 토글이다. */
-const LONG_PRESS_MS = 420;
 
 /**
  * 미리보기 전장.
@@ -96,9 +94,6 @@ export class PartyScene extends Phaser.Scene {
   private info!: CharacterInfoManager;
   /** 같은 정보창을 적 문맥으로 하나 더 둔다. 아군 창과 문맥이 섞이지 않게 창을 나눈다. */
   private enemyInfo!: CharacterInfoManager;
-  private pressTimer?: Phaser.Time.TimerEvent;
-  private pressStartedAt = 0;
-  private longPressFired = false;
   /** 저장을 포함한 전투 진입 처리 중에는 연속 탭이 같은 처리를 다시 시작하지 못하게 한다. */
   private isEnteringBattle = false;
   /** 세 화면에서 같은 감광·드롭 칸·미리보기 수명을 사용하는 공용 표현기다. */
@@ -114,8 +109,6 @@ export class PartyScene extends Phaser.Scene {
     this.picked = relicCollection.validParty;
     this.cards.clear();
     this.allySlots = [];
-    this.pressTimer = undefined;
-    this.pressStartedAt = 0;
     this.isEnteringBattle = false;
 
     const cx = BASE_WIDTH / 2;
@@ -376,41 +369,14 @@ export class PartyScene extends Phaser.Scene {
   /**
    * 짧게 누름(편성 토글)과 꾹 누름(정보창)을 가른다.
    *
-   * 누르고 있는 동안 정보창이 뜨는 느낌을 주려고 타이머를 걸지만, 그것만 믿지는 않는다.
-   * 화면에 아무 일도 일어나지 않는 동안 브라우저가 렌더 루프를 늦추면 타이머가 제때 오지
-   * 않을 수 있어서, 손을 뗄 때 실제로 눌린 시간을 한 번 더 본다.
+   * 시간·게이지 연출·취소 규칙은 공용 `bindLongPress` 하나가 갖는다 — 화면마다 타이머를 따로
+   * 달면 어디서는 열리고 어디서는 열리지 않는 그리드가 남는다.
    */
   private bindCardInput(box: Phaser.GameObjects.Rectangle, relic: RelicDef): void {
-    const openInfo = (): void => {
-      this.longPressFired = true;
-      this.info.showRelic(relic);
-    };
-
-    const clearTimer = (): void => {
-      this.pressTimer?.remove();
-      this.pressTimer = undefined;
-    };
-
-    box.on("pointerdown", () => {
-      this.longPressFired = false;
-      this.pressStartedAt = Date.now();
-      this.pressTimer = this.time.delayedCall(LONG_PRESS_MS, openInfo);
-    });
-
-    box.on("pointerup", () => {
-      clearTimer();
-      if (this.pressStartedAt === 0) return; // 카드 밖에서 시작한 입력
-      const heldMs = Date.now() - this.pressStartedAt;
-      this.pressStartedAt = 0;
-
-      if (this.longPressFired) return; // 누르고 있는 동안 이미 열렸다
-      if (heldMs >= LONG_PRESS_MS) openInfo();
-      else this.toggle(relic.id);
-    });
-
-    box.on("pointerout", () => {
-      clearTimer();
-      this.pressStartedAt = 0;
+    bindLongPress(this, box, {
+      onLongPress: () => this.info.showRelic(relic),
+      onTap: () => this.toggle(relic.id),
+      depth: 900,
     });
   }
 

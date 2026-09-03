@@ -54,6 +54,18 @@ export interface PopupOptions {
  * 화면마다 따로 만들면 층이 엉키고 닫는 규칙이 갈라지므로, 쌓고 닫는 일은 여기서만 한다.
  * 위에 있는 것부터 닫히고, 마지막 한 장이 닫히면 어두운 막도 함께 사라진다.
  */
+/**
+ * 지금 화면에 떠 있는 팝업 장 수. 씬이 아니라 이 경계가 세는 이유는, 팝업 레이어가 화면마다
+ * 그때그때 새로 만들어져 씬이 제 층을 전부 알지 못하기 때문이다. 전투는 이 값으로 코어 시간만
+ * 멈춘다 — 판이 떠 있는 동안 뒤에서 전투가 굴러가면 읽는 사이에 판이 갈린다.
+ */
+let openLayerCount = 0;
+
+/** 팝업이 한 장이라도 떠 있는가. */
+export function anyPopupOpen(): boolean {
+  return openLayerCount > 0;
+}
+
 export class PopupLayer {
   private readonly stack: Phaser.GameObjects.Container[] = [];
   /** 외부 뒤로가기가 `closeTop`을 호출해도 팝업 소유자의 정리 콜백을 빠뜨리지 않는다. */
@@ -63,7 +75,13 @@ export class PopupLayer {
   /** 제목 있는 팝업만 E2E 관찰용으로 기록한다. Canvas 밖에서는 지금 무엇이 열려 있는지 알 방법이 없다. */
   private readonly titleByLayer = new Map<Phaser.GameObjects.Container, string>();
 
-  constructor(private readonly scene: Phaser.Scene, private readonly depth = 2000) {}
+  constructor(private readonly scene: Phaser.Scene, private readonly depth = 2000) {
+    // 씬이 통째로 내려가면 layer.destroy()가 close()를 거치지 않으므로 셈만 직접 되돌린다.
+    scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      openLayerCount -= this.stack.length;
+      this.stack.length = 0;
+    });
+  }
 
   get isOpen(): boolean {
     return this.stack.length > 0;
@@ -168,6 +186,7 @@ export class PopupLayer {
 
     if (options.title) this.titleByLayer.set(layer, options.title);
     this.stack.push(layer);
+    openLayerCount += 1;
     this.publishDebugTitles();
     return body;
   }
@@ -220,6 +239,7 @@ export class PopupLayer {
     const index = this.stack.indexOf(layer);
     if (index === -1) return;
     this.stack.splice(index, 1);
+    openLayerCount -= 1;
     this.titleByLayer.delete(layer);
     const onClose = this.onCloseByLayer.get(layer);
     this.onCloseByLayer.delete(layer);

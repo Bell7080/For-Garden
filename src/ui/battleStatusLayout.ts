@@ -62,19 +62,36 @@ export const BATTLE_STATUS_LAYOUT = {
    * 바가 밀려 어디까지가 체력인지 흐려지고, 겹 수를 적을 자리도 없었다. 지금은 **바 위**에
    * 한 줄로 서고, 칩 하나가 상태 하나다.
    */
-  chipSize: 30,
-  chipGap: 6,
+  /**
+   * 칩 한 장의 크기.
+   *
+   * 작게 둔다 — 여기서 읽어야 하는 것은 "무언가 묻어 있다"와 **어느 계열인가**(색·문양),
+   * 그리고 겹 수뿐이다. 정확한 수치가 필요한 손은 눌러서 쪽지를 연다. 키우면 그만큼 SD와
+   * 체력 바를 가린다.
+   */
+  chipSize: 22,
+  chipGap: 4,
+  /**
+   * 머리 위 체력 바의 폭. 칩 줄이 **바 왼쪽 끝**부터 붙으므로 두 값이 갈리면 줄이 바를 벗어난다.
+   * `UnitHealthBar`도 이 값을 읽어 한 곳만 고치면 둘이 함께 움직인다.
+   */
+  hpBarWidth: 96,
   /** 체력 바 위로 띄우는 높이. 바와 칩이 서로의 외곽선에 닿지 않을 만큼만 띄운다. */
-  chipRowLift: 24,
+  chipRowLift: 18,
   /**
    * 겹 수가 붙는 자리 — 칩 **우하단**이다.
    *
    * 가운데에 적으면 표식 그림과 숫자가 겹쳐 둘 다 흐려진다. 작은 판을 깔아 밝은 배경 원화
    * 위에서도 수가 살아남게 한다.
    */
-  stackCount: { offsetX: 11, offsetY: 11, size: 16, plateRadius: 9 },
-  /** 남은 시간을 도는 시계 고리의 두께. 칩 외곽선 바로 안쪽을 돈다. */
-  clockWidth: 3,
+  stackCount: { offsetX: 8, offsetY: 8, size: 13, plateRadius: 7 },
+  /**
+   * 지나간 시간을 덮는 반투명 검정의 진하기.
+   *
+   * 원형 게이지 대신 **덮이는 부채꼴**을 쓴다 — 고리는 칩 안에 선 하나를 더 그어 표식과 겹치고,
+   * 30px 칩에서는 그 선이 곧 그림이 된다. 덮이는 쪽은 아무 그림도 더하지 않고 남은 시간만 말한다.
+   */
+  clockAlpha: 0.62,
   /**
    * 수치가 뜨는 높이. SD 키의 몇 할 위인지만 정하고, **떠오르는 거리와 시간은 세기에 따라
    * 달라지므로** `src/ui/damageNumbers.ts`가 정한다.
@@ -83,14 +100,15 @@ export const BATTLE_STATUS_LAYOUT = {
 } as const;
 
 /**
- * 상태 칩 `count`장이 설 x 좌표. 체력 바 가운데를 기준으로 한 줄이 가운데 정렬된다.
+ * 상태 칩 `count`장이 설 x 좌표. **체력 바 왼쪽 끝**부터 오른쪽으로 붙는다.
  *
- * 왼쪽부터 고정 슬롯을 쓰지 않는 이유는, 머리 위 줄은 상태가 붙고 떨어지는 일이 잦아 빈칸을
- * 남겨 두면 줄이 한쪽으로 쏠려 보이기 때문이다. 대신 **순서가 고정**이라(기절→출혈→덧칠→손질)
- * 같은 상태는 늘 같은 이웃 옆에 선다.
+ * 순서는 고정이므로(기절→출혈→덧칠→손질) 같은 상태는 늘 같은 자리 근처에 서고, 첫 칸은
+ * 무엇이 걸리든 바 왼쪽 끝이다 — 가운데 정렬하면 상태가 하나 붙을 때마다 줄 전체가 밀린다.
  */
 export function unitStatusChipOffsets(count: number): number[] {
-  const { chipSize, chipGap } = BATTLE_STATUS_LAYOUT;
-  const width = count * chipSize + Math.max(0, count - 1) * chipGap;
-  return Array.from({ length: count }, (_, index) => -width / 2 + chipSize / 2 + index * (chipSize + chipGap));
+  const { chipSize, chipGap, hpBarWidth } = BATTLE_STATUS_LAYOUT;
+  // 가운데 정렬하면 상태가 붙고 떨어질 때마다 이미 읽고 있던 칩까지 좌우로 흔들린다.
+  // 바 왼쪽 끝에 붙여 두면 첫 칸은 늘 같은 자리다.
+  const left = -hpBarWidth / 2;
+  return Array.from({ length: count }, (_, index) => left + chipSize / 2 + index * (chipSize + chipGap));
 }

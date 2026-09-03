@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { BATTLE_STATUS_LAYOUT as L, unitStatusChipOffsets } from "./battleStatusLayout";
 import { chipPoints, drawInnerVignette, drawLayer, drawShapeOutline } from "./holo";
+import { clockWedgePoints } from "./clockWedge";
 import type { UnitStatusView } from "./unitStatusModel";
 import { COLOR, textStyle } from "./theme";
 
@@ -82,17 +83,21 @@ export class UnitStatusChips extends Phaser.GameObjects.Container {
     ], true);
   }
 
-  /** 남은 시간이 있는 상태만 12시에서 시계 방향으로 도는 고리를 그린다. */
+  /**
+   * 지나간 시간을 12시에서 시계 방향으로 덮는다.
+   *
+   * 원형 게이지(고리) 대신 덮는 면을 쓰는 이유는, 30px 칩 안에 선을 하나 더 그으면 그 선이
+   * 표식과 겹쳐 곧 그림이 되기 때문이다. 덮이는 쪽은 아무것도 더하지 않고 "얼마나 남았나"만
+   * 말하고, 다 덮이는 순간이 곧 풀리는 순간이다. 도형은 칩 사각형 안에서 잘라 만든다 —
+   * 기하 마스크는 컨테이너 이동을 물려받지 않아 매 프레임 자리를 옮기는 칩에서 어긋난다.
+   */
   private drawClock(chip: ChipView, view: UnitStatusView): void {
     chip.clock.clear();
     if (view.remaining === undefined || !view.total) return;
-    const ratio = Math.max(0, Math.min(1, view.remaining / view.total));
-    if (ratio <= 0) return;
-    const radius = L.chipSize / 2 - L.clockWidth;
-    const start = -Math.PI / 2;
-    chip.clock.lineStyle(L.clockWidth, view.color, 0.95);
-    chip.clock.beginPath();
-    chip.clock.arc(0, 0, radius, start, start + Math.PI * 2 * ratio, false);
-    chip.clock.strokePath();
+    const elapsed = 1 - Math.max(0, Math.min(1, view.remaining / view.total));
+    const points = clockWedgePoints(L.chipSize, elapsed);
+    if (points.length < 3) return;
+    chip.clock.fillStyle(0x000000, L.clockAlpha);
+    chip.clock.fillPoints(points.map(({ x, y }) => new Phaser.Geom.Point(x, y)), true);
   }
 }

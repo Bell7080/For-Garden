@@ -3,13 +3,17 @@ import { BATTLE_PROFILE_LAYOUT, BATTLE_STATUS_LAYOUT, battleBuffChipBounds, batt
 
 /** Phaser 없이 1080×1920 전투 HUD의 상태 뱃지 간격 계약을 고정한다. */
 describe("머리 위 상태 칩 줄", () => {
-  it("은 칩 수와 무관하게 체력 바 가운데에 정렬된다", () => {
+  it("은 칩 수와 무관하게 체력 바 왼쪽 끝에서 시작한다", () => {
+    const first = unitStatusChipOffsets(1)[0];
     for (const count of [1, 2, 3, 4]) {
       const offsets = unitStatusChipOffsets(count);
       expect(offsets).toHaveLength(count);
-      // 가운데 정렬 — 좌우 끝이 대칭이라 상태가 붙고 떨어져도 줄이 한쪽으로 쏠리지 않는다.
-      expect(offsets[0] + offsets[offsets.length - 1]).toBeCloseTo(0, 6);
+      // 첫 칸은 늘 같은 자리다 — 가운데 정렬하면 상태가 하나 붙을 때마다 줄 전체가 밀린다.
+      expect(offsets[0]).toBe(first);
     }
+    // 줄은 바 왼쪽 끝에서 시작하고 오른쪽으로 붙는다.
+    expect(first).toBeCloseTo(-BATTLE_STATUS_LAYOUT.hpBarWidth / 2 + BATTLE_STATUS_LAYOUT.chipSize / 2, 6);
+    expect(unitStatusChipOffsets(4).every((x) => x > -BATTLE_STATUS_LAYOUT.hpBarWidth)).toBe(true);
   });
 
   it("은 칩끼리 겹치지 않게 벌린다", () => {
@@ -27,6 +31,8 @@ describe("머리 위 상태 칩 줄", () => {
     expect(count.offsetY).toBeGreaterThan(0);
     // 판이 칩 밖으로 크게 삐져나오면 옆 칩과 붙어 어느 칩의 수인지 흐려진다.
     expect(count.offsetX + count.plateRadius).toBeLessThanOrEqual(BATTLE_STATUS_LAYOUT.chipSize / 2 + BATTLE_STATUS_LAYOUT.chipGap);
+    // 작은 칩이라 수가 칩보다 커지지 않게 둔다.
+    expect(count.size).toBeLessThan(BATTLE_STATUS_LAYOUT.chipSize);
   });
 
   it("은 체력 바와 겹치지 않을 만큼 위로 띄운다", () => {

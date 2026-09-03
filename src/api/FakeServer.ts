@@ -12,8 +12,8 @@ import { createInitialRelicProgress, session, type Session } from "../state/sess
 import { saveManager } from "../state/SaveManager";
 import { ProfileModifierManager } from "../managers/ProfileModifierManager";
 import { GameApiError, type AdOperationsConfigResponse, type BreakThroughResponse, type ClaimMissionRewardsResponse, type CompleteStageResponse, type EnterDailyRestorationResponse, type FeedRelicResponse, type GameApi, type LobbyInteractionResponse, type MissionListResponse, type PlayerStateDto, type ClaimAdRewardRequest, type ClaimAdRewardResponse, type PullRequest, type PullResponse, type RechargeStaminaRequest, type RechargeStaminaResponse } from "./contracts";
-import type { ProductDefinition } from "../data/products";
-import { PRODUCTS } from "../data/products";
+import type { ProductDefinition } from "../data/shopCatalog";
+import { PRODUCTS } from "../data/shopCatalog";
 import type { ProductListResponse, PurchaseProductResponse } from "./contracts";
 import type { ExchangeDnaRequest, ExchangeDnaResponse } from "./contracts";
 import { DNA_EXCHANGE_OFFERS, WALLET_CAPS } from "../data/economy";

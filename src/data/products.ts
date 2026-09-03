@@ -1,5 +1,52 @@
-/**
- * 이전 import 경로를 위한 호환 진입점이다.
- * 상품 정의와 탭 순서의 실제 소유자는 `shopCatalog.ts`이며 새 코드는 그 모듈을 직접 사용한다.
- */
-export * from "./shopCatalog";
+/** 상품이 노출되고 구매될 화면 경계다. ID만으로 다른 화면의 상품을 구매하지 못하게 서버 요청에도 사용한다. */
+export type ProductStorefront = "shop" | "trade" | "premium";
+
+/** 일반 인게임 상점과 무역소가 공유하는 안정적인 카테고리 계약이다. */
+export type ShopCategory = "general" | "enhancement" | "rune";
+
+/** 상점의 가격 재화. `real_money`는 플랫폼 영수증 검증 전에는 구매할 수 없다. */
+export type ProductCurrency = "fossil" | "amber" | "cheesecake" | "dnaFragments" | "real_money";
+
+/** API 경계에서 확정할 수 있는 상품 지급 항목이다. */
+export type ProductGrant =
+  | { kind: "currency"; currency: Exclude<ProductCurrency, "real_money">; amount: number }
+  | { kind: "item"; itemId: string; name: string; amount: number }
+  | { kind: "rune"; name: string; amount: number; rarity: "uncommon" | "rare" | "epic" | "legendary"; part: 0 | 1 | 2 }
+  | { kind: "profile_decoration"; decorationId: string; name: string };
+
+/** 구매 제한의 재설정 주기다. */
+export type ProductRefresh = "none" | "daily" | "weekly" | "once";
+
+/** 상품 그림은 영속 ID와 분리해 최종 원화 교체가 구매 기록에 영향을 주지 않게 한다. */
+export type ShopProductIconKey = "shop-product-supplies" | "shop-product-enhancement" | "shop-product-rune";
+
+/** 후원 상품이 부여하는 기간제 또는 영구 계정 권리다. */
+export interface PassBenefitDefinition {
+  durationDays: number | null;
+  instantAdRewards: true;
+  usesStandardAdRewardPolicy: true;
+  dailyBonus: { currency: "gems"; amount: number };
+}
+
+/** 정적 상품은 가격·지급·기본 구매 수량·제한 주기를 빠짐없이 선언한다. */
+export interface ProductDefinition {
+  id: string; storefront: ProductStorefront; category: ShopCategory; iconKey: ShopProductIconKey;
+  name: string; description: string;
+  price: { currency: ProductCurrency; amount: number; display?: string };
+  grants: readonly ProductGrant[];
+  /** 구매 작업판이 처음 제안할 묶음 수량이며 서버는 요청 수량을 별도로 검증한다. */
+  defaultQuantity: number;
+  passBenefit?: PassBenefitDefinition;
+  purchaseLimit: number; refresh: ProductRefresh; visibleFrom: string; visibleUntil: string;
+}
+
+/** 프로토타입 운영 카탈로그. 실제 차감과 지급은 이 데이터가 아니라 GameApi만 수행한다. */
+export const SHOP_PRODUCTS: readonly ProductDefinition[] = [
+  // 일반 상점 임시 상품 세 종은 각 탭의 API·필터 연결을 검증하기 위한 최소 구성이다.
+  { id: "shop-field-supplies", storefront: "shop", category: "general", iconKey: "shop-product-supplies", name: "현장 보급품", description: "현장 활동용 치즈케이크 40개", price: { currency: "fossil", amount: 100 }, grants: [{ kind: "currency", currency: "cheesecake", amount: 40 }], defaultQuantity: 1, purchaseLimit: 5, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "shop-enhancement-dna", storefront: "shop", category: "enhancement", iconKey: "shop-product-enhancement", name: "강화 DNA 묶음", description: "공용 DNA 조각 10개", price: { currency: "amber", amount: 8 }, grants: [{ kind: "currency", currency: "dnaFragments", amount: 10 }], defaultQuantity: 1, purchaseLimit: 3, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "shop-rune-research", storefront: "shop", category: "rune", iconKey: "shop-product-rune", name: "룬 연구 보급", description: "룬 연구용 DNA 조각 6개", price: { currency: "fossil", amount: 220 }, grants: [{ kind: "currency", currency: "dnaFragments", amount: 6 }], defaultQuantity: 1, purchaseLimit: 2, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+];
+
+/** products 모듈을 직접 소비하는 일반 상점에는 shop 상품만 공개한다. */
+export const PRODUCTS = SHOP_PRODUCTS;

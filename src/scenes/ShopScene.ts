@@ -15,6 +15,7 @@ import { COLOR, textStyle } from "../ui/theme";
 import { TopBar } from "../ui/TopBar";
 import { PopupLayer } from "../ui/PopupLayer";
 import { PurchasePopup } from "../ui/PurchasePopup";
+import { tradePopupModel } from "../ui/tradePopupModel";
 import { session } from "../state/session";
 
 /** 상품 목록이 제목 아래에서 뒤로가기 안전 영역 위까지 흐르는 화면 좌표 경계다. */
@@ -90,9 +91,9 @@ export class ShopScene extends Phaser.Scene {
 
   /** 서버의 storefront 경계를 신뢰하되 화면에서는 trade 상품만 렌더링한다. */
   private async refresh(): Promise<void> {
-    const response = await gameApi.getProducts();
+    const response = await gameApi.getProducts("trade");
     if (!this.scene.isActive()) return;
-    this.products = response.products.filter((product) => product.storefront === "trade");
+    this.products = tradePopupModel(response.products);
     this.renderProducts();
   }
 

@@ -780,10 +780,11 @@ export class FakeServer implements GameApi {
   }
 
   /** 서버 시각의 노출 기간과 현재 제한 주기를 반영해 공용 카탈로그를 조회한다. */
-  async getProducts(): Promise<ProductListResponse> {
+  async getProducts(storefront: ProductDefinition["storefront"]): Promise<ProductListResponse> {
     await this.delay();
     const now = this.now();
-    const products = PRODUCTS.filter((product) => this.isVisible(product, now)).map((product) => {
+    // 목록 단계부터 요청 화면과 일치하는 상품만 반환해 화면별 모델이 섞인 카탈로그를 받지 않는다.
+    const products = PRODUCTS.filter((product) => product.storefront === storefront && this.isVisible(product, now)).map((product) => {
       const remaining = this.remaining(product, now);
       const premium = product.price.currency === "real_money";
       return { ...product, remaining, purchasable: !premium && remaining > 0, disabledReason: premium ? "서버 영수증 검증 연결 전에는 구매할 수 없습니다." : remaining <= 0 ? "구매 제한에 도달했습니다." : undefined };
@@ -795,11 +796,13 @@ export class FakeServer implements GameApi {
   async purchaseProduct(request: PurchaseProductRequest): Promise<PurchaseProductResponse> {
     await this.delay();
     const now = this.now();
-    const { productId, quantity } = request;
+    const { storefront, productId, quantity } = request;
     // 수량은 가격과 제한을 곱하기 전에 엄격히 검사해 음수 차감이나 소수 지급을 차단한다.
     if (!Number.isSafeInteger(quantity) || quantity < 1) throw new GameApiError("INVALID_PURCHASE_QUANTITY", "구매 수량이 올바르지 않습니다.");
     const product = PRODUCTS.find((candidate) => candidate.id === productId);
     if (!product) throw new GameApiError("PRODUCT_NOT_FOUND", "존재하지 않는 상품입니다.");
+    // 상품 ID를 알아도 요청 storefront가 다르면 구매할 수 없어 화면 간 ID 주입을 차단한다.
+    if (product.storefront !== storefront) throw new GameApiError("PRODUCT_STOREFRONT_MISMATCH", "요청한 상점의 상품이 아닙니다.");
     const owningEvent = findEventByProductId(productId);
     // 상품 노출 기간과 별개로 이벤트 기간도 검사해 운영 데이터 불일치 시 구매를 막는다.
     if (owningEvent) this.assertEventActive(owningEvent, now);

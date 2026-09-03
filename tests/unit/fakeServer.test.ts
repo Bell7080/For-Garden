@@ -388,39 +388,49 @@ describe("FakeServer 상품 카탈로그", () => {
   it("여러 개의 총가격·총 지급량·구매 제한을 검증한 뒤 한 번에 확정한다", async () => {
     const state = makeSession(1_000);
     const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-22T12:00:00Z") });
-    const result = await server.purchaseProduct({ productId: "trade-weeds", quantity: 2 });
+    const result = await server.purchaseProduct({ storefront: "trade", productId: "trade-weeds", quantity: 2 });
     // 단가와 단위 지급량에 수량을 곱한 결과와 제한 기록이 같은 응답 시점에 반영된다.
     expect(result).toMatchObject({ quantity: 2, remaining: 1, wallet: { fossil: 640, cheesecake: 200 }, granted: [{ kind: "currency", currency: "cheesecake", amount: 200 }] });
     expect(state.productPurchases["trade-weeds"]).toEqual({ periodKey: "2026-08-22", count: 2 });
     const before = { wallet: { ...state.wallet }, purchases: { ...state.productPurchases } };
-    await expect(server.purchaseProduct({ productId: "trade-weeds", quantity: 2 })).rejects.toMatchObject({ code: "PURCHASE_LIMIT_REACHED" });
+    await expect(server.purchaseProduct({ storefront: "trade", productId: "trade-weeds", quantity: 2 })).rejects.toMatchObject({ code: "PURCHASE_LIMIT_REACHED" });
     expect(state.wallet).toEqual(before.wallet); expect(state.productPurchases).toEqual(before.purchases);
   });
 
   it("인게임 가격 차감, 지급, 일일 제한을 한 처리로 확정한다", async () => {
     const state = makeSession(1000);
     const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-22T12:00:00Z") });
-    await expect(server.purchaseProduct({ productId: "trade-weeds", quantity: 1 })).resolves.toMatchObject({ productId: "trade-weeds", quantity: 1, remaining: 2, wallet: { fossil: 820, cheesecake: 100 } });
+    await expect(server.purchaseProduct({ storefront: "trade", productId: "trade-weeds", quantity: 1 })).resolves.toMatchObject({ productId: "trade-weeds", quantity: 1, remaining: 2, wallet: { fossil: 820, cheesecake: 100 } });
     expect(state.productPurchases["trade-weeds"]).toEqual({ periodKey: "2026-08-22", count: 1 });
-    await server.purchaseProduct({ productId: "trade-weeds", quantity: 1 });
-    await server.purchaseProduct({ productId: "trade-weeds", quantity: 1 });
-    await expect(server.purchaseProduct({ productId: "trade-weeds", quantity: 1 })).rejects.toMatchObject({ code: "PURCHASE_LIMIT_REACHED" });
+    await server.purchaseProduct({ storefront: "trade", productId: "trade-weeds", quantity: 1 });
+    await server.purchaseProduct({ storefront: "trade", productId: "trade-weeds", quantity: 1 });
+    await expect(server.purchaseProduct({ storefront: "trade", productId: "trade-weeds", quantity: 1 })).rejects.toMatchObject({ code: "PURCHASE_LIMIT_REACHED" });
   });
 
   it("재화 부족과 유료 상품은 어떤 지급도 만들지 않는다", async () => {
     const state = makeSession(0); const before = { ...state.wallet };
     const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-22T12:00:00Z") });
-    await expect(server.purchaseProduct({ productId: "trade-weeds", quantity: 1 })).rejects.toMatchObject({ code: "INSUFFICIENT_CURRENCY" });
-    await expect(server.purchaseProduct({ productId: "premium-starter", quantity: 1 })).rejects.toMatchObject({ code: "PLATFORM_PAYMENT_REQUIRED" });
+    await expect(server.purchaseProduct({ storefront: "trade", productId: "trade-weeds", quantity: 1 })).rejects.toMatchObject({ code: "INSUFFICIENT_CURRENCY" });
+    await expect(server.purchaseProduct({ storefront: "premium", productId: "premium-starter", quantity: 1 })).rejects.toMatchObject({ code: "PLATFORM_PAYMENT_REQUIRED" });
     expect(state.wallet).toEqual(before);
     expect(state.productPurchases).toEqual({});
+  });
+
+  it("조회 storefront를 분리하고 다른 화면 상품 ID 구매를 거부한다", async () => {
+    const state = makeSession(1000);
+    const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-22T12:00:00Z") });
+    // 조회와 구매가 같은 명시적 storefront 계약을 사용해야 ID 주입으로 경계를 우회할 수 없다.
+    await expect(server.getProducts("shop")).resolves.toMatchObject({ products: expect.arrayContaining([expect.objectContaining({ storefront: "shop" })]) });
+    expect((await server.getProducts("shop")).products.every(({ storefront }) => storefront === "shop")).toBe(true);
+    await expect(server.purchaseProduct({ storefront: "shop", productId: "trade-weeds", quantity: 1 })).rejects.toMatchObject({ code: "PRODUCT_STOREFRONT_MISMATCH" });
+    expect(state.wallet.fossil).toBe(1000); expect(state.productPurchases).toEqual({});
   });
 
   it("잘못된 수량은 차감 전에 거부한다", async () => {
     const state = makeSession(); const before = { ...state.wallet };
     const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-22T12:00:00Z") });
-    await expect(server.purchaseProduct({ productId: "trade-weeds", quantity: 0 })).rejects.toMatchObject({ code: "INVALID_PURCHASE_QUANTITY" });
-    await expect(server.purchaseProduct({ productId: "trade-weeds", quantity: 1.5 })).rejects.toMatchObject({ code: "INVALID_PURCHASE_QUANTITY" });
+    await expect(server.purchaseProduct({ storefront: "trade", productId: "trade-weeds", quantity: 0 })).rejects.toMatchObject({ code: "INVALID_PURCHASE_QUANTITY" });
+    await expect(server.purchaseProduct({ storefront: "trade", productId: "trade-weeds", quantity: 1.5 })).rejects.toMatchObject({ code: "INVALID_PURCHASE_QUANTITY" });
     expect(state.wallet).toEqual(before); expect(state.productPurchases).toEqual({});
   });
 

@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import type { GameApi, ProductDto } from "../api/contracts";
+import type { GameApi, ProductDto, PurchaseProductResponse } from "../api/contracts";
 import { formatCurrency } from "../core/formatCurrency";
 import { quotePurchase, totalGrantAmount } from "../core/purchase";
 import type { Wallet } from "../core/gacha";
@@ -8,6 +8,7 @@ import { chipPoints, drawHairline, drawLayer, HOLO } from "./holo";
 import { addItemFrame, ITEM_FRAME } from "./itemFrame";
 import { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
+import { openRewardPopup, productGrantsToRewardItems } from "./RewardPopup";
 
 /** 신규 상점과 무역이 같은 수량·표시·요청 잠금을 쓰는 공용 구매 작업판이다. */
 export class PurchasePopup {
@@ -24,7 +25,7 @@ export class PurchasePopup {
   ) {}
 
   /** 카드는 구매를 실행하지 않고 이 진입점으로 상품 원본을 전달한다. */
-  open(product: ProductDto, onPurchased: () => void | Promise<void>): void {
+  open(product: ProductDto, onPurchased: (result: PurchaseProductResponse) => void | Promise<void>): void {
     this.quantity = 1; this.pending = false; this.message = "";
     this.popups.open({ width: 820, height: 850, title: "구매 확인", dim: true, closeOnBackdrop: false }, (body, close) => {
       const view = this.scene.add.container(0, 0); body.add(view);
@@ -36,7 +37,7 @@ export class PurchasePopup {
   }
 
   /** 아이콘부터 지급량·단가·수량·총가격·제한·확정 순으로 한눈에 읽히게 배치한다. */
-  private paint(view: Phaser.GameObjects.Container, product: ProductDto, close: () => void, onPurchased: () => void | Promise<void>): void {
+  private paint(view: Phaser.GameObjects.Container, product: ProductDto, close: () => void, onPurchased: (result: PurchaseProductResponse) => void | Promise<void>): void {
     const balance = product.price.currency === "real_money" ? Number.MAX_SAFE_INTEGER : this.wallet[product.price.currency];
     const quote = quotePurchase({ unitPrice: product.price.amount, remaining: product.remaining, balance }, this.quantity);
     this.quantity = quote.quantity;
@@ -83,14 +84,20 @@ export class PurchasePopup {
   }
 
   /** 서버 응답 전에는 지갑과 카탈로그를 건드리지 않고, 처리 중 모든 수량·구매 입력을 잠근다. */
-  private async purchase(product: ProductDto, close: () => void, onPurchased: () => void | Promise<void>): Promise<void> {
+  private async purchase(product: ProductDto, close: () => void, onPurchased: (result: PurchaseProductResponse) => void | Promise<void>): Promise<void> {
     if (this.pending || product.price.currency === "real_money") return;
     const quote = quotePurchase({ unitPrice: product.price.amount, remaining: product.remaining, balance: this.wallet[product.price.currency] }, this.quantity);
     if (!product.purchasable || !quote.valid) return;
     this.pending = true; this.message = ""; this.repaint?.();
     try {
-      await this.api.purchaseProduct({ productId: product.id, quantity: quote.quantity });
-      close(); await onPurchased();
+      const result = await this.api.purchaseProduct({ productId: product.id, quantity: quote.quantity });
+      // 작업판을 먼저 없애 입력면이 겹치지 않게 한 뒤, 더 높은 공용 계층에 서버 영수증만 연다.
+      close();
+      openRewardPopup(this.scene, this.popups, {
+        title: "구매 보상",
+        items: productGrantsToRewardItems(result.granted, result.grantedRunes),
+        onConfirm: () => { void onPurchased(result); },
+      });
     } catch (error) {
       // 낙관적 차감이 없으므로 실패 시 되돌릴 로컬 상태도 없고 서버 이전 화면을 그대로 유지한다.
       this.message = error instanceof Error ? error.message : "구매에 실패했습니다.";

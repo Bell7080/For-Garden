@@ -390,7 +390,7 @@ describe("FakeServer 상품 카탈로그", () => {
     const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-22T12:00:00Z") });
     const result = await server.purchaseProduct({ productId: "trade-weeds", quantity: 2 });
     // 단가와 단위 지급량에 수량을 곱한 결과와 제한 기록이 같은 응답 시점에 반영된다.
-    expect(result).toMatchObject({ quantity: 2, remaining: 1, wallet: { fossil: 640, cheesecake: 200 } });
+    expect(result).toMatchObject({ quantity: 2, remaining: 1, wallet: { fossil: 640, cheesecake: 200 }, granted: [{ kind: "currency", currency: "cheesecake", amount: 200 }] });
     expect(state.productPurchases["trade-weeds"]).toEqual({ periodKey: "2026-08-22", count: 2 });
     const before = { wallet: { ...state.wallet }, purchases: { ...state.productPurchases } };
     await expect(server.purchaseProduct({ productId: "trade-weeds", quantity: 2 })).rejects.toMatchObject({ code: "PURCHASE_LIMIT_REACHED" });

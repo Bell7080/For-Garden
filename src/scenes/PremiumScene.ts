@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { gameApi } from "../api/FakeServer";
-import type { ProductDto } from "../api/contracts";
+import type { ProductDto, PurchaseProductResponse } from "../api/contracts";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugPremiumSection, setDebugScene } from "../debug";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
@@ -16,6 +16,8 @@ import { session } from "../state/session";
 /** 현금 결제 카탈로그를 인게임 재화 상점과 분리해 소유하는 독립 프리미엄 씬이다. */
 export class PremiumScene extends Phaser.Scene {
   private content?: Phaser.GameObjects.Container;
+  /** 서버 지갑 스냅샷을 적용한 뒤 현재 화면의 잔액 표시를 즉시 갱신한다. */
+  private topBar?: TopBar;
   /** 무역과 동일한 구매 상세 프리팹을 화면 최상단에 여는 계층이다. */
   private readonly popups = new PopupLayer(this, 2600);
   /** 설정 왕복 시 복원할 섹션이며, 지원하지 않는 외부 값은 init에서 제거한다. */
@@ -35,7 +37,7 @@ export class PremiumScene extends Phaser.Scene {
     addSceneBackground(this, BACKGROUND.premiumShop);
     drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { depth: -20, strength: 0.72 });
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.5).setDepth(-19);
-    new TopBar(this, 40, {
+    this.topBar = new TopBar(this, 40, {
       onSettings: () => this.scene.start("settings", { returnScene: "premium", returnData: { section: this.activeSection } }),
     });
     this.add.text(60, 185, "프리미엄", textStyle({ role: "display", size: 52 })).setOrigin(0, 0);
@@ -75,10 +77,16 @@ export class PremiumScene extends Phaser.Scene {
     hit.on("pointerup", () => {
       card.setScale(1);
       // 결제 비활성 상품도 상세 팝업 안에서 지급량·가격·사유를 확인한다.
-      new PurchasePopup(this, this.popups, gameApi, session.wallet).open(product, async () => { this.notice("구매가 완료되었습니다."); await this.refresh(); });
+      new PurchasePopup(this, this.popups, gameApi, session.wallet).open(product, async (result) => { this.applyPurchaseResult(result); this.notice("구매가 완료되었습니다."); await this.refresh(); });
     });
     card.add(hit);
     this.content?.add(card);
+  }
+
+  /** 보상 확인이 끝난 뒤에만 구매 응답의 확정 잔액을 공개하고 최신 목록을 다시 그린다. */
+  private applyPurchaseResult(result: PurchaseProductResponse): void {
+    session.wallet = { ...result.wallet };
+    this.topBar?.refresh();
   }
 
   /** 결과 안내는 별도 DOM 없이 현재 Phaser 씬 수명에 묶는다. */

@@ -33,8 +33,13 @@ test("상점 레일은 독립 ShopScene을 열고 공용 뒤로가기로 로비�
   await tap(page, 730, 475);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toContain("구매 확인");
   await page.screenshot({ path: `test-results/${test.info().project.name}-purchase-popup.png`, fullPage: true });
-  // 팝업을 닫은 다음에만 화면 공용 뒤로가기를 누른다.
-  await tap(page, 878, 590);
+  // 서버 성공 뒤 구매 작업판이 사라지고 더 높은 공용 보상 영수증만 남는지 실제 흐름으로 확인한다.
+  await tap(page, WIDTH / 2, 1305);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual(["구매 보상"]);
+  await page.screenshot({ path: `test-results/${test.info().project.name}-shop-reward-popup.png`, fullPage: true });
+  // 보상 팝업을 닫은 뒤 최신 목록을 다시 그릴 시간을 준 다음 화면 공용 뒤로가기를 누른다.
+  await tap(page, WIDTH / 2, HEIGHT / 2);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual([]);
 
   // 독립 씬도 공용 BACK_SLOT을 사용해 원래 로비로 돌아간다.
   await tap(page, WIDTH - 106, HEIGHT - 120);

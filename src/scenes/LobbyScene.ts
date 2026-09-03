@@ -24,7 +24,7 @@ import { bindNotificationDot } from "../ui/NotificationDot";
 import { perspectiveButtonNotificationAnchor } from "../ui/notificationDotStyle";
 import { notificationManager } from "../managers/NotificationManager";
 import { MissionsPopup } from "../ui/MissionsPopup";
-import { LOBBY_ACTION_BOUNDS, LOBBY_MISSION_ENTRY } from "../ui/lobbyLayout";
+import { LOBBY_ACTION_BOUNDS, LOBBY_RAIL_BOUNDS } from "../ui/lobbyLayout";
 import { expeditionManager } from "../managers/ExpeditionManager";
 import { ExpeditionEntryButton, sortieEntrySdSpot } from "../ui/ExpeditionEntryButton";
 import { ENEMY_SD_ASSETS, PONTOS_SD_ASSET, playMotion, type PuppetAsset } from "../puppets/assets";
@@ -239,6 +239,11 @@ export class LobbyScene extends Phaser.Scene {
     this.scene.start("shop");
   }
 
+  /** 인게임 상점은 로비 팝업이 아니라 등록된 ShopScene의 독립 수명주기로 연다. */
+  private openShop(): void {
+    this.scene.start("shop");
+  }
+
   /** 상단과 가방이 공유하는 안내를 열고, 선택적인 이동만 로비 소유 콜백에서 해석한다. */
   private openCurrencyGuide(currency: import("../data/items").WalletItemKey): void {
     if (!this.popupLayer) return;
@@ -422,18 +427,15 @@ export class LobbyScene extends Phaser.Scene {
    * 크기도 출격·교류보다 한참 작게 둔다.
    */
   private buildUtilityRail(): void {
-    const x = BASE_WIDTH - 106;
     const rail = [
-      // 로비의 옛 상점은 현금 상품과 분리된 인게임 재화 전용 "무역"으로 개편한다.
-      { icon: "shop", label: "무역", onClick: () => this.openTrade() },
-      { icon: "mail", label: "우편", onClick: () => this.openMail() },
+      { bounds: LOBBY_RAIL_BOUNDS.utility.mail, icon: "mail", label: "우편", onClick: () => this.openMail() },
       // 친구는 더 이상 준비 중 토스트가 아니라 목록과 공개 프로필 화면으로 연결된다.
-      { icon: "friends", label: "친구", onClick: () => this.scene.start("friends") },
+      { bounds: LOBBY_RAIL_BOUNDS.utility.friends, icon: "friends", label: "친구", onClick: () => this.scene.start("friends") },
       // 가방은 씬 전환 없이 현재 로비 위에서 열린다.
-      { icon: UI_ICON.bag, label: "가방", onClick: () => this.openInventory() },
+      { bounds: LOBBY_RAIL_BOUNDS.utility.inventory, icon: UI_ICON.bag, label: "가방", onClick: () => this.openInventory() },
     ] as const;
-    rail.forEach((item, i) => {
-      const button = new RailButton(this, x, 640 + i * 152, { icon: item.icon, label: item.label, onClick: item.onClick });
+    rail.forEach((item) => {
+      const button = new RailButton(this, item.bounds.x, item.bounds.y, { icon: item.icon, label: item.label, size: item.bounds.width, onClick: item.onClick });
       // 실제 서버 계약이 준비된 우편·친구 요청만 연결하고 Fake 데이터에서는 임의로 켜지 않는다.
       const key = item.icon === "mail" ? "mail" : item.icon === "friends" ? "friendRequest" : undefined;
       if (key) bindNotificationDot(this, button, { x: 42, y: -42 }, (listener) => notificationManager.subscribe(key, listener));
@@ -441,20 +443,21 @@ export class LobbyScene extends Phaser.Scene {
   }
 
   /**
-   * 임무는 오른쪽 편의 레일이 아니라 왼쪽 가장자리의 독립된 콘텐츠 진입점이다.
-   * 프로필·홍보 아래와 교류·발굴 위 사이를 택해 중앙 캐릭터 무대 및 하단 행동 입력면을 비운다.
+   * 임무·상점·무역은 오른쪽 콘텐츠 레일에서 위계 순으로 읽히는 한 묶음이다.
+   * 편의 기능을 맞은편 레일로 옮겨 중앙 캐릭터 무대와 하단 행동 입력면을 함께 비운다.
    */
   private buildMissionEntry(): void {
-    // 전용 좌표 상자는 단위 테스트와 공유해 원정·출격·하단 내비게이션과의 안전 간격을 고정한다.
-    const missionButton = new RailButton(this, LOBBY_MISSION_ENTRY.x, LOBBY_MISSION_ENTRY.y, {
-      icon: "mission",
-      label: "임무",
-      size: LOBBY_MISSION_ENTRY.width,
-      accent: true,
-      onClick: () => this.openMissions(),
-    });
+    const entries = [
+      { bounds: LOBBY_RAIL_BOUNDS.content.mission, icon: "mission", label: "임무", accent: true, onClick: () => this.openMissions() },
+      { bounds: LOBBY_RAIL_BOUNDS.content.shop, icon: "shop", label: "상점", accent: false, onClick: () => this.openShop() },
+      { bounds: LOBBY_RAIL_BOUNDS.content.trade, icon: "shop", label: "무역", accent: false, onClick: () => this.openTrade() },
+    ] as const;
+    // 역할별 배치표가 콘텐츠 순서와 크기를 소유하므로 렌더링은 표를 그대로 소비한다.
+    const buttons = entries.map((entry) => new RailButton(this, entry.bounds.x, entry.bounds.y, {
+      icon: entry.icon, label: entry.label, size: entry.bounds.width, accent: entry.accent, onClick: entry.onClick,
+    }));
     // 보상 상태의 단일 구독과 기존 팝업 연결은 위치 분리 뒤에도 그대로 유지한다.
-    bindNotificationDot(this, missionButton, { x: 42, y: -42 }, (listener) => notificationManager.subscribe("missionReward", listener));
+    bindNotificationDot(this, buttons[0], { x: 42, y: -42 }, (listener) => notificationManager.subscribe("missionReward", listener));
   }
 
   /** 씬 전환 없이 같은 PopupLayer에 임무 작업판 한 장만 연다. */

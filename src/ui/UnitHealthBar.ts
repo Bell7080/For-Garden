@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { battleUiMotionFactor, type BattleUiMotion } from "../core/settings";
 import { slantedRect, toPoints } from "./holo";
+import { BATTLE_STATUS_LAYOUT } from "./battleStatusLayout";
 import { COLOR } from "./theme";
 import {
   createUnitHealthBarState,
@@ -21,7 +22,8 @@ import {
  * 값은 **스르륵** 따라온다. 깎이는 순간이 보이지 않으면 얼마나 아팠는지 알 수 없어서다.
  */
 const BAR = {
-  width: 96,
+  /** 머리 위 상태 칩 줄이 이 폭의 왼쪽 끝부터 붙으므로 폭은 배치표 한 곳이 갖는다. */
+  width: BATTLE_STATUS_LAYOUT.hpBarWidth,
   height: 11,
   /** `/` 기울기. 몸통·복제·칸 나눔이 모두 같은 각을 쓴다. */
   slant: 7,

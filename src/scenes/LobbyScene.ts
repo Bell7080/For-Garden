@@ -17,6 +17,7 @@ import { loadPlayerProfileDisplay } from "../managers/PlayerProfileManager";
 import { bondDialogue } from "../data/bonds";
 import { PopupLayer } from "../ui/PopupLayer";
 import { IdleExcavationPopup } from "../ui/IdleExcavationPopup";
+import { TradePopup } from "../ui/TradePopup";
 import { BACK_SLOT, IconButton } from "../ui/IconButton";
 import { UI_ICON } from "../ui/icons";
 import { InventoryPopup } from "../ui/InventoryPopup";
@@ -103,6 +104,9 @@ export class LobbyScene extends Phaser.Scene {
   private sortieSdTimer?: Phaser.Time.TimerEvent;
   private sortieBackButton?: IconButton;
   private idleExcavationPopup?: IdleExcavationPopup;
+  /** 무역은 로비 수명을 보존하는 패키지 레이어다. */
+  private tradePopup?: TradePopup;
+  private tradeBackButton?: IconButton;
   /** 발굴은 화면 크기의 작업판이므로 팝업 X 대신 로비 좌하단의 공용 아이콘 양식을 쓴다. */
   private excavationBackButton?: IconButton;
   /** 인벤토리는 로비 세션을 유지하는 공용 팝업이며 상태 변경은 API에만 위임한다. */
@@ -234,9 +238,12 @@ export class LobbyScene extends Phaser.Scene {
     }
   }
 
-  /** 무역은 로비 팝업을 재사용하지 않고 전용 씬의 독립 수명주기로 전환한다. */
+  /** 무역은 이전과 같은 로비 패키지 레이어로 열고 중복 레이어를 만들지 않는다. */
   private openTrade(): void {
-    this.scene.start("shop");
+    if (!this.popupLayer) return;
+    this.tradePopup ??= new TradePopup(this, this.popupLayer, gameApi, session.wallet, (result) => { session.wallet = { ...result.wallet }; this.topBar?.refresh(); }, () => { this.tradePopup = undefined; this.tradeBackButton?.destroy(); this.tradeBackButton = undefined; });
+    this.tradePopup.open();
+    if (!this.tradeBackButton) this.tradeBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: () => this.tradePopup?.close() }).setDepth(2100);
   }
 
   /** 인게임 상점은 로비 팝업이 아니라 등록된 ShopScene의 독립 수명주기로 연다. */

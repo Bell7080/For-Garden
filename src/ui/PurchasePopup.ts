@@ -39,8 +39,11 @@ export class PurchasePopup {
 
   /** 아이콘부터 지급량·단가·수량·총가격·제한·확정 순으로 한눈에 읽히게 배치한다. */
   private paint(view: Phaser.GameObjects.Container, product: ProductDto, close: () => void, onPurchased: (result: PurchaseProductResponse) => void | Promise<void>): void {
-    const balance = product.price.currency === "real_money" ? Number.MAX_SAFE_INTEGER : this.wallet[product.price.currency];
-    const quote = quotePurchase({ unitPrice: product.price.amount, remaining: product.remaining, balance }, this.quantity);
+    // 이 수량 작업판은 재화 교환만 담당하며 다른 방식은 전용 확정 경계가 연다.
+    if (product.acquisition.kind !== "currency") return;
+    const acquisition = product.acquisition;
+    const balance = this.wallet[acquisition.currency];
+    const quote = quotePurchase({ unitPrice: acquisition.amount, remaining: product.remaining, balance }, this.quantity);
     this.quantity = quote.quantity;
     const grant = product.grants[0];
     const unitGrant = grant?.kind === "currency" ? grant.amount : 1;
@@ -55,9 +58,9 @@ export class PurchasePopup {
     view.add(this.scene.add.text(-135, -157, `1개 지급 ${formatCurrency(unitGrant)}`, textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0, 0.5));
 
     view.add(drawHairline(this.scene, 0, -55, 690, { color: COLOR.accent, alpha: 0.32 }));
-    this.addValueRow(view, -5, "단가", priceText(product, product.price.amount));
+    this.addValueRow(view, -5, "단가", priceText(product.acquisition, product.acquisition.amount));
     this.addValueRow(view, 75, "구매 개수", formatCurrency(quote.quantity));
-    this.addValueRow(view, 155, "총가격", priceText(product, quote.totalPrice), true);
+    this.addValueRow(view, 155, "총가격", priceText(product.acquisition, quote.totalPrice), true);
     this.addValueRow(view, 235, "남은 구매 제한", `${formatCurrency(product.remaining)} / ${formatCurrency(product.purchaseLimit)}`);
 
     // 수량 조작은 순수 모델이 계산한 실제 구매 가능 상한에서만 활성화한다.
@@ -79,15 +82,15 @@ export class PurchasePopup {
 
   /** 버튼 입력도 모델을 다시 통과시켜 렌더링 수치와 요청 수량이 갈리지 않게 한다. */
   private changeQuantity(product: ProductDto, delta: number): void {
-    if (this.pending || product.price.currency === "real_money") return;
-    this.quantity = quotePurchase({ unitPrice: product.price.amount, remaining: product.remaining, balance: this.wallet[product.price.currency] }, this.quantity + delta).quantity;
+    if (this.pending || product.acquisition.kind !== "currency") return;
+    this.quantity = quotePurchase({ unitPrice: product.acquisition.amount, remaining: product.remaining, balance: this.wallet[product.acquisition.currency] }, this.quantity + delta).quantity;
     this.repaint?.();
   }
 
   /** 서버 응답 전에는 지갑과 카탈로그를 건드리지 않고, 처리 중 모든 수량·구매 입력을 잠근다. */
   private async purchase(product: ProductDto, close: () => void, onPurchased: (result: PurchaseProductResponse) => void | Promise<void>): Promise<void> {
-    if (this.pending || product.price.currency === "real_money") return;
-    const quote = quotePurchase({ unitPrice: product.price.amount, remaining: product.remaining, balance: this.wallet[product.price.currency] }, this.quantity);
+    if (this.pending || product.acquisition.kind !== "currency") return;
+    const quote = quotePurchase({ unitPrice: product.acquisition.amount, remaining: product.remaining, balance: this.wallet[product.acquisition.currency] }, this.quantity);
     if (!product.purchasable || !quote.valid) return;
     this.pending = true; this.message = ""; this.repaint?.();
     try {
@@ -107,13 +110,12 @@ export class PurchasePopup {
   }
 }
 
-/** 유료 표시는 운영 문자열을 유지하고 인게임 재화는 공용 아이콘에 대응하는 짧은 이름을 쓴다. */
-function priceText(product: ProductDto, amount: number): string {
-  if (product.price.currency === "real_money") return product.price.display ?? `₩${formatCurrency(amount)}`;
-  return `${formatCurrency(amount)} ${currencyName(product.price.currency)}`;
+/** 재화 교환 가격은 판별된 acquisition만 받아 다른 방식의 가짜 숫자를 만들지 않는다. */
+function priceText(acquisition: Extract<ProductDto["acquisition"], { kind: "currency" }>, amount: number): string {
+  return `${formatCurrency(amount)} ${currencyName(acquisition.currency)}`;
 }
 
 /** 데이터 키가 화면마다 서로 다른 번역으로 노출되지 않게 한 곳에서 이름을 정한다. */
-function currencyName(currency: Exclude<ProductDto["price"]["currency"], "real_money">): string {
+function currencyName(currency: Extract<ProductDto["acquisition"], { kind: "currency" }>["currency"]): string {
   return ({ fossil: "화석", amber: "호박석", cheesecake: "치즈케이크", dnaFragments: "DNA 조각" } as const)[currency];
 }

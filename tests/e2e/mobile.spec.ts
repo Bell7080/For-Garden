@@ -1,33 +1,27 @@
 import { test, expect } from "@playwright/test";
 import { startAfterOpening } from "./openingSave";
+import { canvasBox, captureGame, gamePoint, tap } from "./canvasInput";
 import { ExpeditionManager } from "../../src/managers/ExpeditionManager";
 import { expeditionNodePosition, focusExpeditionFloor } from "../../src/ui/expeditionLayout";
 
 const BASE_WIDTH = 1080;
 const BASE_HEIGHT = 1920;
 
-/** 기준 게임 좌표를 FIT 스케일이 적용된 모바일 캔버스 좌표로 바꿔 누른다. */
-async function tapGame(page: import("@playwright/test").Page, x: number, y: number): Promise<void> {
-  const canvas = page.locator("canvas");
-  const box = await canvas.boundingBox();
-  if (!box) throw new Error("캔버스를 찾지 못했다");
-  await canvas.click({ position: { x: (x / BASE_WIDTH) * box.width, y: (y / BASE_HEIGHT) * box.height } });
-}
+/** 기준 게임 좌표를 누른다. 실제 입력은 공용 `canvasInput`이 맡는다. */
+const tapGame = tap;
 
 /** 기준 게임 좌표 두 점 사이를 드래그해 지도 추적과 마스크 이탈을 실제 포인터 흐름으로 검증한다. */
 async function dragGame(page: import("@playwright/test").Page, from: { x: number; y: number }, to: { x: number; y: number }): Promise<void> {
-  const box = await page.locator("canvas").boundingBox();
-  if (!box) throw new Error("캔버스를 찾지 못했다");
-  const point = ({ x, y }: { x: number; y: number }) => ({ x: box.x + x / BASE_WIDTH * box.width, y: box.y + y / BASE_HEIGHT * box.height });
+  const box = await canvasBox(page);
+  const point = ({ x, y }: { x: number; y: number }) => gamePoint(box, x, y);
   const start = point(from); const end = point(to);
   await page.mouse.move(start.x, start.y); await page.mouse.down(); await page.mouse.move(end.x, end.y, { steps: 8 }); await page.mouse.up();
 }
 
 /** 상단 SD의 장기 누름 문턱을 넘긴 뒤 이동해 슬롯 드래그 상태기를 실제 모바일 포인터로 통과한다. */
 async function holdDragGame(page: import("@playwright/test").Page, from: { x: number; y: number }, to: { x: number; y: number }): Promise<void> {
-  const box = await page.locator("canvas").boundingBox();
-  if (!box) throw new Error("캔버스를 찾지 못했다");
-  const point = ({ x, y }: { x: number; y: number }) => ({ x: box.x + x / BASE_WIDTH * box.width, y: box.y + y / BASE_HEIGHT * box.height });
+  const box = await canvasBox(page);
+  const point = ({ x, y }: { x: number; y: number }) => gamePoint(box, x, y);
   const start = point(from); const end = point(to);
   await page.mouse.move(start.x, start.y); await page.mouse.down();
   await page.waitForTimeout(420);
@@ -36,9 +30,8 @@ async function holdDragGame(page: import("@playwright/test").Page, from: { x: nu
 
 /** 포인터를 든 채 공용 표현 상태를 검사한 다음 놓아, 중간 프레임이 사라진 뒤의 결과와 섞지 않는다. */
 async function inspectFormationDrag(page: import("@playwright/test").Page, from: { x: number; y: number }, to: { x: number; y: number }, owner: "expedition" | "excavation"): Promise<void> {
-  const box = await page.locator("canvas").boundingBox();
-  if (!box) throw new Error("캔버스를 찾지 못했다");
-  const point = ({ x, y }: { x: number; y: number }) => ({ x: box.x + x / BASE_WIDTH * box.width, y: box.y + y / BASE_HEIGHT * box.height });
+  const box = await canvasBox(page);
+  const point = ({ x, y }: { x: number; y: number }) => gamePoint(box, x, y);
   const start = point(from); const end = point(to);
   await page.mouse.move(start.x, start.y); await page.mouse.down(); await page.waitForTimeout(420); await page.mouse.move(end.x, end.y, { steps: 10 });
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.formationDragVisual)).toMatchObject({ owner, hovered: 1, replacementVisible: true });
@@ -84,7 +77,7 @@ test("세로형 화면에서 캔버스가 뜨고 첫 방문은 오프닝으로 �
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("title");
   await page.waitForFunction(() => window.__PF_DEBUG?.ready === true);
 
-  await page.screenshot({ path: `test-results/${test.info().project.name}-title.png` });
+  await captureGame(page, `test-results/${test.info().project.name}-title.png`);
 
   const box = await canvas.boundingBox();
   expect(box).not.toBeNull();
@@ -103,7 +96,7 @@ test("세로형 화면에서 캔버스가 뜨고 첫 방문은 오프닝으로 �
 test("오프닝을 이미 본 저장이면 타이틀에서 로비로 바로 간다", async ({ page }) => {
   await startAfterOpening(page);
 
-  await page.locator("canvas").click();
+  await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect
     .poll(() => page.evaluate(() => window.__PF_DEBUG?.scene))
     .toBe("lobby");
@@ -113,7 +106,7 @@ test("출격 선택판에서 원정대 3기를 골라 진행 중 상태로 저�
   // 원정 첫 진입은 보스 전신 ZIP까지 파싱하므로 저사양 CI에서도 네 상태 캡처를 끝낼 시간을 둔다.
   test.setTimeout(360_000);
   await startAfterOpening(page);
-  await page.locator("canvas").click();
+  await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
 
   // 잔잔한 출격 선택판에서 원정을 고르면 별도 준비 씬으로 이동한다.
@@ -122,17 +115,17 @@ test("출격 선택판에서 원정대 3기를 골라 진행 중 상태로 저�
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("expedition");
   // 원정의 첫 화면은 주간 기록이다. 순위와 기록 보상을 먼저 보고 출격으로 편성을 연다.
   await page.waitForTimeout(900);
-  await page.screenshot({ path: `test-results/${test.info().project.name}-expedition-ranking.png` });
+  await captureGame(page, `test-results/${test.info().project.name}-expedition-ranking.png`);
   // 기록 원경과 별개로 합성된 순위 팝업(도시 원경 + 옅은 필드)을 실제 캔버스에 남긴다.
   await tapGame(page, 363, 1610);
   await page.waitForTimeout(700);
-  await page.screenshot({ path: `test-results/${test.info().project.name}-expedition-ranking-popup.png` });
+  await captureGame(page, `test-results/${test.info().project.name}-expedition-ranking-popup.png`);
   // 닫힌 팝업의 우하단 공용 뒤로가기로 기록 화면에 복귀한다.
   await tapGame(page, 918, 1758);
   await page.waitForTimeout(500);
   await tapGame(page, 717, 1610);
   await page.waitForTimeout(700);
-  await page.screenshot({ path: `test-results/${test.info().project.name}-expedition-reward-popup.png` });
+  await captureGame(page, `test-results/${test.info().project.name}-expedition-reward-popup.png`);
   // 주간 보상 팝업도 공용 뒤로가기로 닫아 편성 전환 입력을 가리지 않게 한다.
   await tapGame(page, 918, 1758);
   await page.waitForTimeout(500);
@@ -140,7 +133,7 @@ test("출격 선택판에서 원정대 3기를 골라 진행 중 상태로 저�
   // 하단 출격 버튼이 편성 단계를 연다. 씬 재시작과 SD 로딩을 기다린 뒤 카드를 누른다.
   await tapGame(page, BASE_WIDTH / 2, 1800);
   await page.waitForTimeout(1500);
-  await page.screenshot({ path: `test-results/${test.info().project.name}-expedition-preparation.png` });
+  await captureGame(page, `test-results/${test.info().project.name}-expedition-preparation.png`);
 
   // 복원된 세 기 중 가운데 슬롯을 직접 해제하면 카드·SD·인원수·버튼 상태가 함께 2기로 바뀐다.
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.expeditionFormation?.selectedCount)).toBe(3);
@@ -160,7 +153,7 @@ test("출격 선택판에서 원정대 3기를 골라 진행 중 상태로 저�
     const raw = window.localStorage.getItem("eternal-city.local-save");
     return raw ? JSON.parse(raw).expedition?.run?.relics?.length : 0;
   })).toBe(3);
-  await page.screenshot({ path: `test-results/${test.info().project.name}-expedition-active.png` });
+  await captureGame(page, `test-results/${test.info().project.name}-expedition-active.png`);
 });
 
 test("저장된 전투 전 증강 후보는 지도보다 먼저 복원된다", async ({ page }) => {
@@ -171,13 +164,13 @@ test("저장된 전투 전 증강 후보는 지도보다 먼저 복원된다", a
     const node = session.expedition.run!.nodes.find(({ floor, type }) => floor === 1 && ["normal", "elite", "horde"].includes(type))!;
     manager.beginAugmentReward(node.id, node.type);
   });
-  await page.locator("canvas").click();
+  await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   await tapGame(page, BASE_WIDTH - 290, BASE_HEIGHT - 425);
   await tapGame(page, BASE_WIDTH / 2, 1403);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("expedition");
   // 닫기 없는 선택 작업판과 세 후보가 복원된 상태를 시각 회귀 자료로 남긴다.
-  await page.screenshot({ path: `test-results/${test.info().project.name}-expedition-augment-popup.png` });
+  await captureGame(page, `test-results/${test.info().project.name}-expedition-augment-popup.png`);
 });
 
 test("원정 전투 노드는 지도 안 공용 편성판을 붙이고 적 상세 정보창으로 진입한다", async ({ page }) => {
@@ -191,7 +184,7 @@ test("원정 전투 노드는 지도 안 공용 편성판을 붙이고 적 상�
     const point = expeditionNodePosition(node.floor, node.column);
     reachableX = point.x; reachableY = 316 + point.y + focusExpeditionFloor(1, 1138 - 316);
   });
-  await page.locator("canvas").click();
+  await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   // 로비 입장 애니메이션이 입력을 넘겨받은 뒤 출격 버튼을 눌러 저속 모바일 실행을 안정화한다.
   await page.waitForTimeout(700);
@@ -206,7 +199,7 @@ test("원정 전투 노드는 지도 안 공용 편성판을 붙이고 적 상�
   const geometry = await page.evaluate(() => window.__PF_DEBUG!.enemyPreview!);
   expect(geometry.panelTop).toBeGreaterThanOrEqual(geometry.top); expect(geometry.panelBottom).toBeLessThanOrEqual(geometry.bottom);
   expect([1, 3, 5]).toContain(geometry.enemyTargets.length);
-  await page.screenshot({ path: `test-results/${test.info().project.name}-expedition-node-enemy-preview.png` });
+  await captureGame(page, `test-results/${test.info().project.name}-expedition-node-enemy-preview.png`);
   await tapGame(page, geometry.enemyTargets[0].x, geometry.enemyTargets[0].y);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.infoOpen)).toBe(true);
   // 상세창을 닫은 뒤 빈 지도 탭은 선택과 편성판을 취소하고 같은 노드는 다시 새 판을 연다.
@@ -227,7 +220,7 @@ test("방치 발굴 팝업은 좁은 로비 위 한 장으로 열리고 뒤 입�
     // 성공 뒤 다시 그려진 사용량과 같은 저장 상태를 만들고, 한도 소진 버튼도 남는 정책을 검증한다.
     session.dailyAdRewards = { date: new Date().toISOString().slice(0, 10), claimsBySlot: { "excavation-harvest": 1, "excavation-storage": 2 }, requestIds: ["e2e-harvest", "e2e-storage-1", "e2e-storage-2"] };
   });
-  await page.locator("canvas").click();
+  await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
 
   // 왼쪽 하단 발굴 입구를 연타해도 조회 상태를 공유하는 팝업 한 장만 유지한다.
@@ -245,7 +238,7 @@ test("방치 발굴 팝업은 좁은 로비 위 한 장으로 열리고 뒤 입�
   expect(adControls[0].x).toBeLessThan(adControls[1].x);
   // 디버그 계약은 화면의 "발굴 진행 중" 문구가 아니라 기존 자동화용 상태명 ready를 계속 쓴다.
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
-  await page.screenshot({ path: `test-results/${test.info().project.name}-idle-excavation-popup.png` });
+  await captureGame(page, `test-results/${test.info().project.name}-idle-excavation-popup.png`);
 
   // 어두운 backdrop이 출격 좌표의 입력을 먹으므로 로비와 애착 캐릭터가 그대로 남는다.
   await tapGame(page, BASE_WIDTH - 290, BASE_HEIGHT - 425);
@@ -264,7 +257,7 @@ test("SD 완료 뒤 세 슬롯의 공용 입력면이 각각 올바른 편집 �
     // 작은 모바일과 1.15 텍스트 확대 조합에서도 슬롯 입력면의 고정 안전 영역을 검증한다.
     session.settings.accessibility.textScale = 1.15;
   });
-  await page.locator("canvas").click();
+  await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   await tapGame(page, 250, BASE_HEIGHT - 445);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationPopup)).toBe("ready");
@@ -290,12 +283,12 @@ test("SD 완료 뒤 세 슬롯의 공용 입력면이 각각 올바른 편집 �
     await tapGame(page, cancel.x, cancel.y);
     await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationPopup)).toBe("ready");
   }
-  await page.screenshot({ path: `test-results/${test.info().project.name}-idle-excavation-slot-hit-areas.png` });
+  await captureGame(page, `test-results/${test.info().project.name}-idle-excavation-slot-hit-areas.png`);
 });
 
 test("방치 발굴 편집은 슬롯 이동·중복 방지·빈 편성 취소를 확정 상태와 분리한다", async ({ page }) => {
   await startAfterOpening(page);
-  await page.locator("canvas").click();
+  await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   await tapGame(page, 250, BASE_HEIGHT - 445);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationPopup)).toBe("ready");
@@ -315,7 +308,7 @@ test("방치 발굴 편집은 슬롯 이동·중복 방지·빈 편성 취소를
   await tapGame(page, secondSlot.x, secondSlot.y);
   await tapGame(page, BASE_WIDTH / 2 - 250, BASE_HEIGHT / 2 + 115);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationSelectedSlot)).toBe(1);
-  await page.screenshot({ path: `test-results/${test.info().project.name}-idle-excavation-editor.png` });
+  await captureGame(page, `test-results/${test.info().project.name}-idle-excavation-editor.png`);
   const cancel = await excavationControl(page, "cancelEdit");
   await tapGame(page, cancel.x, cancel.y);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationPopup)).toBe("ready");
@@ -327,7 +320,7 @@ test("발굴 수확 보상은 0 지급 자원을 제외하고 뒤 입력을 막�
     session.idleExcavation.unclaimed = { gold: 1234, cheesecake: 56, fossil: 0, gems: 0 };
     session.idleExcavation.lastSettledAt = new Date().toISOString();
   });
-  await page.locator("canvas").click();
+  await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   await tapGame(page, 250, BASE_HEIGHT - 445);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationPopup)).toBe("ready");
@@ -339,7 +332,7 @@ test("발굴 수확 보상은 0 지급 자원을 제외하고 뒤 입력을 막�
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.rewardPopup)).toBe(true);
   // 화석·다이아의 0 지급 칸은 만들지 않아 실제 한 줄에는 두 자원만 남는다.
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.rewardPopupItemCount)).toBe(2);
-  await page.screenshot({ path: `test-results/${test.info().project.name}-excavation-reward-popup.png` });
+  await captureGame(page, `test-results/${test.info().project.name}-excavation-reward-popup.png`);
   // 영수증이므로 팝업 밖(로비 출격 좌표)을 눌러도 닫히되, 그 누름이 뒤 화면으로 새지는 않는다.
   await tapGame(page, BASE_WIDTH - 290, BASE_HEIGHT - 425);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.rewardPopup)).toBeUndefined();
@@ -357,18 +350,18 @@ test("발굴 보상 팝업은 최대 네 생산 자원을 한 줄에 표시한�
     session.idleExcavation.unclaimed = { gold: 1, cheesecake: 2, fossil: 3, gems: 4 };
     session.idleExcavation.lastSettledAt = new Date().toISOString();
   });
-  await page.locator("canvas").click();
+  await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   await tapGame(page, 250, BASE_HEIGHT - 445);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationPopup)).toBe("ready");
   const harvest = await excavationControl(page, "harvest");
   await tapGame(page, harvest.x, harvest.y);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.rewardPopupItemCount)).toBe(4);
-  await page.screenshot({ path: `test-results/${test.info().project.name}-excavation-four-rewards.png` });
+  await captureGame(page, `test-results/${test.info().project.name}-excavation-four-rewards.png`);
 });
 
 test("설정 탭은 텍스트 확대·스크롤·두 단계 초기화를 좁은 모바일에서 안전하게 처리한다", async ({ page }) => {
-  await startAfterOpening(page); await page.locator("canvas").click();
+  await startAfterOpening(page); await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   await tapGame(page, BASE_WIDTH - 58, 86);
   // 미구현 토스트가 아니라 실제 설정 화면의 사용자 표시 제목까지 렌더됐는지 확인한다.
@@ -378,26 +371,26 @@ test("설정 탭은 텍스트 확대·스크롤·두 단계 초기화를 좁은 
   // 게임 탭은 기존 선택 행 양식을 유지하며 전투 UI 움직임을 기본→감소로 즉시 저장한다.
   await tapGame(page, 540, 210); await tapGame(page, 800, 768);
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("eternal-city.local-save")!).settings.presentation.battleUiMotion)).toBe("reduced");
-  await page.screenshot({ path: `test-results/${test.info().project.name}-settings-battle-ui-motion.png` });
+  await captureGame(page, `test-results/${test.info().project.name}-settings-battle-ui-motion.png`);
   // 접근성 탭에서 공용 텍스트 배율을 올린 뒤 재생성된 탭이 잘리지 않는지 캡처한다.
   await tapGame(page, 743, 210); await tapGame(page, 800, 392);
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("eternal-city.local-save")!).settings.accessibility.textScale)).toBe(1.15);
-  await page.screenshot({ path: `test-results/${test.info().project.name}-settings-accessibility-expanded.png` });
+  await captureGame(page, `test-results/${test.info().project.name}-settings-accessibility-expanded.png`);
   // 지원·데이터 탭은 자체 높이에 종속되어 스크롤되고 초기화 팝업이 배경 입력을 가로막는다.
-  await tapGame(page, 946, 210); await page.mouse.wheel(0, 800); await page.screenshot({ path: `test-results/${test.info().project.name}-settings-support-scrolled.png` });
+  await tapGame(page, 946, 210); await page.mouse.wheel(0, 800); await captureGame(page, `test-results/${test.info().project.name}-settings-support-scrolled.png`);
   await tapGame(page, 450, 1026); await tapGame(page, 690, 1065);
   saved = await page.evaluate(() => localStorage.getItem("eternal-city.local-save")); expect(saved).not.toBeNull();
   await tapGame(page, 690, 1065); await expect.poll(() => page.evaluate(() => localStorage.getItem("eternal-city.local-save"))).toBeNull();
   // 검증 이후 다음 케이스에 영향을 주지 않도록 오프닝 완료 저장을 다시 준비한다.
   await startAfterOpening(page);
-  await page.reload(); await page.waitForFunction(() => window.__PF_DEBUG?.ready === true); await page.locator("canvas").click();
+  await page.reload(); await page.waitForFunction(() => window.__PF_DEBUG?.ready === true); await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby"); expect(await page.evaluate(() => JSON.parse(localStorage.getItem("eternal-city.local-save")!).settings.sound.masterVolume)).toBeGreaterThan(0);
   await tapGame(page, BASE_WIDTH - 58, 86); await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("settings"); await tapGame(page, BASE_WIDTH - 106, BASE_HEIGHT - 120);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
 });
 
 test("핵심 콘텐츠의 설정은 고고학·렐릭·연구소·프리미엄 섹션으로 되돌아간다", async ({ page }) => {
-  await startAfterOpening(page); await page.locator("canvas").click();
+  await startAfterOpening(page); await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   // 하단 내비게이션의 네 콘텐츠를 순회하며 각 TopBar 설정과 공용 뒤로가기의 왕복을 검증한다.
   const destinations = [
@@ -446,7 +439,7 @@ test("모바일 편성 상단의 자동 배치 버튼과 자리별 상성 화살
   const secondSlot = (await page.evaluate(() => window.__PF_DEBUG?.party?.slots?.[1]))!;
   await tapGame(page, secondSlot.x, secondSlot.y);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.party?.selectedCount)).toBe(2);
-  await page.screenshot({ path: `test-results/${test.info().project.name}-party-affinity-arrows.png` });
+  await captureGame(page, `test-results/${test.info().project.name}-party-affinity-arrows.png`);
 });
 
 test("모바일에서 1번 SD를 길게 눌러 3번으로 옮기면 실제 전투 아군 순서가 바뀐다", async ({ page }) => {

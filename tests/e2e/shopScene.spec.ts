@@ -1,19 +1,17 @@
 import { expect, test, type Page } from "@playwright/test";
 import type { DebugPoint, DebugState } from "../../src/debug";
 import { startAfterOpening } from "./openingSave";
+import { canvasBox, captureGame, gamePoint, tap as tapGame } from "./canvasInput";
 
-/** 디버그 계약이 준 설계 좌표만 실제 FIT Canvas 좌표로 바꿔 누른다. */
+/** 디버그 계약이 준 자리를 그대로 누른다. */
 async function tap(page: Page, point: DebugPoint): Promise<void> {
-  const box = await page.locator("canvas").boundingBox();
-  if (!box) throw new Error("캔버스를 찾지 못했다");
-  await page.mouse.click(box.x + point.x / 1080 * box.width, box.y + point.y / 1920 * box.height);
+  await tapGame(page, point.x, point.y);
 }
 
 /** 목록 안 입력 중심에서 휠을 보내 Canvas의 세로 스크롤 경로를 탄다. */
 async function scroll(page: Page, point: DebugPoint, deltaY: number): Promise<void> {
-  const box = await page.locator("canvas").boundingBox();
-  if (!box) throw new Error("캔버스를 찾지 못했다");
-  await page.mouse.move(box.x + point.x / 1080 * box.width, box.y + point.y / 1920 * box.height);
+  const at = gamePoint(await canvasBox(page), point.x, point.y);
+  await page.mouse.move(at.x, at.y);
   await page.mouse.wheel(0, deltaY);
 }
 
@@ -28,10 +26,8 @@ async function controls(page: Page): Promise<NonNullable<DebugState["storefrontC
 /** 저장을 통과하고 충분한 테스트 재화가 있는 로비까지 실제 타이틀 입력으로 이동한다. */
 async function enterLobby(page: Page): Promise<void> {
   await startAfterOpening(page, (session) => { session.wallet.fossil = 10_000; session.wallet.amber = 100; });
-  // 타이틀은 화면 전체 입력면이므로 Canvas 자체의 CSS 중앙을 사용하고 게임 좌표를 복제하지 않는다.
-  const canvas = page.locator("canvas"); const box = await canvas.boundingBox();
-  if (!box) throw new Error("캔버스를 찾지 못했다");
-  await canvas.click({ position: { x: box.width / 2, y: box.height / 2 } });
+  // 타이틀은 화면 전체가 입력면이라 한가운데를 누른다.
+  await tapGame(page, 540, 960);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.storefrontControls?.lobby)).toBeTruthy();
 }
@@ -51,7 +47,7 @@ test("로비 임무→상점→무역 순서와 두 storefront의 확정 보상 
   input = await controls(page); await tap(page, input.lobby!.shop);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("shop");
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.shopView?.category)).toBe("general");
-  await page.screenshot({ path: `test-results/${testInfo.project.name}-shop-1080x1920-layout.png`, fullPage: true });
+  await captureGame(page, `test-results/${testInfo.project.name}-shop-1080x1920-layout.png`);
 
   // 세 탭은 같은 입력 계약으로 전환되며 일반 탭 복귀 뒤 긴 상품 열만 세로로 움직인다.
   input = await controls(page); await tap(page, input.shop!.tabs.enhancement);
@@ -89,7 +85,7 @@ test("로비 임무→상점→무역 순서와 두 storefront의 확정 보상 
     hasBack: window.__PF_DEBUG?.storefrontControls?.trade?.back !== undefined,
   }))).toEqual({ titles: ["무역"], hasProducts: true, hasBack: true });
   // 실제 Canvas에도 제목 chrome과 상품 행이 함께 보이는 기준 장면을 회귀 자료로 남긴다.
-  await page.screenshot({ path: `test-results/${testInfo.project.name}-trade-popup-products-1080x1920.png`, fullPage: true });
+  await captureGame(page, `test-results/${testInfo.project.name}-trade-popup-products-1080x1920.png`);
   input = await controls(page); await tap(page, input.trade!.products[0]);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual(["무역", "구매 확인"]);
   input = await controls(page); await tap(page, input.purchase!.confirm);

@@ -1,14 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
 import { startAfterOpening } from "./openingSave";
-
-/** CSS로 축소된 Canvas에서도 게임 설계 좌표를 같은 위치에 누른다. */
-async function tapGame(page: Page, x: number, y: number): Promise<void> {
-  const canvas = page.locator("canvas");
-  const box = await canvas.boundingBox();
-  if (!box) throw new Error("game canvas is missing");
-  await page.mouse.click(box.x + x * box.width / BASE_WIDTH, box.y + y * box.height / BASE_HEIGHT);
-}
+import { captureGame, drag, tap as tapGame } from "./canvasInput";
 
 /** 저장을 통과해 로비에서 도감 탭으로 들어가는 공통 사용자 경로다. */
 async function openRelics(page: Page): Promise<void> {
@@ -31,17 +24,12 @@ test("소수 보유/다수 미보유 목록은 휠과 드래그를 경계 안에
     .toBe(await page.evaluate(() => window.__PF_DEBUG?.relicScroll?.minY));
 
   // 반대 방향 드래그/관성이 끝난 뒤에도 최상단 0을 물리적으로 넘지 않는다.
-  const box = await canvas.boundingBox();
-  if (!box) throw new Error("game canvas is missing");
-  await page.mouse.move(box.x + box.width * 0.5, box.y + box.height * 0.55);
-  await page.mouse.down();
-  await page.mouse.move(box.x + box.width * 0.5, box.y + box.height * 0.85, { steps: 8 });
-  await page.mouse.up();
+  await drag(page, [BASE_WIDTH * 0.5, BASE_HEIGHT * 0.55], [BASE_WIDTH * 0.5, BASE_HEIGHT * 0.85], { steps: 8 });
   await page.waitForTimeout(500);
   const scroll = await page.evaluate(() => window.__PF_DEBUG?.relicScroll);
   expect(scroll?.y).toBeLessThanOrEqual(scroll?.maxY ?? 0);
   expect(scroll?.y).toBeGreaterThanOrEqual(scroll?.minY ?? 0);
-  await page.screenshot({ path: `test-results/relic-scroll-${test.info().project.name}.png`, fullPage: true });
+  await captureGame(page, `test-results/relic-scroll-${test.info().project.name}.png`);
 });
 
 test("도감 스크롤 입력은 BottomNav 탭 영역을 가로채지 않는다", async ({ page }) => {
@@ -57,5 +45,5 @@ test("도감 하단 카드는 탭 경계를 침범하지 않는다", async ({ pa
   // 최하단 카드가 마스크 끝에 접근한 상태를 캡처해 BottomNav 내부로 새는 회귀를 확인한다.
   await page.mouse.wheel(0, 20_000);
   await page.waitForTimeout(150);
-  await page.screenshot({ path: `test-results/relic-bottom-fade-${test.info().project.name}.png`, fullPage: true });
+  await captureGame(page, `test-results/relic-bottom-fade-${test.info().project.name}.png`);
 });

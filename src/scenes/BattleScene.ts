@@ -397,6 +397,10 @@ export class BattleScene extends Phaser.Scene {
     this.refreshDebug();
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.cancelUltimatePresentation();
+      // 전투가 끝나면 디버그 스냅샷도 함께 비운다. 남겨 두면 씬이 바뀐 뒤에도 마지막 값이
+      // 그대로 읽혀, 이미 지도로 나온 화면을 두고 "전투 중"이라고 답한다 — E2E가 그 굳은
+      // 값을 몇 초씩 기다리다 엉뚱한 줄에서 실패했다.
+      setDebugBattle(undefined);
       this.contributionPanel?.destroy();
       this.contributionPanel = undefined;
       this.buffPopups.closeAll();

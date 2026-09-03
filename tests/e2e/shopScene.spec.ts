@@ -20,9 +20,9 @@ async function enterLobby(page: Page): Promise<void> {
 
 test("상점 레일은 독립 ShopScene을 열고 공용 뒤로가기로 로비에 복귀한다", async ({ page }) => {
   await enterLobby(page);
-  // 콘텐츠 레일의 임무 아래 두 번째 슬롯과 분리된 편의 레일을 시각 회귀 자료로 남긴다.
+  // 왼쪽 콘텐츠 레일의 임무 아래 두 번째 슬롯과 오른쪽 가방 레일을 시각 회귀 자료로 남긴다.
   await page.screenshot({ path: `test-results/${test.info().project.name}-lobby-content-rail.png`, fullPage: true });
-  await tap(page, WIDTH - 106, 792);
+  await tap(page, 106, 792);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("shop");
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.screenTitle)).toBe("무역소");
   await page.screenshot({ path: `test-results/${test.info().project.name}-shop-scene.png`, fullPage: true });

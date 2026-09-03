@@ -13,6 +13,11 @@ describe("lobby input layout", () => {
     expect(shop.y - mission.y).toBe(trade.y - shop.y);
   });
 
+  it("places mission content left and inventory utility right", () => {
+    // 로비 핵심 요청인 좌우 반전을 x 좌표로 고정해 이후 버튼 추가가 되돌리지 못하게 한다.
+    expect(LOBBY_RAIL_BOUNDS.content.mission.x).toBeLessThan(LOBBY_RAIL_BOUNDS.utility.inventory.x);
+  });
+
   it("keeps every rail button separated from its neighbors", () => {
     // 눌림 확대가 있어도 같은 레일과 맞은편 레일의 입력면이 서로 가로채지 않아야 한다.
     for (let first = 0; first < railButtons.length; first += 1) {

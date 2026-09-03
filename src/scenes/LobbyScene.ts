@@ -443,8 +443,8 @@ export class LobbyScene extends Phaser.Scene {
   }
 
   /**
-   * 임무·상점·무역은 오른쪽 콘텐츠 레일에서 위계 순으로 읽히는 한 묶음이다.
-   * 편의 기능을 맞은편 레일로 옮겨 중앙 캐릭터 무대와 하단 행동 입력면을 함께 비운다.
+   * 임무·상점·무역은 왼쪽 콘텐츠 레일에서 위계 순으로 읽히는 한 묶음이다.
+   * 가방을 포함한 편의 기능은 오른쪽 레일로 보내 두 역할을 좌우로 명확히 나눈다.
    */
   private buildMissionEntry(): void {
     const entries = [

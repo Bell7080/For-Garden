@@ -11,6 +11,7 @@ import { SKILL_ART_ASSETS } from "../ui/skillArt";
 import { EXCAVATION_TRAIT_ICON_ASSETS } from "../ui/excavationIcons";
 import { ITEM_ICON_ASSETS } from "../ui/itemIcons";
 import { SQUAD_EMBLEM_ASSETS } from "../data/factions";
+import { SHOP_PRODUCT_ICON_ASSETS } from "../data/shopCatalog";
 
 /**
  * 타이틀 화면이 지불하는 로딩 비용의 전부.
@@ -87,6 +88,8 @@ export const LOADING_STEPS: ReadonlyArray<LoadingStep> = [
         // 속성·직군은 이미 구워 둔 WebP라 그대로 읽는다.
         AFFINITY_ICON_ASSETS.forEach(([key, path]) => scene.load.image(key, path));
         CURRENCY_ICON_ASSETS.forEach(([key, path]) => scene.load.image(key, path));
+        // 상품 key는 현재 임시 원화를 가리키며, 최종 그림 교체 위치는 shopCatalog 한곳이다.
+        SHOP_PRODUCT_ICON_ASSETS.forEach(([key, path]) => scene.load.image(key, path));
         // 스쿼드 엠블럼도 이미 구워 둔 WebP다. 색은 파일에 들어 있고 화면은 어둠만 덧댄다.
         SQUAD_EMBLEM_ASSETS.forEach(([key, path]) => scene.load.image(key, path));
         RUNE_ICON_ASSETS.forEach(([key, path]) => scene.load.image(key, path));

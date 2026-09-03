@@ -1,6 +1,8 @@
 import Phaser from "phaser";
 import { gameApi } from "../api/FakeServer";
 import type { ProductDto } from "../api/contracts";
+import { formatCurrency } from "../core/formatCurrency";
+import { SHOP_TABS, type ShopCategory } from "../data/shopCatalog";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugScene } from "../debug";
 import { TORIKA_ASSET, spawnPuppet } from "../puppets/assets";
@@ -13,13 +15,16 @@ import { COLOR, textStyle } from "../ui/theme";
 import { TopBar } from "../ui/TopBar";
 
 /** 상품 목록이 제목 아래에서 뒤로가기 안전 영역 위까지 흐르는 화면 좌표 경계다. */
-const LIST_VIEW = { left: 470, right: BASE_WIDTH - 36, top: 330, bottom: BASE_HEIGHT - 190 } as const;
+const LIST_VIEW = { left: 470, right: BASE_WIDTH - 36, top: 330, bottom: BASE_HEIGHT - 285 } as const;
 /** 세로 카드 간격과 드래그 판정을 한곳에 묶어 스크롤 감각을 일정하게 유지한다. */
-const LIST_LAYOUT = { cardHeight: 270, gap: 28, dragSlop: 16 } as const;
+const LIST_LAYOUT = { cardHeight: 292, gap: 28, dragSlop: 16, frameSize: 164 } as const;
 
 /** 인게임 재화만 교환하는 독립 무역소 씬이다. */
 export class ShopScene extends Phaser.Scene {
   private products: ProductDto[] = [];
+  /** 첫 탭은 카탈로그 순서에서 정해 화면과 데이터의 기본값이 갈리지 않게 한다. */
+  private selectedCategory: ShopCategory = SHOP_TABS[0].id;
+  private tabButtons: Phaser.GameObjects.Container[] = [];
   private content?: Phaser.GameObjects.Container;
   private viewportMask?: Phaser.GameObjects.Graphics;
   private pending = false;
@@ -44,6 +49,7 @@ export class ShopScene extends Phaser.Scene {
     addBackButton(this, () => this.scene.start("lobby"));
 
     this.createViewport();
+    this.createTabs();
     this.installScrollInput();
     // 임시 점원도 정지 이미지 대신 공용 Puppet과 중심1 관절 배치 규칙을 그대로 거친다.
     void this.createMerchant();
@@ -87,32 +93,39 @@ export class ShopScene extends Phaser.Scene {
   /** 현재 서버 상태로 세로 상품 카드를 재조립하고 실제 높이에서 스크롤 한계를 계산한다. */
   private renderProducts(): void {
     this.content?.removeAll(true);
-    this.products.forEach((product, index) => this.addProduct(product, index));
-    const contentHeight = this.products.length * (LIST_LAYOUT.cardHeight + LIST_LAYOUT.gap) - LIST_LAYOUT.gap;
+    const visibleProducts = this.products.filter(({ category }) => category === this.selectedCategory);
+    visibleProducts.forEach((product, index) => this.addProduct(product, index));
+    const contentHeight = Math.max(0, visibleProducts.length * (LIST_LAYOUT.cardHeight + LIST_LAYOUT.gap) - LIST_LAYOUT.gap);
     this.minScrollY = Math.min(0, LIST_VIEW.bottom - LIST_VIEW.top - contentHeight);
     this.scrollTo(this.content?.y ?? 0);
   }
 
-  /** 공용 액자와 유리 칩을 조합해 비용·보상·잔여 횟수를 한 카드 안에서 비교하게 한다. */
+  /** 일반 패널은 윗선만, 상품 그림 액자만 사방 테두리와 내부 비네트를 사용한다. */
   private addProduct(product: ProductDto, index: number): void {
     const width = LIST_VIEW.right - LIST_VIEW.left;
     const x = (LIST_VIEW.left + LIST_VIEW.right) / 2;
     const y = LIST_VIEW.top + LIST_LAYOUT.cardHeight / 2 + index * (LIST_LAYOUT.cardHeight + LIST_LAYOUT.gap);
     const card = this.add.container(x, y);
     card.add(drawLayer(this, 0, 0, chipPoints(width, LIST_LAYOUT.cardHeight, { bevel: { topLeft: 44, topRight: 0, bottomRight: 32, bottomLeft: 0 } }), { fill: 0x182029, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.52 }));
-    const frame = addItemFrame(this, -width / 2 + 82, 0, 124);
-    // 현재 상품 표는 재화 보상만 사용하므로 첫 보상 아이콘을 대표 이미지로 보여 준다.
+    const frameX = -width / 2 + 106;
+    const frame = addItemFrame(this, frameX, -28, LIST_LAYOUT.frameSize);
+    // iconKey는 카탈로그가 고른 임시 상품 그림이며 최종 원화 교체에도 카드 코드는 유지된다.
+    frame.add(this.add.image(0, 0, product.iconKey).setDisplaySize(LIST_LAYOUT.frameSize * ITEM_FRAME.icon, LIST_LAYOUT.frameSize * ITEM_FRAME.icon));
     const currencyGrant = product.grants.find((grant) => grant.kind === "currency");
     if (currencyGrant) {
-      const iconKey = CURRENCY_ICON_BY_WALLET[currencyGrant.currency];
-      frame.add(this.add.image(0, 0, iconKey).setDisplaySize(124 * ITEM_FRAME.icon, 124 * ITEM_FRAME.icon));
+      // 지급 수량은 액자 우하단에 공용 축약 표기로 겹쳐 작은 화면에서도 한눈에 읽힌다.
+      frame.add(this.add.text(LIST_LAYOUT.frameSize / 2 - 10, LIST_LAYOUT.frameSize / 2 - 8, formatCurrency(currencyGrant.amount), textStyle({ role: "emphasis", size: 25, color: COLOR.accentText })).setOrigin(1, 1));
     }
     card.add(frame);
-    card.add(this.add.text(-width / 2 + 168, -88, product.name, textStyle({ role: "emphasis", size: 29 })).setOrigin(0, 0));
-    card.add(this.add.text(-width / 2 + 168, -40, product.description, textStyle({ role: "body", size: 22, color: COLOR.inkDim, wrap: width - 210 })).setOrigin(0, 0));
-    const price = `${product.price.amount.toLocaleString()} ${this.currencyLabel(product.price.currency)}`;
-    card.add(this.add.text(width / 2 - 28, 58, price, textStyle({ role: "emphasis", size: 27, color: COLOR.accentText })).setOrigin(1, 0));
-    card.add(this.add.text(-width / 2 + 168, 72, `남은 교환 ${product.remaining}/${product.purchaseLimit}`, textStyle({ role: "body", size: 20, color: product.purchasable ? COLOR.ink : COLOR.inkDim })).setOrigin(0, 0));
+    card.add(this.add.text(-width / 2 + 206, -100, product.name, textStyle({ role: "emphasis", size: 29 })).setOrigin(0, 0));
+    card.add(this.add.text(-width / 2 + 206, -48, product.description, textStyle({ role: "body", size: 21, color: COLOR.inkDim, wrap: width - 242 })).setOrigin(0, 0));
+    // 가격은 액자 바로 아래에 숫자와 공용 재화 아이콘을 한 행으로 놓는다.
+    if (product.price.currency !== "real_money") {
+      const priceX = frameX - 12;
+      card.add(this.add.image(priceX - 44, 91, CURRENCY_ICON_BY_WALLET[product.price.currency]).setDisplaySize(34, 34));
+      card.add(this.add.text(priceX - 20, 91, formatCurrency(product.price.amount), textStyle({ role: "emphasis", size: 25, color: COLOR.accentText })).setOrigin(0, 0.5));
+    }
+    card.add(this.add.text(-width / 2 + 206, 78, `남은 교환 ${formatCurrency(product.remaining)}/${formatCurrency(product.purchaseLimit)}`, textStyle({ role: "body", size: 20, color: product.purchasable ? COLOR.ink : COLOR.inkDim })).setOrigin(0, 0));
     const hit = this.add.rectangle(0, 0, width, LIST_LAYOUT.cardHeight, 0xffffff, 0).setInteractive({ useHandCursor: product.purchasable });
     hit.on("pointerdown", () => card.setScale(1.04));
     hit.on("pointerout", () => card.setScale(1));
@@ -126,6 +139,40 @@ export class ShopScene extends Phaser.Scene {
     });
     card.add(hit);
     this.content?.add(card);
+  }
+
+  /** 하단 탭은 별도 판이나 밑줄 없이 선택 항목의 강조색과 확대 배율만 바꾼다. */
+  private createTabs(): void {
+    const width = LIST_VIEW.right - LIST_VIEW.left;
+    const step = width / SHOP_TABS.length;
+    this.tabButtons = SHOP_TABS.map((tab, index) => {
+      const x = LIST_VIEW.left + step * (index + 0.5);
+      const container = this.add.container(x, BASE_HEIGHT - 218);
+      const label = this.add.text(0, 0, tab.label, textStyle({ role: "emphasis", size: 27 })).setOrigin(0.5);
+      const hit = this.add.rectangle(0, 0, step, 82, 0xffffff, 0).setInteractive({ useHandCursor: true });
+      hit.on("pointerup", () => this.selectCategory(tab.id));
+      container.add([label, hit]);
+      return container;
+    });
+    this.updateTabStyles();
+  }
+
+  /** 탭을 바꾸면 이전 스크롤을 버리고 해당 분류의 첫 상품부터 다시 보여 준다. */
+  private selectCategory(category: ShopCategory): void {
+    if (category === this.selectedCategory) return;
+    this.selectedCategory = category;
+    if (this.content) this.content.y = 0;
+    this.updateTabStyles();
+    this.renderProducts();
+  }
+
+  /** 선택 상태는 기존 탭 규칙에 맞춰 글자색과 1.12배 확대만으로 드러낸다. */
+  private updateTabStyles(): void {
+    this.tabButtons.forEach((button, index) => {
+      const selected = SHOP_TABS[index].id === this.selectedCategory;
+      button.setScale(selected ? 1.12 : 1);
+      (button.first as Phaser.GameObjects.Text).setColor(selected ? COLOR.accentText : COLOR.inkDim);
+    });
   }
 
   /** 입력을 서버에 한 번만 전달하고 성공한 응답 뒤에 지갑과 목록을 함께 새로 읽는다. */
@@ -188,8 +235,4 @@ export class ShopScene extends Phaser.Scene {
     this.tweens.add({ targets: toast, alpha: 0, delay: 900, duration: 500, onComplete: () => toast.destroy() });
   }
 
-  /** 서버 재화 키를 카드의 짧은 한국어 비용 단위로 바꾼다. */
-  private currencyLabel(currency: ProductDto["price"]["currency"]): string {
-    return ({ fossil: "화석", amber: "호박석", cheesecake: "치즈케이크", dnaFragments: "DNA", real_money: "현금" } as const)[currency];
-  }
 }

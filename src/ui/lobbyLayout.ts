@@ -9,17 +9,17 @@ export interface LobbyInputBounds { x: number; y: number; width: number; height:
 /** 레일 버튼의 실제 입력면과 눌림 확대를 고려한 슬롯 간격을 한곳에서 소유한다. */
 const RAIL = { leftX: 106, rightX: BASE_WIDTH - 106, top: 640, step: 152, size: 96 } as const;
 
-/** 역할별 레일 배치표: 주요 콘텐츠는 오른쪽, 부가 편의 기능은 반대쪽 가장자리에 분리한다. */
+/** 역할별 레일 배치표: 임무 콘텐츠는 왼쪽, 가방을 포함한 편의 기능은 오른쪽에 분리한다. */
 export const LOBBY_RAIL_BOUNDS = {
   content: {
-    mission: { x: RAIL.rightX, y: RAIL.top, width: RAIL.size, height: RAIL.size },
-    shop: { x: RAIL.rightX, y: RAIL.top + RAIL.step, width: RAIL.size, height: RAIL.size },
-    trade: { x: RAIL.rightX, y: RAIL.top + RAIL.step * 2, width: RAIL.size, height: RAIL.size },
+    mission: { x: RAIL.leftX, y: RAIL.top, width: RAIL.size, height: RAIL.size },
+    shop: { x: RAIL.leftX, y: RAIL.top + RAIL.step, width: RAIL.size, height: RAIL.size },
+    trade: { x: RAIL.leftX, y: RAIL.top + RAIL.step * 2, width: RAIL.size, height: RAIL.size },
   },
   utility: {
-    mail: { x: RAIL.leftX, y: RAIL.top, width: RAIL.size, height: RAIL.size },
-    friends: { x: RAIL.leftX, y: RAIL.top + RAIL.step, width: RAIL.size, height: RAIL.size },
-    inventory: { x: RAIL.leftX, y: RAIL.top + RAIL.step * 2, width: RAIL.size, height: RAIL.size },
+    mail: { x: RAIL.rightX, y: RAIL.top, width: RAIL.size, height: RAIL.size },
+    friends: { x: RAIL.rightX, y: RAIL.top + RAIL.step, width: RAIL.size, height: RAIL.size },
+    inventory: { x: RAIL.rightX, y: RAIL.top + RAIL.step * 2, width: RAIL.size, height: RAIL.size },
   },
 } as const satisfies Record<string, Record<string, LobbyInputBounds>>;
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { FakeServer } from "../../src/api/FakeServer";
 import { EVENTS } from "../../src/data/events";
-import { PRODUCTS } from "../../src/data/products";
+import { PRODUCTS } from "../../src/data/shopCatalog";
 import { getRecollectionStory } from "../../src/data/dialogues/recollections";
 import { createDefaultSession } from "../../src/state/session";
 
@@ -33,7 +33,7 @@ describe("이벤트 서버 시간 경계", () => {
     const server = new FakeServer(state, { latencyMs: 0, now: () => new Date(event.endsAt) });
 
     await expect(server.completeStage(event.stages[0].id)).rejects.toMatchObject({ code: "EVENT_NOT_ACTIVE" });
-    await expect(server.purchaseProduct({ productId: event.exchangeProductIds[0], quantity: 1 })).rejects.toMatchObject({ code: "EVENT_NOT_ACTIVE" });
+    await expect(server.purchaseProduct({ storefront: "trade", productId: event.exchangeProductIds[0], quantity: 1 })).rejects.toMatchObject({ code: "EVENT_NOT_ACTIVE" });
     // 거부된 요청은 재화·클리어·구매 기록 어느 것도 변경하지 않는다.
     expect(state.wallet.cheesecake).toBe(100);
     expect(state.cleared.has(event.stages[0].id)).toBe(false);

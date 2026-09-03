@@ -48,7 +48,7 @@ export class PremiumScene extends Phaser.Scene {
 
   /** 서버가 계산한 노출·제한 상태에서 유료 storefront만 골라 다시 그린다. */
   private async refresh(): Promise<void> {
-    const response = await gameApi.getProducts();
+    const response = await gameApi.getProducts("premium");
     this.content?.destroy(true);
     this.content = this.add.container(0, 0);
     response.products.filter((product) => product.storefront === "premium").forEach((product, index) => this.addProduct(product, index));

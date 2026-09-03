@@ -26,7 +26,8 @@ export class PurchasePopup {
 
   /** 카드는 구매를 실행하지 않고 이 진입점으로 상품 원본을 전달한다. */
   open(product: ProductDto, onPurchased: (result: PurchaseProductResponse) => void | Promise<void>): void {
-    this.quantity = 1; this.pending = false; this.message = "";
+    // 카탈로그가 제안한 기본 수량도 잔액·제한 quote를 거쳐 실제 가능한 범위로 정규화된다.
+    this.quantity = product.defaultQuantity; this.pending = false; this.message = "";
     this.popups.open({ width: 820, height: 850, title: "구매 확인", dim: true, closeOnBackdrop: false }, (body, close) => {
       const view = this.scene.add.container(0, 0); body.add(view);
       const render = (): void => { view.removeAll(true); this.paint(view, product, close, onPurchased); };
@@ -90,7 +91,7 @@ export class PurchasePopup {
     if (!product.purchasable || !quote.valid) return;
     this.pending = true; this.message = ""; this.repaint?.();
     try {
-      const result = await this.api.purchaseProduct({ productId: product.id, quantity: quote.quantity });
+      const result = await this.api.purchaseProduct({ storefront: product.storefront, productId: product.id, quantity: quote.quantity });
       // 작업판을 먼저 없애 입력면이 겹치지 않게 한 뒤, 더 높은 공용 계층에 서버 영수증만 연다.
       close();
       openRewardPopup(this.scene, this.popups, {

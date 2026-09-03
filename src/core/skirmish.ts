@@ -83,7 +83,7 @@ export interface Fighter extends Combatant {
    * 출혈처럼 슬롯 하나만 두는 이유는 같다 — 여럿이 겹쳐 걸면 어느 쪽 수치가 도는지 화면과
    * 계산이 갈린다. 다시 칠하면 시간이 처음부터 다시 돌고 중첩만 하나 오른다.
    */
-  overpaint: { remaining: number; stacks: number; percentPerStack: number; maxStacks: number } | null;
+  overpaint: { remaining: number; total: number; stacks: number; percentPerStack: number; maxStacks: number } | null;
   /**
    * 지금 튕겨 날아가는 중인 상태. 없으면 null이다.
    *
@@ -116,6 +116,8 @@ export interface Fighter extends Combatant {
   tailwindTickIn: number;
   /** 남은 기절 시간(초). 별도 boolean 없이 `stunnedFor > 0`만 행동 차단 기준으로 삼는다. */
   stunnedFor: number;
+  /** 지금 도는 기절 한 바퀴의 전체 시간(초). 화면의 시계가 읽는 분모다. */
+  stunnedTotal: number;
   /** 남은 경직 시간(초). 기절과 달리 저항·유지 모션 없이 순간적으로만 행동을 끊는다. */
   staggeredFor: number;
   /** 모든 피해보다 먼저 소모되며 제공자의 안정적인 런타임 ID를 함께 보존하는 보호막이다. */
@@ -123,7 +125,7 @@ export interface Fighter extends Combatant {
   /** 아다지오 정화·보호막의 메테 개체별 남은 쿨타임(초)이다. JSON 직렬화 가능한 숫자다. */
   adagioCooldownRemaining: number;
   /** 걸려 있는 출혈. 없으면 null이다. */
-  bleed: { remaining: number; tickIn: number; percent: number; sourceId?: string } | null;
+  bleed: { remaining: number; total: number; tickIn: number; percent: number; sourceId?: string } | null;
   /** 이 전투에서 긴급 회복 패시브를 이미 발동했는지. 저장하지 않는 "전투당 1회" 소유 상태다. */
   passiveTriggered: boolean;
   /** 진행 중인 지속 회복. remaining과 tickIn은 초, percentPerTick은 최대 HP 대비 %이며 저장하지 않는다. */
@@ -165,6 +167,13 @@ export interface SkirmishState {
  */
 export interface ActiveCombatBuff {
   id: string;
+  /**
+   * 겹 수. 있으면 칩 우하단에 그 수가 선다.
+   *
+   * 겹치는 것을 칩 여러 장으로 늘어놓으면 한 줄이 금세 가득 차고, 어느 것이 같은 효과인지
+   * 세어야 안다. 칩은 하나만 두고 수가 몇 겹인지 말한다.
+   */
+  stacks?: number;
   sourceFighterId: string;
   targetFighterId: string;
   skillId: string;
@@ -384,6 +393,7 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     tailwindTickIn: 0,
     // 전투 시작 시 모든 행동 가능 상태이며, 기절은 전투 한정 상태라 저장 스냅샷에서 복원하지 않는다.
     stunnedFor: 0,
+    stunnedTotal: 0,
     staggeredFor: 0,
     shield: { amount: 0, providerId: null },
     adagioCooldownRemaining: 0,
@@ -500,6 +510,7 @@ export function applyStun(fighter: Fighter, seconds: number, state?: SkirmishSta
   if (resistedSeconds <= 0) return [];
   const wasStunned = fighter.stunnedFor > 0;
   fighter.stunnedFor = Math.max(fighter.stunnedFor, resistedSeconds);
+  fighter.stunnedTotal = Math.max(fighter.stunnedFor, fighter.stunnedTotal);
   const events: SkirmishEvent[] = wasStunned ? [] : [{ kind: "status", fighterId: fighter.id, status: "stun", active: true }];
   if (!wasStunned && state) cleanseControlWithAdagio(state, fighter, events);
   return events;
@@ -627,7 +638,8 @@ function launchKnockback(
  */
 function refreshOverpaint(target: Fighter, effect: Extract<CombatStatusEffect, { kind: "overpaint" }>): void {
   const stacks = Math.min(effect.maxStacks, (target.overpaint?.stacks ?? 0) + 1);
-  target.overpaint = { remaining: effect.seconds, stacks, percentPerStack: effect.damageTakenPercent, maxStacks: effect.maxStacks };
+  // `total`은 화면의 시계(남은 시간 고리)가 읽는 분모다. 화면이 스킬 정의를 다시 뒤지지 않는다.
+  target.overpaint = { remaining: effect.seconds, total: effect.seconds, stacks, percentPerStack: effect.damageTakenPercent, maxStacks: effect.maxStacks };
 }
 
 /**
@@ -749,8 +761,11 @@ function statusEffectsLandThisHit(attacker: Fighter, skill: Skill, useUltimate: 
 
 /** 모든 출혈 진입점이 공유하는 단일 슬롯 갱신 규칙이다. 약한 재적용은 강도와 틱 시계를 덮지 않는다. */
 function refreshBleed(target: Fighter, seconds: number, percent: number, events: SkirmishEvent[], sourceId?: string): void {
+  const remaining = Math.max(target.bleed?.remaining ?? 0, seconds);
   target.bleed = {
-    remaining: Math.max(target.bleed?.remaining ?? 0, seconds),
+    remaining,
+    // 시계의 분모. 더 긴 출혈로 덮이면 그 길이가 곧 새 한 바퀴다.
+    total: Math.max(remaining, target.bleed?.total ?? 0, seconds),
     tickIn: target.bleed?.tickIn ?? 1,
     percent: Math.max(target.bleed?.percent ?? 0, percent),
     sourceId: percent >= (target.bleed?.percent ?? 0) ? sourceId : target.bleed?.sourceId,
@@ -831,6 +846,22 @@ export function activeCombatBuffs(state: SkirmishState, fighterId: string): Acti
         remainingSeconds: fighter.ferocity / FEROCITY_RULES.feverDrainPerSecond,
         totalSeconds: FEROCITY_RULES.max / FEROCITY_RULES.feverDrainPerSecond,
       },
+    });
+  }
+  // 주기 타격(파치의 4타)은 **본인에게 붙는 값**이다 — 적이 아니라 그 개체가 몇 대째 때렸는지가
+  // 다음 한 방을 정하므로, 적 머리 위가 아니라 자기 프로필의 칩이 그 수를 들고 있다.
+  const every = fighter.def.basic.statusEffectEvery ?? 0;
+  if (every > 1 && fighter.statusHitCount % every > 0) {
+    buffs.push({
+      id: `hit-count:${fighter.id}`,
+      sourceFighterId: fighter.id,
+      targetFighterId: fighter.id,
+      skillId: fighter.def.basic.id,
+      name: fighter.def.basic.name,
+      description: `${every}번째 공격마다 부가 효과가 함께 터진다`,
+      stacks: fighter.statusHitCount % every,
+      // 시간이 아니라 타격 수가 채우는 값이라 시계를 두지 않는다.
+      timing: { kind: "conditional" },
     });
   }
   return buffs;

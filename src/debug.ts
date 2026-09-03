@@ -27,6 +27,13 @@ export interface DebugBattle {
   ultimateQueue?: string[];
   /** 실제 이동 중인 적 클릭 영역 중심. E2E가 고정 좌표 대신 렌더 입력 계약을 누르는 데만 쓴다. */
   enemyTargets?: Array<{ x: number; y: number }>;
+  /**
+   * 머리 위 상태 칩 줄의 실제 자리와 걸린 수.
+   *
+   * Canvas 안에서는 칩이 어디에 떴는지 DOM으로 알 방법이 없어, E2E가 좌표를 눈대중으로
+   * 계산하면 상태가 하나 늘어날 때마다 어긋난다. 그려진 그대로만 노출한다.
+   */
+  statusChips?: Array<{ fighterId: string; x: number; y: number; count: number }>;
   /** 코어의 stunnedFor가 양수여서 씬이 실제 기절 뱃지를 보이는 전투원 이름이다. */
   stunned?: string[];
   /** 현재 떠 있는 회복 숫자 수다. 코어 사건을 다시 계산하지 않고 표시 수명만 관찰한다. */

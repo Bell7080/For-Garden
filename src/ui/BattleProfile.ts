@@ -147,7 +147,7 @@ export class BattleProfile extends Phaser.GameObjects.Container {
       const key = this.buffKey(model.buff);
       const current = this.buffChips.get(key);
       if (current) {
-        current.container.setTiming(model.buff.timing, L.buffRow.chipSize);
+        current.container.setTiming(model.buff.timing, L.buffRow.chipSize).setStacks(model.buff.stacks);
         continue;
       }
       const used = new Set([...this.buffChips.values()].map(({ slot }) => slot));

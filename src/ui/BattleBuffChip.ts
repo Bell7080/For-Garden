@@ -3,11 +3,15 @@ import type { ActiveCombatBuff } from "../core/skirmish";
 import { battleBuffEffectShape, battleBuffProgress, type BattleBuffEffectShape } from "../core/battleBuffPresentation";
 import type { BattleUiMotion } from "../core/settings";
 import { chipPoints, drawInnerVignette, drawLayer, drawShapeOutline } from "./holo";
+import { BATTLE_STATUS_LAYOUT } from "./battleStatusLayout";
+import { COLOR, textStyle } from "./theme";
 
 /** 전투 프로필에 붙는 작은 버프 액자. 진행 Graphics는 생성 후 지우고 다시 그려 재사용한다. */
 export class BattleBuffChip extends Phaser.GameObjects.Container {
   private readonly progress = this.scene.add.graphics();
   private readonly hit: Phaser.GameObjects.Rectangle;
+  /** 겹 수 글자. 겹이 오르내릴 때 칩을 다시 만들지 않고 이 글자만 갈아 끼운다. */
+  private stacksText?: Phaser.GameObjects.Text;
   private timing: ActiveCombatBuff["timing"];
 
   constructor(scene: Phaser.Scene, size: number, tint: number, texture: string, buff: ActiveCombatBuff, motion: BattleUiMotion, onPress: () => void) {
@@ -27,8 +31,24 @@ export class BattleBuffChip extends Phaser.GameObjects.Container {
     this.hit.on("pointerup", (_p: Phaser.Input.Pointer, _x: number, _y: number, event: Phaser.Types.Input.EventData) => { event.stopPropagation(); this.setScale(1); onPress(); });
     this.hit.on("pointerout", () => this.setScale(1));
     this.add([drawShapeOutline(scene, 0, 0, shape, { color: tint, alpha: 0.9, width: 2 }), this.hit]);
+    // 겹치는 값(주기 타격의 몇 대째)은 칩을 여러 장 세우지 않고 **우하단 숫자 하나**가 말한다.
+    // 머리 위 상태 칩과 같은 자리·같은 규칙을 쓴다.
+    if (buff.stacks !== undefined) this.add(this.drawStacks(size, tint, buff.stacks));
     this.redraw(size);
     scene.add.existing(this);
+  }
+
+  /** 칩 우하단의 겹 수. 작은 판을 깔아 밝은 배경 원화 위에서도 수가 살아남는다. */
+  private drawStacks(size: number, tint: number, stacks: number): Phaser.GameObjects.Container {
+    const count = BATTLE_STATUS_LAYOUT.stackCount;
+    // 칩 크기가 머리 위 칩보다 크므로 자리는 모서리 비율로 옮긴다.
+    const x = size / 2 - count.plateRadius - 2;
+    const y = size / 2 - count.plateRadius - 2;
+    const group = this.scene.add.container(0, 0);
+    group.add(this.scene.add.circle(x, y, count.plateRadius, COLOR.void, 0.94));
+    this.stacksText = this.scene.add.text(x, y + 1, String(stacks), textStyle({ role: "display", size: count.size, color: `#${tint.toString(16).padStart(6, "0")}` })).setOrigin(0.5);
+    group.add(this.stacksText);
+    return group;
   }
 
   /** 네 가지 각진 문양을 흰색으로 겹쳐 색상 없이도 공격·속도·지원·특수를 구별한다. */
@@ -46,6 +66,12 @@ export class BattleBuffChip extends Phaser.GameObjects.Container {
   public setTiming(timing: ActiveCombatBuff["timing"], size: number): this {
     this.timing = timing;
     this.redraw(size);
+    return this;
+  }
+
+  /** 겹 수만 갈아 끼운다. 칩을 다시 만들면 매 타격마다 액자가 깜빡인다. */
+  public setStacks(stacks: number | undefined): this {
+    if (this.stacksText && stacks !== undefined) this.stacksText.setText(String(stacks));
     return this;
   }
 

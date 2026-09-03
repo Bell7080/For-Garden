@@ -625,7 +625,7 @@ describe("긴급 회복 패시브", () => {
         enemy.x = 400; enemy.y = 1000; enemy.attackCooldown = 0;
       } else {
         // 다음 출혈 틱이 즉시 발생해 51%에서 50% 이하로 진입하도록 최대 HP의 2%를 적용한다.
-        fighter.bleed = { remaining: 1, tickIn: 0, percent: 2 };
+        fighter.bleed = { remaining: 1, total: 1, tickIn: 0, percent: 2 };
       }
       stepSkirmish(state, 1 / 60);
       return fighter;
@@ -921,7 +921,7 @@ describe("능력치 반영", () => {
     expect(attacker.hp).toBeCloseTo(Math.min(attacker.maxHp, 1 + totalBefore - primary.hp - secondary.hp));
 
     const healed = attacker.hp;
-    primary.bleed = { remaining: 1, tickIn: 0, percent: BLEED.percentPerSecond };
+    primary.bleed = { remaining: 1, total: 1, tickIn: 0, percent: BLEED.percentPerSecond };
     attacker.attackCooldown = 99;
     stepSkirmish(state, 1 / 60);
     expect(attacker.hp).toBe(healed);
@@ -1454,7 +1454,7 @@ describe("출혈", () => {
     const state = duel();
     const foe = state.fighters[1];
     state.fighters[0].attackCooldown = foe.attackCooldown = 99;
-    foe.bleed = { remaining: BLEED.seconds, tickIn: 1, percent: BLEED.percentPerSecond };
+    foe.bleed = { remaining: BLEED.seconds, total: BLEED.seconds, tickIn: 1, percent: BLEED.percentPerSecond };
     const hpBefore = foe.hp;
     const ticks = run(state, 3.2).filter((event): event is Extract<SkirmishEvent, { kind: "bleed" }> => event.kind === "bleed");
     const bleedDamage = ticks.reduce((sum, event) => sum + event.amount, 0);
@@ -1603,7 +1603,7 @@ describe("원정 난전 확장", () => {
     const state = createSkirmish([getRelic("rex")], [getRelic("husk-shell")], ARENA, {}, {}, { augmentEffects: [effect] });
     const [ally, foe] = state.fighters;
     ally.x = 400; ally.y = 1000; foe.x = 450; foe.y = 1000; ally.attackCooldown = 0; foe.attackCooldown = 99;
-    foe.bleed = { remaining: 5, tickIn: 0.5, percent: 6 };
+    foe.bleed = { remaining: 5, total: 5, tickIn: 0.5, percent: 6 };
     stepSkirmish(state, 1 / 60);
     expect(foe.bleed).toMatchObject({ percent: 6, tickIn: expect.any(Number) });
     expect(foe.bleed?.remaining).toBeGreaterThan(4.9);
@@ -2035,7 +2035,7 @@ describe("메론 정적 전투 계약", () => {
   it("덧칠은 겹친 만큼 그 적이 받는 모든 피해를 키운다", () => {
     const { enemy } = meronBattle(["meron"]);
     const plain = receivedDamage(enemy, 1000);
-    enemy.overpaint = { remaining: 8, stacks: 3, percentPerStack: 6, maxStacks: 5 };
+    enemy.overpaint = { remaining: 8, total: 8, stacks: 3, percentPerStack: 6, maxStacks: 5 };
     expect(receivedDamage(enemy, 1000)).toBeCloseTo(plain * 1.18);
     // 시간이 다 된 표식은 남아 있어도 세지 않는다.
     enemy.overpaint = { ...enemy.overpaint, remaining: 0 };
@@ -2070,7 +2070,7 @@ describe("메론 정적 전투 계약", () => {
   it("의 궁극기는 겹당 위력으로 터지고 칠하지 않은 적은 아예 맞지 않는다", () => {
     const cast = (stacks: number) => {
       const { state, meron, enemy } = meronBattle(["meron"]);
-      enemy.overpaint = stacks > 0 ? { remaining: 8, stacks, percentPerStack: 0, maxStacks: 5 } : null;
+      enemy.overpaint = stacks > 0 ? { remaining: 8, total: 8, stacks, percentPerStack: 0, maxStacks: 5 } : null;
       meron.energy = meron.def.ultimate.cost;
       const hpBefore = enemy.hp;
       fireUltimate(state, meron.id);
@@ -2234,6 +2234,22 @@ describe("파치 정적 전투 계약", () => {
     for (const foe of foes) expect(foe.stunnedFor).toBeGreaterThan(0);
     // 전장 밖으로는 나가지 않는다.
     expect(pachi.x).toBeLessThanOrEqual(state.arena.right);
+  });
+
+  it("의 4타 카운터는 본인 프로필의 버프 칩으로 붙는다", () => {
+    const { state, pachi, enemy } = pachiBattle(["husk-shell"]);
+    const every = pachi.def.basic.statusEffectEvery!;
+    // 주기 타격은 적이 아니라 **때린 쪽**의 값이다 — 다음 한 방을 정하는 것이 그 개체의 타수다.
+    pachi.attackCooldown = 0; enemy.stunnedFor = 0;
+    stepSkirmish(state, 1 / 60);
+    const [buff] = activeCombatBuffs(state, pachi.id);
+    expect(buff.targetFighterId).toBe(pachi.id);
+    expect(buff.stacks).toBe(1);
+    // 시간이 아니라 타격 수가 채우므로 시계를 두지 않는다.
+    expect(buff.timing.kind).toBe("conditional");
+    // 한 바퀴를 돌면(4타) 다시 0이 되어 칩이 사라진다.
+    for (let hit = 1; hit < every; hit += 1) { pachi.attackCooldown = 0; enemy.stunnedFor = 0; stepSkirmish(state, 1 / 60); }
+    expect(activeCombatBuffs(state, pachi.id)).toEqual([]);
   });
 
   it("의 폭주는 뇌진탕을 확정 치명타로 만들고 그 적을 튕겨 날린다", () => {

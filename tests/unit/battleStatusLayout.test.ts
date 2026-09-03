@@ -1,30 +1,39 @@
 import { describe, expect, it } from "vitest";
-import { BATTLE_PROFILE_LAYOUT, BATTLE_STATUS_LAYOUT, battleBuffChipBounds, battleProfileBounds, statusBadgeOffsets } from "../../src/ui/battleStatusLayout";
+import { BATTLE_PROFILE_LAYOUT, BATTLE_STATUS_LAYOUT, battleBuffChipBounds, battleProfileBounds, unitStatusChipOffsets } from "../../src/ui/battleStatusLayout";
 
 /** Phaser 없이 1080×1920 전투 HUD의 상태 뱃지 간격 계약을 고정한다. */
-describe("전투 상태 표시 배치", () => {
-  it("기절과 출혈이 동시에 보이면 같은 크기의 뱃지를 고정 간격으로 나란히 둔다", () => {
-    const offsets = statusBadgeOffsets(true);
-    expect(Math.abs(offsets.stunX - offsets.bleedX)).toBe(BATTLE_STATUS_LAYOUT.badgeGap);
-    expect(BATTLE_STATUS_LAYOUT.badgeGap).toBeGreaterThan(BATTLE_STATUS_LAYOUT.badgeSize);
+describe("머리 위 상태 칩 줄", () => {
+  it("은 칩 수와 무관하게 체력 바 가운데에 정렬된다", () => {
+    for (const count of [1, 2, 3, 4]) {
+      const offsets = unitStatusChipOffsets(count);
+      expect(offsets).toHaveLength(count);
+      // 가운데 정렬 — 좌우 끝이 대칭이라 상태가 붙고 떨어져도 줄이 한쪽으로 쏠리지 않는다.
+      expect(offsets[0] + offsets[offsets.length - 1]).toBeCloseTo(0, 6);
+    }
   });
 
-  it("출혈만 보일 때는 체력 바 옆의 첫 상태 자리를 사용한다", () => {
-    expect(statusBadgeOffsets(false)).toEqual({ stunX: -62, bleedX: -62, overpaintX: -62, butcherX: -62 });
+  it("은 칩끼리 겹치지 않게 벌린다", () => {
+    const offsets = unitStatusChipOffsets(4);
+    for (let index = 1; index < offsets.length; index += 1) {
+      expect(offsets[index] - offsets[index - 1]).toBe(BATTLE_STATUS_LAYOUT.chipSize + BATTLE_STATUS_LAYOUT.chipGap);
+    }
+    expect(BATTLE_STATUS_LAYOUT.chipGap).toBeGreaterThan(0);
   });
 
-  it("켜진 상태만 한 칸씩 바깥으로 밀어 네 뱃지가 겹치지 않는다", () => {
-    const offsets = statusBadgeOffsets(true, true, true);
-    const gap = BATTLE_STATUS_LAYOUT.badgeGap;
-    expect(offsets.bleedX - offsets.stunX).toBe(-gap);
-    expect(offsets.overpaintX - offsets.bleedX).toBe(-gap);
-    expect(offsets.butcherX - offsets.overpaintX).toBe(-gap);
-    // 꺼진 상태의 자리는 비워 두지 않는다 — 하나가 사라지면 남은 뱃지가 안쪽으로 당겨진다.
-    expect(statusBadgeOffsets(false, true, true).overpaintX).toBe(offsets.bleedX);
+  it("은 겹 수를 칩 우하단 안쪽에 둔다", () => {
+    const count = BATTLE_STATUS_LAYOUT.stackCount;
+    // 우하단이다 — 가운데(0,0)에 적으면 표식 그림과 숫자가 겹쳐 둘 다 흐려진다.
+    expect(count.offsetX).toBeGreaterThan(0);
+    expect(count.offsetY).toBeGreaterThan(0);
+    // 판이 칩 밖으로 크게 삐져나오면 옆 칩과 붙어 어느 칩의 수인지 흐려진다.
+    expect(count.offsetX + count.plateRadius).toBeLessThanOrEqual(BATTLE_STATUS_LAYOUT.chipSize / 2 + BATTLE_STATUS_LAYOUT.chipGap);
+  });
+
+  it("은 체력 바와 겹치지 않을 만큼 위로 띄운다", () => {
+    expect(BATTLE_STATUS_LAYOUT.chipRowLift).toBeGreaterThanOrEqual(BATTLE_STATUS_LAYOUT.chipSize / 2);
   });
 });
 
-/** Phaser 없이 세 칸의 실제 bounds와 지도 하단 행동선 사이 계약을 고정한다. */
 describe("공용 전투 프로필 배치", () => {
   /** 카드·게이지는 서로 다른 정보를 담으므로 버프 액자와 픽셀 하나도 포개지 않게 고정한다. */
   it.each([1, BATTLE_PROFILE_LAYOUT.buffRow.maxVisible])("버프 %i개가 안전 영역 안에서 카드·HP·야성 게이지와 겹치지 않는다", (count) => {
@@ -70,4 +79,5 @@ describe("공용 전투 프로필 배치", () => {
     expect(bounds[2].right).toBeLessThanOrEqual(1080);
     expect(Math.max(...bounds.map(({ bottom }) => bottom))).toBeLessThan(BATTLE_PROFILE_LAYOUT.sortieButton.top);
   });
+
 });

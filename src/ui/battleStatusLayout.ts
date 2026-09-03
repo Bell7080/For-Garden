@@ -53,12 +53,28 @@ export function battleProfileBounds(x: number, y: number, scale: number, showBuf
   };
 }
 
-/** 기존 머리 위 상태 뱃지 규격도 같은 전투 HUD 배치표에서 관리한다. */
+/** 머리 위 상태 칩 규격도 같은 전투 HUD 배치표에서 관리한다. */
 export const BATTLE_STATUS_LAYOUT = {
-  badgeSize: 26,
-  badgeRadius: 13,
-  firstOffsetX: 62,
-  badgeGap: 30,
+  /**
+   * 상태 칩 한 장.
+   *
+   * 예전에는 작은 마름모가 **체력 바 옆**에 붙었다. 옆으로 늘어놓으면 상태가 둘만 걸려도
+   * 바가 밀려 어디까지가 체력인지 흐려지고, 겹 수를 적을 자리도 없었다. 지금은 **바 위**에
+   * 한 줄로 서고, 칩 하나가 상태 하나다.
+   */
+  chipSize: 30,
+  chipGap: 6,
+  /** 체력 바 위로 띄우는 높이. 바와 칩이 서로의 외곽선에 닿지 않을 만큼만 띄운다. */
+  chipRowLift: 24,
+  /**
+   * 겹 수가 붙는 자리 — 칩 **우하단**이다.
+   *
+   * 가운데에 적으면 표식 그림과 숫자가 겹쳐 둘 다 흐려진다. 작은 판을 깔아 밝은 배경 원화
+   * 위에서도 수가 살아남게 한다.
+   */
+  stackCount: { offsetX: 11, offsetY: 11, size: 16, plateRadius: 9 },
+  /** 남은 시간을 도는 시계 고리의 두께. 칩 외곽선 바로 안쪽을 돈다. */
+  clockWidth: 3,
   /**
    * 수치가 뜨는 높이. SD 키의 몇 할 위인지만 정하고, **떠오르는 거리와 시간은 세기에 따라
    * 달라지므로** `src/ui/damageNumbers.ts`가 정한다.
@@ -66,19 +82,15 @@ export const BATTLE_STATUS_LAYOUT = {
   popupBodyOffsetRatio: 0.72,
 } as const;
 
-export interface StatusBadgeOffsets { stunX: number; bleedX: number; overpaintX: number; butcherX: number }
-
 /**
- * 기절을 체력 바 가까이에 고정하고 나머지는 켜진 것만 한 칸씩 바깥으로 민다.
+ * 상태 칩 `count`장이 설 x 좌표. 체력 바 가운데를 기준으로 한 줄이 가운데 정렬된다.
  *
- * 꺼진 상태의 자리를 비워 두지 않는 이유는, 빈칸을 남기면 하나가 사라질 때 남은 뱃지가
- * 제자리에 있는데도 줄이 비어 보이기 때문이다. 순서는 **행동을 막는 것부터** — 기절, 출혈,
- * 덧칠, 손질 순으로 체력 바에서 멀어진다.
+ * 왼쪽부터 고정 슬롯을 쓰지 않는 이유는, 머리 위 줄은 상태가 붙고 떨어지는 일이 잦아 빈칸을
+ * 남겨 두면 줄이 한쪽으로 쏠려 보이기 때문이다. 대신 **순서가 고정**이라(기절→출혈→덧칠→손질)
+ * 같은 상태는 늘 같은 이웃 옆에 선다.
  */
-export function statusBadgeOffsets(stunned: boolean, bleeding = false, overpainted = false): StatusBadgeOffsets {
-  const first = -BATTLE_STATUS_LAYOUT.firstOffsetX;
-  const gap = BATTLE_STATUS_LAYOUT.badgeGap;
-  const bleedX = first - (stunned ? gap : 0);
-  const overpaintX = bleedX - (bleeding ? gap : 0);
-  return { stunX: first, bleedX, overpaintX, butcherX: overpaintX - (overpainted ? gap : 0) };
+export function unitStatusChipOffsets(count: number): number[] {
+  const { chipSize, chipGap } = BATTLE_STATUS_LAYOUT;
+  const width = count * chipSize + Math.max(0, count - 1) * chipGap;
+  return Array.from({ length: count }, (_, index) => -width / 2 + chipSize / 2 + index * (chipSize + chipGap));
 }

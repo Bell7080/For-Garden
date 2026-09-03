@@ -82,19 +82,35 @@ const ARENA: Arena = { left: 130, right: 950, top: 600, bottom: 1360 };
 /**
  * 쓰러진 SD가 튕겨 다니는 값.
  *
- * 한 화면에서 여섯이 함께 쓰러질 수 있으므로 **짧고 얕게** 끊는다 — 길게 두면 결과 화면이
- * 뜬 뒤에도 시체가 날아다니고, 세게 두면 전장 밖까지 나간 것처럼 보인다.
+ * **곡선을 그리며 굴러가지 않는다.** 맞은 방향 그대로 따악 하고 튀어 나가 전장 벽을
+ * 탱탱볼처럼 파바박 튕기다 번쩍 사라진다 — 끝을 시간이 아니라 **부딪히는 횟수**로 정하는
+ * 이유는 전장 크기와 속도가 달라져도 같은 무게로 읽히게 하기 위해서다.
  */
 const DEATH_FLIGHT = {
-  seconds: 1.1,
-  riseSpeed: 900,
-  minSpeedX: 260,
-  maxSpeedX: 520,
-  spinPerLeg: 220,
-  vanishMs: 220,
+  /** 처음 튀어 나가는 속도(px/s). 곡선으로 흐르지 않을 만큼 세다. */
+  speed: 2600,
+  /** 벽에 부딪히는 횟수. 날려버림(3)보다 오래 튕기다 사라진다. */
+  bounces: 6,
+  /** 맞은 방향을 알 수 없을 때(지속 피해 등) 쓰는 기울기. 완전한 수평은 재미가 없다. */
+  fallbackRise: 0.35,
+  spinPerLeg: 320,
+  vanishMs: 160,
   /** 살아 있는 SD보다 앞에 띄워 다른 캐릭터 뒤로 숨지 않게 한다. */
   depth: 60,
 } as const;
+
+/**
+ * 맞는 순간의 눌림.
+ *
+ * 세게 맞은 그림은 날아가는 속도가 아니라 **맞는 한 프레임**이 만든다 — 가로로 길고 세로로
+ * 꾹 눌렸다가 제 모양으로 돌아오며 튀어 나간다. 매 프레임 `placePuppet`이 배율을 다시 잡으므로
+ * tween이 아니라 이 값과 시작 시각으로 계산해 그 위에 곱한다.
+ */
+const SQUASH = { stretch: 0.55, ms: 150 } as const;
+
+/** 날아가는 동안 도는 빠르기(도/초). 튕길 때마다 방향이 바뀌지 않고 한쪽으로 계속 돈다. */
+const KNOCKBACK_SPIN = 1_080;
+
 /** SD 한 명의 화면 높이. 여섯이 겹치지 않도록 기존 300에서 0.7배로 줄였다. */
 const UNIT_HEIGHT = 210;
 const PROFILE_TOP = 1430;
@@ -188,6 +204,12 @@ interface FighterView {
   tint: number;
   /** 지금 몸이 폭주 색으로 물들어 있는지. 상태가 바뀔 때만 다시 칠한다. */
   feverTinted: boolean;
+  /** 맞는 순간의 눌림이 시작된 시각(ms). `placePuppet`이 매 프레임 배율을 다시 잡으므로 tween이 아니라 값으로 둔다. */
+  squashAt: number;
+  /** 눌림을 가로로 늘일 방향(때린 쪽에서 맞은 쪽). 세로로 날아가도 몸은 가로로 눌린다. */
+  squashDir: number;
+  /** 튕겨 날아가는 동안 도는 방향. 코어의 `knockback`이 남아 있는 동안만 돈다. */
+  spinDir: number;
   dead: boolean;
 }
 
@@ -514,7 +536,7 @@ export class BattleScene extends Phaser.Scene {
       const stunBadge = this.makeStunBadge();
       const { badge: overpaintBadge, stacks: overpaintStacks } = this.makeStackBadge(OVERPAINT_BADGE_COLOR);
       const { badge: butcherBadge, stacks: butcherStacks } = this.makeStackBadge(BUTCHER_BADGE_COLOR);
-      this.views.set(fighter.id, { creature, asset, fighter, infoHit, shadow, hpBar, bleedBadge, overpaintBadge, overpaintStacks, butcherBadge, butcherStacks, stunBadge, stunShown: false, feverTint, feverStep: -1, feverTinted: false, tint, dead: false });
+      this.views.set(fighter.id, { creature, asset, fighter, infoHit, shadow, hpBar, bleedBadge, overpaintBadge, overpaintStacks, butcherBadge, butcherStacks, stunBadge, stunShown: false, feverTint, feverStep: -1, feverTinted: false, tint, squashAt: -Infinity, squashDir: 1, spinDir: 1, dead: false });
     }
     this.syncViews();
     // 마지막 한 명까지 서고 나서 시간을 흘려야 먼저 뜬 캐릭터만 앞서 달려가지 않는다.
@@ -761,7 +783,7 @@ export class BattleScene extends Phaser.Scene {
     if (event.kind === "death") {
       // 프로필은 화면에 남으므로 머리 위 바와 달리 즉시 0으로 닫아 사라진 잔상을 기다리지 않는다.
       this.profiles.find((profile) => profile.fighter.id === event.fighterId)?.prefab.setHealthTarget(0, this.views.get(event.fighterId)?.fighter.maxHp ?? 1, "damage", Number.MAX_SAFE_INTEGER);
-      this.playDeath(event.fighterId);
+      this.playDeath(event.fighterId, event.sourceId);
       return undefined;
     }
     const effectTarget = "fighterId" in event ? this.combatEffectTarget(event.fighterId) : undefined;
@@ -843,7 +865,7 @@ export class BattleScene extends Phaser.Scene {
       return undefined;
     }
     if (event.kind === "knockback") {
-      this.playKnockback(event.fighterId, event.seconds);
+      this.playKnockback(event.fighterId);
       return undefined;
     }
     if (event.kind === "butcherBurst") {
@@ -949,23 +971,40 @@ export class BattleScene extends Phaser.Scene {
    * 직접 옮기면 리플레이와 화면이 갈린다. 그림자와 체력 바는 평소처럼 SD를 따라오므로 손대지
    * 않고, 튕기는 순간마다 조각 몇 개와 회전만 얹는다.
    */
-  private playKnockback(fighterId: string, seconds: number): void {
+  private playKnockback(fighterId: string): void {
     const view = this.views.get(fighterId);
     if (!view || view.dead) return;
-    const spins = Math.max(1, Math.round(seconds * 3));
-    this.tweens.add({
-      targets: view.creature,
-      angle: view.creature.angle + 360 * spins * (view.fighter.facing >= 0 ? 1 : -1),
-      duration: seconds * 1_000 / this.battleSpeed,
-      ease: "Sine.Out",
-      onComplete: () => view.creature.setAngle(0),
-    });
+    const flight = view.fighter.knockback;
+    // 날아가는 방향이 곧 맞은 방향이다. 코어가 시전자 → 피격자로 이미 정해 두었다.
+    const dir = flight && flight.vx !== 0 ? Math.sign(flight.vx) : view.fighter.facing >= 0 ? 1 : -1;
+    this.startSquash(view, dir);
+    view.spinDir = dir;
     const height = UNIT_HEIGHT * view.fighter.bodyScale;
     this.effects.burst("fever", view.creature.x, view.fighter.y - height * 0.5, { color: view.feverTint, scale: view.fighter.bodyScale });
   }
 
-  /** 쓰러진 SD는 펑 하고 튀어올라 전장을 튕겨 다니다 별이 되어 사라진다. */
-  private playDeath(fighterId: string): void {
+  /**
+   * 맞는 순간 몸이 가로로 길고 세로로 꾹 눌린다.
+   *
+   * 세게 맞은 그림은 날아가는 속도가 아니라 이 한 프레임이 만든다. 눌림은 tween이 아니라
+   * 시작 시각으로 두는데, `placePuppet`이 매 프레임 배율을 다시 잡아 tween이 곧바로 덮이기
+   * 때문이다 — `syncViews`가 그 위에 곱한다.
+   */
+  private startSquash(view: FighterView, dir: number): void {
+    view.squashAt = this.time.now;
+    view.squashDir = dir === 0 ? 1 : dir;
+  }
+
+  /** 눌림이 지금 얼마나 남았는지. 1이 가장 눌린 순간이고 0이면 제 모양이다. */
+  private squashRatio(view: FighterView): number {
+    const elapsed = this.time.now - view.squashAt;
+    if (elapsed < 0 || elapsed >= SQUASH.ms) return 0;
+    // 맞는 순간이 가장 세고 곧바로 풀린다 — 천천히 풀면 눌린 채 날아가는 것처럼 보인다.
+    return 1 - elapsed / SQUASH.ms;
+  }
+
+  /** 쓰러진 SD는 맞은 방향으로 따악 튀어 나가 전장을 파바박 튕기다 번쩍 사라진다. */
+  private playDeath(fighterId: string, sourceId?: string): void {
     const view = this.views.get(fighterId);
     if (!view || view.dead) return;
     view.dead = true;
@@ -989,34 +1028,38 @@ export class BattleScene extends Phaser.Scene {
     this.effects.burst("death", view.creature.x, view.fighter.y - height * 0.5, { color: view.feverTint, scale: view.fighter.bodyScale });
     // 사망은 판정이나 결과 정산이 아닌 시각 효과다. finishBattle은 이 완료를 기다리지 않는다.
     //
-    // 위로 조용히 떠오르며 사라지는 대신 **펑 하고 튀어올라 전장을 튕겨 다닌다** — 폭주한
-    // 파치가 적을 날리는 그림과 같은 규칙(`knockbackFlightPath`)을 그대로 써서, "쓰러졌다"가
-    // 화면 안에서 같은 물리로 읽히게 한다. 마지막에 삥 하고 오므라들며 별이 된다.
-    const launch = Phaser.Math.Between(-1, 1) || 1;
+    // **때린 쪽에서 맞은 쪽으로** 곧게 튀어 나간다 — 방향을 임의로 고르면 때린 쪽으로 되날아
+    // 가는 그림이 나온다. 서서 치는 보통의 상황이면 좌우로 날아가 벽을 탱탱볼처럼 튕긴다.
+    const launch = this.deathLaunch(view, sourceId);
     const legs = knockbackFlightPath({
       x: view.creature.x,
       y: view.creature.y,
-      vx: launch * Phaser.Math.Between(DEATH_FLIGHT.minSpeedX, DEATH_FLIGHT.maxSpeedX),
-      vy: -DEATH_FLIGHT.riseSpeed,
-      seconds: DEATH_FLIGHT.seconds,
+      vx: launch.x * DEATH_FLIGHT.speed,
+      vy: launch.y * DEATH_FLIGHT.speed,
+      bounces: DEATH_FLIGHT.bounces,
       arena: this.state.arena,
     });
     view.creature.setDepth(DEATH_FLIGHT.depth);
+    // 날아가기 전에 한 번 꾹 눌린다. 이 한 프레임이 "따악 맞았다"를 만든다.
+    this.startSquash(view, launch.x >= 0 ? 1 : -1);
+    const spin = launch.x >= 0 ? 1 : -1;
     this.tweens.chain({
       targets: view.creature,
       tweens: legs.map((leg) => ({
         x: leg.x,
         y: leg.y,
-        angle: `+=${DEATH_FLIGHT.spinPerLeg * launch}`,
-        duration: Math.max(1, leg.durationMs),
-        ease: "Sine.InOut",
+        angle: `+=${DEATH_FLIGHT.spinPerLeg * spin}`,
+        duration: Math.max(1, leg.durationMs / this.battleSpeed),
+        // 튕겨 나간 몸은 가속하지 않는다. 곡선으로 흐르면 "굴렀다"로 보인다.
+        ease: "Linear",
         onComplete: () => {
           // 벽에 닿는 순간에만 조각이 튄다. 구간마다 터뜨리면 날아가는 내내 잔상이 남는다.
           if (leg.bounced) this.effects.burst("death", leg.x, leg.y, { color: view.feverTint, scale: view.fighter.bodyScale * 0.6 });
         },
       })),
       onComplete: () => {
-        // 삥 하고 한 점으로 오므라들며 별이 된다.
+        // 마지막은 번쩍이다. 조용히 오므라들면 여섯이 함께 쓰러질 때 언제 사라졌는지 모른다.
+        this.effects.burst("death", view.creature.x, view.creature.y, { color: view.feverTint, scale: view.fighter.bodyScale * 1.4 });
         this.tweens.add({
           targets: view.creature,
           scale: 0,
@@ -1027,6 +1070,26 @@ export class BattleScene extends Phaser.Scene {
         });
       },
     });
+  }
+
+  /**
+   * 쓰러진 몸이 튀어 나가는 방향(단위 벡터).
+   *
+   * 마지막 일격을 넣은 쪽에서 맞은 쪽으로 향한다. 지속 피해처럼 가한 쪽이 없으면 바라보던
+   * 반대쪽으로 살짝 위를 향해 날린다 — 완전한 수평은 벽 하나만 오가서 심심하다.
+   */
+  private deathLaunch(view: FighterView, sourceId?: string): { x: number; y: number } {
+    const source = sourceId ? this.views.get(sourceId) : undefined;
+    if (source && source !== view) {
+      const dx = view.fighter.x - source.fighter.x;
+      const dy = view.fighter.y - source.fighter.y;
+      const gap = Math.hypot(dx, dy);
+      if (gap > 1) return { x: dx / gap, y: dy / gap };
+    }
+    const away = view.fighter.facing >= 0 ? -1 : 1;
+    const rise = -DEATH_FLIGHT.fallbackRise;
+    const gap = Math.hypot(away, rise);
+    return { x: away / gap, y: rise / gap };
   }
 
   /**
@@ -1134,6 +1197,20 @@ export class BattleScene extends Phaser.Scene {
       view.creature.setAlpha(fighter.stealthFor > 0 ? 0.45 : 1);
       // 폭주 중에는 한 뼘 커진다. 자리를 다시 잡은 뒤에 곱해야 매 프레임 배율이 되돌아가지 않는다.
       if (fighter.ferocityFever) view.creature.setScale(view.creature.scaleX * FEVER.scale, view.creature.scaleY * FEVER.scale);
+      // 맞은 순간의 눌림도 같은 이유로 여기서 곱한다 — 가로로 길고 세로로 꾹 눌렸다 돌아온다.
+      const squash = this.squashRatio(view);
+      if (squash > 0) {
+        view.creature.setScale(
+          view.creature.scaleX * (1 + SQUASH.stretch * squash),
+          view.creature.scaleY * (1 - SQUASH.stretch * squash),
+        );
+      }
+      // 튕겨 날아가는 동안에는 계속 돈다. 좌표는 코어가 옮기고 회전만 화면이 얹는다.
+      if (fighter.knockback) {
+        view.creature.setAngle(view.creature.angle + KNOCKBACK_SPIN * view.spinDir * this.game.loop.delta / 1_000);
+      } else if (view.creature.angle !== 0) {
+        view.creature.setAngle(0);
+      }
       // 아래에 선 캐릭터가 앞에 오도록 발 높이로 앞뒤를 정한다.
       view.creature.setDepth(Math.round(fighter.y / 10) + DEPTH.unitBase);
       // 폭주는 빛이 아니라 **필터**다. 일러스트에 그 개체의 스킬 아이콘 색을 입히고, 섞는

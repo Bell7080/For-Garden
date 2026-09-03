@@ -819,7 +819,8 @@ describe("기절 상태", () => {
     foe.hp = 1;
     ally.attackCooldown = 0;
     const events = stepSkirmish(state, 1 / 60);
-    expect(events).toContainEqual({ kind: "death", fighterId: foe.id });
+    // 사망 사건은 마지막 일격을 넣은 쪽을 함께 싣는다 — 화면이 날아가는 방향을 그 둘에서 만든다.
+    expect(events).toContainEqual({ kind: "death", fighterId: foe.id, sourceId: ally.id });
     expect(foe.stunnedFor).toBe(0);
   });
 
@@ -2251,6 +2252,8 @@ describe("파치 정적 전투 계약", () => {
     expect(rang.critical).toBe(true);
     expect(events.some((event) => event.kind === "knockback")).toBe(true);
     expect(enemy.knockback).not.toBeNull();
+    // 끝은 시간이 아니라 남은 튕김 횟수가 정한다.
+    expect(enemy.knockback!.bouncesLeft).toBe(trait.bounces);
     // 날려 버린 상대는 사거리 밖이므로 파치는 다음 상대를 찾는다.
     expect(pachi.targetId).toBe(foes[1].id);
 
@@ -2263,9 +2266,29 @@ describe("파치 정적 전투 계약", () => {
     expect(enemy.y).toBeGreaterThanOrEqual(state.arena.top);
     expect(enemy.y).toBeLessThanOrEqual(state.arena.bottom);
 
-    // 시간이 다 되면 스스로 풀려 다시 싸운다.
+    // 정해진 횟수를 다 튕기면 그 자리에 선다. 끝을 시간이 아니라 횟수로 정하는 규칙이다.
     run(state, trait.seconds + 0.5);
     expect(enemy.knockback).toBeNull();
+  });
+
+  it("의 날려버림은 시킨 횟수만큼 벽을 튕기고 멈춘다", () => {
+    const { state, pachi, enemy } = pachiBattle(["husk-shell"]);
+    const trait = getRelic("pachi").ferocityTrait;
+    if (trait.effectId !== "knockbackSlam") throw new Error("파치의 폭주 특성이 아니다");
+    pachi.ferocity = 100; pachi.ferocityFever = true;
+    for (let hit = 0; hit < pachi.def.basic.statusEffectEvery!; hit += 1) {
+      pachi.attackCooldown = 0; enemy.stunnedFor = 0;
+      stepSkirmish(state, 1 / 60);
+    }
+    // 벽에 닿을 때마다 남은 횟수가 하나씩 줄고, 다 쓰면 그 프레임에 끝난다.
+    const seen: number[] = [];
+    for (let frame = 0; frame < 600 && enemy.knockback; frame += 1) {
+      stepSkirmish(state, 1 / 60);
+      if (enemy.knockback) seen.push(enemy.knockback.bouncesLeft);
+    }
+    expect(enemy.knockback).toBeNull();
+    // 처음 값에서 0까지 내려온다 — 중간에 건너뛰면 한 프레임에 두 번 센 것이다.
+    expect([...new Set(seen)]).toEqual(Array.from({ length: trait.bounces + 1 }, (_, index) => trait.bounces - index));
   });
 });
 

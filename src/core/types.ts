@@ -208,6 +208,19 @@ export type CombatStatusEffect =
   | { kind: "stun"; /** 저항 계산 전 기본 지속 시간(초). */ seconds: number }
   | {
       /**
+       * 손질. 겹이 상한에 닿는 순간 **그 자리에서 터지고 겹이 비워진다.**
+       *
+       * 덧칠처럼 쌓아 두고 나중에 쓰는 값이 아니라, 세 번째 칼질이 곧 결과다 — 그래서 상한에
+       * 닿은 프레임에 스스로 터진다. 터지는 피해는 그 순간 칼을 댄 개체의 공격력에서 나온다.
+       */
+      kind: "butcher";
+      /** 이 겹에 닿으면 터진다. 터진 뒤 겹은 0으로 돌아간다. */
+      maxStacks: number;
+      /** 터질 때 시전자 공격력에서 뽑는 물리 피해 비율(%). */
+      burstPower: number;
+    }
+  | {
+      /**
        * 뇌진탕. 방어력을 무시하는 **즉발 고정 피해** 한 번이며 지속 상태를 남기지 않는다.
        *
        * 출혈처럼 시간을 두고 깎지 않는 이유는, 파치의 뇌진탕이 "네 번째 배트가 헬멧을 울린
@@ -253,6 +266,8 @@ export type Ultimate = Skill & {
   attackSpeedPower?: number;
   /** 혼합 궁극기가 범위 안 생존 아군에게 적용할 주문력 회복 배율(%). */
   allyHealingPower?: number;
+  /** 이 궁극기로 대상을 처치하면 되돌려받는 궁극기 게이지다. 빗나가거나 살아남으면 없다. */
+  energyRefundOnKill?: number;
   /**
    * 대상에 쌓인 덧칠을 터뜨리는 궁극기인가.
    *
@@ -307,8 +322,10 @@ export type PassiveKind =
   | "bleedStreak"
   /** 메론 전용: 아군이 덧칠된 적을 때리면 그 피해의 일부만큼 **때린 본인**이 회복한다 */
   | "overpaintSiphon"
-  /** 파치 전용: 한 방에 들어오는 피해에 상한을 두되 경감폭 자체도 함께 제한한다 */
+  /** 파치 전용: 한 방에 들어오는 피해에 상한을 둔다 */
   | "impactCap"
+  /** 마키 전용: 체력이 가장 낮은 적으로 주기적으로 도약해 표적을 갈아탄다 */
+  | "gourmetHunt"
   /** 티아 전용: 타격한 적에게 표식을 남기고, 표식이 없는 적을 때리면 표식을 옮기며 추가 마법 피해를 준다. */
   | "shimmerMark"
   /** 체력이 절반 이하가 되면 전투당 한 번 은신해 표적에서 벗어난다 */
@@ -349,7 +366,9 @@ export type FerocityEffectId =
   /** 스테라 전용: 폭주 중 아군 전체의 공격당 야성·궁극기 충전량을 함께 올린다. */
   | "tailwindRally"
   /** 파치 전용: 폭주 중 뇌진탕이 확정 치명타가 되고 그 적을 전장 밖으로 튕겨 날린다. */
-  | "knockbackSlam";
+  | "knockbackSlam"
+  /** 마키 전용: 폭주 중 손질이 터진 피해의 일부를 아군 전체의 회복으로 돌린다. */
+  | "butcherFeast";
 
 /**
  * 개체별 피버 발현 정적 데이터다.
@@ -390,6 +409,11 @@ export type FerocityTrait = {
       effectId: "sharedOverpaint";
       /** 아군의 적중이 대신 걸어 주는 덧칠. 메론의 기본 공격과 같은 계약을 그대로 쓴다. */
       overpaint: Extract<CombatStatusEffect, { kind: "overpaint" }>;
+    }
+  | {
+      effectId: "butcherFeast";
+      /** 터진 손질 피해 중 아군 전체의 회복으로 돌리는 비율(%)이다. */
+      healPercent: number;
     }
   | {
       effectId: "knockbackSlam";
@@ -473,6 +497,8 @@ export interface Passive {
   maxDamageReductionPercent?: number;
   /** 심해 압력 전용: 최대 피해 감소율에 도달하는 현재 체력 비율이다. */
   maxReductionAtHpPercent?: number;
+  /** 고품격 식재료 전용: 다시 표적을 고르고 도약하기까지의 간격(초). 적을 처치하면 즉시 앞당긴다. */
+  huntCooldownSeconds?: number;
   /**
    * 무면허 안전제일 전용: 한 방에 들어올 수 있는 피해의 상한(대상 최대 체력 %)이다.
    *

@@ -90,6 +90,8 @@ export const MERON_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1086,
   imageHeight: 1448,
   content: { left: 186, top: 10, right: 1031, bottom: 1440 },
+  // 코어 관절이 가시 영역의 25% 지점에 박혀 있어(다른 원화는 28~35%) 정보창에서 혼자 내려앉는다.
+  portraitOffsetY: -50,
 };
 
 /** 메론 SD ZIP의 정사각 원본과 alpha > 16 경계다. */
@@ -104,6 +106,8 @@ export const PACHI_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1024,
   imageHeight: 1536,
   content: { left: 88, top: 8, right: 1009, bottom: 1515 },
+  // 배트를 어깨에 걸친 자세라 코어가 가시 영역의 19% 지점까지 올라와 있어 더 크게 올린다.
+  portraitOffsetY: -110,
 };
 
 /** 파치 SD ZIP의 정사각 원본과 alpha > 16 경계다. */

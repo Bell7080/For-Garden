@@ -699,7 +699,7 @@ export const RELICS: RelicDef[] = [
     unlockRecord: { status: "recorded", text: "복원 첫날 파치는 케어실 문틀을 머리로 받아 경첩을 부쉈고, 그 뒤로 안전모를 씌워 두자 벗지 않는다. 하루 종일 체리맛 사탕을 물고 다니며 껍질을 아무 데나 버리고, 지적하면 눈을 굴리며 \"알았다고\"라고 대꾸한 뒤 결국 주워 온다. 출격 지시에도 매번 툴툴거리지만 연구원이 말한 자리에서는 한 발도 물러서지 않고, 뒤따라오는 인원이 다 지나갈 때까지 그 앞을 막고 서 있는다." },
     squadNote: "앱솔루트 팽의 돌파 담당. 전선이 열려야 할 자리를 머리로 뚫어 놓고, 연구원을 굳이 \"보스\"라 부르며 지시에는 툴툴거리면서도 꼭 따른다.",
     researcherTitle: "보스",
-    rarity: "R",
+    rarity: "SR",
     portraitAssetId: "pachi",
     origin: "파키케팔로사우루스",
     element: "earth",
@@ -708,13 +708,13 @@ export const RELICS: RelicDef[] = [
     excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 0.26, efficiencyMultiplier: 1.04 },
     // 머리로 받는 개체라 방어가 두껍고 발이 빠르다. 주문력을 쓰는 스킬이 하나도 없어 낮게 둔다.
     stats: {
-      hp: 1040,
-      def: 88,
-      res: 50,
-      atk: 132,
+      hp: 1100,
+      def: 92,
+      res: 55,
+      atk: 142,
       ap: 45,
-      attackSpeed: 90,
-      moveSpeed: 116,
+      attackSpeed: 92,
+      moveSpeed: 118,
       critChance: 10,
       critDamage: 150,
       energyGain: 26,
@@ -772,6 +772,96 @@ export const RELICS: RelicDef[] = [
         { kind: "stun", seconds: 2 },
         { kind: "concussion", maxHpPercent: 5, criticalMaxHpPercent: 15 },
       ],
+    },
+  },
+
+  {
+    id: "maki",
+    squad: "gear",
+    name: "마키",
+    specimenNumber: "126",
+    projectName: "OMAKASE",
+    excavationSite: "세로 데 라스 아니마스 하부 역암층",
+    // 발굴 기록은 장소·보존 상태·복원 연구 특징만 담고, 복원 이후 생활 관찰과 분리한다.
+    fossilRecord: "역암층 틈에서 아직 다 자라지 않은 검치 한 쌍이 턱뼈째 나왔다. 이가 갈려 나간 흔적 없이 날이 그대로 남아 있어 복원 대상으로 골랐다.",
+    observationProfile: {
+      originYear: "약 1천 2백만 년 전",
+      // E.C.는 마키의 인간형 신체 나잇대이며, 원종 화석의 성장 단계와 독립된 값이다.
+      restorationYear: "E.C. 19년",
+      lifeStage: "해츨링",
+      height: "1.62 m",
+      weight: "49 kg",
+    },
+    catalogSummary: "신장 1.62m, 체중 49kg의 인간형 체격에 반점 무늬 꼬리와 드러난 검치가 확인된 해츨링 표본.",
+    // 복원 후 관찰은 성격과 실제로 목격된 행동만 남기고 발굴 기록과 겹치지 않게 쓴다.
+    unlockRecord: { status: "recorded", text: "이터널 시티에서 뼈를 가장 잘 맞추는 손이다. 부러진 자리를 한 번 짚고 곧바로 붙여 놓고는, 같은 손으로 회복식 재료를 손질해 내온다. 연구원의 전속 담당의를 자처하며 매일 진료 신청서를 들이밀지만 매번 퇴짜를 맞고, 그때마다 \"보는 눈이 없다\"며 꼬리를 세운다. 케어실 벽에 붙여 둔 식재료 순위표 1등 칸에는 연구원의 이름이 적혀 있는데, 본인은 그게 최고의 찬사라고 우긴다." },
+    squadNote: "나이트 기어의 야전 담당의. 인양조가 다치면 그 자리에서 붙여 놓고, 연구원만은 \"연구원님\"이라 부르며 진료 예약을 조른다.",
+    researcherTitle: "연구원님",
+    rarity: "SSR",
+    portraitAssetId: "maki",
+    origin: "마카이로두스",
+    element: "earth",
+    role: "assassin",
+    // 재료를 다루는 손이라 발굴 특화도 치즈케이크 쪽에 붙인다.
+    excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 0.76, efficiencyMultiplier: 1.12 },
+    // 가장 약해진 적을 골라 뛰어드는 개체라 발이 가장 빠르고, 칼을 쓰는 손이라 공격력이 높다.
+    stats: {
+      hp: 930,
+      def: 58,
+      res: 54,
+      atk: 190,
+      ap: 40,
+      attackSpeed: 122,
+      moveSpeed: 128,
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 0,
+    },
+    ferocityTrait: {
+      name: "잠깐, 나 이래 봬도 의사라고?",
+      effectId: "butcherFeast",
+      healPercent: 50,
+    },
+    passive: {
+      // kind가 gourmetHunt인 패시브는 passiveDescription()이 구조화 필드로 다시 문장을 만들므로
+      // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
+      id: "maki-passive",
+      name: "고품격 식재료는 어딨냥?",
+      kind: "gourmetHunt",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      // Passive.value는 공용 필수 필드라, 이 패시브에서는 재사용 간격을 그대로 담아 둔다.
+      value: 10,
+      huntCooldownSeconds: 10,
+      desc: "전투를 시작할 때 현재 체력이 가장 낮은 적을 표적으로 삼고 그 자리로 도약한다. 적을 처치하면 즉시, 그 밖에는 10초마다 다시 고른다.",
+    },
+    basic: {
+      id: "maki-basic",
+      name: "부위별 손질",
+      power: 110,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      targeting: "single",
+      statusEffects: [
+        { kind: "butcher", maxStacks: 3, burstPower: 120 },
+        { kind: "bleed", seconds: 3, maxHpPercentPerSecond: 2 },
+      ],
+    },
+    ultimate: {
+      id: "maki-ult",
+      name: "오마카세",
+      power: 400,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      cost: 180,
+      // 처치했을 때만 돌려받는다. 살아남으면 아무것도 없다.
+      energyRefundOnKill: 100,
+      // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
+      targeting: "single",
     },
   },
 

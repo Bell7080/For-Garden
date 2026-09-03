@@ -93,6 +93,14 @@ export interface Fighter extends Combatant {
   knockback: { remaining: number; vx: number; vy: number } | null;
   /** `statusEffectEvery`가 있는 기본 공격이 실제로 몇 번 나갔는지. 그 주기에만 상태를 건다. */
   statusHitCount: number;
+  /**
+   * 지금 쌓인 손질. 상한에 닿으면 그 자리에서 터지고 다시 0부터 센다.
+   *
+   * 덧칠과 달리 **지속 시간이 없다** — 세 번째 칼질이 곧 결과라 시간이 흘러 사라지지 않는다.
+   */
+  butcher: { stacks: number; maxStacks: number; burstPower: number } | null;
+  /** 고품격 식재료가 다시 표적을 고르기까지 남은 시간(초). 0이 되는 프레임에 도약한다. */
+  huntCooldown: number;
   /** 남은 순풍 시간(초). 공격 속도·이동 속도를 함께 올리는 아군 전체 강화다. */
   tailwindFor: number;
   /** 지금 걸린 순풍의 수치. 여러 제공자가 겹치면 남은 시간이 긴 쪽의 값을 그대로 쓴다. */
@@ -236,6 +244,8 @@ export type SkirmishEvent =
   | { kind: "concussion"; fighterId: string; amount: number; critical: boolean }
   /** 폭주한 파치가 적을 튕겨 날린 순간. 씬은 이 사건으로만 튕기는 연출을 시작한다. */
   | { kind: "knockback"; fighterId: string; seconds: number }
+  /** 손질 세 겹이 터진 순간. 방어를 지나치지 않는 물리 피해라 attack과 다른 색으로 뜬다. */
+  | { kind: "butcherBurst"; attackerId: string; fighterId: string; amount: number }
   /** 돌진이 실제로 지나간 선분. 씬은 이 두 점 사이에 자국을 그린다. */
   | { kind: "charge"; fighterId: string; from: { x: number; y: number }; to: { x: number; y: number } }
   | { kind: "finish"; phase: "victory" | "defeat" };
@@ -352,6 +362,8 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     overpaint: null,
     knockback: null,
     statusHitCount: 0,
+    butcher: null,
+    huntCooldown: 0,
     tailwindFor: 0,
     tailwind: null,
     tailwindTickIn: 0,
@@ -518,6 +530,7 @@ function applyCombatStatusEffect(fighter: Fighter, effect: CombatStatusEffect, e
   if (effect.kind === "bleed") refreshBleed(fighter, effect.seconds, effect.maxHpPercentPerSecond, events, sourceId);
   if (effect.kind === "overpaint") refreshOverpaint(fighter, effect);
   if (effect.kind === "concussion") applyConcussion(fighter, effect, critical, events, state, sourceId);
+  if (effect.kind === "butcher") applyButcher(fighter, effect, events, state, sourceId);
 }
 
 /**
@@ -597,6 +610,91 @@ function refreshOverpaint(target: Fighter, effect: Extract<CombatStatusEffect, {
   target.overpaint = { remaining: effect.seconds, stacks, percentPerStack: effect.damageTakenPercent, maxStacks: effect.maxStacks };
 }
 
+/**
+ * 손질을 한 겹 쌓고, 상한에 닿으면 **그 자리에서 터뜨린다.**
+ *
+ * 덧칠처럼 쌓아 두었다가 나중에 쓰는 값이 아니라 세 번째 칼질이 곧 결과라, 겹을 올린 프레임에
+ * 스스로 터지고 0으로 돌아간다. 터지는 피해는 그 순간 칼을 댄 개체의 공격력에서 나오므로,
+ * 겹을 쌓은 사람과 터뜨린 사람이 다르면 **터뜨린 쪽**의 수치를 쓴다.
+ */
+function applyButcher(
+  target: Fighter,
+  effect: Extract<CombatStatusEffect, { kind: "butcher" }>,
+  events: SkirmishEvent[],
+  state: SkirmishState,
+  sourceId?: string,
+): void {
+  const stacks = (target.butcher?.stacks ?? 0) + 1;
+  target.butcher = { stacks, maxStacks: effect.maxStacks, burstPower: effect.burstPower };
+  if (stacks < effect.maxStacks) return;
+  target.butcher = { stacks: 0, maxStacks: effect.maxStacks, burstPower: effect.burstPower };
+
+  const attacker = sourceId ? findFighter(state, sourceId) : undefined;
+  if (!attacker) return;
+  const raw = Math.max(1, Math.round(computeDamage(
+    { ...attacker, def: offensiveDefinition(attacker) },
+    defensiveDefinition(target, state),
+    { power: effect.burstPower, damageType: "physical", scalingStat: "atk", isCritical: false, kind: "basic" },
+    true,
+  ) * attackPowerMultiplier(state.augmentEffects, attacker.def.id)));
+  const resolution = resolveReceivedDamage(target, raw);
+  const hpBefore = target.hp;
+  applyDamage(target, resolution.applied, events);
+  const dealt = hpBefore - target.hp;
+  events.push({ kind: "butcherBurst", attackerId: attacker.id, fighterId: target.id, amount: resolution.applied });
+  // 폭주한 마키는 터진 몫의 일부를 아군 전체의 회복으로 돌린다.
+  const feast = attacker.ferocityFever && attacker.def.ferocityTrait.effectId === "butcherFeast"
+    ? attacker.def.ferocityTrait : undefined;
+  if (feast && dealt > 0) {
+    for (const ally of aliveFighters(state, attacker.side)) {
+      const healed = applyHealing(state, ally, dealt * feast.healPercent / 100, attacker.id);
+      if (healed > 0) events.push({ kind: "heal", fighterId: ally.id, amount: healed, source: "passive", effect: { tag: "heal", intensity: 1 } });
+    }
+  }
+  if (!isFighterAlive(target)) {
+    clearDefeatedStatuses(target);
+    events.push({ kind: "death", fighterId: target.id });
+  }
+}
+
+/**
+ * 고품격 식재료의 시계. 전투 첫 프레임과 그 뒤 정해진 간격마다 다시 고른다.
+ *
+ * 쿨다운을 0에서 시작하므로 **첫 프레임에 곧바로** 도약한다 — "전투 시작 시"를 따로 분기하지
+ * 않아도 같은 코드 하나가 시작과 재발동을 모두 맡는다. 적을 처치하면 그 자리에서 0으로
+ * 되돌려 다음 프레임에 바로 다음 식재료를 고르러 간다.
+ */
+function tickGourmetHunt(fighter: Fighter, dt: number, state: SkirmishState): void {
+  const passive = fighter.def.passive;
+  if (passive.kind !== "gourmetHunt" || fighter.stunnedFor > 0 || fighter.knockback) return;
+  fighter.huntCooldown -= dt;
+  if (fighter.huntCooldown > 0) return;
+  fighter.huntCooldown = passive.huntCooldownSeconds ?? 10;
+  // 자리를 옮기는 것 자체가 화면에서 보이는 신호라 따로 표시 사건을 만들지 않는다.
+  leapToLowestHpEnemy(fighter, state, SKIRMISH.reach * 0.8);
+}
+
+/**
+ * 고품격 식재료. 지금 가장 약해진 적으로 표적을 갈아타며 그 자리로 뛴다.
+ *
+ * 잠행(스피나)과 같은 자리 계산을 쓰되 은신은 걸지 않는다 — 마키는 숨는 것이 아니라 **가장 잘
+ * 익은 것을 고르러 가는** 개체라, 표적 선택 그 자체가 이 패시브의 전부다.
+ */
+function leapToLowestHpEnemy(fighter: Fighter, state: SkirmishState, landingDistance: number): Fighter | undefined {
+  // 현재 HP 비율, 절대 HP, 배열 순서로 최저 체력 적을 결정해 리플레이를 안정적으로 유지한다.
+  const target = state.fighters.filter((other) => other.side !== fighter.side && isFighterAlive(other))
+    .map((other, index) => ({ other, index }))
+    .sort((a, b) => a.other.hp / a.other.maxHp - b.other.hp / b.other.maxHp || a.other.hp - b.other.hp || a.index - b.index)[0]?.other;
+  if (!target) return undefined;
+  const dx = fighter.x - target.x; const dy = fighter.y - target.y; const gap = Math.hypot(dx, dy) || 1;
+  fighter.x = Math.min(state.arena.right, Math.max(state.arena.left, target.x + dx / gap * landingDistance));
+  fighter.y = Math.min(state.arena.bottom, Math.max(state.arena.top, target.y + dy / gap * landingDistance));
+  fighter.targetId = target.id;
+  // `engaged`는 매 프레임 거리로 다시 정하므로 여기서 건드리지 않는다 — 손대면 착지한 프레임에
+  // 다시 달려들어 착지 거리 자체가 어긋난다.
+  return target;
+}
+
 /** 지금 이 대상이 받는 피해를 몇 배로 키우는지. 화면과 계산이 같은 한 곳에서 읽는다. */
 export function overpaintMultiplier(target: Fighter): number {
   const overpaint = target.overpaint;
@@ -645,6 +743,7 @@ function clearDefeatedStatuses(fighter: Fighter): void {
   fighter.bleed = null;
   fighter.overpaint = null;
   fighter.knockback = null;
+  fighter.butcher = null;
   fighter.regeneration = null;
   fighter.stunnedFor = 0;
   fighter.staggeredFor = 0;
@@ -996,16 +1095,7 @@ function gainFerocity(fighter: Fighter, base: number, state: SkirmishState): voi
     const trait = fighter.def.ferocityTrait;
     if (trait.effectId === "stealthLeap") {
       fighter.stealthFor = trait.durationSeconds;
-      // 현재 HP 비율, 절대 HP, 배열 순서로 최저 체력 적을 결정해 리플레이를 안정적으로 유지한다.
-      const target = state.fighters.filter((other) => other.side !== fighter.side && isFighterAlive(other))
-        .map((other, index) => ({ other, index }))
-        .sort((a, b) => a.other.hp / a.other.maxHp - b.other.hp / b.other.maxHp || a.other.hp - b.other.hp || a.index - b.index)[0]?.other;
-      if (target) {
-        const dx = fighter.x - target.x; const dy = fighter.y - target.y; const gap = Math.hypot(dx, dy) || 1;
-        fighter.x = Math.min(state.arena.right, Math.max(state.arena.left, target.x + dx / gap * trait.landingDistance));
-        fighter.y = Math.min(state.arena.bottom, Math.max(state.arena.top, target.y + dy / gap * trait.landingDistance));
-        fighter.targetId = target.id;
-      }
+      leapToLowestHpEnemy(fighter, state, trait.landingDistance);
       // 이미 스피나를 추적하던 모든 상대도 즉시 대기/재탐색 상태로 돌린다.
       for (const other of state.fighters) if (other.targetId === fighter.id) { other.targetId = null; other.engaged = false; }
     }
@@ -1609,6 +1699,13 @@ function strike(
   // 개별 기본 공격·궁극기가 선언한 상태도 피해 처리 뒤 공용 저항/재적용 규칙을 그대로 사용한다.
   if (statusEffectsLandThisHit(attacker, skill, useUltimate)) applySkillStatuses(target, skill, events, state, attacker.id, critical);
 
+  // 처치는 두 개체의 규칙이 함께 걸리는 자리다 — 오마카세의 게이지 환급과 다음 식재료 선택.
+  if (!isFighterAlive(target)) {
+    if (useUltimate) attacker.energy = Math.min(ULTIMATE_ENERGY_MAX, attacker.energy + (attacker.def.ultimate.energyRefundOnKill ?? 0));
+    // 처치한 순간 시계를 0으로 돌려 다음 프레임에 곧바로 다음 표적으로 뛴다.
+    if (attacker.def.passive.kind === "gourmetHunt") attacker.huntCooldown = 0;
+  }
+
   // 표식은 궁극기가 아니라 실제 타격을 따라 옮겨 다닌다.
   if (!useUltimate) {
     applyShimmerMark(attacker, target, state, events);
@@ -1978,6 +2075,7 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     // 출혈은 붙어 있든 달려가든 흐르는 시간만큼 깎는다.
     tickBleed(fighter, dt, state, events);
     if (!isFighterAlive(fighter)) continue;
+    tickGourmetHunt(fighter, dt, state);
     // 기절 시간은 위에서 흐르지만 행동 시계인 공격 쿨다운은 멈춘다. 즉 이동·추적·평타·자동
     // 궁극기와 함께 행동 자체가 정지하며, 정확히 0이 된 스텝부터 기존 쿨다운을 이어서 처리한다.
     // 날아가는 중에는 벽을 튕기며 실제로 좌표가 움직인다. 기절과 달리 제자리에 서 있지 않다.

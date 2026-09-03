@@ -542,3 +542,45 @@ describe("파치 스킬 표시 계약", () => {
     expect(keyword.description).toContain(`${effect.criticalMaxHpPercent}%`);
   });
 });
+
+describe("마키 스킬 표시 계약", () => {
+  const maki = () => RELICS.find((def) => def.id === "maki")!;
+
+  it("의 패시브는 재사용 조건 둘을 함께 말한다", () => {
+    const def = maki();
+    // 처치와 시간 중 하나만 적으면 플레이어가 나머지 하나를 영영 모른다.
+    expect(passiveDescription(def.passive, def.stats.atk)).toBe(
+      "전투를 시작할 때 현재 체력이 가장 낮은 적을 표적으로 삼고 그 자리로 [[teleport|순간이동]]한다. 적을 처치하면 즉시, 그 밖에는 10초마다 다시 고른다.",
+    );
+  });
+
+  it("의 기본 공격은 손질과 출혈을 각각 제 문장으로 말한다", () => {
+    const def = maki();
+    expect(def.basic.statusEffects).toEqual([
+      { kind: "butcher", maxStacks: 3, burstPower: 120 },
+      { kind: "bleed", seconds: 3, maxHpPercentPerSecond: 2 },
+    ]);
+    // 겹 상한과 터지는 위력은 태그가 말하므로 본문이 되풀이하지 않는다.
+    expect(skillDescription(def.basic, { damage: 209 })).toBe(
+      "적 한 명에게 [[damage-value|209]]의 [[physical-damage|물리 피해]]를 주고 [[butcher|손질]]을 한 겹 쌓는다. 3초 동안 [[bleed|출혈]]시켜 매초 최대 체력의 2%를 잃게 한다.",
+    );
+  });
+
+  it("의 궁극기는 처치했을 때만 돌려받는다는 조건을 말한다", () => {
+    const def = maki();
+    expect(def.ultimate).toMatchObject({ targeting: "single", power: 400, cost: 180, energyRefundOnKill: 100 });
+    expect(skillDescription(def.ultimate, { damage: 760 })).toBe(
+      "적 한 명에게 [[damage-value|760]]의 [[physical-damage|물리 피해]]를 준다. 이 공격으로 처치하면 궁극기 게이지를 100 돌려받는다.",
+    );
+  });
+
+  it("의 손질 키워드는 실제 전투 계약과 같은 상한·위력을 말한다", () => {
+    const effect = maki().basic.statusEffects!.find((status) => status.kind === "butcher")!;
+    if (effect.kind !== "butcher") throw new Error("손질 효과가 아니다");
+    const keyword = KEYWORDS.find((entry) => entry.id === "butcher")!;
+    // 수치를 태그가 말하기로 했으므로 데이터와 갈리면 유일한 설명이 틀린다.
+    expect(keyword.description).toContain("세 겹째");
+    expect(keyword.description).toContain(`${effect.burstPower}%`);
+    expect(effect.maxStacks).toBe(3);
+  });
+});

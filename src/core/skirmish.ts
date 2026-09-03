@@ -77,6 +77,13 @@ export interface Fighter extends Combatant {
    * 표식은 공격자가 소유한다 — 대상에 붙여 두면 티아가 둘일 때 서로의 표식을 지운다.
    */
   shimmerMarkTargetId: string | null;
+  /**
+   * 지금 덧칠된 상태. 스스로는 피해를 주지 않고 **받는 모든 피해**를 중첩만큼 키운다.
+   *
+   * 출혈처럼 슬롯 하나만 두는 이유는 같다 — 여럿이 겹쳐 걸면 어느 쪽 수치가 도는지 화면과
+   * 계산이 갈린다. 다시 칠하면 시간이 처음부터 다시 돌고 중첩만 하나 오른다.
+   */
+  overpaint: { remaining: number; stacks: number; percentPerStack: number; maxStacks: number } | null;
   /** 남은 순풍 시간(초). 공격 속도·이동 속도를 함께 올리는 아군 전체 강화다. */
   tailwindFor: number;
   /** 지금 걸린 순풍의 수치. 여러 제공자가 겹치면 남은 시간이 긴 쪽의 값을 그대로 쓴다. */
@@ -320,6 +327,7 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     streakTargetId: null,
     streakCount: 0,
     shimmerMarkTargetId: null,
+    overpaint: null,
     tailwindFor: 0,
     tailwind: null,
     tailwindTickIn: 0,
@@ -484,6 +492,25 @@ function applyCombatStatusEffect(fighter: Fighter, effect: CombatStatusEffect, e
   if (effect.kind === "stun") events.push(...applyStun(fighter, effect.seconds, state));
   if (effect.kind === "stagger") events.push(...applyStagger(fighter, effect.seconds, state));
   if (effect.kind === "bleed") refreshBleed(fighter, effect.seconds, effect.maxHpPercentPerSecond, events, sourceId);
+  if (effect.kind === "overpaint") refreshOverpaint(fighter, effect);
+}
+
+/**
+ * 덧칠을 한 겹 더 올린다.
+ *
+ * 다시 칠하면 **시간은 처음부터** 다시 돌고 중첩만 하나 오른다 — 오래 유지하려면 계속 칠해야
+ * 하므로, 한 번 쌓아 두고 방치하는 것으로는 파티 배율이 유지되지 않는다.
+ */
+function refreshOverpaint(target: Fighter, effect: Extract<CombatStatusEffect, { kind: "overpaint" }>): void {
+  const stacks = Math.min(effect.maxStacks, (target.overpaint?.stacks ?? 0) + 1);
+  target.overpaint = { remaining: effect.seconds, stacks, percentPerStack: effect.damageTakenPercent, maxStacks: effect.maxStacks };
+}
+
+/** 지금 이 대상이 받는 피해를 몇 배로 키우는지. 화면과 계산이 같은 한 곳에서 읽는다. */
+export function overpaintMultiplier(target: Fighter): number {
+  const overpaint = target.overpaint;
+  if (!overpaint || overpaint.remaining <= 0) return 1;
+  return 1 + overpaint.stacks * overpaint.percentPerStack / 100;
 }
 
 /** 한 스킬이 선언한 상태를 생존한 한 적중 대상에게 공용 저항·UI 사건 경로로 적용한다. */
@@ -508,6 +535,7 @@ function refreshBleed(target: Fighter, seconds: number, percent: number, events:
 function clearDefeatedStatuses(fighter: Fighter): void {
   fighter.targetId = null;
   fighter.bleed = null;
+  fighter.overpaint = null;
   fighter.regeneration = null;
   fighter.stunnedFor = 0;
   fighter.staggeredFor = 0;
@@ -963,6 +991,38 @@ function triggerCrescendoStaccato(state: SkirmishState, target: Fighter, events:
 }
 
 /**
+ * 폭주 중인 메론이 **아군의 일반 공격 적중**에 덧칠을 대신 걸어 준다.
+ *
+ * 메테의 스타카토와 같은 자리·같은 방식이다 — 아군의 원본 적중 하나를 소비하고, 자신이 만든
+ * 추가타에는 다시 반응하지 않는다. 소심해서 앞에 못 나서는 아이가 폭주하면 파티 전체의 손을
+ * 빌려 그림을 칠하게 된다.
+ */
+function triggerSharedOverpaint(state: SkirmishState, target: Fighter): void {
+  for (const meron of state.fighters) {
+    const trait = meron.def.ferocityTrait;
+    if (meron.side === target.side || !isFighterAlive(meron) || !meron.ferocityFever
+      || trait.effectId !== "sharedOverpaint" || !isFighterAlive(target)) continue;
+    refreshOverpaint(target, trait.overpaint);
+  }
+}
+
+/**
+ * 덧칠된 적이 맞을 때마다 그 피해의 일부만큼 **때린 본인**이 회복한다.
+ *
+ * 회복을 만드는 것은 메론이지만 받는 쪽은 그 그림을 부순 아군이다 — 앞에 나선 사람이 그만큼
+ * 버티므로, 덧칠이 화력 증폭과 생존을 한 표식으로 묶는다. 겹 수와 무관하게 실제로 깎인 HP만
+ * 세어 과잉 피해가 회복량이 되지 않게 한다.
+ */
+function siphonOverpaintHealing(attacker: Fighter, target: Fighter, hpLost: number, state: SkirmishState, events: SkirmishEvent[]): void {
+  if (hpLost <= 0 || target.overpaint === null || !isFighterAlive(attacker)) return;
+  // 편성에 메론이 살아 있는 동안만 도는 규칙이라, 패시브를 가진 아군을 먼저 찾는다.
+  const painter = aliveFighters(state, attacker.side).find((ally) => ally.def.passive.kind === "overpaintSiphon");
+  if (!painter) return;
+  const amount = applyHealing(state, attacker, hpLost * painter.def.passive.value / 100, painter.id);
+  if (amount > 0) events.push({ kind: "heal", fighterId: attacker.id, amount, source: "passive", effect: { tag: "heal", intensity: 1 } });
+}
+
+/**
  * HP 변경 직후 저체력 은신의 단일 발동 경계를 검사한다.
  *
  * 긴급 회복과 같은 자리에서 같은 방식으로 판정한다 — 외부 시계나 난수를 읽지 않고,
@@ -1062,7 +1122,10 @@ export function resolveReceivedDamage(target: Fighter, rawAmount: number): Recei
   if (target.ferocityFever && target.def.ferocityTrait.effectId === "damageReduction") {
     reduction = 100 - (100 - reduction) * (1 - target.def.ferocityTrait.reductionPercent / 100);
   }
-  const reduced = Math.max(1, Math.round(rawAmount * (1 - Math.min(100, Math.max(0, reduction)) / 100)));
+  // 덧칠은 경감과 같은 최종 경계에서 곱한다 — 여기 두지 않으면 피해 경로마다 따로 곱하게 되고
+  // 어느 한 곳을 빠뜨리면 "덧칠했는데 그 스킬만 안 아픈" 상태가 된다.
+  const amplified = rawAmount * overpaintMultiplier(target);
+  const reduced = Math.max(1, Math.round(amplified * (1 - Math.min(100, Math.max(0, reduction)) / 100)));
   // 일반 전투원의 최소 1 피해는 그대로 두고, 구조화 필드가 있는 심해 압력만 최종 반올림 뒤 무효화한다.
   const ignored = passive.kind === "abyssalPressure" && reduced <= (passive.ignoreDamageAtOrBelow ?? -1);
   return { raw: rawAmount, reduced, applied: ignored ? 0 : reduced, ignored };
@@ -1323,8 +1386,12 @@ function strike(
   });
   if (resolution.ignored) events.push({ kind: "damageIgnored", attackerId: attacker.id, targetId: target.id });
 
+  // 덧칠된 적이 맞을 때마다 그 피해의 일부가 최저 체력 아군의 회복으로 돌아온다. 궁극기로
+  // 덧칠이 지워지기 전에 정산해야 이번 타격의 몫이 빠지지 않는다.
+  siphonOverpaintHealing(attacker, target, targetHpBefore - target.hp, state, events);
+
   // 궁극기·스타카토 사건은 제외하고, 실제 일반 공격의 각 적중(연격 포함)만 크레센도를 울린다.
-  if (!useUltimate) triggerCrescendoStaccato(state, target, events);
+  if (!useUltimate) { triggerCrescendoStaccato(state, target, events); triggerSharedOverpaint(state, target); }
 
   // 개별 기본 공격·궁극기가 선언한 상태도 피해 처리 뒤 공용 저항/재적용 규칙을 그대로 사용한다.
   applySkillStatuses(target, skill, events, state, attacker.id);
@@ -1421,7 +1488,11 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     y: Math.min(state.arena.bottom, Math.max(state.arena.top, requestedCenter.y)),
   } : { x: attacker.x, y: attacker.y };
   const inCircle = (fighter: Fighter): boolean => Math.hypot(fighter.x - center.x, fighter.y - center.y) <= (skill.radius ?? 0);
+  // 덧칠을 터뜨리는 궁극기는 그릴 것이 남은 적만 친다. 한 겹도 없는 적까지 대상에 넣으면
+  // 위력 0의 최소 피해 1이 떠서 "터졌다"와 "터뜨릴 게 없었다"가 같은 숫자로 읽힌다.
+  const detonation = ultimate?.overpaintDetonation === true;
   const targets = state.fighters.filter((fighter) => fighter.side !== attacker.side && isFighterAlive(fighter) && fighter.stealthFor <= 0
+    && (!detonation || (fighter.overpaint?.stacks ?? 0) > 0)
     && (skill.targeting === "battlefieldEnemies" || (skill.targeting === "nearbyEnemies" && distance(attacker, fighter) <= (skill.radius ?? 0))
       || (skill.targeting === "targetedCircle" && inCircle(fighter))));
   const healingTargets = ultimate?.targeting === "targetedCircle" && ultimate.allyHealingPower !== undefined
@@ -1450,7 +1521,11 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     const criticalChance = Math.min(100, attacker.def.stats.critChance + passiveCritPoints
       + (attackingInFever && critTrait.effectId === "rexBattleQueen" ? critTrait.criticalChancePoints : 0));
     const critical = isCriticalHit(criticalChance, rng());
-    const damageInput = { ...skill, isCritical: critical, kind: useUltimate ? "ultimate" as const : "basic" as const };
+    // 덧칠 중첩은 **대상마다** 다르므로 위력도 대상마다 따로 더한다. 한 번 세어 모두에게
+    // 같은 배율을 쓰면 가장 많이 칠한 적의 몫이 아무도 칠하지 않은 적에게까지 간다.
+    // 폭발형 궁극기의 위력은 총량이 아니라 **겹당 값**이라 그 대상의 겹 수만큼 곱한다.
+    const scaled = detonation ? { ...skill, power: (skill.power ?? 0) * (target.overpaint?.stacks ?? 0) } : skill;
+    const damageInput = { ...scaled, isCritical: critical, kind: useUltimate ? "ultimate" as const : "basic" as const };
     const rawAmount = Math.max(1, Math.round(computeDamage(damageAttacker, defensiveDefinition(target, state), damageInput, true)
       * attackPowerMultiplier(state.augmentEffects, attacker.def.id)));
     const contributionAmount = Math.max(0, computeDamageContribution(damageAttacker, damageInput)
@@ -1464,6 +1539,9 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     tryTriggerEmergencyRecovery(target); tryTriggerLowHpVanish(target, state);
     // 흡혈은 대상별 실제 HP 감소량만 더해 과잉 피해를 회복량으로 만들지 않는다.
     applyHealing(state, attacker, (hpBefore - target.hp) * damageHealingRate(attacker, skill, attackingInFever) / 100);
+    siphonOverpaintHealing(attacker, target, hpBefore - target.hp, state, events);
+    // 완성작을 공개하고 나면 그림은 지워진다 — 쌓아 두고 매번 터뜨릴 수 있으면 상시 배율이 된다.
+    if (detonation) target.overpaint = null;
     if (!resolution.ignored) gainFerocity(target, FEROCITY_RULES.hitGain, state);
 
     const dx = target.x - attacker.x;
@@ -1643,6 +1721,12 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     if (isFighterAlive(fighter) && fighter.stealthFor > 0) {
       const remaining = fighter.stealthFor - dt;
       fighter.stealthFor = remaining <= EMERGENCY_RECOVERY.epsilon ? 0 : remaining;
+    }
+    // 덧칠도 같은 공용 시계로 마른다. 다 마르면 슬롯을 비워 중첩이 다음 전투로 새지 않게 한다.
+    if (isFighterAlive(fighter) && fighter.overpaint) {
+      const remaining = fighter.overpaint.remaining - dt;
+      if (remaining <= EMERGENCY_RECOVERY.epsilon) fighter.overpaint = null;
+      else fighter.overpaint = { ...fighter.overpaint, remaining };
     }
     // 순풍도 같은 공용 시계를 쓴다. 다 흐르면 수치까지 비워 남은 값이 다음 전투로 새지 않게 한다.
     if (isFighterAlive(fighter) && fighter.tailwindFor > 0) {

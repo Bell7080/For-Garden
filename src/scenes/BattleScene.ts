@@ -89,6 +89,8 @@ const CHARGE_CARD_ALPHA = 0.62;
 
 /** 야성 수치의 글자색. 게이지의 붉은 계열과 같아 어느 수인지 색으로 먼저 읽힌다. */
 const FEROCITY_TEXT = COLOR.ferocityText;
+/** 덧칠 뱃지 색. 물감처럼 밝은 청록이라 붉은 출혈·노란 기절과 한눈에 갈린다. */
+const OVERPAINT_BADGE_COLOR = 0x62c6d8;
 
 /** 게이지와 수치가 실제 값을 따라잡는 빠르기(초당 비율). */
 const METER_EASE = 6;
@@ -150,6 +152,8 @@ interface FighterView {
   hpBar: UnitHealthBar;
   /** 걸린 상태이상을 알리는 작은 뱃지. 체력 바 옆에 붙는다. */
   bleedBadge: Phaser.GameObjects.Container;
+  overpaintBadge: Phaser.GameObjects.Container;
+  overpaintStacks: Phaser.GameObjects.Text;
   /** 상태 소유자인 src/core/skirmish.ts의 기절 결과를 체력 바 옆에 그리는 각진 번개 표식이다. */
   stunBadge: Phaser.GameObjects.Container;
   /** 코어 상태 전환 때만 Puppet 모션을 바꾸기 위한 마지막 기절 표시값이다. */
@@ -486,7 +490,8 @@ export class BattleScene extends Phaser.Scene {
       const hpBar = new UnitHealthBar(this, barColor, settingsManager.get().presentation.battleUiMotion).snap(1);
       const bleedBadge = this.makeBleedBadge();
       const stunBadge = this.makeStunBadge();
-      this.views.set(fighter.id, { creature, asset, fighter, infoHit, shadow, hpBar, bleedBadge, stunBadge, stunShown: false, feverTint, feverStep: -1, feverTinted: false, tint, dead: false });
+      const { badge: overpaintBadge, stacks: overpaintStacks } = this.makeOverpaintBadge();
+      this.views.set(fighter.id, { creature, asset, fighter, infoHit, shadow, hpBar, bleedBadge, overpaintBadge, overpaintStacks, stunBadge, stunShown: false, feverTint, feverStep: -1, feverTinted: false, tint, dead: false });
     }
     this.syncViews();
     // 마지막 한 명까지 서고 나서 시간을 흘려야 먼저 뜬 캐릭터만 앞서 달려가지 않는다.
@@ -894,9 +899,11 @@ export class BattleScene extends Phaser.Scene {
     view.shadow.setVisible(false);
     view.hpBar.setVisible(false);
     view.bleedBadge.setVisible(false);
+    view.overpaintBadge.setVisible(false);
     view.stunBadge.setVisible(false);
     // 사망 뒤에는 코어가 상태를 비우므로 표시 객체도 컨테이너와 자식까지 즉시 폐기한다.
     view.bleedBadge.destroy(true);
+    view.overpaintBadge.destroy(true);
     view.stunBadge.destroy(true);
     // 쓰러진 적의 빈자리가 계속 정보창을 열지 않도록 입력도 함께 닫는다.
     view.infoHit?.disableInteractive().setVisible(false);
@@ -922,6 +929,29 @@ export class BattleScene extends Phaser.Scene {
    * 상태이상은 숫자가 아니라 표식으로 알린다 — 전투 중에는 읽을 틈이 없으므로 색과 모양
    * 하나로 "지금 피가 흐르는 중"만 전한다.
    */
+  /**
+   * 덧칠 뱃지.
+   *
+   * 출혈처럼 마름모 하나로 두지 않고 **겹 수를 숫자로** 함께 적는다 — 덧칠은 겹칠수록 세지는
+   * 상태라 "걸렸다"만으로는 지금 얼마나 아픈지 읽히지 않는다.
+   */
+  private makeOverpaintBadge(): { badge: Phaser.GameObjects.Container; stacks: Phaser.GameObjects.Text } {
+    const badge = this.add.container(0, 0).setVisible(false);
+    badge.add(this.add.circle(0, 0, BATTLE_STATUS_LAYOUT.badgeRadius, COLOR.void, HOLO.glass));
+    const mark = this.add.graphics();
+    mark.fillStyle(OVERPAINT_BADGE_COLOR, 0.95);
+    mark.fillPoints([
+      new Phaser.Geom.Point(0, -11),
+      new Phaser.Geom.Point(8, 2),
+      new Phaser.Geom.Point(0, 11),
+      new Phaser.Geom.Point(-8, 2),
+    ], true);
+    badge.add(mark);
+    const stacks = this.add.text(0, 1, "0", textStyle({ role: "display", size: 16, color: "#0a0d12" })).setOrigin(0.5);
+    badge.add(stacks);
+    return { badge, stacks };
+  }
+
   private makeBleedBadge(): Phaser.GameObjects.Container {
     const badge = this.add.container(0, 0).setVisible(false);
     const mark = this.add.graphics();
@@ -1038,10 +1068,14 @@ export class BattleScene extends Phaser.Scene {
         view.stunShown = stunned;
         playMotion(this, view.creature, stunned ? "stun" : "idle");
       }
-      // 여러 상태는 체력 바 왼쪽에서 안쪽부터 기절, 출혈 순서로 나란히 세워 서로 겹치지 않는다.
-      const badgeOffsets = statusBadgeOffsets(stunned);
+      // 여러 상태는 체력 바 왼쪽에서 안쪽부터 기절, 출혈, 덧칠 순서로 나란히 세워 겹치지 않는다.
+      const bleeding = fighter.bleed !== null;
+      const badgeOffsets = statusBadgeOffsets(stunned, bleeding);
       view.stunBadge.setPosition(pose.x + badgeOffsets.stunX, barY).setDepth(DEPTH.hpBar + 2).setVisible(stunned);
-      view.bleedBadge.setPosition(pose.x + badgeOffsets.bleedX, barY).setDepth(DEPTH.hpBar + 2).setVisible(fighter.bleed !== null);
+      view.bleedBadge.setPosition(pose.x + badgeOffsets.bleedX, barY).setDepth(DEPTH.hpBar + 2).setVisible(bleeding);
+      // 덧칠은 겹 수가 곧 세기라 뱃지 안의 숫자로 몇 겹인지 함께 알린다.
+      view.overpaintBadge.setPosition(pose.x + badgeOffsets.overpaintX, barY).setDepth(DEPTH.hpBar + 2).setVisible(fighter.overpaint !== null);
+      view.overpaintStacks.setText(String(fighter.overpaint?.stacks ?? 0));
     });
   }
 

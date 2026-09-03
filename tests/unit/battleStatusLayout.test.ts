@@ -10,7 +10,13 @@ describe("전투 상태 표시 배치", () => {
   });
 
   it("출혈만 보일 때는 체력 바 옆의 첫 상태 자리를 사용한다", () => {
-    expect(statusBadgeOffsets(false)).toEqual({ stunX: -62, bleedX: -62 });
+    expect(statusBadgeOffsets(false)).toEqual({ stunX: -62, bleedX: -62, overpaintX: -62 });
+  });
+
+  it("켜진 상태만 한 칸씩 바깥으로 밀어 덧칠 뱃지가 겹치지 않는다", () => {
+    const offsets = statusBadgeOffsets(true, true);
+    expect(offsets.bleedX - offsets.stunX).toBe(-BATTLE_STATUS_LAYOUT.badgeGap);
+    expect(offsets.overpaintX - offsets.bleedX).toBe(-BATTLE_STATUS_LAYOUT.badgeGap);
   });
 });
 

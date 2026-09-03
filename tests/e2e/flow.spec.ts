@@ -174,7 +174,6 @@ test("궁극기 카드 몸통과 돌출 머리는 0%·50%·100%에서 한 부채
 test("전투 기여도 판을 열고 세 분류를 바꾼 뒤 접어 1080×1920 테마를 보존한다", async ({ page }, testInfo) => {
   await page.setViewportSize({ width: BASE_WIDTH, height: BASE_HEIGHT });
   await enterBattle(page);
-  // 좌측 고정 그래프 칩은 펼친 뒤에도 같은 자리에 남는다.
   await tap(page, 68, 960);
   await expect.poll(async () => (await battle(page))?.contributionPanel?.expanded).toBe(true);
   // 84×76 직접 선택 영역의 중앙을 차례로 눌러 모바일에서 분류 순환을 검증한다.
@@ -185,7 +184,8 @@ test("전투 기여도 판을 열고 세 분류를 바꾼 뒤 접어 1080×1920 
   await tap(page, 150, 620);
   await expect.poll(async () => (await battle(page))?.contributionPanel?.category).toBe("attack");
   await page.screenshot({ path: `test-results/${testInfo.project.name}-battle-contribution-expanded-1080x1920.png`, fullPage: true });
-  await tap(page, 68, 960);
+  // 그래프 칩은 펼친 판 위를 덮어 감춰지므로, 접는 길은 판 밖 아무 곳이나 누르는 것이다.
+  await tap(page, 800, 400);
   await expect.poll(async () => (await battle(page))?.contributionPanel?.expanded).toBe(false);
 });
 

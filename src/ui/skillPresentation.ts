@@ -294,15 +294,9 @@ function skillEffectClauses(skill: Skill | BasicAttack | Ultimate, stats: SkillD
   if (skill.allyEnergyGain !== undefined) {
     clauses.push({ text: `모든 생존 아군의 궁극기 충전량이 ${skill.allyEnergyGain} 증가한다`, standalone: true });
   }
-  for (const effect of skill.statusEffects ?? []) {
-    const text = statusEffectClause(effect);
-    if (text) clauses.push({ text });
-  }
+  clauses.push(...statusClauses(skill));
   if ("damageTransfer" in skill && skill.damageTransfer) {
     clauses.push({ text: `그 적이 실제로 잃은 최종 HP 피해의 ${skill.damageTransfer.percent}%를 가장 가까운 다른 적에게 [[transfer|전이]]한다`, standalone: true });
-  }
-  if ("statusEffectEvery" in skill && skill.statusEffectEvery !== undefined) {
-    clauses.push({ text: `위 상태는 매 ${skill.statusEffectEvery}번째 [[basic-attack|기본 공격]]에만 걸린다`, standalone: true });
   }
   if ("energyRefundOnKill" in skill && skill.energyRefundOnKill !== undefined) {
     clauses.push({ text: `이 공격으로 처치하면 궁극기 게이지를 ${skill.energyRefundOnKill} 돌려받는다`, standalone: true });
@@ -314,6 +308,36 @@ function skillEffectClauses(skill: Skill | BasicAttack | Ultimate, stats: SkillD
     clauses.push({ text: `체력이 ${skill.chargeStartsAtHpPercent}% 이하가 되면 충전을 시작한다`, standalone: true });
   }
   return clauses;
+}
+
+/**
+ * 상태 효과 절들.
+ *
+ * **뇌진탕과 기절처럼 같은 타격에 함께 걸리는 것은 한 문장으로 잇는다** — 문장을 끊으면 서로
+ * 다른 순간에 따로 걸리는 것처럼 읽힌다. 주기(`statusEffectEvery`)가 있으면 그 절들을 뒤에서
+ * 되짚지 않고 **앞에서 "매 N번째 공격마다"로 묶는다** — "위 상태는"이라고 가리키면 어디까지가
+ * 그 상태인지 다시 세어야 한다.
+ */
+function statusClauses(skill: Skill | BasicAttack | Ultimate): SkillEffectClause[] {
+  const effects = skill.statusEffects ?? [];
+  const concussion = effects.find((effect) => effect.kind === "concussion");
+  const stun = effects.find((effect) => effect.kind === "stun");
+  const texts: string[] = [];
+  // 뇌진탕이 있으면 기절을 그 뒤에 이어 붙여 한 덩어리로 만든다. 어미를 잘라 붙이지 않고
+  // 이어지는 형태를 직접 적는다 — 잘라 붙이면 "입힌고" 같은 어형이 나온다.
+  if (concussion && stun && stun.kind === "stun") {
+    texts.push(`[[concussion|뇌진탕]]을 입히고 ${stun.seconds}초 동안 [[stun|기절]]시킨다`);
+  }
+  for (const effect of effects) {
+    if (concussion && stun && (effect === concussion || effect === stun)) continue;
+    const text = statusEffectClause(effect);
+    if (text) texts.push(text);
+  }
+  if (texts.length === 0) return [];
+  const every = "statusEffectEvery" in skill ? skill.statusEffectEvery : undefined;
+  // 주기가 있는 스킬은 상태 절을 피해 문장에 붙이지 않고 제 문장으로 세운다.
+  if (every !== undefined) return [{ text: `매 ${every}번째 공격마다 ${texts.join(" ")}`, standalone: true }];
+  return texts.map((text) => ({ text }));
 }
 
 /**

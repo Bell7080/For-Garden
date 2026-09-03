@@ -169,7 +169,7 @@ describe("메테 스킬 표시 계약", () => {
 
   it("의 궁극기는 피해가 없는 회복 계약에서 문장을 만든다", () => {
     const mette = RELICS.find((def) => def.id === "mette")!;
-    expect(skillDescription(mette.ultimate)).toBe("모든 생존 아군이 각자 [[missing-hp|잃은 체력]]의 20%를 회복한다.");
+    expect(skillDescription(mette.ultimate)).toBe("모든 생존 아군이 각자 [[missing-hp|잃은 체력]]의 15%를 회복한다.");
   });
 });
 
@@ -384,7 +384,7 @@ describe("스피나 스킬 표시 계약", () => {
       "적 한 명에게 [[damage-value|100]]의 [[physical-damage|물리 피해]]를 주고, 40% 확률로 [[combo|연격]]하여 총 2회 적중한다. "
       + "매 적중 뒤 [[missing-hp|잃은 체력]]의 5%를 회복한다.",
     );
-    expect(spino.ultimate).toMatchObject({ name: "범람의 포식자", power: 200, attackSpeedPower: 150, cost: 300, statusEffects: [{ kind: "stun", seconds: 3 }] });
+    expect(spino.ultimate).toMatchObject({ name: "범람의 포식자", power: 200, attackSpeedPower: 150, cost: 200, statusEffects: [{ kind: "stun", seconds: 3 }] });
     // 능력치를 모르면(대상 없이 도감만 보는 경우) 옛 %-표기로 되돌아간다.
     expect(skillDescription(spino.ultimate)).toContain("현재 [[attack-speed|공격 속도]]의 150%");
     // "준다"에 "고"를 그대로 붙이면 인용형 어미("~라고")로 읽히는 어색한 문장이 된다.
@@ -516,8 +516,9 @@ describe("파치 스킬 표시 계약", () => {
     const def = pachi();
     expect(def.basic.statusEffectEvery).toBe(4);
     // 뇌진탕의 수치와 치명타 배증은 태그가 말하므로 본문이 되풀이하지 않는다.
+    // 기절은 뇌진탕과 같은 타격에 함께 걸리므로 문장을 끊지 않고 이어 붙인다.
     expect(skillDescription(def.basic, { damage: 118 })).toBe(
-      "적 한 명에게 [[damage-value|118]]의 [[physical-damage|물리 피해]]를 주고 1초 동안 [[stun|기절]]시킨다. [[concussion|뇌진탕]]을 입힌다. 위 상태는 매 4번째 [[basic-attack|기본 공격]]에만 걸린다.",
+      "적 한 명에게 [[damage-value|118]]의 [[physical-damage|물리 피해]]를 준다. 매 4번째 공격마다 [[concussion|뇌진탕]]을 입히고 1초 동안 [[stun|기절]]시킨다.",
     );
   });
 
@@ -525,7 +526,7 @@ describe("파치 스킬 표시 계약", () => {
     const def = pachi();
     expect(def.ultimate).toMatchObject({ targeting: "chargeLine", power: 200, cost: 250 });
     expect(skillDescription(def.ultimate, { damage: 264 })).toBe(
-      "[[charge|돌진]]해 뚫고 지나간 길의 모든 적에게 [[damage-value|264]]의 [[physical-damage|물리 피해]]를 주고 2초 동안 [[stun|기절]]시킨다. [[concussion|뇌진탕]]을 입힌다.",
+      "[[charge|돌진]]해 뚫고 지나간 길의 모든 적에게 [[damage-value|264]]의 [[physical-damage|물리 피해]]를 주고 [[concussion|뇌진탕]]을 입히고 2초 동안 [[stun|기절]]시킨다.",
     );
   });
 
@@ -538,8 +539,8 @@ describe("파치 스킬 표시 계약", () => {
     if (effect.kind !== "concussion") throw new Error("뇌진탕 효과가 아니다");
     const keyword = KEYWORDS.find((entry) => entry.id === "concussion")!;
     // 수치를 태그가 말하기로 했으므로 데이터와 갈리면 유일한 설명이 틀린다.
-    expect(keyword.description).toContain(`${effect.maxHpPercent}%`);
-    expect(keyword.description).toContain(`${effect.criticalMaxHpPercent}%`);
+    expect(keyword.description).toContain(`최대 체력의 ${effect.maxHpPercent}%`);
+    expect(keyword.description).toContain(`치명타 발동 시 ${effect.criticalMaxHpPercent}%`);
   });
 });
 
@@ -568,7 +569,7 @@ describe("마키 스킬 표시 계약", () => {
 
   it("의 궁극기는 처치했을 때만 돌려받는다는 조건을 말한다", () => {
     const def = maki();
-    expect(def.ultimate).toMatchObject({ targeting: "single", power: 400, cost: 180, energyRefundOnKill: 100 });
+    expect(def.ultimate).toMatchObject({ targeting: "single", power: 400, cost: 220, energyRefundOnKill: 100 });
     expect(skillDescription(def.ultimate, { damage: 760 })).toBe(
       "적 한 명에게 [[damage-value|760]]의 [[physical-damage|물리 피해]]를 준다. 이 공격으로 처치하면 궁극기 게이지를 100 돌려받는다.",
     );

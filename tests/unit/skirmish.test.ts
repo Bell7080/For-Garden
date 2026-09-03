@@ -131,7 +131,7 @@ describe("스피나 전투 계약", () => {
   });
 
   it("은 궁극기에 공격력 200%와 현재 공속 150%를 합산하고 생존자에게 3초 기절을 준다", () => {
-    const { state, spino, target } = readySpino(); spino.energy = 300; spino.bonusAttackSpeed = 6;
+    const { state, spino, target } = readySpino(); spino.energy = spino.def.ultimate.cost; spino.bonusAttackSpeed = 6;
     const ultimate = spino.def.ultimate;
     if (!("damageType" in ultimate) || ultimate.damageType === undefined) throw new Error("스피나 공격 궁극기 계약이 필요합니다.");
     const speed = currentAttackSpeed(spino);
@@ -375,12 +375,15 @@ describe("메테 전투 계약", () => {
     expect(run((mette) => { mette.ferocityFever = true; mette.hp = 0; })).toHaveLength(1);
   });
 
-  it("는 전장의 찬가로 생존 아군별 잃은 체력 20%를 회복하고 50 게이지를 소비한다", () => {
+  it("는 전장의 찬가로 생존 아군별 잃은 체력의 정해진 비율을 회복하고 게이지를 모두 쓴다", () => {
     const { state, mette, ally } = metteBattle();
-    mette.hp -= 500; ally.hp -= 300; mette.energy = 50;
+    const healing = mette.def.ultimate.healing;
+    if (healing?.kind !== "teamMissingHpPercent") throw new Error("메테의 팀 회복 계약이 아니다");
+    // 회복률과 비용은 데이터가 정한다 — 수치를 적어 두면 조정한 뒤 옛 값이 테스트에만 남는다.
+    mette.hp -= 500; ally.hp -= 300; mette.energy = mette.def.ultimate.cost;
     const events = fireUltimate(state, mette.id);
-    expect(mette.hp).toBe(mette.maxHp - 400);
-    expect(ally.hp).toBe(ally.maxHp - 240);
+    expect(mette.hp).toBe(mette.maxHp - 500 + Math.round(500 * healing.percent / 100));
+    expect(ally.hp).toBe(ally.maxHp - 300 + Math.round(300 * healing.percent / 100));
     expect(mette.energy).toBe(0);
     expect(events.filter((event) => event.kind === "heal" && event.source === "ultimate")).toHaveLength(2);
   });
@@ -1487,7 +1490,8 @@ describe("렉시아 전투 계약", () => {
     const { state, rex, foe } = readyRex();
     const hit = stepSkirmish(state, 1 / 60, () => 0.30).find((event) => event.kind === "attack")!;
     const boosted = { ...rex, def: { ...rex.def, stats: { ...rex.def.stats, atk: rex.def.stats.atk * 1.25, critDamage: rex.def.stats.critDamage + 25 } } };
-    expect(rex.def.basic.power).toBe(95);
+    // 위력은 이 테스트의 주제가 아니라 밸런스 값이라 적어 두지 않는다 — 아래 기대값이 데이터의
+    // `rex.def.basic`을 그대로 통과시키므로 조정해도 순서 검증은 그대로 성립한다.
     // 태생 치명타는 전 개체 공통 10%이고 렉시아의 치명타형 정체성은 패시브가 만든다 —
     // 10% + 패시브 25퍼센트포인트 = 35%이며, 치명 피해도 150% + 25퍼센트포인트 = 175%다.
     expect(hit).toMatchObject({ critical: true, amount: computeDamage(boosted, foe, { ...rex.def.basic, kind: "basic", isCritical: true }, true) });

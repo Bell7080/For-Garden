@@ -65,7 +65,7 @@ export const RELICS: RelicDef[] = [
     basic: {
       id: "rex-basic",
       name: "출혈 송곳니",
-      power: 95,
+      power: 120,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -241,7 +241,7 @@ export const RELICS: RelicDef[] = [
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
-      cost: 300,
+      cost: 200,
       // 공격력 200%에 현재 공격 속도 150%를 더해, 두 성장 축을 함께 쓰되 공속 누적의 비중은 절제한다.
       attackSpeedPower: 150,
       // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
@@ -840,7 +840,7 @@ export const RELICS: RelicDef[] = [
     basic: {
       id: "maki-basic",
       name: "부위별 손질",
-      power: 110,
+      power: 80,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -857,7 +857,7 @@ export const RELICS: RelicDef[] = [
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
-      cost: 180,
+      cost: 220,
       // 처치했을 때만 돌려받는다. 살아남으면 아무것도 없다.
       energyRefundOnKill: 100,
       // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
@@ -1107,7 +1107,7 @@ export const RELICS: RelicDef[] = [
     },
     ultimate: {
       id: "mette-ult", name: "전장의 찬가", iconAssetId: "skill-icon-healing", effectType: "healing",
-      cost: 50, targeting: "battlefieldAllies", healing: { kind: "teamMissingHpPercent", percent: 20 },
+      cost: 80, targeting: "battlefieldAllies", healing: { kind: "teamMissingHpPercent", percent: 15 },
     },
   },
   {

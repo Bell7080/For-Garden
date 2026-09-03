@@ -55,7 +55,7 @@ export const KEYWORDS: readonly KeywordDef[] = [
   },
   {
     id: "knockback", term: "날려버림", kind: "디버프",
-    description: "맞은 적이 전장 밖으로 튕겨 나가 벽을 튀기며 날아다닌다. 날아가는 동안에는 움직이지도 때리지도 못한다.",
+    description: "튕겨 나간 적이 전장의 벽을 튀기며 날아다닌다. 날아가는 동안에는 움직이지도 때리지도 못한다.",
   },
   {
     id: "charge", term: "돌진", kind: "규칙",

@@ -526,9 +526,9 @@ function applyCombatStatusEffect(fighter: Fighter, effect: CombatStatusEffect, e
  * 최대 체력 비율로 재는 이유는 출혈과 같다 — 절대값으로 두면 레벨이 오를수록 "헬멧이 울린다"가
  * 아무것도 아닌 수가 된다. 치명타였다면 더 크게 울린다.
  *
- * 폭주한 파치는 여기서 그 적을 전장 밖으로 날려 버린다. 날리는 것을 스킬이 아니라 **뇌진탕이
- * 터진 자리**에 두는 이유는, 뇌진탕을 거는 경로가 늘어나도 폭주 규칙을 다시 적을 필요가 없기
- * 때문이다.
+ * **날려버림은 뇌진탕의 일부가 아니다.** 이 함수는 피해만 확정하고, 폭주한 파치가 얹는 확정
+ * 치명타와 날려버림은 아래 `knockbackSlamOf`가 따로 소유한다 — 다른 개체가 뇌진탕을 갖게
+ * 되어도 그 개체가 적을 날리지는 않는다.
  */
 function applyConcussion(
   target: Fighter,
@@ -539,10 +539,8 @@ function applyConcussion(
   sourceId?: string,
 ): void {
   const attacker = sourceId ? findFighter(state, sourceId) : undefined;
-  const slam = attacker?.ferocityFever === true && attacker.def.ferocityTrait.effectId === "knockbackSlam"
-    ? attacker.def.ferocityTrait
-    : undefined;
-  // 폭주 중에는 판정을 다시 굴리지 않고 확정 치명타로 친다 — 날아가는 그림과 수치가 갈리지 않는다.
+  const slam = attacker ? knockbackSlamOf(attacker) : undefined;
+  // 폭주가 확정 치명타를 얹는다. 판정을 다시 굴리지 않아 날아가는 그림과 수치가 갈리지 않는다.
   const struck = critical || slam !== undefined;
   const percent = struck ? effect.criticalMaxHpPercent : effect.maxHpPercent;
   const amount = Math.max(1, Math.round(target.maxHp * percent / 100));
@@ -553,11 +551,18 @@ function applyConcussion(
     events.push({ kind: "death", fighterId: target.id });
     return;
   }
+  // 날려버림은 폭주가 얹는 몫이라 뇌진탕이 실제로 울린 뒤에 따로 붙는다.
   if (slam && attacker) launchKnockback(target, attacker, slam, state, events);
 }
 
+/** 지금 폭주 중이라 날려버림을 얹는 개체인가. 파치의 폭주만 이 특성을 갖는다. */
+function knockbackSlamOf(attacker: Fighter): Extract<FerocityTrait, { effectId: "knockbackSlam" }> | undefined {
+  const trait = attacker.def.ferocityTrait;
+  return attacker.ferocityFever && trait.effectId === "knockbackSlam" ? trait : undefined;
+}
+
 /**
- * 맞은 적을 전장 안에서 튕겨 다니게 만든다.
+ * 폭주한 파치가 맞은 적을 전장 안에서 튕겨 다니게 만든다.
  *
  * 미리 궤적을 그려 두지 않고 속도만 주는 이유는, 벽에 부딪히는 자리가 그때의 전장 크기와
  * 위치에서 나와야 하기 때문이다 — 좌표를 미리 정해 두면 원정처럼 전장이 다른 화면에서
@@ -1326,21 +1331,17 @@ export function resolveReceivedDamage(target: Fighter, rawAmount: number): Recei
 }
 
 /**
- * 무면허 안전제일. 한 방이 최대 체력의 정해진 비율을 넘으면 그 위를 깎되, **깎는 폭 자체에도
- * 상한을 둔다.**
+ * 무면허 안전제일. 한 방에 들어오는 피해에 **최대 체력 비율의 상한**을 둔다.
  *
- * 두 조건이 함께 있어야 뜻이 선다. 상한만 두면 아무리 센 일격도 늘 같은 값으로 눌려 안전모가
- * 무적이 되고, 경감률만 두면 큰 한 방일수록 더 크게 들어와 "버틴다"가 되지 않는다. 그래서
- * **넘친 만큼 깎되 원래 피해의 그 비율보다 더 줄이지는 않는다** — 평범한 타격은 그대로 다
- * 맞고, 한 방에 죽일 만한 타격만 헬멧이 받아 낸다.
+ * 상한 이하의 평범한 타격은 그대로 다 맞는다 — 안전모가 늘 일하는 것이 아니라 **죽일 만한 한
+ * 방만** 받아 낸다. 그래서 즉사급 일격을 맞아도 체력이 60% 남고, 두 번이면 20%, 세 번째에
+ * 쓰러진다. 아무리 센 공격이든 세 대는 버틴다는 것이 이 패시브의 전부다.
  */
 function applyImpactCap(target: Fighter, amount: number): number {
   const passive = target.def.passive;
   if (passive.kind !== "impactCap") return amount;
-  const threshold = target.maxHp * (passive.impactThresholdMaxHpPercent ?? 0) / 100;
-  if (amount <= threshold) return amount;
-  const floor = amount * (1 - (passive.impactMaxReductionPercent ?? 0) / 100);
-  return Math.max(1, Math.round(Math.max(threshold, floor)));
+  const cap = target.maxHp * (passive.impactCapMaxHpPercent ?? 100) / 100;
+  return amount <= cap ? amount : Math.max(1, Math.round(cap));
 }
 
 /** 기존 숫자 소비자를 위한 얇은 호환 경계이며 신규 공격 처리는 판별 가능한 결과를 직접 사용한다. */

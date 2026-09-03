@@ -2156,22 +2156,28 @@ describe("파치 정적 전투 계약", () => {
     return { state, pachi, enemy: foes[0], foes };
   }
 
-  it("의 패시브는 큰 한 방만 깎되 경감 폭 자체에도 상한을 둔다", () => {
+  it("의 패시브는 한 방에 들어오는 피해에 상한을 둬 아무리 세도 세 대는 버티게 한다", () => {
     const { pachi } = pachiBattle();
     const passive = pachi.def.passive;
     if (passive.kind !== "impactCap") throw new Error("파치의 패시브가 아니다");
-    const threshold = pachi.maxHp * passive.impactThresholdMaxHpPercent! / 100;
+    const cap = pachi.maxHp * passive.impactCapMaxHpPercent! / 100;
 
     // 상한 아래의 평범한 타격은 그대로 다 맞는다 — 안전모가 늘 일하는 것이 아니다.
-    const small = Math.round(threshold * 0.5);
+    const small = Math.round(cap * 0.5);
     expect(receivedDamage(pachi, small)).toBe(small);
 
-    // 상한을 조금 넘는 한 방은 그 선까지 눌린다.
-    expect(receivedDamage(pachi, Math.round(threshold * 1.2))).toBe(Math.round(threshold));
+    // 상한을 넘는 한 방은 그 선까지 눌린다. 즉사급이든 조금 넘든 결과는 같다.
+    expect(receivedDamage(pachi, Math.round(cap * 1.2))).toBe(Math.round(cap));
+    expect(receivedDamage(pachi, pachi.maxHp * 5)).toBe(Math.round(cap));
 
-    // 즉사급 한 방은 40%보다 더 깎이지 않는다 — 그러지 않으면 안전모가 무적이 된다.
-    const huge = pachi.maxHp * 5;
-    expect(receivedDamage(pachi, huge)).toBe(Math.round(huge * 0.6));
+    // 즉사급을 세 번 맞아야 쓰러진다 — 한 번이면 60%, 두 번이면 20%가 남는다.
+    pachi.hp = pachi.maxHp;
+    for (const remaining of [0.6, 0.2]) {
+      pachi.hp -= receivedDamage(pachi, pachi.maxHp * 5);
+      expect(pachi.hp / pachi.maxHp).toBeCloseTo(remaining, 5);
+    }
+    pachi.hp -= receivedDamage(pachi, pachi.maxHp * 5);
+    expect(pachi.hp).toBeLessThanOrEqual(0);
   });
 
   it("의 기본 공격은 네 번째 타격에만 기절과 뇌진탕을 건다", () => {
@@ -2192,6 +2198,9 @@ describe("파치 정적 전투 계약", () => {
       expect(rang, `${hit}타`).toHaveLength(hit === every ? 1 : 0);
     }
     expect(enemy.stunnedFor).toBeGreaterThan(0);
+    // 날려버림은 뇌진탕의 일부가 아니라 폭주가 얹는 몫이라, 평소에는 뇌진탕만 울리고 끝난다.
+    expect(events.some((event) => event.kind === "knockback")).toBe(false);
+    expect(enemy.knockback).toBeNull();
     // 고정 피해라 방어력·속성을 지나쳐 최대 체력 비율 그대로 들어간다.
     const rang = events.find((event): event is Extract<SkirmishEvent, { kind: "concussion" }> => event.kind === "concussion")!;
     const percent = rang.critical ? concussion.criticalMaxHpPercent : concussion.maxHpPercent;

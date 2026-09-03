@@ -679,32 +679,32 @@ export const RELICS: RelicDef[] = [
 
   {
     id: "pachi",
-    squad: "gear",
+    squad: "fang",
     name: "파치",
     specimenNumber: "093",
     projectName: "HARD HAT",
     excavationSite: "헬크리크 상부 사암 붕괴면",
     // 발굴 기록은 장소·보존 상태·복원 연구 특징만 담고, 복원 이후 생활 관찰과 분리한다.
-    fossilRecord: "붕괴면 아래에서 두개골 윗면만 온전한 표본이 나왔다. 뼈가 스무 겹 넘게 겹쳐 굳어 있었고, 같은 자리에서 부러진 뿔 조각 여럿이 함께 수습됐다.",
+    fossilRecord: "붕괴면 아래에서 두개골 윗면만 온전한 성체 표본이 나왔다. 뼈가 스무 겹 넘게 겹쳐 굳어 있었고, 같은 자리에서 부러진 뿔 조각 여럿이 함께 수습됐다.",
     observationProfile: {
       originYear: "약 6천 6백만 년 전",
       // E.C.는 파치의 인간형 신체 나잇대이며, 원종 화석의 성장 단계와 독립된 값이다.
       restorationYear: "E.C. 16년",
-      lifeStage: "아성체",
+      lifeStage: "성체",
       height: "1.55 m",
       weight: "47 kg",
     },
-    catalogSummary: "신장 1.55m, 체중 47kg의 인간형 체격에 각질이 두꺼운 꼬리와 단단한 두개골이 확인된 아성체 표본.",
+    catalogSummary: "신장 1.55m, 체중 47kg의 인간형 체격에 각질이 두꺼운 꼬리와 단단한 두개골이 확인된 성체 표본.",
     // 복원 후 관찰은 성격과 실제로 목격된 행동만 남기고 발굴 기록과 겹치지 않게 쓴다.
-    unlockRecord: { status: "recorded", text: "복원 첫날 파치는 케어실 문틀을 머리로 받아 경첩을 부쉈고, 그 뒤로 안전모를 씌워 두자 벗지 않는다. 잔해 인양 현장에 데려가면 시키지도 않은 벽부터 무너뜨리고 돌아와 \"길 뚫었다\"며 턱을 든다. 말투는 거칠지만 무너질 자리를 먼저 골라 서고, 뒤따라오는 인원이 지나갈 때까지 그 자리를 비키지 않는다." },
-    squadNote: "나이트 기어의 철거 담당. 인양조가 들어갈 길을 먼저 뚫고, 연구원을 이름 대신 \"당신\"이라 부르며 앞장선다.",
-    researcherTitle: "당신",
+    unlockRecord: { status: "recorded", text: "복원 첫날 파치는 케어실 문틀을 머리로 받아 경첩을 부쉈고, 그 뒤로 안전모를 씌워 두자 벗지 않는다. 하루 종일 체리맛 사탕을 물고 다니며 껍질을 아무 데나 버리고, 지적하면 눈을 굴리며 \"알았다고\"라고 대꾸한 뒤 결국 주워 온다. 출격 지시에도 매번 툴툴거리지만 연구원이 말한 자리에서는 한 발도 물러서지 않고, 뒤따라오는 인원이 다 지나갈 때까지 그 앞을 막고 서 있는다." },
+    squadNote: "앱솔루트 팽의 돌파 담당. 전선이 열려야 할 자리를 머리로 뚫어 놓고, 연구원을 굳이 \"보스\"라 부르며 지시에는 툴툴거리면서도 꼭 따른다.",
+    researcherTitle: "보스",
     rarity: "R",
     portraitAssetId: "pachi",
     origin: "파키케팔로사우루스",
     element: "earth",
     role: "warrior",
-    // 잔해를 부수고 다니는 개체라 발굴 특화도 화석 회수 쪽에 붙인다.
+    // 부수고 다니는 개체라 발굴 특화도 화석 회수 쪽에 붙인다.
     excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 0.26, efficiencyMultiplier: 1.04 },
     // 머리로 받는 개체라 방어가 두껍고 발이 빠르다. 주문력을 쓰는 스킬이 하나도 없어 낮게 둔다.
     stats: {
@@ -735,12 +735,11 @@ export const RELICS: RelicDef[] = [
       kind: "impactCap",
       iconAssetId: "skill-icon-fixed",
       effectType: "fixed",
-      // 이 비율을 넘는 한 방만 깎기 시작하고, 그렇게 깎아도 원래 피해의 40%보다 더 줄이지 않는다.
       // Passive.value는 공용 필수 필드라, 이 패시브에서는 상한 비율을 그대로 담아 둔다.
       value: 40,
-      impactThresholdMaxHpPercent: 40,
-      impactMaxReductionPercent: 40,
-      desc: "최대 체력의 40%를 넘는 한 방은 그 선까지 줄어들되, 원래 피해의 40%보다 더 줄어들지는 않는다.",
+      // 한 방에 들어올 수 있는 피해의 상한(최대 체력 %)이다. 이하의 타격은 그대로 다 맞는다.
+      impactCapMaxHpPercent: 40,
+      desc: "한 방에 받는 피해가 최대 체력의 40%를 넘지 않는다.",
     },
     basic: {
       id: "pachi-basic",

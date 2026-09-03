@@ -473,10 +473,13 @@ export interface Passive {
   maxDamageReductionPercent?: number;
   /** 심해 압력 전용: 최대 피해 감소율에 도달하는 현재 체력 비율이다. */
   maxReductionAtHpPercent?: number;
-  /** 무면허 안전제일 전용: 이 비율(대상 최대 체력 %)을 넘는 한 방만 깎기 시작한다. */
-  impactThresholdMaxHpPercent?: number;
-  /** 무면허 안전제일 전용: 그렇게 깎더라도 원래 피해에서 이 비율(%)보다 더 줄이지는 않는다. */
-  impactMaxReductionPercent?: number;
+  /**
+   * 무면허 안전제일 전용: 한 방에 들어올 수 있는 피해의 상한(대상 최대 체력 %)이다.
+   *
+   * 이 비율 **이하의 평범한 타격은 그대로 다 맞고**, 넘는 한 방만 이 선까지 눌린다. 즉사급
+   * 일격을 맞아도 체력이 60% 남고, 두 번이면 20%, 세 번째에 쓰러진다.
+   */
+  impactCapMaxHpPercent?: number;
   /** 심해 압력 전용: 모든 경감과 반올림을 마친 최종 HP 피해가 이 값 이하이면 피해를 무효화한다. */
   ignoreDamageAtOrBelow?: number;
   /** 제공자가 살아 있는 동안 같은 편의 방어력과 저항력에 곱하는 증가율(%). */

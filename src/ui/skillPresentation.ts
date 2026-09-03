@@ -130,7 +130,7 @@ function passiveHead(passive: Passive, atk?: number): string {
     return `생존 중 아군 [[attack-speed|공격 속도]]를 ${passive.teamAttackSpeedPercent}% 높인다. 아군이 [[crowd-control|군중제어]]에 걸리면 즉시 정화하고 ${shieldText} 보호막을 부여한다.`;
   }
   if (passive.kind === "abyssalPressure") return `완전히 경과한 매초 기본 [[ap|주문력]]의 ${passive.apPercentPerSecond}%가 복리로 누적된다. 현재 체력이 최대 체력의 100%에서 ${passive.maxReductionAtHpPercent}%로 낮아질수록 받는 모든 피해 감소가 ${passive.baseDamageReductionPercent}%에서 ${passive.maxDamageReductionPercent}%까지 선형으로 증가하며, 그 이하에서는 최대치로 제한된다. 최종 받는 피해가 ${passive.ignoreDamageAtOrBelow} 이하인 공격은 무효화한다.`;
-  if (passive.kind === "impactCap") return `한 번에 받는 피해가 최대 체력의 ${passive.impactThresholdMaxHpPercent}%를 넘으면 그 선까지 줄어들되, 원래 피해의 ${passive.impactMaxReductionPercent}%보다 더 줄어들지는 않는다.`;
+  if (passive.kind === "impactCap") return `한 번에 받는 피해가 최대 체력의 ${passive.impactCapMaxHpPercent}%를 넘지 않는다.`;
   if (passive.kind === "overpaintSiphon") return `모든 아군이 [[overpaint|덧칠]]된 적을 맞히면 그 피해의 ${passive.value}%만큼 자신의 체력을 회복한다. 표적의 [[overpaint|덧칠]]이 최대로 쌓이면 다른 적으로 표적을 옮긴다.`;
   if (passive.kind === "lowHpVanish") return `전투당 한 번, 체력이 절반 이하가 되면 ${passive.durationSeconds}초 동안 [[stealth|은신]]해 표적에서 벗어난다.`;
   if (passive.kind === "shimmerMark") return `적을 타격하면 반짝이는 표식을 남긴다. 표식이 없는 적을 타격하면 표식이 그 적에게 옮겨가며 [[ap|주문력]]의 ${passive.value}% [[magical-damage|마법 피해]]를 추가로 입힌다.`;

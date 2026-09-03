@@ -65,7 +65,7 @@ export const RELICS: RelicDef[] = [
     basic: {
       id: "rex-basic",
       name: "출혈 송곳니",
-      power: 95,
+      power: 120,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",

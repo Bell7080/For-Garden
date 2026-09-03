@@ -1490,7 +1490,8 @@ describe("렉시아 전투 계약", () => {
     const { state, rex, foe } = readyRex();
     const hit = stepSkirmish(state, 1 / 60, () => 0.30).find((event) => event.kind === "attack")!;
     const boosted = { ...rex, def: { ...rex.def, stats: { ...rex.def.stats, atk: rex.def.stats.atk * 1.25, critDamage: rex.def.stats.critDamage + 25 } } };
-    expect(rex.def.basic.power).toBe(95);
+    // 위력은 이 테스트의 주제가 아니라 밸런스 값이라 적어 두지 않는다 — 아래 기대값이 데이터의
+    // `rex.def.basic`을 그대로 통과시키므로 조정해도 순서 검증은 그대로 성립한다.
     // 태생 치명타는 전 개체 공통 10%이고 렉시아의 치명타형 정체성은 패시브가 만든다 —
     // 10% + 패시브 25퍼센트포인트 = 35%이며, 치명 피해도 150% + 25퍼센트포인트 = 175%다.
     expect(hit).toMatchObject({ critical: true, amount: computeDamage(boosted, foe, { ...rex.def.basic, kind: "basic", isCritical: true }, true) });

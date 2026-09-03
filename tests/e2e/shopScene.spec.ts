@@ -79,8 +79,17 @@ test("로비 임무→상점→무역 순서와 두 storefront의 확정 보상 
 
   // 무역은 독립 씬이 아니라 로비 위 레이어지만 같은 구매·확정 보상 계약을 사용한다.
   input = await controls(page); await tap(page, input.lobby!.trade);
+  // 조회 직후에는 PopupLayer가 만든 chrome이 먼저 살아 있어야 하며 비동기 목록을 기다리다 제목이 사라지면 안 된다.
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual(["무역"]);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.storefrontControls?.trade?.products.length)).toBeGreaterThan(0);
+  // 상품 행이 그려진 뒤에도 같은 제목과 외부 뒤로가기 입력이 함께 남는 수명주기 회귀를 고정한다.
+  await expect.poll(() => page.evaluate(() => ({
+    titles: window.__PF_DEBUG?.popupTitles,
+    hasProducts: (window.__PF_DEBUG?.storefrontControls?.trade?.products.length ?? 0) > 0,
+    hasBack: window.__PF_DEBUG?.storefrontControls?.trade?.back !== undefined,
+  }))).toEqual({ titles: ["무역"], hasProducts: true, hasBack: true });
+  // 실제 Canvas에도 제목 chrome과 상품 행이 함께 보이는 기준 장면을 회귀 자료로 남긴다.
+  await page.screenshot({ path: `test-results/${testInfo.project.name}-trade-popup-products-1080x1920.png`, fullPage: true });
   input = await controls(page); await tap(page, input.trade!.products[0]);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual(["무역", "구매 확인"]);
   input = await controls(page); await tap(page, input.purchase!.confirm);

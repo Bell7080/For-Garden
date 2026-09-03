@@ -453,13 +453,17 @@ describe("메론 스킬 표시 계약", () => {
 
   it("의 궁극기는 총 피해가 아니라 겹당 피해로 말한다", () => {
     const def = meron();
-    expect(def.ultimate).toMatchObject({ targeting: "battlefieldEnemies", overpaintDetonation: true, power: 120 });
+    expect(def.ultimate).toMatchObject({ targeting: "battlefieldEnemies", overpaintDetonation: true, power: 60 });
     // "적 전체에 얼마"로 적으면 한 겹 칠한 적과 다섯 겹 칠한 적이 같은 수를 맞는 것처럼 읽힌다.
     expect(skillDescription(def.ultimate, { damage: 172 })).toBe(
       "전장의 모든 적에게 쌓인 [[overpaint|덧칠]]을 터뜨려 한 겹마다 [[damage-value|172]]의 [[magical-damage|마법 피해]]를 주고, 그 덧칠을 지운다.",
     );
     // 능력치를 모르는 도감에서는 어느 능력치에서 나오는 배율인지 함께 말한다.
-    expect(skillDescription(def.ultimate)).toContain("주문력의 120%");
+    expect(skillDescription(def.ultimate)).toContain("주문력의 60%");
+    // 다섯 겹을 다 칠해야 렉시아의 단일 대상 궁극기와 같은 300%다 — 전장 전체를 때리는
+    // 지원가가 최상위 딜러의 한 방을 넘지 않게 하는 상한이라 함께 고정한다.
+    const rex = RELICS.find((relic) => relic.id === "rex")!;
+    expect(def.ultimate.power! * 5).toBeLessThanOrEqual(rex.ultimate.power!);
   });
 
   it("의 패시브와 폭주는 회복 대상과 덧칠의 주인을 분명히 말한다", () => {

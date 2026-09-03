@@ -662,9 +662,10 @@ export const RELICS: RelicDef[] = [
     ultimate: {
       id: "meron-ult",
       name: "완성_진짜 마지막(4)",
-      // 폭발형 궁극기라 이 위력은 총량이 아니라 **덧칠 한 겹당** 값이다. 다섯 겹까지 칠한
-      // 적에게는 주문력의 600%가 되고, 한 겹도 없는 적은 대상에서 빠진다.
-      power: 120,
+      // 폭발형 궁극기라 이 위력은 총량이 아니라 **덧칠 한 겹당** 값이다. 다섯 겹을 다 칠해야
+      // 렉시아의 단일 대상 궁극기와 같은 300%에 닿고, 한 겹도 없는 적은 대상에서 빠진다 —
+      // 전장 전체를 때리는 지원가가 최상위 딜러의 한 방을 넘지 않게 하는 상한이다.
+      power: 60,
       overpaintDetonation: true,
       scalingStat: "ap",
       iconAssetId: "skill-icon-magical",

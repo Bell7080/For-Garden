@@ -75,11 +75,25 @@ export class PopupLayer {
   /** 제목 있는 팝업만 E2E 관찰용으로 기록한다. Canvas 밖에서는 지금 무엇이 열려 있는지 알 방법이 없다. */
   private readonly titleByLayer = new Map<Phaser.GameObjects.Container, string>();
 
-  constructor(private readonly scene: Phaser.Scene, private readonly depth = 2000) {
-    // 씬이 통째로 내려가면 layer.destroy()가 close()를 거치지 않으므로 셈만 직접 되돌린다.
-    scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+  /** 씬 종료 정리를 이미 걸었는지. 첫 팝업을 열 때 한 번만 건다. */
+  private shutdownHooked = false;
+
+  constructor(private readonly scene: Phaser.Scene, private readonly depth = 2000) {}
+
+  /**
+   * 씬이 통째로 내려가면 `layer.destroy()`가 `close()`를 거치지 않으므로 셈만 직접 되돌린다.
+   *
+   * **생성자에서 걸지 않는다.** 팝업 층을 필드 초기화로 두는 씬(상점·프리미엄·환경설정)은 이
+   * 생성자가 씬 생성자 안에서 도는데, 그때 `scene.events`는 아직 없다 — 거기서 건드리면 게임이
+   * 부팅되는 순간 모든 씬이 만들어지며 통째로 죽는다(v0.55.8이 그랬다).
+   */
+  private hookShutdown(): void {
+    if (this.shutdownHooked) return;
+    this.shutdownHooked = true;
+    this.scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       openLayerCount -= this.stack.length;
       this.stack.length = 0;
+      this.shutdownHooked = false;
     });
   }
 
@@ -185,6 +199,7 @@ export class PopupLayer {
     this.scene.tweens.add({ targets: body, scale: 1, duration: 200, ease: "Cubic.Out" });
 
     if (options.title) this.titleByLayer.set(layer, options.title);
+    this.hookShutdown();
     this.stack.push(layer);
     openLayerCount += 1;
     this.publishDebugTitles();

@@ -95,7 +95,8 @@ export interface DebugState {
   storefrontControls?: {
     lobby?: { mission: DebugPoint; missionBack: DebugPoint; shop: DebugPoint; trade: DebugPoint };
     shop?: { back: DebugPoint; tabs: Record<"general" | "enhancement" | "rune", DebugPoint>; cards: DebugPoint[]; drag: { from: DebugPoint; to: DebugPoint } };
-    trade?: { products: DebugPoint[]; back: DebugPoint };
+    /** 실패 상태에서는 상품 대신 재시도 입력이 생기고 공용 뒤로가기는 계속 남는다. */
+    trade?: { products: DebugPoint[]; retry?: DebugPoint; back: DebugPoint };
     purchase?: { minus: DebugPoint; plus: DebugPoint; confirm: DebugPoint };
   };
   /** 상품명·재화 대신 현재 렌더 탭과 스크롤 위치만 관찰하는 표시 계약이다. */

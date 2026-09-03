@@ -78,9 +78,9 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
   if (trait.effectId === "sharedOverpaint") return `폭주 중 모든 아군의 [[basic-attack|기본 공격]]이 [[overpaint|덧칠]]을 함께 쌓는다.`;
   if (trait.effectId === "ichthyoDive") return `이동 속도가 ${trait.moveSpeedPercent}% 증가하고, [[basic-attack|기본 공격]] 이후 표적을 다른 적으로 바꾼다.`;
   if (trait.effectId === "butcherFeast") return `[[butcher|손질]]이 터진 피해의 ${trait.healPercent}%만큼 생존 아군 전체를 회복시킨다.`;
-  // 날아가는 시간은 전장 크기와 부딪히는 자리에 따라 달라지므로 초로 말하지 않는다 —
-  // 실제로 정해져 있는 것은 **벽을 몇 번 튕기는가**이고, 그 수가 곧 행동하지 못하는 동안이다.
-  if (trait.effectId === "knockbackSlam") return `[[concussion|뇌진탕]]이 확정 치명타가 되고, 그 적을 [[knockback|날려버려]] 전장 벽을 ${trait.bounces}번 튕기게 한다. 날려버린 뒤에는 가장 가까운 적을 표적으로 다시 지정한다.`;
+  // 몇 번 튕기는지도 몇 초인지도 적지 않는다. 날아가는 그림이 곧 그 답이고, 그 수가 플레이어의
+  // 다음 조작을 바꾸지 않는다 — 태그가 "날아가는 동안 움직이지도 때리지도 못한다"까지 말한다.
+  if (trait.effectId === "knockbackSlam") return `[[concussion|뇌진탕]]이 확정 치명타가 되고, 그 적을 [[knockback|날려버린다]]. 날려버린 뒤에는 가장 가까운 적을 표적으로 다시 지정한다.`;
 
   // 방어력 계수는 토리카처럼 추가 피해가 있는 범위 타격만 노출하고, 일반 전이 특성은 원래 피해 비율만 보여 준다.
   const speed = trait.attackSpeedBonusPercent === undefined ? "" : `공격 속도가 ${trait.attackSpeedBonusPercent}% 증가한다. `;

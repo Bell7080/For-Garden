@@ -530,14 +530,14 @@ describe("파치 스킬 표시 계약", () => {
     );
   });
 
-  it("의 폭주는 날아가는 시간이 아니라 튕기는 횟수를 말한다", () => {
+  it("의 폭주는 날아가는 시간도 튕기는 횟수도 적지 않는다", () => {
     const trait = pachi().ferocityTrait;
     if (trait.effectId !== "knockbackSlam") throw new Error("파치의 폭주 특성이 아니다");
-    // 날아가는 시간은 전장 크기와 부딪히는 자리에 따라 달라진다 — 정해져 있는 것은 횟수뿐이라
-    // 본문이 초를 적으면 실제로 서 있는 시간과 갈린다.
-    const text = ferocityTraitDescription(trait);
-    expect(text).toContain(`전장 벽을 ${trait.bounces}번 튕기게 한다`);
-    expect(text).not.toContain(`${trait.seconds}초`);
+    // 둘 다 플레이어의 다음 조작을 바꾸지 않는다 — 날아가는 그림이 곧 그 답이고, 무엇을 못
+    // 하는지는 태그가 말한다.
+    expect(ferocityTraitDescription(trait)).toBe(
+      "[[concussion|뇌진탕]]이 확정 치명타가 되고, 그 적을 [[knockback|날려버린다]]. 날려버린 뒤에는 가장 가까운 적을 표적으로 다시 지정한다.",
+    );
   });
 
   it("의 새 규칙어는 전부 전역 키워드로 정의된다", () => {

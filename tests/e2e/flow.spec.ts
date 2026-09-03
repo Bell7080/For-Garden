@@ -1,5 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
 import { startAfterOpening } from "./openingSave";
+// 캔버스 입력은 한 곳이 소유한다 — 스펙마다 두면 느린 구현이 그대로 살아남는다.
+import { captureGame, drag, longPress, tap } from "./canvasInput";
 
 const BASE_WIDTH = 1080;
 const BASE_HEIGHT = 1920;
@@ -32,44 +34,6 @@ const LEXIA = card(0);
 const TORIKA = card(1);
 const SEIRA = card(2);
 
-async function canvasBox(page: Page) {
-  const box = await page.locator("canvas").boundingBox();
-  if (!box) throw new Error("캔버스를 찾지 못했다");
-  return box;
-}
-
-/**
- * 게임 기준 해상도(1080×1920) 좌표를 실제 캔버스 좌표로 바꿔 누른다.
- * Scale.FIT + CENTER_BOTH라 캔버스 요소가 곧 게임 화면이므로 비율만 맞추면 된다.
- */
-async function tap(page: Page, x: number, y: number): Promise<void> {
-  const box = await canvasBox(page);
-  await page.locator("canvas").click({
-    position: { x: (x / BASE_WIDTH) * box.width, y: (y / BASE_HEIGHT) * box.height },
-  });
-}
-
-/** 같은 포인터를 작은 거리만 옮겨 모바일 손떨림 허용 범위를 확인한다. */
-async function tapWithMove(page: Page, from: [number, number], to: [number, number]): Promise<void> {
-  const box = await canvasBox(page);
-  const point = ([x, y]: [number, number]) => ({ x: box.x + (x / BASE_WIDTH) * box.width, y: box.y + (y / BASE_HEIGHT) * box.height });
-  await page.mouse.move(point(from).x, point(from).y);
-  await page.mouse.down();
-  await page.mouse.move(point(to).x, point(to).y);
-  await page.mouse.up();
-}
-
-/** 꾹 누르기. 편성 화면에서 정보창을 여는 조작이다. */
-async function longPress(page: Page, x: number, y: number, ms = 700): Promise<void> {
-  const box = await canvasBox(page);
-  const px = box.x + (x / BASE_WIDTH) * box.width;
-  const py = box.y + (y / BASE_HEIGHT) * box.height;
-  await page.mouse.move(px, py);
-  await page.mouse.down();
-  await page.waitForTimeout(ms);
-  await page.mouse.up();
-}
-
 function scene(page: Page) {
   return page.evaluate(() => window.__PF_DEBUG?.scene);
 }
@@ -88,6 +52,8 @@ async function enterParty(page: Page): Promise<void> {
   await expect.poll(() => scene(page)).toBe("lobby");
 
   await tap(page, ...SORTIE); // 출격 버튼
+  // 선택판은 SD를 읽어 오므로 열릴 때까지 기다린 뒤 누른다 — 열리기 전에 누르면 허공을 친다.
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toContain("출격");
   // 출격 선택판에서 스토리를 골라 기존 메인 작전 지도로 이어 간다.
   await tap(page, BASE_WIDTH / 2, 550);
   await expect.poll(() => scene(page)).toBe("stageMap");
@@ -149,7 +115,7 @@ test("1080×1920 전장 HUD와 궁극기 입력이 겹치지 않는다", async (
   // 캔버스 자체가 1080×1920 기준 좌표계이므로 기기 프로젝트의 터치 뷰포트는 유지한다.
   await enterBattle(page);
   await expect.poll(async () => (await battle(page))?.phase).toBe("fight");
-  await page.screenshot({ path: `test-results/${testInfo.project.name}-battle-hp-buffs-ultimate-safe-area-1080x1920.png`, fullPage: true });
+  await captureGame(page, `test-results/${testInfo.project.name}-battle-hp-buffs-ultimate-safe-area-1080x1920.png`);
 });
 
 /** 큰 돌출 머리(스피나)와 좌우로 치우친 얼굴(렉시아)의 충전 가림막 경계를 실제 캔버스로 남긴다. */
@@ -157,18 +123,18 @@ test("궁극기 카드 몸통과 돌출 머리는 0%·50%·100%에서 한 부채
   test.setTimeout(180_000);
   await enterBattle(page);
   await expect.poll(async () => (await battle(page))?.chargeRatios?.[1] ?? 1).toBeLessThan(0.08);
-  await page.screenshot({ path: `test-results/${testInfo.project.name}-battle-charge-portrait-000.png`, fullPage: true });
+  await captureGame(page, `test-results/${testInfo.project.name}-battle-charge-portrait-000.png`);
 
   // 정확한 한 프레임 대신 50% 주변의 좁은 구간을 기다려 실시간 전투 속도 차이에도 안정적으로 잡는다.
   await expect.poll(async () => {
     const ratio = (await battle(page))?.chargeRatios?.[1] ?? 0;
     return ratio >= 0.48 && ratio <= 0.56;
   }, { timeout: 60_000 }).toBe(true);
-  await page.screenshot({ path: `test-results/${testInfo.project.name}-battle-charge-portrait-050.png`, fullPage: true });
+  await captureGame(page, `test-results/${testInfo.project.name}-battle-charge-portrait-050.png`);
 
   // 수동 궁극기 기본값에서는 100%가 유지되므로 몸통과 머리 복제 모두 완전히 사라진 상태를 캡처한다.
   await expect.poll(async () => (await battle(page))?.chargeRatios?.[1] ?? 0, { timeout: 60_000 }).toBe(1);
-  await page.screenshot({ path: `test-results/${testInfo.project.name}-battle-charge-portrait-100.png`, fullPage: true });
+  await captureGame(page, `test-results/${testInfo.project.name}-battle-charge-portrait-100.png`);
 });
 
 test("전투 기여도 판을 열고 세 분류를 바꾼 뒤 접어 1080×1920 테마를 보존한다", async ({ page }, testInfo) => {
@@ -183,7 +149,7 @@ test("전투 기여도 판을 열고 세 분류를 바꾼 뒤 접어 1080×1920 
   await expect.poll(async () => (await battle(page))?.contributionPanel?.category).toBe("healing");
   await tap(page, 150, 620);
   await expect.poll(async () => (await battle(page))?.contributionPanel?.category).toBe("attack");
-  await page.screenshot({ path: `test-results/${testInfo.project.name}-battle-contribution-expanded-1080x1920.png`, fullPage: true });
+  await captureGame(page, `test-results/${testInfo.project.name}-battle-contribution-expanded-1080x1920.png`);
   // 그래프 칩은 펼친 판 위를 덮어 감춰지므로, 접는 길은 판 밖 아무 곳이나 누르는 것이다.
   await tap(page, 800, 400);
   await expect.poll(async () => (await battle(page))?.contributionPanel?.expanded).toBe(false);
@@ -203,7 +169,7 @@ test("일반 전투 결과의 기여도 세 분류를 확인하고 닫은 뒤 �
   // 팝업 중앙 기준 세 탭의 넓은 입력면을 눌러 공격 → 방어 → 회복 전환을 시각 자료로 남긴다.
   for (const [name, x] of [["attack", 290], ["defense", 540], ["healing", 790]] as const) {
     await tap(page, x, 425); await page.waitForTimeout(100);
-    await page.screenshot({ path: `test-results/${testInfo.project.name}-battle-result-contribution-${name}-1080x1920.png`, fullPage: true });
+    await captureGame(page, `test-results/${testInfo.project.name}-battle-result-contribution-${name}-1080x1920.png`);
   }
   // 판 우측 상단의 "돌아가기" 라벨 버튼으로 닫으면 뒤에 있던 StageCompletePopup으로 돌아가고
   // 숨겨졌던 "공격 · 방어 · 회복" 버튼이 다시 보인다. 그 팝업은 화면 아무 곳(SD 자리 근처)을
@@ -219,7 +185,7 @@ test("토리카 패시브 회복은 1080×1920 전장에서 초록 +수치로 �
   await tap(page, BASE_WIDTH - 335, 1360);
   await tap(page, BASE_WIDTH - 335, 1360);
   await expect.poll(async () => (await battle(page))?.healPopups ?? 0, { timeout: 45_000 }).toBeGreaterThan(0);
-  await page.screenshot({ path: `test-results/${testInfo.project.name}-battle-torika-passive-heal-1080x1920.png`, fullPage: true });
+  await captureGame(page, `test-results/${testInfo.project.name}-battle-torika-passive-heal-1080x1920.png`);
 });
 
 test("토리카 궁극기의 다중 기절 뱃지를 1080×1920 전장에서 함께 표시한다", async ({ page }, testInfo) => {
@@ -231,7 +197,7 @@ test("토리카 궁극기의 다중 기절 뱃지를 1080×1920 전장에서 함
   await expect.poll(async () => (await battle(page))?.ultimateReady.includes("토리카"), { timeout: 35_000 }).toBe(true);
   await tap(page, 190, 1620);
   await expect.poll(async () => (await battle(page))?.stunned?.length ?? 0, { timeout: 10_000 }).toBeGreaterThanOrEqual(2);
-  await page.screenshot({ path: `test-results/${testInfo.project.name}-battle-multi-stun-1080x1920.png`, fullPage: true });
+  await captureGame(page, `test-results/${testInfo.project.name}-battle-multi-stun-1080x1920.png`);
 });
 
 test("전투 시작의 빠른 연속 탭은 한 번만 진입하고 유효 편성을 보존한다", async ({ page }) => {
@@ -253,12 +219,12 @@ test("버튼 경계를 향한 작은 이동은 탭이고 큰 드래그는 취소
   await tap(page, ...SEIRA);
 
   // 80px 이동은 스크롤/드래그 의도로 보아 전투 진입을 취소한다.
-  await tapWithMove(page, [BASE_WIDTH / 2, 1700], [BASE_WIDTH / 2 + 80, 1700]);
+  await drag(page, [BASE_WIDTH / 2, 1700], [BASE_WIDTH / 2 + 80, 1700]);
   await page.waitForTimeout(100);
   expect(await scene(page)).toBe("party");
 
   // 18px 이동은 손떨림으로 인정되어 정상 진입한다.
-  await tapWithMove(page, [BASE_WIDTH / 2, 1700], [BASE_WIDTH / 2 + 18, 1700]);
+  await drag(page, [BASE_WIDTH / 2, 1700], [BASE_WIDTH / 2 + 18, 1700]);
   await expect.poll(() => scene(page)).toBe("battle");
 });
 
@@ -288,11 +254,11 @@ test("1080×1920 캐릭터 상세과 스킬 카드가 안전 영역 안에 표�
   await enterParty(page);
   await longPress(page, ...SEIRA);
   await expect.poll(() => infoOpen(page)).toBe(true);
-  await page.screenshot({ path: `test-results/${test.info().project.name}-character-info-1080x1920.png`, fullPage: true });
+  await captureGame(page, `test-results/${test.info().project.name}-character-info-1080x1920.png`);
 
   // 오른쪽 첫 스킬 버튼을 눌러 긴 한국어 설명 카드와 내부 뒤로가기 상태도 기록한다.
   await tap(page, 704, 1052);
-  await page.screenshot({ path: `test-results/${test.info().project.name}-skill-info-1080x1920.png`, fullPage: true });
+  await captureGame(page, `test-results/${test.info().project.name}-skill-info-1080x1920.png`);
   // 스킬 상세의 뒤로가기(아이콘 버튼)로 캐릭터 상세로 되돌아온다.
   await tap(page, 694, 1450);
   await expect.poll(() => infoOpen(page)).toBe(true);
@@ -305,7 +271,7 @@ test("토리카 폭주 설명은 성장 능력치로 환산된 수치를 표시�
   await longPress(page, ...TORIKA);
   await expect.poll(() => infoOpen(page)).toBe(true);
   await tap(page, 124, 1585);
-  await page.screenshot({ path: `test-results/${test.info().project.name}-torika-ferocity-info-1080x1920.png`, fullPage: true });
+  await captureGame(page, `test-results/${test.info().project.name}-torika-ferocity-info-1080x1920.png`);
 });
 
 test("관찰 일지의 단일 조작에서 질문과 모든 답변을 한 선택판으로 연다", async ({ page }) => {
@@ -315,10 +281,10 @@ test("관찰 일지의 단일 조작에서 질문과 모든 답변을 한 선택
   await longPress(page, ...TORIKA);
   await expect.poll(() => infoOpen(page)).toBe(true);
   await tap(page, 268, 300);
-  await page.screenshot({ path: `test-results/${test.info().project.name}-observation-journal.png`, fullPage: true });
+  await captureGame(page, `test-results/${test.info().project.name}-observation-journal.png`);
   // 앵커에서 화면 안으로 보정된 일지의 하단 조작을 눌러 단일 인터뷰 선택판도 시각 회귀로 남긴다.
   await tap(page, BASE_WIDTH / 2, 1735);
-  await page.screenshot({ path: `test-results/${test.info().project.name}-observation-interview-popup.png`, fullPage: true });
+  await captureGame(page, `test-results/${test.info().project.name}-observation-interview-popup.png`);
 });
 
 test("실시간 자동 전투는 입력 없이 서로 붙어 체력을 깎는다", async ({ page }) => {
@@ -346,7 +312,7 @@ test("출전 전 지도와 편성에서도 같은 적 분석창이 열린다", a
   // 지도의 적 편성 팝업에서 첫 칸을 누른다. 성장 입력이 없는 적 전용 창이 떠야 한다.
   await tap(page, MAP_ENEMY_SLOT[0], MAP_ENEMY_SLOT[1]);
   await expect.poll(() => infoOpen(page)).toBe(true);
-  await page.screenshot({ path: `test-results/${test.info().project.name}-map-enemy-info.png`, fullPage: true });
+  await captureGame(page, `test-results/${test.info().project.name}-map-enemy-info.png`);
 
   await tap(page, BASE_WIDTH - 120, BASE_HEIGHT - 120); // 뒤로가기 — 분석창만 닫힌다
   await expect.poll(() => infoOpen(page)).toBe(false);
@@ -366,7 +332,7 @@ test("전투 중 움직이는 적을 누르면 적 전용 정보창과 일러스
   const target = (await battle(page))!.enemyTargets![0];
   await tap(page, target.x, target.y);
   await expect.poll(() => infoOpen(page)).toBe(true);
-  await page.screenshot({ path: `test-results/${test.info().project.name}-battle-enemy-info.png`, fullPage: true });
+  await captureGame(page, `test-results/${test.info().project.name}-battle-enemy-info.png`);
 });
 
 test("전투 조작 칩으로 1·2·3배속과 자동 궁극기를 전환한다", async ({ page }) => {
@@ -386,7 +352,7 @@ test("전투 조작 칩으로 1·2·3배속과 자동 궁극기를 전환한다"
   await tap(page, BASE_WIDTH - 130, 1268);
   await expect.poll(async () => (await battle(page))?.skipUltimatePresentation).toBe(true);
   await expect.poll(async () => (await battle(page))?.autoUltimate).toBe(true);
-  await page.screenshot({ path: `test-results/${test.info().project.name}-battle-controls.png`, fullPage: true });
+  await captureGame(page, `test-results/${test.info().project.name}-battle-controls.png`);
 });
 
 test("동시에 준비된 두 궁극기는 연출 하나씩 직렬 실행한다", async ({ page }) => {
@@ -400,7 +366,7 @@ test("동시에 준비된 두 궁극기는 연출 하나씩 직렬 실행한다"
   // 첫 연출 활성 중 다음 전투원이 큐에 남는 것이 곧 겹치지 않고 직렬화됐다는 관찰 계약이다.
   await expect.poll(async () => (await battle(page))?.ultimateSequenceActive, { timeout: 5_000 }).toBe(true);
   await expect.poll(async () => (await battle(page))?.ultimateQueue?.length ?? 0).toBeGreaterThanOrEqual(1);
-  await page.screenshot({ path: `test-results/${test.info().project.name}-ultimate-serialized.png`, fullPage: true });
+  await captureGame(page, `test-results/${test.info().project.name}-ultimate-serialized.png`);
   // 두 연출이 모두 끝나면 큐와 입력 잠금이 함께 풀린다.
   await expect.poll(async () => (await battle(page))?.ultimateSequenceActive, { timeout: 10_000 }).toBe(false);
   await expect.poll(async () => (await battle(page))?.ultimateQueue ?? []).toEqual([]);
@@ -440,7 +406,7 @@ test("하단 탭으로 고고학 · 렐릭 · 로비 · 연구소 · 프리미�
   await tap(page, 900, 225);
   // Phaser 캔버스 텍스트는 DOM 조회가 불가능하므로 재시작 렌더 한 프레임을 기다린다.
   await page.waitForTimeout(300);
-  await page.screenshot({ path: `test-results/${test.info().project.name}-premium-patron-pass.png`, fullPage: true });
+  await captureGame(page, `test-results/${test.info().project.name}-premium-patron-pass.png`);
 });
 
 test("연구소에서 화석을 사용하면 렐릭 연구 결과가 뜬다", async ({ page }) => {
@@ -456,7 +422,7 @@ test("연구소에서 화석을 사용하면 렐릭 연구 결과가 뜬다", as
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.wallet?.fossil)).toBe(1100);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.owned)).not.toBeUndefined();
   // 슬롯별 신규/DNA 배지가 모바일 안전 영역에 표시되는 모습을 회귀 자료로 남긴다.
-  await page.screenshot({ path: `test-results/${test.info().project.name}-lab-pull-result.png`, fullPage: true });
+  await captureGame(page, `test-results/${test.info().project.name}-lab-pull-result.png`);
 });
 
 test("연구소 연구 확률 정보에서 현재 천장과 픽업·이월·중복 정책을 함께 확인한다", async ({ page }) => {
@@ -468,5 +434,5 @@ test("연구소 연구 확률 정보에서 현재 천장과 픽업·이월·중�
 
   // 확률 정보 버튼의 팝업이 기준 모바일 화면에서 잘리지 않는지 회귀 이미지로 남긴다.
   await tap(page, BASE_WIDTH / 2, 390);
-  await page.screenshot({ path: `test-results/${test.info().project.name}-lab-rates-policy.png`, fullPage: true });
+  await captureGame(page, `test-results/${test.info().project.name}-lab-rates-policy.png`);
 });

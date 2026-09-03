@@ -2,16 +2,9 @@ import { expect, test } from "@playwright/test";
 import { startAfterOpening } from "./openingSave";
 import { inventoryCategoryTabPosition } from "../../src/ui/inventoryTabs";
 import { createRuneInstance, type RuneStatKey } from "../../src/core/runes";
+import { captureGame, tap } from "./canvasInput";
 
 const WIDTH = 1080; const HEIGHT = 1920;
-
-/** 기준 게임 좌표를 현재 FIT 캔버스 좌표로 변환한다. */
-async function tap(page: import("@playwright/test").Page, x: number, y: number): Promise<void> {
-  const canvas = page.locator("canvas"); const box = await canvas.boundingBox();
-  if (!box) throw new Error("캔버스를 찾지 못했다");
-  // Phaser 캔버스는 계속 그려지므로 locator의 안정성 대기 대신 계산한 화면 좌표를 직접 누른다.
-  await page.mouse.click(box.x + x / WIDTH * box.width, box.y + y / HEIGHT * box.height);
-}
 
 test("가방은 로비를 유지하고 카테고리 탭과 많은 항목 스크롤 입력을 받는다", async ({ page }) => {
   // 고해상도 WebGL 캡처가 무GPU CI에서도 완료되도록 이 시각 회귀만 여유 시간을 둔다.
@@ -38,7 +31,7 @@ test("가방은 로비를 유지하고 카테고리 탭과 많은 항목 스크�
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.inventoryTextureKeys)).toEqual(["rune-uncommon-0", "rune-rare-1", "rune-legendary-2"]);
   // 스크롤 전 1080×1920 기준 캡처로 좌우 팝업 가장자리와 목록 하단/파일 탭 사이를 함께 보존한다.
   await page.setViewportSize({ width: WIDTH, height: HEIGHT });
-  await page.screenshot({ path: `test-results/${test.info().project.name}-inventory-popup-edges-and-tabs.png`, fullPage: true });
+  await captureGame(page, `test-results/${test.info().project.name}-inventory-popup-edges-and-tabs.png`);
   for (const index of [1, 2, 3, 0]) {
     const position = inventoryCategoryTabPosition(index);
     await tap(page, WIDTH / 2 + position.x, HEIGHT / 2 + position.y);
@@ -50,13 +43,13 @@ test("가방은 로비를 유지하고 카테고리 탭과 많은 항목 스크�
   // 갱신하는 결과 캡처는 기준 게임 해상도와 같은 1080×1920으로 고정한다.
   await page.setViewportSize({ width: WIDTH, height: HEIGHT });
   await page.waitForTimeout(100);
-  await page.screenshot({ path: `test-results/${test.info().project.name}-inventory-popup.png`, fullPage: true });
+  await captureGame(page, `test-results/${test.info().project.name}-inventory-popup.png`);
 
   // 외부 뒤로가기로 닫은 뒤 버튼과 팝업 인스턴스가 함께 정리되어 같은 가방을 다시 열 수 있어야 한다.
   await tap(page, WIDTH - 106, HEIGHT - 120);
   await tap(page, WIDTH - 106, 1096);
   await page.waitForTimeout(150);
-  await page.screenshot({ path: `test-results/${test.info().project.name}-inventory-popup-reopened.png`, fullPage: true });
+  await captureGame(page, `test-results/${test.info().project.name}-inventory-popup-reopened.png`);
   // 재개방 캡처까지 끝나면 테스트가 만든 팝업은 페이지 종료와 함께 정리된다.
 });
 
@@ -82,5 +75,5 @@ test("상단과 가방 재화는 같은 안내를 열고 가방 위 안내만 �
   await tap(page, 880, 556);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual(["가방"]);
   expect(await page.evaluate(() => window.__PF_DEBUG?.inventoryCategory)).toBe("currency");
-  await page.screenshot({ path: `test-results/${test.info().project.name}-currency-guide-stack.png`, fullPage: true });
+  await captureGame(page, `test-results/${test.info().project.name}-currency-guide-stack.png`);
 });

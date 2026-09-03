@@ -1,10 +1,8 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { startAfterOpening } from "./openingSave";
+import { tap } from "./canvasInput";
 
 const BASE = { width: 1080, height: 1920 } as const;
-/** 게임 논리 좌표를 반응형 Canvas의 실제 좌표로 변환한다. */
-async function tap(page: Page, x: number, y: number): Promise<void> { const box = await page.locator("canvas").boundingBox(); if (!box) throw new Error("캔버스를 찾지 못했다"); await page.locator("canvas").click({ position: { x: x / BASE.width * box.width, y: y / BASE.height * box.height } }); }
-
 test("우편 점에서 우편함을 열어 보상을 받고 재화 증가와 점 해제를 확인한다", async ({ page }) => {
   await startAfterOpening(page); await tap(page, BASE.width / 2, BASE.height / 2); await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   const goldBefore = await page.evaluate(() => window.__PF_DEBUG?.wallet?.gold);

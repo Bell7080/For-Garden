@@ -2,17 +2,16 @@ import { expect, test, type Page } from "@playwright/test";
 import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
 import { FEED_UNIT, relicExpToNext } from "../../src/core/relicProgression";
 import { startAfterOpening } from "./openingSave";
+import { canvasBox, captureGame, gamePoint } from "./canvasInput";
 
 /** Convert stable Phaser design coordinates into the browser's scaled canvas coordinates. */
-async function gamePoint(page: Page, x: number, y: number): Promise<{ x: number; y: number }> {
-  const box = await page.locator("canvas").boundingBox();
-  if (!box) throw new Error("game canvas is missing");
-  return { x: box.x + x * box.width / BASE_WIDTH, y: box.y + y * box.height / BASE_HEIGHT };
+async function gamePointOf(page: Page, x: number, y: number): Promise<{ x: number; y: number }> {
+  return gamePoint(await canvasBox(page), x, y);
 }
 
 /** Click one design-space point without repeating canvas scaling at each call site. */
 async function clickGame(page: Page, x: number, y: number): Promise<void> {
-  const point = await gamePoint(page, x, y);
+  const point = await gamePointOf(page, x, y);
   await page.mouse.click(point.x, point.y);
 }
 
@@ -37,24 +36,24 @@ test.beforeEach(async ({ page }) => {
 });
 
 test("짧은 급여 탭 뒤 성장 팝업이 유지되고 외부 입력으로만 닫힌다", async ({ page }, testInfo) => {
-  const feed = await gamePoint(page, 766, 524);
+  const feed = await gamePointOf(page, 766, 524);
   await page.mouse.click(feed.x, feed.y);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual(["한 번에 급여"]);
 
   // Releasing has already happened; an internal blank/header tap must not reach the backdrop.
-  const inside = await gamePoint(page, 766, 650);
+  const inside = await gamePointOf(page, 766, 650);
   await page.mouse.click(inside.x, inside.y);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual(["한 번에 급여"]);
   // Keep a mobile visual regression artifact for the newly-visible growth action note.
-  await page.screenshot({ path: `test-results/${testInfo.project.name}-relic-feed-growth-popup.png`, fullPage: true });
+  await captureGame(page, `test-results/${testInfo.project.name}-relic-feed-growth-popup.png`);
 
-  const outside = await gamePoint(page, 120, 1200);
+  const outside = await gamePointOf(page, 120, 1200);
   await page.mouse.click(outside.x, outside.y);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toBeUndefined();
 });
 
 test("긴 누르기 반복 급여는 손을 뗀 뒤 팝업을 한 장만 연다", async ({ page }) => {
-  const feed = await gamePoint(page, 766, 524);
+  const feed = await gamePointOf(page, 766, 524);
   await page.mouse.move(feed.x, feed.y);
   await page.mouse.down();
   await page.waitForTimeout(760);

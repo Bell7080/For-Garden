@@ -1877,8 +1877,9 @@ describe("스테라 정적 전투 계약", () => {
 
   it("의 기본 공격은 생존 아군 전체의 궁극기 게이지를 함께 채운다", () => {
     const { state, stella, ally } = stellaBattle();
+    // 채우는 양은 밸런스 값이라 적어 두지 않고 데이터에서 읽는다.
     const gain = stella.def.basic.allyEnergyGain!;
-    expect(gain).toBe(2);
+    expect(gain).toBeGreaterThan(0);
     stepSkirmish(state, 1 / 60);
     // 아군은 때리지 않았는데도 스테라의 한 방으로 정확히 그만큼 찼다.
     expect(ally.energy).toBe(gain);

@@ -264,10 +264,10 @@ describe("스테라 스킬 표시 계약", () => {
 
   it("의 기본 공격은 피해 뒤에 아군 충전을 제 문장으로 말한다", () => {
     const def = stella();
-    expect(def.basic).toMatchObject({ damageType: "physical", targeting: "single", power: 50, allyEnergyGain: 2 });
+    expect(def.basic).toMatchObject({ damageType: "physical", targeting: "single", power: 50, allyEnergyGain: 5 });
     // 주어가 시전자에서 아군으로 바뀌는 절이라 "주고"로 잇지 않고 문장을 끊는다.
     expect(skillDescription(def.basic, { damage: 54 })).toBe(
-      "적 한 명에게 [[damage-value|54]]의 [[physical-damage|물리 피해]]를 준다. 모든 생존 아군의 궁극기 충전량이 2 증가한다.",
+      "적 한 명에게 [[damage-value|54]]의 [[physical-damage|물리 피해]]를 준다. 모든 생존 아군의 궁극기 게이지가 5 오른다.",
     );
   });
 
@@ -302,7 +302,7 @@ describe("스테라 스킬 표시 계약", () => {
     const def = stella();
     expect(def.ferocityTrait).toMatchObject({ effectId: "tailwindRally", teamFerocityGain: 5, teamEnergyGain: 5 });
     expect(ferocityTraitDescription(def.ferocityTrait)).toBe(
-      "모든 아군의 공격당 [[ferocity|야성]] 충전량과 궁극기 충전량이 각각 5, 5씩 증가한다.",
+      "모든 아군이 공격할 때마다 오르는 [[ferocity|야성]] 게이지와 궁극기 게이지가 각각 5, 5씩 늘어난다.",
     );
     expect(def.passive.kind).toBe("lowHpVanish");
     expect(passiveDescription(def.passive)).toBe(
@@ -580,7 +580,7 @@ describe("마키 스킬 표시 계약", () => {
     if (effect.kind !== "butcher") throw new Error("손질 효과가 아니다");
     const keyword = KEYWORDS.find((entry) => entry.id === "butcher")!;
     // 수치를 태그가 말하기로 했으므로 데이터와 갈리면 유일한 설명이 틀린다.
-    expect(keyword.description).toContain("세 겹째");
+    expect(keyword.description).toContain(`${effect.maxStacks}겹이 쌓이면`);
     expect(keyword.description).toContain(`${effect.burstPower}%`);
     expect(effect.maxStacks).toBe(3);
   });

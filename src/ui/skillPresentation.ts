@@ -74,7 +74,7 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
     return `폭주 중 아군 기본 공격 적중마다 ${damage} 피해량을 가진 [[mette-staccato|스타카토]]가 추가로 발동한다.`;
   }
   if (trait.effectId === "pontusRage") return `폭주 중 매초 모든 적에게 최대 체력 ${trait.maxHpDamagePercentPerSecond}% 고정 피해를 주고, 모든 회복을 취소한다.`;
-  if (trait.effectId === "tailwindRally") return `모든 아군의 공격당 [[ferocity|야성]] 충전량과 궁극기 충전량이 각각 ${trait.teamFerocityGain}, ${trait.teamEnergyGain}씩 증가한다.`;
+  if (trait.effectId === "tailwindRally") return `모든 아군이 공격할 때마다 오르는 [[ferocity|야성]] 게이지와 궁극기 게이지가 각각 ${trait.teamFerocityGain}, ${trait.teamEnergyGain}씩 늘어난다.`;
   if (trait.effectId === "sharedOverpaint") return `폭주 중 모든 아군의 [[basic-attack|기본 공격]]이 [[overpaint|덧칠]]을 함께 쌓는다.`;
   if (trait.effectId === "ichthyoDive") return `이동 속도가 ${trait.moveSpeedPercent}% 증가하고, [[basic-attack|기본 공격]] 이후 표적을 다른 적으로 바꾼다.`;
   if (trait.effectId === "butcherFeast") return `[[butcher|손질]]이 터진 피해의 ${trait.healPercent}%만큼 생존 아군 전체를 회복시킨다.`;
@@ -292,7 +292,7 @@ function skillEffectClauses(skill: Skill | BasicAttack | Ultimate, stats: SkillD
     clauses.push({ text: `모든 생존 아군의 체력을 ${healText}만큼 회복한다`, joinWithComma: true });
   }
   if (skill.allyEnergyGain !== undefined) {
-    clauses.push({ text: `모든 생존 아군의 궁극기 충전량이 ${skill.allyEnergyGain} 증가한다`, standalone: true });
+    clauses.push({ text: `모든 생존 아군의 궁극기 게이지가 ${skill.allyEnergyGain} 오른다`, standalone: true });
   }
   clauses.push(...statusClauses(skill));
   if ("damageTransfer" in skill && skill.damageTransfer) {

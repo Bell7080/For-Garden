@@ -570,7 +570,7 @@ export const RELICS: RelicDef[] = [
       damageType: "physical",
       targeting: "single",
       // 지원가의 값어치는 제 피해가 아니라 아군의 궁극기가 얼마나 빨리 돌아오느냐다.
-      allyEnergyGain: 2,
+      allyEnergyGain: 5,
     },
     ultimate: {
       id: "stella-ult",

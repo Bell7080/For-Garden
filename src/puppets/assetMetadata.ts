@@ -99,6 +99,34 @@ export const MERON_SD_METADATA: Omit<PuppetAsset, "url"> = {
   content: { left: 197, top: 13, right: 1057, bottom: 1241 },
 };
 
+/** 파치 전신 ZIP의 원본 크기와 alpha > 16 경계다. */
+export const PACHI_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1024,
+  imageHeight: 1536,
+  content: { left: 88, top: 8, right: 1009, bottom: 1515 },
+};
+
+/** 파치 SD ZIP의 정사각 원본과 alpha > 16 경계다. */
+export const PACHI_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254,
+  imageHeight: 1254,
+  content: { left: 155, top: 12, right: 1098, bottom: 1242 },
+};
+
+/** 마키 전신 ZIP의 원본 크기와 alpha > 16 경계다. */
+export const MAKI_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1085,
+  imageHeight: 1449,
+  content: { left: 31, top: 65, right: 1073, bottom: 1392 },
+};
+
+/** 마키 SD ZIP의 정사각 원본과 alpha > 16 경계다. */
+export const MAKI_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254,
+  imageHeight: 1254,
+  content: { left: 61, top: 52, right: 1194, bottom: 1203 },
+};
+
 /** 티아 SD ZIP의 정사각 원본과 alpha > 16 경계다. */
 export const TIA_SD_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1254,

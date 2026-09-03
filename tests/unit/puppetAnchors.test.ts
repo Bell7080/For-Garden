@@ -20,6 +20,9 @@ import {
   LUKA_PORTRAIT_METADATA,
   METTE_PORTRAIT_METADATA,
   METTE_SD_METADATA,
+  MAKI_PORTRAIT_METADATA,
+  MERON_PORTRAIT_METADATA,
+  PACHI_PORTRAIT_METADATA,
   PONTOS_PORTRAIT_METADATA,
   PONTOS_SD_METADATA,
   SEIRA_PORTRAIT_METADATA,
@@ -238,6 +241,9 @@ const REAL_PORTRAITS = [
   { name: "메테", metadata: METTE_PORTRAIT_METADATA, head: { x: 520, y: 255 }, eyes: [{ x: 472, y: 277 }, { x: 568, y: 242 }] },
   { name: "스테라", metadata: STELLA_PORTRAIT_METADATA, head: { x: 549, y: 375 }, eyes: [{ x: 510, y: 386 }, { x: 591, y: 357 }] },
   { name: "티아", metadata: TIA_PORTRAIT_METADATA, head: { x: 518, y: 308 }, eyes: [{ x: 480, y: 317 }, { x: 548, y: 265 }] },
+  { name: "메론", metadata: MERON_PORTRAIT_METADATA, head: { x: 482, y: 270 }, eyes: [{ x: 439, y: 268 }, { x: 507, y: 242 }] },
+  { name: "파치", metadata: PACHI_PORTRAIT_METADATA, head: { x: 445, y: 199 }, eyes: [{ x: 420, y: 206 }, { x: 480, y: 172 }] },
+  { name: "마키", metadata: MAKI_PORTRAIT_METADATA, head: { x: 578, y: 315 }, eyes: [{ x: 528, y: 327 }, { x: 620, y: 306 }] },
 ] as const;
 
 /** PortraitCard가 넘기는 것과 같은 배율 보정으로 실제 카드 잘라내기를 구한다. */

@@ -22,8 +22,12 @@ import {
   PONTOS_PORTRAIT_METADATA,
   PONTOS_SD_METADATA,
   SEIRA_PORTRAIT_METADATA,
+  MAKI_PORTRAIT_METADATA,
+  MAKI_SD_METADATA,
   MERON_PORTRAIT_METADATA,
   MERON_SD_METADATA,
+  PACHI_PORTRAIT_METADATA,
+  PACHI_SD_METADATA,
   STELLA_PORTRAIT_METADATA,
   TIA_PORTRAIT_METADATA,
   TIA_SD_METADATA,
@@ -136,6 +140,18 @@ export const MERON_ASSET: PuppetAsset = {
   ...MERON_PORTRAIT_METADATA,
 };
 
+/** 10번 전신 일러스트: 파치(파키케팔로사우루스). */
+export const PACHI_ASSET: PuppetAsset = {
+  url: `${base}puppets/char_010.zip`,
+  ...PACHI_PORTRAIT_METADATA,
+};
+
+/** 11번 전신 일러스트: 마키(스밀로돈). */
+export const MAKI_ASSET: PuppetAsset = {
+  url: `${base}puppets/char_011.zip`,
+  ...MAKI_PORTRAIT_METADATA,
+};
+
 /** 8번 전신 일러스트: 티아(이크티오사우루스). */
 export const TIA_ASSET: PuppetAsset = {
   url: `${base}puppets/char_008.zip`,
@@ -208,6 +224,8 @@ const PORTRAIT_ASSETS = {
   stella: STELLA_ASSET,
   tia: TIA_ASSET,
   meron: MERON_ASSET,
+  pachi: PACHI_ASSET,
+  maki: MAKI_ASSET,
   // 적도 전용 전신을 가진다. 초상 레지스트리에 함께 두면 정보창이 아군·적을 가르지 않고
   // 같은 경로로 원화를 찾는다 — 화면마다 "적이면 다른 함수"를 두면 한 곳을 고칠 때 다른
   // 곳이 임시 원화로 남는다.
@@ -298,6 +316,18 @@ export const STELLA_SD_ASSET: PuppetAsset = {
   content: { left: 49, top: 83, right: 1175, bottom: 1179 },
 };
 
+/** 10번 SD: 파치. */
+export const PACHI_SD_ASSET: PuppetAsset = {
+  url: `${base}puppets/charSD_010.zip`,
+  ...PACHI_SD_METADATA,
+};
+
+/** 11번 SD: 마키. */
+export const MAKI_SD_ASSET: PuppetAsset = {
+  url: `${base}puppets/charSD_011.zip`,
+  ...MAKI_SD_METADATA,
+};
+
 /** 9번 SD: 메론. */
 export const MERON_SD_ASSET: PuppetAsset = {
   url: `${base}puppets/charSD_009.zip`,
@@ -327,6 +357,8 @@ const ALLY_SD_ASSETS: Readonly<Record<string, PuppetAsset>> = {
   tia: TIA_SD_ASSET,
   stella: STELLA_SD_ASSET,
   meron: MERON_SD_ASSET,
+  pachi: PACHI_SD_ASSET,
+  maki: MAKI_SD_ASSET,
 };
 
 /** 적 SD는 아군과 번호 묶음이 달라 따로 두고, 최종층 보스만 전용 묶음을 쓴다. */

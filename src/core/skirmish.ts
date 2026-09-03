@@ -936,10 +936,34 @@ function applyShimmerMark(attacker: Fighter, target: Fighter, state: SkirmishSta
  */
 function retargetAfterBasic(attacker: Fighter, target: Fighter, state: SkirmishState): void {
   if (!attacker.ferocityFever || attacker.def.ferocityTrait.effectId !== "ichthyoDive") return;
+  moveToNearestOtherEnemy(attacker, target, state);
+}
+
+/**
+ * 다 칠한 그림에는 더 손대지 않는다. 표적의 덧칠이 상한에 닿으면 다른 적으로 옮겨 간다.
+ *
+ * 이 절이 없으면 메론은 처음 고른 적만 계속 때려 **나머지 적에게는 한 겹도 칠하지 못한다** —
+ * 상한을 넘는 타격은 지속 시간만 갱신할 뿐 겹을 늘리지 않으므로, 그 시간은 통째로 버려진다.
+ * 궁극기가 전장 전체를 터뜨리는 개체라 밑그림도 전장 전체에 퍼져야 뜻이 선다.
+ */
+function retargetOnFullOverpaint(attacker: Fighter, target: Fighter, state: SkirmishState): void {
+  if (attacker.def.passive.kind !== "overpaintSiphon") return;
+  const paint = target.overpaint;
+  if (!paint || paint.stacks < paint.maxStacks) return;
+  moveToNearestOtherEnemy(attacker, target, state);
+}
+
+/**
+ * 방금 때린 상대를 빼고 가장 가까운 적으로 옮겨 붙는다.
+ *
+ * 새 표적을 여기서 고르지 않고 추적만 푸는 방법도 있지만, `null`로 두면 다음 프레임의
+ * `resolveTarget`이 방금 때린 그 상대를 다시 뽑을 수 있어 "바꿨다"가 되지 않는다. 살아 있는
+ * 다른 적이 없으면 그대로 둔다.
+ */
+function moveToNearestOtherEnemy(attacker: Fighter, target: Fighter, state: SkirmishState): void {
   const others = state.fighters.filter((other) => other.side !== attacker.side && other.id !== target.id
     && isFighterAlive(other) && other.stealthFor <= 0);
   if (others.length === 0) return;
-  // 가장 가까운 다른 적으로 곧바로 옮겨 붙는다. null로 두면 방금 때린 상대가 다시 뽑힐 수 있다.
   attacker.targetId = others.reduce((best, other) => distance(attacker, other) < distance(attacker, best) ? other : best).id;
   attacker.engaged = false;
 }
@@ -1397,7 +1421,13 @@ function strike(
   applySkillStatuses(target, skill, events, state, attacker.id);
 
   // 표식은 궁극기가 아니라 실제 타격을 따라 옮겨 다닌다.
-  if (!useUltimate) { applyShimmerMark(attacker, target, state, events); retargetAfterBasic(attacker, target, state); }
+  if (!useUltimate) {
+    applyShimmerMark(attacker, target, state, events);
+    // 덧칠은 바로 위의 `applySkillStatuses`에서 쌓이므로, 상한 판정도 그 뒤에 와야 이번 타격으로
+    // 가득 찬 경우를 놓치지 않는다.
+    retargetOnFullOverpaint(attacker, target, state);
+    retargetAfterBasic(attacker, target, state);
+  }
 
   // 광역 피해는 주 대상 타격의 부가 결과이며 에너지·야성·연속 공격을 추가 획득하지 않는다.
   if (attackingInFever && splashTrait.effectId === "splashDamage") {

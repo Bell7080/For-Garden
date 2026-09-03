@@ -445,9 +445,9 @@ describe("메론 스킬 표시 계약", () => {
   it("의 기본 공격은 덧칠의 겹 상한과 겹당 값을 본문이 직접 말한다", () => {
     const def = meron();
     // 겹 상한과 한 겹의 값이 곧 이 스킬의 수치라 키워드가 아니라 본문이 적는다.
-    expect(def.basic.statusEffects).toEqual([{ kind: "overpaint", seconds: 8, damageTakenPercent: 6, maxStacks: 5 }]);
+    expect(def.basic.statusEffects).toEqual([{ kind: "overpaint", seconds: 10, damageTakenPercent: 6, maxStacks: 4 }]);
     expect(skillDescription(def.basic, { damage: 101 })).toBe(
-      "적 한 명에게 [[damage-value|101]]의 [[magical-damage|마법 피해]]를 주고 [[overpaint|덧칠]]을 한 겹 쌓는다(최대 5겹, 겹마다 받는 피해 +6%).",
+      "적 한 명에게 [[damage-value|101]]의 [[magical-damage|마법 피해]]를 주고 [[overpaint|덧칠]]을 한 겹 쌓는다(최대 4겹, 겹마다 받는 피해 +6%).",
     );
   });
 
@@ -470,7 +470,7 @@ describe("메론 스킬 표시 계약", () => {
     const def = meron();
     // 회복은 팀 힐이 아니라 때린 본인의 몫이다.
     expect(passiveDescription(def.passive, def.stats.atk)).toBe(
-      "모든 아군이 [[overpaint|덧칠]]된 적을 맞히면 그 피해의 10%만큼 자신의 체력을 회복한다.",
+      "모든 아군이 [[overpaint|덧칠]]된 적을 맞히면 그 피해의 10%만큼 자신의 체력을 회복한다. 표적의 [[overpaint|덧칠]]이 최대로 쌓이면 다른 적으로 표적을 옮긴다.",
     );
     expect(ferocityTraitDescription(def.ferocityTrait)).toBe(
       "폭주 중 모든 아군의 [[basic-attack|기본 공격]]이 [[overpaint|덧칠]]을 함께 쌓는다.",

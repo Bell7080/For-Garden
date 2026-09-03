@@ -633,7 +633,7 @@ export const RELICS: RelicDef[] = [
     ferocityTrait: {
       name: "네? 마음에 안 드신다고요...?",
       effectId: "sharedOverpaint",
-      overpaint: { kind: "overpaint", seconds: 8, damageTakenPercent: 6, maxStacks: 5 },
+      overpaint: { kind: "overpaint", seconds: 10, damageTakenPercent: 6, maxStacks: 4 },
     },
     passive: {
       // kind가 overpaintSiphon인 패시브는 passiveDescription()이 구조화 필드로 다시 문장을 만들므로
@@ -645,7 +645,7 @@ export const RELICS: RelicDef[] = [
       effectType: "healing",
       // 덧칠된 적에게 입힌 실제 HP 피해 중 때린 본인이 회복하는 비율(%)이다.
       value: 10,
-      desc: "아군이 덧칠된 적을 맞히면 그 피해의 10%만큼 자신의 체력을 회복한다.",
+      desc: "아군이 덧칠된 적을 맞히면 그 피해의 10%만큼 자신의 체력을 회복한다. 표적의 덧칠이 최대로 쌓이면 다른 적으로 표적을 옮긴다.",
     },
     basic: {
       id: "meron-basic",
@@ -657,13 +657,13 @@ export const RELICS: RelicDef[] = [
       effectType: "magical",
       damageType: "magical",
       targeting: "single",
-      statusEffects: [{ kind: "overpaint", seconds: 8, damageTakenPercent: 6, maxStacks: 5 }],
+      statusEffects: [{ kind: "overpaint", seconds: 10, damageTakenPercent: 6, maxStacks: 4 }],
     },
     ultimate: {
       id: "meron-ult",
       name: "완성_진짜 마지막(4)",
-      // 폭발형 궁극기라 이 위력은 총량이 아니라 **덧칠 한 겹당** 값이다. 다섯 겹을 다 칠해야
-      // 렉시아의 단일 대상 궁극기와 같은 300%에 닿고, 한 겹도 없는 적은 대상에서 빠진다 —
+      // 폭발형 궁극기라 이 위력은 총량이 아니라 **덧칠 한 겹당** 값이다. 네 겹을 다 칠해도
+      // 렉시아의 단일 대상 궁극기(300%)에 못 미치고, 한 겹도 없는 적은 대상에서 빠진다 —
       // 전장 전체를 때리는 지원가가 최상위 딜러의 한 방을 넘지 않게 하는 상한이다.
       power: 60,
       overpaintDetonation: true,

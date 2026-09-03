@@ -2085,6 +2085,44 @@ describe("메론 정적 전투 계약", () => {
     expect(four.enemy.overpaint).toBeNull();
   });
 
+  it("의 패시브는 표적의 덧칠이 가득 차면 다른 적으로 옮겨 간다", () => {
+    // 적 둘을 세워 옮겨 갈 자리를 만든다.
+    const state = newSkirmish(["meron"], ["husk-shell", "husk-raptor"]);
+    const meron = state.fighters[0];
+    const [first, second] = state.fighters.filter((fighter) => fighter.side === "enemy");
+    meron.x = 400; meron.y = 1000; meron.attackCooldown = 0;
+    for (const enemy of [first, second]) {
+      enemy.attackCooldown = 99; enemy.maxHp = 400_000; enemy.hp = 400_000;
+    }
+    first.x = 460; first.y = 1000; second.x = 700; second.y = 1000;
+    meron.targetId = first.id;
+    const paint = meron.def.basic.statusEffects![0];
+    if (paint.kind !== "overpaint") throw new Error("메론의 덧칠 효과가 아니다");
+
+    // 상한에 닿기 전에는 계속 같은 적을 그린다.
+    for (let hit = 1; hit < paint.maxStacks; hit += 1) {
+      meron.attackCooldown = 0;
+      stepSkirmish(state, 1 / 60);
+      expect(first.overpaint!.stacks).toBe(hit);
+      expect(meron.targetId).toBe(first.id);
+    }
+
+    // 마지막 한 겹으로 가득 찬 순간, 그림을 더 얹지 않고 옆 적으로 옮긴다 — 이 절이 없으면
+    // 넘치는 타격이 지속 시간만 갱신하고 나머지 적은 한 겹도 받지 못한다.
+    meron.attackCooldown = 0;
+    stepSkirmish(state, 1 / 60);
+    expect(first.overpaint!.stacks).toBe(paint.maxStacks);
+    expect(meron.targetId).toBe(second.id);
+    expect(meron.engaged).toBe(false);
+
+    // 옮겨 갈 적이 남지 않으면 표적을 비우지 않는다.
+    second.hp = 0;
+    meron.targetId = first.id;
+    meron.attackCooldown = 0;
+    stepSkirmish(state, 1 / 60);
+    expect(meron.targetId).toBe(first.id);
+  });
+
   it("의 폭주는 아군 전체의 일반 공격에 덧칠을 얹는다", () => {
     const { state, meron, ally, enemy } = meronBattle();
     const trait = getRelic("meron").ferocityTrait;

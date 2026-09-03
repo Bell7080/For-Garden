@@ -516,8 +516,9 @@ describe("파치 스킬 표시 계약", () => {
     const def = pachi();
     expect(def.basic.statusEffectEvery).toBe(4);
     // 뇌진탕의 수치와 치명타 배증은 태그가 말하므로 본문이 되풀이하지 않는다.
+    // 기절은 뇌진탕과 같은 타격에 함께 걸리므로 문장을 끊지 않고 이어 붙인다.
     expect(skillDescription(def.basic, { damage: 118 })).toBe(
-      "적 한 명에게 [[damage-value|118]]의 [[physical-damage|물리 피해]]를 주고 1초 동안 [[stun|기절]]시킨다. [[concussion|뇌진탕]]을 입힌다. 위 상태는 매 4번째 [[basic-attack|기본 공격]]에만 걸린다.",
+      "적 한 명에게 [[damage-value|118]]의 [[physical-damage|물리 피해]]를 준다. 매 4번째 공격마다 [[concussion|뇌진탕]]을 입히고 1초 동안 [[stun|기절]]시킨다.",
     );
   });
 
@@ -525,7 +526,7 @@ describe("파치 스킬 표시 계약", () => {
     const def = pachi();
     expect(def.ultimate).toMatchObject({ targeting: "chargeLine", power: 200, cost: 250 });
     expect(skillDescription(def.ultimate, { damage: 264 })).toBe(
-      "[[charge|돌진]]해 뚫고 지나간 길의 모든 적에게 [[damage-value|264]]의 [[physical-damage|물리 피해]]를 주고 2초 동안 [[stun|기절]]시킨다. [[concussion|뇌진탕]]을 입힌다.",
+      "[[charge|돌진]]해 뚫고 지나간 길의 모든 적에게 [[damage-value|264]]의 [[physical-damage|물리 피해]]를 주고 [[concussion|뇌진탕]]을 입히고 2초 동안 [[stun|기절]]시킨다.",
     );
   });
 
@@ -538,8 +539,8 @@ describe("파치 스킬 표시 계약", () => {
     if (effect.kind !== "concussion") throw new Error("뇌진탕 효과가 아니다");
     const keyword = KEYWORDS.find((entry) => entry.id === "concussion")!;
     // 수치를 태그가 말하기로 했으므로 데이터와 갈리면 유일한 설명이 틀린다.
-    expect(keyword.description).toContain(`${effect.maxHpPercent}%`);
-    expect(keyword.description).toContain(`${effect.criticalMaxHpPercent}%`);
+    expect(keyword.description).toContain(`최대 체력의 ${effect.maxHpPercent}%`);
+    expect(keyword.description).toContain(`치명타 발동 시 ${effect.criticalMaxHpPercent}%`);
   });
 });
 

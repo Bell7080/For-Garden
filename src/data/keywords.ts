@@ -55,7 +55,7 @@ export const KEYWORDS: readonly KeywordDef[] = [
   },
   {
     id: "concussion", term: "뇌진탕", kind: "디버프",
-    description: "헬멧을 울리는 한 방. 방어력과 속성을 모두 지나쳐 **최대 체력의 5%**를 그대로 깎고, 그 타격이 치명타였다면 **15%**로 커진다. 시간을 두고 흐르지 않고 맞은 순간 한 번에 들어간다.",
+    description: "최대 체력의 5%에 해당하는 피해. 치명타 발동 시 15%에 해당하는 피해. 방어력과 속성을 지나쳐 맞은 순간 한 번에 들어간다.",
   },
   {
     id: "knockback", term: "날려버림", kind: "디버프",

@@ -1,7 +1,7 @@
 import type { AcquisitionResult, GachaPityState, QuantityRewardKind, Wallet } from "../core/gacha";
 import type { RelicProgress, Stats } from "../core/types";
 import type { MissionPeriod } from "../core/missions";
-import type { PassBenefitDefinition, ProductCurrency, ProductGrant, ProductRefresh, ProductStorefront, ShopCategory, ShopProductIconKey } from "../data/products";
+import type { PassBenefitDefinition, ProductAcquisition, ProductGrant, ProductRefresh, ProductStorefront, ShopCategory, ShopProductIconKey } from "../data/products";
 /** storefront와 상점 카테고리는 클라이언트·서버가 함께 쓰는 공용 계약으로 다시 공개한다. */
 export type { ProductStorefront, ShopCategory } from "../data/products";
 import type { DnaExchangeKind } from "../data/economy";
@@ -315,7 +315,7 @@ export interface NotificationSignalsResponse { pendingFriendRequestCount: number
 export interface ClaimMissionRewardsResponse extends PlayerStateDto { claimedIds: string[]; claimedResearchStageIds: string[]; rewards: { missionCheesecake: number; researchCheesecake: number; cheesecake: number }; cheesecakeEarned: number; }
 
 /** 상품 목록은 정적 정의에 서버가 계산한 현재 구매 가능 횟수를 결합한다. */
-export interface ProductDto { id: string; storefront: ProductStorefront; category: ShopCategory; iconKey: ShopProductIconKey; name: string; description: string; price: { currency: ProductCurrency; amount: number; display?: string }; grants: readonly ProductGrant[]; defaultQuantity: number; passBenefit?: PassBenefitDefinition; purchaseLimit: number; refresh: ProductRefresh; remaining: number; purchasable: boolean; disabledReason?: string; }
+export interface ProductDto { id: string; storefront: ProductStorefront; category: ShopCategory; iconKey: ShopProductIconKey; name: string; description: string; acquisition: ProductAcquisition; grants: readonly ProductGrant[]; defaultQuantity: number; passBenefit?: PassBenefitDefinition; purchaseLimit: number; refresh: ProductRefresh; remaining: number; purchasable: boolean; disabledReason?: string; }
 /** 상품 조회 응답은 서버 시각 기준으로 노출 중인 상품만 담는다. */
 export interface ProductListResponse { products: ProductDto[]; serverTime: string; }
 /** 구매 요청은 영속 상품 ID와 사용자가 팝업에서 확정한 묶음 수량을 함께 보낸다. */
@@ -347,7 +347,7 @@ export interface PullResponse extends PlayerStateDto {
 }
 
 /** UI가 서버 실패 원인을 문구로 바꿀 수 있게 고정한 오류 코드다. */
-export type ApiErrorCode = "INSUFFICIENT_STAMINA" | "EXPEDITION_RUN_NOT_FOUND" | "EXPEDITION_ALREADY_SETTLED" | "EXPEDITION_ALREADY_ACTIVE" | "EXPEDITION_WEEKLY_LIMIT" | "EXPEDITION_SCORE_REQUIRED" | "AD_WEEKLY_LIMIT" | "EXPEDITION_SCORE_REJECTED" | "EXPEDITION_REWARD_NOT_FOUND" | "EXPEDITION_REWARD_NOT_EARNED" | "ITEM_NOT_FOUND" | "ITEM_NOT_USABLE" | "INVALID_ITEM_QUANTITY" | "INVALID_PURCHASE_QUANTITY" | "INSUFFICIENT_ITEMS" | "STAMINA_FULL" | "AD_SLOT_NOT_FOUND" | "AD_TOKEN_INVALID" | "AD_REQUEST_DUPLICATE" | "AD_DAILY_LIMIT" | "RECEIPT_INVALID" | "PASS_NOT_FOUND" | "PASS_EXPIRED" | "BANNER_NOT_FOUND" | "INSUFFICIENT_CURRENCY" | "INSUFFICIENT_GOLD" | "INVALID_PULL_COUNT" | "RELIC_NOT_FOUND" | "RELIC_MAX_LEVEL" | "RUNE_NOT_FOUND" | "RUNE_ENHANCEMENT_COMPLETE" | "RUNE_STAT_EXHAUSTED" | "RUNE_ENGRAVING_NOT_ALLOWED" | "INVALID_RUNE_NAME" | "INVALID_RUNE_SLOT" | "RUNE_ALREADY_EQUIPPED" | "RUNE_SLOT_MISMATCH" | "RUNE_SLOT_EMPTY" | "INVALID_RUNE_SALE" | "RUNE_EQUIPPED" | "RUNE_LOCKED" | "STAGE_NOT_FOUND" | "DAILY_ENTRY_LIMIT" | "MISSION_NOT_FOUND" | "MISSION_NOT_COMPLETE" | "MISSION_ALREADY_CLAIMED" | "PRODUCT_NOT_FOUND" | "PRODUCT_STOREFRONT_MISMATCH" | "PRODUCT_NOT_VISIBLE" | "PURCHASE_LIMIT_REACHED" | "PLATFORM_PAYMENT_REQUIRED" | "DNA_OFFER_NOT_FOUND" | "INVALID_EXCHANGE_TARGET" | "DUPLICATE_GRANT" | "INVALID_STATE" | "CURRENCY_LIMIT_EXCEEDED" | "EVENT_NOT_FOUND" | "EVENT_NOT_ACTIVE";
+export type ApiErrorCode = "INSUFFICIENT_STAMINA" | "EXPEDITION_RUN_NOT_FOUND" | "EXPEDITION_ALREADY_SETTLED" | "EXPEDITION_ALREADY_ACTIVE" | "EXPEDITION_WEEKLY_LIMIT" | "EXPEDITION_SCORE_REQUIRED" | "AD_WEEKLY_LIMIT" | "EXPEDITION_SCORE_REJECTED" | "EXPEDITION_REWARD_NOT_FOUND" | "EXPEDITION_REWARD_NOT_EARNED" | "ITEM_NOT_FOUND" | "ITEM_NOT_USABLE" | "INVALID_ITEM_QUANTITY" | "INVALID_PURCHASE_QUANTITY" | "INSUFFICIENT_ITEMS" | "STAMINA_FULL" | "AD_SLOT_NOT_FOUND" | "AD_TOKEN_INVALID" | "AD_REQUEST_DUPLICATE" | "AD_DAILY_LIMIT" | "RECEIPT_INVALID" | "PASS_NOT_FOUND" | "PASS_EXPIRED" | "BANNER_NOT_FOUND" | "INSUFFICIENT_CURRENCY" | "INSUFFICIENT_GOLD" | "INVALID_PULL_COUNT" | "RELIC_NOT_FOUND" | "RELIC_MAX_LEVEL" | "RUNE_NOT_FOUND" | "RUNE_ENHANCEMENT_COMPLETE" | "RUNE_STAT_EXHAUSTED" | "RUNE_ENGRAVING_NOT_ALLOWED" | "INVALID_RUNE_NAME" | "INVALID_RUNE_SLOT" | "RUNE_ALREADY_EQUIPPED" | "RUNE_SLOT_MISMATCH" | "RUNE_SLOT_EMPTY" | "INVALID_RUNE_SALE" | "RUNE_EQUIPPED" | "RUNE_LOCKED" | "STAGE_NOT_FOUND" | "DAILY_ENTRY_LIMIT" | "MISSION_NOT_FOUND" | "MISSION_NOT_COMPLETE" | "MISSION_ALREADY_CLAIMED" | "PRODUCT_NOT_FOUND" | "PRODUCT_STOREFRONT_MISMATCH" | "PRODUCT_NOT_VISIBLE" | "PURCHASE_LIMIT_REACHED" | "PLATFORM_PAYMENT_REQUIRED" | "ACQUISITION_FLOW_REQUIRED" | "DNA_OFFER_NOT_FOUND" | "INVALID_EXCHANGE_TARGET" | "DUPLICATE_GRANT" | "INVALID_STATE" | "CURRENCY_LIMIT_EXCEEDED" | "EVENT_NOT_FOUND" | "EVENT_NOT_ACTIVE";
 
 /**
  * 급여 응답.

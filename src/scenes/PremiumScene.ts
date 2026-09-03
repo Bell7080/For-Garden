@@ -12,6 +12,7 @@ import type { PremiumSection } from "./settingsNavigation";
 import { PopupLayer } from "../ui/PopupLayer";
 import { PurchasePopup } from "../ui/PurchasePopup";
 import { session } from "../state/session";
+import { productActionModel } from "../core/productAcquisition";
 
 /** 현금 결제 카탈로그를 인게임 재화 상점과 분리해 소유하는 독립 프리미엄 씬이다. */
 export class PremiumScene extends Phaser.Scene {
@@ -68,9 +69,10 @@ export class PremiumScene extends Phaser.Scene {
       ? `광고 보상 즉시 수령  ·  ${product.passBenefit.durationDays === null ? "영구" : `유효 기간 ${product.passBenefit.durationDays}일`}\n광고 이용자와 동일한 기본 보상 · 슬롯별 UTC 일일 한도`
       : product.description;
     card.add(this.add.text(-390, -35, benefitNotice, textStyle({ role: "body", size: 24, color: COLOR.inkDim, wrap: 590, lineSpacing: 8 })).setOrigin(0, 0));
-    const price = product.price.display ?? `${product.price.amount.toLocaleString()} ${this.currencyLabel(product.price.currency)}`;
+    const action = productActionModel(product.acquisition, { remaining: product.remaining, available: product.purchasable });
+    const price = action.priceText;
     card.add(this.add.text(360, -28, price, textStyle({ role: "emphasis", size: 30, color: COLOR.accentText })).setOrigin(1, 0.5));
-    card.add(this.add.text(360, 52, product.price.currency === "real_money" ? "결제 비활성" : `남은 구매 ${product.remaining}/${product.purchaseLimit}`, textStyle({ role: "body", size: 22, color: product.purchasable ? COLOR.ink : COLOR.inkDim })).setOrigin(1, 0));
+    card.add(this.add.text(360, 52, action.disabledReason ?? `남은 구매 ${product.remaining}/${product.purchaseLimit}`, textStyle({ role: "body", size: 22, color: product.purchasable ? COLOR.ink : COLOR.inkDim })).setOrigin(1, 0));
     const hit = this.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
     hit.on("pointerdown", () => card.setScale(1.06));
     hit.on("pointerout", () => card.setScale(1));
@@ -95,8 +97,4 @@ export class PremiumScene extends Phaser.Scene {
     this.tweens.add({ targets: toast, alpha: 0, delay: 900, duration: 500, onComplete: () => toast.destroy() });
   }
 
-  /** 내부 재화 키를 플레이어가 읽는 짧은 단위로 바꾼다. */
-  private currencyLabel(currency: ProductDto["price"]["currency"]): string {
-    return ({ fossil: "화석", amber: "호박석", cheesecake: "치즈케이크", dnaFragments: "DNA", real_money: "현금" } as const)[currency];
-  }
 }

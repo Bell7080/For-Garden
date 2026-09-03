@@ -411,7 +411,7 @@ describe("FakeServer 상품 카탈로그", () => {
     const state = makeSession(0); const before = { ...state.wallet };
     const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-22T12:00:00Z") });
     await expect(server.purchaseProduct({ storefront: "trade", productId: "trade-weeds", quantity: 1 })).rejects.toMatchObject({ code: "INSUFFICIENT_CURRENCY" });
-    await expect(server.purchaseProduct({ storefront: "premium", productId: "premium-starter", quantity: 1 })).rejects.toMatchObject({ code: "PLATFORM_PAYMENT_REQUIRED" });
+    await expect(server.purchaseProduct({ storefront: "premium", productId: "premium-starter", quantity: 1 })).rejects.toMatchObject({ code: "ACQUISITION_FLOW_REQUIRED" });
     expect(state.wallet).toEqual(before);
     expect(state.productPurchases).toEqual({});
   });

@@ -4,12 +4,19 @@ export type ProductStorefront = "shop" | "trade" | "premium";
 /** 일반 인게임 상점과 무역소가 공유하는 안정적인 카테고리 계약이다. */
 export type ShopCategory = "general" | "enhancement" | "rune";
 
-/** 상점의 가격 재화. `real_money`는 플랫폼 영수증 검증 전에는 구매할 수 없다. */
-export type ProductCurrency = "fossil" | "amber" | "cheesecake" | "dnaFragments" | "real_money";
+/** 지갑에서 원자 차감할 수 있는 인게임 재화만 가격 재화로 인정한다. */
+export type ProductCurrency = "fossil" | "amber" | "cheesecake" | "dnaFragments";
+
+/** 가격 숫자와 획득 절차를 분리한 판별 합집합이며 외부 절차의 필수 식별자를 타입으로 강제한다. */
+export type ProductAcquisition =
+  | { kind: "currency"; currency: ProductCurrency; amount: number }
+  | { kind: "platform_payment"; platformProductId: string; displayPrice: string }
+  | { kind: "free" }
+  | { kind: "rewarded_ad"; slotId: string; dailyLimitUtc: number };
 
 /** API 경계에서 확정할 수 있는 상품 지급 항목이다. */
 export type ProductGrant =
-  | { kind: "currency"; currency: Exclude<ProductCurrency, "real_money">; amount: number }
+  | { kind: "currency"; currency: ProductCurrency; amount: number }
   | { kind: "item"; itemId: string; name: string; amount: number }
   | { kind: "rune"; name: string; amount: number; rarity: "uncommon" | "rare" | "epic" | "legendary"; part: 0 | 1 | 2 }
   | { kind: "profile_decoration"; decorationId: string; name: string };
@@ -32,7 +39,7 @@ export interface PassBenefitDefinition {
 export interface ProductDefinition {
   id: string; storefront: ProductStorefront; category: ShopCategory; iconKey: ShopProductIconKey;
   name: string; description: string;
-  price: { currency: ProductCurrency; amount: number; display?: string };
+  acquisition: ProductAcquisition;
   grants: readonly ProductGrant[];
   /** 구매 작업판이 처음 제안할 묶음 수량이며 서버는 요청 수량을 별도로 검증한다. */
   defaultQuantity: number;
@@ -43,9 +50,9 @@ export interface ProductDefinition {
 /** 프로토타입 운영 카탈로그. 실제 차감과 지급은 이 데이터가 아니라 GameApi만 수행한다. */
 export const SHOP_PRODUCTS: readonly ProductDefinition[] = [
   // 일반 상점 임시 상품 세 종은 각 탭의 API·필터 연결을 검증하기 위한 최소 구성이다.
-  { id: "shop-field-supplies", storefront: "shop", category: "general", iconKey: "shop-product-supplies", name: "현장 보급품", description: "현장 활동용 치즈케이크 40개", price: { currency: "fossil", amount: 100 }, grants: [{ kind: "currency", currency: "cheesecake", amount: 40 }], defaultQuantity: 1, purchaseLimit: 5, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
-  { id: "shop-enhancement-dna", storefront: "shop", category: "enhancement", iconKey: "shop-product-enhancement", name: "강화 DNA 묶음", description: "공용 DNA 조각 10개", price: { currency: "amber", amount: 8 }, grants: [{ kind: "currency", currency: "dnaFragments", amount: 10 }], defaultQuantity: 1, purchaseLimit: 3, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
-  { id: "shop-rune-research", storefront: "shop", category: "rune", iconKey: "shop-product-rune", name: "룬 연구 보급", description: "룬 연구용 DNA 조각 6개", price: { currency: "fossil", amount: 220 }, grants: [{ kind: "currency", currency: "dnaFragments", amount: 6 }], defaultQuantity: 1, purchaseLimit: 2, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "shop-field-supplies", storefront: "shop", category: "general", iconKey: "shop-product-supplies", name: "현장 보급품", description: "현장 활동용 치즈케이크 40개", acquisition: { kind: "currency", currency: "fossil", amount: 100 }, grants: [{ kind: "currency", currency: "cheesecake", amount: 40 }], defaultQuantity: 1, purchaseLimit: 5, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "shop-enhancement-dna", storefront: "shop", category: "enhancement", iconKey: "shop-product-enhancement", name: "강화 DNA 묶음", description: "공용 DNA 조각 10개", acquisition: { kind: "currency", currency: "amber", amount: 8 }, grants: [{ kind: "currency", currency: "dnaFragments", amount: 10 }], defaultQuantity: 1, purchaseLimit: 3, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "shop-rune-research", storefront: "shop", category: "rune", iconKey: "shop-product-rune", name: "룬 연구 보급", description: "룬 연구용 DNA 조각 6개", acquisition: { kind: "currency", currency: "fossil", amount: 220 }, grants: [{ kind: "currency", currency: "dnaFragments", amount: 6 }], defaultQuantity: 1, purchaseLimit: 2, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
 ];
 
 /** products 모듈을 직접 소비하는 일반 상점에는 shop 상품만 공개한다. */

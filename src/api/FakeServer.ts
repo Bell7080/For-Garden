@@ -482,7 +482,7 @@ export class FakeServer implements GameApi {
     const cached = this.receiptResults.get(request.requestId);
     if (cached) return { ...cached };
     const product = PRODUCTS.find(({ id }) => id === request.productId);
-    if (!request.requestId || !product?.passBenefit || product.price.currency !== "real_money") throw new GameApiError("RECEIPT_INVALID", "후원 패스 영수증이 올바르지 않습니다.");
+    if (!request.requestId || !product?.passBenefit || product.acquisition.kind !== "platform_payment") throw new GameApiError("RECEIPT_INVALID", "후원 패스 영수증이 올바르지 않습니다.");
     const transactionId = await this.verifyReceipt(request.receipt, product.id);
     if (!transactionId) throw new GameApiError("RECEIPT_INVALID", "플랫폼 영수증을 검증할 수 없습니다.");
     const previous = this.verifiedTransactions.get(transactionId);
@@ -786,7 +786,7 @@ export class FakeServer implements GameApi {
     // 목록 단계부터 요청 화면과 일치하는 상품만 반환해 화면별 모델이 섞인 카탈로그를 받지 않는다.
     const products = PRODUCTS.filter((product) => product.storefront === storefront && this.isVisible(product, now)).map((product) => {
       const remaining = this.remaining(product, now);
-      const premium = product.price.currency === "real_money";
+      const premium = product.acquisition.kind === "platform_payment";
       return { ...product, remaining, purchasable: !premium && remaining > 0, disabledReason: premium ? "서버 영수증 검증 연결 전에는 구매할 수 없습니다." : remaining <= 0 ? "구매 제한에 도달했습니다." : undefined };
     });
     return { products, serverTime: now.toISOString() };
@@ -808,13 +808,13 @@ export class FakeServer implements GameApi {
     if (owningEvent) this.assertEventActive(owningEvent, now);
     if (!this.isVisible(product, now)) throw new GameApiError("PRODUCT_NOT_VISIBLE", "현재 노출 기간이 아닌 상품입니다.");
     // FakeServer는 플랫폼 성공이나 영수증을 만들지 않는다. 유료 지급은 실제 검증 서버의 책임이다.
-    if (product.price.currency === "real_money") throw new GameApiError("PLATFORM_PAYMENT_REQUIRED", "플랫폼 영수증 검증이 필요한 상품입니다.");
+    if (product.acquisition.kind !== "currency") throw new GameApiError("ACQUISITION_FLOW_REQUIRED", "상품 획득 방식의 전용 확정 절차가 필요합니다.");
     const remaining = this.remaining(product, now);
     if (quantity > remaining) throw new GameApiError("PURCHASE_LIMIT_REACHED", "남은 구매 제한을 초과했습니다.");
-    const totalPrice = totalGrantAmount(product.price.amount, quantity);
-    if (!Number.isSafeInteger(totalPrice) || this.state.wallet[product.price.currency] < totalPrice) throw new GameApiError("INSUFFICIENT_CURRENCY", "재화가 부족합니다.");
+    const totalPrice = totalGrantAmount(product.acquisition.amount, quantity);
+    if (!Number.isSafeInteger(totalPrice) || this.state.wallet[product.acquisition.currency] < totalPrice) throw new GameApiError("INSUFFICIENT_CURRENCY", "재화가 부족합니다.");
 
-    const nextWallet = { ...this.state.wallet, [product.price.currency]: this.state.wallet[product.price.currency] - totalPrice };
+    const nextWallet = { ...this.state.wallet, [product.acquisition.currency]: this.state.wallet[product.acquisition.currency] - totalPrice };
     const nextRunes = [...this.state.runeInventory];
     const grantedRunes: RuneInstance[] = [];
     const granted: ProductDefinition["grants"][number][] = [];

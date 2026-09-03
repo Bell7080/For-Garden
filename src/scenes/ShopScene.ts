@@ -15,7 +15,6 @@ import { COLOR, textStyle } from "../ui/theme";
 import { TopBar } from "../ui/TopBar";
 import { PopupLayer } from "../ui/PopupLayer";
 import { PurchasePopup } from "../ui/PurchasePopup";
-import { tradePopupModel } from "../ui/tradePopupModel";
 import { session } from "../state/session";
 
 /** 상품 목록이 제목 아래에서 뒤로가기 안전 영역 위까지 흐르는 화면 좌표 경계다. */
@@ -44,13 +43,13 @@ export class ShopScene extends Phaser.Scene {
   constructor() { super("shop"); }
 
   create(): void {
-    setDebugScene("shop", "무역소");
-    // 임시 무역소 배경도 공용 로딩 표에서 먼저 읽혀 씬 진입 중 로더가 튀어나오지 않는다.
+    setDebugScene("shop", "상점");
+    // 임시 상점 배경도 공용 로딩 표에서 먼저 읽혀 씬 진입 중 로더가 튀어나오지 않는다.
     addSceneBackground(this, BACKGROUND.shop);
     drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { depth: -20, strength: 0.76 });
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.56).setDepth(-19);
     this.topBar = new TopBar(this, 40, { onSettings: () => this.scene.start("settings", { returnScene: "lobby" }) });
-    this.add.text(54, 170, "무역소", textStyle({ role: "display", size: 54 })).setOrigin(0, 0);
+    this.add.text(54, 170, "상점", textStyle({ role: "display", size: 54 })).setOrigin(0, 0);
     this.add.text(LIST_VIEW.left, 246, "교환 목록", textStyle({ role: "emphasis", size: 27, color: COLOR.accentText })).setOrigin(0, 0);
     drawHairline(this, (LIST_VIEW.left + LIST_VIEW.right) / 2, 302, LIST_VIEW.right - LIST_VIEW.left, { color: COLOR.accent, alpha: 0.4 });
     addBackButton(this, () => this.scene.start("lobby"));
@@ -89,11 +88,11 @@ export class ShopScene extends Phaser.Scene {
     this.content.setMask(this.viewportMask.createGeometryMask());
   }
 
-  /** 서버의 storefront 경계를 신뢰하되 화면에서는 trade 상품만 렌더링한다. */
+  /** 서버의 storefront 경계를 신뢰하되 독립 상점 씬에서는 shop 상품만 렌더링한다. */
   private async refresh(): Promise<void> {
-    const response = await gameApi.getProducts("trade");
+    const response = await gameApi.getProducts("shop");
     if (!this.scene.isActive()) return;
-    this.products = tradePopupModel(response.products);
+    this.products = response.products.filter(({ storefront }) => storefront === "shop");
     this.renderProducts();
   }
 
@@ -127,10 +126,10 @@ export class ShopScene extends Phaser.Scene {
     card.add(this.add.text(-width / 2 + 206, -100, product.name, textStyle({ role: "emphasis", size: 29 })).setOrigin(0, 0));
     card.add(this.add.text(-width / 2 + 206, -48, product.description, textStyle({ role: "body", size: 21, color: COLOR.inkDim, wrap: width - 242 })).setOrigin(0, 0));
     // 가격은 액자 바로 아래에 숫자와 공용 재화 아이콘을 한 행으로 놓는다.
-    if (product.price.currency !== "real_money") {
+    if (product.acquisition.kind === "currency") {
       const priceX = frameX - 12;
-      card.add(this.add.image(priceX - 44, 91, CURRENCY_ICON_BY_WALLET[product.price.currency]).setDisplaySize(34, 34));
-      card.add(this.add.text(priceX - 20, 91, formatCurrency(product.price.amount), textStyle({ role: "emphasis", size: 25, color: COLOR.accentText })).setOrigin(0, 0.5));
+      card.add(this.add.image(priceX - 44, 91, CURRENCY_ICON_BY_WALLET[product.acquisition.currency]).setDisplaySize(34, 34));
+      card.add(this.add.text(priceX - 20, 91, formatCurrency(product.acquisition.amount), textStyle({ role: "emphasis", size: 25, color: COLOR.accentText })).setOrigin(0, 0.5));
     }
     card.add(this.add.text(-width / 2 + 206, 78, `남은 교환 ${formatCurrency(product.remaining)}/${formatCurrency(product.purchaseLimit)}`, textStyle({ role: "body", size: 20, color: product.purchasable ? COLOR.ink : COLOR.inkDim })).setOrigin(0, 0));
     const hit = this.add.rectangle(0, 0, width, LIST_LAYOUT.cardHeight, 0xffffff, 0).setInteractive({ useHandCursor: product.purchasable });

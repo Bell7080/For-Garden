@@ -12,6 +12,7 @@ import { PartyScene } from "./scenes/PartyScene";
 import { BattleScene } from "./scenes/BattleScene";
 import { OpeningScene } from "./scenes/OpeningScene";
 import { ShopScene } from "./scenes/ShopScene";
+import { PremiumScene } from "./scenes/PremiumScene";
 import { FriendsScene } from "./scenes/FriendsScene";
 import { ArchaeologyScene } from "./scenes/ArchaeologyScene";
 import { SettingsScene } from "./scenes/SettingsScene";
@@ -47,10 +48,10 @@ const game = new Phaser.Game({
     // 멀티터치 환경에서도 Phaser pointer 이벤트가 touchstart/touchend를 안정적으로 추적한다.
     activePointers: 3,
   },
-  // 장기 탐사형 고고학, 배너 연구소, 유료 상품 전용 프리미엄은 각각 독립 화면이다.
+  // 장기 탐사형 고고학, 배너 연구소, 재화 상점, 유료 프리미엄은 각각 독립 화면이다.
   // 원정은 로비 출격 선택판에서 진입하며 준비/이어하기 상태를 같은 씬에서 소유한다.
   // 누른 자리에 답하는 겹은 모든 화면 위에 서야 하므로 목록의 맨 끝에 둔다.
-  scene: [BootScene, TitleScene, OpeningScene, LobbyScene, ExpeditionScene, SortiePreviewScene, SettingsScene, FriendsScene, ShopScene, RelicsScene, LabScene, ArchaeologyScene, StageMapScene, StageStoryScene, PartyScene, BattleScene, EffectOverlayScene],
+  scene: [BootScene, TitleScene, OpeningScene, LobbyScene, ExpeditionScene, SortiePreviewScene, SettingsScene, FriendsScene, ShopScene, PremiumScene, RelicsScene, LabScene, ArchaeologyScene, StageMapScene, StageStoryScene, PartyScene, BattleScene, EffectOverlayScene],
 });
 
 // Phaser Sound 생성과 브라우저 수명 주기 처리는 씬이 아니라 중앙 오디오 관리자에 연결한다.

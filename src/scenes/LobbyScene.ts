@@ -19,7 +19,6 @@ import { PopupLayer } from "../ui/PopupLayer";
 import { IdleExcavationPopup } from "../ui/IdleExcavationPopup";
 import { BACK_SLOT, IconButton } from "../ui/IconButton";
 import { UI_ICON } from "../ui/icons";
-import { TradePopup } from "../ui/TradePopup";
 import { InventoryPopup } from "../ui/InventoryPopup";
 import { bindNotificationDot } from "../ui/NotificationDot";
 import { perspectiveButtonNotificationAnchor } from "../ui/notificationDotStyle";
@@ -106,9 +105,6 @@ export class LobbyScene extends Phaser.Scene {
   private idleExcavationPopup?: IdleExcavationPopup;
   /** 발굴은 화면 크기의 작업판이므로 팝업 X 대신 로비 좌하단의 공용 아이콘 양식을 쓴다. */
   private excavationBackButton?: IconButton;
-  /** 무역도 발굴과 같은 공유 레이어와 외부 뒤로가기 슬롯을 사용한다. */
-  private tradePopup?: TradePopup;
-  private tradeBackButton?: IconButton;
   /** 인벤토리는 로비 세션을 유지하는 공용 팝업이며 상태 변경은 API에만 위임한다. */
   private inventoryPopup?: InventoryPopup;
   private inventoryBackButton?: IconButton;
@@ -238,16 +234,9 @@ export class LobbyScene extends Phaser.Scene {
     }
   }
 
-  /** 연타로 중복 레이어를 만들지 않고 로비 위에 무역 카탈로그 한 장만 연다. */
+  /** 무역은 로비 팝업을 재사용하지 않고 전용 씬의 독립 수명주기로 전환한다. */
   private openTrade(): void {
-    if (!this.popupLayer) return;
-    this.tradePopup ??= new TradePopup(this, this.popupLayer, gameApi, () => {
-      this.tradePopup = undefined;
-      // 팝업이 어떤 경로로 닫혀도 외부 입력면을 남기지 않는다.
-      this.tradeBackButton?.destroy(); this.tradeBackButton = undefined;
-    });
-    this.tradePopup.open();
-    if (!this.tradeBackButton) this.tradeBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: () => this.tradePopup?.close() }).setDepth(2100);
+    this.scene.start("shop");
   }
 
   /** 상단과 가방이 공유하는 안내를 열고, 선택적인 이동만 로비 소유 콜백에서 해석한다. */

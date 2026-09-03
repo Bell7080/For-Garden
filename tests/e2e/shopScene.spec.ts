@@ -18,10 +18,11 @@ async function enterLobby(page: Page): Promise<void> {
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
 }
 
-test("무역 레일은 독립 상점 씬을 열고 공용 뒤로가기로 로비에 복귀한다", async ({ page }) => {
+test("상점 레일은 독립 ShopScene을 열고 공용 뒤로가기로 로비에 복귀한다", async ({ page }) => {
   await enterLobby(page);
-  // 오른쪽 레일 첫 슬롯은 더 이상 로비 팝업을 만들지 않고 인게임 재화 전용 씬을 연다.
-  await tap(page, WIDTH - 106, 640);
+  // 콘텐츠 레일의 임무 아래 두 번째 슬롯과 분리된 편의 레일을 시각 회귀 자료로 남긴다.
+  await page.screenshot({ path: `test-results/${test.info().project.name}-lobby-content-rail.png`, fullPage: true });
+  await tap(page, WIDTH - 106, 792);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("shop");
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.screenTitle)).toBe("무역소");
   await page.screenshot({ path: `test-results/${test.info().project.name}-shop-scene.png`, fullPage: true });

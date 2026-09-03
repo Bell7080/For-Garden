@@ -91,7 +91,19 @@ export interface DebugState {
   relicScroll?: { y: number; minY: number; maxY: number; enabled: boolean; viewportTop: number; viewportBottom: number };
   /** 노드 편성판의 안전 영역·꼬리 방향·적 입력 중심만 노출하는 모바일 시각 회귀 계약이다. */
   enemyPreview?: { top: number; bottom: number; panelTop: number; panelBottom: number; above: boolean; enemyTargets: Array<{ x: number; y: number }> };
+  /** 상점군 E2E가 Canvas 구현을 복제하지 않고 실제 입력면만 누르는 최소 좌표 계약이다. */
+  storefrontControls?: {
+    lobby?: { mission: DebugPoint; missionBack: DebugPoint; shop: DebugPoint; trade: DebugPoint };
+    shop?: { back: DebugPoint; tabs: Record<"general" | "enhancement" | "rune", DebugPoint>; cards: DebugPoint[]; drag: { from: DebugPoint; to: DebugPoint } };
+    trade?: { products: DebugPoint[]; back: DebugPoint };
+    purchase?: { minus: DebugPoint; plus: DebugPoint; confirm: DebugPoint };
+  };
+  /** 상품명·재화 대신 현재 렌더 탭과 스크롤 위치만 관찰하는 표시 계약이다. */
+  shopView?: { category: "general" | "enhancement" | "rune"; scrollY: number; minScrollY: number };
 }
+
+/** 자동화에 공개하는 좌표는 누를 중심점 두 숫자만 가진다. */
+export interface DebugPoint { x: number; y: number }
 
 declare global {
   interface Window {
@@ -109,7 +121,17 @@ export function setDebugScene(scene: string, screenTitle?: string): void {
   state.scene = scene;
   // 이전 씬의 제목이 남아 거짓 양성이 되지 않도록 씬 전환마다 함께 초기화한다.
   state.screenTitle = screenTitle;
+  // 새 씬이 자기 입력면을 게시하기 전에는 과거 상점 좌표를 남기지 않는다.
+  state.storefrontControls = undefined; state.shopView = undefined;
 }
+
+/** 현재 화면이 실제로 만든 상점 입력 중심만 병합하며 상품/지갑 데이터는 받지 않는다. */
+export function setDebugStorefrontControls(controls: Partial<NonNullable<DebugState["storefrontControls"]>> | undefined): void {
+  const state = ensure(); state.storefrontControls = controls ? { ...state.storefrontControls, ...controls } : undefined;
+}
+
+/** 탭 재렌더와 스크롤 clamp 결과를 그대로 게시한다. */
+export function setDebugShopView(view: DebugState["shopView"]): void { ensure().shopView = view; }
 
 export function setDebugReady(ready: boolean): void {
   ensure().ready = ready;

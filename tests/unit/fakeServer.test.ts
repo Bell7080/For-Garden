@@ -385,6 +385,15 @@ describe("FakeServer", () => {
 });
 
 describe("FakeServer 상품 카탈로그", () => {
+  it("UTC 일일 경계가 지나면 구매 제한을 새 주기로 갱신한다", async () => {
+    const state = makeSession(10_000); let now = new Date("2026-08-22T23:59:59Z");
+    const server = new FakeServer(state, { latencyMs: 0, now: () => now });
+    await server.purchaseProduct({ storefront: "shop", productId: "shop-field-supplies", quantity: 5 });
+    expect((await server.getProducts("shop")).products.find(({ id }) => id === "shop-field-supplies")?.remaining).toBe(0);
+    // 서버 날짜 공급자만 다음 UTC 일자로 옮겨 로컬 시계와 무관한 갱신을 확인한다.
+    now = new Date("2026-08-23T00:00:00Z");
+    expect((await server.getProducts("shop")).products.find(({ id }) => id === "shop-field-supplies")?.remaining).toBe(5);
+  });
   it("여러 개의 총가격·총 지급량·구매 제한을 검증한 뒤 한 번에 확정한다", async () => {
     const state = makeSession(1_000);
     const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-22T12:00:00Z") });

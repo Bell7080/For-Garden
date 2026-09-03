@@ -9,6 +9,7 @@ import { addItemFrame, ITEM_FRAME } from "./itemFrame";
 import { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
 import { openRewardPopup, productGrantsToRewardItems } from "./RewardPopup";
+import { setDebugStorefrontControls } from "../debug";
 
 /** 신규 상점과 무역이 같은 수량·표시·요청 잠금을 쓰는 공용 구매 작업판이다. */
 export class PurchasePopup {
@@ -66,6 +67,8 @@ export class PurchasePopup {
     // 수량 조작은 순수 모델이 계산한 실제 구매 가능 상한에서만 활성화한다.
     const minus = new Button(this.scene, 105, 75, { width: 76, height: 58, label: "−", fontSize: 30, onClick: () => this.changeQuantity(product, -1) }).setEnabled(!this.pending && quote.quantity > 1);
     const plus = new Button(this.scene, 205, 75, { width: 76, height: 58, label: "+", fontSize: 30, onClick: () => this.changeQuantity(product, 1) }).setEnabled(!this.pending && quote.quantity < quote.maxQuantity);
+    // 팝업 본문 원점은 화면 중앙이므로 사용자 입력 중심만 절대 좌표로 변환해 공개한다.
+    setDebugStorefrontControls({ purchase: { minus: { x: BASE_CENTER.x + 105, y: BASE_CENTER.y + 75 }, plus: { x: BASE_CENTER.x + 205, y: BASE_CENTER.y + 75 }, confirm: { x: BASE_CENTER.x, y: BASE_CENTER.y + 345 } } });
     view.add([minus, plus]);
     const canPurchase = product.purchasable && quote.valid && !this.pending;
     const buy = new Button(this.scene, 0, 345, { width: 650, height: 86, label: this.pending ? "처리 중" : "구매", fontSize: 31, variant: "primary", onClick: () => { void this.purchase(product, close, onPurchased); } }).setEnabled(canPurchase);
@@ -109,6 +112,9 @@ export class PurchasePopup {
     }
   }
 }
+
+/** PurchasePopup은 중앙 고정 작업판이므로 좌표 변환 기준도 한 상수로 둔다. */
+const BASE_CENTER = { x: 540, y: 960 } as const;
 
 /** 재화 교환 가격은 판별된 acquisition만 받아 다른 방식의 가짜 숫자를 만들지 않는다. */
 function priceText(acquisition: Extract<ProductDto["acquisition"], { kind: "currency" }>, amount: number): string {

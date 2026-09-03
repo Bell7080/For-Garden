@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ProductDto, ProductStorefront } from "../../src/api/contracts";
-import { shopModel } from "../../src/ui/shopModel";
+import { productsForShopCategory, shopModel } from "../../src/ui/shopModel";
 import { tradePopupModel } from "../../src/ui/tradePopupModel";
 
 /** 필터 검증에 필요하지 않은 표시 필드는 한 팩토리에서 채워 storefront 의도만 드러낸다. */
@@ -18,5 +18,10 @@ describe("storefront product models", () => {
 
   it("shopModel preserves only shop products", () => {
     expect(shopModel(mixed).map(({ id }) => id)).toEqual(["shop-item"]);
+  });
+
+  it("탭별 상품 필터는 다른 storefront와 다른 분류를 동시에 제외한다", () => {
+    const enhancement = { ...product("shop-enhancement", "shop"), category: "enhancement" as const };
+    expect(productsForShopCategory([...mixed, enhancement], "enhancement").map(({ id }) => id)).toEqual(["shop-enhancement"]);
   });
 });

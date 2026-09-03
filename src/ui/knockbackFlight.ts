@@ -21,41 +21,39 @@ export interface FlightOptions {
   y: number;
   vx: number;
   vy: number;
-  seconds: number;
   arena: Arena;
+  /**
+   * 벽에 부딪히는 횟수. 이 수를 다 채우면 궤적이 끝난다.
+   *
+   * 끝을 시간이 아니라 횟수로 정하는 이유는, 시간으로 끊으면 전장 크기와 속도에 따라 어떤
+   * 판에서는 두 번, 어떤 판에서는 다섯 번 튕겨 같은 연출이 다른 무게로 읽히기 때문이다.
+   */
+  bounces: number;
   /** 한 번 튕길 때마다 남는 속도의 비율. 코어의 `KNOCKBACK.restitution`과 같은 값을 기본으로 쓴다. */
   restitution?: number;
-  /** 안전장치. 이 수를 넘게 튕기면 남은 시간을 마지막 구간에 몰아 끝낸다. */
-  maxBounces?: number;
+  /** 이 속도 아래로 떨어지면 남은 횟수와 무관하게 그 자리에 선다(0으로 나누지 않기 위한 경계이기도 하다). */
+  minSpeed?: number;
 }
 
-/** 벽에 닿을 때마다 방향만 뒤집으며 전장 안을 가로지르는 궤적을 구한다. */
+/** 벽에 닿을 때마다 방향만 뒤집으며 정해진 횟수만큼 전장 안을 가로지르는 궤적을 구한다. */
 export function knockbackFlightPath(options: FlightOptions): FlightLeg[] {
-  const { arena, restitution = KNOCKBACK.restitution, maxBounces = 8 } = options;
+  const { arena, restitution = KNOCKBACK.restitution, minSpeed = 40 } = options;
   const legs: FlightLeg[] = [];
   let { x, y, vx, vy } = options;
-  let remaining = Math.max(0, options.seconds);
 
-  for (let bounce = 0; bounce <= maxBounces && remaining > 1e-4; bounce += 1) {
+  for (let bounce = 0; bounce < Math.max(0, options.bounces); bounce += 1) {
     const speed = Math.hypot(vx, vy);
-    // 속도를 다 잃으면 남은 시간 동안 그 자리에 머문다 — 0으로 나누지 않기 위한 경계이기도 하다.
-    if (speed < 1e-4) {
-      legs.push({ x, y, durationMs: remaining * 1_000, bounced: false });
-      remaining = 0;
-      break;
-    }
+    if (speed < minSpeed) break;
     // 각 벽까지 남은 시간 중 가장 이른 것이 이번 구간의 끝이다.
     const timeToWall = Math.min(
       vx > 0 ? (arena.right - x) / vx : vx < 0 ? (arena.left - x) / vx : Infinity,
       vy > 0 ? (arena.bottom - y) / vy : vy < 0 ? (arena.top - y) / vy : Infinity,
     );
-    const step = Math.min(remaining, Math.max(0, timeToWall));
+    if (!Number.isFinite(timeToWall)) break;
+    const step = Math.max(0, timeToWall);
     x += vx * step;
     y += vy * step;
-    remaining -= step;
-    const hitsWall = remaining > 1e-4 && bounce < maxBounces;
-    legs.push({ x, y, durationMs: step * 1_000, bounced: hitsWall });
-    if (!hitsWall) break;
+    legs.push({ x, y, durationMs: step * 1_000, bounced: true });
     // 닿은 변만 뒤집는다. 모서리에서는 둘 다 뒤집혀 온 길로 되돌아간다.
     if (x <= arena.left + 1e-3 || x >= arena.right - 1e-3) vx = -vx;
     if (y <= arena.top + 1e-3 || y >= arena.bottom - 1e-3) vy = -vy;
@@ -63,7 +61,13 @@ export function knockbackFlightPath(options: FlightOptions): FlightLeg[] {
     vy *= restitution;
   }
 
-  // 시간이 남았는데 튕길 횟수를 다 쓴 경우, 마지막 자리에서 남은 시간을 흘려보낸다.
-  if (remaining > 1e-4) legs.push({ x, y, durationMs: remaining * 1_000, bounced: false });
+  // 마지막 튕김 뒤에도 속도가 남아 있으면 짧게 미끄러지며 선다 — 벽에 붙은 채 끝나지 않는다.
+  const speed = Math.hypot(vx, vy);
+  if (legs.length > 0 && speed >= minSpeed) {
+    const glide = 0.12;
+    const nextX = Math.min(arena.right, Math.max(arena.left, x + vx * glide));
+    const nextY = Math.min(arena.bottom, Math.max(arena.top, y + vy * glide));
+    legs.push({ x: nextX, y: nextY, durationMs: glide * 1_000, bounced: false });
+  }
   return legs;
 }

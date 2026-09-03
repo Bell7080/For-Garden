@@ -90,7 +90,14 @@ export interface Fighter extends Combatant {
    * 기절과 따로 두는 이유는 **좌표가 실제로 움직이기 때문**이다 — 기절은 제자리에서 멈추는
    * 것이고, 이쪽은 벽을 튕기며 전장을 가로지른다. 그동안 행동하지 못하는 것만 같다.
    */
-  knockback: { remaining: number; vx: number; vy: number } | null;
+  /**
+   * 튕겨 날아가는 중인 몸. 끝은 시간이 아니라 **남은 튕김 횟수**가 정한다.
+   *
+   * 시간으로 끊으면 전장 크기와 속도에 따라 어떤 판에서는 두 번, 어떤 판에서는 다섯 번
+   * 튕기다 멈춰 같은 기술이 화면마다 다른 무게로 읽힌다. `remaining`은 벽에 닿지 못하고
+   * 맴도는 경우를 위한 안전장치일 뿐이다.
+   */
+  knockback: { remaining: number; vx: number; vy: number; bouncesLeft: number } | null;
   /** `statusEffectEvery`가 있는 기본 공격이 실제로 몇 번 나갔는지. 그 주기에만 상태를 건다. */
   statusHitCount: number;
   /**
@@ -239,11 +246,18 @@ export type SkirmishEvent =
   | { kind: "shieldAbsorbed"; fighterId: string; amount: number; remaining: number; effect: CombatEffectCue }
   | { kind: "shieldDepleted"; fighterId: string; effect: CombatEffectCue }
   | { kind: "combatEffect"; fighterId: string; effect: CombatEffectCue }
-  | { kind: "death"; fighterId: string }
+  /**
+   * 쓰러진 순간. `sourceId`는 마지막 일격을 넣은 쪽이다.
+   *
+   * 씬이 날아가는 방향을 이 두 점(가한 쪽 → 맞은 쪽)에서 만든다 — 방향을 화면이 임의로
+   * 고르면 때린 쪽과 반대로 날아가는 그림이 나온다. 지속 피해처럼 가한 쪽이 없는 죽음은
+   * 비워 두고, 그때만 화면이 바라보던 방향으로 되돌아간다.
+   */
+  | { kind: "death"; fighterId: string; sourceId?: string }
   /** 뇌진탕이 울린 순간의 고정 피해. 방어력을 지나치므로 attack 사건과 따로 센다. */
   | { kind: "concussion"; fighterId: string; amount: number; critical: boolean }
   /** 폭주한 파치가 적을 튕겨 날린 순간. 씬은 이 사건으로만 튕기는 연출을 시작한다. */
-  | { kind: "knockback"; fighterId: string; seconds: number }
+  | { kind: "knockback"; fighterId: string; seconds: number; bounces: number }
   /** 손질 세 겹이 터진 순간. 방어를 지나치지 않는 물리 피해라 attack과 다른 색으로 뜬다. */
   | { kind: "butcherBurst"; attackerId: string; fighterId: string; amount: number }
   /** 돌진이 실제로 지나간 선분. 씬은 이 두 점 사이에 자국을 그린다. */
@@ -562,7 +576,7 @@ function applyConcussion(
   events.push({ kind: "concussion", fighterId: target.id, amount: dealt, critical: struck });
   if (!isFighterAlive(target)) {
     clearDefeatedStatuses(target);
-    events.push({ kind: "death", fighterId: target.id });
+    events.push({ kind: "death", fighterId: target.id, sourceId });
     return;
   }
   // 날려버림은 폭주가 얹는 몫이라 뇌진탕이 실제로 울린 뒤에 따로 붙는다.
@@ -592,10 +606,15 @@ function launchKnockback(
   const dx = target.x - attacker.x;
   const dy = target.y - attacker.y;
   const gap = Math.hypot(dx, dy) || 1;
-  target.knockback = { remaining: trait.seconds, vx: (dx / gap) * trait.speed, vy: (dy / gap) * trait.speed };
+  target.knockback = {
+    remaining: trait.seconds,
+    vx: (dx / gap) * trait.speed,
+    vy: (dy / gap) * trait.speed,
+    bouncesLeft: trait.bounces,
+  };
   // 붙어 있던 추적을 끊어야 날아가는 동안 제자리로 되돌아오지 않는다.
   target.engaged = false;
-  events.push({ kind: "knockback", fighterId: target.id, seconds: trait.seconds });
+  events.push({ kind: "knockback", fighterId: target.id, seconds: trait.seconds, bounces: trait.bounces });
   // 날려 버린 상대는 이제 사거리 밖이므로 파치도 다음 상대를 찾는다.
   moveToNearestOtherEnemy(attacker, target, state);
 }
@@ -654,7 +673,7 @@ function applyButcher(
   }
   if (!isFighterAlive(target)) {
     clearDefeatedStatuses(target);
-    events.push({ kind: "death", fighterId: target.id });
+    events.push({ kind: "death", fighterId: target.id, sourceId: attacker.id });
   }
 }
 
@@ -1157,7 +1176,7 @@ function applyShimmerMark(attacker: Fighter, target: Fighter, state: SkirmishSta
   if (resolution.ignored) events.push({ kind: "damageIgnored", attackerId: attacker.id, targetId: target.id });
   if (!isFighterAlive(target)) {
     clearDefeatedStatuses(target);
-    events.push({ kind: "death", fighterId: target.id });
+    events.push({ kind: "death", fighterId: target.id, sourceId: attacker.id });
     state.log.push(`${target.def.name} 전투 불능`);
   }
 }
@@ -1172,22 +1191,28 @@ function advanceKnockback(fighter: Fighter, dt: number, arena: Arena): void {
   const flight = fighter.knockback;
   if (!flight) return;
   const remaining = flight.remaining - dt;
-  if (remaining <= 0) {
-    fighter.knockback = null;
-    return;
-  }
-  let { vx, vy } = flight;
+  let { vx, vy, bouncesLeft } = flight;
   fighter.x += vx * dt;
   fighter.y += vy * dt;
+  // 한 프레임에 모서리로 들어가면 두 변을 함께 치므로, 튕김은 한 번으로 센다.
+  let bounced = false;
   if (fighter.x <= arena.left || fighter.x >= arena.right) {
     fighter.x = Math.min(arena.right, Math.max(arena.left, fighter.x));
     vx = -vx * KNOCKBACK.restitution;
+    bounced = true;
   }
   if (fighter.y <= arena.top || fighter.y >= arena.bottom) {
     fighter.y = Math.min(arena.bottom, Math.max(arena.top, fighter.y));
     vy = -vy * KNOCKBACK.restitution;
+    bounced = true;
   }
-  fighter.knockback = { remaining, vx, vy };
+  if (bounced) bouncesLeft -= 1;
+  // 정해진 횟수를 다 튕기면 그 자리에 선다. 남은 시간은 벽에 닿지 못할 때를 위한 안전장치다.
+  if (bouncesLeft < 0 || remaining <= 0) {
+    fighter.knockback = null;
+    return;
+  }
+  fighter.knockback = { remaining, vx, vy, bouncesLeft };
 }
 
 /** 튕겨 날아가는 값 중 스킬이 정하지 않는 부분. 화면의 `knockbackFlight`와 같은 감쇠를 쓴다. */
@@ -1508,7 +1533,7 @@ function tickBleed(fighter: Fighter, dt: number, state: SkirmishState, events: S
     bleed.tickIn += 1;
     if (!isFighterAlive(fighter)) {
       clearDefeatedStatuses(fighter);
-      events.push({ kind: "death", fighterId: fighter.id });
+      events.push({ kind: "death", fighterId: fighter.id, sourceId: bleed.sourceId });
       state.log.push(`${fighter.def.name} 전투 불능`);
     }
   }
@@ -1618,7 +1643,7 @@ function strike(
       // 전용 사건은 흡혈·야성·기본 공격 적중·스타카토·재전이를 호출하지 않고 사망 정리만 수행한다.
       if (!isFighterAlive(secondary)) {
         clearDefeatedStatuses(secondary);
-        events.push({ kind: "death", fighterId: secondary.id });
+        events.push({ kind: "death", fighterId: secondary.id, sourceId: attacker.id });
       }
     }
   }
@@ -1754,14 +1779,14 @@ function strike(
       if (isFighterAlive(secondary) && splashTrait.statusEffect) applyCombatStatusEffect(secondary, splashTrait.statusEffect, events, state);
       if (!isFighterAlive(secondary)) {
         clearDefeatedStatuses(secondary);
-        events.push({ kind: "death", fighterId: secondary.id });
+        events.push({ kind: "death", fighterId: secondary.id, sourceId: attacker.id });
       }
     }
   }
   state.log.push(`${attacker.def.name} → ${target.def.name} ${amount}`);
   if (!isFighterAlive(target)) {
     clearDefeatedStatuses(target);
-    events.push({ kind: "death", fighterId: target.id });
+    events.push({ kind: "death", fighterId: target.id, sourceId: attacker.id });
     state.log.push(`${target.def.name} 전투 불능`);
   }
 }
@@ -1893,7 +1918,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
       applySkillStatuses(target, skill, events, state, attacker.id, critical);
     } else {
       clearDefeatedStatuses(target);
-      events.push({ kind: "death", fighterId: target.id });
+      events.push({ kind: "death", fighterId: target.id, sourceId: attacker.id });
       state.log.push(`${target.def.name} 전투 불능`);
     }
     state.log.push(`${attacker.def.name} → ${target.def.name} ${amount}`);
@@ -1986,7 +2011,7 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
         state.log.push(`${pontus.def.name} 폭주 → ${target.def.name} ${dealt}`);
         if (!isFighterAlive(target)) {
           clearDefeatedStatuses(target);
-          events.push({ kind: "death", fighterId: target.id });
+          events.push({ kind: "death", fighterId: target.id, sourceId: pontus.id });
           state.log.push(`${target.def.name} 전투 불능`);
         }
       }

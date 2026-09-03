@@ -725,7 +725,9 @@ export const RELICS: RelicDef[] = [
       name: "야, 비켜!",
       effectId: "knockbackSlam",
       seconds: 1.6,
-      speed: 720,
+      // 곡선을 그리며 굴러가는 것이 아니라 **따악 맞고 튀어 나가는** 속도다.
+      speed: 2400,
+      bounces: 3,
     },
     passive: {
       // kind가 impactCap인 패시브는 passiveDescription()이 구조화 필드로 다시 문장을 만들므로

@@ -83,8 +83,8 @@ export interface DebugState {
   expeditionFormation?: { selectedCount: number; slots: Array<{ x: number; y: number }> };
   /** 공용 드래그 표현의 사용자 가시 상태이며 렐릭 ID나 확정 배열은 포함하지 않는다. */
   formationDragVisual?: { owner: "party" | "expedition" | "excavation"; hovered?: number; replacementVisible: boolean };
-  /** 설정 왕복 E2E가 상점의 사용자 표시 섹션까지 복원됐는지 확인하는 최소 상태다. */
-  shopSection?: "premium";
+  /** 설정 왕복 E2E가 프리미엄 화면의 표시 섹션까지 복원됐는지 확인하는 최소 상태다. */
+  premiumSection?: "premium";
   /** 가방 탭 면 입력 뒤 실제로 다시 그려진 카테고리를 Canvas E2E가 확인한다. */
   inventoryCategory?: "rune" | "currency" | "consumable" | "material";
   /** 가방 카드가 실제 선택한 이미지 texture key다. WebGL 캔버스 안의 선택을 E2E가 검증한다. */
@@ -149,9 +149,9 @@ export function setDebugFormationDragVisual(visual: DebugState["formationDragVis
   ensure().formationDragVisual = visual;
 }
 
-/** 상점의 현재 표시 섹션만 공개하며 상품이나 결제 상태는 포함하지 않는다. */
-export function setDebugShopSection(section: DebugState["shopSection"]): void {
-  ensure().shopSection = section;
+/** 프리미엄 화면의 현재 표시 섹션만 공개하며 상품이나 결제 상태는 포함하지 않는다. */
+export function setDebugPremiumSection(section: DebugState["premiumSection"]): void {
+  ensure().premiumSection = section;
 }
 
 /** 게임 상태가 아닌 도감 스크롤의 현재 렌더 지오메트리만 E2E에 공개한다. */

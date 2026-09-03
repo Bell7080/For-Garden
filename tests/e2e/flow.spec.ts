@@ -415,7 +415,7 @@ test("전투는 한쪽이 전멸하면 끝난다", async ({ page }) => {
 });
 
 
-test("하단 탭으로 고고학 · 렐릭 · 로비 · 연구소 · 상점을 오간다", async ({ page }) => {
+test("하단 탭으로 고고학 · 렐릭 · 로비 · 연구소 · 프리미엄을 오간다", async ({ page }) => {
   await startAfterOpening(page);
   await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => scene(page)).toBe("lobby");
@@ -434,13 +434,13 @@ test("하단 탭으로 고고학 · 렐릭 · 로비 · 연구소 · 상점을 �
   await tap(page, (BASE_WIDTH * 7) / 10, navY); // 연구소
   await expect.poll(() => scene(page)).toBe("lab");
 
-  await tap(page, (BASE_WIDTH * 9) / 10, navY); // 상점
-  await expect.poll(() => scene(page)).toBe("shop");
-  // 후원 탭에서 기간·즉시 수령·UTC 일일 제한을 구매 전에 읽을 수 있는 화면을 회귀 자료로 남긴다.
+  await tap(page, (BASE_WIDTH * 9) / 10, navY); // 프리미엄
+  await expect.poll(() => scene(page)).toBe("premium");
+  // 프리미엄 화면에서 기간·즉시 수령·UTC 일일 제한을 구매 전에 읽을 수 있는 회귀 자료를 남긴다.
   await tap(page, 900, 225);
   // Phaser 캔버스 텍스트는 DOM 조회가 불가능하므로 재시작 렌더 한 프레임을 기다린다.
   await page.waitForTimeout(300);
-  await page.screenshot({ path: `test-results/${test.info().project.name}-shop-patron-pass.png`, fullPage: true });
+  await page.screenshot({ path: `test-results/${test.info().project.name}-premium-patron-pass.png`, fullPage: true });
 });
 
 test("연구소에서 화석을 사용하면 렐릭 연구 결과가 뜬다", async ({ page }) => {

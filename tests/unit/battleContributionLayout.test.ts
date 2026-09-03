@@ -27,4 +27,18 @@ describe("battle contribution panel layout", () => {
     expect(boundsOverlap(panel, L.protected.bossHud)).toBe(false);
     expect(boundsOverlap(panel, L.protected.profiles)).toBe(false);
   });
+
+  it("행 왼쪽 얼굴 액자를 판 안에 두고 이름 열과 겹치지 않게 한다", () => {
+    const panel = battleContributionBounds(true);
+    const left = L.face.x - L.face.size / 2;
+    const right = L.face.x + L.face.size / 2;
+    // 액자는 판 왼쪽 여백에 선다 — 펼친 동안 그래프 칩이 사라지므로 그 자리가 비어 있다.
+    expect(left).toBeGreaterThanOrEqual(panel.left);
+    expect(right).toBeLessThanOrEqual(L.rows.left);
+    // 마지막 행의 액자까지 판 아래를 넘지 않는다.
+    const lastFaceBottom = L.rows.top + (L.rows.count - 1) * (L.rows.height + L.rows.gap) + L.face.offsetY + L.face.size / 2;
+    expect(lastFaceBottom).toBeLessThanOrEqual(panel.top + panel.height);
+    // 접힌 상태의 그래프 칩과 같은 x에 서므로, 칩이 남아 있으면 첫 액자를 덮는다는 뜻이다.
+    expect(L.face.x).toBe(L.toggle.x);
+  });
 });

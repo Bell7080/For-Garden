@@ -8,6 +8,14 @@ export const BATTLE_CONTRIBUTION_LAYOUT = {
   toggle: { x: 68, y: 960, width: 88, height: 92 },
   categories: { left: 108, top: 582, width: 252, height: 76, itemWidth: 84 },
   rows: { left: 108, top: 686, width: 252, height: 96, gap: 12, count: 5 },
+  /**
+   * 행 왼쪽의 얼굴 액자.
+   *
+   * 이름만 늘어서면 다섯 줄에서 누구인지 한눈에 읽히지 않는다 — 결과 화면의 기여도 판이
+   * 같은 이유로 액자를 붙인다. 자리는 판 왼쪽 여백(24~108)이며, 그래프 칩이 펼친 동안
+   * 사라지므로 그 자리가 비어 있다.
+   */
+  face: { x: 68, size: 66, offsetY: 26 },
   protected: {
     stage: { left: 0, top: 0, width: 1080, height: 230 },
     bossHud: { left: 0, top: 70, width: 520, height: 150 },

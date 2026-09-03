@@ -29,7 +29,9 @@ export class PurchasePopup {
   open(product: ProductDto, onPurchased: (result: PurchaseProductResponse) => void | Promise<void>): void {
     // 카탈로그가 제안한 기본 수량도 잔액·제한 quote를 거쳐 실제 가능한 범위로 정규화된다.
     this.quantity = product.defaultQuantity; this.pending = false; this.message = "";
-    this.popups.open({ width: 820, height: 850, title: "구매 확인", dim: true, closeOnBackdrop: false }, (body, close) => {
+    // 확인 창은 아직 아무것도 쓰지 않은 자리라 **판 밖을 눌러도 닫힌다** — 사지 않기로 한
+    // 손이 오른쪽 위 X를 찾아 올라가야 할 이유가 없다. 실제 차감은 확정 버튼만 한다.
+    this.popups.open({ width: 820, height: 850, title: "구매 확인", dim: true, closeOnBackdrop: true }, (body, close) => {
       const view = this.scene.add.container(0, 0); body.add(view);
       const render = (): void => { view.removeAll(true); this.paint(view, product, close, onPurchased); };
       this.repaint = render;

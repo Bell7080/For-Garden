@@ -74,8 +74,22 @@ export function equippedLine(instanceId: string): string {
 
 /** 이 룬을 지금 끼고 있는 렐릭 이름. 아무도 끼지 않았으면 undefined다. */
 export function equippedRelicName(instanceId: string): string | undefined {
-  const entry = Object.entries(session.relicProgress).find(([, progress]) => progress.heartGemSlots.includes(instanceId));
-  return entry ? (RELICS.find(({ id }) => id === entry[0])?.name ?? entry[0]) : undefined;
+  const slot = equippedRuneSlot(instanceId);
+  return slot ? (RELICS.find(({ id }) => id === slot.relicId)?.name ?? slot.relicId) : undefined;
+}
+
+/**
+ * 이 룬이 끼워져 있는 자리(렐릭과 칸 번호).
+ *
+ * 해제는 룬 ID가 아니라 **자리**로 보낸다(`unequipRune(relicId, slotIndex)`) — 저장의 장착표가
+ * 렐릭별 칸 배열이라, 비울 칸을 지목해야 같은 조각을 두 곳에서 지우는 일이 생기지 않는다.
+ */
+export function equippedRuneSlot(instanceId: string): { relicId: string; slotIndex: number } | undefined {
+  for (const [relicId, progress] of Object.entries(session.relicProgress)) {
+    const slotIndex = progress.heartGemSlots.indexOf(instanceId);
+    if (slotIndex >= 0) return { relicId, slotIndex };
+  }
+  return undefined;
 }
 
 /** 등급색을 텍스트 스타일이 받는 `#rrggbb` 문자열로 바꾼다. */
@@ -114,6 +128,14 @@ function requestRuneName(scene: Phaser.Scene, current: string, commit: (name: st
 const RUNE_NOTE_BUTTONS = {
   plain: { width: 236, craftX: -70, equipX: 0, sellX: 140 },
   withEquip: { width: 140, craftX: -122, equipX: 28, sellX: 152 },
+  /**
+   * 이미 끼워져 있는 룬의 줄. 세공과 해제 둘뿐이라 같은 폭으로 나란히 선다.
+   *
+   * 판매는 아예 서지 않는다 — 끼고 있는 룬은 서버가 판매를 거부하므로, 눌리지 않는 버튼을
+   * 남겨 두면 "왜 안 되는가"를 창이 말하지 않은 채 자리만 차지한다. 그 자리에 지금 할 수
+   * 있는 조작(해제)을 세운다.
+   */
+  equipped: { width: 176, craftX: -94, equipX: 94, sellX: 0 },
   sellWidth: 84,
   sellHeight: 54,
   /** 되돌릴 수 없는 조작 하나뿐인 색. 강조색(금)과 갈라 두어 실수로 눌리지 않게 한다. */
@@ -203,7 +225,7 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
     // 판매 버튼 옆이 아니라 표식 자리에 있어야 실수로 함께 눌리지 않는다.
     const marks = addRuneMarkChips(scene, body, top, rune.instanceId, options.api ?? gameApi, (next) => {
       // 자물쇠가 걸린 동안에는 판매 자체를 막는다. 서버도 같은 이유로 거부한다.
-      sell.setEnabled(!equipped && !next.locked);
+      if (!equipped) sell.setEnabled(!next.locked);
       options.onChanged?.(next);
     });
     // 머리글("룬")이 창 맨 위에 서므로 그 아래로 한 줄 비우고 시작한다. 액자를 위로 붙이면
@@ -239,11 +261,14 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
 
     const buttonY = height / 2 - 56;
     const equip = options.equip;
-    const equipped = equippedRelicName(rune.instanceId) !== undefined;
+    const slot = equippedRuneSlot(rune.instanceId);
+    const equipped = slot !== undefined;
     // 판매는 **되돌릴 수 없는 다른 성격의 조작**이라 세공·장착과 같은 크기로 나란히 세우지
     // 않는다. 셋을 같은 폭으로 두면 줄이 넘쳐 서로 겹쳤고, 무엇이 이 쪽지의 주 조작인지도
     // 읽히지 않았다. 판매만 작고 붉게 오른쪽 끝으로 물러난다.
-    const main = equip ? RUNE_NOTE_BUTTONS.withEquip : RUNE_NOTE_BUTTONS.plain;
+    // 이미 끼워져 있는 룬은 그 줄 자체가 다르다 — 판매도 장착도 할 수 없으므로 세공과
+    // 해제 둘만 나란히 선다.
+    const main = equipped ? RUNE_NOTE_BUTTONS.equipped : equip ? RUNE_NOTE_BUTTONS.withEquip : RUNE_NOTE_BUTTONS.plain;
     body.add(new Button(scene, main.craftX, buttonY, {
       width: main.width, height: 68, label: "세공", fontSize: 24, variant: "primary", accentColor: accent,
       onClick: () => {
@@ -251,7 +276,20 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
         openRunePopup(scene, popups, options);
       },
     }));
-    if (equip) {
+    if (slot) {
+      // 해제는 되돌릴 수 있는 조작이라 판매처럼 붉게 물러나지 않고 세공과 나란히 선다.
+      body.add(new Button(scene, main.equipX, buttonY, {
+        width: main.width, height: 68, label: "해제", fontSize: 24,
+        onClick: () => {
+          void relicProgression.unequipRune(slot.relicId, slot.slotIndex).then(() => {
+            close();
+            // 장착과 같은 신호를 쓴다 — 부른 화면은 "끼웠다"가 아니라 "칸이 바뀌었다"를 듣는다.
+            equip?.onEquipped?.();
+            options.onChanged?.(rune);
+          });
+        },
+      }));
+    } else if (equip) {
       body.add(new Button(scene, main.equipX, buttonY, {
         width: main.width, height: 68, label: "장착", fontSize: 24,
         onClick: () => {
@@ -262,8 +300,9 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
         },
       }));
     }
-    body.add(sell.setPosition(main.sellX, buttonY));
-    sell.setEnabled(!equipped && !rune.locked);
+    // 끼워져 있는 룬에는 판매 자리 자체를 두지 않는다.
+    if (equipped) sell.destroy();
+    else { body.add(sell.setPosition(main.sellX, buttonY)); sell.setEnabled(!rune.locked); }
     marks.paint(rune);
   });
 }

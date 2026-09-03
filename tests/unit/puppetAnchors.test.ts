@@ -10,6 +10,9 @@ import {
   type CardFrame,
 } from "../../src/puppets/anchors";
 import type { PuppetAsset } from "../../src/puppets/assets";
+// assets.ts는 Phaser를 들여오므로 node 환경에서는 소스 문자열로만 읽는다.
+import ASSETS_SOURCE from "../../src/puppets/assets.ts?raw";
+import { RELICS } from "../../src/data/relics";
 import {
   DODI_PORTRAIT_METADATA,
   DODI_SD_METADATA,
@@ -337,4 +340,32 @@ describe("실제 원화의 카드 얼굴 크기", () => {
     expect(faceSizeOf(withoutZoom) / center).toBeLessThan(MIN_RATIO);
     expect(faceSizeOf(lexia) / center).toBeGreaterThanOrEqual(MIN_RATIO);
   });
+});
+
+/**
+ * SD 등록 누락은 화면에서 **다른 캐릭터가 대신 서는** 모습으로만 드러나 눈으로 보기 전에는
+ * 알 수 없다. `assets.ts`는 Phaser를 들여와 이 환경에서 import할 수 없으므로, 소스 문자열에서
+ * 표를 읽어 모든 아군 렐릭이 자기 자리를 가졌는지 확인한다.
+ */
+describe("아군 SD 등록", () => {
+  const table = ASSETS_SOURCE.slice(
+    ASSETS_SOURCE.indexOf("const ALLY_SD_ASSETS"),
+    ASSETS_SOURCE.indexOf("const ENEMY_SD_ASSETS_BY_ID"),
+  );
+
+  it("은 전투와 비전투가 같은 표 하나를 읽는다", () => {
+    // 두 벌의 if 사슬이던 시절, 새 개체를 한쪽에만 적으면 그 화면만 조용히 토리카로 되돌아갔다
+    // (메론이 v0.52.3까지 원정·승리 MVP에서 그랬다).
+    expect(ASSETS_SOURCE).toContain("return ALLY_SD_ASSETS[relicId] ?? TORIKA_SD_ASSET;");
+    expect(ASSETS_SOURCE).toContain("return ENEMY_SD_ASSETS_BY_ID[relicId] ?? sdAssetFor(relicId);");
+  });
+
+  it.each(RELICS.filter((def) => !def.id.startsWith("husk-") && def.id !== "pontos").map((def) => def.id))(
+    "%s의 SD가 표에 등록되어 있다",
+    (relicId) => {
+      expect(table).toContain(`${relicId}:`);
+      // 토리카만 1번 SD를 자기 것으로 쓰고, 나머지가 그 자리에 오면 전용 원화가 빠진 것이다.
+      if (relicId !== "anky") expect(table).not.toMatch(new RegExp(`${relicId}: TORIKA_SD_ASSET`));
+    },
+  );
 });

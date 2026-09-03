@@ -39,7 +39,7 @@ export const KEYWORDS: readonly KeywordDef[] = [
     id: "bleed",
     term: "출혈",
     kind: "디버프",
-    description: "3초 동안 매 초 최대 체력의 2%만큼 고정 피해를 입는다. 방어력으로 줄일 수 없다.",
+    description: "지속되는 동안 매 초 고정 피해를 입는다. 방어력으로 줄일 수 없다.",
   },
   {
     id: "stagger", term: "경직", kind: "디버프",
@@ -47,11 +47,11 @@ export const KEYWORDS: readonly KeywordDef[] = [
   },
   {
     id: "overpaint", term: "덧칠", kind: "디버프",
-    description: "한 겹마다 그 적이 **받는 모든 피해**가 6% 커진다. 최대 4겹까지 쌓이고 10초 동안 남으며, 다시 칠하면 유지 시간이 처음부터 다시 흐른다.",
+    description: "한 겹마다 그 적이 받는 모든 피해가 6% 커진다. 최대 4겹까지 쌓이고 10초 동안 남으며, 다시 칠하면 유지 시간이 처음부터 다시 흐른다.",
   },
   {
     id: "butcher", term: "손질", kind: "디버프",
-    description: "칼이 지나간 자국. **세 겹째가 쌓이는 순간 그 자리에서 터져** 공격력의 120% [[physical-damage|물리 피해]]를 주고 겹은 0으로 돌아간다. 시간이 흘러 사라지지는 않는다.",
+    description: "3겹이 쌓이면 그 자리에서 터져 공격력의 120%에 해당하는 물리 피해를 준다. 터진 뒤 겹은 0으로 돌아가며, 시간이 흘러 사라지지 않는다.",
   },
   {
     id: "concussion", term: "뇌진탕", kind: "디버프",
@@ -63,7 +63,7 @@ export const KEYWORDS: readonly KeywordDef[] = [
   },
   {
     id: "charge", term: "돌진", kind: "규칙",
-    description: "멈추지 않고 **뚫고 지나간다.** 나아가는 거리는 이동 속도가 정하므로 발이 빠를수록 더 깊이 파고들며, 지나간 길에 있던 적은 모두 맞는다.",
+    description: "멈추지 않고 뚫고 지나간다. 나아가는 거리는 이동 속도가 정하므로 발이 빠를수록 더 깊이 파고들며, 지나간 길에 있던 적은 모두 맞는다.",
   },
   {
     id: "tailwind", term: "순풍", kind: "버프",

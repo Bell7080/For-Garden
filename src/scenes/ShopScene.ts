@@ -13,6 +13,9 @@ import { addItemFrame, ITEM_FRAME } from "../ui/itemFrame";
 import { chipPoints, drawHairline, drawLayer, drawVignette, HOLO } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
 import { TopBar } from "../ui/TopBar";
+import { PopupLayer } from "../ui/PopupLayer";
+import { PurchasePopup } from "../ui/PurchasePopup";
+import { session } from "../state/session";
 
 /** 상품 목록이 제목 아래에서 뒤로가기 안전 영역 위까지 흐르는 화면 좌표 경계다. */
 const LIST_VIEW = { left: 470, right: BASE_WIDTH - 36, top: 330, bottom: BASE_HEIGHT - 285 } as const;
@@ -27,7 +30,8 @@ export class ShopScene extends Phaser.Scene {
   private tabButtons: Phaser.GameObjects.Container[] = [];
   private content?: Phaser.GameObjects.Container;
   private viewportMask?: Phaser.GameObjects.Graphics;
-  private pending = false;
+  /** 상품 목록 위에 재사용 구매 작업판을 쌓는 전용 팝업 계층이다. */
+  private readonly popups = new PopupLayer(this, 2600);
   private minScrollY = 0;
   private pointerDown = false;
   private pointerY = 0;
@@ -133,8 +137,8 @@ export class ShopScene extends Phaser.Scene {
       card.setScale(1);
       // 스크롤 드래그가 끝난 손을 구매 탭으로 오인하지 않는다.
       if (this.draggedDistance <= LIST_LAYOUT.dragSlop) {
-        if (product.purchasable) void this.purchase(product.id);
-        else this.notice(product.disabledReason ?? "교환할 수 없습니다.");
+        // 비활성 상품도 이유와 상세 정보를 읽을 수 있으며 카드 탭 자체는 절대 즉시 구매하지 않는다.
+        new PurchasePopup(this, this.popups, gameApi, session.wallet).open(product, async () => { this.notice("교환이 완료되었습니다."); await this.refresh(); });
       }
     });
     card.add(hit);
@@ -173,15 +177,6 @@ export class ShopScene extends Phaser.Scene {
       button.setScale(selected ? 1.12 : 1);
       (button.first as Phaser.GameObjects.Text).setColor(selected ? COLOR.accentText : COLOR.inkDim);
     });
-  }
-
-  /** 입력을 서버에 한 번만 전달하고 성공한 응답 뒤에 지갑과 목록을 함께 새로 읽는다. */
-  private async purchase(productId: string): Promise<void> {
-    if (this.pending) return;
-    this.pending = true;
-    try { await gameApi.purchaseProduct(productId); this.notice("교환이 완료되었습니다."); await this.refresh(); }
-    catch (error) { this.notice(error instanceof Error ? error.message : "교환에 실패했습니다."); }
-    finally { this.pending = false; }
   }
 
   /** 휠과 포인터 드래그를 같은 세로 위치 경계로 모은다. */

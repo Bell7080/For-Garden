@@ -9,11 +9,15 @@ import { chipPoints, drawLayer, drawVignette, HOLO } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
 import { TopBar } from "../ui/TopBar";
 import type { PremiumSection } from "./settingsNavigation";
+import { PopupLayer } from "../ui/PopupLayer";
+import { PurchasePopup } from "../ui/PurchasePopup";
+import { session } from "../state/session";
 
 /** 현금 결제 카탈로그를 인게임 재화 상점과 분리해 소유하는 독립 프리미엄 씬이다. */
 export class PremiumScene extends Phaser.Scene {
   private content?: Phaser.GameObjects.Container;
-  private pending = false;
+  /** 무역과 동일한 구매 상세 프리팹을 화면 최상단에 여는 계층이다. */
+  private readonly popups = new PopupLayer(this, 2600);
   /** 설정 왕복 시 복원할 섹션이며, 지원하지 않는 외부 값은 init에서 제거한다. */
   private activeSection: PremiumSection = "premium";
 
@@ -65,21 +69,16 @@ export class PremiumScene extends Phaser.Scene {
     const price = product.price.display ?? `${product.price.amount.toLocaleString()} ${this.currencyLabel(product.price.currency)}`;
     card.add(this.add.text(360, -28, price, textStyle({ role: "emphasis", size: 30, color: COLOR.accentText })).setOrigin(1, 0.5));
     card.add(this.add.text(360, 52, product.price.currency === "real_money" ? "결제 비활성" : `남은 구매 ${product.remaining}/${product.purchaseLimit}`, textStyle({ role: "body", size: 22, color: product.purchasable ? COLOR.ink : COLOR.inkDim })).setOrigin(1, 0));
-    const hit = this.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: product.purchasable });
-    hit.on("pointerdown", () => card.setScale(product.purchasable ? 1.06 : 1.02));
+    const hit = this.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    hit.on("pointerdown", () => card.setScale(1.06));
     hit.on("pointerout", () => card.setScale(1));
-    hit.on("pointerup", () => { card.setScale(1); if (product.purchasable) void this.purchase(product.id); else this.notice(product.disabledReason ?? "구매할 수 없습니다."); });
+    hit.on("pointerup", () => {
+      card.setScale(1);
+      // 결제 비활성 상품도 상세 팝업 안에서 지급량·가격·사유를 확인한다.
+      new PurchasePopup(this, this.popups, gameApi, session.wallet).open(product, async () => { this.notice("구매가 완료되었습니다."); await this.refresh(); });
+    });
     card.add(hit);
     this.content?.add(card);
-  }
-
-  /** 연속 입력을 잠그고 서버 성공 응답 뒤에만 카탈로그를 갱신한다. */
-  private async purchase(productId: string): Promise<void> {
-    if (this.pending) return;
-    this.pending = true;
-    try { await gameApi.purchaseProduct(productId); this.notice("교환이 완료되었습니다."); await this.refresh(); }
-    catch (error) { this.notice(error instanceof Error ? error.message : "교환에 실패했습니다."); }
-    finally { this.pending = false; }
   }
 
   /** 결과 안내는 별도 DOM 없이 현재 Phaser 씬 수명에 묶는다. */

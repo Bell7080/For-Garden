@@ -20,7 +20,7 @@ export type Role = "warrior" | "tank" | "assassin" | "support";
 export type RelicRarity = "R" | "SR" | "SSR";
 
 /** 전신 Puppet 레지스트리의 안정적인 데이터 키다. 파일 번호를 게임 데이터에 직접 노출하지 않는다. */
-export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "toby" | "amo" | "ripa" | "pontos";
+export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "toby" | "amo" | "ripa" | "pontos";
 
 export interface Stats {
   /** 생존력과 물리·마법 공격의 기반이 되는 주 능력치다. */
@@ -201,6 +201,21 @@ export type CombatStatusEffect =
       seconds: number;
       /** 매 틱 대상 최대 체력에서 차감하는 비율(%). 방어력을 무시하는 지속 피해다. */
       maxHpPercentPerSecond: number;
+    }
+  | {
+      /**
+       * 덧칠. 스스로는 피해를 주지 않고 **그 적이 받는 모든 피해**를 중첩만큼 키운다.
+       *
+       * 출혈·중독 같은 지속 피해와 다른 축이라 같은 자리에 두지 않는다 — 지속 피해는 건 사람의
+       * 피해지만 덧칠은 **파티 전체의 피해**를 키운다.
+       */
+      kind: "overpaint";
+      /** 마지막으로 덧칠한 뒤 유지되는 시간(초). 다시 칠하면 처음부터 다시 센다. */
+      seconds: number;
+      /** 중첩 하나가 올리는 받는 피해 비율(%). */
+      damageTakenPercent: number;
+      /** 쌓을 수 있는 최대 중첩. */
+      maxStacks: number;
     };
 
 /** 궁극기의 대상 선택은 ID나 설명문 대신 코어가 검증할 수 있는 정적 계약으로 선언한다. */
@@ -213,6 +228,15 @@ export type Ultimate = Skill & {
   attackSpeedPower?: number;
   /** 혼합 궁극기가 범위 안 생존 아군에게 적용할 주문력 회복 배율(%). */
   allyHealingPower?: number;
+  /**
+   * 대상에 쌓인 덧칠을 터뜨리는 궁극기인가.
+   *
+   * 이 값이 켜지면 `power`는 총 위력이 아니라 **덧칠 한 겹당 위력**이고, 실제 피해는
+   * `power × 그 대상의 겹 수`다. 대상마다 겹이 다르므로 각 대상의 겹으로 따로 계산하며,
+   * 한 겹도 없는 적은 터뜨릴 그림이 없어 아예 대상에서 빠진다. 터뜨린 뒤 덧칠은 지워진다 —
+   * 쌓아 두고 매번 터뜨릴 수 있으면 "완성작"이 아니라 상시 배율이 된다.
+   */
+  overpaintDetonation?: true;
   /** 주 대상의 최종 HP 손실 일부를 주 대상에서 가장 가까운 다른 적에게 옮긴다. */
   damageTransfer?: {
     percent: number;
@@ -245,6 +269,8 @@ export type PassiveKind =
   | "emergencyRecovery"
   /** 같은 상대를 연속으로 때리면 출혈을 남긴다 */
   | "bleedStreak"
+  /** 메론 전용: 아군이 덧칠된 적을 때리면 그 피해의 일부만큼 **때린 본인**이 회복한다 */
+  | "overpaintSiphon"
   /** 티아 전용: 타격한 적에게 표식을 남기고, 표식이 없는 적을 때리면 표식을 옮기며 추가 마법 피해를 준다. */
   | "shimmerMark"
   /** 체력이 절반 이하가 되면 전투당 한 번 은신해 표적에서 벗어난다 */
@@ -280,6 +306,8 @@ export type FerocityEffectId =
   | "packHunt"
   /** 티아 전용: 자기 이동 속도를 올리고 일반 공격마다 표적을 다른 적으로 바꾼다. */
   | "ichthyoDive"
+  /** 메론 전용: 폭주 중 아군 전체의 일반 공격이 덧칠을 함께 쌓는다. */
+  | "sharedOverpaint"
   /** 스테라 전용: 폭주 중 아군 전체의 공격당 야성·궁극기 충전량을 함께 올린다. */
   | "tailwindRally";
 
@@ -317,6 +345,11 @@ export type FerocityTrait = {
       teamFerocityGain: number;
       /** 같은 시점에 더해지는 궁극기 게이지다. */
       teamEnergyGain: number;
+    }
+  | {
+      effectId: "sharedOverpaint";
+      /** 아군의 적중이 대신 걸어 주는 덧칠. 메론의 기본 공격과 같은 계약을 그대로 쓴다. */
+      overpaint: Extract<CombatStatusEffect, { kind: "overpaint" }>;
     }
   | {
       effectId: "ichthyoDive";

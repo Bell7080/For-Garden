@@ -47,7 +47,7 @@ const game = new Phaser.Game({
     // 멀티터치 환경에서도 Phaser pointer 이벤트가 touchstart/touchend를 안정적으로 추적한다.
     activePointers: 3,
   },
-  // 새 장기 탐사형 발굴과 기존 배너 연구소는 독립 화면이며 상점은 카탈로그 씬을 공유한다.
+  // 장기 탐사형 고고학, 배너 연구소, 유료 상품 전용 프리미엄은 각각 독립 화면이다.
   // 원정은 로비 출격 선택판에서 진입하며 준비/이어하기 상태를 같은 씬에서 소유한다.
   // 누른 자리에 답하는 겹은 모든 화면 위에 서야 하므로 목록의 맨 끝에 둔다.
   scene: [BootScene, TitleScene, OpeningScene, LobbyScene, ExpeditionScene, SortiePreviewScene, SettingsScene, FriendsScene, ShopScene, RelicsScene, LabScene, ArchaeologyScene, StageMapScene, StageStoryScene, PartyScene, BattleScene, EffectOverlayScene],

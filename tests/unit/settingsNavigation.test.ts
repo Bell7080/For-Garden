@@ -6,10 +6,10 @@ describe("설정 반환 경로 검증", () => {
     expect(validateSettingsReturn({ returnScene: "battle", returnData: { section: "admin" } })).toEqual({ returnScene: "lobby" });
   });
 
-  it("상점의 등록된 섹션만 새 반환 데이터로 복사한다", () => {
-    expect(validateSettingsReturn({ returnScene: "shop", returnData: { section: "premium", injected: true } })).toEqual({
-      returnScene: "shop", returnData: { section: "premium" },
+  it("프리미엄의 등록된 섹션만 새 반환 데이터로 복사한다", () => {
+    expect(validateSettingsReturn({ returnScene: "premium", returnData: { section: "premium", injected: true } })).toEqual({
+      returnScene: "premium", returnData: { section: "premium" },
     });
-    expect(validateSettingsReturn({ returnScene: "shop", returnData: { section: "unknown" } })).toEqual({ returnScene: "shop" });
+    expect(validateSettingsReturn({ returnScene: "premium", returnData: { section: "unknown" } })).toEqual({ returnScene: "premium" });
   });
 });

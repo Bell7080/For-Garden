@@ -3,13 +3,13 @@ import { BASE_WIDTH, BASE_HEIGHT } from "../config/gameConfig";
 import { drawGlassFade, drawHairline, HOLO } from "./holo";
 import { COLOR, textStyle } from "./theme";
 
-/** 핵심 화면 다섯 개. 로비를 중심으로 고고학과 상점이 양 끝에서 서로 균형을 이룬다. */
+/** 핵심 화면 다섯 개. 로비를 중심으로 고고학과 프리미엄이 양 끝에서 서로 균형을 이룬다. */
 export const NAV_TABS = [
   { key: "archaeology", scene: "archaeology", label: "고고학" },
   { key: "relics", scene: "relics", label: "렐릭" },
   { key: "lobby", scene: "lobby", label: "로비" },
   { key: "lab", scene: "lab", label: "연구소" },
-  { key: "shop", scene: "shop", label: "상점" },
+  { key: "premium", scene: "premium", label: "프리미엄" },
 ] as const;
 
 export type NavKey = (typeof NAV_TABS)[number]["key"];
@@ -55,8 +55,8 @@ function drawIcon(scene: Phaser.Scene, key: NavKey, x: number, y: number, color:
         new Phaser.Geom.Point(-19, 20), new Phaser.Geom.Point(-7, -6),
       ], true);
       break;
-    case "shop":
-      // 각진 쇼핑백 — 별도 화면으로 독립한 상점이다.
+    case "premium":
+      // 각진 쇼핑백 — 인게임 무역과 구분된 유료 프리미엄 상품 화면이다.
       g.strokeRect(-18, -8, 36, 30);
       g.beginPath();
       g.moveTo(-10, -8);

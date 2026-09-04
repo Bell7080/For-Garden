@@ -52,17 +52,33 @@ describe("expedition augment rewards", () => {
     expect(generateExpeditionAugmentOffers({ rarity: "sr", relics: relics.map((relic) => ({ ...relic, currentHp: 0, alive: false })), selections: [], random: () => 0 }).every(({ eligibleTargetRelicIds }) => eligibleTargetRelicIds.length === 0)).toBe(true);
   });
 
-  it("keeps party and personal augments available after repeated identical selections", () => {
-    const prior = Array.from({ length: 20 }, () => ({ augmentId: "predator-instinct", targetRelicId: "anky" }));
-    const offers = generateExpeditionAugmentOffers({ rarity: "sr", relics: party(), selections: prior, random: () => 0, candidateCount: 9 });
-    const personal = offers.find(({ augmentId }) => augmentId === "predator-instinct")!;
-    expect(personal.eligibleTargetRelicIds).toEqual(["anky", "rex", "spino"]);
-    expect(validateExpeditionAugmentChoice(personal, { augmentId: "predator-instinct", targetRelicId: "anky" }, prior)).toBe(true);
-    const repeatedParty = Array.from({ length: 20 }, () => ({ augmentId: "field-repair" }));
-    const partyOffers = generateExpeditionAugmentOffers({ rarity: "sr", relics: party(), selections: repeatedParty, random: () => 0, candidateCount: 9 });
-    const partyOffer = partyOffers.find(({ augmentId }) => augmentId === "field-repair")!;
-    expect(partyOffer).toBeDefined();
-    expect(validateExpeditionAugmentChoice(partyOffer, { augmentId: "field-repair" }, repeatedParty)).toBe(true);
+  it("최대 중첩에 도달한 후보를 제거하고 저장 뒤 변조된 재선택도 거절한다", () => {
+    const def = EXPEDITION_AUGMENTS.find(({ id }) => id === "predator-instinct")!;
+    const prior = Array.from({ length: def.maxStacks }, () => ({ augmentId: def.id, targetRelicId: "anky" }));
+    const offers = generateExpeditionAugmentOffers({ rarity: "sr", relics: party(), selections: prior, random: () => 0, candidateCount: 99 });
+    expect(offers.some(({ augmentId }) => augmentId === def.id)).toBe(false);
+    // 오래 저장된 제안 DTO를 다시 보내도 현재 런의 중첩 수를 기준으로 서버 경계가 거절한다.
+    expect(validateExpeditionAugmentChoice({ augmentId: def.id, eligibleTargetRelicIds: ["anky"] }, { augmentId: def.id, targetRelicId: "anky" }, prior)).toBe(false);
+  });
+
+  it("이미 선택한 배타 그룹의 다른 후보와 조작된 선택 DTO를 거절한다", () => {
+    const prior = [{ augmentId: "reinforced-core" }];
+    const offers = generateExpeditionAugmentOffers({ rarity: "sr", relics: party(), selections: prior, random: () => 0, candidateCount: 99 });
+    expect(offers.some(({ augmentId }) => augmentId === "echo-circuit")).toBe(false);
+    expect(offers.some(({ augmentId }) => augmentId === "reinforced-core")).toBe(true);
+    expect(validateExpeditionAugmentChoice({ augmentId: "echo-circuit", eligibleTargetRelicIds: [] }, { augmentId: "echo-circuit" }, prior)).toBe(false);
+  });
+
+  it("후보 풀이 요청 수보다 작으면 더미 없이 가능한 후보만 결정적으로 표시한다", () => {
+    const remaining = new Set(["field-repair", "formation-barrier"]);
+    const prior = EXPEDITION_AUGMENTS.filter(({ rarity, id }) => rarity === "sr" && !remaining.has(id))
+      .flatMap((def) => Array.from({ length: def.maxStacks }, () => ({ augmentId: def.id, ...(def.target === "relic" ? { targetRelicId: "anky" } : {}) })));
+    const input = { rarity: "sr" as const, relics: party(), selections: prior, candidateCount: 3 };
+    const first = generateExpeditionAugmentOffers({ ...input, random: expeditionRewardRandom("saved-prior") });
+    const restored = generateExpeditionAugmentOffers({ ...input, selections: structuredClone(prior), random: expeditionRewardRandom("saved-prior") });
+    expect(first).toEqual(restored);
+    expect(first).toHaveLength(2);
+    expect(new Set(first.map(({ augmentId }) => augmentId))).toEqual(remaining);
   });
 
   it("stores generated seed and offers so reconnecting cannot reroll candidates", () => {

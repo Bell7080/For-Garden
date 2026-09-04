@@ -49,6 +49,8 @@ export interface DebugState {
   screenTitle?: string;
   /** 지금 열려 있는 팝업 제목을 아래(가장 먼저 연 것)부터 순서대로 쌓아 둔다. E2E가 팝업이 실제로 열렸는지 확인한다. */
   popupTitles?: string[];
+  /** 룬 쪽지의 연필 입력면 중심. 이름 글자 폭에 따라 자리가 달라지므로 화면이 직접 알린다. */
+  runeNoteRename?: DebugPoint;
   battle?: DebugBattle;
   /** 정보창이 떠 있는지. `?`와 꾹 누르기를 확인하는 데 쓴다. */
   infoOpen?: boolean;
@@ -243,6 +245,16 @@ export function setDebugProgress(wallet: { fossil: number; amber: number; gold?:
 }
 
 /** 팝업이 열리거나 닫힐 때마다 PopupLayer가 부른다. E2E가 실제로 무엇이 열려 있는지 확인한다. */
+/**
+ * 룬 쪽지의 이름 고치기(연필) 입력면 중심.
+ *
+ * 연필은 이름 글자 폭만큼 밀려 서므로 화면 좌표가 이름에 따라 달라진다 — 스펙이 좌표를 적어
+ * 두면 이름이 바뀌는 순간 조용히 빗나간다. 보상 팝업의 확인 버튼과 같은 방식으로 자리만 알린다.
+ */
+export function setDebugRuneNoteRename(point: { x: number; y: number } | undefined): void {
+  ensure().runeNoteRename = point;
+}
+
 export function setDebugPopupTitles(titles: string[]): void {
   ensure().popupTitles = titles.length > 0 ? titles : undefined;
 }

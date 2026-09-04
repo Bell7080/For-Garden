@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import type { GameApi } from "../api/contracts";
 import { gameApi } from "../api/FakeServer";
+import { setDebugRuneNoteRename } from "../debug";
 import { canEngraveRune, canEnhanceRune, RUNE_PART_LABELS, RUNE_RARITY_LABELS, runeEnhancementAttempts, runeTotalEnhancementAttempts, type RuneInstance, type RuneStatKey } from "../core/runes";
 import { runeEnhancementGoldCost } from "../data/runes";
 import { RELICS } from "../data/relics";
@@ -370,6 +371,15 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
       const pencilY = top + 122;
       content.add(drawGlyph(scene, "edit", pencilX, pencilY, 32, accent));
       const renameHit = scene.add.rectangle(pencilX, pencilY, 74, 74, 0xffffff, 0).setInteractive({ useHandCursor: true });
+      // 연필은 이름 글자 폭만큼 밀려 서므로 자리를 화면이 알린다 — 스펙이 좌표를 적어 두면
+      // 이름이 바뀌는 순간 조용히 빗나간다(보상 팝업의 확인 버튼과 같은 방식이다). 판이 제자리를
+      // 잡은 다음 프레임에 재야 컨테이너 이동·기울임이 모두 반영된 실제 화면 좌표가 나온다.
+      scene.time.delayedCall(0, () => {
+        if (!renameHit.active) return;
+        const bounds = renameHit.getBounds();
+        setDebugRuneNoteRename({ x: bounds.centerX, y: bounds.centerY });
+      });
+      renameHit.once(Phaser.GameObjects.Events.DESTROY, () => setDebugRuneNoteRename(undefined));
       renameHit.on("pointerup", () => requestRuneName(scene, rune!.customName ?? "", async (value) => {
         if (pending) return; pending = true;
         try {

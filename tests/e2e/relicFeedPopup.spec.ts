@@ -28,8 +28,14 @@ async function openOwnedRelic(page: Page): Promise<void> {
 test.beforeEach(async ({ page }) => {
   await startAfterOpening(page, (session) => {
     // Put the first serving exactly on an EXP boundary and retain enough currency for follow-up actions.
-    const id = session.favorite;
-    session.relicProgress[id].exp = relicExpToNext(session.relicProgress[id].level) - FEED_UNIT.exp;
+    //
+    // 애착 렐릭 하나만 준비하면 안 된다 — 이 편이 여는 것은 도감의 **첫 카드**이고, 그것이 애착
+    // 렐릭이라는 보장이 없다. 준비되지 않은 렐릭을 열면 짧은 탭의 급여가 실제로 성사되지 않아
+    // (경험치가 그대로라) 성장 팝업이 뜨지 않는다. 보유한 전부를 같은 경계에 세워 둔다.
+    for (const id of session.owned) {
+      const progress = session.relicProgress[id];
+      if (progress) progress.exp = relicExpToNext(progress.level) - FEED_UNIT.exp;
+    }
     session.wallet.cheesecake = 10_000;
   });
   await openOwnedRelic(page);

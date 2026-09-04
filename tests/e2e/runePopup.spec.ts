@@ -33,10 +33,11 @@ test("세로 화면에서 전설 5행×3칸, 긴 옵션명, 키보드 이름 입
   });
   await openFirstRune(page);
   // 연필 조작은 네이티브 입력을 띄워 모바일 소프트 키보드와 동일한 입력 경로를 사용한다.
-  // 연필은 네이티브 입력을 띄우므로 되풀이해 누르지 않는다 — 쪽지가 조각·옵션을 마저 그릴
-  // 틈만 두고 한 번 누른다.
-  await page.waitForTimeout(700);
-  await tap(page, 850, 456);
+  // 연필 자리는 이름 글자 폭에 따라 달라지므로 화면이 알려 주는 좌표를 쓴다.
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.runeNoteRename)).not.toBeUndefined();
+  const pencil = (await page.evaluate(() => window.__PF_DEBUG!.runeNoteRename!))!;
+  // 네이티브 입력을 띄우는 조작이라 되풀이해 누르지 않는다.
+  await tap(page, pencil.x, pencil.y);
   const input = page.getByLabel("룬 이름");
   await expect(input).toBeVisible();
   await input.fill("긴 이름을 가진 전설의 궁극기 충전 룬");

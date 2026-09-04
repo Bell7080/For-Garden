@@ -18,7 +18,7 @@ export const BACKGROUND = {
   archaeology: "background-archaeology",
   /** 유료 상점의 흰 쇼케이스. 인게임 재화 교환소(무역)와는 다른 자리다. */
   premiumShop: "background-premium-shop",
-  /** 전용 원화가 도착하기 전 무역소가 사용하는 임시 작업실 배경 키다. */
+  /** 일반 상품과 성장 재화를 진열하는 상점 쇼케이스 배경 키다. */
   shop: "background-shop",
   /** 발굴 연출이 덮는 발굴장. 검은 판 대신 이 원화를 깔고 그 위를 눌러 어둡게 한다. */
   excavation: "background-excavation",
@@ -57,8 +57,8 @@ export const BACKGROUND_ASSETS = [
   [BACKGROUND.stageMap, "sprites/background/map_001.webp"],
   [BACKGROUND.archaeology, "sprites/background/background_007.webp"],
   [BACKGROUND.premiumShop, "sprites/background/background_008.webp"],
-  // 임시 무역소 키도 공용 로딩 단계에 연결하며 씬 안에서는 파일을 직접 읽지 않는다.
-  [BACKGROUND.shop, "sprites/background/background_005.webp"],
+  // 일반 상점은 완성된 흰 쇼케이스 원화를 쓰되 유료 상점과 독립된 texture key를 유지한다.
+  [BACKGROUND.shop, "sprites/background/background_008.webp"],
   [BACKGROUND.excavation, "sprites/background/background_009.webp"],
   [BACKGROUND.cardBackdrop, "sprites/background/background_010.webp"],
   // 원정 지도 WebP는 화면 배경 표가 키와 경로를 단독 소유하며 원본 복제본을 만들지 않는다.

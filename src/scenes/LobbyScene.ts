@@ -17,7 +17,6 @@ import { loadPlayerProfileDisplay } from "../managers/PlayerProfileManager";
 import { bondDialogue } from "../data/bonds";
 import { PopupLayer } from "../ui/PopupLayer";
 import { IdleExcavationPopup } from "../ui/IdleExcavationPopup";
-import { TradePopup } from "../ui/TradePopup";
 import { BACK_SLOT, IconButton } from "../ui/IconButton";
 import { UI_ICON } from "../ui/icons";
 import { InventoryPopup } from "../ui/InventoryPopup";
@@ -97,9 +96,6 @@ export class LobbyScene extends Phaser.Scene {
   private sortieSdTimer?: Phaser.Time.TimerEvent;
   private sortieBackButton?: IconButton;
   private idleExcavationPopup?: IdleExcavationPopup;
-  /** 무역은 로비 수명을 보존하는 패키지 레이어다. */
-  private tradePopup?: TradePopup;
-  private tradeBackButton?: IconButton;
   /** 발굴은 화면 크기의 작업판이므로 팝업 X 대신 로비 좌하단의 공용 아이콘 양식을 쓴다. */
   private excavationBackButton?: IconButton;
   /** 인벤토리는 로비 세션을 유지하는 공용 팝업이며 상태 변경은 API에만 위임한다. */
@@ -231,14 +227,6 @@ export class LobbyScene extends Phaser.Scene {
     }
   }
 
-  /** 무역은 이전과 같은 로비 패키지 레이어로 열고 중복 레이어를 만들지 않는다. */
-  private openTrade(): void {
-    if (!this.popupLayer) return;
-    this.tradePopup ??= new TradePopup(this, this.popupLayer, gameApi, session.wallet, (result) => { session.wallet = { ...result.wallet }; this.topBar?.refresh(); }, () => { this.tradePopup = undefined; this.tradeBackButton?.destroy(); this.tradeBackButton = undefined; });
-    this.tradePopup.open();
-    if (!this.tradeBackButton) this.tradeBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: () => this.tradePopup?.close() }).setDepth(2100);
-  }
-
   /** 인게임 상점은 로비 팝업이 아니라 등록된 ShopScene의 독립 수명주기로 연다. */
   private openShop(): void {
     this.scene.start("shop");
@@ -256,7 +244,8 @@ export class LobbyScene extends Phaser.Scene {
   /** 안내 프리팹은 이 콜백만 요청하므로 지갑 변경 없이 구현된 씬·로비 팝업으로만 이동한다. */
   private handleCurrencyAction(action: CurrencyGuideAction): void {
     if (action.kind === "scene" && action.target === "lab") this.scene.start("lab");
-    if (action.kind === "popup" && action.target === "trade") this.openTrade();
+    // 교환은 로비의 구형 팝업이 아니라 교류 씬 안의 단일 교환소 진입점이 소유한다.
+    if (action.kind === "scene" && action.target === "interaction") this.scene.start("interaction", { openExchange: true });
   }
 
   /** 오른쪽 레일에서 로비를 떠나지 않고 가방 작업판을 연다. */
@@ -443,18 +432,17 @@ export class LobbyScene extends Phaser.Scene {
   }
 
   /**
-   * 임무·상점·무역은 왼쪽 콘텐츠 레일에서 위계 순으로 읽히는 한 묶음이다.
-   * 가방을 포함한 편의 기능은 오른쪽 레일로 보내 두 역할을 좌우로 명확히 나눈다.
+   * 임무와 일반 상점은 왼쪽 콘텐츠 레일의 유일한 직접 진입점이다.
+   * 교환소는 하단 교류를 거쳐서만 열리며, 편의 기능은 오른쪽 레일로 역할을 분리한다.
    */
   private buildMissionEntry(): void {
     const entries = [
       { bounds: LOBBY_RAIL_BOUNDS.content.mission, icon: "mission", label: "임무", accent: true, onClick: () => this.openMissions() },
       { bounds: LOBBY_RAIL_BOUNDS.content.shop, icon: "shop", label: "상점", accent: false, onClick: () => this.openShop() },
-      { bounds: LOBBY_RAIL_BOUNDS.content.trade, icon: "shop", label: "무역", accent: false, onClick: () => this.openTrade() },
     ] as const;
     // 캔버스 E2E에는 레일의 게임 상태가 아니라 실제 입력 중심만 전달한다.
     setDebugStorefrontControls({ lobby: {
-      mission: { x: entries[0].bounds.x, y: entries[0].bounds.y }, missionBack: { x: 973, y: 1743 }, shop: { x: entries[1].bounds.x, y: entries[1].bounds.y }, trade: { x: entries[2].bounds.x, y: entries[2].bounds.y },
+      mission: { x: entries[0].bounds.x, y: entries[0].bounds.y }, missionBack: { x: 973, y: 1743 }, shop: { x: entries[1].bounds.x, y: entries[1].bounds.y }, interaction: { x: 250, y: NAV_TOP - 400 },
     } });
     // 역할별 배치표가 콘텐츠 순서와 크기를 소유하므로 렌더링은 표를 그대로 소비한다.
     const buttons = entries.map((entry) => new RailButton(this, entry.bounds.x, entry.bounds.y, {

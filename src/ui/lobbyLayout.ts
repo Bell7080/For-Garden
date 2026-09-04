@@ -14,7 +14,6 @@ export const LOBBY_RAIL_BOUNDS = {
   content: {
     mission: { x: RAIL.leftX, y: RAIL.top, width: RAIL.size, height: RAIL.size },
     shop: { x: RAIL.leftX, y: RAIL.top + RAIL.step, width: RAIL.size, height: RAIL.size },
-    trade: { x: RAIL.leftX, y: RAIL.top + RAIL.step * 2, width: RAIL.size, height: RAIL.size },
   },
   utility: {
     mail: { x: RAIL.rightX, y: RAIL.top, width: RAIL.size, height: RAIL.size },

@@ -57,6 +57,7 @@
 
 ### 4. 상점
 
+- 일반 상점과 교류 교환소의 단일 진입 계약은 [`storefront-entrypoints.md`](storefront-entrypoints.md)를 따른다.
 - 현재 재화 교환 카탈로그와 일/주/계정 구매 제한을 실제 서버 카탈로그·인벤토리로 옮긴다.
 - 플랫폼 결제 영수증 검증, 가격 지역화, 환불/복구 구매와 상품 갱신 운영을 구현한다.
 - DNA 교환소, 이벤트 교환소, 스킨 상품을 각각 알아볼 수 있는 탐색 구조로 정리한다.
@@ -94,3 +95,4 @@
 
 - `src/api/FakeSocialServer.ts`, `src/data/friends.ts`: 계정·친구 서버와 공개 프로필 DTO 구현 대기.
 - `src/data/stages.ts`의 고정 적 편성: 스테이지별 운영 편성 데이터 연결 대기.
+- `src/data/shopPresentation.ts`의 `SHOP_MERCHANT_ASSET`: 일반 상점 최종 점원 Puppet 확정 대기.

@@ -5,7 +5,8 @@ import { formatCurrency } from "../core/formatCurrency";
 import { SHOP_TABS, type ShopCategory } from "../data/shopCatalog";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugScene, setDebugShopView, setDebugStorefrontControls } from "../debug";
-import { TORIKA_ASSET, spawnPuppet } from "../puppets/assets";
+import { spawnPuppet } from "../puppets/assets";
+import { SHOP_MERCHANT_ASSET } from "../data/shopPresentation";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { CURRENCY_ICON_BY_WALLET } from "../ui/currencyIcons";
 import { addBackButton } from "../ui/IconButton";
@@ -23,7 +24,7 @@ const LIST_VIEW = { left: 470, right: BASE_WIDTH - 36, top: 330, bottom: BASE_HE
 /** 세로 카드 간격과 드래그 판정을 한곳에 묶어 스크롤 감각을 일정하게 유지한다. */
 const LIST_LAYOUT = { cardHeight: 292, gap: 28, dragSlop: 16, frameSize: 164 } as const;
 
-/** 인게임 재화만 교환하는 독립 무역소 씬이다. */
+/** 일반 상품과 성장 재화를 취급하는 독립 상점 씬이다. */
 export class ShopScene extends Phaser.Scene {
   private products: ProductDto[] = [];
   /** 첫 탭은 카탈로그 순서에서 정해 화면과 데이터의 기본값이 갈리지 않게 한다. */
@@ -45,7 +46,7 @@ export class ShopScene extends Phaser.Scene {
 
   create(): void {
     setDebugScene("shop", "상점");
-    // 임시 상점 배경도 공용 로딩 표에서 먼저 읽혀 씬 진입 중 로더가 튀어나오지 않는다.
+    // 최종 상점 쇼케이스 배경은 공용 로딩 표에서 먼저 읽혀 씬 진입 중 로더가 튀어나오지 않는다.
     addSceneBackground(this, BACKGROUND.shop);
     drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { depth: -20, strength: 0.76 });
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.56).setDepth(-19);
@@ -62,7 +63,7 @@ export class ShopScene extends Phaser.Scene {
     this.createViewport();
     this.createTabs();
     this.installScrollInput();
-    // 임시 점원도 정지 이미지 대신 공용 Puppet과 중심1 관절 배치 규칙을 그대로 거친다.
+    // 점원 자산은 별도 표시 데이터에서 고르고 공용 Puppet과 중심1 관절 배치 규칙을 그대로 거친다.
     void this.createMerchant();
     void this.refresh();
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.removeScrollInput());
@@ -76,9 +77,9 @@ export class ShopScene extends Phaser.Scene {
     }
   }
 
-  /** 토리카 임시 점원의 코어 관절을 좌측 무대 중심에 맞춰 전신 비율을 보존한다. */
+  /** 표시 데이터가 고른 점원의 코어 관절을 좌측 무대 중심에 맞춰 전신 비율을 보존한다. */
   private async createMerchant(): Promise<void> {
-    const merchant = await spawnPuppet(this, TORIKA_ASSET, {
+    const merchant = await spawnPuppet(this, SHOP_MERCHANT_ASSET, {
       // 전신은 왼쪽 430px 안에 머물러 470px부터 시작하는 상품 열과 시각적으로 겹치지 않는다.
       focus: { anchor: "core", x: 160, y: 1000 }, height: 700, depth: 2, flipX: true,
     });

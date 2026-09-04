@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
 import { FEED_UNIT, relicExpToNext } from "../../src/core/relicProgression";
 import { startAfterOpening } from "./openingSave";
-import { canvasBox, captureGame, gamePoint } from "./canvasInput";
+import { canvasBox, captureGame, gamePoint, tapUntil } from "./canvasInput";
 
 /** Convert stable Phaser design coordinates into the browser's scaled canvas coordinates. */
 async function gamePointOf(page: Page, x: number, y: number): Promise<{ x: number; y: number }> {
@@ -19,8 +19,8 @@ async function clickGame(page: Page, x: number, y: number): Promise<void> {
 async function openOwnedRelic(page: Page): Promise<void> {
   await clickGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
-  await clickGame(page, BASE_WIDTH * 0.3, BASE_HEIGHT - 90);
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("relics");
+  // 로비는 이름이 바뀐 뒤에도 하단 탭의 입력면을 마저 만든다 — 될 때까지 다시 누른다.
+  await tapUntil(page, BASE_WIDTH * 0.3, BASE_HEIGHT - 90, async () => (await page.evaluate(() => window.__PF_DEBUG?.scene)) === "relics");
   await clickGame(page, 200, 620);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.infoOpen)).toBe(true);
 }

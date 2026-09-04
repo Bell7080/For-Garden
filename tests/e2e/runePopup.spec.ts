@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { createRuneInstance, type RuneStatKey } from "../../src/core/runes";
 import { startAfterOpening } from "./openingSave";
-import { captureGame, tap } from "./canvasInput";
+import { captureGame, tap, tapUntil } from "./canvasInput";
 
 const W = 1080;
 const H = 1920;
@@ -15,8 +15,8 @@ const H = 1920;
 async function openFirstRune(page: Page): Promise<void> {
   await tap(page, W / 2, H / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
-  await tap(page, W * 0.3, H - 90);
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("relics");
+  // 로비는 이름이 바뀐 뒤에도 하단 탭의 입력면을 마저 만든다 — 될 때까지 다시 누른다.
+  await tapUntil(page, W * 0.3, H - 90, async () => (await page.evaluate(() => window.__PF_DEBUG?.scene)) === "relics");
   // 애착 렐릭(토리카) 카드 → 1번 룬 조각 → 쪽지의 세공 버튼 순서다. 각 판은 원화·조각을
   // 비동기로 읽으므로, 다음을 누르기 전에 실제로 열렸는지 확인한다 — 열리기 전에 누르면 허공을 친다.
   await tap(page, 530, 580);

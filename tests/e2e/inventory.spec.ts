@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { startAfterOpening } from "./openingSave";
 import { inventoryCategoryTabPosition } from "../../src/ui/inventoryTabs";
 import { createRuneInstance, type RuneStatKey } from "../../src/core/runes";
-import { captureGame, tap } from "./canvasInput";
+import { captureGame, tap, tapUntil } from "./canvasInput";
 
 const WIDTH = 1080; const HEIGHT = 1920;
 
@@ -22,7 +22,8 @@ test("가방은 로비를 유지하고 카테고리 탭과 많은 항목 스크�
   });
   await tap(page, WIDTH / 2, HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
-  await tap(page, WIDTH - 106, 1096);
+  // 레일 버튼은 로비가 원화를 마저 읽은 뒤에 입력면을 갖는다 — 열릴 때까지 다시 누른다.
+  await tapUntil(page, WIDTH - 106, 1096, async () => (await page.evaluate(() => window.__PF_DEBUG?.inventoryCategory)) !== undefined);
   // 팝업이 화면을 바꾸지 않는 것이 발굴·무역과 같은 로비 오버레이 계약이다.
   expect(await page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   // 팝업 원점에 탭 로컬 중심을 더해 글자가 아닌 네 탭 면의 정중앙을 차례로 누른다.
@@ -58,7 +59,7 @@ test("상단과 가방 재화는 같은 안내를 열고 가방 위 안내만 �
   await tap(page, WIDTH / 2, HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   // 기본 상단의 첫 칩(젬)을 눌러 공용 안내 제목이 스택에 기록되는지 확인한다.
-  await tap(page, 500, 86);
+  await tapUntil(page, 500, 86, async () => ((await page.evaluate(() => window.__PF_DEBUG?.popupTitles)) ?? []).includes("젬"));
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual(["젬"]);
   await tap(page, 880, 556);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual([]);

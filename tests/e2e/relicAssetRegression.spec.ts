@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
 import { startAfterOpening } from "./openingSave";
-import { captureGame, tap as tapGame } from "./canvasInput";
+import { captureGame, tap as tapGame, tapUntil } from "./canvasInput";
 
 /** 타이틀에서 기본 작전의 편성 화면까지 공용 UI만 눌러 이동한다. */
 async function openParty(page: Page): Promise<void> {
@@ -20,8 +20,8 @@ test("도디·메테의 도감 전신과 루카 포함 편성·전투 SD 에셋�
   await startAfterOpening(page);
   await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
-  await tapGame(page, BASE_WIDTH * 0.3, BASE_HEIGHT - 90);
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("relics");
+  // 로비는 이름이 바뀐 뒤에도 하단 탭의 입력면을 마저 만든다 — 될 때까지 다시 누른다.
+  await tapUntil(page, BASE_WIDTH * 0.3, BASE_HEIGHT - 90, async () => (await page.evaluate(() => window.__PF_DEBUG?.scene)) === "relics");
 
   // 개체번호순 기본 도감에서 도디는 첫 카드, 메테는 기본 보유 구역의 여섯 번째 카드다.
   await tapGame(page, 200, 620);

@@ -204,15 +204,16 @@ test("토리카 패시브 회복은 1080×1920 전장에서 초록 +수치로 �
 test("토리카 궁극기의 다중 기절 뱃지를 1080×1920 전장에서 함께 표시한다", async ({ page }, testInfo) => {
   await page.setViewportSize({ width: BASE_WIDTH, height: BASE_HEIGHT });
   await enterBattle(page);
-  // 가까이 모인 적이 둘 이상이고 토리카 궁극기가 준비된 순간만 눌러 범위 기절 장면을 고정한다.
+  // 가까이 모인 적이 둘 이상이고 토리카 궁극기가 준비된 순간의 범위 기절 장면을 고정한다.
   await tap(page, BASE_WIDTH - 335, 1360);
   await tap(page, BASE_WIDTH - 335, 1360);
-  // 배속은 프레임이 촘촘할 때만 실제로 빨라진다 — 코어가 한 프레임에 진행하는 시간에 상한
-  // (`SKIRMISH.maxCatchUp`)을 두므로, 프레임이 드문 저사양 환경에서는 3배속을 걸어도 진행이
-  // 1배속 언저리로 눌린다. 그 바닥 속도에서도 충전이 끝날 만큼 기다린다.
-  await expect.poll(async () => (await battle(page))?.ultimateReady.includes("토리카"), { timeout: 90_000 }).toBe(true);
-  await tap(page, 190, 1620);
-  await expect.poll(async () => (await battle(page))?.stunned?.length ?? 0, { timeout: 10_000 }).toBeGreaterThanOrEqual(2);
+  // **손으로 누르지 않고 자동 궁극기에 맡긴다.** 배속은 프레임이 촘촘할 때만 실제로 빨라지고
+  // (코어가 한 프레임에 진행하는 시간에 상한이 있다), 느린 환경에서는 "준비됐다"를 보고 누르러
+  // 가는 사이에 전투가 끝나 버린다 — 그때는 이미 지도로 돌아가 있어 눌러도 아무 일이 없었다.
+  // 자동은 충전이 끝나는 그 프레임에 발동하므로 전투가 끝나기 전에 반드시 터진다.
+  await tap(page, BASE_WIDTH - 130, 1360);
+  await expect.poll(async () => (await battle(page))?.autoUltimate).toBe(true);
+  await expect.poll(async () => (await battle(page))?.stunned?.length ?? 0, { timeout: 90_000 }).toBeGreaterThanOrEqual(2);
   await captureGame(page, `test-results/${testInfo.project.name}-battle-multi-stun-1080x1920.png`);
 });
 

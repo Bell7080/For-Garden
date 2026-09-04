@@ -763,7 +763,14 @@ export class BattleScene extends Phaser.Scene {
     // 판이 떠 있는 동안에는 코어 시간만 멈춘다. 화면 tween과 게이지 추격은 그대로 돌아
     // 판을 닫는 순간 값이 점프하지 않는다. lastStepAt은 위에서 이미 지금으로 밀어 두었으므로
     // 다시 흐를 때 멈춰 있던 만큼이 한꺼번에 들어가지 않는다.
-    if (this.simulationPaused()) return;
+    if (this.simulationPaused()) {
+      // 멈춘 동안에도 화면과 관찰값은 지금 상태를 말해야 한다. 여기서 그냥 돌아가면 프로필과
+      // `__PF_DEBUG.battle`이 **판이 열리기 직전 값으로 얼어붙어**, 판이 눈앞에 펼쳐져 있는데도
+      // 밖에서는 접혀 있다고 읽힌다.
+      this.refreshProfiles();
+      this.refreshDebug();
+      return;
+    }
     // 코어 시간과 전투 배속을 궁극기 연출과 분리한다. 연출 Puppet/tween은 씬의 정상 시계로 돈다.
     if (this.ultimateSequenceActive) return;
     // battleSpeed는 코어 시간에 여기서 정확히 한 번만 곱한다. 궁극기 연출 배율은 tween/Puppet에만

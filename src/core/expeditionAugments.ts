@@ -1,5 +1,35 @@
 import { getExpeditionAugment } from "../data/expeditionAugments";
 import type { ExpeditionAugmentSelection } from "./expeditionRewards";
+import type { CombatStatusEffect, DamageType } from "./types";
+
+/** 정적 증강 데이터가 선택할 수 있는, 전투 진행기가 판별 가능한 일곱 발동 시점이다. */
+export type ExpeditionAugmentTrigger = "battleStart" | "onBasicHit" | "onUltimate" | "onCritical" | "onKill" | "onLowHp" | "afterBattle";
+
+/** 모든 조건부 효과가 공유하는 폭주 방지 계약이다. 0이나 생략값을 암묵적 무제한으로 해석하지 않는다. */
+export interface ExpeditionAugmentLimits {
+  maxTriggers: number;
+  cooldownSeconds: number;
+  maxStacks: number;
+  target: "self" | "hitTarget" | "allAllies";
+}
+
+/** 콜백 대신 공용 상태 계약 또는 수치만 담는 안전한 payload다. */
+export type ExpeditionTriggeredPayload =
+  | { kind: "shield"; maxHpPercent: number }
+  | { kind: "status"; status: Extract<CombatStatusEffect, { kind: "bleed" | "curse" | "stun" | "stagger" }> }
+  | { kind: "ultimateCostReduction"; percent: number }
+  | { kind: "conditionalBonusDamage"; percent: number; damageType: DamageType; requiresStatus: "curse" | "stun" }
+  | { kind: "lowHpDefense"; belowHpPercent: number; defensePercent: number; resistancePercent: number }
+  | { kind: "heal"; maxHpPercent: number };
+
+/** 런타임 훅은 이 구조만 해석하며 데이터가 임의 함수를 주입할 자리는 없다. */
+export interface ExpeditionTriggeredEffect {
+  kind: "triggered";
+  trigger: ExpeditionAugmentTrigger;
+  payload: ExpeditionTriggeredPayload;
+  limits: ExpeditionAugmentLimits;
+  scope: ExpeditionAugmentScope;
+}
 
 /** 원정 증강이 영향을 주는 아군 범위다. 지정 효과는 저장된 렐릭 ID 하나만 고른다. */
 export type ExpeditionAugmentScope = { kind: "all" } | { kind: "relic"; relicId: string };
@@ -13,7 +43,8 @@ export type ExpeditionAugmentStatKind =
 export type ExpeditionAugmentEffect =
   | { kind: ExpeditionAugmentStatKind; percent: number; scope: ExpeditionAugmentScope }
   | { kind: "bleedOnAttack"; strength: "standard" | "minor"; everyNAttacks: number; reapplication: "refresh"; scope: ExpeditionAugmentScope }
-  | { kind: "lowHpAttackPowerPercent"; percent: number; belowHpPercent: number; scope: ExpeditionAugmentScope };
+  | { kind: "lowHpAttackPowerPercent"; percent: number; belowHpPercent: number; scope: ExpeditionAugmentScope }
+  | ExpeditionTriggeredEffect;
 
 /** 합산 결과는 배율로 반환해 호출부가 같은 효과를 두 번 적용하지 않게 한다. */
 export type ExpeditionAugmentStatMultipliers = Record<ExpeditionAugmentStatKind, number>;

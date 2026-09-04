@@ -13,7 +13,7 @@ describe("원정 증강 능력치", () => {
       expect(new Set(pool.map(({ category }) => category))).toEqual(new Set(categories));
       for (const augment of pool) {
         // 출혈은 공용 규칙을 참조하므로 카탈로그에 백분율을 복제하지 않는다.
-        if (augment.effect.kind === "bleedOnAttack") expect(augment.effect).not.toHaveProperty("percent");
+        if (augment.effect.kind === "bleedOnAttack" || augment.effect.kind === "triggered") expect(augment.effect).not.toHaveProperty("percent");
         else {
           expect(augment.effect.percent).toBeGreaterThan(0);
           expect(augment.effect.percent).toBeLessThanOrEqual(40);
@@ -66,7 +66,8 @@ describe("원정 증강 능력치", () => {
     const [ally, foe] = state.fighters;
     ally.x = foe.x = 300; ally.y = foe.y = 500; ally.attackCooldown = 0; foe.attackCooldown = 99;
     stepSkirmish(state, 1 / 60);
-    expect(foe.bleed?.total).toBe(2.5);
+    // 렉시아의 더 긴 기본 출혈도 같은 상태 위력 경로를 지나므로 단일 슬롯에는 강한 쪽이 남는다.
+    expect(foe.bleed?.total).toBe(3.75);
   });
 
   it("출혈 후보는 총 피해 곱 대신 표준 강도와 발동 주기·재적용 규칙으로 고른다", () => {

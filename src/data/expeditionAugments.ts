@@ -7,10 +7,12 @@ export type ExpeditionAugmentCategory = "attack" | "spell" | "survival" | "shiel
 
 /** 전투 코어 또는 전투 후 정산이 소비할 수 있는 정적 파라미터다. */
 export type ExpeditionAugmentParams =
-  | { kind: "maxHpPercent" | "defensePercent" | "resistancePercent" | "attackPowerPercent" | "spellPowerPercent" | "attackSpeedPercent" | "initialShieldPercent" | "statusPotencyPercent"; percent: number }
-  | { kind: "bleedOnAttack"; strength: "standard" | "minor"; everyNAttacks: number; reapplication: "refresh" }
-  | { kind: "healAfterBattlePercent"; percent: number }
-  | { kind: "lowHpAttackPowerPercent"; percent: number; belowHpPercent: number };
+  | { kind: "maxHpPercent" | "defensePercent" | "resistancePercent" | "attackPowerPercent" | "spellPowerPercent" | "attackSpeedPercent" | "statusPotencyPercent"; percent: number }
+  | { kind: "initialShieldPercent"; percent: number; trigger: "battleStart"; limits: { maxTriggers: 1; cooldownSeconds: 0; maxStacks: 1; target: "self" | "allAllies" } }
+  | { kind: "bleedOnAttack"; strength: "standard" | "minor"; everyNAttacks: number; reapplication: "refresh"; trigger: "onBasicHit"; limits: { maxTriggers: number; cooldownSeconds: number; maxStacks: 1; target: "hitTarget" } }
+  | { kind: "healAfterBattlePercent"; percent: number; trigger: "afterBattle"; limits: { maxTriggers: 1; cooldownSeconds: 0; maxStacks: 1; target: "allAllies" } }
+  | { kind: "lowHpAttackPowerPercent"; percent: number; belowHpPercent: number; trigger: "onLowHp"; limits: { maxTriggers: 1; cooldownSeconds: 0; maxStacks: 1; target: "self" } }
+  | Omit<import("../core/expeditionAugments").ExpeditionTriggeredEffect, "scope">;
 
 /** 운영 데이터 한 행이다. 주석의 밸런스 의도와 함께 횟수 제한 없이 중복 획득할 수 있다. */
 export interface ExpeditionAugmentDef { id: string; name: string; rarity: ExpeditionAugmentRarity; target: ExpeditionAugmentTarget; category: ExpeditionAugmentCategory; effect: ExpeditionAugmentParams }
@@ -32,15 +34,15 @@ export const EXPEDITION_AUGMENTS = [
   // 생존/SR: 마법 방어 전용이며 갑각과 같은 10% 축이다.
   { id: "phase-membrane", name: "위상 피막", rarity: "sr", target: "party", category: "survival", effect: { kind: "resistancePercent", percent: 10 } },
   // 보호막/SR: 전투마다 최대 HP 8%를 선지급해 장기전보다 초반 안정성을 산다.
-  { id: "opening-aegis", name: "개막 방벽", rarity: "sr", target: "party", category: "shield", effect: { kind: "initialShieldPercent", percent: 8 } },
+  { id: "opening-aegis", name: "개막 방벽", rarity: "sr", target: "party", category: "shield", effect: { kind: "initialShieldPercent", percent: 8, trigger: "battleStart", limits: { maxTriggers: 1, cooldownSeconds: 0, maxStacks: 1, target: "allAllies" } } },
   // 회복/SR: 전투 중 전력을 올리지 않는 대신 런 유지력 8%를 제공한다.
-  { id: "field-repair", name: "현장 수복", rarity: "sr", target: "party", category: "recovery", effect: { kind: "healAfterBattlePercent", percent: 8 } },
+  { id: "field-repair", name: "현장 수복", rarity: "sr", target: "party", category: "recovery", effect: { kind: "healAfterBattlePercent", percent: 8, trigger: "afterBattle", limits: { maxTriggers: 1, cooldownSeconds: 0, maxStacks: 1, target: "allAllies" } } },
   // 상태/SR: 상태 지속시간을 개인 15% 늘려 상태 특화 개체에만 효율이 모이게 한다.
   { id: "reactive-medium", name: "반응 매질", rarity: "sr", target: "relic", category: "status", effect: { kind: "statusPotencyPercent", percent: 15 } },
   // 상태/SR: 작은 출혈은 표준 출혈과 이름·강도를 분리하고 두 번째 공격마다 단일 슬롯을 갱신한다.
-  { id: "minor-blood-edge", name: "작은 출혈날", rarity: "sr", target: "relic", category: "status", effect: { kind: "bleedOnAttack", strength: "minor", everyNAttacks: 2, reapplication: "refresh" } },
+  { id: "minor-blood-edge", name: "작은 출혈날", rarity: "sr", target: "relic", category: "status", effect: { kind: "bleedOnAttack", strength: "minor", everyNAttacks: 2, reapplication: "refresh", trigger: "onBasicHit", limits: { maxTriggers: 20, cooldownSeconds: 0, maxStacks: 1, target: "hitTarget" } } },
   // 조건/SR: 절반 이하에서만 켜지는 개인 공격력이라 상시 18%보다 높은 24%를 쓴다.
-  { id: "last-instinct", name: "최후 본능", rarity: "sr", target: "relic", category: "conditional", effect: { kind: "lowHpAttackPowerPercent", percent: 24, belowHpPercent: 50 } },
+  { id: "last-instinct", name: "최후 본능", rarity: "sr", target: "relic", category: "conditional", effect: { kind: "lowHpAttackPowerPercent", percent: 24, belowHpPercent: 50, trigger: "onLowHp", limits: { maxTriggers: 1, cooldownSeconds: 0, maxStacks: 1, target: "self" } } },
   // 공격/SSR: 정예 전체 공격력은 SR 전체의 두 배인 16%다.
   { id: "apex-signal", name: "정점 신호", rarity: "ssr", target: "party", category: "attack", effect: { kind: "attackPowerPercent", percent: 16 } },
   // 공격/SSR: 개인 집중안은 전체안보다 강한 28%지만 한 기만 강화한다.
@@ -56,15 +58,29 @@ export const EXPEDITION_AUGMENTS = [
   // 생존/SSR: 개인 저항 30%는 불괴의 외피와 피해 계열만 다르다.
   { id: "null-horizon", name: "무효 지평", rarity: "ssr", target: "relic", category: "survival", effect: { kind: "resistancePercent", percent: 30 } },
   // 보호막/SSR: 한 기 최대 HP 25% 선지급은 집중 포화를 버티는 탱커 선택지다.
-  { id: "guardian-cocoon", name: "수호 고치", rarity: "ssr", target: "relic", category: "shield", effect: { kind: "initialShieldPercent", percent: 25 } },
+  { id: "guardian-cocoon", name: "수호 고치", rarity: "ssr", target: "relic", category: "shield", effect: { kind: "initialShieldPercent", percent: 25, trigger: "battleStart", limits: { maxTriggers: 1, cooldownSeconds: 0, maxStacks: 1, target: "self" } } },
   // 회복/SSR: 전투 후 전체 16%는 즉시 전투력 대신 다음 노드 생존을 산다.
-  { id: "regrowth-protocol", name: "재생 프로토콜", rarity: "ssr", target: "party", category: "recovery", effect: { kind: "healAfterBattlePercent", percent: 16 } },
+  { id: "regrowth-protocol", name: "재생 프로토콜", rarity: "ssr", target: "party", category: "recovery", effect: { kind: "healAfterBattlePercent", percent: 16, trigger: "afterBattle", limits: { maxTriggers: 1, cooldownSeconds: 0, maxStacks: 1, target: "allAllies" } } },
   // 상태/SSR: 공용 표준 출혈을 세 번째 공격마다 갱신해 빠른 공격자의 기대 피해가 무한히 커지지 않는다.
-  { id: "blood-edge", name: "선혈의 날", rarity: "ssr", target: "relic", category: "status", effect: { kind: "bleedOnAttack", strength: "standard", everyNAttacks: 3, reapplication: "refresh" } },
+  { id: "blood-edge", name: "선혈의 날", rarity: "ssr", target: "relic", category: "status", effect: { kind: "bleedOnAttack", strength: "standard", everyNAttacks: 3, reapplication: "refresh", trigger: "onBasicHit", limits: { maxTriggers: 20, cooldownSeconds: 0, maxStacks: 1, target: "hitTarget" } } },
   // 상태/SSR: 전체 상태 지속 18%는 상태 없는 파티원에게 가치가 없다는 위험을 반영한다.
   { id: "volatile-atmosphere", name: "불안정 대기", rarity: "ssr", target: "party", category: "status", effect: { kind: "statusPotencyPercent", percent: 18 } },
   // 조건/SSR: 체력 40% 이하에서만 개인 공격력 38%가 켜지는 역전용 고위험 선택지다.
-  { id: "extinction-drive", name: "절멸 구동", rarity: "ssr", target: "relic", category: "conditional", effect: { kind: "lowHpAttackPowerPercent", percent: 38, belowHpPercent: 40 } },
+  { id: "extinction-drive", name: "절멸 구동", rarity: "ssr", target: "relic", category: "conditional", effect: { kind: "lowHpAttackPowerPercent", percent: 38, belowHpPercent: 40, trigger: "onLowHp", limits: { maxTriggers: 1, cooldownSeconds: 0, maxStacks: 1, target: "self" } } },
+  // 조건/SR: 전투 시작 한 번만 전체 생존 아군에게 최대 체력 6% 보호막을 준다.
+  { id: "formation-barrier", name: "진형 방벽", rarity: "sr", target: "party", category: "shield", effect: { kind: "triggered", trigger: "battleStart", payload: { kind: "shield", maxHpPercent: 6 }, limits: { maxTriggers: 1, cooldownSeconds: 0, maxStacks: 1, target: "allAllies" } } },
+  // 공격/SR: 첫 궁극기 한 번의 비용만 20% 줄여 이후 궁극기에는 영향을 남기지 않는다.
+  { id: "first-resonance", name: "첫 공명", rarity: "sr", target: "relic", category: "attack", effect: { kind: "triggered", trigger: "onUltimate", payload: { kind: "ultimateCostReduction", percent: 20 }, limits: { maxTriggers: 1, cooldownSeconds: 0, maxStacks: 1, target: "self" } } },
+  // 상태/SR: 치명타 사건 하나당 한 번만 작은 출혈을 공용 상태 슬롯에 갱신한다.
+  { id: "critical-incision", name: "치명 절개", rarity: "sr", target: "relic", category: "status", effect: { kind: "triggered", trigger: "onCritical", payload: { kind: "status", status: { kind: "bleed", seconds: 2, maxHpPercentPerSecond: 1 } }, limits: { maxTriggers: 8, cooldownSeconds: 0.5, maxStacks: 1, target: "hitTarget" } } },
+  // 주문/SSR: 저주가 이미 걸린 직접 적중 대상에게만 제한된 추가 마법 피해를 준다.
+  { id: "hex-overload", name: "주박 과부하", rarity: "ssr", target: "relic", category: "spell", effect: { kind: "triggered", trigger: "onBasicHit", payload: { kind: "conditionalBonusDamage", percent: 18, damageType: "magical", requiresStatus: "curse" }, limits: { maxTriggers: 12, cooldownSeconds: 0.2, maxStacks: 1, target: "hitTarget" } } },
+  // 공격/SSR: 기절한 직접 적중 대상에게만 제한된 추가 물리 피해를 준다.
+  { id: "stun-breaker", name: "기절 파쇄", rarity: "ssr", target: "relic", category: "attack", effect: { kind: "triggered", trigger: "onBasicHit", payload: { kind: "conditionalBonusDamage", percent: 22, damageType: "physical", requiresStatus: "stun" }, limits: { maxTriggers: 10, cooldownSeconds: 0.25, maxStacks: 1, target: "hitTarget" } } },
+  // 생존/SSR: 낮은 체력 구간 진입을 전투당 한 번만 기록해 방어·저항을 함께 강화한다.
+  { id: "last-bastion", name: "최후 보루", rarity: "ssr", target: "relic", category: "survival", effect: { kind: "triggered", trigger: "onLowHp", payload: { kind: "lowHpDefense", belowHpPercent: 35, defensePercent: 30, resistancePercent: 30 }, limits: { maxTriggers: 1, cooldownSeconds: 0, maxStacks: 1, target: "self" } } },
+  // 회복/SSR: 처치한 당사자만 최대 체력 12%를 회복하며 연속 처치는 내부 쿨타임으로 제한한다.
+  { id: "predation-repair", name: "포식 수복", rarity: "ssr", target: "relic", category: "recovery", effect: { kind: "triggered", trigger: "onKill", payload: { kind: "heal", maxHpPercent: 12 }, limits: { maxTriggers: 5, cooldownSeconds: 1, maxStacks: 1, target: "self" } } },
 ] as const satisfies readonly ExpeditionAugmentDef[];
 
 /** 저장 검증과 UI 조회가 같은 표를 사용하도록 ID 조회를 공개한다. */

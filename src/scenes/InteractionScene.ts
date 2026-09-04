@@ -122,27 +122,49 @@ export class InteractionScene extends Phaser.Scene {
   private buildLayer(view: InteractionLayerView, index: number): Phaser.GameObjects.Container {
     const spot = interactionLayerSpot(index);
     const layer = this.add.container(spot.x, spot.y);
-    const { width, height } = INTERACTION_LAYER;
+    const { width, height, padding, artWidth } = INTERACTION_LAYER;
     const locked = view.state === "locked";
-    const shape = slantedRect(width, height, 26);
+    const shape = slantedRect(width, height, 30);
     layer.add(drawLayer(this, 0, 0, shape, {
       fill: locked ? COLOR.void : COLOR.panel,
       alpha: locked ? 0.72 : HOLO.glass,
-      edge: view.state === "done" ? COLOR.missionClaim : BLUE,
+      edge: view.state === "done" ? 0xe0a83e : BLUE,
       edgeAlpha: locked ? 0.28 : 0.85,
     }));
 
-    // 글은 뻗어 나온 반대쪽, 화면 안으로 들어온 끝에 붙는다.
-    const textX = spot.fromLeft ? width / 2 - (BASE_WIDTH - INTERACTION_LAYER.inset - spot.x) + 40 : -width / 2 + (spot.x - INTERACTION_LAYER.inset) + 40;
+    // **원화를 왼쪽 안에 슬쩍 눕힌다.** 층이 글자만 있는 띠로 남으면 도시마다 다른 곳이라는
+    // 것이 이름으로만 읽힌다. 오른쪽으로 갈수록 사라지게 덮어 글자와 부딪히지 않게 한다.
+    const artLeft = -width / 2 + padding;
+    if (!locked && this.textures.exists(view.city.illustration)) {
+      const art = this.add.image(artLeft + artWidth / 2, 0, view.city.illustration);
+      art.setDisplaySize(artWidth, height - padding);
+      art.setAlpha(0.44);
+      const artMask = this.make.graphics({});
+      artMask.fillStyle(0xffffff, 1).fillRect(spot.x + artLeft, spot.y - (height - padding) / 2, artWidth, height - padding);
+      art.setMask(artMask.createGeometryMask());
+      layer.add(art);
+      // **오른쪽으로 갈수록 판 색에 녹는다.** 마스크 끝을 그대로 두면 붙여 넣은 섬네일처럼 각진
+      // 경계가 남는다. 좌우로 흐르는 그라데이션이라 위아래로 흐르는 공용 `drawGlassFade`는 쓰지 않는다.
+      const dissolve = this.add.graphics();
+      dissolve.fillGradientStyle(COLOR.void, COLOR.void, COLOR.void, COLOR.void, 0, 0.96, 0, 0.96);
+      dissolve.fillRect(artLeft + artWidth - 150, -(height - padding) / 2, 150, height - padding);
+      layer.add(dissolve);
+      layer.once(Phaser.GameObjects.Events.DESTROY, () => artMask.destroy());
+    }
+
+    // **글은 잠기든 말든 같은 x에서 시작한다.** 층이 화면보다 넓어 왼쪽 여백은 화면 밖에 있고,
+    // 거기서 시작하면 잠긴 층의 이름이 화면 왼쪽으로 잘려 나간다. 같은 시작선이 목록을 목록으로
+    // 읽히게 하는 것이기도 하다.
+    const textX = artLeft + artWidth + padding;
     const name = `${view.city.displayName} ${INTERACTION_DEPARTMENT_LABEL[view.city.department]}`;
-    layer.add(this.add.text(textX, -40, name, textStyle({ role: "display", size: 34, color: locked ? COLOR.inkDim : "#dff2ff" })).setOrigin(0, 0.5));
-    layer.add(this.add.text(textX, 2, locked ? `연구 Lv.${view.city.unlock.researchLevel}에 열린다` : interactionDurationLabel(view.city.durationMinutes), textStyle({ role: "emphasis", size: 24, color: locked ? COLOR.inkDim : COLOR.accentText })).setOrigin(0, 0.5));
+    layer.add(this.add.text(textX, -44, name, textStyle({ role: "display", size: 36, color: locked ? COLOR.inkDim : "#dff2ff" })).setOrigin(0, 0.5));
+    layer.add(this.add.text(textX, 6, locked ? `연구 Lv.${view.city.unlock.researchLevel}에 열린다` : interactionDurationLabel(view.city.durationMinutes), textStyle({ role: "emphasis", size: 26, color: locked ? COLOR.inkDim : COLOR.accentText })).setOrigin(0, 0.5));
 
     if (view.state === "away" || view.state === "done") {
       // 나가 있는 동안에는 층 위에 한 겹을 더 덮는다. 완료는 덮지 않고 색으로 알린다.
       if (view.state === "away") layer.add(drawLayer(this, 0, 0, shape, { fill: COLOR.void, alpha: 0.62 }));
       const label = view.state === "away" ? `파견 중 · ${interactionRemainingLabel(view.remainingMs ?? 0)}` : "수령 대기";
-      layer.add(this.add.text(textX, 42, label, textStyle({ role: "emphasis", size: 26, color: view.state === "away" ? "#a8ddf5" : "#e0a83e" })).setOrigin(0, 0.5));
+      layer.add(this.add.text(textX, 52, label, textStyle({ role: "emphasis", size: 28, color: view.state === "away" ? "#a8ddf5" : "#e0a83e" })).setOrigin(0, 0.5));
     }
 
     if (!locked) {

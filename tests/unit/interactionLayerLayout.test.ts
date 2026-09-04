@@ -5,18 +5,16 @@ import { INTERACTION_LAYER, interactionLayersHeight, interactionLayerSpot } from
 const half = INTERACTION_LAYER.width / 2;
 
 describe("교류 층 자리", () => {
-  it("뻗어 나온 쪽 끝은 화면 밖에 남는다", () => {
-    const left = interactionLayerSpot(0);
-    expect(left.fromLeft).toBe(true);
-    expect(left.x - half).toBeLessThan(0);
-    const right = interactionLayerSpot(1);
-    expect(right.fromLeft).toBe(false);
-    expect(right.x + half).toBeGreaterThan(BASE_WIDTH);
+  it("모든 층이 같은 x에 선다 — 좌우로 번갈아 서면 목록이 흩어진 카드로 읽힌다", () => {
+    const xs = [0, 1, 2, 3].map((index) => interactionLayerSpot(index).x);
+    expect(new Set(xs).size).toBe(1);
+    expect(xs[0]).toBe(BASE_WIDTH / 2);
   });
 
-  it("반대쪽 끝은 화면 안 같은 깊이까지만 들어온다", () => {
-    expect(interactionLayerSpot(0).x + half).toBe(BASE_WIDTH - INTERACTION_LAYER.inset);
-    expect(interactionLayerSpot(1).x - half).toBe(INTERACTION_LAYER.inset);
+  it("양 끝은 화면 밖으로 조금 넘친다", () => {
+    const spot = interactionLayerSpot(0);
+    expect(spot.x - half).toBeLessThan(0);
+    expect(spot.x + half).toBeGreaterThan(BASE_WIDTH);
   });
 
   it("층은 위에서 아래로 같은 간격으로 쌓인다", () => {
@@ -24,8 +22,13 @@ describe("교류 층 자리", () => {
     expect(interactionLayerSpot(0).y).toBe(INTERACTION_LAYER.firstY);
   });
 
-  it("층 사이가 벌어져 서로 겹치지 않는다", () => {
+  it("층 사이가 두께보다 벌어져 서로 붙어 보이지 않는다", () => {
     expect(INTERACTION_LAYER.step).toBeGreaterThan(INTERACTION_LAYER.height);
+  });
+
+  it("원화와 여백이 층 안에 든다", () => {
+    expect(INTERACTION_LAYER.artWidth + INTERACTION_LAYER.padding * 2).toBeLessThan(INTERACTION_LAYER.width);
+    expect(INTERACTION_LAYER.padding * 2).toBeLessThan(INTERACTION_LAYER.height);
   });
 
   it("목록 높이는 층 수에서 나온다", () => {

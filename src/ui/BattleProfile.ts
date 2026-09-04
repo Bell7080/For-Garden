@@ -7,7 +7,9 @@ import { HoloBar } from "./holo";
 import { BattleHealthBar } from "./BattleHealthBar";
 import type { HealthChangeCause } from "./unitHealthBarState";
 import { PortraitCard, type PortraitAlphaOverlay } from "./PortraitCard";
-import { BATTLE_PROFILE_LAYOUT as L } from "./battleStatusLayout";
+import { expeditionAugmentChipOffsets, BATTLE_PROFILE_LAYOUT as L } from "./battleStatusLayout";
+import { ExpeditionAugmentChip } from "./ExpeditionAugmentChip";
+import type { AugmentBadgeView } from "./expeditionAugmentBadges";
 import { skillArtFor, skillArtTint, type SkillArtSlot } from "./skillArt";
 import { FALLBACK_SKILL_ICON } from "./skillIcons";
 import { BattleBuffChip } from "./BattleBuffChip";
@@ -62,6 +64,8 @@ export class BattleProfile extends Phaser.GameObjects.Container {
   /** 버프 액자의 표시 객체를 한곳에 귀속해 프로필 제거 시 함께 정리한다. */
   public readonly buffContainer: Phaser.GameObjects.Container;
   public readonly readOnly: boolean;
+  /** 원정 증강 표식. 전투 버프와 생명주기를 섞지 않도록 목록을 따로 든다. */
+  private readonly augmentChips: Phaser.GameObjects.GameObject[] = [];
   private readonly buffChips = new Map<string, BuffChipView>();
   private readonly battleUiMotion: BattleUiMotion;
   /** 최대 개수를 넘긴 마지막 집계 칩이 전체 목록 열기 의도를 씬으로 전달한다. */
@@ -98,6 +102,10 @@ export class BattleProfile extends Phaser.GameObjects.Container {
     scene.add.existing(this);
     this.setActiveState(options.active);
     this.setMeters(options.currentHp, options.maxHp, options.ferocity, Boolean(options.dead));
+    // 충전 가림막은 **전투에서만** 뜻이 있다. "궁극기가 아직 안 찼다"는 말이라, 궁극기를 쓸 수
+    // 없는 화면(원정 지도의 단계·증강 선택)에서는 그저 얼굴이 반쯤 지워진 카드로 보인다.
+    // 읽기 전용 프로필은 처음부터 다 찬 상태로 세워 그림이 온전히 선다.
+    if (options.readOnly) this.setChargeRatio(1);
     this.syncMask();
   }
 
@@ -170,6 +178,45 @@ export class BattleProfile extends Phaser.GameObjects.Container {
   }
 
   private buffKey(buff: ActiveCombatBuff): string { return `${buff.id}:${buff.sourceFighterId}`; }
+
+  /**
+   * 이 캐릭터에게 붙은 원정 증강을 **왼쪽부터** 세운다.
+   *
+   * 전체 증강은 화면 위쪽 한 줄이 맡고, 여기에는 개인 증강만 온다 — 전체까지 세 칸에 되풀이하면
+   * 같은 것이 화면에 네 번 서고 정작 "이 캐릭터만의 것"이 그 속에 묻힌다. 상한을 넘으면 마지막
+   * 자리를 `+N`으로 바꾼다.
+   */
+  public setAugmentBadges(badges: readonly AugmentBadgeView[], onPress?: () => void): this {
+    this.augmentChips.forEach((chip) => chip.destroy());
+    this.augmentChips.length = 0;
+    if (badges.length === 0) return this;
+    const row = L.augmentRow;
+    const overflow = Math.max(0, badges.length - row.maxVisible);
+    const visible = overflow > 0 ? badges.slice(0, row.maxVisible - 1) : badges;
+    const offsets = expeditionAugmentChipOffsets(visible.length + (overflow > 0 ? 1 : 0));
+    visible.forEach((badge, index) => {
+      const chip = new ExpeditionAugmentChip(this.scene, offsets[index].x, offsets[index].y, badge, row.chipSize);
+      this.augmentChips.push(chip);
+      this.add(chip);
+    });
+    if (overflow > 0) {
+      const spot = offsets[offsets.length - 1];
+      const more = this.scene.add.text(spot.x, spot.y, `+${overflow + 1}`, textStyle({ role: "display", size: 22, color: "#ffffff" }))
+        .setOrigin(0.5)
+        .setStroke("#05070a", 4);
+      this.augmentChips.push(more);
+      this.add(more);
+    }
+    if (onPress) {
+      const width = offsets.length * (row.chipSize + row.gap);
+      const hit = this.scene.add.rectangle(offsets[0].x - row.chipSize / 2 + width / 2, row.y, width, row.chipSize + 12, 0xffffff, 0)
+        .setInteractive({ useHandCursor: true });
+      hit.on("pointerup", () => onPress());
+      this.augmentChips.push(hit);
+      this.add(hit);
+    }
+    return this;
+  }
 
   /** 스킬 그림 한 장을 담는 액자이므로 예외적으로 사방선과 안쪽 비네팅을 함께 쓴다. */
   private createBuffChip(model: BattleBuffRenderModel, slot: number, aggregateLabel?: string, onPress = model.onPress): { container: BattleBuffChip; tint: number } {

@@ -8,17 +8,10 @@ import { chipPoints, drawHairline, drawLayer } from "./holo";
 // 판 아래로 생존 HUD 한 줄이 그대로 보이도록 규격은 지도 배치표 한 곳에서만 정한다.
 import { EXPEDITION_AUGMENT_POPUP } from "./expeditionLayout";
 
-/** 선택 화면과 확정 목록이 공유하는 효과 수치 표기다. 운영 데이터의 값을 문구에 다시 적지 않는다. */
-export function expeditionAugmentEffectLabel(def: ExpeditionAugmentDef): string {
-  if (def.effect.kind === "attackPowerPercent") return `공격력 +${def.effect.percent}%`;
-  if (def.effect.kind === "healAfterBattlePercent") return `전투 후 체력 +${def.effect.percent}%`;
-  return `공격 시 출혈 ${def.effect.percent}% · ${def.effect.seconds}초`;
-}
-
-/** 등급과 범위를 짧은 인게임 표기로 바꾸되 실제 판정은 정적 데이터의 값을 그대로 사용한다. */
-export function expeditionAugmentMetaLabel(def: ExpeditionAugmentDef): string {
-  return `${def.rarity === "advanced" ? "고급" : "일반"} · ${def.target === "party" ? "전체" : "개인"}`;
-}
+// 두 표기는 화면 없이도 읽혀야 하므로 순수 모듈이 소유한다. 기존 호출부가 이 경로를 계속
+// 쓸 수 있도록 여기서 다시 내보내기만 한다.
+import { expeditionAugmentEffectLabel, expeditionAugmentMetaLabel } from "./expeditionAugmentBadges";
+export { expeditionAugmentEffectLabel, expeditionAugmentMetaLabel };
 
 /**
  * 개인 증강의 대상을 고르는 아군 그리드는 이 팝업이 다시 그리지 않는다.

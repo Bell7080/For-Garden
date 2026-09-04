@@ -3,7 +3,7 @@ import type { ActiveCombatBuff } from "../core/skirmish";
 import { battleBuffEffectShape, battleBuffProgress, type BattleBuffEffectShape } from "../core/battleBuffPresentation";
 import type { BattleUiMotion } from "../core/settings";
 import { chipPoints, drawInnerVignette, drawLayer, drawShapeOutline } from "./holo";
-import { BATTLE_STATUS_LAYOUT } from "./battleStatusLayout";
+import { battleBuffStackSpot } from "./battleStatusLayout";
 import { COLOR, textStyle } from "./theme";
 
 /** 전투 프로필에 붙는 작은 버프 액자. 진행 Graphics는 생성 후 지우고 다시 그려 재사용한다. */
@@ -39,14 +39,18 @@ export class BattleBuffChip extends Phaser.GameObjects.Container {
   }
 
   /** 칩 우하단의 겹 수. 작은 판을 깔아 밝은 배경 원화 위에서도 수가 살아남는다. */
-  private drawStacks(size: number, tint: number, stacks: number): Phaser.GameObjects.Container {
-    const count = BATTLE_STATUS_LAYOUT.stackCount;
-    // 칩 크기가 머리 위 칩보다 크므로 자리는 모서리 비율로 옮긴다.
-    const x = size / 2 - count.plateRadius - 2;
-    const y = size / 2 - count.plateRadius - 2;
+  private drawStacks(size: number, _tint: number, stacks: number): Phaser.GameObjects.Container {
+    // 자리와 크기는 액자 크기에서 나온다 — 머리 위 칩(22px)의 값을 그대로 쓰면 56px 액자에서
+    // 판이 점만큼 작아 숫자가 밖으로 넘친다.
+    const spot = battleBuffStackSpot(size);
     const group = this.scene.add.container(0, 0);
-    group.add(this.scene.add.circle(x, y, count.plateRadius, COLOR.void, 0.94));
-    this.stacksText = this.scene.add.text(x, y + 1, String(stacks), textStyle({ role: "display", size: count.size, color: `#${tint.toString(16).padStart(6, "0")}` })).setOrigin(0.5);
+    group.add(this.scene.add.circle(spot.x, spot.y, spot.plateRadius, COLOR.void, 0.94));
+    // 액자 색을 따르지 않고 **흰 글자에 검은 테두리**다. 파치의 4타처럼 지금 몇 대째인지는
+    // 액자 그림보다 먼저 읽혀야 하는 수인데, 액자와 같은 색이면 그림에 묻힌다.
+    this.stacksText = this.scene.add
+      .text(spot.x, spot.y + 1, String(stacks), textStyle({ role: "display", size: spot.fontSize, color: "#ffffff" }))
+      .setOrigin(0.5)
+      .setStroke("#05070a", spot.strokeWidth);
     group.add(this.stacksText);
     return group;
   }

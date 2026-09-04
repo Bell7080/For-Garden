@@ -15,6 +15,8 @@ export const BATTLE_PROFILE_LAYOUT = {
    * 맞추면 이미 읽고 있던 아이콘까지 좌우로 흔들리므로 빈 슬롯만 재사용한다.
    */
   buffRow: { y: -229, chipSize: 56, gap: 12, maxVisible: 4 },
+  /** 원정 증강 표식 줄. 버프 액자와 같은 높이에 더 작은 칩으로 선다. */
+  augmentRow: { y: -229, chipSize: 40, gap: 7, maxVisible: 5 },
   /** 발광과 그 위의 버프 액자까지 포함한 로컬 bounds다. */
   bounds: { left: -189, right: 189, top: -257, bottom: 274 },
   battle: { centerY: 1620, centersX: [190, 540, 890], scale: 1 },
@@ -30,6 +32,44 @@ export const BATTLE_PROFILE_LAYOUT = {
   /** 전장 SD 체력 바와 결과 조작이 점유하는 세로 안전 영역을 회귀 테스트와 공유한다. */
   collisionZones: { battlefieldHpBottom: 1260, ultimateInputTop: 1334, resultUiTop: 1380 },
 } as const;
+
+/**
+ * 프로필 버프 액자의 겹 수가 앉는 자리.
+ *
+ * 머리 위 상태 칩(22px)의 값을 그대로 쓰면 56px 액자에서는 판이 점만큼 작아 숫자가 그 밖으로
+ * 넘치고, 액자 색과 같은 글자라 그림 위에서 읽히지도 않는다. 크기에 비례해 키우고 **흰 글자에
+ * 검은 테두리**를 둘러 어떤 액자 색 위에서도 같은 무게로 읽히게 한다.
+ */
+export function battleBuffStackSpot(size: number) {
+  const plateRadius = Math.max(BATTLE_STATUS_LAYOUT.stackCount.plateRadius, size * 0.19);
+  return {
+    plateRadius,
+    // 액자 오른쪽 아래는 빗변으로 깎여 있으므로 두 변에서 같은 만큼만 들어가면 그 빗변을 넘는다.
+    x: size / 2 - plateRadius - 2,
+    y: size / 2 - plateRadius - 2,
+    fontSize: Math.max(BATTLE_STATUS_LAYOUT.stackCount.size, Math.round(size * 0.3)),
+    strokeWidth: Math.max(3, Math.round(size * 0.075)),
+  };
+}
+
+/**
+ * 원정 증강 표식이 서는 줄.
+ *
+ * 버프 액자와 **같은 y·같은 왼쪽 끝**을 쓴다. 두 줄이 다른 자리에 서면 같은 프로필 위에서
+ * 서로 다른 체계의 표식으로 읽힌다. 전투에는 증강이 없고 원정 지도에는 전투 버프가 없어
+ * 두 줄이 한 화면에서 겹치지 않는다.
+ */
+export function expeditionAugmentChipOffsets(count: number): { x: number; y: number }[] {
+  const row = BATTLE_PROFILE_LAYOUT.augmentRow;
+  const buffs = BATTLE_PROFILE_LAYOUT.buffRow;
+  // 왼쪽 끝은 버프 줄의 첫 슬롯과 같다. 개수가 늘어도 이미 읽고 있던 표식이 흔들리지 않게
+  // 가운데 정렬하지 않고 **왼쪽부터 쌓는다.**
+  const left = -(buffs.maxVisible * buffs.chipSize + (buffs.maxVisible - 1) * buffs.gap) / 2;
+  return Array.from({ length: count }, (_, index) => ({
+    x: left + row.chipSize / 2 + index * (row.chipSize + row.gap),
+    y: row.y,
+  }));
+}
 
 /** 고정 슬롯에 놓인 버프 액자의 로컬 bounds다. 정적 배치 테스트도 이 계산을 그대로 쓴다. */
 export function battleBuffChipBounds(slot: number) {

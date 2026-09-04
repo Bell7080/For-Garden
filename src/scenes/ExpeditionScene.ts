@@ -4,7 +4,6 @@ import { GameApiError, type AdSlotOperationsDto } from "../api/contracts";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import type { ExpeditionMapNode } from "../core/expeditionMap";
 import { getRelic } from "../data/relics";
-import { getExpeditionAugment } from "../data/expeditionAugments";
 import { setDebugExpeditionFormation, setDebugFormationDragVisual, setDebugScene } from "../debug";
 import { expeditionManager, type StartExpeditionFailure } from "../managers/ExpeditionManager";
 import { relicProgression } from "../managers/RelicProgressionManager";
@@ -21,7 +20,10 @@ import { EXPEDITION_LAYOUT, expeditionBackgroundFor, type ExpeditionBackgroundSt
 import { ExpeditionMapView } from "../ui/ExpeditionMapView";
 import { expeditionNodeRewardScore, type ExpeditionAugmentSelection } from "../core/expeditionRewards";
 import type { ExpeditionBattleInputDto, ExpeditionBossBattleInputDto } from "../core/expeditionBattle";
-import { ExpeditionAugmentPopup, expeditionAugmentEffectLabel, expeditionAugmentMetaLabel, type AugmentTargetPicker } from "../ui/ExpeditionAugmentPopup";
+import { ExpeditionAugmentPopup, type AugmentTargetPicker } from "../ui/ExpeditionAugmentPopup";
+import { expeditionAugmentBadges, expeditionAugmentRows } from "../ui/expeditionAugmentBadges";
+import { ExpeditionAugmentChip } from "../ui/ExpeditionAugmentChip";
+import { FaceFrame } from "../ui/FaceFrame";
 import { EXPEDITION_NODE_REWARD_BALANCE, EXPEDITION_WEEKLY_POLICY } from "../data/expedition";
 import { completedAdToken } from "../data/adRewards";
 import { presentRewardedAd } from "../platform/rewardedAds";
@@ -75,6 +77,9 @@ export function rankingBossBounds() {
 }
 
 /** 증강 팝업의 암전(4000) 바로 위. 고르는 동안만 생존 HUD가 이 층으로 올라온다. */
+/** 위쪽 줄에 세우는 전체 증강 표식의 최대 개수. 넘으면 마지막 자리를 `+N`이 대신한다. */
+const GLOBAL_AUGMENT_CHIPS = 6;
+
 const AUGMENT_PICKER_DEPTH = 4001;
 
 /**
@@ -222,7 +227,7 @@ export class ExpeditionScene extends Phaser.Scene {
     this.buildRewardBar(run.pendingRewards, run.lastNodeRewards);
     this.buildMap(run.nodes, run.currentNodeId, run.visitedNodeIds);
     this.buildAugmentChips(augments);
-    this.buildRelicHud(run.relics);
+    this.buildRelicHud(run.relics, augments);
     // 원화는 정보창의 판·스킬 아이콘 아래(1001)에 선다. 더 높이면 스테이지와 달리 원화가
     // 스킬 층 앞으로 튀어나와 아이콘을 가린다.
     this.enemyInfo = new CharacterInfoManager(this, 1001, "enemy");
@@ -381,61 +386,74 @@ export class ExpeditionScene extends Phaser.Scene {
   }
 
   /** 하단 요약을 누르면 축약되지 않은 전체 증강과 개인 대상을 공용 상세 쪽지에서 확인한다. */
+  /**
+   * 전체 적용 증강만 화면 위쪽 한 줄에 세운다.
+   *
+   * 개인 증강은 여기 두지 않는다 — 이름표로 늘어놓으면 "누구에게 붙었나"를 글자로 읽고 아래
+   * HUD의 얼굴과 대조해야 하고, 넷을 넘으면 그마저 `+N`에 잠긴다. 개인 몫은 그 캐릭터의
+   * 프로필이 직접 든다.
+   */
   private buildAugmentChips(augments: readonly ExpeditionAugmentSelection[]): void {
-    if (augments.length === 0) return;
-    // 요약 줄은 배치표의 제 구역 가운데에 선다. 아래 생존 HUD가 전투와 같은 크기로 커졌다.
+    const { global } = expeditionAugmentBadges(augments);
+    if (global.length === 0) return;
     const CHIP_Y = (EXPEDITION_LAYOUT.augments.top + EXPEDITION_LAYOUT.augments.bottom) / 2;
-    const visible = augments.slice(0, 4);
-    const labels = visible.map(({ augmentId, targetRelicId }) => {
-      const name = getExpeditionAugment(augmentId)?.name ?? augmentId;
-      return targetRelicId ? `${name} · ${getRelic(targetRelicId).name}` : name;
+    const size = BATTLE_PROFILE_LAYOUT.augmentRow.chipSize;
+    const gap = BATTLE_PROFILE_LAYOUT.augmentRow.gap + 6;
+    const visible = global.slice(0, GLOBAL_AUGMENT_CHIPS);
+    const overflow = global.length - visible.length;
+    const count = visible.length + (overflow > 0 ? 1 : 0);
+    const total = count * size + (count - 1) * gap;
+    visible.forEach((badge, index) => {
+      new ExpeditionAugmentChip(this, (BASE_WIDTH - total) / 2 + size / 2 + index * (size + gap), CHIP_Y, badge, size);
     });
-    if (augments.length > visible.length) labels.push(`+${augments.length - visible.length}`);
-    const width = 190;
-    const gap = 16;
-    const total = labels.length * width + (labels.length - 1) * gap;
-    labels.forEach((label, index) => {
-      const x = (BASE_WIDTH - total) / 2 + width / 2 + index * (width + gap);
-      const targeted = visible[index]?.targetRelicId !== undefined;
-      drawLayer(this, x, CHIP_Y, chipPoints(width, 62, { bevel: { topLeft: 18, bottomRight: 14 } }), { fill: targeted ? 0x302238 : COLOR.panel, alpha: HOLO.glass, edge: targeted ? COLOR.sortie : COLOR.accent, edgeAlpha: 0.66 });
-      this.add.text(x, CHIP_Y, `${targeted ? "개인" : "전체"} · ${label}`, textStyle({ role: "emphasis", size: 18, color: targeted ? COLOR.sortieText : COLOR.accentText })).setOrigin(0.5);
-    });
-    // +N뿐 아니라 보이는 칩을 눌러도 같은 전체 목록이 열려 발견 가능성을 높인다.
-    const hit = this.add.rectangle(BASE_WIDTH / 2, CHIP_Y, Math.min(BASE_WIDTH - 100, total), 76, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    if (overflow > 0) {
+      const x = (BASE_WIDTH - total) / 2 + size / 2 + visible.length * (size + gap);
+      this.add.text(x, CHIP_Y, `+${overflow}`, textStyle({ role: "display", size: 22, color: "#ffffff" })).setOrigin(0.5).setStroke("#05070a", 4);
+    }
+    // 표식만으로는 무엇인지 알 수 없다. 누르면 전체·개인을 한 장에 모아 보여 준다.
+    const hit = this.add.rectangle(BASE_WIDTH / 2, CHIP_Y, Math.max(total + 40, 200), size + 24, 0xffffff, 0).setInteractive({ useHandCursor: true });
     hit.on("pointerup", () => this.openAugmentDetails(augments));
   }
 
-  /** 선택 순서대로 이름·등급·범위·수치와 개인 대상을 모두 펼쳐 보여 준다. */
+  /**
+   * 지금 무엇이 누구에게 붙어 있는지 한 장에 모은다.
+   *
+   * **전체 적용이 가장 위, 그다음이 편성 순서**다(`expeditionAugmentRows`). 고른 순서로
+   * 늘어놓으면 같은 캐릭터의 증강이 목록 여기저기에 흩어져, 결국 이 창을 열고도 다시 세야 한다.
+   * 누구에게 붙었는지는 이름이 아니라 **기여도 판과 같은 얼굴 액자**가 말한다.
+   */
   private openAugmentDetails(augments: readonly ExpeditionAugmentSelection[]): void {
-    // 한 장에 열 개씩 넘겨 작은 화면에서도 모든 항목과 닫기 조작이 판 안에 머물게 한다.
-    const pageSize = 10;
-    const pageCount = Math.ceil(augments.length / pageSize);
-    const height = Math.min(1120, 250 + Math.min(pageSize, augments.length) * 82);
-    this.popups.open({ width: 850, height, title: `확정 증강 ${augments.length}`, dim: true }, (body) => {
-      const list = this.add.container(0, 0); body.add(list);
-      const pageLabel = this.add.text(0, height / 2 - 58, "", textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0.5); body.add(pageLabel);
-      let page = 0;
-      const render = (): void => {
-        list.removeAll(true);
-        augments.slice(page * pageSize, (page + 1) * pageSize).forEach(({ augmentId, targetRelicId }, index) => {
-          const def = getExpeditionAugment(augmentId);
-          if (!def) return;
-          const target = targetRelicId ? ` · ${getRelic(targetRelicId).name}` : "";
-          list.add(this.add.text(-355, -height / 2 + 105 + index * 82, `${def.name}  ${expeditionAugmentMetaLabel(def)}${target}\n${expeditionAugmentEffectLabel(def)}`, textStyle({ role: "body", size: 22, color: COLOR.ink })).setOrigin(0, 0.5));
-        });
-        pageLabel.setText(`${page + 1} / ${pageCount}`);
-      };
-      if (pageCount > 1) {
-        // 페이지 이동은 목록을 닫지 않아 4개 이후의 개인 대상도 연속해서 대조할 수 있다.
-        body.add(new Button(this, -170, height / 2 - 58, { width: 180, height: 58, label: "이전", fontSize: 20, onClick: () => { page = (page - 1 + pageCount) % pageCount; render(); } }));
-        body.add(new Button(this, 170, height / 2 - 58, { width: 180, height: 58, label: "다음", fontSize: 20, onClick: () => { page = (page + 1) % pageCount; render(); } }));
+    const order = expeditionManager.status().run?.relics.map(({ relicId }) => relicId) ?? [];
+    const rows = expeditionAugmentRows(augments, order);
+    const lines = rows.reduce((sum, row) => sum + row.badges.length, 0);
+    const height = Math.min(1180, 230 + rows.length * 54 + lines * 78);
+    this.popups.open({ width: 880, height, title: `확정 증강 ${augments.length}`, dim: true }, (body) => {
+      let y = -height / 2 + 130;
+      for (const row of rows) {
+        if (row.relicId === undefined) {
+          body.add(this.add.text(-390, y, "전체 적용", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0.5));
+        } else {
+          const relic = getRelic(row.relicId);
+          body.add(new FaceFrame(this, -366, y, { portraitAssetId: relic.portraitAssetId, size: 68 }));
+          body.add(this.add.text(-320, y, relic.name, textStyle({ role: "emphasis", size: 24, color: COLOR.sortieText })).setOrigin(0, 0.5));
+        }
+        y += 54;
+        for (const badge of row.badges) {
+          body.add(new ExpeditionAugmentChip(this, -366, y + 4, badge, 40));
+          body.add(this.add.text(-320, y - 10, `${badge.name}  ${badge.meta}`, textStyle({ role: "emphasis", size: 22, color: COLOR.ink })).setOrigin(0, 0.5));
+          body.add(this.add.text(-320, y + 22, badge.effect, textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0, 0.5));
+          y += 78;
+        }
       }
-      render();
     });
   }
 
   /** 실제 전투 프로필처럼 초상 아래에 현재 체력과 0부터 시작할 야성 게이지를 함께 표시한다. */
-  private buildRelicHud(relics: readonly { relicId: string; currentHp: number; alive: boolean }[]): void {
+  private buildRelicHud(
+    relics: readonly { relicId: string; currentHp: number; alive: boolean }[],
+    augments: readonly ExpeditionAugmentSelection[] = [],
+  ): void {
+    const personal = expeditionAugmentBadges(augments).byRelic;
     relics.forEach((state, index) => {
       const def = getRelic(state.relicId); const x = BATTLE_PROFILE_LAYOUT.expedition.centersX[index];
       const hpRatio = Math.max(0, Math.min(100, state.currentHp)) / 100;
@@ -449,8 +467,16 @@ export class ExpeditionScene extends Phaser.Scene {
       }).setScale(BATTLE_PROFILE_LAYOUT.expedition.scale);
       // 지도 HUD의 칸도 편성 그리드와 같은 꾹 누름으로 상세를 연다. 증강 대상 고르기는
       // 같은 입력면에 짧은 탭만 얹으므로 둘이 부딪히지 않는다.
+      // 개인 증강은 그 캐릭터 위에 왼쪽부터 쌓인다. 표식만으로는 무엇인지 알 수 없으므로
+      // 표식 줄과 카드 어디를 눌러도 같은 목록이 열린다.
+      profile.setAugmentBadges(personal[state.relicId] ?? [], () => this.openAugmentDetails(augments));
       profile.card.hit.setInteractive({ useHandCursor: true });
-      bindLongPress(this, profile.card.hit, { onLongPress: () => this.ally().showRelic(def), depth: 1200 });
+      bindLongPress(this, profile.card.hit, {
+        onLongPress: () => this.ally().showRelic(def),
+        // 짧은 탭은 지금 무엇이 붙어 있는지를 연다. 꾹 누르면 예전처럼 상세 정보창이다.
+        onTap: augments.length > 0 ? () => this.openAugmentDetails(augments) : undefined,
+        depth: 1200,
+      });
       this.relicProfiles.set(state.relicId, profile);
     });
   }

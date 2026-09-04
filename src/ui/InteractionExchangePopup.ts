@@ -13,7 +13,7 @@ export class InteractionExchangePopup {
   constructor(private readonly scene: Phaser.Scene, private readonly popups: PopupLayer, private readonly manager: InteractionManager) {}
 
   open(): void { this.popups.open({ width: 880, height: 1040, title: "교환소", dim: true, closeOnBackdrop: true }, (body) => { this.content = this.scene.add.container(0, 20); body.add(this.content); void this.refresh(); }); }
-  /** TradePopup 회귀처럼 body를 destroy하지 않고 동적 콘텐츠 컨테이너의 자식만 교체한다. */
+  /** 공용 PopupLayer의 chrome을 보존하고 동적 콘텐츠 컨테이너의 자식만 교체한다. */
   private async refresh(result = ""): Promise<void> { const list = await this.manager.exchangeOffers(); const content = this.content; if (!content?.active) return; content.removeAll(true); list.offers.forEach((offer, index) => this.paintRow(content, offer, index, result)); }
   /** 화면에는 의사결정에 필요한 보유량·요구량·결과·남은 횟수만 둔다. */
   private paintRow(content: Phaser.GameObjects.Container, offer: InteractionExchangeOfferDto, index: number, result: string): void { const y = -330 + index * 330; const quantity = Math.min(this.quantities.get(offer.id) ?? 1, Math.max(1, offer.remaining)); this.quantities.set(offer.id, quantity); const reward = offer.grants[0]; const rewardAmount = reward ? reward.amount * quantity : 0;

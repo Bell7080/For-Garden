@@ -5,12 +5,12 @@ import { LOBBY_ACTION_BOUNDS, LOBBY_NAV_TOP, LOBBY_RAIL_BOUNDS, LOBBY_UPPER_BOUN
 const railButtons = Object.values(LOBBY_RAIL_BOUNDS).flatMap((rail) => Object.values(rail)) as LobbyInputBounds[];
 
 describe("lobby input layout", () => {
-  it("orders mission, shop, and trade from the top of one content rail", () => {
-    // 사용 빈도와 진행 위계를 y 좌표만 읽어도 알 수 있도록 슬롯 한 칸씩 정확히 내린다.
-    const { mission, shop, trade } = LOBBY_RAIL_BOUNDS.content;
-    expect(mission.x).toBe(shop.x); expect(shop.x).toBe(trade.x);
-    expect(mission.y).toBeLessThan(shop.y); expect(shop.y).toBeLessThan(trade.y);
-    expect(shop.y - mission.y).toBe(trade.y - shop.y);
+  it("keeps mission and the single shop entry ordered on the content rail", () => {
+    // 구형 무역 버튼을 되살리지 않고 임무 다음 한 슬롯만 일반 상점이 차지하도록 고정한다.
+    const { mission, shop } = LOBBY_RAIL_BOUNDS.content;
+    expect(Object.keys(LOBBY_RAIL_BOUNDS.content)).toEqual(["mission", "shop"]);
+    expect(mission.x).toBe(shop.x);
+    expect(mission.y).toBeLessThan(shop.y);
   });
 
   it("places mission content left and inventory utility right", () => {

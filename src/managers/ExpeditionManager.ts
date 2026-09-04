@@ -1,5 +1,5 @@
 import { generateExpeditionMap } from "../core/expeditionMap";
-import { applyExpeditionRest } from "../core/expeditionAugments";
+import { applyExpeditionAfterBattleHeal, applyExpeditionRest, expeditionAfterBattleHealPercent } from "../core/expeditionAugments";
 import { expeditionRewardRandom, expeditionRewardRule, generateExpeditionAugmentOffers, validateExpeditionAugmentChoice, type ExpeditionAugmentSelection } from "../core/expeditionRewards";
 import type { ExpeditionNodeType } from "../core/expeditionMap";
 import type { SkirmishRelicResult } from "../core/skirmish";
@@ -135,14 +135,25 @@ export class ExpeditionManager {
     this.commit({ ...this.state.expedition, run: next }); return true;
   }
 
-  /** 난전 결과 DTO의 ID 순서를 검증한 뒤 기존 노드 완료 경계로 전달한다. */
+  /**
+   * 난전 결과를 검증한 뒤 전투 후 회복과 노드 완료를 한 저장으로 확정한다.
+   * 승패와 무관하게 유효한 전투 결과에는 회복한다. 따라서 생존자가 남은 실패·보스 시간 종료도
+   * 회복하지만, 전멸은 사망자를 되살리지 않아 실질 회복이 없다.
+   */
   completeBattle(nodeId: string, results: readonly SkirmishRelicResult[]): boolean {
     const run = this.state.expedition.run;
-    if (!run || results.length !== run.relics.length || results.some((result, index) => result.relicId !== run.relics[index].relicId || result.alive !== (result.currentHp > 0))) return false;
-    const node = run.nodes.find(({ id }) => id === nodeId);
+    const node = run?.nodes.find(({ id }) => id === nodeId);
+    const battleTypes: readonly ExpeditionNodeType[] = ["normal", "elite", "horde", "boss"];
+    if (!run || !node || !battleTypes.includes(node.type) || results.length !== run.relics.length
+      || results.some((result, index) => result.relicId !== run.relics[index].relicId
+        || !Number.isFinite(result.currentHp) || result.currentHp < 0 || result.currentHp > 100
+        || result.alive !== (result.currentHp > 0))) return false;
+    const healPercent = expeditionAfterBattleHealPercent(run.selectedAugments);
+    // 결과 순서 검증 뒤 만든 회복 스냅샷을 completeNode가 방문 표식과 같은 commit으로 저장한다.
+    const healed = applyExpeditionAfterBattleHeal(results, healPercent);
     // 점수는 결과 DTO와 서버 생성 맵의 층만으로 계산해 씬이 임의 점수를 주입하지 못하게 한다.
-    const score = node ? node.floor * 1_000 + Math.round(results.reduce((sum, { currentHp }) => sum + currentHp, 0) * 10) : 0;
-    return this.completeNode(nodeId, { relicHp: results.map(({ currentHp }) => currentHp), score });
+    const score = node.floor * 1_000 + Math.round(results.reduce((sum, { currentHp }) => sum + currentHp, 0) * 10);
+    return this.completeNode(nodeId, { relicHp: healed.map(({ currentHp }) => currentHp), score });
   }
 
   /** 보스를 누르는 순간 두 멱등 키를 먼저 저장해 어느 비동기 경계에서 종료돼도 복원한다. */

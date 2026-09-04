@@ -56,7 +56,10 @@ describe("원정 증강 능력치", () => {
   });
 
   it("상태 위력을 기존 출혈 상태 경로의 지속시간에 적용한다", () => {
-    const state = createSkirmish([getRelic("rex")], [getRelic("husk-shell")], { left: 0, right: 600, top: 0, bottom: 1000 }, {}, {}, { augmentEffects: [
+    // 시전자는 **제 출혈이 없는 개체**여야 한다. 렉시아의 기본 공격은 3초짜리 출혈을 함께
+    // 걸고, 그 3초에도 같은 위력이 곱해져(3.75초) 증강의 2.5초를 덮어 버린다 — 그러면 이
+    // 검사가 재는 것이 증강의 지속시간인지 스킬의 지속시간인지 알 수 없다.
+    const state = createSkirmish([getRelic("anky")], [getRelic("husk-shell")], { left: 0, right: 600, top: 0, bottom: 1000 }, {}, {}, { augmentEffects: [
       { kind: "statusPotencyPercent", percent: 25, scope: { kind: "all" } },
       { kind: "bleedOnAttack", strength: "minor", everyNAttacks: 1, reapplication: "refresh", scope: { kind: "all" } },
     ] });

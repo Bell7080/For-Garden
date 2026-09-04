@@ -110,9 +110,11 @@ export function battleHeaderText(input: BattleSceneInputDto, stage: { id: string
 /** 저장 선택을 전투 코어가 소비하는 효과로 바꾸며 비전투 회복 효과는 이 목록에서 제외한다. */
 export function expeditionBattleEffects(selections: readonly ExpeditionAugmentSelection[]): ExpeditionAugmentEffect[] {
   return selections.flatMap(({ augmentId, targetRelicId }) => {
-    const effect = getExpeditionAugment(augmentId)?.effect;
-    if (!effect || effect.kind === "healAfterBattlePercent") return [];
+    const augment = getExpeditionAugment(augmentId);
+    const effect = augment?.effect;
+    if (!augment || !effect || effect.kind === "healAfterBattlePercent") return [];
     const scope = targetRelicId ? { kind: "relic" as const, relicId: targetRelicId } : { kind: "all" as const };
-    return [{ ...effect, scope }];
+    // 수치 효과는 카탈로그 ID로 묶여 가산·상한·최강 단일 정책을 전투 계산까지 보존한다.
+    return [{ ...effect, scope, stacking: augment.stacking, stackKey: `${augment.id}:${targetRelicId ?? "party"}` }];
   });
 }

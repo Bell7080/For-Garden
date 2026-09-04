@@ -41,6 +41,16 @@ export function expeditionAugmentEffectLabel(def: ExpeditionAugmentDef): string 
     const name = def.effect.strength === "standard" ? "출혈" : "작은 출혈";
     return `${def.effect.everyNAttacks}회 공격마다 ${name}\n초당 최대 체력 ${bleed.percentPerSecond}% · ${bleed.seconds}초`;
   }
+  if (def.effect.kind === "triggered") {
+    // 운영 payload의 판별 필드만 읽어 카드 설명을 만들며 실행 함수나 자유 형식 문장을 허용하지 않는다.
+    const payload = def.effect.payload;
+    if (payload.kind === "shield") return `전투 시작 보호막 ${payload.maxHpPercent}%`;
+    if (payload.kind === "ultimateCostReduction") return `첫 궁극기 비용 -${payload.percent}%`;
+    if (payload.kind === "status") return `${def.effect.trigger === "onCritical" ? "치명타 시" : "적중 시"} ${payload.status.kind}`;
+    if (payload.kind === "conditionalBonusDamage") return `${payload.requiresStatus === "curse" ? "저주" : "기절"} 대상 피해 +${payload.percent}%`;
+    if (payload.kind === "lowHpDefense") return `체력 ${payload.belowHpPercent}% 이하\n방어·저항 +${payload.defensePercent}%`;
+    return `처치 시 체력 +${payload.maxHpPercent}%`;
+  }
   // 위 분기가 모든 판별 가능한 효과를 다루며, 이 반환은 향후 데이터 종류 추가 시 안전한 표시다.
   return "효과";
 }

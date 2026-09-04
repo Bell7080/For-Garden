@@ -62,6 +62,48 @@ describe("기여도 프레임 독립성", () => {
   });
 });
 
+describe("원정 증강 전투 훅", () => {
+  /** 개별 훅 테스트가 같은 위치·쿨다운 준비를 공유해 프레임 이동 변수를 제거한다. */
+  function augmented(effect: ExpeditionAugmentEffect, attackerId = "rex") {
+    const state = createSkirmish([getRelic(attackerId)], [getRelic("husk-shell")], ARENA, {}, {}, { augmentEffects: [effect] });
+    const [ally, foe] = state.fighters; ally.x = foe.x = 400; ally.y = foe.y = 900; ally.attackCooldown = 0; foe.attackCooldown = 99;
+    return { state, ally, foe };
+  }
+
+  it("은 전투 시작 보호막 사건을 한 번만 내고 기존 흡수 경로로 소모한다", () => {
+    const effect: ExpeditionAugmentEffect = { kind: "triggered", trigger: "battleStart", payload: { kind: "shield", maxHpPercent: 10 }, limits: { maxTriggers: 1, cooldownSeconds: 0, maxStacks: 1, target: "self" }, scope: { kind: "all" } };
+    const { state, ally, foe } = augmented(effect); const granted = stepSkirmish(state, 0).filter(({ kind }) => kind === "shieldGranted");
+    expect(granted).toHaveLength(1); expect(stepSkirmish(state, 0).some(({ kind }) => kind === "shieldGranted")).toBe(false);
+    foe.def = { ...foe.def, stats: { ...foe.def.stats, atk: 10_000 } }; foe.attackCooldown = 0; ally.attackCooldown = 99;
+    expect(stepSkirmish(state, 1 / 60).some(({ kind }) => kind === "shieldAbsorbed")).toBe(true);
+  });
+
+  it("은 다단 히트도 내부 쿨타임 동안 치명 출혈을 한 번만 발동한다", () => {
+    const effect: ExpeditionAugmentEffect = { kind: "triggered", trigger: "onCritical", payload: { kind: "status", status: { kind: "bleed", seconds: 2, maxHpPercentPerSecond: 1 } }, limits: { maxTriggers: 9, cooldownSeconds: 1, maxStacks: 1, target: "hitTarget" }, scope: { kind: "all" } };
+    const { state, ally } = augmented(effect, "spino");
+    // 스피나 연격을 확정하고 치명타 난수도 확정해 같은 프레임의 두 적중을 만든다.
+    stepSkirmish(state, 1 / 60, () => 0); expect(ally.augmentRuntime["0"].triggers).toBe(1);
+  });
+
+  it("은 기절 payload가 기존 100% 저항 판정과 UI 사건 경로를 우회하지 않는다", () => {
+    const effect: ExpeditionAugmentEffect = { kind: "triggered", trigger: "onBasicHit", payload: { kind: "status", status: { kind: "stun", seconds: 2 } }, limits: { maxTriggers: 1, cooldownSeconds: 0, maxStacks: 1, target: "hitTarget" }, scope: { kind: "all" } };
+    const { state, foe } = augmented(effect); foe.def = { ...foe.def, stunResistancePercent: 100 };
+    const events = stepSkirmish(state, 1 / 60); expect(foe.stunnedFor).toBe(0); expect(events.some(({ kind }) => kind === "status")).toBe(false);
+  });
+
+  it("은 치명타로 대상이 먼저 사망하면 상태 payload를 남기지 않는다", () => {
+    const effect: ExpeditionAugmentEffect = { kind: "triggered", trigger: "onCritical", payload: { kind: "status", status: { kind: "bleed", seconds: 2, maxHpPercentPerSecond: 1 } }, limits: { maxTriggers: 1, cooldownSeconds: 0, maxStacks: 1, target: "hitTarget" }, scope: { kind: "all" } };
+    const { state, foe } = augmented(effect); foe.hp = 1;
+    stepSkirmish(state, 1 / 60, () => 0); expect(foe.hp).toBe(0); expect(foe.bleed).toBeNull();
+  });
+
+  it("은 저주 상태를 공용 슬롯에 재적용해 중첩 상한과 지속시간 갱신을 지킨다", () => {
+    const effect: ExpeditionAugmentEffect = { kind: "triggered", trigger: "onBasicHit", payload: { kind: "status", status: { kind: "curse", seconds: 3, resistancePercent: 5, maxStacks: 2 } }, limits: { maxTriggers: 2, cooldownSeconds: 0, maxStacks: 2, target: "hitTarget" }, scope: { kind: "all" } };
+    const { state, ally, foe } = augmented(effect); stepSkirmish(state, 1 / 60); ally.attackCooldown = 0; stepSkirmish(state, 1 / 60);
+    expect(foe.curse).toMatchObject({ stacks: 2, maxStacks: 2, total: 3 });
+  });
+});
+
 describe("스피나 전투 계약", () => {
   /** 스피나와 대상을 즉시 교전시키고 다른 행동을 멈추는 공용 준비다. */
   function readySpino(enemies = ["husk-shell"]) {

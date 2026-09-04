@@ -1,5 +1,35 @@
-import { getExpeditionAugment } from "../data/expeditionAugments";
+import { getExpeditionAugment, type ExpeditionAugmentStacking } from "../data/expeditionAugments";
 import type { ExpeditionAugmentSelection } from "./expeditionRewards";
+import type { CombatStatusEffect, DamageType } from "./types";
+
+/** 정적 증강 데이터가 선택할 수 있는, 전투 진행기가 판별 가능한 일곱 발동 시점이다. */
+export type ExpeditionAugmentTrigger = "battleStart" | "onBasicHit" | "onUltimate" | "onCritical" | "onKill" | "onLowHp" | "afterBattle";
+
+/** 모든 조건부 효과가 공유하는 폭주 방지 계약이다. 0이나 생략값을 암묵적 무제한으로 해석하지 않는다. */
+export interface ExpeditionAugmentLimits {
+  maxTriggers: number;
+  cooldownSeconds: number;
+  maxStacks: number;
+  target: "self" | "hitTarget" | "allAllies";
+}
+
+/** 콜백 대신 공용 상태 계약 또는 수치만 담는 안전한 payload다. */
+export type ExpeditionTriggeredPayload =
+  | { kind: "shield"; maxHpPercent: number }
+  | { kind: "status"; status: Extract<CombatStatusEffect, { kind: "bleed" | "curse" | "stun" | "stagger" }> }
+  | { kind: "ultimateCostReduction"; percent: number }
+  | { kind: "conditionalBonusDamage"; percent: number; damageType: DamageType; requiresStatus: "curse" | "stun" }
+  | { kind: "lowHpDefense"; belowHpPercent: number; defensePercent: number; resistancePercent: number }
+  | { kind: "heal"; maxHpPercent: number };
+
+/** 런타임 훅은 이 구조만 해석하며 데이터가 임의 함수를 주입할 자리는 없다. */
+export interface ExpeditionTriggeredEffect {
+  kind: "triggered";
+  trigger: ExpeditionAugmentTrigger;
+  payload: ExpeditionTriggeredPayload;
+  limits: ExpeditionAugmentLimits;
+  scope: ExpeditionAugmentScope;
+}
 
 /** 원정 증강이 영향을 주는 아군 범위다. 지정 효과는 저장된 렐릭 ID 하나만 고른다. */
 export type ExpeditionAugmentScope = { kind: "all" } | { kind: "relic"; relicId: string };
@@ -11,9 +41,10 @@ export type ExpeditionAugmentStatKind =
 
 /** 전투 엔진이 해석하는 순수 효과다. 정적 RelicDef가 아니라 매 전투 Fighter만 이 값을 소비한다. */
 export type ExpeditionAugmentEffect =
-  | { kind: ExpeditionAugmentStatKind; percent: number; scope: ExpeditionAugmentScope }
+  | { kind: ExpeditionAugmentStatKind; percent: number; scope: ExpeditionAugmentScope; stacking?: ExpeditionAugmentStacking; stackKey?: string }
   | { kind: "bleedOnAttack"; strength: "standard" | "minor"; everyNAttacks: number; reapplication: "refresh"; scope: ExpeditionAugmentScope }
-  | { kind: "lowHpAttackPowerPercent"; percent: number; belowHpPercent: number; scope: ExpeditionAugmentScope };
+  | { kind: "lowHpAttackPowerPercent"; percent: number; belowHpPercent: number; scope: ExpeditionAugmentScope }
+  | ExpeditionTriggeredEffect;
 
 /** 합산 결과는 배율로 반환해 호출부가 같은 효과를 두 번 적용하지 않게 한다. */
 export type ExpeditionAugmentStatMultipliers = Record<ExpeditionAugmentStatKind, number>;
@@ -32,13 +63,26 @@ export function augmentAppliesTo(effect: ExpeditionAugmentEffect, relicId: strin
   return effect.scope.kind === "all" || effect.scope.relicId === relicId;
 }
 
-/** 능력치별 단순 백분율을 각각 합산하고, 각 능력치에 한 번 곱할 배율로 바꾼다. */
+/** 능력치별 운영 결합 규칙을 적용하고, 각 능력치에 한 번 곱할 배율로 바꾼다. */
 export function expeditionAugmentStatMultipliers(effects: readonly ExpeditionAugmentEffect[], relicId: string): ExpeditionAugmentStatMultipliers {
   const totals = Object.fromEntries(STAT_KINDS.map((kind) => [kind, 0])) as Record<ExpeditionAugmentStatKind, number>;
+  const groups = new Map<string, Extract<ExpeditionAugmentEffect, { kind: ExpeditionAugmentStatKind }>[] >();
   for (const effect of effects) {
-    if (isStatEffect(effect) && augmentAppliesTo(effect, relicId)) {
-      totals[effect.kind] += effect.percent;
-    }
+    if (!isStatEffect(effect) || !augmentAppliesTo(effect, relicId)) continue;
+    // 수동 전투 설정은 예전처럼 각 행을 가산하고, 카탈로그 효과만 ID별 운영 규칙으로 묶는다.
+    const key = effect.stackKey ?? `${effect.kind}:unkeyed:${groups.size}`;
+    groups.set(key, [...(groups.get(key) ?? []), effect]);
+  }
+  for (const effectsInGroup of groups.values()) {
+    const [first] = effectsInGroup;
+    const values = effectsInGroup.map(({ percent }) => percent);
+    const stacking = first.stacking ?? { mode: "additive" as const };
+    const combined = stacking.mode === "strongest"
+      ? Math.max(...values)
+      : stacking.mode === "additiveCapped"
+        ? Math.min(stacking.capPercent, values.reduce((sum, value) => sum + value, 0))
+        : values.reduce((sum, value) => sum + value, 0);
+    totals[first.kind] += combined;
   }
   return Object.fromEntries(STAT_KINDS.map((kind) => [kind, 1 + totals[kind] / 100])) as ExpeditionAugmentStatMultipliers;
 }

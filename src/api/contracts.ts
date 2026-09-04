@@ -28,7 +28,13 @@ export interface ExchangeInteractionOfferRequest { offerId: string; quantity: nu
 export interface ExchangeInteractionOfferResponse { offerId: string; quantity: number; consumed: { itemId: string; amount: number }; granted: InteractionExchangeOfferDto["grants"]; remaining: number; items: InventoryItemDto[]; wallet: Wallet; }
 /** 클라이언트는 선택만 보내고 종료 시각·보상은 보낼 수 없다. */
 export interface StartInteractionDispatchRequest { cityId: string; party: string[]; }
-export interface InteractionDispatchResponse { dispatch: InteractionDispatchSnapshot | null; serverTime: string; }
+/**
+ * 지금 나가 있는 파견 **전부**를 싣는다.
+ *
+ * 한 장만 오가던 계약이라 도시가 늘어도 한 곳밖에 못 보냈다. 후반으로 갈수록 여러 곳에 함께
+ * 보내 두고 하루 뒤에 걷는 것이 이 콘텐츠의 모양이므로, 응답도 목록이다.
+ */
+export interface InteractionDispatchResponse { dispatches: InteractionDispatchSnapshot[]; serverTime: string; }
 /** 수령 재전송을 한 지급으로 묶는 멱등 요청이다. */
 export interface ClaimInteractionDispatchRequest { dispatchId: string; requestId: string; }
 export interface ClaimInteractionDispatchResponse extends InteractionDispatchResponse { granted: { currency: keyof Wallet; amount: number }; alreadyClaimed: boolean; wallet: Wallet; }

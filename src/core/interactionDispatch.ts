@@ -23,7 +23,7 @@ export function interactionSpeedMultiplier(city: InteractionCity, members: reado
 }
 
 /** 소수점 밀리초를 없애 서버·클라이언트 표시가 같은 종료 경계를 사용하게 한다. */
-export function interactionDurationMs(city: InteractionCity, members: readonly InteractionMemberTraits[]): number { return Math.ceil(city.baseDurationHours * 3_600_000 / interactionSpeedMultiplier(city, members)); }
+export function interactionDurationMs(city: InteractionCity, members: readonly InteractionMemberTraits[]): number { return Math.ceil(city.durationMinutes * 60_000 / interactionSpeedMultiplier(city, members)); }
 
 /** 보상 태그는 이름 조건문 없이 편성 특성 집합과 만나면 항목 가중치를 25% 올린다. */
 export function interactionRewardWeights(entries: readonly InteractionRewardEntry[], members: readonly InteractionMemberTraits[]): number[] {

@@ -86,6 +86,9 @@ function normalizeExpeditionRun(value: unknown, ownedIds: readonly string[]): Ex
 }
 
 /** 저장/로드/마이그레이션을 독점해 씬과 localStorage의 의존을 끊는다. */
+/** 동시에 나가 있을 수 있는 교류 파견의 상한. 도시 수가 늘어도 저장이 무한히 자라지 않게 한다. */
+const INTERACTION_SLOT_LIMIT = 32;
+
 export class SaveManager {
   constructor(private readonly storage: StorageLike | undefined = globalThis.localStorage) {}
 
@@ -290,8 +293,10 @@ export class SaveManager {
     const stageIds = new Set(STAGES.map(({ id }) => id));
     const fail = (message: string): never => { throw new SaveDataError(message); };
     const excavation = data.idleExcavation;
+    // **여러 도시에 함께 나갈 수 있다.** 예전에는 한 장으로 못 박혀 있어 두 번째 파견이 저장에서
+    // 막혔다. 배열 계약은 그대로 두고 상한과 중복만 본다 — 옛 저장(한 장)은 그대로 통과한다.
     const interaction = data.interaction;
-    if (!interaction || !Array.isArray(interaction.slots) || interaction.slots.length !== 1 || !Array.isArray(interaction.claimedRequestIds) || interaction.claimedRequestIds.some(id => typeof id !== "string") || interaction.slots.some(slot => slot !== null && (typeof slot.dispatchId !== "string" || typeof slot.cityId !== "string" || !Array.isArray(slot.party) || slot.party.length < 1 || slot.party.length > 3 || new Set(slot.party).size !== slot.party.length || slot.party.some(id => !data.ownedRelicIds.includes(id)) || !Number.isFinite(Date.parse(slot.startedAt)) || !Number.isFinite(Date.parse(slot.completesAt)) || Date.parse(slot.completesAt) <= Date.parse(slot.startedAt) || typeof slot.claimed !== "boolean"))) fail("교류 진행이 올바르지 않습니다.");
+    if (!interaction || !Array.isArray(interaction.slots) || interaction.slots.length > INTERACTION_SLOT_LIMIT || new Set(interaction.slots.filter((slot): slot is NonNullable<typeof slot> => slot !== null).map(slot => slot.dispatchId)).size !== interaction.slots.filter(slot => slot !== null).length || !Array.isArray(interaction.claimedRequestIds) || interaction.claimedRequestIds.some(id => typeof id !== "string") || interaction.slots.some(slot => slot !== null && (typeof slot.dispatchId !== "string" || typeof slot.cityId !== "string" || !Array.isArray(slot.party) || slot.party.length < 1 || slot.party.length > 3 || new Set(slot.party).size !== slot.party.length || slot.party.some(id => !data.ownedRelicIds.includes(id)) || !Number.isFinite(Date.parse(slot.startedAt)) || !Number.isFinite(Date.parse(slot.completesAt)) || Date.parse(slot.completesAt) <= Date.parse(slot.startedAt) || typeof slot.claimed !== "boolean"))) fail("교류 진행이 올바르지 않습니다.");
     // 레벨 구간 경험치는 음수가 될 수 없고 다음 요구량 미만이어야 레벨업 미반영 상태를 차단한다.
     if (typeof data.staminaUpdatedAt !== "string" || (data.staminaUpdatedAt !== "" && !Number.isFinite(Date.parse(data.staminaUpdatedAt)))) fail("스테미나 정산 시각이 올바르지 않습니다.");
     if (!data.playerResearch || !Number.isInteger(data.playerResearch.level) || data.playerResearch.level < 1 || !Number.isInteger(data.playerResearch.experience) || data.playerResearch.experience < 0 || !Number.isInteger(data.playerResearch.experienceToNext) || data.playerResearch.experienceToNext <= 0 || data.playerResearch.experience >= data.playerResearch.experienceToNext) fail("플레이어 연구 진행이 올바르지 않습니다.");

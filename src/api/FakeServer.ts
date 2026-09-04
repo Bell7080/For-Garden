@@ -64,6 +64,8 @@ export interface FakeServerOptions {
 export class FakeServer implements GameApi {
   /** 완료 수령 requestId의 최초 응답을 보존해 네트워크 재시도와 연타를 같은 영수증으로 묶는다. */
   private readonly interactionClaimResults = new Map<string, ClaimInteractionDispatchResponse>();
+  /** 같은 밀리초에 출발한 파견끼리도 id가 갈리게 하는 증가 번호다. */
+  private interactionSequence = 0;
   /** 실제 서버의 고유 requestId 영수증과 기간별 사용량 테이블을 흉내 낸다. */
   private readonly interactionExchangeResults = new Map<string, ExchangeInteractionOfferResponse>();
   private readonly interactionExchangeCounts = new Map<string, number>();
@@ -166,29 +168,44 @@ export class FakeServer implements GameApi {
   /** 표시와 실행이 같은 제한 키·보유량·도시 판정을 공유한다. */
   private interactionExchangeDto(offer: InteractionExchangeOffer, now: Date): import("./contracts").InteractionExchangeOfferDto { const definition = findItem(offer.cost.itemId)!; const owned = this.state.itemInventory.find(({ itemId }) => itemId === offer.cost.itemId)?.quantity ?? 0; const used = this.interactionExchangeCounts.get(`${offer.id}:${this.interactionExchangePeriodKey(offer, now)}`) ?? 0; const city = findInteractionCity(offer.requiredCityId)!; return { id: offer.id, name: offer.name, requiredCityId: offer.requiredCityId, cost: { itemId: offer.cost.itemId, itemName: definition.name, amount: offer.cost.amount, owned }, grants: offer.grants.map((grant) => ({ ...grant })), remaining: Math.max(0, offer.exchangeLimit - used), exchangeLimit: offer.exchangeLimit, unlocked: isInteractionCityUnlocked(city, this.state.playerResearch.level) }; }
 
-  async getInteractionDispatch(): Promise<InteractionDispatchResponse> { await this.delay(); return { dispatch: structuredClone(this.state.interaction.slots[0]), serverTime: this.now().toISOString() }; }
+  async getInteractionDispatch(): Promise<InteractionDispatchResponse> { await this.delay(); return this.interactionDispatchResponse(); }
+
+  /** 세션의 슬롯 배열에서 살아 있는 파견만 추려 같은 모양으로 돌려준다. */
+  private interactionDispatchResponse(): InteractionDispatchResponse {
+    return { dispatches: this.state.interaction.slots.filter((slot): slot is NonNullable<typeof slot> => slot !== null).map((slot) => structuredClone(slot)), serverTime: this.now().toISOString() };
+  }
 
   /** 출발 순간 서버가 편성·seed·결과와 절대 종료 시각을 함께 확정한다. */
   async startInteractionDispatch(request: StartInteractionDispatchRequest): Promise<InteractionDispatchResponse> {
     await this.delay(); const city = findInteractionCity(request.cityId);
     if (!city || !isInteractionCityUnlocked(city, this.state.playerResearch.level)) throw new GameApiError("INVALID_STATE", "개방되지 않은 교류 도시입니다.");
-    if (this.state.interaction.slots[0] && !this.state.interaction.slots[0].claimed) throw new GameApiError("INVALID_STATE", "사용 가능한 교류 슬롯이 없습니다.");
+    // 도시마다 한 팀씩 나간다. 같은 도시에 두 팀을 겹쳐 보내면 어느 쪽 보상인지 화면이 말할 수 없다.
+    if (this.state.interaction.slots.some((slot) => slot && slot.cityId === city.id && !slot.claimed)) throw new GameApiError("INVALID_STATE", "이미 이 도시에 파견 중입니다.");
+    // 나가 있는 팀은 다른 도시에도 함께 나갈 수 없다.
+    const away = new Set(this.state.interaction.slots.flatMap((slot) => slot && !slot.claimed ? slot.party : []));
+    if (request.party.some((id) => away.has(id))) throw new GameApiError("INVALID_STATE", "이미 파견 중인 렐릭입니다.");
     const error = validateInteractionFormation(request.party, this.state.owned); if (error) throw new GameApiError("INVALID_STATE", `교류 편성이 올바르지 않습니다: ${error}`);
     const now = this.now(); const traits = this.interactionTraits(request.party); const weights = interactionRewardWeights(city.rewards, traits); const roll = this.random() * weights.reduce((a, b) => a + b, 0);
     let cursor = 0; const rewardIndex = Math.max(0, weights.findIndex(weight => (cursor += weight) > roll)); const reward = city.rewards[rewardIndex];
-    const sequence = `${now.getTime()}-${Math.floor(this.random() * 1e9)}`;
+    // **같은 시각에 두 곳으로 나가도 id가 겹치지 않아야 한다.** 시각과 난수만으로 만들면 시계가
+    // 멈춘 테스트나 같은 밀리초의 연속 출발에서 같은 id가 나오고, 그러면 수령이 엉뚱한 파견을
+    // 집는다. 계정 안에서 증가하는 번호를 함께 넣는다.
+    const sequence = `${now.getTime()}-${Math.floor(this.random() * 1e9)}-${(this.interactionSequence += 1)}`;
     const dispatch = { dispatchId: `interaction-${sequence}`, cityId: city.id, startedAt: now.toISOString(), completesAt: new Date(now.getTime() + interactionDurationMs(city, traits)).toISOString(), party: [...request.party], rewardSeed: sequence, reward: { currency: reward.currency, amount: reward.amount }, claimed: false };
-    this.state.interaction.slots[0] = dispatch; saveManager.save(this.state); return { dispatch: structuredClone(dispatch), serverTime: now.toISOString() };
+    // 수령이 끝난 자리를 먼저 재사용하고, 없으면 새 자리를 잇는다.
+    const free = this.state.interaction.slots.findIndex((slot) => slot === null || slot.claimed);
+    if (free >= 0) this.state.interaction.slots[free] = dispatch; else this.state.interaction.slots.push(dispatch);
+    saveManager.save(this.state); return this.interactionDispatchResponse();
   }
 
   /** 완료·ID를 다시 검사하고 지급/claimed/멱등 기록을 한 저장 처리로 확정한다. */
   async claimInteractionDispatch(request: ClaimInteractionDispatchRequest): Promise<ClaimInteractionDispatchResponse> {
     await this.delay(); const cached = this.interactionClaimResults.get(request.requestId); if (cached) return structuredClone(cached);
     if (!request.requestId) throw new GameApiError("INVALID_STATE", "교류 수령 요청 ID가 필요합니다.");
-    const dispatch = this.state.interaction.slots[0]; const now = this.now();
+    const now = this.now(); const dispatch = this.state.interaction.slots.find((slot) => slot?.dispatchId === request.dispatchId) ?? null;
     if (!dispatch || dispatch.dispatchId !== request.dispatchId || !isInteractionDispatchComplete(dispatch.completesAt, now.getTime())) throw new GameApiError("INVALID_STATE", "완료된 교류 파견이 아닙니다.");
     const alreadyClaimed = dispatch.claimed; if (!alreadyClaimed) { this.state.wallet[dispatch.reward.currency] += dispatch.reward.amount; dispatch.claimed = true; this.state.interaction.claimedRequestIds.push(request.requestId); }
-    const response = { dispatch: structuredClone(dispatch), serverTime: now.toISOString(), granted: alreadyClaimed ? { ...dispatch.reward, amount: 0 } : { ...dispatch.reward }, alreadyClaimed, wallet: { ...this.state.wallet } };
+    const response = { ...this.interactionDispatchResponse(), serverTime: now.toISOString(), granted: alreadyClaimed ? { ...dispatch.reward, amount: 0 } : { ...dispatch.reward }, alreadyClaimed, wallet: { ...this.state.wallet } };
     this.interactionClaimResults.set(request.requestId, structuredClone(response)); saveManager.save(this.state); return response;
   }
 

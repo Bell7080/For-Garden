@@ -22,7 +22,13 @@ export class InteractionManager {
   async exchangeOffers(): Promise<InteractionExchangeListResponse> { return this.api.getInteractionExchangeOffers(); }
   /** 한 영수증의 아이템·지갑을 함께 반영하고 같은 tick에 두 갱신 이벤트를 발행한다. */
   async exchange(offerId: string, quantity: number, requestId: string): Promise<ExchangeInteractionOfferResponse> { const response = await this.api.exchangeInteractionOffer({ offerId, quantity, requestId }); this.state.wallet = { ...response.wallet }; this.state.itemInventory = response.items.filter(({ category }) => category === "consumable" || category === "material").map(({ definitionId, quantity: amount }) => ({ itemId: definitionId, quantity: amount })); this.saves.save(this.state); managerEvents.publish("wallet", { wallet: this.state.wallet }); managerEvents.publishInventory(); return response; }
-  private apply<T extends InteractionDispatchResponse>(response: T): T { assertDispatch(response.dispatch); if (!Number.isFinite(Date.parse(response.serverTime))) throw new Error("교류 서버 시각이 올바르지 않습니다."); this.state.interaction.slots[0] = response.dispatch ? structuredClone(response.dispatch) : null; this.saves.save(this.state); return response; }
+  /** 서버가 보낸 목록을 통째로 세션 슬롯으로 삼는다 — 씬은 어느 도시가 나가 있는지만 읽는다. */
+  private apply<T extends InteractionDispatchResponse>(response: T): T {
+    for (const dispatch of response.dispatches) assertDispatch(dispatch);
+    if (!Number.isFinite(Date.parse(response.serverTime))) throw new Error("교류 서버 시각이 올바르지 않습니다.");
+    this.state.interaction.slots = response.dispatches.map((dispatch) => structuredClone(dispatch));
+    this.saves.save(this.state); return response;
+  }
 }
 
 export const interactionManager = new InteractionManager();

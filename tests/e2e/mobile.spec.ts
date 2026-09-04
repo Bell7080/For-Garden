@@ -304,11 +304,15 @@ test("방치 발굴 편집은 슬롯 이동·중복 방지·빈 편성 취소를
   // 같은 카드를 다시 누르면 2번으로 이동한다. 복제 대신 원래 칸이 비고 선택은 3번으로 이어진다.
   await tapGame(page, BASE_WIDTH / 2 - 250, BASE_HEIGHT / 2 + 115);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationSelectedSlot)).toBe(2);
-  // 카드가 든 2번 칸을 다시 고른 뒤 같은 카드를 누르면 빈 슬롯 허용 정책에 따라 해제된다.
+  // **편집 중 해제는 칸이 맡는다** — 카드가 든 칸을 누르면 그 자리가 비고 그 칸이 골라진다.
+  // 칸을 고르는 것과 카드를 누르는 것은 서로 다른 조작이라 사이를 확인해야, 빗나갔을 때 어느
+  // 쪽인지 실패가 말해 준다. 칸 탭은 비우고 고르는 일이라 다시 눌러도 결과가 같으므로, 직전
+  // 그리드 손짓의 스크롤 판정이 남아 삼켜지면 한 번 더 누른다.
   const secondSlot = (await page.evaluate(() => window.__PF_DEBUG?.idleExcavationSlots?.[1]))!;
-  await tapGame(page, secondSlot.x, secondSlot.y);
+  await tapUntil(page, secondSlot.x, secondSlot.y, async () => (await page.evaluate(() => window.__PF_DEBUG?.idleExcavationSelectedSlot)) === 1);
+  // 비워진 그 칸에 같은 카드를 다시 놓으면 선택은 다음 빈 칸으로 이어진다.
   await tapGame(page, BASE_WIDTH / 2 - 250, BASE_HEIGHT / 2 + 115);
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationSelectedSlot)).toBe(1);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationSelectedSlot)).toBe(2);
   await captureGame(page, `test-results/${test.info().project.name}-idle-excavation-editor.png`);
   const cancel = await excavationControl(page, "cancelEdit");
   await tapGame(page, cancel.x, cancel.y);

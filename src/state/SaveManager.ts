@@ -14,6 +14,7 @@ import { EXPEDITION_AUGMENT_IDS, EXPEDITION_REWARD_IDS } from "../data/expeditio
 import { validateExpeditionMap } from "../core/expeditionMap";
 import type { ExpeditionRunState } from "./session";
 import { staminaMaxForResearchLevel } from "../core/stamina";
+import { INTERACTION_JOURNALS } from "../data/interactionJournals";
 
 /** v12에서만 존재했던 정적 젬을 저장 마이그레이션용 인스턴스로 재현하는 폐쇄된 표다. */
 const LEGACY_V12_RUNES: Readonly<Record<string, RuneInstance>> = {
@@ -31,7 +32,7 @@ function migrateV12Rune(definitionId: string): RuneInstance {
 
 /** 키는 계정 연동 저장소와 충돌하지 않도록 로컬 프로토타입임을 명시한다. */
 export const SAVE_STORAGE_KEY = "eternal-city.local-save";
-export const CURRENT_SAVE_VERSION = 30;
+export const CURRENT_SAVE_VERSION = 31;
 
 type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
@@ -110,6 +111,9 @@ export class SaveManager {
   /** 상태 확정 경계에서 Set을 배열로 바꾸고 한 번에 교체 저장한다. */
   save(state: Session): void {
     const data: SaveData = {
+      // 런타임 Set은 이 저장 경계에서만 JSON 배열로 바꾼다.
+      discoveredInteractionJournalIds: [...state.discoveredInteractionJournalIds],
+      readInteractionJournalIds: [...state.readInteractionJournalIds],
       // 교류의 서버 확정 시각·편성·결과를 참조 공유 없이 한 번에 보존한다.
       interaction: structuredClone(state.interaction),
       // 표시명은 저장하지 않고 manager가 소유하는 안정적인 ID 목록만 복사한다.
@@ -158,6 +162,9 @@ export class SaveManager {
   migrate(input: unknown): SaveData {
     if (!input || typeof input !== "object") throw new SaveDataError("저장 데이터가 객체가 아닙니다.");
     const legacy = input as Record<string, unknown>;
+    // v31 이전 저장은 일지 시스템이 없었으므로 발견/읽음 모두 빈 배열로 이관한다.
+    const discoveredInteractionJournalIds = Array.isArray(legacy.discoveredInteractionJournalIds) ? legacy.discoveredInteractionJournalIds : [];
+    const readInteractionJournalIds = Array.isArray(legacy.readInteractionJournalIds) ? legacy.readInteractionJournalIds : [];
     // 수식어 도입 전 저장은 미획득으로 시작하며 표시 문자열을 ID로 추측하지 않는다.
     const earnedProfileModifierIds = Array.isArray(legacy.earnedProfileModifierIds) ? legacy.earnedProfileModifierIds : [];
     const equippedProfileModifierIds = Array.isArray(legacy.equippedProfileModifierIds) ? legacy.equippedProfileModifierIds : [];
@@ -280,10 +287,10 @@ export class SaveManager {
     // v20 이전에는 중첩 가방이 없었다. 지갑과 룬은 기존 단일 기준에 남겨 빈 스택만 보충한다.
     const itemInventory = Array.isArray(legacy.itemInventory) ? legacy.itemInventory : [];
     const { ownedHeartGemIds: _oldOwned, runeSlotsByRelicId: _oldSlots, ...current } = legacy;
-    if (legacy.saveVersion === undefined) return { ...current, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, idleExcavation, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition } as unknown as SaveData;
-    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, CURRENT_SAVE_VERSION];
+    if (legacy.saveVersion === undefined) return { ...current, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, idleExcavation, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition } as unknown as SaveData;
+    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, CURRENT_SAVE_VERSION];
     if (!supported.includes(legacy.saveVersion as number)) throw new SaveDataError(`지원하지 않는 저장 버전입니다: ${String(legacy.saveVersion)}`);
-    return { ...current, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, idleExcavation, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition } as unknown as SaveData;
+    return { ...current, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, idleExcavation, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition } as unknown as SaveData;
   }
 
   /** 콘텐츠 ID와 교차 필드 불변식까지 검사해 부분 손상을 조용히 전파하지 않는다. */
@@ -291,11 +298,14 @@ export class SaveManager {
     const relicIds = new Set(PLAYABLE_RELICS.map(({ id }) => id));
     const modifierIds = new Set(PROFILE_MODIFIERS.map(({ id }) => id));
     const stageIds = new Set(STAGES.map(({ id }) => id));
+    const journalIds = new Set(INTERACTION_JOURNALS.map(({ id }) => id));
     const fail = (message: string): never => { throw new SaveDataError(message); };
     const excavation = data.idleExcavation;
     // **여러 도시에 함께 나갈 수 있다.** 예전에는 한 장으로 못 박혀 있어 두 번째 파견이 저장에서
     // 막혔다. 배열 계약은 그대로 두고 상한과 중복만 본다 — 옛 저장(한 장)은 그대로 통과한다.
     const interaction = data.interaction;
+    // 읽음은 발견의 부분집합이고 두 배열 모두 알려진 고유 ID만 가져야 한다.
+    if (!Array.isArray(data.discoveredInteractionJournalIds) || !Array.isArray(data.readInteractionJournalIds) || data.discoveredInteractionJournalIds.some((id) => !journalIds.has(id)) || data.readInteractionJournalIds.some((id) => !data.discoveredInteractionJournalIds.includes(id)) || new Set(data.discoveredInteractionJournalIds).size !== data.discoveredInteractionJournalIds.length || new Set(data.readInteractionJournalIds).size !== data.readInteractionJournalIds.length) fail("교류 일지 진행이 올바르지 않습니다.");
     if (!interaction || !Array.isArray(interaction.slots) || interaction.slots.length > INTERACTION_SLOT_LIMIT || new Set(interaction.slots.filter((slot): slot is NonNullable<typeof slot> => slot !== null).map(slot => slot.dispatchId)).size !== interaction.slots.filter(slot => slot !== null).length || !Array.isArray(interaction.claimedRequestIds) || interaction.claimedRequestIds.some(id => typeof id !== "string") || interaction.slots.some(slot => slot !== null && (typeof slot.dispatchId !== "string" || typeof slot.cityId !== "string" || !Array.isArray(slot.party) || slot.party.length < 1 || slot.party.length > 3 || new Set(slot.party).size !== slot.party.length || slot.party.some(id => !data.ownedRelicIds.includes(id)) || !Number.isFinite(Date.parse(slot.startedAt)) || !Number.isFinite(Date.parse(slot.completesAt)) || Date.parse(slot.completesAt) <= Date.parse(slot.startedAt) || typeof slot.claimed !== "boolean"))) fail("교류 진행이 올바르지 않습니다.");
     // 레벨 구간 경험치는 음수가 될 수 없고 다음 요구량 미만이어야 레벨업 미반영 상태를 차단한다.
     if (typeof data.staminaUpdatedAt !== "string" || (data.staminaUpdatedAt !== "" && !Number.isFinite(Date.parse(data.staminaUpdatedAt)))) fail("스테미나 정산 시각이 올바르지 않습니다.");
@@ -347,6 +357,9 @@ export class SaveManager {
 
   private toSession(data: SaveData): Session {
     return {
+      // 저장 배열은 런타임에서 manager 전용 Set으로 되돌린다.
+      discoveredInteractionJournalIds: new Set(data.discoveredInteractionJournalIds),
+      readInteractionJournalIds: new Set(data.readInteractionJournalIds),
       // 수식어 ID 배열도 독립 복사해 manager 외부 참조 변경을 막는다.
       interaction: structuredClone(data.interaction),
       earnedProfileModifierIds: [...data.earnedProfileModifierIds],

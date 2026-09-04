@@ -36,11 +36,12 @@ export class InteractionCityPopup {
   private pickingSlot: number | null = null;
   private busy = false;
   private onChanged?: () => void;
+  private onOpenJournal?: (cityId: string) => void;
 
   constructor(private readonly scene: Phaser.Scene, private readonly popups: PopupLayer, private readonly manager: InteractionManager) {}
 
-  open(view: InteractionLayerView, onChanged?: () => void): void {
-    this.view = view; this.onChanged = onChanged;
+  open(view: InteractionLayerView, hooks: { onChanged?: () => void; onOpenJournal?: (cityId: string) => void } = {}): void {
+    this.view = view; this.onChanged = hooks.onChanged; this.onOpenJournal = hooks.onOpenJournal;
     this.party = [null, null, null];
     this.pickingSlot = null;
     this.busy = false;
@@ -58,6 +59,11 @@ export class InteractionCityPopup {
       if (view.state === "away") this.buildAway(body, view);
       else if (view.state === "done") this.buildDone(body, view);
       else this.buildDispatch(body, view);
+      // 일지는 그 도시에서만 쌓이므로 도시 쪽지가 유일한 진입점이다.
+      if (this.onOpenJournal) body.add(new Button(this.scene, PANEL.width / 2 - 130, -PANEL.height / 2 + 96, {
+        width: 200, height: 62, fontSize: 22, label: "도시 일지", accentColor: 0x55b9e8,
+        onClick: () => this.onOpenJournal?.(view.city.id),
+      }));
       if (this.pickingSlot !== null) this.buildRoster(body);
     });
   }

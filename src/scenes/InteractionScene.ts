@@ -14,6 +14,7 @@ import { setDebugScene } from "../debug";
 import { PopupLayer } from "../ui/PopupLayer";
 import { InteractionExchangePopup } from "../ui/InteractionExchangePopup";
 import { InteractionCityPopup } from "../ui/InteractionCityPopup";
+import { InteractionJournalPopup } from "../ui/InteractionJournalPopup";
 import { INTERACTION_LAYER, interactionLayersHeight, interactionLayerSpot } from "../ui/interactionLayerLayout";
 import { interactionLayerViews, interactionRemainingLabel, type InteractionLayerView } from "../ui/interactionLayerModel";
 
@@ -34,6 +35,8 @@ export class InteractionScene extends Phaser.Scene {
   private scrollY = 0;
   private minScroll = 0;
   private cityPopup?: InteractionCityPopup;
+  /** 도시 일지는 쪽지에서 열리지만 대사 분기는 씬 위에 서므로 씬이 소유한다. */
+  private journalPopup?: InteractionJournalPopup;
 
   constructor() { super("interaction"); }
 
@@ -178,6 +181,10 @@ export class InteractionScene extends Phaser.Scene {
   /** 층을 누르면 그 도시의 쪽지가 열린다. 완료한 층은 바로 보상으로 이어진다. */
   private openCity(view: InteractionLayerView): void {
     this.cityPopup ??= new InteractionCityPopup(this, this.popups, interactionManager);
-    this.cityPopup.open(view, () => { void interactionManager.refresh().then((response) => { this.serverNow = Date.parse(response.serverTime); this.drawLayers(); }); });
+    this.journalPopup ??= new InteractionJournalPopup(this, this.popups, interactionManager);
+    this.cityPopup.open(view, {
+      onChanged: () => { void interactionManager.refresh().then((response) => { this.serverNow = Date.parse(response.serverTime); this.drawLayers(); }); },
+      onOpenJournal: (cityId) => this.journalPopup!.open(cityId),
+    });
   }
 }

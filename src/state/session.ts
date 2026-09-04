@@ -48,6 +48,9 @@ export function createInitialPlayerResearchProgress(): PlayerResearchProgress {
 }
 
 export interface Session {
+  /** 발견/읽음은 manager만 변경하는 Set이며 SaveManager가 JSON 안전 배열로 변환한다. */
+  discoveredInteractionJournalIds: Set<string>;
+  readInteractionJournalIds: Set<string>;
   /** 교류 서버 응답을 그대로 복원하는 JSON 안전 슬롯이며 씬은 InteractionManager만 사용한다. */
   interaction: InteractionProgress;
   /** 획득/장착은 표시명이 아닌 안정적인 수식어 ID만 저장하며 manager만 변경한다. */
@@ -178,6 +181,9 @@ export interface ObservationRecord {
  * 계정 연동 시에도 이 형태를 업로드 모델로 오해하지 않고 SaveManager 경계에서만 사용한다.
  */
 export interface SaveData {
+  /** 일지 ID Set의 JSON 안전 표현이다. 읽음 목록은 반드시 발견 목록의 부분집합이어야 한다. */
+  discoveredInteractionJournalIds: string[];
+  readInteractionJournalIds: string[];
   /** 구버전은 빈 슬롯으로 이관되는 교류 진행 스냅샷이다. */
   interaction: InteractionProgress;
   /** 문구 변경과 저장 호환성을 분리하는 수식어 ID 전용 저장 필드다. */
@@ -244,6 +250,8 @@ export function createDefaultSession(): Session {
   // 순수 설정 팩토리는 지연 require 대신 정적 import로 의존 방향을 core→state 타입에만 제한한다.
   const settings = createDefaultSettings();
   return {
+    discoveredInteractionJournalIds: new Set<string>(),
+    readInteractionJournalIds: new Set<string>(),
     interaction: createEmptyInteractionProgress(),
     // 신규 계정은 보상 수령을 통해서만 수식어를 획득한다.
     earnedProfileModifierIds: [],

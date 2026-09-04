@@ -19,6 +19,9 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [["html", { outputFolder: "playwright-report", open: "never" }]] : "list",
   use: {
+    // 컨테이너·CI처럼 브라우저가 이미 깔린 환경은 그 실행 파일을 그대로 쓴다. 없으면 예전처럼
+    // Playwright가 제 캐시에서 찾는다 — 개발자 기계의 동작은 바뀌지 않는다.
+    ...(process.env.PW_CHROMIUM_PATH ? { launchOptions: { executablePath: process.env.PW_CHROMIUM_PATH } } : {}),
     baseURL: "http://localhost:4173",
     screenshot: "only-on-failure",
     trace: "retain-on-failure",

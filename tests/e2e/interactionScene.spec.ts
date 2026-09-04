@@ -8,10 +8,8 @@ const CENTER = { x: 540, y: 960 };
 /** 첫 층(중앙 정원구 교류부)의 한가운데. 자리는 화면이 소유한 배치표에서 읽는다. */
 const FIRST_LAYER = interactionLayerSpot(0);
 /** 쪽지 안의 자리들은 팝업 중심 기준이라 화면 좌표로 옮겨 쓴다. */
-const SLOT_ONE = { x: CENTER.x - 256, y: CENTER.y + 300 };
-const FIRST_CARD = { x: CENTER.x - 332, y: CENTER.y + 266 };
-const CLOSE_GRID = { x: 880, y: CENTER.y + 86 };
-const PRIMARY = { x: CENTER.x, y: CENTER.y + 520 };
+const AUTO_ASSIGN = { x: CENTER.x + 290, y: CENTER.y + 105 };
+const PRIMARY = { x: CENTER.x, y: CENTER.y + 560 };
 
 /** 로비부터 교류 층·파견·재접속 복원·완료 수령까지 실제 사용자 경로로 검증한다. */
 test("층을 눌러 파견을 보내고 재접속 뒤 완료 보상까지 받는다", async ({ page }) => {
@@ -20,11 +18,10 @@ test("층을 눌러 파견을 보내고 재접속 뒤 완료 보상까지 받는
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   await tapUntil(page, 250, 1340, async () => (await page.evaluate(() => window.__PF_DEBUG?.scene)) === "interaction");
 
-  // 층 → 도시 쪽지 → 1번 자리 → 파견대 그리드 → 카드 순으로 실제 손이 가는 길을 따른다.
+  // 층 → 도시 쪽지 → 자동 배치 → 파견 순으로 실제 손이 가는 길을 따른다. 세 칸과 목록이 한
+  // 화면에 함께 서므로 그리드를 열고 닫는 걸음이 없다.
   await tapUntil(page, FIRST_LAYER.x, FIRST_LAYER.y, async () => ((await page.evaluate(() => window.__PF_DEBUG?.popupTitles)) ?? []).some((title) => title.includes("교류부")));
-  await tap(page, SLOT_ONE.x, SLOT_ONE.y);
-  await tap(page, FIRST_CARD.x, FIRST_CARD.y);
-  await tap(page, CLOSE_GRID.x, CLOSE_GRID.y);
+  await tap(page, AUTO_ASSIGN.x, AUTO_ASSIGN.y);
   await tap(page, PRIMARY.x, PRIMARY.y);
   await expect
     .poll(() => page.evaluate((key) => JSON.parse(localStorage.getItem(key) ?? "{}").interaction?.slots?.filter(Boolean).length ?? 0, SAVE_STORAGE_KEY))

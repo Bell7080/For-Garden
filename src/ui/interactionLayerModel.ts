@@ -71,3 +71,18 @@ export function interactionRemainingLabel(remainingMs: number): string {
   const restMinutes = minutes % 60;
   return restMinutes === 0 ? `${hours}시간` : `${hours}시간 ${restMinutes}분`;
 }
+
+/**
+ * 자동 배치 — **지금 보낼 수 있는 렐릭 중 가장 센 순서**.
+ *
+ * 교류에는 발굴의 생산 특화 같은 개체별 기준이 없다. 그래서 "무엇을 많이 캘까"가 아니라
+ * "누가 갈 수 있나"만 남고, 그중에서는 전투력이 유일하게 비교 가능한 값이다. 동률은 ID 순으로
+ * 끊어 같은 편성이 늘 같은 결과를 낸다 — 누를 때마다 순서가 바뀌면 자동이 아니라 난수다.
+ */
+export function autoAssignInteractionParty(
+  candidates: readonly { id: string; power: number }[],
+  size: number,
+): (string | null)[] {
+  const sorted = [...candidates].sort((a, b) => b.power - a.power || a.id.localeCompare(b.id));
+  return Array.from({ length: size }, (_, index) => sorted[index]?.id ?? null);
+}

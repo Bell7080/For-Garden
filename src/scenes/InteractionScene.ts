@@ -7,7 +7,7 @@ import type { InteractionDispatchSnapshot } from "../state/session";
 import { Button } from "../ui/Button";
 import { addBackButton } from "../ui/IconButton";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
-import { drawGlassFade, drawHairline, drawLayer, HOLO, slantedRect } from "../ui/holo";
+import { drawFrameVignette, drawGlassFade, drawHairline, drawLayer, HOLO, slantedRect } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
 import { TopBar } from "../ui/TopBar";
 import { setDebugScene, setDebugStorefrontControls } from "../debug";
@@ -19,6 +19,12 @@ import { INTERACTION_LAYER, interactionLayersHeight, interactionLayerSpot } from
 import { interactionLayerViews, interactionRemainingLabel, type InteractionLayerView } from "../ui/interactionLayerModel";
 
 const BLUE = 0x55b9e8;
+
+/** 층을 덮는 원화의 진하기. 글자가 그 위에서 읽혀야 하므로 절반을 넘기지 않는다. */
+const ART_ALPHA = 0.5;
+/** 양 끝에서 판 색으로 녹는 폭(px)과 그 끝의 진하기. */
+const ART_FADE_WIDTH = 300;
+const ART_FADE_ALPHA = 0.98;
 
 /**
  * 교류 — 외부 도시를 층으로 쌓아 위에서 아래로 고른다.
@@ -137,7 +143,7 @@ export class InteractionScene extends Phaser.Scene {
   private buildLayer(view: InteractionLayerView, index: number): Phaser.GameObjects.Container {
     const spot = interactionLayerSpot(index);
     const layer = this.add.container(spot.x, spot.y);
-    const { width, height, padding, artWidth } = INTERACTION_LAYER;
+    const { width, height, padding, textInset } = INTERACTION_LAYER;
     const locked = view.state === "locked";
     const shape = slantedRect(width, height, 30);
     layer.add(drawLayer(this, 0, 0, shape, {
@@ -147,30 +153,38 @@ export class InteractionScene extends Phaser.Scene {
       edgeAlpha: locked ? 0.28 : 0.85,
     }));
 
-    // **원화를 왼쪽 안에 슬쩍 눕힌다.** 층이 글자만 있는 띠로 남으면 도시마다 다른 곳이라는
-    // 것이 이름으로만 읽힌다. 오른쪽으로 갈수록 사라지게 덮어 글자와 부딪히지 않게 한다.
-    const artLeft = -width / 2 + padding;
+    // **원화가 층 전체를 덮는다.** 왼쪽 한 칸에만 눕히면 나머지가 빈 띠로 남아 도시마다 다른
+    // 곳이라는 것이 이름으로만 읽혔다. 대신 **양 끝으로 갈수록 판 색에 녹여** 가운데만 그림이
+    // 남게 한다 — 그 덕에 기울어진 좌우 변도 이미 투명한 자리라 마스크가 필요 없다. 마스크를
+    // 쓰지 않는 것이 중요한데, 이 목록은 세로로 흐르고 기하 마스크는 컨테이너 이동을 물려받지
+    // 않아 스크롤하는 순간 원화만 제자리에 남기 때문이다.
     if (!locked && this.textures.exists(view.city.illustration)) {
-      const art = this.add.image(artLeft + artWidth / 2, 0, view.city.illustration);
-      art.setDisplaySize(artWidth, height - padding);
-      art.setAlpha(0.44);
-      const artMask = this.make.graphics({});
-      artMask.fillStyle(0xffffff, 1).fillRect(spot.x + artLeft, spot.y - (height - padding) / 2, artWidth, height - padding);
-      art.setMask(artMask.createGeometryMask());
+      const art = this.add.image(0, 0, view.city.illustration);
+      art.setDisplaySize(width, height);
+      art.setAlpha(ART_ALPHA);
       layer.add(art);
-      // **오른쪽으로 갈수록 판 색에 녹는다.** 마스크 끝을 그대로 두면 붙여 넣은 섬네일처럼 각진
-      // 경계가 남는다. 좌우로 흐르는 그라데이션이라 위아래로 흐르는 공용 `drawGlassFade`는 쓰지 않는다.
-      const dissolve = this.add.graphics();
-      dissolve.fillGradientStyle(COLOR.void, COLOR.void, COLOR.void, COLOR.void, 0, 0.96, 0, 0.96);
-      dissolve.fillRect(artLeft + artWidth - 150, -(height - padding) / 2, 150, height - padding);
-      layer.add(dissolve);
-      layer.once(Phaser.GameObjects.Events.DESTROY, () => artMask.destroy());
+      const fade = this.add.graphics();
+      // 왼쪽은 불투명 → 투명, 오른쪽은 투명 → 불투명. 두 끝이 판 색으로 녹아 붙여 넣은
+      // 섬네일처럼 각진 경계가 남지 않는다. 위아래로 흐르는 공용 `drawGlassFade`는 쓰지 않는다.
+      fade.fillGradientStyle(COLOR.void, COLOR.void, COLOR.void, COLOR.void, ART_FADE_ALPHA, 0, ART_FADE_ALPHA, 0);
+      fade.fillRect(-width / 2, -height / 2, ART_FADE_WIDTH, height);
+      fade.fillGradientStyle(COLOR.void, COLOR.void, COLOR.void, COLOR.void, 0, ART_FADE_ALPHA, 0, ART_FADE_ALPHA);
+      fade.fillRect(width / 2 - ART_FADE_WIDTH, -height / 2, ART_FADE_WIDTH, height);
+      layer.add(fade);
     }
+
+    // **가장자리를 눌러 층 하나를 버튼으로 떼어 놓는다.** 원화가 판을 가득 채우면 어디까지가
+    // 한 층인지 흐려지므로, 네 변을 고르게 누르는 액자 비네트를 한 겹 얹는다. 같은 도형을
+    // 줄여 가며 두르는 `drawInnerVignette`은 가로로 긴 판에서 좌우가 더 많이 줄어 검은 줄이
+    // 여러 겹 어긋난 잔상으로 남는다.
+    layer.add(drawFrameVignette(this, 0, 0, width, height, { strength: 0.5 }));
 
     // **글은 잠기든 말든 같은 x에서 시작한다.** 층이 화면보다 넓어 왼쪽 여백은 화면 밖에 있고,
     // 거기서 시작하면 잠긴 층의 이름이 화면 왼쪽으로 잘려 나간다. 같은 시작선이 목록을 목록으로
     // 읽히게 하는 것이기도 하다.
-    const textX = artLeft + artWidth + padding;
+    // 층이 화면(1080)보다 넓어 왼쪽 여백은 화면 밖에 있다. 판 왼쪽 변에서 시작하면 이름이
+    // 화면 왼쪽으로 잘려 나가므로, 화면 안으로 들어오는 자리를 시작선으로 삼는다.
+    const textX = -width / 2 + padding + textInset;
     const name = `${view.city.displayName} ${INTERACTION_DEPARTMENT_LABEL[view.city.department]}`;
     layer.add(this.add.text(textX, -44, name, textStyle({ role: "display", size: 36, color: locked ? COLOR.inkDim : "#dff2ff" })).setOrigin(0, 0.5));
     layer.add(this.add.text(textX, 6, locked ? `연구 Lv.${view.city.unlock.researchLevel}에 열린다` : interactionDurationLabel(view.city.durationMinutes), textStyle({ role: "emphasis", size: 26, color: locked ? COLOR.inkDim : COLOR.accentText })).setOrigin(0, 0.5));

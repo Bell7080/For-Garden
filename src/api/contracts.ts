@@ -19,6 +19,13 @@ import type { InteractionDispatchSnapshot } from "../state/session";
 
 /** 도시 조회는 개방 판정과 같은 서버 기준 시각을 제공한다. */
 export interface InteractionCitiesResponse { cities: Array<InteractionCity & { unlocked: boolean }>; serverTime: string; }
+/** ProductDto로 위장하지 않는 교류 교환 전용 표시 행이다. */
+export interface InteractionExchangeOfferDto { id: string; name: string; requiredCityId: string; cost: { itemId: string; itemName: string; amount: number; owned: number }; grants: Array<{ kind: "currency"; currency: keyof Wallet; amount: number } | { kind: "item"; itemId: string; amount: number }>; remaining: number; exchangeLimit: number; unlocked: boolean; }
+export interface InteractionExchangeListResponse { offers: InteractionExchangeOfferDto[]; serverTime: string; }
+/** 멱등 ID와 수량 외에는 클라이언트가 가격이나 보상을 주장할 수 없다. */
+export interface ExchangeInteractionOfferRequest { offerId: string; quantity: number; requestId: string; }
+/** 차감·지급·최종 인벤토리와 지갑을 한 원자 영수증으로 반환한다. */
+export interface ExchangeInteractionOfferResponse { offerId: string; quantity: number; consumed: { itemId: string; amount: number }; granted: InteractionExchangeOfferDto["grants"]; remaining: number; items: InventoryItemDto[]; wallet: Wallet; }
 /** 클라이언트는 선택만 보내고 종료 시각·보상은 보낼 수 없다. */
 export interface StartInteractionDispatchRequest { cityId: string; party: string[]; }
 export interface InteractionDispatchResponse { dispatch: InteractionDispatchSnapshot | null; serverTime: string; }
@@ -404,6 +411,10 @@ export interface SweepExpeditionResponse extends PlayerStateDto { weekKey: strin
 
 /** 실제 HTTP API로 교체할 때도 씬이 의존할 단 하나의 통신 인터페이스다. */
 export interface GameApi extends AsyncArenaProfileApi {
+  /** 교류 표본 교환은 일반 상품 카탈로그와 분리해 조회한다. */
+  getInteractionExchangeOffers(): Promise<InteractionExchangeListResponse>;
+  /** 서버 검증 뒤 차감과 지급을 한 처리로 확정한다. */
+  exchangeInteractionOffer(request: ExchangeInteractionOfferRequest): Promise<ExchangeInteractionOfferResponse>;
   getInteractionCities(): Promise<InteractionCitiesResponse>;
   startInteractionDispatch(request: StartInteractionDispatchRequest): Promise<InteractionDispatchResponse>;
   getInteractionDispatch(): Promise<InteractionDispatchResponse>;

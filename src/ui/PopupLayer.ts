@@ -161,6 +161,11 @@ export class PopupLayer {
       bevel: { topLeft: unit * 0.14, topRight: 0, bottomRight: unit * 0.14, bottomLeft: 0 },
     });
     body.add(drawLayer(this.scene, 0, 0, shape, { fill: 0x0b0f15, alpha: 0.96, edge: COLOR.accent, edgeAlpha: 0.6 }));
+    // 판 자체가 입력을 삼킨다. 몸판은 그림(Graphics)이라 입력을 받지 않으므로, 이것이 없으면
+    // **판의 빈 곳이나 머리글을 누른 손이 뒤의 배경까지 내려가 팝업을 닫는다.** 판 안을 눌렀는데
+    // 판이 사라지는 셈이라, 읽는 중에 손이 스치기만 해도 창이 없어졌다. 이 막이 판보다 뒤에
+    // 깔리므로 그 위에 얹는 버튼·목록은 그대로 제 입력을 받는다.
+    body.add(this.scene.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive());
     body.add(drawShapeEdge(this.scene, 0, 0, shape, "bottom", { color: COLOR.accent, alpha: 0.3, inset: 12 }));
     layer.add(body);
 

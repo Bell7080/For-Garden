@@ -983,6 +983,19 @@ export class BattleScene extends Phaser.Scene {
         direction,
         scale: target.fighter.bodyScale,
       });
+      // 떨어져서 때리는 개체는 사이를 잇는 것이 없으면 맞은 자리에 숫자만 뜬다. 근거리는 몸이
+      // 붙어 있어 파편 하나로 누가 쳤는지 읽히지만, 중·원거리는 그 길이 보여야 공격이 된다.
+      // 전이처럼 실제로 휘두르지 않은 타격(`animate: false`)에는 그리지 않는다.
+      const reachTier = attacker?.fighter.def.reachTier;
+      if (attacker && event.animate !== false && (reachTier === "mid" || reachTier === "ranged")) {
+        const attackerHeight = UNIT_HEIGHT * attacker.fighter.bodyScale;
+        this.effects.reachStrike(
+          { x: attacker.fighter.x, y: attacker.fighter.y - attackerHeight * 0.5 },
+          { x: target.fighter.x, y: target.fighter.y - height * 0.5 },
+          reachTier,
+          this.effectColor(attacker),
+        );
+      }
     }
     return playback;
   }

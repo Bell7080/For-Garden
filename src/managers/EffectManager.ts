@@ -1,6 +1,7 @@
 import Phaser from "phaser";
-import { allowBurst, AREA_IMPACT, EFFECT_BUDGET, EFFECT_PRESETS, EFFECT_TAP_COLOR, SUSTAINED_COMBAT_EFFECT, type BurstSpec, type EffectKind } from "../ui/effectPresets";
+import { allowBurst, AREA_IMPACT, EFFECT_BUDGET, EFFECT_PRESETS, EFFECT_TAP_COLOR, REACH_STRIKE, SUSTAINED_COMBAT_EFFECT, type BurstSpec, type EffectKind } from "../ui/effectPresets";
 import { EFFECT_TEXTURE, ensureEffectTextures } from "../ui/effectTextures";
+import { lashPoints } from "../ui/reachStrikeShape";
 import { damagePopupStyle, risingAlpha, type DamagePopupRequest } from "../ui/damageNumbers";
 import { COLOR, textStyle } from "../ui/theme";
 import { battleUiMotionFactor, type BattleUiMotion } from "../core/settings";
@@ -101,6 +102,13 @@ function groundDiamond(radius: number): Phaser.Geom.Point[] {
   ];
 }
 
+/** 풀에서 꺼내 쓰는 탄환 한 알. */
+interface BulletSlot {
+  image: Phaser.GameObjects.Image;
+  tween?: Phaser.Tweens.Tween;
+  openedAt: number;
+}
+
 export class EffectManager {
   private readonly scene: Phaser.Scene;
   private readonly depth: number;
@@ -110,6 +118,8 @@ export class EffectManager {
   private readonly emitters = new Map<EffectKind, Phaser.GameObjects.Particles.ParticleEmitter>();
   private readonly rings: RingSlot[] = [];
   private readonly numbers: NumberSlot[] = [];
+  /** 날아가는 탄환 풀. 파문과 같은 이유로 다시 쓴다 — 평타마다 새로 만들면 GC가 프레임을 끊는다. */
+  private readonly bullets: BulletSlot[] = [];
   private readonly lastAt = new Map<EffectKind, number>();
   /** 같은 전투원의 복수 제공자 효과를 보존하는 런타임 Fighter ID + 효과 ID 복합 키다. */
   private readonly sustained = new Map<string, SustainedSlot>();
@@ -238,6 +248,114 @@ export class EffectManager {
       },
       onComplete: () => {
         graphics.clear().setVisible(false);
+        slot.tween = undefined;
+      },
+    });
+  }
+
+  /**
+   * 멀리서 때린 타격이 지나간 길.
+   *
+   * 근거리는 몸이 붙어 있어 파편만으로 누가 쳤는지 읽히지만, 떨어져서 때리면 사이를 잇는
+   * 것이 없어 **맞은 자리에 숫자만 뜬다.** 씬은 두 자리와 사거리 단계만 넘기고, 무엇을
+   * 그릴지는 `REACH_STRIKE` 한 표가 정한다.
+   */
+  reachStrike(from: { x: number; y: number }, to: { x: number; y: number }, tier: "mid" | "ranged", color: number): void {
+    const now = this.rollFrame();
+    if (this.openedThisFrame >= EFFECT_BUDGET.perFrame) return;
+    this.openedThisFrame += 1;
+    if (tier === "mid") this.openLash(from, to, color, now);
+    else this.openBullet(from, to, color, now);
+  }
+
+  /**
+   * 채찍 — 이미 닿아 있는 선이라 **자라나지 않는다.**
+   *
+   * 처음부터 끝까지 이어진 채로 뻗었다 걷히며, 가운데가 한 번 휘어 곧은 레이저와 갈린다.
+   * 뿌리에서 끝으로 갈수록 가늘어져 휘두른 방향이 선 하나에 남는다.
+   */
+  private openLash(from: { x: number; y: number }, to: { x: number; y: number }, color: number, now: number): void {
+    const lash = REACH_STRIKE.lash;
+    const slot = this.acquireRing();
+    slot.openedAt = now;
+    const graphics = slot.graphics.clear().setPosition(0, 0).setAlpha(1).setDepth(this.depth)
+      .setBlendMode(Phaser.BlendModes.ADD).setVisible(true);
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
+    const length = Math.hypot(dx, dy) || 1;
+    // 진행 방향의 수직으로 가운데를 밀어 한 번 휜 자국을 만든다.
+    const nx = -dy / length;
+    const ny = dx / length;
+    const bend = length * lash.bend;
+    const state = { t: 0 };
+    slot.tween = this.scene.tweens.add({
+      targets: state,
+      t: 1,
+      duration: lash.ms,
+      ease: "Quad.In",
+      onUpdate: () => {
+        // 휘는 방향이 시간에 따라 되돌아오며 "쳤다가 걷힌다"가 한 동작으로 읽힌다.
+        const swing = Math.sin(Math.PI * (1 - state.t)) * bend;
+        const midX = (from.x + to.x) / 2 + nx * swing;
+        const midY = (from.y + to.y) / 2 + ny * swing;
+        graphics.clear();
+        graphics.fillStyle(color, lash.alpha * (1 - state.t * state.t));
+        graphics.fillPoints(lashPoints(from, { x: midX, y: midY }, to, lash.rootWidth, lash.tipWidth), true);
+      },
+      onComplete: () => {
+        graphics.clear().setVisible(false).setBlendMode(Phaser.BlendModes.NORMAL);
+        slot.tween = undefined;
+      },
+    });
+  }
+
+  /** 풀에서 탄환 한 알을 꺼낸다. 상한을 넘으면 가장 오래된 것을 즉시 회수한다. */
+  private acquireBullet(): BulletSlot {
+    const free = this.bullets.find((slot) => !slot.image.visible);
+    if (free) return free;
+    if (this.bullets.length >= REACH_STRIKE.bullet.maxLive) {
+      const oldest = this.bullets.reduce((old, slot) => (slot.openedAt < old.openedAt ? slot : old));
+      oldest.tween?.stop();
+      oldest.image.setVisible(false);
+      return oldest;
+    }
+    const slot: BulletSlot = {
+      image: this.scene.add.image(0, 0, EFFECT_TEXTURE.shard).setVisible(false).setBlendMode(Phaser.BlendModes.ADD),
+      openedAt: 0,
+    };
+    this.bullets.push(slot);
+    return slot;
+  }
+
+  /**
+   * 탄환 — 실제로 날아간다.
+   *
+   * 피해는 이미 확정된 뒤라 연출이 늦으면 숫자가 먼저 뜨고 총알이 나중에 닿는다. 그래서
+   * 거리와 무관하게 시간을 고정해 **먼 적일수록 빨라 보이게** 한다.
+   */
+  private openBullet(from: { x: number; y: number }, to: { x: number; y: number }, color: number, now: number): void {
+    const bullet = REACH_STRIKE.bullet;
+    const slot = this.acquireBullet();
+    slot.openedAt = now;
+    const angle = Phaser.Math.RadToDeg(Math.atan2(to.y - from.y, to.x - from.x));
+    const image = slot.image
+      .setPosition(from.x, from.y)
+      .setDisplaySize(bullet.length, bullet.thickness)
+      .setAngle(angle)
+      .setTint(color)
+      .setAlpha(bullet.alpha)
+      .setDepth(this.depth)
+      .setVisible(true);
+    slot.tween = this.scene.tweens.add({
+      targets: image,
+      x: to.x,
+      y: to.y,
+      // 날면서 뒤로 늘어나 지나온 자리가 꼬리로 남는다. 잔상 객체를 따로 만들지 않는 방법이다.
+      displayWidth: bullet.length * bullet.trail,
+      duration: bullet.ms,
+      ease: "Quad.In",
+      onComplete: () => {
+        image.setVisible(false);
         slot.tween = undefined;
       },
     });
@@ -471,6 +589,8 @@ export class EffectManager {
     this.rings.length = 0;
     this.numbers.forEach((slot) => { slot.tweens.forEach((tween) => tween.stop()); slot.label.destroy(); });
     this.numbers.length = 0;
+    this.bullets.forEach((slot) => { slot.tween?.stop(); slot.image.destroy(); });
+    this.bullets.length = 0;
     this.lastAt.clear();
   }
 }

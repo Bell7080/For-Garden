@@ -731,7 +731,12 @@ export class InfoManager {
       if (opened && (wasHold || changed)) this.openFeedBulk(x, y + height / 2);
     };
     hit.on("pointerup", () => void release(true));
-    hit.on("pointerout", () => void release(false));
+    // 손을 **뗀 자리**로 판단한다. `pointerout`으로 취소하면 급여가 레벨을 올려 판이 다시 그려질
+    // 때 그 사건이 먼저 도착해, 아직 누르고 있는 제스처를 취소로 삼켜 버린다 — 그래서 급여는
+    // 성사되는데 성장 팝업만 뜨지 않는 일이 생겼다(레벨업이 걸리는 회차에만 나타나 흔들렸다).
+    // 벗어남은 되풀이 급여만 멈추고, 열지 말지는 실제로 떼는 순간에 정한다.
+    hit.on("pointerupoutside", () => void release(false));
+    hit.on("pointerout", () => { this.feedHold?.remove(); this.feedHold = undefined; });
     container.add(hit);
     attach(panel, container);
     this.feedPlate = { on, off };

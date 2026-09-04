@@ -41,6 +41,11 @@ describe("원정 증강 표식", () => {
     expect(groups.byRelic.anky[0].glyph).toBe("status");
     expect(groups.global[0].glyph).toBe("attack");
   });
+
+  it("은 표준 출혈의 실제 공용 수치와 발동 주기를 표시한다", () => {
+    const badge = expeditionAugmentBadges(SELECTIONS).byRelic.anky[0];
+    expect(badge.effect).toBe("3회 공격마다 출혈\n초당 최대 체력 2% · 3초");
+  });
 });
 
 describe("증강 표식 줄", () => {

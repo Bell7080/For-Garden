@@ -100,6 +100,8 @@ export interface Fighter extends Combatant {
   knockback: { remaining: number; vx: number; vy: number; bouncesLeft: number } | null;
   /** `statusEffectEvery`가 있는 기본 공격이 실제로 몇 번 나갔는지. 그 주기에만 상태를 건다. */
   statusHitCount: number;
+  /** 원정 공격 출혈의 명시된 발동 주기만 세며 스킬 상태 주기와 섞지 않는다. */
+  augmentBleedHitCount: number;
   /**
    * 지금 쌓인 손질. 상한에 닿으면 그 자리에서 터지고 다시 0부터 센다.
    *
@@ -406,6 +408,8 @@ export const BLEED = {
   seconds: 3,
   /** 1초마다 깎는 최대 체력 비율(%). */
   percentPerSecond: 2,
+  /** 작은 출혈은 이름뿐 아니라 실제 공용 수치도 표준과 분리한다. */
+  minor: { seconds: 2, percentPerSecond: 1 },
 } as const;
 
 /** 긴급 회복의 공용 틱 규칙. 유지 시간과 회복량은 캐릭터 정의가 소유한다. */
@@ -463,6 +467,7 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     overpaint: null,
     knockback: null,
     statusHitCount: 0,
+    augmentBleedHitCount: 0,
     butcher: null,
     // 첫 도약은 전투가 시작되고 조금 뒤다 — 첫 프레임에 뛰면 순간이동한 것으로만 보인다.
     huntCooldown: def.passive.kind === "gourmetHunt" ? def.passive.huntOpeningSeconds ?? 0 : 0,
@@ -848,7 +853,7 @@ function statusEffectsLandThisHit(attacker: Fighter, skill: Skill, useUltimate: 
 }
 
 /** 모든 출혈 진입점이 공유하는 단일 슬롯 갱신 규칙이다. 약한 재적용은 강도와 틱 시계를 덮지 않는다. */
-function refreshBleed(target: Fighter, seconds: number, percent: number, events: SkirmishEvent[], sourceId?: string): void {
+export function refreshBleed(target: Fighter, seconds: number, percent: number, events: SkirmishEvent[], sourceId?: string): void {
   const remaining = Math.max(target.bleed?.remaining ?? 0, seconds);
   target.bleed = {
     remaining,
@@ -1937,9 +1942,12 @@ function strike(
   applyStreak(attacker, target, events);
   const augmentBleed = bleedOnAttackEffect(state.augmentEffects, attacker.def.id);
   if (augmentBleed && isFighterAlive(target)) {
-    // 원정 증강도 스킬·연속 공격과 동일한 출혈 갱신 규칙을 공유한다.
-    // 기존 출혈 슬롯을 그대로 쓰되 시전자에게 저장된 상태 위력으로 지속시간만 보정한다.
-    refreshBleed(target, augmentBleed.seconds * attacker.statusPotencyMultiplier, augmentBleed.percent, events, attacker.id);
+    // 증강 전용 카운터가 발동 빈도를 제한하고, 실제 적용은 모든 출혈이 쓰는 단일 슬롯을 지난다.
+    attacker.augmentBleedHitCount = (attacker.augmentBleedHitCount + 1) % augmentBleed.everyNAttacks;
+    if (attacker.augmentBleedHitCount === 0) {
+      const strength = augmentBleed.strength === "standard" ? BLEED : BLEED.minor;
+      refreshBleed(target, strength.seconds * attacker.statusPotencyMultiplier, strength.percentPerSecond, events, attacker.id);
+    }
   }
 
   events.push({

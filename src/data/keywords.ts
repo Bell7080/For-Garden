@@ -1,3 +1,5 @@
+import { BLEED } from "../core/skirmish";
+
 /**
  * 스킬 설명 안에서 다시 눌러 볼 수 있는 용어 사전.
  *
@@ -39,7 +41,14 @@ export const KEYWORDS: readonly KeywordDef[] = [
     id: "bleed",
     term: "출혈",
     kind: "디버프",
-    description: "지속되는 동안 매 초 고정 피해를 입는다. 방어력으로 줄일 수 없다.",
+    description: `${BLEED.seconds}초 동안 매초 최대 체력의 ${BLEED.percentPerSecond}% 고정 피해를 입는다. 방어력으로 줄일 수 없다.`,
+  },
+  {
+    // 작은 출혈은 별도 검색어로 노출해 표준 출혈과 같은 효과처럼 오인하지 않게 한다.
+    id: "minor-bleed",
+    term: "작은 출혈",
+    kind: "디버프",
+    description: `${BLEED.minor.seconds}초 동안 매초 최대 체력의 ${BLEED.minor.percentPerSecond}% 고정 피해를 입는다. 약한 재적용은 더 강한 출혈을 덮지 않는다.`,
   },
   {
     id: "stagger", term: "경직", kind: "디버프",

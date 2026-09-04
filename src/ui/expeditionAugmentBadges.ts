@@ -1,5 +1,6 @@
 import { getExpeditionAugment, type ExpeditionAugmentDef } from "../data/expeditionAugments";
 import type { ExpeditionAugmentSelection } from "../core/expeditionRewards";
+import { BLEED } from "../core/skirmish";
 
 /**
  * 확정된 증강을 **누구에게 붙었는지**로 갈라 놓는 순수 규칙.
@@ -31,12 +32,17 @@ export interface AugmentBadgeView {
 /** 선택 화면과 확정 목록이 공유하는 효과 수치 표기다. 운영 데이터의 값을 문구에 다시 적지 않는다. */
 export function expeditionAugmentEffectLabel(def: ExpeditionAugmentDef): string {
   const labels = { maxHpPercent: "최대 체력", defensePercent: "방어력", resistancePercent: "저항력", attackPowerPercent: "공격력", spellPowerPercent: "주문력", attackSpeedPercent: "공격 속도", initialShieldPercent: "시작 보호막", statusPotencyPercent: "상태 위력" } as const;
-  if (def.effect.kind in labels) return `${labels[def.effect.kind as keyof typeof labels]} +${def.effect.percent}%`;
+  if (def.effect.kind in labels && "percent" in def.effect) return `${labels[def.effect.kind as keyof typeof labels]} +${def.effect.percent}%`;
   if (def.effect.kind === "healAfterBattlePercent") return `전투 후 체력 +${def.effect.percent}%`;
   if (def.effect.kind === "lowHpAttackPowerPercent") return `체력 ${def.effect.belowHpPercent}% 이하\n공격력 +${def.effect.percent}%`;
-  if (def.effect.kind === "bleedOnAttack") return `공격 시 출혈 ${def.effect.percent}% · ${def.effect.seconds}초`;
+  if (def.effect.kind === "bleedOnAttack") {
+    // 이름과 수치는 강도별 공용 전투 규칙에서 읽어 데이터와 화면의 복제 상수를 없앤다.
+    const bleed = def.effect.strength === "standard" ? BLEED : BLEED.minor;
+    const name = def.effect.strength === "standard" ? "출혈" : "작은 출혈";
+    return `${def.effect.everyNAttacks}회 공격마다 ${name}\n초당 최대 체력 ${bleed.percentPerSecond}% · ${bleed.seconds}초`;
+  }
   // 위 분기가 모든 판별 가능한 효과를 다루며, 이 반환은 향후 데이터 종류 추가 시 안전한 표시다.
-  return `효과 +${def.effect.percent}%`;
+  return "효과";
 }
 
 /** 등급과 범위를 짧은 인게임 표기로 바꾸되 실제 판정은 정적 데이터의 값을 그대로 사용한다. */

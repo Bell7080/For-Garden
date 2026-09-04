@@ -8,7 +8,7 @@ export type ExpeditionAugmentCategory = "attack" | "spell" | "survival" | "shiel
 /** 전투 코어 또는 전투 후 정산이 소비할 수 있는 정적 파라미터다. */
 export type ExpeditionAugmentParams =
   | { kind: "maxHpPercent" | "defensePercent" | "resistancePercent" | "attackPowerPercent" | "spellPowerPercent" | "attackSpeedPercent" | "initialShieldPercent" | "statusPotencyPercent"; percent: number }
-  | { kind: "bleedOnAttack"; percent: number; seconds: number }
+  | { kind: "bleedOnAttack"; strength: "standard" | "minor"; everyNAttacks: number; reapplication: "refresh" }
   | { kind: "healAfterBattlePercent"; percent: number }
   | { kind: "lowHpAttackPowerPercent"; percent: number; belowHpPercent: number };
 
@@ -37,6 +37,8 @@ export const EXPEDITION_AUGMENTS = [
   { id: "field-repair", name: "현장 수복", rarity: "sr", target: "party", category: "recovery", effect: { kind: "healAfterBattlePercent", percent: 8 } },
   // 상태/SR: 상태 지속시간을 개인 15% 늘려 상태 특화 개체에만 효율이 모이게 한다.
   { id: "reactive-medium", name: "반응 매질", rarity: "sr", target: "relic", category: "status", effect: { kind: "statusPotencyPercent", percent: 15 } },
+  // 상태/SR: 작은 출혈은 표준 출혈과 이름·강도를 분리하고 두 번째 공격마다 단일 슬롯을 갱신한다.
+  { id: "minor-blood-edge", name: "작은 출혈날", rarity: "sr", target: "relic", category: "status", effect: { kind: "bleedOnAttack", strength: "minor", everyNAttacks: 2, reapplication: "refresh" } },
   // 조건/SR: 절반 이하에서만 켜지는 개인 공격력이라 상시 18%보다 높은 24%를 쓴다.
   { id: "last-instinct", name: "최후 본능", rarity: "sr", target: "relic", category: "conditional", effect: { kind: "lowHpAttackPowerPercent", percent: 24, belowHpPercent: 50 } },
   // 공격/SSR: 정예 전체 공격력은 SR 전체의 두 배인 16%다.
@@ -57,8 +59,8 @@ export const EXPEDITION_AUGMENTS = [
   { id: "guardian-cocoon", name: "수호 고치", rarity: "ssr", target: "relic", category: "shield", effect: { kind: "initialShieldPercent", percent: 25 } },
   // 회복/SSR: 전투 후 전체 16%는 즉시 전투력 대신 다음 노드 생존을 산다.
   { id: "regrowth-protocol", name: "재생 프로토콜", rarity: "ssr", target: "party", category: "recovery", effect: { kind: "healAfterBattlePercent", percent: 16 } },
-  // 상태/SSR: 공격 시 출혈은 기존 상태 슬롯을 재사용하며 4초 동안 초당 12% 예산이다.
-  { id: "blood-edge", name: "선혈의 날", rarity: "ssr", target: "relic", category: "status", effect: { kind: "bleedOnAttack", percent: 12, seconds: 4 } },
+  // 상태/SSR: 공용 표준 출혈을 세 번째 공격마다 갱신해 빠른 공격자의 기대 피해가 무한히 커지지 않는다.
+  { id: "blood-edge", name: "선혈의 날", rarity: "ssr", target: "relic", category: "status", effect: { kind: "bleedOnAttack", strength: "standard", everyNAttacks: 3, reapplication: "refresh" } },
   // 상태/SSR: 전체 상태 지속 18%는 상태 없는 파티원에게 가치가 없다는 위험을 반영한다.
   { id: "volatile-atmosphere", name: "불안정 대기", rarity: "ssr", target: "party", category: "status", effect: { kind: "statusPotencyPercent", percent: 18 } },
   // 조건/SSR: 체력 40% 이하에서만 개인 공격력 38%가 켜지는 역전용 고위험 선택지다.

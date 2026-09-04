@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
 import type { ProductDto, ProductStorefront } from "../../src/api/contracts";
 import { productsForShopCategory, shopModel } from "../../src/ui/shopModel";
 import { tradePopupModel } from "../../src/ui/tradePopupModel";
@@ -14,6 +15,13 @@ describe("storefront product models", () => {
 
   it("tradePopupModel preserves only trade products", () => {
     expect(tradePopupModel(mixed).map(({ id }) => id)).toEqual(["trade-item"]);
+  });
+
+  it("TradePopup refresh delegates catalog selection to the tested model", () => {
+    // 생산 프리팹이 같은 storefront 규칙을 다시 쓰지 않고 위에서 검증한 모델을 호출하는지 고정한다.
+    const source = readFileSync(new URL("../../src/ui/TradePopup.ts", import.meta.url), "utf8");
+    expect(source).toContain("tradePopupModel(response.products)");
+    expect(source).not.toMatch(/response\.products\.filter\s*\(/);
   });
 
   it("shopModel preserves only shop products", () => {

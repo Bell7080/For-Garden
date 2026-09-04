@@ -3,6 +3,8 @@ import { startAfterOpening } from "./openingSave";
 import { inventoryCategoryTabPosition } from "../../src/ui/inventoryTabs";
 import { createRuneInstance, type RuneStatKey } from "../../src/core/runes";
 import { captureGame, tap, tapUntil } from "./canvasInput";
+// 레일 자리는 화면이 소유한 배치표에서 읽는다 — 좌표를 스펙에 베껴 두면 줄이 옮겨질 때 조용히 빗나간다.
+import { LOBBY_RAIL_BOUNDS } from "../../src/ui/lobbyLayout";
 
 const WIDTH = 1080; const HEIGHT = 1920;
 
@@ -23,7 +25,7 @@ test("가방은 로비를 유지하고 카테고리 탭과 많은 항목 스크�
   await tap(page, WIDTH / 2, HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   // 레일 버튼은 로비가 원화를 마저 읽은 뒤에 입력면을 갖는다 — 열릴 때까지 다시 누른다.
-  await tapUntil(page, WIDTH - 106, 1096, async () => (await page.evaluate(() => window.__PF_DEBUG?.inventoryCategory)) !== undefined);
+  await tapUntil(page, LOBBY_RAIL_BOUNDS.utility.inventory.x, LOBBY_RAIL_BOUNDS.utility.inventory.y, async () => (await page.evaluate(() => window.__PF_DEBUG?.inventoryCategory)) !== undefined);
   // 팝업이 화면을 바꾸지 않는 것이 발굴·무역과 같은 로비 오버레이 계약이다.
   expect(await page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   // 팝업 원점에 탭 로컬 중심을 더해 글자가 아닌 네 탭 면의 정중앙을 차례로 누른다.

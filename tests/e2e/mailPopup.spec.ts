@@ -1,13 +1,15 @@
 import { expect, test } from "@playwright/test";
 import { startAfterOpening } from "./openingSave";
 import { tap, tapUntil } from "./canvasInput";
+// 레일 자리는 화면이 소유한 배치표에서 읽는다 — 좌표를 스펙에 베껴 두면 줄이 옮겨질 때 조용히 빗나간다.
+import { LOBBY_RAIL_BOUNDS } from "../../src/ui/lobbyLayout";
 
 const BASE = { width: 1080, height: 1920 } as const;
 test("우편 점에서 우편함을 열어 보상을 받고 재화 증가와 점 해제를 확인한다", async ({ page }) => {
   await startAfterOpening(page); await tap(page, BASE.width / 2, BASE.height / 2); await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   const goldBefore = await page.evaluate(() => window.__PF_DEBUG?.wallet?.gold);
-  // 우편은 오른쪽 레일의 두 번째 행이며 초기 미읽음 데이터가 알림 점을 켠다.
-  await tapUntil(page, BASE.width - 106, 792, async () => Boolean(await page.evaluate(() => window.__PF_DEBUG?.mailPopup?.open))); await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.mailPopup)).toMatchObject({ open: true, unreadCount: 2, claimableCount: 1 });
+  // 우편은 오른쪽 레일의 첫 행이며 초기 미읽음 데이터가 알림 점을 켠다.
+  await tapUntil(page, LOBBY_RAIL_BOUNDS.utility.mail.x, LOBBY_RAIL_BOUNDS.utility.mail.y, async () => Boolean(await page.evaluate(() => window.__PF_DEBUG?.mailPopup?.open))); await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.mailPopup)).toMatchObject({ open: true, unreadCount: 2, claimableCount: 1 });
   // 첫 행의 공용 RewardFrame을 눌러 단일 수령하고 TopBar와 알림 집계를 함께 갱신한다.
   await tap(page, BASE.width / 2 - 80, BASE.height / 2 - 570); await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.wallet?.gold)).toBe((goldBefore ?? 0) + 1200);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.mailPopup)).toMatchObject({ unreadCount: 1, claimableCount: 0 });

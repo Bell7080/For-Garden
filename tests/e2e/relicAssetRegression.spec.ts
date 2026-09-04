@@ -37,7 +37,10 @@ test("도디·메테의 도감 전신과 루카 포함 편성·전투 SD 에셋�
   await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT - 90);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   await openParty(page);
-  for (const [x, y] of [[964, 1080], [116, 1358], [752, 1080]] as const) await tapGame(page, x, y);
+  // 준비 화면은 직전 편성을 복원해 세 명이 이미 서 있다 — 먼저 내려야 원하는 셋을 순서대로 세울 수 있다.
+  // 보유 순서는 토리카·렉시아·스피나·루카·도디·메테이고, 그리드는 다섯 칸마다 줄이 바뀐다.
+  for (const [x, y] of [[116, 1080], [328, 1080], [540, 1080]] as const) await tapGame(page, x, y);
+  for (const [x, y] of [[964, 1080], [116, 1324], [752, 1080]] as const) await tapGame(page, x, y);
   await page.waitForTimeout(1_000); // 비동기 Puppet 조립이 캡처 전에 세 자리를 모두 채우게 한다.
   await captureGame(page, `test-results/${testInfo.project.name}-asset-dodi-mette-luka-party-sd.png`);
   await tapGame(page, BASE_WIDTH / 2, 1700);

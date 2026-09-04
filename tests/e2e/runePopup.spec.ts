@@ -35,8 +35,9 @@ test("세로 화면에서 전설 5행×3칸, 긴 옵션명, 키보드 이름 입
   });
   await openFirstRune(page);
   // 연필 조작은 네이티브 입력을 띄워 모바일 소프트 키보드와 동일한 입력 경로를 사용한다.
-  await tap(page, 850, 456);
+  // 연필도 쪽지가 조각·옵션을 마저 그린 뒤에 입력면을 갖는다 — 네이티브 입력이 뜰 때까지 다시 누른다.
   const input = page.getByLabel("룬 이름");
+  await tapUntil(page, 850, 456, async () => (await input.count()) > 0);
   await expect(input).toBeVisible();
   await input.fill("긴 이름을 가진 전설의 궁극기 충전 룬");
   await input.press("Enter");

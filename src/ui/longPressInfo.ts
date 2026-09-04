@@ -28,8 +28,12 @@ export interface LongPressOptions {
 /**
  * 입력면 하나에 짧은 탭과 꾹 누름을 함께 건다.
  *
- * 타이머만 믿지 않고 손을 뗄 때 실제로 눌린 시간을 한 번 더 본다 — 화면에 아무 일도 없는 동안
- * 브라우저가 렌더 루프를 늦추면 타이머가 제때 오지 않는다.
+ * **눌린 시간은 벽시계가 아니라 입력 사건의 시각으로 잰다**(`pointer.downTime`·`upTime`).
+ * 벽시계로 재면 화면이 한 번 밀리는 동안 손가락은 이미 뗐는데도 그 사이가 눌린 시간으로 잡혀,
+ * 톡 친 손이 꾹 누름으로 읽히고 원래 조작(편성 토글·궁극기)이 통째로 사라진다. 사건 시각은
+ * 브라우저가 실제로 그 입력을 받은 때라 메인 스레드가 막혀도 흔들리지 않는다.
+ *
+ * 게이지가 다 차서 먼저 여는 길도 **손가락이 아직 눌려 있을 때만** 지난다.
  */
 export function bindLongPress(
   scene: Phaser.Scene,
@@ -37,6 +41,8 @@ export function bindLongPress(
   options: LongPressOptions,
 ): void {
   let startedAt = 0;
+  /** 입력 사건이 말하는 누른 시각. 브라우저가 그 입력을 받은 때라 프레임이 밀려도 흔들리지 않는다. */
+  let downAt = 0;
   let fired = false;
   let gauge: Phaser.GameObjects.Graphics | undefined;
   let ticker: (() => void) | undefined;
@@ -63,12 +69,13 @@ export function bindLongPress(
     gauge.strokePath();
   };
 
-  const cancel = (): void => { stop(); startedAt = 0; };
+  const cancel = (): void => { stop(); startedAt = 0; downAt = 0; };
 
   hit.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
     if (options.enabled && !options.enabled()) return;
     fired = false;
     startedAt = Date.now();
+    downAt = pointer.downTime;
     stop();
     gauge = scene.add.graphics().setDepth(options.depth ?? 900);
     const { x, y } = pointer;
@@ -77,6 +84,9 @@ export function bindLongPress(
       // 끌기로 넘어간 손가락은 스크롤이지 꾹 누름이 아니다. 활성 포인터를 직접 보므로
       // 화면마다 pointermove 배선을 다시 깔지 않는다.
       const now = scene.input.activePointer;
+      // 손을 이미 뗐으면 여기서 열지 않는다. 프레임이 밀려 pointerup이 늦게 오면 게이지가 그
+      // 사이에 한 바퀴를 돌아, 톡 친 손이 꾹 누름으로 열려 버린다.
+      if (!now.isDown) { cancel(); return; }
       if (Phaser.Math.Distance.Between(x, y, now.x, now.y) > LONG_PRESS.moveSlop) { cancel(); return; }
       const ratio = longPressProgress(Date.now() - startedAt);
       draw(x, y, ratio);
@@ -88,11 +98,14 @@ export function bindLongPress(
     scene.events.on(Phaser.Scenes.Events.UPDATE, ticker);
   });
 
-  hit.on("pointerup", () => {
+  hit.on("pointerup", (pointer: Phaser.Input.Pointer) => {
     stop();
     if (startedAt === 0) return;
-    const heldMs = Date.now() - startedAt;
+    // 사건 시각이 둘 다 있으면 그것만 믿는다. 없을 때만 벽시계로 되돌아간다.
+    const byEvent = pointer.upTime - downAt;
+    const heldMs = downAt > 0 && Number.isFinite(byEvent) && byEvent >= 0 ? byEvent : Date.now() - startedAt;
     startedAt = 0;
+    downAt = 0;
     if (fired) return;
     if (heldMs >= LONG_PRESS.ms) options.onLongPress();
     else if (!options.allowTap || options.allowTap()) options.onTap?.();

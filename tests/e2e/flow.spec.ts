@@ -119,18 +119,20 @@ test("1080×1920 전장 HUD와 궁극기 입력이 겹치지 않는다", async (
 });
 
 /** 큰 돌출 머리(스피나)와 좌우로 치우친 얼굴(렉시아)의 충전 가림막 경계를 실제 캔버스로 남긴다. */
-test("궁극기 카드 몸통과 돌출 머리는 0%·50%·100%에서 한 부채꼴로 걷힌다", async ({ page }, testInfo) => {
+test("궁극기 카드 몸통과 돌출 머리는 빈·중간·꽉 참에서 한 부채꼴로 걷힌다", async ({ page }, testInfo) => {
   test.setTimeout(180_000);
   await enterBattle(page);
   await expect.poll(async () => (await battle(page))?.chargeRatios?.[1] ?? 1).toBeLessThan(0.08);
   await captureGame(page, `test-results/${testInfo.project.name}-battle-charge-portrait-000.png`);
 
-  // 정확한 한 프레임 대신 50% 주변의 좁은 구간을 기다려 실시간 전투 속도 차이에도 안정적으로 잡는다.
+  // 충전은 한 방마다 계단으로 오른다 — 지금 이 개체는 한 번에 약 24%씩 차서 0.47 다음이 0.71이라
+  // 정확히 절반인 프레임 자체가 존재하지 않는다(좁은 창을 기다리면 영영 오지 않는다). 부채꼴이
+  // 반쯤 걷힌 것을 남기는 것이 목적이므로 실제로 지나가는 중간 구간을 잡는다.
   await expect.poll(async () => {
     const ratio = (await battle(page))?.chargeRatios?.[1] ?? 0;
-    return ratio >= 0.48 && ratio <= 0.56;
+    return ratio >= 0.35 && ratio <= 0.8;
   }, { timeout: 60_000 }).toBe(true);
-  await captureGame(page, `test-results/${testInfo.project.name}-battle-charge-portrait-050.png`);
+  await captureGame(page, `test-results/${testInfo.project.name}-battle-charge-portrait-mid.png`);
 
   // 수동 궁극기 기본값에서는 100%가 유지되므로 몸통과 머리 복제 모두 완전히 사라진 상태를 캡처한다.
   await expect.poll(async () => (await battle(page))?.chargeRatios?.[1] ?? 0, { timeout: 60_000 }).toBe(1);

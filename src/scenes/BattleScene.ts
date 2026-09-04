@@ -126,7 +126,7 @@ const PROFILE_TOP = 1430;
  * 1360에 두면 그 위에 겹쳤다. 액자 한 칸(56)만큼 더 띄운다.
  */
 // 전장 아래쪽에 서므로 SD·체력 바보다 앞에 둔다. 컷인(900)보다는 뒤라 연출을 가리지 않는다.
-const BATTLE_CONTROLS = { rowY: 1288, rightX: BASE_WIDTH - 130, speedX: BASE_WIDTH - 335, stackGap: 92, depth: 320 } as const;
+export const BATTLE_CONTROLS = { rowY: 1288, rightX: BASE_WIDTH - 130, speedX: BASE_WIDTH - 335, stackGap: 92, depth: 320 } as const;
 
 /** 아직 다 차지 않은 카드의 불투명도. 다 차면 1이 되어 그림이 온전히 선다. */
 const CHARGE_CARD_ALPHA = 0.62;

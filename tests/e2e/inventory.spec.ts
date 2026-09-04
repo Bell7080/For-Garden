@@ -61,12 +61,15 @@ test("상단과 가방 재화는 같은 안내를 열고 가방 위 안내만 �
   await tap(page, WIDTH / 2, HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   // 기본 상단의 첫 칩(젬)을 눌러 공용 안내 제목이 스택에 기록되는지 확인한다.
-  await tapUntil(page, 500, 86, async () => ((await page.evaluate(() => window.__PF_DEBUG?.popupTitles)) ?? []).includes("젬"));
+  // 안내를 여는 조작은 다시 누르면 배경을 눌러 닫아 버린다 — 상단 줄이 그려질 틈만 두고 한 번 누른다.
+  await page.waitForTimeout(700);
+  await tap(page, 500, 86);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual(["젬"]);
   await tap(page, 880, 556);
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual([]);
+  // 스택이 비면 관찰값 자체를 지운다(`setDebugPopupTitles`) — 빈 배열이 아니라 없음이다.
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toBeUndefined();
 
-  await tap(page, WIDTH - 106, 1096);
+  await tapUntil(page, LOBBY_RAIL_BOUNDS.utility.inventory.x, LOBBY_RAIL_BOUNDS.utility.inventory.y, async () => (await page.evaluate(() => window.__PF_DEBUG?.inventoryCategory)) !== undefined);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.inventoryCategory)).toBe("rune");
   const currencyTab = inventoryCategoryTabPosition(1);
   await tap(page, WIDTH / 2 + currencyTab.x, HEIGHT / 2 + currencyTab.y);

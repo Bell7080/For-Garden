@@ -70,6 +70,10 @@ export async function tap(page: Page, x: number, y: number): Promise<void> {
  *
  * 눌러도 되는 자리를 반복해 누르는 것은 사용자가 실제로 하는 일과 같다 — 반응이 없으면 한 번 더
  * 누른다. 상태가 바뀌면 곧바로 멈춘다.
+ *
+ * **한 번 더 눌러도 같은 결과인 자리에만 쓴다.** 화면을 옮기거나 판을 여는 자리가 그렇다. 급여
+ * 처럼 누를 때마다 재화를 쓰거나, 배경을 누르면 닫히는 판을 여는 조작에는 쓰지 않는다 — 늦게
+ * 열린 판을 다음 누름이 도로 닫는다. 그런 자리는 그려질 틈을 두고 한 번만 누른다.
  */
 export async function tapUntil(
   page: Page,
@@ -79,7 +83,7 @@ export async function tapUntil(
   options: { attempts?: number; gapMs?: number } = {},
 ): Promise<void> {
   const attempts = options.attempts ?? 10;
-  const gapMs = options.gapMs ?? 500;
+  const gapMs = options.gapMs ?? 1_200;
   for (let attempt = 0; attempt < attempts; attempt += 1) {
     if (await ready()) return;
     await tap(page, x, y);

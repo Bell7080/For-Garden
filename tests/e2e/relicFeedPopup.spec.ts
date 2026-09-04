@@ -36,8 +36,11 @@ test.beforeEach(async ({ page }) => {
 });
 
 test("짧은 급여 탭 뒤 성장 팝업이 유지되고 외부 입력으로만 닫힌다", async ({ page }, testInfo) => {
-  // 급여 버튼은 정보창이 원화·스킬을 마저 읽은 뒤에 입력면을 갖는다 — 판이 열릴 때까지 다시 누른다.
-  await tapUntil(page, 766, 524, async () => ((await page.evaluate(() => window.__PF_DEBUG?.popupTitles)) ?? []).includes("한 번에 급여"));
+  // 급여는 되풀이하면 실제로 여러 번 먹이고 판도 열렸다 닫힌다 — 다시 누르지 않고, 정보창이
+  // 원화·스킬을 마저 세울 틈만 두고 한 번 누른다.
+  await page.waitForTimeout(700);
+  const feed = await gamePointOf(page, 766, 524);
+  await page.mouse.click(feed.x, feed.y);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual(["한 번에 급여"]);
 
   // Releasing has already happened; an internal blank/header tap must not reach the backdrop.

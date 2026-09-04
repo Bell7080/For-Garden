@@ -1,4 +1,4 @@
-import { getExpeditionAugment } from "../data/expeditionAugments";
+import { getExpeditionAugment, type ExpeditionAugmentStacking } from "../data/expeditionAugments";
 import type { ExpeditionAugmentSelection } from "./expeditionRewards";
 import type { CombatStatusEffect, DamageType } from "./types";
 
@@ -41,7 +41,7 @@ export type ExpeditionAugmentStatKind =
 
 /** 전투 엔진이 해석하는 순수 효과다. 정적 RelicDef가 아니라 매 전투 Fighter만 이 값을 소비한다. */
 export type ExpeditionAugmentEffect =
-  | { kind: ExpeditionAugmentStatKind; percent: number; scope: ExpeditionAugmentScope }
+  | { kind: ExpeditionAugmentStatKind; percent: number; scope: ExpeditionAugmentScope; stacking?: ExpeditionAugmentStacking; stackKey?: string }
   | { kind: "bleedOnAttack"; strength: "standard" | "minor"; everyNAttacks: number; reapplication: "refresh"; scope: ExpeditionAugmentScope }
   | { kind: "lowHpAttackPowerPercent"; percent: number; belowHpPercent: number; scope: ExpeditionAugmentScope }
   | ExpeditionTriggeredEffect;
@@ -63,13 +63,26 @@ export function augmentAppliesTo(effect: ExpeditionAugmentEffect, relicId: strin
   return effect.scope.kind === "all" || effect.scope.relicId === relicId;
 }
 
-/** 능력치별 단순 백분율을 각각 합산하고, 각 능력치에 한 번 곱할 배율로 바꾼다. */
+/** 능력치별 운영 결합 규칙을 적용하고, 각 능력치에 한 번 곱할 배율로 바꾼다. */
 export function expeditionAugmentStatMultipliers(effects: readonly ExpeditionAugmentEffect[], relicId: string): ExpeditionAugmentStatMultipliers {
   const totals = Object.fromEntries(STAT_KINDS.map((kind) => [kind, 0])) as Record<ExpeditionAugmentStatKind, number>;
+  const groups = new Map<string, Extract<ExpeditionAugmentEffect, { kind: ExpeditionAugmentStatKind }>[] >();
   for (const effect of effects) {
-    if (isStatEffect(effect) && augmentAppliesTo(effect, relicId)) {
-      totals[effect.kind] += effect.percent;
-    }
+    if (!isStatEffect(effect) || !augmentAppliesTo(effect, relicId)) continue;
+    // 수동 전투 설정은 예전처럼 각 행을 가산하고, 카탈로그 효과만 ID별 운영 규칙으로 묶는다.
+    const key = effect.stackKey ?? `${effect.kind}:unkeyed:${groups.size}`;
+    groups.set(key, [...(groups.get(key) ?? []), effect]);
+  }
+  for (const effectsInGroup of groups.values()) {
+    const [first] = effectsInGroup;
+    const values = effectsInGroup.map(({ percent }) => percent);
+    const stacking = first.stacking ?? { mode: "additive" as const };
+    const combined = stacking.mode === "strongest"
+      ? Math.max(...values)
+      : stacking.mode === "additiveCapped"
+        ? Math.min(stacking.capPercent, values.reduce((sum, value) => sum + value, 0))
+        : values.reduce((sum, value) => sum + value, 0);
+    totals[first.kind] += combined;
   }
   return Object.fromEntries(STAT_KINDS.map((kind) => [kind, 1 + totals[kind] / 100])) as ExpeditionAugmentStatMultipliers;
 }

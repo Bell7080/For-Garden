@@ -12,6 +12,11 @@ describe("원정 증강 능력치", () => {
       const pool = EXPEDITION_AUGMENTS.filter((augment) => augment.rarity === rarity);
       expect(new Set(pool.map(({ category }) => category))).toEqual(new Set(categories));
       for (const augment of pool) {
+        // 모든 행이 후보 제한과 전투 결합 정책을 데이터만으로 설명해야 한다.
+        expect(augment.maxStacks).toBeGreaterThan(0);
+        expect(augment.tags).toContain(augment.category);
+        expect(["additive", "additiveCapped", "strongest"]).toContain(augment.stacking.mode);
+        if (augment.stacking.mode === "additiveCapped") expect(augment.stacking.capPercent).toBeGreaterThan(0);
         // 출혈은 공용 규칙을 참조하므로 카탈로그에 백분율을 복제하지 않는다.
         if (augment.effect.kind === "bleedOnAttack" || augment.effect.kind === "triggered") expect(augment.effect).not.toHaveProperty("percent");
         else {
@@ -31,6 +36,16 @@ describe("원정 증강 능력치", () => {
     ];
     expect(expeditionAugmentStatMultipliers(effects, "rex")).toMatchObject({ maxHpPercent: 1.3, defensePercent: 1.15, spellPowerPercent: 1 });
     expect(expeditionAugmentStatMultipliers(effects, "anky")).toMatchObject({ maxHpPercent: 1.1, defensePercent: 1.15, spellPowerPercent: 1.25 });
+  });
+
+  it("합산 상한형은 상한에서 멈추고 최강 단일형은 가장 큰 효과 하나만 쓴다", () => {
+    const effects: ExpeditionAugmentEffect[] = [
+      { kind: "initialShieldPercent", percent: 20, scope: { kind: "all" }, stackKey: "shield", stacking: { mode: "additiveCapped", capPercent: 30 } },
+      { kind: "initialShieldPercent", percent: 20, scope: { kind: "all" }, stackKey: "shield", stacking: { mode: "additiveCapped", capPercent: 30 } },
+      { kind: "attackPowerPercent", percent: 8, scope: { kind: "all" }, stackKey: "proc", stacking: { mode: "strongest" } },
+      { kind: "attackPowerPercent", percent: 18, scope: { kind: "all" }, stackKey: "proc", stacking: { mode: "strongest" } },
+    ];
+    expect(expeditionAugmentStatMultipliers(effects, "rex")).toMatchObject({ initialShieldPercent: 1.3, attackPowerPercent: 1.18 });
   });
 
   it("전투 스냅샷에 모든 능력치와 시작 보호막을 한 번만 적용하고 HP 비율을 보존한다", () => {
@@ -59,7 +74,7 @@ describe("원정 증강 능력치", () => {
     // 시전자는 **제 출혈이 없는 개체**여야 한다. 렉시아의 기본 공격은 3초짜리 출혈을 함께
     // 걸고, 그 3초에도 같은 위력이 곱해져(3.75초) 증강의 2.5초를 덮어 버린다 — 그러면 이
     // 검사가 재는 것이 증강의 지속시간인지 스킬의 지속시간인지 알 수 없다.
-    const state = createSkirmish([getRelic("anky")], [getRelic("husk-shell")], { left: 0, right: 600, top: 0, bottom: 1000 }, {}, {}, { augmentEffects: [
+    const state = createSkirmish([getRelic("rex")], [getRelic("husk-shell")], { left: 0, right: 600, top: 0, bottom: 1000 }, {}, {}, { augmentEffects: [
       { kind: "statusPotencyPercent", percent: 25, scope: { kind: "all" } },
       { kind: "bleedOnAttack", strength: "minor", everyNAttacks: 1, reapplication: "refresh", scope: { kind: "all" } },
     ] });

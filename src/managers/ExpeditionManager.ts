@@ -177,6 +177,8 @@ export class ExpeditionManager {
     if (run.pendingAugmentReward) return structuredClone(run.pendingAugmentReward);
     const seed = `${run.mapSeed}:${nodeId}:augment:1`;
     const offers = generateExpeditionAugmentOffers({ rarity: rule.rarity, relics: run.relics, selections: run.selectedAugments, random: expeditionRewardRandom(seed) });
+    // 모든 운영 후보가 소진됐다면 빈 선택 화면을 저장하지 않고 곧바로 전투 진입을 허용한다.
+    if (offers.length === 0) return null;
     const pending = { nodeId, seed, round: 1, totalRounds: rule.selections, offers };
     const next = { ...structuredClone(run), pendingAugmentReward: pending };
     this.commit({ ...this.state.expedition, run: next });
@@ -198,7 +200,9 @@ export class ExpeditionManager {
       if (!rule.rarity) return false;
       const round = pending.round + 1;
       const seed = `${run.mapSeed}:${pending.nodeId}:augment:${round}`;
-      next.pendingAugmentReward = { nodeId: pending.nodeId, seed, round, totalRounds: pending.totalRounds, offers: generateExpeditionAugmentOffers({ rarity: rule.rarity, relics: next.relics, selections: next.selectedAugments, random: expeditionRewardRandom(seed) }) };
+      const offers = generateExpeditionAugmentOffers({ rarity: rule.rarity, relics: next.relics, selections: next.selectedAugments, random: expeditionRewardRandom(seed) });
+      // 무리 전투의 두 번째 풀이 소진된 경우에도 첫 선택은 저장하고 팝업만 정상 종료한다.
+      next.pendingAugmentReward = offers.length > 0 ? { nodeId: pending.nodeId, seed, round, totalRounds: pending.totalRounds, offers } : null;
     } else next.pendingAugmentReward = null;
     this.commit({ ...this.state.expedition, run: next });
     return true;

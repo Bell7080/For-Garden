@@ -102,6 +102,64 @@ describe("ExpeditionManager", () => {
     expect(save).toHaveBeenCalledTimes(1);
   });
 
+  it("전투 결과의 생존자만 전체 회복 증강 합계만큼 회복하고 100에서 제한한다", () => {
+    const state = createDefaultSession(); const save = vi.fn();
+    const manager = new ExpeditionManager(state, { save }, () => new Date("2026-08-25T12:00:00Z"));
+    manager.start(["anky", "rex", "spino"]);
+    const node = state.expedition.run!.nodes.find(({ type }) => type === "normal")!;
+    // SR 전체 회복과 SSR 전체 회복을 중복 선택한 저장 스냅샷을 구성한다.
+    state.expedition.run!.selectedAugments = [
+      { augmentId: "field-repair" }, { augmentId: "field-repair" }, { augmentId: "regrowth-protocol" },
+      { augmentId: "predator-instinct", targetRelicId: "anky" },
+    ];
+    save.mockClear();
+
+    expect(manager.completeBattle(node.id, [
+      { relicId: "anky", currentHp: 90, alive: true },
+      { relicId: "rex", currentHp: 40, alive: true },
+      { relicId: "spino", currentHp: 0, alive: false },
+    ])).toBe(true);
+    expect(state.expedition.run!.relics).toEqual([
+      { relicId: "anky", currentHp: 100, alive: true },
+      { relicId: "rex", currentHp: 72, alive: true },
+      { relicId: "spino", currentHp: 0, alive: false },
+    ]);
+    expect(save).toHaveBeenCalledTimes(1);
+  });
+
+  it("중복 회복은 50% 상한이며 같은 전투 결과 재전송은 회복과 저장을 반복하지 않는다", () => {
+    const state = createDefaultSession(); const save = vi.fn();
+    const manager = new ExpeditionManager(state, { save }, () => new Date("2026-08-25T12:00:00Z"));
+    manager.start(["anky", "rex", "spino"]);
+    const node = state.expedition.run!.nodes.find(({ type }) => type === "boss")!;
+    // 16% 네 장은 64%지만 순수 누적 규칙의 전투당 상한 50%가 적용된다.
+    state.expedition.run!.selectedAugments = Array.from({ length: 4 }, () => ({ augmentId: "regrowth-protocol" }));
+    const results = [
+      { relicId: "anky", currentHp: 10, alive: true },
+      { relicId: "rex", currentHp: 0, alive: false },
+      { relicId: "spino", currentHp: 25, alive: true },
+    ] as const;
+    save.mockClear();
+
+    // 보스 시간 종료처럼 생존자가 남은 결과도 완료 DTO이면 회복 정책을 따른다.
+    expect(manager.completeBattle(node.id, results)).toBe(true);
+    expect(state.expedition.run!.relics.map(({ currentHp }) => currentHp)).toEqual([60, 0, 75]);
+    expect(manager.completeBattle(node.id, results)).toBe(false);
+    expect(state.expedition.run!.relics.map(({ currentHp }) => currentHp)).toEqual([60, 0, 75]);
+    expect(save).toHaveBeenCalledTimes(1);
+  });
+
+  it("전멸 결과에는 회복 증강이 발동해도 사망자를 자동 부활시키지 않는다", () => {
+    const state = createDefaultSession(); const save = vi.fn();
+    const manager = new ExpeditionManager(state, { save }, () => new Date("2026-08-25T12:00:00Z"));
+    manager.start(["anky", "rex", "spino"]);
+    const node = state.expedition.run!.nodes.find(({ type }) => type === "elite")!;
+    state.expedition.run!.selectedAugments = [{ augmentId: "regrowth-protocol" }];
+
+    expect(manager.completeBattle(node.id, ["anky", "rex", "spino"].map((relicId) => ({ relicId, currentHp: 0, alive: false })))).toBe(true);
+    expect(state.expedition.run!.relics.every(({ currentHp, alive }) => currentHp === 0 && !alive)).toBe(true);
+  });
+
   it("보스 제출과 정산 ID를 전투 진입 전에 한 번만 저장한다", () => {
     const state = createDefaultSession(); const save = vi.fn();
     const manager = new ExpeditionManager(state, { save }, () => new Date("2026-08-25T12:00:00Z"));

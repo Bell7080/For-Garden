@@ -18,6 +18,7 @@ import {
   isFighterAlive,
   moveSpeed,
   renderPose,
+  refreshBleed,
   receivedDamage,
   resolveReceivedDamage,
   SKIRMISH,
@@ -1619,15 +1620,37 @@ describe("원정 난전 확장", () => {
     expect(foe.def.stats.atk).toBe(getRelic("husk-shell").stats.atk);
   });
 
-  it("은 공격 출혈을 단일 슬롯에 중첩하고 약한 재적용이 비율을 낮추지 않는다", () => {
-    const effect: ExpeditionAugmentEffect = { kind: "bleedOnAttack", percent: 4, seconds: 4, scope: { kind: "all" } };
+  it("은 공격 출혈을 단일 슬롯에 중첩하고 약한 재적용이 비율과 출처를 낮추지 않는다", () => {
+    const effect: ExpeditionAugmentEffect = { kind: "bleedOnAttack", strength: "minor", everyNAttacks: 1, reapplication: "refresh", scope: { kind: "all" } };
     const state = createSkirmish([getRelic("rex")], [getRelic("husk-shell")], ARENA, {}, {}, { augmentEffects: [effect] });
     const [ally, foe] = state.fighters;
     ally.x = 400; ally.y = 1000; foe.x = 450; foe.y = 1000; ally.attackCooldown = 0; foe.attackCooldown = 99;
-    foe.bleed = { remaining: 5, total: 5, tickIn: 0.5, percent: 6 };
+    foe.bleed = { remaining: 5, total: 5, tickIn: 0.5, percent: 6, sourceId: "strong-source" };
     stepSkirmish(state, 1 / 60);
-    expect(foe.bleed).toMatchObject({ percent: 6, tickIn: expect.any(Number) });
+    expect(foe.bleed).toMatchObject({ percent: 6, sourceId: "strong-source", tickIn: expect.any(Number) });
     expect(foe.bleed?.remaining).toBeGreaterThan(4.9);
+  });
+
+  it("은 동일 강도 재적용 때 지속시간을 갱신하고 새 공격자에게 기여 출처를 넘긴다", () => {
+    const state = newSkirmish(["anky"], ["husk-shell"]);
+    const foe = state.fighters[1];
+    foe.bleed = { remaining: 0.5, total: BLEED.seconds, tickIn: 0.5, percent: BLEED.percentPerSecond, sourceId: "old-source" };
+    const events: SkirmishEvent[] = [];
+    refreshBleed(foe, BLEED.seconds, BLEED.percentPerSecond, events, state.fighters[0].id);
+    expect(foe.bleed).toMatchObject({ remaining: BLEED.seconds, percent: BLEED.percentPerSecond, sourceId: state.fighters[0].id });
+  });
+
+  it("은 출혈도 보호막을 먼저 소모하고 남은 HP 피해만 공격자 기여도로 기록한다", () => {
+    const state = newSkirmish(["anky"], ["husk-shell"]);
+    const [ally, foe] = state.fighters;
+    ally.attackCooldown = foe.attackCooldown = 99;
+    foe.shield = { amount: 10, providerId: null };
+    foe.bleed = { remaining: 1, total: 1, tickIn: 0, percent: BLEED.percentPerSecond, sourceId: ally.id };
+    const hp = foe.hp;
+    stepSkirmish(state, 1 / 60);
+    expect(foe.shield.amount).toBe(0);
+    expect(foe.hp).toBeLessThan(hp);
+    expect(battleContributionSnapshot(state, "attack").find(({ fighterId }) => fighterId === ally.id)?.total).toBe(hp - foe.hp);
   });
 
   it("은 휴식 시 생존자를 회복하고 한 기만 부활시키되 전멸 뒤에는 부활시키지 않는다", () => {

@@ -1,99 +1,168 @@
 import Phaser from "phaser";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
-import { INTERACTION_CITIES } from "../data/interactionCities";
-import { RELICS } from "../data/relics";
-import { SQUADS } from "../data/factions";
-import { currencyGuide } from "../data/currencyGuide";
-import { ELEMENT_LABEL } from "../ui/info";
+import { INTERACTION_DEPARTMENT_LABEL, interactionDurationLabel } from "../data/interactionCities";
 import { interactionManager } from "../managers/InteractionManager";
 import { session } from "../state/session";
+import type { InteractionDispatchSnapshot } from "../state/session";
 import { Button } from "../ui/Button";
 import { addBackButton } from "../ui/IconButton";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
-import { drawLayer, HOLO, slantedRect } from "../ui/holo";
+import { drawGlassFade, drawHairline, drawLayer, HOLO, slantedRect } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
 import { TopBar } from "../ui/TopBar";
 import { setDebugScene } from "../debug";
 import { PopupLayer } from "../ui/PopupLayer";
 import { InteractionExchangePopup } from "../ui/InteractionExchangePopup";
-import { journalsForCity, type InteractionJournal } from "../data/interactionJournals";
-import { NotificationDot } from "../ui/NotificationDot";
-import { DialogueFlow, type DialogueChoice } from "../core/dialogue";
-import { DialogueLayer } from "../ui/DialogueLayer";
-import { storyManager } from "../managers/StoryManager";
+import { InteractionCityPopup } from "../ui/InteractionCityPopup";
+import { InteractionJournalPopup } from "../ui/InteractionJournalPopup";
+import { INTERACTION_LAYER, interactionLayersHeight, interactionLayerSpot } from "../ui/interactionLayerLayout";
+import { interactionLayerViews, interactionRemainingLabel, type InteractionLayerView } from "../ui/interactionLayerModel";
 
 const BLUE = 0x55b9e8;
-/** 교류 화면은 표시와 입력만 맡고 상태 변경은 InteractionManager로 보낸다. */
+
+/**
+ * 교류 — 외부 도시를 층으로 쌓아 위에서 아래로 고른다.
+ *
+ * 층은 좌우에서 뻗어 나오고, 열리는 순서가 곧 성장 순서다. 한 층을 누르면 그 도시의 쪽지가
+ * 열리고 거기서 파견대를 세운다. 씬은 표시와 입력만 맡고 상태 변경은 `InteractionManager`로
+ * 보낸다 — 어느 렐릭이 어디에 나가 있는지는 서버가 확정한 목록 하나가 소유한다.
+ */
 export class InteractionScene extends Phaser.Scene {
-  private cityId = INTERACTION_CITIES[0].id; private party: string[] = []; private body?: Phaser.GameObjects.Container; private serverNow = Date.now();
   private readonly popups = new PopupLayer(this, 2600);
-  private journalDialogue?: { journal: InteractionJournal; flow: DialogueFlow; layer: DialogueLayer };
+  private serverNow = Date.now();
+  private layers?: Phaser.GameObjects.Container;
+  private layerMask?: Phaser.GameObjects.Graphics;
+  private scrollY = 0;
+  private minScroll = 0;
+  private cityPopup?: InteractionCityPopup;
+  /** 도시 일지는 쪽지에서 열리지만 대사 분기는 씬 위에 서므로 씬이 소유한다. */
+  private journalPopup?: InteractionJournalPopup;
+
   constructor() { super("interaction"); }
+
   create(): void {
     setDebugScene("interaction", "교류");
     // TODO(art): 전용 원화 전까지 loadingSteps가 이미 읽는 로비 배경을 임시 사용한다.
-    addSceneBackground(this, BACKGROUND.lobby); this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.74);
+    addSceneBackground(this, BACKGROUND.lobby);
+    this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.66);
     new TopBar(this, 40, { currencies: "none", onSettings: () => this.scene.start("settings", { returnScene: "interaction" }) });
-    this.add.text(52, 150, "교류", textStyle({ role: "display", size: 50, color: "#a8ddf5" })); addBackButton(this, () => this.scene.start("lobby"));
+    this.add.text(52, 150, "교류", textStyle({ role: "display", size: 50, color: "#a8ddf5" }));
+    this.add.text(56, 216, "도시마다 한 팀씩 보낼 수 있다", textStyle({ role: "body", size: 24, color: COLOR.inkDim }));
     // 파견 목록이 다시 그려져도 파괴되지 않는 씬 고정 진입점이라 항상 교환소를 찾을 수 있다.
     this.add.existing(new Button(this, 875, 185, { width: 300, height: 86, label: "교환소", accentColor: BLUE, onClick: () => new InteractionExchangePopup(this, this.popups, interactionManager).open() }));
-    void Promise.all([interactionManager.cities(), interactionManager.refresh()]).then(([cities, dispatch]) => { this.serverNow = Date.parse(dispatch.serverTime); this.draw(cities.cities); });
-    this.time.addEvent({ delay: 1000, loop: true, callback: () => { this.serverNow += 1000; this.draw(); } });
-  }
-  /** 한 화면 안에서 도시·편성·예상 시간·진행 슬롯을 함께 다시 그린다. */
-  private draw(rows = INTERACTION_CITIES.map(city => ({ ...city, unlocked: city.unlock.researchLevel <= session.playerResearch.level }))): void {
-    this.body?.destroy(true); this.body = this.add.container(); const add = <T extends Phaser.GameObjects.GameObject>(o: T): T => { this.body!.add(o); return o; }; const city = INTERACTION_CITIES.find(c => c.id === this.cityId)!;
-    add(drawLayer(this, 540, 490, slantedRect(980, 500, 18), { fill: COLOR.panel, alpha: HOLO.glass, edge: BLUE, edgeAlpha: .8 }));
-    rows.forEach((c, i) => add(new Button(this, 205 + i * 335, 300, { width: 300, height: 94, label: c.displayName, sub: c.unlocked ? `${c.baseDurationHours}시간` : `연구 Lv.${c.unlock.researchLevel}`, accentColor: BLUE, onClick: () => { if (c.unlocked) { this.cityId = c.id; this.draw(rows); } } })));
-    add(this.add.text(78, 395, city.displayName, textStyle({ role: "emphasis", size: 34, color: "#a8ddf5" }))); add(this.add.text(78, 450, city.description, textStyle({ role: "body", size: 24 })).setWordWrapWidth(900));
-    // 도시별 기록 버튼은 잠긴 원문 대신 발견 수와 읽지 않은 수만 보여 준다.
-    const journals = journalsForCity(city.id); const found = journals.filter(({ id }) => session.discoveredInteractionJournalIds.has(id)); const unread = found.filter(({ id }) => !session.readInteractionJournalIds.has(id));
-    const journalButton = add(new Button(this, 850, 505, { width: 330, height: 82, label: "도시 일지", sub: `${found.length}/${journals.length} 발견 · 새 기록 ${unread.length}`, accentColor: BLUE, onClick: () => this.openJournals(city.id) }));
-    if (unread.length) new NotificationDot(this, journalButton, { x: 150, y: -38 });
-    add(this.add.text(78, 555, `추천 ${city.recommended.elements.map(element => ELEMENT_LABEL[element]).join(" · ")} / ${city.recommended.squads.map(squad => SQUADS[squad].name).join(" · ")}`, textStyle({ role: "body", size: 22, color: COLOR.inkDim }))); add(this.add.text(78, 610, `보상 성향  ${city.rewards.map(r => `${currencyGuide(r.currency).name} ${r.amount}`).join(" · ")}`, textStyle({ role: "body", size: 23 })));
-    add(drawLayer(this, 540, 900, slantedRect(980, 250, 18), { fill: COLOR.panel, alpha: HOLO.glass, edge: BLUE, edgeAlpha: .6 })); const dispatch = session.interaction.slots[0];
-    if (dispatch && !dispatch.claimed) { const left = Math.max(0, Date.parse(dispatch.completesAt) - this.serverNow); add(this.add.text(78, 830, left ? `파견 중 · ${Math.ceil(left / 3_600_000)}시간 남음` : "교류 완료 · 수령 대기", textStyle({ role: "emphasis", size: 32, color: "#a8ddf5" }))); add(this.add.text(78, 900, dispatch.party.map(id => RELICS.find(r => r.id === id)?.name).join(" · "), textStyle({ role: "body", size: 25 }))); if (!left) add(new Button(this, 820, 980, { width: 280, height: 88, label: "완료 수령", accentColor: BLUE, onClick: () => void interactionManager.claim(dispatch.dispatchId, crypto.randomUUID()).then(() => this.draw(rows)) })); return; }
-    add(this.add.text(78, 825, `파견 슬롯 1/1 · 선택 ${this.party.length}/3`, textStyle({ role: "emphasis", size: 30, color: "#a8ddf5" }))); RELICS.filter(r => session.owned.has(r.id)).slice(0, 9).forEach((r, i) => add(new Button(this, 180 + i % 3 * 360, 1090 + Math.floor(i / 3) * 120, { width: 320, height: 88, label: r.name, sub: this.party.includes(r.id) ? "편성됨" : `${ELEMENT_LABEL[r.element]} · ${SQUADS[r.squad].name}`, accentColor: BLUE, onClick: () => { this.party = this.party.includes(r.id) ? this.party.filter(id => id !== r.id) : this.party.length < 3 ? [...this.party, r.id] : this.party; this.draw(rows); } })));
-    add(new Button(this, 780, 1580, { width: 410, height: 110, label: "교류 파견", sub: `${city.baseDurationHours}시간 이내`, variant: "primary", accentColor: BLUE, accentTextColor: "#d9f3ff", onClick: () => { if (this.party.length) void interactionManager.start(city.id, this.party).then(r => { this.serverNow = Date.parse(r.serverTime); this.draw(rows); }); } }));
+
+    this.buildScrollArea();
+    this.buildBackArea();
+
+    void interactionManager.refresh().then((response) => { this.serverNow = Date.parse(response.serverTime); this.drawLayers(); });
+    // 남은 시간은 초마다 흐른다. 층이 다시 그려져도 스크롤 위치는 그대로 남는다.
+    this.time.addEvent({ delay: 1000, loop: true, callback: () => { this.serverNow += 1000; this.drawLayers(); } });
   }
 
-  /** 발견된 제목만 목록에 만들고 미발견 행은 원문 대신 잠금 상태로 남긴다. */
-  private openJournals(cityId: string): void {
-    const journals = journalsForCity(cityId);
-    this.popups.open({ width: 900, height: 980, title: "도시 일지", dim: true, closeOnBackdrop: true }, (body) => {
-      journals.forEach((journal, index) => {
-        const discovered = session.discoveredInteractionJournalIds.has(journal.id);
-        const read = session.readInteractionJournalIds.has(journal.id);
-        const button = new Button(this, 0, -330 + index * 150, { width: 760, height: 110, label: discovered ? journal.title : `기록 ${journal.discoveryOrder} · 미발견`, sub: discovered ? (read ? "열람 완료" : "새 기록") : "본문 잠김", accentColor: BLUE, onClick: () => { if (discovered) this.openJournal(journal); } });
-        body.add(button);
-        if (discovered && !read) new NotificationDot(this, button, { x: 355, y: -48 });
-      });
+  /**
+   * 우하단 뒤로가기 자리.
+   *
+   * **층이 이 자리를 침범하지 않게 그라데이션으로 풀어 둔다.** 단단한 판을 깔면 화면 아래가
+   * 통째로 상자가 되어 배경 원화가 잘려 보이므로, 아래로 갈수록 짙어지는 투명 그라데이션만 둔다.
+   */
+  private buildBackArea(): void {
+    const height = BASE_HEIGHT - INTERACTION_LAYER.viewport.bottom;
+    drawGlassFade(this, BASE_WIDTH / 2, BASE_HEIGHT - height / 2, BASE_WIDTH, height, { topAlpha: 0, bottomAlpha: 0.92 }).setDepth(40);
+    drawHairline(this, BASE_WIDTH / 2, INTERACTION_LAYER.viewport.bottom, BASE_WIDTH, { color: BLUE, alpha: 0.22 }).setDepth(40);
+    addBackButton(this, () => this.scene.start("lobby")).setDepth(41);
+  }
+
+  /** 층이 흐르는 창. 목록이 창보다 길면 그 안에서만 움직인다. */
+  private buildScrollArea(): void {
+    const { top, bottom } = INTERACTION_LAYER.viewport;
+    this.layers = this.add.container(0, 0).setDepth(10);
+    this.layerMask = this.make.graphics({});
+    this.layerMask.fillStyle(0xffffff, 1).fillRect(0, top, BASE_WIDTH, bottom - top);
+    this.layers.setMask(this.layerMask.createGeometryMask());
+
+    const inViewport = (pointer: Phaser.Input.Pointer): boolean => pointer.worldY >= top && pointer.worldY <= bottom;
+    let dragging = false; let origin = 0;
+    const onDown = (pointer: Phaser.Input.Pointer): void => { if (inViewport(pointer) && this.minScroll < 0) { dragging = true; origin = this.scrollY - pointer.y; } };
+    const onMove = (pointer: Phaser.Input.Pointer): void => { if (dragging && pointer.isDown) this.scrollTo(origin + pointer.y); };
+    const onUp = (): void => { dragging = false; };
+    const onWheel = (pointer: Phaser.Input.Pointer, _o: unknown, _dx: number, dy: number): void => { if (inViewport(pointer)) this.scrollTo(this.scrollY - dy); };
+    this.input.on("pointerdown", onDown); this.input.on("pointermove", onMove);
+    this.input.on("pointerup", onUp); this.input.on("pointerupoutside", onUp); this.input.on("wheel", onWheel);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.input.off("pointerdown", onDown); this.input.off("pointermove", onMove);
+      this.input.off("pointerup", onUp); this.input.off("pointerupoutside", onUp); this.input.off("wheel", onWheel);
+      this.layerMask?.destroy(); this.layerMask = undefined;
     });
   }
 
-  /** 일반 본문은 공용 쪽지에서, 분기형 본문은 기존 DialogueLayer와 StoryManager에서 연다. */
-  private openJournal(journal: InteractionJournal): void {
-    interactionManager.markJournalRead(journal.id);
-    if (journal.body) {
-      this.popups.open({ width: 860, height: 620, title: journal.title, dim: true, closeOnBackdrop: true }, (body) => body.add(this.add.text(-360, -170, journal.body, textStyle({ role: "body", size: 30, wrap: 720, lineSpacing: 12 }))));
-      return;
-    }
-    const story = journal.dialogueStory;
-    if (!story) return;
-    const flow = new DialogueFlow(story);
-    const layer = new DialogueLayer(this, (choice) => this.advanceJournalDialogue(choice));
-    this.journalDialogue = { journal, flow, layer };
-    void layer.show(flow.current).finally(() => flow.unlockInput());
+  private scrollTo(value: number): void {
+    this.scrollY = Phaser.Math.Clamp(value, this.minScroll, 0);
+    this.layers?.setY(this.scrollY);
   }
 
-  /** 정적 분기를 진행하고 완독은 StoryManager에 기록한 뒤 씬 재시작으로 Puppet까지 정리한다. */
-  private advanceJournalDialogue(choice?: DialogueChoice): void {
-    const active = this.journalDialogue; if (!active) return;
-    const result = active.flow.advance(choice?.id);
-    const storyId = active.journal.dialogueStory?.id;
-    if (!storyId) return;
-    if (result.effect) storyManager.applyEffect(storyId, result.effect);
-    if (result.completed) { storyManager.complete(storyId); this.scene.restart(); return; }
-    void active.layer.show(result.node!).finally(() => active.flow.unlockInput());
+  /** 서버가 확정한 파견 목록만 읽어 층 상태를 다시 그린다. */
+  private drawLayers(): void {
+    const container = this.layers;
+    if (!container) return;
+    container.removeAll(true);
+    const dispatches = session.interaction.slots.filter((slot): slot is InteractionDispatchSnapshot => slot !== null);
+    const views = interactionLayerViews(session.playerResearch.level, dispatches, this.serverNow);
+    views.forEach((view, index) => container.add(this.buildLayer(view, index)));
+
+    const viewportHeight = INTERACTION_LAYER.viewport.bottom - INTERACTION_LAYER.viewport.top;
+    const contentBottom = INTERACTION_LAYER.firstY + interactionLayersHeight(views.length) - INTERACTION_LAYER.height / 2;
+    this.minScroll = Math.min(0, viewportHeight + INTERACTION_LAYER.viewport.top - contentBottom - 40);
+    this.scrollTo(this.scrollY);
+  }
+
+  /**
+   * 층 한 장.
+   *
+   * 잠긴 층은 무엇이 열릴지만 말하고 눌리지 않는다. 나가 있는 층은 **검은 반투명을 한 겹 더
+   * 쌓아** 남은 시간을 그 위에 적는다 — 층을 지우지 않는 이유는 지금 어디에 누가 나가 있는지가
+   * 목록에서 바로 읽혀야 하기 때문이다.
+   */
+  private buildLayer(view: InteractionLayerView, index: number): Phaser.GameObjects.Container {
+    const spot = interactionLayerSpot(index);
+    const layer = this.add.container(spot.x, spot.y);
+    const { width, height } = INTERACTION_LAYER;
+    const locked = view.state === "locked";
+    const shape = slantedRect(width, height, 26);
+    layer.add(drawLayer(this, 0, 0, shape, {
+      fill: locked ? COLOR.void : COLOR.panel,
+      alpha: locked ? 0.72 : HOLO.glass,
+      edge: view.state === "done" ? COLOR.missionClaim : BLUE,
+      edgeAlpha: locked ? 0.28 : 0.85,
+    }));
+
+    // 글은 뻗어 나온 반대쪽, 화면 안으로 들어온 끝에 붙는다.
+    const textX = spot.fromLeft ? width / 2 - (BASE_WIDTH - INTERACTION_LAYER.inset - spot.x) + 40 : -width / 2 + (spot.x - INTERACTION_LAYER.inset) + 40;
+    const name = `${view.city.displayName} ${INTERACTION_DEPARTMENT_LABEL[view.city.department]}`;
+    layer.add(this.add.text(textX, -40, name, textStyle({ role: "display", size: 34, color: locked ? COLOR.inkDim : "#dff2ff" })).setOrigin(0, 0.5));
+    layer.add(this.add.text(textX, 2, locked ? `연구 Lv.${view.city.unlock.researchLevel}에 열린다` : interactionDurationLabel(view.city.durationMinutes), textStyle({ role: "emphasis", size: 24, color: locked ? COLOR.inkDim : COLOR.accentText })).setOrigin(0, 0.5));
+
+    if (view.state === "away" || view.state === "done") {
+      // 나가 있는 동안에는 층 위에 한 겹을 더 덮는다. 완료는 덮지 않고 색으로 알린다.
+      if (view.state === "away") layer.add(drawLayer(this, 0, 0, shape, { fill: COLOR.void, alpha: 0.62 }));
+      const label = view.state === "away" ? `파견 중 · ${interactionRemainingLabel(view.remainingMs ?? 0)}` : "수령 대기";
+      layer.add(this.add.text(textX, 42, label, textStyle({ role: "emphasis", size: 26, color: view.state === "away" ? "#a8ddf5" : "#e0a83e" })).setOrigin(0, 0.5));
+    }
+
+    if (!locked) {
+      const hit = this.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
+      hit.on("pointerup", () => this.openCity(view));
+      layer.add(hit);
+    }
+    return layer;
+  }
+
+  /** 층을 누르면 그 도시의 쪽지가 열린다. 완료한 층은 바로 보상으로 이어진다. */
+  private openCity(view: InteractionLayerView): void {
+    this.cityPopup ??= new InteractionCityPopup(this, this.popups, interactionManager);
+    this.journalPopup ??= new InteractionJournalPopup(this, this.popups, interactionManager);
+    this.cityPopup.open(view, {
+      onChanged: () => { void interactionManager.refresh().then((response) => { this.serverNow = Date.parse(response.serverTime); this.drawLayers(); }); },
+      onOpenJournal: (cityId) => this.journalPopup!.open(cityId),
+    });
   }
 }

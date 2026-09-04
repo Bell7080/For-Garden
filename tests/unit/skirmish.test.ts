@@ -29,9 +29,11 @@ import {
   type Arena,
   type SkirmishEvent,
   type SkirmishState,
+  REACH_TIER,
+  fighterReach,
 } from "../../src/core/skirmish";
 import { applyExpeditionRest, type ExpeditionAugmentEffect } from "../../src/core/expeditionAugments";
-import { getRelic } from "../../src/data/relics";
+import { RELICS, getRelic } from "../../src/data/relics";
 import { applyLevelGrowth } from "../../src/core/relicProgression";
 import { FEROCITY_RULES } from "../../src/core/ferocity";
 import { ULTIMATE_ENERGY_MAX } from "../../src/core/ultimate";
@@ -570,8 +572,10 @@ describe("단일 난전의 원정 보스 옵션", () => {
     // 등급별 레벨 성장(v0.51.0)에서 SSR 보스가 레벨당 2.2%로 자라 공속이 함께 올랐다.
     // 첫 해일이 그만큼 일찍 오므로 구간을 17초부터로 넓혔다 — 이 값이 재는 것은 "즉시 전멸이
     // 아니라 한 번은 버틴다"이지 정확한 초가 아니다.
+    // 사거리 단계(v0.58.0)에서 도디·메테가 뒷줄에 남아 보스에게 덜 맞으므로 보스의 충전이
+    // 그만큼 늦다. 뒷줄이 안전해지는 것이 이 기능이 노린 결과라 상한을 26초로 넓혔다.
     expect(firstUltimateAt).toBeGreaterThanOrEqual(17);
-    expect(firstUltimateAt).toBeLessThanOrEqual(21);
+    expect(firstUltimateAt).toBeLessThanOrEqual(26);
     expect(survivorsAfterFirstUltimate).toBeGreaterThan(0);
     expect(state.elapsed).toBeGreaterThanOrEqual(24);
     expect(state.elapsed).toBeLessThanOrEqual(38);
@@ -714,6 +718,25 @@ describe("난전 상수", () => {
   it("는 밀어내는 간격보다 사거리를 넓게 잡는다", () => {
     // 반대가 되면 서로 밀려나기만 하고 영원히 때리지 못하는 교착이 생긴다.
     expect(SKIRMISH.reach).toBeGreaterThan(SKIRMISH.spacing);
+  });
+
+  it("의 사거리 세 단계는 모두 밀어내는 간격보다 넓고 근 → 중 → 원 순서다", () => {
+    for (const distance of Object.values(REACH_TIER)) expect(distance).toBeGreaterThan(SKIRMISH.spacing);
+    expect(REACH_TIER.melee).toBeLessThan(REACH_TIER.mid);
+    expect(REACH_TIER.mid).toBeLessThan(REACH_TIER.ranged);
+    // 근거리는 지금까지의 유일한 사거리 그대로다. 단계를 나누며 기존 전투가 바뀌지 않게 한다.
+    expect(REACH_TIER.melee).toBe(SKIRMISH.reach);
+  });
+
+  it("은 모든 개체가 사거리 단계를 고르게 한다", () => {
+    // 기본값을 두면 아무도 고르지 않아 새 개체가 전부 근거리로 들어온다.
+    for (const def of RELICS) expect(Object.keys(REACH_TIER)).toContain(def.reachTier);
+  });
+
+  it("은 원거리 개체가 근거리보다 멀리서 멈춰 선다", () => {
+    const melee = fighterReach({ def: { reachTier: "melee" } } as never);
+    const ranged = fighterReach({ def: { reachTier: "ranged" } } as never);
+    expect(ranged).toBeGreaterThan(melee);
   });
 });
 

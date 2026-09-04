@@ -6,7 +6,7 @@ export { currentAbilityPower } from "./damage";
 import { drainFerocityFever, FEROCITY_RULES } from "./ferocity";
 import { breakthroughBonus } from "./relicProgression";
 import { attackPowerMultiplier, bleedOnAttackEffect, type ExpeditionAugmentEffect } from "./expeditionAugments";
-import type { CombatStatusEffect, FerocityTrait, RelicDef, Side, Skill, TeamBuff } from "./types";
+import type { CombatStatusEffect, FerocityTrait, ReachTier, RelicDef, Side, Skill, TeamBuff } from "./types";
 import { canUseUltimate, ULTIMATE_ENERGY_MAX } from "./ultimate";
 import { stealthTransition, type CombatEffectCue } from "./combatEffects";
 import {
@@ -287,8 +287,9 @@ export const SKIRMISH = {
   /** 이동 속도 100인 캐릭터가 1초에 가는 거리(px). */
   moveRate: 1.45,
   /**
-   * 이 거리 안이면 붙었다고 보고 때리기 시작한다.
+   * 근거리 개체가 붙었다고 보고 때리기 시작하는 거리.
    * 반드시 `spacing`보다 커야 한다 — 밀어내는 간격이 사거리보다 넓으면 서로 영원히 닿지 못한다.
+   * 중거리·원거리는 `REACH_TIER`가 이 값에서부터 벌린다.
    */
   reach: 172,
   /** 서로 밀어내 겹치지 않게 유지하는 간격. 여섯이 한 덩어리로 뭉쳐 보이지 않게 한다. */
@@ -326,6 +327,24 @@ export const SKIRMISH = {
   /** 무한 공속 누적이 0초 간격과 한 프레임 무한 공격을 만들지 않게 하는 안전 하한이다. */
   minimumAttackInterval: 0.12,
 } as const;
+
+/**
+ * 사거리 단계가 정하는 실제 거리(px).
+ *
+ * 개체 정의(`RelicDef.reachTier`)는 단계만 고르고 숫자는 여기 한 표에만 있다. 셋 다
+ * `SKIRMISH.spacing`(밀어내는 간격)보다 커야 한다 — 간격이 사거리보다 넓으면 서로 영원히
+ * 닿지 못한다.
+ */
+export const REACH_TIER = {
+  melee: SKIRMISH.reach,
+  mid: 250,
+  ranged: 340,
+} as const satisfies Readonly<Record<ReachTier, number>>;
+
+/** 이 전투원이 멈춰 서서 때리기 시작하는 거리. 씬과 코어가 같은 값을 읽는다. */
+export function fighterReach(fighter: Fighter): number {
+  return REACH_TIER[fighter.def.reachTier];
+}
 
 /**
  * 출혈. `bleedStreak` 패시브가 남기는 상처다.
@@ -704,7 +723,7 @@ function tickGourmetHunt(fighter: Fighter, dt: number, state: SkirmishState): vo
   if (fighter.huntCooldown > 0) return;
   fighter.huntCooldown = passive.huntCooldownSeconds ?? 10;
   // 자리를 옮기는 것 자체가 화면에서 보이는 신호라 따로 표시 사건을 만들지 않는다.
-  leapToLowestHpEnemy(fighter, state, SKIRMISH.reach * 0.8);
+  leapToLowestHpEnemy(fighter, state, fighterReach(fighter) * 0.8);
 }
 
 /**
@@ -2157,7 +2176,9 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     fighter.attackCooldown -= dt;
 
     // 붙을 때와 떨어질 때의 기준을 다르게 둬 경계에서 걷다 서다를 반복하지 않는다.
-    fighter.engaged = fighter.engaged ? gap <= SKIRMISH.reach : gap <= SKIRMISH.reach * SKIRMISH.engageRatio;
+    // 사거리는 개체마다 다르다. 붙을 때와 떨어질 때의 기준만 같은 비율로 갈린다.
+    const reach = fighterReach(fighter);
+    fighter.engaged = fighter.engaged ? gap <= reach : gap <= reach * SKIRMISH.engageRatio;
 
     if (!fighter.engaged) {
       const step = moveSpeed(fighter, state) * dt;

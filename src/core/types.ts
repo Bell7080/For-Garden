@@ -16,6 +16,15 @@ export type Element = "fire" | "water" | "grass" | "earth" | "wind";
 /** 전투 성능을 강제하지 않는 캐릭터 특화 태그다. 실제 행동은 능력치와 스킬이 결정한다. */
 export type Role = "warrior" | "tank" | "assassin" | "support";
 
+/**
+ * 근접·중거리·원거리.
+ *
+ * 지금까지는 전원이 같은 거리에서 붙어 바이올린도 깃펜도 적 코앞까지 걸어갔다. 단계를 나누면
+ * 원거리 개체가 저절로 뒷줄에 남아 편성이 말하는 앞뒤가 화면에서도 보인다. 다만 원거리는
+ * **도망치지 않는다** — 카이팅을 넣는 순간 난전이 술래잡기가 된다.
+ */
+export type ReachTier = "melee" | "mid" | "ranged";
+
 /** 프로토타입 렐릭 희귀도. 배열 순서에 기대지 말고 가챠 규칙의 명시적 우선순위를 사용한다. */
 export type RelicRarity = "R" | "SR" | "SSR";
 
@@ -611,6 +620,14 @@ export interface RelicDef {
   element: Element;
   /** 편성 이해를 돕는 특화 태그이며 별도의 고정 보정치는 주지 않는다. */
   role: Role;
+  /**
+   * 난전에서 이 개체가 멈춰 서서 때리기 시작하는 거리.
+   *
+   * 실제 픽셀 값은 `REACH_TIER` 한 표가 정하고 개체는 **단계만** 고른다 — 개체마다 숫자를
+   * 적으면 새 개체가 들어올 때마다 사거리가 조금씩 늘어나 앞뒤 줄이 흐려진다. 생략할 수
+   * 없게 필수로 두는 이유는 기본값이 있으면 아무도 고르지 않기 때문이다.
+   */
+  reachTier: ReachTier;
   /** 전투 수치나 장착 룬과 섞이지 않는 정적 방치 발굴 특화다. */
   excavationTrait: ExcavationTrait;
   stats: Stats;

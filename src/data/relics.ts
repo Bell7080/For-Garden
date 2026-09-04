@@ -30,6 +30,8 @@ export const RELICS: RelicDef[] = [
     origin: "티라노사우루스",
     element: "fire",
     role: "warrior",
+    // 송곳니로 물어뜯는 근접 물리 딜러.
+    reachTier: "melee",
     // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
     excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 0.30, efficiencyMultiplier: 1.10 },
     stats: {
@@ -111,6 +113,8 @@ export const RELICS: RelicDef[] = [
     origin: "트리케라톱스",
     element: "earth",
     role: "tank",
+    // 들이받아 막아서는 전방 탱커.
+    reachTier: "melee",
     // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
     excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 25, efficiencyMultiplier: 1.05 },
     stats: {
@@ -192,6 +196,8 @@ export const RELICS: RelicDef[] = [
     origin: "스피노사우루스",
     element: "water",
     role: "assassin",
+    // 악어턱으로 물어뜯는 근접 암살자.
+    reachTier: "melee",
     // 치즈케이크 생산 계약은 수중 발굴 특화이며 전투 역할을 바꿔도 기존 생산성을 보존한다.
     excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 0.80, efficiencyMultiplier: 1.10 },
     // 낮은 HP·방어력은 렉시아보다 낮은 생존력을, 높은 공격·공속·이속은 암살자의 선공 능력을 보장한다.
@@ -277,6 +283,8 @@ export const RELICS: RelicDef[] = [
     origin: "벨로키랍토르",
     element: "grass",
     role: "assassin",
+    // 발톱으로 파고드는 근접 암살자.
+    reachTier: "melee",
     // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
     excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 27.5, efficiencyMultiplier: 1.08 },
     stats: {
@@ -359,6 +367,8 @@ export const RELICS: RelicDef[] = [
     origin: "도도새",
     element: "wind",
     role: "support",
+    // 깃펜을 든 조수라 겁이 많아 한 걸음 뒤에서 거든다.
+    reachTier: "mid",
     // 다이아는 희소 재화라 1시간 생산량을 1 미만으로 두고 수확 시에만 내림한다.
     // 보석은 희소성을 유지하되 기본 보관 4시간에 슬롯 하나가 최소 정수 1개를 만든다.
     excavationTrait: { primaryCurrency: "gems", baseProductionPerHour: 0.25, efficiencyMultiplier: 1.12 },
@@ -440,6 +450,8 @@ export const RELICS: RelicDef[] = [
     origin: "이크티오사우루스",
     element: "water",
     role: "warrior",
+    // 물장구는 붙어야 튄다.
+    reachTier: "melee",
     // 물가에서 주워 오는 것이 곧 그 아이의 일이라, 발굴 특화도 화석 회수 쪽에 붙인다.
     excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 0.28, efficiencyMultiplier: 1.06 },
     // 앞으로 뛰어드는 전사지만 피해는 주문력에서 나온다 — 물살 자체가 무기라 공격력이 낮고
@@ -530,6 +542,8 @@ export const RELICS: RelicDef[] = [
     origin: "게오스테른베르기아",
     element: "wind",
     role: "support",
+    // 바람을 밀어 보내는 지원가.
+    reachTier: "mid",
     // 관측 기록을 자산으로 바꾸는 담당이라 발굴 특화도 골드 회수 쪽에 붙인다.
     excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 31.5, efficiencyMultiplier: 1.10 },
     // 회복이 아니라 아군의 스킬 회전을 앞당기는 지원가라, 자기 화력보다 생존과 충전에 무게를 둔다.
@@ -612,6 +626,8 @@ export const RELICS: RelicDef[] = [
     origin: "메갈로돈",
     element: "water",
     role: "support",
+    // 붓이 닿는 만큼만 다가간다.
+    reachTier: "mid",
     // 그림으로 표본을 기록하는 담당이라 발굴 특화도 화석 회수 쪽에 붙인다.
     excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 0.28, efficiencyMultiplier: 1.14 },
     // 앞에 나서지 못하는 지원가라 화력과 발이 느리고, 대신 오래 서 있도록 체력과 저항이 두껍다.
@@ -704,6 +720,8 @@ export const RELICS: RelicDef[] = [
     origin: "파키케팔로사우루스",
     element: "earth",
     role: "warrior",
+    // 철거 스윙은 휘두르는 팔 길이가 곧 사거리다.
+    reachTier: "melee",
     // 부수고 다니는 개체라 발굴 특화도 화석 회수 쪽에 붙인다.
     excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 0.26, efficiencyMultiplier: 1.04 },
     // 머리로 받는 개체라 방어가 두껍고 발이 빠르다. 주문력을 쓰는 스킬이 하나도 없어 낮게 둔다.
@@ -804,6 +822,8 @@ export const RELICS: RelicDef[] = [
     origin: "마카이로두스",
     element: "earth",
     role: "assassin",
+    // 손질은 붙어서 한다.
+    reachTier: "melee",
     // 재료를 다루는 손이라 발굴 특화도 치즈케이크 쪽에 붙인다.
     excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 0.76, efficiencyMultiplier: 1.12 },
     // 가장 약해진 적을 골라 뛰어드는 개체라 발이 가장 빠르고, 칼을 쓰는 손이라 공격력이 높다.
@@ -886,6 +906,8 @@ export const RELICS: RelicDef[] = [
     origin: "실패한 벨로키랍토르 개체",
     element: "fire",
     role: "assassin",
+    // 갈퀴로 할퀴는 근접 허스크.
+    reachTier: "melee",
     // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
     excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 22.5, efficiencyMultiplier: 1.00 },
     stats: {
@@ -948,6 +970,8 @@ export const RELICS: RelicDef[] = [
     origin: "실패한 갑주 개체",
     element: "earth",
     role: "tank",
+    // 몸통으로 밀어붙이는 근접 허스크.
+    reachTier: "melee",
     // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
     excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 0.25, efficiencyMultiplier: 1.00 },
     stats: {
@@ -1010,6 +1034,8 @@ export const RELICS: RelicDef[] = [
     origin: "실패한 익룡 개체",
     element: "water",
     role: "support",
+    // 날갯짓과 굉음이 조금 떨어진 곳까지 닿는다.
+    reachTier: "mid",
     // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
     excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 0.60, efficiencyMultiplier: 1.00 },
     stats: {
@@ -1084,6 +1110,8 @@ export const RELICS: RelicDef[] = [
     origin: "메가테리움",
     element: "grass",
     role: "support",
+    // 활을 켜는 자리는 무대 뒤편이다.
+    reachTier: "ranged",
     // 물리형 지원가의 견고함을 운영에서도 드러내도록 화석 생산 특화를 부여했다.
     excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 0.30, efficiencyMultiplier: 1.12 },
     stats: {
@@ -1131,6 +1159,9 @@ export const RELICS: RelicDef[] = [
     origin: "리바이어던 멜빌레이",
     element: "water",
     role: "tank",
+    // 거대한 턱은 리치가 길지만 일부러 근거리로 둔다 — 보스가 한 걸음 물러서면 붙는 데
+    // 그만큼이 더 걸려 첫 해일이 5초쯤 늦고, 그만큼 원정 최종층이 통째로 쉬워진다.
+    reachTier: "melee",
     // 적 전용 정의도 RelicDef의 완전한 정적 계약을 지켜 공용 정보창이 예외 없이 표시한다.
     excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 0, efficiencyMultiplier: 1.00 },
     stats: {

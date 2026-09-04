@@ -29,7 +29,7 @@ import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
 import { addStarMark } from "./rarityMark";
 import { addMarkChip } from "./MarkChip";
 import { addRuneCard, addRuneFrame, RUNE_ACCENT, RUNE_CENTER_Y, runeTexture } from "./runeIcons";
-import { STAT_TONE } from "./statTones";
+import { REACH_LABEL, STAT_TONE, reachToneHex } from "./statTones";
 import { equippedRelicName, openRuneInfoPopup, RUNE_STAT_LABEL } from "./RunePopup";
 import { combatPower } from "../core/combatPower";
 import { StatRadar } from "./StatRadar";
@@ -393,6 +393,8 @@ export class InfoManager {
   private readonly bondBar: Gauge;
   private readonly bondLabel: Phaser.GameObjects.Text;
 
+  /** 능력치 칸 제목 아래에 서는 사거리 한 줄. */
+  private reachLabel!: Phaser.GameObjects.Text;
   /** 능력치 칸의 오각형. 숫자는 돋보기로 연 상세가 맡는다. */
   private statRadar?: StatRadar;
   private readonly gemSlots: GemSlot[] = [];
@@ -562,6 +564,12 @@ export class InfoManager {
     // 능력치.
     this.addSectionTitle("능력치", 1024 - 198);
     this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 30, 876, (from) => this.openExtraStats(from), statPanel);
+    // 사거리는 오각형에 없는 축이라 제목 바로 아래에 이름표처럼 한 줄로만 선다. 색은 상세
+    // 팝업이 맡고 여기서는 회색으로 물러난다 — 늘 떠 있는 자리는 균형이 먼저 읽혀야 한다.
+    this.reachLabel = scene.add
+      .text(COLUMN.x - COLUMN.width / 2 + 42, 858, "", textStyle({ role: "body", size: 22, color: COLOR.inkDim }))
+      .setOrigin(0, 0.5);
+    attach(statPanel, this.reachLabel);
     // 칸에는 숫자가 아니라 **오각형**이 선다. 다섯 축의 균형은 숫자 다섯 줄보다 한눈에 읽히고,
     // 정확한 값이 필요할 때만 돋보기로 연다. 축 이름은 굵게 키우고 능력치 색을 입힌다.
     this.statRadar = new StatRadar(this.scene, COLUMN.x, 1024, STAT_RADAR_RADIUS, {
@@ -1590,16 +1598,23 @@ export class InfoManager {
         body.add(this.scene.add.text(edge, y + 22, detail, detailStyle).setOrigin(1, 0.5));
         body.add(drawHairline(this.scene, 0, y + 42, width - 68, { color: COLOR.accent, alpha: 0.14 }));
       });
+      // 사거리는 오각형에 없는 축이라 다섯 줄 **아래**에 한 줄로 붙는다. 값이 아니라 단계라
+      // 기본값 대비 상승분이 없고, 단계 자체를 색이 말한다(근거리 붉은색·중거리 푸른색·원거리 노란색).
+      const reachY = top + 194 + STAT_CHIPS.length * 80;
+      const reachHex = reachToneHex(def.reachTier);
+      body.add(this.scene.add.text(-edge, reachY, "사거리", textStyle({ role: "display", size: 30, color: reachHex })).setOrigin(0, 0.5));
+      body.add(this.scene.add.text(edge, reachY, REACH_LABEL[def.reachTier], textStyle({ role: "display", size: 36, color: reachHex })).setOrigin(1, 0.5));
+      body.add(drawHairline(this.scene, 0, reachY + 42, width - 68, { color: COLOR.accent, alpha: 0.14 }));
       body.add(
         this.scene.add
-          .text(-edge, top + 628, "세부 능력치", textStyle({ role: "emphasis", size: 26, color: COLOR.accentText }))
+          .text(-edge, top + 660, "세부 능력치", textStyle({ role: "emphasis", size: 26, color: COLOR.accentText }))
           .setOrigin(0, 0),
       );
       EXTRA_STATS.forEach((row, index) => {
-        const y = top + 700 + index * 72;
+        const y = top + 726 + index * 66;
         body.add(this.scene.add.text(-edge, y, row.label, textStyle({ role: "body", size: 28, color: COLOR.inkDim })).setOrigin(0, 0.5));
         body.add(this.scene.add.text(edge, y, stats[row.key].toLocaleString() + (row.suffix ?? ""), textStyle({ role: "display", size: 33 })).setOrigin(1, 0.5));
-        if (index < EXTRA_STATS.length - 1) body.add(drawHairline(this.scene, 0, y + 36, width - 68, { color: COLOR.accent, alpha: 0.14 }));
+        if (index < EXTRA_STATS.length - 1) body.add(drawHairline(this.scene, 0, y + 33, width - 68, { color: COLOR.accent, alpha: 0.14 }));
       });
     });
   }
@@ -2062,6 +2077,8 @@ export class InfoManager {
     const cap = relicLevelCap(progress.breakthrough);
     const maxed = progress.level >= cap;
 
+    // 사거리는 성장하지 않는 정적 값이지만, 다른 캐릭터로 넘길 때 함께 갈아 끼워야 한다.
+    this.reachLabel.setText("사거리 · " + REACH_LABEL[def.reachTier]);
     this.levelValue.setText(String(progress.level));
     this.levelCap.setText("/ " + cap);
     // 숫자 폭이 자리 수에 따라 달라지므로 붙는 자리도 그릴 때마다 다시 잡는다.

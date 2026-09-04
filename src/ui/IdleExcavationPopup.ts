@@ -9,6 +9,7 @@ import { notificationManager } from "../managers/NotificationManager";
 import { Button } from "./Button";
 import { chipPoints, drawHairline, drawLayer, HOLO, HoloBar, slantedRect } from "./holo";
 import { PortraitCard } from "./PortraitCard";
+import { autoAssignExcavation, EXCAVATION_AUTO_MODE_LABEL, EXCAVATION_AUTO_MODES, type ExcavationAutoMode, type ExcavationCandidate } from "../core/excavationAutoAssign";
 import { bindLongPress } from "./longPressInfo";
 import { type InfoManager, sceneInfoManager } from "./info";
 import { PORTRAIT_GRID_MASK_GAP, portraitGridContentHeight, portraitGridFirstRowY } from "./portraitGrid";
@@ -138,6 +139,8 @@ export class IdleExcavationPopup {
   private gridPointerMoveHandler?: (pointer: Phaser.Input.Pointer) => void;
   private gridPointerUpHandler?: () => void;
   private saving = false;
+  /** 자동 배치의 기준. 창을 여는 동안만 남는다 — 다음에 열 때는 다시 골고루부터 본다. */
+  private autoMode: ExcavationAutoMode = "balanced";
   /** 전송 실패 재시도에서도 같은 멱등 키를 유지하고 성공한 뒤에만 비운다. */
   private harvestRequestId?: string;
   /** 성공 결과는 다음 현황 렌더 한 번에만 안내·연출하고 즉시 소비한다. */
@@ -447,13 +450,42 @@ export class IdleExcavationPopup {
     return sceneInfoManager(this.scene, { key: "excavation-relic", portraitDepth: 2601, baseDepth: 2600 });
   }
 
+  /** 보유한 렐릭과 그 성장만 넘긴다 — 무엇을 세울지는 순수 규칙이 정한다. */
+  private autoCandidates(): ExcavationCandidate[] {
+    return RELICS.filter((relic) => session.owned.has(relic.id)).map((def) => ({
+      def,
+      progress: session.relicProgress[def.id] ?? { level: 1, breakthrough: 0 },
+    }));
+  }
+
   private renderEditor(error?: string): void {
     if (!this.draft || !this.content) return;
     this.renderUpper(this.draft, true);
     const content = this.resetLower();
     if (!content) return;
     content.add(this.scene.add.text(-360, GRID_VIEW.top - 42, `보유 렐릭 · ${this.selectedSlot + 1}번 칸에 배치`, textStyle({ role: "emphasis", size: 23, color: COLOR.accentText })).setOrigin(0, 0.5));
-    content.add(this.scene.add.text(360, GRID_VIEW.top - 42, "빈 칸 이동 · 찬 칸 자리 교체 · 같은 카드 재선택 해제", textStyle({ role: "body", size: 17, color: COLOR.inkDim })).setOrigin(1, 0.5));
+    // 조작 설명 대신 **그 조작을 대신해 주는 단추**를 둔다. 기준은 화살표로 돌려 고르고,
+    // 무엇을 많이 캘지는 지금 모자란 재화에 따라 그때그때 달라지므로 하나로 고정하지 않는다.
+    const autoY = GRID_VIEW.top - 42;
+    content.add(new Button(this.scene, 210, autoY, {
+      width: 190, height: 56, fontSize: 22,
+      label: "자동 배치", sub: EXCAVATION_AUTO_MODE_LABEL[this.autoMode],
+      onClick: () => {
+        if (this.saving || !this.draft) return;
+        this.draft = autoAssignExcavation(this.autoCandidates(), this.autoMode);
+        // 자동으로 채운 뒤에는 첫 빈 칸(없으면 1번)이 다음 손을 기다린다.
+        this.selectedSlot = Math.max(0, this.draft.findIndex((id) => id === null));
+        this.renderEditor();
+      },
+    }));
+    content.add(new Button(this.scene, 340, autoY, {
+      width: 56, height: 56, fontSize: 24, label: "▶",
+      onClick: () => {
+        const index = EXCAVATION_AUTO_MODES.indexOf(this.autoMode);
+        this.autoMode = EXCAVATION_AUTO_MODES[(index + 1) % EXCAVATION_AUTO_MODES.length];
+        this.renderEditor();
+      },
+    }));
     const owned = RELICS.filter((relic) => session.owned.has(relic.id));
     const grid = this.scene.add.container(0, GRID_VIEW.top + this.gridScrollY);
     owned.forEach((relic, index) => {

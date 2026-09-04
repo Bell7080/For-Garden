@@ -22,8 +22,17 @@ export interface PortraitCardOptions {
   label?: string;
   /** 이름 아래 한 줄. 역할·등급처럼 짧은 문구를 넣는다. */
   sub?: string;
-  /** 보조 문구 왼쪽의 작은 단색 아이콘. 얼굴·이름보다 강해지지 않도록 보조 줄 크기에 맞춘다. */
+  /** 보조 문구 왼쪽의 작은 아이콘. 얼굴·이름보다 강해지지 않도록 보조 줄 크기에 맞춘다. */
   subIcon?: string;
+  /**
+   * 보조 줄이 말하는 것.
+   *
+   * `currency`는 **실제 재화 그림**을 그대로 세우고 글자를 흰색에 검은 테두리로 적는다 —
+   * 여러 색으로 그린 재화 아이콘에 강조색 tint를 먹이면 무슨 재화인지 알 수 없는 한 덩어리가
+   * 되고, 밝은 발굴장 원화 위에서는 강조색 글자가 배경에 묻힌다. `accent`는 역할·등급처럼
+   * 단색 선화와 짧은 문구를 위한 기본이다.
+   */
+  subStyle?: "accent" | "currency";
   /** 이름 앞에 붙는 레벨. 없으면 이름만 보인다. */
   level?: number;
   /** 희귀도. 칩 바탕색이 여기서 나온다(SSR 황금 호박 · SR 보랏빛 · R 하늘빛). */
@@ -297,14 +306,21 @@ export class PortraitCard extends Phaser.GameObjects.Container {
       if (options.sub) {
         // 아이콘과 문구를 한 덩어리로 두되 이름 시작선은 유지한다. 전용 색은 화면이 tint로 넘기지
         // 않고 공용 강조색 하나만 써서 얼굴과 이름보다 먼저 읽히지 않게 한다.
-        const subIconSize = Math.min(24, width / 10);
-        const subLeft = nameLeft + (options.subIcon ? subIconSize + 7 : 0);
+        const currencyRow = options.subStyle === "currency";
+        const subIconSize = Math.min(currencyRow ? 30 : 24, width / (currencyRow ? 8 : 10));
+        // 그림과 수는 바짝 붙인다 — 멀리 떼면 그림과 숫자가 두 정보로 읽힌다.
+        const subLeft = nameLeft + (options.subIcon ? subIconSize + (currencyRow ? 4 : 7) : 0);
         this.subText = scene.add
-          .text(subLeft, baseline + 10, options.sub, textStyle({ role: "emphasis", size: Math.min(22, width / 12), color: COLOR.accentText }))
+          .text(subLeft, baseline + 10, options.sub, textStyle({ role: "emphasis", size: Math.min(currencyRow ? 24 : 22, width / 12), color: currencyRow ? COLOR.ink : COLOR.accentText }))
           .setOrigin(0, 0);
+        // 밝은 원화 위에서도 수가 살아남도록 획 둘레를 검게 두른다. 판을 깔면 카드에 상자가 하나 더 생긴다.
+        if (currencyRow) this.subText.setStroke("#05070a", 5).setShadow(0, 2, "#05070a", 4, true, true);
         this.add(this.subText);
         if (options.subIcon && scene.textures.exists(options.subIcon)) {
-          this.add(scene.add.image(nameLeft + subIconSize / 2, baseline + 10 + subIconSize / 2, options.subIcon).setDisplaySize(subIconSize, subIconSize).setTint(COLOR.accent).setAlpha(0.72));
+          const icon = scene.add.image(nameLeft + subIconSize / 2, baseline + 10 + subIconSize / 2 + (currencyRow ? 1 : 0), options.subIcon).setDisplaySize(subIconSize, subIconSize);
+          // 재화 그림은 제 색을 갖는다 — tint를 먹이면 무슨 재화인지 알 수 없다.
+          if (!currencyRow) icon.setTint(COLOR.accent).setAlpha(0.72);
+          this.add(icon);
         }
       }
     }

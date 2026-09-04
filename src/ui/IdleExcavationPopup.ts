@@ -15,7 +15,7 @@ import { type InfoManager, sceneInfoManager } from "./info";
 import { PORTRAIT_GRID_MASK_GAP, portraitGridContentHeight, portraitGridFirstRowY } from "./portraitGrid";
 import type { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
-import { EXCAVATION_TRAIT_ICON } from "./excavationIcons";
+import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { completedAdToken } from "../data/adRewards";
 import type { CurrencyIconKey } from "./currencyIcons";
 import { openRewardPopup } from "./RewardPopup";
@@ -497,7 +497,7 @@ export class IdleExcavationPopup {
       const card = new PortraitCard(this.scene, x, y, {
         width: GRID_VIEW.cardWidth, height: GRID_VIEW.cardHeight, portraitAssetId: relic.portraitAssetId,
         label: relic.name, level: progress?.level ?? 1, rarity: relic.rarity, stars: (progress?.breakthrough ?? 0) + 1,
-        subIcon: EXCAVATION_TRAIT_ICON[relic.excavationTrait.primaryCurrency], sub: formatRate(detail?.totalPerHour ?? 0),
+        subIcon: CURRENCY_ICON_BY_WALLET[relic.excavationTrait.primaryCurrency], sub: formatRate(detail?.totalPerHour ?? 0), subStyle: "currency",
         // 이미 1~3번 칸에 배치된 카드는 발광뿐 아니라 눌린 듯한 검정 면도 함께 써 "이미 골랐다"를
         // 알린다. 튀어나온 머리 몫은 PortraitCard가 원화 알파 그대로 복제해 겹치므로 여기서는
         // 값만 켠다.

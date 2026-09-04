@@ -263,6 +263,14 @@ const STAT_CHIPS: readonly { key: keyof Stats; label: string; color: number }[] 
  */
 const RUNE_PICKER = { columns: 4, cardWidth: 180, cardHeight: 180, cellWidth: 208, cellHeight: 208, padX: 48, headerHeight: 272 } as const;
 
+/**
+ * 능력치 상세가 서는 세로 자리.
+ *
+ * 화면 한가운데보다 아주 조금만 위다 — 정확히 가운데에 두면 판 밑변이 하단 조작 줄과
+ * 겹쳐 보인다. 판 높이가 바뀌면 이 값이 아니라 높이만 고치면 된다.
+ */
+const EXTRA_STATS_POPUP_Y = 920;
+
 /** 돋보기로만 여는 보조 능력치. 평소에는 다섯 축만 보여 화면을 비운다. */
 const EXTRA_STATS: readonly { key: keyof Stats; label: string; suffix?: string }[] = [
   { key: "attackSpeed", label: "공격 속도" },
@@ -1566,26 +1574,32 @@ export class InfoManager {
     if (!def) return;
     const stats = relicProgression.getFinalStats(def.id);
     // 판은 글자가 들어가는 만큼만 넓다. 남는 여백은 읽는 데 도움이 되지 않고 뒤 화면만 가린다.
-    const width = 640;
+    const width = 700;
     const edge = width / 2 - 34;
-    const height = 1010;
-    this.popups.open({ width, height, title: "능력치 상세", tilt: -1.2, ...anchorOf(from) }, (body) => {
+    const height = 1150;
+    // 이 창만 **누른 자리에 붙지 않고 화면 가운데에 선다.** 열두 줄이 쌓인 성적표라 돋보기에
+    // 매달면 판이 통째로 아래로 밀려 마지막 줄이 화면 밑변에 붙는다(v0.58.0까지 그랬다) —
+    // 손이 닿기도 읽기도 어려운 자리다. 관찰 기록판과 같은 이유로 자리를 고정한다.
+    this.popups.open({
+      width, height, title: "능력치 상세", tilt: -1.2,
+      x: BASE_WIDTH / 2, y: EXTRA_STATS_POPUP_Y, onClose: from.onClose,
+    }, (body) => {
       // 칸에는 오각형이 서 있으므로 여기서는 **숫자**를 맡는다. 총 전투력이 먼저 오고, 다섯
       // 축의 정확한 값과 기본값 대비 상승분, 그 아래에 오각형에 없는 세부 수치가 온다.
       const top = -height / 2;
       // 총 전투력은 판때기 없이 맨 글자로 선다. 이 창에서 가장 굵고 큰 수라 판을 깔지 않아도
       // 저절로 맨 앞에 읽히고, 판을 깔면 아래 목록과 다른 종류의 값처럼 보인다.
-      body.add(this.scene.add.text(-edge, top + 96, "전투력", textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5));
+      body.add(this.scene.add.text(-edge, top + 100, "전투력", textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5));
       body.add(
         this.scene.add
-          .text(edge, top + 96, combatPower(stats).toLocaleString(), textStyle({ role: "display", size: 52 }))
+          .text(edge, top + 100, combatPower(stats).toLocaleString(), textStyle({ role: "display", size: 52 }))
           .setOrigin(1, 0.5)
           .setScale(1, 1.12)
           .setShadow(3, 6, "#05070a", 8, false, true),
       );
-      body.add(drawHairline(this.scene, 0, top + 136, width - 68, { color: COLOR.accent, alpha: 0.3 }));
+      body.add(drawHairline(this.scene, 0, top + 142, width - 68, { color: COLOR.accent, alpha: 0.3 }));
       STAT_CHIPS.forEach((chip, index) => {
-        const y = top + 194 + index * 80;
+        const y = top + 204 + index * 84;
         const base = def.stats[chip.key];
         const gain = stats[chip.key] - base;
         // 칸의 축 이름과 같은 색이라 그래프에서 본 축을 그대로 따라 읽는다.
@@ -1600,21 +1614,21 @@ export class InfoManager {
       });
       // 사거리는 오각형에 없는 축이라 다섯 줄 **아래**에 한 줄로 붙는다. 값이 아니라 단계라
       // 기본값 대비 상승분이 없고, 단계 자체를 색이 말한다(근거리 붉은색·중거리 푸른색·원거리 노란색).
-      const reachY = top + 194 + STAT_CHIPS.length * 80;
+      const reachY = top + 204 + STAT_CHIPS.length * 84;
       const reachHex = reachToneHex(def.reachTier);
       body.add(this.scene.add.text(-edge, reachY, "사거리", textStyle({ role: "display", size: 30, color: reachHex })).setOrigin(0, 0.5));
       body.add(this.scene.add.text(edge, reachY, REACH_LABEL[def.reachTier], textStyle({ role: "display", size: 36, color: reachHex })).setOrigin(1, 0.5));
       body.add(drawHairline(this.scene, 0, reachY + 42, width - 68, { color: COLOR.accent, alpha: 0.14 }));
       body.add(
         this.scene.add
-          .text(-edge, top + 660, "세부 능력치", textStyle({ role: "emphasis", size: 26, color: COLOR.accentText }))
+          .text(-edge, top + 700, "세부 능력치", textStyle({ role: "emphasis", size: 26, color: COLOR.accentText }))
           .setOrigin(0, 0),
       );
       EXTRA_STATS.forEach((row, index) => {
-        const y = top + 726 + index * 66;
+        const y = top + 772 + index * 76;
         body.add(this.scene.add.text(-edge, y, row.label, textStyle({ role: "body", size: 28, color: COLOR.inkDim })).setOrigin(0, 0.5));
         body.add(this.scene.add.text(edge, y, stats[row.key].toLocaleString() + (row.suffix ?? ""), textStyle({ role: "display", size: 33 })).setOrigin(1, 0.5));
-        if (index < EXTRA_STATS.length - 1) body.add(drawHairline(this.scene, 0, y + 33, width - 68, { color: COLOR.accent, alpha: 0.14 }));
+        if (index < EXTRA_STATS.length - 1) body.add(drawHairline(this.scene, 0, y + 38, width - 68, { color: COLOR.accent, alpha: 0.14 }));
       });
     });
   }

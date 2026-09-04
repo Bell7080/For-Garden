@@ -710,7 +710,14 @@ export class InfoManager {
     });
     const release = async (opened: boolean): Promise<void> => {
       container.setScale(1);
-      const held = this.scene.time.now - heldFrom;
+      // **제스처의 소유권을 기다리기 전에 먼저 가져온다.** `pointerup`과 `pointerout`이 잇달아
+      // 오면 둘 다 이 함수로 들어오는데, 예전에는 뒤에 온 쪽이 앞선 호출이 서버 응답을 기다리는
+      // 동안 `heldFrom`을 0으로 지웠다. 그래서 짧은 탭은 급여가 실제로 성사되고도 성장 팝업을
+      // 열지 못했다 — 조건이 이미 0이 된 값을 읽었기 때문이다.
+      const startedAt = heldFrom;
+      heldFrom = 0;
+      if (startedAt === 0) return;
+      const held = this.scene.time.now - startedAt;
       this.feedHold?.remove();
       this.feedHold = undefined;
       const started = feedStarted;
@@ -721,8 +728,7 @@ export class InfoManager {
       const wasHold = repeated || held >= FEED_HOLD_MS;
       // A short successful tap offers the next currently-valid growth action immediately.  A hold keeps its
       // repeat behavior and opens the same singleton only after the hand has been released.
-      if (opened && heldFrom > 0 && (wasHold || changed)) this.openFeedBulk(x, y + height / 2);
-      heldFrom = 0;
+      if (opened && (wasHold || changed)) this.openFeedBulk(x, y + height / 2);
     };
     hit.on("pointerup", () => void release(true));
     hit.on("pointerout", () => void release(false));

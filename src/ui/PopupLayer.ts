@@ -61,6 +61,15 @@ export interface PopupOptions {
  */
 let openLayerCount = 0;
 
+/**
+ * 지금 무언가를 열어 둔 팝업 층들. 관찰값(`popupTitles`)이 하나뿐이라 층마다 제 것만 올리면
+ * 서로 지운다. 연 순서를 지켜 아래(먼저 연 층)부터 쌓이게 한다.
+ *
+ * **비면 곧바로 뺀다.** 팝업 층은 조작할 때마다 새로 만들어지기도 하므로(전투의 기여도·보상),
+ * 만들 때 넣고 두면 씬을 오갈수록 죽은 층이 끝없이 쌓인다.
+ */
+const LIVE_LAYERS: PopupLayer[] = [];
+
 /** 팝업이 한 장이라도 떠 있는가. */
 export function anyPopupOpen(): boolean {
   return openLayerCount > 0;
@@ -80,6 +89,13 @@ export class PopupLayer {
 
   constructor(private readonly scene: Phaser.Scene, private readonly depth = 2000) {}
 
+  /** 이 층이 무언가를 열고 있는 동안에만 관찰 목록에 남는다. */
+  private trackLive(): void {
+    const index = LIVE_LAYERS.indexOf(this);
+    if (this.stack.length > 0) { if (index === -1) LIVE_LAYERS.push(this); }
+    else if (index >= 0) LIVE_LAYERS.splice(index, 1);
+  }
+
   /**
    * 씬이 통째로 내려가면 `layer.destroy()`가 `close()`를 거치지 않으므로 셈만 직접 되돌린다.
    *
@@ -94,6 +110,8 @@ export class PopupLayer {
       openLayerCount -= this.stack.length;
       this.stack.length = 0;
       this.shutdownHooked = false;
+      this.trackLive();
+      this.publishDebugTitles();
     });
   }
 
@@ -206,9 +224,22 @@ export class PopupLayer {
     return body;
   }
 
-  /** 지금 스택에 쌓인 제목만 Canvas 밖에 공개한다. 팝업 본문·게임 상태는 노출하지 않는다. */
+  /**
+   * 지금 열린 팝업 제목을 Canvas 밖에 공개한다. 팝업 본문·게임 상태는 노출하지 않는다.
+   *
+   * **제 스택만 올리지 않는다.** 팝업 층은 한 화면에 여럿 있고(씬의 층, 정보창의 층, 용어 층…)
+   * 관찰값은 하나뿐이라, 제 것만 올리면 **나중에 올린 빈 층이 실제로 열려 있는 팝업을 지운다.**
+   * 실제로 그랬다 — 정보창의 "한 번에 급여"가 화면에 떠 있는데도 관찰값은 비어 있어, E2E는
+   * 열리지 않았다고 읽었다. 살아 있는 모든 층의 제목을 만들어진 순서대로 모아 올린다.
+   */
   private publishDebugTitles(): void {
-    setDebugPopupTitles(this.stack.map((layer) => this.titleByLayer.get(layer)).filter((title): title is string => title !== undefined));
+    this.trackLive();
+    setDebugPopupTitles(LIVE_LAYERS.flatMap((layer) => layer.openTitles()));
+  }
+
+  /** 이 층에 지금 열려 있는 제목들. 다른 층이 함께 올릴 수 있도록 열어 둔다. */
+  private openTitles(): string[] {
+    return this.stack.map((layer) => this.titleByLayer.get(layer)).filter((title): title is string => title !== undefined);
   }
 
   /**

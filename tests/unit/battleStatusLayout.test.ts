@@ -87,3 +87,26 @@ describe("공용 전투 프로필 배치", () => {
   });
 
 });
+
+describe("겹 수 배지는 칩 안에 앉는다", () => {
+  const { chipSize, chipBevel, stackCount } = BATTLE_STATUS_LAYOUT;
+  const half = chipSize / 2;
+
+  it("판이 칩의 네 변을 넘지 않는다", () => {
+    // 넘치면 바로 아래 체력 바 위로 흘러내린다 — 칩을 줄이고 이 값을 그대로 둬서 실제로 그랬다.
+    expect(stackCount.offsetX + stackCount.plateRadius).toBeLessThanOrEqual(half);
+    expect(stackCount.offsetY + stackCount.plateRadius).toBeLessThanOrEqual(half);
+  });
+
+  it("깎인 오른쪽 아래 빗변도 넘지 않는다", () => {
+    // 빗변은 (half, half-bevel)과 (half-bevel, half)를 잇는다 → x + y = chipSize - bevel.
+    const line = chipSize - chipBevel;
+    const distance = (line - stackCount.offsetX - stackCount.offsetY) / Math.SQRT2;
+    expect(distance).toBeGreaterThanOrEqual(stackCount.plateRadius);
+  });
+
+  it("숫자도 칩 아래 변을 넘지 않는다", () => {
+    // 글자는 판보다 조금 크게 그려지므로 반높이로 함께 본다.
+    expect(stackCount.offsetY + stackCount.size / 2).toBeLessThanOrEqual(half);
+  });
+});

@@ -55,7 +55,7 @@ export class UnitStatusChips extends Phaser.GameObjects.Container {
     const scene = this.scene;
     const size = L.chipSize;
     const container = scene.add.container(0, 0);
-    const shape = chipPoints(size, size, { bevel: { topLeft: 8, topRight: 0, bottomRight: 8, bottomLeft: 0 } });
+    const shape = chipPoints(size, size, { bevel: { topLeft: L.chipBevel, topRight: 0, bottomRight: L.chipBevel, bottomLeft: 0 } });
     container.add(drawLayer(scene, 0, 0, shape, { fill: COLOR.void, alpha: 0.88 }));
     container.add(this.drawMark(view.color, size));
     container.add(drawInnerVignette(scene, 0, 0, shape, { strength: 0.5 }));
@@ -86,7 +86,7 @@ export class UnitStatusChips extends Phaser.GameObjects.Container {
   /**
    * 지나간 시간을 12시에서 시계 방향으로 덮는다.
    *
-   * 원형 게이지(고리) 대신 덮는 면을 쓰는 이유는, 30px 칩 안에 선을 하나 더 그으면 그 선이
+   * 원형 게이지(고리) 대신 덮는 면을 쓰는 이유는, 이만큼 작은 칩 안에 선을 하나 더 그으면 그 선이
    * 표식과 겹쳐 곧 그림이 되기 때문이다. 덮이는 쪽은 아무것도 더하지 않고 "얼마나 남았나"만
    * 말하고, 다 덮이는 순간이 곧 풀리는 순간이다. 도형은 칩 사각형 안에서 잘라 만든다 —
    * 기하 마스크는 컨테이너 이동을 물려받지 않아 매 프레임 자리를 옮기는 칩에서 어긋난다.

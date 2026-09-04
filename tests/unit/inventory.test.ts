@@ -21,6 +21,10 @@ describe("inventory", () => {
     expect(Object.keys(CURRENCY_GUIDE).sort()).toEqual([...walletKeys].sort());
     for (const key of walletKeys) expect(CURRENCY_GUIDE[key]).toMatchObject({ key, sources: expect.any(Array), uses: expect.any(Array) });
     expect(walletKeys.every((key) => CURRENCY_GUIDE[key].sources.length > 0 && CURRENCY_GUIDE[key].uses.length > 0)).toBe(true);
+    // 구형 로비 무역 팝업 계약이 돌아오지 않도록 모든 교환 안내를 교류 씬 하나로 고정한다.
+    const exchangeActions = Object.values(CURRENCY_GUIDE).flatMap((entry) => "action" in entry && entry.action.target === "interaction" ? [entry.action] : []);
+    expect(exchangeActions).toHaveLength(3);
+    expect(exchangeActions.every((action) => action.kind === "scene" && action.label === "교류 교환소로 이동")).toBe(true);
   });
   it("모든 정적 item asset이 공용 로딩 표와 실제 임시 SVG에 일대일 대응한다", () => {
     // 정적 정의가 늘 때 로더 등록이나 배포 파일 한쪽만 빠지는 회귀를 빌드 전에 잡는다.

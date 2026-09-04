@@ -1,4 +1,4 @@
-import { BLEED } from "../core/skirmish";
+import { BLEED, POISON } from "../core/skirmish";
 
 /**
  * 스킬 설명 안에서 다시 눌러 볼 수 있는 용어 사전.
@@ -49,6 +49,16 @@ export const KEYWORDS: readonly KeywordDef[] = [
     term: "작은 출혈",
     kind: "디버프",
     description: `${BLEED.minor.seconds}초 동안 매초 최대 체력의 ${BLEED.minor.percentPerSecond}% 고정 피해를 입는다. 약한 재적용은 더 강한 출혈을 덮지 않는다.`,
+  },
+  // 중독은 쓰는 개체가 델로피 하나뿐이라 태그가 매초 계수를 가진다. 다만 **시간**은 출혈과
+  // 같은 이유로 스킬마다 본문이 적는다 — 시간이 다른 개체가 생기는 순간 태그가 거짓말이 된다.
+  {
+    id: "poison", term: "중독", kind: "디버프",
+    description: `시전자의 공격력 ${POISON.attackPercentPerSecond}%와 주문력 ${POISON.abilityPercentPerSecond}%를 합친 [[magical-damage|마법 피해]]를 매초 입는다. 매초 얼마인지는 바르는 순간 한 번 정해지며, 세기가 맞은 쪽이 아니라 바른 쪽에서 나오므로 더 아픈 독이 덮으면 그 값이 남는다.`,
+  },
+  {
+    id: "liquidate", term: "청산", kind: "규칙",
+    description: "남은 지속 피해를 한 번에 몰아서 받고 그 상태가 사라진다. 앞으로 받았을 몫을 먼저 받는 것이라 총량은 그대로 두고 시점만 당긴다.",
   },
   {
     id: "stagger", term: "경직", kind: "디버프",
@@ -153,6 +163,10 @@ export const KEYWORDS: readonly KeywordDef[] = [
   {
     id: "magical-damage", term: "마법 피해", kind: "규칙",
     description: "주문력 또는 명시된 능력치로 계산하고 대상의 저항력으로 감소하는 피해다.",
+  },
+  {
+    id: "fixed-damage", term: "고정 피해", kind: "규칙",
+    description: "대상의 방어력·저항력을 지나쳐 그대로 들어가는 피해다. 속성 상성과 받는 피해 경감은 그대로 거친다.",
   },
   {
     id: "crowd-control", term: "군중제어", kind: "규칙",

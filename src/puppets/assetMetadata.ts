@@ -232,3 +232,30 @@ export const KERIS_SD_METADATA: Omit<PuppetAsset, "url"> = {
   imageHeight: 1254,
   content: { left: 102, top: 61, right: 1100, bottom: 1201 },
 };
+
+/** 13번 델로피(딜로포사우루스) 전신. ZIP 안 WebP의 alpha > 16 경계를 실측한 값이다. */
+export const DELOPI_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1086,
+  imageHeight: 1448,
+  content: { left: 42, top: 27, right: 1062, bottom: 1426 },
+  /*
+   * 렉시아의 낫과 같은 이유의 보정이다. 카드 배율은 `content` **폭**으로 정해지는데, 델로피는
+   * 양옆으로 뿌린 카드가 캔버스를 거의 다 채운다(1020 / 1086). 몸은 그만큼 넓지 않으므로 혼자
+   * 축소되어 얼굴이 다른 카드의 70%로 앉았다.
+   *
+   * 값을 더 키우지 않는 이유는 등신이 낮아 머리가 크기 때문이다. 1.25를 넘으면 머리 위 여백이
+   * 자르기 높이의 0.42를 넘어 `MAX_HEAD_DROP_RATIO`(0.46)에 바짝 붙고, 1.35에서는 남은 여백이
+   * 3px까지 줄어 정수리가 홈 윗변에 닿는다. 1.2는 얼굴이 중앙값의 84%이면서 머리 드롭이
+   * 0.403이라 한계와 여유가 남는 자리이고, `tests/unit/puppetAnchors.test.ts`가 그 둘을 함께 지킨다.
+   */
+  cardZoom: 1.2,
+  /** 로비 세로 비율: 메론 기준. 1.45 m. */
+  lobbyZoom: 0.95,
+};
+
+/** 델로피 SD ZIP의 정사각 원본과 alpha > 16 경계다. */
+export const DELOPI_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254,
+  imageHeight: 1254,
+  content: { left: 184, top: 55, right: 1153, bottom: 1207 },
+};

@@ -75,8 +75,9 @@ describe("스킬 일러스트 파일", () => {
 describe("토리카 스킬 표시 계약", () => {
   it("은 구조화된 5초·7%·전체 적·2초 값을 실제 표시 문구로 만든다", () => {
     // UI가 ID별 예외 없이 같은 정적 데이터를 읽을 수 있도록 모든 궁극기의 계약을 검사한다.
-    // 순수 회복 궁극기는 적 대상 네 종류와 분리된 전장 전체 아군 계약을 사용한다.
-    for (const def of RELICS) expect(["single", "nearbyEnemies", "battlefieldEnemies", "battlefieldAllies", "targetedCircle", "chargeLine"]).toContain(def.ultimate.targeting);
+    // 순수 회복 궁극기는 적 대상 네 종류와 분리된 전장 전체 아군 계약을 사용하고,
+    // 아무도 때리지 않고 자리만 잡는 궁극기(델로피)는 자신만 가리키는 계약을 쓴다.
+    for (const def of RELICS) expect(["single", "nearbyEnemies", "battlefieldEnemies", "battlefieldAllies", "self", "targetedCircle", "chargeLine"]).toContain(def.ultimate.targeting);
     const torika = RELICS.find((def) => def.id === "anky")!;
     expect(torika.ultimate).toMatchObject({
       targeting: "nearbyEnemies",
@@ -308,6 +309,49 @@ describe("스테라 스킬 표시 계약", () => {
     expect(passiveDescription(def.passive)).toBe(
       `전투당 한 번, 체력이 절반 이하가 되면 ${def.passive.durationSeconds}초 동안 [[stealth|은신]]해 표적에서 벗어난다.`,
     );
+  });
+});
+
+describe("델로피 스킬 표시 계약", () => {
+  const delopi = RELICS.find((def) => def.id === "delopi")!;
+
+  it("은 위력을 나눠 가진 두 능력치를 라벨과 본문이 같은 값으로 말한다", () => {
+    // 한쪽 축만 적으면 실제 피해의 절반이 어디서 왔는지 설명되지 않는다.
+    const preview = { kind: "scaling", amount: 114, power: 50, stat: "공격력", secondary: { power: 50, stat: "주문력" }, label: "피해량" } as const;
+    expect(damageKeyword(preview)?.description).toBe("현재 공격력의 50%와 주문력의 50%를 더해 계산한 피해 수치다.");
+    // 능력치를 아는 자리는 태그 하나로, 모르는 자리(도감)는 두 축을 모두 말하는 %로 되돌아간다.
+    expect(skillDescription(delopi.basic, { damage: 114 })).toBe("적 한 명에게 [[damage-value|114]]의 [[physical-damage|물리 피해]]를 주고 3초 동안 [[poison|중독]]시킨다.");
+    expect(skillDescription(delopi.basic)).toContain("공격력의 50%와 주문력의 50%를 더한");
+  });
+
+  it("은 중독의 시간만 본문이 적고 매초 수치는 태그에 맡긴다", () => {
+    // 출혈과 같은 이유다 — 시간은 스킬마다 다르고, 매초 계수는 쓰는 개체가 하나뿐이라 태그가 가진다.
+    expect(statusEffectLabel(delopi.basic.statusEffects?.[0])).toBe("[[poison|중독]] 3초");
+    const poison = KEYWORDS.find((keyword) => keyword.id === "poison")!;
+    expect(poison.description).toContain("공격력 15%와 주문력 15%");
+    expect(skillDescription(delopi.basic, { damage: 114 })).not.toContain("15%");
+  });
+
+  it("은 때리지 않는 궁극기를 위력 없이 자리 잡는 문장으로 만든다", () => {
+    // 피해 수치를 적지 않는다 — 그 한 방은 이어질 트릭 카드의 몫이라 두 곳이 갈리면 안 된다.
+    expect(delopi.ultimate.power).toBeUndefined();
+    expect(targetingLabel(delopi.ultimate.targeting)).toBe("자신");
+    expect(canPreviewSkillDamage(delopi.ultimate, "궁극기")).toBe(false);
+    const text = skillDescription(delopi.ultimate);
+    expect(text).toBe("3초 동안 [[stealth|은신]]하고 체력이 가장 낮은 적에게 [[teleport|순간이동]]한다. 이후 처음 적중하는 [[basic-attack|기본 공격]]이 확정 치명타가 되고 방어력을 무시하는 [[fixed-damage|고정 피해]]로 들어간다.");
+    expect(text).not.toContain("damage-value");
+  });
+
+  it("은 패시브의 치명타 확률과 피해를 서로 다른 값으로 나열한다", () => {
+    expect(passiveDescription(delopi.passive)).toBe("전투를 시작할 때 7초 동안 [[stealth|은신]] 상태로 진입한다. 치명타 확률이 5%, 치명타 피해가 25% 오른다.");
+  });
+
+  it("은 폭주가 바르는 쪽과 터뜨리는 쪽을 모두 말한다", () => {
+    const text = ferocityTraitDescription(delopi.ferocityTrait);
+    expect(text).toContain("공격 속도가 30% 증가한다.");
+    expect(text).toContain("[[liquidate|청산]]");
+    // 번갈아 한다고 적지 않는다 — 실제 규칙은 "지금 걸려 있나"만 보고 고른다.
+    expect(text).not.toContain("번갈아");
   });
 });
 

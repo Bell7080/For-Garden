@@ -58,6 +58,10 @@ export const ULTIMATE_PRESENTATIONS: Readonly<Record<string, UltimatePresentatio
   // 뒷줄에서 책을 펼치는 연출이라 컷인은 왼쪽에서 들어오고, 전장의 확대는 얕게 둔다 —
   // 케리스의 궁극기는 한 방이 아니라 전장 전체가 서로 돌아서는 그림이 결과다.
   keris: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.98, cutInHoldMs: 180, zoomScale: 1.1, cameraShakeIntensity: 0.005 },
+  // 이 궁극기는 아무도 때리지 않는다 — 인사하고 사라지는 한 장이라 컷인만 짧게 지나가고,
+  // SD 확대와 흔들림은 가장 얕다. 실제로 터지는 순간은 뒤이어 날아가는 카드 한 장이다.
+  // 등신이 낮아 컷인에서 한 뼘 줄인다.
+  delopi: { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkScale: 0.92, artworkOrigin: { x: 640, y: 800 }, cutInHoldMs: 130, zoomScale: 1.08, zoomMs: 96, cameraShakeIntensity: 0.004 },
   "husk-raptor": { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", cutInHoldMs: 135, zoomScale: 1.2, zoomMs: 110, cameraShakeIntensity: 0.008 },
   "husk-shell": { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.94, zoomScale: 1.24, zoomMs: 115, cameraShakeIntensity: 0.009 },
   "husk-wing": { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkScale: 0.92, artworkOrigin: { x: 650, y: 770 }, zoomScale: 1.16, cameraShakeIntensity: 0.007 },

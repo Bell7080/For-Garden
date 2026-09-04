@@ -1,3 +1,4 @@
+import { POISON } from "../core/skirmish";
 import type { BasicAttack, RelicDef } from "../core/types";
 
 /**
@@ -281,7 +282,7 @@ export const RELICS: RelicDef[] = [
     rarity: "SR",
     portraitAssetId: "luka",
     origin: "벨로키랍토르",
-    element: "grass",
+    element: "wind",
     role: "assassin",
     // 발톱으로 파고드는 근접 암살자.
     reachTier: "melee",
@@ -980,6 +981,105 @@ export const RELICS: RelicDef[] = [
       // 가득 찬 자동 궁극기가 대상 없이 헛돌고, 플레이어는 왜 안 나가는지 알 수 없다.
       cursedTargetsOnly: { seedCurse: { kind: "curse", seconds: 8, resistancePercent: 15, maxStacks: 3 } },
       statusEffects: [{ kind: "frenzy", seconds: 4, attackSpeedPercent: 50 }],
+    },
+  },
+
+  {
+    id: "delopi",
+    squad: "gear",
+    name: "델로피",
+    specimenNumber: "013",
+    projectName: "CURTAIN CALL",
+    excavationSite: "미국 애리조나 카옌타층 하부 이암대",
+    // 발굴 기록은 장소·보존 상태·복원 연구 특징만 담고, 복원 이후 생활 관찰과 분리한다.
+    fossilRecord: "이암이 갈라진 틈에서 한 쌍의 얇은 볏이 나란히 붙은 채 드러났다. 볏뼈가 얇아 부서질 줄 알았으나 두개골까지 이어진 골질이 그대로 남아, 복원 연구는 그 얇은 판을 세우는 일에 가장 오래 매달렸다.",
+    observationProfile: {
+      originYear: "약 1억 9천만 년 전",
+      // 장난기와 미숙함이 함께 읽히는 중학생 또래 외형·정서에 맞춰 E.C. 14년으로 둔다.
+      restorationYear: "E.C. 14년",
+      lifeStage: "성체",
+      height: "1.45 m",
+      weight: "41 kg",
+    },
+    catalogSummary: "신장 1.45m, 체중 41kg의 작고 마른 인간형 체격에 목 뒤로 접히는 한 쌍의 얇은 볏과, 카드를 다루기 좋게 마디가 긴 손가락이 확인된 성체 딜로포사우루스 표본.",
+    unlockRecord: { status: "recorded", text: "나는 델로피를 손이 먼저 움직이는 아이로 관찰하고 있다. 내 주머니에서 사라진 열쇠는 늘 인사와 함께 되돌아오고, 되돌려 줄 때의 표정이 가져갈 때보다 훨씬 즐거워 보인다. 목 뒤의 볏은 놀래킬 순간에만 활짝 펴지는데, 정작 본인은 그게 다 보인다는 걸 모르는 눈치다. 임무에서 돌아온 날에는 카드 한 벌을 들고 다른 렐릭들을 쫓아다니며 같은 마술을 열 번쯤 반복하다가, 아무도 속지 않으면 그제야 시무룩하게 구석으로 간다." },
+    squadNote: "나이트 기어의 막내 인양조. 조용해야 할 잠입 중에도 회수한 물건을 손안에서 사라지게 했다가 되돌리는 장난을 멈추지 않아, 선배들이 매번 볏을 눌러 접어 준다.",
+    // 낯을 가리는 스쿼드에서 혼자 말이 많은 막내라, 스쿼드가 쓰는 호칭 중 가장 격식 있는 쪽을 골라 장난스럽게 부른다.
+    researcherTitle: "연구원님",
+    rarity: "SR",
+    portraitAssetId: "delopi",
+    origin: "딜로포사우루스",
+    element: "grass",
+    role: "assassin",
+    // 손을 벗어나 날아가는 카드라 붙지 않고 한 걸음 물러서서 던진다.
+    reachTier: "mid",
+    // 남의 주머니에서 나온 것을 되돌려 주는 손이라 발굴 특화도 골드 회수 쪽에 붙인다.
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 26.0, efficiencyMultiplier: 1.07 },
+    // 유일한 혼합형이다. 카드 한 장이 손끝 힘과 발라 둔 독을 함께 쓰므로 공격력과 주문력을
+    // 비슷하게 들며, 그래서 둘 중 어느 쪽도 남는 수치가 되지 않는다. 대신 몸은 가장 얇다.
+    stats: {
+      hp: 820,
+      def: 50,
+      res: 52,
+      atk: 120,
+      ap: 108,
+      attackSpeed: 116,
+      moveSpeed: 116,
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 0,
+    },
+    // 바르거나 터뜨리거나 한 번에 하나만 한다. 그래서 폭주 중 실제 피해량은 공속이 정하고,
+    // 공속 증가가 곧 "얼마나 자주 청산하는가"가 된다.
+    ferocityTrait: { name: "초절정 도파민 중독", effectId: "venomousEncore", attackSpeedBonusPercent: 30 },
+    passive: {
+      // kind가 openingVanish인 패시브는 passiveDescription()이 구조화 필드로 문장을 만들므로
+      // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
+      id: "delopi-passive",
+      name: "짜잔!",
+      kind: "openingVanish",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      // Passive.value는 공용 필수 필드라, 이 패시브에서는 은신 시간을 그대로 담아 둔다.
+      value: 7,
+      durationSeconds: 7,
+      // 태생 치명타는 전 개체 공통이므로 암살자의 치명타형 정체성은 패시브가 만든다.
+      criticalChancePercent: 5,
+      criticalDamagePercent: 25,
+      desc: "전투 시작 시 7초 동안 은신 상태로 진입한다.",
+    },
+    basic: {
+      id: "delopi-basic",
+      name: "트릭 카드",
+      power: 50,
+      scalingStat: "atk",
+      // 카드에 발라 둔 독이 손끝 힘과 함께 실린다 — 위력을 두 능력치가 반씩 나눠 갖는다.
+      secondaryScaling: { stat: "ap", power: 50 },
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      targeting: "single",
+      statusEffects: [{ kind: "poison", seconds: 3, attackPercentPerSecond: POISON.attackPercentPerSecond, abilityPercentPerSecond: POISON.abilityPercentPerSecond }],
+    },
+    ultimate: {
+      id: "delopi-ult",
+      name: "그랜드 피날레",
+      iconAssetId: "skill-icon-fixed",
+      effectType: "fixed",
+      cost: 150,
+      // 아무도 때리지 않는다. 자리를 잡는 것이 전부이고 피해는 이어질 트릭 카드 한 장이 낸다.
+      targeting: "self",
+      // 위력을 적지 않는다. 이 궁극기의 피해는 곧 이어질 트릭 카드 한 장의 몫이라, 여기에
+      // 숫자를 두면 평타 위력을 조정한 뒤 이 한 방만 옛 값으로 남는다.
+      selfSetup: {
+        stealthSeconds: 3,
+        leapTarget: "lowestHpEnemy",
+        // 중거리 개체라 스피나보다 멀찍이 내려선다 — 붙어서 내리면 사거리 안쪽으로 파고든다.
+        landingDistance: 200,
+        empowerNextBasic: { guaranteedCritical: true, ignoresDefense: true },
+      },
     },
   },
 

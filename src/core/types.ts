@@ -29,7 +29,7 @@ export type ReachTier = "melee" | "mid" | "ranged";
 export type RelicRarity = "R" | "SR" | "SSR";
 
 /** 전신 Puppet 레지스트리의 안정적인 데이터 키다. 파일 번호를 게임 데이터에 직접 노출하지 않는다. */
-export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "toby" | "amo" | "ripa" | "pontos";
+export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "toby" | "amo" | "ripa" | "pontos";
 
 export interface Stats {
   /** 생존력과 물리·마법 공격의 기반이 되는 주 능력치다. */
@@ -127,7 +127,7 @@ interface SkillBase {
    * `chargeLine`은 지금 보고 있는 방향으로 **뚫고 지나가며** 통로 안의 적을 모두 친다.
    * 나아가는 거리는 이동 속도에 비례하므로, 발이 빠른 개체일수록 더 멀리 밀고 들어간다.
    */
-  targeting?: "single" | "nearbyEnemies" | "battlefieldEnemies" | "battlefieldAllies" | "targetedCircle" | "chargeLine";
+  targeting?: "single" | "nearbyEnemies" | "battlefieldEnemies" | "battlefieldAllies" | "self" | "targetedCircle" | "chargeLine";
   /** 원형 범위의 반경이자, `chargeLine`에서는 지나간 통로의 **반폭**이다. */
   radius?: number;
   /**
@@ -154,8 +154,17 @@ export type AttackSkill = SkillBase & {
   power: number;
   /** 마법 피해도 메테처럼 물리 공격력(atk)을 명시적으로 선택할 수 있다. */
   scalingStat?: "atk" | "ap" | "def";
+  /**
+   * 한 타격의 위력을 **두 능력치가 나눠 갖는다.** 없으면 `scalingStat` 하나만 쓴다.
+   *
+   * 스피나 궁극기의 공속 복합 계수와 다른 축이다 — 그쪽은 공격 속도를 공격력 배율로 환산해
+   * 더하지만, 이쪽은 서로 다른 두 능력치에서 각각 뽑아 더한다. 델로피의 카드가 손끝 힘(공격력)과
+   * 발라 둔 독(주문력)을 함께 쓰는 것이 그 예다.
+   */
+  secondaryScaling?: { stat: "atk" | "ap" | "def"; power: number };
   healing?: never;
   teamBuff?: never;
+  selfSetup?: never;
 };
 
 /** 순수 회복 스킬은 damageType/power를 가질 수 없어 피해 계산에 잘못 전달되지 않는다. */
@@ -164,7 +173,45 @@ export type HealingSkill = SkillBase & {
   power?: never;
   scalingStat?: never;
   teamBuff?: never;
+  selfSetup?: never;
   healing: { kind: "teamMissingHpPercent"; percent: number };
+};
+
+/**
+ * 때리지도 회복시키지도 않고 **다음 한 방의 자리를 만드는** 스킬이다.
+ *
+ * 피해를 스스로 갖지 않는 이유는 그 피해가 곧 이어질 일반 공격의 몫이기 때문이다 — 여기에
+ * 따로 위력을 적으면 평타 위력을 조정한 뒤 이 숫자만 옛 값으로 남아 같은 한 방이 두 수로 갈린다.
+ */
+export type SetupSkill = SkillBase & {
+  damageType?: never;
+  power?: never;
+  scalingStat?: never;
+  healing?: never;
+  teamBuff?: never;
+  selfSetup: SelfSetup;
+};
+
+/** 자리를 잡는 계약. 은신·순간이동·다음 타격 강화를 코어가 판별할 수 있는 값으로만 적는다. */
+export type SelfSetup = {
+  /** 단일 대상 선택에서 제외되는 시간(초). */
+  stealthSeconds: number;
+  /** 순간이동 대상은 문구가 아니라 결정 가능한 선택 규칙으로 고정한다. */
+  leapTarget: "lowestHpEnemy";
+  /** 보간 이동 없이 같은 프레임에 목표의 사거리 가장자리로 배치할 거리다. */
+  landingDistance: number;
+  /**
+   * 이후 **첫 일반 공격 한 번**을 강화한다. 위력은 그 일반 공격의 값을 그대로 쓴다.
+   *
+   * 은신 중에 걸어 두고 나와서 터뜨리는 구조라, 강화가 남아 있는 동안은 은신이 풀려도 유지된다 —
+   * 은신이 끝나는 순간 사라지면 손이 닿기 전에 강화가 먼저 꺼진다.
+   */
+  empowerNextBasic: {
+    /** 판정을 굴리지 않고 확정 치명타로 만든다. */
+    guaranteedCritical: true;
+    /** 방어력·저항을 지나치는 고정 피해가 된다. */
+    ignoresDefense: true;
+  };
 };
 
 /**
@@ -178,6 +225,7 @@ export type SupportSkill = SkillBase & {
   power?: never;
   scalingStat?: never;
   healing?: never;
+  selfSetup?: never;
   teamBuff: TeamBuff;
 };
 
@@ -201,7 +249,7 @@ export type TeamBuff = {
 };
 
 /** 모든 스킬의 판별 유니온이며 `damageType in skill`로 공격 여부를 좁힌다. */
-export type Skill = AttackSkill | HealingSkill | SupportSkill;
+export type Skill = AttackSkill | HealingSkill | SupportSkill | SetupSkill;
 
 /** 기본 공격만 가질 수 있는 추가 타격 계약이다. 일반 단타는 불필요한 확률 필드를 갖지 않는다. */
 export type BasicAttack = AttackSkill & {
@@ -256,6 +304,23 @@ export type CombatStatusEffect =
       seconds: number;
       /** 매 틱 대상 최대 체력에서 차감하는 비율(%). 방어력을 무시하는 지속 피해다. */
       maxHpPercentPerSecond: number;
+    }
+  | {
+      /**
+       * 중독. 출혈과 같은 지속 피해 축이지만 **재는 자가 다르다.**
+       *
+       * 출혈은 맞은 쪽의 최대 체력에서 깎고, 중독은 **건 쪽의 공격력·주문력**에서 뽑는다.
+       * 그래서 같은 독이라도 누가 발랐는지에 따라 세기가 갈리고, 독을 바른 개체가 성장하면
+       * 그만큼 더 아프다. 매초 다시 재지 않고 **바르는 순간의 능력치로 굳힌다** — 매 틱
+       * 시전자를 되짚으면 그 사이에 걸린 버프까지 소급되어, 화면이 보여 준 수치와 갈린다.
+       */
+      kind: "poison";
+      /** 중독이 유지되는 시간(초). 다시 바르면 남은 시간이 더 긴 쪽으로 갱신된다. */
+      seconds: number;
+      /** 매 틱 시전자 공격력에서 뽑는 비율(%). */
+      attackPercentPerSecond: number;
+      /** 매 틱 시전자 주문력에서 함께 뽑는 비율(%). 둘을 더한 값이 한 틱의 마법 피해다. */
+      abilityPercentPerSecond: number;
     }
   | {
       /**
@@ -347,6 +412,7 @@ export type Ultimate = Skill & {
     }
   | { /** 거리에 상관없이 전장의 모든 생존 적을 공격한다. */ targeting: "battlefieldEnemies" }
   | { /** 거리에 상관없이 모든 생존 아군에게 비공격 효과를 적용한다. */ targeting: "battlefieldAllies" }
+  | { /** 아무도 때리지 않고 시전자 자신에게만 적용한다. 피해는 이어질 일반 공격의 몫이다. */ targeting: "self" }
   | {
       /** 사용자가 전장 사각형의 경계를 포함해 지정한 위치를 중심으로 판정한다. 범위 밖 입력은 전장 경계로 보정한다. */
       targeting: "targetedCircle";
@@ -384,6 +450,8 @@ export type PassiveKind =
   | "shimmerMark"
   /** 체력이 절반 이하가 되면 전투당 한 번 은신해 표적에서 벗어난다 */
   | "lowHpVanish"
+  /** 델로피 전용: 전투가 시작되는 순간부터 정해진 시간 동안 은신한 채로 연다. */
+  | "openingVanish"
   /** 렉시아 전용: 공격 속도·공격력·치명타 확률·치명타 피해를 함께 강화한다. */
   | "battleMaidMastery"
   /** 스피나 전용: 기본 공격의 실제 적중마다 공속을 전투 한정으로 영구 누적한다. */
@@ -424,7 +492,9 @@ export type FerocityEffectId =
   /** 파치 전용: 폭주 중 뇌진탕이 확정 치명타가 되고 그 적을 전장 밖으로 튕겨 날린다. */
   | "knockbackSlam"
   /** 마키 전용: 폭주 중 손질이 터진 피해의 일부를 아군 전체의 회복으로 돌린다. */
-  | "butcherFeast";
+  | "butcherFeast"
+  /** 델로피 전용: 폭주 중 일반 공격이 중독을 걸거나, 이미 걸린 중독을 그 자리에서 청산한다. */
+  | "venomousEncore";
 
 /**
  * 개체별 피버 발현 정적 데이터다.
@@ -470,6 +540,18 @@ export type FerocityTrait = {
       effectId: "butcherFeast";
       /** 터진 손질 피해 중 아군 전체의 회복으로 돌리는 비율(%)이다. */
       healPercent: number;
+    }
+  | {
+      /**
+       * 폭주 중 일반 공격이 **바르거나 터뜨리거나** 둘 중 하나만 한다.
+       *
+       * 그 적에게 자기 중독이 없으면 평소대로 바르고, 이미 있으면 남은 시간의 피해를 한꺼번에
+       * 몰아 주며 지운다. 번갈아 하는 것이 아니라 **매 타격마다 지금 상태를 보고** 고르므로,
+       * 공속이 빨라지거나 중독이 먼저 꺼져도 스스로 맞는 동작으로 돌아온다.
+       */
+      effectId: "venomousEncore";
+      /** 폭주 중 자기 공격 속도에 더하는 비율(%)이다. */
+      attackSpeedBonusPercent: number;
     }
   | {
       effectId: "knockbackSlam";

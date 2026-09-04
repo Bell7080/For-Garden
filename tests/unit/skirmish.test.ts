@@ -5,6 +5,7 @@ import {
   applyStun,
   applyStagger,
   BLEED,
+  POISON,
   EMERGENCY_RECOVERY,
   attackInterval,
   battleContributionSnapshot,
@@ -2511,5 +2512,145 @@ describe("마키 정적 전투 계약", () => {
     // 때리지 않은 아군까지 함께 회복한다 — 흡혈이 아니라 팀 회복이다.
     expect(ally.hp).toBeCloseTo(1 + burst.amount * trait.healPercent / 100, 5);
     expect(maki.hp).toBeGreaterThan(1);
+  });
+});
+
+describe("델로피의 중독과 청산", () => {
+  /** 델로피 하나와 맷집만 큰 적 하나를 붙여 둔다. 다른 개체의 규칙이 섞이지 않게 1대1로 연다. */
+  function poisoned() {
+    const state = createSkirmish([getRelic("delopi")], [getRelic("husk-shell")], ARENA);
+    const [delopi, enemy] = state.fighters;
+    delopi.x = 440; delopi.y = 1000; delopi.attackCooldown = 0;
+    enemy.x = 460; enemy.y = 1000; enemy.attackCooldown = 99;
+    enemy.maxHp = 400_000; enemy.hp = 400_000;
+    delopi.targetId = enemy.id;
+    // 전투 시작 은신이 상대의 표적 선택을 막지 않도록, 검사 대상인 델로피의 타격만 남긴다.
+    return { state, delopi, enemy };
+  }
+
+  it("는 시전자의 공격력·주문력에서 매초 피해를 뽑는다", () => {
+    const { state, delopi, enemy } = poisoned();
+    stepSkirmish(state, 1 / 60);
+    const poison = enemy.poison!;
+    expect(poison).not.toBeNull();
+    expect(poison.sourceId).toBe(delopi.id);
+    // 맞은 쪽의 최대 체력이 아니라 **바른 쪽의 두 능력치**에서 나온다 — 출혈과 갈리는 지점이다.
+    // 이름이 마법 피해인 만큼 대상의 저항력과 속성 상성도 그대로 거친다.
+    const expected = Math.max(1, Math.round(computeDamage(delopi, enemy, {
+      power: POISON.attackPercentPerSecond,
+      scalingStat: "atk",
+      secondaryScaling: { stat: "ap", power: POISON.abilityPercentPerSecond },
+      damageType: "magical",
+      isCritical: false,
+    }, true)));
+    expect(poison.amountPerSecond).toBe(expected);
+
+    // 같은 적에게 더 센 개체가 바르면 더 아프다. 세기가 바른 쪽에서 나온다는 뜻이다.
+    const stronger = poisoned();
+    stronger.delopi.def = { ...stronger.delopi.def, stats: { ...stronger.delopi.def.stats, atk: delopi.def.stats.atk * 2, ap: delopi.def.stats.ap * 2 } };
+    stepSkirmish(stronger.state, 1 / 60);
+    expect(stronger.enemy.poison!.amountPerSecond).toBeGreaterThan(poison.amountPerSecond);
+  });
+
+  it("는 청산이 그냥 두었을 때의 남은 총합과 같은 값을 한 번에 준다", () => {
+    /** 한 번 바른 뒤 그 독만 흐르게 둔다. 다시 바르면 총합 비교의 기준이 사라진다. */
+    function applied() {
+      const fight = poisoned();
+      stepSkirmish(fight.state, 1 / 60);
+      fight.delopi.attackCooldown = 99;
+      // 한 틱이 실제로 지나간 뒤에 비교해야 "이미 받은 몫을 또 받지 않는가"까지 확인된다.
+      for (let chunk = 0; chunk < 6; chunk += 1) stepSkirmish(fight.state, 0.2);
+      return fight;
+    }
+
+    const left = applied();
+    const hpBeforeRest = left.enemy.hp;
+    // 그냥 두면 남은 틱이 시간에 따라 하나씩 들어온다.
+    for (let chunk = 0; chunk < 20; chunk += 1) stepSkirmish(left.state, 0.2);
+    expect(left.enemy.poison).toBeNull();
+    const dealtOverTime = hpBeforeRest - left.enemy.hp;
+
+    const burstFight = applied();
+    const perSecond = burstFight.enemy.poison!.amountPerSecond;
+    burstFight.delopi.ferocity = 100; burstFight.delopi.ferocityFever = true; burstFight.delopi.attackCooldown = 0;
+    const hpBeforeBurst = burstFight.enemy.hp;
+    const events = stepSkirmish(burstFight.state, 1 / 60);
+    const burst = events.find((event): event is Extract<SkirmishEvent, { kind: "poisonLiquidated" }> => event.kind === "poisonLiquidated")!;
+    expect(burst).toBeDefined();
+
+    // 몰아서 받은 값이 그냥 두었을 때의 남은 총합과 같다 — 청산은 총량이 아니라 시점만 바꾼다.
+    expect(burst.amount).toBe(dealtOverTime);
+    expect(burst.amount).toBe(burst.ticks * perSecond);
+    // 청산 타격의 평타 피해까지 함께 들어가므로 HP 손실은 그 몫 이상이다.
+    expect(hpBeforeBurst - burstFight.enemy.hp).toBeGreaterThanOrEqual(burst.amount);
+    // 터뜨린 뒤에는 남지 않는다 — 같은 타격이 바르면서 동시에 터뜨리지도 않는다.
+    expect(burstFight.enemy.poison).toBeNull();
+  });
+
+  it("는 폭주 중 바르는 타격과 청산하는 타격을 번갈아 낸다", () => {
+    const { state, delopi } = poisoned();
+    delopi.ferocity = 100; delopi.ferocityFever = true;
+    const seen: string[] = [];
+    for (let hit = 0; hit < 4; hit += 1) {
+      delopi.attackCooldown = 0;
+      const events = stepSkirmish(state, 1 / 60);
+      seen.push(events.some((event) => event.kind === "poisonLiquidated") ? "청산" : "부여");
+    }
+    // 고정 토글이 아니라 "지금 걸려 있나"를 매번 보는 규칙이라, 결과는 자연히 번갈아 선다.
+    expect(seen).toEqual(["부여", "청산", "부여", "청산"]);
+  });
+});
+
+describe("델로피의 그랜드 피날레", () => {
+  it("는 때리지 않고 은신·순간이동·다음 평타 강화만 남긴다", () => {
+    const state = createSkirmish([getRelic("delopi")], [getRelic("husk-shell"), getRelic("husk-raptor")], ARENA);
+    const [delopi, tough, weak] = state.fighters;
+    delopi.x = 200; delopi.y = 1000;
+    tough.x = 900; tough.y = 1300; weak.x = 800; weak.y = 700;
+    weak.hp = weak.maxHp * 0.1;
+    delopi.energy = ULTIMATE_ENERGY_MAX;
+
+    const events = fireUltimate(state, delopi.id);
+    // 아무도 맞지 않는다 — 이 궁극기의 피해는 곧 이어질 트릭 카드 한 장의 몫이다.
+    expect(events.some((event) => event.kind === "attack")).toBe(false);
+    expect(tough.hp).toBe(tough.maxHp);
+    expect(delopi.stealthFor).toBeGreaterThan(0);
+    expect(delopi.empoweredBasic).toBe(true);
+    // 체력 비율이 가장 낮은 적 곁으로 내려선다.
+    expect(Math.hypot(delopi.x - weak.x, delopi.y - weak.y)).toBeLessThan(Math.hypot(delopi.x - tough.x, delopi.y - tough.y));
+  });
+
+  it("는 강화된 한 방만 확정 치명타·방어 무시로 들어가고 그 뒤로는 평소대로 돌아온다", () => {
+    const state = createSkirmish([getRelic("delopi")], [getRelic("husk-shell")], ARENA);
+    const [delopi, enemy] = state.fighters;
+    delopi.x = 440; delopi.y = 1000; delopi.attackCooldown = 99;
+    enemy.x = 460; enemy.y = 1000; enemy.attackCooldown = 99;
+    enemy.maxHp = 400_000; enemy.hp = 400_000;
+    delopi.targetId = enemy.id;
+    // 방어를 지나치는지 보려면 방어력이 실제로 값을 깎을 만큼 있어야 한다.
+    enemy.def = { ...enemy.def, stats: { ...enemy.def.stats, def: 300 } };
+    delopi.empoweredBasic = true;
+
+    delopi.attackCooldown = 0;
+    // 난수는 절대 치명타가 나오지 않는 값으로 고정한다 — 그런데도 강화된 한 방은 치명타여야 한다.
+    const empowered = stepSkirmish(state, 1 / 60, () => 0.999)
+      .find((event): event is Extract<SkirmishEvent, { kind: "attack" }> => event.kind === "attack")!;
+    expect(empowered.critical).toBe(true);
+    expect(empowered.damageType).toBe("true");
+    expect(delopi.empoweredBasic).toBe(false);
+
+    delopi.attackCooldown = 0;
+    const plain = stepSkirmish(state, 1 / 60, () => 0.999)
+      .find((event): event is Extract<SkirmishEvent, { kind: "attack" }> => event.kind === "attack")!;
+    expect(plain.critical).toBe(false);
+    expect(plain.damageType).toBe("physical");
+    // 확정 치명타와 방어 무시가 겹친 한 방이라 평소 타격보다 확실히 크다.
+    expect(empowered.amount).toBeGreaterThan(plain.amount);
+  });
+
+  it("는 전투 시작 시 짜잔! 으로 은신한 채 연다", () => {
+    const state = createSkirmish([getRelic("delopi")], [getRelic("husk-shell")], ARENA);
+    // 첫 프레임에 이미 걸려 있어야 "숨어서 시작했다"가 된다 — 한 박자 뒤면 표적이 잡힌 뒤다.
+    expect(state.fighters[0].stealthFor).toBe(getRelic("delopi").passive.durationSeconds);
   });
 });

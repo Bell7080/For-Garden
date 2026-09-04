@@ -14,6 +14,7 @@ import type { PuppetAsset } from "../../src/puppets/assets";
 import ASSETS_SOURCE from "../../src/puppets/assets.ts?raw";
 import { RELICS } from "../../src/data/relics";
 import {
+  DELOPI_PORTRAIT_METADATA,
   DODI_PORTRAIT_METADATA,
   DODI_SD_METADATA,
   LEXIA_PORTRAIT_METADATA,
@@ -246,6 +247,7 @@ const REAL_PORTRAITS = [
   { name: "파치", metadata: PACHI_PORTRAIT_METADATA, head: { x: 445, y: 199 }, eyes: [{ x: 420, y: 206 }, { x: 480, y: 172 }] },
   { name: "마키", metadata: MAKI_PORTRAIT_METADATA, head: { x: 578, y: 315 }, eyes: [{ x: 528, y: 327 }, { x: 620, y: 306 }] },
   { name: "케리스", metadata: KERIS_PORTRAIT_METADATA, head: { x: 546, y: 334 }, eyes: [{ x: 490, y: 330 }, { x: 569, y: 361 }] },
+  { name: "델로피", metadata: DELOPI_PORTRAIT_METADATA, head: { x: 519, y: 324 }, eyes: [{ x: 496, y: 319 }, { x: 556, y: 294 }] },
 ] as const;
 
 /** PortraitCard가 넘기는 것과 같은 배율 보정으로 실제 카드 잘라내기를 구한다. */

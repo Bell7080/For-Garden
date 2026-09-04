@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { startAfterOpening } from "./openingSave";
-import { canvasBox, captureGame, gamePoint, tap } from "./canvasInput";
+import { canvasBox, captureGame, gamePoint, tap, tapUntil } from "./canvasInput";
 import { ExpeditionManager } from "../../src/managers/ExpeditionManager";
 import { expeditionNodePosition, focusExpeditionFloor } from "../../src/ui/expeditionLayout";
 
@@ -131,7 +131,8 @@ test("출격 선택판에서 원정대 3기를 골라 진행 중 상태로 저�
   await page.waitForTimeout(500);
 
   // 하단 출격 버튼이 편성 단계를 연다. 씬 재시작과 SD 로딩을 기다린 뒤 카드를 누른다.
-  await tapGame(page, BASE_WIDTH / 2, 1800);
+  // 기록 화면의 판들이 닫히고 나서야 출격이 드러난다 — 편성이 열릴 때까지 다시 누른다.
+  await tapUntil(page, BASE_WIDTH / 2, 1800, async () => (await page.evaluate(() => window.__PF_DEBUG?.expeditionFormation)) !== undefined);
   await page.waitForTimeout(1500);
   await captureGame(page, `test-results/${test.info().project.name}-expedition-preparation.png`);
 
@@ -423,6 +424,13 @@ test("가로로 눕히면 세로로 돌려달라는 안내가 뜬다", async ({ 
 
 test("모바일 편성 상단의 자동 배치 버튼과 자리별 상성 화살표가 표시된다", async ({ page }) => {
   await enterParty(page);
+  // 준비 화면은 빈 상태로 열리지 않는다 — 직전 편성을 복원하거나 자동 편성으로 채운다. 자동
+  // 배치가 화살표를 세우는 것을 보려면 먼저 비워야 한다. 자리를 누르면 그 한 명만 빠진다.
+  for (let remaining = 3; remaining > 0; remaining -= 1) {
+    const slot = (await page.evaluate(() => window.__PF_DEBUG?.party?.slots?.[0]))!;
+    await tapGame(page, slot.x, slot.y);
+    await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.party?.selectedCount)).toBe(remaining - 1);
+  }
   const before = await page.evaluate(() => window.__PF_DEBUG?.party);
 
   // 버튼 중심은 그리드 위 우측 — 그리드 오른쪽 경계에 붙고, 그리드 윗변 바로 위에 뜬다.

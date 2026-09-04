@@ -81,7 +81,12 @@ test("스토리 전투 확정 편성은 다음 스테이지 준비 저장에 유
   await enterBattle(page);
   const savedParty = await page.evaluate(() => JSON.parse(localStorage.getItem("eternal-city.local-save") ?? "null")?.party);
   // 다음 스테이지 PartyScene도 이 저장 순서를 최초 카드·SD·3/3 상태에 그대로 사용한다.
-  expect(savedParty).toEqual(["rex", "anky", "spino"]);
+  //
+  // `enterBattle`이 고르는 순서는 토리카 → 렉시아 → 스피나이고, 편성은 **고른 순서**로 선다.
+  // 그리드 순서(렉시아 → 토리카 → 스피나)와 일부러 어긋나게 골라야 "저장이 그리드를 다시 읽지
+  // 않고 고른 순서를 그대로 들고 있다"가 증명된다 — 그리드 순서를 기대값으로 적으면 정렬이
+  // 무너져도 테스트가 통과한다.
+  expect(savedParty).toEqual(["anky", "rex", "spino"]);
 });
 
 test("원정 종료 뒤에도 다음 원정 전용 편성 저장은 스토리·발굴과 독립적으로 유지된다", async ({ page }) => {
@@ -110,8 +115,6 @@ test("출격 → 스테이지 지도 → 파티 편성 → 전투까지 이어�
 
 /** 기준 해상도 한 장에 전장 HP 바와 하단 궁극기 프로필의 실제 간격을 시각 회귀 자료로 남긴다. */
 test("1080×1920 전장 HUD와 궁극기 입력이 겹치지 않는다", async ({ page }, testInfo) => {
-  // 저사양 CI의 Puppet 로딩 뒤에도 캡처 시간을 별도로 확보한다.
-  test.setTimeout(180_000);
   // 캔버스 자체가 1080×1920 기준 좌표계이므로 기기 프로젝트의 터치 뷰포트는 유지한다.
   await enterBattle(page);
   await expect.poll(async () => (await battle(page))?.phase).toBe("fight");
@@ -120,7 +123,6 @@ test("1080×1920 전장 HUD와 궁극기 입력이 겹치지 않는다", async (
 
 /** 큰 돌출 머리(스피나)와 좌우로 치우친 얼굴(렉시아)의 충전 가림막 경계를 실제 캔버스로 남긴다. */
 test("궁극기 카드 몸통과 돌출 머리는 빈·중간·꽉 참에서 한 부채꼴로 걷힌다", async ({ page }, testInfo) => {
-  test.setTimeout(180_000);
   await enterBattle(page);
   await expect.poll(async () => (await battle(page))?.chargeRatios?.[1] ?? 1).toBeLessThan(0.08);
   await captureGame(page, `test-results/${testInfo.project.name}-battle-charge-portrait-000.png`);

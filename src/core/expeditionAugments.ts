@@ -9,7 +9,7 @@ export type ExpeditionAugmentStatKind =
 /** 전투 엔진이 해석하는 순수 효과다. 정적 RelicDef가 아니라 매 전투 Fighter만 이 값을 소비한다. */
 export type ExpeditionAugmentEffect =
   | { kind: ExpeditionAugmentStatKind; percent: number; scope: ExpeditionAugmentScope }
-  | { kind: "bleedOnAttack"; percent: number; seconds: number; scope: ExpeditionAugmentScope }
+  | { kind: "bleedOnAttack"; strength: "standard" | "minor"; everyNAttacks: number; reapplication: "refresh"; scope: ExpeditionAugmentScope }
   | { kind: "lowHpAttackPowerPercent"; percent: number; belowHpPercent: number; scope: ExpeditionAugmentScope };
 
 /** 합산 결과는 배율로 반환해 호출부가 같은 효과를 두 번 적용하지 않게 한다. */
@@ -18,6 +18,11 @@ const STAT_KINDS: readonly ExpeditionAugmentStatKind[] = [
   "maxHpPercent", "defensePercent", "resistancePercent", "attackPowerPercent",
   "spellPowerPercent", "attackSpeedPercent", "initialShieldPercent", "statusPotencyPercent",
 ];
+
+/** 배열 포함 검사 뒤에도 판별 공용체를 안전하게 좁히는 능력치 효과 가드다. */
+function isStatEffect(effect: ExpeditionAugmentEffect): effect is Extract<ExpeditionAugmentEffect, { kind: ExpeditionAugmentStatKind }> {
+  return STAT_KINDS.includes(effect.kind as ExpeditionAugmentStatKind);
+}
 
 /** 효과가 이 렐릭에 적용되는지 한 곳에서 판정해 전체/지정 범위가 섞이지 않게 한다. */
 export function augmentAppliesTo(effect: ExpeditionAugmentEffect, relicId: string): boolean {
@@ -28,8 +33,8 @@ export function augmentAppliesTo(effect: ExpeditionAugmentEffect, relicId: strin
 export function expeditionAugmentStatMultipliers(effects: readonly ExpeditionAugmentEffect[], relicId: string): ExpeditionAugmentStatMultipliers {
   const totals = Object.fromEntries(STAT_KINDS.map((kind) => [kind, 0])) as Record<ExpeditionAugmentStatKind, number>;
   for (const effect of effects) {
-    if (STAT_KINDS.includes(effect.kind as ExpeditionAugmentStatKind) && augmentAppliesTo(effect, relicId)) {
-      totals[effect.kind as ExpeditionAugmentStatKind] += effect.percent;
+    if (isStatEffect(effect) && augmentAppliesTo(effect, relicId)) {
+      totals[effect.kind] += effect.percent;
     }
   }
   return Object.fromEntries(STAT_KINDS.map((kind) => [kind, 1 + totals[kind] / 100])) as ExpeditionAugmentStatMultipliers;
@@ -48,10 +53,17 @@ export function conditionalAttackPowerMultiplier(effects: readonly ExpeditionAug
   return 1 + percent / 100;
 }
 
-/** 매 공격 출혈은 중복 상태를 만들지 않고 가장 강한 적용값 하나를 선택한다. */
+/**
+ * 공격 출혈은 명시된 강도, 발동 빈도, 지속시간, 재적용 계약 순으로 비교한다.
+ * 단순 총 피해량만 비교하면 느리게 발동하는 강한 출혈과 잦은 약한 출혈의 슬롯 우선권이 뒤집힌다.
+ */
 export function bleedOnAttackEffect(effects: readonly ExpeditionAugmentEffect[], relicId: string): Extract<ExpeditionAugmentEffect, { kind: "bleedOnAttack" }> | undefined {
+  const strengthRank = { minor: 0, standard: 1 } as const;
+  const reapplicationRank = { refresh: 1 } as const;
   return effects.filter((effect): effect is Extract<ExpeditionAugmentEffect, { kind: "bleedOnAttack" }> => effect.kind === "bleedOnAttack" && augmentAppliesTo(effect, relicId))
-    .sort((a, b) => (b.percent * b.seconds) - (a.percent * a.seconds))[0];
+    .sort((a, b) => strengthRank[b.strength] - strengthRank[a.strength]
+      || a.everyNAttacks - b.everyNAttacks
+      || reapplicationRank[b.reapplication] - reapplicationRank[a.reapplication])[0];
 }
 
 /** 휴식 노드가 다루는 저장 스냅샷은 HP를 0~100 비율로 보관한다. */

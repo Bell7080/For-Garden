@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { expeditionAugmentStatMultipliers, type ExpeditionAugmentEffect } from "../../src/core/expeditionAugments";
+import { bleedOnAttackEffect, expeditionAugmentStatMultipliers, type ExpeditionAugmentEffect } from "../../src/core/expeditionAugments";
 import { createSkirmish, stepSkirmish } from "../../src/core/skirmish";
 import { EXPEDITION_AUGMENTS } from "../../src/data/expeditionAugments";
 import { getRelic } from "../../src/data/relics";
@@ -12,8 +12,12 @@ describe("원정 증강 능력치", () => {
       const pool = EXPEDITION_AUGMENTS.filter((augment) => augment.rarity === rarity);
       expect(new Set(pool.map(({ category }) => category))).toEqual(new Set(categories));
       for (const augment of pool) {
-        expect(augment.effect.percent).toBeGreaterThan(0);
-        expect(augment.effect.percent).toBeLessThanOrEqual(40);
+        // 출혈은 공용 규칙을 참조하므로 카탈로그에 백분율을 복제하지 않는다.
+        if (augment.effect.kind === "bleedOnAttack") expect(augment.effect).not.toHaveProperty("percent");
+        else {
+          expect(augment.effect.percent).toBeGreaterThan(0);
+          expect(augment.effect.percent).toBeLessThanOrEqual(40);
+        }
       }
     }
   });
@@ -54,11 +58,20 @@ describe("원정 증강 능력치", () => {
   it("상태 위력을 기존 출혈 상태 경로의 지속시간에 적용한다", () => {
     const state = createSkirmish([getRelic("rex")], [getRelic("husk-shell")], { left: 0, right: 600, top: 0, bottom: 1000 }, {}, {}, { augmentEffects: [
       { kind: "statusPotencyPercent", percent: 25, scope: { kind: "all" } },
-      { kind: "bleedOnAttack", percent: 4, seconds: 4, scope: { kind: "all" } },
+      { kind: "bleedOnAttack", strength: "minor", everyNAttacks: 1, reapplication: "refresh", scope: { kind: "all" } },
     ] });
     const [ally, foe] = state.fighters;
     ally.x = foe.x = 300; ally.y = foe.y = 500; ally.attackCooldown = 0; foe.attackCooldown = 99;
     stepSkirmish(state, 1 / 60);
-    expect(foe.bleed?.total).toBe(5);
+    expect(foe.bleed?.total).toBe(2.5);
+  });
+
+  it("출혈 후보는 총 피해 곱 대신 표준 강도와 발동 주기·재적용 규칙으로 고른다", () => {
+    const effects: ExpeditionAugmentEffect[] = [
+      { kind: "bleedOnAttack", strength: "minor", everyNAttacks: 1, reapplication: "refresh", scope: { kind: "all" } },
+      { kind: "bleedOnAttack", strength: "standard", everyNAttacks: 3, reapplication: "refresh", scope: { kind: "all" } },
+    ];
+    // 작은 출혈이 더 자주 발동해도 단일 슬롯 우선권은 표준화된 강도가 먼저 갖는다.
+    expect(bleedOnAttackEffect(effects, "rex")?.strength).toBe("standard");
   });
 });

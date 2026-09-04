@@ -5,9 +5,9 @@ import { computeDamage, computeDamageContribution, currentAbilityPower, isCritic
 export { currentAbilityPower } from "./damage";
 import { drainFerocityFever, FEROCITY_RULES } from "./ferocity";
 import { breakthroughBonus } from "./relicProgression";
-import { bleedOnAttackEffect, conditionalAttackPowerMultiplier, expeditionAugmentStatMultipliers, type ExpeditionAugmentEffect } from "./expeditionAugments";
+import { augmentAppliesTo, bleedOnAttackEffect, conditionalAttackPowerMultiplier, expeditionAugmentStatMultipliers, type ExpeditionAugmentEffect, type ExpeditionAugmentTrigger, type ExpeditionTriggeredEffect } from "./expeditionAugments";
 import type { CombatStatusEffect, FerocityTrait, ReachTier, RelicDef, Side, Skill, TeamBuff } from "./types";
-import { canUseUltimate, ULTIMATE_ENERGY_MAX } from "./ultimate";
+import { ULTIMATE_ENERGY_MAX } from "./ultimate";
 import { stealthTransition, type CombatEffectCue } from "./combatEffects";
 import {
   accumulateDamageContribution, addContribution, contributionSnapshot, createBattleContributions, type BattleContributionRow, type BattleContributions,
@@ -102,6 +102,11 @@ export interface Fighter extends Combatant {
   statusHitCount: number;
   /** 원정 공격 출혈의 명시된 발동 주기만 세며 스킬 상태 주기와 섞지 않는다. */
   augmentBleedHitCount: number;
+  /** 조건부 증강별 발동 횟수와 마지막 시각. 키는 전투 입력 배열 순번이라 저장 데이터와 분리된다. */
+  augmentRuntime: Record<string, { triggers: number; lastAt: number }>;
+  /** 낮은 체력 훅이 부여한 전투 한정 방어·저항 퍼센트다. */
+  augmentDefensePercent: number;
+  augmentResistancePercent: number;
   /**
    * 지금 쌓인 손질. 상한에 닿으면 그 자리에서 터지고 다시 0부터 센다.
    *
@@ -179,6 +184,8 @@ export interface SkirmishState {
   log: string[];
   /** 원정에서만 주입되는 순수 효과 목록이다. 일반 스토리 전투는 빈 배열이다. */
   augmentEffects: readonly ExpeditionAugmentEffect[];
+  /** 생성 직후 UI가 첫 step에서 한 번만 받는 전투 시작 사건이다. */
+  initialEvents: SkirmishEvent[];
   /** 보스전에서만 존재하는 누적 피해·생존 시간·단계 상태다. 같은 진행기가 함께 갱신한다. */
   boss?: SkirmishBossState;
 }
@@ -468,6 +475,9 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     knockback: null,
     statusHitCount: 0,
     augmentBleedHitCount: 0,
+    augmentRuntime: {},
+    augmentDefensePercent: 0,
+    augmentResistancePercent: 0,
     butcher: null,
     // 첫 도약은 전투가 시작되고 조금 뒤다 — 첫 프레임에 뛰면 순간이동한 것으로만 보인다.
     huntCooldown: def.passive.kind === "gourmetHunt" ? def.passive.huntOpeningSeconds ?? 0 : 0,
@@ -479,7 +489,7 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     stunnedTotal: 0,
     staggeredFor: 0,
     // 시작 보호막은 보정된 최대 HP를 기준으로 계산해 최대 체력 증강과 자연스럽게 결합한다.
-    shield: { amount: battleDef.stats.hp * (multipliers.initialShieldPercent - 1), providerId: null },
+    shield: { amount: 0, providerId: null },
     adagioCooldownRemaining: 0,
     retargetIn: 0,
     curse: null,
@@ -555,12 +565,52 @@ export function createSkirmish(
     elapsed: 0,
     log: [],
     augmentEffects: options.augmentEffects ?? [],
+    initialEvents: [],
     boss: options.boss ? { fighterId: bossFighterId, score: 0, survivedFor: 0, phaseIndex: 0, limitReached: false, phases: options.boss.phases, limitSeconds: options.boss.limitSeconds, damageRemainder: 0, pressureRadius: Math.max(arena.right - arena.left, arena.bottom - arena.top) / 2, tideWarning: false } : undefined,
   };
+  // 시작 효과는 별도의 순수 단계에서 정확히 한 번 적용하고 사건은 첫 렌더 step까지 보존한다.
+  state.initialEvents = initializeSkirmishAugments(state);
   // 무리 사냥이 있는 편만 기준 아군의 정상 최초 표적을 확정한 뒤 루카가 이를 복사한다.
   triggerPackHunt(state, "player");
   triggerPackHunt(state, "enemy");
   return state;
+}
+
+/** 현재 전투의 조건부 증강만 안전하게 좁혀 대상 렐릭에 적용되는 항목과 안정적인 키를 돌려준다. */
+function triggeredAugments(state: SkirmishState, fighter: Fighter, trigger: ExpeditionAugmentTrigger): Array<{ effect: ExpeditionTriggeredEffect; key: string }> {
+  return state.augmentEffects.flatMap((effect, index) => effect.kind === "triggered" && effect.trigger === trigger && augmentAppliesTo(effect, fighter.def.id)
+    ? [{ effect, key: String(index) }] : []);
+}
+
+/** 횟수와 내부 쿨타임을 한 경계에서 소비해 다단 히트와 프레임 반복이 무제한 발동하지 않게 한다. */
+function consumeAugmentTrigger(state: SkirmishState, fighter: Fighter, key: string, effect: ExpeditionTriggeredEffect): boolean {
+  const runtime = fighter.augmentRuntime[key] ?? { triggers: 0, lastAt: Number.NEGATIVE_INFINITY };
+  if (runtime.triggers >= effect.limits.maxTriggers || state.elapsed - runtime.lastAt < effect.limits.cooldownSeconds) return false;
+  fighter.augmentRuntime[key] = { triggers: runtime.triggers + 1, lastAt: state.elapsed };
+  return true;
+}
+
+/** 전투 시작 보호막을 기존 shield 슬롯과 shieldGranted 사건으로만 부여하는 일회성 초기화 단계다. */
+export function initializeSkirmishAugments(state: SkirmishState): SkirmishEvent[] {
+  const events: SkirmishEvent[] = [];
+  for (const fighter of state.fighters.filter(({ side }) => side === "player")) {
+    // 구형 시작 보호막도 동일 사건 경로로 이관해 기존 저장 선택과 UI가 조용히 깨지지 않게 한다.
+    const legacyPercent = expeditionAugmentStatMultipliers(state.augmentEffects, fighter.def.id).initialShieldPercent - 1;
+    if (legacyPercent > 0 && fighter.augmentRuntime.legacyShield === undefined) {
+      fighter.augmentRuntime.legacyShield = { triggers: 1, lastAt: state.elapsed };
+      const amount = fighter.maxHp * legacyPercent; fighter.shield.amount += amount; fighter.shield.providerId = fighter.id;
+      events.push({ kind: "shieldGranted", fighterId: fighter.id, providerId: fighter.id, amount, remaining: fighter.shield.amount, effect: { tag: "shieldGain", intensity: 1 } });
+    }
+    for (const { effect, key } of triggeredAugments(state, fighter, "battleStart")) {
+      if (effect.payload.kind !== "shield" || !consumeAugmentTrigger(state, fighter, key, effect)) continue;
+      const targets = effect.limits.target === "allAllies" ? state.fighters.filter((ally) => ally.side === fighter.side && isFighterAlive(ally)) : [fighter];
+      for (const target of targets) {
+        const amount = target.maxHp * effect.payload.maxHpPercent / 100; target.shield.amount += amount; target.shield.providerId = fighter.id;
+        events.push({ kind: "shieldGranted", fighterId: target.id, providerId: fighter.id, amount, remaining: target.shield.amount, effect: { tag: "shieldGain", intensity: 1 } });
+      }
+    }
+  }
+  return events;
 }
 
 /** 전투 상태의 변경 가능한 Fighter를 노출하지 않고 원정 저장용 결과만 복사한다. */
@@ -1102,10 +1152,52 @@ export function defensiveDefinition(target: Fighter, state: SkirmishState): Figh
   const bonus = strongestLivingAura(state, target.side, "teamDefenseResistancePercent");
   // 저주는 저항만 깎는다. 오라와 같은 자리에서 곱해야 "올려 주는 것"과 "깎는 것"이 한 번씩만 든다.
   const shred = 1 - curseResistanceShred(target) / 100;
-  if (bonus <= 0 && shred === 1) return target;
+  if (bonus <= 0 && shred === 1 && target.augmentDefensePercent === 0 && target.augmentResistancePercent === 0) return target;
   return { ...target, def: { ...target.def, stats: { ...target.def.stats,
-    def: target.def.stats.def * (1 + bonus / 100), res: target.def.stats.res * (1 + bonus / 100) * shred,
+    def: target.def.stats.def * (1 + bonus / 100) * (1 + target.augmentDefensePercent / 100),
+    res: target.def.stats.res * (1 + bonus / 100) * (1 + target.augmentResistancePercent / 100) * shred,
   } } };
+}
+
+/** 적중·치명타·처치·저체력 훅의 구조화 payload를 기존 피해·회복·상태 경계에 연결한다. */
+function triggerCombatAugments(state: SkirmishState, owner: Fighter, trigger: ExpeditionAugmentTrigger, events: SkirmishEvent[], hitTarget?: Fighter): void {
+  for (const { effect, key } of triggeredAugments(state, owner, trigger)) {
+    const payload = effect.payload;
+    if (payload.kind === "ultimateCostReduction" || payload.kind === "shield") continue;
+    if (payload.kind === "lowHpDefense") {
+      const hpPercent = owner.maxHp > 0 ? owner.hp / owner.maxHp * 100 : 0;
+      if (hpPercent > payload.belowHpPercent || !consumeAugmentTrigger(state, owner, key, effect)) continue;
+      owner.augmentDefensePercent = Math.min(payload.defensePercent * effect.limits.maxStacks, owner.augmentDefensePercent + payload.defensePercent);
+      owner.augmentResistancePercent = Math.min(payload.resistancePercent * effect.limits.maxStacks, owner.augmentResistancePercent + payload.resistancePercent);
+      continue;
+    }
+    const target = effect.limits.target === "self" ? owner : hitTarget;
+    // 죽은 적에게 상태나 추가 피해를 남기지 않는 것은 모든 적중형 payload의 공통 불변식이다.
+    if (!target || !isFighterAlive(target)) continue;
+    if (payload.kind === "conditionalBonusDamage") {
+      const qualified = payload.requiresStatus === "curse" ? target.curse !== null : target.stunnedFor > 0;
+      if (!qualified || !consumeAugmentTrigger(state, owner, key, effect)) continue;
+      const skill: Skill = { ...owner.def.basic, damageType: payload.damageType, power: payload.percent };
+      const raw = Math.max(1, Math.round(computeDamage({ ...owner, def: offensiveDefinition(owner) }, defensiveDefinition(target, state), { ...skill, kind: "basic", isCritical: false }, true)));
+      const resolution = resolveReceivedDamage(target, raw); const hpBefore = target.hp; const applied = applyDamage(target, resolution.applied, events);
+      addContribution(state.contributions, owner.id, "attack", hpBefore - target.hp, payload.damageType === "magical" ? "abilityPower" : "attackPower");
+      events.push({ kind: "attack", attackerId: owner.id, targetId: target.id, skill: "transfer", amount: applied, contributionAmount: hpBefore - target.hp, critical: false, animate: false, damageType: payload.damageType, mitigated: resolution.reduced < resolution.raw });
+      if (!isFighterAlive(target)) { clearDefeatedStatuses(target); events.push({ kind: "death", fighterId: target.id, sourceId: owner.id }); }
+    } else if (payload.kind === "status" && consumeAugmentTrigger(state, owner, key, effect)) {
+      applyCombatStatusEffect(target, payload.status, events, state, owner.id);
+    } else if (payload.kind === "heal" && consumeAugmentTrigger(state, owner, key, effect)) {
+      const amount = applyHealing(state, target, target.maxHp * payload.maxHpPercent / 100, owner.id);
+      if (amount > 0) events.push({ kind: "heal", fighterId: target.id, amount, source: "passive", effect: { tag: "heal", intensity: 1 } });
+    }
+  }
+}
+
+/** 첫 궁극기 비용 감소를 조회만 하거나 실제 시전 시 한 번 소비한다. */
+function ultimateCost(state: SkirmishState, fighter: Fighter, consume: boolean): number {
+  const candidate = triggeredAugments(state, fighter, "onUltimate").find(({ effect, key }) => effect.payload.kind === "ultimateCostReduction" && (fighter.augmentRuntime[key]?.triggers ?? 0) < effect.limits.maxTriggers);
+  if (!candidate || candidate.effect.payload.kind !== "ultimateCostReduction") return fighter.def.ultimate.cost;
+  if (consume && !consumeAugmentTrigger(state, fighter, candidate.key, candidate.effect)) return fighter.def.ultimate.cost;
+  return fighter.def.ultimate.cost * (1 - candidate.effect.payload.percent / 100);
 }
 
 /** 현재 살아서 폭주 중인 상대 폰토스를 매 요청마다 찾아 영구 디버프 없이 회복 차단 여부를 정한다. */
@@ -1867,6 +1959,7 @@ function strike(
   const creditedTo = attacker.frenzy?.sourceId ?? attacker.id;
   const credited = recordDamageContribution(state, creditedTo, target, damageInput.damageType, damageInput.scalingStat, contributionAmount, resolution, targetHpBefore, shieldBefore, shieldProviderId);
   tryTriggerEmergencyRecovery(target); tryTriggerLowHpVanish(target, state);
+  triggerCombatAugments(state, target, "onLowHp", events);
 
   const transfer = useUltimate ? attacker.def.ultimate.damageTransfer : undefined;
   if (transfer && dealt > 0) {
@@ -1910,7 +2003,7 @@ function strike(
     }
   }
   if (comboHit?.grantActionResources !== false) {
-    if (useUltimate) attacker.energy -= attacker.def.ultimate.cost;
+    if (useUltimate) attacker.energy -= ultimateCost(state, attacker, true);
     else gainEnergy(attacker, state);
     // 아군 전체 충전은 시전자 자신의 충전과 같은 경계에서, 한 공격 행동에 한 번만 나눠 준다.
     grantAllyEnergy(attacker, skill, state);
@@ -1973,7 +2066,12 @@ function strike(
   if (!useUltimate) { triggerCrescendoStaccato(state, target, events); triggerSharedOverpaint(state, target); }
 
   // 개별 기본 공격·궁극기가 선언한 상태도 피해 처리 뒤 공용 저항/재적용 규칙을 그대로 사용한다.
-  if (statusEffectsLandThisHit(attacker, skill, useUltimate)) applySkillStatuses(target, skill, events, state, attacker.id, critical);
+  if (isFighterAlive(target) && statusEffectsLandThisHit(attacker, skill, useUltimate)) applySkillStatuses(target, skill, events, state, attacker.id, critical);
+  // 연격도 실제 적중마다 이 경계를 지나지만 증강 자체의 횟수·쿨타임 계약이 폭주를 막는다.
+  if (isFighterAlive(target)) {
+    if (!useUltimate) triggerCombatAugments(state, attacker, "onBasicHit", events, target);
+    if (critical) triggerCombatAugments(state, attacker, "onCritical", events, target);
+  }
 
   if (!useUltimate) {
     // 저주에 걸린 적을 **직접** 때린 만큼만 글이 세진다. 전이된 타격은 이 경로를 지나지 않으므로
@@ -1995,6 +2093,7 @@ function strike(
     if (useUltimate) attacker.energy = Math.min(ULTIMATE_ENERGY_MAX, attacker.energy + (attacker.def.ultimate.energyRefundOnKill ?? 0));
     // 처치한 순간 시계를 0으로 돌려 다음 프레임에 곧바로 다음 표적으로 뛴다.
     if (attacker.def.passive.kind === "gourmetHunt") attacker.huntCooldown = 0;
+    triggerCombatAugments(state, attacker, "onKill", events, target);
   }
 
   // 표식은 궁극기가 아니라 실제 타격을 따라 옮겨 다닌다.
@@ -2134,7 +2233,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
   }
 
   // 소비·팀 보조·야성 획득은 명중 수가 아니라 기술 사용 횟수에 묶는다.
-  if (useUltimate) attacker.energy -= attacker.def.ultimate.cost;
+  if (useUltimate) attacker.energy -= ultimateCost(state, attacker, true);
   else gainEnergy(attacker, state);
   grantAllyEnergy(attacker, skill, state);
   // 공격자 야성은 이번 공격의 모든 피해가 같은 시작 시점 배율을 쓰도록 대상 처리 뒤에 얻는다.
@@ -2163,6 +2262,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     applyDamage(target, amount, events);
     const credited = recordDamageContribution(state, attacker.id, target, damageInput.damageType, damageInput.scalingStat, contributionAmount, resolution, hpBefore, shieldBefore, shieldProviderId);
     tryTriggerEmergencyRecovery(target); tryTriggerLowHpVanish(target, state);
+    triggerCombatAugments(state, target, "onLowHp", events);
     // 흡혈은 대상별 실제 HP 감소량만 더해 과잉 피해를 회복량으로 만들지 않는다.
     applyHealing(state, attacker, (hpBefore - target.hp) * damageHealingRate(attacker, skill, attackingInFever) / 100);
     siphonOverpaintHealing(attacker, target, hpBefore - target.hp, state, events);
@@ -2187,10 +2287,13 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     if (isFighterAlive(target)) {
       // 광역 공격도 적중 대상을 하나씩 넘겨 기절 저항·행동 중단·UI 사건을 단일 공격과 공유한다.
       applySkillStatuses(target, skill, events, state, attacker.id, critical);
+      if (!useUltimate) triggerCombatAugments(state, attacker, "onBasicHit", events, target);
+      if (critical) triggerCombatAugments(state, attacker, "onCritical", events, target);
     } else {
       clearDefeatedStatuses(target);
       events.push({ kind: "death", fighterId: target.id, sourceId: attacker.id });
       state.log.push(`${target.def.name} 전투 불능`);
+      triggerCombatAugments(state, attacker, "onKill", events, target);
     }
     state.log.push(`${attacker.def.name} → ${target.def.name} ${amount}`);
   }
@@ -2460,7 +2563,7 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
 /** 지금 궁극기를 쓸 수 있는지. 게이지가 찼고, 살아 있고, 때릴 상대가 남아 있어야 한다. */
 export function canFireUltimate(state: SkirmishState, fighter: Fighter): boolean {
   // 수동 입력과 적 자동 시전이 모두 이 코어 경계를 공유해 기절 우회 경로를 만들지 않는다.
-  if (state.phase !== "fight" || !isFighterAlive(fighter) || fighter.stunnedFor > 0 || fighter.staggeredFor > 0 || !canUseUltimate(fighter)) return false;
+  if (state.phase !== "fight" || !isFighterAlive(fighter) || fighter.stunnedFor > 0 || fighter.staggeredFor > 0 || fighter.energy < ultimateCost(state, fighter, false)) return false;
   // 광란 중에는 기본 공격만 나간다. 궁극기까지 아군에게 꽂히면 한 판이 그 한 번으로 갈린다.
   if (fighter.frenzy) return false;
   if (fighter.def.ultimate.targeting === "battlefieldAllies") return aliveFighters(state, fighter.side).length > 0;
@@ -2487,7 +2590,7 @@ export function fireUltimate(
   const teamUltimate = attacker.def.ultimate;
   if (teamUltimate.targeting === "battlefieldAllies" && teamUltimate.teamBuff !== undefined) {
     // 피해도 회복도 없는 지원 궁극기다. 게이지만 쓰고 생존 아군 전체에 지속 강화를 건다.
-    attacker.energy -= teamUltimate.cost;
+    attacker.energy -= ultimateCost(state, attacker, true);
     for (const ally of aliveFighters(state, attacker.side)) {
       applyTeamBuff(ally, teamUltimate.teamBuff);
       events.push({ kind: "teamBuff", fighterId: ally.id, buff: teamUltimate.teamBuff, sourceId: attacker.id });
@@ -2497,7 +2600,7 @@ export function fireUltimate(
   }
   if (teamUltimate.targeting === "battlefieldAllies" && teamUltimate.healing !== undefined) {
     // 각 대상의 시전 순간 잃은 체력을 따로 계산해 20%씩 회복하고 정확히 50 게이지를 소비한다.
-    attacker.energy -= attacker.def.ultimate.cost;
+    attacker.energy -= ultimateCost(state, attacker, true);
     for (const ally of aliveFighters(state, attacker.side)) {
       const amount = applyHealing(state, ally, (ally.maxHp - ally.hp) * teamUltimate.healing.percent / 100, attacker.id);
       if (amount > 0) events.push({ kind: "heal", fighterId: ally.id, amount, source: "ultimate", effect: { tag: "heal", intensity: 1.65 } });
@@ -2527,7 +2630,8 @@ export function fireUltimate(
  * 버리거나 한 프레임에 여러 대를 몰아 맞는다.
  */
 export function stepSkirmish(state: SkirmishState, dt: number, rng: () => number = NO_CRIT): SkirmishEvent[] {
-  const events: SkirmishEvent[] = [];
+  // 시작 보호막 사건은 생성과 렌더 사이에서 유실되지 않도록 첫 step이 정확히 한 번 가져간다.
+  const events: SkirmishEvent[] = state.initialEvents.splice(0);
   if (state.phase !== "fight" || dt <= 0) return events;
   // 한 호출 안의 여러 적분 조각에서 연장되어도 진입 사건은 한 번만 내보내도록 시작 상태를 보존한다.
   const stealthBefore = new Map(state.fighters.map((fighter) => [fighter.id, fighter.stealthFor]));

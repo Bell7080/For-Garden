@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
 import type { ProductDto, ProductStorefront } from "../../src/api/contracts";
 import { productsForShopCategory, shopModel } from "../../src/ui/shopModel";
 
@@ -10,6 +11,14 @@ function product(id: string, storefront: ProductStorefront): ProductDto {
 /** 일반 상점 모델이 다른 서버 storefront의 상품을 끌어오지 않는지 고정한다. */
 describe("storefront product models", () => {
   const mixed = [product("shop-item", "shop"), product("trade-item", "trade"), product("premium-item", "premium")];
+
+  it("상점 씬은 storefront 고르기를 검증된 모델에 맡긴다", () => {
+    // PR #277이 지키려던 규칙을 그 사이 사라진 TradePopup 대신 지금 남은 진입점에 옮긴 것이다.
+    // 생산 화면이 같은 storefront 규칙을 다시 쓰면 한쪽만 고쳐도 다른 쪽이 옛 규칙으로 남는다.
+    const source = readFileSync(new URL("../../src/scenes/ShopScene.ts", import.meta.url), "utf8");
+    expect(source).toContain("shopModel(response.products)");
+    expect(source).not.toMatch(/response\.products\.filter\s*\(/);
+  });
 
   it("shopModel preserves only shop products", () => {
     expect(shopModel(mixed).map(({ id }) => id)).toEqual(["shop-item"]);

@@ -17,7 +17,7 @@ import { TopBar } from "../ui/TopBar";
 import { PopupLayer } from "../ui/PopupLayer";
 import { PurchasePopup } from "../ui/PurchasePopup";
 import { session } from "../state/session";
-import { productsForShopCategory } from "../ui/shopModel";
+import { productsForShopCategory, shopModel } from "../ui/shopModel";
 
 /** 상품 목록이 제목 아래에서 뒤로가기 안전 영역 위까지 흐르는 화면 좌표 경계다. */
 const LIST_VIEW = { left: 470, right: BASE_WIDTH - 36, top: 330, bottom: BASE_HEIGHT - 285 } as const;
@@ -99,7 +99,9 @@ export class ShopScene extends Phaser.Scene {
   private async refresh(): Promise<void> {
     const response = await gameApi.getProducts("shop");
     if (!this.scene.isActive()) return;
-    this.products = response.products.filter(({ storefront }) => storefront === "shop");
+    // storefront 판정은 검증된 모델 하나가 소유한다. 여기서 filter를 다시 쓰면 같은 규칙이
+    // 두 곳에 살아, 한쪽만 고쳐도 화면은 조용히 예전 규칙으로 남는다.
+    this.products = shopModel(response.products);
     this.renderProducts();
   }
 

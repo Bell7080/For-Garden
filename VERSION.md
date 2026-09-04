@@ -1,6 +1,6 @@
 # 버전 관리
 
-현재 버전: **v0.62.0**
+현재 버전: **v0.62.1**
 
 `VERSION.md`와 `package.json`의 `version`은 항상 같은 값을 쓰고, 타이틀(로딩) 화면 좌측
 하단 표기는 그 값을 그대로 읽는다. 화면에 손으로 적어 두지 않는다.
@@ -31,6 +31,18 @@
   그 이전의 초기 프로토타입 단계는 `v0.1.0` 항목 하나로 묶었다.
 
 ## 변경 이력
+
+## v0.62.1 — 2026-09-04
+
+**Codex PR #277을 지금 남은 진입점으로 옮겨 병합했다.**
+
+- 그 PR은 `TradePopup.refresh()`가 storefront 고르기를 `tradePopupModel`에 맡기는지 검사하는
+  회귀 테스트였는데, 먼저 병합된 #278이 `TradePopup`과 `tradePopupModel`을 **삭제**해 그대로는
+  typecheck와 단위 테스트가 함께 깨졌다.
+- 지키려던 규칙은 여전히 살아 있고, **실제로 어겨져 있었다** — `ShopScene.refresh()`가
+  `response.products.filter(...)`로 storefront 판정을 다시 쓰고 있었다. 그 자리를
+  `shopModel(response.products)` 호출로 바꾸고, 같은 검사를 그 파일에 대해 남겼다.
+- `package-lock.json`의 버전이 0.56.0에 멈춰 있던 것도 그 PR의 의도대로 함께 맞췄다.
 
 ## v0.62.0 — 2026-09-04
 

@@ -5,7 +5,7 @@ import type { Combatant } from "../core/combatTypes";
 import { RUNE_PART_LABELS, RUNE_RARITY_LABELS, type RunePart } from "../core/runes";
 import { previewSkillDamage } from "../core/damage";
 import type { Element, RelicDef, RelicProgress, RelicRarity, Role, Passive, Skill, SkillIconAssetId, Stats, Ultimate } from "../core/types";
-import { setDebugInfoOpen } from "../debug";
+import { setDebugFeedButton, setDebugInfoOpen } from "../debug";
 import { formatCurrency } from "../core/formatCurrency";
 import { RELICS } from "../data/relics";
 import { KeywordManager } from "../managers/KeywordManager";
@@ -2047,6 +2047,14 @@ export class InfoManager {
     this.root.setVisible(true);
     this.chrome.setVisible(true);
     setDebugInfoOpen(true);
+    // 급여 버튼 자리를 **열 때마다** 알린다. 만들 때 한 번만 알리면, 씬을 오갈 때 새 창이 먼저
+    // 알린 값을 옛 창이 사라지며 지워 버린다 — 그 뒤로는 아무도 다시 알리지 않는다.
+    // 판이 제자리를 잡은 다음 프레임에 재야 기울임과 이동이 반영된 실제 좌표가 나온다.
+    this.scene.time.delayedCall(0, () => {
+      if (!this.feedButton.active || !this.isOpen) return;
+      const bounds = this.feedButton.getBounds();
+      setDebugFeedButton({ x: bounds.centerX, y: bounds.centerY });
+    });
   }
 
   /**

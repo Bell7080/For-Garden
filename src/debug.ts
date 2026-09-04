@@ -53,6 +53,8 @@ export interface DebugState {
   runeForgeRename?: DebugPoint;
   /** 룬 쪽지의 "세공" 버튼 중심. 줄 구성(장착·해제·판매)에 따라 자리가 달라진다. */
   runeNoteCraft?: DebugPoint;
+  /** 정보창 급여 버튼의 중심. 레벨 칸의 줄 구성에 따라 자리가 달라진다. */
+  feedButton?: DebugPoint;
   battle?: DebugBattle;
   /** 정보창이 떠 있는지. `?`와 꾹 누르기를 확인하는 데 쓴다. */
   infoOpen?: boolean;
@@ -266,6 +268,17 @@ export function setDebugRuneForgeRename(point: { x: number; y: number } | undefi
  */
 export function setDebugRuneNoteCraft(point: { x: number; y: number } | undefined): void {
   ensure().runeNoteCraft = point;
+}
+
+/**
+ * 급여 버튼의 중심.
+ *
+ * 정보창의 레벨 칸은 경험치 줄·상한·성장 표기가 함께 자라 버튼 자리가 그때그때 달라진다.
+ * 좌표를 스펙에 적어 두면 칸이 한 줄만 바뀌어도 버튼 위가 아닌 곳을 눌러, 실패는 "성장 팝업이
+ * 안 뜬다"로만 보인다 — 실제로는 급여가 아예 일어나지 않은 것이다.
+ */
+export function setDebugFeedButton(point: { x: number; y: number } | undefined): void {
+  ensure().feedButton = point;
 }
 
 export function setDebugPopupTitles(titles: string[]): void {

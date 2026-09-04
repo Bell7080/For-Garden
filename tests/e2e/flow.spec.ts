@@ -2,6 +2,9 @@ import { test, expect, type Page } from "@playwright/test";
 import { startAfterOpening } from "./openingSave";
 // 캔버스 입력은 한 곳이 소유한다 — 스펙마다 두면 느린 구현이 그대로 살아남는다.
 import { captureGame, drag, longPress, tap, tapUntil } from "./canvasInput";
+// 조작 칩 좌표는 화면이 소유한 배치표에서 읽는다 — 스펙이 숫자를 다시 적으면 칩이 움직일
+// 때마다 여기만 옛 자리를 두드린다.
+import { BATTLE_CONTROLS } from "../../src/scenes/BattleScene";
 
 const BASE_WIDTH = 1080;
 const BASE_HEIGHT = 1920;
@@ -172,7 +175,7 @@ test("일반 전투 결과의 기여도 세 분류를 확인하고 닫은 뒤 �
   await page.setViewportSize({ width: BASE_WIDTH, height: BASE_HEIGHT });
   await enterBattle(page);
   // 3배속으로 결과까지 진행하되 결과 스냅샷을 만들기 위해 전투를 별도로 재현하지 않는다.
-  await tap(page, BASE_WIDTH - 335, 1360); await tap(page, BASE_WIDTH - 335, 1360);
+  await tap(page, BATTLE_CONTROLS.speedX, BATTLE_CONTROLS.rowY); await tap(page, BATTLE_CONTROLS.speedX, BATTLE_CONTROLS.rowY);
   await expect.poll(async () => (await battle(page))?.phase, { timeout: 60_000 }).not.toBe("fight");
   // 승리 결과는 StageCompletePopup(보상 팝업의 연장선)이다 — 화면 중심에 뜨는 "공격 · 방어 ·
   // 회복" 버튼(로컬 (0,90))을 눌러 같은 popups 위에 기여도 그래프를 한 겹 더 연다. SD가
@@ -195,8 +198,8 @@ test("토리카 패시브 회복은 1080×1920 전장에서 초록 +수치로 �
   await page.setViewportSize({ width: BASE_WIDTH, height: BASE_HEIGHT });
   await enterBattle(page);
   // 배속은 코어 진행만 앞당기며 회복 숫자의 화면 수명은 정상 속도라 캡처할 시간이 유지된다.
-  await tap(page, BASE_WIDTH - 335, 1360);
-  await tap(page, BASE_WIDTH - 335, 1360);
+  await tap(page, BATTLE_CONTROLS.speedX, BATTLE_CONTROLS.rowY);
+  await tap(page, BATTLE_CONTROLS.speedX, BATTLE_CONTROLS.rowY);
   await expect.poll(async () => (await battle(page))?.healPopups ?? 0, { timeout: 45_000 }).toBeGreaterThan(0);
   await captureGame(page, `test-results/${testInfo.project.name}-battle-torika-passive-heal-1080x1920.png`);
 });
@@ -205,13 +208,13 @@ test("토리카 궁극기의 다중 기절 뱃지를 1080×1920 전장에서 함
   await page.setViewportSize({ width: BASE_WIDTH, height: BASE_HEIGHT });
   await enterBattle(page);
   // 가까이 모인 적이 둘 이상이고 토리카 궁극기가 준비된 순간의 범위 기절 장면을 고정한다.
-  await tap(page, BASE_WIDTH - 335, 1360);
-  await tap(page, BASE_WIDTH - 335, 1360);
+  await tap(page, BATTLE_CONTROLS.speedX, BATTLE_CONTROLS.rowY);
+  await tap(page, BATTLE_CONTROLS.speedX, BATTLE_CONTROLS.rowY);
   // **손으로 누르지 않고 자동 궁극기에 맡긴다.** 배속은 프레임이 촘촘할 때만 실제로 빨라지고
   // (코어가 한 프레임에 진행하는 시간에 상한이 있다), 느린 환경에서는 "준비됐다"를 보고 누르러
   // 가는 사이에 전투가 끝나 버린다 — 그때는 이미 지도로 돌아가 있어 눌러도 아무 일이 없었다.
   // 자동은 충전이 끝나는 그 프레임에 발동하므로 전투가 끝나기 전에 반드시 터진다.
-  await tap(page, BASE_WIDTH - 130, 1360);
+  await tap(page, BATTLE_CONTROLS.rightX, BATTLE_CONTROLS.rowY);
   await expect.poll(async () => (await battle(page))?.autoUltimate).toBe(true);
   await expect.poll(async () => (await battle(page))?.stunned?.length ?? 0, { timeout: 90_000 }).toBeGreaterThanOrEqual(2);
   await captureGame(page, `test-results/${testInfo.project.name}-battle-multi-stun-1080x1920.png`);
@@ -353,16 +356,16 @@ test("전투 조작 칩으로 1·2·3배속과 자동 궁극기를 전환한다"
   expect(await battle(page)).toMatchObject({ speed: 1, autoUltimate: false });
 
   // 배속 칩은 1→2→3→1로 순환한다.
-  await tap(page, BASE_WIDTH - 335, 1360);
+  await tap(page, BATTLE_CONTROLS.speedX, BATTLE_CONTROLS.rowY);
   await expect.poll(async () => (await battle(page))?.speed).toBe(2);
-  await tap(page, BASE_WIDTH - 335, 1360);
+  await tap(page, BATTLE_CONTROLS.speedX, BATTLE_CONTROLS.rowY);
   await expect.poll(async () => (await battle(page))?.speed).toBe(3);
 
   // 자동 궁극기는 배속과 독립적으로 켜고 끌 수 있다.
-  await tap(page, BASE_WIDTH - 130, 1360);
+  await tap(page, BATTLE_CONTROLS.rightX, BATTLE_CONTROLS.rowY);
   await expect.poll(async () => (await battle(page))?.autoUltimate).toBe(true);
   // 세 번째 칩도 같은 줄에 있으며 누르는 즉시 저장된 스킵 상태가 디버그 관찰값에 반영된다.
-  await tap(page, BASE_WIDTH - 130, 1268);
+  await tap(page, BATTLE_CONTROLS.rightX, BATTLE_CONTROLS.rowY - BATTLE_CONTROLS.stackGap);
   await expect.poll(async () => (await battle(page))?.skipUltimatePresentation).toBe(true);
   await expect.poll(async () => (await battle(page))?.autoUltimate).toBe(true);
   await captureGame(page, `test-results/${test.info().project.name}-battle-controls.png`);
@@ -371,11 +374,11 @@ test("전투 조작 칩으로 1·2·3배속과 자동 궁극기를 전환한다"
 test("동시에 준비된 두 궁극기는 연출 하나씩 직렬 실행한다", async ({ page }) => {
   await enterBattle(page);
   // 빠르게 게이지를 모으되 자동 발동은 두 명이 준비될 때까지 켜지 않는다.
-  await tap(page, BASE_WIDTH - 335, 1360);
-  await tap(page, BASE_WIDTH - 335, 1360);
+  await tap(page, BATTLE_CONTROLS.speedX, BATTLE_CONTROLS.rowY);
+  await tap(page, BATTLE_CONTROLS.speedX, BATTLE_CONTROLS.rowY);
   // 위와 같은 이유로 넉넉히 기다린다. 여기는 둘이 함께 준비되어야 해 더 오래 걸린다.
   await expect.poll(async () => (await battle(page))?.ultimateReady.length ?? 0, { timeout: 90_000 }).toBeGreaterThanOrEqual(2);
-  await tap(page, BASE_WIDTH - 130, 1360);
+  await tap(page, BATTLE_CONTROLS.rightX, BATTLE_CONTROLS.rowY);
 
   // 첫 연출 활성 중 다음 전투원이 큐에 남는 것이 곧 겹치지 않고 직렬화됐다는 관찰 계약이다.
   await expect.poll(async () => (await battle(page))?.ultimateSequenceActive, { timeout: 5_000 }).toBe(true);

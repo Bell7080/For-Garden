@@ -41,7 +41,7 @@ export function expeditionAugmentEffectLabel(def: ExpeditionAugmentDef): string 
 
 /** 등급과 범위를 짧은 인게임 표기로 바꾸되 실제 판정은 정적 데이터의 값을 그대로 사용한다. */
 export function expeditionAugmentMetaLabel(def: ExpeditionAugmentDef): string {
-  return `${def.rarity === "advanced" ? "고급" : "일반"} · ${def.target === "party" ? "전체" : "개인"}`;
+  return `${def.rarity === "ssr" ? "SSR" : "SR"} · ${def.target === "party" ? "전체" : "개인"}`;
 }
 
 /** 효과 종류가 곧 문양이다. 같은 효과는 어느 증강이든 같은 그림으로 읽힌다. */

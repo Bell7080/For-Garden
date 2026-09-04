@@ -14,9 +14,8 @@ export class ExpeditionAugmentChip extends Phaser.GameObjects.Container {
   constructor(scene: Phaser.Scene, x: number, y: number, badge: AugmentBadgeView, size: number) {
     super(scene, x, y);
     scene.add.existing(this);
-    // 고급은 출격 주황, 일반은 강조색이다. 등급을 색 하나로만 갈라 크기는 건드리지 않는다 —
-    // 크기가 다르면 줄에 선 표식들이 서로 다른 종류처럼 보인다.
-    const tone = badge.rarity === "advanced" ? COLOR.sortie : COLOR.accent;
+    // 원정 등급도 기존 렐릭 희귀도 토큰을 공유한다. 새 색을 만들지 않아 다른 화면의 SR/SSR과 같은 뜻으로 읽힌다.
+    const tone = badge.rarity === "ssr" ? COLOR.raritySSR : COLOR.raritySR;
     const shape = chipPoints(size, size, { bevel: { topLeft: size * 0.22, topRight: 0, bottomRight: size * 0.22, bottomLeft: 0 } });
     this.add(drawLayer(scene, 0, 0, shape, { fill: tone, alpha: 0.34 }));
     this.add(drawGlyph(scene, badge.glyph, size));

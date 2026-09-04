@@ -8,7 +8,7 @@ import { getRelic } from "../../src/data/relics";
 describe("원정 증강 능력치", () => {
   it("SR/SSR마다 모든 전술 카테고리와 유효한 백분율 후보를 제공한다", () => {
     const categories = ["attack", "spell", "survival", "shield", "recovery", "status", "conditional"];
-    for (const rarity of ["common", "advanced"] as const) {
+    for (const rarity of ["sr", "ssr"] as const) {
       const pool = EXPEDITION_AUGMENTS.filter((augment) => augment.rarity === rarity);
       expect(new Set(pool.map(({ category }) => category))).toEqual(new Set(categories));
       for (const augment of pool) {

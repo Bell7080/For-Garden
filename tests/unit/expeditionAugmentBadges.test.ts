@@ -18,6 +18,9 @@ describe("원정 증강 표식", () => {
     expect(groups.byRelic.rex.map(({ augmentId }) => augmentId)).toEqual(["predator-instinct", "relentless-hunt"]);
     expect(groups.byRelic.anky).toHaveLength(1);
     expect(groups.byRelic.spino).toBeUndefined();
+    // 내부 소문자 키는 플레이어에게 기존 렐릭 등급 표기와 같은 대문자로 보인다.
+    expect(groups.global.map(({ meta }) => meta)).toEqual(["SR · 전체", "SSR · 전체"]);
+    expect(groups.byRelic.rex.map(({ meta }) => meta)).toEqual(["SR · 개인", "SSR · 개인"]);
   });
 
   it("은 정의가 사라진 ID를 화면에 세우지 않는다", () => {

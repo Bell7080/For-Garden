@@ -13,7 +13,7 @@ import type { ExpeditionAugmentSelection } from "../core/expeditionRewards";
  */
 
 /** 증강 하나가 화면에 세우는 표식. 액자 안의 문양은 효과 종류가 정한다. */
-export type AugmentBadgeGlyph = "attack" | "bleed" | "heal";
+export type AugmentBadgeGlyph = "attack" | "spell" | "survival" | "shield" | "heal" | "status" | "conditional";
 
 export interface AugmentBadgeView {
   augmentId: string;
@@ -30,9 +30,13 @@ export interface AugmentBadgeView {
 
 /** 선택 화면과 확정 목록이 공유하는 효과 수치 표기다. 운영 데이터의 값을 문구에 다시 적지 않는다. */
 export function expeditionAugmentEffectLabel(def: ExpeditionAugmentDef): string {
-  if (def.effect.kind === "attackPowerPercent") return `공격력 +${def.effect.percent}%`;
+  const labels = { maxHpPercent: "최대 체력", defensePercent: "방어력", resistancePercent: "저항력", attackPowerPercent: "공격력", spellPowerPercent: "주문력", attackSpeedPercent: "공격 속도", initialShieldPercent: "시작 보호막", statusPotencyPercent: "상태 위력" } as const;
+  if (def.effect.kind in labels) return `${labels[def.effect.kind as keyof typeof labels]} +${def.effect.percent}%`;
   if (def.effect.kind === "healAfterBattlePercent") return `전투 후 체력 +${def.effect.percent}%`;
-  return `공격 시 출혈 ${def.effect.percent}% · ${def.effect.seconds}초`;
+  if (def.effect.kind === "lowHpAttackPowerPercent") return `체력 ${def.effect.belowHpPercent}% 이하\n공격력 +${def.effect.percent}%`;
+  if (def.effect.kind === "bleedOnAttack") return `공격 시 출혈 ${def.effect.percent}% · ${def.effect.seconds}초`;
+  // 위 분기가 모든 판별 가능한 효과를 다루며, 이 반환은 향후 데이터 종류 추가 시 안전한 표시다.
+  return `효과 +${def.effect.percent}%`;
 }
 
 /** 등급과 범위를 짧은 인게임 표기로 바꾸되 실제 판정은 정적 데이터의 값을 그대로 사용한다. */
@@ -42,9 +46,7 @@ export function expeditionAugmentMetaLabel(def: ExpeditionAugmentDef): string {
 
 /** 효과 종류가 곧 문양이다. 같은 효과는 어느 증강이든 같은 그림으로 읽힌다. */
 export function augmentBadgeGlyph(def: ExpeditionAugmentDef): AugmentBadgeGlyph {
-  if (def.effect.kind === "bleedOnAttack") return "bleed";
-  if (def.effect.kind === "healAfterBattlePercent") return "heal";
-  return "attack";
+  return def.category === "recovery" ? "heal" : def.category;
 }
 
 /** 확정 하나를 표식 하나로 바꾼다. 정의가 사라진 ID는 화면에 세우지 않는다. */

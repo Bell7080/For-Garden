@@ -1612,14 +1612,11 @@ describe("원정 난전 확장", () => {
       { kind: "attackPowerPercent", percent: 20, scope: { kind: "relic", relicId: "rex" } },
     ];
     const state = createSkirmish([getRelic("rex"), getRelic("anky")], [getRelic("husk-shell")], ARENA, {}, {}, { augmentEffects: effects });
-    // 같은 정의로 한 번씩 때려 지정 대상에게만 추가 20%가 붙는지 공용 공격 이벤트에서 확인한다.
+    // 정적 정의를 서로 바꿔 끼우지 않고 전투 스냅샷의 공격력을 직접 비교해 일회 적용을 확인한다.
     const [rex, anky, foe] = state.fighters;
-    rex.x = anky.x = 400; rex.y = anky.y = 1000; foe.x = 450; foe.y = 1000;
-    rex.attackCooldown = 0; anky.attackCooldown = foe.attackCooldown = 99;
-    const boosted = stepSkirmish(state, 1 / 60).find((event) => event.kind === "attack")?.amount ?? 0;
-    rex.attackCooldown = 99; anky.attackCooldown = 0; anky.def = { ...rex.def, id: "anky" };
-    const globalOnly = stepSkirmish(state, 1 / 60).find((event) => event.kind === "attack")?.amount ?? 0;
-    expect(boosted).toBeGreaterThan(globalOnly);
+    expect(rex.def.stats.atk / getRelic("rex").stats.atk).toBeCloseTo(1.3);
+    expect(anky.def.stats.atk / getRelic("anky").stats.atk).toBeCloseTo(1.1);
+    expect(foe.def.stats.atk).toBe(getRelic("husk-shell").stats.atk);
   });
 
   it("은 공격 출혈을 단일 슬롯에 중첩하고 약한 재적용이 비율을 낮추지 않는다", () => {

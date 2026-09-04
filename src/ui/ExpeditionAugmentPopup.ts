@@ -84,7 +84,10 @@ export class ExpeditionAugmentPopup {
     const selected = drawLayer(this.scene, 0, 0, shape, { fill: 0x5a3a12, alpha: 0.72, edge: COLOR.missionClaim, edgeAlpha: 0.96 }).setVisible(false);
     this.offerSelections.set(offer.augmentId, selected);
     card.add(selected);
-    card.add(this.scene.add.image(0, -112, "skill-icon-buff").setDisplaySize(76, 76).setTint(def.target === "party" ? COLOR.accent : COLOR.sortie));
+    // 카테고리 이름을 작은 표식으로 함께 보여 같은 범위라도 공격/생존 후보를 즉시 가른다.
+    const categoryLabel: Record<ExpeditionAugmentDef["category"], string> = { attack: "공격", spell: "주문", survival: "생존", shield: "보호막", recovery: "회복", status: "상태", conditional: "조건" };
+    card.add(this.scene.add.image(0, -122, "skill-icon-buff").setDisplaySize(68, 68).setTint(def.target === "party" ? COLOR.accent : COLOR.sortie));
+    card.add(this.scene.add.text(0, -78, categoryLabel[def.category], textStyle({ role: "emphasis", size: 18, color: COLOR.inkDim })).setOrigin(0.5));
     card.add(this.scene.add.text(0, -32, def.name, textStyle({ role: "display", size: 29 })).setOrigin(0.5));
     card.add(drawHairline(this.scene, 0, 20, 210, { color: COLOR.accent, alpha: 0.3 }));
     // 범위와 수치는 고르는 근거라 흐린 회색으로 두지 않는다. 범위는 제 색으로, 효과는 본문 밝기로 읽힌다.

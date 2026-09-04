@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clockWedgePoints } from "../../src/ui/clockWedge";
+import { clockWedgeOnShape, clockWedgePoints } from "../../src/ui/clockWedge";
 
 /**
  * 머리 위 상태 칩의 남은 시간은 원형 게이지가 아니라 **덮이는 부채꼴**이 말한다. 기하 마스크
@@ -52,5 +52,47 @@ describe("시계 부채꼴", () => {
     };
     expect(area(0.25)).toBeGreaterThan(area(0.1));
     expect(area(1)).toBeCloseTo(SIZE * SIZE, 4);
+  });
+});
+
+describe("칩 도형 안에서 자른 시계", () => {
+  const SIZE = 30;
+  const BEVEL = 8;
+  /** `chipPoints`와 같은 모양의 깎인 네모. Phaser 없이 점만 만든다. */
+  const CHIP: { x: number; y: number }[] = [
+    { x: -SIZE / 2 + BEVEL, y: -SIZE / 2 },
+    { x: SIZE / 2, y: -SIZE / 2 },
+    { x: SIZE / 2, y: SIZE / 2 - BEVEL },
+    { x: SIZE / 2 - BEVEL, y: SIZE / 2 },
+    { x: -SIZE / 2, y: SIZE / 2 },
+    { x: -SIZE / 2, y: -SIZE / 2 + BEVEL },
+  ];
+
+  /** 볼록 다각형 안(경계 포함)인지. 모든 변에 대해 같은 부호면 안이다. */
+  function inside(point: { x: number; y: number }): boolean {
+    return CHIP.every((a, index) => {
+      const b = CHIP[(index + 1) % CHIP.length];
+      return (b.x - a.x) * (point.y - a.y) - (b.y - a.y) * (point.x - a.x) >= -1e-6;
+    });
+  }
+
+  it("은 깎인 모서리를 넘지 않는다", () => {
+    // 사각형 기준으로 그리면 오른쪽 아래 빗변 밖으로 검은 조각이 흘러내려 체력 바를 가렸다.
+    for (let ratio = 0.05; ratio <= 1; ratio += 0.05) {
+      for (const point of clockWedgeOnShape(CHIP, ratio)) {
+        expect(inside(point), `ratio ${ratio} → (${point.x}, ${point.y})`).toBe(true);
+      }
+    }
+  });
+
+  it("은 다 덮으면 도형의 꼭짓점을 모두 지난다", () => {
+    const points = clockWedgeOnShape(CHIP, 1);
+    for (const vertex of CHIP) {
+      expect(points.some((point) => Math.hypot(point.x - vertex.x, point.y - vertex.y) < 1e-6), `${vertex.x},${vertex.y}`).toBe(true);
+    }
+  });
+
+  it("은 비어 있으면 아무것도 그리지 않는다", () => {
+    expect(clockWedgeOnShape(CHIP, 0)).toEqual([]);
   });
 });

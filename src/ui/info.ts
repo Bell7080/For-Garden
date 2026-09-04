@@ -575,7 +575,7 @@ export class InfoManager {
     // 사거리는 오각형에 없는 축이라 제목 바로 아래에 이름표처럼 한 줄로만 선다. 색은 상세
     // 팝업이 맡고 여기서는 회색으로 물러난다 — 늘 떠 있는 자리는 균형이 먼저 읽혀야 한다.
     this.reachLabel = scene.add
-      .text(COLUMN.x - COLUMN.width / 2 + 42, 858, "", textStyle({ role: "body", size: 22, color: COLOR.inkDim }))
+      .text(COLUMN.x - COLUMN.width / 2 + 42, 874, "", textStyle({ role: "body", size: 22, color: COLOR.inkDim }))
       .setOrigin(0, 0.5);
     attach(statPanel, this.reachLabel);
     // 칸에는 숫자가 아니라 **오각형**이 선다. 다섯 축의 균형은 숫자 다섯 줄보다 한눈에 읽히고,

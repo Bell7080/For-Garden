@@ -889,6 +889,100 @@ export const RELICS: RelicDef[] = [
     },
   },
 
+  {
+    id: "keris",
+    squad: "eye",
+    name: "케리스",
+    specimenNumber: "182",
+    projectName: "MARGINALIA",
+    excavationSite: "아일랜드 발리베탁 이탄 습지",
+    // 발굴 기록은 장소·보존 상태·복원 연구 특징만 담고, 복원 이후 생활 관찰과 분리한다.
+    fossilRecord: "이탄 습지의 산소 없는 진흙이 거대한 뿔 한 쌍을 뿌리까지 온전히 남겼다. 뿔 안쪽에는 성장선이 촘촘히 겹쳐 있어, 복원 연구는 그 줄을 세는 일부터 시작했다.",
+    observationProfile: {
+      originYear: "약 1만 2천 년 전",
+      // 성체 직전 화석에서 비롯된 조용하고 미숙한 성향에 맞춰 E.C. 17년으로 둔다.
+      restorationYear: "E.C. 17년",
+      lifeStage: "성체",
+      height: "1.62 m",
+      weight: "48 kg",
+    },
+    catalogSummary: "신장 1.62m의 인간형 체격에 안쪽으로 굽은 한 쌍의 큰 뿔과, 종이를 다루기 좋게 가늘고 긴 손끝이 확인된 성체 메갈로케로스 표본.",
+    unlockRecord: { status: "recorded", text: "케리스는 복원 직후부터 중앙 도서관을 떠나지 않았다. 말수가 거의 없고 눈을 잘 맞추지 못하지만, 누가 무엇을 빌려 갔는지는 묻지 않아도 정확히 기억한다. 특히 연구원이 열람한 자료는 반납일이 지나도 서가로 돌려보내지 않고 제 책상 옆에 따로 쌓아 두며, 그 목록을 별도의 공책에 옮겨 적는 모습이 여러 번 관찰됐다. 좋아하는 것을 물으면 로맨스 소설이라고만 답한다." },
+    squadNote: "시그널 아이의 기록 담당. 관측 보고가 오가는 자리에 끼지 않고 그 기록을 받아 색인하며, 연구원이 무엇을 열람했는지는 아무도 묻지 않았는데도 전부 적어 둔다.",
+    // 관제탑의 잡담에 끼지 못하는 성격이라 스쿼드가 쓰는 호칭 중 가장 사적인 "선배"를 쓴다.
+    researcherTitle: "선배",
+    rarity: "SR",
+    portraitAssetId: "keris",
+    origin: "메갈로케로스",
+    element: "earth",
+    role: "warrior",
+    // 서가 사이에서 글로 싸우는 마법형이라 붙지 않는다.
+    reachTier: "ranged",
+    // 장서를 정리하며 나오는 기록 자산이라 발굴 특화도 골드 회수 쪽에 붙인다.
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 26.5, efficiencyMultiplier: 1.06 },
+    // 주문력에 전부 몰아준 마법형 디버프 딜러다. 공격력은 쓰는 스킬이 하나도 없으므로 가장 낮고,
+    // 뒷줄에서 한 자 한 자 적는 손이라 공격 속도와 이동 속도도 낮다.
+    stats: {
+      hp: 900,
+      def: 54,
+      res: 112,
+      atk: 58,
+      ap: 180,
+      attackSpeed: 74,
+      moveSpeed: 62,
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 0,
+    },
+    // 광란은 폭주에서도 나오지만 **직접 적중**에만 걸린다. 전이까지 발동하면 한 번의 공격이
+    // 사슬 길이만큼 적을 돌려세워, 폭주 동안 상대 편이 통째로 멈춘 것처럼 된다.
+    ferocityTrait: { name: "나만 봐", effectId: "frenzyGaze", seconds: 2, attackSpeedPercent: 50 },
+    passive: {
+      // kind가 cursedInsight인 패시브는 passiveDescription()이 구조화 필드로 다시 문장을 만들므로
+      // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
+      id: "keris-passive",
+      name: "열 번 찍어 안 넘어가는 연구원도 없다죠?",
+      kind: "cursedInsight",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      value: 2,
+      maxStacks: 10,
+      desc: "저주에 걸린 적에게 기본 공격을 직접 적중시킬 때마다 이번 전투 동안 주문력이 2% 증가한다. 최대 10회까지 쌓인다.",
+    },
+    basic: {
+      id: "keris-basic",
+      name: "첫 사랑은 무슨 맛일까요?",
+      power: 80,
+      scalingStat: "ap",
+      iconAssetId: "skill-icon-magical",
+      effectType: "magical",
+      damageType: "magical",
+      targeting: "single",
+      statusEffects: [{ kind: "curse", seconds: 8, resistancePercent: 15, maxStacks: 3 }],
+      // 저주가 이미 최대인 적에서만 이어진다. 비율이 곱해지며 줄어들어 피해는 두세 번이면
+      // 미미해지므로, 이어지는 몫은 피해가 아니라 저주를 퍼뜨리는 것이다.
+      curseTransfer: { percent: 25 },
+    },
+    ultimate: {
+      id: "keris-ult",
+      name: "등장인물이 너무 많아요",
+      power: 120,
+      scalingStat: "ap",
+      iconAssetId: "skill-icon-magical",
+      effectType: "magical",
+      damageType: "magical",
+      cost: 200,
+      // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
+      targeting: "battlefieldEnemies",
+      // 저주받은 적이 하나도 없으면 가장 가까운 적에게 먼저 씌운다 — 그러지 않으면 게이지가
+      // 가득 찬 자동 궁극기가 대상 없이 헛돌고, 플레이어는 왜 안 나가는지 알 수 없다.
+      cursedTargetsOnly: { seedCurse: { kind: "curse", seconds: 8, resistancePercent: 15, maxStacks: 3 } },
+      statusEffects: [{ kind: "frenzy", seconds: 4, attackSpeedPercent: 50 }],
+    },
+  },
+
   // --- 적 개체. 폭주해 이터널 시티를 위협하는 실패작들이다. ---
   {
     id: "husk-raptor",

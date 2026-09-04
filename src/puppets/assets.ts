@@ -22,6 +22,8 @@ import {
   PONTOS_PORTRAIT_METADATA,
   PONTOS_SD_METADATA,
   SEIRA_PORTRAIT_METADATA,
+  KERIS_PORTRAIT_METADATA,
+  KERIS_SD_METADATA,
   MAKI_PORTRAIT_METADATA,
   MAKI_SD_METADATA,
   MERON_PORTRAIT_METADATA,
@@ -165,6 +167,12 @@ export const MAKI_ASSET: PuppetAsset = {
   ...MAKI_PORTRAIT_METADATA,
 };
 
+/** 12번 전신 일러스트: 케리스(메갈로케로스). */
+export const KERIS_ASSET: PuppetAsset = {
+  url: `${base}puppets/char_012.zip`,
+  ...KERIS_PORTRAIT_METADATA,
+};
+
 /** 8번 전신 일러스트: 티아(이크티오사우루스). */
 export const TIA_ASSET: PuppetAsset = {
   url: `${base}puppets/char_008.zip`,
@@ -239,6 +247,7 @@ const PORTRAIT_ASSETS = {
   meron: MERON_ASSET,
   pachi: PACHI_ASSET,
   maki: MAKI_ASSET,
+  keris: KERIS_ASSET,
   // 적도 전용 전신을 가진다. 초상 레지스트리에 함께 두면 정보창이 아군·적을 가르지 않고
   // 같은 경로로 원화를 찾는다 — 화면마다 "적이면 다른 함수"를 두면 한 곳을 고칠 때 다른
   // 곳이 임시 원화로 남는다.
@@ -341,6 +350,12 @@ export const MAKI_SD_ASSET: PuppetAsset = {
   ...MAKI_SD_METADATA,
 };
 
+/** 12번 SD: 케리스. */
+export const KERIS_SD_ASSET: PuppetAsset = {
+  url: `${base}puppets/charSD_012.zip`,
+  ...KERIS_SD_METADATA,
+};
+
 /** 9번 SD: 메론. */
 export const MERON_SD_ASSET: PuppetAsset = {
   url: `${base}puppets/charSD_009.zip`,
@@ -372,6 +387,7 @@ const ALLY_SD_ASSETS: Readonly<Record<string, PuppetAsset>> = {
   meron: MERON_SD_ASSET,
   pachi: PACHI_SD_ASSET,
   maki: MAKI_SD_ASSET,
+  keris: KERIS_SD_ASSET,
 };
 
 /** 적 SD는 아군과 번호 묶음이 달라 따로 두고, 최종층 보스만 전용 묶음을 쓴다. */

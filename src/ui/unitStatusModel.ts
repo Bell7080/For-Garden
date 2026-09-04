@@ -7,7 +7,7 @@ import type { Fighter } from "../core/skirmish";
  * 겹 수와 남은 시간을 여기서 한 번만 만들고 둘 다 이 목록만 그린다. Phaser를 들여오지 않아
  * 순서·색·문구를 테스트가 그대로 고정할 수 있다.
  */
-export type UnitStatusId = "stun" | "bleed" | "overpaint" | "butcher";
+export type UnitStatusId = "stun" | "frenzy" | "bleed" | "curse" | "overpaint" | "butcher";
 
 export interface UnitStatusView {
   id: UnitStatusId;
@@ -27,7 +27,9 @@ export interface UnitStatusView {
 /** 상태별 색. 피해 수치의 디버프 색과 같은 계열을 쓴다. */
 export const UNIT_STATUS_COLOR: Readonly<Record<UnitStatusId, number>> = {
   stun: 0xf2c744,
+  frenzy: 0xa8406b,
   bleed: 0xc2303a,
+  curse: 0x8f6aa4,
   overpaint: 0x62c6d8,
   butcher: 0xc07fa4,
 };
@@ -39,7 +41,8 @@ function seconds(value: number): string {
 /**
  * 지금 이 전투원에게 걸린 상태를 **행동을 막는 것부터** 늘어놓는다.
  *
- * 기절 → 출혈 → 덧칠 → 손질 순서다. 순서를 화면이 정하면 같은 상태가 개체마다 다른 자리에
+ * 기절 → 광란 → 출혈 → 덧칠 → 저주 → 손질 순서다. 광란이 기절 다음인 이유는 그 둘만 **무엇을
+ * 때리는지 자체를 바꾸기** 때문이다. 순서를 화면이 정하면 같은 상태가 개체마다 다른 자리에
  * 서서, 어디를 봐야 하는지 매번 다시 찾게 된다.
  */
 export function unitStatusViews(fighter: Fighter): UnitStatusView[] {
@@ -49,6 +52,14 @@ export function unitStatusViews(fighter: Fighter): UnitStatusView[] {
       id: "stun", name: "기절", color: UNIT_STATUS_COLOR.stun,
       remaining: fighter.stunnedFor, total: Math.max(fighter.stunnedTotal, fighter.stunnedFor),
       detail: `${seconds(fighter.stunnedFor)} 남음`,
+    });
+  }
+  if (fighter.frenzy) {
+    const frenzy = fighter.frenzy;
+    views.push({
+      id: "frenzy", name: "광란", color: UNIT_STATUS_COLOR.frenzy,
+      remaining: frenzy.remaining, total: Math.max(frenzy.total, frenzy.remaining),
+      detail: `자기 편을 공격 · 공격 속도 +${frenzy.attackSpeedPercent}% · ${seconds(frenzy.remaining)} 남음`,
     });
   }
   if (fighter.bleed) {
@@ -65,6 +76,15 @@ export function unitStatusViews(fighter: Fighter): UnitStatusView[] {
       stacks: paint.stacks,
       remaining: paint.remaining, total: Math.max(paint.total, paint.remaining),
       detail: `${paint.stacks}겹 · 받는 피해 +${paint.stacks * paint.percentPerStack}% · ${seconds(paint.remaining)} 남음`,
+    });
+  }
+  if (fighter.curse) {
+    const curse = fighter.curse;
+    views.push({
+      id: "curse", name: "저주", color: UNIT_STATUS_COLOR.curse,
+      stacks: curse.stacks,
+      remaining: curse.remaining, total: Math.max(curse.total, curse.remaining),
+      detail: `${curse.stacks}겹 · 저항력 -${curse.stacks * curse.percentPerStack}% · ${seconds(curse.remaining)} 남음`,
     });
   }
   if (fighter.butcher && fighter.butcher.stacks > 0) {

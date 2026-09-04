@@ -55,6 +55,9 @@ export const ULTIMATE_PRESENTATIONS: Readonly<Record<string, UltimatePresentatio
   tia: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.9, artworkOrigin: { x: 640, y: 790 }, cutInHoldMs: 145, zoomScale: 1.18, cameraShakeIntensity: 0.008 },
   // 비공격 찬가는 강한 흔들림 대신 짧고 차분한 공용 placeholder 컷인을 사용한다.
   mette: { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkScale: 0.96, cutInHoldMs: 170, zoomScale: 1.12, cameraShakeIntensity: 0.004 },
+  // 뒷줄에서 책을 펼치는 연출이라 컷인은 왼쪽에서 들어오고, 전장의 확대는 얕게 둔다 —
+  // 케리스의 궁극기는 한 방이 아니라 전장 전체가 서로 돌아서는 그림이 결과다.
+  keris: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.98, cutInHoldMs: 180, zoomScale: 1.1, cameraShakeIntensity: 0.005 },
   "husk-raptor": { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", cutInHoldMs: 135, zoomScale: 1.2, zoomMs: 110, cameraShakeIntensity: 0.008 },
   "husk-shell": { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.94, zoomScale: 1.24, zoomMs: 115, cameraShakeIntensity: 0.009 },
   "husk-wing": { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkScale: 0.92, artworkOrigin: { x: 650, y: 770 }, zoomScale: 1.16, cameraShakeIntensity: 0.007 },

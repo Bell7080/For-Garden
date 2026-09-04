@@ -119,9 +119,14 @@ const KNOCKBACK_SPIN = 1_080;
 /** SD 한 명의 화면 높이. 여섯이 겹치지 않도록 기존 300에서 0.7배로 줄였다. */
 const UNIT_HEIGHT = 210;
 const PROFILE_TOP = 1430;
-/** 조작 칩은 프로필 줄 바로 위 우하단에 모인다. 전장을 가리지 않고 엄지가 닿는 자리다. */
+/**
+ * 조작 칩은 프로필 줄 바로 위 우하단에 모인다. 전장을 가리지 않고 엄지가 닿는 자리다.
+ *
+ * 줄 높이는 프로필의 **버프 액자 줄**이 정한다 — 세 번째 카드의 버프 칩이 1363까지 올라오므로
+ * 1360에 두면 그 위에 겹쳤다. 액자 한 칸(56)만큼 더 띄운다.
+ */
 // 전장 아래쪽에 서므로 SD·체력 바보다 앞에 둔다. 컷인(900)보다는 뒤라 연출을 가리지 않는다.
-const BATTLE_CONTROLS = { rowY: 1360, rightX: BASE_WIDTH - 130, speedX: BASE_WIDTH - 335, stackGap: 92, depth: 320 } as const;
+const BATTLE_CONTROLS = { rowY: 1288, rightX: BASE_WIDTH - 130, speedX: BASE_WIDTH - 335, stackGap: 92, depth: 320 } as const;
 
 /** 아직 다 차지 않은 카드의 불투명도. 다 차면 1이 되어 그림이 온전히 선다. */
 const CHARGE_CARD_ALPHA = 0.62;

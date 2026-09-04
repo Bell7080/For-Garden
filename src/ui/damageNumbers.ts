@@ -36,7 +36,7 @@ export type DamageFlavor =
  * **새 디버프는 여기와 아래 색표에만 더한다.** 화면이 상태마다 색을 새로 고르면 같은 계열의
  * 상태가 화면마다 다른 색으로 보인다.
  */
-export type DebuffId = "bleed" | "poison" | "concussion" | "butcher";
+export type DebuffId = "bleed" | "poison" | "concussion" | "butcher" | "curse" | "frenzy";
 
 /**
  * 디버프별 색.
@@ -50,6 +50,8 @@ export const DEBUFF_TONE: Record<DebuffId, string> = {
   poison: "#7a4bab",
   concussion: "#b8862f",
   butcher: "#9a5b7a",
+  curse: "#6a4a7a",
+  frenzy: "#a8406b",
 };
 
 export interface DamagePopupRequest {

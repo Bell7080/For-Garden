@@ -211,3 +211,24 @@ export const PONTOS_SD_METADATA: Omit<PuppetAsset, "url"> = {
   imageHeight: 1254,
   content: { left: 32, top: 25, right: 1218, bottom: 1238 },
 };
+
+/**
+ * 12번 케리스(메갈로케로스) 전신.
+ *
+ * ZIP 안 WebP의 alpha > 16 경계를 원본 좌표계에서 직접 측정했다. 발 관절(`발2`)이 캔버스
+ * 아래(y=1623 / 높이 1536) 밖에 박혀 있어 바닥선은 관절이 아니라 이 `content.bottom`이 잡는다.
+ */
+export const KERIS_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1024,
+  imageHeight: 1536,
+  content: { left: 77, top: 35, right: 926, bottom: 1491 },
+  /** 로비 세로 비율: 메론 기준. 1.62 m. */
+  lobbyZoom: 1.079,
+};
+
+/** 케리스 SD ZIP의 정사각 원본과 alpha > 16 경계다. */
+export const KERIS_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254,
+  imageHeight: 1254,
+  content: { left: 102, top: 61, right: 1100, bottom: 1201 },
+};

@@ -124,6 +124,20 @@ export interface Fighter extends Combatant {
   shield: { amount: number; providerId: string | null };
   /** 아다지오 정화·보호막의 메테 개체별 남은 쿨타임(초)이다. JSON 직렬화 가능한 숫자다. */
   adagioCooldownRemaining: number;
+  /**
+   * 지금 걸린 저주. 스스로는 피해를 주지 않고 **저항을 중첩만큼 깎는다.**
+   *
+   * 덧칠과 같은 이유로 슬롯 하나만 둔다 — 여럿이 겹쳐 걸면 어느 쪽 수치가 도는지 화면과
+   * 계산이 갈린다. 다시 걸면 시간이 처음부터 다시 돌고 중첩만 하나 오른다.
+   */
+  curse: { remaining: number; total: number; stacks: number; percentPerStack: number; maxStacks: number } | null;
+  /**
+   * 지금 걸린 광란. 표적이 자기 편으로 뒤집히고 공격 속도가 오른다.
+   *
+   * `sourceId`를 함께 드는 이유는 **기여도** 때문이다 — 적이 자기 편을 때린 몫은 그 적이 아니라
+   * 광란을 건 쪽이 만든 피해다. 없으면 광란 전략을 쓴 판에서 시전자가 기여 0으로 찍힌다.
+   */
+  frenzy: { remaining: number; total: number; attackSpeedPercent: number; sourceId?: string } | null;
   /** 걸려 있는 출혈. 없으면 null이다. */
   bleed: { remaining: number; total: number; tickIn: number; percent: number; sourceId?: string } | null;
   /** 이 전투에서 긴급 회복 패시브를 이미 발동했는지. 저장하지 않는 "전투당 1회" 소유 상태다. */
@@ -337,8 +351,10 @@ export const SKIRMISH = {
  */
 export const REACH_TIER = {
   melee: SKIRMISH.reach,
-  mid: 250,
-  ranged: 340,
+  // 처음에는 250 / 340이었는데 전장(820×760)에서 근거리와 나란히 서 보면 차이가 눈에 남지
+  // 않았다. 단계를 나눈 값은 "뒷줄이 뒷줄에 남는 그림"이므로, 보이지 않으면 없는 것과 같다.
+  mid: 300,
+  ranged: 430,
 } as const satisfies Readonly<Record<ReachTier, number>>;
 
 /** 이 전투원이 멈춰 서서 때리기 시작하는 거리. 씬과 코어가 같은 값을 읽는다. */
@@ -416,6 +432,8 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     staggeredFor: 0,
     shield: { amount: 0, providerId: null },
     adagioCooldownRemaining: 0,
+    curse: null,
+    frenzy: null,
     bleed: null,
     // 저장 스냅샷의 HP만 반영하고, 전투 한정 발동권과 지속 효과는 매 전투 새로 만든다.
     passiveTriggered: false,
@@ -576,6 +594,8 @@ function applyCombatStatusEffect(fighter: Fighter, effect: CombatStatusEffect, e
   if (effect.kind === "overpaint") refreshOverpaint(fighter, effect);
   if (effect.kind === "concussion") applyConcussion(fighter, effect, critical, events, state, sourceId);
   if (effect.kind === "butcher") applyButcher(fighter, effect, events, state, sourceId);
+  if (effect.kind === "curse") refreshCurse(fighter, effect);
+  if (effect.kind === "frenzy") applyFrenzy(fighter, effect, sourceId);
 }
 
 /**
@@ -792,11 +812,104 @@ function refreshBleed(target: Fighter, seconds: number, percent: number, events:
   events.push({ kind: "bleed", fighterId: target.id, amount: 0, started: true });
 }
 
+/**
+ * 저주를 한 겹 더 씌우고 시간을 처음부터 다시 돌린다.
+ *
+ * 덧칠과 같은 갱신 규칙이다 — 중첩은 상한까지 오르고 시간은 매번 새로 센다.
+ */
+function refreshCurse(target: Fighter, effect: Extract<CombatStatusEffect, { kind: "curse" }>): void {
+  const stacks = Math.min(effect.maxStacks, (target.curse?.stacks ?? 0) + 1);
+  target.curse = { remaining: effect.seconds, total: effect.seconds, stacks, percentPerStack: effect.resistancePercent, maxStacks: effect.maxStacks };
+}
+
+/** 이 적의 저주가 이미 상한에 닿아 있는가. 전이는 **이번 타격이 얹기 전**의 겹으로 판정한다. */
+function isCurseMaxed(target: Fighter): boolean {
+  return target.curse !== null && target.curse.stacks >= target.curse.maxStacks;
+}
+
+/**
+ * 광란을 건다. **이미 광란 중이면 연장하지 않고 갱신만** 한다.
+ *
+ * 폭주 중 기본 공격마다 다시 걸리므로, 연장하면 짧은 상태가 사실상 상시 광란이 된다.
+ * 표적은 다음 판정에서 다시 고르도록 비운다 — 남겨 두면 뒤집히기 전의 상대를 계속 때린다.
+ */
+function applyFrenzy(target: Fighter, effect: Extract<CombatStatusEffect, { kind: "frenzy" }>, sourceId?: string): void {
+  target.frenzy = {
+    remaining: effect.seconds,
+    total: Math.max(effect.seconds, target.frenzy?.total ?? 0),
+    attackSpeedPercent: effect.attackSpeedPercent,
+    sourceId: sourceId ?? target.frenzy?.sourceId,
+  };
+  target.targetId = null;
+}
+
+/**
+ * 저주가 최대인 적을 때렸을 때 이어지는 전이 사슬.
+ *
+ * 사슬은 **같은 적을 두 번 고르지 않아** 살아 있는 적 수에서 저절로 끝난다. 비율이 곱해지며
+ * 줄어들어 피해는 두세 번이면 미미해지므로, 이어지는 몫은 피해가 아니라 저주를 퍼뜨리는 것이다.
+ * 전이된 타격은 흡혈·야성·패시브 누적·폭주 광란을 부르지 않는다 — 한 번의 공격이 사슬 길이만큼
+ * 값을 벌면 사거리 하나로 전투가 갈린다.
+ */
+function spreadCurseTransfer(
+  attacker: Fighter,
+  primary: Fighter,
+  primaryWasMaxed: boolean,
+  dealt: number,
+  state: SkirmishState,
+  events: SkirmishEvent[],
+): void {
+  const transfer = attacker.def.basic.curseTransfer;
+  if (!transfer || !primaryWasMaxed || dealt <= 0) return;
+  const curse = attacker.def.basic.statusEffects?.find((effect) => effect.kind === "curse");
+  const struck = new Set<string>([primary.id]);
+  let origin = primary;
+  let carried = dealt;
+  for (;;) {
+    const secondary = state.fighters
+      .filter((other) => other.side !== attacker.side && !struck.has(other.id) && isFighterAlive(other) && other.stealthFor <= 0)
+      .reduce<Fighter | undefined>((nearest, other) => !nearest || distance(origin, other) < distance(origin, nearest) ? other : nearest, undefined);
+    if (!secondary) return;
+    const requested = carried * transfer.percent / 100;
+    // 1도 되지 않는 몫까지 이으면 사슬이 숫자만 남기고 화면을 채운다.
+    if (requested < 1) return;
+    const wasMaxed = isCurseMaxed(secondary);
+    const resolution = resolveReceivedDamage(secondary, requested);
+    const hpBefore = secondary.hp;
+    const applied = applyDamage(secondary, resolution.applied, events);
+    addContribution(state.contributions, attacker.id, "attack", hpBefore - secondary.hp, "attackPower");
+    // 전이는 확정된 피해를 그대로 옮기므로 방어·저항·상성을 다시 거치지 않는 고정 피해다.
+    events.push({ kind: "attack", attackerId: attacker.id, targetId: secondary.id, skill: "transfer", amount: applied,
+      contributionAmount: hpBefore - secondary.hp, critical: false, animate: false,
+      damageType: "true", mitigated: resolution.reduced < resolution.raw });
+    if (resolution.ignored) events.push({ kind: "damageIgnored", attackerId: attacker.id, targetId: secondary.id });
+    if (curse && isFighterAlive(secondary)) applyCombatStatusEffect(secondary, curse, events, state, attacker.id);
+    if (!isFighterAlive(secondary)) {
+      clearDefeatedStatuses(secondary);
+      events.push({ kind: "death", fighterId: secondary.id, sourceId: attacker.id });
+    }
+    struck.add(secondary.id);
+    // 이번에 맞은 적도 이미 최대였을 때만 사슬이 이어진다. 이번 타격으로 가득 찬 적에서는 끊긴다.
+    if (!wasMaxed || !isFighterAlive(secondary)) return;
+    origin = secondary;
+    carried = hpBefore - secondary.hp;
+  }
+}
+
+/** 저주가 깎아 주는 저항 비율(%). 없으면 0이다. */
+export function curseResistanceShred(target: Fighter): number {
+  const curse = target.curse;
+  if (!curse || curse.remaining <= 0) return 0;
+  return Math.min(100, curse.stacks * curse.percentPerStack);
+}
+
 /** 사망한 전투원에게서 이후 되살아날 수 있는 전투 한정 지속 상태를 한곳에서 정리한다. */
 function clearDefeatedStatuses(fighter: Fighter): void {
   fighter.targetId = null;
   fighter.bleed = null;
   fighter.overpaint = null;
+  fighter.curse = null;
+  fighter.frenzy = null;
   fighter.knockback = null;
   fighter.butcher = null;
   fighter.regeneration = null;
@@ -900,8 +1013,10 @@ export function currentAttackSpeed(fighter: Fighter, state?: SkirmishState): num
   })) : 0;
   // 순풍은 시간이 정해진 팀 강화라 아다지오·무리 사냥과 같은 자리에서 곱한다.
   const tailwindPercent = fighter.tailwindFor > 0 ? fighter.tailwind?.attackSpeedPercent ?? 0 : 0;
+  // 광란은 남의 손에 걸린 강화다. 시간이 정해진 배율이라 순풍과 같은 자리에서 곱한다.
+  const frenzyPercent = fighter.frenzy?.attackSpeedPercent ?? 0;
   return (fighter.def.stats.attackSpeed + passiveSpeedPoints + fighter.bonusAttackSpeed)
-    * (1 + teamPercent / 100) * (1 + packHuntPercent / 100) * (1 + tailwindPercent / 100);
+    * (1 + teamPercent / 100) * (1 + packHuntPercent / 100) * (1 + tailwindPercent / 100) * (1 + frenzyPercent / 100);
 }
 
 export function attackInterval(fighter: Fighter, state?: SkirmishState): number {
@@ -929,11 +1044,13 @@ function strongestLivingAura(state: SkirmishState, receiverSide: Side, field: "t
 }
 
 /** 피해 공식에만 생존 오라의 방어력·저항력 배율을 투영하고 원본 정적 정의는 변경하지 않는다. */
-function defensiveDefinition(target: Fighter, state: SkirmishState): Fighter {
+export function defensiveDefinition(target: Fighter, state: SkirmishState): Fighter {
   const bonus = strongestLivingAura(state, target.side, "teamDefenseResistancePercent");
-  if (bonus <= 0) return target;
+  // 저주는 저항만 깎는다. 오라와 같은 자리에서 곱해야 "올려 주는 것"과 "깎는 것"이 한 번씩만 든다.
+  const shred = 1 - curseResistanceShred(target) / 100;
+  if (bonus <= 0 && shred === 1) return target;
   return { ...target, def: { ...target.def, stats: { ...target.def.stats,
-    def: target.def.stats.def * (1 + bonus / 100), res: target.def.stats.res * (1 + bonus / 100),
+    def: target.def.stats.def * (1 + bonus / 100), res: target.def.stats.res * (1 + bonus / 100) * shred,
   } } };
 }
 
@@ -1042,8 +1159,12 @@ function distanceToSegment(point: { x: number; y: number }, from: { x: number; y
 
 /** 지금 노릴 상대. 이미 잡은 상대가 살아 있으면 바꾸지 않고 계속 붙는다. */
 function resolveTarget(state: SkirmishState, fighter: Fighter): Fighter | undefined {
+  // 광란은 표적의 편을 통째로 뒤집는다. 그래서 캐시된 표적도 지금 노려야 하는 편인지 다시 본다 —
+  // 그대로 두면 뒤집히기 전의 상대를 계속 때리고, 풀린 뒤에는 아군을 계속 때린다.
+  const frenzied = fighter.frenzy !== null;
+  const wanted = frenzied ? fighter.side : (fighter.side === "player" ? "enemy" : "player");
   const current = fighter.targetId ? findFighter(state, fighter.targetId) : undefined;
-  if (current && isFighterAlive(current) && current.stealthFor <= 0) return current;
+  if (current && current.side === wanted && current.id !== fighter.id && isFighterAlive(current) && current.stealthFor <= 0) return current;
 
   // 가장 가깝더라도 이미 아군이 붙어 있는 상대는 뒤로 미룬다. 셋이 한 명을 둘러싸는 대신
   // 서로 다른 상대와 맞붙어 전장 곳곳에서 싸우는 그림이 된다.
@@ -1051,7 +1172,7 @@ function resolveTarget(state: SkirmishState, fighter: Fighter): Fighter | undefi
   let bestScore = Infinity;
   for (const other of state.fighters) {
     // 은신자는 단일 대상 기술의 중심이 될 수 없다. 다른 중심의 범위 피해 판정에서는 별도로 포함한다.
-    if (other.side === fighter.side || !isFighterAlive(other) || other.stealthFor > 0) continue;
+    if (other.side !== wanted || other.id === fighter.id || !isFighterAlive(other) || other.stealthFor > 0) continue;
     const crowd = state.fighters.filter(
       (mate) => mate.side === fighter.side && mate.id !== fighter.id && isFighterAlive(mate) && mate.targetId === other.id,
     ).length;
@@ -1060,6 +1181,12 @@ function resolveTarget(state: SkirmishState, fighter: Fighter): Fighter | undefi
       chosen = other;
       bestScore = score;
     }
+  }
+  // 광란한 개체가 때릴 자기 편을 다 잃으면 제자리에서 자신을 공격한다. 적이 혼자인 보스전에서
+  // 광란이 통째로 무효가 되지 않게 하는 것이 이 폴백의 유일한 목적이다.
+  if (!chosen && frenzied && isFighterAlive(fighter)) {
+    fighter.targetId = fighter.id;
+    return fighter;
   }
   fighter.targetId = chosen?.id ?? null;
   return chosen;
@@ -1621,6 +1748,10 @@ function strike(
   }
   // 이번 타격 시작 시점의 피버만 본다. 이 공격으로 100에 도달했다면 다음 공격부터 발현한다.
   const attackingInFever = attacker.ferocityFever;
+  // 저주 관련 판정은 **이번 타격이 저주를 얹기 전**의 상태로 한다. 뒤에서 보면 기본 공격이
+  // 방금 건 저주를 자기가 다시 읽어 패시브와 전이가 늘 발동한다.
+  const targetWasCursed = target.curse !== null;
+  const targetCurseWasMaxed = isCurseMaxed(target);
   const critTrait = attacker.def.ferocityTrait;
   // 패시브와 폭주의 퍼센트포인트를 모두 더한 뒤, 난수 판정 직전에만 유효 확률을 100%로 제한한다.
   // 치명타 가산은 개체 이름이 아니라 필드 하나로 읽는다 — 태생 치명타가 전 개체 공통이라
@@ -1670,7 +1801,10 @@ function strike(
   const shieldBefore = target.shield.amount;
   const shieldProviderId = target.shield.providerId;
   const dealt = applyDamage(target, amount, events);
-  const credited = recordDamageContribution(state, attacker.id, target, damageInput.damageType, damageInput.scalingStat, contributionAmount, resolution, targetHpBefore, shieldBefore, shieldProviderId);
+  // 광란한 개체가 제 편을 때린 몫은 그 개체가 아니라 **광란을 건 쪽**이 만든 피해다. 여기서
+  // 넘기지 않으면 광란으로 판을 뒤집은 시전자가 기여도 그래프에 0으로 남는다.
+  const creditedTo = attacker.frenzy?.sourceId ?? attacker.id;
+  const credited = recordDamageContribution(state, creditedTo, target, damageInput.damageType, damageInput.scalingStat, contributionAmount, resolution, targetHpBefore, shieldBefore, shieldProviderId);
   tryTriggerEmergencyRecovery(target); tryTriggerLowHpVanish(target, state);
 
   const transfer = useUltimate ? attacker.def.ultimate.damageTransfer : undefined;
@@ -1775,6 +1909,21 @@ function strike(
 
   // 개별 기본 공격·궁극기가 선언한 상태도 피해 처리 뒤 공용 저항/재적용 규칙을 그대로 사용한다.
   if (statusEffectsLandThisHit(attacker, skill, useUltimate)) applySkillStatuses(target, skill, events, state, attacker.id, critical);
+
+  if (!useUltimate) {
+    // 저주에 걸린 적을 **직접** 때린 만큼만 글이 세진다. 전이된 타격은 이 경로를 지나지 않으므로
+    // 한 번의 공격이 사슬 길이만큼 누적되지 않는다.
+    if (attacker.def.passive.kind === "cursedInsight" && targetWasCursed) {
+      const step = attacker.def.stats.ap * attacker.def.passive.value / 100;
+      attacker.bonusAp = Math.min(step * (attacker.def.passive.maxStacks ?? 1), attacker.bonusAp + step);
+    }
+    // 폭주도 같은 이유로 **직접 적중**에만 걸린다.
+    const gaze = attacker.def.ferocityTrait;
+    if (attackingInFever && gaze.effectId === "frenzyGaze" && isFighterAlive(target)) {
+      applyFrenzy(target, { kind: "frenzy", seconds: gaze.seconds, attackSpeedPercent: gaze.attackSpeedPercent }, attacker.id);
+    }
+    spreadCurseTransfer(attacker, target, targetCurseWasMaxed, targetHpBefore - target.hp, state, events);
+  }
 
   // 처치는 두 개체의 규칙이 함께 걸리는 자리다 — 오마카세의 게이지 환급과 다음 식재료 선택.
   if (!isFighterAlive(target)) {
@@ -1888,8 +2037,19 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
   // 덧칠을 터뜨리는 궁극기는 그릴 것이 남은 적만 친다. 한 겹도 없는 적까지 대상에 넣으면
   // 위력 0의 최소 피해 1이 떠서 "터졌다"와 "터뜨릴 게 없었다"가 같은 숫자로 읽힌다.
   const detonation = ultimate?.overpaintDetonation === true;
+  // 저주받은 적만 치는 궁극기는 걸린 적이 하나도 없으면 가장 가까운 적에게 먼저 씌운다.
+  // 대상이 없다고 조용히 돌려보내면 게이지가 찬 채로 아무 일도 일어나지 않는다.
+  const cursed = ultimate?.cursedTargetsOnly;
+  if (cursed) {
+    const enemies = state.fighters.filter((other) => other.side !== attacker.side && isFighterAlive(other) && other.stealthFor <= 0);
+    if (enemies.length > 0 && !enemies.some((other) => other.curse !== null)) {
+      const nearest = enemies.reduce((best, other) => distance(attacker, other) < distance(attacker, best) ? other : best);
+      refreshCurse(nearest, cursed.seedCurse);
+    }
+  }
   const targets = state.fighters.filter((fighter) => fighter.side !== attacker.side && isFighterAlive(fighter) && fighter.stealthFor <= 0
     && (!detonation || (fighter.overpaint?.stacks ?? 0) > 0)
+    && (!cursed || fighter.curse !== null)
     && (skill.targeting === "battlefieldEnemies" || (skill.targeting === "nearbyEnemies" && distance(attacker, fighter) <= (skill.radius ?? 0))
       || (skill.targeting === "targetedCircle" && inCircle(fighter)) || (skill.targeting === "chargeLine" && inCharge(fighter))));
   const healingTargets = ultimate?.targeting === "targetedCircle" && ultimate.allyHealingPower !== undefined
@@ -2133,6 +2293,18 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
       if (remaining <= EMERGENCY_RECOVERY.epsilon) fighter.overpaint = null;
       else fighter.overpaint = { ...fighter.overpaint, remaining };
     }
+    // 저주도 덧칠과 같은 공용 시계로 마른다. 중첩이 다음 전투로 새지 않게 슬롯째 비운다.
+    if (isFighterAlive(fighter) && fighter.curse) {
+      const remaining = fighter.curse.remaining - dt;
+      if (remaining <= EMERGENCY_RECOVERY.epsilon) fighter.curse = null;
+      else fighter.curse = { ...fighter.curse, remaining };
+    }
+    // 광란이 풀리는 순간 표적을 비운다. 남겨 두면 원래 편으로 돌아가고도 아군을 계속 때린다.
+    if (isFighterAlive(fighter) && fighter.frenzy) {
+      const remaining = fighter.frenzy.remaining - dt;
+      if (remaining <= EMERGENCY_RECOVERY.epsilon) { fighter.frenzy = null; fighter.targetId = null; }
+      else fighter.frenzy = { ...fighter.frenzy, remaining };
+    }
     // 순풍도 같은 공용 시계를 쓴다. 다 흐르면 수치까지 비워 남은 값이 다음 전투로 새지 않게 한다.
     if (isFighterAlive(fighter) && fighter.tailwindFor > 0) {
       // 회복 틱을 먼저 돌려야 남은 시간이 0이 되는 프레임의 마지막 한 틱을 잃지 않는다.
@@ -2220,6 +2392,8 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
 export function canFireUltimate(state: SkirmishState, fighter: Fighter): boolean {
   // 수동 입력과 적 자동 시전이 모두 이 코어 경계를 공유해 기절 우회 경로를 만들지 않는다.
   if (state.phase !== "fight" || !isFighterAlive(fighter) || fighter.stunnedFor > 0 || fighter.staggeredFor > 0 || !canUseUltimate(fighter)) return false;
+  // 광란 중에는 기본 공격만 나간다. 궁극기까지 아군에게 꽂히면 한 판이 그 한 번으로 갈린다.
+  if (fighter.frenzy) return false;
   if (fighter.def.ultimate.targeting === "battlefieldAllies") return aliveFighters(state, fighter.side).length > 0;
   return state.fighters.some((other) => other.side !== fighter.side && isFighterAlive(other) && other.stealthFor <= 0);
 }

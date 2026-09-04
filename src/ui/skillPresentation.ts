@@ -81,6 +81,8 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
   // 몇 번 튕기는지도 몇 초인지도 적지 않는다. 날아가는 그림이 곧 그 답이고, 그 수가 플레이어의
   // 다음 조작을 바꾸지 않는다 — 태그가 "날아가는 동안 움직이지도 때리지도 못한다"까지 말한다.
   if (trait.effectId === "knockbackSlam") return `[[concussion|뇌진탕]]이 확정 치명타가 되고, 그 적을 [[knockback|날려버린다]]. 날려버린 뒤에는 가장 가까운 적을 표적으로 다시 지정한다.`;
+  // 광란은 시간이 스킬마다 다르므로(궁극 4초 · 폭주 2초) 태그가 아니라 본문이 초를 적는다.
+  if (trait.effectId === "frenzyGaze") return `폭주 중 [[basic-attack|기본 공격]]에 적중한 적을 ${trait.seconds}초 동안 [[frenzy|광란]]시킨다. 전이된 타격으로는 발동하지 않는다.`;
 
   // 방어력 계수는 토리카처럼 추가 피해가 있는 범위 타격만 노출하고, 일반 전이 특성은 원래 피해 비율만 보여 준다.
   const speed = trait.attackSpeedBonusPercent === undefined ? "" : `공격 속도가 ${trait.attackSpeedBonusPercent}% 증가한다. `;
@@ -134,6 +136,7 @@ function passiveHead(passive: Passive, atk?: number): string {
   }
   if (passive.kind === "abyssalPressure") return `완전히 경과한 매초 기본 [[ap|주문력]]의 ${passive.apPercentPerSecond}%가 복리로 누적된다. 현재 체력이 최대 체력의 100%에서 ${passive.maxReductionAtHpPercent}%로 낮아질수록 받는 모든 피해 감소가 ${passive.baseDamageReductionPercent}%에서 ${passive.maxDamageReductionPercent}%까지 선형으로 증가하며, 그 이하에서는 최대치로 제한된다. 최종 받는 피해가 ${passive.ignoreDamageAtOrBelow} 이하인 공격은 무효화한다.`;
   if (passive.kind === "gourmetHunt") return `전투를 시작할 때 현재 체력이 가장 낮은 적을 표적으로 삼고 그 자리로 [[teleport|순간이동]]한다. 적을 처치하면 즉시, 그 밖에는 ${passive.huntCooldownSeconds}초마다 다시 고른다.`;
+  if (passive.kind === "cursedInsight") return `[[curse|저주]]에 걸린 적에게 [[basic-attack|기본 공격]]을 직접 적중시킬 때마다 이번 전투 동안 [[ap|주문력]]이 ${passive.value}% 증가한다. 최대 ${passive.maxStacks}회까지 쌓이며, [[transfer|전이]]된 타격으로는 발동하지 않는다.`;
   if (passive.kind === "impactCap") return `한 번에 받는 피해가 최대 체력의 ${passive.impactCapMaxHpPercent}%를 넘지 않는다.`;
   if (passive.kind === "overpaintSiphon") return `모든 아군이 [[overpaint|덧칠]]된 적을 맞히면 그 피해의 ${passive.value}%만큼 자신의 체력을 회복한다. 표적의 [[overpaint|덧칠]]이 최대로 쌓이면 다른 적으로 표적을 옮긴다.`;
   if (passive.kind === "lowHpVanish") return `전투당 한 번, 체력이 절반 이하가 되면 ${passive.durationSeconds}초 동안 [[stealth|은신]]해 표적에서 벗어난다.`;
@@ -300,6 +303,9 @@ function skillEffectClauses(skill: Skill | BasicAttack | Ultimate, stats: SkillD
   if ("damageTransfer" in skill && skill.damageTransfer) {
     clauses.push({ text: `그 적이 실제로 잃은 최종 HP 피해의 ${skill.damageTransfer.percent}%를 가장 가까운 다른 적에게 [[transfer|전이]]한다`, standalone: true });
   }
+  if ("curseTransfer" in skill && skill.curseTransfer) {
+    clauses.push({ text: `그 적의 [[curse|저주]]가 이미 최대라면 실제로 잃은 최종 HP 피해의 ${skill.curseTransfer.percent}%를 가장 가까운 다른 적에게 [[transfer|전이]]하고 저주를 씌운다. 전이된 적의 저주도 최대였다면 같은 방식으로 이어진다`, standalone: true });
+  }
   if ("energyRefundOnKill" in skill && skill.energyRefundOnKill !== undefined) {
     clauses.push({ text: `이 공격으로 처치하면 궁극기 게이지를 ${skill.energyRefundOnKill} 돌려받는다`, standalone: true });
   }
@@ -358,6 +364,10 @@ function statusEffectClause(effect: CombatStatusEffect): string | undefined {
   if (effect.kind === "butcher") return `[[butcher|손질]]을 한 겹 쌓는다`;
   if (effect.kind === "stagger") return `[[stagger|경직]]시킨다`;
   if (effect.kind === "bleed") return `${effect.seconds}초 동안 [[bleed|출혈]]시켜 매초 최대 체력의 ${effect.maxHpPercentPerSecond}%를 잃게 한다`;
+  // 겹 상한·감소율·유지 시간은 저주 태그가 말한다(쓰는 개체가 하나뿐이라 태그가 수치를 가진다).
+  if (effect.kind === "curse") return `[[curse|저주]]를 한 겹 씌운다`;
+  // 반대로 광란의 시간은 스킬마다 다르므로 본문이 적는다 — 출혈이 그런 것과 같은 이유다.
+  if (effect.kind === "frenzy") return `${effect.seconds}초 동안 [[frenzy|광란]]시킨다`;
   return undefined;
 }
 

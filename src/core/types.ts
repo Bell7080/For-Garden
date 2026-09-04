@@ -29,7 +29,7 @@ export type ReachTier = "melee" | "mid" | "ranged";
 export type RelicRarity = "R" | "SR" | "SSR";
 
 /** 전신 Puppet 레지스트리의 안정적인 데이터 키다. 파일 번호를 게임 데이터에 직접 노출하지 않는다. */
-export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "toby" | "amo" | "ripa" | "pontos";
+export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "toby" | "amo" | "ripa" | "pontos";
 
 export interface Stats {
   /** 생존력과 물리·마법 공격의 기반이 되는 주 능력치다. */
@@ -130,6 +130,14 @@ interface SkillBase {
   targeting?: "single" | "nearbyEnemies" | "battlefieldEnemies" | "battlefieldAllies" | "targetedCircle" | "chargeLine";
   /** 원형 범위의 반경이자, `chargeLine`에서는 지나간 통로의 **반폭**이다. */
   radius?: number;
+  /**
+   * 때린 적의 **저주가 이미 최대 중첩이면** 그 피해의 일부를 가장 가까운 다른 적에게 옮긴다.
+   *
+   * 옮겨 간 타격도 저주를 남기고, 그 적 역시 이미 최대였다면 다시 이어진다 — 전이 비율이
+   * 곱해지며 줄어들어 피해는 금세 미미해지므로, 이어지는 몫은 피해가 아니라 **저주를 퍼뜨리는
+   * 것**이다. 같은 적을 두 번 고르지 않아 사슬은 살아 있는 적 수에서 저절로 끝난다.
+   */
+  curseTransfer?: { percent: number };
   /**
    * 문장을 만들 수 없는 스킬만 쓰는 설명 원문이다.
    *
@@ -263,6 +271,36 @@ export type CombatStatusEffect =
       damageTakenPercent: number;
       /** 쌓을 수 있는 최대 중첩. */
       maxStacks: number;
+    }
+  | {
+      /**
+       * 저주. 스스로는 피해를 주지 않고 그 적의 **저항을 깎는다.**
+       *
+       * 덧칠과 다른 축이다 — 덧칠은 받는 피해에 곱하는 배수라 물리·마법을 가리지 않지만,
+       * 저주는 저항 수치 자체를 깎아 **마법 피해에만** 듣는다. 그래서 마법 편성에서만 값이
+       * 서고, 물리 편성에서는 아무 일도 하지 않는다.
+       */
+      kind: "curse";
+      /** 마지막으로 건 뒤 유지되는 시간(초). 다시 걸면 처음부터 다시 센다. */
+      seconds: number;
+      /** 중첩 하나가 깎는 저항 비율(%). 고정값이 아니라 비율인 이유는 레벨이 올라도 같은 몫이 들게 하기 위해서다. */
+      resistancePercent: number;
+      /** 쌓을 수 있는 최대 중첩. */
+      maxStacks: number;
+    }
+  | {
+      /**
+       * 광란. 표적을 **자기 편으로 뒤집는다.**
+       *
+       * 군중제어와 다른 축이다 — 행동을 막는 것이 아니라 방향을 돌린다. 때릴 자기 편이 남지
+       * 않으면 제자리에서 자신을 공격하므로, 적이 혼자인 보스전에서도 무효가 되지 않는다.
+       * 광란 중에는 기본 공격만 나간다 — 궁극기까지 아군에게 꽂히면 한 판이 그 한 번으로 갈린다.
+       */
+      kind: "frenzy";
+      /** 유지 시간(초). 이미 광란 중이면 연장하지 않고 갱신만 한다. */
+      seconds: number;
+      /** 광란 중 오르는 공격 속도 비율(%). */
+      attackSpeedPercent: number;
     };
 
 /** 궁극기의 대상 선택은 ID나 설명문 대신 코어가 검증할 수 있는 정적 계약으로 선언한다. */
@@ -286,6 +324,13 @@ export type Ultimate = Skill & {
    * 쌓아 두고 매번 터뜨릴 수 있으면 "완성작"이 아니라 상시 배율이 된다.
    */
   overpaintDetonation?: true;
+  /**
+   * 저주에 걸린 적만 친다.
+   *
+   * 걸린 적이 하나도 없으면 가장 가까운 적에게 `seedCurse`를 먼저 씌우고 발동한다 — 그렇지
+   * 않으면 게이지가 가득 찬 자동 궁극기가 대상 없이 헛돌고, 플레이어는 왜 안 나가는지 알 수 없다.
+   */
+  cursedTargetsOnly?: { seedCurse: Extract<CombatStatusEffect, { kind: "curse" }> };
   /** 주 대상의 최종 HP 손실 일부를 주 대상에서 가장 가까운 다른 적에게 옮긴다. */
   damageTransfer?: {
     percent: number;
@@ -347,6 +392,8 @@ export type PassiveKind =
   | "abyssalPressure"
   /** 도디 전용: 제공자 생존 여부로 팀 방어와 적 회복을 동시에 조절한다. */
   | "guardianNestAura"
+  /** 케리스 전용: 저주에 걸린 적을 직접 때릴 때마다 주문력을 전투 한정으로 누적한다. */
+  | "cursedInsight"
   /** 메테 전용: 생존 중 팀 공속과 제어 정화·보호막을 제공한다. */
   | "adagioWeight"
   /** 루카 전용: 전투 시작/폭주 진입 때 최고 공격력 아군의 현재 표적을 복사한다. */
@@ -476,6 +523,12 @@ export type FerocityTrait = {
       cancelEnemyHealing: true;
     }
   | {
+      /** 케리스 전용: 폭주 중 직접 적중한 적을 짧게 광란시킨다. 전이된 타격에는 걸리지 않는다. */
+      effectId: "frenzyGaze";
+      seconds: number;
+      attackSpeedPercent: number;
+    }
+  | {
       effectId: "packHunt";
       /** 스피나와 동일하게 단일 대상 추적에서 제외되는 폭주 은신 시간이다. */
       stealthDurationSeconds: number;
@@ -506,6 +559,8 @@ export interface Passive {
   criticalDamagePercent?: number;
   /** 지속 효과인 패시브만 갖는 유지 시간(초). 전투와 표시가 함께 읽는 단일 계약이다. */
   durationSeconds?: number;
+  /** 전투 한정 누적 패시브가 쌓을 수 있는 최대 횟수. 상한이 없으면 한 판이 길수록 끝없이 자란다. */
+  maxStacks?: number;
   /** 심해 압력 전용: 완전히 경과한 매초 기본 주문력에 복리로 누적하는 비율이다. */
   apPercentPerSecond?: number;
   /** 심해 압력 전용: 최대 체력일 때 적용하는 받는 피해 감소율이다. */

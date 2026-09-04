@@ -573,9 +573,10 @@ describe("단일 난전의 원정 보스 옵션", () => {
     // 첫 해일이 그만큼 일찍 오므로 구간을 17초부터로 넓혔다 — 이 값이 재는 것은 "즉시 전멸이
     // 아니라 한 번은 버틴다"이지 정확한 초가 아니다.
     // 사거리 단계(v0.58.0)에서 도디·메테가 뒷줄에 남아 보스에게 덜 맞으므로 보스의 충전이
-    // 그만큼 늦다. 뒷줄이 안전해지는 것이 이 기능이 노린 결과라 상한을 26초로 넓혔다.
+    // 그만큼 늦다. 뒷줄이 안전해지는 것이 이 기능이 노린 결과라 구간을 넓혔다 — 단계 간격을
+    // 250/340에서 300/430으로 더 벌린 뒤에는 26.4초라 상한을 28초로 다시 옮겼다.
     expect(firstUltimateAt).toBeGreaterThanOrEqual(17);
-    expect(firstUltimateAt).toBeLessThanOrEqual(26);
+    expect(firstUltimateAt).toBeLessThanOrEqual(28);
     expect(survivorsAfterFirstUltimate).toBeGreaterThan(0);
     expect(state.elapsed).toBeGreaterThanOrEqual(24);
     expect(state.elapsed).toBeLessThanOrEqual(38);

@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { BATTLE_STATUS_LAYOUT as L, unitStatusChipOffsets } from "./battleStatusLayout";
 import { chipPoints, drawInnerVignette, drawLayer, drawShapeOutline } from "./holo";
-import { clockWedgePoints } from "./clockWedge";
+import { clockWedgeOnShape } from "./clockWedge";
 import type { UnitStatusView } from "./unitStatusModel";
 import { COLOR, textStyle } from "./theme";
 
@@ -25,6 +25,17 @@ interface ChipView {
  * - **시간이 도는 상태**는 칩 둘레를 시계처럼 도는 고리가 남은 시간을 말한다.
  * - 손질처럼 시간이 없는 상태는 고리를 그리지 않는다 — 없는 시계를 그리면 곧 사라질 것처럼 읽힌다.
  */
+/**
+ * 칩 한 장의 도형.
+ *
+ * 액자와 **덮는 시계가 같은 폴리곤을 읽어야** 한다 — 따로 만들면 시계가 깎인 모서리를 넘어
+ * 흘러내리고, 그 조각이 바로 아래 체력 바를 가린다.
+ */
+function chipShape(): number[] {
+  const size = L.chipSize;
+  return chipPoints(size, size, { bevel: { topLeft: L.chipBevel, topRight: 0, bottomRight: L.chipBevel, bottomLeft: 0 } });
+}
+
 export class UnitStatusChips extends Phaser.GameObjects.Container {
   private readonly chips = new Map<string, ChipView>();
 
@@ -55,7 +66,7 @@ export class UnitStatusChips extends Phaser.GameObjects.Container {
     const scene = this.scene;
     const size = L.chipSize;
     const container = scene.add.container(0, 0);
-    const shape = chipPoints(size, size, { bevel: { topLeft: L.chipBevel, topRight: 0, bottomRight: L.chipBevel, bottomLeft: 0 } });
+    const shape = chipShape();
     container.add(drawLayer(scene, 0, 0, shape, { fill: COLOR.void, alpha: 0.88 }));
     container.add(this.drawMark(view.color, size));
     container.add(drawInnerVignette(scene, 0, 0, shape, { strength: 0.5 }));
@@ -95,7 +106,12 @@ export class UnitStatusChips extends Phaser.GameObjects.Container {
     chip.clock.clear();
     if (view.remaining === undefined || !view.total) return;
     const elapsed = 1 - Math.max(0, Math.min(1, view.remaining / view.total));
-    const points = clockWedgePoints(L.chipSize, elapsed);
+    // 덮는 도형은 칩과 **같은 폴리곤** 안에서 잘라 만든다. 사각형으로 그리면 깎인 모서리를
+    // 넘어 흘러내린 검은 조각이 바로 아래 체력 바를 가린다.
+    // chipPoints는 좌표를 한 줄로 늘어놓으므로 점 목록으로 다시 묶어 넘긴다.
+    const flat = chipShape();
+    const outline = Array.from({ length: flat.length / 2 }, (_, index) => ({ x: flat[index * 2], y: flat[index * 2 + 1] }));
+    const points = clockWedgeOnShape(outline, elapsed);
     if (points.length < 3) return;
     chip.clock.fillStyle(0x000000, L.clockAlpha);
     chip.clock.fillPoints(points.map(({ x, y }) => new Phaser.Geom.Point(x, y)), true);

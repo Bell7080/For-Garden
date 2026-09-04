@@ -36,3 +36,55 @@ export function clockWedgePoints(size: number, ratio: number): WedgePoint[] {
   points.push(edgePoint(end, half));
   return points;
 }
+
+/**
+ * 칩 도형(깎인 네모) 안에서 잘라 만드는 부채꼴.
+ *
+ * 정사각형 기준으로 그리면 **깎인 모서리를 넘어 삐져나온다** — 칩의 오른쪽 아래는 빗변으로
+ * 잘려 있어 그 밖으로 흘러내린 검은 조각이 바로 아래 체력 바를 가렸다. 그래서 덮는 도형도
+ * 사각형이 아니라 **칩 폴리곤 자체**를 향해 쏘아 구한다.
+ *
+ * 칩은 볼록 다각형이라 중심에서 나간 반직선이 변과 정확히 한 번 만난다.
+ */
+export function clockWedgeOnShape(shape: readonly WedgePoint[], ratio: number): WedgePoint[] {
+  const covered = Math.max(0, Math.min(1, ratio));
+  if (covered <= 0 || shape.length < 3) return [];
+  const start = -Math.PI / 2;
+  const end = start + Math.PI * 2 * covered;
+  const points: WedgePoint[] = [{ x: 0, y: 0 }, shapeEdgePoint(start, shape)];
+  // 지나가는 꼭짓점을 그대로 넣어야 부채꼴이 도형 모서리에서 잘려 보이지 않는다.
+  for (const vertex of shape.map((point) => ({ point, angle: normalizeFrom(Math.atan2(point.y, point.x), start) }))
+    .sort((a, b) => a.angle - b.angle)) {
+    if (vertex.angle <= 0 || start + vertex.angle >= end) continue;
+    points.push(vertex.point);
+  }
+  points.push(shapeEdgePoint(end, shape));
+  return points;
+}
+
+/** `angle`을 `from` 기준의 0 이상 2π 미만 값으로 옮긴다. */
+function normalizeFrom(angle: number, from: number): number {
+  const delta = (angle - from) % (Math.PI * 2);
+  return delta < 0 ? delta + Math.PI * 2 : delta;
+}
+
+/** 중심에서 각도 `theta`로 나간 반직선이 볼록 다각형의 변에 닿는 점. */
+function shapeEdgePoint(theta: number, shape: readonly WedgePoint[]): WedgePoint {
+  const dx = Math.cos(theta);
+  const dy = Math.sin(theta);
+  let nearest = Infinity;
+  for (let index = 0; index < shape.length; index += 1) {
+    const a = shape[index];
+    const b = shape[(index + 1) % shape.length];
+    const ex = b.x - a.x;
+    const ey = b.y - a.y;
+    const denominator = ex * dy - ey * dx;
+    if (Math.abs(denominator) < 1e-9) continue;
+    const t = (a.y * dx - a.x * dy) / denominator;
+    if (t < 0 || t > 1) continue;
+    const distance = Math.abs(dx) > Math.abs(dy) ? (a.x + t * ex) / dx : (a.y + t * ey) / dy;
+    if (distance > 0 && distance < nearest) nearest = distance;
+  }
+  // 볼록 도형이면 반드시 한 번은 만난다. 만나지 못하는 값이 들어오면 중심을 돌려 빈 도형이 된다.
+  return Number.isFinite(nearest) ? { x: dx * nearest, y: dy * nearest } : { x: 0, y: 0 };
+}

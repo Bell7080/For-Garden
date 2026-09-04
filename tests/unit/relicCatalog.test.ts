@@ -135,8 +135,8 @@ describe("relic catalog", () => {
   it("앞자리 0을 보존한 문자열 개체번호순으로 정렬한다", () => {
     const sorted = sortRelicsBySpecimenNumber(PLAYABLE_RELICS);
     // 루카를 포함해 배열 등록 순서와 무관하게 도감 번호가 정렬되는지 고정한다.
-    // 신규 메테 163번도 기존 앞자리 보존 문자열 순서의 마지막에 안정적으로 정렬된다.
-    expect(sorted.map((relic) => relic.specimenNumber)).toEqual(["001", "014", "038", "047", "072", "093", "105", "118", "126", "141", "163"]);
+    // 신규 케리스 182번도 기존 앞자리 보존 문자열 순서의 마지막에 안정적으로 정렬된다.
+    expect(sorted.map((relic) => relic.specimenNumber)).toEqual(["001", "014", "038", "047", "072", "093", "105", "118", "126", "141", "163", "182"]);
   });
 
   it("8번 Puppet 캐릭터 티아를 전용 원화·SD와 함께 공개한다", () => {

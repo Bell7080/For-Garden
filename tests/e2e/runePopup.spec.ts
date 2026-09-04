@@ -21,7 +21,12 @@ async function openFirstRune(page: Page): Promise<void> {
   // 비동기로 읽으므로, 다음을 누르기 전에 실제로 열렸는지 확인한다 — 열리기 전에 누르면 허공을 친다.
   await tapUntil(page, 530, 580, async () => (await page.evaluate(() => window.__PF_DEBUG?.infoOpen)) === true);
   await tapUntil(page, 688, 1350, async () => ((await page.evaluate(() => window.__PF_DEBUG?.popupTitles)) ?? []).some((title) => title.includes("룬")));
-  await tap(page, 676, 1232);
+  // 쪽지의 세공 버튼은 줄 구성(세공·해제 / 세공·장착·판매)에 따라 자리가 달라진다 — 화면이
+  // 알려 주는 좌표를 쓴다. 좌표를 적어 두면 쪽지 바깥을 눌러 그냥 닫아 버린다.
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.runeNoteCraft)).not.toBeUndefined();
+  const craft = (await page.evaluate(() => window.__PF_DEBUG!.runeNoteCraft!))!;
+  await tap(page, craft.x, craft.y);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toContain("룬 세공");
 }
 
 test("세로 화면에서 전설 5행×3칸, 긴 옵션명, 키보드 이름 입력과 바깥 닫기가 함께 동작한다", async ({ page }) => {
@@ -34,8 +39,8 @@ test("세로 화면에서 전설 5행×3칸, 긴 옵션명, 키보드 이름 입
   await openFirstRune(page);
   // 연필 조작은 네이티브 입력을 띄워 모바일 소프트 키보드와 동일한 입력 경로를 사용한다.
   // 연필 자리는 이름 글자 폭에 따라 달라지므로 화면이 알려 주는 좌표를 쓴다.
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.runeNoteRename)).not.toBeUndefined();
-  const pencil = (await page.evaluate(() => window.__PF_DEBUG!.runeNoteRename!))!;
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.runeForgeRename)).not.toBeUndefined();
+  const pencil = (await page.evaluate(() => window.__PF_DEBUG!.runeForgeRename!))!;
   // 네이티브 입력을 띄우는 조작이라 되풀이해 누르지 않는다.
   await tap(page, pencil.x, pencil.y);
   const input = page.getByLabel("룬 이름");

@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import type { GameApi } from "../api/contracts";
 import { gameApi } from "../api/FakeServer";
-import { setDebugRuneNoteRename } from "../debug";
+import { setDebugRuneForgeRename, setDebugRuneNoteCraft } from "../debug";
 import { canEngraveRune, canEnhanceRune, RUNE_PART_LABELS, RUNE_RARITY_LABELS, runeEnhancementAttempts, runeTotalEnhancementAttempts, type RuneInstance, type RuneStatKey } from "../core/runes";
 import { runeEnhancementGoldCost } from "../data/runes";
 import { RELICS } from "../data/relics";
@@ -270,13 +270,22 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
     // 이미 끼워져 있는 룬은 그 줄 자체가 다르다 — 판매도 장착도 할 수 없으므로 세공과
     // 해제 둘만 나란히 선다.
     const main = equipped ? RUNE_NOTE_BUTTONS.equipped : equip ? RUNE_NOTE_BUTTONS.withEquip : RUNE_NOTE_BUTTONS.plain;
-    body.add(new Button(scene, main.craftX, buttonY, {
+    const craft = new Button(scene, main.craftX, buttonY, {
       width: main.width, height: 68, label: "세공", fontSize: 24, variant: "primary", accentColor: accent,
       onClick: () => {
         close();
         openRunePopup(scene, popups, options);
       },
-    }));
+    });
+    body.add(craft);
+    // 줄 구성이 바뀌면 버튼도 함께 옮겨 가므로 자리를 화면이 알린다. 판이 제자리를 잡은 다음
+    // 프레임에 재야 쪽지의 이동·기울임이 반영된 실제 좌표가 나온다.
+    scene.time.delayedCall(0, () => {
+      if (!craft.active) return;
+      const bounds = craft.getBounds();
+      setDebugRuneNoteCraft({ x: bounds.centerX, y: bounds.centerY });
+    });
+    craft.once(Phaser.GameObjects.Events.DESTROY, () => setDebugRuneNoteCraft(undefined));
     if (slot) {
       // 해제는 되돌릴 수 있는 조작이라 판매처럼 붉게 물러나지 않고 세공과 나란히 선다.
       body.add(new Button(scene, main.equipX, buttonY, {
@@ -377,9 +386,9 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
       scene.time.delayedCall(0, () => {
         if (!renameHit.active) return;
         const bounds = renameHit.getBounds();
-        setDebugRuneNoteRename({ x: bounds.centerX, y: bounds.centerY });
+        setDebugRuneForgeRename({ x: bounds.centerX, y: bounds.centerY });
       });
-      renameHit.once(Phaser.GameObjects.Events.DESTROY, () => setDebugRuneNoteRename(undefined));
+      renameHit.once(Phaser.GameObjects.Events.DESTROY, () => setDebugRuneForgeRename(undefined));
       renameHit.on("pointerup", () => requestRuneName(scene, rune!.customName ?? "", async (value) => {
         if (pending) return; pending = true;
         try {

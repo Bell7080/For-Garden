@@ -63,16 +63,25 @@ async function enterParty(page: Page): Promise<void> {
   await expect.poll(() => scene(page)).toBe("party");
 }
 
-/** 파티는 토리카 · 렉시아 · 스피나 순으로 고른다. */
+/**
+ * 파티를 토리카 · 렉시아 · 스피나 순으로 고른다.
+ *
+ * **준비 화면은 빈 상태로 열리지 않는다** — 직전 스토리 편성을 복원하고, 그것이 온전하지 않으면
+ * 자동 편성으로 세 명을 채운다. 그래서 고르기 전에 먼저 세 명을 해제해야 한다. 해제 없이 세 번만
+ * 누르면 이미 선 세 명을 도로 내리는 셈이라 0/3이 되고, 출전 버튼은 아무 일도 하지 않는다.
+ */
+async function pickParty(page: Page): Promise<void> {
+  await tap(page, ...LEXIA);
+  await tap(page, ...TORIKA);
+  await tap(page, ...SEIRA);
+  await tap(page, ...TORIKA);
+  await tap(page, ...LEXIA);
+  await tap(page, ...SEIRA);
+}
+
 async function enterBattle(page: Page): Promise<void> {
   await enterParty(page);
-  // 준비 화면은 이제 직전 스토리 편성을 복원하므로 기본 세 명을 먼저 해제한 뒤 원하는 순서를 고른다.
-  await tap(page, ...LEXIA);
-  await tap(page, ...TORIKA);
-  await tap(page, ...SEIRA);
-  await tap(page, ...TORIKA);
-  await tap(page, ...LEXIA);
-  await tap(page, ...SEIRA);
+  await pickParty(page);
   await tap(page, BASE_WIDTH / 2, 1700); // 전투 시작
   await expect.poll(() => scene(page)).toBe("battle");
 }
@@ -198,7 +207,10 @@ test("토리카 궁극기의 다중 기절 뱃지를 1080×1920 전장에서 함
   // 가까이 모인 적이 둘 이상이고 토리카 궁극기가 준비된 순간만 눌러 범위 기절 장면을 고정한다.
   await tap(page, BASE_WIDTH - 335, 1360);
   await tap(page, BASE_WIDTH - 335, 1360);
-  await expect.poll(async () => (await battle(page))?.ultimateReady.includes("토리카"), { timeout: 35_000 }).toBe(true);
+  // 배속은 프레임이 촘촘할 때만 실제로 빨라진다 — 코어가 한 프레임에 진행하는 시간에 상한
+  // (`SKIRMISH.maxCatchUp`)을 두므로, 프레임이 드문 저사양 환경에서는 3배속을 걸어도 진행이
+  // 1배속 언저리로 눌린다. 그 바닥 속도에서도 충전이 끝날 만큼 기다린다.
+  await expect.poll(async () => (await battle(page))?.ultimateReady.includes("토리카"), { timeout: 90_000 }).toBe(true);
   await tap(page, 190, 1620);
   await expect.poll(async () => (await battle(page))?.stunned?.length ?? 0, { timeout: 10_000 }).toBeGreaterThanOrEqual(2);
   await captureGame(page, `test-results/${testInfo.project.name}-battle-multi-stun-1080x1920.png`);
@@ -206,9 +218,7 @@ test("토리카 궁극기의 다중 기절 뱃지를 1080×1920 전장에서 함
 
 test("전투 시작의 빠른 연속 탭은 한 번만 진입하고 유효 편성을 보존한다", async ({ page }) => {
   await enterParty(page);
-  await tap(page, ...TORIKA);
-  await tap(page, ...LEXIA);
-  await tap(page, ...SEIRA);
+  await pickParty(page);
 
   // 첫 탭이 즉시 잠금을 걸므로 겹쳐 도착한 다음 입력이 저장/전환을 중복 실행하지 않는다.
   await Promise.all([tap(page, BASE_WIDTH / 2, 1700), tap(page, BASE_WIDTH / 2, 1700)]);
@@ -218,9 +228,7 @@ test("전투 시작의 빠른 연속 탭은 한 번만 진입하고 유효 편�
 
 test("버튼 경계를 향한 작은 이동은 탭이고 큰 드래그는 취소된다", async ({ page }) => {
   await enterParty(page);
-  await tap(page, ...TORIKA);
-  await tap(page, ...LEXIA);
-  await tap(page, ...SEIRA);
+  await pickParty(page);
 
   // 80px 이동은 스크롤/드래그 의도로 보아 전투 진입을 취소한다.
   await drag(page, [BASE_WIDTH / 2, 1700], [BASE_WIDTH / 2 + 80, 1700]);
@@ -364,7 +372,8 @@ test("동시에 준비된 두 궁극기는 연출 하나씩 직렬 실행한다"
   // 빠르게 게이지를 모으되 자동 발동은 두 명이 준비될 때까지 켜지 않는다.
   await tap(page, BASE_WIDTH - 335, 1360);
   await tap(page, BASE_WIDTH - 335, 1360);
-  await expect.poll(async () => (await battle(page))?.ultimateReady.length ?? 0, { timeout: 35_000 }).toBeGreaterThanOrEqual(2);
+  // 위와 같은 이유로 넉넉히 기다린다. 여기는 둘이 함께 준비되어야 해 더 오래 걸린다.
+  await expect.poll(async () => (await battle(page))?.ultimateReady.length ?? 0, { timeout: 90_000 }).toBeGreaterThanOrEqual(2);
   await tap(page, BASE_WIDTH - 130, 1360);
 
   // 첫 연출 활성 중 다음 전투원이 큐에 남는 것이 곧 겹치지 않고 직렬화됐다는 관찰 계약이다.

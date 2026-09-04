@@ -794,7 +794,10 @@ export class BattleScene extends Phaser.Scene {
    * 화면이 통째로 얼어 버린 것처럼 보인다.
    */
   private simulationPaused(): boolean {
-    return anyPopupOpen() || this.info.isOpen || (this.allyInfoRef?.isOpen ?? false);
+    // 펼친 기여도 판도 화면을 덮고 읽는 판이라 같이 멈춘다. 읽는 동안 뒤에서 전투가 끝나 버리면
+    // 판을 접었을 때 돌아갈 전장이 없다.
+    return anyPopupOpen() || this.info.isOpen || (this.allyInfoRef?.isOpen ?? false)
+      || (this.contributionPanel?.state.expanded ?? false);
   }
 
   /** 제한 주기 또는 카테고리 입력 때만 코어의 불변 표시 스냅샷을 프리팹에 전달한다. */

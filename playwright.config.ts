@@ -11,9 +11,11 @@ export default defineConfig({
    * 캐릭터 묶음(zip)이 수 MB라 첫 화면까지 시간이 걸리고, 실시간 전투 검증은 전투가 실제로
    * 끝날 때까지 기다린다. GPU 없이 도는 환경에서는 타이틀 로딩부터 전투 진입까지만 1분 반이
    * 들고, 캡처 한 장이 다시 10초를 더 쓴다 — 그래서 전투를 거치는 편은 2분 안에 들어오지
-   * 못한다. 한도는 여기 한 곳만 두고 편마다 `setTimeout`으로 다시 적지 않는다.
+   * 못한다. 게다가 배속은 프레임이 드물면 코어의 한 프레임 진행 상한에 걸려 실제로 빨라지지
+   * 않으므로, 전투를 끝까지 보는 편은 3배속을 걸어도 1배속만큼 걸린다고 봐야 한다. 한도는
+   * 여기 한 곳만 두고 편마다 `setTimeout`으로 다시 적지 않는다.
    */
-  timeout: 180_000,
+  timeout: 240_000,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [["html", { outputFolder: "playwright-report", open: "never" }]] : "list",
   use: {

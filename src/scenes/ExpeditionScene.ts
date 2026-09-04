@@ -165,6 +165,8 @@ export class ExpeditionScene extends Phaser.Scene {
 
   create(): void {
     setDebugScene("expedition");
+    // 기록·지도 단계에는 편성이 없다. 준비 화면이 다시 그릴 때 제 값으로 채운다.
+    setDebugExpeditionFormation(undefined);
     this.selected = [];
     this.cards.clear();
     this.popups = new PopupLayer(this);
@@ -808,6 +810,13 @@ export class ExpeditionScene extends Phaser.Scene {
   /** 1/2/3 슬롯과 선택 렐릭 SD를 한 번에 다시 그리며 로딩 실패 시에는 초상 카드를 유지한다. */
   private renderFormationPreview(): void {
     this.clearFormationPreview();
+    // 편성 상태를 Canvas 밖에 알린다. `setDebugExpeditionFormation`은 정의만 남고 부르는 곳이
+    // 없어 관찰값이 늘 비어 있었고, 그 값을 보던 E2E는 편성 화면이 눈앞에 떠 있는데도 열리지
+    // 않았다고 읽었다.
+    setDebugExpeditionFormation({
+      selectedCount: this.selected.length,
+      slots: [0, 1, 2].map((index) => ({ x: FORMATION.firstX + index * FORMATION.stepX, y: FORMATION.y })),
+    });
     const generation = ++this.formationGeneration;
     const layer = this.add.container(0, 0).setName("expedition-formation-preview");
     this.formationPreview = layer;

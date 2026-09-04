@@ -145,7 +145,21 @@ test("출격 선택판에서 원정대 3기를 골라 진행 중 상태로 저�
   await tapGame(page, formationSlot.x, formationSlot.y);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.expeditionFormation?.selectedCount)).toBe(2);
   // 빠진 렐릭의 보유 카드를 다시 눌러 세 기로 복구한 뒤 실제 시작 저장까지 이어 간다.
-  await tapGame(page, 540, 850);
+  //
+  // **어느 카드가 빠졌는지는 앞선 드래그가 정한다** — 자리를 바꾼 뒤 하나를 내렸으므로 고정
+  // 좌표 한 곳을 누르면 이미 서 있는 렐릭을 도로 내리기도 한다(그래서 3이 아니라 1이 됐다).
+  // 카드는 누를 때마다 뒤집히므로, 늘지 않으면 곧바로 되돌리고 다음 카드를 본다.
+  const partyCount = async (): Promise<number | undefined> =>
+    page.evaluate(() => window.__PF_DEBUG?.expeditionFormation?.selectedCount);
+  const rosterCards: Array<[number, number]> = [[234, 932], [540, 932], [846, 932], [234, 1292], [540, 1292], [846, 1292]];
+  for (const [x, y] of rosterCards) {
+    const before = (await partyCount()) ?? 0;
+    if (before >= 3) break;
+    await tapGame(page, x, y);
+    const after = (await partyCount()) ?? 0;
+    if (after > before) continue;
+    if (after < before) await tapGame(page, x, y);
+  }
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.expeditionFormation?.selectedCount)).toBe(3);
   await tapGame(page, BASE_WIDTH / 2, 1680);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("expedition");
@@ -211,8 +225,14 @@ test("원정 전투 노드는 지도 안 공용 편성판을 붙이고 적 상�
   await tapGame(page, reachableX, reachableY);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.enemyPreview)).not.toBeUndefined();
   // 1층에서 위쪽 월드를 내려 보면 선택 노드가 마스크 하단을 벗어나 판과 SD도 함께 사라진다.
-  await dragGame(page, { x: 900, y: 700 }, { x: 900, y: 1070 });
-  await dragGame(page, { x: 900, y: 700 }, { x: 900, y: 1070 });
+  // 한 번에 얼마나 밀리는지는 지도 길이와 관성이 정하므로, 판이 사라질 때까지 같은 손짓을
+  // 되풀이한다 — 밀어도 사라지지 않으면 그때 실패해야 "몇 번 밀었나"가 아니라 "안 사라진다"가 남는다.
+  // **판이 덮지 않은 곳에서 끌기 시작한다** — 편성판은 지도 위(610~930)에 떠서 제 입력을 먹으므로,
+  // 그 안에서 시작하면 지도가 한 픽셀도 움직이지 않는다(그래서 몇 번을 밀어도 판이 그대로였다).
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    if ((await page.evaluate(() => window.__PF_DEBUG?.enemyPreview)) === undefined) break;
+    await dragGame(page, { x: 900, y: 400 }, { x: 900, y: 1100 });
+  }
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.enemyPreview)).toBeUndefined();
 });
 

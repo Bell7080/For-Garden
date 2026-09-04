@@ -34,8 +34,11 @@ function completedOpeningSave(prepare?: (session: Session) => void): string {
  */
 export async function startAfterOpening(page: Page, prepare?: (session: Session) => void): Promise<void> {
   const save = completedOpeningSave(prepare);
+  // **이미 저장이 있으면 덮지 않는다.** `addInitScript`는 새로 고침마다 다시 도는데, 그때마다
+  // 준비한 저장을 다시 써 버리면 방금 게임이 남긴 저장이 사라진다 — 재접속 복원을 확인하는 편은
+  // 그래서 제 저장을 잃고 `interaction`이 비어 있는 상태로 이어갔다. 씨앗은 처음 한 번만 심는다.
   await page.addInitScript(
-    ([key, value]) => window.localStorage.setItem(key, value),
+    ([key, value]) => { if (!window.localStorage.getItem(key)) window.localStorage.setItem(key, value); },
     [SAVE_STORAGE_KEY, save] as const,
   );
   await page.goto("/");

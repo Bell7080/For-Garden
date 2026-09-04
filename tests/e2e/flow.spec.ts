@@ -1,7 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
 import { startAfterOpening } from "./openingSave";
 // 캔버스 입력은 한 곳이 소유한다 — 스펙마다 두면 느린 구현이 그대로 살아남는다.
-import { captureGame, drag, longPress, tap } from "./canvasInput";
+import { captureGame, drag, longPress, tap, tapUntil } from "./canvasInput";
 
 const BASE_WIDTH = 1080;
 const BASE_HEIGHT = 1920;
@@ -400,21 +400,16 @@ test("하단 탭으로 고고학 · 렐릭 · 로비 · 연구소 · 프리미�
   await expect.poll(() => scene(page)).toBe("lobby");
 
   const navY = BASE_HEIGHT - 180 + 90;
-  // 다섯 슬롯의 중심 좌표를 차례로 눌러 화면 순서와 연결을 함께 고정한다.
-  await tap(page, (BASE_WIDTH * 3) / 10, navY); // 렐릭
-  await expect.poll(() => scene(page)).toBe("relics");
-
-  await tap(page, BASE_WIDTH / 10, navY); // 고고학
-  await expect.poll(() => scene(page)).toBe("archaeology");
-
-  await tap(page, BASE_WIDTH / 2, navY); // 로비
-  await expect.poll(() => scene(page)).toBe("lobby");
-
-  await tap(page, (BASE_WIDTH * 7) / 10, navY); // 연구소
-  await expect.poll(() => scene(page)).toBe("lab");
-
-  await tap(page, (BASE_WIDTH * 9) / 10, navY); // 프리미엄
-  await expect.poll(() => scene(page)).toBe("premium");
+  // 다섯 슬롯의 중심 좌표를 차례로 눌러 화면 순서와 연결을 함께 고정한다. 화면은 이름이 바뀐
+  // 뒤에도 하단 탭의 입력면을 마저 만들므로, 옮겨질 때까지 다시 누른다.
+  const goTab = async (x: number, target: string): Promise<void> => {
+    await tapUntil(page, x, navY, async () => (await scene(page)) === target);
+  };
+  await goTab((BASE_WIDTH * 3) / 10, "relics");
+  await goTab(BASE_WIDTH / 10, "archaeology");
+  await goTab(BASE_WIDTH / 2, "lobby");
+  await goTab((BASE_WIDTH * 7) / 10, "lab");
+  await goTab((BASE_WIDTH * 9) / 10, "premium");
   // 프리미엄 화면에서 기간·즉시 수령·UTC 일일 제한을 구매 전에 읽을 수 있는 회귀 자료를 남긴다.
   await tap(page, 900, 225);
   // Phaser 캔버스 텍스트는 DOM 조회가 불가능하므로 재시작 렌더 한 프레임을 기다린다.

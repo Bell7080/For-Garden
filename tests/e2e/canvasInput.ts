@@ -60,6 +60,38 @@ export async function tap(page: Page, x: number, y: number): Promise<void> {
   await page.waitForTimeout(SETTLE_MS);
 }
 
+/**
+ * 원하는 상태가 될 때까지 같은 자리를 다시 누른다.
+ *
+ * 씬이 이름을 바꾼 순간에도 그 화면의 입력면은 아직 없을 수 있다 — 로비의 하단 탭, 로비 위에
+ * 뜨는 판처럼 원화·SD를 읽고 나서 만들어지는 것들이 그렇다. 그런 자리를 한 번만 누르면 허공을
+ * 치고, 뒤이은 5초 대기는 "왜 안 눌렸는지" 대신 "상태가 안 바뀐다"만 말한다. 예전의 느린
+ * `locator.click()`은 안정성 대기로 그 몫을 우연히 채워 주고 있었다.
+ *
+ * 눌러도 되는 자리를 반복해 누르는 것은 사용자가 실제로 하는 일과 같다 — 반응이 없으면 한 번 더
+ * 누른다. 상태가 바뀌면 곧바로 멈춘다.
+ */
+export async function tapUntil(
+  page: Page,
+  x: number,
+  y: number,
+  ready: () => Promise<boolean>,
+  options: { attempts?: number; gapMs?: number } = {},
+): Promise<void> {
+  const attempts = options.attempts ?? 10;
+  const gapMs = options.gapMs ?? 500;
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    if (await ready()) return;
+    await tap(page, x, y);
+    const until = Date.now() + gapMs;
+    while (Date.now() < until) {
+      if (await ready()) return;
+      await page.waitForTimeout(60);
+    }
+  }
+  if (!(await ready())) throw new Error(`${attempts}번 눌러도 기다리던 상태가 되지 않았다: (${x}, ${y})`);
+}
+
 /** 같은 포인터를 두 점 사이로 끌어 옮긴다. 손떨림 허용과 지도 드래그가 함께 쓴다. */
 export async function drag(
   page: Page,

@@ -1,15 +1,15 @@
 import { expect, test, type Page } from "@playwright/test";
 import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
 import { startAfterOpening } from "./openingSave";
-import { captureGame, drag, tap as tapGame } from "./canvasInput";
+import { captureGame, drag, tap as tapGame, tapUntil } from "./canvasInput";
 
 /** 저장을 통과해 로비에서 도감 탭으로 들어가는 공통 사용자 경로다. */
 async function openRelics(page: Page): Promise<void> {
   await startAfterOpening(page);
   await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
-  await tapGame(page, BASE_WIDTH * 0.3, BASE_HEIGHT - 90);
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("relics");
+  // 로비는 이름이 바뀐 뒤에도 하단 탭의 입력면을 마저 만든다 — 될 때까지 다시 누른다.
+  await tapUntil(page, BASE_WIDTH * 0.3, BASE_HEIGHT - 90, async () => (await page.evaluate(() => window.__PF_DEBUG?.scene)) === "relics");
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.relicScroll)).toBeTruthy();
 }
 

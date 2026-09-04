@@ -76,6 +76,22 @@ describe("SaveManager", () => {
     expect(loaded.expedition.run?.relics[1]).toMatchObject({ relicId: "rex", currentHp: 0, alive: false });
   });
 
+  it("원정 증강 등급은 저장하지 않고 구버전 런도 증강 ID만으로 마이그레이션한다", () => {
+    const storage = new MemoryStorage(); const source = createDefaultSession();
+    const manager = new ExpeditionManager(source, new SaveManager(storage), () => new Date("2026-08-25T12:00:00Z"));
+    manager.start(["anky", "rex", "spino"]);
+    const normal = source.expedition.run!.nodes.find(({ type }) => type === "normal")!;
+    manager.beginAugmentReward(normal.id, normal.type);
+
+    const legacy = JSON.parse(storage.getItem(SAVE_STORAGE_KEY)!) as SaveData;
+    // 제안과 확정 결과는 ID만 저장하므로 common/advanced 문자열을 sr/ssr로 바꾸는 저장 버전은 필요 없다.
+    expect(JSON.stringify(legacy.expedition.run)).not.toContain('"rarity"');
+    legacy.saveVersion = 30;
+    const migrated = new SaveManager(new MemoryStorage()).migrate(legacy);
+    expect(migrated.expedition.run?.pendingAugmentReward).toEqual(source.expedition.run?.pendingAugmentReward);
+    expect(migrated.saveVersion).toBe(CURRENT_SAVE_VERSION);
+  });
+
   it.each([
     ["잘못된 노드", (run: any) => { run.currentNodeId = "missing-node"; }],
     // 도디는 신규 계정 기본 보유가 되었으므로 여전히 미보유인 티아로 손상 상태를 만든다.

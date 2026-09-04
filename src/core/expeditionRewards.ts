@@ -57,9 +57,9 @@ export interface ExpeditionRewardRelic { relicId: string; currentHp: number; ali
 
 /** 노드별 선택 횟수와 풀이다. 휴식·보물은 의도적으로 0회이며 보스도 일반 증강을 주지 않는다. */
 export function expeditionRewardRule(nodeType: ExpeditionNodeType): { selections: number; rarity: ExpeditionAugmentRarity | null } {
-  if (nodeType === "normal") return { selections: 1, rarity: "common" };
-  if (nodeType === "horde") return { selections: 2, rarity: "common" };
-  if (nodeType === "elite") return { selections: 1, rarity: "advanced" };
+  if (nodeType === "normal") return { selections: 1, rarity: "sr" };
+  if (nodeType === "horde") return { selections: 2, rarity: "sr" };
+  if (nodeType === "elite") return { selections: 1, rarity: "ssr" };
   return { selections: 0, rarity: null };
 }
 

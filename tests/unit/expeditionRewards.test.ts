@@ -25,16 +25,16 @@ describe("expedition augment rewards", () => {
     expect(calculateExpeditionNodeRewards({ nodeType: "treasure", accumulated: {}, random: () => 0 }).gems).toBeGreaterThanOrEqual(3);
     expect(expeditionRewardRule("treasure")).toEqual({ selections: 0, rarity: null });
   });
-  it("assigns one normal, two consecutive horde, one advanced elite selection and none to route tradeoffs", () => {
-    expect(expeditionRewardRule("normal")).toEqual({ selections: 1, rarity: "common" });
-    expect(expeditionRewardRule("horde")).toEqual({ selections: 2, rarity: "common" });
-    expect(expeditionRewardRule("elite")).toEqual({ selections: 1, rarity: "advanced" });
+  it("assigns one normal, two consecutive horde, one SSR elite selection and none to route tradeoffs", () => {
+    expect(expeditionRewardRule("normal")).toEqual({ selections: 1, rarity: "sr" });
+    expect(expeditionRewardRule("horde")).toEqual({ selections: 2, rarity: "sr" });
+    expect(expeditionRewardRule("elite")).toEqual({ selections: 1, rarity: "ssr" });
     expect(expeditionRewardRule("rest").selections).toBe(0);
     expect(expeditionRewardRule("treasure").selections).toBe(0);
   });
 
   it("draws only from the requested rarity pool without duplicate candidates", () => {
-    for (const rarity of ["common", "advanced"] as const) {
+    for (const rarity of ["sr", "ssr"] as const) {
       const offers = generateExpeditionAugmentOffers({ rarity, relics: party(), selections: [], random: expeditionRewardRandom(rarity) });
       expect(new Set(offers.map(({ augmentId }) => augmentId)).size).toBe(offers.length);
       expect(offers.every(({ augmentId }) => EXPEDITION_AUGMENTS.find(({ id }) => id === augmentId)?.rarity === rarity)).toBe(true);
@@ -44,22 +44,22 @@ describe("expedition augment rewards", () => {
   it("removes impossible personal targets and rejects a target that was not offered", () => {
     const relics = party();
     relics[1] = { relicId: "rex", currentHp: 0, alive: false };
-    const offers = generateExpeditionAugmentOffers({ rarity: "common", relics, selections: [], random: () => 0 });
+    const offers = generateExpeditionAugmentOffers({ rarity: "sr", relics, selections: [], random: () => 0 });
     const personal = offers.find(({ eligibleTargetRelicIds }) => eligibleTargetRelicIds.length > 0);
     // 한 생존자가 있으므로 쓰러진 rex도 휴식에서 부활 가능한 유효 대상이다.
     expect(personal?.eligibleTargetRelicIds).toEqual(["anky", "rex", "spino"]);
     expect(personal && validateExpeditionAugmentChoice(personal, { augmentId: personal.augmentId, targetRelicId: "unknown" }, [])).toBe(false);
-    expect(generateExpeditionAugmentOffers({ rarity: "common", relics: relics.map((relic) => ({ ...relic, currentHp: 0, alive: false })), selections: [], random: () => 0 }).every(({ eligibleTargetRelicIds }) => eligibleTargetRelicIds.length === 0)).toBe(true);
+    expect(generateExpeditionAugmentOffers({ rarity: "sr", relics: relics.map((relic) => ({ ...relic, currentHp: 0, alive: false })), selections: [], random: () => 0 }).every(({ eligibleTargetRelicIds }) => eligibleTargetRelicIds.length === 0)).toBe(true);
   });
 
   it("keeps party and personal augments available after repeated identical selections", () => {
     const prior = Array.from({ length: 20 }, () => ({ augmentId: "predator-instinct", targetRelicId: "anky" }));
-    const offers = generateExpeditionAugmentOffers({ rarity: "common", relics: party(), selections: prior, random: () => 0, candidateCount: 9 });
+    const offers = generateExpeditionAugmentOffers({ rarity: "sr", relics: party(), selections: prior, random: () => 0, candidateCount: 9 });
     const personal = offers.find(({ augmentId }) => augmentId === "predator-instinct")!;
     expect(personal.eligibleTargetRelicIds).toEqual(["anky", "rex", "spino"]);
     expect(validateExpeditionAugmentChoice(personal, { augmentId: "predator-instinct", targetRelicId: "anky" }, prior)).toBe(true);
     const repeatedParty = Array.from({ length: 20 }, () => ({ augmentId: "field-repair" }));
-    const partyOffers = generateExpeditionAugmentOffers({ rarity: "common", relics: party(), selections: repeatedParty, random: () => 0, candidateCount: 9 });
+    const partyOffers = generateExpeditionAugmentOffers({ rarity: "sr", relics: party(), selections: repeatedParty, random: () => 0, candidateCount: 9 });
     const partyOffer = partyOffers.find(({ augmentId }) => augmentId === "field-repair")!;
     expect(partyOffer).toBeDefined();
     expect(validateExpeditionAugmentChoice(partyOffer, { augmentId: "field-repair" }, repeatedParty)).toBe(true);

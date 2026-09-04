@@ -50,4 +50,20 @@ describe("탄환", () => {
     expect(REACH_STRIKE.bullet.ms).toBeLessThan(300);
     expect(REACH_STRIKE.lash.ms).toBeLessThan(REACH_STRIKE.bullet.ms);
   });
+
+  it("은 채찍보다 두껍고 한 겹 위에 선다", () => {
+    // 중거리 적과 원거리 아군이 맞붙으면 둘이 같은 길 위에 겹친다. 얇거나 같은 깊이면
+    // 나중에 열린 채찍이 탄환을 통째로 덮어 무엇이 날아갔는지 보이지 않는다.
+    expect(REACH_STRIKE.bullet.thickness).toBeGreaterThan(REACH_STRIKE.lash.rootWidth);
+    expect(REACH_STRIKE.bullet.depthLift).toBeGreaterThan(0);
+  });
+});
+
+describe("채찍이 비우는 길", () => {
+  it("은 두 자리를 통째로 잇지 않고 닿는 쪽 끝만 그린다", () => {
+    // 0이면 화면을 가로지르는 리본이 되어 그 사이의 탄환을 덮고, 1에 가까우면 채찍이
+    // 사라져 무엇이 때렸는지 남지 않는다.
+    expect(REACH_STRIKE.lash.startAt).toBeGreaterThan(0.15);
+    expect(REACH_STRIKE.lash.startAt).toBeLessThan(0.6);
+  });
 });

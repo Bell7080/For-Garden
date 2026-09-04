@@ -280,8 +280,14 @@ export class EffectManager {
     slot.openedAt = now;
     const graphics = slot.graphics.clear().setPosition(0, 0).setAlpha(1).setDepth(this.depth)
       .setBlendMode(Phaser.BlendModes.ADD).setVisible(true);
-    const dx = to.x - from.x;
-    const dy = to.y - from.y;
+    // 두 자리를 통째로 잇지 않고 **닿는 쪽 끝**만 그린다. 길 가운데를 비워 그 위로 날아가는
+    // 탄환이 보이게 하는 것이 이 시작점의 유일한 목적이다.
+    const root = {
+      x: from.x + (to.x - from.x) * lash.startAt,
+      y: from.y + (to.y - from.y) * lash.startAt,
+    };
+    const dx = to.x - root.x;
+    const dy = to.y - root.y;
     const length = Math.hypot(dx, dy) || 1;
     // 진행 방향의 수직으로 가운데를 밀어 한 번 휜 자국을 만든다.
     const nx = -dy / length;
@@ -296,11 +302,11 @@ export class EffectManager {
       onUpdate: () => {
         // 휘는 방향이 시간에 따라 되돌아오며 "쳤다가 걷힌다"가 한 동작으로 읽힌다.
         const swing = Math.sin(Math.PI * (1 - state.t)) * bend;
-        const midX = (from.x + to.x) / 2 + nx * swing;
-        const midY = (from.y + to.y) / 2 + ny * swing;
+        const midX = (root.x + to.x) / 2 + nx * swing;
+        const midY = (root.y + to.y) / 2 + ny * swing;
         graphics.clear();
         graphics.fillStyle(color, lash.alpha * (1 - state.t * state.t));
-        graphics.fillPoints(lashPoints(from, { x: midX, y: midY }, to, lash.rootWidth, lash.tipWidth), true);
+        graphics.fillPoints(lashPoints(root, { x: midX, y: midY }, to, lash.rootWidth, lash.tipWidth), true);
       },
       onComplete: () => {
         graphics.clear().setVisible(false).setBlendMode(Phaser.BlendModes.NORMAL);
@@ -344,7 +350,8 @@ export class EffectManager {
       .setAngle(angle)
       .setTint(color)
       .setAlpha(bullet.alpha)
-      .setDepth(this.depth)
+      // 채찍보다 한 겹 위다. 같은 깊이에 두면 나중에 열린 채찍이 탄환을 덮는다.
+      .setDepth(this.depth + bullet.depthLift)
       .setVisible(true);
     slot.tween = this.scene.tweens.add({
       targets: image,

@@ -11,8 +11,10 @@ import { CONTENT_STAMINA_COSTS } from "../data/contentCosts";
 import { createInitialRelicProgress, session, type Session } from "../state/session";
 import { saveManager } from "../state/SaveManager";
 import { INTERACTION_CITIES, findInteractionCity } from "../data/interactionCities";
+import { INTERACTION_EXCHANGE_OFFERS, findInteractionExchangeOffer, type InteractionExchangeOffer } from "../data/interactionExchange";
 import { interactionDurationMs, interactionRewardWeights, isInteractionCityUnlocked, isInteractionDispatchComplete, validateInteractionFormation, type InteractionMemberTraits } from "../core/interactionDispatch";
 import type { ClaimInteractionDispatchRequest, ClaimInteractionDispatchResponse, InteractionCitiesResponse, InteractionDispatchResponse, StartInteractionDispatchRequest } from "./contracts";
+import type { ExchangeInteractionOfferRequest, ExchangeInteractionOfferResponse, InteractionExchangeListResponse } from "./contracts";
 import { ProfileModifierManager } from "../managers/ProfileModifierManager";
 import { GameApiError, type AdOperationsConfigResponse, type BreakThroughResponse, type ClaimMissionRewardsResponse, type CompleteStageResponse, type EnterDailyRestorationResponse, type FeedRelicResponse, type GameApi, type LobbyInteractionResponse, type MissionListResponse, type PlayerStateDto, type ClaimAdRewardRequest, type ClaimAdRewardResponse, type PullRequest, type PullResponse, type RechargeStaminaRequest, type RechargeStaminaResponse } from "./contracts";
 import type { ProductDefinition } from "../data/shopCatalog";
@@ -62,6 +64,9 @@ export interface FakeServerOptions {
 export class FakeServer implements GameApi {
   /** 완료 수령 requestId의 최초 응답을 보존해 네트워크 재시도와 연타를 같은 영수증으로 묶는다. */
   private readonly interactionClaimResults = new Map<string, ClaimInteractionDispatchResponse>();
+  /** 실제 서버의 고유 requestId 영수증과 기간별 사용량 테이블을 흉내 낸다. */
+  private readonly interactionExchangeResults = new Map<string, ExchangeInteractionOfferResponse>();
+  private readonly interactionExchangeCounts = new Map<string, number>();
   /** 임시 서버에는 결투장 백엔드가 없으므로 티어를 합성하지 않고 명시적으로 미제공한다. */
   async getAsyncArenaServerState(): Promise<null> { return null; }
   private readonly latencyMs: number;
@@ -127,6 +132,39 @@ export class FakeServer implements GameApi {
   }
 
   async getInteractionCities(): Promise<InteractionCitiesResponse> { await this.delay(); return { cities: INTERACTION_CITIES.map(city => ({ ...city, unlocked: isInteractionCityUnlocked(city, this.state.playerResearch.level) })), serverTime: this.now().toISOString() }; }
+
+  /** 보유 표본과 서버 시각의 해금·잔여 제한만 교류 전용 DTO로 합성한다. */
+  async getInteractionExchangeOffers(): Promise<InteractionExchangeListResponse> {
+    await this.delay(); const now = this.now();
+    return { offers: INTERACTION_EXCHANGE_OFFERS.map((offer) => this.interactionExchangeDto(offer, now)), serverTime: now.toISOString() };
+  }
+
+  /** 모든 검증을 마친 복제본만 저장해 표본 차감과 보상 지급이 부분 적용되지 않게 한다. */
+  async exchangeInteractionOffer(request: ExchangeInteractionOfferRequest): Promise<ExchangeInteractionOfferResponse> {
+    await this.delay();
+    if (!request.requestId) throw new GameApiError("INVALID_STATE", "교환 요청 ID가 필요합니다.");
+    const cached = this.interactionExchangeResults.get(request.requestId); if (cached) return structuredClone(cached);
+    if (!Number.isSafeInteger(request.quantity) || request.quantity < 1) throw new GameApiError("INVALID_ITEM_QUANTITY", "교환 수량이 올바르지 않습니다.");
+    const offer = findInteractionExchangeOffer(request.offerId); if (!offer) throw new GameApiError("PRODUCT_NOT_FOUND", "존재하지 않는 교환 제안입니다.");
+    const city = findInteractionCity(offer.requiredCityId); if (!city || !isInteractionCityUnlocked(city, this.state.playerResearch.level)) throw new GameApiError("INVALID_STATE", "교환 도시가 잠겨 있습니다.");
+    const now = this.now(); const key = `${offer.id}:${this.interactionExchangePeriodKey(offer, now)}`; const used = this.interactionExchangeCounts.get(key) ?? 0;
+    if (used + request.quantity > offer.exchangeLimit) throw new GameApiError("PURCHASE_LIMIT_REACHED", "남은 교환 횟수를 초과했습니다.");
+    const required = offer.cost.amount * request.quantity; const stack = this.state.itemInventory.find(({ itemId }) => itemId === offer.cost.itemId);
+    if (!stack || stack.quantity < required) throw new GameApiError("INSUFFICIENT_ITEMS", "아이템 수량이 부족합니다.");
+    const nextItems = this.state.itemInventory.flatMap((entry) => entry.itemId === offer.cost.itemId ? (entry.quantity > required ? [{ ...entry, quantity: entry.quantity - required }] : []) : [{ ...entry }]);
+    const nextWallet = { ...this.state.wallet }; const granted = offer.grants.map((grant) => ({ ...grant, amount: grant.amount * request.quantity }));
+    granted.forEach((grant) => { if (grant.kind === "currency") nextWallet[grant.currency] += grant.amount; else { const target = nextItems.find((entry) => entry.itemId === grant.itemId); if (target) target.quantity += grant.amount; else nextItems.push({ itemId: grant.itemId, quantity: grant.amount }); } });
+    const nextState = { ...this.state, wallet: nextWallet, itemInventory: nextItems }; this.persist(nextState); this.state.wallet = nextWallet; this.state.itemInventory = nextItems; this.interactionExchangeCounts.set(key, used + request.quantity);
+    // 커밋 뒤 추가 await 없이 영수증을 캐시해야 같은 tick에 도착한 동일 ID도 두 번째 커밋을 못 한다.
+    const manager = new InventoryManager(this.state); const items = (["rune", "currency", "consumable", "material"] as const).flatMap((category) => manager.list(category).map((item) => ({ id: item.id, definitionId: item.definition.id, category: item.category, quantity: item.quantity, ...(item.kind === "rune" ? { rune: this.cloneRune(item.rune) } : {}) })));
+    const response = { offerId: offer.id, quantity: request.quantity, consumed: { itemId: offer.cost.itemId, amount: required }, granted, remaining: offer.exchangeLimit - used - request.quantity, items, wallet: { ...nextWallet } };
+    this.interactionExchangeResults.set(request.requestId, structuredClone(response)); return response;
+  }
+
+  /** 일·주·계정 제한을 UTC 서버 키로 정규화한다. */
+  private interactionExchangePeriodKey(offer: InteractionExchangeOffer, now: Date): string { const day = now.toISOString().slice(0, 10); if (offer.refresh === "daily") return day; if (offer.refresh === "weekly") { const date = new Date(`${day}T00:00:00Z`); date.setUTCDate(date.getUTCDate() - ((date.getUTCDay() + 6) % 7)); return date.toISOString().slice(0, 10); } return "account"; }
+  /** 표시와 실행이 같은 제한 키·보유량·도시 판정을 공유한다. */
+  private interactionExchangeDto(offer: InteractionExchangeOffer, now: Date): import("./contracts").InteractionExchangeOfferDto { const definition = findItem(offer.cost.itemId)!; const owned = this.state.itemInventory.find(({ itemId }) => itemId === offer.cost.itemId)?.quantity ?? 0; const used = this.interactionExchangeCounts.get(`${offer.id}:${this.interactionExchangePeriodKey(offer, now)}`) ?? 0; const city = findInteractionCity(offer.requiredCityId)!; return { id: offer.id, name: offer.name, requiredCityId: offer.requiredCityId, cost: { itemId: offer.cost.itemId, itemName: definition.name, amount: offer.cost.amount, owned }, grants: offer.grants.map((grant) => ({ ...grant })), remaining: Math.max(0, offer.exchangeLimit - used), exchangeLimit: offer.exchangeLimit, unlocked: isInteractionCityUnlocked(city, this.state.playerResearch.level) }; }
 
   async getInteractionDispatch(): Promise<InteractionDispatchResponse> { await this.delay(); return { dispatch: structuredClone(this.state.interaction.slots[0]), serverTime: this.now().toISOString() }; }
 

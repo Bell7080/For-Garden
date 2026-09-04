@@ -110,3 +110,11 @@ describe("겹 수 배지는 칩 안에 앉는다", () => {
     expect(stackCount.offsetY + stackCount.size / 2).toBeLessThanOrEqual(half);
   });
 });
+
+describe("상태 칩 줄과 체력 바", () => {
+  it("은 칩 아래 변이 바의 끝 빗금에 닿지 않게 띄운다", () => {
+    // 겹치면 지나간 시간을 덮는 반투명 부채꼴이 바 위에 그대로 얹혀 체력이 가려진다.
+    const chipBottom = BATTLE_STATUS_LAYOUT.chipRowLift - BATTLE_STATUS_LAYOUT.chipSize / 2;
+    expect(chipBottom).toBeGreaterThan(BATTLE_STATUS_LAYOUT.hpBarCapHalfHeight);
+  });
+});

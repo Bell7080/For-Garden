@@ -106,6 +106,8 @@ export interface Fighter extends Combatant {
    * 덧칠과 달리 **지속 시간이 없다** — 세 번째 칼질이 곧 결과라 시간이 흘러 사라지지 않는다.
    */
   butcher: { stacks: number; maxStacks: number; burstPower: number } | null;
+  /** 표적을 다시 고르기까지 남은 시간(초). 0이 되는 프레임에 주위를 다시 잰다. */
+  retargetIn: number;
   /** 고품격 식재료가 다시 표적을 고르기까지 남은 시간(초). 0이 되는 프레임에 도약한다. */
   huntCooldown: number;
   /** 남은 순풍 시간(초). 공격 속도·이동 속도를 함께 올리는 아군 전체 강화다. */
@@ -319,6 +321,28 @@ export const SKIRMISH = {
   facingDeadzone: 16,
   /** 이미 그 상대에게 붙은 아군 한 명당 더해지는 거리 가중치. 셋이 한 명에게 몰리지 않는다. */
   crowdPenalty: 240,
+  /**
+   * 표적을 다시 고르기까지의 간격(초).
+   *
+   * 예전에는 한 번 고른 표적을 **죽을 때까지** 바꾸지 않았다. 그래서 전투가 시작되는 순간
+   * 저마다 상대를 정하고, 바로 옆으로 적이 걸어와도 처음 정한 상대를 향해 전장을 가로질렀다.
+   * 주기적으로 다시 재면 "지금 눈앞에 있는 적"이 저절로 답이 된다.
+   */
+  retargetSeconds: 2,
+  /**
+   * 다시 고를 때 **지금 노리던 상대**에게 주는 점수 보너스(px 상당).
+   *
+   * 없으면 거리가 엎치락뒤치락하는 두 적 사이에서 매번 표적이 바뀌어, 다가가다 돌아서기를
+   * 반복하며 아무도 때리지 못한다.
+   */
+  targetStickiness: 160,
+  /**
+   * 이미 **내 사거리 안에** 들어온 상대에게 주는 점수 보너스(px 상당).
+   *
+   * 멀리 있는 적을 아예 무시하지는 않는다 — 거리가 여전히 기본 항이라 주위에 아무도 없으면
+   * 먼 적을 고른다. 다만 손이 닿는 상대가 있는데 그를 지나쳐 걸어가지는 않는다.
+   */
+  inReachBonus: 320,
   /** 상대에게 곧장 가지 않고 옆으로 흐르는 정도. 패싸움처럼 보이게 한다. */
   swirl: 0.32,
   /** 때리는 순간 상대 쪽으로 튀어나가는 거리(px). */
@@ -351,10 +375,15 @@ export const SKIRMISH = {
  */
 export const REACH_TIER = {
   melee: SKIRMISH.reach,
-  // 처음에는 250 / 340이었는데 전장(820×760)에서 근거리와 나란히 서 보면 차이가 눈에 남지
-  // 않았다. 단계를 나눈 값은 "뒷줄이 뒷줄에 남는 그림"이므로, 보이지 않으면 없는 것과 같다.
-  mid: 300,
-  ranged: 430,
+  /*
+   * 값을 세 번 고쳤다(250/340 → 300/430 → 지금). 앞의 둘은 **먼저 때리는 횟수**가 아니라
+   * 그림만 보고 고른 값이라, 아군이 한 대 치는 사이에 적이 이미 붙어 차이가 남지 않았다.
+   * 기준을 바꿔 "먼저 몇 대 치는가"로 잡는다 — 중거리는 한두 대, 원거리는 두세 대.
+   * 붙는 데 걸리는 시간은 (사거리 차 ÷ 이동 속도)이고, 이동 속도 100이 1초에 145px를 가므로
+   * 중거리 360은 근거리보다 약 1.3초, 원거리 600은 약 3초를 먼저 얻는다.
+   */
+  mid: 360,
+  ranged: 600,
 } as const satisfies Readonly<Record<ReachTier, number>>;
 
 /** 이 전투원이 멈춰 서서 때리기 시작하는 거리. 씬과 코어가 같은 값을 읽는다. */
@@ -432,6 +461,7 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     staggeredFor: 0,
     shield: { amount: 0, providerId: null },
     adagioCooldownRemaining: 0,
+    retargetIn: 0,
     curse: null,
     frenzy: null,
     bleed: null,
@@ -1158,13 +1188,15 @@ function distanceToSegment(point: { x: number; y: number }, from: { x: number; y
 }
 
 /** 지금 노릴 상대. 이미 잡은 상대가 살아 있으면 바꾸지 않고 계속 붙는다. */
-function resolveTarget(state: SkirmishState, fighter: Fighter): Fighter | undefined {
+function resolveTarget(state: SkirmishState, fighter: Fighter, reconsider = false): Fighter | undefined {
   // 광란은 표적의 편을 통째로 뒤집는다. 그래서 캐시된 표적도 지금 노려야 하는 편인지 다시 본다 —
   // 그대로 두면 뒤집히기 전의 상대를 계속 때리고, 풀린 뒤에는 아군을 계속 때린다.
   const frenzied = fighter.frenzy !== null;
   const wanted = frenzied ? fighter.side : (fighter.side === "player" ? "enemy" : "player");
   const current = fighter.targetId ? findFighter(state, fighter.targetId) : undefined;
-  if (current && current.side === wanted && current.id !== fighter.id && isFighterAlive(current) && current.stealthFor <= 0) return current;
+  const keepable = current !== undefined && current.side === wanted && current.id !== fighter.id
+    && isFighterAlive(current) && current.stealthFor <= 0;
+  if (keepable && !reconsider) return current;
 
   // 가장 가깝더라도 이미 아군이 붙어 있는 상대는 뒤로 미룬다. 셋이 한 명을 둘러싸는 대신
   // 서로 다른 상대와 맞붙어 전장 곳곳에서 싸우는 그림이 된다.
@@ -1176,7 +1208,12 @@ function resolveTarget(state: SkirmishState, fighter: Fighter): Fighter | undefi
     const crowd = state.fighters.filter(
       (mate) => mate.side === fighter.side && mate.id !== fighter.id && isFighterAlive(mate) && mate.targetId === other.id,
     ).length;
-    const score = distance(fighter, other) + crowd * SKIRMISH.crowdPenalty;
+    // 점수는 낮을수록 좋다. 거리가 기본이고, 몰림은 밀어내고, **지금 노리던 상대**와
+    // **이미 손이 닿는 상대**는 그만큼 당긴다.
+    const gap = distance(fighter, other);
+    const score = gap + crowd * SKIRMISH.crowdPenalty
+      - (other.id === fighter.targetId ? SKIRMISH.targetStickiness : 0)
+      - (gap <= fighterReach(fighter) ? SKIRMISH.inReachBonus : 0);
     if (score < bestScore) {
       chosen = other;
       bestScore = score;
@@ -2336,7 +2373,15 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
       fighter.hop *= recovery;
       continue;
     }
-    const target = resolveTarget(state, fighter);
+    // 표적을 남이 정해 주는 개체는 주기 재평가에서 뺀다 — 무리 사냥은 대장의 표적을 따라야
+    // 하고, 고품격 식재료는 제 시계로 가장 약한 적을 고른다. 둘을 여기서 다시 재면 그 규칙이
+    // 2초마다 조용히 덮인다.
+    const ownTarget = fighter.def.passive.kind !== "followHighestAttackAllyTarget"
+      && fighter.def.passive.kind !== "gourmetHunt";
+    fighter.retargetIn -= dt;
+    const reconsider = ownTarget && fighter.retargetIn <= 0;
+    if (reconsider) fighter.retargetIn = SKIRMISH.retargetSeconds;
+    const target = resolveTarget(state, fighter, reconsider);
     if (!target) continue;
 
     const dx = target.x - fighter.x;

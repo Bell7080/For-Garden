@@ -580,7 +580,9 @@ export class InfoManager {
     attach(statPanel, this.reachLabel);
     // 칸에는 숫자가 아니라 **오각형**이 선다. 다섯 축의 균형은 숫자 다섯 줄보다 한눈에 읽히고,
     // 정확한 값이 필요할 때만 돋보기로 연다. 축 이름은 굵게 키우고 능력치 색을 입힌다.
-    this.statRadar = new StatRadar(this.scene, COLUMN.x, 1024, STAT_RADAR_RADIUS, {
+    // 판 한가운데(1024)에 두면 위쪽 축만 이름 위에 수치를 한 줄 더 이고 있어 오각형이 판
+    // 천장에 붙어 보인다. 그 한 줄만큼 아래로 내려 위아래 여백을 맞춘다.
+    this.statRadar = new StatRadar(this.scene, COLUMN.x, 1042, STAT_RADAR_RADIUS, {
       size: 24,
       colors: Object.fromEntries(STAT_CHIPS.map((chip) => [chip.key, `#${chip.color.toString(16).padStart(6, "0")}`])),
       // 축마다 실제 수치를 같은 색으로 적고, 면 안에는 전투력을 옅게 깐다.

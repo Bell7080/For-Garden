@@ -14,11 +14,14 @@ import { drawLayer, HOLO, slantedRect } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
 import { TopBar } from "../ui/TopBar";
 import { setDebugScene } from "../debug";
+import { PopupLayer } from "../ui/PopupLayer";
+import { InteractionExchangePopup } from "../ui/InteractionExchangePopup";
 
 const BLUE = 0x55b9e8;
 /** 교류 화면은 표시와 입력만 맡고 상태 변경은 InteractionManager로 보낸다. */
 export class InteractionScene extends Phaser.Scene {
   private cityId = INTERACTION_CITIES[0].id; private party: string[] = []; private body?: Phaser.GameObjects.Container; private serverNow = Date.now();
+  private readonly popups = new PopupLayer(this, 2600);
   constructor() { super("interaction"); }
   create(): void {
     setDebugScene("interaction", "교류");
@@ -26,6 +29,8 @@ export class InteractionScene extends Phaser.Scene {
     addSceneBackground(this, BACKGROUND.lobby); this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.74);
     new TopBar(this, 40, { currencies: "none", onSettings: () => this.scene.start("settings", { returnScene: "interaction" }) });
     this.add.text(52, 150, "교류", textStyle({ role: "display", size: 50, color: "#a8ddf5" })); addBackButton(this, () => this.scene.start("lobby"));
+    // 파견 목록이 다시 그려져도 파괴되지 않는 씬 고정 진입점이라 항상 교환소를 찾을 수 있다.
+    this.add.existing(new Button(this, 875, 185, { width: 300, height: 86, label: "교환소", accentColor: BLUE, onClick: () => new InteractionExchangePopup(this, this.popups, interactionManager).open() }));
     void Promise.all([interactionManager.cities(), interactionManager.refresh()]).then(([cities, dispatch]) => { this.serverNow = Date.parse(dispatch.serverTime); this.draw(cities.cities); });
     this.time.addEvent({ delay: 1000, loop: true, callback: () => { this.serverNow += 1000; this.draw(); } });
   }

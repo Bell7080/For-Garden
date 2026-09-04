@@ -1,5 +1,6 @@
 import { gameApi } from "../api/FakeServer";
-import type { ClaimInteractionDispatchResponse, GameApi, InteractionCitiesResponse, InteractionDispatchResponse } from "../api/contracts";
+import type { ClaimInteractionDispatchResponse, ExchangeInteractionOfferResponse, GameApi, InteractionCitiesResponse, InteractionDispatchResponse, InteractionExchangeListResponse } from "../api/contracts";
+import { managerEvents } from "./ManagerEvents";
 import { findInteractionCity } from "../data/interactionCities";
 import { saveManager, type SaveManager } from "../state/SaveManager";
 import { session, type InteractionDispatchSnapshot, type Session } from "../state/session";
@@ -17,6 +18,10 @@ export class InteractionManager {
   async refresh(): Promise<InteractionDispatchResponse> { return this.apply(await this.api.getInteractionDispatch()); }
   async start(cityId: string, party: string[]): Promise<InteractionDispatchResponse> { return this.apply(await this.api.startInteractionDispatch({ cityId, party: [...party] })); }
   async claim(dispatchId: string, requestId: string): Promise<ClaimInteractionDispatchResponse> { const response = await this.api.claimInteractionDispatch({ dispatchId, requestId }); this.apply(response); this.state.wallet = { ...response.wallet }; this.saves.save(this.state); return response; }
+  /** 교류 교환 목록은 ProductDto 변환 없이 전용 DTO 그대로 검증된 UI 경계에 넘긴다. */
+  async exchangeOffers(): Promise<InteractionExchangeListResponse> { return this.api.getInteractionExchangeOffers(); }
+  /** 한 영수증의 아이템·지갑을 함께 반영하고 같은 tick에 두 갱신 이벤트를 발행한다. */
+  async exchange(offerId: string, quantity: number, requestId: string): Promise<ExchangeInteractionOfferResponse> { const response = await this.api.exchangeInteractionOffer({ offerId, quantity, requestId }); this.state.wallet = { ...response.wallet }; this.state.itemInventory = response.items.filter(({ category }) => category === "consumable" || category === "material").map(({ definitionId, quantity: amount }) => ({ itemId: definitionId, quantity: amount })); this.saves.save(this.state); managerEvents.publish("wallet", { wallet: this.state.wallet }); managerEvents.publishInventory(); return response; }
   private apply<T extends InteractionDispatchResponse>(response: T): T { assertDispatch(response.dispatch); if (!Number.isFinite(Date.parse(response.serverTime))) throw new Error("교류 서버 시각이 올바르지 않습니다."); this.state.interaction.slots[0] = response.dispatch ? structuredClone(response.dispatch) : null; this.saves.save(this.state); return response; }
 }
 

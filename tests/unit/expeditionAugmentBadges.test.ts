@@ -34,7 +34,8 @@ describe("원정 증강 표식", () => {
 
   it("의 효과 종류가 곧 문양이다", () => {
     const groups = expeditionAugmentBadges(SELECTIONS);
-    expect(groups.byRelic.anky[0].glyph).toBe("bleed");
+    // 출혈은 개별 이름이 아니라 확장된 상태 효과 카테고리 문양을 공유한다.
+    expect(groups.byRelic.anky[0].glyph).toBe("status");
     expect(groups.global[0].glyph).toBe("attack");
   });
 });

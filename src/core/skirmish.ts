@@ -5,7 +5,7 @@ import { computeDamage, computeDamageContribution, currentAbilityPower, isCritic
 export { currentAbilityPower } from "./damage";
 import { drainFerocityFever, FEROCITY_RULES } from "./ferocity";
 import { breakthroughBonus } from "./relicProgression";
-import { attackPowerMultiplier, bleedOnAttackEffect, type ExpeditionAugmentEffect } from "./expeditionAugments";
+import { bleedOnAttackEffect, conditionalAttackPowerMultiplier, expeditionAugmentStatMultipliers, type ExpeditionAugmentEffect } from "./expeditionAugments";
 import type { CombatStatusEffect, FerocityTrait, ReachTier, RelicDef, Side, Skill, TeamBuff } from "./types";
 import { canUseUltimate, ULTIMATE_ENERGY_MAX } from "./ultimate";
 import { stealthTransition, type CombatEffectCue } from "./combatEffects";
@@ -152,6 +152,10 @@ export interface Fighter extends Combatant {
   immortal?: boolean;
   /** 기본 공격 실제 적중으로 쌓인 전투 한정 공격 속도다. 저장 모델에는 존재하지 않는다. */
   bonusAttackSpeed: number;
+  /** 원정 상태 효과의 지속시간을 늘리는 전투 스냅샷 배율이다. */
+  statusPotencyMultiplier: number;
+  /** 현재 HP에 따라 켜지는 공격력 효과는 정적 능력치와 달리 매 공격 시점에 판정한다. */
+  conditionalAttackPowerMultiplier: (hpPercent: number) => number;
   /** 루카의 실제 기본 공격 행동 주기만 세며 궁극기·전이·추가타는 포함하지 않는다. */
   basicAttackCount: number;
   /** 0보다 크면 단일 대상 선택의 중심이 될 수 없는 은신 상태다. */
@@ -415,12 +419,22 @@ export const EMERGENCY_RECOVERY = {
 /** 항상 같은 결과를 원하는 호출부(테스트)를 위한 기본 판정값 — 치명타가 나지 않는다. */
 const NO_CRIT = (): number => 0.999999;
 
-function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: number, bondLevel = 0, breakthrough = 0, bodyScale = 1): Fighter {
+function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: number, bondLevel = 0, breakthrough = 0, bodyScale = 1, augmentEffects: readonly ExpeditionAugmentEffect[] = []): Fighter {
   const opened = breakthroughBonus(breakthrough);
+  // 정적 정의를 복제한 전투 스냅샷에만 단순 능력치 증강을 한 번 반영한다.
+  const multipliers = side === "player" ? expeditionAugmentStatMultipliers(augmentEffects, def.id) : expeditionAugmentStatMultipliers([], def.id);
+  const battleDef: RelicDef = { ...def, stats: { ...def.stats,
+    hp: def.stats.hp * multipliers.maxHpPercent,
+    def: def.stats.def * multipliers.defensePercent,
+    res: def.stats.res * multipliers.resistancePercent,
+    atk: def.stats.atk * multipliers.attackPowerPercent,
+    ap: def.stats.ap * multipliers.spellPowerPercent,
+    attackSpeed: def.stats.attackSpeed * multipliers.attackSpeedPercent,
+  } };
   return {
-    def,
-    hp: def.stats.hp,
-    maxHp: def.stats.hp,
+    def: battleDef,
+    hp: battleDef.stats.hp,
+    maxHp: battleDef.stats.hp,
     // 각성 5단계는 전투를 궁극기 준비 상태로 연다.
     energy: opened.readyUltimate ? def.ultimate.cost : 0,
     ferocity: 0,
@@ -459,7 +473,8 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     stunnedFor: 0,
     stunnedTotal: 0,
     staggeredFor: 0,
-    shield: { amount: 0, providerId: null },
+    // 시작 보호막은 보정된 최대 HP를 기준으로 계산해 최대 체력 증강과 자연스럽게 결합한다.
+    shield: { amount: battleDef.stats.hp * (multipliers.initialShieldPercent - 1), providerId: null },
     adagioCooldownRemaining: 0,
     retargetIn: 0,
     curse: null,
@@ -471,6 +486,8 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     bonusAp: 0,
     immortal: false,
     bonusAttackSpeed: 0,
+    statusPotencyMultiplier: multipliers.statusPotencyPercent,
+    conditionalAttackPowerMultiplier: (hpPercent) => side === "player" ? conditionalAttackPowerMultiplier(augmentEffects, def.id, hpPercent) : 1,
     basicAttackCount: 0,
     stealthFor: 0,
     // 폭주가 켜진 뒤 온전한 1초가 지나야 첫 파동이 발생한다.
@@ -511,7 +528,7 @@ export function createSkirmish(
   const enemySpots = spawnSpots(arena, "enemy", enemyDefs.length);
   const initialById = new Map(options.playerInitialStates?.map((snapshot) => [snapshot.relicId, snapshot]));
   const players = playerDefs.map((def, i) => {
-    const fighter = makeFighter(def, "player", i, playerSpots[i].x, playerSpots[i].y, playerBondLevels[def.id] ?? 0, playerBreakthroughs[def.id] ?? 0);
+    const fighter = makeFighter(def, "player", i, playerSpots[i].x, playerSpots[i].y, playerBondLevels[def.id] ?? 0, playerBreakthroughs[def.id] ?? 0, 1, options.augmentEffects);
     const saved = initialById.get(def.id);
     if (saved) fighter.hp = saved.alive ? fighter.maxHp * Math.min(100, Math.max(0, saved.currentHp)) / 100 : 0;
     return fighter;
@@ -618,14 +635,16 @@ function cleanseControlWithAdagio(state: SkirmishState, target: Fighter, events:
 
 /** 개별 스킬과 야성 특성에서 같은 판별 가능한 상태 효과를 적용한다. */
 function applyCombatStatusEffect(fighter: Fighter, effect: CombatStatusEffect, events: SkirmishEvent[], state: SkirmishState, sourceId?: string, critical = false): void {
-  if (effect.kind === "stun") events.push(...applyStun(fighter, effect.seconds, state));
-  if (effect.kind === "stagger") events.push(...applyStagger(fighter, effect.seconds, state));
-  if (effect.kind === "bleed") refreshBleed(fighter, effect.seconds, effect.maxHpPercentPerSecond, events, sourceId);
-  if (effect.kind === "overpaint") refreshOverpaint(fighter, effect);
+  // 상태 위력은 기존 상태 슬롯과 저항 판정을 우회하지 않고 시전자의 지속시간 입력만 늘린다.
+  const potency = sourceId ? findFighter(state, sourceId)?.statusPotencyMultiplier ?? 1 : 1;
+  if (effect.kind === "stun") events.push(...applyStun(fighter, effect.seconds * potency, state));
+  if (effect.kind === "stagger") events.push(...applyStagger(fighter, effect.seconds * potency, state));
+  if (effect.kind === "bleed") refreshBleed(fighter, effect.seconds * potency, effect.maxHpPercentPerSecond, events, sourceId);
+  if (effect.kind === "overpaint") refreshOverpaint(fighter, { ...effect, seconds: effect.seconds * potency });
   if (effect.kind === "concussion") applyConcussion(fighter, effect, critical, events, state, sourceId);
   if (effect.kind === "butcher") applyButcher(fighter, effect, events, state, sourceId);
-  if (effect.kind === "curse") refreshCurse(fighter, effect);
-  if (effect.kind === "frenzy") applyFrenzy(fighter, effect, sourceId);
+  if (effect.kind === "curse") refreshCurse(fighter, { ...effect, seconds: effect.seconds * potency });
+  if (effect.kind === "frenzy") applyFrenzy(fighter, { ...effect, seconds: effect.seconds * potency }, sourceId);
 }
 
 /**
@@ -737,7 +756,7 @@ function applyButcher(
     defensiveDefinition(target, state),
     { power: effect.burstPower, damageType: "physical", scalingStat: "atk", isCritical: false, kind: "basic" },
     true,
-  ) * attackPowerMultiplier(state.augmentEffects, attacker.def.id)));
+  )));
   const resolution = resolveReceivedDamage(target, raw);
   const hpBefore = target.hp;
   applyDamage(target, resolution.applied, events);
@@ -1476,11 +1495,12 @@ function moveToNearestOtherEnemy(attacker: Fighter, target: Fighter, state: Skir
 /** 공격력은 배율로, 백분율 척도인 치명타 피해는 퍼센트포인트로 임시 정의에 반영한다. */
 function offensiveDefinition(attacker: Fighter): RelicDef {
   const passive = attacker.def.passive;
+  const conditional = attacker.conditionalAttackPowerMultiplier(attacker.maxHp > 0 ? attacker.hp / attacker.maxHp * 100 : 0);
   // 치명타 확률과 마찬가지로 개체 이름이 아니라 적힌 값으로 판별한다.
-  if (passive.attackPowerPercent === undefined && passive.criticalDamagePercent === undefined) return attacker.def;
+  if (passive.attackPowerPercent === undefined && passive.criticalDamagePercent === undefined && conditional === 1) return attacker.def;
   return { ...attacker.def, stats: {
     ...attacker.def.stats,
-    atk: attacker.def.stats.atk * (1 + (passive.attackPowerPercent ?? 0) / 100),
+    atk: attacker.def.stats.atk * (1 + (passive.attackPowerPercent ?? 0) / 100) * conditional,
     critDamage: attacker.def.stats.critDamage + (passive.criticalDamagePercent ?? 0),
   } };
 }
@@ -1825,11 +1845,10 @@ function strike(
         damageType: "physical",
       }, true)
     : 0;
-  // 공용 피해 공식을 그대로 통과한 뒤 원정 공격력 증강만 최종 배율로 한 번 적용한다.
-  const rawAmount = Math.max(1, Math.round((computeDamage(damageAttacker, damageTarget, damageInput, true) + defenseBonus) * attackPowerMultiplier(state.augmentEffects, attacker.def.id)));
-  const contributionAmount = Math.max(0, (computeDamageContribution(damageAttacker, damageInput)
-    + (defenseBonus > 0 ? computeDamageContribution(attacker, { ...damageInput, power: splashTrait.effectId === "splashDamage" ? splashTrait.defenseDamagePercent ?? 0 : 0, scalingStat: "def", damageType: "physical" }) : 0))
-    * attackPowerMultiplier(state.augmentEffects, attacker.def.id));
+  // 원정 공격력은 전투 스냅샷에 이미 반영됐으므로 공용 피해 공식에서 다시 곱하지 않는다.
+  const rawAmount = Math.max(1, Math.round(computeDamage(damageAttacker, damageTarget, damageInput, true) + defenseBonus));
+  const contributionAmount = Math.max(0, computeDamageContribution(damageAttacker, damageInput)
+    + (defenseBonus > 0 ? computeDamageContribution(attacker, { ...damageInput, power: splashTrait.effectId === "splashDamage" ? splashTrait.defenseDamagePercent ?? 0 : 0, scalingStat: "def", damageType: "physical" }) : 0));
   // 방어·패시브·상성 뒤의 모든 개별 경감은 공용 HP 피해 경계에서 한 번만 적용한다.
   const resolution = resolveReceivedDamage(target, rawAmount);
   const amount = resolution.applied;
@@ -1919,7 +1938,8 @@ function strike(
   const augmentBleed = bleedOnAttackEffect(state.augmentEffects, attacker.def.id);
   if (augmentBleed && isFighterAlive(target)) {
     // 원정 증강도 스킬·연속 공격과 동일한 출혈 갱신 규칙을 공유한다.
-    refreshBleed(target, augmentBleed.seconds, augmentBleed.percent, events, attacker.id);
+    // 기존 출혈 슬롯을 그대로 쓰되 시전자에게 저장된 상태 위력으로 지속시간만 보정한다.
+    refreshBleed(target, augmentBleed.seconds * attacker.statusPotencyMultiplier, augmentBleed.percent, events, attacker.id);
   }
 
   events.push({
@@ -1995,11 +2015,9 @@ function strike(
         scalingStat: "def",
         damageType: "physical",
       }, true);
-      const secondaryBase = (computeDamage(attacker, defensiveSecondary, damageInput, true) * splashTrait.damagePercent / 100 + secondaryDefenseBonus)
-        * attackPowerMultiplier(state.augmentEffects, attacker.def.id);
+      const secondaryBase = computeDamage(attacker, defensiveSecondary, damageInput, true) * splashTrait.damagePercent / 100 + secondaryDefenseBonus;
       const splashContribution = Math.max(0, (computeDamageContribution(attacker, damageInput) * splashTrait.damagePercent / 100
-        + (splashTrait.defenseDamagePercent === undefined ? 0 : computeDamageContribution(attacker, { ...damageInput, power: splashTrait.defenseDamagePercent, scalingStat: "def", damageType: "physical" })))
-        * attackPowerMultiplier(state.augmentEffects, attacker.def.id));
+        + (splashTrait.defenseDamagePercent === undefined ? 0 : computeDamageContribution(attacker, { ...damageInput, power: splashTrait.defenseDamagePercent, scalingStat: "def", damageType: "physical" }))));
       const splashResolution = resolveReceivedDamage(secondary, secondaryBase);
       const splashAmount = splashResolution.applied;
       const secondaryHpBefore = secondary.hp;
@@ -2128,10 +2146,8 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     // 폭발형 궁극기의 위력은 총량이 아니라 **겹당 값**이라 그 대상의 겹 수만큼 곱한다.
     const scaled = detonation ? { ...skill, power: (skill.power ?? 0) * (target.overpaint?.stacks ?? 0) } : skill;
     const damageInput = { ...scaled, isCritical: critical, kind: useUltimate ? "ultimate" as const : "basic" as const };
-    const rawAmount = Math.max(1, Math.round(computeDamage(damageAttacker, defensiveDefinition(target, state), damageInput, true)
-      * attackPowerMultiplier(state.augmentEffects, attacker.def.id)));
-    const contributionAmount = Math.max(0, computeDamageContribution(damageAttacker, damageInput)
-      * attackPowerMultiplier(state.augmentEffects, attacker.def.id));
+    const rawAmount = Math.max(1, Math.round(computeDamage(damageAttacker, defensiveDefinition(target, state), damageInput, true)));
+    const contributionAmount = Math.max(0, computeDamageContribution(damageAttacker, damageInput));
     const resolution = resolveReceivedDamage(target, rawAmount);
     const amount = resolution.applied;
     const hpBefore = target.hp;

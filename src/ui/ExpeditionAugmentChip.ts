@@ -38,12 +38,24 @@ function drawGlyph(scene: Phaser.Scene, glyph: AugmentBadgeGlyph, size: number):
   if (glyph === "attack") {
     // 위로 뻗는 화살촉 — 공격력이 오른다.
     graphics.beginPath().moveTo(-unit, unit).lineTo(unit, -unit).moveTo(0, -unit).lineTo(unit, -unit).lineTo(unit, 0).strokePath();
-  } else if (glyph === "bleed") {
-    // 떨어지는 물방울을 각지게 — 지속 피해다.
+  } else if (glyph === "status") {
+    // 떨어지는 물방울을 각지게 — 출혈을 포함한 상태 계열이다.
     graphics.beginPath().moveTo(0, -unit * 1.2).lineTo(unit, unit * 0.4).lineTo(0, unit * 1.1).lineTo(-unit, unit * 0.4).closePath().strokePath();
-  } else {
+  } else if (glyph === "heal") {
     // 십자 — 전투 뒤 회복이다.
     graphics.beginPath().moveTo(0, -unit).lineTo(0, unit).moveTo(-unit, 0).lineTo(unit, 0).strokePath();
+  } else if (glyph === "spell") {
+    // 마름모 속 점은 응축된 주문력을 나타낸다.
+    graphics.strokePoints([{ x: 0, y: -unit }, { x: unit, y: 0 }, { x: 0, y: unit }, { x: -unit, y: 0 }], true).fillStyle(0xffffff, 0.96).fillCircle(0, 0, unit * 0.22);
+  } else if (glyph === "survival") {
+    // 아래가 넓은 갑각은 체력·방어·저항 생존군을 함께 묶는다.
+    graphics.beginPath().moveTo(-unit, -unit).lineTo(unit, -unit).lineTo(unit * 0.65, unit).lineTo(-unit * 0.65, unit).closePath().strokePath();
+  } else if (glyph === "shield") {
+    // 방패의 V형 아래 꼭짓점으로 시작 보호막을 구별한다.
+    graphics.beginPath().moveTo(-unit, -unit).lineTo(unit, -unit).lineTo(unit * 0.75, unit * 0.45).lineTo(0, unit).lineTo(-unit * 0.75, unit * 0.45).closePath().strokePath();
+  } else {
+    // 끊긴 번개는 체력 조건을 만족할 때만 켜지는 효과다.
+    graphics.beginPath().moveTo(unit * 0.3, -unit).lineTo(-unit * 0.45, 0).lineTo(unit * 0.1, 0).lineTo(-unit * 0.3, unit).strokePath();
   }
   return graphics;
 }

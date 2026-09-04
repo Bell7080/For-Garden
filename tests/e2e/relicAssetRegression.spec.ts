@@ -24,12 +24,10 @@ test("도디·메테의 도감 전신과 루카 포함 편성·전투 SD 에셋�
   await tapUntil(page, BASE_WIDTH * 0.3, BASE_HEIGHT - 90, async () => (await page.evaluate(() => window.__PF_DEBUG?.scene)) === "relics");
 
   // 개체번호순 기본 도감에서 도디는 첫 카드, 메테는 기본 보유 구역의 여섯 번째 카드다.
-  await tapGame(page, 200, 620);
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.infoOpen)).toBe(true);
+  await tapUntil(page, 200, 620, async () => (await page.evaluate(() => window.__PF_DEBUG?.infoOpen)) === true);
   await captureGame(page, `test-results/${testInfo.project.name}-asset-dodi-catalog-fullbody.png`);
   await tapGame(page, BASE_WIDTH - 106, BASE_HEIGHT - 120);
-  await tapGame(page, 880, 1094);
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.infoOpen)).toBe(true);
+  await tapUntil(page, 880, 1094, async () => (await page.evaluate(() => window.__PF_DEBUG?.infoOpen)) === true);
   await captureGame(page, `test-results/${testInfo.project.name}-asset-mette-catalog-fullbody.png`);
   await tapGame(page, BASE_WIDTH - 106, BASE_HEIGHT - 120);
 

@@ -21,8 +21,8 @@ async function openOwnedRelic(page: Page): Promise<void> {
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   // 로비는 이름이 바뀐 뒤에도 하단 탭의 입력면을 마저 만든다 — 될 때까지 다시 누른다.
   await tapUntil(page, BASE_WIDTH * 0.3, BASE_HEIGHT - 90, async () => (await page.evaluate(() => window.__PF_DEBUG?.scene)) === "relics");
-  await clickGame(page, 200, 620);
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.infoOpen)).toBe(true);
+  // 카드도 그리드가 원화를 마저 세운 뒤에 입력면을 갖는다 — 정보창이 열릴 때까지 다시 누른다.
+  await tapUntil(page, 200, 620, async () => (await page.evaluate(() => window.__PF_DEBUG?.infoOpen)) === true);
 }
 
 test.beforeEach(async ({ page }) => {

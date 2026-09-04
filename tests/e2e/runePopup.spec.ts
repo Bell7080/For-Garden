@@ -19,10 +19,8 @@ async function openFirstRune(page: Page): Promise<void> {
   await tapUntil(page, W * 0.3, H - 90, async () => (await page.evaluate(() => window.__PF_DEBUG?.scene)) === "relics");
   // 애착 렐릭(토리카) 카드 → 1번 룬 조각 → 쪽지의 세공 버튼 순서다. 각 판은 원화·조각을
   // 비동기로 읽으므로, 다음을 누르기 전에 실제로 열렸는지 확인한다 — 열리기 전에 누르면 허공을 친다.
-  await tap(page, 530, 580);
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.infoOpen)).toBe(true);
-  await tap(page, 688, 1350);
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toContain("룬");
+  await tapUntil(page, 530, 580, async () => (await page.evaluate(() => window.__PF_DEBUG?.infoOpen)) === true);
+  await tapUntil(page, 688, 1350, async () => ((await page.evaluate(() => window.__PF_DEBUG?.popupTitles)) ?? []).some((title) => title.includes("룬")));
   await tap(page, 676, 1232);
 }
 

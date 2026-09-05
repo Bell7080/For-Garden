@@ -336,6 +336,21 @@ export type SkirmishEvent =
       mitigated?: boolean;
       /** 광역 한 번에서 첫 피해 사건만 공격 모션을 재생한다. 생략하면 기존처럼 재생한다. */
       animate?: boolean;
+      /**
+       * **한 번의 행동이 만든 뒤이은 타격인가.** 연격 둘째 타·광역의 나머지 대상·튀는 피해는
+       * 모두 제 모션을 갖고 눈에도 보이지만, 플레이어가 고른 행동은 여전히 하나다. 보스
+       * 제출처럼 행동을 세는 곳은 `animate`가 아니라 이 값을 읽는다 — `animate`는 모션을
+       * 겹쳐 틀지 않기 위한 표시라 연격처럼 실제로 두 번 휘두르는 타격에는 켜져 있다.
+       */
+      followUp?: boolean;
+      /**
+       * **이 타격이 일어난 코어 시각(초).** 씬은 프레임이 끝난 뒤에야 사건을 읽으므로
+       * `state.elapsed`를 그때 읽으면 실제 타격보다 한 프레임 늦은 시각을 적는다. 앞 타격이
+       * 그만큼 늦게 적히면 두 행동의 간격이 실제보다 짧아 보여, 보스 제출의 공속 검증이
+       * 정직한 판을 거절했다(v0.66.1까지 폰토스 정산 실패의 두 번째 원인). 조각 안에서
+       * 못 박은 이 값이 곧 코어가 인정하는 시각이다.
+       */
+      at?: number;
     }
   /**
    * 광역 공격이 실제로 터진 자리와 범위다. 씬은 그 자리 **바닥**에 범위를 그려 어디까지
@@ -2488,7 +2503,7 @@ function strike(
     return;
   }
   if ((useUltimate && attacker.def.ultimate.targeting !== "single") || (!useUltimate && currentBasic(attacker).targeting === "nearbyEnemies")) {
-    strikeAreaAttack(attacker, rng, state, events, useUltimate, targetPoint);
+    strikeAreaAttack(attacker, rng, state, events, useUltimate, targetPoint, comboHit !== undefined && !comboHit.grantActionResources);
     return;
   }
   // 이번 타격 시작 시점의 피버만 본다. 이 공격으로 100에 도달했다면 다음 공격부터 발현한다.
@@ -2681,6 +2696,8 @@ function strike(
     // 방어를 지나친 한 방은 종류가 아니라 "고정 피해"로 뜬다 — 전이와 같은 축이다.
     damageType: empowered ? "true" : damageInput.damageType,
     mitigated: resolution.reduced < resolution.raw,
+    // 연격 둘째 타부터는 같은 행동의 뒤이은 타격이다(자원을 주지 않는 타격이 곧 그 표식이다).
+    ...(comboHit && !comboHit.grantActionResources ? { followUp: true } : {}),
   });
   if (resolution.ignored) events.push({ kind: "damageIgnored", attackerId: attacker.id, targetId: target.id });
 
@@ -2765,7 +2782,7 @@ function strike(
       // 광역 피해도 공격자가 실제로 입힌 HP 피해이므로 같은 흡혈 규칙에 포함한다.
       healFromDamage(secondaryHpBefore - secondary.hp);
       events.push({ kind: "attack", attackerId: attacker.id, targetId: secondary.id, skill: useUltimate ? "ultimate" : "basic", amount: splashAmount, contributionAmount: splashCredited, critical,
-        damageType: damageInput.damageType, mitigated: splashResolution.reduced < splashResolution.raw });
+        damageType: damageInput.damageType, mitigated: splashResolution.reduced < splashResolution.raw, followUp: true });
       if (splashResolution.ignored) events.push({ kind: "damageIgnored", attackerId: attacker.id, targetId: secondary.id });
       if (isFighterAlive(secondary) && splashTrait.statusEffect) applyCombatStatusEffect(secondary, splashTrait.statusEffect, events, state);
       if (!isFighterAlive(secondary)) {
@@ -2806,7 +2823,7 @@ export function replayLoggedBossAction(state: SkirmishState, relicId: string, ki
  * "주위"는 시전자 중심 px 반경이고, battlefieldEnemies만 좌표와 무관한 전장 전체다. 공격 시작 전에 대상을
  * 복사하므로 앞선 대상이 죽어도 뒤 대상의 피해·흡혈·상태·사망 처리는 빠지지 않는다.
  */
-function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishState, events: SkirmishEvent[], useUltimate: boolean, targetPoint?: { x: number; y: number }): void {
+function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishState, events: SkirmishEvent[], useUltimate: boolean, targetPoint?: { x: number; y: number }, followUp = false): void {
   const skill = useUltimate ? attacker.def.ultimate : currentBasic(attacker);
   // 비공격 궁극기는 적 대상 범위 처리기에 전달하지 않는다.
   if (!("damageType" in skill) || skill.damageType === undefined || skill.power === undefined) return;
@@ -2917,7 +2934,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     target.dashX = (dx / gap) * SKIRMISH.knockback * 1.4;
     target.dashY = (dy / gap) * SKIRMISH.knockback * 1.4;
     events.push({ kind: "attack", attackerId: attacker.id, targetId: target.id, skill: useUltimate ? "ultimate" : "basic", amount, contributionAmount: credited, critical, animate: index === 0,
-      damageType: damageInput.damageType, mitigated: resolution.reduced < resolution.raw });
+      damageType: damageInput.damageType, mitigated: resolution.reduced < resolution.raw, ...(followUp || index > 0 ? { followUp: true } : {}) });
     if (resolution.ignored) events.push({ kind: "damageIgnored", attackerId: attacker.id, targetId: target.id });
 
     // 죽은 대상에는 지속 상태와 상태 UI 시작 사건을 절대 남기지 않는다.
@@ -3357,7 +3374,14 @@ export function stepSkirmish(state: SkirmishState, dt: number, rng: () => number
   let remaining = Math.min(dt, SKIRMISH.maxCatchUp);
   while (remaining > 0 && state.phase === "fight") {
     const step = Math.min(remaining, SKIRMISH.maxStep);
+    const before = events.length;
     advance(state, step, rng, events);
+    // 이 조각이 만든 타격에는 조각의 끝 시각을 못 박는다. 씬은 프레임이 끝난 뒤에 사건을 읽어
+    // 자기 시계로는 언제 맞았는지 알 수 없다.
+    for (let index = before; index < events.length; index += 1) {
+      const event = events[index];
+      if (event.kind === "attack") event.at = state.elapsed;
+    }
     // 최대치에서 시작한 피버는 공격 여부와 무관하게 실제 전투 시간만큼 자연 감소한다.
     state.fighters.forEach((fighter) => drainFerocityFever(fighter, step));
     remaining -= step;

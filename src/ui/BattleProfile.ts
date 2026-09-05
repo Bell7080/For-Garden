@@ -129,6 +129,12 @@ export class BattleProfile extends Phaser.GameObjects.Container {
     return this;
   }
 
+  /** 막은 사건이 아니라 잔량이라 씬이 매 프레임 그대로 넘긴다. */
+  public setShield(amount: number, maxHp: number): this {
+    this.battleHpBar.setShield(amount, maxHp);
+    return this;
+  }
+
   /** 피해 잔상·게이지 확대를 프레임 시간으로 진행하며 카드 위치는 고정한다. */
   public stepHealth(deltaMs: number): this { this.battleHpBar.step(deltaMs); return this; }
 

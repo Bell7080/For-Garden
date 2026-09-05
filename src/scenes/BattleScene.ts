@@ -57,9 +57,10 @@ import type { ExpeditionBossAction } from "../core/expeditionBoss";
 import { expeditionManager } from "../managers/ExpeditionManager";
 import { settingsManager } from "../managers/SettingsManager";
 import { battleUiMotionFactor } from "../core/settings";
+import { GameApiError } from "../api/contracts";
 import type { SettleExpeditionRunResponse, SubmitExpeditionBossScoreResponse } from "../api/contracts";
 import { currencyRecordToRewardItems, openRewardPopup } from "../ui/RewardPopup";
-import { BATTLE_STATUS_LAYOUT } from "../ui/battleStatusLayout";
+import { BATTLE_CONTROLS, BATTLE_STATUS_LAYOUT } from "../ui/battleStatusLayout";
 import { UnitStatusChips } from "../ui/UnitStatusChips";
 import { openUnitStatusPopup } from "../ui/UnitStatusPopup";
 import { unitStatusViews } from "../ui/unitStatusModel";
@@ -126,7 +127,8 @@ const PROFILE_TOP = 1430;
  * 1360에 두면 그 위에 겹쳤다. 액자 한 칸(56)만큼 더 띄운다.
  */
 // 전장 아래쪽에 서므로 SD·체력 바보다 앞에 둔다. 컷인(900)보다는 뒤라 연출을 가리지 않는다.
-export const BATTLE_CONTROLS = { rowY: 1288, rightX: BASE_WIDTH - 130, speedX: BASE_WIDTH - 335, stackGap: 92, depth: 320 } as const;
+// 자리는 Phaser를 모르는 배치표가 갖는다 — 씬에 두면 좌표를 읽는 E2E가 씬째로 Phaser를 끌어온다.
+export { BATTLE_CONTROLS } from "../ui/battleStatusLayout";
 
 /** 아직 다 차지 않은 카드의 불투명도. 다 차면 1이 되어 그림이 온전히 선다. */
 const CHARGE_CARD_ALPHA = 0.62;
@@ -425,7 +427,13 @@ export class BattleScene extends Phaser.Scene {
       const settlement = await gameApi.settleExpeditionRun({ runId: input.runId, settlementId: input.settlementId, outcome: "completed" });
       // 보스 완료도 공용 지급 영수증을 먼저 확인한 뒤 점수 결과판으로 이어진다.
       openRewardPopup(this, new PopupLayer(this, 2200), { title: "원정 완료 전리품", items: currencyRecordToRewardItems(settlement.granted), onConfirm: () => this.showBossResult(score, settlement) });
-    } catch {
+    } catch (error) {
+      // **무엇이 실패했는지 남긴다.** 예전에는 이유를 통째로 삼켜, 정산이 막히면 화면에 "다시
+      // 시도"만 남고 눌러도 같은 자리에서 같은 이유로 막혔다 — 서버가 거절한 것인지, 이미
+      // 정산된 런인지, 결과판을 그리다 터진 것인지 아무도 알 수 없었다.
+      console.error("[expedition] 보스 정산 실패", error);
+      const reason = error instanceof GameApiError ? error.message : "정산을 마치지 못했습니다.";
+      this.add.text(BASE_WIDTH / 2, 970, reason, textStyle({ role: "body", size: 27, color: COLOR.dangerText, align: "center", wrap: BASE_WIDTH - 220 })).setOrigin(0.5).setDepth(201);
       // 같은 버튼은 저장된 요청 ID로 전체 체인을 재시도하므로 성공한 서버 제출도 중복 누적되지 않는다.
       new Button(this, BASE_WIDTH / 2, 1050, { width: 460, height: 100, label: "정산 다시 시도", onClick: () => void this.submitAndSettleBoss(input, actions) }).setDepth(201);
     }
@@ -695,7 +703,12 @@ export class BattleScene extends Phaser.Scene {
       const waitForPresentation = shouldWaitForUltimatePresentation(hasDeathEvent, hasFinishEvent);
       // 코어가 바꾼 HP를 즉시 게이지 목표로 전달한다. 연출을 기다리는 동안 stepMeters가
       // 매 프레임 목표를 따라가므로 적 체력이 한 번에 점프하지 않고 실제로 깎여 보인다.
-      this.views.forEach((fighterView) => fighterView.hpBar.setValue(fighterView.fighter.hp / fighterView.fighter.maxHp));
+      this.views.forEach((fighterView) => {
+        fighterView.hpBar.setValue(fighterView.fighter.hp / fighterView.fighter.maxHp);
+        // 막은 사건이 아니라 잔량이다. 피해·회복 호출부마다 끼워 넣으면 하나만 빠뜨려도 그
+        // 순간 막이 사라진 것처럼 보이므로, 체력과 같은 자리에서 코어 값을 그대로 읽는다.
+        fighterView.hpBar.setShield(fighterView.fighter.shield.amount, fighterView.fighter.maxHp);
+      });
       // 스킵에서도 같은 events 배열 전체를 전달한다. 전신 컷인만 빠지고 공격→피해→사망→종료 책임은 playEvent에 남는다.
       // 첫 공격 동작만 기다리되 나머지 사건(사망·종료)도 전부 연출로 옮긴다. `??=`의 오른쪽을
       // 조건부로 두면 첫 동작 이후의 사망 사건이 통째로 버려져 쓰러진 적이 계속 서 있었다.
@@ -981,11 +994,15 @@ export class BattleScene extends Phaser.Scene {
 
     const attacker = this.views.get(event.attackerId);
     const target = this.views.get(event.targetId);
-    if (this.state.boss && attacker?.fighter.side === "player" && target?.fighter.side === "enemy" && event.animate !== false) {
+    if (this.state.boss && attacker?.fighter.side === "player" && target?.fighter.side === "enemy" && event.animate !== false && event.followUp !== true) {
       // 서버가 성장 스냅샷으로 재현할 수 있도록 ID·종류·코어 시각만 남기고 event.amount는 버린다.
-      // 추가 사건은 원본 행동에 접는다. transfer는 animate=false라 정상적으로 별도 기록되지 않지만 타입 경계도 명시한다.
+      // 추가 사건은 원본 행동에 접는다. **연격 둘째 타는 제 모션을 갖지만 행동은 하나다** —
+      // `animate`로 걸러 내면 같은 밀리초에 평타가 두 번 기록되어 서버 쿨다운 검증이 제출
+      // 전체를 거절했고(v0.66.1까지 폰토스 정산이 "다시 시도"만 남긴 원인), 그래서 코어가
+      // 표시하는 `followUp`을 읽는다. transfer는 animate=false라 여기 닿지 않는다.
       const replayKind = event.skill === "staccato" || event.skill === "shimmer" ? "basic" : event.skill === "transfer" ? "ultimate" : event.skill;
-      this.bossActions.push({ elapsedMs: Math.round(this.state.elapsed * 1_000), actorId: attacker.fighter.def.id, kind: replayKind });
+      // 프레임이 끝난 지금이 아니라 코어가 못 박은 타격 시각을 적는다(`at`).
+      this.bossActions.push({ elapsedMs: Math.round((event.at ?? this.state.elapsed) * 1_000), actorId: attacker.fighter.def.id, kind: replayKind });
     }
     // 한 광역 기술의 후속 피해 사건은 피격 표현만 만들고 시전자 모션은 첫 사건에서 한 번만 튼다.
     const playback = attacker && event.animate !== false ? playMotion(this, attacker.creature, "attack", motionSpeedMultiplier) : undefined;
@@ -1311,6 +1328,8 @@ export class BattleScene extends Phaser.Scene {
       const ready = canFireUltimate(this.state, fighter);
       const charge = alive ? Math.min(1, fighter.energy / fighter.def.ultimate.cost) : 0;
       profile.prefab.setChargeRatio(charge);
+      // 머리 위 바와 같은 값을 같은 주기로 읽어 두 HUD가 서로 다른 막 길이를 말하지 않게 한다.
+      profile.prefab.setShield(alive ? fighter.shield.amount : 0, fighter.maxHp);
       // 아직이면 카드째 반투명하다. 뒤가 비쳐야 "잠깐 꺼 둔 칸"으로 읽히고, 다 차면 또렷해진다.
       profile.card.setAlpha(alive ? (charge >= 1 ? 1 : CHARGE_CARD_ALPHA) : 0.45);
       // 연출 중에는 사용자 외 모든 카드가 잠겼다는 것을 명도로 즉시 알린다.

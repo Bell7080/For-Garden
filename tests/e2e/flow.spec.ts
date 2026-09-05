@@ -4,7 +4,7 @@ import { startAfterOpening } from "./openingSave";
 import { captureGame, drag, longPress, tap, tapUntil } from "./canvasInput";
 // 조작 칩 좌표는 화면이 소유한 배치표에서 읽는다 — 스펙이 숫자를 다시 적으면 칩이 움직일
 // 때마다 여기만 옛 자리를 두드린다.
-import { BATTLE_CONTROLS } from "../../src/scenes/BattleScene";
+import { BATTLE_CONTROLS } from "../../src/ui/battleStatusLayout";
 
 const BASE_WIDTH = 1080;
 const BASE_HEIGHT = 1920;

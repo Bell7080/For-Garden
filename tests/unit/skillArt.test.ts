@@ -5,7 +5,7 @@ import { RELICS } from "../../src/data/relics";
 import { KEYWORDS } from "../../src/data/keywords";
 import type { BasicAttack, Skill } from "../../src/core/types";
 import { ELEMENT_TINT, ROLE_TINT, SKILL_ART_ASSETS, SKILL_ART_SLOTS, skillArtFor, skillArtKey, skillArtTint } from "../../src/ui/skillArt";
-import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageHealingLabel, damageKeyword, ferocityTraitDescription, passiveDescription, overpaintDetonationDamageKeyword, passiveShieldKeyword, recoveryLabel, skillDescription, skillKeywordLayoutOptions, statusEffectLabel, targetingLabel } from "../../src/ui/skillPresentation";
+import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageHealingLabel, damageKeyword, ferocityTraitDescription, passiveDescription, overpaintDetonationDamageKeyword, passiveShieldKeyword, periodicStackKeyword, recoveryLabel, skillDescription, skillKeywordLayoutOptions, statusEffectLabel, targetingLabel } from "../../src/ui/skillPresentation";
 import type { SkillInfoViewModel } from "../../src/ui/SkillPopup";
 
 /** 구워 둔 스킬 일러스트. 코드가 가리키는 파일이 실제로 있는지 확인한다. */
@@ -97,14 +97,23 @@ describe("토리카 스킬 표시 계약", () => {
     expect(skillDescription(torika.ultimate)).not.toContain("220");
     expect(skillDescription(torika.ultimate)).toContain("자신의 주위 모든 적에게");
 
-    // 셋째 뿔은 기절과 추가 피해를 **한 문장** 안에서 말한다 — 절을 나누면 서로 다른 두
-    // 순간에 따로 터지는 것처럼 읽힌다. 순서는 때린 결과에 가까운 추가 타격이 먼저다.
+    // **본문은 「세 개의 뿔」을 풀어 적지 않는다.** 몇 타마다인지·무엇이 얹히는지·몇 초인지가
+    // 한 문장에 다 들어가면 그 규칙 하나로 문장이 가득 차므로, 덧칠·손질처럼 태그가 수치를
+    // 갖고 본문은 "한 겹 쌓는다"까지만 말한다.
     expect(torika.basic.periodicBonusScaling).toEqual({ stat: "def", power: 50 });
     expect(torika.basic.desc).toBeUndefined();
-    expect(skillDescription(torika.basic, { damage: 74, periodicBonusDamage: 64 }))
-      .toBe("적 한 명에게 [[damage-value|74]]의 [[physical-damage|물리 피해]]를 준다. 매 3번째 공격마다 [[damage-value|64]]의 [[physical-damage|물리 피해]]를 추가로 주고 0.5초 동안 [[stun|기절]]시킨다.");
-    // 능력치를 모르는 자리(도감)에서는 어느 능력치에서 나오는 배율인지 함께 말한다.
-    expect(skillDescription(torika.basic)).toContain("방어력의 50% [[physical-damage|물리 피해]]를 추가로 주고");
+    expect(skillDescription(torika.basic, { damage: 74 }))
+      .toBe("적 한 명에게 [[damage-value|74]]의 [[physical-damage|물리 피해]]를 주고 [[anky-basic-stack|세 개의 뿔]]을 한 겹 쌓는다.");
+
+    // 태그 본문은 실제 전투가 읽는 필드에서 짓는다 — 주기·수치를 조정하면 문장도 함께 바뀐다.
+    const stack = periodicStackKeyword(torika.basic)!;
+    expect(stack).toMatchObject({ id: "anky-basic-stack", term: "세 개의 뿔", kind: "규칙" });
+    expect(stack.description).toBe("기본 공격 한 번마다 한 겹씩 쌓이고 3겹째에 터진다. 터지는 타격은 방어력의 50%에 해당하는 물리 피해를 추가로 주고 0.5초 동안 기절시킨다. 터진 뒤 겹은 0으로 돌아간다.");
+    // **태그 팝업 안에는 또 다른 태그를 두지 않는다** — 그 안에서 여는 설명은 화면의 임시
+    // 사전을 물려받지 못해 눌러도 아무것도 열리지 않는다.
+    expect(stack.description).not.toMatch(/\[\[/);
+    // 이름 없는 주기(파치)는 예전처럼 본문이 직접 말한다.
+    expect(periodicStackKeyword(RELICS.find((def) => def.id === "pachi")!.basic)).toBeUndefined();
   });
   it("은 일반 공격과 궁극기의 피해 출처를 공용 상세 정의로 만든다", () => {
     expect(damageKeyword({ kind: "scaling", amount: 128, power: 100, stat: "공격력", label: "피해량" })).toMatchObject({

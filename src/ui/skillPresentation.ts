@@ -51,6 +51,44 @@ export function damageKeyword(preview?: DamagePreview): KeywordDef | undefined {
   return { id: "damage-value", term: String(preview.amount), kind: "규칙", description };
 }
 
+/**
+ * 이름을 가진 주기 스택(토리카의 「세 개의 뿔」)의 태그 정의.
+ *
+ * 본문은 "한 겹 쌓는다"까지만 말하고, 몇 타마다 터지는지·무엇이 얹히는지는 눌러서 읽는다.
+ * 문장을 손으로 적지 않고 실제 전투가 읽는 필드에서 지으므로, 주기나 수치를 조정하면 태그
+ * 본문도 함께 바뀐다.
+ *
+ * **태그 본문에는 또 다른 태그를 두지 않는다** — 태그 팝업이 여는 설명은 화면의 임시 사전을
+ * 물려받지 못해, 그 안의 동적 태그는 눌러도 아무것도 열리지 않는다. 덧칠·손질처럼 낱말만 적는다.
+ */
+export function periodicStackKeyword(skill: DescribedSkill): KeywordDef | undefined {
+  if (!("statusEffectStackName" in skill)) return undefined;
+  const name = skill.statusEffectStackName;
+  const every = skill.statusEffectEvery;
+  if (name === undefined || every === undefined) return undefined;
+  const parts: string[] = [];
+  const bonus = skill.periodicBonusScaling;
+  if (bonus !== undefined) {
+    const label = bonus.stat === "def" ? "방어력" : bonus.stat === "ap" ? "주문력" : "공격력";
+    parts.push(`${label}의 ${bonus.power}%에 해당하는 물리 피해를 추가로 주고`);
+  }
+  for (const effect of skill.statusEffects ?? []) {
+    const text = statusEffectClause(effect);
+    if (text !== undefined) parts.push(withoutKeywordTags(text));
+  }
+  return {
+    id: `${skill.id}-stack`,
+    term: name,
+    kind: "규칙",
+    description: `기본 공격 한 번마다 한 겹씩 쌓이고 ${every}겹째에 터진다. 터지는 타격은 ${parts.join(" ")}. 터진 뒤 겹은 0으로 돌아간다.`,
+  };
+}
+
+/** 태그를 벗겨 낱말만 남긴다. 태그 팝업 안에서는 중첩 태그가 열리지 않기 때문이다. */
+function withoutKeywordTags(text: string): string {
+  return text.replace(/\[\[[^\]|]+\|([^\]]+)\]\]/g, "$1");
+}
+
 /** 요약과 본문이 같은 동적 키워드 사전을 쓰도록 순수 레이아웃 옵션을 한 경계에서 결합한다. */
 export function skillKeywordLayoutOptions(
   skill: { contextualKeywords?: readonly KeywordDef[] },
@@ -246,13 +284,6 @@ export interface SkillDescriptionStats {
    */
   damage?: number;
   /**
-   * 주기 타격에만 얹히는 추가 피해(`periodicBonusScaling`)의 실제 값.
-   *
-   * 본 타격과 다른 능력치에서 나오므로 `damage` 하나로는 말할 수 없다 — 없으면 위력(%)과
-   * 그 능력치 이름으로 되돌아간다.
-   */
-  periodicBonusDamage?: number;
-  /**
    * 순환 기본 공격의 **걸음마다** 다른 실제 피해. 순서는 `cycle`과 같다.
    *
    * 걸음마다 위력이 통째로 달라 `damage` 하나로는 말할 수 없다 — 없으면 걸음도 위력(%)으로
@@ -386,7 +417,7 @@ function skillEffectClauses(skill: DescribedSkill, stats: SkillDescriptionStats)
   if (skill.allyEnergyGain !== undefined) {
     clauses.push({ text: `모든 생존 아군의 궁극기 게이지가 ${skill.allyEnergyGain} 오른다`, standalone: true });
   }
-  clauses.push(...statusClauses(skill, stats));
+  clauses.push(...statusClauses(skill));
   if ("damageTransfer" in skill && skill.damageTransfer) {
     clauses.push({ text: `그 적이 실제로 잃은 최종 HP 피해의 ${skill.damageTransfer.percent}%를 가장 가까운 다른 적에게 [[transfer|전이]]한다`, standalone: true });
   }
@@ -413,7 +444,7 @@ function skillEffectClauses(skill: DescribedSkill, stats: SkillDescriptionStats)
  * 되짚지 않고 **앞에서 "매 N번째 공격마다"로 묶는다** — "위 상태는"이라고 가리키면 어디까지가
  * 그 상태인지 다시 세어야 한다.
  */
-function statusClauses(skill: DescribedSkill, stats: SkillDescriptionStats = {}): SkillEffectClause[] {
+function statusClauses(skill: DescribedSkill): SkillEffectClause[] {
   const effects = skill.statusEffects ?? [];
   const concussion = effects.find((effect) => effect.kind === "concussion");
   const stun = effects.find((effect) => effect.kind === "stun");
@@ -429,19 +460,12 @@ function statusClauses(skill: DescribedSkill, stats: SkillDescriptionStats = {})
     if (text) texts.push(text);
   }
   const every = "statusEffectEvery" in skill ? skill.statusEffectEvery : undefined;
-  // 주기가 채워지는 그 한 방에만 얹히는 추가 피해도 같은 문장 안에 든다 — 따로 세우면 셋째
-  // 뿔이 서로 다른 두 순간에 두 번 터지는 것처럼 읽힌다. 순서는 때린 결과에 가까운 쪽부터라
-  // 추가 타격이 상태이상 앞에 선다.
-  const bonus = "periodicBonusScaling" in skill ? skill.periodicBonusScaling : undefined;
-  if (bonus !== undefined && every !== undefined) {
-    const label = bonus.stat === "def" ? "방어력" : bonus.stat === "ap" ? "주문력" : "공격력";
-    const amount = stats.periodicBonusDamage;
-    // 수치를 아는 자리는 "64의 물리 피해", 모르는 자리는 "방어력의 50% 물리 피해"다 — 뒤쪽에
-    // 다시 "의"를 붙이면 "방어력의 50%의 물리 피해"가 된다.
-    const value = amount === undefined ? `${label}의 ${bonus.power}% ` : `[[damage-value|${amount}]]의 `;
-    // 상태이상이 없는 개체도 있을 수 있으므로 뒤에 이을 절이 있을 때만 "주고"로 잇는다.
-    texts.unshift(`${value}[[physical-damage|물리 피해]]를 추가로 ${texts.length === 0 ? "준다" : "주고"}`);
-  }
+  // **이름을 가진 주기 스택은 본문에 풀어 적지 않고 태그 한 장으로 접는다.** 셋을 모아야
+  // 터지는 규칙은 몇 타마다인지·무엇이 얹히는지·몇 초인지가 함께 붙어 다녀, 본문에 풀면
+  // 한 문장이 그 규칙 하나로 가득 찬다. 덧칠·손질과 같은 자리다 — 쓰는 개체가 하나뿐인
+  // 규칙어라 수치는 태그가 갖고 본문은 "한 겹 쌓는다"까지만 말한다.
+  const stack = periodicStackKeyword(skill);
+  if (stack !== undefined) return [{ text: `[[${stack.id}|${stack.term}]]을 한 겹 쌓는다` }];
   if (texts.length === 0) return [];
   // 주기가 있는 스킬은 상태 절을 피해 문장에 붙이지 않고 제 문장으로 세운다.
   if (every !== undefined) return [{ text: `매 ${every}번째 공격마다 ${texts.join(" ")}`, standalone: true }];

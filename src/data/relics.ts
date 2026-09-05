@@ -147,10 +147,14 @@ export const RELICS: RelicDef[] = [
     basic: {
       id: "anky-basic",
       name: "들이받기",
-      power: 100,
+      // 위력을 로스터 최저로 내리고 그 몫을 기절로 옮겼다. 한 방이 아프지 않은 대신 상대의
+      // 시간을 빼앗는 개체라, 방어형 탱커가 "혼자 튼튼하기만 한" 자리에서 벗어난다.
+      power: 70,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
+      targeting: "single",
+      statusEffects: [{ kind: "stun", seconds: 1 }],
     },
     ultimate: {
       id: "anky-ult",
@@ -161,12 +165,13 @@ export const RELICS: RelicDef[] = [
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
-      cost: 120,
+      // 광역 제어가 이 개체의 값이므로 게이지를 낮춰 더 자주 돌게 한다.
+      cost: 100,
       // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
       targeting: "nearbyEnemies",
       // 반경은 전투 엔진의 대상 판정용 값이며 플레이어에게는 이해하기 쉬운 대상 범위로 바꿔 표시한다.
       radius: 220,
-      statusEffects: [{ kind: "stun", seconds: 2 }],
+      statusEffects: [{ kind: "stun", seconds: 3.5 }],
     },
   },
   {
@@ -1356,6 +1361,21 @@ export const RELICS: RelicDef[] = [
     // 거대한 턱은 리치가 길지만 일부러 근거리로 둔다 — 보스가 한 걸음 물러서면 붙는 데
     // 그만큼이 더 걸려 첫 해일이 5초쯤 늦고, 그만큼 원정 최종층이 통째로 쉬워진다.
     reachTier: "melee",
+    /**
+     * 최종 보스만 갖는 기절 저항이다.
+     *
+     * 기절은 **공격 쿨다운까지 멈추므로** 저항이 0이면 군중제어형 하나가 보스의 행동 자체를
+     * 지워 버린다. 토리카의 들이받기(1초 기절 · 공격 간격 1.9초)가 들어온 순간 첫 해일이
+     * 24.7초에서 **72.7초**로 밀렸다 — 최종 관문이 "얼마나 버티나"가 아니라 "기절을 가졌나"로
+     * 갈린다.
+     *
+     * 값은 실측해서 골랐다. 50%는 첫 해일 31.7초·전투 54초, 70%는 28.8초·47.4초로 여전히
+     * 관문이 늘어졌고, **85%에서 26.3초·35.2초로 원래 구간(24.7초·33.5초)에 돌아온다.**
+     * 면역(100)으로 막지 않는 이유는 그러면 제어 개체가 보스전에서 통째로 쓸모없어지기
+     * 때문이다 — 저항은 지속 시간만 줄이므로 1초는 0.15초로, 3.5초는 0.525초로 남는다.
+     * 저항을 적지 않은 일반 적에게는 기절이 그대로 다 들어간다.
+     */
+    stunResistancePercent: 85,
     // 적 전용 정의도 RelicDef의 완전한 정적 계약을 지켜 공용 정보창이 예외 없이 표시한다.
     excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 0, efficiencyMultiplier: 1.00 },
     stats: {

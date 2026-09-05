@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canFireUltimate, createSkirmish, defensiveDefinition, isFighterAlive, stepSkirmish, type Arena } from "../../src/core/skirmish";
+import { canFireUltimate, clearStun, createSkirmish, defensiveDefinition, isFighterAlive, stepSkirmish, type Arena } from "../../src/core/skirmish";
 import { computeDamage } from "../../src/core/damage";
 import { getRelic } from "../../src/data/relics";
 
@@ -46,6 +46,9 @@ describe("저주 전이", () => {
     const untouched = neighbour.hp;
     for (let frame = 0; frame < 60 * 3 && state.phase === "fight"; frame += 1) {
       stepSkirmish(state, 1 / 60, () => 0.99);
+      // 이 편이 재는 것은 저주 전이뿐이다. 상대(토리카)의 들이받기가 거는 기절까지 흐르면
+      // 케리스가 때리지 못해 전이가 아니라 기절을 재게 되므로 매 프레임 풀어 준다.
+      clearStun(keris);
       if (primary.curse) primary.curse.stacks = 1;
     }
     expect(neighbour.hp).toBe(untouched);
@@ -53,6 +56,7 @@ describe("저주 전이", () => {
     primary.curse = { remaining: 8, total: 8, stacks: 3, percentPerStack: 15, maxStacks: 3 };
     for (let frame = 0; frame < 60 * 8 && state.phase === "fight"; frame += 1) {
       stepSkirmish(state, 1 / 60, () => 0.99);
+      clearStun(keris);
       if (primary.curse) primary.curse.stacks = 3;
     }
     // 옆 적은 맞기만 하는 것이 아니라 저주도 함께 받는다 — 이어지는 몫의 값은 그쪽이다.

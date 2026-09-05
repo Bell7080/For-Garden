@@ -619,6 +619,9 @@ describe("단일 난전의 원정 보스 옵션", () => {
     // 사거리 단계(v0.58.0)에서 도디·메테가 뒷줄에 남아 보스에게 덜 맞으므로 보스의 충전이
     // 그만큼 늦다. 뒷줄이 안전해지는 것이 이 기능이 노린 결과라 구간을 넓혔다 — 단계 간격을
     // 250/340에서 300/430으로 더 벌린 뒤에는 26.4초라 상한을 28초로 다시 옮겼다.
+    // 토리카가 들이받기에 1초 기절을 갖게 된 뒤에도 이 구간은 그대로다 — 폰토스의 기절 저항
+    // 85%가 그 몫을 되돌려 놓기 때문이다. 저항이 없으면 첫 해일이 72.7초로 밀려 이 검사가
+    // 먼저 무너진다.
     expect(firstUltimateAt).toBeGreaterThanOrEqual(17);
     expect(firstUltimateAt).toBeLessThanOrEqual(28);
     expect(survivorsAfterFirstUltimate).toBeGreaterThan(0);
@@ -1060,8 +1063,10 @@ describe("효과 ID별 야성 특성", () => {
     expect(torika.def.ferocityTrait).toMatchObject({ damagePercent: 100, defenseDamagePercent: 15, attackSpeedBonusPercent: 20 });
     expect(primaryHit.amount).toBeGreaterThan(computeDamage(torika, primary, { ...torika.def.basic, isCritical: primaryHit.critical, kind: "basic" }, true));
     expect(nearbyHit.amount).toBeGreaterThan(computeDamage(torika, nearby, { ...torika.def.basic, isCritical: nearbyHit.critical, kind: "basic" }, true));
-    // 경직은 기절 상태를 오용하지 않고 주·주변 대상의 행동만 0.1초 순간 차단한다.
-    expect(primary.stunnedFor).toBe(0);
+    // 경직은 기절 상태를 오용하지 않는다 — 주 대상의 기절은 **기본 공격이 선언한 값 그대로**이고
+    // 경직은 제 슬롯에 따로 선다. 광역으로 번지는 것은 경직뿐이라 주변 대상은 기절하지 않는다.
+    const basicStun = torika.def.basic.statusEffects?.find((effect) => effect.kind === "stun");
+    expect(primary.stunnedFor).toBeCloseTo(basicStun?.kind === "stun" ? basicStun.seconds : 0);
     expect(nearby.stunnedFor).toBe(0);
     expect(primary.staggeredFor).toBeCloseTo(0.1);
     expect(nearby.staggeredFor).toBeCloseTo(0.1);
@@ -1368,9 +1373,14 @@ describe("궁극기", () => {
     expect(expected[0]).toBeGreaterThan(expected[2]);
     // 기대값 자체가 토리카의 atk가 아니라 상향된 def 300%를 원천으로 썼는지도 수치로 고정한다.
     expect(expected[0]).toBe(Math.round((torika.def.stats.def * 3) * 1.25));
+    // 기절 시간은 궁극기가 선언한 값을 그대로 읽는다 — 여기에 초를 손으로 적으면 데이터를
+    // 조정한 뒤 이 검사만 옛 값으로 남는다.
+    const ultimateStun = ultimate.statusEffects?.find((effect) => effect.kind === "stun");
+    const stunSeconds = ultimateStun?.kind === "stun" ? ultimateStun.seconds : 0;
+    expect(stunSeconds).toBeGreaterThan(0);
     expect(first.stunnedFor).toBe(0);
-    expect(armored.stunnedFor).toBe(2);
-    expect(disadvantaged.stunnedFor).toBe(2);
+    expect(armored.stunnedFor).toBe(stunSeconds);
+    expect(disadvantaged.stunnedFor).toBe(stunSeconds);
     expect(events.filter((event) => event.kind === "status")).toHaveLength(2);
     expect(torika.energy).toBe(0);
     expect(hits.filter((event) => event.animate !== false)).toHaveLength(1);

@@ -73,7 +73,7 @@ describe("스킬 일러스트 파일", () => {
 });
 
 describe("토리카 스킬 표시 계약", () => {
-  it("은 구조화된 5초·7%·전체 적·2초 값을 실제 표시 문구로 만든다", () => {
+  it("은 구조화된 5초·7%·전체 적·3.5초 값을 실제 표시 문구로 만든다", () => {
     // UI가 ID별 예외 없이 같은 정적 데이터를 읽을 수 있도록 모든 궁극기의 계약을 검사한다.
     // 순수 회복 궁극기는 적 대상 네 종류와 분리된 전장 전체 아군 계약을 사용하고,
     // 아무도 때리지 않고 자리만 잡는 궁극기(델로피)는 자신만 가리키는 계약을 쓴다.
@@ -82,12 +82,12 @@ describe("토리카 스킬 표시 계약", () => {
     expect(torika.ultimate).toMatchObject({
       targeting: "nearbyEnemies",
       radius: 220,
-      statusEffects: [{ kind: "stun", seconds: 2 }],
+      statusEffects: [{ kind: "stun", seconds: 3.5 }],
     });
     expect(torika.passive).toMatchObject({ value: 7, durationSeconds: 5 });
     expect(`${torika.passive.durationSeconds}초 동안 ${recoveryLabel(torika.passive.value)}`).toBe("5초 동안 매초 최대 체력의 7% 회복");
     expect(targetingLabel(torika.ultimate.targeting)).toBe("자신의 주위 모든 적");
-    expect(statusEffectLabel(torika.ultimate.statusEffects?.[0])).toBe("[[stun|기절]] 2초");
+    expect(statusEffectLabel(torika.ultimate.statusEffects?.[0])).toBe("[[stun|기절]] 3.5초");
     expect(ferocityTraitDescription(torika.ferocityTrait, { attack: torika.stats.atk, defense: torika.stats.def })).toBe("공격 속도가 20% 증가한다. 기본 공격이 대상 주위의 모든 적에게 적중해 [[damage-value|19]]만큼 추가 물리 피해를 입히고 [[stagger|경직]]시킨다.");
     // 설명의 환산 피해도 현재 방어력을 다시 읽으므로 레벨·룬으로 능력치가 변하면 같이 변한다.
     expect(ferocityTraitDescription(torika.ferocityTrait, { attack: torika.stats.atk, defense: torika.stats.def * 2 })).toContain("[[damage-value|38]]");

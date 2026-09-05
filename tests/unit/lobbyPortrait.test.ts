@@ -18,7 +18,7 @@ import {
   TIA_PORTRAIT_METADATA,
   TORIKA_PORTRAIT_METADATA,
 } from "../../src/puppets/assetMetadata";
-import { LOBBY_PORTRAIT_SPOT, lobbyPortraitPlacement } from "../../src/ui/portraitPlacement";
+import { INFO_PORTRAIT_FOCUS, LOBBY_PORTRAIT_SPOT, lobbyPortraitPlacement } from "../../src/ui/portraitPlacement";
 
 /**
  * 로비에 선 애착 렐릭의 세로 비율 계약.
@@ -133,5 +133,53 @@ describe("로비 전신의 세로 비율", () => {
     for (const relic of LOBBY_RELICS) {
       expect(lobbyPortraitPlacement({ url: "", ...PORTRAITS[relic.portraitAssetId] }).groundY).toBe(LOBBY_PORTRAIT_SPOT.floor);
     }
+  });
+});
+
+/**
+ * **회귀 테스트다.** "정보창에서 노도니아만 작아 보인다"를 눈대중이 아니라 수치로 고정한다.
+ *
+ * 정보창 전신은 그림(alpha 상자) **전체**를 공용 높이에 맞추므로, 날개·베일처럼 실루엣을
+ * 키우는 장식이 있으면 그만큼 얼굴이 줄어든다. 노도니아가 그랬다 — 눈 간격이 화면에서
+ * 61.5px로 중앙값(106px)의 58%였고, `portraitZoom`으로 되돌렸다. 카드에서 같은 함정을 막는
+ * `puppetAnchors.test.ts`의 "카드 얼굴 크기"와 짝이며, 크기 대리 지표(두 눈 사이 거리)도 같다.
+ *
+ * 관절 표(`JOINTS`)를 이 파일이 갖고 있어 여기 둔다.
+ */
+describe("정보창 전신의 얼굴 크기", () => {
+  const faceSizeOf = (assetId: string): number => {
+    const asset = PORTRAITS[assetId];
+    const height = INFO_PORTRAIT_FOCUS.height * (asset.portraitZoom ?? 1);
+    const scale = height / (asset.content.bottom - asset.content.top);
+    const [left, right] = JOINTS[assetId].eyes;
+    return Math.hypot(right[0] - left[0], right[1] - left[1]) * scale;
+  };
+
+  const median = (values: number[]): number => {
+    const sorted = [...values].sort((a, b) => a - b);
+    const middle = sorted.length / 2;
+    return sorted.length % 2 === 0 ? (sorted[middle - 1] + sorted[middle]) / 2 : sorted[Math.floor(middle)];
+  };
+
+  it.each(LOBBY_RELICS.map((relic) => [relic.name, relic.portraitAssetId] as const))(
+    "%s의 얼굴은 다른 전신과 같은 크기대에 있다",
+    (_name, assetId) => {
+      const center = median(LOBBY_RELICS.map((relic) => faceSizeOf(relic.portraitAssetId)));
+      const ratio = faceSizeOf(assetId) / center;
+      // 아래는 노도니아가 걸렸던 0.58을 확실히 잡고, 위는 등신이 낮아 머리가 큰 도디(1.41)와
+      // 메테(1.24)를 그대로 통과시킨다. 아트 방향이 더 촘촘한 정렬을 원하면 그 둘의
+      // portraitZoom을 낮추면서 이 한계도 함께 좁힌다.
+      expect(ratio).toBeGreaterThanOrEqual(0.7);
+      expect(ratio).toBeLessThanOrEqual(1.45);
+    },
+  );
+
+  it("는 노도니아의 portraitZoom을 떼면 다시 실패한다", () => {
+    // 보정을 되돌리면 예전 값(중앙값의 0.58배)으로 돌아가는지 직접 확인한다.
+    const asset = PORTRAITS.nodonia;
+    expect(asset.portraitZoom).toBe(1.55);
+    const bare = faceSizeOf("nodonia") / (asset.portraitZoom ?? 1);
+    const center = median(LOBBY_RELICS.map((relic) => faceSizeOf(relic.portraitAssetId)));
+    expect(bare / center).toBeLessThan(0.7);
   });
 });

@@ -260,6 +260,40 @@ export const DELOPI_SD_METADATA: Omit<PuppetAsset, "url"> = {
   content: { left: 184, top: 55, right: 1153, bottom: 1207 },
 };
 
+/**
+ * 14번 노도니아(프테라노돈) 전신. ZIP 안 WebP의 alpha > 16 경계를 실측한 값이다.
+ *
+ * **눈 위로 베일 끝이 320px 솟아 있다**(전체 높이의 21%). 로비 배율은 눈에서 발끝까지가
+ * 키에 비례하도록 잡으므로, 머리 위 몫이 큰 원화일수록 그림 전체는 그만큼 더 커진다 —
+ * 1.70 m로 적으면 화면 높이를 41px 넘겨 베일 끝이 상단에서 잘린다. 1.66 m가 지금 로비
+ * 규격에서 이 원화가 온전히 서는 가장 큰 키다.
+ */
+export const NODONIA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1024,
+  imageHeight: 1536,
+  content: { left: 13, top: 14, right: 1011, bottom: 1521 },
+  /**
+   * 베일과 펼친 날개가 캔버스를 거의 다 채워(998 / 1024) 카드 배율이 그 폭으로 정해지는 바람에
+   * 얼굴만 중앙값의 0.56배까지 줄었다 — 렉시아의 낫과 같은 함정이다. 게다가 이 원화는 얼굴
+   * 자체도 작게 그려져 있어(눈 간격 51px, 엘라 74px) 되돌릴 폭이 더 크다.
+   */
+  cardZoom: 1.5,
+  /**
+   * 카드는 베일 끝을 자른다. 실루엣 폭의 15%(150px)를 처음 넘는 행이 236이라, 그 위는 몇
+   * 픽셀짜리 뾰족한 끝이라 잘려도 단면이 보이지 않는다. 로비 전신은 이 값을 쓰지 않는다.
+   */
+  cardTop: 236,
+  /** 로비 세로 비율: 메론 기준. 1.66 m. */
+  lobbyZoom: 1.106,
+};
+
+/** 노도니아 SD ZIP의 정사각 원본과 alpha > 16 경계다. */
+export const NODONIA_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254,
+  imageHeight: 1254,
+  content: { left: 164, top: 27, right: 1125, bottom: 1225 },
+};
+
 /** 15번 엘라(코엘로돈타) 전신. ZIP 안 WebP의 alpha > 16 경계를 실측한 값이다. */
 export const ELLA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1086,

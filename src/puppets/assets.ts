@@ -17,6 +17,8 @@ import {
   DELOPI_SD_METADATA,
   ELLA_PORTRAIT_METADATA,
   ELLA_SD_METADATA,
+  NODONIA_PORTRAIT_METADATA,
+  NODONIA_SD_METADATA,
   DODI_PORTRAIT_METADATA,
   DODI_SD_METADATA,
   LEXIA_PORTRAIT_METADATA,
@@ -69,6 +71,16 @@ export interface PuppetAsset {
    * 캐릭터마다 다르게 만들지 않고, 원화 쪽에 보정값을 달아 한 그리드에서 크기가 맞게 한다.
    */
   cardZoom?: number;
+  /**
+   * 카드가 그림의 위쪽을 어디부터 보면 되는지(텍스처 y). 없으면 실측 alpha 경계를 쓴다.
+   *
+   * 로비 전신은 그림 전체가 서야 하지만, 카드는 얼굴 카드라 베일 끝처럼 얼굴보다 한참 높이
+   * 솟은 **가는** 장식까지 담을 이유가 없다. 둘을 한 값으로 묶으면 넓은 실루엣(얼굴이 작아짐)과
+   * 높은 장식(정수리가 잘림)을 동시에 만족시킬 수 없다 — 노도니아가 그랬다.
+   *
+   * 값은 실측이다: 그 장식의 가로폭이 실루엣 폭의 15%를 넘기 시작하는 행.
+   */
+  cardTop?: number;
   /**
    * 정보창 전신 배율. 1이면 공용 높이 그대로다.
    *
@@ -183,6 +195,12 @@ export const DELOPI_ASSET: PuppetAsset = {
   ...DELOPI_PORTRAIT_METADATA,
 };
 
+/** 14번 전신 일러스트: 노도니아(프테라노돈). */
+export const NODONIA_ASSET: PuppetAsset = {
+  url: `${base}puppets/char_014.zip`,
+  ...NODONIA_PORTRAIT_METADATA,
+};
+
 /** 15번 전신 일러스트: 엘라(코엘로돈타). */
 export const ELLA_ASSET: PuppetAsset = {
   url: `${base}puppets/char_015.zip`,
@@ -265,6 +283,7 @@ const PORTRAIT_ASSETS = {
   maki: MAKI_ASSET,
   keris: KERIS_ASSET,
   delopi: DELOPI_ASSET,
+  nodonia: NODONIA_ASSET,
   ella: ELLA_ASSET,
   // 적도 전용 전신을 가진다. 초상 레지스트리에 함께 두면 정보창이 아군·적을 가르지 않고
   // 같은 경로로 원화를 찾는다 — 화면마다 "적이면 다른 함수"를 두면 한 곳을 고칠 때 다른
@@ -380,6 +399,12 @@ export const DELOPI_SD_ASSET: PuppetAsset = {
   ...DELOPI_SD_METADATA,
 };
 
+/** 14번 SD: 노도니아. */
+export const NODONIA_SD_ASSET: PuppetAsset = {
+  url: `${base}puppets/charSD_014.zip`,
+  ...NODONIA_SD_METADATA,
+};
+
 /** 15번 SD: 엘라. */
 export const ELLA_SD_ASSET: PuppetAsset = {
   url: `${base}puppets/charSD_015.zip`,
@@ -419,6 +444,7 @@ const ALLY_SD_ASSETS: Readonly<Record<string, PuppetAsset>> = {
   maki: MAKI_SD_ASSET,
   keris: KERIS_SD_ASSET,
   delopi: DELOPI_SD_ASSET,
+  nodonia: NODONIA_SD_ASSET,
   ella: ELLA_SD_ASSET,
 };
 

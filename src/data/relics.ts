@@ -1098,6 +1098,100 @@ export const RELICS: RelicDef[] = [
   },
 
   {
+    id: "nodonia",
+    squad: "rune",
+    name: "노도니아",
+    // 파일 번호(char_014)와 개체번호는 다른 계열이다 — 014는 토리카가 이미 쓴다.
+    // 원종이 살던 8,300만 년 전에서 따 083을 쓴다.
+    specimenNumber: "083",
+    projectName: "REVERIE",
+    excavationSite: "미국 캔자스 스모키힐 백악층",
+    // 발굴 기록은 장소·보존 상태·복원 연구 특징만 담고, 복원 이후 생활 관찰과 분리한다.
+    fossilRecord: "얕은 바다가 남긴 백악층에서 볏뼈와 날개막 자국이 함께 눌린 채 나왔다. 골절이 아문 자리가 열두 곳이며 그중 아홉은 부러진 뒤에도 계속 날았던 흔적이다.",
+    observationProfile: {
+      originYear: "약 8,300만 년 전",
+      restorationYear: "E.C. 18년",
+      lifeStage: "성체",
+      height: "1.66 m",
+      weight: "79 kg",
+    },
+    catalogSummary: "검은 예복과 베일을 쓴 채 복원된 성체 프테라노돈 표본.",
+    unlockRecord: { status: "recorded", text: "노도니아는 아프다는 말을 하지 않는다. 케어실에서 상처를 볼 때 표정이 오히려 풀리는 것이 여러 번 기록됐고, 처치가 끝나면 아쉬운 얼굴로 베일을 내린다. 훈련에서는 늘 어린 렐릭들 앞에 서서 먼저 맞고, 다 끝난 뒤 \"잘했어요\"라며 한 명씩 머리를 쓰다듬는다. 정작 자기 몫의 붕대는 며칠씩 갈지 않아 케어 담당이 매번 찾아다닌다. 반대로 남이 다치는 자리에는 웃음기가 완전히 사라진다." },
+    squadNote: "사일런트 룬의 케어실 앞자리. 공명이 흔들린 개체가 실려 오면 제일 먼저 달려가 붙잡고 있으며, 그 자리에서 자기 상처는 뒤로 미룬다.",
+    // 케어하는 스쿼드에서 스스로 돌봄을 받지 않는 쪽이라, 아이를 부르듯 하는 호칭을 골라 쓴다.
+    researcherTitle: "아가",
+    rarity: "SSR",
+    portraitAssetId: "nodonia",
+    origin: "프테라노돈",
+    element: "wind",
+    role: "tank",
+    // 아군 앞에 서는 자리라 손이 닿는 거리에서만 싸운다. 날개는 버티는 데 쓴다.
+    reachTier: "melee",
+    // 하늘에서 내려다보며 넓게 훑는 손이라 발굴 특화는 화석 쪽에 붙인다.
+    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 0.31, efficiencyMultiplier: 1.1 },
+    /**
+     * **공격력이 로스터 최저다**(46). 이 개체의 기본 공격은 방어력에서 피해를 뽑고 궁극기는
+     * 아무도 때리지 않으므로, 공격력은 어디에도 쓰이지 않는다 — 쓰지 않는 능력치를 높게 적으면
+     * 실전에 없는 힘이 전투력만 부풀린다(스테라의 주문력이 그랬다).
+     *
+     * 대신 체력·방어력·저항력이 모두 로스터 최고다. 저항이 방어보다 낮지 않은 이유는 아군의
+     * 몫을 대신 받는 개체라 물리든 마법이든 가리지 않고 맞기 때문이다.
+     */
+    stats: {
+      hp: 1640,
+      def: 158,
+      res: 150,
+      atk: 46,
+      ap: 24,
+      attackSpeed: 68,
+      moveSpeed: 70,
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 0,
+    },
+    // 맞은 만큼이 곧 회복량이 된다. 잃은 체력 비례라 아플수록 많이 돌아오고, 희열이 쌓여 있을수록
+    // 더 돈다 — 안전한 자리로 물러나면 겹이 식어 회복도 함께 줄어든다.
+    ferocityTrait: { name: "한 판 더", effectId: "oneMoreRound", missingHpPercentPerBasic: 3, missingHpPercentPerElationStack: 0.2, allyDamageHealPercent: 10 },
+    passive: {
+      // kind가 painfulElation인 패시브는 passiveDescription()이 구조화 필드로 문장을 만들므로
+      // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
+      id: "nodonia-passive",
+      name: "고통의 희열",
+      kind: "painfulElation",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      // Passive.value는 공용 필수 필드라, 이 패시브에서는 겹 하나가 올리는 비율을 담아 둔다.
+      value: 5,
+      durationSeconds: 5,
+      elation: { maxStacks: 10, percentPerStack: 5, seconds: 5, burst: { seconds: 6, redirectPercent: 30 } },
+      desc: "적에게 피격당할 때마다 희열이 한 겹 쌓이고, 열 겹째에 터져 6초 동안 아군이 받는 모든 피해의 30%를 대신 받는다.",
+    },
+    basic: {
+      id: "nodonia-basic",
+      name: "착한 아이에게는 포상을",
+      // 방어력에서 피해를 뽑는다. 앞에 서는 것이 곧 세지는 것이라, 단단해질수록 손도 매워진다.
+      power: 60,
+      scalingStat: "def",
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      targeting: "single",
+    },
+    ultimate: {
+      id: "nodonia-ult",
+      name: "고통의 미학",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      cost: 150,
+      // 아무도 때리지 않고 아무 데도 가지 않는다. 앞에 서서 아군의 몫을 대신 받는 것이 전부다.
+      targeting: "self",
+      selfBulwark: { seconds: 3, redirectPercent: 100, damageReductionPercent: 70, healFromTakenPercent: 50 },
+    },
+  },
+
+  {
     id: "ella",
     squad: "fang",
     name: "엘라",

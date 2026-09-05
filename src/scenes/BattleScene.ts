@@ -961,6 +961,24 @@ export class BattleScene extends Phaser.Scene {
       return undefined;
     }
 
+    // 앞에 선 개체가 대신 받은 몫은 때린 사람이 없다 — 공격 사건이 아니라 **옮겨진 피해**라
+    // 파편도 모션도 없고, 대신 받은 쪽에만 붉은 수치와 피격 섬광이 뜬다.
+    if (event.kind === "damageShared") {
+      const guardian = this.views.get(event.fighterId);
+      if (guardian && event.amount > 0) {
+        guardian.hpBar.setValue({ currentHp: guardian.fighter.hp, maxHp: guardian.fighter.maxHp, damage: event.amount, cause: "damage" });
+        this.profiles.find((profile) => profile.fighter.id === guardian.fighter.id)
+          ?.prefab.setHealthTarget(guardian.fighter.hp, guardian.fighter.maxHp, "damage", event.amount);
+        flashHit(this, guardian.creature, this.bodyTint(guardian));
+        this.effects.damage(
+          guardian.fighter.x,
+          guardian.fighter.y - UNIT_HEIGHT * guardian.fighter.bodyScale * BATTLE_STATUS_LAYOUT.popupBodyOffsetRatio,
+          attackDamagePopupRequest({ amount: event.amount, damageType: "physical", skill: "basic", critical: false }, guardian.fighter),
+        );
+      }
+      return undefined;
+    }
+
     const attacker = this.views.get(event.attackerId);
     const target = this.views.get(event.targetId);
     if (this.state.boss && attacker?.fighter.side === "player" && target?.fighter.side === "enemy" && event.animate !== false) {

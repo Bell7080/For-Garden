@@ -205,6 +205,21 @@ export interface Fighter extends Combatant {
    */
   taunted: { remaining: number; total: number; sourceId: string } | null;
   /**
+   * 지금 쌓인 희열. 맞을 때마다 한 겹씩 오르고 방어력·저항력을 함께 올린다.
+   *
+   * 손질과 같은 성질이라 **상한에 닿는 프레임에 스스로 터지고** 겹이 0으로 돌아간다. 다만
+   * 손질과 달리 시간도 흐른다 — 맞지 않으면 식는 값이라, 앞에 서 있는 동안만 단단해진다.
+   */
+  elation: { stacks: number; remaining: number; total: number; percentPerStack: number; maxStacks: number } | null;
+  /**
+   * 아군이 받을 피해를 대신 받는 중. 희열이 터질 때와 「고통의 미학」이 켠다.
+   *
+   * **슬롯은 하나뿐이다** — 두 겹으로 쌓으면 같은 피해가 두 번 나뉘어 아군이 실제로 받는 몫이
+   * 화면과 갈린다. 그래서 새로 켜질 때는 **대신 받는 비율이 큰 쪽**이 남고, 비율이 같으면 남은
+   * 시간이 긴 쪽이 남는다.
+   */
+  bulwark: { remaining: number; total: number; percent: number; reductionPercent: number; healPercent: number; taken: number; skillId: string; name: string } | null;
+  /**
    * 이번 프레임에 쓰러질 피해를 가로챘다는 표시다.
    *
    * 가로채기는 `applyDamage` 안에서 일어나 어떤 피해 원천도 빠뜨리지 않지만(출혈·중독·뇌진탕
@@ -327,6 +342,13 @@ export type SkirmishEvent =
    */
   | { kind: "areaImpact"; attackerId: string; x: number; y: number; radius: number; ultimate: boolean }
   | { kind: "damageIgnored"; attackerId: string; targetId: string }
+  /**
+   * 아군이 받을 피해를 앞에 선 개체가 대신 받은 순간이다.
+   *
+   * 두 사람을 함께 싣는 이유는 화면이 "누가 누구 대신 맞았는가"를 그려야 하기 때문이다 —
+   * 대신 받은 쪽에만 숫자가 뜨면 정작 살아난 아군 쪽에서는 아무 일도 없어 보인다.
+   */
+  | { kind: "damageShared"; fighterId: string; fromFighterId: string; amount: number }
   /** 순풍처럼 시간이 정해진 아군 전체 강화가 걸린 순간이다. 씬은 대상 위에 표식만 띄운다. */
   | { kind: "teamBuff"; fighterId: string; sourceId: string; buff: TeamBuff }
   | { kind: "bleed"; fighterId: string; amount: number; started: boolean }
@@ -337,7 +359,7 @@ export type SkirmishEvent =
    * 몇 초치를 몰아 받았는지(`ticks`)를 함께 싣는다 — 씬이 상태를 되짚지 않고 그 수를 읽는다.
    */
   | { kind: "poisonLiquidated"; fighterId: string; amount: number; ticks: number }
-  | { kind: "heal"; fighterId: string; amount: number; source: "passive" | "ultimate"; effect: CombatEffectCue }
+  | { kind: "heal"; fighterId: string; amount: number; source: "passive" | "ultimate" | "ferocity"; effect: CombatEffectCue }
   | { kind: "status"; fighterId: string; status: "stun" | "stagger"; active: true }
   | { kind: "shieldGranted"; fighterId: string; providerId: string; amount: number; remaining: number; effect: CombatEffectCue }
   | { kind: "shieldAbsorbed"; fighterId: string; amount: number; remaining: number; effect: CombatEffectCue }
@@ -587,6 +609,8 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     undyingPending: false,
     guard: null,
     taunted: null,
+    elation: null,
+    bulwark: null,
     empoweredBasic: false,
     // 폭주가 켜진 뒤 온전한 1초가 지나야 첫 파동이 발생한다.
     pontusRageTickIn: 1,
@@ -814,7 +838,7 @@ function applyConcussion(
   const struck = critical || slam !== undefined;
   const percent = struck ? effect.criticalMaxHpPercent : effect.maxHpPercent;
   const amount = Math.max(1, Math.round(target.maxHp * percent / 100));
-  const dealt = applyDamage(target, amount, events);
+  const dealt = applyDamage(target, amount, events, state);
   events.push({ kind: "concussion", fighterId: target.id, amount: dealt, critical: struck });
   if (!isFighterAlive(target)) {
     clearDefeatedStatuses(target);
@@ -902,7 +926,7 @@ function applyButcher(
   )));
   const resolution = resolveReceivedDamage(target, raw);
   const hpBefore = target.hp;
-  applyDamage(target, resolution.applied, events);
+  applyDamage(target, resolution.applied, events, state);
   const dealt = hpBefore - target.hp;
   events.push({ kind: "butcherBurst", attackerId: attacker.id, fighterId: target.id, amount: resolution.applied });
   // 폭주한 마키는 터진 몫의 일부를 아군 전체의 회복으로 돌린다.
@@ -1065,6 +1089,124 @@ function tickGuard(fighter: Fighter, dt: number, events: SkirmishEvent[]): void 
   events.push({ kind: "shieldGranted", fighterId: fighter.id, providerId: fighter.id, amount, remaining: fighter.shield.amount, effect: { tag: "shieldGain", intensity: 1.3 } });
 }
 
+/**
+ * 「고통의 희열」 — 맞은 그 순간 겹이 하나 오른다.
+ *
+ * **공격에 맞았을 때만 오른다.** 출혈·중독처럼 시간이 깎는 피해까지 세면 겹이 저절로 차올라
+ * "앞에 서서 맞고 있다"가 아니라 "가만히 있어도 단단해진다"가 된다.
+ */
+function gainElation(target: Fighter, events: SkirmishEvent[]): void {
+  const plan = target.def.passive.elation;
+  if (target.def.passive.kind !== "painfulElation" || plan === undefined || !isFighterAlive(target)) return;
+  const stacks = (target.elation?.stacks ?? 0) + 1;
+  // 상한에 닿는 프레임에 그 자리에서 터진다 — 손질과 같은 성질이라 겹은 0으로 돌아간다.
+  if (stacks >= plan.maxStacks) {
+    target.elation = null;
+    raiseBulwark(target, {
+      seconds: plan.burst.seconds,
+      percent: plan.burst.redirectPercent,
+      reductionPercent: 0,
+      healPercent: 0,
+      skillId: target.def.passive.id,
+      name: target.def.passive.name,
+    });
+    events.push({ kind: "combatEffect", fighterId: target.id, effect: { tag: "shieldGain", intensity: 1.3 } });
+    return;
+  }
+  target.elation = {
+    stacks,
+    remaining: plan.seconds,
+    total: plan.seconds,
+    percentPerStack: plan.percentPerStack,
+    maxStacks: plan.maxStacks,
+  };
+}
+
+/** 희열은 맞지 않으면 식는다. 다시 맞을 때마다 `gainElation`이 시간을 처음부터 되돌린다. */
+function tickElation(fighter: Fighter, dt: number): void {
+  const elation = fighter.elation;
+  if (!elation) return;
+  const remaining = elation.remaining - dt;
+  fighter.elation = remaining <= EMERGENCY_RECOVERY.epsilon ? null : { ...elation, remaining };
+}
+
+/**
+ * 앞에 서기를 켠다. **슬롯이 하나뿐**이라 대신 받는 비율이 큰 쪽이 남는다.
+ *
+ * 두 겹으로 쌓으면 같은 한 방이 두 번 나뉘어 아군이 실제로 받는 몫이 화면과 갈린다. 비율이
+ * 같으면 남은 시간이 긴 쪽을 남겨, 궁극기 도중에 겹이 터져도 시간이 줄어들지 않는다.
+ */
+function raiseBulwark(
+  fighter: Fighter,
+  plan: { seconds: number; percent: number; reductionPercent: number; healPercent: number; skillId: string; name: string },
+): void {
+  const current = fighter.bulwark;
+  if (current && (current.percent > plan.percent
+    || (current.percent === plan.percent && current.remaining >= plan.seconds))) return;
+  fighter.bulwark = {
+    remaining: plan.seconds,
+    total: plan.seconds,
+    percent: plan.percent,
+    reductionPercent: plan.reductionPercent,
+    healPercent: plan.healPercent,
+    // 이어받지 않고 0에서 시작한다 — 돌려받는 몫은 **이번에 앞에 서 있던 동안**의 값이다.
+    taken: 0,
+    skillId: plan.skillId,
+    name: plan.name,
+  };
+}
+
+/**
+ * 앞에 서 있던 시간이 끝나면 그동안 실제로 잃은 만큼의 일부를 되찾는다.
+ *
+ * 회복이 시전이 아니라 **끝난 뒤**에 오는 것이 이 궁극기의 성질이다 — 한 대도 대신 받지
+ * 않았으면 아무것도 돌아오지 않는다. 희열이 터뜨린 앞에 서기는 `healPercent`가 0이라 이
+ * 자리를 그냥 지나간다.
+ */
+function tickBulwark(fighter: Fighter, dt: number, state: SkirmishState, events: SkirmishEvent[]): void {
+  const bulwark = fighter.bulwark;
+  if (!bulwark) return;
+  const remaining = bulwark.remaining - dt;
+  if (remaining > EMERGENCY_RECOVERY.epsilon) {
+    fighter.bulwark = { ...bulwark, remaining };
+    return;
+  }
+  fighter.bulwark = null;
+  const amount = applyHealing(state, fighter, bulwark.taken * bulwark.healPercent / 100, fighter.id);
+  if (amount > 0) events.push({ kind: "heal", fighterId: fighter.id, amount, source: "ultimate", effect: { tag: "heal", intensity: 1.65 } });
+}
+
+/**
+ * 「한 판 더」 — 폭주 중인 노도니아가 아군이 낸 피해의 일부를 제 회복으로 돌린다.
+ *
+ * 때린 쪽이 자신인지 아닌지를 가리지 않는 이유는 이 값이 "우리 편이 얼마나 때렸나"이기
+ * 때문이다. 대신 받은 몫과 달리 편성에 여럿이 있어도 각자 제 몫을 따로 회복한다.
+ */
+function healOneMoreRound(attacker: Fighter, dealt: number, state: SkirmishState, events: SkirmishEvent[]): void {
+  if (dealt <= 0) return;
+  for (const ally of aliveFighters(state, attacker.side)) {
+    const trait = ally.def.ferocityTrait;
+    if (!ally.ferocityFever || trait.effectId !== "oneMoreRound" || trait.allyDamageHealPercent <= 0) continue;
+    const amount = applyHealing(state, ally, dealt * trait.allyDamageHealPercent / 100, ally.id);
+    if (amount > 0) events.push({ kind: "heal", fighterId: ally.id, amount, source: "ferocity", effect: { tag: "heal", intensity: 1 } });
+  }
+}
+
+/**
+ * 「한 판 더」의 자기 기본 공격 회복. 잃은 체력 비례라 아플수록 많이 돌아온다.
+ *
+ * 희열 겹이 회복량을 올리므로 **맞으면서 때리는 것**이 이 폭주의 값이다 — 안전한 자리에서는
+ * 겹이 식어 회복도 함께 줄어든다.
+ */
+function healOneMoreRoundBasic(attacker: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
+  const trait = attacker.def.ferocityTrait;
+  if (!attacker.ferocityFever || trait.effectId !== "oneMoreRound") return;
+  const percent = trait.missingHpPercentPerBasic
+    + (attacker.elation?.stacks ?? 0) * trait.missingHpPercentPerElationStack;
+  const amount = applyHealing(state, attacker, (attacker.maxHp - attacker.hp) * percent / 100, attacker.id);
+  if (amount > 0) events.push({ kind: "heal", fighterId: attacker.id, amount, source: "ferocity", effect: { tag: "heal", intensity: 1.2 } });
+}
+
 /** 도발은 시간이 지나면 저절로 풀린다. 방향만 바꾸는 상태라 정화의 대상이 아니다. */
 function tickTaunt(fighter: Fighter, dt: number): void {
   const taunted = fighter.taunted;
@@ -1160,7 +1302,7 @@ function tickPoison(fighter: Fighter, dt: number, state: SkirmishState, events: 
   while (poison.tickIn <= 0 && isFighterAlive(fighter)) {
     const amount = receivedDamage(fighter, poison.amountPerSecond);
     const hpBefore = fighter.hp;
-    applyDamage(fighter, amount, events);
+    applyDamage(fighter, amount, events, state);
     if (poison.sourceId) addContribution(state.contributions, poison.sourceId, "attack", hpBefore - fighter.hp, "abilityPower");
     events.push({ kind: "poison", fighterId: fighter.id, amount, started: false });
     tryTriggerEmergencyRecovery(fighter); tryTriggerLowHpVanish(fighter, state);
@@ -1190,7 +1332,7 @@ function liquidatePoison(target: Fighter, state: SkirmishState, events: Skirmish
   if (pendingTicks <= 0) return;
   const amount = receivedDamage(target, poison.amountPerSecond * pendingTicks);
   const hpBefore = target.hp;
-  applyDamage(target, amount, events);
+  applyDamage(target, amount, events, state);
   if (poison.sourceId) addContribution(state.contributions, poison.sourceId, "attack", hpBefore - target.hp, "abilityPower");
   events.push({ kind: "poisonLiquidated", fighterId: target.id, amount, ticks: pendingTicks });
   tryTriggerEmergencyRecovery(target); tryTriggerLowHpVanish(target, state);
@@ -1266,7 +1408,7 @@ function spreadCurseTransfer(
     const wasMaxed = isCurseMaxed(secondary);
     const resolution = resolveReceivedDamage(secondary, requested);
     const hpBefore = secondary.hp;
-    const applied = applyDamage(secondary, resolution.applied, events);
+    const applied = applyDamage(secondary, resolution.applied, events, state);
     addContribution(state.contributions, attacker.id, "attack", hpBefore - secondary.hp, "attackPower");
     // 전이는 확정된 피해를 그대로 옮기므로 방어·저항·상성을 다시 거치지 않는 고정 피해다.
     events.push({ kind: "attack", attackerId: attacker.id, targetId: secondary.id, skill: "transfer", amount: applied,
@@ -1302,6 +1444,8 @@ function clearDefeatedStatuses(fighter: Fighter): void {
   fighter.undyingPending = false;
   fighter.guard = null;
   fighter.taunted = null;
+  fighter.elation = null;
+  fighter.bulwark = null;
   fighter.overpaint = null;
   fighter.curse = null;
   fighter.frenzy = null;
@@ -1384,6 +1528,31 @@ export function activeCombatBuffs(state: SkirmishState, fighterId: string): Acti
       name: fighter.def.ultimate.name,
       description: `받는 피해 ${fighter.guard.reductionPercent}% 감소 · 끝나면 줄인 만큼 보호막`,
       timing: { kind: "timed", remainingSeconds: fighter.guard.remaining, totalSeconds: fighter.guard.total },
+    });
+  }
+  if (fighter.bulwark) {
+    buffs.push({
+      id: `bulwark:${fighter.id}`,
+      sourceFighterId: fighter.id,
+      targetFighterId: fighter.id,
+      skillId: fighter.bulwark.skillId,
+      name: fighter.bulwark.name,
+      description: fighter.bulwark.reductionPercent > 0
+        ? `아군이 받는 피해의 ${fighter.bulwark.percent}%를 대신 받고 받는 피해 ${fighter.bulwark.reductionPercent}% 감소`
+        : `아군이 받는 피해의 ${fighter.bulwark.percent}%를 대신 받는다`,
+      timing: { kind: "timed", remainingSeconds: fighter.bulwark.remaining, totalSeconds: fighter.bulwark.total },
+    });
+  }
+  if (fighter.elation) {
+    buffs.push({
+      id: `elation:${fighter.id}`,
+      sourceFighterId: fighter.id,
+      targetFighterId: fighter.id,
+      skillId: fighter.def.passive.id,
+      name: fighter.def.passive.name,
+      description: `한 겹마다 방어력·저항력 ${fighter.elation.percentPerStack}% 증가 · ${fighter.elation.maxStacks}겹째에 터진다`,
+      stacks: fighter.elation.stacks,
+      timing: { kind: "timed", remainingSeconds: fighter.elation.remaining, totalSeconds: fighter.elation.total },
     });
   }
   if (fighter.undying) {
@@ -1475,10 +1644,13 @@ export function defensiveDefinition(target: Fighter, state: SkirmishState): Figh
   // 다른 자리인 이유는 그쪽이 최종 피해에 곱하는 값이라 방어 관통·고정 피해와 섞이지 않기 때문이다.
   const trait = target.def.ferocityTrait;
   const hardened = target.ferocityFever && trait.effectId === "adamantBody" ? trait.defenseResistancePercent : 0;
-  if (bonus <= 0 && shred === 1 && hardened === 0 && target.augmentDefensePercent === 0 && target.augmentResistancePercent === 0) return target;
+  // 희열도 금강불괴와 같은 자리에서 곱한다 — 몸이 단단해지는 값이라 최종 피해 경감이 아니라
+  // 방어·저항 자체를 올린다. 겹이 곧 수치라 여기서 한 번만 읽는다.
+  const elated = target.elation ? target.elation.stacks * target.elation.percentPerStack : 0;
+  if (bonus <= 0 && shred === 1 && hardened === 0 && elated === 0 && target.augmentDefensePercent === 0 && target.augmentResistancePercent === 0) return target;
   return { ...target, def: { ...target.def, stats: { ...target.def.stats,
-    def: target.def.stats.def * (1 + bonus / 100) * (1 + hardened / 100) * (1 + target.augmentDefensePercent / 100),
-    res: target.def.stats.res * (1 + bonus / 100) * (1 + hardened / 100) * (1 + target.augmentResistancePercent / 100) * shred,
+    def: target.def.stats.def * (1 + bonus / 100) * (1 + hardened / 100) * (1 + elated / 100) * (1 + target.augmentDefensePercent / 100),
+    res: target.def.stats.res * (1 + bonus / 100) * (1 + hardened / 100) * (1 + elated / 100) * (1 + target.augmentResistancePercent / 100) * shred,
   } } };
 }
 
@@ -1502,7 +1674,7 @@ function triggerCombatAugments(state: SkirmishState, owner: Fighter, trigger: Ex
       if (!qualified || !consumeAugmentTrigger(state, owner, key, effect)) continue;
       const skill: Skill = { ...owner.def.basic, damageType: payload.damageType, power: payload.percent };
       const raw = Math.max(1, Math.round(computeDamage({ ...owner, def: offensiveDefinition(owner) }, defensiveDefinition(target, state), { ...skill, kind: "basic", isCritical: false }, true)));
-      const resolution = resolveReceivedDamage(target, raw); const hpBefore = target.hp; const applied = applyDamage(target, resolution.applied, events);
+      const resolution = resolveReceivedDamage(target, raw); const hpBefore = target.hp; const applied = applyDamage(target, resolution.applied, events, state);
       addContribution(state.contributions, owner.id, "attack", hpBefore - target.hp, payload.damageType === "magical" ? "abilityPower" : "attackPower");
       events.push({ kind: "attack", attackerId: owner.id, targetId: target.id, skill: "transfer", amount: applied, contributionAmount: hpBefore - target.hp, critical: false, animate: false, damageType: payload.damageType, mitigated: resolution.reduced < resolution.raw });
       if (!isFighterAlive(target)) { clearDefeatedStatuses(target); events.push({ kind: "death", fighterId: target.id, sourceId: owner.id }); }
@@ -1830,7 +2002,7 @@ function applyShimmerMark(attacker: Fighter, target: Fighter, state: SkirmishSta
   const resolution = resolveReceivedDamage(target, raw);
   const amount = resolution.applied;
   const hpBefore = target.hp; const shieldBefore = target.shield.amount; const shieldProviderId = target.shield.providerId;
-  applyDamage(target, amount, events);
+  applyDamage(target, amount, events, state);
   const credited = recordDamageContribution(state, attacker.id, target, "magical", "ap", contributionAmount, resolution, hpBefore, shieldBefore, shieldProviderId);
   events.push({ kind: "attack", attackerId: attacker.id, targetId: target.id, skill: "shimmer", amount, contributionAmount: credited, critical: false, animate: false,
     damageType: "magical", mitigated: resolution.reduced < resolution.raw });
@@ -1957,7 +2129,7 @@ function triggerCrescendoStaccato(state: SkirmishState, target: Fighter, events:
     const resolution = resolveReceivedDamage(target, raw);
     const amount = resolution.applied;
     const hpBefore = target.hp; const shieldBefore = target.shield.amount; const shieldProviderId = target.shield.providerId;
-    applyDamage(target, amount, events);
+    applyDamage(target, amount, events, state);
     // 스타카토 추가타도 공격자 귀속이 명확하므로 최종 HP 손실 정책에 포함한다.
     const credited = recordDamageContribution(state, mette.id, target, "magical", "atk", contributionAmount, resolution, hpBefore, shieldBefore, shieldProviderId);
     events.push({ kind: "attack", attackerId: mette.id, targetId: target.id, skill: "staccato", amount, contributionAmount: credited, critical: false, animate: false,
@@ -2111,7 +2283,11 @@ export function resolveReceivedDamage(target: Fighter, rawAmount: number): Recei
   const guard = target.guard;
   const softened = guard ? Math.max(1, Math.round(beforeGuard * (1 - Math.min(100, Math.max(0, guard.reductionPercent)) / 100))) : beforeGuard;
   if (guard) guard.mitigated += Math.max(0, beforeGuard - softened);
-  const reduced = applyImpactCap(target, softened);
+  // 앞에 서 있는 동안은 **받는 모든 피해**가 줄어든다 — 대신 받은 몫만이 아니라 자기가 직접
+  // 맞는 것까지다. 여기 두지 않으면 같은 궁극기가 피해 경로마다 다르게 든다.
+  const bulwark = target.bulwark;
+  const braced = bulwark ? Math.max(1, Math.round(softened * (1 - Math.min(100, Math.max(0, bulwark.reductionPercent)) / 100))) : softened;
+  const reduced = applyImpactCap(target, braced);
   // 일반 전투원의 최소 1 피해는 그대로 두고, 구조화 필드가 있는 심해 압력만 최종 반올림 뒤 무효화한다.
   const ignored = passive.kind === "abyssalPressure" && reduced <= (passive.ignoreDamageAtOrBelow ?? -1);
   return { raw: rawAmount, reduced, applied: ignored ? 0 : reduced, ignored };
@@ -2137,10 +2313,14 @@ export function receivedDamage(target: Fighter, rawAmount: number): number {
 }
 
 /** 확정 피해를 보호막부터 흡수하고 남은 값만 HP에 적용하는 유일한 피해 적용 경계다. */
-function applyDamage(target: Fighter, amount: number, events: SkirmishEvent[]): number {
-  const hpBefore = target.hp;
+function applyDamage(target: Fighter, amount: number, events: SkirmishEvent[], state: SkirmishState): number {
   // 무효화된 0 피해는 보호막 사건조차 만들지 않아 보호막 잔량과 피격 파생 효과를 보존한다.
   if (amount <= 0) return 0;
+  // 앞에 선 아군이 있으면 그 몫을 **HP에 닿기 전에** 떼어 낸다. 이 함수가 모든 피해 원천의
+  // 마지막 관문이라, 출혈·중독·뇌진탕까지 한 규칙으로 나뉜다.
+  amount -= shareWithBulwark(target, amount, events, state);
+  if (amount <= 0) return 0;
+  const hpBefore = target.hp;
   if (target.shield.amount > 0) {
     const absorbed = Math.min(target.shield.amount, amount);
     target.shield.amount -= absorbed;
@@ -2159,7 +2339,32 @@ function applyDamage(target: Fighter, amount: number, events: SkirmishEvent[]): 
     target.hp = 1;
     target.undyingPending = true;
   }
-  return hpBefore - target.hp;
+  const dealt = hpBefore - target.hp;
+  // 「고통의 미학」이 끝날 때 돌려받는 몫의 근거다. 보호막이 삼킨 몫은 세지 않는다 — 그 피해는
+  // 실제로 몸이 받은 것이 아니라 막힌 것이고, 회복의 분모가 되면 막을수록 더 회복하게 된다.
+  if (target.bulwark) target.bulwark.taken += dealt;
+  return dealt;
+}
+
+/**
+ * 앞에 선 아군이 대신 받는 몫을 떼어 낸다. 실제로 넘어간 양(원래 피해 기준)을 돌려준다.
+ *
+ * **대신 받는 개체 자신의 피해는 다시 나누지 않는다** — 나누면 앞에 선 둘이 서로에게 몫을
+ * 넘기며 같은 한 방이 몇 번이고 쪼개진다. 넘어간 몫도 그 개체의 경감을 그대로 지나므로,
+ * 「고통의 미학」의 70% 감쇠가 대신 받은 피해에도 든다.
+ */
+function shareWithBulwark(target: Fighter, amount: number, events: SkirmishEvent[], state: SkirmishState): number {
+  if (target.bulwark !== null) return 0;
+  const guardian = state.fighters.find((fighter) => fighter.id !== target.id && fighter.side === target.side
+    && fighter.bulwark !== null && isFighterAlive(fighter));
+  if (!guardian?.bulwark) return 0;
+  const share = Math.round(amount * Math.min(100, Math.max(0, guardian.bulwark.percent)) / 100);
+  // 1도 되지 않는 몫까지 옮기면 화면에 숫자만 남고 실제로 바뀌는 것이 없다.
+  if (share < 1) return 0;
+  const resolution = resolveReceivedDamage(guardian, share);
+  const dealt = applyDamage(guardian, resolution.applied, events, state);
+  events.push({ kind: "damageShared", fighterId: guardian.id, fromFighterId: target.id, amount: dealt });
+  return share;
 }
 
 /** 불멸을 지금 켤 수 있는가. 전투당 한 번뿐이고 이미 버티는 중에는 다시 켜지지 않는다. */
@@ -2240,7 +2445,7 @@ function tickBleed(fighter: Fighter, dt: number, state: SkirmishState, events: S
   while (bleed.tickIn <= 0 && isFighterAlive(fighter)) {
     const amount = receivedDamage(fighter, Math.max(1, Math.round((fighter.maxHp * bleed.percent) / 100)));
     const hpBefore = fighter.hp;
-    applyDamage(fighter, amount, events);
+    applyDamage(fighter, amount, events, state);
     // 출혈은 건 공격자가 명확할 때만 고정 피해의 실제 HP 손실을 공격 기여도로 인정한다.
     if (bleed.sourceId) addContribution(state.contributions, bleed.sourceId, "attack", hpBefore - fighter.hp, "attackPower");
     events.push({ kind: "bleed", fighterId: fighter.id, amount, started: false });
@@ -2368,13 +2573,18 @@ function strike(
   const targetHpBefore = target.hp;
   const shieldBefore = target.shield.amount;
   const shieldProviderId = target.shield.providerId;
-  const dealt = applyDamage(target, amount, events);
+  const dealt = applyDamage(target, amount, events, state);
   // 광란한 개체가 제 편을 때린 몫은 그 개체가 아니라 **광란을 건 쪽**이 만든 피해다. 여기서
   // 넘기지 않으면 광란으로 판을 뒤집은 시전자가 기여도 그래프에 0으로 남는다.
   const creditedTo = attacker.frenzy?.sourceId ?? attacker.id;
   const credited = recordDamageContribution(state, creditedTo, target, damageInput.damageType, damageInput.scalingStat, contributionAmount, resolution, targetHpBefore, shieldBefore, shieldProviderId);
   tryTriggerEmergencyRecovery(target); tryTriggerLowHpVanish(target, state);
   triggerCombatAugments(state, target, "onLowHp", events);
+  // 맞은 그 순간 희열이 오른다. 대신 받은 몫이 아니라 **실제로 날아온 공격**만 세는 자리다.
+  gainElation(target, events);
+  // 폭주한 노도니아는 아군이 낸 피해도 제 회복으로 돌린다. 때린 쪽이 누구든 상관없다 —
+  // 이 값은 "우리 편이 얼마나 때렸나"이기 때문이다.
+  healOneMoreRound(attacker, dealt, state, events);
 
   const transfer = useUltimate ? attacker.def.ultimate.damageTransfer : undefined;
   if (transfer && dealt > 0) {
@@ -2386,7 +2596,7 @@ function strike(
       // 전이는 공격 공식을 재계산하지 않지만 공용 받는 피해 경감·무효화와 보호막 경계는 적용한다.
       const transferResolution = resolveReceivedDamage(secondary, requested);
       const secondaryHpBefore = secondary.hp;
-      const transferApplied = applyDamage(secondary, transferResolution.applied, events);
+      const transferApplied = applyDamage(secondary, transferResolution.applied, events, state);
       addContribution(state.contributions, attacker.id, "attack", secondaryHpBefore - secondary.hp, "attackPower");
       // 전이는 확정된 피해량을 그대로 옮기므로 방어·저항·상성을 다시 거치지 않는 고정 피해다.
       events.push({ kind: "attack", attackerId: attacker.id, targetId: secondary.id, skill: "transfer", amount: transferApplied,
@@ -2549,7 +2759,7 @@ function strike(
       const splashAmount = splashResolution.applied;
       const secondaryHpBefore = secondary.hp;
       const secondaryShieldBefore = secondary.shield.amount; const secondaryShieldProviderId = secondary.shield.providerId;
-      applyDamage(secondary, splashAmount, events);
+      applyDamage(secondary, splashAmount, events, state);
       const splashCredited = recordDamageContribution(state, attacker.id, secondary, damageInput.damageType, damageInput.scalingStat, splashContribution, splashResolution, secondaryHpBefore, secondaryShieldBefore, secondaryShieldProviderId);
       tryTriggerEmergencyRecovery(secondary); tryTriggerLowHpVanish(secondary, state);
       // 광역 피해도 공격자가 실제로 입힌 HP 피해이므로 같은 흡혈 규칙에 포함한다.
@@ -2679,7 +2889,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     const amount = resolution.applied;
     const hpBefore = target.hp;
     const shieldBefore = target.shield.amount; const shieldProviderId = target.shield.providerId;
-    applyDamage(target, amount, events);
+    applyDamage(target, amount, events, state);
     const credited = recordDamageContribution(state, attacker.id, target, damageInput.damageType, damageInput.scalingStat, contributionAmount, resolution, hpBefore, shieldBefore, shieldProviderId);
     tryTriggerEmergencyRecovery(target); tryTriggerLowHpVanish(target, state);
     triggerCombatAugments(state, target, "onLowHp", events);
@@ -2692,6 +2902,10 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     // 완성작을 공개하고 나면 그림은 지워진다 — 쌓아 두고 매번 터뜨릴 수 있으면 상시 배율이 된다.
     if (detonation) target.overpaint = null;
     if (!resolution.ignored) gainFerocity(target, FEROCITY_RULES.hitGain, state);
+    // 광역으로 맞은 쪽도 희열이 오른다. 단일과 광역에서 규칙이 갈리면 같은 한 대가 어느
+    // 스킬에 맞았느냐에 따라 겹을 주기도 하고 안 주기도 한다.
+    gainElation(target, events);
+    healOneMoreRound(attacker, hpBefore - target.hp, state, events);
 
     const dx = target.x - attacker.x;
     const dy = target.y - attacker.y;
@@ -2802,7 +3016,7 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
       for (const target of aliveFighters(state, pontus.side === "player" ? "enemy" : "player")) {
         const amount = target.maxHp * trait.maxHpDamagePercentPerSecond / 100;
         const hpBefore = target.hp;
-        const dealt = applyDamage(target, amount, events);
+        const dealt = applyDamage(target, amount, events, state);
         // 폰토스 폭주는 시전자 귀속이 명확한 고정 피해이므로 실제 HP 손실만 공격 기여도에 포함한다.
         addContribution(state.contributions, pontus.id, "attack", hpBefore - target.hp, "abilityPower");
         state.log.push(`${pontus.def.name} 폭주 → ${target.def.name} ${dealt}`);
@@ -2846,7 +3060,7 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
       boss.damageRemainder -= pulse;
       for (const fighter of aliveFighters(state, "player")) {
         // 원정 시간 제한 해일은 공격 전투원이 없는 environment 피해라 누구의 공격 기여도에도 넣지 않는다.
-        applyDamage(fighter, receivedDamage(fighter, pulse), events);
+        applyDamage(fighter, receivedDamage(fighter, pulse), events, state);
         if (!isFighterAlive(fighter)) { clearDefeatedStatuses(fighter); events.push({ kind: "death", fighterId: fighter.id }); }
       }
     }
@@ -2917,6 +3131,8 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     if (!isFighterAlive(fighter)) continue;
     tickGourmetHunt(fighter, dt, state);
     tickGuard(fighter, dt, events);
+    tickBulwark(fighter, dt, state, events);
+    tickElation(fighter, dt);
     tickTaunt(fighter, dt);
     // 불멸은 기절과 같은 자리에서 행동을 멈추지만 슬롯이 달라 아다지오의 정화에 걸리지 않는다.
     if (fighter.undying) {
@@ -2990,6 +3206,9 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
       if (!firedUltimate) {
         advanceBasicCycle(fighter);
         if (fighter.hastenedAttacksLeft > 0) fighter.hastenedAttacksLeft -= 1;
+        // 「한 판 더」의 자기 회복도 행동 하나마다다 — 적중 수로 세면 광역 한 번이 셋을 맞힐 때
+        // 세 배로 돌아 같은 폭주가 편성에 따라 다른 무게가 된다.
+        healOneMoreRoundBasic(fighter, state, events);
       }
       // 명시적 보스 ID에 맞은 경감 전 기여만 점수로 옮겨 실제 HP 피해·부속물 피해와 분리한다.
       if (state.boss && target.id === state.boss.fighterId) {
@@ -3051,6 +3270,23 @@ export function fireUltimate(
       const amount = applyHealing(state, ally, (ally.maxHp - ally.hp) * teamUltimate.healing.percent / 100, attacker.id);
       if (amount > 0) events.push({ kind: "heal", fighterId: ally.id, amount, source: "ultimate", effect: { tag: "heal", intensity: 1.65 } });
     }
+    attacker.attackCooldown = attackInterval(attacker, state);
+    return events;
+  }
+
+  if (teamUltimate.selfBulwark !== undefined) {
+    // 아무도 때리지 않고 아무 데도 가지 않는다. 앞에 서서 아군의 몫을 대신 받는 것이 전부다.
+    const plan = teamUltimate.selfBulwark;
+    attacker.energy -= ultimateCost(state, attacker, true);
+    raiseBulwark(attacker, {
+      seconds: plan.seconds,
+      percent: plan.redirectPercent,
+      reductionPercent: plan.damageReductionPercent,
+      healPercent: plan.healFromTakenPercent,
+      skillId: teamUltimate.id,
+      name: teamUltimate.name,
+    });
+    events.push({ kind: "combatEffect", fighterId: attacker.id, effect: { tag: "shieldGain", intensity: 1.6 } });
     attacker.attackCooldown = attackInterval(attacker, state);
     return events;
   }

@@ -165,6 +165,18 @@ export interface CardFrameOptions {
   fillRatio?: number;
   /** 머리 관절 위쪽 여백을 얼마나 남길지. 0이면 머리 관절이 카드 맨 위에 붙는다. */
   headroom?: number;
+  /**
+   * 카드가 그림의 위쪽을 어디부터 보면 되는지. 없으면 실측 alpha 경계(`content.top`)를 쓴다.
+   *
+   * 로비 전신은 그림 **전체**가 서야 하므로 늘 alpha 경계를 쓰지만, 카드는 얼굴 카드라
+   * 베일 끝·깃털처럼 얼굴보다 한참 높이 솟은 가는 장식까지 담을 이유가 없다. 그 둘을 한 값으로
+   * 묶으면 넓은 실루엣(작아진 얼굴)과 높은 장식(잘린 정수리)을 동시에 만족시킬 수 없다 —
+   * 노도니아가 그랬다. 그래서 **카드에만** 다른 윗선을 준다.
+   *
+   * 값은 눈대중이 아니라 실측이다: 그 장식의 가로폭이 실루엣 폭의 15%를 넘기 시작하는 행.
+   * 그 위는 몇 픽셀짜리 뾰족한 끝이라 잘려도 단면이 보이지 않는다.
+   */
+  cardTop?: number;
 }
 
 /**
@@ -194,6 +206,11 @@ export interface CardFrameOptions {
  * 넣은 뒤 정수리가 평평하게 잘려 보이면 이 값을 조금씩 내리지 말고, 먼저
  * `tests/unit/puppetAnchors.test.ts`의 "실제 원화" 회귀 테스트에 그 원화를 더해 한계에
  * 걸리는지부터 확인한다 — 걸린다면 원인은 카드가 아니라 그 원화의 등신비다.
+ *
+ * **값을 올려서 풀지 않는다.** 노도니아에서 0.66까지 올려 봤더니 엘라의 얼굴이 카드 아래
+ * 절반으로 내려앉았다 — 이 죔쇠는 실제로 여러 원화의 머리를 상단에 붙잡고 있다. 베일처럼
+ * 얼굴보다 한참 높은 장식 때문에 걸리는 원화는 `cardTop`으로 **카드가 잘라도 되는 자리**를
+ * 따로 적는다(아래 참고).
  */
 const MAX_HEAD_DROP_RATIO = 0.46;
 
@@ -229,10 +246,12 @@ export function computeHeadCardFrame(
   const cropX = clamp(head.x - cropWidth / 2, frame.imageWidth - cropWidth);
   // 머리카락 끝(내용 상자 위)과 머리 관절 사이에서 시작점을 잡아 정수리가 살짝 잘리게 한다.
   // 그 위에 공통 여백을 더 얹어, 뭉툭한 장식이 자르기 상단에 딱 붙어 수평으로 잘리지 않게 한다.
-  const naturalCropY = frame.content.top + (head.y - frame.content.top) * headroom - cropHeight * HEAD_TIP_MARGIN_RATIO;
+  // 카드의 윗선은 alpha 경계와 다를 수 있다(`cardTop` 참고). 정수리가 잘렸는지도 같은 선으로 잰다.
+  const contentTop = options.cardTop ?? frame.content.top;
+  const naturalCropY = contentTop + (head.y - contentTop) * headroom - cropHeight * HEAD_TIP_MARGIN_RATIO;
   // 자연스러운 시작점이 머리를 상단 한계 밖으로 밀어내면(위 주석 참고) 그만큼만 시작점을
   // 늦춘다 — 정상 원화의 결과보다 시작점을 앞당기지는 않는다.
   const cropY = clamp(Math.max(naturalCropY, head.y - cropHeight * MAX_HEAD_DROP_RATIO), frame.imageHeight - cropHeight);
 
-  return { cropX, cropY, cropWidth, cropHeight, scale, clipsContentTop: cropY > frame.content.top };
+  return { cropX, cropY, cropWidth, cropHeight, scale, clipsContentTop: cropY > contentTop };
 }

@@ -25,6 +25,7 @@ import {
   KERIS_PORTRAIT_METADATA,
   MAKI_PORTRAIT_METADATA,
   MERON_PORTRAIT_METADATA,
+  NODONIA_PORTRAIT_METADATA,
   PACHI_PORTRAIT_METADATA,
   PONTOS_PORTRAIT_METADATA,
   PONTOS_SD_METADATA,
@@ -250,6 +251,7 @@ const REAL_PORTRAITS = [
   { name: "케리스", metadata: KERIS_PORTRAIT_METADATA, head: { x: 546, y: 334 }, eyes: [{ x: 490, y: 330 }, { x: 569, y: 361 }] },
   { name: "델로피", metadata: DELOPI_PORTRAIT_METADATA, head: { x: 519, y: 324 }, eyes: [{ x: 496, y: 319 }, { x: 556, y: 294 }] },
   { name: "엘라", metadata: ELLA_PORTRAIT_METADATA, head: { x: 554, y: 292 }, eyes: [{ x: 512, y: 289 }, { x: 584, y: 271 }] },
+  { name: "노도니아", metadata: NODONIA_PORTRAIT_METADATA, head: { x: 484, y: 353 }, eyes: [{ x: 467, y: 344 }, { x: 515, y: 327 }] },
 ] as const;
 
 /** PortraitCard가 넘기는 것과 같은 배율 보정으로 실제 카드 잘라내기를 구한다. */
@@ -257,7 +259,15 @@ function realCardFrame(portrait: { metadata: Omit<PuppetAsset, "url">; head: { x
   return computeHeadCardFrame(portrait.metadata, portrait.head, {
     ...REAL_CARD,
     fillRatio: 0.56 / ((portrait.metadata.cardZoom ?? 1) * (portrait.metadata.portraitZoom ?? 1)),
+    // 카드만의 윗선도 화면과 같은 값을 쓴다 — 여기서 빠뜨리면 실제로는 자르지 않는 원화를
+    // 자른다고 판정하고, 반대로 정말 잘리는 원화를 못 잡는다.
+    cardTop: portrait.metadata.cardTop,
   });
+}
+
+/** 카드가 보는 윗선. 베일 끝처럼 잘라도 되는 장식을 적어 둔 원화는 그 값을 쓴다. */
+function cardTopOf(portrait: { metadata: Omit<PuppetAsset, "url"> }): number {
+  return portrait.metadata.cardTop ?? portrait.metadata.content.top;
 }
 
 describe("실제 원화의 카드 잘라내기", () => {
@@ -275,7 +285,7 @@ describe("실제 원화의 카드 잘라내기", () => {
     (_name, portrait) => {
       const card = realCardFrame(portrait);
       // 뭉툭한 뿔·깃털이 홈 윗변에 딱 붙어 수평으로 잘린 것처럼 보이지 않을 만큼은 띄운다.
-      const margin = (portrait.metadata.content.top - card.cropY) * card.scale;
+      const margin = (cardTopOf(portrait) - card.cropY) * card.scale;
       expect(margin).toBeGreaterThan(0);
       expect(margin).toBeLessThan(REAL_CARD.height - REAL_CARD.width / 2);
     },
@@ -295,7 +305,7 @@ describe("실제 원화의 카드 잘라내기", () => {
     // 가장 머리가 큰 원화도 한계에 여유를 두고 못 미쳐야 다음 캐릭터가 다시 걸리지 않는다.
     const worst = Math.max(...REAL_PORTRAITS.map((portrait) => {
       const card = realCardFrame(portrait);
-      return (portrait.head.y - portrait.metadata.content.top) / card.cropHeight;
+      return (portrait.head.y - cardTopOf(portrait)) / card.cropHeight;
     }));
     expect(worst).toBeLessThan(0.42);
   });

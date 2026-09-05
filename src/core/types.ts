@@ -29,7 +29,7 @@ export type ReachTier = "melee" | "mid" | "ranged";
 export type RelicRarity = "R" | "SR" | "SSR";
 
 /** 전신 Puppet 레지스트리의 안정적인 데이터 키다. 파일 번호를 게임 데이터에 직접 노출하지 않는다. */
-export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "toby" | "amo" | "ripa" | "pontos";
+export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "toby" | "amo" | "ripa" | "pontos";
 
 export interface Stats {
   /** 생존력과 물리·마법 공격의 기반이 되는 주 능력치다. */
@@ -166,6 +166,7 @@ export type AttackSkill = SkillBase & {
   teamBuff?: never;
   selfSetup?: never;
   selfGuard?: never;
+  selfBulwark?: never;
 };
 
 /** 순수 회복 스킬은 damageType/power를 가질 수 없어 피해 계산에 잘못 전달되지 않는다. */
@@ -176,6 +177,7 @@ export type HealingSkill = SkillBase & {
   teamBuff?: never;
   selfSetup?: never;
   selfGuard?: never;
+  selfBulwark?: never;
   healing: { kind: "teamMissingHpPercent"; percent: number };
 };
 
@@ -192,9 +194,29 @@ export type SetupSkill = SkillBase & {
   healing?: never;
   teamBuff?: never;
 } & (
-  | { selfSetup: SelfSetup; selfGuard?: never }
-  | { selfSetup?: never; selfGuard: SelfGuard }
+  | { selfSetup: SelfSetup; selfGuard?: never; selfBulwark?: never }
+  | { selfSetup?: never; selfGuard: SelfGuard; selfBulwark?: never }
+  | { selfSetup?: never; selfGuard?: never; selfBulwark: SelfBulwark }
 );
+
+/**
+ * 앞에 서는 계약. 아군이 받을 피해를 **대신 받고**, 그 아픈 시간을 회복으로 바꾼다.
+ *
+ * `SelfGuard`(엘라의 「인」)와 다른 축이다 — 그쪽은 적을 끌어당겨 **자신에게 오게** 만들고
+ * 자기가 덜 맞은 몫을 보호막으로 돌려받는다. 이쪽은 적을 건드리지 않고 **아군에게 갈 피해를
+ * 가로채** 대신 맞는다. 무적을 쓰지 않는 이유는 그래야 회복의 분모가 실재하고, 아군의 피해가
+ * 그냥 사라지는 일도 생기지 않기 때문이다.
+ */
+export type SelfBulwark = {
+  /** 앞에 서 있는 시간(초). */
+  seconds: number;
+  /** 이 동안 아군이 받는 피해 중 대신 받는 비율(%). */
+  redirectPercent: number;
+  /** 앞에 서 있는 동안 자신이 받는 모든 피해가 줄어드는 비율(%). */
+  damageReductionPercent: number;
+  /** 끝날 때, 그동안 **실제로 HP에서 잃은** 피해의 이 비율(%)만큼 회복한다. */
+  healFromTakenPercent: number;
+};
 
 /**
  * 버티는 계약. 끌어당겨 붙잡아 두고, 그동안 덜 맞은 만큼을 나중에 보호막으로 돌려받는다.
@@ -250,6 +272,7 @@ export type SupportSkill = SkillBase & {
   healing?: never;
   selfSetup?: never;
   selfGuard?: never;
+  selfBulwark?: never;
   teamBuff: TeamBuff;
 };
 
@@ -523,6 +546,8 @@ export type PassiveKind =
   | "openingVanish"
   /** 엘라 전용: 쓰러질 피해를 가로채 전투당 한 번, 무적·행동불가로 버티며 되살아난다. */
   | "undyingTalisman"
+  /** 노도니아 전용: 맞을수록 겹이 쌓여 단단해지고, 겹이 차면 터져 아군의 피해를 대신 받는다. */
+  | "painfulElation"
   /** 렉시아 전용: 공격 속도·공격력·치명타 확률·치명타 피해를 함께 강화한다. */
   | "battleMaidMastery"
   /** 스피나 전용: 기본 공격의 실제 적중마다 공속을 전투 한정으로 영구 누적한다. */
@@ -567,7 +592,9 @@ export type FerocityEffectId =
   /** 델로피 전용: 폭주 중 일반 공격이 중독을 걸거나, 이미 걸린 중독을 그 자리에서 청산한다. */
   | "venomousEncore"
   /** 엘라 전용: 폭주 중 방어·저항이 오르고, 정해진 횟수의 기본 공격만 훨씬 빨라진다. */
-  | "adamantBody";
+  | "adamantBody"
+  /** 노도니아 전용: 폭주 중 기본 공격마다 잃은 체력을 되찾고, 아군이 낸 피해도 회복으로 돌린다. */
+  | "oneMoreRound";
 
 /**
  * 개체별 피버 발현 정적 데이터다.
@@ -629,6 +656,21 @@ export type FerocityTrait = {
       hastenedAttacks: number;
       /** 그 횟수 동안 공격 속도에 더하는 비율(%)이다. */
       attackSpeedPercent: number;
+    }
+  | {
+      /**
+       * 한 판 더. 폭주 중에는 **맞은 만큼이 곧 회복량**이 된다.
+       *
+       * 잃은 체력 비례라 체력이 낮을수록 많이 돌아온다 — 앞에 서서 맞는 것이 값인 개체라
+       * 최대 체력 비례로 두면 멀쩡할 때 가장 많이 회복해 성질이 거꾸로 선다.
+       */
+      effectId: "oneMoreRound";
+      /** 자기 기본 공격 한 번마다 되찾는 잃은 체력 비율(%). */
+      missingHpPercentPerBasic: number;
+      /** 그 회복량에 희열 겹 하나마다 더하는 잃은 체력 비율(%). */
+      missingHpPercentPerElationStack: number;
+      /** 아군이 적에게 실제로 입힌 피해에서 되찾는 비율(%). */
+      allyDamageHealPercent: number;
     }
   | {
       /**
@@ -737,6 +779,24 @@ export interface Passive {
    * 날리고 엘라는 쓰러지려는 순간 제 주위를 비운다. 그래서 폭주 특성이 아니라 패시브가 든다.
    */
   undyingKnockback?: { seconds: number; speed: number; bounces: number; radius: number };
+  /**
+   * 「고통의 희열」 계약. 맞을 때마다 겹이 쌓이고, 겹이 차면 그 자리에서 터진다.
+   *
+   * **덧칠이 아니라 손질과 같은 성질이다** — 시간이 흘러 사라지기도 하지만(`seconds`), 상한에
+   * 닿는 프레임에 스스로 터져 겹이 0으로 돌아간다. 임계점을 하나만 두는 이유는 겹 수를 보고
+   * 다음에 무엇이 오는지 셀 수 있어야 하기 때문이다 — 10겹과 20겹에 서로 다른 효과를 걸면
+   * 플레이어가 두 수를 동시에 세야 한다.
+   */
+  elation?: {
+    /** 겹 상한. 이 겹에 닿는 순간 터진다. */
+    maxStacks: number;
+    /** 겹 하나가 올리는 방어력·저항력 비율(%). */
+    percentPerStack: number;
+    /** 겹이 남아 있는 시간(초). 다시 맞으면 처음부터 다시 흐른다. */
+    seconds: number;
+    /** 겹이 터졌을 때 아군의 피해를 대신 받는 계약이다. */
+    burst: { seconds: number; redirectPercent: number };
+  };
   /** 전투 한정 누적 패시브가 쌓을 수 있는 최대 횟수. 상한이 없으면 한 판이 길수록 끝없이 자란다. */
   maxStacks?: number;
   /** 심해 압력 전용: 완전히 경과한 매초 기본 주문력에 복리로 누적하는 비율이다. */

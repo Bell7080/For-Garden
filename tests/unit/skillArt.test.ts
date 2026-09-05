@@ -5,7 +5,7 @@ import { RELICS } from "../../src/data/relics";
 import { KEYWORDS } from "../../src/data/keywords";
 import type { BasicAttack, Skill } from "../../src/core/types";
 import { ELEMENT_TINT, ROLE_TINT, SKILL_ART_ASSETS, SKILL_ART_SLOTS, skillArtFor, skillArtKey, skillArtTint } from "../../src/ui/skillArt";
-import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageHealingLabel, damageKeyword, ferocityTraitDescription, passiveDescription, overpaintDetonationDamageKeyword, passiveShieldKeyword, periodicStackKeyword, recoveryLabel, skillDescription, skillKeywordLayoutOptions, statusEffectLabel, targetingLabel } from "../../src/ui/skillPresentation";
+import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageHealingLabel, damageKeyword, elationKeyword, ferocityTraitDescription, passiveDescription, overpaintDetonationDamageKeyword, passiveShieldKeyword, periodicStackKeyword, recoveryLabel, skillDescription, skillKeywordLayoutOptions, statusEffectLabel, targetingLabel } from "../../src/ui/skillPresentation";
 import type { SkillInfoViewModel } from "../../src/ui/SkillPopup";
 
 /** 구워 둔 스킬 일러스트. 코드가 가리키는 파일이 실제로 있는지 확인한다. */
@@ -131,6 +131,57 @@ describe("토리카 스킬 표시 계약", () => {
       effectType: "buff", description: "[[damage-value|19]]만큼 추가 피해", contextualKeywords: [damage],
     };
     expect(skillKeywordLayoutOptions(skill, { width: 760, size: 28 }).contextualKeywords).toEqual([damage]);
+  });
+});
+
+describe("노도니아 스킬 표시 계약", () => {
+  const nodonia = RELICS.find((def) => def.id === "nodonia")!;
+
+  it("의 희열은 본문이 아니라 눌러서 여는 태그가 수치를 갖는다", () => {
+    // 겹이 무엇을 하는지·얼마나 남는지·언제 터지는지가 한 덩어리라, 본문에 풀면 한 문장이
+    // 그 규칙 하나로 가득 찬다. 덧칠·손질과 같은 자리다.
+    expect(passiveDescription(nodonia.passive, nodonia.stats.atk)).toBe(
+      "적에게 피격당할 때마다 [[nodonia-elation|희열]]이 한 겹 쌓인다."
+      + " 10겹째에 터져 6초 동안 아군이 받는 모든 피해의 30%를 대신 받는다.",
+    );
+    const tag = elationKeyword(nodonia.passive)!;
+    expect(tag).toMatchObject({ id: "nodonia-elation", term: "희열", kind: "버프" });
+    expect(tag.description).toBe(
+      "한 겹마다 방어력과 저항력이 5% 오른다. 5초 동안 남으며 다시 맞으면 유지 시간이 처음부터 다시 흐른다."
+      + " 10겹째에 그 자리에서 터지고 겹은 0으로 돌아간다.",
+    );
+    // 태그 팝업 안에서는 중첩 태그가 열리지 않으므로 낱말만 적는다.
+    expect(tag.description).not.toMatch(/\[\[/);
+    // 겹을 쓰지 않는 개체는 이 태그를 갖지 않는다.
+    expect(elationKeyword(RELICS.find((def) => def.id === "ella")!.passive)).toBeUndefined();
+  });
+
+  it("의 고통의 미학은 무적이 아니라 대신 받는다고 말한다", () => {
+    expect(nodonia.ultimate.desc).toBeUndefined();
+    expect(nodonia.ultimate.selfBulwark).toMatchObject({ seconds: 3, redirectPercent: 100, damageReductionPercent: 70, healFromTakenPercent: 50 });
+    const text = skillDescription(nodonia.ultimate);
+    expect(text).toBe(
+      "3초 동안 모든 아군이 받는 피해를 대신 받고, 그동안 자신이 받는 피해가 70% 줄어든다."
+      + " 시간이 끝나면 그동안 실제로 잃은 체력의 50%를 회복한다.",
+    );
+    // 엘라의 불멸과 갈라 두는 지점이다 — 이 궁극기는 무적이 아니라 실제로 아프다.
+    expect(text).not.toContain("무적");
+  });
+
+  it("의 기본 공격은 방어력에서 피해를 뽑는다", () => {
+    expect(nodonia.basic).toMatchObject({ scalingStat: "def", power: 60 });
+    expect(nodonia.basic.desc).toBeUndefined();
+    // 능력치를 모르는 자리(도감)에서도 어느 능력치에서 나오는 배율인지 말한다.
+    expect(skillDescription(nodonia.basic)).toBe("적 한 명에게 방어력의 60% [[physical-damage|물리 피해]]를 준다.");
+    // 공격력은 어디에도 쓰이지 않으므로 로스터 최저다 — 쓰지 않는 능력치를 높게 적지 않는다.
+    expect(Math.min(...RELICS.map((def) => def.stats.atk))).toBe(nodonia.stats.atk);
+  });
+
+  it("의 한 판 더는 잃은 체력과 희열 겹을 함께 말한다", () => {
+    expect(ferocityTraitDescription(nodonia.ferocityTrait, { attack: nodonia.stats.atk, defense: nodonia.stats.def })).toBe(
+      "[[basic-attack|기본 공격]]마다 [[missing-hp|잃은 체력]]의 3%를 회복하며, 회복량은 [[nodonia-elation|희열]] 한 겹마다 0.2%씩 더 오른다."
+      + " 아군이 적에게 입힌 피해의 10%만큼도 함께 회복한다.",
+    );
   });
 });
 

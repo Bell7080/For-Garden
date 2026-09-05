@@ -443,6 +443,9 @@ export class PortraitCard extends Phaser.GameObjects.Container {
       // 정수리를 한 줄도 자르지 않는다. 카드에서는 머리 끝이 곧 그리드의 윗선이라, 몇 px만
       // 잘라도 뿔·리본이 평평하게 깎인 것처럼 읽힌다.
       headroom: 0,
+      // 베일 끝처럼 얼굴보다 한참 높은 가는 장식은 카드에서 잘라도 된다. 어디까지 잘라도 되는지는
+      // 화면이 정하지 않고 원화 쪽에 실측해 적는다.
+      cardTop: asset.cardTop,
     });
     const originX = -width / 2 - card.cropX * card.scale;
     // 전신과 같은 세로 보정을 써 코어 관절이 높은 원화의 시각 중심을 카드에서도 유지한다.

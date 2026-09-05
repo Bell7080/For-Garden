@@ -131,6 +131,12 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
   if (trait.effectId === "knockbackSlam") return `[[concussion|뇌진탕]]이 확정 치명타가 되고, 그 적을 [[knockback|날려버린다]]. 날려버린 뒤에는 가장 가까운 적을 표적으로 다시 지정한다.`;
   // 광란은 시간이 스킬마다 다르므로(궁극 4초 · 폭주 2초) 태그가 아니라 본문이 초를 적는다.
   if (trait.effectId === "frenzyGaze") return `폭주 중 [[basic-attack|기본 공격]]에 적중한 적을 ${trait.seconds}초 동안 [[frenzy|광란]]시킨다. 전이된 타격으로는 발동하지 않는다.`;
+  // 최대 체력이 아니라 **잃은 체력** 비례라는 것이 이 폭주의 전부다 — 앞에 서서 맞는 것이
+  // 값인 개체라, 성한 몸일 때 가장 많이 도는 회복이면 성질이 거꾸로 선다.
+  if (trait.effectId === "oneMoreRound") {
+    return `[[basic-attack|기본 공격]]마다 [[missing-hp|잃은 체력]]의 ${trait.missingHpPercentPerBasic}%를 회복하며, 회복량은 [[nodonia-elation|희열]] 한 겹마다 ${trait.missingHpPercentPerElationStack}%씩 더 오른다.`
+      + ` 아군이 적에게 입힌 피해의 ${trait.allyDamageHealPercent}%만큼도 함께 회복한다.`;
+  }
 
   // 방어력 계수는 토리카처럼 추가 피해가 있는 범위 타격만 노출하고, 일반 전이 특성은 원래 피해 비율만 보여 준다.
   const speed = trait.attackSpeedBonusPercent === undefined ? "" : `공격 속도가 ${trait.attackSpeedBonusPercent}% 증가한다. `;
@@ -144,6 +150,26 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
     ? `${bonus}를 입히고 [[stagger|경직]]시킨다.`
     : `${bonus}를 입힌다.`;
   return `${speed}기본 공격이 대상 주위의 모든 적에게 적중해 ${ending}`;
+}
+
+/**
+ * 「희열」 태그. 겹이 무엇을 하는지·얼마나 남는지·언제 터지는지를 한 자리에서 말한다.
+ *
+ * 개체 전용 규칙어라 전역 사전(`keywords.ts`)이 아니라 이 개체의 스킬을 여는 자리에서만
+ * 주입한다 — 메테의 스타카토와 같은 자리다. 문장은 실제 전투가 읽는 필드에서 지으므로
+ * 겹 상한이나 비율을 조정하면 팝업도 함께 바뀐다.
+ */
+export function elationKeyword(passive: Passive): KeywordDef | undefined {
+  const plan = passive.elation;
+  if (passive.kind !== "painfulElation" || plan === undefined) return undefined;
+  return {
+    id: "nodonia-elation",
+    term: "희열",
+    kind: "버프",
+    description: `한 겹마다 방어력과 저항력이 ${plan.percentPerStack}% 오른다.`
+      + ` ${plan.seconds}초 동안 남으며 다시 맞으면 유지 시간이 처음부터 다시 흐른다.`
+      + ` ${plan.maxStacks}겹째에 그 자리에서 터지고 겹은 0으로 돌아간다.`,
+  };
 }
 
 /** 아다지오의 무게 보호막처럼 패시브가 실제 능력치에서 계산하는 수치를 조회 가능한 태그로 만든다. */
@@ -203,6 +229,11 @@ function passiveHead(passive: Passive, atk?: number): string {
     // 무적·행동불가·회복·밀어냄이 한 덩어리로 일어나므로 한 문장에 순서대로 담는다.
     const blast = passive.undyingKnockback === undefined ? "" : ` 이때 주위 적을 [[knockback|날려버린다]].`;
     return `전투당 한 번, 쓰러질 피해를 받으면 죽지 않고 ${passive.durationSeconds}초 동안 [[invulnerable|무적]]이 되는 대신 아무 행동도 하지 못한다. 그동안 최대 체력의 ${passive.value}%를 매초 나누어 회복한다.${blast}`;
+  }
+  if (passive.kind === "painfulElation" && passive.elation !== undefined) {
+    const plan = passive.elation;
+    return `적에게 피격당할 때마다 [[nodonia-elation|희열]]이 한 겹 쌓인다.`
+      + ` ${plan.maxStacks}겹째에 터져 ${plan.burst.seconds}초 동안 아군이 받는 모든 피해의 ${plan.burst.redirectPercent}%를 대신 받는다.`;
   }
   if (passive.kind === "shimmerMark") return `적을 타격하면 반짝이는 표식을 남긴다. 표식이 없는 적을 타격하면 표식이 그 적에게 옮겨가며 [[ap|주문력]]의 ${passive.value}% [[magical-damage|마법 피해]]를 추가로 입힌다.`;
   if (passive.kind !== "battleMaidMastery") return passive.desc;
@@ -311,6 +342,12 @@ export function skillDescription(
   if (skill.damageType === undefined || skill.power === undefined) {
     if ("healing" in skill && skill.healing?.kind === "teamMissingHpPercent") {
       return `모든 생존 아군이 각자 [[missing-hp|잃은 체력]]의 ${skill.healing.percent}%를 회복한다.`;
+    }
+    // 앞에 서는 궁극기. 아무도 때리지 않고 아군의 몫을 대신 받는다.
+    if ("selfBulwark" in skill && skill.selfBulwark !== undefined) {
+      const plan = skill.selfBulwark;
+      return `${plan.seconds}초 동안 모든 아군이 받는 피해를 대신 받고, 그동안 자신이 받는 피해가 ${plan.damageReductionPercent}% 줄어든다.`
+        + ` 시간이 끝나면 그동안 실제로 잃은 체력의 ${plan.healFromTakenPercent}%를 회복한다.`;
     }
     // 버티는 궁극기. 끌어당겨 붙잡아 두고 덜 맞은 만큼을 끝나고 돌려받는다.
     if ("selfGuard" in skill && skill.selfGuard !== undefined) {

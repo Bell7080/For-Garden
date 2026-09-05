@@ -50,7 +50,7 @@ import { observationQuestionForRelicAndDate } from "../data/observations";
 import type { PublicRelicProfileDto } from "../api/contracts";
 import type { Fighter } from "../core/skirmish";
 import { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../core/infoCapabilities";
-import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, overpaintDetonationDamageKeyword, passiveShieldKeyword, periodicStackKeyword, skillDescription } from "./skillPresentation";
+import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, overpaintDetonationDamageKeyword, elationKeyword, passiveShieldKeyword, periodicStackKeyword, skillDescription } from "./skillPresentation";
 import type { KeywordDef } from "../data/keywords";
 import { addFactionMark, factionMarkBounds } from "./FactionMark";
 import { SQUADS } from "../data/factions";
@@ -1889,6 +1889,9 @@ export class InfoManager {
       id: "mette-staccato", term: "스타카토", kind: "규칙",
       description: "메테의 [[basic-attack|기본 공격]]과 같은 마법 추가타다. 적중한 대상을 [[stagger|경직]]시킨다.",
     });
+    // 「한 판 더」는 희열 겹이 회복량을 정하므로, 폭주 쪽 팝업에서도 그 태그를 눌러 읽을 수 있어야 한다.
+    const elation = elationKeyword(def.passive);
+    if (elation && def.ferocityTrait.effectId === "oneMoreRound") contextualKeywords.push(elation);
     // 폭주도 패시브와 같은 정형 상세창을 사용한다. 별도 제목 레이어 없이 아이콘 옆에서
     // 스킬 종류·이름·발현 유형을 한 번에 읽게 한다.
     openSkillPopup(this.scene, this.popups, this.keywords, {
@@ -1962,8 +1965,12 @@ export class InfoManager {
       valueLabel,
       // 「세 개의 뿔」처럼 이름을 가진 주기 스택은 개체 전용 규칙어라 전역 사전이 아니라
       // 이 스킬을 여는 자리에서만 주입한다(메테의 스타카토와 같은 자리다).
-      contextualKeywords: [damageDetail, shieldDetail, healDetail, "kind" in skill ? undefined : periodicStackKeyword(skill as Skill)]
-        .filter((item): item is KeywordDef => item !== undefined),
+      contextualKeywords: [
+        damageDetail, shieldDetail, healDetail,
+        "kind" in skill ? undefined : periodicStackKeyword(skill as Skill),
+        // 「고통의 희열」은 패시브 본문이 직접 가리키는 태그라 그 쪽지에도 함께 실린다.
+        "kind" in skill ? elationKeyword(skill as Passive) : undefined,
+      ].filter((item): item is KeywordDef => item !== undefined),
       // 정적 문장에서 수치를 재해석하지 않고 전투 정의를 그대로 팝업에 넘긴다.
       targeting: "targeting" in skill ? skill.targeting as Ultimate["targeting"] : undefined,
       statusEffects: "statusEffects" in skill ? skill.statusEffects : undefined,

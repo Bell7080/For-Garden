@@ -62,6 +62,9 @@ export const ULTIMATE_PRESENTATIONS: Readonly<Record<string, UltimatePresentatio
   // SD 확대와 흔들림은 가장 얕다. 실제로 터지는 순간은 뒤이어 날아가는 카드 한 장이다.
   // 등신이 낮아 컷인에서 한 뼘 줄인다.
   delopi: { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkScale: 0.92, artworkOrigin: { x: 640, y: 800 }, cutInHoldMs: 130, zoomScale: 1.08, zoomMs: 96, cameraShakeIntensity: 0.004 },
+  // 아무도 때리지 않고 앞에 서기만 하는 궁극기라 확대도 흔들림도 얕다. 컷인은 오른쪽에서
+  // 천천히 들어와 한 박자 머문다 — 베일을 내리는 그 한 장이 이 개체의 값이다.
+  nodonia: { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkScale: 1.02, artworkOrigin: { x: 655, y: 805 }, cutInHoldMs: 180, zoomScale: 1.05, zoomMs: 124, cameraShakeIntensity: 0.004 },
   // 아무도 때리지 않고 제자리에 뿌리내리는 궁극기라 확대도 흔들림도 가장 얕다. 컷인은 느린
   // 권법에 맞춰 한 박자 길게 머문다 — 이 개체의 값은 속도가 아니라 버티는 시간이다.
   ella: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.97, artworkOrigin: { x: 645, y: 800 }, cutInHoldMs: 175, zoomScale: 1.06, zoomMs: 120, cameraShakeIntensity: 0.005 },

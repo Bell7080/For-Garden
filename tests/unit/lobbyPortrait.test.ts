@@ -177,7 +177,7 @@ describe("정보창 전신의 얼굴 크기", () => {
   it("는 노도니아의 portraitZoom을 떼면 다시 실패한다", () => {
     // 보정을 되돌리면 예전 값(중앙값의 0.58배)으로 돌아가는지 직접 확인한다.
     const asset = PORTRAITS.nodonia;
-    expect(asset.portraitZoom).toBe(1.55);
+    expect(asset.portraitZoom).toBe(1.45);
     const bare = faceSizeOf("nodonia") / (asset.portraitZoom ?? 1);
     const center = median(LOBBY_RELICS.map((relic) => faceSizeOf(relic.portraitAssetId)));
     expect(bare / center).toBeLessThan(0.7);

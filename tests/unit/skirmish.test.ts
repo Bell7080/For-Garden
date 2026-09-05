@@ -2852,7 +2852,7 @@ describe("엘라의 프로젝트 TALISMAN", () => {
     const state = arena();
     const ella = state.fighters[0];
     const trait = getRelic("ella").ferocityTrait;
-    expect(trait).toMatchObject({ effectId: "adamantBody", defenseResistancePercent: 150, hastenedAttacks: 3, attackSpeedPercent: 150 });
+    expect(trait).toMatchObject({ effectId: "adamantBody", defenseResistancePercent: 120, hastenedAttacks: 3, attackSpeedPercent: 150 });
     const calmDef = defensiveDefinition(ella, state).def.stats;
     const calmInterval = attackInterval(ella);
 
@@ -2965,7 +2965,7 @@ describe("노도니아의 프로젝트 REVERIE", () => {
   it("의 한 판 더는 잃은 체력과 희열 겹으로 회복량을 정한다", () => {
     const { state, nodonia, ally, foe } = arena();
     const trait = getRelic("nodonia").ferocityTrait;
-    expect(trait).toMatchObject({ effectId: "oneMoreRound", missingHpPercentPerBasic: 3, missingHpPercentPerElationStack: 0.2, allyDamageHealPercent: 10 });
+    expect(trait).toMatchObject({ effectId: "oneMoreRound", missingHpPercentPerBasic: 2.5, missingHpPercentPerElationStack: 0.15, allyDamageHealPercent: 8 });
     nodonia.ferocity = 100; nodonia.ferocityFever = true;
     nodonia.hp = nodonia.maxHp / 2; nodonia.targetId = foe.id;
 
@@ -2978,7 +2978,7 @@ describe("노도니아의 프로젝트 REVERIE", () => {
 
     // 겹이 쌓이면 같은 한 방이 더 많이 돌려준다 — 맞으면서 때리는 것이 이 폭주의 값이다.
     nodonia.hp = nodonia.maxHp / 2;
-    nodonia.elation = { stacks: 10, remaining: 5, total: 5, percentPerStack: 5, maxStacks: 10 };
+    nodonia.elation = { stacks: 10, remaining: 5, total: 5, percentPerStack: 4, maxStacks: 10 };
     nodonia.attackCooldown = 0;
     stepSkirmish(state, 1 / 60);
     expect(nodonia.hp - nodonia.maxHp / 2).toBeGreaterThan(plain);

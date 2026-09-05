@@ -1153,7 +1153,7 @@ export const RELICS: RelicDef[] = [
     },
     // 맞은 만큼이 곧 회복량이 된다. 잃은 체력 비례라 아플수록 많이 돌아오고, 희열이 쌓여 있을수록
     // 더 돈다 — 안전한 자리로 물러나면 겹이 식어 회복도 함께 줄어든다.
-    ferocityTrait: { name: "한 판 더", effectId: "oneMoreRound", missingHpPercentPerBasic: 3, missingHpPercentPerElationStack: 0.2, allyDamageHealPercent: 10 },
+    ferocityTrait: { name: "한 판 더", effectId: "oneMoreRound", missingHpPercentPerBasic: 2.5, missingHpPercentPerElationStack: 0.15, allyDamageHealPercent: 8 },
     passive: {
       // kind가 painfulElation인 패시브는 passiveDescription()이 구조화 필드로 문장을 만들므로
       // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
@@ -1163,10 +1163,10 @@ export const RELICS: RelicDef[] = [
       iconAssetId: "skill-icon-buff",
       effectType: "buff",
       // Passive.value는 공용 필수 필드라, 이 패시브에서는 겹 하나가 올리는 비율을 담아 둔다.
-      value: 5,
+      value: 4,
       durationSeconds: 5,
-      elation: { maxStacks: 10, percentPerStack: 5, seconds: 5 },
-      desc: "적에게 피격당할 때마다 희열이 한 겹 쌓여 겹당 방어력·저항력이 5%씩 오른다. 최대 열 겹까지 쌓이고 5초 동안 남으며, 다시 맞으면 유지 시간이 처음부터 다시 흐른다.",
+      elation: { maxStacks: 10, percentPerStack: 4, seconds: 5 },
+      desc: "적에게 피격당할 때마다 희열이 한 겹 쌓여 겹당 방어력·저항력이 4%씩 오른다. 최대 열 겹까지 쌓이고 5초 동안 남으며, 다시 맞으면 유지 시간이 처음부터 다시 흐른다.",
     },
     basic: {
       id: "nodonia-basic",
@@ -1189,7 +1189,7 @@ export const RELICS: RelicDef[] = [
       targeting: "self",
       // 감쇠가 아니라 방어·저항 증가다 — 뚫을 창이 있으면 뚫려야 하므로, 방어 관통과 고정
       // 피해는 이 버티기를 그대로 지나간다.
-      selfBulwark: { seconds: 3, redirectPercent: 100, defenseResistancePercent: 300, healFromTakenPercent: 50 },
+      selfBulwark: { seconds: 3, redirectPercent: 100, defenseResistancePercent: 200, healFromTakenPercent: 40 },
     },
   },
 
@@ -1242,7 +1242,7 @@ export const RELICS: RelicDef[] = [
       ferocityGain: 0,
     },
     // 굳어서 단단해지고, 그 상태로 권을 딱 한 바퀴(발경 3연) 몰아친다.
-    ferocityTrait: { name: "금강불괴(金剛不壞)", effectId: "adamantBody", defenseResistancePercent: 150, hastenedAttacks: 3, attackSpeedPercent: 150 },
+    ferocityTrait: { name: "금강불괴(金剛不壞)", effectId: "adamantBody", defenseResistancePercent: 120, hastenedAttacks: 3, attackSpeedPercent: 150 },
     passive: {
       // kind가 undyingTalisman인 패시브는 passiveDescription()이 구조화 필드로 문장을 만들므로
       // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
@@ -1252,11 +1252,11 @@ export const RELICS: RelicDef[] = [
       iconAssetId: "skill-icon-buff",
       effectType: "buff",
       // Passive.value는 공용 필수 필드라, 이 패시브에서는 버티는 동안 회복할 총량을 담아 둔다.
-      value: 40,
-      durationSeconds: 5,
+      value: 30,
+      durationSeconds: 4,
       // 쓰러지려는 순간 제 주위를 비운다. 파치의 날려버림과 같은 궤적 규칙을 쓰되 주체가 다르다.
       undyingKnockback: { seconds: 0.8, speed: 900, bounces: 1, radius: 240 },
-      desc: "전투당 한 번, 쓰러질 피해를 받으면 죽지 않고 5초 동안 무적이 되는 대신 아무 행동도 하지 못한다. 그동안 최대 체력의 40%를 매초 나누어 회복하고, 발동 순간 주위 적을 날려버린다.",
+      desc: "전투당 한 번, 쓰러질 피해를 받으면 죽지 않고 4초 동안 무적이 되는 대신 아무 행동도 하지 못한다. 그동안 최대 체력의 30%를 매초 나누어 회복하고, 발동 순간 주위 적을 날려버린다.",
     },
     basic: {
       id: "ella-basic",
@@ -1269,9 +1269,9 @@ export const RELICS: RelicDef[] = [
       targeting: "single",
       // 세 가지 권법을 차례로 반복한다. 붙이고(보호막) — 흔들고(경직) — 쓸어낸다(광역·회복).
       cycle: [
-        { name: "점(粘)", power: 90, shieldFromDamagePercent: 80 },
+        { name: "점(粘)", power: 90, shieldFromDamagePercent: 60 },
         { name: "화(化)", power: 120, statusEffects: [{ kind: "stagger", seconds: 0.1 }] },
-        { name: "발(發)", power: 150, targeting: "nearbyEnemies", radius: 200, damageHealingPercent: 50 },
+        { name: "발(發)", power: 150, targeting: "nearbyEnemies", radius: 200, damageHealingPercent: 35 },
       ],
     },
     ultimate: {
@@ -1284,10 +1284,10 @@ export const RELICS: RelicDef[] = [
       targeting: "self",
       selfGuard: {
         seconds: 5,
-        defenseResistancePercent: 200,
+        defenseResistancePercent: 150,
         pull: { radius: 420, distance: 150 },
         tauntSeconds: 5,
-        shieldFromTakenPercent: 25,
+        shieldFromTakenPercent: 20,
       },
     },
   },

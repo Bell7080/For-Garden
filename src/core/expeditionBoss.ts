@@ -46,7 +46,23 @@ function fastestAttackInterval(fighter: Fighter, state: Parameters<typeof attack
   fighter.ferocityFever = true;
   const interval = attackInterval(fighter, state);
   fighter.bonusAttackSpeed = bonusBefore; fighter.ferocityFever = feverBefore;
-  return interval;
+  // **아군이 걸어 주는 공속 오라도 한계에 넣는다.** 무리 사냥·아다지오는 제공자가 살아 있고
+  // 같은 표적을 볼 때만 켜지는데, 재현은 자리와 표적이 실제 판과 다르므로 그 순간에 꺼져 있을
+  // 수 있다. 그러면 편성이 실제로 낼 수 있었던 속도보다 느린 값이 기준이 되어, 규칙대로 싸운
+  // 판이 거절된다 — 이동 규칙을 손댈 때마다 이 검증이 흔들리던 이유다. 켜진 것을 한 번 더
+  // 세더라도 한계는 느슨해질 뿐이라 재현으로 설명되지 않는 판은 여전히 걸린다.
+  return interval / (1 + strongestAllyAttackSpeedPercent(fighter, state) / 100);
+}
+
+/** 그 편성이 걸어 줄 수 있었던 가장 강한 아군 공속 오라(%). 제공자의 생사와 표적은 묻지 않는다. */
+function strongestAllyAttackSpeedPercent(fighter: Fighter, state: Parameters<typeof attackInterval>[1]): number {
+  if (!state) return 0;
+  return Math.max(0, ...state.fighters
+    .filter((ally) => ally.side === fighter.side)
+    .map((ally) => Math.max(
+      ally.def.passive.kind === "adagioWeight" ? ally.def.passive.teamAttackSpeedPercent ?? 0 : 0,
+      ally.def.ferocityTrait.effectId === "packHunt" ? ally.def.ferocityTrait.sharedTargetAttackSpeedPercent : 0,
+    )));
 }
 
 /**

@@ -53,6 +53,23 @@ export interface Fighter extends Combatant {
    * 보인다. 붙는 거리와 떨어지는 거리를 다르게 둬서 경계에서 상태가 튀지 않게 한다.
    */
   engaged: boolean;
+  /**
+   * 표적에 다가가지 못한 채 흐른 시간(초).
+   *
+   * 표적이 바뀌어 달려가는 길에 **아군이 서 있으면** 앞으로 가는 걸음과 밀어내는 힘이
+   * 맞부딪쳐 제자리에 선다. 그 사이 이 개체의 피해는 통째로 비고, 화면에서는 이유 없이
+   * 멈춰 선 것으로 보인다. 얼마나 오래 나아가지 못했는지를 세어 두면, 더 좁히려 애쓰는
+   * 대신 **그 자리에서 때리게 할** 시점을 규칙으로 정할 수 있다.
+   */
+  blockedFor: number;
+  /**
+   * 지금 표적에게 이제껏 **가장 가까이 붙었던 거리**(px).
+   *
+   * 직전 프레임과 비교하면 밀려나며 생기는 몇 픽셀의 진동만으로도 "가까워졌다"가 되어
+   * 막힘이 영영 세지지 않는다 — 실제로 벽 앞에서 163px에 멈춘 채 진동하던 것이 그랬다.
+   * 최고 기록을 갱신했을 때만 나아간 것으로 본다.
+   */
+  bestGap: number;
   /** 붙는 각도를 사람마다 어긋나게 만드는 고유 위상. 여섯이 한 점에 겹치지 않게 한다. */
   wander: number;
   /**
@@ -436,6 +453,36 @@ export const SKIRMISH = {
   separationRate: 6,
   /** 이 비율만큼 다가가면 붙은 것으로 본다. 다시 떨어지는 기준은 `reach`다. */
   engageRatio: 0.82,
+  /**
+   * 아군에게 막힌 것으로 보기 시작하는 시간(초).
+   *
+   * 이 시간이 지나도록 표적까지의 거리가 줄지 않고 이미 사거리 안이라면, 더 좁히려 애쓰는
+   * 대신 **그 자리에서 때린다**. 짧게 두면 잠깐 스치는 정체마다 먼 거리에서 서서 때리고,
+   * 길게 두면 그동안 피해가 통째로 빈다.
+   */
+  blockedGraceSeconds: 0.7,
+  /**
+   * "가까워졌다"로 인정하는 최소 거리(px).
+   *
+   * 최고 기록을 이만큼 줄여야 나아간 것으로 본다. 0으로 두면 밀려나며 생기는 소수점 진동만
+   * 으로도 막힘이 계속 풀려 영영 세지 못한다.
+   */
+  blockedProgressStep: 4,
+  /**
+   * 앞을 "막았다"고 보는 각도의 코사인(0.5 = 60도).
+   *
+   * 옆이나 뒤에서 밀리는 것은 그냥 붐비는 것이라 예전처럼 곧장 밀어내야 겹침이 실제로
+   * 풀린다. 옆으로 돌리는 것은 **가는 길을 정면으로 가로막은 상대**에게만 쓴다 — 모든
+   * 밀어내기를 옆으로 돌리면 겹침을 벌리는 힘이 사라져 여럿이 표적 주위를 맴돈다.
+   */
+  blockAheadCos: 0.5,
+  /**
+   * 앞을 막은 아군에게 밀릴 때 **뒤로 내줄 수 있는 몫**(그 프레임 걸음 대비).
+   *
+   * 0이면 겹침을 벌리는 힘이 사라져 여럿이 한 점으로 뭉치고, 1이면 걸음이 통째로 상쇄되어
+   * 제자리에 선다. 걸음의 일부만 내주면 겹침은 풀리면서 앞으로도 반드시 나아간다.
+   */
+  blockBackflowRatio: 0.55,
   /** 좌우를 뒤집기 전에 필요한 최소 가로 거리(px). 상대와 세로로 겹칠 때 깜빡이지 않게 한다. */
   facingDeadzone: 16,
   /** 이미 그 상대에게 붙은 아군 한 명당 더해지는 거리 가중치. 셋이 한 명에게 몰리지 않는다. */
@@ -582,6 +629,8 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     attackCooldown: index * 0.18,
     targetId: null,
     engaged: false,
+    blockedFor: 0,
+    bestGap: Number.POSITIVE_INFINITY,
     wander: index * 2.1 + (side === "player" ? 0 : 1.05),
     dashX: 0,
     dashY: 0,
@@ -2966,13 +3015,65 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
 }
 
 /**
+ * 밀어내는 힘이 **걸음을 통째로 먹지 않도록** 뒤로 가는 몫을 잘라 옆으로 돌린다.
+ *
+ * 앞을 막은 아군에게서 밀려나는 방향은 곧 왔던 길이라, 그대로 두면 걸어 들어가는 걸음과
+ * 정면으로 상쇄되어 제자리에 선다. 그렇다고 뒤로 가는 몫을 **전부** 없애면 이번에는 겹침을
+ * 벌리는 힘이 사라져 여럿이 한 점으로 뭉친다(실제로 아군 간격이 113 → 70px까지 좁아졌다).
+ * 그래서 뒤로 가는 몫에 상한(`allowBack`)만 두고 넘치는 만큼을 옆으로 돌린다 — 겹침은
+ * 여전히 풀리면서 걸음은 반드시 남는다.
+ *
+ * 정확히 정면일 때는 옆으로 돌릴 방향이 둘 다 같으므로 고유 위상으로 한쪽을 고른다 —
+ * 매 프레임 다시 고르면 두 걸음마다 좌우로 흔들려 그 자리에서 떤다.
+ */
+export function sidestep(
+  push: { x: number; y: number },
+  heading: { x: number; y: number },
+  wander: number,
+  allowBack: number,
+): { x: number; y: number } {
+  const forward = push.x * heading.x + push.y * heading.y;
+  if (forward >= -allowBack) return push;
+  const sideX = push.x - forward * heading.x;
+  const sideY = push.y - forward * heading.y;
+  const length = Math.hypot(push.x, push.y);
+  // 뒤로는 상한까지만 가고, 남은 세기는 옆으로 간다 — 전체 세기는 그대로다.
+  const sideAmount = Math.sqrt(Math.max(0, length * length - allowBack * allowBack));
+  const sideLength = Math.hypot(sideX, sideY);
+  const [unitX, unitY] = sideLength < length * 0.001
+    // 옆 성분이 거의 없으면(정면에서 막혔으면) 진행 방향의 수직으로 직접 세운다.
+    ? [-heading.y * (Math.sin(wander) >= 0 ? 1 : -1), heading.x * (Math.sin(wander) >= 0 ? 1 : -1)]
+    : [sideX / sideLength, sideY / sideLength];
+  return {
+    x: -heading.x * allowBack + unitX * sideAmount,
+    y: -heading.y * allowBack + unitY * sideAmount,
+  };
+}
+
+/**
  * 서로 겹쳐 서지 않도록 **달려드는 쪽만** 비켜 세운다.
  *
  * 이미 붙어 싸우는 캐릭터까지 밀면 주고받는 내내 둘이 함께 미끄러진다. 겹침은 대부분 같은
  * 상대에게 몰려드는 도중에 생기므로, 아직 붙지 않은 쪽만 움직여도 충분히 풀린다.
+ *
+ * 다만 그 밀어내기가 **가려는 방향과 정면으로 맞부딪치면 걸음이 통째로 상쇄된다**. 표적이
+ * 바뀌어 달려가는 길에 아군이 서 있을 때가 그렇고, 그동안 이 개체의 피해는 통째로 빈다.
+ * 그래서 앞을 가로막은 상대에게 밀릴 때만 뒤로 가는 몫에 상한을 두고 넘치는 만큼을 옆으로
+ * 돌린다(`sidestep`) — 겹침은 그대로 풀리면서 걸음은 반드시 남는다.
  */
 function separate(state: SkirmishState, dt: number): void {
   const alive = state.fighters.filter(isFighterAlive);
+  /** 지금 표적 쪽으로 걸어가는 중인가. 그렇다면 밀어내기를 그 방향과 맞부딪치게 두지 않는다. */
+  const approachOf = (fighter: Fighter): { heading: { x: number; y: number } } | null => {
+    if (fighter.engaged || fighter.targetId === null) return null;
+    const target = findFighter(state, fighter.targetId);
+    if (!target || !isFighterAlive(target)) return null;
+    const dx = target.x - fighter.x;
+    const dy = target.y - fighter.y;
+    const length = Math.hypot(dx, dy);
+    if (length <= 0.001) return null;
+    return { heading: { x: dx / length, y: dy / length } };
+  };
   for (let i = 0; i < alive.length; i += 1) {
     for (let j = i + 1; j < alive.length; j += 1) {
       const a = alive[i];
@@ -2983,22 +3084,30 @@ function separate(state: SkirmishState, dt: number): void {
       if (gap >= SKIRMISH.spacing) continue;
       // 정확히 겹쳤을 때도 방향이 필요하므로 고유 위상으로 갈라 세운다.
       const angle = gap > 0.001 ? Math.atan2(dy, dx) : a.wander;
+      // 기절과 경직 모두 순간 이동을 막아 밀집 정리가 행동 차단을 우회하지 않게 한다.
+      const canMove = (fighter: Fighter): boolean => !fighter.engaged && fighter.targetId !== null
+        && fighter.stunnedFor <= 0 && fighter.staggeredFor <= 0;
+      const movable = [canMove(a), canMove(b)];
+      if (!movable[0] && !movable[1]) continue;
       // 겹친 양을 한 번에 없애지 않고 시간에 비례해 조금씩 푼다.
       // 한쪽만 움직일 수 있으면 그쪽이 겹친 양을 전부 감당한다.
-      // 기절은 위치 행동도 멈추므로 충돌 해소가 기절한 전투원을 밀어내지 않는다.
-      // 기절과 경직 모두 순간 이동을 막아 밀집 정리가 행동 차단을 우회하지 않게 한다.
-      const movable = [!a.engaged && a.targetId !== null && a.stunnedFor <= 0 && a.staggeredFor <= 0, !b.engaged && b.targetId !== null && b.stunnedFor <= 0 && b.staggeredFor <= 0];
-      if (!movable[0] && !movable[1]) continue;
       const share = movable[0] && movable[1] ? 0.5 : 1;
       const push = (SKIRMISH.spacing - gap) * share * Math.min(1, SKIRMISH.separationRate * dt);
-      if (movable[0]) {
-        a.x -= Math.cos(angle) * push;
-        a.y -= Math.sin(angle) * push;
-      }
-      if (movable[1]) {
-        b.x += Math.cos(angle) * push;
-        b.y += Math.sin(angle) * push;
-      }
+      const shove = (fighter: Fighter, sign: number, toOtherX: number, toOtherY: number): void => {
+        const raw = { x: Math.cos(angle) * push * sign, y: Math.sin(angle) * push * sign };
+        const approach = approachOf(fighter);
+        // 옆이나 뒤에서 붐비는 것은 예전처럼 곧장 밀어낸다 — 앞을 가로막은 상대에게만 돌린다.
+        const blocking = approach !== null && (toOtherX * approach.heading.x + toOtherY * approach.heading.y) >= SKIRMISH.blockAheadCos;
+        const step = blocking && approach !== null
+          ? sidestep(raw, approach.heading, fighter.wander, moveSpeed(fighter, state) * dt * SKIRMISH.blockBackflowRatio)
+          : raw;
+        fighter.x += step.x;
+        fighter.y += step.y;
+      };
+      // 상대가 어느 쪽에 있는지는 두 개체에서 서로 반대다.
+      const toB = gap > 0.001 ? { x: dx / gap, y: dy / gap } : { x: Math.cos(a.wander), y: Math.sin(a.wander) };
+      if (movable[0]) shove(a, -1, toB.x, toB.y);
+      if (movable[1]) shove(b, 1, -toB.x, -toB.y);
     }
   }
 }
@@ -3198,7 +3307,31 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     // 붙을 때와 떨어질 때의 기준을 다르게 둬 경계에서 걷다 서다를 반복하지 않는다.
     // 사거리는 개체마다 다르다. 붙을 때와 떨어질 때의 기준만 같은 비율로 갈린다.
     const reach = fighterReach(fighter);
-    fighter.engaged = fighter.engaged ? gap <= reach : gap <= reach * SKIRMISH.engageRatio;
+    // **닿는데 못 때리는 자리를 만들지 않는다.** 붙는 기준은 사거리보다 18% 안쪽이라(경계에서
+    // 떠는 것을 막는 여유다) 그 사이 31px가 빈 띠로 남는데, 아군에게 밀리며 다가서기를
+    // 반복하면 거기 갇혀 사거리 안에 서 있으면서도 영영 때리지 못한다 — 아군 셋에게
+    // 둘러싸인 개체가 실제로 163px에서 멈춰 섰다. 앞으로 나아가지 못한 지 오래라면
+    // **자리를 더 좁히는 대신 그 자리에서 때린다.**
+    const stalled = fighter.blockedFor >= SKIRMISH.blockedGraceSeconds;
+    fighter.engaged = fighter.engaged ? gap <= reach : gap <= (stalled ? reach : reach * SKIRMISH.engageRatio);
+
+    // **정말로 가까워지고 있는지 잰다.** 걷고 있다는 것만으로는 모자라다 — 앞을 막은 아군에게
+    // 밀려 걸음이 그대로 상쇄되면 다리는 움직이는데 거리는 그대로다. 거리는 프레임 사이의
+    // 밀어내기까지 지난 결과이므로 이 자리에서 비교해야 뜻이 선다.
+    if (fighter.engaged) {
+      fighter.blockedFor = 0;
+      fighter.bestGap = gap;
+    } else if (gap > fighter.bestGap + SKIRMISH.spacing) {
+      // 표적이 바뀌거나 순간이동으로 멀어졌으면 기록을 새로 시작한다. 그러지 않으면 예전
+      // 표적에게 붙었던 거리가 기준으로 남아 새 표적으로 달려가는 내내 막힌 것으로 센다.
+      fighter.blockedFor = 0;
+      fighter.bestGap = gap;
+    } else if (gap < fighter.bestGap - SKIRMISH.blockedProgressStep) {
+      fighter.blockedFor = 0;
+      fighter.bestGap = gap;
+    } else {
+      fighter.blockedFor += dt;
+    }
 
     if (!fighter.engaged) {
       const step = moveSpeed(fighter, state) * dt;

@@ -35,6 +35,7 @@ import {
   type SkirmishState,
   REACH_TIER,
   fighterReach,
+  sidestep,
 } from "../../src/core/skirmish";
 import { applyExpeditionRest, type ExpeditionAugmentEffect } from "../../src/core/expeditionAugments";
 import { RELICS, getRelic } from "../../src/data/relics";
@@ -1223,6 +1224,60 @@ describe("자리 정리", () => {
         expect(gap).toBeGreaterThan(SKIRMISH.spacing * 0.9);
       }
     }
+  });
+
+  it("는 앞을 막은 아군에게 밀려도 걸음을 통째로 잃지 않는다", () => {
+    // 밀어내는 힘이 가려는 방향과 정면으로 맞부딪치면 제자리에 선다. 뒤로 가는 몫에 상한을
+    // 두고 넘치는 만큼을 옆으로 돌리므로, 어떤 세기로 밀려도 뒤로 가는 거리는 그 상한이다.
+    const heading = { x: 1, y: 0 };
+    const head_on = sidestep({ x: -900, y: 0 }, heading, 0.3, 5);
+    expect(head_on.x).toBeCloseTo(-5, 5);
+    // 세기는 그대로 두고 방향만 돌린다 — 줄이면 벽을 따라 흐르는 속도가 함께 죽는다.
+    expect(Math.hypot(head_on.x, head_on.y)).toBeCloseTo(900, 5);
+    expect(Math.abs(head_on.y)).toBeGreaterThan(0);
+    // 상한 안쪽으로 밀리거나 앞·옆으로 밀리는 것은 그대로 둔다 — 겹침을 벌리는 힘이다.
+    expect(sidestep({ x: -3, y: 0 }, heading, 0.3, 5)).toEqual({ x: -3, y: 0 });
+    expect(sidestep({ x: 0, y: 40 }, heading, 0.3, 5)).toEqual({ x: 0, y: 40 });
+  });
+
+  it("는 아군 벽에 막힌 개체를 제자리에 세워 두지 않는다", () => {
+    // 표적이 바뀌어 달려가는 길에 붙어 싸우는 아군이 늘어서면, 걸어 들어가는 걸음과 밀어내는
+    // 힘이 정면으로 맞부딪쳐 그 개체의 피해가 통째로 빈다. 실제로 12초 동안 292px 앞에서
+    // 한 대도 때리지 못했다.
+    const state = createSkirmish(
+      ["rex", "anky", "ella", "meron"].map(getRelic),
+      [getRelic("husk-shell"), getRelic("husk-raptor")],
+      ARENA,
+    );
+    const [runner, ...wall] = state.fighters.filter((fighter) => fighter.side === "player");
+    const [foe, decoy] = state.fighters.filter((fighter) => fighter.side === "enemy");
+    foe.x = 900; foe.y = 1100;
+    runner.x = 200; runner.y = 1100;
+    decoy.x = 560; decoy.y = 1100;
+    // 아군 셋이 달려가는 길 위에서 다른 적과 붙어 싸우는 중이라 자리를 내주지 않는다.
+    wall.forEach((ally, index) => { ally.x = 500; ally.y = 1030 + index * 70; ally.targetId = decoy.id; ally.engaged = true; });
+    for (let frame = 0; frame < 60 * 10; frame += 1) {
+      stepSkirmish(state, 1 / 60, () => 0.99);
+      wall.forEach((ally) => { ally.engaged = true; ally.attackCooldown = 99; });
+      runner.attackCooldown = 99; foe.attackCooldown = 99; decoy.attackCooldown = 99;
+      runner.targetId = foe.id;
+    }
+    expect(runner.engaged).toBe(true);
+    expect(Math.hypot(runner.x - foe.x, runner.y - foe.y)).toBeLessThanOrEqual(fighterReach(runner));
+  });
+
+  it("는 닿는데 못 때리는 자리에 갇히지 않는다", () => {
+    // 붙는 기준은 사거리보다 안쪽이라 그 사이가 빈 띠로 남는다. 거기서 앞으로 나아가지
+    // 못한 지 오래라면 자리를 더 좁히는 대신 그 자리에서 때린다.
+    const state = createSkirmish([getRelic("rex")], [getRelic("husk-shell")], ARENA);
+    const [me, foe] = state.fighters;
+    const reach = fighterReach(me);
+    foe.x = 540; foe.y = 1100;
+    me.x = 540; me.y = 1100 + (reach + reach * SKIRMISH.engageRatio) / 2;
+    me.targetId = foe.id;
+    me.blockedFor = SKIRMISH.blockedGraceSeconds;
+    stepSkirmish(state, 1 / 60, () => 0.99);
+    expect(me.engaged).toBe(true);
   });
 
   it("는 아무도 전장 밖으로 나가지 않게 한다", () => {

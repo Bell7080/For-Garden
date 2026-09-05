@@ -1110,27 +1110,16 @@ function tickGuard(fighter: Fighter, dt: number, events: SkirmishEvent[]): void 
  *
  * **공격에 맞았을 때만 오른다.** 출혈·중독처럼 시간이 깎는 피해까지 세면 겹이 저절로 차올라
  * "앞에 서서 맞고 있다"가 아니라 "가만히 있어도 단단해진다"가 된다.
+ *
+ * **터지지 않는다.** 상한에 닿으면 그 자리에 머물 뿐이고, 겹을 비우는 것은 시간뿐이다 —
+ * 덧칠·저주와 같은 축이고 손질과는 다르다. 겹 하나하나가 곧 방어·저항이라 채워 두는 것이
+ * 목적이지, 채워서 다른 일을 터뜨리는 것이 아니다.
  */
-function gainElation(target: Fighter, events: SkirmishEvent[]): void {
+function gainElation(target: Fighter): void {
   const plan = target.def.passive.elation;
   if (target.def.passive.kind !== "painfulElation" || plan === undefined || !isFighterAlive(target)) return;
-  const stacks = (target.elation?.stacks ?? 0) + 1;
-  // 상한에 닿는 프레임에 그 자리에서 터진다 — 손질과 같은 성질이라 겹은 0으로 돌아간다.
-  if (stacks >= plan.maxStacks) {
-    target.elation = null;
-    raiseBulwark(target, {
-      seconds: plan.burst.seconds,
-      percent: plan.burst.redirectPercent,
-      defenseResistancePercent: 0,
-      healPercent: 0,
-      skillId: target.def.passive.id,
-      name: target.def.passive.name,
-    });
-    events.push({ kind: "combatEffect", fighterId: target.id, effect: { tag: "shieldGain", intensity: 1.3 } });
-    return;
-  }
   target.elation = {
-    stacks,
+    stacks: Math.min(plan.maxStacks, (target.elation?.stacks ?? 0) + 1),
     remaining: plan.seconds,
     total: plan.seconds,
     percentPerStack: plan.percentPerStack,
@@ -1147,18 +1136,16 @@ function tickElation(fighter: Fighter, dt: number): void {
 }
 
 /**
- * 앞에 서기를 켠다. **슬롯이 하나뿐**이라 대신 받는 비율이 큰 쪽이 남는다.
+ * 앞에 서기를 켠다. **슬롯은 하나뿐이다.**
  *
- * 두 겹으로 쌓으면 같은 한 방이 두 번 나뉘어 아군이 실제로 받는 몫이 화면과 갈린다. 비율이
- * 같으면 남은 시간이 긴 쪽을 남겨, 궁극기 도중에 겹이 터져도 시간이 줄어들지 않는다.
+ * 두 겹으로 쌓으면 같은 한 방이 두 번 나뉘어 아군이 실제로 받는 몫이 화면과 갈린다. 지금은
+ * 켜는 곳이 「고통의 미학」 하나뿐이라 다시 켜면 그대로 덮어쓴다 — 둘째 원천이 생기면 여기서
+ * 어느 쪽이 남는지부터 정한다.
  */
 function raiseBulwark(
   fighter: Fighter,
   plan: { seconds: number; percent: number; defenseResistancePercent: number; healPercent: number; skillId: string; name: string },
 ): void {
-  const current = fighter.bulwark;
-  if (current && (current.percent > plan.percent
-    || (current.percent === plan.percent && current.remaining >= plan.seconds))) return;
   fighter.bulwark = {
     remaining: plan.seconds,
     total: plan.seconds,
@@ -1553,9 +1540,7 @@ export function activeCombatBuffs(state: SkirmishState, fighterId: string): Acti
       targetFighterId: fighter.id,
       skillId: fighter.bulwark.skillId,
       name: fighter.bulwark.name,
-      description: fighter.bulwark.defenseResistancePercent > 0
-        ? `아군이 받는 피해의 ${fighter.bulwark.percent}%를 대신 받고 방어력·저항력 ${fighter.bulwark.defenseResistancePercent}% 증가`
-        : `아군이 받는 피해의 ${fighter.bulwark.percent}%를 대신 받는다`,
+      description: `아군이 받는 피해의 ${fighter.bulwark.percent}%를 대신 받고 방어력·저항력 ${fighter.bulwark.defenseResistancePercent}% 증가`,
       timing: { kind: "timed", remainingSeconds: fighter.bulwark.remaining, totalSeconds: fighter.bulwark.total },
     });
   }
@@ -1566,7 +1551,7 @@ export function activeCombatBuffs(state: SkirmishState, fighterId: string): Acti
       targetFighterId: fighter.id,
       skillId: fighter.def.passive.id,
       name: fighter.def.passive.name,
-      description: `한 겹마다 방어력·저항력 ${fighter.elation.percentPerStack}% 증가 · ${fighter.elation.maxStacks}겹째에 터진다`,
+      description: `한 겹마다 방어력·저항력 ${fighter.elation.percentPerStack}% 증가 · 최대 ${fighter.elation.maxStacks}겹`,
       stacks: fighter.elation.stacks,
       timing: { kind: "timed", remainingSeconds: fighter.elation.remaining, totalSeconds: fighter.elation.total },
     });
@@ -2596,7 +2581,7 @@ function strike(
   tryTriggerEmergencyRecovery(target); tryTriggerLowHpVanish(target, state);
   triggerCombatAugments(state, target, "onLowHp", events);
   // 맞은 그 순간 희열이 오른다. 대신 받은 몫이 아니라 **실제로 날아온 공격**만 세는 자리다.
-  gainElation(target, events);
+  gainElation(target);
   // 폭주한 노도니아는 아군이 낸 피해도 제 회복으로 돌린다. 때린 쪽이 누구든 상관없다 —
   // 이 값은 "우리 편이 얼마나 때렸나"이기 때문이다.
   healOneMoreRound(attacker, dealt, state, events);
@@ -2921,7 +2906,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     if (!resolution.ignored) gainFerocity(target, FEROCITY_RULES.hitGain, state);
     // 광역으로 맞은 쪽도 희열이 오른다. 단일과 광역에서 규칙이 갈리면 같은 한 대가 어느
     // 스킬에 맞았느냐에 따라 겹을 주기도 하고 안 주기도 한다.
-    gainElation(target, events);
+    gainElation(target);
     healOneMoreRound(attacker, hpBefore - target.hp, state, events);
 
     const dx = target.x - attacker.x;

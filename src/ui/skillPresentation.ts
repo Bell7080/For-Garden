@@ -166,9 +166,8 @@ export function elationKeyword(passive: Passive): KeywordDef | undefined {
     id: "nodonia-elation",
     term: "희열",
     kind: "버프",
-    description: `한 겹마다 방어력과 저항력이 ${plan.percentPerStack}% 오른다.`
-      + ` ${plan.seconds}초 동안 남으며 다시 맞으면 유지 시간이 처음부터 다시 흐른다.`
-      + ` ${plan.maxStacks}겹째에 그 자리에서 터지고 겹은 0으로 돌아간다.`,
+    description: `한 겹마다 방어력과 저항력이 ${plan.percentPerStack}% 오르며 최대 ${plan.maxStacks}겹까지 쌓인다.`
+      + ` ${plan.seconds}초 동안 남으며 다시 맞으면 유지 시간이 처음부터 다시 흐른다.`,
   };
 }
 
@@ -231,9 +230,7 @@ function passiveHead(passive: Passive, atk?: number): string {
     return `전투당 한 번, 쓰러질 피해를 받으면 죽지 않고 ${passive.durationSeconds}초 동안 [[invulnerable|무적]]이 되는 대신 아무 행동도 하지 못한다. 그동안 최대 체력의 ${passive.value}%를 매초 나누어 회복한다.${blast}`;
   }
   if (passive.kind === "painfulElation" && passive.elation !== undefined) {
-    const plan = passive.elation;
-    return `적에게 피격당할 때마다 [[nodonia-elation|희열]]이 한 겹 쌓인다.`
-      + ` ${plan.maxStacks}겹째에 터져 ${plan.burst.seconds}초 동안 아군이 받는 모든 피해의 ${plan.burst.redirectPercent}%를 대신 받는다.`;
+    return `적에게 피격당할 때마다 [[nodonia-elation|희열]]이 한 겹 쌓인다.`;
   }
   if (passive.kind === "shimmerMark") return `적을 타격하면 반짝이는 표식을 남긴다. 표식이 없는 적을 타격하면 표식이 그 적에게 옮겨가며 [[ap|주문력]]의 ${passive.value}% [[magical-damage|마법 피해]]를 추가로 입힌다.`;
   if (passive.kind !== "battleMaidMastery") return passive.desc;

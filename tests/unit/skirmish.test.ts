@@ -2903,25 +2903,24 @@ describe("노도니아의 프로젝트 REVERIE", () => {
     expect(nodonia.elation).toBeNull();
   });
 
-  it("의 희열은 열 겹째에 터져 아군의 피해를 대신 받는다", () => {
-    const { state, nodonia, ally, foe } = arena();
+  it("의 희열은 상한에서 터지지 않고 그 자리에 머문다", () => {
+    const { state, nodonia, foe } = arena();
     const plan = getRelic("nodonia").passive.elation!;
     foe.targetId = nodonia.id;
-    for (let hit = 0; hit < plan.maxStacks; hit += 1) {
+    // 상한보다 여러 번 더 때려도 겹은 상한에 머문다 — 덧칠·저주와 같은 축이고 손질과 다르다.
+    for (let hit = 0; hit < plan.maxStacks + 4; hit += 1) {
       foe.attackCooldown = 0;
       stepSkirmish(state, 1 / 60);
     }
-    // 손질과 같은 성질이다 — 상한에 닿는 그 프레임에 터지고 겹은 0으로 돌아간다.
+    expect(nodonia.elation?.stacks).toBe(plan.maxStacks);
+    // 터지는 것이 없으므로 패시브만으로는 대신 받기가 켜지지 않는다.
+    expect(nodonia.bulwark).toBeNull();
+    // 겹을 비우는 것은 시간뿐이다.
+    for (let frame = 0; frame < 60 * plan.seconds + 2; frame += 1) {
+      foe.attackCooldown = 99;
+      stepSkirmish(state, 1 / 60);
+    }
     expect(nodonia.elation).toBeNull();
-    expect(nodonia.bulwark).toMatchObject({ percent: plan.burst.redirectPercent, total: plan.burst.seconds, defenseResistancePercent: 0 });
-
-    // 이제 아군이 맞으면 그 몫의 30%가 노도니아에게 간다.
-    ally.hp = ally.maxHp; nodonia.hp = nodonia.maxHp; nodonia.shield.amount = 0; ally.shield.amount = 0;
-    foe.targetId = ally.id; foe.attackCooldown = 0;
-    const shared = stepSkirmish(state, 1 / 60).filter((event) => event.kind === "damageShared");
-    expect(shared).toHaveLength(1);
-    expect(nodonia.hp).toBeLessThan(nodonia.maxHp);
-    expect(ally.hp).toBeLessThan(ally.maxHp);
   });
 
   it("의 고통의 미학은 아군의 몫을 전부 대신 받고 끝나면 그만큼을 되찾는다", () => {

@@ -140,16 +140,18 @@ describe("노도니아 스킬 표시 계약", () => {
   it("의 희열은 본문이 아니라 눌러서 여는 태그가 수치를 갖는다", () => {
     // 겹이 무엇을 하는지·얼마나 남는지·언제 터지는지가 한 덩어리라, 본문에 풀면 한 문장이
     // 그 규칙 하나로 가득 찬다. 덧칠·손질과 같은 자리다.
-    expect(passiveDescription(nodonia.passive, nodonia.stats.atk)).toBe(
-      "적에게 피격당할 때마다 [[nodonia-elation|희열]]이 한 겹 쌓인다."
-      + " 10겹째에 터져 6초 동안 아군이 받는 모든 피해의 30%를 대신 받는다.",
-    );
+    expect(passiveDescription(nodonia.passive, nodonia.stats.atk))
+      .toBe("적에게 피격당할 때마다 [[nodonia-elation|희열]]이 한 겹 쌓인다.");
     const tag = elationKeyword(nodonia.passive)!;
     expect(tag).toMatchObject({ id: "nodonia-elation", term: "희열", kind: "버프" });
     expect(tag.description).toBe(
-      "한 겹마다 방어력과 저항력이 5% 오른다. 5초 동안 남으며 다시 맞으면 유지 시간이 처음부터 다시 흐른다."
-      + " 10겹째에 그 자리에서 터지고 겹은 0으로 돌아간다.",
+      "한 겹마다 방어력과 저항력이 5% 오르며 최대 10겹까지 쌓인다."
+      + " 5초 동안 남으며 다시 맞으면 유지 시간이 처음부터 다시 흐른다.",
     );
+    // **터지지 않는다.** 겹 하나하나가 곧 방어·저항이라 채워 두는 것이 목적이지, 채워서 다른
+    // 일을 터뜨리는 것이 아니다 — 문장에도 그 말이 남으면 안 된다.
+    expect(tag.description).not.toMatch(/터진|터져|터뜨/);
+    expect(passiveDescription(nodonia.passive, nodonia.stats.atk)).not.toContain("대신 받");
     // 태그 팝업 안에서는 중첩 태그가 열리지 않으므로 낱말만 적는다.
     expect(tag.description).not.toMatch(/\[\[/);
     // 겹을 쓰지 않는 개체는 이 태그를 갖지 않는다.

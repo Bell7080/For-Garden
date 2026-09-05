@@ -1165,8 +1165,8 @@ export const RELICS: RelicDef[] = [
       // Passive.value는 공용 필수 필드라, 이 패시브에서는 겹 하나가 올리는 비율을 담아 둔다.
       value: 5,
       durationSeconds: 5,
-      elation: { maxStacks: 10, percentPerStack: 5, seconds: 5, burst: { seconds: 6, redirectPercent: 30 } },
-      desc: "적에게 피격당할 때마다 희열이 한 겹 쌓이고, 열 겹째에 터져 6초 동안 아군이 받는 모든 피해의 30%를 대신 받는다.",
+      elation: { maxStacks: 10, percentPerStack: 5, seconds: 5 },
+      desc: "적에게 피격당할 때마다 희열이 한 겹 쌓여 겹당 방어력·저항력이 5%씩 오른다. 최대 열 겹까지 쌓이고 5초 동안 남으며, 다시 맞으면 유지 시간이 처음부터 다시 흐른다.",
     },
     basic: {
       id: "nodonia-basic",

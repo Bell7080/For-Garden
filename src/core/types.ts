@@ -152,8 +152,13 @@ interface SkillBase {
 export type AttackSkill = SkillBase & {
   damageType: DamageType;
   power: number;
-  /** 마법 피해도 메테처럼 물리 공격력(atk)을 명시적으로 선택할 수 있다. */
-  scalingStat?: "atk" | "ap" | "def";
+  /**
+   * 위력을 어느 능력치에서 뽑을지. 생략하면 피해 종류가 정한다(물리=공격력, 마법=주문력).
+   *
+   * 마법 피해도 메테처럼 공격력을 명시적으로 고를 수 있고, 방어·체력에서 뽑는 개체도 있다 —
+   * 노도니아처럼 **공격력을 아예 쓰지 않는** 개체는 자기 몸에서 피해를 낸다.
+   */
+  scalingStat?: "atk" | "ap" | "def" | "hp";
   /**
    * 한 타격의 위력을 **두 능력치가 나눠 갖는다.** 없으면 `scalingStat` 하나만 쓴다.
    *
@@ -161,7 +166,7 @@ export type AttackSkill = SkillBase & {
    * 더하지만, 이쪽은 서로 다른 두 능력치에서 각각 뽑아 더한다. 델로피의 카드가 손끝 힘(공격력)과
    * 발라 둔 독(주문력)을 함께 쓰는 것이 그 예다.
    */
-  secondaryScaling?: { stat: "atk" | "ap" | "def"; power: number };
+  secondaryScaling?: { stat: "atk" | "ap" | "def" | "hp"; power: number };
   healing?: never;
   teamBuff?: never;
   selfSetup?: never;
@@ -213,14 +218,13 @@ export type SelfBulwark = {
   /** 이 동안 아군이 받는 피해 중 대신 받는 비율(%). */
   redirectPercent: number;
   /**
-   * 앞에 서 있는 동안 방어력·저항력에 더하는 비율(%).
+   * 앞에 서 있는 **동안** 매초 회복하는 최대 체력 비율(%).
    *
-   * `SelfGuard`와 같은 이유로 최종 피해 감쇠를 쓰지 않는다 — 방어 관통·고정 피해는 그대로
-   * 지나가야 하고, 수치가 커질수록 수익이 줄어야 한다.
+   * 끝난 뒤에 몰아서 돌려주지 않는 이유는, 대신 받는 그 시간을 버텨 내는 것이 이 궁극기이기
+   * 때문이다 — 끝나고 받으면 그 사이에 쓰러진다. 방어·저항을 올리지도 않는다: 종이 방어로
+   * 다 맞으면서 그보다 빨리 차오르는 것이 이 개체의 값이다.
    */
-  defenseResistancePercent: number;
-  /** 끝날 때, 그동안 **실제로 HP에서 잃은** 피해의 이 비율(%)만큼 회복한다. */
-  healFromTakenPercent: number;
+  maxHpRegenPercentPerSecond: number;
 };
 
 /**
@@ -230,28 +234,17 @@ export type SelfBulwark = {
  * **맞는 시간 자체를 자산으로 바꾼다.** 그래서 보상이 시전 순간이 아니라 버티기가 끝난 뒤에 온다.
  */
 export type SelfGuard = {
-  /** 버티는 시간(초). */
-  seconds: number;
-  /**
-   * 이 동안 방어력·저항력에 더하는 비율(%).
-   *
-   * **받는 피해를 직접 깎지 않는다.** 최종 피해에 곱하는 감쇠는 무엇으로 때리든 똑같이 듣고,
-   * 그 수치가 조금만 커져도 뚫을 방법이 없어진다. 방어·저항으로 올리면 방어 관통·고정 피해가
-   * 그대로 지나가므로 "뚫을 창이 있으면 뚫린다"가 성립하고, 값이 커질수록 수익이 줄어든다.
-   */
-  defenseResistancePercent: number;
-  /** 시전 순간 주위 적을 끌어당긴다. `distance`는 끌어당긴 뒤 시전자와의 거리다. */
-  pull: { radius: number; distance: number };
   /** 끌어당긴 적이 자신만 표적으로 삼는 시간(초). */
   tauntSeconds: number;
+  /** 시전 순간 주위 적을 끌어당긴다. `distance`는 끌어당긴 뒤 시전자와의 거리다. */
+  pull: { radius: number; distance: number };
   /**
-   * 버티기가 끝날 때, 그동안 **실제로 HP에서 잃은** 피해의 이 비율(%)을 보호막으로 얻는다.
+   * 시전 **순간** 얻는 보호막(최대 체력 비율 %).
    *
-   * 예전에는 "이 스킬이 줄인 피해"를 기준으로 삼았는데, 감쇠를 방어·저항 증가로 바꾸면서
-   * 줄인 몫을 따로 셀 수 없게 됐다(방어는 피해 공식 안에서 이미 곱해진다). 맞은 만큼을
-   * 돌려받는 쪽이 규칙도 단순하고, 위험한 자리에 서 있던 시간이 값이 되는 성질도 같다.
+   * 끝난 뒤에 돌려받지 않는다 — 끌어당겨 도발해 놓고 막을 5초 뒤에 받으면 순서가 거꾸로다.
+   * 불러 놓고 그 자리에서 덮는 것이 이 궁극기이고, 그래서 도발과 보호막이 한 조작에 든다.
    */
-  shieldFromTakenPercent: number;
+  shieldMaxHpPercent: number;
 };
 
 /** 자리를 잡는 계약. 은신·순간이동·다음 타격 강화를 코어가 판별할 수 있는 값으로만 적는다. */
@@ -343,6 +336,13 @@ export type BasicAttackStep = {
   damageHealingPercent?: number;
   /** 실제 HP 손실의 이 비율(%)만큼 시전자가 보호막을 얻는다. */
   shieldFromDamagePercent?: number;
+  /**
+   * 이 걸음에 맞은 적을 날려버린다. 파치의 폭주와 같은 궤적 규칙(`KNOCKBACK`)을 쓴다.
+   *
+   * 기절과 다른 축이다 — 기절은 제자리에서 멈추는 것이고 이쪽은 **실제로 좌표가 움직인다.**
+   * 3연 순환의 마지막 걸음처럼 "여기서 끊는다"를 화면에 보여 줘야 하는 자리에 쓴다.
+   */
+  knockback?: { seconds: number; speed: number; bounces: number };
 };
 
 /** 기본 공격만 가질 수 있는 추가 타격 계약이다. 일반 단타는 불필요한 확률 필드를 갖지 않는다. */
@@ -366,7 +366,7 @@ export type BasicAttack = AttackSkill & {
    * 기절과 함께 방어력을 실어 보내는 것이 이 값이다 — 쌓는 값이 제어 하나로만 끝나면
    * 방어력을 키운 몫이 기본 공격에는 전혀 돌아오지 않는다.
    */
-  periodicBonusScaling?: { stat: "atk" | "ap" | "def"; power: number };
+  periodicBonusScaling?: { stat: "atk" | "ap" | "def" | "hp"; power: number };
   /**
    * 주기 타수 칩에 세울 이름. 없으면 스킬 이름을 그대로 쓴다.
    *
@@ -618,8 +618,8 @@ export type FerocityEffectId =
   | "venomousEncore"
   /** 엘라 전용: 폭주 중 방어·저항이 오르고, 정해진 횟수의 기본 공격만 훨씬 빨라진다. */
   | "adamantBody"
-  /** 노도니아 전용: 폭주 중 기본 공격마다 잃은 체력을 되찾고, 아군이 낸 피해도 회복으로 돌린다. */
-  | "oneMoreRound";
+  /** 노도니아 전용: 폭주 중 주위를 매초 지지고, 기본 공격마다 잃은 체력을 되찾는다. */
+  | "climax";
 
 /**
  * 개체별 피버 발현 정적 데이터다.
@@ -675,8 +675,8 @@ export type FerocityTrait = {
        * 바퀴 수가 달라져 그 그림이 흐려진다.
        */
       effectId: "adamantBody";
-      /** 방어력·저항력에 더하는 비율(%)이다. */
-      defenseResistancePercent: number;
+      /** 폭주에 들어가는 순간 얻는 보호막(최대 체력 비율 %)이다. */
+      shieldMaxHpPercent: number;
       /** 훨씬 빨라지는 기본 공격 횟수. 다 쓰면 방어 상승만 남는다. */
       hastenedAttacks: number;
       /** 그 횟수 동안 공격 속도에 더하는 비율(%)이다. */
@@ -684,18 +684,19 @@ export type FerocityTrait = {
     }
   | {
       /**
-       * 한 판 더. 폭주 중에는 **맞은 만큼이 곧 회복량**이 된다.
+       * 절정. 폭주 중에는 서 있는 것만으로 주위가 지져진다.
        *
-       * 잃은 체력 비례라 체력이 낮을수록 많이 돌아온다 — 앞에 서서 맞는 것이 값인 개체라
-       * 최대 체력 비례로 두면 멀쩡할 때 가장 많이 회복해 성질이 거꾸로 선다.
+       * 회복만 있던 자리에 **적에게 남기는 값**을 하나 둔다 — 탱커가 자기 숫자만 바꾸면 화면에
+       * 아무 일도 일어나지 않아 그대로 "없는 것"으로 읽힌다. 피해가 최대 체력 비례인 이유는
+       * 이 개체가 공격력을 아예 쓰지 않기 때문이다.
        */
-      effectId: "oneMoreRound";
+      effectId: "climax";
+      /** 매초 주위 모든 적에게 주는 최대 체력 비율(%) 고정 피해. */
+      auraDamageMaxHpPercent: number;
+      /** 그 지속 피해가 닿는 반경이다. */
+      radius: number;
       /** 자기 기본 공격 한 번마다 되찾는 잃은 체력 비율(%). */
       missingHpPercentPerBasic: number;
-      /** 그 회복량에 희열 겹 하나마다 더하는 잃은 체력 비율(%). */
-      missingHpPercentPerElationStack: number;
-      /** 아군이 적에게 실제로 입힌 피해에서 되찾는 비율(%). */
-      allyDamageHealPercent: number;
     }
   | {
       /**
@@ -805,17 +806,17 @@ export interface Passive {
    */
   undyingKnockback?: { seconds: number; speed: number; bounces: number; radius: number };
   /**
-   * 「고통의 희열」 계약. 맞을 때마다 겹이 쌓여 방어력·저항력을 함께 올린다.
+   * 「고통의 희열」 계약. 맞을 때마다 겹이 쌓여 **재생이 빨라진다.**
    *
    * **덧칠·저주와 같은 축이고 손질과는 다르다** — 상한에 닿아도 터지지 않고 그 자리에 머물며,
-   * 겹을 비우는 것은 시간뿐이다. 겹 하나하나가 곧 방어·저항이라 채워 두는 것이 목적이지,
-   * 채워서 다른 일을 터뜨리는 것이 아니다.
+   * 겹을 비우는 것은 시간뿐이다. 방어를 올리지 않고 회복을 올리는 이유는 이 개체가 종이 방어로
+   * 다 맞으면서 그보다 빨리 차오르는 쪽이기 때문이다 — 맞을수록 빨리 찬다.
    */
   elation?: {
     /** 겹 상한. 더 맞아도 이 위로는 오르지 않는다. */
     maxStacks: number;
-    /** 겹 하나가 올리는 방어력·저항력 비율(%). */
-    percentPerStack: number;
+    /** 겹 하나가 매초 회복시키는 최대 체력 비율(%). */
+    maxHpRegenPercentPerStack: number;
     /** 겹이 남아 있는 시간(초). 다시 맞으면 처음부터 다시 흐른다. */
     seconds: number;
   };

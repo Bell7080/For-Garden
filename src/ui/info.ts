@@ -50,7 +50,7 @@ import { observationQuestionForRelicAndDate } from "../data/observations";
 import type { PublicRelicProfileDto } from "../api/contracts";
 import type { Fighter } from "../core/skirmish";
 import { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../core/infoCapabilities";
-import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, overpaintDetonationDamageKeyword, defenseResistanceKeywords, elationKeyword, passiveShieldKeyword, periodicStackKeyword, skillDescription } from "./skillPresentation";
+import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, overpaintDetonationDamageKeyword, elationKeyword, passiveShieldKeyword, periodicStackKeyword, skillDescription } from "./skillPresentation";
 import type { KeywordDef } from "../data/keywords";
 import { addFactionMark, factionMarkBounds } from "./FactionMark";
 import { SQUADS } from "../data/factions";
@@ -1880,6 +1880,11 @@ export class InfoManager {
       : undefined;
     const damageSourceLabel = defensePercent !== undefined ? "방어력" : "공격력";
     const contextualKeywords: KeywordDef[] = [];
+    // 금강불괴가 덮는 막도 퍼센트가 아니라 실제로 덮이는 값으로 보여 준다.
+    if (def.ferocityTrait.effectId === "adamantBody") contextualKeywords.push({
+      id: "shield-value", term: String(Math.round(def.stats.hp * def.ferocityTrait.shieldMaxHpPercent / 100)), kind: "규칙",
+      description: `현재 최대 체력에서 ${def.ferocityTrait.shieldMaxHpPercent}%를 받아 계산한 보호막 수치다.`,
+    });
     if (convertedDamage !== undefined) contextualKeywords.push({
       id: "damage-value", term: String(convertedDamage), kind: "규칙",
       description: `현재 ${damageSourceLabel}에서 ${defensePercent ?? attackPercent}%를 받아 계산한 추가 피해 수치다.`,
@@ -1889,14 +1894,6 @@ export class InfoManager {
       id: "mette-staccato", term: "스타카토", kind: "규칙",
       description: "메테의 [[basic-attack|기본 공격]]과 같은 마법 추가타다. 적중한 대상을 [[stagger|경직]]시킨다.",
     });
-    // 금강불괴처럼 방어·저항을 올리는 폭주는 실제로 오르는 값을 태그로 보여 준다.
-    const braced = { defense, resistance: def.stats.res };
-    if (def.ferocityTrait.effectId === "adamantBody") {
-      contextualKeywords.push(...defenseResistanceKeywords(def.ferocityTrait.defenseResistancePercent, braced));
-    }
-    // 「한 판 더」는 희열 겹이 회복량을 정하므로, 폭주 쪽 팝업에서도 그 태그를 눌러 읽을 수 있어야 한다.
-    const elation = elationKeyword(def.passive, braced);
-    if (elation && def.ferocityTrait.effectId === "oneMoreRound") contextualKeywords.push(elation);
     // 폭주도 패시브와 같은 정형 상세창을 사용한다. 별도 제목 레이어 없이 아이콘 옆에서
     // 스킬 종류·이름·발현 유형을 한 번에 읽게 한다.
     openSkillPopup(this.scene, this.popups, this.keywords, {
@@ -1910,7 +1907,7 @@ export class InfoManager {
       contextualKeywords: contextualKeywords.length > 0 ? contextualKeywords : undefined,
       // 설명 수치는 전투가 읽는 특성 필드에서 생성해 정적 문구와 실제 효과가 갈라지지 않는다.
       description: "[[ferocity|야성 게이지]]가 가득 차면 폭주한다. "
-        + ferocityTraitDescription(def.ferocityTrait, { attack, defense, resistance: def.stats.res }),
+        + ferocityTraitDescription(def.ferocityTrait, { attack, defense, maxHp: def.stats.hp }),
     }, from);
   }
 
@@ -1923,14 +1920,11 @@ export class InfoManager {
       energy: 0, ferocity: 0, bondLevel: 0, ferocityFever: false,
       breakthrough: relicProgression.getProgress(finalDef.id).breakthrough,
     };
-    // 방어·저항을 올리는 것은 **퍼센트가 아니라 실제로 오르는 값**으로 보여 준다. 성장한
-    // 정의를 읽으므로 레벨·룬으로 능력치가 변하면 그 숫자도 함께 변한다.
-    const braced = attacker && { defense: attacker.def.stats.def, resistance: attacker.def.stats.res };
-    // 희열의 겹당 증가는 **태그 본문**이 말하는 값이라 여기 넣지 않는다 — 태그 팝업은 임시
-    // 사전을 물려받지 못해 그 안의 태그가 열리지 않으므로, 그쪽은 낱말로만 적는다.
-    const bracedPercent = "selfGuard" in skill && skill.selfGuard !== undefined ? skill.selfGuard.defenseResistancePercent
-      : "selfBulwark" in skill && skill.selfBulwark !== undefined ? skill.selfBulwark.defenseResistancePercent
-      : undefined;
+    // 최대 체력 비례 보호막은 **퍼센트가 아니라 실제로 덮이는 값**으로 보여 준다. 성장한
+    // 정의를 읽으므로 레벨·룬으로 체력이 변하면 그 숫자도 함께 변한다.
+    const maxHp = attacker?.def.stats.hp;
+    const guardShield = "selfGuard" in skill && skill.selfGuard !== undefined && maxHp !== undefined
+      ? Math.round(maxHp * skill.selfGuard.shieldMaxHpPercent / 100) : undefined;
     // 공격 속도 복합 궁극기(스피나 등)는 위력만 보는 previewSkillDamage로는 실제 한 방의
     // 절반만 계산되므로, 상단 라벨과 본문이 같은 하나의 합산 수치를 쓰도록 먼저 따로 구한다.
     const attackSpeedPower = "attackSpeedPower" in skill ? (skill as Ultimate).attackSpeedPower : undefined;
@@ -1982,9 +1976,12 @@ export class InfoManager {
         damageDetail, shieldDetail, healDetail,
         "kind" in skill ? undefined : periodicStackKeyword(skill as Skill),
         // 「고통의 희열」은 패시브 본문이 직접 가리키는 태그라 그 쪽지에도 함께 실린다.
-        "kind" in skill ? elationKeyword(skill as Passive, braced) : undefined,
-        // 버티는 궁극기가 올리는 방어·저항도 실제 값으로 보여 주고, 그 뜻을 눌러 읽게 한다.
-        ...(bracedPercent === undefined ? [] : defenseResistanceKeywords(bracedPercent, braced)),
+        "kind" in skill ? elationKeyword(skill as Passive) : undefined,
+        // 「인」이 덮는 막도 실제 값으로 보여 주고, 어디서 나온 수인지 눌러 읽게 한다.
+        guardShield === undefined || !("selfGuard" in skill) || skill.selfGuard === undefined ? undefined : {
+          id: "shield-value", term: String(guardShield), kind: "규칙" as const,
+          description: `현재 최대 체력에서 ${skill.selfGuard.shieldMaxHpPercent}%를 받아 계산한 보호막 수치다.`,
+        },
       ].filter((item): item is KeywordDef => item !== undefined),
       // 정적 문장에서 수치를 재해석하지 않고 전투 정의를 그대로 팝업에 넘긴다.
       targeting: "targeting" in skill ? skill.targeting as Ultimate["targeting"] : undefined,
@@ -2004,7 +2001,7 @@ export class InfoManager {
           // 본문은 아이콘 위 라벨과 **같은** 수치를 받아 쓴다. 따로 계산하면 위아래가 갈린다.
           damage: preview?.kind === "scaling" ? preview.amount : undefined,
           cycleDamage,
-          braced,
+          maxHp,
         }),
     };
   }

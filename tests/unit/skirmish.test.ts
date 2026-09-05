@@ -2756,7 +2756,7 @@ describe("토리카의 세 개의 뿔", () => {
 });
 
 describe("엘라의 프로젝트 TALISMAN", () => {
-  /** 엘라와 허스크 하나를 사거리 안에 세우고, 적은 때리지 않게 묶어 둔다. */
+  /** 엘라와 허스크 둘을 사거리 안에 세우고, 적은 때리지 않게 묶어 둔다. */
   function arena(enemies = ["husk-shell"]): SkirmishState {
     const state = createSkirmish([getRelic("ella")], enemies.map((id) => getRelic(id)), ARENA);
     const [ella, ...foes] = state.fighters;
@@ -2772,8 +2772,6 @@ describe("엘라의 프로젝트 TALISMAN", () => {
     const state = arena();
     const [ella, foe] = state.fighters;
     const passive = getRelic("ella").passive;
-    // 쓰러질 한 방은 실제 타격으로 받는다 — 죽음을 가로채는 자리가 공용 피해 경계 하나뿐임을
-    // 여기서 함께 고정한다.
     const fell = (): void => {
       // 「점」의 보호막이 그 한 방을 삼키지 않도록 엘라의 손을 묶고 보호막을 비운다.
       ella.hp = 1; ella.shield.amount = 0; ella.attackCooldown = 99;
@@ -2784,114 +2782,81 @@ describe("엘라의 프로젝트 TALISMAN", () => {
     };
     fell();
     expect(isFighterAlive(ella)).toBe(true);
-    expect(ella.undying).not.toBeNull();
     expect(ella.undying?.total).toBe(passive.durationSeconds);
-    // 무적인 동안은 어떤 피해도 HP에 닿지 않는다.
-    const held = ella.hp;
     expect(resolveReceivedDamage(ella, 99_999)).toMatchObject({ applied: 0, ignored: true });
-    expect(ella.hp).toBeGreaterThanOrEqual(held);
-    // 대신 아무 행동도 하지 못하고, 발동 순간 주위 적이 날아가 추적이 끊긴다.
+    // 발동 순간 주위 적이 날아가 추적이 끊긴다.
     expect(foe.targetId).toBeNull();
-    // 버티는 동안 최대 체력의 40%를 나누어 회복한다.
     for (let frame = 0; frame < 60 * (passive.durationSeconds ?? 0); frame += 1) stepSkirmish(state, 1 / 60);
     expect(ella.undying).toBeNull();
     expect(ella.hp).toBeGreaterThan(ella.maxHp * (passive.value ?? 0) / 100 * 0.9);
-    // 전투당 한 번뿐이다 — 두 번째로 쓰러질 한 방은 그대로 쓰러뜨린다.
+    // 전투당 한 번뿐이다.
     fell();
     expect(isFighterAlive(ella)).toBe(false);
   });
 
-  it("의 발경은 점 → 화 → 발을 걸음마다 다르게 낸다", () => {
+  it("의 발경은 세 걸음 모두 광역이고 점 → 화 → 발이 서로 다른 일을 한다", () => {
     const state = arena(["husk-shell", "husk-raptor"]);
     const [ella, primary, nearby] = state.fighters;
     nearby.x = primary.x + 60; nearby.y = primary.y;
     const cycle = getRelic("ella").basic.cycle!;
     expect(cycle.map((step) => step.name)).toEqual(["점(粘)", "화(化)", "발(發)"]);
 
-    // 1걸음 「점」 — 입힌 피해의 80%를 보호막으로 받는다.
+    // 1걸음 「점」 — 둘 다 맞고, 입힌 피해의 절반이 보호막으로 온다.
+    ella.shield.amount = 0;
     ella.attackCooldown = 0;
-    const first = stepSkirmish(state, 1 / 60);
-    const firstHit = first.find((event) => event.kind === "attack")!;
+    const first = stepSkirmish(state, 1 / 60).filter((event) => event.kind === "attack");
+    expect(first.map((event) => event.kind === "attack" && event.targetId).sort()).toEqual([primary.id, nearby.id].sort());
     expect(ella.shield.amount).toBeGreaterThan(0);
-    expect(firstHit.kind === "attack" && firstHit.targetId).toBe(primary.id);
     expect(primary.staggeredFor).toBe(0);
+    expect(primary.knockback).toBeNull();
 
-    // 2걸음 「화」 — 경직만 남기고 보호막은 더 붙지 않는다.
-    const shieldAfterFirst = ella.shield.amount;
+    // 2걸음 「화」 — 경직만 남기고 날리지 않는다.
     ella.attackCooldown = 0;
     stepSkirmish(state, 1 / 60);
     expect(primary.staggeredFor).toBeCloseTo(0.1);
-    expect(ella.shield.amount).toBeLessThanOrEqual(shieldAfterFirst);
+    expect(primary.knockback).toBeNull();
 
-    // 3걸음 「발」 — 혼자 광역이고, 입힌 피해의 50%를 회복한다.
-    ella.hp = ella.maxHp / 2;
-    const wounded = ella.hp;
+    // 3걸음 「발」 — 맞은 적이 실제로 날아간다. 기절이 아니라 좌표가 움직이는 것이 이 걸음의 값이다.
     ella.attackCooldown = 0;
-    const third = stepSkirmish(state, 1 / 60).filter((event) => event.kind === "attack");
-    expect(third.map((event) => event.kind === "attack" && event.targetId).sort())
-      .toEqual([primary.id, nearby.id].sort());
-    expect(ella.hp).toBeGreaterThan(wounded);
+    stepSkirmish(state, 1 / 60);
+    expect(primary.knockback).not.toBeNull();
+    expect(nearby.knockback).not.toBeNull();
+    expect(primary.stunnedFor).toBe(0);
+    // 회복은 두지 않는다 — 엘라는 보호막으로 버티고 회복은 노도니아의 축이다.
+    expect(cycle.some((step) => step.damageHealingPercent !== undefined)).toBe(false);
   });
 
-  it("의 인은 끌어당겨 도발하고, 맞은 만큼을 보호막으로 돌려받는다", () => {
+  it("의 인은 끌어당겨 도발하고 그 자리에서 보호막을 덮는다", () => {
     const state = arena(["husk-shell", "husk-raptor"]);
     const [ella, primary, nearby] = state.fighters;
     const guard = getRelic("ella").ultimate.selfGuard!;
-    // 끌려올 자리가 보이도록 둘 다 멀리 세우고, 다른 아군이 없어도 표적이 엘라로 바뀌는지 본다.
     primary.x = 800; nearby.x = 820; nearby.y = 1040;
     primary.targetId = null; nearby.targetId = null;
+    ella.shield.amount = 0;
     ella.energy = ULTIMATE_ENERGY_MAX;
     const far = Math.hypot(primary.x - ella.x, primary.y - ella.y);
     fireUltimate(state, ella.id);
 
-    // 끌어당김 → 도발 순이다. 붙잡아 두지 못하면 방어도 보호막도 의미가 없다.
+    // 끌어당김 → 도발 순이다. 붙잡아 두지 못하면 막도 의미가 없다.
     expect(Math.hypot(primary.x - ella.x, primary.y - ella.y)).toBeLessThan(far);
     expect(primary.taunted?.sourceId).toBe(ella.id);
-    expect(nearby.taunted?.sourceId).toBe(ella.id);
-    expect(primary.taunted?.total).toBe(guard.tauntSeconds);
-    expect(ella.guard).toMatchObject({ defenseResistancePercent: guard.defenseResistancePercent, total: guard.seconds });
-
-    // **버티기는 최종 피해를 깎지 않는다.** 방어력·저항력이 오를 뿐이라 피해 공식 안에서
-    // 반영되고, 그래서 방어를 지나가는 고정 피해는 이 궁극기를 그대로 뚫는다.
+    expect(nearby.taunted?.total).toBe(guard.tauntSeconds);
+    // 막은 **시전 순간** 온다. 끝난 뒤에 받으면 버티라고 준 막이 이미 늦는다.
+    expect(ella.shield.amount).toBe(Math.round(ella.maxHp * guard.shieldMaxHpPercent / 100));
+    // 최종 피해를 깎는 감쇠는 쓰지 않는다 — 뚫을 창이 있으면 뚫려야 한다.
+    ella.shield.amount = 0;
     expect(resolveReceivedDamage(ella, 1_000).applied).toBe(1_000);
-    const base = defensiveDefinition({ ...ella, guard: null }, state).def.stats;
-    const braced = defensiveDefinition(ella, state).def.stats;
-    expect(braced.def).toBeCloseTo(base.def * (1 + guard.defenseResistancePercent / 100), 5);
-    expect(braced.res).toBeCloseTo(base.res * (1 + guard.defenseResistancePercent / 100), 5);
-
-    // 맞은 만큼이 쌓인다. 시간이 끝나는 순간 그 몫의 25%가 보호막으로 돌아온다. 버티는 동안
-    // 엘라가 「점」으로 따로 보호막을 얻으면 돌려받는 몫과 섞이므로 손을 묶어 둔다.
-    ella.shield.amount = 0;
-    primary.x = ella.x + 20; primary.y = ella.y;
-    primary.attackCooldown = 0; primary.targetId = ella.id;
-    stepSkirmish(state, 1 / 60);
-    const taken = ella.guard!.taken;
-    expect(taken).toBeGreaterThan(0);
-    ella.shield.amount = 0;
-    for (let frame = 0; frame < 60 * guard.seconds + 2; frame += 1) {
-      ella.attackCooldown = 99;
-      primary.attackCooldown = 99;
-      nearby.attackCooldown = 99;
-      stepSkirmish(state, 1 / 60);
-    }
-    expect(ella.guard).toBeNull();
-    expect(ella.shield.amount).toBe(Math.round(taken * guard.shieldFromTakenPercent / 100));
   });
 
-  it("의 금강불괴는 굳어서 단단해지고 그 상태로 권을 한 바퀴 몰아친다", () => {
+  it("의 금강불괴는 굳는 순간 한 겹 덮이고 그 상태로 권을 한 바퀴 몰아친다", () => {
     const state = arena();
     const ella = state.fighters[0];
     const trait = getRelic("ella").ferocityTrait;
-    expect(trait).toMatchObject({ effectId: "adamantBody", defenseResistancePercent: 120, hastenedAttacks: 3, attackSpeedPercent: 150 });
-    const calmDef = defensiveDefinition(ella, state).def.stats;
+    expect(trait).toMatchObject({ effectId: "adamantBody", shieldMaxHpPercent: 15, hastenedAttacks: 3, attackSpeedPercent: 150 });
     const calmInterval = attackInterval(ella);
 
     ella.ferocity = 100; ella.ferocityFever = true;
     ella.hastenedAttacksLeft = trait.effectId === "adamantBody" ? trait.hastenedAttacks : 0;
-    // 방어력·저항이 함께 오른다 — 한쪽만 오르면 마법 딜러 앞에서 폭주가 값을 잃는다.
-    const feverDef = defensiveDefinition(ella, state).def.stats;
-    expect(feverDef.def).toBeGreaterThan(calmDef.def);
-    expect(feverDef.res).toBeGreaterThan(calmDef.res);
     // 몰아치는 것은 정해진 타수뿐이라 폭주 내내 빨라지지 않는다.
     expect(attackInterval(ella)).toBeLessThan(calmInterval);
     ella.hastenedAttacksLeft = 0;
@@ -2910,42 +2875,44 @@ describe("노도니아의 프로젝트 REVERIE", () => {
     return { state, nodonia, ally, foe };
   }
 
-  it("의 희열은 맞을 때마다 쌓여 방어력·저항력을 함께 올린다", () => {
+  it("의 희열은 맞을수록 재생이 빨라지고 방어를 올리지는 않는다", () => {
     const { state, nodonia, foe } = arena();
     const plan = getRelic("nodonia").passive.elation!;
     const calm = defensiveDefinition(nodonia, state).def.stats;
     foe.targetId = nodonia.id;
-
     for (let hit = 0; hit < 3; hit += 1) {
       foe.attackCooldown = 0;
       stepSkirmish(state, 1 / 60);
     }
     expect(nodonia.elation?.stacks).toBe(3);
-    // 겹이 곧 수치다 — 방어와 저항이 같은 비율로 함께 오른다.
+    // **방어는 그대로다.** 아프지 않으면 재생이 할 일이 없어 성질이 거꾸로 선다.
     const elated = defensiveDefinition(nodonia, state).def.stats;
-    expect(elated.def).toBeCloseTo(calm.def * (1 + 3 * plan.percentPerStack / 100), 5);
-    expect(elated.res).toBeCloseTo(calm.res * (1 + 3 * plan.percentPerStack / 100), 5);
-    // 맞지 않으면 식는다. 다시 맞으면 유지 시간이 처음부터 다시 흐른다.
-    for (let frame = 0; frame < 60 * plan.seconds + 2; frame += 1) {
+    expect(elated.def).toBe(calm.def);
+    expect(elated.res).toBe(calm.res);
+
+    // 겹이 곧 재생이다 — 1초가 지나면 겹 수에 비례해 돌아온다.
+    // 맞는 동안 이미 줄어든 몫을 되돌려 딱 한 번의 회복만 재도록 눈금을 다시 세운다.
+    nodonia.elation!.tickIn = 1;
+    nodonia.hp = nodonia.maxHp / 2;
+    const wounded = nodonia.hp;
+    for (let frame = 0; frame < 61; frame += 1) {
       foe.attackCooldown = 99;
       stepSkirmish(state, 1 / 60);
     }
-    expect(nodonia.elation).toBeNull();
+    const healed = nodonia.hp - wounded;
+    expect(healed).toBeCloseTo((nodonia.maxHp * 3 * plan.maxHpRegenPercentPerStack) / 100, 5);
   });
 
   it("의 희열은 상한에서 터지지 않고 그 자리에 머문다", () => {
     const { state, nodonia, foe } = arena();
     const plan = getRelic("nodonia").passive.elation!;
     foe.targetId = nodonia.id;
-    // 상한보다 여러 번 더 때려도 겹은 상한에 머문다 — 덧칠·저주와 같은 축이고 손질과 다르다.
     for (let hit = 0; hit < plan.maxStacks + 4; hit += 1) {
       foe.attackCooldown = 0;
       stepSkirmish(state, 1 / 60);
     }
     expect(nodonia.elation?.stacks).toBe(plan.maxStacks);
-    // 터지는 것이 없으므로 패시브만으로는 대신 받기가 켜지지 않는다.
     expect(nodonia.bulwark).toBeNull();
-    // 겹을 비우는 것은 시간뿐이다.
     for (let frame = 0; frame < 60 * plan.seconds + 2; frame += 1) {
       foe.attackCooldown = 99;
       stepSkirmish(state, 1 / 60);
@@ -2953,70 +2920,71 @@ describe("노도니아의 프로젝트 REVERIE", () => {
     expect(nodonia.elation).toBeNull();
   });
 
-  it("의 고통의 미학은 아군의 몫을 전부 대신 받고 끝나면 그만큼을 되찾는다", () => {
+  it("의 고통의 미학은 아군의 몫을 전부 대신 받으며 매초 차오른다", () => {
     const { state, nodonia, ally, foe } = arena();
     const plan = getRelic("nodonia").ultimate.selfBulwark!;
     nodonia.energy = ULTIMATE_ENERGY_MAX;
     fireUltimate(state, nodonia.id);
     expect(nodonia.bulwark).toMatchObject({
       percent: plan.redirectPercent,
-      defenseResistancePercent: plan.defenseResistancePercent,
-      healPercent: plan.healFromTakenPercent,
+      regenPercentPerSecond: plan.maxHpRegenPercentPerSecond,
       total: plan.seconds,
     });
-
-    // **최종 피해를 깎지 않는다.** 방어력·저항력이 오를 뿐이라 방어 관통·고정 피해는 그대로
-    // 지나가고, 대신 받은 몫도 같은 방어로 계산된다.
-    expect(resolveReceivedDamage(nodonia, 1_000).applied).toBe(1_000);
+    // **방어를 올리지 않는다.** 종이 방어로 다 맞으면서 그보다 빨리 차오르는 것이 이 궁극기다.
     const base = defensiveDefinition({ ...nodonia, bulwark: null }, state).def.stats;
     const braced = defensiveDefinition(nodonia, state).def.stats;
-    expect(braced.def).toBeCloseTo(base.def * (1 + plan.defenseResistancePercent / 100), 5);
-    expect(braced.res).toBeCloseTo(base.res * (1 + plan.defenseResistancePercent / 100), 5);
+    expect(braced.def).toBe(base.def);
+    expect(resolveReceivedDamage(nodonia, 1_000).applied).toBe(1_000);
 
-    // 아군이 받을 피해는 전부 노도니아에게 간다. 무적이 아니라 실제로 아프므로 회복의 분모가 선다.
+    // 아군이 받을 피해는 전부 노도니아에게 간다.
     ally.hp = ally.maxHp; ally.shield.amount = 0;
     nodonia.hp = nodonia.maxHp / 2; nodonia.shield.amount = 0;
     foe.targetId = ally.id; foe.attackCooldown = 0;
-    stepSkirmish(state, 1 / 60);
+    const shared = stepSkirmish(state, 1 / 60).filter((event) => event.kind === "damageShared");
+    expect(shared).toHaveLength(1);
     expect(ally.hp).toBe(ally.maxHp);
     expect(nodonia.hp).toBeLessThan(nodonia.maxHp / 2);
-    const taken = nodonia.bulwark!.taken;
-    expect(taken).toBeGreaterThan(0);
 
-    // 시간이 끝나는 순간 실제로 잃은 만큼의 절반이 돌아온다.
-    const wounded = nodonia.hp;
+    // 회복은 끝난 뒤가 아니라 **버티는 동안** 돈다 — 끝나고 받으면 그 사이에 쓰러진다.
     foe.attackCooldown = 99;
-    for (let frame = 0; frame < 60 * plan.seconds + 2; frame += 1) stepSkirmish(state, 1 / 60);
-    expect(nodonia.bulwark).toBeNull();
-    // 회복량은 실제로 잃은 만큼에서 나온다. 반올림 한 칸까지만 허용한다.
-    expect(Math.abs(nodonia.hp - wounded - taken * plan.healFromTakenPercent / 100)).toBeLessThanOrEqual(1);
+    const wounded = nodonia.hp;
+    for (let frame = 0; frame < 61; frame += 1) stepSkirmish(state, 1 / 60);
+    expect(nodonia.bulwark).not.toBeNull();
+    expect(nodonia.hp - wounded).toBeCloseTo(Math.round(nodonia.maxHp * plan.maxHpRegenPercentPerSecond / 100), 0);
   });
 
-  it("의 한 판 더는 잃은 체력과 희열 겹으로 회복량을 정한다", () => {
-    const { state, nodonia, ally, foe } = arena();
+  it("의 절정은 폭주 중 주위를 매초 지지고 잃은 체력을 되찾는다", () => {
+    const { state, nodonia, foe } = arena();
     const trait = getRelic("nodonia").ferocityTrait;
-    expect(trait).toMatchObject({ effectId: "oneMoreRound", missingHpPercentPerBasic: 2.5, missingHpPercentPerElationStack: 0.15, allyDamageHealPercent: 8 });
+    expect(trait).toMatchObject({ effectId: "climax", auraDamageMaxHpPercent: 1.5, radius: 240, missingHpPercentPerBasic: 3 });
     nodonia.ferocity = 100; nodonia.ferocityFever = true;
-    nodonia.hp = nodonia.maxHp / 2; nodonia.targetId = foe.id;
+    foe.x = nodonia.x + 100; foe.y = nodonia.y;
 
-    // 겹이 없을 때는 잃은 체력의 3%만 돈다.
-    const wounded = nodonia.hp;
-    nodonia.attackCooldown = 0;
+    // 폭주에 들어가는 첫 프레임에 공짜로 터지지 않는다 — 1초가 지나야 한 번 돈다.
+    const before = foe.hp;
     stepSkirmish(state, 1 / 60);
-    const plain = nodonia.hp - wounded;
-    expect(plain).toBeGreaterThan(0);
+    expect(foe.hp).toBe(before);
+    for (let frame = 0; frame < 60; frame += 1) {
+      nodonia.attackCooldown = 99;
+      stepSkirmish(state, 1 / 60);
+    }
+    const burned = before - foe.hp;
+    expect(burned).toBeGreaterThan(0);
+    expect(burned).toBe(Math.round(nodonia.maxHp * (trait.effectId === "climax" ? trait.auraDamageMaxHpPercent : 0) / 100));
 
-    // 겹이 쌓이면 같은 한 방이 더 많이 돌려준다 — 맞으면서 때리는 것이 이 폭주의 값이다.
+    // 반경 밖은 지져지지 않는다.
+    foe.x = nodonia.x + 2_000;
+    const outside = foe.hp;
+    for (let frame = 0; frame < 61; frame += 1) stepSkirmish(state, 1 / 60);
+    expect(foe.hp).toBe(outside);
+
+    // 기본 공격마다 잃은 체력의 일부가 돌아온다.
+    foe.x = nodonia.x + 20;
     nodonia.hp = nodonia.maxHp / 2;
-    nodonia.elation = { stacks: 10, remaining: 5, total: 5, percentPerStack: 4, maxStacks: 10 };
+    const wounded = nodonia.hp;
+    nodonia.targetId = foe.id;
     nodonia.attackCooldown = 0;
     stepSkirmish(state, 1 / 60);
-    expect(nodonia.hp - nodonia.maxHp / 2).toBeGreaterThan(plain);
-
-    // 아군이 낸 피해도 제 회복으로 돌아온다. 때린 쪽이 자신인지 아닌지를 가리지 않는다.
-    nodonia.hp = nodonia.maxHp / 2; nodonia.attackCooldown = 99;
-    ally.targetId = foe.id; ally.attackCooldown = 0;
-    stepSkirmish(state, 1 / 60);
-    expect(nodonia.hp).toBeGreaterThan(nodonia.maxHp / 2);
+    expect(nodonia.hp).toBeGreaterThan(wounded);
   });
 });

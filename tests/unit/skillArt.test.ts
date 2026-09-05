@@ -5,7 +5,7 @@ import { RELICS } from "../../src/data/relics";
 import { KEYWORDS } from "../../src/data/keywords";
 import type { BasicAttack, Skill } from "../../src/core/types";
 import { ELEMENT_TINT, ROLE_TINT, SKILL_ART_ASSETS, SKILL_ART_SLOTS, skillArtFor, skillArtKey, skillArtTint } from "../../src/ui/skillArt";
-import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageHealingLabel, damageKeyword, defenseResistanceKeywords, elationKeyword, ferocityTraitDescription, passiveDescription, overpaintDetonationDamageKeyword, passiveShieldKeyword, periodicStackKeyword, recoveryLabel, skillDescription, skillKeywordLayoutOptions, statusEffectLabel, targetingLabel } from "../../src/ui/skillPresentation";
+import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageHealingLabel, damageKeyword, elationKeyword, ferocityTraitDescription, passiveDescription, overpaintDetonationDamageKeyword, passiveShieldKeyword, periodicStackKeyword, recoveryLabel, skillDescription, skillKeywordLayoutOptions, statusEffectLabel, targetingLabel } from "../../src/ui/skillPresentation";
 import type { SkillInfoViewModel } from "../../src/ui/SkillPopup";
 
 /** 구워 둔 스킬 일러스트. 코드가 가리키는 파일이 실제로 있는지 확인한다. */
@@ -138,67 +138,54 @@ describe("노도니아 스킬 표시 계약", () => {
   const nodonia = RELICS.find((def) => def.id === "nodonia")!;
 
   it("의 희열은 본문이 아니라 눌러서 여는 태그가 수치를 갖는다", () => {
-    // 겹이 무엇을 하는지·얼마나 남는지·언제 터지는지가 한 덩어리라, 본문에 풀면 한 문장이
-    // 그 규칙 하나로 가득 찬다. 덧칠·손질과 같은 자리다.
     expect(passiveDescription(nodonia.passive, nodonia.stats.atk))
       .toBe("적에게 피격당할 때마다 [[nodonia-elation|희열]]이 한 겹 쌓인다.");
-    const tag = elationKeyword(nodonia.passive, { defense: nodonia.stats.def, resistance: nodonia.stats.res })!;
+    const tag = elationKeyword(nodonia.passive)!;
     expect(tag).toMatchObject({ id: "nodonia-elation", term: "희열", kind: "버프" });
     expect(tag.description).toBe(
-      "한 겹마다 방어력과 저항력이 6씩 오르며 최대 10겹까지 쌓인다."
+      "한 겹마다 매초 최대 체력의 0.4%를 회복하며 최대 10겹까지 쌓인다."
       + " 5초 동안 남으며 다시 맞으면 유지 시간이 처음부터 다시 흐른다.",
     );
-    // **퍼센트가 아니라 실제로 오르는 값**을 보여 준다 — 같은 4%도 개체마다 오르는 양이 다르고,
-    // 능력치 판에는 %가 아니라 숫자가 서 있다.
-    expect(tag.description).not.toContain("%");
-    // 능력치를 모르면 그때만 위력으로 되돌아간다.
-    expect(elationKeyword(nodonia.passive)!.description).toContain("방어력과 저항력이 4%");
-    // **터지지 않는다.** 겹 하나하나가 곧 방어·저항이라 채워 두는 것이 목적이지, 채워서 다른
-    // 일을 터뜨리는 것이 아니다 — 문장에도 그 말이 남으면 안 된다.
+    // **터지지 않는다.** 겹 하나하나가 곧 재생이라 채워 두는 것이 목적이지, 채워서 다른 일을
+    // 터뜨리는 것이 아니다 — 문장에도 그 말이 남으면 안 된다.
     expect(tag.description).not.toMatch(/터진|터져|터뜨/);
-    expect(passiveDescription(nodonia.passive, nodonia.stats.atk)).not.toContain("대신 받");
-    // 태그 팝업 안에서는 중첩 태그가 열리지 않으므로 낱말만 적는다.
+    // 태그 팝업은 화면의 임시 사전을 물려받지 못하므로 그 안에는 태그를 두지 않는다.
     expect(tag.description).not.toMatch(/\[\[/);
-    // 겹을 쓰지 않는 개체는 이 태그를 갖지 않는다.
-    expect(elationKeyword(RELICS.find((def) => def.id === "ella")!.passive)).toBeUndefined();
   });
 
-  it("의 고통의 미학은 무적이 아니라 대신 받는다고 말한다", () => {
+  it("의 고통의 미학은 대신 받으며 버티는 시간을 말한다", () => {
     expect(nodonia.ultimate.desc).toBeUndefined();
-    expect(nodonia.ultimate.selfBulwark).toMatchObject({ seconds: 3, redirectPercent: 100, defenseResistancePercent: 200, healFromTakenPercent: 40 });
-    const braced = { defense: nodonia.stats.def, resistance: nodonia.stats.res };
-    const text = skillDescription(nodonia.ultimate, { braced });
-    expect(text).toBe(
-      "3초 동안 모든 아군이 받는 피해를 대신 받고, 그동안 자신의 방어력이 [[defense-value|316]], 저항력이 [[resistance-value|300]] 오른다."
-      + " 시간이 끝나면 그동안 실제로 잃은 체력의 40%를 회복한다.",
-    );
-    // 태그의 뜻도 같은 계약에서 나온다 — 두 곳이 따로 계산하면 수치와 설명이 갈린다.
-    expect(defenseResistanceKeywords(200, braced)).toEqual([
-      { id: "defense-value", term: "316", kind: "규칙", description: "현재 방어력에서 200%를 받아 계산한 증가량이다." },
-      { id: "resistance-value", term: "300", kind: "규칙", description: "현재 저항력에서 200%를 받아 계산한 증가량이다." },
-    ]);
-    // 능력치를 모르는 자리(도감)에서만 위력으로 되돌아간다.
-    expect(skillDescription(nodonia.ultimate)).toContain("방어력과 저항력이 200% 오른다");
-    // 엘라의 불멸과 갈라 두는 지점이다 — 이 궁극기는 무적이 아니라 실제로 아프다.
+    expect(nodonia.ultimate.selfBulwark).toMatchObject({ seconds: 5, redirectPercent: 100, maxHpRegenPercentPerSecond: 5 });
+    const text = skillDescription(nodonia.ultimate);
+    expect(text).toBe("5초 동안 모든 아군이 받는 피해를 대신 받고, 그동안 매초 최대 체력의 5%를 회복한다.");
+    // 엘라와 갈라 두는 지점이다 — 무적도 아니고 방어를 올리지도 않는다. 종이 방어로 다 맞으면서
+    // 그보다 빨리 차오르는 것이 이 개체의 값이다.
     expect(text).not.toContain("무적");
-    // 최종 피해를 깎는 감쇠는 무엇으로 때리든 똑같이 들어 뚫을 방법이 없다. 이 개체도 엘라도
-    // 그래서 감쇠를 쓰지 않는다 — 문장에 "받는 피해"가 줄어든다는 말이 남으면 안 된다.
-    expect(text).not.toContain("받는 피해가");
+    expect(text).not.toContain("방어력");
+    expect(text).not.toContain("보호막");
   });
 
-  it("의 기본 공격은 방어력에서 피해를 뽑는다", () => {
-    expect(nodonia.basic).toMatchObject({ scalingStat: "def", power: 60 });
+  it("의 기본 공격은 최대 체력에서 피해를 뽑는다", () => {
+    expect(nodonia.basic).toMatchObject({ scalingStat: "hp", power: 5 });
     expect(nodonia.basic.desc).toBeUndefined();
-    // 능력치를 모르는 자리(도감)에서도 어느 능력치에서 나오는 배율인지 말한다.
-    expect(skillDescription(nodonia.basic)).toBe("적 한 명에게 방어력의 60% [[physical-damage|물리 피해]]를 준다.");
+    expect(skillDescription(nodonia.basic)).toBe("적 한 명에게 최대 체력의 5% [[physical-damage|물리 피해]]를 준다.");
     // 공격력은 어디에도 쓰이지 않으므로 로스터 최저다 — 쓰지 않는 능력치를 높게 적지 않는다.
     expect(Math.min(...RELICS.map((def) => def.stats.atk))).toBe(nodonia.stats.atk);
+    // 방어·저항은 아군 탱커 중 최저이고 체력은 최고다. 아프지 않으면 재생이 할 일이 없다.
+    // 적 전용 개체(폰토스·허스크)는 등급 띠 밖이라 비교에서 뺀다.
+    const allyTanks = RELICS.filter((def) => def.role === "tank" && !["pontos", "husk-raptor", "husk-shell", "husk-wing"].includes(def.id));
+    expect(Math.max(...allyTanks.map((def) => def.stats.hp))).toBe(nodonia.stats.hp);
+    for (const tank of allyTanks.filter((def) => def.id !== "nodonia")) {
+      expect(nodonia.stats.def, `${tank.name}보다 낮아야 한다`).toBeLessThan(tank.stats.def);
+      expect(nodonia.stats.res, `${tank.name}보다 낮아야 한다`).toBeLessThan(tank.stats.res);
+    }
   });
 
-  it("의 한 판 더는 잃은 체력과 희열 겹을 함께 말한다", () => {
+  it("의 절정은 주위를 지지고 잃은 체력을 되찾는다", () => {
+    expect(nodonia.ferocityTrait).toMatchObject({ name: "절정", effectId: "climax", auraDamageMaxHpPercent: 1.5, radius: 240, missingHpPercentPerBasic: 3 });
     expect(ferocityTraitDescription(nodonia.ferocityTrait, { attack: nodonia.stats.atk, defense: nodonia.stats.def })).toBe(
-      "[[basic-attack|기본 공격]]마다 [[missing-hp|잃은 체력]]의 2.5%를 회복하며, 회복량은 [[nodonia-elation|희열]] 한 겹마다 0.15%씩 더 오른다."
-      + " 아군이 적에게 입힌 피해의 8%만큼도 함께 회복한다.",
+      "매초 자신의 주위 모든 적에게 최대 체력의 1.5%만큼 [[fixed-damage|고정 피해]]를 준다."
+      + " [[basic-attack|기본 공격]]마다 [[missing-hp|잃은 체력]]의 3%를 회복한다.",
     );
   });
 });
@@ -206,40 +193,46 @@ describe("노도니아 스킬 표시 계약", () => {
 describe("엘라 스킬 표시 계약", () => {
   const ella = RELICS.find((def) => def.id === "ella")!;
 
-  it("의 발경은 걸음마다 제 문장을 갖는다", () => {
-    // 순환 기본 공격을 한 문장으로 뭉치면 세 권 중 하나만 설명한 문장이 된다.
+  it("의 발경은 걸음마다 제 줄을 갖는다", () => {
+    // 한 줄로 쭉 이으면 세 문장이 한 덩어리로 뭉쳐 어디서 걸음이 바뀌는지 「」를 눈으로 찾아야 한다.
     expect(ella.basic.cycle?.map((step) => step.name)).toEqual(["점(粘)", "화(化)", "발(發)"]);
     expect(ella.basic.desc).toBeUndefined();
-    expect(skillDescription(ella.basic, { cycleDamage: [90, 120, 150] })).toBe(
-      "다음 3가지를 차례로 반복한다."
-      + " 「점(粘)」 적 한 명에게 [[damage-value|90]]의 [[physical-damage|물리 피해]]를 주고, 입힌 피해의 60%만큼 보호막을 얻는다."
-      + " 「화(化)」 적 한 명에게 [[damage-value|120]]의 [[physical-damage|물리 피해]]를 주고 [[stagger|경직]]시킨다."
-      + " 「발(發)」 자신의 주위 모든 적에게 [[damage-value|150]]의 [[physical-damage|물리 피해]]를 주고, 입힌 피해의 35%만큼 체력을 회복한다.",
-    );
-    // 걸음에 적지 않은 값은 기본 공격 쪽에서 새어 들어오지 않는다 — 「점」은 경직시키지 않는다.
-    expect(skillDescription(ella.basic)).not.toContain("「점(粘)」 적 한 명에게 공격력의 90% [[physical-damage|물리 피해]]를 주고 [[stagger|경직]]");
+    expect(skillDescription(ella.basic, { cycleDamage: [64, 84, 108] })).toBe([
+      "다음 3가지를 차례로 반복한다.",
+      "「점(粘)」 자신의 주위 모든 적에게 [[damage-value|64]]의 [[physical-damage|물리 피해]]를 주고, 입힌 피해의 50%만큼 보호막을 얻는다.",
+      "「화(化)」 자신의 주위 모든 적에게 [[damage-value|84]]의 [[physical-damage|물리 피해]]를 주고 [[stagger|경직]]시킨다.",
+      "「발(發)」 자신의 주위 모든 적에게 [[damage-value|108]]의 [[physical-damage|물리 피해]]를 주고 [[knockback|날려버린다]].",
+    ].join("\n"));
+    // **세 걸음이 모두 광역이고 반경이 걸음마다 넓어진다.** 1·2단이 단일이면 순환이 화면에서
+    // 읽히지 않는다 — 같은 SD가 같은 자리에서 세 번 때리고 차이는 숫자뿐이 된다.
+    expect(ella.basic.cycle?.map((step) => step.targeting)).toEqual(["nearbyEnemies", "nearbyEnemies", "nearbyEnemies"]);
+    const radii = ella.basic.cycle!.map((step) => step.radius!);
+    expect(radii).toEqual([...radii].sort((a, b) => a - b));
+    // 회복은 두지 않는다 — 이 개체는 보호막으로 버티고, 회복은 노도니아의 축이다.
+    expect(ella.basic.cycle?.some((step) => step.damageHealingPercent !== undefined)).toBe(false);
     // 전투 엔진의 반경(px)은 문장에 새지 않고 대상 범위 문구로만 나온다.
-    expect(skillDescription(ella.basic)).not.toContain("200");
+    for (const radius of radii) expect(skillDescription(ella.basic)).not.toContain(String(radius));
   });
 
   it("의 인·불멸·금강불괴는 구조화 계약에서 문장을 짓는다", () => {
-    // 아무도 때리지 않는 궁극기라 위력이 없다. 끌어당김 → 도발 순으로 말한다.
-    expect(ella.ultimate.selfGuard).toMatchObject({ seconds: 5, defenseResistancePercent: 150, tauntSeconds: 5, shieldFromTakenPercent: 20 });
-    expect(skillDescription(ella.ultimate, { braced: { defense: ella.stats.def, resistance: ella.stats.res } })).toBe(
-      "주위 모든 적을 [[pull|끌어당겨]] 5초 동안 [[taunt|도발]]한다."
-      + " 5초 동안 방어력이 [[defense-value|219]], 저항력이 [[resistance-value|168]] 오르고, 그 시간이 끝나면 그동안 실제로 잃은 체력의 20%만큼 보호막을 얻는다.",
-    );
-    // 버티는 궁극기 둘 다 최종 피해 감쇠를 쓰지 않는다 — 뚫을 창이 있으면 뚫려야 한다.
+    // 불러 놓고 그 자리에서 덮는다 — 도발과 보호막이 한 조작에 든다.
+    expect(ella.ultimate.selfGuard).toMatchObject({ tauntSeconds: 5, shieldMaxHpPercent: 25 });
+    expect(skillDescription(ella.ultimate, { maxHp: ella.stats.hp }))
+      .toBe("주위 모든 적을 [[pull|끌어당겨]] 5초 동안 [[taunt|도발]]하고, [[shield-value|375]]만큼 보호막을 얻는다.");
+    // 능력치를 모르는 자리(도감)에서만 비율로 되돌아간다.
+    expect(skillDescription(ella.ultimate)).toContain("최대 체력의 25%만큼 보호막");
+    // 버티는 궁극기가 최종 피해 감쇠를 쓰지 않는 것은 그대로다 — 뚫을 창이 있으면 뚫려야 한다.
     expect(skillDescription(ella.ultimate)).not.toContain("받는 피해가");
+
     expect(passiveDescription(ella.passive, ella.stats.atk)).toBe(
       "전투당 한 번, 쓰러질 피해를 받으면 죽지 않고 4초 동안 [[invulnerable|무적]]이 되는 대신 아무 행동도 하지 못한다."
       + " 그동안 최대 체력의 30%를 매초 나누어 회복한다. 이때 주위 적을 [[knockback|날려버린다]].",
     );
-    expect(ferocityTraitDescription(ella.ferocityTrait, { attack: ella.stats.atk, defense: ella.stats.def, resistance: ella.stats.res }))
-      .toBe("방어력이 [[defense-value|175]], 저항력이 [[resistance-value|134]] 오른다. 이후 [[basic-attack|기본 공격]] 3회 동안 [[attack-speed|공격 속도]]가 150% 오른다.");
-    // 저항력을 모르면 위력으로 되돌아간다 — 도감처럼 한 축만 아는 자리가 있다.
+    expect(ella.ferocityTrait).toMatchObject({ effectId: "adamantBody", shieldMaxHpPercent: 15, hastenedAttacks: 3, attackSpeedPercent: 150 });
+    expect(ferocityTraitDescription(ella.ferocityTrait, { attack: ella.stats.atk, defense: ella.stats.def, maxHp: ella.stats.hp }))
+      .toBe("[[shield-value|225]]만큼 보호막을 얻는다. 이후 [[basic-attack|기본 공격]] 3회 동안 [[attack-speed|공격 속도]]가 150% 오른다.");
     expect(ferocityTraitDescription(ella.ferocityTrait, { attack: ella.stats.atk, defense: ella.stats.def }))
-      .toContain("방어력과 저항력이 120% 오른다");
+      .toContain("최대 체력의 15%만큼 보호막");
   });
 });
 
@@ -508,9 +501,10 @@ describe("스킬 설명문 양식 계약", () => {
         : cycle.map((step) => {
           const marker = `「${step.name}」 `;
           expect(text, `${step.name} 걸음`).toContain(marker);
-          return text.slice(text.indexOf(marker) + marker.length);
+          return text.slice(text.indexOf(marker) + marker.length).split("\n")[0];
         });
-      if (cycle !== undefined) expect(text.startsWith(`다음 ${cycle.length}가지를 차례로 반복한다. `)).toBe(true);
+      // 걸음마다 **줄**을 나눈다 — 한 줄로 이으면 어디서 걸음이 바뀌는지 「」를 눈으로 찾아야 한다.
+      if (cycle !== undefined) expect(text.startsWith(`다음 ${cycle.length}가지를 차례로 반복한다.\n`)).toBe(true);
       for (const body of bodies) {
         // 대상이 먼저다. 무엇을 때리는지 모른 채 수치부터 읽게 하지 않는다.
         expect(body).toMatch(/^(적 한 명|자신의 주위 모든 적|전장의 모든 적|지정한 원 안의 모든 적|\[\[charge\|돌진\]\]해 뚫고 지나간 길의 모든 적)에게 /);

@@ -98,7 +98,7 @@ export function skillKeywordLayoutOptions(
 }
 
 /** 폭주 설명의 모든 수치를 실제 전투 계약에서 만들어 밸런스 조정 후 문구가 남지 않게 한다. */
-export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack: number; defense: number; resistance?: number }): string {
+export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack: number; defense: number; maxHp?: number }): string {
   if (trait.effectId === "attackIntervalReduction") return `공격 간격이 ${trait.reductionPercent}% 짧아진다.`;
   if (trait.effectId === "damageReduction") return `받는 피해가 ${trait.reductionPercent}% 줄어든다.`;
   // 덧셈형 확률도 플레이어에게는 일반적인 퍼센트 기호로 보여 주고 내부 산술 단위는 노출하지 않는다.
@@ -121,8 +121,10 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
   // 바르거나 터뜨리거나 한 번에 하나뿐이라는 것이 이 폭주의 전부다. 번갈아 한다고 적지 않는
   // 이유는 실제 규칙이 "지금 걸려 있나"만 보기 때문이다 — 공속이 빨라져도 그 판단은 같다.
   if (trait.effectId === "adamantBody") {
-    const braced = stats?.resistance === undefined ? undefined : { defense: stats.defense, resistance: stats.resistance };
-    return `${defenseResistancePhrase(trait.defenseResistancePercent, braced)} 오른다. 이후 [[basic-attack|기본 공격]] ${trait.hastenedAttacks}회 동안 [[attack-speed|공격 속도]]가 ${trait.attackSpeedPercent}% 오른다.`;
+    const shield = stats?.maxHp === undefined ? `최대 체력의 ${trait.shieldMaxHpPercent}%`
+      : `[[shield-value|${Math.round(stats.maxHp * trait.shieldMaxHpPercent / 100)}]]`;
+    return `${shield}만큼 보호막을 얻는다.`
+      + ` 이후 [[basic-attack|기본 공격]] ${trait.hastenedAttacks}회 동안 [[attack-speed|공격 속도]]가 ${trait.attackSpeedPercent}% 오른다.`;
   }
   if (trait.effectId === "venomousEncore") {
     return `공격 속도가 ${trait.attackSpeedBonusPercent}% 증가한다. [[basic-attack|기본 공격]]이 자신의 [[poison|중독]]에 걸리지 않은 적에게는 중독을 부여하고, 이미 걸린 적에게는 그 중독을 [[liquidate|청산]]한다.`;
@@ -134,9 +136,9 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
   if (trait.effectId === "frenzyGaze") return `폭주 중 [[basic-attack|기본 공격]]에 적중한 적을 ${trait.seconds}초 동안 [[frenzy|광란]]시킨다. 전이된 타격으로는 발동하지 않는다.`;
   // 최대 체력이 아니라 **잃은 체력** 비례라는 것이 이 폭주의 전부다 — 앞에 서서 맞는 것이
   // 값인 개체라, 성한 몸일 때 가장 많이 도는 회복이면 성질이 거꾸로 선다.
-  if (trait.effectId === "oneMoreRound") {
-    return `[[basic-attack|기본 공격]]마다 [[missing-hp|잃은 체력]]의 ${trait.missingHpPercentPerBasic}%를 회복하며, 회복량은 [[nodonia-elation|희열]] 한 겹마다 ${trait.missingHpPercentPerElationStack}%씩 더 오른다.`
-      + ` 아군이 적에게 입힌 피해의 ${trait.allyDamageHealPercent}%만큼도 함께 회복한다.`;
+  if (trait.effectId === "climax") {
+    return `매초 자신의 주위 모든 적에게 최대 체력의 ${trait.auraDamageMaxHpPercent}%만큼 [[fixed-damage|고정 피해]]를 준다.`
+      + ` [[basic-attack|기본 공격]]마다 [[missing-hp|잃은 체력]]의 ${trait.missingHpPercentPerBasic}%를 회복한다.`;
   }
 
   // 방어력 계수는 토리카처럼 추가 피해가 있는 범위 타격만 노출하고, 일반 전이 특성은 원래 피해 비율만 보여 준다.
@@ -160,52 +162,16 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
  * 주입한다 — 메테의 스타카토와 같은 자리다. 문장은 실제 전투가 읽는 필드에서 지으므로
  * 겹 상한이나 비율을 조정하면 팝업도 함께 바뀐다.
  */
-export function elationKeyword(passive: Passive, stats?: DefenseResistanceStats): KeywordDef | undefined {
+export function elationKeyword(passive: Passive): KeywordDef | undefined {
   const plan = passive.elation;
   if (passive.kind !== "painfulElation" || plan === undefined) return undefined;
   return {
     id: "nodonia-elation",
     term: "희열",
     kind: "버프",
-    description: `한 겹마다 ${defenseResistancePhrase(plan.percentPerStack, stats, false)} 오르며 최대 ${plan.maxStacks}겹까지 쌓인다.`
+    description: `한 겹마다 매초 최대 체력의 ${plan.maxHpRegenPercentPerStack}%를 회복하며 최대 ${plan.maxStacks}겹까지 쌓인다.`
       + ` ${plan.seconds}초 동안 남으며 다시 맞으면 유지 시간이 처음부터 다시 흐른다.`,
   };
-}
-
-/** 방어·저항 증가를 보여 줄 때 함께 쓰는 현재 능력치다. 없으면 위력(%)으로 되돌아간다. */
-export interface DefenseResistanceStats { defense: number; resistance: number }
-
-/**
- * "방어력과 저항력이 얼마나 오르는가" 한 덩어리.
- *
- * **퍼센트가 아니라 실제로 오르는 값을 보여 준다** — 같은 200%도 개체마다 오르는 양이 다르고,
- * 플레이어가 보는 능력치 판에는 %가 아니라 숫자가 서 있다. 능력치를 모르는 자리(도감)에서만
- * 위력으로 되돌아간다.
- *
- * 두 값이 같으면 한 번만 말한다(`방어력과 저항력이 6씩`) — 값이 갈리는 순간 다시 나열한다.
- */
-function defenseResistancePhrase(percent: number, stats?: DefenseResistanceStats, tagged = true): string {
-  if (stats === undefined) return `방어력과 저항력이 ${percent}%`;
-  const defense = Math.round(stats.defense * percent / 100);
-  const resistance = Math.round(stats.resistance * percent / 100);
-  const show = (id: string, amount: number): string => tagged ? `[[${id}|${amount}]]` : String(amount);
-  if (defense === resistance) return `방어력과 저항력이 ${show("defense-value", defense)}씩`;
-  return `방어력이 ${show("defense-value", defense)}, 저항력이 ${show("resistance-value", resistance)}`;
-}
-
-/** 위 문구가 만든 두 태그의 뜻. 화면은 이 정의를 그대로 임시 사전에 실어 준다. */
-export function defenseResistanceKeywords(percent: number, stats?: DefenseResistanceStats): KeywordDef[] {
-  if (stats === undefined) return [];
-  const defense = Math.round(stats.defense * percent / 100);
-  const resistance = Math.round(stats.resistance * percent / 100);
-  const keywords: KeywordDef[] = [
-    { id: "defense-value", term: String(defense), kind: "규칙", description: `현재 방어력에서 ${percent}%를 받아 계산한 증가량이다.` },
-  ];
-  // 두 값이 같으면 문구도 태그를 하나만 쓴다.
-  if (defense !== resistance) {
-    keywords.push({ id: "resistance-value", term: String(resistance), kind: "규칙", description: `현재 저항력에서 ${percent}%를 받아 계산한 증가량이다.` });
-  }
-  return keywords;
 }
 
 /** 아다지오의 무게 보호막처럼 패시브가 실제 능력치에서 계산하는 수치를 조회 가능한 태그로 만든다. */
@@ -334,7 +300,7 @@ export function allyHealPowerKeyword(percent: number, ap?: number): KeywordDef |
  * 필드(보호막 전환)까지 이 유니온이 함께 든다 — 그래야 걸음 하나를 설명할 때도 같은 절
  * 조립기를 그대로 지나간다.
  */
-export type DescribedSkill = Skill | BasicAttack | Ultimate | (BasicAttack & Pick<BasicAttackStep, "shieldFromDamagePercent">);
+export type DescribedSkill = Skill | BasicAttack | Ultimate | (BasicAttack & Pick<BasicAttackStep, "shieldFromDamagePercent" | "knockback">);
 
 export interface SkillDescriptionStats {
   /** 회복량을 실제 값으로 환산할 때 쓴다. */
@@ -355,8 +321,8 @@ export interface SkillDescriptionStats {
    * 되돌아간다.
    */
   cycleDamage?: readonly number[];
-  /** 방어·저항 증가를 실제 값으로 환산할 때 쓴다. 없으면 위력(%)으로 되돌아간다. */
-  braced?: DefenseResistanceStats;
+  /** 최대 체력 비례 보호막을 실제 값으로 환산할 때 쓴다. 없으면 위력(%)으로 되돌아간다. */
+  maxHp?: number;
 }
 
 /**
@@ -382,13 +348,13 @@ export function skillDescription(
     // 앞에 서는 궁극기. 아무도 때리지 않고 아군의 몫을 대신 받는다.
     if ("selfBulwark" in skill && skill.selfBulwark !== undefined) {
       const plan = skill.selfBulwark;
-      return `${plan.seconds}초 동안 모든 아군이 받는 피해를 대신 받고, 그동안 자신의 ${defenseResistancePhrase(plan.defenseResistancePercent, stats.braced)} 오른다.`
-        + ` 시간이 끝나면 그동안 실제로 잃은 체력의 ${plan.healFromTakenPercent}%를 회복한다.`;
+      return `${plan.seconds}초 동안 모든 아군이 받는 피해를 대신 받고, 그동안 매초 최대 체력의 ${plan.maxHpRegenPercentPerSecond}%를 회복한다.`;
     }
     // 버티는 궁극기. 끌어당겨 붙잡아 두고 덜 맞은 만큼을 끝나고 돌려받는다.
     if ("selfGuard" in skill && skill.selfGuard !== undefined) {
       const guard = skill.selfGuard;
-      return `주위 모든 적을 [[pull|끌어당겨]] ${guard.tauntSeconds}초 동안 [[taunt|도발]]한다. ${guard.seconds}초 동안 ${defenseResistancePhrase(guard.defenseResistancePercent, stats.braced)} 오르고, 그 시간이 끝나면 그동안 실제로 잃은 체력의 ${guard.shieldFromTakenPercent}%만큼 보호막을 얻는다.`;
+      const shield = stats.maxHp === undefined ? `최대 체력의 ${guard.shieldMaxHpPercent}%` : `[[shield-value|${Math.round(stats.maxHp * guard.shieldMaxHpPercent / 100)}]]`;
+      return `주위 모든 적을 [[pull|끌어당겨]] ${guard.tauntSeconds}초 동안 [[taunt|도발]]하고, ${shield}만큼 보호막을 얻는다.`;
     }
     // 때리지 않고 자리만 잡는 궁극기. 위력을 적지 않는 이유는 그 피해가 이어질 일반 공격의
     // 몫이기 때문이다 — 여기에 수치를 적으면 같은 한 방이 위아래에서 두 수로 보인다.
@@ -434,10 +400,13 @@ export function skillDescription(
         statusEffects: step.statusEffects,
         damageHealingPercent: step.damageHealingPercent,
         shieldFromDamagePercent: step.shieldFromDamagePercent,
+        knockback: step.knockback,
       } as DescribedSkill;
       return `「${step.name}」 ${skillDescription(stepSkill, { ...stats, damage: stats.cycleDamage?.[index] })}`;
     });
-    return [`다음 ${cycle.length}가지를 차례로 반복한다.`, ...steps].join(" ");
+    // **걸음마다 줄을 나눈다.** 한 줄로 쭉 이으면 세 문장이 한 덩어리로 뭉쳐 어디서 걸음이
+    // 바뀌는지 읽으려면 「」를 눈으로 찾아야 한다.
+    return [`다음 ${cycle.length}가지를 차례로 반복한다.`, ...steps].join("\n");
   }
   const sentences: string[] = [];
   const clauses = skillEffectClauses(skill, stats);
@@ -481,6 +450,11 @@ function skillEffectClauses(skill: DescribedSkill, stats: SkillDescriptionStats)
   }
   if ("shieldFromDamagePercent" in skill && skill.shieldFromDamagePercent !== undefined) {
     clauses.push({ text: `입힌 피해의 ${skill.shieldFromDamagePercent}%만큼 보호막을 얻는다`, joinWithComma: true });
+  }
+  // 몇 초 날아가고 몇 번 튕기는지는 적지 않는다 — 날아가는 그림이 곧 그 답이고, 태그가
+  // "날아가는 동안 움직이지도 때리지도 못한다"까지 이미 말한다.
+  if ("knockback" in skill && skill.knockback !== undefined) {
+    clauses.push({ text: `[[knockback|날려버린다]]` });
   }
   if ("lowestHpAllyHealingFromDamagePercent" in skill && skill.lowestHpAllyHealingFromDamagePercent !== undefined) {
     clauses.push({ text: `입힌 피해의 ${skill.lowestHpAllyHealingFromDamagePercent}%만큼 현재 체력이 가장 낮은 생존 아군을 회복한다`, joinWithComma: true });
@@ -607,9 +581,10 @@ function skillDamagePhrase(skill: DescribedSkill, stats: SkillDescriptionStats):
       : `[[damage-value|${composite.term}]]의 ${damageTag}`;
   }
   if (stats.damage !== undefined) return `[[damage-value|${stats.damage}]]의 ${damageTag}`;
-  const label = (scaling: "atk" | "ap" | "def" | undefined): string => scaling === "def" ? "방어력"
-    : scaling === "ap" || (scaling === undefined && skill.damageType === "magical") ? "주문력"
-      : "공격력";
+  const label = (scaling: "atk" | "ap" | "def" | "hp" | undefined): string => scaling === "def" ? "방어력"
+    : scaling === "hp" ? "최대 체력"
+      : scaling === "ap" || (scaling === undefined && skill.damageType === "magical") ? "주문력"
+        : "공격력";
   const secondary = "secondaryScaling" in skill ? skill.secondaryScaling : undefined;
   // 능력치를 모르는 자리(도감)에서도 두 축을 모두 말한다 — 한쪽만 적으면 실제 피해의 절반만
   // 설명한 문장이 된다.

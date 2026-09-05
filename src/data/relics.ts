@@ -1133,30 +1133,31 @@ export const RELICS: RelicDef[] = [
     // 하늘에서 내려다보며 넓게 훑는 손이라 발굴 특화는 화석 쪽에 붙인다.
     excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 0.31, efficiencyMultiplier: 1.1 },
     /**
-     * **공격력이 로스터 최저다**(46). 이 개체의 기본 공격은 방어력에서 피해를 뽑고 궁극기는
-     * 아무도 때리지 않으므로, 공격력은 어디에도 쓰이지 않는다 — 쓰지 않는 능력치를 높게 적으면
-     * 실전에 없는 힘이 전투력만 부풀린다(스테라의 주문력이 그랬다).
+     * **종이 방어에 산더미 체력이다.** 방어력 86·저항력 80은 탱커 중 최저이고 체력 2280은
+     * 로스터 최고다(엘라 1500). 다 맞으면서 그보다 빨리 차오르는 것이 이 개체의 값이라,
+     * 방어를 올리면 오히려 회복이 값을 잃는다 — 아프지 않으면 재생이 할 일이 없다.
      *
-     * 대신 체력·방어력·저항력이 모두 로스터 최고다. 저항이 방어보다 낮지 않은 이유는 아군의
-     * 몫을 대신 받는 개체라 물리든 마법이든 가리지 않고 맞기 때문이다.
+     * **공격력이 로스터 최저다**(46). 기본 공격도 폭주도 최대 체력에서 피해를 뽑으므로 공격력은
+     * 어디에도 쓰이지 않는다 — 쓰지 않는 능력치를 높게 적으면 실전에 없는 힘이 전투력만
+     * 부풀린다(스테라의 주문력이 그랬다).
      */
     stats: {
-      hp: 1640,
-      def: 158,
-      res: 150,
+      hp: 2280,
+      def: 86,
+      res: 80,
       atk: 46,
       ap: 24,
-      attackSpeed: 68,
-      moveSpeed: 70,
+      attackSpeed: 74,
+      moveSpeed: 78,
       critChance: 10,
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
       ferocityGain: 0,
     },
-    // 맞은 만큼이 곧 회복량이 된다. 잃은 체력 비례라 아플수록 많이 돌아오고, 희열이 쌓여 있을수록
-    // 더 돈다 — 안전한 자리로 물러나면 겹이 식어 회복도 함께 줄어든다.
-    ferocityTrait: { name: "한 판 더", effectId: "oneMoreRound", missingHpPercentPerBasic: 2.5, missingHpPercentPerElationStack: 0.15, allyDamageHealPercent: 8 },
+    // 폭주 중에는 서 있는 것만으로 주위가 지져진다. 회복만 있던 자리에 적에게 남기는 값을 하나
+    // 두는 것이라, 탱커가 자기 숫자만 바꾸다 화면에서 사라지는 일이 없다.
+    ferocityTrait: { name: "절정", effectId: "climax", auraDamageMaxHpPercent: 1.5, radius: 240, missingHpPercentPerBasic: 3 },
     passive: {
       // kind가 painfulElation인 패시브는 passiveDescription()이 구조화 필드로 문장을 만들므로
       // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
@@ -1165,18 +1166,19 @@ export const RELICS: RelicDef[] = [
       kind: "painfulElation",
       iconAssetId: "skill-icon-buff",
       effectType: "buff",
-      // Passive.value는 공용 필수 필드라, 이 패시브에서는 겹 하나가 올리는 비율을 담아 둔다.
-      value: 4,
+      // Passive.value는 공용 필수 필드라, 이 패시브에서는 겹 하나가 매초 돌리는 비율을 담아 둔다.
+      value: 0.4,
       durationSeconds: 5,
-      elation: { maxStacks: 10, percentPerStack: 4, seconds: 5 },
-      desc: "적에게 피격당할 때마다 희열이 한 겹 쌓여 겹당 방어력·저항력이 4%씩 오른다. 최대 열 겹까지 쌓이고 5초 동안 남으며, 다시 맞으면 유지 시간이 처음부터 다시 흐른다.",
+      elation: { maxStacks: 10, maxHpRegenPercentPerStack: 0.4, seconds: 5 },
+      desc: "적에게 피격당할 때마다 희열이 한 겹 쌓여 겹당 매초 최대 체력의 0.4%를 회복한다. 최대 열 겹까지 쌓이고 5초 동안 남으며, 다시 맞으면 유지 시간이 처음부터 다시 흐른다.",
     },
     basic: {
       id: "nodonia-basic",
       name: "착한 아이에게는 포상을",
-      // 방어력에서 피해를 뽑는다. 앞에 서는 것이 곧 세지는 것이라, 단단해질수록 손도 매워진다.
-      power: 60,
-      scalingStat: "def",
+      // 최대 체력에서 피해를 뽑는다. 방어가 종이라 방어 계수는 쓸 수 없고, 이 개체가 키우는
+      // 유일한 축이 체력이라 몸집이 곧 손이 된다.
+      power: 5,
+      scalingStat: "hp",
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -1190,9 +1192,9 @@ export const RELICS: RelicDef[] = [
       cost: 150,
       // 아무도 때리지 않고 아무 데도 가지 않는다. 앞에 서서 아군의 몫을 대신 받는 것이 전부다.
       targeting: "self",
-      // 감쇠가 아니라 방어·저항 증가다 — 뚫을 창이 있으면 뚫려야 하므로, 방어 관통과 고정
-      // 피해는 이 버티기를 그대로 지나간다.
-      selfBulwark: { seconds: 3, redirectPercent: 100, defenseResistancePercent: 200, healFromTakenPercent: 40 },
+      // 방어를 올리지 않고 회복만 돌린다. 종이 방어로 다 맞으면서 그보다 빨리 차오르는 것이
+      // 이 궁극기이고, 끝난 뒤가 아니라 **버티는 동안** 돌아야 그 사이에 쓰러지지 않는다.
+      selfBulwark: { seconds: 5, redirectPercent: 100, maxHpRegenPercentPerSecond: 5 },
     },
   },
 
@@ -1245,7 +1247,8 @@ export const RELICS: RelicDef[] = [
       ferocityGain: 0,
     },
     // 굳어서 단단해지고, 그 상태로 권을 딱 한 바퀴(발경 3연) 몰아친다.
-    ferocityTrait: { name: "금강불괴(金剛不壞)", effectId: "adamantBody", defenseResistancePercent: 120, hastenedAttacks: 3, attackSpeedPercent: 150 },
+    // 굳는 순간 몸이 한 겹 덮이고, 그 상태로 권을 딱 한 바퀴(발경 3연) 몰아친다.
+    ferocityTrait: { name: "금강불괴(金剛不壞)", effectId: "adamantBody", shieldMaxHpPercent: 15, hastenedAttacks: 3, attackSpeedPercent: 150 },
     passive: {
       // kind가 undyingTalisman인 패시브는 passiveDescription()이 구조화 필드로 문장을 만들므로
       // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
@@ -1270,11 +1273,19 @@ export const RELICS: RelicDef[] = [
       effectType: "physical",
       damageType: "physical",
       targeting: "single",
-      // 세 가지 권법을 차례로 반복한다. 붙이고(보호막) — 흔들고(경직) — 쓸어낸다(광역·회복).
+      /**
+       * 세 걸음이 **모두 자기 주위 광역**이고 반경이 걸음마다 넓어진다 — 붙이고(보호막)
+       * 흔들고(경직) 쓸어 낸다(날려버림). 1·2단이 단일이던 시절에는 순환이 화면에서 읽히지
+       * 않았다: 같은 SD가 같은 자리에서 세 번 때리고 차이는 숫자뿐이었다.
+       *
+       * 마지막 걸음이 기절이 아니라 **날려버림**인 이유는 기절이 토리카의 정체성이고, 여기서
+       * 필요한 것은 "여기서 끊는다"를 눈으로 보여 주는 것이기 때문이다. 회복은 두지 않는다 —
+       * 이 개체는 보호막으로 버티고, 회복은 노도니아의 축이다.
+       */
       cycle: [
-        { name: "점(粘)", power: 90, shieldFromDamagePercent: 60 },
-        { name: "화(化)", power: 120, statusEffects: [{ kind: "stagger", seconds: 0.1 }] },
-        { name: "발(發)", power: 150, targeting: "nearbyEnemies", radius: 200, damageHealingPercent: 35 },
+        { name: "점(粘)", power: 80, targeting: "nearbyEnemies", radius: 150, shieldFromDamagePercent: 50 },
+        { name: "화(化)", power: 105, targeting: "nearbyEnemies", radius: 190, statusEffects: [{ kind: "stagger", seconds: 0.1 }] },
+        { name: "발(發)", power: 135, targeting: "nearbyEnemies", radius: 240, knockback: { seconds: 0.5, speed: 620, bounces: 1 } },
       ],
     },
     ultimate: {
@@ -1285,12 +1296,12 @@ export const RELICS: RelicDef[] = [
       cost: 140,
       // 아무도 때리지 않는다. 끌어당겨 붙잡아 두고 버틴 시간을 보호막으로 바꾸는 것이 전부다.
       targeting: "self",
+      // 불러 놓고 그 자리에서 덮는다. 끝난 뒤에 돌려받으면 순서가 거꾸로다 — 끌어당겨 도발한
+      // 5초를 버티라고 주는 막이 5초 뒤에 오면 이미 늦는다.
       selfGuard: {
-        seconds: 5,
-        defenseResistancePercent: 150,
-        pull: { radius: 420, distance: 150 },
         tauntSeconds: 5,
-        shieldFromTakenPercent: 20,
+        pull: { radius: 420, distance: 150 },
+        shieldMaxHpPercent: 25,
       },
     },
   },

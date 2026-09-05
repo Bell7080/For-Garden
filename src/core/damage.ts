@@ -5,7 +5,7 @@ import type { Skill } from "./types";
 import type { Combatant, DamageInput } from "./combatTypes";
 
 /** 미리보기와 태그가 함께 읽는 능력치 이름이다. */
-export type ScalingStatLabel = "공격력" | "주문력" | "방어력";
+export type ScalingStatLabel = "공격력" | "주문력" | "방어력" | "체력";
 
 /** 정보창이 확정 피해와 대상 없는 능력치 배율을 구분하는 미리보기 결과다. */
 export type DamagePreview =
@@ -34,6 +34,9 @@ export function currentAbilityPower(combatant: Combatant): number {
 /** 스킬이 고른 능력치 하나를 읽는다. 고르지 않았으면 피해 종류가 정한다. */
 function scalingStatValue(attacker: Combatant, stat: DamageInput["scalingStat"], damageType: DamageInput["damageType"]): number {
   if (stat === "def") return attacker.def.stats.def;
+  // 최대 체력에서 뽑는 개체는 공격력을 아예 쓰지 않는다. 현재 체력이 아니라 **최대** 체력이라
+  // 아플 때 갑자기 약해지지 않는다 — 앞에 서서 맞는 개체의 피해가 맞을수록 줄면 성질이 거꾸로다.
+  if (stat === "hp") return attacker.def.stats.hp;
   if (stat === "atk") return attacker.def.stats.atk;
   if (stat === "ap") return currentAbilityPower(attacker);
   return damageType === "physical" ? attacker.def.stats.atk : currentAbilityPower(attacker);
@@ -81,9 +84,11 @@ export function previewSkillDamage(attacker: Combatant, skill: Skill, target?: C
   }
   if (!target) {
     const label = (stat: DamageInput["scalingStat"]): ScalingStatLabel =>
-      stat === "def" ? "방어력" : stat === "atk" || (stat === undefined && skill.damageType === "physical") ? "공격력" : "주문력";
+      stat === "def" ? "방어력" : stat === "hp" ? "체력"
+        : stat === "atk" || (stat === undefined && skill.damageType === "physical") ? "공격력" : "주문력";
     const base = (stat: DamageInput["scalingStat"]): number =>
-      stat === "def" ? attacker.def.stats.def : label(stat) === "공격력" ? attacker.def.stats.atk : attacker.def.stats.ap;
+      stat === "def" ? attacker.def.stats.def : stat === "hp" ? attacker.def.stats.hp
+        : label(stat) === "공격력" ? attacker.def.stats.atk : attacker.def.stats.ap;
     const primary = base(skill.scalingStat) * skill.power / 100;
     const secondary = skill.secondaryScaling;
     return {

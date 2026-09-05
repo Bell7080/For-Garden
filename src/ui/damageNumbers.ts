@@ -166,7 +166,7 @@ export const DAMAGE_FLAVOR_COLOR: Record<Exclude<DamageFlavor, "debuff">, string
   damage: "#f4f2ee",
   true: "#b98cf0",
   heal: COLOR.hpText,
-  shield: "#7fb4ec",
+  shield: COLOR.shieldText,
   blocked: "#9a9a9a",
 };
 

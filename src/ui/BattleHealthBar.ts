@@ -8,12 +8,15 @@ import {
   setUnitHealthValue,
   stepUnitHealthBar,
   type HealthValueInput,
+  setUnitShield,
   type UnitHealthBarState,
 } from "./unitHealthBarState";
 
 /** 공용 HoloBar를 오염시키지 않고 전투에서만 붉은 피해 잔상과 사건 기반 반응을 덧씌운다. */
 export class BattleHealthBar {
   public readonly trail: HoloBar;
+  /** 체력 아래에 한 겹 더 넓게 깔리는 막. 체력을 넘긴 만큼만 푸르게 남는다. */
+  public readonly shield: HoloBar;
   public readonly value: HoloBar;
   private health: UnitHealthBarState;
 
@@ -22,6 +25,9 @@ export class BattleHealthBar {
     this.motionFactor = battleUiMotionFactor(motion);
     // 아래 HoloBar가 홈·붉은 층을 그리고, 위 바의 테두리·눈금이 두 채움 모두를 또렷하게 덮는다.
     this.trail = new HoloBar(scene, x, y, width, height, { color: COLOR.danger });
+    // 막을 체력보다 **먼저** 그린다. 체력이 그 위를 덮으므로 넘치는 오른쪽만 푸르게 남고,
+    // 두 채움이 겹치는 자리에서 색이 섞이지 않는다.
+    this.shield = new HoloBar(scene, x, y, width, height, { color: COLOR.shieldFill, trackAlpha: 0 });
     this.value = new HoloBar(scene, x, y, width, height, { color: COLOR.hpFill, trackAlpha: 0, outline: true, ticks: 3 });
     this.paint();
   }
@@ -29,10 +35,13 @@ export class BattleHealthBar {
   /** 머리 위 체력 바와 같은 설정을 쓰는 프로필 전용 반응 배율이다. */
   private readonly motionFactor: number;
 
-  get objects(): readonly Phaser.GameObjects.Graphics[] { return [...this.trail.objects, ...this.value.objects]; }
+  get objects(): readonly Phaser.GameObjects.Graphics[] { return [...this.trail.objects, ...this.shield.objects, ...this.value.objects]; }
 
   /** 실제 목표 HP와 원인을 함께 받아 보간값만으로 피해/회복을 추측하지 않는다. */
   public setHealth(input: HealthValueInput): void { this.health = setUnitHealthValue(this.health, input); }
+
+  /** 막의 잔량만 갱신한다. 체력 사건과 갈라 두어 새 호출부가 막을 빠뜨릴 수 없게 한다. */
+  public setShield(amount: number, maxHp: number): void { this.health = setUnitShield(this.health, amount, maxHp); }
 
   /** 사망처럼 기다리면 안 되는 상태는 모든 층을 한 프레임에 최종 비율로 정리한다. */
   public snap(ratio: number): void { this.health = createUnitHealthBarState(ratio); this.paint(); }
@@ -54,6 +63,7 @@ export class BattleHealthBar {
 
   private paint(): void {
     this.trail.setValue(this.health.damageTrail, COLOR.danger);
+    this.shield.setValue(this.health.shown + this.health.shield, COLOR.shieldFill);
     this.value.setValue(this.health.shown, COLOR.hpFill);
   }
 }

@@ -25,6 +25,10 @@ export interface UnitHealthBarState {
   reactionLeft: number;
   /** 최대 체력 대비 피해를 단계화한 0~3 피격 강도다. */
   reactionLevel: number;
+  /** 체력 위에 이어 붙는 보호막의 최대 체력 대비 비율이다. 체력과 같은 속도로 따라온다. */
+  shield: number;
+  /** 보호막이 요구하는 최종 비율이다. */
+  shieldTarget: number;
 }
 
 /** 낮은 프레임률에서도 지수 보간 계수가 1을 넘지 않도록 상한을 둔다. */
@@ -56,7 +60,7 @@ export function damageReactionLevel(ratio: number): number {
 /** 전투 시작과 재사용 시 세 표시값을 같은 지점에 즉시 맞춘다. */
 export function createUnitHealthBarState(ratio = 1): UnitHealthBarState {
   const value = clamp01(ratio);
-  return { shown: value, damageTrail: value, target: value, trailHold: 0, reactionLeft: 0, reactionLevel: 0 };
+  return { shown: value, damageTrail: value, target: value, trailHold: 0, reactionLeft: 0, reactionLevel: 0, shield: 0, shieldTarget: 0 };
 }
 
 /** HP 입력을 비율로 바꾸고, 명시적인 피해 사건에만 잔상과 피격 타이머를 갱신한다. */
@@ -83,6 +87,20 @@ export function setUnitHealthValue(state: UnitHealthBarState, input: number | He
   };
 }
 
+/**
+ * 막의 잔량만 갱신한다.
+ *
+ * 체력 사건과 **일부러 갈라 둔다.** 피해·회복 호출부는 여덟 곳이라 거기에 막을 끼워 넣으면
+ * 새 호출부가 하나만 빠뜨려도 그 순간 막이 사라진 것처럼 보인다. 막은 사건이 아니라
+ * `Fighter.shield`의 잔량이므로 HUD가 매 프레임 읽어 여기로 넘긴다.
+ */
+export function setUnitShield(state: UnitHealthBarState, amount: number, maxHp: number): UnitHealthBarState {
+  // 막은 체력을 넘길 수 있으므로 바 밖으로 넘치지 않게 여기서 한 번만 자른다. 호출부마다
+  // 자르면 같은 막이 머리 위 바와 프로필에서 다른 길이로 선다.
+  const shieldTarget = clamp01(Math.max(0, amount) / Math.max(1, maxHp));
+  return shieldTarget === state.shieldTarget ? state : { ...state, shieldTarget };
+}
+
 /** 한 프레임을 진행한다. 큰 delta도 보간을 초과시키지 않고 잔상을 현재 체력 이상으로 고정한다. */
 export function stepUnitHealthBar(state: UnitHealthBarState, deltaMs: number, motionFactor = 1): UnitHealthBarState {
   const seconds = Math.max(0, deltaMs) / 1000;
@@ -96,5 +114,8 @@ export function stepUnitHealthBar(state: UnitHealthBarState, deltaMs: number, mo
   // 부동소수점 오차와 저프레임 보간 모두에서 붉은 잔상이 체력 아래로 파고들지 않게 한다.
   damageTrail = Math.max(shown, state.target, damageTrail);
   const reactionLeft = Math.max(0, state.reactionLeft - seconds);
-  return { ...state, shown, damageTrail, trailHold, reactionLeft, reactionLevel: reactionLeft > 0 ? state.reactionLevel : 0 };
+  // 막도 체력과 같은 속도로 따라온다. 한쪽만 즉시 뛰면 둘이 맞닿은 자리가 프레임마다 어긋난다.
+  const shield = motionFactor === 0 ? state.shieldTarget
+    : state.shield + (state.shieldTarget - state.shield) * Math.min(1, seconds * HEALTH_BAR_MOTION.shownEase * motionFactor);
+  return { ...state, shown, damageTrail, trailHold, shield, reactionLeft, reactionLevel: reactionLeft > 0 ? state.reactionLevel : 0 };
 }

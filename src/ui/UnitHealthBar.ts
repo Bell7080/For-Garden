@@ -7,6 +7,7 @@ import {
   createUnitHealthBarState,
   HEALTH_BAR_MOTION,
   setUnitHealthValue,
+  setUnitShield,
   stepUnitHealthBar,
   type HealthValueInput,
   type UnitHealthBarState,
@@ -76,6 +77,12 @@ export class UnitHealthBar extends Phaser.GameObjects.Container {
     return this;
   }
 
+  /** 막의 잔량만 갱신한다. 체력 사건과 갈라 두어 새 호출부가 막을 빠뜨릴 수 없게 한다. */
+  setShield(amount: number, maxHp: number): this {
+    this.health = setUnitShield(this.health, amount, maxHp);
+    return this;
+  }
+
   /** 지금 값을 목표로 즉시 맞춘다. 전투 시작처럼 이어 보일 필요가 없는 순간에만 쓴다. */
   snap(ratio: number): this {
     this.health = createUnitHealthBarState(ratio);
@@ -109,6 +116,10 @@ export class UnitHealthBar extends Phaser.GameObjects.Container {
     const trailFilled = width * this.health.damageTrail;
     if (trailFilled > 0.5) this.paintFill(trailFilled, COLOR.danger, 0.95);
     const filled = width * this.health.shown;
+    // 막은 체력 **오른쪽으로 이어 붙는다.** 체력 아래에 한 겹 더 넓게 깔면 넘치는 만큼만
+    // 푸르게 남아, 체력 채움과 겹치는 자리에서 두 색이 섞이지 않는다.
+    const shielded = Math.min(width, filled + width * this.health.shield);
+    if (shielded > filled + 0.5) this.paintFill(shielded, COLOR.shieldFill, 1);
     if (filled > 0.5) {
       this.paintFill(filled, this.color, 1);
     }

@@ -1,3 +1,15 @@
+/**
+ * 전투 조작 칩(배속·자동 궁극기·연출)이 서는 자리다.
+ *
+ * 전장을 가리지 않으면서 엄지가 닿는 우하단, 프로필 줄 바로 위에 모인다. 궁극기와 관련된
+ * 두 조작(자동·연출)은 세로로 붙여 한 덩어리로 읽힌다.
+ *
+ * **Phaser를 모르는 이 표가 자리를 갖는다.** 전투 씬에 두면 좌표를 읽으려는 E2E가 씬을
+ * import하게 되고, 그 순간 Node가 Phaser를 통째로 불러 `window is not defined`로 스펙
+ * 수집 전체가 멈춘다(전 스펙이 "No tests found"가 됐다).
+ */
+export const BATTLE_CONTROLS = { rowY: 1288, rightX: 1080 - 130, speedX: 1080 - 335, stackGap: 92, depth: 320 } as const;
+
 /** 전투 프로필 한 칸의 1080×1920 기준 실제 외곽과 내부 기준선이다. */
 export const BATTLE_PROFILE_LAYOUT = {
   cardWidth: 300,

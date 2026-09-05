@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createUnitHealthBarState, setUnitHealthValue, stepUnitHealthBar } from "../../src/ui/unitHealthBarState";
+import { createUnitHealthBarState, setUnitHealthValue, setUnitShield, stepUnitHealthBar } from "../../src/ui/unitHealthBarState";
 
 /** Phaser 없이 체력 표시의 시간 규칙만 검증해 렌더러 변경과 전투 규칙을 분리한다. */
 describe("unit health bar state", () => {
@@ -57,5 +57,38 @@ describe("unit health bar state", () => {
       expect(state.damageTrail).toBeGreaterThanOrEqual(state.shown);
       expect(state.damageTrail).toBeGreaterThanOrEqual(state.target);
     }
+  });
+
+  it("막은 최대 체력 대비 비율로 잘리고 바 밖으로 넘치지 않는다", () => {
+    const state = setUnitShield(createUnitHealthBarState(1), 250, 100);
+    expect(state.shieldTarget).toBe(1);
+    expect(setUnitShield(state, 30, 100).shieldTarget).toBeCloseTo(0.3, 5);
+    expect(setUnitShield(state, -5, 100).shieldTarget).toBe(0);
+  });
+
+  it("막은 체력 사건이 아니라 잔량으로만 바뀐다", () => {
+    // 피해·회복 호출부는 여덟 곳이라, 그쪽이 막을 건드리면 하나만 빠뜨려도 막이 사라져 보인다.
+    const shielded = setUnitShield(createUnitHealthBarState(1), 40, 100);
+    const hit = setUnitHealthValue(shielded, { currentHp: 60, maxHp: 100, damage: 40, cause: "damage" });
+    expect(hit.shieldTarget).toBe(0.4);
+    const healed = setUnitHealthValue(hit, { currentHp: 90, maxHp: 100, cause: "heal" });
+    expect(healed.shieldTarget).toBe(0.4);
+  });
+
+  it("막도 체력과 같은 속도로 따라오고 움직임을 끄면 즉시 맞는다", () => {
+    const state = setUnitShield(createUnitHealthBarState(1), 50, 100);
+    expect(state.shield).toBe(0);
+    const eased = stepUnitHealthBar(state, 16);
+    expect(eased.shield).toBeGreaterThan(0);
+    expect(eased.shield).toBeLessThan(0.5);
+    expect(stepUnitHealthBar(state, 16, 0).shield).toBe(0.5);
+  });
+
+  it("막이 사라지면 표시도 0으로 돌아온다", () => {
+    let state = setUnitShield(createUnitHealthBarState(1), 50, 100);
+    state = stepUnitHealthBar(state, 1_000);
+    state = setUnitShield(state, 0, 100);
+    state = stepUnitHealthBar(state, 1_000);
+    expect(state.shield).toBeCloseTo(0, 3);
   });
 });

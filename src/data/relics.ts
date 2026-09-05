@@ -154,9 +154,12 @@ export const RELICS: RelicDef[] = [
       effectType: "physical",
       damageType: "physical",
       targeting: "single",
-      // 매 타격마다 1초씩 걸면 공격 간격이 1.92초라 상대의 시간을 절반이나 빼앗는다. 두 번에
-      // 한 번 0.5초로 낮춰 "가끔 끊는" 정도로 둔다 — 실효 점유가 52%에서 13%로 내려간다.
-      statusEffectEvery: 2,
+      // 뿔 셋이 모여야 들이받는다. 매 타격마다 1초씩 걸면 공격 간격이 1.92초라 상대의 시간을
+      // 절반이나 빼앗아 과했고, 세 타에 한 번 0.5초면 실효 점유가 9%로 내려간다. 주기를
+      // 숨기지 않는 이유는 자기 프로필의 칩이 그 수를 들고 있어 다음 한 방이 언제인지
+      // 플레이어가 보고 셀 수 있기 때문이다(파치의 배트와 같은 자리다).
+      statusEffectEvery: 3,
+      statusEffectStackName: "세 개의 뿔",
       statusEffects: [{ kind: "stun", seconds: 0.5 }],
     },
     ultimate: {

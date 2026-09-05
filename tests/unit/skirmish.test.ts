@@ -2664,3 +2664,34 @@ describe("델로피의 그랜드 피날레", () => {
     expect(state.fighters[0].stealthFor).toBe(getRelic("delopi").passive.durationSeconds);
   });
 });
+
+describe("토리카의 세 개의 뿔", () => {
+  it("은 자기 칩에 겹을 쌓다가 세 번째 타격에만 기절시킨다", () => {
+    const state = createSkirmish([getRelic("anky")], [getRelic("husk-shell")], ARENA);
+    const [torika, foe] = state.fighters;
+    torika.x = 440; torika.y = 1000; foe.x = 460; foe.y = 1000; foe.attackCooldown = 99;
+    foe.maxHp = 400_000; foe.hp = 400_000; torika.targetId = foe.id;
+
+    const seen: { stacks?: number; stunned: number }[] = [];
+    for (let hit = 0; hit < 3; hit += 1) {
+      torika.attackCooldown = 0;
+      stepSkirmish(state, 1 / 60);
+      const chip = activeCombatBuffs(state, torika.id).find((buff) => buff.id.startsWith("hit-count"));
+      seen.push({ stacks: chip?.stacks, stunned: foe.stunnedFor });
+    }
+    // 뿔은 **때린 쪽**에 쌓인다 — 다음 한 방이 언제인지는 적이 아니라 토리카의 타수가 정한다.
+    expect(seen.map(({ stacks }) => stacks)).toEqual([1, 2, undefined]);
+    // 셋이 모이는 그 타격에만 기절이 걸리고, 그 순간 겹은 비워져 칩이 사라진다.
+    expect(seen[0].stunned).toBe(0);
+    expect(seen[1].stunned).toBe(0);
+    const stun = getRelic("anky").basic.statusEffects?.find((effect) => effect.kind === "stun");
+    expect(seen[2].stunned).toBe(stun?.kind === "stun" ? stun.seconds : 0);
+
+    // 칩 이름은 스킬 이름이 아니라 쌓이는 것의 이름을 쓴다.
+    torika.attackCooldown = 0;
+    stepSkirmish(state, 1 / 60);
+    expect(activeCombatBuffs(state, torika.id).find((buff) => buff.id.startsWith("hit-count"))?.name).toBe("세 개의 뿔");
+    // 이름을 적지 않은 개체(파치)는 예전처럼 스킬 이름을 그대로 쓴다.
+    expect(getRelic("pachi").basic.statusEffectStackName).toBeUndefined();
+  });
+});

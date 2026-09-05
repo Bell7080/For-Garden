@@ -1241,7 +1241,7 @@ export function activeCombatBuffs(state: SkirmishState, fighterId: string): Acti
       sourceFighterId: fighter.id,
       targetFighterId: fighter.id,
       skillId: fighter.def.basic.id,
-      name: fighter.def.basic.name,
+      name: fighter.def.basic.statusEffectStackName ?? fighter.def.basic.name,
       description: `${every}번째 공격마다 부가 효과가 함께 터진다`,
       stacks: fighter.statusHitCount % every,
       // 시간이 아니라 타격 수가 채우는 값이라 시계를 두지 않는다.

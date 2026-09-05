@@ -257,6 +257,13 @@ export type BasicAttack = AttackSkill & {
   lowestHpAllyHealingFromDamagePercent?: number;
   /** 실제 기본 공격 행동 수를 세어 주기 끝 타격을 난수 소비 없이 확정 치명타로 만든다. */
   periodicCritical?: { every: number };
+  /**
+   * 주기 타수 칩에 세울 이름. 없으면 스킬 이름을 그대로 쓴다.
+   *
+   * 쌓이는 것이 이야기 안에서 제 이름을 가진 경우에만 적는다 — 토리카의 「세 개의 뿔」이
+   * 그렇다. 파치처럼 그냥 몇 대째인지만 세는 개체는 스킬 이름이 곧 그 값이라 비워 둔다.
+   */
+  statusEffectStackName?: string;
 } & ({ combo?: undefined } | {
   combo: {
     /** 한 공격 행동에서 추가 적중이 발생할 확률(%)이다. */

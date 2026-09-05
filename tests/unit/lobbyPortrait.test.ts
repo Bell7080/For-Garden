@@ -47,7 +47,7 @@ const JOINTS: Readonly<Record<string, { eyes: readonly [readonly [number, number
   maki: { eyes: [[528, 327], [620, 306]], core: [599, 457] },
   keris: { eyes: [[490, 330], [569, 361]], core: [537, 454] },
   delopi: { eyes: [[496, 319], [556, 294]], core: [537, 394] },
-  ella: { eyes: [[512, 289], [584, 271]], core: [570, 389] },
+  ella: { eyes: [[529, 280], [603, 262]], core: [589, 377] },
   nodonia: { eyes: [[467, 344], [515, 327]], core: [520, 420] },
 };
 
@@ -175,11 +175,33 @@ describe("정보창 전신의 얼굴 크기", () => {
   );
 
   it("는 노도니아의 portraitZoom을 떼면 다시 실패한다", () => {
-    // 보정을 되돌리면 예전 값(중앙값의 0.58배)으로 돌아가는지 직접 확인한다.
+    // 보정을 되돌리면 예전 값(중앙값의 0.58배)으로 돌아가는지 직접 확인한다. 배율 자체를
+    // 여기 적지 않는 이유는, 값을 조정할 때마다 테스트가 그 숫자만 따라 고쳐지면 정작
+    // "보정이 필요하다"는 사실은 아무도 검사하지 않게 되기 때문이다.
     const asset = PORTRAITS.nodonia;
-    expect(asset.portraitZoom).toBe(1.45);
+    expect(asset.portraitZoom ?? 1).toBeGreaterThan(1);
     const bare = faceSizeOf("nodonia") / (asset.portraitZoom ?? 1);
     const center = median(LOBBY_RELICS.map((relic) => faceSizeOf(relic.portraitAssetId)));
     expect(bare / center).toBeLessThan(0.7);
+  });
+
+  /**
+   * **화면에서 읽히는 크기는 얼굴이 아니라 판을 채우는 몸이다.**
+   *
+   * 얼굴만 맞추면 얼굴이 작게 그려진 원화는 배율이 계속 올라가고, 그때 함께 커지는 것은
+   * 실루엣 전체다 — 노도니아가 1.45에서 폭 1748px(다른 개체 최대 1429px)이 되어 "너무
+   * 확대됐다"로 보였다. 위 얼굴 하한과 이 폭 상한이 함께 서야 배율이 한쪽으로 달아나지 않는다.
+   */
+  it("는 어느 전신도 다른 개체보다 크게 판을 채우지 않는다", () => {
+    const widthOf = (assetId: string): number => {
+      const asset = PORTRAITS[assetId];
+      const height = INFO_PORTRAIT_FOCUS.height * (asset.portraitZoom ?? 1);
+      return (asset.content.right - asset.content.left) * height / (asset.content.bottom - asset.content.top);
+    };
+    for (const relic of LOBBY_RELICS) {
+      const others = LOBBY_RELICS.filter((other) => other !== relic).map((other) => widthOf(other.portraitAssetId));
+      // 가장 넓은 개체보다 5% 넘게 넓으면 그 원화만 판을 통째로 덮는다.
+      expect(widthOf(relic.portraitAssetId) / Math.max(...others), relic.name).toBeLessThanOrEqual(1.05);
+    }
   });
 });

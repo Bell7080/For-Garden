@@ -2803,7 +2803,7 @@ describe("엘라의 프로젝트 TALISMAN", () => {
     expect(ella.hp).toBeGreaterThan(wounded);
   });
 
-  it("의 인은 끌어당겨 도발하고, 덜 맞은 만큼을 보호막으로 돌려받는다", () => {
+  it("의 인은 끌어당겨 도발하고, 맞은 만큼을 보호막으로 돌려받는다", () => {
     const state = arena(["husk-shell", "husk-raptor"]);
     const [ella, primary, nearby] = state.fighters;
     const guard = getRelic("ella").ultimate.selfGuard!;
@@ -2814,28 +2814,38 @@ describe("엘라의 프로젝트 TALISMAN", () => {
     const far = Math.hypot(primary.x - ella.x, primary.y - ella.y);
     fireUltimate(state, ella.id);
 
-    // 끌어당김 → 도발 순이다. 붙잡아 두지 못하면 감쇠도 보호막도 의미가 없다.
+    // 끌어당김 → 도발 순이다. 붙잡아 두지 못하면 방어도 보호막도 의미가 없다.
     expect(Math.hypot(primary.x - ella.x, primary.y - ella.y)).toBeLessThan(far);
     expect(primary.taunted?.sourceId).toBe(ella.id);
     expect(nearby.taunted?.sourceId).toBe(ella.id);
     expect(primary.taunted?.total).toBe(guard.tauntSeconds);
-    expect(ella.guard).toMatchObject({ reductionPercent: guard.damageReductionPercent, total: guard.seconds });
+    expect(ella.guard).toMatchObject({ defenseResistancePercent: guard.defenseResistancePercent, total: guard.seconds });
 
-    // 버티는 동안 받는 피해가 절반으로 줄고, 줄인 몫이 그대로 쌓인다.
+    // **버티기는 최종 피해를 깎지 않는다.** 방어력·저항력이 오를 뿐이라 피해 공식 안에서
+    // 반영되고, 그래서 방어를 지나가는 고정 피해는 이 궁극기를 그대로 뚫는다.
+    expect(resolveReceivedDamage(ella, 1_000).applied).toBe(1_000);
+    const base = defensiveDefinition({ ...ella, guard: null }, state).def.stats;
+    const braced = defensiveDefinition(ella, state).def.stats;
+    expect(braced.def).toBeCloseTo(base.def * (1 + guard.defenseResistancePercent / 100), 5);
+    expect(braced.res).toBeCloseTo(base.res * (1 + guard.defenseResistancePercent / 100), 5);
+
+    // 맞은 만큼이 쌓인다. 시간이 끝나는 순간 그 몫의 25%가 보호막으로 돌아온다. 버티는 동안
+    // 엘라가 「점」으로 따로 보호막을 얻으면 돌려받는 몫과 섞이므로 손을 묶어 둔다.
     ella.shield.amount = 0;
-    const resolved = resolveReceivedDamage(ella, 1_000);
-    expect(resolved.applied).toBeLessThan(1_000);
-    expect(ella.guard!.mitigated).toBeGreaterThan(0);
-    const mitigated = ella.guard!.mitigated;
-
-    // 시간이 끝나는 순간 그 몫의 25%가 보호막으로 돌아온다. 버티는 동안 엘라가 「점」으로
-    // 따로 보호막을 얻으면 돌려받는 몫과 섞이므로, 이 구간에서는 손을 묶어 둔다.
+    primary.x = ella.x + 20; primary.y = ella.y;
+    primary.attackCooldown = 0; primary.targetId = ella.id;
+    stepSkirmish(state, 1 / 60);
+    const taken = ella.guard!.taken;
+    expect(taken).toBeGreaterThan(0);
+    ella.shield.amount = 0;
     for (let frame = 0; frame < 60 * guard.seconds + 2; frame += 1) {
       ella.attackCooldown = 99;
+      primary.attackCooldown = 99;
+      nearby.attackCooldown = 99;
       stepSkirmish(state, 1 / 60);
     }
     expect(ella.guard).toBeNull();
-    expect(ella.shield.amount).toBeCloseTo(Math.round(mitigated * guard.shieldFromMitigatedPercent / 100), 0);
+    expect(ella.shield.amount).toBe(Math.round(taken * guard.shieldFromTakenPercent / 100));
   });
 
   it("의 금강불괴는 굳어서 단단해지고 그 상태로 권을 한 바퀴 몰아친다", () => {
@@ -2903,7 +2913,7 @@ describe("노도니아의 프로젝트 REVERIE", () => {
     }
     // 손질과 같은 성질이다 — 상한에 닿는 그 프레임에 터지고 겹은 0으로 돌아간다.
     expect(nodonia.elation).toBeNull();
-    expect(nodonia.bulwark).toMatchObject({ percent: plan.burst.redirectPercent, total: plan.burst.seconds, reductionPercent: 0 });
+    expect(nodonia.bulwark).toMatchObject({ percent: plan.burst.redirectPercent, total: plan.burst.seconds, defenseResistancePercent: 0 });
 
     // 이제 아군이 맞으면 그 몫의 30%가 노도니아에게 간다.
     ally.hp = ally.maxHp; nodonia.hp = nodonia.maxHp; nodonia.shield.amount = 0; ally.shield.amount = 0;
@@ -2921,13 +2931,18 @@ describe("노도니아의 프로젝트 REVERIE", () => {
     fireUltimate(state, nodonia.id);
     expect(nodonia.bulwark).toMatchObject({
       percent: plan.redirectPercent,
-      reductionPercent: plan.damageReductionPercent,
+      defenseResistancePercent: plan.defenseResistancePercent,
       healPercent: plan.healFromTakenPercent,
       total: plan.seconds,
     });
 
-    // 앞에 서 있는 동안은 **받는 모든 피해**가 줄어든다 — 대신 받은 몫만이 아니다.
-    expect(resolveReceivedDamage(nodonia, 1_000).applied).toBeLessThan(1_000 * (1 - plan.damageReductionPercent / 100) + 1);
+    // **최종 피해를 깎지 않는다.** 방어력·저항력이 오를 뿐이라 방어 관통·고정 피해는 그대로
+    // 지나가고, 대신 받은 몫도 같은 방어로 계산된다.
+    expect(resolveReceivedDamage(nodonia, 1_000).applied).toBe(1_000);
+    const base = defensiveDefinition({ ...nodonia, bulwark: null }, state).def.stats;
+    const braced = defensiveDefinition(nodonia, state).def.stats;
+    expect(braced.def).toBeCloseTo(base.def * (1 + plan.defenseResistancePercent / 100), 5);
+    expect(braced.res).toBeCloseTo(base.res * (1 + plan.defenseResistancePercent / 100), 5);
 
     // 아군이 받을 피해는 전부 노도니아에게 간다. 무적이 아니라 실제로 아프므로 회복의 분모가 선다.
     ally.hp = ally.maxHp; ally.shield.amount = 0;

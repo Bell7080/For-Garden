@@ -1187,7 +1187,9 @@ export const RELICS: RelicDef[] = [
       cost: 150,
       // 아무도 때리지 않고 아무 데도 가지 않는다. 앞에 서서 아군의 몫을 대신 받는 것이 전부다.
       targeting: "self",
-      selfBulwark: { seconds: 3, redirectPercent: 100, damageReductionPercent: 70, healFromTakenPercent: 50 },
+      // 감쇠가 아니라 방어·저항 증가다 — 뚫을 창이 있으면 뚫려야 하므로, 방어 관통과 고정
+      // 피해는 이 버티기를 그대로 지나간다.
+      selfBulwark: { seconds: 3, redirectPercent: 100, defenseResistancePercent: 300, healFromTakenPercent: 50 },
     },
   },
 
@@ -1282,10 +1284,10 @@ export const RELICS: RelicDef[] = [
       targeting: "self",
       selfGuard: {
         seconds: 5,
-        damageReductionPercent: 50,
+        defenseResistancePercent: 200,
         pull: { radius: 420, distance: 150 },
         tauntSeconds: 5,
-        shieldFromMitigatedPercent: 25,
+        shieldFromTakenPercent: 25,
       },
     },
   },

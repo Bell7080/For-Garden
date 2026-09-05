@@ -346,13 +346,13 @@ export function skillDescription(
     // 앞에 서는 궁극기. 아무도 때리지 않고 아군의 몫을 대신 받는다.
     if ("selfBulwark" in skill && skill.selfBulwark !== undefined) {
       const plan = skill.selfBulwark;
-      return `${plan.seconds}초 동안 모든 아군이 받는 피해를 대신 받고, 그동안 자신이 받는 피해가 ${plan.damageReductionPercent}% 줄어든다.`
+      return `${plan.seconds}초 동안 모든 아군이 받는 피해를 대신 받고, 그동안 자신의 방어력과 저항력이 ${plan.defenseResistancePercent}% 오른다.`
         + ` 시간이 끝나면 그동안 실제로 잃은 체력의 ${plan.healFromTakenPercent}%를 회복한다.`;
     }
     // 버티는 궁극기. 끌어당겨 붙잡아 두고 덜 맞은 만큼을 끝나고 돌려받는다.
     if ("selfGuard" in skill && skill.selfGuard !== undefined) {
       const guard = skill.selfGuard;
-      return `주위 모든 적을 [[pull|끌어당겨]] ${guard.tauntSeconds}초 동안 [[taunt|도발]]한다. ${guard.seconds}초 동안 받는 피해가 ${guard.damageReductionPercent}% 줄고, 그 시간이 끝나면 그동안 줄인 피해의 ${guard.shieldFromMitigatedPercent}%만큼 보호막을 얻는다.`;
+      return `주위 모든 적을 [[pull|끌어당겨]] ${guard.tauntSeconds}초 동안 [[taunt|도발]]한다. ${guard.seconds}초 동안 방어력과 저항력이 ${guard.defenseResistancePercent}% 오르고, 그 시간이 끝나면 그동안 실제로 잃은 체력의 ${guard.shieldFromTakenPercent}%만큼 보호막을 얻는다.`;
     }
     // 때리지 않고 자리만 잡는 궁극기. 위력을 적지 않는 이유는 그 피해가 이어질 일반 공격의
     // 몫이기 때문이다 — 여기에 수치를 적으면 같은 한 방이 위아래에서 두 수로 보인다.

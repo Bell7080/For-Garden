@@ -192,12 +192,13 @@ export interface Fighter extends Combatant {
    */
   undying: { remaining: number; total: number } | null;
   /**
-   * 「인」으로 버티는 중. 받는 피해를 줄이고 **그 줄인 양을 쌓아 두었다가** 끝날 때 보호막으로 돌려준다.
+   * 「인」으로 버티는 중. 방어·저항이 오르고 **그동안 실제로 맞은 양을 쌓아 두었다가** 끝날 때
+   * 보호막으로 돌려준다.
    *
    * 폭주의 `damageReduction`과 다른 축이라 슬롯을 따로 둔다 — 그쪽은 야성이 차 있는 동안
    * 계속 도는 상태고, 이쪽은 시전 시각부터 정해진 시간만 도는 한 번의 조작이다.
    */
-  guard: { remaining: number; total: number; reductionPercent: number; mitigated: number; shieldPercent: number } | null;
+  guard: { remaining: number; total: number; defenseResistancePercent: number; taken: number; shieldPercent: number } | null;
   /**
    * 도발당해 특정 상대만 노리는 중. 없으면 평소의 거리·혼잡도 규칙으로 고른다.
    *
@@ -218,7 +219,7 @@ export interface Fighter extends Combatant {
    * 화면과 갈린다. 그래서 새로 켜질 때는 **대신 받는 비율이 큰 쪽**이 남고, 비율이 같으면 남은
    * 시간이 긴 쪽이 남는다.
    */
-  bulwark: { remaining: number; total: number; percent: number; reductionPercent: number; healPercent: number; taken: number; skillId: string; name: string } | null;
+  bulwark: { remaining: number; total: number; percent: number; defenseResistancePercent: number; healPercent: number; taken: number; skillId: string; name: string } | null;
   /**
    * 이번 프레임에 쓰러질 피해를 가로챘다는 표시다.
    *
@@ -1068,7 +1069,7 @@ function grantShieldFromDamage(attacker: Fighter, dealt: number, events: Skirmis
 }
 
 /**
- * 「인」의 버티기를 흘리고, 끝나는 순간 덜 맞은 만큼을 보호막으로 돌려준다.
+ * 「인」의 버티기를 흘리고, 끝나는 순간 **맞은 만큼**의 일부를 보호막으로 돌려준다.
  *
  * 보상이 시전이 아니라 **끝난 뒤**에 오는 것이 이 스킬의 성질이다 — 맞을수록 두꺼워지므로
  * 위험한 자리에 서 있던 시간이 곧 값이 된다. 한 대도 맞지 않았으면 아무것도 얻지 못한다.
@@ -1082,7 +1083,7 @@ function tickGuard(fighter: Fighter, dt: number, events: SkirmishEvent[]): void 
     return;
   }
   fighter.guard = null;
-  const amount = Math.round(guard.mitigated * guard.shieldPercent / 100);
+  const amount = Math.round(guard.taken * guard.shieldPercent / 100);
   if (amount <= 0 || !isFighterAlive(fighter)) return;
   fighter.shield.amount += amount;
   fighter.shield.providerId = fighter.id;
@@ -1105,7 +1106,7 @@ function gainElation(target: Fighter, events: SkirmishEvent[]): void {
     raiseBulwark(target, {
       seconds: plan.burst.seconds,
       percent: plan.burst.redirectPercent,
-      reductionPercent: 0,
+      defenseResistancePercent: 0,
       healPercent: 0,
       skillId: target.def.passive.id,
       name: target.def.passive.name,
@@ -1138,7 +1139,7 @@ function tickElation(fighter: Fighter, dt: number): void {
  */
 function raiseBulwark(
   fighter: Fighter,
-  plan: { seconds: number; percent: number; reductionPercent: number; healPercent: number; skillId: string; name: string },
+  plan: { seconds: number; percent: number; defenseResistancePercent: number; healPercent: number; skillId: string; name: string },
 ): void {
   const current = fighter.bulwark;
   if (current && (current.percent > plan.percent
@@ -1147,7 +1148,7 @@ function raiseBulwark(
     remaining: plan.seconds,
     total: plan.seconds,
     percent: plan.percent,
-    reductionPercent: plan.reductionPercent,
+    defenseResistancePercent: plan.defenseResistancePercent,
     healPercent: plan.healPercent,
     // 이어받지 않고 0에서 시작한다 — 돌려받는 몫은 **이번에 앞에 서 있던 동안**의 값이다.
     taken: 0,
@@ -1526,7 +1527,7 @@ export function activeCombatBuffs(state: SkirmishState, fighterId: string): Acti
       targetFighterId: fighter.id,
       skillId: fighter.def.ultimate.id,
       name: fighter.def.ultimate.name,
-      description: `받는 피해 ${fighter.guard.reductionPercent}% 감소 · 끝나면 줄인 만큼 보호막`,
+      description: `방어력·저항력 ${fighter.guard.defenseResistancePercent}% 증가 · 끝나면 맞은 만큼 보호막`,
       timing: { kind: "timed", remainingSeconds: fighter.guard.remaining, totalSeconds: fighter.guard.total },
     });
   }
@@ -1537,8 +1538,8 @@ export function activeCombatBuffs(state: SkirmishState, fighterId: string): Acti
       targetFighterId: fighter.id,
       skillId: fighter.bulwark.skillId,
       name: fighter.bulwark.name,
-      description: fighter.bulwark.reductionPercent > 0
-        ? `아군이 받는 피해의 ${fighter.bulwark.percent}%를 대신 받고 받는 피해 ${fighter.bulwark.reductionPercent}% 감소`
+      description: fighter.bulwark.defenseResistancePercent > 0
+        ? `아군이 받는 피해의 ${fighter.bulwark.percent}%를 대신 받고 방어력·저항력 ${fighter.bulwark.defenseResistancePercent}% 증가`
         : `아군이 받는 피해의 ${fighter.bulwark.percent}%를 대신 받는다`,
       timing: { kind: "timed", remainingSeconds: fighter.bulwark.remaining, totalSeconds: fighter.bulwark.total },
     });
@@ -1647,10 +1648,14 @@ export function defensiveDefinition(target: Fighter, state: SkirmishState): Figh
   // 희열도 금강불괴와 같은 자리에서 곱한다 — 몸이 단단해지는 값이라 최종 피해 경감이 아니라
   // 방어·저항 자체를 올린다. 겹이 곧 수치라 여기서 한 번만 읽는다.
   const elated = target.elation ? target.elation.stacks * target.elation.percentPerStack : 0;
-  if (bonus <= 0 && shred === 1 && hardened === 0 && elated === 0 && target.augmentDefensePercent === 0 && target.augmentResistancePercent === 0) return target;
+  // 버티는 궁극기 둘(「인」·「고통의 미학」)도 같은 자리에 선다. 최종 피해를 깎는 감쇠는 무엇으로
+  // 때리든 똑같이 들어 뚫을 방법이 없지만, 방어·저항은 방어 관통과 고정 피해가 그대로 지나간다.
+  const braced = (target.guard?.defenseResistancePercent ?? 0) + (target.bulwark?.defenseResistancePercent ?? 0);
+  if (bonus <= 0 && shred === 1 && hardened === 0 && elated === 0 && braced === 0
+    && target.augmentDefensePercent === 0 && target.augmentResistancePercent === 0) return target;
   return { ...target, def: { ...target.def, stats: { ...target.def.stats,
-    def: target.def.stats.def * (1 + bonus / 100) * (1 + hardened / 100) * (1 + elated / 100) * (1 + target.augmentDefensePercent / 100),
-    res: target.def.stats.res * (1 + bonus / 100) * (1 + hardened / 100) * (1 + elated / 100) * (1 + target.augmentResistancePercent / 100) * shred,
+    def: target.def.stats.def * (1 + bonus / 100) * (1 + hardened / 100) * (1 + elated / 100) * (1 + braced / 100) * (1 + target.augmentDefensePercent / 100),
+    res: target.def.stats.res * (1 + bonus / 100) * (1 + hardened / 100) * (1 + elated / 100) * (1 + braced / 100) * (1 + target.augmentResistancePercent / 100) * shred,
   } } };
 }
 
@@ -2277,17 +2282,11 @@ export function resolveReceivedDamage(target: Fighter, rawAmount: number): Recei
   // 덧칠은 경감과 같은 최종 경계에서 곱한다 — 여기 두지 않으면 피해 경로마다 따로 곱하게 되고
   // 어느 한 곳을 빠뜨리면 "덧칠했는데 그 스킬만 안 아픈" 상태가 된다.
   const amplified = rawAmount * overpaintMultiplier(target);
-  const beforeGuard = Math.max(1, Math.round(amplified * (1 - Math.min(100, Math.max(0, reduction)) / 100)));
-  // 「인」의 경감은 다른 경감을 모두 적용한 **뒤에** 따로 곱한다. 그래야 이 스킬이 실제로 줄인
-  // 몫만 떼어 셀 수 있고, 그 값이 곧 버티기가 끝날 때 돌려받는 보호막의 근거가 된다.
-  const guard = target.guard;
-  const softened = guard ? Math.max(1, Math.round(beforeGuard * (1 - Math.min(100, Math.max(0, guard.reductionPercent)) / 100))) : beforeGuard;
-  if (guard) guard.mitigated += Math.max(0, beforeGuard - softened);
-  // 앞에 서 있는 동안은 **받는 모든 피해**가 줄어든다 — 대신 받은 몫만이 아니라 자기가 직접
-  // 맞는 것까지다. 여기 두지 않으면 같은 궁극기가 피해 경로마다 다르게 든다.
-  const bulwark = target.bulwark;
-  const braced = bulwark ? Math.max(1, Math.round(softened * (1 - Math.min(100, Math.max(0, bulwark.reductionPercent)) / 100))) : softened;
-  const reduced = applyImpactCap(target, braced);
+  // 「인」과 「고통의 미학」의 버티기는 **여기서 곱하지 않는다.** 그 둘은 최종 피해 감쇠가
+  // 아니라 방어력·저항력 증가라 `defensiveDefinition`이 피해 공식 안에서 이미 반영한다 —
+  // 그래야 방어 관통·고정 피해가 그대로 지나가고, 수치가 커질수록 수익이 줄어든다.
+  const softened = Math.max(1, Math.round(amplified * (1 - Math.min(100, Math.max(0, reduction)) / 100)));
+  const reduced = applyImpactCap(target, softened);
   // 일반 전투원의 최소 1 피해는 그대로 두고, 구조화 필드가 있는 심해 압력만 최종 반올림 뒤 무효화한다.
   const ignored = passive.kind === "abyssalPressure" && reduced <= (passive.ignoreDamageAtOrBelow ?? -1);
   return { raw: rawAmount, reduced, applied: ignored ? 0 : reduced, ignored };
@@ -2343,6 +2342,7 @@ function applyDamage(target: Fighter, amount: number, events: SkirmishEvent[], s
   // 「고통의 미학」이 끝날 때 돌려받는 몫의 근거다. 보호막이 삼킨 몫은 세지 않는다 — 그 피해는
   // 실제로 몸이 받은 것이 아니라 막힌 것이고, 회복의 분모가 되면 막을수록 더 회복하게 된다.
   if (target.bulwark) target.bulwark.taken += dealt;
+  if (target.guard) target.guard.taken += dealt;
   return dealt;
 }
 
@@ -3281,7 +3281,7 @@ export function fireUltimate(
     raiseBulwark(attacker, {
       seconds: plan.seconds,
       percent: plan.redirectPercent,
-      reductionPercent: plan.damageReductionPercent,
+      defenseResistancePercent: plan.defenseResistancePercent,
       healPercent: plan.healFromTakenPercent,
       skillId: teamUltimate.id,
       name: teamUltimate.name,
@@ -3295,7 +3295,7 @@ export function fireUltimate(
     // 때리지 않는 궁극기다. 끌어당겨 붙잡아 두고, 버틴 값은 끝날 때 보호막으로 돌려받는다.
     const plan = teamUltimate.selfGuard;
     attacker.energy -= ultimateCost(state, attacker, true);
-    attacker.guard = { remaining: plan.seconds, total: plan.seconds, reductionPercent: plan.damageReductionPercent, mitigated: 0, shieldPercent: plan.shieldFromMitigatedPercent };
+    attacker.guard = { remaining: plan.seconds, total: plan.seconds, defenseResistancePercent: plan.defenseResistancePercent, taken: 0, shieldPercent: plan.shieldFromTakenPercent };
     for (const other of state.fighters) {
       if (other.side === attacker.side || !isFighterAlive(other) || distance(attacker, other) > plan.pull.radius) continue;
       // 끌어당김은 보간 없이 같은 프레임에 자리를 옮긴다 — 순간이동과 같은 규칙이라 이동 속도의

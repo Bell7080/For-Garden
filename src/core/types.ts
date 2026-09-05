@@ -212,8 +212,13 @@ export type SelfBulwark = {
   seconds: number;
   /** 이 동안 아군이 받는 피해 중 대신 받는 비율(%). */
   redirectPercent: number;
-  /** 앞에 서 있는 동안 자신이 받는 모든 피해가 줄어드는 비율(%). */
-  damageReductionPercent: number;
+  /**
+   * 앞에 서 있는 동안 방어력·저항력에 더하는 비율(%).
+   *
+   * `SelfGuard`와 같은 이유로 최종 피해 감쇠를 쓰지 않는다 — 방어 관통·고정 피해는 그대로
+   * 지나가야 하고, 수치가 커질수록 수익이 줄어야 한다.
+   */
+  defenseResistancePercent: number;
   /** 끝날 때, 그동안 **실제로 HP에서 잃은** 피해의 이 비율(%)만큼 회복한다. */
   healFromTakenPercent: number;
 };
@@ -227,14 +232,26 @@ export type SelfBulwark = {
 export type SelfGuard = {
   /** 버티는 시간(초). */
   seconds: number;
-  /** 이 동안 받는 피해를 줄이는 비율(%). */
-  damageReductionPercent: number;
+  /**
+   * 이 동안 방어력·저항력에 더하는 비율(%).
+   *
+   * **받는 피해를 직접 깎지 않는다.** 최종 피해에 곱하는 감쇠는 무엇으로 때리든 똑같이 듣고,
+   * 그 수치가 조금만 커져도 뚫을 방법이 없어진다. 방어·저항으로 올리면 방어 관통·고정 피해가
+   * 그대로 지나가므로 "뚫을 창이 있으면 뚫린다"가 성립하고, 값이 커질수록 수익이 줄어든다.
+   */
+  defenseResistancePercent: number;
   /** 시전 순간 주위 적을 끌어당긴다. `distance`는 끌어당긴 뒤 시전자와의 거리다. */
   pull: { radius: number; distance: number };
   /** 끌어당긴 적이 자신만 표적으로 삼는 시간(초). */
   tauntSeconds: number;
-  /** 버티기가 끝날 때, 그동안 이 스킬이 줄인 피해의 이 비율(%)을 보호막으로 얻는다. */
-  shieldFromMitigatedPercent: number;
+  /**
+   * 버티기가 끝날 때, 그동안 **실제로 HP에서 잃은** 피해의 이 비율(%)을 보호막으로 얻는다.
+   *
+   * 예전에는 "이 스킬이 줄인 피해"를 기준으로 삼았는데, 감쇠를 방어·저항 증가로 바꾸면서
+   * 줄인 몫을 따로 셀 수 없게 됐다(방어는 피해 공식 안에서 이미 곱해진다). 맞은 만큼을
+   * 돌려받는 쪽이 규칙도 단순하고, 위험한 자리에 서 있던 시간이 값이 되는 성질도 같다.
+   */
+  shieldFromTakenPercent: number;
 };
 
 /** 자리를 잡는 계약. 은신·순간이동·다음 타격 강화를 코어가 판별할 수 있는 값으로만 적는다. */

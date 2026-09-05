@@ -158,14 +158,17 @@ describe("노도니아 스킬 표시 계약", () => {
 
   it("의 고통의 미학은 무적이 아니라 대신 받는다고 말한다", () => {
     expect(nodonia.ultimate.desc).toBeUndefined();
-    expect(nodonia.ultimate.selfBulwark).toMatchObject({ seconds: 3, redirectPercent: 100, damageReductionPercent: 70, healFromTakenPercent: 50 });
+    expect(nodonia.ultimate.selfBulwark).toMatchObject({ seconds: 3, redirectPercent: 100, defenseResistancePercent: 300, healFromTakenPercent: 50 });
     const text = skillDescription(nodonia.ultimate);
     expect(text).toBe(
-      "3초 동안 모든 아군이 받는 피해를 대신 받고, 그동안 자신이 받는 피해가 70% 줄어든다."
+      "3초 동안 모든 아군이 받는 피해를 대신 받고, 그동안 자신의 방어력과 저항력이 300% 오른다."
       + " 시간이 끝나면 그동안 실제로 잃은 체력의 50%를 회복한다.",
     );
     // 엘라의 불멸과 갈라 두는 지점이다 — 이 궁극기는 무적이 아니라 실제로 아프다.
     expect(text).not.toContain("무적");
+    // 최종 피해를 깎는 감쇠는 무엇으로 때리든 똑같이 들어 뚫을 방법이 없다. 이 개체도 엘라도
+    // 그래서 감쇠를 쓰지 않는다 — 문장에 "받는 피해"가 줄어든다는 말이 남으면 안 된다.
+    expect(text).not.toContain("받는 피해가");
   });
 
   it("의 기본 공격은 방어력에서 피해를 뽑는다", () => {
@@ -206,11 +209,13 @@ describe("엘라 스킬 표시 계약", () => {
 
   it("의 인·불멸·금강불괴는 구조화 계약에서 문장을 짓는다", () => {
     // 아무도 때리지 않는 궁극기라 위력이 없다. 끌어당김 → 도발 순으로 말한다.
-    expect(ella.ultimate.selfGuard).toMatchObject({ seconds: 5, damageReductionPercent: 50, tauntSeconds: 5, shieldFromMitigatedPercent: 25 });
+    expect(ella.ultimate.selfGuard).toMatchObject({ seconds: 5, defenseResistancePercent: 200, tauntSeconds: 5, shieldFromTakenPercent: 25 });
     expect(skillDescription(ella.ultimate)).toBe(
       "주위 모든 적을 [[pull|끌어당겨]] 5초 동안 [[taunt|도발]]한다."
-      + " 5초 동안 받는 피해가 50% 줄고, 그 시간이 끝나면 그동안 줄인 피해의 25%만큼 보호막을 얻는다.",
+      + " 5초 동안 방어력과 저항력이 200% 오르고, 그 시간이 끝나면 그동안 실제로 잃은 체력의 25%만큼 보호막을 얻는다.",
     );
+    // 버티는 궁극기 둘 다 최종 피해 감쇠를 쓰지 않는다 — 뚫을 창이 있으면 뚫려야 한다.
+    expect(skillDescription(ella.ultimate)).not.toContain("받는 피해가");
     expect(passiveDescription(ella.passive, ella.stats.atk)).toBe(
       "전투당 한 번, 쓰러질 피해를 받으면 죽지 않고 5초 동안 [[invulnerable|무적]]이 되는 대신 아무 행동도 하지 못한다."
       + " 그동안 최대 체력의 40%를 매초 나누어 회복한다. 이때 주위 적을 [[knockback|날려버린다]].",

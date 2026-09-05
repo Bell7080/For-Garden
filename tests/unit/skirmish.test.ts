@@ -1063,10 +1063,10 @@ describe("효과 ID별 야성 특성", () => {
     expect(torika.def.ferocityTrait).toMatchObject({ damagePercent: 100, defenseDamagePercent: 15, attackSpeedBonusPercent: 20 });
     expect(primaryHit.amount).toBeGreaterThan(computeDamage(torika, primary, { ...torika.def.basic, isCritical: primaryHit.critical, kind: "basic" }, true));
     expect(nearbyHit.amount).toBeGreaterThan(computeDamage(torika, nearby, { ...torika.def.basic, isCritical: nearbyHit.critical, kind: "basic" }, true));
-    // 경직은 기절 상태를 오용하지 않는다 — 주 대상의 기절은 **기본 공격이 선언한 값 그대로**이고
-    // 경직은 제 슬롯에 따로 선다. 광역으로 번지는 것은 경직뿐이라 주변 대상은 기절하지 않는다.
-    const basicStun = torika.def.basic.statusEffects?.find((effect) => effect.kind === "stun");
-    expect(primary.stunnedFor).toBeCloseTo(basicStun?.kind === "stun" ? basicStun.seconds : 0);
+    // 경직은 기절 상태를 오용하지 않고 주·주변 대상의 행동만 0.1초 순간 차단한다.
+    // 들이받기의 기절은 두 타마다 걸리므로 이 첫 타격에서는 아직 아무도 기절하지 않는다 —
+    // 그래서 여기 남은 값은 경직이 기절 슬롯에 새지 않았다는 뜻 그대로다.
+    expect(primary.stunnedFor).toBe(0);
     expect(nearby.stunnedFor).toBe(0);
     expect(primary.staggeredFor).toBeCloseTo(0.1);
     expect(nearby.staggeredFor).toBeCloseTo(0.1);

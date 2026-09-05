@@ -2660,6 +2660,36 @@ describe("델로피의 그랜드 피날레", () => {
     expect(empowered.amount).toBeGreaterThan(plain.amount);
   });
 
+  it("의 은신은 기본 공격 한 번으로 풀리고, 패시브의 은신은 시간이 지켜 준다", () => {
+    const state = createSkirmish([getRelic("delopi")], [getRelic("husk-shell")], ARENA);
+    const [delopi, enemy] = state.fighters;
+    delopi.x = 440; delopi.y = 1000; delopi.attackCooldown = 99;
+    enemy.x = 460; enemy.y = 1000; enemy.attackCooldown = 99;
+    enemy.maxHp = 400_000; enemy.hp = 400_000;
+    delopi.targetId = enemy.id;
+
+    // 전투 시작 은신은 때려도 유지된다 — 시간이 다할 때까지 그대로다.
+    expect(delopi.stealthFor).toBe(getRelic("delopi").passive.durationSeconds);
+    expect(delopi.stealthBreaksOnBasic).toBe(false);
+    delopi.attackCooldown = 0;
+    stepSkirmish(state, 1 / 60);
+    expect(delopi.stealthFor).toBeGreaterThan(0);
+
+    // 궁극기가 건 은신은 다르다 — 한 방을 꽂는 자리라 그 한 방이 곧 노출이다.
+    delopi.energy = ULTIMATE_ENERGY_MAX;
+    fireUltimate(state, delopi.id);
+    expect(delopi.stealthBreaksOnBasic).toBe(true);
+    expect(delopi.stealthFor).toBeGreaterThan(0);
+    delopi.targetId = enemy.id;
+    delopi.x = enemy.x - 20; delopi.y = enemy.y;
+    delopi.attackCooldown = 0;
+    // 그 타격까지는 숨은 채로 들어간다 — 강화된 한 방이 실제로 나갔는지 함께 확인한다.
+    const hits = stepSkirmish(state, 1 / 60).filter((event) => event.kind === "attack");
+    expect(hits).toHaveLength(1);
+    expect(delopi.stealthFor).toBe(0);
+    expect(delopi.stealthBreaksOnBasic).toBe(false);
+  });
+
   it("는 전투 시작 시 짜잔! 으로 은신한 채 연다", () => {
     const state = createSkirmish([getRelic("delopi")], [getRelic("husk-shell")], ARENA);
     // 첫 프레임에 이미 걸려 있어야 "숨어서 시작했다"가 된다 — 한 박자 뒤면 표적이 잡힌 뒤다.

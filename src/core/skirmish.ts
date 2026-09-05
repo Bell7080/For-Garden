@@ -185,6 +185,14 @@ export interface Fighter extends Combatant {
   /** 0보다 크면 단일 대상 선택의 중심이 될 수 없는 은신 상태다. */
   stealthFor: number;
   /**
+   * 지금 걸린 은신이 **기본 공격 한 번으로 풀리는가.**
+   *
+   * 은신 슬롯은 하나뿐이라 어느 스킬이 걸었는지 시간만으로는 알 수 없다. 궁극기가 건 은신은
+   * 한 방을 꽂는 자리라 그 한 방이 곧 노출이고, 패시브의 전투 시작 은신은 시간이 다할 때까지
+   * 유지된다 — 그 차이를 여기 한 값이 든다.
+   */
+  stealthBreaksOnBasic: boolean;
+  /**
    * 불멸로 버티는 중. 이 동안은 **모든 피해를 받지 않고 아무것도 하지 못한다.**
    *
    * 기절 슬롯을 쓰지 않는 이유는 메테의 아다지오가 아군의 군중제어를 자동으로 정화하기
@@ -621,6 +629,8 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     // 짜잔! 은 전투가 열리는 순간부터 은신한 채로 시작한다 — 첫 프레임에 이미 걸려 있어야
     // "숨어서 시작했다"가 되고, 한 박자 뒤에 걸면 이미 표적이 잡힌 뒤다.
     stealthFor: def.passive.kind === "openingVanish" ? def.passive.durationSeconds ?? 0 : 0,
+    // 전투 시작 은신은 시간이 다할 때까지 유지된다. 궁극기가 걸 때만 이 값이 켜진다.
+    stealthBreaksOnBasic: false,
     undying: null,
     undyingPending: false,
     guard: null,
@@ -1208,6 +1218,18 @@ function healOneMoreRoundBasic(attacker: Fighter, state: SkirmishState, events: 
     + (attacker.elation?.stacks ?? 0) * trait.missingHpPercentPerElationStack;
   const amount = applyHealing(state, attacker, (attacker.maxHp - attacker.hp) * percent / 100, attacker.id);
   if (amount > 0) events.push({ kind: "heal", fighterId: attacker.id, amount, source: "ferocity", effect: { tag: "heal", intensity: 1.2 } });
+}
+
+/**
+ * 궁극기가 건 은신을 기본 공격 한 번으로 푼다. 패시브의 전투 시작 은신은 건드리지 않는다.
+ *
+ * 시간만으로 끊으면 혼자 남은 판에서 아무도 자신을 고르지 못하는 채로 계속 때리게 되어
+ * 짧은 무적과 다르지 않다 — 그래서 **행동 하나**를 노출의 값으로 쓴다.
+ */
+function breakStealthOnBasic(fighter: Fighter): void {
+  if (!fighter.stealthBreaksOnBasic) return;
+  fighter.stealthFor = 0;
+  fighter.stealthBreaksOnBasic = false;
 }
 
 /** 도발은 시간이 지나면 저절로 풀린다. 방향만 바꾸는 상태라 정화의 대상이 아니다. */
@@ -3211,6 +3233,9 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
         // 「한 판 더」의 자기 회복도 행동 하나마다다 — 적중 수로 세면 광역 한 번이 셋을 맞힐 때
         // 세 배로 돌아 같은 폭주가 편성에 따라 다른 무게가 된다.
         healOneMoreRoundBasic(fighter, state, events);
+        // 숨어 들어가 꽂는 한 방은 그 한 방이 곧 노출이다. 피해가 끝난 **뒤**에 푸는 이유는
+        // 그 타격까지는 숨은 채로 들어가야 하기 때문이다.
+        breakStealthOnBasic(fighter);
       }
       // 명시적 보스 ID에 맞은 경감 전 기여만 점수로 옮겨 실제 HP 피해·부속물 피해와 분리한다.
       if (state.boss && target.id === state.boss.fighterId) {
@@ -3320,6 +3345,7 @@ export function fireUltimate(
     const setup = teamUltimate.selfSetup;
     attacker.energy -= ultimateCost(state, attacker, true);
     attacker.stealthFor = Math.max(attacker.stealthFor, setup.stealthSeconds);
+    attacker.stealthBreaksOnBasic = setup.stealthBreaksOnBasic;
     leapToLowestHpEnemy(attacker, state, setup.landingDistance);
     // 숨은 순간 그를 쫓던 상대는 표적을 잃는다. 스피나·루카의 은신과 같은 처리다.
     for (const other of state.fighters) if (other.targetId === attacker.id) { other.targetId = null; other.engaged = false; }

@@ -465,12 +465,15 @@ describe("델로피 스킬 표시 계약", () => {
     expect(targetingLabel(delopi.ultimate.targeting)).toBe("자신");
     expect(canPreviewSkillDamage(delopi.ultimate, "궁극기")).toBe(false);
     const text = skillDescription(delopi.ultimate);
-    expect(text).toBe("3초 동안 [[stealth|은신]]하고 체력이 가장 낮은 적에게 [[teleport|순간이동]]한다. 이후 처음 적중하는 [[basic-attack|기본 공격]]이 확정 치명타가 되고 방어력을 무시하는 [[fixed-damage|고정 피해]]로 들어간다.");
+    expect(text).toBe("3초 동안 [[stealth|은신]]하고 체력이 가장 낮은 적에게 [[teleport|순간이동]]한다. 이후 처음 적중하는 [[basic-attack|기본 공격]]이 확정 치명타가 되고 방어력을 무시하는 [[fixed-damage|고정 피해]]로 들어간다. 그 공격과 함께 [[stealth|은신]]이 풀린다.");
+    // **언제 풀리는지는 그 한 방을 언제 쓸지 정하는 정보다.** 시간만으로 끊으면 혼자 남은 판에서
+    // 아무도 자신을 고르지 못한 채 계속 때리게 되어 짧은 무적과 다르지 않다.
+    expect(delopi.ultimate.selfSetup?.stealthBreaksOnBasic).toBe(true);
     expect(text).not.toContain("damage-value");
   });
 
   it("은 패시브의 치명타 확률과 피해를 서로 다른 값으로 나열한다", () => {
-    expect(passiveDescription(delopi.passive)).toBe("전투를 시작할 때 7초 동안 [[stealth|은신]] 상태로 진입한다. 치명타 확률이 5%, 치명타 피해가 25% 오른다.");
+    expect(passiveDescription(delopi.passive)).toBe("전투를 시작할 때 5초 동안 [[stealth|은신]] 상태로 진입한다. 치명타 확률이 5%, 치명타 피해가 25% 오른다.");
   });
 
   it("은 폭주가 바르는 쪽과 터뜨리는 쪽을 모두 말한다", () => {

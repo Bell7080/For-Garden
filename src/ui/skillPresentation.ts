@@ -394,7 +394,10 @@ export function skillDescription(
     // 몫이기 때문이다 — 여기에 수치를 적으면 같은 한 방이 위아래에서 두 수로 보인다.
     if ("selfSetup" in skill && skill.selfSetup !== undefined) {
       const setup = skill.selfSetup;
-      return `${setup.stealthSeconds}초 동안 [[stealth|은신]]하고 체력이 가장 낮은 적에게 [[teleport|순간이동]]한다. 이후 처음 적중하는 [[basic-attack|기본 공격]]이 확정 치명타가 되고 방어력을 무시하는 [[fixed-damage|고정 피해]]로 들어간다.`;
+      // 은신이 언제 풀리는지는 그 한 방을 언제 쓸지 정하는 정보라 본문이 직접 말한다.
+      const exposed = setup.stealthBreaksOnBasic ? ` 그 공격과 함께 [[stealth|은신]]이 풀린다.` : "";
+      return `${setup.stealthSeconds}초 동안 [[stealth|은신]]하고 체력이 가장 낮은 적에게 [[teleport|순간이동]]한다.`
+        + ` 이후 처음 적중하는 [[basic-attack|기본 공격]]이 확정 치명타가 되고 방어력을 무시하는 [[fixed-damage|고정 피해]]로 들어간다.${exposed}`;
     }
     // 피해도 회복도 없는 지원 궁극기. 무엇을 얼마나 오래 거는지만 말한다.
     if ("teamBuff" in skill && skill.teamBuff?.kind === "tailwind") {

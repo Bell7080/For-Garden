@@ -1057,12 +1057,12 @@ export const RELICS: RelicDef[] = [
       iconAssetId: "skill-icon-buff",
       effectType: "buff",
       // Passive.value는 공용 필수 필드라, 이 패시브에서는 은신 시간을 그대로 담아 둔다.
-      value: 7,
-      durationSeconds: 7,
+      value: 5,
+      durationSeconds: 5,
       // 태생 치명타는 전 개체 공통이므로 암살자의 치명타형 정체성은 패시브가 만든다.
       criticalChancePercent: 5,
       criticalDamagePercent: 25,
-      desc: "전투 시작 시 7초 동안 은신 상태로 진입한다.",
+      desc: "전투 시작 시 5초 동안 은신 상태로 진입한다.",
     },
     basic: {
       id: "delopi-basic",
@@ -1089,6 +1089,9 @@ export const RELICS: RelicDef[] = [
       // 숫자를 두면 평타 위력을 조정한 뒤 이 한 방만 옛 값으로 남는다.
       selfSetup: {
         stealthSeconds: 3,
+        // 숨어 들어가 한 방을 꽂는 자리라 그 한 방이 곧 노출이다. 시간만으로 끊으면 혼자 남은
+        // 판에서 아무도 자신을 고르지 못한 채 계속 때리게 되어 짧은 무적과 다르지 않다.
+        stealthBreaksOnBasic: true,
         leapTarget: "lowestHpEnemy",
         // 중거리 개체라 스피나보다 멀찍이 내려선다 — 붙어서 내리면 사거리 안쪽으로 파고든다.
         landingDistance: 200,

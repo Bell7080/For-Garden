@@ -19,6 +19,7 @@ export function targetingLabel(targeting?: Ultimate["targeting"]): string | unde
   if (targeting === "single") return "적 한 명";
   if (targeting === "nearbyEnemies") return "자신의 주위 모든 적";
   if (targeting === "battlefieldEnemies") return "전장의 모든 적";
+  if (targeting === "self") return "자신";
   if (targeting === "targetedCircle") return "지정한 원 안의 모든 적과 생존 아군";
   if (targeting === "chargeLine") return "[[charge|돌진]]해 뚫고 지나간 길의 모든 적";
   return undefined;
@@ -30,6 +31,7 @@ export function statusEffectLabel(effect?: CombatStatusEffect): string | undefin
   // 경직은 항상 0.1초인 용어 규칙을 키워드 설명이 담당하므로 요약줄에서 시간을 중복하지 않는다.
   if (effect?.kind === "stagger") return "[[stagger|경직]]";
   if (effect?.kind === "bleed") return `[[bleed|출혈]] ${effect.seconds}초 · 매초 최대 체력 ${effect.maxHpPercentPerSecond}%`;
+  if (effect?.kind === "poison") return `[[poison|중독]] ${effect.seconds}초`;
   return undefined;
 }
 
@@ -41,12 +43,12 @@ export function recoveryLabel(percent?: number): string | undefined {
 /** 어느 캐릭터나 같은 양식으로 피해 수치의 능력치 출처와 적용 배율을 열어 볼 수 있게 한다. */
 export function damageKeyword(preview?: DamagePreview): KeywordDef | undefined {
   if (preview?.kind !== "scaling") return undefined;
-  return {
-    id: "damage-value",
-    term: String(preview.amount),
-    kind: "규칙",
-    description: `현재 ${preview.stat}에서 ${preview.power}%를 받아 계산한 피해 수치다.`,
-  };
+  // 두 능력치가 위력을 나눠 갖는 스킬은 두 축을 함께 말한다. 한쪽만 말하면 실제 수치의
+  // 절반이 어디서 왔는지 설명되지 않는다.
+  const description = preview.secondary === undefined
+    ? `현재 ${preview.stat}에서 ${preview.power}%를 받아 계산한 피해 수치다.`
+    : `현재 ${preview.stat}의 ${preview.power}%와 ${preview.secondary.stat}의 ${preview.secondary.power}%를 더해 계산한 피해 수치다.`;
+  return { id: "damage-value", term: String(preview.amount), kind: "규칙", description };
 }
 
 /** 요약과 본문이 같은 동적 키워드 사전을 쓰도록 순수 레이아웃 옵션을 한 경계에서 결합한다. */
@@ -78,6 +80,11 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
   if (trait.effectId === "sharedOverpaint") return `폭주 중 모든 아군의 [[basic-attack|기본 공격]]이 [[overpaint|덧칠]]을 함께 쌓는다.`;
   if (trait.effectId === "ichthyoDive") return `이동 속도가 ${trait.moveSpeedPercent}% 증가하고, [[basic-attack|기본 공격]] 이후 표적을 다른 적으로 바꾼다.`;
   if (trait.effectId === "butcherFeast") return `[[butcher|손질]]이 터진 피해의 ${trait.healPercent}%만큼 생존 아군 전체를 회복시킨다.`;
+  // 바르거나 터뜨리거나 한 번에 하나뿐이라는 것이 이 폭주의 전부다. 번갈아 한다고 적지 않는
+  // 이유는 실제 규칙이 "지금 걸려 있나"만 보기 때문이다 — 공속이 빨라져도 그 판단은 같다.
+  if (trait.effectId === "venomousEncore") {
+    return `공격 속도가 ${trait.attackSpeedBonusPercent}% 증가한다. [[basic-attack|기본 공격]]이 자신의 [[poison|중독]]에 걸리지 않은 적에게는 중독을 부여하고, 이미 걸린 적에게는 그 중독을 [[liquidate|청산]]한다.`;
+  }
   // 몇 번 튕기는지도 몇 초인지도 적지 않는다. 날아가는 그림이 곧 그 답이고, 그 수가 플레이어의
   // 다음 조작을 바꾸지 않는다 — 태그가 "날아가는 동안 움직이지도 때리지도 못한다"까지 말한다.
   if (trait.effectId === "knockbackSlam") return `[[concussion|뇌진탕]]이 확정 치명타가 되고, 그 적을 [[knockback|날려버린다]]. 날려버린 뒤에는 가장 가까운 적을 표적으로 다시 지정한다.`;
@@ -117,13 +124,23 @@ export function passiveDescription(passive: Passive, atk?: number): string {
 }
 
 /**
- * 치명타 확률을 올리는 패시브의 공통 절.
+ * 치명타를 올리는 패시브의 공통 절.
  *
  * 렉시아처럼 그 사실을 이미 제 문장에서 말하는 종류는 뺀다 — 같은 말을 두 번 하게 된다.
+ * 확률과 피해가 **같은 값이면 한 번만 말한다** — 서로 다른 순간에만 따로 나열한다.
  */
 function passiveCriticalClause(passive: Passive): string {
-  if (passive.criticalChancePercent === undefined || passive.kind === "battleMaidMastery") return "";
-  return `치명타 확률이 ${passive.criticalChancePercent}% 오른다.`;
+  if (passive.kind === "battleMaidMastery") return "";
+  const chance = passive.criticalChancePercent;
+  const damage = passive.criticalDamagePercent;
+  if (chance !== undefined && damage !== undefined) {
+    return chance === damage
+      ? `치명타 확률과 치명타 피해가 모두 ${chance}% 오른다.`
+      : `치명타 확률이 ${chance}%, 치명타 피해가 ${damage}% 오른다.`;
+  }
+  if (chance !== undefined) return `치명타 확률이 ${chance}% 오른다.`;
+  if (damage !== undefined) return `치명타 피해가 ${damage}% 오른다.`;
+  return "";
 }
 
 function passiveHead(passive: Passive, atk?: number): string {
@@ -140,6 +157,7 @@ function passiveHead(passive: Passive, atk?: number): string {
   if (passive.kind === "impactCap") return `한 번에 받는 피해가 최대 체력의 ${passive.impactCapMaxHpPercent}%를 넘지 않는다.`;
   if (passive.kind === "overpaintSiphon") return `모든 아군이 [[overpaint|덧칠]]된 적을 맞히면 그 피해의 ${passive.value}%만큼 자신의 체력을 회복한다. 표적의 [[overpaint|덧칠]]이 최대로 쌓이면 다른 적으로 표적을 옮긴다.`;
   if (passive.kind === "lowHpVanish") return `전투당 한 번, 체력이 절반 이하가 되면 ${passive.durationSeconds}초 동안 [[stealth|은신]]해 표적에서 벗어난다.`;
+  if (passive.kind === "openingVanish") return `전투를 시작할 때 ${passive.durationSeconds}초 동안 [[stealth|은신]] 상태로 진입한다.`;
   if (passive.kind === "shimmerMark") return `적을 타격하면 반짝이는 표식을 남긴다. 표식이 없는 적을 타격하면 표식이 그 적에게 옮겨가며 [[ap|주문력]]의 ${passive.value}% [[magical-damage|마법 피해]]를 추가로 입힌다.`;
   if (passive.kind !== "battleMaidMastery") return passive.desc;
   // 네 능력이 모두 같은 비율로 오르므로 값을 한 번만 말한다. 값이 서로 달라지면 다시 나열해야 한다.
@@ -231,6 +249,12 @@ export function skillDescription(
   if (skill.damageType === undefined || skill.power === undefined) {
     if ("healing" in skill && skill.healing?.kind === "teamMissingHpPercent") {
       return `모든 생존 아군이 각자 [[missing-hp|잃은 체력]]의 ${skill.healing.percent}%를 회복한다.`;
+    }
+    // 때리지 않고 자리만 잡는 궁극기. 위력을 적지 않는 이유는 그 피해가 이어질 일반 공격의
+    // 몫이기 때문이다 — 여기에 수치를 적으면 같은 한 방이 위아래에서 두 수로 보인다.
+    if ("selfSetup" in skill && skill.selfSetup !== undefined) {
+      const setup = skill.selfSetup;
+      return `${setup.stealthSeconds}초 동안 [[stealth|은신]]하고 체력이 가장 낮은 적에게 [[teleport|순간이동]]한다. 이후 처음 적중하는 [[basic-attack|기본 공격]]이 확정 치명타가 되고 방어력을 무시하는 [[fixed-damage|고정 피해]]로 들어간다.`;
     }
     // 피해도 회복도 없는 지원 궁극기. 무엇을 얼마나 오래 거는지만 말한다.
     if ("teamBuff" in skill && skill.teamBuff?.kind === "tailwind") {
@@ -364,6 +388,8 @@ function statusEffectClause(effect: CombatStatusEffect): string | undefined {
   if (effect.kind === "butcher") return `[[butcher|손질]]을 한 겹 쌓는다`;
   if (effect.kind === "stagger") return `[[stagger|경직]]시킨다`;
   if (effect.kind === "bleed") return `${effect.seconds}초 동안 [[bleed|출혈]]시켜 매초 최대 체력의 ${effect.maxHpPercentPerSecond}%를 잃게 한다`;
+  // 매초 얼마인지는 태그가 말한다(쓰는 개체가 하나뿐이다). 시간만 스킬마다 달라 본문이 적는다.
+  if (effect.kind === "poison") return `${effect.seconds}초 동안 [[poison|중독]]시킨다`;
   // 겹 상한·감소율·유지 시간은 저주 태그가 말한다(쓰는 개체가 하나뿐이라 태그가 수치를 가진다).
   if (effect.kind === "curse") return `[[curse|저주]]를 한 겹 씌운다`;
   // 반대로 광란의 시간은 스킬마다 다르므로 본문이 적는다 — 출혈이 그런 것과 같은 이유다.
@@ -405,10 +431,14 @@ function skillDamagePhrase(skill: Skill | BasicAttack | Ultimate, stats: SkillDe
       : `[[damage-value|${composite.term}]]의 ${damageTag}`;
   }
   if (stats.damage !== undefined) return `[[damage-value|${stats.damage}]]의 ${damageTag}`;
-  const stat = skill.scalingStat === "def" ? "방어력"
-    : skill.scalingStat === "ap" || (skill.scalingStat === undefined && skill.damageType === "magical") ? "주문력"
+  const label = (scaling: "atk" | "ap" | "def" | undefined): string => scaling === "def" ? "방어력"
+    : scaling === "ap" || (scaling === undefined && skill.damageType === "magical") ? "주문력"
       : "공격력";
-  return `${stat}의 ${skill.power}% ${damageTag}`;
+  const secondary = "secondaryScaling" in skill ? skill.secondaryScaling : undefined;
+  // 능력치를 모르는 자리(도감)에서도 두 축을 모두 말한다 — 한쪽만 적으면 실제 피해의 절반만
+  // 설명한 문장이 된다.
+  if (secondary) return `${label(skill.scalingStat)}의 ${skill.power}%와 ${label(secondary.stat)}의 ${secondary.power}%를 더한 ${damageTag}`;
+  return `${label(skill.scalingStat)}의 ${skill.power}% ${damageTag}`;
 }
 
 /** 스킬별 피해 회복은 최대 체력 회복과 다른 계약이므로 실제 피해 기준임을 명시한다. */

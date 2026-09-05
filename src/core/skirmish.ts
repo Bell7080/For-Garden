@@ -149,6 +149,14 @@ export interface Fighter extends Combatant {
   frenzy: { remaining: number; total: number; attackSpeedPercent: number; sourceId?: string } | null;
   /** 걸려 있는 출혈. 없으면 null이다. */
   bleed: { remaining: number; total: number; tickIn: number; percent: number; sourceId?: string } | null;
+  /**
+   * 걸려 있는 중독. 없으면 null이다.
+   *
+   * 출혈과 달리 **매 틱 피해가 굳어 있다**(`amountPerSecond`) — 바른 쪽의 공격력·주문력에서
+   * 바르는 순간 계산한 값이다. 매 틱 시전자를 되짚으면 그 사이 버프까지 소급되어, 바를 때
+   * 화면이 보여 준 수치와 갈린다.
+   */
+  poison: { remaining: number; total: number; tickIn: number; amountPerSecond: number; sourceId?: string } | null;
   /** 이 전투에서 긴급 회복 패시브를 이미 발동했는지. 저장하지 않는 "전투당 1회" 소유 상태다. */
   passiveTriggered: boolean;
   /** 진행 중인 지속 회복. remaining과 tickIn은 초, percentPerTick은 최대 HP 대비 %이며 저장하지 않는다. */
@@ -167,6 +175,13 @@ export interface Fighter extends Combatant {
   basicAttackCount: number;
   /** 0보다 크면 단일 대상 선택의 중심이 될 수 없는 은신 상태다. */
   stealthFor: number;
+  /**
+   * 궁극기가 걸어 둔 **다음 일반 공격 한 번**의 강화가 남아 있는가.
+   *
+   * 위력을 따로 들지 않는 이유는 그 값이 곧 이 개체의 일반 공격이기 때문이다 — 여기에 숫자를
+   * 두면 평타 위력을 조정한 뒤 이 한 방만 옛 값으로 남는다.
+   */
+  empoweredBasic: boolean;
   /** 폰토스 폭주의 다음 1초 고정 피해까지 남은 시간이며 비활성 중에는 1초로 초기화한다. */
   pontusRageTickIn: number;
 }
@@ -278,6 +293,13 @@ export type SkirmishEvent =
   /** 순풍처럼 시간이 정해진 아군 전체 강화가 걸린 순간이다. 씬은 대상 위에 표식만 띄운다. */
   | { kind: "teamBuff"; fighterId: string; sourceId: string; buff: TeamBuff }
   | { kind: "bleed"; fighterId: string; amount: number; started: boolean }
+  /** 중독이 발린 순간(`started`)과 매초 깎인 순간. 출혈과 같은 축이라 같은 모양으로 싣는다. */
+  | { kind: "poison"; fighterId: string; amount: number; started: boolean }
+  /**
+   * 중독이 **청산된** 순간. 남은 몫을 한꺼번에 받은 한 방이라 매초 틱과 다른 무게로 뜬다.
+   * 몇 초치를 몰아 받았는지(`ticks`)를 함께 싣는다 — 씬이 상태를 되짚지 않고 그 수를 읽는다.
+   */
+  | { kind: "poisonLiquidated"; fighterId: string; amount: number; ticks: number }
   | { kind: "heal"; fighterId: string; amount: number; source: "passive" | "ultimate"; effect: CombatEffectCue }
   | { kind: "status"; fighterId: string; status: "stun" | "stagger"; active: true }
   | { kind: "shieldGranted"; fighterId: string; providerId: string; amount: number; remaining: number; effect: CombatEffectCue }
@@ -419,6 +441,20 @@ export const BLEED = {
   minor: { seconds: 2, percentPerSecond: 1 },
 } as const;
 
+/**
+ * 중독의 공용 계수. **유지 시간은 스킬이 소유한다** — 출혈과 같은 이유로, 시간이 다른 개체가
+ * 생기는 순간 태그가 거짓말이 되기 때문이다.
+ *
+ * 반대로 매초 뽑는 비율은 여기 한 곳에만 둔다. 태그 문장과 실제 스킬 데이터가 같은 수를 읽어야
+ * 밸런스를 조정한 뒤 옛 문장이 남지 않는다.
+ */
+export const POISON = {
+  /** 매 틱 시전자 공격력에서 뽑는 비율(%). */
+  attackPercentPerSecond: 15,
+  /** 매 틱 시전자 주문력에서 함께 뽑는 비율(%). */
+  abilityPercentPerSecond: 15,
+} as const;
+
 /** 긴급 회복의 공용 틱 규칙. 유지 시간과 회복량은 캐릭터 정의가 소유한다. */
 export const EMERGENCY_RECOVERY = {
   /** 회복 틱 사이의 시간(초). */
@@ -495,6 +531,7 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     curse: null,
     frenzy: null,
     bleed: null,
+    poison: null,
     // 저장 스냅샷의 HP만 반영하고, 전투 한정 발동권과 지속 효과는 매 전투 새로 만든다.
     passiveTriggered: false,
     regeneration: null,
@@ -504,7 +541,10 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     statusPotencyMultiplier: multipliers.statusPotencyPercent,
     conditionalAttackPowerMultiplier: (hpPercent) => side === "player" ? conditionalAttackPowerMultiplier(augmentEffects, def.id, hpPercent) : 1,
     basicAttackCount: 0,
-    stealthFor: 0,
+    // 짜잔! 은 전투가 열리는 순간부터 은신한 채로 시작한다 — 첫 프레임에 이미 걸려 있어야
+    // "숨어서 시작했다"가 되고, 한 박자 뒤에 걸면 이미 표적이 잡힌 뒤다.
+    stealthFor: def.passive.kind === "openingVanish" ? def.passive.durationSeconds ?? 0 : 0,
+    empoweredBasic: false,
     // 폭주가 켜진 뒤 온전한 1초가 지나야 첫 파동이 발생한다.
     pontusRageTickIn: 1,
   };
@@ -695,6 +735,11 @@ function applyCombatStatusEffect(fighter: Fighter, effect: CombatStatusEffect, e
   if (effect.kind === "stun") events.push(...applyStun(fighter, effect.seconds * potency, state));
   if (effect.kind === "stagger") events.push(...applyStagger(fighter, effect.seconds * potency, state));
   if (effect.kind === "bleed") refreshBleed(fighter, effect.seconds * potency, effect.maxHpPercentPerSecond, events, sourceId);
+  if (effect.kind === "poison") {
+    // 세기는 바른 쪽에서 나오므로 시전자를 찾지 못하면 바를 것도 없다.
+    const attacker = sourceId ? findFighter(state, sourceId) : undefined;
+    if (attacker) refreshPoison(fighter, effect.seconds * potency, poisonAmountPerSecond(attacker, fighter, effect, state), events, sourceId);
+  }
   if (effect.kind === "overpaint") refreshOverpaint(fighter, { ...effect, seconds: effect.seconds * potency });
   if (effect.kind === "concussion") applyConcussion(fighter, effect, critical, events, state, sourceId);
   if (effect.kind === "butcher") applyButcher(fighter, effect, events, state, sourceId);
@@ -902,6 +947,11 @@ function statusEffectsLandThisHit(attacker: Fighter, skill: Skill, useUltimate: 
   return true;
 }
 
+/** 청산하는 타격이 쓰는 사본. 같은 타격이 독을 바르면서 동시에 터뜨리지 않게 한다. */
+function withoutPoison(skill: Skill): Skill {
+  return { ...skill, statusEffects: (skill.statusEffects ?? []).filter((effect) => effect.kind !== "poison") };
+}
+
 /** 모든 출혈 진입점이 공유하는 단일 슬롯 갱신 규칙이다. 약한 재적용은 강도와 틱 시계를 덮지 않는다. */
 export function refreshBleed(target: Fighter, seconds: number, percent: number, events: SkirmishEvent[], sourceId?: string): void {
   const remaining = Math.max(target.bleed?.remaining ?? 0, seconds);
@@ -914,6 +964,103 @@ export function refreshBleed(target: Fighter, seconds: number, percent: number, 
     sourceId: percent >= (target.bleed?.percent ?? 0) ? sourceId : target.bleed?.sourceId,
   };
   events.push({ kind: "bleed", fighterId: target.id, amount: 0, started: true });
+}
+
+/**
+ * 중독을 바른다. 매 틱 피해는 **바르는 순간의 시전자 능력치**로 굳힌다.
+ *
+ * 출혈과 달리 세기가 맞은 쪽이 아니라 바른 쪽에서 나오므로, 더 아픈 독으로 덮이면 그 값이
+ * 이긴다 — 약한 독이 나중에 발렸다고 이미 발린 독이 묽어지지는 않는다.
+ */
+function refreshPoison(target: Fighter, seconds: number, amountPerSecond: number, events: SkirmishEvent[], sourceId?: string): void {
+  const remaining = Math.max(target.poison?.remaining ?? 0, seconds);
+  target.poison = {
+    remaining,
+    total: Math.max(remaining, target.poison?.total ?? 0, seconds),
+    tickIn: target.poison?.tickIn ?? 1,
+    amountPerSecond: Math.max(target.poison?.amountPerSecond ?? 0, amountPerSecond),
+    sourceId: amountPerSecond >= (target.poison?.amountPerSecond ?? 0) ? sourceId : target.poison?.sourceId,
+  };
+  events.push({ kind: "poison", fighterId: target.id, amount: 0, started: true });
+}
+
+/**
+ * 한 틱의 중독 피해. 바른 쪽의 공격력과 주문력에서 각각 뽑아 더한 **마법 피해**다.
+ *
+ * 출혈과 달리 대상의 저항력과 속성 상성을 그대로 거친다 — 이름이 마법 피해인데 저항이 듣지
+ * 않으면 저항 능력치가 거짓말이 된다. 다만 그 계산을 **바르는 순간 한 번만** 하고 값을 굳힌다:
+ * 매 틱 다시 계산하면 청산이 몰아 주는 값과 그냥 두었을 때의 총합이 반올림만큼 갈린다.
+ */
+function poisonAmountPerSecond(attacker: Fighter, target: Fighter, effect: Extract<CombatStatusEffect, { kind: "poison" }>, state: SkirmishState): number {
+  return Math.max(1, Math.round(computeDamage(
+    { ...attacker, def: offensiveDefinition(attacker) },
+    defensiveDefinition(target, state),
+    {
+      power: effect.attackPercentPerSecond,
+      scalingStat: "atk",
+      secondaryScaling: { stat: "ap", power: effect.abilityPercentPerSecond },
+      damageType: "magical",
+      isCritical: false,
+    },
+    true,
+  )));
+}
+
+/**
+ * 걸린 중독을 1초 간격으로 깎는다. 출혈과 같은 고정 피해 경계다.
+ *
+ * 남은 시간과 다음 틱까지의 시계를 함께 보는 이유는 **청산**(`liquidatePoison`)이 같은 셈을
+ * 거꾸로 쓰기 때문이다 — 두 곳이 "앞으로 몇 번 더 아픈가"를 다르게 세면 몰아서 받은 피해와
+ * 그냥 두었을 때의 총합이 갈린다.
+ */
+function tickPoison(fighter: Fighter, dt: number, state: SkirmishState, events: SkirmishEvent[]): void {
+  const poison = fighter.poison;
+  if (!poison) return;
+  poison.remaining -= dt;
+  poison.tickIn -= dt;
+  while (poison.tickIn <= 0 && isFighterAlive(fighter)) {
+    const amount = receivedDamage(fighter, poison.amountPerSecond);
+    const hpBefore = fighter.hp;
+    applyDamage(fighter, amount, events);
+    if (poison.sourceId) addContribution(state.contributions, poison.sourceId, "attack", hpBefore - fighter.hp, "abilityPower");
+    events.push({ kind: "poison", fighterId: fighter.id, amount, started: false });
+    tryTriggerEmergencyRecovery(fighter); tryTriggerLowHpVanish(fighter, state);
+    state.log.push(`${fighter.def.name} 중독 ${amount}`);
+    poison.tickIn += 1;
+    if (!isFighterAlive(fighter)) {
+      clearDefeatedStatuses(fighter);
+      events.push({ kind: "death", fighterId: fighter.id, sourceId: poison.sourceId });
+      state.log.push(`${fighter.def.name} 전투 불능`);
+    }
+  }
+  if (poison.remaining <= 0 || !isFighterAlive(fighter)) fighter.poison = null;
+}
+
+/**
+ * 남은 중독을 **한 번에 몰아서** 받게 하고 지운다.
+ *
+ * 앞으로 실제로 터졌을 틱 수를 그대로 센다 — 남은 시간을 올림하거나 처음 지속시간을 쓰면,
+ * 이미 한 틱 아팠던 적이 청산으로 그 몫을 또 맞는다. 그냥 두었을 때의 총합과 같아야 청산이
+ * "먼저 받는 것"이지 "더 받는 것"이 되지 않는다.
+ */
+function liquidatePoison(target: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
+  const poison = target.poison;
+  if (!poison) return;
+  const pendingTicks = poison.remaining >= poison.tickIn ? Math.floor(poison.remaining - poison.tickIn) + 1 : 0;
+  target.poison = null;
+  if (pendingTicks <= 0) return;
+  const amount = receivedDamage(target, poison.amountPerSecond * pendingTicks);
+  const hpBefore = target.hp;
+  applyDamage(target, amount, events);
+  if (poison.sourceId) addContribution(state.contributions, poison.sourceId, "attack", hpBefore - target.hp, "abilityPower");
+  events.push({ kind: "poisonLiquidated", fighterId: target.id, amount, ticks: pendingTicks });
+  tryTriggerEmergencyRecovery(target); tryTriggerLowHpVanish(target, state);
+  state.log.push(`${target.def.name} 중독 청산 ${amount}`);
+  if (!isFighterAlive(target)) {
+    clearDefeatedStatuses(target);
+    events.push({ kind: "death", fighterId: target.id, sourceId: poison.sourceId });
+    state.log.push(`${target.def.name} 전투 불능`);
+  }
 }
 
 /**
@@ -1011,6 +1158,7 @@ export function curseResistanceShred(target: Fighter): number {
 function clearDefeatedStatuses(fighter: Fighter): void {
   fighter.targetId = null;
   fighter.bleed = null;
+  fighter.poison = null;
   fighter.overpaint = null;
   fighter.curse = null;
   fighter.frenzy = null;
@@ -1135,6 +1283,9 @@ export function attackInterval(fighter: Fighter, state?: SkirmishState): number 
       : fighter.ferocityFever && trait.effectId === "selfAttackSpeedMultiplier"
         // +100%는 공격 속도 x2이고, 속도의 역수인 공격 간격은 정확히 50%가 된다.
         ? 1 / (1 + trait.bonusPercent / 100)
+      : fighter.ferocityFever && trait.effectId === "venomousEncore"
+        // 바르고 터뜨리기를 번갈아 하는 손이라 속도가 곧 그 주기다. 같은 역수 규칙을 쓴다.
+        ? 1 / (1 + trait.attackSpeedBonusPercent / 100)
       : 1;
   return Math.max(SKIRMISH.minimumAttackInterval, ((SKIRMISH.attackInterval * 100) / Math.max(1, currentAttackSpeed(fighter, state))) * feverMultiplier);
 }
@@ -1906,6 +2057,10 @@ function strike(
   // 방금 건 저주를 자기가 다시 읽어 패시브와 전이가 늘 발동한다.
   const targetWasCursed = target.curse !== null;
   const targetCurseWasMaxed = isCurseMaxed(target);
+  // 청산 여부도 **이번 타격이 독을 바르기 전**의 상태로 정한다. 뒤에서 보면 방금 자기가 바른
+  // 독을 그 자리에서 도로 터뜨려, 바르는 차례가 영영 오지 않는다.
+  const encoreLiquidation = !useUltimate && attackingInFever
+    && attacker.def.ferocityTrait.effectId === "venomousEncore" && target.poison?.sourceId === attacker.id;
   const critTrait = attacker.def.ferocityTrait;
   // 패시브와 폭주의 퍼센트포인트를 모두 더한 뒤, 난수 판정 직전에만 유효 확률을 100%로 제한한다.
   // 치명타 가산은 개체 이름이 아니라 필드 하나로 읽는다 — 태생 치명타가 전 개체 공통이라
@@ -1921,14 +2076,25 @@ function strike(
   }
   const forcedCritical = periodicCritical !== undefined && attacker.basicAttackCount >= periodicCritical.every;
   if (forcedCritical) attacker.basicAttackCount = 0;
+  // 궁극기가 걸어 둔 강화는 실제로 나가는 일반 공격 한 번을 쓰고 사라진다. 이 타격이 곧 그
+  // 한 번이므로 여기서 소비한다 — 궁극기 쪽에서 미리 지우면 강화가 붙을 타격이 없어진다.
+  const empowered = !useUltimate && attacker.empoweredBasic;
+  if (empowered) attacker.empoweredBasic = false;
   // 확정 치명타는 RNG를 호출조차 하지 않아 이후 리플레이 난수열이 밀리지 않는다.
-  const critical = forcedCritical || isCriticalHit(Math.min(100, criticalChance), rng());
+  const critical = forcedCritical || empowered || isCriticalHit(Math.min(100, criticalChance), rng());
   // 공속 복합 계수는 현재 기본 공속과 전투의 환희 누적을 읽되 폭주 임시 배율은 포함하지 않는다.
   const attackSpeedPower = useUltimate ? attacker.def.ultimate.attackSpeedPower ?? 0 : 0;
   const compositePower = attackSpeedPower > 0
     ? skill.power + currentAttackSpeed(attacker) * attackSpeedPower / Math.max(1, attacker.def.stats.atk)
     : skill.power;
-  const damageInput = { ...skill, power: compositePower, isCritical: critical, kind: useUltimate ? "ultimate" as const : "basic" as const };
+  const damageInput = {
+    ...skill,
+    power: compositePower,
+    isCritical: critical,
+    kind: useUltimate ? "ultimate" as const : "basic" as const,
+    // 강화된 한 방만 방어·저항을 지나간다. 속성 상성과 대상 경감은 그대로 거친다.
+    ignoresDefense: empowered,
+  };
   const damageAttacker = { ...attacker, def: offensiveDefinition(attacker) };
   const damageTarget = defensiveDefinition(target, state);
   const splashTrait = attacker.def.ferocityTrait;
@@ -2052,8 +2218,8 @@ function strike(
     // 사건과 상태 모두 서버 검증기가 재계산하는 과잉 피해 제한 후 실제 HP 손실을 쓴다.
     contributionAmount: credited,
     critical,
-    damageType: damageInput.damageType,
-   
+    // 방어를 지나친 한 방은 종류가 아니라 "고정 피해"로 뜬다 — 전이와 같은 축이다.
+    damageType: empowered ? "true" : damageInput.damageType,
     mitigated: resolution.reduced < resolution.raw,
   });
   if (resolution.ignored) events.push({ kind: "damageIgnored", attackerId: attacker.id, targetId: target.id });
@@ -2066,7 +2232,11 @@ function strike(
   if (!useUltimate) { triggerCrescendoStaccato(state, target, events); triggerSharedOverpaint(state, target); }
 
   // 개별 기본 공격·궁극기가 선언한 상태도 피해 처리 뒤 공용 저항/재적용 규칙을 그대로 사용한다.
-  if (isFighterAlive(target) && statusEffectsLandThisHit(attacker, skill, useUltimate)) applySkillStatuses(target, skill, events, state, attacker.id, critical);
+  // 청산하는 타격은 같은 손으로 덧바르지 않는다 — 바르거나 터뜨리거나 한 번에 하나뿐이다.
+  if (isFighterAlive(target) && statusEffectsLandThisHit(attacker, skill, useUltimate)) {
+    applySkillStatuses(target, encoreLiquidation ? withoutPoison(skill) : skill, events, state, attacker.id, critical);
+  }
+  if (encoreLiquidation && isFighterAlive(target)) liquidatePoison(target, state, events);
   // 연격도 실제 적중마다 이 경계를 지나지만 증강 자체의 횟수·쿨타임 계약이 폭주를 막는다.
   if (isFighterAlive(target)) {
     if (!useUltimate) triggerCombatAugments(state, attacker, "onBasicHit", events, target);
@@ -2485,8 +2655,10 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
       clearDefeatedStatuses(fighter);
       continue;
     }
-    // 출혈은 붙어 있든 달려가든 흐르는 시간만큼 깎는다.
+    // 출혈은 붙어 있든 달려가든 흐르는 시간만큼 깎는다. 중독도 같은 축이라 나란히 흐른다.
     tickBleed(fighter, dt, state, events);
+    if (!isFighterAlive(fighter)) continue;
+    tickPoison(fighter, dt, state, events);
     if (!isFighterAlive(fighter)) continue;
     tickGourmetHunt(fighter, dt, state);
     // 기절 시간은 위에서 흐르지만 행동 시계인 공격 쿨다운은 멈춘다. 즉 이동·추적·평타·자동
@@ -2606,6 +2778,20 @@ export function fireUltimate(
       if (amount > 0) events.push({ kind: "heal", fighterId: ally.id, amount, source: "ultimate", effect: { tag: "heal", intensity: 1.65 } });
     }
     attacker.attackCooldown = attackInterval(attacker, state);
+    return events;
+  }
+
+  if (teamUltimate.selfSetup !== undefined) {
+    // 때리지 않는 궁극기다. 게이지를 쓰고 자리만 잡은 뒤, 피해는 이어질 일반 공격이 낸다.
+    const setup = teamUltimate.selfSetup;
+    attacker.energy -= ultimateCost(state, attacker, true);
+    attacker.stealthFor = Math.max(attacker.stealthFor, setup.stealthSeconds);
+    leapToLowestHpEnemy(attacker, state, setup.landingDistance);
+    // 숨은 순간 그를 쫓던 상대는 표적을 잃는다. 스피나·루카의 은신과 같은 처리다.
+    for (const other of state.fighters) if (other.targetId === attacker.id) { other.targetId = null; other.engaged = false; }
+    attacker.empoweredBasic = true;
+    attacker.attackCooldown = attackInterval(attacker, state);
+    settle(state, events);
     return events;
   }
 

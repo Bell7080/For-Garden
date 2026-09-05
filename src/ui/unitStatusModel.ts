@@ -7,7 +7,7 @@ import type { Fighter } from "../core/skirmish";
  * 겹 수와 남은 시간을 여기서 한 번만 만들고 둘 다 이 목록만 그린다. Phaser를 들여오지 않아
  * 순서·색·문구를 테스트가 그대로 고정할 수 있다.
  */
-export type UnitStatusId = "stun" | "frenzy" | "bleed" | "curse" | "overpaint" | "butcher";
+export type UnitStatusId = "stun" | "frenzy" | "bleed" | "poison" | "curse" | "overpaint" | "butcher";
 
 export interface UnitStatusView {
   id: UnitStatusId;
@@ -29,6 +29,7 @@ export const UNIT_STATUS_COLOR: Readonly<Record<UnitStatusId, number>> = {
   stun: 0xf2c744,
   frenzy: 0xa8406b,
   bleed: 0xc2303a,
+  poison: 0x7a4bab,
   curse: 0x8f6aa4,
   overpaint: 0x62c6d8,
   butcher: 0xc07fa4,
@@ -67,6 +68,15 @@ export function unitStatusViews(fighter: Fighter): UnitStatusView[] {
       id: "bleed", name: "출혈", color: UNIT_STATUS_COLOR.bleed,
       remaining: fighter.bleed.remaining, total: Math.max(fighter.bleed.total, fighter.bleed.remaining),
       detail: `매초 최대 체력의 ${fighter.bleed.percent}% · ${seconds(fighter.bleed.remaining)} 남음`,
+    });
+  }
+  if (fighter.poison) {
+    const poison = fighter.poison;
+    views.push({
+      id: "poison", name: "중독", color: UNIT_STATUS_COLOR.poison,
+      remaining: poison.remaining, total: Math.max(poison.total, poison.remaining),
+      // 중독은 맞은 쪽의 비율이 아니라 바른 쪽이 굳혀 둔 값이라, 비율이 아니라 그 수를 그대로 적는다.
+      detail: `매초 ${poison.amountPerSecond} · ${seconds(poison.remaining)} 남음`,
     });
   }
   if (fighter.overpaint) {

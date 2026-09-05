@@ -859,6 +859,28 @@ export class BattleScene extends Phaser.Scene {
       this.popNumber(view.fighter, event.amount, "debuff", { debuff: "bleed" });
       return undefined;
     }
+    if (event.kind === "poison") {
+      const view = this.views.get(event.fighterId);
+      if (!view) return undefined;
+      // 독이 발리는 순간만 한 번 번쩍이고, 이후 매초 피해는 숫자로만 뜬다. 출혈과 같은 결이다.
+      if (event.started) {
+        flashHit(this, view.creature, this.bodyTint(view));
+        return undefined;
+      }
+      this.profiles.find((profile) => profile.fighter.id === event.fighterId)?.prefab.setHealthTarget(view.fighter.hp, view.fighter.maxHp, "damage", event.amount);
+      this.popNumber(view.fighter, event.amount, "debuff", { debuff: "poison" });
+      return undefined;
+    }
+    if (event.kind === "poisonLiquidated") {
+      const view = this.views.get(event.fighterId);
+      if (!view) return undefined;
+      this.profiles.find((profile) => profile.fighter.id === event.fighterId)?.prefab.setHealthTarget(view.fighter.hp, view.fighter.maxHp, "damage", event.amount);
+      // 남은 몫을 한꺼번에 받은 한 방이라 매초 틱과 달리 피격 섬광을 함께 준다 — 같은 색
+      // 숫자만 크게 뜨면 잔타가 우연히 커진 것처럼 읽힌다.
+      flashHit(this, view.creature, this.bodyTint(view));
+      this.popNumber(view.fighter, event.amount, "debuff", { debuff: "poison" });
+      return undefined;
+    }
     if (event.kind === "heal") {
       const view = this.views.get(event.fighterId);
       if (!view) return undefined;

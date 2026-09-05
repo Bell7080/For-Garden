@@ -37,13 +37,23 @@ async function openFirstRune(page: Page): Promise<void> {
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   // 로비는 이름이 바뀐 뒤에도 하단 탭의 입력면을 마저 만든다 — 될 때까지 다시 누른다.
   await tapUntil(page, W * 0.3, H - 90, async () => (await page.evaluate(() => window.__PF_DEBUG?.scene)) === "relics");
-  // 애착 렐릭(토리카) 카드 → 1번 룬 조각 → 쪽지의 세공 버튼 순서다. 각 판은 원화·조각을
-  // 비동기로 읽으므로, 다음을 누르기 전에 실제로 열렸는지 확인한다 — 열리기 전에 누르면 허공을 친다.
-  await tapUntil(page, 530, 580, async () => (await page.evaluate(() => window.__PF_DEBUG?.infoOpen)) === true);
-  await tapUntil(page, 688, 1350, async () => ((await page.evaluate(() => window.__PF_DEBUG?.popupTitles)) ?? []).some((title) => title.includes("룬")));
+  // **도감의 첫 카드**를 연다 — 룬을 끼운 렐릭과 같은 자리여야 한다. 예전에는 두 번째 칸을
+  // 누르면서 주석만 "애착 렐릭"이라 적어 두었는데, 목록은 즐겨찾기 → 개체번호 순이라 애착과
+  // 무관하다. 그래서 룬이 없는 렐릭이 열렸고 첫 조각은 빈 자리라 쪽지 대신 가방이 떴다.
+  // 각 판은 원화·조각을 비동기로 읽으므로, 다음을 누르기 전에 실제로 열렸는지 확인한다.
+  await tapUntil(page, 200, 620, async () => (await page.evaluate(() => window.__PF_DEBUG?.infoOpen)) === true);
+  // **조각은 되풀이해 누르지 않는다.** 룬 쪽지는 바깥을 누르면 닫히므로, 열릴 때까지 다시
+  // 누르는 `tapUntil`은 열었다 닫았다를 반복하다 닫힌 채로 끝난다 — `canvasInput`이 경고하는
+  // 그대로다. 대신 조각이 **실제로 칠해질 때까지** 기다린 뒤 한 번만 누른다. 칠해지기 전에
+  // 누르면 빈 자리로 판정돼 쪽지 대신 장착 가방이 열린다.
+  // 정보창은 원화와 조각을 비동기로 읽는다. 관찰값이 나타나기를 기다리되, 첫 프레임의 빈
+  // 상태를 지나치도록 한 박자 둔다.
+  await page.waitForTimeout(1200);
+  await expect.poll(() => page.evaluate(() => Boolean(window.__PF_DEBUG?.infoGemSlots?.[0])), { timeout: 15_000 }).toBe(true);
+  await tap(page, 688, 1350);
   // 쪽지의 세공 버튼은 줄 구성(세공·해제 / 세공·장착·판매)에 따라 자리가 달라진다 — 화면이
   // 알려 주는 좌표를 쓴다. 좌표를 적어 두면 쪽지 바깥을 눌러 그냥 닫아 버린다.
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.runeNoteCraft)).not.toBeUndefined();
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.runeNoteCraft !== undefined)).toBe(true);
   const craft = (await page.evaluate(() => window.__PF_DEBUG!.runeNoteCraft!))!;
   await tap(page, craft.x, craft.y);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toContain("룬 세공");
@@ -62,7 +72,7 @@ test("세로 화면에서 전설 5행×3칸, 긴 옵션명, 키보드 이름 입
   await openFirstRune(page);
   // 연필 조작은 네이티브 입력을 띄워 모바일 소프트 키보드와 동일한 입력 경로를 사용한다.
   // 연필 자리는 이름 글자 폭에 따라 달라지므로 화면이 알려 주는 좌표를 쓴다.
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.runeForgeRename)).not.toBeUndefined();
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.runeForgeRename !== undefined)).toBe(true);
   const pencil = (await page.evaluate(() => window.__PF_DEBUG!.runeForgeRename!))!;
   // 네이티브 입력을 띄우는 조작이라 되풀이해 누르지 않는다.
   await tap(page, pencil.x, pencil.y);

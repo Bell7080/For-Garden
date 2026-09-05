@@ -5,7 +5,7 @@ import type { Combatant } from "../core/combatTypes";
 import { RUNE_PART_LABELS, RUNE_RARITY_LABELS, type RunePart } from "../core/runes";
 import { previewSkillDamage } from "../core/damage";
 import type { BasicAttack, Element, RelicDef, RelicProgress, RelicRarity, Role, Passive, Skill, SkillIconAssetId, Stats, Ultimate } from "../core/types";
-import { setDebugFeedButton, setDebugInfoOpen } from "../debug";
+import { setDebugFeedButton, setDebugInfoGemSlots, setDebugInfoOpen } from "../debug";
 import { formatCurrency } from "../core/formatCurrency";
 import { RELICS } from "../data/relics";
 import { KeywordManager } from "../managers/KeywordManager";
@@ -2159,6 +2159,9 @@ export class InfoManager {
     this.statRadar?.draw(finalStats, STAT_RADAR_RADIUS);
 
     progress.heartGemSlots.forEach((id, index) => this.gemSlots[index].paint(id));
+    // 칠한 결과를 그대로 알린다. 조각을 누르는 자동화가 "언제 칠해지는가"를 시간으로 짐작하지
+    // 않게 하는 것이 유일한 목적이다.
+    setDebugInfoGemSlots([...progress.heartGemSlots]);
   }
 }
 

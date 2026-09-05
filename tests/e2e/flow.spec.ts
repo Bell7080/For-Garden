@@ -176,7 +176,7 @@ test("일반 전투 결과의 기여도 세 분류를 확인하고 닫은 뒤 �
   await enterBattle(page);
   // 3배속으로 결과까지 진행하되 결과 스냅샷을 만들기 위해 전투를 별도로 재현하지 않는다.
   await tap(page, BATTLE_CONTROLS.speedX, BATTLE_CONTROLS.rowY); await tap(page, BATTLE_CONTROLS.speedX, BATTLE_CONTROLS.rowY);
-  await expect.poll(async () => (await battle(page))?.phase, { timeout: 60_000 }).not.toBe("fight");
+  await expect.poll(async () => (await battle(page))?.phase !== "fight", { timeout: 60_000 }).toBe(true);
   // 승리 결과는 StageCompletePopup(보상 팝업의 연장선)이다 — 화면 중심에 뜨는 "공격 · 방어 ·
   // 회복" 버튼(로컬 (0,90))을 눌러 같은 popups 위에 기여도 그래프를 한 겹 더 연다. SD가
   // 다 뜨기 전에 누르지 않도록 팝업이 실제로 열렸다는 디버그 플래그부터 기다린다.
@@ -432,7 +432,7 @@ test("연구소에서 화석을 사용하면 렐릭 연구 결과가 뜬다", as
 
   await tap(page, 300, BASE_HEIGHT - 180 - 250); // 1회 연구
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.wallet?.fossil)).toBe(1100);
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.owned)).not.toBeUndefined();
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.owned !== undefined)).toBe(true);
   // 슬롯별 신규/DNA 배지가 모바일 안전 영역에 표시되는 모습을 회귀 자료로 남긴다.
   await captureGame(page, `test-results/${test.info().project.name}-lab-pull-result.png`);
 });

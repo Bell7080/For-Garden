@@ -55,6 +55,8 @@ export interface DebugState {
   runeNoteCraft?: DebugPoint;
   /** 정보창 급여 버튼의 중심. 레벨 칸의 줄 구성에 따라 자리가 달라진다. */
   feedButton?: DebugPoint;
+  /** 정보창이 지금 그린 룬 조각 셋. 조각을 누르기 전에 실제로 칠해졌는지 확인하는 용도다. */
+  infoGemSlots?: (string | null)[];
   battle?: DebugBattle;
   /** 정보창이 떠 있는지. `?`와 꾹 누르기를 확인하는 데 쓴다. */
   infoOpen?: boolean;
@@ -279,6 +281,17 @@ export function setDebugRuneNoteCraft(point: { x: number; y: number } | undefine
  */
 export function setDebugFeedButton(point: { x: number; y: number } | undefined): void {
   ensure().feedButton = point;
+}
+
+/**
+ * 정보창이 지금 그린 룬 조각 셋.
+ *
+ * 조각은 정보창이 열린 뒤에 칠해진다. 그 전에 누르면 빈 자리로 판정돼 룬 쪽지 대신 장착
+ * 가방이 열리고, 실패는 "세공 화면이 안 열린다"로만 보인다 — 기다리는 시간을 눈대중으로
+ * 늘리는 대신 **칠해졌는지 자체를** 알린다.
+ */
+export function setDebugInfoGemSlots(slots: (string | null)[] | undefined): void {
+  ensure().infoGemSlots = slots;
 }
 
 export function setDebugPopupTitles(titles: string[]): void {

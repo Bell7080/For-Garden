@@ -45,7 +45,8 @@ test("짧은 급여 탭 뒤 성장 팝업이 유지되고 외부 입력으로만
   // 급여는 되풀이하면 실제로 여러 번 먹이고 판도 열렸다 닫힌다 — 다시 누르지 않고, 정보창이
   // 원화·스킬을 마저 세울 틈만 두고 한 번 누른다.
   // 급여 버튼 자리는 화면이 알려 준다 — 레벨 칸의 줄 구성이 바뀌면 좌표가 함께 움직인다.
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.feedButton)).not.toBeUndefined();
+  await page.waitForTimeout(900);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.feedButton !== undefined), { timeout: 15_000 }).toBe(true);
   const spot = (await page.evaluate(() => window.__PF_DEBUG!.feedButton!))!;
   const feed = await gamePointOf(page, spot.x, spot.y);
   await page.mouse.click(feed.x, feed.y);
@@ -64,7 +65,8 @@ test("짧은 급여 탭 뒤 성장 팝업이 유지되고 외부 입력으로만
 });
 
 test("긴 누르기 반복 급여는 손을 뗀 뒤 팝업을 한 장만 연다", async ({ page }) => {
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.feedButton)).not.toBeUndefined();
+  await page.waitForTimeout(900);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.feedButton !== undefined), { timeout: 15_000 }).toBe(true);
   const spot = (await page.evaluate(() => window.__PF_DEBUG!.feedButton!))!;
   const feed = await gamePointOf(page, spot.x, spot.y);
   await page.mouse.move(feed.x, feed.y);

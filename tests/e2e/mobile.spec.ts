@@ -210,7 +210,7 @@ test("원정 전투 노드는 지도 안 공용 편성판을 붙이고 적 상�
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("expedition");
   // 실제 지도 포커스 계산이 반영된 첫 도달 노드의 화면 좌표를 선택한다.
   await tapGame(page, reachableX, reachableY);
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.enemyPreview)).not.toBeUndefined();
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.enemyPreview !== undefined)).toBe(true);
   const geometry = await page.evaluate(() => window.__PF_DEBUG!.enemyPreview!);
   expect(geometry.panelTop).toBeGreaterThanOrEqual(geometry.top); expect(geometry.panelBottom).toBeLessThanOrEqual(geometry.bottom);
   expect([1, 3, 5]).toContain(geometry.enemyTargets.length);
@@ -223,7 +223,7 @@ test("원정 전투 노드는 지도 안 공용 편성판을 붙이고 적 상�
   await tapGame(page, 100, 400);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.enemyPreview)).toBeUndefined();
   await tapGame(page, reachableX, reachableY);
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.enemyPreview)).not.toBeUndefined();
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.enemyPreview !== undefined)).toBe(true);
   // 1층에서 위쪽 월드를 내려 보면 선택 노드가 마스크 하단을 벗어나 판과 SD도 함께 사라진다.
   // 한 번에 얼마나 밀리는지는 지도 길이와 관성이 정하므로, 판이 사라질 때까지 같은 손짓을
   // 되풀이한다 — 밀어도 사라지지 않으면 그때 실패해야 "몇 번 밀었나"가 아니라 "안 사라진다"가 남는다.

@@ -1,6 +1,6 @@
 import { EXPEDITION_BOSS_BALANCE } from "../data/expedition";
 import type { ExpeditionAugmentEffect } from "./expeditionAugments";
-import { attackInterval, createSkirmish, isFighterAlive, replayLoggedBossAction, stepSkirmish, type Arena } from "./skirmish";
+import { attackInterval, createSkirmish, isFighterAlive, replayLoggedBossAction, stepSkirmish, type Arena, type Fighter } from "./skirmish";
 import type { RelicDef } from "./types";
 
 /** 클라이언트 제출 계약에는 관측 가능한 시각과 행동만 있으며 피해 숫자는 의도적으로 없다. */
@@ -29,6 +29,27 @@ export function expeditionWeekKey(now: Date): string {
 }
 
 /**
+ * 그 개체가 그 시점에 **도달할 수 있었던 가장 짧은** 공격 간격이다.
+ *
+ * 재현은 점수를 부풀리지 않으려고 치명타도 연격도 굴리지 않는 고정 난수로 돈다. 그래서 재현
+ * 속의 공속은 실제 판보다 언제나 느리다 — 연격이 두 번 터진 판은 적중마다 쌓이는 공속 누적을
+ * 두 배로 받기 때문이다. 그 느린 값을 재사용 대기의 기준으로 삼으면 규칙대로 싸운 판이
+ * 거절되므로(v0.66.1까지 폰토스 정산이 "다시 시도"만 남긴 원인), 검증은 같기를 요구하지 않고
+ * **한계**를 잡는다: 지금까지의 평타가 모두 최대 타수로 터지고 폭주도 계속 켜져 있었다고 보고
+ * 그때의 간격을 구한다. 그보다 빠른 판은 재현으로 설명되지 않으므로 여전히 거절된다.
+ */
+function fastestAttackInterval(fighter: Fighter, state: Parameters<typeof attackInterval>[1], basicCount: number): number {
+  const stack = fighter.def.passive.kind === "basicHitAttackSpeedStack" ? fighter.def.passive.value : 0;
+  const hitCount = fighter.def.basic.combo?.hitCount ?? 1;
+  const bonusBefore = fighter.bonusAttackSpeed; const feverBefore = fighter.ferocityFever;
+  fighter.bonusAttackSpeed = Math.max(bonusBefore, basicCount * hitCount * stack);
+  fighter.ferocityFever = true;
+  const interval = attackInterval(fighter, state);
+  fighter.bonusAttackSpeed = bonusBefore; fighter.ferocityFever = feverBefore;
+  return interval;
+}
+
+/**
  * 행동열을 공용 난전에 재생한다. 서버는 클라이언트 피해를 받지 않으며 렐릭/폰토스 정의, 실제 스킬
  * 계수, 공속 쿨다운, 상태 효과와 증강을 다시 읽는다. rng도 주입되어 클라이언트 교차 검증이 가능하다.
  */
@@ -42,16 +63,21 @@ export function resolveExpeditionBossBattle(input: ExpeditionBossReplayInput, ac
   });
   // 자동 평타는 제출 로그가 명시적으로 재생하므로 끄고, 폰토스의 AI·폭주·상태 시계만 stepSkirmish로 진행한다.
   for (const fighter of state.fighters) if (fighter.side === "player") fighter.attackCooldown = Number.POSITIVE_INFINITY;
-  const lastAction = new Map<string, number>(); let cursorMs = 0;
+  // 같은 행동이 다시 준비되는 시각을 그 행동을 재생한 **그 순간의 상태**로 못 박는다.
+  const readyAt = new Map<string, number>(); const basicCount = new Map<string, number>(); let cursorMs = 0;
   for (const action of actions) {
     if (!Number.isInteger(action.elapsedMs) || action.elapsedMs < cursorMs || action.elapsedMs > EXPEDITION_BOSS_BALANCE.maximumDurationMs) throw new Error("INVALID_BOSS_BATTLE_INPUT");
     while (cursorMs < action.elapsedMs && state.phase === "fight") { const slice = Math.min(50, action.elapsedMs - cursorMs); stepSkirmish(state, slice / 1_000, rng); cursorMs += slice; }
     const fighter = state.fighters.find(({ side, def }) => side === "player" && def.id === action.actorId);
     if (!fighter || !isFighterAlive(fighter)) throw new Error("INVALID_BOSS_BATTLE_INPUT");
-    const key = `${action.actorId}:${action.kind}`; const previous = lastAction.get(key) ?? -Infinity;
-    const cooldownMs = action.kind === "basic" ? attackInterval(fighter, state) * 1_000 : fighter.def.ultimate.cost / Math.max(1, fighter.def.stats.energyGain) * attackInterval(fighter, state) * 1_000;
-    if (action.elapsedMs + 1e-6 < previous + cooldownMs) throw new Error("INVALID_BOSS_BATTLE_INPUT");
-    lastAction.set(key, action.elapsedMs); replayLoggedBossAction(state, action.actorId, action.kind, rng);
+    const key = `${action.actorId}:${action.kind}`;
+    if (action.elapsedMs + 1e-6 < (readyAt.get(key) ?? -Infinity)) throw new Error("INVALID_BOSS_BATTLE_INPUT");
+    replayLoggedBossAction(state, action.actorId, action.kind, rng);
+    if (action.kind === "basic") basicCount.set(action.actorId, (basicCount.get(action.actorId) ?? 0) + 1);
+    // 대기 시간은 **때린 그 순간**의 상태로 잰다. 다음 행동 때 다시 재면 그 사이에 풀린 강화만큼
+    // 간격이 길어져, 규칙대로 싸운 판이 거절된다.
+    const intervalMs = fastestAttackInterval(fighter, state, basicCount.get(action.actorId) ?? 0) * 1_000;
+    readyAt.set(key, action.elapsedMs + (action.kind === "basic" ? intervalMs : fighter.def.ultimate.cost / Math.max(1, fighter.def.stats.energyGain) * intervalMs));
   }
   while (state.phase === "fight" && cursorMs < EXPEDITION_BOSS_BALANCE.maximumDurationMs) { stepSkirmish(state, 0.05, rng); cursorMs += 50; }
   if (state.phase !== "defeat") throw new Error("BOSS_BATTLE_DID_NOT_END_IN_WIPE");

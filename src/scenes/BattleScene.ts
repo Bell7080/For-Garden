@@ -57,6 +57,7 @@ import type { ExpeditionBossAction } from "../core/expeditionBoss";
 import { expeditionManager } from "../managers/ExpeditionManager";
 import { settingsManager } from "../managers/SettingsManager";
 import { battleUiMotionFactor } from "../core/settings";
+import { GameApiError } from "../api/contracts";
 import type { SettleExpeditionRunResponse, SubmitExpeditionBossScoreResponse } from "../api/contracts";
 import { currencyRecordToRewardItems, openRewardPopup } from "../ui/RewardPopup";
 import { BATTLE_STATUS_LAYOUT } from "../ui/battleStatusLayout";
@@ -425,7 +426,13 @@ export class BattleScene extends Phaser.Scene {
       const settlement = await gameApi.settleExpeditionRun({ runId: input.runId, settlementId: input.settlementId, outcome: "completed" });
       // 보스 완료도 공용 지급 영수증을 먼저 확인한 뒤 점수 결과판으로 이어진다.
       openRewardPopup(this, new PopupLayer(this, 2200), { title: "원정 완료 전리품", items: currencyRecordToRewardItems(settlement.granted), onConfirm: () => this.showBossResult(score, settlement) });
-    } catch {
+    } catch (error) {
+      // **무엇이 실패했는지 남긴다.** 예전에는 이유를 통째로 삼켜, 정산이 막히면 화면에 "다시
+      // 시도"만 남고 눌러도 같은 자리에서 같은 이유로 막혔다 — 서버가 거절한 것인지, 이미
+      // 정산된 런인지, 결과판을 그리다 터진 것인지 아무도 알 수 없었다.
+      console.error("[expedition] 보스 정산 실패", error);
+      const reason = error instanceof GameApiError ? error.message : "정산을 마치지 못했습니다.";
+      this.add.text(BASE_WIDTH / 2, 970, reason, textStyle({ role: "body", size: 27, color: COLOR.dangerText, align: "center", wrap: BASE_WIDTH - 220 })).setOrigin(0.5).setDepth(201);
       // 같은 버튼은 저장된 요청 ID로 전체 체인을 재시도하므로 성공한 서버 제출도 중복 누적되지 않는다.
       new Button(this, BASE_WIDTH / 2, 1050, { width: 460, height: 100, label: "정산 다시 시도", onClick: () => void this.submitAndSettleBoss(input, actions) }).setDepth(201);
     }
@@ -963,11 +970,15 @@ export class BattleScene extends Phaser.Scene {
 
     const attacker = this.views.get(event.attackerId);
     const target = this.views.get(event.targetId);
-    if (this.state.boss && attacker?.fighter.side === "player" && target?.fighter.side === "enemy" && event.animate !== false) {
+    if (this.state.boss && attacker?.fighter.side === "player" && target?.fighter.side === "enemy" && event.animate !== false && event.followUp !== true) {
       // 서버가 성장 스냅샷으로 재현할 수 있도록 ID·종류·코어 시각만 남기고 event.amount는 버린다.
-      // 추가 사건은 원본 행동에 접는다. transfer는 animate=false라 정상적으로 별도 기록되지 않지만 타입 경계도 명시한다.
+      // 추가 사건은 원본 행동에 접는다. **연격 둘째 타는 제 모션을 갖지만 행동은 하나다** —
+      // `animate`로 걸러 내면 같은 밀리초에 평타가 두 번 기록되어 서버 쿨다운 검증이 제출
+      // 전체를 거절했고(v0.66.1까지 폰토스 정산이 "다시 시도"만 남긴 원인), 그래서 코어가
+      // 표시하는 `followUp`을 읽는다. transfer는 animate=false라 여기 닿지 않는다.
       const replayKind = event.skill === "staccato" || event.skill === "shimmer" ? "basic" : event.skill === "transfer" ? "ultimate" : event.skill;
-      this.bossActions.push({ elapsedMs: Math.round(this.state.elapsed * 1_000), actorId: attacker.fighter.def.id, kind: replayKind });
+      // 프레임이 끝난 지금이 아니라 코어가 못 박은 타격 시각을 적는다(`at`).
+      this.bossActions.push({ elapsedMs: Math.round((event.at ?? this.state.elapsed) * 1_000), actorId: attacker.fighter.def.id, kind: replayKind });
     }
     // 한 광역 기술의 후속 피해 사건은 피격 표현만 만들고 시전자 모션은 첫 사건에서 한 번만 튼다.
     const playback = attacker && event.animate !== false ? playMotion(this, attacker.creature, "attack", motionSpeedMultiplier) : undefined;

@@ -423,6 +423,21 @@ describe("메테 전투 계약", () => {
     expect(run((mette) => { mette.ferocityFever = true; mette.hp = 0; })).toHaveLength(1);
   });
 
+  it("의 스타카토는 폭주 동안 아군 모두에게 선다 — 연주를 부르는 손은 아군의 손이다", () => {
+    const { state, mette, ally } = metteBattle();
+    expect(activeCombatBuffs(state, ally.id).some((buff) => buff.skillId === "crescendoStaccato")).toBe(false);
+    mette.ferocityFever = true; mette.ferocity = 100;
+    const onAlly = activeCombatBuffs(state, ally.id).find((buff) => buff.skillId === "crescendoStaccato");
+    expect(onAlly).toBeDefined();
+    // 표식은 아군이 들지만 그 값의 주인은 메테다 — 남은 시간도 메테의 게이지에서 나온다.
+    expect(onAlly?.sourceFighterId).toBe(mette.id);
+    expect(onAlly?.targetFighterId).toBe(ally.id);
+    expect(activeCombatBuffs(state, mette.id).some((buff) => buff.skillId === "crescendoStaccato")).toBe(true);
+    // 적에게는 서지 않는다.
+    const foe = state.fighters.find((fighter) => fighter.side === "enemy")!;
+    expect(activeCombatBuffs(state, foe.id).some((buff) => buff.skillId === "crescendoStaccato")).toBe(false);
+  });
+
   it("는 전장의 찬가로 생존 아군별 잃은 체력의 정해진 비율을 회복하고 게이지를 모두 쓴다", () => {
     const { state, mette, ally } = metteBattle();
     const healing = mette.def.ultimate.healing;
@@ -2308,6 +2323,8 @@ describe("파치 정적 전투 계약", () => {
     expect(enemy.knockback).toBeNull();
     // 고정 피해라 방어력·속성을 지나쳐 최대 체력 비율 그대로 들어간다.
     const rang = events.find((event): event is Extract<SkirmishEvent, { kind: "concussion" }> => event.kind === "concussion")!;
+    // **누가 울렸는지도 함께 싣는다.** 맞은 쪽만 알면 화면이 때린 개체의 색을 되짚을 수 없다.
+    expect(rang.sourceId).toBe(pachi.id);
     const percent = rang.critical ? concussion.criticalMaxHpPercent : concussion.maxHpPercent;
     expect(rang.amount).toBe(Math.round(enemy.maxHp * percent / 100));
   });
@@ -2806,6 +2823,9 @@ describe("엘라의 프로젝트 TALISMAN", () => {
     ella.attackCooldown = 0;
     const first = stepSkirmish(state, 1 / 60).filter((event) => event.kind === "attack");
     expect(first.map((event) => event.kind === "attack" && event.targetId).sort()).toEqual([primary.id, nearby.id].sort());
+    // **몇 번째 걸음이 때렸는지는 사건이 들고 온다.** 화면이 `basicCycleStep`을 나중에 읽으면
+    // 코어는 이미 다음 걸음으로 넘어가 있어 한 박자 어긋난 획을 그린다.
+    expect(first.every((event) => event.kind === "attack" && event.basicStep === 0)).toBe(true);
     expect(ella.shield.amount).toBeGreaterThan(0);
     expect(primary.staggeredFor).toBe(0);
     const farBefore = Math.hypot(primary.x - ella.x, primary.y - ella.y);
@@ -2818,7 +2838,8 @@ describe("엘라의 프로젝트 TALISMAN", () => {
 
     // 3걸음 「발」 — 맞은 적이 실제로 끌려온다. 날리는 것이 아니라 붙잡는 것이 이 걸음의 값이다.
     ella.attackCooldown = 0;
-    stepSkirmish(state, 1 / 60);
+    const third = stepSkirmish(state, 1 / 60).filter((event) => event.kind === "attack");
+    expect(third.every((event) => event.kind === "attack" && event.basicStep === 2)).toBe(true);
     const pull = cycle[2].pull!;
     expect(Math.hypot(primary.x - ella.x, primary.y - ella.y)).toBeCloseTo(pull.distance, 5);
     expect(Math.hypot(nearby.x - ella.x, nearby.y - ella.y)).toBeCloseTo(pull.distance, 5);

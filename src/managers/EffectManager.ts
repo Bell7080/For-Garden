@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { allowBurst, AREA_IMPACT, EFFECT_BUDGET, EFFECT_PRESETS, EFFECT_TAP_COLOR, REACH_STRIKE, SUSTAINED_COMBAT_EFFECT, type BurstSpec, type EffectKind } from "../ui/effectPresets";
 import { EFFECT_TEXTURE, ensureEffectTextures } from "../ui/effectTextures";
 import { lashPoints } from "../ui/reachStrikeShape";
+import { inkBlotPoints, mawTeeth, slashPoints, SIGNATURE_SPECS, type CombatPalette, type SignatureId, type StrokePoint } from "../ui/signatureEffects";
 import { damagePopupStyle, risingAlpha, type DamagePopupRequest } from "../ui/damageNumbers";
 import { COLOR, textStyle } from "../ui/theme";
 import { battleUiMotionFactor, type BattleUiMotion } from "../core/settings";
@@ -585,6 +586,174 @@ export class EffectManager {
       const intensity = style.shake * this.shakeFactor;
       if (!shake.isRunning || shake.intensity.x < intensity) this.scene.cameras.main.shake(150, intensity);
     }
+  }
+
+  /**
+   * 그 개체를 그 개체답게 만드는 한 순간.
+   *
+   * 무엇을 그릴지는 `SIGNATURE_SPECS` 한 표가 정하고, 씬은 **누가 누구를 어떤 순간에
+   * 쳤는지**만 넘긴다. 공용 파편과 같은 예산을 쓰므로 난전에서 넘치면 조용히 버려진다 —
+   * 놓친 한 방보다 끊긴 프레임이 훨씬 크게 보인다.
+   */
+  signature(
+    id: SignatureId,
+    at: { x: number; y: number },
+    palette: CombatPalette,
+    options: { from?: { x: number; y: number }; step?: number; scale?: number } = {},
+  ): void {
+    const now = this.rollFrame();
+    if (this.openedThisFrame >= EFFECT_BUDGET.perFrame) return;
+    this.openedThisFrame += 1;
+    const scale = options.scale ?? 1;
+    if (id === "rexMaw") this.openMaw(at, palette, scale, now);
+    else if (id === "spinoDoubleTap") this.openDoubleTap(at, palette, options.from);
+    else if (id === "pachiSlam") this.openSlam(at, palette, scale, now);
+    else if (id === "nodoniaShare") this.openShareFlow(options.from ?? at, at, palette, now);
+    else this.openInkStroke(at, palette, options.step ?? 0, options.from, now);
+  }
+
+  /** 풀에서 그래픽 한 장을 꺼내 한 번 그리고 스스로 회수되는 tween을 건다. */
+  private openShape(
+    x: number, y: number, ms: number, now: number, depth: number,
+    additive: boolean,
+    draw: (graphics: Phaser.GameObjects.Graphics, t: number) => void,
+  ): void {
+    const slot = this.acquireRing();
+    slot.openedAt = now;
+    const graphics = slot.graphics.clear().setPosition(x, y).setAlpha(1).setDepth(depth).setVisible(true);
+    if (additive) graphics.setBlendMode(Phaser.BlendModes.ADD);
+    const state = { t: 0 };
+    slot.tween = this.scene.tweens.add({
+      targets: state,
+      t: 1,
+      duration: ms,
+      ease: "Linear",
+      onUpdate: () => { graphics.clear(); draw(graphics, state.t); },
+      onComplete: () => {
+        graphics.clear().setVisible(false).setBlendMode(Phaser.BlendModes.NORMAL);
+        slot.tween = undefined;
+      },
+    });
+  }
+
+  /** 렉시아 — 위아래 턱이 맞물렸다 사라진다. 닫히는 동안이 곧 무는 동작이다. */
+  private openMaw(at: { x: number; y: number }, palette: CombatPalette, scale: number, now: number): void {
+    const spec = SIGNATURE_SPECS.rexMaw;
+    const half = spec.halfWidth * scale;
+    const depth = spec.depth * scale;
+    const upper = mawTeeth(half, depth, spec.teeth, 1);
+    const lower = mawTeeth(half, depth, spec.teeth, -1);
+    this.openShape(at.x, at.y, spec.ms, now, this.depth, false, (graphics, t) => {
+      // 간격이 0으로 좁혀지며 두 줄이 맞물린다. 마지막에 알파가 빠져 이빨이 남지 않는다.
+      const gap = spec.gap * scale * (1 - t);
+      const fade = 1 - t * t * t;
+      for (const [points, side] of [[upper, -1], [lower, 1]] as const) {
+        const moved = points.map((point) => ({ x: point.x, y: point.y + gap * side }));
+        graphics.fillStyle(palette.main, spec.fillAlpha * fade);
+        graphics.fillPoints(moved, true);
+        graphics.lineStyle(spec.edgeWidth, palette.sub, fade);
+        graphics.strokePoints(moved, true);
+      }
+    });
+    // 맞물린 순간에 섬광 한 장. 턱이 닫히기 전에 터지면 무는 그림이 지워진다.
+    this.scene.time.delayedCall(spec.ms, () => this.openFlash(at.x, at.y, spec.flash * scale, spec.flashMs, 0.5, palette.main));
+  }
+
+  /** 스피나 — 베인 자국 둘이 박자를 두고 지나간다. 두 번 때렸다는 것이 사이로 읽힌다. */
+  private openDoubleTap(at: { x: number; y: number }, palette: CombatPalette, from: { x: number; y: number } | undefined): void {
+    const spec = SIGNATURE_SPECS.spinoDoubleTap;
+    // 벤 방향은 때린 쪽에서 맞은 쪽을 향한 각의 수직이다. 어디서 왔는지 모르면 비스듬히 긋는다.
+    const base = from ? Phaser.Math.RadToDeg(Math.atan2(at.y - from.y, at.x - from.x)) + 90 : -34;
+    const cut = (angle: number, length: number, delay: number): void => {
+      this.scene.time.delayedCall(delay, () => {
+        const points = slashPoints({ x: 0, y: 0 }, angle, length, spec.rootWidth, spec.tipWidth);
+        this.openShape(at.x, at.y, spec.ms, this.scene.time.now, this.depth, true, (graphics, t) => {
+          graphics.fillStyle(palette.main, spec.alpha * (1 - t * t));
+          graphics.fillPoints(points, true);
+        });
+      });
+    };
+    cut(base, spec.length, 0);
+    // 둘째 타는 각을 틀고 더 길다 — 같은 각·같은 길이면 한 번 그은 것이 깜빡인 것으로 보인다.
+    cut(base + spec.angleGap, spec.length * spec.growth, spec.beatMs);
+  }
+
+  /** 파치 — 바닥을 친다. 납작한 충격파 한 겹과 갈라진 금. */
+  private openSlam(at: { x: number; y: number }, palette: CombatPalette, scale: number, now: number): void {
+    const spec = SIGNATURE_SPECS.pachiSlam;
+    const radius = spec.radius * scale;
+    // 바닥 자국이라 SD보다 뒤에 깐다. 앞에 두면 때린 그림이 캐릭터를 덮는다.
+    this.openShape(at.x, at.y, spec.ms, now, this.groundDepth, false, (graphics, t) => {
+      const fade = 1 - t * t;
+      const grown = radius * (0.45 + 0.55 * t);
+      graphics.lineStyle(spec.ringWidth * (1 - t * 0.6), palette.main, spec.alpha * fade);
+      graphics.strokePoints([
+        { x: 0, y: -grown * spec.squash }, { x: grown, y: 0 },
+        { x: 0, y: grown * spec.squash }, { x: -grown, y: 0 },
+      ], true);
+      graphics.lineStyle(spec.crackWidth, palette.sub, spec.alpha * fade);
+      for (let crack = 0; crack < spec.cracks; crack += 1) {
+        // 금은 고르게 벌어지지 않는다 — 각을 조금씩 어긋나게 두어야 별이 아니라 균열이 된다.
+        const angle = (crack / spec.cracks) * Math.PI * 2 + 0.4 + crack * 0.17;
+        const length = spec.crackLength * scale * (0.6 + 0.4 * t);
+        graphics.lineBetween(0, 0, Math.cos(angle) * length, Math.sin(angle) * length * spec.squash);
+      }
+    });
+  }
+
+  /** 노도니아 — 아군이 맞은 자리에서 노도니아 쪽으로 한 줄기가 흘러간다. */
+  private openShareFlow(from: { x: number; y: number }, to: { x: number; y: number }, palette: CombatPalette, now: number): void {
+    const spec = SIGNATURE_SPECS.nodoniaShare;
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
+    this.openShape(0, 0, spec.ms, now, this.depth, true, (graphics, t) => {
+      // 길 전체를 잇지 않고 **한 토막이 흘러간다**. 통째로 이으면 두 사람을 묶은 줄이 되어
+      // 무엇이 어느 쪽으로 옮겨 갔는지 방향이 사라진다.
+      const head = Math.min(1, t + spec.span);
+      const tail = Math.max(0, t - spec.span * 0.4);
+      const root: StrokePoint = { x: from.x + dx * tail, y: from.y + dy * tail };
+      const tip: StrokePoint = { x: from.x + dx * head, y: from.y + dy * head };
+      const mid: StrokePoint = { x: (root.x + tip.x) / 2, y: (root.y + tip.y) / 2 };
+      graphics.fillStyle(palette.main, spec.alpha * (1 - t * t));
+      graphics.fillPoints(lashPoints(root, mid, tip, spec.thickness, spec.thickness * 0.3), true);
+    });
+    // 도착한 자리에서 한 겹 인다. 흐름이 닿는 시각과 맞춰야 두 사건으로 보이지 않는다.
+    this.scene.time.delayedCall(spec.ms * 0.7, () => this.openRing(to.x, to.y, spec.ringRadius, spec.ringMs, spec.ringWidth, palette.sub));
+  }
+
+  /**
+   * 엘라 — 수묵 한 획.
+   *
+   * 걸음마다 획의 성질이 다르다. 번지고(점), 갈라지고(화), 끌린다(발). 겹쳐 밝아지는 합성을
+   * 쓰지 않는 이유는 먹이 빛이 아니라 얼룩이기 때문이다.
+   */
+  private openInkStroke(
+    at: { x: number; y: number }, palette: CombatPalette, step: number,
+    from: { x: number; y: number } | undefined, now: number,
+  ): void {
+    const spec = SIGNATURE_SPECS.ellaInkStroke;
+    const shape = spec.steps[step % spec.steps.length];
+    // 끌리는 획(발)은 끌려오는 방향, 곧 엘라 쪽을 향한다. 나머지는 때린 방향을 따른다.
+    const toward = from ? Phaser.Math.RadToDeg(Math.atan2(from.y - at.y, from.x - at.x)) : -20;
+    const strokes: StrokePoint[][] = step === 0
+      ? [inkBlotPoints({ x: 0, y: 0 }, shape.length)]
+      : step === 1
+        ? [
+            slashPoints({ x: 0, y: 0 }, toward + 180 - spec.splitAngle, shape.length, shape.rootWidth, shape.tipWidth),
+            slashPoints({ x: 0, y: 0 }, toward + 180 + spec.splitAngle, shape.length, shape.rootWidth, shape.tipWidth),
+          ]
+        : [slashPoints({ x: shape.length / 2 * Math.cos((toward * Math.PI) / 180), y: shape.length / 2 * Math.sin((toward * Math.PI) / 180) },
+            toward, shape.length, shape.rootWidth, shape.tipWidth)];
+    this.openShape(at.x, at.y, shape.ms, now, this.depth, false, (graphics, t) => {
+      // 획은 그어진 뒤 마르듯 사라진다 — 처음이 가장 진하고 끝에서 급히 빠진다.
+      const fade = 1 - t * t;
+      for (const points of strokes) {
+        graphics.fillStyle(spec.ink, spec.inkAlpha * fade);
+        graphics.fillPoints(points, true);
+        graphics.lineStyle(spec.edgeWidth, palette.main, spec.edgeAlpha * fade);
+        graphics.strokePoints(points, true);
+      }
+    });
   }
 
   /** 씬이 꺼질 때 emitter와 두 풀을 모두 폐기한다. */

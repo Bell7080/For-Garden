@@ -32,6 +32,7 @@ import { drawGlassFade, drawHairline, HoloBar } from "../ui/holo";
 import { PortraitCard } from "../ui/PortraitCard";
 import { UnitHealthBar } from "../ui/UnitHealthBar";
 import { skillArtTint } from "../ui/skillArt";
+import { combatPalette, signatureFor, type CombatPalette, type SignatureMoment } from "../ui/signatureEffects";
 import { COLOR, textStyle } from "../ui/theme";
 import { setDebugBattle, setDebugScene } from "../debug";
 import { CharacterInfoManager } from "../managers/CharacterInfoManager";
@@ -952,6 +953,9 @@ export class BattleScene extends Phaser.Scene {
       // 헬멧이 울리는 소리라 방어를 지나친 고정 피해다 — 출혈처럼 상태의 색으로 뜬다.
       this.popNumber(view.fighter, event.amount, "debuff", { debuff: "concussion" });
       flashHit(this, view.creature, this.bodyTint(view));
+      // 4타마다 한 번 울리는 확정 치명타라 노란 숫자만으로는 왜 이번만 큰지 읽히지 않는다.
+      const striker = event.sourceId ? this.views.get(event.sourceId) : undefined;
+      if (striker) this.playSignature(striker, "concussion", { x: view.fighter.x, y: view.fighter.y }, { scale: view.fighter.bodyScale });
       return undefined;
     }
     if (event.kind === "knockback") {
@@ -988,6 +992,11 @@ export class BattleScene extends Phaser.Scene {
           guardian.fighter.y - UNIT_HEIGHT * guardian.fighter.bodyScale * BATTLE_STATUS_LAYOUT.popupBodyOffsetRatio,
           attackDamagePopupRequest({ amount: event.amount, damageType: "physical", skill: "basic", critical: false }, guardian.fighter),
         );
+        // 아군이 맞았는데 앞에 선 개체가 깎이면, 잇는 선이 없으면 두 사건으로 읽힌다.
+        const saved = this.views.get(event.fromFighterId);
+        this.playSignature(guardian, "damageShared",
+          { x: guardian.fighter.x, y: guardian.fighter.y - UNIT_HEIGHT * guardian.fighter.bodyScale * 0.5 },
+          saved ? { from: { x: saved.fighter.x, y: saved.fighter.y - UNIT_HEIGHT * saved.fighter.bodyScale * 0.5 } } : {});
       }
       return undefined;
     }
@@ -1040,6 +1049,22 @@ export class BattleScene extends Phaser.Scene {
         direction,
         scale: target.fighter.bodyScale,
       });
+      // 그 개체를 그 개체답게 만드는 순간이면 공용 파편 위에 전용 연출이 한 겹 더 선다.
+      // **순간은 사건에서 읽는다** — 어느 개체가 무엇을 갖는지는 씬이 아니라 표가 안다.
+      if (attacker && event.animate !== false) {
+        const moment: SignatureMoment | undefined = event.skill === "ultimate" ? "ultimate"
+          : event.followUp === true ? "combo"
+          : event.basicStep !== undefined ? "basicStep"
+          : undefined;
+        const attackerHeight = UNIT_HEIGHT * attacker.fighter.bodyScale;
+        if (moment) {
+          this.playSignature(attacker, moment, { x: target.fighter.x, y: target.fighter.y - height * 0.5 }, {
+            from: { x: attacker.fighter.x, y: attacker.fighter.y - attackerHeight * 0.5 },
+            step: event.basicStep,
+            scale: target.fighter.bodyScale,
+          });
+        }
+      }
       // 떨어져서 때리는 개체는 사이를 잇는 것이 없으면 맞은 자리에 숫자만 뜬다. 근거리는 몸이
       // 붙어 있어 파편 하나로 누가 쳤는지 읽히지만, 중·원거리는 그 길이 보여야 공격이 된다.
       // 전이처럼 실제로 휘두르지 않은 타격(`animate: false`)에는 그리지 않는다.
@@ -1087,6 +1112,30 @@ export class BattleScene extends Phaser.Scene {
   /** 그 개체의 속성·직군을 섞은 색. 스킬 아이콘·폭주 발광과 같은 색을 이펙트도 그대로 쓴다. */
   private effectColor(view: FighterView | undefined): number {
     return view ? view.feverTint : COLOR.accent;
+  }
+
+  /**
+   * 전용 연출이 쓰는 **두 색**.
+   *
+   * 공용 파편은 섞은 한 색으로 충분하지만, 전용 연출은 큰 면과 얇은 선이 함께 서므로 속성과
+   * 직군이 갈려야 한다. 어느 색이 어디에 서는지는 `combatPalette` 한 곳이 정한다.
+   */
+  private palette(view: FighterView): CombatPalette {
+    return combatPalette(view.fighter.def.element, view.fighter.def.role);
+  }
+
+  /**
+   * 그 개체를 그 개체답게 만드는 한 순간이면 전용 연출을 연다.
+   *
+   * **개체 이름으로 분기하지 않는다** — 무엇이 어디에 붙는지는 `signatureFor` 한 표가 알고,
+   * 씬은 사건에서 읽은 "순간"만 넘긴다. 표에 없는 조합은 공용 파편 그대로다.
+   */
+  private playSignature(
+    actor: FighterView, moment: SignatureMoment, at: { x: number; y: number },
+    options: { from?: { x: number; y: number }; step?: number; scale?: number } = {},
+  ): void {
+    const id = signatureFor(actor.fighter.def.id, moment);
+    if (id) this.effects.signature(id, at, this.palette(actor), options);
   }
 
   /**

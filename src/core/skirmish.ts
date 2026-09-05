@@ -347,6 +347,12 @@ export type SkirmishEvent =
        */
       followUp?: boolean;
       /**
+       * **순환 평타의 몇 번째 걸음이 때렸나**(0부터). 걸음마다 하는 일이 다른 개체는 화면도
+       * 걸음마다 달라야 한다. 씬이 `basicCycleStep`을 직접 읽으면 사건을 처리할 즈음 코어는
+       * 이미 다음 걸음으로 넘어가 있어 한 박자 어긋난 획을 그린다.
+       */
+      basicStep?: number;
+      /**
        * **이 타격이 일어난 코어 시각(초).** 씬은 프레임이 끝난 뒤에야 사건을 읽으므로
        * `state.elapsed`를 그때 읽으면 실제 타격보다 한 프레임 늦은 시각을 적는다. 앞 타격이
        * 그만큼 늦게 적히면 두 행동의 간격이 실제보다 짧아 보여, 보스 제출의 공속 검증이
@@ -393,7 +399,7 @@ export type SkirmishEvent =
    */
   | { kind: "death"; fighterId: string; sourceId?: string }
   /** 뇌진탕이 울린 순간의 고정 피해. 방어력을 지나치므로 attack 사건과 따로 센다. */
-  | { kind: "concussion"; fighterId: string; amount: number; critical: boolean }
+  | { kind: "concussion"; fighterId: string; amount: number; critical: boolean; sourceId?: string }
   /** 폭주한 파치가 적을 튕겨 날린 순간. 씬은 이 사건으로만 튕기는 연출을 시작한다. */
   | { kind: "knockback"; fighterId: string; seconds: number; bounces: number }
   /** 손질 세 겹이 터진 순간. 방어를 지나치지 않는 물리 피해라 attack과 다른 색으로 뜬다. */
@@ -860,7 +866,7 @@ function applyConcussion(
   const percent = struck ? effect.criticalMaxHpPercent : effect.maxHpPercent;
   const amount = Math.max(1, Math.round(target.maxHp * percent / 100));
   const dealt = applyDamage(target, amount, events, state);
-  events.push({ kind: "concussion", fighterId: target.id, amount: dealt, critical: struck });
+  events.push({ kind: "concussion", fighterId: target.id, amount: dealt, critical: struck, sourceId });
   if (!isFighterAlive(target)) {
     clearDefeatedStatuses(target);
     events.push({ kind: "death", fighterId: target.id, sourceId });
@@ -1542,17 +1548,22 @@ export function activeCombatBuffs(state: SkirmishState, fighterId: string): Acti
   if (!fighter || !isFighterAlive(fighter)) return [];
 
   const buffs = activePackHuntBuffs(state, fighterId);
-  if (fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "crescendoStaccato") {
+  // **스타카토는 아군 전체에 선다.** 추가타를 울리는 것은 아군의 기본 공격이므로 표식이
+  // 메테 혼자에게만 붙으면 "누가 이 강화를 받고 있나"를 화면이 말하지 않는다 — 실제로
+  // 연주를 부르는 손은 옆에 선 아군의 손이다.
+  for (const player of state.fighters) {
+    const trait = player.def.ferocityTrait;
+    if (!player.ferocityFever || trait.effectId !== "crescendoStaccato" || player.side !== fighter.side || !isFighterAlive(player)) continue;
     buffs.push({
-      id: `crescendo-staccato:${fighter.id}`,
-      sourceFighterId: fighter.id,
+      id: `crescendo-staccato:${player.id}`,
+      sourceFighterId: player.id,
       targetFighterId: fighter.id,
       skillId: "crescendoStaccato",
-      name: fighter.def.ferocityTrait.name,
+      name: trait.name,
       description: "폭주 중 아군의 기본 공격 적중에 스타카토 추가타를 연주",
       timing: {
         kind: "ferocity",
-        remainingSeconds: fighter.ferocity / FEROCITY_RULES.feverDrainPerSecond,
+        remainingSeconds: player.ferocity / FEROCITY_RULES.feverDrainPerSecond,
         totalSeconds: FEROCITY_RULES.max / FEROCITY_RULES.feverDrainPerSecond,
       },
     });
@@ -2690,6 +2701,7 @@ function strike(
     mitigated: resolution.reduced < resolution.raw,
     // 연격 둘째 타부터는 같은 행동의 뒤이은 타격이다(자원을 주지 않는 타격이 곧 그 표식이다).
     ...(comboHit && !comboHit.grantActionResources ? { followUp: true } : {}),
+    ...(useUltimate || !attacker.def.basic.cycle ? {} : { basicStep: attacker.basicCycleStep % attacker.def.basic.cycle.length }),
   });
   if (resolution.ignored) events.push({ kind: "damageIgnored", attackerId: attacker.id, targetId: target.id });
 
@@ -2927,7 +2939,8 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     target.dashX = (dx / gap) * SKIRMISH.knockback * 1.4;
     target.dashY = (dy / gap) * SKIRMISH.knockback * 1.4;
     events.push({ kind: "attack", attackerId: attacker.id, targetId: target.id, skill: useUltimate ? "ultimate" : "basic", amount, contributionAmount: credited, critical, animate: index === 0,
-      damageType: damageInput.damageType, mitigated: resolution.reduced < resolution.raw, ...(followUp || index > 0 ? { followUp: true } : {}) });
+      damageType: damageInput.damageType, mitigated: resolution.reduced < resolution.raw, ...(followUp || index > 0 ? { followUp: true } : {}),
+      ...(useUltimate || !attacker.def.basic.cycle ? {} : { basicStep: attacker.basicCycleStep % attacker.def.basic.cycle.length }) });
     if (resolution.ignored) events.push({ kind: "damageIgnored", attackerId: attacker.id, targetId: target.id });
 
     // 죽은 대상에는 지속 상태와 상태 UI 시작 사건을 절대 남기지 않는다.

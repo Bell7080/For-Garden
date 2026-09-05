@@ -67,6 +67,30 @@ describe("기여도 프레임 독립성", () => {
 });
 
 describe("원정 증강 전투 훅", () => {
+  it("동일 시드·편성에서 무증강 < SR < SSR 공격 결과를 낸다", () => {
+    /** 같은 시드는 치명타 판정 순서까지 고정해 증강 외 변수를 제거한다. */
+    const seeded = (seed: number) => () => {
+      seed = (seed * 1_664_525 + 1_013_904_223) >>> 0;
+      return seed / 0x1_0000_0000;
+    };
+    const damageWith = (percent: number) => {
+      const effects: ExpeditionAugmentEffect[] = percent === 0 ? [] : [
+        { kind: "attackPowerPercent", percent, scope: { kind: "all" } },
+      ];
+      const state = createSkirmish([getRelic("rex")], [getRelic("husk-shell")], ARENA, {}, {}, { augmentEffects: effects });
+      const [ally, foe] = state.fighters;
+      // 이동과 적의 반격을 제거해 4초 동안의 공격 결과만 비교한다.
+      ally.x = foe.x = 400; ally.y = foe.y = 900; ally.attackCooldown = 0; foe.attackCooldown = 99;
+      return run(state, 4, seeded(0x5eed)).filter((event): event is Extract<SkirmishEvent, { kind: "attack" }> => event.kind === "attack")
+        .filter((event) => event.attackerId === ally.id)
+        .reduce((total, event) => total + event.amount, 0);
+    };
+
+    const [plain, sr, ssr] = [damageWith(0), damageWith(8), damageWith(16)];
+    expect(sr).toBeGreaterThan(plain);
+    expect(ssr).toBeGreaterThan(sr);
+  });
+
   /** 개별 훅 테스트가 같은 위치·쿨다운 준비를 공유해 프레임 이동 변수를 제거한다. */
   function augmented(effect: ExpeditionAugmentEffect, attackerId = "rex") {
     const state = createSkirmish([getRelic(attackerId)], [getRelic("husk-shell")], ARENA, {}, {}, { augmentEffects: [effect] });

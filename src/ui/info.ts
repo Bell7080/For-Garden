@@ -4,7 +4,7 @@ import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import type { Combatant } from "../core/combatTypes";
 import { RUNE_PART_LABELS, RUNE_RARITY_LABELS, type RunePart } from "../core/runes";
 import { previewSkillDamage } from "../core/damage";
-import type { Element, RelicDef, RelicProgress, RelicRarity, Role, Passive, Skill, SkillIconAssetId, Stats, Ultimate } from "../core/types";
+import type { BasicAttack, Element, RelicDef, RelicProgress, RelicRarity, Role, Passive, Skill, SkillIconAssetId, Stats, Ultimate } from "../core/types";
 import { setDebugFeedButton, setDebugInfoOpen } from "../debug";
 import { formatCurrency } from "../core/formatCurrency";
 import { RELICS } from "../data/relics";
@@ -1923,6 +1923,27 @@ export class InfoManager {
       : undefined;
     const preview = !compositeDamage && attacker && canPreviewSkillDamage(skill, kindLabel)
       ? previewSkillDamage(attacker, skill as Skill) : undefined;
+    // 주기 타격에만 얹히는 몫(토리카의 셋째 뿔)은 본 타격과 다른 능력치에서 나오므로 같은
+    // 미리보기 경계를 한 번 더 지나 제 실제 수치를 구한다 — 본문이 스스로 곱하면 전투와 갈린다.
+    const periodicBonus = "periodicBonusScaling" in skill ? (skill as BasicAttack).periodicBonusScaling : undefined;
+    const periodicBonusPreview = periodicBonus !== undefined && attacker && canPreviewSkillDamage(skill, kindLabel)
+      ? previewSkillDamage(attacker, {
+        ...(skill as Skill),
+        power: periodicBonus.power,
+        scalingStat: periodicBonus.stat,
+        secondaryScaling: undefined,
+        damageType: "physical",
+      } as Skill)
+      : undefined;
+    // 순환 기본 공격은 걸음마다 위력이 통째로 달라 한 수로 말할 수 없다. 걸음마다 같은
+    // 미리보기 경계를 지나 제 수치를 구하고, 본문이 그 순서 그대로 읽는다.
+    const cycle = "cycle" in skill ? (skill as BasicAttack).cycle : undefined;
+    const cycleDamage = cycle && attacker && canPreviewSkillDamage(skill, kindLabel)
+      ? cycle.map((step) => {
+        const stepPreview = previewSkillDamage(attacker, { ...(skill as Skill), power: step.power } as Skill);
+        return stepPreview.kind === "scaling" ? stepPreview.amount : 0;
+      })
+      : undefined;
     // 덧칠 폭발 궁극기의 위력은 겹당 값이라, 상단 라벨만 겹을 다 쌓았을 때의 최대 피해를 말한다.
     // 겹 상한은 궁극기가 아니라 그 덧칠을 만드는 기본 공격이 갖고 있으므로 거기서 읽는다.
     const overpaintCap = finalDef?.basic.statusEffects?.find((effect) => effect.kind === "overpaint");
@@ -1969,6 +1990,8 @@ export class InfoManager {
           atk: attacker && { atk: attacker.def.stats.atk, attackSpeed: attacker.def.stats.attackSpeed },
           // 본문은 아이콘 위 라벨과 **같은** 수치를 받아 쓴다. 따로 계산하면 위아래가 갈린다.
           damage: preview?.kind === "scaling" ? preview.amount : undefined,
+          periodicBonusDamage: periodicBonusPreview?.kind === "scaling" ? periodicBonusPreview.amount : undefined,
+          cycleDamage,
         }),
     };
   }

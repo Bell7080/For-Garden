@@ -160,6 +160,9 @@ export const RELICS: RelicDef[] = [
       // 플레이어가 보고 셀 수 있기 때문이다(파치의 배트와 같은 자리다).
       statusEffectEvery: 3,
       statusEffectStackName: "세 개의 뿔",
+      // 셋째 뿔은 기절만 남기지 않는다 — 제어 하나로만 끝나면 방어력을 키운 몫이 기본 공격에
+      // 돌아오지 않아, 이 개체는 궁극기를 쓸 때만 방어형으로 읽혔다.
+      periodicBonusScaling: { stat: "def", power: 50 },
       statusEffects: [{ kind: "stun", seconds: 0.5 }],
     },
     ultimate: {
@@ -1090,6 +1093,105 @@ export const RELICS: RelicDef[] = [
         // 중거리 개체라 스피나보다 멀찍이 내려선다 — 붙어서 내리면 사거리 안쪽으로 파고든다.
         landingDistance: 200,
         empowerNextBasic: { guaranteedCritical: true, ignoresDefense: true },
+      },
+    },
+  },
+
+  {
+    id: "ella",
+    squad: "fang",
+    name: "엘라",
+    specimenNumber: "015",
+    projectName: "TALISMAN",
+    excavationSite: "중국 티베트 자다 분지 홍적세 자갈층",
+    // 발굴 기록은 장소·보존 상태·복원 연구 특징만 담고, 복원 이후 생활 관찰과 분리한다.
+    fossilRecord: "고원의 자갈층에서 코뿔 하나와 앞다리뼈가 함께 나왔다. 뼈의 성장선이 유난히 촘촘하고 겹이 많아, 같은 종 표본 중 가장 오래 산 개체로 분류됐다.",
+    observationProfile: {
+      originYear: "약 3만 년 전",
+      // 외형은 열대여섯이지만 말투는 그보다 한참 늙었다. E.C.는 외형 쪽을 따르고, 그 어긋남은
+      // 복원 후 관찰 기록이 말한다.
+      restorationYear: "E.C. 15년",
+      lifeStage: "성체 후기",
+      height: "1.56 m",
+      weight: "138 kg",
+    },
+    catalogSummary: "신장 1.56m, 체중 138kg의 표본. 인간형 체격에 비해 밀도가 세 배 가까워 들어 올릴 수 없으며, 이마와 소매에 부적을 붙인 채 복원된 성체 후기 코엘로돈타 표본이다.",
+    unlockRecord: { status: "recorded", text: "엘라는 몸이 굳어 있다. 복원 직후 계측대가 주저앉아 한 번 갈았고 케어실 바닥재도 다시 깔았는데, 정작 본인은 소리 없이 걷는다. 하루의 대부분을 마당에서 같은 동작을 아주 느리게 반복하며 보내고, 어린 렐릭들이 흉내 내며 달려들면 손목만 살짝 돌려 하나씩 넘어뜨리고는 다시 처음 자세로 돌아간다. 앳된 얼굴로 \"요즘 것들은 성질이 급해\"라고 말하는 것이 여러 번 관찰됐다. 이마의 부적은 젖으면 안 된다며 비 오는 날에는 처마 밑에서만 움직인다." },
+    squadNote: "앱솔루트 팽의 최전선 방벽. 화려한 선배들이 앞다투어 뛰어나갈 때 혼자 제자리에 서서 그 뒤를 받치고, 문짝을 부순 이들의 시말서를 대신 써 준다.",
+    // 힘을 숨기지 않는 스쿼드에서 유일하게 물러서지 않는 쪽이라, 호칭도 가장 격의 없는 것을 쓴다.
+    researcherTitle: "연구원",
+    rarity: "SSR",
+    portraitAssetId: "ella",
+    origin: "코엘로돈타",
+    element: "grass",
+    role: "tank",
+    // 붙어서 밀고 흘리는 권법이라 손이 닿는 거리에서만 싸운다.
+    reachTier: "melee",
+    // 굳은 몸으로 땅을 다지는 손이라 발굴 특화는 화석 쪽에 붙인다.
+    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 0.34, efficiencyMultiplier: 1.14 },
+    // **로스터에서 가장 느리다**(공속 62 · 이속 64). 한 방 한 방이 무거운 대신 그 사이가 길고,
+    // 공격력은 탱커답게 절제해 화력이 아니라 버티는 시간이 이 개체의 값이 되게 한다.
+    stats: {
+      hp: 1500,
+      def: 146,
+      res: 112,
+      atk: 100,
+      ap: 32,
+      attackSpeed: 62,
+      moveSpeed: 64,
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 0,
+    },
+    // 굳어서 단단해지고, 그 상태로 권을 딱 한 바퀴(발경 3연) 몰아친다.
+    ferocityTrait: { name: "금강불괴(金剛不壞)", effectId: "adamantBody", defenseResistancePercent: 150, hastenedAttacks: 3, attackSpeedPercent: 150 },
+    passive: {
+      // kind가 undyingTalisman인 패시브는 passiveDescription()이 구조화 필드로 문장을 만들므로
+      // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
+      id: "ella-passive",
+      name: "불멸(不滅)",
+      kind: "undyingTalisman",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      // Passive.value는 공용 필수 필드라, 이 패시브에서는 버티는 동안 회복할 총량을 담아 둔다.
+      value: 40,
+      durationSeconds: 5,
+      // 쓰러지려는 순간 제 주위를 비운다. 파치의 날려버림과 같은 궤적 규칙을 쓰되 주체가 다르다.
+      undyingKnockback: { seconds: 0.8, speed: 900, bounces: 1, radius: 240 },
+      desc: "전투당 한 번, 쓰러질 피해를 받으면 죽지 않고 5초 동안 무적이 되는 대신 아무 행동도 하지 못한다. 그동안 최대 체력의 40%를 매초 나누어 회복하고, 발동 순간 주위 적을 날려버린다.",
+    },
+    basic: {
+      id: "ella-basic",
+      name: "발경(發勁)",
+      // 순환이 위력·대상·효과를 걸음마다 통째로 정하므로 이 값들은 쓰이지 않는 기본값이다.
+      power: 90,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      targeting: "single",
+      // 세 가지 권법을 차례로 반복한다. 붙이고(보호막) — 흔들고(경직) — 쓸어낸다(광역·회복).
+      cycle: [
+        { name: "점(粘)", power: 90, shieldFromDamagePercent: 80 },
+        { name: "화(化)", power: 120, statusEffects: [{ kind: "stagger", seconds: 0.1 }] },
+        { name: "발(發)", power: 150, targeting: "nearbyEnemies", radius: 200, damageHealingPercent: 50 },
+      ],
+    },
+    ultimate: {
+      id: "ella-ult",
+      name: "인(引)",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      cost: 140,
+      // 아무도 때리지 않는다. 끌어당겨 붙잡아 두고 버틴 시간을 보호막으로 바꾸는 것이 전부다.
+      targeting: "self",
+      selfGuard: {
+        seconds: 5,
+        damageReductionPercent: 50,
+        pull: { radius: 420, distance: 150 },
+        tauntSeconds: 5,
+        shieldFromMitigatedPercent: 25,
       },
     },
   },

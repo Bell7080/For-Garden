@@ -6,7 +6,7 @@ export { currentAbilityPower } from "./damage";
 import { drainFerocityFever, FEROCITY_RULES } from "./ferocity";
 import { breakthroughBonus } from "./relicProgression";
 import { augmentAppliesTo, bleedOnAttackEffect, conditionalAttackPowerMultiplier, expeditionAugmentStatMultipliers, type ExpeditionAugmentEffect, type ExpeditionAugmentTrigger, type ExpeditionTriggeredEffect } from "./expeditionAugments";
-import type { CombatStatusEffect, FerocityTrait, ReachTier, RelicDef, Side, Skill, TeamBuff } from "./types";
+import type { BasicAttack, BasicAttackStep, CombatStatusEffect, FerocityTrait, ReachTier, RelicDef, Side, Skill, TeamBuff } from "./types";
 import { ULTIMATE_ENERGY_MAX } from "./ultimate";
 import { stealthTransition, type CombatEffectCue } from "./combatEffects";
 import {
@@ -173,8 +173,45 @@ export interface Fighter extends Combatant {
   conditionalAttackPowerMultiplier: (hpPercent: number) => number;
   /** 루카의 실제 기본 공격 행동 주기만 세며 궁극기·전이·추가타는 포함하지 않는다. */
   basicAttackCount: number;
+  /** 순환 기본 공격(엘라의 발경)이 다음에 낼 걸음이다. 순환이 없는 개체는 늘 0이다. */
+  basicCycleStep: number;
+  /**
+   * 금강불괴가 아직 빠르게 내줄 수 있는 기본 공격 횟수다.
+   *
+   * 폭주에 **들어가는 순간** 채우고 한 방마다 하나씩 쓴다 — 시간이 아니라 횟수로 끊는 값이라
+   * 폭주가 길어져도 손이 빨라지는 구간은 정확히 그만큼이다.
+   */
+  hastenedAttacksLeft: number;
   /** 0보다 크면 단일 대상 선택의 중심이 될 수 없는 은신 상태다. */
   stealthFor: number;
+  /**
+   * 불멸로 버티는 중. 이 동안은 **모든 피해를 받지 않고 아무것도 하지 못한다.**
+   *
+   * 기절 슬롯을 쓰지 않는 이유는 메테의 아다지오가 아군의 군중제어를 자동으로 정화하기
+   * 때문이다 — 기절로 묶으면 메테가 있는 편성에서 즉시 풀려 **무적인 채로 싸우게 된다.**
+   */
+  undying: { remaining: number; total: number } | null;
+  /**
+   * 「인」으로 버티는 중. 받는 피해를 줄이고 **그 줄인 양을 쌓아 두었다가** 끝날 때 보호막으로 돌려준다.
+   *
+   * 폭주의 `damageReduction`과 다른 축이라 슬롯을 따로 둔다 — 그쪽은 야성이 차 있는 동안
+   * 계속 도는 상태고, 이쪽은 시전 시각부터 정해진 시간만 도는 한 번의 조작이다.
+   */
+  guard: { remaining: number; total: number; reductionPercent: number; mitigated: number; shieldPercent: number } | null;
+  /**
+   * 도발당해 특정 상대만 노리는 중. 없으면 평소의 거리·혼잡도 규칙으로 고른다.
+   *
+   * 기절과 달리 **행동을 막지 않고 방향만 돌린다.** 그래서 군중제어 정화의 대상이 아니다.
+   */
+  taunted: { remaining: number; total: number; sourceId: string } | null;
+  /**
+   * 이번 프레임에 쓰러질 피해를 가로챘다는 표시다.
+   *
+   * 가로채기는 `applyDamage` 안에서 일어나 어떤 피해 원천도 빠뜨리지 않지만(출혈·중독·뇌진탕
+   * 포함), 주위를 밀어내려면 전장 전체가 필요하다. 그래서 HP만 그 자리에서 붙잡고 실제 발동은
+   * 같은 프레임의 `advance`가 마무리한다.
+   */
+  undyingPending: boolean;
   /**
    * 궁극기가 걸어 둔 **다음 일반 공격 한 번**의 강화가 남아 있는가.
    *
@@ -541,9 +578,15 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     statusPotencyMultiplier: multipliers.statusPotencyPercent,
     conditionalAttackPowerMultiplier: (hpPercent) => side === "player" ? conditionalAttackPowerMultiplier(augmentEffects, def.id, hpPercent) : 1,
     basicAttackCount: 0,
+    basicCycleStep: 0,
+    hastenedAttacksLeft: 0,
     // 짜잔! 은 전투가 열리는 순간부터 은신한 채로 시작한다 — 첫 프레임에 이미 걸려 있어야
     // "숨어서 시작했다"가 되고, 한 박자 뒤에 걸면 이미 표적이 잡힌 뒤다.
     stealthFor: def.passive.kind === "openingVanish" ? def.passive.durationSeconds ?? 0 : 0,
+    undying: null,
+    undyingPending: false,
+    guard: null,
+    taunted: null,
     empoweredBasic: false,
     // 폭주가 켜진 뒤 온전한 1초가 지나야 첫 파동이 발생한다.
     pontusRageTickIn: 1,
@@ -947,6 +990,102 @@ function statusEffectsLandThisHit(attacker: Fighter, skill: Skill, useUltimate: 
   return true;
 }
 
+/**
+ * 이번 타격이 주기가 채워지는 그 한 방인가 — **세지 않고 보기만 한다.**
+ *
+ * 주기를 실제로 넘기는 것은 피해가 끝난 뒤의 `statusEffectsLandThisHit` 하나뿐이므로, 피해를
+ * 짓는 자리에서는 다음 값을 내다보기만 한다. 여기서 함께 세면 한 행동이 두 걸음을 삼켜
+ * 셋째 뿔이 영영 오지 않는다.
+ */
+function completesStatusCycle(attacker: Fighter, skill: Skill, useUltimate: boolean): boolean {
+  const every = useUltimate ? undefined : attacker.def.basic.statusEffectEvery;
+  if (every === undefined || (skill.statusEffects?.length ?? 0) === 0) return false;
+  return attacker.statusHitCount + 1 >= every;
+}
+
+/**
+ * 이번 공격 행동이 낼 기본 공격. 순환이 없으면 정의된 그대로다.
+ *
+ * **읽기만 하고 걸음을 넘기지 않는다** — 한 행동 안에서 `strike`와 `strikeAreaAttack`이 각각
+ * 부르므로, 여기서 넘기면 같은 한 방이 두 걸음을 소비한다. 걸음은 행동이 끝난 자리에서
+ * `advanceBasicCycle`이 한 번만 넘긴다.
+ */
+function currentBasic(attacker: Fighter): BasicAttack {
+  const basic = attacker.def.basic;
+  const cycle = basic.cycle;
+  if (!cycle || cycle.length === 0) return basic;
+  const step = cycle[attacker.basicCycleStep % cycle.length];
+  // 선언하지 않은 필드는 비운다. 기본 공격 쪽 값이 새어 들어오면 어느 걸음이 무엇을 하는지
+  // 데이터만 보고 알 수 없다.
+  return {
+    ...basic,
+    name: step.name,
+    power: step.power,
+    targeting: step.targeting ?? "single",
+    radius: step.radius,
+    statusEffects: step.statusEffects,
+    damageHealingPercent: step.damageHealingPercent,
+  };
+}
+
+/**
+ * 이번 걸음이 실제로 깎은 HP의 일부를 시전자의 보호막으로 돌린다.
+ *
+ * 흡혈과 같은 자리에서 같은 값(과잉 피해를 뺀 실제 HP 손실)을 읽는다 — 때린 만큼 단단해지는
+ * 규칙이라 공격력이 곧 생존력이 되고, 그래서 탱커가 공격 능력치를 올릴 이유가 생긴다.
+ */
+function grantShieldFromDamage(attacker: Fighter, dealt: number, events: SkirmishEvent[]): void {
+  const percent = currentBasicStep(attacker)?.shieldFromDamagePercent ?? 0;
+  if (percent <= 0 || dealt <= 0 || !isFighterAlive(attacker)) return;
+  const amount = Math.max(1, Math.round(dealt * percent / 100));
+  attacker.shield.amount += amount;
+  attacker.shield.providerId = attacker.id;
+  events.push({ kind: "shieldGranted", fighterId: attacker.id, providerId: attacker.id, amount, remaining: attacker.shield.amount, effect: { tag: "shieldGain", intensity: 1 } });
+}
+
+/**
+ * 「인」의 버티기를 흘리고, 끝나는 순간 덜 맞은 만큼을 보호막으로 돌려준다.
+ *
+ * 보상이 시전이 아니라 **끝난 뒤**에 오는 것이 이 스킬의 성질이다 — 맞을수록 두꺼워지므로
+ * 위험한 자리에 서 있던 시간이 곧 값이 된다. 한 대도 맞지 않았으면 아무것도 얻지 못한다.
+ */
+function tickGuard(fighter: Fighter, dt: number, events: SkirmishEvent[]): void {
+  const guard = fighter.guard;
+  if (!guard) return;
+  const remaining = guard.remaining - dt;
+  if (remaining > EMERGENCY_RECOVERY.epsilon) {
+    fighter.guard = { ...guard, remaining };
+    return;
+  }
+  fighter.guard = null;
+  const amount = Math.round(guard.mitigated * guard.shieldPercent / 100);
+  if (amount <= 0 || !isFighterAlive(fighter)) return;
+  fighter.shield.amount += amount;
+  fighter.shield.providerId = fighter.id;
+  events.push({ kind: "shieldGranted", fighterId: fighter.id, providerId: fighter.id, amount, remaining: fighter.shield.amount, effect: { tag: "shieldGain", intensity: 1.3 } });
+}
+
+/** 도발은 시간이 지나면 저절로 풀린다. 방향만 바꾸는 상태라 정화의 대상이 아니다. */
+function tickTaunt(fighter: Fighter, dt: number): void {
+  const taunted = fighter.taunted;
+  if (!taunted) return;
+  const remaining = taunted.remaining - dt;
+  fighter.taunted = remaining <= EMERGENCY_RECOVERY.epsilon ? null : { ...taunted, remaining };
+}
+
+/** 지금 걸음의 원본 계약. 걸음만 갖는 값(보호막 전환 등)을 읽을 때 쓴다. */
+function currentBasicStep(attacker: Fighter): BasicAttackStep | undefined {
+  const cycle = attacker.def.basic.cycle;
+  if (!cycle || cycle.length === 0) return undefined;
+  return cycle[attacker.basicCycleStep % cycle.length];
+}
+
+/** 한 공격 행동이 끝난 자리에서 다음 걸음으로 넘긴다. 연격의 개별 적중은 넘기지 않는다. */
+function advanceBasicCycle(attacker: Fighter): void {
+  const cycle = attacker.def.basic.cycle;
+  if (cycle && cycle.length > 0) attacker.basicCycleStep = (attacker.basicCycleStep + 1) % cycle.length;
+}
+
 /** 청산하는 타격이 쓰는 사본. 같은 타격이 독을 바르면서 동시에 터뜨리지 않게 한다. */
 function withoutPoison(skill: Skill): Skill {
   return { ...skill, statusEffects: (skill.statusEffects ?? []).filter((effect) => effect.kind !== "poison") };
@@ -1159,6 +1298,10 @@ function clearDefeatedStatuses(fighter: Fighter): void {
   fighter.targetId = null;
   fighter.bleed = null;
   fighter.poison = null;
+  fighter.undying = null;
+  fighter.undyingPending = false;
+  fighter.guard = null;
+  fighter.taunted = null;
   fighter.overpaint = null;
   fighter.curse = null;
   fighter.frenzy = null;
@@ -1232,6 +1375,28 @@ export function activeCombatBuffs(state: SkirmishState, fighterId: string): Acti
       },
     });
   }
+  if (fighter.guard) {
+    buffs.push({
+      id: `guard:${fighter.id}`,
+      sourceFighterId: fighter.id,
+      targetFighterId: fighter.id,
+      skillId: fighter.def.ultimate.id,
+      name: fighter.def.ultimate.name,
+      description: `받는 피해 ${fighter.guard.reductionPercent}% 감소 · 끝나면 줄인 만큼 보호막`,
+      timing: { kind: "timed", remainingSeconds: fighter.guard.remaining, totalSeconds: fighter.guard.total },
+    });
+  }
+  if (fighter.undying) {
+    buffs.push({
+      id: `undying:${fighter.id}`,
+      sourceFighterId: fighter.id,
+      targetFighterId: fighter.id,
+      skillId: fighter.def.passive.id,
+      name: fighter.def.passive.name,
+      description: "모든 피해를 받지 않고 아무 행동도 하지 못한다",
+      timing: { kind: "timed", remainingSeconds: fighter.undying.remaining, totalSeconds: fighter.undying.total },
+    });
+  }
   // 주기 타격(파치의 4타)은 **본인에게 붙는 값**이다 — 적이 아니라 그 개체가 몇 대째 때렸는지가
   // 다음 한 방을 정하므로, 적 머리 위가 아니라 자기 프로필의 칩이 그 수를 들고 있다.
   const every = fighter.def.basic.statusEffectEvery ?? 0;
@@ -1283,6 +1448,9 @@ export function attackInterval(fighter: Fighter, state?: SkirmishState): number 
       : fighter.ferocityFever && trait.effectId === "selfAttackSpeedMultiplier"
         // +100%는 공격 속도 x2이고, 속도의 역수인 공격 간격은 정확히 50%가 된다.
         ? 1 / (1 + trait.bonusPercent / 100)
+      : fighter.ferocityFever && trait.effectId === "adamantBody" && fighter.hastenedAttacksLeft > 0
+        // 남은 횟수가 있을 때만 빨라진다. 다 쓰면 방어 상승만 남는다.
+        ? 1 / (1 + trait.attackSpeedPercent / 100)
       : fighter.ferocityFever && trait.effectId === "venomousEncore"
         // 바르고 터뜨리기를 번갈아 하는 손이라 속도가 곧 그 주기다. 같은 역수 규칙을 쓴다.
         ? 1 / (1 + trait.attackSpeedBonusPercent / 100)
@@ -1303,10 +1471,14 @@ export function defensiveDefinition(target: Fighter, state: SkirmishState): Figh
   const bonus = strongestLivingAura(state, target.side, "teamDefenseResistancePercent");
   // 저주는 저항만 깎는다. 오라와 같은 자리에서 곱해야 "올려 주는 것"과 "깎는 것"이 한 번씩만 든다.
   const shred = 1 - curseResistanceShred(target) / 100;
-  if (bonus <= 0 && shred === 1 && target.augmentDefensePercent === 0 && target.augmentResistancePercent === 0) return target;
+  // 금강불괴는 몸이 굳는 것이라 방어·저항 자체를 올린다. 받는 피해 경감(`damageReduction`)과
+  // 다른 자리인 이유는 그쪽이 최종 피해에 곱하는 값이라 방어 관통·고정 피해와 섞이지 않기 때문이다.
+  const trait = target.def.ferocityTrait;
+  const hardened = target.ferocityFever && trait.effectId === "adamantBody" ? trait.defenseResistancePercent : 0;
+  if (bonus <= 0 && shred === 1 && hardened === 0 && target.augmentDefensePercent === 0 && target.augmentResistancePercent === 0) return target;
   return { ...target, def: { ...target.def, stats: { ...target.def.stats,
-    def: target.def.stats.def * (1 + bonus / 100) * (1 + target.augmentDefensePercent / 100),
-    res: target.def.stats.res * (1 + bonus / 100) * (1 + target.augmentResistancePercent / 100) * shred,
+    def: target.def.stats.def * (1 + bonus / 100) * (1 + hardened / 100) * (1 + target.augmentDefensePercent / 100),
+    res: target.def.stats.res * (1 + bonus / 100) * (1 + hardened / 100) * (1 + target.augmentResistancePercent / 100) * shred,
   } } };
 }
 
@@ -1460,6 +1632,13 @@ function resolveTarget(state: SkirmishState, fighter: Fighter, reconsider = fals
   // 그대로 두면 뒤집히기 전의 상대를 계속 때리고, 풀린 뒤에는 아군을 계속 때린다.
   const frenzied = fighter.frenzy !== null;
   const wanted = frenzied ? fighter.side : (fighter.side === "player" ? "enemy" : "player");
+  // 도발은 거리·혼잡도보다 먼저다 — 강제로 그쪽을 보게 만드는 것이 이 상태의 전부다.
+  // 다만 광란으로 편이 뒤집힌 동안에는 듣지 않는다. 그때 노려야 하는 편이 아예 반대이므로,
+  // 도발을 그대로 따르면 지금 때릴 수 없는 상대를 바라보며 멈춰 선다.
+  if (fighter.taunted) {
+    const tauntSource = findFighter(state, fighter.taunted.sourceId);
+    if (tauntSource && tauntSource.side === wanted && isFighterAlive(tauntSource)) return tauntSource;
+  }
   const current = fighter.targetId ? findFighter(state, fighter.targetId) : undefined;
   const keepable = current !== undefined && current.side === wanted && current.id !== fighter.id
     && isFighterAlive(current) && current.stealthFor <= 0;
@@ -1601,6 +1780,7 @@ function gainFerocity(fighter: Fighter, base: number, state: SkirmishState): voi
       // 이미 스피나를 추적하던 모든 상대도 즉시 대기/재탐색 상태로 돌린다.
       for (const other of state.fighters) if (other.targetId === fighter.id) { other.targetId = null; other.engaged = false; }
     }
+    if (trait.effectId === "adamantBody") fighter.hastenedAttacksLeft = trait.hastenedAttacks;
     if (trait.effectId === "packHunt") {
       fighter.stealthFor = trait.stealthDurationSeconds;
       // 루카는 도약하지 않고 현재 좌표를 유지한 채 표적만 다시 정하며, 기존 단일 추적은 즉시 해제한다.
@@ -1903,6 +2083,9 @@ export interface ReceivedDamageResult {
 
 /** 폰토스의 잃은 체력 경감과 최종 피해 무효화를 판별하는 순수 피해 경계다. */
 export function resolveReceivedDamage(target: Fighter, rawAmount: number): ReceivedDamageResult {
+  // 불멸로 버티는 동안은 무엇을 맞아도 들어가지 않는다. 경감표 앞에 두는 이유는 이것이
+  // 비율이 아니라 **아예 없던 일**이기 때문이다 — 무효 처리라 보호막도 깎이지 않는다.
+  if (target.undying) return { raw: rawAmount, reduced: 0, applied: 0, ignored: true };
   const passive = target.def.passive;
   let reduction = 0;
   if (passive.kind === "abyssalPressure") {
@@ -1922,7 +2105,12 @@ export function resolveReceivedDamage(target: Fighter, rawAmount: number): Recei
   // 덧칠은 경감과 같은 최종 경계에서 곱한다 — 여기 두지 않으면 피해 경로마다 따로 곱하게 되고
   // 어느 한 곳을 빠뜨리면 "덧칠했는데 그 스킬만 안 아픈" 상태가 된다.
   const amplified = rawAmount * overpaintMultiplier(target);
-  const softened = Math.max(1, Math.round(amplified * (1 - Math.min(100, Math.max(0, reduction)) / 100)));
+  const beforeGuard = Math.max(1, Math.round(amplified * (1 - Math.min(100, Math.max(0, reduction)) / 100)));
+  // 「인」의 경감은 다른 경감을 모두 적용한 **뒤에** 따로 곱한다. 그래야 이 스킬이 실제로 줄인
+  // 몫만 떼어 셀 수 있고, 그 값이 곧 버티기가 끝날 때 돌려받는 보호막의 근거가 된다.
+  const guard = target.guard;
+  const softened = guard ? Math.max(1, Math.round(beforeGuard * (1 - Math.min(100, Math.max(0, guard.reductionPercent)) / 100))) : beforeGuard;
+  if (guard) guard.mitigated += Math.max(0, beforeGuard - softened);
   const reduced = applyImpactCap(target, softened);
   // 일반 전투원의 최소 1 피해는 그대로 두고, 구조화 필드가 있는 심해 압력만 최종 반올림 뒤 무효화한다.
   const ignored = passive.kind === "abyssalPressure" && reduced <= (passive.ignoreDamageAtOrBelow ?? -1);
@@ -1965,7 +2153,54 @@ function applyDamage(target: Fighter, amount: number, events: SkirmishEvent[]): 
     amount -= absorbed;
   }
   target.hp = Math.max(0, target.hp - amount);
+  // 쓰러지는 순간을 여기서 가로챈다. 이 함수가 모든 피해 원천의 마지막 관문이라, 출혈·중독·
+  // 뇌진탕처럼 공격이 아닌 경로로 죽는 경우까지 한 곳에서 붙잡을 수 있다.
+  if (target.hp <= 0 && canStartUndying(target)) {
+    target.hp = 1;
+    target.undyingPending = true;
+  }
   return hpBefore - target.hp;
+}
+
+/** 불멸을 지금 켤 수 있는가. 전투당 한 번뿐이고 이미 버티는 중에는 다시 켜지지 않는다. */
+function canStartUndying(fighter: Fighter): boolean {
+  return fighter.def.passive.kind === "undyingTalisman" && !fighter.passiveTriggered
+    && fighter.undying === null && !fighter.undyingPending;
+}
+
+/**
+ * 가로챈 죽음을 실제 불멸로 바꾼다.
+ *
+ * HP는 이미 `applyDamage`가 1로 붙잡아 두었으므로 여기서는 시계·회복·밀어내기만 세운다.
+ * 전투당 한 번은 `passiveTriggered`가 지키며, 이 값은 긴급 회복과 같은 "전투 한정 발동권"이라
+ * 개체마다 패시브가 하나뿐이므로 서로 부딪히지 않는다.
+ */
+function startUndying(fighter: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
+  const passive = fighter.def.passive;
+  fighter.undyingPending = false;
+  if (passive.kind !== "undyingTalisman") return;
+  fighter.passiveTriggered = true;
+  const seconds = passive.durationSeconds ?? 0;
+  fighter.undying = { remaining: seconds, total: seconds };
+  // 회복은 긴급 회복과 같은 슬롯을 쓴다 — 매초 한 번씩, 정해진 시간 동안만 흐른다.
+  if (seconds > 0 && (passive.value ?? 0) > 0) {
+    fighter.regeneration = { remaining: seconds, tickIn: 1, percentPerTick: (passive.value ?? 0) / seconds };
+  }
+  // 버티는 동안 붙어 있던 상대를 떼어 놓는다. 파치의 날려버림과 같은 궤적 규칙을 쓴다.
+  const blast = passive.undyingKnockback;
+  if (blast) {
+    for (const other of state.fighters) {
+      if (other.side === fighter.side || !isFighterAlive(other) || distance(fighter, other) > blast.radius) continue;
+      const dx = other.x - fighter.x; const dy = other.y - fighter.y; const gap = Math.hypot(dx, dy) || 1;
+      other.knockback = { remaining: blast.seconds, vx: (dx / gap) * blast.speed, vy: (dy / gap) * blast.speed, bouncesLeft: blast.bounces };
+      other.engaged = false;
+      events.push({ kind: "knockback", fighterId: other.id, seconds: blast.seconds, bounces: blast.bounces });
+    }
+  }
+  // 쫓던 쪽은 표적을 잃는다 — 어차피 때려도 들어가지 않는 동안 붙어 있을 이유가 없다.
+  for (const other of state.fighters) if (other.targetId === fighter.id) { other.targetId = null; other.engaged = false; }
+  events.push({ kind: "combatEffect", fighterId: fighter.id, effect: { tag: "shieldGain", intensity: 1.6 } });
+  state.log.push(`${fighter.def.name} 불멸`);
 }
 
 /**
@@ -2035,7 +2270,7 @@ function strike(
   /** 지정 원형 궁극기의 사용자 선택 중심점이다. */
   targetPoint?: { x: number; y: number },
 ): void {
-  const skill: Skill = useUltimate ? attacker.def.ultimate : attacker.def.basic;
+  const skill: Skill = useUltimate ? attacker.def.ultimate : currentBasic(attacker);
   // 순수 회복 궁극기는 fireUltimate의 비공격 분기에서만 실행한다.
   if (!("damageType" in skill) || skill.damageType === undefined || skill.power === undefined) return;
   const combo = !useUltimate ? attacker.def.basic.combo : undefined;
@@ -2047,7 +2282,7 @@ function strike(
     }
     return;
   }
-  if ((useUltimate && attacker.def.ultimate.targeting !== "single") || (!useUltimate && attacker.def.basic.targeting === "nearbyEnemies")) {
+  if ((useUltimate && attacker.def.ultimate.targeting !== "single") || (!useUltimate && currentBasic(attacker).targeting === "nearbyEnemies")) {
     strikeAreaAttack(attacker, rng, state, events, useUltimate, targetPoint);
     return;
   }
@@ -2108,10 +2343,24 @@ function strike(
         damageType: "physical",
       }, true)
     : 0;
+  // 주기가 채워지는 한 방(토리카의 셋째 뿔)에만 얹히는 몫도 같은 물리 피해 공식을 거친다 —
+  // 여기서만 따로 계산하면 속성 상성과 대상 방어력이 본 타격과 갈린다.
+  const periodicScaling = !useUltimate ? attacker.def.basic.periodicBonusScaling : undefined;
+  const periodicBonusInput = periodicScaling !== undefined && completesStatusCycle(attacker, skill, useUltimate)
+    ? {
+        ...damageInput,
+        power: periodicScaling.power,
+        scalingStat: periodicScaling.stat,
+        secondaryScaling: undefined,
+        damageType: "physical" as const,
+      }
+    : undefined;
+  const periodicBonus = periodicBonusInput ? computeDamage(damageAttacker, damageTarget, periodicBonusInput, true) : 0;
   // 원정 공격력은 전투 스냅샷에 이미 반영됐으므로 공용 피해 공식에서 다시 곱하지 않는다.
-  const rawAmount = Math.max(1, Math.round(computeDamage(damageAttacker, damageTarget, damageInput, true) + defenseBonus));
+  const rawAmount = Math.max(1, Math.round(computeDamage(damageAttacker, damageTarget, damageInput, true) + defenseBonus + periodicBonus));
   const contributionAmount = Math.max(0, computeDamageContribution(damageAttacker, damageInput)
-    + (defenseBonus > 0 ? computeDamageContribution(attacker, { ...damageInput, power: splashTrait.effectId === "splashDamage" ? splashTrait.defenseDamagePercent ?? 0 : 0, scalingStat: "def", damageType: "physical" }) : 0));
+    + (defenseBonus > 0 ? computeDamageContribution(attacker, { ...damageInput, power: splashTrait.effectId === "splashDamage" ? splashTrait.defenseDamagePercent ?? 0 : 0, scalingStat: "def", damageType: "physical" }) : 0)
+    + (periodicBonusInput ? computeDamageContribution(damageAttacker, periodicBonusInput) : 0));
   // 방어·패시브·상성 뒤의 모든 개별 경감은 공용 HP 피해 경계에서 한 번만 적용한다.
   const resolution = resolveReceivedDamage(target, rawAmount);
   const amount = resolution.applied;
@@ -2160,6 +2409,7 @@ function strike(
     applyHealing(state, attacker, dealt * damageHealingRate(attacker, skill, attackingInFever) / 100);
   };
   healFromDamage(dealt);
+  if (!useUltimate) grantShieldFromDamage(attacker, dealt, events);
   if (!useUltimate && attacker.def.basic.lowestHpAllyHealingFromDamagePercent !== undefined) {
     const ally = lowestCurrentHpAlly(state, attacker.side);
     if (ally) {
@@ -2347,7 +2597,7 @@ export function replayLoggedBossAction(state: SkirmishState, relicId: string, ki
  * 복사하므로 앞선 대상이 죽어도 뒤 대상의 피해·흡혈·상태·사망 처리는 빠지지 않는다.
  */
 function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishState, events: SkirmishEvent[], useUltimate: boolean, targetPoint?: { x: number; y: number }): void {
-  const skill = useUltimate ? attacker.def.ultimate : attacker.def.basic;
+  const skill = useUltimate ? attacker.def.ultimate : currentBasic(attacker);
   // 비공격 궁극기는 적 대상 범위 처리기에 전달하지 않는다.
   if (!("damageType" in skill) || skill.damageType === undefined || skill.power === undefined) return;
   const ultimate = useUltimate ? attacker.def.ultimate : undefined;
@@ -2435,6 +2685,9 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     triggerCombatAugments(state, target, "onLowHp", events);
     // 흡혈은 대상별 실제 HP 감소량만 더해 과잉 피해를 회복량으로 만들지 않는다.
     applyHealing(state, attacker, (hpBefore - target.hp) * damageHealingRate(attacker, skill, attackingInFever) / 100);
+    // 보호막 전환도 같은 값을 읽는다 — 단일과 광역에서 규칙이 갈리면 같은 걸음이 대상 수에
+    // 따라 다른 일을 한다.
+    if (!useUltimate) grantShieldFromDamage(attacker, hpBefore - target.hp, events);
     siphonOverpaintHealing(attacker, target, hpBefore - target.hp, state, events);
     // 완성작을 공개하고 나면 그림은 지워진다 — 쌓아 두고 매번 터뜨릴 수 있으면 상시 배율이 된다.
     if (detonation) target.overpaint = null;
@@ -2655,12 +2908,23 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
       clearDefeatedStatuses(fighter);
       continue;
     }
+    // 가로챈 죽음은 다음 일이 일어나기 전에 마무리한다 — 밀어내기가 늦으면 그 사이 한 대 더 맞는다.
+    if (fighter.undyingPending) startUndying(fighter, state, events);
     // 출혈은 붙어 있든 달려가든 흐르는 시간만큼 깎는다. 중독도 같은 축이라 나란히 흐른다.
     tickBleed(fighter, dt, state, events);
     if (!isFighterAlive(fighter)) continue;
     tickPoison(fighter, dt, state, events);
     if (!isFighterAlive(fighter)) continue;
     tickGourmetHunt(fighter, dt, state);
+    tickGuard(fighter, dt, events);
+    tickTaunt(fighter, dt);
+    // 불멸은 기절과 같은 자리에서 행동을 멈추지만 슬롯이 달라 아다지오의 정화에 걸리지 않는다.
+    if (fighter.undying) {
+      const remaining = fighter.undying.remaining - dt;
+      fighter.undying = remaining <= EMERGENCY_RECOVERY.epsilon ? null : { ...fighter.undying, remaining };
+      fighter.hop *= recovery;
+      continue;
+    }
     // 기절 시간은 위에서 흐르지만 행동 시계인 공격 쿨다운은 멈춘다. 즉 이동·추적·평타·자동
     // 궁극기와 함께 행동 자체가 정지하며, 정확히 0이 된 스텝부터 기존 쿨다운을 이어서 처리한다.
     // 날아가는 중에는 벽을 튕기며 실제로 좌표가 움직인다. 기절과 달리 제자리에 서 있지 않다.
@@ -2717,7 +2981,16 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     if (fighter.attackCooldown <= 0) {
       // 아군 궁극기는 자동으로 나가지 않는다. 화면에서 누를 때만 fireUltimate로 들어온다.
       // 적 자동 궁극기도 수동 입력과 같은 생존·기절·게이지 코어 규칙을 통과한다.
-      strike(fighter, target, rng, state, events, fighter.side === "enemy" && canFireUltimate(state, fighter));
+      const firedUltimate = fighter.side === "enemy" && canFireUltimate(state, fighter);
+      strike(fighter, target, rng, state, events, firedUltimate);
+      // 순환 걸음은 **행동 하나마다** 넘긴다. strike 안에서 넘기면 연격의 개별 적중과 광역
+      // 처리기가 각자 한 걸음씩 삼켜, 한 번 휘두른 것이 두세 걸음을 지나간다.
+      // 금강불괴의 남은 횟수도 같은 자리에서 하나 쓴다 — 세는 것이 적중이 아니라 행동이라
+      // 빗나가거나 광역으로 여럿을 맞혀도 한 번은 한 번이다.
+      if (!firedUltimate) {
+        advanceBasicCycle(fighter);
+        if (fighter.hastenedAttacksLeft > 0) fighter.hastenedAttacksLeft -= 1;
+      }
       // 명시적 보스 ID에 맞은 경감 전 기여만 점수로 옮겨 실제 HP 피해·부속물 피해와 분리한다.
       if (state.boss && target.id === state.boss.fighterId) {
         const scored = [...events].reverse().find((event): event is Extract<SkirmishEvent, { kind: "attack" }> => event.kind === "attack" && event.attackerId === fighter.id && event.targetId === target.id);
@@ -2735,7 +3008,8 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
 /** 지금 궁극기를 쓸 수 있는지. 게이지가 찼고, 살아 있고, 때릴 상대가 남아 있어야 한다. */
 export function canFireUltimate(state: SkirmishState, fighter: Fighter): boolean {
   // 수동 입력과 적 자동 시전이 모두 이 코어 경계를 공유해 기절 우회 경로를 만들지 않는다.
-  if (state.phase !== "fight" || !isFighterAlive(fighter) || fighter.stunnedFor > 0 || fighter.staggeredFor > 0 || fighter.energy < ultimateCost(state, fighter, false)) return false;
+  // 불멸로 버티는 동안은 아무것도 하지 못한다 — 무적의 대가가 행동 정지다.
+  if (state.phase !== "fight" || !isFighterAlive(fighter) || fighter.undying !== null || fighter.stunnedFor > 0 || fighter.staggeredFor > 0 || fighter.energy < ultimateCost(state, fighter, false)) return false;
   // 광란 중에는 기본 공격만 나간다. 궁극기까지 아군에게 꽂히면 한 판이 그 한 번으로 갈린다.
   if (fighter.frenzy) return false;
   if (fighter.def.ultimate.targeting === "battlefieldAllies") return aliveFighters(state, fighter.side).length > 0;
@@ -2781,6 +3055,28 @@ export function fireUltimate(
     return events;
   }
 
+  if (teamUltimate.selfGuard !== undefined) {
+    // 때리지 않는 궁극기다. 끌어당겨 붙잡아 두고, 버틴 값은 끝날 때 보호막으로 돌려받는다.
+    const plan = teamUltimate.selfGuard;
+    attacker.energy -= ultimateCost(state, attacker, true);
+    attacker.guard = { remaining: plan.seconds, total: plan.seconds, reductionPercent: plan.damageReductionPercent, mitigated: 0, shieldPercent: plan.shieldFromMitigatedPercent };
+    for (const other of state.fighters) {
+      if (other.side === attacker.side || !isFighterAlive(other) || distance(attacker, other) > plan.pull.radius) continue;
+      // 끌어당김은 보간 없이 같은 프레임에 자리를 옮긴다 — 순간이동과 같은 규칙이라 이동 속도의
+      // 영향을 받지 않고, 끌려온 자리는 시전자에게서 정해진 거리다.
+      const dx = other.x - attacker.x; const dy = other.y - attacker.y; const gap = Math.hypot(dx, dy) || 1;
+      other.x = Math.min(state.arena.right, Math.max(state.arena.left, attacker.x + dx / gap * plan.pull.distance));
+      other.y = Math.min(state.arena.bottom, Math.max(state.arena.top, attacker.y + dy / gap * plan.pull.distance));
+      other.taunted = { remaining: plan.tauntSeconds, total: plan.tauntSeconds, sourceId: attacker.id };
+      // 끌려온 순간부터 엘라를 본다. 다음 재탐색까지 기다리면 끌어당긴 보람이 한 박자 늦는다.
+      other.targetId = attacker.id;
+      other.engaged = false;
+      events.push({ kind: "combatEffect", fighterId: other.id, effect: { tag: "shieldHit", intensity: 1 } });
+    }
+    attacker.attackCooldown = attackInterval(attacker, state);
+    settle(state, events);
+    return events;
+  }
   if (teamUltimate.selfSetup !== undefined) {
     // 때리지 않는 궁극기다. 게이지를 쓰고 자리만 잡은 뒤, 피해는 이어질 일반 공격이 낸다.
     const setup = teamUltimate.selfSetup;

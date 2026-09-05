@@ -3,7 +3,7 @@ import ts from "typescript";
 import PREPARE_ICONS from "../../scripts/prepare_icons.py?raw";
 import { RELICS } from "../../src/data/relics";
 import { KEYWORDS } from "../../src/data/keywords";
-import type { Skill } from "../../src/core/types";
+import type { BasicAttack, Skill } from "../../src/core/types";
 import { ELEMENT_TINT, ROLE_TINT, SKILL_ART_ASSETS, SKILL_ART_SLOTS, skillArtFor, skillArtKey, skillArtTint } from "../../src/ui/skillArt";
 import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageHealingLabel, damageKeyword, ferocityTraitDescription, passiveDescription, overpaintDetonationDamageKeyword, passiveShieldKeyword, recoveryLabel, skillDescription, skillKeywordLayoutOptions, statusEffectLabel, targetingLabel } from "../../src/ui/skillPresentation";
 import type { SkillInfoViewModel } from "../../src/ui/SkillPopup";
@@ -96,6 +96,15 @@ describe("토리카 스킬 표시 계약", () => {
     // 전투 엔진의 반경(px) 같은 개발 좌표는 문장에 새지 않고 대상 범위 문구로만 나온다.
     expect(skillDescription(torika.ultimate)).not.toContain("220");
     expect(skillDescription(torika.ultimate)).toContain("자신의 주위 모든 적에게");
+
+    // 셋째 뿔은 기절과 추가 피해를 **한 문장** 안에서 말한다 — 절을 나누면 서로 다른 두
+    // 순간에 따로 터지는 것처럼 읽힌다. 순서는 때린 결과에 가까운 추가 타격이 먼저다.
+    expect(torika.basic.periodicBonusScaling).toEqual({ stat: "def", power: 50 });
+    expect(torika.basic.desc).toBeUndefined();
+    expect(skillDescription(torika.basic, { damage: 74, periodicBonusDamage: 64 }))
+      .toBe("적 한 명에게 [[damage-value|74]]의 [[physical-damage|물리 피해]]를 준다. 매 3번째 공격마다 [[damage-value|64]]의 [[physical-damage|물리 피해]]를 추가로 주고 0.5초 동안 [[stun|기절]]시킨다.");
+    // 능력치를 모르는 자리(도감)에서는 어느 능력치에서 나오는 배율인지 함께 말한다.
+    expect(skillDescription(torika.basic)).toContain("방어력의 50% [[physical-damage|물리 피해]]를 추가로 주고");
   });
   it("은 일반 공격과 궁극기의 피해 출처를 공용 상세 정의로 만든다", () => {
     expect(damageKeyword({ kind: "scaling", amount: 128, power: 100, stat: "공격력", label: "피해량" })).toMatchObject({
@@ -113,6 +122,41 @@ describe("토리카 스킬 표시 계약", () => {
       effectType: "buff", description: "[[damage-value|19]]만큼 추가 피해", contextualKeywords: [damage],
     };
     expect(skillKeywordLayoutOptions(skill, { width: 760, size: 28 }).contextualKeywords).toEqual([damage]);
+  });
+});
+
+describe("엘라 스킬 표시 계약", () => {
+  const ella = RELICS.find((def) => def.id === "ella")!;
+
+  it("의 발경은 걸음마다 제 문장을 갖는다", () => {
+    // 순환 기본 공격을 한 문장으로 뭉치면 세 권 중 하나만 설명한 문장이 된다.
+    expect(ella.basic.cycle?.map((step) => step.name)).toEqual(["점(粘)", "화(化)", "발(發)"]);
+    expect(ella.basic.desc).toBeUndefined();
+    expect(skillDescription(ella.basic, { cycleDamage: [90, 120, 150] })).toBe(
+      "다음 3가지를 차례로 반복한다."
+      + " 「점(粘)」 적 한 명에게 [[damage-value|90]]의 [[physical-damage|물리 피해]]를 주고, 입힌 피해의 80%만큼 보호막을 얻는다."
+      + " 「화(化)」 적 한 명에게 [[damage-value|120]]의 [[physical-damage|물리 피해]]를 주고 [[stagger|경직]]시킨다."
+      + " 「발(發)」 자신의 주위 모든 적에게 [[damage-value|150]]의 [[physical-damage|물리 피해]]를 주고, 입힌 피해의 50%만큼 체력을 회복한다.",
+    );
+    // 걸음에 적지 않은 값은 기본 공격 쪽에서 새어 들어오지 않는다 — 「점」은 경직시키지 않는다.
+    expect(skillDescription(ella.basic)).not.toContain("「점(粘)」 적 한 명에게 공격력의 90% [[physical-damage|물리 피해]]를 주고 [[stagger|경직]]");
+    // 전투 엔진의 반경(px)은 문장에 새지 않고 대상 범위 문구로만 나온다.
+    expect(skillDescription(ella.basic)).not.toContain("200");
+  });
+
+  it("의 인·불멸·금강불괴는 구조화 계약에서 문장을 짓는다", () => {
+    // 아무도 때리지 않는 궁극기라 위력이 없다. 끌어당김 → 도발 순으로 말한다.
+    expect(ella.ultimate.selfGuard).toMatchObject({ seconds: 5, damageReductionPercent: 50, tauntSeconds: 5, shieldFromMitigatedPercent: 25 });
+    expect(skillDescription(ella.ultimate)).toBe(
+      "주위 모든 적을 [[pull|끌어당겨]] 5초 동안 [[taunt|도발]]한다."
+      + " 5초 동안 받는 피해가 50% 줄고, 그 시간이 끝나면 그동안 줄인 피해의 25%만큼 보호막을 얻는다.",
+    );
+    expect(passiveDescription(ella.passive, ella.stats.atk)).toBe(
+      "전투당 한 번, 쓰러질 피해를 받으면 죽지 않고 5초 동안 [[invulnerable|무적]]이 되는 대신 아무 행동도 하지 못한다."
+      + " 그동안 최대 체력의 40%를 매초 나누어 회복한다. 이때 주위 적을 [[knockback|날려버린다]].",
+    );
+    expect(ferocityTraitDescription(ella.ferocityTrait, { attack: ella.stats.atk, defense: ella.stats.def }))
+      .toBe("방어력과 저항력이 150% 오른다. 이후 [[basic-attack|기본 공격]] 3회 동안 [[attack-speed|공격 속도]]가 150% 오른다.");
   });
 });
 
@@ -366,12 +410,28 @@ describe("스킬 설명문 양식 계약", () => {
     "%s은 대상 → 피해 → 부가 효과 순서로 읽힌다",
     (_label, skill) => {
       // 공격 속도까지 함께 쓰는 스킬(스피나 궁극기)은 두 축을 합쳐 계산하므로 능력치를 함께 준다.
-      const text = skillDescription(skill, { damage: 123, ap: 150, atk: { atk: 120, attackSpeed: 100 } });
-      // 대상이 먼저다. 무엇을 때리는지 모른 채 수치부터 읽게 하지 않는다.
-      expect(text).toMatch(/^(적 한 명|자신의 주위 모든 적|전장의 모든 적|지정한 원 안의 모든 적|\[\[charge\|돌진\]\]해 뚫고 지나간 길의 모든 적)에게 /);
-      // 그다음이 피해다. 실제 수치를 알 수 있으면 조회 가능한 태그로 보여 준다.
-      expect(text).toContain("[[damage-value|");
-      expect(text).toMatch(/\[\[(physical|magical)-damage\|(물리|마법) 피해\]\]를 (준다|주고)/);
+      const cycle = "cycle" in skill ? (skill as BasicAttack).cycle : undefined;
+      const text = skillDescription(skill, {
+        damage: 123, ap: 150, atk: { atk: 120, attackSpeed: 100 },
+        cycleDamage: cycle?.map(() => 123),
+      });
+      // 순환 기본 공격은 걸음마다 제 문장을 갖는다. 한 문장으로 뭉치면 세 권 중 하나만 설명한
+      // 문장이 되므로, 양식은 문장 전체가 아니라 **걸음 하나하나**가 지킨다.
+      const bodies = cycle === undefined
+        ? [text]
+        : cycle.map((step) => {
+          const marker = `「${step.name}」 `;
+          expect(text, `${step.name} 걸음`).toContain(marker);
+          return text.slice(text.indexOf(marker) + marker.length);
+        });
+      if (cycle !== undefined) expect(text.startsWith(`다음 ${cycle.length}가지를 차례로 반복한다. `)).toBe(true);
+      for (const body of bodies) {
+        // 대상이 먼저다. 무엇을 때리는지 모른 채 수치부터 읽게 하지 않는다.
+        expect(body).toMatch(/^(적 한 명|자신의 주위 모든 적|전장의 모든 적|지정한 원 안의 모든 적|\[\[charge\|돌진\]\]해 뚫고 지나간 길의 모든 적)에게 /);
+        // 그다음이 피해다. 실제 수치를 알 수 있으면 조회 가능한 태그로 보여 준다.
+        expect(body).toContain("[[damage-value|");
+        expect(body).toMatch(/\[\[(physical|magical)-damage\|(물리|마법) 피해\]\]를 (준다|주고)/);
+      }
       expect(text.endsWith(".")).toBe(true);
     },
   );

@@ -62,6 +62,9 @@ export const ULTIMATE_PRESENTATIONS: Readonly<Record<string, UltimatePresentatio
   // SD 확대와 흔들림은 가장 얕다. 실제로 터지는 순간은 뒤이어 날아가는 카드 한 장이다.
   // 등신이 낮아 컷인에서 한 뼘 줄인다.
   delopi: { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkScale: 0.92, artworkOrigin: { x: 640, y: 800 }, cutInHoldMs: 130, zoomScale: 1.08, zoomMs: 96, cameraShakeIntensity: 0.004 },
+  // 아무도 때리지 않고 제자리에 뿌리내리는 궁극기라 확대도 흔들림도 가장 얕다. 컷인은 느린
+  // 권법에 맞춰 한 박자 길게 머문다 — 이 개체의 값은 속도가 아니라 버티는 시간이다.
+  ella: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.97, artworkOrigin: { x: 645, y: 800 }, cutInHoldMs: 175, zoomScale: 1.06, zoomMs: 120, cameraShakeIntensity: 0.005 },
   "husk-raptor": { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", cutInHoldMs: 135, zoomScale: 1.2, zoomMs: 110, cameraShakeIntensity: 0.008 },
   "husk-shell": { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.94, zoomScale: 1.24, zoomMs: 115, cameraShakeIntensity: 0.009 },
   "husk-wing": { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkScale: 0.92, artworkOrigin: { x: 650, y: 770 }, zoomScale: 1.16, cameraShakeIntensity: 0.007 },

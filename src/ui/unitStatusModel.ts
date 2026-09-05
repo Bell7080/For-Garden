@@ -7,7 +7,7 @@ import type { Fighter } from "../core/skirmish";
  * 겹 수와 남은 시간을 여기서 한 번만 만들고 둘 다 이 목록만 그린다. Phaser를 들여오지 않아
  * 순서·색·문구를 테스트가 그대로 고정할 수 있다.
  */
-export type UnitStatusId = "stun" | "frenzy" | "bleed" | "poison" | "curse" | "overpaint" | "butcher";
+export type UnitStatusId = "stun" | "frenzy" | "taunt" | "bleed" | "poison" | "curse" | "overpaint" | "butcher";
 
 export interface UnitStatusView {
   id: UnitStatusId;
@@ -28,6 +28,7 @@ export interface UnitStatusView {
 export const UNIT_STATUS_COLOR: Readonly<Record<UnitStatusId, number>> = {
   stun: 0xf2c744,
   frenzy: 0xa8406b,
+  taunt: 0xd8913a,
   bleed: 0xc2303a,
   poison: 0x7a4bab,
   curse: 0x8f6aa4,
@@ -61,6 +62,15 @@ export function unitStatusViews(fighter: Fighter): UnitStatusView[] {
       id: "frenzy", name: "광란", color: UNIT_STATUS_COLOR.frenzy,
       remaining: frenzy.remaining, total: Math.max(frenzy.total, frenzy.remaining),
       detail: `자기 편을 공격 · 공격 속도 +${frenzy.attackSpeedPercent}% · ${seconds(frenzy.remaining)} 남음`,
+    });
+  }
+  if (fighter.taunted) {
+    const taunted = fighter.taunted;
+    views.push({
+      id: "taunt", name: "도발", color: UNIT_STATUS_COLOR.taunt,
+      remaining: taunted.remaining, total: Math.max(taunted.total, taunted.remaining),
+      // 행동을 막지 않고 방향만 바꾸는 상태라, 남은 시간과 "누구만 본다"는 사실만 말한다.
+      detail: `도발한 상대만 표적으로 삼는다 · ${seconds(taunted.remaining)} 남음`,
     });
   }
   if (fighter.bleed) {

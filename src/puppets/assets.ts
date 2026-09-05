@@ -15,6 +15,8 @@ import { ensureTexture, IndexedPuppetCreature } from "./IndexedPuppetCreature";
 import {
   DELOPI_PORTRAIT_METADATA,
   DELOPI_SD_METADATA,
+  ELLA_PORTRAIT_METADATA,
+  ELLA_SD_METADATA,
   DODI_PORTRAIT_METADATA,
   DODI_SD_METADATA,
   LEXIA_PORTRAIT_METADATA,
@@ -181,6 +183,12 @@ export const DELOPI_ASSET: PuppetAsset = {
   ...DELOPI_PORTRAIT_METADATA,
 };
 
+/** 15번 전신 일러스트: 엘라(코엘로돈타). */
+export const ELLA_ASSET: PuppetAsset = {
+  url: `${base}puppets/char_015.zip`,
+  ...ELLA_PORTRAIT_METADATA,
+};
+
 /** 8번 전신 일러스트: 티아(이크티오사우루스). */
 export const TIA_ASSET: PuppetAsset = {
   url: `${base}puppets/char_008.zip`,
@@ -257,6 +265,7 @@ const PORTRAIT_ASSETS = {
   maki: MAKI_ASSET,
   keris: KERIS_ASSET,
   delopi: DELOPI_ASSET,
+  ella: ELLA_ASSET,
   // 적도 전용 전신을 가진다. 초상 레지스트리에 함께 두면 정보창이 아군·적을 가르지 않고
   // 같은 경로로 원화를 찾는다 — 화면마다 "적이면 다른 함수"를 두면 한 곳을 고칠 때 다른
   // 곳이 임시 원화로 남는다.
@@ -371,6 +380,12 @@ export const DELOPI_SD_ASSET: PuppetAsset = {
   ...DELOPI_SD_METADATA,
 };
 
+/** 15번 SD: 엘라. */
+export const ELLA_SD_ASSET: PuppetAsset = {
+  url: `${base}puppets/charSD_015.zip`,
+  ...ELLA_SD_METADATA,
+};
+
 /** 9번 SD: 메론. */
 export const MERON_SD_ASSET: PuppetAsset = {
   url: `${base}puppets/charSD_009.zip`,
@@ -404,6 +419,7 @@ const ALLY_SD_ASSETS: Readonly<Record<string, PuppetAsset>> = {
   maki: MAKI_SD_ASSET,
   keris: KERIS_SD_ASSET,
   delopi: DELOPI_SD_ASSET,
+  ella: ELLA_SD_ASSET,
 };
 
 /** 적 SD는 아군과 번호 묶음이 달라 따로 두고, 최종층 보스만 전용 묶음을 쓴다. */

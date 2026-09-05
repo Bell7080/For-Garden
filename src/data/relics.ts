@@ -1285,7 +1285,7 @@ export const RELICS: RelicDef[] = [
       cycle: [
         { name: "점(粘)", power: 80, targeting: "nearbyEnemies", radius: 150, shieldFromDamagePercent: 50 },
         { name: "화(化)", power: 105, targeting: "nearbyEnemies", radius: 190, statusEffects: [{ kind: "stagger", seconds: 0.1 }] },
-        { name: "발(發)", power: 135, targeting: "nearbyEnemies", radius: 240, knockback: { seconds: 0.5, speed: 620, bounces: 1 } },
+        { name: "발(發)", power: 135, targeting: "nearbyEnemies", radius: 240, pull: { distance: 90 } },
       ],
     },
     ultimate: {

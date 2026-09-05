@@ -2808,19 +2808,21 @@ describe("엘라의 프로젝트 TALISMAN", () => {
     expect(first.map((event) => event.kind === "attack" && event.targetId).sort()).toEqual([primary.id, nearby.id].sort());
     expect(ella.shield.amount).toBeGreaterThan(0);
     expect(primary.staggeredFor).toBe(0);
-    expect(primary.knockback).toBeNull();
+    const farBefore = Math.hypot(primary.x - ella.x, primary.y - ella.y);
 
-    // 2걸음 「화」 — 경직만 남기고 날리지 않는다.
+    // 2걸음 「화」 — 경직만 남기고 자리는 그대로다.
     ella.attackCooldown = 0;
     stepSkirmish(state, 1 / 60);
     expect(primary.staggeredFor).toBeCloseTo(0.1);
-    expect(primary.knockback).toBeNull();
+    expect(Math.hypot(primary.x - ella.x, primary.y - ella.y)).toBeCloseTo(farBefore, 5);
 
-    // 3걸음 「발」 — 맞은 적이 실제로 날아간다. 기절이 아니라 좌표가 움직이는 것이 이 걸음의 값이다.
+    // 3걸음 「발」 — 맞은 적이 실제로 끌려온다. 날리는 것이 아니라 붙잡는 것이 이 걸음의 값이다.
     ella.attackCooldown = 0;
     stepSkirmish(state, 1 / 60);
-    expect(primary.knockback).not.toBeNull();
-    expect(nearby.knockback).not.toBeNull();
+    const pull = cycle[2].pull!;
+    expect(Math.hypot(primary.x - ella.x, primary.y - ella.y)).toBeCloseTo(pull.distance, 5);
+    expect(Math.hypot(nearby.x - ella.x, nearby.y - ella.y)).toBeCloseTo(pull.distance, 5);
+    expect(primary.knockback).toBeNull();
     expect(primary.stunnedFor).toBe(0);
     // 회복은 두지 않는다 — 엘라는 보호막으로 버티고 회복은 노도니아의 축이다.
     expect(cycle.some((step) => step.damageHealingPercent !== undefined)).toBe(false);

@@ -1242,13 +1242,16 @@ function tickTaunt(fighter: Fighter, dt: number): void {
  * 이 걸음이 적을 날려버리는가. 파치의 폭주와 같은 궤적 규칙을 쓰되 **주체가 다르다** —
  * 파치는 폭주해야 날리고, 순환의 마지막 걸음은 세 번마다 반드시 날린다.
  */
-function knockbackStruck(attacker: Fighter, target: Fighter, events: SkirmishEvent[]): void {
-  const blast = currentBasicStep(attacker)?.knockback;
-  if (!blast || !isFighterAlive(target)) return;
+function pullStruck(attacker: Fighter, target: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
+  const plan = currentBasicStep(attacker)?.pull;
+  if (!plan || !isFighterAlive(target)) return;
+  // 끌어당김은 「인(引)」과 같은 규칙이다 — 보간 없이 같은 프레임에 자리를 옮기므로 이동
+  // 속도의 영향을 받지 않고, 끌려온 자리는 시전자에게서 정해진 거리다.
   const dx = target.x - attacker.x; const dy = target.y - attacker.y; const gap = Math.hypot(dx, dy) || 1;
-  target.knockback = { remaining: blast.seconds, vx: (dx / gap) * blast.speed, vy: (dy / gap) * blast.speed, bouncesLeft: blast.bounces };
+  target.x = Math.min(state.arena.right, Math.max(state.arena.left, attacker.x + dx / gap * plan.distance));
+  target.y = Math.min(state.arena.bottom, Math.max(state.arena.top, attacker.y + dy / gap * plan.distance));
   target.engaged = false;
-  events.push({ kind: "knockback", fighterId: target.id, seconds: blast.seconds, bounces: blast.bounces });
+  events.push({ kind: "combatEffect", fighterId: target.id, effect: { tag: "shieldHit", intensity: 1 } });
 }
 
 /** 지금 걸음의 원본 계약. 걸음만 갖는 값(보호막 전환 등)을 읽을 때 쓴다. */
@@ -2588,7 +2591,7 @@ function strike(
   triggerCombatAugments(state, target, "onLowHp", events);
   // 맞은 그 순간 희열이 오른다. 대신 받은 몫이 아니라 **실제로 날아온 공격**만 세는 자리다.
   gainElation(target);
-  if (!useUltimate) knockbackStruck(attacker, target, events);
+  if (!useUltimate) pullStruck(attacker, target, state, events);
 
   const transfer = useUltimate ? attacker.def.ultimate.damageTransfer : undefined;
   if (transfer && dealt > 0) {
@@ -2911,8 +2914,8 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     // 광역으로 맞은 쪽도 희열이 오른다. 단일과 광역에서 규칙이 갈리면 같은 한 대가 어느
     // 스킬에 맞았느냐에 따라 겹을 주기도 하고 안 주기도 한다.
     gainElation(target);
-    // 광역 걸음도 같은 규칙으로 날린다 — 단일과 광역에서 갈리면 같은 걸음이 대상 수에 따라 다른 일을 한다.
-    if (!useUltimate) knockbackStruck(attacker, target, events);
+    // 광역 걸음도 같은 규칙으로 끌어당긴다 — 단일과 광역에서 갈리면 같은 걸음이 대상 수에 따라 다른 일을 한다.
+    if (!useUltimate) pullStruck(attacker, target, state, events);
 
     const dx = target.x - attacker.x;
     const dy = target.y - attacker.y;

@@ -342,7 +342,8 @@ export type BasicAttackStep = {
    * 기절과 다른 축이다 — 기절은 제자리에서 멈추는 것이고 이쪽은 **실제로 좌표가 움직인다.**
    * 3연 순환의 마지막 걸음처럼 "여기서 끊는다"를 화면에 보여 줘야 하는 자리에 쓴다.
    */
-  knockback?: { seconds: number; speed: number; bounces: number };
+  /** 맞은 적을 시전자에게서 이 거리까지 끌어당긴다. 날려버림과 달리 붙잡아 두는 쪽이다. */
+  pull?: { distance: number };
 };
 
 /** 기본 공격만 가질 수 있는 추가 타격 계약이다. 일반 단타는 불필요한 확률 필드를 갖지 않는다. */

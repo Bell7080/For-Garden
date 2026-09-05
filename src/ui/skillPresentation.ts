@@ -300,7 +300,7 @@ export function allyHealPowerKeyword(percent: number, ap?: number): KeywordDef |
  * 필드(보호막 전환)까지 이 유니온이 함께 든다 — 그래야 걸음 하나를 설명할 때도 같은 절
  * 조립기를 그대로 지나간다.
  */
-export type DescribedSkill = Skill | BasicAttack | Ultimate | (BasicAttack & Pick<BasicAttackStep, "shieldFromDamagePercent" | "knockback">);
+export type DescribedSkill = Skill | BasicAttack | Ultimate | (BasicAttack & Pick<BasicAttackStep, "shieldFromDamagePercent" | "pull">);
 
 export interface SkillDescriptionStats {
   /** 회복량을 실제 값으로 환산할 때 쓴다. */
@@ -400,7 +400,7 @@ export function skillDescription(
         statusEffects: step.statusEffects,
         damageHealingPercent: step.damageHealingPercent,
         shieldFromDamagePercent: step.shieldFromDamagePercent,
-        knockback: step.knockback,
+        pull: step.pull,
       } as DescribedSkill;
       return `「${step.name}」 ${skillDescription(stepSkill, { ...stats, damage: stats.cycleDamage?.[index] })}`;
     });
@@ -453,8 +453,8 @@ function skillEffectClauses(skill: DescribedSkill, stats: SkillDescriptionStats)
   }
   // 몇 초 날아가고 몇 번 튕기는지는 적지 않는다 — 날아가는 그림이 곧 그 답이고, 태그가
   // "날아가는 동안 움직이지도 때리지도 못한다"까지 이미 말한다.
-  if ("knockback" in skill && skill.knockback !== undefined) {
-    clauses.push({ text: `[[knockback|날려버린다]]` });
+  if ("pull" in skill && skill.pull !== undefined) {
+    clauses.push({ text: `[[pull|끌어당긴다]]` });
   }
   if ("lowestHpAllyHealingFromDamagePercent" in skill && skill.lowestHpAllyHealingFromDamagePercent !== undefined) {
     clauses.push({ text: `입힌 피해의 ${skill.lowestHpAllyHealingFromDamagePercent}%만큼 현재 체력이 가장 낮은 생존 아군을 회복한다`, joinWithComma: true });

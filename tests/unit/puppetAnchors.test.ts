@@ -17,6 +17,7 @@ import {
   DELOPI_PORTRAIT_METADATA,
   DODI_PORTRAIT_METADATA,
   DODI_SD_METADATA,
+  ELLA_PORTRAIT_METADATA,
   LEXIA_PORTRAIT_METADATA,
   LUKA_PORTRAIT_METADATA,
   METTE_PORTRAIT_METADATA,
@@ -248,6 +249,7 @@ const REAL_PORTRAITS = [
   { name: "마키", metadata: MAKI_PORTRAIT_METADATA, head: { x: 578, y: 315 }, eyes: [{ x: 528, y: 327 }, { x: 620, y: 306 }] },
   { name: "케리스", metadata: KERIS_PORTRAIT_METADATA, head: { x: 546, y: 334 }, eyes: [{ x: 490, y: 330 }, { x: 569, y: 361 }] },
   { name: "델로피", metadata: DELOPI_PORTRAIT_METADATA, head: { x: 519, y: 324 }, eyes: [{ x: 496, y: 319 }, { x: 556, y: 294 }] },
+  { name: "엘라", metadata: ELLA_PORTRAIT_METADATA, head: { x: 554, y: 292 }, eyes: [{ x: 512, y: 289 }, { x: 584, y: 271 }] },
 ] as const;
 
 /** PortraitCard가 넘기는 것과 같은 배율 보정으로 실제 카드 잘라내기를 구한다. */

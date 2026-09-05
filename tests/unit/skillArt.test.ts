@@ -3,9 +3,9 @@ import ts from "typescript";
 import PREPARE_ICONS from "../../scripts/prepare_icons.py?raw";
 import { RELICS } from "../../src/data/relics";
 import { KEYWORDS } from "../../src/data/keywords";
-import type { Skill } from "../../src/core/types";
+import type { BasicAttack, Skill } from "../../src/core/types";
 import { ELEMENT_TINT, ROLE_TINT, SKILL_ART_ASSETS, SKILL_ART_SLOTS, skillArtFor, skillArtKey, skillArtTint } from "../../src/ui/skillArt";
-import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageHealingLabel, damageKeyword, ferocityTraitDescription, passiveDescription, overpaintDetonationDamageKeyword, passiveShieldKeyword, recoveryLabel, skillDescription, skillKeywordLayoutOptions, statusEffectLabel, targetingLabel } from "../../src/ui/skillPresentation";
+import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageHealingLabel, damageKeyword, ferocityTraitDescription, passiveDescription, overpaintDetonationDamageKeyword, passiveShieldKeyword, periodicStackKeyword, recoveryLabel, skillDescription, skillKeywordLayoutOptions, statusEffectLabel, targetingLabel } from "../../src/ui/skillPresentation";
 import type { SkillInfoViewModel } from "../../src/ui/SkillPopup";
 
 /** 구워 둔 스킬 일러스트. 코드가 가리키는 파일이 실제로 있는지 확인한다. */
@@ -73,7 +73,7 @@ describe("스킬 일러스트 파일", () => {
 });
 
 describe("토리카 스킬 표시 계약", () => {
-  it("은 구조화된 5초·7%·전체 적·2초 값을 실제 표시 문구로 만든다", () => {
+  it("은 구조화된 5초·7%·전체 적·3.5초 값을 실제 표시 문구로 만든다", () => {
     // UI가 ID별 예외 없이 같은 정적 데이터를 읽을 수 있도록 모든 궁극기의 계약을 검사한다.
     // 순수 회복 궁극기는 적 대상 네 종류와 분리된 전장 전체 아군 계약을 사용하고,
     // 아무도 때리지 않고 자리만 잡는 궁극기(델로피)는 자신만 가리키는 계약을 쓴다.
@@ -82,12 +82,12 @@ describe("토리카 스킬 표시 계약", () => {
     expect(torika.ultimate).toMatchObject({
       targeting: "nearbyEnemies",
       radius: 220,
-      statusEffects: [{ kind: "stun", seconds: 2 }],
+      statusEffects: [{ kind: "stun", seconds: 3.5 }],
     });
     expect(torika.passive).toMatchObject({ value: 7, durationSeconds: 5 });
     expect(`${torika.passive.durationSeconds}초 동안 ${recoveryLabel(torika.passive.value)}`).toBe("5초 동안 매초 최대 체력의 7% 회복");
     expect(targetingLabel(torika.ultimate.targeting)).toBe("자신의 주위 모든 적");
-    expect(statusEffectLabel(torika.ultimate.statusEffects?.[0])).toBe("[[stun|기절]] 2초");
+    expect(statusEffectLabel(torika.ultimate.statusEffects?.[0])).toBe("[[stun|기절]] 3.5초");
     expect(ferocityTraitDescription(torika.ferocityTrait, { attack: torika.stats.atk, defense: torika.stats.def })).toBe("공격 속도가 20% 증가한다. 기본 공격이 대상 주위의 모든 적에게 적중해 [[damage-value|19]]만큼 추가 물리 피해를 입히고 [[stagger|경직]]시킨다.");
     // 설명의 환산 피해도 현재 방어력을 다시 읽으므로 레벨·룬으로 능력치가 변하면 같이 변한다.
     expect(ferocityTraitDescription(torika.ferocityTrait, { attack: torika.stats.atk, defense: torika.stats.def * 2 })).toContain("[[damage-value|38]]");
@@ -96,6 +96,24 @@ describe("토리카 스킬 표시 계약", () => {
     // 전투 엔진의 반경(px) 같은 개발 좌표는 문장에 새지 않고 대상 범위 문구로만 나온다.
     expect(skillDescription(torika.ultimate)).not.toContain("220");
     expect(skillDescription(torika.ultimate)).toContain("자신의 주위 모든 적에게");
+
+    // **본문은 「세 개의 뿔」을 풀어 적지 않는다.** 몇 타마다인지·무엇이 얹히는지·몇 초인지가
+    // 한 문장에 다 들어가면 그 규칙 하나로 문장이 가득 차므로, 덧칠·손질처럼 태그가 수치를
+    // 갖고 본문은 "한 겹 쌓는다"까지만 말한다.
+    expect(torika.basic.periodicBonusScaling).toEqual({ stat: "def", power: 50 });
+    expect(torika.basic.desc).toBeUndefined();
+    expect(skillDescription(torika.basic, { damage: 74 }))
+      .toBe("적 한 명에게 [[damage-value|74]]의 [[physical-damage|물리 피해]]를 주고 [[anky-basic-stack|세 개의 뿔]]을 한 겹 쌓는다.");
+
+    // 태그 본문은 실제 전투가 읽는 필드에서 짓는다 — 주기·수치를 조정하면 문장도 함께 바뀐다.
+    const stack = periodicStackKeyword(torika.basic)!;
+    expect(stack).toMatchObject({ id: "anky-basic-stack", term: "세 개의 뿔", kind: "규칙" });
+    expect(stack.description).toBe("기본 공격 한 번마다 한 겹씩 쌓이고 3겹째에 터진다. 터지는 타격은 방어력의 50%에 해당하는 물리 피해를 추가로 주고 0.5초 동안 기절시킨다. 터진 뒤 겹은 0으로 돌아간다.");
+    // **태그 팝업 안에는 또 다른 태그를 두지 않는다** — 그 안에서 여는 설명은 화면의 임시
+    // 사전을 물려받지 못해 눌러도 아무것도 열리지 않는다.
+    expect(stack.description).not.toMatch(/\[\[/);
+    // 이름 없는 주기(파치)는 예전처럼 본문이 직접 말한다.
+    expect(periodicStackKeyword(RELICS.find((def) => def.id === "pachi")!.basic)).toBeUndefined();
   });
   it("은 일반 공격과 궁극기의 피해 출처를 공용 상세 정의로 만든다", () => {
     expect(damageKeyword({ kind: "scaling", amount: 128, power: 100, stat: "공격력", label: "피해량" })).toMatchObject({
@@ -113,6 +131,41 @@ describe("토리카 스킬 표시 계약", () => {
       effectType: "buff", description: "[[damage-value|19]]만큼 추가 피해", contextualKeywords: [damage],
     };
     expect(skillKeywordLayoutOptions(skill, { width: 760, size: 28 }).contextualKeywords).toEqual([damage]);
+  });
+});
+
+describe("엘라 스킬 표시 계약", () => {
+  const ella = RELICS.find((def) => def.id === "ella")!;
+
+  it("의 발경은 걸음마다 제 문장을 갖는다", () => {
+    // 순환 기본 공격을 한 문장으로 뭉치면 세 권 중 하나만 설명한 문장이 된다.
+    expect(ella.basic.cycle?.map((step) => step.name)).toEqual(["점(粘)", "화(化)", "발(發)"]);
+    expect(ella.basic.desc).toBeUndefined();
+    expect(skillDescription(ella.basic, { cycleDamage: [90, 120, 150] })).toBe(
+      "다음 3가지를 차례로 반복한다."
+      + " 「점(粘)」 적 한 명에게 [[damage-value|90]]의 [[physical-damage|물리 피해]]를 주고, 입힌 피해의 80%만큼 보호막을 얻는다."
+      + " 「화(化)」 적 한 명에게 [[damage-value|120]]의 [[physical-damage|물리 피해]]를 주고 [[stagger|경직]]시킨다."
+      + " 「발(發)」 자신의 주위 모든 적에게 [[damage-value|150]]의 [[physical-damage|물리 피해]]를 주고, 입힌 피해의 50%만큼 체력을 회복한다.",
+    );
+    // 걸음에 적지 않은 값은 기본 공격 쪽에서 새어 들어오지 않는다 — 「점」은 경직시키지 않는다.
+    expect(skillDescription(ella.basic)).not.toContain("「점(粘)」 적 한 명에게 공격력의 90% [[physical-damage|물리 피해]]를 주고 [[stagger|경직]]");
+    // 전투 엔진의 반경(px)은 문장에 새지 않고 대상 범위 문구로만 나온다.
+    expect(skillDescription(ella.basic)).not.toContain("200");
+  });
+
+  it("의 인·불멸·금강불괴는 구조화 계약에서 문장을 짓는다", () => {
+    // 아무도 때리지 않는 궁극기라 위력이 없다. 끌어당김 → 도발 순으로 말한다.
+    expect(ella.ultimate.selfGuard).toMatchObject({ seconds: 5, damageReductionPercent: 50, tauntSeconds: 5, shieldFromMitigatedPercent: 25 });
+    expect(skillDescription(ella.ultimate)).toBe(
+      "주위 모든 적을 [[pull|끌어당겨]] 5초 동안 [[taunt|도발]]한다."
+      + " 5초 동안 받는 피해가 50% 줄고, 그 시간이 끝나면 그동안 줄인 피해의 25%만큼 보호막을 얻는다.",
+    );
+    expect(passiveDescription(ella.passive, ella.stats.atk)).toBe(
+      "전투당 한 번, 쓰러질 피해를 받으면 죽지 않고 5초 동안 [[invulnerable|무적]]이 되는 대신 아무 행동도 하지 못한다."
+      + " 그동안 최대 체력의 40%를 매초 나누어 회복한다. 이때 주위 적을 [[knockback|날려버린다]].",
+    );
+    expect(ferocityTraitDescription(ella.ferocityTrait, { attack: ella.stats.atk, defense: ella.stats.def }))
+      .toBe("방어력과 저항력이 150% 오른다. 이후 [[basic-attack|기본 공격]] 3회 동안 [[attack-speed|공격 속도]]가 150% 오른다.");
   });
 });
 
@@ -366,12 +419,28 @@ describe("스킬 설명문 양식 계약", () => {
     "%s은 대상 → 피해 → 부가 효과 순서로 읽힌다",
     (_label, skill) => {
       // 공격 속도까지 함께 쓰는 스킬(스피나 궁극기)은 두 축을 합쳐 계산하므로 능력치를 함께 준다.
-      const text = skillDescription(skill, { damage: 123, ap: 150, atk: { atk: 120, attackSpeed: 100 } });
-      // 대상이 먼저다. 무엇을 때리는지 모른 채 수치부터 읽게 하지 않는다.
-      expect(text).toMatch(/^(적 한 명|자신의 주위 모든 적|전장의 모든 적|지정한 원 안의 모든 적|\[\[charge\|돌진\]\]해 뚫고 지나간 길의 모든 적)에게 /);
-      // 그다음이 피해다. 실제 수치를 알 수 있으면 조회 가능한 태그로 보여 준다.
-      expect(text).toContain("[[damage-value|");
-      expect(text).toMatch(/\[\[(physical|magical)-damage\|(물리|마법) 피해\]\]를 (준다|주고)/);
+      const cycle = "cycle" in skill ? (skill as BasicAttack).cycle : undefined;
+      const text = skillDescription(skill, {
+        damage: 123, ap: 150, atk: { atk: 120, attackSpeed: 100 },
+        cycleDamage: cycle?.map(() => 123),
+      });
+      // 순환 기본 공격은 걸음마다 제 문장을 갖는다. 한 문장으로 뭉치면 세 권 중 하나만 설명한
+      // 문장이 되므로, 양식은 문장 전체가 아니라 **걸음 하나하나**가 지킨다.
+      const bodies = cycle === undefined
+        ? [text]
+        : cycle.map((step) => {
+          const marker = `「${step.name}」 `;
+          expect(text, `${step.name} 걸음`).toContain(marker);
+          return text.slice(text.indexOf(marker) + marker.length);
+        });
+      if (cycle !== undefined) expect(text.startsWith(`다음 ${cycle.length}가지를 차례로 반복한다. `)).toBe(true);
+      for (const body of bodies) {
+        // 대상이 먼저다. 무엇을 때리는지 모른 채 수치부터 읽게 하지 않는다.
+        expect(body).toMatch(/^(적 한 명|자신의 주위 모든 적|전장의 모든 적|지정한 원 안의 모든 적|\[\[charge\|돌진\]\]해 뚫고 지나간 길의 모든 적)에게 /);
+        // 그다음이 피해다. 실제 수치를 알 수 있으면 조회 가능한 태그로 보여 준다.
+        expect(body).toContain("[[damage-value|");
+        expect(body).toMatch(/\[\[(physical|magical)-damage\|(물리|마법) 피해\]\]를 (준다|주고)/);
+      }
       expect(text.endsWith(".")).toBe(true);
     },
   );

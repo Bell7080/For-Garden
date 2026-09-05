@@ -13,6 +13,7 @@ import {
   clearStun,
   createSkirmish,
   currentAbilityPower,
+  defensiveDefinition,
   currentAttackSpeed,
   fireUltimate,
   findFighter,
@@ -619,6 +620,9 @@ describe("단일 난전의 원정 보스 옵션", () => {
     // 사거리 단계(v0.58.0)에서 도디·메테가 뒷줄에 남아 보스에게 덜 맞으므로 보스의 충전이
     // 그만큼 늦다. 뒷줄이 안전해지는 것이 이 기능이 노린 결과라 구간을 넓혔다 — 단계 간격을
     // 250/340에서 300/430으로 더 벌린 뒤에는 26.4초라 상한을 28초로 다시 옮겼다.
+    // 토리카가 들이받기에 1초 기절을 갖게 된 뒤에도 이 구간은 그대로다 — 폰토스의 기절 저항
+    // 85%가 그 몫을 되돌려 놓기 때문이다. 저항이 없으면 첫 해일이 72.7초로 밀려 이 검사가
+    // 먼저 무너진다.
     expect(firstUltimateAt).toBeGreaterThanOrEqual(17);
     expect(firstUltimateAt).toBeLessThanOrEqual(28);
     expect(survivorsAfterFirstUltimate).toBeGreaterThan(0);
@@ -1061,6 +1065,8 @@ describe("효과 ID별 야성 특성", () => {
     expect(primaryHit.amount).toBeGreaterThan(computeDamage(torika, primary, { ...torika.def.basic, isCritical: primaryHit.critical, kind: "basic" }, true));
     expect(nearbyHit.amount).toBeGreaterThan(computeDamage(torika, nearby, { ...torika.def.basic, isCritical: nearbyHit.critical, kind: "basic" }, true));
     // 경직은 기절 상태를 오용하지 않고 주·주변 대상의 행동만 0.1초 순간 차단한다.
+    // 들이받기의 기절은 두 타마다 걸리므로 이 첫 타격에서는 아직 아무도 기절하지 않는다 —
+    // 그래서 여기 남은 값은 경직이 기절 슬롯에 새지 않았다는 뜻 그대로다.
     expect(primary.stunnedFor).toBe(0);
     expect(nearby.stunnedFor).toBe(0);
     expect(primary.staggeredFor).toBeCloseTo(0.1);
@@ -1368,9 +1374,14 @@ describe("궁극기", () => {
     expect(expected[0]).toBeGreaterThan(expected[2]);
     // 기대값 자체가 토리카의 atk가 아니라 상향된 def 300%를 원천으로 썼는지도 수치로 고정한다.
     expect(expected[0]).toBe(Math.round((torika.def.stats.def * 3) * 1.25));
+    // 기절 시간은 궁극기가 선언한 값을 그대로 읽는다 — 여기에 초를 손으로 적으면 데이터를
+    // 조정한 뒤 이 검사만 옛 값으로 남는다.
+    const ultimateStun = ultimate.statusEffects?.find((effect) => effect.kind === "stun");
+    const stunSeconds = ultimateStun?.kind === "stun" ? ultimateStun.seconds : 0;
+    expect(stunSeconds).toBeGreaterThan(0);
     expect(first.stunnedFor).toBe(0);
-    expect(armored.stunnedFor).toBe(2);
-    expect(disadvantaged.stunnedFor).toBe(2);
+    expect(armored.stunnedFor).toBe(stunSeconds);
+    expect(disadvantaged.stunnedFor).toBe(stunSeconds);
     expect(events.filter((event) => event.kind === "status")).toHaveLength(2);
     expect(torika.energy).toBe(0);
     expect(hits.filter((event) => event.animate !== false)).toHaveLength(1);
@@ -2652,5 +2663,197 @@ describe("델로피의 그랜드 피날레", () => {
     const state = createSkirmish([getRelic("delopi")], [getRelic("husk-shell")], ARENA);
     // 첫 프레임에 이미 걸려 있어야 "숨어서 시작했다"가 된다 — 한 박자 뒤면 표적이 잡힌 뒤다.
     expect(state.fighters[0].stealthFor).toBe(getRelic("delopi").passive.durationSeconds);
+  });
+});
+
+describe("토리카의 세 개의 뿔", () => {
+  it("은 자기 칩에 겹을 쌓다가 세 번째 타격에만 기절시킨다", () => {
+    const state = createSkirmish([getRelic("anky")], [getRelic("husk-shell")], ARENA);
+    const [torika, foe] = state.fighters;
+    torika.x = 440; torika.y = 1000; foe.x = 460; foe.y = 1000; foe.attackCooldown = 99;
+    foe.maxHp = 400_000; foe.hp = 400_000; torika.targetId = foe.id;
+
+    const seen: { stacks?: number; stunned: number }[] = [];
+    for (let hit = 0; hit < 3; hit += 1) {
+      torika.attackCooldown = 0;
+      stepSkirmish(state, 1 / 60);
+      const chip = activeCombatBuffs(state, torika.id).find((buff) => buff.id.startsWith("hit-count"));
+      seen.push({ stacks: chip?.stacks, stunned: foe.stunnedFor });
+    }
+    // 뿔은 **때린 쪽**에 쌓인다 — 다음 한 방이 언제인지는 적이 아니라 토리카의 타수가 정한다.
+    expect(seen.map(({ stacks }) => stacks)).toEqual([1, 2, undefined]);
+    // 셋이 모이는 그 타격에만 기절이 걸리고, 그 순간 겹은 비워져 칩이 사라진다.
+    expect(seen[0].stunned).toBe(0);
+    expect(seen[1].stunned).toBe(0);
+    const stun = getRelic("anky").basic.statusEffects?.find((effect) => effect.kind === "stun");
+    expect(seen[2].stunned).toBe(stun?.kind === "stun" ? stun.seconds : 0);
+
+    // 칩 이름은 스킬 이름이 아니라 쌓이는 것의 이름을 쓴다.
+    torika.attackCooldown = 0;
+    stepSkirmish(state, 1 / 60);
+    expect(activeCombatBuffs(state, torika.id).find((buff) => buff.id.startsWith("hit-count"))?.name).toBe("세 개의 뿔");
+    // 이름을 적지 않은 개체(파치)는 예전처럼 스킬 이름을 그대로 쓴다.
+    expect(getRelic("pachi").basic.statusEffectStackName).toBeUndefined();
+  });
+
+  it("은 셋째 뿔에만 방어력 50%를 물리 피해로 더한다", () => {
+    const state = createSkirmish([getRelic("anky")], [getRelic("husk-shell")], ARENA);
+    const [torika, foe] = state.fighters;
+    torika.x = 440; torika.y = 1000; foe.x = 460; foe.y = 1000; foe.attackCooldown = 99;
+    foe.maxHp = 400_000; foe.hp = 400_000; torika.targetId = foe.id;
+
+    const hits: { amount: number; critical: boolean }[] = [];
+    for (let hit = 0; hit < 3; hit += 1) {
+      torika.attackCooldown = 0;
+      for (const event of stepSkirmish(state, 1 / 60)) {
+        if (event.kind === "attack" && event.targetId === foe.id) hits.push({ amount: event.amount, critical: event.critical });
+      }
+    }
+    // 계수의 단일 출처는 데이터 한 곳뿐이다 — 전투도 설명문도 이 값을 읽는다.
+    expect(torika.def.basic.periodicBonusScaling).toEqual({ stat: "def", power: 50 });
+    const plain = (critical: boolean): number =>
+      computeDamage(torika, foe, { ...torika.def.basic, isCritical: critical, kind: "basic" }, true);
+    const bonus = (critical: boolean): number =>
+      computeDamage(torika, foe, { ...torika.def.basic, power: 50, scalingStat: "def", damageType: "physical", isCritical: critical, kind: "basic" }, true);
+    // 첫 두 뿔은 평소 한 방 그대로다 — 주기가 채워지기 전에 방어력 몫이 새면 상시 강화가 된다.
+    expect(hits[0].amount).toBe(Math.max(1, Math.round(plain(hits[0].critical))));
+    expect(hits[1].amount).toBe(Math.max(1, Math.round(plain(hits[1].critical))));
+    // 셋이 모이는 그 한 방에만 방어력 몫이 얹히고, 같은 물리 피해 공식(속성·대상 방어력·치명타)을 거친다.
+    expect(hits[2].amount).toBe(Math.max(1, Math.round(plain(hits[2].critical) + bonus(hits[2].critical))));
+    expect(hits[2].amount).toBeGreaterThan(hits[1].amount);
+  });
+});
+
+describe("엘라의 프로젝트 TALISMAN", () => {
+  /** 엘라와 허스크 하나를 사거리 안에 세우고, 적은 때리지 않게 묶어 둔다. */
+  function arena(enemies = ["husk-shell"]): SkirmishState {
+    const state = createSkirmish([getRelic("ella")], enemies.map((id) => getRelic(id)), ARENA);
+    const [ella, ...foes] = state.fighters;
+    ella.x = 440; ella.y = 1000; ella.targetId = foes[0].id;
+    for (const [index, foe] of foes.entries()) {
+      foe.x = 460 + index * 40; foe.y = 1000; foe.attackCooldown = 99;
+      foe.maxHp = 400_000; foe.hp = 400_000;
+    }
+    return state;
+  }
+
+  it("의 불멸은 쓰러질 피해를 받아도 죽지 않고 무적으로 버틴다", () => {
+    const state = arena();
+    const [ella, foe] = state.fighters;
+    const passive = getRelic("ella").passive;
+    // 쓰러질 한 방은 실제 타격으로 받는다 — 죽음을 가로채는 자리가 공용 피해 경계 하나뿐임을
+    // 여기서 함께 고정한다.
+    const fell = (): void => {
+      // 「점」의 보호막이 그 한 방을 삼키지 않도록 엘라의 손을 묶고 보호막을 비운다.
+      ella.hp = 1; ella.shield.amount = 0; ella.attackCooldown = 99;
+      foe.attackCooldown = 0; foe.targetId = ella.id;
+      stepSkirmish(state, 1 / 60);
+      stepSkirmish(state, 1 / 60);
+      foe.attackCooldown = 99;
+    };
+    fell();
+    expect(isFighterAlive(ella)).toBe(true);
+    expect(ella.undying).not.toBeNull();
+    expect(ella.undying?.total).toBe(passive.durationSeconds);
+    // 무적인 동안은 어떤 피해도 HP에 닿지 않는다.
+    const held = ella.hp;
+    expect(resolveReceivedDamage(ella, 99_999)).toMatchObject({ applied: 0, ignored: true });
+    expect(ella.hp).toBeGreaterThanOrEqual(held);
+    // 대신 아무 행동도 하지 못하고, 발동 순간 주위 적이 날아가 추적이 끊긴다.
+    expect(foe.targetId).toBeNull();
+    // 버티는 동안 최대 체력의 40%를 나누어 회복한다.
+    for (let frame = 0; frame < 60 * (passive.durationSeconds ?? 0); frame += 1) stepSkirmish(state, 1 / 60);
+    expect(ella.undying).toBeNull();
+    expect(ella.hp).toBeGreaterThan(ella.maxHp * (passive.value ?? 0) / 100 * 0.9);
+    // 전투당 한 번뿐이다 — 두 번째로 쓰러질 한 방은 그대로 쓰러뜨린다.
+    fell();
+    expect(isFighterAlive(ella)).toBe(false);
+  });
+
+  it("의 발경은 점 → 화 → 발을 걸음마다 다르게 낸다", () => {
+    const state = arena(["husk-shell", "husk-raptor"]);
+    const [ella, primary, nearby] = state.fighters;
+    nearby.x = primary.x + 60; nearby.y = primary.y;
+    const cycle = getRelic("ella").basic.cycle!;
+    expect(cycle.map((step) => step.name)).toEqual(["점(粘)", "화(化)", "발(發)"]);
+
+    // 1걸음 「점」 — 입힌 피해의 80%를 보호막으로 받는다.
+    ella.attackCooldown = 0;
+    const first = stepSkirmish(state, 1 / 60);
+    const firstHit = first.find((event) => event.kind === "attack")!;
+    expect(ella.shield.amount).toBeGreaterThan(0);
+    expect(firstHit.kind === "attack" && firstHit.targetId).toBe(primary.id);
+    expect(primary.staggeredFor).toBe(0);
+
+    // 2걸음 「화」 — 경직만 남기고 보호막은 더 붙지 않는다.
+    const shieldAfterFirst = ella.shield.amount;
+    ella.attackCooldown = 0;
+    stepSkirmish(state, 1 / 60);
+    expect(primary.staggeredFor).toBeCloseTo(0.1);
+    expect(ella.shield.amount).toBeLessThanOrEqual(shieldAfterFirst);
+
+    // 3걸음 「발」 — 혼자 광역이고, 입힌 피해의 50%를 회복한다.
+    ella.hp = ella.maxHp / 2;
+    const wounded = ella.hp;
+    ella.attackCooldown = 0;
+    const third = stepSkirmish(state, 1 / 60).filter((event) => event.kind === "attack");
+    expect(third.map((event) => event.kind === "attack" && event.targetId).sort())
+      .toEqual([primary.id, nearby.id].sort());
+    expect(ella.hp).toBeGreaterThan(wounded);
+  });
+
+  it("의 인은 끌어당겨 도발하고, 덜 맞은 만큼을 보호막으로 돌려받는다", () => {
+    const state = arena(["husk-shell", "husk-raptor"]);
+    const [ella, primary, nearby] = state.fighters;
+    const guard = getRelic("ella").ultimate.selfGuard!;
+    // 끌려올 자리가 보이도록 둘 다 멀리 세우고, 다른 아군이 없어도 표적이 엘라로 바뀌는지 본다.
+    primary.x = 800; nearby.x = 820; nearby.y = 1040;
+    primary.targetId = null; nearby.targetId = null;
+    ella.energy = ULTIMATE_ENERGY_MAX;
+    const far = Math.hypot(primary.x - ella.x, primary.y - ella.y);
+    fireUltimate(state, ella.id);
+
+    // 끌어당김 → 도발 순이다. 붙잡아 두지 못하면 감쇠도 보호막도 의미가 없다.
+    expect(Math.hypot(primary.x - ella.x, primary.y - ella.y)).toBeLessThan(far);
+    expect(primary.taunted?.sourceId).toBe(ella.id);
+    expect(nearby.taunted?.sourceId).toBe(ella.id);
+    expect(primary.taunted?.total).toBe(guard.tauntSeconds);
+    expect(ella.guard).toMatchObject({ reductionPercent: guard.damageReductionPercent, total: guard.seconds });
+
+    // 버티는 동안 받는 피해가 절반으로 줄고, 줄인 몫이 그대로 쌓인다.
+    ella.shield.amount = 0;
+    const resolved = resolveReceivedDamage(ella, 1_000);
+    expect(resolved.applied).toBeLessThan(1_000);
+    expect(ella.guard!.mitigated).toBeGreaterThan(0);
+    const mitigated = ella.guard!.mitigated;
+
+    // 시간이 끝나는 순간 그 몫의 25%가 보호막으로 돌아온다. 버티는 동안 엘라가 「점」으로
+    // 따로 보호막을 얻으면 돌려받는 몫과 섞이므로, 이 구간에서는 손을 묶어 둔다.
+    for (let frame = 0; frame < 60 * guard.seconds + 2; frame += 1) {
+      ella.attackCooldown = 99;
+      stepSkirmish(state, 1 / 60);
+    }
+    expect(ella.guard).toBeNull();
+    expect(ella.shield.amount).toBeCloseTo(Math.round(mitigated * guard.shieldFromMitigatedPercent / 100), 0);
+  });
+
+  it("의 금강불괴는 굳어서 단단해지고 그 상태로 권을 한 바퀴 몰아친다", () => {
+    const state = arena();
+    const ella = state.fighters[0];
+    const trait = getRelic("ella").ferocityTrait;
+    expect(trait).toMatchObject({ effectId: "adamantBody", defenseResistancePercent: 150, hastenedAttacks: 3, attackSpeedPercent: 150 });
+    const calmDef = defensiveDefinition(ella, state).def.stats;
+    const calmInterval = attackInterval(ella);
+
+    ella.ferocity = 100; ella.ferocityFever = true;
+    ella.hastenedAttacksLeft = trait.effectId === "adamantBody" ? trait.hastenedAttacks : 0;
+    // 방어력·저항이 함께 오른다 — 한쪽만 오르면 마법 딜러 앞에서 폭주가 값을 잃는다.
+    const feverDef = defensiveDefinition(ella, state).def.stats;
+    expect(feverDef.def).toBeGreaterThan(calmDef.def);
+    expect(feverDef.res).toBeGreaterThan(calmDef.res);
+    // 몰아치는 것은 정해진 타수뿐이라 폭주 내내 빨라지지 않는다.
+    expect(attackInterval(ella)).toBeLessThan(calmInterval);
+    ella.hastenedAttacksLeft = 0;
+    expect(attackInterval(ella)).toBe(calmInterval);
   });
 });

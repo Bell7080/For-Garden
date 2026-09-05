@@ -29,7 +29,7 @@ export type ReachTier = "melee" | "mid" | "ranged";
 export type RelicRarity = "R" | "SR" | "SSR";
 
 /** 전신 Puppet 레지스트리의 안정적인 데이터 키다. 파일 번호를 게임 데이터에 직접 노출하지 않는다. */
-export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "toby" | "amo" | "ripa" | "pontos";
+export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "toby" | "amo" | "ripa" | "pontos";
 
 export interface Stats {
   /** 생존력과 물리·마법 공격의 기반이 되는 주 능력치다. */
@@ -165,6 +165,7 @@ export type AttackSkill = SkillBase & {
   healing?: never;
   teamBuff?: never;
   selfSetup?: never;
+  selfGuard?: never;
 };
 
 /** 순수 회복 스킬은 damageType/power를 가질 수 없어 피해 계산에 잘못 전달되지 않는다. */
@@ -174,6 +175,7 @@ export type HealingSkill = SkillBase & {
   scalingStat?: never;
   teamBuff?: never;
   selfSetup?: never;
+  selfGuard?: never;
   healing: { kind: "teamMissingHpPercent"; percent: number };
 };
 
@@ -189,7 +191,28 @@ export type SetupSkill = SkillBase & {
   scalingStat?: never;
   healing?: never;
   teamBuff?: never;
-  selfSetup: SelfSetup;
+} & (
+  | { selfSetup: SelfSetup; selfGuard?: never }
+  | { selfSetup?: never; selfGuard: SelfGuard }
+);
+
+/**
+ * 버티는 계약. 끌어당겨 붙잡아 두고, 그동안 덜 맞은 만큼을 나중에 보호막으로 돌려받는다.
+ *
+ * `SelfSetup`(숨었다가 한 방)과 반대 축이다 — 그쪽은 다음 한 방의 자리를 만들고, 이쪽은
+ * **맞는 시간 자체를 자산으로 바꾼다.** 그래서 보상이 시전 순간이 아니라 버티기가 끝난 뒤에 온다.
+ */
+export type SelfGuard = {
+  /** 버티는 시간(초). */
+  seconds: number;
+  /** 이 동안 받는 피해를 줄이는 비율(%). */
+  damageReductionPercent: number;
+  /** 시전 순간 주위 적을 끌어당긴다. `distance`는 끌어당긴 뒤 시전자와의 거리다. */
+  pull: { radius: number; distance: number };
+  /** 끌어당긴 적이 자신만 표적으로 삼는 시간(초). */
+  tauntSeconds: number;
+  /** 버티기가 끝날 때, 그동안 이 스킬이 줄인 피해의 이 비율(%)을 보호막으로 얻는다. */
+  shieldFromMitigatedPercent: number;
 };
 
 /** 자리를 잡는 계약. 은신·순간이동·다음 타격 강화를 코어가 판별할 수 있는 값으로만 적는다. */
@@ -226,6 +249,7 @@ export type SupportSkill = SkillBase & {
   scalingStat?: never;
   healing?: never;
   selfSetup?: never;
+  selfGuard?: never;
   teamBuff: TeamBuff;
 };
 
@@ -251,12 +275,57 @@ export type TeamBuff = {
 /** 모든 스킬의 판별 유니온이며 `damageType in skill`로 공격 여부를 좁힌다. */
 export type Skill = AttackSkill | HealingSkill | SupportSkill | SetupSkill;
 
+/**
+ * 순환 기본 공격의 한 걸음.
+ *
+ * 엘라의 발경처럼 **타마다 다른 권을 내는** 개체가 쓴다. 걸음마다 위력·대상·부가 효과가 통째로
+ * 달라지므로 `statusEffectEvery`(같은 공격에 주기로 효과만 얹는 것)와는 다른 축이다.
+ * 선언하지 않은 필드는 **비어 있는 것으로 본다** — 기본 공격 쪽 값이 새어 들어오면 어느 걸음이
+ * 무엇을 하는지 데이터만 보고 알 수 없다.
+ */
+export type BasicAttackStep = {
+  /** 이 걸음의 이름. 설명문이 걸음을 차례로 늘어놓을 때 쓴다. */
+  name: string;
+  power: number;
+  /** 걸음마다 혼자만 광역일 수 있다. 생략하면 단일 대상이다. */
+  targeting?: "single" | "nearbyEnemies";
+  radius?: number;
+  statusEffects?: readonly CombatStatusEffect[];
+  /** 실제 HP 손실의 이 비율(%)만큼 시전자가 회복한다. */
+  damageHealingPercent?: number;
+  /** 실제 HP 손실의 이 비율(%)만큼 시전자가 보호막을 얻는다. */
+  shieldFromDamagePercent?: number;
+};
+
 /** 기본 공격만 가질 수 있는 추가 타격 계약이다. 일반 단타는 불필요한 확률 필드를 갖지 않는다. */
 export type BasicAttack = AttackSkill & {
+  /**
+   * 타마다 다른 걸음을 순서대로 반복한다. 없으면 늘 같은 한 방이다.
+   *
+   * 한 **공격 행동**마다 한 걸음씩 나아가며, 연격의 개별 적중으로는 나아가지 않는다 — 그러면
+   * 한 번 휘두른 것이 두 걸음을 삼킨다.
+   */
+  cycle?: readonly BasicAttackStep[];
   /** 실제 감소시킨 적 HP의 이 비율만큼 최저 현재 HP 생존 아군을 회복한다. 자신도 후보이며 동률은 편성 순서다. */
   lowestHpAllyHealingFromDamagePercent?: number;
   /** 실제 기본 공격 행동 수를 세어 주기 끝 타격을 난수 소비 없이 확정 치명타로 만든다. */
   periodicCritical?: { every: number };
+  /**
+   * `statusEffectEvery`가 터지는 **그 한 방에만** 더해지는 추가 계수다.
+   *
+   * `secondaryScaling`과 다른 축이다 — 그쪽은 매 타격의 위력을 두 능력치가 나눠 갖지만,
+   * 이쪽은 주기가 채워진 타격 하나에만 얹힌다. 토리카의 「세 개의 뿔」이 셋째 뿔에서
+   * 기절과 함께 방어력을 실어 보내는 것이 이 값이다 — 쌓는 값이 제어 하나로만 끝나면
+   * 방어력을 키운 몫이 기본 공격에는 전혀 돌아오지 않는다.
+   */
+  periodicBonusScaling?: { stat: "atk" | "ap" | "def"; power: number };
+  /**
+   * 주기 타수 칩에 세울 이름. 없으면 스킬 이름을 그대로 쓴다.
+   *
+   * 쌓이는 것이 이야기 안에서 제 이름을 가진 경우에만 적는다 — 토리카의 「세 개의 뿔」이
+   * 그렇다. 파치처럼 그냥 몇 대째인지만 세는 개체는 스킬 이름이 곧 그 값이라 비워 둔다.
+   */
+  statusEffectStackName?: string;
 } & ({ combo?: undefined } | {
   combo: {
     /** 한 공격 행동에서 추가 적중이 발생할 확률(%)이다. */
@@ -452,6 +521,8 @@ export type PassiveKind =
   | "lowHpVanish"
   /** 델로피 전용: 전투가 시작되는 순간부터 정해진 시간 동안 은신한 채로 연다. */
   | "openingVanish"
+  /** 엘라 전용: 쓰러질 피해를 가로채 전투당 한 번, 무적·행동불가로 버티며 되살아난다. */
+  | "undyingTalisman"
   /** 렉시아 전용: 공격 속도·공격력·치명타 확률·치명타 피해를 함께 강화한다. */
   | "battleMaidMastery"
   /** 스피나 전용: 기본 공격의 실제 적중마다 공속을 전투 한정으로 영구 누적한다. */
@@ -494,7 +565,9 @@ export type FerocityEffectId =
   /** 마키 전용: 폭주 중 손질이 터진 피해의 일부를 아군 전체의 회복으로 돌린다. */
   | "butcherFeast"
   /** 델로피 전용: 폭주 중 일반 공격이 중독을 걸거나, 이미 걸린 중독을 그 자리에서 청산한다. */
-  | "venomousEncore";
+  | "venomousEncore"
+  /** 엘라 전용: 폭주 중 방어·저항이 오르고, 정해진 횟수의 기본 공격만 훨씬 빨라진다. */
+  | "adamantBody";
 
 /**
  * 개체별 피버 발현 정적 데이터다.
@@ -540,6 +613,22 @@ export type FerocityTrait = {
       effectId: "butcherFeast";
       /** 터진 손질 피해 중 아군 전체의 회복으로 돌리는 비율(%)이다. */
       healPercent: number;
+    }
+  | {
+      /**
+       * 금강불괴. 폭주 중 몸이 굳어 단단해지고, **정해진 횟수만** 손이 빨라진다.
+       *
+       * 공속을 시간이 아니라 **횟수로** 끊는 이유는 발경이 3연 순환이기 때문이다 — 세 번이면
+       * 한 바퀴라, 폭주가 "권을 한 바퀴 몰아친다"는 뜻이 된다. 시간으로 두면 공속이 오른 만큼
+       * 바퀴 수가 달라져 그 그림이 흐려진다.
+       */
+      effectId: "adamantBody";
+      /** 방어력·저항력에 더하는 비율(%)이다. */
+      defenseResistancePercent: number;
+      /** 훨씬 빨라지는 기본 공격 횟수. 다 쓰면 방어 상승만 남는다. */
+      hastenedAttacks: number;
+      /** 그 횟수 동안 공격 속도에 더하는 비율(%)이다. */
+      attackSpeedPercent: number;
     }
   | {
       /**
@@ -641,6 +730,13 @@ export interface Passive {
   criticalDamagePercent?: number;
   /** 지속 효과인 패시브만 갖는 유지 시간(초). 전투와 표시가 함께 읽는 단일 계약이다. */
   durationSeconds?: number;
+  /**
+   * 불멸이 버티는 동안 주위 적을 밀어내는 값이다. 없으면 밀어내지 않는다.
+   *
+   * 파치의 날려버림과 같은 궤적 규칙(`KNOCKBACK`)을 쓰지만 **주체가 다르다** — 파치는 때려서
+   * 날리고 엘라는 쓰러지려는 순간 제 주위를 비운다. 그래서 폭주 특성이 아니라 패시브가 든다.
+   */
+  undyingKnockback?: { seconds: number; speed: number; bounces: number; radius: number };
   /** 전투 한정 누적 패시브가 쌓을 수 있는 최대 횟수. 상한이 없으면 한 판이 길수록 끝없이 자란다. */
   maxStacks?: number;
   /** 심해 압력 전용: 완전히 경과한 매초 기본 주문력에 복리로 누적하는 비율이다. */

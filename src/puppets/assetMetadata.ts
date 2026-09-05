@@ -259,3 +259,19 @@ export const DELOPI_SD_METADATA: Omit<PuppetAsset, "url"> = {
   imageHeight: 1254,
   content: { left: 184, top: 55, right: 1153, bottom: 1207 },
 };
+
+/** 15번 엘라(코엘로돈타) 전신. ZIP 안 WebP의 alpha > 16 경계를 실측한 값이다. */
+export const ELLA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1086,
+  imageHeight: 1448,
+  content: { left: 62, top: 21, right: 1032, bottom: 1410 },
+  /** 로비 세로 비율: 메론 기준. 1.56 m. */
+  lobbyZoom: 1.005,
+};
+
+/** 엘라 SD ZIP의 정사각 원본과 alpha > 16 경계다. */
+export const ELLA_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254,
+  imageHeight: 1254,
+  content: { left: 183, top: 32, right: 1033, bottom: 1205 },
+};

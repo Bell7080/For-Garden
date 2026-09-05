@@ -1,7 +1,7 @@
 import type { DamagePreview } from "../core/damage";
 import type { KeywordDef } from "../data/keywords";
 import type { KeywordTextOptions } from "../managers/KeywordManager";
-import type { BasicAttack, CombatStatusEffect, FerocityTrait, Passive, Skill, Ultimate } from "../core/types";
+import type { BasicAttack, BasicAttackStep, CombatStatusEffect, FerocityTrait, Passive, Skill, Ultimate } from "../core/types";
 
 /**
  * 순수 회복형 궁극기(메테 등)는 damageType/power가 없어 피해 미리보기를 만들 수 없다.
@@ -51,6 +51,44 @@ export function damageKeyword(preview?: DamagePreview): KeywordDef | undefined {
   return { id: "damage-value", term: String(preview.amount), kind: "규칙", description };
 }
 
+/**
+ * 이름을 가진 주기 스택(토리카의 「세 개의 뿔」)의 태그 정의.
+ *
+ * 본문은 "한 겹 쌓는다"까지만 말하고, 몇 타마다 터지는지·무엇이 얹히는지는 눌러서 읽는다.
+ * 문장을 손으로 적지 않고 실제 전투가 읽는 필드에서 지으므로, 주기나 수치를 조정하면 태그
+ * 본문도 함께 바뀐다.
+ *
+ * **태그 본문에는 또 다른 태그를 두지 않는다** — 태그 팝업이 여는 설명은 화면의 임시 사전을
+ * 물려받지 못해, 그 안의 동적 태그는 눌러도 아무것도 열리지 않는다. 덧칠·손질처럼 낱말만 적는다.
+ */
+export function periodicStackKeyword(skill: DescribedSkill): KeywordDef | undefined {
+  if (!("statusEffectStackName" in skill)) return undefined;
+  const name = skill.statusEffectStackName;
+  const every = skill.statusEffectEvery;
+  if (name === undefined || every === undefined) return undefined;
+  const parts: string[] = [];
+  const bonus = skill.periodicBonusScaling;
+  if (bonus !== undefined) {
+    const label = bonus.stat === "def" ? "방어력" : bonus.stat === "ap" ? "주문력" : "공격력";
+    parts.push(`${label}의 ${bonus.power}%에 해당하는 물리 피해를 추가로 주고`);
+  }
+  for (const effect of skill.statusEffects ?? []) {
+    const text = statusEffectClause(effect);
+    if (text !== undefined) parts.push(withoutKeywordTags(text));
+  }
+  return {
+    id: `${skill.id}-stack`,
+    term: name,
+    kind: "규칙",
+    description: `기본 공격 한 번마다 한 겹씩 쌓이고 ${every}겹째에 터진다. 터지는 타격은 ${parts.join(" ")}. 터진 뒤 겹은 0으로 돌아간다.`,
+  };
+}
+
+/** 태그를 벗겨 낱말만 남긴다. 태그 팝업 안에서는 중첩 태그가 열리지 않기 때문이다. */
+function withoutKeywordTags(text: string): string {
+  return text.replace(/\[\[[^\]|]+\|([^\]]+)\]\]/g, "$1");
+}
+
 /** 요약과 본문이 같은 동적 키워드 사전을 쓰도록 순수 레이아웃 옵션을 한 경계에서 결합한다. */
 export function skillKeywordLayoutOptions(
   skill: { contextualKeywords?: readonly KeywordDef[] },
@@ -82,6 +120,9 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
   if (trait.effectId === "butcherFeast") return `[[butcher|손질]]이 터진 피해의 ${trait.healPercent}%만큼 생존 아군 전체를 회복시킨다.`;
   // 바르거나 터뜨리거나 한 번에 하나뿐이라는 것이 이 폭주의 전부다. 번갈아 한다고 적지 않는
   // 이유는 실제 규칙이 "지금 걸려 있나"만 보기 때문이다 — 공속이 빨라져도 그 판단은 같다.
+  if (trait.effectId === "adamantBody") {
+    return `방어력과 저항력이 ${trait.defenseResistancePercent}% 오른다. 이후 [[basic-attack|기본 공격]] ${trait.hastenedAttacks}회 동안 [[attack-speed|공격 속도]]가 ${trait.attackSpeedPercent}% 오른다.`;
+  }
   if (trait.effectId === "venomousEncore") {
     return `공격 속도가 ${trait.attackSpeedBonusPercent}% 증가한다. [[basic-attack|기본 공격]]이 자신의 [[poison|중독]]에 걸리지 않은 적에게는 중독을 부여하고, 이미 걸린 적에게는 그 중독을 [[liquidate|청산]]한다.`;
   }
@@ -158,6 +199,11 @@ function passiveHead(passive: Passive, atk?: number): string {
   if (passive.kind === "overpaintSiphon") return `모든 아군이 [[overpaint|덧칠]]된 적을 맞히면 그 피해의 ${passive.value}%만큼 자신의 체력을 회복한다. 표적의 [[overpaint|덧칠]]이 최대로 쌓이면 다른 적으로 표적을 옮긴다.`;
   if (passive.kind === "lowHpVanish") return `전투당 한 번, 체력이 절반 이하가 되면 ${passive.durationSeconds}초 동안 [[stealth|은신]]해 표적에서 벗어난다.`;
   if (passive.kind === "openingVanish") return `전투를 시작할 때 ${passive.durationSeconds}초 동안 [[stealth|은신]] 상태로 진입한다.`;
+  if (passive.kind === "undyingTalisman") {
+    // 무적·행동불가·회복·밀어냄이 한 덩어리로 일어나므로 한 문장에 순서대로 담는다.
+    const blast = passive.undyingKnockback === undefined ? "" : ` 이때 주위 적을 [[knockback|날려버린다]].`;
+    return `전투당 한 번, 쓰러질 피해를 받으면 죽지 않고 ${passive.durationSeconds}초 동안 [[invulnerable|무적]]이 되는 대신 아무 행동도 하지 못한다. 그동안 최대 체력의 ${passive.value}%를 매초 나누어 회복한다.${blast}`;
+  }
   if (passive.kind === "shimmerMark") return `적을 타격하면 반짝이는 표식을 남긴다. 표식이 없는 적을 타격하면 표식이 그 적에게 옮겨가며 [[ap|주문력]]의 ${passive.value}% [[magical-damage|마법 피해]]를 추가로 입힌다.`;
   if (passive.kind !== "battleMaidMastery") return passive.desc;
   // 네 능력이 모두 같은 비율로 오르므로 값을 한 번만 말한다. 값이 서로 달라지면 다시 나열해야 한다.
@@ -216,6 +262,15 @@ export function allyHealPowerKeyword(percent: number, ap?: number): KeywordDef |
 }
 
 /** 추가 타격 계약을 본문용 키워드 문장으로 바꿔 확률·횟수·회복 수치가 데이터와 함께 바뀌게 한다. */
+/**
+ * 설명문이 문장을 지을 수 있는 것들.
+ *
+ * 순환 기본 공격의 **한 걸음**은 그 기본 공격에 걸음의 값을 덮어쓴 모양이라, 걸음에만 있는
+ * 필드(보호막 전환)까지 이 유니온이 함께 든다 — 그래야 걸음 하나를 설명할 때도 같은 절
+ * 조립기를 그대로 지나간다.
+ */
+export type DescribedSkill = Skill | BasicAttack | Ultimate | (BasicAttack & Pick<BasicAttackStep, "shieldFromDamagePercent">);
+
 export interface SkillDescriptionStats {
   /** 회복량을 실제 값으로 환산할 때 쓴다. */
   ap?: number;
@@ -228,6 +283,13 @@ export interface SkillDescriptionStats {
    * 같은 스킬의 피해가 위아래에서 다른 수로 보이기 때문이다.
    */
   damage?: number;
+  /**
+   * 순환 기본 공격의 **걸음마다** 다른 실제 피해. 순서는 `cycle`과 같다.
+   *
+   * 걸음마다 위력이 통째로 달라 `damage` 하나로는 말할 수 없다 — 없으면 걸음도 위력(%)으로
+   * 되돌아간다.
+   */
+  cycleDamage?: readonly number[];
 }
 
 /**
@@ -242,13 +304,18 @@ export interface SkillDescriptionStats {
  * 이 함수에 그 효과의 절을 더한다.
  */
 export function skillDescription(
-  skill: Skill | BasicAttack | Ultimate,
+  skill: DescribedSkill,
   stats: SkillDescriptionStats = {},
 ): string {
   // 순수 회복기는 때리는 대상이 없어 "대상 → 피해"로 시작할 수 없다. 회복 계약에서 바로 짓는다.
   if (skill.damageType === undefined || skill.power === undefined) {
     if ("healing" in skill && skill.healing?.kind === "teamMissingHpPercent") {
       return `모든 생존 아군이 각자 [[missing-hp|잃은 체력]]의 ${skill.healing.percent}%를 회복한다.`;
+    }
+    // 버티는 궁극기. 끌어당겨 붙잡아 두고 덜 맞은 만큼을 끝나고 돌려받는다.
+    if ("selfGuard" in skill && skill.selfGuard !== undefined) {
+      const guard = skill.selfGuard;
+      return `주위 모든 적을 [[pull|끌어당겨]] ${guard.tauntSeconds}초 동안 [[taunt|도발]]한다. ${guard.seconds}초 동안 받는 피해가 ${guard.damageReductionPercent}% 줄고, 그 시간이 끝나면 그동안 줄인 피해의 ${guard.shieldFromMitigatedPercent}%만큼 보호막을 얻는다.`;
     }
     // 때리지 않고 자리만 잡는 궁극기. 위력을 적지 않는 이유는 그 피해가 이어질 일반 공격의
     // 몫이기 때문이다 — 여기에 수치를 적으면 같은 한 방이 위아래에서 두 수로 보인다.
@@ -271,6 +338,30 @@ export function skillDescription(
   // 적으면 한 겹만 칠한 적과 다섯 겹을 칠한 적이 같은 수를 맞는 것처럼 읽힌다.
   if ("overpaintDetonation" in skill && skill.overpaintDetonation === true) {
     return `${skillTargetPhrase(skill)} 쌓인 [[overpaint|덧칠]]을 터뜨려 한 겹마다 ${skillDamagePhrase(skill, stats)}를 주고, 그 덧칠을 지운다.`;
+  }
+  // 걸음마다 다른 권을 내는 순환 기본 공격(엘라의 발경)은 한 문장으로 뭉치지 않는다 — 위력도
+  // 대상도 부가 효과도 걸음마다 통째로 달라, 하나로 적으면 세 권 중 하나만 설명한 문장이 된다.
+  const cycle = "cycle" in skill ? skill.cycle : undefined;
+  if (cycle !== undefined && cycle.length > 0) {
+    const steps = cycle.map((step, index) => {
+      // 선언하지 않은 필드는 **비어 있는 것으로 본다** — 기본 공격 쪽 값이 새어 들어오면 어느
+      // 걸음이 무엇을 하는지 문장만 보고 알 수 없다. 코어의 `currentBasic`과 같은 규칙이다.
+      const stepSkill = {
+        ...skill,
+        cycle: undefined,
+        combo: undefined,
+        statusEffectEvery: undefined,
+        periodicBonusScaling: undefined,
+        power: step.power,
+        targeting: step.targeting ?? "single",
+        radius: step.radius,
+        statusEffects: step.statusEffects,
+        damageHealingPercent: step.damageHealingPercent,
+        shieldFromDamagePercent: step.shieldFromDamagePercent,
+      } as DescribedSkill;
+      return `「${step.name}」 ${skillDescription(stepSkill, { ...stats, damage: stats.cycleDamage?.[index] })}`;
+    });
+    return [`다음 ${cycle.length}가지를 차례로 반복한다.`, ...steps].join(" ");
   }
   const sentences: string[] = [];
   const clauses = skillEffectClauses(skill, stats);
@@ -302,7 +393,7 @@ interface SkillEffectClause {
  * 순서는 **때린 결과에 가까운 것부터**다 — 추가 타격, 그 피해로 생기는 회복, 남는 상태이상,
  * 그 밖의 규칙. 새 효과를 넣을 자리를 이 순서로 정하면 개체가 늘어도 문장 모양이 갈리지 않는다.
  */
-function skillEffectClauses(skill: Skill | BasicAttack | Ultimate, stats: SkillDescriptionStats): SkillEffectClause[] {
+function skillEffectClauses(skill: DescribedSkill, stats: SkillDescriptionStats): SkillEffectClause[] {
   const clauses: SkillEffectClause[] = [];
   const combo = "combo" in skill ? skill.combo : undefined;
   if (combo) {
@@ -311,6 +402,9 @@ function skillEffectClauses(skill: Skill | BasicAttack | Ultimate, stats: SkillD
   }
   if ("damageHealingPercent" in skill && skill.damageHealingPercent !== undefined) {
     clauses.push({ text: `입힌 피해의 ${skill.damageHealingPercent}%만큼 체력을 회복한다`, joinWithComma: true });
+  }
+  if ("shieldFromDamagePercent" in skill && skill.shieldFromDamagePercent !== undefined) {
+    clauses.push({ text: `입힌 피해의 ${skill.shieldFromDamagePercent}%만큼 보호막을 얻는다`, joinWithComma: true });
   }
   if ("lowestHpAllyHealingFromDamagePercent" in skill && skill.lowestHpAllyHealingFromDamagePercent !== undefined) {
     clauses.push({ text: `입힌 피해의 ${skill.lowestHpAllyHealingFromDamagePercent}%만큼 현재 체력이 가장 낮은 생존 아군을 회복한다`, joinWithComma: true });
@@ -350,7 +444,7 @@ function skillEffectClauses(skill: Skill | BasicAttack | Ultimate, stats: SkillD
  * 되짚지 않고 **앞에서 "매 N번째 공격마다"로 묶는다** — "위 상태는"이라고 가리키면 어디까지가
  * 그 상태인지 다시 세어야 한다.
  */
-function statusClauses(skill: Skill | BasicAttack | Ultimate): SkillEffectClause[] {
+function statusClauses(skill: DescribedSkill): SkillEffectClause[] {
   const effects = skill.statusEffects ?? [];
   const concussion = effects.find((effect) => effect.kind === "concussion");
   const stun = effects.find((effect) => effect.kind === "stun");
@@ -365,8 +459,14 @@ function statusClauses(skill: Skill | BasicAttack | Ultimate): SkillEffectClause
     const text = statusEffectClause(effect);
     if (text) texts.push(text);
   }
-  if (texts.length === 0) return [];
   const every = "statusEffectEvery" in skill ? skill.statusEffectEvery : undefined;
+  // **이름을 가진 주기 스택은 본문에 풀어 적지 않고 태그 한 장으로 접는다.** 셋을 모아야
+  // 터지는 규칙은 몇 타마다인지·무엇이 얹히는지·몇 초인지가 함께 붙어 다녀, 본문에 풀면
+  // 한 문장이 그 규칙 하나로 가득 찬다. 덧칠·손질과 같은 자리다 — 쓰는 개체가 하나뿐인
+  // 규칙어라 수치는 태그가 갖고 본문은 "한 겹 쌓는다"까지만 말한다.
+  const stack = periodicStackKeyword(skill);
+  if (stack !== undefined) return [{ text: `[[${stack.id}|${stack.term}]]을 한 겹 쌓는다` }];
+  if (texts.length === 0) return [];
   // 주기가 있는 스킬은 상태 절을 피해 문장에 붙이지 않고 제 문장으로 세운다.
   if (every !== undefined) return [{ text: `매 ${every}번째 공격마다 ${texts.join(" ")}`, standalone: true }];
   return texts.map((text) => ({ text }));
@@ -404,7 +504,7 @@ function statusEffectClause(effect: CombatStatusEffect): string | undefined {
  * 실제로 맞는 범위와 갈린다. 지정 원은 아군도 함께 판정하지만 **피해를 받는 것은 적뿐**이라
  * 요약줄(`targetingLabel`)과 달리 여기서는 적만 말한다.
  */
-function skillTargetPhrase(skill: Skill | BasicAttack | Ultimate): string {
+function skillTargetPhrase(skill: DescribedSkill): string {
   const targeting = "targeting" in skill ? skill.targeting : undefined;
   if (targeting === "nearbyEnemies") return "자신의 주위 모든 적에게";
   if (targeting === "battlefieldEnemies") return "전장의 모든 적에게";
@@ -421,7 +521,7 @@ function skillTargetPhrase(skill: Skill | BasicAttack | Ultimate): string {
  * 스킬의 피해가 위아래에서 다른 수로 보인다), 능력치를 모르는 자리에서만 위력(%)으로
  * 되돌아간다. 그때도 어느 능력치에서 나오는 배율인지 함께 말한다.
  */
-function skillDamagePhrase(skill: Skill | BasicAttack | Ultimate, stats: SkillDescriptionStats): string {
+function skillDamagePhrase(skill: DescribedSkill, stats: SkillDescriptionStats): string {
   const damageTag = skill.damageType === "physical" ? "[[physical-damage|물리 피해]]" : "[[magical-damage|마법 피해]]";
   // 위력과 현재 공격 속도를 하나의 배율로 합쳐 쓰는 스킬(스피나 궁극기)만 두 축을 합친다.
   if ("attackSpeedPower" in skill && skill.attackSpeedPower !== undefined) {

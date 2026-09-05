@@ -4,7 +4,7 @@ import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import type { Combatant } from "../core/combatTypes";
 import { RUNE_PART_LABELS, RUNE_RARITY_LABELS, type RunePart } from "../core/runes";
 import { previewSkillDamage } from "../core/damage";
-import type { Element, RelicDef, RelicProgress, RelicRarity, Role, Passive, Skill, SkillIconAssetId, Stats, Ultimate } from "../core/types";
+import type { BasicAttack, Element, RelicDef, RelicProgress, RelicRarity, Role, Passive, Skill, SkillIconAssetId, Stats, Ultimate } from "../core/types";
 import { setDebugFeedButton, setDebugInfoGemSlots, setDebugInfoOpen } from "../debug";
 import { formatCurrency } from "../core/formatCurrency";
 import { RELICS } from "../data/relics";
@@ -50,7 +50,7 @@ import { observationQuestionForRelicAndDate } from "../data/observations";
 import type { PublicRelicProfileDto } from "../api/contracts";
 import type { Fighter } from "../core/skirmish";
 import { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../core/infoCapabilities";
-import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, overpaintDetonationDamageKeyword, passiveShieldKeyword, skillDescription } from "./skillPresentation";
+import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, overpaintDetonationDamageKeyword, passiveShieldKeyword, periodicStackKeyword, skillDescription } from "./skillPresentation";
 import type { KeywordDef } from "../data/keywords";
 import { addFactionMark, factionMarkBounds } from "./FactionMark";
 import { SQUADS } from "../data/factions";
@@ -1923,6 +1923,15 @@ export class InfoManager {
       : undefined;
     const preview = !compositeDamage && attacker && canPreviewSkillDamage(skill, kindLabel)
       ? previewSkillDamage(attacker, skill as Skill) : undefined;
+    // 순환 기본 공격은 걸음마다 위력이 통째로 달라 한 수로 말할 수 없다. 걸음마다 같은
+    // 미리보기 경계를 지나 제 수치를 구하고, 본문이 그 순서 그대로 읽는다.
+    const cycle = "cycle" in skill ? (skill as BasicAttack).cycle : undefined;
+    const cycleDamage = cycle && attacker && canPreviewSkillDamage(skill, kindLabel)
+      ? cycle.map((step) => {
+        const stepPreview = previewSkillDamage(attacker, { ...(skill as Skill), power: step.power } as Skill);
+        return stepPreview.kind === "scaling" ? stepPreview.amount : 0;
+      })
+      : undefined;
     // 덧칠 폭발 궁극기의 위력은 겹당 값이라, 상단 라벨만 겹을 다 쌓았을 때의 최대 피해를 말한다.
     // 겹 상한은 궁극기가 아니라 그 덧칠을 만드는 기본 공격이 갖고 있으므로 거기서 읽는다.
     const overpaintCap = finalDef?.basic.statusEffects?.find((effect) => effect.kind === "overpaint");
@@ -1951,7 +1960,10 @@ export class InfoManager {
       tint: this.currentDef && skillArtTint(this.currentDef.element, this.currentDef.role),
       effectType: skill.effectType,
       valueLabel,
-      contextualKeywords: [damageDetail, shieldDetail, healDetail].filter((item): item is KeywordDef => item !== undefined),
+      // 「세 개의 뿔」처럼 이름을 가진 주기 스택은 개체 전용 규칙어라 전역 사전이 아니라
+      // 이 스킬을 여는 자리에서만 주입한다(메테의 스타카토와 같은 자리다).
+      contextualKeywords: [damageDetail, shieldDetail, healDetail, "kind" in skill ? undefined : periodicStackKeyword(skill as Skill)]
+        .filter((item): item is KeywordDef => item !== undefined),
       // 정적 문장에서 수치를 재해석하지 않고 전투 정의를 그대로 팝업에 넘긴다.
       targeting: "targeting" in skill ? skill.targeting as Ultimate["targeting"] : undefined,
       statusEffects: "statusEffects" in skill ? skill.statusEffects : undefined,
@@ -1969,6 +1981,7 @@ export class InfoManager {
           atk: attacker && { atk: attacker.def.stats.atk, attackSpeed: attacker.def.stats.attackSpeed },
           // 본문은 아이콘 위 라벨과 **같은** 수치를 받아 쓴다. 따로 계산하면 위아래가 갈린다.
           damage: preview?.kind === "scaling" ? preview.amount : undefined,
+          cycleDamage,
         }),
     };
   }

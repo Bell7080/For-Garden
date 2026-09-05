@@ -165,6 +165,18 @@ export const KEYWORDS: readonly KeywordDef[] = [
     description: "주문력 또는 명시된 능력치로 계산하고 대상의 저항력으로 감소하는 피해다.",
   },
   {
+    id: "taunt", term: "도발", kind: "디버프",
+    description: "도발한 상대를 강제로 표적으로 삼는다. 행동을 막지 않으므로 공격도 스킬도 그대로 나가지만, 그 방향이 정해진다.",
+  },
+  {
+    id: "pull", term: "끌어당김", kind: "규칙",
+    description: "이동 경로를 거치지 않고 시전자 쪽으로 즉시 자리를 옮긴다. 이동 속도의 영향을 받지 않는다.",
+  },
+  {
+    id: "invulnerable", term: "무적", kind: "버프",
+    description: "받는 모든 피해가 들어가지 않는다. 보호막도 깎이지 않으며, 지속 피해와 고정 피해까지 함께 막는다.",
+  },
+  {
     id: "fixed-damage", term: "고정 피해", kind: "규칙",
     description: "대상의 방어력·저항력을 지나쳐 그대로 들어가는 피해다. 속성 상성과 받는 피해 경감은 그대로 거친다.",
   },

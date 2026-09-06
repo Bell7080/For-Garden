@@ -32,7 +32,17 @@ function migrateV12Rune(definitionId: string): RuneInstance {
 
 /** 키는 계정 연동 저장소와 충돌하지 않도록 로컬 프로토타입임을 명시한다. */
 export const SAVE_STORAGE_KEY = "eternal-city.local-save";
-export const CURRENT_SAVE_VERSION = 31;
+export const CURRENT_SAVE_VERSION = 32;
+
+/**
+ * 과거 적 허스크의 ID를 플레이어블 렐릭 ID로 옮기는 **저장 버전 마이그레이션 전용** 표다.
+ * 런타임 조회 별칭으로 사용하면 적/아군 정체성이 다시 섞이므로 이 파일 밖으로 내보내지 않는다.
+ */
+const LEGACY_SAVED_RELIC_ID_MAP: Readonly<Record<string, string>> = {
+  "husk-shell": "amo",
+  "husk-raptor": "toby",
+  "husk-wing": "ripa",
+};
 
 type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
@@ -56,6 +66,69 @@ function cloneRune(rune: RuneInstance): RuneInstance {
 
 /** 런 전체를 독립 복사해 저장소와 런타임 사이의 중첩 참조 공유를 막는다. */
 function cloneExpeditionRun(run: ExpeditionRunState): ExpeditionRunState { return structuredClone(run); }
+
+/** v31 이하에서 실제로 직렬화된 렐릭 참조만 바꾸고, 치환으로 생긴 배열 중복은 첫 항목을 보존한다. */
+function migrateSavedRelicIds(input: Record<string, unknown>): Record<string, unknown> {
+  // 원본 파싱 객체를 바꾸지 않아 migrate 호출자가 실패 뒤에도 입력을 진단할 수 있게 한다.
+  const data = structuredClone(input);
+  const mapId = (value: unknown): unknown => typeof value === "string" ? (LEGACY_SAVED_RELIC_ID_MAP[value] ?? value) : value;
+  const mapUniqueIds = (value: unknown): unknown => Array.isArray(value)
+    ? [...new Set(value.map(mapId))]
+    : value;
+  const mapNullableIds = (value: unknown): unknown => Array.isArray(value)
+    ? value.map((id) => id === null ? null : mapId(id))
+    : value;
+  const remapRecordKeys = (value: unknown, label: string): unknown => {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return value;
+    const result: Record<string, unknown> = {};
+    for (const [oldId, entry] of Object.entries(value)) {
+      const newId = mapId(oldId) as string;
+      // 구/신 키가 함께 있으면 어느 성장값이 최신인지 증명할 수 없으므로 임의 합산 대신 거부한다.
+      if (Object.hasOwn(result, newId)) throw new SaveDataError(`${label}에 구형/신규 렐릭 ID가 함께 있습니다: ${newId}`);
+      result[newId] = entry;
+    }
+    return result;
+  };
+
+  data.ownedRelicIds = mapUniqueIds(data.ownedRelicIds);
+  data.party = mapUniqueIds(data.party);
+  data.favorite = mapId(data.favorite);
+  data.bookmarkedRelicIds = mapUniqueIds(data.bookmarkedRelicIds);
+  data.relicProgress = remapRecordKeys(data.relicProgress, "렐릭 성장 정보");
+  data.relicFragments = remapRecordKeys(data.relicFragments, "렐릭 파편 정보");
+
+  // 발굴은 빈 슬롯(null)의 위치를 보존하되 저장된 배치 ID만 치환한다.
+  const excavation = data.idleExcavation as Record<string, unknown> | undefined;
+  if (excavation && typeof excavation === "object") excavation.assignedRelicIds = mapNullableIds(excavation.assignedRelicIds);
+  // 교류 슬롯의 파티는 치환 충돌 시 앞선 대원을 남기는 결정적 순서를 따른다.
+  const interaction = data.interaction as { slots?: unknown[] } | undefined;
+  if (interaction && Array.isArray(interaction.slots)) interaction.slots.forEach((slot) => {
+    if (slot && typeof slot === "object") (slot as Record<string, unknown>).party = mapUniqueIds((slot as Record<string, unknown>).party);
+  });
+  if (Array.isArray(data.observationRecords)) data.observationRecords.forEach((record) => {
+    if (record && typeof record === "object") (record as Record<string, unknown>).relicId = mapId((record as Record<string, unknown>).relicId);
+  });
+
+  const expedition = data.expedition as Record<string, unknown> | undefined;
+  if (expedition && typeof expedition === "object") {
+    expedition.lastParty = mapUniqueIds(expedition.lastParty);
+    const run = expedition.run as Record<string, unknown> | undefined;
+    if (run && typeof run === "object") {
+      if (Array.isArray(run.relics)) run.relics.forEach((relic) => {
+        if (relic && typeof relic === "object") (relic as Record<string, unknown>).relicId = mapId((relic as Record<string, unknown>).relicId);
+      });
+      if (Array.isArray(run.selectedAugments)) run.selectedAugments.forEach((selection) => {
+        if (selection && typeof selection === "object" && "targetRelicId" in selection) (selection as Record<string, unknown>).targetRelicId = mapId((selection as Record<string, unknown>).targetRelicId);
+      });
+      // 아직 고르지 않은 증강 후보도 재접속 뒤 대상 선택에 사용하는 저장된 렐릭 참조다.
+      const pending = run.pendingAugmentReward as { offers?: unknown[] } | undefined;
+      if (pending && Array.isArray(pending.offers)) pending.offers.forEach((offer) => {
+        if (offer && typeof offer === "object") (offer as Record<string, unknown>).eligibleTargetRelicIds = mapUniqueIds((offer as Record<string, unknown>).eligibleTargetRelicIds);
+      });
+    }
+  }
+  return data;
+}
 
 /** 손상된 런은 일부만 살려 규칙을 우회하지 않고 통째로 폐기한다. 주간 기록은 별도로 보존된다. */
 function normalizeExpeditionRun(value: unknown, ownedIds: readonly string[]): ExpeditionRunState | null {
@@ -165,7 +238,11 @@ export class SaveManager {
   /** 버전 없는 초기 프로토타입 저장을 명시적으로 v1 계약에 올린다. */
   migrate(input: unknown): SaveData {
     if (!input || typeof input !== "object") throw new SaveDataError("저장 데이터가 객체가 아닙니다.");
-    const legacy = input as Record<string, unknown>;
+    const source = input as Record<string, unknown>;
+    // ID 치환은 현재 계약 검증보다 먼저 실행하되, v32 데이터에는 런타임 별칭처럼 적용하지 않는다.
+    const legacy = source.saveVersion === undefined || Number(source.saveVersion) < CURRENT_SAVE_VERSION
+      ? migrateSavedRelicIds(source)
+      : source;
     // v31 이전 저장은 일지 시스템이 없었으므로 발견/읽음 모두 빈 배열로 이관한다.
     const discoveredInteractionJournalIds = Array.isArray(legacy.discoveredInteractionJournalIds) ? legacy.discoveredInteractionJournalIds : [];
     const readInteractionJournalIds = Array.isArray(legacy.readInteractionJournalIds) ? legacy.readInteractionJournalIds : [];
@@ -292,14 +369,15 @@ export class SaveManager {
     const itemInventory = Array.isArray(legacy.itemInventory) ? legacy.itemInventory : [];
     const { ownedHeartGemIds: _oldOwned, runeSlotsByRelicId: _oldSlots, ...current } = legacy;
     if (legacy.saveVersion === undefined) return { ...current, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, idleExcavation, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition } as unknown as SaveData;
-    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, CURRENT_SAVE_VERSION];
+    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, CURRENT_SAVE_VERSION];
     if (!supported.includes(legacy.saveVersion as number)) throw new SaveDataError(`지원하지 않는 저장 버전입니다: ${String(legacy.saveVersion)}`);
     return { ...current, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, idleExcavation, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition } as unknown as SaveData;
   }
 
   /** 콘텐츠 ID와 교차 필드 불변식까지 검사해 부분 손상을 조용히 전파하지 않는다. */
   validate(data: SaveData): void {
-    const relicIds = new Set(PLAYABLE_RELICS.map(({ id }) => id));
+    // 세 이관 대상은 현재 가챠 비대상이어도 과거 계정의 저장 소유권을 잃지 않도록 저장 계약에서만 허용한다.
+    const relicIds = new Set([...PLAYABLE_RELICS.map(({ id }) => id), ...Object.values(LEGACY_SAVED_RELIC_ID_MAP)]);
     const modifierIds = new Set(PROFILE_MODIFIERS.map(({ id }) => id));
     const stageIds = new Set(STAGES.map(({ id }) => id));
     const journalIds = new Set(INTERACTION_JOURNALS.map(({ id }) => id));

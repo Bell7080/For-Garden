@@ -113,9 +113,8 @@ export function unitStatusViews(fighter: Fighter): UnitStatusView[] {
     views.push({
       id: "vandalism", name: "밴덜리즘", color: UNIT_STATUS_COLOR.vandalism,
       stacks: paint.stacks,
-      remaining: paint.remaining, total: Math.max(paint.total, paint.remaining),
-      // 깎는 값과 언제 터지는지를 한 줄에 함께 둔다 — 이 상태는 그 둘이 한 몸이다.
-      detail: `${paint.stacks} / ${paint.maxStacks}겹 · 공격력·주문력 -${paint.stacks * paint.percentPerStack}% · ${seconds(paint.remaining)} 남음`,
+      // 손질과 같이 시간이 흘러 사라지지 않는다 — 시계를 그리지 않는 이유이자 그 자체가 성질이다.
+      detail: `${paint.stacks} / ${paint.maxStacks}겹 · 공격력·주문력 -${paint.stacks * paint.percentPerStack}% · 다 차면 그 자리에서 터진다`,
     });
   }
   if (fighter.butcher && fighter.butcher.stacks > 0) {

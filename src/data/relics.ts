@@ -1598,9 +1598,9 @@ export const RELICS: RelicDef[] = [
      * 주문력에서 나오므로 공격력은 쓰지 않는 값이라 낮게 둔다.
      */
     stats: {
-      hp: 1350,
+      hp: 1660,
       def: 62,
-      res: 78,
+      res: 70,
       // 노도니아(46)에 이어 로스터에서 두 번째로 낮다. 세 스킬이 전부 주문력에서 나오므로
       // 이 값은 어디에도 쓰이지 않는다.
       atk: 48,
@@ -1609,11 +1609,17 @@ export const RELICS: RelicDef[] = [
        * 이 개체는 표적을 계속 돌리고 폭주는 주위를 통째로 지지며 궁극기는 전장 전체를 치므로
        * 같은 주문력이 개체 수만큼 곱해진다 — 표준 5인 파티 재현에서 적 체력의 30%를 혼자
        * 깎아 렉시아(22%)와 스피나(28%)를 넘었다. 탱커 슬롯을 쓰면서 딜러 화력을 내는 자리다.
-       * 110으로 내리고 그 몫을 체력·저항·이동 속도로 옮겨 21%에 맞췄다(마키 17% ~ 렉시아 22%).
+       *
+       * 위력을 낙서를 묻히는 값으로 다시 짠 뒤에는 70까지 내렸다. **남는 몫은 체력으로 간다** —
+       * 도발이 평타가 아니라 들어간 피해에 붙어 폭주 중에도 계속 걸리므로 어그로 시간이 2.3초
+       * → 5.4초로 늘었는데, 1350짜리 몸으로는 여섯 판 중 셋에서 쓰러졌다.
        */
-      ap: 110,
+      ap: 70,
       attackSpeed: 112,
       moveSpeed: 166,
+      // 체력은 탱커 중 둘째로 높지만(노도니아 2280 다음) **방어·저항이 로스터 탱커 최저**라,
+      // 방어를 곱한 실효 체력은 여전히 넷 중 가장 얇다(2689 · 토리카 3238 · 엘라 3690 ·
+      // 노도니아 4241). 맞아도 되는 몸이 아니라 "한 번 더 달릴 수 있는" 몸이다.
       critChance: 10,
       critDamage: 150,
       energyGain: 26,
@@ -1624,11 +1630,14 @@ export const RELICS: RelicDef[] = [
       name: "네가 예술을 알아?",
       effectId: "graffitiRun",
       moveSpeedPercent: 100,
-      // 매초 30%씩 8초면 주문력 240% — 그동안 포기하는 평타 여섯 번(45% × 6 = 270%)보다 조금
-      // 적다. 단일 대상에서는 오히려 손해이고, 둘 이상이 반경에 들어올 때만 남는 장사가 된다.
-      auraDamagePercent: 30,
+      // 이 폭주가 버는 것은 피해가 아니라 **묻히는 속도**다. 매초 주위 전부에게 낙서 한 겹씩
+      // 이 들어가 평타 한 대씩 돌던 것이 한 번에 끝나므로, 피해는 평타보다도 얕게 둔다.
+      auraDamagePercent: 25,
       radius: 240,
-      vandalism: { kind: "vandalism", seconds: 8, offenseShredPercent: 5, maxStacks: 5, burstPower: 130 },
+      vandalism: { kind: "vandalism", offenseShredPercent: 5, maxStacks: 5, burstPower: 125 },
+      // 평타를 놓아도 도발은 그대로 걸린다 — 도발이 "때린다"가 아니라 "피해가 들어간다"에
+      // 붙어 있어, 달리는 것 자체가 어그로인 개체의 탱킹이 폭주 중에 꺼지지 않는다.
+      taunt: { kind: "taunt", seconds: 0.5 },
     },
     passive: {
       // kind가 tagAndRun인 패시브는 passiveDescription()이 구조화 필드로 문장을 만들므로
@@ -1649,24 +1658,30 @@ export const RELICS: RelicDef[] = [
     basic: {
       id: "deina-basic",
       name: "치익, 칙!",
-      // 「톡 톡 치고 다닌다」가 그대로 수치다. 표적을 매 타격마다 바꾸므로 같은 위력이 적 수만큼
-      // 곱해져, 단일 대상 기준으로 읽고 적으면 실제로는 그 몇 배가 된다.
-      power: 45,
+      /*
+       * 「톡 톡 치고 다닌다」가 그대로 수치다. 표적을 매 타격마다 바꾸므로 같은 위력이 적
+       * 수만큼 곱해져, 단일 대상 기준으로 읽고 적으면 실제로는 그 몇 배가 된다.
+       *
+       * **이 한 방의 값은 피해가 아니라 낙서와 도발이다.** 그래서 로스터 최저 수준까지 내려
+       * 둔다 — 여기를 올리면 낙서를 묻히러 다니는 개체가 아니라 빠른 마법 딜러가 된다.
+       */
+      power: 35,
       scalingStat: "ap",
       iconAssetId: "skill-icon-magical",
       effectType: "magical",
       damageType: "magical",
       targeting: "single",
       /*
-       * 낙서는 8초 남는다. 표적을 매 타격마다 바꾸는 개체라 **한 바퀴를 도는 시간보다 길어야**
-       * 겹이 쌓인다 — 적 셋과 공격 간격 1.34초면 한 바퀴가 약 4초라, 4초짜리로 두면 돌아왔을
-       * 때 이미 말라 영영 1겹에 머문다.
+       * **낙서는 시간으로 지워지지 않는다.** 표적을 매 타격마다 갈아타는 개체라 시계를 달면
+       * 한 바퀴를 돌고 돌아왔을 때 이미 말라, 몇 겹을 칠하든 영영 1~2겹에 머문다(유지 시간
+       * 8초로 두고 재현했을 때 표준 전투에서 최대 4겹이었고 평타만으로는 한 번도 터지지
+       * 않았다). 지우는 것은 시간이 아니라 다섯 겹째에 터지는 것뿐이다.
        *
        * 도발은 0.5초뿐이다. 붙잡아 두려는 것이 아니라 "잠깐 이쪽을 보게 해 놓고 빠지는" 것이
        * 이 개체의 탱킹이라, 길게 걸면 종이 방어로 그 시간을 다 맞는다.
        */
       statusEffects: [
-        { kind: "vandalism", seconds: 8, offenseShredPercent: 5, maxStacks: 5, burstPower: 130 },
+        { kind: "vandalism", offenseShredPercent: 5, maxStacks: 5, burstPower: 125 },
         { kind: "taunt", seconds: 0.5 },
       ],
     },
@@ -1674,12 +1689,13 @@ export const RELICS: RelicDef[] = [
       id: "deina-ult",
       name: "펑크 아트 180",
       /*
-       * `channel`이 있으므로 이 위력은 총량이 아니라 **한 틱**의 몫이다. 40% × 5틱 = 주문력
-       * 200%가 전장 전체에 들어간다 — 같은 전장 광역인 케리스(120% 즉발, 200 게이지)보다
-       * 크고 메론(겹당 60%, 최대 300%, 260 게이지)보다 작은 자리이며, 낙서 다섯 겹과 기절이
-       * 함께 붙으므로 게이지는 그 위쪽에 맞춘다.
+       * `channel`이 있으므로 이 위력은 총량이 아니라 **한 틱**의 몫이다.
+       *
+       * **이 궁극기가 사는 이유는 피해가 아니라 전장 전체를 한 번에 칠하는 것이다.** 5초 동안
+       * 매초 한 겹씩, 즉 한 번의 시전이 살아 있는 모든 적을 상한까지 칠해 터뜨린다. 그래서
+       * 위력은 케리스(120% 즉발)의 절반도 되지 않는 총 75%만 두고, 값은 낙서와 기절이 갖는다.
        */
-      power: 40,
+      power: 24,
       scalingStat: "ap",
       iconAssetId: "skill-icon-magical",
       effectType: "magical",
@@ -1697,7 +1713,7 @@ export const RELICS: RelicDef[] = [
         // 전장이 한꺼번에 받는 틱과 달리, 이쪽은 그 5초 안에 실제로 손이 닿은 적만 받는다.
         basicStatusEffects: [{ kind: "stun", seconds: 1 }],
       },
-      statusEffects: [{ kind: "vandalism", seconds: 8, offenseShredPercent: 5, maxStacks: 5, burstPower: 130 }],
+      statusEffects: [{ kind: "vandalism", offenseShredPercent: 5, maxStacks: 5, burstPower: 125 }],
     },
   },
   {

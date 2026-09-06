@@ -258,14 +258,17 @@ export interface Fighter extends Combatant {
   /** 「절정」의 다음 1초 주위 피해까지 남은 시간이며 비활성 중에는 1초로 초기화한다. */
   climaxAuraTickIn: number;
   /**
-   * 지금 묻어 있는 밴덜리즘. 낙서가 남은 동안 **공격력과 주문력이 함께 깎인다.**
+   * 지금 묻어 있는 밴덜리즘. 묻은 겹만큼 **공격력과 주문력이 함께 깎인다.**
+   *
+   * **시계가 없다 — 손질과 같은 축이다.** 시간이 흘러 사라지지 않고, 겹을 비우는 것은 상한에
+   * 닿아 터지는 것뿐이다. 그래서 `remaining`·`total`을 들지 않는다.
    *
    * 저주·덧칠과 같은 이유로 슬롯은 하나뿐이다 — 여럿이 겹쳐 묻으면 어느 쪽 수치가 도는지
-   * 화면과 계산이 갈린다. 다시 칠하면 시간이 처음부터 흐르고 겹만 하나 오른다.
+   * 화면과 계산이 갈린다.
    *
    * `sourceId`를 함께 드는 이유는 터질 때의 피해가 **칠한 쪽의 주문력**에서 나오기 때문이다.
    */
-  vandalism: { remaining: number; total: number; stacks: number; percentPerStack: number; maxStacks: number; burstPower: number; sourceId?: string } | null;
+  vandalism: { stacks: number; percentPerStack: number; maxStacks: number; burstPower: number; sourceId?: string } | null;
   /**
    * 시간을 두고 되풀이되는 궁극기가 아직 남긴 틱.
    *
@@ -927,7 +930,9 @@ function applyCombatStatusEffect(fighter: Fighter, effect: CombatStatusEffect, e
     const seconds = effect.seconds * potency;
     fighter.taunted = { remaining: seconds, total: seconds, sourceId };
   }
-  if (effect.kind === "vandalism") applyVandalism(fighter, { ...effect, seconds: effect.seconds * potency }, events, state, sourceId);
+  // 원정의 지속시간 배율(`potency`)은 시계가 있는 상태에만 든다. 밴덜리즘은 시간으로 사라지지
+  // 않으므로 늘릴 시간 자체가 없다.
+  if (effect.kind === "vandalism") applyVandalism(fighter, effect, events, state, sourceId);
 }
 
 /**
@@ -1080,8 +1085,7 @@ function applyVandalism(
 ): void {
   const stacks = Math.min(effect.maxStacks, (target.vandalism?.stacks ?? 0) + 1);
   target.vandalism = {
-    remaining: effect.seconds, total: effect.seconds, stacks,
-    percentPerStack: effect.offenseShredPercent, maxStacks: effect.maxStacks, burstPower: effect.burstPower, sourceId,
+    stacks, percentPerStack: effect.offenseShredPercent, maxStacks: effect.maxStacks, burstPower: effect.burstPower, sourceId,
   };
   if (stacks < effect.maxStacks) return;
   // 터진 뒤에는 겹만 0으로 돌아가고 슬롯은 지운다 — 0겹짜리 칩이 머리 위에 남으면 아무것도
@@ -1110,7 +1114,7 @@ function applyVandalism(
 /** 밴덜리즘이 지금 깎고 있는 공격력·주문력 비율(0~1). 화면과 전투가 같은 값을 읽는다. */
 export function vandalismOffenseShred(fighter: Fighter): number {
   const paint = fighter.vandalism;
-  if (!paint || paint.remaining <= 0) return 0;
+  if (!paint) return 0;
   return Math.min(1, paint.stacks * paint.percentPerStack / 100);
 }
 
@@ -1395,7 +1399,12 @@ function tickGraffitiAura(fighter: Fighter, dt: number, state: SkirmishState, ev
     // 휘두르지 않고 달리기만 하므로 시전 모션을 틀지 않는다(`animate: false`).
     events.push({ kind: "attack", attackerId: fighter.id, targetId: other.id, skill: "basic", amount: resolution.applied,
       contributionAmount: credited, critical: false, animate: false, damageType: "magical", mitigated: resolution.reduced < resolution.raw });
-    if (isFighterAlive(other)) applyCombatStatusEffect(other, trait.vandalism, events, state, fighter.id);
+    // **도발은 때리는 손이 아니라 들어간 피해에 붙는다.** 손을 놓는 폭주에서도 지나가는
+    // 자리마다 그대로 걸려야, 달리는 것 자체가 어그로인 개체의 탱킹이 폭주 중에 꺼지지 않는다.
+    if (isFighterAlive(other)) {
+      applyCombatStatusEffect(other, trait.vandalism, events, state, fighter.id);
+      applyCombatStatusEffect(other, trait.taunt, events, state, fighter.id);
+    }
     if (!isFighterAlive(other)) {
       clearDefeatedStatuses(other);
       events.push({ kind: "death", fighterId: other.id, sourceId: fighter.id });
@@ -3450,13 +3459,6 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
       const remaining = fighter.curse.remaining - dt;
       if (remaining <= EMERGENCY_RECOVERY.epsilon) fighter.curse = null;
       else fighter.curse = { ...fighter.curse, remaining };
-    }
-    // 밴덜리즘도 저주와 같은 공용 시계로 마른다. 다 마르면 슬롯째 비워 깎인 공격력이
-    // 다음 전투로 새지 않게 한다.
-    if (isFighterAlive(fighter) && fighter.vandalism) {
-      const remaining = fighter.vandalism.remaining - dt;
-      if (remaining <= EMERGENCY_RECOVERY.epsilon) fighter.vandalism = null;
-      else fighter.vandalism = { ...fighter.vandalism, remaining };
     }
     // 광란이 풀리는 순간 표적을 비운다. 남겨 두면 원래 편으로 돌아가고도 아군을 계속 때린다.
     if (isFighterAlive(fighter) && fighter.frenzy) {

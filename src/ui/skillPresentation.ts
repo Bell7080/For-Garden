@@ -32,7 +32,8 @@ export function statusEffectLabel(effect?: CombatStatusEffect): string | undefin
   if (effect?.kind === "stagger") return "[[stagger|경직]]";
   if (effect?.kind === "bleed") return `[[bleed|출혈]] ${effect.seconds}초 · 매초 최대 체력 ${effect.maxHpPercentPerSecond}%`;
   if (effect?.kind === "poison") return `[[poison|중독]] ${effect.seconds}초`;
-  if (effect?.kind === "vandalism") return `[[vandalism|밴덜리즘]] ${effect.seconds}초`;
+  // 시간으로 사라지지 않으므로 요약줄에도 초를 적지 않는다. 겹 상한은 태그가 말한다.
+  if (effect?.kind === "vandalism") return "[[vandalism|밴덜리즘]]";
   if (effect?.kind === "taunt") return `[[taunt|도발]] ${effect.seconds}초`;
   return undefined;
 }
@@ -147,8 +148,10 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
   if (trait.effectId === "graffitiRun") {
     const converted = stats?.abilityPower === undefined ? undefined : Math.round(stats.abilityPower * trait.auraDamagePercent / 100);
     const damage = converted === undefined ? `주문력의 ${trait.auraDamagePercent}%` : `[[damage-value|${converted}]]`;
+    // 도발이 평타가 아니라 이 지속 피해에 붙어 있다는 것이 이 폭주의 전부라, 한 문장에 함께 적는다.
     return `이동 속도가 ${trait.moveSpeedPercent}% 증가하고 [[basic-attack|기본 공격]]을 하지 않는다.`
-      + ` 매초 자신의 주위 모든 적에게 ${damage}의 [[magical-damage|마법 피해]]를 주고 [[vandalism|밴덜리즘]]을 한 겹 쌓는다.`;
+      + ` 매초 자신의 주위 모든 적에게 ${damage}의 [[magical-damage|마법 피해]]를 주고`
+      + ` [[vandalism|밴덜리즘]]을 한 겹 쌓으며 ${trait.taunt.seconds}초 동안 [[taunt|도발]]한다.`;
   }
 
   // 방어력 계수는 토리카처럼 추가 피해가 있는 범위 타격만 노출하고, 일반 전이 특성은 원래 피해 비율만 보여 준다.

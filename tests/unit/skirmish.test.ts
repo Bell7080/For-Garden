@@ -3123,10 +3123,11 @@ describe("데이나", () => {
 
   it("의 밴덜리즘은 공격력·주문력을 함께 깎고 상한에서 터진다", () => {
     const effect = getRelic("deina").basic.statusEffects!.find((e) => e.kind === "vandalism")!;
-    expect(effect).toMatchObject({ kind: "vandalism", offenseShredPercent: 5, maxStacks: 5, seconds: 8 });
-    // 유지 시간은 한 바퀴를 도는 시간보다 길어야 겹이 쌓인다 — 적 셋과 공격 간격 1.34초면
-    // 한 바퀴가 약 4초라, 그보다 짧게 두면 돌아왔을 때 이미 말라 영영 1겹에 머문다.
-    expect(effect.kind === "vandalism" && effect.seconds).toBeGreaterThan(4);
+    expect(effect).toMatchObject({ kind: "vandalism", offenseShredPercent: 5, maxStacks: 5 });
+    // **시계를 달지 않는다.** 표적을 매 타격마다 갈아타는 개체라 시간을 두면 한 바퀴를 돌고
+    // 돌아왔을 때 이미 말라, 몇 겹을 칠하든 영영 1~2겹에 머문다(유지 시간 8초로 두고 재현했을
+    // 때 평타만으로는 한 번도 터지지 않았다). `seconds`가 다시 생기면 여기서 걸린다.
+    expect(effect).not.toHaveProperty("seconds");
 
     // 적이 하나면 표적을 옮길 곳이 없어 같은 상대에게 겹이 그대로 쌓인다.
     const state = createSkirmish([getRelic("deina")], [getRelic("husk-shell")], arena);
@@ -3147,6 +3148,25 @@ describe("데이나", () => {
     expect(shredAtPeak).toBeCloseTo(peak * 0.05, 5);
     // 상한에 닿은 프레임에 스스로 터지고 겹이 0으로 돌아간다.
     expect(events.some((event) => event.kind === "vandalismBurst")).toBe(true);
+  });
+
+  it("의 밴덜리즘은 시간이 흘러도 지워지지 않는다", () => {
+    // 손질과 같은 축이다 — 지우는 것은 시간이 아니라 터지는 것뿐이다. 시계를 달면 표적을
+    // 갈아타는 이 개체에서만 규칙이 성립하지 않아, 몇 겹을 칠하든 영영 1~2겹에 머문다.
+    const state = createSkirmish([getRelic("deina")], [getRelic("husk-shell")], arena);
+    const [deina, enemy] = state.fighters;
+    deina.x = 400; deina.y = 700; enemy.x = 480; enemy.y = 700;
+    const rng = seeded(21);
+    for (let t = 0; t < 2 && state.phase === "fight"; t += 0.05) stepSkirmish(state, 0.05, rng);
+    const painted = enemy.vandalism?.stacks ?? 0;
+    expect(painted).toBeGreaterThan(0);
+
+    // 데이나의 손을 묶고 한참 둔다 — 새로 칠하지 못하는 채로, 시계가 있었다면 이 사이에 말라
+    // 사라졌을 시간이다(예전 유지 시간은 8초였다).
+    deina.stunnedFor = 30;
+    for (let t = 0; t < 12 && state.phase === "fight"; t += 0.05) stepSkirmish(state, 0.05, rng);
+    expect(enemy.vandalism?.stacks).toBe(painted);
+    expect(vandalismOffenseShred(enemy)).toBeCloseTo(painted * 0.05, 5);
   });
 
   it("의 짧은 도발은 때린 적만 자기 쪽으로 돌린다", () => {
@@ -3184,8 +3204,9 @@ describe("데이나", () => {
     const hits = events.filter((event): event is Extract<SkirmishEvent, { kind: "attack" }> => event.kind === "attack" && event.attackerId === deina.id);
     expect(hits.length).toBeGreaterThan(0);
     expect(hits.every((hit) => hit.animate === false)).toBe(true);
-    // 때리지 않으므로 도발도 함께 멈춘다 — 붙잡아 두기를 놓고 흩뿌리기를 가져가는 교환이다.
-    expect(enemy.taunted).toBeNull();
+    // **때리지 않아도 도발은 그대로 걸린다.** 도발이 "때린다"가 아니라 "피해가 들어간다"에
+    // 붙어 있어야, 달리는 것 자체가 어그로인 개체의 탱킹이 폭주 중에 꺼지지 않는다.
+    expect(enemy.taunted?.sourceId).toBe(deina.id);
     // 두 배로 달린다.
     expect(moveSpeed(deina, state)).toBeCloseTo(getRelic("deina").stats.moveSpeed * SKIRMISH.moveRate * 2, 5);
   });

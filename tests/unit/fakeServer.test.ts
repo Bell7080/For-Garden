@@ -710,7 +710,7 @@ describe("FakeServer 원정 정산", () => {
     const score = await server.submitExpeditionBossScore(request);
     const repeated = await server.submitExpeditionBossScore(request);
     expect(repeated).toEqual(score);
-    expect(score.runScore).toBe(score.nodeScoreTotal + score.bossDamageScore);
+    expect(score.runScore).toBe(score.normalNodeScoreTotal + score.bossDamageScore);
     manager.completeNode(bossNode.id, { relicHp: [0, 0, 0], bossDamage: score.bossDamageScore });
 
     // 팀이 전멸해 "패배"로 끝나도(불사 보스는 애초에 이길 수 없다) 이미 입힌 피해는 그대로 남는다.

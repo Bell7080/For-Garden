@@ -404,8 +404,8 @@ export interface SubmitExpeditionBossScoreResponse {
   weekKey: string;
   /** 이전 클라이언트 호환용이며 runScore와 같다. */ score: number;
   /** 이번 폰토스 전투에서 확정된 피해 점수만 담는다. */ bossDamageScore: number;
-  /** 이번 런에서 폰토스 전까지 확정된 일반 노드 점수 합이다. */ nodeScoreTotal: number;
-  /** 이번 한 판의 최종 점수로 nodeScoreTotal + bossDamageScore다. */ runScore: number;
+  /** 이번 런에서 폰토스 전까지 확정된 일반 노드 점수 합이다. */ normalNodeScoreTotal: number;
+  /** 이번 한 판의 최종 점수로 normalNodeScoreTotal + bossDamageScore다. */ runScore: number;
   /** 이번 주 한 판 최고 점수다. */ bestScore: number;
   /** 주간 보상 트랙에 반영된 모든 확정 점수의 합이다. */ cumulativeScore: number;
   improved: boolean; endedAtMs: number; rankBefore: number | null; rankAfter: number;

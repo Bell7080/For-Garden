@@ -78,6 +78,7 @@ import type { ActiveCombatDisplayEffect } from "../core/combatEffects";
 import { stepBattleScoreMotion } from "../ui/battleScoreMotion";
 import { RewardFrame } from "../ui/RewardFrame";
 import { ExpeditionRankingPopup } from "../ui/ExpeditionRankingPopup";
+import { ExpeditionScoreDetailPopup } from "../ui/ExpeditionScoreDetailPopup";
 import { BOSS_RESULT_LAYOUT, bossResultUtilityBounds } from "../ui/bossResultLayout";
 import type { CurrencyIconKey } from "../ui/currencyIcons";
 
@@ -443,7 +444,7 @@ export class BattleScene extends Phaser.Scene {
     }
   }
 
-  /** 서버 기록과 정산 재화를 같은 결과 화면 안의 독립된 위계로 보여 준다. */
+  /** 서버 총점과 정산 재화를 같은 결과 화면 안의 독립된 위계로 보여 준다. */
   private showBossResult(score: SubmitExpeditionBossScoreResponse, settlement: SettleExpeditionRunResponse): void {
     // 서버 재검증 총점은 머리글에만 더하고 확정 당시의 개별 행동 분배는 다시 시뮬레이션하지 않는다.
     if (this.contributionResult) this.contributionResult = withConfirmedAttackTotal(this.contributionResult, score.bossDamageScore);
@@ -451,7 +452,6 @@ export class BattleScene extends Phaser.Scene {
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.96).setDepth(5000);
     const layout = BOSS_RESULT_LAYOUT;
     this.add.text(layout.title.x, layout.title.y, "원정 관측 완료", textStyle({ role: "display", size: 60, color: COLOR.accentText })).setOrigin(0.5).setDepth(5001);
-    const rank = score.rankBefore === null ? `신규 → ${score.rankAfter}위` : `${score.rankBefore}위 → ${score.rankAfter}위`;
     const rewardItems = currencyRecordToRewardItems(settlement.granted);
     // 정산 재화는 문자열로 점수에 붙이지 않고 기존 RewardFrame 액자 문법을 그대로 재사용한다.
     drawLayer(this, BASE_WIDTH / 2, layout.rewards.top + layout.rewards.height / 2, chipPoints(layout.rewards.width, layout.rewards.height, { bevel: { topLeft: 34, bottomRight: 28 } }), { fill: 0x0d131b, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.5 }).setDepth(5001);
@@ -463,10 +463,13 @@ export class BattleScene extends Phaser.Scene {
       // currencyRecordToRewardItems는 이 경로에서 CurrencyIconKey만 만들며 다른 상품 글리프는 받지 않는다.
       rewardItems.forEach((item, index) => new RewardFrame(this, startX + index * layout.rewards.frameGap, layout.rewards.top + 205, { icon: item.icon as CurrencyIconKey, amount: item.amount, size: layout.rewards.frameSize }).setDepth(5002));
     }
-    // 점수는 결과 하단 안전 영역에서 흰 display 글꼴과 검은 대비만 사용하며 새 판을 받치지 않는다.
-    const scoreText = this.add.text(BASE_WIDTH / 2, layout.score.top + layout.score.height / 2, `이번 원정 점수  ${score.runScore.toLocaleString()}\n폰토스 피해  ${score.bossDamageScore.toLocaleString()}\n주간 최고 점수  ${score.bestScore.toLocaleString()}  ${score.improved ? "· 최고점 갱신" : "· 기존 기록 유지"}\n주간 누적 원정 점수  ${score.cumulativeScore.toLocaleString()}\n순위 변화  ${rank}`, textStyle({ role: "display", size: 31, color: "#ffffff", align: "center", lineSpacing: 22, wrap: layout.score.width })).setOrigin(0.5).setDepth(5001);
+    // 기본 결과판은 최종 총점만 크게 남긴다. 구성값은 서버 영수증 그대로 별도 상세 팝업에 건넨다.
+    this.add.text(BASE_WIDTH / 2, layout.score.top + 105, "이번 원정 점수", textStyle({ role: "body", size: 27, color: COLOR.inkDim })).setOrigin(0.5).setDepth(5001);
+    const scoreText = this.add.text(BASE_WIDTH / 2, layout.score.top + 225, score.runScore.toLocaleString(), textStyle({ role: "display", size: 76, color: "#ffffff", align: "center" })).setOrigin(0.5).setDepth(5001);
     scoreText.setStroke("#000000", 6).setShadow(0, 4, "#000000", 4, false, true);
     const popups = new PopupLayer(this, 6000);
+    // 총점 바로 아래의 작은 보조 조작만 세부 점수로 이어져 기본 화면의 정보 위계를 흐리지 않는다.
+    new Button(this, BASE_WIDTH / 2, layout.score.top + 350, { width: 160, height: 62, label: "상세", fontSize: 22, onClick: () => new ExpeditionScoreDetailPopup(this, popups).open(score) }).setDepth(5001);
     new Button(this, BASE_WIDTH / 2, layout.lobby.top + layout.lobby.height / 2, { width: layout.lobby.width, height: layout.lobby.height, label: "로비로", variant: "primary", onClick: () => {
       if (this.bossLeaving) return;
       this.bossLeaving = true;

@@ -1871,7 +1871,7 @@ export class InfoManager {
 
   /** 개체별 폭주 발현 설명. 야성 규칙 자체는 강조된 말을 눌러 다시 열 수 있다. */
   private openFerocityTrait(def: RelicDef, from: PopupSource): void {
-    // 주문력에서 피해를 뽑는 폭주(데이나의 낙서)도 다른 수치와 같은 기준으로 실제 값을 보여 준다.
+    // 주문력에서 피해를 뽑는 폭주(데이의 낙서)도 다른 수치와 같은 기준으로 실제 값을 보여 준다.
     const { atk: attack, def: defense, ap: abilityPower } = relicProgression.getFinalStats(def.id);
     const defensePercent = def.ferocityTrait.effectId === "splashDamage" ? def.ferocityTrait.defenseDamagePercent : undefined;
     const attackPercent = def.ferocityTrait.effectId === "crescendoStaccato" ? def.ferocityTrait.damagePercent : undefined;

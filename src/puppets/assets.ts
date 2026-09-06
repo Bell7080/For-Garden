@@ -209,7 +209,7 @@ export const ELLA_ASSET: PuppetAsset = {
   ...ELLA_PORTRAIT_METADATA,
 };
 
-/** 16번 전신 일러스트: 데이나(데이노니쿠스). */
+/** 16번 전신 일러스트: 데이(데이노니쿠스). */
 export const DEINA_ASSET: PuppetAsset = {
   url: `${base}puppets/char_016.zip`,
   ...DEINA_PORTRAIT_METADATA,
@@ -426,7 +426,7 @@ export const MERON_SD_ASSET: PuppetAsset = {
   ...MERON_SD_METADATA,
 };
 
-/** 16번 SD: 데이나. */
+/** 16번 SD: 데이. */
 export const DEINA_SD_ASSET: PuppetAsset = {
   url: `${base}puppets/charSD_016.zip`,
   ...DEINA_SD_METADATA,

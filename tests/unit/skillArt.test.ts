@@ -175,14 +175,14 @@ describe("노도니아 스킬 표시 계약", () => {
     // 적 전용 개체(폰토스·허스크)는 등급 띠 밖이라 비교에서 뺀다.
     const allyTanks = RELICS.filter((def) => def.role === "tank" && !["pontos", "husk-raptor", "husk-shell", "husk-wing"].includes(def.id));
     expect(Math.max(...allyTanks.map((def) => def.stats.hp))).toBe(nodonia.stats.hp);
-    // **데이나는 이 비교 밖이다.** 이 규칙이 지키려는 것은 "노도니아에게 방어를 얹지 마라"이고,
-    // 그 비교 상대는 방어로 버티는 탱커(토리카·엘라)다. 데이나는 방어에도 체력에도 버티는 값을
+    // **데이는 이 비교 밖이다.** 이 규칙이 지키려는 것은 "노도니아에게 방어를 얹지 마라"이고,
+    // 그 비교 상대는 방어로 버티는 탱커(토리카·엘라)다. 데이는 방어에도 체력에도 버티는 값을
     // 두지 않는 기동형이라 노도니아보다 얇은 것이 정상이며, 그쪽에는 아래 제 규칙을 따로 둔다.
     for (const tank of allyTanks.filter((def) => def.id !== "nodonia" && def.id !== "deina")) {
       expect(nodonia.stats.def, `${tank.name}보다 낮아야 한다`).toBeLessThan(tank.stats.def);
       expect(nodonia.stats.res, `${tank.name}보다 낮아야 한다`).toBeLessThan(tank.stats.res);
     }
-    // 데이나의 몫은 「데이나 스킬 표시 계약」이 갖는다 — 방어·저항 최저와 실효 체력 최저다.
+    // 데이의 몫은 「데이 스킬 표시 계약」이 갖는다 — 방어·저항 최저와 실효 체력 최저다.
     // **체력 최저가 아닌 것이 중요하다**: 도발이 들어간 피해마다 걸려 어그로 시간이 길어진
     // 개체라, 방어를 올리는 대신 한 번 더 달릴 몸을 체력으로 준다.
     const deina = RELICS.find((def) => def.id === "deina")!;
@@ -198,7 +198,7 @@ describe("노도니아 스킬 표시 계약", () => {
   });
 });
 
-describe("데이나 스킬 표시 계약", () => {
+describe("데이 스킬 표시 계약", () => {
   const deina = RELICS.find((def) => def.id === "deina")!;
 
   it("의 밴덜리즘은 태그가 수치를 갖고 본문은 한 겹만 말한다", () => {
@@ -259,7 +259,7 @@ describe("데이나 스킬 표시 계약", () => {
     // 체력은 여전히 넷 중 가장 얇다 — 맞아도 되는 몸이 아니라 한 번 더 달릴 수 있는 몸이다.
     const allyTanks = RELICS.filter((def) => def.role === "tank" && !["pontos", "husk-shell"].includes(def.id));
     for (const key of ["def", "res"] as const) {
-      expect(Math.min(...allyTanks.map((def) => def.stats[key])), `데이나 ${key}`).toBe(deina.stats[key]);
+      expect(Math.min(...allyTanks.map((def) => def.stats[key])), `데이 ${key}`).toBe(deina.stats[key]);
     }
     const effectiveHp = (def: typeof deina) => def.stats.hp * (1 + def.stats.def / 100);
     expect(Math.min(...allyTanks.map(effectiveHp))).toBe(effectiveHp(deina));

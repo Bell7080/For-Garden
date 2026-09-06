@@ -338,7 +338,7 @@ export const ELLA_SD_METADATA: Omit<PuppetAsset, "url"> = {
   content: { left: 138, top: 7, right: 1116, bottom: 1247 },
 };
 
-/** 16번 데이나(데이노니쿠스) 전신. ZIP 안 WebP의 alpha > 16 경계를 실측한 값이다. */
+/** 16번 데이(데이노니쿠스) 전신. ZIP 안 WebP의 alpha > 16 경계를 실측한 값이다. */
 export const DEINA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1085,
   imageHeight: 1450,
@@ -357,7 +357,7 @@ export const DEINA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   lobbyZoom: 1.013,
 };
 
-/** 데이나 SD ZIP의 정사각 원본과 alpha > 16 경계다. */
+/** 데이 SD ZIP의 정사각 원본과 alpha > 16 경계다. */
 export const DEINA_SD_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1254,
   imageHeight: 1254,

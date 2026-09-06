@@ -3093,13 +3093,13 @@ describe("노도니아의 프로젝트 REVERIE", () => {
 });
 
 /**
- * 데이나의 전투 규칙.
+ * 데이의 전투 규칙.
  *
  * 이 개체는 **네 슬롯이 서로를 물고 있다** — 표적을 돌리기 때문에 낙서가 전장에 퍼지고,
  * 멈추지 않기 때문에 게이지가 차며, 폭주는 그 둘을 놓고 흩뿌리기를 가져간다. 하나만 고치면
  * 나머지가 조용히 무너지므로 네 규칙을 한 자리에서 함께 고정한다.
  */
-describe("데이나", () => {
+describe("데이", () => {
   const arena: Arena = { left: 0, right: 900, top: 0, bottom: 1_400 };
   const seeded = (start: number) => { let n = start; return () => (n = (n * 1103515245 + 12345) % 2147483648) / 2147483648; };
 
@@ -3161,7 +3161,7 @@ describe("데이나", () => {
     const painted = enemy.vandalism?.stacks ?? 0;
     expect(painted).toBeGreaterThan(0);
 
-    // 데이나의 손을 묶고 한참 둔다 — 새로 칠하지 못하는 채로, 시계가 있었다면 이 사이에 말라
+    // 데이의 손을 묶고 한참 둔다 — 새로 칠하지 못하는 채로, 시계가 있었다면 이 사이에 말라
     // 사라졌을 시간이다(예전 유지 시간은 8초였다).
     deina.stunnedFor = 30;
     for (let t = 0; t < 12 && state.phase === "fight"; t += 0.05) stepSkirmish(state, 0.05, rng);
@@ -3173,7 +3173,7 @@ describe("데이나", () => {
     const { state, deina } = fight(6);
     const taunt = getRelic("deina").basic.statusEffects!.find((e) => e.kind === "taunt")!;
     expect(taunt).toMatchObject({ kind: "taunt", seconds: 0.5 });
-    // 걸린 도발은 반드시 데이나를 가리킨다. 다른 아군을 가리키면 어그로가 엉뚱한 곳으로 간다.
+    // 걸린 도발은 반드시 데이를 가리킨다. 다른 아군을 가리키면 어그로가 엉뚱한 곳으로 간다.
     for (const enemy of aliveFighters(state, "enemy")) {
       if (enemy.taunted) expect(enemy.taunted.sourceId).toBe(deina.id);
     }

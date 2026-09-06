@@ -253,7 +253,7 @@ const REAL_PORTRAITS = [
   { name: "델로피", metadata: DELOPI_PORTRAIT_METADATA, head: { x: 519, y: 324 }, eyes: [{ x: 496, y: 319 }, { x: 556, y: 294 }] },
   { name: "엘라", metadata: ELLA_PORTRAIT_METADATA, head: { x: 572, y: 283 }, eyes: [{ x: 529, y: 280 }, { x: 603, y: 262 }] },
   { name: "노도니아", metadata: NODONIA_PORTRAIT_METADATA, head: { x: 484, y: 353 }, eyes: [{ x: 467, y: 344 }, { x: 515, y: 327 }] },
-  { name: "데이나", metadata: DEINA_PORTRAIT_METADATA, head: { x: 403, y: 245 }, eyes: [{ x: 383, y: 254 }, { x: 430, y: 216 }] },
+  { name: "데이", metadata: DEINA_PORTRAIT_METADATA, head: { x: 403, y: 245 }, eyes: [{ x: 383, y: 254 }, { x: 430, y: 216 }] },
 ] as const;
 
 /** PortraitCard가 넘기는 것과 같은 배율 보정으로 실제 카드 잘라내기를 구한다. */

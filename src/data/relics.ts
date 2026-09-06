@@ -1308,6 +1308,7 @@ export const RELICS: RelicDef[] = [
   // --- 적 개체. 폭주해 이터널 시티를 위협하는 실패작들이다. ---
   {
     id: "husk-raptor",
+    enemyOnly: true,
     squad: "gear",
     name: "토비",
     specimenNumber: "201",
@@ -1372,6 +1373,7 @@ export const RELICS: RelicDef[] = [
   },
   {
     id: "husk-shell",
+    enemyOnly: true,
     squad: "rogue",
     name: "아모",
     specimenNumber: "202",
@@ -1436,6 +1438,7 @@ export const RELICS: RelicDef[] = [
   },
   {
     id: "husk-wing",
+    enemyOnly: true,
     squad: "eye",
     name: "리파",
     specimenNumber: "203",
@@ -1502,6 +1505,7 @@ export const RELICS: RelicDef[] = [
   {
     // 코마는 1-10에서만 처음 등장하지만 스테이지 전용 보정이 아닌 독립 영구 캐릭터다.
     id: "husk-koma",
+    enemyOnly: true,
     squad: "gear",
     name: "코마",
     // 도감 개체번호는 렉시아의 072와 충돌하지 않으며, 공멸 프로젝트 번호 072는 아래 이름에 보존한다.
@@ -1793,6 +1797,7 @@ export const RELICS: RelicDef[] = [
   {
     // 원정 최종층의 단독 보스. 리바이어던 멜빌레이의 거대한 턱과 심해 포식자 모티브를 담는다.
     id: "pontos",
+    enemyOnly: true,
     squad: "fang",
     name: "폰토스",
     specimenNumber: "220",
@@ -1930,5 +1935,5 @@ export function getRelic(id: string): RelicDef {
   return found;
 }
 
-/** 플레이어가 파티에 넣을 수 있는 렐릭. 일반 허스크와 전용 보스 폰토스는 빠진다. */
-export const PLAYABLE_RELICS = RELICS.filter((r) => !r.id.startsWith("husk-") && r.id !== "pontos");
+/** 플레이어가 파티에 넣을 수 있는 렐릭. 이름 규칙이 아니라 명시적인 적 전용 계약을 따른다. */
+export const PLAYABLE_RELICS = RELICS.filter((relic) => relic.enemyOnly !== true);

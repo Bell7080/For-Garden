@@ -8,7 +8,7 @@ import { unitStatusViews } from "../../src/ui/unitStatusModel";
  * 뜨는데 쪽지에는 없는 상태가 생기므로, 순서와 내용을 여기서 고정한다.
  */
 function enemy(): Fighter {
-  const state = createSkirmish([getRelic("anky")], [getRelic("husk-shell")], { left: 130, right: 950, top: 600, bottom: 1360 });
+  const state = createSkirmish([getRelic("anky")], [getRelic("amo")], { left: 130, right: 950, top: 600, bottom: 1360 });
   return state.fighters.find((fighter) => fighter.side === "enemy")!;
 }
 

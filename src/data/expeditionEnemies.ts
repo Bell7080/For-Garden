@@ -11,13 +11,13 @@ import { EXPEDITION_COMBAT_BALANCE } from "./expedition";
  * 교체하면 정보창과 실제 전투가 함께 바뀌며, 씬에 별도의 임시 공용 편성이 남지 않는다.
  */
 const EXPEDITION_ENEMY_FORMATIONS: Record<ExpeditionNodeType, readonly [string, string, string]> = {
-  normal: ["husk-raptor", "husk-shell", "husk-wing"],
-  elite: ["husk-shell", "husk-raptor", "husk-wing"],
-  horde: ["husk-wing", "husk-raptor", "husk-shell"],
-  boss: ["husk-shell", "husk-wing", "husk-raptor"],
+  normal: ["toby", "amo", "ripa"],
+  elite: ["amo", "toby", "ripa"],
+  horde: ["ripa", "toby", "amo"],
+  boss: ["amo", "ripa", "toby"],
   // 비전투 노드는 표시/전투 함수에서 호출하지 않지만 완전한 타입 표를 유지한다.
-  rest: ["husk-raptor", "husk-shell", "husk-wing"],
-  treasure: ["husk-raptor", "husk-shell", "husk-wing"],
+  rest: ["toby", "amo", "ripa"],
+  treasure: ["toby", "amo", "ripa"],
 };
 
 /** 최종층 보스는 일반 boss fallback 표와 섞지 않아 다른 층의 임시 보스 편성을 바꾸지 않는다. */

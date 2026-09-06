@@ -462,12 +462,16 @@ const ALLY_SD_ASSETS: Readonly<Record<string, PuppetAsset>> = {
   deina: DEINA_SD_ASSET,
 };
 
-/** 적 SD는 아군과 번호 묶음이 달라 따로 두고, 최종층 보스만 전용 묶음을 쓴다. */
+/**
+ * 적 SD는 아군과 번호 묶음이 달라 따로 두고, 최종층 보스만 전용 묶음을 쓴다.
+ * 캐릭터 영구 ID는 이름 기준으로 바꾸되 이 값은 기존 enemySD zip의 로더 위치를 가리키므로
+ * 에셋 배열 순서와 실제 파일 경로는 바꾸지 않는다.
+ */
 const ENEMY_SD_ASSETS_BY_ID: Readonly<Record<string, PuppetAsset>> = {
   pontos: PONTOS_SD_ASSET,
-  "husk-raptor": ENEMY_SD_ASSETS[0],
-  "husk-shell": ENEMY_SD_ASSETS[1],
-  "husk-wing": ENEMY_SD_ASSETS[2],
+  "toby": ENEMY_SD_ASSETS[0],
+  "amo": ENEMY_SD_ASSETS[1],
+  "ripa": ENEMY_SD_ASSETS[2],
   "husk-koma": EXPLORER_SD_ASSET,
 };
 

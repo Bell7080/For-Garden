@@ -173,7 +173,7 @@ describe("노도니아 스킬 표시 계약", () => {
     expect(Math.min(...RELICS.map((def) => def.stats.atk))).toBe(nodonia.stats.atk);
     // 방어·저항은 아군 탱커 중 최저이고 체력은 최고다. 아프지 않으면 재생이 할 일이 없다.
     // 적 전용 개체(폰토스·허스크)는 등급 띠 밖이라 비교에서 뺀다.
-    const allyTanks = RELICS.filter((def) => def.role === "tank" && !["pontos", "husk-raptor", "husk-shell", "husk-wing"].includes(def.id));
+    const allyTanks = RELICS.filter((def) => def.role === "tank" && !["pontos", "toby", "amo", "ripa"].includes(def.id));
     expect(Math.max(...allyTanks.map((def) => def.stats.hp))).toBe(nodonia.stats.hp);
     // **데이는 이 비교 밖이다.** 이 규칙이 지키려는 것은 "노도니아에게 방어를 얹지 마라"이고,
     // 그 비교 상대는 방어로 버티는 탱커(토리카·엘라)다. 데이는 방어에도 체력에도 버티는 값을
@@ -257,7 +257,7 @@ describe("데이 스킬 표시 계약", () => {
     expect(deina.basic.power).toBeLessThanOrEqual(40);
     // **방어·저항은 로스터 탱커 최저다.** 체력은 노도니아 다음으로 높지만 방어를 곱한 실효
     // 체력은 여전히 넷 중 가장 얇다 — 맞아도 되는 몸이 아니라 한 번 더 달릴 수 있는 몸이다.
-    const allyTanks = RELICS.filter((def) => def.role === "tank" && !["pontos", "husk-shell"].includes(def.id));
+    const allyTanks = RELICS.filter((def) => def.role === "tank" && !["pontos", "amo"].includes(def.id));
     for (const key of ["def", "res"] as const) {
       expect(Math.min(...allyTanks.map((def) => def.stats[key])), `데이 ${key}`).toBe(deina.stats[key]);
     }

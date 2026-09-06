@@ -3,7 +3,7 @@ import type { ChapterDef, RelicDef, StageDef, StageEnemyDef } from "../core/type
 import { getRelic } from "./relics";
 
 /** 챕터 1의 기본 악당 셋은 영구 캐릭터 ID만 공유하고 성장 상태는 각 스테이지가 소유한다. */
-export const FIXED_STAGE_ENEMIES = ["husk-raptor", "husk-shell", "husk-wing"] as const;
+export const FIXED_STAGE_ENEMIES = ["toby", "amo", "ripa"] as const;
 
 /** 스테이지 난이도를 캐릭터 수치가 아닌 공개 성장 축과 검증 가능한 배치로만 표현한다. */
 function enemyGrowth(relicId: string, level: number, breakthrough: number, formationSlot: 0 | 1 | 2): StageEnemyDef {
@@ -12,17 +12,17 @@ function enemyGrowth(relicId: string, level: number, breakthrough: number, forma
 
 /** 한계 돌파는 레벨을 초기화하지 않으므로 1-8 이후에도 직전 레벨 5를 유지한다. */
 const CHAPTER_ONE_ENEMIES: readonly [StageEnemyDef, StageEnemyDef, StageEnemyDef][] = [
-  [enemyGrowth("husk-shell", 1, 0, 0), enemyGrowth("husk-raptor", 1, 0, 1), enemyGrowth("husk-wing", 1, 0, 2)],
-  [enemyGrowth("husk-shell", 1, 0, 0), enemyGrowth("husk-raptor", 2, 0, 1), enemyGrowth("husk-wing", 1, 0, 2)],
-  [enemyGrowth("husk-shell", 2, 0, 0), enemyGrowth("husk-raptor", 2, 0, 1), enemyGrowth("husk-wing", 1, 0, 2)],
-  [enemyGrowth("husk-shell", 2, 0, 0), enemyGrowth("husk-raptor", 3, 0, 1), enemyGrowth("husk-wing", 2, 0, 2)],
-  [enemyGrowth("husk-shell", 3, 0, 0), enemyGrowth("husk-raptor", 3, 0, 1), enemyGrowth("husk-wing", 3, 0, 2)],
-  [enemyGrowth("husk-shell", 4, 0, 0), enemyGrowth("husk-raptor", 4, 0, 1), enemyGrowth("husk-wing", 3, 0, 2)],
-  [enemyGrowth("husk-shell", 4, 0, 0), enemyGrowth("husk-raptor", 5, 0, 1), enemyGrowth("husk-wing", 4, 0, 2)],
-  [enemyGrowth("husk-shell", 5, 1, 0), enemyGrowth("husk-raptor", 5, 0, 1), enemyGrowth("husk-wing", 5, 0, 2)],
-  [enemyGrowth("husk-shell", 5, 1, 0), enemyGrowth("husk-raptor", 5, 1, 1), enemyGrowth("husk-wing", 5, 1, 2)],
+  [enemyGrowth("amo", 1, 0, 0), enemyGrowth("toby", 1, 0, 1), enemyGrowth("ripa", 1, 0, 2)],
+  [enemyGrowth("amo", 1, 0, 0), enemyGrowth("toby", 2, 0, 1), enemyGrowth("ripa", 1, 0, 2)],
+  [enemyGrowth("amo", 2, 0, 0), enemyGrowth("toby", 2, 0, 1), enemyGrowth("ripa", 1, 0, 2)],
+  [enemyGrowth("amo", 2, 0, 0), enemyGrowth("toby", 3, 0, 1), enemyGrowth("ripa", 2, 0, 2)],
+  [enemyGrowth("amo", 3, 0, 0), enemyGrowth("toby", 3, 0, 1), enemyGrowth("ripa", 3, 0, 2)],
+  [enemyGrowth("amo", 4, 0, 0), enemyGrowth("toby", 4, 0, 1), enemyGrowth("ripa", 3, 0, 2)],
+  [enemyGrowth("amo", 4, 0, 0), enemyGrowth("toby", 5, 0, 1), enemyGrowth("ripa", 4, 0, 2)],
+  [enemyGrowth("amo", 5, 1, 0), enemyGrowth("toby", 5, 0, 1), enemyGrowth("ripa", 5, 0, 2)],
+  [enemyGrowth("amo", 5, 1, 0), enemyGrowth("toby", 5, 1, 1), enemyGrowth("ripa", 5, 1, 2)],
   // 코마도 일반 RelicDef를 사용하는 중간보스이며, 아모와 리파가 앞뒤에서 전열을 완성한다.
-  [enemyGrowth("husk-shell", 5, 1, 0), enemyGrowth("husk-koma", 1, 1, 1), enemyGrowth("husk-wing", 5, 1, 2)],
+  [enemyGrowth("amo", 5, 1, 0), enemyGrowth("husk-koma", 1, 1, 1), enemyGrowth("ripa", 5, 1, 2)],
 ];
 
 /**

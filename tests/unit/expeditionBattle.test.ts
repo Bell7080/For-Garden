@@ -8,7 +8,7 @@ import { getExpeditionNodeEnemies } from "../../src/data/expeditionEnemies";
 // 실제 씬과 같은 안전 영역으로 5기 배치의 비겹침까지 순수 규칙에서 검증한다.
 const ARENA: Arena = { left: 130, right: 950, top: 600, bottom: 1360 };
 const players = ["anky", "rex", "dodo"].map(getRelic);
-const enemies = ["husk-raptor", "husk-shell", "husk-wing"].map(getRelic);
+const enemies = ["toby", "amo", "ripa"].map(getRelic);
 
 function input(nodeType: "normal" | "elite" | "horde"): ExpeditionBattleInputDto {
   return {

@@ -18,7 +18,7 @@ import { COLOR, textStyle } from "../ui/theme";
 import { chipPoints, drawGlassFade, drawHairline, drawLayer, drawVignette, HOLO } from "../ui/holo";
 import { EXPEDITION_LAYOUT, expeditionBackgroundFor, type ExpeditionBackgroundState } from "../ui/expeditionLayout";
 import { ExpeditionMapView } from "../ui/ExpeditionMapView";
-import { expeditionNodeRewardScore, type ExpeditionAugmentSelection } from "../core/expeditionRewards";
+import { type ExpeditionAugmentSelection } from "../core/expeditionRewards";
 import type { ExpeditionBattleInputDto, ExpeditionBossBattleInputDto } from "../core/expeditionBattle";
 import { ExpeditionAugmentPopup, type AugmentTargetPicker } from "../ui/ExpeditionAugmentPopup";
 import { expeditionAugmentBadges, expeditionAugmentRows } from "../ui/expeditionAugmentBadges";
@@ -275,7 +275,7 @@ export class ExpeditionScene extends Phaser.Scene {
       if (gained > 0) this.add.text(x, 263, `+ ${formatCurrency(gained)}`, textStyle({ role: "emphasis", size: 16, color: COLOR.accentText })).setOrigin(0.5);
     });
     // 이번 런이 주간 누적 점수에 보탠 몫이다. 판이 아니라 글자와 검은 테두리만으로 눈에 띈다.
-    const score = expeditionNodeRewardScore(rewards);
+    const score = expeditionManager.status().run?.normalNodeScoreTotal ?? 0;
     this.add.text(BASE_WIDTH / 2, 282, `점수 ${score.toLocaleString()}`, textStyle({ role: "emphasis", size: 22, color: "#ffffff" })).setOrigin(0.5).setStroke("#000000", 5);
   }
 

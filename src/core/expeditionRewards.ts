@@ -34,16 +34,27 @@ export function calculateExpeditionNodeRewards(input: { nodeType: ExpeditionNode
   return result;
 }
 
-/**
- * 일반 노드 클리어 보상을 주간 랭킹 누적 점수로 환산한다.
- *
- * 불사 보스에게 입힌 피해량(수만 단위)에 비하면 한 노드의 재화(수십~수백 단위)는 작지만,
- * 전투 한 번의 노력을 조금이라도 누적 점수에 보태 주간 보상 단계(EXPEDITION_CUMULATIVE_REWARD_STAGES)에
- * 기여하게 한다. 재화 종류를 가중하지 않고 그대로 더해, 새 재화가 추가돼도 이 표를 다시 조정할
- * 필요가 없게 한다.
- */
-export function expeditionNodeRewardScore(rewards: Readonly<Record<string, number>>): number {
-  return Math.max(0, Math.floor(Object.values(rewards).reduce((sum, amount) => sum + amount, 0)));
+/** 한 판 점수의 두 독립 구성 요소와 합계를 함께 노출해 재화 보상과 점수를 혼동하지 않게 한다. */
+export interface ExpeditionRunScore {
+  /** 보스 전까지 확정된 일반 전투 노드 점수의 합이다. */
+  normalNodeScoreTotal: number;
+  /** 폰토스 전투에서 서버가 행동 재현으로 확정한 피해 점수다. */
+  bossDamageScore: number;
+  /** 한 판 점수 = 일반 노드 누적 점수 + 폰토스 피해 점수다. */
+  runScore: number;
+}
+
+/** 전투 결과와 층만으로 일반 노드 하나의 점수를 계산하며 재화 보상 객체는 입력받지 않는다. */
+export function calculateExpeditionNormalNodeScore(input: { floor: number; relicHp: readonly number[] }): number {
+  if (!Number.isFinite(input.floor) || input.floor < 0 || input.relicHp.some((hp) => !Number.isFinite(hp) || hp < 0)) return 0;
+  return Math.max(0, Math.floor(input.floor) * 1_000 + Math.round(input.relicHp.reduce((sum, hp) => sum + hp, 0) * 10));
+}
+
+/** 서버·매니저·정산이 공유하는 유일한 한 판 합산식이다. */
+export function calculateExpeditionRunScore(input: { normalNodeScoreTotal: number; bossDamageScore: number }): ExpeditionRunScore {
+  const normalNodeScoreTotal = Math.max(0, Math.floor(input.normalNodeScoreTotal));
+  const bossDamageScore = Math.max(0, Math.floor(input.bossDamageScore));
+  return { normalNodeScoreTotal, bossDamageScore, runScore: normalNodeScoreTotal + bossDamageScore };
 }
 
 /** 저장 가능한 증강 확정 결과다. 전체 증강에는 대상 ID를 두지 않는다. */

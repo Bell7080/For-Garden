@@ -70,6 +70,10 @@ function normalizeExpeditionRun(value: unknown, ownedIds: readonly string[]): Ex
   // v23 런은 보스 비동기 멱등 키가 없으므로 아직 시작하지 않은 상태로 보충한다.
   run.bossSubmissionId ??= null;
   run.bossSettlementId ??= null;
+  // 구버전의 단일 최고값은 구성 범위를 복원할 수 없으므로 일반 노드 합계로만 안전하게 이관한다.
+  run.normalNodeScoreTotal ??= run.bestScore ?? 0;
+  run.bossDamageScore ??= run.bossDamage ?? 0;
+  run.runScore ??= run.normalNodeScoreTotal + run.bossDamageScore;
   const nodeIds = Array.isArray(run.nodes) ? run.nodes.map(({ id }) => id) : [];
   const rewardsValid = run.pendingRewards && Object.entries(run.pendingRewards).every(([id, amount]) => EXPEDITION_REWARD_IDS.includes(id as never) && Number.isFinite(amount) && amount >= 0);
   const relicIds = Array.isArray(run.relics) ? run.relics.map(({ relicId }) => relicId) : [];
@@ -81,7 +85,7 @@ function normalizeExpeditionRun(value: unknown, ownedIds: readonly string[]): Ex
     && Array.isArray(run.selectedAugmentIds) && run.selectedAugmentIds.every((id) => EXPEDITION_AUGMENT_IDS.includes(id as never))
     && Array.isArray(run.selectedAugments) && run.selectedAugments.every(({ augmentId, targetRelicId }) => EXPEDITION_AUGMENT_IDS.includes(augmentId as never) && (targetRelicId === undefined || relicIds.includes(targetRelicId)))
     && (run.pendingAugmentReward === null || (typeof run.pendingAugmentReward.seed === "string" && nodeIds.includes(run.pendingAugmentReward.nodeId) && Number.isInteger(run.pendingAugmentReward.round) && run.pendingAugmentReward.round > 0 && Number.isInteger(run.pendingAugmentReward.totalRounds) && run.pendingAugmentReward.totalRounds >= run.pendingAugmentReward.round && Array.isArray(run.pendingAugmentReward.offers)))
-    && rewardsValid && Number.isFinite(run.bossDamage) && run.bossDamage >= 0 && Number.isFinite(run.bestScore) && run.bestScore >= 0 && typeof run.settled === "boolean" && (run.settlementId === null || typeof run.settlementId === "string")
+    && rewardsValid && Number.isFinite(run.bossDamage) && run.bossDamage >= 0 && Number.isFinite(run.normalNodeScoreTotal) && run.normalNodeScoreTotal >= 0 && Number.isFinite(run.bossDamageScore) && run.bossDamageScore >= 0 && Number.isFinite(run.runScore) && run.runScore >= 0 && Number.isFinite(run.bestScore) && run.bestScore >= 0 && typeof run.settled === "boolean" && (run.settlementId === null || typeof run.settlementId === "string")
     && (run.bossSubmissionId === null || typeof run.bossSubmissionId === "string") && (run.bossSettlementId === null || typeof run.bossSettlementId === "string");
   return valid ? cloneExpeditionRun(run) : null;
 }

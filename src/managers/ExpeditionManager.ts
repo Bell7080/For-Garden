@@ -1,6 +1,6 @@
 import { generateExpeditionMap } from "../core/expeditionMap";
 import { applyExpeditionAfterBattleHeal, applyExpeditionRest, expeditionAfterBattleHealPercent } from "../core/expeditionAugments";
-import { expeditionRewardRandom, expeditionRewardRule, generateExpeditionAugmentOffers, validateExpeditionAugmentChoice, type ExpeditionAugmentSelection } from "../core/expeditionRewards";
+import { calculateExpeditionNormalNodeScore, calculateExpeditionRunScore, expeditionRewardRandom, expeditionRewardRule, generateExpeditionAugmentOffers, validateExpeditionAugmentChoice, type ExpeditionAugmentSelection } from "../core/expeditionRewards";
 import type { ExpeditionNodeType } from "../core/expeditionMap";
 import type { SkirmishRelicResult } from "../core/skirmish";
 import { EXPEDITION_AUGMENT_IDS, EXPEDITION_REST_RULES, EXPEDITION_WEEKLY_POLICY } from "../data/expedition";
@@ -58,7 +58,7 @@ export class ExpeditionManager {
     if (this.state.expedition.run?.settled) this.commit({ ...this.state.expedition, run: null });
     const run = this.state.expedition.run;
     const copy = run ? structuredClone(run) : null;
-    return { ...this.state.expedition, run: copy, active: copy ? { relicIds: copy.relics.map(({ relicId }) => relicId) as [string, string, string], score: copy.bestScore } : null, quickAvailable: this.state.expedition.bestScore > 0 && run === null, canStartRun: this.state.expedition.playsThisWeek < EXPEDITION_WEEKLY_POLICY.maxPlaysPerWeek };
+    return { ...this.state.expedition, run: copy, active: copy ? { relicIds: copy.relics.map(({ relicId }) => relicId) as [string, string, string], score: copy.runScore } : null, quickAvailable: this.state.expedition.bestScore > 0 && run === null, canStartRun: this.state.expedition.playsThisWeek < EXPEDITION_WEEKLY_POLICY.maxPlaysPerWeek };
   }
 
   /** 정확히 세 보유 렐릭을 검증하고 서버 주간 키가 포함된 결정적 맵을 생성한다. */
@@ -72,7 +72,7 @@ export class ExpeditionManager {
     const weekKey = expeditionWeekKey(this.serverNow());
     const mapSeed = `${weekKey}:${this.state.expedition.playsThisWeek + 1}`;
     const map = generateExpeditionMap({ seed: mapSeed, random: seededRandom(mapSeed) });
-    const run: ExpeditionRunState = { runId: `run:${mapSeed}`, weekKey, mapSeed, nodes: map.nodes, currentNodeId: null, visitedNodeIds: [], relics: relicIds.map((relicId) => ({ relicId, currentHp: 100, alive: true })) as ExpeditionRunState["relics"], selectedAugmentIds: [], selectedAugments: [], pendingAugmentReward: null, pendingRewards: {}, lastNodeRewards: null, bossDamage: 0, bestScore: 0, settled: false, settlementId: null, bossSubmissionId: null, bossSettlementId: null };
+    const run: ExpeditionRunState = { runId: `run:${mapSeed}`, weekKey, mapSeed, nodes: map.nodes, currentNodeId: null, visitedNodeIds: [], relics: relicIds.map((relicId) => ({ relicId, currentHp: 100, alive: true })) as ExpeditionRunState["relics"], selectedAugmentIds: [], selectedAugments: [], pendingAugmentReward: null, pendingRewards: {}, lastNodeRewards: null, bossDamage: 0, normalNodeScoreTotal: 0, bossDamageScore: 0, runScore: 0, bestScore: 0, settled: false, settlementId: null, bossSubmissionId: null, bossSettlementId: null };
     // 출발 검증의 단일 경계에서 런과 마지막 원정 편성을 같은 저장으로 확정한다.
     this.commit({ ...this.state.expedition, lastParty: [...relicIds], run });
     return { ok: true, run: structuredClone(run) };
@@ -108,7 +108,7 @@ export class ExpeditionManager {
       visitedNodeIds: route.slice(0, -1).map(({ id }) => id),
       relics: relicIds.map((relicId) => ({ relicId, currentHp: 100, alive: true })) as ExpeditionRunState["relics"],
       selectedAugmentIds: [], selectedAugments: [], pendingAugmentReward: null,
-      pendingRewards: {}, lastNodeRewards: null, bossDamage: 0, bestScore: 0,
+      pendingRewards: {}, lastNodeRewards: null, bossDamage: 0, normalNodeScoreTotal: 0, bossDamageScore: 0, runScore: 0, bestScore: 0,
       settled: false, settlementId: null,
       bossSubmissionId: `${runId}:${boss.id}:boss-score`,
       bossSettlementId: `${runId}:boss-completed`,
@@ -129,7 +129,11 @@ export class ExpeditionManager {
     const next = structuredClone(run); next.currentNodeId = nodeId; next.visitedNodeIds.push(nodeId);
     next.relics.forEach((relic, index) => { relic.currentHp = update.relicHp[index]; relic.alive = relic.currentHp > 0; });
     if (update.augmentId && !next.selectedAugmentIds.includes(update.augmentId)) next.selectedAugmentIds.push(update.augmentId);
-    next.bossDamage += update.bossDamage ?? 0; next.bestScore = Math.max(next.bestScore, update.score ?? 0);
+    // 방문 표식과 같은 commit에서 노드 점수를 한 번만 누적한다. 보스 재응답은 누적이 아니라 확정값이다.
+    if (node.type === "boss") next.bossDamageScore = Math.max(next.bossDamageScore, update.bossDamage ?? update.score ?? 0);
+    else next.normalNodeScoreTotal += update.score ?? 0;
+    const score = calculateExpeditionRunScore(next);
+    next.bossDamage = score.bossDamageScore; next.runScore = score.runScore; next.bestScore = score.runScore;
     // 마지막 생존자가 쓰러지면 해당 전투 결과와 함께 런도 즉시 종료 상태로 확정한다.
     // 전멸도 정산 API 호출 전에는 보상 이전이 끝난 상태가 아니므로 런을 열어 둔다.
     this.commit({ ...this.state.expedition, run: next }); return true;
@@ -152,8 +156,10 @@ export class ExpeditionManager {
     // 결과 순서 검증 뒤 만든 회복 스냅샷을 completeNode가 방문 표식과 같은 commit으로 저장한다.
     const healed = applyExpeditionAfterBattleHeal(results, healPercent);
     // 점수는 결과 DTO와 서버 생성 맵의 층만으로 계산해 씬이 임의 점수를 주입하지 못하게 한다.
-    const score = node.floor * 1_000 + Math.round(results.reduce((sum, { currentHp }) => sum + currentHp, 0) * 10);
-    return this.completeNode(nodeId, { relicHp: healed.map(({ currentHp }) => currentHp), score });
+    const relicHp = healed.map(({ currentHp }) => currentHp);
+    // 보스 피해는 제출 API가 확정하므로 일반 전투 노드만 이 순수 공식으로 누적한다.
+    const score = node.type === "boss" ? 0 : calculateExpeditionNormalNodeScore({ floor: node.floor, relicHp });
+    return this.completeNode(nodeId, { relicHp, score });
   }
 
   /** 보스를 누르는 순간 두 멱등 키를 먼저 저장해 어느 비동기 경계에서 종료돼도 복원한다. */

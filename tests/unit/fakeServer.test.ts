@@ -588,17 +588,20 @@ describe("FakeServer 원정 정산", () => {
     await expect(server.completeExpeditionNode({ ...request, requestId: "node-forged-retry" })).rejects.toMatchObject({ code: "EXPEDITION_RUN_NOT_FOUND" });
   });
 
-  it("일반 노드 클리어 재화는 주간 순위(bestScore)가 아니라 누적 점수에만 조금씩 쌓인다", async () => {
+  it("일반 노드 점수는 재화 합계가 아니라 전투 결과로 계산되고 재요청에도 한 번만 쌓인다", async () => {
     const state = makeSession();
     const manager = new (await import("../../src/managers/ExpeditionManager")).ExpeditionManager(state, { save: () => undefined }, () => new Date("2026-08-25T12:00:00Z"));
     manager.start(["anky", "rex", "dodo"]);
     const node = state.expedition.run!.nodes.find(({ floor }) => floor === 1)!;
     const server = new FakeServer(state, { latencyMs: 0, random: () => 0.5, now: () => new Date("2026-08-25T12:00:00Z") });
     const response = await server.completeExpeditionNode({ requestId: "node-score", runId: state.expedition.run!.runId, nodeId: node.id, relicHp: [100, 90, 80] });
-    const expectedScore = Object.values(response.rewards).reduce((sum, amount) => sum + amount, 0);
-    expect(expectedScore).toBeGreaterThan(0);
+    const rewardTotal = Object.values(response.rewards).reduce((sum, amount) => sum + amount, 0);
+    const expectedScore = 1_000 + (100 + 90 + 80) * 10;
+    expect(rewardTotal).not.toBe(expectedScore);
+    await server.completeExpeditionNode({ requestId: "node-score", runId: state.expedition.run!.runId, nodeId: node.id, relicHp: [100, 90, 80] });
     const weekly = await server.getExpeditionWeeklyBest();
     expect(weekly.cumulativeScore).toBe(expectedScore);
+    expect(state.expedition.run!.normalNodeScoreTotal).toBe(expectedScore);
     // 순위 산정 기준(bestScore)은 여전히 보스 피해량만 반영한다.
     expect(weekly.bestScore).toBe(0);
   });
@@ -627,7 +630,7 @@ describe("FakeServer 원정 정산", () => {
   it("포기 정산은 런 점수를 주간 최고점에 반영하지 않고, 노드 진행 점수는 랭킹에도 반영하지 않는다", async () => {
     const state = makeSession();
     const manager = new (await import("../../src/managers/ExpeditionManager")).ExpeditionManager(state, { save: () => undefined }, () => new Date("2026-08-25T12:00:00Z"));
-    manager.start(["anky", "rex", "dodo"]); state.expedition.run!.bestScore = 88_000; state.expedition.bestScore = 12_000;
+    manager.start(["anky", "rex", "dodo"]); state.expedition.run!.runScore = 88_000; state.expedition.run!.normalNodeScoreTotal = 88_000; state.expedition.run!.bestScore = 88_000; state.expedition.bestScore = 12_000;
     const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-25T12:00:00Z") });
 
     await server.settleExpeditionRun({ runId: state.expedition.run!.runId, settlementId: "abandon-score", outcome: "abandoned" });
@@ -646,12 +649,19 @@ describe("FakeServer 원정 정산", () => {
     manager.start(["anky", "rex", "dodo"]);
     const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-25T12:00:00Z") });
     const runId = state.expedition.run!.runId;
+    // 폰토스 전에 일반 노드 하나를 서버에서 확정해 한 판 합산과 멱등 재시도를 함께 검증한다.
+    const normalNode = state.expedition.run!.nodes.find(({ floor }) => floor === 1)!;
+    await server.completeExpeditionNode({ requestId: "before-boss", runId, nodeId: normalNode.id, relicHp: [100, 90, 80] });
     const bossNode = state.expedition.run!.nodes.find(({ type }) => type === "boss")!;
     state.expedition.run!.bossSubmissionId = `${runId}:${bossNode.id}:boss-score`;
     // 실제 피해량 없이 각 렐릭의 공용 공속 쿨다운을 만족하는 기본 공격 입력이다.
     const bossActions = Array.from({ length: 5 }, (_, index) => ["anky", "rex", "dodo"].map((actorId) => ({ elapsedMs: index * 2_000, actorId, kind: "basic" as const }))).flat();
-    const score = await server.submitExpeditionBossScore({ requestId: state.expedition.run!.bossSubmissionId, runId, nodeId: bossNode.id, actions: bossActions });
-    manager.completeNode(bossNode.id, { relicHp: [0, 0, 0], score: score.score });
+    const request = { requestId: state.expedition.run!.bossSubmissionId!, runId, nodeId: bossNode.id, actions: bossActions };
+    const score = await server.submitExpeditionBossScore(request);
+    const repeated = await server.submitExpeditionBossScore(request);
+    expect(repeated).toEqual(score);
+    expect(score.runScore).toBe(score.nodeScoreTotal + score.bossDamageScore);
+    manager.completeNode(bossNode.id, { relicHp: [0, 0, 0], bossDamage: score.bossDamageScore });
 
     // 팀이 전멸해 "패배"로 끝나도(불사 보스는 애초에 이길 수 없다) 이미 입힌 피해는 그대로 남는다.
     await server.settleExpeditionRun({ runId, settlementId: "boss-then-wipe", outcome: "abandoned" });
@@ -664,7 +674,7 @@ describe("FakeServer 원정 정산", () => {
   it("20층 정상 완료 정산에서만 런 최고점을 주간 최고점으로 갱신한다", async () => {
     const state = makeSession();
     const manager = new (await import("../../src/managers/ExpeditionManager")).ExpeditionManager(state, { save: () => undefined }, () => new Date("2026-08-25T12:00:00Z"));
-    manager.start(["anky", "rex", "dodo"]); state.expedition.run!.bestScore = 88_000; state.expedition.bestScore = 12_000;
+    manager.start(["anky", "rex", "dodo"]); state.expedition.run!.runScore = 88_000; state.expedition.run!.normalNodeScoreTotal = 88_000; state.expedition.run!.bestScore = 88_000; state.expedition.bestScore = 12_000;
     const server = new FakeServer(state, { latencyMs: 0 });
 
     await server.settleExpeditionRun({ runId: state.expedition.run!.runId, settlementId: "boss-complete", outcome: "completed" });

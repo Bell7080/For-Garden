@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createSkirmish, stepSkirmish, type SkirmishEvent } from "../../src/core/skirmish";
 import { createExpeditionBossSkirmishConfig, type ExpeditionBossBattleInputDto } from "../../src/core/expeditionBattle";
+import { calculateExpeditionRunScore } from "../../src/core/expeditionRewards";
 import { resolveExpeditionBossBattle, type ExpeditionBossAction } from "../../src/core/expeditionBoss";
 import { getExpeditionNodeEnemies } from "../../src/data/expeditionEnemies";
 import { RELICS } from "../../src/data/relics";
@@ -66,6 +67,15 @@ describe("원정 보스 제출 왕복", () => {
       });
     }
   }
+
+  it("여러 일반 노드 뒤 폰토스 피해를 한 판 점수로 한 번만 합친다", () => {
+    const bossDamageScore = verify(["anky", "rex", "spino"], fightAndLog(["anky", "rex", "spino"], 1));
+    const nodeScoreTotal = 4_000 + 5_700 + 7_200;
+    const first = calculateExpeditionRunScore({ normalNodeScoreTotal: nodeScoreTotal, bossDamageScore });
+    const retry = calculateExpeditionRunScore({ normalNodeScoreTotal: nodeScoreTotal, bossDamageScore });
+    expect(first.runScore).toBe(nodeScoreTotal + bossDamageScore);
+    expect(retry).toEqual(first);
+  });
 
   it("한 행동이 남긴 뒤이은 타격은 행동으로 세지 않는다", () => {
     const actions = fightAndLog(["anky", "rex", "spino"], 1);

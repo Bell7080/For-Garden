@@ -400,7 +400,16 @@ export interface EnterEventStageResponse { eventId: string; stage: StageDef; ser
 /** 클라이언트 점수가 아니라 재연산 가능한 동작열만 받는 주간 보스 제출 계약이다. */
 export interface SubmitExpeditionBossScoreRequest { requestId: string; runId?: string; nodeId?: string; actions: ExpeditionBossAction[]; }
 /** 전멸 순간 서버가 확정한 점수와 최고/누적 기록이다. */
-export interface SubmitExpeditionBossScoreResponse { weekKey: string; score: number; bestScore: number; cumulativeScore: number; improved: boolean; endedAtMs: number; rankBefore: number | null; rankAfter: number; }
+export interface SubmitExpeditionBossScoreResponse {
+  weekKey: string;
+  /** 이전 클라이언트 호환용이며 runScore와 같다. */ score: number;
+  /** 이번 폰토스 전투에서 확정된 피해 점수만 담는다. */ bossDamageScore: number;
+  /** 이번 런에서 폰토스 전까지 확정된 일반 노드 점수 합이다. */ nodeScoreTotal: number;
+  /** 이번 한 판의 최종 점수로 nodeScoreTotal + bossDamageScore다. */ runScore: number;
+  /** 이번 주 한 판 최고 점수다. */ bestScore: number;
+  /** 주간 보상 트랙에 반영된 모든 확정 점수의 합이다. */ cumulativeScore: number;
+  improved: boolean; endedAtMs: number; rankBefore: number | null; rankAfter: number;
+}
 /** 주간 최고 점수와 월요일 00:00 UTC 초기화 경계를 함께 전달한다. */
 /** 운영 보상 수치와 수령 상태는 서버 스냅샷만 화면의 기준으로 삼는다. */
 export interface ExpeditionRewardStageDto { id: string; threshold: number; reward: { currency: "gold" | "fossil" | "gems"; amount: number }; claimed: boolean; }

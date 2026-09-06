@@ -8,7 +8,8 @@ export type Side = "player" | "enemy";
  * 이름·호칭·엠블럼 같은 내용은 `src/data/factions.ts`가 소유한다. 코어는 데이터 표를 알 필요가
  * 없으므로 판별 가능한 id만 둔다. 엠블럼 파일 이름도 이 id와 같다.
  */
-export type SquadId = "fang" | "gear" | "eye" | "rune" | "rogue";
+/** 아군 자치 스쿼드와 적대 세력을 함께 식별하는 영구 소속 ID다. */
+export type SquadId = "fang" | "gear" | "eye" | "rune" | "rogue" | "annihilation" | "abyssal-crown";
 
 /** 속성. 다섯 속성은 서로 정확히 두 속성을 이기고 나머지 두 속성에 진다. */
 export type Element = "fire" | "water" | "grass" | "earth" | "wind";
@@ -1072,7 +1073,7 @@ export interface RelicDef {
     weight: string;
   };
   /**
-   * 소속 자치 스쿼드.
+   * 소속 자치 스쿼드 또는 적대 세력.
    *
    * 전투 role·속성처럼 코드가 강제하는 값이 아니라 **서사 값**이다. `docs/factions.md`의
    * 배정표가 원문이고, 여기 없는 렐릭이 생기면 그 문서에 근거 한 줄과 함께 추가한다.
@@ -1085,7 +1086,7 @@ export interface RelicDef {
    * 불리는지가 있어야 소속이 성격이 된다.
    */
   squadNote?: string;
-  /** 그 개체가 주인공을 부르는 말. 비우면 소속 스쿼드의 대표 호칭을 쓴다. */
+  /** 그 개체가 주인공을 부르는 말. 봉인된 적은 관계가 공개되지 않았으므로 의도적으로 비운다. */
   researcherTitle?: string;
   /** 미보유 상태에서도 공개할 수 있는 외형 중심의 짧은 도감 요약이다. 발굴 경위나 복원 후 생활 관찰은 넣지 않는다. */
   catalogSummary: string;

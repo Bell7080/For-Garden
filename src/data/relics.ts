@@ -1305,13 +1305,13 @@ export const RELICS: RelicDef[] = [
     },
   },
 
-  // --- 적 개체. 폭주해 이터널 시티를 위협하는 실패작들이다. ---
+  // --- 적 개체. 아군 5대 자치 스쿼드가 아니라 각자의 적대 세력에만 배정한다. ---
   // 영구 캐릭터 ID는 외형을 뜻하던 husk-* 대신 이름과 같은 ID를 써 저장·편성 데이터의
   // 정체성을 분명히 한다. 초상/전신 asset ID는 로더 키와 실제 zip 계약이므로 그대로 둔다.
   {
     id: "toby",
     enemyOnly: true,
-    squad: "gear",
+    squad: "annihilation",
     name: "토비",
     // 공멸 내부 프로젝트 번호와 도감 개체번호를 혼동하지 않도록 별도의 연속 번호를 쓴다.
     specimenNumber: "202",
@@ -1334,8 +1334,8 @@ export const RELICS: RelicDef[] = [
     // 복원 후 성격 관찰은 사고를 낸 순서와 뒤늦은 수습 행동만 기록한다.
     unlockRecord: { status: "recorded", text: "복원 후 토비는 낯선 장치를 보면 허락을 기다리지 않고 먼저 집게발을 댄다. 작동시킨 뒤에야 멈출 방법을 찾느라 뛰어다니며, 넘어뜨린 장비는 아무도 보기 전에 제자리로 돌려놓으려 한다. 훈련에서는 힘을 줄이겠다고 매번 다짐하지만 손잡이나 표적을 또 부순 다음에야 힘 조절에 실패했다는 것을 알아차린다." },
     // 복원 후 성격 관찰을 소속 내 행동으로 이어 쓰되 발굴 상태는 반복하지 않는다.
-    squadNote: "나이트 기어의 장비 회수 담당. 잠긴 장치를 먼저 건드려 일을 키우고, 뒤늦게 부품을 모아 원래 자리로 돌려놓느라 철수 대열의 맨 뒤에 선다.",
-    researcherTitle: "연구원님",
+    squadNote: "공멸의 정면 돌파 담당. 잠긴 방벽을 집게발로 먼저 뜯어 일을 키우지만, 흩어진 장비까지 주워 다음 돌입로를 열어 둔다.",
+    researcherTitle: "연구원",
     rarity: "R",
     portraitAssetId: "toby",
     // 원종·속성·역할은 발굴 및 복원 분류 데이터이며 성격을 직접 표현하지 않는다.
@@ -1393,7 +1393,7 @@ export const RELICS: RelicDef[] = [
   {
     id: "amo",
     enemyOnly: true,
-    squad: "rogue",
+    squad: "annihilation",
     name: "아모",
     // 도디의 도감 001번과 공멸 프로젝트 001을 구분하면서 공멸 표본군의 첫 번호를 표시한다.
     specimenNumber: "201",
@@ -1416,8 +1416,8 @@ export const RELICS: RelicDef[] = [
     // 복원 후 성격 관찰은 위험에 숨는 반응과 동료를 위해 앞을 막는 행동만 기록한다.
     unlockRecord: { status: "recorded", text: "복원 후 아모는 큰 소리나 위험 신호가 나면 곧바로 몸을 껍질 안으로 감춘다. 혼자 있을 때는 좀처럼 다시 나오지 않지만, 뒤에 동료가 남아 있으면 한참 망설이다 껍질을 끌고 앞으로 나와 길을 막는다. 상황이 끝난 뒤에는 자신이 먼저 나섰다는 말을 부정하며 다시 얼굴을 숨긴다." },
     // 복원 후 성격 관찰을 소속 내 행동으로 이어 쓰되 발굴 상태는 반복하지 않는다.
-    squadNote: "쁘띠 로그의 후미 방벽. 위험하면 가장 먼저 껍질에 숨지만, 뒤처진 동료가 보이면 마지못해 돌아와 모두 지나갈 때까지 앞을 막는다.",
-    researcherTitle: "대장님",
+    squadNote: "공멸의 후미 방벽. 포격에는 먼저 껍질을 닫지만 작은 동료가 남으면 돌아와, 침투조가 모두 빠질 때까지 통로를 몸으로 막는다.",
+    researcherTitle: "연구원",
     rarity: "R",
     portraitAssetId: "amo",
     // 원종·속성·역할은 발굴 및 복원 분류 데이터이며 성격을 직접 표현하지 않는다.
@@ -1475,7 +1475,7 @@ export const RELICS: RelicDef[] = [
   {
     id: "ripa",
     enemyOnly: true,
-    squad: "eye",
+    squad: "annihilation",
     name: "리파",
     // 공멸 프로젝트 계보와 분리된 도감 개체번호이며 세 표본의 복원 순서를 유지한다.
     specimenNumber: "203",
@@ -1498,8 +1498,8 @@ export const RELICS: RelicDef[] = [
     // 복원 후 성격 관찰은 숨었다 나타나는 장난과 동료 물건을 옮기는 행동만 기록한다.
     unlockRecord: { status: "recorded", text: "복원 후 리파는 모래나 얕은 물속에 몸을 숨긴 채 동료가 가까이 오기를 기다린다. 갑자기 솟아올라 놀래킨 뒤에는 웃으며 달아나고, 자리를 비운 사이 동료의 장갑이나 기록 도구를 다른 선반으로 옮겨 놓는다. 물건을 찾는 모습을 충분히 지켜본 다음에야 숨겨 둔 곳을 가리킨다." },
     // 복원 후 성격 관찰을 소속 내 행동으로 이어 쓰되 발굴 상태는 반복하지 않는다.
-    squadNote: "시그널 아이의 수변 관측 보조. 모래나 물속에 숨어 신호를 기다리면서도 동료 장비를 슬쩍 옮겨 놓아, 교대 때마다 장비 위치를 다시 확인하게 만든다.",
-    researcherTitle: "선배",
+    squadNote: "공멸의 잠복 지원가. 모래와 물속을 오가며 회복 파장을 건네고, 동료 장비를 숨겼다가 필요한 순간 버프 신호와 함께 되돌려 준다.",
+    researcherTitle: "연구원",
     rarity: "R",
     portraitAssetId: "ripa",
     // 원종·속성·역할은 발굴 및 복원 분류 데이터이며 성격을 직접 표현하지 않는다.
@@ -1561,7 +1561,7 @@ export const RELICS: RelicDef[] = [
     // 코마는 1-10에서만 처음 등장하지만 스테이지 전용 보정이 아닌 독립 영구 캐릭터다.
     id: "husk-koma",
     enemyOnly: true,
-    squad: "gear",
+    squad: "annihilation",
     name: "코마",
     // 도감 개체번호는 렉시아의 072와 충돌하지 않으며, 공멸 프로젝트 번호 072는 아래 이름에 보존한다.
     specimenNumber: "204",
@@ -1571,6 +1571,7 @@ export const RELICS: RelicDef[] = [
     fossilRecord: "오디디 격리 연구동의 파손된 배양조에서 소형 골격과 폭발 잔류물을 회수했다. 빠른 이동을 위한 경량 복원 흔적이 사지 관절마다 남아 있다.",
     catalogSummary: "가벼운 체형과 긴 꼬리로 급습하는 콤프소그나투스 기반 공멸 선봉.",
     unlockRecord: { status: "sealed", reason: "restricted" },
+    // 봉인된 적은 소속만 공개하며 squadNote와 researcherTitle은 관계 기록 해제 전까지 넣지 않는다.
     rarity: "R",
     portraitAssetId: "koma",
     origin: "콤프소그나투스",
@@ -1853,7 +1854,7 @@ export const RELICS: RelicDef[] = [
     // 원정 최종층의 단독 보스. 리바이어던 멜빌레이의 거대한 턱과 심해 포식자 모티브를 담는다.
     id: "pontos",
     enemyOnly: true,
-    squad: "fang",
+    squad: "abyssal-crown",
     name: "폰토스",
     specimenNumber: "220",
     projectName: "ABYSSAL CROWN",
@@ -1862,6 +1863,7 @@ export const RELICS: RelicDef[] = [
     fossilRecord: "심해 퇴적층의 저산소 점토가 거대한 턱뼈와 척추 마디를 보존했다. 압력 복원 연구에서 고래형 골격의 비정상적인 내구성이 확인됐다.",
     catalogSummary: "리바이어던 멜빌레이를 모티브로 복원된 거대 고래형 심해 개체.",
     unlockRecord: { status: "sealed", reason: "restricted" },
+    // 봉인된 적은 소속만 공개하며 squadNote와 researcherTitle은 관계 기록 해제 전까지 넣지 않는다.
     rarity: "SSR",
     portraitAssetId: "pontos",
     origin: "리바이어던 멜빌레이",

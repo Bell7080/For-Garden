@@ -9,10 +9,10 @@ describe("원정 노드 적 편성", () => {
     const elite = getExpeditionNodeEnemies("elite", 4);
 
     expect(normal.map(({ id }) => id)).toEqual(["toby", "amo", "ripa"]);
-    expect(elite.map(({ id }) => id)).toEqual(["amo", "toby", "ripa"]);
+    expect(elite.map(({ id }) => id)).toEqual(["amo", "husk-koma", "ripa"]);
     expect(expeditionEnemyLevel("elite", 4)).toBe(7);
     // 같은 원본도 더 높은 조우 레벨에서는 실제 전투 수치가 함께 높아져야 한다.
-    expect(elite[1].stats.hp).toBeGreaterThan(normal[0].stats.hp);
+    expect(elite[0].stats.hp).toBeGreaterThan(normal[1].stats.hp);
   });
 
   it("정보판 편성은 실제 일반·정예·무리 전투 개체 수를 그대로 보여 준다", () => {

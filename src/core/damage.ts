@@ -64,7 +64,7 @@ export function computeDamageContribution(attacker: Combatant, input: DamageInpu
 }
 
 /** 실시간 난전의 공격력, 방어, 치명타, 각성, 야성, 속성 순서를 고정한 피해 공식이다. */
-export function computeDamage(attacker: Combatant, target: Combatant, input: DamageInput, targetIsFront: boolean): number {
+export function computeDamage(attacker: Combatant, target: Combatant, input: DamageInput): number {
   // 고정 피해는 방어·저항을 0으로 두고 지나간다. 속성 상성과 대상 경감은 그대로 거친다.
   const defense = input.ignoresDefense ? 0 : input.damageType === "physical" ? target.def.stats.def : target.def.stats.res;
   const critical = input.isCritical ? attacker.def.stats.critDamage / 100 : 1;
@@ -72,12 +72,12 @@ export function computeDamage(attacker: Combatant, target: Combatant, input: Dam
   const awakened = 1 + (input.kind === "ultimate" ? opened.ultimateDamage : input.kind === "basic" ? opened.basicDamage : 0);
   const raw = offenseValue(attacker, input) * critical * awakened * (1 + ferocityDamageBonus(attacker.ferocity));
   const afterDefense = (raw * 100) / (100 + defense);
-  const guard = targetIsFront && target.def.passive.kind === "frontGuard" ? 1 - target.def.passive.value / 100 : 1;
-  return Math.max(1, Math.round(afterDefense * guard * elementMultiplier(effectiveElement(attacker.def), effectiveElement(target.def))));
+  // 위치와 무관한 공용 방어·속성 공식만 적용한다. 특정 개체의 전방 경감은 더 이상 숨은 배율로 끼우지 않는다.
+  return Math.max(1, Math.round(afterDefense * elementMultiplier(effectiveElement(attacker.def), effectiveElement(target.def))));
 }
 
 /** 대상이 있으면 실제 방어를 적용하고, 없으면 도감에 표시할 스탯 배율만 반환한다. */
-export function previewSkillDamage(attacker: Combatant, skill: Skill, target?: Combatant, targetIsFront = false): DamagePreview {
+export function previewSkillDamage(attacker: Combatant, skill: Skill, target?: Combatant): DamagePreview {
   // 순수 회복기는 피해 미리보기 경계에 들어올 수 없으며 호출부가 healing 계약을 표시해야 한다.
   if (!("damageType" in skill) || skill.damageType === undefined || skill.power === undefined) {
     throw new TypeError("비공격 스킬은 피해를 미리 볼 수 없습니다.");
@@ -101,5 +101,5 @@ export function previewSkillDamage(attacker: Combatant, skill: Skill, target?: C
       label: "피해량",
     };
   }
-  return { kind: "damage", amount: computeDamage(attacker, target, { ...skill, isCritical: false }, targetIsFront), label: "예상 피해" };
+  return { kind: "damage", amount: computeDamage(attacker, target, { ...skill, isCritical: false }), label: "예상 피해" };
 }

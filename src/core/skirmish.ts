@@ -1131,7 +1131,6 @@ function applyButcher(
     { ...attacker, def: offensiveDefinition(attacker) },
     defensiveDefinition(target, state),
     { power: effect.burstPower, damageType: "physical", scalingStat: "atk", isCritical: false, kind: "basic" },
-    true,
   )));
   const resolution = resolveReceivedDamage(target, raw);
   const hpBefore = target.hp;
@@ -1186,7 +1185,6 @@ function applyVandalism(
     { ...attacker, def: offensiveDefinition(attacker) },
     defensiveDefinition(target, state),
     { power: effect.burstPower, damageType: "magical", scalingStat: "ap", isCritical: false, kind: "basic" },
-    true,
   )));
   const resolution = resolveReceivedDamage(target, raw);
   const hpBefore = target.hp;
@@ -1478,7 +1476,7 @@ function tickGraffitiAura(fighter: Fighter, dt: number, state: SkirmishState, ev
   let struck = 0;
   for (const other of state.fighters) {
     if (other.side === fighter.side || !isFighterAlive(other) || distance(fighter, other) > trait.radius) continue;
-    const raw = Math.max(1, Math.round(computeDamage(attacker, defensiveDefinition(other, state), input, true)));
+    const raw = Math.max(1, Math.round(computeDamage(attacker, defensiveDefinition(other, state), input)));
     const resolution = resolveReceivedDamage(other, raw);
     const hpBefore = other.hp;
     const shieldBefore = other.shield.amount; const shieldProviderId = other.shield.providerId;
@@ -1526,7 +1524,7 @@ function tickArtChannel(fighter: Fighter, dt: number, state: SkirmishState, even
   const input = { ...ultimate, isCritical: false, kind: "ultimate" as const };
   for (const other of state.fighters) {
     if (other.side === fighter.side || !isFighterAlive(other)) continue;
-    const raw = Math.max(1, Math.round(computeDamage(attacker, defensiveDefinition(other, state), input, true)));
+    const raw = Math.max(1, Math.round(computeDamage(attacker, defensiveDefinition(other, state), input)));
     const resolution = resolveReceivedDamage(other, raw);
     const hpBefore = other.hp;
     const shieldBefore = other.shield.amount; const shieldProviderId = other.shield.providerId;
@@ -1661,7 +1659,6 @@ function poisonAmountPerSecond(attacker: Fighter, target: Fighter, effect: Extra
       damageType: "magical",
       isCritical: false,
     },
-    true,
   )));
 }
 
@@ -2044,7 +2041,7 @@ function triggerCombatAugments(state: SkirmishState, owner: Fighter, trigger: Ex
       const qualified = payload.requiresStatus === "curse" ? target.curse !== null : target.stunnedFor > 0 || target.frozen !== null;
       if (!qualified || !consumeAugmentTrigger(state, owner, key, effect)) continue;
       const skill: Skill = { ...owner.def.basic, damageType: payload.damageType, power: payload.percent };
-      const raw = Math.max(1, Math.round(computeDamage({ ...owner, def: offensiveDefinition(owner) }, defensiveDefinition(target, state), { ...skill, kind: "basic", isCritical: false }, true)));
+      const raw = Math.max(1, Math.round(computeDamage({ ...owner, def: offensiveDefinition(owner) }, defensiveDefinition(target, state), { ...skill, kind: "basic", isCritical: false })));
       const resolution = resolveReceivedDamage(target, raw); const hpBefore = target.hp; const applied = applyDamage(target, resolution.applied, events, state);
       addContribution(state.contributions, owner.id, "attack", hpBefore - target.hp, payload.damageType === "magical" ? "abilityPower" : "attackPower");
       events.push({ kind: "attack", attackerId: owner.id, targetId: target.id, skill: "transfer", amount: applied, contributionAmount: hpBefore - target.hp, critical: false, animate: false, damageType: payload.damageType, mitigated: resolution.reduced < resolution.raw });
@@ -2398,7 +2395,7 @@ function applyShimmerMark(attacker: Fighter, target: Fighter, state: SkirmishSta
   attacker.shimmerMarkTargetId = target.id;
 
   const input = { power: passive.value, damageType: "magical" as const, scalingStat: "ap" as const, isCritical: false, kind: "basic" as const };
-  const raw = computeDamage(attacker, defensiveDefinition(target, state), input, true);
+  const raw = computeDamage(attacker, defensiveDefinition(target, state), input);
   const contributionAmount = computeDamageContribution(attacker, input);
   const resolution = resolveReceivedDamage(target, raw);
   const amount = resolution.applied;
@@ -2564,7 +2561,7 @@ function triggerCrescendoStaccato(state: SkirmishState, target: Fighter, events:
     // 이 함수의 호출 조건인 실제 기본 공격과 구별되며, 추가 스타카토가 다시 재귀하지 않는다.
     const raw = computeDamage(mette, defensiveDefinition(target, state), {
       power: trait.damagePercent, damageType: "magical", scalingStat: "atk", isCritical: false, kind: "basic",
-    }, true);
+    });
     const contributionAmount = computeDamageContribution(mette, {
       power: trait.damagePercent, damageType: "magical", scalingStat: "atk", isCritical: false, kind: "basic",
     });
@@ -2979,7 +2976,7 @@ function strike(
         power: splashTrait.defenseDamagePercent,
         scalingStat: "def",
         damageType: "physical",
-      }, true)
+      })
     : 0;
   // 주기가 채워지는 한 방(토리카의 셋째 뿔)에만 얹히는 몫도 같은 물리 피해 공식을 거친다 —
   // 여기서만 따로 계산하면 속성 상성과 대상 방어력이 본 타격과 갈린다.
@@ -2993,9 +2990,9 @@ function strike(
         damageType: "physical" as const,
       }
     : undefined;
-  const periodicBonus = periodicBonusInput ? computeDamage(damageAttacker, damageTarget, periodicBonusInput, true) : 0;
+  const periodicBonus = periodicBonusInput ? computeDamage(damageAttacker, damageTarget, periodicBonusInput) : 0;
   // 원정 공격력은 전투 스냅샷에 이미 반영됐으므로 공용 피해 공식에서 다시 곱하지 않는다.
-  const rawAmount = Math.max(1, Math.round(computeDamage(damageAttacker, damageTarget, damageInput, true) + defenseBonus + periodicBonus));
+  const rawAmount = Math.max(1, Math.round(computeDamage(damageAttacker, damageTarget, damageInput) + defenseBonus + periodicBonus));
   const contributionAmount = Math.max(0, computeDamageContribution(damageAttacker, damageInput)
     + (defenseBonus > 0 ? computeDamageContribution(attacker, { ...damageInput, power: splashTrait.effectId === "splashDamage" ? splashTrait.defenseDamagePercent ?? 0 : 0, scalingStat: "def", damageType: "physical" }) : 0)
     + (periodicBonusInput ? computeDamageContribution(damageAttacker, periodicBonusInput) : 0));
@@ -3192,8 +3189,8 @@ function strike(
         power: splashTrait.defenseDamagePercent,
         scalingStat: "def",
         damageType: "physical",
-      }, true);
-      const secondaryBase = computeDamage(attacker, defensiveSecondary, damageInput, true) * splashTrait.damagePercent / 100 + secondaryDefenseBonus;
+      });
+      const secondaryBase = computeDamage(attacker, defensiveSecondary, damageInput) * splashTrait.damagePercent / 100 + secondaryDefenseBonus;
       const splashContribution = Math.max(0, (computeDamageContribution(attacker, damageInput) * splashTrait.damagePercent / 100
         + (splashTrait.defenseDamagePercent === undefined ? 0 : computeDamageContribution(attacker, { ...damageInput, power: splashTrait.defenseDamagePercent, scalingStat: "def", damageType: "physical" }))));
       const splashResolution = resolveReceivedDamage(secondary, secondaryBase);
@@ -3324,7 +3321,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     // 폭발형 궁극기의 위력은 총량이 아니라 **겹당 값**이라 그 대상의 겹 수만큼 곱한다.
     const scaled = detonation ? { ...skill, power: (skill.power ?? 0) * (target.overpaint?.stacks ?? 0) } : skill;
     const damageInput = { ...scaled, isCritical: critical, kind: useUltimate ? "ultimate" as const : "basic" as const };
-    const rawAmount = Math.max(1, Math.round(computeDamage(damageAttacker, defensiveDefinition(target, state), damageInput, true)));
+    const rawAmount = Math.max(1, Math.round(computeDamage(damageAttacker, defensiveDefinition(target, state), damageInput)));
     const contributionAmount = Math.max(0, computeDamageContribution(damageAttacker, damageInput));
     const resolution = resolveReceivedDamage(target, rawAmount);
     const amount = resolution.applied;

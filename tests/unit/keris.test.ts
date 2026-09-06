@@ -19,13 +19,13 @@ describe("저주", () => {
     const magic = { power: 100, damageType: "magical" as const, scalingStat: "ap" as const, isCritical: false, kind: "basic" as const };
     const physical = { power: 100, damageType: "physical" as const, scalingStat: "atk" as const, isCritical: false, kind: "basic" as const };
     // 전투가 실제로 읽는 방어 정의를 그대로 쓴다 — 저주는 여기서만 저항을 깎는다.
-    const cleanMagic = computeDamage(keris, defensiveDefinition(foe, state), magic, true);
-    const cleanPhysical = computeDamage(keris, defensiveDefinition(foe, state), physical, true);
+    const cleanMagic = computeDamage(keris, defensiveDefinition(foe, state), magic);
+    const cleanPhysical = computeDamage(keris, defensiveDefinition(foe, state), physical);
 
     foe.curse = { remaining: 8, total: 8, stacks: 3, percentPerStack: 15, maxStacks: 3 };
     // 저항만 45% 깎이므로 마법은 더 아프고 물리는 그대로다 — 덧칠과 갈리는 지점이 이것이다.
-    expect(computeDamage(keris, defensiveDefinition(foe, state), magic, true)).toBeGreaterThan(cleanMagic);
-    expect(computeDamage(keris, defensiveDefinition(foe, state), physical, true)).toBe(cleanPhysical);
+    expect(computeDamage(keris, defensiveDefinition(foe, state), magic)).toBeGreaterThan(cleanMagic);
+    expect(computeDamage(keris, defensiveDefinition(foe, state), physical)).toBe(cleanPhysical);
   });
 
   it("는 기본 공격 세 번이면 상한에 닿고 더 쌓이지 않는다", () => {

@@ -1366,12 +1366,14 @@ export const RELICS: RelicDef[] = [
     ferocityTrait: { name: "맹추", effectId: "attackIntervalReduction", reductionPercent: 12 },
     passive: {
       id: "toby-passive",
-      name: "무리 본능",
-      kind: "bleedStreak",
-      iconAssetId: "skill-icon-physical",
-      effectType: "physical",
-      value: 3,
-      desc: "같은 적을 연속으로 3번 맞히면 [[bleed|출혈]]을 남긴다.",
+      name: "집게 손놀림",
+      kind: "basicHitAttackSpeedStack",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      value: 2,
+      maxStacks: 8,
+      // 정면 전사라는 새 역할은 출혈 암살 대신 실제 적중을 거듭할수록 손이 빨라지는 방식으로 드러낸다.
+      desc: "기본 공격이 적중할 때마다 이번 전투 동안 공격 속도가 증가한다.",
     },
     basic: {
       id: "toby-basic",
@@ -1451,12 +1453,14 @@ export const RELICS: RelicDef[] = [
     ferocityTrait: { name: "농성", effectId: "damageReduction", reductionPercent: 12 },
     passive: {
       id: "amo-passive",
-      name: "굳은 껍질",
-      kind: "frontGuard",
-      iconAssetId: "skill-icon-buff",
-      effectType: "buff",
-      value: 15,
-      desc: "전방에서 받는 피해가 15% 줄어든다.",
+      name: "껍질 공명",
+      kind: "painfulElation",
+      iconAssetId: "skill-icon-healing",
+      effectType: "healing",
+      value: 0,
+      elation: { maxStacks: 3, maxHpRegenPercentPerStack: 0.5, seconds: 3 },
+      // 방향에 따른 숨은 감쇠 대신 맞은 사실을 겹으로 보여 주고, 짧은 재생으로 버티게 한다.
+      desc: "피해를 받을 때마다 3초 동안 유지되는 껍질 공명을 쌓아 매초 회복한다.",
     },
     basic: {
       id: "amo-basic",
@@ -1536,13 +1540,14 @@ export const RELICS: RelicDef[] = [
     ferocityTrait: { name: "역풍", effectId: "teamMoveSpeedBonus", bonusPercent: 12 },
     passive: {
       id: "ripa-passive",
-      name: "잔존 신호",
-      kind: "emergencyRecovery",
-      iconAssetId: "skill-icon-healing",
-      effectType: "healing",
-      value: 5,
-      durationSeconds: 5,
-      desc: "전투당 한 번, 체력이 절반 이하가 되면 [[regeneration|지속 회복]]한다.",
+      name: "퇴적 잠복",
+      kind: "lowHpVanish",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      value: 3,
+      durationSeconds: 3,
+      // 자기 회복 대신 원종과 관찰 기록에 맞게 모래·물속으로 숨어 표적을 끊는 생존 수단을 쓴다.
+      desc: "전투당 한 번, 체력이 절반 이하가 되면 3초 동안 은신해 표적에서 벗어난다.",
     },
     basic: {
       id: "ripa-basic",

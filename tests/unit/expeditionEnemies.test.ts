@@ -37,12 +37,17 @@ describe("원정 노드 적 편성", () => {
       .map((relic) => ({ ...relic, stats: applyLevelGrowth(relic.stats, 25, relic.rarity) }));
     // 레벨 25(20층 + boss 5)에 SSR 성장률 2.2%/레벨을 적용한 52.8% 성장의 실제 전투 수치다.
     expect(pontos.stats).toMatchObject({ hp: 4278, def: 275, res: 199, ap: 153, attackSpeed: 84, energyGain: 46 });
-    for (const key of ["hp", "def", "res", "ap"] as const) {
+    // 생존 축은 최종 보스가 일반 적 전체를 넘는다.
+    for (const key of ["hp", "def", "res"] as const) {
       expect(pontos.stats[key]).toBeGreaterThan(Math.max(...normalEnemies.map((enemy) => enemy.stats[key])));
       expect(pontos.stats[key]).toBeGreaterThan(Math.max(...normalSsr.map((relic) => relic.stats[key])));
       // 9,999,999 같은 센티널 수치가 밸런스 데이터에 다시 들어오는 회귀를 막는다.
       expect(pontos.stats[key]).toBeLessThan(10_000);
     }
+    // 리파는 낮은 생존력을 실제로 쓰는 주문력에 몰아 R 띠를 채운 마법 특화 적이다. 따라서 폰토스의
+    // AP는 일반 적 전체가 아니라 동급 성장 SSR 상한을 넘는 보스 계약으로 검증한다.
+    expect(pontos.stats.ap).toBeGreaterThan(Math.max(...normalSsr.map((relic) => relic.stats.ap)));
+    expect(pontos.stats.ap).toBeLessThan(10_000);
   });
 
   it("폰토스 정보창 표기는 1등급 LV.20이어도 높은 표시 스탯 스냅샷을 유지한다", () => {

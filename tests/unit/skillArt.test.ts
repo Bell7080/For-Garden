@@ -169,8 +169,10 @@ describe("노도니아 스킬 표시 계약", () => {
     expect(nodonia.basic).toMatchObject({ scalingStat: "hp", power: 5 });
     expect(nodonia.basic.desc).toBeUndefined();
     expect(skillDescription(nodonia.basic)).toBe("적 한 명에게 최대 체력의 5% [[physical-damage|물리 피해]]를 준다.");
-    // 공격력은 어디에도 쓰이지 않으므로 로스터 최저다 — 쓰지 않는 능력치를 높게 적지 않는다.
-    expect(Math.min(...RELICS.map((def) => def.stats.atk))).toBe(nodonia.stats.atk);
+    // 공격력은 어디에도 쓰이지 않으므로 플레이어블 로스터 최저다 — 쓰지 않는 능력치를 높게
+    // 적지 않는다. 적 전용 리파처럼 주문력만 쓰는 개체는 같은 원칙으로 더 낮을 수 있다.
+    const playable = RELICS.filter((def) => def.enemyOnly !== true);
+    expect(Math.min(...playable.map((def) => def.stats.atk))).toBe(nodonia.stats.atk);
     // 방어·저항은 아군 탱커 중 최저이고 체력은 최고다. 아프지 않으면 재생이 할 일이 없다.
     // 적 전용 개체(폰토스·허스크)는 등급 띠 밖이라 비교에서 뺀다.
     const allyTanks = RELICS.filter((def) => def.role === "tank" && !["pontos", "toby", "amo", "ripa"].includes(def.id));

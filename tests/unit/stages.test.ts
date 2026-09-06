@@ -35,8 +35,11 @@ describe("stage enemy design", () => {
       { 아모: [5, 1], 코마: [1, 1], 리파: [5, 1] },
     ]);
     const finalEnemies = getStageEnemies(battles[29]);
-    expect(finalEnemies[0].stats.hp).toBeGreaterThan(getRelic(FIXED_STAGE_ENEMIES[0]).stats.hp);
-    expect(getRelic(FIXED_STAGE_ENEMIES[0]).stats.hp).toBe(620);
+    // 배열 첫 칸의 다른 개체와 비교하지 않고, 토비 자신의 태생값보다 성장했는지를 검증한다.
+    const baseToby = getRelic(FIXED_STAGE_ENEMIES[0]);
+    const finalToby = finalEnemies.find((enemy) => enemy.id === baseToby.id);
+    expect(finalToby?.stats.hp).toBeGreaterThan(baseToby.stats.hp);
+    expect(baseToby.stats.hp).toBe(1000);
   });
 
   it("1-1부터 1-10까지 재등장한 캐릭터의 레벨이나 돌파가 메타데이터 없이 역행하지 않는다", () => {

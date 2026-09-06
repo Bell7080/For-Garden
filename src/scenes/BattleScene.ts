@@ -34,7 +34,7 @@ import { UnitHealthBar } from "../ui/UnitHealthBar";
 import { skillArtTint } from "../ui/skillArt";
 import { combatPalette, signatureFor, type CombatPalette, type SignatureMoment } from "../ui/signatureEffects";
 import { COLOR, textStyle } from "../ui/theme";
-import { setDebugBattle, setDebugScene } from "../debug";
+import { setDebugBattle, setDebugBossResult, setDebugScene } from "../debug";
 import { CharacterInfoManager } from "../managers/CharacterInfoManager";
 import { bindLongPress } from "../ui/longPressInfo";
 import { type InfoManager, sceneInfoManager } from "../ui/info";
@@ -52,13 +52,11 @@ import type { MotionPlayback } from "../puppets/assets";
 import { ultimatePresentationFor } from "../data/ultimatePresentations";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { anyPopupOpen, PopupLayer } from "../ui/PopupLayer";
-import { ExpeditionRankingPopup } from "../ui/ExpeditionRankingPopup";
 import { battleHeaderText, createExpeditionBossSkirmishConfig, createExpeditionSkirmishConfig, expeditionBattleResults, normalizeBattleSceneInput, type BattleSceneInputDto, type ExpeditionBattleInputDto, type ExpeditionBossBattleInputDto } from "../core/expeditionBattle";
 import type { ExpeditionBossAction } from "../core/expeditionBoss";
-import { expeditionManager } from "../managers/ExpeditionManager";
+import { expeditionManager, ExpeditionBossSettlementError, ExpeditionBossSettlementFlow } from "../managers/ExpeditionManager";
 import { settingsManager } from "../managers/SettingsManager";
 import { battleUiMotionFactor } from "../core/settings";
-import { GameApiError } from "../api/contracts";
 import type { SettleExpeditionRunResponse, SubmitExpeditionBossScoreResponse } from "../api/contracts";
 import { currencyRecordToRewardItems, openRewardPopup } from "../ui/RewardPopup";
 import { BATTLE_CONTROLS, BATTLE_STATUS_LAYOUT } from "../ui/battleStatusLayout";
@@ -258,6 +256,9 @@ export class BattleScene extends Phaser.Scene {
   private finished = false;
   /** 보스 제출에는 코어가 실제로 낸 공격 종류와 시각만 기록하며 피해 숫자는 넣지 않는다. */
   private bossActions: ExpeditionBossAction[] = [];
+  /** 성공 응답은 결과 UI보다 오래 살아 UI 생성 중단 뒤에도 같은 영수증으로 복구된다. */
+  private readonly bossSettlement = new ExpeditionBossSettlementFlow(gameApi, expeditionManager);
+  private bossLeaving = false;
   private bossScoreLabel?: Phaser.GameObjects.Text;
   /** 중앙 총점이 서버/코어 목표값을 부드럽게 따라갈 때 사용하는 화면 전용 정수다. */
   private bossScoreShown = 0;
@@ -411,6 +412,7 @@ export class BattleScene extends Phaser.Scene {
       // 그대로 읽혀, 이미 지도로 나온 화면을 두고 "전투 중"이라고 답한다 — E2E가 그 굳은
       // 값을 몇 초씩 기다리다 엉뚱한 줄에서 실패했다.
       setDebugBattle(undefined);
+      setDebugBossResult(undefined);
       this.contributionPanel?.destroy();
       this.contributionPanel = undefined;
       this.buffPopups.closeAll();
@@ -420,43 +422,43 @@ export class BattleScene extends Phaser.Scene {
     });
   }
 
-  /** 점수 제출 → 로컬 노드 반영 → completed 정산을 고정 ID로 직렬화한다. */
+  /** 두 원격 경계를 manager 흐름에 맡기고, 성공하면 전리품을 포함한 최종판을 곧바로 연다. */
   private async submitAndSettleBoss(input: ExpeditionBossBattleInputDto, actions: ExpeditionBossAction[]): Promise<void> {
     try {
-      const score = await gameApi.submitExpeditionBossScore({ requestId: input.requestId, runId: input.runId, nodeId: input.nodeId, actions });
-      // 서버가 확정한 피해만 노드에 반영하며 클라이언트 추정 피해는 상태에 쓰지 않는다.
-      const completed = expeditionManager.completeNode(input.nodeId, { relicHp: [0, 0, 0], bossDamage: score.score });
-      if (!completed && !expeditionManager.status().run?.visitedNodeIds.includes(input.nodeId)) throw new Error("BOSS_NODE_SAVE_FAILED");
-      const settlement = await gameApi.settleExpeditionRun({ runId: input.runId, settlementId: input.settlementId, outcome: "completed" });
-      // 보스 완료도 공용 지급 영수증을 먼저 확인한 뒤 점수 결과판으로 이어진다.
-      openRewardPopup(this, new PopupLayer(this, 2200), { title: "원정 완료 전리품", items: currencyRecordToRewardItems(settlement.granted), onConfirm: () => this.showBossResult(score, settlement) });
+      const result = await this.bossSettlement.finish(input, actions);
+      this.showBossResult(result.score, result.settlement);
     } catch (error) {
       // **무엇이 실패했는지 남긴다.** 예전에는 이유를 통째로 삼켜, 정산이 막히면 화면에 "다시
       // 시도"만 남고 눌러도 같은 자리에서 같은 이유로 막혔다 — 서버가 거절한 것인지, 이미
       // 정산된 런인지, 결과판을 그리다 터진 것인지 아무도 알 수 없었다.
       console.error("[expedition] 보스 정산 실패", error);
-      const reason = error instanceof GameApiError ? error.message : "정산을 마치지 못했습니다.";
+      const reason = error instanceof ExpeditionBossSettlementError ? error.message : "결과 화면을 복구하지 못했습니다.";
       this.add.text(BASE_WIDTH / 2, 970, reason, textStyle({ role: "body", size: 27, color: COLOR.dangerText, align: "center", wrap: BASE_WIDTH - 220 })).setOrigin(0.5).setDepth(201);
       // 같은 버튼은 저장된 요청 ID로 전체 체인을 재시도하므로 성공한 서버 제출도 중복 누적되지 않는다.
       new Button(this, BASE_WIDTH / 2, 1050, { width: 460, height: 100, label: "정산 다시 시도", onClick: () => void this.submitAndSettleBoss(input, actions) }).setDepth(201);
     }
   }
 
-  /** 서버 기록과 정산 재화를 한 장의 최종 영수증으로 보여 준다. */
+  /** 서버 기록과 정산 재화를 별도 전리품 확인 단계 없이 한 장의 최종 영수증으로 보여 준다. */
   private showBossResult(score: SubmitExpeditionBossScoreResponse, settlement: SettleExpeditionRunResponse): void {
     // 서버 재검증 총점은 머리글에만 더하고 확정 당시의 개별 행동 분배는 다시 시뮬레이션하지 않는다.
-    if (this.contributionResult) this.contributionResult = withConfirmedAttackTotal(this.contributionResult, score.score);
-    this.add.rectangle(BASE_WIDTH / 2, 960, BASE_WIDTH - 90, 850, COLOR.void, 0.94).setDepth(200);
-    this.add.text(BASE_WIDTH / 2, 620, "원정 관측 완료", textStyle({ role: "display", size: 60, color: COLOR.accentText })).setOrigin(0.5).setDepth(201);
+    if (this.contributionResult) this.contributionResult = withConfirmedAttackTotal(this.contributionResult, score.bossDamageScore);
+    // 최종판은 전장 HUD·잔존 피해 숫자까지 완전히 덮어 별도 화면처럼 읽히게 한다.
+    this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.96).setDepth(5000);
+    this.add.text(BASE_WIDTH / 2, 430, "원정 관측 완료", textStyle({ role: "display", size: 60, color: COLOR.accentText })).setOrigin(0.5).setDepth(5001);
     const rank = score.rankBefore === null ? `신규 → ${score.rankAfter}위` : `${score.rankBefore}위 → ${score.rankAfter}위`;
     const rewards = Object.entries(settlement.granted).filter(([, amount]) => amount > 0).map(([id, amount]) => `${id} +${amount.toLocaleString()}`).join("  ·  ") || "정산 재화 없음";
-    this.add.text(BASE_WIDTH / 2, 875, `이번 점수  ${score.runScore.toLocaleString()}\n주간 최고  ${score.bestScore.toLocaleString()}  ${score.improved ? "· 최고점 갱신" : "· 기존 기록 유지"}\n누적 점수  ${score.cumulativeScore.toLocaleString()}\n순위  ${rank}\n\n런 정산  ${rewards}`, textStyle({ role: "body", size: 31, color: COLOR.ink, align: "center", lineSpacing: 16 })).setOrigin(0.5).setDepth(201);
-    // 제출 직후 서버 순위를 다시 조회하는 공용 기록판으로 새 최고점과 해금 단계를 한 번에 잇는다.
-    const popups = new PopupLayer(this, 2200);
-    new Button(this, BASE_WIDTH / 2 - 235, 1260, { width: 400, height: 105, label: "주간 기록 확인", onClick: () => new ExpeditionRankingPopup(this, popups).open() }).setDepth(201);
-    new Button(this, BASE_WIDTH / 2 + 235, 1260, { width: 400, height: 105, label: "로비로", onClick: () => this.scene.start("lobby") }).setDepth(201);
-    // 주요 이동 버튼을 압축하지 않고 둘째 줄의 작은 조회 버튼으로 결과판 위 팝업을 연다.
-    new Button(this, BASE_WIDTH / 2, 1395, { width: 310, height: 78, label: "기여도", fontSize: 27, onClick: () => this.openContributionPopup(popups) }).setDepth(201);
+    this.add.text(BASE_WIDTH / 2, 880, `한 판 점수  ${score.runScore.toLocaleString()}\n폰토스 피해  ${score.bossDamageScore.toLocaleString()}\n주간 최고  ${score.bestScore.toLocaleString()}  ${score.improved ? "· 최고점 갱신" : "· 기존 기록 유지"}\n주간 누적  ${score.cumulativeScore.toLocaleString()}\n순위 변화  ${rank}\n\n정산 보상  ${rewards}`, textStyle({ role: "body", size: 31, color: COLOR.ink, align: "center", lineSpacing: 16, wrap: BASE_WIDTH - 180 })).setOrigin(0.5).setDepth(5001);
+    const popups = new PopupLayer(this, 6000);
+    new Button(this, BASE_WIDTH / 2, 1450, { width: 620, height: 112, label: "로비로", variant: "primary", onClick: () => {
+      if (this.bossLeaving) return;
+      this.bossLeaving = true;
+      // 성공 정산은 다시 요청하지 않는다. Boot가 서버 최신본을 읽고 저장 검증·마이그레이션을 거친다.
+      this.scene.start("boot", { destination: "lobby" });
+    } }).setDepth(5001);
+    setDebugBossResult({ visible: true, lobby: { x: BASE_WIDTH / 2, y: 1450 } });
+    // 기여도는 결과를 가리지 않는 보조 행동이며 주 행동의 모바일 안전 영역을 침범하지 않는다.
+    new Button(this, BASE_WIDTH / 2, 1590, { width: 310, height: 78, label: "기여도", fontSize: 27, onClick: () => this.openContributionPopup(popups) }).setDepth(5001);
   }
 
   /** 같은 PopupLayer 위에 읽기 전용 판을 쌓아 닫은 뒤 기존 결과 조작이 그대로 남게 한다. */

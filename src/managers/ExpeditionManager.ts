@@ -6,6 +6,8 @@ import type { SkirmishRelicResult } from "../core/skirmish";
 import { EXPEDITION_AUGMENT_IDS, EXPEDITION_REST_RULES, EXPEDITION_WEEKLY_POLICY } from "../data/expedition";
 import { saveManager, type SaveManager } from "../state/SaveManager";
 import { session, type ExpeditionRunState, type Session } from "../state/session";
+import type { GameApi, SettleExpeditionRunResponse, SubmitExpeditionBossScoreResponse } from "../api/contracts";
+import type { ExpeditionBossAction } from "../core/expeditionBoss";
 
 /** UI가 소비하는 원정 요약이며 변경 가능한 Session 참조는 노출하지 않는다. */
 export interface ExpeditionStatus {
@@ -171,6 +173,15 @@ export class ExpeditionManager {
     return { requestId: next.bossSubmissionId, settlementId: next.bossSettlementId };
   }
 
+  /** 서버가 검증한 보스 피해만 진행 저장에 합치며, 재응답은 같은 노드를 두 번 완료하지 않는다. */
+  applyBossScore(nodeId: string, response: SubmitExpeditionBossScoreResponse): boolean {
+    const run = this.state.expedition.run;
+    if (!run) return false;
+    // 점수 제출 성공 뒤 정산만 실패한 재시도에서는 방문 표식과 점수를 그대로 인정한다.
+    if (run.visitedNodeIds.includes(nodeId)) return run.bossDamageScore === response.bossDamageScore;
+    return this.completeNode(nodeId, { relicHp: [0, 0, 0], bossDamage: response.bossDamageScore });
+  }
+
   /** 전투 노드의 첫 제안을 한 번만 만들고 seed와 결과를 같은 저장 트랜잭션에 고정한다. */
   beginAugmentReward(nodeId: string, nodeType: ExpeditionNodeType): ExpeditionRunState["pendingAugmentReward"] {
     const run = this.state.expedition.run;
@@ -244,3 +255,50 @@ export class ExpeditionManager {
 }
 
 export const expeditionManager = new ExpeditionManager();
+
+/** 어느 원격 경계에서 멈췄는지 UI와 테스트가 문자열 추측 없이 구분하는 실패다. */
+export class ExpeditionBossSettlementError extends Error {
+  constructor(readonly phase: "score" | "settlement", readonly cause: unknown) {
+    super(phase === "score" ? "점수를 제출하지 못했습니다." : "점수는 제출했지만 정산을 마치지 못했습니다.");
+  }
+}
+
+export interface ExpeditionBossFinalResult {
+  score: SubmitExpeditionBossScoreResponse;
+  settlement: SettleExpeditionRunResponse;
+}
+
+/**
+ * 점수 제출과 런 정산 사이의 복구 가능한 경계다.
+ *
+ * 성공 응답을 ID별로 보존해 UI 조립이 중단되어 같은 씬에서 다시 호출돼도 네트워크를 재호출하지
+ * 않는다. 앱 재시작 뒤에는 서버가 같은 두 멱등 ID의 응답을 복원한다.
+ */
+export class ExpeditionBossSettlementFlow {
+  private readonly scores = new Map<string, SubmitExpeditionBossScoreResponse>();
+  private readonly settlements = new Map<string, SettleExpeditionRunResponse>();
+
+  constructor(private readonly api: Pick<GameApi, "submitExpeditionBossScore" | "settleExpeditionRun">, private readonly manager: Pick<ExpeditionManager, "applyBossScore">) {}
+
+  async finish(input: { requestId: string; settlementId: string; runId: string; nodeId: string }, actions: readonly ExpeditionBossAction[]): Promise<ExpeditionBossFinalResult> {
+    let score = this.scores.get(input.requestId);
+    if (!score) {
+      try {
+        score = await this.api.submitExpeditionBossScore({ requestId: input.requestId, runId: input.runId, nodeId: input.nodeId, actions: [...actions] });
+      } catch (error) { throw new ExpeditionBossSettlementError("score", error); }
+      this.scores.set(input.requestId, score);
+    }
+    // UI 생성만 중단된 경우에는 정산이 이미 런을 닫았으므로 로컬 노드를 다시 적용하지 않는다.
+    const cachedSettlement = this.settlements.get(input.settlementId);
+    if (cachedSettlement) return { score, settlement: cachedSettlement };
+    // 응답 적용도 manager 경계에 맡겨 씬이 Session을 직접 수정하지 않게 한다.
+    if (!this.manager.applyBossScore(input.nodeId, score)) throw new ExpeditionBossSettlementError("score", new Error("BOSS_NODE_SAVE_FAILED"));
+
+    let settlement: SettleExpeditionRunResponse;
+    try {
+      settlement = await this.api.settleExpeditionRun({ runId: input.runId, settlementId: input.settlementId, outcome: "completed" });
+    } catch (error) { throw new ExpeditionBossSettlementError("settlement", error); }
+    this.settlements.set(input.settlementId, settlement);
+    return { score, settlement };
+  }
+}

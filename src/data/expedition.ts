@@ -109,10 +109,24 @@ export const EXPEDITION_BOSS_BALANCE = {
   ],
 } as const;
 
-/** 주간 누적 피해 보상은 이 표 하나만 읽으며 단계 ID가 서버의 중복 수령 키가 된다. */
+/**
+ * 주간 누적 원정 점수 보상은 이 표 하나만 읽으며 단계 ID가 서버의 중복 수령 키가 된다.
+ *
+ * `damage-*` ID는 예전 "누적 피해" 명칭으로 저장된 수령 기록과의 호환을 위해 유지한다. 새 ID로
+ * 즉시 바꾸면 같은 단계가 미수령으로 되살아날 수 있으므로, 영구 저장 마이그레이션을 제공하기
+ * 전에는 표시명과 문서에서만 정확한 "주간 누적 원정 점수" 용어를 사용한다.
+ *
+ * 현재 한 판 점수는 일반 노드 점수 + 폰토스 피해 점수로 확정됐고, 주간 플레이 상한은 2회다.
+ * 10,000은 첫 정상 노드들에서 보상 길을 알리는 초반 문턱, 50,000은 평균적인 1회 진행 목표,
+ * 100,000은 평균 50,000점인 플레이를 주 2회 마치는 목표로 재검토해 유지한다. 실제 평균 점수가
+ * 쌓이면 이 표의 세 threshold만 다시 조정하며 화면이나 서버에 별도 보상 표를 만들지 않는다.
+ */
 export const EXPEDITION_CUMULATIVE_REWARD_STAGES = [
+  // 저장 호환 ID다. `score-10k`로 바꾸지 않는다.
   { id: "damage-10k", threshold: 10_000, reward: { currency: "gold", amount: 5_000 } },
+  // 저장 호환 ID다. `score-50k`로 바꾸지 않는다.
   { id: "damage-50k", threshold: 50_000, reward: { currency: "fossil", amount: 100 } },
+  // 저장 호환 ID다. `score-100k`로 바꾸지 않는다.
   { id: "damage-100k", threshold: 100_000, reward: { currency: "gems", amount: 100 } },
 ] as const;
 

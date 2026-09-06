@@ -361,7 +361,8 @@ export class BattleScene extends Phaser.Scene {
       ...(this.battleInput.mode === "expeditionBoss" ? { boss: (expeditionConfig as ReturnType<typeof createExpeditionBossSkirmishConfig>).boss } : {}),
     } : {
       // 일반 스테이지의 적도 능력치뿐 아니라 스킬 돌파 효과까지 슬롯별 스냅샷을 사용한다.
-      enemyBreakthroughs: stage.enemies.map(({ breakthrough }) => breakthrough),
+      // 능력치 복사본과 같은 formationSlot 순서로 돌파 스킬 스냅샷을 맞춘다.
+      enemyBreakthroughs: [...stage.enemies].sort((a, b) => a.formationSlot - b.formationSlot).map(({ breakthrough }) => breakthrough),
     });
     this.views.clear();
     this.profiles = [];

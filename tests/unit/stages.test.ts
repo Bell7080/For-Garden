@@ -5,7 +5,7 @@ import { isStageUnlockedByProgress } from "../../src/core/stageProgress";
 import { stageChapterNavigationLayout } from "../../src/ui/stageChapterLayout";
 import { BREAKTHROUGH_CAP, relicLevelCap } from "../../src/core/relicProgression";
 
-/** 임시 스테이지 편성과 레벨 성장 설계가 콘텐츠 수정 중 흐트러지지 않도록 고정한다. */
+/** 스테이지 편성과 공개 성장 설계가 콘텐츠 수정 중 흐트러지지 않도록 고정한다. */
 describe("stage enemy design", () => {
   /** 판별 유니온 테스트에서 전투 데이터만 안전하게 추려낸다. */
   const battles = STAGES.filter((stage) => stage.kind === "battle");
@@ -13,16 +13,53 @@ describe("stage enemy design", () => {
     expect(battles[0].rewards).toEqual({ firstClearCheesecake: 30, repeatClearCheesecake: 10 });
     expect(DAILY_RESTORATION).toMatchObject({ id: "daily-restoration", maxEntriesPerUtcDay: 3, rewardCheesecake: 40 });
   });
-  it("모든 스테이지에 임시 적 세 명을 챕터별 순환 편성한다", () => {
-    expect(battles.every((stage) => new Set(stage.enemies.map(({ relicId }) => relicId)).size === FIXED_STAGE_ENEMIES.length)).toBe(true);
+  it("챕터 1의 기본 악당은 토비·아모·리파이며 1-10에서 코마가 한 자리를 교체한다", () => {
+    expect(battles.slice(0, 9).every((stage) => new Set(stage.enemies.map(({ relicId }) => relicId)).size === FIXED_STAGE_ENEMIES.length)).toBe(true);
     expect(FIXED_STAGE_ENEMIES.map((id) => getRelic(id).name)).toEqual(["토비", "아모", "리파"]);
+    expect(battles[9].enemies.map(({ relicId }) => getRelic(relicId).name)).toEqual(["아모", "코마", "리파"]);
   });
 
-  it("스테이지마다 적별 레벨을 1 올리고 원본보다 강한 복사본을 만든다", () => {
-    expect(battles.map((stage) => stage.enemies[0].level)).toEqual(Array.from({ length: 30 }, (_, index) => index + 1));
+  it("챕터 1의 레벨·돌파 초안을 적별 StageEnemyDef에 정확히 기록한다", () => {
+    // 비교표는 캐릭터별 [레벨, 돌파]로 읽어 배열 배치 변경과 독립적으로 검증한다.
+    const growthAt = (index: number) => Object.fromEntries(battles[index].enemies.map(({ relicId, level, breakthrough }) => [getRelic(relicId).name, [level, breakthrough]]));
+    expect(Array.from({ length: 10 }, (_, index) => growthAt(index))).toEqual([
+      { 아모: [1, 0], 토비: [1, 0], 리파: [1, 0] },
+      { 아모: [1, 0], 토비: [2, 0], 리파: [1, 0] },
+      { 아모: [2, 0], 토비: [2, 0], 리파: [1, 0] },
+      { 아모: [2, 0], 토비: [3, 0], 리파: [2, 0] },
+      { 아모: [3, 0], 토비: [3, 0], 리파: [3, 0] },
+      { 아모: [4, 0], 토비: [4, 0], 리파: [3, 0] },
+      { 아모: [4, 0], 토비: [5, 0], 리파: [4, 0] },
+      { 아모: [5, 1], 토비: [5, 0], 리파: [5, 0] },
+      { 아모: [5, 1], 토비: [5, 1], 리파: [5, 1] },
+      { 아모: [5, 1], 코마: [1, 1], 리파: [5, 1] },
+    ]);
     const finalEnemies = getStageEnemies(battles[29]);
     expect(finalEnemies[0].stats.hp).toBeGreaterThan(getRelic(FIXED_STAGE_ENEMIES[0]).stats.hp);
     expect(getRelic(FIXED_STAGE_ENEMIES[0]).stats.hp).toBe(620);
+  });
+
+  it("1-1부터 1-10까지 재등장한 캐릭터의 레벨이나 돌파가 메타데이터 없이 역행하지 않는다", () => {
+    const previous = new Map<string, { level: number; breakthrough: number; stageId: string }>();
+    for (const stage of battles.slice(0, 10)) {
+      for (const enemy of stage.enemies) {
+        const before = previous.get(enemy.relicId);
+        // 회상·분기는 스테이지 전체의 명시적 사유가 있을 때만 의도적인 회귀로 인정한다.
+        if (before && stage.growthRegression === undefined) {
+          expect(enemy.level, `${stage.id} ${enemy.relicId} level after ${before.stageId}`).toBeGreaterThanOrEqual(before.level);
+          expect(enemy.breakthrough, `${stage.id} ${enemy.relicId} breakthrough after ${before.stageId}`).toBeGreaterThanOrEqual(before.breakthrough);
+        }
+        previous.set(enemy.relicId, { level: enemy.level, breakthrough: enemy.breakthrough, stageId: stage.id });
+      }
+    }
+  });
+
+  it("챕터 1의 연속 스테이지마다 성장·배치·캐릭터 중 관찰 가능한 차이가 있다", () => {
+    // 정렬된 직렬화는 배열 작성 순서가 아니라 실제 formationSlot을 비교한다.
+    const signature = (index: number) => JSON.stringify([...battles[index].enemies]
+      .sort((a, b) => a.formationSlot - b.formationSlot)
+      .map(({ relicId, level, breakthrough, formationSlot }) => ({ relicId, level, breakthrough, formationSlot })));
+    for (let index = 1; index < 10; index += 1) expect(signature(index)).not.toBe(signature(index - 1));
   });
 
   it("같은 ID의 태생 능력치와 스킬은 언제나 영구 정의 한 곳에서 조회한다", () => {
@@ -36,7 +73,7 @@ describe("stage enemy design", () => {
   });
 
   it("스테이지 사이에서 허용하는 차이는 레벨과 돌파뿐이다", () => {
-    const allowed = ["relicId", "level", "breakthrough"];
+    const allowed = ["relicId", "level", "breakthrough", "formationSlot"];
     for (const stage of battles) for (const enemy of stage.enemies) expect(Object.keys(enemy).sort()).toEqual([...allowed].sort());
   });
 
@@ -57,6 +94,14 @@ describe("stage enemy design", () => {
       expect(enemy.breakthrough).toBeLessThanOrEqual(BREAKTHROUGH_CAP);
       expect(enemy.level).toBeGreaterThanOrEqual(1);
       expect(enemy.level).toBeLessThanOrEqual(relicLevelCap(enemy.breakthrough));
+    }
+  });
+
+  it("모든 전투는 중복 없는 formationSlot 0·1·2를 가지며 그 순서로 전투 복사본을 만든다", () => {
+    for (const stage of battles) {
+      expect(stage.enemies.map(({ formationSlot }) => formationSlot).sort()).toEqual([0, 1, 2]);
+      const expectedIds = [...stage.enemies].sort((a, b) => a.formationSlot - b.formationSlot).map(({ relicId }) => relicId);
+      expect(getStageEnemies(stage).map(({ id }) => id)).toEqual(expectedIds);
     }
   });
 

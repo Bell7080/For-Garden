@@ -2,13 +2,28 @@ import { applyBreakthrough, applyLevelGrowth } from "../core/relicProgression";
 import type { ChapterDef, RelicDef, StageDef, StageEnemyDef } from "../core/types";
 import { getRelic } from "./relics";
 
-/** 임시 고정 편성: 1번 토비 · 2번 아모 · 3번 리파 순서로 모든 스테이지에 등장한다. */
+/** 챕터 1의 기본 악당 셋은 영구 캐릭터 ID만 공유하고 성장 상태는 각 스테이지가 소유한다. */
 export const FIXED_STAGE_ENEMIES = ["husk-raptor", "husk-shell", "husk-wing"] as const;
 
-/** 임시 난이도를 캐릭터 수치가 아닌 공개 성장 축만으로 표현한다. */
-function enemyGrowth(relicId: string, level: number, breakthrough: number): StageEnemyDef {
-  return { relicId, level, breakthrough };
+/** 스테이지 난이도를 캐릭터 수치가 아닌 공개 성장 축과 검증 가능한 배치로만 표현한다. */
+function enemyGrowth(relicId: string, level: number, breakthrough: number, formationSlot: 0 | 1 | 2): StageEnemyDef {
+  return { relicId, level, breakthrough, formationSlot };
 }
+
+/** 한계 돌파는 레벨을 초기화하지 않으므로 1-8 이후에도 직전 레벨 5를 유지한다. */
+const CHAPTER_ONE_ENEMIES: readonly [StageEnemyDef, StageEnemyDef, StageEnemyDef][] = [
+  [enemyGrowth("husk-shell", 1, 0, 0), enemyGrowth("husk-raptor", 1, 0, 1), enemyGrowth("husk-wing", 1, 0, 2)],
+  [enemyGrowth("husk-shell", 1, 0, 0), enemyGrowth("husk-raptor", 2, 0, 1), enemyGrowth("husk-wing", 1, 0, 2)],
+  [enemyGrowth("husk-shell", 2, 0, 0), enemyGrowth("husk-raptor", 2, 0, 1), enemyGrowth("husk-wing", 1, 0, 2)],
+  [enemyGrowth("husk-shell", 2, 0, 0), enemyGrowth("husk-raptor", 3, 0, 1), enemyGrowth("husk-wing", 2, 0, 2)],
+  [enemyGrowth("husk-shell", 3, 0, 0), enemyGrowth("husk-raptor", 3, 0, 1), enemyGrowth("husk-wing", 3, 0, 2)],
+  [enemyGrowth("husk-shell", 4, 0, 0), enemyGrowth("husk-raptor", 4, 0, 1), enemyGrowth("husk-wing", 3, 0, 2)],
+  [enemyGrowth("husk-shell", 4, 0, 0), enemyGrowth("husk-raptor", 5, 0, 1), enemyGrowth("husk-wing", 4, 0, 2)],
+  [enemyGrowth("husk-shell", 5, 1, 0), enemyGrowth("husk-raptor", 5, 0, 1), enemyGrowth("husk-wing", 5, 0, 2)],
+  [enemyGrowth("husk-shell", 5, 1, 0), enemyGrowth("husk-raptor", 5, 1, 1), enemyGrowth("husk-wing", 5, 1, 2)],
+  // 코마도 일반 RelicDef를 사용하는 중간보스이며, 아모와 리파가 앞뒤에서 전열을 완성한다.
+  [enemyGrowth("husk-shell", 5, 1, 0), enemyGrowth("husk-koma", 1, 1, 1), enemyGrowth("husk-wing", 5, 1, 2)],
+];
 
 /**
  * 스테이지. 지도에서 아래에서 위로 올라가는 순서 그대로다.
@@ -32,9 +47,9 @@ export const CHAPTERS: readonly ChapterDef[] = CHAPTER_CONTENT.map((content, cha
       id: `${chapter}-${chapterOrder}`, name, chapter, chapterOrder,
       // 첫 노드는 이전 챕터 끝을, 나머지는 같은 챕터의 직전 노드를 선행 조건으로 삼는다.
       prerequisiteStageIds: chapterOrder === 1 ? (prerequisiteStageId ? [prerequisiteStageId] : []) : [`${chapter}-${chapterOrder - 1}`],
-      // 임시 편성도 챕터별 순환을 주어 이후 적 데이터 교체 지점을 명확히 남긴다.
-      enemies: [...FIXED_STAGE_ENEMIES.slice(chapterIndex), ...FIXED_STAGE_ENEMIES.slice(0, chapterIndex)]
-        .map((relicId) => enemyGrowth(relicId, globalOrder + 1, Math.floor(globalOrder / 10))) as [StageEnemyDef, StageEnemyDef, StageEnemyDef],
+      // 후속 챕터의 임시 성장도 1장의 최고 성장보다 낮아지지 않게 이어 둔다.
+      enemies: chapter === 1 ? CHAPTER_ONE_ENEMIES[orderIndex] : [...FIXED_STAGE_ENEMIES.slice(chapterIndex), ...FIXED_STAGE_ENEMIES.slice(0, chapterIndex)]
+        .map((relicId, slot) => enemyGrowth(relicId, globalOrder + 1, Math.floor(globalOrder / 10), slot as 0 | 1 | 2)) as [StageEnemyDef, StageEnemyDef, StageEnemyDef],
       rewards: { firstClearCheesecake: 30 + globalOrder * 5, repeatClearCheesecake: 10 + globalOrder * 2 },
     };
   });
@@ -75,7 +90,8 @@ export function getBattleStage(id: string): Extract<StageDef, { kind: "battle" }
 
 /** 플레이어와 같은 레벨→돌파 순서로 성장시키며 영구 캐릭터 정의는 변경하지 않는다. */
 export function getStageEnemies(stage: Extract<StageDef, { kind: "battle" }>): [RelicDef, RelicDef, RelicDef] {
-  return stage.enemies.map((enemy) => {
+  // 배열을 재정렬해도 실제 전투 배치는 formationSlot이라는 데이터 계약을 따른다.
+  return [...stage.enemies].sort((a, b) => a.formationSlot - b.formationSlot).map((enemy) => {
     const base = getRelic(enemy.relicId);
     const leveled = applyLevelGrowth(base.stats, enemy.level, base.rarity);
     return { ...base, stats: applyBreakthrough(leveled, enemy.breakthrough) };

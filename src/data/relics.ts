@@ -92,7 +92,7 @@ export const RELICS: RelicDef[] = [
   },
   {
     id: "anky",
-    squad: "fang",
+    squad: "rogue",
     name: "토리카",
     specimenNumber: "014",
     projectName: "BASTION HORN",
@@ -109,6 +109,12 @@ export const RELICS: RelicDef[] = [
     },
     catalogSummary: "유치원생 또래의 키를 지닌 트리케라톱스 해츨링 표본.",
     unlockRecord: { status: "recorded", text: "토리카는 작은 뿔로도 누군가의 앞을 막아 서려 한다. 겁이 나면 한 걸음 물러서지만, 지켜야 할 일이 생기면 자기 생각을 또박또박 말한다. 식사 시간에는 누구보다 씩씩하고 먹성도 좋아 마지막 접시까지 챙긴다. 칭찬을 받으면 볏 끝까지 붉어진 채 친구 몫부터 슬쩍 내미는 습관이 있다." },
+    // 소속은 role이 아니라 나이와 성격이 정했다 — E.C. 6년 · 1.08 m의 해츨링이라 "유년형·소형
+    // 렐릭은 쁘띠 로그"라는 배정 가이드에 그대로 걸린다. 스쿼드 안의 자리는 기존 둘과 겹치지
+    // 않게 잡는다: 도디가 기록하고 티아가 주워 오면, 이쪽은 그 짐을 지고 앞을 막는다.
+    squadNote: "쁘띠 로그의 보급 담당 겸 선두 방패. 탐험대가 주워 온 간식과 부품을 제 등에 지고 다니다, 앞이 막히면 누구보다 먼저 나서서 짧은 뿔로 길을 가로막는다.",
+    // 스쿼드가 주인공을 부르는 대표 호칭.
+    researcherTitle: "대장님",
     rarity: "SR",
     portraitAssetId: "torika",
     origin: "트리케라톱스",
@@ -1728,7 +1734,7 @@ export const RELICS: RelicDef[] = [
     rarity: "SSR",
     portraitAssetId: "deina",
     origin: "데이노니쿠스",
-    element: "wind",
+    element: "fire",
     // 붙잡아 두는 것이 값이라 태그는 tank지만, 버티는 방식은 체력도 보호막도 아닌 발이다.
     role: "tank",
     // 캔이 닿는 거리까지만 다가간다.

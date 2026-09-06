@@ -1,4 +1,4 @@
-import { elementMultiplier } from "./element";
+import { effectiveElement, elementMultiplier } from "./element";
 import type { Element, RelicDef } from "./types";
 
 /** 편성 전체가 적 전체를 상대할 때 생기는 유리·불리·중립 교차 매치 수다. */
@@ -18,7 +18,7 @@ export type AffinityDirection = "up" | "down" | "neutral";
  */
 export function relicAffinityDirection(relic: RelicDef, enemies: readonly RelicDef[]): AffinityDirection {
   const balance = enemies.reduce((sum, enemy) => {
-    const multiplier = elementMultiplier(relic.element, enemy.element);
+    const multiplier = elementMultiplier(effectiveElement(relic), effectiveElement(enemy));
     return sum + (multiplier > 1 ? 1 : multiplier < 1 ? -1 : 0);
   }, 0);
   return balance > 0 ? "up" : balance < 0 ? "down" : "neutral";
@@ -36,7 +36,7 @@ export function partyAffinitySummary(allies: readonly RelicDef[], enemies: reado
   const summary: PartyAffinitySummary = { advantage: 0, disadvantage: 0, neutral: 0 };
   for (const ally of allies) {
     for (const enemy of enemies) {
-      const multiplier = elementMultiplier(ally.element, enemy.element);
+      const multiplier = elementMultiplier(effectiveElement(ally), effectiveElement(enemy));
       if (multiplier > 1) summary.advantage += 1;
       else if (multiplier < 1) summary.disadvantage += 1;
       else summary.neutral += 1;
@@ -54,7 +54,7 @@ export function autoPickParty(roster: readonly RelicDef[], enemies: readonly Rel
     .map((relic, index) => ({
       id: relic.id,
       index,
-      score: enemies.reduce((sum, enemy) => sum + elementMultiplier(relic.element, enemy.element), 0),
+      score: enemies.reduce((sum, enemy) => sum + elementMultiplier(effectiveElement(relic), effectiveElement(enemy)), 0),
     }))
     .sort((left, right) => right.score - left.score || left.index - right.index)
     .slice(0, Math.max(0, size))

@@ -7,7 +7,7 @@ import type { Fighter } from "../core/skirmish";
  * 겹 수와 남은 시간을 여기서 한 번만 만들고 둘 다 이 목록만 그린다. Phaser를 들여오지 않아
  * 순서·색·문구를 테스트가 그대로 고정할 수 있다.
  */
-export type UnitStatusId = "stun" | "frenzy" | "taunt" | "bleed" | "poison" | "curse" | "overpaint" | "butcher" | "vandalism";
+export type UnitStatusId = "stun" | "frozen" | "frenzy" | "taunt" | "bleed" | "poison" | "curse" | "chill" | "overpaint" | "butcher" | "vandalism";
 
 export interface UnitStatusView {
   id: UnitStatusId;
@@ -27,11 +27,13 @@ export interface UnitStatusView {
 /** 상태별 색. 피해 수치의 디버프 색과 같은 계열을 쓴다. */
 export const UNIT_STATUS_COLOR: Readonly<Record<UnitStatusId, number>> = {
   stun: 0xf2c744,
+  frozen: 0x6fd0f2,
   frenzy: 0xa8406b,
   taunt: 0xd8913a,
   bleed: 0xc2303a,
   poison: 0x7a4bab,
   curse: 0x8f6aa4,
+  chill: 0x4fa8e4,
   overpaint: 0x62c6d8,
   butcher: 0xc07fa4,
   vandalism: 0xd45aa8,
@@ -55,6 +57,14 @@ export function unitStatusViews(fighter: Fighter): UnitStatusView[] {
       id: "stun", name: "기절", color: UNIT_STATUS_COLOR.stun,
       remaining: fighter.stunnedFor, total: Math.max(fighter.stunnedTotal, fighter.stunnedFor),
       detail: `${seconds(fighter.stunnedFor)} 남음`,
+    });
+  }
+  if (fighter.frozen) {
+    const frozen = fighter.frozen;
+    views.push({
+      id: "frozen", name: "빙결", color: UNIT_STATUS_COLOR.frozen,
+      remaining: frozen.remaining, total: Math.max(frozen.total, frozen.remaining),
+      detail: `${seconds(frozen.remaining)} 남음 · 풀리는 순간 최대 체력의 ${frozen.maxHpPercentOnExpire}% 고정 피해`,
     });
   }
   if (fighter.frenzy) {
@@ -106,6 +116,14 @@ export function unitStatusViews(fighter: Fighter): UnitStatusView[] {
       stacks: curse.stacks,
       remaining: curse.remaining, total: Math.max(curse.total, curse.remaining),
       detail: `${curse.stacks}겹 · 저항력 -${curse.stacks * curse.percentPerStack}% · ${seconds(curse.remaining)} 남음`,
+    });
+  }
+  if (fighter.chill) {
+    const chill = fighter.chill;
+    views.push({
+      id: "chill", name: "둔화", color: UNIT_STATUS_COLOR.chill,
+      stacks: chill.stacks,
+      detail: `${chill.stacks} / ${chill.maxStacks}겹 · 공격 속도·이동 속도 -${chill.stacks * chill.speedPercentPerStack}%`,
     });
   }
   if (fighter.vandalism) {

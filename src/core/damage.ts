@@ -1,4 +1,4 @@
-import { elementMultiplier } from "./element";
+import { effectiveElement, elementMultiplier } from "./element";
 import { ferocityDamageBonus } from "./ferocity";
 import { breakthroughBonus } from "./relicProgression";
 import type { Skill } from "./types";
@@ -73,7 +73,7 @@ export function computeDamage(attacker: Combatant, target: Combatant, input: Dam
   const raw = offenseValue(attacker, input) * critical * awakened * (1 + ferocityDamageBonus(attacker.ferocity));
   const afterDefense = (raw * 100) / (100 + defense);
   const guard = targetIsFront && target.def.passive.kind === "frontGuard" ? 1 - target.def.passive.value / 100 : 1;
-  return Math.max(1, Math.round(afterDefense * guard * elementMultiplier(attacker.def.element, target.def.element)));
+  return Math.max(1, Math.round(afterDefense * guard * elementMultiplier(effectiveElement(attacker.def), effectiveElement(target.def))));
 }
 
 /** 대상이 있으면 실제 방어를 적용하고, 없으면 도감에 표시할 스탯 배율만 반환한다. */

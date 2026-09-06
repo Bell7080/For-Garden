@@ -28,7 +28,7 @@ import { battleAssetFor, cancelMotion, flashHit, isHitFlashing, placePuppet, pla
 import { session } from "../state/session";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { Button } from "../ui/Button";
-import { drawGlassFade, drawHairline, HoloBar } from "../ui/holo";
+import { chipPoints, drawGlassFade, drawHairline, drawLayer, HoloBar, HOLO } from "../ui/holo";
 import { PortraitCard } from "../ui/PortraitCard";
 import { UnitHealthBar } from "../ui/UnitHealthBar";
 import { skillArtTint } from "../ui/skillArt";
@@ -76,6 +76,10 @@ import { attackDamagePopupRequest, type DamageFlavor, type DebuffId } from "../u
 import { openBattleBuffListPopup, openBattleBuffPopup, type BattleBuffListItem, type BattleBuffPopupController } from "../ui/BattleBuffPopup";
 import type { ActiveCombatDisplayEffect } from "../core/combatEffects";
 import { stepBattleScoreMotion } from "../ui/battleScoreMotion";
+import { RewardFrame } from "../ui/RewardFrame";
+import { ExpeditionRankingPopup } from "../ui/ExpeditionRankingPopup";
+import { BOSS_RESULT_LAYOUT, bossResultUtilityBounds } from "../ui/bossResultLayout";
+import type { CurrencyIconKey } from "../ui/currencyIcons";
 
 /**
  * 여섯이 돌아다닐 수 있는 범위.
@@ -439,27 +443,41 @@ export class BattleScene extends Phaser.Scene {
     }
   }
 
-  /** 서버 기록과 정산 재화를 별도 전리품 확인 단계 없이 한 장의 최종 영수증으로 보여 준다. */
+  /** 서버 기록과 정산 재화를 같은 결과 화면 안의 독립된 위계로 보여 준다. */
   private showBossResult(score: SubmitExpeditionBossScoreResponse, settlement: SettleExpeditionRunResponse): void {
     // 서버 재검증 총점은 머리글에만 더하고 확정 당시의 개별 행동 분배는 다시 시뮬레이션하지 않는다.
     if (this.contributionResult) this.contributionResult = withConfirmedAttackTotal(this.contributionResult, score.bossDamageScore);
     // 최종판은 전장 HUD·잔존 피해 숫자까지 완전히 덮어 별도 화면처럼 읽히게 한다.
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.96).setDepth(5000);
-    this.add.text(BASE_WIDTH / 2, 430, "원정 관측 완료", textStyle({ role: "display", size: 60, color: COLOR.accentText })).setOrigin(0.5).setDepth(5001);
+    const layout = BOSS_RESULT_LAYOUT;
+    this.add.text(layout.title.x, layout.title.y, "원정 관측 완료", textStyle({ role: "display", size: 60, color: COLOR.accentText })).setOrigin(0.5).setDepth(5001);
     const rank = score.rankBefore === null ? `신규 → ${score.rankAfter}위` : `${score.rankBefore}위 → ${score.rankAfter}위`;
-    const rewards = Object.entries(settlement.granted).filter(([, amount]) => amount > 0).map(([id, amount]) => `${id} +${amount.toLocaleString()}`).join("  ·  ") || "정산 재화 없음";
-    // 한 판 합계·보스 피해·주간 최고·보상용 누적을 축약하지 않아 결과 수치의 쓰임을 구분한다.
-    this.add.text(BASE_WIDTH / 2, 880, `이번 원정 점수  ${score.runScore.toLocaleString()}\n폰토스 피해  ${score.bossDamageScore.toLocaleString()}\n주간 최고 점수  ${score.bestScore.toLocaleString()}  ${score.improved ? "· 최고점 갱신" : "· 기존 기록 유지"}\n주간 누적 원정 점수  ${score.cumulativeScore.toLocaleString()}\n순위 변화  ${rank}\n\n정산 보상  ${rewards}`, textStyle({ role: "body", size: 31, color: COLOR.ink, align: "center", lineSpacing: 16, wrap: BASE_WIDTH - 180 })).setOrigin(0.5).setDepth(5001);
+    const rewardItems = currencyRecordToRewardItems(settlement.granted);
+    // 정산 재화는 문자열로 점수에 붙이지 않고 기존 RewardFrame 액자 문법을 그대로 재사용한다.
+    drawLayer(this, BASE_WIDTH / 2, layout.rewards.top + layout.rewards.height / 2, chipPoints(layout.rewards.width, layout.rewards.height, { bevel: { topLeft: 34, bottomRight: 28 } }), { fill: 0x0d131b, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.5 }).setDepth(5001);
+    this.add.text(BASE_WIDTH / 2, layout.rewards.top + 54, "정산 보상", textStyle({ role: "display", size: 28, color: COLOR.accentText })).setOrigin(0.5).setDepth(5002);
+    if (rewardItems.length === 0) {
+      this.add.text(BASE_WIDTH / 2, layout.rewards.top + 190, "정산 재화 없음", textStyle({ role: "body", size: 25, color: COLOR.inkDim })).setOrigin(0.5).setDepth(5002);
+    } else {
+      const startX = BASE_WIDTH / 2 - ((rewardItems.length - 1) * layout.rewards.frameGap) / 2;
+      // currencyRecordToRewardItems는 이 경로에서 CurrencyIconKey만 만들며 다른 상품 글리프는 받지 않는다.
+      rewardItems.forEach((item, index) => new RewardFrame(this, startX + index * layout.rewards.frameGap, layout.rewards.top + 205, { icon: item.icon as CurrencyIconKey, amount: item.amount, size: layout.rewards.frameSize }).setDepth(5002));
+    }
+    // 점수는 결과 하단 안전 영역에서 흰 display 글꼴과 검은 대비만 사용하며 새 판을 받치지 않는다.
+    const scoreText = this.add.text(BASE_WIDTH / 2, layout.score.top + layout.score.height / 2, `이번 원정 점수  ${score.runScore.toLocaleString()}\n폰토스 피해  ${score.bossDamageScore.toLocaleString()}\n주간 최고 점수  ${score.bestScore.toLocaleString()}  ${score.improved ? "· 최고점 갱신" : "· 기존 기록 유지"}\n주간 누적 원정 점수  ${score.cumulativeScore.toLocaleString()}\n순위 변화  ${rank}`, textStyle({ role: "display", size: 31, color: "#ffffff", align: "center", lineSpacing: 22, wrap: layout.score.width })).setOrigin(0.5).setDepth(5001);
+    scoreText.setStroke("#000000", 6).setShadow(0, 4, "#000000", 4, false, true);
     const popups = new PopupLayer(this, 6000);
-    new Button(this, BASE_WIDTH / 2, 1450, { width: 620, height: 112, label: "로비로", variant: "primary", onClick: () => {
+    new Button(this, BASE_WIDTH / 2, layout.lobby.top + layout.lobby.height / 2, { width: layout.lobby.width, height: layout.lobby.height, label: "로비로", variant: "primary", onClick: () => {
       if (this.bossLeaving) return;
       this.bossLeaving = true;
       // 성공 정산은 다시 요청하지 않는다. Boot가 서버 최신본을 읽고 저장 검증·마이그레이션을 거친다.
       this.scene.start("boot", { destination: "lobby" });
     } }).setDepth(5001);
-    setDebugBossResult({ visible: true, lobby: { x: BASE_WIDTH / 2, y: 1450 } });
-    // 기여도는 결과를 가리지 않는 보조 행동이며 주 행동의 모바일 안전 영역을 침범하지 않는다.
-    new Button(this, BASE_WIDTH / 2, 1590, { width: 310, height: 78, label: "기여도", fontSize: 27, onClick: () => this.openContributionPopup(popups) }).setDepth(5001);
+    setDebugBossResult({ visible: true, lobby: { x: BASE_WIDTH / 2, y: layout.lobby.top + layout.lobby.height / 2 } });
+    const [weekly, contribution] = bossResultUtilityBounds();
+    // 기록과 기여도는 같은 보조 행동선에 두고, 로비 주 행동은 그 아래 독립 안전 영역에 둔다.
+    new Button(this, weekly.left + weekly.width / 2, weekly.top + weekly.height / 2, { width: weekly.width, height: weekly.height, label: "주간 기록", fontSize: 27, onClick: () => new ExpeditionRankingPopup(this, popups).open() }).setDepth(5001);
+    new Button(this, contribution.left + contribution.width / 2, contribution.top + contribution.height / 2, { width: contribution.width, height: contribution.height, label: "기여도", fontSize: 27, onClick: () => this.openContributionPopup(popups) }).setDepth(5001);
   }
 
   /** 같은 PopupLayer 위에 읽기 전용 판을 쌓아 닫은 뒤 기존 결과 조작이 그대로 남게 한다. */

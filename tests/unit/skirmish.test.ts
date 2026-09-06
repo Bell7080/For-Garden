@@ -37,6 +37,7 @@ import {
   fighterReach,
   sidestep,
   vandalismOffenseShred,
+  orbitStep,
 } from "../../src/core/skirmish";
 import { applyExpeditionRest, type ExpeditionAugmentEffect } from "../../src/core/expeditionAugments";
 import { RELICS, getRelic } from "../../src/data/relics";
@@ -3211,6 +3212,90 @@ describe("데이", () => {
     expect(moveSpeed(deina, state)).toBeCloseTo(getRelic("deina").stats.moveSpeed * SKIRMISH.moveRate * 2, 5);
   });
 
+  it("의 짧은 도발은 아군과 붙어 싸우던 적의 표적을 실제로 갈아 끼운다", () => {
+    // **회귀 테스트다.** 예전에는 `resolveTarget`이 도발한 상대를 돌려주기만 하고 `targetId`는
+    // 그대로 뒀다. 그래서 도발은 그 상대가 **이미 사거리 안에 있을 때만** 얻어걸리고 걸어오지는
+    // 않았다 — 아군과 붙어 싸우던 적을 톡 쳐도 표적은 내내 그 아군이었다.
+    const state = createSkirmish([getRelic("anky"), getRelic("deina")], [getRelic("husk-shell")], arena);
+    const [anky, deina, foe] = state.fighters;
+    anky.x = 500; anky.y = 800; foe.x = 560; foe.y = 800; deina.x = 380; deina.y = 800;
+    const rng = seeded(99);
+    let switched = false;
+    for (let t = 0; t < 4 && state.phase === "fight"; t += 0.05) {
+      stepSkirmish(state, 0.05, rng);
+      if (foe.targetId === deina.id) switched = true;
+    }
+    expect(switched).toBe(true);
+  });
+
+  it("의 도발이 풀리면 그 표적도 함께 비워져 원래 규칙으로 돌아간다", () => {
+    // 남겨 두면 0.5초짜리 도발이 다음 재탐색(2초)까지 조용히 이어져, 짧게 시선만 끄는 상태가
+    // 사실상 2초짜리가 된다. 광란이 풀릴 때와 같은 처리다.
+    const state = createSkirmish([getRelic("deina"), getRelic("anky")], [getRelic("husk-shell")], arena);
+    const [deina, torika, foe] = state.fighters;
+    // 도발이 없었다면 코앞의 토리카를 골랐을 자리에 세운다.
+    foe.x = 500; foe.y = 800; torika.x = 560; torika.y = 800; deina.x = 100; deina.y = 200;
+    foe.taunted = { remaining: 0.04, total: 0.5, sourceId: deina.id };
+    foe.targetId = deina.id;
+    stepSkirmish(state, 0.05, seeded(5));
+    expect(foe.taunted).toBeNull();
+    // 비워진 자리를 거리·혼잡도 규칙이 다시 채운다 — 멀리 있는 데이를 계속 쫓지 않는다.
+    expect(foe.targetId).toBe(torika.id);
+  });
+
+  it("는 유체화해 다른 전투원을 밀지 않고 그대로 지나간다", () => {
+    expect(getRelic("deina").passive.phasesThroughFighters).toBe(true);
+    // 토리카의 편성 자리를 고정해 제 걸음(swirl)이 두 판에서 똑같게 만들고, 겹쳐 세운 개체만
+    // 바꿔 **겹침 때문에** 밀린 거리만 남긴다.
+    const walk = (subjectId: string, overlap: boolean): { x: number; y: number } => {
+      const state = createSkirmish([getRelic(subjectId), getRelic("anky")], [getRelic("husk-shell")], arena);
+      const [subject, torika, foe] = state.fighters;
+      torika.x = 300; torika.y = 800; foe.x = 860; foe.y = 800;
+      subject.x = 300; subject.y = overlap ? 800 : -5_000;
+      const rng = seeded(3);
+      for (let t = 0; t < 1 && state.phase === "fight"; t += 0.05) stepSkirmish(state, 0.05, rng);
+      return { x: torika.x, y: torika.y };
+    };
+    const alone = walk("rex", false);
+    const shovedBy = (subjectId: string): number => {
+      const pushed = walk(subjectId, true);
+      return Math.hypot(pushed.x - alone.x, pushed.y - alone.y);
+    };
+    // 보통 개체가 겹치면 밀어낸다. 데이가 겹치면 아무 일도 일어나지 않는다.
+    expect(shovedBy("rex")).toBeGreaterThan(10);
+    // 정확히 0은 아니다 — 처리 순서가 달라지며 남는 부동소수점 잔차뿐이라 1px에도 못 미친다.
+    expect(shovedBy("deina")).toBeLessThan(1);
+  });
+
+  it("는 적이 하나뿐이면 비비지 않고 표적 둘레를 돈다", () => {
+    // 표적을 갈아탈 적이 없으면 예전에는 사거리 경계에서 다가섰다 물러서기를 되풀이했다.
+    const state = createSkirmish([getRelic("deina")], [getRelic("husk-shell")], arena);
+    const [deina, foe] = state.fighters;
+    deina.x = 400; deina.y = 800; foe.x = 560; foe.y = 800;
+    // 적은 발을 묶어 데이의 걸음만 남긴다.
+    foe.stunnedFor = 999;
+    const rng = seeded(7);
+    let arc = 0;
+    let previous = Math.atan2(deina.y - foe.y, deina.x - foe.x);
+    let closest = Infinity; let farthest = 0;
+    for (let t = 0; t < 4; t += 0.05) {
+      stepSkirmish(state, 0.05, rng);
+      const angle = Math.atan2(deina.y - foe.y, deina.x - foe.x);
+      let delta = angle - previous;
+      while (delta > Math.PI) delta -= 2 * Math.PI;
+      while (delta < -Math.PI) delta += 2 * Math.PI;
+      arc += Math.abs(delta);
+      previous = angle;
+      const gap = Math.hypot(deina.x - foe.x, deina.y - foe.y);
+      closest = Math.min(closest, gap); farthest = Math.max(farthest, gap);
+    }
+    // 4초면 한 바퀴를 넘게 돈다.
+    expect(arc).toBeGreaterThan(Math.PI * 2);
+    // 도는 내내 사거리 안에 머문다 — 벗어나면 도는 동안 때리지 못해 공백이 생긴다.
+    expect(farthest).toBeLessThan(fighterReach(deina));
+    expect(closest).toBeGreaterThan(fighterReach(deina) / 2);
+  });
+
   it("의 궁극기는 5초 동안 매초 전장 전체를 친다", () => {
     const state = createSkirmish([getRelic("deina")], ["husk-raptor", "husk-shell", "husk-wing"].map(getRelic), arena);
     const deina = state.fighters[0];
@@ -3234,5 +3319,30 @@ describe("데이", () => {
     expect(deina.energy).toBeGreaterThanOrEqual(energyAfterCast);
     // 5초가 지나면 시계가 사라진다 — 시전자가 쓰러지지 않아도 스스로 끝난다.
     expect(deina.artChannel).toBeNull();
+  });
+});
+
+describe("표적 둘레 돌기", () => {
+  it("는 걸음 길이를 늘리지 않고 방향만 나눈다", () => {
+    // 반지름 보정과 도는 몫을 따로 더하면 걸음이 이동 속도보다 길어져 그 개체만 빨라진다.
+    for (const gap of [40, 100, 141, 200]) {
+      const moved = orbitStep({ x: gap, y: 0 }, { x: 0, y: 0 }, 12, 141, 1);
+      expect(Math.hypot(moved.x - gap, moved.y - 0)).toBeCloseTo(12, 6);
+    }
+  });
+
+  it("는 제 거리로 수렴한 뒤에는 그 반지름을 지키며 돈다", () => {
+    let position = { x: 40, y: 0 };
+    for (let step = 0; step < 200; step += 1) position = orbitStep(position, { x: 0, y: 0 }, 12, 141, 1);
+    // 한 걸음(12px)마다 접선으로 도는 만큼 반지름이 아주 조금 벌어졌다 되돌아온다.
+    expect(Math.abs(Math.hypot(position.x, position.y) - 141)).toBeLessThan(2);
+  });
+
+  it("는 방향 하나로 한쪽으로만 돈다", () => {
+    // 매 프레임 방향이 뒤집히면 도는 것이 아니라 떠는 것으로 보인다.
+    const clockwise = orbitStep({ x: 141, y: 0 }, { x: 0, y: 0 }, 12, 141, 1);
+    const counter = orbitStep({ x: 141, y: 0 }, { x: 0, y: 0 }, 12, 141, -1);
+    expect(Math.sign(clockwise.y)).toBe(1);
+    expect(Math.sign(counter.y)).toBe(-1);
   });
 });

@@ -1471,7 +1471,11 @@ function tickTaunt(fighter: Fighter, dt: number): void {
   const taunted = fighter.taunted;
   if (!taunted) return;
   const remaining = taunted.remaining - dt;
-  fighter.taunted = remaining <= EMERGENCY_RECOVERY.epsilon ? null : { ...taunted, remaining };
+  if (remaining > EMERGENCY_RECOVERY.epsilon) { fighter.taunted = { ...taunted, remaining }; return; }
+  fighter.taunted = null;
+  // 풀리는 순간 도발이 넣어 둔 표적을 비운다 — 남겨 두면 0.5초짜리 도발이 다음 재탐색(2초)까지
+  // 조용히 이어져, 짧게 시선만 끄는 상태가 사실상 2초짜리가 된다. 광란이 풀릴 때와 같은 처리다.
+  if (fighter.targetId === taunted.sourceId) fighter.targetId = null;
 }
 
 /**
@@ -2071,7 +2075,22 @@ function resolveTarget(state: SkirmishState, fighter: Fighter, reconsider = fals
   // 도발을 그대로 따르면 지금 때릴 수 없는 상대를 바라보며 멈춰 선다.
   if (fighter.taunted) {
     const tauntSource = findFighter(state, fighter.taunted.sourceId);
-    if (tauntSource && tauntSource.side === wanted && isFighterAlive(tauntSource)) return tauntSource;
+    if (tauntSource && tauntSource.side === wanted && isFighterAlive(tauntSource)) {
+      /*
+       * **표적 자체를 갈아 끼운다.** 여기서 돌려주기만 하고 `targetId`를 그대로 두면, 도발은
+       * 그 상대가 **이미 사거리 안에 있을 때만** 얻어걸리고 걸어가지는 않는다 — 아군과 붙어
+       * 싸우던 적을 톡 쳐서 도발해도 제자리에서 계속 아군을 때렸다(재현에서 도발 두 번 동안
+       * 표적은 내내 토리카였다). 엘라의 「인」이 끌어당긴 뒤 `targetId`를 직접 넣는 것과 같은
+       * 계약이라, 그 규칙을 이 한 곳으로 모은다.
+       *
+       * 바뀌는 순간에만 `engaged`를 푼다 — 매 프레임 풀면 도발한 상대에게 영영 붙지 못한다.
+       */
+      if (fighter.targetId !== tauntSource.id) {
+        fighter.targetId = tauntSource.id;
+        fighter.engaged = false;
+      }
+      return tauntSource;
+    }
   }
   const current = fighter.targetId ? findFighter(state, fighter.targetId) : undefined;
   const keepable = current !== undefined && current.side === wanted && current.id !== fighter.id
@@ -3254,6 +3273,39 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
  * 정확히 정면일 때는 옆으로 돌릴 방향이 둘 다 같으므로 고유 위상으로 한쪽을 고른다 —
  * 매 프레임 다시 고르면 두 걸음마다 좌우로 흔들려 그 자리에서 떤다.
  */
+/**
+ * 표적 둘레를 도는 한 걸음.
+ *
+ * 붙어서 쿨다운을 기다리는 동안 **제자리에서 비비지 않게** 한다. 앞뒤로 다가섰다 물러서면
+ * 두 몸이 서로 비비는 것처럼 보이는데, 둘레를 돌면 같은 시간이 "한 바퀴 돌고 온다"가 된다.
+ * 적이 하나뿐이라 표적을 갈아탈 곳이 없을 때 이 걸음이 그 자리를 대신한다.
+ *
+ * 걸음의 **길이는 그대로 두고 방향만 나눈다** — 반지름을 되돌리는 몫(`pull`)을 먼저 떼고 남은
+ * 만큼을 접선으로 돌린다. 그래야 멀리 있을 때는 곧장 다가서고, 제 거리에 닿은 뒤에는 온전히
+ * 돌기만 한다. 두 몫을 따로 더하면 걸음이 이동 속도보다 길어져 그 개체만 빨라진다.
+ */
+export function orbitStep(
+  position: { x: number; y: number },
+  target: { x: number; y: number },
+  step: number,
+  radius: number,
+  /** 도는 방향. 개체마다 고정해야 매 프레임 방향이 뒤집혀 떠는 것처럼 보이지 않는다. */
+  direction: 1 | -1,
+): { x: number; y: number } {
+  const dx = position.x - target.x;
+  const dy = position.y - target.y;
+  const gap = Math.hypot(dx, dy) || 0.001;
+  const outX = dx / gap;
+  const outY = dy / gap;
+  // 반지름 보정은 걸음 길이를 넘지 않는다. 넘기면 한 프레임에 목표 거리로 순간이동한다.
+  const pull = Math.max(-step, Math.min(step, radius - gap));
+  const spin = Math.sqrt(Math.max(0, step * step - pull * pull));
+  return {
+    x: position.x + outX * pull + -outY * direction * spin,
+    y: position.y + outY * pull + outX * direction * spin,
+  };
+}
+
 export function sidestep(
   push: { x: number; y: number },
   heading: { x: number; y: number },
@@ -3290,7 +3342,13 @@ export function sidestep(
  * 돌린다(`sidestep`) — 겹침은 그대로 풀리면서 걸음은 반드시 남는다.
  */
 function separate(state: SkirmishState, dt: number): void {
-  const alive = state.fighters.filter(isFighterAlive);
+  /*
+   * **유체화한 개체는 밀어내기에 아예 참여하지 않는다** — 밀리지도, 밀지도 않는다.
+   *
+   * 한쪽만 빼면 뚫고 지나가는 대신 남을 밀어내며 다니게 되어, 지나간 자리마다 대형이 흐트러진다.
+   * 둘 다 빼야 "그 자리에 없는 것처럼 지나간다"가 된다.
+   */
+  const alive = state.fighters.filter((fighter) => isFighterAlive(fighter) && fighter.def.passive.phasesThroughFighters !== true);
   /** 지금 표적 쪽으로 걸어가는 중인가. 그렇다면 밀어내기를 그 방향과 맞부딪치게 두지 않는다. */
   const approachOf = (fighter: Fighter): { heading: { x: number; y: number } } | null => {
     if (fighter.engaged || fighter.targetId === null) return null;
@@ -3592,10 +3650,19 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
       // 달리는 동안에는 통통 튀어 오른다. 발이 땅에 닿는 순간마다 hop이 0을 지난다.
       fighter.hopPhase += dt * SKIRMISH.hopRate * Math.PI * (fighter.def.stats.moveSpeed / 100);
       fighter.hop = Math.abs(Math.sin(fighter.hopPhase)) * SKIRMISH.hopHeight;
-      // 곧장 달려들지 않고 조금씩 옆으로 흘러 여섯이 서로를 돌며 붙는다.
-      const swirl = Math.sin(state.elapsed * 1.7 + fighter.wander) * SKIRMISH.swirl;
-      fighter.x += ((dx / gap) + (-dy / gap) * swirl) * step;
-      fighter.y += ((dy / gap) + (dx / gap) * swirl) * step;
+      if (runsUntilStrike && fighter.engaged) {
+        // 이미 손이 닿는데 아직 못 때리는 시간이다. 다가설 곳이 없으므로 둘레를 돈다 —
+        // 표적을 갈아탈 적이 남아 있으면 애초에 `engaged`가 풀려 이 자리로 오지 않는다.
+        const orbit = orbitStep(fighter, target, step, reach * SKIRMISH.engageRatio,
+          Math.sin(fighter.wander) >= 0 ? 1 : -1);
+        fighter.x = orbit.x;
+        fighter.y = orbit.y;
+      } else {
+        // 곧장 달려들지 않고 조금씩 옆으로 흘러 여섯이 서로를 돌며 붙는다.
+        const swirl = Math.sin(state.elapsed * 1.7 + fighter.wander) * SKIRMISH.swirl;
+        fighter.x += ((dx / gap) + (-dy / gap) * swirl) * step;
+        fighter.y += ((dy / gap) + (dx / gap) * swirl) * step;
+      }
       // 사거리 밖이면 여기서 끝이다. 달리면서도 손이 닿는 개체는 아래 공격 판정까지 이어 간다 —
       // 멈춰 서는 것과 때리는 것은 다른 일이고, 이 개체는 앞의 하나만 하지 않는다.
       if (!fighter.engaged) continue;

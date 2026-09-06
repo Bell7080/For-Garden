@@ -255,8 +255,11 @@ function passiveHead(passive: Passive, atk?: number): string {
       passive.moveEnergyPerSecond === undefined ? undefined : `궁극기 게이지가 ${passive.moveEnergyPerSecond}`,
       passive.moveFerocityPerSecond === undefined ? undefined : `[[ferocity|야성]]이 ${passive.moveFerocityPerSecond}`,
     ].filter(Boolean).join(", ");
+    // 유체화는 화면에서 곧바로 보이는 움직임이라 본문이 직접 말한다 — 왜 이 개체만 남을
+    // 통과하는지가 설명되지 않으면 버그로 읽힌다.
+    const phasing = passive.phasesThroughFighters ? " 다른 전투원을 그대로 지나가고," : "";
     return `[[basic-attack|기본 공격]]을 낼 때마다 아직 때리지 않은 적으로 표적을 바꾼다. 모든 적을 때렸다면 처음부터 다시 돈다.`
-      + ` 타격하는 순간까지 멈추지 않고 움직이며, 움직이는 동안 매초 ${charge}씩 더 찬다.`;
+      + `${phasing} 타격하는 순간까지 멈추지 않고 움직이며, 움직이는 동안 매초 ${charge}씩 더 찬다.`;
   }
   if (passive.kind === "shimmerMark") return `적을 타격하면 반짝이는 표식을 남긴다. 표식이 없는 적을 타격하면 표식이 그 적에게 옮겨가며 [[ap|주문력]]의 ${passive.value}% [[magical-damage|마법 피해]]를 추가로 입힌다.`;
   if (passive.kind !== "battleMaidMastery") return passive.desc;

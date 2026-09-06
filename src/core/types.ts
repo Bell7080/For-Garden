@@ -958,6 +958,16 @@ export interface Passive {
   moveEnergyPerSecond?: number;
   /** 「태그 앤 런」 전용: 달리는 동안 매초 더 차는 야성이다. 피버 중에는 공용 규칙대로 오르지 않는다. */
   moveFerocityPerSecond?: number;
+  /**
+   * 유체화. 다른 전투원과 **서로 밀어내지 않고 그대로 지나간다.**
+   *
+   * 겹침을 푸는 힘(`separate`)에서 통째로 빠지므로 밀리지도, 밀지도 않는다 — 한쪽만 빼면
+   * 뚫고 지나가는 대신 남을 밀어내며 다녀 지나간 자리마다 대형이 흐트러진다.
+   *
+   * 늘 달리는 개체에만 준다. 멈춰 서서 때리는 개체가 이걸 가지면 표적 위에 그대로 겹쳐 서서
+   * 두 몸이 한 자리에 남는다 — 이 값은 "지나간다"이지 "겹쳐 선다"가 아니다.
+   */
+  phasesThroughFighters?: true;
   desc: string;
 }
 

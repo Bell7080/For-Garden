@@ -346,8 +346,7 @@ export interface SkirmishBossState {
   phases: readonly SkirmishBossPhase[];
   limitSeconds: number;
   damageRemainder: number;
-  /** 리미트가 좁혀 오는 현재 안전 반경과 다음 해일 예고 여부다. 씬은 이 값만 그린다. */
-  pressureRadius: number;
+  /** 다음 시간 단계의 해일이 임박했음을 HUD에 전달한다. */
   tideWarning: boolean;
 }
 
@@ -785,7 +784,7 @@ export function createSkirmish(
     log: [],
     augmentEffects: options.augmentEffects ?? [],
     initialEvents: [],
-    boss: options.boss ? { fighterId: bossFighterId, score: 0, survivedFor: 0, phaseIndex: 0, limitReached: false, phases: options.boss.phases, limitSeconds: options.boss.limitSeconds, damageRemainder: 0, pressureRadius: Math.max(arena.right - arena.left, arena.bottom - arena.top) / 2, tideWarning: false } : undefined,
+    boss: options.boss ? { fighterId: bossFighterId, score: 0, survivedFor: 0, phaseIndex: 0, limitReached: false, phases: options.boss.phases, limitSeconds: options.boss.limitSeconds, damageRemainder: 0, tideWarning: false } : undefined,
   };
   // 시작 효과는 별도의 순수 단계에서 정확히 한 번 적용하고 사건은 첫 렌더 step까지 보존한다.
   state.initialEvents = initializeSkirmishAugments(state);
@@ -3487,15 +3486,8 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     // ES2022 빌드에서도 동작하도록 뒤에서 직접 찾아 현재 단계를 고른다.
     for (let index = boss.phases.length - 1; index >= 0; index -= 1) if (state.elapsed >= boss.phases[index].startsAt) { boss.phaseIndex = index; break; }
     boss.limitReached = state.elapsed >= boss.limitSeconds;
-    // 리미트는 순수 시간/좌표 규칙이다. 시간이 갈수록 안전 반경이 좁고 폰토스가 중앙으로 압박한다.
-    const progress = Math.min(1, state.elapsed / boss.limitSeconds);
-    boss.pressureRadius = Math.max(120, Math.max(state.arena.right - state.arena.left, state.arena.bottom - state.arena.top) * (1 - progress) / 2);
+    // 폰토스의 압박은 단계별 환경 피해와 자체 성장 패시브만 담당하며, 판정 없는 안전 원은 두지 않는다.
     boss.tideWarning = boss.phases[boss.phaseIndex + 1] !== undefined && boss.phases[boss.phaseIndex + 1].startsAt - state.elapsed <= 3;
-    for (const pontos of aliveFighters(state, "enemy").filter(({ def }) => def.passive.kind === "abyssalPressure")) {
-      const centerX = (state.arena.left + state.arena.right) / 2; const centerY = (state.arena.top + state.arena.bottom) / 2;
-      pontos.x += (centerX - pontos.x) * Math.min(1, dt * (0.08 + progress * 0.22));
-      pontos.y += (centerY - pontos.y) * Math.min(1, dt * (0.08 + progress * 0.22));
-    }
     // 프레임 크기와 무관하게 같은 누적 광역 피해가 되도록 소수 나머지를 다음 스텝에 보존한다.
     boss.damageRemainder += boss.phases[boss.phaseIndex].damagePerSecond * dt;
     const pulse = Math.floor(boss.damageRemainder);

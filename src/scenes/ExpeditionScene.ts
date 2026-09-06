@@ -224,7 +224,8 @@ export class ExpeditionScene extends Phaser.Scene {
     if (!run) return;
     // 진행 중 합계는 랭킹의 주간 최고와 다른 "이번 원정 점수"임을 상태 줄에서 명시한다.
     this.add.text(BASE_WIDTH - 54, 94, `이번 원정 점수 ${score.toLocaleString()}`, textStyle({ role: "emphasis", size: 25, color: COLOR.sortieText })).setOrigin(1, 0);
-    this.buildRewardBar(run.pendingRewards, run.lastNodeRewards);
+    // 지도 HUD는 마지막 노드 증가분이 아니라 서버 저장 런 합계를 명시적으로 넘긴다.
+    this.buildRewardBar(run.pendingRewards, { scope: "run", value: score }, run.lastNodeRewards);
     this.buildMap(run.nodes, run.currentNodeId, run.visitedNodeIds);
     this.buildAugmentChips(augments);
     this.buildRelicHud(run.relics, augments);
@@ -251,7 +252,11 @@ export class ExpeditionScene extends Phaser.Scene {
   }
 
   /** 런에서만 누적되는 네 재화를 보상 팝업과 같은 액자·우하단 수량 문법으로 묶는다. */
-  private buildRewardBar(rewards: Readonly<Record<string, number>>, last: { nodeScore: number; rewards: Record<string, number>; cappedCurrencies: string[] } | null): void {
+  private buildRewardBar(
+    rewards: Readonly<Record<string, number>>,
+    confirmedScore: { scope: "node" | "run"; value: number },
+    last: { nodeScore: number; rewards: Record<string, number>; cappedCurrencies: string[] } | null,
+  ): void {
     const items = [
       ["currency-cheesecake", "cheesecake"], ["currency-gold", "gold"],
       ["currency-fossil", "fossil"], ["currency-gems", "gems"],
@@ -274,9 +279,9 @@ export class ExpeditionScene extends Phaser.Scene {
       const gained = Math.floor(last?.rewards[key] ?? 0);
       if (gained > 0) this.add.text(x, 263, `+ ${formatCurrency(gained)}`, textStyle({ role: "emphasis", size: 16, color: COLOR.accentText })).setOrigin(0.5);
     });
-    // 누적 보상이나 런 합계를 재계산하지 않고 마지막 완료 응답에 저장된 서버 확정값만 보여 준다.
-    const score = last?.nodeScore ?? 0;
-    this.add.text(BASE_WIDTH / 2, 282, `점수 ${score.toLocaleString()}`, textStyle({ role: "emphasis", size: 22, color: "#ffffff" })).setOrigin(0.5).setStroke("#000000", 5);
+    // 재화 레코드로 점수를 추론하지 않는다. 호출자가 고른 서버 확정 범위를 라벨까지 함께 보낸다.
+    const scoreLabel = confirmedScore.scope === "node" ? "이번 노드 점수" : "이번 원정 누적 점수";
+    this.add.text(BASE_WIDTH / 2, 282, `${scoreLabel} ${Math.floor(confirmedScore.value).toLocaleString()}`, textStyle({ role: "emphasis", size: 22, color: "#ffffff" })).setOrigin(0.5).setStroke("#000000", 5);
   }
 
   /** 전용 프리팹에 지도 월드와 입력 수명을 넘기고 씬은 선택 결과만 연결한다. */

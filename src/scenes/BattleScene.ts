@@ -448,7 +448,8 @@ export class BattleScene extends Phaser.Scene {
     this.add.text(BASE_WIDTH / 2, 430, "원정 관측 완료", textStyle({ role: "display", size: 60, color: COLOR.accentText })).setOrigin(0.5).setDepth(5001);
     const rank = score.rankBefore === null ? `신규 → ${score.rankAfter}위` : `${score.rankBefore}위 → ${score.rankAfter}위`;
     const rewards = Object.entries(settlement.granted).filter(([, amount]) => amount > 0).map(([id, amount]) => `${id} +${amount.toLocaleString()}`).join("  ·  ") || "정산 재화 없음";
-    this.add.text(BASE_WIDTH / 2, 880, `한 판 점수  ${score.runScore.toLocaleString()}\n폰토스 피해  ${score.bossDamageScore.toLocaleString()}\n주간 최고  ${score.bestScore.toLocaleString()}  ${score.improved ? "· 최고점 갱신" : "· 기존 기록 유지"}\n주간 누적  ${score.cumulativeScore.toLocaleString()}\n순위 변화  ${rank}\n\n정산 보상  ${rewards}`, textStyle({ role: "body", size: 31, color: COLOR.ink, align: "center", lineSpacing: 16, wrap: BASE_WIDTH - 180 })).setOrigin(0.5).setDepth(5001);
+    // 한 판 합계·보스 피해·주간 최고·보상용 누적을 축약하지 않아 결과 수치의 쓰임을 구분한다.
+    this.add.text(BASE_WIDTH / 2, 880, `이번 원정 점수  ${score.runScore.toLocaleString()}\n폰토스 피해  ${score.bossDamageScore.toLocaleString()}\n주간 최고 점수  ${score.bestScore.toLocaleString()}  ${score.improved ? "· 최고점 갱신" : "· 기존 기록 유지"}\n주간 누적 원정 점수  ${score.cumulativeScore.toLocaleString()}\n순위 변화  ${rank}\n\n정산 보상  ${rewards}`, textStyle({ role: "body", size: 31, color: COLOR.ink, align: "center", lineSpacing: 16, wrap: BASE_WIDTH - 180 })).setOrigin(0.5).setDepth(5001);
     const popups = new PopupLayer(this, 6000);
     new Button(this, BASE_WIDTH / 2, 1450, { width: 620, height: 112, label: "로비로", variant: "primary", onClick: () => {
       if (this.bossLeaving) return;

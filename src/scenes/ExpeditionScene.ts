@@ -204,7 +204,7 @@ export class ExpeditionScene extends Phaser.Scene {
     }
 
     this.add.text(54, 34, "주간 원정", textStyle({ role: "display", size: 48 })).setOrigin(0, 0);
-    this.add.text(54, 94, `이번 주 ${status.playsThisWeek}회  ·  최고 ${status.bestScore.toLocaleString()}`, textStyle({ role: "emphasis", size: 25, color: COLOR.accentText })).setOrigin(0, 0);
+    this.add.text(54, 94, `이번 주 ${status.playsThisWeek}회  ·  주간 최고 점수 ${status.bestScore.toLocaleString()}`, textStyle({ role: "emphasis", size: 25, color: COLOR.accentText })).setOrigin(0, 0);
     drawHairline(this, BASE_WIDTH / 2, 224, BASE_WIDTH - 108, { color: COLOR.accent, alpha: 0.34 });
 
     if (status.active) this.buildActive(status.active.score, status.run?.selectedAugments ?? []);
@@ -222,8 +222,8 @@ export class ExpeditionScene extends Phaser.Scene {
   private buildActive(score: number, augments: readonly ExpeditionAugmentSelection[]): void {
     const run = expeditionManager.status().run;
     if (!run) return;
-    // 현재 점수는 주간 최고와 같은 상태 줄에 짧게 붙여 지도 공간을 침범하지 않는다.
-    this.add.text(BASE_WIDTH - 54, 94, `런 ${score.toLocaleString()}`, textStyle({ role: "emphasis", size: 25, color: COLOR.sortieText })).setOrigin(1, 0);
+    // 진행 중 합계는 랭킹의 주간 최고와 다른 "이번 원정 점수"임을 상태 줄에서 명시한다.
+    this.add.text(BASE_WIDTH - 54, 94, `이번 원정 점수 ${score.toLocaleString()}`, textStyle({ role: "emphasis", size: 25, color: COLOR.sortieText })).setOrigin(1, 0);
     this.buildRewardBar(run.pendingRewards, run.lastNodeRewards);
     this.buildMap(run.nodes, run.currentNodeId, run.visitedNodeIds);
     this.buildAugmentChips(augments);
@@ -600,10 +600,10 @@ export class ExpeditionScene extends Phaser.Scene {
     const left = -score.width / 2 + 48;
     const right = score.width / 2 - 48;
     const top = -score.height / 2 + 40;
-    panel.add(this.add.text(left, top, "내 주간 최고", textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0, 0));
+    panel.add(this.add.text(left, top, "내 주간 최고 점수", textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0, 0));
     panel.add(this.add.text(left, top + 32, (best?.bestScore ?? 0).toLocaleString(), textStyle({ role: "display", size: 52, color: COLOR.accentText })).setOrigin(0, 0));
     panel.add(this.add.text(right, top, best?.rank ? `주간 ${best.rank}위` : "미등재", textStyle({ role: "emphasis", size: 26, color: COLOR.sortieText })).setOrigin(1, 0));
-    panel.add(this.add.text(right, top + 90, `누적 ${(best?.cumulativeScore ?? 0).toLocaleString()}`, textStyle({ role: "body", size: 22, color: COLOR.ink })).setOrigin(1, 0));
+    panel.add(this.add.text(right, top + 90, `주간 누적 원정 점수 ${(best?.cumulativeScore ?? 0).toLocaleString()}`, textStyle({ role: "body", size: 20, color: COLOR.ink })).setOrigin(1, 0));
   }
 
   /** 내 최고 순위는 순위표에만 있으므로 두 조회를 함께 묶는다. */

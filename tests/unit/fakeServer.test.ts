@@ -611,6 +611,51 @@ describe("FakeServer 원정 정산", () => {
     expect(weekly.bestScore).toBe(0);
   });
 
+  it("일반 노드·폰토스 피해·소탕은 주간 누적에 한 번씩 더하고 새 주에는 단계 수령을 초기화한다", async () => {
+    const state = makeSession();
+    let now = new Date("2026-08-25T12:00:00Z");
+    const manager = new (await import("../../src/managers/ExpeditionManager")).ExpeditionManager(state, { save: () => undefined }, () => now);
+    manager.start(["anky", "rex", "dodo"]);
+    const server = new FakeServer(state, { latencyMs: 0, random: () => 0.5, now: () => now });
+    const runId = state.expedition.run!.runId;
+
+    // 일반 노드 응답의 확정 점수는 같은 요청을 재전송해도 누적에 한 번만 들어간다.
+    const normalNode = state.expedition.run!.nodes.find(({ floor }) => floor === 1)!;
+    const nodeRequest = { requestId: "weekly-node-once", runId, nodeId: normalNode.id, relicHp: [100, 90, 80] };
+    const nodeResult = await server.completeExpeditionNode(nodeRequest);
+    await server.completeExpeditionNode(nodeRequest);
+    expect((await server.getExpeditionWeeklyBest()).cumulativeScore).toBe(nodeResult.nodeScore);
+
+    // 폰토스 제출도 캐시된 재요청을 제외한 피해 몫만 더해 한 판 합계와 주간 누적을 일치시킨다.
+    const bossNode = state.expedition.run!.nodes.find(({ type }) => type === "boss")!;
+    state.expedition.run!.bossSubmissionId = `${runId}:${bossNode.id}:weekly-boss-once`;
+    // 공용 공속 쿨다운과 실제 전투 종료 시각 안에 머무는 기본 공격열만 서버에 제출한다.
+    const actions = Array.from({ length: 5 }, (_, index) => ["anky", "rex", "dodo"].map((actorId) => (
+      { elapsedMs: index * 2_000, actorId, kind: "basic" as const }
+    ))).flat();
+    const bossRequest = { requestId: state.expedition.run!.bossSubmissionId!, runId, nodeId: bossNode.id, actions };
+    const bossResult = await server.submitExpeditionBossScore(bossRequest);
+    await server.submitExpeditionBossScore(bossRequest);
+    expect((await server.getExpeditionWeeklyBest()).cumulativeScore).toBe(nodeResult.nodeScore + bossResult.bossDamageScore);
+
+    // 정산으로 활성 런을 닫은 뒤 소탕 역시 동일 요청을 두 번 받아도 scoreGain을 딱 한 번만 더한다.
+    await server.settleExpeditionRun({ runId, settlementId: "weekly-score-settlement", outcome: "abandoned" });
+    // 소탕 기준을 10,000점 이상으로 고정해 수령 초기화까지 전투 밸런스 변동과 독립적으로 검사한다.
+    state.expedition.allTimeBestScore = Math.max(10_000, state.expedition.allTimeBestScore);
+    const beforeSweep = (await server.getExpeditionWeeklyBest()).cumulativeScore;
+    const sweepResult = await server.sweepExpedition({ requestId: "weekly-sweep-once" });
+    await server.sweepExpedition({ requestId: "weekly-sweep-once" });
+    expect((await server.getExpeditionWeeklyBest()).cumulativeScore).toBe(beforeSweep + sweepResult.scoreGain);
+
+    // 레거시 damage-* ID는 저장 호환 키일 뿐이며, 새 주 스냅샷은 점수와 수령 상태를 함께 비운다.
+    expect((await server.claimExpeditionReward({ requestId: "weekly-stage-claim", stageId: "damage-10k" })).alreadyClaimed).toBe(false);
+    now = new Date("2026-08-31T00:00:00Z");
+    const reset = await server.getExpeditionWeeklyBest();
+    expect(reset.cumulativeScore).toBe(0);
+    expect(reset.bestScore).toBe(0);
+    expect(reset.rewardStages.every(({ claimed }) => !claimed)).toBe(true);
+  });
+
   it("정산 뒤 새 편성을 열고 같은 정산 ID는 지갑을 다시 늘리지 않는다", async () => {
     const state = makeSession();
     state.wallet.gold = 999_999_998;

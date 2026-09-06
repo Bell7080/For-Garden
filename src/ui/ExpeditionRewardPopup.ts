@@ -108,7 +108,8 @@ export class ExpeditionRewardPopup {
       if (this.error) content.add(new Button(this.scene, 0, 96, { width: 280, height: 76, label: "새로고침", onClick: () => void this.refresh() }));
       return;
     }
-    content.add(this.scene.add.text(0, top + 96, `누적 ${snapshot.cumulativeScore.toLocaleString()}  ·  최고 ${snapshot.bestScore.toLocaleString()}`, textStyle({ role: "display", size: 32, color: COLOR.accentText })).setOrigin(0.5));
+    // 보상 기준인 합계와 랭킹 기준인 한 판 최고를 완전한 이름으로 적어 서로 바꿔 읽지 않게 한다.
+    content.add(this.scene.add.text(0, top + 96, `주간 누적 원정 점수 ${snapshot.cumulativeScore.toLocaleString()}  ·  주간 최고 점수 ${snapshot.bestScore.toLocaleString()}`, textStyle({ role: "display", size: 27, color: COLOR.accentText })).setOrigin(0.5));
     if (this.message) content.add(this.scene.add.text(0, top + 140, this.message, textStyle({ role: "emphasis", size: 22, color: COLOR.sortieText })).setOrigin(0.5));
 
     // 창은 판 안의 고정된 사각이고, 길만 그 안에서 흐른다.

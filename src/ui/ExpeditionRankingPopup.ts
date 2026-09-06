@@ -67,7 +67,8 @@ export class ExpeditionRankingPopup {
     const merged = [...entries, ...placeholderEntries(bestScore)]
       .sort((a, b) => b.score - a.score)
       .map((entry, index) => ({ ...entry, rank: index + 1 }));
-    this.content.add(this.scene.add.text(-410, -700, "주간 순위", textStyle({ role: "display", size: 40, color: COLOR.accentText })).setOrigin(0, 0.5));
+    // 순위는 누적 보상 점수가 아니라 한 판 최고 점수로 정렬된다는 기준을 제목에서 바로 밝힌다.
+    this.content.add(this.scene.add.text(-410, -700, "주간 최고 점수 순위", textStyle({ role: "display", size: 36, color: COLOR.accentText })).setOrigin(0, 0.5));
     this.content.add(this.scene.add.text(410, -700, "동점: 최고점 최초 달성 순", textStyle({ role: "body", size: 19, color: COLOR.inkDim })).setOrigin(1, 0.5));
     merged.slice(0, 8).forEach((entry, index) => this.renderRank(entry, -560 + index * 95));
   }
@@ -77,7 +78,7 @@ export class ExpeditionRankingPopup {
     if (!this.content) return;
     const row = this.scene.add.container(0, y).setScale(entry.isMe ? 1.06 : 1);
     const panel = drawLayer(this.scene, 0, 0, chipPoints(780, 72), { fill: entry.isMe ? 0x263844 : 0x171d25, alpha: HOLO.glass, edge: entry.isMe ? COLOR.accent : COLOR.panelEdge, edgeAlpha: entry.isMe ? 0.65 : 0.22 });
-    row.add([panel, this.scene.add.text(-350, 0, `${entry.rank}위`, textStyle({ role: "emphasis", size: 23, color: entry.isMe ? COLOR.accentText : COLOR.ink })).setOrigin(0, 0.5), this.scene.add.text(-210, 0, entry.displayName, textStyle({ role: "body", size: 23, color: entry.isMe ? COLOR.accentText : COLOR.ink })).setOrigin(0, 0.5), this.scene.add.text(350, 0, entry.score.toLocaleString(), textStyle({ role: "emphasis", size: 23 })).setOrigin(1, 0.5)]);
+    row.add([panel, this.scene.add.text(-350, 0, `${entry.rank}위`, textStyle({ role: "emphasis", size: 23, color: entry.isMe ? COLOR.accentText : COLOR.ink })).setOrigin(0, 0.5), this.scene.add.text(-210, 0, entry.displayName, textStyle({ role: "body", size: 23, color: entry.isMe ? COLOR.accentText : COLOR.ink })).setOrigin(0, 0.5), this.scene.add.text(350, 0, `최고 ${entry.score.toLocaleString()}`, textStyle({ role: "emphasis", size: 23 })).setOrigin(1, 0.5)]);
     this.content.add(row);
   }
 

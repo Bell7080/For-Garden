@@ -95,7 +95,7 @@ describe("원정 보스 제출 왕복", () => {
 });
 
 /** 렌더러와 무관하게 두 await 경계의 멱등·복구 상태만 고정하는 최소 영수증이다. */
-const scoreReceipt = { score: 130, bossDamageScore: 30, nodeScoreTotal: 100, runScore: 130, bestScore: 130, cumulativeScore: 230, improved: true, endedAtMs: 90_000, rankBefore: 4, rankAfter: 2, weekKey: "2026-08-31" } satisfies SubmitExpeditionBossScoreResponse;
+const scoreReceipt = { score: 130, normalNodeScoreTotal: 100, bossDamageScore: 30, runScore: 130, bestScore: 130, cumulativeScore: 230, improved: true, endedAtMs: 90_000, rankBefore: 4, rankAfter: 2, weekKey: "2026-08-31" } satisfies SubmitExpeditionBossScoreResponse;
 // 흐름은 PlayerStateDto의 나머지 필드를 해석하지 않으므로 테스트 영수증은 관찰 필드만 채운다.
 const settlementReceipt = { runId: "run", settlementId: "settle", outcome: "completed", granted: { gold: 50 } } as unknown as SettleExpeditionRunResponse;
 const request = { requestId: "score", settlementId: "settle", runId: "run", nodeId: "boss" };

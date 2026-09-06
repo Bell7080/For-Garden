@@ -299,7 +299,8 @@ export class FakeServer implements GameApi {
         this.persist({ ...this.state, expedition }); this.state.expedition = expedition;
       }
       // 단일 개발 계정은 기록 전 미등재(null), 제출 뒤 1위다. 운영 구현은 같은 필드에 실제 변화를 넣는다.
-      const response = { weekKey: this.bossWeek.weekKey, score: runScore.runScore, bossDamageScore: runScore.bossDamageScore, nodeScoreTotal: runScore.normalNodeScoreTotal, runScore: runScore.runScore, bestScore: this.bossWeek.bestScore, cumulativeScore: this.bossWeek.cumulativeScore, improved, endedAtMs: result.endedAtMs, rankBefore: this.previousBossBest > 0 ? 1 : null, rankAfter: 1 };
+      // 최종 영수증은 UI가 합산하지 않도록 일반 노드·보스·총점을 각각 확정해 돌려준다.
+      const response = { weekKey: this.bossWeek.weekKey, score: runScore.runScore, normalNodeScoreTotal: runScore.normalNodeScoreTotal, bossDamageScore: runScore.bossDamageScore, runScore: runScore.runScore, bestScore: this.bossWeek.bestScore, cumulativeScore: this.bossWeek.cumulativeScore, improved, endedAtMs: result.endedAtMs, rankBefore: this.previousBossBest > 0 ? 1 : null, rankAfter: 1 };
       this.previousBossBest = this.bossWeek.bestScore;
       this.bossSubmissionResults.set(request.requestId, response); return { ...response };
     } catch { throw new GameApiError("EXPEDITION_SCORE_REJECTED", "검증할 수 없거나 비정상적으로 큰 보스 점수입니다."); }

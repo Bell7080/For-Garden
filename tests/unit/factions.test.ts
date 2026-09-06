@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { SQUADS, SQUAD_EMBLEM_ASSETS, squadEmblemKey } from "../../src/data/factions";
 import { RELICS } from "../../src/data/relics";
 import type { SquadId } from "../../src/core/types";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 
 const SQUAD_IDS = Object.keys(SQUADS) as SquadId[];
 
@@ -33,6 +33,8 @@ describe("자치 스쿼드 표", () => {
       const id = SQUAD_IDS.find((squad) => squadEmblemKey(squad) === key);
       expect(id).toBeDefined();
       expect(path).toBe(`/sprites/factions/${id}.webp`);
+      // hasEmblem만 켜고 원화를 굽지 않으면 로딩이 404를 삼켜 표식만 조용히 사라진다.
+      expect(existsSync(new URL(`../../public${path}`, import.meta.url)), `${id} 엠블럼 원화`).toBe(true);
     }
   });
 });

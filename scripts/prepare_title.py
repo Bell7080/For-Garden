@@ -22,13 +22,15 @@ TITLE_BACKGROUND_TARGET = BACKGROUND_TARGET / "background_011.webp"
 TITLE_LOGOTYPE = PUBLIC / "titlename.png"
 TITLE_LOGOTYPE_TARGET = UI_TARGET / "titlename.webp"
 
-# docs/factions.md의 "이터널 시티 5대 자치 스쿼드" 순서와 1:1로 대응한다.
+# 앞의 다섯은 docs/factions.md의 "이터널 시티 5대 자치 스쿼드" 순서와 1:1로 대응하고,
+# 그 뒤로 적대 세력의 표식이 도착한 순서대로 붙는다. 파일 이름이 곧 SquadId다.
 FACTIONS = {
-    "1.png": "fang",    # 앱솔루트 팽 (Absolute Fang)
-    "2.png": "gear",    # 나이트 기어 (Night Gear)
-    "3.png": "eye",     # 시그널 아이 (Signal Eye)
-    "4.png": "rune",    # 사일런트 룬 (Silent Rune)
-    "5.png": "rogue",   # 쁘띠 로그 (Petit Rogue)
+    "1.png": "fang",                  # 앱솔루트 팽 (Absolute Fang)
+    "2.png": "gear",                  # 나이트 기어 (Night Gear)
+    "3.png": "eye",                   # 시그널 아이 (Signal Eye)
+    "4.png": "rune",                  # 사일런트 룬 (Silent Rune)
+    "5.png": "rogue",                 # 쁘띠 로그 (Petit Rogue)
+    "annihilation.webp": "annihilation",  # 공멸 (Annihilation) — 적대 세력
 }
 # 화면에서 쓰는 가장 큰 크기의 두 배로 굽는다. 원본은 얇은 선화라 과하게 줄이지 않는다.
 FACTION_SIZE = 512

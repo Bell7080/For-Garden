@@ -67,7 +67,7 @@ export const SQUADS: Readonly<Record<SquadId, SquadDef>> = {
   annihilation: {
     id: "annihilation", name: "공멸", latin: "Annihilation",
     duty: "복원체 침투 및 이터널 시티 파괴",
-    allegiance: "enemy", hasEmblem: false,
+    allegiance: "enemy", hasEmblem: true,
     // 기록이 열린 세 개체는 적대 관계에서도 주인공의 직책을 그대로 불러 관계의 거리를 드러낸다.
     researcherTitles: ["연구원"],
   },

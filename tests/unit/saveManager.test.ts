@@ -26,6 +26,66 @@ function validData(): SaveData {
 }
 
 describe("SaveManager", () => {
+  it("v31의 저장된 허스크 참조를 신규 렐릭 ID로 바꾸고 중복 없이 v32로 재저장한다", () => {
+    const storage = new MemoryStorage();
+    const source = createDefaultSession();
+    // 실제 원정 런을 먼저 만들어 맵처럼 이번 변경과 무관한 계약은 그대로 유효하게 유지한다.
+    new ExpeditionManager(source, new SaveManager(storage), () => new Date("2026-08-25T12:00:00Z")).start(["anky", "rex", "spino"]);
+    const legacy = JSON.parse(storage.getItem(SAVE_STORAGE_KEY)!) as unknown as Record<string, any>;
+    legacy.saveVersion = 31;
+    const replacements = [["anky", "husk-shell"], ["rex", "husk-raptor"], ["spino", "husk-wing"]] as const;
+    // 구형 저장에서 캐릭터 참조가 존재했던 모든 플레이어 진행 경로를 재현한다.
+    for (const [currentId, oldId] of replacements) {
+      legacy.ownedRelicIds = legacy.ownedRelicIds.map((id: string) => id === currentId ? oldId : id);
+      legacy.party = legacy.party.map((id: string) => id === currentId ? oldId : id);
+      legacy.relicProgress[oldId] = legacy.relicProgress[currentId]; delete legacy.relicProgress[currentId];
+    }
+    legacy.favorite = "husk-shell";
+    legacy.bookmarkedRelicIds = ["husk-shell", "amo", "husk-raptor"];
+    legacy.relicFragments = { "husk-shell": 7, "husk-raptor": 2 };
+    legacy.idleExcavation.assignedRelicIds = ["husk-shell", null, "husk-wing"];
+    legacy.interaction = { slots: [{ dispatchId: "legacy-dispatch", cityId: "cairo", startedAt: "2026-08-25T00:00:00Z", completesAt: "2026-08-25T01:00:00Z", party: ["husk-shell", "amo", "husk-raptor"], rewardSeed: "seed", reward: { currency: "gold", amount: 1 }, claimed: false }], claimedRequestIds: [] };
+    legacy.observationRecords = [{ date: "2026-08-25", relicId: "husk-wing", storyId: "story", questionId: "question", question: "질문", choiceId: "choice", answer: "답", personalityTag: "tag", discoveredHabit: "habit" }];
+    legacy.expedition.lastParty = ["husk-shell", "amo", "husk-raptor", "husk-wing"];
+    legacy.expedition.run.relics.forEach((relic: { relicId: string }) => { relic.relicId = replacements.find(([id]) => id === relic.relicId)?.[1] ?? relic.relicId; });
+    legacy.expedition.run.selectedAugments = [{ augmentId: "predator-instinct", targetRelicId: "husk-shell" }];
+    storage.setItem(SAVE_STORAGE_KEY, JSON.stringify(legacy));
+
+    const manager = new SaveManager(storage);
+    const loaded = manager.load()!;
+    expect([...loaded.owned]).toEqual(expect.arrayContaining(["amo", "toby", "ripa"]));
+    expect(loaded.party).toEqual(["amo", "toby", "ripa"]);
+    expect(loaded.favorite).toBe("amo");
+    expect([...loaded.bookmarked]).toEqual(["amo", "toby"]);
+    expect(loaded.relicFragments).toMatchObject({ amo: 7, toby: 2 });
+    expect(loaded.idleExcavation.assignedRelicIds).toEqual(["amo", null, "ripa"]);
+    expect(loaded.interaction.slots[0]?.party).toEqual(["amo", "toby"]);
+    expect(loaded.observationRecords[0].relicId).toBe("ripa");
+    expect(loaded.expedition.lastParty).toEqual(["amo", "toby", "ripa"]);
+    expect(loaded.expedition.run?.relics.map(({ relicId }) => relicId)).toEqual(["amo", "toby", "ripa"]);
+    expect(loaded.expedition.run?.selectedAugments[0].targetRelicId).toBe("amo");
+
+    // 로드 마이그레이션은 저장소를 몰래 쓰지 않으며, 다음 정상 저장이 신규 버전을 확정한다.
+    manager.save(loaded);
+    const resaved = JSON.parse(storage.getItem(SAVE_STORAGE_KEY)!) as SaveData;
+    expect(resaved.saveVersion).toBe(CURRENT_SAVE_VERSION);
+    expect(JSON.stringify(resaved)).not.toContain("husk-shell");
+  });
+
+  it("구형/신규 ID의 성장 키 충돌은 임의 병합하지 않고 거부하며 알 수 없는 ID도 거부한다", () => {
+    const manager = new SaveManager(new MemoryStorage());
+    const collision = validData() as unknown as Record<string, any>;
+    collision.saveVersion = 31;
+    collision.ownedRelicIds.push("husk-shell", "amo");
+    collision.relicProgress["husk-shell"] = { ...collision.relicProgress.anky };
+    collision.relicProgress.amo = { ...collision.relicProgress.anky, level: 2 };
+    expect(() => manager.migrate(collision)).toThrow("구형/신규 렐릭 ID");
+
+    const unknown = validData();
+    unknown.ownedRelicIds.push("husk-unknown");
+    expect(() => manager.validate(manager.migrate(unknown))).toThrow("존재하지 않는 렐릭");
+  });
+
   it("v24 저장은 플레이어 연구 진행을 명시적인 레벨 1 기본값으로 마이그레이션한다", () => {
     const legacy = validData() as unknown as Record<string, unknown>;
     legacy.saveVersion = 24;

@@ -36,6 +36,7 @@ RELICS = {
     "char012": "keris",
     "char013": "delopi",
     "char015": "ella",
+    "char016": "deina",
     # 적도 같은 파이프라인을 쓴다. 원본 이름의 머리말만 다르고(enemy00N) 나머지 규칙은 같다.
     "enemy001": "husk-raptor",
     "enemy002": "husk-shell",

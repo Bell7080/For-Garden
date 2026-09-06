@@ -36,6 +36,7 @@ import {
   REACH_TIER,
   fighterReach,
   sidestep,
+  vandalismOffenseShred,
 } from "../../src/core/skirmish";
 import { applyExpeditionRest, type ExpeditionAugmentEffect } from "../../src/core/expeditionAugments";
 import { RELICS, getRelic } from "../../src/data/relics";
@@ -3088,5 +3089,129 @@ describe("노도니아의 프로젝트 REVERIE", () => {
     nodonia.attackCooldown = 0;
     stepSkirmish(state, 1 / 60);
     expect(nodonia.hp).toBeGreaterThan(wounded);
+  });
+});
+
+/**
+ * 데이나의 전투 규칙.
+ *
+ * 이 개체는 **네 슬롯이 서로를 물고 있다** — 표적을 돌리기 때문에 낙서가 전장에 퍼지고,
+ * 멈추지 않기 때문에 게이지가 차며, 폭주는 그 둘을 놓고 흩뿌리기를 가져간다. 하나만 고치면
+ * 나머지가 조용히 무너지므로 네 규칙을 한 자리에서 함께 고정한다.
+ */
+describe("데이나", () => {
+  const arena: Arena = { left: 0, right: 900, top: 0, bottom: 1_400 };
+  const seeded = (start: number) => { let n = start; return () => (n = (n * 1103515245 + 12345) % 2147483648) / 2147483648; };
+
+  function fight(seconds: number, seed = 4242): { state: SkirmishState; deina: Fighter; events: SkirmishEvent[] } {
+    const state = createSkirmish([getRelic("deina")], ["husk-raptor", "husk-shell", "husk-wing"].map(getRelic), arena);
+    const rng = seeded(seed);
+    const events: SkirmishEvent[] = [];
+    for (let t = 0; t < seconds && state.phase === "fight"; t += 0.05) events.push(...stepSkirmish(state, 0.05, rng));
+    return { state, deina: state.fighters[0], events };
+  }
+
+  it("의 태그 앤 런은 한 바퀴를 다 돌고 나서야 같은 적으로 돌아온다", () => {
+    const { state, deina } = fight(12);
+    // 세 적 모두 적어도 한 번은 태그당해야 한다. 가장 가까운 적만 계속 때리면 낙서가 한 명에게
+    // 몰려, 전장 전체를 터뜨리는 궁극기가 밑그림 없이 나간다.
+    const painted = aliveFighters(state, "enemy").filter((enemy) => enemy.vandalism !== null || enemy.hp < enemy.maxHp);
+    expect(painted.length).toBeGreaterThanOrEqual(2);
+    // 기억한 자리는 살아 있는 적 수를 넘지 않는다 — 넘으면 한 바퀴가 끝나도 비워지지 않은 것이다.
+    expect(deina.taggedIds.length).toBeLessThanOrEqual(3);
+  });
+
+  it("의 밴덜리즘은 공격력·주문력을 함께 깎고 상한에서 터진다", () => {
+    const effect = getRelic("deina").basic.statusEffects!.find((e) => e.kind === "vandalism")!;
+    expect(effect).toMatchObject({ kind: "vandalism", offenseShredPercent: 5, maxStacks: 5, seconds: 8 });
+    // 유지 시간은 한 바퀴를 도는 시간보다 길어야 겹이 쌓인다 — 적 셋과 공격 간격 1.34초면
+    // 한 바퀴가 약 4초라, 그보다 짧게 두면 돌아왔을 때 이미 말라 영영 1겹에 머문다.
+    expect(effect.kind === "vandalism" && effect.seconds).toBeGreaterThan(4);
+
+    // 적이 하나면 표적을 옮길 곳이 없어 같은 상대에게 겹이 그대로 쌓인다.
+    const state = createSkirmish([getRelic("deina")], [getRelic("husk-shell")], arena);
+    const [deina, enemy] = state.fighters;
+    deina.x = 400; deina.y = 700; enemy.x = 480; enemy.y = 700;
+    const rng = seeded(9);
+    const events: SkirmishEvent[] = [];
+    let peak = 0; let shredAtPeak = 0;
+    for (let t = 0; t < 10 && state.phase === "fight"; t += 0.05) {
+      events.push(...stepSkirmish(state, 0.05, rng));
+      if ((enemy.vandalism?.stacks ?? 0) > peak) {
+        peak = enemy.vandalism!.stacks;
+        shredAtPeak = vandalismOffenseShred(enemy);
+      }
+    }
+    // 겹은 상한 직전까지 오르며, 한 겹이 공격력·주문력을 5%씩 깎는다.
+    expect(peak).toBeGreaterThanOrEqual(4);
+    expect(shredAtPeak).toBeCloseTo(peak * 0.05, 5);
+    // 상한에 닿은 프레임에 스스로 터지고 겹이 0으로 돌아간다.
+    expect(events.some((event) => event.kind === "vandalismBurst")).toBe(true);
+  });
+
+  it("의 짧은 도발은 때린 적만 자기 쪽으로 돌린다", () => {
+    const { state, deina } = fight(6);
+    const taunt = getRelic("deina").basic.statusEffects!.find((e) => e.kind === "taunt")!;
+    expect(taunt).toMatchObject({ kind: "taunt", seconds: 0.5 });
+    // 걸린 도발은 반드시 데이나를 가리킨다. 다른 아군을 가리키면 어그로가 엉뚱한 곳으로 간다.
+    for (const enemy of aliveFighters(state, "enemy")) {
+      if (enemy.taunted) expect(enemy.taunted.sourceId).toBe(deina.id);
+    }
+  });
+
+  it("는 때리는 순간을 빼고 멈추지 않고, 달리는 동안 게이지가 더 찬다", () => {
+    // 사거리 안에 세워 두고 쿨다운만 남긴다. 보통 개체는 여기서 발을 붙이고 기다린다.
+    const state = createSkirmish([getRelic("deina")], [getRelic("husk-raptor")], arena);
+    const [deina, enemy] = state.fighters;
+    deina.x = 400; deina.y = 700; enemy.x = 450; enemy.y = 700;
+    deina.attackCooldown = 1;
+    const before = { x: deina.x, y: deina.y, energy: deina.energy };
+    stepSkirmish(state, 0.05, seeded(7));
+    expect(Math.hypot(deina.x - before.x, deina.y - before.y)).toBeGreaterThan(0);
+    // 달린 만큼만 찬다. 서서 때리는 프레임에는 오르지 않아, 얼마나 돌아다녔는지가 곧 게이지다.
+    expect(deina.energy).toBeGreaterThan(before.energy);
+  });
+
+  it("의 폭주는 때리기를 놓고 매초 주위에 낙서를 흩뿌린다", () => {
+    const state = createSkirmish([getRelic("deina")], [getRelic("husk-raptor")], arena);
+    const [deina, enemy] = state.fighters;
+    deina.x = 400; deina.y = 700; enemy.x = 450; enemy.y = 700;
+    deina.ferocity = FEROCITY_RULES.max; deina.ferocityFever = true;
+    const rng = seeded(11);
+    const events: SkirmishEvent[] = [];
+    for (let t = 0; t < 1.2; t += 0.05) events.push(...stepSkirmish(state, 0.05, rng));
+    // 매초 도는 아우라는 시전 모션 없이 들어온다(`animate: false`). 평타는 한 번도 나가지 않는다.
+    const hits = events.filter((event): event is Extract<SkirmishEvent, { kind: "attack" }> => event.kind === "attack" && event.attackerId === deina.id);
+    expect(hits.length).toBeGreaterThan(0);
+    expect(hits.every((hit) => hit.animate === false)).toBe(true);
+    // 때리지 않으므로 도발도 함께 멈춘다 — 붙잡아 두기를 놓고 흩뿌리기를 가져가는 교환이다.
+    expect(enemy.taunted).toBeNull();
+    // 두 배로 달린다.
+    expect(moveSpeed(deina, state)).toBeCloseTo(getRelic("deina").stats.moveSpeed * SKIRMISH.moveRate * 2, 5);
+  });
+
+  it("의 궁극기는 5초 동안 매초 전장 전체를 친다", () => {
+    const state = createSkirmish([getRelic("deina")], ["husk-raptor", "husk-shell", "husk-wing"].map(getRelic), arena);
+    const deina = state.fighters[0];
+    deina.energy = getRelic("deina").ultimate.cost;
+    const rng = seeded(13);
+    fireUltimate(state, deina.id, rng);
+    // 시전 순간이 곧 첫 틱이라 남은 시간만 시계에 얹는다 — 전체를 넣으면 같은 초에 두 번 터진다.
+    expect(deina.artChannel).toMatchObject({ total: 5, tickIn: 1 });
+    expect(deina.artChannel!.remaining).toBeCloseTo(4, 5);
+
+    // 게이지는 시전한 그 한 번의 몫만 쓴다. 남은 틱이 다시 소비하면 5초짜리가 궁극기 다섯 번이 된다.
+    const energyAfterCast = deina.energy;
+    let ticks = 0;
+    for (let t = 0; t < 5; t += 0.05) {
+      for (const event of stepSkirmish(state, 0.05, rng)) {
+        if (event.kind === "attack" && event.attackerId === deina.id && event.skill === "ultimate") ticks += 1;
+      }
+    }
+    // 남은 네 틱이 각각 살아 있는 적 전부를 친다.
+    expect(ticks).toBeGreaterThanOrEqual(4);
+    expect(deina.energy).toBeGreaterThanOrEqual(energyAfterCast);
+    // 5초가 지나면 시계가 사라진다 — 시전자가 쓰러지지 않아도 스스로 끝난다.
+    expect(deina.artChannel).toBeNull();
   });
 });

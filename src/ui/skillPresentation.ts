@@ -32,6 +32,8 @@ export function statusEffectLabel(effect?: CombatStatusEffect): string | undefin
   if (effect?.kind === "stagger") return "[[stagger|경직]]";
   if (effect?.kind === "bleed") return `[[bleed|출혈]] ${effect.seconds}초 · 매초 최대 체력 ${effect.maxHpPercentPerSecond}%`;
   if (effect?.kind === "poison") return `[[poison|중독]] ${effect.seconds}초`;
+  if (effect?.kind === "vandalism") return `[[vandalism|밴덜리즘]] ${effect.seconds}초`;
+  if (effect?.kind === "taunt") return `[[taunt|도발]] ${effect.seconds}초`;
   return undefined;
 }
 
@@ -98,7 +100,7 @@ export function skillKeywordLayoutOptions(
 }
 
 /** 폭주 설명의 모든 수치를 실제 전투 계약에서 만들어 밸런스 조정 후 문구가 남지 않게 한다. */
-export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack: number; defense: number; maxHp?: number }): string {
+export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack: number; defense: number; maxHp?: number; abilityPower?: number }): string {
   if (trait.effectId === "attackIntervalReduction") return `공격 간격이 ${trait.reductionPercent}% 짧아진다.`;
   if (trait.effectId === "damageReduction") return `받는 피해가 ${trait.reductionPercent}% 줄어든다.`;
   // 덧셈형 확률도 플레이어에게는 일반적인 퍼센트 기호로 보여 주고 내부 산술 단위는 노출하지 않는다.
@@ -139,6 +141,14 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
   if (trait.effectId === "climax") {
     return `매초 자신의 주위 모든 적에게 최대 체력의 ${trait.auraDamageMaxHpPercent}%만큼 [[fixed-damage|고정 피해]]를 준다.`
       + ` [[basic-attack|기본 공격]]마다 [[missing-hp|잃은 체력]]의 ${trait.missingHpPercentPerBasic}%를 회복한다.`;
+  }
+  // 때리지 않는다는 것을 먼저 말한다 — 이 폭주에서 플레이어가 화면으로 확인할 첫 변화가
+  // "평타가 멈췄다"이고, 그래서 도발도 함께 멈춘다. 뒤에 붙는 절이 그 대가로 무엇을 얻는지다.
+  if (trait.effectId === "graffitiRun") {
+    const converted = stats?.abilityPower === undefined ? undefined : Math.round(stats.abilityPower * trait.auraDamagePercent / 100);
+    const damage = converted === undefined ? `주문력의 ${trait.auraDamagePercent}%` : `[[damage-value|${converted}]]`;
+    return `이동 속도가 ${trait.moveSpeedPercent}% 증가하고 [[basic-attack|기본 공격]]을 하지 않는다.`
+      + ` 매초 자신의 주위 모든 적에게 ${damage}의 [[magical-damage|마법 피해]]를 주고 [[vandalism|밴덜리즘]]을 한 겹 쌓는다.`;
   }
 
   // 방어력 계수는 토리카처럼 추가 피해가 있는 범위 타격만 노출하고, 일반 전이 특성은 원래 피해 비율만 보여 준다.
@@ -234,6 +244,16 @@ function passiveHead(passive: Passive, atk?: number): string {
   }
   if (passive.kind === "painfulElation" && passive.elation !== undefined) {
     return `적에게 피격당할 때마다 [[nodonia-elation|희열]]이 한 겹 쌓인다.`;
+  }
+  if (passive.kind === "tagAndRun") {
+    // 세 절이 각각 다른 일을 한다 — 표적을 돌리고, 멈추지 않고, 달린 만큼 찬다. 한 문장에
+    // 이으면 무엇이 이 패시브의 주 규칙인지 읽히지 않으므로 문장을 끊는다.
+    const charge = [
+      passive.moveEnergyPerSecond === undefined ? undefined : `궁극기 게이지가 ${passive.moveEnergyPerSecond}`,
+      passive.moveFerocityPerSecond === undefined ? undefined : `[[ferocity|야성]]이 ${passive.moveFerocityPerSecond}`,
+    ].filter(Boolean).join(", ");
+    return `[[basic-attack|기본 공격]]을 낼 때마다 아직 때리지 않은 적으로 표적을 바꾼다. 모든 적을 때렸다면 처음부터 다시 돈다.`
+      + ` 타격하는 순간까지 멈추지 않고 움직이며, 움직이는 동안 매초 ${charge}씩 더 찬다.`;
   }
   if (passive.kind === "shimmerMark") return `적을 타격하면 반짝이는 표식을 남긴다. 표식이 없는 적을 타격하면 표식이 그 적에게 옮겨가며 [[ap|주문력]]의 ${passive.value}% [[magical-damage|마법 피해]]를 추가로 입힌다.`;
   if (passive.kind !== "battleMaidMastery") return passive.desc;
@@ -380,6 +400,21 @@ export function skillDescription(
   // 적으면 한 겹만 칠한 적과 다섯 겹을 칠한 적이 같은 수를 맞는 것처럼 읽힌다.
   if ("overpaintDetonation" in skill && skill.overpaintDetonation === true) {
     return `${skillTargetPhrase(skill)} 쌓인 [[overpaint|덧칠]]을 터뜨려 한 겹마다 ${skillDamagePhrase(skill, stats)}를 주고, 그 덧칠을 지운다.`;
+  }
+  /*
+   * 시간을 두고 되풀이되는 궁극기는 위력이 총량이 아니라 **한 틱**의 값이라 뼈대가 다르다.
+   * "전장 전체에 얼마"로 적으면 한 번에 다 들어가는 것처럼 읽히고, 총량으로 환산해 적으면
+   * 도중에 쓰러진 적이 실제로 받은 몫과 갈린다.
+   */
+  const channel = "channel" in skill ? skill.channel : undefined;
+  if (channel !== undefined) {
+    const clauses = statusClauses(skill).map(({ text }) => text);
+    // 대상이 먼저다 — 다른 모든 스킬과 같은 뼈대를 지키고, 그 뒤에 "얼마 동안 매초"를 둔다.
+    const tick = `${skillTargetPhrase(skill)} ${channel.seconds}초 동안 매초 ${skillDamagePhrase(skill, stats)}를 주고 ${clauses.join(" ")}.`;
+    const rider = (channel.basicStatusEffects ?? []).map((effect) => statusEffectClause(effect)).filter(Boolean);
+    // 손이 닿은 적만 받는 몫은 전장 전체가 받는 틱과 주어가 달라 제 문장으로 선다.
+    return rider.length === 0 ? tick
+      : `${tick} 그동안 [[basic-attack|기본 공격]]에 맞은 적을 ${rider.join(" ")}.`;
   }
   // 걸음마다 다른 권을 내는 순환 기본 공격(엘라의 발경)은 한 문장으로 뭉치지 않는다 — 위력도
   // 대상도 부가 효과도 걸음마다 통째로 달라, 하나로 적으면 세 권 중 하나만 설명한 문장이 된다.
@@ -544,6 +579,11 @@ function statusEffectClause(effect: CombatStatusEffect): string | undefined {
   if (effect.kind === "curse") return `[[curse|저주]]를 한 겹 씌운다`;
   // 반대로 광란의 시간은 스킬마다 다르므로 본문이 적는다 — 출혈이 그런 것과 같은 이유다.
   if (effect.kind === "frenzy") return `${effect.seconds}초 동안 [[frenzy|광란]]시킨다`;
+  // 겹 상한·감소율·유지 시간·터지는 위력은 밴덜리즘 태그가 말한다(쓰는 개체가 하나뿐이라
+  // 태그가 수치를 가진다). 둘째 개체가 이 규칙어를 갖게 되면 출혈처럼 본문으로 옮긴다.
+  if (effect.kind === "vandalism") return `[[vandalism|밴덜리즘]]을 한 겹 쌓는다`;
+  // 도발은 붙잡아 두는 시간이 곧 스킬마다 다른 값이라 본문이 초를 적는다.
+  if (effect.kind === "taunt") return `${effect.seconds}초 동안 [[taunt|도발]]한다`;
   return undefined;
 }
 

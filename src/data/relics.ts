@@ -1559,6 +1559,148 @@ export const RELICS: RelicDef[] = [
     },
   },
   {
+    id: "deina",
+    squad: "rogue",
+    name: "데이나",
+    specimenNumber: "059",
+    projectName: "NEON TAG",
+    excavationSite: "몬태나 클로버리층 상부 이암",
+    // 발굴 기록은 장소·보존 상태·복원 연구 특징만 담고, 복원 이후 생활 관찰과 분리한다.
+    fossilRecord: "복원 목록에 마지막으로 올라온 표본이다. 무너진 이암 단면에서 낫발톱과 꼬리 힘줄뼈가 달리던 자세 그대로 굳어 나왔다.",
+    observationProfile: {
+      originYear: "약 1억 1천만 년 전",
+      // E.C.는 인간형 신체 나잇대만 나타내며, 아래 아성체 화석 단계와 독립된 값이다.
+      restorationYear: "E.C. 17년",
+      lifeStage: "아성체",
+      height: "1.66 m",
+      weight: "43 kg",
+    },
+    catalogSummary: "신장 1.66m, 체중 43kg의 가벼운 인간형 체격과 발달한 꼬리 깃이 확인된, 아성체 데이노니쿠스 화석 기반 표본.",
+    // 복원 후 관찰은 성격과 실제로 목격된 행동만 남기고 발굴 기록과 겹치지 않게 쓴다.
+    unlockRecord: { status: "recorded", text: "데이나는 비어 있는 면을 그냥 지나치지 못한다. 케어실 셔터와 창고 벽에 하룻밤 사이 이름 모를 표식이 늘어나는데, 정작 본인은 아침마다 시치미를 뗀다. 연구원이 책상에 엎드려 잠든 날에는 어김없이 얼굴에 무언가를 남기고, 들켜서 혼이 나면 눈이 그렁그렁해져 다시는 안 하겠다고 말한 뒤 그날 밤에 또 한다. 야단맞는 동안에도 손끝은 캔을 흔들고 있다." },
+    squadNote: "쁘띠 로그의 자율 보급 회수조. 유적에서 주워 온 빈 캔을 스스로 채워 쓰고, 회수 경로를 벽의 표식으로 남겨 다음 조가 읽게 한다.",
+    researcherTitle: "대장님",
+    rarity: "SSR",
+    portraitAssetId: "deina",
+    origin: "데이노니쿠스",
+    element: "wind",
+    // 붙잡아 두는 것이 값이라 태그는 tank지만, 버티는 방식은 체력도 보호막도 아닌 발이다.
+    role: "tank",
+    // 캔이 닿는 거리까지만 다가간다.
+    reachTier: "melee",
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 22, efficiencyMultiplier: 1.14 },
+    /*
+     * **버티는 몫을 체력에 두지 않는다.** 탱커 셋 중 체력이 가장 낮고(노도니아 2280 · 엘라
+     * 1500) 방어·저항도 가장 얇다 — 이 개체가 사는 방식은 맞고 버티는 것이 아니라 한 대
+     * 치고 다음 벽으로 옮겨 가는 것이라, 단단하게 적으면 콘셉트와 수치가 갈린다.
+     *
+     * 대신 **이동 속도가 로스터 최고**(마키 128)이고 그 다음이 주문력이다. 세 스킬이 전부
+     * 주문력에서 나오므로 공격력은 쓰지 않는 값이라 낮게 둔다.
+     */
+    stats: {
+      hp: 1350,
+      def: 62,
+      res: 78,
+      // 노도니아(46)에 이어 로스터에서 두 번째로 낮다. 세 스킬이 전부 주문력에서 나오므로
+      // 이 값은 어디에도 쓰이지 않는다.
+      atk: 48,
+      /*
+       * **주문력을 딜러 자리에 두지 않는다.** 처음에는 152(케리스 180에 이어 2위)로 적었는데,
+       * 이 개체는 표적을 계속 돌리고 폭주는 주위를 통째로 지지며 궁극기는 전장 전체를 치므로
+       * 같은 주문력이 개체 수만큼 곱해진다 — 표준 5인 파티 재현에서 적 체력의 30%를 혼자
+       * 깎아 렉시아(22%)와 스피나(28%)를 넘었다. 탱커 슬롯을 쓰면서 딜러 화력을 내는 자리다.
+       * 110으로 내리고 그 몫을 체력·저항·이동 속도로 옮겨 21%에 맞췄다(마키 17% ~ 렉시아 22%).
+       */
+      ap: 110,
+      attackSpeed: 112,
+      moveSpeed: 166,
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 0,
+    },
+    ferocityTrait: {
+      name: "네가 예술을 알아?",
+      effectId: "graffitiRun",
+      moveSpeedPercent: 100,
+      // 매초 30%씩 8초면 주문력 240% — 그동안 포기하는 평타 여섯 번(45% × 6 = 270%)보다 조금
+      // 적다. 단일 대상에서는 오히려 손해이고, 둘 이상이 반경에 들어올 때만 남는 장사가 된다.
+      auraDamagePercent: 30,
+      radius: 240,
+      vandalism: { kind: "vandalism", seconds: 8, offenseShredPercent: 5, maxStacks: 5, burstPower: 130 },
+    },
+    passive: {
+      // kind가 tagAndRun인 패시브는 passiveDescription()이 구조화 필드로 문장을 만들므로
+      // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
+      id: "deina-passive",
+      name: "태그 앤 런",
+      kind: "tagAndRun",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      // Passive.value는 공용 필수 필드라, 이 패시브에서는 달리는 동안의 궁극기 충전량을 담는다.
+      value: 6,
+      // 이 개체는 때리는 순간을 빼면 늘 달리고 있어 사실상 상시 충전이다. 그래서 평타 한 번이
+      // 주는 26에 견주면 작다 — 나란히 두면 게이지가 두 배 속도로 차 궁극기가 상시기가 된다.
+      moveEnergyPerSecond: 6,
+      moveFerocityPerSecond: 2.5,
+      desc: "기본 공격을 한 번 낼 때마다 아직 때리지 않은 적으로 표적을 바꾼다. 모두 때렸다면 처음부터 다시 돈다. 타격하는 순간을 빼고는 멈추지 않고 움직이며, 움직이는 동안 궁극기 게이지와 야성이 매초 더 찬다.",
+    },
+    basic: {
+      id: "deina-basic",
+      name: "치익, 칙!",
+      // 「톡 톡 치고 다닌다」가 그대로 수치다. 표적을 매 타격마다 바꾸므로 같은 위력이 적 수만큼
+      // 곱해져, 단일 대상 기준으로 읽고 적으면 실제로는 그 몇 배가 된다.
+      power: 45,
+      scalingStat: "ap",
+      iconAssetId: "skill-icon-magical",
+      effectType: "magical",
+      damageType: "magical",
+      targeting: "single",
+      /*
+       * 낙서는 8초 남는다. 표적을 매 타격마다 바꾸는 개체라 **한 바퀴를 도는 시간보다 길어야**
+       * 겹이 쌓인다 — 적 셋과 공격 간격 1.34초면 한 바퀴가 약 4초라, 4초짜리로 두면 돌아왔을
+       * 때 이미 말라 영영 1겹에 머문다.
+       *
+       * 도발은 0.5초뿐이다. 붙잡아 두려는 것이 아니라 "잠깐 이쪽을 보게 해 놓고 빠지는" 것이
+       * 이 개체의 탱킹이라, 길게 걸면 종이 방어로 그 시간을 다 맞는다.
+       */
+      statusEffects: [
+        { kind: "vandalism", seconds: 8, offenseShredPercent: 5, maxStacks: 5, burstPower: 130 },
+        { kind: "taunt", seconds: 0.5 },
+      ],
+    },
+    ultimate: {
+      id: "deina-ult",
+      name: "펑크 아트 180",
+      /*
+       * `channel`이 있으므로 이 위력은 총량이 아니라 **한 틱**의 몫이다. 40% × 5틱 = 주문력
+       * 200%가 전장 전체에 들어간다 — 같은 전장 광역인 케리스(120% 즉발, 200 게이지)보다
+       * 크고 메론(겹당 60%, 최대 300%, 260 게이지)보다 작은 자리이며, 낙서 다섯 겹과 기절이
+       * 함께 붙으므로 게이지는 그 위쪽에 맞춘다.
+       */
+      power: 40,
+      scalingStat: "ap",
+      iconAssetId: "skill-icon-magical",
+      effectType: "magical",
+      damageType: "magical",
+      /*
+       * **260으로 두면 한 판에 한 번도 나가지 않는다.** 폭주 중에는 때리지 않아 평타 충전이
+       * 통째로 멈추고(한 판의 20~40%가 폭주다), 달리며 차는 몫은 매초 6뿐이라 13~15초짜리
+       * 표준 전투에서 게이지가 257에서 끝났다. 220이면 10~11초에 한 번 나가 마무리로 선다 —
+       * 전장 광역인 케리스(200)보다 위, 메론(260)보다 아래라는 자리도 그대로다.
+       */
+      cost: 220,
+      targeting: "battlefieldEnemies",
+      channel: {
+        seconds: 5,
+        // 전장이 한꺼번에 받는 틱과 달리, 이쪽은 그 5초 안에 실제로 손이 닿은 적만 받는다.
+        basicStatusEffects: [{ kind: "stun", seconds: 1 }],
+      },
+      statusEffects: [{ kind: "vandalism", seconds: 8, offenseShredPercent: 5, maxStacks: 5, burstPower: 130 }],
+    },
+  },
+  {
     // 원정 최종층의 단독 보스. 리바이어던 멜빌레이의 거대한 턱과 심해 포식자 모티브를 담는다.
     id: "pontos",
     squad: "fang",

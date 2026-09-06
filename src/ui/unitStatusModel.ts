@@ -7,7 +7,7 @@ import type { Fighter } from "../core/skirmish";
  * 겹 수와 남은 시간을 여기서 한 번만 만들고 둘 다 이 목록만 그린다. Phaser를 들여오지 않아
  * 순서·색·문구를 테스트가 그대로 고정할 수 있다.
  */
-export type UnitStatusId = "stun" | "frenzy" | "taunt" | "bleed" | "poison" | "curse" | "overpaint" | "butcher";
+export type UnitStatusId = "stun" | "frenzy" | "taunt" | "bleed" | "poison" | "curse" | "overpaint" | "butcher" | "vandalism";
 
 export interface UnitStatusView {
   id: UnitStatusId;
@@ -34,6 +34,7 @@ export const UNIT_STATUS_COLOR: Readonly<Record<UnitStatusId, number>> = {
   curse: 0x8f6aa4,
   overpaint: 0x62c6d8,
   butcher: 0xc07fa4,
+  vandalism: 0xd45aa8,
 };
 
 function seconds(value: number): string {
@@ -105,6 +106,16 @@ export function unitStatusViews(fighter: Fighter): UnitStatusView[] {
       stacks: curse.stacks,
       remaining: curse.remaining, total: Math.max(curse.total, curse.remaining),
       detail: `${curse.stacks}겹 · 저항력 -${curse.stacks * curse.percentPerStack}% · ${seconds(curse.remaining)} 남음`,
+    });
+  }
+  if (fighter.vandalism) {
+    const paint = fighter.vandalism;
+    views.push({
+      id: "vandalism", name: "밴덜리즘", color: UNIT_STATUS_COLOR.vandalism,
+      stacks: paint.stacks,
+      remaining: paint.remaining, total: Math.max(paint.total, paint.remaining),
+      // 깎는 값과 언제 터지는지를 한 줄에 함께 둔다 — 이 상태는 그 둘이 한 몸이다.
+      detail: `${paint.stacks} / ${paint.maxStacks}겹 · 공격력·주문력 -${paint.stacks * paint.percentPerStack}% · ${seconds(paint.remaining)} 남음`,
     });
   }
   if (fighter.butcher && fighter.butcher.stacks > 0) {

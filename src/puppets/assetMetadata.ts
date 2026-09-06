@@ -337,3 +337,29 @@ export const ELLA_SD_METADATA: Omit<PuppetAsset, "url"> = {
   imageHeight: 1254,
   content: { left: 138, top: 7, right: 1116, bottom: 1247 },
 };
+
+/** 16번 데이나(데이노니쿠스) 전신. ZIP 안 WebP의 alpha > 16 경계를 실측한 값이다. */
+export const DEINA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1085,
+  imageHeight: 1450,
+  content: { left: 57, top: 45, right: 1053, bottom: 1395 },
+  /*
+   * **렉시아와 같은 함정이다.** 카드 배율은 `content` **폭**으로 정해지는데, 이 원화는 왼쪽으로
+   * 내민 스프레이 캔과 오른쪽으로 크게 휘는 깃털 꼬리가 캔버스를 거의 다 차지한다(996 / 1085).
+   * 몸은 그만큼 넓지 않으므로 혼자 축소되어 얼굴이 다른 카드의 68%까지 작아졌다.
+   *
+   * 그리고 그 폭을 만든 캔과 꼬리는 **정작 잘라내기에서 버려진다** — 카드 크롭은 머리 관절
+   * 기준이라 화면에 나오지도 않는다. 그래서 개체별 보정이 맞다. 값은 눈대중이 아니라
+   * `tests/unit/puppetAnchors.test.ts`의 "카드 얼굴 크기" 중앙값에 맞춰 구했다(0.99배).
+   */
+  cardZoom: 1.45,
+  /** 로비 세로 비율: 메론 기준. 1.66 m. */
+  lobbyZoom: 1.013,
+};
+
+/** 데이나 SD ZIP의 정사각 원본과 alpha > 16 경계다. */
+export const DEINA_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254,
+  imageHeight: 1254,
+  content: { left: 222, top: 67, right: 1125, bottom: 1190 },
+};

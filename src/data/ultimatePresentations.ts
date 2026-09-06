@@ -68,6 +68,10 @@ export const ULTIMATE_PRESENTATIONS: Readonly<Record<string, UltimatePresentatio
   // 아무도 때리지 않고 제자리에 뿌리내리는 궁극기라 확대도 흔들림도 가장 얕다. 컷인은 느린
   // 권법에 맞춰 한 박자 길게 머문다 — 이 개체의 값은 속도가 아니라 버티는 시간이다.
   ella: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.97, artworkOrigin: { x: 645, y: 800 }, cutInHoldMs: 175, zoomScale: 1.06, zoomMs: 120, cameraShakeIntensity: 0.005 },
+  // 시전 순간에 다 터지지 않고 5초 동안 전장에 계속 떨어지는 궁극기라, 첫 한 방을 크게
+  // 세우지 않는다 — 확대와 흔들림을 얕게 두고 컷인만 빠르게 지나간다. 여기서 크게 흔들면
+  // 정작 이어지는 네 번의 틱이 그 한 번보다 작아 보인다.
+  deina: { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkScale: 1.0, cutInHoldMs: 135, zoomScale: 1.12, zoomMs: 100, cameraShakeIntensity: 0.006 },
   "husk-raptor": { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", cutInHoldMs: 135, zoomScale: 1.2, zoomMs: 110, cameraShakeIntensity: 0.008 },
   "husk-shell": { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.94, zoomScale: 1.24, zoomMs: 115, cameraShakeIntensity: 0.009 },
   "husk-wing": { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkScale: 0.92, artworkOrigin: { x: 650, y: 770 }, zoomScale: 1.16, cameraShakeIntensity: 0.007 },

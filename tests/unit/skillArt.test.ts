@@ -175,9 +175,18 @@ describe("노도니아 스킬 표시 계약", () => {
     // 적 전용 개체(폰토스·허스크)는 등급 띠 밖이라 비교에서 뺀다.
     const allyTanks = RELICS.filter((def) => def.role === "tank" && !["pontos", "husk-raptor", "husk-shell", "husk-wing"].includes(def.id));
     expect(Math.max(...allyTanks.map((def) => def.stats.hp))).toBe(nodonia.stats.hp);
-    for (const tank of allyTanks.filter((def) => def.id !== "nodonia")) {
+    // **데이나는 이 비교 밖이다.** 이 규칙이 지키려는 것은 "노도니아에게 방어를 얹지 마라"이고,
+    // 그 비교 상대는 방어로 버티는 탱커(토리카·엘라)다. 데이나는 방어에도 체력에도 버티는 값을
+    // 두지 않는 기동형이라 노도니아보다 얇은 것이 정상이며, 그쪽에는 아래 제 규칙을 따로 둔다.
+    for (const tank of allyTanks.filter((def) => def.id !== "nodonia" && def.id !== "deina")) {
       expect(nodonia.stats.def, `${tank.name}보다 낮아야 한다`).toBeLessThan(tank.stats.def);
       expect(nodonia.stats.res, `${tank.name}보다 낮아야 한다`).toBeLessThan(tank.stats.res);
+    }
+    // 데이나는 체력·방어·저항이 모두 탱커 최저여야 한다 — 셋 중 하나라도 올려 주면 "안 맞는
+    // 것"이 유일한 생존 수단이라는 전제가 무너지고, 짧은 도발을 걸고도 그냥 서서 버틸 수 있다.
+    const deina = RELICS.find((def) => def.id === "deina")!;
+    for (const key of ["hp", "def", "res"] as const) {
+      expect(Math.min(...allyTanks.map((def) => def.stats[key])), `데이나 ${key}`).toBe(deina.stats[key]);
     }
   });
 
@@ -187,6 +196,67 @@ describe("노도니아 스킬 표시 계약", () => {
       "매초 자신의 주위 모든 적에게 최대 체력의 1.5%만큼 [[fixed-damage|고정 피해]]를 준다."
       + " [[basic-attack|기본 공격]]마다 [[missing-hp|잃은 체력]]의 3%를 회복한다.",
     );
+  });
+});
+
+describe("데이나 스킬 표시 계약", () => {
+  const deina = RELICS.find((def) => def.id === "deina")!;
+
+  it("의 밴덜리즘은 태그가 수치를 갖고 본문은 한 겹만 말한다", () => {
+    // 쓰는 개체가 하나뿐인 규칙어라 태그가 수치를 가진다(덧칠·손질과 같은 자리). 둘째 개체가
+    // 이 규칙어를 갖게 되면 출혈처럼 시간·비율을 본문으로 옮긴다.
+    const keyword = KEYWORDS.find((entry) => entry.id === "vandalism")!;
+    const effect = deina.basic.statusEffects!.find((e) => e.kind === "vandalism")!;
+    expect(effect).toMatchObject({ offenseShredPercent: 5, maxStacks: 5, seconds: 8, burstPower: 130 });
+    // 태그 본문의 수치는 실제 전투가 읽는 필드와 같아야 한다 — 갈리면 조정 뒤 옛 문장이 남는다.
+    expect(keyword.description).toContain(`${effect.kind === "vandalism" ? effect.offenseShredPercent : 0}% 낮아진다`);
+    expect(keyword.description).toContain("최대 5겹");
+    expect(keyword.description).toContain("8초");
+    expect(keyword.description).toContain("130%");
+    // 태그 팝업 안에는 또 다른 태그를 두지 않는다 — 눌러도 아무것도 열리지 않는다.
+    expect(keyword.description).not.toMatch(/\[\[/);
+  });
+
+  it("의 일반 공격은 낙서와 짧은 도발을 함께 말한다", () => {
+    expect(deina.basic.desc).toBeUndefined();
+    // 도발은 붙잡아 두는 시간이 곧 스킬마다 다른 값이라 본문이 초를 적는다.
+    expect(skillDescription(deina.basic, { damage: 50 }))
+      .toBe("적 한 명에게 [[damage-value|50]]의 [[magical-damage|마법 피해]]를 주고 [[vandalism|밴덜리즘]]을 한 겹 쌓는다. 0.5초 동안 [[taunt|도발]]한다.");
+  });
+
+  it("의 궁극기는 총량이 아니라 매초의 몫으로 읽힌다", () => {
+    // `channel`이 있으면 power는 한 틱의 값이다. "전장 전체에 얼마"로 적으면 한 번에 다
+    // 들어가는 것처럼 읽히고, 총량으로 환산하면 도중에 쓰러진 적이 받은 몫과 갈린다.
+    expect(deina.ultimate.channel).toMatchObject({ seconds: 5 });
+    expect(deina.ultimate.desc).toBeUndefined();
+    expect(skillDescription(deina.ultimate, { damage: 44 }))
+      .toBe("전장의 모든 적에게 5초 동안 매초 [[damage-value|44]]의 [[magical-damage|마법 피해]]를 주고 [[vandalism|밴덜리즘]]을 한 겹 쌓는다."
+        + " 그동안 [[basic-attack|기본 공격]]에 맞은 적을 1초 동안 [[stun|기절]]시킨다.");
+  });
+
+  it("의 패시브와 폭주는 구조화 필드에서 문장을 짓는다", () => {
+    expect(passiveDescription(deina.passive)).toBe(
+      "[[basic-attack|기본 공격]]을 낼 때마다 아직 때리지 않은 적으로 표적을 바꾼다. 모든 적을 때렸다면 처음부터 다시 돈다."
+      + " 타격하는 순간까지 멈추지 않고 움직이며, 움직이는 동안 매초 궁극기 게이지가 6, [[ferocity|야성]]이 2.5씩 더 찬다.",
+    );
+    // 폭주의 첫 절이 "때리지 않는다"인 이유는 화면에서 확인할 첫 변화가 그것이기 때문이다.
+    expect(ferocityTraitDescription(deina.ferocityTrait, { attack: deina.stats.atk, defense: deina.stats.def, abilityPower: deina.stats.ap })).toBe(
+      "이동 속도가 100% 증가하고 [[basic-attack|기본 공격]]을 하지 않는다."
+      + " 매초 자신의 주위 모든 적에게 [[damage-value|33]]의 [[magical-damage|마법 피해]]를 주고 [[vandalism|밴덜리즘]]을 한 겹 쌓는다.",
+    );
+  });
+
+  it("는 탱커이면서 딜러 화력을 내지 않는다", () => {
+    // 표적을 계속 돌리고, 폭주는 주위를 통째로 지지며, 궁극기는 전장 전체를 친다 — 같은
+    // 주문력이 적 수만큼 곱해지는 개체라 단일 대상 기준으로 적으면 실제로는 그 몇 배가 된다.
+    // v0.72.0 이전 초안이 주문력 152·평타 70%였고 표준 5인 파티 재현에서 적 체력의 30%를
+    // 혼자 깎아 렉시아(22%)·스피나(28%)를 넘었다. 그 값으로 되돌리면 여기서 걸린다.
+    const dealers = RELICS.filter((def) => def.rarity === "SSR" && (def.role === "assassin" || def.role === "warrior"));
+    expect(Math.max(...dealers.map((def) => def.stats.ap))).toBeGreaterThan(0);
+    expect(deina.stats.ap).toBeLessThan(RELICS.find((def) => def.id === "keris")!.stats.ap);
+    expect(deina.basic.power).toBeLessThanOrEqual(50);
+    // 이동 속도는 로스터 최고여야 한다 — 이 개체가 사는 방식이 그 한 값이다.
+    expect(Math.max(...RELICS.map((def) => def.stats.moveSpeed))).toBe(deina.stats.moveSpeed);
   });
 });
 

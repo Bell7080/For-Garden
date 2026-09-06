@@ -971,6 +971,15 @@ export class BattleScene extends Phaser.Scene {
       flashHit(this, view.creature, this.bodyTint(view));
       return undefined;
     }
+    if (event.kind === "vandalismBurst") {
+      const view = this.views.get(event.fighterId);
+      if (!view) return undefined;
+      this.profiles.find((profile) => profile.fighter.id === event.fighterId)?.prefab.setHealthTarget(view.fighter.hp, view.fighter.maxHp, "damage", event.amount);
+      // 다 칠한 낙서가 통째로 터진 자리라 평타와 다른 무게로 읽혀야 한다 — 상태의 색을 쓴다.
+      this.popNumber(view.fighter, event.amount, "debuff", { debuff: "vandalism" });
+      flashHit(this, view.creature, this.bodyTint(view));
+      return undefined;
+    }
     if (event.kind === "charge") {
       // 지나간 길에 바닥 자국을 남긴다. 광역과 같은 규칙(눌린 마름모)이라 SD보다 뒤에 깔린다.
       this.effects.groundArea((event.from.x + event.to.x) / 2, (event.from.y + event.to.y) / 2,

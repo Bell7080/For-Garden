@@ -29,7 +29,7 @@ export type ReachTier = "melee" | "mid" | "ranged";
 export type RelicRarity = "R" | "SR" | "SSR";
 
 /** 전신 Puppet 레지스트리의 안정적인 데이터 키다. 파일 번호를 게임 데이터에 직접 노출하지 않는다. */
-export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "toby" | "amo" | "ripa" | "pontos";
+export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "toby" | "amo" | "ripa" | "pontos";
 
 export interface Stats {
   /** 생존력과 물리·마법 공격의 기반이 되는 주 능력치다. */
@@ -473,6 +473,42 @@ export type CombatStatusEffect =
     }
   | {
       /**
+       * 도발. 맞은 쪽이 **때린 쪽만** 표적으로 삼는다.
+       *
+       * 기절과 다른 축이다 — 행동을 막지 않고 방향만 돌린다. 그래서 정화의 대상이 아니고,
+       * 짧게 걸면 "잠깐 이쪽을 보게 만들고 빠진다"가 된다. 엘라의 「인」은 궁극기 계약
+       * (`SelfGuard.tauntSeconds`)으로 끌어당겨 걸지만, 이쪽은 **기본 공격 하나가** 건다.
+       */
+      kind: "taunt";
+      /** 그 상대가 시전자만 노리는 시간(초). */
+      seconds: number;
+    }
+  | {
+      /**
+       * 밴덜리즘. 낙서가 남은 동안 그 적의 **공격력과 주문력이 함께 깎이고**, 겹이 상한에
+       * 닿는 순간 낙서가 통째로 터지며 겹이 0으로 돌아간다.
+       *
+       * **저주와 손질을 한 축으로 묶은 것이 아니라 그 둘의 성질을 하나씩 나눠 가진다** —
+       * 깎는 값은 저주처럼 비율이고(레벨이 올라도 같은 몫이 든다), 터지는 방식은 손질처럼
+       * 상한에 닿은 프레임에 스스로다. 깎는 대상이 방어가 아니라 **공격**이라 물리·마법
+       * 편성을 가리지 않고 파티 전체의 맞는 몫을 함께 줄인다.
+       *
+       * 터지는 피해는 깎인 쪽이 아니라 **칠한 쪽의 주문력**에서 뽑는다(마키의 손질과 같은
+       * 축이다). 대상의 깎인 수치로 재면 공격력이 낮은 보스에게 20~30밖에 들어가지 않아
+       * 사실상 표시용 숫자가 된다.
+       */
+      kind: "vandalism";
+      /** 마지막으로 칠한 뒤 유지되는 시간(초). 다시 칠하면 처음부터 다시 센다. */
+      seconds: number;
+      /** 중첩 하나가 깎는 공격력·주문력 비율(%). */
+      offenseShredPercent: number;
+      /** 쌓을 수 있는 최대 중첩. 이 겹에 닿으면 터지고 0으로 돌아간다. */
+      maxStacks: number;
+      /** 터질 때 시전자 주문력에서 뽑는 마법 피해 비율(%). */
+      burstPower: number;
+    }
+  | {
+      /**
        * 광란. 표적을 **자기 편으로 뒤집는다.**
        *
        * 군중제어와 다른 축이다 — 행동을 막는 것이 아니라 방향을 돌린다. 때릴 자기 편이 남지
@@ -514,6 +550,28 @@ export type Ultimate = Skill & {
    * 않으면 게이지가 가득 찬 자동 궁극기가 대상 없이 헛돌고, 플레이어는 왜 안 나가는지 알 수 없다.
    */
   cursedTargetsOnly?: { seedCurse: Extract<CombatStatusEffect, { kind: "curse" }> };
+  /**
+   * 한 번에 다 터뜨리지 않고 **정해진 시간 동안 매초 되풀이하는** 궁극기인가.
+   *
+   * 이 값이 있으면 `power`는 총 위력이 아니라 **한 틱의 위력**이고, 시전 순간이 곧 첫 틱이다
+   * (5초짜리는 0·1·2·3·4초에 다섯 번 터진다). 총 위력을 적지 않는 이유는 도중에 적이 쓰러지면
+   * 남은 틱이 사라지기 때문이다 — 한 숫자로 적으면 화면이 약속한 피해와 실제가 갈린다.
+   *
+   * 시전자가 쓰러지거나 전투가 끝나면 남은 틱은 사라진다. 폭주와 달리 **시전 중에도 평소처럼
+   * 움직이고 때린다** — 채널링은 자리를 묶는 것이 아니라 전장에 낙서가 계속 떨어지는 시간이다.
+   */
+  channel?: {
+    /** 첫 틱을 포함한 전체 시간(초). */
+    seconds: number;
+    /**
+     * 이 동안 시전자의 **일반 공격**이 추가로 거는 상태다.
+     *
+     * 틱이 거는 상태(`statusEffects`)와 다른 축이다 — 그쪽은 전장 전체가 한꺼번에 받고,
+     * 이쪽은 그 시간 안에 실제로 손이 닿은 적만 받는다. 궁극기가 도는 동안 평타가 달라지는
+     * 것을 데이터로 두어, 씬이 개체 이름으로 분기하지 않는다.
+     */
+    basicStatusEffects?: readonly CombatStatusEffect[];
+  };
   /** 주 대상의 최종 HP 손실 일부를 주 대상에서 가장 가까운 다른 적에게 옮긴다. */
   damageTransfer?: {
     percent: number;
@@ -587,7 +645,9 @@ export type PassiveKind =
   /** 메테 전용: 생존 중 팀 공속과 제어 정화·보호막을 제공한다. */
   | "adagioWeight"
   /** 루카 전용: 전투 시작/폭주 진입 때 최고 공격력 아군의 현재 표적을 복사한다. */
-  | "followHighestAttackAllyTarget";
+  | "followHighestAttackAllyTarget"
+  /** 데이나 전용: 때린 적을 건너뛰며 표적을 돌리고, 때리는 순간까지 멈추지 않고 움직인다. */
+  | "tagAndRun";
 
 /** 전투 엔진이 판별하는 야성 특성 효과 ID다. 새 효과는 수치 계약과 함께 명시적으로 추가한다. */
 export type FerocityEffectId =
@@ -620,7 +680,9 @@ export type FerocityEffectId =
   /** 엘라 「금강불괴」: 폭주 진입 시 보호막 획득 + 정해진 횟수의 가속 공격. */
   | "adamantBody"
   /** 노도니아 전용: 폭주 중 주위를 매초 지지고, 기본 공격마다 잃은 체력을 되찾는다. */
-  | "climax";
+  | "climax"
+  /** 데이나 전용: 폭주 중 때리기를 멈추고 훨씬 빠르게 달리며 주위에 매초 낙서를 흩뿌린다. */
+  | "graffitiRun";
 
 /**
  * 개체별 피버 발현 정적 데이터다.
@@ -769,6 +831,28 @@ export type FerocityTrait = {
       attackSpeedPercent: number;
     }
   | {
+      /**
+       * 「네가 예술을 알아?」 폭주 중에는 **때리지 않고 달리기만 한다.**
+       *
+       * 「절정」(노도니아)과 같은 주위 지속 피해 축이지만 성질이 반대다 — 그쪽은 앞에 서서
+       * 버티는 동안 주위가 지져지고, 이쪽은 **한 자리에 서지 않는 것 자체**가 피해가 된다.
+       * 기본 공격을 멈추는 것이 손해가 아닌 이유는, 달리는 동안 지나간 자리마다 낙서가 남아
+       * 여럿에게 동시에 들어가기 때문이다.
+       *
+       * 대신 **도발도 함께 멈춘다** — 이 개체의 탱킹은 평타가 거는 짧은 도발이 전부라,
+       * 폭주는 "붙잡아 두기"를 놓고 "흩뿌리기"를 가져가는 교환이다.
+       */
+      effectId: "graffitiRun";
+      /** 폭주 중 자기 이동 속도에 더하는 비율(%). 100이면 두 배로 달린다. */
+      moveSpeedPercent: number;
+      /** 매초 주위 모든 적에게 주는 주문력 비율(%) 마법 피해. */
+      auraDamagePercent: number;
+      /** 그 지속 피해와 낙서가 닿는 반경이다. */
+      radius: number;
+      /** 매초 함께 칠하는 낙서. 기본 공격과 같은 계약을 그대로 쓴다. */
+      vandalism: Extract<CombatStatusEffect, { kind: "vandalism" }>;
+    }
+  | {
       effectId: "packHunt";
       /** 스피나와 동일하게 단일 대상 추적에서 제외되는 폭주 은신 시간이다. */
       stealthDurationSeconds: number;
@@ -859,6 +943,15 @@ export interface Passive {
   cleanseShieldAttackPercent?: number;
   /** 메테 개체가 독립적으로 소유하는 정화·보호막 재사용 대기시간이다. */
   cleanseCooldownSeconds?: number;
+  /**
+   * 「태그 앤 런」 전용: **달리고 있는 동안** 매초 더 차는 궁극기 게이지다.
+   *
+   * 이 개체는 때리는 순간을 빼면 늘 달리고 있으므로 사실상 상시 충전이다. 그래서 값이 작다 —
+   * 평타 한 번이 주는 26과 나란히 두면 게이지가 두 배 속도로 차 궁극기가 상시기가 된다.
+   */
+  moveEnergyPerSecond?: number;
+  /** 「태그 앤 런」 전용: 달리는 동안 매초 더 차는 야성이다. 피버 중에는 공용 규칙대로 오르지 않는다. */
+  moveFerocityPerSecond?: number;
   desc: string;
 }
 

@@ -257,6 +257,33 @@ export interface Fighter extends Combatant {
   pontusRageTickIn: number;
   /** 「절정」의 다음 1초 주위 피해까지 남은 시간이며 비활성 중에는 1초로 초기화한다. */
   climaxAuraTickIn: number;
+  /**
+   * 지금 묻어 있는 밴덜리즘. 낙서가 남은 동안 **공격력과 주문력이 함께 깎인다.**
+   *
+   * 저주·덧칠과 같은 이유로 슬롯은 하나뿐이다 — 여럿이 겹쳐 묻으면 어느 쪽 수치가 도는지
+   * 화면과 계산이 갈린다. 다시 칠하면 시간이 처음부터 흐르고 겹만 하나 오른다.
+   *
+   * `sourceId`를 함께 드는 이유는 터질 때의 피해가 **칠한 쪽의 주문력**에서 나오기 때문이다.
+   */
+  vandalism: { remaining: number; total: number; stacks: number; percentPerStack: number; maxStacks: number; burstPower: number; sourceId?: string } | null;
+  /**
+   * 시간을 두고 되풀이되는 궁극기가 아직 남긴 틱.
+   *
+   * 시전자가 드는 이유는 그 궁극기가 **전장 전체**를 치기 때문이다 — 맞는 쪽에 두면 도중에
+   * 들어온 적은 맞지 않고, 쓰러진 적의 남은 틱이 어디로 가는지가 애매해진다. 시전자가 쓰러지면
+   * 남은 틱도 함께 사라진다.
+   */
+  artChannel: { remaining: number; total: number; tickIn: number } | null;
+  /**
+   * 「태그 앤 런」이 **이번 순회에서 이미 태그한** 적들의 런타임 id.
+   *
+   * 전부 태그하면 비우고 처음부터 다시 돈다. 표적 하나를 기억하는 `streakTargetId`와 반대
+   * 축이다 — 그쪽은 같은 상대에게 붙어 있는 것이 값이고, 이쪽은 **다른 상대로 옮겨 가는 것**이
+   * 값이라 지나온 자리를 기억해야 한다.
+   */
+  taggedIds: string[];
+  /** 「네가 예술을 알아?」의 다음 1초 주위 낙서까지 남은 시간이며 비활성 중에는 1초로 초기화한다. */
+  graffitiAuraTickIn: number;
 }
 
 export type SkirmishPhase = "fight" | "victory" | "defeat";
@@ -421,6 +448,8 @@ export type SkirmishEvent =
   | { kind: "knockback"; fighterId: string; seconds: number; bounces: number }
   /** 손질 세 겹이 터진 순간. 방어를 지나치지 않는 물리 피해라 attack과 다른 색으로 뜬다. */
   | { kind: "butcherBurst"; attackerId: string; fighterId: string; amount: number }
+  /** 밴덜리즘이 상한에 닿아 낙서가 통째로 터진 순간. 칠한 쪽의 주문력에서 나온 마법 피해다. */
+  | { kind: "vandalismBurst"; attackerId: string; fighterId: string; amount: number }
   /** 돌진이 실제로 지나간 선분. 씬은 이 두 점 사이에 자국을 그린다. */
   | { kind: "charge"; fighterId: string; from: { x: number; y: number }; to: { x: number; y: number } }
   | { kind: "finish"; phase: "victory" | "defeat" };
@@ -690,6 +719,10 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     // 폭주가 켜진 뒤 온전한 1초가 지나야 첫 파동이 발생한다.
     pontusRageTickIn: 1,
     climaxAuraTickIn: 1,
+    vandalism: null,
+    artChannel: null,
+    taggedIds: [],
+    graffitiAuraTickIn: 1,
   };
 }
 
@@ -888,6 +921,13 @@ function applyCombatStatusEffect(fighter: Fighter, effect: CombatStatusEffect, e
   if (effect.kind === "butcher") applyButcher(fighter, effect, events, state, sourceId);
   if (effect.kind === "curse") refreshCurse(fighter, { ...effect, seconds: effect.seconds * potency });
   if (effect.kind === "frenzy") applyFrenzy(fighter, { ...effect, seconds: effect.seconds * potency }, sourceId);
+  // 도발은 방향만 돌리는 상태라 기절 저항도 정화도 거치지 않는다. 건 사람이 없으면 바라볼
+  // 상대도 없으므로 아무 일도 일어나지 않는다.
+  if (effect.kind === "taunt" && sourceId) {
+    const seconds = effect.seconds * potency;
+    fighter.taunted = { remaining: seconds, total: seconds, sourceId };
+  }
+  if (effect.kind === "vandalism") applyVandalism(fighter, { ...effect, seconds: effect.seconds * potency }, events, state, sourceId);
 }
 
 /**
@@ -1018,6 +1058,60 @@ function applyButcher(
     clearDefeatedStatuses(target);
     events.push({ kind: "death", fighterId: target.id, sourceId: attacker.id });
   }
+}
+
+/**
+ * 낙서를 한 겹 덧칠하고, 겹이 상한에 닿으면 **그 자리에서 터뜨린다.**
+ *
+ * 저주(비율로 깎기)와 손질(상한에서 터지기)을 하나씩 나눠 가진 상태라 둘 중 어느 함수도
+ * 재사용하지 않는다 — 저주는 터지지 않고 손질은 시간이 흐르지 않는다. 다시 칠하면 시간이
+ * 처음부터 흐르고 겹만 하나 오르는 것은 덧칠·저주와 같다.
+ *
+ * 터지는 피해가 **칠한 쪽의 주문력**에서 나오는 이유는 마키의 손질과 같다 — 깎인 쪽의 수치로
+ * 재면 공격력이 낮은 보스에게 사실상 아무 일도 일어나지 않아, 화면에 뜨는 숫자가 그 상태가
+ * 무엇을 했는지 말해 주지 못한다.
+ */
+function applyVandalism(
+  target: Fighter,
+  effect: Extract<CombatStatusEffect, { kind: "vandalism" }>,
+  events: SkirmishEvent[],
+  state: SkirmishState,
+  sourceId?: string,
+): void {
+  const stacks = Math.min(effect.maxStacks, (target.vandalism?.stacks ?? 0) + 1);
+  target.vandalism = {
+    remaining: effect.seconds, total: effect.seconds, stacks,
+    percentPerStack: effect.offenseShredPercent, maxStacks: effect.maxStacks, burstPower: effect.burstPower, sourceId,
+  };
+  if (stacks < effect.maxStacks) return;
+  // 터진 뒤에는 겹만 0으로 돌아가고 슬롯은 지운다 — 0겹짜리 칩이 머리 위에 남으면 아무것도
+  // 하지 않는 상태가 계속 서 있게 된다.
+  target.vandalism = null;
+
+  const attacker = sourceId ? findFighter(state, sourceId) : undefined;
+  if (!attacker) return;
+  const raw = Math.max(1, Math.round(computeDamage(
+    { ...attacker, def: offensiveDefinition(attacker) },
+    defensiveDefinition(target, state),
+    { power: effect.burstPower, damageType: "magical", scalingStat: "ap", isCritical: false, kind: "basic" },
+    true,
+  )));
+  const resolution = resolveReceivedDamage(target, raw);
+  const hpBefore = target.hp;
+  applyDamage(target, resolution.applied, events, state);
+  addContribution(state.contributions, attacker.id, "attack", hpBefore - target.hp, "abilityPower");
+  events.push({ kind: "vandalismBurst", attackerId: attacker.id, fighterId: target.id, amount: resolution.applied });
+  if (!isFighterAlive(target)) {
+    clearDefeatedStatuses(target);
+    events.push({ kind: "death", fighterId: target.id, sourceId: attacker.id });
+  }
+}
+
+/** 밴덜리즘이 지금 깎고 있는 공격력·주문력 비율(0~1). 화면과 전투가 같은 값을 읽는다. */
+export function vandalismOffenseShred(fighter: Fighter): number {
+  const paint = fighter.vandalism;
+  if (!paint || paint.remaining <= 0) return 0;
+  return Math.min(1, paint.stacks * paint.percentPerStack / 100);
 }
 
 /**
@@ -1266,6 +1360,84 @@ function tickClimaxAura(fighter: Fighter, dt: number, state: SkirmishState, even
     // 휘두르지 않고 서 있기만 하므로 시전 모션을 틀지 않는다(`animate: false`).
     events.push({ kind: "attack", attackerId: fighter.id, targetId: other.id, skill: "basic", amount,
       contributionAmount: amount, critical: false, animate: false, damageType: "true" });
+    if (!isFighterAlive(other)) {
+      clearDefeatedStatuses(other);
+      events.push({ kind: "death", fighterId: other.id, sourceId: fighter.id });
+    }
+  }
+}
+
+/**
+ * 「네가 예술을 알아?」의 시계. 폭주 중 매초 주위에 낙서를 흩뿌린다.
+ *
+ * 「절정」과 같은 1초 시계를 쓰지만 피해의 출처가 다르다 — 그쪽은 자기 최대 체력 비례
+ * 고정 피해라 방어를 지나치지만, 이쪽은 **주문력에서 나오는 보통 마법 피해**라 저항과 속성
+ * 상성을 그대로 거친다. 지나가며 뿌리는 것이지 태우는 것이 아니다.
+ */
+function tickGraffitiAura(fighter: Fighter, dt: number, state: SkirmishState, events: SkirmishEvent[]): void {
+  const trait = fighter.def.ferocityTrait;
+  if (trait.effectId !== "graffitiRun") return;
+  if (!fighter.ferocityFever) { fighter.graffitiAuraTickIn = 1; return; }
+  const tickIn = fighter.graffitiAuraTickIn - dt;
+  if (tickIn > 0) { fighter.graffitiAuraTickIn = tickIn; return; }
+  fighter.graffitiAuraTickIn = tickIn + 1;
+  const attacker = { ...fighter, def: offensiveDefinition(fighter) };
+  const input = { power: trait.auraDamagePercent, damageType: "magical" as const, scalingStat: "ap" as const, isCritical: false, kind: "basic" as const };
+  let struck = 0;
+  for (const other of state.fighters) {
+    if (other.side === fighter.side || !isFighterAlive(other) || distance(fighter, other) > trait.radius) continue;
+    const raw = Math.max(1, Math.round(computeDamage(attacker, defensiveDefinition(other, state), input, true)));
+    const resolution = resolveReceivedDamage(other, raw);
+    const hpBefore = other.hp;
+    const shieldBefore = other.shield.amount; const shieldProviderId = other.shield.providerId;
+    applyDamage(other, resolution.applied, events, state);
+    const credited = recordDamageContribution(state, fighter.id, other, "magical", "ap", computeDamageContribution(attacker, input), resolution, hpBefore, shieldBefore, shieldProviderId);
+    // 휘두르지 않고 달리기만 하므로 시전 모션을 틀지 않는다(`animate: false`).
+    events.push({ kind: "attack", attackerId: fighter.id, targetId: other.id, skill: "basic", amount: resolution.applied,
+      contributionAmount: credited, critical: false, animate: false, damageType: "magical", mitigated: resolution.reduced < resolution.raw });
+    if (isFighterAlive(other)) applyCombatStatusEffect(other, trait.vandalism, events, state, fighter.id);
+    if (!isFighterAlive(other)) {
+      clearDefeatedStatuses(other);
+      events.push({ kind: "death", fighterId: other.id, sourceId: fighter.id });
+    }
+    struck += 1;
+  }
+  // 아무도 없는 자리에는 바닥 자국을 남기지 않는다 — 매초 빈 원이 뜨면 그 표시가 "여기 맞았다"를
+  // 뜻하지 않게 되어, 정작 여럿이 맞은 순간과 구별되지 않는다.
+  if (struck > 0) events.push({ kind: "areaImpact", attackerId: fighter.id, x: fighter.x, y: fighter.y, radius: trait.radius, ultimate: false });
+}
+
+/**
+ * 시간을 두고 되풀이되는 궁극기의 시계. 남은 틱마다 궁극기를 **피해 계산만** 다시 돌린다.
+ *
+ * 게이지를 다시 쓰지 않고 야성도 다시 올리지 않는다 — 자원은 시전한 그 한 번의 몫이고,
+ * 여기서 다시 세면 5초짜리 궁극기가 궁극기 다섯 번이 된다. 그래서 `strikeAreaAttack`을
+ * 직접 부르지 않고 전용 경로를 쓴다.
+ */
+function tickArtChannel(fighter: Fighter, dt: number, state: SkirmishState, events: SkirmishEvent[]): void {
+  const channel = fighter.artChannel;
+  if (!channel) return;
+  const remaining = channel.remaining - dt;
+  if (remaining <= EMERGENCY_RECOVERY.epsilon) { fighter.artChannel = null; return; }
+  const tickIn = channel.tickIn - dt;
+  if (tickIn > 0) { fighter.artChannel = { ...channel, remaining, tickIn }; return; }
+  fighter.artChannel = { ...channel, remaining, tickIn: tickIn + 1 };
+
+  const ultimate = fighter.def.ultimate;
+  if (!("damageType" in ultimate) || ultimate.damageType === undefined || ultimate.power === undefined) return;
+  const attacker = { ...fighter, def: offensiveDefinition(fighter) };
+  const input = { ...ultimate, isCritical: false, kind: "ultimate" as const };
+  for (const other of state.fighters) {
+    if (other.side === fighter.side || !isFighterAlive(other)) continue;
+    const raw = Math.max(1, Math.round(computeDamage(attacker, defensiveDefinition(other, state), input, true)));
+    const resolution = resolveReceivedDamage(other, raw);
+    const hpBefore = other.hp;
+    const shieldBefore = other.shield.amount; const shieldProviderId = other.shield.providerId;
+    applyDamage(other, resolution.applied, events, state);
+    const credited = recordDamageContribution(state, fighter.id, other, ultimate.damageType, ultimate.scalingStat, computeDamageContribution(attacker, input), resolution, hpBefore, shieldBefore, shieldProviderId);
+    events.push({ kind: "attack", attackerId: fighter.id, targetId: other.id, skill: "ultimate", amount: resolution.applied,
+      contributionAmount: credited, critical: false, animate: false, damageType: ultimate.damageType, mitigated: resolution.reduced < resolution.raw });
+    if (isFighterAlive(other)) applySkillStatuses(other, ultimate, events, state, fighter.id, false);
     if (!isFighterAlive(other)) {
       clearDefeatedStatuses(other);
       events.push({ kind: "death", fighterId: other.id, sourceId: fighter.id });
@@ -1537,6 +1709,8 @@ function clearDefeatedStatuses(fighter: Fighter): void {
   fighter.undying = null;
   fighter.undyingPending = false;
   fighter.taunted = null;
+  fighter.vandalism = null;
+  fighter.artChannel = null;
   fighter.elation = null;
   fighter.bulwark = null;
   fighter.overpaint = null;
@@ -1807,9 +1981,10 @@ export function moveSpeed(fighter: Fighter, state?: SkirmishState): number {
         && ally.def.ferocityTrait.effectId === "teamMoveSpeedBonus")
       .map((ally) => ally.def.ferocityTrait.effectId === "teamMoveSpeedBonus" ? ally.def.ferocityTrait.bonusPercent : 0))
     : 0;
-  // 팀 오라와 달리 이크티오 다이브는 폭주한 본인만 빨라진다.
-  const selfBonus = fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "ichthyoDive"
-    ? fighter.def.ferocityTrait.moveSpeedPercent : 0;
+  // 팀 오라와 달리 이크티오 다이브와 그래피티 런은 폭주한 본인만 빨라진다.
+  const trait = fighter.def.ferocityTrait;
+  const selfBonus = fighter.ferocityFever && (trait.effectId === "ichthyoDive" || trait.effectId === "graffitiRun")
+    ? trait.moveSpeedPercent : 0;
   const tailwindPercent = fighter.tailwindFor > 0 ? fighter.tailwind?.moveSpeedPercent ?? 0 : 0;
   return fighter.def.stats.moveSpeed * SKIRMISH.moveRate
     * (1 + teamBonus / 100) * (1 + selfBonus / 100) * (1 + tailwindPercent / 100);
@@ -2137,8 +2312,34 @@ export const KNOCKBACK = { restitution: 0.86 } as const;
  * 것이 아니므로, 살아 있는 다른 적이 있을 때만 푼다.
  */
 function retargetAfterBasic(attacker: Fighter, target: Fighter, state: SkirmishState): void {
+  if (attacker.def.passive.kind === "tagAndRun") { tagAndRun(attacker, target, state); return; }
   if (!attacker.ferocityFever || attacker.def.ferocityTrait.effectId !== "ichthyoDive") return;
   moveToNearestOtherEnemy(attacker, target, state);
+}
+
+/**
+ * 태그 앤 런. 방금 태그한 자리를 기억하고 **아직 안 간 벽**으로 옮겨 간다.
+ *
+ * 이크티오 다이브(그냥 가장 가까운 다른 적)와 다른 축이다 — 그쪽은 둘만 남으면 둘 사이를
+ * 왕복하지만, 이쪽은 지나온 자리를 기억해 **한 바퀴를 다 돌고 나서야** 처음으로 돌아온다.
+ * 그래야 낙서가 한 명에게 몰리지 않고 전장에 고르게 퍼지고, 짧은 도발도 여럿에게 돌아간다.
+ *
+ * 다 돌면 기억을 비우고 다시 첫 바퀴처럼 돈다. 죽은 적의 id는 비울 때 함께 사라지므로 따로
+ * 지우지 않는다 — 남아 있어도 살아 있는 후보가 없으면 그대로 다음 바퀴로 넘어간다.
+ */
+function tagAndRun(attacker: Fighter, target: Fighter, state: SkirmishState): void {
+  if (!attacker.taggedIds.includes(target.id)) attacker.taggedIds.push(target.id);
+  const enemies = state.fighters.filter((other) => other.side !== attacker.side && isFighterAlive(other) && other.stealthFor <= 0);
+  if (enemies.length === 0) return;
+  let fresh = enemies.filter((other) => !attacker.taggedIds.includes(other.id));
+  if (fresh.length === 0) {
+    // 한 바퀴를 다 돌았다. 기억을 비우고 방금 태그한 상대만 빼면 다음 바퀴의 첫 벽이 나온다.
+    attacker.taggedIds = [];
+    fresh = enemies.filter((other) => other.id !== target.id);
+    if (fresh.length === 0) return;
+  }
+  attacker.targetId = fresh.reduce((best, other) => distance(attacker, other) < distance(attacker, best) ? other : best).id;
+  attacker.engaged = false;
 }
 
 /**
@@ -2170,15 +2371,27 @@ function moveToNearestOtherEnemy(attacker: Fighter, target: Fighter, state: Skir
   attacker.engaged = false;
 }
 
-/** 공격력은 배율로, 백분율 척도인 치명타 피해는 퍼센트포인트로 임시 정의에 반영한다. */
+/**
+ * 공격력은 배율로, 백분율 척도인 치명타 피해는 퍼센트포인트로 임시 정의에 반영한다.
+ *
+ * 밴덜리즘은 그 반대 방향으로 같은 자리에 든다 — **공격력과 주문력을 함께** 깎는다. 여기 두는
+ * 이유는 이 함수가 "지금 이 개체가 때릴 때 쓰는 수치"의 유일한 소유자이기 때문이다. 피해
+ * 경로마다 따로 곱하면 여덟 곳 중 하나만 빠뜨려도 그 스킬만 조용히 깎이지 않는다.
+ *
+ * 다만 **전투 중 누적된 주문력(`bonusAp`)은 깎지 않는다.** 그 값은 정의가 아니라 전투 상태라
+ * 여기서 손댈 수 없고, 렉시아의 공격력 강화가 같은 이유로 `def.stats.atk`에만 곱하는 것과
+ * 같은 경계다.
+ */
 function offensiveDefinition(attacker: Fighter): RelicDef {
   const passive = attacker.def.passive;
   const conditional = attacker.conditionalAttackPowerMultiplier(attacker.maxHp > 0 ? attacker.hp / attacker.maxHp * 100 : 0);
+  const vandalised = 1 - vandalismOffenseShred(attacker);
   // 치명타 확률과 마찬가지로 개체 이름이 아니라 적힌 값으로 판별한다.
-  if (passive.attackPowerPercent === undefined && passive.criticalDamagePercent === undefined && conditional === 1) return attacker.def;
+  if (passive.attackPowerPercent === undefined && passive.criticalDamagePercent === undefined && conditional === 1 && vandalised === 1) return attacker.def;
   return { ...attacker.def, stats: {
     ...attacker.def.stats,
-    atk: attacker.def.stats.atk * (1 + (passive.attackPowerPercent ?? 0) / 100) * conditional,
+    atk: attacker.def.stats.atk * (1 + (passive.attackPowerPercent ?? 0) / 100) * conditional * vandalised,
+    ap: attacker.def.stats.ap * vandalised,
     critDamage: attacker.def.stats.critDamage + (passive.criticalDamagePercent ?? 0),
   } };
 }
@@ -2766,6 +2979,12 @@ function strike(
   if (isFighterAlive(target) && statusEffectsLandThisHit(attacker, skill, useUltimate)) {
     applySkillStatuses(target, encoreLiquidation ? withoutPoison(skill) : skill, events, state, attacker.id, critical);
   }
+  // 채널링이 도는 동안에는 손이 닿은 적에게만 한 겹이 더 붙는다. 틱이 거는 상태(전장 전체)와
+  // 다른 축이라 스킬 정의도 따로 든다 — 씬도 전투도 개체 이름으로 분기하지 않는다.
+  const channelRider = !useUltimate && attacker.artChannel ? attacker.def.ultimate.channel?.basicStatusEffects : undefined;
+  if (channelRider && isFighterAlive(target)) {
+    for (const effect of channelRider) applyCombatStatusEffect(target, effect, events, state, attacker.id, critical);
+  }
   if (encoreLiquidation && isFighterAlive(target)) liquidatePoison(target, state, events);
   // 연격도 실제 적중마다 이 경계를 지나지만 증강 자체의 횟수·쿨타임 계약이 폭주를 막는다.
   if (isFighterAlive(target)) {
@@ -3232,6 +3451,13 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
       if (remaining <= EMERGENCY_RECOVERY.epsilon) fighter.curse = null;
       else fighter.curse = { ...fighter.curse, remaining };
     }
+    // 밴덜리즘도 저주와 같은 공용 시계로 마른다. 다 마르면 슬롯째 비워 깎인 공격력이
+    // 다음 전투로 새지 않게 한다.
+    if (isFighterAlive(fighter) && fighter.vandalism) {
+      const remaining = fighter.vandalism.remaining - dt;
+      if (remaining <= EMERGENCY_RECOVERY.epsilon) fighter.vandalism = null;
+      else fighter.vandalism = { ...fighter.vandalism, remaining };
+    }
     // 광란이 풀리는 순간 표적을 비운다. 남겨 두면 원래 편으로 돌아가고도 아군을 계속 때린다.
     if (isFighterAlive(fighter) && fighter.frenzy) {
       const remaining = fighter.frenzy.remaining - dt;
@@ -3266,6 +3492,9 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     tickElation(fighter, dt);
     tickElationRegen(fighter, dt, state, events);
     tickClimaxAura(fighter, dt, state, events);
+    tickGraffitiAura(fighter, dt, state, events);
+    // 궁극기 채널링은 기절·행동불가와 무관하게 흐른다 — 이미 뿌려 둔 낙서라 손이 멈춰도 마른다.
+    tickArtChannel(fighter, dt, state, events);
     tickTaunt(fighter, dt);
     // 불멸은 기절과 같은 자리에서 행동을 멈추지만 슬롯이 달라 아다지오의 정화에 걸리지 않는다.
     if (fighter.undying) {
@@ -3315,6 +3544,20 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     const stalled = fighter.blockedFor >= SKIRMISH.blockedGraceSeconds;
     fighter.engaged = fighter.engaged ? gap <= reach : gap <= (stalled ? reach : reach * SKIRMISH.engageRatio);
 
+    /**
+     * **때리기 직전까지는 발을 멈추지 않는다.**
+     *
+     * 다른 개체는 사거리에 닿는 순간 서서 쿨다운을 기다리지만, 태그 앤 런은 그 기다림을
+     * 그대로 달리기로 바꾼다 — 손이 준비된 프레임에만 서고, 그 밖에는 늘 다음 벽으로
+     * 향한다. 폭주 중에는 아예 때리지 않으므로 한 번도 서지 않는다.
+     *
+     * 사거리 판정 자체는 그대로 둔다(`engaged`를 거짓으로 만들지 않는다) — 그 값은 "지금
+     * 손이 닿는가"이고, 여기서 바꾸는 것은 "그동안 서 있는가"뿐이다.
+     */
+    const feverKeepsRunning = fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "graffitiRun";
+    const runsUntilStrike = fighter.def.passive.kind === "tagAndRun"
+      && (feverKeepsRunning || fighter.attackCooldown > 0);
+
     // **정말로 가까워지고 있는지 잰다.** 걷고 있다는 것만으로는 모자라다 — 앞을 막은 아군에게
     // 밀려 걸음이 그대로 상쇄되면 다리는 움직이는데 거리는 그대로다. 거리는 프레임 사이의
     // 밀어내기까지 지난 결과이므로 이 자리에서 비교해야 뜻이 선다.
@@ -3333,8 +3576,17 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
       fighter.blockedFor += dt;
     }
 
-    if (!fighter.engaged) {
+    if (!fighter.engaged || runsUntilStrike) {
       const step = moveSpeed(fighter, state) * dt;
+      // 달리는 동안만 차오르는 몫. 서서 때리는 프레임에는 오르지 않아, 얼마나 돌아다녔는지가
+      // 그대로 게이지가 된다. 피버 중에는 공용 규칙대로 야성이 더 오르지 않는다.
+      const passive = fighter.def.passive;
+      if (passive.kind === "tagAndRun") {
+        if (passive.moveEnergyPerSecond) {
+          fighter.energy = Math.min(ULTIMATE_ENERGY_MAX, fighter.energy + passive.moveEnergyPerSecond * dt);
+        }
+        if (passive.moveFerocityPerSecond) gainFerocity(fighter, passive.moveFerocityPerSecond * dt, state);
+      }
       // 달리는 동안에는 통통 튀어 오른다. 발이 땅에 닿는 순간마다 hop이 0을 지난다.
       fighter.hopPhase += dt * SKIRMISH.hopRate * Math.PI * (fighter.def.stats.moveSpeed / 100);
       fighter.hop = Math.abs(Math.sin(fighter.hopPhase)) * SKIRMISH.hopHeight;
@@ -3342,16 +3594,20 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
       const swirl = Math.sin(state.elapsed * 1.7 + fighter.wander) * SKIRMISH.swirl;
       fighter.x += ((dx / gap) + (-dy / gap) * swirl) * step;
       fighter.y += ((dy / gap) + (dx / gap) * swirl) * step;
-      continue;
+      // 사거리 밖이면 여기서 끝이다. 달리면서도 손이 닿는 개체는 아래 공격 판정까지 이어 간다 —
+      // 멈춰 서는 것과 때리는 것은 다른 일이고, 이 개체는 앞의 하나만 하지 않는다.
+      if (!fighter.engaged) continue;
+    } else {
+      // 멈춰 서면 튀어 오르던 높이만 부드럽게 내려놓는다.
+      fighter.hop *= recovery;
     }
-
-    // 멈춰 서면 튀어 오르던 높이만 부드럽게 내려놓는다.
-    fighter.hop *= recovery;
 
     // 붙은 뒤에는 발을 붙인다. 자리를 계속 바꾸면 서로 밀며 미끄러지는 것처럼 보이고,
     // 때리는 순간의 돌진·피격 반동(그림만 흔드는 변위)도 묻힌다.
 
-    if (fighter.attackCooldown <= 0) {
+    // 폭주 중 때리기를 놓는 개체는 여기서 손을 멈춘다 — 게이지도 야성도 오르지 않고, 그래서
+    // 이 개체의 짧은 도발도 함께 멈춘다. 그 대가가 매초 흩뿌려지는 낙서다.
+    if (fighter.attackCooldown <= 0 && !feverKeepsRunning) {
       // 아군 궁극기는 자동으로 나가지 않는다. 화면에서 누를 때만 fireUltimate로 들어온다.
       // 적 자동 궁극기도 수동 입력과 같은 생존·기절·게이지 코어 규칙을 통과한다.
       const firedUltimate = fighter.side === "enemy" && canFireUltimate(state, fighter);
@@ -3495,6 +3751,12 @@ export function fireUltimate(
   if (!target) return events;
 
   strike(attacker, target, rng, state, events, true, undefined, targetPoint);
+  // 시전 순간이 곧 첫 틱이다. 남은 시간만 시계에 얹어 다음 초부터 이어 뿌린다 — 여기서 전체
+  // 시간을 그대로 넣으면 같은 초에 두 번 터진다.
+  const channel = attacker.def.ultimate.channel;
+  if (channel && channel.seconds > 1) {
+    attacker.artChannel = { remaining: channel.seconds - 1, total: channel.seconds, tickIn: 1 };
+  }
   // 수동 궁극기도 평타와 동일하게 명시적 보스 ID의 경감 전 기여만 점수화한다.
   if (state.boss && target.id === state.boss.fighterId) {
     state.boss.score += events.reduce((sum, event) => sum + (event.kind === "attack" && event.attackerId === attacker.id && event.targetId === state.boss!.fighterId ? event.contributionAmount : 0), 0);

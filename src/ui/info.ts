@@ -1871,7 +1871,8 @@ export class InfoManager {
 
   /** 개체별 폭주 발현 설명. 야성 규칙 자체는 강조된 말을 눌러 다시 열 수 있다. */
   private openFerocityTrait(def: RelicDef, from: PopupSource): void {
-    const { atk: attack, def: defense } = relicProgression.getFinalStats(def.id);
+    // 주문력에서 피해를 뽑는 폭주(데이나의 낙서)도 다른 수치와 같은 기준으로 실제 값을 보여 준다.
+    const { atk: attack, def: defense, ap: abilityPower } = relicProgression.getFinalStats(def.id);
     const defensePercent = def.ferocityTrait.effectId === "splashDamage" ? def.ferocityTrait.defenseDamagePercent : undefined;
     const attackPercent = def.ferocityTrait.effectId === "crescendoStaccato" ? def.ferocityTrait.damagePercent : undefined;
     // 폭주 추가 피해도 일반 스킬과 같은 수치 링크를 써서 캐릭터가 늘어도 별도 팝업을 만들지 않는다.
@@ -1907,7 +1908,7 @@ export class InfoManager {
       contextualKeywords: contextualKeywords.length > 0 ? contextualKeywords : undefined,
       // 설명 수치는 전투가 읽는 특성 필드에서 생성해 정적 문구와 실제 효과가 갈라지지 않는다.
       description: "[[ferocity|야성 게이지]]가 가득 차면 폭주한다. "
-        + ferocityTraitDescription(def.ferocityTrait, { attack, defense, maxHp: def.stats.hp }),
+        + ferocityTraitDescription(def.ferocityTrait, { attack, defense, maxHp: def.stats.hp, abilityPower }),
     }, from);
   }
 

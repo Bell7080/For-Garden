@@ -58,6 +58,8 @@ export interface DebugState {
   /** 정보창이 지금 그린 룬 조각 셋. 조각을 누르기 전에 실제로 칠해졌는지 확인하는 용도다. */
   infoGemSlots?: (string | null)[];
   battle?: DebugBattle;
+  /** 폰토스 최종판의 표시 여부와 주 행동 중심만 노출해 Canvas E2E가 결과 흐름을 따라간다. */
+  bossResult?: { visible: boolean; lobby: DebugPoint };
   /** 정보창이 떠 있는지. `?`와 꾹 누르기를 확인하는 데 쓴다. */
   infoOpen?: boolean;
   /** 로비 공개 프로필 정보창의 열림 상태이며 계정 내용 자체는 E2E에 복제하지 않는다. */
@@ -169,6 +171,9 @@ export function setDebugInventoryTextureKeys(keys: readonly string[] | undefined
 export function setDebugBattle(battle: DebugBattle | undefined): void {
   ensure().battle = battle;
 }
+
+/** 결과 수치 자체는 서버 영수증 테스트가 맡고 E2E에는 표시·입력 계약만 공개한다. */
+export function setDebugBossResult(result: DebugState["bossResult"]): void { ensure().bossResult = result; }
 
 /** 편성 UI의 실제 렌더 상태만 복사해 노출하고 게임 규칙 입력에는 사용하지 않는다. */
 export function setDebugParty(party: DebugState["party"]): void {

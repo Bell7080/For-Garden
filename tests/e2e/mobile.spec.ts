@@ -188,6 +188,37 @@ test("저장된 전투 전 증강 후보는 지도보다 먼저 복원된다", a
   await captureGame(page, `test-results/${test.info().project.name}-expedition-augment-popup.png`);
 });
 
+test("폰토스 종료 결과판에서 로비로 이동하면 원정은 비활성이다", async ({ page }) => {
+  let bossPoint = { x: BASE_WIDTH / 2, y: 500 };
+  await startAfterOpening(page, (session) => {
+    // 개발 바로가기도 실제 manager가 맵·도달 경로·멱등 ID를 만들므로 손으로 런 저장을 위조하지 않는다.
+    const manager = new ExpeditionManager(session, { save: () => undefined }, () => new Date(), true);
+    const result = manager.prepareDevelopmentBossShortcut([...session.owned].slice(0, 3));
+    if (!result.ok) throw new Error(`폰토스 E2E 준비 실패: ${result.reason}`);
+    const boss = result.run.nodes.find(({ floor, type }) => floor === 20 && type === "boss")!;
+    const point = expeditionNodePosition(boss.floor, boss.column);
+    bossPoint = { x: point.x, y: 316 + point.y + focusExpeditionFloor(20, 1138 - 316) };
+  });
+  await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+  await page.waitForTimeout(700);
+  await tapGame(page, BASE_WIDTH - 290, BASE_HEIGHT - 425);
+  await tapGame(page, BASE_WIDTH / 2, 1403);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("expedition");
+  await tapGame(page, bossPoint.x, bossPoint.y);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.enemyPreview !== undefined)).toBe(true);
+  await tapGame(page, BASE_WIDTH / 2, 1810);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("battle");
+  // 세 번 눌러 1→2→3→1이 아니라 두 번 눌러 최고 3배속으로 90초 제한전을 단축한다.
+  await tapGame(page, BASE_WIDTH - 335, 1288); await tapGame(page, BASE_WIDTH - 335, 1288);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.bossResult?.visible), { timeout: 150_000 }).toBe(true);
+  await captureGame(page, `test-results/${test.info().project.name}-expedition-boss-final-result.png`);
+  const lobby = (await page.evaluate(() => window.__PF_DEBUG?.bossResult?.lobby))!;
+  await tapGame(page, lobby.x, lobby.y);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("eternal-city.local-save")!).expedition.run)).toBeNull();
+});
+
 test("원정 전투 노드는 지도 안 공용 편성판을 붙이고 적 상세 정보창으로 진입한다", async ({ page }) => {
   let reachableX = BASE_WIDTH / 2;
   let reachableY = (316 + 1138) / 2;

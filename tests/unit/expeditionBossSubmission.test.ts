@@ -1,10 +1,12 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { createSkirmish, stepSkirmish, type SkirmishEvent } from "../../src/core/skirmish";
 import { createExpeditionBossSkirmishConfig, type ExpeditionBossBattleInputDto } from "../../src/core/expeditionBattle";
 import { calculateExpeditionRunScore } from "../../src/core/expeditionRewards";
 import { resolveExpeditionBossBattle, type ExpeditionBossAction } from "../../src/core/expeditionBoss";
 import { getExpeditionNodeEnemies } from "../../src/data/expeditionEnemies";
 import { RELICS } from "../../src/data/relics";
+import { ExpeditionBossSettlementError, ExpeditionBossSettlementFlow } from "../../src/managers/ExpeditionManager";
+import type { SettleExpeditionRunResponse, SubmitExpeditionBossScoreResponse } from "../../src/api/contracts";
 
 const ARENA = { left: 130, right: 950, top: 600, bottom: 1360 };
 
@@ -89,5 +91,57 @@ describe("원정 보스 제출 왕복", () => {
     const first = actions.find(({ kind }) => kind === "basic")!;
     const spam = Array.from({ length: 8 }, (_, index) => ({ ...first, elapsedMs: first.elapsedMs + index * 10 }));
     expect(() => verify(["anky", "rex", "spino"], spam)).toThrow();
+  });
+});
+
+/** 렌더러와 무관하게 두 await 경계의 멱등·복구 상태만 고정하는 최소 영수증이다. */
+const scoreReceipt = { score: 130, bossDamageScore: 30, nodeScoreTotal: 100, runScore: 130, bestScore: 130, cumulativeScore: 230, improved: true, endedAtMs: 90_000, rankBefore: 4, rankAfter: 2, weekKey: "2026-08-31" } satisfies SubmitExpeditionBossScoreResponse;
+// 흐름은 PlayerStateDto의 나머지 필드를 해석하지 않으므로 테스트 영수증은 관찰 필드만 채운다.
+const settlementReceipt = { runId: "run", settlementId: "settle", outcome: "completed", granted: { gold: 50 } } as unknown as SettleExpeditionRunResponse;
+const request = { requestId: "score", settlementId: "settle", runId: "run", nodeId: "boss" };
+
+/** 테스트는 manager가 응답 적용을 소유한다는 호출 계약도 함께 관찰한다. */
+function settlementHarness() {
+  const applyBossScore = vi.fn(() => true);
+  const api = { submitExpeditionBossScore: vi.fn(async () => scoreReceipt), settleExpeditionRun: vi.fn(async () => settlementReceipt) };
+  return { flow: new ExpeditionBossSettlementFlow(api, { applyBossScore }), api, applyBossScore };
+}
+
+describe("원정 보스 비동기 정산 복구", () => {
+  it("점수 제출 실패는 정산을 시작하지 않고 score 단계에서 재시도한다", async () => {
+    const harness = settlementHarness();
+    harness.api.submitExpeditionBossScore.mockRejectedValueOnce(new Error("offline"));
+    await expect(harness.flow.finish(request, [])).rejects.toMatchObject({ phase: "score" } satisfies Partial<ExpeditionBossSettlementError>);
+    await expect(harness.flow.finish(request, [])).resolves.toEqual({ score: scoreReceipt, settlement: settlementReceipt });
+    expect(harness.api.submitExpeditionBossScore).toHaveBeenCalledTimes(2);
+    expect(harness.api.settleExpeditionRun).toHaveBeenCalledTimes(1);
+  });
+
+  it("점수 성공 뒤 정산 실패는 점수를 다시 제출하지 않고 settlement 단계만 재시도한다", async () => {
+    const harness = settlementHarness();
+    harness.api.settleExpeditionRun.mockRejectedValueOnce(new Error("timeout"));
+    await expect(harness.flow.finish(request, [])).rejects.toMatchObject({ phase: "settlement" } satisfies Partial<ExpeditionBossSettlementError>);
+    await expect(harness.flow.finish(request, [])).resolves.toEqual({ score: scoreReceipt, settlement: settlementReceipt });
+    expect(harness.api.submitExpeditionBossScore).toHaveBeenCalledTimes(1);
+    expect(harness.api.settleExpeditionRun).toHaveBeenCalledTimes(2);
+  });
+
+  it("정산 성공 뒤 UI 생성이 중단되어도 캐시된 최종 영수증으로 복구한다", async () => {
+    const harness = settlementHarness();
+    const first = await harness.flow.finish(request, []);
+    // 첫 결과를 받은 뒤 렌더가 예외로 끊겼다고 가정해 동일 입력으로 최종 결과만 다시 얻는다.
+    const recovered = await harness.flow.finish(request, []);
+    expect(recovered).toEqual(first);
+    expect(harness.api.submitExpeditionBossScore).toHaveBeenCalledTimes(1);
+    expect(harness.api.settleExpeditionRun).toHaveBeenCalledTimes(1);
+  });
+
+  it("같은 멱등 ID 재시도는 누적 점수와 정산 보상을 만드는 API를 다시 부르지 않는다", async () => {
+    const harness = settlementHarness();
+    await harness.flow.finish(request, []);
+    await harness.flow.finish({ ...request }, []);
+    expect(harness.api.submitExpeditionBossScore).toHaveBeenCalledTimes(1);
+    expect(harness.api.settleExpeditionRun).toHaveBeenCalledTimes(1);
+    expect(harness.applyBossScore).toHaveBeenCalledTimes(1);
   });
 });

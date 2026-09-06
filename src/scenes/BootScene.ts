@@ -11,7 +11,7 @@ export class BootScene extends Phaser.Scene {
     super("boot");
   }
 
-  create(): void {
+  create(data?: { destination?: "lobby" }): void {
     setDebugScene("boot");
     try {
       const loaded = saveManager.load();
@@ -31,6 +31,7 @@ export class BootScene extends Phaser.Scene {
     // 부트는 저장 로드와 복구만 조율하고 곧바로 넘긴다.
     // 누른 자리에 답하는 겹은 씬 전환과 무관하게 계속 떠 있어야 하므로 start가 아니라 launch다.
     this.scene.launch(EffectOverlayScene.KEY);
-    this.scene.start("title");
+    // 성공 정산 뒤에는 이미 로드된 에셋을 다시 기다리지 않고, 같은 저장 복구 경계를 지난 뒤 로비로 간다.
+    this.scene.start(data?.destination === "lobby" ? "lobby" : "title");
   }
 }

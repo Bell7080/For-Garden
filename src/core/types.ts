@@ -631,8 +631,6 @@ export type Ultimate = Skill & {
 
 /** 패시브는 종류별로 전투 엔진이 직접 해석한다. 새 패시브는 여기에 종류를 늘려 추가한다. */
 export type PassiveKind =
-  /** 전방에 있을 때 받는 피해 감소 */
-  | "frontGuard"
   /** 체력이 절반 이하가 되면 전투당 한 번 지속 회복 */
   | "emergencyRecovery"
   /** 같은 상대를 연속으로 때리면 출혈을 남긴다 */

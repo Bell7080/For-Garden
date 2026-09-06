@@ -42,14 +42,20 @@ export const CHAPTERS: readonly ChapterDef[] = CHAPTER_CONTENT.map((content, cha
   const stages = content.names.map((name, orderIndex): StageDef => {
     const chapterOrder = orderIndex + 1;
     const globalOrder = chapterIndex * 10 + orderIndex;
+    // 후속 챕터의 임시 성장도 1장의 최고 성장보다 낮아지지 않게 이어 두되 최종 관문에는 보스를 세운다.
+    const laterChapterIds = chapter === 3 && chapterOrder === 10
+      ? ["toby", "pontos", "ripa"]
+      : [...FIXED_STAGE_ENEMIES.slice(chapterIndex), ...FIXED_STAGE_ENEMIES.slice(0, chapterIndex)];
+    const laterChapterEnemies = laterChapterIds.map((relicId, slot) =>
+      enemyGrowth(relicId, globalOrder + 1, Math.floor(globalOrder / 10), slot as 0 | 1 | 2),
+    ) as [StageEnemyDef, StageEnemyDef, StageEnemyDef];
     return {
       kind: "battle",
       id: `${chapter}-${chapterOrder}`, name, chapter, chapterOrder,
       // 첫 노드는 이전 챕터 끝을, 나머지는 같은 챕터의 직전 노드를 선행 조건으로 삼는다.
       prerequisiteStageIds: chapterOrder === 1 ? (prerequisiteStageId ? [prerequisiteStageId] : []) : [`${chapter}-${chapterOrder - 1}`],
-      // 후속 챕터의 임시 성장도 1장의 최고 성장보다 낮아지지 않게 이어 둔다.
-      enemies: chapter === 1 ? CHAPTER_ONE_ENEMIES[orderIndex] : [...FIXED_STAGE_ENEMIES.slice(chapterIndex), ...FIXED_STAGE_ENEMIES.slice(0, chapterIndex)]
-        .map((relicId, slot) => enemyGrowth(relicId, globalOrder + 1, Math.floor(globalOrder / 10), slot as 0 | 1 | 2)) as [StageEnemyDef, StageEnemyDef, StageEnemyDef],
+      // 마지막 심층 관문은 원정 최종층과 같은 폰토스를 세워 등록된 보스가 스테이지에서도 고립되지 않게 한다.
+      enemies: chapter === 1 ? CHAPTER_ONE_ENEMIES[orderIndex] : laterChapterEnemies,
       rewards: { firstClearCheesecake: 30 + globalOrder * 5, repeatClearCheesecake: 10 + globalOrder * 2 },
     };
   });

@@ -214,7 +214,7 @@ describe("스피나 전투 계약", () => {
     const speed = currentAttackSpeed(spino);
     // 실제 피해는 아래 공용 함수에서 방어 적용 후 정수로 반올림하므로, 복합 원피해 산식과 구분한다.
     const equivalentPower = 200 + speed * 150 / spino.def.stats.atk;
-    const expected = computeDamage(spino, target, { ...ultimate, power: equivalentPower, kind: "ultimate", isCritical: false }, true);
+    const expected = computeDamage(spino, target, { ...ultimate, power: equivalentPower, kind: "ultimate", isCritical: false });
     const hit = fireUltimate(state, spino.id).find((event) => event.kind === "attack");
     expect(hit).toMatchObject({ amount: expected });
     expect(target.stunnedFor).toBe(3);
@@ -233,7 +233,7 @@ describe("스피나 전투 계약", () => {
         + currentAttackSpeed(spino) * ultimate.attackSpeedPower! / spino.def.stats.atk,
       kind: "ultimate",
       isCritical: false,
-    }, true);
+    });
 
     // 공격력의 200%와 공속의 150%를 더한 방어 적용 전 값이다. 등급별 태생 조정이 있어도
     // 계약이 함께 움직이도록 수치를 손으로 베끼지 않고 데이터에서 계산한다.
@@ -253,7 +253,7 @@ describe("스피나 전투 계약", () => {
       power: 200 + (spino.def.stats.attackSpeed + 3) * 150 / spino.def.stats.atk,
       kind: "ultimate",
       isCritical: false,
-    }, true));
+    }));
     expect(Number.isInteger(actualAfterHit - actualBeforeHit)).toBe(true);
   });
 
@@ -1107,8 +1107,8 @@ describe("효과 ID별 야성 특성", () => {
     const nearbyHit = attackEvents.find((event) => event.targetId === nearby.id)!;
     // 계수의 단일 출처를 고정하고, 실제 타격이 기존 공격력 피해보다 커졌는지 각 대상에서 검증한다.
     expect(torika.def.ferocityTrait).toMatchObject({ damagePercent: 100, defenseDamagePercent: 15, attackSpeedBonusPercent: 20 });
-    expect(primaryHit.amount).toBeGreaterThan(computeDamage(torika, primary, { ...torika.def.basic, isCritical: primaryHit.critical, kind: "basic" }, true));
-    expect(nearbyHit.amount).toBeGreaterThan(computeDamage(torika, nearby, { ...torika.def.basic, isCritical: nearbyHit.critical, kind: "basic" }, true));
+    expect(primaryHit.amount).toBeGreaterThan(computeDamage(torika, primary, { ...torika.def.basic, isCritical: primaryHit.critical, kind: "basic" }));
+    expect(nearbyHit.amount).toBeGreaterThan(computeDamage(torika, nearby, { ...torika.def.basic, isCritical: nearbyHit.critical, kind: "basic" }));
     // 경직은 기절 상태를 오용하지 않고 주·주변 대상의 행동만 0.1초 순간 차단한다.
     // 들이받기의 기절은 두 타마다 걸리므로 이 첫 타격에서는 아직 아무도 기절하지 않는다 —
     // 그래서 여기 남은 값은 경직이 기절 슬롯에 새지 않았다는 뜻 그대로다.
@@ -1462,7 +1462,6 @@ describe("궁극기", () => {
       torika,
       target,
       { ...ultimate, isCritical: false, kind: "ultimate" },
-      true,
     ));
     const events = fireUltimate(state, torika.id);
     const hits = events.filter((event) => event.kind === "attack");
@@ -1673,7 +1672,7 @@ describe("렉시아 전투 계약", () => {
     // `rex.def.basic`을 그대로 통과시키므로 조정해도 순서 검증은 그대로 성립한다.
     // 태생 치명타는 전 개체 공통 10%이고 렉시아의 치명타형 정체성은 패시브가 만든다 —
     // 10% + 패시브 25퍼센트포인트 = 35%이며, 치명 피해도 150% + 25퍼센트포인트 = 175%다.
-    expect(hit).toMatchObject({ critical: true, amount: computeDamage(boosted, foe, { ...rex.def.basic, kind: "basic", isCritical: true }, true) });
+    expect(hit).toMatchObject({ critical: true, amount: computeDamage(boosted, foe, { ...rex.def.basic, kind: "basic", isCritical: true }) });
   });
 
   it("은 폭주 중 치명타와 모든 피해 흡혈에 각각 25퍼센트포인트를 적용하고 종료 후 복구한다", () => {
@@ -2640,7 +2639,8 @@ describe("마키 정적 전투 계약", () => {
 describe("델로피의 중독과 청산", () => {
   /** 델로피 하나와 맷집만 큰 적 하나를 붙여 둔다. 다른 개체의 규칙이 섞이지 않게 1대1로 연다. */
   function poisoned() {
-    const state = createSkirmish([getRelic("delopi")], [getRelic("amo")], ARENA);
+    // 자체 피격 재생을 가진 아모는 독 피해 총량 비교를 흐리므로, 회복하지 않는 토비를 순수 표적으로 쓴다.
+    const state = createSkirmish([getRelic("delopi")], [getRelic("toby")], ARENA);
     const [delopi, enemy] = state.fighters;
     delopi.x = 440; delopi.y = 1000; delopi.attackCooldown = 0;
     enemy.x = 460; enemy.y = 1000; enemy.attackCooldown = 99;
@@ -2664,7 +2664,7 @@ describe("델로피의 중독과 청산", () => {
       secondaryScaling: { stat: "ap", power: POISON.abilityPercentPerSecond },
       damageType: "magical",
       isCritical: false,
-    }, true)));
+    })));
     expect(poison.amountPerSecond).toBe(expected);
 
     // 같은 적에게 더 센 개체가 바르면 더 아프다. 세기가 바른 쪽에서 나온다는 뜻이다.
@@ -2853,9 +2853,9 @@ describe("토리카의 세 개의 뿔", () => {
     // 계수의 단일 출처는 데이터 한 곳뿐이다 — 전투도 설명문도 이 값을 읽는다.
     expect(torika.def.basic.periodicBonusScaling).toEqual({ stat: "def", power: 50 });
     const plain = (critical: boolean): number =>
-      computeDamage(torika, foe, { ...torika.def.basic, isCritical: critical, kind: "basic" }, true);
+      computeDamage(torika, foe, { ...torika.def.basic, isCritical: critical, kind: "basic" });
     const bonus = (critical: boolean): number =>
-      computeDamage(torika, foe, { ...torika.def.basic, power: 50, scalingStat: "def", damageType: "physical", isCritical: critical, kind: "basic" }, true);
+      computeDamage(torika, foe, { ...torika.def.basic, power: 50, scalingStat: "def", damageType: "physical", isCritical: critical, kind: "basic" });
     // 첫 두 뿔은 평소 한 방 그대로다 — 주기가 채워지기 전에 방어력 몫이 새면 상시 강화가 된다.
     expect(hits[0].amount).toBe(Math.max(1, Math.round(plain(hits[0].critical))));
     expect(hits[1].amount).toBe(Math.max(1, Math.round(plain(hits[1].critical))));

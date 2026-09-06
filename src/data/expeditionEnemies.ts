@@ -10,9 +10,10 @@ import { EXPEDITION_COMBAT_BALANCE } from "./expedition";
  * 현재 보유한 적 원화 세 종을 조우 성격별 순서로 배치한다. 새 적 데이터가 들어오면 이 표의 ID만
  * 교체하면 정보창과 실제 전투가 함께 바뀌며, 씬에 별도의 임시 공용 편성이 남지 않는다.
  */
-const EXPEDITION_ENEMY_FORMATIONS: Record<ExpeditionNodeType, readonly [string, string, string]> = {
+export const EXPEDITION_ENEMY_FORMATIONS: Record<ExpeditionNodeType, readonly [string, string, string]> = {
   normal: ["toby", "amo", "ripa"],
-  elite: ["amo", "toby", "ripa"],
+  // 정예 조우에는 1장 중간보스 코마를 넣어 영구 적 정의가 원정에서도 실제 편성으로 검증되게 한다.
+  elite: ["amo", "husk-koma", "ripa"],
   horde: ["ripa", "toby", "amo"],
   boss: ["amo", "ripa", "toby"],
   // 비전투 노드는 표시/전투 함수에서 호출하지 않지만 완전한 타입 표를 유지한다.
@@ -21,7 +22,7 @@ const EXPEDITION_ENEMY_FORMATIONS: Record<ExpeditionNodeType, readonly [string, 
 };
 
 /** 최종층 보스는 일반 boss fallback 표와 섞지 않아 다른 층의 임시 보스 편성을 바꾸지 않는다. */
-const FINAL_FLOOR_BOSS_ID = "pontos";
+export const FINAL_FLOOR_BOSS_ID = "pontos";
 
 /** 층과 조우 난도를 함께 반영한 표시/전투 공용 적 레벨이다. */
 export function expeditionEnemyLevel(type: ExpeditionNodeType, floor: number): number {

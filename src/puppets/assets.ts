@@ -1,6 +1,7 @@
 import type Phaser from "phaser";
 import { Puppet } from "puppetforge/phaser";
 import type { PortraitAssetId } from "../core/types";
+import { ENEMY_SD_ASSET_IDS } from "./enemyAssetIds";
 import {
   computeAnchoredPlacement,
   computeHeadCardFrame,
@@ -483,12 +484,12 @@ const ALLY_SD_ASSETS: Readonly<Record<string, PuppetAsset>> = {
  * 캐릭터 영구 ID는 이름 기준으로 바꾸되 이 값은 기존 enemySD zip의 로더 위치를 가리키므로
  * 에셋 배열 순서와 실제 파일 경로는 바꾸지 않는다.
  */
-const ENEMY_SD_ASSETS_BY_ID: Readonly<Record<string, PuppetAsset>> = {
-  pontos: PONTOS_SD_ASSET,
-  "toby": ENEMY_SD_ASSETS[0],
-  "amo": ENEMY_SD_ASSETS[1],
-  "ripa": ENEMY_SD_ASSETS[2],
-  "husk-koma": EXPLORER_SD_ASSET,
+export const ENEMY_SD_ASSETS_BY_ID: Readonly<Record<string, PuppetAsset>> = {
+  [ENEMY_SD_ASSET_IDS[0]]: PONTOS_SD_ASSET,
+  [ENEMY_SD_ASSET_IDS[1]]: ENEMY_SD_ASSETS[0],
+  [ENEMY_SD_ASSET_IDS[2]]: ENEMY_SD_ASSETS[1],
+  [ENEMY_SD_ASSET_IDS[3]]: ENEMY_SD_ASSETS[2],
+  [ENEMY_SD_ASSET_IDS[4]]: EXPLORER_SD_ASSET,
 };
 
 /** 비전투 화면의 아군 SD 선택. 적 ID는 받지 않는다. */

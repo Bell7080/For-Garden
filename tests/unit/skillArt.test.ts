@@ -860,3 +860,18 @@ describe("마키 스킬 표시 계약", () => {
     expect(effect.maxStacks).toBe(3);
   });
 });
+
+describe("아모 조가비 표시 계약", () => {
+  const amo = RELICS.find((def) => def.id === "amo")!;
+
+  it("네 스킬의 최종 이름과 데이터 기반 조가비 설명을 노출한다", () => {
+    expect(amo.passive.name).toBe("무서운 건 아니거든");
+    expect(amo.ferocityTrait.name).toBe("이번엔 안 숨을 거야!");
+    expect(amo.basic.name).toBe("껍질로 쿵");
+    expect(amo.ultimate.name).toBe("다들 내 뒤로!");
+    expect(passiveDescription(amo.passive)).toContain("[[shell|조가비]]");
+    expect(passiveDescription(amo.passive)).toContain("최대 체력의 6%");
+    expect(ferocityTraitDescription(amo.ferocityTrait)).toContain("조가비]]를 3겹");
+    expect(skillDescription(amo.ultimate)).toContain("조가비]] 내부 재사용 대기시간을 초기화");
+  });
+});

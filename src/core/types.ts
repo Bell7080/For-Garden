@@ -248,6 +248,8 @@ export type SelfGuard = {
    * 불러 놓고 그 자리에서 덮는 것이 이 궁극기이고, 그래서 도발과 보호막이 한 조작에 든다.
    */
   shieldMaxHpPercent: number;
+  /** 시전 순간, 보호막·끌어당김·도발 처리가 끝난 뒤 시전자 조가비의 내부 쿨다운만 0으로 되돌린다. */
+  resetShellGuardCooldown?: true;
 };
 
 /** 자리를 잡는 계약. 은신·순간이동·다음 타격 강화를 코어가 판별할 수 있는 값으로만 적는다. */
@@ -651,6 +653,8 @@ export type PassiveKind =
   | "undyingTalisman"
   /** 노도니아 전용: 맞을수록 회복 중첩을 쌓는 패시브다. */
   | "painfulElation"
+  /** 아모 전용: 실제 HP 피해를 받고 살아남을 때 조가비를 쌓아 자신과 최저 HP 비율 아군을 보호한다. */
+  | "shellGuard"
   /** 렉시아 전용: 공격 속도·공격력·치명타 확률·치명타 피해를 함께 강화한다. */
   | "battleMaidMastery"
   /** 스피나 전용: 기본 공격의 실제 적중마다 공속을 전투 한정으로 영구 누적한다. */
@@ -705,7 +709,9 @@ export type FerocityEffectId =
   /** 데이 전용: 폭주 중 때리기를 멈추고 훨씬 빠르게 달리며 주위에 매초 낙서를 흩뿌린다. */
   | "graffitiRun"
   /** 매디 전용: 폭주 진입 시 모든 상태이상·디버프를 지우고 보호막을 얻으며, 폭주 중 방어력·저항력이 함께 오른다. */
-  | "furCoat";
+  | "furCoat"
+  /** 아모 전용: 폭주 진입 정화·즉시 조가비·단축 내부 쿨다운을 한 계약으로 식별한다. */
+  | "shellResolve";
 
 /**
  * 개체별 피버 발현 정적 데이터다.
@@ -903,6 +909,15 @@ export type FerocityTrait = {
       /** 폭주 중 내내 곱해지는 방어력·저항력 증가율(%)이다. */
       defenseResistancePercent: number;
     }
+  | {
+      effectId: "shellResolve";
+      /** 폭주 진입 판정 직후, 조가비를 지급하기 전에 자기 상태이상·디버프를 모두 지운다. */
+      cleanseAllOnEntry: true;
+      /** 정화가 끝난 같은 진입 시점에 더하며, 상한 판정 뒤 즉시 소비 판정까지 이어지는 조가비 수다. */
+      shellStacksOnEntry: number;
+      /** 폭주가 유지되는 동안 새 조가비 발동 뒤 적용할 내부 재사용 대기시간(초)이다. */
+      shellCooldownSecondsDuringFever: number;
+    }
 );
 
 export interface Passive {
@@ -946,6 +961,23 @@ export interface Passive {
     maxHpRegenPercentPerStack: number;
     /** 겹이 남아 있는 시간(초). 다시 맞으면 처음부터 다시 흐른다. */
     seconds: number;
+  };
+  /**
+   * 「조가비」 계약. 실제 HP 피해 처리가 끝나고 아모가 살아 있을 때만 한 겹을 얻으며,
+   * 유지 시간은 매 획득마다 갱신된다. 상한에 닿으면 같은 피해 처리의 마지막 단계에서 전부
+   * 소비해 자신과 자신을 제외한 생존 아군 중 현재 HP 비율 최저(동률은 편성 순서)를 보호한다.
+   */
+  shellGuard?: {
+    /** 소비 전 쌓을 수 있는 최대 겹 수다. */
+    maxStacks: number;
+    /** 마지막 획득부터 모든 겹이 함께 남는 시간(초)이다. */
+    durationSeconds: number;
+    /** 평상시 발동 직후 다시 소비할 수 없도록 막는 내부 재사용 대기시간(초)이다. */
+    cooldownSeconds: number;
+    /** 소비 시 아모 자신에게 주는 자기 최대 체력 비례 보호막(%)이다. */
+    selfShieldMaxHpPercent: number;
+    /** 소비 시 선정된 아군에게 주는 그 아군 최대 체력 비례 보호막(%)이다. */
+    lowestHpAllyShieldMaxHpPercent: number;
   };
   /** 전투 한정 누적 패시브가 쌓을 수 있는 최대 횟수. 상한이 없으면 한 판이 길수록 끝없이 자란다. */
   maxStacks?: number;

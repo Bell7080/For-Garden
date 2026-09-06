@@ -150,6 +150,10 @@ export interface Fighter extends Combatant {
   shield: { amount: number; providerId: string | null };
   /** 아다지오 정화·보호막의 메테 개체별 남은 쿨타임(초)이다. JSON 직렬화 가능한 숫자다. */
   adagioCooldownRemaining: number;
+  /** 아모의 전투 한정 조가비 겹·유지 시계다. 정적 계약이 없는 개체는 항상 null이다. */
+  shellGuard: { stacks: number; remaining: number; total: number } | null;
+  /** 조가비 3겹 소비 뒤 다시 발동할 수 있을 때까지 남은 순수 전투 시간(초)이다. */
+  shellGuardCooldownRemaining: number;
   /**
    * 지금 걸린 저주. 스스로는 피해를 주지 않고 **저항을 중첩만큼 깎는다.**
    *
@@ -737,6 +741,8 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     // 시작 보호막은 보정된 최대 HP를 기준으로 계산해 최대 체력 증강과 자연스럽게 결합한다.
     shield: { amount: 0, providerId: null },
     adagioCooldownRemaining: 0,
+    shellGuard: null,
+    shellGuardCooldownRemaining: 0,
     retargetIn: 0,
     curse: null,
     frenzy: null,
@@ -1367,6 +1373,40 @@ function gainElation(target: Fighter): void {
   };
 }
 
+/** 기존 보호막 사건과 제공자 슬롯을 함께 갱신해 방어 기여도와 화면 효과가 같은 원천을 보게 한다. */
+function grantProvidedShield(provider: Fighter, target: Fighter, percent: number, events: SkirmishEvent[]): void {
+  const amount = Math.max(1, Math.round(target.maxHp * percent / 100));
+  target.shield.amount += amount;
+  target.shield.providerId = provider.id;
+  events.push({ kind: "shieldGranted", fighterId: target.id, providerId: provider.id, amount, remaining: target.shield.amount, effect: { tag: "shieldGain", intensity: 1 } });
+}
+
+/** 조가비 상한 소비는 겹을 먼저 비우고 쿨다운을 건 뒤 보호막을 준다. 보호막 후속 피해가 같은 발동을 재귀 호출하지 않게 하는 순서다. */
+function consumeShellGuard(fighter: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
+  const plan = fighter.def.passive.shellGuard;
+  if (!plan || (fighter.shellGuard?.stacks ?? 0) < plan.maxStacks || fighter.shellGuardCooldownRemaining > 0) return;
+  fighter.shellGuard = null;
+  const fever = fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "shellResolve" ? fighter.def.ferocityTrait : undefined;
+  fighter.shellGuardCooldownRemaining = fever?.shellCooldownSecondsDuringFever ?? plan.cooldownSeconds;
+  grantProvidedShield(fighter, fighter, plan.selfShieldMaxHpPercent, events);
+  // 자신은 후보에서 빼며 filter/find 순서를 유지해 HP 비율 동률을 기존 편성 배열 순서로 결정한다.
+  const ally = state.fighters.filter((candidate) => candidate.id !== fighter.id && candidate.side === fighter.side && isFighterAlive(candidate))
+    .reduce<Fighter | undefined>((best, candidate) => !best || candidate.hp / candidate.maxHp < best.hp / best.maxHp ? candidate : best, undefined);
+  if (ally) grantProvidedShield(fighter, ally, plan.lowestHpAllyShieldMaxHpPercent, events);
+}
+
+/** 실제 HP 감소가 끝난 뒤 살아남은 대상만 겹을 받는다. 같은 타격에서 사망·불멸 판정 전 조가비가 끼어들지 않는다. */
+function gainShellGuard(target: Fighter, stacks: number, state: SkirmishState, events: SkirmishEvent[]): void {
+  const plan = target.def.passive.shellGuard;
+  if (target.def.passive.kind !== "shellGuard" || !plan || !isFighterAlive(target) || stacks <= 0) return;
+  target.shellGuard = {
+    stacks: Math.min(plan.maxStacks, (target.shellGuard?.stacks ?? 0) + stacks),
+    remaining: plan.durationSeconds,
+    total: plan.durationSeconds,
+  };
+  consumeShellGuard(target, state, events);
+}
+
 /** 희열이 도는 동안 매초 흐르는 재생. 겹이 많을수록 한 번에 더 많이 돌아온다. */
 function tickElationRegen(fighter: Fighter, dt: number, state: SkirmishState, events: SkirmishEvent[]): void {
   const elation = fighter.elation;
@@ -1845,6 +1885,7 @@ function clearDefeatedStatuses(fighter: Fighter): void {
   fighter.vandalism = null;
   fighter.artChannel = null;
   fighter.elation = null;
+  fighter.shellGuard = null;
   fighter.bulwark = null;
   fighter.overpaint = null;
   fighter.curse = null;
@@ -2344,8 +2385,15 @@ function tickTailwind(fighter: Fighter, dt: number, state: SkirmishState): Skirm
   return events;
 }
 
+/** 폭주 진입 정화들이 공유하는 상태이상·디버프 정리 경로다. 이로운 조가비·희열·순풍은 건드리지 않는다. */
+function cleanseAllDebuffs(fighter: Fighter): void {
+  fighter.stunnedFor = 0; fighter.staggeredFor = 0; fighter.frozen = null; fighter.chill = null;
+  fighter.bleed = null; fighter.poison = null; fighter.curse = null; fighter.overpaint = null;
+  fighter.vandalism = null; fighter.butcher = null; fighter.frenzy = null; fighter.taunted = null;
+}
+
 /** 실시간 전투도 턴제와 같은 사건별 증가 및 임계 로그 계약을 사용한다. */
-function gainFerocity(fighter: Fighter, base: number, state: SkirmishState): void {
+function gainFerocity(fighter: Fighter, base: number, state: SkirmishState, events: SkirmishEvent[]): void {
   const before = fighter.ferocity;
   // 피버 중 추가 획득은 무시해 한 번 열린 보상 구간이 정해진 시간 안에 반드시 끝나게 한다.
   if (fighter.ferocityFever) return;
@@ -2368,12 +2416,16 @@ function gainFerocity(fighter: Fighter, base: number, state: SkirmishState): voi
     if (trait.effectId === "furCoat") {
       // 정화: 살아 있는 채로 걸린 상태이상·디버프만 지운다. 버프·아군이 준 것(순풍·희열 등)은
       // 건드리지 않는다 — "장식이 아니다"가 말하는 것은 스스로 두른 것을 지키는 힘이다.
-      fighter.stunnedFor = 0; fighter.staggeredFor = 0; fighter.frozen = null; fighter.chill = null;
-      fighter.bleed = null; fighter.poison = null; fighter.curse = null; fighter.overpaint = null;
-      fighter.vandalism = null; fighter.butcher = null; fighter.frenzy = null; fighter.taunted = null;
+      cleanseAllDebuffs(fighter);
       const shield = Math.max(1, Math.round(fighter.maxHp * trait.shieldMaxHpPercent / 100));
       fighter.shield.amount += shield;
       fighter.shield.providerId = fighter.id;
+    }
+    if (trait.effectId === "shellResolve") {
+      // 진입 순서는 정화 → 즉시 겹 획득 → 소비다. 먼저 정화해야 방금 얻은 조가비를 정리 경로가
+      // 지우지 않고, 소비가 쿨다운을 먼저 걸어 같은 진입에서 두 번 발동하는 순환을 막는다.
+      if (trait.cleanseAllOnEntry) cleanseAllDebuffs(fighter);
+      gainShellGuard(fighter, trait.shellStacksOnEntry, state, events);
     }
     if (trait.effectId === "packHunt") {
       fighter.stealthFor = trait.stealthDurationSeconds;
@@ -2797,6 +2849,9 @@ function applyDamage(target: Fighter, amount: number, events: SkirmishEvent[], s
     target.undyingPending = true;
   }
   const dealt = hpBefore - target.hp;
+  // 모든 피해 원천이 지나온 마지막 관문에서만 지급한다. 실제 HP 손실 0·전투 불능은 제외해
+  // 보호막에 막힌 피해나 죽은 개체가 조가비를 만들고 다시 살아나는 무한 재발동을 방지한다.
+  if (dealt > 0 && isFighterAlive(target)) gainShellGuard(target, 1, state, events);
   return dealt;
 }
 
@@ -3085,10 +3140,10 @@ function strike(
     else gainEnergy(attacker, state);
     // 아군 전체 충전은 시전자 자신의 충전과 같은 경계에서, 한 공격 행동에 한 번만 나눠 준다.
     grantAllyEnergy(attacker, skill, state);
-    gainFerocity(attacker, useUltimate ? FEROCITY_RULES.ultimateGain : FEROCITY_RULES.basicGain, state);
+    gainFerocity(attacker, useUltimate ? FEROCITY_RULES.ultimateGain : FEROCITY_RULES.basicGain, state, events);
   }
   // 무효 공격은 실제 피격이 아니므로 피격 야성과 그에 따른 폭주 전환을 만들지 않는다.
-  if (!resolution.ignored) gainFerocity(target, FEROCITY_RULES.hitGain, state);
+  if (!resolution.ignored) gainFerocity(target, FEROCITY_RULES.hitGain, state, events);
   if (!useUltimate && attacker.def.passive.kind === "basicHitAttackSpeedStack") {
     // 적중 사건마다 +3을 더하므로 연격 두 타는 각각 누적되며 전투 생성 시 0으로 초기화된다.
     attacker.bonusAttackSpeed += attacker.def.passive.value;
@@ -3375,7 +3430,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     siphonOverpaintHealing(attacker, target, hpBefore - target.hp, state, events);
     // 완성작을 공개하고 나면 그림은 지워진다 — 쌓아 두고 매번 터뜨릴 수 있으면 상시 배율이 된다.
     if (detonation) target.overpaint = null;
-    if (!resolution.ignored) gainFerocity(target, FEROCITY_RULES.hitGain, state);
+    if (!resolution.ignored) gainFerocity(target, FEROCITY_RULES.hitGain, state, events);
     // 광역으로 맞은 쪽도 희열이 오른다. 단일과 광역에서 규칙이 갈리면 같은 한 대가 어느
     // 스킬에 맞았느냐에 따라 겹을 주기도 하고 안 주기도 한다.
     gainElation(target);
@@ -3415,7 +3470,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     const healed = applyHealing(state, ally, currentAbilityPower(attacker) * (ultimate?.allyHealingPower ?? 0) / 100, attacker.id);
     if (healed > 0) events.push({ kind: "heal", fighterId: ally.id, amount: healed, source: "passive", effect: { tag: "heal", intensity: 1 } });
   }
-  gainFerocity(attacker, useUltimate ? FEROCITY_RULES.ultimateGain : FEROCITY_RULES.basicGain, state);
+  gainFerocity(attacker, useUltimate ? FEROCITY_RULES.ultimateGain : FEROCITY_RULES.basicGain, state, events);
 }
 
 /**
@@ -3640,6 +3695,13 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     // 메테 개체별 쿨타임은 행동 불능과 무관하게 실제 전투 시간으로 흐른다.
     const adagioRemaining = fighter.adagioCooldownRemaining - dt;
     fighter.adagioCooldownRemaining = adagioRemaining <= EMERGENCY_RECOVERY.epsilon ? 0 : adagioRemaining;
+    // 조가비 쿨다운은 기절·행동 불능과 무관한 실제 전투 시계로 흐르며, 궁극기만 명시적으로 0으로 만든다.
+    const shellCooldown = fighter.shellGuardCooldownRemaining - dt;
+    fighter.shellGuardCooldownRemaining = shellCooldown <= EMERGENCY_RECOVERY.epsilon ? 0 : shellCooldown;
+    if (fighter.shellGuard) {
+      const remaining = fighter.shellGuard.remaining - dt;
+      fighter.shellGuard = remaining <= EMERGENCY_RECOVERY.epsilon ? null : { ...fighter.shellGuard, remaining };
+    }
     fighter.dashX *= recovery;
     fighter.dashY *= recovery;
   }
@@ -3809,7 +3871,7 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
         if (passive.moveEnergyPerSecond) {
           fighter.energy = Math.min(ULTIMATE_ENERGY_MAX, fighter.energy + passive.moveEnergyPerSecond * dt);
         }
-        if (passive.moveFerocityPerSecond) gainFerocity(fighter, passive.moveFerocityPerSecond * dt, state);
+        if (passive.moveFerocityPerSecond) gainFerocity(fighter, passive.moveFerocityPerSecond * dt, state, events);
       }
       // 달리는 동안에는 통통 튀어 오른다. 발이 땅에 닿는 순간마다 hop이 0을 지난다.
       fighter.hopPhase += dt * SKIRMISH.hopRate * Math.PI * (fighter.def.stats.moveSpeed / 100);
@@ -3966,6 +4028,9 @@ export function fireUltimate(
       }
       events.push({ kind: "combatEffect", fighterId: other.id, effect: { tag: "shieldHit", intensity: 1 } });
     }
+    // 끌어당김·도발·selfGuard 보호막을 모두 확정한 뒤에만 조가비 내부 쿨다운을 초기화한다.
+    // 필드가 없는 기존 selfGuard에는 손대지 않아 궁극기 사용이 조가비를 연쇄 발동시키지 않는다.
+    if (plan.resetShellGuardCooldown === true) attacker.shellGuardCooldownRemaining = 0;
     attacker.attackCooldown = attackInterval(attacker, state);
     settle(state, events);
     return events;

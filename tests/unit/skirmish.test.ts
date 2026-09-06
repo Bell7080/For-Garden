@@ -874,7 +874,7 @@ describe("실시간 진행", () => {
 describe("기절 상태", () => {
   /** 두 전투원을 붙이고 다른 우연한 행동 없이 기절 정책만 관찰할 결투를 만든다. */
   function stunnedDuel(): SkirmishState {
-    const state = newSkirmish(["rex"], ["amo"]);
+    const state = newSkirmish(["rex"], ["toby"]);
     const [ally, foe] = state.fighters;
     ally.x = 400; ally.y = 1000; ally.targetId = foe.id; ally.engaged = true;
     foe.x = 460; foe.y = 1000; foe.targetId = ally.id; foe.engaged = true;
@@ -2355,7 +2355,7 @@ describe("메론 정적 전투 계약", () => {
 
 describe("파치 정적 전투 계약", () => {
   /** 파치와 적 하나를 붙여 세우고 적 행동을 멈춰 파치의 타격만 관찰한다. */
-  function pachiBattle(enemies = ["amo"]) {
+  function pachiBattle(enemies = ["toby"]) {
     const state = newSkirmish(["pachi"], enemies);
     const pachi = state.fighters[0];
     pachi.x = 400; pachi.y = 1000; pachi.attackCooldown = 0;
@@ -2612,7 +2612,7 @@ describe("마키 정적 전투 계약", () => {
   });
 
   it("의 폭주는 터진 손질의 일부를 아군 전체의 회복으로 돌린다", () => {
-    const state = newSkirmish(["maki", "anky"], ["amo"]);
+    const state = newSkirmish(["maki", "anky"], ["toby"]);
     const [maki, ally, enemy] = state.fighters;
     maki.x = 400; maki.y = 1000; maki.attackCooldown = 0;
     ally.attackCooldown = 99;
@@ -2983,7 +2983,7 @@ describe("엘라의 프로젝트 TALISMAN", () => {
 describe("노도니아의 프로젝트 REVERIE", () => {
   /** 노도니아와 아군 하나, 적 하나를 사거리 안에 세운다. */
   function arena(): { state: SkirmishState; nodonia: Fighter; ally: Fighter; foe: Fighter } {
-    const state = createSkirmish([getRelic("nodonia"), getRelic("anky")], [getRelic("amo")], ARENA);
+    const state = createSkirmish([getRelic("nodonia"), getRelic("anky")], [getRelic("toby")], ARENA);
     const [nodonia, ally, foe] = state.fighters;
     nodonia.x = 420; nodonia.y = 1000; ally.x = 460; ally.y = 1000; foe.x = 500; foe.y = 1000;
     foe.attackCooldown = 99; nodonia.attackCooldown = 99; ally.attackCooldown = 99;
@@ -3533,5 +3533,64 @@ describe("둔화·빙결 계약", () => {
         expect(foe.frozen, "3겹").not.toBeNull();
       }
     }
+  });
+});
+
+describe("아모 조가비 전투 계약", () => {
+  /** 상대의 평타를 즉시 한 번 내게 해 조가비 획득의 실제 피해 경계만 통과시킨다. */
+  function hitAmo(state: SkirmishState): SkirmishEvent[] {
+    const amo = state.fighters[0];
+    const enemy = state.fighters.at(-1)!;
+    amo.x = enemy.x = 400; amo.y = enemy.y = 900;
+    amo.attackCooldown = 99; enemy.attackCooldown = 0;
+    return stepSkirmish(state, 0.01);
+  }
+
+  it("실제 피해마다 6초를 갱신하고 3겹을 소비해 자신과 최저 HP 비율 아군을 보호한다", () => {
+    const state = createSkirmish([getRelic("amo"), getRelic("anky"), getRelic("dodo")], [getRelic("rex")], ARENA);
+    const [amo, first, second] = state.fighters;
+    first.hp = first.maxHp / 2; second.hp = second.maxHp / 2;
+    hitAmo(state);
+    expect(amo.shellGuard).toMatchObject({ stacks: 1, total: 6 });
+    expect(unitStatusViews(amo)).toContainEqual(expect.objectContaining({ id: "shell", detail: expect.stringContaining("조가비 1/3") }));
+    stepSkirmish(state, 2); amo.attackCooldown = 99;
+    hitAmo(state);
+    expect(amo.shellGuard).toMatchObject({ stacks: 2, remaining: expect.closeTo(6, 1) });
+    const events = hitAmo(state);
+    expect(amo.shellGuard).toBeNull();
+    expect(amo.shellGuardCooldownRemaining).toBeCloseTo(6, 1);
+    expect(events).toContainEqual(expect.objectContaining({ kind: "shieldGranted", fighterId: amo.id, providerId: amo.id }));
+    // 같은 HP 비율 동률은 편성 배열에서 먼저 선 아군이 받는다.
+    expect(events).toContainEqual(expect.objectContaining({ kind: "shieldGranted", fighterId: first.id, providerId: amo.id }));
+    expect(events).not.toContainEqual(expect.objectContaining({ kind: "shieldGranted", fighterId: second.id }));
+  });
+
+  it("혼자 남으면 자기 보호막만 주고 궁극기는 도발·25% 보호막 뒤 내부 쿨다운을 초기화한다", () => {
+    const state = createSkirmish([getRelic("amo")], [getRelic("rex")], ARENA);
+    const [amo, enemy] = state.fighters;
+    amo.shellGuard = { stacks: 2, remaining: 6, total: 6 };
+    const shellEvents = hitAmo(state).filter((event) => event.kind === "shieldGranted");
+    expect(shellEvents).toHaveLength(1);
+    amo.energy = amo.def.ultimate.cost; amo.shellGuardCooldownRemaining = 4;
+    enemy.x = amo.x + 100; enemy.y = amo.y;
+    const before = amo.shield.amount;
+    const events = fireUltimate(state, amo.id);
+    expect(amo.shield.amount - before).toBe(Math.round(amo.maxHp * 0.25));
+    expect(enemy.taunted?.sourceId).toBe(amo.id);
+    expect(amo.shellGuardCooldownRemaining).toBe(0);
+    expect(events).toContainEqual(expect.objectContaining({ kind: "shieldGranted", fighterId: amo.id }));
+  });
+
+  it("폭주 진입은 정화한 뒤 조가비 3겹을 즉시 소비하고 3초 쿨다운을 건다", () => {
+    const state = createSkirmish([getRelic("amo")], [getRelic("rex")], ARENA);
+    const [amo] = state.fighters;
+    amo.stunnedFor = 5; amo.poison = { remaining: 5, total: 5, tickIn: 1, amountPerSecond: 1 };
+    amo.ferocity = FEROCITY_RULES.max - FEROCITY_RULES.hitGain;
+    const events = hitAmo(state);
+    expect(amo.ferocityFever).toBe(true);
+    expect(amo.stunnedFor).toBe(0); expect(amo.poison).toBeNull();
+    expect(amo.shellGuard).toBeNull();
+    expect(amo.shellGuardCooldownRemaining).toBeCloseTo(3, 1);
+    expect(events).toContainEqual(expect.objectContaining({ kind: "shieldGranted", fighterId: amo.id }));
   });
 });

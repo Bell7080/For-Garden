@@ -157,6 +157,10 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
     return `폭주에 들어가는 순간 자신의 모든 상태이상·디버프를 지우고 최대 체력의 ${trait.shieldMaxHpPercent}% 보호막을 얻는다.`
       + ` 폭주 중에는 방어력과 저항력이 ${trait.defenseResistancePercent}% 오른다.`;
   }
+  if (trait.effectId === "shellResolve") {
+    return `폭주에 들어가는 순간 자신의 모든 상태이상·디버프를 지우고 [[shell|조가비]]를 ${trait.shellStacksOnEntry}겹 얻는다.`
+      + ` 폭주 중 조가비 내부 재사용 대기시간이 ${trait.shellCooldownSecondsDuringFever}초로 줄어든다.`;
+  }
 
   // 방어력 계수는 토리카처럼 추가 피해가 있는 범위 타격만 노출하고, 일반 전이 특성은 원래 피해 비율만 보여 준다.
   const speed = trait.attackSpeedBonusPercent === undefined ? "" : `공격 속도가 ${trait.attackSpeedBonusPercent}% 증가한다. `;
@@ -251,6 +255,13 @@ function passiveHead(passive: Passive, atk?: number): string {
   }
   if (passive.kind === "painfulElation" && passive.elation !== undefined) {
     return `적에게 피격당할 때마다 [[nodonia-elation|희열]]이 한 겹 쌓인다.`;
+  }
+  if (passive.kind === "shellGuard" && passive.shellGuard !== undefined) {
+    const shell = passive.shellGuard;
+    return `실제 피해를 받고 살아남으면 ${shell.durationSeconds}초 동안 유지되는 [[shell|조가비]]를 한 겹 얻는다.`
+      + ` ${shell.maxStacks}겹이 되면 모두 소비해 자신에게 최대 체력의 ${shell.selfShieldMaxHpPercent}%,`
+      + ` 자신을 제외한 현재 HP 비율이 가장 낮은 생존 아군에게 그 아군 최대 체력의 ${shell.lowestHpAllyShieldMaxHpPercent}% 보호막을 부여한다.`
+      + ` 한 번 발동하면 ${shell.cooldownSeconds}초 동안 다시 발동하지 않는다.`;
   }
   if (passive.kind === "tagAndRun") {
     // 세 절이 각각 다른 일을 한다 — 표적을 돌리고, 멈추지 않고, 달린 만큼 찬다. 한 문장에
@@ -385,7 +396,8 @@ export function skillDescription(
     if ("selfGuard" in skill && skill.selfGuard !== undefined) {
       const guard = skill.selfGuard;
       const shield = stats.maxHp === undefined ? `최대 체력의 ${guard.shieldMaxHpPercent}%` : `[[shield-value|${Math.round(stats.maxHp * guard.shieldMaxHpPercent / 100)}]]`;
-      return `주위 모든 적을 [[pull|끌어당겨]] ${guard.tauntSeconds}초 동안 [[taunt|도발]]하고, ${shield}만큼 보호막을 얻는다.`;
+      const reset = guard.resetShellGuardCooldown === true ? " [[shell|조가비]] 내부 재사용 대기시간을 초기화한다." : "";
+      return `주위 모든 적을 [[pull|끌어당겨]] ${guard.tauntSeconds}초 동안 [[taunt|도발]]하고, ${shield}만큼 보호막을 얻는다.${reset}`;
     }
     // 때리지 않고 자리만 잡는 궁극기. 위력을 적지 않는 이유는 그 피해가 이어질 일반 공격의
     // 몫이기 때문이다 — 여기에 수치를 적으면 같은 한 방이 위아래에서 두 수로 보인다.

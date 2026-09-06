@@ -38,7 +38,9 @@ import {
   sidestep,
   vandalismOffenseShred,
   orbitStep,
+  applyCombatStatusEffect,
 } from "../../src/core/skirmish";
+import { unitStatusViews } from "../../src/ui/unitStatusModel";
 import { applyExpeditionRest, type ExpeditionAugmentEffect } from "../../src/core/expeditionAugments";
 import { RELICS, getRelic } from "../../src/data/relics";
 import { applyLevelGrowth } from "../../src/core/relicProgression";
@@ -3344,5 +3346,98 @@ describe("표적 둘레 돌기", () => {
     const counter = orbitStep({ x: 141, y: 0 }, { x: 0, y: 0 }, 12, 141, -1);
     expect(Math.sign(clockwise.y)).toBe(1);
     expect(Math.sign(counter.y)).toBe(-1);
+  });
+});
+
+/**
+ * **도발 계약 회귀 테스트.**
+ *
+ * 도발은 이제 두 곳에서 나온다 — 엘라의 궁극기(`SelfGuard`, 끌어당겨 5초)와 데이의 타격
+ * (`CombatStatusEffect`, 0.5초). 둘이 서로 다른 경로로 슬롯을 건드리는 동안 네 가지가 조용히
+ * 어긋나 있었고, 넷 다 "한쪽에서만" 나타나 개체별 테스트로는 잡히지 않았다. 그래서 개체가
+ * 아니라 **상태 자체의 계약**으로 묶는다.
+ */
+describe("도발 계약", () => {
+  const arena: Arena = { left: 0, right: 900, top: 0, bottom: 1_400 };
+  const seeded = (start: number) => { let n = start; return () => (n = (n * 1103515245 + 12345) % 2147483648) / 2147483648; };
+
+  it("은 짧은 도발이 더 긴 도발을 덮어쓰지 않는다", () => {
+    // 게이지를 다 쓴 엘라의 5초 도발이 스치는 평타 하나에 0.5초로 지워지고 있었다.
+    // 보호막·순풍과 같은 규칙으로 **남은 시간이 더 긴 쪽**이 남는다.
+    const state = createSkirmish([getRelic("ella"), getRelic("deina")], [getRelic("husk-shell")], arena);
+    const [ella, deina, foe] = state.fighters;
+    ella.x = 500; ella.y = 800; foe.x = 540; foe.y = 800; deina.x = 470; deina.y = 800;
+    ella.energy = getRelic("ella").ultimate.cost;
+    fireUltimate(state, ella.id, seeded(1));
+    expect(foe.taunted).toMatchObject({ sourceId: ella.id });
+    const held = foe.taunted!.remaining;
+
+    const rng = seeded(2);
+    for (let t = 0; t < 2 && state.phase === "fight"; t += 0.05) stepSkirmish(state, 0.05, rng);
+    // 데이가 그 사이 몇 번을 쳐도 엘라의 도발이 남고, 시간은 흐른 만큼만 줄어든다.
+    expect(foe.taunted?.sourceId).toBe(ella.id);
+    expect(foe.taunted!.remaining).toBeLessThan(held);
+    expect(foe.taunted!.remaining).toBeGreaterThan(1);
+  });
+
+  it("은 같은 상대가 다시 걸면 시간을 되돌린다", () => {
+    // "더 긴 쪽이 남는다"가 제 도발의 갱신까지 막으면, 계속 때리는데도 도발이 끊긴다.
+    const state = createSkirmish([getRelic("deina")], [getRelic("husk-shell")], arena);
+    const [deina, foe] = state.fighters;
+    foe.taunted = { remaining: 0.1, total: 0.5, sourceId: deina.id };
+    const taunt = getRelic("deina").basic.statusEffects!.find((e) => e.kind === "taunt")!;
+    applyCombatStatusEffect(foe, taunt, [], state, deina.id);
+    expect(foe.taunted!.remaining).toBeCloseTo(0.5, 5);
+  });
+
+  it("은 도발한 쪽이 쓰러지면 그 자리에서 정리된다", () => {
+    // 표적 규칙은 죽은 도발자를 알아서 비껴가지만, 머리 위 칩은 "도발한 상대만 표적으로
+    // 삼는다"를 죽은 상대에 대고 계속 말한다.
+    const state = createSkirmish([getRelic("deina")], [getRelic("husk-shell")], arena);
+    const [deina, foe] = state.fighters;
+    foe.taunted = { remaining: 5, total: 5, sourceId: deina.id };
+    foe.targetId = deina.id;
+    deina.hp = 0;
+    stepSkirmish(state, 0.05, seeded(3));
+    expect(foe.taunted).toBeNull();
+    expect(unitStatusViews(foe).some((view) => view.id === "taunt")).toBe(false);
+  });
+
+  it("은 은신한 상대를 표적으로 만들지 않는다", () => {
+    // "은신자는 단일 대상 추적의 중심이 될 수 없다"는 전역 규칙이다. 도발 하나가 그것을
+    // 통째로 지나가면, 숨은 상대를 오히려 정확히 찾아간다.
+    const state = createSkirmish([getRelic("deina"), getRelic("anky")], [getRelic("husk-shell")], arena);
+    const [deina, torika, foe] = state.fighters;
+    foe.x = 500; foe.y = 800; torika.x = 540; torika.y = 800; deina.x = 480; deina.y = 800;
+    foe.taunted = { remaining: 5, total: 5, sourceId: deina.id };
+    deina.stealthFor = 3;
+    stepSkirmish(state, 0.05, seeded(4));
+    expect(foe.targetId).toBe(torika.id);
+  });
+
+  it("은 두 도발이 같은 공용 경로를 지나 원정 배율을 함께 받는다", () => {
+    // 엘라의 도발만 슬롯에 직접 들어가 증강의 지속시간 배율을 비껴가고 있었다. 경로가 갈리면
+    // 같은 상태가 개체에 따라 다른 규칙으로 돈다.
+    const state = createSkirmish([getRelic("ella")], [getRelic("husk-shell")], arena);
+    const [ella, foe] = state.fighters;
+    ella.x = 500; ella.y = 800; foe.x = 540; foe.y = 800;
+    ella.statusPotencyMultiplier = 2;
+    ella.energy = getRelic("ella").ultimate.cost;
+    const guard = getRelic("ella").ultimate.selfGuard!;
+    fireUltimate(state, ella.id, seeded(5));
+    expect(foe.taunted?.remaining).toBeCloseTo(guard.tauntSeconds * 2, 5);
+  });
+
+  it("은 도발이 도는 동안 표적을 그 상대로 붙잡아 둔다", () => {
+    // 표적을 실제로 갈아 끼우지 않으면 도발은 상대가 이미 사거리 안에 있을 때만 얻어걸린다.
+    const state = createSkirmish([getRelic("anky"), getRelic("deina")], [getRelic("husk-shell")], arena);
+    const [torika, deina, foe] = state.fighters;
+    torika.x = 500; torika.y = 800; foe.x = 540; foe.y = 800; deina.x = 200; deina.y = 800;
+    foe.taunted = { remaining: 3, total: 3, sourceId: deina.id };
+    foe.targetId = torika.id;
+    stepSkirmish(state, 0.05, seeded(6));
+    expect(foe.targetId).toBe(deina.id);
+    // 표적이 바뀌는 순간에만 붙은 상태를 푼다 — 매 프레임 풀면 영영 붙지 못한다.
+    expect(foe.engaged).toBe(false);
   });
 });

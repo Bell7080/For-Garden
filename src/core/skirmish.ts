@@ -907,8 +907,14 @@ function cleanseControlWithAdagio(state: SkirmishState, target: Fighter, events:
   events.push({ kind: "shieldGranted", fighterId: target.id, providerId: provider.id, amount, remaining: target.shield.amount, effect: { tag: "shieldGain", intensity: 1 } });
 }
 
-/** 개별 스킬과 야성 특성에서 같은 판별 가능한 상태 효과를 적용한다. */
-function applyCombatStatusEffect(fighter: Fighter, effect: CombatStatusEffect, events: SkirmishEvent[], state: SkirmishState, sourceId?: string, critical = false): void {
+/**
+ * 개별 스킬과 야성 특성에서 같은 판별 가능한 상태 효과를 적용한다.
+ *
+ * 공개하는 이유는 **상태 자체의 계약**을 테스트가 개체 없이 검사할 수 있어야 하기 때문이다 —
+ * 도발처럼 두 개체가 서로 다른 경로로 같은 슬롯을 건드리면, 개체별 테스트로는 한쪽에서만
+ * 나타나는 어긋남을 잡지 못한다.
+ */
+export function applyCombatStatusEffect(fighter: Fighter, effect: CombatStatusEffect, events: SkirmishEvent[], state: SkirmishState, sourceId?: string, critical = false): void {
   // 상태 위력은 기존 상태 슬롯과 저항 판정을 우회하지 않고 시전자의 지속시간 입력만 늘린다.
   const potency = sourceId ? findFighter(state, sourceId)?.statusPotencyMultiplier ?? 1 : 1;
   if (effect.kind === "stun") events.push(...applyStun(fighter, effect.seconds * potency, state));
@@ -928,7 +934,16 @@ function applyCombatStatusEffect(fighter: Fighter, effect: CombatStatusEffect, e
   // 상대도 없으므로 아무 일도 일어나지 않는다.
   if (effect.kind === "taunt" && sourceId) {
     const seconds = effect.seconds * potency;
-    fighter.taunted = { remaining: seconds, total: seconds, sourceId };
+    /*
+     * **남은 시간이 더 긴 쪽이 남는다** — 보호막·순풍과 같은 규칙이다.
+     *
+     * 덮어쓰게 두면 짧은 도발이 긴 도발을 깎는다. 엘라가 궁극기로 끌어당겨 5초를 걸어 둔 적을
+     * 데이가 지나가며 톡 치는 순간 0.5초로 줄어, 게이지를 다 쓴 궁극기가 스치는 평타 하나에
+     * 지워졌다. 도발은 슬롯이 하나뿐이라 이 판단을 여기서 한 번만 한다.
+     */
+    if (fighter.taunted === null || seconds > fighter.taunted.remaining) {
+      fighter.taunted = { remaining: seconds, total: seconds, sourceId };
+    }
   }
   // 원정의 지속시간 배율(`potency`)은 시계가 있는 상태에만 든다. 밴덜리즘은 시간으로 사라지지
   // 않으므로 늘릴 시간 자체가 없다.
@@ -1467,9 +1482,17 @@ function breakStealthOnBasic(fighter: Fighter): void {
 }
 
 /** 도발은 시간이 지나면 저절로 풀린다. 방향만 바꾸는 상태라 정화의 대상이 아니다. */
-function tickTaunt(fighter: Fighter, dt: number): void {
+function tickTaunt(fighter: Fighter, dt: number, state: SkirmishState): void {
   const taunted = fighter.taunted;
   if (!taunted) return;
+  // 도발한 쪽이 쓰러지면 그 자리에서 정리한다. 남겨 두면 표적 규칙은 알아서 비껴가지만
+  // 머리 위 칩은 "도발한 상대만 표적으로 삼는다"를 죽은 상대에 대고 계속 말한다.
+  const source = findFighter(state, taunted.sourceId);
+  if (!source || !isFighterAlive(source)) {
+    fighter.taunted = null;
+    if (fighter.targetId === taunted.sourceId) fighter.targetId = null;
+    return;
+  }
   const remaining = taunted.remaining - dt;
   if (remaining > EMERGENCY_RECOVERY.epsilon) { fighter.taunted = { ...taunted, remaining }; return; }
   fighter.taunted = null;
@@ -2075,7 +2098,9 @@ function resolveTarget(state: SkirmishState, fighter: Fighter, reconsider = fals
   // 도발을 그대로 따르면 지금 때릴 수 없는 상대를 바라보며 멈춰 선다.
   if (fighter.taunted) {
     const tauntSource = findFighter(state, fighter.taunted.sourceId);
-    if (tauntSource && tauntSource.side === wanted && isFighterAlive(tauntSource)) {
+    // 은신한 상대는 단일 대상 추적의 중심이 될 수 없다 — 아래 일반 경로와 같은 규칙이다.
+    // 여기서 빼놓으면 도발 하나가 그 규칙을 통째로 지나가, 숨은 상대를 정확히 찾아간다.
+    if (tauntSource && tauntSource.side === wanted && isFighterAlive(tauntSource) && tauntSource.stealthFor <= 0) {
       /*
        * **표적 자체를 갈아 끼운다.** 여기서 돌려주기만 하고 `targetId`를 그대로 두면, 도발은
        * 그 상대가 **이미 사거리 안에 있을 때만** 얻어걸리고 걸어가지는 않는다 — 아군과 붙어
@@ -3555,7 +3580,7 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     tickGraffitiAura(fighter, dt, state, events);
     // 궁극기 채널링은 기절·행동불가와 무관하게 흐른다 — 이미 뿌려 둔 낙서라 손이 멈춰도 마른다.
     tickArtChannel(fighter, dt, state, events);
-    tickTaunt(fighter, dt);
+    tickTaunt(fighter, dt, state);
     // 불멸은 기절과 같은 자리에서 행동을 멈추지만 슬롯이 달라 아다지오의 정화에 걸리지 않는다.
     if (fighter.undying) {
       const remaining = fighter.undying.remaining - dt;
@@ -3791,10 +3816,15 @@ export function fireUltimate(
       const dx = other.x - attacker.x; const dy = other.y - attacker.y; const gap = Math.hypot(dx, dy) || 1;
       other.x = Math.min(state.arena.right, Math.max(state.arena.left, attacker.x + dx / gap * plan.pull.distance));
       other.y = Math.min(state.arena.bottom, Math.max(state.arena.top, attacker.y + dy / gap * plan.pull.distance));
-      other.taunted = { remaining: plan.tauntSeconds, total: plan.tauntSeconds, sourceId: attacker.id };
+      // 데이의 짧은 도발과 **같은 경로**를 지난다. 여기서 슬롯에 직접 넣으면 원정 증강의
+      // 지속시간 배율이 이 도발에만 들지 않고, 더 긴 도발을 지키는 규칙도 비껴간다.
+      applyCombatStatusEffect(other, { kind: "taunt", seconds: plan.tauntSeconds }, events, state, attacker.id);
       // 끌려온 순간부터 엘라를 본다. 다음 재탐색까지 기다리면 끌어당긴 보람이 한 박자 늦는다.
-      other.targetId = attacker.id;
-      other.engaged = false;
+      // 더 긴 도발이 이미 걸려 있어 이번 도발이 밀렸다면 표적까지 빼앗지는 않는다.
+      if (other.taunted?.sourceId === attacker.id) {
+        other.targetId = attacker.id;
+        other.engaged = false;
+      }
       events.push({ kind: "combatEffect", fighterId: other.id, effect: { tag: "shieldHit", intensity: 1 } });
     }
     attacker.attackCooldown = attackInterval(attacker, state);

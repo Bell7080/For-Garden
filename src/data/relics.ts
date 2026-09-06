@@ -1313,18 +1313,26 @@ export const RELICS: RelicDef[] = [
     enemyOnly: true,
     squad: "gear",
     name: "토비",
-    specimenNumber: "201",
-    projectName: "SEALED",
-    excavationSite: "비공개",
+    // 공멸 내부 프로젝트 번호와 도감 개체번호를 혼동하지 않도록 별도의 연속 번호를 쓴다.
+    specimenNumber: "202",
+    // 정체성 데이터는 복원 프로젝트 계보를 표시하며 발굴 기록이나 성격 관찰에 포함하지 않는다.
+    projectName: "ANNIHILATION OVERREACH",
+    // 발굴 기록의 장소 데이터로, 복원 후 행동은 아래 관찰 기록에서만 다룬다.
+    excavationSite: "뉴욕주 버티층 석회암대",
     // 발굴 기록은 장소·보존 상태·복원 연구 특징만 담고, 복원 이후 생활 관찰과 분리한다.
-    fossilRecord: "출처가 봉인된 운송함에서 갈고리 발톱과 불완전한 골격을 인계받았다. 복원 흔적이 겹쳐 원래의 매장 상태는 판독할 수 없다.",
-    catalogSummary: "날렵한 체형과 갈고리 발톱이 관측된 미확인 개체.",
-    unlockRecord: { status: "sealed", reason: "pending-lore" },
+    fossilRecord: "버티층 석회암에서 바다전갈의 등판과 집게발 화석을 한 덩어리로 회수했다. 관절 사이에는 여러 차례 접합한 복원 흔적이 남아 있다.",
+    // 공개 도감 요약은 원종과 복원 외형만 설명하는 발굴 계열 데이터다.
+    catalogSummary: "넓은 등판과 집게발이 복원된 바다전갈 기반 표본.",
+    // 복원 후 성격 관찰은 사고를 낸 순서와 뒤늦은 수습 행동만 기록한다.
+    unlockRecord: { status: "recorded", text: "복원 후 토비는 낯선 장치를 보면 허락을 기다리지 않고 먼저 집게발을 댄다. 작동시킨 뒤에야 멈출 방법을 찾느라 뛰어다니며, 넘어뜨린 장비는 아무도 보기 전에 제자리로 돌려놓으려 한다. 훈련에서는 힘을 줄이겠다고 매번 다짐하지만 손잡이나 표적을 또 부순 다음에야 힘 조절에 실패했다는 것을 알아차린다." },
+    // 복원 후 성격 관찰을 소속 내 행동으로 이어 쓰되 발굴 상태는 반복하지 않는다.
+    squadNote: "나이트 기어의 장비 회수 담당. 잠긴 장치를 먼저 건드려 일을 키우고, 뒤늦게 부품을 모아 원래 자리로 돌려놓느라 철수 대열의 맨 뒤에 선다.",
     rarity: "R",
     portraitAssetId: "toby",
-    origin: "실패한 벨로키랍토르 개체",
+    // 원종·속성·역할은 발굴 및 복원 분류 데이터이며 성격을 직접 표현하지 않는다.
+    origin: "바다전갈",
     element: "fire",
-    role: "assassin",
+    role: "warrior",
     // 갈퀴로 할퀴는 근접 허스크.
     reachTier: "melee",
     // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
@@ -1378,16 +1386,24 @@ export const RELICS: RelicDef[] = [
     enemyOnly: true,
     squad: "rogue",
     name: "아모",
-    specimenNumber: "202",
-    projectName: "SEALED",
-    excavationSite: "비공개",
+    // 도디의 도감 001번과 공멸 프로젝트 001을 구분하면서 공멸 표본군의 첫 번호를 표시한다.
+    specimenNumber: "201",
+    // 설정 문서의 공멸 001과 같은 인물임을 보존하는 복원 프로젝트 식별 데이터다.
+    projectName: "ANNIHILATION 001 — 최초의 호문쿨루스",
+    // 발굴 기록의 장소 데이터로, 복원 후 행동은 아래 관찰 기록에서만 다룬다.
+    excavationSite: "도싯 쥐라기 해안 암모나이트층",
     // 발굴 기록은 장소·보존 상태·복원 연구 특징만 담고, 복원 이후 생활 관찰과 분리한다.
-    fossilRecord: "출처 불명의 암괴 안에 두꺼운 골판 조각이 층층이 남아 있었다. 복원 연구에서도 외피 결합부의 비정상적인 중첩이 확인됐다.",
-    catalogSummary: "두꺼운 외피를 가진 미확인 개체.",
-    unlockRecord: { status: "sealed", reason: "pending-lore" },
+    fossilRecord: "해안 절벽에서 나선형 암모나이트 껍질과 내부 격벽이 함께 드러난 표본을 수습했다. 껍질 가장자리에는 초기 복원 과정에서 덧댄 접합 흔적이 남아 있다.",
+    // 공개 도감 요약은 원종과 복원 외형만 설명하는 발굴 계열 데이터다.
+    catalogSummary: "나선형 껍질과 격벽 구조가 복원된 암모나이트 기반 표본.",
+    // 복원 후 성격 관찰은 위험에 숨는 반응과 동료를 위해 앞을 막는 행동만 기록한다.
+    unlockRecord: { status: "recorded", text: "복원 후 아모는 큰 소리나 위험 신호가 나면 곧바로 몸을 껍질 안으로 감춘다. 혼자 있을 때는 좀처럼 다시 나오지 않지만, 뒤에 동료가 남아 있으면 한참 망설이다 껍질을 끌고 앞으로 나와 길을 막는다. 상황이 끝난 뒤에는 자신이 먼저 나섰다는 말을 부정하며 다시 얼굴을 숨긴다." },
+    // 복원 후 성격 관찰을 소속 내 행동으로 이어 쓰되 발굴 상태는 반복하지 않는다.
+    squadNote: "쁘띠 로그의 후미 방벽. 위험하면 가장 먼저 껍질에 숨지만, 뒤처진 동료가 보이면 마지못해 돌아와 모두 지나갈 때까지 앞을 막는다.",
     rarity: "R",
     portraitAssetId: "amo",
-    origin: "실패한 갑주 개체",
+    // 원종·속성·역할은 발굴 및 복원 분류 데이터이며 성격을 직접 표현하지 않는다.
+    origin: "암모나이트",
     element: "earth",
     role: "tank",
     // 몸통으로 밀어붙이는 근접 허스크.
@@ -1443,19 +1459,27 @@ export const RELICS: RelicDef[] = [
     enemyOnly: true,
     squad: "eye",
     name: "리파",
+    // 공멸 프로젝트 계보와 분리된 도감 개체번호이며 세 표본의 복원 순서를 유지한다.
     specimenNumber: "203",
-    projectName: "SEALED",
-    excavationSite: "비공개",
+    // 정체성 데이터는 복원 프로젝트 계보를 표시하며 발굴 기록이나 성격 관찰에 포함하지 않는다.
+    projectName: "ANNIHILATION HIDE-AND-TIDE",
+    // 발굴 기록의 장소 데이터로, 복원 후 행동은 아래 관찰 기록에서만 다룬다.
+    excavationSite: "모로코 안티아틀라스 셰일층",
     // 발굴 기록은 장소·보존 상태·복원 연구 특징만 담고, 복원 이후 생활 관찰과 분리한다.
-    fossilRecord: "봉인 구역에서 파손된 날개뼈 묶음을 회수했다. 골편마다 서로 다른 복원 흔적이 남아 단일 표본 여부조차 확정하지 못했다.",
-    catalogSummary: "날개 형태의 사지가 관측된 미확인 개체.",
-    unlockRecord: { status: "sealed", reason: "restricted" },
+    fossilRecord: "셰일층에서 삼엽충의 머리·가슴·꼬리 마디가 이어진 압착 화석을 회수했다. 닳아 없어진 가슴마디 일부에는 얇은 복원재를 덧댄 흔적이 보인다.",
+    // 공개 도감 요약은 원종과 복원 외형만 설명하는 발굴 계열 데이터다.
+    catalogSummary: "세 구획의 등껍질과 마디 구조가 복원된 삼엽충 기반 표본.",
+    // 복원 후 성격 관찰은 숨었다 나타나는 장난과 동료 물건을 옮기는 행동만 기록한다.
+    unlockRecord: { status: "recorded", text: "복원 후 리파는 모래나 얕은 물속에 몸을 숨긴 채 동료가 가까이 오기를 기다린다. 갑자기 솟아올라 놀래킨 뒤에는 웃으며 달아나고, 자리를 비운 사이 동료의 장갑이나 기록 도구를 다른 선반으로 옮겨 놓는다. 물건을 찾는 모습을 충분히 지켜본 다음에야 숨겨 둔 곳을 가리킨다." },
+    // 복원 후 성격 관찰을 소속 내 행동으로 이어 쓰되 발굴 상태는 반복하지 않는다.
+    squadNote: "시그널 아이의 수변 관측 보조. 모래나 물속에 숨어 신호를 기다리면서도 동료 장비를 슬쩍 옮겨 놓아, 교대 때마다 장비 위치를 다시 확인하게 만든다.",
     rarity: "R",
     portraitAssetId: "ripa",
-    origin: "실패한 익룡 개체",
+    // 원종·속성·역할은 발굴 및 복원 분류 데이터이며 성격을 직접 표현하지 않는다.
+    origin: "삼엽충",
     element: "water",
     role: "support",
-    // 날갯짓과 굉음이 조금 떨어진 곳까지 닿는다.
+    // 복원된 마디가 일으키는 수류가 조금 떨어진 곳까지 닿는다.
     reachTier: "mid",
     // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
     excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 0.60, efficiencyMultiplier: 1.00 },
@@ -1486,7 +1510,8 @@ export const RELICS: RelicDef[] = [
     },
     basic: {
       id: "ripa-basic",
-      name: "날개 후려치기",
+      // 삼엽충 원종의 복원 외형에 맞춘 기술명이며 성격 관찰 데이터와는 분리한다.
+      name: "마디 파동",
       power: 100,
       iconAssetId: "skill-icon-magical",
       effectType: "magical",
@@ -1494,7 +1519,8 @@ export const RELICS: RelicDef[] = [
     },
     ultimate: {
       id: "ripa-ult",
-      name: "굉음 확산",
+      // 삼엽충 원종의 수중 움직임에 맞춘 기술명이며 성격 관찰 데이터와는 분리한다.
+      name: "퇴적류 확산",
       power: 150,
       iconAssetId: "skill-icon-magical",
       effectType: "magical",

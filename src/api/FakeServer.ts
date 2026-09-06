@@ -41,7 +41,7 @@ import type { EnterStageRequest, EnterStageResponse } from "./contracts";
 import type { ClaimMailRewardsRequest, ClaimMailRewardsResponse, MailDto, MailListResponse, MailRewardDto, MarkMailsReadRequest } from "./contracts";
 import { expeditionWeekKey, resolveExpeditionBossBattle } from "../core/expeditionBoss";
 import { EXPEDITION_BOSS_BALANCE, EXPEDITION_CUMULATIVE_REWARD_STAGES, EXPEDITION_NODE_REWARD_BALANCE, EXPEDITION_SWEEP_POLICY, EXPEDITION_WEEKLY_POLICY, QUICK_EXPEDITION_POLICY } from "../data/expedition";
-import { calculateExpeditionNodeRewards, expeditionNodeRewardScore } from "../core/expeditionRewards";
+import { calculateExpeditionNodeRewards, calculateExpeditionNormalNodeScore, calculateExpeditionRunScore } from "../core/expeditionRewards";
 import { RelicProgressionManager } from "../managers/RelicProgressionManager";
 import { expeditionBattleEffects } from "../core/expeditionBattle";
 
@@ -280,17 +280,25 @@ export class FakeServer implements GameApi {
         arena: { left: 130, right: 950, top: 600, bottom: 1360 },
       }, request.actions);
       if (result.totalDamage > EXPEDITION_BOSS_BALANCE.maximumAcceptedScore) throw new Error("ABNORMAL_SCORE");
-      const improved = result.totalDamage > this.bossWeek.bestScore;
-      this.bossWeek.cumulativeScore += result.totalDamage;
-      if (improved) { this.bossWeek.bestScore = result.totalDamage; this.bossWeek.achievedAt = now.toISOString(); }
+      // 일반 노드 누적과 폰토스 피해를 같은 순수 모델로 합쳐 한 판 점수를 확정한다.
+      const runScore = calculateExpeditionRunScore({ normalNodeScoreTotal: run?.normalNodeScoreTotal ?? 0, bossDamageScore: result.totalDamage });
+      const improved = runScore.runScore > this.bossWeek.bestScore;
+      // 일반 노드 몫은 각 노드 확정 때 이미 반영했으므로 여기서는 새 보스 피해만 한 번 더한다.
+      this.bossWeek.cumulativeScore += runScore.bossDamageScore;
+      if (improved) { this.bossWeek.bestScore = runScore.runScore; this.bossWeek.achievedAt = now.toISOString(); }
+      if (run) {
+        run.bossDamage = runScore.bossDamageScore; run.bossDamageScore = runScore.bossDamageScore;
+        run.runScore = runScore.runScore; run.bestScore = runScore.runScore;
+        this.persist(this.state);
+      }
       // 불사 보스는 처치가 아니라 입힌 피해량 자체가 성과이므로, 승패와 무관하게 이 제출이
       // 소탕이 참조하는 역대 최고점(allTimeBestScore)의 유일한 갱신 경로다.
-      if (result.totalDamage > this.state.expedition.allTimeBestScore) {
-        const expedition = { ...this.state.expedition, allTimeBestScore: result.totalDamage };
+      if (runScore.runScore > this.state.expedition.allTimeBestScore) {
+        const expedition = { ...this.state.expedition, allTimeBestScore: runScore.runScore };
         this.persist({ ...this.state, expedition }); this.state.expedition = expedition;
       }
       // 단일 개발 계정은 기록 전 미등재(null), 제출 뒤 1위다. 운영 구현은 같은 필드에 실제 변화를 넣는다.
-      const response = { weekKey: this.bossWeek.weekKey, score: result.totalDamage, bestScore: this.bossWeek.bestScore, cumulativeScore: this.bossWeek.cumulativeScore, improved, endedAtMs: result.endedAtMs, rankBefore: this.previousBossBest > 0 ? 1 : null, rankAfter: 1 };
+      const response = { weekKey: this.bossWeek.weekKey, score: runScore.runScore, bossDamageScore: runScore.bossDamageScore, nodeScoreTotal: runScore.normalNodeScoreTotal, runScore: runScore.runScore, bestScore: this.bossWeek.bestScore, cumulativeScore: this.bossWeek.cumulativeScore, improved, endedAtMs: result.endedAtMs, rankBefore: this.previousBossBest > 0 ? 1 : null, rankAfter: 1 };
       this.previousBossBest = this.bossWeek.bestScore;
       this.bossSubmissionResults.set(request.requestId, response); return { ...response };
     } catch { throw new GameApiError("EXPEDITION_SCORE_REJECTED", "검증할 수 없거나 비정상적으로 큰 보스 점수입니다."); }
@@ -332,15 +340,12 @@ export class FakeServer implements GameApi {
     }
     // 완료 런은 활성 슬롯에서 즉시 제거한다. 멱등 재응답은 아래 정산 결과 캐시가 소유하므로
     // settled 표식을 활성 run에 남겨 다음 진입을 가로막지 않는다.
-    // 순위(bossWeek.bestScore)와 소탕이 참조하는 역대 최고점(allTimeBestScore)은 노드 진행
-    // 점수가 아니라 불사 보스에게 입힌 피해량만 반영한다(submitExpeditionBossScore 참고) —
-    // 보스는 처치가 불가능해 "완료"라는 개념이 없으므로, 여기서는 그 둘을 갱신하지 않는다.
-    // 주간 누적 점수(bossWeek.cumulativeScore, 단계 보상 트랙)는 노드 클리어 시점마다
-    // completeExpeditionNode에서 이미 더했으므로 여기서 다시 더하지 않는다.
+    // 최고점은 정상 완료한 한 판 점수로 갱신한다. 주간 누적은 일반 노드와 보스 제출 시점에
+    // 각각 한 번 반영했으므로 정산에서는 다시 더하지 않는다.
     const expedition = {
       ...this.state.expedition,
       playsThisWeek: this.state.expedition.playsThisWeek + 1,
-      bestScore: request.outcome === "completed" ? Math.max(this.state.expedition.bestScore, run.bestScore) : this.state.expedition.bestScore,
+      bestScore: request.outcome === "completed" ? Math.max(this.state.expedition.bestScore, calculateExpeditionRunScore(run).runScore) : this.state.expedition.bestScore,
       run: null,
     };
     this.persist({ ...this.state, wallet, expedition }); this.state.wallet = wallet; this.state.expedition = expedition;
@@ -361,13 +366,16 @@ export class FakeServer implements GameApi {
       || request.relicHp.some((hp) => !Number.isFinite(hp) || hp < 0)) throw new GameApiError("EXPEDITION_RUN_NOT_FOUND", "완료할 수 없는 원정 노드입니다.");
     // 전멸은 노드 종료만 기록하고 승리 재화는 생성하지 않는다.
     const rewards = request.relicHp.every((hp) => hp === 0) ? {} : calculateExpeditionNodeRewards({ nodeType: node.type, accumulated: run.pendingRewards, random: this.random });
-    // 일반 노드 클리어 재화도 주간 누적 점수(랭킹 팝업의 단계 보상 트랙)에 조금씩 보탠다.
-    // 보스 피해량과 달리 순위(bestScore)는 바꾸지 않는다 — 순위는 여전히 보스에게 입힌 피해량만
-    // 반영한다(submitExpeditionBossScore 참고).
-    const rewardScore = expeditionNodeRewardScore(rewards);
-    if (rewardScore > 0) { this.normalizeBossWeek(this.now()); this.bossWeek.cumulativeScore += rewardScore; }
+    // 전리품 수량은 점수가 아니다. 서버가 검증한 층과 종료 HP로 일반 노드 점수를 별도 확정한다.
+    const scoreBearingNode = node.type === "normal" || node.type === "elite" || node.type === "horde";
+    const nodeScore = !scoreBearingNode || request.relicHp.every((hp) => hp === 0)
+      ? 0 : calculateExpeditionNormalNodeScore({ floor: node.floor, relicHp: request.relicHp });
+    if (nodeScore > 0) { this.normalizeBossWeek(this.now()); this.bossWeek.cumulativeScore += nodeScore; }
     const next = structuredClone(run);
     next.currentNodeId = node.id; next.visitedNodeIds.push(node.id);
+    next.normalNodeScoreTotal += nodeScore;
+    const score = calculateExpeditionRunScore(next);
+    next.runScore = score.runScore; next.bestScore = score.runScore;
     next.relics.forEach((relic, index) => { relic.currentHp = request.relicHp[index]; relic.alive = relic.currentHp > 0; });
     for (const [currency, amount] of Object.entries(rewards)) next.pendingRewards[currency] = (next.pendingRewards[currency] ?? 0) + amount;
     const cappedCurrencies = Object.keys(EXPEDITION_NODE_REWARD_BALANCE).filter((currency) => (next.pendingRewards[currency] ?? 0) >= EXPEDITION_NODE_REWARD_BALANCE[currency as keyof typeof EXPEDITION_NODE_REWARD_BALANCE].runCap);

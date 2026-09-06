@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { calculateExpeditionNodeRewards, expeditionNodeRewardScore, expeditionRewardRandom, expeditionRewardRule, generateExpeditionAugmentOffers, validateExpeditionAugmentChoice } from "../../src/core/expeditionRewards";
+import { calculateExpeditionNodeRewards, calculateExpeditionNormalNodeScore, calculateExpeditionRunScore, expeditionRewardRandom, expeditionRewardRule, generateExpeditionAugmentOffers, validateExpeditionAugmentChoice } from "../../src/core/expeditionRewards";
 import { EXPEDITION_NODE_REWARD_BALANCE } from "../../src/data/expedition";
 import { EXPEDITION_AUGMENTS } from "../../src/data/expeditionAugments";
 import { ExpeditionManager } from "../../src/managers/ExpeditionManager";
@@ -14,11 +14,13 @@ describe("expedition augment rewards", () => {
     expect(() => calculateExpeditionNodeRewards({ nodeType: "normal", accumulated: { hacked: 1 }, random: () => 0 })).toThrow("INVALID_EXPEDITION_REWARD_STATE");
   });
 
-  it("일반 노드 클리어 보상은 종류를 가리지 않고 그대로 더해 주간 누적 점수로 환산한다", () => {
-    expect(expeditionNodeRewardScore({ cheesecake: 8, gold: 260, fossil: 6 })).toBe(274);
-    expect(expeditionNodeRewardScore({})).toBe(0);
-    // 전멸로 보상이 없는 노드는 점수도 없다.
-    expect(expeditionNodeRewardScore({ gold: 0 })).toBe(0);
+  it("여러 일반 노드 점수와 폰토스 피해를 재화와 무관한 한 판 점수로 합산한다", () => {
+    const first = calculateExpeditionNormalNodeScore({ floor: 1, relicHp: [100, 90, 80] });
+    const second = calculateExpeditionNormalNodeScore({ floor: 2, relicHp: [80, 70, 60] });
+    const score = calculateExpeditionRunScore({ normalNodeScoreTotal: first + second, bossDamageScore: 12_345 });
+    expect(score).toEqual({ normalNodeScoreTotal: first + second, bossDamageScore: 12_345, runScore: first + second + 12_345 });
+    // 전리품 수량이 달라도 순수 점수 공식에는 재화 객체가 들어갈 자리가 없다.
+    expect(calculateExpeditionNormalNodeScore({ floor: 1, relicHp: [100, 90, 80] })).toBe(first);
   });
 
   it("보물은 보석을 보장하고 증강을 제공하지 않는다", () => {

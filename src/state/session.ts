@@ -125,6 +125,13 @@ export interface ExpeditionRunState {
   /** 마지막 서버 완료 응답의 증가분과 상한을 재접속 후에도 HUD에 보여 준다. */
   lastNodeRewards: { nodeId: string; rewards: Record<string, number>; cappedCurrencies: string[] } | null;
   bossDamage: number;
+  /** 보스가 아닌 전투 노드가 서버에서 확정될 때 정확히 한 번 더하는 이번 런의 누적 점수다. */
+  normalNodeScoreTotal: number;
+  /** 폰토스 제출이 멱등 ID로 확정될 때 갱신하며 일반 노드 점수는 포함하지 않는다. */
+  bossDamageScore: number;
+  /** 폰토스 제출/노드 확정 뒤 갱신하는 최종 한 판 점수로, 일반 노드 누적과 보스 피해를 모두 포함한다. */
+  runScore: number;
+  /** 이전 저장 호환용 별칭이며 새 코드는 runScore를 점수 기준으로 사용한다. */
   bestScore: number;
   settled: boolean;
   /** 성공한 정산 요청의 고유 키이며 null이면 아직 지갑 이전 전이다. */

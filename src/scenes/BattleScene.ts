@@ -448,7 +448,7 @@ export class BattleScene extends Phaser.Scene {
     this.add.text(BASE_WIDTH / 2, 620, "원정 관측 완료", textStyle({ role: "display", size: 60, color: COLOR.accentText })).setOrigin(0.5).setDepth(201);
     const rank = score.rankBefore === null ? `신규 → ${score.rankAfter}위` : `${score.rankBefore}위 → ${score.rankAfter}위`;
     const rewards = Object.entries(settlement.granted).filter(([, amount]) => amount > 0).map(([id, amount]) => `${id} +${amount.toLocaleString()}`).join("  ·  ") || "정산 재화 없음";
-    this.add.text(BASE_WIDTH / 2, 875, `이번 점수  ${score.score.toLocaleString()}\n주간 최고  ${score.bestScore.toLocaleString()}  ${score.improved ? "· 최고점 갱신" : "· 기존 기록 유지"}\n누적 점수  ${score.cumulativeScore.toLocaleString()}\n순위  ${rank}\n\n런 정산  ${rewards}`, textStyle({ role: "body", size: 31, color: COLOR.ink, align: "center", lineSpacing: 16 })).setOrigin(0.5).setDepth(201);
+    this.add.text(BASE_WIDTH / 2, 875, `이번 점수  ${score.runScore.toLocaleString()}\n주간 최고  ${score.bestScore.toLocaleString()}  ${score.improved ? "· 최고점 갱신" : "· 기존 기록 유지"}\n누적 점수  ${score.cumulativeScore.toLocaleString()}\n순위  ${rank}\n\n런 정산  ${rewards}`, textStyle({ role: "body", size: 31, color: COLOR.ink, align: "center", lineSpacing: 16 })).setOrigin(0.5).setDepth(201);
     // 제출 직후 서버 순위를 다시 조회하는 공용 기록판으로 새 최고점과 해금 단계를 한 번에 잇는다.
     const popups = new PopupLayer(this, 2200);
     new Button(this, BASE_WIDTH / 2 - 235, 1260, { width: 400, height: 105, label: "주간 기록 확인", onClick: () => new ExpeditionRankingPopup(this, popups).open() }).setDepth(201);

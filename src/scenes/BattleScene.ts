@@ -393,6 +393,8 @@ export class BattleScene extends Phaser.Scene {
     // 광역 범위만 배경 원화 위·SD 아래에 깔려 누가 어디 섰는지 가리지 않는다.
     this.effects = new EffectManager(this, { depth: DEPTH.burst, groundDepth: DEPTH.ground, shake: currentSettings.presentation.screenShake, battleUiMotion });
     this.combatEffects = new CombatEffectPresenter(this.effects);
+    // 전장 전체를 때리는 궁극기는 그릴 경계가 없어 가장자리 워시로 알린다. 그 자리를 알려 준다.
+    this.effects.setArena(this.state.arena);
 
     // 편성 화면에서 본 6번 전장을 그대로 이어 실제 전투의 공간으로 사용한다.
     addSceneBackground(this, this.battleInput.mode === "expedition" || this.battleInput.mode === "expeditionBoss" ? BACKGROUND.expeditionField : BACKGROUND.combat, -30);
@@ -961,9 +963,15 @@ export class BattleScene extends Phaser.Scene {
       return undefined;
     }
     if (event.kind === "areaImpact") {
-      // 범위는 시전자의 색으로 바닥에 깔린다. 숫자가 여럿 떠도 어디까지 맞았는지 한 번에 읽힌다.
+      // 모양도 피해 종류도 사건이 싣고 온다 — 씬이 스킬 정의를 다시 읽어 색과 모양을 되짚으면
+      // 바닥과 피해 수치가 서로 다른 축을 읽게 된다. 여기서 더하는 것은 "우리 편이 맞는가"뿐이다.
       const caster = this.views.get(event.attackerId);
-      this.effects.groundArea(event.x, event.y, event.radius, { color: this.effectColor(caster), ultimate: event.ultimate });
+      this.effects.groundArea(event.area, {
+        hostile: caster?.fighter.side === "enemy",
+        damageType: event.damageType,
+        supportive: event.supportive,
+        ultimate: event.ultimate,
+      });
       return undefined;
     }
     if (event.kind === "teamBuff") {
@@ -1017,9 +1025,8 @@ export class BattleScene extends Phaser.Scene {
       return undefined;
     }
     if (event.kind === "charge") {
-      // 지나간 길에 바닥 자국을 남긴다. 광역과 같은 규칙(눌린 마름모)이라 SD보다 뒤에 깔린다.
-      this.effects.groundArea((event.from.x + event.to.x) / 2, (event.from.y + event.to.y) / 2,
-        Math.hypot(event.to.x - event.from.x, event.to.y - event.from.y) / 2, { ultimate: true });
+      // 바닥 자국은 `areaImpact`가 통로 모양 그대로 그린다 — 여기서 경로 길이만 한 마름모를 더
+      // 깔면 실제 판정폭(반폭 110px)보다 훨씬 넓은 범위를 보여 주게 된다.
       return undefined;
     }
 

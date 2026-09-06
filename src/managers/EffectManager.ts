@@ -1,9 +1,10 @@
 import Phaser from "phaser";
-import { allowBurst, AREA_IMPACT, EFFECT_BUDGET, EFFECT_PRESETS, EFFECT_TAP_COLOR, REACH_STRIKE, SUSTAINED_COMBAT_EFFECT, type BurstSpec, type EffectKind } from "../ui/effectPresets";
+import { allowBurst, AREA_IMPACT, BATTLEFIELD_WASH_HOLD, BATTLEFIELD_WASH_RISE, EFFECT_BUDGET, EFFECT_PRESETS, EFFECT_TAP_COLOR, REACH_STRIKE, SUSTAINED_COMBAT_EFFECT, type BurstSpec, type EffectKind } from "../ui/effectPresets";
 import { EFFECT_TEXTURE, ensureEffectTextures } from "../ui/effectTextures";
 import { lashPoints } from "../ui/reachStrikeShape";
 import { inkBlotPoints, mawTeeth, slashPoints, SIGNATURE_SPECS, type CombatPalette, type SignatureId, type StrokePoint } from "../ui/signatureEffects";
 import { damagePopupStyle, risingAlpha, type DamagePopupRequest } from "../ui/damageNumbers";
+import { battlefieldWashBands, groundAreaStyle, laneAreaPoints, radialAreaPoints, type GroundAreaRequest, type GroundAreaShape, type GroundAreaStyle } from "../ui/groundAreas";
 import { COLOR, textStyle } from "../ui/theme";
 import { battleUiMotionFactor, type BattleUiMotion } from "../core/settings";
 import type { ActiveCombatDisplayEffect } from "../core/combatEffects";
@@ -92,15 +93,14 @@ function strokeDiamond(
   ], true);
 }
 
-/** 바닥에 누운 범위 마름모. 세로를 눌러 위에서 비스듬히 내려다본 원처럼 보이게 한다. */
+/**
+ * 바닥에 누운 마름모를 Phaser 점으로 옮긴다.
+ *
+ * 비례는 `groundAreas.ts`가 갖는다 — 눌림 값을 여기서 다시 적으면 같은 바닥면 위의 도형이
+ * 범위 표시와 조금씩 다른 각도로 눕는다.
+ */
 function groundDiamond(radius: number): Phaser.Geom.Point[] {
-  const half = radius * AREA_IMPACT.squash;
-  return [
-    new Phaser.Geom.Point(0, -half),
-    new Phaser.Geom.Point(radius, 0),
-    new Phaser.Geom.Point(0, half),
-    new Phaser.Geom.Point(-radius, 0),
-  ];
+  return radialAreaPoints(radius).map((point) => new Phaser.Geom.Point(point.x, point.y));
 }
 
 /** 풀에서 꺼내 쓰는 탄환 한 알. */
@@ -116,6 +116,8 @@ export class EffectManager {
   private readonly shakeEnabled: boolean;
   private readonly shakeFactor: number;
   private readonly groundDepth: number;
+  /** 전장 경계. 가장자리 워시만 쓰며 씬이 `setArena`로 넘긴다. */
+  private arena: { left: number; right: number; top: number; bottom: number } | undefined;
   private readonly emitters = new Map<EffectKind, Phaser.GameObjects.Particles.ParticleEmitter>();
   private readonly rings: RingSlot[] = [];
   private readonly numbers: NumberSlot[] = [];
@@ -219,39 +221,111 @@ export class EffectManager {
   /**
    * 광역이 터진 자리를 **바닥에** 그린다.
    *
-   * 숫자만 셋이 한꺼번에 뜨면 왜 함께 맞았는지 읽히지 않는다. 눌린 마름모가 한 번 벌어졌다
+   * 숫자만 셋이 한꺼번에 뜨면 왜 함께 맞았는지 읽히지 않는다. 반투명한 면 한 겹이 벌어졌다
    * 꺼지면서 "여기까지가 범위였다"를 한 번에 말한다. SD보다 뒤에 깔려 아무도 가리지 않는다.
+   *
+   * **양식은 하나뿐이다** — 채움 한 겹과 테두리선 한 줄. 무엇에 맞는지와 누가 깔았는지는
+   * 무늬가 아니라 **색**이 말하고(`groundAreas.ts`), 순간과 지속은 남아 있는 시간이 가른다.
+   * 모양은 판정이 쓴 것을 그대로 받는다 — 돌진을 원으로 그리면 보여 준 범위와 맞은 범위가 갈린다.
    */
-  groundArea(x: number, y: number, radius: number, options: { color?: number; ultimate?: boolean } = {}): void {
+  groundArea(shape: GroundAreaShape, request: GroundAreaRequest): void {
     const now = this.rollFrame();
     if (this.openedThisFrame >= EFFECT_BUDGET.perFrame) return;
     this.openedThisFrame += 1;
-    const color = options.color ?? COLOR.accent;
+    const style = groundAreaStyle(request);
+    const color = Phaser.Display.Color.HexStringToColor(style.color).color;
+    if (shape.shape === "battlefield") { this.battlefieldWash(color, style, now); return; }
     const slot = this.acquireRing();
     slot.openedAt = now;
-    const graphics = slot.graphics.clear().setPosition(x, y).setAlpha(1).setDepth(this.groundDepth).setVisible(true);
+    // 통로는 월드 좌표 그대로 그린다. 국소 좌표에 그려 두고 컨테이너를 돌리면 바닥으로 누른
+    // 세로까지 함께 돌아가 비스듬한 돌진이 바닥에 누운 것으로 보이지 않는다.
+    const origin = shape.shape === "radial" ? { x: shape.x, y: shape.y } : { x: 0, y: 0 };
+    const graphics = slot.graphics.clear().setPosition(origin.x, origin.y).setAlpha(1).setDepth(this.groundDepth).setVisible(true);
     const state = { t: 0 };
     slot.tween = this.scene.tweens.add({
       targets: state,
       t: 1,
-      duration: options.ultimate ? AREA_IMPACT.ultimateMs : AREA_IMPACT.ms,
+      duration: style.ms,
       ease: "Cubic.Out",
       onUpdate: () => {
-        const grown = radius * (AREA_IMPACT.growFrom + (1 - AREA_IMPACT.growFrom) * state.t);
+        const grow = AREA_IMPACT.growFrom + (1 - AREA_IMPACT.growFrom) * state.t;
         // 진하기는 끝에서만 급히 빠진다. 처음부터 선형으로 옅어지면 벌어지는 동안 이미 사라진다.
         const fade = 1 - state.t * state.t;
-        const shape = groundDiamond(grown);
+        const points = (shape.shape === "radial"
+          ? radialAreaPoints(shape.radius * grow)
+          : laneAreaPoints(shape.from, shape.to, shape.halfWidth * grow)
+        ).map((point) => new Phaser.Geom.Point(point.x, point.y));
         graphics.clear();
-        graphics.fillStyle(color, AREA_IMPACT.fillAlpha * fade);
-        graphics.fillPoints(shape, true);
-        graphics.lineStyle(AREA_IMPACT.lineWidth, color, AREA_IMPACT.lineAlpha * fade);
-        graphics.strokePoints(shape, true);
+        // 색면 아래에 검은 겹을 먼저 깐다 — 밝은 배경 원화 위에서는 옅은 색 한 겹이 통째로
+        // 묻힌다(보통 피해의 흰빛이 특히 그렇다). 머리 위 체력 바와 같은 해법이다.
+        graphics.fillStyle(COLOR.void, style.backdropAlpha * fade);
+        graphics.fillPoints(points, true);
+        graphics.fillStyle(color, style.fillAlpha * fade);
+        graphics.fillPoints(points, true);
+        graphics.lineStyle(style.lineWidth, color, style.lineAlpha * fade);
+        graphics.strokePoints(points, true);
       },
       onComplete: () => {
         graphics.clear().setVisible(false);
         slot.tween = undefined;
       },
     });
+  }
+
+  /**
+   * 전장 전체를 때리는 기술이 켜는 가장자리 워시.
+   *
+   * 전장 크기의 마름모를 깔면 화면 대부분이 덮여 정작 봐야 할 SD와 체력 바가 그 속에 묻힌다.
+   * "어디까지"가 아니라 **"전부"**를 뜻하는 다른 문법이라, 네 변에서 안쪽으로 스며드는 띠
+   * 몇 겹만 세운다. 캔버스 그라데이션은 열 때마다 프레임이 튀므로 **띠를 겹쳐** 계단으로
+   * 만들고, 한 번만 그린 뒤 진하기만 tween한다.
+   */
+  private battlefieldWash(color: number, style: GroundAreaStyle, now: number): void {
+    const arena = this.arena;
+    if (!arena) return;
+    const slot = this.acquireRing();
+    slot.openedAt = now;
+    const graphics = slot.graphics.clear().setPosition(0, 0).setAlpha(0).setDepth(this.groundDepth).setVisible(true);
+    const width = arena.right - arena.left;
+    const height = arena.bottom - arena.top;
+    const short = Math.min(width, height);
+    for (const band of battlefieldWashBands()) {
+      const inset = short * band.inset;
+      graphics.fillStyle(COLOR.void, style.backdropAlpha * band.alpha);
+      graphics.fillRect(arena.left, arena.top, width, inset);
+      graphics.fillRect(arena.left, arena.bottom - inset, width, inset);
+      graphics.fillRect(arena.left, arena.top, inset, height);
+      graphics.fillRect(arena.right - inset, arena.top, inset, height);
+      graphics.fillStyle(color, style.fillAlpha * band.alpha);
+      // 네 변을 각각 한 번씩 채워 모서리에서 두 겹이 겹치게 둔다 — 모서리가 조금 더 진해져
+      // 빛이 바깥에서 스며드는 것처럼 보인다.
+      graphics.fillRect(arena.left, arena.top, width, inset);
+      graphics.fillRect(arena.left, arena.bottom - inset, width, inset);
+      graphics.fillRect(arena.left, arena.top, inset, height);
+      graphics.fillRect(arena.right - inset, arena.top, inset, height);
+    }
+    slot.tween = this.scene.tweens.add({
+      targets: graphics,
+      alpha: { from: 0, to: 1 },
+      duration: style.ms * BATTLEFIELD_WASH_RISE,
+      yoyo: true,
+      hold: style.ms * BATTLEFIELD_WASH_HOLD,
+      ease: "Sine.Out",
+      onComplete: () => {
+        graphics.clear().setVisible(false).setAlpha(1);
+        slot.tween = undefined;
+      },
+    });
+  }
+
+  /**
+   * 전장 경계를 알려 준다.
+   *
+   * 가장자리 워시만 쓴다 — 없으면 그릴 자리를 모르므로 조용히 건너뛴다. 전투 화면 밖에서 쓰는
+   * `EffectManager`(로비의 누름 반응 등)는 전장이 없으니 그대로 두면 된다.
+   */
+  setArena(arena: { left: number; right: number; top: number; bottom: number } | undefined): void {
+    this.arena = arena;
   }
 
   /**

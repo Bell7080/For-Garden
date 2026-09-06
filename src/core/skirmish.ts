@@ -429,8 +429,24 @@ export type SkirmishEvent =
   /**
    * 광역 공격이 실제로 터진 자리와 범위다. 씬은 그 자리 **바닥**에 범위를 그려 어디까지
    * 맞았는지 보여 준다 — 숫자만 여럿 뜨면 왜 셋이 함께 맞았는지 읽히지 않는다.
+   *
+   * `area`는 **판정이 쓴 모양을 그대로** 싣는다. 돌진을 반경 하나로 줄여 보내면 씬은 통로
+   * 대신 원을 그리게 되어 보여 준 범위와 실제로 맞은 범위가 갈린다. 피해 종류를 함께 싣는
+   * 이유도 같다 — 씬이 색을 고르려고 스킬 정의를 다시 읽으면 수치와 바닥이 서로 다른 축을
+   * 읽게 된다(피해 수치의 `damageType`과 같은 계약이다).
    */
-  | { kind: "areaImpact"; attackerId: string; x: number; y: number; radius: number; ultimate: boolean }
+  | {
+      kind: "areaImpact"; attackerId: string; ultimate: boolean;
+      /** 피해 수치 사건과 같은 축이다 — 방어를 지나치는 고정 피해만 색이 갈린다. */
+      damageType?: "physical" | "magical" | "true";
+      /** 피해가 아니라 아군을 살리는 범위다. 회복 색으로 선다. */
+      supportive?: true;
+      area:
+        | { shape: "radial"; x: number; y: number; radius: number }
+        | { shape: "lane"; from: { x: number; y: number }; to: { x: number; y: number }; halfWidth: number }
+        /** 전장 전체를 때려 그릴 경계가 없다. 씬이 가장자리 워시로 알린다. */
+        | { shape: "battlefield" };
+    }
   | { kind: "damageIgnored"; attackerId: string; targetId: string }
   /**
    * 아군이 받을 피해를 앞에 선 개체가 대신 받은 순간이다.
@@ -1499,7 +1515,10 @@ function tickGraffitiAura(fighter: Fighter, dt: number, state: SkirmishState, ev
   }
   // 아무도 없는 자리에는 바닥 자국을 남기지 않는다 — 매초 빈 원이 뜨면 그 표시가 "여기 맞았다"를
   // 뜻하지 않게 되어, 정작 여럿이 맞은 순간과 구별되지 않는다.
-  if (struck > 0) events.push({ kind: "areaImpact", attackerId: fighter.id, x: fighter.x, y: fighter.y, radius: trait.radius, ultimate: false });
+  if (struck > 0) {
+    events.push({ kind: "areaImpact", attackerId: fighter.id, ultimate: false, damageType: "magical",
+      area: { shape: "radial", x: fighter.x, y: fighter.y, radius: trait.radius } });
+  }
 }
 
 /**
@@ -1522,6 +1541,11 @@ function tickArtChannel(fighter: Fighter, dt: number, state: SkirmishState, even
   if (!("damageType" in ultimate) || ultimate.damageType === undefined || ultimate.power === undefined) return;
   const attacker = { ...fighter, def: offensiveDefinition(fighter) };
   const input = { ...ultimate, isCritical: false, kind: "ultimate" as const };
+  // 채널링은 매초 전장 전체에 한 번씩 떨어진다. 틱마다 같은 표시를 다시 켜야 "아직 도는 중"이
+  // 리듬으로 읽힌다 — 한 번만 켜고 5초를 버티면 깔린 판이 그동안 화면을 덮는다.
+  if (state.fighters.some((other) => other.side !== fighter.side && isFighterAlive(other))) {
+    events.push({ kind: "areaImpact", attackerId: fighter.id, ultimate: true, damageType: ultimate.damageType, area: { shape: "battlefield" } });
+  }
   for (const other of state.fighters) {
     if (other.side === fighter.side || !isFighterAlive(other)) continue;
     const raw = Math.max(1, Math.round(computeDamage(attacker, defensiveDefinition(other, state), input)));
@@ -3176,7 +3200,8 @@ function strike(
   // 광역 피해는 주 대상 타격의 부가 결과이며 에너지·야성·연속 공격을 추가 획득하지 않는다.
   if (attackingInFever && splashTrait.effectId === "splashDamage") {
     // 폭주 광역도 같은 범위 표시를 쓴다 — 주 대상 자리에서 반경만큼 번진다.
-    events.push({ kind: "areaImpact", attackerId: attacker.id, x: target.x, y: target.y, radius: splashTrait.radius, ultimate: useUltimate });
+    events.push({ kind: "areaImpact", attackerId: attacker.id, ultimate: useUltimate, damageType: damageInput.damageType,
+      area: { shape: "radial", x: target.x, y: target.y, radius: splashTrait.radius } });
     // 토리카의 경직처럼 피해 특성이 기절 시간을 선언하면 주 대상도 같은 공용 상태 규칙을 지난다.
     if (splashTrait.statusEffect && isFighterAlive(target)) applyCombatStatusEffect(target, splashTrait.statusEffect, events, state);
     for (const secondary of state.fighters) {
@@ -3286,10 +3311,21 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     ? aliveFighters(state, attacker.side).filter(inCircle) : [];
   if (targets.length === 0 && healingTargets.length === 0) return;
 
-  // 전장 전체를 때리는 기술은 그릴 범위가 없다. 나머지는 실제로 터진 자리와 반경을 그대로
-  // 넘겨 씬이 바닥에 범위를 그리게 한다.
-  if (skill.targeting !== "battlefieldEnemies" && (skill.radius ?? 0) > 0) {
-    events.push({ kind: "areaImpact", attackerId: attacker.id, x: center.x, y: center.y, radius: skill.radius ?? 0, ultimate: useUltimate });
+  // 판정이 쓴 모양을 그대로 넘긴다. 돌진을 반경 하나로 줄이면 씬은 통로 대신 원을 그리게 되어
+  // "닿을 줄 알았는데 안 맞았다"가 남는다. 전장 전체를 때리는 기술은 그릴 경계가 없으므로
+  // 모양 대신 그 사실을 넘기고, 씬이 가장자리 워시라는 다른 문법으로 알린다.
+  // 지정 원이 적은 못 잡고 아군만 덮은 순간은 피해가 아니라 회복이다 — 그때만 회복 색으로 선다.
+  const supportiveOnly = targets.length === 0 && healingTargets.length > 0;
+  const impactArea = skill.targeting === "battlefieldEnemies"
+    ? { shape: "battlefield" as const }
+    : charge
+      ? { shape: "lane" as const, from: charge.from, to: charge.to, halfWidth: skill.radius ?? 0 }
+      : (skill.radius ?? 0) > 0
+        ? { shape: "radial" as const, x: center.x, y: center.y, radius: skill.radius ?? 0 }
+        : undefined;
+  if (impactArea) {
+    events.push({ kind: "areaImpact", attackerId: attacker.id, ultimate: useUltimate,
+      damageType: supportiveOnly ? undefined : skill.damageType, ...(supportiveOnly ? { supportive: true as const } : {}), area: impactArea });
   }
 
   // 돌진은 대상을 고른 뒤 실제로 자리를 옮긴다. 먼저 옮기면 판정 기준선이 이미 지나온 길이 된다.

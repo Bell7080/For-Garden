@@ -29,7 +29,7 @@ export type ReachTier = "melee" | "mid" | "ranged";
 export type RelicRarity = "R" | "SR" | "SSR";
 
 /** 전신 Puppet 레지스트리의 안정적인 데이터 키다. 파일 번호를 게임 데이터에 직접 노출하지 않는다. */
-export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "toby" | "amo" | "ripa" | "pontos";
+export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "toby" | "amo" | "ripa" | "koma" | "pontos";
 
 export interface Stats {
   /** 생존력과 물리·마법 공격의 기반이 되는 주 능력치다. */
@@ -1080,6 +1080,8 @@ interface StageBase {
   chapterOrder?: number;
   /** 모두 완료해야 하는 선행 노드 ID다. 빈 배열이면 캠페인의 최초 진입점이다. */
   prerequisiteStageIds: readonly string[];
+  /** 의도적으로 성장을 되돌리는 회상·분기만 회귀 사유를 명시해 정적 검사를 통과한다. */
+  growthRegression?: { kind: "flashback" | "branch"; reason: string };
 }
 
 /** 스테이지에 출전하는 영구 캐릭터 정의를 플레이어에게도 공개된 성장 상태와 연결한다. */
@@ -1090,6 +1092,8 @@ export interface StageEnemyDef {
   level: number;
   /** 플레이어 렐릭과 같은 한계 돌파 공식을 적용할 정수 단계다. */
   breakthrough: number;
+  /** 배열 순서와 무관하게 전열(0)에서 후열(2)까지의 전투 배치를 고정한다. */
+  formationSlot: 0 | 1 | 2;
 }
 
 /** 전투 노드만 적별 성장 스냅샷과 전투 보상을 소유한다. */

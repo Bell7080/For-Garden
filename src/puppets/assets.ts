@@ -262,10 +262,7 @@ export const PONTOS_ASSET: PuppetAsset = {
 };
 
 /**
- * 4번째 적 전신(가칭, puppet.json 원제 "비늘 후드의 신비한 꼬마 탐험가").
- *
- * 스테이지 배치·전투 수치가 아직 없어 `ENEMY_SD_ASSETS`(1~3번 묶음)에는 넣지 않는다.
- * 콘텐츠가 정해지면 이 상수와 `EXPLORER_SD_ASSET`을 그 자리에 연결한다.
+ * 4번째 적 코마 전신. 원화 측정값은 기존 enemy_004 묶음의 알파 경계를 그대로 사용한다.
  */
 export const EXPLORER_ASSET: PuppetAsset = {
   url: `${base}puppets/enemy_004.zip`,
@@ -300,6 +297,7 @@ const PORTRAIT_ASSETS = {
   toby: TOBY_ASSET,
   amo: AMO_ASSET,
   ripa: RIPA_ASSET,
+  koma: EXPLORER_ASSET,
   pontos: PONTOS_ASSET,
 } as const satisfies Record<PortraitAssetId, PuppetAsset>;
 
@@ -316,7 +314,7 @@ export const ENEMY_SD_ASSETS: readonly [PuppetAsset, PuppetAsset, PuppetAsset] =
   content: { left: 352, top: 155, right: 993, bottom: 1082 },
 })) as unknown as readonly [PuppetAsset, PuppetAsset, PuppetAsset];
 
-/** EXPLORER_ASSET과 짝을 이루는 4번째 적 전투 SD. 콘텐츠가 정해지기 전까지는 미사용이다. */
+/** 코마 전신 원화와 짝을 이루는 4번째 적 전투 SD. */
 export const EXPLORER_SD_ASSET: PuppetAsset = {
   url: `${base}puppets/enemySD_004.zip`,
   imageWidth: 1254,
@@ -470,6 +468,7 @@ const ENEMY_SD_ASSETS_BY_ID: Readonly<Record<string, PuppetAsset>> = {
   "husk-raptor": ENEMY_SD_ASSETS[0],
   "husk-shell": ENEMY_SD_ASSETS[1],
   "husk-wing": ENEMY_SD_ASSETS[2],
+  "husk-koma": EXPLORER_SD_ASSET,
 };
 
 /** 비전투 화면의 아군 SD 선택. 적 ID는 받지 않는다. */

@@ -1500,6 +1500,73 @@ export const RELICS: RelicDef[] = [
     },
   },
   {
+    // 코마는 1-10에서만 처음 등장하지만 스테이지 전용 보정이 아닌 독립 영구 캐릭터다.
+    id: "husk-koma",
+    squad: "gear",
+    name: "코마",
+    // 도감 개체번호는 렉시아의 072와 충돌하지 않으며, 공멸 프로젝트 번호 072는 아래 이름에 보존한다.
+    specimenNumber: "204",
+    projectName: "ANNIHILATION VANGUARD 072",
+    excavationSite: "오디디 격리 연구동",
+    // 봉인된 적 캐릭터도 출처와 복원 흔적은 영구 정의에 남겨 스테이지 데이터와 섞지 않는다.
+    fossilRecord: "오디디 격리 연구동의 파손된 배양조에서 소형 골격과 폭발 잔류물을 회수했다. 빠른 이동을 위한 경량 복원 흔적이 사지 관절마다 남아 있다.",
+    catalogSummary: "가벼운 체형과 긴 꼬리로 급습하는 콤프소그나투스 기반 공멸 선봉.",
+    unlockRecord: { status: "sealed", reason: "restricted" },
+    rarity: "R",
+    portraitAssetId: "koma",
+    origin: "콤프소그나투스",
+    element: "fire",
+    role: "assassin",
+    // 전열 사이를 빠르게 파고드는 근접 중간보스다.
+    reachTier: "melee",
+    // 적 전용 개체지만 데이터 계약을 완성하기 위해 비전투 특성도 영구 정의에 둔다.
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 22.5, efficiencyMultiplier: 1.00 },
+    stats: {
+      hp: 760,
+      def: 42,
+      res: 34,
+      atk: 108,
+      ap: 52,
+      attackSpeed: 112,
+      moveSpeed: 118,
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 0,
+    },
+    ferocityTrait: { name: "공멸 선봉", effectId: "attackIntervalReduction", reductionPercent: 15 },
+    passive: {
+      id: "husk-koma-passive",
+      name: "집요한 추격",
+      kind: "bleedStreak",
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      value: 3,
+      desc: "같은 적을 연속으로 3번 맞히면 [[bleed|출혈]]을 남긴다.",
+    },
+    basic: {
+      id: "husk-koma-basic",
+      name: "꼬리 베기",
+      power: 110,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      targeting: "single",
+    },
+    ultimate: {
+      id: "husk-koma-ult",
+      name: "추락하는 방주",
+      power: 190,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      cost: 100,
+      // 코마 역시 일반 캐릭터 표적 규칙만 사용하며 스테이지 전용 효과를 받지 않는다.
+      targeting: "single",
+    },
+  },
+  {
     // 신규 저장 키 `mette`는 표시명이나 에셋 번호와 분리한 안정적인 내부 ID다.
     id: "mette",
     squad: "rune",

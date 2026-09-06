@@ -3451,3 +3451,87 @@ describe("도발 계약", () => {
     expect(foe.engaged).toBe(false);
   });
 });
+
+/**
+ * 둔화·빙결은 아직 쓰는 개체가 없는 공용 상태이상이라(매디 예정), 캐릭터 데이터가 아니라
+ * 이 상태 자체의 계약만 검사한다. 손질과 같은 "쌓이다 최대에서 자동 전환" 골격을 재사용하되,
+ * 전환 조건이 상태 자체가 아니라 **때린 쪽의 패시브**(`freezeAtMaxChill`)에 달려 있다.
+ */
+describe("둔화·빙결 계약", () => {
+  const arena: Arena = { left: 0, right: 900, top: 0, bottom: 1_400 };
+  const seeded = (start: number) => { let n = start; return () => (n = (n * 1103515245 + 12345) % 2147483648) / 2147483648; };
+  const CHILL = { kind: "chill" as const, speedPercentPerStack: 5, maxStacks: 3 };
+
+  it("은 중첩마다 공격 속도·이동 속도를 같은 비율로 깎는다", () => {
+    const state = createSkirmish([getRelic("anky")], [getRelic("husk-shell")], arena);
+    const [, foe] = state.fighters;
+    const baseSpeed = currentAttackSpeed(foe, state);
+    const baseMove = moveSpeed(foe, state);
+    applyCombatStatusEffect(foe, CHILL, [], state);
+    expect(foe.chill).toMatchObject({ stacks: 1, maxStacks: 3 });
+    expect(currentAttackSpeed(foe, state)).toBeCloseTo(baseSpeed * 0.95, 5);
+    expect(moveSpeed(foe, state)).toBeCloseTo(baseMove * 0.95, 5);
+    applyCombatStatusEffect(foe, CHILL, [], state);
+    applyCombatStatusEffect(foe, CHILL, [], state);
+    expect(foe.chill!.stacks).toBe(3);
+    expect(currentAttackSpeed(foe, state)).toBeCloseTo(baseSpeed * 0.85, 5);
+    // 최대 중첩을 넘겨도 더 깎이지 않는다.
+    applyCombatStatusEffect(foe, CHILL, [], state);
+    expect(foe.chill!.stacks).toBe(3);
+  });
+
+  it("은 빙결 중에는 새로 걸리지 않는다", () => {
+    const state = createSkirmish([getRelic("anky")], [getRelic("husk-shell")], arena);
+    const [, foe] = state.fighters;
+    foe.frozen = { remaining: 1, total: 1, maxHpPercentOnExpire: 10 };
+    applyCombatStatusEffect(foe, CHILL, [], state);
+    expect(foe.chill).toBeNull();
+  });
+
+  it("은 완전한 행동불가이며 풀리는 순간 최대 체력 비율 고정 피해를 입힌다", () => {
+    const state = createSkirmish([getRelic("anky")], [getRelic("husk-shell")], arena);
+    const [ally, foe] = state.fighters;
+    ally.x = 500; ally.y = 800; foe.x = 540; foe.y = 800;
+    foe.frozen = { remaining: 0.5, total: 3, maxHpPercentOnExpire: 10 };
+    const targetBefore = foe.targetId;
+    stepSkirmish(state, 0.05, seeded(1));
+    // 빙결 중에는 표적 재평가·이동·공격이 전혀 돌지 않는다.
+    expect(foe.targetId).toBe(targetBefore);
+    const hpBeforeExpire = foe.hp;
+    // maxCatchUp(0.25초)이 한 호출당 처리량을 제한하므로, 실제 프레임처럼 잘게 나눠 굴린다.
+    const events: SkirmishEvent[] = [];
+    for (let t = 0; t < 1 && foe.frozen; t += 0.05) events.push(...stepSkirmish(state, 0.05, seeded(2)));
+    expect(foe.frozen).toBeNull();
+    expect(hpBeforeExpire - foe.hp).toBe(Math.round(foe.maxHp * 0.1));
+    expect(events.some((event) => event.kind === "concussion")).toBe(true);
+  });
+
+  it("의 최대 중첩은 「빙결시키는」 패시브를 가진 개체가 때릴 때만 소모되어 빙결로 바뀐다", () => {
+    // 손질과 같은 골격이지만, 자동으로 터지지 않고 때린 쪽의 패시브 플래그가 있어야 전환된다.
+    const base = getRelic("anky");
+    const frostbound = {
+      ...base,
+      id: "test-frostbound",
+      passive: { ...base.passive, freezeAtMaxChill: true as const },
+      // 토리카의 원래 기본 공격은 statusEffectEvery(세 번째 타격에만 효과)를 갖고 있어, 매
+      // 타격 걸려야 하는 둔화 검증에는 지워야 한다.
+      basic: { ...base.basic, id: "test-frostbound-basic", statusEffectEvery: undefined, statusEffects: [CHILL] },
+    };
+    const state = createSkirmish([frostbound], [getRelic("husk-shell")], arena);
+    const [attacker, foe] = state.fighters;
+    attacker.x = 500; attacker.y = 800; foe.x = 540; foe.y = 800;
+
+    for (let hit = 1; hit <= CHILL.maxStacks; hit += 1) {
+      attacker.attackCooldown = 0;
+      stepSkirmish(state, 1 / 60, seeded(hit));
+      if (hit < CHILL.maxStacks) {
+        expect(foe.chill?.stacks, `${hit}겹`).toBe(hit);
+        expect(foe.frozen, `${hit}겹`).toBeNull();
+      } else {
+        // 세 번째 타격에서 겹이 소모되고 빙결로 바뀐다.
+        expect(foe.chill, "3겹").toBeNull();
+        expect(foe.frozen, "3겹").not.toBeNull();
+      }
+    }
+  });
+});

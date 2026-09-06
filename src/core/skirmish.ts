@@ -287,6 +287,23 @@ export interface Fighter extends Combatant {
   taggedIds: string[];
   /** 「네가 예술을 알아?」의 다음 1초 주위 낙서까지 남은 시간이며 비활성 중에는 1초로 초기화한다. */
   graffitiAuraTickIn: number;
+  /**
+   * 지금 쌓인 둔화. 중첩마다 공격 속도·이동 속도가 같은 비율만큼 깎인다.
+   *
+   * 저주·덧칠과 같은 이유로 슬롯 하나다 — 여럿이 겹쳐 걸면 어느 쪽 수치가 도는지 화면과
+   * 계산이 갈린다. **빙결 중에는 새로 걸리지 않는다** — 이미 완전히 멈춘 적을 다시 느리게
+   * 만들 이유가 없고, 매디의 패시브가 최대 중첩을 소모해 빙결로 바꾸는 순간과도 겹치지 않아야
+   * 한다.
+   */
+  chill: { stacks: number; speedPercentPerStack: number; maxStacks: number } | null;
+  /**
+   * 지금 걸린 빙결. 기절과 같은 완전 행동불가이며, `stunnedFor`와 별도 슬롯을 쓴다.
+   *
+   * 슬롯을 나누는 이유는 **풀리는 순간의 고정 피해**(`maxHpPercentOnExpire`) 때문이다 —
+   * 기절 슬롯과 합치면 다른 원천의 기절이 겹칠 때 이 값이 뒤섞이거나, 기절만 걸린 적에게도
+   * 폭발 피해가 나가게 된다.
+   */
+  frozen: { remaining: number; total: number; maxHpPercentOnExpire: number } | null;
 }
 
 export type SkirmishPhase = "fight" | "victory" | "defeat";
@@ -433,7 +450,7 @@ export type SkirmishEvent =
    */
   | { kind: "poisonLiquidated"; fighterId: string; amount: number; ticks: number }
   | { kind: "heal"; fighterId: string; amount: number; source: "passive" | "ultimate" | "ferocity"; effect: CombatEffectCue }
-  | { kind: "status"; fighterId: string; status: "stun" | "stagger"; active: true }
+  | { kind: "status"; fighterId: string; status: "stun" | "stagger" | "frozen"; active: true }
   | { kind: "shieldGranted"; fighterId: string; providerId: string; amount: number; remaining: number; effect: CombatEffectCue }
   | { kind: "shieldAbsorbed"; fighterId: string; amount: number; remaining: number; effect: CombatEffectCue }
   | { kind: "shieldDepleted"; fighterId: string; effect: CombatEffectCue }
@@ -619,6 +636,17 @@ export const POISON = {
   abilityPercentPerSecond: 15,
 } as const;
 
+/**
+ * 빙결의 공용 계수. 매디의 패시브가 둔화 최대 중첩을 소모해 걸 때만 쓰는 값이라, 쓰는 개체가
+ * 하나뿐인 저주·밴덜리즘과 같은 이유로 여기 한 곳에만 둔다.
+ */
+export const FROZEN = {
+  /** 완전 행동불가로 묶이는 시간(초). */
+  seconds: 3,
+  /** 풀리는 순간 입히는 최대 체력 비율(%) 고정 피해. */
+  maxHpPercentOnExpire: 10,
+} as const;
+
 /** 긴급 회복의 공용 틱 규칙. 유지 시간과 회복량은 캐릭터 정의가 소유한다. */
 export const EMERGENCY_RECOVERY = {
   /** 회복 틱 사이의 시간(초). */
@@ -727,6 +755,8 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     artChannel: null,
     taggedIds: [],
     graffitiAuraTickIn: 1,
+    chill: null,
+    frozen: null,
   };
 }
 
@@ -908,6 +938,47 @@ function cleanseControlWithAdagio(state: SkirmishState, target: Fighter, events:
   events.push({ kind: "shieldGranted", fighterId: target.id, providerId: provider.id, amount, remaining: target.shield.amount, effect: { tag: "shieldGain", intensity: 1 } });
 }
 
+/** 둔화 재적용. 저주·덧칠과 같은 자리라 슬롯 하나만 두고 중첩만 오른다. 빙결 중에는 걸리지 않는다. */
+function refreshChill(target: Fighter, effect: Extract<CombatStatusEffect, { kind: "chill" }>): void {
+  if (!isFighterAlive(target) || target.frozen !== null) return;
+  const stacks = Math.min(effect.maxStacks, (target.chill?.stacks ?? 0) + 1);
+  target.chill = { stacks, speedPercentPerStack: effect.speedPercentPerStack, maxStacks: effect.maxStacks };
+}
+
+/** 지금 걸린 둔화가 이미 최대 중첩인지. 매디의 패시브가 빙결로 바꿀지 판단할 때 쓴다. */
+function chillIsMaxed(target: Fighter): boolean {
+  return target.chill !== null && target.chill.stacks >= target.chill.maxStacks;
+}
+
+/**
+ * 빙결 적용. 기절과 같은 완전 행동불가이지만 별도 슬롯을 쓴다.
+ *
+ * 기절 슬롯을 함께 쓰지 않는 이유는 **풀리는 순간의 고정 피해**(`maxHpPercentOnExpire`) 때문이다.
+ * 합치면 다른 원천의 기절이 이 시간을 늘리거나 줄일 때 폭발 피해의 기준이 함께 흔들린다.
+ */
+function applyFrozen(target: Fighter, seconds: number, maxHpPercentOnExpire: number, events: SkirmishEvent[], state: SkirmishState): void {
+  if (!isFighterAlive(target) || seconds <= 0) return;
+  const wasFrozen = target.frozen !== null;
+  target.frozen = { remaining: seconds, total: seconds, maxHpPercentOnExpire };
+  // 빙결로 바뀌는 순간 소모되는 자원이라 둔화 겹은 비운다.
+  target.chill = null;
+  if (!wasFrozen) {
+    events.push({ kind: "status", fighterId: target.id, status: "frozen", active: true });
+    cleanseControlWithAdagio(state, target, events);
+  }
+}
+
+/**
+ * 매디 전용: 방금 때린 적의 둔화가 이미 최대 중첩이었다면 그 스택을 모두 소모해 빙결시킨다.
+ *
+ * 기본 공격·궁극기(채널 틱 포함) 양쪽의 적중 경로가 함께 부르는 공용 훅이다 — 한쪽만 부르면
+ * 같은 패시브가 스킬에 따라 발동하거나 안 하는 것처럼 보인다.
+ */
+function maybeFreezeAtMaxChill(attacker: Fighter, target: Fighter, events: SkirmishEvent[], state: SkirmishState): void {
+  if (attacker.def.passive.freezeAtMaxChill !== true || !isFighterAlive(target) || !chillIsMaxed(target)) return;
+  applyFrozen(target, FROZEN.seconds, FROZEN.maxHpPercentOnExpire, events, state);
+}
+
 /**
  * 개별 스킬과 야성 특성에서 같은 판별 가능한 상태 효과를 적용한다.
  *
@@ -930,6 +1001,7 @@ export function applyCombatStatusEffect(fighter: Fighter, effect: CombatStatusEf
   if (effect.kind === "concussion") applyConcussion(fighter, effect, critical, events, state, sourceId);
   if (effect.kind === "butcher") applyButcher(fighter, effect, events, state, sourceId);
   if (effect.kind === "curse") refreshCurse(fighter, { ...effect, seconds: effect.seconds * potency });
+  if (effect.kind === "chill") refreshChill(fighter, effect);
   if (effect.kind === "frenzy") applyFrenzy(fighter, { ...effect, seconds: effect.seconds * potency }, sourceId);
   // 도발은 방향만 돌리는 상태라 기절 저항도 정화도 거치지 않는다. 건 사람이 없으면 바라볼
   // 상대도 없으므로 아무 일도 일어나지 않는다.
@@ -1144,7 +1216,7 @@ export function vandalismOffenseShred(fighter: Fighter): number {
  */
 function tickGourmetHunt(fighter: Fighter, dt: number, state: SkirmishState): void {
   const passive = fighter.def.passive;
-  if (passive.kind !== "gourmetHunt" || fighter.stunnedFor > 0 || fighter.knockback) return;
+  if (passive.kind !== "gourmetHunt" || fighter.stunnedFor > 0 || fighter.frozen || fighter.knockback) return;
   fighter.huntCooldown -= dt;
   if (fighter.huntCooldown > 0) return;
   fighter.huntCooldown = passive.huntCooldownSeconds ?? 10;
@@ -1462,7 +1534,10 @@ function tickArtChannel(fighter: Fighter, dt: number, state: SkirmishState, even
     const credited = recordDamageContribution(state, fighter.id, other, ultimate.damageType, ultimate.scalingStat, computeDamageContribution(attacker, input), resolution, hpBefore, shieldBefore, shieldProviderId);
     events.push({ kind: "attack", attackerId: fighter.id, targetId: other.id, skill: "ultimate", amount: resolution.applied,
       contributionAmount: credited, critical: false, animate: false, damageType: ultimate.damageType, mitigated: resolution.reduced < resolution.raw });
-    if (isFighterAlive(other)) applySkillStatuses(other, ultimate, events, state, fighter.id, false);
+    if (isFighterAlive(other)) {
+      applySkillStatuses(other, ultimate, events, state, fighter.id, false);
+      maybeFreezeAtMaxChill(fighter, other, events, state);
+    }
     if (!isFighterAlive(other)) {
       clearDefeatedStatuses(other);
       events.push({ kind: "death", fighterId: other.id, sourceId: fighter.id });
@@ -1758,6 +1833,8 @@ function clearDefeatedStatuses(fighter: Fighter): void {
   fighter.regeneration = null;
   fighter.stunnedFor = 0;
   fighter.staggeredFor = 0;
+  fighter.chill = null;
+  fighter.frozen = null;
 }
 
 /** 한쪽 편에서 살아 있는 캐릭터만 고른다. */
@@ -1897,8 +1974,11 @@ export function currentAttackSpeed(fighter: Fighter, state?: SkirmishState): num
   const tailwindPercent = fighter.tailwindFor > 0 ? fighter.tailwind?.attackSpeedPercent ?? 0 : 0;
   // 광란은 남의 손에 걸린 강화다. 시간이 정해진 배율이라 순풍과 같은 자리에서 곱한다.
   const frenzyPercent = fighter.frenzy?.attackSpeedPercent ?? 0;
+  // 둔화는 남이 걸어 준 감속이라 다른 배율과 같은 자리에서 나눈다.
+  const chillPercent = fighter.chill ? fighter.chill.stacks * fighter.chill.speedPercentPerStack : 0;
   return (fighter.def.stats.attackSpeed + passiveSpeedPoints + fighter.bonusAttackSpeed)
-    * (1 + teamPercent / 100) * (1 + packHuntPercent / 100) * (1 + tailwindPercent / 100) * (1 + frenzyPercent / 100);
+    * (1 + teamPercent / 100) * (1 + packHuntPercent / 100) * (1 + tailwindPercent / 100) * (1 + frenzyPercent / 100)
+    * (1 - chillPercent / 100);
 }
 
 export function attackInterval(fighter: Fighter, state?: SkirmishState): number {
@@ -1936,10 +2016,12 @@ export function defensiveDefinition(target: Fighter, state: SkirmishState): Figh
   const bonus = strongestLivingAura(state, target.side, "teamDefenseResistancePercent");
   // 저주는 저항만 깎는다. 오라와 같은 자리에서 곱해야 "올려 주는 것"과 "깎는 것"이 한 번씩만 든다.
   const shred = 1 - curseResistanceShred(target) / 100;
-  if (bonus <= 0 && shred === 1 && target.augmentDefensePercent === 0 && target.augmentResistancePercent === 0) return target;
+  // 모피 코트는 남이 아니라 폭주 중인 자기 자신에게만 붙는 배율이라 오라와 다른 자리에서 온다.
+  const furCoat = target.ferocityFever && target.def.ferocityTrait.effectId === "furCoat" ? target.def.ferocityTrait.defenseResistancePercent : 0;
+  if (bonus <= 0 && furCoat <= 0 && shred === 1 && target.augmentDefensePercent === 0 && target.augmentResistancePercent === 0) return target;
   return { ...target, def: { ...target.def, stats: { ...target.def.stats,
-    def: target.def.stats.def * (1 + bonus / 100) * (1 + target.augmentDefensePercent / 100),
-    res: target.def.stats.res * (1 + bonus / 100) * (1 + target.augmentResistancePercent / 100) * shred,
+    def: target.def.stats.def * (1 + bonus / 100) * (1 + furCoat / 100) * (1 + target.augmentDefensePercent / 100),
+    res: target.def.stats.res * (1 + bonus / 100) * (1 + furCoat / 100) * (1 + target.augmentResistancePercent / 100) * shred,
   } } };
 }
 
@@ -1959,7 +2041,7 @@ function triggerCombatAugments(state: SkirmishState, owner: Fighter, trigger: Ex
     // 죽은 적에게 상태나 추가 피해를 남기지 않는 것은 모든 적중형 payload의 공통 불변식이다.
     if (!target || !isFighterAlive(target)) continue;
     if (payload.kind === "conditionalBonusDamage") {
-      const qualified = payload.requiresStatus === "curse" ? target.curse !== null : target.stunnedFor > 0;
+      const qualified = payload.requiresStatus === "curse" ? target.curse !== null : target.stunnedFor > 0 || target.frozen !== null;
       if (!qualified || !consumeAugmentTrigger(state, owner, key, effect)) continue;
       const skill: Skill = { ...owner.def.basic, damageType: payload.damageType, power: payload.percent };
       const raw = Math.max(1, Math.round(computeDamage({ ...owner, def: offensiveDefinition(owner) }, defensiveDefinition(target, state), { ...skill, kind: "basic", isCritical: false }, true)));
@@ -2023,8 +2105,10 @@ export function moveSpeed(fighter: Fighter, state?: SkirmishState): number {
   const selfBonus = fighter.ferocityFever && (trait.effectId === "ichthyoDive" || trait.effectId === "graffitiRun")
     ? trait.moveSpeedPercent : 0;
   const tailwindPercent = fighter.tailwindFor > 0 ? fighter.tailwind?.moveSpeedPercent ?? 0 : 0;
+  // 둔화는 공격 속도와 같은 비율로 이동 속도도 함께 깎는다.
+  const chillPercent = fighter.chill ? fighter.chill.stacks * fighter.chill.speedPercentPerStack : 0;
   return fighter.def.stats.moveSpeed * SKIRMISH.moveRate
-    * (1 + teamBonus / 100) * (1 + selfBonus / 100) * (1 + tailwindPercent / 100);
+    * (1 + teamBonus / 100) * (1 + selfBonus / 100) * (1 + tailwindPercent / 100) * (1 - chillPercent / 100);
 }
 
 /** 화면에 그릴 위치. 발 좌표에 돌진·피격 변위와 뛰어오른 높이를 얹은 값이다. */
@@ -2260,6 +2344,16 @@ function gainFerocity(fighter: Fighter, base: number, state: SkirmishState): voi
       for (const other of state.fighters) if (other.targetId === fighter.id) { other.targetId = null; other.engaged = false; }
     }
     if (trait.effectId === "adamantBody") fighter.hastenedAttacksLeft = trait.hastenedAttacks;
+    if (trait.effectId === "furCoat") {
+      // 정화: 살아 있는 채로 걸린 상태이상·디버프만 지운다. 버프·아군이 준 것(순풍·희열 등)은
+      // 건드리지 않는다 — "장식이 아니다"가 말하는 것은 스스로 두른 것을 지키는 힘이다.
+      fighter.stunnedFor = 0; fighter.staggeredFor = 0; fighter.frozen = null; fighter.chill = null;
+      fighter.bleed = null; fighter.poison = null; fighter.curse = null; fighter.overpaint = null;
+      fighter.vandalism = null; fighter.butcher = null; fighter.frenzy = null; fighter.taunted = null;
+      const shield = Math.max(1, Math.round(fighter.maxHp * trait.shieldMaxHpPercent / 100));
+      fighter.shield.amount += shield;
+      fighter.shield.providerId = fighter.id;
+    }
     if (trait.effectId === "packHunt") {
       fighter.stealthFor = trait.stealthDurationSeconds;
       // 루카는 도약하지 않고 현재 좌표를 유지한 채 표적만 다시 정하며, 기존 단일 추적은 즉시 해제한다.
@@ -2451,10 +2545,13 @@ function offensiveDefinition(attacker: Fighter): RelicDef {
 }
 
 /** 직접 피해 회복률은 기본 능력치, 현재 폭주, 사용 스킬을 퍼센트포인트 덧셈으로 확정한다. */
-function damageHealingRate(attacker: Fighter, skill: Skill, attackingInFever: boolean): number {
+function damageHealingRate(attacker: Fighter, skill: Skill, attackingInFever: boolean, target: Fighter): number {
   const trait = attacker.def.ferocityTrait;
   const fever = attackingInFever && trait.effectId === "rexBattleQueen" ? trait.allDamageLifeStealPoints : 0;
-  return attacker.def.stats.lifeSteal + fever + (skill.damageHealingPercent ?? 0);
+  // 매디 전용: 때리기 전부터 이미 빙결 중이던 적에게만 붙는 흡혈이다. 이번 타격이 새로 건
+  // 빙결에는 적용하지 않는다 — 상태 효과는 이 계산 뒤에 적용된다.
+  const frozenBonus = target.frozen !== null ? skill.damageHealingPercentIfFrozen ?? 0 : 0;
+  return attacker.def.stats.lifeSteal + fever + frozenBonus + (skill.damageHealingPercent ?? 0);
 }
 
 /** 아군의 원본 일반 공격 적중 하나를 소비해 폭주 중인 메테들의 스타카토를 한 번씩 발생시킨다. */
@@ -2950,7 +3047,7 @@ function strike(
    * 생기면 이 지점에 도달하는 HP 피해만 넘기면 규칙이 그대로 유지된다.
    */
   const healFromDamage = (dealt: number) => {
-    applyHealing(state, attacker, dealt * damageHealingRate(attacker, skill, attackingInFever) / 100);
+    applyHealing(state, attacker, dealt * damageHealingRate(attacker, skill, attackingInFever, target) / 100);
   };
   healFromDamage(dealt);
   if (!useUltimate) grantShieldFromDamage(attacker, dealt, events);
@@ -3032,6 +3129,7 @@ function strike(
   // 청산하는 타격은 같은 손으로 덧바르지 않는다 — 바르거나 터뜨리거나 한 번에 하나뿐이다.
   if (isFighterAlive(target) && statusEffectsLandThisHit(attacker, skill, useUltimate)) {
     applySkillStatuses(target, encoreLiquidation ? withoutPoison(skill) : skill, events, state, attacker.id, critical);
+    maybeFreezeAtMaxChill(attacker, target, events, state);
   }
   // 채널링이 도는 동안에는 손이 닿은 적에게만 한 겹이 더 붙는다. 틱이 거는 상태(전장 전체)와
   // 다른 축이라 스킬 정의도 따로 든다 — 씬도 전투도 개체 이름으로 분기하지 않는다.
@@ -3237,7 +3335,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     tryTriggerEmergencyRecovery(target); tryTriggerLowHpVanish(target, state);
     triggerCombatAugments(state, target, "onLowHp", events);
     // 흡혈은 대상별 실제 HP 감소량만 더해 과잉 피해를 회복량으로 만들지 않는다.
-    applyHealing(state, attacker, (hpBefore - target.hp) * damageHealingRate(attacker, skill, attackingInFever) / 100);
+    applyHealing(state, attacker, (hpBefore - target.hp) * damageHealingRate(attacker, skill, attackingInFever, target) / 100);
     // 보호막 전환도 같은 값을 읽는다 — 단일과 광역에서 규칙이 갈리면 같은 걸음이 대상 수에
     // 따라 다른 일을 한다.
     if (!useUltimate) grantShieldFromDamage(attacker, hpBefore - target.hp, events);
@@ -3398,7 +3496,7 @@ function separate(state: SkirmishState, dt: number): void {
       const angle = gap > 0.001 ? Math.atan2(dy, dx) : a.wander;
       // 기절과 경직 모두 순간 이동을 막아 밀집 정리가 행동 차단을 우회하지 않게 한다.
       const canMove = (fighter: Fighter): boolean => !fighter.engaged && fighter.targetId !== null
-        && fighter.stunnedFor <= 0 && fighter.staggeredFor <= 0;
+        && fighter.stunnedFor <= 0 && fighter.staggeredFor <= 0 && !fighter.frozen;
       const movable = [canMove(a), canMove(b)];
       if (!movable[0] && !movable[1]) continue;
       // 겹친 양을 한 번에 없애지 않고 시간에 비례해 조금씩 푼다.
@@ -3520,6 +3618,20 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
   for (const fighter of state.fighters) {
     if (isFighterAlive(fighter) && fighter.stunnedFor > 0) fighter.stunnedFor = Math.max(0, fighter.stunnedFor - dt);
     if (isFighterAlive(fighter) && fighter.staggeredFor > 0) fighter.staggeredFor = Math.max(0, fighter.staggeredFor - dt);
+    // 빙결이 풀리는 순간 최대 체력 비율 고정 피해를 한 번 입힌다. 방어·상성을 지나치는 즉발
+    // 피해라 뇌진탕과 같은 사건(kind: "concussion")을 그대로 재사용한다.
+    if (isFighterAlive(fighter) && fighter.frozen) {
+      const remaining = fighter.frozen.remaining - dt;
+      if (remaining <= EMERGENCY_RECOVERY.epsilon) {
+        const amount = Math.max(1, Math.round(fighter.maxHp * fighter.frozen.maxHpPercentOnExpire / 100));
+        fighter.frozen = null;
+        const dealt = applyDamage(fighter, amount, events, state);
+        events.push({ kind: "concussion", fighterId: fighter.id, amount: dealt, critical: false });
+        if (!isFighterAlive(fighter)) { clearDefeatedStatuses(fighter); events.push({ kind: "death", fighterId: fighter.id }); }
+      } else {
+        fighter.frozen = { ...fighter.frozen, remaining };
+      }
+    }
     // 은신 시계도 행동 여부와 무관한 공용 전투 시계로 흐른다. 정확히 0이 된 스텝부터 재지정 가능하다.
     if (isFighterAlive(fighter) && fighter.stealthFor > 0) {
       const remaining = fighter.stealthFor - dt;
@@ -3589,7 +3701,7 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
       advanceKnockback(fighter, dt, state.arena);
       continue;
     }
-    if (fighter.stunnedFor > 0 || fighter.staggeredFor > 0) {
+    if (fighter.stunnedFor > 0 || fighter.staggeredFor > 0 || fighter.frozen) {
       fighter.hop *= recovery;
       continue;
     }
@@ -3732,7 +3844,7 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
 export function canFireUltimate(state: SkirmishState, fighter: Fighter): boolean {
   // 수동 입력과 적 자동 시전이 모두 이 코어 경계를 공유해 기절 우회 경로를 만들지 않는다.
   // 불멸로 버티는 동안은 아무것도 하지 못한다 — 무적의 대가가 행동 정지다.
-  if (state.phase !== "fight" || !isFighterAlive(fighter) || fighter.undying !== null || fighter.stunnedFor > 0 || fighter.staggeredFor > 0 || fighter.energy < ultimateCost(state, fighter, false)) return false;
+  if (state.phase !== "fight" || !isFighterAlive(fighter) || fighter.undying !== null || fighter.stunnedFor > 0 || fighter.staggeredFor > 0 || fighter.frozen !== null || fighter.energy < ultimateCost(state, fighter, false)) return false;
   // 광란 중에는 기본 공격만 나간다. 궁극기까지 아군에게 꽂히면 한 판이 그 한 번으로 갈린다.
   if (fighter.frenzy) return false;
   if (fighter.def.ultimate.targeting === "battlefieldAllies") return aliveFighters(state, fighter.side).length > 0;

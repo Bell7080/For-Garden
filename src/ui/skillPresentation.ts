@@ -153,6 +153,10 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
       + ` 매초 자신의 주위 모든 적에게 ${damage}의 [[magical-damage|마법 피해]]를 주고`
       + ` [[vandalism|밴덜리즘]]을 한 겹 쌓으며 ${trait.taunt.seconds}초 동안 [[taunt|도발]]한다.`;
   }
+  if (trait.effectId === "furCoat") {
+    return `폭주에 들어가는 순간 자신의 모든 상태이상·디버프를 지우고 최대 체력의 ${trait.shieldMaxHpPercent}% 보호막을 얻는다.`
+      + ` 폭주 중에는 방어력과 저항력이 ${trait.defenseResistancePercent}% 오른다.`;
+  }
 
   // 방어력 계수는 토리카처럼 추가 피해가 있는 범위 타격만 노출하고, 일반 전이 특성은 원래 피해 비율만 보여 준다.
   const speed = trait.attackSpeedBonusPercent === undefined ? "" : `공격 속도가 ${trait.attackSpeedBonusPercent}% 증가한다. `;
@@ -262,6 +266,7 @@ function passiveHead(passive: Passive, atk?: number): string {
       + `${phasing} 타격하는 순간까지 멈추지 않고 움직이며, 움직이는 동안 매초 ${charge}씩 더 찬다.`;
   }
   if (passive.kind === "shimmerMark") return `적을 타격하면 반짝이는 표식을 남긴다. 표식이 없는 적을 타격하면 표식이 그 적에게 옮겨가며 [[ap|주문력]]의 ${passive.value}% [[magical-damage|마법 피해]]를 추가로 입힌다.`;
+  if (passive.kind === "frostboundDominion") return `상성 계산에서 물이 아닌 얼음으로 취급된다. 얼음은 풀·물·땅에 유리하고 불에 불리하며 바람과는 무상성이다. 이미 [[chill|둔화]]가 최대 중첩인 적을 때리면 그 겹을 모두 소모해 [[frozen|빙결]]시킨다.`;
   if (passive.kind !== "battleMaidMastery") return passive.desc;
   // 네 능력이 모두 같은 비율로 오르므로 값을 한 번만 말한다. 값이 서로 달라지면 다시 나열해야 한다.
   return `전투 시작 시, 공격 속도·공격력·치명타 확률·치명타 피해가 모두 ${passive.attackSpeedPercent}% 오른다.`;
@@ -489,6 +494,9 @@ function skillEffectClauses(skill: DescribedSkill, stats: SkillDescriptionStats)
   if ("damageHealingPercent" in skill && skill.damageHealingPercent !== undefined) {
     clauses.push({ text: `입힌 피해의 ${skill.damageHealingPercent}%만큼 체력을 회복한다`, joinWithComma: true });
   }
+  if ("damageHealingPercentIfFrozen" in skill && skill.damageHealingPercentIfFrozen !== undefined) {
+    clauses.push({ text: `[[frozen|빙결]] 상태의 적에게 입힌 피해라면 그중 ${skill.damageHealingPercentIfFrozen}%만큼 체력을 회복한다`, standalone: true });
+  }
   if ("shieldFromDamagePercent" in skill && skill.shieldFromDamagePercent !== undefined) {
     clauses.push({ text: `입힌 피해의 ${skill.shieldFromDamagePercent}%만큼 보호막을 얻는다`, joinWithComma: true });
   }
@@ -583,6 +591,9 @@ function statusEffectClause(effect: CombatStatusEffect): string | undefined {
   if (effect.kind === "poison") return `${effect.seconds}초 동안 [[poison|중독]]시킨다`;
   // 겹 상한·감소율·유지 시간은 저주 태그가 말한다(쓰는 개체가 하나뿐이라 태그가 수치를 가진다).
   if (effect.kind === "curse") return `[[curse|저주]]를 한 겹 씌운다`;
+  // 겹 상한·감소율도 둔화 태그가 말한다(쓰는 개체가 하나뿐이다). 최대 중첩에서 빙결로 바뀌는
+  // 것은 패시브의 몫이라 여기서는 겹이 쌓인다는 사실만 적는다.
+  if (effect.kind === "chill") return `[[chill|둔화]]를 한 겹 쌓는다`;
   // 반대로 광란의 시간은 스킬마다 다르므로 본문이 적는다 — 출혈이 그런 것과 같은 이유다.
   if (effect.kind === "frenzy") return `${effect.seconds}초 동안 [[frenzy|광란]]시킨다`;
   // 겹 상한·감소율·유지 시간·터지는 위력은 밴덜리즘 태그가 말한다(쓰는 개체가 하나뿐이라

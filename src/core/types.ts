@@ -113,6 +113,8 @@ interface SkillBase {
   statusEffects?: readonly CombatStatusEffect[];
   /** 실제 HP에서 감소한 피해의 이 비율(%)을 시전자가 회복한다. 과잉 피해는 계산하지 않으며 능력치·폭주 흡혈과 합산한다. */
   damageHealingPercent?: number;
+  /** 매디 전용: 대상이 [[frozen|빙결]] 상태일 때만, 실제 HP에서 감소한 피해의 이 비율(%)을 시전자가 회복한다. */
+  damageHealingPercentIfFrozen?: number;
   /** 이 스킬을 쓸 때마다 생존 아군 전체가 함께 얻는 궁극기 게이지다. 시전자 자신도 포함한다. */
   allyEnergyGain?: number;
   /**
@@ -473,6 +475,21 @@ export type CombatStatusEffect =
     }
   | {
       /**
+       * 둔화. 중첩마다 공격 속도·이동 속도를 같은 비율만큼 깎는다.
+       *
+       * 광란처럼 곱해서 적용하지만 방향이 반대다. 최대 중첩에 닿아도 스스로 터지지 않는다 —
+       * 그다음은 손질·밴덜리즘처럼 "쌓이면 자동으로" 터지는 게 아니라, **빙결시키는 패시브를
+       * 가진 개체가 직접 때렸을 때만** 소모되어 빙결로 바뀐다(매디 「설원의 지배자」). 빙결
+       * 중에는 새로 걸리지 않는다.
+       */
+      kind: "chill";
+      /** 중첩 하나가 깎는 공격 속도·이동 속도 비율(%). */
+      speedPercentPerStack: number;
+      /** 쌓을 수 있는 최대 중첩. */
+      maxStacks: number;
+    }
+  | {
+      /**
        * 도발. 맞은 쪽이 **때린 쪽만** 표적으로 삼는다.
        *
        * 기절과 다른 축이다 — 행동을 막지 않고 방향만 돌린다. 그래서 정화의 대상이 아니고,
@@ -650,7 +667,9 @@ export type PassiveKind =
   /** 루카 전용: 전투 시작/폭주 진입 때 최고 공격력 아군의 현재 표적을 복사한다. */
   | "followHighestAttackAllyTarget"
   /** 데이 전용: 때린 적을 건너뛰며 표적을 돌리고, 때리는 순간까지 멈추지 않고 움직인다. */
-  | "tagAndRun";
+  | "tagAndRun"
+  /** 매디 전용: 상성 계산에서 물을 얼음으로 가로채고, 이미 둔화가 최대인 적을 때리면 빙결시킨다. */
+  | "frostboundDominion";
 
 /** 전투 엔진이 판별하는 야성 특성 효과 ID다. 새 효과는 수치 계약과 함께 명시적으로 추가한다. */
 export type FerocityEffectId =
@@ -685,7 +704,9 @@ export type FerocityEffectId =
   /** 노도니아 전용: 폭주 중 주위를 매초 지지고, 기본 공격마다 잃은 체력을 되찾는다. */
   | "climax"
   /** 데이 전용: 폭주 중 때리기를 멈추고 훨씬 빠르게 달리며 주위에 매초 낙서를 흩뿌린다. */
-  | "graffitiRun";
+  | "graffitiRun"
+  /** 매디 전용: 폭주 진입 시 모든 상태이상·디버프를 지우고 보호막을 얻으며, 폭주 중 방어력·저항력이 함께 오른다. */
+  | "furCoat";
 
 /**
  * 개체별 피버 발현 정적 데이터다.
@@ -867,6 +888,22 @@ export type FerocityTrait = {
       /** 루카 자신을 포함해 같은 targetId를 가진 생존 아군에게 주는 공속 증가율이다. */
       sharedTargetAttackSpeedPercent: number;
     }
+  | {
+      /**
+       * 「모피 코트는 장식이 아니랍니다」: 폭주 진입 시 한 번 정화하고 보호막을 얻으며, 폭주 중
+       * 내내 방어력·저항력이 함께 오른다.
+       *
+       * 금강불괴(엘라)와 진입 순간 보호막을 주는 자리는 같지만, 저쪽은 그 자리에 공속을 얹어
+       * 계속 때리게 하고 이쪽은 정화 + 방어·저항으로 **버티는 시간 자체**를 늘린다.
+       */
+      effectId: "furCoat";
+      /** 폭주에 들어가는 순간 모든 상태이상·디버프를 지운다. */
+      cleanseAllOnEntry: true;
+      /** 폭주에 들어가는 순간 얻는 보호막(최대 체력 비율 %)이다. */
+      shieldMaxHpPercent: number;
+      /** 폭주 중 내내 곱해지는 방어력·저항력 증가율(%)이다. */
+      defenseResistancePercent: number;
+    }
 );
 
 export interface Passive {
@@ -968,6 +1005,15 @@ export interface Passive {
    * 두 몸이 한 자리에 남는다 — 이 값은 "지나간다"이지 "겹쳐 선다"가 아니다.
    */
   phasesThroughFighters?: true;
+  /**
+   * 설원의 지배자 전용: 상성 계산에서만 이 개체를 `Element` 대신 이 값으로 취급한다.
+   *
+   * `RelicDef.element`는 그대로 두므로 아이콘·색·도감 표시는 바뀌지 않고, `effectiveElement()`를
+   * 거치는 실제 피해 계산과 자동편성 점수만 이 값을 읽는다.
+   */
+  elementOverride?: "ice";
+  /** 설원의 지배자 전용: 때린 적의 둔화가 이미 최대 중첩이면 그 스택을 모두 소모해 빙결시킨다. */
+  freezeAtMaxChill?: true;
   desc: string;
 }
 

@@ -1,4 +1,4 @@
-import { BLEED, POISON } from "../core/skirmish";
+import { BLEED, FROZEN, POISON } from "../core/skirmish";
 
 /**
  * 스킬 설명 안에서 다시 눌러 볼 수 있는 용어 사전.
@@ -111,6 +111,16 @@ export const KEYWORDS: readonly KeywordDef[] = [
   {
     id: "stun", term: "기절", kind: "디버프",
     description: "지속되는 동안 이동하거나 공격하거나 스킬을 사용할 수 없다.",
+  },
+  // 둔화·빙결은 쓰는 개체가 매디 하나뿐이라 태그가 수치를 가진다. 둘째 개체가 이 규칙어를
+  // 갖게 되면 출혈처럼 겹 수·시간을 본문으로 옮기고 태그는 무엇인지만 말하게 바꾼다.
+  {
+    id: "chill", term: "둔화", kind: "디버프",
+    description: "한 겹마다 공격 속도와 이동 속도가 5% 낮아진다. 최대 3겹까지 쌓이며, [[frozen|빙결]] 중에는 새로 걸리지 않는다.",
+  },
+  {
+    id: "frozen", term: "빙결", kind: "디버프",
+    description: `${FROZEN.seconds}초 동안 [[stun|기절]]과 같이 완전히 행동할 수 없다. 풀리는 순간 최대 체력의 ${FROZEN.maxHpPercentOnExpire}%에 해당하는 [[fixed-damage|고정 피해]]를 입는다.`,
   },
   {
     id: "hp", term: "체력", kind: "규칙",

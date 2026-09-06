@@ -69,7 +69,7 @@ describe("SaveManager", () => {
     manager.start(["anky", "rex", "spino"]);
     const firstNode = source.expedition.run!.nodes.find(({ floor }) => floor === 1)!;
     // 매니저 저장 왕복은 전투 상태만 다루며 재화는 서버 완료 API만 쓸 수 있다.
-    expect(manager.completeNode(firstNode.id, { relicHp: [90, 0, 75], augmentId: "field-repair", bossDamage: 3, score: 80 })).toBe(true);
+    expect(manager.completeNode(firstNode.id, { relicHp: [90, 0, 75], augmentId: "field-repair", bossDamage: 3 })).toBe(true);
     const loaded = new SaveManager(storage).load()!;
     expect(loaded.expedition.run).toEqual(source.expedition.run);
     expect(loaded.expedition.run).not.toBe(source.expedition.run);

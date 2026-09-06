@@ -122,8 +122,8 @@ export interface ExpeditionRunState {
   /** 생성 seed와 후보 자체를 함께 저장해 앱 재실행으로 제안을 다시 뽑지 못하게 한다. */
   pendingAugmentReward: { nodeId: string; seed: string; round: number; totalRounds: number; offers: ExpeditionAugmentOffer[] } | null;
   pendingRewards: Record<string, number>;
-  /** 마지막 서버 완료 응답의 증가분과 상한을 재접속 후에도 HUD에 보여 준다. */
-  lastNodeRewards: { nodeId: string; rewards: Record<string, number>; cappedCurrencies: string[] } | null;
+  /** 마지막 서버 완료 응답의 증가분·확정 점수·상한을 재접속 후에도 HUD에 보여 준다. */
+  lastNodeRewards: { nodeId: string; nodeScore: number; rewards: Record<string, number>; cappedCurrencies: string[] } | null;
   bossDamage: number;
   /** 보스가 아닌 전투 노드가 서버에서 확정될 때 정확히 한 번 더하는 이번 런의 누적 점수다. */
   normalNodeScoreTotal: number;

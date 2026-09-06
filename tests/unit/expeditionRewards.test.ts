@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { calculateExpeditionNodeRewards, calculateExpeditionNormalNodeScore, calculateExpeditionRunScore, expeditionRewardRandom, expeditionRewardRule, generateExpeditionAugmentOffers, validateExpeditionAugmentChoice } from "../../src/core/expeditionRewards";
+import { calculateExpeditionNodeRewards, calculateExpeditionRunScore, expeditionRewardRandom, expeditionRewardRule, generateExpeditionAugmentOffers, validateExpeditionAugmentChoice } from "../../src/core/expeditionRewards";
+import { calculateExpeditionNodeScore } from "../../src/core/expeditionScore";
 import { EXPEDITION_NODE_REWARD_BALANCE } from "../../src/data/expedition";
 import { EXPEDITION_AUGMENTS } from "../../src/data/expeditionAugments";
 import { ExpeditionManager } from "../../src/managers/ExpeditionManager";
@@ -14,13 +15,25 @@ describe("expedition augment rewards", () => {
     expect(() => calculateExpeditionNodeRewards({ nodeType: "normal", accumulated: { hacked: 1 }, random: () => 0 })).toThrow("INVALID_EXPEDITION_REWARD_STATE");
   });
 
-  it("여러 일반 노드 점수와 폰토스 피해를 재화와 무관한 한 판 점수로 합산한다", () => {
-    const first = calculateExpeditionNormalNodeScore({ floor: 1, relicHp: [100, 90, 80] });
-    const second = calculateExpeditionNormalNodeScore({ floor: 2, relicHp: [80, 70, 60] });
+  it("여러 확정 노드 점수와 폰토스 피해를 한 판 점수로 합산한다", () => {
+    const first = calculateExpeditionNodeScore({ floor: 1, nodeType: "normal", remainingHpPercent: 90, cleared: true });
+    const second = calculateExpeditionNodeScore({ floor: 2, nodeType: "normal", remainingHpPercent: 70, cleared: true });
     const score = calculateExpeditionRunScore({ normalNodeScoreTotal: first + second, bossDamageScore: 12_345 });
     expect(score).toEqual({ normalNodeScoreTotal: first + second, bossDamageScore: 12_345, runScore: first + second + 12_345 });
-    // 전리품 수량이 달라도 순수 점수 공식에는 재화 객체가 들어갈 자리가 없다.
-    expect(calculateExpeditionNormalNodeScore({ floor: 1, relicHp: [100, 90, 80] })).toBe(first);
+  });
+
+  it("층·종류·잔여 HP 경계만으로 점수를 계산하고 재화 RNG를 입력받지 않는다", () => {
+    // 1층 100%의 기준 점수는 4,000점이며 위험한 노드만 단일 밸런스 배율을 적용한다.
+    expect(calculateExpeditionNodeScore({ floor: 1, nodeType: "normal", remainingHpPercent: 100, cleared: true })).toBe(4_000);
+    expect(calculateExpeditionNodeScore({ floor: 2, nodeType: "elite", remainingHpPercent: 50, cleared: true })).toBe(5_250);
+    expect(calculateExpeditionNodeScore({ floor: 2, nodeType: "horde", remainingHpPercent: 50, cleared: true })).toBe(4_375);
+    expect(calculateExpeditionNodeScore({ floor: 20, nodeType: "boss", remainingHpPercent: 100, cleared: true })).toBe(0);
+  });
+
+  it("전멸·미클리어와 서버가 거부해야 할 HP·층 경계는 0점이다", () => {
+    expect(calculateExpeditionNodeScore({ floor: 1, nodeType: "normal", remainingHpPercent: 0, cleared: false })).toBe(0);
+    expect(calculateExpeditionNodeScore({ floor: 1, nodeType: "normal", remainingHpPercent: 101, cleared: true })).toBe(0);
+    expect(calculateExpeditionNodeScore({ floor: 0, nodeType: "normal", remainingHpPercent: 100, cleared: true })).toBe(0);
   });
 
   it("보물은 보석을 보장하고 증강을 제공하지 않는다", () => {

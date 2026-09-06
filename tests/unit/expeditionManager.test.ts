@@ -160,7 +160,7 @@ describe("ExpeditionManager", () => {
     expect(state.expedition.run!.relics.every(({ currentHp, alive }) => currentHp === 0 && !alive)).toBe(true);
   });
 
-  it("여러 일반 노드 점수를 합산하고 같은 노드 재시도는 다시 더하지 않는다", () => {
+  it("클라이언트 HP 헬퍼는 일반 노드 점수를 만들지 않고 같은 노드 재시도도 거절한다", () => {
     const state = createDefaultSession();
     const manager = new ExpeditionManager(state, { save: vi.fn() }, () => new Date("2026-08-25T12:00:00Z"));
     manager.start(["anky", "rex", "spino"]);
@@ -169,11 +169,11 @@ describe("ExpeditionManager", () => {
     expect(manager.completeBattle(first.id, results)).toBe(true);
     const second = state.expedition.run!.nodes.find(({ id }) => first.successorIds.includes(id))!;
     expect(manager.completeBattle(second.id, results)).toBe(true);
-    const expected = (first.floor * 1_000 + 3_000) + (second.floor * 1_000 + 3_000);
-    expect(state.expedition.run!.normalNodeScoreTotal).toBe(expected);
-    expect(state.expedition.run!.runScore).toBe(expected);
+    // 확정 점수는 서버 완료 응답만 반영하므로 로컬 전투 결과만으로는 증가하지 않는다.
+    expect(state.expedition.run!.normalNodeScoreTotal).toBe(0);
+    expect(state.expedition.run!.runScore).toBe(0);
     expect(manager.completeBattle(second.id, results)).toBe(false);
-    expect(state.expedition.run!.normalNodeScoreTotal).toBe(expected);
+    expect(state.expedition.run!.normalNodeScoreTotal).toBe(0);
   });
 
   it("보스 제출과 정산 ID를 전투 진입 전에 한 번만 저장한다", () => {

@@ -1,6 +1,6 @@
 import { generateExpeditionMap } from "../core/expeditionMap";
 import { applyExpeditionAfterBattleHeal, applyExpeditionRest, expeditionAfterBattleHealPercent } from "../core/expeditionAugments";
-import { calculateExpeditionNormalNodeScore, calculateExpeditionRunScore, expeditionRewardRandom, expeditionRewardRule, generateExpeditionAugmentOffers, validateExpeditionAugmentChoice, type ExpeditionAugmentSelection } from "../core/expeditionRewards";
+import { calculateExpeditionRunScore, expeditionRewardRandom, expeditionRewardRule, generateExpeditionAugmentOffers, validateExpeditionAugmentChoice, type ExpeditionAugmentSelection } from "../core/expeditionRewards";
 import type { ExpeditionNodeType } from "../core/expeditionMap";
 import type { SkirmishRelicResult } from "../core/skirmish";
 import { EXPEDITION_AUGMENT_IDS, EXPEDITION_REST_RULES, EXPEDITION_WEEKLY_POLICY } from "../data/expedition";
@@ -120,18 +120,17 @@ export class ExpeditionManager {
   }
 
   /** 도달한 노드의 결과만 반영하며 씬이 HP·보상·점수를 직접 쓸 필요가 없게 한다. */
-  completeNode(nodeId: string, update: { relicHp: readonly number[]; augmentId?: string; bossDamage?: number; score?: number }): boolean {
+  completeNode(nodeId: string, update: { relicHp: readonly number[]; augmentId?: string; bossDamage?: number }): boolean {
     const run = this.state.expedition.run;
     const node = run?.nodes.find(({ id }) => id === nodeId);
     if (!run || run.settled || !node || run.visitedNodeIds.includes(nodeId) || (run.currentNodeId !== null && !run.nodes.find(({ id }) => id === run.currentNodeId)?.successorIds.includes(nodeId)) || update.relicHp.length !== 3) return false;
     if (update.augmentId && !EXPEDITION_AUGMENT_IDS.includes(update.augmentId as never)) return false;
-    if (update.relicHp.some((hp) => !Number.isFinite(hp) || hp < 0) || [update.bossDamage ?? 0, update.score ?? 0].some((value) => !Number.isFinite(value) || value < 0)) return false;
+    if (update.relicHp.some((hp) => !Number.isFinite(hp) || hp < 0) || !Number.isFinite(update.bossDamage ?? 0) || (update.bossDamage ?? 0) < 0) return false;
     const next = structuredClone(run); next.currentNodeId = nodeId; next.visitedNodeIds.push(nodeId);
     next.relics.forEach((relic, index) => { relic.currentHp = update.relicHp[index]; relic.alive = relic.currentHp > 0; });
     if (update.augmentId && !next.selectedAugmentIds.includes(update.augmentId)) next.selectedAugmentIds.push(update.augmentId);
-    // 방문 표식과 같은 commit에서 노드 점수를 한 번만 누적한다. 보스 재응답은 누적이 아니라 확정값이다.
-    if (node.type === "boss") next.bossDamageScore = Math.max(next.bossDamageScore, update.bossDamage ?? update.score ?? 0);
-    else next.normalNodeScoreTotal += update.score ?? 0;
+    // 클라이언트 경계는 일반 점수를 만들지 않는다. 별도 제출로 검증된 보스 값만 확정값으로 보존한다.
+    if (node.type === "boss") next.bossDamageScore = Math.max(next.bossDamageScore, update.bossDamage ?? 0);
     const score = calculateExpeditionRunScore(next);
     next.bossDamage = score.bossDamageScore; next.runScore = score.runScore; next.bestScore = score.runScore;
     // 마지막 생존자가 쓰러지면 해당 전투 결과와 함께 런도 즉시 종료 상태로 확정한다.
@@ -155,11 +154,9 @@ export class ExpeditionManager {
     const healPercent = expeditionAfterBattleHealPercent(run.selectedAugments);
     // 결과 순서 검증 뒤 만든 회복 스냅샷을 completeNode가 방문 표식과 같은 commit으로 저장한다.
     const healed = applyExpeditionAfterBattleHeal(results, healPercent);
-    // 점수는 결과 DTO와 서버 생성 맵의 층만으로 계산해 씬이 임의 점수를 주입하지 못하게 한다.
     const relicHp = healed.map(({ currentHp }) => currentHp);
-    // 보스 피해는 제출 API가 확정하므로 일반 전투 노드만 이 순수 공식으로 누적한다.
-    const score = node.type === "boss" ? 0 : calculateExpeditionNormalNodeScore({ floor: node.floor, relicHp });
-    return this.completeNode(nodeId, { relicHp, score });
+    // 이 로컬 상태 헬퍼는 HP만 반영한다. 일반 노드 점수는 완료 API 응답을 저장하는 서버만 확정한다.
+    return this.completeNode(nodeId, { relicHp });
   }
 
   /** 보스를 누르는 순간 두 멱등 키를 먼저 저장해 어느 비동기 경계에서 종료돼도 복원한다. */

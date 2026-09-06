@@ -30,6 +30,7 @@ RELICS = {
     "char006": "mette",
     "char007": "stella",
     "char008": "tia",
+    "char009": "meron",
     "char010": "pachi",
     "char011": "maki",
     "char012": "keris",

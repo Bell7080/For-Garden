@@ -7,7 +7,7 @@ import type { Fighter } from "../core/skirmish";
  * 겹 수와 남은 시간을 여기서 한 번만 만들고 둘 다 이 목록만 그린다. Phaser를 들여오지 않아
  * 순서·색·문구를 테스트가 그대로 고정할 수 있다.
  */
-export type UnitStatusId = "stun" | "frozen" | "frenzy" | "taunt" | "bleed" | "poison" | "curse" | "chill" | "overpaint" | "butcher" | "vandalism";
+export type UnitStatusId = "shell" | "stun" | "frozen" | "frenzy" | "taunt" | "bleed" | "poison" | "curse" | "chill" | "overpaint" | "butcher" | "vandalism";
 
 export interface UnitStatusView {
   id: UnitStatusId;
@@ -26,6 +26,8 @@ export interface UnitStatusView {
 
 /** 상태별 색. 피해 수치의 디버프 색과 같은 계열을 쓴다. */
 export const UNIT_STATUS_COLOR: Readonly<Record<UnitStatusId, number>> = {
+  // 보호막 시각 효과와 같은 청록 계열을 사용해 조가비 소비 결과가 한 자원으로 읽히게 한다.
+  shell: 0x62c6d8,
   stun: 0xf2c744,
   frozen: 0x6fd0f2,
   frenzy: 0xa8406b,
@@ -52,6 +54,15 @@ function seconds(value: number): string {
  */
 export function unitStatusViews(fighter: Fighter): UnitStatusView[] {
   const views: UnitStatusView[] = [];
+  if (fighter.shellGuard) {
+    const shell = fighter.shellGuard;
+    const maxStacks = fighter.def.passive.shellGuard?.maxStacks ?? shell.stacks;
+    views.push({
+      id: "shell", name: "조가비", color: UNIT_STATUS_COLOR.shell, stacks: shell.stacks,
+      remaining: shell.remaining, total: Math.max(shell.total, shell.remaining),
+      detail: `조가비 ${shell.stacks}/${maxStacks} · ${seconds(shell.remaining)} 남음`,
+    });
+  }
   if (fighter.stunnedFor > 0) {
     views.push({
       id: "stun", name: "기절", color: UNIT_STATUS_COLOR.stun,

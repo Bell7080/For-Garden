@@ -1456,21 +1456,29 @@ export const RELICS: RelicDef[] = [
       lifeSteal: 0,
       ferocityGain: 0,
     },
-    ferocityTrait: { name: "농성", effectId: "damageReduction", reductionPercent: 12 },
+    ferocityTrait: {
+      name: "이번엔 안 숨을 거야!",
+      effectId: "shellResolve",
+      // 폭주 진입 순서는 정화 → 조가비 획득 → 상한 소비이며, ID가 아닌 이 계약만 전투가 읽는다.
+      cleanseAllOnEntry: true,
+      shellStacksOnEntry: 3,
+      shellCooldownSecondsDuringFever: 3,
+    },
     passive: {
       id: "amo-passive",
-      name: "껍질 공명",
-      kind: "painfulElation",
-      iconAssetId: "skill-icon-healing",
-      effectType: "healing",
+      name: "무서운 건 아니거든",
+      kind: "shellGuard",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
       value: 0,
-      elation: { maxStacks: 3, maxHpRegenPercentPerStack: 0.5, seconds: 3 },
-      // 방향에 따른 숨은 감쇠 대신 맞은 사실을 겹으로 보여 주고, 짧은 재생으로 버티게 한다.
-      desc: "피해를 받을 때마다 3초 동안 유지되는 껍질 공명을 쌓아 매초 회복한다.",
+      // 요청 수치의 절반인 자기 6%·아군 3%로 시작해 R 탱커의 반복 보호막 과잉을 막는다.
+      shellGuard: { maxStacks: 3, durationSeconds: 6, cooldownSeconds: 6, selfShieldMaxHpPercent: 6, lowestHpAllyShieldMaxHpPercent: 3 },
+      // 실제 문구는 shellGuard 수치에서 생성하며, 수동 원문은 의도적으로 비워 둔다.
+      desc: "",
     },
     basic: {
       id: "amo-basic",
-      name: "몸통 박치기",
+      name: "껍질로 쿵",
       power: 100,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
@@ -1478,14 +1486,13 @@ export const RELICS: RelicDef[] = [
     },
     ultimate: {
       id: "amo-ult",
-      name: "붕괴 압사",
-      power: 160,
-      iconAssetId: "skill-icon-physical",
-      effectType: "physical",
-      damageType: "physical",
+      name: "다들 내 뒤로!",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
       cost: 100,
-      // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
-      targeting: "single",
+      targeting: "self",
+      // 피해 없이 기존 끌어당김·도발·자기 보호막 경로를 재사용하고 마지막에 조가비 쿨다운만 초기화한다.
+      selfGuard: { tauntSeconds: 5, pull: { radius: 420, distance: 150 }, shieldMaxHpPercent: 25, resetShellGuardCooldown: true },
     },
   },
   {

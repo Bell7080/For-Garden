@@ -232,7 +232,7 @@ export class ExpeditionScene extends Phaser.Scene {
     // 원화는 정보창의 판·스킬 아이콘 아래(1001)에 선다. 더 높이면 스테이지와 달리 원화가
     // 스킬 층 앞으로 튀어나와 아이콘을 가린다.
     this.enemyInfo = new CharacterInfoManager(this, 1001, "enemy");
-    this.enemyPreview = new NodeEnemyPreview(this, { title: "", level: 1, enemies: [], top: EXPEDITION_LAYOUT.map.top, bottom: EXPEDITION_LAYOUT.map.bottom, depth: 20, onEnemyClick: () => undefined });
+    this.enemyPreview = new NodeEnemyPreview(this, { title: "", growth: [], enemies: [], top: EXPEDITION_LAYOUT.map.top, bottom: EXPEDITION_LAYOUT.map.bottom, depth: 20, onEnemyClick: () => undefined });
     // 지도 영역 밖 입력은 편성판 내부가 아닌 경우 현재 노드 선택만 닫는다.
     const dismissOutsideMap = (pointer: Phaser.Input.Pointer): void => {
       const outsideMap = pointer.worldY < EXPEDITION_LAYOUT.map.top || pointer.worldY > EXPEDITION_LAYOUT.map.bottom;
@@ -317,7 +317,9 @@ export class ExpeditionScene extends Phaser.Scene {
       const enemies = getExpeditionEncounterEnemies(node.type, node.floor);
       this.selectedNode = node; this.startButton?.setEnabled(true);
       // 선택 세대가 바뀌면 프리팹이 기존 SD와 늦게 끝난 로드 요청을 함께 폐기한다.
-      this.enemyPreview?.showAt(nodeY, { title: `${node.floor}층 · ${names[node.type]}`, level, enemies, onEnemyClick: (enemy) => this.enemyInfo?.showEnemy(enemy, { level }) });
+      // 원정은 아직 슬롯별 돌파가 없지만 같은 미리보기 계약에 각 슬롯의 성장 상태를 명시한다.
+      const growth = enemies.map(() => ({ level, breakthrough: 0 }));
+      this.enemyPreview?.showAt(nodeY, { title: `${node.floor}층 · ${names[node.type]}`, growth, enemies, onEnemyClick: (enemy) => this.enemyInfo?.showEnemy(enemy, { level }) });
       return;
     }
     this.nodeTransitionPending = true;

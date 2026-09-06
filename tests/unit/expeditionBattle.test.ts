@@ -112,7 +112,8 @@ describe("전투 씬 입력 정규화 회귀", () => {
   });
 
   it("원정 헤더에 선택된 스토리 이름을 표시하지 않는다", () => {
-    const story = { id: "1-5", name: "남아서는 안 되는 이름", enemyLevel: 12 };
+    // 일반 스테이지 헤더는 단일 공용 레벨 대신 슬롯별 성장 스냅샷을 읽는다.
+    const story = { id: "1-5", name: "남아서는 안 되는 이름", enemies: [{ relicId: "a", level: 12, breakthrough: 1 }, { relicId: "b", level: 13, breakthrough: 2 }, { relicId: "c", level: 14, breakthrough: 3 }] } as const;
     expect(battleHeaderText(input("horde"), story)).toBe("원정 1층 · 군집 전투");
     expect(battleHeaderText({ mode: "stage" }, story)).toContain(story.name);
   });

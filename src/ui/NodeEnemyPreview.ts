@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import type { RelicDef } from "../core/types";
+import type { RelicDef, StageEnemyDef } from "../core/types";
 import { setDebugEnemyPreview } from "../debug";
 import { ROLE_LABEL } from "../managers/CharacterInfoManager";
 import { battleAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
@@ -10,7 +10,8 @@ import { anchorEnemyPreview, enemyPreviewColumns, NODE_ENEMY_PREVIEW } from "./n
 
 export interface NodeEnemyPreviewOptions {
   title: string;
-  level: number;
+  /** 렌더된 적과 같은 슬롯 순서의 공개 성장 상태다. */
+  growth: readonly Pick<StageEnemyDef, "level" | "breakthrough">[];
   enemies: readonly RelicDef[];
   top: number;
   bottom: number;
@@ -40,7 +41,7 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
   }
 
   /** 새 노드의 제목·레벨·편성을 원자적으로 갈아 끼우고 노드에 꼬리를 붙인다. */
-  showAt(nodeY: number, options: Partial<Pick<NodeEnemyPreviewOptions, "title" | "level" | "enemies" | "onEnemyClick">> = {}): void {
+  showAt(nodeY: number, options: Partial<Pick<NodeEnemyPreviewOptions, "title" | "growth" | "enemies" | "onEnemyClick">> = {}): void {
     this.options = { ...this.options, ...options };
     this.removeAll(true); this.clearPuppets();
     const generation = ++this.generation;
@@ -49,17 +50,18 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
     const bevel = Math.min(NODE_ENEMY_PREVIEW.width, NODE_ENEMY_PREVIEW.height) * 0.16;
     this.add(drawLayer(this.scene, 0, 0, chipPoints(NODE_ENEMY_PREVIEW.width, NODE_ENEMY_PREVIEW.height, { bevel: { topLeft: bevel, bottomRight: bevel } }), { fill: 0x0b0f15, alpha: 0.92, edge: COLOR.accent, edgeAlpha: 0.55 }));
     this.tail = this.scene.add.graphics(); this.add(this.tail); this.drawTail(above);
-    this.add(this.scene.add.text(-NODE_ENEMY_PREVIEW.width / 2 + bevel * 0.7, -136, `${this.options.title}  ·  적 LV.${this.options.level}`, textStyle({ role: "display", size: 32 })).setOrigin(0, 0));
+    this.add(this.scene.add.text(-NODE_ENEMY_PREVIEW.width / 2 + bevel * 0.7, -136, this.options.title, textStyle({ role: "display", size: 32 })).setOrigin(0, 0));
     this.add(this.scene.add.text(NODE_ENEMY_PREVIEW.width / 2 - 30, -132, "적 편성", textStyle({ role: "emphasis", size: 22, color: COLOR.dangerText })).setOrigin(1, 0));
     this.add(drawHairline(this.scene, 0, -86, NODE_ENEMY_PREVIEW.width - 60, { color: COLOR.accent, alpha: 0.35 }));
     const columns = enemyPreviewColumns(this.options.enemies.length);
     const compact = columns.length > 3;
     const ground = 90;
     this.options.enemies.forEach((enemy, index) => {
+      const growth = this.options.growth[index] ?? { level: 1, breakthrough: 0 };
       const x = columns[index];
       this.add(this.scene.add.ellipse(x, ground + 4, compact ? 112 : 150, 26, COLOR.void, 0.5));
       this.add(this.scene.add.text(x, ground + 14, enemy.name, textStyle({ role: "display", size: compact ? 19 : 24 })).setOrigin(0.5, 0));
-      this.add(this.scene.add.text(x, ground + 42, `${ROLE_LABEL[enemy.role]}  HP ${enemy.stats.hp}`, textStyle({ role: "body", size: compact ? 15 : 19, color: COLOR.inkDim })).setOrigin(0.5, 0));
+      this.add(this.scene.add.text(x, ground + 42, `LV.${growth.level} · 돌파 ${growth.breakthrough}  ${ROLE_LABEL[enemy.role]}  HP ${enemy.stats.hp}`, textStyle({ role: "body", size: compact ? 15 : 19, color: COLOR.inkDim })).setOrigin(0.5, 0));
       const hit = this.scene.add.rectangle(x, ground - 70, compact ? 145 : 230, 250, 0xffffff, 0).setInteractive({ useHandCursor: true });
       hit.on("pointerup", () => this.options.onEnemyClick(enemy)); this.add(hit);
       void this.spawnEnemy(enemy.id, x, ground, compact ? 132 : NODE_ENEMY_PREVIEW.sdHeight, generation);

@@ -359,7 +359,10 @@ export class BattleScene extends Phaser.Scene {
       augmentEffects: expeditionConfig.augmentEffects,
       enemyBodyScale: expeditionConfig.enemyBodyScale,
       ...(this.battleInput.mode === "expeditionBoss" ? { boss: (expeditionConfig as ReturnType<typeof createExpeditionBossSkirmishConfig>).boss } : {}),
-    } : {});
+    } : {
+      // 일반 스테이지의 적도 능력치뿐 아니라 스킬 돌파 효과까지 슬롯별 스냅샷을 사용한다.
+      enemyBreakthroughs: stage.enemies.map(({ breakthrough }) => breakthrough),
+    });
     this.views.clear();
     this.profiles = [];
     this.allyInfoRef = undefined;

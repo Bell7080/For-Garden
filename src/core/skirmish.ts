@@ -361,6 +361,8 @@ export interface CreateSkirmishOptions {
   augmentEffects?: readonly ExpeditionAugmentEffect[];
   /** 적 종류별 크기 표현을 씬이 재해석하지 않도록 입력 모델에서 전달한다. */
   enemyBodyScale?: number;
+  /** 적 슬롯별 돌파 효과를 스테이지 성장 스냅샷 그대로 전투원에게 전달한다. */
+  enemyBreakthroughs?: readonly number[];
   /** 지정한 적 한 명만 불사이며 아군 전멸만 패배 종료가 되는 보스 규칙을 켠다. */
   boss?: { phases: readonly SkirmishBossPhase[]; limitSeconds: number; fighterId?: string };
 }
@@ -768,7 +770,7 @@ export function createSkirmish(
   });
   const bossFighterId = options.boss?.fighterId ?? "enemy-0";
   const enemies = enemyDefs.map((def, i) => {
-    const fighter = makeFighter(def, "enemy", i, enemySpots[i].x, enemySpots[i].y, 0, 0, options.enemyBodyScale ?? 1);
+    const fighter = makeFighter(def, "enemy", i, enemySpots[i].x, enemySpots[i].y, 0, options.enemyBreakthroughs?.[i] ?? 0, options.enemyBodyScale ?? 1);
     // 적 편 전체가 아니라 계약에 지정된 한 개체만 불사 경계를 가진다.
     fighter.immortal = options.boss !== undefined && fighter.id === bossFighterId;
     return fighter;

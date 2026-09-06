@@ -1082,11 +1082,20 @@ interface StageBase {
   prerequisiteStageIds: readonly string[];
 }
 
-/** 전투 노드만 편성, 적 레벨, 전투 보상을 소유한다. */
+/** 스테이지에 출전하는 영구 캐릭터 정의를 플레이어에게도 공개된 성장 상태와 연결한다. */
+export interface StageEnemyDef {
+  /** `src/data/relics.ts`에 정의된, 스테이지가 덮어쓸 수 없는 캐릭터 ID다. */
+  relicId: string;
+  /** 플레이어 렐릭과 같은 레벨 성장 공식을 적용할 정수 레벨이다. */
+  level: number;
+  /** 플레이어 렐릭과 같은 한계 돌파 공식을 적용할 정수 단계다. */
+  breakthrough: number;
+}
+
+/** 전투 노드만 적별 성장 스냅샷과 전투 보상을 소유한다. */
 export interface BattleStageDef extends StageBase {
   kind: "battle";
-  enemies: [string, string, string];
-  enemyLevel: number;
+  enemies: [StageEnemyDef, StageEnemyDef, StageEnemyDef];
   rewards: { firstClearCheesecake: number; repeatClearCheesecake: number };
 }
 

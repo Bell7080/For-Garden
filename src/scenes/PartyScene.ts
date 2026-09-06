@@ -148,7 +148,7 @@ export class PartyScene extends Phaser.Scene {
       .text(cx, 132, "렐릭 3명 편성 — 고른 순서대로 왼쪽부터 선다", textStyle({ role: "body", size: 28, color: COLOR.inkDim }))
       .setOrigin(0.5, 0);
 
-    this.buildPreview(this.enemies, stage.enemyLevel);
+    this.buildPreview(this.enemies, stage.enemies);
     this.buildRoster();
 
     // 그리드 위 우측 — 고르는 손이 그리드에 머무는 동안 곧바로 닿는 자리다. 그리드 오른쪽
@@ -221,7 +221,7 @@ export class PartyScene extends Phaser.Scene {
   }
 
   /** 위쪽 시작 배치 미리보기. 적은 위에, 아군은 아래에 나란히 선다. */
-  private buildPreview(enemies: readonly RelicDef[], stageLevel: number): void {
+  private buildPreview(enemies: readonly RelicDef[], growth: readonly { level: number; breakthrough: number }[]): void {
     this.add
       .text(BASE_WIDTH - 40, 210, "적", textStyle({ role: "emphasis", size: 30, color: COLOR.dangerText }))
       .setOrigin(1, 0);
@@ -239,6 +239,7 @@ export class PartyScene extends Phaser.Scene {
       .setAlpha(0.45);
 
     enemies.forEach((def, slot) => {
+      const snapshot = growth[slot] ?? { level: 1, breakthrough: 0 };
       const x = PREVIEW_COLUMNS[slot];
       // 받침은 SD(-10)보다 뒤에 둬야 발을 덮지 않는다.
       this.add.ellipse(x, ENEMY_ROW + 4, 190, 34, COLOR.void, 0.45).setDepth(-12);
@@ -246,10 +247,10 @@ export class PartyScene extends Phaser.Scene {
 
       this.add.text(x, ENEMY_ROW + 26, def.name, textStyle({ role: "display", size: 28 })).setOrigin(0.5, 0);
       this.add
-        .text(x, ENEMY_ROW + 62, `${ELEMENT_LABEL[def.element]} · ${ROLE_LABEL[def.role]}  HP ${def.stats.hp}`, textStyle({ role: "body", size: 22, color: COLOR.inkDim }))
+        .text(x, ENEMY_ROW + 62, `LV.${snapshot.level} · 돌파 ${snapshot.breakthrough}  ${ELEMENT_LABEL[def.element]} · ${ROLE_LABEL[def.role]}  HP ${def.stats.hp}`, textStyle({ role: "body", size: 20, color: COLOR.inkDim }))
         .setOrigin(0.5, 0);
       // SD 자체는 그림이라 입력을 받지 않는다. 상세는 옆의 ?로 연다.
-      addHelpBadge(this, x + 96, ENEMY_ROW - PREVIEW_HEIGHT + 10, () => this.enemyInfo.showEnemy(def, { level: stageLevel }), 24);
+      addHelpBadge(this, x + 96, ENEMY_ROW - PREVIEW_HEIGHT + 10, () => this.enemyInfo.showEnemy(def, { level: snapshot.level }), 24);
     });
 
     this.add.text(40, FRONT_LINE + 28, "아군", textStyle({ role: "emphasis", size: 30 })).setOrigin(0, 0);

@@ -78,7 +78,7 @@ export class StageMapScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setDepth(CHROME_DEPTH);
 
-    this.enemyPreview = new NodeEnemyPreview(this, { title: "", level: 1, enemies: [], top: WINDOW.top - 40, bottom: WINDOW.bottom + 40, onEnemyClick: () => undefined });
+    this.enemyPreview = new NodeEnemyPreview(this, { title: "", growth: [], enemies: [], top: WINDOW.top - 40, bottom: WINDOW.bottom + 40, onEnemyClick: () => undefined });
 
     this.sortieButton = new Button(this, cx, BASE_HEIGHT - 180, {
       width: 340,
@@ -281,9 +281,13 @@ export class StageMapScene extends Phaser.Scene {
     this.sortieButton.setLabel("출  전");
     const enemies = getStageEnemies(stage);
     this.enemyPreview.showAt(scroll - index * NODE_GAP, {
-      title: `${stage.id}  ${stage.name}`, level: stage.enemyLevel, enemies,
+      title: `${stage.id}  ${stage.name}`, growth: stage.enemies, enemies,
       // 전투 전에도 전투와 동일한 공용 적 정보창으로 연결한다.
-      onEnemyClick: (enemy) => this.info.showEnemy(enemy, { level: stage.enemyLevel }),
+      onEnemyClick: (enemy) => {
+        // 복사본 ID와 일치하는 슬롯의 개별 성장 상태를 상세 정보에도 전달한다.
+        const growth = stage.enemies[enemies.indexOf(enemy)];
+        this.info.showEnemy(enemy, { level: growth?.level ?? 1 });
+      },
     });
   }
 

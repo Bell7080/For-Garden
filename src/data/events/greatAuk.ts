@@ -8,8 +8,8 @@ const GREAT_AUK_SHORE: BattleStageDef = {
   kind: "battle",
   id: "event-great-auk-shore",
   name: "큰바다쇠오리 해안 발굴지",
-  enemies: [...FIXED_STAGE_ENEMIES],
-  enemyLevel: 4,
+  // 이벤트도 캐릭터 정의를 덮어쓰지 않고 플레이어와 같은 성장 축만 고정한다.
+  enemies: FIXED_STAGE_ENEMIES.map((relicId) => ({ relicId, level: 4, breakthrough: 0 })) as BattleStageDef["enemies"],
   rewards: { firstClearCheesecake: 60, repeatClearCheesecake: 15 },
   prerequisiteStageIds: [],
 };

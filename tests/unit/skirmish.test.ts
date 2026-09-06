@@ -1974,15 +1974,25 @@ describe("폰토스 실전 스킬과 심해 압력", () => {
     expect(rex.hp).toBeGreaterThan(rex.maxHp / 2);
   });
 
-  it("는 시간이 흐를수록 리미트 안전 반경을 좁히고 폰토스를 전장 중앙으로 접근시킨다", () => {
+  it("는 판정 없는 안전 원 없이 단계 전환·예고·제한 시간 도달을 시간 경계에서 고정한다", () => {
     const state = createSkirmish([getRelic("anky")], [getRelic("pontos")], ARENA, {}, {}, {
       boss: { phases: [{ startsAt: 0, damagePerSecond: 0, label: "관측" }, { startsAt: 1, damagePerSecond: 0, label: "해일" }], limitSeconds: 10 },
     });
-    const pontos = state.fighters[1]; pontos.x = ARENA.left; pontos.stunnedFor = 999; pontos.attackCooldown = 999; state.fighters[0].attackCooldown = 999;
-    const startRadius = state.boss!.pressureRadius; const startX = pontos.x;
-    stepSkirmish(state, 0.25);
-    expect(state.boss!.pressureRadius).toBeLessThan(startRadius);
-    expect(Math.abs(pontos.x - (ARENA.left + ARENA.right) / 2)).toBeLessThan(Math.abs(startX - (ARENA.left + ARENA.right) / 2));
+    for (const fighter of state.fighters) { fighter.stunnedFor = 999; fighter.attackCooldown = 999; }
+    // 코어의 프레임 공백 상한(0.25초)을 넘기지 않고 원하는 시간만큼 실제로 전진시킨다.
+    const advance = (seconds: number): void => {
+      for (let remaining = seconds; remaining > 0;) {
+        const slice = Math.min(0.25, remaining); stepSkirmish(state, slice); remaining -= slice;
+      }
+    };
+    advance(0.99);
+    expect(state.boss).toMatchObject({ phaseIndex: 0, tideWarning: true, limitReached: false });
+    // 10ms 분할의 부동소수점 합이 경계 바로 아래에 머무는 경우를 피하고 실제 경계를 확실히 넘긴다.
+    advance(0.02);
+    expect(state.boss).toMatchObject({ phaseIndex: 1, tideWarning: false, limitReached: false });
+    advance(9);
+    expect(state.boss).toMatchObject({ phaseIndex: 1, limitReached: true });
+    expect(state.boss!.survivedFor).toBeCloseTo(10.01);
   });
 });
 

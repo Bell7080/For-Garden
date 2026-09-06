@@ -77,6 +77,7 @@ import { ensureEffectTextures } from "../ui/effectTextures";
 import { attackDamagePopupRequest, type DamageFlavor, type DebuffId } from "../ui/damageNumbers";
 import { openBattleBuffListPopup, openBattleBuffPopup, type BattleBuffListItem, type BattleBuffPopupController } from "../ui/BattleBuffPopup";
 import type { ActiveCombatDisplayEffect } from "../core/combatEffects";
+import { stepBattleScoreMotion } from "../ui/battleScoreMotion";
 
 /**
  * 여섯이 돌아다닐 수 있는 범위.
@@ -258,10 +259,12 @@ export class BattleScene extends Phaser.Scene {
   /** 보스 제출에는 코어가 실제로 낸 공격 종류와 시각만 기록하며 피해 숫자는 넣지 않는다. */
   private bossActions: ExpeditionBossAction[] = [];
   private bossScoreLabel?: Phaser.GameObjects.Text;
+  /** 중앙 총점이 서버/코어 목표값을 부드럽게 따라갈 때 사용하는 화면 전용 정수다. */
+  private bossScoreShown = 0;
+  private bossScoreTarget = 0;
+  private bossScoreScale = 1;
   private bossPhaseLabel?: Phaser.GameObjects.Text;
   private bossBestLabel?: Phaser.GameObjects.Text;
-  /** 코어가 계산한 리미트 경고선만 그리며 범위나 시간을 씬에서 재계산하지 않는다. */
-  private bossWarningLine?: Phaser.GameObjects.Graphics;
   private spawned = false;
   /** 마지막으로 시뮬레이션을 굴린 실제 시각(ms). */
   private lastStepAt = 0;
@@ -311,15 +314,14 @@ export class BattleScene extends Phaser.Scene {
     super("battle");
   }
 
-  /** 기존 상단 안전 영역에 보스 점수·단계·최고 기록을 고정하고 전장 입력을 가리지 않는다. */
+  /** 중앙에는 런 총점을, 좌측에는 총점을 구성하는 일반 노드·보스 피해 상세를 둔다. */
   private buildBossScoreHud(): void {
-    this.bossScoreLabel = this.add.text(42, 92, "관측 피해 0", textStyle({ role: "display", size: 38, color: COLOR.sortieText })).setDepth(90);
+    this.bossScoreShown = expeditionManager.status().run?.normalNodeScoreTotal ?? 0;
+    this.bossScoreTarget = this.bossScoreShown;
+    this.bossScoreScale = 1;
+    this.bossScoreLabel = this.add.text(BASE_WIDTH / 2, 78, this.bossScoreShown.toLocaleString(), textStyle({ role: "display", size: 58, color: COLOR.sortieText })).setOrigin(0.5, 0).setDepth(90);
     this.bossPhaseLabel = this.add.text(42, 140, "관측 · 00:00", textStyle({ role: "emphasis", size: 25, color: COLOR.accentText })).setDepth(90);
-    this.bossBestLabel = this.add.text(42, 180, "주간 최고 0", textStyle({ role: "emphasis", size: 25, color: COLOR.ink })).setDepth(90);
-    // 선은 전투 좌표에 놓되 실제 리미트 판정은 전적으로 코어 상태가 소유한다.
-    this.bossWarningLine = this.add.graphics().setDepth(35);
-    // 최고 기록은 서버 스냅샷만 표시하고 실패하면 0 표기를 유지해 로컬 추정치를 권한으로 쓰지 않는다.
-    void gameApi.getExpeditionWeeklyBest().then(({ bestScore }) => this.bossBestLabel?.setText(`주간 최고 ${bestScore.toLocaleString()}`));
+    this.bossBestLabel = this.add.text(42, 180, "일반 스테이지 0  ·  보스전 0", textStyle({ role: "emphasis", size: 25, color: COLOR.ink })).setDepth(90);
   }
 
   /** Phaser scene data를 명시 DTO로 받아 일반 스테이지와 원정 결과 경계를 분리한다. */
@@ -797,12 +799,18 @@ export class BattleScene extends Phaser.Scene {
     const events = stepSkirmish(this.state, dt * this.battleSpeed, () => Math.random());
     if (this.state.boss) {
       const boss = this.state.boss; const phase = boss.phases[boss.phaseIndex];
-      this.bossScoreLabel?.setText(`관측 피해 ${boss.score.toLocaleString()}`);
+      const normalScore = expeditionManager.status().run?.normalNodeScoreTotal ?? 0;
+      const previousTarget = this.bossScoreTarget;
+      this.bossScoreTarget = normalScore + boss.score;
+      const scoreMotion = stepBattleScoreMotion(this.bossScoreShown, this.bossScoreTarget, elapsed);
+      this.bossScoreShown = scoreMotion.shown;
+      // 새 타격의 크기로 즉시 부풀고, 다음 프레임부터 원래 크기로 가라앉아 강한 공격을 숫자 무게로 보여 준다.
+      this.bossScoreScale = Math.max(1, this.bossScoreScale - elapsed / 260);
+      if (this.bossScoreTarget > previousTarget) this.bossScoreScale = Math.max(this.bossScoreScale, 1 + scoreMotion.punch);
+      this.bossScoreLabel?.setText(this.bossScoreShown.toLocaleString()).setScale(this.bossScoreScale);
       this.bossPhaseLabel?.setText(`${phase.label}${boss.tideWarning ? " · 해일 예고" : boss.limitReached ? " · LIMIT" : ""} · ${String(Math.floor(boss.survivedFor / 60)).padStart(2, "0")}:${String(Math.floor(boss.survivedFor) % 60).padStart(2, "0")}`);
-      const centerX = (this.state.arena.left + this.state.arena.right) / 2;
-      const centerY = (this.state.arena.top + this.state.arena.bottom) / 2;
-      this.bossWarningLine?.clear().lineStyle(boss.tideWarning ? 6 : 3, boss.tideWarning ? 0xff8a63 : 0x59d9ff, boss.tideWarning ? 0.9 : 0.42)
-        .strokeCircle(centerX, centerY, boss.pressureRadius);
+      // 좌측 기존 정보 영역은 총점과 중복하지 않고 런을 이루는 두 점수의 세부값만 짧게 표시한다.
+      this.bossBestLabel?.setText(`일반 스테이지 ${normalScore.toLocaleString()}  ·  보스전 ${boss.score.toLocaleString()}`);
     }
     // 상태 종료와 좌표를 먼저 Puppet에 동기화한 뒤 공격 사건을 재생해야, 기절이 풀린 같은 스텝의
     // 공격 모션을 뒤늦은 idle 전환이 덮어쓰지 않는다.

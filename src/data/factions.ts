@@ -20,6 +20,10 @@ export interface SquadDef {
   latin: string;
   /** 그 스쿼드가 맡은 일. 한 줄로 끊어 소속을 처음 보는 사람도 무엇 하는 무리인지 알게 한다. */
   duty: string;
+  /** 플레이어 측 자치 스쿼드인지, 전투에서 마주치는 적대 세력인지 구분한다. */
+  allegiance: "ally" | "enemy";
+  /** 아직 엠블럼 원화가 전달되지 않은 세력은 false로 두어 로더가 없는 파일을 요청하지 않게 한다. */
+  hasEmblem: boolean;
   /**
    * 그 스쿼드가 주인공(연구원)을 부르는 말.
    *
@@ -33,27 +37,46 @@ export const SQUADS: Readonly<Record<SquadId, SquadDef>> = {
   fang: {
     id: "fang", name: "앱솔루트 팽", latin: "Absolute Fang",
     duty: "최전선 결전 및 전술 제압",
+    allegiance: "ally", hasEmblem: true,
     researcherTitles: ["연구원", "마스터", "보스"],
   },
   gear: {
     id: "gear", name: "나이트 기어", latin: "Night Gear",
     duty: "외곽 잠입 및 잔해 인양",
+    allegiance: "ally", hasEmblem: true,
     researcherTitles: ["연구원님", "당신"],
   },
   eye: {
     id: "eye", name: "시그널 아이", latin: "Signal Eye",
     duty: "고공 통신 및 광역 관측",
+    allegiance: "ally", hasEmblem: true,
     researcherTitles: ["선배", "담당관", "오더"],
   },
   rune: {
     id: "rune", name: "사일런트 룬", latin: "Silent Rune",
     duty: "DNA 공명 안정 및 심신 케어",
+    allegiance: "ally", hasEmblem: true,
     researcherTitles: ["선생", "연구원 씨", "아가"],
   },
   rogue: {
     id: "rogue", name: "쁘띠 로그", latin: "Petit Rogue",
     duty: "자율 탐험 및 보급 회수",
+    allegiance: "ally", hasEmblem: true,
     researcherTitles: ["대장님", "선생님", "연구원님"],
+  },
+  annihilation: {
+    id: "annihilation", name: "공멸", latin: "Annihilation",
+    duty: "복원체 침투 및 이터널 시티 파괴",
+    allegiance: "enemy", hasEmblem: false,
+    // 기록이 열린 세 개체는 적대 관계에서도 주인공의 직책을 그대로 불러 관계의 거리를 드러낸다.
+    researcherTitles: ["연구원"],
+  },
+  "abyssal-crown": {
+    id: "abyssal-crown", name: "심연 왕관", latin: "Abyssal Crown",
+    duty: "심해 영역 침식 및 압력 폭주",
+    allegiance: "enemy", hasEmblem: false,
+    // 폰토스의 관계 기록은 봉인 상태라 호칭을 아직 공개하지 않는다.
+    researcherTitles: [],
   },
 };
 
@@ -64,4 +87,5 @@ export function squadEmblemKey(squad: SquadId): string {
 
 /** 로딩 단계가 읽는 목록. 스쿼드 하나에 엠블럼 한 장이다. */
 export const SQUAD_EMBLEM_ASSETS: ReadonlyArray<readonly [string, string]> = (Object.keys(SQUADS) as SquadId[])
+  .filter((squad) => SQUADS[squad].hasEmblem)
   .map((squad) => [squadEmblemKey(squad), `/sprites/factions/${squad}.webp`] as const);

@@ -2,8 +2,51 @@ import { describe, expect, it } from "vitest";
 import { combatPower } from "../../src/core/combatPower";
 import { applyLevelGrowth, RELIC_LEVEL_CAP } from "../../src/core/relicProgression";
 import { COMMON_SECONDARY_STATS, RARITY_LEVEL_GROWTH, RARITY_ORDER, RARITY_STAT_BAND, withinRarityBand } from "../../src/core/rarityScaling";
-import { PLAYABLE_RELICS } from "../../src/data/relics";
-import type { Stats } from "../../src/core/types";
+import { getRelic, PLAYABLE_RELICS, RELICS } from "../../src/data/relics";
+import type { RelicDef, Stats } from "../../src/core/types";
+
+/** 상속 없이 각 정체성이 직접 소유해야 하는 전투 정의의 최상위 필드다. */
+const REQUIRED_IDENTITY_FIELDS = ["stats", "passive", "ferocityTrait", "basic", "ultimate", "element", "role"] as const;
+
+/** 선택 관계가 있어도 완전한 독립 정의인지 own-property 기준으로 검사한다. */
+function expectCompleteIdentity(relic: RelicDef): void {
+  for (const field of REQUIRED_IDENTITY_FIELDS) {
+    expect(Object.hasOwn(relic, field), `${relic.id} owns ${field}`).toBe(true);
+    expect(relic[field], `${relic.id} defines ${field}`).toBeDefined();
+  }
+}
+
+describe("적 및 강화형 캐릭터 정체성", () => {
+  it("은 적 전용 캐릭터도 필수 능력치와 스킬을 완전하게 직접 소유한다", () => {
+    const enemies = RELICS.filter((relic) => relic.enemyOnly === true);
+    expect(enemies.map(({ id }) => id)).toContain("husk-koma");
+    for (const enemy of enemies) expectCompleteIdentity(enemy);
+  });
+
+  it("은 baseIdentityId가 있어도 원본 정의를 런타임에서 합성하지 않는다", () => {
+    const base = getRelic("husk-shell");
+    // 실제 강화형 추가 전에도 계약을 검증하는 완전한 예제다. spread는 작성 편의를 위한 테스트
+    // 준비일 뿐이며, own-property 검사 대상 필드는 모두 강화형 객체가 직접 소유한다.
+    const enraged: RelicDef = {
+      ...base,
+      id: "husk-shell-enraged",
+      baseIdentityId: base.id,
+      name: "분노 아모",
+      stats: { ...base.stats, atk: base.stats.atk + 20 },
+      passive: { ...base.passive, id: "husk-shell-enraged-passive" },
+      ferocityTrait: { ...base.ferocityTrait },
+      basic: { ...base.basic, id: "husk-shell-enraged-basic" },
+      ultimate: { ...base.ultimate, id: "husk-shell-enraged-ult" },
+    };
+
+    expectCompleteIdentity(enraged);
+    expect(enraged.baseIdentityId).toBe(base.id);
+    expect(enraged.stats).not.toBe(base.stats);
+    expect(enraged.basic).not.toBe(base.basic);
+    // 관계 필드는 조회 별칭이 아니다. 등록되지 않은 강화형 ID는 원본으로 폴백하지 않는다.
+    expect(() => getRelic(enraged.id)).toThrow("알 수 없는 렐릭 id");
+  });
+});
 
 describe("등급별 태생 능력치", () => {
   it("의 세 띠는 겹치지 않고 R → SR → SSR 순서로 올라간다", () => {

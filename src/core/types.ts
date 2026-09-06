@@ -990,6 +990,17 @@ export interface ExcavationTrait {
 /** 렐릭 한 명의 불변 정의. 플레이어별 성장 값은 RelicProgress에만 둔다. */
 export interface RelicDef {
   id: string;
+  /**
+   * 같은 인물의 다른 상태를 도감과 서사에서 연결하는 원본 캐릭터 ID다.
+   *
+   * 관계 메타데이터일 뿐이며 전투 정의를 상속하거나 합성하는 키로 사용하지 않는다. 이 필드를
+   * 가진 강화형도 stats와 모든 스킬을 자기 정의에 완전하게 소유해야 한다.
+   */
+  baseIdentityId?: string;
+  /** 여러 상태를 하나의 도감 계보로 묶는 선택적 식별자이며 전투 계산에는 사용하지 않는다. */
+  identityFamilyId?: string;
+  /** 가챠·보유 목록에는 들어가지 않고 적 편성에서만 사용하는 완전한 RelicDef임을 표시한다. */
+  enemyOnly?: true;
   /** 기절 지속 시간을 줄이는 비율(%). 정의하지 않으면 저항이 없고 100 이상이면 면역이다. */
   stunResistancePercent?: number;
   name: string;

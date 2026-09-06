@@ -384,7 +384,8 @@ describe("아군 SD 등록", () => {
     expect(ASSETS_SOURCE).toContain("return ENEMY_SD_ASSETS_BY_ID[relicId] ?? sdAssetFor(relicId);");
   });
 
-  it.each(RELICS.filter((def) => !def.id.startsWith("husk-") && def.id !== "pontos").map((def) => def.id))(
+  // 영구 ID의 철자 대신 캐릭터 정의의 구조화된 적 전용 필드로 아군만 고른다.
+  it.each(RELICS.filter((def) => !def.enemyOnly).map((def) => def.id))(
     "%s의 SD가 표에 등록되어 있다",
     (relicId) => {
       expect(table).toContain(`${relicId}:`);

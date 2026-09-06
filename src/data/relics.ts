@@ -1306,8 +1306,10 @@ export const RELICS: RelicDef[] = [
   },
 
   // --- 적 개체. 폭주해 이터널 시티를 위협하는 실패작들이다. ---
+  // 영구 캐릭터 ID는 외형을 뜻하던 husk-* 대신 이름과 같은 ID를 써 저장·편성 데이터의
+  // 정체성을 분명히 한다. 초상/전신 asset ID는 로더 키와 실제 zip 계약이므로 그대로 둔다.
   {
-    id: "husk-raptor",
+    id: "toby",
     enemyOnly: true,
     squad: "gear",
     name: "토비",
@@ -1343,7 +1345,7 @@ export const RELICS: RelicDef[] = [
     },
     ferocityTrait: { name: "맹추", effectId: "attackIntervalReduction", reductionPercent: 12 },
     passive: {
-      id: "husk-raptor-passive",
+      id: "toby-passive",
       name: "무리 본능",
       kind: "bleedStreak",
       iconAssetId: "skill-icon-physical",
@@ -1352,7 +1354,7 @@ export const RELICS: RelicDef[] = [
       desc: "같은 적을 연속으로 3번 맞히면 [[bleed|출혈]]을 남긴다.",
     },
     basic: {
-      id: "husk-raptor-basic",
+      id: "toby-basic",
       name: "갈퀴 할퀴기",
       power: 100,
       iconAssetId: "skill-icon-physical",
@@ -1360,7 +1362,7 @@ export const RELICS: RelicDef[] = [
       damageType: "physical",
     },
     ultimate: {
-      id: "husk-raptor-ult",
+      id: "toby-ult",
       name: "무리 사냥",
       power: 170,
       iconAssetId: "skill-icon-physical",
@@ -1372,7 +1374,7 @@ export const RELICS: RelicDef[] = [
     },
   },
   {
-    id: "husk-shell",
+    id: "amo",
     enemyOnly: true,
     squad: "rogue",
     name: "아모",
@@ -1408,7 +1410,7 @@ export const RELICS: RelicDef[] = [
     },
     ferocityTrait: { name: "농성", effectId: "damageReduction", reductionPercent: 12 },
     passive: {
-      id: "husk-shell-passive",
+      id: "amo-passive",
       name: "굳은 껍질",
       kind: "frontGuard",
       iconAssetId: "skill-icon-buff",
@@ -1417,7 +1419,7 @@ export const RELICS: RelicDef[] = [
       desc: "전방에서 받는 피해가 15% 줄어든다.",
     },
     basic: {
-      id: "husk-shell-basic",
+      id: "amo-basic",
       name: "몸통 박치기",
       power: 100,
       iconAssetId: "skill-icon-physical",
@@ -1425,7 +1427,7 @@ export const RELICS: RelicDef[] = [
       damageType: "physical",
     },
     ultimate: {
-      id: "husk-shell-ult",
+      id: "amo-ult",
       name: "붕괴 압사",
       power: 160,
       iconAssetId: "skill-icon-physical",
@@ -1437,7 +1439,7 @@ export const RELICS: RelicDef[] = [
     },
   },
   {
-    id: "husk-wing",
+    id: "ripa",
     enemyOnly: true,
     squad: "eye",
     name: "리파",
@@ -1473,7 +1475,7 @@ export const RELICS: RelicDef[] = [
     },
     ferocityTrait: { name: "역풍", effectId: "teamMoveSpeedBonus", bonusPercent: 12 },
     passive: {
-      id: "husk-wing-passive",
+      id: "ripa-passive",
       name: "잔존 신호",
       kind: "emergencyRecovery",
       iconAssetId: "skill-icon-healing",
@@ -1483,7 +1485,7 @@ export const RELICS: RelicDef[] = [
       desc: "전투당 한 번, 체력이 절반 이하가 되면 [[regeneration|지속 회복]]한다.",
     },
     basic: {
-      id: "husk-wing-basic",
+      id: "ripa-basic",
       name: "날개 후려치기",
       power: 100,
       iconAssetId: "skill-icon-magical",
@@ -1491,7 +1493,7 @@ export const RELICS: RelicDef[] = [
       damageType: "magical",
     },
     ultimate: {
-      id: "husk-wing-ult",
+      id: "ripa-ult",
       name: "굉음 확산",
       power: 150,
       iconAssetId: "skill-icon-magical",

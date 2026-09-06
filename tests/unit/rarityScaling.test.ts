@@ -68,6 +68,24 @@ describe("등급별 태생 능력치", () => {
     }
   });
 
+  it("의 공멸 신규 3개체도 적 전용 예외 없이 R 띠와 지정 역할을 지킨다", () => {
+    // 세 개체는 플레이어블 목록 밖에 있어도 영구 캐릭터이므로 ID별 계약을 명시적으로 고정한다.
+    const identities = [
+      { id: "toby", element: "fire", role: "warrior" },
+      { id: "amo", element: "earth", role: "tank" },
+      { id: "ripa", element: "water", role: "support" },
+    ] as const;
+
+    for (const identity of identities) {
+      const relic = getRelic(identity.id);
+      const power = combatPower(relic.stats);
+      expect(relic.rarity, identity.id).toBe("R");
+      expect(withinRarityBand(power, "R"), `${identity.id} R ${power}`).toBe(true);
+      expect(relic.element, identity.id).toBe(identity.element);
+      expect(relic.role, identity.id).toBe(identity.role);
+    }
+  });
+
   it("의 등급별 최저 태생이 한 단계 아래 등급의 최고 태생보다 높다", () => {
     const best = new Map(RARITY_ORDER.map((rarity) => [rarity, PLAYABLE_RELICS.filter((r) => r.rarity === rarity).map((r) => combatPower(r.stats))] as const));
     for (const [index, rarity] of RARITY_ORDER.entries()) {
@@ -87,6 +105,14 @@ describe("공통 부가 능력치", () => {
     // 이 수치가 필요한 개체는 렉시아처럼 패시브나 폭주로 끌어다 쓴다.
     for (const relic of PLAYABLE_RELICS) {
       for (const key of KEYS) expect(relic.stats[key], `${relic.name} ${key}`).toBe(COMMON_SECONDARY_STATS[key]);
+    }
+  });
+
+  it("은 공멸 신규 3개체도 모든 공용 부가 능력치를 정확히 따른다", () => {
+    // 적 전용 개체는 PLAYABLE_RELICS 순회에 포함되지 않으므로 신규 ID를 따로 회귀 검증한다.
+    for (const id of ["toby", "amo", "ripa"] as const) {
+      const relic = getRelic(id);
+      for (const key of KEYS) expect(relic.stats[key], `${id} ${key}`).toBe(COMMON_SECONDARY_STATS[key]);
     }
   });
 

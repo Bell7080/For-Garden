@@ -1346,17 +1346,20 @@ export const RELICS: RelicDef[] = [
     reachTier: "melee",
     // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
     excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 22.5, efficiencyMultiplier: 1.00 },
+    // 기존의 강한 물리 공격과 빠른 발은 보존한다. 다만 암살자가 아닌 전사로 확정했으므로
+    // 체력·방어를 한 단계 올리고, 공속은 폭증시키지 않아 정면에서 버티며 때리는 감각을 만든다.
+    // 쓰지 않는 주문력은 낮추고 공용 부가 능력치는 COMMON_SECONDARY_STATS와 같은 값으로 맞춘다.
     stats: {
-      hp: 620,
-      def: 38,
-      res: 30,
-      atk: 92,
-      ap: 48,
-      attackSpeed: 106,
+      hp: 1000,
+      def: 75,
+      res: 45,
+      atk: 135,
+      ap: 20,
+      attackSpeed: 102,
       moveSpeed: 110,
-      critChance: 12,
+      critChance: 10,
       critDamage: 150,
-      energyGain: 24,
+      energyGain: 26,
       lifeSteal: 0,
       ferocityGain: 0,
     },
@@ -1428,17 +1431,20 @@ export const RELICS: RelicDef[] = [
     reachTier: "melee",
     // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
     excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 0.25, efficiencyMultiplier: 1.00 },
+    // 높은 체력·방어·저항과 느린 공속·이속이라는 기존 방벽 감각을 그대로 살린다.
+    // 물리 기본기만큼의 공격력만 남기고 쓰지 않는 주문력은 낮춰, 생존 능력으로 R 띠를 채운다.
+    // 치명타·충전 계열은 캐릭터 차별점이 아니므로 COMMON_SECONDARY_STATS와 동일하게 통일한다.
     stats: {
-      hp: 980,
-      def: 92,
-      res: 70,
-      atk: 66,
-      ap: 44,
+      hp: 1300,
+      def: 120,
+      res: 100,
+      atk: 65,
+      ap: 20,
       attackSpeed: 74,
       moveSpeed: 64,
-      critChance: 5,
-      critDamage: 140,
-      energyGain: 18,
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
       lifeSteal: 0,
       ferocityGain: 0,
     },
@@ -1510,17 +1516,20 @@ export const RELICS: RelicDef[] = [
     reachTier: "mid",
     // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
     excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 0.60, efficiencyMultiplier: 1.00 },
+    // 높은 주문력·이동 속도와 낮은 체력·방어라는 기존 지원가 감각을 보존한다.
+    // 마법 기본기·궁극기가 쓰는 주문력으로 R 띠를 채우고, 쓰지 않는 공격력은 낮게 둔다.
+    // 공용 부가 능력치는 COMMON_SECONDARY_STATS와 맞춰 차별점을 스킬·패시브에만 남긴다.
     stats: {
-      hp: 580,
-      def: 34,
-      res: 62,
-      atk: 84,
-      ap: 102,
+      hp: 650,
+      def: 40,
+      res: 60,
+      atk: 20,
+      ap: 200,
       attackSpeed: 100,
       moveSpeed: 114,
       critChance: 10,
       critDamage: 150,
-      energyGain: 27,
+      energyGain: 26,
       lifeSteal: 0,
       ferocityGain: 0,
     },

@@ -25,6 +25,8 @@ import {
   DODI_SD_METADATA,
   LEXIA_PORTRAIT_METADATA,
   LUKA_PORTRAIT_METADATA,
+  MADDY_PORTRAIT_METADATA,
+  MADDY_SD_METADATA,
   METTE_PORTRAIT_METADATA,
   METTE_SD_METADATA,
   PONTOS_PORTRAIT_METADATA,
@@ -215,6 +217,12 @@ export const DEINA_ASSET: PuppetAsset = {
   ...DEINA_PORTRAIT_METADATA,
 };
 
+/** 17번 전신 일러스트: 매디(매머드). */
+export const MADDY_ASSET: PuppetAsset = {
+  url: `${base}puppets/char_017.zip`,
+  ...MADDY_PORTRAIT_METADATA,
+};
+
 /** 8번 전신 일러스트: 티아(이크티오사우루스). */
 export const TIA_ASSET: PuppetAsset = {
   url: `${base}puppets/char_008.zip`,
@@ -291,6 +299,7 @@ const PORTRAIT_ASSETS = {
   nodonia: NODONIA_ASSET,
   ella: ELLA_ASSET,
   deina: DEINA_ASSET,
+  maddy: MADDY_ASSET,
   // 적도 전용 전신을 가진다. 초상 레지스트리에 함께 두면 정보창이 아군·적을 가르지 않고
   // 같은 경로로 원화를 찾는다 — 화면마다 "적이면 다른 함수"를 두면 한 곳을 고칠 때 다른
   // 곳이 임시 원화로 남는다.
@@ -430,6 +439,12 @@ export const DEINA_SD_ASSET: PuppetAsset = {
   ...DEINA_SD_METADATA,
 };
 
+/** 17번 SD: 매디. */
+export const MADDY_SD_ASSET: PuppetAsset = {
+  url: `${base}puppets/charSD_017.zip`,
+  ...MADDY_SD_METADATA,
+};
+
 /** 8번 SD: 티아. */
 export const TIA_SD_ASSET: PuppetAsset = {
   url: `${base}puppets/charSD_008.zip`,
@@ -460,6 +475,7 @@ const ALLY_SD_ASSETS: Readonly<Record<string, PuppetAsset>> = {
   nodonia: NODONIA_SD_ASSET,
   ella: ELLA_SD_ASSET,
   deina: DEINA_SD_ASSET,
+  maddy: MADDY_SD_ASSET,
 };
 
 /**

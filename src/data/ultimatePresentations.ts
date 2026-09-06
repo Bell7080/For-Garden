@@ -72,6 +72,9 @@ export const ULTIMATE_PRESENTATIONS: Readonly<Record<string, UltimatePresentatio
   // 세우지 않는다 — 확대와 흔들림을 얕게 두고 컷인만 빠르게 지나간다. 여기서 크게 흔들면
   // 정작 이어지는 네 번의 틱이 그 한 번보다 작아 보인다.
   deina: { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkScale: 1.0, cutInHoldMs: 135, zoomScale: 1.12, zoomMs: 100, cameraShakeIntensity: 0.006 },
+  // 데이와 같은 이유로, 5초 동안 계속 떨어지는 냉기 궁극기라 첫 한 방을 크게 세우지 않는다.
+  // 왼쪽에서 훅 불어오는 냉방이라 컷인만 왼쪽에서 들어오고 확대·흔들림은 얕게 둔다.
+  maddy: { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "left", artworkScale: 1.0, cutInHoldMs: 150, zoomScale: 1.1, zoomMs: 105, cameraShakeIntensity: 0.006 },
   "toby": { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", cutInHoldMs: 135, zoomScale: 1.2, zoomMs: 110, cameraShakeIntensity: 0.008 },
   "amo": { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.94, zoomScale: 1.24, zoomMs: 115, cameraShakeIntensity: 0.009 },
   "ripa": { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkScale: 0.92, artworkOrigin: { x: 650, y: 770 }, zoomScale: 1.16, cameraShakeIntensity: 0.007 },

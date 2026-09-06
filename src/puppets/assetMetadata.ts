@@ -363,3 +363,29 @@ export const DEINA_SD_METADATA: Omit<PuppetAsset, "url"> = {
   imageHeight: 1254,
   content: { left: 222, top: 67, right: 1125, bottom: 1190 },
 };
+
+/**
+ * 17번 매디(매머드) 전신. ZIP 안 WebP의 alpha > 16 경계를 실측한 값이다.
+ *
+ * 거대한 모피 코트가 실루엣 폭을 넓게 채워(982 / 1086) 렉시아의 낫과 같은 함정에 걸린다 —
+ * 카드·정보창 배율이 `content` **폭**으로 정해지는데, 모피는 몸 넓이만큼 있지 않아 얼굴이
+ * 중앙값보다 작게 앉는다. `cardZoom`은 카드 얼굴 크기 회귀 테스트의 중앙값에 맞춰 구했다.
+ * `portraitZoom`은 얼굴 하한(도디가 밀려 1.45를 넘지 않는 범위)과 실루엣 폭 상한(다른
+ * 개체의 105%를 넘지 않는 범위)이 겹치는 좁은 구간(1.188~1.192) 안에서 골랐다.
+ */
+export const MADDY_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1086,
+  imageHeight: 1448,
+  content: { left: 37, top: 29, right: 1019, bottom: 1421 },
+  cardZoom: 1.2,
+  portraitZoom: 1.19,
+  /** 로비 세로 비율: 메론 기준. 1.52 m. */
+  lobbyZoom: 0.932,
+};
+
+/** 매디 SD ZIP의 정사각 원본과 alpha > 16 경계다. */
+export const MADDY_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254,
+  imageHeight: 1254,
+  content: { left: 240, top: 63, right: 1082, bottom: 1208 },
+};

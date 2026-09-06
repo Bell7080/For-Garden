@@ -1823,6 +1823,97 @@ export const RELICS: RelicDef[] = [
     },
   },
   {
+    id: "maddy",
+    squad: "rune",
+    name: "매디",
+    specimenNumber: "096",
+    projectName: "PERMAFROST COAT",
+    excavationSite: "러시아 사하 공화국 콜리마강 영구동토층",
+    // 발굴 기록은 장소·보존 상태·복원 연구 특징만 담고, 복원 이후 생활 관찰과 분리한다.
+    fossilRecord: "얼어붙은 강기슭이 무너지며 드러난 냉동 개체다. 두꺼운 털가죽이 얼음 속에 그대로 눌어붙어 있어, 복원 연구는 해동 속도를 늦추는 데 가장 오래 매달렸다.",
+    observationProfile: {
+      originYear: "약 1만 년 전",
+      // 냉방을 세게 틀었다가 혼나고도 굽히지 않는 배짱과 어린 장난기를 함께 두어 E.C. 15년으로 둔다.
+      restorationYear: "E.C. 15년",
+      lifeStage: "성체",
+      height: "1.52 m",
+      weight: "39 kg",
+    },
+    catalogSummary: "신장 1.52m, 체중 39kg의 가늘고 마른 인간형 체격에 몸을 통째로 감싸는 두꺼운 흰 모피와 작게 말린 한 쌍의 엄니가 확인된 성체 매머드 화석 기반 표본.",
+    unlockRecord: { status: "recorded", text: "매디는 더위를 못 견뎌 늘 아이스크림을 입에 물고 다니고, 연구소 냉장고를 제 것인 양 아이스크림으로 가득 채워 둔다. 냉방을 세게 틀었다가 연구원 씨에게 몇 번을 혼나도 다음 날이면 온도를 또 최저로 내려놓는다. 몸집에 안 맞게 가는 팔다리로 커다란 모피를 여미며 걷는 모습이 자꾸 눈이 간다." },
+    // 저온 보존실을 제집처럼 여기고 관리하는 모습이 사일런트 룬의 임무(메인프레임 저온 보존실 관리)와
+    // role(warrior)의 어긋남을 서사로 메운다 — 방어·저항을 스스로 두르는 폭주도 "버티며 지키는" 룬의 결과 맞는다.
+    squadNote: "룬의 저온 보존실 냉장고를 아이스크림으로 채우는 자칭 관리인. 온도를 최저로 내려 선배들을 떨게 해 놓고는 정작 모피 코트 속에서 제일 먼저 존다.",
+    researcherTitle: "연구원 씨",
+    rarity: "SSR",
+    portraitAssetId: "maddy",
+    origin: "매머드",
+    element: "water",
+    role: "warrior",
+    // 엄니와 모피를 휘두르는 근접형이다.
+    reachTier: "melee",
+    excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 0.72, efficiencyMultiplier: 1.09 },
+    stats: {
+      hp: 1050,
+      def: 90,
+      res: 90,
+      atk: 145,
+      ap: 70,
+      attackSpeed: 100,
+      moveSpeed: 90,
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 0,
+    },
+    ferocityTrait: { name: "모피", effectId: "furCoat", cleanseAllOnEntry: true, shieldMaxHpPercent: 15, defenseResistancePercent: 100 },
+    passive: {
+      // kind가 frostboundDominion인 패시브는 passiveDescription()이 구조화 필드로 문장을 만드므로
+      // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
+      id: "maddy-passive",
+      name: "설원의 지배자",
+      kind: "frostboundDominion",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      value: 0,
+      elementOverride: "ice",
+      freezeAtMaxChill: true,
+      desc: "상성 계산에서 물이 아닌 얼음으로 취급된다. 얼음은 풀·물·땅에 유리하고 불에 불리하며 바람과는 무상성이다. 이미 둔화가 최대 중첩인 적을 때리면 그 겹을 모두 소모해 빙결시킨다.",
+    },
+    basic: {
+      id: "maddy-basic",
+      name: "소다맛 아이스크림",
+      power: 100,
+      scalingStat: "atk",
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      targeting: "single",
+      statusEffects: [{ kind: "chill", speedPercentPerStack: 5, maxStacks: 3 }],
+      // 빙결 상태의 적에게만 붙는 조건부 흡혈이다 — 평소에는 흡혈 없이 그냥 때린다.
+      damageHealingPercentIfFrozen: 30,
+    },
+    ultimate: {
+      id: "maddy-ult",
+      name: "파워 냉방으로 부탁드려요.",
+      /*
+       * `channel`이 있으므로 이 위력은 총량이 아니라 **한 틱**의 몫이다. 5초 동안 매초 전장
+       * 전체에 터져 총 175%가 되며, 틱마다 둔화도 함께 쌓여 시전 한 번으로 최대 중첩(3겹)에
+       * 닿고 그 뒤로도 계속 얼려 둔다.
+       */
+      power: 35,
+      scalingStat: "ap",
+      iconAssetId: "skill-icon-magical",
+      effectType: "magical",
+      damageType: "magical",
+      cost: 210,
+      targeting: "battlefieldEnemies",
+      channel: { seconds: 5 },
+      statusEffects: [{ kind: "chill", speedPercentPerStack: 5, maxStacks: 3 }],
+    },
+  },
+  {
     // 원정 최종층의 단독 보스. 리바이어던 멜빌레이의 거대한 턱과 심해 포식자 모티브를 담는다.
     id: "pontos",
     enemyOnly: true,

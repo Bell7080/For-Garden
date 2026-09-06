@@ -31,6 +31,25 @@ export const EXPEDITION_COMBAT_BALANCE = {
   horde: { enemyCount: 5, statScale: 0.82, bodyScale: 0.94 },
 } as const;
 
+/**
+ * 일반 전투 노드 점수의 종류별 배율이다. 점수 공식은 core/expeditionScore가 소유하고,
+ * 운영 중 조정하는 상대 가치만 이 한 표에 둔다.
+ */
+export const EXPEDITION_NODE_SCORE_MULTIPLIERS = {
+  /** 표준 교전은 층과 잔여 HP의 기준 가치를 그대로 사용한다. */
+  normal: 1,
+  /** 단일 강적의 높은 실패 위험을 표준 교전보다 50% 높게 보상한다. */
+  elite: 1.5,
+  /** 다수전의 추가 부담은 정예보다 낮은 25% 가산으로 보상한다. */
+  horde: 1.25,
+  /** 휴식은 전투 성과가 아니므로 점수를 만들지 않는다. */
+  rest: 0,
+  /** 보물의 가치는 전리품에만 있으며 RNG 결과를 점수로 환산하지 않는다. */
+  treasure: 0,
+  /** 보스 점수는 별도의 서버 검증 피해 점수가 소유한다. */
+  boss: 0,
+} as const;
+
 /** 휴식은 생존자를 최대 HP의 30%만큼 회복하고, 전멸 전이라면 사망자 한 기를 25% HP로 부활시킨다. */
 export const EXPEDITION_REST_RULES = { healPercent: 30, revivePercent: 25, maxRevives: 1, cannotReviveAfterWipe: true } as const;
 

@@ -580,9 +580,13 @@ describe("FakeServer 원정 정산", () => {
     const node = state.expedition.run!.nodes.find(({ floor }) => floor === 1)!;
     const server = new FakeServer(state, { latencyMs: 0, random: () => 0 });
     const request = { requestId: "node-once", runId: state.expedition.run!.runId, nodeId: node.id, relicHp: [100, 90, 80] };
+    // 점수 입력으로 축약하기 전에 서버가 HP 퍼센트 범위를 검증한다.
+    await expect(server.completeExpeditionNode({ ...request, requestId: "forged-hp", relicHp: [101, 90, 80] })).rejects.toMatchObject({ code: "EXPEDITION_RUN_NOT_FOUND" });
     const first = await server.completeExpeditionNode(request);
     const repeated = await server.completeExpeditionNode(request);
     expect(repeated).toEqual(first);
+    // 같은 requestId의 재시도는 최초 확정 노드 점수까지 그대로 돌려준다.
+    expect(repeated.nodeScore).toBe(first.nodeScore);
     expect(state.expedition.run!.visitedNodeIds.filter((id) => id === node.id)).toHaveLength(1);
     expect(state.expedition.run!.pendingRewards).toEqual(first.pendingRewards);
     await expect(server.completeExpeditionNode({ ...request, requestId: "node-forged-retry" })).rejects.toMatchObject({ code: "EXPEDITION_RUN_NOT_FOUND" });
@@ -596,7 +600,8 @@ describe("FakeServer 원정 정산", () => {
     const server = new FakeServer(state, { latencyMs: 0, random: () => 0.5, now: () => new Date("2026-08-25T12:00:00Z") });
     const response = await server.completeExpeditionNode({ requestId: "node-score", runId: state.expedition.run!.runId, nodeId: node.id, relicHp: [100, 90, 80] });
     const rewardTotal = Object.values(response.rewards).reduce((sum, amount) => sum + amount, 0);
-    const expectedScore = 1_000 + (100 + 90 + 80) * 10;
+    // 맵이 고른 노드 종류의 서버 배율까지 적용된 응답 자체가 이 처리의 확정 점수다.
+    const expectedScore = response.nodeScore;
     expect(rewardTotal).not.toBe(expectedScore);
     await server.completeExpeditionNode({ requestId: "node-score", runId: state.expedition.run!.runId, nodeId: node.id, relicHp: [100, 90, 80] });
     const weekly = await server.getExpeditionWeeklyBest();

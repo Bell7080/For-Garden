@@ -44,12 +44,6 @@ export interface ExpeditionRunScore {
   runScore: number;
 }
 
-/** 전투 결과와 층만으로 일반 노드 하나의 점수를 계산하며 재화 보상 객체는 입력받지 않는다. */
-export function calculateExpeditionNormalNodeScore(input: { floor: number; relicHp: readonly number[] }): number {
-  if (!Number.isFinite(input.floor) || input.floor < 0 || input.relicHp.some((hp) => !Number.isFinite(hp) || hp < 0)) return 0;
-  return Math.max(0, Math.floor(input.floor) * 1_000 + Math.round(input.relicHp.reduce((sum, hp) => sum + hp, 0) * 10));
-}
-
 /** 서버·매니저·정산이 공유하는 유일한 한 판 합산식이다. */
 export function calculateExpeditionRunScore(input: { normalNodeScoreTotal: number; bossDamageScore: number }): ExpeditionRunScore {
   const normalNodeScoreTotal = Math.max(0, Math.floor(input.normalNodeScoreTotal));

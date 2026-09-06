@@ -251,7 +251,7 @@ export class ExpeditionScene extends Phaser.Scene {
   }
 
   /** 런에서만 누적되는 네 재화를 보상 팝업과 같은 액자·우하단 수량 문법으로 묶는다. */
-  private buildRewardBar(rewards: Readonly<Record<string, number>>, last: { rewards: Record<string, number>; cappedCurrencies: string[] } | null): void {
+  private buildRewardBar(rewards: Readonly<Record<string, number>>, last: { nodeScore: number; rewards: Record<string, number>; cappedCurrencies: string[] } | null): void {
     const items = [
       ["currency-cheesecake", "cheesecake"], ["currency-gold", "gold"],
       ["currency-fossil", "fossil"], ["currency-gems", "gems"],
@@ -274,8 +274,8 @@ export class ExpeditionScene extends Phaser.Scene {
       const gained = Math.floor(last?.rewards[key] ?? 0);
       if (gained > 0) this.add.text(x, 263, `+ ${formatCurrency(gained)}`, textStyle({ role: "emphasis", size: 16, color: COLOR.accentText })).setOrigin(0.5);
     });
-    // 이번 런이 주간 누적 점수에 보탠 몫이다. 판이 아니라 글자와 검은 테두리만으로 눈에 띈다.
-    const score = expeditionManager.status().run?.normalNodeScoreTotal ?? 0;
+    // 누적 보상이나 런 합계를 재계산하지 않고 마지막 완료 응답에 저장된 서버 확정값만 보여 준다.
+    const score = last?.nodeScore ?? 0;
     this.add.text(BASE_WIDTH / 2, 282, `점수 ${score.toLocaleString()}`, textStyle({ role: "emphasis", size: 22, color: "#ffffff" })).setOrigin(0.5).setStroke("#000000", 5);
   }
 

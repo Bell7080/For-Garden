@@ -423,7 +423,7 @@ export class BattleScene extends Phaser.Scene {
     try {
       const score = await gameApi.submitExpeditionBossScore({ requestId: input.requestId, runId: input.runId, nodeId: input.nodeId, actions });
       // 서버가 확정한 피해만 노드에 반영하며 클라이언트 추정 피해는 상태에 쓰지 않는다.
-      const completed = expeditionManager.completeNode(input.nodeId, { relicHp: [0, 0, 0], bossDamage: score.score, score: score.score });
+      const completed = expeditionManager.completeNode(input.nodeId, { relicHp: [0, 0, 0], bossDamage: score.score });
       if (!completed && !expeditionManager.status().run?.visitedNodeIds.includes(input.nodeId)) throw new Error("BOSS_NODE_SAVE_FAILED");
       const settlement = await gameApi.settleExpeditionRun({ runId: input.runId, settlementId: input.settlementId, outcome: "completed" });
       // 보스 완료도 공용 지급 영수증을 먼저 확인한 뒤 점수 결과판으로 이어진다.

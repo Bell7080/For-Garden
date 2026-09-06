@@ -41,7 +41,8 @@ import type { EnterStageRequest, EnterStageResponse } from "./contracts";
 import type { ClaimMailRewardsRequest, ClaimMailRewardsResponse, MailDto, MailListResponse, MailRewardDto, MarkMailsReadRequest } from "./contracts";
 import { expeditionWeekKey, resolveExpeditionBossBattle } from "../core/expeditionBoss";
 import { EXPEDITION_BOSS_BALANCE, EXPEDITION_CUMULATIVE_REWARD_STAGES, EXPEDITION_NODE_REWARD_BALANCE, EXPEDITION_SWEEP_POLICY, EXPEDITION_WEEKLY_POLICY, QUICK_EXPEDITION_POLICY } from "../data/expedition";
-import { calculateExpeditionNodeRewards, calculateExpeditionNormalNodeScore, calculateExpeditionRunScore } from "../core/expeditionRewards";
+import { calculateExpeditionNodeRewards, calculateExpeditionRunScore } from "../core/expeditionRewards";
+import { calculateExpeditionNodeScore } from "../core/expeditionScore";
 import { RelicProgressionManager } from "../managers/RelicProgressionManager";
 import { expeditionBattleEffects } from "../core/expeditionBattle";
 
@@ -363,13 +364,16 @@ export class FakeServer implements GameApi {
     const predecessor = run?.currentNodeId ? run.nodes.find(({ id }) => id === run.currentNodeId) : null;
     if (!request.requestId || !run || run.runId !== request.runId || !node || run.settled || run.visitedNodeIds.includes(node.id)
       || (!predecessor && node.floor !== 1) || (predecessor && !predecessor.successorIds.includes(node.id)) || request.relicHp.length !== 3
-      || request.relicHp.some((hp) => !Number.isFinite(hp) || hp < 0)) throw new GameApiError("EXPEDITION_RUN_NOT_FOUND", "완료할 수 없는 원정 노드입니다.");
+      // HP는 전투 계약의 퍼센트 범위여야 하며 100 초과 값으로 생존 점수를 부풀릴 수 없다.
+      || request.relicHp.some((hp) => !Number.isFinite(hp) || hp < 0 || hp > 100)) throw new GameApiError("EXPEDITION_RUN_NOT_FOUND", "완료할 수 없는 원정 노드입니다.");
     // 전멸은 노드 종료만 기록하고 승리 재화는 생성하지 않는다.
     const rewards = request.relicHp.every((hp) => hp === 0) ? {} : calculateExpeditionNodeRewards({ nodeType: node.type, accumulated: run.pendingRewards, random: this.random });
     // 전리품 수량은 점수가 아니다. 서버가 검증한 층과 종료 HP로 일반 노드 점수를 별도 확정한다.
     const scoreBearingNode = node.type === "normal" || node.type === "elite" || node.type === "horde";
-    const nodeScore = !scoreBearingNode || request.relicHp.every((hp) => hp === 0)
-      ? 0 : calculateExpeditionNormalNodeScore({ floor: node.floor, relicHp: request.relicHp });
+    const cleared = scoreBearingNode && request.relicHp.some((hp) => hp > 0);
+    // 요청 배열은 3인 편성 계약으로 검증됐으므로 서버가 평균 잔여 HP를 하나의 점수 입력으로 축약한다.
+    const remainingHpPercent = request.relicHp.reduce((sum, hp) => sum + hp, 0) / request.relicHp.length;
+    const nodeScore = calculateExpeditionNodeScore({ floor: node.floor, nodeType: node.type, remainingHpPercent, cleared });
     if (nodeScore > 0) { this.normalizeBossWeek(this.now()); this.bossWeek.cumulativeScore += nodeScore; }
     const next = structuredClone(run);
     next.currentNodeId = node.id; next.visitedNodeIds.push(node.id);
@@ -379,10 +383,10 @@ export class FakeServer implements GameApi {
     next.relics.forEach((relic, index) => { relic.currentHp = request.relicHp[index]; relic.alive = relic.currentHp > 0; });
     for (const [currency, amount] of Object.entries(rewards)) next.pendingRewards[currency] = (next.pendingRewards[currency] ?? 0) + amount;
     const cappedCurrencies = Object.keys(EXPEDITION_NODE_REWARD_BALANCE).filter((currency) => (next.pendingRewards[currency] ?? 0) >= EXPEDITION_NODE_REWARD_BALANCE[currency as keyof typeof EXPEDITION_NODE_REWARD_BALANCE].runCap);
-    next.lastNodeRewards = { nodeId: node.id, rewards, cappedCurrencies };
+    next.lastNodeRewards = { nodeId: node.id, nodeScore, rewards, cappedCurrencies };
     const expedition = { ...this.state.expedition, run: next };
     this.persist({ ...this.state, expedition }); this.state.expedition = expedition;
-    const response = { runId: run.runId, nodeId: node.id, rewards, pendingRewards: { ...next.pendingRewards }, cappedCurrencies, alreadyCompleted: false };
+    const response = { runId: run.runId, nodeId: node.id, nodeScore, rewards, pendingRewards: { ...next.pendingRewards }, cappedCurrencies, alreadyCompleted: false };
     this.expeditionNodeResults.set(request.requestId, response);
     return structuredClone(response);
   }

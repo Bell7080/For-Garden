@@ -8,8 +8,8 @@ describe("원정 노드 적 편성", () => {
     const normal = getExpeditionNodeEnemies("normal", 4);
     const elite = getExpeditionNodeEnemies("elite", 4);
 
-    expect(normal.map(({ id }) => id)).toEqual(["husk-raptor", "husk-shell", "husk-wing"]);
-    expect(elite.map(({ id }) => id)).toEqual(["husk-shell", "husk-raptor", "husk-wing"]);
+    expect(normal.map(({ id }) => id)).toEqual(["toby", "amo", "ripa"]);
+    expect(elite.map(({ id }) => id)).toEqual(["amo", "toby", "ripa"]);
     expect(expeditionEnemyLevel("elite", 4)).toBe(7);
     // 같은 원본도 더 높은 조우 레벨에서는 실제 전투 수치가 함께 높아져야 한다.
     expect(elite[1].stats.hp).toBeGreaterThan(normal[0].stats.hp);
@@ -26,7 +26,7 @@ describe("원정 노드 적 편성", () => {
     // 최종층 조건이 단순 boss 조건으로 넓어져 이전 층까지 폰토스로 바뀌는 회귀를 함께 막는다.
     expect(getExpeditionNodeEnemies("boss", 20).map(({ id }) => id)).toEqual(["pontos"]);
     expect(getExpeditionEncounterEnemies("boss", 20).map(({ id }) => id)).toEqual(["pontos"]);
-    expect(getExpeditionNodeEnemies("boss", 19).map(({ id }) => id)).toEqual(["husk-shell", "husk-wing", "husk-raptor"]);
+    expect(getExpeditionNodeEnemies("boss", 19).map(({ id }) => id)).toEqual(["amo", "ripa", "toby"]);
   });
 
   it("최종층 성장 폰토스는 유한한 자릿수로 일반 적과 SSR의 생존·마법 공격 상한을 넘는다", () => {

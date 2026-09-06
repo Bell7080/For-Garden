@@ -24,19 +24,19 @@ describe("적 및 강화형 캐릭터 정체성", () => {
   });
 
   it("은 baseIdentityId가 있어도 원본 정의를 런타임에서 합성하지 않는다", () => {
-    const base = getRelic("husk-shell");
+    const base = getRelic("amo");
     // 실제 강화형 추가 전에도 계약을 검증하는 완전한 예제다. spread는 작성 편의를 위한 테스트
     // 준비일 뿐이며, own-property 검사 대상 필드는 모두 강화형 객체가 직접 소유한다.
     const enraged: RelicDef = {
       ...base,
-      id: "husk-shell-enraged",
+      id: "amo-enraged",
       baseIdentityId: base.id,
       name: "분노 아모",
       stats: { ...base.stats, atk: base.stats.atk + 20 },
-      passive: { ...base.passive, id: "husk-shell-enraged-passive" },
+      passive: { ...base.passive, id: "amo-enraged-passive" },
       ferocityTrait: { ...base.ferocityTrait },
-      basic: { ...base.basic, id: "husk-shell-enraged-basic" },
-      ultimate: { ...base.ultimate, id: "husk-shell-enraged-ult" },
+      basic: { ...base.basic, id: "amo-enraged-basic" },
+      ultimate: { ...base.ultimate, id: "amo-enraged-ult" },
     };
 
     expectCompleteIdentity(enraged);

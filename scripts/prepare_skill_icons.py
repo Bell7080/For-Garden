@@ -39,9 +39,9 @@ RELICS = {
     "char015": "ella",
     "char016": "deina",
     # 적도 같은 파이프라인을 쓴다. 원본 이름의 머리말만 다르고(enemy00N) 나머지 규칙은 같다.
-    "enemy001": "husk-raptor",
-    "enemy002": "husk-shell",
-    "enemy003": "husk-wing",
+    "enemy001": "toby",
+    "enemy002": "amo",
+    "enemy003": "ripa",
     # 원정 최종층 단독 보스는 번호 대신 렐릭 id를 그대로 원본 이름 머리말로 쓴다.
     "pontos": "pontos",
 }

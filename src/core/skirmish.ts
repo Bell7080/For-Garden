@@ -2346,6 +2346,21 @@ function resolveTarget(state: SkirmishState, fighter: Fighter, reconsider = fals
     && isFighterAlive(current) && current.stealthFor <= 0;
   if (keepable && !reconsider) return current;
 
+  /*
+   * 태그 앤 런의 표적은 공용 거리 점수로 다시 뽑지 않는다. 이 패시브는 "가까운 적"보다
+   * **이번 순회에서 아직 안 때린 적**이 먼저라, 2초 재평가가 끼어들면 방금 친 적이 코앞이라는
+   * 이유로 되돌아가 낙서와 도발을 한곳에 반복했다. 쫓던 적이 먼저 쓰러진 경우에도 같은 순회
+   * 장부에서 다음 적을 골라야 화면에서 방향을 잃고 왕복하지 않는다.
+   *
+   * 광란 중에는 적과 아군의 의미가 뒤집히므로 이 패시브 순회를 적용하지 않는다. 광란의 공용
+   * 자기 편 표적 규칙이 우선이며, 광란이 풀릴 때 표적도 비워져 정상 순회를 다시 시작한다.
+   */
+  if (!frenzied && fighter.def.passive.kind === "tagAndRun") {
+    const chosen = nextTagAndRunTarget(fighter, state, current?.id);
+    fighter.targetId = chosen?.id ?? null;
+    return chosen;
+  }
+
   // 가장 가깝더라도 이미 아군이 붙어 있는 상대는 뒤로 미룬다. 셋이 한 명을 둘러싸는 대신
   // 서로 다른 상대와 맞붙어 전장 곳곳에서 싸우는 그림이 된다.
   let chosen: Fighter | undefined;
@@ -2638,17 +2653,30 @@ function retargetAfterBasic(attacker: Fighter, target: Fighter, state: SkirmishS
  */
 function tagAndRun(attacker: Fighter, target: Fighter, state: SkirmishState): void {
   if (!attacker.taggedIds.includes(target.id)) attacker.taggedIds.push(target.id);
-  const enemies = state.fighters.filter((other) => other.side !== attacker.side && isFighterAlive(other) && other.stealthFor <= 0);
-  if (enemies.length === 0) return;
-  let fresh = enemies.filter((other) => !attacker.taggedIds.includes(other.id));
-  if (fresh.length === 0) {
-    // 한 바퀴를 다 돌았다. 기억을 비우고 방금 태그한 상대만 빼면 다음 바퀴의 첫 벽이 나온다.
-    attacker.taggedIds = [];
-    fresh = enemies.filter((other) => other.id !== target.id);
-    if (fresh.length === 0) return;
-  }
-  attacker.targetId = fresh.reduce((best, other) => distance(attacker, other) < distance(attacker, best) ? other : best).id;
+  const next = nextTagAndRunTarget(attacker, state, target.id);
+  if (!next) return;
+  // 적이 하나뿐이면 표적은 이미 맞다. 붙은 상태까지 풀면 공격할 때마다 안으로 재진입해 원을
+  // 찌그러뜨리므로, 기존 교전 반경을 유지한 채 다음 공격까지 둘레를 돈다.
+  if (next.id === target.id) return;
+  attacker.targetId = next.id;
   attacker.engaged = false;
+}
+
+/** 태그 앤 런의 순회 장부를 지키면서 아직 칠하지 않은 가장 가까운 적을 고른다. */
+function nextTagAndRunTarget(attacker: Fighter, state: SkirmishState, excludedId?: string): Fighter | undefined {
+  const enemies = state.fighters.filter((other) => other.side !== attacker.side && isFighterAlive(other)
+    && other.stealthFor <= 0);
+  if (enemies.length === 0) return undefined;
+
+  let fresh = enemies.filter((other) => !attacker.taggedIds.includes(other.id) && other.id !== excludedId);
+  if (fresh.length === 0) {
+    // 살아 있는 미방문 적이 없으면 한 바퀴가 끝났다. 직전에 친 적만 빼고 새 순회를 시작해
+    // 적이 둘 이상인 동안에는 같은 적을 연속으로 다시 치지 않는다.
+    attacker.taggedIds = [];
+    fresh = enemies.filter((other) => other.id !== excludedId);
+  }
+  if (fresh.length === 0) return enemies.find((other) => other.id === excludedId) ?? enemies[0];
+  return fresh.reduce((best, other) => distance(attacker, other) < distance(attacker, best) ? other : best);
 }
 
 /**
@@ -3932,7 +3960,10 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     // 하고, 고품격 식재료는 제 시계로 가장 약한 적을 고른다. 둘을 여기서 다시 재면 그 규칙이
     // 2초마다 조용히 덮인다.
     const ownTarget = fighter.def.passive.kind !== "followHighestAttackAllyTarget"
-      && fighter.def.passive.kind !== "gourmetHunt";
+      && fighter.def.passive.kind !== "gourmetHunt"
+      // 태그 앤 런은 적중할 때 직접 다음 표적을 예약한다. 공용 재평가를 켜면 그 예약이 거리
+      // 점수에 덮여 방금 때린 적에게 되돌아가므로, 표적 사망 때만 resolveTarget이 보충한다.
+      && fighter.def.passive.kind !== "tagAndRun";
     fighter.retargetIn -= dt;
     const reconsider = ownTarget && fighter.retargetIn <= 0;
     if (reconsider) fighter.retargetIn = SKIRMISH.retargetSeconds;

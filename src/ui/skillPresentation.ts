@@ -103,6 +103,8 @@ export function skillKeywordLayoutOptions(
 
 /** 폭주 설명의 모든 수치를 실제 전투 계약에서 만들어 밸런스 조정 후 문구가 남지 않게 한다. */
 export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack: number; defense: number; maxHp?: number; abilityPower?: number }): string {
+  // 캐릭터 ID가 아니라 도핑 계약의 구조화 수치만 읽어 어떤 정의에도 같은 문장 조립을 제공한다.
+  if (trait.effectId === "reagentDoping") return `폭주에 진입하면 모든 생존 적에게 [[reagent|시약]]을 ${trait.stacksOnEntry}겹 부여한다. 폭주 중 [[attack-speed|공격 속도]]가 ${trait.attackSpeedPercent}% 증가한다.`;
   if (trait.effectId === "attackIntervalReduction") return `공격 간격이 ${trait.reductionPercent}% 짧아진다.`;
   if (trait.effectId === "damageReduction") return `받는 피해가 ${trait.reductionPercent}% 줄어든다.`;
   // 덧셈형 확률도 플레이어에게는 일반적인 퍼센트 기호로 보여 주고 내부 산술 단위는 노출하지 않는다.
@@ -241,6 +243,14 @@ function passiveCriticalClause(passive: Passive): string {
 }
 
 function passiveHead(passive: Passive, atk?: number): string {
+  if (passive.kind === "reagentReaction" && passive.reagentReaction !== undefined) {
+    // 이름이 아니라 공용 계약을 문장화하므로 다른 캐릭터가 같은 메커니즘을 선언해도 그대로 읽힌다.
+    const reagent = passive.reagentReaction;
+    return `공격이 적중하면 [[reagent|시약]]을 부여한다. [[basic-attack|기본 공격]]은 ${reagent.basicStacks}겹, 궁극기는 ${reagent.ultimateStacks}겹 부여한다.`
+      + ` 시약은 최대 ${reagent.maxStacks}겹까지 ${reagent.seconds}초 동안 유지되며, 최대 중첩이 되면 모두 소비해 [[reagent-reaction|시약 반응]]을 일으킨다.`
+      + ` 반응한 적을 ${reagent.reactionPoisonSeconds}초 동안 [[poison|중독]]시키고 저항력을 ${reagent.resistanceReductionSeconds}초 동안 ${reagent.resistanceReductionPercent}% 낮춘다.`
+      + ` 이어 현재 HP 비율이 가장 낮은 생존 아군 한 명을 그 아군 최대 체력의 ${reagent.lowestHpAllyHealMaxHpPercent}%만큼 회복한다.`;
+  }
   if (passive.kind === "followHighestAttackAllyTarget") return `전투 시작 시 아군 중 공격력이 가장 높은 렐릭이 표적으로 삼은 적을 함께 표적으로 삼는다.`;
   if (passive.kind === "basicHitAttackSpeedStack") return `[[basic-attack|기본 공격]]이 실제 적중할 때마다 이번 전투 동안 [[attack-speed|공격 속도]]가 ${passive.value} 증가한다.`;
   if (passive.kind === "farthestFocus") {
@@ -552,6 +562,10 @@ interface SkillEffectClause {
  */
 function skillEffectClauses(skill: DescribedSkill, stats: SkillDescriptionStats): SkillEffectClause[] {
   const clauses: SkillEffectClause[] = [];
+  // 일반 공격과 궁극기 모두 캐릭터 ID 없이 같은 적중 후 데이터 계약을 설명한다.
+  if ("reagentStacks" in skill && skill.reagentStacks !== undefined) {
+    clauses.push({ text: `[[reagent|시약]]을 ${skill.reagentStacks}겹 부여한다` });
+  }
   const combo = "combo" in skill ? skill.combo : undefined;
   if (combo) {
     clauses.push({ text: `${combo.chancePercent}% 확률로 [[combo|연격]]하여 총 ${combo.hitCount}회 적중한다`, joinWithComma: true });

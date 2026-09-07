@@ -1578,38 +1578,43 @@ export const RELICS: RelicDef[] = [
       lifeSteal: 0,
       ferocityGain: 0,
     },
-    ferocityTrait: { name: "역풍", effectId: "teamMoveSpeedBonus", bonusPercent: 12 },
+    // 캐릭터 ID가 아니라 공용 시약 도핑 계약이 진입 살포와 자기 공속 증가를 함께 표현한다.
+    ferocityTrait: { name: "몰래 쿡! 도핑 투여", effectId: "reagentDoping", stacksOnEntry: 1, attackSpeedPercent: 40 },
     passive: {
       id: "ripa-passive",
-      name: "퇴적 잠복",
-      kind: "lowHpVanish",
+      name: "으흐흐, 실험 시작!",
+      kind: "reagentReaction",
       iconAssetId: "skill-icon-buff",
       effectType: "buff",
       value: 3,
-      durationSeconds: 3,
-      // 자기 회복 대신 원종과 관찰 기록에 맞게 모래·물속으로 숨어 표적을 끊는 생존 수단을 쓴다.
-      desc: "전투당 한 번, 체력이 절반 이하가 되면 3초 동안 은신해 표적에서 벗어난다.",
+      // 모든 수치는 ID 분기 없이 패시브 설명과 이후 공용 적중 후 처리 경로가 함께 읽는다.
+      reagentReaction: { maxStacks: 3, seconds: 8, basicStacks: 1, ultimateStacks: 2, reactionPoisonSeconds: 4, lowestHpAllyHealMaxHpPercent: 5, resistanceReductionPercent: 12, resistanceReductionSeconds: 5 },
+      desc: "",
     },
     basic: {
       id: "ripa-basic",
       // 삼엽충 원종의 복원 외형에 맞춘 기술명이며 성격 관찰 데이터와는 분리한다.
-      name: "마디 파동",
-      power: 100,
+      name: "찰싹! 시약 묻히기",
+      power: 80,
       iconAssetId: "skill-icon-magical",
       effectType: "magical",
       damageType: "magical",
+      // 패시브 수치와 일치하며 이후 공용 적중 후 경로가 캐릭터 ID 없이 읽을 부여량이다.
+      reagentStacks: 1,
     },
     ultimate: {
       id: "ripa-ult",
       // 삼엽충 원종의 수중 움직임에 맞춘 기술명이며 성격 관찰 데이터와는 분리한다.
-      name: "퇴적류 확산",
-      power: 150,
+      name: "뭐가 들었게? 약물 폭탄",
+      power: 100,
       iconAssetId: "skill-icon-magical",
       effectType: "magical",
       damageType: "magical",
       cost: 100,
       // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
-      targeting: "single",
+      targeting: "battlefieldEnemies",
+      // 일반 공격과 동일한 공용 적중 후 경로에 넘겨 각 대상의 반응을 독립 판정한다.
+      reagentStacks: 2,
     },
   },
   {

@@ -1215,15 +1215,6 @@ describe("효과 ID별 야성 특성", () => {
     expect([first.targetId, lowest.targetId]).toEqual([null, null]);
   });
 
-  it("teamMoveSpeedBonus은 리파의 피버 중 생존 아군 이동 속도를 12% 올린다", () => {
-    const state = newSkirmish(["ripa", "rex"], ["amo"]);
-    const [ripa, ally] = state.fighters;
-    const before = moveSpeed(ally, state);
-    ripa.ferocity = 99;
-    expect(moveSpeed(ally, state)).toBe(before);
-    ripa.ferocity = 100; ripa.ferocityFever = true;
-    expect(moveSpeed(ally, state)).toBeCloseTo(before * 1.12);
-  });
 });
 
 describe("도디 정적 전투 계약", () => {

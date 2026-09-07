@@ -22,18 +22,34 @@ describe("stage enemy design", () => {
   it("챕터 1의 레벨·돌파 초안을 적별 StageEnemyDef에 정확히 기록한다", () => {
     // 비교표는 캐릭터별 [레벨, 돌파]로 읽어 배열 배치 변경과 독립적으로 검증한다.
     const growthAt = (index: number) => Object.fromEntries(battles[index].enemies.map(({ relicId, level, breakthrough }) => [getRelic(relicId).name, [level, breakthrough]]));
-    expect(Array.from({ length: 10 }, (_, index) => growthAt(index))).toEqual([
-      { 아모: [1, 0], 토비: [1, 0], 리파: [1, 0] },
-      { 아모: [1, 0], 토비: [2, 0], 리파: [1, 0] },
-      { 아모: [2, 0], 토비: [2, 0], 리파: [1, 0] },
+    const ladder = Array.from({ length: 10 }, (_, index) => growthAt(index));
+    expect(ladder).toEqual([
+      { 아모: [2, 0], 토비: [2, 0], 리파: [2, 0] },
       { 아모: [2, 0], 토비: [3, 0], 리파: [2, 0] },
-      { 아모: [3, 0], 토비: [3, 0], 리파: [3, 0] },
-      { 아모: [4, 0], 토비: [4, 0], 리파: [3, 0] },
+      { 아모: [3, 0], 토비: [4, 0], 리파: [3, 0] },
       { 아모: [4, 0], 토비: [5, 0], 리파: [4, 0] },
-      { 아모: [5, 1], 토비: [5, 0], 리파: [5, 0] },
-      { 아모: [5, 1], 토비: [5, 1], 리파: [5, 1] },
-      { 아모: [5, 1], 코마: [1, 1], 리파: [5, 1] },
+      { 아모: [4, 0], 토비: [5, 0], 리파: [5, 0] },
+      { 아모: [5, 0], 토비: [5, 0], 리파: [5, 0] },
+      { 아모: [5, 0], 토비: [6, 0], 리파: [6, 0] },
+      { 아모: [6, 1], 토비: [6, 0], 리파: [6, 0] },
+      { 아모: [6, 1], 토비: [6, 1], 리파: [6, 1] },
+      { 아모: [6, 1], 코마: [4, 1], 리파: [6, 1] },
     ]);
+    /*
+     * **레벨은 관문을 따라 내려가지 않는다.** 1-10까지 마지막 관문이 직전보다 쉬운 구간이
+     * 있었고(코마만 레벨 1로 남아 있었다) 그때는 이 표만 봐서는 드러나지 않았다.
+     * 코마는 토비를 대신하는 다른 개체라 자기 자신끼리만 비교한다.
+     */
+    for (const name of ["아모", "리파"] as const) {
+      const levels = ladder.map((row) => row[name][0]);
+      for (let index = 1; index < levels.length; index += 1) {
+        expect(levels[index], `${name} ${index + 1}번째 관문`).toBeGreaterThanOrEqual(levels[index - 1]);
+      }
+    }
+    const tobyLevels = ladder.slice(0, 9).map((row) => row["토비"][0]);
+    for (let index = 1; index < tobyLevels.length; index += 1) {
+      expect(tobyLevels[index], `토비 ${index + 1}번째 관문`).toBeGreaterThanOrEqual(tobyLevels[index - 1]);
+    }
     const finalEnemies = getStageEnemies(battles[29]);
     // 배열 첫 칸의 다른 개체와 비교하지 않고, 토비 자신의 태생값보다 성장했는지를 검증한다.
     const baseToby = getRelic(FIXED_STAGE_ENEMIES[0]);

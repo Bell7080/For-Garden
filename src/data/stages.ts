@@ -10,19 +10,33 @@ function enemyGrowth(relicId: string, level: number, breakthrough: number, forma
   return { relicId, level, breakthrough, formationSlot };
 }
 
-/** 한계 돌파는 레벨을 초기화하지 않으므로 1-8 이후에도 직전 레벨 5를 유지한다. */
+/**
+ * 1장의 적 사다리. **레벨은 관문을 따라 내려가지 않는다** — 세 마리 모두 단조 증가하고,
+ * 한계 돌파는 레벨을 초기화하지 않으므로 1-8 이후에도 직전 레벨을 유지한다.
+ *
+ * 값은 `tests/unit/stageDifficulty.test.ts`의 잔여 체력 띠에서 거꾸로 구했다. 공멸 3인조의
+ * 패시브를 읽히는 스킬로 다시 짜면서(v0.75.1) 적이 전 구간에서 약해져 1장이 통째로 위로
+ * 밀렸고, 특히 **1-10이 1-9보다 쉬웠다** — 마지막 관문의 코마만 레벨 1로 남아 있었기 때문이다.
+ * 지금 곡선은 88.6% → 76.6% → 73.9% → 70.1% → 66.5%로 끝까지 내려간다.
+ */
 const CHAPTER_ONE_ENEMIES: readonly [StageEnemyDef, StageEnemyDef, StageEnemyDef][] = [
-  [enemyGrowth("amo", 1, 0, 0), enemyGrowth("toby", 1, 0, 1), enemyGrowth("ripa", 1, 0, 2)],
-  [enemyGrowth("amo", 1, 0, 0), enemyGrowth("toby", 2, 0, 1), enemyGrowth("ripa", 1, 0, 2)],
-  [enemyGrowth("amo", 2, 0, 0), enemyGrowth("toby", 2, 0, 1), enemyGrowth("ripa", 1, 0, 2)],
+  [enemyGrowth("amo", 2, 0, 0), enemyGrowth("toby", 2, 0, 1), enemyGrowth("ripa", 2, 0, 2)],
   [enemyGrowth("amo", 2, 0, 0), enemyGrowth("toby", 3, 0, 1), enemyGrowth("ripa", 2, 0, 2)],
-  [enemyGrowth("amo", 3, 0, 0), enemyGrowth("toby", 3, 0, 1), enemyGrowth("ripa", 3, 0, 2)],
-  [enemyGrowth("amo", 4, 0, 0), enemyGrowth("toby", 4, 0, 1), enemyGrowth("ripa", 3, 0, 2)],
+  [enemyGrowth("amo", 3, 0, 0), enemyGrowth("toby", 4, 0, 1), enemyGrowth("ripa", 3, 0, 2)],
   [enemyGrowth("amo", 4, 0, 0), enemyGrowth("toby", 5, 0, 1), enemyGrowth("ripa", 4, 0, 2)],
-  [enemyGrowth("amo", 5, 1, 0), enemyGrowth("toby", 5, 0, 1), enemyGrowth("ripa", 5, 0, 2)],
-  [enemyGrowth("amo", 5, 1, 0), enemyGrowth("toby", 5, 1, 1), enemyGrowth("ripa", 5, 1, 2)],
-  // 코마도 일반 RelicDef를 사용하는 중간보스이며, 아모와 리파가 앞뒤에서 전열을 완성한다.
-  [enemyGrowth("amo", 5, 1, 0), enemyGrowth("husk-koma", 1, 1, 1), enemyGrowth("ripa", 5, 1, 2)],
+  [enemyGrowth("amo", 4, 0, 0), enemyGrowth("toby", 5, 0, 1), enemyGrowth("ripa", 5, 0, 2)],
+  [enemyGrowth("amo", 5, 0, 0), enemyGrowth("toby", 5, 0, 1), enemyGrowth("ripa", 5, 0, 2)],
+  [enemyGrowth("amo", 5, 0, 0), enemyGrowth("toby", 6, 0, 1), enemyGrowth("ripa", 6, 0, 2)],
+  [enemyGrowth("amo", 6, 1, 0), enemyGrowth("toby", 6, 0, 1), enemyGrowth("ripa", 6, 0, 2)],
+  [enemyGrowth("amo", 6, 1, 0), enemyGrowth("toby", 6, 1, 1), enemyGrowth("ripa", 6, 1, 2)],
+  /*
+   * 코마도 일반 RelicDef를 사용하는 중간보스이며, 아모와 리파가 앞뒤에서 전열을 완성한다.
+   *
+   * **레벨만 넷인 이유는 코마가 원래 약하기 때문이다** — 태생 전투력 1916으로 아모(2098)·
+   * 토비(2085)·리파(2082)보다 한참 아래다. 대신 추격형 암살자라 같은 전투력에서 더 아프게
+   * 들어와, 토비 6을 코마 4로 갈아 끼운 이 편성이 1-9보다 확실히 어렵다(66.5% < 70.1%).
+   */
+  [enemyGrowth("amo", 6, 1, 0), enemyGrowth("husk-koma", 4, 1, 1), enemyGrowth("ripa", 6, 1, 2)],
 ];
 
 /**

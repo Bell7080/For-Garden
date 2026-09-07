@@ -47,6 +47,8 @@ import {
   TIA_PORTRAIT_METADATA,
   TIA_SD_METADATA,
   TORIKA_PORTRAIT_METADATA,
+  TORIKA_SKIN_001_PORTRAIT_METADATA,
+  TORIKA_SKIN_001_SD_METADATA,
 } from "./assetMetadata";
 
 /** 기존 호출부가 렌더러 구현을 몰라도 되도록 인게임 Puppet 타입을 한 곳에서 공개한다. */
@@ -134,6 +136,12 @@ const base = import.meta.env.BASE_URL;
 export const TORIKA_ASSET: PuppetAsset = {
   url: `${base}puppets/char_001.zip`,
   ...TORIKA_PORTRAIT_METADATA,
+};
+
+/** 토리카 skin001 전신: 기본 외형과 독립 측정한 카드·로비·정보창 배치를 사용한다. */
+export const TORIKA_SKIN_001_ASSET: PuppetAsset = {
+  url: `${base}puppets/char_001_skin001.zip`,
+  ...TORIKA_SKIN_001_PORTRAIT_METADATA,
 };
 
 /** 2번 전신 일러스트: 렉시아(티라노사우루스). */
@@ -320,9 +328,25 @@ const PORTRAIT_ASSETS = {
   parua: PARUA_ASSET,
 } as const satisfies Record<PortraitAssetId, PuppetAsset>;
 
+/**
+ * 장착 가능한 전신 스킨 표. 첫 키는 렐릭의 전신 asset ID, 둘째 키는 저장되는 스킨 ID다.
+ * 기본 외형은 이 표에 넣지 않아 "명시한 장착 스킨 → 해당 렐릭 기본 외형" 순서를 보존한다.
+ */
+const PORTRAIT_SKINS: Readonly<Partial<Record<PortraitAssetId, Readonly<Record<string, PuppetAsset>>>>> = {
+  torika: { "torika-skin-001": TORIKA_SKIN_001_ASSET },
+};
+
 /** 데이터 키로 전신 원화를 찾는다. 캐릭터 내부 id에 의존하지 않는다. */
 export function portraitAssetFor(assetId: PortraitAssetId): PuppetAsset {
   return PORTRAIT_ASSETS[assetId];
+}
+
+/**
+ * 명시적으로 장착된 스킨을 먼저 고르고, null·미장착·알 수 없는 값은 **같은 렐릭의** 기본 전신으로
+ * 돌아간다. 다른 렐릭(특히 토리카)을 전역 대체물로 쓰지 않아 잘못된 외형을 조용히 표시하지 않는다.
+ */
+export function portraitAssetForSkin(assetId: PortraitAssetId, equippedSkinId?: string | null): PuppetAsset {
+  return (equippedSkinId && PORTRAIT_SKINS[assetId]?.[equippedSkinId]) || portraitAssetFor(assetId);
 }
 
 /** 전투용 적 SD 1~3번은 정보창용 전신 원화와 파일을 섞지 않는다. */
@@ -353,6 +377,12 @@ export const TORIKA_SD_ASSET: PuppetAsset = {
   imageWidth: 1254,
   imageHeight: 1254,
   content: { left: 245, top: 120, right: 1010, bottom: 1135 },
+};
+
+/** 토리카 skin001 SD: 실측 발끝과 관절 좌표를 사용하는 전투용 묶음이다. */
+export const TORIKA_SKIN_001_SD_ASSET: PuppetAsset = {
+  url: `${base}puppets/charSD_001_skin001.zip`,
+  ...TORIKA_SKIN_001_SD_METADATA,
 };
 
 /** 2번 SD: 렉시아. */
@@ -508,10 +538,23 @@ export const ENEMY_SD_ASSETS_BY_ID: Readonly<Record<string, PuppetAsset>> = {
   [ENEMY_SD_ASSET_IDS[4]]: EXPLORER_SD_ASSET,
 };
 
+/** SD 스킨도 렐릭 ID 아래에만 등록해 다른 렐릭으로 폴백할 수 없게 한다. */
+const ALLY_SD_SKINS: Readonly<Record<string, Readonly<Record<string, PuppetAsset>>>> = {
+  anky: { "torika-skin-001": TORIKA_SKIN_001_SD_ASSET },
+};
+
 /** 비전투 화면의 아군 SD 선택. 적 ID는 받지 않는다. */
 export function sdAssetFor(relicId: string): PuppetAsset {
-  // 표에 없는 렐릭만 기존 공용 토리카 SD로 안전하게 폴백한다.
+  // 캐릭터 ID만 받는 기존 계약은 유지한다. 미등록 구형 렐릭의 역사적 토리카 폴백도 바꾸지 않는다.
   return ALLY_SD_ASSETS[relicId] ?? TORIKA_SD_ASSET;
+}
+
+/**
+ * 장착 SD 스킨을 먼저 고르고, 없거나 알 수 없으면 그 렐릭의 기본 SD만 고른다.
+ * 스킨 resolver에서는 전역 토리카 폴백을 금지하므로 알 수 없는 렐릭 ID는 `undefined`다.
+ */
+export function sdAssetForSkin(relicId: string, equippedSkinId?: string | null): PuppetAsset | undefined {
+  return (equippedSkinId && ALLY_SD_SKINS[relicId]?.[equippedSkinId]) || ALLY_SD_ASSETS[relicId];
 }
 
 /** 전투는 아군 표에 적 묶음을 얹어 같은 경로로 찾는다. */
@@ -584,9 +627,9 @@ function loadPuppet(asset: PuppetAsset): Promise<Puppet> {
  */
 export const PUPPET_PRELOAD_GROUPS: ReadonlyArray<readonly PuppetAsset[]> = [
   // 전신은 PortraitCard와 정보창이 처음 열릴 때 파싱하지 않도록 중앙 전신 단계에 둔다.
-  [TORIKA_ASSET, LEXIA_ASSET, SEIRA_ASSET, LUKA_ASSET, PONTOS_ASSET],
+  [TORIKA_ASSET, TORIKA_SKIN_001_ASSET, LEXIA_ASSET, SEIRA_ASSET, LUKA_ASSET, PONTOS_ASSET],
   // SD 역시 씬 로더가 아니라 타이틀의 공용 Puppet 단계에서 미리 해석한다.
-  [TORIKA_SD_ASSET, LEXIA_SD_ASSET, SEIRA_SD_ASSET, LUKA_SD_ASSET, ...ENEMY_SD_ASSETS, PONTOS_SD_ASSET, TOBY_ASSET, AMO_ASSET, RIPA_ASSET],
+  [TORIKA_SD_ASSET, TORIKA_SKIN_001_SD_ASSET, LEXIA_SD_ASSET, SEIRA_SD_ASSET, LUKA_SD_ASSET, ...ENEMY_SD_ASSETS, PONTOS_SD_ASSET, TOBY_ASSET, AMO_ASSET, RIPA_ASSET],
 ];
 
 /**

@@ -20,6 +20,7 @@ import {
   STELLA_PORTRAIT_METADATA,
   TIA_PORTRAIT_METADATA,
   TORIKA_PORTRAIT_METADATA,
+  TORIKA_SKIN_001_PORTRAIT_METADATA,
 } from "../../src/puppets/assetMetadata";
 import { INFO_PORTRAIT_FOCUS, LOBBY_PORTRAIT_SPOT, lobbyPortraitPlacement } from "../../src/ui/portraitPlacement";
 
@@ -212,5 +213,28 @@ describe("정보창 전신의 얼굴 크기", () => {
       // 가장 넓은 개체보다 5% 넘게 넓으면 그 원화만 판을 통째로 덮는다.
       expect(widthOf(relic.portraitAssetId) / Math.max(...others), relic.name).toBeLessThanOrEqual(1.05);
     }
+  });
+});
+
+
+describe("토리카 skin001 화면 비율", () => {
+  const skinEyes = [[472, 312], [558, 344]] as const;
+  const baseEyes = JOINTS.torika.eyes;
+
+  it("는 기본 토리카와 같은 키 비율로 로비 바닥에 선다", () => {
+    // 같은 1.08 m 외형이므로 눈 중간점부터 alpha 발끝까지의 화면 길이를 직접 비교한다.
+    const eyeToFoot = (asset: Omit<PuppetAsset, "url">, eyes: readonly [readonly [number, number], readonly [number, number]]): number => {
+      const height = lobbyPortraitPlacement({ url: "", ...asset }).height;
+      const eye = (eyes[0][1] + eyes[1][1]) / 2;
+      return (asset.content.bottom - eye) * height / (asset.content.bottom - asset.content.top);
+    };
+    expect(eyeToFoot(TORIKA_SKIN_001_PORTRAIT_METADATA, skinEyes) / eyeToFoot(TORIKA_PORTRAIT_METADATA, baseEyes)).toBeCloseTo(1, 3);
+  });
+
+  it("는 카드와 정보창 보정이 기본 토리카 복사가 아니다", () => {
+    // 새 눈 간격·실루엣·중심1로 다시 잰 값이어야 하므로 기본 메타데이터와 달라야 한다.
+    expect(TORIKA_SKIN_001_PORTRAIT_METADATA.cardZoom).not.toBe(TORIKA_PORTRAIT_METADATA.cardZoom);
+    expect(TORIKA_SKIN_001_PORTRAIT_METADATA.lobbyZoom).not.toBe(TORIKA_PORTRAIT_METADATA.lobbyZoom);
+    expect(TORIKA_SKIN_001_PORTRAIT_METADATA.portraitOffsetY).toBe(-278);
   });
 });

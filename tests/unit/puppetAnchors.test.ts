@@ -36,6 +36,8 @@ import {
   STELLA_PORTRAIT_METADATA,
   TIA_PORTRAIT_METADATA,
   TORIKA_PORTRAIT_METADATA,
+  TORIKA_SKIN_001_PORTRAIT_METADATA,
+  TORIKA_SKIN_001_SD_METADATA,
 } from "../../src/puppets/assetMetadata";
 
 /** 실제 char_001.zip과 같은 구성 — 머리 태그를 눈·입이 함께 가지고 있다. */
@@ -217,6 +219,30 @@ describe("도디·메테 전용 에셋 앵커 메타데이터", () => {
   });
 });
 
+describe("토리카 skin001 에셋 앵커 메타데이터", () => {
+  it("는 전신·SD ZIP의 독립 측정 좌표와 SD 발끝을 고정한다", () => {
+    // alpha > 16은 좌상단 원점의 포괄 경계이며, SD content.bottom이 실제 발끝이다.
+    expect(TORIKA_SKIN_001_PORTRAIT_METADATA).toMatchObject({
+      imageWidth: 1024, imageHeight: 1536,
+      content: { left: 178, top: 23, right: 972, bottom: 1491 },
+      cardZoom: 0.792, lobbyZoom: 0.715, portraitOffsetY: -278,
+    });
+    expect(TORIKA_SKIN_001_SD_METADATA).toMatchObject({
+      imageWidth: 1254, imageHeight: 1254,
+      content: { left: 189, top: 28, right: 1064, bottom: 1225 },
+    });
+  });
+
+  it("는 skin001의 중심1·머리1·눈 관절이 독립 실루엣 안에 있다", () => {
+    const { content } = TORIKA_SKIN_001_PORTRAIT_METADATA;
+    // puppet.json에서 읽은 중심1, 머리1, 눈1, 눈2의 텍스처 좌표다.
+    for (const [x, y] of [[467, 454], [527, 335], [472, 312], [558, 344]]) {
+      expect(x).toBeGreaterThanOrEqual(content.left); expect(x).toBeLessThanOrEqual(content.right);
+      expect(y).toBeGreaterThanOrEqual(content.top); expect(y).toBeLessThanOrEqual(content.bottom);
+    }
+  });
+});
+
 /**
  * **회귀 테스트다.** 여기까지의 카드 테스트는 전부 손으로 지어낸 프레임을 썼고, 그래서 실제
  * 원화가 정수리를 잘리는 문제를 여러 번 고치는 동안에도 한 번도 실패하지 않았다.
@@ -241,6 +267,8 @@ const REAL_CARD = { width: 300, height: 464, headroom: 0 } as const;
  */
 const REAL_PORTRAITS = [
   { name: "토리카", metadata: TORIKA_PORTRAIT_METADATA, head: { x: 609, y: 395 }, eyes: [{ x: 554, y: 416 }, { x: 638, y: 446 }] },
+  // skin001도 자기 ZIP의 텍스처 좌표를 써 기본 토리카 관절을 복사하는 회귀를 막는다.
+  { name: "토리카 skin001", metadata: TORIKA_SKIN_001_PORTRAIT_METADATA, head: { x: 527, y: 335 }, eyes: [{ x: 472, y: 312 }, { x: 558, y: 344 }] },
   { name: "렉시아", metadata: LEXIA_PORTRAIT_METADATA, head: { x: 613, y: 265 }, eyes: [{ x: 582, y: 265 }, { x: 643, y: 236 }] },
   { name: "스피나", metadata: SEIRA_PORTRAIT_METADATA, head: { x: 572, y: 250 }, eyes: [{ x: 544, y: 239 }, { x: 597, y: 208 }] },
   { name: "루카", metadata: LUKA_PORTRAIT_METADATA, head: { x: 882, y: 419 }, eyes: [{ x: 832, y: 425 }, { x: 960, y: 368 }] },

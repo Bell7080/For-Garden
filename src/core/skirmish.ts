@@ -545,6 +545,8 @@ export const SKIRMISH = {
    * 길게 두면 그동안 피해가 통째로 빈다.
    */
   blockedGraceSeconds: 0.7,
+  /** 사거리 밖 정체가 실제 몸 벽이라고 확정해 충돌을 통과하기까지 기다리는 시간(초). */
+  collisionBypassSeconds: 2,
   /**
    * "가까워졌다"로 인정하는 최소 거리(px).
    *
@@ -3713,6 +3715,11 @@ function separate(state: SkirmishState, dt: number): void {
    * 둘 다 빼야 "그 자리에 없는 것처럼 지나간다"가 된다.
    */
   const alive = state.fighters.filter((fighter) => isFighterAlive(fighter) && fighter.def.passive.phasesThroughFighters !== true);
+  /** 여러 몸에 충분히 오래 막힌 추격자는 표적에게 붙을 때까지 충돌에서 빠져 연속 벽을 통과한다. */
+  const bypassesCollision = (fighter: Fighter): boolean => !fighter.engaged && fighter.targetId !== null
+    // 적이 하나뿐인 보스전은 그 몸 자체가 전장 축이라 기존 대형과 전투 시간을 그대로 지킨다.
+    && state.fighters.filter((other) => other.side !== fighter.side && isFighterAlive(other)).length > 1
+    && fighter.blockedFor >= SKIRMISH.collisionBypassSeconds;
   /** 지금 표적 쪽으로 걸어가는 중인가. 그렇다면 밀어내기를 그 방향과 맞부딪치게 두지 않는다. */
   const approachOf = (fighter: Fighter): { heading: { x: number; y: number } } | null => {
     if (fighter.engaged || fighter.targetId === null) return null;
@@ -3728,6 +3735,8 @@ function separate(state: SkirmishState, dt: number): void {
     for (let j = i + 1; j < alive.length; j += 1) {
       const a = alive[i];
       const b = alive[j];
+      // 탈출 중인 한쪽만 밀어내면 지나가며 상대 대형을 흔드므로, 이 쌍은 서로 없는 것처럼 다룬다.
+      if (bypassesCollision(a) || bypassesCollision(b)) continue;
       const dx = b.x - a.x;
       const dy = b.y - a.y;
       const gap = Math.hypot(dx, dy);
@@ -4014,7 +4023,9 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
       // 표적에게 붙었던 거리가 기준으로 남아 새 표적으로 달려가는 내내 막힌 것으로 센다.
       fighter.blockedFor = 0;
       fighter.bestGap = gap;
-    } else if (gap < fighter.bestGap - SKIRMISH.blockedProgressStep) {
+    } else if (fighter.blockedFor < (state.fighters.filter((other) => other.side !== fighter.side && isFighterAlive(other)).length > 1
+      ? SKIRMISH.collisionBypassSeconds : SKIRMISH.blockedGraceSeconds)
+      && gap < fighter.bestGap - SKIRMISH.blockedProgressStep) {
       fighter.blockedFor = 0;
       fighter.bestGap = gap;
     } else {

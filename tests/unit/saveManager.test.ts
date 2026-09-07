@@ -3,6 +3,7 @@ import { CURRENT_SAVE_VERSION, SAVE_STORAGE_KEY, SaveDataError, SaveManager } fr
 import { createDefaultSession, type SaveData } from "../../src/state/session";
 import { createRuneInstance, type RuneStatKey } from "../../src/core/runes";
 import { ExpeditionManager } from "../../src/managers/ExpeditionManager";
+import { ownTorikaTestSkin } from "../fixtures/relicSkin";
 
 /** 저장 왕복과 손상 검증에 쓰는 결정적 신규 룬이다. */
 function testRune(instanceId = "rune-save-1") {
@@ -39,6 +40,8 @@ describe("SaveManager", () => {
   it("스킨 소유·장착을 JSON으로 왕복하고 현행 손상 ID와 대상 불일치를 거부한다", () => {
     const storage = new MemoryStorage();
     const source = createDefaultSession();
+    // 저장 왕복 검증은 승인되지 않은 실서비스 지급 대신 명시적인 테스트 소유권을 사용한다.
+    ownTorikaTestSkin(source);
     source.equippedRelicSkinIds.anky = "torika-skin-001";
     const manager = new SaveManager(storage);
     manager.save(source);

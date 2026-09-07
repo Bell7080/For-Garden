@@ -38,6 +38,16 @@ describe("머리 위 상태 칩 줄", () => {
   it("은 체력 바와 겹치지 않을 만큼 위로 띄운다", () => {
     expect(BATTLE_STATUS_LAYOUT.chipRowLift).toBeGreaterThanOrEqual(BATTLE_STATUS_LAYOUT.chipSize / 2);
   });
+
+  it("은 세 시험관을 1080×1920 체력 바 아래에서 바·윗쪽 상태 칩과 겹치지 않게 둔다", () => {
+    const { reagent, reagentRowDrop, hpBarWidth, chipRowLift, chipSize } = BATTLE_STATUS_LAYOUT;
+    const width = reagent.slotWidth * 3 + reagent.gap * 2;
+    // 시험관 묶음은 체력 바 폭 안에 있고, 바 아랫변보다 아래에서 시작한다.
+    expect(width).toBeLessThan(hpBarWidth);
+    expect(reagentRowDrop - reagent.slotHeight / 2).toBeGreaterThan(11 / 2);
+    // 기존 상태 행은 위쪽, 시험관은 아래쪽이라 어떤 중첩 수에서도 세로 영역이 갈린다.
+    expect(-chipRowLift + chipSize / 2).toBeLessThan(reagentRowDrop - reagent.slotHeight / 2);
+  });
 });
 
 describe("공용 전투 프로필 배치", () => {

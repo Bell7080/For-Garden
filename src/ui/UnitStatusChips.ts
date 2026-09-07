@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { BATTLE_STATUS_LAYOUT as L, unitStatusChipOffsets } from "./battleStatusLayout";
-import { chipPoints, drawInnerVignette, drawLayer, drawShapeOutline } from "./holo";
+import { chipPoints, drawInnerVignette, drawLayer, drawShapeOutline, slantedRect, toPoints } from "./holo";
 import { clockWedgeOnShape } from "./clockWedge";
 import type { UnitStatusView } from "./unitStatusModel";
 import { COLOR, textStyle } from "./theme";
@@ -12,6 +12,8 @@ interface ChipView {
   clock: Phaser.GameObjects.Graphics;
   stacks: Phaser.GameObjects.Text;
   plate: Phaser.GameObjects.Arc;
+  /** 시약만 쓰는 세 칸 그래픽. 일반 상태 칩에는 비어 있다. */
+  reagent?: Phaser.GameObjects.Graphics;
 }
 
 /**
@@ -46,27 +48,48 @@ export class UnitStatusChips extends Phaser.GameObjects.Container {
 
   /** 지금 걸린 상태 목록으로 한 줄을 다시 세운다. 없어진 상태의 칩만 버린다. */
   update(views: readonly UnitStatusView[]): void {
-    const alive = new Set(views.map(({ id }) => id));
+    const alive = new Set(views.map((view) => view.key ?? view.id));
     for (const [id, chip] of this.chips) {
-      if (!alive.has(id as UnitStatusView["id"])) { chip.container.destroy(true); this.chips.delete(id); }
+      if (!alive.has(id)) { chip.container.destroy(true); this.chips.delete(id); }
     }
-    const offsets = unitStatusChipOffsets(views.length);
-    views.forEach((view, index) => {
-      const chip = this.chips.get(view.id) ?? this.createChip(view);
-      chip.container.setPosition(offsets[index], 0);
+    // 아래쪽 시약은 위쪽 고정 슬롯 수에 포함하지 않아, 시약이 생겨도 기존 상태 칩이 흔들리지 않는다.
+    const offsets = unitStatusChipOffsets(views.filter((view) => !view.stackSlots).length);
+    const reagentCount = views.filter((view) => view.stackSlots).length;
+    const reagentWidth = L.reagent.slotWidth * 3 + L.reagent.gap * 2;
+    // 제공자가 둘 이상이어도 세 칸 묶음끼리 포개지지 않게 묶음 폭 단위로 가운데에서 벌린다.
+    const reagentOffsets = Array.from({ length: reagentCount }, (_, index) => (index - (reagentCount - 1) / 2) * (reagentWidth + L.reagent.gap));
+    let statusIndex = 0;
+    let reagentIndex = 0;
+    views.forEach((view) => {
+      const key = view.key ?? view.id;
+      const chip = this.chips.get(key) ?? this.createChip(view, key);
+      // 시약은 체력 바 아래, 나머지 상태는 기존 위쪽 경계를 그대로 쓴다.
+      chip.container.setPosition(view.stackSlots ? reagentOffsets[reagentIndex++] : offsets[statusIndex++], view.stackSlots ? L.reagentRowDrop : 0);
       // 겹은 있을 때만 적는다. 0을 남겨 두면 사라진 상태가 아직 걸린 것처럼 보인다.
       const hasStacks = view.stacks !== undefined && view.stacks > 0;
       chip.plate.setVisible(hasStacks);
       chip.stacks.setVisible(hasStacks).setText(hasStacks ? String(view.stacks) : "");
-      this.drawClock(chip, view);
+      if (chip.reagent) this.drawReagent(chip.reagent, view);
+      else this.drawClock(chip, view);
     });
   }
 
-  private createChip(view: UnitStatusView): ChipView {
+  private createChip(view: UnitStatusView, key: string): ChipView {
     const scene = this.scene;
     const size = L.chipSize;
     const container = scene.add.container(0, 0);
     const shape = chipShape();
+    if (view.stackSlots) {
+      const reagent = scene.add.graphics();
+      container.add(reagent);
+      this.add(container);
+      const hidden = scene.add.circle(0, 0, 1).setVisible(false);
+      const hiddenText = scene.add.text(0, 0, "").setVisible(false);
+      container.add([hidden, hiddenText]);
+      const chip: ChipView = { container, id: key, clock: reagent, stacks: hiddenText, plate: hidden, reagent };
+      this.chips.set(key, chip);
+      return chip;
+    }
     container.add(drawLayer(scene, 0, 0, shape, { fill: COLOR.void, alpha: 0.88 }));
     container.add(this.drawMark(view.color, size));
     container.add(drawInnerVignette(scene, 0, 0, shape, { strength: 0.5 }));
@@ -78,9 +101,26 @@ export class UnitStatusChips extends Phaser.GameObjects.Container {
     const stacks = scene.add.text(count.offsetX, count.offsetY + 1, "", textStyle({ role: "display", size: count.size, color: `#${view.color.toString(16).padStart(6, "0")}` })).setOrigin(0.5);
     container.add([plate, stacks]);
     this.add(container);
-    const chip: ChipView = { container, id: view.id, clock, stacks, plate };
-    this.chips.set(view.id, chip);
+    const chip: ChipView = { container, id: key, clock, stacks, plate };
+    this.chips.set(key, chip);
     return chip;
+  }
+
+  /** 사방 테두리나 별도 패널 없이 플랫한 세 면과 얇은 세로 구분선만 그린다. */
+  private drawReagent(graphics: Phaser.GameObjects.Graphics, view: UnitStatusView): void {
+    const { slotWidth, slotHeight, gap, slant } = L.reagent;
+    const slots = view.stackSlots ?? 0;
+    const totalWidth = slots * slotWidth + (slots - 1) * gap;
+    graphics.clear();
+    for (let index = 0; index < slots; index += 1) {
+      const x = -totalWidth / 2 + slotWidth / 2 + index * (slotWidth + gap);
+      const points = toPoints(slantedRect(slotWidth, slotHeight, slant));
+      graphics.fillStyle(index < (view.stacks ?? 0) ? view.color : COLOR.void, index < (view.stacks ?? 0) ? 0.96 : 0.62);
+      graphics.fillPoints(points.map((point) => new Phaser.Geom.Point(point.x + x, point.y)), true);
+      // 윗변 한 줄만 남겨 홀로그램 면의 방향을 알리고 사방 외곽선은 만들지 않는다.
+      graphics.lineStyle(1, index < (view.stacks ?? 0) ? 0xffffff : view.color, 0.5);
+      graphics.lineBetween(x - slotWidth / 2 + slant / 2, -slotHeight / 2, x + slotWidth / 2 + slant / 2, -slotHeight / 2);
+    }
   }
 
   /** 상태를 알리는 마름모 한 장. 색만으로 갈리지 않도록 예전 뱃지와 같은 모양을 그대로 쓴다. */

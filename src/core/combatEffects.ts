@@ -12,6 +12,8 @@ export type CombatEffectTag =
   | "stealthEnter"
   | "stealthActive"
   | "stealthExit"
+  /** 시약 세 칸을 소비한 그 순간 한 번만 터지는 수포 반응이다. */
+  | "reagentReaction"
   /** 메테 자신의 크레셴도 스타카토 폭주가 유지되는 동안만 존재하는 순수 표시 상태다. */
   | "metteStaccatoActive"
   /** 루카와 같은 적을 겨누어 실제 공격 속도 오라를 받는 전투원의 순수 표시 상태다. */

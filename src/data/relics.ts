@@ -1579,41 +1579,69 @@ export const RELICS: RelicDef[] = [
       ferocityGain: 0,
     },
     // 캐릭터 ID가 아니라 공용 시약 도핑 계약이 진입 살포와 자기 공속 증가를 함께 표현한다.
-    ferocityTrait: { name: "몰래 쿡! 도핑 투여", effectId: "reagentDoping", stacksOnEntry: 1, attackSpeedPercent: 40 },
+    ferocityTrait: {
+      name: "몰래 쿡! 도핑 투여", effectId: "reagentDoping",
+      // 진입 1겹은 궁극기 없이도 순환을 시작하되 즉시 반응하지 않는 R등급 행동 예산이다.
+      stacksOnEntry: 1,
+      // +40%는 R 지원가의 직접 버프를 자기 폭주 시간에만 묶어 반응 횟수의 상한을 세운다.
+      attackSpeedPercent: 40,
+    },
     passive: {
       id: "ripa-passive",
       name: "으흐흐, 실험 시작!",
       kind: "reagentReaction",
       iconAssetId: "skill-icon-buff",
       effectType: "buff",
+      // 기존 Passive 계약의 대표값도 3겹 상한과 맞춰 정보창의 R등급 발동 예산이 갈리지 않게 한다.
       value: 3,
-      // 모든 수치는 ID 분기 없이 패시브 설명과 이후 공용 적중 후 처리 경로가 함께 읽는다.
-      reagentReaction: { maxStacks: 3, seconds: 8, basicStacks: 1, ultimateStacks: 2, reactionPoisonSeconds: 4, lowestHpAllyHealMaxHpPercent: 5, resistanceReductionPercent: 12, resistanceReductionSeconds: 5 },
+      reagentReaction: {
+        // 3겹은 기본 공격 세 번 또는 기본기+궁극기로 완성되어 R등급의 준비 동작을 보존한다.
+        maxStacks: 3,
+        // 8초는 느린 기본 공속에도 한 순환을 허용하지만 표적 변경으로 영구 보존되지는 않는 창이다.
+        seconds: 8,
+        // 기본 1겹은 매 타격 반응을 막아 독·회복 예산을 세 번의 적중에 나눠 둔다.
+        basicStacks: 1,
+        // 궁극기 2겹은 비용 100의 광역 준비 가치를 주되 단독 즉발 반응은 만들지 않는다.
+        ultimateStacks: 2,
+        // 중독 4초는 공용 POISON 네 틱만 빌려 R등급 직접 피해가 주력 딜러를 넘지 않게 한다.
+        reactionPoisonSeconds: 4,
+        // 단일 아군 최대 HP 5%는 광역 회복보다 좁은 대신 반복 가능한 R 지원 예산이다.
+        lowestHpAllyHealMaxHpPercent: 5,
+        // 원본 저항 12%는 후반 기여의 첫 조정점이며 3겹 규칙을 건드리지 않고 낮출 수 있다.
+        resistanceReductionPercent: 12,
+        // 5초는 후속 아군 공격을 받되 다음 반응까지 상시 유지되기 어렵게 둔 가동 창이다.
+        resistanceReductionSeconds: 5,
+      },
       desc: "",
     },
     basic: {
       id: "ripa-basic",
       // 삼엽충 원종의 복원 외형에 맞춘 기술명이며 성격 관찰 데이터와는 분리한다.
       name: "찰싹! 시약 묻히기",
+      // AP 80%는 시약 1겹과 공용 중독을 함께 가진 R등급 기본기의 직접 피해 예산이다.
       power: 80,
       iconAssetId: "skill-icon-magical",
       effectType: "magical",
       damageType: "magical",
       // 패시브 수치와 일치하며 이후 공용 적중 후 경로가 캐릭터 ID 없이 읽을 부여량이다.
+      // 1겹은 패시브 계약과 같은 기본 공격 몫이며 숫자를 두 경로가 함께 검증한다.
       reagentStacks: 1,
     },
     ultimate: {
       id: "ripa-ult",
       // 삼엽충 원종의 수중 움직임에 맞춘 기술명이며 성격 관찰 데이터와는 분리한다.
       name: "뭐가 들었게? 약물 폭탄",
+      // AP 100%는 광역 2겹 준비가 핵심인 R등급 궁극기라 직접 피해를 한 배율로 제한한다.
       power: 100,
       iconAssetId: "skill-icon-magical",
       effectType: "magical",
       damageType: "magical",
+      // 비용 100은 공용 궁극기 한 주기 예산을 지켜 광역 2겹을 반복 살포하지 못하게 한다.
       cost: 100,
       // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
       targeting: "battlefieldEnemies",
       // 일반 공격과 동일한 공용 적중 후 경로에 넘겨 각 대상의 반응을 독립 판정한다.
+      // 2겹은 이미 묻은 1겹과 합쳐 반응한다는 입력 순서를 화면의 세 칸과 일치시킨다.
       reagentStacks: 2,
     },
   },

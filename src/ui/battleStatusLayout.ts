@@ -136,6 +136,10 @@ export const BATTLE_STATUS_LAYOUT = {
    * 더하고도 남을 만큼 띄운다.
    */
   chipRowLift: 28,
+  /** 체력 바 아래 시험관의 중심. 바(11px)와 4px를 띄워 어느 채움 상태에서도 닿지 않는다. */
+  reagentRowDrop: 13,
+  /** 세 칸은 숫자 없이도 1·2겹을 세도록 충분히 갈라지되 체력 바 폭 안에 머문다. */
+  reagent: { slotWidth: 12, slotHeight: 7, gap: 3, slant: 3, dividerWidth: 1 },
   /** 칩 아래 변이 바의 끝 빗금 꼭대기에 닿지 않는지 테스트가 이 값으로 잰다. */
   hpBarCapHalfHeight: 7.4,
   /**

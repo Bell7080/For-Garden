@@ -23,6 +23,8 @@ const TRANSIENT_EFFECT = {
   shieldBreak: { method: "shieldBreak", color: COLOR.danger },
   stealthEnter: { method: "stealthEnter", color: COLOR.inkDimHex },
   stealthExit: { method: "stealthExit", color: COLOR.inkDimHex },
+  // 중독 수치 팝업과 같은 보랏빛이라 반응 뒤 남는 상태를 자연스럽게 이어 읽는다.
+  reagentReaction: { method: "reagentReaction", color: 0x7a4bab },
 } as const;
 
 /** BattleScene의 사건 조건문과 Phaser 표현 세부사항 사이를 끊는 전투 표현 매퍼다. */

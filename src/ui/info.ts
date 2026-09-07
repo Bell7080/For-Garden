@@ -58,6 +58,9 @@ import { addFactionMark, factionMarkBounds } from "./FactionMark";
 import { SQUADS } from "../data/factions";
 import { OBSERVATION_INTERVIEW_LAYOUT, observationInterviewPanelState, type ObservationInterviewPanelState } from "./observationInterviewPanel";
 import { INFO_PORTRAIT_FOCUS, infoPortraitPlacement } from "./portraitPlacement";
+import { skinsForRelic, type RelicSkinDef } from "../data/relicSkins";
+import { relicSkinManager } from "../managers/RelicSkinManager";
+import { Button } from "./Button";
 
 export type { SkillInfoViewModel } from "./SkillPopup";
 
@@ -91,6 +94,13 @@ const PORTRAIT_FOCUS = INFO_PORTRAIT_FOCUS;
 
 /** 정보창 구석에 세우는 SD 피규어. 받침 위에서 idle만 재생한다. */
 const FIGURE = { x: 762, y: 1786, height: 240 } as const;
+
+/** 1080×1920에서 제목·카드·상태·하단 공용 버튼이 서로 침범하지 않는 외형 작업판 배치다. */
+export const APPEARANCE_PANEL_LAYOUT = {
+  width: 920, height: 1240, cardY: -90, cardWidth: 390, cardHeight: 760,
+  cardCenters: [-210, 210] as const, puppetGroundY: 195, puppetHeight: 620,
+  actionY: 500, actionWidth: 520, actionHeight: 96,
+} as const;
 
 /** 오른쪽 정보 기둥. 캐릭터를 덮지 않도록 화면 오른쪽 절반만 쓴다. */
 const COLUMN = {
@@ -426,6 +436,8 @@ export class InfoManager {
   private portraitHome?: { x: number; y: number; scale: number };
   private figure?: PuppetCreature;
   private figureRequest = 0;
+  /** 현재 렐릭에 비교할 외형이 없을 때 입력면까지 숨기는 공용 진입 버튼이다. */
+  private appearanceButton?: Phaser.GameObjects.Container;
   /** 전신 감상 중일 때 화면을 덮는 종료 판. 없으면 감상 중이 아니다. */
   private gallery?: Phaser.GameObjects.Rectangle;
   /** 감상을 연 돋보기를 눌린 크기에서 되돌리는 콜백. */
@@ -599,7 +611,7 @@ export class InfoManager {
     for (let index = 0; index < 3; index += 1) this.gemSlots.push(this.addGemSlot(index, gemPanel));
 
     this.buildFigureStand();
-    if (this.capabilities.mutateProgress) this.addCostumeButton(FIGURE.x + 152, FIGURE.y - 206);
+    if (this.capabilities.mutateProgress) this.addAppearanceButton(FIGURE.x + 152, FIGURE.y - 206);
     this.chrome.add(addBackButton(scene, () => this.hide()));
   }
 
@@ -1640,8 +1652,8 @@ export class InfoManager {
     });
   }
 
-  /** 코스튬은 아직 데이터가 없다. 자리와 여는 방법만 먼저 정해 둔다. */
-  private addCostumeButton(x: number, y: number): void {
+  /** 추가 외형이 있는 렐릭에게만 공용 외형 선택 진입점을 세운다. */
+  private addAppearanceButton(x: number, y: number): void {
     const size = 78;
     const container = this.scene.add.container(x, y);
     container.add(drawLayer(this.scene, 0, 0, chipPoints(size, size, {
@@ -1649,13 +1661,76 @@ export class InfoManager {
     }), { fill: 0x121820, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.4 }));
     container.add(drawGlyph(this.scene, "costume", 0, 0, size * 0.54, 0xd2d6dc));
     const hit = this.scene.add.rectangle(0, 0, size + 10, size + 10, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    hit.on("pointerdown", () => container.setScale(1.12));
+    hit.on("pointerout", () => { if (!this.popups.isOpen) container.setScale(1); });
     hit.on("pointerup", () => {
-      this.popups.open({ width: 720, height: 420, title: "옷장", dim: true }, (body) => {
-        body.add(this.scene.add.text(0, 20, "코스튬은 준비 중이다.", textStyle({ role: "body", size: 28, color: COLOR.inkDim })).setOrigin(0.5));
-      });
+      const def = this.currentDef;
+      if (!def || skinsForRelic(def.id).length === 0) { container.setScale(1); return; }
+      this.openAppearancePanel(def, () => container.setScale(1));
     });
     container.add(hit);
     this.chrome.add(container);
+    this.appearanceButton = container;
+  }
+
+  /** 기본 외형과 추가 외형을 실제 resolver의 Puppet으로 비교하고 manager를 통해 장착한다. */
+  private openAppearancePanel(def: RelicDef, onClose: () => void): void {
+    const extra = skinsForRelic(def.id);
+    if (extra.length === 0) return;
+    const layout = APPEARANCE_PANEL_LAYOUT;
+    this.popups.open({ width: layout.width, height: layout.height, title: "외형", dim: true, closeOnBackdrop: false, onClose }, (body) => {
+      let selected: RelicSkinDef | undefined = extra.find(({ id }) => id === relicSkinManager.equippedFor(def.id));
+      const cards: Phaser.GameObjects.Container[] = [];
+      const entries: Array<{ skin?: RelicSkinDef; name: string }> = [{ name: "기본 외형" }, ...extra.map((skin) => ({ skin, name: skin.name }))];
+      const action = new Button(this.scene, 0, layout.actionY, {
+        width: layout.actionWidth, height: layout.actionHeight, label: "장착", variant: "primary",
+        onClick: () => {
+          const equipped = relicSkinManager.equippedFor(def.id);
+          const succeeded = selected ? relicSkinManager.equip(def.id, selected.id) : (equipped === undefined || relicSkinManager.unequip(def.id));
+          if (!succeeded) return;
+          paint();
+          // 사건 구독 화면과 함께 현재 정보창의 두 Puppet도 즉시 같은 장착 결과로 교체한다.
+          void this.loadPortrait(def); void this.loadFigure(def);
+        },
+      });
+      body.add(action);
+
+      entries.forEach((entry, index) => {
+        const owned = !entry.skin || relicSkinManager.owns(entry.skin.id);
+        const card = this.scene.add.container(layout.cardCenters[index], layout.cardY);
+        const shape = chipPoints(layout.cardWidth, layout.cardHeight, { bevel: { topLeft: 54, topRight: 0, bottomRight: 54, bottomLeft: 0 } });
+        const off = drawLayer(this.scene, 0, 0, shape, { fill: 0x0b0f15, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.24 });
+        const on = drawLayer(this.scene, 0, 0, shape, { fill: 0x121820, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.95, edgeWidth: 4 });
+        card.add([off, on]);
+        const asset = portraitAssetForSkin(def.portraitAssetId, entry.skin?.id);
+        // 복사 이미지나 전용 크롭 없이 장착과 같은 resolver가 돌려준 Puppet을 카드 바닥선에 세운다.
+        void spawnPuppet(this.scene, asset, { x: 0, groundY: layout.puppetGroundY, height: layout.puppetHeight, depth: 1 }).then((puppet) => {
+          if (!card.active) { puppet.destroy(); return; }
+          puppet.setAlpha(owned ? 1 : 0.28); card.addAt(puppet, 2);
+        });
+        card.add(this.scene.add.text(0, 310, entry.name, textStyle({ role: "display", size: 28, color: owned ? COLOR.ink : COLOR.inkDim, align: "center", wrap: 330 })).setOrigin(0.5));
+        card.add(this.scene.add.text(0, 352, owned ? "보유" : "미보유 · 잠금", textStyle({ role: "emphasis", size: 22, color: owned ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5));
+        const hit = this.scene.add.rectangle(0, 0, layout.cardWidth, layout.cardHeight, 0xffffff, 0);
+        if (owned) hit.setInteractive({ useHandCursor: true }).on("pointerup", () => { selected = entry.skin; paint(); });
+        card.add(hit); body.add(card); cards.push(card);
+      });
+      function paint(): void {
+        const equipped = relicSkinManager.equippedFor(def.id);
+        cards.forEach((card, index) => {
+          const chosen = entries[index].skin?.id === selected?.id;
+          // 기본(undefined)끼리도 같은 선택이며, 선택 상태는 1.08배 확대와 강조 윗선으로만 읽힌다.
+          const selectedNow = chosen || (!entries[index].skin && !selected);
+          card.setScale(selectedNow ? 1.08 : 1);
+          (card.list[0] as Phaser.GameObjects.Graphics).setVisible(!selectedNow);
+          (card.list[1] as Phaser.GameObjects.Graphics).setVisible(selectedNow);
+        });
+        const selectedId = selected?.id;
+        const equippedNow = selectedId ? equipped === selectedId : equipped === undefined;
+        action.setLabel(equippedNow ? "장착 중" : "장착");
+        action.setEnabled(!equippedNow && (!selectedId || relicSkinManager.owns(selectedId)));
+      }
+      paint();
+    });
   }
 
   /** SD 피규어가 공중에 뜨지 않도록 받침을 깐다. 대사는 그 위에 뜬다. */
@@ -2065,6 +2140,8 @@ export class InfoManager {
   private openCharacter(def: RelicDef, owned = true): void {
     this.currentDef = def;
     this.ownedNow = owned;
+    // 기본 외형 하나뿐이거나 소유자 문맥이 아니면 선택 진입점 자체를 노출하지 않는다.
+    this.appearanceButton?.setVisible(owned && !this.publicProfile && skinsForRelic(def.id).length > 0);
     this.popups.closeAll();
 
     this.paintRarity(owned ? def.rarity : undefined);

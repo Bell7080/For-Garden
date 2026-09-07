@@ -22,6 +22,8 @@ describe("RelicSkinManager", () => {
     const state = createDefaultSession();
     const saves = { save: vi.fn() };
     const manager = new RelicSkinManager(state, saves);
+    const listener = vi.fn();
+    const unsubscribe = manager.subscribe(listener);
 
     expect(manager.owns("torika-skin-001")).toBe(true);
     expect(manager.equippedFor("anky")).toBeUndefined();
@@ -31,5 +33,11 @@ describe("RelicSkinManager", () => {
     expect(manager.equippedFor("anky")).toBeUndefined();
     expect(saves.save).toHaveBeenCalledTimes(2);
     expect(saves.save).toHaveBeenNthCalledWith(1, state);
+    // 저장 뒤 사건만 발행해 정보창·도감·로비가 확정 상태를 함께 다시 읽는다.
+    expect(listener).toHaveBeenNthCalledWith(1, { relicId: "anky", equippedSkinId: "torika-skin-001" });
+    expect(listener).toHaveBeenNthCalledWith(2, { relicId: "anky", equippedSkinId: undefined });
+    unsubscribe();
+    manager.equip("anky", "torika-skin-001");
+    expect(listener).toHaveBeenCalledTimes(2);
   });
 });

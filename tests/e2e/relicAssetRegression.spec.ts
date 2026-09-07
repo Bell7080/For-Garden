@@ -48,3 +48,36 @@ test("도디·메테의 도감 전신과 루카 포함 편성·전투 SD 에셋�
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.battle?.playerOrder)).toEqual(["도디", "메테", "루카"]);
   await captureGame(page, `test-results/${testInfo.project.name}-asset-dodi-mette-luka-battle-sd.png`);
 });
+
+test("토리카 기본 외형과 추가 외형을 전환하고 정보창 재진입 뒤 장착을 유지한다", async ({ page }, testInfo) => {
+  await startAfterOpening(page);
+  await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+  await tapUntil(page, BASE_WIDTH * 0.3, BASE_HEIGHT - 90, async () => (await page.evaluate(() => window.__PF_DEBUG?.scene)) === "relics");
+
+  // 개체번호순 보유 구역의 세 번째 카드가 토리카다. 공용 정보창 우하단 외형 칩으로 진입한다.
+  await tapUntil(page, 880, 620, async () => (await page.evaluate(() => window.__PF_DEBUG?.infoOpen)) === true);
+  await tapGame(page, 914, 1580);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toContain("외형");
+  await page.waitForTimeout(800); // 두 resolver Puppet이 카드에 조립된 뒤 기본 상태를 캡처한다.
+  await captureGame(page, `test-results/${testInfo.project.name}-torika-appearance-default.png`);
+
+  // 오른쪽 추가 외형을 고른 뒤 공용 장착 버튼으로 manager 경계를 호출한다.
+  await tapGame(page, 750, 870);
+  await tapGame(page, 540, 1460);
+  await page.waitForTimeout(800);
+  await captureGame(page, `test-results/${testInfo.project.name}-torika-appearance-skin001.png`);
+
+  // 기본↔스킨 양방향을 같은 판에서 검증한 뒤 스킨을 다시 장착해 재진입 유지 조건을 만든다.
+  await tapGame(page, 330, 870);
+  await tapGame(page, 540, 1460);
+  await tapGame(page, 750, 870);
+  await tapGame(page, 540, 1460);
+  await tapGame(page, 958, 382);
+  await tapGame(page, BASE_WIDTH - 106, BASE_HEIGHT - 120);
+  await tapUntil(page, 880, 620, async () => (await page.evaluate(() => window.__PF_DEBUG?.infoOpen)) === true);
+  await tapGame(page, 914, 1580);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toContain("외형");
+  await page.waitForTimeout(800);
+  await captureGame(page, `test-results/${testInfo.project.name}-torika-appearance-reentered-skin001.png`);
+});

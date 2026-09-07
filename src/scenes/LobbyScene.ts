@@ -27,6 +27,7 @@ import { MissionsPopup } from "../ui/MissionsPopup";
 import { lobbyPortraitPlacement } from "../ui/portraitPlacement";
 import { LOBBY_ACTION_BOUNDS, LOBBY_RAIL_BOUNDS } from "../ui/lobbyLayout";
 import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
+import { relicSkinManager } from "../managers/RelicSkinManager";
 import { expeditionManager } from "../managers/ExpeditionManager";
 import { ExpeditionEntryButton, sortieEntrySdSpot } from "../ui/ExpeditionEntryButton";
 import { ENEMY_SD_ASSETS, PONTOS_SD_ASSET, playMotion, type PuppetAsset } from "../puppets/assets";
@@ -194,6 +195,9 @@ export class LobbyScene extends Phaser.Scene {
     // 한 번의 공용 조회가 모든 버튼을 갱신하며 실패 시 기존의 안전한 꺼짐 상태를 유지한다.
     void notificationManager.refresh().catch(() => undefined);
     void this.showFavorite();
+    // 로비가 살아 있는 동안 외형 사건을 받으면 애착 렐릭 Puppet을 같은 resolver로 즉시 교체한다.
+    const unsubscribeSkin = relicSkinManager.subscribe(({ relicId }) => { if (relicId === session.favorite) void this.showFavorite(); });
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, unsubscribeSkin);
   }
 
   /** TopBar가 건넨 공개 모델만 사용해 공용 레이어 기반 정보창을 연다. */

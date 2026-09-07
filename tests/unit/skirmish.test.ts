@@ -3824,3 +3824,126 @@ describe("파루아 — 쏘면서 자라는 사거리", () => {
     expect(parua.volley).toBeNull();
   });
 });
+
+describe("리파 — 제공자별 시약 반응", () => {
+  /** 이동·반격을 제거해 한 번의 공용 적중 훅만 관찰하는 결정적 전투를 만든다. */
+  function reagentFight(players = ["ripa"], enemies = ["amo", "toby", "rex"]) {
+    const state = createSkirmish(players.map(getRelic), enemies.map(getRelic), ARENA);
+    const providers = state.fighters.filter((fighter) => fighter.side === "player");
+    const targets = state.fighters.filter((fighter) => fighter.side === "enemy");
+    for (const fighter of state.fighters) { fighter.x = 400; fighter.y = 900; fighter.attackCooldown = 99; }
+    return { state, providers, targets };
+  }
+
+  /** 지정 리파가 첫 적에게 기본 공격 한 번만 적중하게 한다. */
+  function basicHit(state: SkirmishState, provider: Fighter, target: Fighter) {
+    provider.targetId = target.id;
+    provider.engaged = true;
+    provider.attackCooldown = 0;
+    return stepSkirmish(state, 1 / 60, () => 0.999999);
+  }
+
+  it("는 1→2→3겹에서만 소비·공용 중독·저항 감소·회복을 일으키고 초과 겹을 남기지 않는다", () => {
+    const { state, providers: [ripa], targets: [target] } = reagentFight(["ripa", "rex"], ["amo"]);
+    const ally = state.fighters.find((fighter) => fighter.def.id === "rex")!;
+    ally.hp = ally.maxHp * 0.5;
+    const originalResistance = target.def.stats.res;
+
+    basicHit(state, ripa, target);
+    expect(target.reagents[ripa.id]).toMatchObject({ stacks: 1, total: 8 });
+    basicHit(state, ripa, target);
+    expect(target.reagents[ripa.id].stacks).toBe(2);
+    const events = basicHit(state, ripa, target);
+
+    expect(target.reagents[ripa.id]).toBeUndefined();
+    expect(target.poison?.remaining).toBeCloseTo(4, 1);
+    expect(target.poison?.sourceId).toBe(ripa.id);
+    expect(target.poison?.amountPerSecond).toBeGreaterThan(0);
+    expect(target.reagentResistanceReductions[ripa.id].amount).toBeCloseTo(originalResistance * 0.12, 8);
+    expect(defensiveDefinition(target, state).def.stats.res).toBeGreaterThanOrEqual(0);
+    expect(ally.hp).toBeCloseTo(ally.maxHp * 0.55, 8);
+    expect(events).toContainEqual(expect.objectContaining({ kind: "heal", fighterId: ally.id }));
+  });
+
+  it("는 같은 제공자의 재적중마다 8초로 갱신하고 만료 때 겹을 제거한다", () => {
+    const { state, providers: [ripa], targets: [target] } = reagentFight();
+    basicHit(state, ripa, target);
+    ripa.attackCooldown = 99;
+    run(state, 3);
+    expect(target.reagents[ripa.id].remaining).toBeCloseTo(5, 1);
+    basicHit(state, ripa, target);
+    expect(target.reagents[ripa.id].remaining).toBeGreaterThan(7.9);
+    ripa.attackCooldown = 99;
+    run(state, 8);
+    expect(target.reagents[ripa.id]).toBeUndefined();
+  });
+
+  it("는 제공자 ID마다 겹을 분리하고 궁극기 2겹을 모든 생존 적에게 각각 부여한다", () => {
+    const { state, providers: [first, second], targets } = reagentFight(["ripa", "ripa"]);
+    basicHit(state, first, targets[0]);
+    basicHit(state, second, targets[0]);
+    expect(targets[0].reagents[first.id].stacks).toBe(1);
+    expect(targets[0].reagents[second.id].stacks).toBe(1);
+
+    first.energy = first.def.ultimate.cost;
+    const events = fireUltimate(state, first.id);
+    expect(events.filter((event) => event.kind === "attack" && event.skill === "ultimate")).toHaveLength(targets.length);
+    // 첫 대상은 기존 1+궁극기 2가 반응해 소비되고, 나머지는 독립적으로 2겹을 가진다.
+    expect(targets[0].reagents[first.id]).toBeUndefined();
+    for (const target of targets.slice(1)) expect(target.reagents[first.id].stacks).toBe(2);
+    expect(targets[0].reagents[second.id].stacks).toBe(1);
+  });
+
+  it("는 폭주 진입 때 생존 적 전체에 살포하고 리파 자신의 공격 속도만 40% 높인다", () => {
+    const { state, providers: [ripa, ally], targets } = reagentFight(["ripa", "rex"]);
+    targets[2].hp = 0;
+    const ownBefore = currentAttackSpeed(ripa, state);
+    const allyBefore = currentAttackSpeed(ally, state);
+    ripa.ferocity = FEROCITY_RULES.max - FEROCITY_RULES.basicGain;
+    basicHit(state, ripa, targets[0]);
+
+    expect(ripa.ferocityFever).toBe(true);
+    expect(currentAttackSpeed(ripa, state)).toBeCloseTo(ownBefore * 1.4, 8);
+    expect(currentAttackSpeed(ally, state)).toBe(allyBefore);
+    expect(targets[1].reagents[ripa.id].stacks).toBe(1);
+    expect(targets[2].reagents[ripa.id]).toBeUndefined();
+  });
+
+  it("는 최저 HP 비율 동률이면 편성 앞 아군을 고르고 회복은 최대 HP를 넘지 않는다", () => {
+    const { state, providers: [ripa, first, second], targets: [target] } = reagentFight(["ripa", "rex", "dodo"], ["amo"]);
+    first.hp = first.maxHp * 0.5;
+    second.hp = second.maxHp * 0.5;
+    for (let hit = 0; hit < 3; hit += 1) basicHit(state, ripa, target);
+    expect(first.hp).toBeCloseTo(first.maxHp * 0.55, 8);
+    expect(second.hp).toBe(second.maxHp * 0.5);
+
+    // 다음 반응은 99%인 첫 편성 리파만 결손 상태이므로 5% 요청도 실제 1%까지만 회복한다.
+    ripa.hp = ripa.maxHp * 0.99;
+    first.hp = first.maxHp;
+    second.hp = second.maxHp;
+    for (let hit = 0; hit < 3; hit += 1) basicHit(state, ripa, target);
+    expect(ripa.hp).toBe(ripa.maxHp);
+  });
+
+  it("는 무효화·사망 대상에 시약을 남기지 않고 사망 및 전투 종료 때 두 런타임 장부를 정리한다", () => {
+    const ignored = reagentFight();
+    ignored.targets[0].undying = { remaining: 2, total: 2 };
+    basicHit(ignored.state, ignored.providers[0], ignored.targets[0]);
+    expect(ignored.targets[0].reagents).toEqual({});
+
+    const dead = reagentFight(["ripa"], ["amo"]);
+    dead.targets[0].hp = 1;
+    basicHit(dead.state, dead.providers[0], dead.targets[0]);
+    expect(dead.targets[0].reagents).toEqual({});
+    expect(dead.targets[0].reagentResistanceReductions).toEqual({});
+
+    const finished = reagentFight(["ripa"], ["amo"]);
+    finished.targets[0].reagents[finished.providers[0].id] = { stacks: 2, remaining: 8, total: 8 };
+    finished.targets[0].reagentResistanceReductions[finished.providers[0].id] = { amount: 5, remaining: 5, total: 5 };
+    finished.targets[0].hp = 1;
+    basicHit(finished.state, finished.providers[0], finished.targets[0]);
+    expect(finished.state.phase).toBe("victory");
+    expect(finished.targets[0].reagents).toEqual({});
+    expect(finished.targets[0].reagentResistanceReductions).toEqual({});
+  });
+});

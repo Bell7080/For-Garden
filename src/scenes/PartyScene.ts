@@ -213,7 +213,7 @@ export class PartyScene extends Phaser.Scene {
         }
 
         try {
-          // 입장에서는 잔량만 검증하고, 실제 비용은 승리 정산에서만 차감한다.
+          // 서버가 입장 비용을 확정한 뒤에만 전투로 전환해 같은 요청 재시도에서 중복 차감되지 않게 한다.
           const requestId = globalThis.crypto?.randomUUID?.() ?? `stage-entry-${Date.now()}`;
           await gameApi.enterStage({ stageId: session.selectedStageId!, requestId });
           this.scene.start("battle", { mode: "stage" });

@@ -54,15 +54,29 @@ describe("stamina rules", () => {
 });
 
 describe("stamina admission", () => {
-  it("keeps stamina at admission and charges only a victory once for the same request id", async () => {
+  it("charges a normal stage only once for the same request id", async () => {
     const state = createDefaultSession(); state.wallet.stamina = 20; state.staminaUpdatedAt = "2026-09-01T00:00:00.000Z";
     const api = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-09-01T00:00:00.000Z") });
     const request = { stageId: "1-1", requestId: "admission-1" };
     const first = await api.enterStage(request); const retried = await api.enterStage(request);
-    expect(first.staminaCost).toBe(6); expect(retried.wallet.stamina).toBe(20); expect(state.wallet.stamina).toBe(20);
-    expect(retried.chargePolicy).toBe("victory-only");
-    await api.completeStage("1-1", true);
-    expect(state.wallet.stamina).toBe(14);
+    expect(first.staminaSpent).toBe(6); expect(retried.wallet.stamina).toBe(14); expect(state.wallet.stamina).toBe(14);
+    expect(retried.refundPolicy).toBe("no-refund-after-admission");
+  });
+
+  it("preserves stamina when admission persistence fails and charges one successful retry", async () => {
+    const state = createDefaultSession(); state.wallet.stamina = 20; state.staminaUpdatedAt = "2026-09-01T00:00:00.000Z";
+    let shouldFail = true;
+    // 저장 어댑터의 첫 커밋만 실패시켜 실제 저장소 예외 뒤 같은 requestId 재시도를 재현한다.
+    const api = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-09-01T00:00:00.000Z"), persistSession: () => { if (shouldFail) throw new Error("storage unavailable"); } });
+    const request = { stageId: "1-1", requestId: "persistence-retry" };
+
+    await expect(api.enterStage(request)).rejects.toThrow("storage unavailable");
+    // persist 이전에는 복제 지갑만 바뀌므로 실패한 커밋이 공유 메모리 잔액을 오염시키지 않는다.
+    expect(state.wallet.stamina).toBe(20);
+
+    shouldFail = false;
+    const succeeded = await api.enterStage(request); const retried = await api.enterStage(request);
+    expect(succeeded.wallet.stamina).toBe(14); expect(retried.wallet.stamina).toBe(14); expect(state.wallet.stamina).toBe(14);
   });
 
   it("returns INSUFFICIENT_STAMINA without changing a balance below the admission cost", async () => {
@@ -75,15 +89,15 @@ describe("stamina admission", () => {
     expect(state.wallet.stamina).toBe(CONTENT_STAMINA_COSTS.normalStage - 1);
   });
 
-  it("does not charge stamina after defeat and charges the next victorious admission", async () => {
+  it("keeps an admitted charge after defeat and charges the next admission", async () => {
     const state = createDefaultSession(); state.wallet.stamina = 20; state.staminaUpdatedAt = "2026-09-01T00:00:00.000Z";
     const api = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-09-01T00:00:00.000Z") });
     await api.enterStage({ stageId: "1-1", requestId: "defeat" });
     await api.completeStage("1-1", false);
-    expect(state.wallet.stamina).toBe(20);
+    expect(state.wallet.stamina).toBe(14);
     await api.enterStage({ stageId: "1-1", requestId: "victory" });
     await api.completeStage("1-1", true);
-    expect(state.wallet.stamina).toBe(14);
+    expect(state.wallet.stamina).toBe(8);
   });
 
   it("maps insufficient stamina to recharge guidance instead of a party-save failure", () => {

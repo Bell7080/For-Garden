@@ -1,5 +1,6 @@
 import { AREA_IMPACT } from "./effectPresets";
 import { DAMAGE_FLAVOR_COLOR, INCOMING_DAMAGE_TONE } from "./damageNumbers";
+import { UNIT_STATUS_COLOR, type UnitStatusId } from "./unitStatusModel";
 
 /**
  * 바닥에 깔리는 범위 표시의 **순수 규칙**.
@@ -50,6 +51,13 @@ export interface GroundAreaRequest {
   damageType?: "physical" | "magical" | "true";
   /** 아군을 살리는 범위(회복 지정 원). 피해 색 대신 체력 색으로 선다. */
   supportive?: boolean;
+  /**
+   * 피해가 아니라 **상태를 거는** 범위(스피나의 여울). 그 상태의 머리 위 칩과 같은 색으로 선다.
+   *
+   * 피해 수치에서 디버프가 받는 쪽에서도 제 색을 지키는 것과 같은 규칙이라 아군 피격보다 먼저
+   * 색을 정한다 — 같은 상태가 바닥과 머리 위에서 다른 색이면 무엇이 걸렸는지 두 번 읽어야 한다.
+   */
+  status?: UnitStatusId;
   /** 궁극기 범위는 조금 더 오래 남아 무엇이 컸는지 알린다. 색은 바꾸지 않는다. */
   ultimate: boolean;
 }
@@ -78,13 +86,25 @@ export const HOSTILE_AREA_COLOR = INCOMING_DAMAGE_TONE[3];
 export const SUPPORTIVE_AREA_COLOR = DAMAGE_FLAVOR_COLOR.heal;
 
 /**
+ * 상태를 거는 범위의 색.
+ *
+ * 머리 위 상태 칩과 **같은 표**를 읽는다 — 여기서 색을 새로 고르면 같은 둔화가 바닥에서는
+ * 다른 색으로 번진다.
+ */
+export function statusAreaColor(status: UnitStatusId): string {
+  return `#${UNIT_STATUS_COLOR[status].toString(16).padStart(6, "0")}`;
+}
+
+/**
  * 범위 한 겹의 색과 진하기를 정한다.
  *
- * 우선순위는 피해 수치와 같다 — **아군 피격 → 지원 → 종류**. 우리 편이 맞는다는 사실이 무엇에
+ * 우선순위는 피해 수치와 같다 — **상태 → 아군 피격 → 지원 → 종류**. 우리 편이 맞는다는 사실이 무엇에
  * 맞는지보다 먼저 읽혀야 한다.
  */
 export function groundAreaStyle(request: GroundAreaRequest): GroundAreaStyle {
-  const color = request.hostile
+  const color = request.status
+    ? statusAreaColor(request.status)
+    : request.hostile
     ? HOSTILE_AREA_COLOR
     : request.supportive
       ? SUPPORTIVE_AREA_COLOR

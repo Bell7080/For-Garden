@@ -160,6 +160,64 @@ describe("스피나 전투 계약", () => {
     expect(spino.hp).toBeCloseTo(spino.maxHp * (1 - 0.5 * 0.95 * 0.95));
   });
 
+  it("은 첫 공격 뒤 발밑에 여울을 남기고, 마르면 판이 사라진다", () => {
+    const { state, spino } = readySpino();
+    // 물은 **때린 자리에** 고인다 — 첫 한 방은 마른 땅에서 나간다.
+    expect(spino.shallows).toBeNull();
+    stepSkirmish(state, 1 / 60, () => 0.99);
+    expect(spino.shallows).toMatchObject({ x: spino.x, y: spino.y });
+    // 판은 개체를 따라다니지 않는다. 자리를 옮겨도 고인 곳에 그대로 남는다.
+    const pooled = { x: spino.shallows!.x, y: spino.shallows!.y };
+    spino.x += 300; spino.attackCooldown = 99;
+    stepSkirmish(state, 1 / 60, () => 0.99);
+    expect(spino.shallows).toMatchObject(pooled);
+    for (let frame = 0; frame < 60 * 4; frame += 1) stepSkirmish(state, 1 / 60, () => 0.99);
+    expect(spino.shallows).toBeNull();
+  });
+
+  it("은 여울에 잠긴 적의 이동만 늦추고, 물 밖으로 나가면 그 프레임에 풀린다", () => {
+    const { state, spino, target } = readySpino();
+    const walked = moveSpeed(target);
+    // 잠김 판정은 모든 여울의 시계가 흐른 뒤 한 번에 돌므로, 물이 고인 다음 프레임부터 잠긴다.
+    stepSkirmish(state, 1 / 60, () => 0.99);
+    stepSkirmish(state, 1 / 60, () => 0.99);
+    expect(target.submergedIn).toMatchObject({ ownerId: spino.id, moveSlowPercent: 35 });
+    expect(moveSpeed(target)).toBeCloseTo(walked * 0.65);
+    // 공격 속도는 건드리지 않는다 — 이 판이 말하는 것은 "빠져나가지 못한다"이지 "덜 아프다"가 아니다.
+    expect(attackInterval(target)).toBe(attackInterval(newSkirmish(["amo"], ["spino"]).fighters[0]));
+    // 상태가 아니라 서 있는 자리라, 물 밖으로 한 걸음 나가면 같은 프레임에 풀린다.
+    target.x = spino.shallows!.x + 400;
+    stepSkirmish(state, 1 / 60, () => 0.99);
+    expect(target.submergedIn).toBeNull();
+    expect(moveSpeed(target)).toBeCloseTo(walked);
+  });
+
+  it("은 여울에 잠긴 적에게 연격을 확정으로 넣되 메워 준 한 대는 회복도 공속 누적도 돌리지 않는다", () => {
+    const { state, spino } = readySpino();
+    spino.hp = spino.maxHp / 2;
+    stepSkirmish(state, 1 / 60, () => 0.99);
+    const hp = spino.hp;
+    const speed = spino.bonusAttackSpeed;
+    spino.attackCooldown = 0;
+    // 연격 판정은 빗나가지만(0.99) 물가에서는 두 번째 이빨이 들어간다.
+    const events = stepSkirmish(state, 1 / 60, () => 0.99);
+    expect(events.filter((event) => event.kind === "attack")).toHaveLength(2);
+    // 물이 메워 준 몫이라 공속 누적은 한 번(+3)뿐이고 잃은 체력 회복도 한 번만 돈다.
+    expect(spino.bonusAttackSpeed - speed).toBe(spino.def.passive.value);
+    expect(spino.hp - hp).toBeCloseTo((spino.maxHp - hp) * 0.05);
+  });
+
+  it("은 확률로 터진 연격까지 물이 갉아먹지 않는다", () => {
+    const { state, spino } = readySpino();
+    stepSkirmish(state, 1 / 60, () => 0.99);
+    const speed = spino.bonusAttackSpeed;
+    spino.attackCooldown = 0;
+    // 판정이 성공하면(0.39) 두 대 모두 제 힘으로 문 것이므로 예전 그대로 +6이다.
+    const rolls = [0.39, 0.99, 0.99];
+    stepSkirmish(state, 1 / 60, () => rolls.shift() ?? 0.99);
+    expect(spino.bonusAttackSpeed - speed).toBe(spino.def.passive.value * 2);
+  });
+
   it("은 연격 첫 타로 대상이 죽으면 후속타와 두 번째 누적을 취소한다", () => {
     const { state, spino, target } = readySpino(); target.hp = 1;
     const events = stepSkirmish(state, 1 / 60, () => 0);
@@ -670,6 +728,8 @@ describe("단일 난전의 원정 보스 옵션", () => {
     // 85%가 그 몫을 되돌려 놓기 때문이다. 저항이 없으면 첫 해일이 72.7초로 밀려 이 검사가
     // 먼저 무너진다.
     expect(firstUltimateAt).toBeGreaterThanOrEqual(17);
+    // 스피나의 여울(v0.78.0)이 들어온 뒤에도 이 구간은 그대로다 — 잠김은 이동 속도만 깎고,
+    // 물이 메워 준 한 대는 회복도 공속 누적도 돌리지 않아 파티의 지속력이 예전과 같다.
     expect(firstUltimateAt).toBeLessThanOrEqual(28);
     expect(survivorsAfterFirstUltimate).toBeGreaterThan(0);
     expect(state.elapsed).toBeGreaterThanOrEqual(24);
@@ -2613,6 +2673,32 @@ describe("마키 정적 전투 계약", () => {
     expect(maki.targetId).toBe(other.id);
   });
 
+  it("의 패시브는 실제 피해를 받을 때 세 번까지만 2초 은신하며 적의 추적을 끊는다", () => {
+    const state = newSkirmish(["maki"], ["toby"]);
+    const [maki, enemy] = state.fighters;
+    maki.x = 440; maki.y = 1000; maki.attackCooldown = 99;
+    enemy.x = 460; enemy.y = 1000;
+    const passive = maki.def.passive;
+    if (passive.kind !== "gourmetHunt") throw new Error("마키의 패시브가 아니다");
+
+    for (let hit = 1; hit <= passive.damageStealthMaxTriggers! + 1; hit += 1) {
+      // 각 검증 타격 전에 은신을 끝내야 같은 적이 다시 마키를 유효 표적으로 삼을 수 있다.
+      maki.stealthFor = 0;
+      enemy.targetId = maki.id; enemy.attackCooldown = 0;
+      // 실제 이동·사거리 판정을 통과해 때릴 때까지 진행하되 다음 자연 공격 전에는 검사를 끝낸다.
+      const before = maki.hp;
+      for (let frame = 0; frame < 120 && maki.hp === before; frame += 1) stepSkirmish(state, 1 / 60);
+      expect(maki.hp).toBeLessThan(before);
+      expect(maki.damageStealthTriggersUsed).toBe(Math.min(hit, passive.damageStealthMaxTriggers!));
+      if (hit <= passive.damageStealthMaxTriggers!) {
+        expect(maki.stealthFor).toBeGreaterThan(passive.damageStealthSeconds! - 0.1);
+        expect(enemy.targetId).toBeNull();
+      } else {
+        expect(maki.stealthFor).toBe(0);
+      }
+    }
+  });
+
   it("의 기본 공격은 세 겹째에 손질을 터뜨리고 겹을 비운다", () => {
     const { state, maki, foes } = makiBattle(["amo"]);
     const butcher = maki.def.basic.statusEffects!.find((effect) => effect.kind === "butcher")!;
@@ -2678,6 +2764,26 @@ describe("마키 정적 전투 계약", () => {
     // 때리지 않은 아군까지 함께 회복한다 — 흡혈이 아니라 팀 회복이다.
     expect(ally.hp).toBeCloseTo(1 + burst.amount * trait.healPercent / 100, 5);
     expect(maki.hp).toBeGreaterThan(1);
+  });
+
+  it("의 폭주 진입 후 다음 세 기본 공격은 손질을 즉시 터뜨린다", () => {
+    const { state, maki, foes } = makiBattle(["toby"]);
+    const enemy = foes[0];
+    const trait = maki.def.ferocityTrait;
+    if (trait.effectId !== "butcherFeast") throw new Error("마키의 폭주 특성이 아니다");
+    // 첫 공격으로 폭주에 들어가며, 그 공격 자체는 진입 전에 시작했으므로 평소처럼 한 겹만 쌓는다.
+    maki.ferocity = 99;
+    stepSkirmish(state, 1 / 60);
+    expect(maki.instantButcherAttacksLeft).toBe(trait.instantButcherAttacks);
+
+    const events: SkirmishEvent[] = [];
+    for (let attack = 0; attack < trait.instantButcherAttacks; attack += 1) {
+      maki.attackCooldown = 0;
+      events.push(...stepSkirmish(state, 1 / 60));
+    }
+    expect(events.filter((event) => event.kind === "butcherBurst")).toHaveLength(trait.instantButcherAttacks);
+    expect(maki.instantButcherAttacksLeft).toBe(0);
+    expect(enemy.butcher?.stacks).toBe(0);
   });
 });
 

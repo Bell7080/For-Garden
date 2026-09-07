@@ -202,6 +202,20 @@ export interface Fighter extends Combatant {
    * 때문이다 — 분모를 화면이 스킬 정의에서 다시 찾지 않게 코어가 들고 온다.
    */
   volley: { remaining: number; total: number; hitCount: number; attackSpeedPercent: number } | null;
+  /**
+   * 발밑에 고인 여울(`BasicAttack.shallows`). 판은 개체당 **한 곳뿐이다.**
+   *
+   * 좌표를 함께 드는 이유는 판이 **개체를 따라다니지 않기 때문이다** — 낸 자리에 그대로 남아
+   * 마른다. 표적을 갈아타 달려가면 스피나만 빠져나오고 판은 뒤에 남아 거기 선 적을 계속 잠근다.
+   */
+  shallows: { x: number; y: number; remaining: number; total: number; tickIn: number } | null;
+  /**
+   * 지금 적의 여울에 발을 담그고 있는가. **매 프레임 다시 잰다.**
+   *
+   * 상태 슬롯이 아니라 그때그때의 자리라, 물 밖으로 한 걸음만 나가도 같은 프레임에 풀린다 —
+   * 남는 시계를 두면 "잠겨 있다"가 아니라 "잠겼었다"가 되어 판이 없는 자리에서도 느려진다.
+   */
+  submergedIn: { ownerId: string; moveSlowPercent: number } | null;
   /** 원정 상태 효과의 지속시간을 늘리는 전투 스냅샷 배율이다. */
   statusPotencyMultiplier: number;
   /** 현재 HP에 따라 켜지는 공격력 효과는 정적 능력치와 달리 매 공격 시점에 판정한다. */
@@ -217,6 +231,12 @@ export interface Fighter extends Combatant {
    * 폭주가 길어져도 손이 빨라지는 구간은 정확히 그만큼이다.
    */
   hastenedAttacksLeft: number;
+  /** 마키가 이번 폭주에서 손질을 즉시 터뜨릴 수 있는 남은 기본 공격 횟수다. */
+  instantButcherAttacksLeft: number;
+  /** 폭주를 연 바로 그 공격이 "다음 세 번"에 섞이지 않도록 첫 손질 적용만 건너뛰는 표식이다. */
+  instantButcherPending: boolean;
+  /** 실제 HP 피해로 발동한 피격 은신 횟수다. 전투마다 새 전투원과 함께 0으로 초기화된다. */
+  damageStealthTriggersUsed: number;
   /** 0보다 크면 단일 대상 선택의 중심이 될 수 없는 은신 상태다. */
   stealthFor: number;
   /**
@@ -459,6 +479,14 @@ export type SkirmishEvent =
       damageType?: "physical" | "magical" | "true";
       /** 피해가 아니라 아군을 살리는 범위다. 회복 색으로 선다. */
       supportive?: true;
+      /**
+       * 피해가 아니라 **상태를 거는** 범위다. 머리 위 칩과 같은 색으로 선다.
+       *
+       * 피해 수치에서 디버프가 받는 쪽에서도 제 색을 지키는 것과 같은 규칙이라, 이 값이 있으면
+       * 아군 피격 여부보다 먼저 색을 정한다 — 같은 상태가 바닥과 머리 위에서 다른 색이면
+       * 무엇이 걸렸는지 두 번 읽어야 한다.
+       */
+      status?: "submerged";
       area:
         | { shape: "radial"; x: number; y: number; radius: number }
         | { shape: "lane"; from: { x: number; y: number }; to: { x: number; y: number }; halfWidth: number }
@@ -798,11 +826,16 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     bonusAttackSpeed: 0,
     focus: 0,
     volley: null,
+    shallows: null,
+    submergedIn: null,
     statusPotencyMultiplier: multipliers.statusPotencyPercent,
     conditionalAttackPowerMultiplier: (hpPercent) => side === "player" ? conditionalAttackPowerMultiplier(augmentEffects, def.id, hpPercent) : 1,
     basicAttackCount: 0,
     basicCycleStep: 0,
     hastenedAttacksLeft: 0,
+    instantButcherAttacksLeft: 0,
+    instantButcherPending: false,
+    damageStealthTriggersUsed: 0,
     // 짜잔! 은 전투가 열리는 순간부터 은신한 채로 시작한다 — 첫 프레임에 이미 걸려 있어야
     // "숨어서 시작했다"가 되고, 한 박자 뒤에 걸면 이미 표적이 잡힌 뒤다.
     stealthFor: def.passive.kind === "openingVanish" ? def.passive.durationSeconds ?? 0 : 0,
@@ -1186,7 +1219,8 @@ function applyButcher(
   state: SkirmishState,
   sourceId?: string,
 ): void {
-  const stacks = (target.butcher?.stacks ?? 0) + 1;
+  const instant = attackerCanInstantlyButcher(sourceId, state);
+  const stacks = instant ? effect.maxStacks : (target.butcher?.stacks ?? 0) + 1;
   target.butcher = { stacks, maxStacks: effect.maxStacks, burstPower: effect.burstPower };
   if (stacks < effect.maxStacks) return;
   target.butcher = { stacks: 0, maxStacks: effect.maxStacks, burstPower: effect.burstPower };
@@ -1216,6 +1250,19 @@ function applyButcher(
     clearDefeatedStatuses(target);
     events.push({ kind: "death", fighterId: target.id, sourceId: attacker.id });
   }
+}
+
+/** 폭주 진입으로 받은 확정 손질권을 실제 손질 적중에서만 하나 소비한다. */
+function attackerCanInstantlyButcher(sourceId: string | undefined, state: SkirmishState): boolean {
+  const attacker = sourceId ? findFighter(state, sourceId) : undefined;
+  if (attacker?.instantButcherPending) {
+    attacker.instantButcherPending = false;
+    return false;
+  }
+  if (!attacker || !attacker.ferocityFever || attacker.def.ferocityTrait.effectId !== "butcherFeast"
+    || attacker.instantButcherAttacksLeft <= 0) return false;
+  attacker.instantButcherAttacksLeft -= 1;
+  return true;
 }
 
 /**
@@ -1944,6 +1991,10 @@ function clearDefeatedStatuses(fighter: Fighter): void {
   fighter.frenzy = null;
   fighter.knockback = null;
   fighter.butcher = null;
+  // 물을 고이게 한 개체가 쓰러지면 판도 함께 마른다 — 주인 없는 판이 남아 계속 잠그면
+  // 화면에는 아무도 없는 자리가 혼자 깜빡인다.
+  fighter.shallows = null;
+  fighter.submergedIn = null;
   fighter.regeneration = null;
   fighter.stunnedFor = 0;
   fighter.staggeredFor = 0;
@@ -2062,6 +2113,19 @@ export function activeCombatBuffs(state: SkirmishState, fighterId: string): Acti
       name: fighter.def.ultimate.name,
       description: `기본 공격이 ${fighter.volley.hitCount}번 적중하고 공격 속도 +${fighter.volley.attackSpeedPercent}%`,
       timing: { kind: "timed", remainingSeconds: fighter.volley.remaining, totalSeconds: fighter.volley.total },
+    });
+  }
+  // 여울은 개체가 아니라 **자리에** 걸린 값이라 칩이 말할 수 있는 것은 "지금 물이 고여 있다"
+  // 까지다. 어느 적이 잠겼는지는 그 적의 머리 위 둔화 칩이 말한다.
+  if (fighter.shallows && fighter.def.basic.shallows) {
+    buffs.push({
+      id: `shallows:${fighter.id}`,
+      sourceFighterId: fighter.id,
+      targetFighterId: fighter.id,
+      skillId: fighter.def.basic.id,
+      name: "여울",
+      description: `잠긴 적은 둔화되고, 그 적을 때리면 연격이 확정 발동한다`,
+      timing: { kind: "timed", remainingSeconds: fighter.shallows.remaining, totalSeconds: fighter.shallows.total },
     });
   }
   // 집중은 **본인에게 쌓이는 값**이다. 시간이 흘러 사라지지 않으므로 남은 시계를 두지 않고,
@@ -2248,8 +2312,11 @@ export function moveSpeed(fighter: Fighter, state?: SkirmishState): number {
   const tailwindPercent = fighter.tailwindFor > 0 ? fighter.tailwind?.moveSpeedPercent ?? 0 : 0;
   // 둔화는 공격 속도와 같은 비율로 이동 속도도 함께 깎는다.
   const chillPercent = fighter.chill ? fighter.chill.stacks * fighter.chill.speedPercentPerStack : 0;
+  // 여울은 상태가 아니라 지금 서 있는 자리라, 물 밖으로 나가면 같은 프레임에 풀린다.
+  const submergedPercent = fighter.submergedIn?.moveSlowPercent ?? 0;
   return fighter.def.stats.moveSpeed * SKIRMISH.moveRate
-    * (1 + teamBonus / 100) * (1 + selfBonus / 100) * (1 + tailwindPercent / 100) * (1 - chillPercent / 100);
+    * (1 + teamBonus / 100) * (1 + selfBonus / 100) * (1 + tailwindPercent / 100)
+    * (1 - chillPercent / 100) * (1 - submergedPercent / 100);
 }
 
 /** 화면에 그릴 위치. 발 좌표에 돌진·피격 변위와 뛰어오른 높이를 얹은 값이다. */
@@ -2518,6 +2585,11 @@ function gainFerocity(fighter: Fighter, base: number, state: SkirmishState, even
       for (const other of state.fighters) if (other.targetId === fighter.id) { other.targetId = null; other.engaged = false; }
     }
     if (trait.effectId === "adamantBody") fighter.hastenedAttacksLeft = trait.hastenedAttacks;
+    // 마키는 폭주 진입 직후 세 번의 칼질을 회복과 폭딜로 바꾼다. 이전 폭주의 잔여치는 덮어쓴다.
+    if (trait.effectId === "butcherFeast") {
+      fighter.instantButcherAttacksLeft = trait.instantButcherAttacks;
+      fighter.instantButcherPending = true;
+    }
     if (trait.effectId === "furCoat") {
       // 정화: 살아 있는 채로 걸린 상태이상·디버프만 지운다. 버프·아군이 준 것(순풍·희열 등)은
       // 건드리지 않는다 — "장식이 아니다"가 말하는 것은 스스로 두른 것을 지키는 힘이다.
@@ -2970,10 +3042,28 @@ function applyDamage(target: Fighter, amount: number, events: SkirmishEvent[], s
     target.undyingPending = true;
   }
   const dealt = hpBefore - target.hp;
+  // 보호막에 전부 막힌 타격은 "피해를 입은" 것이 아니므로 발동권을 쓰지 않는다.
+  if (dealt > 0 && isFighterAlive(target)) tryTriggerDamageStealth(target, state);
   // 모든 피해 원천이 지나온 마지막 관문에서만 지급한다. 실제 HP 손실 0·전투 불능은 제외해
   // 보호막에 막힌 피해나 죽은 개체가 조가비를 만들고 다시 살아나는 무한 재발동을 방지한다.
   if (dealt > 0 && isFighterAlive(target)) gainShellGuard(target, 1, state, events);
   return dealt;
+}
+
+/** 마키의 피격 은신을 전투당 상한 안에서 발동하고, 이미 자신을 보던 적의 어그로를 즉시 끊는다. */
+function tryTriggerDamageStealth(fighter: Fighter, state: SkirmishState): void {
+  const passive = fighter.def.passive;
+  if (passive.kind !== "gourmetHunt") return;
+  const seconds = passive.damageStealthSeconds ?? 0;
+  const maximum = passive.damageStealthMaxTriggers ?? 0;
+  if (seconds <= 0 || fighter.damageStealthTriggersUsed >= maximum) return;
+  fighter.damageStealthTriggersUsed += 1;
+  fighter.stealthFor = Math.max(fighter.stealthFor, seconds);
+  for (const enemy of state.fighters) {
+    if (enemy.side === fighter.side || enemy.targetId !== fighter.id) continue;
+    enemy.targetId = null;
+    enemy.engaged = false;
+  }
 }
 
 /**
@@ -3092,6 +3182,76 @@ function tickBleed(fighter: Fighter, dt: number, state: SkirmishState, events: S
   if (bleed.remaining <= 0 || !isFighterAlive(fighter)) fighter.bleed = null;
 }
 
+/**
+ * 여울을 발밑에 다시 고이게 한다. **기본 공격 행동 하나마다** 부르며 궁극기는 부르지 않는다.
+ *
+ * 이미 고여 있으면 자리와 남은 시간만 갱신하고 **틱 시계는 그대로 둔다** — 공격할 때마다
+ * 시계를 되감으면 공속이 빠른 개체일수록 매초 틱이 영영 오지 않아, 물은 늘 고여 있는데
+ * 아무도 잠기지 않는다.
+ */
+function refreshShallows(fighter: Fighter): void {
+  const shallows = fighter.def.basic.shallows;
+  if (!shallows || !isFighterAlive(fighter)) return;
+  fighter.shallows = {
+    x: fighter.x,
+    y: fighter.y,
+    remaining: shallows.seconds,
+    total: shallows.seconds,
+    tickIn: fighter.shallows?.tickIn ?? 1,
+  };
+}
+
+/** 이 적이 그 개체의 여울에 잠겨 있는가. 연격 확정과 이동 감속이 같은 판정을 쓴다. */
+function isSubmerged(fighter: Fighter, target: Fighter): boolean {
+  const shallows = fighter.def.basic.shallows;
+  if (!shallows || !fighter.shallows) return false;
+  return Math.hypot(target.x - fighter.shallows.x, target.y - fighter.shallows.y) <= shallows.radius;
+}
+
+/**
+ * 지금 누가 어느 여울에 잠겼는지 **매 프레임 다시 잰다.**
+ *
+ * 상태로 걸어 두지 않는 이유는 이 값이 "걸린 것"이 아니라 **서 있는 자리**이기 때문이다 —
+ * 물 밖으로 한 걸음만 나가면 같은 프레임에 풀려야 한다. 판을 여럿이 깔면 가장 깊은 것 하나만
+ * 센다: 물은 겹친다고 두 배로 붙잡지 않는다.
+ */
+function refreshSubmersion(state: SkirmishState): void {
+  for (const fighter of state.fighters) fighter.submergedIn = null;
+  for (const owner of state.fighters) {
+    const def = owner.def.basic.shallows;
+    if (!def || !owner.shallows || !isFighterAlive(owner)) continue;
+    for (const enemy of aliveFighters(state, owner.side === "player" ? "enemy" : "player")) {
+      if (Math.hypot(enemy.x - owner.shallows.x, enemy.y - owner.shallows.y) > def.radius) continue;
+      if ((enemy.submergedIn?.moveSlowPercent ?? 0) >= def.moveSlowPercent) continue;
+      enemy.submergedIn = { ownerId: owner.id, moveSlowPercent: def.moveSlowPercent };
+    }
+  }
+}
+
+/**
+ * 여울의 시계를 흘리고, 완전히 경과한 매초 판이 있는 자리를 알린다.
+ *
+ * 판은 피해를 주지 않으므로 사건에 `damageType`을 싣지 않고 걸리는 **상태**를 싣는다 — 색은
+ * 머리 위 잠김 칩과 같은 것을 쓴다. 매초 다시 벌어지는 이유는 오래 남는 면이 그동안 SD와
+ * 체력 바를 덮기 때문이다(채널링 궁극기와 같은 규칙이다).
+ */
+function tickShallows(fighter: Fighter, dt: number, events: SkirmishEvent[]): void {
+  const def = fighter.def.basic.shallows;
+  const shallows = fighter.shallows;
+  if (!def || !shallows) return;
+  if (!isFighterAlive(fighter)) { fighter.shallows = null; return; }
+  shallows.remaining -= dt;
+  shallows.tickIn -= dt;
+  while (shallows.tickIn <= EMERGENCY_RECOVERY.epsilon && shallows.remaining > -EMERGENCY_RECOVERY.epsilon) {
+    events.push({
+      kind: "areaImpact", attackerId: fighter.id, ultimate: false, status: "submerged",
+      area: { shape: "radial", x: shallows.x, y: shallows.y, radius: def.radius },
+    });
+    shallows.tickIn += 1;
+  }
+  if (shallows.remaining <= EMERGENCY_RECOVERY.epsilon) fighter.shallows = null;
+}
+
 /** 한 번 때린다. 궁극기 여부는 호출하는 쪽이 정한다. */
 function strike(
   attacker: Fighter,
@@ -3100,8 +3260,15 @@ function strike(
   state: SkirmishState,
   events: SkirmishEvent[],
   useUltimate: boolean,
-  /** 연격 내부 타격이면 행동 단위 자원은 첫 타에서만 처리한다. */
-  comboHit?: { grantActionResources: boolean },
+  /**
+   * 연격 내부 타격이면 행동 단위 자원은 첫 타에서만 처리한다.
+   *
+   * `waterGranted`는 여울이 보태 준 한 대다 — **피해만 준다.** 잃은 체력 회복과 공속 누적이
+   * 이 개체는 적중 수로 도는 값이라, 확정 연격이 그 둘까지 함께 늘리면 물가에 선 동안
+   * 공격·회복·성장이 한꺼번에 1.4배가 되어 버티는 개체가 된다. 물가가 보태는 것은 이빨이지
+   * 숨이 아니다.
+   */
+  comboHit?: { grantActionResources: boolean; waterGranted?: boolean },
   /** 지정 원형 궁극기의 사용자 선택 중심점이다. */
   targetPoint?: { x: number; y: number },
 ): void {
@@ -3113,10 +3280,16 @@ function strike(
   // 이 동안에는 연격을 내므로 두 경로를 같은 자리에서 본다.
   const volley = !useUltimate && attacker.volley ? attacker.volley : undefined;
   if ((combo || volley) && comboHit === undefined) {
-    // 난수 순서는 연격 판정 1회 뒤 실제로 발생한 각 타격의 치명타 순서로 고정한다.
-    const hitCount = volley ? volley.hitCount : (rng() < combo!.chancePercent / 100 ? combo!.hitCount : 1);
+    // 여울에 잠긴 사냥감은 놓치지 않는다 — 확률이 빗나가도 물가에서는 두 번째 이빨이 들어간다.
+    const submerged = combo !== undefined && attacker.def.basic.shallows?.guaranteesCombo === true && isSubmerged(attacker, target);
+    // 난수 순서는 연격 판정 1회 뒤 실제로 발생한 각 타격의 치명타 순서로 고정한다. 여울이
+    // 있어도 **판정 자체는 그대로 굴린다** — 건너뛰면 물에 잠긴 적이 하나 있고 없고에 따라
+    // 같은 판의 다른 판정까지 자리가 밀린다. 물이 하는 일은 빗나간 판정을 메우는 것이다.
+    const rolled = volley ? volley.hitCount : (rng() < combo!.chancePercent / 100 ? combo!.hitCount : 1);
+    const hitCount = submerged ? Math.max(rolled, combo!.hitCount) : rolled;
     for (let hit = 0; hit < hitCount && isFighterAlive(target); hit += 1) {
-      strike(attacker, target, rng, state, events, false, { grantActionResources: hit === 0 });
+      // 확률로 터진 연격은 예전 그대로이고, **물이 메워 준 몫만** 피해만 주는 한 대다.
+      strike(attacker, target, rng, state, events, false, { grantActionResources: hit === 0, waterGranted: hit >= rolled });
     }
     return;
   }
@@ -3269,8 +3442,10 @@ function strike(
   }
   // 무효 공격은 실제 피격이 아니므로 피격 야성과 그에 따른 폭주 전환을 만들지 않는다.
   if (!resolution.ignored) gainFerocity(target, FEROCITY_RULES.hitGain, state, events);
-  if (!useUltimate && attacker.def.passive.kind === "basicHitAttackSpeedStack") {
+  if (!useUltimate && attacker.def.passive.kind === "basicHitAttackSpeedStack" && comboHit?.waterGranted !== true) {
     // 적중 사건마다 +3을 더하므로 연격 두 타는 각각 누적되며 전투 생성 시 0으로 초기화된다.
+    // **여울이 메워 준 한 대만 빠진다** — 「전투의 환희」는 이 개체의 성장 축 전체라, 그 대까지
+    // 세면 물가에 선 동안 공속이 두 배 속도로 자라 판 하나가 개체의 성장률을 갈아 치운다.
     attacker.bonusAttackSpeed += attacker.def.passive.value;
   }
   if (!useUltimate && attacker.def.passive.kind === "farthestFocus") {
@@ -3278,7 +3453,8 @@ function strike(
     // 번만 쏘면 정면의 적에게 닿기 시작한다. 상한을 넘기지 않는다.
     attacker.focus = Math.min(FOCUS.maxStacks, attacker.focus + 1);
   }
-  if (!useUltimate && combo) {
+  // 여울이 보태 준 한 대는 회복을 돌리지 않는다 — 물가가 보태는 것은 이빨이지 숨이 아니다.
+  if (!useUltimate && combo && comboHit?.waterGranted !== true) {
     const missing = attacker.maxHp - attacker.hp;
     const healed = missing * combo.missingHpHealingPercentPerHit / 100;
     const actualHealing = applyHealing(state, attacker, healed);
@@ -3911,6 +4087,8 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
       if (remaining <= EMERGENCY_RECOVERY.epsilon) { fighter.frenzy = null; fighter.targetId = null; }
       else fighter.frenzy = { ...fighter.frenzy, remaining };
     }
+    // 여울도 같은 공용 시계로 마른다. 개체를 따라다니지 않으므로 자리는 고인 그대로 둔다.
+    tickShallows(fighter, dt, events);
     // 순풍도 같은 공용 시계를 쓴다. 다 흐르면 수치까지 비워 남은 값이 다음 전투로 새지 않게 한다.
     if (isFighterAlive(fighter) && fighter.tailwindFor > 0) {
       // 회복 틱을 먼저 돌려야 남은 시간이 0이 되는 프레임의 마지막 한 틱을 잃지 않는다.
@@ -3920,6 +4098,10 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
       if (fighter.tailwindFor === 0) { fighter.tailwind = null; fighter.tailwindTickIn = 0; }
     }
   }
+
+  // 모든 여울의 시계가 흐른 **뒤에** 누가 잠겼는지 한 번에 잰다. 판마다 그 자리에서 재면
+  // 배열 앞에 선 개체가 먼저 잠근 뒤 뒤에 선 개체가 그 값을 덮어쓴다.
+  refreshSubmersion(state);
 
   for (const fighter of state.fighters) {
     if (!isFighterAlive(fighter)) {
@@ -4083,6 +4265,9 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
       // 빗나가거나 광역으로 여럿을 맞혀도 한 번은 한 번이다.
       if (!firedUltimate) {
         advanceBasicCycle(fighter);
+        // 물은 **때린 자리에** 고인다. 공격 뒤에 갱신하므로 첫 한 방은 마른 땅에서 나가고,
+        // 두 번째부터 발밑이 물가가 된다.
+        refreshShallows(fighter);
         if (fighter.hastenedAttacksLeft > 0) fighter.hastenedAttacksLeft -= 1;
         // 「한 판 더」의 자기 회복도 행동 하나마다다 — 적중 수로 세면 광역 한 번이 셋을 맞힐 때
         // 세 배로 돌아 같은 폭주가 편성에 따라 다른 무게가 된다.

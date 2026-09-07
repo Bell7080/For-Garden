@@ -7,7 +7,7 @@ import type { Fighter } from "../core/skirmish";
  * 겹 수와 남은 시간을 여기서 한 번만 만들고 둘 다 이 목록만 그린다. Phaser를 들여오지 않아
  * 순서·색·문구를 테스트가 그대로 고정할 수 있다.
  */
-export type UnitStatusId = "shell" | "stun" | "frozen" | "frenzy" | "taunt" | "bleed" | "poison" | "curse" | "chill" | "overpaint" | "butcher" | "vandalism";
+export type UnitStatusId = "shell" | "stun" | "frozen" | "frenzy" | "taunt" | "bleed" | "poison" | "curse" | "chill" | "submerged" | "overpaint" | "butcher" | "vandalism";
 
 export interface UnitStatusView {
   id: UnitStatusId;
@@ -36,6 +36,9 @@ export const UNIT_STATUS_COLOR: Readonly<Record<UnitStatusId, number>> = {
   poison: 0x7a4bab,
   curse: 0x8f6aa4,
   chill: 0x4fa8e4,
+  // 여울에 잠긴 상태. 둔화와 같은 계열의 물빛이지만 한 단계 짙어, 바닥에 깔린 판과 머리 위
+  // 칩이 같은 물이라는 것이 읽힌다.
+  submerged: 0x2f86c4,
   overpaint: 0x62c6d8,
   butcher: 0xc07fa4,
   vandalism: 0xd45aa8,
@@ -135,6 +138,14 @@ export function unitStatusViews(fighter: Fighter): UnitStatusView[] {
       id: "chill", name: "둔화", color: UNIT_STATUS_COLOR.chill,
       stacks: chill.stacks,
       detail: `${chill.stacks} / ${chill.maxStacks}겹 · 공격 속도·이동 속도 -${chill.stacks * chill.speedPercentPerStack}%`,
+    });
+  }
+  // 잠김은 시계가 도는 상태가 아니라 **지금 서 있는 자리**다. 물 밖으로 나가면 그 프레임에
+  // 사라지므로 남은 시간을 그리지 않는다 — 손질·밴덜리즘과 같은 자리다.
+  if (fighter.submergedIn) {
+    views.push({
+      id: "submerged", name: "잠김", color: UNIT_STATUS_COLOR.submerged,
+      detail: `이동 속도 -${fighter.submergedIn.moveSlowPercent}% · 여울에서 벗어나면 풀린다`,
     });
   }
   if (fighter.vandalism) {

@@ -121,7 +121,7 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
   if (trait.effectId === "tailwindRally") return `모든 아군이 공격할 때마다 오르는 [[ferocity|야성]] 게이지와 궁극기 게이지가 각각 ${trait.teamFerocityGain}, ${trait.teamEnergyGain}씩 늘어난다.`;
   if (trait.effectId === "sharedOverpaint") return `폭주 중 모든 아군의 [[basic-attack|기본 공격]]이 [[overpaint|덧칠]]을 함께 쌓는다.`;
   if (trait.effectId === "ichthyoDive") return `이동 속도가 ${trait.moveSpeedPercent}% 증가하고, [[basic-attack|기본 공격]] 이후 표적을 다른 적으로 바꾼다.`;
-  if (trait.effectId === "butcherFeast") return `[[butcher|손질]]이 터진 피해의 ${trait.healPercent}%만큼 생존 아군 전체를 회복시킨다.`;
+  if (trait.effectId === "butcherFeast") return `폭주 후 다음 ${trait.instantButcherAttacks}번의 [[basic-attack|기본 공격]]은 [[butcher|손질]]을 즉시 터뜨린다. [[butcher|손질]]이 터진 피해의 ${trait.healPercent}%만큼 생존 아군 전체를 회복시킨다.`;
   // 바르거나 터뜨리거나 한 번에 하나뿐이라는 것이 이 폭주의 전부다. 번갈아 한다고 적지 않는
   // 이유는 실제 규칙이 "지금 걸려 있나"만 보기 때문이다 — 공속이 빨라져도 그 판단은 같다.
   if (trait.effectId === "adamantBody") {
@@ -254,7 +254,7 @@ function passiveHead(passive: Passive, atk?: number): string {
     return `생존 중 아군 [[attack-speed|공격 속도]]를 ${passive.teamAttackSpeedPercent}% 높인다. 아군이 [[crowd-control|군중제어]]에 걸리면 즉시 정화하고 ${shieldText} 보호막을 부여한다.`;
   }
   if (passive.kind === "abyssalPressure") return `완전히 경과한 매초 기본 [[ap|주문력]]의 ${passive.apPercentPerSecond}%가 복리로 누적된다. 현재 체력이 최대 체력의 100%에서 ${passive.maxReductionAtHpPercent}%로 낮아질수록 받는 모든 피해 감소가 ${passive.baseDamageReductionPercent}%에서 ${passive.maxDamageReductionPercent}%까지 선형으로 증가하며, 그 이하에서는 최대치로 제한된다. 최종 받는 피해가 ${passive.ignoreDamageAtOrBelow} 이하인 공격은 무효화한다.`;
-  if (passive.kind === "gourmetHunt") return `전투를 시작할 때 현재 체력이 가장 낮은 적을 표적으로 삼고 그 자리로 [[teleport|순간이동]]한다. 적을 처치하면 즉시, 그 밖에는 ${passive.huntCooldownSeconds}초마다 다시 고른다.`;
+  if (passive.kind === "gourmetHunt") return `전투를 시작할 때 현재 체력이 가장 낮은 적을 표적으로 삼고 그 자리로 [[teleport|순간이동]]한다. 적을 처치하면 즉시, 그 밖에는 ${passive.huntCooldownSeconds}초마다 다시 고른다. 적에게 피해를 입으면 ${passive.damageStealthSeconds}초 동안 [[stealth|은신]]한다. 전투당 최대 ${passive.damageStealthMaxTriggers}번 발동한다.`;
   if (passive.kind === "cursedInsight") return `[[curse|저주]]에 걸린 적에게 [[basic-attack|기본 공격]]을 직접 적중시킬 때마다 이번 전투 동안 [[ap|주문력]]이 ${passive.value}% 증가한다. 최대 ${passive.maxStacks}회까지 쌓이며, [[transfer|전이]]된 타격으로는 발동하지 않는다.`;
   if (passive.kind === "impactCap") return `한 번에 받는 피해가 최대 체력의 ${passive.impactCapMaxHpPercent}%를 넘지 않는다.`;
   if (passive.kind === "overpaintSiphon") return `모든 아군이 [[overpaint|덧칠]]된 적을 맞히면 그 피해의 ${passive.value}%만큼 자신의 체력을 회복한다. 표적의 [[overpaint|덧칠]]이 최대로 쌓이면 다른 적으로 표적을 옮긴다.`;
@@ -594,6 +594,11 @@ function skillEffectClauses(skill: DescribedSkill, stats: SkillDescriptionStats)
   }
   if ("periodicCritical" in skill && skill.periodicCritical) {
     clauses.push({ text: `매 ${skill.periodicCritical.every}번째 실제 [[basic-attack|기본 공격]]은 확정 치명타가 된다`, standalone: true });
+  }
+  // 여울은 **쓰는 개체가 하나뿐인 규칙어**라 반경·시간·둔화·확정 연격을 태그가 갖는다.
+  // 본문이 그걸 다시 늘어놓으면 한 문장이 그 규칙 하나로 가득 찬다.
+  if ("shallows" in skill && skill.shallows !== undefined) {
+    clauses.push({ text: `공격한 자리에 [[shallows|여울]]이 고인다`, standalone: true });
   }
   if ("chargeStartsAtHpPercent" in skill && skill.chargeStartsAtHpPercent !== undefined) {
     clauses.push({ text: `체력이 ${skill.chargeStartsAtHpPercent}% 이하가 되면 충전을 시작한다`, standalone: true });

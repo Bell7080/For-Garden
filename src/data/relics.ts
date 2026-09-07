@@ -259,6 +259,29 @@ export const RELICS: RelicDef[] = [
       effectType: "physical",
       damageType: "physical",
       combo: { chancePercent: 40, hitCount: 2, missingHpHealingPercentPerHit: 5 },
+      /*
+       * 「여울」. 물가의 포식자는 사냥터를 고르는 것이 아니라 **만든다.**
+       *
+       * 반경 200은 붙어 싸우는 거리(`SKIRMISH.reach` 172)보다 조금 넓다 — 표적 하나만
+       * 잠그는 판이면 "물가"가 아니라 그냥 표식이고, 난전 한 덩어리를 통째로 덮을 만큼
+       * 넓으면 근접 개체가 전부 상시 둔화된다. 3초는 표적을 갈아타 달려가면 **뒤에 남는**
+       * 길이다 — 다음 사냥감에게 붙는 동안 앞서 잠근 적은 아직 물속에 있다.
+       *
+       * 이동 감속 35%는 **잠긴 동안에만** 걸리고 물 밖으로 나오면 그 프레임에 풀린다. 공격
+       * 속도를 함께 깎지 않는 이유는 그렇게 하면 이 개체가 붙어 싸우는 내내 적 전체의 화력이
+       * 줄어, 암살자 한 명이 조용히 팀 방어를 겸하게 되기 때문이다.
+       *
+       * 확정 연격이 이 판의 값이다. 40% 확률로만 터지던 물어뜯기가 물가에서는 반드시 두 번
+       * 들어가고 잃은 체력 회복도 두 번 돈다 — 「악어턱」이라는 이름이 실제로 붙잡는 순간은
+       * 여기뿐이다. 대신 그 값은 **자리에** 걸려 있어, 달려가는 동안과 물이 마른 뒤에는
+       * 예전과 같은 40%로 돌아간다.
+       */
+      shallows: {
+        radius: 200,
+        seconds: 3,
+        moveSlowPercent: 35,
+        guaranteesCombo: true,
+      },
       // combo가 있는 BasicAttack은 skillDescription()이 구조화 필드로 다시 문장을 만들므로
     } satisfies BasicAttack,
     ultimate: {
@@ -866,6 +889,8 @@ export const RELICS: RelicDef[] = [
       name: "잠깐, 나 이래 봬도 의사라고?",
       effectId: "butcherFeast",
       healPercent: 50,
+      // 폭주 직후 세 번은 기존 손질 중첩과 무관하게 즉시 터져 짧은 회복·폭딜 구간을 만든다.
+      instantButcherAttacks: 3,
     },
     passive: {
       // kind가 gourmetHunt인 패시브는 passiveDescription()이 구조화 필드로 다시 문장을 만들므로
@@ -880,7 +905,10 @@ export const RELICS: RelicDef[] = [
       huntCooldownSeconds: 10,
       // 첫 도약만 조금 늦춰, 전투가 시작되자마자 사라지는 것처럼 보이지 않게 한다.
       huntOpeningSeconds: 1.2,
-      desc: "전투를 시작할 때 현재 체력이 가장 낮은 적을 표적으로 삼고 그 자리로 도약한다. 적을 처치하면 즉시, 그 밖에는 10초마다 다시 고른다.",
+      // 종잇장 같은 생존력을 어그로 해제로 보완하되, 전투당 세 번만 허용해 상시 은신을 막는다.
+      damageStealthSeconds: 2,
+      damageStealthMaxTriggers: 3,
+      desc: "전투를 시작할 때 현재 체력이 가장 낮은 적을 표적으로 삼고 그 자리로 도약한다. 적을 처치하면 즉시, 그 밖에는 10초마다 다시 고른다. 적에게 피해를 입으면 2초 동안 은신하며 전투당 최대 3번 발동한다.",
     },
     basic: {
       id: "maki-basic",

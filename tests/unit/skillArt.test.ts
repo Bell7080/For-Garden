@@ -651,7 +651,10 @@ describe("스피나 스킬 표시 계약", () => {
     expect(spino.basic).toMatchObject({ name: "악어턱 물어뜯기", power: 80, combo: { chancePercent: 40, hitCount: 2, missingHpHealingPercentPerHit: 5 } });
     expect(skillDescription(spino.basic, { damage: 100 })).toBe(
       "적 한 명에게 [[damage-value|100]]의 [[physical-damage|물리 피해]]를 주고, 40% 확률로 [[combo|연격]]하여 총 2회 적중한다. "
-      + "매 적중 뒤 [[missing-hp|잃은 체력]]의 5%를 회복한다.",
+      + "매 적중 뒤 [[missing-hp|잃은 체력]]의 5%를 회복한다."
+      // 여울은 쓰는 개체가 하나뿐인 규칙어라 반경·시간·감속·확정 연격을 **태그가** 갖는다.
+      // 본문이 그 수치를 다시 늘어놓으면 한 문장이 이 규칙 하나로 가득 찬다.
+      + " 공격한 자리에 [[shallows|여울]]이 고인다.",
     );
     expect(spino.ultimate).toMatchObject({ name: "범람의 포식자", power: 200, attackSpeedPower: 150, cost: 200, statusEffects: [{ kind: "stun", seconds: 3 }] });
     // 능력치를 모르면(대상 없이 도감만 보는 경우) 옛 %-표기로 되돌아간다.
@@ -830,7 +833,7 @@ describe("마키 스킬 표시 계약", () => {
     const def = maki();
     // 처치와 시간 중 하나만 적으면 플레이어가 나머지 하나를 영영 모른다.
     expect(passiveDescription(def.passive, def.stats.atk)).toBe(
-      "전투를 시작할 때 현재 체력이 가장 낮은 적을 표적으로 삼고 그 자리로 [[teleport|순간이동]]한다. 적을 처치하면 즉시, 그 밖에는 10초마다 다시 고른다.",
+      "전투를 시작할 때 현재 체력이 가장 낮은 적을 표적으로 삼고 그 자리로 [[teleport|순간이동]]한다. 적을 처치하면 즉시, 그 밖에는 10초마다 다시 고른다. 적에게 피해를 입으면 2초 동안 [[stealth|은신]]한다. 전투당 최대 3번 발동한다.",
     );
   });
 

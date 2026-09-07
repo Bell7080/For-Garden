@@ -26,7 +26,35 @@ function validData(): SaveData {
 }
 
 describe("SaveManager", () => {
-  it("v31의 저장된 허스크 참조를 신규 렐릭 ID로 바꾸고 중복 없이 v32로 재저장한다", () => {
+  it("v32 외형 없는 저장은 기본 외형으로 마이그레이션하고 손상된 레거시 선택도 폐기한다", () => {
+    const legacy = validData() as unknown as Record<string, unknown>;
+    legacy.saveVersion = 32;
+    legacy.ownedRelicSkinIds = ["missing-skin"];
+    legacy.equippedRelicSkinIds = { anky: "missing-skin" };
+    const migrated = new SaveManager(new MemoryStorage()).migrate(legacy);
+    expect(migrated.ownedRelicSkinIds).toEqual([]);
+    expect(migrated.equippedRelicSkinIds).toEqual({});
+  });
+
+  it("스킨 소유·장착을 JSON으로 왕복하고 현행 손상 ID와 대상 불일치를 거부한다", () => {
+    const storage = new MemoryStorage();
+    const source = createDefaultSession();
+    source.equippedRelicSkinIds.anky = "torika-skin-001";
+    const manager = new SaveManager(storage);
+    manager.save(source);
+    const json = JSON.parse(storage.getItem(SAVE_STORAGE_KEY)!) as SaveData;
+    expect(json.ownedRelicSkinIds).toEqual(["torika-skin-001"]);
+    expect(manager.load()?.equippedRelicSkinIds).toEqual({ anky: "torika-skin-001" });
+
+    const unknown = validData();
+    unknown.ownedRelicSkinIds = ["missing-skin" as never];
+    expect(() => manager.validate(unknown)).toThrow("스킨 소유");
+    const wrongRelic = validData();
+    wrongRelic.equippedRelicSkinIds = { rex: "torika-skin-001" };
+    expect(() => manager.validate(wrongRelic)).toThrow("스킨 장착");
+  });
+
+  it("v31의 저장된 허스크 참조를 신규 렐릭 ID로 바꾸고 중복 없이 v33으로 재저장한다", () => {
     const storage = new MemoryStorage();
     const source = createDefaultSession();
     // 실제 원정 런을 먼저 만들어 맵처럼 이번 변경과 무관한 계약은 그대로 유효하게 유지한다.

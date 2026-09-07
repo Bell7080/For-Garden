@@ -18,6 +18,8 @@ function makeRune(instanceId = "rune-1"): RuneInstance {
 /** 각 테스트가 독립적으로 쓸 서버 저장소 역할의 세션을 만든다. */
 function makeSession(fossil = 1000): Session {
   return {
+    // 이 테스트는 추가 외형을 다루지 않으므로 소유·장착 상태를 비워 둔다.
+    ownedRelicSkinIds: new Set(), equippedRelicSkinIds: {},
     discoveredInteractionJournalIds: new Set(), readInteractionJournalIds: new Set(),
     // 교류와 무관한 테스트는 비어 있는 서버 파견 슬롯을 사용한다.
     interaction: { slots: [null], claimedRequestIds: [] },

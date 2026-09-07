@@ -178,6 +178,10 @@ export interface Fighter extends Combatant {
    * 화면이 보여 준 수치와 갈린다.
    */
   poison: { remaining: number; total: number; tickIn: number; amountPerSecond: number; sourceId?: string } | null;
+  /** 제공자별 시약 겹과 시계. 서로 다른 리파의 투여가 한 전역 슬롯에서 섞이지 않는 전투 전용 상태다. */
+  reagents: Record<string, { stacks: number; remaining: number; total: number }>;
+  /** 제공자별 시약 반응 저항 감소의 실제 수치와 시계. 정적 `RelicDef.stats.res`는 절대 바꾸지 않는다. */
+  reagentResistanceReductions: Record<string, { amount: number; remaining: number; total: number }>;
   /** 이 전투에서 긴급 회복 패시브를 이미 발동했는지. 저장하지 않는 "전투당 1회" 소유 상태다. */
   passiveTriggered: boolean;
   /** 진행 중인 지속 회복. remaining과 tickIn은 초, percentPerTick은 최대 HP 대비 %이며 저장하지 않는다. */
@@ -818,6 +822,9 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     frenzy: null,
     bleed: null,
     poison: null,
+    // 시약은 저장 데이터가 아니라 매 난전마다 비어 있는 제공자별 런타임 장부에서 시작한다.
+    reagents: {},
+    reagentResistanceReductions: {},
     // 저장 스냅샷의 HP만 반영하고, 전투 한정 발동권과 지속 효과는 매 전투 새로 만든다.
     passiveTriggered: false,
     regeneration: null,
@@ -1825,6 +1832,80 @@ function poisonAmountPerSecond(attacker: Fighter, target: Fighter, effect: Extra
   )));
 }
 
+/** 시약 반응으로 현재 적용 중인 제공자별 저항 감소의 합이다. */
+export function reagentResistanceReduction(target: Fighter): number {
+  return Object.values(target.reagentResistanceReductions)
+    .filter((entry) => entry.remaining > EMERGENCY_RECOVERY.epsilon)
+    .reduce((sum, entry) => sum + entry.amount, 0);
+}
+
+/**
+ * 실제 피해가 적중하고 대상이 살아남은 뒤 시약을 처리하는 공용 훅이다.
+ *
+ * 반응 순서는 계약 그 자체다: **시약 소비 → 공용 poison 갱신 → 저항력 감소 →
+ * 최저 HP 비율 생존 아군 회복**. 순서를 바꾸면 이번 독 피해량이나 회복 대상이 달라질 수 있다.
+ */
+function applyReagentOnHit(attacker: Fighter, target: Fighter, stacks: number | undefined, state: SkirmishState, events: SkirmishEvent[]): void {
+  const contract = attacker.def.passive.kind === "reagentReaction" ? attacker.def.passive.reagentReaction : undefined;
+  if (!contract || !stacks || stacks <= 0 || !isFighterAlive(target)) return;
+
+  const previous = target.reagents[attacker.id]?.stacks ?? 0;
+  const next = Math.min(contract.maxStacks, previous + stacks);
+  // 같은 제공자의 재적중은 상한을 넘기지 않되, 정확히 계약 시간부터 다시 세도록 갱신한다.
+  target.reagents[attacker.id] = { stacks: next, remaining: contract.seconds, total: contract.seconds };
+  if (next < contract.maxStacks) return;
+
+  // 1) 임계 겹을 먼저 전부 소비해 반응 중 재진입이나 초과 중첩이 남지 않게 한다.
+  delete target.reagents[attacker.id];
+  // 2) 캐릭터 전용 독을 만들지 않고 공용 POISON 계수와 기존 강한 독 갱신 규칙을 재사용한다.
+  const poisonEffect: Extract<CombatStatusEffect, { kind: "poison" }> = {
+    kind: "poison", seconds: contract.reactionPoisonSeconds,
+    attackPercentPerSecond: POISON.attackPercentPerSecond,
+    abilityPercentPerSecond: POISON.abilityPercentPerSecond,
+  };
+  refreshPoison(target, poisonEffect.seconds, poisonAmountPerSecond(attacker, target, poisonEffect, state), events, attacker.id);
+
+  // 3) 원본 저항의 계약 비율을 수치로 잡되, 현재 유효 저항 아래로는 내려가지 않게 실제 감소량을 자른다.
+  const ownPrevious = target.reagentResistanceReductions[attacker.id]?.amount ?? 0;
+  const effectiveBeforeOwn = Math.max(0, defensiveDefinition(target, state).def.stats.res + ownPrevious);
+  const requested = Math.max(0, target.def.stats.res * contract.resistanceReductionPercent / 100);
+  target.reagentResistanceReductions[attacker.id] = {
+    amount: Math.min(requested, effectiveBeforeOwn),
+    remaining: contract.resistanceReductionSeconds,
+    total: contract.resistanceReductionSeconds,
+  };
+
+  // 4) 배열(편성) 순서를 유지한 채 HP 비율 최솟값만 갱신하므로 동률이면 먼저 편성된 아군이 남는다.
+  const ally = state.fighters.reduce<Fighter | null>((lowest, candidate) => {
+    if (candidate.side !== attacker.side || !isFighterAlive(candidate)) return lowest;
+    if (!lowest) return candidate;
+    return candidate.hp / candidate.maxHp < lowest.hp / lowest.maxHp ? candidate : lowest;
+  }, null);
+  if (ally) {
+    const amount = applyHealing(state, ally, ally.maxHp * contract.lowestHpAllyHealMaxHpPercent / 100, attacker.id);
+    if (amount > 0) events.push({ kind: "heal", fighterId: ally.id, amount, source: "passive", effect: { tag: "heal", intensity: 1 } });
+  }
+}
+
+/** 제공자별 시약과 저항 감소 시계를 함께 흘리고, 사망자는 두 장부를 즉시 비운다. */
+function tickReagentStates(fighter: Fighter, dt: number): void {
+  if (!isFighterAlive(fighter)) {
+    fighter.reagents = {};
+    fighter.reagentResistanceReductions = {};
+    return;
+  }
+  for (const [providerId, entry] of Object.entries(fighter.reagents)) {
+    const remaining = entry.remaining - dt;
+    if (remaining <= EMERGENCY_RECOVERY.epsilon) delete fighter.reagents[providerId];
+    else fighter.reagents[providerId] = { ...entry, remaining };
+  }
+  for (const [providerId, entry] of Object.entries(fighter.reagentResistanceReductions)) {
+    const remaining = entry.remaining - dt;
+    if (remaining <= EMERGENCY_RECOVERY.epsilon) delete fighter.reagentResistanceReductions[providerId];
+    else fighter.reagentResistanceReductions[providerId] = { ...entry, remaining };
+  }
+}
+
 /**
  * 걸린 중독을 1초 간격으로 깎는다. 출혈과 같은 고정 피해 경계다.
  *
@@ -1978,6 +2059,8 @@ function clearDefeatedStatuses(fighter: Fighter): void {
   fighter.targetId = null;
   fighter.bleed = null;
   fighter.poison = null;
+  fighter.reagents = {};
+  fighter.reagentResistanceReductions = {};
   fighter.undying = null;
   fighter.undyingPending = false;
   fighter.taunted = null;
@@ -2179,11 +2262,14 @@ export function currentAttackSpeed(fighter: Fighter, state?: SkirmishState): num
   const frenzyPercent = fighter.frenzy?.attackSpeedPercent ?? 0;
   // 쏟아붓기는 자기 궁극기가 건 시간제한 강화라 같은 자리에서 곱한다.
   const volleyPercent = fighter.volley?.attackSpeedPercent ?? 0;
+  // 시약 도핑은 폭주한 제공자 자신의 손만 빠르게 하며 팀 오라로 퍼지지 않는다.
+  const reagentDopingPercent = fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "reagentDoping"
+    ? fighter.def.ferocityTrait.attackSpeedPercent : 0;
   // 둔화는 남이 걸어 준 감속이라 다른 배율과 같은 자리에서 나눈다.
   const chillPercent = fighter.chill ? fighter.chill.stacks * fighter.chill.speedPercentPerStack : 0;
   return (fighter.def.stats.attackSpeed + passiveSpeedPoints + fighter.bonusAttackSpeed)
     * (1 + teamPercent / 100) * (1 + packHuntPercent / 100) * (1 + tailwindPercent / 100) * (1 + frenzyPercent / 100)
-    * (1 + volleyPercent / 100) * (1 - chillPercent / 100);
+    * (1 + volleyPercent / 100) * (1 + reagentDopingPercent / 100) * (1 - chillPercent / 100);
 }
 
 export function attackInterval(fighter: Fighter, state?: SkirmishState): number {
@@ -2223,10 +2309,12 @@ export function defensiveDefinition(target: Fighter, state: SkirmishState): Figh
   const shred = 1 - curseResistanceShred(target) / 100;
   // 모피 코트는 남이 아니라 폭주 중인 자기 자신에게만 붙는 배율이라 오라와 다른 자리에서 온다.
   const furCoat = target.ferocityFever && target.def.ferocityTrait.effectId === "furCoat" ? target.def.ferocityTrait.defenseResistancePercent : 0;
-  if (bonus <= 0 && furCoat <= 0 && shred === 1 && target.augmentDefensePercent === 0 && target.augmentResistancePercent === 0) return target;
+  const reagentReduction = reagentResistanceReduction(target);
+  if (bonus <= 0 && furCoat <= 0 && shred === 1 && target.augmentDefensePercent === 0 && target.augmentResistancePercent === 0 && reagentReduction === 0) return target;
   return { ...target, def: { ...target.def, stats: { ...target.def.stats,
     def: target.def.stats.def * (1 + bonus / 100) * (1 + furCoat / 100) * (1 + target.augmentDefensePercent / 100),
-    res: target.def.stats.res * (1 + bonus / 100) * (1 + furCoat / 100) * (1 + target.augmentResistancePercent / 100) * shred,
+    // 시약 반응은 정적 정의가 아닌 런타임 실제 감소량이며, 여러 제공자가 있어도 유효 저항은 0 아래로 내리지 않는다.
+    res: Math.max(0, target.def.stats.res * (1 + bonus / 100) * (1 + furCoat / 100) * (1 + target.augmentResistancePercent / 100) * shred - reagentReduction),
   } } };
 }
 
@@ -2609,6 +2697,14 @@ function gainFerocity(fighter: Fighter, base: number, state: SkirmishState, even
       // 루카는 도약하지 않고 현재 좌표를 유지한 채 표적만 다시 정하며, 기존 단일 추적은 즉시 해제한다.
       for (const other of state.fighters) if (other.targetId === fighter.id) { other.targetId = null; other.engaged = false; }
       if (trait.retriggerPackHunt) triggerPackHunt(state, fighter.side);
+    }
+    if (trait.effectId === "reagentDoping") {
+      // 진입 살포도 ID 분기 없이 같은 제공자별 장부와 반응 순서를 사용한다.
+      for (const enemy of state.fighters) {
+        if (enemy.side !== fighter.side && isFighterAlive(enemy)) {
+          applyReagentOnHit(fighter, enemy, trait.stacksOnEntry, state, events);
+        }
+      }
     }
   }
   for (const { value } of FEROCITY_RULES.thresholds) {
@@ -3509,6 +3605,9 @@ function strike(
 
   // 개별 기본 공격·궁극기가 선언한 상태도 피해 처리 뒤 공용 저항/재적용 규칙을 그대로 사용한다.
   // 청산하는 타격은 같은 손으로 덧바르지 않는다 — 바르거나 터뜨리거나 한 번에 하나뿐이다.
+  if (isFighterAlive(target) && !resolution.ignored) {
+    applyReagentOnHit(attacker, target, skill.reagentStacks, state, events);
+  }
   if (isFighterAlive(target) && statusEffectsLandThisHit(attacker, skill, useUltimate)) {
     applySkillStatuses(target, encoreLiquidation ? withoutPoison(skill) : skill, events, state, attacker.id, critical);
     maybeFreezeAtMaxChill(attacker, target, events, state);
@@ -3783,6 +3882,8 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
 
     // 죽은 대상에는 지속 상태와 상태 UI 시작 사건을 절대 남기지 않는다.
     if (isFighterAlive(target)) {
+      // 피해가 무효화되지 않고 실제로 적중한 생존 대상만 모든 일반/궁극기 시약의 공용 훅을 지난다.
+      if (!resolution.ignored) applyReagentOnHit(attacker, target, skill.reagentStacks, state, events);
       // 광역 공격도 적중 대상을 하나씩 넘겨 기절 저항·행동 중단·UI 사건을 단일 공격과 공유한다.
       applySkillStatuses(target, skill, events, state, attacker.id, critical);
       if (!useUltimate) triggerCombatAugments(state, attacker, "onBasicHit", events, target);
@@ -3964,6 +4065,11 @@ function settle(state: SkirmishState, events: SkirmishEvent[]): void {
   else if (enemiesLeft === 0) state.phase = "victory";
   else if (playersLeft === 0) state.phase = "defeat";
   else return;
+  // 종료 스냅샷에 전투 전용 시약/저항 감소가 남아 다음 난전이나 결과 화면의 유효 수치로 새지 않게 한다.
+  for (const fighter of state.fighters) {
+    fighter.reagents = {};
+    fighter.reagentResistanceReductions = {};
+  }
   events.push({ kind: "finish", phase: state.phase });
 }
 
@@ -4048,6 +4154,8 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
   // 기절·경직 시계도 행동 전에 한 번만 전진한다. 이번 스텝의 공격으로 새로 걸린 상태까지 즉시
   // 깎으면 배열상 뒤에 선 대상만 지속 시간이 짧아지므로, 모든 기존 상태를 먼저 동기화한다.
   for (const fighter of state.fighters) {
+    // 행동 가능 여부와 무관하게 시약과 그 반응 시계는 공용 전투 시간만큼 흐른다.
+    tickReagentStates(fighter, dt);
     if (isFighterAlive(fighter) && fighter.stunnedFor > 0) fighter.stunnedFor = Math.max(0, fighter.stunnedFor - dt);
     if (isFighterAlive(fighter) && fighter.staggeredFor > 0) fighter.staggeredFor = Math.max(0, fighter.staggeredFor - dt);
     // 빙결이 풀리는 순간 최대 체력 비율 고정 피해를 한 번 입힌다. 방어·상성을 지나치는 즉발

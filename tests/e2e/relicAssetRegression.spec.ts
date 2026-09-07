@@ -49,7 +49,7 @@ test("도디·메테의 도감 전신과 루카 포함 편성·전투 SD 에셋�
   await captureGame(page, `test-results/${testInfo.project.name}-asset-dodi-mette-luka-battle-sd.png`);
 });
 
-test("토리카 기본 외형과 추가 외형을 전환하고 정보창 재진입 뒤 장착을 유지한다", async ({ page }, testInfo) => {
+test("토리카 기본 외형에서 스킨을 장착해 도감·로비·편성·전투·재시작까지 같은 한 벌을 유지한다", async ({ page }, testInfo) => {
   await startAfterOpening(page);
   await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
@@ -68,16 +68,43 @@ test("토리카 기본 외형과 추가 외형을 전환하고 정보창 재진�
   await page.waitForTimeout(800);
   await captureGame(page, `test-results/${testInfo.project.name}-torika-appearance-skin001.png`);
 
-  // 기본↔스킨 양방향을 같은 판에서 검증한 뒤 스킨을 다시 장착해 재진입 유지 조건을 만든다.
-  await tapGame(page, 330, 870);
-  await tapGame(page, 540, 1460);
-  await tapGame(page, 750, 870);
-  await tapGame(page, 540, 1460);
+  // 선택판을 닫아 같은 스킨 전신을 도감 정보창 자체에서도 캡처한다.
   await tapGame(page, 958, 382);
+  await page.waitForTimeout(500);
+  await captureGame(page, `test-results/${testInfo.project.name}-torika-skin001-catalog-fullbody.png`);
   await tapGame(page, BASE_WIDTH - 106, BASE_HEIGHT - 120);
-  await tapUntil(page, 880, 620, async () => (await page.evaluate(() => window.__PF_DEBUG?.infoOpen)) === true);
-  await tapGame(page, 914, 1580);
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toContain("외형");
+  await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT - 90);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   await page.waitForTimeout(800);
-  await captureGame(page, `test-results/${testInfo.project.name}-torika-appearance-reentered-skin001.png`);
+  await captureGame(page, `test-results/${testInfo.project.name}-torika-skin001-lobby-fullbody.png`);
+
+  await openParty(page);
+  await page.waitForTimeout(800);
+  await captureGame(page, `test-results/${testInfo.project.name}-torika-skin001-party-sd.png`);
+  await tapGame(page, BASE_WIDTH / 2, 1700);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("battle");
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.battle?.playerOrder)).toContain("토리카");
+  await captureGame(page, `test-results/${testInfo.project.name}-torika-skin001-battle-sd.png`);
+
+  // 실제 앱 재시작과 같은 새로고침을 거쳐 저장에서 장착 ID가 복원된 로비 전신을 마지막으로 남긴다.
+  await page.reload();
+  await page.waitForFunction(() => window.__PF_DEBUG?.ready === true);
+  await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+  await page.waitForTimeout(800);
+  await captureGame(page, `test-results/${testInfo.project.name}-torika-skin001-restored-lobby-fullbody.png`);
+});
+
+test("스킨 ZIP 하나가 실패해도 타이틀과 기본 토리카 외형으로 계속 진행한다", async ({ page }, testInfo) => {
+  // 전신 스킨 하나만 네트워크 실패시켜 단계 실패가 나머지 로딩과 기본 외형까지 막지 않는지 재현한다.
+  await page.route("**/puppets/char_001_skin001.zip", (route) => route.abort("failed"));
+  await startAfterOpening(page, (session) => {
+    delete session.equippedRelicSkinIds.anky;
+  });
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("title");
+  await captureGame(page, `test-results/${testInfo.project.name}-skin-zip-failure-title-continues.png`);
+  await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+  await page.waitForTimeout(800);
+  await captureGame(page, `test-results/${testInfo.project.name}-skin-zip-failure-default-torika.png`);
 });

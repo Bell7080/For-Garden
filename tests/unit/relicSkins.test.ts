@@ -1,3 +1,5 @@
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { RELIC_SKINS, getRelicSkin, skinsForRelic, validateRelicSkins } from "../../src/data/relicSkins";
 
@@ -16,6 +18,23 @@ describe("relic skins", () => {
       expect(skin.sdAssetId, `${skin.id} SD`).not.toBe("");
     }
     expect(() => validateRelicSkins(RELIC_SKINS)).not.toThrow();
+  });
+
+  it("정적 정의의 전신·SD ZIP이 배포 디렉터리에 실제 파일로 존재한다", () => {
+    // 논리 키만 등록되고 파일이 빠지는 배포 회귀를 막으며, 빈 자리표시자도 ZIP으로 인정하지 않는다.
+    const filesByAssetId: Readonly<Record<string, string>> = {
+      "torika-skin-001-portrait": "char_001_skin001.zip",
+      "torika-skin-001-sd": "charSD_001_skin001.zip",
+    };
+    for (const skin of RELIC_SKINS) {
+      for (const assetId of [skin.portraitAssetId, skin.sdAssetId]) {
+        const file = filesByAssetId[assetId];
+        expect(file, `${assetId} 배포 파일 매핑`).toBeDefined();
+        const path = resolve(process.cwd(), "public", "puppets", file);
+        expect(existsSync(path), path).toBe(true);
+        expect(readFileSync(path).subarray(0, 4).toString("hex"), `${path} ZIP header`).toBe("504b0304");
+      }
+    }
   });
 
   it("알 수 없는 스킨 ID를 조용히 다른 외형으로 바꾸지 않는다", () => {

@@ -107,8 +107,10 @@ export class FakeServer implements GameApi {
   private readonly mailClaimResults = new Map<string, ClaimMailRewardsResponse>();
   /** 운영 DB의 requestId 고유 제약을 흉내 내 판매 재전송에 최초 확정 영수증을 돌려준다. */
   private readonly runeSaleResults = new Map<string, SellRunesResponse>();
-  /** 일반 스테이지 입장 재전송의 이중 차감을 막는 서버 영수증 표다. */
+  /** 일반 스테이지 입장 재전송이 중복 승리 대기 건을 만들지 않게 하는 서버 영수증 표다. */
   private readonly stageAdmissionResults = new Map<string, EnterStageResponse>();
+  /** 입장 때 검증한 요청을 보관하고 승리 정산만 하나를 소비해 패배·강제 종료에는 비용이 없게 한다. */
+  private readonly pendingStageAdmissions = new Map<string, Set<string>>();
 
   constructor(
     private readonly state: Session = session,
@@ -751,7 +753,7 @@ export class FakeServer implements GameApi {
     return { ...this.snapshot(), relicId, breakthrough, levelCap: relicLevelCap(breakthrough), stars: relicStars(breakthrough), fragments: nextFragments[relicId] };
   }
 
-  /** 입장 허가와 비용 차감을 한 처리로 묶고 requestId 재전송에는 최초 영수증을 반환한다. */
+  /** 입장에서는 잔량만 검증하고 requestId 재전송에는 같은 허가를 반환한다. 실제 차감은 승리 시점이다. */
   async enterStage(request: EnterStageRequest): Promise<EnterStageResponse> {
     await this.delay();
     const cached = this.stageAdmissionResults.get(request.requestId);
@@ -762,9 +764,10 @@ export class FakeServer implements GameApi {
     this.settleStaminaNow();
     const cost = CONTENT_STAMINA_COSTS.normalStage;
     if (this.state.wallet.stamina < cost) throw new GameApiError("INSUFFICIENT_STAMINA", "스테미나가 부족합니다.");
-    this.state.wallet.stamina -= cost;
-    this.persist(this.state);
-    const response = { ...this.snapshot(), stageId: request.stageId, requestId: request.requestId, staminaSpent: cost, refundPolicy: "no-refund-after-admission" as const };
+    const pending = this.pendingStageAdmissions.get(request.stageId) ?? new Set<string>();
+    pending.add(request.requestId);
+    this.pendingStageAdmissions.set(request.stageId, pending);
+    const response = { ...this.snapshot(), stageId: request.stageId, requestId: request.requestId, staminaCost: cost, chargePolicy: "victory-only" as const };
     this.stageAdmissionResults.set(request.requestId, structuredClone(response));
     return response;
   }
@@ -782,13 +785,19 @@ export class FakeServer implements GameApi {
     const firstClear = victory && !this.state.cleared.has(stageId);
     const cheesecakeEarned = victory ? (firstClear ? stage.rewards.firstClearCheesecake : stage.rewards.repeatClearCheesecake) : 0;
     const nextCleared = victory ? new Set(this.state.cleared).add(stageId) : new Set(this.state.cleared);
-    const nextWallet = { ...this.state.wallet, cheesecake: this.state.wallet.cheesecake + cheesecakeEarned };
+    const pending = this.pendingStageAdmissions.get(stageId);
+    const admissionId = pending?.values().next().value as string | undefined;
+    // 파티 저장과 입장 검증은 선행 절차일 뿐이다. 검증된 실제 플레이도 승리한 경우에만 비용을 낸다.
+    const staminaSpent = victory && admissionId ? CONTENT_STAMINA_COSTS.normalStage : 0;
+    const nextWallet = { ...this.state.wallet, stamina: this.state.wallet.stamina - staminaSpent, cheesecake: this.state.wallet.cheesecake + cheesecakeEarned };
     // 승리한 전투에 실제 편성된 세 렐릭에게만 유대 경험치를 지급한다.
     const nextProgress = Object.fromEntries(Object.entries(this.state.relicProgress).map(([id, progress]) => [id,
       victory && this.state.party.includes(id) ? grantBondXp(progress, BOND_XP_REWARD.partyVictory).progress : progress]));
     const nextMissions = applyMissionEvent(this.state.missions, { type: "battle_completed", victory }, this.now());
     this.persist({ ...this.state, cleared: nextCleared, wallet: nextWallet, relicProgress: nextProgress, missions: nextMissions });
     this.state.cleared = nextCleared; this.state.wallet = nextWallet; this.state.relicProgress = nextProgress; this.state.missions = nextMissions;
+    if (admissionId) pending?.delete(admissionId);
+    if (pending?.size === 0) this.pendingStageAdmissions.delete(stageId);
     return { ...this.snapshot(), stageId, firstClear, cheesecakeEarned };
   }
 

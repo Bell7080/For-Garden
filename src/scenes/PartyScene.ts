@@ -11,6 +11,7 @@ import { battleAssetFor, placePuppet, spawnPuppet } from "../puppets/assets";
 import { getBattleStage, getStageEnemies } from "../data/stages";
 import { session } from "../state/session";
 import { gameApi } from "../api/FakeServer";
+import { GameApiError } from "../api/contracts";
 import { Button } from "../ui/Button";
 import { addBackButton } from "../ui/IconButton";
 import { PortraitCard } from "../ui/PortraitCard";
@@ -26,6 +27,9 @@ import { moveFormationSlot } from "../core/formation";
 import { bindFormationDrag } from "../ui/formationDrag";
 import { FORMATION_DRAG_VISUAL } from "../ui/formationDragVisual";
 import { createFormationDragVisualController, type FormationDragVisualController } from "../ui/formationDragVisualController";
+import { PopupLayer } from "../ui/PopupLayer";
+import { StaminaPopup } from "../ui/StaminaPopup";
+import { partyEntryErrorView } from "./partyEntryError";
 
 /**
  * 미리보기 전장.
@@ -191,6 +195,7 @@ export class PartyScene extends Phaser.Scene {
         this.isEnteringBattle = true;
         this.startButton.setEnabled(false);
 
+        // 로컬 편성 저장과 서버 입장은 실패 원인과 복구 행동이 다르므로 서로 다른 예외 경계로 둔다.
         try {
           // 화면에 그린 뒤 보유 상태가 바뀔 수 있으므로 전환 직전에 매니저에서 다시 검증한다.
           const result = relicCollection.setParty([...this.picked]);
@@ -200,15 +205,24 @@ export class PartyScene extends Phaser.Scene {
             this.refreshButtonState();
             return;
           }
-          // 서버가 입장을 확정한 뒤에만 전투로 전환해 로딩 중 재시도가 비용을 두 번 빼지 않게 한다.
+        } catch {
+          // 이 문구는 setParty의 영속 저장 예외에만 사용해 입장 API 오류와 섞이지 않게 한다.
+          this.hint.setText("파티 저장에 실패했다. 저장 공간을 확인한 뒤 다시 시도해 주세요.");
+          this.restoreEntryControls();
+          return;
+        }
+
+        try {
+          // 입장에서는 잔량만 검증하고, 실제 비용은 승리 정산에서만 차감한다.
           const requestId = globalThis.crypto?.randomUUID?.() ?? `stage-entry-${Date.now()}`;
           await gameApi.enterStage({ stageId: session.selectedStageId!, requestId });
           this.scene.start("battle", { mode: "stage" });
-        } catch {
-          // 저장소 용량/보안 오류의 세부 정보 대신 사용자가 재시도할 수 있는 문구를 보여 준다.
-          this.isEnteringBattle = false;
-          this.hint.setText("파티 저장에 실패했다. 저장 공간을 확인한 뒤 다시 시도해 주세요.");
-          this.refreshButtonState();
+        } catch (error) {
+          // instanceof 판정이 계약의 런타임 오류 타입을 기준으로 수행됨을 import 수준에서도 명확히 한다.
+          const view = partyEntryErrorView(error instanceof GameApiError ? error : undefined);
+          this.hint.setText(view.message);
+          this.restoreEntryControls();
+          if (view.openStaminaPopup) new StaminaPopup(this, new PopupLayer(this, 2200), gameApi).open();
         }
       },
     });
@@ -530,6 +544,12 @@ export class PartyScene extends Phaser.Scene {
   /** 선택 수와 전투 진입 잠금을 함께 반영해 버튼 활성 상태를 한곳에서 계산한다. */
   private refreshButtonState(): void {
     this.startButton.setEnabled(this.picked.length === 3 && !this.isEnteringBattle);
+  }
+
+  /** 모든 실패 경로가 진입 잠금과 버튼을 함께 복구하도록 한곳에서 처리한다. */
+  private restoreEntryControls(): void {
+    this.isEnteringBattle = false;
+    this.refreshButtonState();
   }
 
   /** 매니저의 안정적인 실패 코드를 편성 화면에서 바로 이해할 수 있는 안내로 바꾼다. */

@@ -15,6 +15,10 @@ import { BACKGROUND } from "../ui/backgrounds";
 import { NodeEnemyPreview } from "../ui/NodeEnemyPreview";
 import { isEnemyPreviewNodeVisible } from "../ui/nodeEnemyPreviewLayout";
 import { stageChapterNavigationLayout } from "../ui/stageChapterLayout";
+import { CONTENT_STAMINA_COSTS } from "../data/contentCosts";
+import { PopupLayer } from "../ui/PopupLayer";
+import { StaminaPopup } from "../ui/StaminaPopup";
+import { gameApi } from "../api/FakeServer";
 
 /** 지도가 보이는 세로 구간. 위쪽 제목과 아래쪽 버튼을 침범하지 않는다. */
 const WINDOW = { top: 500, bottom: 1560 } as const;
@@ -296,7 +300,15 @@ export class StageMapScene extends Phaser.Scene {
     const stage = STAGES.find(({ id }) => id === this.selected);
     if (!stage) return;
     if (stage.kind === "story") this.scene.start("stageStory", { storyId: stage.storyId });
-    else { session.selectedStageId = stage.id; this.scene.start("party"); }
+    else {
+      // 편성 화면에 들어가기 전 출전 버튼에서 먼저 막아, 부족함을 확인한 사용자가 헛된 편성을 하지 않게 한다.
+      if (session.wallet.stamina < CONTENT_STAMINA_COSTS.normalStage) {
+        new StaminaPopup(this, new PopupLayer(this, 2200), gameApi).open();
+        return;
+      }
+      session.selectedStageId = stage.id;
+      this.scene.start("party");
+    }
   }
 
 }

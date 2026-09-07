@@ -3,6 +3,9 @@ import { ABSOLUTE_STAMINA_MAX, settleStamina, staminaMaxForResearchLevel, stamin
 import { FakeServer } from "../../src/api/FakeServer";
 import { createDefaultSession } from "../../src/state/session";
 import { TIME_ACCRUAL_FIXTURES } from "../fixtures/timeAccrual";
+import { CONTENT_STAMINA_COSTS } from "../../src/data/contentCosts";
+import { GameApiError } from "../../src/api/contracts";
+import { partyEntryErrorView } from "../../src/scenes/partyEntryError";
 
 describe("stamina rules", () => {
   it("shares timezone, regression, long-offline, and boundary clock fixtures with excavation", () => {
@@ -51,12 +54,43 @@ describe("stamina rules", () => {
 });
 
 describe("stamina admission", () => {
-  it("charges a normal stage only once for the same request id", async () => {
+  it("keeps stamina at admission and charges only a victory once for the same request id", async () => {
     const state = createDefaultSession(); state.wallet.stamina = 20; state.staminaUpdatedAt = "2026-09-01T00:00:00.000Z";
     const api = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-09-01T00:00:00.000Z") });
     const request = { stageId: "1-1", requestId: "admission-1" };
     const first = await api.enterStage(request); const retried = await api.enterStage(request);
-    expect(first.staminaSpent).toBe(6); expect(retried.wallet.stamina).toBe(14); expect(state.wallet.stamina).toBe(14);
-    expect(retried.refundPolicy).toBe("no-refund-after-admission");
+    expect(first.staminaCost).toBe(6); expect(retried.wallet.stamina).toBe(20); expect(state.wallet.stamina).toBe(20);
+    expect(retried.chargePolicy).toBe("victory-only");
+    await api.completeStage("1-1", true);
+    expect(state.wallet.stamina).toBe(14);
+  });
+
+  it("returns INSUFFICIENT_STAMINA without changing a balance below the admission cost", async () => {
+    const state = createDefaultSession();
+    state.wallet.stamina = CONTENT_STAMINA_COSTS.normalStage - 1;
+    state.staminaUpdatedAt = "2026-09-01T00:00:00.000Z";
+    const api = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-09-01T00:00:00.000Z") });
+    await expect(api.enterStage({ stageId: "1-1", requestId: "insufficient" })).rejects.toMatchObject({ code: "INSUFFICIENT_STAMINA" });
+    // 거절은 예약이나 차감보다 먼저 끝나므로 원래 잔량을 그대로 보존한다.
+    expect(state.wallet.stamina).toBe(CONTENT_STAMINA_COSTS.normalStage - 1);
+  });
+
+  it("does not charge stamina after defeat and charges the next victorious admission", async () => {
+    const state = createDefaultSession(); state.wallet.stamina = 20; state.staminaUpdatedAt = "2026-09-01T00:00:00.000Z";
+    const api = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-09-01T00:00:00.000Z") });
+    await api.enterStage({ stageId: "1-1", requestId: "defeat" });
+    await api.completeStage("1-1", false);
+    expect(state.wallet.stamina).toBe(20);
+    await api.enterStage({ stageId: "1-1", requestId: "victory" });
+    await api.completeStage("1-1", true);
+    expect(state.wallet.stamina).toBe(14);
+  });
+
+  it("maps insufficient stamina to recharge guidance instead of a party-save failure", () => {
+    const view = partyEntryErrorView(new GameApiError("INSUFFICIENT_STAMINA", "server detail"));
+    // 씬에 Phaser를 띄우지 않고도 두 실패 경계의 문구가 다시 섞이지 않는지 고정한다.
+    expect(view).toMatchObject({ openStaminaPopup: true });
+    expect(view.message).toContain("스테미나");
+    expect(view.message).not.toContain("파티 저장");
   });
 });

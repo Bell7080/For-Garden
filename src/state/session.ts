@@ -265,8 +265,8 @@ export function createDefaultSession(): Session {
   // 순수 설정 팩토리는 지연 require 대신 정적 import로 의존 방향을 core→state 타입에만 제한한다.
   const settings = createDefaultSettings();
   return {
-    // 신규 계정은 토리카 외형을 즉시 체험할 수 있게 보유하되, 처음에는 기본 외형으로 시작한다.
-    ownedRelicSkinIds: new Set<RelicSkinId>(["torika-skin-001"]),
+    // 획득 정책 승인 전에는 일반 신규 계정에 추가 외형을 지급하지 않는다. 검증은 테스트 fixture가 소유권을 명시한다.
+    ownedRelicSkinIds: new Set<RelicSkinId>(),
     equippedRelicSkinIds: {},
     discoveredInteractionJournalIds: new Set<string>(),
     readInteractionJournalIds: new Set<string>(),

@@ -48,13 +48,6 @@ export class RelicSkinManager {
     return true;
   }
 
-  /** 보상/API 경계가 알려진 외형을 한 번만 지급할 수 있게 하는 작은 획득 진입점이다. */
-  grant(skinId: RelicSkinId): boolean {
-    if (!getRelicSkin(skinId) || this.owns(skinId)) return false;
-    this.state.ownedRelicSkinIds.add(skinId);
-    this.saves.save(this.state);
-    return true;
-  }
 }
 
 /** 앱 전역 세션을 사용하는 기본 외형 관리자다. */

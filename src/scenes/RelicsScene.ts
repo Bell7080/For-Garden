@@ -18,6 +18,7 @@ import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { SectionDivider } from "../ui/SectionDivider";
 import { compareBookmarkedOwnedRelics } from "../core/relicCatalog";
 import { drawVignette } from "../ui/holo";
+import { relicSkinManager } from "../managers/RelicSkinManager";
 
 /** 제목/정렬 조작과 하단 탭 사이만 목록에 내주는 고정 화면 경계다. */
 const VIEWPORT_TOP = 390;
@@ -137,6 +138,9 @@ export class RelicsScene extends Phaser.Scene {
     this.info.onClose = () => this.refresh();
     // 서버가 재화 차감을 확정한 직후 정보창과 상단 줄이 같은 세션 지갑을 다시 읽는다.
     this.info.onWalletChange = () => this.topBar.refresh();
+    // manager 사건을 받으면 열린 정보창 뒤의 도감 카드도 같은 resolver 결과로 즉시 재조립한다.
+    const unsubscribeSkin = relicSkinManager.subscribe(() => this.refresh());
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, unsubscribeSkin);
     this.refresh();
     this.installScrollInput();
 

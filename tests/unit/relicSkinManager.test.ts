@@ -4,6 +4,21 @@ import { createDefaultSession } from "../../src/state/session";
 
 /** 외형 변경의 소유권 검증과 영속화 경계를 작은 독립 세션으로 고정한다. */
 describe("RelicSkinManager", () => {
+  it("알려진 외형만 한 번 획득시키고 즉시 저장한다", () => {
+    const state = createDefaultSession();
+    const saves = { save: vi.fn() };
+    const manager = new RelicSkinManager(state, saves);
+    // 신규 계정의 데모 지급분을 비워 실제 보상 획득 경계를 독립적으로 재현한다.
+    state.ownedRelicSkinIds.clear();
+
+    expect(manager.grant("torika-skin-001")).toBe(true);
+    expect(manager.owns("torika-skin-001")).toBe(true);
+    expect(manager.grant("torika-skin-001")).toBe(false);
+    expect(manager.grant("missing-skin" as never)).toBe(false);
+    expect(saves.save).toHaveBeenCalledTimes(1);
+    expect(saves.save).toHaveBeenCalledWith(state);
+  });
+
   it("미보유 렐릭, 미보유 스킨, 다른 렐릭용 스킨은 장착하지도 저장하지도 않는다", () => {
     const state = createDefaultSession();
     const saves = { save: vi.fn() };

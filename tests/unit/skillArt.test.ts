@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import ts from "typescript";
 import PREPARE_ICONS from "../../scripts/prepare_icons.py?raw";
 import { RELICS } from "../../src/data/relics";
+import { FOCUS } from "../../src/core/skirmish";
 import { KEYWORDS } from "../../src/data/keywords";
 import type { BasicAttack, Skill } from "../../src/core/types";
 import { ELEMENT_TINT, ROLE_TINT, SKILL_ART_ASSETS, SKILL_ART_SLOTS, skillArtFor, skillArtKey, skillArtTint } from "../../src/ui/skillArt";
@@ -576,7 +577,11 @@ describe("스킬 설명문 양식 계약", () => {
       });
       // 순환 기본 공격은 걸음마다 제 문장을 갖는다. 한 문장으로 뭉치면 세 권 중 하나만 설명한
       // 문장이 되므로, 양식은 문장 전체가 아니라 **걸음 하나하나**가 지킨다.
-      const bodies = cycle === undefined
+      // 앞 걸음이 전부 같은 순환(파루아)은 늘어놓지 않고 한 문장에 대체 절만 붙인다 —
+      // 같은 문장을 두 번 읽히지 않게 하려는 것이므로, 그때는 그 한 문장이 양식을 지킨다.
+      const uniformHead = cycle !== undefined && cycle.length > 1
+        && cycle.slice(0, -1).every((step) => step.name === cycle[0].name && step.power === cycle[0].power);
+      const bodies = cycle === undefined || uniformHead
         ? [text]
         : cycle.map((step) => {
           const marker = `「${step.name}」 `;
@@ -584,7 +589,7 @@ describe("스킬 설명문 양식 계약", () => {
           return text.slice(text.indexOf(marker) + marker.length).split("\n")[0];
         });
       // 걸음마다 **줄**을 나눈다 — 한 줄로 이으면 어디서 걸음이 바뀌는지 「」를 눈으로 찾아야 한다.
-      if (cycle !== undefined) expect(text.startsWith(`다음 ${cycle.length}가지를 차례로 반복한다.\n`)).toBe(true);
+      if (cycle !== undefined && !uniformHead) expect(text.startsWith(`다음 ${cycle.length}가지를 차례로 반복한다.\n`)).toBe(true);
       for (const body of bodies) {
         // 대상이 먼저다. 무엇을 때리는지 모른 채 수치부터 읽게 하지 않는다.
         expect(body).toMatch(/^(적 한 명|자신의 주위 모든 적|표적과 그 주위의 적|전장의 모든 적|지정한 원 안의 모든 적|\[\[charge\|돌진\]\]해 뚫고 지나간 길의 모든 적)에게 /);
@@ -873,5 +878,47 @@ describe("아모 조가비 표시 계약", () => {
     expect(passiveDescription(amo.passive)).toContain("최대 체력의 6%");
     expect(ferocityTraitDescription(amo.ferocityTrait)).toContain("조가비]]를 3겹");
     expect(skillDescription(amo.ultimate)).toContain("조가비]] 내부 재사용 대기시간을 초기화");
+  });
+});
+
+describe("파루아 표시 계약", () => {
+  const parua = RELICS.find((relic) => relic.id === "parua")!;
+  const keyword = (id: string) => KEYWORDS.find((entry) => entry.id === id)!;
+
+  it("의 평타는 걸음을 늘어놓지 않고 한 문장에 대체 절만 붙인다", () => {
+    // 앞 두 걸음이 같은 한 방이라 나열하면 같은 문장을 두 번 읽힌다 — 다른 개체의 평타와
+    // 같은 모양으로 적고, 달라지는 세 번째만 한 절로 덧붙인다.
+    const body = skillDescription(parua.basic, { damage: 142 });
+    expect(body).not.toContain("차례로 반복한다");
+    expect(body).toBe("적 한 명에게 [[damage-value|142]]의 [[physical-damage|물리 피해]]를 준다."
+      + " 세 번째 공격은 [[split-arrow|갈래화살]]로 대체된다.");
+  });
+
+  it("의 패시브는 집중이 무엇을 얼마나 올리는지 되풀이하지 않는다", () => {
+    // 쓰는 개체가 하나뿐인 규칙어라 태그가 수치를 갖는다(덧칠 쪽 규칙). 본문이 같은 수를
+    // 다시 적으면 한쪽만 고쳤을 때 두 문장이 갈린다.
+    const body = passiveDescription(parua.passive);
+    expect(body).toContain("[[focus|집중]]");
+    // 겹당 수치는 태그의 몫이다. 치명타 확률은 집중과 무관한 공용 절이라 그대로 남는다.
+    expect(body).not.toContain("겹");
+    expect(body).not.toContain("사거리가");
+  });
+
+  it("의 집중 태그 수치는 실제 데이터와 같은 값을 말한다", () => {
+    // 태그 문장은 정적 텍스트라 데이터에서 조용히 갈릴 수 있다. 여기서 묶어 둔다.
+    const text = keyword("focus").description;
+    if (parua.passive.kind !== "farthestFocus") throw new Error("파루아 패시브 계약이 바뀌었다");
+    expect(text).toContain(`최대 ${FOCUS.maxStacks}겹`);
+    expect(text).toContain(`공격력이 ${parua.passive.value}%`);
+    expect(text).toContain(`사거리가 ${FOCUS.reachPerStack} 오르고`);
+  });
+
+  it("의 갈래화살 태그 수치는 실제 걸음과 같은 인원·위력을 말한다", () => {
+    const split = parua.basic.cycle![parua.basic.cycle!.length - 1];
+    expect(split).toMatchObject({ targeting: "splitShot", maxTargets: 3 });
+    // 갈래화살 한 발은 일반 걸음 위력의 절반이다.
+    expect(split.power * 2).toBe(parua.basic.cycle![0].power);
+    expect(keyword("split-arrow").description).toContain("최대 세 명");
+    expect(keyword("split-arrow").description).toContain("50%");
   });
 });

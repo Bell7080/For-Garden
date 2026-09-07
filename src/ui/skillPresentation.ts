@@ -244,8 +244,9 @@ function passiveHead(passive: Passive, atk?: number): string {
   if (passive.kind === "followHighestAttackAllyTarget") return `전투 시작 시 아군 중 공격력이 가장 높은 렐릭이 표적으로 삼은 적을 함께 표적으로 삼는다.`;
   if (passive.kind === "basicHitAttackSpeedStack") return `[[basic-attack|기본 공격]]이 실제 적중할 때마다 이번 전투 동안 [[attack-speed|공격 속도]]가 ${passive.value} 증가한다.`;
   if (passive.kind === "farthestFocus") {
-    // 겹당 사거리와 상한은 태그가 말하므로 본문은 표적 규칙과 겹당 공격력만 적는다.
-    return `사거리 안에서 가장 먼 적을 노린다. 공격이 적중할 때마다 [[focus|집중]]을 얻고, 1겹마다 공격력이 ${passive.value}% 오른다.`;
+    // 겹당 무엇이 얼마나 오르는지는 전부 태그가 말한다 — 쓰는 개체가 하나뿐인 규칙어라
+    // 태그가 수치를 갖고, 본문은 그것을 되풀이하지 않는다(출혈이 아니라 덧칠 쪽 규칙이다).
+    return `사거리 안에서 가장 먼 적을 노리고, 공격이 적중할 때마다 [[focus|집중]]을 얻는다.`;
   }
   if (passive.kind === "adagioWeight") {
     const shield = passiveShieldKeyword(passive, atk);
@@ -378,6 +379,24 @@ export interface SkillDescriptionStats {
   maxHp?: number;
 }
 
+/** 순환 걸음 둘이 같은 일을 하는가. 이름까지 같아야 화면에서도 같은 한 방으로 읽힌다. */
+function sameCycleStep(a: BasicAttackStep, b: BasicAttackStep): boolean {
+  return a.name === b.name && a.power === b.power && (a.targeting ?? "single") === (b.targeting ?? "single")
+    && JSON.stringify(a.statusEffects ?? null) === JSON.stringify(b.statusEffects ?? null);
+}
+
+/** 한글 서수. 순환은 길어야 서넛이라 표 하나로 충분하다. */
+const ORDINALS = ["첫", "두", "세", "네", "다섯"].map((word) => `${word} 번째`);
+
+/** 대체되는 걸음의 이름. 규칙어로 정의돼 있으면 태그로 걸어 눌러 볼 수 있게 한다. */
+function cycleStepKeyword(step: BasicAttackStep): string {
+  const id = CYCLE_STEP_KEYWORDS[step.name];
+  return id === undefined ? `「${step.name}」` : `[[${id}|${step.name}]]`;
+}
+
+/** 걸음 이름과 규칙어를 잇는 표. 이름이 곧 규칙어인 걸음만 여기 둔다. */
+const CYCLE_STEP_KEYWORDS: Readonly<Record<string, string>> = { "갈래화살": "split-arrow" };
+
 /**
  * 스킬 설명문을 만드는 유일한 자리.
  *
@@ -461,6 +480,23 @@ export function skillDescription(
   // 대상도 부가 효과도 걸음마다 통째로 달라, 하나로 적으면 세 권 중 하나만 설명한 문장이 된다.
   const cycle = "cycle" in skill ? skill.cycle : undefined;
   if (cycle !== undefined && cycle.length > 0) {
+    /**
+     * **앞 걸음이 전부 같은 순환은 늘어놓지 않는다.**
+     *
+     * 엘라의 발경은 세 권이 저마다 달라 걸음을 나열해야 하지만, 파루아처럼 같은 한 방을
+     * 되풀이하다 마지막에만 갈라지는 순환은 같은 문장을 두 번 읽히게 만든다 — 다른 개체의
+     * 평타처럼 한 문장으로 적고, 달라지는 걸음만 한 절로 덧붙인다.
+     */
+    const head = cycle[0];
+    const uniformHead = cycle.length > 1 && cycle.slice(0, -1).every((step) => sameCycleStep(step, head));
+    if (uniformHead) {
+      const base = { ...skill, cycle: undefined, power: head.power, targeting: head.targeting ?? "single",
+        radius: head.radius, statusEffects: head.statusEffects, damageHealingPercent: head.damageHealingPercent } as DescribedSkill;
+      const last = cycle[cycle.length - 1];
+      const body = skillDescription(base, { ...stats, damage: stats.cycleDamage?.[0] ?? stats.damage });
+      // 대체되는 걸음이 무엇을 하는지는 그 이름의 태그가 말한다 — 여기서 되풀이하지 않는다.
+      return `${body} ${ORDINALS[cycle.length - 1] ?? `${cycle.length}번째`} 공격은 ${cycleStepKeyword(last)}로 대체된다.`;
+    }
     const steps = cycle.map((step, index) => {
       // 선언하지 않은 필드는 **비어 있는 것으로 본다** — 기본 공격 쪽 값이 새어 들어오면 어느
       // 걸음이 무엇을 하는지 문장만 보고 알 수 없다. 코어의 `currentBasic`과 같은 규칙이다.

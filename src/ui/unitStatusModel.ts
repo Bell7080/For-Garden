@@ -7,9 +7,11 @@ import type { Fighter } from "../core/skirmish";
  * 겹 수와 남은 시간을 여기서 한 번만 만들고 둘 다 이 목록만 그린다. Phaser를 들여오지 않아
  * 순서·색·문구를 테스트가 그대로 고정할 수 있다.
  */
-export type UnitStatusId = "shell" | "stun" | "frozen" | "frenzy" | "taunt" | "bleed" | "poison" | "curse" | "chill" | "submerged" | "overpaint" | "butcher" | "vandalism";
+export type UnitStatusId = "shell" | "stun" | "frozen" | "frenzy" | "taunt" | "bleed" | "poison" | "reagent" | "curse" | "chill" | "submerged" | "overpaint" | "butcher" | "vandalism";
 
 export interface UnitStatusView {
+  /** 같은 상태를 제공자가 여럿 걸 수 있을 때도 HUD 객체를 덮어쓰지 않는 전투 내 키다. */
+  key?: string;
   id: UnitStatusId;
   /** 팝업에 그대로 서는 이름. 규칙어 태그와 같은 표기를 쓴다. */
   name: string;
@@ -17,6 +19,8 @@ export interface UnitStatusView {
   color: number;
   /** 겹치는 상태만 갖는 겹 수. 칩 우하단의 작은 수가 이 값이다. */
   stacks?: number;
+  /** 숫자 대신 채워진 시험관 수로 읽는 자원만 갖는 고정 슬롯 수다. */
+  stackSlots?: number;
   /** 남은 시간(초)과 한 바퀴의 전체 시간. 시계 고리가 이 둘의 비로 돈다. */
   remaining?: number;
   total?: number;
@@ -34,6 +38,8 @@ export const UNIT_STATUS_COLOR: Readonly<Record<UnitStatusId, number>> = {
   taunt: 0xd8913a,
   bleed: 0xc2303a,
   poison: 0x7a4bab,
+  // 기존 중독 강조색을 그대로 써 반응 뒤 이어지는 상태와 같은 계열로 읽히게 한다.
+  reagent: 0x7a4bab,
   curse: 0x8f6aa4,
   chill: 0x4fa8e4,
   // 여울에 잠긴 상태. 둔화와 같은 계열의 물빛이지만 한 단계 짙어, 바닥에 깔린 판과 머리 위
@@ -112,6 +118,15 @@ export function unitStatusViews(fighter: Fighter): UnitStatusView[] {
       remaining: poison.remaining, total: Math.max(poison.total, poison.remaining),
       // 중독은 맞은 쪽의 비율이 아니라 바른 쪽이 굳혀 둔 값이라, 비율이 아니라 그 수를 그대로 적는다.
       detail: `매초 ${poison.amountPerSecond} · ${seconds(poison.remaining)} 남음`,
+    });
+  }
+  // 제공자별 장부를 합치지 않는다. 여러 리파가 있어도 각자의 1→2→반응 순환이 따로 보인다.
+  for (const [providerId, reagent] of Object.entries(fighter.reagents)) {
+    views.push({
+      key: `reagent:${providerId}`, id: "reagent", name: "시약", color: UNIT_STATUS_COLOR.reagent,
+      stacks: reagent.stacks, stackSlots: 3,
+      remaining: reagent.remaining, total: Math.max(reagent.total, reagent.remaining),
+      detail: `${reagent.stacks}/3겹 · ${seconds(reagent.remaining)} 남음`,
     });
   }
   if (fighter.overpaint) {

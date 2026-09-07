@@ -1857,6 +1857,9 @@ function applyReagentOnHit(attacker: Fighter, target: Fighter, stacks: number | 
 
   // 1) 임계 겹을 먼저 전부 소비해 반응 중 재진입이나 초과 중첩이 남지 않게 한다.
   delete target.reagents[attacker.id];
+  // 소비 직후 한 사건만 싣는다. 독·저항 감소·회복은 각자의 기존 사건을 유지하므로 UI가
+  // 그 후속 사건을 반응으로 오인해 수포를 중복 재생하지 않는다.
+  events.push({ kind: "combatEffect", fighterId: target.id, effect: { tag: "reagentReaction", intensity: 1 } });
   // 2) 캐릭터 전용 독을 만들지 않고 공용 POISON 계수와 기존 강한 독 갱신 규칙을 재사용한다.
   const poisonEffect: Extract<CombatStatusEffect, { kind: "poison" }> = {
     kind: "poison", seconds: contract.reactionPoisonSeconds,

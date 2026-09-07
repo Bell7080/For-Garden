@@ -54,4 +54,19 @@ describe("머리 위 상태 목록", () => {
     const [stun] = unitStatusViews(target);
     expect(stun.total).toBeGreaterThanOrEqual(stun.remaining!);
   });
+
+  it("은 제공자별 시약을 중독색 세 칸 계약으로 내보내고 반응 뒤 즉시 없앤다", () => {
+    const target = enemy();
+    target.reagents["player-0"] = { stacks: 1, remaining: 8, total: 8 };
+    target.reagents["player-1"] = { stacks: 2, remaining: 7, total: 8 };
+    const reagents = unitStatusViews(target).filter(({ id }) => id === "reagent");
+    // 색에 의존하지 않고 stackSlots와 stacks 조합만으로 빈칸·1겹·2겹을 그릴 수 있어야 한다.
+    expect(reagents).toEqual([
+      expect.objectContaining({ key: "reagent:player-0", stacks: 1, stackSlots: 3, color: 0x7a4bab }),
+      expect.objectContaining({ key: "reagent:player-1", stacks: 2, stackSlots: 3, color: 0x7a4bab }),
+    ]);
+    delete target.reagents["player-0"];
+    delete target.reagents["player-1"];
+    expect(unitStatusViews(target).some(({ id }) => id === "reagent")).toBe(false);
+  });
 });

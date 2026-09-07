@@ -3863,6 +3863,8 @@ describe("리파 — 제공자별 시약 반응", () => {
     expect(defensiveDefinition(target, state).def.stats.res).toBeGreaterThanOrEqual(0);
     expect(ally.hp).toBeCloseTo(ally.maxHp * 0.55, 8);
     expect(events).toContainEqual(expect.objectContaining({ kind: "heal", fighterId: ally.id }));
+    // 세 칸 소비 하나가 수포 사건 하나다. 뒤따르는 독 시작과 회복이 이를 복제하지 않는다.
+    expect(events.filter((event) => event.kind === "combatEffect" && event.effect.tag === "reagentReaction")).toHaveLength(1);
   });
 
   it("는 같은 제공자의 재적중마다 8초로 갱신하고 만료 때 겹을 제거한다", () => {

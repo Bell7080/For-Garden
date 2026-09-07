@@ -72,7 +72,7 @@ export interface SustainedEffectTarget {
 /** 코어 활성 목록과 함께 사는 재사용 그래픽이다. 매 프레임 새 객체를 만들지 않아 GC를 피한다. */
 interface SustainedSlot { graphics: Phaser.GameObjects.Graphics; tween?: Phaser.Tweens.Tween; tag: SustainedTag }
 
-export type CombatVisualMethod = "heal" | "shieldGain" | "shieldHit" | "shieldBreak" | "stealthEnter" | "stealthExit";
+export type CombatVisualMethod = "heal" | "shieldGain" | "shieldHit" | "shieldBreak" | "stealthEnter" | "stealthExit" | "reagentReaction";
 
 /** 마름모 파문 한 겹. 원이 아니라 각진 네 꼭짓점이라 SD의 각진 UI와 같은 결로 읽힌다. */
 function strokeDiamond(
@@ -523,6 +523,14 @@ export class EffectManager {
     }
     if (method === "shieldHit") { this.openRing(x, y, 94 * scale, 180, 7, options.color); return; }
     if (method === "shieldBreak") { this.burst("death", x, y, { color: options.color, scale: scale * 0.8 }); return; }
+    if (method === "reagentReaction") {
+      // 전용 애니메이션 에셋을 만들지 않고 기존 파문 풀을 크기가 다른 세 수포처럼 벌린다.
+      // 한 사건에서만 이 묶음을 열기 때문에 독 시작·회복 사건이 뒤따라도 다시 재생되지 않는다.
+      this.openRing(x - 24 * scale, y + 8 * scale, 22 * scale, 260, 3, options.color);
+      this.openRing(x + 4 * scale, y - 14 * scale, 34 * scale, 330, 3, options.color, 35);
+      this.openRing(x + 31 * scale, y + 3 * scale, 18 * scale, 240, 2, options.color, 75);
+      return;
+    }
     // 진입은 윤곽이 밖으로 분해되고 해제는 작은 윤곽부터 커져 역방향으로 재결합한다.
     if (method === "stealthEnter") this.burst("passive", x, y, { color: options.color, scale });
     else {

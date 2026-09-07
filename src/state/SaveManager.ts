@@ -15,6 +15,7 @@ import { validateExpeditionMap } from "../core/expeditionMap";
 import type { ExpeditionRunState } from "./session";
 import { staminaMaxForResearchLevel } from "../core/stamina";
 import { INTERACTION_JOURNALS } from "../data/interactionJournals";
+import { RELIC_SKINS } from "../data/relicSkins";
 
 /** v12에서만 존재했던 정적 젬을 저장 마이그레이션용 인스턴스로 재현하는 폐쇄된 표다. */
 const LEGACY_V12_RUNES: Readonly<Record<string, RuneInstance>> = {
@@ -32,7 +33,7 @@ function migrateV12Rune(definitionId: string): RuneInstance {
 
 /** 키는 계정 연동 저장소와 충돌하지 않도록 로컬 프로토타입임을 명시한다. */
 export const SAVE_STORAGE_KEY = "eternal-city.local-save";
-export const CURRENT_SAVE_VERSION = 32;
+export const CURRENT_SAVE_VERSION = 33;
 
 /**
  * 과거 적 허스크의 ID를 플레이어블 렐릭 ID로 옮기는 **저장 버전 마이그레이션 전용** 표다.
@@ -188,6 +189,9 @@ export class SaveManager {
   /** 상태 확정 경계에서 Set을 배열로 바꾸고 한 번에 교체 저장한다. */
   save(state: Session): void {
     const data: SaveData = {
+      // 추가 외형의 Set과 장착 표는 이 경계에서만 JSON 안전 복사본으로 바꾼다.
+      ownedRelicSkinIds: [...state.ownedRelicSkinIds],
+      equippedRelicSkinIds: { ...state.equippedRelicSkinIds },
       // 런타임 Set은 이 저장 경계에서만 JSON 배열로 바꾼다.
       discoveredInteractionJournalIds: [...state.discoveredInteractionJournalIds],
       readInteractionJournalIds: [...state.readInteractionJournalIds],
@@ -243,6 +247,9 @@ export class SaveManager {
     const legacy = source.saveVersion === undefined || Number(source.saveVersion) < CURRENT_SAVE_VERSION
       ? migrateSavedRelicIds(source)
       : source;
+    // v32 이하에는 외형 상태가 없었다. 기존 플레이어는 기본 외형으로 안전하게 이관한다.
+    const ownedRelicSkinIds = Number(legacy.saveVersion) >= 33 && Array.isArray(legacy.ownedRelicSkinIds) ? legacy.ownedRelicSkinIds : [];
+    const equippedRelicSkinIds = Number(legacy.saveVersion) >= 33 && legacy.equippedRelicSkinIds && typeof legacy.equippedRelicSkinIds === "object" ? legacy.equippedRelicSkinIds : {};
     // v31 이전 저장은 일지 시스템이 없었으므로 발견/읽음 모두 빈 배열로 이관한다.
     const discoveredInteractionJournalIds = Array.isArray(legacy.discoveredInteractionJournalIds) ? legacy.discoveredInteractionJournalIds : [];
     const readInteractionJournalIds = Array.isArray(legacy.readInteractionJournalIds) ? legacy.readInteractionJournalIds : [];
@@ -368,10 +375,10 @@ export class SaveManager {
     // v20 이전에는 중첩 가방이 없었다. 지갑과 룬은 기존 단일 기준에 남겨 빈 스택만 보충한다.
     const itemInventory = Array.isArray(legacy.itemInventory) ? legacy.itemInventory : [];
     const { ownedHeartGemIds: _oldOwned, runeSlotsByRelicId: _oldSlots, ...current } = legacy;
-    if (legacy.saveVersion === undefined) return { ...current, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, idleExcavation, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition } as unknown as SaveData;
-    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, CURRENT_SAVE_VERSION];
+    if (legacy.saveVersion === undefined) return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, idleExcavation, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition } as unknown as SaveData;
+    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, CURRENT_SAVE_VERSION];
     if (!supported.includes(legacy.saveVersion as number)) throw new SaveDataError(`지원하지 않는 저장 버전입니다: ${String(legacy.saveVersion)}`);
-    return { ...current, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, idleExcavation, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition } as unknown as SaveData;
+    return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, idleExcavation, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition } as unknown as SaveData;
   }
 
   /** 콘텐츠 ID와 교차 필드 불변식까지 검사해 부분 손상을 조용히 전파하지 않는다. */
@@ -379,6 +386,7 @@ export class SaveManager {
     // 세 이관 대상은 현재 가챠 비대상이어도 과거 계정의 저장 소유권을 잃지 않도록 저장 계약에서만 허용한다.
     const relicIds = new Set([...PLAYABLE_RELICS.map(({ id }) => id), ...Object.values(LEGACY_SAVED_RELIC_ID_MAP)]);
     const modifierIds = new Set(PROFILE_MODIFIERS.map(({ id }) => id));
+    const skinsById = new Map(RELIC_SKINS.map((skin) => [skin.id, skin]));
     const stageIds = new Set(STAGES.map(({ id }) => id));
     const journalIds = new Set(INTERACTION_JOURNALS.map(({ id }) => id));
     const fail = (message: string): never => { throw new SaveDataError(message); };
@@ -394,6 +402,9 @@ export class SaveManager {
     if (!data.playerResearch || !Number.isInteger(data.playerResearch.level) || data.playerResearch.level < 1 || !Number.isInteger(data.playerResearch.experience) || data.playerResearch.experience < 0 || !Number.isInteger(data.playerResearch.experienceToNext) || data.playerResearch.experienceToNext <= 0 || data.playerResearch.experience >= data.playerResearch.experienceToNext) fail("플레이어 연구 진행이 올바르지 않습니다.");
     if (!excavation || !Array.isArray(excavation.assignedRelicIds) || excavation.assignedRelicIds.length !== 3 || excavation.assignedRelicIds.some((id) => id !== null && (!relicIds.has(id) || !data.ownedRelicIds.includes(id))) || excavation.assignedRelicIds.filter(Boolean).length !== new Set(excavation.assignedRelicIds.filter(Boolean)).size || (excavation.lastSettledAt !== null && !Number.isFinite(Date.parse(excavation.lastSettledAt))) || !excavation.unclaimed || EXCAVATION_CURRENCIES.some((currency) => !Number.isFinite(excavation.unclaimed[currency]) || excavation.unclaimed[currency] < 0) || !Number.isInteger(excavation.retroactiveExcavationGrantVersion) || excavation.retroactiveExcavationGrantVersion < 0 || excavation.retroactiveExcavationGrantVersion > RETROACTIVE_EXCAVATION_GRANT_VERSION || !Number.isFinite(excavation.baseStorageSeconds) || excavation.baseStorageSeconds <= 0 || !Number.isFinite(excavation.activeProductionMultiplier) || excavation.activeProductionMultiplier <= 0 || (excavation.storageExtensionExpiresAt !== null && !Number.isFinite(Date.parse(excavation.storageExtensionExpiresAt)))) fail("발굴 상태가 올바르지 않습니다.");
     if (data.saveVersion !== CURRENT_SAVE_VERSION || !Array.isArray(data.ownedRelicIds) || data.ownedRelicIds.some((id) => !relicIds.has(id))) fail("존재하지 않는 렐릭 ID가 있습니다.");
+    // 현행 저장의 손상은 조용히 지우지 않는다. 구버전만 위 migrate에서 빈 기본 외형으로 복구한다.
+    if (!Array.isArray(data.ownedRelicSkinIds) || new Set(data.ownedRelicSkinIds).size !== data.ownedRelicSkinIds.length || data.ownedRelicSkinIds.some((id) => !skinsById.has(id))) fail("렐릭 스킨 소유 정보가 올바르지 않습니다.");
+    if (!data.equippedRelicSkinIds || typeof data.equippedRelicSkinIds !== "object" || Array.isArray(data.equippedRelicSkinIds) || Object.entries(data.equippedRelicSkinIds).some(([relicId, skinId]) => { const skin = skinId && skinsById.get(skinId); return !data.ownedRelicIds.includes(relicId) || !skin || !data.ownedRelicSkinIds.includes(skinId) || skin.relicId !== relicId; })) fail("렐릭 스킨 장착 정보가 올바르지 않습니다.");
     // 획득 목록은 알려진 고유 ID만, 장착 목록은 그 부분집합과 공용 상한만 허용한다.
     if (!Array.isArray(data.earnedProfileModifierIds) || !Array.isArray(data.equippedProfileModifierIds) || data.earnedProfileModifierIds.some((id) => !modifierIds.has(id)) || data.equippedProfileModifierIds.some((id) => !data.earnedProfileModifierIds.includes(id)) || new Set(data.earnedProfileModifierIds).size !== data.earnedProfileModifierIds.length || new Set(data.equippedProfileModifierIds).size !== data.equippedProfileModifierIds.length || data.equippedProfileModifierIds.length > 3) fail("프로필 수식어 정보가 올바르지 않습니다.");
     // 설정은 저장 전에 정규화되므로 검증 시 값이 바뀐다면 현재 계약이 아닌 손상 데이터다.
@@ -440,6 +451,8 @@ export class SaveManager {
   private toSession(data: SaveData): Session {
     return {
       // 저장 배열은 런타임에서 manager 전용 Set으로 되돌린다.
+      ownedRelicSkinIds: new Set(data.ownedRelicSkinIds),
+      equippedRelicSkinIds: { ...data.equippedRelicSkinIds },
       discoveredInteractionJournalIds: new Set(data.discoveredInteractionJournalIds),
       readInteractionJournalIds: new Set(data.readInteractionJournalIds),
       // 수식어 ID 배열도 독립 복사해 manager 외부 참조 변경을 막는다.

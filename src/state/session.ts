@@ -1,7 +1,7 @@
 /** 씬 사이를 오가는 런타임 상태다. JSON 경계에서는 반드시 SaveData로 변환한다. */
 
 import type { GachaPityState, Wallet } from "../core/gacha";
-import type { RelicProgress } from "../core/types";
+import type { RelicProgress, RelicSkinId } from "../core/types";
 import { BANNERS } from "../data/banners";
 import { STAGES } from "../data/stages";
 import { isStageUnlockedByProgress } from "../core/stageProgress";
@@ -48,6 +48,10 @@ export function createInitialPlayerResearchProgress(): PlayerResearchProgress {
 }
 
 export interface Session {
+  /** 획득한 추가 외형이다. 기본 외형은 별도 ID 없이 항상 사용할 수 있다. */
+  ownedRelicSkinIds: Set<RelicSkinId>;
+  /** 렐릭별 추가 외형 선택이다. 키가 없으면 해당 렐릭의 기본 외형을 사용한다. */
+  equippedRelicSkinIds: Partial<Record<string, RelicSkinId>>;
   /** 발견/읽음은 manager만 변경하는 Set이며 SaveManager가 JSON 안전 배열로 변환한다. */
   discoveredInteractionJournalIds: Set<string>;
   readInteractionJournalIds: Set<string>;
@@ -188,6 +192,10 @@ export interface ObservationRecord {
  * 계정 연동 시에도 이 형태를 업로드 모델로 오해하지 않고 SaveManager 경계에서만 사용한다.
  */
 export interface SaveData {
+  /** 런타임 스킨 소유 Set을 JSON 배열로 표현한다. */
+  ownedRelicSkinIds: RelicSkinId[];
+  /** 렐릭 ID를 키로 하는 JSON 안전 장착 표이며 누락 키는 기본 외형이다. */
+  equippedRelicSkinIds: Partial<Record<string, RelicSkinId>>;
   /** 일지 ID Set의 JSON 안전 표현이다. 읽음 목록은 반드시 발견 목록의 부분집합이어야 한다. */
   discoveredInteractionJournalIds: string[];
   readInteractionJournalIds: string[];
@@ -257,6 +265,9 @@ export function createDefaultSession(): Session {
   // 순수 설정 팩토리는 지연 require 대신 정적 import로 의존 방향을 core→state 타입에만 제한한다.
   const settings = createDefaultSettings();
   return {
+    // 신규 계정은 토리카 외형을 즉시 체험할 수 있게 보유하되, 처음에는 기본 외형으로 시작한다.
+    ownedRelicSkinIds: new Set<RelicSkinId>(["torika-skin-001"]),
+    equippedRelicSkinIds: {},
     discoveredInteractionJournalIds: new Set<string>(),
     readInteractionJournalIds: new Set<string>(),
     interaction: createEmptyInteractionProgress(),

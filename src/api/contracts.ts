@@ -181,6 +181,7 @@ export interface PublicCompetitiveStatsDto {
 
 /** 네트워크로 직렬화할 수 있는 플레이어 진행 정보의 최소 규격이다. */
 export interface PlayerStateDto {
+  // 렐릭 스킨은 현재 로컬 전용 프로토타입이다. 소유·장착은 SaveData에만 두고 서버 DTO에는 싣지 않는다.
   /** 서버가 확정한 계정 연구 레벨·현재 경험치·다음 레벨 요구량의 공개 스냅샷이다. */
   playerResearch: PlayerResearchProgress;
   /** 서버가 확정한 현재 재화다. */

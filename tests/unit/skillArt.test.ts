@@ -773,6 +773,40 @@ describe("메론 스킬 표시 계약", () => {
   });
 });
 
+describe("리파 시약 표시 계약", () => {
+  const ripa = () => RELICS.find((def) => def.id === "ripa")!;
+
+  it("은 스킬명과 적중별 시약 부여량을 구조화 정의에서 고정한다", () => {
+    const def = ripa();
+    // 이름과 수치를 함께 고정해 설명만 새 설계로 바뀌거나 데이터만 바뀌는 반쪽 반영을 막는다.
+    expect(def.passive.name).toBe("으흐흐, 실험 시작!");
+    expect(def.basic.name).toBe("찰싹! 시약 묻히기");
+    expect(def.ultimate.name).toBe("뭐가 들었게? 약물 폭탄");
+    expect(skillDescription(def.basic, { damage: 160 })).toBe(
+      "적 한 명에게 [[damage-value|160]]의 [[magical-damage|마법 피해]]를 주고 [[reagent|시약]]을 1겹 부여한다.",
+    );
+    expect(skillDescription(def.ultimate, { damage: 200 })).toBe(
+      "전장의 모든 적에게 [[damage-value|200]]의 [[magical-damage|마법 피해]]를 주고 [[reagent|시약]]을 2겹 부여한다.",
+    );
+  });
+
+  it("은 패시브와 폭주의 모든 수치를 캐릭터 ID가 아닌 계약에서 설명한다", () => {
+    const def = ripa();
+    expect(passiveDescription(def.passive)).toBe(
+      "공격이 적중하면 [[reagent|시약]]을 부여한다. [[basic-attack|기본 공격]]은 1겹, 궁극기는 2겹 부여한다. 시약은 최대 3겹까지 8초 동안 유지되며, 최대 중첩이 되면 모두 소비해 [[reagent-reaction|시약 반응]]을 일으킨다. 반응한 적을 4초 동안 [[poison|중독]]시키고 저항력을 5초 동안 12% 낮춘다. 이어 현재 HP 비율이 가장 낮은 생존 아군 한 명을 그 아군 최대 체력의 5%만큼 회복한다.",
+    );
+    expect(ferocityTraitDescription(def.ferocityTrait)).toBe(
+      "폭주에 진입하면 모든 생존 적에게 [[reagent|시약]]을 1겹 부여한다. 폭주 중 [[attack-speed|공격 속도]]가 40% 증가한다.",
+    );
+  });
+
+  it("은 시약과 시약 반응의 전역 문맥 설명을 제공한다", () => {
+    // 관련 UI는 전역 사전을 사용하므로 두 태그가 모두 있어야 팝업에서 눌러 설명을 열 수 있다.
+    expect(KEYWORDS.find((keyword) => keyword.id === "reagent")?.description).toContain("제공자별 중첩");
+    expect(KEYWORDS.find((keyword) => keyword.id === "reagent-reaction")?.description).toContain("중독과 저항력 감소");
+  });
+});
+
 describe("파치 스킬 표시 계약", () => {
   const pachi = () => RELICS.find((def) => def.id === "pachi")!;
 

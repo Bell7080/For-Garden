@@ -109,6 +109,13 @@ interface SkillBase {
   iconAssetId: SkillIconAssetId;
   /** UI가 피해·회복·강화 의미를 damageType 존재 여부와 무관하게 표현하는 분류다. */
   effectType: EffectType;
+  /**
+   * 적중 뒤 공용 시약 처리 경로에 넘길 중첩 수다.
+   *
+   * 리파 ID를 검사하는 전용 분기가 아니라, 시약을 쓰는 모든 캐릭터 정의가 일반 공격과
+   * 궁극기를 같은 데이터 계약으로 연결하기 위한 선택 필드다.
+   */
+  reagentStacks?: number;
   /** 공격력 배율(%). 100이면 공격력 그대로. 회복·버프 스킬은 회복량/버프량으로 쓴다. */
   /** 명중 뒤 적용할 작은 공용 상태 효과 목록이다. 기절·경직이 없는 스킬은 생략한다. */
   statusEffects?: readonly CombatStatusEffect[];
@@ -768,7 +775,9 @@ export type PassiveKind =
    * 밖의 먼 적을 노리면 전투가 끝날 때까지 걸어가기만 한다. 사거리 안에 아무도 없으면
    * 평소처럼 가장 가까운 적으로 되돌린다.
    */
-  | "farthestFocus";
+  | "farthestFocus"
+  /** 캐릭터 ID와 무관하게 구조화된 시약 중첩과 반응 보상을 해석한다. */
+  | "reagentReaction";
 
 /** 전투 엔진이 판별하는 야성 특성 효과 ID다. 새 효과는 수치 계약과 함께 명시적으로 추가한다. */
 export type FerocityEffectId =
@@ -809,7 +818,9 @@ export type FerocityEffectId =
   /** 매디 전용: 폭주 진입 시 모든 상태이상·디버프를 지우고 보호막을 얻으며, 폭주 중 방어력·저항력이 함께 오른다. */
   | "furCoat"
   /** 아모 전용: 폭주 진입 정화·즉시 조가비·단축 내부 쿨다운을 한 계약으로 식별한다. */
-  | "shellResolve";
+  | "shellResolve"
+  /** 캐릭터 ID와 무관하게 폭주 진입 시 시약 살포와 자기 가속을 함께 적용한다. */
+  | "reagentDoping";
 
 /**
  * 개체별 피버 발현 정적 데이터다.
@@ -1029,7 +1040,40 @@ export type FerocityTrait = {
       /** 폭주가 유지되는 동안 새 조가비 발동 뒤 적용할 내부 재사용 대기시간(초)이다. */
       shellCooldownSecondsDuringFever: number;
     }
+  | {
+      /** 리파 ID가 아니라 이 계약을 선언한 모든 캐릭터가 사용할 수 있는 시약 도핑 효과다. */
+      effectId: "reagentDoping";
+      /** 모든 생존 적에게 폭주 진입 시 부여할 시약 수로, 캐릭터 ID 대신 정의가 결정한다. */
+      stacksOnEntry: number;
+      /** 폭주 동안 자신에게 더할 공격 속도 비율로, 캐릭터 ID 대신 정의가 결정한다. */
+      attackSpeedPercent: number;
+    }
 );
+
+/**
+ * 최대 중첩 도달 시 발동하는 시약 반응의 공용 데이터 계약이다.
+ *
+ * 리파 ID를 검사하는 전용 분기가 아니라, 같은 적중 후 처리 규칙을 원하는 모든 캐릭터 정의가
+ * 수치만 선언해 재사용하도록 패시브와 UI가 함께 읽는다.
+ */
+export interface ReagentReaction {
+  /** 반응 직전까지 쌓을 수 있는 최대 시약 수로, 모든 선언 캐릭터가 정할 수 있다. */
+  maxStacks: number;
+  /** 마지막 부여 뒤 시약이 유지되는 시간(초)으로, 모든 선언 캐릭터가 정할 수 있다. */
+  seconds: number;
+  /** 일반 공격 적중당 부여량으로, ID 분기 없이 스킬 계약을 검증하고 설명하는 값이다. */
+  basicStacks: number;
+  /** 궁극기 적중당 부여량으로, ID 분기 없이 스킬 계약을 검증하고 설명하는 값이다. */
+  ultimateStacks: number;
+  /** 반응으로 공용 중독을 유지할 시간(초)으로, 모든 선언 캐릭터가 정할 수 있다. */
+  reactionPoisonSeconds: number;
+  /** 반응 후 최저 HP 비율 아군을 회복할 대상 최대 HP 비율로, 모든 정의가 재사용할 수 있다. */
+  lowestHpAllyHealMaxHpPercent: number;
+  /** 반응 대상의 실제 저항력에서 낮출 비율로, 캐릭터 ID 대신 이 값이 처리를 결정한다. */
+  resistanceReductionPercent: number;
+  /** 반응의 저항력 감소가 유지되는 시간(초)으로, 캐릭터 ID 대신 이 값이 처리를 결정한다. */
+  resistanceReductionSeconds: number;
+}
 
 export interface Passive {
   id: string;
@@ -1051,6 +1095,11 @@ export interface Passive {
   criticalDamagePercent?: number;
   /** 지속 효과인 패시브만 갖는 유지 시간(초). 전투와 표시가 함께 읽는 단일 계약이다. */
   durationSeconds?: number;
+  /**
+   * 시약 중첩·반응의 전체 수치 계약이다. 리파 ID 전용 속성이 아니라 `reagentReaction`을
+   * 선언하는 모든 캐릭터 정의가 전투 처리와 설명 생성에 함께 제공한다.
+   */
+  reagentReaction?: ReagentReaction;
   /**
    * 불멸이 버티는 동안 주위 적을 밀어내는 값이다. 없으면 밀어내지 않는다.
    *

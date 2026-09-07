@@ -33,7 +33,7 @@ describe("stage enemy design", () => {
       { 아모: [5, 0], 토비: [6, 0], 리파: [6, 0] },
       { 아모: [6, 1], 토비: [6, 0], 리파: [6, 0] },
       { 아모: [6, 1], 토비: [6, 1], 리파: [6, 1] },
-      { 아모: [6, 1], 코마: [4, 1], 리파: [6, 1] },
+      { 아모: [6, 1], 코마: [6, 1], 리파: [6, 1] },
     ]);
     /*
      * **레벨은 관문을 따라 내려가지 않는다.** 1-10까지 마지막 관문이 직전보다 쉬운 구간이
@@ -50,6 +50,10 @@ describe("stage enemy design", () => {
     for (let index = 1; index < tobyLevels.length; index += 1) {
       expect(tobyLevels[index], `토비 ${index + 1}번째 관문`).toBeGreaterThanOrEqual(tobyLevels[index - 1]);
     }
+    // **중간보스는 호위보다 낮은 레벨로 서지 않는다.** 마지막 관문에서 토비를 대신하는 코마가
+    // 레벨 1로 남아 관문이 직전보다 쉬웠던 적이 있다(v0.77.2에서 고쳤다).
+    const boss = ladder[9];
+    expect(boss["코마"][0]).toBeGreaterThanOrEqual(Math.max(boss["아모"][0], boss["리파"][0]));
     const finalEnemies = getStageEnemies(battles[29]);
     // 배열 첫 칸의 다른 개체와 비교하지 않고, 토비 자신의 태생값보다 성장했는지를 검증한다.
     const baseToby = getRelic(FIXED_STAGE_ENEMIES[0]);

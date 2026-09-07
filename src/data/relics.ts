@@ -1599,7 +1599,12 @@ export const RELICS: RelicDef[] = [
     catalogSummary: "가벼운 체형과 긴 꼬리로 급습하는 콤프소그나투스 기반 공멸 선봉.",
     unlockRecord: { status: "sealed", reason: "restricted" },
     // 봉인된 적은 소속만 공개하며 squadNote와 researcherTitle은 관계 기록 해제 전까지 넣지 않는다.
-    rarity: "R",
+    /*
+     * **중간보스는 SR급이다.** 공멸 3인조(토비·아모·리파)가 R 띠를 지키는 잡졸이라면 이쪽은
+     * 1장 마지막 관문에 서는 개체라 한 단계 위에 둔다. 적 전용이라 띠 검사 대상은 아니지만,
+     * 등급을 R로 두면 레벨 성장률(1.8)까지 잡졸과 같아져 관문이 올라갈수록 격차가 벌어진다.
+     */
+    rarity: "SR",
     portraitAssetId: "koma",
     origin: "콤프소그나투스",
     element: "fire",
@@ -1608,14 +1613,22 @@ export const RELICS: RelicDef[] = [
     reachTier: "melee",
     // 적 전용 개체지만 데이터 계약을 완성하기 위해 비전투 특성도 영구 정의에 둔다.
     excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 22.5, efficiencyMultiplier: 1.00 },
+    /*
+     * **잡졸보다 아래에 있던 수치를 SR 띠로 올렸다.** 태생 전투력이 1916으로 공멸 3인조
+     * (2082~2098)보다도 낮아, 중간보스 자리에 섰는데 실제로는 셋 중 누구보다 약했다 —
+     * 1장 마지막 관문이 직전 관문보다 쉬웠던 원인의 절반이 여기다(나머지 절반은 레벨 1이었다).
+     *
+     * 모양은 그대로 둔다: 방어·저항이 얇고 발이 빠른 급습형이다. 늘린 몫은 체력과 공격력이라
+     * "한 번 붙으면 아프지만 붙잡히면 죽는다"가 유지된다. 2274로 SR 띠(2210~2330) 안이다.
+     */
     stats: {
-      hp: 760,
-      def: 42,
-      res: 34,
-      atk: 108,
+      hp: 1100,
+      def: 55,
+      res: 46,
+      atk: 140,
       ap: 52,
-      attackSpeed: 112,
-      moveSpeed: 118,
+      attackSpeed: 116,
+      moveSpeed: 124,
       critChance: 10,
       critDamage: 150,
       energyGain: 26,
@@ -1635,7 +1648,8 @@ export const RELICS: RelicDef[] = [
     basic: {
       id: "husk-koma-basic",
       name: "꼬리 베기",
-      power: 110,
+      // 중간보스는 잡졸보다 한 대가 아프다(토비·아모·리파 100).
+      power: 120,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -1644,7 +1658,8 @@ export const RELICS: RelicDef[] = [
     ultimate: {
       id: "husk-koma-ult",
       name: "추락하는 방주",
-      power: 190,
+      // 잡졸의 궁극기(토비 170 · 리파 150)와 최종 보스(폰토스 500) 사이에 둔다.
+      power: 220,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",

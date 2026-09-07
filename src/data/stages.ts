@@ -32,11 +32,14 @@ const CHAPTER_ONE_ENEMIES: readonly [StageEnemyDef, StageEnemyDef, StageEnemyDef
   /*
    * 코마도 일반 RelicDef를 사용하는 중간보스이며, 아모와 리파가 앞뒤에서 전열을 완성한다.
    *
-   * **레벨만 넷인 이유는 코마가 원래 약하기 때문이다** — 태생 전투력 1916으로 아모(2098)·
-   * 토비(2085)·리파(2082)보다 한참 아래다. 대신 추격형 암살자라 같은 전투력에서 더 아프게
-   * 들어와, 토비 6을 코마 4로 갈아 끼운 이 편성이 1-9보다 확실히 어렵다(66.5% < 70.1%).
+   * 셋을 같은 레벨로 두는 이유는 **보스가 호위보다 낮은 레벨로 서지 않게** 하기 위해서다.
+   * 코마는 SR급이라 레벨이 아니라 등급과 능력치로 앞선다 — 실제로 이 관문에서 코마의 레벨을
+   * 1에서 6까지 올려 봐도 잔여 체력이 63.9%에서 57.3%까지만 움직인다.
+   *
+   * 잔여 57.3%로 직전 관문(70.1%)에서 한 번에 내려앉는데, 그것이 `CHAPTER_ONE_DIFFICULTY_GOALS`
+   * 가 이 관문에 적어 둔 `midBoss` 관문의 뜻이다.
    */
-  [enemyGrowth("amo", 6, 1, 0), enemyGrowth("husk-koma", 4, 1, 1), enemyGrowth("ripa", 6, 1, 2)],
+  [enemyGrowth("amo", 6, 1, 0), enemyGrowth("husk-koma", 6, 1, 1), enemyGrowth("ripa", 6, 1, 2)],
 ];
 
 /**

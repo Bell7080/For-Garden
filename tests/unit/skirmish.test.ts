@@ -3152,6 +3152,40 @@ describe("데이", () => {
     expect(deina.taggedIds.length).toBeLessThanOrEqual(3);
   });
 
+  it("는 다음 표적까지 오래 달려도 방금 때린 적에게 되돌아가지 않는다", () => {
+    // 태그 직후의 런타임 상태를 고정한다. 다음 벽이 2초보다 멀면 예전 공용 재평가가 중간에
+    // 끼어들어, 코앞에 남은 첫 적을 다시 골라 같은 적을 연속으로 칠했다.
+    const state = createSkirmish([getRelic("deina")], [getRelic("toby"), getRelic("amo")], arena);
+    const [deina, tagged, next] = state.fighters;
+    deina.x = 100; deina.y = 700;
+    tagged.x = 120; tagged.y = 700;
+    next.x = 880; next.y = 1_300;
+    deina.taggedIds = [tagged.id];
+    deina.targetId = next.id;
+    deina.retargetIn = 0;
+    deina.attackCooldown = 10;
+
+    // 재평가 시계가 지난 뒤에도 패시브가 예약한 미방문 표적을 계속 쫓아야 한다.
+    stepSkirmish(state, 0.05, seeded(31));
+    expect(deina.targetId).toBe(next.id);
+  });
+
+  it("는 쫓던 적이 쓰러져도 방문 장부에서 다음 미방문 적을 찾는다", () => {
+    // 이미 첫 적을 칠하고 두 번째를 쫓던 중 두 번째가 다른 피해로 쓰러진 상황이다. 거리만
+    // 다시 재면 가까운 첫 적에게 돌아가지만, 패시브의 성향대로 아직 안 칠한 셋째가 답이다.
+    const state = createSkirmish([getRelic("deina")], [getRelic("toby"), getRelic("amo"), getRelic("ripa")], arena);
+    const [deina, tagged, defeated, fresh] = state.fighters;
+    deina.x = 100; deina.y = 700;
+    tagged.x = 120; tagged.y = 700;
+    fresh.x = 850; fresh.y = 1_250;
+    deina.taggedIds = [tagged.id];
+    deina.targetId = defeated.id;
+    defeated.hp = 0;
+
+    stepSkirmish(state, 0.05, seeded(32));
+    expect(deina.targetId).toBe(fresh.id);
+  });
+
   it("의 밴덜리즘은 공격력·주문력을 함께 깎고 상한에서 터진다", () => {
     const effect = getRelic("deina").basic.statusEffects!.find((e) => e.kind === "vandalism")!;
     expect(effect).toMatchObject({ kind: "vandalism", offenseShredPercent: 5, maxStacks: 5 });

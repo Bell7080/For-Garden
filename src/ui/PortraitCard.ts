@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import type { Element, PortraitAssetId, RelicRarity, Role } from "../core/types";
-import { headCardFrame, loadPortraitTexture, portraitAssetFor } from "../puppets/assets";
+import { headCardFrame, loadPortraitTexture, portraitAssetFor, type PuppetAsset } from "../puppets/assets";
+import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { mixWhite } from "../puppets/tints";
 import { chipPoints, HOLO } from "./holo";
 import { BACKGROUND } from "./backgrounds";
@@ -15,7 +16,15 @@ import { addBookmarkMark } from "./bookmarkMark";
 export interface PortraitCardOptions {
   width: number;
   height: number;
-  portraitAssetId: PortraitAssetId;
+  /**
+   * 기존 무스킨 호출부의 기본 원화 키. `relicId`나 이미 결정된 `asset`이 있으면 그 값을
+   * 우선한다. 외형 선택은 manager/resolver가 소유하고 카드는 결과만 그린다.
+   */
+  portraitAssetId?: PortraitAssetId;
+  /** 로컬 장착 외형을 따라야 하는 카드가 manager에 전달할 렐릭 ID다. */
+  relicId?: string;
+  /** 다른 플레이어처럼 호출부가 공개 DTO로 외형을 이미 결정한 경우의 최종 에셋이다. */
+  asset?: PuppetAsset;
   /** 임시 공유 원화를 캐릭터별로 구분하는 색. 전용 원화면 넘기지 않는다. */
   tint?: number;
   /** 하단 레이어의 이름. 비우면 하단 레이어를 만들지 않는다. */
@@ -81,6 +90,14 @@ interface ManagedPortraitOverlay extends PortraitAlphaOverlay {
   ratio: number;
   head?: Phaser.GameObjects.Image;
   headMask: Phaser.GameObjects.Graphics;
+}
+
+/** 세 입력 계약을 하나의 최종 에셋으로 접는다. 스킨 판별은 공용 manager 밖으로 새지 않는다. */
+function resolvedPortraitAsset(options: PortraitCardOptions): PuppetAsset {
+  if (options.asset) return options.asset;
+  if (options.relicId) return relicAppearanceManager.portraitAssetFor(options.relicId);
+  if (options.portraitAssetId) return portraitAssetFor(options.portraitAssetId);
+  throw new Error("PortraitCard에는 relicId, asset 또는 portraitAssetId가 필요합니다.");
 }
 
 /** 칩 바탕. 검은 유리에 가깝게 두고 원화가 빛을 담당한다. */
@@ -195,7 +212,7 @@ export class PortraitCard extends Phaser.GameObjects.Container {
       bevel.topLeft,
       bevel.topRight,
       CHIP_NOTCH_WIDTH,
-      portraitAssetFor(options.portraitAssetId).cardHeadEscape,
+      resolvedPortraitAsset(options).cardHeadEscape,
     );
 
     // 고르거나 애착으로 세운 카드에만 켜지는 발광. 테두리를 두르는 대신 카드 전체가 은은하게 빛난다.
@@ -427,7 +444,7 @@ export class PortraitCard extends Phaser.GameObjects.Container {
    * 캐릭터가 늘어도 추가 아트가 필요 없다.
    */
   private async loadPortrait(): Promise<void> {
-    const asset = portraitAssetFor(this.options.portraitAssetId);
+    const asset = resolvedPortraitAsset(this.options);
     const { key, anchors } = await loadPortraitTexture(this.scene, asset);
     if (this.disposed) return;
 

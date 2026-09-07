@@ -12,6 +12,8 @@ export type SkirmishRulesVersion = string;
 export interface DefenseUnitSnapshot {
   /** 정적 `RelicDef`를 찾는 식별자다. */
   relicId: string;
+  /** 게시 시 서버가 검증한 상대 장착 스킨이다. 없으면 기본 SD를 사용한다. */
+  equippedSkinId?: import("../core/types").RelicSkinId;
   /** 스냅샷을 게시할 때 서버가 검증한 레벨이다. */
   level: number;
   /** 전투 보너스를 복원하기 위한 유대 단계다. */

@@ -78,7 +78,7 @@ export class BattleProfile extends Phaser.GameObjects.Container {
     this.glow = scene.add.rectangle(0, 0, L.glowSize, L.glowSize, COLOR.accent, 0);
     this.sweep = scene.add.rectangle(-125, 0, 34, 320, COLOR.accent, 0).setAngle(18).setDepth(2);
     this.card = new PortraitCard(scene, 0, 0, {
-      width: L.cardWidth, height: L.cardHeight, portraitAssetId: options.relic.portraitAssetId,
+      width: L.cardWidth, height: L.cardHeight, relicId: options.relic.id,
       label: options.relic.name, level: options.level,
       sub: options.sub, rarity: options.relic.rarity, stars: options.stars,
     });

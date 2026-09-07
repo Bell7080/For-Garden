@@ -162,7 +162,7 @@ export class InteractionCityPopup {
       if (relic) {
         const progress = relicProgression.getProgress(relic.id);
         const card = new PortraitCard(this.scene, x, SLOT.y, {
-          width: SLOT.width, height: SLOT.height, portraitAssetId: relic.portraitAssetId,
+          width: SLOT.width, height: SLOT.height, relicId: relic.id,
           label: relic.name, level: progress.level, rarity: relic.rarity, stars: relicProgression.getStars(relic.id),
         });
         card.hit.disableInteractive();
@@ -223,7 +223,7 @@ export class InteractionCityPopup {
       const y = portraitGridFirstRowY(0, GRID.cardHeight, PORTRAIT_GRID_MASK_GAP) + Math.floor(index / GRID.cols) * GRID.rowGap;
       const placedAt = this.party.indexOf(relic.id);
       const card = new PortraitCard(this.scene, x, y, {
-        width: GRID.cardWidth, height: GRID.cardHeight, portraitAssetId: relic.portraitAssetId,
+        width: GRID.cardWidth, height: GRID.cardHeight, relicId: relic.id,
         label: relic.name, level: progress.level, rarity: relic.rarity, stars: relicProgression.getStars(relic.id),
         affinity: { element: relic.element, role: relic.role },
       });

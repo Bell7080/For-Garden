@@ -3,11 +3,12 @@ import { BASE_WIDTH, BASE_HEIGHT } from "../config/gameConfig";
 import { setDebugParty, setDebugScene } from "../debug";
 import type { RelicDef } from "../core/types";
 import { getRelic } from "../data/relics";
+import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { relicCollection } from "../managers/RelicCollectionManager";
 import { CharacterInfoManager, ELEMENT_LABEL, ROLE_LABEL, addHelpBadge } from "../managers/CharacterInfoManager";
 import { bindLongPress } from "../ui/longPressInfo";
 import type { PuppetCreature } from "../puppets/assets";
-import { battleAssetFor, placePuppet, spawnPuppet } from "../puppets/assets";
+import { placePuppet, spawnPuppet } from "../puppets/assets";
 import { getBattleStage, getStageEnemies } from "../data/stages";
 import { session } from "../state/session";
 import { gameApi } from "../api/FakeServer";
@@ -317,12 +318,12 @@ export class PartyScene extends Phaser.Scene {
       const relicId = this.picked[index];
       if (!creature || !relicId) return;
       if (entry.lifted) {
-        placePuppet(creature, battleAssetFor(relicId), { x, groundY: y + PREVIEW_HEIGHT / 2, height: PREVIEW_HEIGHT * FORMATION_DRAG_VISUAL.liftScale, flipX: false });
+        placePuppet(creature, relicAppearanceManager.battleAssetFor(relicId), { x, groundY: y + PREVIEW_HEIGHT / 2, height: PREVIEW_HEIGHT * FORMATION_DRAG_VISUAL.liftScale, flipX: false });
         creature.setDepth(20).setAlpha(FORMATION_DRAG_VISUAL.liftAlpha);
         return;
       }
       const target = preview.findIndex((other) => other.relicId === relicId);
-      placePuppet(creature, battleAssetFor(relicId), { x: PREVIEW_COLUMNS[target < 0 ? index : target], groundY: ALLY_ROW, height: PREVIEW_HEIGHT, flipX: false });
+      placePuppet(creature, relicAppearanceManager.battleAssetFor(relicId), { x: PREVIEW_COLUMNS[target < 0 ? index : target], groundY: ALLY_ROW, height: PREVIEW_HEIGHT, flipX: false });
       creature.setDepth(-10).setAlpha(target === index ? 1 : FORMATION_DRAG_VISUAL.previewAlpha);
     });
   }
@@ -332,14 +333,14 @@ export class PartyScene extends Phaser.Scene {
     this.allySlots.forEach((slot, index) => {
       const relicId = this.picked[index];
       if (!slot.creature || !relicId) return;
-      placePuppet(slot.creature, battleAssetFor(relicId), { x: PREVIEW_COLUMNS[index], groundY: ALLY_ROW, height: PREVIEW_HEIGHT, flipX: false });
+      placePuppet(slot.creature, relicAppearanceManager.battleAssetFor(relicId), { x: PREVIEW_COLUMNS[index], groundY: ALLY_ROW, height: PREVIEW_HEIGHT, flipX: false });
       slot.creature.setDepth(-10).setAlpha(1);
     });
   }
 
   /** 미리보기용 SD 하나를 세운다. 씬을 떠난 뒤 도착한 로딩은 그대로 버린다. */
   private async standSD(relicId: string, x: number, groundY: number, enemy: boolean): Promise<PuppetCreature | undefined> {
-    const creature = await spawnPuppet(this, battleAssetFor(relicId), {
+    const creature = await spawnPuppet(this, relicAppearanceManager.battleAssetFor(relicId, enemy ? "enemy" : "ally"), {
       x,
       groundY,
       height: PREVIEW_HEIGHT,
@@ -399,7 +400,7 @@ export class PartyScene extends Phaser.Scene {
       const card = new PortraitCard(this, x, y, {
         width: cardW,
         height: cardH,
-        portraitAssetId: relic.portraitAssetId,
+        relicId: relic.id,
         label: relic.name,
         level: relicProgression.getProgress(relic.id).level,
         rarity: relic.rarity,

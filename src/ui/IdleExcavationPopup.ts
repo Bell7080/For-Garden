@@ -2,9 +2,10 @@ import Phaser from "phaser";
 import type { AdOperationsConfigResponse, AdPresentationResult, AdSlotOperationsDto, GameApi, HarvestExcavationResponse, IdleExcavationResponse } from "../api/contracts";
 import { emptyExcavationAmounts, EXCAVATION_CURRENCIES, excavationProductionDisplayModel, excavationStorageFillRatio, excavationStorageLimitSeconds, nextExcavationSlot, placeExcavationRelic, type ExcavationCurrency, type IdleExcavationState } from "../core/idleExcavation";
 import { RELICS } from "../data/relics";
-import { placePuppet, sdAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
+import { placePuppet, spawnPuppet, type PuppetAsset, type PuppetCreature } from "../puppets/assets";
 import { session } from "../state/session";
 import { setDebugExcavationAdOffers, setDebugFormationDragVisual, setDebugIdleExcavationControls, setDebugIdleExcavationPopup, setDebugIdleExcavationSdReady, setDebugIdleExcavationSlots } from "../debug";
+import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { notificationManager } from "../managers/NotificationManager";
 import { Button } from "./Button";
 import { chipPoints, drawHairline, drawLayer, HOLO, HoloBar, slantedRect } from "./holo";
@@ -79,11 +80,11 @@ type Formation = IdleExcavationState["assignedRelicIds"];
 
 /** SD 비동기 경계를 테스트에서 성공·실패·지연 완료로 바꿀 수 있게 좁게 주입한다. */
 export interface StatusPuppetLoader {
-  assetFor: typeof sdAssetFor;
+  assetFor: (relicId: string) => PuppetAsset;
   spawn: typeof spawnPuppet;
 }
 
-const DEFAULT_STATUS_PUPPET_LOADER: StatusPuppetLoader = { assetFor: sdAssetFor, spawn: spawnPuppet };
+const DEFAULT_STATUS_PUPPET_LOADER: StatusPuppetLoader = { assetFor: (relicId) => relicAppearanceManager.sdAssetFor(relicId), spawn: spawnPuppet };
 
 /** 발굴 지급 재화는 생산 특성 표식과 달리 다색 공용 재화 이미지를 직접 사용한다. */
 const EXCAVATION_CURRENCY_ICON: Record<ExcavationCurrency, CurrencyIconKey> = {
@@ -495,7 +496,7 @@ export class IdleExcavationPopup {
       const detail = excavationProductionDisplayModel([relic.id, null, null], RELICS, session.relicProgress).relics[0];
       const progress = session.relicProgress[relic.id];
       const card = new PortraitCard(this.scene, x, y, {
-        width: GRID_VIEW.cardWidth, height: GRID_VIEW.cardHeight, portraitAssetId: relic.portraitAssetId,
+        width: GRID_VIEW.cardWidth, height: GRID_VIEW.cardHeight, relicId: relic.id,
         label: relic.name, level: progress?.level ?? 1, rarity: relic.rarity, stars: (progress?.breakthrough ?? 0) + 1,
         subIcon: CURRENCY_ICON_BY_WALLET[relic.excavationTrait.primaryCurrency], sub: formatRate(detail?.totalPerHour ?? 0), subStyle: "currency",
         // 이미 1~3번 칸에 배치된 카드는 발광뿐 아니라 눌린 듯한 검정 면도 함께 써 "이미 골랐다"를
@@ -612,7 +613,7 @@ export class IdleExcavationPopup {
       if (editable && index === this.selectedSlot) parent.add(drawLayer(this.scene, x, STATUS_HERO.slotY, slantedRect(236, 271), { fill: COLOR.accent, alpha: 0.22, edge: COLOR.accent, edgeAlpha: 0.95 }));
       if (relic) {
         const progress = session.relicProgress[relic.id];
-        const card = new PortraitCard(this.scene, x, STATUS_HERO.slotY, { width: 210, height: 245, portraitAssetId: relic.portraitAssetId, label: relic.name, level: progress?.level ?? 1, rarity: relic.rarity, stars: (progress?.breakthrough ?? 0) + 1 });
+        const card = new PortraitCard(this.scene, x, STATUS_HERO.slotY, { width: 210, height: 245, relicId: relic.id, label: relic.name, level: progress?.level ?? 1, rarity: relic.rarity, stars: (progress?.breakthrough ?? 0) + 1 });
         card.setSelected(editable && index === this.selectedSlot);
         // 카드 내부 hit는 카드 자체 용도로 남기되 슬롯 선택은 아래 공용 입력면 하나만 담당한다.
         card.hit.disableInteractive(); parent.add(card); cards[index] = card;

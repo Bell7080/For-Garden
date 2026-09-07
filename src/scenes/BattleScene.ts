@@ -24,7 +24,7 @@ import { getRelic } from "../data/relics";
 import { getBattleStage, getStageEnemies } from "../data/stages";
 import { getExpeditionNodeEnemies } from "../data/expeditionEnemies";
 import type { PuppetCreature, PuppetAsset } from "../puppets/assets";
-import { battleAssetFor, cancelMotion, flashHit, isHitFlashing, placePuppet, playMotion, spawnPuppet, tintPuppet } from "../puppets/assets";
+import { cancelMotion, flashHit, isHitFlashing, placePuppet, playMotion, spawnPuppet, tintPuppet } from "../puppets/assets";
 import { session } from "../state/session";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { Button } from "../ui/Button";
@@ -35,6 +35,7 @@ import { skillArtTint } from "../ui/skillArt";
 import { combatPalette, signatureFor, type CombatPalette, type SignatureMoment } from "../ui/signatureEffects";
 import { COLOR, textStyle } from "../ui/theme";
 import { setDebugBattle, setDebugBossResult, setDebugScene } from "../debug";
+import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { CharacterInfoManager } from "../managers/CharacterInfoManager";
 import { bindLongPress } from "../ui/longPressInfo";
 import { type InfoManager, sceneInfoManager } from "../ui/info";
@@ -552,7 +553,8 @@ export class BattleScene extends Phaser.Scene {
     for (const fighter of this.state.fighters) {
       // 표시 배율은 코어 입력에 들어 있으며 씬은 모든 Puppet 부속 표현에 같은 높이만 적용한다.
       const unitHeight = UNIT_HEIGHT * fighter.bodyScale;
-      const asset = battleAssetFor(fighter.def.id);
+      // 외형 선택은 manager/resolver가 소유하고 전투 씬은 진영과 결과 에셋만 배치한다.
+      const asset = relicAppearanceManager.battleAssetFor(fighter.def.id, fighter.side === "enemy" ? "enemy" : "ally");
       // 번호별 전용 적 SD도 원화 색을 보존하므로 더 이상 임시 허스크 tint를 입히지 않는다.
       const tint = 0xffffff;
       const creature = await spawnPuppet(this, asset, {

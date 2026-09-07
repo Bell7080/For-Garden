@@ -20,6 +20,8 @@ test("도디·메테의 도감 전신과 루카 포함 편성·전투 SD 에셋�
   await startAfterOpening(page);
   await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+  // 로비도 같은 manager/resolver 결과를 그리므로 도감·편성·전투와 함께 회귀 캡처한다.
+  await captureGame(page, `test-results/${testInfo.project.name}-asset-equipped-lobby-fullbody.png`);
   // 로비는 이름이 바뀐 뒤에도 하단 탭의 입력면을 마저 만든다 — 될 때까지 다시 누른다.
   await tapUntil(page, BASE_WIDTH * 0.3, BASE_HEIGHT - 90, async () => (await page.evaluate(() => window.__PF_DEBUG?.scene)) === "relics");
 

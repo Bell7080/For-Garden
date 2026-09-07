@@ -231,7 +231,7 @@ export class RelicsScene extends Phaser.Scene {
       const card = new PortraitCard(this, x, y, {
         width: cardW,
         height: cardH,
-        portraitAssetId: relic.portraitAssetId,
+        relicId: relic.id,
         label: relic.name,
         level: owned ? relicProgression.getProgress(relic.id).level : undefined,
         rarity: relic.rarity,

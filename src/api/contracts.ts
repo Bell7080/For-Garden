@@ -139,6 +139,8 @@ export interface SellRunesResponse { inventory: RuneInventoryDto; wallet: Wallet
 /** 다른 이용자에게 공개해도 되는 렐릭 정보만 담는 소셜 DTO다. */
 export interface PublicRelicProfileDto {
   relicId: string;
+  /** 서버가 공개 시점에 검증한 장착 스킨이다. 없으면 상대의 기본 외형을 사용한다. */
+  equippedSkinId?: import("../core/types").RelicSkinId;
   level: number;
   /** 성급은 중복 획득/각성 단계와 구분되는 공개 표시 값이다. */
   stars: number;

@@ -5,6 +5,7 @@ import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import type { ExpeditionMapNode } from "../core/expeditionMap";
 import { getRelic } from "../data/relics";
 import { setDebugExpeditionFormation, setDebugFormationDragVisual, setDebugScene } from "../debug";
+import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { expeditionManager, type StartExpeditionFailure } from "../managers/ExpeditionManager";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { session } from "../state/session";
@@ -30,7 +31,7 @@ import { presentRewardedAd } from "../platform/rewardedAds";
 import { currencyRecordToRewardItems, openRewardPopup } from "../ui/RewardPopup";
 import { ExpeditionRewardPopup } from "../ui/ExpeditionRewardPopup";
 import { ExpeditionRankingPopup } from "../ui/ExpeditionRankingPopup";
-import { placePuppet, portraitAssetFor, sdAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
+import { placePuppet, portraitAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
 import { loadOwnedPuppet } from "../ui/statusPuppetLoad";
 import { expeditionEnemyLevel, getExpeditionEncounterEnemies } from "../data/expeditionEnemies";
 import { formatCurrency } from "../core/formatCurrency";
@@ -719,7 +720,7 @@ export class ExpeditionScene extends Phaser.Scene {
       const card = new PortraitCard(this, startX + (index % ROSTER.columns) * (ROSTER.width + ROSTER.gapX), firstRowY + Math.floor(index / ROSTER.columns) * rowStep, {
         width: ROSTER.width,
         height: ROSTER.height,
-        portraitAssetId: relic.portraitAssetId,
+        relicId: relic.id,
         label: relic.name,
         level: relicProgression.getProgress(relic.id).level,
         rarity: relic.rarity,
@@ -865,11 +866,11 @@ export class ExpeditionScene extends Phaser.Scene {
         layer.add(this.add.text(x, FORMATION.y, "선택 대기", textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0.5));
       } else {
         const relic = getRelic(relicId);
-        const fallback = new PortraitCard(this, x, FORMATION.y, { width: FORMATION.width, height: FORMATION.height, portraitAssetId: relic.portraitAssetId, label: relic.name, level: relicProgression.getProgress(relic.id).level, rarity: relic.rarity, stars: relicProgression.getStars(relic.id) });
+        const fallback = new PortraitCard(this, x, FORMATION.y, { width: FORMATION.width, height: FORMATION.height, relicId: relic.id, label: relic.name, level: relicProgression.getProgress(relic.id).level, rarity: relic.rarity, stars: relicProgression.getStars(relic.id) });
         fallback.hit.disableInteractive(); layer.add(fallback);
         layer.add(this.add.ellipse(x, FORMATION.y + 120, 190, 28, COLOR.sortie, 0.18));
         void loadOwnedPuppet({
-          spawn: () => spawnPuppet(this, sdAssetFor(relicId), { x, groundY: FORMATION.y + 120, height: 250, depth: 2 }),
+          spawn: () => spawnPuppet(this, relicAppearanceManager.sdAssetFor(relicId), { x, groundY: FORMATION.y + 120, height: 250, depth: 2 }),
           isCurrent: () => generation === this.formationGeneration && layer === this.formationPreview,
           isDisplayable: (puppet) => Boolean(puppet.active && puppet.texture?.key && this.textures.exists(puppet.texture.key)),
           adopt: (puppet) => { puppet.disableInteractive(); layer.add(puppet); this.formationPuppets.add(puppet); puppetsByRelicId.set(relicId, puppet); fallback.setVisible(false); },
@@ -892,13 +893,13 @@ export class ExpeditionScene extends Phaser.Scene {
           const target = preview.findIndex((entry) => entry.relicId === relicId);
           const x = lifted ? pointer.x : FORMATION.firstX + (target < 0 ? index : target) * FORMATION.stepX;
           const groundY = lifted ? pointer.y + FORMATION.height / 2 : FORMATION.y + 120;
-          placePuppet(puppet, sdAssetFor(relicId), { x, groundY, height: lifted ? 250 * FORMATION_DRAG_VISUAL.liftScale : 250 });
+          placePuppet(puppet, relicAppearanceManager.sdAssetFor(relicId), { x, groundY, height: lifted ? 250 * FORMATION_DRAG_VISUAL.liftScale : 250 });
           puppet.setDepth(lifted ? 20 : 2).setAlpha(lifted ? FORMATION_DRAG_VISUAL.liftAlpha : target === index ? 1 : FORMATION_DRAG_VISUAL.previewAlpha);
         });
       },
       restore: () => this.selected.forEach((relicId, index) => {
         const puppet = puppetsByRelicId.get(relicId); if (!puppet) return;
-        placePuppet(puppet, sdAssetFor(relicId), { x: FORMATION.firstX + index * FORMATION.stepX, groundY: FORMATION.y + 120, height: 250 });
+        placePuppet(puppet, relicAppearanceManager.sdAssetFor(relicId), { x: FORMATION.firstX + index * FORMATION.stepX, groundY: FORMATION.y + 120, height: 250 });
         puppet.setDepth(2).setAlpha(1);
       }),
       onVisualState: (state) => setDebugFormationDragVisual(state ? { owner: "expedition", ...state } : undefined),

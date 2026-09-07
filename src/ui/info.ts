@@ -15,7 +15,8 @@ import {
   enableHitOnClick,
   placePuppet,
   playMotion,
-  portraitAssetFor,
+  portraitAssetForSkin,
+  sdAssetForSkin,
   spawnPuppet,
 } from "../puppets/assets";
 import { addPopupBackgroundImage, addSceneBackground, BACKGROUND } from "./backgrounds";
@@ -35,6 +36,7 @@ import { combatPower } from "../core/combatPower";
 import { StatRadar } from "./StatRadar";
 import { addSectionTitle } from "./SectionTitle";
 import { openSkillPopup, type SkillInfoViewModel } from "./SkillPopup";
+import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { relicCollection } from "../managers/RelicCollectionManager";
 import { COLOR, textStyle } from "./theme";
 import { FALLBACK_SKILL_ICON } from "./skillIcons";
@@ -1444,7 +1446,10 @@ export class InfoManager {
   private enterGallery(onClose?: () => void): void {
     const def = this.currentDef;
     if (!def || this.gallery || !this.portrait) return;
-    const asset = portraitAssetFor(def.portraitAssetId);
+    // 외형 선택은 manager/resolver가 소유한다. 공개 프로필은 로컬 장착 상태 대신 DTO 값만 사용한다.
+    const asset = this.publicProfile
+      ? portraitAssetForSkin(def.portraitAssetId, this.publicProfile.equippedSkinId)
+      : relicAppearanceManager.portraitAssetFor(def.id);
     const portrait = this.portrait;
     // 되돌아오는 트윈이 아직 돌고 있으면 여기서 끊는다. 그대로 두면 감상 중에도 원화가
     // 제자리를 향해 계속 움직인다.
@@ -1724,7 +1729,10 @@ export class InfoManager {
 
   private async loadPortrait(def: RelicDef): Promise<void> {
     const request = ++this.portraitRequest;
-    const asset = portraitAssetFor(def.portraitAssetId);
+    // 외형 선택은 manager/resolver가 소유한다. 공개 프로필은 로컬 장착 상태 대신 DTO 값만 사용한다.
+    const asset = this.publicProfile
+      ? portraitAssetForSkin(def.portraitAssetId, this.publicProfile.equippedSkinId)
+      : relicAppearanceManager.portraitAssetFor(def.id);
     const portrait = await spawnPuppet(this.scene, asset, {
       // 지도와 전투의 CharacterInfoManager가 모두 이 경로를 써서 폰토스 보정도 동일하다.
       ...infoPortraitPlacement(asset, PORTRAIT_FOCUS),
@@ -1745,7 +1753,11 @@ export class InfoManager {
 
   private async loadFigure(def: RelicDef): Promise<void> {
     const request = ++this.figureRequest;
-    const figure = await spawnPuppet(this.scene, battleAssetFor(def.id), {
+    const asset = this.publicProfile
+      ? (sdAssetForSkin(def.id, this.publicProfile.equippedSkinId) ?? battleAssetFor(def.id))
+      : relicAppearanceManager.battleAssetFor(def.id);
+    // 관련 SD도 공개 DTO 또는 로컬 manager가 결정한 결과만 그린다.
+    const figure = await spawnPuppet(this.scene, asset, {
       x: FIGURE.x,
       groundY: FIGURE.y,
       height: FIGURE.height,

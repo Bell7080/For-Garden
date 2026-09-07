@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { formatCurrency } from "../core/formatCurrency";
 import { getRelic } from "../data/relics";
+import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { chipPoints, drawHairline, drawInnerVignette, drawLayer, drawShapeOutline } from "./holo";
@@ -9,7 +10,7 @@ import { Button } from "./Button";
 import type { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
 import { setDebugRewardPopup } from "../debug";
-import { sdAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
+import { spawnPuppet, type PuppetCreature } from "../puppets/assets";
 import { loadOwnedPuppet } from "./statusPuppetLoad";
 
 /** 결과 화면이 넘기는 편성원 한 명. MVP 여부만 알면 카드 크기·발광은 이 프리팹이 정한다. */
@@ -141,7 +142,7 @@ export class StageCompletePopup {
       // 발밑 그림자는 카드 없이 서는 SD가 바닥에 붙어 보이게 하는 최소한의 장치다.
       puppetLayer.add(this.scene.add.ellipse(absX, absGroundY + 6, size.width * 0.6, size.width * 0.2, 0x000000, 0.32));
       void loadOwnedPuppet({
-        spawn: () => spawnPuppet(this.scene, sdAssetFor(fighter.relicId), { x: absX, groundY: absGroundY, height: size.height }),
+        spawn: () => spawnPuppet(this.scene, relicAppearanceManager.sdAssetFor(fighter.relicId), { x: absX, groundY: absGroundY, height: size.height }),
         isCurrent: () => !isDisposed(),
         isDisplayable: (puppet) => Boolean(puppet.active),
         adopt: (puppet) => { puppet.disableInteractive(); puppetLayer.add(puppet); puppets.add(puppet); },

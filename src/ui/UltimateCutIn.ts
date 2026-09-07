@@ -1,7 +1,8 @@
 import Phaser from "phaser";
 import type { RelicDef } from "../core/types";
-import { portraitAssetFor, spawnPuppet } from "../puppets/assets";
+import { spawnPuppet } from "../puppets/assets";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
+import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { COLOR, textStyle } from "./theme";
 import type { UltimatePresentation } from "../data/ultimatePresentations";
 import { scaleUltimateCutInDurations, type UltimatePresentationTiming } from "../core/battleControls";
@@ -59,7 +60,8 @@ export class UltimateCutIn extends Phaser.GameObjects.Container {
   /** 캐시된 원화를 준비한 뒤에만 진입시켜 빈 컷인 프레임이 보이지 않게 한다. */
   static async create(scene: Phaser.Scene, relic: RelicDef, presentation: Readonly<UltimatePresentation>): Promise<UltimateCutIn> {
     const cutIn = new UltimateCutIn(scene, relic, presentation);
-    const asset = portraitAssetFor(relic.portraitAssetId);
+    // 외형 선택은 manager/resolver가 소유하고 컷인은 결정된 전신만 연출한다.
+    const asset = relicAppearanceManager.portraitAssetFor(relic.id);
     let portrait: Awaited<ReturnType<typeof spawnPuppet>>;
     try {
       portrait = await spawnPuppet(scene, asset, {

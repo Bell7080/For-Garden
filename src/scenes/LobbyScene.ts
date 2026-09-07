@@ -3,7 +3,7 @@ import type { PuppetCreature } from "../puppets/assets";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugScene, setDebugStorefrontControls } from "../debug";
 import { getRelic } from "../data/relics";
-import { enableHitOnClick, portraitAssetFor, spawnPuppet } from "../puppets/assets";
+import { enableHitOnClick, spawnPuppet } from "../puppets/assets";
 import { session } from "../state/session";
 import { BottomNav, NAV_TOP } from "../ui/BottomNav";
 import { Button } from "../ui/Button";
@@ -26,6 +26,7 @@ import { notificationManager } from "../managers/NotificationManager";
 import { MissionsPopup } from "../ui/MissionsPopup";
 import { lobbyPortraitPlacement } from "../ui/portraitPlacement";
 import { LOBBY_ACTION_BOUNDS, LOBBY_RAIL_BOUNDS } from "../ui/lobbyLayout";
+import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { expeditionManager } from "../managers/ExpeditionManager";
 import { ExpeditionEntryButton, sortieEntrySdSpot } from "../ui/ExpeditionEntryButton";
 import { ENEMY_SD_ASSETS, PONTOS_SD_ASSET, playMotion, type PuppetAsset } from "../puppets/assets";
@@ -83,6 +84,8 @@ interface SortieEntry {
  */
 export class LobbyScene extends Phaser.Scene {
   private favorite?: PuppetCreature;
+  /** 비동기 외형 로딩이 역순으로 끝나도 마지막 요청 하나만 남기는 세대 번호다. */
+  private favoriteRequest = 0;
   /** 같은 방문 중 반복 터치의 대사 변형 순번이며 보상 중복 판정은 서버 날짜가 담당한다. */
   private interactionIndex = 0;
   private interactionPending = false;
@@ -476,17 +479,23 @@ export class LobbyScene extends Phaser.Scene {
 
   /** 애착 렐릭을 광장 한가운데 세우고, 전용 원화가 없을 때만 임시 색으로 구분한다. */
   private async showFavorite(): Promise<void> {
+    const request = ++this.favoriteRequest;
     const def = getRelic(session.favorite);
-    const asset = portraitAssetFor(def.portraitAssetId);
-    this.favorite = await spawnPuppet(this, asset, {
+    // 외형 선택은 manager/resolver가 소유하고 로비는 결정된 전신만 그린다.
+    const asset = relicAppearanceManager.portraitAssetFor(def.id);
+    const nextFavorite = await spawnPuppet(this, asset, {
       // 자리·바닥선·키 보정은 모두 `LOBBY_PORTRAIT_SPOT`이 정한다. 화면이 좌표를 적지 않는다.
       ...lobbyPortraitPlacement(asset),
       // 전용 원화가 연결된 두 캐릭터는 원본 색을 유지한다.
       depth: -20,
     });
-    enableHitOnClick(this, this.favorite);
-    this.favorite.on("pointerup", () => this.interactWithFavorite(def.id));
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.favorite?.destroy());
+    if (request !== this.favoriteRequest || !this.scene.isActive()) { nextFavorite.destroy(); return; }
+    // 교체가 확정된 뒤 이전 Puppet을 파괴해 로비에는 언제나 최신 외형 하나만 남긴다.
+    this.favorite?.destroy();
+    this.favorite = nextFavorite;
+    enableHitOnClick(this, nextFavorite);
+    nextFavorite.on("pointerup", () => this.interactWithFavorite(def.id));
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => nextFavorite.destroy());
 
     // 캐릭터 하단 이름/종 설명은 제거해 로비가 원화 감상 화면처럼 보이게 한다.
   }

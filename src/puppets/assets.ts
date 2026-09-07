@@ -1,5 +1,5 @@
 import type Phaser from "phaser";
-import { Puppet } from "puppetforge/phaser";
+import type { Puppet } from "puppetforge/phaser";
 import type { PortraitAssetId } from "../core/types";
 import { ENEMY_SD_ASSET_IDS } from "./enemyAssetIds";
 import {
@@ -611,11 +611,12 @@ const motionCompletions = new WeakMap<PuppetCreature, () => void>();
 /** 묶음의 정적 프로젝트와 텍스처는 파일당 한 번만 읽어 재사용한다. */
 const loaded = new Map<string, Promise<Puppet>>();
 
-function loadPuppet(asset: PuppetAsset): Promise<Puppet> {
+async function loadPuppet(asset: PuppetAsset): Promise<Puppet> {
   let pending = loaded.get(asset.url);
   if (!pending) {
     // ZIP의 원본 격자와 모든 deform 가중치를 그대로 캐시한다. 인게임용 재샘플링은 하지 않는다.
-    pending = Puppet.load(asset.url);
+    // 렌더러 모듈은 실제 Puppet 로딩 시점에만 평가해 순수 resolver 단위 테스트가 DOM을 요구하지 않게 한다.
+    pending = import("puppetforge/phaser").then(({ Puppet }) => Puppet.load(asset.url));
     loaded.set(asset.url, pending);
   }
   return pending;
@@ -782,6 +783,7 @@ export async function spawnPuppet(
   const template = await loadPuppet(asset);
   // Puppet은 재생 시각·속도·강도를 내부에 보관한다. 같은 인스턴스를 여러 Mesh가 공유하면 한
   // 캐릭터의 play가 다른 캐릭터를 덮으므로, 정적 프로젝트만 공유하고 재생기는 개체마다 만든다.
+  const { Puppet } = await import("puppetforge/phaser");
   const puppet = Puppet.fromProject(template.project, template.texture);
   const creature = await IndexedPuppetCreature.fromPuppet(scene, puppet);
 

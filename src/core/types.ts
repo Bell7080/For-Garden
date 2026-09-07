@@ -30,7 +30,7 @@ export type ReachTier = "melee" | "mid" | "ranged";
 export type RelicRarity = "R" | "SR" | "SSR";
 
 /** 전신 Puppet 레지스트리의 안정적인 데이터 키다. 파일 번호를 게임 데이터에 직접 노출하지 않는다. */
-export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "pontos";
+export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "pontos" | "parua";
 
 export interface Stats {
   /** 생존력과 물리·마법 공격의 기반이 되는 주 능력치다. */
@@ -130,9 +130,11 @@ interface SkillBase {
    * `chargeLine`은 지금 보고 있는 방향으로 **뚫고 지나가며** 통로 안의 적을 모두 친다.
    * 나아가는 거리는 이동 속도에 비례하므로, 발이 빠른 개체일수록 더 멀리 밀고 들어간다.
    */
-  targeting?: "single" | "nearbyEnemies" | "battlefieldEnemies" | "battlefieldAllies" | "self" | "targetedCircle" | "chargeLine";
+  targeting?: "single" | "nearbyEnemies" | "splitShot" | "battlefieldEnemies" | "battlefieldAllies" | "self" | "targetedCircle" | "chargeLine";
   /** 원형 범위의 반경이자, `chargeLine`에서는 지나간 통로의 **반폭**이다. */
   radius?: number;
+  /** `splitShot`이 표적을 포함해 한 번에 맞히는 최대 인원이다. */
+  maxTargets?: number;
   /**
    * 때린 적의 **저주가 이미 최대 중첩이면** 그 피해의 일부를 가장 가까운 다른 적에게 옮긴다.
    *
@@ -175,6 +177,7 @@ export type AttackSkill = SkillBase & {
   selfSetup?: never;
   selfGuard?: never;
   selfBulwark?: never;
+  selfVolley?: never;
 };
 
 /** 순수 회복 스킬은 damageType/power를 가질 수 없어 피해 계산에 잘못 전달되지 않는다. */
@@ -186,6 +189,7 @@ export type HealingSkill = SkillBase & {
   selfSetup?: never;
   selfGuard?: never;
   selfBulwark?: never;
+  selfVolley?: never;
   healing: { kind: "teamMissingHpPercent"; percent: number };
 };
 
@@ -202,10 +206,31 @@ export type SetupSkill = SkillBase & {
   healing?: never;
   teamBuff?: never;
 } & (
-  | { selfSetup: SelfSetup; selfGuard?: never; selfBulwark?: never }
-  | { selfSetup?: never; selfGuard: SelfGuard; selfBulwark?: never }
-  | { selfSetup?: never; selfGuard?: never; selfBulwark: SelfBulwark }
+  | { selfSetup: SelfSetup; selfGuard?: never; selfBulwark?: never; selfVolley?: never }
+  | { selfSetup?: never; selfGuard: SelfGuard; selfBulwark?: never; selfVolley?: never }
+  | { selfSetup?: never; selfGuard?: never; selfBulwark: SelfBulwark; selfVolley?: never }
+  | { selfSetup?: never; selfGuard?: never; selfBulwark?: never; selfVolley: SelfVolley }
 );
+
+/**
+ * 쏟아붓는 계약. 정해진 시간 동안 **일반 공격 자체를 바꾼다.**
+ *
+ * `SelfSetup`(다음 한 방의 자리)과 다른 축이다 — 그쪽은 한 방을 강화하고 이쪽은 그 시간의
+ * 모든 손을 강화한다. 피해를 스스로 갖지 않는 이유는 같다: 그 피해가 곧 이어질 일반 공격의
+ * 몫이라, 여기 위력을 적으면 평타를 조정한 뒤 이 숫자만 옛 값으로 남는다.
+ *
+ * **순환은 건드리지 않는다.** 연격의 두 타격은 같은 걸음을 쓰므로(`cycle`은 공격 **행동**마다
+ * 한 걸음 나아간다) 갈래화살 차례가 오면 두 발이 함께 갈라진다 — 그것이 이 궁극기의 절정이고,
+ * 갈래화살을 상시로 켜는 것은 폭주의 몫이라 여기서 다시 켜지 않는다.
+ */
+export type SelfVolley = {
+  /** 쏟아붓는 시간(초). */
+  seconds: number;
+  /** 이 동안 한 번의 공격 행동이 내는 적중 횟수. 확률이 아니라 확정이다. */
+  hitCount: number;
+  /** 이 동안 더해지는 공격 속도 비율(%). 폭주가 사거리를 갖는 대신 속도는 이쪽이 갖는다. */
+  attackSpeedPercent: number;
+};
 
 /**
  * 앞에 서는 계약. 아군이 받을 피해를 **대신 받고**, 그 아픈 시간을 회복으로 바꾼다.
@@ -296,6 +321,7 @@ export type SupportSkill = SkillBase & {
   selfSetup?: never;
   selfGuard?: never;
   selfBulwark?: never;
+  selfVolley?: never;
   teamBuff: TeamBuff;
 };
 
@@ -333,9 +359,17 @@ export type BasicAttackStep = {
   /** 이 걸음의 이름. 설명문이 걸음을 차례로 늘어놓을 때 쓴다. */
   name: string;
   power: number;
-  /** 걸음마다 혼자만 광역일 수 있다. 생략하면 단일 대상이다. */
-  targeting?: "single" | "nearbyEnemies";
+  /**
+   * 걸음마다 혼자만 광역일 수 있다. 생략하면 단일 대상이다.
+   *
+   * `splitShot`은 **표적을 중심으로** 가까운 순서대로 `maxTargets`명까지 함께 맞힌다.
+   * `nearbyEnemies`(시전자 중심 반경)와 다른 축인 이유는 원거리 개체 때문이다 — 600 뒤에
+   * 선 개체가 자기 중심 반경을 쓰면 발밑의 빈 땅을 때린다.
+   */
+  targeting?: "single" | "nearbyEnemies" | "splitShot";
   radius?: number;
+  /** `splitShot`이 한 번에 맞히는 최대 인원(표적 포함)이다. */
+  maxTargets?: number;
   statusEffects?: readonly CombatStatusEffect[];
   /** 실제 HP 손실의 이 비율(%)만큼 시전자가 회복한다. */
   damageHealingPercent?: number;
@@ -609,6 +643,19 @@ export type Ultimate = Skill & {
       /** 거리 단위는 난전 좌표와 같은 px이며, 시전자 중심에서 잰다. */
       radius: number;
     }
+  | {
+      /**
+       * 화살이 갈라져 **표적과 그 주위**를 함께 맞힌다.
+       *
+       * `nearbyEnemies`가 시전자 중심인 것과 달리 **표적 중심**이다 — 원거리 개체가 시전자
+       * 중심 반경을 쓰면 자기 발밑의 빈 땅을 때린다. 반경이 아니라 **인원**으로 끊는 이유는
+       * 갈라지는 화살 수가 곧 이 기술이라, 적이 몰려 있느냐에 따라 달라지면 안 되기 때문이다.
+       */
+      targeting: "splitShot";
+      /** 표적을 포함해 한 번에 맞히는 최대 인원이다. 표적에서 가까운 순으로 채운다. */
+      maxTargets: number;
+      radius?: never;
+    }
   | { /** 거리에 상관없이 전장의 모든 생존 적을 공격한다. */ targeting: "battlefieldEnemies" }
   | { /** 거리에 상관없이 모든 생존 아군에게 비공격 효과를 적용한다. */ targeting: "battlefieldAllies" }
   | { /** 아무도 때리지 않고 시전자 자신에게만 적용한다. 피해는 이어질 일반 공격의 몫이다. */ targeting: "self" }
@@ -672,10 +719,24 @@ export type PassiveKind =
   /** 데이 전용: 때린 적을 건너뛰며 표적을 돌리고, 때리는 순간까지 멈추지 않고 움직인다. */
   | "tagAndRun"
   /** 매디 전용: 상성 계산에서 물을 얼음으로 가로채고, 이미 둔화가 최대인 적을 때리면 빙결시킨다. */
-  | "frostboundDominion";
+  | "frostboundDominion"
+  /**
+   * 파루아 전용: **사거리 안에서 가장 먼 적**을 노리고, 적중할 때마다 집중을 쌓는다.
+   *
+   * 집중은 공격력과 **사거리**를 함께 올린다 — 쏠수록 더 멀리 닿아 노릴 수 있는 적이 넓어지고,
+   * 그래서 표적을 고르는 규칙과 성장이 서로를 설명한다. 겹당 수치와 상한은 `FOCUS` 한 표가
+   * 갖고, 겹당 공격력만 `value`로 적어 스피나의 누적 패시브와 같은 자리에 둔다.
+   *
+   * "사거리 안에서"라고 좁히는 이유는 이 개체가 로스터 최하 이동 속도이기 때문이다 — 사거리
+   * 밖의 먼 적을 노리면 전투가 끝날 때까지 걸어가기만 한다. 사거리 안에 아무도 없으면
+   * 평소처럼 가장 가까운 적으로 되돌린다.
+   */
+  | "farthestFocus";
 
 /** 전투 엔진이 판별하는 야성 특성 효과 ID다. 새 효과는 수치 계약과 함께 명시적으로 추가한다. */
 export type FerocityEffectId =
+  /** 파루아 전용: 폭주 중 모든 일반 공격이 갈래화살이 되고 사거리가 늘어난다. */
+  | "splitVolley"
   | "attackIntervalReduction"
   | "damageReduction"
   | "splashDamage"
@@ -722,6 +783,17 @@ export type FerocityTrait = {
   /** 뱃지에 찍히는 짧은 이름. 두세 글자를 넘기지 않는다. */
   name: string;
 } & (
+  | {
+      /**
+       * 폭주 중 **순환을 기다리지 않고** 매 공격을 갈래화살로 낸다.
+       *
+       * 공격 속도가 아니라 **사거리**를 함께 올리는 이유는 궁극기가 속도 축을 갖기 때문이다 —
+       * 둘 다 공속을 올리면 폭주와 궁극기가 화면에서 같은 말을 한다.
+       */
+      effectId: "splitVolley";
+      /** 폭주 동안 더해지는 사거리(px). `fighterReach`가 집중 겹 위에 얹는다. */
+      reachBonus: number;
+    }
   | { effectId: "attackIntervalReduction"; reductionPercent: number }
   | { effectId: "damageReduction"; reductionPercent: number }
   | {

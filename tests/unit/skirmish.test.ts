@@ -35,6 +35,7 @@ import {
   type SkirmishState,
   REACH_TIER,
   fighterReach,
+  FOCUS,
   sidestep,
   vandalismOffenseShred,
   orbitStep,
@@ -828,9 +829,26 @@ describe("난전 상수", () => {
   });
 
   it("은 원거리 개체가 근거리보다 멀리서 멈춰 선다", () => {
-    const melee = fighterReach({ def: { reachTier: "melee" } } as never);
-    const ranged = fighterReach({ def: { reachTier: "ranged" } } as never);
+    // 사거리는 이제 집중 겹과 폭주까지 얹으므로 그 둘이 비어 있는 상태를 함께 넘긴다.
+    const plain = (reachTier: string) => ({ def: { reachTier, ferocityTrait: { effectId: "splashDamage" } }, focus: 0, ferocityFever: false } as never);
+    const melee = fighterReach(plain("melee"));
+    const ranged = fighterReach(plain("ranged"));
     expect(ranged).toBeGreaterThan(melee);
+  });
+
+  it("은 집중 겹과 폭주가 사거리를 그 위에 얹는다", () => {
+    // 쏠수록 멀리 닿는 것이 파루아의 전부라, 정적 단계값만 돌려주면 그 성장이 판정에 없다.
+    const parua = getRelic("parua");
+    const base = fighterReach({ def: parua, focus: 0, ferocityFever: false } as never);
+    expect(base).toBe(REACH_TIER.ranged);
+    // 열 겹이면 정확히 전장 세로 간격(760)에 닿는다 — 제자리에서 정면의 적을 쏘기 시작하는 지점이다.
+    expect(fighterReach({ def: parua, focus: 10, ferocityFever: false } as never)).toBe(760);
+    expect(fighterReach({ def: parua, focus: FOCUS.maxStacks, ferocityFever: false } as never))
+      .toBe(REACH_TIER.ranged + FOCUS.maxStacks * FOCUS.reachPerStack);
+    // 폭주는 그 위에 한 겹 더 얹는다.
+    const feverTrait = parua.ferocityTrait;
+    if (feverTrait.effectId !== "splitVolley") throw new Error("파루아 폭주 계약이 바뀌었다");
+    expect(fighterReach({ def: parua, focus: 0, ferocityFever: true } as never)).toBe(REACH_TIER.ranged + feverTrait.reachBonus);
   });
 });
 
@@ -3592,5 +3610,59 @@ describe("아모 조가비 전투 계약", () => {
     expect(amo.shellGuard).toBeNull();
     expect(amo.shellGuardCooldownRemaining).toBeCloseTo(3, 1);
     expect(events).toContainEqual(expect.objectContaining({ kind: "shieldGranted", fighterId: amo.id }));
+  });
+});
+
+describe("파루아 — 쏘면서 자라는 사거리", () => {
+  /** 파루아 혼자 세워 다른 개체의 표적·피해가 섞이지 않게 한다. */
+  function volleyState() {
+    return createSkirmish([getRelic("parua")], ["toby", "amo", "ripa"].map(getRelic), ARENA);
+  }
+
+  it("는 세 번째 공격에서만 갈래화살이 나가 셋을 함께 맞힌다", () => {
+    const state = volleyState();
+    const events = run(state, 12).filter((event) => event.kind === "attack");
+    // 순환은 공격 **행동**마다 한 걸음 나아간다. 그러므로 한 행동에 여러 적이 함께 맞은
+    // 묶음이 갈래화살이고, 그 묶음의 인원은 언제나 최대 세 명이다.
+    const splitNames = new Set(events.filter((event) => event.skill === "basic").map((event) => event.targetId));
+    expect(splitNames.size).toBeGreaterThan(1);
+    const parua = state.fighters.find((fighter) => fighter.def.id === "parua")!;
+    expect(parua.def.basic.cycle?.[2]).toMatchObject({ targeting: "splitShot", maxTargets: 3 });
+  });
+
+  it("는 적중마다 집중을 쌓고 상한에서 멈춘다", () => {
+    const state = volleyState();
+    const parua = state.fighters.find((fighter) => fighter.def.id === "parua")!;
+    expect(parua.focus).toBe(0);
+    run(state, 6);
+    // 갈래화살 한 발이 셋을 맞히면 겹도 셋 오르므로 초반 몇 번만 쏘면 눈에 띄게 쌓인다.
+    expect(parua.focus).toBeGreaterThan(0);
+    run(state, 60);
+    expect(parua.focus).toBeLessThanOrEqual(FOCUS.maxStacks);
+  });
+
+  it("는 집중이 쌓이면 실제로 더 멀리서 때린다", () => {
+    const state = volleyState();
+    const parua = state.fighters.find((fighter) => fighter.def.id === "parua")!;
+    const before = fighterReach(parua);
+    parua.focus = FOCUS.maxStacks;
+    // 사거리는 정적 단계값이 아니라 지금 겹을 읽는다 — 그러지 않으면 화면에는 닿는데
+    // 판정에서는 못 때리는 자리가 생긴다.
+    expect(fighterReach(parua)).toBe(before + FOCUS.maxStacks * FOCUS.reachPerStack);
+  });
+
+  it("의 궁극기는 아무도 때리지 않고 5초 동안 손을 바꾼다", () => {
+    const state = volleyState();
+    const parua = state.fighters.find((fighter) => fighter.def.id === "parua")!;
+    parua.energy = 999;
+    const before = currentAttackSpeed(parua, state);
+    const events = fireUltimate(state, parua.id);
+    // 시전 순간에는 피해가 없다 — 피해는 이어질 일반 공격의 몫이다.
+    expect(events.filter((event) => event.kind === "attack")).toHaveLength(0);
+    expect(parua.volley).toMatchObject({ hitCount: 2, attackSpeedPercent: 40 });
+    expect(currentAttackSpeed(parua, state)).toBeCloseTo(before * 1.4, 5);
+    // 시간이 다하면 저절로 꺼진다.
+    run(state, 6);
+    expect(parua.volley).toBeNull();
   });
 });

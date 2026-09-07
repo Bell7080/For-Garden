@@ -389,3 +389,24 @@ export const MADDY_SD_METADATA: Omit<PuppetAsset, "url"> = {
   imageHeight: 1254,
   content: { left: 240, top: 63, right: 1082, bottom: 1208 },
 };
+
+/**
+ * 21번 파루아(파라사우롤로푸스) 전신.
+ *
+ * ZIP 안 WebP의 alpha > 16 경계를 실측한 값이다. 실루엣이 캔버스를 거의 채워(폭 994/1086)
+ * 렉시아 같은 폭 보정이 필요 없다.
+ */
+export const PARUA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1086,
+  imageHeight: 1448,
+  content: { left: 58, top: 12, right: 1052, bottom: 1431 },
+  /** 로비 세로 비율: 메론 기준. 1.45 m — 보정 없이 세우면 1.459 m로 서므로 살짝 줄인다. */
+  lobbyZoom: 0.994,
+};
+
+/** 파루아 SD ZIP의 정사각 원본과 alpha > 16 경계다. */
+export const PARUA_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254,
+  imageHeight: 1254,
+  content: { left: 58, top: 11, right: 1196, bottom: 1244 },
+};

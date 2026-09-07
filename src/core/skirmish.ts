@@ -188,6 +188,20 @@ export interface Fighter extends Combatant {
   immortal?: boolean;
   /** 기본 공격 실제 적중으로 쌓인 전투 한정 공격 속도다. 저장 모델에는 존재하지 않는다. */
   bonusAttackSpeed: number;
+  /**
+   * `farthestFocus`가 적중마다 쌓는 전투 한정 집중 겹이다. 저장 모델에는 존재하지 않는다.
+   *
+   * 겹당 공격력과 **사거리**를 함께 올린다(`FOCUS`). 시간이 지나도 사라지지 않으므로 남은
+   * 시계를 들지 않고 수 하나로 충분하다 — 스피나의 `bonusAttackSpeed`와 같은 결이다.
+   */
+  focus: number;
+  /**
+   * 궁극기가 켠 쏟아붓기. 이 동안 일반 공격이 확정 연격이 되고 공격 속도가 오른다.
+   *
+   * 남은 시간과 전체 시간을 함께 드는 이유는 머리 위 칩이 지나간 만큼을 덮어 보여 주기
+   * 때문이다 — 분모를 화면이 스킬 정의에서 다시 찾지 않게 코어가 들고 온다.
+   */
+  volley: { remaining: number; total: number; hitCount: number; attackSpeedPercent: number } | null;
   /** 원정 상태 효과의 지속시간을 늘리는 전투 스냅샷 배율이다. */
   statusPotencyMultiplier: number;
   /** 현재 HP에 따라 켜지는 공격력 효과는 정적 능력치와 달리 매 공격 시점에 판정한다. */
@@ -622,10 +636,36 @@ export const REACH_TIER = {
   ranged: 600,
 } as const satisfies Readonly<Record<ReachTier, number>>;
 
-/** 이 전투원이 멈춰 서서 때리기 시작하는 거리. 씬과 코어가 같은 값을 읽는다. */
+/**
+ * 이 전투원이 멈춰 서서 때리기 시작하는 거리. 씬과 코어가 같은 값을 읽는다.
+ *
+ * 단계가 정한 값이 기본이지만 **집중과 폭주는 그 위에 얹힌다** — 파루아는 쏠수록 사거리가
+ * 늘고, 폭주 동안 한 번 더 늘어난다. 정적 표를 그대로 돌려주면 그 성장이 판정에 반영되지
+ * 않아, 화면에는 닿는데 실제로는 못 때리는 자리가 생긴다.
+ */
 export function fighterReach(fighter: Fighter): number {
-  return REACH_TIER[fighter.def.reachTier];
+  const trait = fighter.def.ferocityTrait;
+  const feverBonus = fighter.ferocityFever && trait.effectId === "splitVolley" ? trait.reachBonus : 0;
+  return REACH_TIER[fighter.def.reachTier] + fighter.focus * FOCUS.reachPerStack + feverBonus;
 }
+
+/**
+ * 집중. `farthestFocus` 패시브가 적중마다 쌓는 전투 한정 겹이다.
+ *
+ * 공격력만이 아니라 **사거리**를 함께 올리는 것이 이 개체의 전부다 — 쏠수록 더 멀리 닿고,
+ * 더 멀리 닿으면 「사거리 안에서 가장 먼 적」이라는 표적 규칙이 노릴 수 있는 범위도 함께
+ * 넓어진다. 수치는 데이터가 아니라 규칙이라 여기 한 곳에만 둔다.
+ *
+ * **겹당 사거리 16은 눈대중이 아니다.** 전장(`BattleScene`의 ARENA)은 아군이 아래, 적이 위에
+ * 서고 그 세로 간격이 760이다. 원거리 기본 사거리 600에서 10겹이면 정확히 760이 되어,
+ * **열 번 맞히면 제자리에서 정면의 적에게 닿는다**는 지점이 수치 하나로 떨어진다.
+ */
+export const FOCUS = {
+  /** 겹당 오르는 사거리(px). */
+  reachPerStack: 16,
+  /** 상한. 갈래화살이 한 번에 셋을 맞히면 겹도 셋 오르므로 한 판에 닿을 수 있는 값으로 둔다. */
+  maxStacks: 15,
+} as const;
 
 /**
  * 출혈. `bleedStreak` 패시브가 남기는 상처다.
@@ -754,6 +794,8 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     bonusAp: 0,
     immortal: false,
     bonusAttackSpeed: 0,
+    focus: 0,
+    volley: null,
     statusPotencyMultiplier: multipliers.statusPotencyPercent,
     conditionalAttackPowerMultiplier: (hpPercent) => side === "player" ? conditionalAttackPowerMultiplier(augmentEffects, def.id, hpPercent) : 1,
     basicAttackCount: 0,
@@ -1323,15 +1365,23 @@ function currentBasic(attacker: Fighter): BasicAttack {
   const step = cycle[attacker.basicCycleStep % cycle.length];
   // 선언하지 않은 필드는 비운다. 기본 공격 쪽 값이 새어 들어오면 어느 걸음이 무엇을 하는지
   // 데이터만 보고 알 수 없다.
+  // 대상 계약은 판별 union이라 통째로 갈아 끼운다 — `targeting`만 바꾸고 `radius`를 남기면
+  // 갈래화살 걸음에 반경이 따라붙어 어느 쪽 규칙으로 맞는지 데이터만 보고 알 수 없다.
+  const aim = step.targeting === "splitShot"
+    ? { targeting: "splitShot" as const, maxTargets: step.maxTargets ?? 1 }
+    : step.targeting === "nearbyEnemies"
+      ? { targeting: "nearbyEnemies" as const, radius: step.radius ?? 0 }
+      : { targeting: "single" as const };
+  // 선언하지 않은 필드는 비운다. 기본 공격 쪽 값이 새어 들어오면 어느 걸음이 무엇을 하는지
+  // 데이터만 보고 알 수 없다.
   return {
     ...basic,
+    ...aim,
     name: step.name,
     power: step.power,
-    targeting: step.targeting ?? "single",
-    radius: step.radius,
     statusEffects: step.statusEffects,
     damageHealingPercent: step.damageHealingPercent,
-  };
+  } as BasicAttack;
 }
 
 /**
@@ -2001,6 +2051,31 @@ export function activeCombatBuffs(state: SkirmishState, fighterId: string): Acti
       timing: { kind: "timed", remainingSeconds: fighter.undying.remaining, totalSeconds: fighter.undying.total },
     });
   }
+  if (fighter.volley) {
+    buffs.push({
+      id: `volley:${fighter.id}`,
+      sourceFighterId: fighter.id,
+      targetFighterId: fighter.id,
+      skillId: fighter.def.ultimate.id,
+      name: fighter.def.ultimate.name,
+      description: `기본 공격이 ${fighter.volley.hitCount}번 적중하고 공격 속도 +${fighter.volley.attackSpeedPercent}%`,
+      timing: { kind: "timed", remainingSeconds: fighter.volley.remaining, totalSeconds: fighter.volley.total },
+    });
+  }
+  // 집중은 **본인에게 쌓이는 값**이다. 시간이 흘러 사라지지 않으므로 남은 시계를 두지 않고,
+  // 몇 겹인지와 그 겹이 지금 무엇을 올리고 있는지만 든다.
+  if (fighter.def.passive.kind === "farthestFocus" && fighter.focus > 0) {
+    buffs.push({
+      id: `focus:${fighter.id}`,
+      sourceFighterId: fighter.id,
+      targetFighterId: fighter.id,
+      skillId: fighter.def.passive.id,
+      name: "집중",
+      description: `공격력 +${fighter.focus * fighter.def.passive.value}% · 사거리 +${fighter.focus * FOCUS.reachPerStack} · 최대 ${FOCUS.maxStacks}겹`,
+      stacks: fighter.focus,
+      timing: { kind: "permanent" },
+    });
+  }
   // 주기 타격(파치의 4타)은 **본인에게 붙는 값**이다 — 적이 아니라 그 개체가 몇 대째 때렸는지가
   // 다음 한 방을 정하므로, 적 머리 위가 아니라 자기 프로필의 칩이 그 수를 들고 있다.
   const every = fighter.def.basic.statusEffectEvery ?? 0;
@@ -2036,11 +2111,13 @@ export function currentAttackSpeed(fighter: Fighter, state?: SkirmishState): num
   const tailwindPercent = fighter.tailwindFor > 0 ? fighter.tailwind?.attackSpeedPercent ?? 0 : 0;
   // 광란은 남의 손에 걸린 강화다. 시간이 정해진 배율이라 순풍과 같은 자리에서 곱한다.
   const frenzyPercent = fighter.frenzy?.attackSpeedPercent ?? 0;
+  // 쏟아붓기는 자기 궁극기가 건 시간제한 강화라 같은 자리에서 곱한다.
+  const volleyPercent = fighter.volley?.attackSpeedPercent ?? 0;
   // 둔화는 남이 걸어 준 감속이라 다른 배율과 같은 자리에서 나눈다.
   const chillPercent = fighter.chill ? fighter.chill.stacks * fighter.chill.speedPercentPerStack : 0;
   return (fighter.def.stats.attackSpeed + passiveSpeedPoints + fighter.bonusAttackSpeed)
     * (1 + teamPercent / 100) * (1 + packHuntPercent / 100) * (1 + tailwindPercent / 100) * (1 + frenzyPercent / 100)
-    * (1 - chillPercent / 100);
+    * (1 + volleyPercent / 100) * (1 - chillPercent / 100);
 }
 
 export function attackInterval(fighter: Fighter, state?: SkirmishState): number {
@@ -2282,9 +2359,20 @@ function resolveTarget(state: SkirmishState, fighter: Fighter, reconsider = fals
     // 점수는 낮을수록 좋다. 거리가 기본이고, 몰림은 밀어내고, **지금 노리던 상대**와
     // **이미 손이 닿는 상대**는 그만큼 당긴다.
     const gap = distance(fighter, other);
-    const score = gap + crowd * SKIRMISH.crowdPenalty
+    const inReach = gap <= fighterReach(fighter);
+    /*
+     * **집중은 거리의 부호를 뒤집는다.** 「사거리 안에서 가장 먼 적」이라 손이 닿는 후보끼리는
+     * 멀수록 좋고, 닿는 후보가 하나도 없을 때만 평소처럼 가까운 쪽으로 되돌아간다 — 로스터
+     * 최하 이동 속도라 사거리 밖의 먼 적을 고르면 걸어가다 전투가 끝난다.
+     *
+     * 사거리 안을 통째로 당기는 `inReachBonus`는 그대로 두어, 닿는 적이 하나라도 있으면
+     * 못 닿는 적보다 언제나 먼저 선다. 몰림과 고착도 그대로 지나므로 2초 주기 재평가에서
+     * 표적이 흔들리지 않는다.
+     */
+    const distanceScore = fighter.def.passive.kind === "farthestFocus" && inReach ? -gap : gap;
+    const score = distanceScore + crowd * SKIRMISH.crowdPenalty
       - (other.id === fighter.targetId ? SKIRMISH.targetStickiness : 0)
-      - (gap <= fighterReach(fighter) ? SKIRMISH.inReachBonus : 0);
+      - (inReach ? SKIRMISH.inReachBonus : 0);
     if (score < bestScore) {
       chosen = other;
       bestScore = score;
@@ -2607,11 +2695,14 @@ function offensiveDefinition(attacker: Fighter): RelicDef {
   const passive = attacker.def.passive;
   const conditional = attacker.conditionalAttackPowerMultiplier(attacker.maxHp > 0 ? attacker.hp / attacker.maxHp * 100 : 0);
   const vandalised = 1 - vandalismOffenseShred(attacker);
+  // 집중은 겹당 `value`%씩 공격력을 올린다. 스피나의 공속 누적과 같은 자리이고, 정적 정의를
+  // 바꾸지 않고 계산 시점에만 곱한다.
+  const focused = passive.kind === "farthestFocus" ? 1 + attacker.focus * passive.value / 100 : 1;
   // 치명타 확률과 마찬가지로 개체 이름이 아니라 적힌 값으로 판별한다.
-  if (passive.attackPowerPercent === undefined && passive.criticalDamagePercent === undefined && conditional === 1 && vandalised === 1) return attacker.def;
+  if (passive.attackPowerPercent === undefined && passive.criticalDamagePercent === undefined && conditional === 1 && vandalised === 1 && focused === 1) return attacker.def;
   return { ...attacker.def, stats: {
     ...attacker.def.stats,
-    atk: attacker.def.stats.atk * (1 + (passive.attackPowerPercent ?? 0) / 100) * conditional * vandalised,
+    atk: attacker.def.stats.atk * (1 + (passive.attackPowerPercent ?? 0) / 100) * conditional * vandalised * focused,
     ap: attacker.def.stats.ap * vandalised,
     critDamage: attacker.def.stats.critDamage + (passive.criticalDamagePercent ?? 0),
   } };
@@ -2988,15 +3079,19 @@ function strike(
   // 순수 회복 궁극기는 fireUltimate의 비공격 분기에서만 실행한다.
   if (!("damageType" in skill) || skill.damageType === undefined || skill.power === undefined) return;
   const combo = !useUltimate ? attacker.def.basic.combo : undefined;
-  if (combo && comboHit === undefined) {
+  // 쏟아붓기는 확률이 아니라 **확정**이라 난수를 쓰지 않는다. 정적 `combo`가 없는 개체도
+  // 이 동안에는 연격을 내므로 두 경로를 같은 자리에서 본다.
+  const volley = !useUltimate && attacker.volley ? attacker.volley : undefined;
+  if ((combo || volley) && comboHit === undefined) {
     // 난수 순서는 연격 판정 1회 뒤 실제로 발생한 각 타격의 치명타 순서로 고정한다.
-    const hitCount = rng() < combo.chancePercent / 100 ? combo.hitCount : 1;
+    const hitCount = volley ? volley.hitCount : (rng() < combo!.chancePercent / 100 ? combo!.hitCount : 1);
     for (let hit = 0; hit < hitCount && isFighterAlive(target); hit += 1) {
       strike(attacker, target, rng, state, events, false, { grantActionResources: hit === 0 });
     }
     return;
   }
-  if ((useUltimate && attacker.def.ultimate.targeting !== "single") || (!useUltimate && currentBasic(attacker).targeting === "nearbyEnemies")) {
+  const basicAim = useUltimate ? undefined : currentBasic(attacker).targeting;
+  if ((useUltimate && attacker.def.ultimate.targeting !== "single") || basicAim === "nearbyEnemies" || basicAim === "splitShot") {
     strikeAreaAttack(attacker, rng, state, events, useUltimate, targetPoint, comboHit !== undefined && !comboHit.grantActionResources);
     return;
   }
@@ -3147,6 +3242,11 @@ function strike(
   if (!useUltimate && attacker.def.passive.kind === "basicHitAttackSpeedStack") {
     // 적중 사건마다 +3을 더하므로 연격 두 타는 각각 누적되며 전투 생성 시 0으로 초기화된다.
     attacker.bonusAttackSpeed += attacker.def.passive.value;
+  }
+  if (!useUltimate && attacker.def.passive.kind === "farthestFocus") {
+    // **적중마다** 쌓으므로 갈래화살 한 발이 셋을 맞히면 겹도 셋 오른다 — 그래서 초반 서너
+    // 번만 쏘면 정면의 적에게 닿기 시작한다. 상한을 넘기지 않는다.
+    attacker.focus = Math.min(FOCUS.maxStacks, attacker.focus + 1);
   }
   if (!useUltimate && combo) {
     const missing = attacker.maxHp - attacker.hp;
@@ -3357,10 +3457,25 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
       refreshCurse(nearest, cursed.seedCurse);
     }
   }
+  /*
+   * 갈래화살은 **표적에서 가까운 순으로** 정해진 인원까지 채운다.
+   *
+   * 반경이 아니라 인원으로 끊으므로 적이 얼마나 몰려 있든 갈라지는 화살 수가 같고, 중심이
+   * 시전자가 아니라 표적이라 600 뒤에 선 개체도 실제로 적을 맞힌다. 은신·저주 같은 공용
+   * 조건은 아래 필터가 그대로 다시 확인하므로 여기서는 후보만 좁힌다.
+   */
+  const splitTargetIds = skill.targeting !== "splitShot" ? undefined : new Set(
+    state.fighters
+      .filter((fighter) => fighter.side !== attacker.side && isFighterAlive(fighter) && fighter.stealthFor <= 0)
+      .sort((a, b) => Math.hypot(a.x - requestedCenter.x, a.y - requestedCenter.y) - Math.hypot(b.x - requestedCenter.x, b.y - requestedCenter.y))
+      .slice(0, Math.max(1, skill.maxTargets ?? 1))
+      .map((fighter) => fighter.id),
+  );
   const targets = state.fighters.filter((fighter) => fighter.side !== attacker.side && isFighterAlive(fighter) && fighter.stealthFor <= 0
     && (!detonation || (fighter.overpaint?.stacks ?? 0) > 0)
     && (!cursed || fighter.curse !== null)
     && (skill.targeting === "battlefieldEnemies" || (skill.targeting === "nearbyEnemies" && distance(attacker, fighter) <= (skill.radius ?? 0))
+      || (skill.targeting === "splitShot" && splitTargetIds!.has(fighter.id))
       || (skill.targeting === "targetedCircle" && inCircle(fighter)) || (skill.targeting === "chargeLine" && inCharge(fighter))));
   const healingTargets = ultimate?.targeting === "targetedCircle" && ultimate.allyHealingPower !== undefined
     ? aliveFighters(state, attacker.side).filter(inCircle) : [];
@@ -3373,6 +3488,10 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
   const supportiveOnly = targets.length === 0 && healingTargets.length > 0;
   const impactArea = skill.targeting === "battlefieldEnemies"
     ? { shape: "battlefield" as const }
+    : skill.targeting === "splitShot"
+      // 갈래화살은 반경이 없다. 실제로 맞은 적들을 감싸는 크기로 그려야 "여기까지 갈라졌다"가 맞는다.
+      ? { shape: "radial" as const, x: requestedCenter.x, y: requestedCenter.y,
+          radius: Math.max(SKIRMISH.spacing, ...targets.map((fighter) => Math.hypot(fighter.x - requestedCenter.x, fighter.y - requestedCenter.y))) }
     : charge
       ? { shape: "lane" as const, from: charge.from, to: charge.to, halfWidth: skill.radius ?? 0 }
       : (skill.radius ?? 0) > 0
@@ -3436,6 +3555,11 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     gainElation(target);
     // 광역 걸음도 같은 규칙으로 끌어당긴다 — 단일과 광역에서 갈리면 같은 걸음이 대상 수에 따라 다른 일을 한다.
     if (!useUltimate) pullStruck(attacker, target, state, events);
+    // 집중도 **적중마다** 쌓는다. 단일 타격 쪽에만 두면 갈래화살이 셋을 맞혀도 겹이 하나도
+    // 오르지 않아, 가장 많이 맞히는 걸음이 성장에는 전혀 기여하지 않는 거꾸로가 된다.
+    if (!useUltimate && attacker.def.passive.kind === "farthestFocus") {
+      attacker.focus = Math.min(FOCUS.maxStacks, attacker.focus + 1);
+    }
 
     const dx = target.x - attacker.x;
     const dy = target.y - attacker.y;
@@ -3782,6 +3906,10 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     // 궁극기 채널링은 기절·행동불가와 무관하게 흐른다 — 이미 뿌려 둔 낙서라 손이 멈춰도 마른다.
     tickArtChannel(fighter, dt, state, events);
     tickTaunt(fighter, dt, state);
+    if (fighter.volley) {
+      const remaining = fighter.volley.remaining - dt;
+      fighter.volley = remaining <= 0 ? null : { ...fighter.volley, remaining };
+    }
     // 불멸은 기절과 같은 자리에서 행동을 멈추지만 슬롯이 달라 아다지오의 정화에 걸리지 않는다.
     if (fighter.undying) {
       const remaining = fighter.undying.remaining - dt;
@@ -3997,6 +4125,18 @@ export function fireUltimate(
       name: teamUltimate.name,
     });
     events.push({ kind: "combatEffect", fighterId: attacker.id, effect: { tag: "shieldGain", intensity: 1.6 } });
+    attacker.attackCooldown = attackInterval(attacker, state);
+    return events;
+  }
+
+  if (teamUltimate.selfVolley !== undefined) {
+    // 아무도 때리지 않는다. 정해진 시간 동안 **일반 공격 자체가 달라지는 것**이 전부이고,
+    // 피해는 이어질 그 공격들의 몫이라 여기에 위력을 적지 않는다.
+    const plan = teamUltimate.selfVolley;
+    attacker.energy -= ultimateCost(state, attacker, true);
+    attacker.volley = { remaining: plan.seconds, total: plan.seconds, hitCount: plan.hitCount, attackSpeedPercent: plan.attackSpeedPercent };
+    // 표시용 사건을 따로 쏘지 않는다 — 궁극기 컷인이 이미 켜지고, 도는 동안은 자기 프로필의
+    // 버프 칩이 남은 시간을 든다. 여기서 한 번 더 터뜨리면 같은 순간이 두 번 읽힌다.
     attacker.attackCooldown = attackInterval(attacker, state);
     return events;
   }

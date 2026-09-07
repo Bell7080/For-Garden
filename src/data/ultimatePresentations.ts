@@ -75,6 +75,9 @@ export const ULTIMATE_PRESENTATIONS: Readonly<Record<string, UltimatePresentatio
   // 데이와 같은 이유로, 5초 동안 계속 떨어지는 냉기 궁극기라 첫 한 방을 크게 세우지 않는다.
   // 왼쪽에서 훅 불어오는 냉방이라 컷인만 왼쪽에서 들어오고 확대·흔들림은 얕게 둔다.
   maddy: { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "left", artworkScale: 1.0, cutInHoldMs: 150, zoomScale: 1.1, zoomMs: 105, cameraShakeIntensity: 0.006 },
+  // 아무도 때리지 않는 궁극기라 시전 순간에는 터질 것이 없다 — 확대와 흔들림을 가장 얕게 두고
+  // 컷인만 짧게 지나간다. 이 궁극기의 무게는 이어지는 5초의 연격이 만든다.
+  parua: { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkScale: 1.0, cutInHoldMs: 140, zoomScale: 1.08, zoomMs: 100, cameraShakeIntensity: 0.004 },
   "toby": { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", cutInHoldMs: 135, zoomScale: 1.2, zoomMs: 110, cameraShakeIntensity: 0.008 },
   "amo": { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.94, zoomScale: 1.24, zoomMs: 115, cameraShakeIntensity: 0.009 },
   "ripa": { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkScale: 0.92, artworkOrigin: { x: 650, y: 770 }, zoomScale: 1.16, cameraShakeIntensity: 0.007 },

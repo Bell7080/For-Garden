@@ -22,6 +22,7 @@ import {
   LEXIA_PORTRAIT_METADATA,
   LUKA_PORTRAIT_METADATA,
   MADDY_PORTRAIT_METADATA,
+  PARUA_PORTRAIT_METADATA,
   METTE_PORTRAIT_METADATA,
   METTE_SD_METADATA,
   KERIS_PORTRAIT_METADATA,
@@ -256,6 +257,7 @@ const REAL_PORTRAITS = [
   { name: "노도니아", metadata: NODONIA_PORTRAIT_METADATA, head: { x: 484, y: 353 }, eyes: [{ x: 467, y: 344 }, { x: 515, y: 327 }] },
   { name: "데이", metadata: DEINA_PORTRAIT_METADATA, head: { x: 403, y: 245 }, eyes: [{ x: 383, y: 254 }, { x: 430, y: 216 }] },
   { name: "매디", metadata: MADDY_PORTRAIT_METADATA, head: { x: 472, y: 255 }, eyes: [{ x: 448, y: 244 }, { x: 509, y: 218 }] },
+  { name: "파루아", metadata: PARUA_PORTRAIT_METADATA, head: { x: 588, y: 360 }, eyes: [{ x: 536, y: 331 }, { x: 615, y: 361 }] },
 ] as const;
 
 /** PortraitCard가 넘기는 것과 같은 배율 보정으로 실제 카드 잘라내기를 구한다. */

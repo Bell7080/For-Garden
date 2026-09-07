@@ -25,10 +25,11 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
     const enemies = getStageEnemies(getBattleStage("1-1"));
     const pairs = selectableRPartyPairs(PLAYABLE_RELICS);
     const parties = selectReferenceParties(getRelic("anky"), PLAYABLE_RELICS, enemies, SEEDS);
-    // 현재 R은 도디·티아 둘뿐이지만 새 R이 추가되면 조합 수와 최선/최악 선택이 자동으로 넓어진다.
-    expect(pairs.map((pair) => pair.map(({ id }) => id))).toEqual([["dodo", "tia"]]);
+    // 새 R이 추가되면 조합 수와 최선/최악 선택이 자동으로 넓어진다 — 파루아가 들어와 셋이 됐다.
+    expect(pairs.map((pair) => pair.map(({ id }) => id))).toEqual([["dodo", "tia"], ["dodo", "parua"], ["tia", "parua"]]);
     expect(parties.favorable.map(({ id }) => id)).toEqual(["anky", "dodo", "tia"]);
-    expect(parties.unfavorable.map(({ id }) => id)).toEqual(["anky", "dodo", "tia"]);
+    // 최악이 최선과 갈린 것은 후보가 둘 이상이 된 뒤부터다 — 원거리 유리몸인 파루아가 그 자리다.
+    expect(parties.unfavorable.map(({ id }) => id)).toEqual(["anky", "dodo", "parua"]);
   });
 
   it.each(Object.entries(BASELINES))("%s의 여러 고정 난수열 결과와 상세 지표를 기준 범위에 둔다", (stageId, baseline) => {

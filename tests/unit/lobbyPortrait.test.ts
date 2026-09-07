@@ -10,6 +10,7 @@ import {
   LUKA_PORTRAIT_METADATA,
   KERIS_PORTRAIT_METADATA,
   MADDY_PORTRAIT_METADATA,
+  PARUA_PORTRAIT_METADATA,
   MAKI_PORTRAIT_METADATA,
   MERON_PORTRAIT_METADATA,
   NODONIA_PORTRAIT_METADATA,
@@ -53,6 +54,7 @@ const JOINTS: Readonly<Record<string, { eyes: readonly [readonly [number, number
   nodonia: { eyes: [[467, 344], [515, 327]], core: [520, 420] },
   deina: { eyes: [[383, 254], [430, 216]], core: [441, 344] },
   maddy: { eyes: [[448, 244], [509, 218]], core: [507, 324] },
+  parua: { eyes: [[536, 331], [615, 361]], core: [561, 468] },
 };
 
 /** 눈 관절 두 개의 중간 높이. 배율은 이 점에서 발끝까지의 거리로 잰다. */
@@ -80,6 +82,7 @@ const PORTRAITS: Readonly<Record<string, Omit<PuppetAsset, "url">>> = {
   nodonia: NODONIA_PORTRAIT_METADATA,
   deina: DEINA_PORTRAIT_METADATA,
   maddy: MADDY_PORTRAIT_METADATA,
+  parua: PARUA_PORTRAIT_METADATA,
 };
 
 /** 로비에 설 수 있는 개체 = 플레이어가 애착으로 고를 수 있는 렐릭이다. */

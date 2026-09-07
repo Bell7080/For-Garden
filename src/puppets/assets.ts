@@ -27,7 +27,9 @@ import {
   LEXIA_PORTRAIT_METADATA,
   LUKA_PORTRAIT_METADATA,
   MADDY_PORTRAIT_METADATA,
+  PARUA_PORTRAIT_METADATA,
   MADDY_SD_METADATA,
+  PARUA_SD_METADATA,
   METTE_PORTRAIT_METADATA,
   METTE_SD_METADATA,
   PONTOS_PORTRAIT_METADATA,
@@ -224,6 +226,12 @@ export const MADDY_ASSET: PuppetAsset = {
   ...MADDY_PORTRAIT_METADATA,
 };
 
+/** 21번 전신 일러스트: 파루아(파라사우롤로푸스). */
+export const PARUA_ASSET: PuppetAsset = {
+  url: `${base}puppets/char_021.zip`,
+  ...PARUA_PORTRAIT_METADATA,
+};
+
 /** 8번 전신 일러스트: 티아(이크티오사우루스). */
 export const TIA_ASSET: PuppetAsset = {
   url: `${base}puppets/char_008.zip`,
@@ -309,6 +317,7 @@ const PORTRAIT_ASSETS = {
   ripa: RIPA_ASSET,
   koma: EXPLORER_ASSET,
   pontos: PONTOS_ASSET,
+  parua: PARUA_ASSET,
 } as const satisfies Record<PortraitAssetId, PuppetAsset>;
 
 /** 데이터 키로 전신 원화를 찾는다. 캐릭터 내부 id에 의존하지 않는다. */
@@ -440,6 +449,12 @@ export const DEINA_SD_ASSET: PuppetAsset = {
   ...DEINA_SD_METADATA,
 };
 
+/** 21번 SD: 파루아. */
+export const PARUA_SD_ASSET: PuppetAsset = {
+  url: `${base}puppets/charSD_021.zip`,
+  ...PARUA_SD_METADATA,
+};
+
 /** 17번 SD: 매디. */
 export const MADDY_SD_ASSET: PuppetAsset = {
   url: `${base}puppets/charSD_017.zip`,
@@ -477,6 +492,7 @@ const ALLY_SD_ASSETS: Readonly<Record<string, PuppetAsset>> = {
   ella: ELLA_SD_ASSET,
   deina: DEINA_SD_ASSET,
   maddy: MADDY_SD_ASSET,
+  parua: PARUA_SD_ASSET,
 };
 
 /**

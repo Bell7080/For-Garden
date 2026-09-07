@@ -1969,6 +1969,113 @@ export const RELICS: RelicDef[] = [
     },
   },
   {
+    id: "parua",
+    squad: "rogue",
+    name: "파루아",
+    specimenNumber: "034",
+    projectName: "QUIET CREST",
+    excavationSite: "뉴멕시코 커틀랜드층 상부 사암",
+    // 발굴 기록은 장소·보존 상태·복원 연구 특징만 담고, 복원 이후 생활 관찰과 분리한다.
+    fossilRecord: "사암이 무너진 자리에서 뒤로 길게 뻗은 볏이 통째로 드러났다. 속이 빈 관이 두개골까지 이어져 있었고, 복원 연구진이 그 관에 바람을 통과시키자 사람 목소리에 가까운 낮은 울림이 나왔다.",
+    observationProfile: {
+      originYear: "약 7,500만 년 전",
+      // 또래보다 반걸음 물러서 있지만 제 몫은 끝까지 해내는 중학생 또래의 외형·정서에 맞춘다.
+      restorationYear: "E.C. 13년",
+      lifeStage: "아성체",
+      height: "1.45 m",
+      weight: "38 kg",
+    },
+    catalogSummary: "신장 1.45m, 체중 38kg의 가늘고 긴 인간형 체격에 뒤로 뻗은 속 빈 볏과, 시위를 오래 당겨도 떨리지 않는 긴 손가락이 확인된 아성체 파라사우롤로푸스 표본.",
+    unlockRecord: { status: "recorded", text: "파루아는 말을 걸면 먼저 한 걸음 물러선다. 그러면서도 시선은 늘 상대의 뒤쪽 먼 곳을 훑고 있어, 누가 다가오는지 가장 먼저 아는 것은 언제나 이 아이다. 활을 들면 그 물러섬이 사라진다 — 숨을 멈추고 한참을 겨누다가 놓는데, 놓은 뒤에는 맞았는지 보지도 않고 다음 화살을 뽑는다. 간식을 나눠 줄 때는 제 몫을 가장 작게 덜고, 남는 것이 생기면 아무 말 없이 다른 아이 접시에 올려 둔다." },
+    squadNote: "쁘띠 로그의 눈. 탐험대가 몰려다니는 동안 혼자 뒤에 남아 오던 길과 그 너머를 살피고, 무언가 보이면 소리치는 대신 조용히 대장님의 소매를 잡아당긴다.",
+    // 목소리를 크게 내지 못하는 아이라 스쿼드가 쓰는 호칭 중 가장 짧고 부르기 쉬운 쪽을 고른다.
+    researcherTitle: "대장님",
+    rarity: "R",
+    portraitAssetId: "parua",
+    origin: "파라사우롤로푸스",
+    element: "grass",
+    role: "assassin",
+    // 로스터에서 세 번째 원거리 개체이며, 사거리는 집중이 자라면서 함께 늘어난다.
+    reachTier: "ranged",
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 21, efficiencyMultiplier: 1.06 },
+    /*
+     * **공격력에 전부 몰아준 유리몸이다.** 체력·방어·저항이 로스터 최하급이고 공격력은 SR
+     * 루카(136)보다 높다 — 600 뒤에서 쏘는 대신 붙으면 곧바로 무너지는 자리다.
+     *
+     * 주문력 44는 일부러 낮다. 세 스킬이 전부 물리 평타에서 나오므로 주문력을 쓰는 곳이
+     * 하나도 없고, 쓰지 않는 값을 높게 적으면 실전에 없는 힘이 전투력만 부풀린다.
+     *
+     * 이동 속도 62는 로스터 최하다. 활은 자세를 잡아야 쏘고, 그래서 **걸어가지 않고 사거리를
+     * 늘려 닿는다**는 이 개체의 성장 축이 능력치에서도 그대로 읽힌다.
+     */
+    stats: {
+      hp: 780,
+      def: 50,
+      res: 56,
+      atk: 158,
+      ap: 44,
+      attackSpeed: 118,
+      moveSpeed: 62,
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 0,
+    },
+    // 폭주는 **거리**를 갖는다. 궁극기가 속도를 갖고 있어, 둘 다 공속을 올리면 두 슬롯이
+    // 화면에서 같은 말을 한다. 순환을 기다리지 않는 갈래화살과 사거리가 함께 붙는다.
+    ferocityTrait: { name: "멀리… 멀리요!", effectId: "splitVolley", reachBonus: 200 },
+    passive: {
+      id: "parua-passive",
+      name: "나무가 아닌 숲을!",
+      kind: "farthestFocus",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      // 겹당 오르는 공격력(%). 겹당 사거리와 상한은 코어의 `FOCUS` 한 표가 갖는다.
+      value: 2,
+      // 태생 치명타는 전 개체 공통이므로 암살자의 치명타형 정체성은 패시브가 만든다.
+      // 갈래화살이 한 행동에 셋을 판정하므로 렉시아(25)·루카(15)보다 낮게 잡는다.
+      criticalChancePercent: 12,
+      // 전용 분기가 있으므로 화면에는 이 문장이 아니라 `passiveDescription`이 지은 것이 뜬다.
+      // 여기 사본은 데이터만 읽는 사람을 위한 것이라, 분기를 고칠 때 함께 고친다.
+      desc: "사거리 안에서 가장 먼 적을 노리고, 적중할 때마다 집중을 얻어 공격력과 사거리가 오른다.",
+    },
+    basic: {
+      id: "parua-basic",
+      name: "신중한 일격...! 이에요...",
+      // 순환이 위력과 대상을 걸음마다 정하므로 이 값은 쓰이지 않는 기본값이다.
+      power: 90,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      targeting: "single",
+      /*
+       * 두 번 겨누고 세 번째에 가른다. 갈래화살은 **반경이 아니라 인원**으로 끊으므로 적이
+       * 얼마나 몰려 있든 화살은 늘 셋으로 갈라지고, 중심이 시전자가 아니라 표적이라 600 뒤에
+       * 선 개체도 실제로 맞힌다.
+       */
+      cycle: [
+        { name: "신중한 일격...! 이에요...", power: 90 },
+        { name: "신중한 일격...! 이에요...", power: 90 },
+        { name: "갈래화살", power: 45, targeting: "splitShot", maxTargets: 3 },
+      ],
+    } satisfies BasicAttack,
+    ultimate: {
+      id: "parua-ult",
+      name: "이제, 숲이 보여요",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      cost: 200,
+      // 아무도 때리지 않는다. 5초 동안 손이 달라지는 것이 전부이고 피해는 그 손들의 몫이다.
+      targeting: "self",
+      /*
+       * 갈래화살을 상시로 켜지 않는다 — 그것은 폭주의 몫이다. 연격의 두 타격이 같은 걸음을
+       * 쓰므로 갈래화살 차례가 오면 **두 발이 함께 갈라지고**, 그 한 순간이 이 궁극기의 절정이다.
+       */
+      selfVolley: { seconds: 5, hitCount: 2, attackSpeedPercent: 40 },
+    },
+  },
+  {
     // 원정 최종층의 단독 보스. 리바이어던 멜빌레이의 거대한 턱과 심해 포식자 모티브를 담는다.
     id: "pontos",
     enemyOnly: true,

@@ -18,6 +18,7 @@ export function canPreviewSkillDamage(skill: Skill | Passive, kindLabel: string)
 export function targetingLabel(targeting?: Ultimate["targeting"]): string | undefined {
   if (targeting === "single") return "적 한 명";
   if (targeting === "nearbyEnemies") return "자신의 주위 모든 적";
+  if (targeting === "splitShot") return "표적과 그 주위의 적";
   if (targeting === "battlefieldEnemies") return "전장의 모든 적";
   if (targeting === "self") return "자신";
   if (targeting === "targetedCircle") return "지정한 원 안의 모든 적과 생존 아군";
@@ -162,6 +163,12 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
       + ` 폭주 중 조가비 내부 재사용 대기시간이 ${trait.shellCooldownSecondsDuringFever}초로 줄어든다.`;
   }
 
+  if (trait.effectId === "splitVolley") {
+    // 순환을 기다리지 않는다는 것과 사거리가 는다는 것 둘만 말한다. 갈래화살이 무엇인지는
+    // 태그가 이미 말하므로 여기서 되풀이하지 않는다.
+    return `폭주 중 모든 일반 공격이 [[split-arrow|갈래화살]]이 되고 사거리가 ${trait.reachBonus} 증가한다.`;
+  }
+
   // 방어력 계수는 토리카처럼 추가 피해가 있는 범위 타격만 노출하고, 일반 전이 특성은 원래 피해 비율만 보여 준다.
   const speed = trait.attackSpeedBonusPercent === undefined ? "" : `공격 속도가 ${trait.attackSpeedBonusPercent}% 증가한다. `;
   const converted = trait.defenseDamagePercent === undefined || stats === undefined
@@ -236,6 +243,10 @@ function passiveCriticalClause(passive: Passive): string {
 function passiveHead(passive: Passive, atk?: number): string {
   if (passive.kind === "followHighestAttackAllyTarget") return `전투 시작 시 아군 중 공격력이 가장 높은 렐릭이 표적으로 삼은 적을 함께 표적으로 삼는다.`;
   if (passive.kind === "basicHitAttackSpeedStack") return `[[basic-attack|기본 공격]]이 실제 적중할 때마다 이번 전투 동안 [[attack-speed|공격 속도]]가 ${passive.value} 증가한다.`;
+  if (passive.kind === "farthestFocus") {
+    // 겹당 사거리와 상한은 태그가 말하므로 본문은 표적 규칙과 겹당 공격력만 적는다.
+    return `사거리 안에서 가장 먼 적을 노린다. 공격이 적중할 때마다 [[focus|집중]]을 얻고, 1겹마다 공격력이 ${passive.value}% 오른다.`;
+  }
   if (passive.kind === "adagioWeight") {
     const shield = passiveShieldKeyword(passive, atk);
     const shieldText = shield === undefined ? `공격력 ${passive.cleanseShieldAttackPercent}%` : `[[shield-value|${shield.term}]]`;
@@ -407,6 +418,13 @@ export function skillDescription(
       const exposed = setup.stealthBreaksOnBasic ? ` 그 공격과 함께 [[stealth|은신]]이 풀린다.` : "";
       return `${setup.stealthSeconds}초 동안 [[stealth|은신]]하고 체력이 가장 낮은 적에게 [[teleport|순간이동]]한다.`
         + ` 이후 처음 적중하는 [[basic-attack|기본 공격]]이 확정 치명타가 되고 방어력을 무시하는 [[fixed-damage|고정 피해]]로 들어간다.${exposed}`;
+    }
+    // 때리지 않고 손을 바꾸는 궁극기. 위력을 적지 않는 이유는 selfSetup과 같다 — 그 피해가
+    // 이어질 일반 공격의 몫이라, 여기에 수를 적으면 같은 한 방이 위아래에서 두 수로 보인다.
+    if ("selfVolley" in skill && skill.selfVolley !== undefined) {
+      const volley = skill.selfVolley;
+      return `${volley.seconds}초 동안 [[basic-attack|기본 공격]]이 ${volley.hitCount}번 적중하는 [[combo|연격]]이 되고,`
+        + ` [[attack-speed|공격 속도]]가 ${volley.attackSpeedPercent}% 오른다.`;
     }
     // 피해도 회복도 없는 지원 궁극기. 무엇을 얼마나 오래 거는지만 말한다.
     if ("teamBuff" in skill && skill.teamBuff?.kind === "tailwind") {
@@ -626,6 +644,9 @@ function statusEffectClause(effect: CombatStatusEffect): string | undefined {
 function skillTargetPhrase(skill: DescribedSkill): string {
   const targeting = "targeting" in skill ? skill.targeting : undefined;
   if (targeting === "nearbyEnemies") return "자신의 주위 모든 적에게";
+  // 걸음 이름이 이미 「갈래화살」이고 몇 명까지 갈라지는지는 태그가 말한다 — 본문은 어디를
+  // 중심으로 갈라지는지만 적어, 한 줄에서 같은 말이 두 번 나오지 않게 한다.
+  if (targeting === "splitShot") return "표적과 그 주위의 적에게";
   if (targeting === "battlefieldEnemies") return "전장의 모든 적에게";
   if (targeting === "targetedCircle") return "지정한 원 안의 모든 적에게";
   // 돌진은 시전 시점의 자리가 아니라 지나간 길이 대상이라, 원·전장과 다른 말로 적는다.

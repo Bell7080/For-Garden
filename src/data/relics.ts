@@ -866,6 +866,8 @@ export const RELICS: RelicDef[] = [
       name: "잠깐, 나 이래 봬도 의사라고?",
       effectId: "butcherFeast",
       healPercent: 50,
+      // 폭주 직후 세 번은 기존 손질 중첩과 무관하게 즉시 터져 짧은 회복·폭딜 구간을 만든다.
+      instantButcherAttacks: 3,
     },
     passive: {
       // kind가 gourmetHunt인 패시브는 passiveDescription()이 구조화 필드로 다시 문장을 만들므로
@@ -880,7 +882,10 @@ export const RELICS: RelicDef[] = [
       huntCooldownSeconds: 10,
       // 첫 도약만 조금 늦춰, 전투가 시작되자마자 사라지는 것처럼 보이지 않게 한다.
       huntOpeningSeconds: 1.2,
-      desc: "전투를 시작할 때 현재 체력이 가장 낮은 적을 표적으로 삼고 그 자리로 도약한다. 적을 처치하면 즉시, 그 밖에는 10초마다 다시 고른다.",
+      // 종잇장 같은 생존력을 어그로 해제로 보완하되, 전투당 세 번만 허용해 상시 은신을 막는다.
+      damageStealthSeconds: 2,
+      damageStealthMaxTriggers: 3,
+      desc: "전투를 시작할 때 현재 체력이 가장 낮은 적을 표적으로 삼고 그 자리로 도약한다. 적을 처치하면 즉시, 그 밖에는 10초마다 다시 고른다. 적에게 피해를 입으면 2초 동안 은신하며 전투당 최대 3번 발동한다.",
     },
     basic: {
       id: "maki-basic",

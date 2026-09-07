@@ -829,6 +829,8 @@ export type FerocityTrait = {
       effectId: "butcherFeast";
       /** 터진 손질 피해 중 아군 전체의 회복으로 돌리는 비율(%)이다. */
       healPercent: number;
+      /** 폭주에 들어간 뒤 손질 중첩을 건너뛰고 즉시 터뜨릴 기본 공격 횟수다. */
+      instantButcherAttacks: number;
     }
   | {
       /**
@@ -1070,6 +1072,10 @@ export interface Passive {
    * 짧은 틈을 두면 어디에서 어디로 갔는지가 보인다.
    */
   huntOpeningSeconds?: number;
+  /** 고품격 식재료 전용: 실제 HP 피해를 받은 직후 표적에서 벗어나는 은신 시간(초)이다. */
+  damageStealthSeconds?: number;
+  /** 고품격 식재료 전용: 피격 은신이 한 전투에서 발동할 수 있는 최대 횟수다. */
+  damageStealthMaxTriggers?: number;
   /**
    * 무면허 안전제일 전용: 한 방에 들어올 수 있는 피해의 상한(대상 최대 체력 %)이다.
    *

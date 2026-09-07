@@ -384,9 +384,9 @@ export interface FeedRelicResponse extends PlayerStateDto { relicId: string; fee
 export interface BreakThroughResponse extends PlayerStateDto { relicId: string; breakthrough: number; levelCap: number; /** 돌파 뒤의 별(1~5). */ stars: number; /** 남은 그 개체의 파편. */ fragments: number; }
 /** 전투 확인 시 저장되는 보상으로 최초 여부와 획득 치즈케이크를 결과 UI에 그대로 전달한다. */
 export interface CompleteStageResponse extends PlayerStateDto { stageId: string; firstClear: boolean; cheesecakeEarned: number; }
-/** 입장 영수증은 재시도에 그대로 반환되며 확정 뒤 클라이언트 로딩 실패는 자동 환불하지 않는다. */
+/** 입장 영수증은 잔량 검증 결과이며 비용은 패배·강제 종료가 아닌 승리 정산에서만 확정한다. */
 export interface EnterStageRequest { stageId: string; requestId: string; }
-export interface EnterStageResponse extends PlayerStateDto { stageId: string; requestId: string; staminaSpent: number; refundPolicy: "no-refund-after-admission"; }
+export interface EnterStageResponse extends PlayerStateDto { stageId: string; requestId: string; staminaCost: number; chargePolicy: "victory-only"; }
 /** 로비 터치 결과는 중복 여부와 대사 UI가 표시할 유대 변화량을 돌려준다. */
 export interface LobbyInteractionResponse extends PlayerStateDto { relicId: string; bondXpEarned: number; bondLevelsGained: number; }
 /** 일일 입장 소비와 즉시 지급된 프로토타입 보상을 한 응답으로 확정한다. */

@@ -13,6 +13,34 @@ export const TORIKA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
 };
 
 /**
+ * 토리카 skin001 전신을 ZIP의 원본 텍스처 좌표계(왼쪽 위 0,0)에서 별도로 측정한 값이다.
+ *
+ * alpha > 16 경계는 178,23–972,1491이고, 관절은 중심1(467,454)·머리1(527,335)·
+ * 눈1(472,312)·눈2(558,344)다. 기본 토리카 값을 복사하지 않고 같은 화면에서 나란히 비교했다.
+ * `cardZoom` 0.792는 눈 간격의 카드 표시 크기를 기본 외형과 맞추고, `lobbyZoom` 0.715는 같은
+ * 1.08 m 토리카의 눈–발끝 표시 길이를 맞춘다. 높은 중심 관절은 정보창 얼굴을 278px 내리므로
+ * `portraitOffsetY`로 되돌린다. 머리 장식은 대칭 카드 홈 안에 들어 `cardHeadEscape`는 불필요하다.
+ */
+export const TORIKA_SKIN_001_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1024,
+  imageHeight: 1536,
+  content: { left: 178, top: 23, right: 972, bottom: 1491 },
+  cardZoom: 0.792,
+  lobbyZoom: 0.715,
+  portraitOffsetY: -278,
+};
+
+/**
+ * 토리카 skin001 SD의 원본 텍스처 좌표 측정값이다. alpha > 16 발끝은 y=1225이고,
+ * 중심1(509,656)·머리1(621,508)을 함께 기록해 전투 배치가 기본 SD 메타데이터에 기대지 않는다.
+ */
+export const TORIKA_SKIN_001_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254,
+  imageHeight: 1254,
+  content: { left: 189, top: 28, right: 1064, bottom: 1225 },
+};
+
+/**
  * 2번 렉시아(티라노사우루스) 전신.
  *
  * content가 1번 토리카 값을 그대로 옮겨 온 것이었다. 왼쪽으로 크게 뻗은 낫 무기가 실제 alpha

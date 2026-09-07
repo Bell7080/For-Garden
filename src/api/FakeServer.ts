@@ -59,6 +59,8 @@ export interface FakeServerOptions {
   verifyAdToken?: (token: string, slotId: string) => boolean | Promise<boolean>;
   /** 실제 백엔드에서는 Apple/Google 서버 검증으로 대체되는 테스트용 영수증 검증기다. */
   verifyPurchaseReceipt?: (receipt: string, productId: string) => string | null | Promise<string | null>;
+  /** 저장 성공/실패를 결정적으로 재현하는 테스트용 어댑터이며, 생략하면 공유 세션만 SaveManager에 저장한다. */
+  persistSession?: (next: Session) => void;
 }
 
 /** 백엔드가 생기기 전까지 메모리 상태를 서버처럼 독점 변경하는 임시 어댑터다. */
@@ -77,6 +79,8 @@ export class FakeServer implements GameApi {
   private readonly now: () => Date;
   private readonly verifyAdToken: (token: string, slotId: string) => boolean | Promise<boolean>;
   private readonly verifyReceipt: (receipt: string, productId: string) => string | null | Promise<string | null>;
+  /** 테스트가 브라우저 저장소 없이 커밋 실패를 주입할 수 있는 선택 저장 경계다. */
+  private readonly persistSession?: (next: Session) => void;
   /** 아래 저장소들은 실제 서버의 고유 제약조건/트랜잭션을 흉내 내는 FakeServer 전용 멱등 기록이다. */
   private readonly receiptResults = new Map<string, VerifyPurchaseReceiptResponse>();
   private readonly verifiedTransactions = new Map<string, VerifyPurchaseReceiptResponse>();
@@ -109,7 +113,7 @@ export class FakeServer implements GameApi {
   private readonly runeSaleResults = new Map<string, SellRunesResponse>();
   /** 일반 스테이지 입장 재전송이 중복 승리 대기 건을 만들지 않게 하는 서버 영수증 표다. */
   private readonly stageAdmissionResults = new Map<string, EnterStageResponse>();
-  /** 입장 때 검증한 요청을 보관하고 승리 정산만 하나를 소비해 패배·강제 종료에는 비용이 없게 한다. */
+  /** 입장 때 커밋한 요청을 보관하고 완료 정산이 해당 전투의 대기 건 하나만 소비하게 한다. */
   private readonly pendingStageAdmissions = new Map<string, Set<string>>();
 
   constructor(
@@ -122,6 +126,7 @@ export class FakeServer implements GameApi {
     // FakeServer 기본값은 테스트용 서명 형식이며 프로덕션 HTTP 서버는 반드시 SSV 검증기를 주입한다.
     this.verifyAdToken = options.verifyAdToken ?? ((token, slotId) => token === `verified:${slotId}`);
     this.verifyReceipt = options.verifyPurchaseReceipt ?? ((receipt, productId) => receipt.startsWith(`verified-receipt:${productId}:`) ? receipt.slice(`verified-receipt:${productId}:`.length) : null);
+    this.persistSession = options.persistSession;
     // 절대 시각을 고정해 테스트와 개발 빌드에서 내용·순서가 언제나 같게 한다.
     this.mails = [
       { id: "welcome-supply", title: "중앙 연구소 보급품", sender: "연구지원국", body: "새로운 조사 활동을 위한 보급품입니다.", sentAt: "2026-08-29T00:00:00.000Z", expiresAt: "2099-12-31T23:59:59.000Z", read: false, claimed: false, rewards: [{ kind: "currency", currency: "gold", amount: 1200 }] },
@@ -753,7 +758,7 @@ export class FakeServer implements GameApi {
     return { ...this.snapshot(), relicId, breakthrough, levelCap: relicLevelCap(breakthrough), stars: relicStars(breakthrough), fragments: nextFragments[relicId] };
   }
 
-  /** 입장에서는 잔량만 검증하고 requestId 재전송에는 같은 허가를 반환한다. 실제 차감은 승리 시점이다. */
+  /** 입장 허가와 비용 차감을 한 처리로 묶고 requestId 재전송에는 최초 영수증을 반환한다. */
   async enterStage(request: EnterStageRequest): Promise<EnterStageResponse> {
     await this.delay();
     const cached = this.stageAdmissionResults.get(request.requestId);
@@ -764,10 +769,15 @@ export class FakeServer implements GameApi {
     this.settleStaminaNow();
     const cost = CONTENT_STAMINA_COSTS.normalStage;
     if (this.state.wallet.stamina < cost) throw new GameApiError("INSUFFICIENT_STAMINA", "스테미나가 부족합니다.");
+    const nextWallet = { ...this.state.wallet, stamina: this.state.wallet.stamina - cost };
+    // 가챠·성장 API처럼 다음 상태를 먼저 저장해야 저장 실패 시 공유 메모리 지갑이 호출 전 값으로 보존된다.
+    this.persist({ ...this.state, wallet: nextWallet });
+    // 영속화가 성공한 뒤에만 공유 참조를 교체해 응답 스냅샷도 실제로 확정된 잔액을 기준으로 만든다.
+    this.state.wallet = nextWallet;
     const pending = this.pendingStageAdmissions.get(request.stageId) ?? new Set<string>();
     pending.add(request.requestId);
     this.pendingStageAdmissions.set(request.stageId, pending);
-    const response = { ...this.snapshot(), stageId: request.stageId, requestId: request.requestId, staminaCost: cost, chargePolicy: "victory-only" as const };
+    const response = { ...this.snapshot(), stageId: request.stageId, requestId: request.requestId, staminaSpent: cost, refundPolicy: "no-refund-after-admission" as const };
     this.stageAdmissionResults.set(request.requestId, structuredClone(response));
     return response;
   }
@@ -787,9 +797,8 @@ export class FakeServer implements GameApi {
     const nextCleared = victory ? new Set(this.state.cleared).add(stageId) : new Set(this.state.cleared);
     const pending = this.pendingStageAdmissions.get(stageId);
     const admissionId = pending?.values().next().value as string | undefined;
-    // 파티 저장과 입장 검증은 선행 절차일 뿐이다. 검증된 실제 플레이도 승리한 경우에만 비용을 낸다.
-    const staminaSpent = victory && admissionId ? CONTENT_STAMINA_COSTS.normalStage : 0;
-    const nextWallet = { ...this.state.wallet, stamina: this.state.wallet.stamina - staminaSpent, cheesecake: this.state.wallet.cheesecake + cheesecakeEarned };
+    // 스테미나는 입장 커밋에서 이미 차감됐으므로 완료에서는 전투 보상만 다음 지갑에 반영한다.
+    const nextWallet = { ...this.state.wallet, cheesecake: this.state.wallet.cheesecake + cheesecakeEarned };
     // 승리한 전투에 실제 편성된 세 렐릭에게만 유대 경험치를 지급한다.
     const nextProgress = Object.fromEntries(Object.entries(this.state.relicProgress).map(([id, progress]) => [id,
       victory && this.state.party.includes(id) ? grantBondXp(progress, BOND_XP_REWARD.partyVictory).progress : progress]));
@@ -1289,11 +1298,12 @@ export class FakeServer implements GameApi {
     if (this.bossWeek.weekKey !== weekKey) { this.previousBossBest = this.bossWeek.bestScore; this.bossWeek = { weekKey, bestScore: 0, cumulativeScore: 0, achievedAt: "", claimedStageIds: [] }; }
   }
 
-  /** 공유 세션일 때만 브라우저 저장을 수행해 단위 테스트의 독립 세션에는 부작용을 만들지 않는다. */
+  /** 주입 어댑터를 우선 사용하고, 없으면 공유 세션만 브라우저에 저장해 독립 테스트 부작용을 막는다. */
   private persist(next: Session): void {
     // 모든 쓰기 API가 공유하는 마지막 경계에서 음수·상한·중복을 저장 전에 차단한다.
     this.validateState(next);
-    if (this.state === session) saveManager.save(next);
+    if (this.persistSession) this.persistSession(next);
+    else if (this.state === session) saveManager.save(next);
   }
 
   /** 실제 HTTP 서버로 옮겨도 그대로 적용할 API 응답 직전 불변식 검사다. */

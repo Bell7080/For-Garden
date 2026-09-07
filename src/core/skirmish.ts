@@ -231,6 +231,12 @@ export interface Fighter extends Combatant {
    * 폭주가 길어져도 손이 빨라지는 구간은 정확히 그만큼이다.
    */
   hastenedAttacksLeft: number;
+  /** 마키가 이번 폭주에서 손질을 즉시 터뜨릴 수 있는 남은 기본 공격 횟수다. */
+  instantButcherAttacksLeft: number;
+  /** 폭주를 연 바로 그 공격이 "다음 세 번"에 섞이지 않도록 첫 손질 적용만 건너뛰는 표식이다. */
+  instantButcherPending: boolean;
+  /** 실제 HP 피해로 발동한 피격 은신 횟수다. 전투마다 새 전투원과 함께 0으로 초기화된다. */
+  damageStealthTriggersUsed: number;
   /** 0보다 크면 단일 대상 선택의 중심이 될 수 없는 은신 상태다. */
   stealthFor: number;
   /**
@@ -827,6 +833,9 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     basicAttackCount: 0,
     basicCycleStep: 0,
     hastenedAttacksLeft: 0,
+    instantButcherAttacksLeft: 0,
+    instantButcherPending: false,
+    damageStealthTriggersUsed: 0,
     // 짜잔! 은 전투가 열리는 순간부터 은신한 채로 시작한다 — 첫 프레임에 이미 걸려 있어야
     // "숨어서 시작했다"가 되고, 한 박자 뒤에 걸면 이미 표적이 잡힌 뒤다.
     stealthFor: def.passive.kind === "openingVanish" ? def.passive.durationSeconds ?? 0 : 0,
@@ -1210,7 +1219,8 @@ function applyButcher(
   state: SkirmishState,
   sourceId?: string,
 ): void {
-  const stacks = (target.butcher?.stacks ?? 0) + 1;
+  const instant = attackerCanInstantlyButcher(sourceId, state);
+  const stacks = instant ? effect.maxStacks : (target.butcher?.stacks ?? 0) + 1;
   target.butcher = { stacks, maxStacks: effect.maxStacks, burstPower: effect.burstPower };
   if (stacks < effect.maxStacks) return;
   target.butcher = { stacks: 0, maxStacks: effect.maxStacks, burstPower: effect.burstPower };
@@ -1240,6 +1250,19 @@ function applyButcher(
     clearDefeatedStatuses(target);
     events.push({ kind: "death", fighterId: target.id, sourceId: attacker.id });
   }
+}
+
+/** 폭주 진입으로 받은 확정 손질권을 실제 손질 적중에서만 하나 소비한다. */
+function attackerCanInstantlyButcher(sourceId: string | undefined, state: SkirmishState): boolean {
+  const attacker = sourceId ? findFighter(state, sourceId) : undefined;
+  if (attacker?.instantButcherPending) {
+    attacker.instantButcherPending = false;
+    return false;
+  }
+  if (!attacker || !attacker.ferocityFever || attacker.def.ferocityTrait.effectId !== "butcherFeast"
+    || attacker.instantButcherAttacksLeft <= 0) return false;
+  attacker.instantButcherAttacksLeft -= 1;
+  return true;
 }
 
 /**
@@ -2562,6 +2585,11 @@ function gainFerocity(fighter: Fighter, base: number, state: SkirmishState, even
       for (const other of state.fighters) if (other.targetId === fighter.id) { other.targetId = null; other.engaged = false; }
     }
     if (trait.effectId === "adamantBody") fighter.hastenedAttacksLeft = trait.hastenedAttacks;
+    // 마키는 폭주 진입 직후 세 번의 칼질을 회복과 폭딜로 바꾼다. 이전 폭주의 잔여치는 덮어쓴다.
+    if (trait.effectId === "butcherFeast") {
+      fighter.instantButcherAttacksLeft = trait.instantButcherAttacks;
+      fighter.instantButcherPending = true;
+    }
     if (trait.effectId === "furCoat") {
       // 정화: 살아 있는 채로 걸린 상태이상·디버프만 지운다. 버프·아군이 준 것(순풍·희열 등)은
       // 건드리지 않는다 — "장식이 아니다"가 말하는 것은 스스로 두른 것을 지키는 힘이다.
@@ -3014,10 +3042,28 @@ function applyDamage(target: Fighter, amount: number, events: SkirmishEvent[], s
     target.undyingPending = true;
   }
   const dealt = hpBefore - target.hp;
+  // 보호막에 전부 막힌 타격은 "피해를 입은" 것이 아니므로 발동권을 쓰지 않는다.
+  if (dealt > 0 && isFighterAlive(target)) tryTriggerDamageStealth(target, state);
   // 모든 피해 원천이 지나온 마지막 관문에서만 지급한다. 실제 HP 손실 0·전투 불능은 제외해
   // 보호막에 막힌 피해나 죽은 개체가 조가비를 만들고 다시 살아나는 무한 재발동을 방지한다.
   if (dealt > 0 && isFighterAlive(target)) gainShellGuard(target, 1, state, events);
   return dealt;
+}
+
+/** 마키의 피격 은신을 전투당 상한 안에서 발동하고, 이미 자신을 보던 적의 어그로를 즉시 끊는다. */
+function tryTriggerDamageStealth(fighter: Fighter, state: SkirmishState): void {
+  const passive = fighter.def.passive;
+  if (passive.kind !== "gourmetHunt") return;
+  const seconds = passive.damageStealthSeconds ?? 0;
+  const maximum = passive.damageStealthMaxTriggers ?? 0;
+  if (seconds <= 0 || fighter.damageStealthTriggersUsed >= maximum) return;
+  fighter.damageStealthTriggersUsed += 1;
+  fighter.stealthFor = Math.max(fighter.stealthFor, seconds);
+  for (const enemy of state.fighters) {
+    if (enemy.side === fighter.side || enemy.targetId !== fighter.id) continue;
+    enemy.targetId = null;
+    enemy.engaged = false;
+  }
 }
 
 /**

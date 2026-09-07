@@ -2673,6 +2673,32 @@ describe("마키 정적 전투 계약", () => {
     expect(maki.targetId).toBe(other.id);
   });
 
+  it("의 패시브는 실제 피해를 받을 때 세 번까지만 2초 은신하며 적의 추적을 끊는다", () => {
+    const state = newSkirmish(["maki"], ["toby"]);
+    const [maki, enemy] = state.fighters;
+    maki.x = 440; maki.y = 1000; maki.attackCooldown = 99;
+    enemy.x = 460; enemy.y = 1000;
+    const passive = maki.def.passive;
+    if (passive.kind !== "gourmetHunt") throw new Error("마키의 패시브가 아니다");
+
+    for (let hit = 1; hit <= passive.damageStealthMaxTriggers! + 1; hit += 1) {
+      // 각 검증 타격 전에 은신을 끝내야 같은 적이 다시 마키를 유효 표적으로 삼을 수 있다.
+      maki.stealthFor = 0;
+      enemy.targetId = maki.id; enemy.attackCooldown = 0;
+      // 실제 이동·사거리 판정을 통과해 때릴 때까지 진행하되 다음 자연 공격 전에는 검사를 끝낸다.
+      const before = maki.hp;
+      for (let frame = 0; frame < 120 && maki.hp === before; frame += 1) stepSkirmish(state, 1 / 60);
+      expect(maki.hp).toBeLessThan(before);
+      expect(maki.damageStealthTriggersUsed).toBe(Math.min(hit, passive.damageStealthMaxTriggers!));
+      if (hit <= passive.damageStealthMaxTriggers!) {
+        expect(maki.stealthFor).toBeGreaterThan(passive.damageStealthSeconds! - 0.1);
+        expect(enemy.targetId).toBeNull();
+      } else {
+        expect(maki.stealthFor).toBe(0);
+      }
+    }
+  });
+
   it("의 기본 공격은 세 겹째에 손질을 터뜨리고 겹을 비운다", () => {
     const { state, maki, foes } = makiBattle(["amo"]);
     const butcher = maki.def.basic.statusEffects!.find((effect) => effect.kind === "butcher")!;
@@ -2738,6 +2764,26 @@ describe("마키 정적 전투 계약", () => {
     // 때리지 않은 아군까지 함께 회복한다 — 흡혈이 아니라 팀 회복이다.
     expect(ally.hp).toBeCloseTo(1 + burst.amount * trait.healPercent / 100, 5);
     expect(maki.hp).toBeGreaterThan(1);
+  });
+
+  it("의 폭주 진입 후 다음 세 기본 공격은 손질을 즉시 터뜨린다", () => {
+    const { state, maki, foes } = makiBattle(["toby"]);
+    const enemy = foes[0];
+    const trait = maki.def.ferocityTrait;
+    if (trait.effectId !== "butcherFeast") throw new Error("마키의 폭주 특성이 아니다");
+    // 첫 공격으로 폭주에 들어가며, 그 공격 자체는 진입 전에 시작했으므로 평소처럼 한 겹만 쌓는다.
+    maki.ferocity = 99;
+    stepSkirmish(state, 1 / 60);
+    expect(maki.instantButcherAttacksLeft).toBe(trait.instantButcherAttacks);
+
+    const events: SkirmishEvent[] = [];
+    for (let attack = 0; attack < trait.instantButcherAttacks; attack += 1) {
+      maki.attackCooldown = 0;
+      events.push(...stepSkirmish(state, 1 / 60));
+    }
+    expect(events.filter((event) => event.kind === "butcherBurst")).toHaveLength(trait.instantButcherAttacks);
+    expect(maki.instantButcherAttacksLeft).toBe(0);
+    expect(enemy.butcher?.stacks).toBe(0);
   });
 });
 

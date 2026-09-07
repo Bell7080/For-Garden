@@ -595,6 +595,11 @@ function skillEffectClauses(skill: DescribedSkill, stats: SkillDescriptionStats)
   if ("periodicCritical" in skill && skill.periodicCritical) {
     clauses.push({ text: `매 ${skill.periodicCritical.every}번째 실제 [[basic-attack|기본 공격]]은 확정 치명타가 된다`, standalone: true });
   }
+  // 여울은 **쓰는 개체가 하나뿐인 규칙어**라 반경·시간·둔화·확정 연격을 태그가 갖는다.
+  // 본문이 그걸 다시 늘어놓으면 한 문장이 그 규칙 하나로 가득 찬다.
+  if ("shallows" in skill && skill.shallows !== undefined) {
+    clauses.push({ text: `공격한 자리에 [[shallows|여울]]이 고인다`, standalone: true });
+  }
   if ("chargeStartsAtHpPercent" in skill && skill.chargeStartsAtHpPercent !== undefined) {
     clauses.push({ text: `체력이 ${skill.chargeStartsAtHpPercent}% 이하가 되면 충전을 시작한다`, standalone: true });
   }

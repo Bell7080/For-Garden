@@ -6,7 +6,9 @@ import {
   laneAreaPoints,
   radialAreaPoints,
   SUPPORTIVE_AREA_COLOR,
+  statusAreaColor,
 } from "../../src/ui/groundAreas";
+import { UNIT_STATUS_COLOR } from "../../src/ui/unitStatusModel";
 import { AREA_IMPACT } from "../../src/ui/effectPresets";
 import { DAMAGE_FLAVOR_COLOR } from "../../src/ui/damageNumbers";
 import { readFileSync } from "node:fs";
@@ -30,6 +32,15 @@ describe("바닥 범위 표시의 색", () => {
     expect(physical.color).toBe(DAMAGE_FLAVOR_COLOR.damage);
     expect(groundAreaStyle({ hostile: false, damageType: "true", ultimate: false }).color).toBe(DAMAGE_FLAVOR_COLOR.true);
     expect(groundAreaStyle({ hostile: false, supportive: true, ultimate: false }).color).toBe(SUPPORTIVE_AREA_COLOR);
+  });
+
+  it("상태를 거는 범위는 머리 위 칩과 같은 색으로, 아군 피격보다 먼저 선다", () => {
+    // 피해 수치에서 디버프가 받는 쪽에서도 제 색을 지키는 것과 같은 규칙이다 — 같은 상태가
+    // 바닥과 머리 위에서 다른 색이면 무엇이 걸렸는지 두 번 읽어야 한다.
+    const submerged = groundAreaStyle({ hostile: false, status: "submerged", ultimate: false });
+    expect(submerged.color).toBe(statusAreaColor("submerged"));
+    expect(statusAreaColor("submerged")).toBe(`#${UNIT_STATUS_COLOR.submerged.toString(16)}`);
+    expect(groundAreaStyle({ hostile: true, status: "submerged", ultimate: false }).color).toBe(submerged.color);
   });
 
   it("궁극기는 색이 아니라 남아 있는 시간으로 갈린다", () => {

@@ -970,6 +970,7 @@ export class BattleScene extends Phaser.Scene {
         hostile: caster?.fighter.side === "enemy",
         damageType: event.damageType,
         supportive: event.supportive,
+        status: event.status,
         ultimate: event.ultimate,
       });
       return undefined;

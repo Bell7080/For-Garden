@@ -259,6 +259,29 @@ export const RELICS: RelicDef[] = [
       effectType: "physical",
       damageType: "physical",
       combo: { chancePercent: 40, hitCount: 2, missingHpHealingPercentPerHit: 5 },
+      /*
+       * 「여울」. 물가의 포식자는 사냥터를 고르는 것이 아니라 **만든다.**
+       *
+       * 반경 200은 붙어 싸우는 거리(`SKIRMISH.reach` 172)보다 조금 넓다 — 표적 하나만
+       * 잠그는 판이면 "물가"가 아니라 그냥 표식이고, 난전 한 덩어리를 통째로 덮을 만큼
+       * 넓으면 근접 개체가 전부 상시 둔화된다. 3초는 표적을 갈아타 달려가면 **뒤에 남는**
+       * 길이다 — 다음 사냥감에게 붙는 동안 앞서 잠근 적은 아직 물속에 있다.
+       *
+       * 이동 감속 35%는 **잠긴 동안에만** 걸리고 물 밖으로 나오면 그 프레임에 풀린다. 공격
+       * 속도를 함께 깎지 않는 이유는 그렇게 하면 이 개체가 붙어 싸우는 내내 적 전체의 화력이
+       * 줄어, 암살자 한 명이 조용히 팀 방어를 겸하게 되기 때문이다.
+       *
+       * 확정 연격이 이 판의 값이다. 40% 확률로만 터지던 물어뜯기가 물가에서는 반드시 두 번
+       * 들어가고 잃은 체력 회복도 두 번 돈다 — 「악어턱」이라는 이름이 실제로 붙잡는 순간은
+       * 여기뿐이다. 대신 그 값은 **자리에** 걸려 있어, 달려가는 동안과 물이 마른 뒤에는
+       * 예전과 같은 40%로 돌아간다.
+       */
+      shallows: {
+        radius: 200,
+        seconds: 3,
+        moveSlowPercent: 35,
+        guaranteesCombo: true,
+      },
       // combo가 있는 BasicAttack은 skillDescription()이 구조화 필드로 다시 문장을 만들므로
     } satisfies BasicAttack,
     ultimate: {

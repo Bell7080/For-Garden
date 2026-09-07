@@ -32,6 +32,14 @@ export type RelicRarity = "R" | "SR" | "SSR";
 /** 전신 Puppet 레지스트리의 안정적인 데이터 키다. 파일 번호를 게임 데이터에 직접 노출하지 않는다. */
 export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "pontos" | "parua";
 
+/**
+ * 저장 데이터에서 선택·소유 외형을 식별하는 안정적인 ID다.
+ *
+ * 파일명이나 에셋 번호와 직접 결합하지 않으며, 스킨은 능력치·스킬을 전혀 갖지 않는 외형 전용
+ * 데이터다. 새 외형을 출시할 때 이 유니온에 영구 ID를 추가하고 기존 ID의 의미는 바꾸지 않는다.
+ */
+export type RelicSkinId = "torika-skin-001";
+
 export interface Stats {
   /** 생존력과 물리·마법 공격의 기반이 되는 주 능력치다. */
   hp: number;

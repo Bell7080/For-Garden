@@ -1312,6 +1312,33 @@ describe("자리 정리", () => {
     expect(Math.hypot(runner.x - foe.x, runner.y - foe.y)).toBeLessThanOrEqual(fighterReach(runner));
   });
 
+  it("는 정체 시간이 지난 추격자를 연속된 근접 캐릭터 사이에서 빼낸다", () => {
+    // 한 쌍만 옆으로 비키는 방식은 두세 명이 겹친 벽에서 다음 몸에 즉시 다시 밀렸다. 막힘이
+    // 확정된 뒤에는 표적에게 붙을 때까지 충돌을 건너뛰어, 통과하는 쪽도 벽도 밀리지 않게 한다.
+    const state = createSkirmish(
+      [getRelic("rex"), getRelic("anky"), getRelic("ella")],
+      [getRelic("amo"), getRelic("toby")],
+      ARENA,
+    );
+    const [runner, firstWall, secondWall, foe, decoy] = state.fighters;
+    runner.x = 300; runner.y = 1_100; runner.targetId = foe.id;
+    runner.bestGap = 600;
+    runner.blockedFor = SKIRMISH.collisionBypassSeconds;
+    foe.x = 900; foe.y = 1_100; foe.attackCooldown = 99;
+    decoy.x = 900; decoy.y = 300; decoy.attackCooldown = 99;
+    for (const wall of [firstWall, secondWall]) {
+      wall.x = 302; wall.y = 1_100; wall.engaged = true; wall.attackCooldown = 99; wall.stunnedFor = 99;
+    }
+    const wallsBefore = [firstWall.x, secondWall.x];
+
+    stepSkirmish(state, 0.05, () => 0.99);
+
+    expect(runner.x).toBeGreaterThan(300);
+    expect([firstWall.x, secondWall.x]).toEqual(wallsBefore);
+    // 4px 전진했다고 바로 충돌을 되살리면 다음 프레임에 같은 벽에 다시 잡히므로 탈출을 유지한다.
+    expect(runner.blockedFor).toBeGreaterThanOrEqual(SKIRMISH.collisionBypassSeconds);
+  });
+
   it("는 닿는데 못 때리는 자리에 갇히지 않는다", () => {
     // 붙는 기준은 사거리보다 안쪽이라 그 사이가 빈 띠로 남는다. 거기서 앞으로 나아가지
     // 못한 지 오래라면 자리를 더 좁히는 대신 그 자리에서 때린다.

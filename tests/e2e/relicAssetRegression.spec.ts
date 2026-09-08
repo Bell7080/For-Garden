@@ -2,7 +2,6 @@ import { expect, test, type Page } from "@playwright/test";
 import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
 import { startAfterOpening } from "./openingSave";
 import { captureGame, tap as tapGame, tapUntil } from "./canvasInput";
-import { ownTorikaTestSkin } from "../fixtures/relicSkin";
 
 /** 타이틀에서 기본 작전의 편성 화면까지 공용 UI만 눌러 이동한다. */
 async function openParty(page: Page): Promise<void> {
@@ -51,8 +50,8 @@ test("도디·메테의 도감 전신과 루카 포함 편성·전투 SD 에셋�
 });
 
 test("토리카 기본 외형에서 스킨을 장착해 도감·로비·편성·전투·재시작까지 같은 한 벌을 유지한다", async ({ page }, testInfo) => {
-  // 승인되지 않은 획득 경로에 기대지 않고 이 시각 회귀만 명시적으로 스킨을 보유한다.
-  await startAfterOpening(page, ownTorikaTestSkin);
+  // 신규 계정의 정적 기본 해금만으로 외형 선택 흐름이 열려야 한다.
+  await startAfterOpening(page);
   await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   await tapUntil(page, BASE_WIDTH * 0.3, BASE_HEIGHT - 90, async () => (await page.evaluate(() => window.__PF_DEBUG?.scene)) === "relics");

@@ -1,9 +1,13 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { RELIC_SKINS, getRelicSkin, skinsForRelic, validateRelicSkins } from "../../src/data/relicSkins";
+import { defaultUnlockedRelicSkinIds, RELIC_SKINS, getRelicSkin, skinsForRelic, validateRelicSkins } from "../../src/data/relicSkins";
 
 describe("relic skins", () => {
+  it("토리카 외형은 정적 정책에서 기본 해금된다", () => {
+    // 상태 코드가 특정 ID를 복제하지 않도록 공개 헬퍼의 계산 결과를 계약으로 고정한다.
+    expect(defaultUnlockedRelicSkinIds()).toEqual(["torika-skin-001"]);
+  });
   it("토리카 추가 외형은 anky에만 연결된다", () => {
     // 표시명이나 파일 번호가 아니라 저장 호환 렐릭 ID로 소유 대상을 고정한다.
     expect(skinsForRelic("anky").map(({ id }) => id)).toEqual(["torika-skin-001"]);

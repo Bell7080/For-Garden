@@ -1,14 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 import { RelicSkinManager } from "../../src/managers/RelicSkinManager";
 import { createDefaultSession } from "../../src/state/session";
-import { ownTorikaTestSkin } from "../fixtures/relicSkin";
 
 /** 외형 변경의 소유권 검증과 영속화 경계를 작은 독립 세션으로 고정한다. */
 describe("RelicSkinManager", () => {
-  it("일반 신규 계정에는 승인 전 외형을 지급하지 않는다", () => {
+  it("일반 신규 계정은 기본 해금 외형을 소유한다", () => {
     const manager = new RelicSkinManager(createDefaultSession(), { save: vi.fn() });
-    // 상품·이벤트·무료 지급 중 어느 경로도 아직 확정되지 않았으므로 기본 세션은 소유권이 없다.
-    expect(manager.owns("torika-skin-001")).toBe(false);
+    // 상품·이벤트 호출 없이도 데이터가 선언한 무료 지급 정책이 manager 소유권으로 이어진다.
+    expect(manager.owns("torika-skin-001")).toBe(true);
   });
 
   it("미보유 렐릭, 미보유 스킨, 다른 렐릭용 스킨은 장착하지도 저장하지도 않는다", () => {
@@ -19,14 +18,15 @@ describe("RelicSkinManager", () => {
     expect(manager.equip("tia", "torika-skin-001")).toBe(false);
     state.ownedRelicSkinIds.clear();
     expect(manager.equip("anky", "torika-skin-001")).toBe(false);
-    ownTorikaTestSkin(state);
+    // 기본 해금 복구 뒤에도 다른 렐릭용 외형이라는 장착 규칙은 그대로 적용된다.
+    state.ownedRelicSkinIds.add("torika-skin-001");
     expect(manager.equip("rex", "torika-skin-001")).toBe(false);
     expect(state.equippedRelicSkinIds).toEqual({});
     expect(saves.save).not.toHaveBeenCalled();
   });
 
   it("유효한 외형을 장착하고 해제할 때마다 변경된 세션을 저장한다", () => {
-    const state = ownTorikaTestSkin(createDefaultSession());
+    const state = createDefaultSession();
     const saves = { save: vi.fn() };
     const manager = new RelicSkinManager(state, saves);
     const listener = vi.fn();

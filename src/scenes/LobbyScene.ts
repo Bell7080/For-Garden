@@ -56,6 +56,8 @@ const SORTIE_MENU = { panel: { width: 980, height: 1240 }, motionDelay: 2600 } a
 const SORTIE_SD_DEPTH = 2101;
 /** 복제 그림자의 색과 진하기. 카드 원화의 그림자와 같은 결로 눌러 둔다. */
 const SORTIE_SD_SHADOW = { color: 0x05070a, alpha: 0.42 } as const;
+/** 일시 실패를 무한 재요청하지 않으면서 메뉴 한 번 안에서는 본체를 회복할 수 있는 추가 시도 수다. */
+const SORTIE_SD_PRIMARY_RETRIES = 2;
 
 /** 한 자리에 선 SD 두 겹. 그림자는 늦게 도착하거나 실패할 수 있다. */
 interface SortieSdPair { body?: PuppetCreature; shadow?: PuppetCreature }
@@ -317,6 +319,8 @@ export class LobbyScene extends Phaser.Scene {
     this.popupLayer.open({ width: panel.width, height: panel.height, title: "출격", titleSize: 34, dim: true, dimAlpha: 0.24, closeOnBackdrop: false, hideCloseButton: true, onClose: () => this.clearSortieChrome() }, (body, close) => {
       // Puppet은 컨테이너 변환을 물려받지 않으므로 원점에 선 전용 레이어에 화면 좌표로 세운다.
       this.sortieSdLayer = this.add.container(0, 0).setName("sortie-entry-sd").setDepth(SORTIE_SD_DEPTH);
+      // Canvas 밖 E2E에는 그림자가 아니라 이 판이 실제 소유한 서로 다른 본체만 관측시킨다.
+      if (window.__PF_DEBUG) window.__PF_DEBUG.sortieSdBodyAssetUrls = [];
       const entries: SortieEntry[] = [
         {
           y: -410, width: 800, height: 220, label: "스토리", status: "메인 작전", artKey: "content-story-entry",
@@ -410,15 +414,23 @@ export class LobbyScene extends Phaser.Scene {
       height: place.height,
       depth: shadow ? SORTIE_SD_DEPTH - 1 : SORTIE_SD_DEPTH,
     });
-    await loadOwnedPuppetPair({
-      // 본체와 그림자를 함께 조립해 저속 기기에서도 그림자만 먼저 남는 중간 프레임을 없앤다.
-      spawnPrimary: () => spawn(false),
-      spawnCompanion: () => spawn(true),
-      isCurrent: () => this.sortieSdLayer === layer,
-      isDisplayable: (puppet) => Boolean(puppet.active && puppet.texture?.key && this.textures.exists(puppet.texture.key)),
-      adoptPrimary: (puppet) => adopt(puppet, false),
-      adoptCompanion: (puppet) => adopt(puppet, true),
-    });
+    for (let attempt = 0; attempt <= SORTIE_SD_PRIMARY_RETRIES; attempt += 1) {
+      const result = await loadOwnedPuppetPair({
+        // 본체와 그림자를 함께 조립해 저속 기기에서도 그림자만 먼저 남는 중간 프레임을 없앤다.
+        spawnPrimary: () => spawn(false),
+        spawnCompanion: () => spawn(true),
+        // 재시도와 늦은 완료 모두 처음 연 판의 소유권을 통과해야 닫힌 팝업에 붙지 않는다.
+        isCurrent: () => this.sortieSdLayer === layer,
+        isDisplayable: (puppet) => Boolean(puppet.active && puppet.texture?.key && this.textures.exists(puppet.texture.key)),
+        adoptPrimary: (puppet) => {
+          adopt(puppet, false);
+          if (window.__PF_DEBUG && !window.__PF_DEBUG.sortieSdBodyAssetUrls?.includes(asset.url)) window.__PF_DEBUG.sortieSdBodyAssetUrls?.push(asset.url);
+        },
+        adoptCompanion: (puppet) => adopt(puppet, true),
+      });
+      if (result.status !== "failed" || this.sortieSdLayer !== layer) break;
+      // 실패한 본체만 제한 횟수로 다시 만들며, 그림자 실패는 adopted라서 본체를 숨기거나 재시도하지 않는다.
+    }
     if (pair.body) this.sortieSdPairs.push(pair);
   }
 
@@ -428,6 +440,7 @@ export class LobbyScene extends Phaser.Scene {
     for (const puppet of this.sortieSdPuppets) { this.sortieSdLayer?.remove(puppet, false); puppet.destroy(); }
     this.sortieSdPuppets.clear(); this.sortieSdPairs = [];
     this.sortieSdLayer?.destroy(true); this.sortieSdLayer = undefined;
+    if (window.__PF_DEBUG) window.__PF_DEBUG.sortieSdBodyAssetUrls = undefined;
     this.sortieBackButton?.destroy(); this.sortieBackButton = undefined;
   }
 

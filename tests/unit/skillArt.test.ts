@@ -227,7 +227,7 @@ describe("데이 스킬 표시 계약", () => {
     expect(deina.basic.desc).toBeUndefined();
     // 도발은 붙잡아 두는 시간이 곧 스킬마다 다른 값이라 본문이 초를 적는다.
     expect(skillDescription(deina.basic, { damage: 25 }))
-      .toBe("적 한 명에게 [[damage-value|25]]의 [[magical-damage|마법 피해]]를 주고 [[vandalism|밴덜리즘]]을 한 겹 쌓는다. 0.5초 동안 [[taunt|도발]]한다.");
+      .toBe("적 한 명에게 [[damage-value|25]]의 [[magical-damage|마법 피해]]를 주고 [[vandalism|밴덜리즘]]을 한 겹 쌓는다. 0.75초 동안 [[taunt|도발]]한다.");
   });
 
   it("의 궁극기는 총량이 아니라 매초의 몫으로 읽힌다", () => {
@@ -249,7 +249,7 @@ describe("데이 스킬 표시 계약", () => {
     // 도발이 그 뒤에 붙는 것이 이 폭주의 핵심이다 — 손을 놓아도 어그로는 꺼지지 않는다.
     expect(ferocityTraitDescription(deina.ferocityTrait, { attack: deina.stats.atk, defense: deina.stats.def, abilityPower: deina.stats.ap })).toBe(
       "이동 속도가 100% 증가하고 [[basic-attack|기본 공격]]을 하지 않는다."
-      + " 매초 자신의 주위 모든 적에게 [[damage-value|18]]의 [[magical-damage|마법 피해]]를 주고 [[vandalism|밴덜리즘]]을 한 겹 쌓으며 0.5초 동안 [[taunt|도발]]한다.",
+      + " 매초 자신의 주위 모든 적에게 [[damage-value|18]]의 [[magical-damage|마법 피해]]를 주고 [[vandalism|밴덜리즘]]을 한 겹 쌓으며 0.75초 동안 [[taunt|도발]]한다.",
     );
   });
 

@@ -1194,7 +1194,11 @@ export const RELICS: RelicDef[] = [
     },
     // 폭주 중에는 서 있는 것만으로 주위가 지져진다. 회복만 있던 자리에 적에게 남기는 값을 하나
     // 두는 것이라, 탱커가 자기 숫자만 바꾸다 화면에서 사라지는 일이 없다.
-    ferocityTrait: { name: "절정", effectId: "climax", auraDamageMaxHpPercent: 1.5, radius: 240, missingHpPercentPerBasic: 3 },
+    ferocityTrait: {
+      name: "절정", effectId: "climax", auraDamageMaxHpPercent: 1.5, radius: 240,
+      // 화상 틱을 버틴 적만 잠깐 노도니아를 바라보므로 피해 반경과 도발 반경이 갈리지 않는다.
+      taunt: { kind: "taunt", seconds: 0.5 }, missingHpPercentPerBasic: 3,
+    },
     passive: {
       // kind가 painfulElation인 패시브는 passiveDescription()이 구조화 필드로 문장을 만들므로
       // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.

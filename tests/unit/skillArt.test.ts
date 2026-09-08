@@ -193,9 +193,11 @@ describe("노도니아 스킬 표시 계약", () => {
   });
 
   it("의 절정은 주위를 지지고 잃은 체력을 되찾는다", () => {
-    expect(nodonia.ferocityTrait).toMatchObject({ name: "절정", effectId: "climax", auraDamageMaxHpPercent: 1.5, radius: 240, missingHpPercentPerBasic: 3 });
+    // 표시문과 전투가 같은 구조화 도발 계약을 읽어 0.5초 수치가 둘 사이에서 갈리지 않게 한다.
+    expect(nodonia.ferocityTrait).toMatchObject({ name: "절정", effectId: "climax", auraDamageMaxHpPercent: 1.5, radius: 240, taunt: { kind: "taunt", seconds: 0.5 }, missingHpPercentPerBasic: 3 });
     expect(ferocityTraitDescription(nodonia.ferocityTrait, { attack: nodonia.stats.atk, defense: nodonia.stats.def })).toBe(
       "매초 자신의 주위 모든 적에게 최대 체력의 1.5%만큼 [[fixed-damage|고정 피해]]를 준다."
+      + " 매초 피해를 받은 적을 0.5초 동안 [[taunt|도발]]한다."
       + " [[basic-attack|기본 공격]]마다 [[missing-hp|잃은 체력]]의 3%를 회복한다.",
     );
   });

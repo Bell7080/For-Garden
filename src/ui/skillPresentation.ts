@@ -149,6 +149,7 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
   // 값인 개체라, 성한 몸일 때 가장 많이 도는 회복이면 성질이 거꾸로 선다.
   if (trait.effectId === "climax") {
     return `매초 자신의 주위 모든 적에게 최대 체력의 ${trait.auraDamageMaxHpPercent}%만큼 [[fixed-damage|고정 피해]]를 준다.`
+      + ` 매초 피해를 받은 적을 ${trait.taunt.seconds}초 동안 [[taunt|도발]]한다.`
       + ` [[basic-attack|기본 공격]]마다 [[missing-hp|잃은 체력]]의 ${trait.missingHpPercentPerBasic}%를 회복한다.`;
   }
   // 때리지 않는다는 것을 먼저 말한다 — 이 폭주에서 플레이어가 화면으로 확인할 첫 변화가

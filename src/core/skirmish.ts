@@ -266,14 +266,15 @@ export interface Fighter extends Combatant {
    */
   taunted: { remaining: number; total: number; sourceId: string } | null;
   /**
-   * 지금 쌓인 희열. 맞을 때마다 한 겹씩 오르고 방어력·저항력을 함께 올린다.
+   * 지금 쌓인 희열. 적에게 피격될 때마다 한 겹씩 쌓이고, 한 겹마다 매초 최대 체력에 비례해
+   * 회복한다.
    *
-   * 손질과 같은 성질이라 **상한에 닿는 프레임에 스스로 터지고** 겹이 0으로 돌아간다. 다만
-   * 손질과 달리 시간도 흐른다 — 맞지 않으면 식는 값이라, 앞에 서 있는 동안만 단단해진다.
+   * 정해진 최대 겹을 넘지 않으며 다시 피격되면 유지 시간이 처음부터 갱신된다. 갱신 없이 유지
+   * 시간이 만료되면 쌓인 희열을 모두 제거한다.
    */
   elation: { stacks: number; remaining: number; total: number; regenPercentPerStack: number; maxStacks: number; tickIn: number } | null;
   /**
-   * 아군이 받을 피해를 대신 받는 중. 희열이 터질 때와 「고통의 미학」이 켠다.
+   * 아군이 받을 피해를 대신 받는 중. 「고통의 미학」이 켠다.
    *
    * **슬롯은 하나뿐이다** — 두 겹으로 쌓으면 같은 피해가 두 번 나뉘어 아군이 실제로 받는 몫이
    * 화면과 갈린다. 그래서 새로 켜질 때는 **대신 받는 비율이 큰 쪽**이 남고, 비율이 같으면 남은
@@ -1464,9 +1465,8 @@ function grantShieldFromDamage(attacker: Fighter, dealt: number, events: Skirmis
  * **공격에 맞았을 때만 오른다.** 출혈·중독처럼 시간이 깎는 피해까지 세면 겹이 저절로 차올라
  * "앞에 서서 맞고 있다"가 아니라 "가만히 있어도 단단해진다"가 된다.
  *
- * **터지지 않는다.** 상한에 닿으면 그 자리에 머물 뿐이고, 겹을 비우는 것은 시간뿐이다 —
- * 덧칠·저주와 같은 축이고 손질과는 다르다. 겹 하나하나가 곧 방어·저항이라 채워 두는 것이
- * 목적이지, 채워서 다른 일을 터뜨리는 것이 아니다.
+ * 정해진 최대 겹에 닿으면 더 쌓이지 않으며, 다시 맞을 때마다 유지 시간을 처음부터 갱신한다.
+ * 겹은 별도 효과를 발동해 소비되지 않고 유지 시간이 만료될 때 모두 제거된다.
  */
 function gainElation(target: Fighter): void {
   const plan = target.def.passive.elation;
@@ -1516,7 +1516,7 @@ function gainShellGuard(target: Fighter, stacks: number, state: SkirmishState, e
   consumeShellGuard(target, state, events);
 }
 
-/** 희열이 도는 동안 매초 흐르는 재생. 겹이 많을수록 한 번에 더 많이 돌아온다. */
+/** 희열이 유지되는 동안 한 겹마다 매초 최대 체력에 비례한 회복을 적용한다. */
 function tickElationRegen(fighter: Fighter, dt: number, state: SkirmishState, events: SkirmishEvent[]): void {
   const elation = fighter.elation;
   if (!elation || elation.regenPercentPerStack <= 0) return;
@@ -1527,7 +1527,7 @@ function tickElationRegen(fighter: Fighter, dt: number, state: SkirmishState, ev
   if (amount > 0) events.push({ kind: "heal", fighterId: fighter.id, amount, source: "passive", effect: { tag: "heal", intensity: 1 } });
 }
 
-/** 희열은 맞지 않으면 식는다. 다시 맞을 때마다 `gainElation`이 시간을 처음부터 되돌린다. */
+/** 재피격으로 갱신되지 않은 희열의 유지 시간을 줄이고, 만료되면 모든 겹을 제거한다. */
 function tickElation(fighter: Fighter, dt: number): void {
   const elation = fighter.elation;
   if (!elation) return;

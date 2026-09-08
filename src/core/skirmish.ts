@@ -6,7 +6,7 @@ export { currentAbilityPower } from "./damage";
 import { drainFerocityFever, FEROCITY_RULES } from "./ferocity";
 import { breakthroughBonus } from "./relicProgression";
 import { augmentAppliesTo, bleedOnAttackEffect, conditionalAttackPowerMultiplier, expeditionAugmentStatMultipliers, type ExpeditionAugmentEffect, type ExpeditionAugmentTrigger, type ExpeditionTriggeredEffect } from "./expeditionAugments";
-import type { BasicAttack, BasicAttackStep, CombatStatusEffect, FerocityTrait, ReachTier, RelicDef, Side, Skill, TeamBuff } from "./types";
+import type { AttackSkill, BasicAttack, BasicAttackStep, CombatStatusEffect, FerocityTrait, ReachTier, RelicDef, Side, Skill, TeamBuff } from "./types";
 import { ULTIMATE_ENERGY_MAX } from "./ultimate";
 import { deriveSummonStats } from "./summonStats";
 import { stealthTransition, type CombatEffectCue } from "./combatEffects";
@@ -4198,6 +4198,64 @@ function advanceSummons(state: SkirmishState, dt: number): void {
   refreshSummonCommanderStealth(state);
 }
 
+/** 지휘자가 현재 부릴 수 있는 늑대만 정의 순서(쿠로, 시로)대로 돌려준다. */
+function activeOwnedSummons(state: SkirmishState, owner: Fighter): Array<{ unit: SummonedUnit; definition: NonNullable<RelicDef["summons"]>[number] }> {
+  return (owner.def.summons ?? []).flatMap((definition) => {
+    const unit = state.summons.find((candidate) => candidate.ownerFighterId === owner.id && candidate.summonId === definition.id);
+    return unit?.status === "active" && unit.hp > 0 ? [{ unit, definition }] : [];
+  });
+}
+
+/** 소환수 한 마리의 파생 능력치로 한 번만 피해를 계산하고, 기여도는 성장 주체인 지휘자에게 귀속한다. */
+function strikeSummon(owner: Fighter, summon: SummonedUnit, skill: AttackSkill, target: Fighter, state: SkirmishState, events: SkirmishEvent[], ultimate: boolean): void {
+  const proxy = { ...owner, id: summon.id, def: { ...owner.def, stats: summon.stats } };
+  const input = { ...skill, kind: ultimate ? "ultimate" as const : "basic" as const, isCritical: false };
+  const raw = Math.max(1, Math.round(computeDamage(proxy, defensiveDefinition(target, state), input)));
+  const contribution = computeDamageContribution(proxy, input);
+  const resolution = resolveReceivedDamage(target, raw);
+  const hpBefore = target.hp; const shieldBefore = target.shield.amount; const provider = target.shield.providerId;
+  applyDamage(target, resolution.applied, events, state);
+  const credited = recordDamageContribution(state, owner.id, target, skill.damageType, skill.scalingStat, contribution, resolution, hpBefore, shieldBefore, provider);
+  events.push({ kind: "attack", attackerId: summon.id, targetId: target.id, skill: ultimate ? "ultimate" : "basic", amount: resolution.applied, contributionAmount: credited, critical: false, damageType: skill.damageType });
+  if (!isFighterAlive(target)) events.push({ kind: "death", fighterId: target.id, sourceId: summon.id });
+}
+
+/** 일반 지휘는 서로 다른 표적을 예약하고 행동마다 선행 늑대를 교대한다. */
+function commandSummonBasic(owner: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
+  const wolves = activeOwnedSummons(state, owner);
+  const enemies = state.fighters.filter((fighter) => fighter.side !== owner.side && isFighterAlive(fighter) && fighter.stealthFor <= 0);
+  if (wolves.length === 0 || enemies.length === 0) return;
+  const ordered = owner.basicCycleStep % 2 === 0 ? wolves : [...wolves].reverse();
+  const reserved = new Map(ordered.map(({ unit }, index) => [unit.id, enemies[Math.min(index, enemies.length - 1)]]));
+  for (const { unit, definition } of ordered) {
+    // 선행 타격으로 예약 대상이 죽은 경우에만 현재 남은 적을 한 번 재탐색한다.
+    const target = reserved.get(unit.id);
+    const valid = target && isFighterAlive(target) ? target : enemies.find(isFighterAlive);
+    if (valid) strikeSummon(owner, unit, definition.skills.basic, valid, state, events, false);
+  }
+  owner.basicCycleStep = (owner.basicCycleStep + 1) % 2;
+  owner.energy = Math.min(ULTIMATE_ENERGY_MAX, owner.energy + owner.def.stats.energyGain);
+}
+
+/** 궁극기는 HP 비율, 실제 HP, fighter 배열 순으로 가장 약한 적을 정하고 양쪽 늑대를 보낸다. */
+function commandSummonUltimate(owner: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
+  const wolves = activeOwnedSummons(state, owner);
+  const weakest = (): Fighter | undefined => state.fighters.filter((fighter) => fighter.side !== owner.side && isFighterAlive(fighter) && fighter.stealthFor <= 0)
+    .reduce<Fighter | undefined>((best, fighter) => !best || fighter.hp / fighter.maxHp < best.hp / best.maxHp
+      || (fighter.hp / fighter.maxHp === best.hp / best.maxHp && fighter.hp < best.hp) ? fighter : best, undefined);
+  let target = weakest();
+  for (const [index, { unit, definition }] of wolves.entries()) {
+    if (!target || !isFighterAlive(target)) target = weakest(); // 돌진 중 사망하면 후행 늑대가 한 번만 재지정한다.
+    if (!target) break;
+    const side = index % 2 === 0 ? -1 : 1;
+    unit.x = Math.min(state.arena.right, Math.max(state.arena.left, target.x + side * 36));
+    unit.y = target.y;
+    events.push({ kind: "areaImpact", attackerId: unit.id, ultimate: true, damageType: definition.skills.special.damageType,
+      area: { shape: "lane", from: { x: unit.x - side * 72, y: unit.y }, to: { x: unit.x, y: unit.y }, halfWidth: 24 } });
+    strikeSummon(owner, unit, definition.skills.special, target, state, events, true);
+  }
+}
+
 function settle(state: SkirmishState, events: SkirmishEvent[]): void {
   if (state.phase !== "fight") return;
   const playersLeft = aliveFighters(state, "player").length;
@@ -4403,9 +4461,18 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
       fighter.hop *= recovery;
       continue;
     }
-    // 지휘형 디안은 늑대에게 명령할 뿐 직접 이동·기본 공격·자동 궁극기를 실행하지 않는다.
+    // 지휘형은 자기 몸 대신 현장에 남은 소환수에게 한 행동 단위의 공격 명령을 내린다.
     if (fighter.def.passive.kind === "summonCommander") {
       fighter.hop *= recovery;
+      fighter.attackCooldown -= dt;
+      if (fighter.attackCooldown <= 0) {
+        const firedUltimate = fighter.side === "enemy" && canFireUltimate(state, fighter);
+        if (firedUltimate) {
+          fighter.energy -= ultimateCost(state, fighter, true);
+          commandSummonUltimate(fighter, state, events);
+        } else commandSummonBasic(fighter, state, events);
+        fighter.attackCooldown = attackInterval(fighter, state);
+      }
       continue;
     }
     // 표적을 남이 정해 주는 개체는 주기 재평가에서 뺀다 — 무리 사냥은 대장의 표적을 따라야
@@ -4558,8 +4625,9 @@ export function canFireUltimate(state: SkirmishState, fighter: Fighter): boolean
   if (state.phase !== "fight" || !isFighterAlive(fighter) || fighter.undying !== null || fighter.stunnedFor > 0 || fighter.staggeredFor > 0 || fighter.frozen !== null || fighter.energy < ultimateCost(state, fighter, false)) return false;
   // 광란 중에는 기본 공격만 나간다. 궁극기까지 아군에게 꽂히면 한 판이 그 한 번으로 갈린다.
   if (fighter.frenzy) return false;
-  // 직접 공격하지 않는 지휘형 계약은 수동 입력으로도 우회할 수 없다.
-  if (fighter.def.passive.kind === "summonCommander") return false;
+  // 지휘형도 최소 한 소환수가 현장에 있으면 남은 한 마리로 축소 궁극기를 정상 시전한다.
+  if (fighter.def.passive.kind === "summonCommander") return activeOwnedSummons(state, fighter).length > 0
+    && state.fighters.some((other) => other.side !== fighter.side && isFighterAlive(other) && other.stealthFor <= 0);
   if (fighter.def.ultimate.targeting === "battlefieldAllies") return aliveFighters(state, fighter.side).length > 0;
   return state.fighters.some((other) => other.side !== fighter.side && isFighterAlive(other) && other.stealthFor <= 0);
 }
@@ -4582,6 +4650,14 @@ export function fireUltimate(
   if (!attacker || !canFireUltimate(state, attacker)) return events;
 
   const teamUltimate = attacker.def.ultimate;
+  if (teamUltimate.summonCommand === "oppositeChargePair") {
+    // 회수된 늑대 몫은 본체가 메우지 않으며, 한 마리만 남아도 게이지는 정상 비용을 소비한다.
+    attacker.energy -= ultimateCost(state, attacker, true);
+    commandSummonUltimate(attacker, state, events);
+    attacker.attackCooldown = attackInterval(attacker, state);
+    settle(state, events);
+    return events;
+  }
   if (teamUltimate.targeting === "battlefieldAllies" && teamUltimate.teamBuff !== undefined) {
     // 피해도 회복도 없는 지원 궁극기다. 게이지만 쓰고 생존 아군 전체에 지속 강화를 건다.
     attacker.energy -= ultimateCost(state, attacker, true);

@@ -122,6 +122,91 @@ describe("디안 귀속 늑대 생명주기", () => {
   });
 });
 
+describe("디안 늑대 지휘 전투", () => {
+  /** 지휘 행동만 관찰하도록 적의 행동을 멈추고 디안의 시계를 즉시 준비한다. */
+  function readyDian(enemyCount = 2): { state: SkirmishState; dian: Fighter } {
+    const enemies = Array.from({ length: enemyCount }, () => getRelic("amo"));
+    const state = createSkirmish([getRelic("dian")], enemies, ARENA);
+    const dian = state.fighters[0];
+    dian.attackCooldown = 0;
+    for (const enemy of state.fighters.slice(1)) enemy.attackCooldown = 999;
+    return { state, dian };
+  }
+
+  /** 한 프레임의 늑대 피해 사건만 추려 지휘자의 가짜 본체 타격이 섞이지 않았는지도 함께 검증한다. */
+  function wolfHits(events: SkirmishEvent[]) {
+    return events.filter((event): event is Extract<SkirmishEvent, { kind: "attack" }> => event.kind === "attack");
+  }
+
+  it("은 두 적을 쿠로·시로에게 나누고 다음 행동에는 선행 순서를 교대한다", () => {
+    const { state, dian } = readyDian();
+    const first = wolfHits(stepSkirmish(state, 0.01));
+    expect(first.map(({ attackerId, targetId }) => [attackerId, targetId])).toEqual([
+      ["player-0:kuro", "enemy-0"], ["player-0:shiro", "enemy-1"],
+    ]);
+    expect(first.some(({ attackerId }) => attackerId === dian.id)).toBe(false);
+
+    dian.attackCooldown = 0;
+    const second = wolfHits(stepSkirmish(state, 0.01));
+    expect(second.map(({ attackerId }) => attackerId)).toEqual(["player-0:shiro", "player-0:kuro"]);
+    expect(second[0].targetId).not.toBe(second[1].targetId);
+  });
+
+  it("은 적이 하나면 물리 쿠로와 마법 시로가 같은 적에게 독립 피해를 준다", () => {
+    const { state } = readyDian(1);
+    const hits = wolfHits(stepSkirmish(state, 0.01));
+    expect(hits.map(({ targetId }) => targetId)).toEqual(["enemy-0", "enemy-0"]);
+    expect(hits.map(({ damageType }) => damageType)).toEqual(["physical", "magical"]);
+    // 서로 다른 파생 능력치와 기술 계수를 읽으므로 한 합산 피해를 반으로 복제하지 않는다.
+    expect(hits[0].amount).not.toBe(hits[1].amount);
+  });
+
+  it("은 선행 늑대가 예약 대상을 처치해도 후행 늑대가 남은 적을 한 번만 공격한다", () => {
+    const { state } = readyDian();
+    state.fighters[1].hp = 1;
+    const hits = wolfHits(stepSkirmish(state, 0.01));
+    expect(hits).toHaveLength(2);
+    expect(hits.map(({ targetId }) => targetId)).toEqual(["enemy-0", "enemy-1"]);
+  });
+
+  it("은 회수된 늑대를 본체로 대체하지 않고 생존한 늑대만 공격시킨다", () => {
+    const { state, dian } = readyDian();
+    damageSummonedUnit(state, "player-0:kuro", Number.MAX_SAFE_INTEGER);
+    const hits = wolfHits(stepSkirmish(state, 0.01));
+    expect(hits.map(({ attackerId }) => attackerId)).toEqual(["player-0:shiro"]);
+    expect(hits.some(({ attackerId }) => attackerId === dian.id)).toBe(false);
+  });
+
+  it("은 궁극기 최약체를 HP 비율, 실제 HP, 안정적 fighter 순서로 고르고 사망 시 한 번 재지정한다", () => {
+    const { state, dian } = readyDian(3);
+    const [first, second, third] = state.fighters.slice(1);
+    first.hp = first.maxHp * 0.5;
+    second.maxHp *= 2; second.hp = second.maxHp * 0.5; // 같은 비율이면 실제 HP가 낮은 first가 우선이다.
+    third.hp = third.maxHp * 0.75;
+    dian.energy = dian.def.ultimate.cost;
+    const hits = wolfHits(fireUltimate(state, dian.id));
+    expect(hits.map(({ attackerId, targetId, damageType }) => [attackerId, targetId, damageType])).toEqual([
+      ["player-0:kuro", first.id, "physical"], ["player-0:shiro", first.id, "magical"],
+    ]);
+
+    // 동률이면 배열 앞 fighter가 먼저 맞고, 그 타격으로 죽으면 후행 늑대는 다음 순서로 옮긴다.
+    const retarget = readyDian(3); const enemies = retarget.state.fighters.slice(1);
+    enemies[0].hp = 1; enemies[1].hp = 1; enemies[2].hp = 2;
+    retarget.dian.energy = retarget.dian.def.ultimate.cost;
+    const redirected = wolfHits(fireUltimate(retarget.state, retarget.dian.id));
+    expect(redirected.map(({ targetId }) => targetId)).toEqual([enemies[0].id, enemies[1].id]);
+  });
+
+  it("은 한 늑대만 남아도 축소 궁극기를 실행하고 정상 비용을 모두 쓴다", () => {
+    const { state, dian } = readyDian();
+    damageSummonedUnit(state, "player-0:shiro", Number.MAX_SAFE_INTEGER);
+    dian.energy = dian.def.ultimate.cost;
+    const hits = wolfHits(fireUltimate(state, dian.id));
+    expect(hits.map(({ attackerId }) => attackerId)).toEqual(["player-0:kuro"]);
+    expect(dian.energy).toBe(0);
+  });
+});
+
 describe("원정 증강 전투 훅", () => {
   it("동일 시드·편성에서 무증강 < SR < SSR 공격 결과를 낸다", () => {
     /** 같은 시드는 치명타 판정 순서까지 고정해 증강 외 변수를 제거한다. */

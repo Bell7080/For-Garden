@@ -2236,8 +2236,9 @@ export const RELICS: RelicDef[] = [
     // 디안 자신은 공격하지 않고 두 늑대를 지휘한다. 둘이 모두 현장에 있을 때만 단일 대상 추적을 피한다.
     ferocityTrait: { name: "무리", effectId: "selfAttackSpeedMultiplier", bonusPercent: 35 },
     passive: { id: "dian-passive", name: "우두머리의 경계", kind: "summonCommander", iconAssetId: "skill-icon-buff", effectType: "buff", value: 0, desc: "전투 시작 시 쿠로와 시로를 앞쪽 좌우에 부른다. 둘이 모두 현장에 있는 동안 단일 대상 공격의 표적이 되지 않는다." },
-    basic: { id: "dian-basic", name: "쿠로, 확인!", power: 105, iconAssetId: "skill-icon-physical", effectType: "physical", damageType: "physical", targeting: "single" },
-    ultimate: { id: "dian-ult", name: "시로, 지켜!", power: 260, iconAssetId: "skill-icon-physical", effectType: "physical", damageType: "physical", cost: 110, targeting: "nearbyEnemies", radius: 240 },
+    // 지휘 기술의 power/damageType은 UI 계약을 위한 대표값일 뿐이며 실제 피해는 각 늑대 기술이 낸다.
+    basic: { id: "dian-basic", name: "쿠로, 확인!", power: 105, iconAssetId: "skill-icon-physical", effectType: "physical", damageType: "physical", targeting: "single", summonCommand: "alternatingPair" },
+    ultimate: { id: "dian-ult", name: "시로, 지켜!", power: 260, iconAssetId: "skill-icon-physical", effectType: "physical", damageType: "physical", cost: 110, targeting: "single", summonCommand: "oppositeChargePair" },
   },
   {
     // 원정 최종층의 단독 보스. 리바이어던 멜빌레이의 거대한 턱과 심해 포식자 모티브를 담는다.

@@ -118,6 +118,11 @@ interface SkillBase {
   /** UI가 피해·회복·강화 의미를 damageType 존재 여부와 무관하게 표현하는 분류다. */
   effectType: EffectType;
   /**
+   * 귀속 소환수에게 행동을 위임하는 지휘 계약이다. 지휘자는 피해를 만들지 않으며, 전투 코어는
+   * 현재 현장에 남은 소환수의 독립 능력치와 기술을 읽어 각 타격을 계산한다.
+   */
+  summonCommand?: "alternatingPair" | "oppositeChargePair";
+  /**
    * 적중 뒤 공용 시약 처리 경로에 넘길 중첩 수다.
    *
    * 리파 ID를 검사하는 전용 분기가 아니라, 시약을 쓰는 모든 캐릭터 정의가 일반 공격과

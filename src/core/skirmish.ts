@@ -1121,7 +1121,7 @@ export function applyCombatStatusEffect(fighter: Fighter, effect: CombatStatusEf
      * **남은 시간이 더 긴 쪽이 남는다** — 보호막·순풍과 같은 규칙이다.
      *
      * 덮어쓰게 두면 짧은 도발이 긴 도발을 깎는다. 엘라가 궁극기로 끌어당겨 5초를 걸어 둔 적을
-     * 데이가 지나가며 톡 치는 순간 0.5초로 줄어, 게이지를 다 쓴 궁극기가 스치는 평타 하나에
+     * 데이가 지나가며 톡 치는 순간 0.75초로 줄어, 게이지를 다 쓴 궁극기가 스치는 평타 하나에
      * 지워졌다. 도발은 슬롯이 하나뿐이라 이 판단을 여기서 한 번만 한다.
      */
     if (fighter.taunted === null || seconds > fighter.taunted.remaining) {
@@ -1758,7 +1758,7 @@ function tickTaunt(fighter: Fighter, dt: number, state: SkirmishState): void {
   const remaining = taunted.remaining - dt;
   if (remaining > EMERGENCY_RECOVERY.epsilon) { fighter.taunted = { ...taunted, remaining }; return; }
   fighter.taunted = null;
-  // 풀리는 순간 도발이 넣어 둔 표적을 비운다 — 남겨 두면 0.5초짜리 도발이 다음 재탐색(2초)까지
+  // 풀리는 순간 도발이 넣어 둔 표적을 비운다 — 남겨 두면 0.75초짜리 도발이 다음 재탐색(2초)까지
   // 조용히 이어져, 짧게 시선만 끄는 상태가 사실상 2초짜리가 된다. 광란이 풀릴 때와 같은 처리다.
   if (fighter.targetId === taunted.sourceId) fighter.targetId = null;
 }

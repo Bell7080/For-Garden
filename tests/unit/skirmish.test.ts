@@ -3392,7 +3392,9 @@ describe("데이", () => {
   it("의 짧은 도발은 때린 적만 자기 쪽으로 돌린다", () => {
     const { state, deina } = fight(6);
     const taunt = getRelic("deina").basic.statusEffects!.find((e) => e.kind === "taunt")!;
-    expect(taunt).toMatchObject({ kind: "taunt", seconds: 0.5 });
+    // 일반 공격도 폭주와 같은 상향된 지속시간을 써 한쪽만 이전 값으로 남지 않게 고정한다.
+    expect(taunt).toMatchObject({ kind: "taunt", seconds: 0.75 });
+    expect(getRelic("deina").ferocityTrait).toMatchObject({ taunt: { kind: "taunt", seconds: 0.75 } });
     // 걸린 도발은 반드시 데이를 가리킨다. 다른 아군을 가리키면 어그로가 엉뚱한 곳으로 간다.
     for (const enemy of aliveFighters(state, "enemy")) {
       if (enemy.taunted) expect(enemy.taunted.sourceId).toBe(deina.id);
@@ -3601,10 +3603,11 @@ describe("도발 계약", () => {
     // "더 긴 쪽이 남는다"가 제 도발의 갱신까지 막으면, 계속 때리는데도 도발이 끊긴다.
     const state = createSkirmish([getRelic("deina")], [getRelic("amo")], arena);
     const [deina, foe] = state.fighters;
-    foe.taunted = { remaining: 0.1, total: 0.5, sourceId: deina.id };
+    // 이미 같은 데이가 건 상태도 현재 스킬의 0.75초 계약으로 완전히 갱신되어야 한다.
+    foe.taunted = { remaining: 0.1, total: 0.75, sourceId: deina.id };
     const taunt = getRelic("deina").basic.statusEffects!.find((e) => e.kind === "taunt")!;
     applyCombatStatusEffect(foe, taunt, [], state, deina.id);
-    expect(foe.taunted!.remaining).toBeCloseTo(0.5, 5);
+    expect(foe.taunted!.remaining).toBeCloseTo(0.75, 5);
   });
 
   it("은 도발한 쪽이 쓰러지면 그 자리에서 정리된다", () => {

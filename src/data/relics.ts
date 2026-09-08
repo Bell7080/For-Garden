@@ -1894,7 +1894,7 @@ export const RELICS: RelicDef[] = [
       vandalism: { kind: "vandalism", offenseShredPercent: 5, maxStacks: 5, burstPower: 125 },
       // 평타를 놓아도 도발은 그대로 걸린다 — 도발이 "때린다"가 아니라 "피해가 들어간다"에
       // 붙어 있어, 달리는 것 자체가 어그로인 개체의 탱킹이 폭주 중에 꺼지지 않는다.
-      taunt: { kind: "taunt", seconds: 0.5 },
+      taunt: { kind: "taunt", seconds: 0.75 },
     },
     passive: {
       // kind가 tagAndRun인 패시브는 passiveDescription()이 구조화 필드로 문장을 만들므로
@@ -1937,12 +1937,12 @@ export const RELICS: RelicDef[] = [
        * 8초로 두고 재현했을 때 표준 전투에서 최대 4겹이었고 평타만으로는 한 번도 터지지
        * 않았다). 지우는 것은 시간이 아니라 다섯 겹째에 터지는 것뿐이다.
        *
-       * 도발은 0.5초뿐이다. 붙잡아 두려는 것이 아니라 "잠깐 이쪽을 보게 해 놓고 빠지는" 것이
+       * 도발은 0.75초뿐이다. 붙잡아 두려는 것이 아니라 "잠깐 이쪽을 보게 해 놓고 빠지는" 것이
        * 이 개체의 탱킹이라, 길게 걸면 종이 방어로 그 시간을 다 맞는다.
        */
       statusEffects: [
         { kind: "vandalism", offenseShredPercent: 5, maxStacks: 5, burstPower: 125 },
-        { kind: "taunt", seconds: 0.5 },
+        { kind: "taunt", seconds: 0.75 },
       ],
     },
     ultimate: {

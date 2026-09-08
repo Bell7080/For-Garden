@@ -15,6 +15,12 @@ async function openParty(page: Page): Promise<void> {
     "/puppets/enemySD_001.zip",
     "/puppets/enemySD_Pontos.zip",
   ]);
+  // 첫 장식 주기가 실제로 시작됐다가 끝날 때까지 기다려, 초기 로딩 뒤 모션 복귀에서 사라지는 회귀도 잡는다.
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.sortieSdBodies?.some((body) => body.motion !== "idle")), { timeout: 8_000 }).toBe(true);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.sortieSdBodies?.slice().sort((a, b) => a.assetUrl.localeCompare(b.assetUrl))), { timeout: 8_000 }).toEqual([
+    { assetUrl: "/puppets/enemySD_001.zip", active: true, visible: true, motion: "idle" },
+    { assetUrl: "/puppets/enemySD_Pontos.zip", active: true, visible: true, motion: "idle" },
+  ]);
   await tapGame(page, BASE_WIDTH / 2, 550);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("stageMap");
   await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT - 180);

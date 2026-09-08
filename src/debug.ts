@@ -51,6 +51,8 @@ export interface DebugState {
   popupTitles?: string[];
   /** 출격판이 실제 채택한 본체 에셋 URL이다. 복제 그림자는 세지 않아 장식 실패를 본체 실패로 오판하지 않는다. */
   sortieSdBodyAssetUrls?: string[];
+  /** E2E 관찰 전용: Canvas 안 출격 SD 본체의 실제 표시 상태와 현재 재생 모션만 비친다. */
+  sortieSdBodies?: Array<{ assetUrl: string; active: boolean; visible: boolean; motion: string }>;
   /** 세공 화면의 연필 입력면 중심. 이름 글자 폭에 따라 자리가 달라지므로 화면이 직접 알린다. */
   runeForgeRename?: DebugPoint;
   /** 룬 쪽지의 "세공" 버튼 중심. 줄 구성(장착·해제·판매)에 따라 자리가 달라진다. */

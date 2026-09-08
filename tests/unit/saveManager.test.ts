@@ -3,7 +3,6 @@ import { CURRENT_SAVE_VERSION, SAVE_STORAGE_KEY, SaveDataError, SaveManager } fr
 import { createDefaultSession, type SaveData } from "../../src/state/session";
 import { createRuneInstance, type RuneStatKey } from "../../src/core/runes";
 import { ExpeditionManager } from "../../src/managers/ExpeditionManager";
-import { ownTorikaTestSkin } from "../fixtures/relicSkin";
 
 /** 저장 왕복과 손상 검증에 쓰는 결정적 신규 룬이다. */
 function testRune(instanceId = "rune-save-1") {
@@ -27,21 +26,37 @@ function validData(): SaveData {
 }
 
 describe("SaveManager", () => {
-  it("v32 외형 없는 저장은 기본 외형으로 마이그레이션하고 손상된 레거시 선택도 폐기한다", () => {
+  it("v32 외형 없는 저장도 토리카 기본 해금을 보유하고 손상된 레거시 선택은 폐기한다", () => {
     const legacy = validData() as unknown as Record<string, unknown>;
     legacy.saveVersion = 32;
     legacy.ownedRelicSkinIds = ["missing-skin"];
     legacy.equippedRelicSkinIds = { anky: "missing-skin" };
     const migrated = new SaveManager(new MemoryStorage()).migrate(legacy);
-    expect(migrated.ownedRelicSkinIds).toEqual([]);
+    expect(migrated.ownedRelicSkinIds).toEqual(["torika-skin-001"]);
     expect(migrated.equippedRelicSkinIds).toEqual({});
+  });
+
+  it("v33 기존 소유 목록과 기본 해금을 중복 없이 병합한다", () => {
+    const legacy = validData();
+    legacy.saveVersion = 33;
+    legacy.ownedRelicSkinIds = ["torika-skin-001"];
+    // 이미 지급된 계정도 버전 이관에서 같은 ID가 두 번 생기지 않아야 한다.
+    expect(new SaveManager(new MemoryStorage()).migrate(legacy).ownedRelicSkinIds).toEqual(["torika-skin-001"]);
+  });
+
+  it("기본 해금이 빠진 현행 저장은 로드 정규화에서 보충한다", () => {
+    const storage = new MemoryStorage();
+    const incomplete = validData();
+    incomplete.ownedRelicSkinIds = [];
+    storage.setItem(SAVE_STORAGE_KEY, JSON.stringify(incomplete));
+    // 검증 전에 실행되는 migrate가 현행 버전에도 동일한 기본 해금 정책을 적용한다.
+    expect([...new SaveManager(storage).load()!.ownedRelicSkinIds]).toEqual(["torika-skin-001"]);
   });
 
   it("스킨 소유·장착을 JSON으로 왕복하고 현행 손상 ID와 대상 불일치를 거부한다", () => {
     const storage = new MemoryStorage();
     const source = createDefaultSession();
-    // 저장 왕복 검증은 승인되지 않은 실서비스 지급 대신 명시적인 테스트 소유권을 사용한다.
-    ownTorikaTestSkin(source);
+    // 신규 세션의 정적 기본 해금이 별도 테스트 주입 없이 그대로 직렬화되어야 한다.
     source.equippedRelicSkinIds.anky = "torika-skin-001";
     const manager = new SaveManager(storage);
     manager.save(source);
@@ -57,7 +72,7 @@ describe("SaveManager", () => {
     expect(() => manager.validate(wrongRelic)).toThrow("스킨 장착");
   });
 
-  it("v31의 저장된 허스크 참조를 신규 렐릭 ID로 바꾸고 중복 없이 v33으로 재저장한다", () => {
+  it("v31의 저장된 허스크 참조를 신규 렐릭 ID로 바꾸고 중복 없이 현행 버전으로 재저장한다", () => {
     const storage = new MemoryStorage();
     const source = createDefaultSession();
     // 실제 원정 런을 먼저 만들어 맵처럼 이번 변경과 무관한 계약은 그대로 유효하게 유지한다.

@@ -12,6 +12,7 @@ import { createDefaultSettings } from "../core/settings";
 import { createIdleExcavationState, type IdleExcavationState } from "../core/idleExcavation";
 import type { ExpeditionMapNode } from "../core/expeditionMap";
 import type { ExpeditionAugmentOffer, ExpeditionAugmentSelection } from "../core/expeditionRewards";
+import { defaultUnlockedRelicSkinIds } from "../data/relicSkins";
 
 /** 로컬에 저장 가능한 사용자 환경설정이다. 계정에는 표시 정보만 두며 인증 비밀은 서버 경계에 남긴다. */
 export interface GameSettings {
@@ -265,8 +266,8 @@ export function createDefaultSession(): Session {
   // 순수 설정 팩토리는 지연 require 대신 정적 import로 의존 방향을 core→state 타입에만 제한한다.
   const settings = createDefaultSettings();
   return {
-    // 획득 정책 승인 전에는 일반 신규 계정에 추가 외형을 지급하지 않는다. 검증은 테스트 fixture가 소유권을 명시한다.
-    ownedRelicSkinIds: new Set<RelicSkinId>(),
+    // 무료 외형 정책은 정적 정의에서 계산해 새 콘텐츠가 상태 모듈의 하드코딩을 요구하지 않게 한다.
+    ownedRelicSkinIds: new Set(defaultUnlockedRelicSkinIds()),
     equippedRelicSkinIds: {},
     discoveredInteractionJournalIds: new Set<string>(),
     readInteractionJournalIds: new Set<string>(),

@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { DialogueFlow, type DialogueChoice, type DialogueStory } from "../core/dialogue";
 import { getRecollectionStory } from "../data/dialogues/recollections";
-import { setDebugReady, setDebugScene } from "../debug";
+import { bindDebugReadyLifecycle, setDebugReady, setDebugScene } from "../debug";
 import { storyManager } from "../managers/StoryManager";
 import { DialogueLayer } from "../ui/DialogueLayer";
 import { drawLayer, slantedRect } from "../ui/holo";
@@ -17,6 +17,8 @@ export class StageStoryScene extends Phaser.Scene {
   constructor() { super("stageStory"); }
 
   create(data: { storyId: string }): void {
+    // 대사 씬도 다른 ready 소유 씬과 같은 시작/종료 초기화 규칙을 사용한다.
+    bindDebugReadyLifecycle(this.events);
     this.story = getRecollectionStory(data.storyId);
     this.flow = new DialogueFlow(this.story);
     setDebugScene("stageStory");

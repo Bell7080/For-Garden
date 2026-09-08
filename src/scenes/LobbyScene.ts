@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import type { PuppetCreature } from "../puppets/assets";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
-import { setDebugScene, setDebugStorefrontControls } from "../debug";
+import { bindDebugReadyLifecycle, setDebugReady, setDebugScene, setDebugStorefrontControls } from "../debug";
 import { getRelic, RELICS } from "../data/relics";
 import { enableHitOnClick, spawnPuppet } from "../puppets/assets";
 import { session } from "../state/session";
@@ -121,6 +121,8 @@ export class LobbyScene extends Phaser.Scene {
   }
 
   create(): void {
+    // 이전 씬의 true를 지우고, 로비가 끝날 때도 다음 씬에 준비 상태가 새지 않게 한다.
+    bindDebugReadyLifecycle(this.events);
     setDebugScene("lobby");
     this.popupLayer = new PopupLayer(this);
     this.sortieSdPuppets.clear();
@@ -197,8 +199,14 @@ export class LobbyScene extends Phaser.Scene {
     new BottomNav(this, "lobby");
     // 한 번의 공용 조회가 모든 버튼을 갱신하며 실패 시 기존의 안전한 꺼짐 상태를 유지한다.
     void notificationManager.refresh().catch(() => undefined);
-    // 호출 경계에서 생성 실패를 소비해 로비 진입 Promise가 처리되지 않은 rejection으로 남지 않게 한다.
-    void this.showFavorite().catch((error) => console.error("로비 애착 Puppet 표시 실패", error));
+    // 로비의 조작 가능 시점은 동기 UI와 최초 애착 Puppet 시도가 모두 끝난 때다. Puppet 실패는
+    // 장식 하나를 포기하는 복구 가능한 실패로 취급해 기록만 남기고, 전체 입력은 영구 대기시키지 않는다.
+    void this.showFavorite()
+      .catch((error) => console.error("로비 애착 Puppet 표시 실패", error))
+      .finally(() => {
+        // 종료된 로비의 늦은 Promise가 다음 씬을 준비 완료로 덮어쓰지 못하게 활성 상태를 확인한다.
+        if (this.scene.isActive()) setDebugReady(true);
+      });
     this.installPerformanceScenario();
     // 로비가 살아 있는 동안 외형 사건을 받으면 애착 렐릭 Puppet을 같은 resolver로 즉시 교체한다.
     const unsubscribeSkin = relicSkinManager.subscribe(({ relicId }) => {

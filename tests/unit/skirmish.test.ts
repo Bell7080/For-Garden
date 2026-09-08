@@ -3215,16 +3215,22 @@ describe("노도니아의 프로젝트 REVERIE", () => {
   });
 
   it("의 절정은 폭주 중 주위를 매초 지지고 잃은 체력을 되찾는다", () => {
-    const { state, nodonia, foe } = arena();
+    // 반경 안팎을 같은 틱에서 비교해야 피해와 도발의 대상 집합이 정확히 같은지 알 수 있다.
+    const state = createSkirmish([getRelic("nodonia"), getRelic("anky")], [getRelic("toby"), getRelic("amo")], ARENA);
+    const [nodonia, ally, foe, outsideFoe] = state.fighters;
+    nodonia.x = 420; nodonia.y = 1000; ally.x = 460; ally.y = 1000;
+    foe.x = nodonia.x + 100; foe.y = nodonia.y; outsideFoe.x = nodonia.x + 2_000; outsideFoe.y = nodonia.y;
+    for (const fighter of state.fighters) fighter.attackCooldown = 99;
+    foe.maxHp = 400_000; foe.hp = 400_000; outsideFoe.maxHp = 400_000; outsideFoe.hp = 400_000;
     const trait = getRelic("nodonia").ferocityTrait;
-    expect(trait).toMatchObject({ effectId: "climax", auraDamageMaxHpPercent: 1.5, radius: 240, missingHpPercentPerBasic: 3 });
+    expect(trait).toMatchObject({ effectId: "climax", auraDamageMaxHpPercent: 1.5, radius: 240, taunt: { kind: "taunt", seconds: 0.5 }, missingHpPercentPerBasic: 3 });
     nodonia.ferocity = 100; nodonia.ferocityFever = true;
-    foe.x = nodonia.x + 100; foe.y = nodonia.y;
 
-    // 폭주에 들어가는 첫 프레임에 공짜로 터지지 않는다 — 1초가 지나야 한 번 돈다.
+    // 폭주에 들어가는 첫 프레임에는 피해도 도발도 공짜로 생기지 않는다 — 1초가 지나야 돈다.
     const before = foe.hp;
     stepSkirmish(state, 1 / 60);
     expect(foe.hp).toBe(before);
+    expect(foe.taunted).toBeNull();
     for (let frame = 0; frame < 60; frame += 1) {
       nodonia.attackCooldown = 99;
       stepSkirmish(state, 1 / 60);
@@ -3232,16 +3238,38 @@ describe("노도니아의 프로젝트 REVERIE", () => {
     const burned = before - foe.hp;
     expect(burned).toBeGreaterThan(0);
     expect(burned).toBe(Math.round(nodonia.maxHp * (trait.effectId === "climax" ? trait.auraDamageMaxHpPercent : 0) / 100));
+    expect(foe.taunted?.sourceId).toBe(nodonia.id);
+    // 부여 프레임에도 공용 상태 시계가 흐르므로 한 프레임 오차 안에서 계약한 0.5초다.
+    expect(foe.taunted?.remaining).toBeCloseTo(0.5, 1);
 
-    // 반경 밖은 지져지지 않는다.
-    foe.x = nodonia.x + 2_000;
-    const outside = foe.hp;
-    for (let frame = 0; frame < 61; frame += 1) stepSkirmish(state, 1 / 60);
-    expect(foe.hp).toBe(outside);
+    // 같은 틱의 반경 밖 적은 피해도 받지 않고 도발도 남지 않는다.
+    expect(outsideFoe.hp).toBe(outsideFoe.maxHp);
+    expect(outsideFoe.taunted).toBeNull();
+
+    // 공용 경로는 이미 남은 시간이 더 긴 도발을 짧은 절정 도발로 덮어쓰지 않는다.
+    foe.taunted = { remaining: 3, total: 3, sourceId: ally.id };
+    for (let frame = 0; frame < 60; frame += 1) stepSkirmish(state, 1 / 60);
+    expect(foe.taunted?.sourceId).toBe(ally.id);
+    expect(foe.taunted!.remaining).toBeGreaterThan(1.9);
+
+    // 피해로 쓰러진 대상은 즉시 상태가 정리되어 마지막 틱의 도발 칩을 남기지 않는다.
+    foe.taunted = null;
+    foe.hp = 1;
+    for (let frame = 0; frame < 60; frame += 1) stepSkirmish(state, 1 / 60);
+    expect(foe.hp).toBe(0);
+    expect(foe.taunted).toBeNull();
+
+    // 도발의 원천인 노도니아가 쓰러지면 공용 도발 시계가 그 자리에서 상태를 해제한다.
+    foe.hp = foe.maxHp;
+    foe.taunted = { remaining: 0.5, total: 0.5, sourceId: nodonia.id };
+    nodonia.hp = 0;
+    stepSkirmish(state, 1 / 60);
+    expect(foe.taunted).toBeNull();
 
     // 기본 공격마다 잃은 체력의 일부가 돌아온다.
-    foe.x = nodonia.x + 20;
     nodonia.hp = nodonia.maxHp / 2;
+    nodonia.ferocityFever = true;
+    foe.x = nodonia.x + 20;
     const wounded = nodonia.hp;
     nodonia.targetId = foe.id;
     nodonia.attackCooldown = 0;

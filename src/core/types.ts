@@ -933,6 +933,8 @@ export type FerocityTrait = {
       auraDamageMaxHpPercent: number;
       /** 그 지속 피해가 닿는 반경이다. */
       radius: number;
+      /** 매 피해 틱과 같은 반경 안에서 실제 피해를 받고 살아남은 적에게 거는 도발이다. */
+      taunt: { kind: "taunt"; seconds: number };
       /** 자기 기본 공격 한 번마다 되찾는 잃은 체력 비율(%). */
       missingHpPercentPerBasic: number;
     }

@@ -1627,6 +1627,9 @@ function tickClimaxAura(fighter: Fighter, dt: number, state: SkirmishState, even
     // 휘두르지 않고 서 있기만 하므로 시전 모션을 틀지 않는다(`animate: false`).
     events.push({ kind: "attack", attackerId: fighter.id, targetId: other.id, skill: "basic", amount,
       contributionAmount: amount, critical: false, animate: false, damageType: "true" });
+    // 피해 틱을 버틴 같은 대상만 공용 상태 경로로 보낸다. 그래야 원정 지속시간 배율과
+    // 더 긴 기존 도발을 보존하는 규칙을 그대로 받고, 반경 밖·사망 대상에는 도발이 남지 않는다.
+    if (isFighterAlive(other)) applyCombatStatusEffect(other, trait.taunt, events, state, fighter.id, false);
     if (!isFighterAlive(other)) {
       clearDefeatedStatuses(other);
       events.push({ kind: "death", fighterId: other.id, sourceId: fighter.id });

@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import type { PuppetCreature } from "../puppets/assets";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugScene, setDebugStorefrontControls } from "../debug";
-import { getRelic } from "../data/relics";
+import { getRelic, RELICS } from "../data/relics";
 import { enableHitOnClick, spawnPuppet } from "../puppets/assets";
 import { session } from "../state/session";
 import { BottomNav, NAV_TOP } from "../ui/BottomNav";
@@ -39,6 +39,8 @@ import { MailPopup } from "../ui/MailPopup";
 import { CurrencyGuidePopup } from "../ui/CurrencyGuidePopup";
 import { StaminaPopup } from "../ui/StaminaPopup";
 import type { CurrencyGuideAction } from "../data/currencyGuide";
+import { CharacterInfoManager } from "../managers/CharacterInfoManager";
+import { installPuppetPerformanceHarness, puppetPerformanceEnabled, removePuppetPerformanceHarness } from "../puppets/performanceDiagnostics";
 
 /** 확대된 애착 렐릭의 골반 아래가 내비게이션 뒤로 자연스럽게 이어지는 기준선. */
 const STAGE_FLOOR = 1660;
@@ -112,6 +114,7 @@ export class LobbyScene extends Phaser.Scene {
   private topBar?: TopBar;
   /** 공개 플레이어 정보창은 닫힐 때 참조까지 비워 다음 입력이 새 입력면 한 장만 만든다. */
   private playerProfilePopup?: PlayerProfilePopup;
+  private performanceRelicIndex = 0;
 
   constructor() {
     super("lobby");
@@ -195,9 +198,29 @@ export class LobbyScene extends Phaser.Scene {
     // 한 번의 공용 조회가 모든 버튼을 갱신하며 실패 시 기존의 안전한 꺼짐 상태를 유지한다.
     void notificationManager.refresh().catch(() => undefined);
     void this.showFavorite();
+    this.installPerformanceScenario();
     // 로비가 살아 있는 동안 외형 사건을 받으면 애착 렐릭 Puppet을 같은 resolver로 즉시 교체한다.
     const unsubscribeSkin = relicSkinManager.subscribe(({ relicId }) => { if (relicId === session.favorite) void this.showFavorite(); });
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, unsubscribeSkin);
+  }
+
+  /** 같은 애착 캐릭터를 로비와 공용 정보창에 겹쳐 재현하는 비저장 성능 테스트 진입점이다. */
+  private installPerformanceScenario(): void {
+    if (!puppetPerformanceEnabled()) return;
+    this.performanceRelicIndex = Math.max(0, RELICS.findIndex(({ id }) => id === session.favorite));
+    const info = new CharacterInfoManager(this);
+    installPuppetPerformanceHarness({
+      openInfo: () => info.showRelic(getRelic(session.favorite), true),
+      closeInfo: () => info.hide(),
+      nextCharacter: () => {
+        // 저장된 favorite는 바꾸지 않고 상세창의 표시 대상만 순환한다.
+        this.performanceRelicIndex = (this.performanceRelicIndex + 1) % RELICS.length;
+        info.showRelic(RELICS[this.performanceRelicIndex], true);
+      },
+    });
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      removePuppetPerformanceHarness();
+    });
   }
 
   /** TopBar가 건넨 공개 모델만 사용해 공용 레이어 기반 정보창을 연다. */

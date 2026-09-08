@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import type { PlayOptions, Puppet } from "puppetforge";
 import { advancePuppet, shouldAdvancePuppet } from "./runtimeStep";
+import { recordPuppetCreated, recordPuppetDestroyed } from "./performanceDiagnostics";
 
 /** GPU 프로그램과 정적 attribute 위치는 렌더러 하나당 한 번만 만든다. */
 interface SharedGpuProgram {
@@ -142,6 +143,8 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
     this.setOrigin(0.5);
     scene.add.existing(this);
     scene.events.on(Phaser.Scenes.Events.UPDATE, this.step, this);
+    // 성능 시나리오에서만 생성 수와 이 UPDATE 구독을 한 쌍으로 센다.
+    recordPuppetCreated();
     this.once(Phaser.GameObjects.Events.DESTROY, this.release, this);
   }
 
@@ -265,6 +268,8 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
   /** scene 종료 시 update listener와 개체 전용 GPU Buffer를 함께 해제한다. */
   private release(): void {
     this.scene.events.off(Phaser.Scenes.Events.UPDATE, this.step, this);
+    // listener를 해제한 바로 그 지점에서 차감해야 숨은 인스턴스와 구독 누수를 함께 잡는다.
+    recordPuppetDestroyed();
     if (!this.buffers) return;
     const gl = (this.scene.game.renderer as Phaser.Renderer.WebGL.WebGLRenderer).gl;
     gl.deleteBuffer(this.buffers.position);

@@ -52,18 +52,36 @@ describe("Puppet runtime stepping", () => {
     expect(vertices).toBe(update.mock.results.at(-1)?.value);
   });
 
-  it("연속된 200ms 프레임의 실제 재생 시간을 이후 프레임에 끝까지 따라잡는다", () => {
+  it("500ms 프레임이 지속되어도 1초의 wall-clock 시간을 같은 프레임들에서 모두 진행한다", () => {
     const { puppet, update } = puppetStub();
 
-    // 세 느린 프레임에서는 물리 예산만 쓰고, 뒤의 정상 프레임들이 보존된 실제 시간을 회수한다.
-    for (let frame = 0; frame < 3; frame += 1) advancePuppet(puppet, 0.2);
-    for (let frame = 0; frame < 4; frame += 1) advancePuppet(puppet, PUPPET_STEP_SECONDS);
+    // 두 프레임만으로 실제 1초가 지났으므로 뒤의 빠른 프레임에 빚을 남겨서는 안 된다.
+    advancePuppet(puppet, 0.5);
+    advancePuppet(puppet, 0.5);
 
-    // 예전 단순 절삭은 600ms 중 300ms를 영구 폐기했지만, 이제 모든 foreground 시간이 진행된다.
-    expect(update.mock.calls.reduce((sum, [step]) => sum + step, 0)).toBeCloseTo(
-      0.6 + 4 * PUPPET_STEP_SECONDS,
-    );
+    expect(update.mock.calls.reduce((sum, [step]) => sum + step, 0)).toBeCloseTo(1);
+    expect(update.mock.calls.every(([step]) => step <= PUPPET_STEP_SECONDS)).toBe(true);
   });
+
+  it.each([0.2, 0.1, 0.033, 0.01667])(
+    "%d초 프레임에서 누적 animation time과 1초 wall-clock time이 일치한다",
+    (frameSeconds) => {
+      const { puppet, update } = puppetStub();
+      let wallClock = 0;
+
+      // 마지막 프레임만 잘라 정확히 1초를 구성해 프레임 길이별 누적 오차를 직접 비교한다.
+      while (wallClock < 1) {
+        const elapsed = Math.min(frameSeconds, 1 - wallClock);
+        advancePuppet(puppet, elapsed);
+        wallClock += elapsed;
+      }
+
+      const animationTime = update.mock.calls.reduce((sum, [step]) => sum + step, 0);
+      expect(animationTime).toBeCloseTo(wallClock, 10);
+      expect(animationTime).toBeCloseTo(1, 10);
+      expect(update.mock.calls.every(([step]) => step <= PUPPET_STEP_SECONDS)).toBe(true);
+    },
+  );
 
   it("탭 복귀처럼 큰 간격은 별도 임계값에서 버려 secondary spring 폭주를 막는다", () => {
     const { puppet, update } = puppetStub();

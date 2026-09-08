@@ -5,16 +5,19 @@ import type { Puppet } from "puppetforge";
  * Keep its integration interval close to PuppetForge's 60 fps preview while retaining ordinary slow-frame time.
  */
 export const PUPPET_STEP_SECONDS = 1 / 60;
-export const PUPPET_MAX_CATCH_UP_SECONDS = 0.1;
 // A multi-second return from a background tab is suspended wall time, not useful animation or stable spring time.
 export const PUPPET_BACKGROUND_GAP_SECONDS = 1;
 
 /**
- * PuppetForge v0.41.0 exposes only `Puppet.update(dt)`, which advances the real animation timeline and its
- * secondary spring together. Keep sub-background real time per instance until bounded physics-sized updates
- * can consume it; a WeakMap lets discarded Puppet instances release this scheduling state with the instance.
+ * PuppetForge v0.41.0 (pinned commit b5af06a) exposes only `Puppet.update(dt)`: its public `Puppet` API has
+ * neither `seek`/`setTime` nor separate timeline and secondary-motion advancement. Consequently animation
+ * accuracy cannot be capped independently from physics work here. Every foreground delta is consumed in the
+ * frame that supplied it; physics protection comes only from splitting that delta into stable-sized updates.
+ *
+ * Do not reintroduce a per-Puppet remainder: sustained slow frames would make animation permanently trail
+ * wall-clock time. If update-count capping becomes necessary, PuppetForge must first expose timeline correction
+ * (ideally `advanceTimeline(elapsed)` plus `integrateSecondary(step)`) so only secondary work can be bounded.
  */
-const puppetRemainders = new WeakMap<Puppet, number>();
 
 /**
  * Phaser가 UPDATE listener를 유지하는 동안 Puppet 계산이 실제로 필요한지를 순수하게 판정한다.
@@ -37,22 +40,14 @@ export function advancePuppet(puppet: Puppet, elapsedSeconds: number): Float32Ar
 
   if (elapsedSeconds >= PUPPET_BACKGROUND_GAP_SECONDS) {
     // Background-return wall time is intentionally discarded instead of feeding seconds into an unstable spring.
-    puppetRemainders.delete(puppet);
     return null;
   }
 
-  // Real foreground time is retained, while only this frame's physics work is capped for frame-time stability.
-  const available = (puppetRemainders.get(puppet) ?? 0) + elapsedSeconds;
-  const elapsed = Math.min(available, PUPPET_MAX_CATCH_UP_SECONDS);
-  const remainder = available - elapsed;
-  if (remainder > Number.EPSILON) puppetRemainders.set(puppet, remainder);
-  else puppetRemainders.delete(puppet);
-
   let vertices: Float32Array | null = null;
-  const stepCount = Math.ceil(elapsed / PUPPET_STEP_SECONDS);
-  const step = stepCount > 0 ? elapsed / stepCount : 0;
+  const stepCount = Math.ceil(elapsedSeconds / PUPPET_STEP_SECONDS);
+  const step = elapsedSeconds / stepCount;
 
-  // Small calls protect secondary integration; the retained sum keeps the coupled animation timeline truthful.
+  // Substep size protects secondary integration; consuming every substep now keeps the coupled timeline truthful.
   for (let index = 0; index < stepCount; index += 1) {
     vertices = puppet.update(step) ?? vertices;
   }

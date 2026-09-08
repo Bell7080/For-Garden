@@ -61,7 +61,9 @@ test("토리카 기본 외형에서 스킨을 장착해 도감·로비·편성·
   await tapUntil(page, 880, 620, async () => (await page.evaluate(() => window.__PF_DEBUG?.infoOpen)) === true);
   await tapGame(page, 914, 1580);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toContain("외형");
-  await page.waitForTimeout(800); // 두 resolver Puppet이 카드에 조립된 뒤 기본 상태를 캡처한다.
+  // 두 resolver Puppet이 비동기 addAt으로 카드에 조립된 뒤, 각 카드의 선택 배율을 물려받으면서도
+  // 카드 중심(x=0)과 공용 바닥선에 나란히 선 완성 상태를 시각 회귀로 남긴다.
+  await page.waitForTimeout(800);
   await captureGame(page, `test-results/${testInfo.project.name}-torika-appearance-default.png`);
 
   // 오른쪽 추가 외형을 고른 뒤 공용 장착 버튼으로 manager 경계를 호출한다.

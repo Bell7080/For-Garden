@@ -176,6 +176,13 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
     // 태그가 이미 말하므로 여기서 되풀이하지 않는다.
     return `폭주 중 모든 일반 공격이 [[split-arrow|갈래화살]]이 되고 사거리가 ${trait.reachBonus} 증가한다.`;
   }
+  if (trait.effectId === "summonPackFrenzy") {
+    // 두 늑대의 역할 차이와 네 가지 공통 강화 축을 데이터 숫자에서 그대로 설명한다.
+    return `쿠로의 공격력이 ${trait.kuro.attackPowerPercent}%, 공격 속도가 ${trait.kuro.attackSpeedPercent}%, 이동 속도가 ${trait.kuro.moveSpeedPercent}% 증가하고,`
+      + ` 체력 ${trait.kuro.executeBelowHpPercent}% 이하 적에게 주는 피해가 ${trait.kuro.executeDamagePercent}% 증가한다.`
+      + ` 시로의 주문력이 ${trait.shiro.abilityPowerPercent}%, 공격 속도가 ${trait.shiro.attackSpeedPercent}%, 이동 속도가 ${trait.shiro.moveSpeedPercent}% 증가하고,`
+      + ` 추적 피해가 ${trait.shiro.pursuitDamagePercent}% 증가한다.`;
+  }
 
   // 방어력 계수는 토리카처럼 추가 피해가 있는 범위 타격만 노출하고, 일반 전이 특성은 원래 피해 비율만 보여 준다.
   const speed = trait.attackSpeedBonusPercent === undefined ? "" : `공격 속도가 ${trait.attackSpeedBonusPercent}% 증가한다. `;

@@ -11,7 +11,7 @@ import { ULTIMATE_ENERGY_MAX } from "./ultimate";
 import { deriveSummonStats } from "./summonStats";
 import { stealthTransition, type CombatEffectCue } from "./combatEffects";
 import {
-  accumulateDamageContribution, addContribution, contributionSnapshot, createBattleContributions, type BattleContributionRow, type BattleContributions,
+  accumulateDamageContribution, addContribution, contributionOwnerId, contributionSnapshot, createBattleContributions, type BattleContributionRow, type BattleContributions,
   type ContributionCategory,
 } from "./battleContribution";
 
@@ -453,6 +453,14 @@ export interface CreateSkirmishOptions {
 
 /** 씬이 모션·피격 숫자·사망 연출을 붙일 수 있도록 이번 프레임에 일어난 일만 모아 돌려준다. */
 export type SkirmishEvent =
+  /** 소환수 사건은 언제나 런타임 ID와 성장·정산 주체를 함께 실어 씬이 정의를 역탐색하지 않게 한다. */
+  | { kind: "summon"; summonId: string; ownerFighterId: string; x: number; y: number }
+  | { kind: "summonMove"; summonId: string; ownerFighterId: string; from: { x: number; y: number }; to: { x: number; y: number } }
+  | { kind: "summonHit"; summonId: string; ownerFighterId: string; targetId: string; amount: number; damageType: "physical" | "magical" }
+  | { kind: "summonRecall"; summonId: string; ownerFighterId: string }
+  | { kind: "summonReturn"; summonId: string; ownerFighterId: string; x: number; y: number }
+  | { kind: "summonUltimateCharge"; summonId: string; ownerFighterId: string; from: { x: number; y: number }; to: { x: number; y: number } }
+  | { kind: "summonFrenzy"; summonId: string; ownerFighterId: string; active: boolean; remainingSeconds: number }
   | {
       kind: "attack";
       attackerId: string;
@@ -492,6 +500,8 @@ export type SkirmishEvent =
        * 못 박은 이 값이 곧 코어가 인정하는 시각이다.
        */
       at?: number;
+      /** 소환수 타격일 때 디버그 상세가 실제 출처와 결과 행의 소유자를 동시에 보존한다. */
+      ownerFighterId?: string;
     }
   /**
    * 광역 공격이 실제로 터진 자리와 범위다. 씬은 그 자리 **바닥**에 범위를 그려 어디까지
@@ -979,6 +989,10 @@ export function createSkirmish(
   refreshSummonCommanderStealth(state);
   // 시작 효과는 별도의 순수 단계에서 정확히 한 번 적용하고 사건은 첫 렌더 step까지 보존한다.
   state.initialEvents = initializeSkirmishAugments(state);
+  // 최초 소환도 재호출과 같은 좌표 계약을 사용하며, 정산용 fighters 배열에는 넣지 않는다.
+  state.initialEvents.push(...state.summons.map((summon): SkirmishEvent => ({
+    kind: "summon", summonId: summon.id, ownerFighterId: summon.ownerFighterId, x: summon.x, y: summon.y,
+  })));
   // 무리 사냥이 있는 편만 기준 아군의 정상 최초 표적을 확정한 뒤 루카가 이를 복사한다.
   triggerPackHunt(state, "player");
   triggerPackHunt(state, "enemy");
@@ -2770,6 +2784,13 @@ function gainFerocity(fighter: Fighter, base: number, state: SkirmishState, even
       for (const other of state.fighters) if (other.targetId === fighter.id) { other.targetId = null; other.engaged = false; }
       if (trait.retriggerPackHunt) triggerPackHunt(state, fighter.side);
     }
+    if (trait.effectId === "summonPackFrenzy") {
+      // 회수 중인 늑대는 건드리지 않는다. 재호출되면 그때 남은 폭주 시계만 전달한다.
+      const remainingSeconds = fighter.ferocity / FEROCITY_RULES.feverDrainPerSecond;
+      for (const summon of state.summons.filter((unit) => unit.ownerFighterId === fighter.id && unit.status === "active")) {
+        events.push({ kind: "summonFrenzy", summonId: summon.id, ownerFighterId: fighter.id, active: true, remainingSeconds });
+      }
+    }
     if (trait.effectId === "torikaBulwark") {
       // 진입 도발도 공용 상태 경계를 지나 지속시간 배율·긴 도발 우선·사망 해제를 그대로 얻는다.
       for (const enemy of state.fighters) {
@@ -4165,12 +4186,17 @@ export function damageSummonedUnit(state: SkirmishState, summonId: string, amoun
     const definition = owner?.def.summons?.find((entry) => entry.id === summon.summonId);
     summon.resummonRemaining = definition?.resummon.enabled ? definition.resummon.cooldownSeconds : Number.POSITIVE_INFINITY;
     refreshSummonCommanderStealth(state);
+    // 직접 피해 API는 사건 배열을 받지 않으므로 다음 step까지 코어의 시작 사건 큐에 보존한다.
+    state.initialEvents.push({ kind: "summonHit", summonId: summon.id, ownerFighterId: summon.ownerFighterId, targetId: summon.id, amount: before, damageType: "physical" });
+    state.initialEvents.push({ kind: "summonRecall", summonId: summon.id, ownerFighterId: summon.ownerFighterId });
+  } else {
+    state.initialEvents.push({ kind: "summonHit", summonId: summon.id, ownerFighterId: summon.ownerFighterId, targetId: summon.id, amount: before - summon.hp, damageType: "physical" });
   }
   return before - summon.hp;
 }
 
 /** 회수·재호출 시계를 갱신하며 주인 사망 및 전투 종료에서는 재호출 가능성을 즉시 없앤다. */
-function advanceSummons(state: SkirmishState, dt: number): void {
+function advanceSummons(state: SkirmishState, dt: number, events: SkirmishEvent[]): void {
   for (const summon of state.summons) {
     const owner = findFighter(state, summon.ownerFighterId);
     const definition = owner?.def.summons?.find((entry) => entry.id === summon.summonId);
@@ -4192,6 +4218,11 @@ function advanceSummons(state: SkirmishState, dt: number): void {
         const siblingIndex = owner.def.summons?.findIndex((entry) => entry.id === summon.summonId) ?? 0;
         summon.x = owner.x + (siblingIndex % 2 === 0 ? -70 : 70);
         summon.y = owner.y + (owner.side === "player" ? -90 : 90);
+        events.push({ kind: "summonReturn", summonId: summon.id, ownerFighterId: owner.id, x: summon.x, y: summon.y });
+        if (owner.ferocityFever && owner.def.ferocityTrait.effectId === "summonPackFrenzy") {
+          events.push({ kind: "summonFrenzy", summonId: summon.id, ownerFighterId: owner.id, active: true,
+            remainingSeconds: owner.ferocity / FEROCITY_RULES.feverDrainPerSecond });
+        }
       }
     }
   }
@@ -4208,15 +4239,28 @@ function activeOwnedSummons(state: SkirmishState, owner: Fighter): Array<{ unit:
 
 /** 소환수 한 마리의 파생 능력치로 한 번만 피해를 계산하고, 기여도는 성장 주체인 지휘자에게 귀속한다. */
 function strikeSummon(owner: Fighter, summon: SummonedUnit, skill: AttackSkill, target: Fighter, state: SkirmishState, events: SkirmishEvent[], ultimate: boolean): void {
-  const proxy = { ...owner, id: summon.id, def: { ...owner.def, stats: summon.stats } };
-  const input = { ...skill, kind: ultimate ? "ultimate" as const : "basic" as const, isCritical: false };
+  const trait = owner.def.ferocityTrait;
+  const frenzy = owner.ferocityFever && trait.effectId === "summonPackFrenzy" ? trait : undefined;
+  const role = summon.summonId === "kuro" ? frenzy?.kuro : summon.summonId === "shiro" ? frenzy?.shiro : undefined;
+  // 강화는 계산용 사본에만 투영해 정적 소환수 능력치와 회수 중 HP를 바꾸지 않는다.
+  const stats = { ...summon.stats };
+  if (role && "attackPowerPercent" in role) stats.atk *= 1 + role.attackPowerPercent / 100;
+  if (role && "abilityPowerPercent" in role) stats.ap *= 1 + role.abilityPowerPercent / 100;
+  stats.attackSpeed *= 1 + (role?.attackSpeedPercent ?? 0) / 100;
+  stats.moveSpeed *= 1 + (role?.moveSpeedPercent ?? 0) / 100;
+  const proxy = { ...owner, id: summon.id, def: { ...owner.def, stats } };
+  let power = skill.power;
+  if (role && "pursuitDamagePercent" in role && ultimate) power *= 1 + role.pursuitDamagePercent / 100;
+  if (role && "executeDamagePercent" in role && target.hp / target.maxHp * 100 <= role.executeBelowHpPercent) power *= 1 + role.executeDamagePercent / 100;
+  const input = { ...skill, power, kind: ultimate ? "ultimate" as const : "basic" as const, isCritical: false };
   const raw = Math.max(1, Math.round(computeDamage(proxy, defensiveDefinition(target, state), input)));
   const contribution = computeDamageContribution(proxy, input);
   const resolution = resolveReceivedDamage(target, raw);
   const hpBefore = target.hp; const shieldBefore = target.shield.amount; const provider = target.shield.providerId;
   applyDamage(target, resolution.applied, events, state);
-  const credited = recordDamageContribution(state, owner.id, target, skill.damageType, skill.scalingStat, contribution, resolution, hpBefore, shieldBefore, provider);
-  events.push({ kind: "attack", attackerId: summon.id, targetId: target.id, skill: ultimate ? "ultimate" : "basic", amount: resolution.applied, contributionAmount: credited, critical: false, damageType: skill.damageType });
+  const credited = recordDamageContribution(state, contributionOwnerId(summon.id, owner.id), target, skill.damageType, skill.scalingStat, contribution, resolution, hpBefore, shieldBefore, provider);
+  events.push({ kind: "attack", attackerId: summon.id, ownerFighterId: owner.id, targetId: target.id, skill: ultimate ? "ultimate" : "basic", amount: resolution.applied, contributionAmount: credited, critical: false, damageType: skill.damageType });
+  events.push({ kind: "summonHit", summonId: summon.id, ownerFighterId: owner.id, targetId: target.id, amount: resolution.applied, damageType: skill.damageType });
   if (!isFighterAlive(target)) events.push({ kind: "death", fighterId: target.id, sourceId: summon.id });
 }
 
@@ -4248,8 +4292,12 @@ function commandSummonUltimate(owner: Fighter, state: SkirmishState, events: Ski
     if (!target || !isFighterAlive(target)) target = weakest(); // 돌진 중 사망하면 후행 늑대가 한 번만 재지정한다.
     if (!target) break;
     const side = index % 2 === 0 ? -1 : 1;
+    const from = { x: unit.x, y: unit.y };
     unit.x = Math.min(state.arena.right, Math.max(state.arena.left, target.x + side * 36));
     unit.y = target.y;
+    const to = { x: unit.x, y: unit.y };
+    events.push({ kind: "summonUltimateCharge", summonId: unit.id, ownerFighterId: owner.id, from, to });
+    events.push({ kind: "summonMove", summonId: unit.id, ownerFighterId: owner.id, from, to });
     events.push({ kind: "areaImpact", attackerId: unit.id, ultimate: true, damageType: definition.skills.special.damageType,
       area: { shape: "lane", from: { x: unit.x - side * 72, y: unit.y }, to: { x: unit.x, y: unit.y }, halfWidth: 24 } });
     strikeSummon(owner, unit, definition.skills.special, target, state, events, true);
@@ -4272,13 +4320,13 @@ function settle(state: SkirmishState, events: SkirmishEvent[]): void {
     fighter.reagentResistanceReductions = {};
   }
   // 종료와 같은 프레임에 남아 있는 소환수도 결과 화면으로 넘어가기 전에 모두 회수한다.
-  advanceSummons(state, 0);
+  advanceSummons(state, 0, events);
   events.push({ kind: "finish", phase: state.phase });
 }
 
 function advance(state: SkirmishState, dt: number, rng: () => number, events: SkirmishEvent[]): void {
   state.elapsed += dt;
-  advanceSummons(state, dt);
+  advanceSummons(state, dt, events);
 
   // 각 폰토스가 소유한 누적 시계로 완전히 경과한 1초만 처리해 프레임 분할과 무관하게 만든다.
   for (const pontus of state.fighters) {
@@ -4788,6 +4836,8 @@ export function stepSkirmish(state: SkirmishState, dt: number, rng: () => number
   if (state.phase !== "fight" || dt <= 0) return events;
   // 한 호출 안의 여러 적분 조각에서 연장되어도 진입 사건은 한 번만 내보내도록 시작 상태를 보존한다.
   const stealthBefore = new Map(state.fighters.map((fighter) => [fighter.id, fighter.stealthFor]));
+  // 소환수 강화 종료는 최종 조각의 drain 뒤에만 알 수 있으므로 호출 시작 상태를 보존한다.
+  const frenzyBefore = new Map(state.fighters.map((fighter) => [fighter.id, fighter.ferocityFever]));
 
   let remaining = Math.min(dt, SKIRMISH.maxCatchUp);
   while (remaining > 0 && state.phase === "fight") {
@@ -4808,6 +4858,12 @@ export function stepSkirmish(state: SkirmishState, dt: number, rng: () => number
   for (const fighter of state.fighters) {
     const tag = stealthTransition(stealthBefore.get(fighter.id) ?? 0, fighter.stealthFor);
     if (tag) events.push({ kind: "combatEffect", fighterId: fighter.id, effect: { tag, intensity: 1 } });
+    if (frenzyBefore.get(fighter.id) && !fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "summonPackFrenzy") {
+      // 회수 여부와 무관하게 런타임 쌍 모두에 종료를 알려 뒤늦은 재호출이 옛 강화를 이어받지 않게 한다.
+      for (const summon of state.summons.filter((unit) => unit.ownerFighterId === fighter.id)) {
+        events.push({ kind: "summonFrenzy", summonId: summon.id, ownerFighterId: fighter.id, active: false, remainingSeconds: 0 });
+      }
+    }
   }
   return events;
 }

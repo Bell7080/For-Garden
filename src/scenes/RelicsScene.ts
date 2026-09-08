@@ -25,6 +25,8 @@ const VIEWPORT_TOP = 390;
 const VIEWPORT_BOTTOM = NAV_TOP;
 /** 카드 규격은 한 곳에서만 정한다. 첫 줄 자리와 미보유 구역이 같은 값을 읽어야 한다. */
 const GRID_CARD = { width: 300, height: 400, gapX: 40, gapY: 74 } as const;
+/** 빠른 스크롤에서도 빈 줄이 보이지 않도록 화면 위아래에 카드 한 행만 미리 렌더한다. */
+const GRID_OVERSCAN_Y = GRID_CARD.height + GRID_CARD.gapY;
 /** 첫 줄의 돌출된 머리가 상단 마스크에 닿지 않도록 공용 안전 영역 계산만 쓴다. */
 const GRID_FIRST_ROW_Y = portraitGridFirstRowY(VIEWPORT_TOP, GRID_CARD.height, PORTRAIT_GRID_MASK_GAP);
 /** 드래그와 카드 탭을 구분하는 최소 이동 거리다. */
@@ -57,6 +59,8 @@ export class RelicsScene extends Phaser.Scene {
   private contentBottom = VIEWPORT_TOP;
   private minScrollY = 0;
   private velocityY = 0;
+  /** 콘텐츠 좌표가 그대로인 정지 프레임에는 카드 전체를 다시 순회하지 않게 하는 표시다. */
+  private viewportVisibilityDirty = true;
   private pointerDown = false;
   private pointerY = 0;
   private draggedDistance = 0;
@@ -177,6 +181,8 @@ export class RelicsScene extends Phaser.Scene {
    * 세부 수치는 요약 칸으로 미뤄, 한눈에 "누가 있는지"부터 보이게 한다.
    */
   private buildGrid(): void {
+    // 새 카드들은 스크롤 좌표가 같아도 최초 가시성 판정이 필요하다.
+    this.viewportVisibilityDirty = true;
     const cols = 3;
     const { width: cardW, height: cardH, gapX, gapY } = GRID_CARD;
     const gridW = cols * cardW + (cols - 1) * gapX;
@@ -318,18 +324,29 @@ export class RelicsScene extends Phaser.Scene {
 
   /** 휠·드래그·관성이 공유하는 유일한 clamp 경로다. */
   private scrollTo(y: number): void {
-    this.content.y = Phaser.Math.Clamp(y, this.minScrollY, 0);
+    const nextY = Phaser.Math.Clamp(y, this.minScrollY, 0);
+    // clamp 결과가 실제로 달라졌을 때만 다음 동기화가 모든 카드의 월드 범위를 다시 판정한다.
+    if (nextY !== this.content.y) this.viewportVisibilityDirty = true;
+    this.content.y = nextY;
     if (this.content.y === this.minScrollY || this.content.y === 0) this.velocityY = 0;
     this.syncCardMasks();
     setDebugRelicScroll({ y: this.content.y, minY: this.minScrollY, maxY: 0, enabled: this.scrollEnabled(), viewportTop: VIEWPORT_TOP, viewportBottom: VIEWPORT_BOTTOM });
   }
 
-  /** PortraitCard의 자체 마스크는 부모 이동을 상속하지 않으므로 가시 카드의 월드 변환만 갱신한다. */
+  /** PortraitCard의 자체 마스크는 부모 이동을 상속하지 않으므로 오버스캔 안 카드만 갱신한다. */
   private syncCardMasks(): void {
+    if (!this.viewportVisibilityDirty) return;
+    this.viewportVisibilityDirty = false;
     for (const card of this.cards.values()) {
-      // 화면 밖 카드는 다시 들어오는 scrollTo에서 맞춰진다. 매번 전체 도감 크기만큼 계산하지 않는다.
+      // getBounds는 부모 content 이동까지 반영한 월드 y 범위다. 한 행의 오버스캔만 남겨 빠른
+      // 관성 이동을 준비하고, 그 밖의 초상·그림자·텍스트·배지는 부모와 함께 렌더 목록에서 뺀다.
       const bounds = card.getBounds();
-      if (bounds.bottom >= VIEWPORT_TOP && bounds.top < VIEWPORT_BOTTOM) card.syncMask();
+      const visible = bounds.bottom >= VIEWPORT_TOP - GRID_OVERSCAN_Y
+        && bounds.top < VIEWPORT_BOTTOM + GRID_OVERSCAN_Y;
+      const wasVisible = card.visible;
+      card.setViewportVisible(visible);
+      // 재진입 카드는 setViewportVisible이 마스크를 한 번 맞춘다. 계속 보이는 카드만 이동분을 맞춘다.
+      if (visible && wasVisible) card.syncMask();
     }
   }
 

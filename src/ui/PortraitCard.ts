@@ -180,6 +180,8 @@ export class PortraitCard extends Phaser.GameObjects.Container {
   private readonly maskOffsetY: number;
   private readonly shadeHeight: number;
   private selected = false;
+  /** 스크롤 목록이 렌더·입력·마스크 수명 주기를 한 상태로 전환할 때 쓰는 현재 상태다. */
+  private viewportVisible = true;
   private disposed = false;
   /** 원화가 비동기로 도착하기 전에도 오버레이 API를 만들 수 있도록 요청을 보관한다. */
   private readonly managedOverlays: ManagedPortraitOverlay[] = [];
@@ -618,6 +620,26 @@ export class PortraitCard extends Phaser.GameObjects.Container {
         .setPosition(decomposed.translateX, decomposed.translateY + this.maskOffsetY * decomposed.scaleY)
         .setScale(decomposed.scaleX, decomposed.scaleY);
     }
+  }
+
+  /**
+   * 스크롤 뷰포트에 제출할 카드 전체를 한 번에 켜거나 끈다.
+   *
+   * 컨테이너만 숨기고 투명 입력면을 남기면 화면 밖 카드가 탭을 가로채며, 입력만 되살리고
+   * 마스크를 옮기지 않으면 부모 컨테이너가 이동한 동안 남은 옛 월드 좌표에서 초상이 잘린다.
+   * 따라서 재진입할 때 표시·입력을 함께 복구하고 그 순간 마스크도 정확히 한 번 동기화한다.
+   */
+  public setViewportVisible(visible: boolean): this {
+    if (this.viewportVisible === visible) return this;
+    this.viewportVisible = visible;
+    this.setVisible(visible);
+    if (visible) {
+      this.hit.setInteractive({ useHandCursor: true });
+      this.syncMask();
+    } else {
+      this.hit.disableInteractive();
+    }
+    return this;
   }
 
   /**

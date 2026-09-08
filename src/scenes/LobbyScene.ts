@@ -197,10 +197,15 @@ export class LobbyScene extends Phaser.Scene {
     new BottomNav(this, "lobby");
     // 한 번의 공용 조회가 모든 버튼을 갱신하며 실패 시 기존의 안전한 꺼짐 상태를 유지한다.
     void notificationManager.refresh().catch(() => undefined);
-    void this.showFavorite();
+    // 호출 경계에서 생성 실패를 소비해 로비 진입 Promise가 처리되지 않은 rejection으로 남지 않게 한다.
+    void this.showFavorite().catch((error) => console.error("로비 애착 Puppet 표시 실패", error));
     this.installPerformanceScenario();
     // 로비가 살아 있는 동안 외형 사건을 받으면 애착 렐릭 Puppet을 같은 resolver로 즉시 교체한다.
-    const unsubscribeSkin = relicSkinManager.subscribe(({ relicId }) => { if (relicId === session.favorite) void this.showFavorite(); });
+    const unsubscribeSkin = relicSkinManager.subscribe(({ relicId }) => {
+      if (relicId !== session.favorite) return;
+      // 종료 가드는 showFavorite 안에 유지하고, 이 호출 경계도 비동기 생성 실패를 직접 처리한다.
+      void this.showFavorite().catch((error) => console.error("로비 애착 Puppet 갱신 실패", error));
+    });
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, unsubscribeSkin);
   }
 
@@ -518,6 +523,7 @@ export class LobbyScene extends Phaser.Scene {
       // 전용 원화가 연결된 두 캐릭터는 원본 색을 유지한다.
       depth: -20,
     });
+    // 현재 가드는 종료된 씬에서 비동기 Puppet 결과가 되살아나는 것을 막고 최신 요청만 남긴다.
     if (request !== this.favoriteRequest || !this.scene.isActive()) { nextFavorite.destroy(); return; }
     // 교체가 확정된 뒤 이전 Puppet을 파괴해 로비에는 언제나 최신 외형 하나만 남긴다.
     this.favorite?.destroy();

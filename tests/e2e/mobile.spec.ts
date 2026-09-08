@@ -61,7 +61,7 @@ async function enterParty(page: import("@playwright/test").Page): Promise<void> 
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("party");
 }
 
-test("세로형 화면에서 캔버스가 뜨고 첫 방문은 오프닝으로 들어간다", async ({ page }) => {
+test("세로형 첫 방문은 오프닝을 끝내고 중복 입력 없이 로비로 한 번 전환한다", async ({ page }) => {
   const consoleErrors: string[] = [];
   page.on("console", (msg) => {
     if (msg.type() === "error") consoleErrors.push(msg.text());
@@ -89,6 +89,34 @@ test("세로형 화면에서 캔버스가 뜨고 첫 방문은 오프닝으로 �
   await expect
     .poll(() => page.evaluate(() => window.__PF_DEBUG?.scene))
     .toBe("opening");
+  // 첫 전신 ZIP 파싱이 끝나 입력 잠금이 풀릴 시간을 저사양 모바일 실행에도 보장한다.
+  await page.waitForTimeout(2_000);
+
+  // 디버그 씬 계약의 실제 대입을 감시해 빠른 마지막 입력이 로비 create를 중복 호출하지 않는지 센다.
+  await page.evaluate(() => {
+    const debug = window.__PF_DEBUG!;
+    let scene = debug.scene;
+    let lobbyEntries = 0;
+    Object.defineProperty(debug, "scene", {
+      configurable: true,
+      get: () => scene,
+      set: (next: string) => { scene = next; if (next === "lobby") lobbyEntries += 1; },
+    });
+    Object.defineProperty(debug, "__lobbyEntries", { configurable: true, get: () => lobbyEntries });
+  });
+
+  // wake → window → 선택 → 분기 응답 → arrival → end까지 실제 Canvas 입력으로 진행한다.
+  await tapGame(page, BASE_WIDTH / 2, 1500); await page.waitForTimeout(300);
+  await tapGame(page, BASE_WIDTH / 2, 1500); await page.waitForTimeout(300);
+  await tapGame(page, BASE_WIDTH / 2, 1050); await page.waitForTimeout(300);
+  await tapGame(page, BASE_WIDTH / 2, 1500); await page.waitForTimeout(300);
+  await tapGame(page, BASE_WIDTH / 2, 1500); await page.waitForTimeout(500);
+
+  // 마지막 노드 입력은 같은 순간 여러 번 보내 완료 저장/전환 멱등 경계를 직접 압박한다.
+  for (let input = 0; input < 5; input += 1) await tapGame(page, BASE_WIDTH / 2, 1500);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene), { timeout: 15_000 }).toBe("lobby");
+  await page.waitForTimeout(500);
+  expect(await page.evaluate(() => (window.__PF_DEBUG as typeof window.__PF_DEBUG & { __lobbyEntries?: number })?.__lobbyEntries)).toBe(1);
 
   expect(consoleErrors, `콘솔 에러 발생: ${consoleErrors.join(", ")}`).toEqual([]);
 });

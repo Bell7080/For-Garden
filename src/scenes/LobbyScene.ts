@@ -31,7 +31,7 @@ import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { relicSkinManager } from "../managers/RelicSkinManager";
 import { expeditionManager } from "../managers/ExpeditionManager";
 import { ExpeditionEntryButton, sortieEntrySdSpot } from "../ui/ExpeditionEntryButton";
-import { ENEMY_SD_ASSETS, PONTOS_SD_ASSET, playMotion, type PuppetAsset } from "../puppets/assets";
+import { ENEMY_SD_ASSETS, PONTOS_SD_ASSET, playMotion, type MotionName, type PuppetAsset } from "../puppets/assets";
 import { loadOwnedPuppetPair } from "../ui/statusPuppetLoad";
 import { PlayerProfilePopup } from "../ui/PlayerProfilePopup";
 import { profileModifierManager } from "../managers/ProfileModifierManager";
@@ -59,8 +59,15 @@ const SORTIE_SD_SHADOW = { color: 0x05070a, alpha: 0.42 } as const;
 /** 일시 실패를 무한 재요청하지 않으면서 메뉴 한 번 안에서는 본체를 회복할 수 있는 추가 시도 수다. */
 const SORTIE_SD_PRIMARY_RETRIES = 2;
 
-/** 한 자리에 선 SD 두 겹. 그림자는 늦게 도착하거나 실패할 수 있다. */
-interface SortieSdPair { body?: PuppetCreature; shadow?: PuppetCreature }
+/** 한 자리에 선 SD 두 겹과 장식에 허용된 잔잔한 동작. 그림자는 늦게 도착하거나 실패할 수 있다. */
+interface SortieSdPair {
+  body?: PuppetCreature;
+  shadow?: PuppetCreature;
+  assetUrl: string;
+  motions: readonly MotionName[];
+  /** Canvas 밖 E2E가 실제 재생 상태를 관찰할 때 쓰며 게임 로직에는 입력하지 않는다. */
+  currentMotion: string;
+}
 
 /** 한 줄에 담기는 출격 콘텐츠 한 칸. 자리·크기·원화·SD를 한 표로 읽는다. */
 interface SortieEntry {
@@ -77,6 +84,8 @@ interface SortieEntry {
   accentTextColor?: string;
   sdSide?: "left" | "right";
   sd?: PuppetAsset;
+  /** 선택판 장식에서 허용하는 모션만 열거한다. 피격 의미의 `hit`는 이 데이터에 넣지 않는다. */
+  sdMotions?: readonly MotionName[];
   split?: "left" | "right";
   /** 개체마다 원화 크기가 달라 혼자 커 보이는 SD만 이 배율로 줄인다. */
   sdScale?: number;
@@ -324,7 +333,7 @@ export class LobbyScene extends Phaser.Scene {
       const entries: SortieEntry[] = [
         {
           y: -410, width: 800, height: 220, label: "스토리", status: "메인 작전", artKey: "content-story-entry",
-          accentColor: EXCHANGE_BLUE, accentTextColor: "#9fd0f0", sd: ENEMY_SD_ASSETS[0], sdScale: 0.9,
+          accentColor: EXCHANGE_BLUE, accentTextColor: "#9fd0f0", sd: ENEMY_SD_ASSETS[0], sdScale: 0.9, sdMotions: ["attack"],
           onClick: () => { close(); this.scene.start("stageMap"); },
         },
         // 두 일일 던전은 같은 위계와 같은 폭으로 나란히 놓아 어느 쪽도 기본 선택처럼 보이지 않게 한다.
@@ -348,7 +357,8 @@ export class LobbyScene extends Phaser.Scene {
         // 전용 프리팹이 Content2_001 원화, 주황 출격 위계, 확대 피드백을 한 입력면으로 유지한다.
         // 원정만 SD가 오른쪽에 서고 글자가 왼쪽 아래로 간다 — 20층 보스가 판 밖을 보는 자리다.
         {
-          y: 443, width: 800, height: 230, status: this.expeditionStatus(status), sdSide: "right", sd: PONTOS_SD_ASSET,
+          // 폰토스는 선택판에서 검증된 포효만 사용해 피격처럼 움찔하거나 쓰러져 보이지 않게 한다.
+          y: 443, width: 800, height: 230, status: this.expeditionStatus(status), sdSide: "right", sd: PONTOS_SD_ASSET, sdMotions: ["roar"],
           onClick: () => { close(); this.scene.start("expedition"); },
         },
       ];
@@ -364,7 +374,7 @@ export class LobbyScene extends Phaser.Scene {
         body.add(button);
         if (!entry.sd) return;
         const spot = sortieEntrySdSpot(entry.width, entry.height, sdSide ?? "left");
-        void this.spawnSortieSd(entry.sd, {
+        void this.spawnSortieSd(entry.sd, entry.sdMotions ?? ["idle"], {
           x: BASE_WIDTH / 2 + x + spot.x,
           groundY: BASE_HEIGHT / 2 + entry.y + spot.groundY,
           height: Math.round(spot.height * (entry.sdScale ?? 1)),
@@ -377,13 +387,26 @@ export class LobbyScene extends Phaser.Scene {
       this.sortieBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: close }).setDepth(SORTIE_SD_DEPTH + 1);
       // 세워 둔 SD가 가끔 한 번씩 움직인다. 다섯 칸이 동시에 뛰면 무엇을 고르는 화면인지 흐려지므로
       // 한 번에 하나만, 그것도 드문드문 재생한다.
-      this.sortieSdTimer = this.time.addEvent({ delay: SORTIE_MENU.motionDelay, loop: true, callback: () => {
-        const pair = this.sortieSdPairs[Math.floor(Math.random() * this.sortieSdPairs.length)];
-        if (!pair?.body) return;
-        const motion = Math.random() < 0.5 ? "attack" : "hit";
-        // 본체와 그림자는 같은 동작을 함께 재생한다. 한쪽만 움직이면 그림자가 딴 자세로 남는다.
-        playMotion(this, pair.body, motion);
-        if (pair.shadow) playMotion(this, pair.shadow, motion);
+      this.sortieSdTimer = this.time.addEvent({ delay: SORTIE_MENU.motionDelay, loop: true, callback: async () => {
+        // 두 겹이 모두 준비되고 이전 동작을 마친 장식만 골라 한쪽 자세가 홀로 바뀌는 프레임을 막는다.
+        const readyPairs = this.sortieSdPairs.filter((pair) => pair.body && pair.shadow && pair.currentMotion === "idle");
+        const pair = readyPairs[Math.floor(Math.random() * readyPairs.length)];
+        if (!pair?.body || !pair.shadow) return;
+        const motion = pair.motions[Math.floor(Math.random() * pair.motions.length)] ?? "idle";
+        // 동일한 요청을 같은 프로젝트의 본체·그림자에 함께 전달하고 둘의 완료를 모두 기다린다.
+        const bodyPlayback = playMotion(this, pair.body, motion);
+        const shadowPlayback = playMotion(this, pair.shadow, motion);
+        pair.currentMotion = bodyPlayback.playedName ?? "idle";
+        this.publishSortieSdDebug();
+        await Promise.all([bodyPlayback.completed, shadowPlayback.completed]);
+        // 닫힌 판이나 숨겨진 겹을 되살리지 않고, 두 개체가 모두 표시 중일 때에만 함께 idle로 복귀한다.
+        if (pair.body.parentContainer === this.sortieSdLayer && pair.shadow.parentContainer === this.sortieSdLayer
+          && pair.body.active && pair.body.visible && pair.shadow.active && pair.shadow.visible) {
+          playMotion(this, pair.body, "idle");
+          playMotion(this, pair.shadow, "idle");
+          pair.currentMotion = "idle";
+        }
+        this.publishSortieSdDebug();
       } });
     });
   }
@@ -395,10 +418,10 @@ export class LobbyScene extends Phaser.Scene {
    * 판에서 떠오른다. 그림자도 같은 동작을 재생해야 두 겹이 어긋나지 않는다. 늦게 도착한
    * 결과는 이미 닫힌 판 위에 남지 않도록 현재 레이어일 때만 붙인다.
    */
-  private async spawnSortieSd(asset: PuppetAsset, place: { x: number; groundY: number; height: number; shadowOffsetX: number; shadowOffsetY: number; mask?: Phaser.Display.Masks.GeometryMask }): Promise<void> {
+  private async spawnSortieSd(asset: PuppetAsset, motions: readonly MotionName[], place: { x: number; groundY: number; height: number; shadowOffsetX: number; shadowOffsetY: number; mask?: Phaser.Display.Masks.GeometryMask }): Promise<void> {
     const layer = this.sortieSdLayer;
     if (!layer) return;
-    const pair: SortieSdPair = {};
+    const pair: SortieSdPair = { assetUrl: asset.url, motions, currentMotion: "idle" };
     const adopt = (puppet: PuppetCreature, shadow: boolean): void => {
       // 장식이므로 입력을 받지 않는다. 버튼의 투명 입력면이 그대로 손짓을 가져간다.
       puppet.disableInteractive();
@@ -425,6 +448,8 @@ export class LobbyScene extends Phaser.Scene {
         adoptPrimary: (puppet) => {
           adopt(puppet, false);
           if (window.__PF_DEBUG && !window.__PF_DEBUG.sortieSdBodyAssetUrls?.includes(asset.url)) window.__PF_DEBUG.sortieSdBodyAssetUrls?.push(asset.url);
+          // 비동기 채택 직후의 실제 Canvas 표시 상태를 E2E 모델에도 함께 반영한다.
+          this.publishSortieSdDebug();
         },
         adoptCompanion: (puppet) => adopt(puppet, true),
       });
@@ -432,6 +457,15 @@ export class LobbyScene extends Phaser.Scene {
       // 실패한 본체만 제한 횟수로 다시 만들며, 그림자 실패는 adopted라서 본체를 숨기거나 재시도하지 않는다.
     }
     if (pair.body) this.sortieSdPairs.push(pair);
+    this.publishSortieSdDebug();
+  }
+
+  /** E2E 관찰 전용 모델에 본체의 Phaser 표시 상태를 그대로 복사한다. */
+  private publishSortieSdDebug(): void {
+    if (!window.__PF_DEBUG) return;
+    window.__PF_DEBUG.sortieSdBodies = this.sortieSdPairs.flatMap((pair) => pair.body ? [{
+      assetUrl: pair.assetUrl, active: pair.body.active, visible: pair.body.visible, motion: pair.currentMotion,
+    }] : []);
   }
 
   /** 판이 닫히면 화면에 직접 올린 SD·타이머·돌아가기를 함께 거둔다. */
@@ -440,7 +474,7 @@ export class LobbyScene extends Phaser.Scene {
     for (const puppet of this.sortieSdPuppets) { this.sortieSdLayer?.remove(puppet, false); puppet.destroy(); }
     this.sortieSdPuppets.clear(); this.sortieSdPairs = [];
     this.sortieSdLayer?.destroy(true); this.sortieSdLayer = undefined;
-    if (window.__PF_DEBUG) window.__PF_DEBUG.sortieSdBodyAssetUrls = undefined;
+    if (window.__PF_DEBUG) { window.__PF_DEBUG.sortieSdBodyAssetUrls = undefined; window.__PF_DEBUG.sortieSdBodies = undefined; }
     this.sortieBackButton?.destroy(); this.sortieBackButton = undefined;
   }
 

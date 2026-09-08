@@ -748,6 +748,8 @@ export type PassiveKind =
   | "lowHpVanish"
   /** 델로피 전용: 전투가 시작되는 순간부터 정해진 시간 동안 은신한 채로 연다. */
   | "openingVanish"
+  /** 디안 전용: 귀속 소환수 둘을 지휘하며 둘이 모두 현장에 있을 때만 은신한다. */
+  | "summonCommander"
   /** 엘라 전용: 쓰러질 피해를 가로채 전투당 한 번, 무적·행동불가로 버티며 되살아난다. */
   | "undyingTalisman"
   /** 노도니아 전용: 맞을수록 회복 중첩을 쌓는 패시브다. */
@@ -1302,6 +1304,8 @@ export interface SummonDef {
     enabled: boolean;
     /** 쓰러진 시점부터 재호출까지 기다리는 초다. */
     cooldownSeconds: number;
+    /** 재호출 때 회복하는 소환수 최대 HP 비율이다. 전투 중 완전 회복을 만들지 않는다. */
+    hpPercent: number;
   };
 }
 

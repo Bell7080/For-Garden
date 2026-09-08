@@ -8,6 +8,7 @@ import { breakthroughBonus } from "./relicProgression";
 import { augmentAppliesTo, bleedOnAttackEffect, conditionalAttackPowerMultiplier, expeditionAugmentStatMultipliers, type ExpeditionAugmentEffect, type ExpeditionAugmentTrigger, type ExpeditionTriggeredEffect } from "./expeditionAugments";
 import type { BasicAttack, BasicAttackStep, CombatStatusEffect, FerocityTrait, ReachTier, RelicDef, Side, Skill, TeamBuff } from "./types";
 import { ULTIMATE_ENERGY_MAX } from "./ultimate";
+import { deriveSummonStats } from "./summonStats";
 import { stealthTransition, type CombatEffectCue } from "./combatEffects";
 import {
   accumulateDamageContribution, addContribution, contributionSnapshot, createBattleContributions, type BattleContributionRow, type BattleContributions,
@@ -351,10 +352,31 @@ export interface Fighter extends Combatant {
   frozen: { remaining: number; total: number; maxHpPercentOnExpire: number } | null;
 }
 
+/** 편성 캐릭터와 분리되어 승패·보상·유대 정산에 절대 들어가지 않는 귀속 전투 유닛이다. */
+export interface SummonedUnit {
+  /** `${ownerFighterId}:${summonId}` 계약으로 만든 전투 안의 유일한 ID다. */
+  id: string;
+  ownerFighterId: string;
+  summonId: string;
+  name: string;
+  side: Side;
+  stats: RelicDef["stats"];
+  hp: number;
+  maxHp: number;
+  x: number;
+  y: number;
+  facing: 1 | -1;
+  /** 현장에 없을 때만 양수로 흐르며 0이 되면 제한 체력으로 재호출된다. */
+  resummonRemaining: number;
+  status: "active" | "recalled";
+}
+
 export type SkirmishPhase = "fight" | "victory" | "defeat";
 
 export interface SkirmishState {
   fighters: Fighter[];
+  /** 편성 및 정산 배열과 의도적으로 분리한 전투 한정 소환수 목록이다. */
+  summons: SummonedUnit[];
   /** 중복 relicId와 무관하게 런타임 ID별로 누적하는 전투 결과의 단일 진실이다. */
   contributions: BattleContributions;
   arena: Arena;
@@ -889,6 +911,30 @@ export function spawnSpots(arena: Arena, side: Side, count = 3): { x: number; y:
   }));
 }
 
+/** 소유자의 앞쪽 좌우에 정의 순서대로 소환수를 세우며 런타임 ID는 소유자 ID를 이름공간으로 쓴다. */
+function createSummons(fighters: readonly Fighter[]): SummonedUnit[] {
+  return fighters.flatMap((owner) => (owner.def.summons ?? []).map((definition, index) => {
+    const stats = deriveSummonStats(owner.def.stats, definition);
+    // 플레이어의 앞은 위쪽, 적의 앞은 아래쪽이다. 좌우 간격은 같은 위치의 쌍둥이가 겹치지 않게 한다.
+    const forward = owner.side === "player" ? -1 : 1;
+    return {
+      id: `${owner.id}:${definition.id}`,
+      ownerFighterId: owner.id,
+      summonId: definition.id,
+      name: definition.name,
+      side: owner.side,
+      stats,
+      hp: stats.hp,
+      maxHp: stats.hp,
+      x: owner.x + (index % 2 === 0 ? -70 : 70),
+      y: owner.y + forward * 90,
+      facing: owner.facing,
+      resummonRemaining: 0,
+      status: "active" as const,
+    };
+  }));
+}
+
 export function createSkirmish(
   playerDefs: RelicDef[],
   enemyDefs: RelicDef[],
@@ -919,6 +965,7 @@ export function createSkirmish(
   const fighters = [...players, ...enemies];
   const state: SkirmishState = {
     fighters,
+    summons: createSummons(fighters),
     contributions: createBattleContributions(fighters.map(({ id }) => id)),
     arena,
     phase: "fight",
@@ -928,6 +975,8 @@ export function createSkirmish(
     initialEvents: [],
     boss: options.boss ? { fighterId: bossFighterId, score: 0, survivedFor: 0, phaseIndex: 0, limitReached: false, phases: options.boss.phases, limitSeconds: options.boss.limitSeconds, damageRemainder: 0, tideWarning: false } : undefined,
   };
+  // 지휘형 은신은 시간이 아니라 두 귀속 소환수의 생존 조건이 소유하므로 무기한 값으로 표시한다.
+  refreshSummonCommanderStealth(state);
   // 시작 효과는 별도의 순수 단계에서 정확히 한 번 적용하고 사건은 첫 렌더 step까지 보존한다.
   state.initialEvents = initializeSkirmishAugments(state);
   // 무리 사냥이 있는 편만 기준 아군의 정상 최초 표적을 확정한 뒤 루카가 이를 복사한다.
@@ -3802,12 +3851,14 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
    */
   const splitTargetIds = skill.targeting !== "splitShot" ? undefined : new Set(
     state.fighters
-      .filter((fighter) => fighter.side !== attacker.side && isFighterAlive(fighter) && fighter.stealthFor <= 0)
+      // 은신은 갈래화살의 최초 단일 표적이 되는 것만 막고, 이미 정해진 광역 판정의 피해는 막지 않는다.
+      .filter((fighter) => fighter.side !== attacker.side && isFighterAlive(fighter))
       .sort((a, b) => Math.hypot(a.x - requestedCenter.x, a.y - requestedCenter.y) - Math.hypot(b.x - requestedCenter.x, b.y - requestedCenter.y))
       .slice(0, Math.max(1, skill.maxTargets ?? 1))
       .map((fighter) => fighter.id),
   );
-  const targets = state.fighters.filter((fighter) => fighter.side !== attacker.side && isFighterAlive(fighter) && fighter.stealthFor <= 0
+  // 이 함수에 들어온 공격은 모두 광역이다. 은신은 단일 추적 회피이지 광역 무적이 아니므로 포함한다.
+  const targets = state.fighters.filter((fighter) => fighter.side !== attacker.side && isFighterAlive(fighter)
     && (!detonation || (fighter.overpaint?.stacks ?? 0) > 0)
     && (!cursed || fighter.curse !== null)
     && (skill.targeting === "battlefieldEnemies" || (skill.targeting === "nearbyEnemies" && distance(attacker, fighter) <= (skill.radius ?? 0))
@@ -4086,6 +4137,67 @@ function clampToArena(state: SkirmishState): void {
   }
 }
 
+/** 두 늑대가 모두 현장에 있는 동안만 디안의 조건부 은신을 유지하고 추적 중인 단일 표적을 끊는다. */
+function refreshSummonCommanderStealth(state: SkirmishState): void {
+  for (const owner of state.fighters.filter((fighter) => fighter.def.passive.kind === "summonCommander")) {
+    const owned = state.summons.filter((summon) => summon.ownerFighterId === owner.id);
+    const guarded = isFighterAlive(owner) && owned.length > 0 && owned.every((summon) => summon.status === "active" && summon.hp > 0);
+    owner.stealthFor = guarded ? Number.POSITIVE_INFINITY : 0;
+    owner.stealthBreaksOnBasic = false;
+    if (!guarded) continue;
+    // 이미 디안을 쫓던 단일 대상도 조건이 켜진 프레임에 즉시 표적을 잃는다.
+    for (const enemy of state.fighters) if (enemy.targetId === owner.id) {
+      enemy.targetId = null;
+      enemy.engaged = false;
+    }
+  }
+}
+
+/** 소환수 HP를 깎는 공용 경계다. 0 HP는 패배가 아니라 즉시 회수 상태가 된다. */
+export function damageSummonedUnit(state: SkirmishState, summonId: string, amount: number): number {
+  const summon = state.summons.find((candidate) => candidate.id === summonId);
+  if (!summon || summon.status !== "active" || amount <= 0 || state.phase !== "fight") return 0;
+  const before = summon.hp;
+  summon.hp = Math.max(0, summon.hp - amount);
+  if (summon.hp <= 0) {
+    summon.status = "recalled";
+    const owner = findFighter(state, summon.ownerFighterId);
+    const definition = owner?.def.summons?.find((entry) => entry.id === summon.summonId);
+    summon.resummonRemaining = definition?.resummon.enabled ? definition.resummon.cooldownSeconds : Number.POSITIVE_INFINITY;
+    refreshSummonCommanderStealth(state);
+  }
+  return before - summon.hp;
+}
+
+/** 회수·재호출 시계를 갱신하며 주인 사망 및 전투 종료에서는 재호출 가능성을 즉시 없앤다. */
+function advanceSummons(state: SkirmishState, dt: number): void {
+  for (const summon of state.summons) {
+    const owner = findFighter(state, summon.ownerFighterId);
+    const definition = owner?.def.summons?.find((entry) => entry.id === summon.summonId);
+    if (!owner || !isFighterAlive(owner) || state.phase !== "fight") {
+      summon.status = "recalled";
+      summon.hp = 0;
+      summon.resummonRemaining = Number.POSITIVE_INFINITY;
+      continue;
+    }
+    if (summon.status === "active" && summon.hp <= 0) {
+      summon.status = "recalled";
+      summon.resummonRemaining = definition?.resummon.enabled ? definition.resummon.cooldownSeconds : Number.POSITIVE_INFINITY;
+    } else if (summon.status === "recalled" && Number.isFinite(summon.resummonRemaining)) {
+      summon.resummonRemaining = Math.max(0, summon.resummonRemaining - dt);
+      if (summon.resummonRemaining === 0 && definition?.resummon.enabled) {
+        summon.status = "active";
+        summon.hp = Math.max(1, Math.round(summon.maxHp * definition.resummon.hpPercent / 100));
+        // 돌아온 늑대는 움직이는 주인의 현재 앞쪽으로 다시 배치한다.
+        const siblingIndex = owner.def.summons?.findIndex((entry) => entry.id === summon.summonId) ?? 0;
+        summon.x = owner.x + (siblingIndex % 2 === 0 ? -70 : 70);
+        summon.y = owner.y + (owner.side === "player" ? -90 : 90);
+      }
+    }
+  }
+  refreshSummonCommanderStealth(state);
+}
+
 function settle(state: SkirmishState, events: SkirmishEvent[]): void {
   if (state.phase !== "fight") return;
   const playersLeft = aliveFighters(state, "player").length;
@@ -4101,11 +4213,14 @@ function settle(state: SkirmishState, events: SkirmishEvent[]): void {
     fighter.reagents = {};
     fighter.reagentResistanceReductions = {};
   }
+  // 종료와 같은 프레임에 남아 있는 소환수도 결과 화면으로 넘어가기 전에 모두 회수한다.
+  advanceSummons(state, 0);
   events.push({ kind: "finish", phase: state.phase });
 }
 
 function advance(state: SkirmishState, dt: number, rng: () => number, events: SkirmishEvent[]): void {
   state.elapsed += dt;
+  advanceSummons(state, dt);
 
   // 각 폰토스가 소유한 누적 시계로 완전히 경과한 1초만 처리해 프레임 분할과 무관하게 만든다.
   for (const pontus of state.fighters) {
@@ -4288,6 +4403,11 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
       fighter.hop *= recovery;
       continue;
     }
+    // 지휘형 디안은 늑대에게 명령할 뿐 직접 이동·기본 공격·자동 궁극기를 실행하지 않는다.
+    if (fighter.def.passive.kind === "summonCommander") {
+      fighter.hop *= recovery;
+      continue;
+    }
     // 표적을 남이 정해 주는 개체는 주기 재평가에서 뺀다 — 무리 사냥은 대장의 표적을 따라야
     // 하고, 고품격 식재료는 제 시계로 가장 약한 적을 고른다. 둘을 여기서 다시 재면 그 규칙이
     // 2초마다 조용히 덮인다.
@@ -4438,6 +4558,8 @@ export function canFireUltimate(state: SkirmishState, fighter: Fighter): boolean
   if (state.phase !== "fight" || !isFighterAlive(fighter) || fighter.undying !== null || fighter.stunnedFor > 0 || fighter.staggeredFor > 0 || fighter.frozen !== null || fighter.energy < ultimateCost(state, fighter, false)) return false;
   // 광란 중에는 기본 공격만 나간다. 궁극기까지 아군에게 꽂히면 한 판이 그 한 번으로 갈린다.
   if (fighter.frenzy) return false;
+  // 직접 공격하지 않는 지휘형 계약은 수동 입력으로도 우회할 수 없다.
+  if (fighter.def.passive.kind === "summonCommander") return false;
   if (fighter.def.ultimate.targeting === "battlefieldAllies") return aliveFighters(state, fighter.side).length > 0;
   return state.fighters.some((other) => other.side !== fighter.side && isFighterAlive(other) && other.stealthFor <= 0);
 }

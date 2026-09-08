@@ -14,6 +14,7 @@ import {
   createSkirmish,
   currentAbilityPower,
   defensiveDefinition,
+  damageSummonedUnit,
   currentAttackSpeed,
   fireUltimate,
   findFighter,
@@ -68,6 +69,56 @@ describe("기여도 프레임 독립성", () => {
     expect(battleContributionSnapshot(split, "attack")).toEqual(battleContributionSnapshot(once, "attack"));
     expect(battleContributionSnapshot(split, "defense")).toEqual(battleContributionSnapshot(once, "defense"));
     expect(battleContributionSnapshot(split, "healing")).toEqual(battleContributionSnapshot(once, "healing"));
+  });
+});
+
+describe("디안 귀속 늑대 생명주기", () => {
+  /** 재호출처럼 긴 시계를 maxCatchUp 상한과 무관하게 실제 프레임 단위로 흘린다. */
+  function advanceFor(state: SkirmishState, seconds: number): SkirmishEvent[] {
+    const events: SkirmishEvent[] = [];
+    for (let elapsed = 0; elapsed < seconds; elapsed += 0.05) events.push(...stepSkirmish(state, Math.min(0.05, seconds - elapsed)));
+    return events;
+  }
+
+  it("은 양 진영의 같은 디안도 소유자 기반 ID로 쿠로·시로를 따로 소환한다", () => {
+    const state = createSkirmish([getRelic("dian")], [getRelic("dian")], ARENA);
+    expect(state.summons.map(({ id }) => id)).toEqual([
+      "player-0:kuro", "player-0:shiro", "enemy-0:kuro", "enemy-0:shiro",
+    ]);
+    // 두 늑대가 모두 현장에 있는 시작 프레임부터 양쪽 디안은 단일 추적에서 숨는다.
+    expect(state.fighters.every(({ stealthFor }) => stealthFor === Number.POSITIVE_INFINITY)).toBe(true);
+  });
+
+  it("은 한 마리 또는 양쪽이 회수되면 즉시 은신을 풀고, 둘 다 재호출된 뒤에만 되살린다", () => {
+    const state = createSkirmish([getRelic("dian")], [getRelic("amo")], ARENA);
+    const dian = state.fighters[0];
+    damageSummonedUnit(state, "player-0:kuro", Number.MAX_SAFE_INTEGER);
+    expect(dian.stealthFor).toBe(0);
+    damageSummonedUnit(state, "player-0:shiro", Number.MAX_SAFE_INTEGER);
+    expect(state.summons.filter(({ ownerFighterId, status }) => ownerFighterId === dian.id && status === "recalled")).toHaveLength(2);
+
+    // 적 행동을 멈춰 재호출 조건만 관찰하고, 긴 대기시간 직전에는 둘 다 여전히 회수 상태다.
+    state.fighters[1].attackCooldown = 999;
+    advanceFor(state, 11.95);
+    expect(dian.stealthFor).toBe(0);
+    advanceFor(state, 0.1);
+    expect(state.summons.filter(({ ownerFighterId, status }) => ownerFighterId === dian.id && status === "active")).toHaveLength(2);
+    expect(state.summons.every((summon) => summon.hp === Math.round(summon.maxHp * 0.4))).toBe(true);
+    expect(dian.stealthFor).toBe(Number.POSITIVE_INFINITY);
+  });
+
+  it("은 은신 중에도 전장 광역 피해를 받고, 디안 사망 즉시 두 늑대를 회수한다", () => {
+    const state = createSkirmish([getRelic("dian"), getRelic("anky")], [getRelic("pontos")], ARENA);
+    const [dian] = state.fighters; const pontos = state.fighters[2];
+    pontos.energy = pontos.def.ultimate.cost;
+    const hpBefore = dian.hp;
+    fireUltimate(state, pontos.id, () => 0.99);
+    expect(dian.hp).toBeLessThan(hpBefore);
+
+    dian.hp = 0;
+    stepSkirmish(state, 1 / 60);
+    expect(state.summons.filter(({ ownerFighterId }) => ownerFighterId === dian.id).every(({ status, hp }) => status === "recalled" && hp === 0)).toBe(true);
+    expect(dian.stealthFor).toBe(0);
   });
 });
 

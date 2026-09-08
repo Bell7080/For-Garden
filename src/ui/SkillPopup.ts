@@ -126,7 +126,7 @@ export function openSkillPopup(
 
     body.add(drawHairline(scene, 0, top + 232, POPUP.width - 96, { color: COLOR.accent, alpha: 0.35 }));
 
-    // 토리카 폭주처럼 피해 수치가 본문에 있는 경우에도 요약과 같은 사전을 넘겨 밑줄과 입력을 붙인다.
+    // 폭주·보호막처럼 동적 수치가 본문에 있는 경우에도 요약과 같은 사전을 넘겨 밑줄과 입력을 붙인다.
     const description = keywords.layout(skill.description, skillKeywordLayoutOptions(skill, {
       width: POPUP.width - 120, size: 28, lineSpacing: 10,
     }));

@@ -107,6 +107,11 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
   if (trait.effectId === "reagentDoping") return `폭주에 진입하면 모든 생존 적에게 [[reagent|시약]]을 ${trait.stacksOnEntry}겹 부여한다. 폭주 중 [[attack-speed|공격 속도]]가 ${trait.attackSpeedPercent}% 증가한다.`;
   if (trait.effectId === "attackIntervalReduction") return `공격 간격이 ${trait.reductionPercent}% 짧아진다.`;
   if (trait.effectId === "damageReduction") return `받는 피해가 ${trait.reductionPercent}% 줄어든다.`;
+  if (trait.effectId === "torikaBulwark") {
+    // 방어 수치는 퍼센트로 재해석하지 않고 전투 계약의 실제 증가값을 그대로 노출한다.
+    return `매초 최대 체력의 ${trait.maxHpRegenPercentPerSecond}%를 회복하고 방어력이 ${trait.defenseBonus}, 저항력이 ${trait.resistanceBonus} 증가한다.`
+      + ` 폭주에 들어가는 순간 주위 모든 적을 ${trait.tauntDurationSeconds}초 동안 [[taunt|도발]]한다.`;
+  }
   // 덧셈형 확률도 플레이어에게는 일반적인 퍼센트 기호로 보여 주고 내부 산술 단위는 노출하지 않는다.
   if (trait.effectId === "teamMoveSpeedBonus") return `생존 아군 전체의 이동 속도가 ${trait.bonusPercent}% 빨라진다.`;
   if (trait.effectId === "rexBattleQueen") return `치명타 확률과 모든 피해 흡혈이 각각 ${trait.criticalChancePoints}%, ${trait.allDamageLifeStealPoints}% 증가한다.`;

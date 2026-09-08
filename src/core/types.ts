@@ -794,6 +794,8 @@ export type FerocityEffectId =
   | "attackIntervalReduction"
   | "damageReduction"
   | "splashDamage"
+  /** 토리카 전용: 폭주 중 재생·실제 방어 수치 가산과 진입 도발을 한 계약으로 묶는다. */
+  | "torikaBulwark"
   | "teamMoveSpeedBonus"
   /** 저장 호환용 이름은 도약이지만, 전투에서는 보간 이동 없이 같은 발동 프레임에 좌표를 즉시 변경한다. */
   | "stealthLeap"
@@ -852,6 +854,20 @@ export type FerocityTrait = {
     }
   | { effectId: "attackIntervalReduction"; reductionPercent: number }
   | { effectId: "damageReduction"; reductionPercent: number }
+  | {
+      /** 토리카 전용 탱커 폭주. 정적 종족값을 바꾸지 않고 전투 계산에만 투영한다. */
+      effectId: "torikaBulwark";
+      /** 폭주 중 매초 회복하는 최대 체력 비율(%). */
+      maxHpRegenPercentPerSecond: number;
+      /** 폭주 중 방어력에 더하는 실제 수치. 퍼센트 배율이 아니다. */
+      defenseBonus: number;
+      /** 폭주 중 저항력에 더하는 실제 수치. 퍼센트 배율이 아니다. */
+      resistanceBonus: number;
+      /** 폭주 진입 도발이 닿는 전장 반경(px). */
+      tauntRadius: number;
+      /** 공용 도발 상태에 넘기는 지속시간(초). */
+      tauntDurationSeconds: number;
+    }
   | {
       effectId: "splashDamage";
       /** 기본 타격 피해 중 주변 대상에게 전달할 비율이다. */

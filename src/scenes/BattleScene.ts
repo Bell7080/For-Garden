@@ -1056,6 +1056,12 @@ export class BattleScene extends Phaser.Scene {
       return undefined;
     }
 
+    // 소환수 전용 사건은 현재 코어/디버그 계약용이다. Puppet 뷰가 연결되기 전에는 기존 전투원
+    // 공격 연출로 잘못 해석하지 않으며, 실제 피해는 뒤따르는 `attack` 사건이 계속 표시한다.
+    if (event.kind === "summon" || event.kind === "summonMove" || event.kind === "summonHit"
+      || event.kind === "summonRecall" || event.kind === "summonReturn"
+      || event.kind === "summonUltimateCharge" || event.kind === "summonFrenzy") return undefined;
+
     const attacker = this.views.get(event.attackerId);
     const target = this.views.get(event.targetId);
     if (this.state.boss && attacker?.fighter.side === "player" && target?.fighter.side === "enemy" && event.animate !== false && event.followUp !== true) {

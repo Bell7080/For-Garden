@@ -11,6 +11,16 @@ export interface FighterContribution {
 /** 안정적인 전투원 런타임 ID만 키로 쓰는 변경 가능한 전투 누적표다. */
 export type BattleContributions = Record<string, FighterContribution>;
 
+/**
+ * 귀속 전투 유닛의 실제 공격자 ID와 결과 행 소유자를 분리한다.
+ *
+ * 사건은 `actualSourceId`를 그대로 보존하고, 누적표만 명시된 owner로 접는다. owner가 없으면
+ * 일반 전투원 공격이므로 실제 출처가 곧 결과 행이다. 이 경계 덕분에 소환수 행을 만들지 않는다.
+ */
+export function contributionOwnerId(actualSourceId: string, ownerFighterId?: string): string {
+  return ownerFighterId ?? actualSourceId;
+}
+
 /** 편성원 전부를 0으로 시작시켜 사건이 없던 전투원도 결과 화면에 항상 남긴다. */
 export function createBattleContributions(fighterIds: readonly string[]): BattleContributions {
   return Object.fromEntries(fighterIds.map((id) => [id, {

@@ -893,6 +893,20 @@ export type FerocityTrait = {
       bonusPercent: number;
     }
   | {
+      /** 디안 전용: 폭주 중 현장에 있는 귀속 늑대만 서로 다른 역할 계수로 강화한다. */
+      effectId: "summonPackFrenzy";
+      kuro: {
+        attackPowerPercent: number; attackSpeedPercent: number; moveSpeedPercent: number;
+        /** 이 체력 비율 이하의 적에게 적용하는 마무리 피해 증가다. 무적이나 최종 피해 감소는 만들지 않는다. */
+        executeBelowHpPercent: number; executeDamagePercent: number;
+      };
+      shiro: {
+        abilityPowerPercent: number; attackSpeedPercent: number; moveSpeedPercent: number;
+        /** 추적 기술(`special`)에만 더하는 피해 증가다. */
+        pursuitDamagePercent: number;
+      };
+    }
+  | {
       effectId: "tailwindRally";
       /** 아군 한 명이 한 번 공격할 때마다 더해지는 야성 충전량이다. */
       teamFerocityGain: number;

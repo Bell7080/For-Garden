@@ -120,6 +120,24 @@ describe("디안 귀속 늑대 생명주기", () => {
     expect(state.summons.filter(({ ownerFighterId }) => ownerFighterId === dian.id).every(({ status, hp }) => status === "recalled" && hp === 0)).toBe(true);
     expect(dian.stealthFor).toBe(0);
   });
+
+  it("은 회수 중 시작된 폭주로 부활하지 않고 재호출 뒤 남은 시간만 강화한 다음 종료한다", () => {
+    const state = createSkirmish([getRelic("dian")], [getRelic("amo")], ARENA);
+    const dian = state.fighters[0]; const kuro = state.summons.find(({ summonId }) => summonId === "kuro")!;
+    // 회수 직후 폭주 상태를 열어도 소환수의 생명주기 시계는 별도로 유지된다.
+    damageSummonedUnit(state, kuro.id, Number.MAX_SAFE_INTEGER);
+    dian.ferocity = 100; dian.ferocityFever = true; kuro.resummonRemaining = 0.1;
+    const waiting = stepSkirmish(state, 0.05);
+    expect(kuro.status).toBe("recalled");
+    expect(waiting.some((event) => event.kind === "summonReturn")).toBe(false);
+
+    const returned = stepSkirmish(state, 0.06);
+    expect(returned).toContainEqual(expect.objectContaining({ kind: "summonReturn", summonId: kuro.id, ownerFighterId: dian.id }));
+    const buff = returned.find((event) => event.kind === "summonFrenzy" && event.summonId === kuro.id && event.active);
+    expect(buff?.kind === "summonFrenzy" ? buff.remainingSeconds : 8).toBeLessThan(8);
+    const ended = advanceFor(state, 8);
+    expect(ended).toContainEqual({ kind: "summonFrenzy", summonId: kuro.id, ownerFighterId: dian.id, active: false, remainingSeconds: 0 });
+  });
 });
 
 describe("디안 늑대 지휘 전투", () => {
@@ -159,6 +177,26 @@ describe("디안 늑대 지휘 전투", () => {
     expect(hits.map(({ damageType }) => damageType)).toEqual(["physical", "magical"]);
     // 서로 다른 파생 능력치와 기술 계수를 읽으므로 한 합산 피해를 반으로 복제하지 않는다.
     expect(hits[0].amount).not.toBe(hits[1].amount);
+  });
+
+  it("은 폭주 중 쿠로 물리·시로 마법과 궁극기를 실제 늑대 출처로 남기되 디안 한 행에 합산한다", () => {
+    const { state, dian } = readyDian(1);
+    dian.ferocityFever = true; dian.ferocity = 100;
+    const basic = wolfHits(stepSkirmish(state, 0.01));
+    dian.energy = dian.def.ultimate.cost;
+    const ultimate = wolfHits(fireUltimate(state, dian.id));
+    const hits = [...basic, ...ultimate];
+    // 디버그 상세는 공격자 ID를 늑대로 보존하고 정산 주체는 별도 owner 필드로 명시한다.
+    expect(hits.map(({ attackerId, ownerFighterId, damageType }) => [attackerId, ownerFighterId, damageType])).toEqual([
+      ["player-0:kuro", dian.id, "physical"], ["player-0:shiro", dian.id, "magical"],
+      ["player-0:kuro", dian.id, "physical"], ["player-0:shiro", dian.id, "magical"],
+    ]);
+    const rows = battleContributionSnapshot(state, "attack");
+    expect(rows.map(({ fighterId }) => fighterId)).toEqual([dian.id]);
+    expect(rows[0].attack.attackPower).toBeGreaterThan(0);
+    expect(rows[0].attack.abilityPower).toBeGreaterThan(0);
+    expect(state.contributions).not.toHaveProperty("player-0:kuro");
+    expect(state.contributions).not.toHaveProperty("player-0:shiro");
   });
 
   it("은 선행 늑대가 예약 대상을 처치해도 후행 늑대가 남은 적을 한 번만 공격한다", () => {

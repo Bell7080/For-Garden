@@ -2234,7 +2234,12 @@ export const RELICS: RelicDef[] = [
       },
     ],
     // 디안 자신은 공격하지 않고 두 늑대를 지휘한다. 둘이 모두 현장에 있을 때만 단일 대상 추적을 피한다.
-    ferocityTrait: { name: "무리", effectId: "selfAttackSpeedMultiplier", bonusPercent: 35 },
+    ferocityTrait: {
+      name: "무리", effectId: "summonPackFrenzy",
+      // 쿠로는 물리 마무리, 시로는 마법 추적에 무게를 두되 둘 모두 손과 발이 빨라진다.
+      kuro: { attackPowerPercent: 40, attackSpeedPercent: 30, moveSpeedPercent: 20, executeBelowHpPercent: 30, executeDamagePercent: 35 },
+      shiro: { abilityPowerPercent: 35, attackSpeedPercent: 20, moveSpeedPercent: 35, pursuitDamagePercent: 30 },
+    },
     passive: { id: "dian-passive", name: "우두머리의 경계", kind: "summonCommander", iconAssetId: "skill-icon-buff", effectType: "buff", value: 0, desc: "전투 시작 시 쿠로와 시로를 앞쪽 좌우에 부른다. 둘이 모두 현장에 있는 동안 단일 대상 공격의 표적이 되지 않는다." },
     // 지휘 기술의 power/damageType은 UI 계약을 위한 대표값일 뿐이며 실제 피해는 각 늑대 기술이 낸다.
     basic: { id: "dian-basic", name: "쿠로, 확인!", power: 105, iconAssetId: "skill-icon-physical", effectType: "physical", damageType: "physical", targeting: "single", summonCommand: "alternatingPair" },

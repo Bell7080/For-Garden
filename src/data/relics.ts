@@ -138,8 +138,11 @@ export const RELICS: RelicDef[] = [
       lifeSteal: 0,
       ferocityGain: 0,
     },
-    // 폭주 기본 공격은 여러 대상을 자주 때리므로, 방어력 300%인 궁극기보다 낮은 15% 추가 피해로 제한한다.
-    ferocityTrait: { name: "다들 그만해!", effectId: "splashDamage", damagePercent: 100, defenseDamagePercent: 15, attackSpeedBonusPercent: 20, radius: 220, statusEffect: { kind: "stagger", seconds: 0.1 } },
+    // 회복 5%는 8초 폭주 동안 최대 체력 40%를 되찾아 전열 유지력을 주되 즉시 완치시키지 않는다.
+    // 방어력 +80·저항력 +60은 CLAUDE.md의 탱커 규칙대로 퍼센트가 아닌 능력치 판의 실제 증가값이다.
+    // 320px 도발은 기존 폭주 반경 220보다 넓어 전열 주변의 복수 적을 확실히 붙잡되 전장 전체는 덮지 않는다.
+    // 도발은 진입 때 한 번만 3초간 걸어 폭주 내내 표적을 강제하지 않고, 그 뒤에는 적의 공용 재지정을 허용한다.
+    ferocityTrait: { name: "이제 못참아!", effectId: "torikaBulwark", maxHpRegenPercentPerSecond: 5, defenseBonus: 80, resistanceBonus: 60, tauntRadius: 320, tauntDurationSeconds: 3 },
     passive: {
       id: "anky-passive",
       name: "온화한 방패",

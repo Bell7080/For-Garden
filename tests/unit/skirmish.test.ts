@@ -246,16 +246,6 @@ describe("스피나 전투 계약", () => {
     expect(attack).toHaveProperty("mitigated");
   });
 
-  it("은 다른 적을 중심으로 번진 범위 피해에는 은신 중에도 맞는다", () => {
-    const state = newSkirmish(["anky"], ["amo", "spino"]);
-    const [anky, center, spino] = state.fighters;
-    anky.x = 400; anky.y = center.y = spino.y = 900; center.x = 450; spino.x = 500;
-    anky.attackCooldown = 0; anky.ferocityFever = true; anky.ferocity = 100;
-    center.attackCooldown = spino.attackCooldown = 99; spino.stealthFor = 3;
-    const events = stepSkirmish(state, 1 / 60);
-    expect(events).toContainEqual(expect.objectContaining({ kind: "attack", targetId: spino.id }));
-  });
-
   it("은 정확히 3초 뒤 다시 지정되며 공용 최소 공격 간격 아래로 내려가지 않는다", () => {
     const { state, spino, target: enemy } = readySpino(); spino.stealthFor = 3; spino.attackCooldown = 99;
     for (let i = 0; i < 11; i += 1) stepSkirmish(state, 0.25);
@@ -1170,35 +1160,48 @@ describe("효과 ID별 야성 특성", () => {
     expect(attackInterval(rex)).toBe(before);
   });
 
-  it("토리카의 폭주는 기본 공격을 주변 적에게 번지게 한다", () => {
-    const state = prepareHit("anky", ["amo", "toby"]);
-    const [torika, primary, nearby] = state.fighters;
-    nearby.x = primary.x + 100; nearby.y = primary.y;
-    torika.ferocity = 100; torika.ferocityFever = true;
-    // 폭주 설명과 실제 전투가 갈라지지 않도록 주 대상과 주변 대상 모두 공격 사건을 남긴다.
-    const hits = stepSkirmish(state, 1 / 60).filter((event) => event.kind === "attack");
-    expect(hits).toHaveLength(2);
-    expect(hits.some((event) => event.kind === "attack" && event.targetId === nearby.id)).toBe(true);
-    // 주 대상과 주변 대상은 모두 원래 타격에 방어력 15% 추가 피해를 각 대상의 방어력으로 계산한다.
-    const attackEvents = hits.filter((event) => event.kind === "attack");
-    const primaryHit = attackEvents.find((event) => event.targetId === primary.id)!;
-    const nearbyHit = attackEvents.find((event) => event.targetId === nearby.id)!;
-    // 계수의 단일 출처를 고정하고, 실제 타격이 기존 공격력 피해보다 커졌는지 각 대상에서 검증한다.
-    expect(torika.def.ferocityTrait).toMatchObject({ damagePercent: 100, defenseDamagePercent: 15, attackSpeedBonusPercent: 20 });
-    expect(primaryHit.amount).toBeGreaterThan(computeDamage(torika, primary, { ...torika.def.basic, isCritical: primaryHit.critical, kind: "basic" }));
-    expect(nearbyHit.amount).toBeGreaterThan(computeDamage(torika, nearby, { ...torika.def.basic, isCritical: nearbyHit.critical, kind: "basic" }));
-    // 경직은 기절 상태를 오용하지 않고 주·주변 대상의 행동만 0.1초 순간 차단한다.
-    // 들이받기의 기절은 두 타마다 걸리므로 이 첫 타격에서는 아직 아무도 기절하지 않는다 —
-    // 그래서 여기 남은 값은 경직이 기절 슬롯에 새지 않았다는 뜻 그대로다.
-    expect(primary.stunnedFor).toBe(0);
-    expect(nearby.stunnedFor).toBe(0);
-    expect(primary.staggeredFor).toBeCloseTo(0.1);
-    expect(nearby.staggeredFor).toBeCloseTo(0.1);
-    // 공격 속도 20% 증가는 기본 공격 간격을 1.2로 나눈 값이다.
-    torika.ferocityFever = false;
-    const calmInterval = attackInterval(torika);
-    torika.ferocityFever = true;
-    expect(attackInterval(torika)).toBeCloseTo(calmInterval / 1.2);
+  it("토리카의 폭주는 회복·실제 방어 수치·범위 도발을 제공하고 종료 뒤 원복한다", () => {
+    const state = prepareHit("anky", ["amo", "toby", "rex"]);
+    const [torika, first, second, outside] = state.fighters;
+    first.x = torika.x + 100; first.y = torika.y;
+    second.x = torika.x + 300; second.y = torika.y;
+    outside.x = torika.x + 321; outside.y = torika.y;
+    torika.ferocity = 99;
+
+    // 첫 평타의 야성 획득으로 폭주에 진입해야 진입 훅과 공용 도발 경로를 함께 검증할 수 있다.
+    stepSkirmish(state, 1 / 60);
+    expect(torika.ferocityFever).toBe(true);
+    // 진입 공격에서 긴급 회복이 섞이지 않도록 폭주 진입 뒤 검증용 체력을 정한다.
+    torika.hp = torika.maxHp * 0.5;
+    expect(first.taunted).toMatchObject({ sourceId: torika.id, total: 3 });
+    expect(second.taunted).toMatchObject({ sourceId: torika.id, total: 3 });
+    expect(outside.taunted).toBeNull();
+
+    const calmDefinition = { defense: torika.def.stats.def, resistance: torika.def.stats.res };
+    const raging = defensiveDefinition(torika, state).def.stats;
+    expect({ defense: raging.def, resistance: raging.res }).toEqual({ defense: calmDefinition.defense + 80, resistance: calmDefinition.resistance + 60 });
+    // 동일 위력의 물리·마법 입력을 실제 피해 공식에 넣어 각 방어 축이 피해를 줄이는지 고정한다.
+    const physical = { power: 100, damageType: "physical" as const, kind: "basic" as const, isCritical: false };
+    const magical = { power: 100, damageType: "magical" as const, kind: "basic" as const, isCritical: false };
+    const calmTarget = { ...torika, def: { ...torika.def, stats: { ...torika.def.stats } }, ferocityFever: false };
+    expect(computeDamage(first, defensiveDefinition(torika, state), physical)).toBeLessThan(computeDamage(first, calmTarget, physical));
+    expect(computeDamage(first, defensiveDefinition(torika, state), magical)).toBeLessThan(computeDamage(first, calmTarget, magical));
+
+    // 다른 행동을 막아 정확히 한 번의 1초 폭주 회복만 관찰한다.
+    state.fighters.forEach((fighter) => { fighter.attackCooldown = 99; });
+    const hpBeforeTick = torika.hp;
+    // 한 호출은 프레임 폭주를 막기 위해 0.25초로 제한되므로 네 프레임을 진행해 온전한 1초를 만든다.
+    for (let frame = 0; frame < 4; frame += 1) stepSkirmish(state, 0.25);
+    expect(torika.hp - hpBeforeTick).toBeCloseTo(torika.maxHp * 0.05);
+
+    // 공용 피버 배수구로 종료시켜 정적 종족값과 회복이 모두 원상복구되는지 확인한다.
+    torika.ferocity = 0.1;
+    stepSkirmish(state, 1 / 60);
+    expect(torika.ferocityFever).toBe(false);
+    expect(defensiveDefinition(torika, state).def.stats).toMatchObject({ def: calmDefinition.defense, res: calmDefinition.resistance });
+    const hpAfterFever = torika.hp;
+    for (let frame = 0; frame < 4; frame += 1) stepSkirmish(state, 0.25);
+    expect(torika.hp).toBe(hpAfterFever);
   });
 
   it("stealthLeap는 최저 체력 적에게 도약하고 기존 추적을 모두 해제한다", () => {

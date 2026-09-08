@@ -1958,11 +1958,11 @@ export class InfoManager {
 
   /** 개체별 폭주 발현 설명. 야성 규칙 자체는 강조된 말을 눌러 다시 열 수 있다. */
   private openFerocityTrait(def: RelicDef, from: PopupSource): void {
-    // 주문력에서 피해를 뽑는 폭주(데이의 낙서)도 다른 수치와 같은 기준으로 실제 값을 보여 준다.
+    // 피해 수치가 있는 폭주만 현재 능력치로 환산한다. 토리카의 새 탱커 계약은 자체 실제값을 그대로 보여 준다.
     const { atk: attack, def: defense, ap: abilityPower } = relicProgression.getFinalStats(def.id);
     const defensePercent = def.ferocityTrait.effectId === "splashDamage" ? def.ferocityTrait.defenseDamagePercent : undefined;
     const attackPercent = def.ferocityTrait.effectId === "crescendoStaccato" ? def.ferocityTrait.damagePercent : undefined;
-    // 폭주 추가 피해도 일반 스킬과 같은 수치 링크를 써서 캐릭터가 늘어도 별도 팝업을 만들지 않는다.
+    // 남아 있는 공격형 폭주 추가 피해도 일반 스킬과 같은 수치 링크를 써서 별도 팝업을 만들지 않는다.
     const convertedDamage = defensePercent !== undefined ? Math.round(defense * defensePercent / 100)
       : attackPercent !== undefined ? Math.round(attack * attackPercent / 100)
       : undefined;

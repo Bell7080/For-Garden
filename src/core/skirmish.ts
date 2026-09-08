@@ -299,6 +299,8 @@ export interface Fighter extends Combatant {
   pontusRageTickIn: number;
   /** 「절정」의 다음 1초 주위 피해까지 남은 시간이며 비활성 중에는 1초로 초기화한다. */
   climaxAuraTickIn: number;
+  /** 토리카 탱커 폭주의 다음 1초 최대 체력 회복까지 남은 시간이다. */
+  torikaBulwarkTickIn: number;
   /**
    * 지금 묻어 있는 밴덜리즘. 묻은 겹만큼 **공격력과 주문력이 함께 깎인다.**
    *
@@ -857,6 +859,7 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     // 폭주가 켜진 뒤 온전한 1초가 지나야 첫 파동이 발생한다.
     pontusRageTickIn: 1,
     climaxAuraTickIn: 1,
+    torikaBulwarkTickIn: 1,
     vandalism: null,
     artChannel: null,
     taggedIds: [],
@@ -1589,6 +1592,18 @@ function healClimaxBasic(attacker: Fighter, state: SkirmishState, events: Skirmi
   if (amount > 0) events.push({ kind: "heal", fighterId: attacker.id, amount, source: "ferocity", effect: { tag: "heal", intensity: 1.2 } });
 }
 
+/** 토리카 폭주의 최대 체력 비례 회복을 온전한 1초마다 공용 회복 경계로 처리한다. */
+function tickTorikaBulwark(fighter: Fighter, dt: number, state: SkirmishState, events: SkirmishEvent[]): void {
+  const trait = fighter.def.ferocityTrait;
+  if (!fighter.ferocityFever || trait.effectId !== "torikaBulwark") { fighter.torikaBulwarkTickIn = 1; return; }
+  fighter.torikaBulwarkTickIn -= dt;
+  while (fighter.torikaBulwarkTickIn <= EMERGENCY_RECOVERY.epsilon) {
+    const amount = applyHealing(state, fighter, fighter.maxHp * trait.maxHpRegenPercentPerSecond / 100, fighter.id);
+    if (amount > 0) events.push({ kind: "heal", fighterId: fighter.id, amount, source: "ferocity", effect: { tag: "heal", intensity: 1.2 } });
+    fighter.torikaBulwarkTickIn += 1;
+  }
+}
+
 /**
  * 「절정」의 주위 지속 피해. 폭주 중에는 서 있는 것만으로 주위가 지져진다.
  *
@@ -2312,12 +2327,14 @@ export function defensiveDefinition(target: Fighter, state: SkirmishState): Figh
   const shred = 1 - curseResistanceShred(target) / 100;
   // 모피 코트는 남이 아니라 폭주 중인 자기 자신에게만 붙는 배율이라 오라와 다른 자리에서 온다.
   const furCoat = target.ferocityFever && target.def.ferocityTrait.effectId === "furCoat" ? target.def.ferocityTrait.defenseResistancePercent : 0;
+  // 토리카는 퍼센트가 아닌 실제값을 피해 계산용 사본에만 더해 정적 RelicDef를 보존한다.
+  const torika = target.ferocityFever && target.def.ferocityTrait.effectId === "torikaBulwark" ? target.def.ferocityTrait : undefined;
   const reagentReduction = reagentResistanceReduction(target);
-  if (bonus <= 0 && furCoat <= 0 && shred === 1 && target.augmentDefensePercent === 0 && target.augmentResistancePercent === 0 && reagentReduction === 0) return target;
+  if (bonus <= 0 && furCoat <= 0 && torika === undefined && shred === 1 && target.augmentDefensePercent === 0 && target.augmentResistancePercent === 0 && reagentReduction === 0) return target;
   return { ...target, def: { ...target.def, stats: { ...target.def.stats,
-    def: target.def.stats.def * (1 + bonus / 100) * (1 + furCoat / 100) * (1 + target.augmentDefensePercent / 100),
+    def: target.def.stats.def * (1 + bonus / 100) * (1 + furCoat / 100) * (1 + target.augmentDefensePercent / 100) + (torika?.defenseBonus ?? 0),
     // 시약 반응은 정적 정의가 아닌 런타임 실제 감소량이며, 여러 제공자가 있어도 유효 저항은 0 아래로 내리지 않는다.
-    res: Math.max(0, target.def.stats.res * (1 + bonus / 100) * (1 + furCoat / 100) * (1 + target.augmentResistancePercent / 100) * shred - reagentReduction),
+    res: Math.max(0, target.def.stats.res * (1 + bonus / 100) * (1 + furCoat / 100) * (1 + target.augmentResistancePercent / 100) * shred - reagentReduction + (torika?.resistanceBonus ?? 0)),
   } } };
 }
 
@@ -2700,6 +2717,14 @@ function gainFerocity(fighter: Fighter, base: number, state: SkirmishState, even
       // 루카는 도약하지 않고 현재 좌표를 유지한 채 표적만 다시 정하며, 기존 단일 추적은 즉시 해제한다.
       for (const other of state.fighters) if (other.targetId === fighter.id) { other.targetId = null; other.engaged = false; }
       if (trait.retriggerPackHunt) triggerPackHunt(state, fighter.side);
+    }
+    if (trait.effectId === "torikaBulwark") {
+      // 진입 도발도 공용 상태 경계를 지나 지속시간 배율·긴 도발 우선·사망 해제를 그대로 얻는다.
+      for (const enemy of state.fighters) {
+        if (enemy.side === fighter.side || !isFighterAlive(enemy)) continue;
+        if (Math.hypot(enemy.x - fighter.x, enemy.y - fighter.y) > trait.tauntRadius) continue;
+        applyCombatStatusEffect(enemy, { kind: "taunt", seconds: trait.tauntDurationSeconds }, events, state, fighter.id);
+      }
     }
     if (trait.effectId === "reagentDoping") {
       // 진입 살포도 ID 분기 없이 같은 제공자별 장부와 반응 순서를 사용한다.
@@ -4231,6 +4256,8 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     tickBulwark(fighter, dt, state, events);
     tickElation(fighter, dt);
     tickElationRegen(fighter, dt, state, events);
+    // 폭주 회복은 행동 불능과 무관한 전투 시간으로 돌아 탱커가 제어당해도 계약한 생존력을 유지한다.
+    tickTorikaBulwark(fighter, dt, state, events);
     tickClimaxAura(fighter, dt, state, events);
     tickGraffitiAura(fighter, dt, state, events);
     // 궁극기 채널링은 기절·행동불가와 무관하게 흐른다 — 이미 뿌려 둔 낙서라 손이 멈춰도 마른다.

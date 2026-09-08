@@ -101,16 +101,12 @@ export const LOADING_STEPS: ReadonlyArray<LoadingStep> = [
       }),
   },
   {
-    label: "렐릭 스탠딩",
+    // 정보창 전신과 궁극기 컷인이 공유하는 첫 그룹 전체가 끝나야 이 단계가 완료된다.
+    label: "렐릭 스탠딩·궁극기 컷인",
     run: () => preloadPuppetAssets(PUPPET_PRELOAD_GROUPS[0]),
   },
   {
-    // 궁극기 컷인은 portraitAssetFor가 가리키는 같은 캐시를 재사용한다. 단계로 등록해 두면
-    // 첫 발동 도중 ZIP 파싱이 일어나 연출이 끊기는 일이 없다.
-    label: "궁극기 컷인 원화",
-    run: () => preloadPuppetAssets(PUPPET_PRELOAD_GROUPS[0]),
-  },
-  {
+    // 두 번째 그룹도 await하므로 TitleScene의 ready/입장 상태는 전신과 모든 SD가 끝난 뒤에만 열린다.
     label: "SD·적 묶음",
     run: () => preloadPuppetAssets(PUPPET_PRELOAD_GROUPS[1]),
   },

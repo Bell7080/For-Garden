@@ -18,8 +18,9 @@ describe("토리카 skin001 에셋 완전성", () => {
     expect(ASSETS_SOURCE).toContain("puppets/char_001_skin001.zip");
     expect(ASSETS_SOURCE).toContain("puppets/charSD_001_skin001.zip");
     const groups = ASSETS_SOURCE.slice(ASSETS_SOURCE.indexOf("export const PUPPET_PRELOAD_GROUPS"));
-    expect(groups).toMatch(/\[TORIKA_ASSET, TORIKA_SKIN_001_ASSET,/);
-    expect(groups).toMatch(/\[TORIKA_SD_ASSET, TORIKA_SKIN_001_SD_ASSET,/);
+    // 프리로드 표는 개별 상수 나열 대신 기본/스킨 레지스트리에서 자동으로 파생한다.
+    expect(groups).toContain("skinAssets(PORTRAIT_SKINS)");
+    expect(groups).toContain("skinAssets(ALLY_SD_SKINS)");
   });
 
   it("는 명시적 resolver에서 같은 렐릭 기본 외형으로만 폴백한다", () => {

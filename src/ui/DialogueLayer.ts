@@ -18,9 +18,14 @@ export class DialogueLayer extends Phaser.GameObjects.Container {
   private standing?: PuppetCreature;
   private standingKey?: DialogueStandingAsset;
   private renderGeneration = 0;
+  /** 종료가 시작된 컨테이너에는 늦게 도착한 비동기 Puppet 결과를 다시 붙이지 않는다. */
+  private terminated = false;
+  /** Phaser가 Container의 scene 참조를 정리해도 생성 당시 씬의 실행 상태를 판정하는 기준이다. */
+  private readonly ownerScene: Phaser.Scene;
 
   constructor(scene: Phaser.Scene, private readonly onAdvance: (choice?: DialogueChoice) => void) {
     super(scene, 0, 0);
+    this.ownerScene = scene;
     // 대사판도 테두리를 두르지 않는다. 아래로 짙어지는 유리면과 윗선 한 줄로만 자리를 잡는다.
     const glass = drawGlassFade(scene, BASE_WIDTH / 2, PANEL_TOP + 300, BASE_WIDTH, 620, { topAlpha: 0.2, bottomAlpha: 0.95 });
     const topLine = drawHairline(scene, BASE_WIDTH / 2, PANEL_TOP - 10, BASE_WIDTH, { color: COLOR.accent, alpha: 0.3 });
@@ -35,12 +40,17 @@ export class DialogueLayer extends Phaser.GameObjects.Container {
     this.add([glass, topLine, blocker, this.speaker, this.bodyText, this.nextMark]);
     this.setDepth(600);
     scene.add.existing(this);
-    // 씬 종료 때는 이미 컨테이너가 파괴돼 tween을 걸 수 없다. 바로 지운다.
-    scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.destroyStanding(false));
+    scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      // 종료 세대는 진행 중인 show를 모두 무효화해 종료된 씬에서 비동기 Puppet 결과가 되살아나는 것을 막는다.
+      this.terminated = true;
+      this.renderGeneration += 1;
+      this.destroyStanding(false);
+    });
   }
 
   /** 노드가 바뀔 때 이전 선택 UI를 폐기하고 Puppet 캐시에서 필요한 스탠딩만 교체한다. */
   async show(node: DialogueNode): Promise<void> {
+    if (!this.isRenderOwnerActive()) return;
     const generation = ++this.renderGeneration;
     this.clearChoices();
     this.speaker.setText(node.expression ? `${node.speaker}  ·  ${node.expression}` : node.speaker);
@@ -50,8 +60,8 @@ export class DialogueLayer extends Phaser.GameObjects.Container {
     else if (node.standing !== this.standingKey) {
       this.destroyStanding();
       const creature = await spawnPuppet(this.scene, ASSETS[node.standing], { focus: { anchor: "core", x: BASE_WIDTH / 2, y: 735 }, height: 1120, depth: 100 });
-      // 빠르게 다음 노드로 이동한 동안 끝난 비동기 로드가 옛 스탠딩을 되살리지 않게 한다.
-      if (generation !== this.renderGeneration || !this.active) { creature.destroy(); return; }
+      // 요청 교체와 씬 종료를 함께 확인해 종료된 씬에서 비동기 Puppet 결과가 되살아나는 것을 막는다.
+      if (generation !== this.renderGeneration || !this.isRenderOwnerActive()) { creature.destroy(); return; }
       this.standing = creature;
       this.standingKey = node.standing;
       creature.setAlpha(0);
@@ -59,6 +69,11 @@ export class DialogueLayer extends Phaser.GameObjects.Container {
     }
     if (this.standing && node.motion) playMotion(this.scene, this.standing, node.motion);
     this.buildChoices(node.choices ?? []);
+  }
+
+  /** 컨테이너와 그 컨테이너를 만든 원래 씬이 모두 렌더 가능한 동안에만 후속 연출을 허용한다. */
+  private isRenderOwnerActive(): boolean {
+    return !this.terminated && this.active && this.ownerScene.scene.isActive();
   }
 
   private buildChoices(choices: readonly DialogueChoice[]): void {

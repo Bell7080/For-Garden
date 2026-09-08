@@ -2200,8 +2200,8 @@ export const RELICS: RelicDef[] = [
     // “두목”은 관계 인식이고 실제 발화 호칭은 쁘띠 로그의 허용 목록과 일치시킨다.
     researcherTitle: "대장님",
     rarity: "SSR",
-    // 전용 원화가 아직 없으므로 정적 타입이 허용하는 파루아 원화를 임시 사용한다. 에셋 도착 시 dian 키로 교체한다.
-    portraitAssetId: "parua",
+    // 디안 전용 전신은 소환수 SD와 분리해 도감·컷인에서만 사용한다.
+    portraitAssetId: "dian",
     origin: "다이어울프",
     element: "fire",
     role: "assassin",

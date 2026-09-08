@@ -18,13 +18,14 @@ import {
   type ActiveCombatBuff,
   type SkirmishEvent,
   type SkirmishState,
+  type SummonedUnit,
   skirmishRelicResults,
 } from "../core/skirmish";
 import { getRelic } from "../data/relics";
 import { getBattleStage, getStageEnemies } from "../data/stages";
 import { getExpeditionNodeEnemies } from "../data/expeditionEnemies";
 import type { PuppetCreature, PuppetAsset } from "../puppets/assets";
-import { cancelMotion, flashHit, isHitFlashing, placePuppet, playMotion, spawnPuppet, tintPuppet } from "../puppets/assets";
+import { cancelMotion, flashHit, isHitFlashing, placePuppet, playMotion, spawnPuppet, SUMMON_SD_ASSETS, tintPuppet } from "../puppets/assets";
 import { session } from "../state/session";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { Button } from "../ui/Button";
@@ -223,6 +224,15 @@ interface FighterView {
   dead: boolean;
 }
 
+/** 정산 대상 Fighter와 섞이지 않는 쿠로·시로 전용 화면 생명주기다. */
+interface SummonView {
+  creature: PuppetCreature;
+  asset: PuppetAsset;
+  summon: SummonedUnit;
+  /** Puppet 메시와 별도로 움직이고 회수 때 함께 제거되는 입력 영역이다. */
+  input: Phaser.GameObjects.Rectangle;
+}
+
 /** 하단 프로필 한 칸. 궁극기가 차면 카드 자체가 발동 버튼이 된다. */
 interface ProfileView {
   fighter: Fighter;
@@ -258,6 +268,8 @@ export class BattleScene extends Phaser.Scene {
   private battleInput: BattleSceneInputDto = { mode: "stage" };
   private state!: SkirmishState;
   private views = new Map<string, FighterView>();
+  /** 소환수는 fighter 상세/프로필과 분리해 회수·재호출이 독립적으로 생성과 파괴를 반복한다. */
+  private summonViews = new Map<string, SummonView>();
   private profiles: ProfileView[] = [];
   private finished = false;
   /** 보스 제출에는 코어가 실제로 낸 공격 종류와 시각만 기록하며 피해 숫자는 넣지 않는다. */
@@ -366,6 +378,7 @@ export class BattleScene extends Phaser.Scene {
       enemyBreakthroughs: [...stage.enemies].sort((a, b) => a.formationSlot - b.formationSlot).map(({ breakthrough }) => breakthrough),
     });
     this.views.clear();
+    this.summonViews.clear();
     this.profiles = [];
     this.allyInfoRef = undefined;
     this.finished = false;
@@ -431,6 +444,9 @@ export class BattleScene extends Phaser.Scene {
       this.openBuff = undefined;
       this.views.forEach((view) => view.creature.destroy());
       this.views.clear();
+      // 비동기 재호출이 남았더라도 세 SD와 별도 입력 영역을 씬 밖으로 가져가지 않는다.
+      this.summonViews.forEach((view) => this.destroySummonView(view));
+      this.summonViews.clear();
     });
   }
 
@@ -557,13 +573,20 @@ export class BattleScene extends Phaser.Scene {
       const asset = relicAppearanceManager.battleAssetFor(fighter.def.id, fighter.side === "enemy" ? "enemy" : "ally");
       // 번호별 전용 적 SD도 원화 색을 보존하므로 더 이상 임시 허스크 tint를 입히지 않는다.
       const tint = 0xffffff;
-      const creature = await spawnPuppet(this, asset, {
+      let creature: PuppetCreature;
+      try {
+        creature = await spawnPuppet(this, asset, {
         x: fighter.x,
         groundY: fighter.y,
         height: unitHeight,
         flipX: fighter.facing < 0,
         tint,
-      });
+        });
+      } catch (error) {
+        // 표시 파일 하나가 깨져도 코어 전투를 멈추지 않는다. 이 Fighter의 화면만 생략한다.
+        console.error(`[battle] Puppet 로드 실패: ${asset.url}`, error);
+        continue;
+      }
       if (!this.scene.isActive()) {
         creature.destroy();
         return;
@@ -883,6 +906,82 @@ export class BattleScene extends Phaser.Scene {
     void this.pumpUltimateQueue();
   }
 
+  /** 재호출 사건 하나가 도착할 때만 Puppet과 입력면을 새로 만든다. 실패는 표시 한 마리에만 국한한다. */
+  private async spawnSummonView(summonId: string): Promise<void> {
+    if (this.summonViews.has(summonId)) return;
+    const summon = this.state.summons.find(({ id }) => id === summonId);
+    const owner = summon && this.state.fighters.find(({ id }) => id === summon.ownerFighterId);
+    const definition = owner?.def.summons?.find(({ id }) => id === summon?.summonId);
+    const asset = definition && SUMMON_SD_ASSETS[definition.sdAssetKey];
+    if (!summon || !asset || summon.status !== "active") return;
+    try {
+      const creature = await spawnPuppet(this, asset, { x: summon.x, groundY: summon.y, height: UNIT_HEIGHT * 0.82, flipX: summon.facing < 0 });
+      if (!this.scene.isActive() || summon.status !== "active") { creature.destroy(); return; }
+      // 입력면은 투명하지만 Puppet과 같은 좌표를 따라가며 회수 시 반드시 함께 파괴된다.
+      const input = this.add.rectangle(summon.x, summon.y - UNIT_HEIGHT * 0.41, 150, UNIT_HEIGHT * 0.9, 0xffffff, 0)
+        .setInteractive({ useHandCursor: true })
+        .on("pointerup", () => playMotion(this, creature, "hit"));
+      this.summonViews.set(summon.id, { creature, asset, summon, input });
+      playMotion(this, creature, "idle");
+    } catch (error) {
+      // 에셋 실패는 시뮬레이션/피해/승패와 무관하며 재호출 사건에서 다시 시도할 수 있다.
+      console.error(`[battle] 소환수 Puppet 로드 실패: ${asset.url}`, error);
+    }
+  }
+
+  /** 회수와 씬 종료가 공유하는 완전 정리 경계다. */
+  private destroySummonView(view: SummonView): void {
+    cancelMotion(view.creature);
+    this.tweens.killTweensOf(view.creature);
+    view.input.destroy();
+    view.creature.destroy();
+  }
+
+  /** 코어 사건의 좌표와 시점만 읽어 소환수 표시를 갱신한다. */
+  private playSummonEvent(event: Extract<SkirmishEvent, { kind: "summon" | "summonMove" | "summonHit" | "summonRecall" | "summonReturn" | "summonUltimateCharge" | "summonFrenzy" }>): void {
+    if (event.kind === "summon" || event.kind === "summonReturn") { void this.spawnSummonView(event.summonId); return; }
+    const view = this.summonViews.get(event.summonId);
+    if (!view) return;
+    if (event.kind === "summonRecall") {
+      playMotion(this, view.creature, "down");
+      this.destroySummonView(view);
+      this.summonViews.delete(event.summonId);
+      return;
+    }
+    if (event.kind === "summonHit") {
+      // 늑대의 공격과 후방 디안의 명령 몸짓은 같은 판정 사건에서 시작한다.
+      playMotion(this, view.creature, "attack");
+      const owner = this.views.get(event.ownerFighterId);
+      if (owner) playMotion(this, owner.creature, "attack");
+      if (event.targetId === event.summonId) playMotion(this, view.creature, "hit");
+      return;
+    }
+    if (event.kind === "summonFrenzy") {
+      tintPuppet(view.creature, event.active ? 0xff684f : 0xffffff);
+      return;
+    }
+    if (event.kind === "summonUltimateCharge") {
+      // 돌진 길이와 시작 시점은 사건 외에는 추론하지 않는다.
+      playMotion(this, view.creature, "run");
+      placePuppet(view.creature, view.asset, { x: event.from.x, groundY: event.from.y, height: UNIT_HEIGHT * 0.82, flipX: view.summon.facing < 0 });
+      const start = { x: view.creature.x, y: view.creature.y };
+      placePuppet(view.creature, view.asset, { x: event.to.x, groundY: event.to.y, height: UNIT_HEIGHT * 0.82, flipX: view.summon.facing < 0 });
+      const destination = { x: view.creature.x, y: view.creature.y };
+      view.creature.setPosition(start.x, start.y);
+      view.input.setPosition(event.from.x, event.from.y - UNIT_HEIGHT * 0.41);
+      this.tweens.add({ targets: view.creature, ...destination, duration: 180, onComplete: () => playMotion(this, view.creature, "idle") });
+      this.tweens.add({ targets: view.input, x: event.to.x, y: event.to.y - UNIT_HEIGHT * 0.41, duration: 180 });
+      return;
+    }
+    // 일반 이동도 코어가 보낸 종점만 사용한다. 궁극기 사건 직후의 중복 move는 현재 tween을 보존한다.
+    if (event.kind === "summonMove" && this.tweens.getTweensOf(view.creature).length === 0) {
+      playMotion(this, view.creature, "run");
+      placePuppet(view.creature, view.asset, { x: event.to.x, groundY: event.to.y, height: UNIT_HEIGHT * 0.82, flipX: view.summon.facing < 0 });
+      view.input.setPosition(event.to.x, event.to.y - UNIT_HEIGHT * 0.41);
+      playMotion(this, view.creature, "idle");
+    }
+  }
+
   /** 공격·회복·사망·종료를 각각 구분되는 연출로 옮긴다. */
   private playEvent(event: SkirmishEvent, motionSpeedMultiplier = 1): MotionPlayback | undefined {
     if (event.kind === "finish") {
@@ -1056,11 +1155,12 @@ export class BattleScene extends Phaser.Scene {
       return undefined;
     }
 
-    // 소환수 전용 사건은 현재 코어/디버그 계약용이다. Puppet 뷰가 연결되기 전에는 기존 전투원
-    // 공격 연출로 잘못 해석하지 않으며, 실제 피해는 뒤따르는 `attack` 사건이 계속 표시한다.
     if (event.kind === "summon" || event.kind === "summonMove" || event.kind === "summonHit"
       || event.kind === "summonRecall" || event.kind === "summonReturn"
-      || event.kind === "summonUltimateCharge" || event.kind === "summonFrenzy") return undefined;
+      || event.kind === "summonUltimateCharge" || event.kind === "summonFrenzy") {
+      this.playSummonEvent(event);
+      return undefined;
+    }
 
     const attacker = this.views.get(event.attackerId);
     const target = this.views.get(event.targetId);

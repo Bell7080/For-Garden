@@ -1254,6 +1254,57 @@ export interface ExcavationTrait {
   efficiencyMultiplier: number;
 }
 
+/** 소환수가 주인의 최종 능력치에서 각 전투 능력치를 가져오는 비율 계약이다. */
+export interface SummonScaling {
+  /** 체력 파생 비율이다. 1은 성장 기준 능력치의 100%다. */
+  hp: number;
+  /** 공격력 파생 비율이다. */
+  atk: number;
+  /** 방어력 파생 비율이다. */
+  def: number;
+  /** 저항력 파생 비율이다. */
+  res: number;
+  /** 공격 속도 파생 비율이다. */
+  attackSpeed: number;
+  /** 이동 속도 파생 비율이다. */
+  moveSpeed: number;
+  /** 지나친 행동 빈도를 막는 공격 속도 최종 상한이다. */
+  attackSpeedCap: number;
+  /** 전장 추적이 순간이동처럼 보이지 않게 하는 이동 속도 최종 상한이다. */
+  moveSpeedCap: number;
+}
+
+/** 소환수 전투 AI가 이름이나 소유 렐릭 ID 분기 없이 읽는 두 행동이다. */
+export interface SummonSkillSet {
+  /** 사거리 안의 표적에게 반복하는 일반 공격이다. */
+  basic: BasicAttack;
+  /** 기본 공격 사이에 사용하는 소환수 고유 행동이다. */
+  special: AttackSkill;
+}
+
+/** 독립 수집 대상이 아닌, 렐릭 한 명에게 귀속된 전투 중 소환수 정의다. */
+export interface SummonDef {
+  /** 소유 렐릭 안에서 영구적으로 유지할 소환수 ID다. */
+  id: string;
+  /** 전투 UI와 기록에 표시할 이름이다. */
+  name: string;
+  /** Phaser 로더가 SD Puppet zip을 찾는 정적 에셋 키다. */
+  sdAssetKey: string;
+  /** 주인의 최종 능력치 중 파생의 유일한 성장 기준이다. */
+  growthStat: "atk" | "ap";
+  /** 성장 기준 한 값에 곱할 능력치별 계수와 속도 상한이다. */
+  scaling: SummonScaling;
+  /** 소환수 자신이 실행할 전투 행동 모음이다. */
+  skills: SummonSkillSet;
+  /** 쓰러진 뒤 같은 전투에서 다시 호출할 수 있는 규칙이다. */
+  resummon: {
+    /** 재호출을 허용하는지 여부다. */
+    enabled: boolean;
+    /** 쓰러진 시점부터 재호출까지 기다리는 초다. */
+    cooldownSeconds: number;
+  };
+}
+
 /** 렐릭 한 명의 불변 정의. 플레이어별 성장 값은 RelicProgress에만 둔다. */
 export interface RelicDef {
   id: string;
@@ -1335,6 +1386,8 @@ export interface RelicDef {
   /** 전투 수치나 장착 룬과 섞이지 않는 정적 방치 발굴 특화다. */
   excavationTrait: ExcavationTrait;
   stats: Stats;
+  /** 이 렐릭과 함께 전투 세션에만 나타나는 귀속 소환수다. 수집·성장·전투력에는 포함하지 않는다. */
+  summons?: readonly SummonDef[];
   passive: Passive;
   /**
    * 이 개체만의 야성(피버) 발현 방식.

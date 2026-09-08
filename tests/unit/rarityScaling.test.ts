@@ -132,6 +132,15 @@ describe("공통 부가 능력치", () => {
     expect(new Set(PLAYABLE_RELICS.map((r) => r.stats.attackSpeed)).size).toBeGreaterThan(3);
     expect(new Set(PLAYABLE_RELICS.map((r) => r.stats.moveSpeed)).size).toBeGreaterThan(3);
   });
+
+  it("은 디안도 소환수와 무관하게 공용 부가 능력치를 유지한다", () => {
+    // 귀속 소환수는 별도 렐릭 전투력이 아니므로 이 검사는 오직 디안의 Stats만 대상으로 삼는다.
+    const dian = getRelic("dian");
+    expect(dian.summons?.map(({ id }) => id)).toEqual(["kuro", "shiro"]);
+    for (const key of KEYS) expect(dian.stats[key], `dian ${key}`).toBe(COMMON_SECONDARY_STATS[key]);
+    expect(combatPower(dian.stats)).toBeGreaterThanOrEqual(RARITY_STAT_BAND.SSR.min);
+    expect(combatPower(dian.stats)).toBeLessThanOrEqual(RARITY_STAT_BAND.SSR.max);
+  });
 });
 
 describe("등급별 레벨 성장", () => {

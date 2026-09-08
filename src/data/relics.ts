@@ -2208,7 +2208,30 @@ export const RELICS: RelicDef[] = [
     reachTier: "ranged",
     excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 29, efficiencyMultiplier: 1.10 },
     // SSR 띠 안에서 원거리 암살자의 낮은 내구와 빠른 행동을 표현하며 공용 부가 능력치는 유지한다.
-    stats: { hp: 900, def: 46, res: 50, atk: 160, ap: 84, attackSpeed: 124, moveSpeed: 126, critChance: 10, critDamage: 150, energyGain: 26, lifeSteal: 0, ferocityGain: 0 },
+    stats: { hp: 840, def: 42, res: 44, atk: 164, ap: 118, attackSpeed: 128, moveSpeed: 132, critChance: 10, critDamage: 150, energyGain: 26, lifeSteal: 0, ferocityGain: 0 },
+    // 쿠로는 최종 공격력만, 시로는 최종 주문력만 읽는다. 서로 반대 능력치는 파생 결과에 섞이지 않는다.
+    summons: [
+      {
+        id: "kuro", name: "쿠로", sdAssetKey: "charSD_020_black", growthStat: "atk",
+        // 쿠로는 몸을 던지는 물리 돌격수라 공격·공속·이속 계수를 쌍둥이보다 높게 둔다.
+        scaling: { hp: 4.8, atk: 1.05, def: 0.42, res: 0.34, attackSpeed: 0.94, moveSpeed: 1.12, attackSpeedCap: 180, moveSpeedCap: 210 },
+        skills: {
+          basic: { id: "kuro-basic", name: "물어뜯기", power: 110, iconAssetId: "skill-icon-physical", effectType: "physical", damageType: "physical", targeting: "single" },
+          special: { id: "kuro-charge", name: "검은 돌진", power: 165, iconAssetId: "skill-icon-physical", effectType: "physical", damageType: "physical", targeting: "chargeLine", radius: 42 },
+        },
+        resummon: { enabled: true, cooldownSeconds: 12 },
+      },
+      {
+        id: "shiro", name: "시로", sdAssetKey: "charSD_020_white", growthStat: "ap",
+        // 시로는 마법 피해와 추적 안정성을 맡아 주문 공격과 생존·이속 비중을 상대적으로 높인다.
+        scaling: { hp: 5.2, atk: 1.12, def: 0.48, res: 0.52, attackSpeed: 0.88, moveSpeed: 1.24, attackSpeedCap: 165, moveSpeedCap: 195 },
+        skills: {
+          basic: { id: "shiro-basic", name: "서리 추적", power: 115, iconAssetId: "skill-icon-magical", effectType: "magical", damageType: "magical", scalingStat: "ap", targeting: "single" },
+          special: { id: "shiro-pursuit", name: "흰 그림자", power: 180, iconAssetId: "skill-icon-magical", effectType: "magical", damageType: "magical", scalingStat: "ap", targeting: "single" },
+        },
+        resummon: { enabled: true, cooldownSeconds: 12 },
+      },
+    ],
     // 현재 전투 계약은 귀속 늑대의 연속 견제를 공속 강화로 표현하며, 늑대용 독립 전투원을 생성하지 않는다.
     ferocityTrait: { name: "무리", effectId: "selfAttackSpeedMultiplier", bonusPercent: 35 },
     passive: { id: "dian-passive", name: "우두머리의 경계", kind: "basicHitAttackSpeedStack", iconAssetId: "skill-icon-buff", effectType: "buff", value: 2, desc: "기본 공격이 적중할 때마다 이번 전투 동안 공격 속도가 2 증가한다." },

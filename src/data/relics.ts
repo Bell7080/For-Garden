@@ -2177,6 +2177,45 @@ export const RELICS: RelicDef[] = [
     },
   },
   {
+    // 디안 데이터 묶음은 우두머리 표본에서 복원된 한 렐릭만 성장 주체로 둔다. 쿠로·시로는
+    // 별도 RelicDef가 아니라 디안에게 귀속된 소환수이므로 획득·편성·유대·장비 슬롯을 만들지 않는다.
+    id: "dian",
+    squad: "rogue",
+    name: "디안",
+    specimenNumber: "221",
+    projectName: "PACK ECHO",
+    excavationSite: "북아메리카 란초 라브레아 타르층",
+    fossilRecord: "한 개체 전체가 아니라 무리의 중심에 묻힌 우두머리 화석에서 유전 정보를 추출했다. 인접한 두 다이어울프 표본은 다른 도시의 후속 복원 연구로 분리 이송됐다.",
+    observationProfile: {
+      originYear: "약 1만 2천 년 전",
+      // E.C. 11년은 실제 생존 기간이 아니라 작은 체격과 아직 서툰 사회생활이 드러내는 고정 관찰 분류다.
+      restorationYear: "E.C. 11년",
+      lifeStage: "성체",
+      height: "1.34 m",
+      weight: "29 kg",
+    },
+    catalogSummary: "신장 1.34m, 체중 29kg의 또래보다 작고 가벼운 인간형 체격에 다이어울프의 귀와 예민한 감각이 확인된 우두머리 표본 기반 렐릭.",
+    unlockRecord: { status: "recorded", text: "디안은 애견 카페에 들어온 우당탕탕 신입 아르바이트생이다. 주문을 옮기다 쿠로와 시로까지 얽혀 테이블을 어지럽히곤 하지만, 손님과 강아지가 놀라면 누구보다 먼저 사이를 막아 선다. 나를 자신이 지켜야 할 무리의 ‘두목’으로 여기면서도 쁘띠 로그의 아이들처럼 ‘대장님’이라 부른다. 임무에서는 두 늑대를 먼저 보내 위험 지역을 확인하고, 어린 탐험대원이 모두 돌아올 때까지 가장 뒤에 남는다." },
+    squadNote: "쁘띠 로그의 경계 담당. 쿠로·시로와 위험 지역을 먼저 확인하고, 어린 탐험대원이 안전하게 빠져나갈 때까지 길목을 지킨다.",
+    // “두목”은 관계 인식이고 실제 발화 호칭은 쁘띠 로그의 허용 목록과 일치시킨다.
+    researcherTitle: "대장님",
+    rarity: "SSR",
+    // 전용 원화가 아직 없으므로 정적 타입이 허용하는 파루아 원화를 임시 사용한다. 에셋 도착 시 dian 키로 교체한다.
+    portraitAssetId: "parua",
+    origin: "다이어울프",
+    element: "fire",
+    role: "assassin",
+    reachTier: "ranged",
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 29, efficiencyMultiplier: 1.10 },
+    // SSR 띠 안에서 원거리 암살자의 낮은 내구와 빠른 행동을 표현하며 공용 부가 능력치는 유지한다.
+    stats: { hp: 900, def: 46, res: 50, atk: 160, ap: 84, attackSpeed: 124, moveSpeed: 126, critChance: 10, critDamage: 150, energyGain: 26, lifeSteal: 0, ferocityGain: 0 },
+    // 현재 전투 계약은 귀속 늑대의 연속 견제를 공속 강화로 표현하며, 늑대용 독립 전투원을 생성하지 않는다.
+    ferocityTrait: { name: "무리", effectId: "selfAttackSpeedMultiplier", bonusPercent: 35 },
+    passive: { id: "dian-passive", name: "우두머리의 경계", kind: "basicHitAttackSpeedStack", iconAssetId: "skill-icon-buff", effectType: "buff", value: 2, desc: "기본 공격이 적중할 때마다 이번 전투 동안 공격 속도가 2 증가한다." },
+    basic: { id: "dian-basic", name: "쿠로, 확인!", power: 105, iconAssetId: "skill-icon-physical", effectType: "physical", damageType: "physical", targeting: "single" },
+    ultimate: { id: "dian-ult", name: "시로, 지켜!", power: 260, iconAssetId: "skill-icon-physical", effectType: "physical", damageType: "physical", cost: 110, targeting: "nearbyEnemies", radius: 240 },
+  },
+  {
     // 원정 최종층의 단독 보스. 리바이어던 멜빌레이의 거대한 턱과 심해 포식자 모티브를 담는다.
     id: "pontos",
     enemyOnly: true,

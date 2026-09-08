@@ -31,7 +31,7 @@ import { relicSkinManager } from "../managers/RelicSkinManager";
 import { expeditionManager } from "../managers/ExpeditionManager";
 import { ExpeditionEntryButton, sortieEntrySdSpot } from "../ui/ExpeditionEntryButton";
 import { ENEMY_SD_ASSETS, PONTOS_SD_ASSET, playMotion, type PuppetAsset } from "../puppets/assets";
-import { loadOwnedPuppet } from "../ui/statusPuppetLoad";
+import { loadOwnedPuppetPair } from "../ui/statusPuppetLoad";
 import { PlayerProfilePopup } from "../ui/PlayerProfilePopup";
 import { profileModifierManager } from "../managers/ProfileModifierManager";
 import type { PlayerProfileDisplay } from "../state/playerProfile";
@@ -403,20 +403,21 @@ export class LobbyScene extends Phaser.Scene {
       layer.add(puppet);
       this.sortieSdPuppets.add(puppet);
     };
-    const spawn = (shadow: boolean) => loadOwnedPuppet({
-      spawn: () => spawnPuppet(this, asset, {
-        x: place.x + (shadow ? place.shadowOffsetX : 0),
-        groundY: place.groundY + (shadow ? place.shadowOffsetY : 0),
-        height: place.height,
-        depth: shadow ? SORTIE_SD_DEPTH - 1 : SORTIE_SD_DEPTH,
-      }),
+    const spawn = (shadow: boolean) => spawnPuppet(this, asset, {
+      x: place.x + (shadow ? place.shadowOffsetX : 0),
+      groundY: place.groundY + (shadow ? place.shadowOffsetY : 0),
+      height: place.height,
+      depth: shadow ? SORTIE_SD_DEPTH - 1 : SORTIE_SD_DEPTH,
+    });
+    await loadOwnedPuppetPair({
+      // 본체와 그림자를 함께 조립해 저속 기기에서도 그림자만 먼저 남는 중간 프레임을 없앤다.
+      spawnPrimary: () => spawn(false),
+      spawnCompanion: () => spawn(true),
       isCurrent: () => this.sortieSdLayer === layer,
       isDisplayable: (puppet) => Boolean(puppet.active && puppet.texture?.key && this.textures.exists(puppet.texture.key)),
-      adopt: (puppet) => adopt(puppet, shadow),
+      adoptPrimary: (puppet) => adopt(puppet, false),
+      adoptCompanion: (puppet) => adopt(puppet, true),
     });
-    // 그림자를 먼저 세워 본체가 늘 그 위에 오게 한다.
-    await spawn(true);
-    await spawn(false);
     if (pair.body) this.sortieSdPairs.push(pair);
   }
 

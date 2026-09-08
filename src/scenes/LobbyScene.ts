@@ -26,6 +26,7 @@ import { notificationManager } from "../managers/NotificationManager";
 import { MissionsPopup } from "../ui/MissionsPopup";
 import { lobbyPortraitPlacement } from "../ui/portraitPlacement";
 import { LOBBY_ACTION_BOUNDS, LOBBY_RAIL_BOUNDS } from "../ui/lobbyLayout";
+import { createLobbyUtilityRail } from "../ui/lobbyUtilityRail";
 import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { relicSkinManager } from "../managers/RelicSkinManager";
 import { expeditionManager } from "../managers/ExpeditionManager";
@@ -475,13 +476,14 @@ export class LobbyScene extends Phaser.Scene {
    * 크기도 출격·교류보다 한참 작게 둔다.
    */
   private buildUtilityRail(): void {
-    const rail = [
-      { bounds: LOBBY_RAIL_BOUNDS.utility.mail, icon: "mail", label: "우편", onClick: () => this.openMail() },
+    // 우편·친구·가방은 각각 입력 중심 하나만 가져야 한 번의 탭이 한 동작으로 이어진다.
+    const rail = createLobbyUtilityRail({
+      openMail: () => this.openMail(),
       // 친구는 더 이상 준비 중 토스트가 아니라 목록과 공개 프로필 화면으로 연결된다.
-      { bounds: LOBBY_RAIL_BOUNDS.utility.friends, icon: "friends", label: "친구", onClick: () => this.scene.start("friends") },
+      openFriends: () => this.scene.start("friends"),
       // 가방은 씬 전환 없이 현재 로비 위에서 열린다.
-      { bounds: LOBBY_RAIL_BOUNDS.utility.inventory, icon: UI_ICON.bag, label: "가방", onClick: () => this.openInventory() },
-    ] as const;
+      openInventory: () => this.openInventory(),
+    });
     rail.forEach((item) => {
       const button = new RailButton(this, item.bounds.x, item.bounds.y, { icon: item.icon, label: item.label, size: item.bounds.width, onClick: item.onClick });
       // 실제 서버 계약이 준비된 우편·친구 요청만 연결하고 Fake 데이터에서는 임의로 켜지 않는다.

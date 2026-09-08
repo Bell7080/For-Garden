@@ -65,6 +65,8 @@ import { relicSkinManager } from "../managers/RelicSkinManager";
 import { Button } from "./Button";
 import { APPEARANCE_PANEL_LAYOUT } from "./appearancePanelLayout";
 import { AppearanceCard } from "./AppearanceCard";
+import { openSummonInfoPopup } from "./SummonInfoPopup";
+import { canShowSummonInfo, summonInfoModel } from "./summonInfoModel";
 
 export type { SkillInfoViewModel } from "./SkillPopup";
 
@@ -416,6 +418,8 @@ export class InfoManager {
   private statRadar?: StatRadar;
   private readonly gemSlots: GemSlot[] = [];
   private readonly skillIcons: Phaser.GameObjects.Container[] = [];
+  /** 이름·문양을 함께 가진 귀속 소환수 태그. 캐릭터 교체 때 통째로 다시 만든다. */
+  private readonly summonTags: Phaser.GameObjects.Container[] = [];
 
   private currentDef?: RelicDef;
   private ownedNow = true;
@@ -1933,6 +1937,27 @@ export class InfoManager {
     });
   }
 
+  /** 디안 같은 소환 지휘자의 이름줄 아래에 보유 정책을 지키는 소환수 진입 태그를 만든다. */
+  private buildSummonTags(def: RelicDef, owned: boolean): void {
+    for (const tag of this.summonTags.splice(0)) tag.destroy();
+    if (!this.capabilities.showSummons || !canShowSummonInfo(this.capabilities, owned)) return;
+    const ownerStats = this.publicProfile?.stats ?? relicProgression.getFinalStats(def.id);
+    (def.summons ?? []).forEach((summon, index) => {
+      const model = summonInfoModel(summon, ownerStats);
+      const tag = this.scene.add.container(380 + index * 190, 300);
+      const shape = slantedRect(168, 66, 10);
+      tag.add(drawLayer(this.scene, 0, 0, shape, { fill: HOLO.glass, alpha: 0.82, edge: COLOR.accent, edgeAlpha: 0.38 }));
+      // 송곳니/초승달을 텍스트 기호로도 고정해 흑백·색각과 무관하게 이름 앞에서 함께 읽힌다.
+      const mark = model.mark === "fang" ? "◇" : "◐";
+      tag.add(this.scene.add.text(-62, 0, mark, textStyle({ role: "display", size: 30, color: COLOR.accentText })).setOrigin(0.5));
+      tag.add(this.scene.add.text(14, 0, summon.name, textStyle({ role: "display", size: 28 })).setOrigin(0.5));
+      const hit = this.scene.add.rectangle(0, 0, 168, 66, 0xffffff, 0).setInteractive({ useHandCursor: true });
+      hit.on("pointerdown", () => tag.setScale(1.08)); hit.on("pointerout", () => tag.setScale(1));
+      hit.on("pointerup", () => { tag.setScale(1); openSummonInfoPopup(this.scene, this.popups, this.keywords, ownerStats, summon); });
+      tag.add(hit); this.chrome.add(tag); this.summonTags.push(tag);
+    });
+  }
+
   /**
    * 패시브 아이콘 위에 붙는 야성(피버) 뱃지.
    *
@@ -2179,6 +2204,7 @@ export class InfoManager {
     this.refreshBadges();
     this.paintStars(def);
     this.buildSkillIcons(def);
+    this.buildSummonTags(def, owned);
     this.refreshGrowth();
 
     // 미보유 개체는 원화·스킬을 감추고 번호와 실루엣만 남긴다.

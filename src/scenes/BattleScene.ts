@@ -83,6 +83,8 @@ import { ExpeditionRankingPopup } from "../ui/ExpeditionRankingPopup";
 import { ExpeditionScoreDetailPopup } from "../ui/ExpeditionScoreDetailPopup";
 import { BOSS_RESULT_LAYOUT, bossResultUtilityBounds } from "../ui/bossResultLayout";
 import type { CurrencyIconKey } from "../ui/currencyIcons";
+import { KeywordManager } from "../managers/KeywordManager";
+import { openSummonInfoPopup } from "../ui/SummonInfoPopup";
 
 /**
  * 여섯이 돌아다닐 수 있는 범위.
@@ -310,6 +312,8 @@ export class BattleScene extends Phaser.Scene {
   private allyInfoRef?: InfoManager;
   /** 버프 상세도 전투 씬의 한 PopupLayer에 쌓아 입력·닫기 순서를 통일한다. */
   private buffPopups!: PopupLayer;
+  /** 소환수→스킬→강조 용어가 전투의 한 PopupLayer 스택에 계속 쌓이게 하는 공용 키워드 경계다. */
+  private battleKeywords!: KeywordManager;
   /** 전투는 팝업 중에도 계속되며, 선택 ID로 최신 버프를 찾아 시간 갱신/종료 닫기를 수행한다. */
   private openBuff?: { key: string; controller: BattleBuffPopupController };
   /**
@@ -402,6 +406,7 @@ export class BattleScene extends Phaser.Scene {
     // 적도 같은 정보창을 쓴다. 문맥만 "enemy"라 급여·돌파·유대·룬이 빠지고 현재 전투 줄이 붙는다.
     this.info = new CharacterInfoManager(this, 1001, "enemy");
     this.buffPopups = new PopupLayer(this, 2200);
+    this.battleKeywords = new KeywordManager(this, this.buffPopups);
     this.openBuff = undefined;
     // 파편·파문은 SD보다 앞이되 궁극기 컷인(900)보다는 뒤라 연출을 가리지 않는다.
     // 광역 범위만 배경 원화 위·SD 아래에 깔려 누가 어디 섰는지 가리지 않는다.
@@ -913,14 +918,21 @@ export class BattleScene extends Phaser.Scene {
     const owner = summon && this.state.fighters.find(({ id }) => id === summon.ownerFighterId);
     const definition = owner?.def.summons?.find(({ id }) => id === summon?.summonId);
     const asset = definition && SUMMON_SD_ASSETS[definition.sdAssetKey];
-    if (!summon || !asset || summon.status !== "active") return;
+    if (!summon || !owner || !definition || !asset || summon.status !== "active") return;
     try {
       const creature = await spawnPuppet(this, asset, { x: summon.x, groundY: summon.y, height: UNIT_HEIGHT * 0.82, flipX: summon.facing < 0 });
       if (!this.scene.isActive() || summon.status !== "active") { creature.destroy(); return; }
       // 입력면은 투명하지만 Puppet과 같은 좌표를 따라가며 회수 시 반드시 함께 파괴된다.
       const input = this.add.rectangle(summon.x, summon.y - UNIT_HEIGHT * 0.41, 150, UNIT_HEIGHT * 0.9, 0xffffff, 0)
         .setInteractive({ useHandCursor: true })
-        .on("pointerup", () => playMotion(this, creature, "hit"));
+        // 전투 SD 탭도 도감 태그와 같은 전용 팝업을 열며, 현재 전투용 최종 능력치를 그대로 쓴다.
+        .on("pointerdown", () => creature.setScale(creature.scaleX * 1.05, creature.scaleY * 1.05))
+        .on("pointerout", () => placePuppet(creature, asset, { x: summon.x, groundY: summon.y, height: UNIT_HEIGHT * 0.82, flipX: summon.facing < 0 }))
+        .on("pointerup", () => {
+          placePuppet(creature, asset, { x: summon.x, groundY: summon.y, height: UNIT_HEIGHT * 0.82, flipX: summon.facing < 0 });
+          playMotion(this, creature, "hit");
+          openSummonInfoPopup(this, this.buffPopups, this.battleKeywords, owner.def.stats, definition);
+        });
       this.summonViews.set(summon.id, { creature, asset, summon, input });
       playMotion(this, creature, "idle");
     } catch (error) {

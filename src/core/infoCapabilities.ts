@@ -12,11 +12,13 @@ export interface InfoCapabilities {
   showBond: boolean;
   /** 전투 중인 적에게만 있는 현재 체력·게이지·상태이상 줄. */
   showRuntimeCombat: boolean;
+  /** 보유/공개된 렐릭에 귀속된 소환수 성장 정보를 표시할 수 있는가. */
+  showSummons: boolean;
 }
 
 /** 문맥 판정은 UI와 테스트가 공유하는 순수 화이트리스트다. */
 export function capabilitiesFor(context: InfoContext): Readonly<InfoCapabilities> {
-  if (context === "owner") return { mutateProgress: true, showGrowth: true, showBond: true, showRuntimeCombat: false };
-  if (context === "friend") return { mutateProgress: false, showGrowth: true, showBond: false, showRuntimeCombat: false };
-  return { mutateProgress: false, showGrowth: true, showBond: false, showRuntimeCombat: true };
+  if (context === "owner") return { mutateProgress: true, showGrowth: true, showBond: true, showRuntimeCombat: false, showSummons: true };
+  if (context === "friend") return { mutateProgress: false, showGrowth: true, showBond: false, showRuntimeCombat: false, showSummons: true };
+  return { mutateProgress: false, showGrowth: true, showBond: false, showRuntimeCombat: true, showSummons: true };
 }

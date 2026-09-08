@@ -12,7 +12,7 @@ import { KeywordManager } from "../managers/KeywordManager";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import {
   battleAssetFor,
-  loadPortraitTexture,
+  enableHitOnClick,
   placePuppet,
   playMotion,
   pauseMotion,
@@ -436,8 +436,8 @@ export class InfoManager {
    * 그 순간의 커진 값이 "제자리"로 굳어, 열고 닫을 때마다 원화가 조금씩 커진다.
    */
   private portraitHome?: { x: number; y: number; scale: number };
-  /** 장식용 SD는 별도 Puppet runtime 없이 원본 텍스처의 정지 프레임으로 그린다. */
-  private figure?: Phaser.GameObjects.Image;
+  /** 장식용 SD도 idle과 탭 반응을 재생하는 독립 Puppet runtime을 가진다. */
+  private figure?: PuppetCreature;
   private figureRequest = 0;
   /** 현재 렐릭에 비교할 외형이 없을 때 입력면까지 숨기는 공용 진입 버튼이다. */
   private appearanceButton?: Phaser.GameObjects.Container;
@@ -1476,6 +1476,8 @@ export class InfoManager {
     this.scene.tweens.add({ targets: portrait, alpha: 1, duration: 260 });
     // SD는 판이 아니라 따로 선 인형이라 함께 빠지지 않는다. 감상 중에는 접어 둔다.
     this.figure?.setVisible(false);
+    // 보이지 않는 동안 UPDATE 비용을 쓰지 않되, 감상에서 나오면 idle을 처음부터 다시 잇는다.
+    pauseMotion(this.figure);
     // 판은 오른쪽으로, 이름줄과 스킬은 그대로 두면 인물을 가리므로 chrome 통째로 민다.
     this.scene.tweens.add({ targets: this.chrome, x: BASE_WIDTH, alpha: 0, duration: 320, ease: "Cubic.In" });
     const exit = this.scene.add
@@ -1503,6 +1505,7 @@ export class InfoManager {
     }
     this.scene.tweens.add({ targets: this.chrome, x: 0, alpha: 1, duration: 320, ease: "Cubic.Out" });
     this.figure?.setVisible(this.portraitWanted && this.root.visible);
+    if (this.figure?.visible) resumeMotion(this.figure); else pauseMotion(this.figure);
   }
 
   /** hide/렐릭 전환은 복귀 연출을 재생하지 않고 갤러리의 입력면과 chrome 좌표를 즉시 정리한다. */
@@ -1757,7 +1760,7 @@ export class InfoManager {
   private buildFigureStand(): void {
     this.chrome.add(this.scene.add.ellipse(FIGURE.x, FIGURE.y + 6, 206, 52, COLOR.void, 0.55));
     this.chrome.add(this.scene.add.ellipse(FIGURE.x, FIGURE.y, 192, 44, 0x141920, 0.92));
-    this.chrome.add(drawHairline(this.scene, FIGURE.x, FIGURE.y - 20, 172, { color: COLOR.accent, alpha: 0.4 }));
+    // 받침의 두 면만으로 접지를 표현해 SD 뒤로 노란 강조선이 비쳐 보이지 않게 한다.
     this.chrome.add(
       this.scene.add.text(FIGURE.x, FIGURE.y + 32, "IN-GAME SD", textStyle({ role: "body", size: 17, color: COLOR.inkDim })).setOrigin(0.5, 0),
     );
@@ -1795,8 +1798,9 @@ export class InfoManager {
     this.figureRequest += 1;
     this.portrait?.setVisible(false);
     this.figure?.setVisible(false);
-    // visible=false만으로는 Scene UPDATE 구독이 해제되지 않아 숨은 전신 runtime을 명시적으로 멈춘다.
+    // visible=false만으로는 Scene UPDATE 구독이 해제되지 않아 숨은 두 runtime을 명시적으로 멈춘다.
     pauseMotion(this.portrait);
+    pauseMotion(this.figure);
     this.liveLine?.destroy();
     setDebugInfoOpen(false);
     this.onClose?.();
@@ -1865,20 +1869,21 @@ export class InfoManager {
     const asset = this.publicProfile
       ? (sdAssetForSkin(def.id, this.publicProfile.equippedSkinId) ?? battleAssetFor(def.id))
       : relicAppearanceManager.battleAssetFor(def.id);
-    // 정보창의 주인공은 전신 Puppet이다. 장식용 SD까지 같은 주사율로 적분하면 첫 진입에 runtime과
-    // GPU 비용이 겹치므로, SD는 loadPortraitTexture가 공유하는 원본 정지 프레임만 사용한다.
-    const texture = await loadPortraitTexture(this.scene, asset);
-    const figure = this.scene.add.image(FIGURE.x, FIGURE.y, texture.key)
-      .setOrigin(0.5, 1)
-      .setScale(FIGURE.height / asset.imageHeight)
-      .setDepth(1004);
+    // 상세창에서도 실제 SD runtime을 세워 원본 idle 모션과 탭 피격 모션을 온전히 보여 준다.
+    const figure = await spawnPuppet(this.scene, asset, {
+      x: FIGURE.x,
+      groundY: FIGURE.y,
+      height: FIGURE.height,
+      depth: 1004,
+    });
     if (request !== this.figureRequest || !this.portraitWanted || this.currentDef !== def) { figure.destroy(); return; }
     this.figure?.destroy();
     this.figure = figure;
-    // 투명 여백을 포함한 정지 이미지여도 기존 SD와 같은 가벼운 상호작용은 유지한다.
-    figure.setInteractive({ useHandCursor: true });
+    // 공용 입력 계약이 탭할 때 짧은 hit 동작을 재생한 뒤 자동으로 idle에 복귀시킨다.
+    enableHitOnClick(this.scene, figure);
     figure.on("pointerup", () => this.say(def.name + "는 당신을 바라본다."));
     figure.setVisible(this.portraitWanted && this.root.visible);
+    if (figure.visible) resumeMotion(figure); else pauseMotion(figure);
   }
 
   /** 원화 아래 스킬 아이콘 세 개. 누르면 정형 팝업이 뜬다. */
@@ -2205,6 +2210,7 @@ export class InfoManager {
     this.figure?.setVisible(false);
     // 이전 캐릭터는 비동기 교체가 끝날 때까지 살아 있으므로 렌더와 runtime 계산을 모두 즉시 멈춘다.
     pauseMotion(this.portrait);
+    pauseMotion(this.figure);
     if (owned) {
       void this.loadCharacterVisuals(def);
     }

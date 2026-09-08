@@ -61,6 +61,8 @@ export class RelicsScene extends Phaser.Scene {
   private pointerY = 0;
   private draggedDistance = 0;
   private readonly onPointerDown = (pointer: Phaser.Input.Pointer): void => {
+    // 상세 정보가 도감 전체를 덮는 동안에는 뒤쪽 그리드가 새 제스처를 시작하지 않는다.
+    if (this.info?.isOpen) return;
     if (pointer.y < VIEWPORT_TOP || pointer.y >= VIEWPORT_BOTTOM) return;
     // 스크롤이 불필요한 소수 카드에서도 이전 제스처의 이동량이 카드 탭을 막지 않게 초기화한다.
     this.draggedDistance = 0;
@@ -70,6 +72,8 @@ export class RelicsScene extends Phaser.Scene {
     this.velocityY = 0;
   };
   private readonly onPointerMove = (pointer: Phaser.Input.Pointer): void => {
+    // 팝업 위의 드래그를 배경 콘텐츠 이동으로 전달하지 않는다.
+    if (this.info?.isOpen) return;
     if (!this.pointerDown || !pointer.isDown) return;
     const delta = pointer.y - this.pointerY;
     this.pointerY = pointer.y;
@@ -77,8 +81,14 @@ export class RelicsScene extends Phaser.Scene {
     this.velocityY = delta * 60;
     this.scrollTo(this.content.y + delta);
   };
-  private readonly onPointerUp = (): void => { this.pointerDown = false; };
+  private readonly onPointerUp = (): void => {
+    // 정보창을 여는 탭에서 이미 드래그 상태를 지우므로, 열린 동안의 입력은 그대로 무시한다.
+    if (this.info?.isOpen) return;
+    this.pointerDown = false;
+  };
   private readonly onWheel = (_pointer: Phaser.Input.Pointer, _objects: Phaser.GameObjects.GameObject[], _dx: number, dy: number): void => {
+    // 상세 정보 위에서 발생한 휠이 뒤쪽 도감을 움직이지 않게 한다.
+    if (this.info?.isOpen) return;
     if (this.scrollEnabled()) this.scrollTo(this.content.y - dy * 0.8);
   };
 
@@ -135,6 +145,7 @@ export class RelicsScene extends Phaser.Scene {
 
     this.info = new CharacterInfoManager(this);
     // 정보창 안에서 애착·즐겨찾기가 바뀔 수 있으므로 닫힐 때 표시와 정렬을 함께 다시 맞춘다.
+    // refresh의 마지막 scrollTo가 현재 콘텐츠 위치에서 가시 카드 마스크를 정확히 한 차례 맞춘다.
     this.info.onClose = () => this.refresh();
     // 서버가 재화 차감을 확정한 직후 정보창과 상단 줄이 같은 세션 지갑을 다시 읽는다.
     this.info.onWalletChange = () => this.topBar.refresh();
@@ -148,13 +159,15 @@ export class RelicsScene extends Phaser.Scene {
     new BottomNav(this, "relics");
   }
 
-  /** 모바일 관성은 프레임 시간으로 감쇠하며, 이동한 프레임마다 카드 내부 마스크도 동기화한다. */
+  /** 모바일 관성은 프레임 시간으로 감쇠하며, 실제 이동은 scrollTo의 마스크 동기화 경로를 쓴다. */
   update(_time: number, delta: number): void {
+    // 정보창은 도감 전체를 덮어 배경 카드가 보이지 않는다. 따라서 열린 동안에는 관성 이동과
+    // 카드 수에 비례하는 마스크 계산을 모두 생략해도 시각적 결과가 달라지지 않는다.
+    if (this.info?.isOpen) return;
     if (!this.pointerDown && Math.abs(this.velocityY) > 4 && this.scrollEnabled()) {
       this.scrollTo(this.content.y + this.velocityY * Math.min(delta, 34) / 1000);
       this.velocityY *= Math.pow(0.9, delta / 16.67);
     }
-    this.syncCardMasks();
   }
 
   /**
@@ -248,7 +261,12 @@ export class RelicsScene extends Phaser.Scene {
       // 카드를 누르면 바로 정보창이 열린다. 애착 설정도 그 안의 뱃지가 맡는다.
       card.hit.on("pointerup", () => {
         // 드래그 종료가 카드 선택으로 새지 않도록 포인터 이동 허용치를 넘은 탭은 버린다.
-        if (this.draggedDistance <= DRAG_SLOP) this.info.showRelic(relic, relicCollection.owns(relic.id));
+        if (this.draggedDistance <= DRAG_SLOP && !this.info.isOpen) {
+          // 열리기 직전에 관성과 드래그를 함께 끊어 상세 화면 뒤에서 목록이 계속 흐르지 않게 한다.
+          this.velocityY = 0;
+          this.pointerDown = false;
+          this.info.showRelic(relic, relicCollection.owns(relic.id));
+        }
       });
       this.cards.set(relic.id, card);
     }
@@ -306,9 +324,13 @@ export class RelicsScene extends Phaser.Scene {
     setDebugRelicScroll({ y: this.content.y, minY: this.minScrollY, maxY: 0, enabled: this.scrollEnabled(), viewportTop: VIEWPORT_TOP, viewportBottom: VIEWPORT_BOTTOM });
   }
 
-  /** PortraitCard의 자체 마스크는 부모 이동을 상속하지 않으므로 월드 변환을 명시적으로 갱신한다. */
+  /** PortraitCard의 자체 마스크는 부모 이동을 상속하지 않으므로 가시 카드의 월드 변환만 갱신한다. */
   private syncCardMasks(): void {
-    for (const card of this.cards.values()) card.syncMask();
+    for (const card of this.cards.values()) {
+      // 화면 밖 카드는 다시 들어오는 scrollTo에서 맞춰진다. 매번 전체 도감 크기만큼 계산하지 않는다.
+      const bounds = card.getBounds();
+      if (bounds.bottom >= VIEWPORT_TOP && bounds.top < VIEWPORT_BOTTOM) card.syncMask();
+    }
   }
 
   private scrollEnabled(): boolean { return this.minScrollY < 0; }

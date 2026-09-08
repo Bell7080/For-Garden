@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import type { PlayOptions, Puppet } from "puppetforge";
-import { advancePuppet } from "./runtimeStep";
+import { advancePuppet, shouldAdvancePuppet } from "./runtimeStep";
 
 /** GPU 프로그램과 정적 attribute 위치는 렌더러 하나당 한 번만 만든다. */
 interface SharedGpuProgram {
@@ -129,6 +129,8 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
   private readonly uvs: Float32Array;
   private positions: Float32Array;
   private buffers?: CreatureGpuBuffers;
+  /** 명시적으로 숨긴 UI가 UPDATE에 남아 있더라도 runtime 시간을 소비하지 않게 하는 수명주기 상태다. */
+  private motionPaused = false;
 
   private constructor(scene: Phaser.Scene, puppet: Puppet, textureKey: string) {
     super(scene, 0, 0, textureKey);
@@ -161,8 +163,31 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
     return this.puppet.play(name, options);
   }
 
+  /** 공개 asset 수명주기 API가 계산 중지 여부를 검증할 수 있도록 읽기 전용 상태를 노출한다. */
+  get isMotionPaused(): boolean {
+    return this.motionPaused;
+  }
+
+  /** 다음 UPDATE부터 PuppetForge runtime 적분을 중지한다. 건너뛴 delta는 내부에 누적하지 않는다. */
+  pauseMotion(): void {
+    this.motionPaused = true;
+  }
+
+  /** 정지 상태만 해제하며, 호출자가 재개 자세를 명시적으로 선택하도록 자동 재생하지 않는다. */
+  resumeMotion(): void {
+    this.motionPaused = false;
+  }
+
   /** Phaser scene update에서 원본 해상도의 변형 정점만 계산한다. */
   private step(_time: number, delta: number): void {
+    // visible=false는 Phaser Scene UPDATE 구독을 해제하지 않는다. 렌더되지 않는 개체는 runtime에도
+    // delta를 전달하지 않아 CPU 계산과 재표시 순간의 뜻밖의 시간 점프를 함께 막는다.
+    if (!shouldAdvancePuppet({
+      active: this.active,
+      visible: this.visible,
+      sceneActive: this.scene.sys.isActive(),
+      motionPaused: this.motionPaused,
+    })) return;
     // 편집기보다 긴 프레임을 한 번에 적분하면 pinnedSoft 발 주변의 spring이 튀므로 잘게 나눈다.
     const next = advancePuppet(this.puppet, delta / 1000);
     if (next) this.positions = next;

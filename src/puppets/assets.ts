@@ -760,6 +760,26 @@ export function tintPuppet(creature: PuppetCreature, color: number): void {
 }
 
 /**
+ * UI 수명주기에서 PuppetForge 계산을 명시적으로 멈춘다.
+ * Phaser의 `visible=false`는 그리기만 생략하고 Scene UPDATE listener는 그대로 호출하기 때문에
+ * 가려진 정보창의 전신과 SD에는 이 API도 함께 적용해야 한다.
+ */
+export function pauseMotion(creature: PuppetCreature | undefined): void {
+  creature?.pauseMotion();
+}
+
+/**
+ * 건너뛴 시간을 보충하지 않고 현재 프레임부터 다시 적분하며, 마지막 일회성 자세가 남지 않도록
+ * idle을 처음부터 명시적으로 재생한다. PuppetForge의 `update(delta)` 계약은 전달받은 delta만
+ * 진행하므로 pause 중 delta는 runtime 내부에 누적되지 않는다.
+ */
+export function resumeMotion(creature: PuppetCreature | undefined): void {
+  if (!creature?.active) return;
+  creature.play("idle");
+  creature.resumeMotion();
+}
+
+/**
  * 요청한 방식(발끝 · 기준 관절)에 맞는 최종 좌표를 고른다.
  *
  * 관절 해석은 실제로 필요할 때만 한다. 실시간 전투는 매 프레임 여섯 명을 다시 놓기 때문에

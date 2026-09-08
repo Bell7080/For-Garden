@@ -15,9 +15,11 @@ import {
   enableHitOnClick,
   placePuppet,
   playMotion,
+  pauseMotion,
   portraitAssetForSkin,
   sdAssetForSkin,
   spawnPuppet,
+  resumeMotion,
 } from "../puppets/assets";
 import { addPopupBackgroundImage, addSceneBackground, BACKGROUND } from "./backgrounds";
 import { addBackButton } from "./IconButton";
@@ -1473,6 +1475,7 @@ export class InfoManager {
     this.scene.tweens.add({ targets: portrait, alpha: 1, duration: 260 });
     // SD는 판이 아니라 따로 선 인형이라 함께 빠지지 않는다. 감상 중에는 접어 둔다.
     this.figure?.setVisible(false);
+    pauseMotion(this.figure);
     // 판은 오른쪽으로, 이름줄과 스킬은 그대로 두면 인물을 가리므로 chrome 통째로 민다.
     this.scene.tweens.add({ targets: this.chrome, x: BASE_WIDTH, alpha: 0, duration: 320, ease: "Cubic.In" });
     const exit = this.scene.add
@@ -1500,6 +1503,7 @@ export class InfoManager {
     }
     this.scene.tweens.add({ targets: this.chrome, x: 0, alpha: 1, duration: 320, ease: "Cubic.Out" });
     this.figure?.setVisible(this.portraitWanted && this.root.visible);
+    if (this.figure?.visible) resumeMotion(this.figure); else pauseMotion(this.figure);
   }
 
   /**
@@ -1770,6 +1774,9 @@ export class InfoManager {
     this.portraitWanted = false;
     this.portrait?.setVisible(false);
     this.figure?.setVisible(false);
+    // visible=false만으로는 Scene UPDATE 구독이 해제되지 않아 숨은 전신과 SD의 runtime도 함께 멈춘다.
+    pauseMotion(this.portrait);
+    pauseMotion(this.figure);
     this.liveLine?.destroy();
     setDebugInfoOpen(false);
     this.onClose?.();
@@ -1821,6 +1828,7 @@ export class InfoManager {
     // 화면 아무 데나 눌러도 통통 튀면 정신이 없다. 코어 관절 둘레의 몸통에서만 반응한다.
     portrait.disableInteractive();
     portrait.setVisible(this.portraitWanted && this.root.visible);
+    if (portrait.visible) resumeMotion(portrait); else pauseMotion(portrait);
     // 새 인물은 살짝 떠오르며 나타난다. 좌우로 넘길 때 갈아 끼우는 티가 덜 난다.
     portrait.setAlpha(0);
     this.scene.tweens.add({ targets: portrait, alpha: 1, duration: 220 });
@@ -1844,6 +1852,7 @@ export class InfoManager {
     enableHitOnClick(this.scene, figure);
     figure.on("pointerup", () => this.say(def.name + "는 당신을 바라본다."));
     figure.setVisible(this.portraitWanted && this.root.visible);
+    if (figure.visible) resumeMotion(figure); else pauseMotion(figure);
   }
 
   /** 원화 아래 스킬 아이콘 세 개. 누르면 정형 팝업이 뜬다. */
@@ -2163,6 +2172,9 @@ export class InfoManager {
     this.portraitWanted = owned;
     this.portrait?.setVisible(false);
     this.figure?.setVisible(false);
+    // 이전 캐릭터는 비동기 교체가 끝날 때까지 살아 있으므로 렌더와 runtime 계산을 모두 즉시 멈춘다.
+    pauseMotion(this.portrait);
+    pauseMotion(this.figure);
     if (owned) {
       void this.loadPortrait(def);
       void this.loadFigure(def);

@@ -12,7 +12,7 @@ import { KeywordManager } from "../managers/KeywordManager";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import {
   battleAssetFor,
-  enableHitOnClick,
+  loadPortraitTexture,
   placePuppet,
   playMotion,
   pauseMotion,
@@ -436,7 +436,8 @@ export class InfoManager {
    * 그 순간의 커진 값이 "제자리"로 굳어, 열고 닫을 때마다 원화가 조금씩 커진다.
    */
   private portraitHome?: { x: number; y: number; scale: number };
-  private figure?: PuppetCreature;
+  /** 장식용 SD는 별도 Puppet runtime 없이 원본 텍스처의 정지 프레임으로 그린다. */
+  private figure?: Phaser.GameObjects.Image;
   private figureRequest = 0;
   /** 현재 렐릭에 비교할 외형이 없을 때 입력면까지 숨기는 공용 진입 버튼이다. */
   private appearanceButton?: Phaser.GameObjects.Container;
@@ -1475,7 +1476,6 @@ export class InfoManager {
     this.scene.tweens.add({ targets: portrait, alpha: 1, duration: 260 });
     // SD는 판이 아니라 따로 선 인형이라 함께 빠지지 않는다. 감상 중에는 접어 둔다.
     this.figure?.setVisible(false);
-    pauseMotion(this.figure);
     // 판은 오른쪽으로, 이름줄과 스킬은 그대로 두면 인물을 가리므로 chrome 통째로 민다.
     this.scene.tweens.add({ targets: this.chrome, x: BASE_WIDTH, alpha: 0, duration: 320, ease: "Cubic.In" });
     const exit = this.scene.add
@@ -1503,8 +1503,22 @@ export class InfoManager {
     }
     this.scene.tweens.add({ targets: this.chrome, x: 0, alpha: 1, duration: 320, ease: "Cubic.Out" });
     this.figure?.setVisible(this.portraitWanted && this.root.visible);
-    if (this.figure?.visible) resumeMotion(this.figure); else pauseMotion(this.figure);
   }
+
+  /** hide/렐릭 전환은 복귀 연출을 재생하지 않고 갤러리의 입력면과 chrome 좌표를 즉시 정리한다. */
+  private cancelGallery(): void {
+    this.gallery?.destroy();
+    this.gallery = undefined;
+    this.galleryReturn?.();
+    this.galleryReturn = undefined;
+    this.chrome.setPosition(0, 0).setAlpha(1);
+  }
+
+  /** 저장 상태를 건드리지 않고 갤러리 수명주기만 재현하는 성능 테스트 전용 진입점이다. */
+  openGalleryForPerformanceTest(): void { this.enterGallery(); }
+
+  /** 공개 UI 입력과 같은 복귀 경로를 성능 테스트가 좌표 의존 없이 호출한다. */
+  closeGalleryForPerformanceTest(): void { if (this.gallery) this.leaveGallery(); }
 
   /**
    * 유대가 지금 무엇을 얼마나 바꾸고 있는지.
@@ -1693,8 +1707,8 @@ export class InfoManager {
           const succeeded = selected ? relicSkinManager.equip(def.id, selected.id) : (equipped === undefined || relicSkinManager.unequip(def.id));
           if (!succeeded) return;
           paint();
-          // 사건 구독 화면과 함께 현재 정보창의 두 Puppet도 즉시 같은 장착 결과로 교체한다.
-          void this.loadPortrait(def); void this.loadFigure(def);
+          // 장착 뒤에도 전신 준비를 먼저 끝내고 장식용 SD 정지 이미지를 이어서 교체한다.
+          void this.loadCharacterVisuals(def);
         },
       });
       body.add(action);
@@ -1769,14 +1783,18 @@ export class InfoManager {
       this.popups.closeTop();
       return;
     }
+    // 씬 전환이 갤러리 도중 발생해도 투명 입력면과 화면 밖 chrome을 다음 진입에 남기지 않는다.
+    this.cancelGallery();
     this.root.setVisible(false);
     this.chrome.setVisible(false);
     this.portraitWanted = false;
+    // 진행 중인 비동기 로드도 무효화해야 닫힌 뒤 Puppet/SD가 뒤늦게 다시 살아나지 않는다.
+    this.portraitRequest += 1;
+    this.figureRequest += 1;
     this.portrait?.setVisible(false);
     this.figure?.setVisible(false);
-    // visible=false만으로는 Scene UPDATE 구독이 해제되지 않아 숨은 전신과 SD의 runtime도 함께 멈춘다.
+    // visible=false만으로는 Scene UPDATE 구독이 해제되지 않아 숨은 전신 runtime을 명시적으로 멈춘다.
     pauseMotion(this.portrait);
-    pauseMotion(this.figure);
     this.liveLine?.destroy();
     setDebugInfoOpen(false);
     this.onClose?.();
@@ -1820,7 +1838,7 @@ export class InfoManager {
       ...infoPortraitPlacement(asset, PORTRAIT_FOCUS),
       depth: Math.max(this.portraitDepth, this.root.depth + 1),
     });
-    if (request !== this.portraitRequest) { portrait.destroy(); return; }
+    if (request !== this.portraitRequest || !this.portraitWanted || this.currentDef !== def) { portrait.destroy(); return; }
     this.portrait?.destroy();
     this.portrait = portrait;
     // 세운 그 자리가 곧 제자리다. 전신 감상은 여기로만 되돌아온다.
@@ -1834,25 +1852,31 @@ export class InfoManager {
     this.scene.tweens.add({ targets: portrait, alpha: 1, duration: 220 });
   }
 
+  /** 첫 진입의 프레임 예산은 주인공인 전신에 먼저 주고, 장식용 SD 텍스처는 그 뒤에 준비한다. */
+  private async loadCharacterVisuals(def: RelicDef): Promise<void> {
+    await this.loadPortrait(def);
+    if (this.portraitWanted && this.currentDef === def) await this.loadFigure(def);
+  }
+
   private async loadFigure(def: RelicDef): Promise<void> {
     const request = ++this.figureRequest;
     const asset = this.publicProfile
       ? (sdAssetForSkin(def.id, this.publicProfile.equippedSkinId) ?? battleAssetFor(def.id))
       : relicAppearanceManager.battleAssetFor(def.id);
-    // 관련 SD도 공개 DTO 또는 로컬 manager가 결정한 결과만 그린다.
-    const figure = await spawnPuppet(this.scene, asset, {
-      x: FIGURE.x,
-      groundY: FIGURE.y,
-      height: FIGURE.height,
-      depth: 1004,
-    });
-    if (request !== this.figureRequest) { figure.destroy(); return; }
+    // 정보창의 주인공은 전신 Puppet이다. 장식용 SD까지 같은 주사율로 적분하면 첫 진입에 runtime과
+    // GPU 비용이 겹치므로, SD는 loadPortraitTexture가 공유하는 원본 정지 프레임만 사용한다.
+    const texture = await loadPortraitTexture(this.scene, asset);
+    const figure = this.scene.add.image(FIGURE.x, FIGURE.y, texture.key)
+      .setOrigin(0.5, 1)
+      .setScale(FIGURE.height / asset.imageHeight)
+      .setDepth(1004);
+    if (request !== this.figureRequest || !this.portraitWanted || this.currentDef !== def) { figure.destroy(); return; }
     this.figure?.destroy();
     this.figure = figure;
-    enableHitOnClick(this.scene, figure);
+    // 투명 여백을 포함한 정지 이미지여도 기존 SD와 같은 가벼운 상호작용은 유지한다.
+    figure.setInteractive({ useHandCursor: true });
     figure.on("pointerup", () => this.say(def.name + "는 당신을 바라본다."));
     figure.setVisible(this.portraitWanted && this.root.visible);
-    if (figure.visible) resumeMotion(figure); else pauseMotion(figure);
   }
 
   /** 원화 아래 스킬 아이콘 세 개. 누르면 정형 팝업이 뜬다. */
@@ -2147,6 +2171,8 @@ export class InfoManager {
 
   /** 정적 렐릭 정의만 받아 읽기 전용 상세 화면의 상태를 교체한다. */
   private openCharacter(def: RelicDef, owned = true): void {
+    // 감상 중 렐릭을 바꾸는 진입점도 같은 전신을 계속 갱신하지 않도록 먼저 수명을 닫는다.
+    this.cancelGallery();
     this.currentDef = def;
     this.ownedNow = owned;
     // 기본 외형 하나뿐이거나 소유자 문맥이 아니면 선택 진입점 자체를 노출하지 않는다.
@@ -2170,14 +2196,15 @@ export class InfoManager {
     // 미보유 개체는 원화·스킬을 감추고 번호와 실루엣만 남긴다.
     for (const icon of this.skillIcons) icon.setVisible(owned);
     this.portraitWanted = owned;
+    // 렐릭을 넘기는 즉시 이전 비동기 결과를 폐기한다. 새 요청 번호는 load 함수가 이어서 발급한다.
+    this.portraitRequest += 1;
+    this.figureRequest += 1;
     this.portrait?.setVisible(false);
     this.figure?.setVisible(false);
     // 이전 캐릭터는 비동기 교체가 끝날 때까지 살아 있으므로 렌더와 runtime 계산을 모두 즉시 멈춘다.
     pauseMotion(this.portrait);
-    pauseMotion(this.figure);
     if (owned) {
-      void this.loadPortrait(def);
-      void this.loadFigure(def);
+      void this.loadCharacterVisuals(def);
     }
     this.root.setVisible(true);
     this.chrome.setVisible(true);

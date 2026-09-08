@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { BASE_WIDTH, BASE_HEIGHT } from "../config/gameConfig";
-import { setDebugReady, setDebugScene } from "../debug";
+import { bindDebugReadyLifecycle, setDebugReady, setDebugScene } from "../debug";
 import { COLOR, textStyle } from "../ui/theme";
 import { OPENING_TRAIN } from "../data/dialogues/openingTrain";
 import { storyManager } from "../managers/StoryManager";
@@ -88,8 +88,9 @@ export class TitleScene extends Phaser.Scene {
   }
 
   create(): void {
+    // 타이틀 로딩의 ready 소유권을 시작/종료 수명주기와 함께 초기화한다.
+    bindDebugReadyLifecycle(this.events);
     setDebugScene("title");
-    setDebugReady(false);
     this.revealed = false;
 
     const cx = BASE_WIDTH / 2;

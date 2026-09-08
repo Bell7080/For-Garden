@@ -92,17 +92,25 @@ test("세로형 첫 방문은 오프닝을 끝내고 중복 입력 없이 로비
   // 첫 전신 ZIP 파싱이 끝나 입력 잠금이 풀릴 시간을 저사양 모바일 실행에도 보장한다.
   await page.waitForTimeout(2_000);
 
-  // 디버그 씬 계약의 실제 대입을 감시해 빠른 마지막 입력이 로비 create를 중복 호출하지 않는지 센다.
+  // 디버그 계약의 실제 대입을 감시해 중복 로비 진입과 ready 전환의 선후를 함께 검증한다.
   await page.evaluate(() => {
     const debug = window.__PF_DEBUG!;
     let scene = debug.scene;
+    let ready = debug.ready;
     let lobbyEntries = 0;
+    const transitionEvents: string[] = [];
     Object.defineProperty(debug, "scene", {
       configurable: true,
       get: () => scene,
-      set: (next: string) => { scene = next; if (next === "lobby") lobbyEntries += 1; },
+      set: (next: string) => { scene = next; transitionEvents.push(`scene:${next}`); if (next === "lobby") lobbyEntries += 1; },
+    });
+    Object.defineProperty(debug, "ready", {
+      configurable: true,
+      get: () => ready,
+      set: (next: boolean) => { ready = next; transitionEvents.push(`ready:${next}`); },
     });
     Object.defineProperty(debug, "__lobbyEntries", { configurable: true, get: () => lobbyEntries });
+    Object.defineProperty(debug, "__transitionEvents", { configurable: true, get: () => [...transitionEvents] });
   });
 
   // wake → window → 선택 → 분기 응답 → arrival → end까지 실제 Canvas 입력으로 진행한다.
@@ -114,9 +122,15 @@ test("세로형 첫 방문은 오프닝을 끝내고 중복 입력 없이 로비
 
   // 마지막 노드 입력은 같은 순간 여러 번 보내 완료 저장/전환 멱등 경계를 직접 압박한다.
   for (let input = 0; input < 5; input += 1) await tapGame(page, BASE_WIDTH / 2, 1500);
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene), { timeout: 15_000 }).toBe("lobby");
+  // 최종 입력 직후에는 오프닝 준비 상태가 먼저 내려가고, Puppet 초기화가 끝나야 로비가 준비된다.
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.ready)).toBe(false);
+  await expect.poll(() => page.evaluate(() => ({ scene: window.__PF_DEBUG?.scene, ready: window.__PF_DEBUG?.ready })), { timeout: 15_000 }).toEqual({ scene: "lobby", ready: true });
   await page.waitForTimeout(500);
   expect(await page.evaluate(() => (window.__PF_DEBUG as typeof window.__PF_DEBUG & { __lobbyEntries?: number })?.__lobbyEntries)).toBe(1);
+  const transitionEvents = await page.evaluate(() => (window.__PF_DEBUG as typeof window.__PF_DEBUG & { __transitionEvents?: string[] })?.__transitionEvents ?? []);
+  // 첫 ready:false가 lobby 게시보다 앞서고, ready:true는 lobby 게시 뒤에 와야 한다.
+  expect(transitionEvents.indexOf("ready:false")).toBeLessThan(transitionEvents.indexOf("scene:lobby"));
+  expect(transitionEvents.lastIndexOf("ready:true")).toBeGreaterThan(transitionEvents.indexOf("scene:lobby"));
 
   expect(consoleErrors, `콘솔 에러 발생: ${consoleErrors.join(", ")}`).toEqual([]);
 });

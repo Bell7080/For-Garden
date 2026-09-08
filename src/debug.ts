@@ -155,6 +155,17 @@ export function setDebugReady(ready: boolean): void {
   ensure().ready = ready;
 }
 
+/**
+ * ready를 소유하는 씬의 시작/종료 경계를 한 규칙으로 묶는다.
+ *
+ * Phaser 타입을 디버그 계약에 끌어들이지 않고 필요한 `once` 모양만 받는다. 씬이 새로 만들어진
+ * 순간과 SHUTDOWN 순간 모두 false로 돌려, 다음 씬이 준비 완료를 선언하기 전 이전 true가 남지 않는다.
+ */
+export function bindDebugReadyLifecycle(events: { once(event: string, listener: () => void): unknown }): void {
+  setDebugReady(false);
+  events.once("shutdown", () => setDebugReady(false));
+}
+
 /** 비동기 가방 조회와 탭 재구성이 끝난 시점의 사용자 표시 상태만 공개한다. */
 export function setDebugInventoryCategory(category: DebugState["inventoryCategory"]): void {
   ensure().inventoryCategory = category;

@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { DialogueFlow, type DialogueChoice } from "../core/dialogue";
 import { OPENING_TRAIN } from "../data/dialogues/openingTrain";
-import { setDebugReady, setDebugScene } from "../debug";
+import { bindDebugReadyLifecycle, setDebugReady, setDebugScene } from "../debug";
 import { storyManager } from "../managers/StoryManager";
 import { drawLayer, slantedRect } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
@@ -18,6 +18,8 @@ export class OpeningScene extends Phaser.Scene {
   constructor() { super("opening"); }
 
   create(): void {
+    // 이 씬이 ready를 소유하는 동안 시작과 종료 모두 공용 수명주기 규칙으로 false를 보장한다.
+    bindDebugReadyLifecycle(this.events);
     // Phaser가 같은 Scene 인스턴스를 회상에 재사용하므로 커서를 시작 노드로 되돌린다.
     this.flow = new DialogueFlow(OPENING_TRAIN);
     this.transitioningToLobby = false;
@@ -42,6 +44,8 @@ export class OpeningScene extends Phaser.Scene {
       try {
         storyManager.complete(OPENING_TRAIN.id);
         this.transitioningToLobby = true;
+        // 로비의 비동기 Puppet까지 준비되기 전 오프닝의 true를 자동화가 재사용하지 않게 먼저 내린다.
+        setDebugReady(false);
         this.scene.start("lobby");
       } finally {
         // 완료 경로도 잠금을 풀어 저장 실패 때문에 입력이 영구 잠기게 두지 않는다.

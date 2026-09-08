@@ -45,4 +45,22 @@ describe("RelicsScene 카드 마스크 스케줄", () => {
     expect(maskSyncCalls(method("update"))).toBe(0);
     expect(maskSyncCalls(method("scrollTo"))).toBe(1);
   });
+
+  it("정지한 scrollTo는 dirty guard 뒤에서 카드 가시성을 다시 순회하지 않는다", () => {
+    const scrollSource = method("scrollTo").getText(file);
+    const syncSource = method("syncCardMasks").getText(file);
+    // 실제 clamp 좌표의 변경만 dirty를 세우고, 동기화 진입 즉시 guard가 소비하는 계약을 고정한다.
+    expect(scrollSource).toContain("if (nextY !== this.content.y) this.viewportVisibilityDirty = true");
+    expect(syncSource).toContain("if (!this.viewportVisibilityDirty) return");
+    expect(syncSource).toContain("this.viewportVisibilityDirty = false");
+  });
+
+  it("월드 bounds와 한 행 오버스캔으로 카드 전체 표시 상태를 전환한다", () => {
+    const syncSource = method("syncCardMasks").getText(file);
+    // 부모 이동을 포함한 bounds 판정과 PortraitCard의 단일 전환 API가 빠지면 렌더와 입력이 갈린다.
+    expect(syncSource).toContain("card.getBounds()");
+    expect(syncSource).toContain("VIEWPORT_TOP - GRID_OVERSCAN_Y");
+    expect(syncSource).toContain("VIEWPORT_BOTTOM + GRID_OVERSCAN_Y");
+    expect(syncSource).toContain("card.setViewportVisible(visible)");
+  });
 });

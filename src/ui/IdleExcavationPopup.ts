@@ -103,6 +103,12 @@ function requestId(): string {
 /** 서버 확정값과 분리된 편집 사본을 만드는 좁은 복사 함수다. */
 function copyFormation(value: Formation): Formation { return [...value] as Formation; }
 
+/** 화면 포인터를 Puppet 레이어의 로컬 좌표로 되돌려 부모 변환이 있어도 드래그 발끝을 맞춘다. */
+function layerScreenToLocal(layer: Phaser.GameObjects.Container | undefined, x: number, y: number): Phaser.Math.Vector2 {
+  if (!layer) return new Phaser.Math.Vector2(x, y);
+  return layer.getWorldTransformMatrix().applyInverse(x, y);
+}
+
 /** PopupLayer 한 장 안에서 서버 확정 편성과 임시 편집 편성의 생명주기를 소유한다. */
 export class IdleExcavationPopup {
   private body?: Phaser.GameObjects.Container;
@@ -629,7 +635,7 @@ export class IdleExcavationPopup {
       parent.add(hit);
       dragSlots.push({ hit, x: POPUP_CENTER.x - 250 + index * 250, y: POPUP_CENTER.y + STATUS_HERO.slotY, width: 210, height: 245 });
     });
-    // 발굴 Puppet도 화면 좌표에 서므로 parent 이동이 아니라 기존 placePuppet 배치기를 주입한다.
+    // Puppet은 body의 로컬 좌표에 서며 renderer가 팝업의 변환과 alpha를 최종 화면에 합성한다.
     this.formationDragVisual = createFormationDragVisualController({
       scene: this.scene, slots: dragSlots, formation: () => formation, color: COLOR.accent,
       zoneDepth: SD_DEPTH - 1, dimDepth: SD_DEPTH - 2,
@@ -638,15 +644,17 @@ export class IdleExcavationPopup {
         const puppet = this.sdPuppetByRelicId.get(relicId); if (!puppet) return;
         const lifted = preview[index]?.lifted;
         const target = preview.findIndex((entry) => entry.relicId === relicId);
-        const x = lifted ? pointer.x : POPUP_CENTER.x - 250 + (target < 0 ? index : target) * 250;
-        const groundY = lifted ? pointer.y + 245 / 2 : POPUP_CENTER.y + STATUS_HERO.slotY + SLOT_GROUND_OFFSET;
+        // 포인터는 화면 좌표이므로 드래그 중일 때만 SD 레이어의 로컬 좌표로 역변환한다.
+        const localPointer = layerScreenToLocal(this.sdContainer, pointer.x, pointer.y);
+        const x = lifted ? localPointer.x : -250 + (target < 0 ? index : target) * 250;
+        const groundY = lifted ? localPointer.y + 245 / 2 : STATUS_HERO.slotY + SLOT_GROUND_OFFSET;
         placePuppet(puppet, this.puppetLoader.assetFor(relicId), { x, groundY, height: lifted ? 205 * FORMATION_DRAG_VISUAL.liftScale : 205 });
         puppet.setDepth(lifted ? SD_DEPTH + 2 : SD_DEPTH).setAlpha(lifted ? FORMATION_DRAG_VISUAL.liftAlpha : target === index ? 1 : FORMATION_DRAG_VISUAL.previewAlpha);
       }),
       restore: () => formation.forEach((relicId, index) => {
         if (!relicId) return;
         const puppet = this.sdPuppetByRelicId.get(relicId); if (!puppet) return;
-        placePuppet(puppet, this.puppetLoader.assetFor(relicId), { x: POPUP_CENTER.x - 250 + index * 250, groundY: POPUP_CENTER.y + STATUS_HERO.slotY + SLOT_GROUND_OFFSET, height: 205 });
+        placePuppet(puppet, this.puppetLoader.assetFor(relicId), { x: -250 + index * 250, groundY: STATUS_HERO.slotY + SLOT_GROUND_OFFSET, height: 205 });
         puppet.setDepth(SD_DEPTH).setAlpha(1);
       }),
       onVisualState: (state) => setDebugFormationDragVisual(state ? { owner: "excavation", ...state } : undefined),
@@ -692,10 +700,8 @@ export class IdleExcavationPopup {
   /**
    * 확정 슬롯의 카드 위에 SD가 준비된 자리만 교체하며 실패한 자리는 카드 미리보기를 보존한다.
    *
-   * Puppet은 자신의 **화면 좌표**로 직접 그리는 GPU 개체라 컨테이너 이동·배율을 물려받지 않는다.
-   * 팝업 본문(화면 가운데로 옮겨진 컨테이너) 안에 넣으면 국소 좌표 그대로 화면 왼쪽 위 바깥에
-   * 그려져 아무것도 보이지 않는다. 그래서 SD만 원점에 선 별도 레이어에 세우고 좌표도 팝업 판의
-   * 중심을 더한 화면 좌표로 넘긴다.
+   * SD 레이어는 팝업 body의 자식이고 Puppet은 그 로컬 좌표를 쓴다. indexed renderer가 body의
+   * 이동·배율·회전·alpha와 카메라를 합성하므로 팝업과 Puppet이 하나의 시각 계층으로 움직인다.
    */
   private loadStatusSD(formation: Formation, cards: Array<Phaser.GameObjects.Container | undefined>): void {
     // 로드 시작 자체가 새 세대다. clear 호출 횟수와 무관하게 이전 render와 같은 번호를 공유하지 않는다.
@@ -703,11 +709,12 @@ export class IdleExcavationPopup {
     const body = this.body;
     if (!body) return;
     const layer = this.scene.add.container(0, 0).setName("idle-excavation-confirmed-sd").setDepth(SD_DEPTH);
+    body.add(layer);
     this.sdContainer = layer;
     formation.forEach((relicId, index) => {
       if (!relicId) return;
-      const x = body.x - 250 + index * 250;
-      const groundY = body.y + STATUS_HERO.slotY + SLOT_GROUND_OFFSET;
+      const x = -250 + index * 250;
+      const groundY = STATUS_HERO.slotY + SLOT_GROUND_OFFSET;
       // 사방 테두리나 입체 판 대신 얇은 홀로그램 투영 그림자만 발 아래에 둔다.
       layer.add(this.scene.add.ellipse(x, groundY + 2, 172, 25, COLOR.accent, 0.16));
       void this.loadStatusPuppet(relicId, index, x, groundY, generation, layer, cards[index]);

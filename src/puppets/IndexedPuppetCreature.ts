@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import type { PlayOptions, Puppet } from "puppetforge";
 import { advancePuppet, shouldAdvancePuppet } from "./runtimeStep";
+import { puppetAffineUniform, puppetShaderAlpha } from "./renderTransform";
 import { recordPuppetCreated, recordPuppetDestroyed, recordPuppetMotionUpdate } from "./performanceDiagnostics";
 
 /** GPU 프로그램과 정적 attribute 위치는 렌더러 하나당 한 번만 만든다. */
@@ -8,6 +9,7 @@ interface SharedGpuProgram {
   program: WebGLProgram;
   position: number;
   uv: number;
+  /** Puppet 로컬 픽셀을 카메라가 투영한 화면 픽셀로 옮기는 완전한 2D affine 행렬이다. */
   transform: WebGLUniformLocation;
   viewport: WebGLUniformLocation;
   tint: WebGLUniformLocation;
@@ -29,11 +31,12 @@ const programs = new WeakMap<WebGLRenderingContext, SharedGpuProgram>();
 const VERTEX_SHADER = `
 attribute vec2 aPosition;
 attribute vec2 aUv;
-uniform vec4 uTransform;
+uniform mat3 uTransform;
 uniform vec2 uViewport;
 varying vec2 vUv;
 void main() {
-  vec2 screen = uTransform.xy + aPosition * uTransform.zw;
+  // 정점은 Puppet 이미지의 로컬 픽셀이며, affine 행렬은 원점 보정 뒤 부모와 카메라까지 합성한다.
+  vec2 screen = (uTransform * vec3(aPosition, 1.0)).xy;
   vec2 clip = vec2(screen.x / uViewport.x * 2.0 - 1.0, 1.0 - screen.y / uViewport.y * 2.0);
   gl_Position = vec4(clip, 0.0, 1.0);
   vUv = aUv;
@@ -244,6 +247,7 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
     renderer: Phaser.Renderer.WebGL.WebGLRenderer,
     _src: IndexedPuppetCreature,
     camera: Phaser.Cameras.Scene2D.Camera,
+    parentMatrix?: Phaser.GameObjects.Components.TransformMatrix,
   ): void {
     camera.addToRenderList(this);
     // Phaser가 같은 type의 다음 GameObject를 알려 주므로 연속 Puppet 사이에서는 pipeline을
@@ -277,15 +281,11 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
     gl.vertexAttribPointer(shared.uv, 2, gl.FLOAT, false, 0, 0);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.index);
 
-    const zoom = camera.zoom;
-    const screenX = camera.x + (this.x - camera.scrollX) * zoom;
-    const screenY = camera.y + (this.y - camera.scrollY) * zoom;
-    const signedScaleX = this.scaleX * (this.flipX ? -1 : 1) * zoom;
-    const scaleY = this.scaleY * (this.flipY ? -1 : 1) * zoom;
-    // Puppet 정점은 이미지 좌상단 기준이므로 Image 원점(중앙)만큼 GPU 변환 전에 되돌린다.
-    const centeredX = screenX - (this.width / 2) * signedScaleX;
-    const centeredY = screenY - (this.height / 2) * scaleY;
-    gl.uniform4f(shared.transform, centeredX, centeredY, signedScaleX, scaleY);
+    // GetCalcMatrix가 개체 로컬 → 부모 Container → Camera 순으로 이동·배율·회전을 합성한다.
+    // Puppet 정점은 이미지 좌상단 픽셀이므로 displayOrigin을 로컬에서 먼저 빼고, flip도 원점
+    // 둘레의 로컬 반전으로 행렬에 포함한다. vec4 이동/축 배율로는 부모 회전과 shear를 보존할 수 없다.
+    const calc = Phaser.GameObjects.GetCalcMatrix(this, camera, parentMatrix).calc;
+    gl.uniformMatrix3fv(shared.transform, false, puppetAffineUniform(calc, this.displayOriginX, this.displayOriginY, this.flipX, this.flipY));
     gl.uniform2f(shared.viewport, renderer.width, renderer.height);
     gl.uniform3f(
       shared.tint,
@@ -293,7 +293,8 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
       ((this.tintTopLeft >> 8) & 0xff) / 255,
       (this.tintTopLeft & 0xff) / 255,
     );
-    gl.uniform1f(shared.alpha, this.alpha * camera.alpha);
+    // Container renderer가 호출 직전에 누적 부모 alpha를 this.alpha에 곱하므로 카메라 alpha만 마저 합친다.
+    gl.uniform1f(shared.alpha, puppetShaderAlpha(this.alpha, camera.alpha));
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, frameTexture);
     gl.uniform1i(shared.sampler, 0);

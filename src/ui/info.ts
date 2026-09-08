@@ -1724,6 +1724,8 @@ export class InfoManager {
         // 복사 이미지나 전용 크롭 없이 장착과 같은 resolver가 돌려준 Puppet을 카드 바닥선에 세운다.
         void spawnPuppet(this.scene, asset, { x: 0, groundY: layout.puppetGroundY, height: layout.puppetHeight, depth: 1 }).then((puppet) => {
           if (!card.active) { puppet.destroy(); return; }
+          // Puppet은 카드 로컬 좌표를 유지한다. indexed renderer가 비동기 addAt 뒤에도 카드의
+          // 이동·선택 배율·향후 회전·alpha를 카메라 행렬과 합성하므로 화면 좌표로 바꾸지 않는다.
           puppet.setAlpha(owned ? 1 : 0.28); card.addAt(puppet, 2);
         });
         card.add(this.scene.add.text(0, 310, entry.name, textStyle({ role: "display", size: 28, color: owned ? COLOR.ink : COLOR.inkDim, align: "center", wrap: 330 })).setOrigin(0.5));

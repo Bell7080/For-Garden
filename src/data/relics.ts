@@ -1992,7 +1992,7 @@ export const RELICS: RelicDef[] = [
     // role(warrior)의 어긋남을 서사로 메운다 — 방어·저항을 스스로 두르는 폭주도 "버티며 지키는" 룬의 결과 맞는다.
     squadNote: "룬의 저온 보존실 냉장고를 아이스크림으로 채우는 자칭 관리인. 온도를 최저로 내려 선배들을 떨게 해 놓고는 정작 모피 코트 속에서 제일 먼저 존다.",
     researcherTitle: "연구원 씨",
-    rarity: "SSR",
+    rarity: "SR",
     portraitAssetId: "maddy",
     origin: "매머드",
     element: "water",
@@ -2000,12 +2000,14 @@ export const RELICS: RelicDef[] = [
     // 엄니와 모피를 휘두르는 근접형이다.
     reachTier: "melee",
     excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 0.72, efficiencyMultiplier: 1.09 },
+    // SSR 시절의 방어형 전사 윤곽은 유지하되, SR 띠에 맞춰 주 능력치를 약 6~10% 낮춘다.
+    // 공속·이속은 전투에서 보이는 개체 정체성이므로 그대로 두고 전투력 2304로 완화한다.
     stats: {
-      hp: 1050,
-      def: 90,
-      res: 90,
-      atk: 145,
-      ap: 70,
+      hp: 980,
+      def: 82,
+      res: 82,
+      atk: 136,
+      ap: 64,
       attackSpeed: 100,
       moveSpeed: 90,
       critChance: 10,

@@ -68,6 +68,15 @@ describe("등급별 태생 능력치", () => {
     }
   });
 
+  it("은 매디의 SR 강등과 완화된 방어형 전사 능력치를 고정한다", () => {
+    // 등급만 낮추거나 수치만 낮추는 반쪽 변경이 다시 들어오지 않도록 두 계약을 함께 검증한다.
+    const maddy = getRelic("maddy");
+    expect(maddy.rarity).toBe("SR");
+    expect(maddy.stats).toMatchObject({ hp: 980, def: 82, res: 82, atk: 136, ap: 64 });
+    expect(combatPower(maddy.stats)).toBe(2304);
+    expect(withinRarityBand(combatPower(maddy.stats), maddy.rarity)).toBe(true);
+  });
+
   it("의 공멸 신규 3개체도 적 전용 예외 없이 R 띠와 지정 역할을 지킨다", () => {
     // 세 개체는 플레이어블 목록 밖에 있어도 영구 캐릭터이므로 ID별 계약을 명시적으로 고정한다.
     const identities = [

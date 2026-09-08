@@ -1,6 +1,37 @@
 import type { PuppetAsset } from "./assets";
 
 /**
+ * 20번 네 ZIP은 WebP 원본 좌표계에서 alpha > 16을 순회해 경계와 관절을 함께 실측했다.
+ * SD 프로젝트에는 눈 관절이 없으므로 임의 얼굴 좌표를 만들지 않고 `eyes: null`로 기록한다.
+ */
+export const DIAN_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1086, imageHeight: 1448,
+  content: { left: 16, top: 25, right: 1069, bottom: 1422 },
+  joints: { center: [561, 468], head: [593, 360], eyes: [[550, 328], [630, 372]], feet: [[380, 1567], [571, 1394]] },
+};
+
+/** 디안 SD: 중심1·머리1·발1·발2를 프로젝트에서 읽었으며 눈 관절은 없다. */
+export const DIAN_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254, imageHeight: 1254,
+  content: { left: 23, top: 83, right: 1237, bottom: 1184 },
+  joints: { center: [649, 653], head: [688, 531], eyes: null, feet: [[760, 1162], [535, 1171]] },
+};
+
+/** 검은 털 소환수 쿠로 SD의 독립 실측값이다. */
+export const KURO_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254, imageHeight: 1254,
+  content: { left: 87, top: 124, right: 1166, bottom: 1129 },
+  joints: { center: [533, 729], head: [446, 577], eyes: null, feet: [[882, 1080], [694, 1056]] },
+};
+
+/** 흰 털 소환수 시로 SD의 독립 실측값이다. */
+export const SHIRO_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254, imageHeight: 1254,
+  content: { left: 58, top: 89, right: 1195, bottom: 1165 },
+  joints: { center: [533, 729], head: [364, 588], eyes: null, feet: [[820, 1110], [630, 1059]] },
+};
+
+/**
  * 1번 토리카(트리케라톱스) 전신. 다른 원화보다 등신이 낮아 카드에서는 확대를 줄여 얼굴 크기를 맞춘다.
  */
 export const TORIKA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {

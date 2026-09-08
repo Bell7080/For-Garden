@@ -16,6 +16,8 @@ import type { IndexedPuppetCreature } from "./IndexedPuppetCreature";
 import {
   DEINA_PORTRAIT_METADATA,
   DEINA_SD_METADATA,
+  DIAN_PORTRAIT_METADATA,
+  DIAN_SD_METADATA,
   DELOPI_PORTRAIT_METADATA,
   DELOPI_SD_METADATA,
   ELLA_PORTRAIT_METADATA,
@@ -49,6 +51,8 @@ import {
   TORIKA_PORTRAIT_METADATA,
   TORIKA_SKIN_001_PORTRAIT_METADATA,
   TORIKA_SKIN_001_SD_METADATA,
+  KURO_SD_METADATA,
+  SHIRO_SD_METADATA,
 } from "./assetMetadata";
 
 /** 기존 호출부가 렌더러 구현을 몰라도 되도록 인게임 Puppet 타입을 한 곳에서 공개한다. */
@@ -73,6 +77,13 @@ export interface PuppetAsset {
   imageWidth: number;
   imageHeight: number;
   content: { left: number; top: number; right: number; bottom: number };
+  /** ZIP 프로젝트에서 실측한 기준 관절. null은 제작 파일에 해당 관절이 없다는 뜻이다. */
+  joints?: {
+    center: readonly [number, number];
+    head: readonly [number, number];
+    eyes: readonly (readonly [number, number])[] | null;
+    feet: readonly (readonly [number, number])[];
+  };
   /**
    * 카드에서의 확대 보정. 1이 기준이다.
    *
@@ -240,6 +251,9 @@ export const PARUA_ASSET: PuppetAsset = {
   ...PARUA_PORTRAIT_METADATA,
 };
 
+/** 20번 전신: 디안. black/white는 아래 SD 늑대의 털색이며 디안 자신의 변형명이 아니다. */
+export const DIAN_ASSET: PuppetAsset = { url: `${base}puppets/char_020.zip`, ...DIAN_PORTRAIT_METADATA };
+
 /** 8번 전신 일러스트: 티아(이크티오사우루스). */
 export const TIA_ASSET: PuppetAsset = {
   url: `${base}puppets/char_008.zip`,
@@ -326,6 +340,7 @@ export const PORTRAIT_ASSETS = {
   koma: EXPLORER_ASSET,
   pontos: PONTOS_ASSET,
   parua: PARUA_ASSET,
+  dian: DIAN_ASSET,
 } as const satisfies Record<PortraitAssetId, PuppetAsset>;
 
 /**
@@ -497,6 +512,17 @@ export const TIA_SD_ASSET: PuppetAsset = {
   ...TIA_SD_METADATA,
 };
 
+/** 20번 기본 SD는 디안, `_black`은 쿠로, `_white`는 시로라는 이름 대응을 보존한다. */
+export const DIAN_SD_ASSET: PuppetAsset = { url: `${base}puppets/charSD_020.zip`, ...DIAN_SD_METADATA };
+export const KURO_SD_ASSET: PuppetAsset = { url: `${base}puppets/charSD_020_black.zip`, ...KURO_SD_METADATA };
+export const SHIRO_SD_ASSET: PuppetAsset = { url: `${base}puppets/charSD_020_white.zip`, ...SHIRO_SD_METADATA };
+
+/** 소환 정의의 정적 키를 실제 SD에 연결하며 수집 가능한 렐릭 표에는 섞지 않는다. */
+export const SUMMON_SD_ASSETS: Readonly<Record<string, PuppetAsset>> = {
+  charSD_020_black: KURO_SD_ASSET,
+  charSD_020_white: SHIRO_SD_ASSET,
+};
+
 /**
  * 아군 SD의 유일한 표.
  *
@@ -523,6 +549,7 @@ export const ALLY_SD_ASSETS: Readonly<Record<string, PuppetAsset>> = {
   deina: DEINA_SD_ASSET,
   maddy: MADDY_SD_ASSET,
   parua: PARUA_SD_ASSET,
+  dian: DIAN_SD_ASSET,
 };
 
 /**
@@ -595,6 +622,10 @@ export const MOTION = {
   roar: { names: ["roar", "shout", "attack", "idle"], returnsToIdle: true, priority: 3 },
   /** 공격 동작이 따로 없어 포효로 대신한다. 재생 중에는 어떤 동작도 이걸 끊지 못한다. */
   attack: { names: ["attack", "slam", "roar", "idle"], returnsToIdle: true, priority: 2 },
+  /** 이동 클립이 없는 SD는 idle을 사용하되 이동 상태도 공용 모션 API로 전환한다. */
+  run: { names: ["run", "idle"], priority: 1 },
+  /** 회수 직전에는 down, 구형 묶음에서는 stun/hit 순으로 쓰러진 자세를 고른다. */
+  down: { names: ["down", "stun", "hit", "idle"], priority: 5 },
 } as const satisfies Record<string, MotionConfig>;
 
 export type MotionName = keyof typeof MOTION;
@@ -649,7 +680,7 @@ export const PUPPET_PRELOAD_GROUPS: ReadonlyArray<readonly PuppetAsset[]> = [
   // 기본 전신과 장착 스킨을 모두 포함하며, 궁극기 컷인도 이 전신 캐시를 함께 재사용한다.
   uniqueAssets([...Object.values(PORTRAIT_ASSETS), ...skinAssets(PORTRAIT_SKINS)], preloadUrls),
   // 아군·적 SD와 SD 스킨을 모두 포함하고 앞 그룹과 URL이 같아도 다시 넣지 않는다.
-  uniqueAssets([...Object.values(ALLY_SD_ASSETS), ...Object.values(ENEMY_SD_ASSETS_BY_ID), ...skinAssets(ALLY_SD_SKINS)], preloadUrls),
+  uniqueAssets([...Object.values(ALLY_SD_ASSETS), ...Object.values(SUMMON_SD_ASSETS), ...Object.values(ENEMY_SD_ASSETS_BY_ID), ...skinAssets(ALLY_SD_SKINS)], preloadUrls),
 ];
 
 /**

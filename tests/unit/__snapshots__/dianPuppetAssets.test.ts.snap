@@ -1,0 +1,37 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`디안과 귀속 늑대 Puppet 에셋 > char_020.zip는 puppets 아래 실제 ZIP과 측정 메타데이터를 가진다 1`] = `
+{
+  "bottom": 1422,
+  "left": 16,
+  "right": 1069,
+  "top": 25,
+}
+`;
+
+exports[`디안과 귀속 늑대 Puppet 에셋 > charSD_020.zip는 puppets 아래 실제 ZIP과 측정 메타데이터를 가진다 1`] = `
+{
+  "bottom": 1184,
+  "left": 23,
+  "right": 1237,
+  "top": 83,
+}
+`;
+
+exports[`디안과 귀속 늑대 Puppet 에셋 > charSD_020_black.zip는 puppets 아래 실제 ZIP과 측정 메타데이터를 가진다 1`] = `
+{
+  "bottom": 1129,
+  "left": 87,
+  "right": 1166,
+  "top": 124,
+}
+`;
+
+exports[`디안과 귀속 늑대 Puppet 에셋 > charSD_020_white.zip는 puppets 아래 실제 ZIP과 측정 메타데이터를 가진다 1`] = `
+{
+  "bottom": 1165,
+  "left": 58,
+  "right": 1195,
+  "top": 89,
+}
+`;

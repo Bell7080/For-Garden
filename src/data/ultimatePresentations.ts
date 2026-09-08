@@ -78,6 +78,8 @@ export const ULTIMATE_PRESENTATIONS: Readonly<Record<string, UltimatePresentatio
   // 아무도 때리지 않는 궁극기라 시전 순간에는 터질 것이 없다 — 확대와 흔들림을 가장 얕게 두고
   // 컷인만 짧게 지나간다. 이 궁극기의 무게는 이어지는 5초의 연격이 만든다.
   parua: { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkScale: 1.0, cutInHoldMs: 140, zoomScale: 1.08, zoomMs: 100, cameraShakeIntensity: 0.004 },
+  // 디안은 후방에서 명령만 내리므로 본체 확대와 흔들림을 얕게 두고 늑대 돌진 사건에 무게를 넘긴다.
+  dian: { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkScale: 0.96, cutInHoldMs: 130, zoomScale: 1.06, zoomMs: 96, cameraShakeIntensity: 0.004 },
   "toby": { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", cutInHoldMs: 135, zoomScale: 1.2, zoomMs: 110, cameraShakeIntensity: 0.008 },
   "amo": { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.94, zoomScale: 1.24, zoomMs: 115, cameraShakeIntensity: 0.009 },
   "ripa": { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkScale: 0.92, artworkOrigin: { x: 650, y: 770 }, zoomScale: 1.16, cameraShakeIntensity: 0.007 },

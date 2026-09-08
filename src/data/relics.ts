@@ -2219,7 +2219,8 @@ export const RELICS: RelicDef[] = [
           basic: { id: "kuro-basic", name: "물어뜯기", power: 110, iconAssetId: "skill-icon-physical", effectType: "physical", damageType: "physical", targeting: "single" },
           special: { id: "kuro-charge", name: "검은 돌진", power: 165, iconAssetId: "skill-icon-physical", effectType: "physical", damageType: "physical", targeting: "chargeLine", radius: 42 },
         },
-        resummon: { enabled: true, cooldownSeconds: 12 },
+        // 회수 뒤 긴 공백을 남기고 불완전한 체력으로 돌아와 늑대를 소모품처럼 던질 수 없게 한다.
+        resummon: { enabled: true, cooldownSeconds: 12, hpPercent: 40 },
       },
       {
         id: "shiro", name: "시로", sdAssetKey: "charSD_020_white", growthStat: "ap",
@@ -2229,12 +2230,12 @@ export const RELICS: RelicDef[] = [
           basic: { id: "shiro-basic", name: "서리 추적", power: 115, iconAssetId: "skill-icon-magical", effectType: "magical", damageType: "magical", scalingStat: "ap", targeting: "single" },
           special: { id: "shiro-pursuit", name: "흰 그림자", power: 180, iconAssetId: "skill-icon-magical", effectType: "magical", damageType: "magical", scalingStat: "ap", targeting: "single" },
         },
-        resummon: { enabled: true, cooldownSeconds: 12 },
+        resummon: { enabled: true, cooldownSeconds: 12, hpPercent: 40 },
       },
     ],
-    // 현재 전투 계약은 귀속 늑대의 연속 견제를 공속 강화로 표현하며, 늑대용 독립 전투원을 생성하지 않는다.
+    // 디안 자신은 공격하지 않고 두 늑대를 지휘한다. 둘이 모두 현장에 있을 때만 단일 대상 추적을 피한다.
     ferocityTrait: { name: "무리", effectId: "selfAttackSpeedMultiplier", bonusPercent: 35 },
-    passive: { id: "dian-passive", name: "우두머리의 경계", kind: "basicHitAttackSpeedStack", iconAssetId: "skill-icon-buff", effectType: "buff", value: 2, desc: "기본 공격이 적중할 때마다 이번 전투 동안 공격 속도가 2 증가한다." },
+    passive: { id: "dian-passive", name: "우두머리의 경계", kind: "summonCommander", iconAssetId: "skill-icon-buff", effectType: "buff", value: 0, desc: "전투 시작 시 쿠로와 시로를 앞쪽 좌우에 부른다. 둘이 모두 현장에 있는 동안 단일 대상 공격의 표적이 되지 않는다." },
     basic: { id: "dian-basic", name: "쿠로, 확인!", power: 105, iconAssetId: "skill-icon-physical", effectType: "physical", damageType: "physical", targeting: "single" },
     ultimate: { id: "dian-ult", name: "시로, 지켜!", power: 260, iconAssetId: "skill-icon-physical", effectType: "physical", damageType: "physical", cost: 110, targeting: "nearbyEnemies", radius: 240 },
   },

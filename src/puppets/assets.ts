@@ -13,6 +13,7 @@ import {
   type FocusOptions,
 } from "./anchors";
 import type { IndexedPuppetCreature } from "./IndexedPuppetCreature";
+import { loadSharedPromise } from "./promiseCache";
 import {
   DEINA_PORTRAIT_METADATA,
   DEINA_SD_METADATA,
@@ -643,14 +644,12 @@ const motionCompletions = new WeakMap<PuppetCreature, () => void>();
 const loaded = new Map<string, Promise<Puppet>>();
 
 async function loadPuppet(asset: PuppetAsset): Promise<Puppet> {
-  let pending = loaded.get(asset.url);
-  if (!pending) {
+  return loadSharedPromise(loaded, asset.url, () => {
     // ZIP의 원본 격자와 모든 deform 가중치를 그대로 캐시한다. 인게임용 재샘플링은 하지 않는다.
     // 렌더러 모듈은 실제 Puppet 로딩 시점에만 평가해 순수 resolver 단위 테스트가 DOM을 요구하지 않게 한다.
-    pending = import("puppetforge/phaser").then(({ Puppet }) => Puppet.load(asset.url));
-    loaded.set(asset.url, pending);
-  }
-  return pending;
+    // 일시적인 네트워크·ZIP 파싱 실패는 헬퍼가 동일 Promise인지 확인해 제거하므로 다음 호출이 재시도한다.
+    return import("puppetforge/phaser").then(({ Puppet }) => Puppet.load(asset.url));
+  });
 }
 
 /** 중첩된 스킨 표를 등록된 Puppet 목록으로 펼친다. */

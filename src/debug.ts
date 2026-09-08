@@ -49,6 +49,8 @@ export interface DebugState {
   screenTitle?: string;
   /** 지금 열려 있는 팝업 제목을 아래(가장 먼저 연 것)부터 순서대로 쌓아 둔다. E2E가 팝업이 실제로 열렸는지 확인한다. */
   popupTitles?: string[];
+  /** 출격판이 실제 채택한 본체 에셋 URL이다. 복제 그림자는 세지 않아 장식 실패를 본체 실패로 오판하지 않는다. */
+  sortieSdBodyAssetUrls?: string[];
   /** 세공 화면의 연필 입력면 중심. 이름 글자 폭에 따라 자리가 달라지므로 화면이 직접 알린다. */
   runeForgeRename?: DebugPoint;
   /** 룬 쪽지의 "세공" 버튼 중심. 줄 구성(장착·해제·판매)에 따라 자리가 달라진다. */

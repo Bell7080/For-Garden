@@ -10,6 +10,11 @@ async function openParty(page: Page): Promise<void> {
   await tapGame(page, BASE_WIDTH - 290, BASE_HEIGHT - 425);
   // 출격 선택판은 SD를 읽어 오므로 열릴 때까지 기다린 뒤 누른다.
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toContain("출격");
+  // 그림자 개수가 아니라 스토리와 폰토스의 서로 다른 본체가 비동기 소유권 검사를 통과했는지 본다.
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.sortieSdBodyAssetUrls?.slice().sort())).toEqual([
+    "/puppets/enemySD_001.zip",
+    "/puppets/enemySD_Pontos.zip",
+  ]);
   await tapGame(page, BASE_WIDTH / 2, 550);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("stageMap");
   await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT - 180);

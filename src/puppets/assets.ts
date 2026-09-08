@@ -12,7 +12,7 @@ import {
   type CardFrameOptions,
   type FocusOptions,
 } from "./anchors";
-import { ensureTexture, IndexedPuppetCreature } from "./IndexedPuppetCreature";
+import type { IndexedPuppetCreature } from "./IndexedPuppetCreature";
 import {
   DEINA_PORTRAIT_METADATA,
   DEINA_SD_METADATA,
@@ -299,7 +299,7 @@ export const EXPLORER_ASSET: PuppetAsset = {
 /**
  * 렐릭 데이터가 참조하는 원화 레지스트리. 새 원화는 여기에 한 번 등록한 뒤 데이터 키로 연결한다.
  */
-const PORTRAIT_ASSETS = {
+export const PORTRAIT_ASSETS = {
   torika: TORIKA_ASSET,
   lexia: LEXIA_ASSET,
   seira: SEIRA_ASSET,
@@ -332,7 +332,7 @@ const PORTRAIT_ASSETS = {
  * 장착 가능한 전신 스킨 표. 첫 키는 렐릭의 전신 asset ID, 둘째 키는 저장되는 스킨 ID다.
  * 기본 외형은 이 표에 넣지 않아 "명시한 장착 스킨 → 해당 렐릭 기본 외형" 순서를 보존한다.
  */
-const PORTRAIT_SKINS: Readonly<Partial<Record<PortraitAssetId, Readonly<Record<string, PuppetAsset>>>>> = {
+export const PORTRAIT_SKINS: Readonly<Partial<Record<PortraitAssetId, Readonly<Record<string, PuppetAsset>>>>> = {
   torika: { "torika-skin-001": TORIKA_SKIN_001_ASSET },
 };
 
@@ -504,7 +504,7 @@ export const TIA_SD_ASSET: PuppetAsset = {
  * `if` 사슬을 갖고 있어, 새 개체를 한쪽에만 적으면 그 화면에서만 조용히 토리카 SD로 되돌아갔다
  * — 메론이 v0.52.3까지 원정과 승리 MVP에서 그랬다. 표가 하나면 빠뜨릴 자리가 없다.
  */
-const ALLY_SD_ASSETS: Readonly<Record<string, PuppetAsset>> = {
+export const ALLY_SD_ASSETS: Readonly<Record<string, PuppetAsset>> = {
   anky: TORIKA_SD_ASSET,
   rex: LEXIA_SD_ASSET,
   spino: SEIRA_SD_ASSET,
@@ -539,7 +539,7 @@ export const ENEMY_SD_ASSETS_BY_ID: Readonly<Record<string, PuppetAsset>> = {
 };
 
 /** SD 스킨도 렐릭 ID 아래에만 등록해 다른 렐릭으로 폴백할 수 없게 한다. */
-const ALLY_SD_SKINS: Readonly<Record<string, Readonly<Record<string, PuppetAsset>>>> = {
+export const ALLY_SD_SKINS: Readonly<Record<string, Readonly<Record<string, PuppetAsset>>>> = {
   anky: { "torika-skin-001": TORIKA_SKIN_001_SD_ASSET },
 };
 
@@ -622,15 +622,34 @@ async function loadPuppet(asset: PuppetAsset): Promise<Puppet> {
   return pending;
 }
 
+/** 중첩된 스킨 표를 등록된 Puppet 목록으로 펼친다. */
+function skinAssets(
+  skins: Readonly<Record<string, Readonly<Record<string, PuppetAsset>> | undefined>>,
+): PuppetAsset[] {
+  return Object.values(skins).flatMap((assets) => Object.values(assets ?? {}));
+}
+
+/** URL이 같은 등록 항목은 최초 항목만 남겨 다운로드와 ZIP 파싱을 한 번으로 제한한다. */
+function uniqueAssets(assets: readonly PuppetAsset[], seen = new Set<string>()): PuppetAsset[] {
+  return assets.filter((asset) => {
+    if (seen.has(asset.url)) return false;
+    seen.add(asset.url);
+    return true;
+  });
+}
+
 /**
- * 타이틀 로딩이 진행 칸을 나눠 보여줄 수 있도록 묶음을 두 무리로 갈라 둔다.
- * 전신 스탠딩이 먼저 필요하고(로비·발굴 연출), SD와 적은 전투에 들어가야 쓰인다.
+ * 타이틀 로딩이 진행 칸을 나눠 보여줄 수 있도록 전체 등록 표를 전신과 SD 두 무리로 나눈다.
+ * 정보창은 큰 관절 원화를 세우는 동시에 능력치/편성 영역에서 SD 미리보기를 사용하므로 두 무리가
+ * 모두 필요하다. 새 캐릭터와 스킨은 resolver 표에 등록하는 즉시 이 목록에도 자동 반영되어야 첫
+ * 정보창이나 전투 프레임에서 ZIP 다운로드·파싱이 뒤늦게 발생하지 않는다.
  */
+const preloadUrls = new Set<string>();
 export const PUPPET_PRELOAD_GROUPS: ReadonlyArray<readonly PuppetAsset[]> = [
-  // 전신은 PortraitCard와 정보창이 처음 열릴 때 파싱하지 않도록 중앙 전신 단계에 둔다.
-  [TORIKA_ASSET, TORIKA_SKIN_001_ASSET, LEXIA_ASSET, SEIRA_ASSET, LUKA_ASSET, PONTOS_ASSET],
-  // SD 역시 씬 로더가 아니라 타이틀의 공용 Puppet 단계에서 미리 해석한다.
-  [TORIKA_SD_ASSET, TORIKA_SKIN_001_SD_ASSET, LEXIA_SD_ASSET, SEIRA_SD_ASSET, LUKA_SD_ASSET, ...ENEMY_SD_ASSETS, PONTOS_SD_ASSET, TOBY_ASSET, AMO_ASSET, RIPA_ASSET],
+  // 기본 전신과 장착 스킨을 모두 포함하며, 궁극기 컷인도 이 전신 캐시를 함께 재사용한다.
+  uniqueAssets([...Object.values(PORTRAIT_ASSETS), ...skinAssets(PORTRAIT_SKINS)], preloadUrls),
+  // 아군·적 SD와 SD 스킨을 모두 포함하고 앞 그룹과 URL이 같아도 다시 넣지 않는다.
+  uniqueAssets([...Object.values(ALLY_SD_ASSETS), ...Object.values(ENEMY_SD_ASSETS_BY_ID), ...skinAssets(ALLY_SD_SKINS)], preloadUrls),
 ];
 
 /**
@@ -724,6 +743,8 @@ export interface PortraitTexture {
  */
 export async function loadPortraitTexture(scene: Phaser.Scene, asset: PuppetAsset): Promise<PortraitTexture> {
   const template = await loadPuppet(asset);
+  // Phaser 구현은 실제 생성 시점에만 읽어 resolver/프리로드 표의 정적 테스트가 DOM을 요구하지 않게 한다.
+  const { ensureTexture } = await import("./IndexedPuppetCreature");
   const [key, anchors] = await Promise.all([ensureTexture(scene, template), loadPuppetAnchors(asset)]);
   return { key, anchors };
 }
@@ -785,6 +806,8 @@ export async function spawnPuppet(
   // 캐릭터의 play가 다른 캐릭터를 덮으므로, 정적 프로젝트만 공유하고 재생기는 개체마다 만든다.
   const { Puppet } = await import("puppetforge/phaser");
   const puppet = Puppet.fromProject(template.project, template.texture);
+  // 렌더러 클래스도 실제 Puppet 생성 직전에만 평가해 에셋 레지스트리는 Node에서도 읽을 수 있게 한다.
+  const { IndexedPuppetCreature } = await import("./IndexedPuppetCreature");
   const creature = await IndexedPuppetCreature.fromPuppet(scene, puppet);
 
   placePuppet(creature, asset, options);

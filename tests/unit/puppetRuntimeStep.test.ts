@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { Puppet } from "puppetforge";
 import {
   advancePuppet,
-  PUPPET_MAX_CATCH_UP_SECONDS,
+  PUPPET_BACKGROUND_GAP_SECONDS,
   PUPPET_STEP_SECONDS,
   shouldAdvancePuppet,
 } from "../../src/puppets/runtimeStep";
@@ -52,13 +52,25 @@ describe("Puppet runtime stepping", () => {
     expect(vertices).toBe(update.mock.results.at(-1)?.value);
   });
 
-  it("탭 복귀처럼 큰 간격은 제한해 secondary spring 폭주를 막는다", () => {
+  it("연속된 200ms 프레임의 실제 재생 시간을 이후 프레임에 끝까지 따라잡는다", () => {
     const { puppet, update } = puppetStub();
-    advancePuppet(puppet, 2);
 
+    // 세 느린 프레임에서는 물리 예산만 쓰고, 뒤의 정상 프레임들이 보존된 실제 시간을 회수한다.
+    for (let frame = 0; frame < 3; frame += 1) advancePuppet(puppet, 0.2);
+    for (let frame = 0; frame < 4; frame += 1) advancePuppet(puppet, PUPPET_STEP_SECONDS);
+
+    // 예전 단순 절삭은 600ms 중 300ms를 영구 폐기했지만, 이제 모든 foreground 시간이 진행된다.
     expect(update.mock.calls.reduce((sum, [step]) => sum + step, 0)).toBeCloseTo(
-      PUPPET_MAX_CATCH_UP_SECONDS,
+      0.6 + 4 * PUPPET_STEP_SECONDS,
     );
+  });
+
+  it("탭 복귀처럼 큰 간격은 별도 임계값에서 버려 secondary spring 폭주를 막는다", () => {
+    const { puppet, update } = puppetStub();
+    advancePuppet(puppet, PUPPET_BACKGROUND_GAP_SECONDS);
+
+    // 백그라운드에서 흐른 벽시계 시간은 foreground 재생 remainder와 달리 복구하지 않는다.
+    expect(update).not.toHaveBeenCalled();
   });
 
   it("음수나 정지 프레임에서는 runtime 시간을 되감지 않는다", () => {

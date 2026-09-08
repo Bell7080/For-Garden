@@ -1,6 +1,6 @@
 # 버전 관리
 
-현재 버전: **v0.79.3**
+현재 버전: **v0.79.4**
 
 `VERSION.md`와 `package.json`의 `version`은 항상 같은 값을 쓰고, 타이틀(로딩) 화면 좌측
 하단 표기는 그 값을 그대로 읽는다. 화면에 손으로 적어 두지 않는다.
@@ -31,6 +31,16 @@
   그 이전의 초기 프로토타입 단계는 `v0.1.0` 항목 하나로 묶었다.
 
 ## 변경 이력
+
+## v0.79.4 — 2026-09-08
+
+**느린 foreground 프레임에서 Puppet 애니메이션이 현실 시간보다 영구적으로 뒤처지지 않게 했다.**
+고정된 PuppetForge v0.41.0과 upstream `main`을 확인했지만 공개 `Puppet`에는 타임라인과 secondary
+spring을 따로 진행하거나 타임라인만 `seek`하는 API가 없다. 따라서 100ms 작업 상한과 인스턴스별
+remainder를 제거하고, 1초 미만의 실제 프레임 delta를 모두 1/60초 이하 조각으로 나눠 그 프레임에
+소비한다. 500ms 지속 프레임과 200ms·100ms·33ms·16.67ms 프레임에서 1초의 wall-clock 시간이
+animation time 1초와 일치하는지 회귀 테스트로 고정했다. 향후 substep 횟수를 제한하려면 upstream에
+`advanceTimeline(elapsed)`와 `integrateSecondary(step)` 분리 API를 먼저 추가해야 한다.
 
 ## v0.79.3 — 2026-09-08
 

@@ -4,6 +4,7 @@ export interface PuppetPerformanceCounts {
   destroyed: number;
   alive: number;
   updateSubscriptions: number;
+  motionUpdates: number;
 }
 
 /** 테스트가 정보창을 조작하는 최소 명령이며 게임 진행 데이터는 읽거나 쓰지 않는다. */
@@ -12,13 +13,15 @@ export interface PuppetPerformanceHarness {
   openInfo(): void;
   closeInfo(): void;
   nextCharacter(): void;
+  openGallery(): void;
+  closeGallery(): void;
 }
 
 declare global {
   interface Window { __PUPPET_PERF__?: PuppetPerformanceHarness }
 }
 
-const counts: PuppetPerformanceCounts = { created: 0, destroyed: 0, alive: 0, updateSubscriptions: 0 };
+const counts: PuppetPerformanceCounts = { created: 0, destroyed: 0, alive: 0, updateSubscriptions: 0, motionUpdates: 0 };
 
 /** 일반 실행에는 전역이나 계측 분기를 만들지 않고 명시적인 성능 시나리오에서만 켠다. */
 export function puppetPerformanceEnabled(): boolean {
@@ -35,6 +38,11 @@ export function recordPuppetCreated(): void {
 export function recordPuppetDestroyed(): void {
   if (!puppetPerformanceEnabled()) return;
   counts.destroyed += 1; counts.alive -= 1; counts.updateSubscriptions -= 1;
+}
+
+/** 실제 PuppetForge 적분 횟수를 세어 visible 개체만 움직이는지 E2E에서 검증한다. */
+export function recordPuppetMotionUpdate(): void {
+  if (puppetPerformanceEnabled()) counts.motionUpdates += 1;
 }
 
 /** 로비가 소유한 조작만 붙이고 계측값 객체는 유지해 비동기 생성도 즉시 반영한다. */

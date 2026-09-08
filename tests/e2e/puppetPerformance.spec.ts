@@ -33,8 +33,15 @@ test("로비와 정보창 Puppet의 프레임 비용 및 UPDATE 수명을 기록
   await page.waitForFunction(() => window.__PUPPET_PERF__?.counts.alive === 1);
 
   await page.evaluate(() => window.__PUPPET_PERF__!.openInfo());
-  await page.waitForFunction(() => window.__PF_DEBUG?.infoOpen && window.__PUPPET_PERF__!.counts.alive >= 3);
+  // 장식용 SD는 정지 텍스처이므로 로비 전신 + 정보창 전신 두 Puppet만 생성된다.
+  await page.waitForFunction(() => window.__PF_DEBUG?.infoOpen && window.__PUPPET_PERF__!.counts.alive >= 2);
   const firstOpen = await sampleFrames(page);
+
+  await page.evaluate(() => window.__PUPPET_PERF__!.openGallery());
+  await page.waitForTimeout(150);
+  // 갤러리는 같은 전신을 옮기고 정지 SD만 숨기므로 runtime 수가 늘어나지 않는다.
+  expect(await page.evaluate(() => window.__PUPPET_PERF__!.counts.alive)).toBe(2);
+  await page.evaluate(() => window.__PUPPET_PERF__!.closeGallery());
 
   await page.evaluate(() => window.__PUPPET_PERF__!.closeInfo());
   await page.waitForFunction(() => window.__PF_DEBUG?.infoOpen === false);
@@ -55,12 +62,12 @@ test("로비와 정보창 Puppet의 프레임 비용 및 UPDATE 수명을 기록
   });
 
   // 마지막 비동기 교체가 끝나 이전 전신/SD를 파괴할 때까지 기다린 뒤 수명을 판정한다.
-  await page.waitForFunction(() => window.__PUPPET_PERF__!.counts.alive === 3);
+  await page.waitForFunction(() => window.__PUPPET_PERF__!.counts.alive === 2);
   const counts = await page.evaluate(() => ({ ...window.__PUPPET_PERF__!.counts }));
   console.info("Puppet frame metrics", { firstOpen, closed, switching, counts });
   await testInfo.attach("puppet-frame-metrics.json", { body: JSON.stringify({ firstOpen, closed, switching, counts }, null, 2), contentType: "application/json" });
-  // 로비 1 + 정보창 전신/SD 2만 살아 있고 모든 생존 Puppet이 UPDATE 하나씩만 구독해야 한다.
-  expect(counts.alive).toBe(3);
+  // 로비 1 + 정보창 전신 1만 살아 있다. SD는 Puppet이 아니며, 렐릭 교체도 이전 전신을 남기지 않는다.
+  expect(counts.alive).toBe(2);
   expect(counts.updateSubscriptions).toBe(counts.alive);
   expect(counts.created - counts.destroyed).toBe(counts.alive);
 });

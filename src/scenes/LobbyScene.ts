@@ -217,6 +217,8 @@ export class LobbyScene extends Phaser.Scene {
         this.performanceRelicIndex = (this.performanceRelicIndex + 1) % RELICS.length;
         info.showRelic(RELICS[this.performanceRelicIndex], true);
       },
+      openGallery: () => info.openGalleryForPerformanceTest(),
+      closeGallery: () => info.closeGalleryForPerformanceTest(),
     });
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       removePuppetPerformanceHarness();

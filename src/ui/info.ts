@@ -63,6 +63,8 @@ import { INFO_PORTRAIT_FOCUS, infoPortraitPlacement } from "./portraitPlacement"
 import { skinsForRelic, type RelicSkinDef } from "../data/relicSkins";
 import { relicSkinManager } from "../managers/RelicSkinManager";
 import { Button } from "./Button";
+import { APPEARANCE_PANEL_LAYOUT } from "./appearancePanelLayout";
+import { AppearanceCard } from "./AppearanceCard";
 
 export type { SkillInfoViewModel } from "./SkillPopup";
 
@@ -96,13 +98,6 @@ const PORTRAIT_FOCUS = INFO_PORTRAIT_FOCUS;
 
 /** 정보창 구석에 세우는 SD 피규어. 받침 위에서 idle만 재생한다. */
 const FIGURE = { x: 762, y: 1786, height: 240 } as const;
-
-/** 1080×1920에서 제목·카드·상태·하단 공용 버튼이 서로 침범하지 않는 외형 작업판 배치다. */
-export const APPEARANCE_PANEL_LAYOUT = {
-  width: 920, height: 1240, cardY: -90, cardWidth: 390, cardHeight: 760,
-  cardCenters: [-210, 210] as const, puppetGroundY: 195, puppetHeight: 620,
-  actionY: 500, actionWidth: 520, actionHeight: 96,
-} as const;
 
 /** 오른쪽 정보 기둥. 캐릭터를 덮지 않도록 화면 오른쪽 절반만 쓴다. */
 const COLUMN = {
@@ -1701,10 +1696,10 @@ export class InfoManager {
     const layout = APPEARANCE_PANEL_LAYOUT;
     this.popups.open({ width: layout.width, height: layout.height, title: "외형", dim: true, closeOnBackdrop: false, onClose }, (body) => {
       let selected: RelicSkinDef | undefined = extra.find(({ id }) => id === relicSkinManager.equippedFor(def.id));
-      const cards: Phaser.GameObjects.Container[] = [];
+      const cards: AppearanceCard[] = [];
       const entries: Array<{ skin?: RelicSkinDef; name: string }> = [{ name: "기본 외형" }, ...extra.map((skin) => ({ skin, name: skin.name }))];
-      const action = new Button(this.scene, 0, layout.actionY, {
-        width: layout.actionWidth, height: layout.actionHeight, label: "장착", variant: "primary",
+      const action = new Button(this.scene, 0, layout.action.y, {
+        width: layout.action.width, height: layout.action.height, label: "장착", variant: "primary",
         onClick: () => {
           const equipped = relicSkinManager.equippedFor(def.id);
           const succeeded = selected ? relicSkinManager.equip(def.id, selected.id) : (equipped === undefined || relicSkinManager.unequip(def.id));
@@ -1718,24 +1713,12 @@ export class InfoManager {
 
       entries.forEach((entry, index) => {
         const owned = !entry.skin || relicSkinManager.owns(entry.skin.id);
-        const card = this.scene.add.container(layout.cardCenters[index], layout.cardY);
-        const shape = chipPoints(layout.cardWidth, layout.cardHeight, { bevel: { topLeft: 54, topRight: 0, bottomRight: 54, bottomLeft: 0 } });
-        const off = drawLayer(this.scene, 0, 0, shape, { fill: 0x0b0f15, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.24 });
-        const on = drawLayer(this.scene, 0, 0, shape, { fill: 0x121820, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.95, edgeWidth: 4 });
-        card.add([off, on]);
-        const asset = portraitAssetForSkin(def.portraitAssetId, entry.skin?.id);
-        // 복사 이미지나 전용 크롭 없이 장착과 같은 resolver가 돌려준 Puppet을 카드 바닥선에 세운다.
-        void spawnPuppet(this.scene, asset, { x: 0, groundY: layout.puppetGroundY, height: layout.puppetHeight, depth: 1 }).then((puppet) => {
-          if (!card.active) { puppet.destroy(); return; }
-          // Puppet은 카드 로컬 좌표를 유지한다. indexed renderer가 비동기 addAt 뒤에도 카드의
-          // 이동·선택 배율·향후 회전·alpha를 카메라 행렬과 합성하므로 화면 좌표로 바꾸지 않는다.
-          puppet.setAlpha(owned ? 1 : 0.28); card.addAt(puppet, 2);
+        // 프리팹 하나가 전신 마스크·머리 오버행·같은 외형의 SD·문구 안전띠를 함께 소유한다.
+        const card = new AppearanceCard(this.scene, layout.card.centers[index], {
+          def, skin: entry.skin, name: entry.name, owned,
+          onChoose: () => { selected = entry.skin; paint(); },
         });
-        card.add(this.scene.add.text(0, 310, entry.name, textStyle({ role: "display", size: 28, color: owned ? COLOR.ink : COLOR.inkDim, align: "center", wrap: 330 })).setOrigin(0.5));
-        card.add(this.scene.add.text(0, 352, owned ? "보유" : "미보유 · 잠금", textStyle({ role: "emphasis", size: 22, color: owned ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5));
-        const hit = this.scene.add.rectangle(0, 0, layout.cardWidth, layout.cardHeight, 0xffffff, 0);
-        if (owned) hit.setInteractive({ useHandCursor: true }).on("pointerup", () => { selected = entry.skin; paint(); });
-        card.add(hit); body.add(card); cards.push(card);
+        body.add(card); cards.push(card);
       });
       function paint(): void {
         const equipped = relicSkinManager.equippedFor(def.id);
@@ -1743,9 +1726,7 @@ export class InfoManager {
           const chosen = entries[index].skin?.id === selected?.id;
           // 기본(undefined)끼리도 같은 선택이며, 선택 상태는 1.08배 확대와 강조 윗선으로만 읽힌다.
           const selectedNow = chosen || (!entries[index].skin && !selected);
-          card.setScale(selectedNow ? 1.08 : 1);
-          (card.list[0] as Phaser.GameObjects.Graphics).setVisible(!selectedNow);
-          (card.list[1] as Phaser.GameObjects.Graphics).setVisible(selectedNow);
+          card.setSelected(selectedNow);
         });
         const selectedId = selected?.id;
         const equippedNow = selectedId ? equipped === selectedId : equipped === undefined;

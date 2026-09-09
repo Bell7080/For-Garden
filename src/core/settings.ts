@@ -22,7 +22,8 @@ export function createDefaultSettings(): GameSettings {
     vibration: { enabled: true, combatHit: true, ultimate: true, excavationResult: true, uiInput: true },
     notifications: { enabled: false, staminaFull: true, freeRecruit: true, dailyMission: true, event: true, mail: true, quietHours: true, quietHoursStart: "22:00", quietHoursEnd: "08:00", lastScheduledIds: {} },
     presentation: { screenShake: true, damageNumbers: true, shortenExcavation: false, lowSpecMode: false, battleUiMotion: "default" },
-    accessibility: { textScale: 1, reduceMotion: false, reduceFlashes: false, colorAssist: false, subtitles: true },
+    // 현재 대사는 보이스의 보조 자막이 아니라 필수 진행 정보이므로 숨김 설정을 제공하지 않는다.
+    accessibility: { textScale: 1, reduceMotion: false, reduceFlashes: false, colorAssist: false },
     // 궁극기 스킵은 연출 품질이 아니라 전투 조작이며 기본적으로 완전한 시퀀스를 보여 준다.
     game: { battleSpeed: 1, autoUltimate: false, skipUltimatePresentation: false, textSpeed: 1, language: "ko" },
     account: { provider: "guest", displayId: "게스트" },
@@ -46,7 +47,8 @@ export function normalizeSettings(value: unknown): GameSettings {
     presentation: { screenShake: bool(p.screenShake, d.presentation.screenShake), damageNumbers: bool(p.damageNumbers, d.presentation.damageNumbers), shortenExcavation: bool(p.shortenExcavation, d.presentation.shortenExcavation), lowSpecMode: bool(p.lowSpecMode, d.presentation.lowSpecMode),
       // 필드가 없던 모든 저장은 기존 연출과 같은 기본 강도로 명시 이관한다.
       battleUiMotion: allowed(p.battleUiMotion, BATTLE_UI_MOTIONS, d.presentation.battleUiMotion) },
-    accessibility: { textScale: allowed(x.textScale, TEXT_SCALES, d.accessibility.textScale), reduceMotion: bool(x.reduceMotion, d.accessibility.reduceMotion), reduceFlashes: bool(x.reduceFlashes, d.accessibility.reduceFlashes), colorAssist: bool(x.colorAssist, d.accessibility.colorAssist), subtitles: bool(x.subtitles, d.accessibility.subtitles) },
+    // 구버전의 subtitles 값은 필수 본문을 감추는 잘못된 의미라 저장 모델로 이관하지 않고 폐기한다.
+    accessibility: { textScale: allowed(x.textScale, TEXT_SCALES, d.accessibility.textScale), reduceMotion: bool(x.reduceMotion, d.accessibility.reduceMotion), reduceFlashes: bool(x.reduceFlashes, d.accessibility.reduceFlashes), colorAssist: bool(x.colorAssist, d.accessibility.colorAssist) },
     game: { battleSpeed: allowed(g.battleSpeed, BATTLE_SPEEDS, d.game.battleSpeed), autoUltimate: bool(g.autoUltimate, d.game.autoUltimate),
       // 새 필드가 없을 때만 옛 `컷인 끄기`를 `전체 궁극 연출 스킵`으로 승격한다. 명시된 새 값이 언제나 우선한다.
       skipUltimatePresentation: typeof g.skipUltimatePresentation === "boolean" ? g.skipUltimatePresentation : p.ultimateCutIn === false,

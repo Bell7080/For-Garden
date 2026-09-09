@@ -1,6 +1,8 @@
 import Phaser from "phaser";
 import { BASE_WIDTH } from "../config/gameConfig";
 import type { DialogueChoice, DialogueNode, DialogueStandingAsset } from "../core/dialogue";
+import { DialoguePlaybackClock } from "../core/dialoguePlayback";
+import { settingsManager } from "../managers/SettingsManager";
 import { LEXIA_ASSET, playMotion, SEIRA_ASSET, spawnPuppet, TORIKA_ASSET, type PuppetAsset, type PuppetCreature } from "../puppets/assets";
 import { Button } from "./Button";
 import { drawGlassFade, drawHairline } from "./holo";
@@ -18,6 +20,13 @@ export class DialogueLayer extends Phaser.GameObjects.Container {
   private standing?: PuppetCreature;
   private standingKey?: DialogueStandingAsset;
   private renderGeneration = 0;
+  /** 현재 노드의 타이핑을 소유해 노드 교체와 빠른 입력이 이전 콜백을 남기지 않게 한다. */
+  private typingEvent?: Phaser.Time.TimerEvent;
+  private pendingChoices: readonly DialogueChoice[] = [];
+  private isTyping = false;
+  private fullBody = "";
+  /** 설정을 노드마다 다시 읽는 실행 경계라 화면을 재생성하지 않아도 다음 대사에 새 배속이 적용된다. */
+  private readonly playbackClock = new DialoguePlaybackClock(() => settingsManager.get().game.textSpeed);
   /** 종료가 시작된 컨테이너에는 늦게 도착한 비동기 Puppet 결과를 다시 붙이지 않는다. */
   private terminated = false;
   /** Phaser가 Container의 scene 참조를 정리해도 생성 당시 씬의 실행 상태를 판정하는 기준이다. */
@@ -32,7 +41,10 @@ export class DialogueLayer extends Phaser.GameObjects.Container {
     const blocker = scene.add.rectangle(BASE_WIDTH / 2, PANEL_TOP + 290, BASE_WIDTH, 620, 0xffffff, 0);
     blocker.setInteractive({ useHandCursor: true }).on("pointerup", () => {
       // 선택지가 떠 있을 때 패널 탭으로 분기를 건너뛰지 않는다.
-      if (this.choiceObjects.length === 0) this.onAdvance();
+      if (this.choiceObjects.length > 0) return;
+      // 타이핑 중 첫 입력은 본문만 완성하고, 완성된 뒤의 별도 입력만 다음 노드로 진행한다.
+      if (this.isTyping) { this.finishTyping(); return; }
+      this.onAdvance();
     });
     this.speaker = scene.add.text(92, PANEL_TOP + 52, "", textStyle({ role: "display", size: 34, color: COLOR.accentText }));
     this.bodyText = scene.add.text(92, PANEL_TOP + 126, "", textStyle({ role: "body", size: 36, wrap: BASE_WIDTH - 184, lineSpacing: 14 }));
@@ -44,6 +56,7 @@ export class DialogueLayer extends Phaser.GameObjects.Container {
       // 종료 세대는 진행 중인 show를 모두 무효화해 종료된 씬에서 비동기 Puppet 결과가 되살아나는 것을 막는다.
       this.terminated = true;
       this.renderGeneration += 1;
+      this.cancelTyping();
       this.destroyStanding(false);
     });
   }
@@ -52,10 +65,11 @@ export class DialogueLayer extends Phaser.GameObjects.Container {
   async show(node: DialogueNode): Promise<void> {
     if (!this.isRenderOwnerActive()) return;
     const generation = ++this.renderGeneration;
+    this.cancelTyping();
     this.clearChoices();
     this.speaker.setText(node.expression ? `${node.speaker}  ·  ${node.expression}` : node.speaker);
-    this.bodyText.setText(node.body);
-    this.nextMark.setVisible(!node.choices?.length);
+    this.pendingChoices = node.choices ?? [];
+    this.startTyping(node.body);
     if (!node.standing) this.destroyStanding();
     else if (node.standing !== this.standingKey) {
       this.destroyStanding();
@@ -68,7 +82,47 @@ export class DialogueLayer extends Phaser.GameObjects.Container {
       this.scene.tweens.add({ targets: creature, alpha: 1, x: creature.x, duration: 220 });
     }
     if (this.standing && node.motion) playMotion(this.scene, this.standing, node.motion);
-    this.buildChoices(node.choices ?? []);
+  }
+
+  /** 현재 설정으로 글자 간격을 계산하고 본문 완성 전에는 진행 표식과 선택지를 감춘다. */
+  private startTyping(body: string): void {
+    const characters = Array.from(body);
+    const timing = this.playbackClock.timingFor(body);
+    this.fullBody = body;
+    this.bodyText.setText("");
+    this.nextMark.setVisible(false);
+    this.isTyping = characters.length > 0;
+    if (!this.isTyping) { this.finishTyping(); return; }
+    let visibleCount = 0;
+    this.typingEvent = this.scene.time.addEvent({
+      delay: timing.characterMs,
+      repeat: characters.length - 1,
+      callback: () => {
+        // 한 타이머만 본문을 소유하며 마지막 글자에서 선택지 또는 진행 표식을 연다.
+        visibleCount += 1;
+        this.bodyText.setText(characters.slice(0, visibleCount).join(""));
+        if (visibleCount === characters.length) this.finishTyping();
+      },
+    });
+  }
+
+  /** 빠른 입력과 자연 완료가 공유하는 단일 완료 경계다. */
+  private finishTyping(): void {
+    this.typingEvent?.remove(false);
+    this.typingEvent = undefined;
+    this.isTyping = false;
+    // Timer 완료와 빠른 입력 모두 같은 원문으로 끝나 일부 문자열이 남는 경로를 없앤다.
+    this.bodyText.setText(this.fullBody);
+    this.nextMark.setVisible(this.pendingChoices.length === 0);
+    this.buildChoices(this.pendingChoices);
+  }
+
+  /** 노드 교체 시 타이머와 그 타이머가 참조하던 원문을 함께 폐기한다. */
+  private cancelTyping(): void {
+    this.typingEvent?.remove(false);
+    this.typingEvent = undefined;
+    this.isTyping = false;
+    this.fullBody = "";
   }
 
   /** 컨테이너와 그 컨테이너를 만든 원래 씬이 모두 렌더 가능한 동안에만 후속 연출을 허용한다. */

@@ -61,7 +61,8 @@ export class InteractionJournalPopup {
     const flow = new DialogueFlow(story);
     const layer = new DialogueLayer(this.scene, (choice) => this.advance(choice));
     this.active = { journal, flow, layer };
-    void layer.show(flow.current).finally(() => flow.unlockInput());
+    // 일지도 최초 표시 잠금으로 시작해 Puppet 비동기 로딩 전에 팝업을 연 입력이 노드를 소비하지 못한다.
+    void layer.show(flow.current).finally(() => flow.markCurrentNodeReady());
   }
 
   /** 정적 분기를 진행하고 완독은 StoryManager에 기록한다. */
@@ -73,6 +74,7 @@ export class InteractionJournalPopup {
     if (!storyId) return;
     if (result.effect) storyManager.applyEffect(storyId, result.effect);
     if (result.completed) { storyManager.complete(storyId); this.active = undefined; return; }
-    void active.layer.show(result.node!).finally(() => active.flow.unlockInput());
+    // 후속 표시 완료만 흐름을 다시 열어 Puppet 교체와 빠른 입력 사이의 경쟁을 차단한다.
+    void active.layer.show(result.node!).finally(() => active.flow.markCurrentNodeReady());
   }
 }

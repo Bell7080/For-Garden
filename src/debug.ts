@@ -47,6 +47,8 @@ export interface DebugState {
   scene: string;
   /** 캔버스 DOM에서 읽을 수 없는 현재 화면 제목을 E2E가 사용자 관점으로 확인할 때 쓴다. */
   screenTitle?: string;
+  /** Canvas 안 현재 대사의 ID와 원문이며, E2E가 최초 Puppet 로딩 중 커서 보존만 관찰한다. */
+  dialogue?: { nodeId: string; body: string };
   /** 지금 열려 있는 팝업 제목을 아래(가장 먼저 연 것)부터 순서대로 쌓아 둔다. E2E가 팝업이 실제로 열렸는지 확인한다. */
   popupTitles?: string[];
   /** 세공 화면의 연필 입력면 중심. 이름 글자 폭에 따라 자리가 달라지므로 화면이 직접 알린다. */
@@ -139,6 +141,8 @@ export function setDebugScene(scene: string, screenTitle?: string): void {
   state.scene = scene;
   // 이전 씬의 제목이 남아 거짓 양성이 되지 않도록 씬 전환마다 함께 초기화한다.
   state.screenTitle = screenTitle;
+  // 이전 씬의 대사 원문이 새 화면의 최초 표시처럼 보이지 않도록 씬 경계에서 함께 비운다.
+  state.dialogue = undefined;
   // 새 씬이 자기 입력면을 게시하기 전에는 과거 상점 좌표를 남기지 않는다.
   state.storefrontControls = undefined; state.shopView = undefined;
 }
@@ -153,6 +157,11 @@ export function setDebugShopView(view: DebugState["shopView"]): void { ensure().
 
 export function setDebugReady(ready: boolean): void {
   ensure().ready = ready;
+}
+
+/** 화면이 실제 표시를 시작한 대사만 복사해 E2E가 UI 구현을 재계산하지 않게 한다. */
+export function setDebugDialogue(node: { id: string; body: string } | undefined): void {
+  ensure().dialogue = node ? { nodeId: node.id, body: node.body } : undefined;
 }
 
 /**

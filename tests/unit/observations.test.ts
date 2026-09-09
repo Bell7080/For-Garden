@@ -28,8 +28,9 @@ describe("관찰 인터뷰", () => {
 
     const flow = new DialogueFlow(createObservationStory("anky", "토리카", date));
     expect(flow.current.id).toBe("intro");
+    // 순수 테스트도 실제 화면처럼 최초 노드 표시 완료를 알린 뒤에만 커서를 진행한다.
+    flow.markCurrentNodeReady();
     flow.advance();
-    flow.unlockInput();
     expect(flow.current.body).toBe(first.prompt);
   });
 

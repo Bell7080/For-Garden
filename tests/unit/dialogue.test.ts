@@ -16,23 +16,35 @@ describe("DialogueFlow", () => {
   it("1-5 서브 스토리 원문을 끝까지 순회할 수 있다", () => {
     const flow = new DialogueFlow(GREENHOUSE_ECHO);
     expect(flow.current.id).toBe("signal");
-    expect(flow.advance().node?.id).toBe("seed"); flow.unlockInput();
-    expect(flow.advance().node?.id).toBe("promise"); flow.unlockInput();
+    flow.markCurrentNodeReady();
+    expect(flow.advance().node?.id).toBe("seed"); flow.markCurrentNodeReady();
+    expect(flow.advance().node?.id).toBe("promise"); flow.markCurrentNodeReady();
     expect(flow.advance().completed).toBe(true);
   });
   it("선택한 분기로 이동하고 마지막 노드를 완료한다", () => {
     const flow = new DialogueFlow(STORY);
+    flow.markCurrentNodeReady();
     const branch = flow.advance("left");
     expect(branch.node?.id).toBe("last");
     expect(branch.effect).toEqual({ type: "bondXp", relicId: "anky", amount: 5 });
-    flow.unlockInput();
+    flow.markCurrentNodeReady();
     expect(flow.advance().completed).toBe(true);
   });
 
   it("render 사이의 빠른 연속 입력을 한 번만 소비한다", () => {
     const flow = new DialogueFlow({ id: "linear", startNodeId: "one", nodes: [{ id: "one", speaker: "A", body: "1", nextId: "two" }, { id: "two", speaker: "A", body: "2", nextId: "three" }, { id: "three", speaker: "A", body: "3" }] });
+    flow.markCurrentNodeReady();
     expect(flow.advance().node?.id).toBe("two");
     expect(flow.advance().node?.id).toBe("two");
+  });
+
+  it("최초 렌더 잠금 중 advance가 시작 노드를 소비하지 않는다", () => {
+    const flow = new DialogueFlow({ id: "initial-lock", startNodeId: "first", nodes: [{ id: "first", speaker: "A", body: "첫 원문", nextId: "second" }, { id: "second", speaker: "B", body: "다음 원문" }] });
+    // Puppet 비동기 표시가 완료되기 전의 진입 입력은 UI 상태와 무관하게 흐름 커서를 유지해야 한다.
+    expect(flow.advance()).toMatchObject({ node: { id: "first", body: "첫 원문" }, completed: false });
+    expect(flow.current.id).toBe("first");
+    flow.markCurrentNodeReady();
+    expect(flow.advance().node?.id).toBe("second");
   });
 });
 

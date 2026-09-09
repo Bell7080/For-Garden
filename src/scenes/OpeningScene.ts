@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { DialogueFlow, type DialogueChoice } from "../core/dialogue";
 import { OPENING_TRAIN } from "../data/dialogues/openingTrain";
-import { bindDebugReadyLifecycle, setDebugReady, setDebugScene } from "../debug";
+import { bindDebugReadyLifecycle, setDebugDialogue, setDebugReady, setDebugScene } from "../debug";
 import { storyManager } from "../managers/StoryManager";
 import { drawLayer, slantedRect } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
@@ -31,6 +31,8 @@ export class OpeningScene extends Phaser.Scene {
     });
     this.add.text(BASE_WIDTH / 2, 250, "NIGHT TRAIN · ETERNAL CITY LINE", textStyle({ role: "body", size: 25, color: COLOR.inkDim })).setOrigin(0.5);
     this.layer = new DialogueLayer(this, (choice) => this.advance(choice));
+    // 첫 노드 정보를 먼저 게시하되 DialogueFlow 잠금은 Puppet 비동기 표시가 끝날 때까지 유지한다.
+    setDebugDialogue(this.flow.current);
     void this.showCurrentNode(this.flow.current);
     setDebugReady(true);
   }
@@ -49,7 +51,7 @@ export class OpeningScene extends Phaser.Scene {
         this.scene.start("lobby");
       } finally {
         // 완료 경로도 잠금을 풀어 저장 실패 때문에 입력이 영구 잠기게 두지 않는다.
-        this.flow.unlockInput();
+        this.flow.markCurrentNodeReady();
       }
       return;
     }
@@ -58,13 +60,16 @@ export class OpeningScene extends Phaser.Scene {
 
   /** 비동기 표시 실패를 호출 경계에서 소비하되 어떤 결과에서도 다음 입력은 다시 허용한다. */
   private async showCurrentNode(node: Parameters<DialogueLayer["show"]>[0]): Promise<void> {
+    // E2E도 실제 흐름 커서와 원문을 관찰해 Puppet 로딩 중 진입 입력이 첫 노드를 넘기지 않았는지 확인한다.
+    setDebugDialogue(node);
     try {
       await this.layer?.show(node);
     } catch (error) {
       // 로드 실패를 보고하면서도 종료된 씬에서 비동기 Puppet 결과가 되살아나는 후속 작업은 만들지 않는다.
       console.error("오프닝 Puppet 표시 실패", error);
     } finally {
-      this.flow.unlockInput();
+      // 성공과 에셋 실패 모두 표시 시도가 정리된 뒤에만 다음 입력을 받아 Puppet 로딩 경쟁을 막는다.
+      this.flow.markCurrentNodeReady();
     }
   }
 }

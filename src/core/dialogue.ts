@@ -39,7 +39,8 @@ export interface DialogueStory {
 export class DialogueFlow {
   private readonly byId: Map<string, DialogueNode>;
   private currentId: string;
-  private inputLocked = false;
+  /** 최초 노드는 Puppet 비동기 표시가 끝나기 전 생성 입력과 경쟁하지 않도록 잠긴 채 시작한다. */
+  private inputLocked = true;
 
   constructor(readonly story: DialogueStory) {
     this.byId = new Map(story.nodes.map((node) => [node.id, node]));
@@ -54,8 +55,12 @@ export class DialogueFlow {
 
   get current(): DialogueNode { return this.byId.get(this.currentId)!; }
 
-  /** 같은 프레임의 연속 pointer 이벤트는 첫 입력만 소비한다. render 완료 후 unlock해야 한다. */
+  /**
+   * 최초 표시 전 입력과 같은 프레임의 연속 pointer 이벤트는 현재 노드를 소비하지 않는다.
+   * 호출자는 Puppet을 포함한 현재 노드 표시가 끝난 뒤 `markCurrentNodeReady`로 잠금을 풀어야 한다.
+   */
   advance(choiceId?: string): { node?: DialogueNode; effect?: DialogueEffect; completed: boolean } {
+    // UI 타이핑 상태와 별개인 흐름 잠금이 타이틀 진입 입력과 비동기 Puppet 로딩의 경쟁을 차단한다.
     if (this.inputLocked) return { node: this.current, completed: false };
     this.inputLocked = true;
     const node = this.current;
@@ -75,5 +80,6 @@ export class DialogueFlow {
     return { node: this.current, effect, completed: false };
   }
 
-  unlockInput(): void { this.inputLocked = false; }
+  /** Puppet을 포함한 현재 노드 표시가 끝났음을 알려 최초 표시 및 노드 사이 입력 잠금을 해제한다. */
+  markCurrentNodeReady(): void { this.inputLocked = false; }
 }

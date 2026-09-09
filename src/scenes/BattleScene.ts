@@ -25,7 +25,7 @@ import { getRelic } from "../data/relics";
 import { getBattleStage, getStageEnemies } from "../data/stages";
 import { getExpeditionNodeEnemies } from "../data/expeditionEnemies";
 import type { PuppetCreature, PuppetAsset } from "../puppets/assets";
-import { cancelMotion, flashHit, isHitFlashing, placePuppet, playMotion, spawnPuppet, SUMMON_SD_ASSETS, tintPuppet } from "../puppets/assets";
+import { cancelMotion, flashHit, isHitFlashing, placePuppet, playMotion, spawnPuppet, SUMMON_SD_ASSETS, tintPuppet, warmPuppetTextures } from "../puppets/assets";
 import { session } from "../state/session";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { Button } from "../ui/Button";
@@ -452,7 +452,13 @@ export class BattleScene extends Phaser.Scene {
     this.refreshContribution(true);
 
     this.buildProfiles();
-    void this.spawnFighters(spawnToken);
+    // 외형은 준비 시작 시 한 번 고정해, 기다리는 동안 장착 스킨이 바뀌어 warm과 spawn URL이 갈리지 않게 한다.
+    const battleAssets = new Map(this.state.fighters.map((fighter) => [
+      fighter.id,
+      relicAppearanceManager.battleAssetFor(fighter.def.id, fighter.side === "enemy" ? "enemy" : "ally"),
+    ]));
+    // 타이틀의 네트워크/파싱 preload와 달리 GPU 준비는 Phaser renderer가 살아 있는 전투 경계에서만 한다.
+    void this.warmAndSpawnFighters(spawnToken, battleAssets);
     this.refreshDebug();
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       // shutdown 직전에 resolve된 Puppet도 게시 단계에서 현재 세대가 아님을 확인하고 즉시 파괴한다.
@@ -475,6 +481,14 @@ export class BattleScene extends Phaser.Scene {
       this.summonViews.forEach((view) => this.destroySummonView(view));
       this.summonViews.clear();
     });
+  }
+
+  /** 현재 여섯의 고유 URL만 GPU 장벽에 올린 뒤, 실패 에셋까지 개별 spawn 복구 흐름으로 넘긴다. */
+  private async warmAndSpawnFighters(token: number, assetsByFighter: ReadonlyMap<string, PuppetAsset>): Promise<void> {
+    const uniqueBattleAssets = [...new Map([...assetsByFighter.values()].map((asset) => [asset.url, asset])).values()];
+    await warmPuppetTextures(this, uniqueBattleAssets);
+    // warm은 allSettled 결과를 반환하므로 한 파일 실패가 전투 전체 spawn을 영구 정지시키지 않는다.
+    if (this.isCurrentSpawn(token)) await this.spawnFighters(token, assetsByFighter);
   }
 
   /** 두 원격 경계를 manager 흐름에 맡기고, 성공하면 전리품을 포함한 최종판을 곧바로 연다. */
@@ -622,7 +636,7 @@ export class BattleScene extends Phaser.Scene {
   }
 
   /** 여섯을 숨긴 채 병렬 준비하고, 전원이 성공한 한 프레임에 표현과 입력을 함께 공개한다. */
-  private async spawnFighters(token: number): Promise<void> {
+  private async spawnFighters(token: number, assetsByFighter: ReadonlyMap<string, PuppetAsset>): Promise<void> {
     ensureEffectTextures(this);
     // 로드 첫 프레임부터 빈 전장을 피한다. 마름모 색은 아군/적 진영을, 안쪽 막대는 생존을 말한다.
     this.state.fighters.forEach((fighter) => {
@@ -639,8 +653,9 @@ export class BattleScene extends Phaser.Scene {
     const prepare = async (fighter: Fighter): Promise<{ fighter: Fighter; asset: PuppetAsset; unitHeight: number; tint: number; creature: PuppetCreature }> => {
       // 표시 배율은 코어 입력에 들어 있으며 씬은 모든 Puppet 부속 표현에 같은 높이만 적용한다.
       const unitHeight = UNIT_HEIGHT * fighter.bodyScale;
-      // 외형 선택은 manager/resolver가 소유하고 전투 씬은 진영과 결과 에셋만 배치한다.
-      const asset = relicAppearanceManager.battleAssetFor(fighter.def.id, fighter.side === "enemy" ? "enemy" : "ally");
+      // warm 단계에서 manager가 고른 같은 스냅샷을 사용해 캐시 키와 실제 생성 URL을 일치시킨다.
+      const asset = assetsByFighter.get(fighter.id);
+      if (!asset) throw new Error(`전투원 외형 스냅샷이 없습니다: ${fighter.id}`);
       // 번호별 전용 적 SD도 원화 색을 보존하므로 더 이상 임시 허스크 tint를 입히지 않는다.
       const tint = 0xffffff;
       let adoptedCreature: PuppetCreature | undefined;

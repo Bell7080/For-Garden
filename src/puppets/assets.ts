@@ -667,6 +667,9 @@ export interface PuppetAssetPreloadResult {
   readonly fallbackAvailable: boolean;
 }
 
+/** Phaser texture 준비도 개별 실패를 격리해 전투원이 자기 생성 복구 경로를 계속 탈 수 있게 한다. */
+export type PuppetTextureWarmResult = PuppetAssetPreloadResult;
+
 /** 테스트 주입과 네트워크 정책 조정을 위한 제한된 사전 로딩 옵션이다. */
 export interface PuppetAssetPreloadOptions {
   readonly maxRetries?: number;
@@ -776,14 +779,28 @@ export async function preloadPuppetAssets(
  * Phaser renderer와 Scene이 있어야 만들 수 있으므로, 전투 진입을 조율하는 Scene이 선택적으로
  * 이 함수를 호출한다. 두 단계를 합치지 않아 타이틀의 Phaser 비의존 프리로드 계약을 보존한다.
  */
+// Texture Manager는 WebGL 컨텍스트와 수명을 같이하므로 URL 전역 캐시가 아니라 renderer별 캐시다.
+const warmedTextures = new WeakMap<object, Map<string, Promise<void>>>();
+
 export async function warmPuppetTextures(
   scene: Phaser.Scene,
-  group: readonly PuppetAsset[] = PUPPET_PRELOAD_GROUPS[1],
-): Promise<void> {
-  // 같은 URL은 하나만 준비해 스킨 표의 별칭이 texture 업로드를 중복 요청하지 않게 한다.
+  group: readonly PuppetAsset[],
+): Promise<PuppetTextureWarmResult> {
+  // 호출자도 현재 편성만 넘기지만, 이 경계에서 URL을 다시 접어 같은 파일의 동시 GPU 업로드를 막는다.
   const assets = uniqueAssets(group);
+  const textureManager = scene.textures as object;
+  const cache = warmedTextures.get(textureManager) ?? new Map<string, Promise<void>>();
+  warmedTextures.set(textureManager, cache);
   const { ensureTexture } = await import("./IndexedPuppetCreature");
-  await Promise.all(assets.map(async (asset) => ensureTexture(scene, await loadPuppet(asset))));
+  const settled = await Promise.allSettled(assets.map((asset) => loadSharedPromise(cache, asset.url, async () => {
+    // loadPuppet 캐시는 네트워크/ZIP 파싱 결과이고, 이 별도 캐시는 renderer의 GPU texture 완료를 기억한다.
+    await ensureTexture(scene, await loadPuppet(asset));
+  })));
+  const failures = settled.flatMap<PuppetAssetPreloadFailure>((result, index) => result.status === "rejected"
+    // 실패 Promise는 loadSharedPromise가 제거하므로 spawnPuppet의 캐릭터별 제한 재시도가 복구를 맡는다.
+    ? [{ assetUrl: assets[index].url, error: result.reason, fallbackAvailable: true }]
+    : []);
+  return { failures, fallbackAvailable: true };
 }
 
 export interface SpawnOptions {

@@ -166,6 +166,10 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
 
   /** Phaser scene update에서 원본 해상도의 변형 정점만 계산한다. */
   private step(_time: number, delta: number): void {
+    // Scene UPDATE는 listener 목록을 순회하는 도중에도 씬 전환으로 개체를 파괴할 수 있다.
+    // 이미 순회 목록에 담긴 콜백은 release()로 구독을 해제한 뒤 한 번 더 호출될 수 있으므로,
+    // Phaser가 scene 참조를 비운 파괴 완료 개체는 game loop를 읽기 전에 즉시 건너뛴다.
+    if (!this.active || !this.scene) return;
     // 평탄화된 delta는 fps.min보다 느린 프레임의 시간을 잘라 버려 애니메이션을 느리게 만든다.
     const elapsed = puppetElapsedMs(this.scene.game.loop.rawDelta, delta);
     // 편집기보다 긴 프레임을 한 번에 적분하면 pinnedSoft 발 주변의 spring이 튀므로 잘게 나눈다.

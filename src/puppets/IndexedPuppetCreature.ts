@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import type { PlayOptions, Puppet } from "puppetforge";
-import { advancePuppet } from "./runtimeStep";
+import { advancePuppet, puppetElapsedMs } from "./runtimeStep";
 import { puppetAffineUniform, puppetShaderAlpha } from "./renderTransform";
 
 /** GPU 프로그램과 정적 attribute 위치는 렌더러 하나당 한 번만 만든다. */
@@ -166,8 +166,10 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
 
   /** Phaser scene update에서 원본 해상도의 변형 정점만 계산한다. */
   private step(_time: number, delta: number): void {
+    // 평탄화된 delta는 fps.min보다 느린 프레임의 시간을 잘라 버려 애니메이션을 느리게 만든다.
+    const elapsed = puppetElapsedMs(this.scene.game.loop.rawDelta, delta);
     // 편집기보다 긴 프레임을 한 번에 적분하면 pinnedSoft 발 주변의 spring이 튀므로 잘게 나눈다.
-    const next = advancePuppet(this.puppet, delta / 1000);
+    const next = advancePuppet(this.puppet, elapsed / 1000);
     if (next) this.positions = next;
   }
 

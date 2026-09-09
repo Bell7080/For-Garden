@@ -4,6 +4,7 @@ import {
   advancePuppet,
   PUPPET_BACKGROUND_GAP_SECONDS,
   PUPPET_STEP_SECONDS,
+  puppetElapsedMs,
 } from "../../src/puppets/runtimeStep";
 
 /** Runtime 전체를 만들지 않고 적분 간격과 마지막 vertex 전달만 검증하는 최소 Puppet 대역이다. */
@@ -66,5 +67,32 @@ describe("Puppet runtime stepping", () => {
     const { puppet, update } = puppetStub();
     expect(advancePuppet(puppet, -1)).toBeNull();
     expect(update).not.toHaveBeenCalled();
+  });
+});
+
+describe("Puppet에 전달할 실제 경과 시간", () => {
+  // Phaser의 fps.min=30 설정에서 smoothDelta가 33.33ms로 잘라 보고하는 상황을 그대로 세운다.
+  const CLAMPED_MS = 1000 / 30;
+
+  it("평탄화된 delta가 아니라 rawDelta를 써서 느린 프레임의 시간을 잃지 않는다", () => {
+    // 6fps(166ms)로 도는 저사양 화면: 평탄화 값만 믿으면 1초가 0.2초로 줄어 5배 슬로모션이 된다.
+    expect(puppetElapsedMs(166, CLAMPED_MS)).toBe(166);
+    // 창을 다시 잡은 직후의 panicMax 쿨다운(16.67ms 고정)도 같은 이유로 무시한다.
+    expect(puppetElapsedMs(166, 1000 / 60)).toBe(166);
+  });
+
+  it("1초의 실제 시간은 프레임이 아무리 길어도 1초로 누적된다", () => {
+    // 166ms 프레임 여섯 번이 실제 1초에 해당하며, 평탄화 값을 쓰면 0.2초에 그친다.
+    const frames = [166, 166, 167, 167, 167, 167];
+    const raw = frames.reduce((sum, ms) => sum + puppetElapsedMs(ms, CLAMPED_MS), 0);
+    const smoothed = frames.reduce((sum) => sum + CLAMPED_MS, 0);
+    expect(raw).toBe(1000);
+    expect(smoothed).toBeLessThan(210);
+  });
+
+  it("rawDelta를 읽을 수 없으면 기존 delta로 되돌아간다", () => {
+    for (const missing of [0, -5, Number.NaN, Number.POSITIVE_INFINITY]) {
+      expect(puppetElapsedMs(missing, CLAMPED_MS)).toBe(CLAMPED_MS);
+    }
   });
 });

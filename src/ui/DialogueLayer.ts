@@ -63,7 +63,8 @@ export class DialogueLayer extends Phaser.GameObjects.Container {
 
   /** 노드가 바뀔 때 이전 선택 UI를 폐기하고 Puppet 캐시에서 필요한 스탠딩만 교체한다. */
   async show(node: DialogueNode): Promise<void> {
-    if (!this.isRenderOwnerActive()) return;
+    // Phaser의 create() 안에서는 scene.isActive()가 아직 false일 수 있어도 첫 화자·본문 UI는 그려야 한다.
+    if (this.terminated) return;
     const generation = ++this.renderGeneration;
     this.cancelTyping();
     this.clearChoices();

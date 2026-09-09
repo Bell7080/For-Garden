@@ -28,6 +28,9 @@ import { audioManager, type AudioScope } from "../managers/AudioManager";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { PopupLayer } from "../ui/PopupLayer";
 import { MileagePopup } from "../ui/MileagePopup";
+import { settingsManager } from "../managers/SettingsManager";
+import { colorAssistPolicy, excavationStageDuration } from "../core/settings";
+import { flashPolicy } from "../ui/signatureEffects";
 
 /** 마일리지 상점 버튼의 황금빛. 다른 버튼과 갈라 놓아 "쌓아 두었다 쓰는 곳"임을 알린다. */
 const MILEAGE_EDGE = 0xf2c744;
@@ -295,6 +298,8 @@ export class LabScene extends Phaser.Scene {
 
   /** 서버 확정 등급을 복권처럼 암시한 뒤 균열→첫 대면→카드 순서로 재생한다. */
   private async playPresentation(results: PullResultDto[]): Promise<void> {
+    // 한 연출 도중 설정을 다시 읽어 단계별 시간이 서로 갈리지 않도록 시작 시 스냅샷을 고정한다.
+    const preferences = settingsManager.get();
     const request = this.presentation.begin();
     const rarity = highestRarity(results.map((result) => result.type === "relic" ? getRelic(result.relicId).rarity : result.grade));
     const meetings = firstMeetingRelicIds(results);
@@ -315,7 +320,7 @@ export class LabScene extends Phaser.Scene {
     layer.add(skip);
 
     content.add(this.add.text(BASE_WIDTH / 2, 660, "화석 DNA 연구 중", textStyle({ role: "display", size: 48, color: COLOR.inkDim })).setOrigin(0.5));
-    await this.waitForStage(650, request);
+    await this.waitForStage(excavationStageDuration("scan", preferences.presentation.shortenExcavation), request);
     if (!this.presentation.isCurrent(request)) return;
     if (!this.presentation.wasSkipped) this.presentation.advance();
 
@@ -325,20 +330,20 @@ export class LabScene extends Phaser.Scene {
       this.cameras.main.shake(rarity === "SSR" ? 420 : 260, rarity === "SSR" ? 0.012 : 0.006);
       // 등급은 시각 연출에만 쓰며 사운드는 의미 키와 중앙 버스 설정으로 일관되게 재생한다.
       this.audioScope?.play("research.crack");
-      await this.waitForStage(700, request);
+      await this.waitForStage(excavationStageDuration("crack", preferences.presentation.shortenExcavation), request);
       this.presentation.advance();
     }
     if (!this.presentation.isCurrent(request)) return;
 
     if (!this.presentation.wasSkipped) {
-      this.showRarityFlash(content, rarity);
-      await this.waitForStage(650, request);
+      this.showRarityFlash(content, rarity, preferences.accessibility.reduceFlashes, preferences.accessibility.colorAssist);
+      await this.waitForStage(excavationStageDuration("rarity", preferences.presentation.shortenExcavation), request);
       this.presentation.advance();
     }
 
     for (const relicId of meetings) {
       if (!this.presentation.isCurrent(request) || this.presentation.wasSkipped) break;
-      await this.showFirstMeeting(content, relicId, request);
+      await this.showFirstMeeting(content, relicId, request, preferences.presentation.shortenExcavation);
     }
     if (!this.presentation.wasSkipped) this.presentation.advance();
     if (this.presentation.isCurrent(request)) {
@@ -366,15 +371,17 @@ export class LabScene extends Phaser.Scene {
   }
 
   /** 최고 등급 색만 미리 보여 주고 구체적인 카드 결과는 아직 숨긴다. */
-  private showRarityFlash(layer: Phaser.GameObjects.Container, rarity: ResearchGrade): void {
+  private showRarityFlash(layer: Phaser.GameObjects.Container, rarity: ResearchGrade, reduceFlashes: boolean, colorAssist: boolean): void {
     layer.removeAll(true);
     const flash = this.add.rectangle(BASE_WIDTH / 2, 960, BASE_WIDTH, 1920, this.rarityColor(rarity), 0.18);
     layer.add(flash);
     // SR은 보라 외곽, SSR은 밝은 호박 외곽을 더해 단색 R과 실루엣만으로도 구분한다.
     if (rarity === "SR" || rarity === "SSR") layer.add(this.add.rectangle(BASE_WIDTH / 2, 960, 920, 1240)
       .setStrokeStyle(10, rarity === "SR" ? COLOR.raritySRAlt : COLOR.raritySSRLight, 0.85));
-    layer.add(this.add.text(BASE_WIDTH / 2, 800, rarity === "SSR" ? "호박빛 공명이 폭발한다" : rarity === "SR" ? "청록과 보랏빛이 교차한다" : rarity === "R" ? "회청색 파장이 감지된다" : "중립 파장이 응결한다", textStyle({ role: "emphasis", size: 42, align: "center", wrap: 820 })).setOrigin(0.5));
-    this.tweens.add({ targets: flash, alpha: 0.55, duration: 180, yoyo: true, repeat: 1 });
+    const assist = colorAssistPolicy(colorAssist, "rarity", rarity);
+    layer.add(this.add.text(BASE_WIDTH / 2, 800, `${assist.glyph ? `${assist.glyph} ` : ""}${rarity === "SSR" ? "호박빛 공명이 폭발한다" : rarity === "SR" ? "청록과 보랏빛이 교차한다" : rarity === "R" ? "회청색 파장이 감지된다" : "중립 파장이 응결한다"}`, textStyle({ role: "emphasis", size: 42, align: "center", wrap: 820 })).setOrigin(0.5));
+    const flashes = flashPolicy(reduceFlashes);
+    this.tweens.add({ targets: flash, alpha: 0.55 * flashes.alphaRatio, duration: 180, yoyo: true, repeat: Math.min(1, flashes.maxRepeats) });
   }
 
   private rarityColor(rarity: ResearchGrade): number {
@@ -382,7 +389,7 @@ export class LabScene extends Phaser.Scene {
   }
 
   /** 신규 Puppet 로딩 실패도 연출을 멈추지 않고 이름과 대사 텍스트로 대체한다. */
-  private async showFirstMeeting(layer: Phaser.GameObjects.Container, relicId: string, request: number): Promise<void> {
+  private async showFirstMeeting(layer: Phaser.GameObjects.Container, relicId: string, request: number, shortened: boolean): Promise<void> {
     layer.removeAll(true);
     const def = getRelic(relicId);
     let standing: PuppetCreature | undefined;
@@ -398,7 +405,7 @@ export class LabScene extends Phaser.Scene {
     }));
     layer.add(this.add.text(140, 1380, `${def.name} · ${def.rarity}`, textStyle({ role: "display", size: 32, color: COLOR.accentText })).setOrigin(0, 0.5));
     layer.add(this.add.text(BASE_WIDTH / 2, 1500, firstMeetingLine(relicId), textStyle({ role: "body", size: 30, wrap: 780, align: "center" })).setOrigin(0.5));
-    await this.waitForStage(1200, request);
+    await this.waitForStage(excavationStageDuration("firstMeeting", shortened), request);
     standing?.destroy();
   }
 

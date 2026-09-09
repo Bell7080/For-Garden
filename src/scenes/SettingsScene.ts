@@ -110,7 +110,7 @@ export class SettingsScene extends Phaser.Scene {
       ([['스테미나 충전 완료','staminaFull'],['무료 모집','freeRecruit'],['일일 임무','dailyMission'],['이벤트','event'],['우편','mail'],['야간 알림 제한','quietHours']] as const).forEach(([a,b]) => toggle(a,'notifications',b));
     } else if (this.activeTab === "play") {
       section("연출 · 게임", 1140);
-      // 궁극기 연출 스킵은 전투 HUD의 즉시 조작으로 옮겼으므로 여기에는 화면 품질 옵션만 남긴다.
+      // 네 프레젠테이션 선택은 각각 공용 정책 소비자가 있으므로 효과 없는 임시 토글을 노출하지 않는다.
       ([['화면 흔들림','screenShake'],['피해 숫자','damageNumbers'],['연구 연출 단축','shortenExcavation'],['저사양 모드','lowSpecMode']] as const).forEach(([a,b]) => toggle(a,'presentation',b));
       // 기존 선택 행의 크기 반응과 강조색을 재사용하고 저장값만 안정적인 영문 ID로 유지한다.
       const motionLabels = { default: "기본", reduced: "감소", off: "끔" } as const;
@@ -123,7 +123,7 @@ export class SettingsScene extends Phaser.Scene {
     } else if (this.activeTab === "access") {
       section("접근성", 650);
       this.content.add(new SettingsSelectRow(this,90,y,'텍스트 크기',s.accessibility.textScale,[1,1.15,1.3] as const,value=>{ settingsManager.update({accessibility:{textScale:value}}); this.scene.restart({ tab: "access" }); })); y+=94;
-      // 보이스 없는 필수 대사는 자막이 아니라 유일한 정보 전달 수단이므로 숨김 토글을 노출하지 않는다.
+      // 접근성 선택은 공용 효과·의미 표식 경계에서 소비하며 씬마다 별도 색이나 밝기를 만들지 않는다.
       toggle('화면 흔들림 감소','accessibility','reduceMotion'); toggle('섬광 감소','accessibility','reduceFlashes'); toggle('색각 보조','accessibility','colorAssist');
       this.content.add(this.add.text(90, y + 28, "텍스트 배율은 공용 스타일에 적용되며 장면 좌표는 변경하지 않습니다.", textStyle({ role: "body", size: 22, color: COLOR.inkDim, wrap: 850 }))); y += 120;
     } else {

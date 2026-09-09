@@ -6,7 +6,7 @@ export interface DisposablePuppet {
 /** 소유 Puppet 한 개가 제한 재시도 경계에서 거치는 사용자 가시 준비 단계다. */
 export type PuppetLoadAttemptState = "loading" | "retrying" | "failed";
 
-export type PuppetLoadResult = { status: "adopted" } | { status: "failed"; error: unknown } | { status: "discarded"; reason: "stale" | "not-displayable" };
+export type PuppetLoadResult = { status: "adopted" } | { status: "failed"; error: unknown; attempts?: number } | { status: "discarded"; reason: "stale" | "not-displayable" };
 
 /** 완료 결과의 세대와 표시 가능성을 검사한 뒤 단일 분기에서만 destroy한다. */
 export async function loadOwnedPuppet<T extends DisposablePuppet>(options: {
@@ -49,7 +49,8 @@ export async function loadOwnedPuppetWithRetry<T extends DisposablePuppet>(optio
   }
   // 모든 시도가 끝난 뒤에만 최종 실패를 게시해 일시 오류가 경고로 번쩍이지 않게 한다.
   options.onStateChange?.("failed");
-  return last;
+  // 호출부가 재시도 횟수를 추측하지 않도록 실제로 소비한 총 시도 수를 최종 실패에 붙인다.
+  return last.status === "failed" ? { ...last, attempts } : last;
 }
 
 /** 본체와 장식을 병렬 준비하되 본체 성공 프레임에만 둘을 함께 소유한다. */

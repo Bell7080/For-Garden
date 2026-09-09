@@ -60,4 +60,23 @@ describe("Puppet 사전 로딩 레지스트리", () => {
     );
     diagnostic.mockRestore();
   });
+
+  it("로딩 단계 예외를 라벨과 실제 Error로 공용 진단 상태에 기록하고 다음 단계를 진행한다", async () => {
+    const failure = new Error("font transport detail");
+    const host = globalThis as typeof globalThis & { __PF_DEBUG?: { loadingDiagnostics?: unknown[] } };
+    host.__PF_DEBUG = undefined;
+    const done: number[] = [];
+    const diagnostic = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const scene = { scene: { isActive: () => true } } as never;
+
+    await runLoadingSteps(scene, (count) => done.push(count), [
+      { label: "글꼴", run: async () => { throw failure; } },
+      { label: "후속", run: async () => undefined },
+    ]);
+
+    // 사용자 화면 문자열이 아니라 개발 전역에 원래 Error 객체가 그대로 남아 stack도 잃지 않는다.
+    expect((globalThis as typeof globalThis & { __PF_DEBUG?: { loadingDiagnostics?: unknown[] } }).__PF_DEBUG?.loadingDiagnostics).toEqual([{ label: "글꼴", error: failure }]);
+    expect(done).toEqual([1, 2]);
+    diagnostic.mockRestore();
+  });
 });

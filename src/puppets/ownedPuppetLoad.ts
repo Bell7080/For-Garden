@@ -3,6 +3,9 @@ export interface DisposablePuppet {
   destroy(): void;
 }
 
+/** 소유 Puppet 한 개가 제한 재시도 경계에서 거치는 사용자 가시 준비 단계다. */
+export type PuppetLoadAttemptState = "loading" | "retrying" | "failed";
+
 export type PuppetLoadResult = { status: "adopted" } | { status: "failed"; error: unknown } | { status: "discarded"; reason: "stale" | "not-displayable" };
 
 /** 완료 결과의 세대와 표시 가능성을 검사한 뒤 단일 분기에서만 destroy한다. */
@@ -30,6 +33,8 @@ export async function loadOwnedPuppetWithRetry<T extends DisposablePuppet>(optio
   attempts?: number;
   retryDelayMs?: number;
   wait?: (milliseconds: number) => Promise<void>;
+  /** 호출 화면이 원인을 해석하지 않고 준비 표현만 바꿀 수 있도록 시도 단계만 알린다. */
+  onStateChange?: (state: PuppetLoadAttemptState) => void;
 }): Promise<PuppetLoadResult> {
   const attempts = Math.max(1, options.attempts ?? 3);
   const wait = options.wait ?? ((milliseconds) => new Promise<void>((resolve) => setTimeout(resolve, milliseconds)));
@@ -37,10 +42,13 @@ export async function loadOwnedPuppetWithRetry<T extends DisposablePuppet>(optio
   for (let attempt = 0; attempt < attempts; attempt += 1) {
     // 세대가 바뀐 뒤에는 네트워크/GPU 작업 자체를 새로 시작하지 않는다.
     if (!options.isCurrent()) return { status: "discarded", reason: "stale" };
+    options.onStateChange?.(attempt === 0 ? "loading" : "retrying");
     last = await loadOwnedPuppet(options);
     if (last.status !== "failed") return last;
     if (attempt + 1 < attempts) await wait(options.retryDelayMs ?? 120);
   }
+  // 모든 시도가 끝난 뒤에만 최종 실패를 게시해 일시 오류가 경고로 번쩍이지 않게 한다.
+  options.onStateChange?.("failed");
   return last;
 }
 

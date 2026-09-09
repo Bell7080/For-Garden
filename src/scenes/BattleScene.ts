@@ -35,7 +35,7 @@ import { UnitHealthBar } from "../ui/UnitHealthBar";
 import { skillArtTint } from "../ui/skillArt";
 import { combatPalette, signatureFor, type CombatPalette, type SignatureMoment } from "../ui/signatureEffects";
 import { COLOR, textStyle } from "../ui/theme";
-import { setDebugBattle, setDebugBossResult, setDebugScene } from "../debug";
+import { reportBattleFighterFallbackFailure, setDebugBattle, setDebugBossResult, setDebugScene } from "../debug";
 import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { CharacterInfoManager } from "../managers/CharacterInfoManager";
 import { bindLongPress } from "../ui/longPressInfo";
@@ -231,6 +231,10 @@ interface FighterView {
 interface FighterFallback {
   marker: Phaser.GameObjects.Graphics;
   fighter: Fighter;
+  /** 화면에는 문구를 쓰지 않고 표식의 움직임과 공용 경고 문법으로만 알리는 준비 단계다. */
+  state: "loading" | "retrying" | "failed";
+  /** 상태가 바뀔 때 이전 맥동이 남지 않도록 표식이 자기 tween 하나를 소유한다. */
+  motion?: Phaser.Tweens.Tween;
 }
 
 /** 정산 대상 Fighter와 섞이지 않는 쿠로·시로 전용 화면 생명주기다. */
@@ -591,6 +595,32 @@ export class BattleScene extends Phaser.Scene {
     return token === this.spawnGeneration && this.scene.isActive();
   }
 
+  /** 진영 실루엣을 유지하면서 준비 단계만 홀로그램 움직임으로 덧입힌다. */
+  private setFighterFallbackState(fighterId: string, state: FighterFallback["state"]): void {
+    const fallback = this.fighterFallbacks.get(fighterId);
+    if (!fallback || fallback.state === state) return;
+    fallback.motion?.stop();
+    fallback.state = state;
+    const { marker, fighter } = fallback;
+    const sideColor = fighter.side === "player" ? COLOR.hpFill : COLOR.hpEnemy;
+    marker.clear().setAlpha(1).setScale(1).fillStyle(0x05080c, 0.82).fillPoints([
+      new Phaser.Geom.Point(-34, 0), new Phaser.Geom.Point(0, -88), new Phaser.Geom.Point(34, 0), new Phaser.Geom.Point(0, 18),
+    ]);
+    if (state === "failed") {
+      // 금색 공용 경고 마름모는 초록/적색 어느 진영에도 속하지 않으며 실패 원문은 그리지 않는다.
+      marker.fillStyle(COLOR.accent, 0.9).fillPoints([
+        new Phaser.Geom.Point(0, -61), new Phaser.Geom.Point(10, -51), new Phaser.Geom.Point(0, -41), new Phaser.Geom.Point(-10, -51),
+      ]).fillStyle(COLOR.void, 0.95).fillRect(-2, -57, 4, 9).fillRect(-2, -45, 4, 4);
+      return;
+    }
+    marker.fillStyle(sideColor, state === "loading" ? 0.72 : 0.95).fillRect(-22, -14, 44, 8);
+    fallback.motion = state === "loading"
+      // 로딩은 같은 마커가 약하게 숨 쉬어 별도 자리표가 생기지 않는다.
+      ? this.tweens.add({ targets: marker, alpha: { from: 0.62, to: 0.9 }, duration: 720, yoyo: true, repeat: -1 })
+      // 재시도는 기다림 전체를 과장하지 않는 한 번의 짧은 전진감만 준다.
+      : this.tweens.add({ targets: marker, scaleX: { from: 0.82, to: 1.08 }, duration: 90, yoyo: true, repeat: 0 });
+  }
+
   /** 여섯을 숨긴 채 병렬 준비하고, 전원이 성공한 한 프레임에 표현과 입력을 함께 공개한다. */
   private async spawnFighters(token: number): Promise<void> {
     ensureEffectTextures(this);
@@ -601,7 +631,10 @@ export class BattleScene extends Phaser.Scene {
       const marker = this.add.graphics().fillStyle(0x05080c, 0.82).fillPoints([
         new Phaser.Geom.Point(-34, 0), new Phaser.Geom.Point(0, -88), new Phaser.Geom.Point(34, 0), new Phaser.Geom.Point(0, 18),
       ]).fillStyle(color, 0.95).fillRect(-22, -14, 44, 8);
-      this.fighterFallbacks.set(fighter.id, { marker, fighter });
+      this.fighterFallbacks.set(fighter.id, { marker, fighter, state: "loading" });
+      // 최초 상태도 동일한 그리기 경계를 통과시키기 위해 임시 값에서 전환한다.
+      this.fighterFallbacks.get(fighter.id)!.state = "retrying";
+      this.setFighterFallbackState(fighter.id, "loading");
     });
     const prepare = async (fighter: Fighter): Promise<{ fighter: Fighter; asset: PuppetAsset; unitHeight: number; tint: number; creature: PuppetCreature }> => {
       // 표시 배율은 코어 입력에 들어 있으며 씬은 모든 Puppet 부속 표현에 같은 높이만 적용한다.
@@ -619,8 +652,12 @@ export class BattleScene extends Phaser.Scene {
         adopt: (creature) => { creature.setVisible(false); adoptedCreature = creature; },
         attempts: 3,
         retryDelayMs: 120,
+        onStateChange: (state) => this.setFighterFallbackState(fighter.id, state),
       });
-      if (result.status === "failed") throw result.error;
+      if (result.status === "failed") {
+        reportBattleFighterFallbackFailure(fighter.id, result.error);
+        throw result.error;
+      }
       if (result.status === "discarded") throw new Error(`discarded battle spawn: ${result.reason}`);
       // adopted 콜백이 같은 동기 분기에서 참조를 넘기는 계약을 별도로 검증해 타입과 런타임을 함께 지킨다.
       if (!adoptedCreature) throw new Error("adopted battle spawn did not provide a creature");
@@ -633,12 +670,6 @@ export class BattleScene extends Phaser.Scene {
       results.forEach((result) => { if (result.status === "fulfilled") result.value.creature.destroy(); });
       return;
     }
-    const failures = results.filter((result): result is PromiseRejectedResult => result.status === "rejected");
-    if (failures.length > 0) {
-      // 실패 개체만 실루엣으로 남고 성공 개체와 코어 전투는 정상 진행한다.
-      console.error("[battle] 필수 전투원 준비 실패", failures.map(({ reason }) => reason));
-    }
-
     const prepared = results.filter((result): result is PromiseFulfilledResult<Awaited<ReturnType<typeof prepare>>> => result.status === "fulfilled").map(({ value }) => value);
     for (const { fighter, asset, unitHeight, tint, creature } of prepared) {
       // Puppet Mesh의 기본 입력 경계는 비동기 생성 시점의 로컬 크기에 묶여 이동·배율 적용 뒤
@@ -668,6 +699,7 @@ export class BattleScene extends Phaser.Scene {
         });
       this.views.set(fighter.id, { creature, asset, fighter, infoHit, shadow, hpBar, statusChips, statusHit, stunShown: false, feverTint, feverStep: -1, feverTinted: false, tint, squashAt: -Infinity, squashDir: 1, spinDir: 1, dead: false });
       // view 등록 후 fallback을 제거해 어느 프레임에도 둘이 없거나 둘 다 소유되는 틈을 만들지 않는다.
+      this.fighterFallbacks.get(fighter.id)?.motion?.stop();
       this.fighterFallbacks.get(fighter.id)?.marker.destroy();
       this.fighterFallbacks.delete(fighter.id);
     }
@@ -1756,6 +1788,7 @@ export class BattleScene extends Phaser.Scene {
         registered: this.views.size,
         visible: [...this.views.values()].filter(({ creature }) => creature.visible).length,
       },
+      fighterFallbacks: [...this.fighterFallbacks.entries()].map(([fighterId, { state }]) => ({ fighterId, state })),
       ultimateReady: this.playerFighters().filter((fighter) => canFireUltimate(this.state, fighter)).map((fighter) => fighter.def.name),
       // 렉시아의 치우친 얼굴과 스피나의 큰 돌출 머리를 같은 프레임에서 고정할 수 있게 읽기만 노출한다.
       chargeRatios: this.playerFighters().map((fighter) => Math.min(1, fighter.energy / fighter.def.ultimate.cost)),

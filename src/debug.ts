@@ -10,6 +10,8 @@ export interface DebugBattle {
   playerOrder: string[];
   /** 원자적 공개 회귀가 첫 표시에서 전원 등록 여부를 확인하는 렌더 전투원 수다. */
   fighterViews?: { expected: number; registered: number; visible: number };
+  /** 비동기 외형 준비의 표시 단계만 노출하며 상세 실패 원인은 아래 진단 함수가 맡는다. */
+  fighterFallbacks?: Array<{ fighterId: string; state: "loading" | "retrying" | "failed" }>;
   /** 지금 궁극기를 누를 수 있는 아군 이름. */
   ultimateReady: string[];
   /** 시각 회귀가 0%·중간·100% 프레임을 고를 수 있는 편성 순서별 충전 비율이다. */
@@ -187,6 +189,11 @@ export function setDebugInventoryTextureKeys(keys: readonly string[] | undefined
 
 export function setDebugBattle(battle: DebugBattle | undefined): void {
   ensure().battle = battle;
+}
+
+/** 에셋 준비의 상세 원인을 화면 코드와 사용자 문구에서 격리하는 개발 진단 경계다. */
+export function reportBattleFighterFallbackFailure(fighterId: string, error: unknown): void {
+  if (import.meta.env.DEV) console.error(`[battle:fallback] fighter=${fighterId}`, error);
 }
 
 /** 결과 수치 자체는 서버 영수증 테스트가 맡고 E2E에는 표시·입력 계약만 공개한다. */

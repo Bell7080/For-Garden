@@ -23,4 +23,13 @@ describe("BattleScene 전투원 원자적 공개", () => {
     expect(revealed).toBeGreaterThan(registered);
     expect(started).toBeGreaterThan(revealed);
   });
+
+  it("view 등록 뒤 fallback을 제거하고 그 뒤에만 Puppet을 공개한다", () => {
+    const registered = source.indexOf("this.views.set(fighter.id");
+    const removed = source.indexOf("this.fighterFallbacks.delete(fighter.id)", registered);
+    const revealed = source.indexOf("prepared.forEach(({ creature }) => creature.setVisible(true))", removed);
+    // 같은 이벤트 루프 안의 교체 순서를 잠가 마커와 본체가 함께 합성되는 프레임을 막는다.
+    expect(removed).toBeGreaterThan(registered);
+    expect(revealed).toBeGreaterThan(removed);
+  });
 });

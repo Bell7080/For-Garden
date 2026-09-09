@@ -32,4 +32,13 @@ describe("BattleScene 전투원 원자적 공개", () => {
     expect(removed).toBeGreaterThan(registered);
     expect(revealed).toBeGreaterThan(removed);
   });
+
+  it("현재 전투 편성에서 고른 고유 URL만 warm한 뒤 spawn한다", () => {
+    // 호출되지 않는 최적화 API나 전체 SD 표 기본값이 다시 생기면 전투 진입 비용 회귀를 바로 드러낸다.
+    expect(source).toContain("relicAppearanceManager.battleAssetFor(fighter.def.id");
+    expect(source).toContain("new Map([...assetsByFighter.values()].map((asset) => [asset.url, asset]))");
+    expect(source).toContain("await warmPuppetTextures(this, uniqueBattleAssets)");
+    expect(source).toMatch(/await warmPuppetTextures\(this, uniqueBattleAssets\);[\s\S]*await this\.spawnFighters\(token, assetsByFighter\)/);
+    expect(source).not.toContain("warmPuppetTextures(this, PUPPET_PRELOAD_GROUPS");
+  });
 });

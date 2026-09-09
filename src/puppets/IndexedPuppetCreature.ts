@@ -250,56 +250,58 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
     parentMatrix?: Phaser.GameObjects.Components.TransformMatrix,
   ): void {
     camera.addToRenderList(this);
-    // Phaser가 같은 type의 다음 GameObject를 알려 주므로 연속 Puppet 사이에서는 pipeline을
-    // 되돌렸다 다시 clear하지 않는다. 앞/뒤의 일반 Phaser batch 경계에서만 상태를 전환한다.
-    if (renderer.newType) renderer.pipelines.clear();
+    // Phaser의 newType/nextTypeMatch는 Image를 상속한 Puppet과 일반 Image를 구별하지 못한다.
+    // 따라서 매 draw를 명시적인 batch 경계로 두어 직전 Phaser batch를 먼저 flush한다.
+    renderer.pipelines.clear();
+    try {
+      const gl = renderer.gl;
+      const shared = programs.get(gl) ?? createProgram(gl);
+      programs.set(gl, shared);
+      const buffers = this.ensureBuffers(gl);
+      const frameTexture = this.frame.glTexture.webGLTexture;
+      // 콘텍스 복구 직후에는 Phaser frame이 아직 GL texture를 못 가질 수 있다.
+      if (!frameTexture) return;
 
-    const gl = renderer.gl;
-    const shared = programs.get(gl) ?? createProgram(gl);
-    programs.set(gl, shared);
-    const buffers = this.ensureBuffers(gl);
-    const frameTexture = this.frame.glTexture.webGLTexture;
-    if (!frameTexture) {
+      gl.useProgram(shared.program);
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
+      // Puppet mesh 토폴로지가 그대로면 GPU 저장소를 재지정하지 않고 position 내용만 덮어쓴다.
+      // 런타임에서 정점 수가 바뀌는 예외에만 bufferData로 새 크기를 할당한다.
+      if (buffers.positionBytes === this.positions.byteLength) {
+        gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.positions);
+      } else {
+        gl.bufferData(gl.ARRAY_BUFFER, this.positions, gl.DYNAMIC_DRAW);
+        buffers.positionBytes = this.positions.byteLength;
+      }
+      gl.enableVertexAttribArray(shared.position);
+      gl.vertexAttribPointer(shared.position, 2, gl.FLOAT, false, 0, 0);
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffers.uv);
+      gl.enableVertexAttribArray(shared.uv);
+      gl.vertexAttribPointer(shared.uv, 2, gl.FLOAT, false, 0, 0);
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.index);
+
+      // GetCalcMatrix가 개체 로컬 → 부모 Container → Camera 순으로 이동·배율·회전을 합성한다.
+      // Puppet 정점은 이미지 좌상단 픽셀이므로 displayOrigin을 로컬에서 먼저 빼고, flip도 원점
+      // 둘레의 로컬 반전으로 행렬에 포함한다. vec4 이동/축 배율로는 부모 회전과 shear를 보존할 수 없다.
+      const calc = Phaser.GameObjects.GetCalcMatrix(this, camera, parentMatrix).calc;
+      gl.uniformMatrix3fv(shared.transform, false, puppetAffineUniform(calc, this.displayOriginX, this.displayOriginY, this.flipX, this.flipY));
+      gl.uniform2f(shared.viewport, renderer.width, renderer.height);
+      gl.uniform3f(
+        shared.tint,
+        ((this.tintTopLeft >> 16) & 0xff) / 255,
+        ((this.tintTopLeft >> 8) & 0xff) / 255,
+        (this.tintTopLeft & 0xff) / 255,
+      );
+      // Container renderer가 호출 직전에 누적 부모 alpha를 this.alpha에 곱하므로 카메라 alpha만 마저 합친다.
+      gl.uniform1f(shared.alpha, puppetShaderAlpha(this.alpha, camera.alpha));
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, frameTexture);
+      gl.uniform1i(shared.sampler, 0);
+      gl.drawElements(gl.TRIANGLES, this.indices.length, gl.UNSIGNED_SHORT, 0);
+    } finally {
+      // texture 누락·shader/buffer 오류를 포함한 모든 종료 경로에서 Phaser의 program과
+      // vertex state를 복원해, 뒤따르는 Image·Graphics·Text가 Puppet shader로 그려지지 않게 한다.
       renderer.pipelines.rebind();
-      return;
     }
-
-    gl.useProgram(shared.program);
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
-    // Puppet mesh 토폴로지가 그대로면 GPU 저장소를 재지정하지 않고 position 내용만 덮어쓴다.
-    // 런타임에서 정점 수가 바뀌는 예외에만 bufferData로 새 크기를 할당한다.
-    if (buffers.positionBytes === this.positions.byteLength) {
-      gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.positions);
-    } else {
-      gl.bufferData(gl.ARRAY_BUFFER, this.positions, gl.DYNAMIC_DRAW);
-      buffers.positionBytes = this.positions.byteLength;
-    }
-    gl.enableVertexAttribArray(shared.position);
-    gl.vertexAttribPointer(shared.position, 2, gl.FLOAT, false, 0, 0);
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.uv);
-    gl.enableVertexAttribArray(shared.uv);
-    gl.vertexAttribPointer(shared.uv, 2, gl.FLOAT, false, 0, 0);
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.index);
-
-    // GetCalcMatrix가 개체 로컬 → 부모 Container → Camera 순으로 이동·배율·회전을 합성한다.
-    // Puppet 정점은 이미지 좌상단 픽셀이므로 displayOrigin을 로컬에서 먼저 빼고, flip도 원점
-    // 둘레의 로컬 반전으로 행렬에 포함한다. vec4 이동/축 배율로는 부모 회전과 shear를 보존할 수 없다.
-    const calc = Phaser.GameObjects.GetCalcMatrix(this, camera, parentMatrix).calc;
-    gl.uniformMatrix3fv(shared.transform, false, puppetAffineUniform(calc, this.displayOriginX, this.displayOriginY, this.flipX, this.flipY));
-    gl.uniform2f(shared.viewport, renderer.width, renderer.height);
-    gl.uniform3f(
-      shared.tint,
-      ((this.tintTopLeft >> 16) & 0xff) / 255,
-      ((this.tintTopLeft >> 8) & 0xff) / 255,
-      (this.tintTopLeft & 0xff) / 255,
-    );
-    // Container renderer가 호출 직전에 누적 부모 alpha를 this.alpha에 곱하므로 카메라 alpha만 마저 합친다.
-    gl.uniform1f(shared.alpha, puppetShaderAlpha(this.alpha, camera.alpha));
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, frameTexture);
-    gl.uniform1i(shared.sampler, 0);
-    gl.drawElements(gl.TRIANGLES, this.indices.length, gl.UNSIGNED_SHORT, 0);
-    if (!renderer.nextTypeMatch) renderer.pipelines.rebind();
   }
 
   /** scene 종료 시 update listener와 개체 전용 GPU Buffer를 함께 해제한다. */

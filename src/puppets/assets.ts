@@ -652,6 +652,72 @@ async function loadPuppet(asset: PuppetAsset): Promise<Puppet> {
   });
 }
 
+/** 사전 로딩 한 건이 실패했을 때 호출자에게 URL과 원래 오류를 함께 전달하는 진단 정보다. */
+export interface PuppetAssetPreloadFailure {
+  readonly assetUrl: string;
+  readonly error: unknown;
+  /** 실패한 캐시는 제거되므로 이후 화면은 필요할 때 다시 읽는 폴백을 시도할 수 있다. */
+  readonly fallbackAvailable: boolean;
+}
+
+/** 모든 등록 요청이 settle된 뒤 반환되는 Puppet 사전 로딩 결과다. */
+export interface PuppetAssetPreloadResult {
+  readonly failures: readonly PuppetAssetPreloadFailure[];
+  /** 일부 원화가 없어도 호출자가 게임 진입을 계속할 수 있는지 명시한다. */
+  readonly fallbackAvailable: boolean;
+}
+
+/** 테스트 주입과 네트워크 정책 조정을 위한 제한된 사전 로딩 옵션이다. */
+export interface PuppetAssetPreloadOptions {
+  readonly maxRetries?: number;
+  readonly attemptTimeoutMs?: number;
+  readonly loader?: (asset: PuppetAsset) => Promise<unknown>;
+}
+
+/** 네트워크 계층에서 흔히 일시적으로 발생하는 오류만 재시도 대상으로 분류한다. */
+function isTransientLoadError(error: unknown): boolean {
+  if (error instanceof TypeError) return true;
+  const status = typeof error === "object" && error !== null && "status" in error
+    ? Number((error as { status?: unknown }).status)
+    : Number.NaN;
+  return status === 408 || status === 429 || status >= 500;
+}
+
+/** 응답하지 않는 한 요청이 전체 타이틀 로딩을 영원히 붙들지 않도록 시한을 둔다. */
+function withTimeout<T>(pending: Promise<T>, timeoutMs: number, assetUrl: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = globalThis.setTimeout(
+      () => reject(new TypeError(`Puppet asset load timed out after ${timeoutMs}ms: ${assetUrl}`)),
+      timeoutMs,
+    );
+    void pending.then(
+      (value) => {
+        globalThis.clearTimeout(timer);
+        resolve(value);
+      },
+      (error: unknown) => {
+        globalThis.clearTimeout(timer);
+        reject(error);
+      },
+    );
+  });
+}
+
+/** 한 에셋을 유한 횟수만 재시도하고 마지막 오류를 allSettled 결과에 보존한다. */
+async function loadPuppetWithRetry(asset: PuppetAsset, options: PuppetAssetPreloadOptions): Promise<void> {
+  const maxRetries = Math.max(0, options.maxRetries ?? 1);
+  const timeoutMs = Math.max(1, options.attemptTimeoutMs ?? 30_000);
+  const loader = options.loader ?? loadPuppet;
+  for (let attempt = 0; ; attempt++) {
+    try {
+      await withTimeout(Promise.resolve(loader(asset)), timeoutMs, asset.url);
+      return;
+    } catch (error) {
+      if (attempt >= maxRetries || !isTransientLoadError(error)) throw error;
+    }
+  }
+}
+
 /** 중첩된 스킨 표를 등록된 Puppet 목록으로 펼친다. */
 function skinAssets(
   skins: Readonly<Record<string, Readonly<Record<string, PuppetAsset>> | undefined>>,
@@ -691,8 +757,16 @@ export const PUPPET_PRELOAD_GROUPS: ReadonlyArray<readonly PuppetAsset[]> = [
  */
 export async function preloadPuppetAssets(
   group: readonly PuppetAsset[] = PUPPET_PRELOAD_GROUPS.flat(),
-): Promise<void> {
-  await Promise.all(group.map(loadPuppet));
+  options: PuppetAssetPreloadOptions = {},
+): Promise<PuppetAssetPreloadResult> {
+  // allSettled가 빠른 실패 뒤에도 나머지 ZIP 다운로드·파싱이 끝날 때까지 단계 반환을 막는다.
+  const settled = await Promise.allSettled(group.map((asset) => loadPuppetWithRetry(asset, options)));
+  const failures = settled.flatMap<PuppetAssetPreloadFailure>((result, index) =>
+    result.status === "rejected"
+      ? [{ assetUrl: group[index].url, error: result.reason, fallbackAvailable: true }]
+      : [],
+  );
+  return { failures, fallbackAvailable: failures.every((failure) => failure.fallbackAvailable) };
 }
 
 /**

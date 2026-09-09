@@ -42,17 +42,18 @@ export class OpeningScene extends Phaser.Scene {
     const result = this.flow.advance(choice?.id);
     if (result.effect) storyManager.applyEffect(OPENING_TRAIN.id, result.effect);
     if (result.completed) {
-      // 저장이 던지면 현재 씬에 머물고 다시 시도할 수 있게 하며, 성공한 전환만 한 번 허용한다.
+      // 완료를 확인한 즉시 후속 입력을 영구 차단해 저장과 씬 전환을 한 번만 수행한다.
+      this.transitioningToLobby = true;
       try {
         storyManager.complete(OPENING_TRAIN.id);
-        this.transitioningToLobby = true;
-        // 로비의 비동기 Puppet까지 준비되기 전 오프닝의 true를 자동화가 재사용하지 않게 먼저 내린다.
-        setDebugReady(false);
-        this.scene.start("lobby");
-      } finally {
-        // 완료 경로도 잠금을 풀어 저장 실패 때문에 입력이 영구 잠기게 두지 않는다.
-        this.flow.markCurrentNodeReady();
+      } catch (error) {
+        // 저장 실패는 다음 실행에서 오프닝을 다시 보여 주는 복구로 남기고 현재 세션의 진행은 계속한다.
+        console.error("오프닝 완료 저장 실패", error);
       }
+      // 로비의 비동기 Puppet까지 준비되기 전 오프닝의 true를 자동화가 재사용하지 않게 먼저 내린다.
+      setDebugReady(false);
+      // 로딩을 기다리는 지연이 아니라 현재 pointerup 처리와 DialogueLayer 종료를 다음 Phaser 틱으로 분리한다.
+      this.time.delayedCall(0, () => this.scene.start("lobby"));
       return;
     }
     void this.showCurrentNode(result.node!);

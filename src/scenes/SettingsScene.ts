@@ -15,6 +15,7 @@ import { accountApi, type AccountFailureCode, type AccountState } from "../api/A
 import { PopupLayer } from "../ui/PopupLayer";
 import { validateSettingsReturn, type SettingsEntryData, type SettingsReturnScene } from "./settingsNavigation";
 import { relicCollection } from "../managers/RelicCollectionManager";
+import { openPolicyDocument, type PolicyPath } from "./policyNavigation";
 
 /** 상단 탭은 긴 설정을 의미 단위로 나눠 좁은 화면에서도 한 섹션만 스크롤하게 한다. */
 const TABS = [
@@ -170,8 +171,8 @@ export class SettingsScene extends Phaser.Scene {
     this.popups.confirm({ title: "캐시 정리 완료", message: "다운로드 캐시만 정리했습니다. 계정과 저장 진행은 유지됩니다.", confirmLabel: "확인" }, () => undefined);
   }
 
-  /** 정책은 같은 출처의 문서 진입점으로 열어 배포 환경이 실제 문서를 연결할 수 있게 한다. */
-  private openPolicy(path: "/terms" | "/privacy"): void { window.open(path, "_blank", "noopener,noreferrer"); }
+  /** 정책은 새 탭을 우선 사용하되 팝업 차단 시 같은 탭으로 이동해 문서 접근을 보장한다. */
+  private openPolicy(path: PolicyPath): void { openPolicyDocument(path); }
 
   /** 1차 위험 안내 후 2차 최종 확인을 거쳐 로컬 저장만 삭제한다. */
   private confirmLocalReset(): void {

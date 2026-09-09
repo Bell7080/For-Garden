@@ -11,6 +11,12 @@
 import type { Element, Role } from "../core/types";
 import { ELEMENT_TINT, ROLE_TINT, skillArtTint } from "./skillArt";
 
+/** 섬광 감소 선택을 공용 효과 경계가 소비할 밝기·반복 상한으로 바꾼다. */
+export function flashPolicy(reduceFlashes: boolean) {
+  return reduceFlashes ? { alphaRatio: 0.32, maxRepeats: 0, fadeFromTransparent: false } as const
+    : { alphaRatio: 1, maxRepeats: 2, fadeFromTransparent: true } as const;
+}
+
 export interface StrokePoint { x: number; y: number }
 
 /**

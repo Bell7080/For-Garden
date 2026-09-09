@@ -19,9 +19,9 @@ export interface GameSettings {
   sound: { masterVolume: number; musicVolume: number; effectsVolume: number; voiceVolume: number; masterMuted: boolean; musicMuted: boolean; effectsMuted: boolean; voiceMuted: boolean };
   vibration: { enabled: boolean; combatHit: boolean; ultimate: boolean; excavationResult: boolean; uiInput: boolean };
   notifications: { enabled: boolean; staminaFull: boolean; freeRecruit: boolean; dailyMission: boolean; event: boolean; mail: boolean; quietHours: boolean; quietHoursStart: string; quietHoursEnd: string; lastScheduledIds: Partial<Record<"staminaFull" | "freeRecruit" | "dailyMission", string>> };
-  /** 화면 품질만 저장하며 실제 전투 흐름을 바꾸는 조작은 game에 두어 책임을 분리한다. */
+  /** `lowSpecMode`와 `shortenExcavation`은 각각 공용 렌더 예산과 연구 단계 시간표에서만 해석한다. */
   presentation: { screenShake: boolean; damageNumbers: boolean; shortenExcavation: boolean; lowSpecMode: boolean; battleUiMotion: "default" | "reduced" | "off" };
-  /** 읽기 편의 옵션은 장면 좌표가 아니라 공용 텍스트/연출 계층에서 소비한다. 필수 대사는 숨기지 않는다. */
+  /** `reduceFlashes`와 `colorAssist`는 공용 효과·의미 표식 경계에서 소비한다. 필수 대사는 숨기지 않는다. */
   accessibility: { textScale: 1 | 1.15 | 1.3; reduceMotion: boolean; reduceFlashes: boolean; colorAssist: boolean };
   /** 전투 중 즉시 바꿀 수 있는 조작은 SettingsManager 저장 경계를 공유한다. */
   game: { battleSpeed: 1 | 2 | 3; autoUltimate: boolean; skipUltimatePresentation: boolean; textSpeed: 0.5 | 1 | 2; language: "ko" | "en" | "ja" };

@@ -15,6 +15,36 @@ export function battleUiMotionFactor(value: BattleUiMotion): number {
   return value === "default" ? 1 : value === "reduced" ? 0.4 : 0;
 }
 
+/** 저사양 선택을 모든 프레젠테이션 소비자가 공유하는 명시적 렌더 예산으로 바꾼다. */
+export function presentationPolicy(lowSpecMode: boolean) {
+  // 씬은 이 값을 다시 해석하지 않고 파티클·전신·후처리 경계에 그대로 전달한다.
+  return lowSpecMode
+    ? { particleRatio: 0.45, ringRatio: 0.5, fullBodyScale: 0.78, postProcessing: false, renderQuality: 0.75 } as const
+    : { particleRatio: 1, ringRatio: 1, fullBodyScale: 1, postProcessing: true, renderQuality: 1 } as const;
+}
+
+export type ExcavationPresentationStage = "scan" | "crack" | "rarity" | "firstMeeting";
+
+/** 연구 결과의 단계 이름을 실제 대기 시간으로 바꾸는 순수한 단일 시간표다. */
+export function excavationStageDuration(stage: ExcavationPresentationStage, shortenExcavation: boolean): number {
+  const normal: Record<ExcavationPresentationStage, number> = { scan: 650, crack: 700, rarity: 650, firstMeeting: 1200 };
+  // 정보 카드는 생략하지 않고 각 단계의 읽을 수 있는 최소 시간만 보존한다.
+  return shortenExcavation ? Math.max(240, Math.round(normal[stage] * 0.45)) : normal[stage];
+}
+
+export type SemanticColorKind = "element" | "rarity" | "status";
+
+/** 색각 보조를 홀로그램 색 위에 겹칠 공용 비색상 표식으로 변환한다. */
+export function colorAssistPolicy(enabled: boolean, kind: SemanticColorKind, value: string) {
+  if (!enabled) return { glyph: "", pattern: "none" as const };
+  const glyphs: Record<SemanticColorKind, readonly string[]> = {
+    element: ["◆", "▲", "●", "✦", "■"], rarity: ["◇", "◆", "✦", "✦✦"], status: ["+", "−", "!", "×"],
+  };
+  // 안정적인 문자열 해시는 새 값에도 색과 무관한 동일 표식을 되돌려준다.
+  const index = [...value].reduce((sum, char) => sum + char.charCodeAt(0), 0) % glyphs[kind].length;
+  return { glyph: glyphs[kind][index], pattern: (["dots", "diagonal", "crosshatch"] as const)[index % 3] };
+}
+
 /** 새 계정과 손상 값 복구가 공유하되 호출자끼리 객체를 공유하지 않는 기본 설정을 만든다. */
 export function createDefaultSettings(): GameSettings {
   return {

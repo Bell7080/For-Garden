@@ -6,6 +6,8 @@ import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { COLOR, textStyle } from "./theme";
 import type { UltimatePresentation } from "../data/ultimatePresentations";
 import { scaleUltimateCutInDurations, type UltimatePresentationTiming } from "../core/battleControls";
+import { presentationPolicy } from "../core/settings";
+import { flashPolicy } from "./signatureEffects";
 import { ultimateCutInMaskLayout, type CutInPoint } from "./ultimateCutInLayout";
 import { InterruptibleStep } from "./InterruptibleStep";
 
@@ -35,7 +37,7 @@ export class UltimateCutIn extends Phaser.GameObjects.Container {
   private portraitMaskGraphics?: Phaser.GameObjects.Graphics;
   private syncPortraitMask?: () => void;
 
-  private constructor(scene: Phaser.Scene, relic: RelicDef, private readonly presentation: Readonly<UltimatePresentation>) {
+  private constructor(scene: Phaser.Scene, relic: RelicDef, private readonly presentation: Readonly<UltimatePresentation>, private readonly policy: { lowSpecMode: boolean; reduceFlashes: boolean }) {
     super(scene, 0, 0);
     scene.add.existing(this);
     this.setDepth(CUT_IN.depth);
@@ -58,15 +60,15 @@ export class UltimateCutIn extends Phaser.GameObjects.Container {
   }
 
   /** 캐시된 원화를 준비한 뒤에만 진입시켜 빈 컷인 프레임이 보이지 않게 한다. */
-  static async create(scene: Phaser.Scene, relic: RelicDef, presentation: Readonly<UltimatePresentation>): Promise<UltimateCutIn> {
-    const cutIn = new UltimateCutIn(scene, relic, presentation);
+  static async create(scene: Phaser.Scene, relic: RelicDef, presentation: Readonly<UltimatePresentation>, policy = { lowSpecMode: false, reduceFlashes: false }): Promise<UltimateCutIn> {
+    const cutIn = new UltimateCutIn(scene, relic, presentation, policy);
     // 외형 선택은 manager/resolver가 소유하고 컷인은 결정된 전신만 연출한다.
     const asset = relicAppearanceManager.portraitAssetFor(relic.id);
     let portrait: Awaited<ReturnType<typeof spawnPuppet>>;
     try {
       portrait = await spawnPuppet(scene, asset, {
         // 데이터의 기준점과 배율만 해석하며 렐릭 ID에 따른 UI 분기는 만들지 않는다.
-        focus: { anchor: "core", ...presentation.artworkOrigin }, height: 1280 * presentation.artworkScale,
+        focus: { anchor: "core", ...presentation.artworkOrigin }, height: 1280 * presentation.artworkScale * presentationPolicy(policy.lowSpecMode).fullBodyScale,
       });
     } catch (error) {
       // 로딩 실패는 호출자에게 전달하되 await 전에 만든 빈 컨테이너는 이 경계에서 회수한다.
@@ -104,7 +106,9 @@ export class UltimateCutIn extends Phaser.GameObjects.Container {
     if (this.disposed) return;
     // 진입 방향의 부호를 퇴장에도 재사용해 한 프리셋이 동선 전체를 설명하게 한다.
     const direction = this.presentation.enterFrom === "left" ? -1 : 1;
-    this.setX(direction * BASE_WIDTH).setScale(0.82).setAlpha(0);
+    const flashes = flashPolicy(this.policy.reduceFlashes);
+    // 섬광 감소에서는 투명→불투명 점멸 대신 화면 밖 이동만으로 진입을 알린다.
+    this.setX(direction * BASE_WIDTH).setScale(0.82).setAlpha(flashes.fadeFromTransparent ? 0 : 1);
     // 구간별 한 프레임 하한과 별도로 전체 가시 시간도 보장해 빠른 배속에서 섬광처럼 사라지지 않게 한다.
     const [enterMs, holdMs, exitMs] = scaleUltimateCutInDurations(CUT_IN.enterMs, this.presentation.cutInHoldMs, CUT_IN.exitMs, timing);
     await this.tween({ targets: this, x: 0, scale: 1, alpha: 1, duration: enterMs, ease: "Cubic.Out" });

@@ -2,11 +2,11 @@ import Phaser from "phaser";
 import { allowBurst, AREA_IMPACT, BATTLEFIELD_WASH_HOLD, BATTLEFIELD_WASH_RISE, EFFECT_BUDGET, EFFECT_PRESETS, EFFECT_TAP_COLOR, REACH_STRIKE, SUSTAINED_COMBAT_EFFECT, type BurstSpec, type EffectKind } from "../ui/effectPresets";
 import { EFFECT_TEXTURE, ensureEffectTextures } from "../ui/effectTextures";
 import { lashPoints } from "../ui/reachStrikeShape";
-import { inkBlotPoints, mawTeeth, slashPoints, SIGNATURE_SPECS, type CombatPalette, type SignatureId, type StrokePoint } from "../ui/signatureEffects";
+import { flashPolicy, inkBlotPoints, mawTeeth, slashPoints, SIGNATURE_SPECS, type CombatPalette, type SignatureId, type StrokePoint } from "../ui/signatureEffects";
 import { damagePopupStyle, risingAlpha, type DamagePopupRequest } from "../ui/damageNumbers";
 import { battlefieldWashBands, groundAreaStyle, laneAreaPoints, radialAreaPoints, type GroundAreaRequest, type GroundAreaShape, type GroundAreaStyle } from "../ui/groundAreas";
 import { COLOR, textStyle } from "../ui/theme";
-import { battleUiMotionFactor, type BattleUiMotion } from "../core/settings";
+import { battleUiMotionFactor, presentationPolicy, type BattleUiMotion } from "../core/settings";
 import type { ActiveCombatDisplayEffect } from "../core/combatEffects";
 
 /**
@@ -32,6 +32,10 @@ export interface EffectManagerOptions {
   shake?: boolean;
   /** 체력 HUD와 같은 저장 선택으로 카메라 흔들림 세기만 조절한다. */
   battleUiMotion?: BattleUiMotion;
+  /** 공용 예산 정책의 입력이며 이펙트 종류별 임의 저사양 분기를 금지한다. */
+  lowSpecMode?: boolean;
+  /** 모든 타격·전용 연출 섬광이 공유하는 접근성 입력이다. */
+  reduceFlashes?: boolean;
   /**
    * 바닥에 깔리는 범위 표시의 깊이.
    *
@@ -116,6 +120,8 @@ export class EffectManager {
   private readonly shakeEnabled: boolean;
   private readonly shakeFactor: number;
   private readonly groundDepth: number;
+  private readonly quality: ReturnType<typeof presentationPolicy>;
+  private readonly flashes: ReturnType<typeof flashPolicy>;
   /** 전장 경계. 가장자리 워시만 쓰며 씬이 `setArena`로 넘긴다. */
   private arena: { left: number; right: number; top: number; bottom: number } | undefined;
   private readonly emitters = new Map<EffectKind, Phaser.GameObjects.Particles.ParticleEmitter>();
@@ -135,6 +141,8 @@ export class EffectManager {
     this.shakeEnabled = options.shake ?? true;
     this.shakeFactor = battleUiMotionFactor(options.battleUiMotion ?? "default");
     this.groundDepth = options.groundDepth ?? this.depth - 400;
+    this.quality = presentationPolicy(options.lowSpecMode ?? false);
+    this.flashes = flashPolicy(options.reduceFlashes ?? false);
     ensureEffectTextures(scene);
     // 씬이 꺼질 때 emitter·풀을 함께 정리한다. 씬 재진입마다 쌓이면 텍스처는 하나여도
     // 표시 객체가 배로 늘어난다.
@@ -448,7 +456,7 @@ export class EffectManager {
     const flash = this.scene.add.image(x, y, EFFECT_TEXTURE.glow)
       .setDisplaySize(size, size * 0.92)
       .setTint(color)
-      .setAlpha(alpha)
+      .setAlpha(alpha * this.flashes.alphaRatio)
       .setBlendMode(Phaser.BlendModes.ADD)
       .setDepth(this.depth);
     this.scene.tweens.add({
@@ -484,9 +492,9 @@ export class EffectManager {
       emitter.setEmitterAngle(options.direction === undefined
         ? { min: 0, max: 360 }
         : { min: options.direction - 46, max: options.direction + 46 });
-      emitter.explode(spec.shards, x, y);
+      emitter.explode(Math.max(1, Math.round(spec.shards * this.quality.particleRatio)), x, y);
     }
-    for (let ring = 0; ring < spec.rings; ring += 1) {
+    for (let ring = 0; ring < Math.ceil(spec.rings * this.quality.ringRatio); ring += 1) {
       // 두 겹째는 조금 늦게, 조금 더 크게 벌어져 한 겹이 두 번 밀려나는 것처럼 보인다.
       this.openRing(x, y, spec.ringRadius * scale * (1 + ring * 0.42), spec.ringMs + ring * 90, spec.ringWidth, ring === 0 ? color : 0xffffff, ring * 70);
     }

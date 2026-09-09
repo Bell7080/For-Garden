@@ -695,6 +695,23 @@ export async function preloadPuppetAssets(
   await Promise.all(group.map(loadPuppet));
 }
 
+/**
+ * 등록된 SD를 실제 Phaser texture cache까지 올려 전투 진입 프레임의 GPU 업로드를 미리 끝낸다.
+ *
+ * `preloadPuppetAssets`의 소유권은 네트워크 다운로드와 ZIP/프로젝트 파싱까지다. 반대로 texture는
+ * Phaser renderer와 Scene이 있어야 만들 수 있으므로, 전투 진입을 조율하는 Scene이 선택적으로
+ * 이 함수를 호출한다. 두 단계를 합치지 않아 타이틀의 Phaser 비의존 프리로드 계약을 보존한다.
+ */
+export async function warmPuppetTextures(
+  scene: Phaser.Scene,
+  group: readonly PuppetAsset[] = PUPPET_PRELOAD_GROUPS[1],
+): Promise<void> {
+  // 같은 URL은 하나만 준비해 스킨 표의 별칭이 texture 업로드를 중복 요청하지 않게 한다.
+  const assets = uniqueAssets(group);
+  const { ensureTexture } = await import("./IndexedPuppetCreature");
+  await Promise.all(assets.map(async (asset) => ensureTexture(scene, await loadPuppet(asset))));
+}
+
 export interface SpawnOptions {
   /** 발끝을 놓을 바닥 지점. `focus`를 주면 쓰이지 않는다. */
   x?: number;

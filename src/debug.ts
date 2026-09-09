@@ -8,6 +8,8 @@ export interface DebugBattle {
   elapsed: number;
   /** 아직 살아 있는 아군 이름. 편성 순서를 유지한다. */
   playerOrder: string[];
+  /** 원자적 공개 회귀가 첫 표시에서 전원 등록 여부를 확인하는 렌더 전투원 수다. */
+  fighterViews?: { expected: number; registered: number; visible: number };
   /** 지금 궁극기를 누를 수 있는 아군 이름. */
   ultimateReady: string[];
   /** 시각 회귀가 0%·중간·100% 프레임을 고를 수 있는 편성 순서별 충전 비율이다. */

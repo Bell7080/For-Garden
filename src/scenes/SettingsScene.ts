@@ -106,8 +106,14 @@ export class SettingsScene extends Phaser.Scene {
       section("알림", 850);
       const permission = platformFeedback.getNotificationPermission();
       this.addTextAction(90, y, s.notifications.enabled ? "알림 활성화됨" : "알림 활성화 확인", () => void settingsManager.confirmNotifications().then(() => this.buildRows())); y += 64;
-      this.content.add(this.add.text(90, y, `예약 지원: ${platformFeedback.notificationScheduling} · 권한: ${permission}`, textStyle({ role: "body", size: 22, color: COLOR.inkDim }))); y += 72;
-      ([['스테미나 충전 완료','staminaFull'],['무료 모집','freeRecruit'],['일일 임무','dailyMission'],['이벤트','event'],['우편','mail'],['야간 알림 제한','quietHours']] as const).forEach(([a,b]) => toggle(a,'notifications',b));
+      // 플랫폼 차이는 구현 용어 대신 플레이어가 기대할 수 있는 짧은 상태명으로만 구분한다.
+      const schedulingLabel = platformFeedback.notificationScheduling === "persistent" ? "기기 알림" : platformFeedback.notificationScheduling === "foreground-only" ? "실행 중 알림" : "알림 미지원";
+      this.content.add(this.add.text(90, y, `${schedulingLabel} · ${permission === "granted" ? "허용됨" : "허용 필요"}`, textStyle({ role: "body", size: 22, color: COLOR.inkDim }))); y += 72;
+      ([['스테미나 충전 완료','staminaFull'],['일일 임무','dailyMission'],['야간 알림 제한','quietHours']] as const).forEach(([a,b]) => toggle(a,'notifications',b));
+      // 기존 선택 행의 눌림·강조 양식을 재사용하며 30분 단위의 유효 HH:mm 값만 저장한다.
+      const quietTimes = Array.from({ length: 48 }, (_, index) => `${String(Math.floor(index / 2)).padStart(2, "0")}:${index % 2 ? "30" : "00"}`);
+      this.content.add(new SettingsSelectRow(this, 90, y, '제한 시작', s.notifications.quietHoursStart, quietTimes, value => settingsManager.update({ notifications: { quietHoursStart: value } }))); y += 94;
+      this.content.add(new SettingsSelectRow(this, 90, y, '제한 종료', s.notifications.quietHoursEnd, quietTimes, value => settingsManager.update({ notifications: { quietHoursEnd: value } }))); y += 94;
     } else if (this.activeTab === "play") {
       section("연출 · 게임", 1140);
       // 네 프레젠테이션 선택은 각각 공용 정책 소비자가 있으므로 효과 없는 임시 토글을 노출하지 않는다.

@@ -3,6 +3,7 @@ import { createDefaultSettings, normalizeSettings } from "../../src/core/setting
 import { SettingsManager } from "../../src/managers/SettingsManager";
 import { createDefaultSession } from "../../src/state/session";
 import type { PlatformFeedback, ScheduledNotification } from "../../src/api/PlatformFeedback";
+import { adjustForQuietHours, nextUtcDay } from "../../src/core/notificationSchedule";
 
 /** 브라우저 API 없이 권한·예약·취소 호출을 관찰하는 테스트 전용 어댑터다. */
 function fakePlatform(permission: "default" | "granted" | "denied" | "unsupported" = "granted") {
@@ -73,10 +74,25 @@ describe("settings", () => {
 
   it("실제 만료 시각 예약, 이전 예약 취소, 마지막 식별자 저장을 연결한다", async () => {
     const state = createDefaultSession(); const platform = fakePlatform(); const save = vi.fn(); const manager = new SettingsManager(state, { save }, platform);
-    manager.update({ notifications: { enabled: true, lastScheduledIds: { staminaFull: "old" } } });
+    manager.update({ notifications: { enabled: true, quietHours: false, lastScheduledIds: { staminaFull: "old" } } });
     const request: ScheduledNotification = { id: "stamina-42", kind: "staminaFull", title: "충전 완료", body: "스테미나가 가득 찼습니다.", expiresAt: new Date(Date.now() + 60_000) };
     await expect(manager.scheduleNotification(request)).resolves.toBe("stamina-42"); expect(platform.cancelNotification).toHaveBeenCalledWith("old"); expect(platform.scheduleNotification).toHaveBeenCalledWith(request); expect(manager.get().notifications.lastScheduledIds.staminaFull).toBe("stamina-42");
     await expect(manager.cancelNotification("staminaFull")).resolves.toBe(true); expect(manager.get().notifications.lastScheduledIds.staminaFull).toBeUndefined();
+  });
+
+  it("자정을 넘는 야간 제한과 같은 날 제한을 종료 시각으로 미룬다", () => {
+    // 제한 밖은 원래 시각을 보존하고 시작=종료는 하루 전체가 아닌 빈 구간이다.
+    expect(adjustForQuietHours(new Date("2026-09-09T23:30:00"), true, "22:00", "08:00")).toEqual(new Date("2026-09-10T08:00:00"));
+    expect(adjustForQuietHours(new Date("2026-09-09T06:30:00"), true, "22:00", "08:00")).toEqual(new Date("2026-09-09T08:00:00"));
+    expect(adjustForQuietHours(new Date("2026-09-09T14:00:00"), true, "13:00", "15:00")).toEqual(new Date("2026-09-09T15:00:00"));
+    expect(adjustForQuietHours(new Date("2026-09-09T12:00:00"), true, "12:00", "12:00")).toEqual(new Date("2026-09-09T12:00:00"));
+    expect(nextUtcDay(new Date("2026-12-31T23:59:00Z")).toISOString()).toBe("2027-01-01T00:00:00.000Z");
+  });
+
+  it("구형 미지원 알림 키와 예약 ID를 정규화에서 폐기한다", () => {
+    const notifications = normalizeSettings({ notifications: { freeRecruit: true, event: true, mail: true, lastScheduledIds: { staminaFull: "ok", freeRecruit: "old", event: "old" } } }).notifications;
+    expect(notifications).not.toHaveProperty("freeRecruit"); expect(notifications).not.toHaveProperty("event"); expect(notifications).not.toHaveProperty("mail");
+    expect(notifications.lastScheduledIds).toEqual({ staminaFull: "ok" });
   });
 
   it("알림 설정 비활성화와 권한 거부에서는 예약하지 않는다", async () => {

@@ -18,7 +18,7 @@ import { defaultUnlockedRelicSkinIds } from "../data/relicSkins";
 export interface GameSettings {
   sound: { masterVolume: number; musicVolume: number; effectsVolume: number; voiceVolume: number; masterMuted: boolean; musicMuted: boolean; effectsMuted: boolean; voiceMuted: boolean };
   vibration: { enabled: boolean; combatHit: boolean; ultimate: boolean; excavationResult: boolean; uiInput: boolean };
-  notifications: { enabled: boolean; staminaFull: boolean; freeRecruit: boolean; dailyMission: boolean; event: boolean; mail: boolean; quietHours: boolean; quietHoursStart: string; quietHoursEnd: string; lastScheduledIds: Partial<Record<"staminaFull" | "freeRecruit" | "dailyMission", string>> };
+  notifications: { enabled: boolean; staminaFull: boolean; dailyMission: boolean; quietHours: boolean; quietHoursStart: string; quietHoursEnd: string; lastScheduledIds: Partial<Record<"staminaFull" | "dailyMission", string>> };
   /** `lowSpecMode`와 `shortenExcavation`은 각각 공용 렌더 예산과 연구 단계 시간표에서만 해석한다. */
   presentation: { screenShake: boolean; damageNumbers: boolean; shortenExcavation: boolean; lowSpecMode: boolean; battleUiMotion: "default" | "reduced" | "off" };
   /** `reduceFlashes`와 `colorAssist`는 공용 효과·의미 표식 경계에서 소비한다. 필수 대사는 숨기지 않는다. */

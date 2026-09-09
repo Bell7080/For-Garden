@@ -7,7 +7,7 @@ export type NotificationPermission = "default" | "granted" | "denied" | "unsuppo
 /** 실제 만료 시각을 포함하는 로컬 알림 예약 요청이다. */
 export interface ScheduledNotification {
   id: string;
-  kind: "staminaFull" | "freeRecruit" | "dailyMission";
+  kind: "staminaFull" | "dailyMission";
   title: string;
   body: string;
   expiresAt: Date;

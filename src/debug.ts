@@ -66,6 +66,10 @@ export interface DebugState {
   /** 정보창이 지금 그린 룬 조각 셋. 조각을 누르기 전에 실제로 칠해졌는지 확인하는 용도다. */
   infoGemSlots?: (string | null)[];
   battle?: DebugBattle;
+  /** 화면에는 보이지 않는 공용 로딩 실패 장부다. 단계명과 원래 오류를 함께 보존한다. */
+  loadingDiagnostics?: Array<{ label: string; error: unknown }>;
+  /** 전투 SD 최종 실패를 에셋 선택과 시도 횟수까지 묶어 조사할 수 있는 개발 장부다. */
+  battleFighterDiagnostics?: Array<{ fighterId: string; assetUrl: string; retryCount: number; error: unknown }>;
   /** 폰토스 최종판의 표시 여부와 주 행동 중심만 노출해 Canvas E2E가 결과 흐름을 따라간다. */
   bossResult?: { visible: boolean; lobby: DebugPoint };
   /** 정보창이 떠 있는지. `?`와 꾹 누르기를 확인하는 데 쓴다. */
@@ -138,8 +142,10 @@ declare global {
 }
 
 function ensure(): DebugState {
-  window.__PF_DEBUG ??= { ready: false, scene: "boot" };
-  return window.__PF_DEBUG;
+  // 순수 Node 단위 테스트에서도 동일한 진단 계약을 검증할 수 있도록 전역 저장소를 사용한다.
+  const host = globalThis as typeof globalThis & { __PF_DEBUG?: DebugState };
+  host.__PF_DEBUG ??= { ready: false, scene: "boot" };
+  return host.__PF_DEBUG;
 }
 
 export function setDebugScene(scene: string, screenTitle?: string): void {
@@ -192,8 +198,18 @@ export function setDebugBattle(battle: DebugBattle | undefined): void {
 }
 
 /** 에셋 준비의 상세 원인을 화면 코드와 사용자 문구에서 격리하는 개발 진단 경계다. */
-export function reportBattleFighterFallbackFailure(fighterId: string, error: unknown): void {
-  if (import.meta.env.DEV) console.error(`[battle:fallback] fighter=${fighterId}`, error);
+export function reportBattleFighterFallbackFailure(diagnostic: { fighterId: string; assetUrl: string; retryCount: number; error: unknown }): void {
+  const state = ensure();
+  // Error 객체를 문자열로 평탄화하지 않아 개발 도구에서 stack/cause까지 그대로 조사할 수 있게 한다.
+  state.battleFighterDiagnostics = [...(state.battleFighterDiagnostics ?? []), diagnostic];
+  if (import.meta.env.DEV) console.error("[battle:fallback] fighter Puppet failed", diagnostic);
+}
+
+/** 실패를 삼키지 않고 공용 로딩 상태에 단계 라벨과 원래 오류를 함께 누적한다. */
+export function reportLoadingFailure(label: string, error: unknown): void {
+  const state = ensure();
+  state.loadingDiagnostics = [...(state.loadingDiagnostics ?? []), { label, error }];
+  if (import.meta.env.DEV) console.error(`[loading:${label}] step failed`, error);
 }
 
 /** 결과 수치 자체는 서버 영수증 테스트가 맡고 E2E에는 표시·입력 계약만 공개한다. */

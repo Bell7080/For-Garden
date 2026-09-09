@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { loadOwnedPuppetWithRetry } from "../../src/puppets/ownedPuppetLoad";
 import { loadSharedPromise } from "../../src/puppets/promiseCache";
+import { reportBattleFighterFallbackFailure } from "../../src/debug";
 
 /** Phaser 없이 실제 요청 횟수와 단일 소유권만 세는 전투 Puppet 대역이다. */
 function puppet() { return { active: true, destroy: vi.fn() }; }
@@ -45,8 +46,21 @@ describe("battle owned Puppet retry boundary", () => {
       onStateChange: (state) => states.push(state),
     });
 
-    expect(result.status).toBe("failed");
+    expect(result).toEqual(expect.objectContaining({ status: "failed", attempts: 3 }));
     expect(states).toEqual(["loading", "retrying", "retrying", "failed"]);
+  });
+
+  it("모든 재시도 실패의 fighter·asset·횟수·원래 오류를 구조화해 보존한다", () => {
+    const failure = new Error("private decoder detail");
+    const host = globalThis as typeof globalThis & { __PF_DEBUG?: { battleFighterDiagnostics?: unknown[] } };
+    host.__PF_DEBUG = undefined;
+
+    reportBattleFighterFallbackFailure({ fighterId: "ally:rex", assetUrl: "rex-sd.zip", retryCount: 2, error: failure });
+
+    // Error를 문자열로 바꾸지 않아 개발 진단에서 원래 stack과 cause를 계속 확인할 수 있다.
+    expect((globalThis as typeof globalThis & { __PF_DEBUG?: { battleFighterDiagnostics?: unknown[] } }).__PF_DEBUG?.battleFighterDiagnostics).toEqual([{
+      fighterId: "ally:rex", assetUrl: "rex-sd.zip", retryCount: 2, error: failure,
+    }]);
   });
 
   it("Scene 종료 후 늦게 완료된 결과는 등록하지 않고 정확히 한 번 폐기한다", async () => {

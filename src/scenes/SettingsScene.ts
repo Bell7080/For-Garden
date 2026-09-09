@@ -12,6 +12,9 @@ import { SettingsToggle } from "../ui/SettingsToggle";
 import { COLOR, textStyle } from "../ui/theme";
 import { platformFeedback } from "../api/PlatformFeedback";
 import { accountApi, type AccountFailureCode, type AccountState } from "../api/AccountApi";
+import { AccountSaveSync } from "../api/AccountSaveSync";
+import { session } from "../state/session";
+import { openSaveConflictPopup, type SaveConflictChoice } from "../ui/SaveConflictPopup";
 import { PopupLayer } from "../ui/PopupLayer";
 import { validateSettingsReturn, type SettingsEntryData, type SettingsReturnScene } from "./settingsNavigation";
 import { relicCollection } from "../managers/RelicCollectionManager";
@@ -198,8 +201,20 @@ export class SettingsScene extends Phaser.Scene {
     this.popups.confirm({ title: "모든 캐릭터 획득", message: grantedCount > 0 ? `새 캐릭터 ${grantedCount}명을 보유 처리했습니다.` : "이미 모든 캐릭터를 보유하고 있습니다.", confirmLabel: "확인" }, () => undefined);
   }
 
-  /** 로그인은 플랫폼 경계만 호출하며 토큰이나 서버 DTO를 Session에 넣지 않는다. */
-  private async login(provider: "google" | "apple"): Promise<void> { await this.runAccountAction(() => accountApi.login({ provider, mergeGuestProgress: true })); }
+  /** 인증 성공 뒤 해시를 비교하고, 게스트의 로컬 선택은 서버 멱등 병합으로만 처리한다. */
+  private async login(provider: "google" | "apple"): Promise<void> {
+    this.accountBusy = true; this.input.enabled = false;
+    // login 자체에는 합산을 맡기지 않는다. 아래 명시적 mergeGuestSave 계약만 게스트 진행을 병합한다.
+    const loggedIn = await accountApi.login({ provider, mergeGuestProgress: false });
+    this.accountBusy = false; this.input.enabled = true;
+    if (!loggedIn.ok) { this.showAccountFailure(loggedIn.code); return; }
+
+    const sync = new AccountSaveSync(accountApi, saveManager);
+    const requestId = crypto.randomUUID();
+    const result = await sync.synchronize(session, (local, remote) => new Promise<SaveConflictChoice>(resolve => openSaveConflictPopup(this, this.popups, local, remote, resolve)), requestId);
+    if (result.ok) { this.scene.start("boot"); return; }
+    this.showAccountFailure(result.code);
+  }
 
   /** 로그아웃/탈퇴는 저장 초기화와 별개의 공용 확인 팝업을 통과한다. */
   private confirmAccountAction(title: string, message: string, operation: () => Promise<{ ok: boolean; code?: AccountFailureCode; message?: string }>): void {
@@ -210,8 +225,13 @@ export class SettingsScene extends Phaser.Scene {
   private async runAccountAction(operation: () => Promise<{ ok: boolean; code?: AccountFailureCode; message?: string }>): Promise<void> {
     this.accountBusy = true; this.input.enabled = false; const result = await operation(); this.accountBusy = false; this.input.enabled = true;
     if (result.ok) { this.scene.start("boot"); return; }
-    const labels: Record<AccountFailureCode, string> = { unsupported: "계정 연동 미지원", cancelled: "로그인이 취소되었습니다.", "network-error": "네트워크 연결을 확인해 주세요.", "guest-merge-unavailable": "게스트 진행을 기존 계정에 합칠 수 없습니다.", "conflict-cancelled": "저장 충돌 선택을 취소했습니다." };
-    this.popups.confirm({ title: "계정 안내", message: labels[result.code ?? "network-error"], confirmLabel: "확인" }, () => undefined);
+    this.showAccountFailure(result.code ?? "network-error");
+  }
+
+  /** 서버 계약의 실패 코드를 플레이어용 문구로 한곳에서 바꾼다. */
+  private showAccountFailure(code: AccountFailureCode): void {
+    const labels: Record<AccountFailureCode, string> = { unsupported: "계정 연동 미지원", cancelled: "로그인이 취소되었습니다.", "network-error": "네트워크 연결을 확인해 주세요.", "guest-merge-unavailable": "게스트 진행을 기존 계정에 합칠 수 없습니다.", "conflict-cancelled": "저장 충돌 선택을 취소했습니다.", "save-conflict": "다른 기기에서 저장이 갱신되었습니다. 다시 시도해 주세요.", "invalid-remote-save": "서버 저장을 확인할 수 없습니다." };
+    this.popups.confirm({ title: "계정 안내", message: labels[code], confirmLabel: "확인" }, () => undefined);
   }
 
   /** 현재 탭 높이만 기준으로 콘텐츠를 움직여 다른 탭 영역으로 새지 않게 한다. */

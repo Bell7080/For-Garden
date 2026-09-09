@@ -186,8 +186,28 @@ export class SaveManager {
     return this.toSession(data);
   }
 
+  /** 원격 전송용 DTO도 로컬 저장과 정확히 같은 직렬화·검증 규칙으로 만든다. */
+  exportData(state: Session): SaveData {
+    return this.toSaveData(state);
+  }
+
+  /** 다운로드 본문은 불신 입력으로 취급하고 마이그레이션·검증 후에만 로컬 저장으로 확정한다. */
+  importRemote(input: unknown): Session {
+    const data = this.migrate(input);
+    this.validate(data);
+    const restored = this.toSession(data);
+    this.save(restored);
+    return restored;
+  }
+
   /** 상태 확정 경계에서 Set을 배열로 바꾸고 한 번에 교체 저장한다. */
   save(state: Session): void {
+    const data = this.toSaveData(state);
+    this.storage?.setItem(SAVE_STORAGE_KEY, JSON.stringify(data));
+  }
+
+  /** Set과 중첩 객체를 JSON 안전 복사본으로 바꾸는 단일 변환점이다. */
+  private toSaveData(state: Session): SaveData {
     const data: SaveData = {
       // 추가 외형의 Set과 장착 표는 이 경계에서만 JSON 안전 복사본으로 바꾼다.
       ownedRelicSkinIds: [...state.ownedRelicSkinIds],
@@ -231,7 +251,7 @@ export class SaveManager {
       expedition: { ...state.expedition, lastParty: [...state.expedition.lastParty], run: state.expedition.run ? cloneExpeditionRun(state.expedition.run) : null },
     };
     this.validate(data);
-    this.storage?.setItem(SAVE_STORAGE_KEY, JSON.stringify(data));
+    return data;
   }
 
   /** 로그아웃/계정 전환에서 사용할 저장 제거다. 새게임 UI를 만들지는 않는다. */

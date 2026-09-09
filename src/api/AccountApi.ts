@@ -19,6 +19,10 @@ export interface ProgressSummary {
 
 /** 원격 저장 본문과 분리해 먼저 조회하는 비교·동시성 메타데이터다. */
 export interface RemoteSaveMetadata {
+  /** 서버가 저장할 때마다 증가시키는 낙관적 동시성 번호다. */
+  revision: string;
+  /** HTTP 구현이 If-Match에 그대로 사용할 수 있는 불투명 ETag다. */
+  etag: string;
   saveVersion: number;
   serverModifiedAt: string;
   summary: ProgressSummary;
@@ -30,6 +34,8 @@ export type AccountFailureCode =
   | "cancelled"
   | "network-error"
   | "guest-merge-unavailable"
+  | "save-conflict"
+  | "invalid-remote-save"
   | "conflict-cancelled";
 
 /** 예외 문자열 대신 UI가 취소·통신 실패·합치기 불가를 구별하게 하는 공통 결과다. */
@@ -39,6 +45,19 @@ export interface LoginRequest {
   provider: Exclude<AccountProvider, "guest">;
   /** true면 플랫폼이 지원하는 경우에만 게스트 진행 합치기를 시도한다. */
   mergeGuestProgress: boolean;
+}
+
+/** revision과 ETag를 함께 보내 오래 읽은 클라이언트가 최신 저장을 덮지 못하게 한다. */
+export interface RemoteSavePrecondition { revision: string; etag: string; }
+
+/** 본문은 신뢰할 수 없는 JSON이므로 AccountApi가 해석하지 않고 SaveManager로 전달한다. */
+export interface RemoteSaveDocument { metadata: RemoteSaveMetadata; data: unknown; }
+
+/** 게스트 병합 재시도는 같은 requestId에 대해 서버가 같은 결과를 돌려줘야 한다. */
+export interface GuestSaveMergeRequest {
+  requestId: string;
+  guestData: unknown;
+  expectedRemote: RemoteSavePrecondition | null;
 }
 
 /**
@@ -53,6 +72,10 @@ export interface AccountApi {
   logout(): Promise<AccountResult<AccountState>>;
   requestWithdrawal(): Promise<AccountResult<void>>;
   getRemoteSaveMetadata(): Promise<AccountResult<RemoteSaveMetadata | null>>;
+  downloadRemoteSave(): Promise<AccountResult<RemoteSaveDocument>>;
+  uploadRemoteSave(data: unknown, expectedRemote: RemoteSavePrecondition | null): Promise<AccountResult<RemoteSaveMetadata>>;
+  deleteRemoteSave(expectedRemote: RemoteSavePrecondition): Promise<AccountResult<void>>;
+  mergeGuestSave(request: GuestSaveMergeRequest): Promise<AccountResult<RemoteSaveDocument>>;
 }
 
 const UNSUPPORTED = "이 빌드에는 계정 플랫폼 SDK가 연결되어 있지 않습니다.";
@@ -67,6 +90,10 @@ export class UnsupportedAccountApi implements AccountApi {
   async logout(): Promise<AccountResult<AccountState>> { return this.unsupported(); }
   async requestWithdrawal(): Promise<AccountResult<void>> { return this.unsupported(); }
   async getRemoteSaveMetadata(): Promise<AccountResult<RemoteSaveMetadata | null>> { return this.unsupported(); }
+  async downloadRemoteSave(): Promise<AccountResult<RemoteSaveDocument>> { return this.unsupported(); }
+  async uploadRemoteSave(_data: unknown, _expectedRemote: RemoteSavePrecondition | null): Promise<AccountResult<RemoteSaveMetadata>> { return this.unsupported(); }
+  async deleteRemoteSave(_expectedRemote: RemoteSavePrecondition): Promise<AccountResult<void>> { return this.unsupported(); }
+  async mergeGuestSave(_request: GuestSaveMergeRequest): Promise<AccountResult<RemoteSaveDocument>> { return this.unsupported(); }
 
   private unsupported<T>(): AccountResult<T> { return { ok: false, code: "unsupported", message: UNSUPPORTED }; }
 }

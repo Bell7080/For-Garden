@@ -85,6 +85,7 @@ import { BOSS_RESULT_LAYOUT, bossResultUtilityBounds } from "../ui/bossResultLay
 import type { CurrencyIconKey } from "../ui/currencyIcons";
 import { KeywordManager } from "../managers/KeywordManager";
 import { openSummonInfoPopup } from "../ui/SummonInfoPopup";
+import { loadOwnedPuppetWithRetry } from "../puppets/ownedPuppetLoad";
 
 /**
  * 여섯이 돌아다닐 수 있는 범위.
@@ -226,6 +227,12 @@ interface FighterView {
   dead: boolean;
 }
 
+/** Puppet이 준비되지 않아도 진영·위치·생존을 계속 보여 주는 저비용 전장 표식이다. */
+interface FighterFallback {
+  marker: Phaser.GameObjects.Graphics;
+  fighter: Fighter;
+}
+
 /** 정산 대상 Fighter와 섞이지 않는 쿠로·시로 전용 화면 생명주기다. */
 interface SummonView {
   creature: PuppetCreature;
@@ -270,6 +277,8 @@ export class BattleScene extends Phaser.Scene {
   private battleInput: BattleSceneInputDto = { mode: "stage" };
   private state!: SkirmishState;
   private views = new Map<string, FighterView>();
+  /** 실제 Puppet 채택과 같은 프레임에 제거되는 임시 실루엣들이다. */
+  private fighterFallbacks = new Map<string, FighterFallback>();
   /** 소환수는 fighter 상세/프로필과 분리해 회수·재호출이 독립적으로 생성과 파괴를 반복한다. */
   private summonViews = new Map<string, SummonView>();
   private profiles: ProfileView[] = [];
@@ -386,6 +395,7 @@ export class BattleScene extends Phaser.Scene {
       enemyBreakthroughs: [...stage.enemies].sort((a, b) => a.formationSlot - b.formationSlot).map(({ breakthrough }) => breakthrough),
     });
     this.views.clear();
+    this.fighterFallbacks.clear();
     this.summonViews.clear();
     this.profiles = [];
     this.allyInfoRef = undefined;
@@ -455,6 +465,8 @@ export class BattleScene extends Phaser.Scene {
       this.openBuff = undefined;
       this.views.forEach((view) => view.creature.destroy());
       this.views.clear();
+      this.fighterFallbacks.forEach(({ marker }) => marker.destroy());
+      this.fighterFallbacks.clear();
       // 비동기 재호출이 남았더라도 세 SD와 별도 입력 영역을 씬 밖으로 가져가지 않는다.
       this.summonViews.forEach((view) => this.destroySummonView(view));
       this.summonViews.clear();
@@ -582,6 +594,15 @@ export class BattleScene extends Phaser.Scene {
   /** 여섯을 숨긴 채 병렬 준비하고, 전원이 성공한 한 프레임에 표현과 입력을 함께 공개한다. */
   private async spawnFighters(token: number): Promise<void> {
     ensureEffectTextures(this);
+    // 로드 첫 프레임부터 빈 전장을 피한다. 마름모 색은 아군/적 진영을, 안쪽 막대는 생존을 말한다.
+    this.state.fighters.forEach((fighter) => {
+      if (this.fighterFallbacks.has(fighter.id)) return;
+      const color = fighter.side === "player" ? COLOR.hpFill : COLOR.hpEnemy;
+      const marker = this.add.graphics().fillStyle(0x05080c, 0.82).fillPoints([
+        new Phaser.Geom.Point(-34, 0), new Phaser.Geom.Point(0, -88), new Phaser.Geom.Point(34, 0), new Phaser.Geom.Point(0, 18),
+      ]).fillStyle(color, 0.95).fillRect(-22, -14, 44, 8);
+      this.fighterFallbacks.set(fighter.id, { marker, fighter });
+    });
     const prepare = async (fighter: Fighter): Promise<{ fighter: Fighter; asset: PuppetAsset; unitHeight: number; tint: number; creature: PuppetCreature }> => {
       // 표시 배율은 코어 입력에 들어 있으며 씬은 모든 Puppet 부속 표현에 같은 높이만 적용한다.
       const unitHeight = UNIT_HEIGHT * fighter.bodyScale;
@@ -589,50 +610,36 @@ export class BattleScene extends Phaser.Scene {
       const asset = relicAppearanceManager.battleAssetFor(fighter.def.id, fighter.side === "enemy" ? "enemy" : "ally");
       // 번호별 전용 적 SD도 원화 색을 보존하므로 더 이상 임시 허스크 tint를 입히지 않는다.
       const tint = 0xffffff;
-      const creature = await spawnPuppet(this, asset, {
-        x: fighter.x,
-        groundY: fighter.y,
-        height: unitHeight,
-        flipX: fighter.facing < 0,
-        tint,
+      let adoptedCreature: PuppetCreature | undefined;
+      const result = await loadOwnedPuppetWithRetry({
+        // 실패 캐시는 rejection microtask에서 제거되며, 매 attempt가 spawnPuppet을 실제 재호출한다.
+        spawn: () => spawnPuppet(this, asset, { x: fighter.x, groundY: fighter.y, height: unitHeight, flipX: fighter.facing < 0, tint }),
+        isCurrent: () => this.isCurrentSpawn(token),
+        isDisplayable: (candidate) => candidate.active,
+        adopt: (creature) => { creature.setVisible(false); adoptedCreature = creature; },
+        attempts: 3,
+        retryDelayMs: 120,
       });
-      // await의 continuation은 렌더보다 먼저 실행되므로 생성된 Puppet이 단독으로 보이는 프레임은 없다.
-      creature.setVisible(false);
-      if (!this.isCurrentSpawn(token)) {
-        creature.destroy();
-        throw new Error("stale battle spawn");
-      }
-      return { fighter, asset, unitHeight, tint, creature };
+      if (result.status === "failed") throw result.error;
+      if (result.status === "discarded") throw new Error(`discarded battle spawn: ${result.reason}`);
+      // adopted 콜백이 같은 동기 분기에서 참조를 넘기는 계약을 별도로 검증해 타입과 런타임을 함께 지킨다.
+      if (!adoptedCreature) throw new Error("adopted battle spawn did not provide a creature");
+      return { fighter, asset, unitHeight, tint, creature: adoptedCreature };
     };
 
-    // 첫 실패는 일시적인 캐시/업로드 문제일 수 있어 전투 공개 전에 딱 한 번 전원 단위로 재시도한다.
-    let results = await Promise.allSettled(this.state.fighters.map(prepare));
-    if (!this.isCurrentSpawn(token)) {
-      results.forEach((result) => { if (result.status === "fulfilled") result.value.creature.destroy(); });
-      return;
-    }
-    if (results.some((result) => result.status === "rejected")) {
-      results.forEach((result) => { if (result.status === "fulfilled") result.value.creature.destroy(); });
-      results = await Promise.allSettled(this.state.fighters.map(prepare));
-    }
+    // 개별 로더가 짧은 제한 재시도를 소유하므로 성공한 Fighter를 전원 단위로 다시 만들지 않는다.
+    const results = await Promise.allSettled(this.state.fighters.map(prepare));
     if (!this.isCurrentSpawn(token)) {
       results.forEach((result) => { if (result.status === "fulfilled") result.value.creature.destroy(); });
       return;
     }
     const failures = results.filter((result): result is PromiseRejectedResult => result.status === "rejected");
     if (failures.length > 0) {
-      // 일부 전투원만 공개하지 않는다. 명시적인 대체 판과 재시도만 보여 코어 전투도 시작하지 않는다.
-      results.forEach((result) => { if (result.status === "fulfilled") result.value.creature.destroy(); });
+      // 실패 개체만 실루엣으로 남고 성공 개체와 코어 전투는 정상 진행한다.
       console.error("[battle] 필수 전투원 준비 실패", failures.map(({ reason }) => reason));
-      this.add.text(BASE_WIDTH / 2, 850, "전투원 표시를 준비하지 못했습니다.", textStyle({ role: "body", size: 28, color: COLOR.dangerText })).setOrigin(0.5);
-      new Button(this, BASE_WIDTH / 2, 940, { width: 360, height: 88, label: "다시 시도", onClick: () => {
-        if (!this.spawned && this.isCurrentSpawn(token)) void this.spawnFighters(token);
-      } });
-      return;
     }
 
-    // allSettled 검사를 통과했으므로 아래 공개 단계에는 반드시 모든 Fighter가 있다.
-    const prepared = results.map((result) => (result as PromiseFulfilledResult<Awaited<ReturnType<typeof prepare>>>).value);
+    const prepared = results.filter((result): result is PromiseFulfilledResult<Awaited<ReturnType<typeof prepare>>> => result.status === "fulfilled").map(({ value }) => value);
     for (const { fighter, asset, unitHeight, tint, creature } of prepared) {
       // Puppet Mesh의 기본 입력 경계는 비동기 생성 시점의 로컬 크기에 묶여 이동·배율 적용 뒤
       // 실제 SD와 어긋날 수 있다. 투명 몸통 영역을 따로 두고 매 프레임 발 위치를 따라가게 한다.
@@ -660,6 +667,9 @@ export class BattleScene extends Phaser.Scene {
           this.openStatusList(fighter.id);
         });
       this.views.set(fighter.id, { creature, asset, fighter, infoHit, shadow, hpBar, statusChips, statusHit, stunShown: false, feverTint, feverStep: -1, feverTinted: false, tint, squashAt: -Infinity, squashDir: 1, spinDir: 1, dead: false });
+      // view 등록 후 fallback을 제거해 어느 프레임에도 둘이 없거나 둘 다 소유되는 틈을 만들지 않는다.
+      this.fighterFallbacks.get(fighter.id)?.marker.destroy();
+      this.fighterFallbacks.delete(fighter.id);
     }
     // creature와 모든 부속 표현을 등록한 뒤 한 루프에서 전원을 공개한다.
     prepared.forEach(({ creature }) => creature.setVisible(true));
@@ -1497,6 +1507,11 @@ export class BattleScene extends Phaser.Scene {
 
   /** 좌표·방향·체력 바·앞뒤 순서를 시뮬레이션 상태에 맞춘다. */
   private syncViews(): void {
+    // 실패 실루엣도 코어 pose를 따라가며 사망 즉시 흐려져 전투 정보가 투명해지지 않는다.
+    this.fighterFallbacks.forEach(({ marker, fighter }) => {
+      const pose = renderPose(fighter);
+      marker.setPosition(pose.x, pose.y).setDepth(Math.round(fighter.y / 10) + DEPTH.unitBase).setAlpha(isFighterAlive(fighter) ? 1 : 0.24);
+    });
     this.views.forEach((view) => {
       if (view.dead) return;
       const { fighter } = view;

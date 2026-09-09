@@ -12,5 +12,10 @@ describe("UnsupportedAccountApi", () => {
     const api = new UnsupportedAccountApi();
     expect(await api.login({ provider: "google", mergeGuestProgress: true })).toMatchObject({ ok: false, code: "unsupported" });
     expect(await api.getRemoteSaveMetadata()).toMatchObject({ ok: false, code: "unsupported" });
+    // 웹 프로토타입은 다운로드·조건부 업로드·삭제·병합 역시 성공으로 위장하지 않는다.
+    expect(await api.downloadRemoteSave()).toMatchObject({ ok: false, code: "unsupported" });
+    expect(await api.uploadRemoteSave({}, null)).toMatchObject({ ok: false, code: "unsupported" });
+    expect(await api.deleteRemoteSave({ revision: "1", etag: '"1"' })).toMatchObject({ ok: false, code: "unsupported" });
+    expect(await api.mergeGuestSave({ requestId: "merge-1", guestData: {}, expectedRemote: null })).toMatchObject({ ok: false, code: "unsupported" });
   });
 });

@@ -26,7 +26,8 @@ export class StageStoryScene extends Phaser.Scene {
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void);
     drawLayer(this, BASE_WIDTH / 2, 560, slantedRect(880, 720), { fill: 0x141920, alpha: 0.9, edge: COLOR.accent, edgeAlpha: 0.25 });
     this.layer = new DialogueLayer(this, (choice) => this.advance(choice));
-    void this.layer.show(this.flow.current).finally(() => this.flow.unlockInput());
+    // DialogueFlow는 최초 표시 잠금으로 시작하므로 Puppet 비동기 준비가 끝난 뒤에만 커서를 연다.
+    void this.layer.show(this.flow.current).finally(() => this.flow.markCurrentNodeReady());
     setDebugReady(true);
   }
 
@@ -39,6 +40,7 @@ export class StageStoryScene extends Phaser.Scene {
       this.scene.start("stageMap");
       return;
     }
-    void this.layer?.show(result.node!).finally(() => this.flow.unlockInput());
+    // 후속 노드도 같은 흐름 잠금을 사용해 Puppet 교체와 연속 입력이 경쟁하지 않게 한다.
+    void this.layer?.show(result.node!).finally(() => this.flow.markCurrentNodeReady());
   }
 }

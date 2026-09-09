@@ -1,7 +1,5 @@
 import type Phaser from "phaser";
 import { preloadPuppetAssets, PUPPET_PRELOAD_GROUPS } from "../puppets/assets";
-import { runLoadingSteps as runSteps, type LoadingStep } from "./loadingStepRunner";
-export type { LoadingStep } from "./loadingStepRunner";
 import { BACKGROUND_ASSETS } from "../ui/backgrounds";
 import { loadGameFonts } from "../ui/fonts";
 import { UI_ICON_ASSETS } from "../ui/icons";
@@ -22,6 +20,12 @@ import { SHOP_PRODUCT_ICON_ASSETS } from "../data/shopCatalog";
  * 읽어, 기다리는 동안 사용자가 검은 화면 대신 제목과 진행 칸을 본다. 로딩할 것이 늘면 씬에
  * 직접 `load`를 부르지 말고 이 목록에 단계를 더한다 — 진행 칸 수가 목록 길이라서 저절로 맞는다.
  */
+export interface LoadingStep {
+  /** 디버깅과 테스트에서 단계를 가리키는 이름. 화면에는 띄우지 않는다. */
+  readonly label: string;
+  run(scene: Phaser.Scene): Promise<void>;
+}
+
 /** Phaser 로더는 콜백식이라 단계 하나를 기다릴 수 있게 감싼다. */
 function loadWithPhaser(scene: Phaser.Scene, queue: () => void): Promise<void> {
   return new Promise((resolve) => {
@@ -97,12 +101,16 @@ export const LOADING_STEPS: ReadonlyArray<LoadingStep> = [
       }),
   },
   {
-    // 정보창 전신과 궁극기 컷인이 공유하는 첫 그룹 전체가 끝나야 이 단계가 완료된다.
-    label: "렐릭 스탠딩·궁극기 컷인",
+    label: "렐릭 스탠딩",
     run: () => preloadPuppetAssets(PUPPET_PRELOAD_GROUPS[0]),
   },
   {
-    // 두 번째 그룹도 await하므로 TitleScene의 ready/입장 상태는 전신과 모든 SD가 끝난 뒤에만 열린다.
+    // 궁극기 컷인은 portraitAssetFor가 가리키는 같은 캐시를 재사용한다. 단계로 등록해 두면
+    // 첫 발동 도중 ZIP 파싱이 일어나 연출이 끊기는 일이 없다.
+    label: "궁극기 컷인 원화",
+    run: () => preloadPuppetAssets(PUPPET_PRELOAD_GROUPS[0]),
+  },
+  {
     label: "SD·적 묶음",
     run: () => preloadPuppetAssets(PUPPET_PRELOAD_GROUPS[1]),
   },
@@ -119,8 +127,15 @@ export async function runLoadingSteps(
   onStepDone: (done: number, total: number) => void,
   steps: ReadonlyArray<LoadingStep> = LOADING_STEPS,
 ): Promise<void> {
-  // 기본 목록을 이 조합 모듈이 소유하고, 순수 실행기는 테스트에서도 Phaser 런타임 없이 검증한다.
-  await runSteps(scene, onStepDone, steps);
+  for (let i = 0; i < steps.length; i++) {
+    try {
+      await steps[i].run(scene);
+    } catch {
+      // 실패한 단계도 칸은 채운다. 진행이 멈춘 것처럼 보이는 편이 더 나쁘다.
+    }
+    if (!scene.scene.isActive()) return;
+    onStepDone(i + 1, steps.length);
+  }
 }
 
 /**

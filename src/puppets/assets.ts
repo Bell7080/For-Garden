@@ -13,7 +13,6 @@ import {
   type FocusOptions,
 } from "./anchors";
 import type { IndexedPuppetCreature } from "./IndexedPuppetCreature";
-import { loadSharedPromise } from "./promiseCache";
 import {
   DEINA_PORTRAIT_METADATA,
   DEINA_SD_METADATA,
@@ -314,7 +313,7 @@ export const EXPLORER_ASSET: PuppetAsset = {
 /**
  * 렐릭 데이터가 참조하는 원화 레지스트리. 새 원화는 여기에 한 번 등록한 뒤 데이터 키로 연결한다.
  */
-export const PORTRAIT_ASSETS = {
+const PORTRAIT_ASSETS = {
   torika: TORIKA_ASSET,
   lexia: LEXIA_ASSET,
   seira: SEIRA_ASSET,
@@ -348,7 +347,7 @@ export const PORTRAIT_ASSETS = {
  * 장착 가능한 전신 스킨 표. 첫 키는 렐릭의 전신 asset ID, 둘째 키는 저장되는 스킨 ID다.
  * 기본 외형은 이 표에 넣지 않아 "명시한 장착 스킨 → 해당 렐릭 기본 외형" 순서를 보존한다.
  */
-export const PORTRAIT_SKINS: Readonly<Partial<Record<PortraitAssetId, Readonly<Record<string, PuppetAsset>>>>> = {
+const PORTRAIT_SKINS: Readonly<Partial<Record<PortraitAssetId, Readonly<Record<string, PuppetAsset>>>>> = {
   torika: { "torika-skin-001": TORIKA_SKIN_001_ASSET },
 };
 
@@ -531,7 +530,7 @@ export const SUMMON_SD_ASSETS: Readonly<Record<string, PuppetAsset>> = {
  * `if` 사슬을 갖고 있어, 새 개체를 한쪽에만 적으면 그 화면에서만 조용히 토리카 SD로 되돌아갔다
  * — 메론이 v0.52.3까지 원정과 승리 MVP에서 그랬다. 표가 하나면 빠뜨릴 자리가 없다.
  */
-export const ALLY_SD_ASSETS: Readonly<Record<string, PuppetAsset>> = {
+const ALLY_SD_ASSETS: Readonly<Record<string, PuppetAsset>> = {
   anky: TORIKA_SD_ASSET,
   rex: LEXIA_SD_ASSET,
   spino: SEIRA_SD_ASSET,
@@ -567,7 +566,7 @@ export const ENEMY_SD_ASSETS_BY_ID: Readonly<Record<string, PuppetAsset>> = {
 };
 
 /** SD 스킨도 렐릭 ID 아래에만 등록해 다른 렐릭으로 폴백할 수 없게 한다. */
-export const ALLY_SD_SKINS: Readonly<Record<string, Readonly<Record<string, PuppetAsset>>>> = {
+const ALLY_SD_SKINS: Readonly<Record<string, Readonly<Record<string, PuppetAsset>>>> = {
   anky: { "torika-skin-001": TORIKA_SKIN_001_SD_ASSET },
 };
 
@@ -644,111 +643,25 @@ const motionCompletions = new WeakMap<PuppetCreature, () => void>();
 const loaded = new Map<string, Promise<Puppet>>();
 
 async function loadPuppet(asset: PuppetAsset): Promise<Puppet> {
-  return loadSharedPromise(loaded, asset.url, () => {
+  let pending = loaded.get(asset.url);
+  if (!pending) {
     // ZIP의 원본 격자와 모든 deform 가중치를 그대로 캐시한다. 인게임용 재샘플링은 하지 않는다.
     // 렌더러 모듈은 실제 Puppet 로딩 시점에만 평가해 순수 resolver 단위 테스트가 DOM을 요구하지 않게 한다.
-    // 일시적인 네트워크·ZIP 파싱 실패는 헬퍼가 동일 Promise인지 확인해 제거하므로 다음 호출이 재시도한다.
-    return import("puppetforge/phaser").then(({ Puppet }) => Puppet.load(asset.url));
-  });
-}
-
-/** 사전 로딩 한 건이 실패했을 때 호출자에게 URL과 원래 오류를 함께 전달하는 진단 정보다. */
-export interface PuppetAssetPreloadFailure {
-  readonly assetUrl: string;
-  readonly error: unknown;
-  /** 실패한 캐시는 제거되므로 이후 화면은 필요할 때 다시 읽는 폴백을 시도할 수 있다. */
-  readonly fallbackAvailable: boolean;
-}
-
-/** 모든 등록 요청이 settle된 뒤 반환되는 Puppet 사전 로딩 결과다. */
-export interface PuppetAssetPreloadResult {
-  readonly failures: readonly PuppetAssetPreloadFailure[];
-  /** 일부 원화가 없어도 호출자가 게임 진입을 계속할 수 있는지 명시한다. */
-  readonly fallbackAvailable: boolean;
-}
-
-/** Phaser texture 준비도 개별 실패를 격리해 전투원이 자기 생성 복구 경로를 계속 탈 수 있게 한다. */
-export type PuppetTextureWarmResult = PuppetAssetPreloadResult;
-
-/** 테스트 주입과 네트워크 정책 조정을 위한 제한된 사전 로딩 옵션이다. */
-export interface PuppetAssetPreloadOptions {
-  readonly maxRetries?: number;
-  readonly attemptTimeoutMs?: number;
-  readonly loader?: (asset: PuppetAsset) => Promise<unknown>;
-}
-
-/** 네트워크 계층에서 흔히 일시적으로 발생하는 오류만 재시도 대상으로 분류한다. */
-function isTransientLoadError(error: unknown): boolean {
-  if (error instanceof TypeError) return true;
-  const status = typeof error === "object" && error !== null && "status" in error
-    ? Number((error as { status?: unknown }).status)
-    : Number.NaN;
-  return status === 408 || status === 429 || status >= 500;
-}
-
-/** 응답하지 않는 한 요청이 전체 타이틀 로딩을 영원히 붙들지 않도록 시한을 둔다. */
-function withTimeout<T>(pending: Promise<T>, timeoutMs: number, assetUrl: string): Promise<T> {
-  return new Promise<T>((resolve, reject) => {
-    const timer = globalThis.setTimeout(
-      () => reject(new TypeError(`Puppet asset load timed out after ${timeoutMs}ms: ${assetUrl}`)),
-      timeoutMs,
-    );
-    void pending.then(
-      (value) => {
-        globalThis.clearTimeout(timer);
-        resolve(value);
-      },
-      (error: unknown) => {
-        globalThis.clearTimeout(timer);
-        reject(error);
-      },
-    );
-  });
-}
-
-/** 한 에셋을 유한 횟수만 재시도하고 마지막 오류를 allSettled 결과에 보존한다. */
-async function loadPuppetWithRetry(asset: PuppetAsset, options: PuppetAssetPreloadOptions): Promise<void> {
-  const maxRetries = Math.max(0, options.maxRetries ?? 1);
-  const timeoutMs = Math.max(1, options.attemptTimeoutMs ?? 30_000);
-  const loader = options.loader ?? loadPuppet;
-  for (let attempt = 0; ; attempt++) {
-    try {
-      await withTimeout(Promise.resolve(loader(asset)), timeoutMs, asset.url);
-      return;
-    } catch (error) {
-      if (attempt >= maxRetries || !isTransientLoadError(error)) throw error;
-    }
+    pending = import("puppetforge/phaser").then(({ Puppet }) => Puppet.load(asset.url));
+    loaded.set(asset.url, pending);
   }
-}
-
-/** 중첩된 스킨 표를 등록된 Puppet 목록으로 펼친다. */
-function skinAssets(
-  skins: Readonly<Record<string, Readonly<Record<string, PuppetAsset>> | undefined>>,
-): PuppetAsset[] {
-  return Object.values(skins).flatMap((assets) => Object.values(assets ?? {}));
-}
-
-/** URL이 같은 등록 항목은 최초 항목만 남겨 다운로드와 ZIP 파싱을 한 번으로 제한한다. */
-function uniqueAssets(assets: readonly PuppetAsset[], seen = new Set<string>()): PuppetAsset[] {
-  return assets.filter((asset) => {
-    if (seen.has(asset.url)) return false;
-    seen.add(asset.url);
-    return true;
-  });
+  return pending;
 }
 
 /**
- * 타이틀 로딩이 진행 칸을 나눠 보여줄 수 있도록 전체 등록 표를 전신과 SD 두 무리로 나눈다.
- * 정보창은 큰 관절 원화를 세우는 동시에 능력치/편성 영역에서 SD 미리보기를 사용하므로 두 무리가
- * 모두 필요하다. 새 캐릭터와 스킨은 resolver 표에 등록하는 즉시 이 목록에도 자동 반영되어야 첫
- * 정보창이나 전투 프레임에서 ZIP 다운로드·파싱이 뒤늦게 발생하지 않는다.
+ * 타이틀 로딩이 진행 칸을 나눠 보여줄 수 있도록 묶음을 두 무리로 갈라 둔다.
+ * 전신 스탠딩이 먼저 필요하고(로비·발굴 연출), SD와 적은 전투에 들어가야 쓰인다.
  */
-const preloadUrls = new Set<string>();
 export const PUPPET_PRELOAD_GROUPS: ReadonlyArray<readonly PuppetAsset[]> = [
-  // 기본 전신과 장착 스킨을 모두 포함하며, 궁극기 컷인도 이 전신 캐시를 함께 재사용한다.
-  uniqueAssets([...Object.values(PORTRAIT_ASSETS), ...skinAssets(PORTRAIT_SKINS)], preloadUrls),
-  // 아군·적 SD와 SD 스킨을 모두 포함하고 앞 그룹과 URL이 같아도 다시 넣지 않는다.
-  uniqueAssets([...Object.values(ALLY_SD_ASSETS), ...Object.values(SUMMON_SD_ASSETS), ...Object.values(ENEMY_SD_ASSETS_BY_ID), ...skinAssets(ALLY_SD_SKINS)], preloadUrls),
+  // 전신은 PortraitCard와 정보창이 처음 열릴 때 파싱하지 않도록 중앙 전신 단계에 둔다.
+  [TORIKA_ASSET, TORIKA_SKIN_001_ASSET, LEXIA_ASSET, SEIRA_ASSET, LUKA_ASSET, PONTOS_ASSET],
+  // SD 역시 씬 로더가 아니라 타이틀의 공용 Puppet 단계에서 미리 해석한다.
+  [TORIKA_SD_ASSET, TORIKA_SKIN_001_SD_ASSET, LEXIA_SD_ASSET, SEIRA_SD_ASSET, LUKA_SD_ASSET, ...ENEMY_SD_ASSETS, PONTOS_SD_ASSET, TOBY_ASSET, AMO_ASSET, RIPA_ASSET],
 ];
 
 /**
@@ -760,47 +673,8 @@ export const PUPPET_PRELOAD_GROUPS: ReadonlyArray<readonly PuppetAsset[]> = [
  */
 export async function preloadPuppetAssets(
   group: readonly PuppetAsset[] = PUPPET_PRELOAD_GROUPS.flat(),
-  options: PuppetAssetPreloadOptions = {},
-): Promise<PuppetAssetPreloadResult> {
-  // allSettled가 빠른 실패 뒤에도 나머지 ZIP 다운로드·파싱이 끝날 때까지 단계 반환을 막는다.
-  const settled = await Promise.allSettled(group.map((asset) => loadPuppetWithRetry(asset, options)));
-  const failures = settled.flatMap<PuppetAssetPreloadFailure>((result, index) =>
-    result.status === "rejected"
-      ? [{ assetUrl: group[index].url, error: result.reason, fallbackAvailable: true }]
-      : [],
-  );
-  return { failures, fallbackAvailable: failures.every((failure) => failure.fallbackAvailable) };
-}
-
-/**
- * 등록된 SD를 실제 Phaser texture cache까지 올려 전투 진입 프레임의 GPU 업로드를 미리 끝낸다.
- *
- * `preloadPuppetAssets`의 소유권은 네트워크 다운로드와 ZIP/프로젝트 파싱까지다. 반대로 texture는
- * Phaser renderer와 Scene이 있어야 만들 수 있으므로, 전투 진입을 조율하는 Scene이 선택적으로
- * 이 함수를 호출한다. 두 단계를 합치지 않아 타이틀의 Phaser 비의존 프리로드 계약을 보존한다.
- */
-// Texture Manager는 WebGL 컨텍스트와 수명을 같이하므로 URL 전역 캐시가 아니라 renderer별 캐시다.
-const warmedTextures = new WeakMap<object, Map<string, Promise<void>>>();
-
-export async function warmPuppetTextures(
-  scene: Phaser.Scene,
-  group: readonly PuppetAsset[],
-): Promise<PuppetTextureWarmResult> {
-  // 호출자도 현재 편성만 넘기지만, 이 경계에서 URL을 다시 접어 같은 파일의 동시 GPU 업로드를 막는다.
-  const assets = uniqueAssets(group);
-  const textureManager = scene.textures as object;
-  const cache = warmedTextures.get(textureManager) ?? new Map<string, Promise<void>>();
-  warmedTextures.set(textureManager, cache);
-  const { ensureTexture } = await import("./IndexedPuppetCreature");
-  const settled = await Promise.allSettled(assets.map((asset) => loadSharedPromise(cache, asset.url, async () => {
-    // loadPuppet 캐시는 네트워크/ZIP 파싱 결과이고, 이 별도 캐시는 renderer의 GPU texture 완료를 기억한다.
-    await ensureTexture(scene, await loadPuppet(asset));
-  })));
-  const failures = settled.flatMap<PuppetAssetPreloadFailure>((result, index) => result.status === "rejected"
-    // 실패 Promise는 loadSharedPromise가 제거하므로 spawnPuppet의 캐릭터별 제한 재시도가 복구를 맡는다.
-    ? [{ assetUrl: assets[index].url, error: result.reason, fallbackAvailable: true }]
-    : []);
-  return { failures, fallbackAvailable: true };
+): Promise<void> {
+  await Promise.all(group.map(loadPuppet));
 }
 
 export interface SpawnOptions {
@@ -881,7 +755,7 @@ export interface PortraitTexture {
  */
 export async function loadPortraitTexture(scene: Phaser.Scene, asset: PuppetAsset): Promise<PortraitTexture> {
   const template = await loadPuppet(asset);
-  // Phaser 구현은 실제 생성 시점에만 읽어 resolver/프리로드 표의 정적 테스트가 DOM을 요구하지 않게 한다.
+  // Phaser 구현은 실제 생성 시점에만 읽어 정적 asset 표의 테스트가 DOM을 요구하지 않게 한다.
   const { ensureTexture } = await import("./IndexedPuppetCreature");
   const [key, anchors] = await Promise.all([ensureTexture(scene, template), loadPuppetAnchors(asset)]);
   return { key, anchors };
@@ -895,26 +769,6 @@ export function headCardFrame(asset: PuppetAsset, anchors: Record<AnchorKind, An
 /** indexed renderer는 단일 GPU uniform으로 색 필터를 적용한다. */
 export function tintPuppet(creature: PuppetCreature, color: number): void {
   creature.setTint(color);
-}
-
-/**
- * UI 수명주기에서 PuppetForge 계산을 명시적으로 멈춘다.
- * Phaser의 `visible=false`는 그리기만 생략하고 Scene UPDATE listener는 그대로 호출하기 때문에
- * 가려진 정보창의 전신과 SD에는 이 API도 함께 적용해야 한다.
- */
-export function pauseMotion(creature: PuppetCreature | undefined): void {
-  creature?.pauseMotion();
-}
-
-/**
- * 건너뛴 시간을 보충하지 않고 현재 프레임부터 다시 적분하며, 마지막 일회성 자세가 남지 않도록
- * idle을 처음부터 명시적으로 재생한다. PuppetForge의 `update(delta)` 계약은 전달받은 delta만
- * 진행하므로 pause 중 delta는 runtime 내부에 누적되지 않는다.
- */
-export function resumeMotion(creature: PuppetCreature | undefined): void {
-  if (!creature?.active) return;
-  creature.play("idle");
-  creature.resumeMotion();
 }
 
 /**
@@ -964,7 +818,6 @@ export async function spawnPuppet(
   // 캐릭터의 play가 다른 캐릭터를 덮으므로, 정적 프로젝트만 공유하고 재생기는 개체마다 만든다.
   const { Puppet } = await import("puppetforge/phaser");
   const puppet = Puppet.fromProject(template.project, template.texture);
-  // 렌더러 클래스도 실제 Puppet 생성 직전에만 평가해 에셋 레지스트리는 Node에서도 읽을 수 있게 한다.
   const { IndexedPuppetCreature } = await import("./IndexedPuppetCreature");
   const creature = await IndexedPuppetCreature.fromPuppet(scene, puppet);
 

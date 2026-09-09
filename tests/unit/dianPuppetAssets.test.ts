@@ -3,7 +3,8 @@ import { resolve } from "node:path";
 import { execFileSync } from "node:child_process";
 import { describe, expect, it } from "vitest";
 import { DIAN_PORTRAIT_METADATA, DIAN_SD_METADATA, KURO_SD_METADATA, SHIRO_SD_METADATA } from "../../src/puppets/assetMetadata";
-import { DIAN_ASSET, DIAN_SD_ASSET, KURO_SD_ASSET, PUPPET_PRELOAD_GROUPS, SHIRO_SD_ASSET } from "../../src/puppets/assets";
+// 디안은 다른 후발 개체와 마찬가지로 타이틀 프리로드 목록이 아니라 첫 사용 시점에 해석한다.
+import { DIAN_ASSET, DIAN_SD_ASSET, KURO_SD_ASSET, SHIRO_SD_ASSET } from "../../src/puppets/assets";
 
 /** 배포 ZIP에서 puppet.json만 읽어 테스트용 압축 해제 파일을 저장소에 남기지 않는다. */
 function project(file: string): { character: { width: number; height: number }; bones: Array<{ name: string; x: number; y: number }> } {
@@ -34,12 +35,5 @@ describe("디안과 귀속 늑대 Puppet 에셋", () => {
     expect(metadata.joints?.head).toEqual(point("머리1"));
     expect(metadata.joints?.feet).toEqual([point("발1"), point("발2")]);
     expect(metadata.joints?.eyes).toEqual(point("눈1") ? [point("눈1"), point("눈2")] : null);
-  });
-
-  it("는 전신을 첫 그룹, 디안·쿠로·시로 SD를 둘째 그룹에 중복 없이 등록한다", () => {
-    expect(PUPPET_PRELOAD_GROUPS[0]).toContain(DIAN_ASSET);
-    for (const asset of [DIAN_SD_ASSET, KURO_SD_ASSET, SHIRO_SD_ASSET]) expect(PUPPET_PRELOAD_GROUPS[1]).toContain(asset);
-    const urls = PUPPET_PRELOAD_GROUPS.flat().map(({ url }) => url);
-    expect(new Set(urls).size).toBe(urls.length);
   });
 });

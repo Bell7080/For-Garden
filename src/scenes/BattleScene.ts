@@ -25,7 +25,7 @@ import { getRelic } from "../data/relics";
 import { getBattleStage, getStageEnemies } from "../data/stages";
 import { getExpeditionNodeEnemies } from "../data/expeditionEnemies";
 import type { PuppetCreature, PuppetAsset } from "../puppets/assets";
-import { cancelMotion, flashHit, isHitFlashing, placePuppet, playMotion, spawnPuppet, SUMMON_SD_ASSETS, tintPuppet, warmPuppetTextures } from "../puppets/assets";
+import { cancelMotion, flashHit, isHitFlashing, placePuppet, playMotion, spawnPuppet, SUMMON_SD_ASSETS, tintPuppet } from "../puppets/assets";
 import { session } from "../state/session";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { Button } from "../ui/Button";
@@ -35,7 +35,7 @@ import { UnitHealthBar } from "../ui/UnitHealthBar";
 import { skillArtTint } from "../ui/skillArt";
 import { combatPalette, signatureFor, type CombatPalette, type SignatureMoment } from "../ui/signatureEffects";
 import { COLOR, textStyle } from "../ui/theme";
-import { reportBattleFighterFallbackFailure, setDebugBattle, setDebugBossResult, setDebugScene } from "../debug";
+import { setDebugBattle, setDebugBossResult, setDebugScene } from "../debug";
 import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { CharacterInfoManager } from "../managers/CharacterInfoManager";
 import { bindLongPress } from "../ui/longPressInfo";
@@ -85,7 +85,6 @@ import { BOSS_RESULT_LAYOUT, bossResultUtilityBounds } from "../ui/bossResultLay
 import type { CurrencyIconKey } from "../ui/currencyIcons";
 import { KeywordManager } from "../managers/KeywordManager";
 import { openSummonInfoPopup } from "../ui/SummonInfoPopup";
-import { loadOwnedPuppetWithRetry } from "../puppets/ownedPuppetLoad";
 
 /**
  * 여섯이 돌아다닐 수 있는 범위.
@@ -227,18 +226,6 @@ interface FighterView {
   dead: boolean;
 }
 
-/** Puppet이 준비되지 않아도 진영·위치·생존을 계속 보여 주는 저비용 전장 표식이다. */
-interface FighterFallback {
-  marker: Phaser.GameObjects.Graphics;
-  fighter: Fighter;
-  /** 화면에는 문구를 쓰지 않고 표식의 움직임과 공용 경고 문법으로만 알리는 준비 단계다. */
-  state: "loading" | "retrying" | "failed";
-  /** 상태가 바뀔 때 이전 맥동이 남지 않도록 표식이 자기 tween 하나를 소유한다. */
-  motion?: Phaser.Tweens.Tween;
-  /** 최종 실패 표식을 다시 누를 때 이 전투원 하나만 준비하는 동작이다. */
-  retry?: () => void;
-}
-
 /** 정산 대상 Fighter와 섞이지 않는 쿠로·시로 전용 화면 생명주기다. */
 interface SummonView {
   creature: PuppetCreature;
@@ -283,8 +270,6 @@ export class BattleScene extends Phaser.Scene {
   private battleInput: BattleSceneInputDto = { mode: "stage" };
   private state!: SkirmishState;
   private views = new Map<string, FighterView>();
-  /** 실제 Puppet 채택과 같은 프레임에 제거되는 임시 실루엣들이다. */
-  private fighterFallbacks = new Map<string, FighterFallback>();
   /** 소환수는 fighter 상세/프로필과 분리해 회수·재호출이 독립적으로 생성과 파괴를 반복한다. */
   private summonViews = new Map<string, SummonView>();
   private profiles: ProfileView[] = [];
@@ -302,8 +287,6 @@ export class BattleScene extends Phaser.Scene {
   private bossPhaseLabel?: Phaser.GameObjects.Text;
   private bossBestLabel?: Phaser.GameObjects.Text;
   private spawned = false;
-  /** 재진입/종료 뒤 도착한 비동기 생성 결과가 새 전투에 섞이지 않게 하는 생명주기 세대다. */
-  private spawnGeneration = 0;
   /** 마지막으로 시뮬레이션을 굴린 실제 시각(ms). */
   private lastStepAt = 0;
   /** 시뮬레이션 시간에만 곱하는 현재 전투 배속이다. */
@@ -371,8 +354,6 @@ export class BattleScene extends Phaser.Scene {
   }
 
   create(): void {
-    // 같은 Scene 인스턴스가 재사용되므로 create마다 이전 준비 작업을 무효화한다.
-    const spawnToken = ++this.spawnGeneration;
     setDebugScene("battle");
     const stage = getBattleStage(session.selectedStageId ?? "1-1");
     // 적은 스테이지별 임시 레벨 성장치를 적용한 복사본으로 전투에 투입한다.
@@ -401,7 +382,6 @@ export class BattleScene extends Phaser.Scene {
       enemyBreakthroughs: [...stage.enemies].sort((a, b) => a.formationSlot - b.formationSlot).map(({ breakthrough }) => breakthrough),
     });
     this.views.clear();
-    this.fighterFallbacks.clear();
     this.summonViews.clear();
     this.profiles = [];
     this.allyInfoRef = undefined;
@@ -454,17 +434,9 @@ export class BattleScene extends Phaser.Scene {
     this.refreshContribution(true);
 
     this.buildProfiles();
-    // 외형은 준비 시작 시 한 번 고정해, 기다리는 동안 장착 스킨이 바뀌어 warm과 spawn URL이 갈리지 않게 한다.
-    const battleAssets = new Map(this.state.fighters.map((fighter) => [
-      fighter.id,
-      relicAppearanceManager.battleAssetFor(fighter.def.id, fighter.side === "enemy" ? "enemy" : "ally"),
-    ]));
-    // 타이틀의 네트워크/파싱 preload와 달리 GPU 준비는 Phaser renderer가 살아 있는 전투 경계에서만 한다.
-    void this.warmAndSpawnFighters(spawnToken, battleAssets);
+    void this.spawnFighters();
     this.refreshDebug();
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
-      // shutdown 직전에 resolve된 Puppet도 게시 단계에서 현재 세대가 아님을 확인하고 즉시 파괴한다.
-      this.spawnGeneration += 1;
       this.cancelUltimatePresentation();
       // 전투가 끝나면 디버그 스냅샷도 함께 비운다. 남겨 두면 씬이 바뀐 뒤에도 마지막 값이
       // 그대로 읽혀, 이미 지도로 나온 화면을 두고 "전투 중"이라고 답한다 — E2E가 그 굳은
@@ -477,20 +449,10 @@ export class BattleScene extends Phaser.Scene {
       this.openBuff = undefined;
       this.views.forEach((view) => view.creature.destroy());
       this.views.clear();
-      this.fighterFallbacks.forEach(({ marker }) => marker.destroy());
-      this.fighterFallbacks.clear();
       // 비동기 재호출이 남았더라도 세 SD와 별도 입력 영역을 씬 밖으로 가져가지 않는다.
       this.summonViews.forEach((view) => this.destroySummonView(view));
       this.summonViews.clear();
     });
-  }
-
-  /** 현재 여섯의 고유 URL만 GPU 장벽에 올린 뒤, 실패 에셋까지 개별 spawn 복구 흐름으로 넘긴다. */
-  private async warmAndSpawnFighters(token: number, assetsByFighter: ReadonlyMap<string, PuppetAsset>): Promise<void> {
-    const uniqueBattleAssets = [...new Map([...assetsByFighter.values()].map((asset) => [asset.url, asset])).values()];
-    await warmPuppetTextures(this, uniqueBattleAssets);
-    // warm은 allSettled 결과를 반환하므로 한 파일 실패가 전투 전체 spawn을 영구 정지시키지 않는다.
-    if (this.isCurrentSpawn(token)) await this.spawnFighters(token, assetsByFighter);
   }
 
   /** 두 원격 경계를 manager 흐름에 맡기고, 성공하면 전리품을 포함한 최종판을 곧바로 연다. */
@@ -606,148 +568,65 @@ export class BattleScene extends Phaser.Scene {
     refreshPresentationChip();
   }
 
-  /** 현재 Scene 생명주기의 준비 결과만 공개할 수 있는지 한 경계에서 판정한다. */
-  private isCurrentSpawn(token: number): boolean {
-    return token === this.spawnGeneration && this.scene.isActive();
-  }
-
-  /** 진영 실루엣을 유지하면서 준비 단계만 홀로그램 움직임으로 덧입힌다. */
-  private setFighterFallbackState(fighterId: string, state: FighterFallback["state"]): void {
-    const fallback = this.fighterFallbacks.get(fighterId);
-    if (!fallback || fallback.state === state) return;
-    fallback.motion?.stop();
-    fallback.state = state;
-    const { marker, fighter } = fallback;
-    const sideColor = fighter.side === "player" ? COLOR.hpFill : COLOR.hpEnemy;
-    marker.clear().setAlpha(1).setScale(1).fillStyle(0x05080c, 0.82).fillPoints([
-      new Phaser.Geom.Point(-34, 0), new Phaser.Geom.Point(0, -88), new Phaser.Geom.Point(34, 0), new Phaser.Geom.Point(0, 18),
-    ]);
-    if (state === "failed") {
-      // 금색 공용 경고 마름모는 초록/적색 어느 진영에도 속하지 않으며 실패 원문은 그리지 않는다.
-      marker.fillStyle(COLOR.accent, 0.9).fillPoints([
-        new Phaser.Geom.Point(0, -61), new Phaser.Geom.Point(10, -51), new Phaser.Geom.Point(0, -41), new Phaser.Geom.Point(-10, -51),
-      ]).fillStyle(COLOR.void, 0.95).fillRect(-2, -57, 4, 9).fillRect(-2, -45, 4, 4);
-      // 오류 문장이나 버튼 라벨을 띄우지 않고 경고 마름모 자체만 재시도 입력면으로 사용한다.
-      marker.setInteractive(new Phaser.Geom.Rectangle(-48, -96, 96, 124), Phaser.Geom.Rectangle.Contains)
-        .once("pointerup", () => fallback.retry?.());
-      return;
-    }
-    // 재시도 중에는 연타가 중복 로더를 만들지 않도록 입력을 즉시 거둔다.
-    marker.disableInteractive();
-    marker.fillStyle(sideColor, state === "loading" ? 0.72 : 0.95).fillRect(-22, -14, 44, 8);
-    fallback.motion = state === "loading"
-      // 로딩은 같은 마커가 약하게 숨 쉬어 별도 자리표가 생기지 않는다.
-      ? this.tweens.add({ targets: marker, alpha: { from: 0.62, to: 0.9 }, duration: 720, yoyo: true, repeat: -1 })
-      // 재시도는 기다림 전체를 과장하지 않는 한 번의 짧은 전진감만 준다.
-      : this.tweens.add({ targets: marker, scaleX: { from: 0.82, to: 1.08 }, duration: 90, yoyo: true, repeat: 0 });
-  }
-
-  /** 여섯을 숨긴 채 병렬 준비하고, 전원이 성공한 한 프레임에 표현과 입력을 함께 공개한다. */
-  private async spawnFighters(token: number, assetsByFighter: ReadonlyMap<string, PuppetAsset>): Promise<void> {
+  /** 여섯을 각자의 시작 자리에 세운다. 전부 준비된 뒤에야 시간이 흐르기 시작한다. */
+  private async spawnFighters(): Promise<void> {
     ensureEffectTextures(this);
-    // 로드 첫 프레임부터 빈 전장을 피한다. 마름모 색은 아군/적 진영을, 안쪽 막대는 생존을 말한다.
-    this.state.fighters.forEach((fighter) => {
-      if (this.fighterFallbacks.has(fighter.id)) return;
-      const color = fighter.side === "player" ? COLOR.hpFill : COLOR.hpEnemy;
-      const marker = this.add.graphics().fillStyle(0x05080c, 0.82).fillPoints([
-        new Phaser.Geom.Point(-34, 0), new Phaser.Geom.Point(0, -88), new Phaser.Geom.Point(34, 0), new Phaser.Geom.Point(0, 18),
-      ]).fillStyle(color, 0.95).fillRect(-22, -14, 44, 8);
-      this.fighterFallbacks.set(fighter.id, { marker, fighter, state: "loading" });
-      // 최초 상태도 동일한 그리기 경계를 통과시키기 위해 임시 값에서 전환한다.
-      this.fighterFallbacks.get(fighter.id)!.state = "retrying";
-      this.setFighterFallbackState(fighter.id, "loading");
-    });
-    type Prepared = { fighter: Fighter; asset: PuppetAsset; unitHeight: number; tint: number; creature: PuppetCreature };
-    const prepare = async (fighter: Fighter): Promise<Prepared> => {
+    for (const fighter of this.state.fighters) {
       // 표시 배율은 코어 입력에 들어 있으며 씬은 모든 Puppet 부속 표현에 같은 높이만 적용한다.
       const unitHeight = UNIT_HEIGHT * fighter.bodyScale;
-      // warm 단계에서 manager가 고른 같은 스냅샷을 사용해 캐시 키와 실제 생성 URL을 일치시킨다.
-      const asset = assetsByFighter.get(fighter.id);
-      if (!asset) throw new Error(`전투원 외형 스냅샷이 없습니다: ${fighter.id}`);
+      // 외형 선택은 manager/resolver가 소유하고 전투 씬은 진영과 결과 에셋만 배치한다.
+      const asset = relicAppearanceManager.battleAssetFor(fighter.def.id, fighter.side === "enemy" ? "enemy" : "ally");
       // 번호별 전용 적 SD도 원화 색을 보존하므로 더 이상 임시 허스크 tint를 입히지 않는다.
       const tint = 0xffffff;
-      let adoptedCreature: PuppetCreature | undefined;
-      const result = await loadOwnedPuppetWithRetry({
-        // 실패 캐시는 rejection microtask에서 제거되며, 매 attempt가 spawnPuppet을 실제 재호출한다.
-        spawn: () => spawnPuppet(this, asset, { x: fighter.x, groundY: fighter.y, height: unitHeight, flipX: fighter.facing < 0, tint }),
-        isCurrent: () => this.isCurrentSpawn(token),
-        isDisplayable: (candidate) => candidate.active,
-        adopt: (creature) => { creature.setVisible(false); adoptedCreature = creature; },
-        attempts: 3,
-        retryDelayMs: 120,
-        onStateChange: (state) => this.setFighterFallbackState(fighter.id, state),
-      });
-      if (result.status === "failed") {
-        reportBattleFighterFallbackFailure({ fighterId: fighter.id, assetUrl: asset.url, retryCount: Math.max(0, (result.attempts ?? 1) - 1), error: result.error });
-        throw result.error;
+      let creature: PuppetCreature;
+      try {
+        creature = await spawnPuppet(this, asset, {
+        x: fighter.x,
+        groundY: fighter.y,
+        height: unitHeight,
+        flipX: fighter.facing < 0,
+        tint,
+        });
+      } catch (error) {
+        // 표시 파일 하나가 깨져도 코어 전투를 멈추지 않는다. 이 Fighter의 화면만 생략한다.
+        console.error(`[battle] Puppet 로드 실패: ${asset.url}`, error);
+        continue;
       }
-      if (result.status === "discarded") throw new Error(`discarded battle spawn: ${result.reason}`);
-      // adopted 콜백이 같은 동기 분기에서 참조를 넘기는 계약을 별도로 검증해 타입과 런타임을 함께 지킨다.
-      if (!adoptedCreature) throw new Error("adopted battle spawn did not provide a creature");
-      return { fighter, asset, unitHeight, tint, creature: adoptedCreature };
-    };
-
-    /** Puppet과 모든 입력 부속을 만든 뒤 한 동기 구간에서 채택하고 fallback을 제거한다. */
-    const register = ({ fighter, asset, unitHeight, tint, creature }: Prepared): void => {
-      if (!this.isCurrentSpawn(token)) { creature.destroy(); return; }
-      // Puppet Mesh의 기본 입력 경계는 이동·배율 적용 뒤 어긋날 수 있어 투명 몸통 영역을 별도로 둔다.
+      if (!this.scene.isActive()) {
+        creature.destroy();
+        return;
+      }
+      // Puppet Mesh의 기본 입력 경계는 비동기 생성 시점의 로컬 크기에 묶여 이동·배율 적용 뒤
+      // 실제 SD와 어긋날 수 있다. 투명 몸통 영역을 따로 두고 매 프레임 발 위치를 따라가게 한다.
       const infoHit = fighter.side === "enemy"
         ? this.add.rectangle(fighter.x, fighter.y - unitHeight / 2, 190 * fighter.bodyScale, unitHeight + 70, 0xffffff, 0)
           .setInteractive({ useHandCursor: true })
           .on("pointerup", () => {
-            // 불사 폰토스는 런타임 Fighter가 아니라 유한 표시 스냅샷을 상세창에 넘긴다.
+            // 불사 폰토스는 런타임 Fighter가 아니라 지도와 같은 유한 표시 스냅샷을 상세창에 넘긴다.
             const displayDef = this.battleInput.mode === "expeditionBoss" ? getExpeditionNodeEnemies("boss", 20)[0] : fighter.def;
             this.info.showEnemy(displayDef, { live: fighter, ...(this.battleInput.mode === "expeditionBoss" ? { level: 20 } : {}) });
           })
         : undefined;
+      // 폭주 필터. 스킬 아이콘과 같은 속성·직군 색을 그대로 쓰며, 발광이 아니라 몸에 입힌다.
       const feverTint = skillArtTint(fighter.def.element, fighter.def.role);
       const shadow = this.add.ellipse(fighter.x, fighter.y + 4, 132, 24, 0x000000, 0.38);
       const barColor = fighter.side === "player" ? COLOR.hpFill : COLOR.hpEnemy;
       const hpBar = new UnitHealthBar(this, barColor, settingsManager.get().presentation.battleUiMotion).snap(1);
       const statusChips = new UnitStatusChips(this);
-      // 체력 바와 상태 칩을 함께 덮어 어느 쪽을 눌러도 같은 상세 목록을 연다.
+      // 체력 바와 칩 줄을 함께 덮는 입력면. 둘 중 어디를 눌러도 지금 걸린 상태를 펼친다 —
+      // 칩은 작아 "무엇이 걸렸나"까지만 말하고, 몇 겹이 얼마나 남았는지는 눌러서 읽는다.
       const statusHit = this.add.rectangle(fighter.x, fighter.y, 120, 64, 0xffffff, 0)
         .setInteractive({ useHandCursor: true })
         .on("pointerup", (_p: Phaser.Input.Pointer, _x: number, _y: number, event: Phaser.Types.Input.EventData) => {
-          event.stopPropagation(); this.openStatusList(fighter.id);
+          event.stopPropagation();
+          this.openStatusList(fighter.id);
         });
       this.views.set(fighter.id, { creature, asset, fighter, infoHit, shadow, hpBar, statusChips, statusHit, stunShown: false, feverTint, feverStep: -1, feverTinted: false, tint, squashAt: -Infinity, squashDir: 1, spinDir: 1, dead: false });
-      creature.setVisible(true);
-      // view·입력면 등록과 같은 이벤트 루프에서 fallback을 제거해 중간 렌더 상태가 생기지 않는다.
-      this.fighterFallbacks.get(fighter.id)?.motion?.stop();
-      this.fighterFallbacks.get(fighter.id)?.marker.destroy();
-      this.fighterFallbacks.delete(fighter.id);
-      if (this.fighterFallbacks.size === 0) {
-        this.lastStepAt = performance.now();
-        this.spawned = true;
-      }
-      this.syncViews(); this.refreshDebug();
-    };
-
-    /** 최종 실패한 한 전투원만 다시 준비하며 성공할 때까지 전투 시간은 시작하지 않는다. */
-    const retryOne = async (fighter: Fighter): Promise<void> => {
-      this.setFighterFallbackState(fighter.id, "retrying");
-      try { register(await prepare(fighter)); } catch {
-        // prepare가 구조화 진단과 failed 상태를 이미 게시하므로 사용자 화면에는 원문을 더하지 않는다.
-      }
-    };
-
-    // 개별 로더가 제한 재시도를 소유하므로 성공한 Fighter를 전원 단위로 다시 만들지 않는다.
-    const results = await Promise.allSettled(this.state.fighters.map(prepare));
-    if (!this.isCurrentSpawn(token)) {
-      results.forEach((result) => { if (result.status === "fulfilled") result.value.creature.destroy(); });
-      return;
     }
-    results.forEach((result, index) => {
-      if (result.status === "fulfilled") register(result.value);
-      else {
-        // 실패 표식만 누르면 해당 asset만 다시 준비하도록 닫힌 fighter 참조를 저장한다.
-        const fallback = this.fighterFallbacks.get(this.state.fighters[index].id);
-        if (fallback) fallback.retry = () => void retryOne(fallback.fighter);
-      }
-    });
-    // 실패가 남은 경우 spawned는 false라 코어 전투 진입을 막고, 조작 가능한 표식만 유지한다.
-    this.refreshDebug();
+    this.syncViews();
+    // 마지막 한 명까지 서고 나서 시간을 흘려야 먼저 뜬 캐릭터만 앞서 달려가지 않는다.
+    this.lastStepAt = performance.now();
+    this.spawned = true;
   }
 
   /**
@@ -1576,11 +1455,6 @@ export class BattleScene extends Phaser.Scene {
 
   /** 좌표·방향·체력 바·앞뒤 순서를 시뮬레이션 상태에 맞춘다. */
   private syncViews(): void {
-    // 실패 실루엣도 코어 pose를 따라가며 사망 즉시 흐려져 전투 정보가 투명해지지 않는다.
-    this.fighterFallbacks.forEach(({ marker, fighter }) => {
-      const pose = renderPose(fighter);
-      marker.setPosition(pose.x, pose.y).setDepth(Math.round(fighter.y / 10) + DEPTH.unitBase).setAlpha(isFighterAlive(fighter) ? 1 : 0.24);
-    });
     this.views.forEach((view) => {
       if (view.dead) return;
       const { fighter } = view;
@@ -1819,13 +1693,6 @@ export class BattleScene extends Phaser.Scene {
       phase: this.state.phase,
       elapsed: Math.round(this.state.elapsed * 10) / 10,
       playerOrder: aliveFighters(this.state, "player").map((fighter) => fighter.def.name),
-      // 게임 규칙을 복제하지 않고 실제 등록/표시된 Phaser 표현만 세어 첫 가시 프레임을 검증한다.
-      fighterViews: {
-        expected: this.state.fighters.length,
-        registered: this.views.size,
-        visible: [...this.views.values()].filter(({ creature }) => creature.visible).length,
-      },
-      fighterFallbacks: [...this.fighterFallbacks.entries()].map(([fighterId, { state }]) => ({ fighterId, state })),
       ultimateReady: this.playerFighters().filter((fighter) => canFireUltimate(this.state, fighter)).map((fighter) => fighter.def.name),
       // 렉시아의 치우친 얼굴과 스피나의 큰 돌출 머리를 같은 프레임에서 고정할 수 있게 읽기만 노출한다.
       chargeRatios: this.playerFighters().map((fighter) => Math.min(1, fighter.energy / fighter.def.ultimate.cost)),

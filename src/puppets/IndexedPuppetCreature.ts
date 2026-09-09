@@ -1,8 +1,7 @@
 import Phaser from "phaser";
 import type { PlayOptions, Puppet } from "puppetforge";
-import { advancePuppet, shouldAdvancePuppet } from "./runtimeStep";
+import { advancePuppet } from "./runtimeStep";
 import { puppetAffineUniform, puppetShaderAlpha } from "./renderTransform";
-import { recordPuppetCreated, recordPuppetDestroyed, recordPuppetMotionUpdate } from "./performanceDiagnostics";
 
 /** GPU 프로그램과 정적 attribute 위치는 렌더러 하나당 한 번만 만든다. */
 interface SharedGpuProgram {
@@ -22,8 +21,6 @@ interface CreatureGpuBuffers {
   position: WebGLBuffer;
   uv: WebGLBuffer;
   index: WebGLBuffer;
-  /** position 저장소의 byte 크기다. 정점 수가 바뀔 때만 저장소를 다시 만든다. */
-  positionBytes: number;
 }
 
 const programs = new WeakMap<WebGLRenderingContext, SharedGpuProgram>();
@@ -135,11 +132,6 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
   private readonly uvs: Float32Array;
   private positions: Float32Array;
   private buffers?: CreatureGpuBuffers;
-  /** 명시적으로 숨긴 UI가 UPDATE에 남아 있더라도 runtime 시간을 소비하지 않게 하는 수명주기 상태다. */
-  private motionPaused = false;
-  /** 0은 화면 주사율, 양수는 장식용 SD처럼 낮춰도 되는 최대 갱신 Hz다. */
-  private motionIntervalMs = 0;
-  private motionElapsedMs = 0;
 
   private constructor(scene: Phaser.Scene, puppet: Puppet, textureKey: string) {
     super(scene, 0, 0, textureKey);
@@ -151,8 +143,6 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
     this.setOrigin(0.5);
     scene.add.existing(this);
     scene.events.on(Phaser.Scenes.Events.UPDATE, this.step, this);
-    // 성능 시나리오에서만 생성 수와 이 UPDATE 구독을 한 쌍으로 센다.
-    recordPuppetCreated();
     this.once(Phaser.GameObjects.Events.DESTROY, this.release, this);
   }
 
@@ -174,53 +164,11 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
     return this.puppet.play(name, options);
   }
 
-  /** 공개 asset 수명주기 API가 계산 중지 여부를 검증할 수 있도록 읽기 전용 상태를 노출한다. */
-  get isMotionPaused(): boolean {
-    return this.motionPaused;
-  }
-
-  /** 다음 UPDATE부터 PuppetForge runtime 적분을 중지한다. 건너뛴 delta는 내부에 누적하지 않는다. */
-  pauseMotion(): void {
-    this.motionPaused = true;
-  }
-
-  /** 정지 상태만 해제하며, 호출자가 재개 자세를 명시적으로 선택하도록 자동 재생하지 않는다. */
-  resumeMotion(): void {
-    this.motionPaused = false;
-  }
-
-  /**
-   * PuppetForge 적분 빈도를 제한한다. 전신은 0(화면 주사율)을 유지하고, 꼭 움직여야 하는 장식용
-   * SD만 15~30Hz로 낮추기 위한 API다. 건너뛴 시간은 다음 적분에 합쳐 동작 속도는 유지한다.
-   */
-  setMotionUpdateRate(hz = 0): this {
-    this.motionIntervalMs = hz > 0 ? 1000 / Math.min(60, Math.max(1, hz)) : 0;
-    this.motionElapsedMs = 0;
-    return this;
-  }
-
   /** Phaser scene update에서 원본 해상도의 변형 정점만 계산한다. */
   private step(_time: number, delta: number): void {
-    // visible=false는 Phaser Scene UPDATE 구독을 해제하지 않는다. 렌더되지 않는 개체는 runtime에도
-    // delta를 전달하지 않아 CPU 계산과 재표시 순간의 뜻밖의 시간 점프를 함께 막는다.
-    if (!shouldAdvancePuppet({
-      active: this.active,
-      visible: this.visible,
-      sceneActive: this.scene.sys.isActive(),
-      motionPaused: this.motionPaused,
-    })) return;
-    if (this.motionIntervalMs > 0) {
-      this.motionElapsedMs += delta;
-      if (this.motionElapsedMs < this.motionIntervalMs) return;
-      delta = this.motionElapsedMs;
-      this.motionElapsedMs = 0;
-    }
     // 편집기보다 긴 프레임을 한 번에 적분하면 pinnedSoft 발 주변의 spring이 튀므로 잘게 나눈다.
     const next = advancePuppet(this.puppet, delta / 1000);
-    if (next) {
-      this.positions = next;
-      recordPuppetMotionUpdate();
-    }
+    if (next) this.positions = next;
   }
 
   /** 최초 렌더 때만 GPU Buffer를 만들며, UV와 index는 이후 다시 올리지 않는다. */
@@ -235,10 +183,7 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
     gl.bufferData(gl.ARRAY_BUFFER, this.uvs, gl.STATIC_DRAW);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, index);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.indices, gl.STATIC_DRAW);
-    // position은 매 프레임 변하지만 크기는 보통 고정이다. 첫 draw가 저장소를 한 번 할당한다.
-    gl.bindBuffer(gl.ARRAY_BUFFER, position);
-    gl.bufferData(gl.ARRAY_BUFFER, this.positions.byteLength, gl.DYNAMIC_DRAW);
-    this.buffers = { position, uv, index, positionBytes: this.positions.byteLength };
+    this.buffers = { position, uv, index };
     return this.buffers;
   }
 
@@ -264,14 +209,7 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
 
       gl.useProgram(shared.program);
       gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
-      // Puppet mesh 토폴로지가 그대로면 GPU 저장소를 재지정하지 않고 position 내용만 덮어쓴다.
-      // 런타임에서 정점 수가 바뀌는 예외에만 bufferData로 새 크기를 할당한다.
-      if (buffers.positionBytes === this.positions.byteLength) {
-        gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.positions);
-      } else {
-        gl.bufferData(gl.ARRAY_BUFFER, this.positions, gl.DYNAMIC_DRAW);
-        buffers.positionBytes = this.positions.byteLength;
-      }
+      gl.bufferData(gl.ARRAY_BUFFER, this.positions, gl.DYNAMIC_DRAW);
       gl.enableVertexAttribArray(shared.position);
       gl.vertexAttribPointer(shared.position, 2, gl.FLOAT, false, 0, 0);
       gl.bindBuffer(gl.ARRAY_BUFFER, buffers.uv);
@@ -307,8 +245,6 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
   /** scene 종료 시 update listener와 개체 전용 GPU Buffer를 함께 해제한다. */
   private release(): void {
     this.scene.events.off(Phaser.Scenes.Events.UPDATE, this.step, this);
-    // listener를 해제한 바로 그 지점에서 차감해야 숨은 인스턴스와 구독 누수를 함께 잡는다.
-    recordPuppetDestroyed();
     if (!this.buffers) return;
     const gl = (this.scene.game.renderer as Phaser.Renderer.WebGL.WebGLRenderer).gl;
     gl.deleteBuffer(this.buffers.position);

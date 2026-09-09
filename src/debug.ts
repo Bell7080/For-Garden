@@ -8,10 +8,6 @@ export interface DebugBattle {
   elapsed: number;
   /** 아직 살아 있는 아군 이름. 편성 순서를 유지한다. */
   playerOrder: string[];
-  /** 원자적 공개 회귀가 첫 표시에서 전원 등록 여부를 확인하는 렌더 전투원 수다. */
-  fighterViews?: { expected: number; registered: number; visible: number };
-  /** 비동기 외형 준비의 표시 단계만 노출하며 상세 실패 원인은 아래 진단 함수가 맡는다. */
-  fighterFallbacks?: Array<{ fighterId: string; state: "loading" | "retrying" | "failed" }>;
   /** 지금 궁극기를 누를 수 있는 아군 이름. */
   ultimateReady: string[];
   /** 시각 회귀가 0%·중간·100% 프레임을 고를 수 있는 편성 순서별 충전 비율이다. */
@@ -53,10 +49,6 @@ export interface DebugState {
   screenTitle?: string;
   /** 지금 열려 있는 팝업 제목을 아래(가장 먼저 연 것)부터 순서대로 쌓아 둔다. E2E가 팝업이 실제로 열렸는지 확인한다. */
   popupTitles?: string[];
-  /** 출격판이 실제 채택한 본체 에셋 URL이다. 복제 그림자는 세지 않아 장식 실패를 본체 실패로 오판하지 않는다. */
-  sortieSdBodyAssetUrls?: string[];
-  /** E2E 관찰 전용: Canvas 안 출격 SD 본체의 실제 표시 상태와 현재 재생 모션만 비친다. */
-  sortieSdBodies?: Array<{ assetUrl: string; active: boolean; visible: boolean; motion: string }>;
   /** 세공 화면의 연필 입력면 중심. 이름 글자 폭에 따라 자리가 달라지므로 화면이 직접 알린다. */
   runeForgeRename?: DebugPoint;
   /** 룬 쪽지의 "세공" 버튼 중심. 줄 구성(장착·해제·판매)에 따라 자리가 달라진다. */
@@ -66,10 +58,6 @@ export interface DebugState {
   /** 정보창이 지금 그린 룬 조각 셋. 조각을 누르기 전에 실제로 칠해졌는지 확인하는 용도다. */
   infoGemSlots?: (string | null)[];
   battle?: DebugBattle;
-  /** 화면에는 보이지 않는 공용 로딩 실패 장부다. 단계명과 원래 오류를 함께 보존한다. */
-  loadingDiagnostics?: Array<{ label: string; error: unknown }>;
-  /** 전투 SD 최종 실패를 에셋 선택과 시도 횟수까지 묶어 조사할 수 있는 개발 장부다. */
-  battleFighterDiagnostics?: Array<{ fighterId: string; assetUrl: string; retryCount: number; error: unknown }>;
   /** 폰토스 최종판의 표시 여부와 주 행동 중심만 노출해 Canvas E2E가 결과 흐름을 따라간다. */
   bossResult?: { visible: boolean; lobby: DebugPoint };
   /** 정보창이 떠 있는지. `?`와 꾹 누르기를 확인하는 데 쓴다. */
@@ -142,10 +130,8 @@ declare global {
 }
 
 function ensure(): DebugState {
-  // 순수 Node 단위 테스트에서도 동일한 진단 계약을 검증할 수 있도록 전역 저장소를 사용한다.
-  const host = globalThis as typeof globalThis & { __PF_DEBUG?: DebugState };
-  host.__PF_DEBUG ??= { ready: false, scene: "boot" };
-  return host.__PF_DEBUG;
+  window.__PF_DEBUG ??= { ready: false, scene: "boot" };
+  return window.__PF_DEBUG;
 }
 
 export function setDebugScene(scene: string, screenTitle?: string): void {
@@ -195,21 +181,6 @@ export function setDebugInventoryTextureKeys(keys: readonly string[] | undefined
 
 export function setDebugBattle(battle: DebugBattle | undefined): void {
   ensure().battle = battle;
-}
-
-/** 에셋 준비의 상세 원인을 화면 코드와 사용자 문구에서 격리하는 개발 진단 경계다. */
-export function reportBattleFighterFallbackFailure(diagnostic: { fighterId: string; assetUrl: string; retryCount: number; error: unknown }): void {
-  const state = ensure();
-  // Error 객체를 문자열로 평탄화하지 않아 개발 도구에서 stack/cause까지 그대로 조사할 수 있게 한다.
-  state.battleFighterDiagnostics = [...(state.battleFighterDiagnostics ?? []), diagnostic];
-  if (import.meta.env.DEV) console.error("[battle:fallback] fighter Puppet failed", diagnostic);
-}
-
-/** 실패를 삼키지 않고 공용 로딩 상태에 단계 라벨과 원래 오류를 함께 누적한다. */
-export function reportLoadingFailure(label: string, error: unknown): void {
-  const state = ensure();
-  state.loadingDiagnostics = [...(state.loadingDiagnostics ?? []), { label, error }];
-  if (import.meta.env.DEV) console.error(`[loading:${label}] step failed`, error);
 }
 
 /** 결과 수치 자체는 서버 영수증 테스트가 맡고 E2E에는 표시·입력 계약만 공개한다. */

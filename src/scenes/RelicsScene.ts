@@ -25,8 +25,6 @@ const VIEWPORT_TOP = 390;
 const VIEWPORT_BOTTOM = NAV_TOP;
 /** 카드 규격은 한 곳에서만 정한다. 첫 줄 자리와 미보유 구역이 같은 값을 읽어야 한다. */
 const GRID_CARD = { width: 300, height: 400, gapX: 40, gapY: 74 } as const;
-/** 빠른 스크롤에서도 빈 줄이 보이지 않도록 화면 위아래에 카드 한 행만 미리 렌더한다. */
-const GRID_OVERSCAN_Y = GRID_CARD.height + GRID_CARD.gapY;
 /** 첫 줄의 돌출된 머리가 상단 마스크에 닿지 않도록 공용 안전 영역 계산만 쓴다. */
 const GRID_FIRST_ROW_Y = portraitGridFirstRowY(VIEWPORT_TOP, GRID_CARD.height, PORTRAIT_GRID_MASK_GAP);
 /** 드래그와 카드 탭을 구분하는 최소 이동 거리다. */
@@ -59,14 +57,10 @@ export class RelicsScene extends Phaser.Scene {
   private contentBottom = VIEWPORT_TOP;
   private minScrollY = 0;
   private velocityY = 0;
-  /** 콘텐츠 좌표가 그대로인 정지 프레임에는 카드 전체를 다시 순회하지 않게 하는 표시다. */
-  private viewportVisibilityDirty = true;
   private pointerDown = false;
   private pointerY = 0;
   private draggedDistance = 0;
   private readonly onPointerDown = (pointer: Phaser.Input.Pointer): void => {
-    // 상세 정보가 도감 전체를 덮는 동안에는 뒤쪽 그리드가 새 제스처를 시작하지 않는다.
-    if (this.info?.isOpen) return;
     if (pointer.y < VIEWPORT_TOP || pointer.y >= VIEWPORT_BOTTOM) return;
     // 스크롤이 불필요한 소수 카드에서도 이전 제스처의 이동량이 카드 탭을 막지 않게 초기화한다.
     this.draggedDistance = 0;
@@ -76,8 +70,6 @@ export class RelicsScene extends Phaser.Scene {
     this.velocityY = 0;
   };
   private readonly onPointerMove = (pointer: Phaser.Input.Pointer): void => {
-    // 팝업 위의 드래그를 배경 콘텐츠 이동으로 전달하지 않는다.
-    if (this.info?.isOpen) return;
     if (!this.pointerDown || !pointer.isDown) return;
     const delta = pointer.y - this.pointerY;
     this.pointerY = pointer.y;
@@ -85,14 +77,8 @@ export class RelicsScene extends Phaser.Scene {
     this.velocityY = delta * 60;
     this.scrollTo(this.content.y + delta);
   };
-  private readonly onPointerUp = (): void => {
-    // 정보창을 여는 탭에서 이미 드래그 상태를 지우므로, 열린 동안의 입력은 그대로 무시한다.
-    if (this.info?.isOpen) return;
-    this.pointerDown = false;
-  };
+  private readonly onPointerUp = (): void => { this.pointerDown = false; };
   private readonly onWheel = (_pointer: Phaser.Input.Pointer, _objects: Phaser.GameObjects.GameObject[], _dx: number, dy: number): void => {
-    // 상세 정보 위에서 발생한 휠이 뒤쪽 도감을 움직이지 않게 한다.
-    if (this.info?.isOpen) return;
     if (this.scrollEnabled()) this.scrollTo(this.content.y - dy * 0.8);
   };
 
@@ -149,7 +135,6 @@ export class RelicsScene extends Phaser.Scene {
 
     this.info = new CharacterInfoManager(this);
     // 정보창 안에서 애착·즐겨찾기가 바뀔 수 있으므로 닫힐 때 표시와 정렬을 함께 다시 맞춘다.
-    // refresh의 마지막 scrollTo가 현재 콘텐츠 위치에서 가시 카드 마스크를 정확히 한 차례 맞춘다.
     this.info.onClose = () => this.refresh();
     // 서버가 재화 차감을 확정한 직후 정보창과 상단 줄이 같은 세션 지갑을 다시 읽는다.
     this.info.onWalletChange = () => this.topBar.refresh();
@@ -163,15 +148,13 @@ export class RelicsScene extends Phaser.Scene {
     new BottomNav(this, "relics");
   }
 
-  /** 모바일 관성은 프레임 시간으로 감쇠하며, 실제 이동은 scrollTo의 마스크 동기화 경로를 쓴다. */
+  /** 모바일 관성은 프레임 시간으로 감쇠하며, 이동한 프레임마다 카드 내부 마스크도 동기화한다. */
   update(_time: number, delta: number): void {
-    // 정보창은 도감 전체를 덮어 배경 카드가 보이지 않는다. 따라서 열린 동안에는 관성 이동과
-    // 카드 수에 비례하는 마스크 계산을 모두 생략해도 시각적 결과가 달라지지 않는다.
-    if (this.info?.isOpen) return;
     if (!this.pointerDown && Math.abs(this.velocityY) > 4 && this.scrollEnabled()) {
       this.scrollTo(this.content.y + this.velocityY * Math.min(delta, 34) / 1000);
       this.velocityY *= Math.pow(0.9, delta / 16.67);
     }
+    this.syncCardMasks();
   }
 
   /**
@@ -181,8 +164,6 @@ export class RelicsScene extends Phaser.Scene {
    * 세부 수치는 요약 칸으로 미뤄, 한눈에 "누가 있는지"부터 보이게 한다.
    */
   private buildGrid(): void {
-    // 새 카드들은 스크롤 좌표가 같아도 최초 가시성 판정이 필요하다.
-    this.viewportVisibilityDirty = true;
     const cols = 3;
     const { width: cardW, height: cardH, gapX, gapY } = GRID_CARD;
     const gridW = cols * cardW + (cols - 1) * gapX;
@@ -267,12 +248,7 @@ export class RelicsScene extends Phaser.Scene {
       // 카드를 누르면 바로 정보창이 열린다. 애착 설정도 그 안의 뱃지가 맡는다.
       card.hit.on("pointerup", () => {
         // 드래그 종료가 카드 선택으로 새지 않도록 포인터 이동 허용치를 넘은 탭은 버린다.
-        if (this.draggedDistance <= DRAG_SLOP && !this.info.isOpen) {
-          // 열리기 직전에 관성과 드래그를 함께 끊어 상세 화면 뒤에서 목록이 계속 흐르지 않게 한다.
-          this.velocityY = 0;
-          this.pointerDown = false;
-          this.info.showRelic(relic, relicCollection.owns(relic.id));
-        }
+        if (this.draggedDistance <= DRAG_SLOP) this.info.showRelic(relic, relicCollection.owns(relic.id));
       });
       this.cards.set(relic.id, card);
     }
@@ -324,30 +300,15 @@ export class RelicsScene extends Phaser.Scene {
 
   /** 휠·드래그·관성이 공유하는 유일한 clamp 경로다. */
   private scrollTo(y: number): void {
-    const nextY = Phaser.Math.Clamp(y, this.minScrollY, 0);
-    // clamp 결과가 실제로 달라졌을 때만 다음 동기화가 모든 카드의 월드 범위를 다시 판정한다.
-    if (nextY !== this.content.y) this.viewportVisibilityDirty = true;
-    this.content.y = nextY;
+    this.content.y = Phaser.Math.Clamp(y, this.minScrollY, 0);
     if (this.content.y === this.minScrollY || this.content.y === 0) this.velocityY = 0;
     this.syncCardMasks();
     setDebugRelicScroll({ y: this.content.y, minY: this.minScrollY, maxY: 0, enabled: this.scrollEnabled(), viewportTop: VIEWPORT_TOP, viewportBottom: VIEWPORT_BOTTOM });
   }
 
-  /** PortraitCard의 자체 마스크는 부모 이동을 상속하지 않으므로 오버스캔 안 카드만 갱신한다. */
+  /** PortraitCard의 자체 마스크는 부모 이동을 상속하지 않으므로 월드 변환을 명시적으로 갱신한다. */
   private syncCardMasks(): void {
-    if (!this.viewportVisibilityDirty) return;
-    this.viewportVisibilityDirty = false;
-    for (const card of this.cards.values()) {
-      // getBounds는 부모 content 이동까지 반영한 월드 y 범위다. 한 행의 오버스캔만 남겨 빠른
-      // 관성 이동을 준비하고, 그 밖의 초상·그림자·텍스트·배지는 부모와 함께 렌더 목록에서 뺀다.
-      const bounds = card.getBounds();
-      const visible = bounds.bottom >= VIEWPORT_TOP - GRID_OVERSCAN_Y
-        && bounds.top < VIEWPORT_BOTTOM + GRID_OVERSCAN_Y;
-      const wasVisible = card.visible;
-      card.setViewportVisible(visible);
-      // 재진입 카드는 setViewportVisible이 마스크를 한 번 맞춘다. 계속 보이는 카드만 이동분을 맞춘다.
-      if (visible && wasVisible) card.syncMask();
-    }
+    for (const card of this.cards.values()) card.syncMask();
   }
 
   private scrollEnabled(): boolean { return this.minScrollY < 0; }

@@ -19,20 +19,6 @@ export const PUPPET_BACKGROUND_GAP_SECONDS = 1;
  * (ideally `advanceTimeline(elapsed)` plus `integrateSecondary(step)`) so only secondary work can be bounded.
  */
 
-/**
- * Phaser가 UPDATE listener를 유지하는 동안 Puppet 계산이 실제로 필요한지를 순수하게 판정한다.
- * `visible=false`는 렌더만 막고 Scene UPDATE 구독은 해제하지 않으므로, 호출부가 모든 상태를
- * 명시적으로 전달해야 숨은 정보창의 CPU 애니메이션도 멈춘다.
- */
-export function shouldAdvancePuppet(state: {
-  active: boolean;
-  visible: boolean;
-  sceneActive: boolean;
-  motionPaused: boolean;
-}): boolean {
-  return state.active && state.visible && state.sceneActive && !state.motionPaused;
-}
-
 /** Advance one Puppet through stable, editor-sized steps and return the last calculated vertex buffer. */
 export function advancePuppet(puppet: Puppet, elapsedSeconds: number): Float32Array | null {
   // Negative/non-finite deltas are not real elapsed time, so they must neither rewind nor poison the remainder.

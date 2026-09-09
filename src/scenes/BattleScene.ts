@@ -287,6 +287,8 @@ export class BattleScene extends Phaser.Scene {
   private bossPhaseLabel?: Phaser.GameObjects.Text;
   private bossBestLabel?: Phaser.GameObjects.Text;
   private spawned = false;
+  /** 재진입/종료 뒤 도착한 비동기 생성 결과가 새 전투에 섞이지 않게 하는 생명주기 세대다. */
+  private spawnGeneration = 0;
   /** 마지막으로 시뮬레이션을 굴린 실제 시각(ms). */
   private lastStepAt = 0;
   /** 시뮬레이션 시간에만 곱하는 현재 전투 배속이다. */
@@ -354,6 +356,8 @@ export class BattleScene extends Phaser.Scene {
   }
 
   create(): void {
+    // 같은 Scene 인스턴스가 재사용되므로 create마다 이전 준비 작업을 무효화한다.
+    const spawnToken = ++this.spawnGeneration;
     setDebugScene("battle");
     const stage = getBattleStage(session.selectedStageId ?? "1-1");
     // 적은 스테이지별 임시 레벨 성장치를 적용한 복사본으로 전투에 투입한다.
@@ -434,9 +438,11 @@ export class BattleScene extends Phaser.Scene {
     this.refreshContribution(true);
 
     this.buildProfiles();
-    void this.spawnFighters();
+    void this.spawnFighters(spawnToken);
     this.refreshDebug();
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      // shutdown 직전에 resolve된 Puppet도 게시 단계에서 현재 세대가 아님을 확인하고 즉시 파괴한다.
+      this.spawnGeneration += 1;
       this.cancelUltimatePresentation();
       // 전투가 끝나면 디버그 스냅샷도 함께 비운다. 남겨 두면 씬이 바뀐 뒤에도 마지막 값이
       // 그대로 읽혀, 이미 지도로 나온 화면을 두고 "전투 중"이라고 답한다 — E2E가 그 굳은
@@ -568,34 +574,66 @@ export class BattleScene extends Phaser.Scene {
     refreshPresentationChip();
   }
 
-  /** 여섯을 각자의 시작 자리에 세운다. 전부 준비된 뒤에야 시간이 흐르기 시작한다. */
-  private async spawnFighters(): Promise<void> {
+  /** 현재 Scene 생명주기의 준비 결과만 공개할 수 있는지 한 경계에서 판정한다. */
+  private isCurrentSpawn(token: number): boolean {
+    return token === this.spawnGeneration && this.scene.isActive();
+  }
+
+  /** 여섯을 숨긴 채 병렬 준비하고, 전원이 성공한 한 프레임에 표현과 입력을 함께 공개한다. */
+  private async spawnFighters(token: number): Promise<void> {
     ensureEffectTextures(this);
-    for (const fighter of this.state.fighters) {
+    const prepare = async (fighter: Fighter): Promise<{ fighter: Fighter; asset: PuppetAsset; unitHeight: number; tint: number; creature: PuppetCreature }> => {
       // 표시 배율은 코어 입력에 들어 있으며 씬은 모든 Puppet 부속 표현에 같은 높이만 적용한다.
       const unitHeight = UNIT_HEIGHT * fighter.bodyScale;
       // 외형 선택은 manager/resolver가 소유하고 전투 씬은 진영과 결과 에셋만 배치한다.
       const asset = relicAppearanceManager.battleAssetFor(fighter.def.id, fighter.side === "enemy" ? "enemy" : "ally");
       // 번호별 전용 적 SD도 원화 색을 보존하므로 더 이상 임시 허스크 tint를 입히지 않는다.
       const tint = 0xffffff;
-      let creature: PuppetCreature;
-      try {
-        creature = await spawnPuppet(this, asset, {
+      const creature = await spawnPuppet(this, asset, {
         x: fighter.x,
         groundY: fighter.y,
         height: unitHeight,
         flipX: fighter.facing < 0,
         tint,
-        });
-      } catch (error) {
-        // 표시 파일 하나가 깨져도 코어 전투를 멈추지 않는다. 이 Fighter의 화면만 생략한다.
-        console.error(`[battle] Puppet 로드 실패: ${asset.url}`, error);
-        continue;
-      }
-      if (!this.scene.isActive()) {
+      });
+      // await의 continuation은 렌더보다 먼저 실행되므로 생성된 Puppet이 단독으로 보이는 프레임은 없다.
+      creature.setVisible(false);
+      if (!this.isCurrentSpawn(token)) {
         creature.destroy();
-        return;
+        throw new Error("stale battle spawn");
       }
+      return { fighter, asset, unitHeight, tint, creature };
+    };
+
+    // 첫 실패는 일시적인 캐시/업로드 문제일 수 있어 전투 공개 전에 딱 한 번 전원 단위로 재시도한다.
+    let results = await Promise.allSettled(this.state.fighters.map(prepare));
+    if (!this.isCurrentSpawn(token)) {
+      results.forEach((result) => { if (result.status === "fulfilled") result.value.creature.destroy(); });
+      return;
+    }
+    if (results.some((result) => result.status === "rejected")) {
+      results.forEach((result) => { if (result.status === "fulfilled") result.value.creature.destroy(); });
+      results = await Promise.allSettled(this.state.fighters.map(prepare));
+    }
+    if (!this.isCurrentSpawn(token)) {
+      results.forEach((result) => { if (result.status === "fulfilled") result.value.creature.destroy(); });
+      return;
+    }
+    const failures = results.filter((result): result is PromiseRejectedResult => result.status === "rejected");
+    if (failures.length > 0) {
+      // 일부 전투원만 공개하지 않는다. 명시적인 대체 판과 재시도만 보여 코어 전투도 시작하지 않는다.
+      results.forEach((result) => { if (result.status === "fulfilled") result.value.creature.destroy(); });
+      console.error("[battle] 필수 전투원 준비 실패", failures.map(({ reason }) => reason));
+      this.add.text(BASE_WIDTH / 2, 850, "전투원 표시를 준비하지 못했습니다.", textStyle({ role: "body", size: 28, color: COLOR.dangerText })).setOrigin(0.5);
+      new Button(this, BASE_WIDTH / 2, 940, { width: 360, height: 88, label: "다시 시도", onClick: () => {
+        if (!this.spawned && this.isCurrentSpawn(token)) void this.spawnFighters(token);
+      } });
+      return;
+    }
+
+    // allSettled 검사를 통과했으므로 아래 공개 단계에는 반드시 모든 Fighter가 있다.
+    const prepared = results.map((result) => (result as PromiseFulfilledResult<Awaited<ReturnType<typeof prepare>>>).value);
+    for (const { fighter, asset, unitHeight, tint, creature } of prepared) {
       // Puppet Mesh의 기본 입력 경계는 비동기 생성 시점의 로컬 크기에 묶여 이동·배율 적용 뒤
       // 실제 SD와 어긋날 수 있다. 투명 몸통 영역을 따로 두고 매 프레임 발 위치를 따라가게 한다.
       const infoHit = fighter.side === "enemy"
@@ -623,10 +661,14 @@ export class BattleScene extends Phaser.Scene {
         });
       this.views.set(fighter.id, { creature, asset, fighter, infoHit, shadow, hpBar, statusChips, statusHit, stunShown: false, feverTint, feverStep: -1, feverTinted: false, tint, squashAt: -Infinity, squashDir: 1, spinDir: 1, dead: false });
     }
+    // creature와 모든 부속 표현을 등록한 뒤 한 루프에서 전원을 공개한다.
+    prepared.forEach(({ creature }) => creature.setVisible(true));
     this.syncViews();
     // 마지막 한 명까지 서고 나서 시간을 흘려야 먼저 뜬 캐릭터만 앞서 달려가지 않는다.
     this.lastStepAt = performance.now();
     this.spawned = true;
+    // 첫 update를 기다리지 않고 원자적으로 공개된 바로 그 상태를 테스트 관찰 경계에 게시한다.
+    this.refreshDebug();
   }
 
   /**
@@ -1693,6 +1735,12 @@ export class BattleScene extends Phaser.Scene {
       phase: this.state.phase,
       elapsed: Math.round(this.state.elapsed * 10) / 10,
       playerOrder: aliveFighters(this.state, "player").map((fighter) => fighter.def.name),
+      // 게임 규칙을 복제하지 않고 실제 등록/표시된 Phaser 표현만 세어 첫 가시 프레임을 검증한다.
+      fighterViews: {
+        expected: this.state.fighters.length,
+        registered: this.views.size,
+        visible: [...this.views.values()].filter(({ creature }) => creature.visible).length,
+      },
       ultimateReady: this.playerFighters().filter((fighter) => canFireUltimate(this.state, fighter)).map((fighter) => fighter.def.name),
       // 렉시아의 치우친 얼굴과 스피나의 큰 돌출 머리를 같은 프레임에서 고정할 수 있게 읽기만 노출한다.
       chargeRatios: this.playerFighters().map((fighter) => Math.min(1, fighter.energy / fighter.def.ultimate.cost)),

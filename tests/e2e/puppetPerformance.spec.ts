@@ -71,3 +71,24 @@ test("로비와 정보창 Puppet의 프레임 비용 및 UPDATE 수명을 기록
   expect(counts.updateSubscriptions).toBe(counts.alive);
   expect(counts.created - counts.destroyed).toBe(counts.alive);
 });
+
+test("일반 Image·여러 Puppet·Graphics/Text가 교차해도 WebGL 프레임을 유지한다", async ({ page }, testInfo) => {
+  // 로비 배경/Image와 Graphics/Text HUD 사이에 전신 Puppet을 두고, 정보창의 전신·SD를 더해
+  // 한 프레임에 세 Puppet이 일반 Phaser 개체와 실제로 섞이는 인게임 렌더 순서를 만든다.
+  await startAfterOpening(page);
+  await page.goto("/?puppetPerf=1");
+  await page.waitForFunction(() => window.__PF_DEBUG?.ready === true);
+  await tap(page, 540, 960);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+  await page.evaluate(() => window.__PUPPET_PERF__!.openInfo());
+  await page.waitForFunction(() => window.__PF_DEBUG?.infoOpen && window.__PUPPET_PERF__!.counts.alive >= 3);
+
+  // PNG 스크린샷은 WebGL framebuffer를 실제로 읽는다. 파일 크기와 연속 프레임 차이를
+  // 함께 검사해, 뒤의 Image/Text가 사라진 단색 프레임과 Puppet 정지/누락을 모두 잡는다.
+  const first = await page.screenshot({ type: "png" });
+  await page.waitForTimeout(250);
+  const second = await page.screenshot({ type: "png" });
+  expect(first.byteLength).toBeGreaterThan(100_000);
+  expect(second.equals(first)).toBe(false);
+  await testInfo.attach("puppet-phaser-interleaved.png", { body: second, contentType: "image/png" });
+});

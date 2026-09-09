@@ -621,7 +621,7 @@ export class BattleScene extends Phaser.Scene {
       : this.tweens.add({ targets: marker, scaleX: { from: 0.82, to: 1.08 }, duration: 90, yoyo: true, repeat: 0 });
   }
 
-  /** 여섯을 숨긴 채 병렬 준비하고, 전원이 성공한 한 프레임에 표현과 입력을 함께 공개한다. */
+  /** 여섯을 병렬 준비하되, 각 Fighter가 준비되는 즉시 자기 표현과 입력을 한 단위로 공개한다. */
   private async spawnFighters(token: number): Promise<void> {
     ensureEffectTextures(this);
     // 로드 첫 프레임부터 빈 전장을 피한다. 마름모 색은 아군/적 진영을, 안쪽 막대는 생존을 말한다.
@@ -664,14 +664,24 @@ export class BattleScene extends Phaser.Scene {
       return { fighter, asset, unitHeight, tint, creature: adoptedCreature };
     };
 
-    // 개별 로더가 짧은 제한 재시도를 소유하므로 성공한 Fighter를 전원 단위로 다시 만들지 않는다.
-    const results = await Promise.allSettled(this.state.fighters.map(prepare));
-    if (!this.isCurrentSpawn(token)) {
-      results.forEach((result) => { if (result.status === "fulfilled") result.value.creature.destroy(); });
-      return;
-    }
-    const prepared = results.filter((result): result is PromiseFulfilledResult<Awaited<ReturnType<typeof prepare>>> => result.status === "fulfilled").map(({ value }) => value);
-    for (const { fighter, asset, unitHeight, tint, creature } of prepared) {
+    // 각 Promise가 자기 Fighter의 제한 재시도와 게시를 소유한다. 따라서 느리거나 실패한 하나가
+    // 이미 성공한 다른 Fighter의 공개 시점을 전원 장벽 뒤로 미루지 않는다.
+    const pending = this.state.fighters.map(async (fighter) => {
+      let prepared: Awaited<ReturnType<typeof prepare>>;
+      try {
+        prepared = await prepare(fighter);
+      } catch {
+        // 실패 보고와 제한 재시도는 prepare/loader가 소유한다. 여기서는 이 Fighter만 종결해
+        // 다른 독립 Promise의 성공·공개 시점에 rejection이 전파되지 않게 한다.
+        return;
+      }
+      const { asset, unitHeight, tint, creature } = prepared;
+      // await 뒤 게시 직전에 세대를 다시 확인한다. 종료된 Scene의 늦은 Puppet은 어떤 부속
+      // 객체도 만들거나 views 소유권을 얻기 전에 여기서 폐기한다.
+      if (!this.isCurrentSpawn(token)) {
+        creature.destroy();
+        return;
+      }
       // Puppet Mesh의 기본 입력 경계는 비동기 생성 시점의 로컬 크기에 묶여 이동·배율 적용 뒤
       // 실제 SD와 어긋날 수 있다. 투명 몸통 영역을 따로 두고 매 프레임 발 위치를 따라가게 한다.
       const infoHit = fighter.side === "enemy"
@@ -683,33 +693,50 @@ export class BattleScene extends Phaser.Scene {
             this.info.showEnemy(displayDef, { live: fighter, ...(this.battleInput.mode === "expeditionBoss" ? { level: 20 } : {}) });
           })
         : undefined;
+      // 조립 중인 한 Fighter의 부속은 views가 소유하기 전까지 숨긴다. 같은 동기 게시 구간에서
+      // 모두 등록한 뒤 열어 부분 조립 상태가 한 프레임이라도 관찰되는 일을 막는다.
+      infoHit?.setVisible(false);
       // 폭주 필터. 스킬 아이콘과 같은 속성·직군 색을 그대로 쓰며, 발광이 아니라 몸에 입힌다.
       const feverTint = skillArtTint(fighter.def.element, fighter.def.role);
-      const shadow = this.add.ellipse(fighter.x, fighter.y + 4, 132, 24, 0x000000, 0.38);
+      const shadow = this.add.ellipse(fighter.x, fighter.y + 4, 132, 24, 0x000000, 0.38).setVisible(false);
       const barColor = fighter.side === "player" ? COLOR.hpFill : COLOR.hpEnemy;
-      const hpBar = new UnitHealthBar(this, barColor, settingsManager.get().presentation.battleUiMotion).snap(1);
-      const statusChips = new UnitStatusChips(this);
+      const hpBar = new UnitHealthBar(this, barColor, settingsManager.get().presentation.battleUiMotion).snap(1).setVisible(false);
+      const statusChips = new UnitStatusChips(this).setVisible(false);
       // 체력 바와 칩 줄을 함께 덮는 입력면. 둘 중 어디를 눌러도 지금 걸린 상태를 펼친다 —
       // 칩은 작아 "무엇이 걸렸나"까지만 말하고, 몇 겹이 얼마나 남았는지는 눌러서 읽는다.
       const statusHit = this.add.rectangle(fighter.x, fighter.y, 120, 64, 0xffffff, 0)
+        .setVisible(false)
         .setInteractive({ useHandCursor: true })
         .on("pointerup", (_p: Phaser.Input.Pointer, _x: number, _y: number, event: Phaser.Types.Input.EventData) => {
           event.stopPropagation();
           this.openStatusList(fighter.id);
         });
       this.views.set(fighter.id, { creature, asset, fighter, infoHit, shadow, hpBar, statusChips, statusHit, stunShown: false, feverTint, feverStep: -1, feverTinted: false, tint, squashAt: -Infinity, squashDir: 1, spinDir: 1, dead: false });
-      // view 등록 후 fallback을 제거해 어느 프레임에도 둘이 없거나 둘 다 소유되는 틈을 만들지 않는다.
+      // 완성된 view가 먼저 소유권을 얻고 자기 fallback만 제거한다. 다른 Fighter의 marker와
+      // 준비 Promise는 건드리지 않아 독립적인 로딩·재시도 상태를 그대로 보존한다.
       this.fighterFallbacks.get(fighter.id)?.motion?.stop();
       this.fighterFallbacks.get(fighter.id)?.marker.destroy();
       this.fighterFallbacks.delete(fighter.id);
-    }
-    // creature와 모든 부속 표현을 등록한 뒤 한 루프에서 전원을 공개한다.
-    prepared.forEach(({ creature }) => creature.setVisible(true));
-    this.syncViews();
+      this.syncViews();
+      // views 등록과 fallback 교체가 끝난 같은 동기 구간에서 부속과 Puppet을 함께 연다. Puppet을
+      // 마지막에 공개하므로 몸만 먼저 보이는 부분 조립 프레임은 존재하지 않는다.
+      shadow.setVisible(true);
+      hpBar.setVisible(true);
+      statusChips.setVisible(true);
+      statusHit.setVisible(true);
+      infoHit?.setVisible(true);
+      creature.setVisible(true);
+      // 성공한 Fighter 하나의 공개가 곧 테스트/E2E 관찰 경계이며 느린 동료를 기다리지 않는다.
+      this.refreshDebug();
+    });
+    // 이 await는 전투 시계의 시작만 정렬한다. 각 성공 결과는 위의 개별 Promise 안에서 이미 공개됐다.
+    await Promise.all(pending);
+    // Scene 종료가 마지막 준비와 경합하면 전투 시작 상태를 게시하지 않는다.
+    if (!this.isCurrentSpawn(token)) return;
     // 마지막 한 명까지 서고 나서 시간을 흘려야 먼저 뜬 캐릭터만 앞서 달려가지 않는다.
     this.lastStepAt = performance.now();
     this.spawned = true;
-    // 첫 update를 기다리지 않고 원자적으로 공개된 바로 그 상태를 테스트 관찰 경계에 게시한다.
+    // 첫 update를 기다리지 않고 준비 작업이 모두 종결된 전투 시작 상태를 관찰 경계에 게시한다.
     this.refreshDebug();
   }
 

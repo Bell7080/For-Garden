@@ -123,7 +123,8 @@ export class SettingsScene extends Phaser.Scene {
     } else if (this.activeTab === "access") {
       section("접근성", 650);
       this.content.add(new SettingsSelectRow(this,90,y,'텍스트 크기',s.accessibility.textScale,[1,1.15,1.3] as const,value=>{ settingsManager.update({accessibility:{textScale:value}}); this.scene.restart({ tab: "access" }); })); y+=94;
-      toggle('화면 흔들림 감소','accessibility','reduceMotion'); toggle('섬광 감소','accessibility','reduceFlashes'); toggle('색각 보조','accessibility','colorAssist'); toggle('자막 표시','accessibility','subtitles');
+      // 보이스 없는 필수 대사는 자막이 아니라 유일한 정보 전달 수단이므로 숨김 토글을 노출하지 않는다.
+      toggle('화면 흔들림 감소','accessibility','reduceMotion'); toggle('섬광 감소','accessibility','reduceFlashes'); toggle('색각 보조','accessibility','colorAssist');
       this.content.add(this.add.text(90, y + 28, "텍스트 배율은 공용 스타일에 적용되며 장면 좌표는 변경하지 않습니다.", textStyle({ role: "body", size: 22, color: COLOR.inkDim, wrap: 850 }))); y += 120;
     } else {
       y = this.buildSupportRows(y, section);

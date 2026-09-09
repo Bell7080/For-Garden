@@ -20,7 +20,12 @@ describe("settings", () => {
     const first = createDefaultSettings(); const second = createDefaultSettings(); first.sound.masterVolume = 0;
     expect(second.sound.masterVolume).toBe(1);
     expect(second.game.skipUltimatePresentation).toBe(false);
-    expect(normalizeSettings({ sound: { masterVolume: 8, musicVolume: -2 }, accessibility: { textScale: 9, reduceMotion: true }, game: { battleSpeed: 99, skipUltimatePresentation: "yes", textSpeed: "fast", language: "xx" }, account: { provider: "token", token: "secret" } })).toMatchObject({ sound: { masterVolume: 1, musicVolume: 0 }, accessibility: { textScale: 1, reduceMotion: true, reduceFlashes: false, colorAssist: false, subtitles: true }, game: { battleSpeed: 1, skipUltimatePresentation: false, textSpeed: 1, language: "ko" }, account: { provider: "guest" } });
+    expect(normalizeSettings({ sound: { masterVolume: 8, musicVolume: -2 }, accessibility: { textScale: 9, reduceMotion: true }, game: { battleSpeed: 99, skipUltimatePresentation: "yes", textSpeed: "fast", language: "xx" }, account: { provider: "token", token: "secret" } })).toMatchObject({ sound: { masterVolume: 1, musicVolume: 0 }, accessibility: { textScale: 1, reduceMotion: true, reduceFlashes: false, colorAssist: false }, game: { battleSpeed: 1, skipUltimatePresentation: false, textSpeed: 1, language: "ko" }, account: { provider: "guest" } });
+  });
+
+  it("보이스 없는 필수 대사를 숨기던 옛 자막 값을 폐기한다", () => {
+    // 자막은 향후 보이스가 연결된 비필수 콘텐츠에 별도 의미로 도입하기 전까지 저장 계약에 두지 않는다.
+    expect(normalizeSettings({ accessibility: { subtitles: false } }).accessibility).not.toHaveProperty("subtitles");
   });
 
   it("옛 컷인 끄기를 새 전투 스킵으로 옮기고 폐기 필드는 저장 모델에서 제거한다", () => {

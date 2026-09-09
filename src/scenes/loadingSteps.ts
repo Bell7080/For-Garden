@@ -1,7 +1,7 @@
 import type Phaser from "phaser";
 import { preloadPuppetAssets, PUPPET_PRELOAD_GROUPS } from "../puppets/assets";
-import { runLoadingSteps as runSteps, type LoadingStep } from "./loadingStepRunner";
-export type { LoadingStep } from "./loadingStepRunner";
+import { runLoadingSteps as runSteps, type LoadingStep, type LoadingStepResult } from "./loadingStepRunner";
+export type { LoadingStep, LoadingStepResult } from "./loadingStepRunner";
 import { BACKGROUND_ASSETS } from "../ui/backgrounds";
 import { loadGameFonts } from "../ui/fonts";
 import { UI_ICON_ASSETS } from "../ui/icons";
@@ -118,9 +118,9 @@ export async function runLoadingSteps(
   scene: Phaser.Scene,
   onStepDone: (done: number, total: number) => void,
   steps: ReadonlyArray<LoadingStep> = LOADING_STEPS,
-): Promise<void> {
+): Promise<readonly LoadingStepResult[]> {
   // 기본 목록을 이 조합 모듈이 소유하고, 순수 실행기는 테스트에서도 Phaser 런타임 없이 검증한다.
-  await runSteps(scene, onStepDone, steps);
+  return runSteps(scene, onStepDone, steps);
 }
 
 /**

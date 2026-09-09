@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { BASE_WIDTH, BASE_HEIGHT } from "../config/gameConfig";
-import { setDebugParty, setDebugScene } from "../debug";
+import { reportBattleAssetRetry, setDebugParty, setDebugScene } from "../debug";
 import type { RelicDef } from "../core/types";
 import { getRelic } from "../data/relics";
 import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
@@ -8,7 +8,7 @@ import { relicCollection } from "../managers/RelicCollectionManager";
 import { CharacterInfoManager, ELEMENT_LABEL, ROLE_LABEL, addHelpBadge } from "../managers/CharacterInfoManager";
 import { bindLongPress } from "../ui/longPressInfo";
 import type { PuppetCreature } from "../puppets/assets";
-import { placePuppet, spawnPuppet } from "../puppets/assets";
+import { battleAssetFor, placePuppet, retryFailedPuppetAssetsForBattle, spawnPuppet } from "../puppets/assets";
 import { getBattleStage, getStageEnemies } from "../data/stages";
 import { session } from "../state/session";
 import { gameApi } from "../api/FakeServer";
@@ -217,6 +217,11 @@ export class PartyScene extends Phaser.Scene {
           // 서버가 입장 비용을 확정한 뒤에만 전투로 전환해 같은 요청 재시도에서 중복 차감되지 않게 한다.
           const requestId = globalThis.crypto?.randomUUID?.() ?? `stage-entry-${Date.now()}`;
           await gameApi.enterStage({ stageId: session.selectedStageId!, requestId });
+          // 타이틀 실패분 중 현재 아군과 이 스테이지 적의 URL만 기다린다. 다른 렐릭 실패는 진입과 무관하다.
+          const stage = getBattleStage(session.selectedStageId!);
+          const assets = [...this.picked.map((id) => relicAppearanceManager.battleAssetFor(id)), ...getStageEnemies(stage).map(({ id }) => battleAssetFor(id))];
+          const retryResult = await retryFailedPuppetAssetsForBattle(assets);
+          reportBattleAssetRetry("전투 편성 에셋 재시도", retryResult);
           this.scene.start("battle", { mode: "stage" });
         } catch (error) {
           // instanceof 판정이 계약의 런타임 오류 타입을 기준으로 수행됨을 import 수준에서도 명확히 한다.

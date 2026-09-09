@@ -660,12 +660,25 @@ export interface PuppetAssetPreloadFailure {
   readonly fallbackAvailable: boolean;
 }
 
-/** 모든 등록 요청이 settle된 뒤 반환되는 Puppet 사전 로딩 결과다. */
+/** URL별 성공을 잃지 않는 사전 로딩 DTO 상태다. */
+export type PuppetAssetPreloadStatus = "success" | "partial" | "failure";
+
+/**
+ * 모든 등록 요청이 settle된 뒤 반환되는 Puppet 사전 로딩 결과다.
+ *
+ * `successfulUrls`는 같은 호출의 다른 URL이 실패해도 이미 채워진 Puppet 캐시를 무효화하지
+ * 않았음을 명시한다. `failures`만 재시도 후보이며, 그룹 전체를 다시 요청해서는 안 된다.
+ */
 export interface PuppetAssetPreloadResult {
+  readonly status: PuppetAssetPreloadStatus;
+  readonly successfulUrls: readonly string[];
   readonly failures: readonly PuppetAssetPreloadFailure[];
   /** 일부 원화가 없어도 호출자가 게임 진입을 계속할 수 있는지 명시한다. */
   readonly fallbackAvailable: boolean;
 }
+
+/** 타이틀에서 실패한 URL만 보존한다. 성공 URL은 loadSharedPromise의 기존 캐시에 그대로 남는다. */
+const failedPreloadUrls = new Set<string>();
 
 /** 테스트 주입과 네트워크 정책 조정을 위한 제한된 사전 로딩 옵션이다. */
 export interface PuppetAssetPreloadOptions {
@@ -766,7 +779,23 @@ export async function preloadPuppetAssets(
       ? [{ assetUrl: group[index].url, error: result.reason, fallbackAvailable: true }]
       : [],
   );
-  return { failures, fallbackAvailable: failures.every((failure) => failure.fallbackAvailable) };
+  const successfulUrls = settled.flatMap((result, index) => result.status === "fulfilled" ? [group[index].url] : []);
+  // URL 단위 결과로 다음 전투의 교집합 재시도 집합만 갱신한다.
+  successfulUrls.forEach((url) => failedPreloadUrls.delete(url));
+  failures.forEach(({ assetUrl }) => failedPreloadUrls.add(assetUrl));
+  const status: PuppetAssetPreloadStatus = failures.length === 0 ? "success" : successfulUrls.length === 0 ? "failure" : "partial";
+  return { status, successfulUrls, failures, fallbackAvailable: failures.every((failure) => failure.fallbackAvailable) };
+}
+
+/**
+ * 전투 직전 현재 편성이 실제로 쓰는 에셋과 과거 실패 URL의 교집합만 다시 준비한다.
+ * 빈 교집합은 즉시 성공하므로, 현재 전투에 없는 캐릭터의 장애가 진입을 지연시키지 않는다.
+ */
+export function retryFailedPuppetAssetsForBattle(
+  battleAssets: readonly PuppetAsset[],
+  options: PuppetAssetPreloadOptions = {},
+): Promise<PuppetAssetPreloadResult> {
+  return preloadPuppetAssets(uniqueAssets(battleAssets).filter(({ url }) => failedPreloadUrls.has(url)), options);
 }
 
 /**

@@ -4,7 +4,7 @@ import { GameApiError, type AdSlotOperationsDto } from "../api/contracts";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import type { ExpeditionMapNode } from "../core/expeditionMap";
 import { getRelic } from "../data/relics";
-import { setDebugExpeditionFormation, setDebugFormationDragVisual, setDebugScene } from "../debug";
+import { reportBattleAssetRetry, setDebugExpeditionFormation, setDebugFormationDragVisual, setDebugScene } from "../debug";
 import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { expeditionManager, type StartExpeditionFailure } from "../managers/ExpeditionManager";
 import { relicProgression } from "../managers/RelicProgressionManager";
@@ -31,7 +31,7 @@ import { presentRewardedAd } from "../platform/rewardedAds";
 import { currencyRecordToRewardItems, openRewardPopup } from "../ui/RewardPopup";
 import { ExpeditionRewardPopup } from "../ui/ExpeditionRewardPopup";
 import { ExpeditionRankingPopup } from "../ui/ExpeditionRankingPopup";
-import { placePuppet, portraitAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
+import { battleAssetFor, placePuppet, portraitAssetFor, retryFailedPuppetAssetsForBattle, spawnPuppet, type PuppetCreature } from "../puppets/assets";
 import { loadOwnedPuppet } from "../ui/statusPuppetLoad";
 import { expeditionEnemyLevel, getExpeditionEncounterEnemies } from "../data/expeditionEnemies";
 import { formatCurrency } from "../core/formatCurrency";
@@ -347,19 +347,25 @@ export class ExpeditionScene extends Phaser.Scene {
   }
 
   /** 선택이 모두 저장된 바로 그 노드로 진입해, 후보 확정 뒤 다른 지도 노드를 누를 틈을 만들지 않는다. */
-  private enterBattle(node: ExpeditionMapNode): void {
+  private async enterBattle(node: ExpeditionMapNode): Promise<void> {
     const run = expeditionManager.status().run;
     if (!run) { this.nodeTransitionPending = false; return; }
     const input: ExpeditionBattleInputDto = { mode: "expedition", runId: run.runId, nodeId: node.id, nodeType: node.type as ExpeditionBattleInputDto["nodeType"], floor: node.floor, relics: run.relics.map(({ relicId, currentHp, alive }) => ({ relicId, currentHp, alive })), augments: run.selectedAugments };
+    // 현재 생존 편성과 이 노드의 적만 타이틀 실패 목록과 교차해 재시도한다.
+    const retryResult = await retryFailedPuppetAssetsForBattle([...run.relics.filter(({ alive }) => alive).map(({ relicId }) => relicAppearanceManager.battleAssetFor(relicId)), ...getExpeditionEncounterEnemies(node.type, node.floor).map(({ id }) => battleAssetFor(id))]);
+    reportBattleAssetRetry("원정 전투 에셋 재시도", retryResult);
     this.scene.start("battle", input);
   }
 
   /** 서버 제출과 완료 정산의 멱등 키를 먼저 런에 고정한 뒤 불사 보스 전장으로 이동한다. */
-  private enterBossBattle(node: ExpeditionMapNode): void {
+  private async enterBossBattle(node: ExpeditionMapNode): Promise<void> {
     const run = expeditionManager.status().run;
     const ids = expeditionManager.prepareBossRequests(node.id);
     if (!run || !ids || node.floor !== 20) { this.nodeTransitionPending = false; return; }
     const input: ExpeditionBossBattleInputDto = { mode: "expeditionBoss", runId: run.runId, nodeId: node.id, floor: 20, relics: run.relics.map(({ relicId, currentHp, alive }) => ({ relicId, currentHp, alive })), augments: run.selectedAugments, ...ids };
+    // 보스전도 실제 생존 편성과 보스 에셋만 재시도해 관련 없는 실패를 기다리지 않는다.
+    const retryResult = await retryFailedPuppetAssetsForBattle([...run.relics.filter(({ alive }) => alive).map(({ relicId }) => relicAppearanceManager.battleAssetFor(relicId)), ...getExpeditionEncounterEnemies("boss", 20).map(({ id }) => battleAssetFor(id))]);
+    reportBattleAssetRetry("원정 보스 에셋 재시도", retryResult);
     this.scene.start("battle", input);
   }
 

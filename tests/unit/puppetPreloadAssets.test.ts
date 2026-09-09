@@ -4,6 +4,7 @@ import {
   PORTRAIT_ASSETS,
   PUPPET_PRELOAD_GROUPS,
   preloadPuppetAssets,
+  retryFailedPuppetAssetsForBattle,
   type PuppetAsset,
 } from "../../src/puppets/assets";
 import { runLoadingSteps, type LoadingStep } from "../../src/scenes/loadingStepRunner";
@@ -52,12 +53,27 @@ describe("Puppet 사전 로딩 레지스트리", () => {
     await running;
     expect(done).toEqual([1]);
     expect(diagnostic).toHaveBeenCalledWith(
-      "[loading:Puppet test] Puppet assets failed",
-      expect.objectContaining({
-        failures: [expect.objectContaining({ assetUrl: "broken.zip", error: expect.any(Error) })],
-        fallbackAvailable: true,
-      }),
+      "[loading:Puppet test] partial",
+      [expect.objectContaining({ assetUrl: "broken.zip", error: expect.any(Error), errorKind: "Error" })],
     );
     diagnostic.mockRestore();
+  });
+
+  it("성공 URL을 보존하고 다음 전투에서는 실패 목록과 현재 편성의 교집합만 재시도한다", async () => {
+    // 세 URL 중 하나만 실패시킨 뒤 관련 없는 성공/실패가 전투 준비 대상으로 되살아나지 않는지 검증한다.
+    const template = Object.values(PORTRAIT_ASSETS)[0];
+    const assets = ["cached.zip", "needed.zip", "unused-broken.zip"].map((url) => ({ ...template, url }));
+    const initialLoader = vi.fn((asset: PuppetAsset) => asset.url === "cached.zip" ? Promise.resolve() : Promise.reject(new Error("offline")));
+    const initial = await preloadPuppetAssets(assets, { loader: initialLoader, maxRetries: 0 });
+    expect(initial).toMatchObject({ status: "partial", successfulUrls: ["cached.zip"] });
+    expect(initial.failures.map(({ assetUrl }) => assetUrl)).toEqual(["needed.zip", "unused-broken.zip"]);
+
+    const retryLoader = vi.fn(() => Promise.resolve());
+    const retried = await retryFailedPuppetAssetsForBattle(
+      [{ ...template, url: "cached.zip" }, { ...template, url: "needed.zip" }],
+      { loader: retryLoader, maxRetries: 0 },
+    );
+    expect(retryLoader).toHaveBeenCalledTimes(1);
+    expect(retried).toMatchObject({ status: "success", successfulUrls: ["needed.zip"], failures: [] });
   });
 });

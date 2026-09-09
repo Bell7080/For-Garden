@@ -49,6 +49,8 @@ export interface DebugBattle {
 export interface DebugState {
   ready: boolean;
   scene: string;
+  /** 로딩 단계명·상태·실패 URL·오류 종류만 담는 개발 진단 기록이며 플레이어 UI에는 연결하지 않는다. */
+  loadingSteps?: Array<{ label: string; status: "success" | "partial" | "failure"; failures: Array<{ assetUrl?: string; errorKind: string }> }>;
   /** 캔버스 DOM에서 읽을 수 없는 현재 화면 제목을 E2E가 사용자 관점으로 확인할 때 쓴다. */
   screenTitle?: string;
   /** 지금 열려 있는 팝업 제목을 아래(가장 먼저 연 것)부터 순서대로 쌓아 둔다. E2E가 팝업이 실제로 열렸는지 확인한다. */
@@ -126,6 +128,22 @@ export interface DebugState {
   };
   /** 상품명·재화 대신 현재 렌더 탭과 스크롤 위치만 관찰하는 표시 계약이다. */
   shopView?: { category: "general" | "enhancement" | "rune"; scrollY: number; minScrollY: number };
+}
+
+/** 원래 오류는 DEV 콘솔에, 직렬화 가능한 종류와 URL은 E2E 진단 상태에만 남긴다. */
+export function reportLoadingStepResult(result: { label: string; status: "success" | "partial" | "failure"; failures: readonly { assetUrl?: string; error: unknown; errorKind: string }[] }): void {
+  // 순수 Vitest(Node)에서도 실행되므로 브라우저 진단 상태 기록만 window 존재 여부로 제한한다.
+  if (typeof window !== "undefined") {
+    const state = ensure();
+    state.loadingSteps ??= [];
+    state.loadingSteps.push({ label: result.label, status: result.status, failures: result.failures.map(({ assetUrl, errorKind }) => ({ assetUrl, errorKind })) });
+  }
+  if (import.meta.env.DEV && result.failures.length > 0) console.error(`[loading:${result.label}] ${result.status}`, result.failures);
+}
+
+/** 전투 직전 교집합 재시도도 로딩 단계와 같은 개발 전용 진단 계약으로 기록한다. */
+export function reportBattleAssetRetry(label: string, result: { status: "success" | "partial" | "failure"; failures: readonly { assetUrl: string; error: unknown }[] }): void {
+  reportLoadingStepResult({ label, status: result.status, failures: result.failures.map(({ assetUrl, error }) => ({ assetUrl, error, errorKind: error instanceof Error ? error.name : typeof error })) });
 }
 
 /** 자동화에 공개하는 좌표는 누를 중심점 두 숫자만 가진다. */

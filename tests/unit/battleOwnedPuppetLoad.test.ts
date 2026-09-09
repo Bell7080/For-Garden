@@ -32,6 +32,23 @@ describe("battle owned Puppet retry boundary", () => {
     expect(root.destroy).not.toHaveBeenCalled();
   });
 
+  it("첫 준비와 재시도를 구분하고 최종 실패만 실패 상태로 게시한다", async () => {
+    const states: string[] = [];
+    // 화면은 오류 원문 대신 이 세 단계만 받아 진영 표식의 표현을 결정한다.
+    const result = await loadOwnedPuppetWithRetry<ReturnType<typeof puppet>>({
+      spawn: vi.fn().mockRejectedValue(new Error("private transport detail")),
+      isCurrent: () => true,
+      isDisplayable: ({ active }) => active,
+      adopt: vi.fn(),
+      attempts: 3,
+      wait: async () => undefined,
+      onStateChange: (state) => states.push(state),
+    });
+
+    expect(result.status).toBe("failed");
+    expect(states).toEqual(["loading", "retrying", "retrying", "failed"]);
+  });
+
   it("Scene 종료 후 늦게 완료된 결과는 등록하지 않고 정확히 한 번 폐기한다", async () => {
     const root = puppet(); let current = true; let resolve!: (value: typeof root) => void;
     const pending = new Promise<typeof root>((done) => { resolve = done; });

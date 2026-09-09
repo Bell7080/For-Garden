@@ -139,17 +139,19 @@ export class SettingsScene extends Phaser.Scene {
     this.content.setData("height", y + 70); this.scrollTo(this.scrollY);
   }
 
-  /** 지원·데이터 탭은 계정 연결, 정책 문서, 캐시와 저장 삭제를 한곳에서 구분한다. */
+  /** 지원·데이터 탭은 계정 연결, 정책 문서, 환경설정 복원과 파괴적 저장 삭제를 한곳에서 구분한다. */
   private buildSupportRows(y: number, section: (title: string, height: number) => number): number {
     y = section("계정", 330);
     const account = this.accountState;
     this.content.add(this.add.text(90, y, `상태  ${account.kind === "guest" ? "게스트" : "연동됨"}\n제공자  ${account.provider.toUpperCase()}\n식별 ID  ${account.maskedId}`, textStyle({ role: "body", size: 26, color: COLOR.inkDim, lineSpacing: 10 }))); y += 150;
     if (account.kind === "guest") { this.addTextAction(90, y, "Google 연동", () => void this.login("google")); this.addTextAction(350, y, "Apple 연동", () => void this.login("apple")); }
     else { this.addTextAction(90, y, "로그아웃", () => this.confirmAccountAction("로그아웃", "계정 연결만 해제합니다. 저장 데이터 초기화와 서버 데이터 삭제는 실행하지 않습니다.", () => accountApi.logout()), true); }
-    y += 120; y = section("고객지원 · 데이터", 660);
+    y += 120; y = section("고객지원 · 데이터", 752);
     this.addTextAction(90, y, "캐시 정리", () => void this.clearCache()); y += 92;
     this.addTextAction(90, y, "이용약관", () => this.openPolicy("/terms")); y += 92;
     this.addTextAction(90, y, "개인정보 처리방침", () => this.openPolicy("/privacy")); y += 92;
+    // 환경설정 복원은 일반 강조색으로 두어 위험색을 쓰는 진행 삭제·계정 탈퇴와 시각적으로 구분한다.
+    this.addTextAction(90, y, "환경설정 초기화", () => this.confirmSettingsReset()); y += 92;
     this.addTextAction(90, y, "저장 데이터 초기화", () => this.confirmLocalReset(), true); y += 92;
     // 스타터 렐릭 추가처럼 저장 마이그레이션이 소급하지 않는 변경을 QA가 재설치 없이 확인하는 임시 진입점이다.
     this.addTextAction(90, y, "모든 캐릭터 획득", () => this.grantAllRelics()); y += 92;
@@ -173,6 +175,15 @@ export class SettingsScene extends Phaser.Scene {
 
   /** 정책은 새 탭을 우선 사용하되 팝업 차단 시 같은 탭으로 이동해 문서 접근을 보장한다. */
   private openPolicy(path: PolicyPath): void { openPolicyDocument(path); }
+
+  /** 한 번의 확인 뒤 환경설정만 복원하고 지원 탭을 재생성해 모든 입력과 글자 배율을 즉시 동기화한다. */
+  private confirmSettingsReset(): void {
+    this.popups.confirm({ title: "환경설정 초기화", message: "사운드·알림·게임·접근성 설정을 기본값으로 되돌립니다. 진행 데이터와 계정 상태는 유지됩니다.", confirmLabel: "초기화" }, () => {
+      settingsManager.reset();
+      // 현재 반환 경로도 함께 넘겨 초기화 뒤 뒤로가기가 사용자가 들어온 화면을 그대로 가리키게 한다.
+      this.scene.restart({ tab: "support", returnScene: this.returnScene, returnData: this.returnData });
+    });
+  }
 
   /** 1차 위험 안내 후 2차 최종 확인을 거쳐 로컬 저장만 삭제한다. */
   private confirmLocalReset(): void {

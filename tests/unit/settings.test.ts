@@ -44,11 +44,16 @@ describe("settings", () => {
     expect(normalizeSettings({ presentation: { battleUiMotion: "invalid" } }).presentation.battleUiMotion).toBe("default");
   });
 
-  it("부분 변경을 보정해 저장하고 초기화하되 진행은 보존한다", () => {
-    const state = createDefaultSession(); state.wallet.gold = 77; const save = vi.fn(); const manager = new SettingsManager(state, { save });
+  it("부분 변경을 보정해 저장하고 초기화하되 진행과 계정 상태는 보존한다", () => {
+    const state = createDefaultSession(); state.wallet.gold = 77; state.cleared.add("stage-1"); state.settings.account = { provider: "google", displayId: "연동 연구원" };
+    // 설정 외 진행 객체와 공개 계정 표시값을 함께 고정해 reset이 전체 세션 초기화로 번지지 않게 한다.
+    const progressBeforeReset = { gold: state.wallet.gold, cleared: [...state.cleared], owned: [...state.owned] };
+    const accountBeforeReset = { ...state.settings.account }; const save = vi.fn(); const manager = new SettingsManager(state, { save });
     manager.update({ sound: { musicVolume: 0.25 }, game: { autoUltimate: true } });
     expect(manager.get()).toMatchObject({ sound: { musicVolume: 0.25 }, game: { autoUltimate: true } }); expect(save).toHaveBeenCalledTimes(1);
-    manager.reset(); expect(manager.get()).toEqual(createDefaultSettings()); expect(state.wallet.gold).toBe(77); expect(save).toHaveBeenCalledTimes(2);
+    manager.reset(); expect(manager.get()).toEqual({ ...createDefaultSettings(), account: accountBeforeReset });
+    expect({ gold: state.wallet.gold, cleared: [...state.cleared], owned: [...state.owned] }).toEqual(progressBeforeReset);
+    expect(state.settings.account).toEqual(accountBeforeReset); expect(save).toHaveBeenCalledTimes(2);
   });
 
   it("전투의 3배속과 자동 궁극기를 다음 판에 복원할 설정으로 함께 저장한다", () => {

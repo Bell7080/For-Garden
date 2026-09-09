@@ -23,8 +23,17 @@ export class SettingsManager extends EventTarget {
     return this.get();
   }
 
-  /** 진행 데이터에는 손대지 않고 환경설정만 초기 상태로 되돌린다. */
-  reset(): GameSettings { this.state.settings = createDefaultSettings(); setTextScale(this.state.settings.accessibility.textScale); this.saves.save(this.state); this.dispatchEvent(new CustomEvent<GameSettings>("change", { detail: this.get() })); return this.get(); }
+  /** 진행 데이터와 계정 표시 상태에는 손대지 않고 사용자가 조정하는 환경설정만 기본값으로 되돌린다. */
+  reset(): GameSettings {
+    // 계정 연결은 환경설정이 아니므로 기본 게스트 값으로 덮지 않고 현재의 공개 표시 정보만 보존한다.
+    const account = { ...this.get().account };
+    this.state.settings = { ...createDefaultSettings(), account };
+    // 씬을 다시 그리기 전에도 이후 생성되는 글자가 즉시 기본 배율을 사용하도록 공용 배율을 먼저 맞춘다.
+    setTextScale(this.state.settings.accessibility.textScale);
+    this.saves.save(this.state);
+    this.dispatchEvent(new CustomEvent<GameSettings>("change", { detail: this.get() }));
+    return this.get();
+  }
 
   /** 개별/전체 설정이 모두 켜진 경우에만 의미 기반 햅틱을 플랫폼으로 전달한다. */
   haptic(pattern: HapticPattern): boolean {

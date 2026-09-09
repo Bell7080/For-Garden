@@ -464,6 +464,9 @@ test("설정 탭은 텍스트 확대·스크롤·두 단계 초기화를 좁은 
   await tapGame(page, BASE_WIDTH - 58, 86);
   // 미구현 토스트가 아니라 실제 설정 화면의 사용자 표시 제목까지 렌더됐는지 확인한다.
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.screenTitle)).toBe("환경 설정");
+  // 알림 탭은 지원 범위와 야간 시작·종료 행을 모바일 안전 영역 안에서 함께 보여 준다.
+  await tapGame(page, 324, 210); await captureGame(page, `test-results/${test.info().project.name}-settings-notifications.png`);
+  await tapGame(page, 130, 210);
   // 새 고정 헤더 아래 첫 사운드 슬라이더가 88px 이상의 터치 행으로 저장을 즉시 반영한다.
   await tapGame(page, 800, 392); let saved = await page.evaluate(() => localStorage.getItem("eternal-city.local-save")); expect(saved).toContain('"masterVolume"');
   // 게임 탭은 기존 선택 행 양식을 유지하며 전투 UI 움직임을 기본→감소로 즉시 저장한다.

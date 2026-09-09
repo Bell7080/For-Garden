@@ -3,6 +3,7 @@ import { saveManager, type SaveManager } from "../state/SaveManager";
 import { session, type GameSettings, type Session } from "../state/session";
 import { platformFeedback, type HapticPattern, type PlatformFeedback, type ScheduledNotification } from "../api/PlatformFeedback";
 import { setTextScale } from "../ui/textScale";
+import { adjustForQuietHours } from "../core/notificationSchedule";
 
 /** 설정 변경자가 저장과 알림을 빠뜨리지 않도록 한 공개 변경 경계다. */
 export class SettingsManager extends EventTarget {
@@ -49,7 +50,9 @@ export class SettingsManager extends EventTarget {
     }
     if (this.platform.getNotificationPermission() !== "granted") return null;
     if (previous) await this.platform.cancelNotification(previous);
-    const id = await this.platform.scheduleNotification(notification);
+    // 조용한 시간에는 알림을 버리지 않고 사용자가 정한 종료 시각으로 순수하게 이동한다.
+    const expiresAt = adjustForQuietHours(notification.expiresAt, settings.notifications.quietHours, settings.notifications.quietHoursStart, settings.notifications.quietHoursEnd);
+    const id = await this.platform.scheduleNotification({ ...notification, expiresAt });
     this.update({ notifications: { lastScheduledIds: { ...settings.notifications.lastScheduledIds, ...(id ? { [notification.kind]: id } : {}) } } });
     return id;
   }

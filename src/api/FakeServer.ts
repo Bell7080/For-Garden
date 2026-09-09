@@ -45,6 +45,8 @@ import { calculateExpeditionNodeRewards, calculateExpeditionRunScore } from "../
 import { calculateExpeditionNodeScore } from "../core/expeditionScore";
 import { RelicProgressionManager } from "../managers/RelicProgressionManager";
 import { expeditionBattleEffects } from "../core/expeditionBattle";
+import { settingsManager } from "../managers/SettingsManager";
+import { nextUtcDay } from "../core/notificationSchedule";
 
 /** 사용자 룬 이름의 서버 정책이다. UI 글자 수와 무관하게 API 경계가 최종 권한을 가진다. */
 export const MAX_RUNE_NAME_LENGTH = 20;
@@ -61,6 +63,8 @@ export interface FakeServerOptions {
   verifyPurchaseReceipt?: (receipt: string, productId: string) => string | null | Promise<string | null>;
   /** 저장 성공/실패를 결정적으로 재현하는 테스트용 어댑터이며, 생략하면 공유 세션만 SaveManager에 저장한다. */
   persistSession?: (next: Session) => void;
+  /** 콘텐츠 시각의 소유 경계가 플랫폼 예약을 갱신하도록 주입하는 좁은 알림 계약이다. */
+  notificationScheduler?: Pick<typeof settingsManager, "scheduleNotification" | "cancelNotification">;
 }
 
 /** 백엔드가 생기기 전까지 메모리 상태를 서버처럼 독점 변경하는 임시 어댑터다. */
@@ -81,6 +85,7 @@ export class FakeServer implements GameApi {
   private readonly verifyReceipt: (receipt: string, productId: string) => string | null | Promise<string | null>;
   /** 테스트가 브라우저 저장소 없이 커밋 실패를 주입할 수 있는 선택 저장 경계다. */
   private readonly persistSession?: (next: Session) => void;
+  private readonly notificationScheduler?: Pick<typeof settingsManager, "scheduleNotification" | "cancelNotification">;
   /** 아래 저장소들은 실제 서버의 고유 제약조건/트랜잭션을 흉내 내는 FakeServer 전용 멱등 기록이다. */
   private readonly receiptResults = new Map<string, VerifyPurchaseReceiptResponse>();
   private readonly verifiedTransactions = new Map<string, VerifyPurchaseReceiptResponse>();
@@ -127,6 +132,8 @@ export class FakeServer implements GameApi {
     this.verifyAdToken = options.verifyAdToken ?? ((token, slotId) => token === `verified:${slotId}`);
     this.verifyReceipt = options.verifyPurchaseReceipt ?? ((receipt, productId) => receipt.startsWith(`verified-receipt:${productId}:`) ? receipt.slice(`verified-receipt:${productId}:`.length) : null);
     this.persistSession = options.persistSession;
+    // 독립 상태 테스트는 공유 세션의 알림 저장을 건드리지 않고, 실제 공유 API만 기본 manager를 쓴다.
+    this.notificationScheduler = options.notificationScheduler ?? (state === session ? settingsManager : undefined);
     // 절대 시각을 고정해 테스트와 개발 빌드에서 내용·순서가 언제나 같게 한다.
     this.mails = [
       { id: "welcome-supply", title: "중앙 연구소 보급품", sender: "연구지원국", body: "새로운 조사 활동을 위한 보급품입니다.", sentAt: "2026-08-29T00:00:00.000Z", expiresAt: "2099-12-31T23:59:59.000Z", read: false, claimed: false, rewards: [{ kind: "currency", currency: "gold", amount: 1200 }] },
@@ -863,6 +870,9 @@ export class FakeServer implements GameApi {
     // 기간 전환 자체도 재실행 뒤 되살아나지 않도록 서버 상태에 확정한다.
     this.persist({ ...this.state, missions: normalized });
     this.state.missions = normalized;
+    const resetAt = nextUtcDay(this.now());
+    // 임무 기간을 실제로 정규화하는 API 경계에서 다음 UTC 갱신도 함께 예약한다.
+    void this.notificationScheduler?.scheduleNotification({ id: `daily-mission:${resetAt.toISOString()}`, kind: "dailyMission", title: "일일 임무 갱신", body: "새로운 일일 임무가 시작되었습니다.", expiresAt: resetAt });
     return this.missionListDto(normalized);
   }
 
@@ -1166,6 +1176,10 @@ export class FakeServer implements GameApi {
     const settled = settleStamina(this.state.wallet.stamina, maximum, this.state.staminaUpdatedAt, now);
     this.state.wallet.stamina = settled.amount;
     this.state.staminaUpdatedAt = settled.updatedAt;
+    const fullAt = staminaTiming(settled.amount, maximum, settled.updatedAt).fullAt;
+    // 정산 경계가 완충 시각을 소유하므로 화면이 DTO를 해석해 예약하지 않는다.
+    if (fullAt) void this.notificationScheduler?.scheduleNotification({ id: `stamina-full:${fullAt}`, kind: "staminaFull", title: "스테미나 충전 완료", body: "스테미나가 모두 충전되었습니다.", expiresAt: new Date(fullAt) });
+    else void this.notificationScheduler?.cancelNotification("staminaFull");
   }
 
   /** 정산된 현재량과 이후 시각을 클라이언트 표시용 DTO로 묶는다. */

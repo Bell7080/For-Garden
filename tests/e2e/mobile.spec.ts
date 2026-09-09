@@ -89,6 +89,11 @@ test("세로형 첫 방문은 오프닝을 끝내고 중복 입력 없이 로비
   await expect
     .poll(() => page.evaluate(() => window.__PF_DEBUG?.scene))
     .toBe("opening");
+  // 타이틀 진입 pointer가 Puppet 비동기 로딩보다 먼저 재사용돼도 첫 ID와 원문은 그대로여야 한다.
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.dialogue)).toEqual({
+    nodeId: "wake",
+    body: "연구원님, 곧 이터널 시티에 도착해요.",
+  });
   // 첫 전신 ZIP 파싱이 끝나 입력 잠금이 풀릴 시간을 저사양 모바일 실행에도 보장한다.
   await page.waitForTimeout(2_000);
 

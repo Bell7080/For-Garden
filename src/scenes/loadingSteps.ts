@@ -1,6 +1,6 @@
 import type Phaser from "phaser";
 import { preloadPuppetAssets, PUPPET_PRELOAD_GROUPS } from "../puppets/assets";
-import { BACKGROUND_ASSETS } from "../ui/backgrounds";
+import { BACKGROUND_ASSETS, BACKGROUND_BOOT_KEYS } from "../ui/backgrounds";
 import { loadGameFonts } from "../ui/fonts";
 import { UI_ICON_ASSETS } from "../ui/icons";
 import { AFFINITY_ICON_ASSETS } from "../ui/affinityIcons";
@@ -93,8 +93,14 @@ export const LOADING_STEPS: ReadonlyArray<LoadingStep> = [
     label: "배경 원화",
     run: (scene) =>
       loadWithPhaser(scene, () => {
-        // 지도(Content2_001map)와 전투 필드(Content2_001field)는 backgrounds.ts의 화면 배경 표가 소유한다.
-        BACKGROUND_ASSETS.forEach(([key, path]) => scene.load.image(key, path));
+        // **전부 읽지 않는다.** 한 장이 디코드되면 25MB라 열여덟 장이면 로비에 닿기도 전에
+        // 텍스처만 434MB가 된다. 나머지는 그 화면에 들어갈 때 읽고 나올 때 내린다 —
+        // 규칙은 backgrounds.ts와 backgroundResidency.ts가 갖는다.
+        const paths = new Map<string, string>(BACKGROUND_ASSETS.map(([key, path]) => [key, path]));
+        BACKGROUND_BOOT_KEYS.forEach((key) => {
+          const path = paths.get(key);
+          if (path) scene.load.image(key, path);
+        });
         // 진입 버튼(Content2_001)은 화면 배경이 아니므로 이 중앙 콘텐츠 표에서 함께 적재한다.
         CONTENT_ART_ASSETS.forEach(([key, path]) => scene.load.image(key, path));
       }),

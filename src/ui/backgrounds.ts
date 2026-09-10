@@ -1,76 +1,93 @@
 import Phaser from "phaser";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
+import { BACKGROUND_ASSETS } from "./backgroundAssets";
+import {
+  emptyBackgroundResidency,
+  releaseBackground,
+  retainBackground,
+  type BackgroundResidency,
+} from "./backgroundResidency";
 import { HOLO } from "./holo";
 import { COLOR } from "./theme";
 
-/** 화면 용도별 배경 키. 파일 번호와 실제 사용처의 대응을 한 곳에서 관리한다. */
-export const BACKGROUND = {
-  lobby: "background-lobby",
-  relics: "background-relics",
-  info: "background-info",
-  battleArea: "background-battle-area",
-  lab: "background-lab",
-  /** 편성부터 실제 전투까지 이어지는 6번 전장 원화다. */
-  combat: "background-combat",
-  /** 스테이지 진행과 함께 아래에서 위로 움직이는 장축 지도 원화다. */
-  stageMap: "background-stage-map",
-  /** 화석을 손질하는 작업실. 장기 탐사(고고학) 전용이다. */
-  archaeology: "background-archaeology",
-  /** 유료 상점의 흰 쇼케이스. 인게임 재화 교환소(무역)와는 다른 자리다. */
-  premiumShop: "background-premium-shop",
-  /** 일반 상품과 성장 재화를 진열하는 상점 쇼케이스 배경 키다. */
-  shop: "background-shop",
-  /** 발굴 연출이 덮는 발굴장. 검은 판 대신 이 원화를 깔고 그 위를 눌러 어둡게 한다. */
-  excavation: "background-excavation",
-  /** 캐릭터 카드 안, 인물 뒤에 깔리는 원화. 등급색 필터를 통과해 은은하게만 남는다. */
-  cardBackdrop: "background-card-backdrop",
-  /** 진행 중인 원정에서 층과 분기를 고르는 전용 상승 지도다(Content2_001map). */
-  expeditionMap: "background-expedition-map",
-  /** 원정 노드에 진입한 뒤 교전 UI 아래에 까는 전용 전투 필드다(Content2_001field). */
-  expeditionField: "background-expedition-field",
-  /** 인물이 없는 침수 도시 원경이다(Content2_001background). 기록 화면과 순위 팝업의 환경층을 맡는다. */
-  expeditionRanking: "background-expedition-ranking",
-  /** 케이크 대작전 진입 화면 배경이다(Content3_001background). */
-  sortieCake: "background-sortie-cake",
-  /** 현상수배 진입 화면 배경이다(Content4_001background). */
-  sortieBounty: "background-sortie-bounty",
-  /** 레이드 진입 화면 배경이다(Content5_001background). */
-  sortieRaid: "background-sortie-raid",
-  /**
-   * 타이틀(로딩) 화면 전용 원화다. 화면 자체가 로딩 화면이라 다른 배경처럼 이 표의
-   * `BACKGROUND_ASSETS`(로딩 단계 안에서 읽힘)로 적재할 수 없다 — `TitleScene`이
-   * 씬 진입 직후 이 키로 직접 읽는다.
-   */
-  title: "background-title",
-} as const;
+// 표는 Phaser 없는 모듈이 소유하지만, 부르는 곳 38군데가 한 경로만 알면 되도록 여기서 잇는다.
+export { BACKGROUND, BACKGROUND_ASSETS, BACKGROUND_BOOT_KEYS } from "./backgroundAssets";
 
-/** BootScene이 모든 화면 배경을 한 번에 적재할 때 사용하는 경로 목록이다. */
-export const BACKGROUND_ASSETS = [
-  // 일반 배경 스프라이트는 PuppetForge 번들과 분리한 공용 자산 경로에서 읽는다.
-  [BACKGROUND.lobby, "sprites/background/background_001.webp"],
-  [BACKGROUND.relics, "sprites/background/background_002.webp"],
-  [BACKGROUND.info, "sprites/background/background_003.webp"],
-  [BACKGROUND.battleArea, "sprites/background/background_004.webp"],
-  // 5번 원화는 발굴 설비가 있는 연구소 전용 배경이다.
-  [BACKGROUND.lab, "sprites/background/background_005.webp"],
-  [BACKGROUND.combat, "sprites/background/background_006.webp"],
-  [BACKGROUND.stageMap, "sprites/background/map_001.webp"],
-  [BACKGROUND.archaeology, "sprites/background/background_007.webp"],
-  [BACKGROUND.premiumShop, "sprites/background/background_008.webp"],
-  // 일반 상점은 완성된 흰 쇼케이스 원화를 쓰되 유료 상점과 독립된 texture key를 유지한다.
-  [BACKGROUND.shop, "sprites/background/background_008.webp"],
-  [BACKGROUND.excavation, "sprites/background/background_009.webp"],
-  [BACKGROUND.cardBackdrop, "sprites/background/background_010.webp"],
-  // 원정 지도 WebP는 화면 배경 표가 키와 경로를 단독 소유하며 원본 복제본을 만들지 않는다.
-  [BACKGROUND.expeditionMap, "sprites/content/Content2_001map.webp"],
-  // 원정 전투 필드 WebP도 이미 배포 형식이므로 그대로 적재한다.
-  [BACKGROUND.expeditionField, "sprites/content/Content2_001field.webp"],
-  // 아래 세 콘텐츠의 배경 WebP도 같은 이유로 그대로 적재한다.
-  [BACKGROUND.expeditionRanking, "sprites/content/Content2_001background.webp"],
-  [BACKGROUND.sortieCake, "sprites/content/Content3_001background.webp"],
-  [BACKGROUND.sortieBounty, "sprites/content/Content4_001background.webp"],
-  [BACKGROUND.sortieRaid, "sprites/content/Content5_001background.webp"],
-] as const;
+/** 키 하나로 경로를 찾는 조회표. 늦게 읽는 경로가 이 표만 본다. */
+const BACKGROUND_PATHS: Readonly<Record<string, string>> = Object.fromEntries(BACKGROUND_ASSETS);
+
+/** 지금 무엇이 올라가 있는지. 화면이 아니라 이 모듈만 안다. */
+let residency: BackgroundResidency = emptyBackgroundResidency();
+
+/** 같은 원화를 두 곳에서 동시에 요청해도 로더를 두 번 돌리지 않는다. */
+const pendingLoads = new Map<string, Promise<boolean>>();
+
+/**
+ * 그 배경 원화를 GPU에 올려 둔다. 이미 있으면 곧바로 끝난다.
+ *
+ * 실패해도 던지지 않고 `false`만 돌려준다 — 원화 한 장이 없다고 그 화면의 조작까지 막지
+ * 않는다는 로딩 단계의 태도를 그대로 쓴다.
+ */
+export function ensureBackgroundTexture(scene: Phaser.Scene, key: string): Promise<boolean> {
+  if (scene.textures.exists(key)) return Promise.resolve(true);
+  const path = BACKGROUND_PATHS[key];
+  if (!path) return Promise.resolve(false);
+
+  const existing = pendingLoads.get(key);
+  if (existing) return existing;
+
+  const job = new Promise<boolean>((resolve) => {
+    const done = (ok: boolean): void => {
+      scene.load.off(Phaser.Loader.Events.FILE_LOAD_ERROR, onError);
+      scene.events.off(Phaser.Scenes.Events.SHUTDOWN, onShutdown);
+      resolve(ok);
+    };
+    // 씬이 먼저 닫히면 완료 신호가 영영 오지 않는다. 기다리던 쪽을 반드시 풀어 준다.
+    const onShutdown = (): void => done(scene.textures.exists(key));
+    const onError = (file: Phaser.Loader.File): void => { if (file.key === key) done(false); };
+    scene.load.once(`filecomplete-image-${key}`, () => done(true));
+    scene.load.on(Phaser.Loader.Events.FILE_LOAD_ERROR, onError);
+    scene.events.once(Phaser.Scenes.Events.SHUTDOWN, onShutdown);
+    scene.load.image(key, path);
+    scene.load.start();
+  });
+  pendingLoads.set(key, job);
+  void job.then(() => pendingLoads.delete(key));
+  return job;
+}
+
+/**
+ * 이 표시 객체가 사는 동안 그 배경 원화를 붙잡아 두고, 죽으면 놓는다.
+ *
+ * 아직 올라와 있지 않으면 읽어 와 채운 뒤 `onReady`를 부른다 — 원화마다 배율·원점이 달라
+ * 자리 잡는 일은 부른 쪽이 해야 한다. 화면은 `textures.exists`를 직접 묻지 않는다.
+ */
+export function useBackgroundTexture(
+  scene: Phaser.Scene,
+  image: Phaser.GameObjects.Image,
+  key: string,
+  onReady?: (image: Phaser.GameObjects.Image) => void,
+): void {
+  const textures = scene.textures;
+  residency = retainBackground(residency, key);
+  image.once(Phaser.GameObjects.Events.DESTROY, () => {
+    const next = releaseBackground(residency, key);
+    residency = next.state;
+    // 붙잡은 곳이 하나도 없는 키만 목록에 오르므로 살아 있는 표시 객체를 지울 일이 없다.
+    for (const evicted of next.evict) textures.remove(evicted);
+  });
+
+  if (textures.exists(key)) {
+    onReady?.(image);
+    return;
+  }
+  void ensureBackgroundTexture(scene, key).then((ok) => {
+    // 읽는 사이에 화면을 떠났을 수 있다. 죽은 객체에 텍스처를 물리면 렌더에서 터진다.
+    if (!ok || !image.active || !image.scene) return;
+    image.setTexture(key);
+    onReady?.(image);
+  });
+}
 
 /**
  * 세로 원화를 비율 왜곡 없이 화면 전체에 cover 배치한다.
@@ -81,9 +98,16 @@ export function addSceneBackground(
   texture: string,
   depth = -30,
 ): Phaser.GameObjects.Image {
-  const image = scene.add.image(BASE_WIDTH / 2, BASE_HEIGHT / 2, texture).setDepth(depth);
-  const coverScale = Math.max(BASE_WIDTH / image.width, BASE_HEIGHT / image.height);
-  return image.setScale(coverScale);
+  // 아직 안 올라온 원화는 Phaser의 물음표 텍스처로 뜨므로, 도착하기 전에는 투명한 1×1로
+  // 세워 두고 검은 화면만 보인다 — 로딩 화면과 같은 태도다(조립 과정을 보여 주지 않는다).
+  const ready = scene.textures.exists(texture);
+  const image = scene.add.image(BASE_WIDTH / 2, BASE_HEIGHT / 2, ready ? texture : "__DEFAULT").setDepth(depth);
+  if (!ready) image.setAlpha(0);
+  useBackgroundTexture(scene, image, texture, (loaded) => {
+    loaded.setScale(Math.max(BASE_WIDTH / loaded.width, BASE_HEIGHT / loaded.height));
+    if (loaded.alpha < 1) scene.tweens.add({ targets: loaded, alpha: 1, duration: 160 });
+  });
+  return image;
 }
 
 /** 팝업 안에서만 쓰는 배경 원화의 이미지·마스크·페이드 수명주기 묶음이다. */
@@ -124,9 +148,14 @@ export function addPopupBackgroundImage(
   },
 ): PopupBackgroundImage {
   // 이미지와 마스크 모두 bounds의 같은 로컬 중심을 쓴다. native-center의 crop도 이 중심에서 대칭이다.
-  const image = scene.add.image(bounds.x + (bounds.imageOffsetX ?? 0), bounds.y + (bounds.imageOffsetY ?? 0), texture);
-  if ((bounds.fit ?? "cover") === "cover") image.setScale(Math.max(bounds.width / image.width, bounds.height / image.height));
-  image.setAlpha(bounds.imageAlpha ?? 1);
+  const ready = scene.textures.exists(texture);
+  const image = scene.add.image(bounds.x + (bounds.imageOffsetX ?? 0), bounds.y + (bounds.imageOffsetY ?? 0), ready ? texture : "__DEFAULT");
+  const fitImage = (target: Phaser.GameObjects.Image): void => {
+    if ((bounds.fit ?? "cover") === "cover") target.setScale(Math.max(bounds.width / target.width, bounds.height / target.height));
+    target.setAlpha(bounds.imageAlpha ?? 1);
+  };
+  image.setAlpha(ready ? (bounds.imageAlpha ?? 1) : 0);
+  useBackgroundTexture(scene, image, texture, fitImage);
   parent.add(image);
 
   // GeometryMask는 Container 변환을 자동 상속하지 않으므로 렌더 직전마다 월드 좌표를 맞춘다.

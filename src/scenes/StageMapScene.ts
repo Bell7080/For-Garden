@@ -11,7 +11,7 @@ import { Button } from "../ui/Button";
 import { addBackButton } from "../ui/IconButton";
 import { chipPoints, drawLayer, drawVignette } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
-import { BACKGROUND } from "../ui/backgrounds";
+import { useBackgroundTexture, BACKGROUND } from "../ui/backgrounds";
 import { NodeEnemyPreview } from "../ui/NodeEnemyPreview";
 import { isEnemyPreviewNodeVisible } from "../ui/nodeEnemyPreviewLayout";
 import { stageChapterNavigationLayout } from "../ui/stageChapterLayout";
@@ -152,10 +152,14 @@ export class StageMapScene extends Phaser.Scene {
     // 원화 하단을 1-1보다 조금 아래에 고정한다. 위 스테이지로 스크롤할수록 배경도 같은 거리만큼
     // 올라간다. 지도가 화면을 가득 채워야 하므로, 폭에 맞춘 배율로 모자라면 세로를 기준으로 키운다.
     const artBottom = 460;
-    const mapArt = this.add.image(cx, artBottom, BACKGROUND.stageMap).setOrigin(0.5, 1);
+    const mapArt = this.add.image(cx, artBottom, "__DEFAULT").setOrigin(0.5, 1);
     // 가장 위 스테이지까지 굴렸을 때 화면 꼭대기가 비지 않는 길이.
     const needed = artBottom + WINDOW.top + 120 + height;
-    mapArt.setScale(Math.max(BASE_WIDTH / mapArt.width, needed / mapArt.height));
+    // 지도 원화는 25MB짜리라 이 화면에 들어올 때 읽고 나갈 때 내린다. 늦게 도착해도 배율
+    // 규칙을 같은 자리에서 다시 적용해야 화면마다 값이 갈리지 않는다.
+    useBackgroundTexture(this, mapArt, BACKGROUND.stageMap, (art) => {
+      art.setScale(Math.max(BASE_WIDTH / art.width, needed / art.height));
+    });
     this.map.add(mapArt);
     // 어두운 투명막도 지도에 묶어 원화의 이동감을 보존하면서 노드와 글자의 대비를 일정하게 한다.
     this.map.add(this.add.rectangle(cx, -height / 2, BASE_WIDTH, height + BASE_HEIGHT, COLOR.void, 0.22));

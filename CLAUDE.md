@@ -250,6 +250,16 @@
   어긋난 잔상으로 남는다. 네 변 그라데이션은 비율이 어떻든 고르게 눌러 준다.
 - 로비 대사는 이름줄과 대사줄만 덮는 얇은 띠를 쓴다. 판을 키우는 대신 불투명하게 하고,
   경계는 위아래 선 두 줄과 이름 옆으로 이어지는 선이 잡는다. 이름은 금색, 대사는 흰색이다.
+- **배경 원화는 화면에 들어갈 때 읽고 나올 때 내린다**(`src/ui/backgrounds.ts` + 순수 규칙
+  `backgroundResidency.ts`). **파일 용량은 그 원화가 차지하는 메모리를 말해 주지 않는다** —
+  `background_001.webp`는 1.3MB지만 1882×3344라 디코드되면 25.2MB다. 열여덟 장을 부트에서 한꺼번에
+  올리던 v0.84.1까지는 로비에 닿기도 전에 텍스처만 590MB였고, 그대로 모바일에 패키징하면 화면을
+  보기 전에 죽는다. 어느 화면이 무엇을 쓰는지 표로 적지 않는다 — 표는 화면이 늘 때마다 빠뜨릴
+  자리가 된다. 대신 **원화를 세운 표시 객체가 사는 동안만 붙잡고 죽으면 놓는다**. 배경 키를
+  화면이 직접 `add.image`로 세우지 말고 `addSceneBackground`·`addPopupBackgroundImage`·
+  `useBackgroundTexture` 셋 중 하나를 쓴다 — 직접 세우면 붙잡히지 않아 쓰는 중에 내려간다.
+  부트가 미리 읽는 것은 `BACKGROUND_BOOT_KEYS`뿐이고, 카드 뒷배경만 `BACKGROUND_PINNED`으로
+  붙잡아 둔다(카드 한 장마다 깔려 내렸다 올리면 그리드가 뜰 때마다 빈다).
 - 배경 원화와 출격 진입 버튼 일러스트(`ContentN_00M`)는 `scripts/prepare_backgrounds.py`가 구운
   WebP만 둔다 — 배경은 `public/sprites/background`, 버튼 원화는 `public/sprites/content`다.
   원본 PNG는 한 장에 10MB에 가까워 그대로 두면 첫 로딩이 통째로 그만큼 늘어난다. 굽고 나면

@@ -303,7 +303,9 @@ export class IdleExcavationPopup {
     const formation = response.excavation.assignedRelicIds;
     const rate = excavationProductionDisplayModel(formation, RELICS, session.relicProgress).totalsPerHour;
     // 1순위 발굴대 상태: 전용 원화를 팝업 전체에 한 장으로 깔아 히어로와 조작부를 끊지 않는다.
-    if (!this.statusBackground && this.scene.textures.exists(BACKGROUND.excavation)) {
+    // 발굴장 원화는 25MB짜리라 이 팝업을 열 때 읽고 닫으면 내린다. 도착 전에는 판이 비어
+    // 보이지만 조작은 그대로 선다 — 원화 한 장이 화면을 막지 않는다.
+    if (!this.statusBackground) {
       this.statusBackground = addPopupBackgroundImage(this.scene, content, BACKGROUND.excavation, { x: 0, y: 0, width: PANEL.width - 24, height: PANEL.height - 24, maskShape: POPUP_ART_SHAPE });
       if (this.body) this.popups.raiseChrome(this.body);
     }

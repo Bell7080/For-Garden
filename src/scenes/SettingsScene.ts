@@ -107,17 +107,21 @@ export class SettingsScene extends Phaser.Scene {
       ([['전체 음소거','masterMuted'],['배경음 음소거','musicMuted'],['효과음 음소거','effectsMuted'],['보이스 음소거','voiceMuted']] as const).forEach(([label,key]) => { this.content.add(new SettingsToggle(this,90,y,label,s.sound[key],value=>settingsManager.update({sound:{[key]:value}}))); y+=94; divider(); });
       section("진동", 560); ([['전체 진동','enabled'],['전투 타격','combatHit'],['궁극기','ultimate'],['연구 결과','excavationResult'],['UI 입력','uiInput']] as const).forEach(([a,b]) => toggle(a,'vibration',b));
     } else if (this.activeTab === "alerts") {
-      section("알림", 850);
+      section("알림", 944);
       const permission = platformFeedback.getNotificationPermission();
       this.addTextAction(90, y, s.notifications.enabled ? "알림 활성화됨" : "알림 활성화 확인", () => void settingsManager.confirmNotifications().then(() => this.buildRows())); y += 64;
       // 플랫폼 차이는 구현 용어 대신 플레이어가 기대할 수 있는 짧은 상태명으로만 구분한다.
       const schedulingLabel = platformFeedback.notificationScheduling === "persistent" ? "기기 알림" : platformFeedback.notificationScheduling === "foreground-only" ? "실행 중 알림" : "알림 미지원";
       this.content.add(this.add.text(90, y, `${schedulingLabel} · ${permission === "granted" ? "허용됨" : "허용 필요"}`, textStyle({ role: "body", size: 22, color: COLOR.inkDim }))); y += 72;
-      ([['스테미나 충전 완료','staminaFull'],['일일 임무','dailyMission'],['야간 알림 제한','quietHours']] as const).forEach(([a,b]) => toggle(a,'notifications',b));
+      // 알림 행은 저장과 플랫폼 예약 해제를 함께 처리하는 manager 전용 경계를 통과시킨다.
+      ([['전체 알림','enabled'],['스테미나 충전 완료','staminaFull'],['일일 임무','dailyMission'],['야간 알림 제한','quietHours']] as const).forEach(([label, key]) => {
+        this.content.add(new SettingsToggle(this, 90, y, label, s.notifications[key], value => settingsManager.updateNotificationPreferences({ [key]: value })));
+        y += 94; divider();
+      });
       // 기존 선택 행의 눌림·강조 양식을 재사용하며 30분 단위의 유효 HH:mm 값만 저장한다.
       const quietTimes = Array.from({ length: 48 }, (_, index) => `${String(Math.floor(index / 2)).padStart(2, "0")}:${index % 2 ? "30" : "00"}`);
-      this.content.add(new SettingsSelectRow(this, 90, y, '제한 시작', s.notifications.quietHoursStart, quietTimes, value => settingsManager.update({ notifications: { quietHoursStart: value } }))); y += 94;
-      this.content.add(new SettingsSelectRow(this, 90, y, '제한 종료', s.notifications.quietHoursEnd, quietTimes, value => settingsManager.update({ notifications: { quietHoursEnd: value } }))); y += 94;
+      this.content.add(new SettingsSelectRow(this, 90, y, '제한 시작', s.notifications.quietHoursStart, quietTimes, value => void settingsManager.updateNotificationPreferences({ quietHoursStart: value }))); y += 94;
+      this.content.add(new SettingsSelectRow(this, 90, y, '제한 종료', s.notifications.quietHoursEnd, quietTimes, value => void settingsManager.updateNotificationPreferences({ quietHoursEnd: value }))); y += 94;
     } else if (this.activeTab === "play") {
       section("연출 · 게임", 1140);
       // 네 프레젠테이션 선택은 각각 공용 정책 소비자가 있으므로 효과 없는 임시 토글을 노출하지 않는다.

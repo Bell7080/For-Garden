@@ -20,7 +20,7 @@ export class SettingsToggle extends Phaser.GameObjects.Container {
   private readonly track: Phaser.GameObjects.Container;
   private slide?: Phaser.Tweens.Tween;
 
-  constructor(scene: Phaser.Scene, x: number, y: number, label: string, value: boolean, onChange: (value: boolean) => void) {
+  constructor(scene: Phaser.Scene, x: number, y: number, label: string, value: boolean, onChange: (value: boolean) => unknown) {
     super(scene, x, y);
     this.value = value;
     this.add(scene.add.text(0, 0, label, textStyle({ role: "body", size: 28 })).setOrigin(0, 0.5));
@@ -40,11 +40,20 @@ export class SettingsToggle extends Phaser.GameObjects.Container {
     // 누르면 커진다 — 눌린 상태를 색이 아니라 크기로 알리는 화면 전체의 규칙이다.
     hit.on("pointerdown", () => this.track.setScale(1.06));
     hit.on("pointerout", () => this.track.setScale(1));
-    hit.on("pointerup", () => {
+    let pending = false;
+    hit.on("pointerup", async () => {
+      // 플랫폼 예약 취소처럼 비동기 변경이 끝나기 전에는 같은 행의 중복 입력을 조용히 무시한다.
+      if (pending) return;
       this.track.setScale(1);
       this.value = !this.value;
       this.paint();
-      onChange(this.value);
+      pending = true;
+      try {
+        await onChange(this.value);
+      } finally {
+        // 실패한 작업도 입력 잠금을 영구히 남기지 않아 사용자가 다시 시도할 수 있게 한다.
+        pending = false;
+      }
     });
     this.add(hit);
     this.paint(true);

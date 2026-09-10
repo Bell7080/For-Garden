@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import type { AdOperationsConfigResponse, AdPresentationResult, AdSlotOperationsDto, GameApi, HarvestExcavationResponse, IdleExcavationResponse } from "../api/contracts";
-import { motionPolicy } from "../core/settings";
+import { motionPolicy, powerSavingPolicy } from "../core/settings";
 import { emptyExcavationAmounts, EXCAVATION_CURRENCIES, excavationProductionDisplayModel, excavationStorageFillRatio, excavationStorageLimitSeconds, nextExcavationSlot, placeExcavationRelic, type ExcavationCurrency, type IdleExcavationState } from "../core/idleExcavation";
 import { RELICS } from "../data/relics";
 import { placePuppet, spawnPuppet, type PuppetAsset, type PuppetCreature } from "../puppets/assets";
@@ -737,6 +737,8 @@ export class IdleExcavationPopup {
       adopt: (puppet) => {
         // Puppet는 장식 레이어다. 내부 Image가 향후 interactive로 내보내져도 슬롯 입력면을 가로채지 않는다.
         puppet.disableInteractive();
+        // 방치 정산은 서버 시간을 그대로 쓰고, 화면에 세운 장식 SD의 갱신 빈도만 낮춘다.
+        puppet.setDecorativeUpdateFactor(powerSavingPolicy(session.settings).idlePuppetUpdateFactor);
         layer.add(puppet); this.sdPuppets.add(puppet);
         this.sdPuppetByRelicId.set(relicId, puppet);
         setDebugIdleExcavationSdReady(index);

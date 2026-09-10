@@ -123,9 +123,11 @@ export class SettingsScene extends Phaser.Scene {
       this.content.add(new SettingsSelectRow(this, 90, y, '제한 시작', s.notifications.quietHoursStart, quietTimes, value => void settingsManager.updateNotificationPreferences({ quietHoursStart: value }))); y += 94;
       this.content.add(new SettingsSelectRow(this, 90, y, '제한 종료', s.notifications.quietHoursEnd, quietTimes, value => void settingsManager.updateNotificationPreferences({ quietHoursEnd: value }))); y += 94;
     } else if (this.activeTab === "play") {
-      section("연출 · 게임", 1234);
+      section("연출 · 게임", 1328);
       // 기존 저사양 토글은 품질 선택과 의미가 겹쳐 제거하고, 서로 다른 연출 토글만 남긴다.
       ([['전투 화면 흔들림','screenShake'],['피해 숫자','damageNumbers'],['연구 연출 단축','shortenExcavation']] as const).forEach(([a,b]) => toggle(a,'presentation',b));
+      // 기존 SettingsToggle의 행·강조·입력 피드백을 그대로 쓰며 접근성 선택과 별도 필드로 저장한다.
+      toggle('절전 모드','presentation','powerSaving');
       // 홀로그램 선택 행의 강조색·눌림 확대를 그대로 재사용한다.
       const qualityLabels = { high: "높음", balanced: "균형", low: "낮음" } as const;
       this.content.add(new SettingsSelectRow(this,90,y,'그래픽 품질',s.presentation.graphicsQuality,['high','balanced','low'] as const,v=>settingsManager.update({presentation:{graphicsQuality:v}}),v=>qualityLabels[v])); y+=94;

@@ -30,6 +30,7 @@ import { createLobbyUtilityRail } from "../ui/lobbyUtilityRail";
 import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { relicSkinManager } from "../managers/RelicSkinManager";
 import { expeditionManager } from "../managers/ExpeditionManager";
+import { PVP_MODES } from "../data/pvpModes";
 import { ExpeditionEntryButton, sortieEntrySdSpot } from "../ui/ExpeditionEntryButton";
 import { ENEMY_SD_ASSETS, PONTOS_SD_ASSET, playMotion, type PuppetAsset } from "../puppets/assets";
 import { loadOwnedPuppet } from "../ui/statusPuppetLoad";
@@ -51,6 +52,13 @@ const EXCHANGE_BLUE = 0x6fa8d6;
 
 /** 출격 선택판의 규격. 판 크기와 SD 층·동작 간격을 한 곳에서만 정한다. */
 const SORTIE_MENU = { panel: { width: 980, height: 1240 }, motionDelay: 2600 } as const;
+/**
+ * 결투 선택판.
+ *
+ * 출격과 같은 폭·같은 칸 프리팹을 쓰되 SD와 원화가 없어 판이 낮다. 네 모드가 같은 크기로
+ * 나란히 서므로 어느 하나가 기본 선택처럼 보이지 않는다.
+ */
+const PVP_MENU = { panel: { width: 980, height: 1000 }, entry: { width: 800, height: 170 }, firstY: -285, stepY: 190 } as const;
 /** 팝업 판(2000) 위. 화면에 직접 세우는 SD는 판보다 앞에 서야 버튼 위로 빠져나온다. */
 const SORTIE_SD_DEPTH = 2101;
 /** 복제 그림자의 색과 진하기. 카드 원화의 그림자와 같은 결로 눌러 둔다. */
@@ -142,7 +150,7 @@ export class LobbyScene extends Phaser.Scene {
       // 출격과 성격이 다른 입구라 강조 양식을 쓰지 않는다. 같은 원근만 공유한다.
       perspective: "right",
       tilt: -6,
-      onClick: () => this.scene.start("pvp"),
+      onClick: () => this.openPvpMenu(),
     });
 
     // 출격 — 로비에서 가장 큰 버튼이다. 주황빛 강조로 다른 입구와 구분한다.
@@ -281,6 +289,33 @@ export class LobbyScene extends Phaser.Scene {
 
   /** 레일 입력을 준비 문구 없이 실제 우편 작업판과 즉시 연결한다. */
   private openMail(): void { if (!this.popupLayer) return; this.mailPopup ??= new MailPopup(this, this.popupLayer, gameApi, () => { this.mailPopup = undefined; }); this.mailPopup.open(); }
+
+  /**
+   * 결투의 모드 선택판.
+   *
+   * **씬이 아니라 판이다.** 고르는 일만 하는 화면은 로비를 통째로 갈아 끼울 이유가 없고,
+   * 출격이 이미 같은 일을 판 한 장으로 한다 — 두 입구가 서로 다른 물건처럼 열리면 무엇이 더
+   * 큰 콘텐츠인지 화면 구조가 먼저 말해 버린다. 같은 프리팹·같은 돌아가기 자리를 쓴다.
+   */
+  private openPvpMenu(): void {
+    if (!this.popupLayer || this.popupLayer.isOpen) return;
+    const panel = PVP_MENU.panel;
+    this.popupLayer.open({ width: panel.width, height: panel.height, title: "결투", titleSize: 34, dim: true, dimAlpha: 0.24, closeOnBackdrop: false, hideCloseButton: true, onClose: () => this.clearSortieChrome() }, (body, close) => {
+      PVP_MODES.forEach((mode, index) => {
+        const y = PVP_MENU.firstY + index * PVP_MENU.stepY;
+        body.add(new ExpeditionEntryButton(this, 0, y, {
+          width: PVP_MENU.entry.width, height: PVP_MENU.entry.height,
+          // 라벨은 판에서 한 줄로 선다 — 2×2 칸에서 쓰던 줄바꿈은 가로로 긴 칸에서 빈 줄이 된다.
+          label: mode.label.replace("\n", " "), labelSize: 38,
+          // 무엇을 하는 모드인지 첫 줄만 남긴다. 나머지는 상세가 말한다.
+          status: mode.scope.split("\n")[0],
+          onClick: () => { close(); this.scene.start("pvpPreview", { mode: mode.id }); },
+        }));
+      });
+      // 돌아가기는 판 안이 아니라 출격과 같은 화면 우하단 슬롯에 선다.
+      this.sortieBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: close }).setDepth(SORTIE_SD_DEPTH + 1);
+    });
+  }
 
   /** 출격의 잔잔한 콘텐츠 선택판을 열고 우하단 공용 돌아가기로만 닫는다. */
   private openSortieMenu(): void {

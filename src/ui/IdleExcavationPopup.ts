@@ -1,7 +1,8 @@
 import Phaser from "phaser";
 import type { AdOperationsConfigResponse, AdPresentationResult, AdSlotOperationsDto, GameApi, HarvestExcavationResponse, IdleExcavationResponse } from "../api/contracts";
 import { motionPolicy, powerSavingPolicy } from "../core/settings";
-import { emptyExcavationAmounts, EXCAVATION_CURRENCIES, excavationProductionDisplayModel, excavationStorageFillRatio, excavationStorageLimitSeconds, nextExcavationSlot, placeExcavationRelic, type ExcavationCurrency, type IdleExcavationState } from "../core/idleExcavation";
+import { emptyExcavationAmounts, EXCAVATION_CURRENCIES, excavationProductionDisplayModel, excavationStorageFillRatio, excavationStorageLimitSeconds, type ExcavationCurrency, type IdleExcavationState } from "../core/idleExcavation";
+import { nextFormationSlot, placeFormationRelic, tapFormationSlot } from "../core/formationSlots";
 import { RELICS } from "../data/relics";
 import { placePuppet, spawnPuppet, type PuppetAsset, type PuppetCreature } from "../puppets/assets";
 import { session } from "../state/session";
@@ -14,7 +15,8 @@ import { PortraitCard } from "./PortraitCard";
 import { autoAssignExcavation, EXCAVATION_AUTO_MODE_LABEL, EXCAVATION_AUTO_MODES, type ExcavationAutoMode, type ExcavationCandidate } from "../core/excavationAutoAssign";
 import { bindLongPress } from "./longPressInfo";
 import { type InfoManager, sceneInfoManager } from "./info";
-import { PORTRAIT_GRID_MASK_GAP, portraitGridContentHeight, portraitGridFirstRowY } from "./portraitGrid";
+import { formationRosterColumnX, formationRosterGrid, PORTRAIT_GRID_MASK_GAP, portraitGridContentHeight, portraitGridFirstRowY } from "./portraitGrid";
+import { addFormationRemoveChip, addFormationSlotSelection } from "./formationSlotChrome";
 import type { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
@@ -49,7 +51,9 @@ const STORAGE_GAUGE = { labelY: -158, y: -128, width: 700, height: 20 } as const
 // 카드 비율(세로/가로)을 도감 그리드(300×400)와 맞춰, 머리 관절 기준 잘라내기가 카드 크기와
 // 무관하게 같은 구도로 보이게 한다 — 비율이 다르면 같은 캐릭터도 화면마다 잘리는 범위가
 // 달라진다(`computeHeadCardFrame`은 카드 가로세로비를 그대로 잘라내기 비율로 쓴다).
-const GRID_VIEW = { left: -370, right: 370, top: STATUS_SUMMARY.y - STATUS_SUMMARY.height / 2, bottom: 425, columnGap: 250, rowGap: 313, cardWidth: 215, cardHeight: 268 } as const;
+const GRID_VIEW = { left: -415, right: 415, top: STATUS_SUMMARY.y - STATUS_SUMMARY.height / 2, bottom: 425 } as const;
+/** 한 줄에 몇 칸이고 카드가 얼마나 큰지는 화면이 정하지 않는다 — 폭만 주면 공용 규칙이 정한다. */
+const ROSTER = formationRosterGrid(GRID_VIEW.right - GRID_VIEW.left);
 /** 손가락이 이 거리 이상 움직여야 카드 선택이 아니라 스크롤로 판정한다. */
 const GRID_DRAG_SLOP = 12;
 /** 팝업 판(PopupLayer 기본 2000) 바로 위. 그 위에 열리는 보상 팝업(2002)보다는 아래에 남는다. */
@@ -473,11 +477,11 @@ export class IdleExcavationPopup {
     this.renderUpper(this.draft, true);
     const content = this.resetLower();
     if (!content) return;
-    content.add(this.scene.add.text(-360, GRID_VIEW.top - 42, `보유 렐릭 · ${this.selectedSlot + 1}번 칸에 배치`, textStyle({ role: "emphasis", size: 23, color: COLOR.accentText })).setOrigin(0, 0.5));
+    content.add(this.scene.add.text(GRID_VIEW.left + 10, GRID_VIEW.top - 42, `보유 렐릭 · ${this.selectedSlot + 1}번 칸에 배치`, textStyle({ role: "emphasis", size: 23, color: COLOR.accentText })).setOrigin(0, 0.5));
     // 조작 설명 대신 **그 조작을 대신해 주는 단추**를 둔다. 기준은 화살표로 돌려 고르고,
     // 무엇을 많이 캘지는 지금 모자란 재화에 따라 그때그때 달라지므로 하나로 고정하지 않는다.
     const autoY = GRID_VIEW.top - 42;
-    content.add(new Button(this.scene, 210, autoY, {
+    content.add(new Button(this.scene, GRID_VIEW.right - 205, autoY, {
       width: 190, height: 56, fontSize: 22,
       label: "자동 배치", sub: EXCAVATION_AUTO_MODE_LABEL[this.autoMode],
       onClick: () => {
@@ -488,7 +492,7 @@ export class IdleExcavationPopup {
         this.renderEditor();
       },
     }));
-    content.add(new Button(this.scene, 340, autoY, {
+    content.add(new Button(this.scene, GRID_VIEW.right - 75, autoY, {
       width: 56, height: 56, fontSize: 24, label: "▶",
       onClick: () => {
         const index = EXCAVATION_AUTO_MODES.indexOf(this.autoMode);
@@ -499,19 +503,18 @@ export class IdleExcavationPopup {
     const owned = RELICS.filter((relic) => session.owned.has(relic.id));
     const grid = this.scene.add.container(0, GRID_VIEW.top + this.gridScrollY);
     owned.forEach((relic, index) => {
-      const x = -250 + (index % 3) * GRID_VIEW.columnGap;
+      const x = formationRosterColumnX(ROSTER, index % ROSTER.columns);
       // 머리는 칩 밖으로 나오므로 첫 줄은 공용 안전 영역만큼 내려 세운다. 그러지 않으면 정수리가 잘린다.
-      const y = portraitGridFirstRowY(0, GRID_VIEW.cardHeight, PORTRAIT_GRID_MASK_GAP) + Math.floor(index / 3) * GRID_VIEW.rowGap;
+      const y = portraitGridFirstRowY(0, ROSTER.cardHeight, PORTRAIT_GRID_MASK_GAP) + Math.floor(index / ROSTER.columns) * ROSTER.rowStep;
       const detail = excavationProductionDisplayModel([relic.id, null, null], RELICS, session.relicProgress).relics[0];
       const progress = session.relicProgress[relic.id];
       const card = new PortraitCard(this.scene, x, y, {
-        width: GRID_VIEW.cardWidth, height: GRID_VIEW.cardHeight, relicId: relic.id,
+        width: ROSTER.cardWidth, height: ROSTER.cardHeight, relicId: relic.id,
         label: relic.name, level: progress?.level ?? 1, rarity: relic.rarity, stars: (progress?.breakthrough ?? 0) + 1,
         subIcon: CURRENCY_ICON_BY_WALLET[relic.excavationTrait.primaryCurrency], sub: formatRate(detail?.totalPerHour ?? 0), subStyle: "currency",
-        // 이미 1~3번 칸에 배치된 카드는 발광뿐 아니라 눌린 듯한 검정 면도 함께 써 "이미 골랐다"를
-        // 알린다. 튀어나온 머리 몫은 PortraitCard가 원화 알파 그대로 복제해 겹치므로 여기서는
-        // 값만 켠다.
-        selectedOverlayAlpha: 0.28,
+        // 이미 칸에 나가 있는 카드는 떠오르지 않고 눌려 들어간다. 튀어나온 머리 몫은
+        // PortraitCard가 원화 알파 그대로 복제해 겹치므로 여기서는 양식만 고른다.
+        selectedStyle: "pressed",
       });
       card.setSelected(this.draft!.includes(relic.id));
       // 짧은 탭은 배치, 꾹 누름은 상세다. 편성 그리드와 같은 조작이라 화면마다 다르게 익히지 않는다.
@@ -519,10 +522,10 @@ export class IdleExcavationPopup {
         onTap: () => {
           if (this.saving || !this.draft) return;
           const slot = this.selectedSlot;
-          this.draft = placeExcavationRelic(this.draft, slot, relic.id);
+          this.draft = placeFormationRelic(this.draft, slot, relic.id) as Formation;
           // 한 칸을 채우면 선택이 저절로 다음 빈 칸으로 넘어가 세 번의 배치가 끊기지 않는다.
           // 방금 비운 칸에서는 그대로 머문다 — 비운 자리를 다시 채우려는 손이 대부분이다.
-          this.selectedSlot = this.draft[slot] === null ? slot : nextExcavationSlot(this.draft, slot);
+          this.selectedSlot = this.draft[slot] === null ? slot : nextFormationSlot(this.draft, slot);
           this.renderEditor();
         },
         allowTap: () => this.gridDragMoved <= GRID_DRAG_SLOP,
@@ -546,9 +549,9 @@ export class IdleExcavationPopup {
   /** 보유 카드가 두 줄을 넘으면 드래그와 휠이 같은 연속 스크롤 값을 갱신한다. */
   private addGridScroll(parent: Phaser.GameObjects.Container, grid: Phaser.GameObjects.Container, relicCount: number): void {
     const viewportHeight = GRID_VIEW.bottom - GRID_VIEW.top;
-    const rows = Math.ceil(relicCount / 3);
+    const rows = Math.ceil(relicCount / ROSTER.columns);
     // 첫 줄 머리 여유와 마스크 여백까지 넣어야 마지막 줄이 끝까지 올라온다.
-    const contentHeight = rows > 0 ? PORTRAIT_GRID_MASK_GAP + portraitGridContentHeight(rows, GRID_VIEW.rowGap, GRID_VIEW.cardHeight) : 0;
+    const contentHeight = rows > 0 ? PORTRAIT_GRID_MASK_GAP + portraitGridContentHeight(rows, ROSTER.rowStep, ROSTER.cardHeight) : 0;
     // 도감 그리드(RelicsScene)와 같은 28px 여유를 아래에도 둔다 — 안 그러면 마지막 줄의
     // 밑변이 마스크 경계에 정확히 겹쳐 앤티에일리어싱에 한 줄이 깎여 보인다.
     const minScroll = Math.min(0, viewportHeight - contentHeight - 28);
@@ -619,7 +622,7 @@ export class IdleExcavationPopup {
       const x = -250 + index * 250;
       const relic = id ? RELICS.find((item) => item.id === id) : undefined;
       // 고른 칸은 칸 바깥의 얇은 밑판이 알린다. SD가 카드 위에 서면 카드의 선택 발광이 가려진다.
-      if (editable && index === this.selectedSlot) parent.add(drawLayer(this.scene, x, STATUS_HERO.slotY, slantedRect(236, 271), { fill: COLOR.accent, alpha: 0.22, edge: COLOR.accent, edgeAlpha: 0.95 }));
+      if (editable && index === this.selectedSlot) addFormationSlotSelection(this.scene, parent, { x, y: STATUS_HERO.slotY, width: 210, height: 245 });
       if (relic) {
         const progress = session.relicProgress[relic.id];
         const card = new PortraitCard(this.scene, x, STATUS_HERO.slotY, { width: 210, height: 245, relicId: relic.id, label: relic.name, level: progress?.level ?? 1, rarity: relic.rarity, stars: (progress?.breakthrough ?? 0) + 1 });
@@ -636,6 +639,15 @@ export class IdleExcavationPopup {
       // SD보다 나중에 추가한 투명 전용 입력면이 현황/편집의 동일한 210×245 슬롯 계약을 소유한다.
       const hit = this.scene.add.rectangle(x, STATUS_HERO.slotY, 210, 245, 0xffffff, 0).setName(`idle-excavation-slot-${index + 1}`).setDepth(100).setInteractive({ useHandCursor: true });
       parent.add(hit);
+      // 빼는 표식은 고른 칸에 누군가 서 있을 때만 선다. 입력면보다 나중에 붙어야 그 위에서 눌린다.
+      if (editable && index === this.selectedSlot && relic) {
+        addFormationRemoveChip(this.scene, parent, { x, y: STATUS_HERO.slotY, width: 210, height: 245 }, () => {
+          if (this.saving || !this.draft) return;
+          this.draft = tapFormationSlot(this.draft, index, this.selectedSlot, "clear").formation as Formation;
+          this.selectedSlot = index;
+          this.renderEditor();
+        });
+      }
       dragSlots.push({ hit, x: POPUP_CENTER.x - 250 + index * 250, y: POPUP_CENTER.y + STATUS_HERO.slotY, width: 210, height: 245 });
     });
     // Puppet은 body의 로컬 좌표에 서며 renderer가 팝업의 변환과 alpha를 최종 화면에 합성한다.
@@ -670,9 +682,13 @@ export class IdleExcavationPopup {
       tap: (index) => {
         if (this.gridDragging || this.gridDragMoved >= GRID_DRAG_SLOP || this.saving) return;
         if (!editable) { this.beginEdit(index); return; }
-        // 편집 슬롯의 짧은 탭은 확정값이 아니라 draft의 해당 자리만 해제한다.
-        if (this.draft?.[index] !== null) this.draft![index] = null;
-        this.selectedSlot = index; this.renderEditor();
+        if (!this.draft) return;
+        // 편집 중의 짧은 탭은 그 칸을 **고르기만** 한다. 이미 골라 둔 칸을 한 번 더 눌러야 비고,
+        // 그때도 뒤 칸은 당겨지지 않는다.
+        const result = tapFormationSlot(this.draft, index, this.selectedSlot);
+        this.draft = result.formation as Formation;
+        this.selectedSlot = result.selectedSlot;
+        this.renderEditor();
       },
       drop: (from, to) => {
         this.formationDragVisual?.endDrag();

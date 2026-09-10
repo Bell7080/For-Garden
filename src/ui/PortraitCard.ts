@@ -65,7 +65,20 @@ export interface PortraitCardOptions {
   affinity?: { element: Element; role: Role };
   /** 선택 시 카드 안을 누르는 반투명 검정. 편성처럼 명시적인 눌림 피드백이 필요할 때만 켠다. */
   selectedOverlayAlpha?: number;
+  /**
+   * 고른 카드를 무엇으로 알릴지.
+   *
+   * `glow`는 카드가 커지며 은은하게 빛나는 기본이다 — 애착 렐릭처럼 **여럿 중 하나가 두드러져야
+   * 하는** 자리에 쓴다. `pressed`는 반대로 **눌려 들어간 칸**이다: 검은 반투명이 카드를 덮고
+   * 살짝 작아지며 발광은 켜지 않는다. 편성 목록이 이쪽을 쓰는 이유는, 고른 카드가 "지금 고를
+   * 수 있는 것"이 아니라 **"이미 자리에 나가 있는 것"**이기 때문이다 — 떠오르면 아직 고를
+   * 수 있는 것처럼 읽힌다.
+   */
+  selectedStyle?: "glow" | "pressed";
 }
+
+/** 눌린 카드. 검은 반투명 한 겹과 아주 조금의 축소만으로 "이미 나갔다"를 말한다. */
+const PRESSED_SELECTION = { overlayAlpha: 0.46, scale: 0.955 } as const;
 
 /** 카드 몸통과 원화 알파를 보존한 돌출 머리를 한 상태값으로 갱신하는 공개 오버레이다. */
 export interface PortraitAlphaOverlay {
@@ -181,6 +194,8 @@ export class PortraitCard extends Phaser.GameObjects.Container {
   private readonly selectedOverlay: Phaser.GameObjects.Graphics;
   private readonly maskOffsetY: number;
   private readonly shadeHeight: number;
+  /** 눌림 표시의 실제 진하기. 양식과 호출부 값이 여기 한 번만 접힌다. */
+  private readonly overlayAlpha: number;
   private selected = false;
   private disposed = false;
   /** 원화가 비동기로 도착하기 전에도 오버레이 API를 만들 수 있도록 요청을 보관한다. */
@@ -191,6 +206,11 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     super(scene, x, y);
     this.options = options;
     const { width, height } = options;
+    this.overlayAlpha = Phaser.Math.Clamp(
+      options.selectedOverlayAlpha ?? (options.selectedStyle === "pressed" ? PRESSED_SELECTION.overlayAlpha : 0),
+      0,
+      1,
+    );
 
     this.bodyHeight = height;
     // 머리가 칩 위로 빠져나올 여유. 카드가 납작할수록 조금만 내민다.
@@ -295,7 +315,11 @@ export class PortraitCard extends Phaser.GameObjects.Container {
 
       const name = options.locked ? "???" : options.label;
       const inset = CHIP_INSET + 14;
-      const baseline = height / 2 - (options.sub ? 44 : 20);
+      // **재화 줄은 이름 위에 선다.** 발굴 특화 재화처럼 실제 그림과 수가 함께 서는 줄은 역할
+      // 문구보다 크고 진해서, 이름 아래에 두면 이름이 얹혀 있는 것처럼 보이고 두 줄이 서로
+      // 닿는다. 이름·레벨을 카드 맨 아래로 내리고 그 위를 재화가 쓴다.
+      const currencyRow = options.subStyle === "currency";
+      const baseline = height / 2 - (options.sub && !currencyRow ? 44 : 20);
       const nameSize = Math.min(46, width / 6);
       const hasLevel = options.level !== undefined && !options.locked;
 
@@ -323,22 +347,32 @@ export class PortraitCard extends Phaser.GameObjects.Container {
       this.add(this.nameText);
 
       if (options.sub) {
-        // 아이콘과 문구를 한 덩어리로 두되 이름 시작선은 유지한다. 전용 색은 화면이 tint로 넘기지
-        // 않고 공용 강조색 하나만 써서 얼굴과 이름보다 먼저 읽히지 않게 한다.
-        const currencyRow = options.subStyle === "currency";
-        const subIconSize = Math.min(currencyRow ? 30 : 24, width / (currencyRow ? 8 : 10));
-        // 그림과 수는 바짝 붙인다 — 멀리 떼면 그림과 숫자가 두 정보로 읽힌다.
-        const subLeft = nameLeft + (options.subIcon ? subIconSize + (currencyRow ? 4 : 7) : 0);
+        // 아이콘과 문구를 한 덩어리로 두되 이름 시작선은 유지한다. 역할 문구의 전용 색은 화면이
+        // tint로 넘기지 않고 공용 강조색 하나만 써서 얼굴과 이름보다 먼저 읽히지 않게 한다.
+        // 재화 줄만 예외로 **더 크게** 선다 — 발굴에서는 "누가 무엇을 얼마나 캐는가"가 카드를
+        // 고르는 이유 그 자체라, 이름보다 먼저 읽혀야 한다.
+        const subIconSize = Math.min(currencyRow ? 40 : 24, width / (currencyRow ? 5.2 : 10));
+        const subFontSize = Math.min(currencyRow ? 30 : 22, width / (currencyRow ? 7 : 12));
+        // 재화 줄은 이름 **위**에 밑변을 맞춰 쌓고, 역할 문구는 예전처럼 이름 아래에 붙는다.
+        const subBottom = baseline - nameSize * 1.24 - 4;
+        const subLeft = nameLeft + (options.subIcon ? subIconSize + (currencyRow ? 5 : 7) : 0);
         this.subText = scene.add
-          .text(subLeft, baseline + 10, options.sub, textStyle({ role: "emphasis", size: Math.min(currencyRow ? 24 : 22, width / 12), color: currencyRow ? COLOR.ink : COLOR.accentText }))
-          .setOrigin(0, 0);
-        // 밝은 원화 위에서도 수가 살아남도록 획 둘레를 검게 두른다. 판을 깔면 카드에 상자가 하나 더 생긴다.
-        if (currencyRow) this.subText.setStroke("#05070a", 5).setShadow(0, 2, "#05070a", 4, true, true);
+          .text(subLeft, currencyRow ? subBottom : baseline + 10, options.sub, textStyle({ role: "emphasis", size: subFontSize, color: currencyRow ? COLOR.ink : COLOR.accentText }))
+          .setOrigin(0, currencyRow ? 1 : 0);
+        // 밝은 원화 위에서도 수가 살아남도록 획 둘레를 검게 두른다. 판을 깔면 카드에 상자가
+        // 하나 더 생긴다. 띠는 **얇게** 둘러야 한다 — 두꺼우면 획 사이가 메워져 글자가 뭉갠다.
+        if (currencyRow) this.subText.setStroke("#05070a", 3).setShadow(0, 2, "#05070a", 3, true, true);
         this.add(this.subText);
         if (options.subIcon && scene.textures.exists(options.subIcon)) {
-          const icon = scene.add.image(nameLeft + subIconSize / 2, baseline + 10 + subIconSize / 2 + (currencyRow ? 1 : 0), options.subIcon).setDisplaySize(subIconSize, subIconSize);
-          // 재화 그림은 제 색을 갖는다 — tint를 먹이면 무슨 재화인지 알 수 없다.
-          if (!currencyRow) icon.setTint(COLOR.accent).setAlpha(0.72);
+          const iconY = currencyRow ? subBottom - subIconSize / 2 + 2 : baseline + 10 + subIconSize / 2;
+          const icon = scene.add.image(nameLeft + subIconSize / 2, iconY, options.subIcon).setDisplaySize(subIconSize, subIconSize);
+          // 재화 그림은 제 색을 갖는다 — tint를 먹이면 무슨 재화인지 알 수 없다. 대신 그림 뒤로
+          // 같은 그림을 검게 한 겹 깔아 밝은 원화 위에서 실루엣이 떨어져 나오게 한다.
+          if (currencyRow) {
+            this.add(scene.add.image(icon.x + 2, iconY + 3, options.subIcon).setDisplaySize(subIconSize, subIconSize).setTint(0x000000).setAlpha(0.55));
+          } else {
+            icon.setTint(COLOR.accent).setAlpha(0.72);
+          }
           this.add(icon);
         }
       }
@@ -369,7 +403,7 @@ export class PortraitCard extends Phaser.GameObjects.Container {
 
     // 입력면 바로 아래에 두어 초상·이름·표식을 함께 은은하게 누르되 카드 바깥으로 번지지 않는다.
     this.selectedOverlay = scene.add.graphics().setVisible(false);
-    this.selectedOverlay.fillStyle(0x000000, Phaser.Math.Clamp(options.selectedOverlayAlpha ?? 0, 0, 1));
+    this.selectedOverlay.fillStyle(0x000000, this.overlayAlpha);
     // 칩 몸통만 덮는다. 윗변 밖으로 빠져나온 머리는 도형이 아니라 **원화 자체를 검게 겹쳐**
     // 눌러야 한다 — 홈을 통째로 칠하면 머리 옆의 투명한 빈자리까지 어두워진다.
     this.selectedOverlay.fillPoints(toGeomPoints(this.chipShape), true);
@@ -500,7 +534,7 @@ export class PortraitCard extends Phaser.GameObjects.Container {
 
     // 선택 표시의 머리 몫. 같은 원화를 검게 복제해 홈 안에서만 보이게 하면, 머리 모양 그대로
     // 눌리고 그 옆의 투명한 빈자리는 밝게 남는다.
-    const overlayAlpha = Phaser.Math.Clamp(this.options.selectedOverlayAlpha ?? 0, 0, 1);
+    const overlayAlpha = this.overlayAlpha;
     if (overlayAlpha > 0) {
       const shade = this.scene.add.image(originX, originY, key).setOrigin(0, 0).setScale(card.scale).setTint(0x000000).setAlpha(overlayAlpha).setVisible(this.selected);
       shade.setCrop(card.cropX, card.cropY, card.cropWidth, card.cropHeight);
@@ -629,19 +663,21 @@ export class PortraitCard extends Phaser.GameObjects.Container {
   }
 
   /**
-   * 고른 카드는 커지고 은은하게 빛난다.
+   * 고른 카드를 알린다.
    *
    * 노란 사각 테두리를 두르지 않는다. 테두리는 카드 위에 다른 물체를 하나 더 얹는 것처럼
-   * 보이지만, 발광은 카드 전체가 상태를 갖는 것처럼 읽힌다. 발굴만 등급 보조색을 넘긴다.
+   * 보이지만, 발광과 눌림은 카드 전체가 상태를 갖는 것처럼 읽힌다. 어느 쪽으로 알릴지는
+   * 카드를 만들 때 고른 `selectedStyle`이 정하고, `accent`는 발광 양식에만 쓰인다.
    */
   setSelected(selected: boolean, accent: number = COLOR.accent): this {
     if (this.selected === selected && !selected) return this;
     this.selected = selected;
-    if (selected) this.paintGlow(accent);
-    this.glow.setVisible(selected);
-    this.selectedOverlay.setVisible(selected && (this.options.selectedOverlayAlpha ?? 0) > 0);
+    const pressed = this.options.selectedStyle === "pressed";
+    if (selected && !pressed) this.paintGlow(accent);
+    this.glow.setVisible(selected && !pressed);
+    this.selectedOverlay.setVisible(selected && this.overlayAlpha > 0);
     this.selectedHeadShade?.setVisible(selected);
-    this.setScale(selected ? 1.06 : 1);
+    this.setScale(selected ? (pressed ? PRESSED_SELECTION.scale : 1.06) : 1);
     this.syncMask();
     return this;
   }

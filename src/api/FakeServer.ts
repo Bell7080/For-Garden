@@ -42,7 +42,7 @@ import type { ClaimMailRewardsRequest, ClaimMailRewardsResponse, MailDto, MailLi
 import { expeditionWeekKey, resolveExpeditionBossBattle } from "../core/expeditionBoss";
 import { EXPEDITION_BOSS_BALANCE, EXPEDITION_CUMULATIVE_REWARD_STAGES, EXPEDITION_NODE_REWARD_BALANCE, EXPEDITION_SWEEP_POLICY, EXPEDITION_WEEKLY_POLICY, QUICK_EXPEDITION_POLICY } from "../data/expedition";
 import { calculateExpeditionNodeRewards, calculateExpeditionRunScore } from "../core/expeditionRewards";
-import { calculateExpeditionNodeScore } from "../core/expeditionScore";
+import { calculateExpeditionNodeScore, expeditionBossDamageScore } from "../core/expeditionScore";
 import { RelicProgressionManager } from "../managers/RelicProgressionManager";
 import { expeditionBattleEffects } from "../core/expeditionBattle";
 import { settingsManager } from "../managers/SettingsManager";
@@ -295,8 +295,9 @@ export class FakeServer implements GameApi {
         arena: { left: 130, right: 950, top: 600, bottom: 1360 },
       }, request.actions);
       if (result.totalDamage > EXPEDITION_BOSS_BALANCE.maximumAcceptedScore) throw new Error("ABNORMAL_SCORE");
-      // 일반 노드 누적과 폰토스 피해를 같은 순수 모델로 합쳐 한 판 점수를 확정한다.
-      const runScore = calculateExpeditionRunScore({ normalNodeScoreTotal: run?.normalNodeScoreTotal ?? 0, bossDamageScore: result.totalDamage });
+      // 일반 노드 누적과 폰토스 피해를 같은 순수 모델로 합쳐 한 판 점수를 확정한다. 보스 피해는
+      // 원값이 아니라 점수판 환산을 한 번 거친다 — 그 환산은 순수 규칙 한 곳이 소유한다.
+      const runScore = calculateExpeditionRunScore({ normalNodeScoreTotal: run?.normalNodeScoreTotal ?? 0, bossDamageScore: expeditionBossDamageScore(result.totalDamage) });
       const improved = runScore.runScore > this.bossWeek.bestScore;
       // 일반 노드 몫은 각 노드 확정 때 이미 반영했으므로 여기서는 새 보스 피해만 한 번 더한다.
       this.bossWeek.cumulativeScore += runScore.bossDamageScore;

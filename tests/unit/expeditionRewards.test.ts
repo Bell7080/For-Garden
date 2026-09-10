@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { calculateExpeditionNodeRewards, calculateExpeditionRunScore, expeditionRewardRandom, expeditionRewardRule, generateExpeditionAugmentOffers, validateExpeditionAugmentChoice } from "../../src/core/expeditionRewards";
-import { calculateExpeditionNodeScore } from "../../src/core/expeditionScore";
+import { calculateExpeditionNodeScore, expeditionBossDamageScore } from "../../src/core/expeditionScore";
 import { EXPEDITION_NODE_REWARD_BALANCE } from "../../src/data/expedition";
 import { EXPEDITION_AUGMENTS } from "../../src/data/expeditionAugments";
 import { ExpeditionManager } from "../../src/managers/ExpeditionManager";
@@ -23,11 +23,22 @@ describe("expedition augment rewards", () => {
   });
 
   it("층·종류·잔여 HP 경계만으로 점수를 계산하고 재화 RNG를 입력받지 않는다", () => {
-    // 1층 100%의 기준 점수는 4,000점이며 위험한 노드만 단일 밸런스 배율을 적용한다.
-    expect(calculateExpeditionNodeScore({ floor: 1, nodeType: "normal", remainingHpPercent: 100, cleared: true })).toBe(4_000);
-    expect(calculateExpeditionNodeScore({ floor: 2, nodeType: "elite", remainingHpPercent: 50, cleared: true })).toBe(5_250);
-    expect(calculateExpeditionNodeScore({ floor: 2, nodeType: "horde", remainingHpPercent: 50, cleared: true })).toBe(4_375);
+    // 1층 100%의 기준 점수는 190점이며 위험한 노드만 단일 밸런스 배율을 적용한다.
+    expect(calculateExpeditionNodeScore({ floor: 1, nodeType: "normal", remainingHpPercent: 100, cleared: true })).toBe(190);
+    expect(calculateExpeditionNodeScore({ floor: 2, nodeType: "elite", remainingHpPercent: 50, cleared: true })).toBe(233);
+    expect(calculateExpeditionNodeScore({ floor: 2, nodeType: "horde", remainingHpPercent: 50, cleared: true })).toBe(194);
     expect(calculateExpeditionNodeScore({ floor: 20, nodeType: "boss", remainingHpPercent: 100, cleared: true })).toBe(0);
+  });
+
+  it("19층을 다 돌아도 노드 총점은 폰토스 피해 점수에 밀린다", () => {
+    // 이 원정의 주 점수는 폰토스 타격이다. 지도를 끝까지 도는 것만으로 총점이 결정되면 누가
+    // 얼마나 키웠든 모두 비슷한 점수로 마감한다 — 그 회귀를 수치로 고정한다.
+    let nodeTotal = 0;
+    for (let floor = 1; floor <= 19; floor += 1) {
+      nodeTotal += calculateExpeditionNodeScore({ floor, nodeType: "normal", remainingHpPercent: 70, cleared: true });
+    }
+    // 원 피해 450점(레벨 1 3인 편성의 실측)만으로도 노드 총점의 아홉 배를 넘는다.
+    expect(expeditionBossDamageScore(450)).toBeGreaterThan(nodeTotal * 9);
   });
 
   it("전멸·미클리어와 서버가 거부해야 할 HP·층 경계는 0점이다", () => {

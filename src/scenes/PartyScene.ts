@@ -16,15 +16,16 @@ import { GameApiError } from "../api/contracts";
 import { Button } from "../ui/Button";
 import { addBackButton } from "../ui/IconButton";
 import { PortraitCard } from "../ui/PortraitCard";
-import { PORTRAIT_GRID_MASK_GAP, portraitGridContentHeight, portraitGridFirstRowY, portraitGridHeadroom } from "../ui/portraitGrid";
+import { formationRosterColumnX, formationRosterGrid, PORTRAIT_GRID_MASK_GAP, portraitGridContentHeight, portraitGridFirstRowY, portraitGridHeadroom } from "../ui/portraitGrid";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { COLOR, textStyle } from "../ui/theme";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { autoPickParty, elementDistribution, relicAffinityDirection } from "../core/partyAffinity";
 import type { SetPartyFailureReason } from "../managers/RelicCollectionManager";
 import { AffinityDirection } from "../ui/AffinityDirection";
-import { removeFormationSlot } from "../core/formationSelection";
+import { formationMembers, nextFormationSlot, placeFormationRelic, tapFormationSlot, toFormationSlots } from "../core/formationSlots";
 import { moveFormationSlot } from "../core/formation";
+import { addFormationRemoveChip, addFormationSlotSelection } from "../ui/formationSlotChrome";
 import { bindFormationDrag } from "../ui/formationDrag";
 import { FORMATION_DRAG_VISUAL } from "../ui/formationDragVisual";
 import { createFormationDragVisualController, type FormationDragVisualController } from "../ui/formationDragVisualController";
@@ -45,8 +46,14 @@ const ALLY_ROW = 830;
 const FRONT_LINE = 556;
 const PREVIEW_HEIGHT = 210;
 
-/** 보유 렐릭 그리드의 배치표. 자동 배치 버튼 자리도 이 값을 그대로 읽어 그리드와 어긋나지 않는다. */
-const ROSTER_GRID = { cols: 5, cardW: 186, cardH: 226, gapX: 26, gapY: 52, startY: 1080 } as const;
+/**
+ * 보유 렐릭 그리드의 배치표.
+ *
+ * 칸 수와 카드 크기는 화면이 정하지 않는다 — 편성 목록은 어디서나 네 칸이 한 줄이고, 폭만
+ * 주면 공용 규칙이 카드 크기와 줄 간격을 구한다. 자동 배치 버튼 자리도 이 값을 그대로 읽어
+ * 그리드와 어긋나지 않는다.
+ */
+const ROSTER_GRID = formationRosterGrid(BASE_WIDTH - 96);
 
 /**
  * 그리드가 보이는 창.
@@ -61,14 +68,12 @@ const ROSTER_DRAG_SLOP = 12;
 
 /** 그리드 카드 하나의 중심 x좌표. 열 번호(0부터)를 받는다. */
 function rosterColumnX(col: number): number {
-  const gridW = ROSTER_GRID.cols * ROSTER_GRID.cardW + (ROSTER_GRID.cols - 1) * ROSTER_GRID.gapX;
-  const startX = (BASE_WIDTH - gridW) / 2 + ROSTER_GRID.cardW / 2;
-  return startX + col * (ROSTER_GRID.cardW + ROSTER_GRID.gapX);
+  return BASE_WIDTH / 2 + formationRosterColumnX(ROSTER_GRID, col);
 }
 
 /** 그리드 오른쪽 바깥 경계. 자동 배치 버튼을 그리드 위 우측에 맞추는 데 쓴다. */
 function rosterRightEdge(): number {
-  return rosterColumnX(ROSTER_GRID.cols - 1) + ROSTER_GRID.cardW / 2;
+  return rosterColumnX(ROSTER_GRID.columns - 1) + ROSTER_GRID.cardWidth / 2;
 }
 
 interface RosterCard {
@@ -99,9 +104,14 @@ interface AllySlot {
  * 어느 자리에 서는지를 들어가기 전에 SD 그대로 볼 수 있게 하려는 것이다.
  */
 export class PartyScene extends Phaser.Scene {
-  private picked: string[] = [];
+  /** 빈 자리를 `null`로 남기는 고정 세 자리. 빼도 뒤가 당겨지지 않는다. */
+  private picked: (string | null)[] = [null, null, null];
+  /** 목록을 눌렀을 때 캐릭터가 설 자리. 늘 한 자리가 골라져 있다. */
+  private selectedSlot = 0;
   private cards = new Map<string, RosterCard>();
   private allySlots: AllySlot[] = [];
+  /** 고른 칸 표시와 빼기 표식만 사는 층. 편성이 바뀔 때마다 통째로 다시 그린다. */
+  private slotChrome?: Phaser.GameObjects.Container;
   private startButton!: Button;
   private hint!: Phaser.GameObjects.Text;
   /** 자동 배치와 자리별 방향 표식이 함께 참조하는 이번 스테이지의 적 정의다. */
@@ -132,7 +142,8 @@ export class PartyScene extends Phaser.Scene {
   create(): void {
     setDebugScene("party");
     // 직전 스토리 편성만 복원한다. 원정·발굴은 각 콘텐츠가 소유한 별도 저장 필드를 유지한다.
-    this.picked = relicCollection.validParty;
+    this.picked = toFormationSlots(relicCollection.validParty, 3);
+    this.selectedSlot = 0;
     this.cards.clear();
     this.allySlots = [];
     this.isEnteringBattle = false;
@@ -147,10 +158,10 @@ export class PartyScene extends Phaser.Scene {
     // 전투보다 낮게 보인다 — 스테이지 레벨 보정은 `getStageEnemies` 한 곳에만 있다.
     this.enemies = getStageEnemies(stage);
     // 손상된 런타임 파티만 보유 목록 기반 자동 편성으로 안전하게 대체한다.
-    if (this.picked.length !== 3) this.picked = autoPickParty(relicCollection.owned, this.enemies);
+    if (formationMembers(this.picked).length !== 3) this.picked = toFormationSlots(autoPickParty(relicCollection.owned, this.enemies), 3);
     this.add.text(cx, 70, `${stage.id}  ${stage.name}`, textStyle({ role: "display", size: 46 })).setOrigin(0.5, 0);
     this.add
-      .text(cx, 132, "렐릭 3명 편성 — 고른 순서대로 왼쪽부터 선다", textStyle({ role: "body", size: 28, color: COLOR.inkDim }))
+      .text(cx, 132, "자리를 고르고 렐릭을 세운다", textStyle({ role: "body", size: 28, color: COLOR.inkDim }))
       .setOrigin(0.5, 0);
 
     this.buildPreview(this.enemies, stage.enemies);
@@ -164,8 +175,8 @@ export class PartyScene extends Phaser.Scene {
     // **카드 윗변이 아니라 머리 끝을 기준으로 띄운다.** 카드 몸체만 피하면 칩 밖으로 빠져나온
     // 정수리(도디처럼 머리가 큰 원화)가 버튼과 겹친다 — 그리드의 보이는 윗선은 몸체가 아니라
     // 머리 끝이다.
-    const firstRowY = portraitGridFirstRowY(ROSTER_VIEWPORT.top, ROSTER_GRID.cardH, PORTRAIT_GRID_MASK_GAP);
-    const headTop = firstRowY - ROSTER_GRID.cardH / 2 - portraitGridHeadroom(ROSTER_GRID.cardH);
+    const firstRowY = portraitGridFirstRowY(ROSTER_VIEWPORT.top, ROSTER_GRID.cardHeight, PORTRAIT_GRID_MASK_GAP);
+    const headTop = firstRowY - ROSTER_GRID.cardHeight / 2 - portraitGridHeadroom(ROSTER_GRID.cardHeight);
     this.autoButtonPosition = {
       x: rosterRightEdge() - autoButtonWidth / 2,
       y: headTop - 18 - autoButtonHeight / 2,
@@ -176,7 +187,8 @@ export class PartyScene extends Phaser.Scene {
       label: "자동 배치",
       fontSize: 26,
       onClick: () => {
-        this.picked = autoPickParty(relicCollection.owned, this.enemies);
+        this.picked = toFormationSlots(autoPickParty(relicCollection.owned, this.enemies), 3);
+        this.selectedSlot = Math.max(0, this.picked.findIndex((id) => id === null));
         this.refresh();
       },
     });
@@ -192,14 +204,14 @@ export class PartyScene extends Phaser.Scene {
       fontSize: 44,
       onClick: async () => {
         // 첫 유효 클릭에서 즉시 잠가 같은 프레임의 빠른 연속 입력도 한 번만 처리한다.
-        if (this.isEnteringBattle || this.picked.length !== 3) return;
+        if (this.isEnteringBattle || formationMembers(this.picked).length !== 3) return;
         this.isEnteringBattle = true;
         this.startButton.setEnabled(false);
 
         // 로컬 편성 저장과 서버 입장은 실패 원인과 복구 행동이 다르므로 서로 다른 예외 경계로 둔다.
         try {
           // 화면에 그린 뒤 보유 상태가 바뀔 수 있으므로 전환 직전에 매니저에서 다시 검증한다.
-          const result = relicCollection.setParty([...this.picked]);
+          const result = relicCollection.setParty(formationMembers(this.picked));
           if (!result.ok) {
             this.isEnteringBattle = false;
             this.hint.setText(this.partyFailureMessage(result.reason, result.relicId));
@@ -283,6 +295,9 @@ export class PartyScene extends Phaser.Scene {
         .setName(`party-ally-slot-${slot + 1}`).setDepth(3).setInteractive({ useHandCursor: true });
       this.allySlots.push({ platform, name, slotLabel, affinityDirection, request: 0, hit });
     });
+    // 고른 칸 밑판과 빼기 표식은 SD 뒤·입력면 앞 사이에 산다. 편성이 바뀔 때마다 통째로 다시
+    // 그리므로 슬롯 자체(받침·이름·입력면)와 수명을 나눠 둔다.
+    this.slotChrome = this.add.container(0, 0).setDepth(2);
     // 공용 표현기는 화면 좌표 Puppet을 기존 placePuppet 콜백으로 옮겨 컨테이너 변환에 기대지 않는다.
     this.dragVisual = createFormationDragVisualController({
       scene: this, slots: PREVIEW_COLUMNS.map((x) => ({ x, y: ALLY_ROW - PREVIEW_HEIGHT / 2, width: 210, height: PREVIEW_HEIGHT })),
@@ -298,17 +313,25 @@ export class PartyScene extends Phaser.Scene {
       dragStart: (slot, x, y) => this.dragVisual?.beginDrag(slot, x, y),
       dragMove: (slot, x, y) => this.dragVisual?.moveDrag(slot, x, y),
       cancel: () => this.dragVisual?.endDrag(),
-      tap: (slot) => {
-        // 짧은 탭은 화면에 보이는 자리 번호 그대로 해제한다.
-        if (this.picked[slot] !== undefined && removeFormationSlot(this.picked, slot)) this.refresh();
-      },
+      // 짧은 탭은 그 자리를 **고르기만** 한다. 이미 골라 둔 자리를 한 번 더 눌러야 비고, 그때도
+      // 뒤 자리는 당겨지지 않는다 — 2번을 비워도 3번은 3번에 그대로 선다.
+      tap: (slot) => this.tapSlot(slot),
       drop: (from, to) => {
         this.dragVisual?.endDrag();
         this.picked = moveFormationSlot(this.picked, from, to);
+        this.selectedSlot = to;
         // 미리보기로 옮겨 둔 SD는 확정 뒤 기존 비동기 재배치 경로가 제자리에 다시 세운다.
         this.refresh();
       },
     });
+  }
+
+  /** 자리를 누르면 고르고, 골라 둔 자리를 한 번 더 누르거나 `−`를 누르면 그 자리만 비운다. */
+  private tapSlot(slot: number, intent: "select" | "clear" = "select"): void {
+    const result = tapFormationSlot(this.picked, slot, this.selectedSlot, intent);
+    this.picked = result.formation;
+    this.selectedSlot = result.selectedSlot;
+    this.refresh();
   }
 
   /** 공용 컨트롤러가 계산한 슬롯 결과를 기존 화면 좌표 Puppet 배치기로 그린다. */
@@ -380,10 +403,9 @@ export class PartyScene extends Phaser.Scene {
    * 고른 카드는 띠 문구가 전장에서 설 자리 번호로 바뀐다.
    */
   private buildRoster(): void {
-    const { cols, cardW, cardH, gapY } = ROSTER_GRID;
+    const { columns: cols, cardWidth: cardW, cardHeight: cardH, rowStep } = ROSTER_GRID;
     // 첫 줄은 창 윗변에 붙이지 않는다 — 칩 밖으로 빠져나온 정수리가 마스크에 잘린다.
     const startY = portraitGridFirstRowY(ROSTER_VIEWPORT.top, cardH, PORTRAIT_GRID_MASK_GAP);
-    const rowStep = cardH + gapY;
 
     const content = this.add.container(0, 0);
     this.rosterContent = content;
@@ -406,6 +428,9 @@ export class PartyScene extends Phaser.Scene {
         rarity: relic.rarity,
         stars: relicProgression.getStars(relic.id),
         affinity: { element: relic.element, role: relic.role },
+        // 이미 자리에 나가 있는 카드는 떠오르지 않고 눌려 들어간다 — 발광은 "지금 고를 수 있다"로
+        // 읽혀 이미 세운 렐릭과 아직 고를 수 있는 렐릭이 같은 무게가 된다.
+        selectedStyle: "pressed",
       });
 
       this.bindCardInput(card.hit, relic);
@@ -491,21 +516,23 @@ export class PartyScene extends Phaser.Scene {
     });
   }
 
+  /**
+   * 목록의 카드를 누르면 **고른 자리**에 선다.
+   *
+   * 채우는 순서가 자리를 정하지 않는다. 그 렐릭이 다른 자리에 이미 서 있으면 두 자리를 맞바꾸고,
+   * 고른 자리에 서 있던 렐릭이면 그 자리를 비운다.
+   */
   private toggle(relicId: string): void {
-    const at = this.picked.indexOf(relicId);
-    if (at >= 0) {
-      this.picked.splice(at, 1);
-    } else if (this.picked.length < 3) {
-      this.picked.push(relicId);
-    } else {
-      // 자동 배치 등으로 이미 3명이 찬 상태에서 새 카드를 누르면, 아무 반응도 없는 것처럼
-      // 보이지 않도록 마지막 자리를 바로 바꾼다.
-      this.picked[this.picked.length - 1] = relicId;
-    }
+    const slot = this.selectedSlot;
+    this.picked = placeFormationRelic(this.picked, slot, relicId);
+    // 한 자리를 채우면 선택이 저절로 다음 빈 자리로 넘어간다. 방금 비운 자리에서는 머문다 —
+    // 비운 자리를 다시 채우려는 손이 대부분이다.
+    this.selectedSlot = this.picked[slot] === null ? slot : nextFormationSlot(this.picked, slot);
     this.refresh();
   }
 
   private refresh(): void {
+    const members = formationMembers(this.picked);
     for (const [id, entry] of this.cards) {
       const at = this.picked.indexOf(id);
       const chosen = at >= 0;
@@ -513,9 +540,10 @@ export class PartyScene extends Phaser.Scene {
       entry.card.setSub(chosen ? `${at + 1}번 자리` : entry.role);
     }
 
-    // 고른 순서 그대로 왼쪽 자리부터 올린다.
+    const chrome = this.slotChrome;
+    chrome?.removeAll(true);
     this.allySlots.forEach((slot, i) => {
-      const id = this.picked[i];
+      const id = this.picked[i] ?? undefined;
       const standing = slot.creature !== undefined;
       slot.name.setText(id ? getRelic(id).name : "―");
       slot.name.setColor(id ? COLOR.ink : COLOR.inkDim);
@@ -526,6 +554,13 @@ export class PartyScene extends Phaser.Scene {
       // 이미 그 렐릭이 서 있으면 다시 세우지 않는다.
       if (!id || !standing || slot.currentId !== id) void this.fillAllySlot(slot, i, id);
       slot.currentId = id;
+
+      if (!chrome) return;
+      const box = { x: PREVIEW_COLUMNS[i], y: ALLY_ROW - PREVIEW_HEIGHT / 2, width: 210, height: PREVIEW_HEIGHT };
+      if (i === this.selectedSlot) addFormationSlotSelection(this, chrome, box, COLOR.ally);
+      // 빼는 표식은 **고른 자리에 누군가 서 있을 때만** 선다. 늘 세워 두면 세 자리 위에 붉은
+      // 표식이 셋 늘어서 SD보다 먼저 읽힌다.
+      if (i === this.selectedSlot && id) addFormationRemoveChip(this, chrome, box, () => this.tapSlot(i, "clear"));
     });
 
     this.refreshButtonState();
@@ -533,18 +568,16 @@ export class PartyScene extends Phaser.Scene {
     setDebugParty({
       autoButton: this.autoButtonPosition,
       visibleAffinityDirections: this.allySlots.filter((slot) => slot.affinityDirection.visible).length,
-      selectedCount: this.picked.length,
+      selectedCount: members.length,
       // 입력면 중심을 공개해 E2E가 SD 로딩이나 하드코딩 좌표에 의존하지 않게 한다.
       slots: PREVIEW_COLUMNS.map((x) => ({ x, y: ALLY_ROW - PREVIEW_HEIGHT / 2 })),
     });
-    this.hint.setText(
-      this.picked.length === 3 ? "편성 완료" : `${3 - this.picked.length}명 더 골라야 한다`,
-    );
+    this.hint.setText(members.length === 3 ? "편성 완료" : `${3 - members.length}명 더 골라야 한다`);
   }
 
   /** 선택 수와 전투 진입 잠금을 함께 반영해 버튼 활성 상태를 한곳에서 계산한다. */
   private refreshButtonState(): void {
-    this.startButton.setEnabled(this.picked.length === 3 && !this.isEnteringBattle);
+    this.startButton.setEnabled(formationMembers(this.picked).length === 3 && !this.isEnteringBattle);
   }
 
   /** 모든 실패 경로가 진입 잠금과 버튼을 함께 복구하도록 한곳에서 처리한다. */

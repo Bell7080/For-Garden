@@ -8,8 +8,9 @@ export type ExpeditionLayoutRegion = "rewards" | "map" | "augments" | "relics" |
  * 하단 행동선(`actions`)에 속한다 — 둘을 따로 두면 같은 줄이 두 이름을 갖는다.
  */
 export const EXPEDITION_LAYOUT: Readonly<Record<ExpeditionLayoutRegion, { top: number; bottom: number }>> = {
-  rewards: { top: 116, bottom: 286 },
-  map: { top: 316, bottom: 1138 },
+  // 전리품 판 아래에 점수 한 줄이 판때기 없이 맨 글자로 서므로, 그 줄까지 이 구역이 품는다.
+  rewards: { top: 116, bottom: 322 },
+  map: { top: 342, bottom: 1138 },
   augments: { top: 1162, bottom: 1234 },
   relics: { top: 1271, bottom: 1734 },
   actions: { top: 1756, bottom: 1902 },

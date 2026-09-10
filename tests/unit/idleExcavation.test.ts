@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { emptyExcavationAmounts, excavationProductionDisplayModel, createIdleExcavationState, excavationHarvestStatus, excavationStorageFillRatio, excavationStorageLimitSeconds, harvestIdleExcavation, nextExcavationSlot, placeExcavationRelic, settleIdleExcavation, validateExcavationFormation } from "../../src/core/idleExcavation";
+import { emptyExcavationAmounts, excavationProductionDisplayModel, createIdleExcavationState, excavationHarvestStatus, excavationStorageFillRatio, excavationStorageLimitSeconds, harvestIdleExcavation, settleIdleExcavation, validateExcavationFormation } from "../../src/core/idleExcavation";
 import { WALLET_CAPS } from "../../src/data/economy";
 import { RELICS } from "../../src/data/relics";
 import type { RelicProgress } from "../../src/core/types";
@@ -38,18 +38,10 @@ describe("방치 발굴 순수 규칙", () => {
     expect(validateExcavationFormation(["rex", "dodo", null], new Set(["rex"]))).toEqual({ valid: false, reason: "unowned" });
   });
 
-  it("배치된 렐릭을 빈 슬롯으로 옮기고 중복을 만들지 않는다", () => {
-    expect(placeExcavationRelic(["rex", null, "spino"], 1, "rex")).toEqual([null, "rex", "spino"]);
-  });
-
-  it("차 있는 슬롯으로 옮기면 두 슬롯을 교체한다", () => {
-    expect(placeExcavationRelic(["rex", "anky", null], 1, "rex")).toEqual(["anky", "rex", null]);
-  });
-
-  it("같은 슬롯을 다시 고르면 빈 슬롯으로 만들며 3칸 미완성도 유효하다", () => {
-    const incomplete = placeExcavationRelic(["rex", "anky", null], 0, "rex");
-    expect(incomplete).toEqual([null, "anky", null]);
-    expect(validateExcavationFormation(incomplete, new Set(["rex", "anky"]))).toEqual({ valid: true });
+  it("3칸이 다 차지 않은 편성도 유효하다", () => {
+    // 자리를 고르는 규칙 자체는 formationSlots.test.ts가 지킨다. 여기서는 그 결과가 발굴 편성
+    // 검증을 그대로 통과하는지만 본다.
+    expect(validateExcavationFormation([null, "anky", null], new Set(["rex", "anky"]))).toEqual({ valid: true });
   });
 
   it("서로 다른 자원 특화를 자원별로 합산한다", () => {
@@ -210,22 +202,5 @@ describe("보관량 게이지", () => {
     expect(excavationStorageLimitSeconds(state, new Date("2026-08-20T01:00:00.000Z"))).toBe(state.baseStorageSeconds * 2);
     // 만료 이후에는 원래 한도로 돌아온다.
     expect(excavationStorageLimitSeconds(state, new Date("2026-08-20T05:00:00.000Z"))).toBe(state.baseStorageSeconds);
-  });
-});
-
-describe("배치 뒤 다음 칸", () => {
-  it("바로 뒤의 빈 칸으로 이어진다", () => {
-    expect(nextExcavationSlot(["anky", null, null], 0)).toBe(1);
-    expect(nextExcavationSlot(["anky", "rex", null], 1)).toBe(2);
-  });
-
-  it("뒤가 차 있으면 앞쪽 빈 칸으로 돌아온다", () => {
-    expect(nextExcavationSlot([null, "rex", "spino"], 2)).toBe(0);
-    expect(nextExcavationSlot(["anky", null, "spino"], 2)).toBe(1);
-  });
-
-  it("세 칸이 모두 차면 다음 칸에 그대로 머문다", () => {
-    expect(nextExcavationSlot(["anky", "rex", "spino"], 0)).toBe(1);
-    expect(nextExcavationSlot(["anky", "rex", "spino"], 2)).toBe(0);
   });
 });

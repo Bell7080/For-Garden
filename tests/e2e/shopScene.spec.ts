@@ -32,7 +32,7 @@ async function enterLobby(page: Page): Promise<void> {
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.storefrontControls?.lobby)).toBeTruthy();
 }
 
-test("로비 임무→상점과 교류→교환소의 분리된 진입 흐름을 검증한다", async ({ page }, testInfo) => {
+test("로비 임무→상점→무역과 교류→교환소의 분리된 진입 흐름을 검증한다", async ({ page }, testInfo) => {
   // SwiftShader의 기준 캡처와 대형 Puppet 로딩이 느린 CI에서도 흐름 제한과 섞이지 않게 한다.
   test.setTimeout(420_000);
   await enterLobby(page);
@@ -72,6 +72,22 @@ test("로비 임무→상점과 교류→교환소의 분리된 진입 흐름을
   await page.waitForTimeout(300);
   input = await controls(page); await tap(page, input.shop!.back);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+
+  // 무역은 독립 씬이 아니라 로비 위 레이어지만 같은 구매·확정 보상 계약을 사용한다.
+  // 상점(사는 곳)·무역(재화를 바꾸는 곳)·교환소(교류 표본을 바꾸는 곳)는 서로 다른 셋이다.
+  input = await controls(page); await tap(page, input.lobby!.trade);
+  // 조회 직후에는 PopupLayer가 만든 chrome이 먼저 살아 있어야 하며 비동기 목록을 기다리다 제목이 사라지면 안 된다.
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual(["무역"]);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.storefrontControls?.trade?.products.length)).toBeGreaterThan(0);
+  // 상품 행이 그려진 뒤에도 같은 제목과 외부 뒤로가기 입력이 함께 남는 수명주기 회귀를 고정한다.
+  await expect.poll(() => page.evaluate(() => ({
+    titles: window.__PF_DEBUG?.popupTitles,
+    hasProducts: (window.__PF_DEBUG?.storefrontControls?.trade?.products.length ?? 0) > 0,
+    hasBack: window.__PF_DEBUG?.storefrontControls?.trade?.back !== undefined,
+  }))).toEqual({ titles: ["무역"], hasProducts: true, hasBack: true });
+  await captureGame(page, `test-results/${testInfo.project.name}-trade-popup-products-1080x1920.png`);
+  input = await controls(page); await tap(page, input.trade!.back);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toBeUndefined();
 
   // 교류 버튼은 새 교류 씬의 유일한 로비 진입점이고, 그 안의 고정 버튼만 교환소를 연다.
   input = await controls(page); await tap(page, input.lobby!.interaction);

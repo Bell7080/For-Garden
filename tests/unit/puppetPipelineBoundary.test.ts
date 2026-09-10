@@ -23,6 +23,6 @@ describe("Indexed Puppet WebGL pipeline 경계", () => {
   it("씬 전환 중 이미 파괴된 Puppet의 대기 중인 UPDATE 콜백을 건너뛴다", () => {
     // EventEmitter가 이미 만든 순회 목록은 off 이후에도 현재 emit에서 콜백을 부를 수 있으므로
     // scene.game에 닿기 전 active와 scene을 모두 검사하는 순서를 소스 계약으로 고정한다.
-    expect(UPDATE_STEP).toMatch(/if \(!this\.active \|\| !this\.scene\) return;[\s\S]*this\.scene\.game\.loop\.rawDelta/);
+    expect(UPDATE_STEP).toMatch(/if \(!this\.active \|\| !this\.scene\) return;[\s\S]*this\.scene\.game\.loop/);
   });
 });

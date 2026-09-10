@@ -19,8 +19,16 @@ export interface GameSettings {
   sound: { masterVolume: number; musicVolume: number; effectsVolume: number; voiceVolume: number; masterMuted: boolean; musicMuted: boolean; effectsMuted: boolean; voiceMuted: boolean };
   vibration: { enabled: boolean; combatHit: boolean; ultimate: boolean; excavationResult: boolean; uiInput: boolean };
   notifications: { enabled: boolean; staminaFull: boolean; dailyMission: boolean; quietHours: boolean; quietHoursStart: string; quietHoursEnd: string; lastScheduledIds: Partial<Record<"staminaFull" | "dailyMission", string>> };
-  /** `lowSpecMode`와 `shortenExcavation`은 각각 공용 렌더 예산과 연구 단계 시간표에서만 해석한다. */
-  presentation: { screenShake: boolean; damageNumbers: boolean; shortenExcavation: boolean; lowSpecMode: boolean; battleUiMotion: "default" | "reduced" | "off" };
+  /** 연출 선택이며 전투 시계·판정에는 절대 소비되지 않는다. */
+  presentation: {
+    screenShake: boolean; damageNumbers: boolean; shortenExcavation: boolean; battleUiMotion: "default" | "reduced" | "off";
+    /** 비전투 장식의 갱신 예산만 낮추며 접근성의 움직임 감소 선택과 별도로 저장한다. */
+    powerSaving: boolean;
+    /** 파티클·후처리·전신 렌더 배율만 결정하며 `presentationPolicy`가 유일한 소비 경계다. */
+    graphicsQuality: "high" | "balanced" | "low";
+    /** Phaser 런타임 시간 설정에서만 프레임 제한으로 소비하며 코어 dt와 배속은 바꾸지 않는다. */
+    frameRateLimit: 30 | 60;
+  };
   /** `reduceFlashes`와 `colorAssist`는 공용 효과·의미 표식 경계에서 소비한다. 필수 대사는 숨기지 않는다. */
   accessibility: { textScale: 1 | 1.15 | 1.3; reduceMotion: boolean; reduceFlashes: boolean; colorAssist: boolean };
   /** 전투 중 즉시 바꿀 수 있는 조작은 SettingsManager 저장 경계를 공유한다. */

@@ -21,10 +21,14 @@ describe("inventory", () => {
     expect(Object.keys(CURRENCY_GUIDE).sort()).toEqual([...walletKeys].sort());
     for (const key of walletKeys) expect(CURRENCY_GUIDE[key]).toMatchObject({ key, sources: expect.any(Array), uses: expect.any(Array) });
     expect(walletKeys.every((key) => CURRENCY_GUIDE[key].sources.length > 0 && CURRENCY_GUIDE[key].uses.length > 0)).toBe(true);
-    // 구형 로비 무역 팝업 계약이 돌아오지 않도록 모든 교환 안내를 교류 씬 하나로 고정한다.
-    const exchangeActions = Object.values(CURRENCY_GUIDE).flatMap((entry) => "action" in entry && entry.action.target === "interaction" ? [entry.action] : []);
-    expect(exchangeActions).toHaveLength(3);
-    expect(exchangeActions.every((action) => action.kind === "scene" && action.label === "교류 교환소로 이동")).toBe(true);
+    // **무역과 교환소는 서로 다른 곳이다.** 재화끼리 바꾸는 안내는 로비의 무역 팝업으로,
+    // 교류 표본을 바꾸는 안내는 교류 씬의 교환소로 간다 — 한쪽이 다른 쪽을 삼키지 않게 고정한다.
+    const actions = Object.values(CURRENCY_GUIDE).flatMap((entry) => "action" in entry ? [entry.action] : []);
+    const targets = actions.map((action) => `${action.kind}:${action.target}`);
+    expect(targets.filter((target) => target === "popup:trade")).toHaveLength(2);
+    expect(actions.every((action) => action.target !== "trade" || action.label === "무역 열기")).toBe(true);
+    // 교환소는 파견에서만 나오는 표본을 바꾸는 창구라 지갑 재화 안내가 직접 가리키지 않는다.
+    expect(targets).not.toContain("scene:interaction");
   });
   it("모든 정적 item asset이 공용 로딩 표와 실제 임시 SVG에 일대일 대응한다", () => {
     // 정적 정의가 늘 때 로더 등록이나 배포 파일 한쪽만 빠지는 회귀를 빌드 전에 잡는다.

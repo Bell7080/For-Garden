@@ -13,7 +13,8 @@ import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { Button } from "../ui/Button";
 import { addBackButton } from "../ui/IconButton";
 import { PortraitCard } from "../ui/PortraitCard";
-import { PORTRAIT_GRID_MASK_GAP, portraitGridContentHeight, portraitGridFirstRowY } from "../ui/portraitGrid";
+import { formationRosterColumnX, formationRosterGrid, PORTRAIT_GRID_MASK_GAP, portraitGridContentHeight, portraitGridFirstRowY } from "../ui/portraitGrid";
+import { addFramedIcon } from "../ui/itemFrame";
 import { PopupLayer } from "../ui/PopupLayer";
 import { COLOR, textStyle } from "../ui/theme";
 import { chipPoints, drawGlassFade, drawHairline, drawLayer, drawVignette, HOLO } from "../ui/holo";
@@ -35,21 +36,28 @@ import { placePuppet, portraitAssetFor, spawnPuppet, type PuppetCreature } from 
 import { loadOwnedPuppet } from "../ui/statusPuppetLoad";
 import { expeditionEnemyLevel, getExpeditionEncounterEnemies } from "../data/expeditionEnemies";
 import { formatCurrency } from "../core/formatCurrency";
-import { drawInnerVignette, drawShapeOutline } from "../ui/holo";
+import { drawInnerVignette } from "../ui/holo";
 import { CharacterInfoManager } from "../managers/CharacterInfoManager";
 import { bindLongPress } from "../ui/longPressInfo";
 import { groundedPortraitBounds } from "../ui/portraitPlacement";
 import { NodeEnemyPreview } from "../ui/NodeEnemyPreview";
 import { BattleProfile } from "../ui/BattleProfile";
 import { BATTLE_PROFILE_LAYOUT } from "../ui/battleStatusLayout";
-import { removeFormationSlot } from "../core/formationSelection";
+import { formationMembers, tapFormationSlot, tapRosterRelic, toFormationSlots } from "../core/formationSlots";
 import { moveFormationSlot } from "../core/formation";
+import { addFormationRemoveChip, addFormationSlotSelection } from "../ui/formationSlotChrome";
 import { bindFormationDrag, type FormationDragSlot } from "../ui/formationDrag";
 import { FORMATION_DRAG_VISUAL } from "../ui/formationDragVisual";
 import { createFormationDragVisualController, type FormationDragVisualController } from "../ui/formationDragVisualController";
 
-/** 원정 준비 카드의 고정 그리드 규격이다. 다른 편성과 달리 세 칸씩 읽게 한다. */
-const ROSTER = { columns: 3, width: 250, height: 310, gapX: 56, gapY: 50 } as const;
+/** 편성 목록은 어디서나 네 칸이 한 줄이다. 카드 크기와 줄 간격은 폭에서 공용 규칙이 구한다. */
+const ROSTER = formationRosterGrid(BASE_WIDTH - 96);
+/**
+ * 지도 위 전리품 줄의 자리표.
+ *
+ * 판 안에는 액자 넷과 방금 얻은 몫까지만 들어가고, 점수는 판 밖 아래에 맨 글자로 선다.
+ */
+const LOOT = { panelY: 199, panelHeight: 152, frameY: 200, step: 200, gainY: 258, scoreY: 316 } as const;
 /** 보유 렐릭이 늘면 편성판 아래·힌트/출격 버튼 위 사이만 스크롤로 보여준다. */
 const ROSTER_VIEWPORT = { top: 705, bottom: 1500 } as const;
 /** 손가락이 이 거리 이상 움직여야 카드 선택이 아니라 스크롤로 판정한다. */
@@ -89,7 +97,10 @@ const AUGMENT_PICKER_DEPTH = 4001;
  * 이 씬은 카드 선택과 문구만 소유한다. 진행 상태 검증과 Session 저장은 ExpeditionManager가 맡는다.
  */
 export class ExpeditionScene extends Phaser.Scene {
-  private selected: string[] = [];
+  /** 빈 자리를 `null`로 남기는 고정 세 자리. 빼도 뒤가 당겨지지 않는다. */
+  private selected: (string | null)[] = [null, null, null];
+  /** 목록을 눌렀을 때 캐릭터가 설 자리. 아무 칸도 고르지 않은 상태가 있고, 판 밖을 누르면 풀린다. */
+  private selectedSlot: number | undefined;
   private cards = new Map<string, PortraitCard>();
   /** 보유 카드가 뷰포트를 넘을 때만 쓰는 스크롤 콘텐츠·마스크·틱커다. */
   private rosterContent?: Phaser.GameObjects.Container;
@@ -126,9 +137,19 @@ export class ExpeditionScene extends Phaser.Scene {
   /** 광고 표시부터 서버 확정까지 연타를 막는 빠른 원정 전용 잠금이다. */
   private quickClaimPending = false;
   private quickButton?: Button;
-  /** 선택 미리보기와 비동기 SD는 매 선택마다 함께 폐기해 이전 편성이 겹치지 않게 한다. */
+  /**
+   * 편성판의 판때기·번호·입력면만 사는 층. 선택이 바뀔 때마다 통째로 다시 그린다.
+   *
+   * **SD는 여기 살지 않는다.** 매번 함께 지우면 자리를 하나 바꿀 때마다 세 SD가 사라졌다가
+   * 카드로 한 번 나타난 뒤 다시 SD로 돌아온다 — 편성판이 그리드로 깜빡이는 것처럼 보인다.
+   */
   private formationPreview?: Phaser.GameObjects.Container;
-  private formationPuppets = new Set<PuppetCreature>();
+  /** SD보다 앞에 서야 하는 겉치레(빼는 표식)만 사는 씬 층이다. 편성판과 함께 폐기한다. */
+  private formationChrome?: Phaser.GameObjects.Container;
+  /** 이미 세운 SD를 렐릭 ID로 붙잡아 둔다. 편성에서 빠지는 순간에만 폐기한다. */
+  private readonly formationPuppets = new Map<string, PuppetCreature>();
+  /** 지금 SD를 읽는 중인 렐릭. 같은 렐릭을 두 번 읽지 않게 한다. */
+  private readonly formationPuppetLoading = new Set<string>();
   private formationGeneration = 0;
   /** 재생성되는 원정 편성판과 함께 폐기되는 공용 드래그 표현 수명이다. */
   private formationDragVisual?: FormationDragVisualController;
@@ -173,7 +194,8 @@ export class ExpeditionScene extends Phaser.Scene {
     setDebugScene("expedition");
     // 기록·지도 단계에는 편성이 없다. 준비 화면이 다시 그릴 때 제 값으로 채운다.
     setDebugExpeditionFormation(undefined);
-    this.selected = [];
+    this.selected = [null, null, null];
+    this.selectedSlot = undefined;
     this.cards.clear();
     this.popups = new PopupLayer(this);
     // 씬이 다시 서면 이전 창의 게임 오브젝트는 함께 사라졌으므로 만든 기록도 비운다.
@@ -223,8 +245,13 @@ export class ExpeditionScene extends Phaser.Scene {
   private buildActive(score: number, augments: readonly ExpeditionAugmentSelection[]): void {
     const run = expeditionManager.status().run;
     if (!run) return;
-    // 진행 중 합계는 랭킹의 주간 최고와 다른 "이번 원정 점수"임을 상태 줄에서 명시한다.
-    this.add.text(BASE_WIDTH - 54, 94, `이번 원정 점수 ${score.toLocaleString()}`, textStyle({ role: "emphasis", size: 25, color: COLOR.sortieText })).setOrigin(1, 0);
+    // 이번 판의 점수는 전리품 판 아래에 크게 서므로, 위 구석의 작은 줄은 **이번 주에 얼마나
+    // 쌓았는가**를 맡는다. 같은 수를 두 자리에 적으면 어느 쪽이 무엇인지 흐려진다.
+    const weekly = this.add.text(BASE_WIDTH - 54, 94, "", textStyle({ role: "emphasis", size: 25, color: COLOR.sortieText })).setOrigin(1, 0);
+    void gameApi.getExpeditionWeeklyBest()
+      .then((best) => { if (weekly.active) weekly.setText(`주간 누적 점수 ${best.cumulativeScore.toLocaleString()}`); })
+      // 조회에 실패하면 그 자리를 비운다 — 못 읽었다는 말은 플레이어가 지금 할 일을 바꾸지 않는다.
+      .catch(() => { if (weekly.active) weekly.setText(""); });
     // 지도 HUD는 마지막 노드 증가분이 아니라 서버 저장 런 합계를 명시적으로 넘긴다.
     this.buildRewardBar(run.pendingRewards, { scope: "run", value: score }, run.lastNodeRewards);
     this.buildMap(run.nodes, run.currentNodeId, run.visitedNodeIds);
@@ -263,26 +290,34 @@ export class ExpeditionScene extends Phaser.Scene {
       ["currency-fossil", "fossil"], ["currency-gems", "gems"],
     ] as const;
     // 지도 위에 떠 있는 하나의 전리품 레이어로 읽히도록 제목과 얇은 상단선을 먼저 놓는다.
-    // 아래에 점수 한 줄을 더 두는 만큼 판 아래쪽으로만 키운다(위쪽은 기존 자리 그대로).
-    drawLayer(this, BASE_WIDTH / 2, 209, chipPoints(972, 172, { bevel: { topLeft: 30, bottomRight: 22 } }), { fill: 0x0d131b, alpha: 0.82, edge: COLOR.accent, edgeAlpha: 0.55 });
+    drawLayer(this, BASE_WIDTH / 2, LOOT.panelY, chipPoints(972, LOOT.panelHeight, { bevel: { topLeft: 30, bottomRight: 22 } }), { fill: 0x0d131b, alpha: 0.82, edge: COLOR.accent, edgeAlpha: 0.55 });
     this.add.text(86, 137, "획득 전리품", textStyle({ role: "display", size: 25, color: COLOR.accentText })).setOrigin(0, 0.5);
     items.forEach(([icon, key], index) => {
-      const x = 180 + index * 225; const y = 207; const size = 96;
-      const frame = chipPoints(size, size, { bevel: { topLeft: 20, bottomRight: 18 } });
-      drawLayer(this, x, y, frame, { fill: 0x101722, alpha: 0.98 });
-      this.add.image(x, y, icon).setDisplaySize(72, 72);
-      drawInnerVignette(this, x, y, frame, { strength: 0.58 });
-      drawShapeOutline(this, x, y, frame, { color: COLOR.accent, alpha: 0.74, width: 2 });
+      // 네 액자는 판 가운데에 모여 선다. 넓게 벌리면 네 재화가 각자 다른 정보처럼 읽힌다.
+      const x = BASE_WIDTH / 2 + (index - 1.5) * LOOT.step; const y = LOOT.frameY; const size = 96;
       const total = Math.floor(rewards[key] ?? 0);
       const capped = last?.cappedCurrencies.includes(key) ?? total >= EXPEDITION_NODE_REWARD_BALANCE[key].runCap;
-      // 수량은 보상 팝업처럼 액자 우하단에 겹치고 검은 스트로크로 아이콘에서 떼어 낸다.
-      this.add.text(x + 42, y + 40, `${formatCurrency(total)}${capped ? " MAX" : ""}`, textStyle({ role: "display", size: 20, color: capped ? "#ffd27a" : "#ffffff" })).setOrigin(1, 1).setStroke("#000000", 5);
+      // 액자·그림·그늘·수량은 가방·보상 팝업과 같은 공용 프리팹 한 장이 그린다.
+      addFramedIcon(this, undefined, x, y, size, icon, {
+        amount: `${formatCurrency(total)}${capped ? " MAX" : ""}`,
+        amountColor: capped ? "#ffd27a" : COLOR.ink,
+      });
       const gained = Math.floor(last?.rewards[key] ?? 0);
-      if (gained > 0) this.add.text(x, 263, `+ ${formatCurrency(gained)}`, textStyle({ role: "emphasis", size: 16, color: COLOR.accentText })).setOrigin(0.5);
+      // 방금 얻은 몫은 이번 한 판의 결과라 누적량보다 먼저 눈에 들어와야 한다.
+      if (gained > 0) this.add.text(x, LOOT.gainY, `+${formatCurrency(gained)}`, textStyle({ role: "display", size: 28, color: COLOR.accentText })).setOrigin(0.5).setStroke("#000000", 5).setShadow(0, 3, "#000000", 4, true, true);
     });
+
+    // **점수는 판 밖에 맨 글자로 선다.** 판 안에 두면 전리품 액자 넷과 같은 무게로 읽혀, 정작
+    // 이 화면에서 가장 중요한 수가 재화 옆의 한 줄이 된다. 판때기도 테두리도 두르지 않고
+    // 옅은 그림자 한 겹만으로 지도 위에서 떨어져 나오게 한다 — 검은 획을 두르면 글자가 굵어져
+    // 전리품 판의 강조선과 다투고, 이 줄만 다른 화면에서 온 것처럼 보인다.
+    // 이름표와 수는 **같은 크기·같은 색**이다. 둘을 다르게 두면 한 줄이 두 정보로 갈린다.
     // 재화 레코드로 점수를 추론하지 않는다. 호출자가 고른 서버 확정 범위를 라벨까지 함께 보낸다.
-    const scoreLabel = confirmedScore.scope === "node" ? "이번 노드 점수" : "이번 원정 누적 점수";
-    this.add.text(BASE_WIDTH / 2, 282, `${scoreLabel} ${Math.floor(confirmedScore.value).toLocaleString()}`, textStyle({ role: "emphasis", size: 22, color: "#ffffff" })).setOrigin(0.5).setStroke("#000000", 5);
+    const scoreLabel = confirmedScore.scope === "node" ? "노드 점수" : "원정 점수";
+    this.add
+      .text(BASE_WIDTH / 2, LOOT.scoreY, `${scoreLabel} : ${Math.floor(confirmedScore.value).toLocaleString()}`, textStyle({ role: "display", size: 42, color: COLOR.ink }))
+      .setOrigin(0.5)
+      .setShadow(0, 4, "#000000", 6, false, true);
   }
 
   /** 전용 프리팹에 지도 월드와 입력 수명을 넘기고 씬은 선택 결과만 연결한다. */
@@ -663,7 +698,8 @@ export class ExpeditionScene extends Phaser.Scene {
   private buildPreparation(): void {
     // 저장 손상이나 보유 변경으로 세 명이 아니면 현재 보유 목록에서 안전한 기본 편성을 만든다.
     const saved = session.expedition.lastParty.filter((id, index, ids) => session.owned.has(id) && ids.indexOf(id) === index);
-    this.selected = saved.length === 3 ? [...saved] : [...session.owned].slice(0, 3);
+    this.selected = toFormationSlots(saved.length === 3 ? saved : [...session.owned].slice(0, 3), 3);
+    this.selectedSlot = undefined;
     this.add.text(BASE_WIDTH / 2, 292, "원정대 3기 선택", textStyle({ role: "emphasis", size: 32 })).setOrigin(0.5);
     if (import.meta.env.DEV) {
       // 임시 개발 도구: Session을 건드리지 않고 매니저가 만든 실제 20층 노드를 열어 미리보기와 출격 흐름을 그대로 검수한다.
@@ -689,11 +725,17 @@ export class ExpeditionScene extends Phaser.Scene {
       onClick: () => this.startExpedition(),
     });
     this.startButton.setEnabled(false);
+    // 편성판·목록 밖에서 뗀 손은 고른 칸을 푼다. 표시가 계속 떠 있으면 다 고른 뒤에도 할 일이
+    // 남은 것처럼 보인다.
+    const clearSelection = (_pointer: Phaser.Input.Pointer, objects: Phaser.GameObjects.GameObject[]): void => {
+      if (objects.length > 0 || this.selectedSlot === undefined) return;
+      this.selectedSlot = undefined;
+      this.refreshPreparationSelection();
+    };
+    this.input.on("pointerup", clearSelection);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.input.off("pointerup", clearSelection));
     // 카드·슬롯 SD·버튼 수를 최초 프레임부터 복원 편성과 일치시킨다.
-    this.renderFormationPreview();
-    this.cards.forEach((card, id) => card.setSelected(this.selected.includes(id), COLOR.sortie));
-    this.startButton.setSub(`${this.selected.length} / 3`).setEnabled(this.selected.length === 3);
-    this.hint.setText(this.selected.length === 3 ? "출발 준비 완료" : "3기를 선택하세요");
+    this.refreshPreparationSelection();
   }
 
   /**
@@ -704,11 +746,9 @@ export class ExpeditionScene extends Phaser.Scene {
    */
   private buildRosterGrid(): void {
     const owned = [...session.owned].map(getRelic);
-    const gridWidth = ROSTER.columns * ROSTER.width + (ROSTER.columns - 1) * ROSTER.gapX;
-    const startX = (BASE_WIDTH - gridWidth) / 2 + ROSTER.width / 2;
-    const rowStep = ROSTER.height + ROSTER.gapY;
+    const rowStep = ROSTER.rowStep;
     // 머리가 칩 밖으로 나오므로 첫 줄은 도감·발굴과 같은 공용 안전 영역만큼 내려 세운다.
-    const firstRowY = portraitGridFirstRowY(ROSTER_VIEWPORT.top, ROSTER.height, PORTRAIT_GRID_MASK_GAP);
+    const firstRowY = portraitGridFirstRowY(ROSTER_VIEWPORT.top, ROSTER.cardHeight, PORTRAIT_GRID_MASK_GAP);
 
     const content = this.add.container(0, 0);
     this.rosterContent = content;
@@ -717,17 +757,17 @@ export class ExpeditionScene extends Phaser.Scene {
     content.setMask(this.rosterMask.createGeometryMask());
 
     owned.forEach((relic, index) => {
-      const card = new PortraitCard(this, startX + (index % ROSTER.columns) * (ROSTER.width + ROSTER.gapX), firstRowY + Math.floor(index / ROSTER.columns) * rowStep, {
-        width: ROSTER.width,
-        height: ROSTER.height,
+      const card = new PortraitCard(this, BASE_WIDTH / 2 + formationRosterColumnX(ROSTER, index % ROSTER.columns), firstRowY + Math.floor(index / ROSTER.columns) * rowStep, {
+        width: ROSTER.cardWidth,
+        height: ROSTER.cardHeight,
         relicId: relic.id,
         label: relic.name,
         level: relicProgression.getProgress(relic.id).level,
         rarity: relic.rarity,
         stars: relicProgression.getStars(relic.id),
         affinity: { element: relic.element, role: relic.role },
-        // 상단 편성 슬롯과 구분되도록 선택 카드는 발광뿐 아니라 눌린 듯한 검정 면도 함께 쓴다.
-        selectedOverlayAlpha: 0.28,
+        // 이미 편성판에 나가 있는 카드는 떠오르지 않고 눌려 들어간다.
+        selectedStyle: "pressed",
       });
       // 카드는 선택만 바꾸며 Session을 쓰지 않는다. 시작 버튼에서 매니저가 최종 소유 검증을 반복한다.
       // 짧은 탭은 편성 토글, 꾹 누름은 상세다. 끌어서 스크롤한 손가락은 둘 다 아니다.
@@ -742,7 +782,7 @@ export class ExpeditionScene extends Phaser.Scene {
     });
 
     const rows = Math.ceil(owned.length / ROSTER.columns);
-    const contentHeight = rows > 0 ? PORTRAIT_GRID_MASK_GAP + portraitGridContentHeight(rows, rowStep, ROSTER.height) : 0;
+    const contentHeight = rows > 0 ? PORTRAIT_GRID_MASK_GAP + portraitGridContentHeight(rows, rowStep, ROSTER.cardHeight) : 0;
     const viewportHeight = ROSTER_VIEWPORT.bottom - ROSTER_VIEWPORT.top;
     // 도감 그리드와 같은 28px 여유를 아래에도 둬 마지막 줄 밑변이 마스크 경계에 정확히
     // 겹쳐 앤티에일리어싱으로 깎이지 않게 한다.
@@ -779,7 +819,8 @@ export class ExpeditionScene extends Phaser.Scene {
 
   /** 개발 빌드의 임시 버튼은 현재 편성을 우선 보존하고, 비어 있으면 보유 목록의 첫 세 기만 편성 후보로 넘긴다. */
   private openDevelopmentBossShortcut(): void {
-    const relicIds = this.selected.length === 3 ? [...this.selected] : [...session.owned].slice(0, 3);
+    const members = formationMembers(this.selected);
+    const relicIds = members.length === 3 ? members : [...session.owned].slice(0, 3);
     const result = expeditionManager.prepareDevelopmentBossShortcut(relicIds);
     if (result.ok) {
       // 재시작 뒤 실제 보스 노드를 눌러 적 미리보기를 확인하고, 기존 enterBossBattle 출격 DTO로 진입한다.
@@ -841,45 +882,55 @@ export class ExpeditionScene extends Phaser.Scene {
     }
   }
 
-  /** 1/2/3 슬롯과 선택 렐릭 SD를 한 번에 다시 그리며 로딩 실패 시에는 초상 카드를 유지한다. */
+  /**
+   * 1/2/3 슬롯과 선택 렐릭 SD.
+   *
+   * **판때기만 다시 그리고 SD는 살려 둔다.** 예전에는 선택이 바뀔 때마다 SD까지 통째로 버리고
+   * 다시 읽어, 자리를 하나 옮길 때마다 편성판이 카드 그리드로 한 번 깜빡였다가 SD로 돌아왔다.
+   * 이미 서 있는 렐릭은 자리만 옮기고, 새로 들어온 렐릭만 읽는다 — 그래서 카드 대체본도 두지
+   * 않는다. 아직 안 온 SD 자리는 빈 판이 지키고 있으면 될 뿐이다.
+   */
   private renderFormationPreview(): void {
-    this.clearFormationPreview();
+    this.formationPreview?.destroy(true);
+    this.formationPreview = undefined;
+    this.formationDragVisual?.destroy(); this.formationDragVisual = undefined;
+    this.releaseUnusedFormationPuppets();
     // 편성 상태를 Canvas 밖에 알린다. `setDebugExpeditionFormation`은 정의만 남고 부르는 곳이
     // 없어 관찰값이 늘 비어 있었고, 그 값을 보던 E2E는 편성 화면이 눈앞에 떠 있는데도 열리지
     // 않았다고 읽었다.
     setDebugExpeditionFormation({
-      selectedCount: this.selected.length,
+      selectedCount: formationMembers(this.selected).length,
       slots: [0, 1, 2].map((index) => ({ x: FORMATION.firstX + index * FORMATION.stepX, y: FORMATION.y })),
     });
     const generation = ++this.formationGeneration;
     const layer = this.add.container(0, 0).setName("expedition-formation-preview");
     this.formationPreview = layer;
+    // 밑판은 판때기와 함께 layer(0)에 눕고, 빼는 표식만 SD보다 앞선 층에 선다. SD는 컨테이너에
+    // 들어가지 않는 화면 좌표 Puppet(깊이 2)이라, 표식을 layer 안에 넣으면 그 안에서만 정렬돼
+    // 머리에 가린다. 그래서 씬 층 하나를 따로 두고 판과 함께 폐기한다.
+    this.formationChrome?.destroy(true);
+    const chrome = this.add.container(0, 0).setName("expedition-formation-chrome").setDepth(6);
+    this.formationChrome = chrome;
     const dragSlots: FormationDragSlot[] = [];
-    const puppetsByRelicId = new Map<string, PuppetCreature>();
     for (let index = 0; index < 3; index += 1) {
       const x = FORMATION.firstX + index * FORMATION.stepX;
+      const box = { x, y: FORMATION.y, width: FORMATION.width, height: FORMATION.height };
+      if (index === this.selectedSlot) addFormationSlotSelection(this, layer, box, COLOR.sortie);
       // 번호는 카드 위 독립 표식으로 두어 SD가 나타나도 편성 순서를 잃지 않는다.
       layer.add(this.add.text(x, FORMATION.y - 172, `${index + 1}`, textStyle({ role: "display", size: 30, color: COLOR.sortieText })).setOrigin(0.5));
       const relicId = this.selected[index];
       if (!relicId) {
         layer.add(drawLayer(this, x, FORMATION.y, chipPoints(FORMATION.width, FORMATION.height, { bevel: { topLeft: 24, bottomRight: 18 } }), { fill: COLOR.panel, alpha: HOLO.glassLight, edge: COLOR.inkDimHex, edgeAlpha: 0.42 }));
-        layer.add(this.add.text(x, FORMATION.y, "선택 대기", textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0.5));
       } else {
-        const relic = getRelic(relicId);
-        const fallback = new PortraitCard(this, x, FORMATION.y, { width: FORMATION.width, height: FORMATION.height, relicId: relic.id, label: relic.name, level: relicProgression.getProgress(relic.id).level, rarity: relic.rarity, stars: relicProgression.getStars(relic.id) });
-        fallback.hit.disableInteractive(); layer.add(fallback);
         layer.add(this.add.ellipse(x, FORMATION.y + 120, 190, 28, COLOR.sortie, 0.18));
-        void loadOwnedPuppet({
-          spawn: () => spawnPuppet(this, relicAppearanceManager.sdAssetFor(relicId), { x, groundY: FORMATION.y + 120, height: 250, depth: 2 }),
-          isCurrent: () => generation === this.formationGeneration && layer === this.formationPreview,
-          isDisplayable: (puppet) => Boolean(puppet.active && puppet.texture?.key && this.textures.exists(puppet.texture.key)),
-          adopt: (puppet) => { puppet.disableInteractive(); layer.add(puppet); this.formationPuppets.add(puppet); puppetsByRelicId.set(relicId, puppet); fallback.setVisible(false); },
-        });
+        this.standFormationPuppet(relicId, x, generation);
       }
-      // 공용 슬롯 면은 카드와 SD보다 위에서 입력을 맡고, SD 자체는 계속 비대화형으로 둔다.
+      // 공용 슬롯 면은 SD보다 위에서 입력을 맡고, SD 자체는 계속 비대화형으로 둔다.
       const hit = this.add.rectangle(x, FORMATION.y, FORMATION.width, FORMATION.height, 0xffffff, 0)
         .setName(`expedition-formation-slot-${index + 1}`).setDepth(4).setInteractive({ useHandCursor: true });
       layer.add(hit);
+      // 빼는 표식은 고른 자리에 누군가 서 있을 때만 선다. SD(2)보다 앞 층에 서야 머리에 가리지 않는다.
+      if (index === this.selectedSlot && relicId) addFormationRemoveChip(this, chrome, box, () => this.tapFormationSlot(index, "clear"));
       dragSlots.push({ hit, x, y: FORMATION.y, width: FORMATION.width, height: FORMATION.height });
     }
     // Puppet이 컨테이너 좌표를 물려받지 않으므로 공용 표현기에 기존 화면 좌표 배치기를 주입한다.
@@ -888,7 +939,8 @@ export class ExpeditionScene extends Phaser.Scene {
       zoneDepth: 3, dimDepth: 1,
       renderPreview: ({ preview, pointer }) => {
         this.selected.forEach((relicId, index) => {
-          const puppet = puppetsByRelicId.get(relicId); if (!puppet) return;
+          if (!relicId) return;
+          const puppet = this.formationPuppets.get(relicId); if (!puppet) return;
           const lifted = preview[index]?.lifted;
           const target = preview.findIndex((entry) => entry.relicId === relicId);
           const x = lifted ? pointer.x : FORMATION.firstX + (target < 0 ? index : target) * FORMATION.stepX;
@@ -898,7 +950,8 @@ export class ExpeditionScene extends Phaser.Scene {
         });
       },
       restore: () => this.selected.forEach((relicId, index) => {
-        const puppet = puppetsByRelicId.get(relicId); if (!puppet) return;
+        if (!relicId) return;
+        const puppet = this.formationPuppets.get(relicId); if (!puppet) return;
         placePuppet(puppet, relicAppearanceManager.sdAssetFor(relicId), { x: FORMATION.firstX + index * FORMATION.stepX, groundY: FORMATION.y + 120, height: 250 });
         puppet.setDepth(2).setAlpha(1);
       }),
@@ -908,50 +961,98 @@ export class ExpeditionScene extends Phaser.Scene {
       dragStart: (slot, x, y) => this.formationDragVisual?.beginDrag(slot, x, y),
       dragMove: (slot, x, y) => this.formationDragVisual?.moveDrag(slot, x, y),
       cancel: () => this.formationDragVisual?.endDrag(),
+      // 짧은 탭은 그 자리를 고르기만 한다. 이미 고른 자리를 한 번 더 눌러야 비고, 그때도 뒤
+      // 자리는 당겨지지 않는다.
       tap: (index) => {
-        if (this.rosterDragging || this.rosterDraggedDistance > ROSTER_DRAG_SLOP || this.selected[index] === undefined || !removeFormationSlot(this.selected, index)) return;
-        this.refreshPreparationSelection();
+        if (this.rosterDragging || this.rosterDraggedDistance > ROSTER_DRAG_SLOP) return;
+        this.tapFormationSlot(index);
       },
       drop: (from, to) => {
         this.formationDragVisual?.endDrag();
         this.selected = moveFormationSlot(this.selected, from, to);
+        this.selectedSlot = to;
         this.refreshPreparationSelection();
       },
     });
   }
 
-  /** 컨테이너 밖 GPU 자원을 포함한 이전 SD 미리보기를 선택 변경 전에 명시적으로 정리한다. */
+  /** 아직 서 있지 않은 렐릭만 읽어 세우고, 이미 선 SD는 자리만 옮긴다. */
+  private standFormationPuppet(relicId: string, x: number, generation: number): void {
+    const groundY = FORMATION.y + 120;
+    const standing = this.formationPuppets.get(relicId);
+    if (standing) {
+      placePuppet(standing, relicAppearanceManager.sdAssetFor(relicId), { x, groundY, height: 250 });
+      standing.setDepth(2).setAlpha(1);
+      return;
+    }
+    if (this.formationPuppetLoading.has(relicId)) return;
+    this.formationPuppetLoading.add(relicId);
+    void loadOwnedPuppet({
+      spawn: () => spawnPuppet(this, relicAppearanceManager.sdAssetFor(relicId), { x, groundY, height: 250, depth: 2 }),
+      // 편성판이 다시 그려져도 SD는 살아남는다. 버릴 때는 그 렐릭이 편성에서 빠질 때뿐이다.
+      isCurrent: () => generation <= this.formationGeneration && this.selected.includes(relicId),
+      isDisplayable: (puppet) => Boolean(puppet.active && puppet.texture?.key && this.textures.exists(puppet.texture.key)),
+      adopt: (puppet) => { puppet.disableInteractive(); this.formationPuppets.set(relicId, puppet); },
+    }).finally(() => this.formationPuppetLoading.delete(relicId));
+  }
+
+  /** 편성에서 빠진 렐릭의 SD만 폐기한다. 남은 렐릭은 다음 화면에서도 같은 SD를 그대로 쓴다. */
+  private releaseUnusedFormationPuppets(): void {
+    for (const [relicId, puppet] of this.formationPuppets) {
+      if (this.selected.includes(relicId)) continue;
+      puppet.destroy();
+      this.formationPuppets.delete(relicId);
+    }
+  }
+
+  /** 컨테이너 밖 GPU 자원을 포함한 SD 미리보기를 씬 전환 전에 남김없이 정리한다. */
   private clearFormationPreview(): void {
     this.formationDragVisual?.destroy(); this.formationDragVisual = undefined;
     this.formationGeneration += 1;
-    for (const puppet of this.formationPuppets) { this.formationPreview?.remove(puppet, false); puppet.destroy(); }
+    for (const puppet of this.formationPuppets.values()) puppet.destroy();
     this.formationPuppets.clear();
+    this.formationPuppetLoading.clear();
     this.formationPreview?.destroy(true);
     this.formationPreview = undefined;
+    this.formationChrome?.destroy(true);
+    this.formationChrome = undefined;
   }
 
-  /** 네 번째 선택은 받지 않고 카드 발광과 선택 수만 동기화한다. */
+  /** 자리를 누르면 고르고, 고른 자리를 한 번 더 누르거나 `−`를 누르면 그 자리만 비운다. */
+  private tapFormationSlot(index: number, intent: "select" | "clear" = "select"): void {
+    const result = tapFormationSlot(this.selected, index, this.selectedSlot, intent);
+    this.selected = result.formation;
+    this.selectedSlot = result.selectedSlot;
+    this.refreshPreparationSelection();
+  }
+
+  /**
+   * 목록의 카드를 누르면 **고른 자리**에 선다.
+   *
+   * 채우는 순서가 자리를 정하지 않는다. 이미 어느 자리에 선 렐릭을 누르면 옮기지 않고 그 자리를
+   * 고른다 — 자세한 계약은 `tapRosterRelic`에 있다.
+   */
   private toggle(relicId: string): void {
-    const index = this.selected.indexOf(relicId);
-    if (index >= 0) this.selected.splice(index, 1);
-    else if (this.selected.length < 3) this.selected.push(relicId);
-    // 상단 슬롯은 배열 순서를 그대로 사용해 전방부터 1/2/3번 편성을 즉시 확인시킨다.
+    const result = tapRosterRelic(this.selected, this.selectedSlot, relicId);
+    this.selected = result.formation;
+    this.selectedSlot = result.selectedSlot;
     this.refreshPreparationSelection();
   }
 
   /** 카드, SD, 인원수와 시작 가능 상태를 한 프레임의 동일한 선택 배열로 갱신한다. */
   private refreshPreparationSelection(): void {
     this.renderFormationPreview();
+    const count = formationMembers(this.selected).length;
     this.cards.forEach((card, id) => card.setSelected(this.selected.includes(id), COLOR.sortie));
-    this.startButton?.setSub(`${this.selected.length} / 3`).setEnabled(this.selected.length === 3);
-    this.hint.setText(this.selected.length === 3 ? "출발 준비 완료" : "3기를 선택하세요");
+    this.startButton?.setSub(`${count} / 3`).setEnabled(count === 3);
+    this.hint.setText(count === 3 ? "출발 준비 완료" : "3기를 선택하세요");
     // Canvas 밖 모바일 E2E에는 렐릭 정보 없이 실제 슬롯 입력 중심과 표시 인원수만 공개한다.
-    setDebugExpeditionFormation({ selectedCount: this.selected.length, slots: [0, 1, 2].map((index) => ({ x: FORMATION.firstX + index * FORMATION.stepX, y: FORMATION.y })) });
+    setDebugExpeditionFormation({ selectedCount: count, slots: [0, 1, 2].map((index) => ({ x: FORMATION.firstX + index * FORMATION.stepX, y: FORMATION.y })) });
   }
 
   /** 선택 배열을 직접 저장하지 않고 매니저의 검증 완료 상태 전이만 요청한다. */
   private startExpedition(): void {
-    const result = expeditionManager.start([...this.selected]);
+    const result = expeditionManager.start(formationMembers(this.selected));
     if (result.ok) {
       // 성공 결과는 이미 저장까지 완료되었으므로 같은 씬을 다시 그려 이어하기 상태로 전환한다.
       this.scene.restart();

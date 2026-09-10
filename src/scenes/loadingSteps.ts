@@ -1,6 +1,6 @@
 import type Phaser from "phaser";
 import { preloadPuppetAssets, PUPPET_PRELOAD_GROUPS } from "../puppets/assets";
-import { BACKGROUND_ASSETS } from "../ui/backgrounds";
+import { BACKGROUND_ASSETS, BACKGROUND_BOOT_KEYS } from "../ui/backgrounds";
 import { loadGameFonts } from "../ui/fonts";
 import { UI_ICON_ASSETS } from "../ui/icons";
 import { AFFINITY_ICON_ASSETS } from "../ui/affinityIcons";
@@ -61,6 +61,29 @@ const CONTENT_ART_ASSETS = [
   ["content-observation-journal", "sprites/content/journal_001.webp"],
 ] as const;
 
+/**
+ * **출시 전에 채울 자리 — 지금 목록은 일부러 좁다.**
+ *
+ * 아래 Puppet 단계는 `PUPPET_PRELOAD_GROUPS`가 가진 것만 읽는데, 그 표에는 전신 원화 25종 중
+ * 여섯과 아군 SD 19종 중 다섯만 들어 있다. 나머지 개체는 정보창을 열거나 전투에 들어가는 그
+ * 순간에 처음 내려받아 파싱하므로, 화면이 먼저 뜨고 캐릭터가 한 박자 늦게 나타난다.
+ *
+ * **개발 중에는 이대로 둔다.** 게임에 빨리 들어가는 것이 더 중요하고, 개체가 늘 때마다 타이틀
+ * 대기 시간이 함께 늘면 매번 확인하는 화면이 그만큼 멀어진다.
+ *
+ * 출시가 가까워지면 다음 셋을 함께 손본다.
+ * 1. 저장을 읽은 뒤 **보유 렐릭과 현재 편성**의 전신·SD를 단계로 넣는다. 전체를 다 읽을 필요는
+ *    없고, 그 계정이 실제로 볼 것만 읽으면 늦게 뜨는 자리가 사라진다.
+ * 2. `BattleScene.spawnFighters`는 여섯을 `await`로 **순차** 처리한다. 미리 읽지 않은 개체가
+ *    남는다면 최소한 한 번에 나란히 읽어야 진입이 여섯 배로 늘어지지 않는다.
+ * 3. 아래 `궁극기 컷인 원화` 단계는 바로 앞 단계와 **같은 그룹**을 가리켜 캐시에 걸린다. 실제로
+ *    읽는 것이 없으므로 진행 칸 하나가 즉시 차 버린다 — 컷인이 쓰는 묶음이 전신과 갈리는 날
+ *    이 단계에 그 표를 준다.
+ *
+ * 다운로드 빌드라고 저절로 해결되지 않는다. 파일이 기기에 있으면 네트워크 대기만 사라지고,
+ * 늦게 뜨는 진짜 원인인 **메인 스레드 작업**(ZIP 해제 → 600KB 남짓한 puppet.json 파싱 →
+ * 16,641개 정점 격자 복원 → WebP 디코드)은 그대로 남는다.
+ */
 export const LOADING_STEPS: ReadonlyArray<LoadingStep> = [
   {
     label: "글꼴",
@@ -70,8 +93,14 @@ export const LOADING_STEPS: ReadonlyArray<LoadingStep> = [
     label: "배경 원화",
     run: (scene) =>
       loadWithPhaser(scene, () => {
-        // 지도(Content2_001map)와 전투 필드(Content2_001field)는 backgrounds.ts의 화면 배경 표가 소유한다.
-        BACKGROUND_ASSETS.forEach(([key, path]) => scene.load.image(key, path));
+        // **전부 읽지 않는다.** 한 장이 디코드되면 25MB라 열여덟 장이면 로비에 닿기도 전에
+        // 텍스처만 434MB가 된다. 나머지는 그 화면에 들어갈 때 읽고 나올 때 내린다 —
+        // 규칙은 backgrounds.ts와 backgroundResidency.ts가 갖는다.
+        const paths = new Map<string, string>(BACKGROUND_ASSETS.map(([key, path]) => [key, path]));
+        BACKGROUND_BOOT_KEYS.forEach((key) => {
+          const path = paths.get(key);
+          if (path) scene.load.image(key, path);
+        });
         // 진입 버튼(Content2_001)은 화면 배경이 아니므로 이 중앙 콘텐츠 표에서 함께 적재한다.
         CONTENT_ART_ASSETS.forEach(([key, path]) => scene.load.image(key, path));
       }),

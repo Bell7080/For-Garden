@@ -14,6 +14,9 @@ export const LOBBY_RAIL_BOUNDS = {
   content: {
     mission: { x: RAIL.leftX, y: RAIL.top, width: RAIL.size, height: RAIL.size },
     shop: { x: RAIL.leftX, y: RAIL.top + RAIL.step, width: RAIL.size, height: RAIL.size },
+    // 무역은 상점 바로 아래에 선다. 사는 곳과 바꾸는 곳이라 같은 콘텐츠 레일에 이웃하되,
+    // 교류의 교환소와는 다른 기능이므로 진입점도 따로 갖는다.
+    trade: { x: RAIL.leftX, y: RAIL.top + RAIL.step * 2, width: RAIL.size, height: RAIL.size },
   },
   utility: {
     mail: { x: RAIL.rightX, y: RAIL.top, width: RAIL.size, height: RAIL.size },

@@ -32,12 +32,23 @@ import { settingsManager } from "../managers/SettingsManager";
 import { colorAssistPolicy, excavationStageDuration } from "../core/settings";
 import { flashPolicy } from "../ui/signatureEffects";
 import { hasRareExcavationResult } from "../core/hapticPolicy";
+import { portraitGridFirstRowY } from "../ui/portraitGrid";
 
 /** 마일리지 상점 버튼의 황금빛. 다른 버튼과 갈라 놓아 "쌓아 두었다 쓰는 곳"임을 알린다. */
 const MILEAGE_EDGE = 0xf2c744;
 
 /** 배너 그림이 서는 바닥. */
 const BANNER_FLOOR = 1240;
+
+/** 10연 결과는 공용 카드의 돌출 머리까지 포함해 서로 겹치지 않는 2×5 규격으로 배치한다. */
+const RESULT_GRID = {
+  cardWidth: 400,
+  cardHeight: 180,
+  columnX: [275, 805],
+  viewportTop: 300,
+  rowGap: 245,
+  edgeGap: 12,
+} as const;
 
 /**
  * 연구소 — 화석과 호박석으로 렐릭을 복원하는 기존 연구 시설이다.
@@ -419,12 +430,17 @@ export class LabScene extends Phaser.Scene {
     content.add(this.add.text(cx, 210, "연구 결과", textStyle({ role: "display", size: 52 })).setOrigin(0.5));
 
     results.forEach((result, index) => {
-      const columns = results.length === 1 ? 1 : 2;
-      const x = columns === 1 ? cx : 285 + (index % 2) * 510;
-      const y = results.length === 1 ? 850 : 390 + Math.floor(index / 2) * 230;
+      const single = results.length === 1;
+      // 공용 그리드의 머리 여유 계산을 사용한다. 이전 230px 줄 간격은 210px 카드 위로 나온
+      // 머리와 다음 줄 표식이 겹쳤으므로, 카드 자체를 조금 줄이고 행·열 사이를 넉넉히 벌린다.
+      const x = single ? cx : RESULT_GRID.columnX[index % 2];
+      const y = single
+        ? 850
+        : portraitGridFirstRowY(RESULT_GRID.viewportTop, RESULT_GRID.cardHeight, RESULT_GRID.edgeGap)
+          + Math.floor(index / 2) * RESULT_GRID.rowGap;
       if (result.type === "currency") {
         // 공용 액자 문법을 그대로 써 아이콘·비네팅·사방 외곽선·우하단 수량을 중복 구현하지 않는다.
-        const reward = new RewardFrame(this, x, y, { icon: CURRENCY_ICON_BY_WALLET[result.currency], amount: result.amount, size: results.length === 1 ? 420 : 190, color: COLOR.researchGray });
+        const reward = new RewardFrame(this, x, y, { icon: CURRENCY_ICON_BY_WALLET[result.currency], amount: result.amount, size: single ? 420 : RESULT_GRID.cardHeight, color: COLOR.researchGray });
         reward.setDepth(902); content.add(reward); return;
       }
       const def = getRelic(result.relicId);
@@ -434,7 +450,7 @@ export class LabScene extends Phaser.Scene {
           ? `파편 +${result.fragments}`
           : `DNA 조각 +${result.overflowFragments}`;
       const card = new PortraitCard(this, x, y, {
-        width: results.length === 1 ? 520 : 440, height: results.length === 1 ? 720 : 210,
+        width: single ? 520 : RESULT_GRID.cardWidth, height: single ? 720 : RESULT_GRID.cardHeight,
         portraitAssetId: def.portraitAssetId,
         label: def.name, sub: badge, rarity: def.rarity, stars: relicProgression.getStars(def.id),
       });

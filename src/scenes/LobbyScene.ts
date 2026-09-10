@@ -17,6 +17,7 @@ import { loadPlayerProfileDisplay } from "../managers/PlayerProfileManager";
 import { bondDialogue } from "../data/bonds";
 import { PopupLayer } from "../ui/PopupLayer";
 import { IdleExcavationPopup } from "../ui/IdleExcavationPopup";
+import { TradePopup } from "../ui/TradePopup";
 import { BACK_SLOT, IconButton } from "../ui/IconButton";
 import { UI_ICON } from "../ui/icons";
 import { InventoryPopup } from "../ui/InventoryPopup";
@@ -30,6 +31,7 @@ import { createLobbyUtilityRail } from "../ui/lobbyUtilityRail";
 import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { relicSkinManager } from "../managers/RelicSkinManager";
 import { expeditionManager } from "../managers/ExpeditionManager";
+import { PVP_MODES } from "../data/pvpModes";
 import { ExpeditionEntryButton, sortieEntrySdSpot } from "../ui/ExpeditionEntryButton";
 import { ENEMY_SD_ASSETS, PONTOS_SD_ASSET, playMotion, type PuppetAsset } from "../puppets/assets";
 import { loadOwnedPuppet } from "../ui/statusPuppetLoad";
@@ -40,6 +42,7 @@ import { MailPopup } from "../ui/MailPopup";
 import { CurrencyGuidePopup } from "../ui/CurrencyGuidePopup";
 import { StaminaPopup } from "../ui/StaminaPopup";
 import type { CurrencyGuideAction } from "../data/currencyGuide";
+import { powerSavingPolicy } from "../core/settings";
 
 /** 확대된 애착 렐릭의 골반 아래가 내비게이션 뒤로 자연스럽게 이어지는 기준선. */
 const STAGE_FLOOR = 1660;
@@ -50,6 +53,13 @@ const EXCHANGE_BLUE = 0x6fa8d6;
 
 /** 출격 선택판의 규격. 판 크기와 SD 층·동작 간격을 한 곳에서만 정한다. */
 const SORTIE_MENU = { panel: { width: 980, height: 1240 }, motionDelay: 2600 } as const;
+/**
+ * 결투 선택판.
+ *
+ * 출격과 같은 폭·같은 칸 프리팹을 쓰되 SD와 원화가 없어 판이 낮다. 네 모드가 같은 크기로
+ * 나란히 서므로 어느 하나가 기본 선택처럼 보이지 않는다.
+ */
+const PVP_MENU = { panel: { width: 980, height: 1000 }, entry: { width: 800, height: 170 }, firstY: -285, stepY: 190 } as const;
 /** 팝업 판(2000) 위. 화면에 직접 세우는 SD는 판보다 앞에 서야 버튼 위로 빠져나온다. */
 const SORTIE_SD_DEPTH = 2101;
 /** 복제 그림자의 색과 진하기. 카드 원화의 그림자와 같은 결로 눌러 둔다. */
@@ -101,6 +111,9 @@ export class LobbyScene extends Phaser.Scene {
   private sortieSdTimer?: Phaser.Time.TimerEvent;
   private sortieBackButton?: IconButton;
   private idleExcavationPopup?: IdleExcavationPopup;
+  /** 무역은 로비 수명을 보존하는 패키지 레이어다. 교류의 교환소와는 다른 화면이다. */
+  private tradePopup?: TradePopup;
+  private tradeBackButton?: IconButton;
   /** 발굴은 화면 크기의 작업판이므로 팝업 X 대신 로비 좌하단의 공용 아이콘 양식을 쓴다. */
   private excavationBackButton?: IconButton;
   /** 인벤토리는 로비 세션을 유지하는 공용 팝업이며 상태 변경은 API에만 위임한다. */
@@ -132,17 +145,16 @@ export class LobbyScene extends Phaser.Scene {
     this.buildUtilityRail();
     this.buildMissionEntry();
 
-    // 결투 — 기존 원정 자리는 추후 PvP가 들어올 독립 입구로 보존한다.
+    // 결투 — 기존 원정 자리를 독립 PvP 모드 선택 화면으로 연결한다.
     new Button(this, LOBBY_ACTION_BOUNDS.expedition.x, LOBBY_ACTION_BOUNDS.expedition.y, {
       width: LOBBY_ACTION_BOUNDS.expedition.width,
       height: LOBBY_ACTION_BOUNDS.expedition.height,
       label: "결투",
-      sub: "준비 중",
       fontSize: 34,
       // 출격과 성격이 다른 입구라 강조 양식을 쓰지 않는다. 같은 원근만 공유한다.
       perspective: "right",
       tilt: -6,
-      onClick: () => this.notReady("결투"),
+      onClick: () => this.openPvpMenu(),
     });
 
     // 출격 — 로비에서 가장 큰 버튼이다. 주황빛 강조로 다른 입구와 구분한다.
@@ -248,6 +260,20 @@ export class LobbyScene extends Phaser.Scene {
     }
   }
 
+  /**
+   * 무역은 로비를 유지하는 패키지 레이어다.
+   *
+   * 상점처럼 씬을 갈아 끼우지 않는 이유는, 남는 재화를 바꾸는 일이 다른 화면으로 떠나는 볼일이
+   * 아니라 **가진 것을 확인하며 잠깐 들르는** 일이기 때문이다. 상단 재화 줄이 그대로 보인다.
+   */
+  private openTrade(): void {
+    if (!this.popupLayer) return;
+    this.tradePopup ??= new TradePopup(this, this.popupLayer, gameApi, session.wallet, (result) => { session.wallet = { ...result.wallet }; this.topBar?.refresh(); }, () => { this.tradePopup = undefined; this.tradeBackButton?.destroy(); this.tradeBackButton = undefined; });
+    this.tradePopup.open();
+    // 판이 화면을 거의 채우므로 팝업 X 대신 다른 작업판과 같은 우하단 공용 아이콘을 쓴다.
+    if (!this.tradeBackButton) this.tradeBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: () => this.tradePopup?.close() }).setDepth(2100);
+  }
+
   /** 인게임 상점은 로비 팝업이 아니라 등록된 ShopScene의 독립 수명주기로 연다. */
   private openShop(): void {
     this.scene.start("shop");
@@ -265,8 +291,9 @@ export class LobbyScene extends Phaser.Scene {
   /** 안내 프리팹은 이 콜백만 요청하므로 지갑 변경 없이 구현된 씬·로비 팝업으로만 이동한다. */
   private handleCurrencyAction(action: CurrencyGuideAction): void {
     if (action.kind === "scene" && action.target === "lab") this.scene.start("lab");
-    // 교환은 로비의 구형 팝업이 아니라 교류 씬 안의 단일 교환소 진입점이 소유한다.
+    // 교류 표본 교환은 교류 씬 안의 교환소가 소유하고, 재화끼리 바꾸는 일은 로비의 무역이 맡는다.
     if (action.kind === "scene" && action.target === "interaction") this.scene.start("interaction", { openExchange: true });
+    if (action.kind === "popup" && action.target === "trade") this.openTrade();
   }
 
   /** 오른쪽 레일에서 로비를 떠나지 않고 가방 작업판을 연다. */
@@ -281,6 +308,33 @@ export class LobbyScene extends Phaser.Scene {
 
   /** 레일 입력을 준비 문구 없이 실제 우편 작업판과 즉시 연결한다. */
   private openMail(): void { if (!this.popupLayer) return; this.mailPopup ??= new MailPopup(this, this.popupLayer, gameApi, () => { this.mailPopup = undefined; }); this.mailPopup.open(); }
+
+  /**
+   * 결투의 모드 선택판.
+   *
+   * **씬이 아니라 판이다.** 고르는 일만 하는 화면은 로비를 통째로 갈아 끼울 이유가 없고,
+   * 출격이 이미 같은 일을 판 한 장으로 한다 — 두 입구가 서로 다른 물건처럼 열리면 무엇이 더
+   * 큰 콘텐츠인지 화면 구조가 먼저 말해 버린다. 같은 프리팹·같은 돌아가기 자리를 쓴다.
+   */
+  private openPvpMenu(): void {
+    if (!this.popupLayer || this.popupLayer.isOpen) return;
+    const panel = PVP_MENU.panel;
+    this.popupLayer.open({ width: panel.width, height: panel.height, title: "결투", titleSize: 34, dim: true, dimAlpha: 0.24, closeOnBackdrop: false, hideCloseButton: true, onClose: () => this.clearSortieChrome() }, (body, close) => {
+      PVP_MODES.forEach((mode, index) => {
+        const y = PVP_MENU.firstY + index * PVP_MENU.stepY;
+        body.add(new ExpeditionEntryButton(this, 0, y, {
+          width: PVP_MENU.entry.width, height: PVP_MENU.entry.height,
+          // 라벨은 판에서 한 줄로 선다 — 2×2 칸에서 쓰던 줄바꿈은 가로로 긴 칸에서 빈 줄이 된다.
+          label: mode.label.replace("\n", " "), labelSize: 38,
+          // 무엇을 하는 모드인지 첫 줄만 남긴다. 나머지는 상세가 말한다.
+          status: mode.scope.split("\n")[0],
+          onClick: () => { close(); this.scene.start("pvpPreview", { mode: mode.id }); },
+        }));
+      });
+      // 돌아가기는 판 안이 아니라 출격과 같은 화면 우하단 슬롯에 선다.
+      this.sortieBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: close }).setDepth(SORTIE_SD_DEPTH + 1);
+    });
+  }
 
   /** 출격의 잔잔한 콘텐츠 선택판을 열고 우하단 공용 돌아가기로만 닫는다. */
   private openSortieMenu(): void {
@@ -373,6 +427,8 @@ export class LobbyScene extends Phaser.Scene {
     const adopt = (puppet: PuppetCreature, shadow: boolean): void => {
       // 장식이므로 입력을 받지 않는다. 버튼의 투명 입력면이 그대로 손짓을 가져간다.
       puppet.disableInteractive();
+      // 출격판 SD는 비전투 장식이므로 절전 정책의 유휴 갱신 예산만 적용한다.
+      puppet.setDecorativeUpdateFactor(powerSavingPolicy(session.settings).idlePuppetUpdateFactor);
       if (place.mask) puppet.setMask(place.mask);
       if (shadow) { puppet.setTint(SORTIE_SD_SHADOW.color); puppet.setAlpha(SORTIE_SD_SHADOW.alpha); pair.shadow = puppet; }
       else pair.body = puppet;
@@ -423,11 +479,8 @@ export class LobbyScene extends Phaser.Scene {
       .rectangle(cx, (STAGE_FLOOR + NAV_TOP) / 2, BASE_WIDTH, NAV_TOP - STAGE_FLOOR, COLOR.void, 0.24)
       .setDepth(-29);
     drawHairline(this, cx, STAGE_FLOOR, BASE_WIDTH, { color: COLOR.accent, alpha: 0.14 }).setDepth(-28);
-
-    this.add
-      .text(cx, 196, "이터널 시티 · 중앙 광장", textStyle({ role: "body", size: 26, color: COLOR.inkDim }))
-      .setOrigin(0.5, 0)
-      .setAlpha(0.85);
+    // 여기가 어디인지는 배경 원화가 이미 말한다. 자리 이름을 글자로 한 번 더 적으면 로비의
+    // 주인공(애착 렐릭) 위에 아무 조작도 바꾸지 않는 문장이 하나 더 얹힌다.
   }
 
   /**
@@ -454,17 +507,24 @@ export class LobbyScene extends Phaser.Scene {
   }
 
   /**
-   * 임무와 일반 상점은 왼쪽 콘텐츠 레일의 유일한 직접 진입점이다.
-   * 교환소는 하단 교류를 거쳐서만 열리며, 편의 기능은 오른쪽 레일로 역할을 분리한다.
+   * 임무·상점·무역은 왼쪽 콘텐츠 레일에서 위계 순으로 읽히는 한 묶음이다.
+   *
+   * **상점과 무역과 교환소는 서로 다른 셋이다.** 상점은 화석·호박석으로 보급품을 **사는** 곳,
+   * 무역은 남는 재화를 모자란 재화로 **바꾸는** 상시 창구, 교환소는 교류 파견에서만 나오는
+   * 표본을 바꾸는 교류 전용 창구다. 앞의 둘만 이 레일에 서고 교환소는 교류 씬 안에 있다.
+   * 편의 기능(우편·친구·가방)은 오른쪽 레일로 보내 두 역할을 좌우로 나눈다.
    */
   private buildMissionEntry(): void {
     const entries = [
       { bounds: LOBBY_RAIL_BOUNDS.content.mission, icon: "mission", label: "임무", accent: true, onClick: () => this.openMissions() },
       { bounds: LOBBY_RAIL_BOUNDS.content.shop, icon: "shop", label: "상점", accent: false, onClick: () => this.openShop() },
+      { bounds: LOBBY_RAIL_BOUNDS.content.trade, icon: "exchange", label: "무역", accent: false, onClick: () => this.openTrade() },
     ] as const;
     // 캔버스 E2E에는 레일의 게임 상태가 아니라 실제 입력 중심만 전달한다.
     setDebugStorefrontControls({ lobby: {
-      mission: { x: entries[0].bounds.x, y: entries[0].bounds.y }, missionBack: { x: 973, y: 1743 }, shop: { x: entries[1].bounds.x, y: entries[1].bounds.y }, interaction: { x: 250, y: NAV_TOP - 400 },
+      mission: { x: entries[0].bounds.x, y: entries[0].bounds.y }, missionBack: { x: 973, y: 1743 },
+      shop: { x: entries[1].bounds.x, y: entries[1].bounds.y }, trade: { x: entries[2].bounds.x, y: entries[2].bounds.y },
+      interaction: { x: 250, y: NAV_TOP - 400 },
     } });
     // 역할별 배치표가 콘텐츠 순서와 크기를 소유하므로 렌더링은 표를 그대로 소비한다.
     const buttons = entries.map((entry) => new RailButton(this, entry.bounds.x, entry.bounds.y, {
@@ -508,6 +568,8 @@ export class LobbyScene extends Phaser.Scene {
       // 전용 원화가 연결된 두 캐릭터는 원본 색을 유지한다.
       depth: -20,
     });
+    // 로비 대표 Puppet만 장식 예산을 opt-in하며 입력과 서버/게임 시계에는 영향을 주지 않는다.
+    nextFavorite.setDecorativeUpdateFactor(powerSavingPolicy(session.settings).idlePuppetUpdateFactor);
     // 현재 가드는 종료된 씬에서 비동기 Puppet 결과가 되살아나는 것을 막고 최신 요청만 남긴다.
     if (request !== this.favoriteRequest || !this.scene.isActive()) { nextFavorite.destroy(); return; }
     // 교체가 확정된 뒤 이전 Puppet을 파괴해 로비에는 언제나 최신 외형 하나만 남긴다.

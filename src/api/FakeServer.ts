@@ -5,7 +5,7 @@ import { AD_REWARD_SLOTS, findAdRewardSlot, type AdReward } from "../data/adRewa
 import { consumeRestorationEntry, normalizeDailyContent } from "../core/dailyContent";
 import { BREAKTHROUGH_CAP, canBreakThrough, canFeedRelic, feedRelic as calculateFeed, FEED_UNIT, nextBreakthrough, relicLevelCap, RELIC_STAR_CAP, relicStars } from "../core/relicProgression";
 import { BOND_XP_REWARD, grantBondXp, grantDailyLobbyBondXp } from "../core/bond";
-import { MAX_RESEARCH_POINTS, MISSIONS, RESEARCH_REWARD_STAGES, applyMissionEvent, claimResearchStages, claimableMissionIds, normalizeMissions, researchStageClaimId, type MissionPeriod } from "../core/missions";
+import { MAX_RESEARCH_POINTS, MISSIONS, RESEARCH_REWARD_STAGES, addResearchPoints, applyMissionEvent, claimResearchStages, claimableMissionIds, normalizeMissions, researchPointsForClaim, researchStageClaimId, type MissionPeriod } from "../core/missions";
 import { DAILY_RESTORATION, getStage } from "../data/stages";
 import { CONTENT_STAMINA_COSTS } from "../data/contentCosts";
 import { createInitialRelicProgress, session, type Session } from "../state/session";
@@ -42,7 +42,7 @@ import type { ClaimMailRewardsRequest, ClaimMailRewardsResponse, MailDto, MailLi
 import { expeditionWeekKey, resolveExpeditionBossBattle } from "../core/expeditionBoss";
 import { EXPEDITION_BOSS_BALANCE, EXPEDITION_CUMULATIVE_REWARD_STAGES, EXPEDITION_NODE_REWARD_BALANCE, EXPEDITION_SWEEP_POLICY, EXPEDITION_WEEKLY_POLICY, QUICK_EXPEDITION_POLICY } from "../data/expedition";
 import { calculateExpeditionNodeRewards, calculateExpeditionRunScore } from "../core/expeditionRewards";
-import { calculateExpeditionNodeScore } from "../core/expeditionScore";
+import { calculateExpeditionNodeScore, expeditionBossDamageScore } from "../core/expeditionScore";
 import { RelicProgressionManager } from "../managers/RelicProgressionManager";
 import { expeditionBattleEffects } from "../core/expeditionBattle";
 import { settingsManager } from "../managers/SettingsManager";
@@ -295,8 +295,9 @@ export class FakeServer implements GameApi {
         arena: { left: 130, right: 950, top: 600, bottom: 1360 },
       }, request.actions);
       if (result.totalDamage > EXPEDITION_BOSS_BALANCE.maximumAcceptedScore) throw new Error("ABNORMAL_SCORE");
-      // 일반 노드 누적과 폰토스 피해를 같은 순수 모델로 합쳐 한 판 점수를 확정한다.
-      const runScore = calculateExpeditionRunScore({ normalNodeScoreTotal: run?.normalNodeScoreTotal ?? 0, bossDamageScore: result.totalDamage });
+      // 일반 노드 누적과 폰토스 피해를 같은 순수 모델로 합쳐 한 판 점수를 확정한다. 보스 피해는
+      // 원값이 아니라 점수판 환산을 한 번 거친다 — 그 환산은 순수 규칙 한 곳이 소유한다.
+      const runScore = calculateExpeditionRunScore({ normalNodeScoreTotal: run?.normalNodeScoreTotal ?? 0, bossDamageScore: expeditionBossDamageScore(result.totalDamage) });
       const improved = runScore.runScore > this.bossWeek.bestScore;
       // 일반 노드 몫은 각 노드 확정 때 이미 반영했으므로 여기서는 새 보스 피해만 한 번 더한다.
       this.bossWeek.cumulativeScore += runScore.bossDamageScore;
@@ -895,7 +896,10 @@ export class FakeServer implements GameApi {
       if ((normalized.progress[id] ?? 0) < mission.target) throw new GameApiError("MISSION_NOT_COMPLETE", "완료하지 않은 임무입니다.");
     }
     const missionCheesecake = uniqueIds.reduce((sum, id) => sum + (MISSIONS.find((mission) => mission.id === id)?.rewardCheesecake ?? 0), 0);
-    let nextMissions = { ...normalized, claimedIds: [...normalized.claimedIds, ...uniqueIds] };
+    // **연구도는 수령이 올린다.** 완료하는 순간 저 혼자 차오르면 보상을 받는 손에는 아무 일도
+    // 일어나지 않아 두 값이 따로 논다. 그래서 이 자리에서 먼저 더한 뒤, 그 오른 값으로 단계
+    // 보상을 판정한다 — 일괄 수령이 게이지를 채우고 그 단계 보상까지 한 번에 주게 하려는 것이다.
+    let nextMissions = addResearchPoints({ ...normalized, claimedIds: [...normalized.claimedIds, ...uniqueIds] }, researchPointsForClaim(uniqueIds));
     const periods = researchPeriod ? [researchPeriod] : [...new Set(uniqueIds.map((id) => MISSIONS.find((mission) => mission.id === id)?.period).filter((period): period is MissionPeriod => period !== undefined))];
     const claimedResearchStageIds: string[] = [];
     let researchCheesecake = 0;

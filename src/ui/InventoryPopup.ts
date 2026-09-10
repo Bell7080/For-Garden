@@ -14,6 +14,7 @@ import { RUNE_PART_LABELS, RUNE_RARITY_LABELS } from "../core/runes";
 import { addRuneCard, runeTexture } from "./runeIcons";
 import { COLOR, textStyle } from "./theme";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
+import { formatCurrency } from "../core/formatCurrency";
 import { managerEvents } from "../managers/ManagerEvents";
 import { CurrencyGuidePopup } from "./CurrencyGuidePopup";
 import type { CurrencyGuideAction } from "../data/currencyGuide";
@@ -34,7 +35,8 @@ const VIEWPORT = {
 /**
  * 액자가 카드 한 변에서 차지하는 비율.
  *
- * 룬 카드(`addRuneCard`)와 같은 값을 써야 탭을 옮겨도 칸의 무게가 그대로다.
+ * 룬 카드(`addRuneCard`)와 같은 값을 써야 탭을 옮겨도 칸의 무게가 그대로다. 액자 안 그림
+ * 비율과 그늘은 공용 `ITEM_FRAME.icon`·`ITEM_FRAME.shadow`를 따른다.
  */
 const INVENTORY_ITEM_FRAME = { ratio: 0.89 } as const;
 
@@ -184,9 +186,15 @@ export class InventoryPopup {
     // 그림 한 장을 담는 칸이라 공용 액자 한 장을 쓴다.
     const frameSize = Math.min(cardWidth, cardHeight) * INVENTORY_ITEM_FRAME.ratio;
     card.add(addItemFrame(this.scene, 0, 0, frameSize));
-    card.add(this.renderDefinitionIcon(item.definition.icon, 0, 0, frameSize * ITEM_FRAME.icon, textureKeys));
+    // 그림·그늘은 공용 양식(`ITEM_FRAME.icon`·`shadow`)을 그대로 쓴다. glyph 대체 경로가
+    // 있는 정의라 `addFramedIcon` 대신 같은 값으로 직접 세운다.
+    const iconSize = frameSize * ITEM_FRAME.icon;
+    card.add(this.renderDefinitionIcon(item.definition.icon, ITEM_FRAME.shadow.offsetX, ITEM_FRAME.shadow.offsetY, iconSize, textureKeys, true));
+    card.add(this.renderDefinitionIcon(item.definition.icon, 0, 0, iconSize, textureKeys));
     // 수량은 액자 오른쪽 아래에 겹친다. 보상 액자와 같은 자리라 화면이 달라도 같은 곳을 본다.
-    card.add(this.scene.add.text(frameSize / 2 - 6, frameSize / 2 - 2, String(item.quantity), textStyle({ role: "emphasis", size: 24 })).setOrigin(1, 1).setStroke("#05070a", 5));
+    // 골드처럼 자릿수가 큰 재화는 K·M으로 줄여 칸을 넘지 않게 한다 — 온전한 수는 눌러서 여는
+    // 안내가 말한다.
+    card.add(this.scene.add.text(frameSize / 2 - 6, frameSize / 2 - 2, formatCurrency(item.quantity), textStyle({ role: "emphasis", size: 32 })).setOrigin(1, 1).setStroke("#05070a", 4).setShadow(0, 2, "#05070a", 3, true, true));
     this.addCardInput(content, card, item, cardWidth, cardHeight);
   }
 
@@ -199,18 +207,27 @@ export class InventoryPopup {
     content.add(card);
   }
 
-  /** currency → item asset → glyph fallback 순서를 한곳에 고정하고 누락 texture를 국소 복구한다. */
-  private renderDefinitionIcon(icon: ItemIcon, x: number, y: number, size: number, textureKeys: string[]): Phaser.GameObjects.GameObject {
+  /**
+   * currency → item asset → glyph fallback 순서를 한곳에 고정하고 누락 texture를 국소 복구한다.
+   *
+   * `shadow`는 같은 그림을 검게 눌러 뒤에 까는 복제본이다. 그림 자체의 알파를 그대로 쓰므로
+   * 실루엣 모양대로 그늘이 지고, 액자 안에 네모난 판이 하나 더 생기지 않는다.
+   */
+  private renderDefinitionIcon(icon: ItemIcon, x: number, y: number, size: number, textureKeys: string[], shadow = false): Phaser.GameObjects.GameObject {
+    const shade = (object: Phaser.GameObjects.Image | Phaser.GameObjects.Graphics): Phaser.GameObjects.GameObject =>
+      shadow ? object.setAlpha(0.5) : object;
     if (icon.kind === "currency") {
       const key = CURRENCY_ICON_BY_WALLET[icon.key]; textureKeys.push(key);
-      return this.scene.add.image(x, y, key).setDisplaySize(size, size);
+      const image = this.scene.add.image(x, y, key).setDisplaySize(size, size);
+      return shade(shadow ? image.setTint(0x000000) : image);
     }
     if (icon.kind === "asset" && this.scene.textures.exists(icon.key)) {
       textureKeys.push(icon.key);
-      return this.scene.add.image(x, y, icon.key).setDisplaySize(size, size);
+      const image = this.scene.add.image(x, y, icon.key).setDisplaySize(size, size);
+      return shade(shadow ? image.setTint(0x000000) : image);
     }
     // 정의 glyph와 누락 asset의 공용 glyph를 마지막 경로로만 사용한다.
-    return drawGlyph(this.scene, icon.kind === "glyph" ? icon.key : ITEM_ICON_FALLBACK, x, y, size * 0.7, COLOR.accent);
+    return shade(drawGlyph(this.scene, icon.kind === "glyph" ? icon.key : ITEM_ICON_FALLBACK, x, y, size * 0.7, shadow ? 0x000000 : COLOR.accent));
   }
 
   private label(item: InventoryDisplayItem): string { return item.kind === "rune" ? item.rune.customName ?? item.rune.baseName : item.definition.name; }

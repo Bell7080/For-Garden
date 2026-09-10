@@ -4,8 +4,12 @@ import {
   advancePuppet,
   PUPPET_BACKGROUND_GAP_SECONDS,
   PUPPET_STEP_SECONDS,
+  PUPPET_STEP_TOLERANCE,
   puppetElapsedMs,
 } from "../../src/puppets/runtimeStep";
+
+/** 경계 바로 위를 한 번으로 삼키는 여유까지 포함한 서브스텝 상한이다. */
+const MAX_STEP_SECONDS = PUPPET_STEP_SECONDS * (1 + PUPPET_STEP_TOLERANCE);
 
 /** Runtime 전체를 만들지 않고 적분 간격과 마지막 vertex 전달만 검증하는 최소 Puppet 대역이다. */
 function puppetStub(): { puppet: Puppet; update: ReturnType<typeof vi.fn> } {
@@ -19,7 +23,7 @@ describe("Puppet runtime stepping", () => {
     const vertices = advancePuppet(puppet, 0.05);
 
     expect(update).toHaveBeenCalledTimes(3);
-    expect(update.mock.calls.every(([step]) => step <= PUPPET_STEP_SECONDS)).toBe(true);
+    expect(update.mock.calls.every(([step]) => step <= MAX_STEP_SECONDS)).toBe(true);
     expect(update.mock.calls.reduce((sum, [step]) => sum + step, 0)).toBeCloseTo(0.05);
     expect(vertices).toBe(update.mock.results.at(-1)?.value);
   });
@@ -32,7 +36,7 @@ describe("Puppet runtime stepping", () => {
     advancePuppet(puppet, 0.5);
 
     expect(update.mock.calls.reduce((sum, [step]) => sum + step, 0)).toBeCloseTo(1);
-    expect(update.mock.calls.every(([step]) => step <= PUPPET_STEP_SECONDS)).toBe(true);
+    expect(update.mock.calls.every(([step]) => step <= MAX_STEP_SECONDS)).toBe(true);
   });
 
   it.each([0.2, 0.1, 0.033, 0.01667])(
@@ -51,9 +55,27 @@ describe("Puppet runtime stepping", () => {
       const animationTime = update.mock.calls.reduce((sum, [step]) => sum + step, 0);
       expect(animationTime).toBeCloseTo(wallClock, 10);
       expect(animationTime).toBeCloseTo(1, 10);
-      expect(update.mock.calls.every(([step]) => step <= PUPPET_STEP_SECONDS)).toBe(true);
+      expect(update.mock.calls.every(([step]) => step <= MAX_STEP_SECONDS)).toBe(true);
     },
   );
+
+  it("60fps 프레임은 편집기 간격을 아주 조금 넘어도 한 번만 적분한다", () => {
+    // rawDelta 16.7ms는 편집기 간격(16.667ms)을 0.2% 넘을 뿐인데, ceil을 그대로 쓰면 매 프레임
+    // 두 번 적분해 가장 비싼 정점 스키닝이 상시 두 배로 돈다(v0.83.0까지 그랬다).
+    for (const frameMs of [16.667, 16.7, 16.8, 17]) {
+      const { puppet, update } = puppetStub();
+      advancePuppet(puppet, frameMs / 1000);
+      expect(update).toHaveBeenCalledTimes(1);
+    }
+  });
+
+  it("여유는 배수 바로 위 구간에만 걸리고 그보다 긴 프레임은 그대로 나눈다", () => {
+    const { puppet, update } = puppetStub();
+    // 30ms는 한 스텝의 1.8배라 여유(0.25)로 삼켜지지 않고 둘로 나뉜다.
+    advancePuppet(puppet, 0.03);
+    expect(update).toHaveBeenCalledTimes(2);
+    expect(update.mock.calls.every(([step]) => step <= PUPPET_STEP_SECONDS)).toBe(true);
+  });
 
   it("탭 복귀처럼 큰 간격은 별도 임계값에서 버려 secondary spring 폭주를 막는다", () => {
     const { puppet, update } = puppetStub();
@@ -88,6 +110,20 @@ describe("Puppet에 전달할 실제 경과 시간", () => {
     const smoothed = frames.reduce((sum) => sum + CLAMPED_MS, 0);
     expect(raw).toBe(1000);
     expect(smoothed).toBeLessThan(210);
+  });
+
+  it("프레임 제한이 켜지면 rAF 간격이 아니라 TimeStep 벽시계 간격을 쓴다", () => {
+    // stepLimitFPS는 rawDelta를 매 rAF마다 덮어쓰고 콜백은 두 rAF에 한 번만 부른다.
+    // rawDelta(16.7)만 읽으면 Puppet이 절반 속도로 흘러 트윈과 어긋난다.
+    expect(puppetElapsedMs(16.7, 33.3, 33.4)).toBe(33.4);
+  });
+
+  it("벽시계 간격을 못 잴 때만 rawDelta로, 그것도 없으면 delta로 되돌아간다", () => {
+    // 첫 프레임에는 직전 시각이 없어 벽시계 간격이 없다.
+    expect(puppetElapsedMs(166, CLAMPED_MS, undefined)).toBe(166);
+    for (const missing of [0, -5, Number.NaN]) {
+      expect(puppetElapsedMs(166, CLAMPED_MS, missing)).toBe(166);
+    }
   });
 
   it("rawDelta를 읽을 수 없으면 기존 delta로 되돌아간다", () => {

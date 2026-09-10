@@ -479,6 +479,17 @@ test("발굴 보상 팝업은 최대 네 생산 자원을 한 줄에 표시한�
   await captureGame(page, `test-results/${test.info().project.name}-excavation-four-rewards.png`);
 });
 
+test("그래픽 품질 세 단계는 1080×1920 게임 탭의 시각 요소를 누락하지 않는다", async ({ page }) => {
+  await startAfterOpening(page); await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+  await tapGame(page, BASE_WIDTH - 58, 86); await tapGame(page, 540, 210);
+  // 같은 홀로그램 행을 high→balanced→low로 순환하며 행·강조색·프레임 선택이 남는지 비교한다.
+  await captureGame(page, `test-results/${test.info().project.name}-settings-quality-high-1080x1920.png`);
+  await tapGame(page, 800, 674); await captureGame(page, `test-results/${test.info().project.name}-settings-quality-balanced-1080x1920.png`);
+  await tapGame(page, 800, 674); await captureGame(page, `test-results/${test.info().project.name}-settings-quality-low-1080x1920.png`);
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("eternal-city.local-save")!).settings.presentation.graphicsQuality)).toBe("low");
+});
+
 test("설정 탭은 텍스트 확대·스크롤·두 단계 초기화를 좁은 모바일에서 안전하게 처리한다", async ({ page }) => {
   await startAfterOpening(page); await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
@@ -490,8 +501,8 @@ test("설정 탭은 텍스트 확대·스크롤·두 단계 초기화를 좁은 
   await tapGame(page, 130, 210);
   // 새 고정 헤더 아래 첫 사운드 슬라이더가 88px 이상의 터치 행으로 저장을 즉시 반영한다.
   await tapGame(page, 800, 392); let saved = await page.evaluate(() => localStorage.getItem("eternal-city.local-save")); expect(saved).toContain('"masterVolume"');
-  // 게임 탭은 기존 선택 행 양식을 유지하며 전투 UI 움직임을 기본→감소로 즉시 저장한다.
-  await tapGame(page, 540, 210); await tapGame(page, 800, 768);
+  // 게임 탭은 새 두 선택 행 아래에서도 전투 UI 움직임을 기본→감소로 즉시 저장한다.
+  await tapGame(page, 540, 210); await tapGame(page, 800, 862);
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("eternal-city.local-save")!).settings.presentation.battleUiMotion)).toBe("reduced");
   await captureGame(page, `test-results/${test.info().project.name}-settings-battle-ui-motion.png`);
   // 접근성 탭에서 공용 텍스트 배율을 올린 뒤 재생성된 탭이 잘리지 않는지 캡처한다.

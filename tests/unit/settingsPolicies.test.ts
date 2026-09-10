@@ -1,18 +1,38 @@
 import { describe, expect, it } from "vitest";
-import { colorAssistPolicy, excavationStageDuration, motionPolicy, presentationPolicy } from "../../src/core/settings";
+import { colorAssistPolicy, createDefaultSettings, decorativeUpdateBudget, excavationStageDuration, motionPolicy, powerSavingPolicy, presentationPolicy } from "../../src/core/settings";
 import { flashPolicy } from "../../src/ui/signatureEffects";
 import { COLOR_ASSIST_LAYOUT, COLOR_ASSIST_SURFACES } from "../../src/ui/colorAssist";
 
 /** 네 저장 토글의 on/off가 Phaser 없이도 각 소비 경계의 실제 정책 차이를 고정한다. */
 describe("settings presentation policies", () => {
-  it("저사양 모드는 파티클·파문·전신·후처리·렌더 품질 예산을 함께 낮춘다", () => {
-    const full = presentationPolicy(false);
-    const low = presentationPolicy(true);
-    expect(full).toEqual({ particleRatio: 1, ringRatio: 1, fullBodyScale: 1, postProcessing: true, renderQuality: 1 });
-    expect(low.particleRatio).toBeLessThan(full.particleRatio);
-    expect(low.ringRatio).toBeLessThan(full.ringRatio);
-    expect(low.fullBodyScale).toBeLessThan(full.fullBodyScale);
-    expect(low).toMatchObject({ postProcessing: false, renderQuality: 0.75 });
+  it.each([
+    // 절전, 움직임 감소, 가시성, 최종 배율, 가시성 정지를 모든 조합으로 고정한다.
+    [false, false, "visible", 1, false], [true, false, "visible", 0.5, false],
+    [false, true, "visible", 0.25, false], [true, true, "visible", 0.25, false],
+    [false, false, "hidden", 0, true], [true, true, "hidden", 0, true],
+  ] as const)("절전 정책 조합 %#을 분리한다", (powerSaving, reduceMotion, visibility, factor, paused) => {
+    const settings = createDefaultSettings();
+    settings.presentation.powerSaving = powerSaving; settings.accessibility.reduceMotion = reduceMotion;
+    const policy = powerSavingPolicy(settings, visibility);
+    expect(policy).toEqual({ decorativeParticleFactor: factor, hologramSweepFactor: factor, idlePuppetUpdateFactor: factor, pausedByVisibility: paused });
+  });
+
+  it("로비·정보창·방치 발굴은 같은 장식 업데이트 예산만 줄인다", () => {
+    const settings = createDefaultSettings(); settings.presentation.powerSaving = true;
+    const policy = powerSavingPolicy(settings);
+    // 세 화면의 60Hz 장식 예산만 30Hz로 줄며 정책에는 전투·타이머·입력용 필드가 존재하지 않는다.
+    expect(["lobby", "info", "idleExcavation"].map(surface => decorativeUpdateBudget(surface as "lobby" | "info" | "idleExcavation", policy))).toEqual([30, 30, 30]);
+    expect(policy).not.toHaveProperty("combatFactor"); expect(policy).not.toHaveProperty("timerFactor"); expect(policy).not.toHaveProperty("inputFactor");
+  });
+  it("세 품질 프리셋은 게임 규칙이 아닌 명시적 렌더 예산만 단계별로 줄인다", () => {
+    const high = presentationPolicy("high");
+    const balanced = presentationPolicy("balanced");
+    const low = presentationPolicy("low");
+    expect(high).toEqual({ particleRatio: 1, ringRatio: 1, fullBodyScale: 1, postProcessing: true, renderQuality: 1 });
+    expect(balanced).toEqual({ particleRatio: 0.72, ringRatio: 0.75, fullBodyScale: 0.9, postProcessing: true, renderQuality: 0.9 });
+    expect(low).toEqual({ particleRatio: 0.45, ringRatio: 0.5, fullBodyScale: 0.78, postProcessing: false, renderQuality: 0.75 });
+    // 모든 작업량은 high → balanced → low 순서로만 줄어 프리셋 전환이 일관된다.
+    expect([high, balanced, low].map(({ particleRatio }) => particleRatio)).toEqual([1, 0.72, 0.45]);
   });
 
   it.each([

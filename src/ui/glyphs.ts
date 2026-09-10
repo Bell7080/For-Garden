@@ -35,7 +35,8 @@ export type GlyphName =
   | "bar-chart"
   | "arena-tier"
   | "page-prev"
-  | "page-next";
+  | "page-next"
+  | "remove";
 
 function points(...pairs: number[]): Phaser.Geom.Point[] {
   const list: Phaser.Geom.Point[] = [];
@@ -109,6 +110,12 @@ export function drawGlyph(
     case "page-next":
       // "page-prev"를 좌우로 뒤집은 모양이다.
       g.strokePoints(points(-r * 0.28, -r * 0.7, r * 0.32, 0, -r * 0.28, r * 0.7), false);
+      break;
+    case "remove":
+      // 굵은 가로줄 하나. 편성 자리에서 캐릭터를 빼는 조작은 어디서나 이 표식만 쓴다 —
+      // ✕는 "닫는다"를, 휴지통은 "지운다"를 뜻해 자리만 비우는 조작과 섞인다.
+      g.lineStyle(Math.max(3, size * 0.16), color, alpha);
+      g.lineBetween(-r * 0.56, 0, r * 0.56, 0);
       break;
     case "edit":
       // 각진 연필과 짧은 밑줄. 이름 변경 조작은 모든 씬에서 이 표식만 사용한다.

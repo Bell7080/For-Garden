@@ -25,7 +25,8 @@ export class EffectOverlayScene extends Phaser.Scene {
   }
 
   create(): void {
-    this.effects = new EffectManager(this, { depth: 0, shake: false });
+    // 전투 수치를 만들지 않는 입력 겹이지만 생성 옵션의 의미를 명시해 전투 설정과 혼동하지 않는다.
+    this.effects = new EffectManager(this, { depth: 0, shake: false, damageNumbers: true });
     this.scene.bringToTop();
     // 모바일 우선 입력이라 손이 닿는 순간 답한다 — 떼는 순간까지 기다리면 눌린 느낌이 늦다.
     this.input.on(Phaser.Input.Events.POINTER_DOWN, (pointer: Phaser.Input.Pointer) => {

@@ -495,6 +495,29 @@ test("설정 탭은 텍스트 확대·스크롤·두 단계 초기화를 좁은 
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
 });
 
+test("피해 숫자 토글을 끄면 전투 피해 팝업 Text 객체를 만들지 않는다", async ({ page }) => {
+  await startAfterOpening(page); await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+  await tapGame(page, BASE_WIDTH - 58, 86);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("settings");
+  // 게임 탭의 실제 "피해 숫자" 토글을 눌러 저장 경계부터 전투 생성 옵션까지 함께 통과시킨다.
+  await tapGame(page, 540, 210); await tapGame(page, 800, 486);
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("eternal-city.local-save")!).settings.presentation.damageNumbers)).toBe(false);
+  await tapGame(page, BASE_WIDTH - 106, BASE_HEIGHT - 120);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+
+  // 메인 작전의 기본 편성을 그대로 출격시켜 실제 HP 피해가 난 뒤에도 수치 풀이 비었는지 본다.
+  await tapGame(page, BASE_WIDTH - 290, BASE_HEIGHT - 425); await tapGame(page, BASE_WIDTH / 2, 550);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("stageMap");
+  await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT - 180);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("party");
+  await tapGame(page, BASE_WIDTH / 2, 1700);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("battle");
+  const initialEnemyHp = (await page.evaluate(() => window.__PF_DEBUG?.battle?.enemyHp))!;
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.battle?.enemyHp)).toBeLessThan(initialEnemyHp);
+  expect(await page.evaluate(() => window.__PF_DEBUG?.battle?.allocatedNumberCount)).toBe(0);
+});
+
 test("핵심 콘텐츠의 설정은 고고학·렐릭·연구소·프리미엄 섹션으로 되돌아간다", async ({ page }) => {
   await startAfterOpening(page); await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");

@@ -3,7 +3,7 @@ import { allowBurst, AREA_IMPACT, BATTLEFIELD_WASH_HOLD, BATTLEFIELD_WASH_RISE, 
 import { EFFECT_TEXTURE, ensureEffectTextures } from "../ui/effectTextures";
 import { lashPoints } from "../ui/reachStrikeShape";
 import { flashPolicy, inkBlotPoints, mawTeeth, slashPoints, SIGNATURE_SPECS, type CombatPalette, type SignatureId, type StrokePoint } from "../ui/signatureEffects";
-import { damagePopupStyle, risingAlpha, type DamagePopupRequest } from "../ui/damageNumbers";
+import { damagePopupStyle, risingAlpha, shouldShowDamagePopup, type DamagePopupRequest } from "../ui/damageNumbers";
 import { battlefieldWashBands, groundAreaStyle, laneAreaPoints, radialAreaPoints, type GroundAreaRequest, type GroundAreaShape, type GroundAreaStyle } from "../ui/groundAreas";
 import { COLOR, textStyle } from "../ui/theme";
 import { battleUiMotionFactor, presentationPolicy, type BattleUiMotion } from "../core/settings";
@@ -26,6 +26,15 @@ import type { ActiveCombatDisplayEffect } from "../core/combatEffects";
  */
 
 export interface EffectManagerOptions {
+  /**
+   * 일반·고정·지속 피해량 텍스트를 표시할지 여부다. 회복·보호막·무효처럼 전투 판단에 필요한
+   * 별도 텍스트에는 적용하지 않는다. 이 옵션은 매니저 생성 시점의 전투 설정 스냅샷이다.
+   *
+   * 현재 전투에서는 설정 화면을 열 수 없으므로 변경 이벤트를 구독하지 않는다. 향후 전투 중
+   * 설정 왕복을 지원하면 `SettingsManager`를 직접 결합하지 말고 갱신 메서드 또는 구독 해제까지
+   * 소유하는 입력을 추가해, 이미 떠 있는 텍스트와 이후 사건 중 어디부터 적용할지도 함께 정한다.
+   */
+  damageNumbers: boolean;
   /** 파편과 파문이 서는 깊이. 수치 글자는 그보다 한 겹 위에 선다. */
   depth?: number;
   /** 큰 한 방에 화면을 흔들지 여부. 지도·로비처럼 조작이 이어지는 화면은 끈다. */
@@ -122,6 +131,8 @@ export class EffectManager {
   private readonly groundDepth: number;
   private readonly quality: ReturnType<typeof presentationPolicy>;
   private readonly flashes: ReturnType<typeof flashPolicy>;
+  /** 생성 시 받은 설정 스냅샷이며 피해량 텍스트에만 적용한다. */
+  private readonly damageNumbers: boolean;
   /** 전장 경계. 가장자리 워시만 쓰며 씬이 `setArena`로 넘긴다. */
   private arena: { left: number; right: number; top: number; bottom: number } | undefined;
   private readonly emitters = new Map<EffectKind, Phaser.GameObjects.Particles.ParticleEmitter>();
@@ -135,7 +146,7 @@ export class EffectManager {
   private frame = -1;
   private openedThisFrame = 0;
 
-  constructor(scene: Phaser.Scene, options: EffectManagerOptions = {}) {
+  constructor(scene: Phaser.Scene, options: EffectManagerOptions) {
     this.scene = scene;
     this.depth = options.depth ?? 300;
     this.shakeEnabled = options.shake ?? true;
@@ -143,6 +154,7 @@ export class EffectManager {
     this.groundDepth = options.groundDepth ?? this.depth - 400;
     this.quality = presentationPolicy(options.lowSpecMode ?? false);
     this.flashes = flashPolicy(options.reduceFlashes ?? false);
+    this.damageNumbers = options.damageNumbers;
     ensureEffectTextures(scene);
     // 씬이 꺼질 때 emitter·풀을 함께 정리한다. 씬 재진입마다 쌓이면 텍스처는 하나여도
     // 표시 객체가 배로 늘어난다.
@@ -633,6 +645,8 @@ export class EffectManager {
    * 크고 오래 남아, 숫자를 읽지 않고 크기만 봐도 "세게 맞았다"가 전해진다.
    */
   damage(x: number, y: number, request: DamagePopupRequest, options: BurstOptions = {}): void {
+    // 정책을 풀 획득보다 먼저 적용해야 꺼진 피해 수치가 Phaser Text 객체조차 만들지 않는다.
+    if (!shouldShowDamagePopup(request, this.damageNumbers)) return;
     const style = damagePopupStyle(request);
     const slot = this.acquireNumber();
     slot.openedAt = this.scene.time.now;
@@ -677,6 +691,9 @@ export class EffectManager {
       if (!shake.isRunning || shake.intensity.x < intensity) this.scene.cameras.main.shake(150, intensity);
     }
   }
+
+  /** Canvas DOM 밖 객체 생성을 E2E가 관찰하는 읽기 전용 진단값이다. 전투 규칙에는 사용하지 않는다. */
+  get allocatedNumberCount(): number { return this.numbers.length; }
 
   /**
    * 그 개체를 그 개체답게 만드는 한 순간.

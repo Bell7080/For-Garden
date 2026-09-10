@@ -132,6 +132,9 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
   private readonly uvs: Float32Array;
   private positions: Float32Array;
   private buffers?: CreatureGpuBuffers;
+  /** 1보다 작은 값은 비전투 장식의 프레임 일부를 버리며 누락 시간을 다음 프레임에 합치지 않는다. */
+  private decorativeUpdateFactor = 1;
+  private decorativeUpdateCredit = 0;
 
   private constructor(scene: Phaser.Scene, puppet: Puppet, textureKey: string) {
     super(scene, 0, 0, textureKey);
@@ -164,12 +167,24 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
     return this.puppet.play(name, options);
   }
 
+  /** 전투 개체는 호출하지 않는 opt-in 장식 예산 경계다. */
+  setDecorativeUpdateFactor(factor: number): this {
+    this.decorativeUpdateFactor = Phaser.Math.Clamp(factor, 0, 1);
+    this.decorativeUpdateCredit = 0;
+    return this;
+  }
+
   /** Phaser scene update에서 원본 해상도의 변형 정점만 계산한다. */
   private step(_time: number, delta: number): void {
     // Scene UPDATE는 listener 목록을 순회하는 도중에도 씬 전환으로 개체를 파괴할 수 있다.
     // 이미 순회 목록에 담긴 콜백은 release()로 구독을 해제한 뒤 한 번 더 호출될 수 있으므로,
     // Phaser가 scene 참조를 비운 파괴 완료 개체는 game loop를 읽기 전에 즉시 건너뛴다.
     if (!this.active || !this.scene) return;
+    // 브라우저 비가시성은 저장된 절전과 별도 정지이며 hidden delta를 임의 애니메이션으로 따라잡지 않는다.
+    if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
+    this.decorativeUpdateCredit += this.decorativeUpdateFactor;
+    if (this.decorativeUpdateCredit < 1) return;
+    this.decorativeUpdateCredit -= 1;
     // 평탄화된 delta는 fps.min보다 느린 프레임의 시간을 잘라 버려 애니메이션을 느리게 만든다.
     const elapsed = puppetElapsedMs(this.scene.game.loop.rawDelta, delta);
     // 편집기보다 긴 프레임을 한 번에 적분하면 pinnedSoft 발 주변의 spring이 튀므로 잘게 나눈다.

@@ -40,6 +40,7 @@ import { MailPopup } from "../ui/MailPopup";
 import { CurrencyGuidePopup } from "../ui/CurrencyGuidePopup";
 import { StaminaPopup } from "../ui/StaminaPopup";
 import type { CurrencyGuideAction } from "../data/currencyGuide";
+import { powerSavingPolicy } from "../core/settings";
 
 /** 확대된 애착 렐릭의 골반 아래가 내비게이션 뒤로 자연스럽게 이어지는 기준선. */
 const STAGE_FLOOR = 1660;
@@ -373,6 +374,8 @@ export class LobbyScene extends Phaser.Scene {
     const adopt = (puppet: PuppetCreature, shadow: boolean): void => {
       // 장식이므로 입력을 받지 않는다. 버튼의 투명 입력면이 그대로 손짓을 가져간다.
       puppet.disableInteractive();
+      // 출격판 SD는 비전투 장식이므로 절전 정책의 유휴 갱신 예산만 적용한다.
+      puppet.setDecorativeUpdateFactor(powerSavingPolicy(session.settings).idlePuppetUpdateFactor);
       if (place.mask) puppet.setMask(place.mask);
       if (shadow) { puppet.setTint(SORTIE_SD_SHADOW.color); puppet.setAlpha(SORTIE_SD_SHADOW.alpha); pair.shadow = puppet; }
       else pair.body = puppet;
@@ -508,6 +511,8 @@ export class LobbyScene extends Phaser.Scene {
       // 전용 원화가 연결된 두 캐릭터는 원본 색을 유지한다.
       depth: -20,
     });
+    // 로비 대표 Puppet만 장식 예산을 opt-in하며 입력과 서버/게임 시계에는 영향을 주지 않는다.
+    nextFavorite.setDecorativeUpdateFactor(powerSavingPolicy(session.settings).idlePuppetUpdateFactor);
     // 현재 가드는 종료된 씬에서 비동기 Puppet 결과가 되살아나는 것을 막고 최신 요청만 남긴다.
     if (request !== this.favoriteRequest || !this.scene.isActive()) { nextFavorite.destroy(); return; }
     // 교체가 확정된 뒤 이전 Puppet을 파괴해 로비에는 언제나 최신 외형 하나만 남긴다.

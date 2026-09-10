@@ -469,7 +469,9 @@ export function skillDescription(
     const physical = stats.atk === undefined ? `공격력의 ${dual.attackPercent}%` : `[[damage-value|${Math.round(stats.atk.atk * dual.attackPercent / 100)}]]`;
     const magical = stats.ap === undefined ? `주문력의 ${dual.abilityPercent}%` : `[[damage-value|${Math.round(stats.ap * dual.abilityPercent / 100)}]]`;
     const assault = "packAssault" in skill && skill.packAssault !== undefined
-      ? ` 쓰러진 늑대를 즉시 일으켜 세우고 둘 모두 표적에게 돌진해 각자 성장 축의 ${skill.packAssault.summonPowerPercent}% 피해를 준다.`
+      ? ` 곁에 선 늑대가 모두 표적에게 돌진해 각자 성장 축의 ${skill.packAssault.summonPowerPercent}% 피해를 주고,`
+        + ` 쓰러진 늑대는 다시 설 때까지 남은 시간이 ${skill.packAssault.resummonHasteSeconds}초 앞당겨진다.`
+        + ` 그 자리에서 다시 서면 그 늑대도 함께 돌진한다.`
       : "";
     const finisher = skill.finisher === undefined ? "" : finisherClause(skill.finisher);
     return `적 한 명에게 ${physical}의 [[physical-damage|물리 피해]]와 ${magical}의 [[magical-damage|마법 피해]]를 동시에 준다.`

@@ -4306,12 +4306,19 @@ function packStrike(attacker: Fighter, target: Fighter, state: SkirmishState, ev
   const amplify = 1 + stacks * (rule?.damagePercentPerStack ?? 0) / 100;
   const wolves = packOf(state, attacker);
   const assault = useUltimate ? attacker.def.ultimate.packAssault : undefined;
-  if (assault?.reviveSummons) {
+  if (assault) {
+    /*
+     * 쓰러진 몸을 그 자리에서 되살리지 않는다 — 그러면 늑대를 잃는 일이 값을 잃지 않는다.
+     * 남은 대기 시간을 앞당길 뿐이고, 그 결과로 다 되면 그때 다시 선다.
+     */
     for (const wolf of state.fighters.filter((unit) => unit.summonOwnerId === attacker.id && !isFighterAlive(unit))) {
-      reviveWolf(state, attacker, wolf, events);
+      if (!Number.isFinite(wolf.resummonIn) || wolf.resummonIn <= 0) continue;
+      wolf.resummonIn = Math.max(0, wolf.resummonIn - assault.resummonHasteSeconds);
+      // 앞당긴 결과로 지금 서게 됐다면 이 돌격에도 함께 나간다.
+      if (wolf.resummonIn === 0) reviveWolf(state, attacker, wolf, events);
     }
   }
-  // 궁극기는 다시 선 늑대까지 함께 던진다. 살아 있는 몸을 다시 세어야 방금 일어난 몫이 빠지지 않는다.
+  // 방금 일어난 몸까지 세도록 살아 있는 늑대를 다시 고른다.
   if (assault) {
     for (const wolf of packOf(state, attacker)) {
       chargeWolfInto(state, wolf, target, events, assault.summonPowerPercent);

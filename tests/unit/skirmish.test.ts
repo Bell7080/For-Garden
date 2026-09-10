@@ -118,7 +118,7 @@ describe("디안 무리 생명주기", () => {
 
     // 적 행동을 멈춰 재소환 조건만 관찰한다. 긴 대기 직전에는 아직 서지 않는다.
     state.fighters[1].attackCooldown = 999;
-    advanceFor(state, 11.9);
+    advanceFor(state, 19.9);
     expect(isFighterAlive(kuro)).toBe(false);
     const returned = advanceFor(state, 0.2);
     expect(isFighterAlive(kuro)).toBe(true);
@@ -134,7 +134,7 @@ describe("디안 무리 생명주기", () => {
     dian.hp = 0;
     stepSkirmish(state, 1 / 60);
     expect(wolvesOf(state, dian.id).every((wolf) => !isFighterAlive(wolf))).toBe(true);
-    advanceFor(state, 13);
+    advanceFor(state, 21);
     expect(wolvesOf(state, dian.id).every((wolf) => !isFighterAlive(wolf))).toBe(true);
   });
 
@@ -239,19 +239,51 @@ describe("디안 합공과 목덜미", () => {
     expect(nape.amount).toBeGreaterThan(8 * 0.4);
   });
 
-  it("은 궁극기가 쓰러진 늑대를 일으켜 세우고 셋이 함께 표적에 뛰어든다", () => {
+  it("은 궁극기가 곁에 선 늑대만 던지고 쓰러진 늑대는 대기 시간만 앞당긴다", () => {
     const { state, dian } = readyDian(1);
     const [kuro, shiro] = state.fighters.filter((f) => f.summonOwnerId === dian.id);
     kuro.hp = 0;
     stepSkirmish(state, 1 / 60);
+    expect(kuro.resummonIn).toBe(20);
     dian.energy = dian.def.ultimate.cost;
     const events = fireUltimate(state, dian.id);
-    expect(isFighterAlive(kuro)).toBe(true);
-    // 늑대 둘의 돌진과 지휘자의 목덜미가 한 행동에서 함께 나간다.
-    expect(hitsBy(events, kuro.id)).toHaveLength(1);
+    // 즉시 되살아나지 않는다 — 앞당겨진 만큼만 남는다.
+    expect(isFighterAlive(kuro)).toBe(false);
+    expect(kuro.resummonIn).toBe(10);
+    expect(hitsBy(events, kuro.id)).toHaveLength(0);
+    // 곁에 선 몸의 돌진과 지휘자의 목덜미는 한 행동에서 함께 나간다.
     expect(hitsBy(events, shiro.id)).toHaveLength(1);
     expect(events.some((event) => event.kind === "packFinisher")).toBe(true);
     expect(dian.energy).toBe(0);
+  });
+
+  it("은 앞당긴 대기 시간이 그 자리에서 끝나면 그 늑대도 함께 돌진시킨다", () => {
+    const { state, dian } = readyDian(1);
+    const [kuro] = state.fighters.filter((f) => f.summonOwnerId === dian.id);
+    kuro.hp = 0;
+    stepSkirmish(state, 1 / 60);
+    // 남은 대기가 앞당기는 폭보다 짧으면 그 자리에서 다시 서고 이 돌격에 함께 나간다.
+    kuro.resummonIn = 8;
+    dian.energy = dian.def.ultimate.cost;
+    const events = fireUltimate(state, dian.id);
+    expect(isFighterAlive(kuro)).toBe(true);
+    expect(hitsBy(events, kuro.id)).toHaveLength(1);
+  });
+
+  it("은 지휘자의 머리 위에 늑대 둘을 세우고 쓰러진 몸만 남은 대기를 시계로 보여 준다", () => {
+    const { state, dian } = readyDian(1);
+    const pack = state.fighters.filter((f) => f.summonOwnerId === dian.id);
+    const standing = unitStatusViews(dian, pack);
+    expect(standing.map(({ id }) => id)).toEqual(["packKuro", "packShiro"]);
+    // 서 있는 동안에는 시계를 돌리지 않는다. 덮인 만큼이 곧 남은 대기라는 규칙이 흐려진다.
+    expect(standing.every(({ remaining }) => remaining === undefined)).toBe(true);
+
+    pack[0].hp = 0;
+    stepSkirmish(state, 1 / 60);
+    const [fallen] = unitStatusViews(dian, pack);
+    expect(fallen.remaining).toBe(20);
+    expect(fallen.total).toBe(20);
+    expect(fallen.detail).toContain("다시 선다");
   });
 
   it("은 늑대가 낸 피해를 성장 주체인 지휘자 앞으로 쌓는다", () => {

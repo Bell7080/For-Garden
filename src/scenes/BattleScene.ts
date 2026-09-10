@@ -913,6 +913,12 @@ export class BattleScene extends Phaser.Scene {
     playMotion(this, view.creature, "idle");
   }
 
+  /** 이 전투원이 거느린 귀속 소환수를 정의 순서대로 돌려준다. 없으면 빈 배열이다. */
+  private packOfView(fighter: Fighter): Fighter[] {
+    if ((fighter.def.summons ?? []).length === 0) return [];
+    return this.state.fighters.filter((wolf) => wolf.summonOwnerId === fighter.id);
+  }
+
   /** 공격·회복·사망·종료를 각각 구분되는 연출로 옮긴다. */
   private playEvent(event: SkirmishEvent, motionSpeedMultiplier = 1): MotionPlayback | undefined {
     if (event.kind === "finish") {
@@ -1455,7 +1461,9 @@ export class BattleScene extends Phaser.Scene {
       }
       // 상태 칩은 체력 바 **위**에 한 줄로 선다. 옆에 늘어놓으면 상태가 둘만 걸려도 바가 밀려
       // 어디까지가 체력인지 흐려진다. 순서와 색·겹·남은 시간은 순수 모델 하나가 정한다.
-      const statuses = unitStatusViews(fighter);
+      // 귀속 소환수는 지휘자의 머리 위에 함께 선다. 몇 마리가 서 있는지가 이 개체의 은신과
+      // 치명타를 그대로 말하므로 상태 줄이 그 자리를 맡는다.
+      const statuses = unitStatusViews(fighter, this.packOfView(fighter));
       view.statusChips.setPosition(pose.x, barY - BATTLE_STATUS_LAYOUT.chipRowLift)
         .setDepth(DEPTH.hpBar + 2)
         .setVisible(statuses.length > 0);
@@ -1519,7 +1527,7 @@ export class BattleScene extends Phaser.Scene {
   private openStatusList(fighterId: string): void {
     const view = this.views.get(fighterId);
     if (!view || view.dead) return;
-    openUnitStatusPopup(this, this.buffPopups, view.fighter.def.name, unitStatusViews(view.fighter), { x: view.statusHit.x, y: view.statusHit.y });
+    openUnitStatusPopup(this, this.buffPopups, view.fighter.def.name, unitStatusViews(view.fighter, this.packOfView(view.fighter)), { x: view.statusHit.x, y: view.statusHit.y });
   }
 
   /** 목록을 누른 시점에 코어를 다시 조회해 이미 종료된 버프가 팝업에 남지 않게 한다. */
@@ -1636,7 +1644,7 @@ export class BattleScene extends Phaser.Scene {
       // 머리 위 칩은 Canvas 안에만 있어 DOM으로 자리를 알 수 없다. 그린 그대로만 노출한다.
       statusChips: [...this.views.values()]
         .filter((view) => !view.dead)
-        .map((view) => ({ fighterId: view.fighter.id, x: view.statusHit.x, y: view.statusHit.y, count: unitStatusViews(view.fighter).length }))
+        .map((view) => ({ fighterId: view.fighter.id, x: view.statusHit.x, y: view.statusHit.y, count: unitStatusViews(view.fighter, this.packOfView(view.fighter)).length }))
         .filter(({ count }) => count > 0),
       // E2E도 사용자가 보는 이동 중 클릭 영역의 중심을 그대로 눌러 입력 회귀를 확인한다.
       enemyTargets: [...this.views.values()]

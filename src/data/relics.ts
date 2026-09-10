@@ -2309,12 +2309,12 @@ export const RELICS: RelicDef[] = [
         // 정의의 태생 능력치가 그대로 나오도록 디안의 태생 공격력 160을 기준으로 잰 계수다.
         scaling: { hp: 4.40, atk: 0.99, def: 0.35, res: 0.35, attackSpeed: 0.65, moveSpeed: 0.68, attackSpeedCap: 150, moveSpeedCap: 150 },
         // 쓰러진 뒤 긴 공백을 남기고 불완전한 체력으로 돌아와 늑대를 소모품처럼 던질 수 없게 한다.
-        resummon: { enabled: true, cooldownSeconds: 12, hpPercent: 40 },
+        resummon: { enabled: true, cooldownSeconds: 20, hpPercent: 40 },
       },
       {
         def: SHIRO_DEF, growthStat: "ap",
         scaling: { hp: 4.45, atk: 0.98, def: 0.37, res: 0.39, attackSpeed: 0.61, moveSpeed: 0.63, attackSpeedCap: 140, moveSpeedCap: 145 },
-        resummon: { enabled: true, cooldownSeconds: 12, hpPercent: 40 },
+        resummon: { enabled: true, cooldownSeconds: 20, hpPercent: 40 },
       },
     ],
     /**
@@ -2347,7 +2347,7 @@ export const RELICS: RelicDef[] = [
     ultimate: {
       id: "dian-ult", name: "약점을 공격해!", power: 150,
       iconAssetId: "skill-icon-physical", effectType: "physical", damageType: "physical", cost: 110, targeting: "single",
-      packAssault: { reviveSummons: true, summonPowerPercent: 150 },
+      packAssault: { resummonHasteSeconds: 10, summonPowerPercent: 150 },
       finisher: { thresholdPercent: 100, thresholdPerStack: 0, remainingHpPercent: 30 },
     },
   },

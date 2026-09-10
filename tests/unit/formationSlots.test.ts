@@ -2,9 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   clearFormationSlot,
   formationMembers,
-  nextFormationSlot,
-  placeFormationRelic,
   tapFormationSlot,
+  tapRosterRelic,
   toFormationSlots,
 } from "../../src/core/formationSlots";
 
@@ -28,38 +27,29 @@ describe("자리를 비우기", () => {
   });
 });
 
-describe("고른 자리에 세우기", () => {
-  it("빈 자리로 옮기며 중복을 만들지 않는다", () => {
-    expect(placeFormationRelic(["rex", null, "spino"], 1, "rex")).toEqual([null, "rex", "spino"]);
+describe("목록의 카드를 누름", () => {
+  it("아직 어디에도 없는 렐릭은 고른 자리에 선다", () => {
+    const result = tapRosterRelic(["rex", null, null], 2, "spino");
+    expect(result.formation).toEqual(["rex", null, "spino"]);
+    // 채운 뒤에도 선택은 그 자리에 머문다 — 다음 빈 칸으로 밀면 방금 세운 렐릭을 바로 못 바꾼다.
+    expect(result.selectedSlot).toBe(2);
   });
 
-  it("차 있는 자리로 옮기면 두 자리를 맞바꾼다", () => {
-    expect(placeFormationRelic(["rex", "anky", null], 1, "rex")).toEqual(["anky", "rex", null]);
+  it("고른 자리에 누가 서 있으면 그대로 갈아 끼운다", () => {
+    const result = tapRosterRelic(["rex", "anky", null], 1, "spino");
+    expect(result.formation).toEqual(["rex", "spino", null]);
+    expect(result.selectedSlot).toBe(1);
   });
 
-  it("같은 자리의 렐릭을 다시 누르면 그 자리를 비운다", () => {
-    expect(placeFormationRelic(["rex", "anky", null], 0, "rex")).toEqual([null, "anky", null]);
+  it("이미 어느 칸에 선 렐릭을 누르면 옮기지 않고 그 칸을 고른다", () => {
+    // 1번을 고른 채 3번에 선 렐릭을 눌러도 1번으로 끌어오지 않는다. 옮기는 일은 칸을 끌어서 한다.
+    const result = tapRosterRelic(["rex", null, "spino"], 0, "spino");
+    expect(result.formation).toEqual(["rex", null, "spino"]);
+    expect(result.selectedSlot).toBe(2);
   });
 
-  it("어느 자리에도 없던 렐릭은 고른 자리를 그대로 차지한다", () => {
-    expect(placeFormationRelic(["rex", null, null], 2, "spino")).toEqual(["rex", null, "spino"]);
-  });
-});
-
-describe("배치 뒤 다음 자리", () => {
-  it("바로 뒤의 빈 자리로 이어진다", () => {
-    expect(nextFormationSlot(["anky", null, null], 0)).toBe(1);
-    expect(nextFormationSlot(["anky", "rex", null], 1)).toBe(2);
-  });
-
-  it("뒤가 차 있으면 앞쪽 빈 자리로 돌아온다", () => {
-    expect(nextFormationSlot([null, "rex", "spino"], 2)).toBe(0);
-    expect(nextFormationSlot(["anky", null, "spino"], 2)).toBe(1);
-  });
-
-  it("모두 차면 다음 자리에 그대로 머문다", () => {
-    expect(nextFormationSlot(["anky", "rex", "spino"], 0)).toBe(1);
-    expect(nextFormationSlot(["anky", "rex", "spino"], 2)).toBe(0);
+  it("범위 밖 선택은 편성을 바꾸지 않는다", () => {
+    expect(tapRosterRelic(["rex", null, null], 5, "spino").formation).toEqual(["rex", null, null]);
   });
 });
 
@@ -99,5 +89,25 @@ describe("편성원과 고정 길이", () => {
   it("모자라면 빈 자리로 채우고 넘치면 자른다", () => {
     expect(toFormationSlots(["rex"], 3)).toEqual(["rex", null, null]);
     expect(toFormationSlots(["rex", "anky", "spino", "dodi"], 3)).toEqual(["rex", "anky", "spino"]);
+  });
+});
+
+describe("아무 칸도 고르지 않았을 때", () => {
+  it("빈 칸이 있으면 그 첫 칸에 세우고 그 칸을 고른다", () => {
+    // 처음 셋을 채우는 동안에는 어느 칸이든 상관없어, 칸을 먼저 누르게 하는 것이 손만 늘린다.
+    const result = tapRosterRelic(["rex", null, null], undefined, "spino");
+    expect(result.formation).toEqual(["rex", "spino", null]);
+    expect(result.selectedSlot).toBe(1);
+  });
+
+  it("이미 다 찼으면 아무것도 바꾸지 않는다", () => {
+    // 누구를 물릴지는 사람이 정한다. 마지막 칸을 임의로 갈아 끼우면 누르지 않은 자리가 사라진다.
+    const result = tapRosterRelic(["rex", "anky", "spino"], undefined, "dodi");
+    expect(result.formation).toEqual(["rex", "anky", "spino"]);
+    expect(result.selectedSlot).toBeUndefined();
+  });
+
+  it("이미 선 렐릭을 누르면 그때도 그 칸을 고른다", () => {
+    expect(tapRosterRelic(["rex", null, "spino"], undefined, "spino").selectedSlot).toBe(2);
   });
 });

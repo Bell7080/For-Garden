@@ -32,7 +32,7 @@ import { COLOR, textStyle } from "./theme";
 import { currencyRecordToRewardItems, openRewardPopup } from "./RewardPopup";
 import { interactionRemainingLabel, relicsAwayOnInteraction, autoAssignInteractionParty, type InteractionLayerView } from "./interactionLayerModel";
 import { combatPower } from "../core/combatPower";
-import { nextFormationSlot, placeFormationRelic, tapFormationSlot, toFormationSlots, formationMembers } from "../core/formationSlots";
+import { tapFormationSlot, tapRosterRelic, toFormationSlots, formationMembers } from "../core/formationSlots";
 import { bindLongPress } from "./longPressInfo";
 import { loadOwnedPuppet } from "./statusPuppetLoad";
 import { sceneInfoManager, type InfoManager } from "./info";
@@ -61,8 +61,8 @@ export class InteractionCityPopup {
   private view?: InteractionLayerView;
   /** 빈 자리를 `null`로 남기는 고정 세 자리. 빼도 뒤가 당겨지지 않는다. */
   private party: (string | null)[] = [null, null, null];
-  /** 목록을 눌렀을 때 캐릭터가 설 자리. 늘 한 자리가 골라져 있다. */
-  private selectedSlot = 0;
+  /** 목록을 눌렀을 때 캐릭터가 설 자리. 아무 칸도 고르지 않은 상태가 있다. */
+  private selectedSlot: number | undefined;
   /** 아래 칸이 지금 무엇을 보여 주는가. 칸을 누르면 배치로, 취소하면 안내로 돌아온다. */
   private editing = false;
   private busy = false;
@@ -76,7 +76,10 @@ export class InteractionCityPopup {
   /** 이미 세운 SD를 렐릭 ID로 붙잡아 둔다. 편성에서 빠지는 순간에만 폐기한다. */
   private readonly puppets = new Map<string, PuppetCreature>();
   private readonly puppetLoading = new Set<string>();
+  /** 목록 카드. 편성이 바뀌면 눌림 표시만 갈아 끼워 그리드를 다시 만들지 않는다. */
+  private readonly rosterCards = new Map<string, PortraitCard>();
   private sdLayer?: Phaser.GameObjects.Container;
+  private chromeLayer?: Phaser.GameObjects.Container;
   private gridMask?: Phaser.GameObjects.Graphics;
   private detachGrid?: () => void;
   private onChanged?: () => void;
@@ -89,7 +92,7 @@ export class InteractionCityPopup {
     this.onChanged = hooks.onChanged;
     this.onOpenJournal = hooks.onOpenJournal;
     this.party = toFormationSlots(view.state === "idle" ? [] : (view.dispatch?.party ?? []), 3);
-    this.selectedSlot = 0;
+    this.selectedSlot = undefined;
     this.editing = false;
     this.gridScrollY = 0;
     this.busy = false;
@@ -105,6 +108,9 @@ export class InteractionCityPopup {
       // SD는 판 위에 서지만 판의 자식이라 팝업의 이동·배율·alpha를 그대로 물려받는다.
       this.sdLayer = this.scene.add.container(0, 0).setName("interaction-party-sd").setDepth(SD_DEPTH);
       body.add(this.sdLayer);
+      // 빼는 표식만 SD보다 앞선 층에 산다. 고른 칸의 밑판은 반대로 SD 뒤(upper)에 깔린다.
+      this.chromeLayer = this.scene.add.container(0, 0).setName("interaction-party-chrome").setDepth(SD_DEPTH + 2);
+      body.add(this.chromeLayer);
       // 일지는 그 도시에서만 쌓이므로 도시 쪽지가 유일한 진입점이다.
       if (this.onOpenJournal) body.add(new Button(this.scene, PANEL.width / 2 - 130, -PANEL.height / 2 + 96, {
         width: 200, height: 62, fontSize: 22, label: "도시 일지", accentColor: BLUE,
@@ -134,6 +140,7 @@ export class InteractionCityPopup {
     const parent = this.upper;
     if (!parent) return;
     parent.removeAll(true);
+    this.chromeLayer?.removeAll(true);
     const editable = view.state === "idle";
     this.releaseUnusedPuppets();
 
@@ -162,7 +169,8 @@ export class InteractionCityPopup {
         .setName(`interaction-party-slot-${index + 1}`).setDepth(SD_DEPTH + 1).setInteractive({ useHandCursor: true });
       hit.on("pointerup", () => this.tapSlot(index));
       parent.add(hit);
-      if (index === this.selectedSlot && relicId) addFormationRemoveChip(this.scene, parent, box, () => this.tapSlot(index, "clear"));
+      // 빼는 표식은 SD보다 앞선 층에 선다 — 같은 컨테이너에 두면 머리에 가린다.
+      if (index === this.selectedSlot && relicId && this.chromeLayer) addFormationRemoveChip(this.scene, this.chromeLayer, box, () => this.tapSlot(index, "clear"));
     });
   }
 
@@ -221,8 +229,9 @@ export class InteractionCityPopup {
 
     const away = relicsAwayOnInteraction(session.interaction.slots.filter((slot): slot is InteractionDispatchSnapshot => slot !== null));
     const roster = RELICS.filter((relic) => session.owned.has(relic.id) && !away.has(relic.id));
+    this.rosterCards.clear();
 
-    parent.add(this.scene.add.text(LOWER.left + 10, LOWER.top - 42, `보유 렐릭 · ${this.selectedSlot + 1}번 자리에 배치`, textStyle({ role: "emphasis", size: 23, color: COLOR.accentText })).setOrigin(0, 0.5));
+    parent.add(this.scene.add.text(LOWER.left + 10, LOWER.top - 42, this.selectedSlot === undefined ? "보유 렐릭" : `보유 렐릭 · ${this.selectedSlot + 1}번 자리에 배치`, textStyle({ role: "emphasis", size: 23, color: COLOR.accentText })).setOrigin(0, 0.5));
     // 조작 설명 대신 그 조작을 대신해 주는 단추를 둔다. 교류에는 발굴의 생산 특화 같은 개체별
     // 기준이 없어 고를 축이 전투력뿐이라, 발굴처럼 기준을 돌려 고르는 화살표는 두지 않는다.
     parent.add(new Button(this.scene, LOWER.right - 90, LOWER.top - 42, {
@@ -232,7 +241,7 @@ export class InteractionCityPopup {
           roster.map((relic) => ({ id: relic.id, power: combatPower(relicProgression.getFinalStats(relic.id)) })),
           view.city.partySize.max,
         ), 3);
-        this.selectedSlot = Math.max(0, this.party.findIndex((id) => id === null));
+        this.selectedSlot = undefined;
         this.render();
       },
     }));
@@ -256,12 +265,16 @@ export class InteractionCityPopup {
         selectedStyle: "pressed",
       });
       card.setSelected(this.party.includes(relic.id));
+      this.rosterCards.set(relic.id, card);
       bindLongPress(this.scene, card.hit, {
         onTap: () => {
-          const slot = this.selectedSlot;
-          this.party = placeFormationRelic(this.party, slot, relic.id);
-          this.selectedSlot = this.party[slot] === null ? slot : nextFormationSlot(this.party, slot);
-          this.render();
+          // 이미 어느 칸에 선 렐릭이면 옮기지 않고 그 칸을 고른다.
+          const result = tapRosterRelic(this.party, this.selectedSlot, relic.id);
+          this.party = result.formation;
+          this.selectedSlot = result.selectedSlot;
+          this.renderSlots(view);
+          this.renderActions(view);
+          for (const [relicId, card] of this.rosterCards) card.setSelected(this.party.includes(relicId));
         },
         allowTap: () => this.gridDragMoved <= GRID_DRAG_SLOP,
         onLongPress: () => this.info().showRelic(relic),
@@ -383,7 +396,14 @@ export class InteractionCityPopup {
       this.gridDragMoved = Math.max(this.gridDragMoved, Math.abs(pointer.y - pointer.downY));
       scrollTo(originY + pointer.y);
     };
-    const onUp = (): void => { dragging = false; };
+    const onUp = (_pointer: Phaser.Input.Pointer, objects: Phaser.GameObjects.GameObject[]): void => {
+      dragging = false;
+      // 칸·카드 밖에서 뗀 손은 고른 자리를 푼다. 표시가 계속 떠 있으면 다 고른 뒤에도 할 일이
+      // 남은 것처럼 보인다.
+      if (objects.length > 0 || this.selectedSlot === undefined) return;
+      this.selectedSlot = undefined;
+      this.render();
+    };
     const onWheel = (pointer: Phaser.Input.Pointer, _o: unknown, _dx: number, dy: number): void => { if (inside(pointer)) scrollTo(this.gridScrollY - dy); };
     this.scene.input.on("pointerdown", onDown); this.scene.input.on("pointermove", onMove);
     this.scene.input.on("pointerup", onUp); this.scene.input.on("pointerupoutside", onUp);
@@ -410,7 +430,7 @@ export class InteractionCityPopup {
     for (const puppet of this.puppets.values()) puppet.destroy();
     this.puppets.clear();
     this.puppetLoading.clear();
-    this.sdLayer = undefined;
+    this.sdLayer = undefined; this.chromeLayer = undefined;
     this.upper = undefined; this.lower = undefined; this.actions = undefined;
     this.body = undefined;
   }

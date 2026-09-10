@@ -9,8 +9,8 @@ export type ExpeditionLayoutRegion = "rewards" | "map" | "augments" | "relics" |
  */
 export const EXPEDITION_LAYOUT: Readonly<Record<ExpeditionLayoutRegion, { top: number; bottom: number }>> = {
   // 전리품 판 아래에 점수 한 줄이 판때기 없이 맨 글자로 서므로, 그 줄까지 이 구역이 품는다.
-  rewards: { top: 116, bottom: 322 },
-  map: { top: 342, bottom: 1138 },
+  rewards: { top: 116, bottom: 340 },
+  map: { top: 362, bottom: 1138 },
   augments: { top: 1162, bottom: 1234 },
   relics: { top: 1271, bottom: 1734 },
   actions: { top: 1756, bottom: 1902 },
@@ -20,9 +20,10 @@ export const EXPEDITION_LAYOUT: Readonly<Record<ExpeditionLayoutRegion, { top: n
  * 증강 선택판의 규격이다.
  *
  * 개인 대상은 판 안이 아니라 화면에 이미 선 생존 HUD에서 고르므로, 판은 `relics` 구역 위에서
- * 멈춰야 한다. 높이를 늘릴 때는 이 계약을 함께 확인한다.
+ * 멈춰야 한다. 위로는 전리품 판과 그 아래 원정 점수 줄을 덮지 않도록 지도 구역에서 시작한다.
+ * 높이를 늘릴 때는 이 계약을 함께 확인한다.
  */
-export const EXPEDITION_AUGMENT_POPUP = { width: 940, height: 840, centerY: 690 } as const;
+export const EXPEDITION_AUGMENT_POPUP = { width: 940, height: 840, centerY: 780 } as const;
 
 /** 인접 구역의 최소 여백을 계산해 모바일 세로 화면에서 겹침을 순수하게 검증한다. */
 export function expeditionLayoutGaps(): number[] {

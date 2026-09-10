@@ -17,6 +17,7 @@ import { loadPlayerProfileDisplay } from "../managers/PlayerProfileManager";
 import { bondDialogue } from "../data/bonds";
 import { PopupLayer } from "../ui/PopupLayer";
 import { IdleExcavationPopup } from "../ui/IdleExcavationPopup";
+import { TradePopup } from "../ui/TradePopup";
 import { BACK_SLOT, IconButton } from "../ui/IconButton";
 import { UI_ICON } from "../ui/icons";
 import { InventoryPopup } from "../ui/InventoryPopup";
@@ -110,6 +111,9 @@ export class LobbyScene extends Phaser.Scene {
   private sortieSdTimer?: Phaser.Time.TimerEvent;
   private sortieBackButton?: IconButton;
   private idleExcavationPopup?: IdleExcavationPopup;
+  /** 무역은 로비 수명을 보존하는 패키지 레이어다. 교류의 교환소와는 다른 화면이다. */
+  private tradePopup?: TradePopup;
+  private tradeBackButton?: IconButton;
   /** 발굴은 화면 크기의 작업판이므로 팝업 X 대신 로비 좌하단의 공용 아이콘 양식을 쓴다. */
   private excavationBackButton?: IconButton;
   /** 인벤토리는 로비 세션을 유지하는 공용 팝업이며 상태 변경은 API에만 위임한다. */
@@ -256,6 +260,20 @@ export class LobbyScene extends Phaser.Scene {
     }
   }
 
+  /**
+   * 무역은 로비를 유지하는 패키지 레이어다.
+   *
+   * 상점처럼 씬을 갈아 끼우지 않는 이유는, 남는 재화를 바꾸는 일이 다른 화면으로 떠나는 볼일이
+   * 아니라 **가진 것을 확인하며 잠깐 들르는** 일이기 때문이다. 상단 재화 줄이 그대로 보인다.
+   */
+  private openTrade(): void {
+    if (!this.popupLayer) return;
+    this.tradePopup ??= new TradePopup(this, this.popupLayer, gameApi, session.wallet, (result) => { session.wallet = { ...result.wallet }; this.topBar?.refresh(); }, () => { this.tradePopup = undefined; this.tradeBackButton?.destroy(); this.tradeBackButton = undefined; });
+    this.tradePopup.open();
+    // 판이 화면을 거의 채우므로 팝업 X 대신 다른 작업판과 같은 우하단 공용 아이콘을 쓴다.
+    if (!this.tradeBackButton) this.tradeBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: () => this.tradePopup?.close() }).setDepth(2100);
+  }
+
   /** 인게임 상점은 로비 팝업이 아니라 등록된 ShopScene의 독립 수명주기로 연다. */
   private openShop(): void {
     this.scene.start("shop");
@@ -273,8 +291,9 @@ export class LobbyScene extends Phaser.Scene {
   /** 안내 프리팹은 이 콜백만 요청하므로 지갑 변경 없이 구현된 씬·로비 팝업으로만 이동한다. */
   private handleCurrencyAction(action: CurrencyGuideAction): void {
     if (action.kind === "scene" && action.target === "lab") this.scene.start("lab");
-    // 교환은 로비의 구형 팝업이 아니라 교류 씬 안의 단일 교환소 진입점이 소유한다.
+    // 교류 표본 교환은 교류 씬 안의 교환소가 소유하고, 재화끼리 바꾸는 일은 로비의 무역이 맡는다.
     if (action.kind === "scene" && action.target === "interaction") this.scene.start("interaction", { openExchange: true });
+    if (action.kind === "popup" && action.target === "trade") this.openTrade();
   }
 
   /** 오른쪽 레일에서 로비를 떠나지 않고 가방 작업판을 연다. */
@@ -491,17 +510,24 @@ export class LobbyScene extends Phaser.Scene {
   }
 
   /**
-   * 임무와 일반 상점은 왼쪽 콘텐츠 레일의 유일한 직접 진입점이다.
-   * 교환소는 하단 교류를 거쳐서만 열리며, 편의 기능은 오른쪽 레일로 역할을 분리한다.
+   * 임무·상점·무역은 왼쪽 콘텐츠 레일에서 위계 순으로 읽히는 한 묶음이다.
+   *
+   * **상점과 무역과 교환소는 서로 다른 셋이다.** 상점은 화석·호박석으로 보급품을 **사는** 곳,
+   * 무역은 남는 재화를 모자란 재화로 **바꾸는** 상시 창구, 교환소는 교류 파견에서만 나오는
+   * 표본을 바꾸는 교류 전용 창구다. 앞의 둘만 이 레일에 서고 교환소는 교류 씬 안에 있다.
+   * 편의 기능(우편·친구·가방)은 오른쪽 레일로 보내 두 역할을 좌우로 나눈다.
    */
   private buildMissionEntry(): void {
     const entries = [
       { bounds: LOBBY_RAIL_BOUNDS.content.mission, icon: "mission", label: "임무", accent: true, onClick: () => this.openMissions() },
       { bounds: LOBBY_RAIL_BOUNDS.content.shop, icon: "shop", label: "상점", accent: false, onClick: () => this.openShop() },
+      { bounds: LOBBY_RAIL_BOUNDS.content.trade, icon: "exchange", label: "무역", accent: false, onClick: () => this.openTrade() },
     ] as const;
     // 캔버스 E2E에는 레일의 게임 상태가 아니라 실제 입력 중심만 전달한다.
     setDebugStorefrontControls({ lobby: {
-      mission: { x: entries[0].bounds.x, y: entries[0].bounds.y }, missionBack: { x: 973, y: 1743 }, shop: { x: entries[1].bounds.x, y: entries[1].bounds.y }, interaction: { x: 250, y: NAV_TOP - 400 },
+      mission: { x: entries[0].bounds.x, y: entries[0].bounds.y }, missionBack: { x: 973, y: 1743 },
+      shop: { x: entries[1].bounds.x, y: entries[1].bounds.y }, trade: { x: entries[2].bounds.x, y: entries[2].bounds.y },
+      interaction: { x: 250, y: NAV_TOP - 400 },
     } });
     // 역할별 배치표가 콘텐츠 순서와 크기를 소유하므로 렌더링은 표를 그대로 소비한다.
     const buttons = entries.map((entry) => new RailButton(this, entry.bounds.x, entry.bounds.y, {

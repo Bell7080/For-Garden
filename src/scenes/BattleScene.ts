@@ -1851,7 +1851,14 @@ export class BattleScene extends Phaser.Scene {
           return;
         }
         // 승리 노드에서 서버가 새로 만든 전리품만 영수증에 표시하고, 확인 뒤 지도로 돌아간다.
-        openRewardPopup(this, new PopupLayer(this, 2200), { title: "교전 획득 전리품", items: currencyRecordToRewardItems(nodeResult.rewards), onConfirm: () => this.scene.start("expedition") });
+        // 점수 증가분도 여기서 함께 말한다 — 지도로 돌아가 합계만 보면 이번 판이 얼마를 보탰는지
+        // 알 수 없고, 노드마다 다른 층·잔여 HP가 점수를 바꾼다는 것도 읽히지 않는다.
+        openRewardPopup(this, new PopupLayer(this, 2200), {
+          title: "교전 획득 전리품",
+          items: currencyRecordToRewardItems(nodeResult.rewards),
+          footnote: nodeResult.nodeScore > 0 ? `원정 점수 +${Math.floor(nodeResult.nodeScore).toLocaleString()}` : undefined,
+          onConfirm: () => this.scene.start("expedition"),
+        });
       }).catch(() => { saving = false; });
     } }).setDepth(101);
     // 일반 원정 결과에서도 정산 전후와 무관하게 finish 시점의 같은 스냅샷을 확인한다.

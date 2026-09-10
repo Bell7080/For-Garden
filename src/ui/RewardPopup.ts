@@ -19,6 +19,13 @@ export interface RewardPopupOptions {
   /** 뒤 화면을 누르는 암전 강도. 기본은 원래 화면의 맥락이 남는 은은한 검정이다. */
   dimAlpha?: number;
   items: readonly RewardPopupItem[];
+  /**
+   * 액자 줄 아래 한 줄.
+   *
+   * 재화가 아니라 **이번 결과로 얼마나 올랐는가**를 말하는 자리다(원정 노드의 점수 증가분).
+   * 액자로 세우면 지갑에 들어온 재화처럼 읽히므로 글자 한 줄로만 남긴다.
+   */
+  footnote?: string;
   onConfirm?: () => void;
 }
 
@@ -95,6 +102,11 @@ export function openRewardPopup(scene: Phaser.Scene, popups: PopupLayer, options
     strip.setMask(maskShape.createGeometryMask());
 
     body.add(drawHairline(scene, 0, 108, 700, { color: COLOR.accent, alpha: 0.3 }));
+    if (options.footnote) {
+      body.add(scene.add.text(0, 132, options.footnote, textStyle({ role: "display", size: 30, color: COLOR.sortieText }))
+        .setOrigin(0.5)
+        .setShadow(0, 3, "#000000", 4, false, true));
+    }
     // 팝업 판이 아니라 화면 밑동에 반투명한 굵은 글자로 남겨, 누를 수 있는 곳이 화면 전체임을 알린다.
     hint = scene.add
       .text(scene.scale.width / 2, scene.scale.height - 130, overflow > 0 ? "좌우로 밀어 확인 · 화면을 눌러 확인" : "화면을 눌러 확인", textStyle({ role: "emphasis", size: 30, color: COLOR.ink }))

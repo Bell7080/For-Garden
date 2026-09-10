@@ -27,19 +27,19 @@ export interface StaminaPopupLayout {
 }
 
 const BASE = {
-  width: 760,
+  width: 860,
   /**
    * 창 좌우 안쪽 여백. 판·칸·구분선이 모두 이 폭 안에 선다.
    *
    * 위쪽 여백과 **합쳐서** 몸판의 깎인 왼쪽 위 모서리(폭의 14%)를 넘어야 판이 그 빗변 안에
    * 든다. 둘 중 하나만 줄여도 판의 왼쪽 위 귀퉁이가 창 밖으로 나가므로 함께 본다.
    */
-  padX: 56,
+  padX: 68,
   /** 제목표가 윗변에 걸터앉으므로 판은 그보다 아래에서 시작한다. */
   heroTop: 58,
-  heroHeight: 268,
+  heroHeight: 286,
   heroPadY: 20,
-  frameSize: 132,
+  frameSize: 148,
   /** 수치(52px)와 시간(22px) 줄이 실제로 차지하는 높이다. */
   valueHeight: 58,
   timerHeight: 30,
@@ -47,7 +47,7 @@ const BASE = {
   gapValueTimer: 4,
   heroToTitle: 46,
   titleToCells: 40,
-  cellHeight: 236,
+  cellHeight: 300,
   cellGap: 18,
   cellsToHairline: 40,
   hairlineToTitle: 34,

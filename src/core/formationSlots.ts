@@ -34,41 +34,28 @@ export function clearFormationSlot(formation: FormationSlots, index: number): (s
 }
 
 /**
- * 고른 칸에 렐릭을 세운다.
+ * 목록의 카드를 누른 결과.
  *
- * 그 렐릭이 다른 칸에 이미 서 있으면 **두 칸을 맞바꾼다** — 그러지 않으면 같은 렐릭이 두 자리에
- * 선다. 같은 칸의 렐릭을 목록에서 다시 누르면 그 자리를 비운다(누른 것을 한 번 더 누르면
- * 되돌아가는 것이 목록의 기본 계약이다).
+ * **이미 어느 칸에 선 렐릭을 누르면 그 칸을 고른다.** 고른 칸으로 끌어오지 않는다 — 목록에서
+ * 이미 나가 있는 얼굴을 누르는 손은 대개 "쟤가 몇 번이지"를 확인하거나 그 자리를 손보려는
+ * 것이지, 다른 칸으로 옮기려는 것이 아니다. 옮기는 일은 칸을 끌어서 한다.
+ *
+ * 아직 어디에도 없는 렐릭은 **고른 칸**에 선다. 그 칸에 누가 서 있었다면 그대로 갈아 끼운다.
+ * 채운 뒤에도 **선택은 그 자리에 머문다** — 다음 빈 칸으로 밀면 방금 세운 렐릭을 곧바로 다시
+ * 바꿔 볼 수 없고, 사람이 고른 자리가 사람이 누르지 않은 곳으로 옮겨 간다.
  */
-export function placeFormationRelic(formation: FormationSlots, targetSlot: number, relicId: string): (string | null)[] {
+export function tapRosterRelic(formation: FormationSlots, selectedSlot: number | undefined, relicId: string): FormationSlotTap {
+  const placedAt = formation.indexOf(relicId);
+  if (placedAt >= 0) return { formation: copy(formation), selectedSlot: placedAt, cleared: false };
   const next = copy(formation);
-  if (!inRange(formation, targetSlot)) return next;
-  const sourceSlot = next.indexOf(relicId);
-  if (sourceSlot === targetSlot) {
-    next[targetSlot] = null;
-    return next;
-  }
-  const displaced = next[targetSlot];
-  next[targetSlot] = relicId;
-  if (sourceSlot >= 0) next[sourceSlot] = displaced;
-  return next;
-}
-
-/**
- * 한 칸을 채운 뒤 이어서 고를 칸.
- *
- * 여러 자리를 채우는 일은 보통 연속으로 일어나므로, 카드를 고를 때마다 사람이 다시 칸을 누르게
- * 하면 그 손이 그대로 낭비다. 뒤쪽 빈 칸을 먼저 보고, 없으면 앞쪽 빈 칸, 그것도 없으면 다음
- * 칸으로 넘어간다.
- */
-export function nextFormationSlot(formation: FormationSlots, placedSlot: number): number {
-  const count = formation.length;
-  if (count === 0) return 0;
-  for (let step = 1; step <= count; step += 1) {
-    const index = (placedSlot + step) % count;
-    if (formation[index] === null) return index;
-  }
-  return (placedSlot + 1) % count;
+  // 아무 칸도 고르지 않았으면 **빈 칸 하나**에만 세운다. 처음 셋을 채우는 동안에는 어느 칸이든
+  // 상관없어 칸을 먼저 누르게 하는 것이 손만 늘리는 일이기 때문이다. 반대로 이미 다 찼다면
+  // 누구를 물릴지는 사람이 정해야 하므로 아무 일도 하지 않는다 — 마지막 칸을 임의로 바꾸면
+  // 누르지 않은 자리의 캐릭터가 사라진다.
+  const target = selectedSlot ?? next.indexOf(null);
+  if (!inRange(formation, target)) return { formation: next, selectedSlot, cleared: false };
+  next[target] = relicId;
+  return { formation: next, selectedSlot: target, cleared: false };
 }
 
 /**
@@ -81,7 +68,8 @@ export function nextFormationSlot(formation: FormationSlots, placedSlot: number)
  */
 export interface FormationSlotTap {
   formation: (string | null)[];
-  selectedSlot: number;
+  /** 이 손짓 뒤에 골라져 있는 칸. 아무 칸도 고르지 않은 상태는 `undefined`다. */
+  selectedSlot: number | undefined;
   /** 이번 누름이 실제로 한 자리를 비웠는지. 화면이 다시 그릴 이유를 이 값으로 판단한다. */
   cleared: boolean;
 }
@@ -89,7 +77,7 @@ export interface FormationSlotTap {
 export function tapFormationSlot(
   formation: FormationSlots,
   index: number,
-  selectedSlot: number,
+  selectedSlot: number | undefined,
   intent: "select" | "clear" = "select",
 ): FormationSlotTap {
   if (!inRange(formation, index)) return { formation: copy(formation), selectedSlot, cleared: false };

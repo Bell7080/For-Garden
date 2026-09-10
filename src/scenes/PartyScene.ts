@@ -5,7 +5,7 @@ import type { RelicDef } from "../core/types";
 import { getRelic } from "../data/relics";
 import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { relicCollection } from "../managers/RelicCollectionManager";
-import { CharacterInfoManager, ELEMENT_LABEL, ROLE_LABEL, addHelpBadge } from "../managers/CharacterInfoManager";
+import { CharacterInfoManager, ROLE_LABEL } from "../managers/CharacterInfoManager";
 import { bindLongPress } from "../ui/longPressInfo";
 import type { PuppetCreature } from "../puppets/assets";
 import { placePuppet, spawnPuppet } from "../puppets/assets";
@@ -20,10 +20,14 @@ import { formationRosterColumnX, formationRosterGrid, PORTRAIT_GRID_MASK_GAP, po
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { COLOR, textStyle } from "../ui/theme";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
-import { autoPickParty, elementDistribution, relicAffinityDirection } from "../core/partyAffinity";
+import { autoPickParty, relicAffinityDirection } from "../core/partyAffinity";
 import type { SetPartyFailureReason } from "../managers/RelicCollectionManager";
 import { AffinityDirection } from "../ui/AffinityDirection";
-import { formationMembers, nextFormationSlot, placeFormationRelic, tapFormationSlot, toFormationSlots } from "../core/formationSlots";
+import { AffinityBadge } from "../ui/AffinityBadge";
+import { ELEMENT_ICON, ROLE_ICON } from "../ui/affinityIcons";
+import { addStarMark } from "../ui/rarityMark";
+import { combatPower } from "../core/combatPower";
+import { formationMembers, tapFormationSlot, tapRosterRelic, toFormationSlots } from "../core/formationSlots";
 import { moveFormationSlot } from "../core/formation";
 import { addFormationRemoveChip, addFormationSlotSelection } from "../ui/formationSlotChrome";
 import { bindFormationDrag } from "../ui/formationDrag";
@@ -106,11 +110,25 @@ interface AllySlot {
 export class PartyScene extends Phaser.Scene {
   /** 빈 자리를 `null`로 남기는 고정 세 자리. 빼도 뒤가 당겨지지 않는다. */
   private picked: (string | null)[] = [null, null, null];
-  /** 목록을 눌렀을 때 캐릭터가 설 자리. 늘 한 자리가 골라져 있다. */
-  private selectedSlot = 0;
+  /**
+   * 목록을 눌렀을 때 캐릭터가 설 자리.
+   *
+   * **아무 칸도 고르지 않은 상태가 있다.** 고른 칸 표시가 화면에 계속 떠 있으면 다 고르고 난
+   * 뒤에도 무언가 더 할 일이 남은 것처럼 보인다. 전장 아무 곳이나 누르면 풀린다.
+   */
+  private selectedSlot: number | undefined;
   private cards = new Map<string, RosterCard>();
   private allySlots: AllySlot[] = [];
-  /** 고른 칸 표시와 빼기 표식만 사는 층. 편성이 바뀔 때마다 통째로 다시 그린다. */
+  /** 대치선 위에 마주 보는 두 편의 종합 전투력. 편성이 바뀌면 아군 쪽만 다시 적는다. */
+  private enemyPowerText?: Phaser.GameObjects.Text;
+  private allyPowerText?: Phaser.GameObjects.Text;
+  /**
+   * 고른 칸 표시와 빼기 표식이 사는 두 층. 편성이 바뀔 때마다 통째로 다시 그린다.
+   *
+   * 밑판은 SD(-10)보다 **뒤**, 표식은 입력면(3)보다 **앞**이다 — 밑판이 앞에 서면 고른 칸의
+   * 캐릭터만 반투명한 판에 덮여 오히려 흐려진다.
+   */
+  private slotPlate?: Phaser.GameObjects.Container;
   private slotChrome?: Phaser.GameObjects.Container;
   private startButton!: Button;
   private hint!: Phaser.GameObjects.Text;
@@ -143,7 +161,7 @@ export class PartyScene extends Phaser.Scene {
     setDebugScene("party");
     // 직전 스토리 편성만 복원한다. 원정·발굴은 각 콘텐츠가 소유한 별도 저장 필드를 유지한다.
     this.picked = toFormationSlots(relicCollection.validParty, 3);
-    this.selectedSlot = 0;
+    this.selectedSlot = undefined;
     this.cards.clear();
     this.allySlots = [];
     this.isEnteringBattle = false;
@@ -160,10 +178,6 @@ export class PartyScene extends Phaser.Scene {
     // 손상된 런타임 파티만 보유 목록 기반 자동 편성으로 안전하게 대체한다.
     if (formationMembers(this.picked).length !== 3) this.picked = toFormationSlots(autoPickParty(relicCollection.owned, this.enemies), 3);
     this.add.text(cx, 70, `${stage.id}  ${stage.name}`, textStyle({ role: "display", size: 46 })).setOrigin(0.5, 0);
-    this.add
-      .text(cx, 132, "자리를 고르고 렐릭을 세운다", textStyle({ role: "body", size: 28, color: COLOR.inkDim }))
-      .setOrigin(0.5, 0);
-
     this.buildPreview(this.enemies, stage.enemies);
     this.buildRoster();
 
@@ -188,7 +202,7 @@ export class PartyScene extends Phaser.Scene {
       fontSize: 26,
       onClick: () => {
         this.picked = toFormationSlots(autoPickParty(relicCollection.owned, this.enemies), 3);
-        this.selectedSlot = Math.max(0, this.picked.findIndex((id) => id === null));
+        this.selectedSlot = undefined;
         this.refresh();
       },
     });
@@ -244,20 +258,18 @@ export class PartyScene extends Phaser.Scene {
 
     this.info = new CharacterInfoManager(this);
     this.enemyInfo = new CharacterInfoManager(this, 1001, "enemy");
+    this.bindDeselect();
     this.refresh();
   }
 
-  /** 위쪽 시작 배치 미리보기. 적은 위에, 아군은 아래에 나란히 선다. */
+  /**
+   * 위쪽 시작 배치 미리보기. 적은 위에, 아군은 아래에 나란히 선다.
+   *
+   * **적은 노드 미리보기와 같은 양식으로 선다** — 속성·직군은 왼쪽 위 아이콘, 돌파는 오른쪽 위
+   * 로마자, 레벨과 이름은 한 줄에 강조색으로. 두 화면이 같은 적을 다른 글로 적으면 같은 값이
+   * 어디서는 표식, 어디서는 문장이 된다.
+   */
   private buildPreview(enemies: readonly RelicDef[], growth: readonly { level: number; breakthrough: number }[]): void {
-    this.add
-      .text(BASE_WIDTH - 40, 210, "적", textStyle({ role: "emphasis", size: 30, color: COLOR.dangerText }))
-      .setOrigin(1, 0);
-    const distribution = elementDistribution(enemies)
-      .map(({ element, count }) => `${ELEMENT_LABEL[element]} ${count}`)
-      .join("  ·  ");
-    this.add
-      .text(BASE_WIDTH / 2, 178, `적 속성  ${distribution}`, textStyle({ role: "emphasis", size: 24, color: COLOR.dangerText }))
-      .setOrigin(0.5, 0);
     // 두 줄 사이의 대치선.
     this.add
       .line(0, 0, 120, FRONT_LINE, BASE_WIDTH - 120, FRONT_LINE, COLOR.panelEdge)
@@ -272,15 +284,38 @@ export class PartyScene extends Phaser.Scene {
       this.add.ellipse(x, ENEMY_ROW + 4, 190, 34, COLOR.void, 0.45).setDepth(-12);
       void this.standSD(def.id, x, ENEMY_ROW, true);
 
-      this.add.text(x, ENEMY_ROW + 26, def.name, textStyle({ role: "display", size: 28 })).setOrigin(0.5, 0);
-      this.add
-        .text(x, ENEMY_ROW + 62, `LV.${snapshot.level} · 돌파 ${snapshot.breakthrough}  ${ELEMENT_LABEL[def.element]} · ${ROLE_LABEL[def.role]}  HP ${def.stats.hp}`, textStyle({ role: "body", size: 20, color: COLOR.inkDim }))
+      const badgeTop = ENEMY_ROW - PREVIEW_HEIGHT + 34;
+      this.add.existing(new AffinityBadge(this, x - 104, badgeTop, ELEMENT_ICON[def.element], 52, 0.62)).setDepth(3);
+      this.add.existing(new AffinityBadge(this, x - 104, badgeTop + 49, ROLE_ICON[def.role], 38, 0.62)).setDepth(3);
+      const marks = this.add.container(0, 0).setDepth(3);
+      addStarMark(this, marks, x + 104, badgeTop - 4, 42, snapshot.breakthrough + 1);
+
+      const nameLine = this.add
+        .text(x, ENEMY_ROW + 26, `LV.${snapshot.level}  ${def.name}`, textStyle({ role: "display", size: 30, color: COLOR.accentText }))
         .setOrigin(0.5, 0);
-      // SD 자체는 그림이라 입력을 받지 않는다. 상세는 옆의 ?로 연다.
-      addHelpBadge(this, x + 96, ENEMY_ROW - PREVIEW_HEIGHT + 10, () => this.enemyInfo.showEnemy(def, { level: snapshot.level }), 24);
+      nameLine.setStroke("#05070a", 4).setShadow(0, 2, "#05070a", 3, true, true);
+      this.add
+        .text(x, ENEMY_ROW + 66, `HP ${def.stats.hp.toLocaleString()}`, textStyle({ role: "emphasis", size: 21, color: COLOR.ink }))
+        .setOrigin(0.5, 0);
+      // **적을 누르면 상세가 열린다.** 옆에 물음표를 하나 더 세우면 SD와 표식 사이에 눌러야 할
+      // 것이 둘이 되고, 정작 크게 서 있는 SD는 눌러도 아무 일이 없다.
+      this.add.rectangle(x, ENEMY_ROW - PREVIEW_HEIGHT / 2, 210, PREVIEW_HEIGHT + 70, 0xffffff, 0)
+        .setDepth(4)
+        .setInteractive({ useHandCursor: true })
+        .on("pointerup", () => this.enemyInfo.showEnemy(def, { level: snapshot.level }));
     });
 
-    this.add.text(40, FRONT_LINE + 28, "아군", textStyle({ role: "emphasis", size: 30 })).setOrigin(0, 0);
+    // **대치선 위에는 두 편의 무게만 남긴다.** 속성 분포는 이미 각 SD의 아이콘이 말하고, "적"과
+    // "아군"이라는 이름표는 위아래 자리가 이미 말한다. 대신 어느 쪽이 센지를 한 줄로 가른다.
+    this.enemyPowerText = this.add
+      .text(BASE_WIDTH / 2 - 24, FRONT_LINE - 6, "", textStyle({ role: "display", size: 30, color: COLOR.dangerText }))
+      .setOrigin(1, 1)
+      .setShadow(0, 3, "#05070a", 4, false, true);
+    this.allyPowerText = this.add
+      .text(BASE_WIDTH / 2 + 24, FRONT_LINE - 6, "", textStyle({ role: "display", size: 30, color: COLOR.accentText }))
+      .setOrigin(0, 1)
+      .setShadow(0, 3, "#05070a", 4, false, true);
+    this.add.text(BASE_WIDTH / 2, FRONT_LINE - 6, "VS", textStyle({ role: "display", size: 24, color: COLOR.inkDim })).setOrigin(0.5, 1);
 
     PREVIEW_COLUMNS.forEach((x, slot) => {
       const platform = this.add.ellipse(x, ALLY_ROW, 210, 46, COLOR.panel, 0.85).setStrokeStyle(3, COLOR.ally).setDepth(-12);
@@ -295,9 +330,9 @@ export class PartyScene extends Phaser.Scene {
         .setName(`party-ally-slot-${slot + 1}`).setDepth(3).setInteractive({ useHandCursor: true });
       this.allySlots.push({ platform, name, slotLabel, affinityDirection, request: 0, hit });
     });
-    // 고른 칸 밑판과 빼기 표식은 SD 뒤·입력면 앞 사이에 산다. 편성이 바뀔 때마다 통째로 다시
-    // 그리므로 슬롯 자체(받침·이름·입력면)와 수명을 나눠 둔다.
-    this.slotChrome = this.add.container(0, 0).setDepth(2);
+    // 편성이 바뀔 때마다 통째로 다시 그리므로 슬롯 자체(받침·이름·입력면)와 수명을 나눠 둔다.
+    this.slotPlate = this.add.container(0, 0).setDepth(-14);
+    this.slotChrome = this.add.container(0, 0).setDepth(5);
     // 공용 표현기는 화면 좌표 Puppet을 기존 placePuppet 콜백으로 옮겨 컨테이너 변환에 기대지 않는다.
     this.dragVisual = createFormationDragVisualController({
       scene: this, slots: PREVIEW_COLUMNS.map((x) => ({ x, y: ALLY_ROW - PREVIEW_HEIGHT / 2, width: 210, height: PREVIEW_HEIGHT })),
@@ -324,6 +359,23 @@ export class PartyScene extends Phaser.Scene {
         this.refresh();
       },
     });
+  }
+
+  /**
+   * 자리·카드 **말고 다른 곳**을 누르면 선택이 풀린다.
+   *
+   * 고른 칸 표시가 계속 떠 있으면 다 고르고 난 뒤에도 무언가 더 할 일이 남은 것처럼 보인다.
+   * 입력면(슬롯·카드) 위에서 뗀 손은 그 입력면의 일이므로 건드리지 않는다.
+   */
+  private bindDeselect(): void {
+    const clear = (_pointer: Phaser.Input.Pointer, objects: Phaser.GameObjects.GameObject[]): void => {
+      // 입력면 위에서 뗀 손은 그 입력면의 일이다. 빈 곳에서 뗀 손만 선택을 푼다.
+      if (objects.length > 0 || this.selectedSlot === undefined) return;
+      this.selectedSlot = undefined;
+      this.refresh();
+    };
+    this.input.on("pointerup", clear);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.input.off("pointerup", clear));
   }
 
   /** 자리를 누르면 고르고, 골라 둔 자리를 한 번 더 누르거나 `−`를 누르면 그 자리만 비운다. */
@@ -519,15 +571,13 @@ export class PartyScene extends Phaser.Scene {
   /**
    * 목록의 카드를 누르면 **고른 자리**에 선다.
    *
-   * 채우는 순서가 자리를 정하지 않는다. 그 렐릭이 다른 자리에 이미 서 있으면 두 자리를 맞바꾸고,
-   * 고른 자리에 서 있던 렐릭이면 그 자리를 비운다.
+   * 채우는 순서가 자리를 정하지 않는다. 이미 어느 자리에 선 렐릭을 누르면 옮기지 않고 그 자리를
+   * 고른다 — 자세한 계약은 `tapRosterRelic`에 있다.
    */
   private toggle(relicId: string): void {
-    const slot = this.selectedSlot;
-    this.picked = placeFormationRelic(this.picked, slot, relicId);
-    // 한 자리를 채우면 선택이 저절로 다음 빈 자리로 넘어간다. 방금 비운 자리에서는 머문다 —
-    // 비운 자리를 다시 채우려는 손이 대부분이다.
-    this.selectedSlot = this.picked[slot] === null ? slot : nextFormationSlot(this.picked, slot);
+    const result = tapRosterRelic(this.picked, this.selectedSlot, relicId);
+    this.picked = result.formation;
+    this.selectedSlot = result.selectedSlot;
     this.refresh();
   }
 
@@ -540,7 +590,9 @@ export class PartyScene extends Phaser.Scene {
       entry.card.setSub(chosen ? `${at + 1}번 자리` : entry.role);
     }
 
+    const plate = this.slotPlate;
     const chrome = this.slotChrome;
+    plate?.removeAll(true);
     chrome?.removeAll(true);
     this.allySlots.forEach((slot, i) => {
       const id = this.picked[i] ?? undefined;
@@ -555,13 +607,17 @@ export class PartyScene extends Phaser.Scene {
       if (!id || !standing || slot.currentId !== id) void this.fillAllySlot(slot, i, id);
       slot.currentId = id;
 
-      if (!chrome) return;
+      if (!chrome || !plate) return;
       const box = { x: PREVIEW_COLUMNS[i], y: ALLY_ROW - PREVIEW_HEIGHT / 2, width: 210, height: PREVIEW_HEIGHT };
-      if (i === this.selectedSlot) addFormationSlotSelection(this, chrome, box, COLOR.ally);
+      if (i === this.selectedSlot) addFormationSlotSelection(this, plate, box, COLOR.ally);
       // 빼는 표식은 **고른 자리에 누군가 서 있을 때만** 선다. 늘 세워 두면 세 자리 위에 붉은
       // 표식이 셋 늘어서 SD보다 먼저 읽힌다.
       if (i === this.selectedSlot && id) addFormationRemoveChip(this, chrome, box, () => this.tapSlot(i, "clear"));
     });
+
+    // 어느 편이 센지는 두 수가 마주 보는 것으로 말한다. 표시·정렬 전용 값이라 전투에는 쓰지 않는다.
+    this.enemyPowerText?.setText(`적 ${this.enemies.reduce((sum, def) => sum + combatPower(def.stats), 0).toLocaleString()}`);
+    this.allyPowerText?.setText(`${members.reduce((sum, id) => sum + combatPower(relicProgression.getFinalStats(id)), 0).toLocaleString()} 아군`);
 
     this.refreshButtonState();
     // 자동 배치 직후 방향 표식이 실제로 나타났는지 캔버스 밖 E2E가 판별하는 읽기 전용 수치다.

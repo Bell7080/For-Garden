@@ -114,7 +114,9 @@ export interface DebugState {
   enemyPreview?: { top: number; bottom: number; panelTop: number; panelBottom: number; above: boolean; enemyTargets: Array<{ x: number; y: number }> };
   /** 상점군 E2E가 Canvas 구현을 복제하지 않고 실제 입력면만 누르는 최소 좌표 계약이다. */
   storefrontControls?: {
-    lobby?: { mission: DebugPoint; missionBack: DebugPoint; shop: DebugPoint; interaction: DebugPoint };
+    lobby?: { mission: DebugPoint; missionBack: DebugPoint; shop: DebugPoint; trade: DebugPoint; interaction: DebugPoint };
+    /** 무역 팝업. 실패 상태에서는 상품 대신 재시도 입력이 생기고 공용 뒤로가기는 계속 남는다. */
+    trade?: { products: DebugPoint[]; retry?: DebugPoint; back: DebugPoint };
     /** 교류 씬에서 교환소를 여는 유일한 고정 입력 중심이다. */
     interaction?: { exchange: DebugPoint };
     shop?: { back: DebugPoint; tabs: Record<"general" | "enhancement" | "rune", DebugPoint>; cards: DebugPoint[]; drag: { from: DebugPoint; to: DebugPoint } };

@@ -913,7 +913,6 @@ export class InfoManager {
     if (!def) return;
     const progress = relicProgression.getProgress(def.id);
     const canFeed = canFeedRelic(progress, session.wallet.cheesecake);
-    const step = nextBreakthrough(progress.breakthrough);
     // Growth actions are derived from the current confirmed state, never from “did this tap level up?”.  At
     // the cap the note becomes an explicit route to breakthrough and explains why it is not yet available.
     const atCap = progress.level >= relicLevelCap(progress.breakthrough);
@@ -929,6 +928,23 @@ export class InfoManager {
       closeOnBackdrop: true,
       onClose: () => { this.feedPopupOpen = false; },
     }, (body, close) => {
+      // **쪽지는 한 번 먹였다고 닫히지 않는다.** 한 레벨씩 올리는 일은 보통 연달아 일어나므로,
+      // 누를 때마다 닫히면 같은 자리를 다시 길게 눌러 쪽지를 여는 손이 매번 더 든다. 값과
+      // 남은 여력만 다시 적고 그대로 남아, 화면의 다른 곳을 누를 때까지 이어서 누를 수 있다.
+      const paint = (): void => { if (this.feedPopupOpen) this.paintFeedBulk(body, close, paint, x, y); };
+      paint();
+    });
+  }
+
+  /** 한 번에 급여 쪽지의 내용. 먹일 때마다 값이 달라지므로 같은 판 위에 다시 그린다. */
+  private paintFeedBulk(body: Phaser.GameObjects.Container, close: () => void, repaint: () => void, x: number, y: number): void {
+    body.removeAll(true);
+    const def = this.currentDef;
+    if (!def) { close(); return; }
+    const progress = relicProgression.getProgress(def.id);
+    const step = nextBreakthrough(progress.breakthrough);
+    const atCap = progress.level >= relicLevelCap(progress.breakthrough);
+    {
       if (atCap) {
         const held = relicProgression.getFragments(def.id);
         const ready = !!step && canBreakThrough(progress, held, session.wallet.cheesecake);
@@ -959,13 +975,12 @@ export class InfoManager {
         body.add(price.container);
         if (!enough) return;
         const hit = this.scene.add.rectangle(bx, 12, 212, 116, 0xffffff, 0).setInteractive({ useHandCursor: true });
-        hit.on("pointerup", () => {
-          close();
-          void this.feedLevels(levels);
-        });
+        // 먹인 뒤 쪽지를 닫지 않고 같은 판을 다시 적는다 — 레벨이 올라 다음 한 레벨의 값이
+        // 달라지므로, 남겨 두기만 하고 값을 그대로 두면 화면이 거짓말을 한다.
+        hit.on("pointerup", () => { void this.feedLevels(levels).then(repaint); });
         body.add(hit);
       });
-    });
+    }
   }
 
   /** 지금 레벨에서 목표 레벨까지 필요한 급여 횟수. 팝업의 소모량 표기와 실제 요청이 같은 값을 쓴다. */

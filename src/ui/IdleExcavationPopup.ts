@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import type { AdOperationsConfigResponse, AdPresentationResult, AdSlotOperationsDto, GameApi, HarvestExcavationResponse, IdleExcavationResponse } from "../api/contracts";
 import { motionPolicy, powerSavingPolicy } from "../core/settings";
 import { emptyExcavationAmounts, EXCAVATION_CURRENCIES, excavationProductionDisplayModel, excavationStorageFillRatio, excavationStorageLimitSeconds, type ExcavationCurrency, type IdleExcavationState } from "../core/idleExcavation";
-import { nextFormationSlot, placeFormationRelic, tapFormationSlot } from "../core/formationSlots";
+import { tapFormationSlot, tapRosterRelic } from "../core/formationSlots";
 import { RELICS } from "../data/relics";
 import { placePuppet, spawnPuppet, type PuppetAsset, type PuppetCreature } from "../puppets/assets";
 import { session } from "../state/session";
@@ -140,7 +140,25 @@ export class IdleExcavationPopup {
   private sdLoadGeneration = 0;
   private confirmed?: IdleExcavationResponse;
   private draft?: Formation;
-  private selectedSlot = 0;
+  /** 목록을 눌렀을 때 렐릭이 설 칸. 아무 칸도 고르지 않은 상태가 있고, 판 밖을 누르면 풀린다. */
+  private selectedSlot: number | undefined;
+  /**
+   * 선택만 바뀌었을 때 다시 그릴 것들.
+   *
+   * 칸을 하나 누를 때마다 아래 칸의 그리드를 통째로 다시 만들면 스크롤이 처음으로 돌아가고
+   * 카드 수십 장이 한 프레임에 새로 태어난다. 고른 칸이 바뀌는 것은 **표시**만 달라지는 일이라
+   * 여기 모아 둔 것만 갈아 끼운다.
+   */
+  private readonly slotSelectionAppliers: Array<(selected: boolean) => void> = [];
+  /** 고른 칸의 밑판. SD보다 **뒤**에 깔려야 고른 칸의 캐릭터가 판에 덮이지 않는다. */
+  private slotPlateLayer?: Phaser.GameObjects.Container;
+  /** 빼는 표식. SD보다 **앞**에 서야 머리에 가리지 않는다. */
+  private slotChromeLayer?: Phaser.GameObjects.Container;
+  /** 편집 중 선택 칸을 말하는 두 글자. 선택만 바뀌면 이 둘만 다시 적는다. */
+  private editTitle?: Phaser.GameObjects.Container;
+  private rosterLabel?: Phaser.GameObjects.Text;
+  /** 목록 카드. 편성이 바뀌면 눌림 표시만 갈아 끼운다. */
+  private readonly rosterCards = new Map<string, PortraitCard>();
   private gridScrollY = 0;
   private gridDragging = false;
   private gridDragOrigin = 0;
@@ -265,8 +283,15 @@ export class IdleExcavationPopup {
     this.upper?.destroy(true);
     const upper = this.scene.add.container(0, 0);
     this.upper = upper; content.add(upper);
+    // 밑판은 슬롯 카드보다 먼저 들어가야 뒤에 깔린다. 빼는 표식만 SD 위 전용 층에 산다.
+    this.slotPlateLayer = this.scene.add.container(0, 0);
+    upper.add(this.slotPlateLayer);
+    this.slotChromeLayer?.destroy(true);
+    this.slotChromeLayer = this.scene.add.container(0, 0).setDepth(SD_DEPTH + 1);
+    this.body?.add(this.slotChromeLayer);
+    this.editTitle = undefined;
     if (editable) {
-      addSectionTitle(this.scene, -380, STATUS_HERO.headerY, this.saving ? "편성 저장 중…" : `배치 편집 · 슬롯 ${this.selectedSlot + 1}/3`, { size: 23, parent: upper });
+      this.editTitle = addSectionTitle(this.scene, -380, STATUS_HERO.headerY, this.editTitleText(), { size: 23, parent: upper });
     } else {
       // 진행 문구는 일반 강조, 배치 수는 같은 행의 얇은 보조 정보로 두어 제목 위계를 만들지 않는다.
       upper.add(this.scene.add.text(-360, STATUS_HERO.headerY, this.saving ? "수확 처리 중…" : "발굴 진행 중", textStyle({ role: "emphasis", size: 27, color: COLOR.accentText })).setOrigin(0, 0.5));
@@ -445,7 +470,7 @@ export class IdleExcavationPopup {
   }
 
   /** 편집을 열 때에만 확정 배열을 복사하므로 취소/닫기가 서버 편성을 건드릴 수 없다. */
-  private beginEdit(slot = 0): void {
+  private beginEdit(slot: number | undefined = undefined): void {
     if (!this.confirmed || this.saving) return;
     this.draft = copyFormation(this.confirmed.excavation.assignedRelicIds);
     this.selectedSlot = slot;
@@ -477,7 +502,8 @@ export class IdleExcavationPopup {
     this.renderUpper(this.draft, true);
     const content = this.resetLower();
     if (!content) return;
-    content.add(this.scene.add.text(GRID_VIEW.left + 10, GRID_VIEW.top - 42, `보유 렐릭 · ${this.selectedSlot + 1}번 칸에 배치`, textStyle({ role: "emphasis", size: 23, color: COLOR.accentText })).setOrigin(0, 0.5));
+    this.rosterLabel = this.scene.add.text(GRID_VIEW.left + 10, GRID_VIEW.top - 42, (this.selectedSlot === undefined ? "보유 렐릭" : `보유 렐릭 · ${this.selectedSlot + 1}번 칸에 배치`), textStyle({ role: "emphasis", size: 23, color: COLOR.accentText })).setOrigin(0, 0.5);
+    content.add(this.rosterLabel);
     // 조작 설명 대신 **그 조작을 대신해 주는 단추**를 둔다. 기준은 화살표로 돌려 고르고,
     // 무엇을 많이 캘지는 지금 모자란 재화에 따라 그때그때 달라지므로 하나로 고정하지 않는다.
     const autoY = GRID_VIEW.top - 42;
@@ -488,8 +514,8 @@ export class IdleExcavationPopup {
         if (this.saving || !this.draft) return;
         this.draft = autoAssignExcavation(this.autoCandidates(), this.autoMode);
         // 자동으로 채운 뒤에는 첫 빈 칸(없으면 1번)이 다음 손을 기다린다.
-        this.selectedSlot = Math.max(0, this.draft.findIndex((id) => id === null));
-        this.renderEditor();
+        this.selectedSlot = undefined;
+        this.refreshEditorSlots();
       },
     }));
     content.add(new Button(this.scene, GRID_VIEW.right - 75, autoY, {
@@ -501,6 +527,7 @@ export class IdleExcavationPopup {
       },
     }));
     const owned = RELICS.filter((relic) => session.owned.has(relic.id));
+    this.rosterCards.clear();
     const grid = this.scene.add.container(0, GRID_VIEW.top + this.gridScrollY);
     owned.forEach((relic, index) => {
       const x = formationRosterColumnX(ROSTER, index % ROSTER.columns);
@@ -517,16 +544,19 @@ export class IdleExcavationPopup {
         selectedStyle: "pressed",
       });
       card.setSelected(this.draft!.includes(relic.id));
+      this.rosterCards.set(relic.id, card);
       // 짧은 탭은 배치, 꾹 누름은 상세다. 편성 그리드와 같은 조작이라 화면마다 다르게 익히지 않는다.
       bindLongPress(this.scene, card.hit, {
         onTap: () => {
           if (this.saving || !this.draft) return;
-          const slot = this.selectedSlot;
-          this.draft = placeFormationRelic(this.draft, slot, relic.id) as Formation;
-          // 한 칸을 채우면 선택이 저절로 다음 빈 칸으로 넘어가 세 번의 배치가 끊기지 않는다.
-          // 방금 비운 칸에서는 그대로 머문다 — 비운 자리를 다시 채우려는 손이 대부분이다.
-          this.selectedSlot = this.draft[slot] === null ? slot : nextFormationSlot(this.draft, slot);
-          this.renderEditor();
+          // 이미 어느 칸에 선 렐릭이면 옮기지 않고 그 칸을 고른다. 그때는 편성이 그대로라
+          // 슬롯 줄도 목록도 다시 만들 이유가 없다.
+          const result = tapRosterRelic(this.draft, this.selectedSlot, relic.id);
+          const moved = result.formation.join("|") !== this.draft.join("|");
+          this.draft = result.formation as Formation;
+          this.selectedSlot = result.selectedSlot;
+          if (moved) this.refreshEditorSlots();
+          else this.paintSlotSelection();
         },
         allowTap: () => this.gridDragMoved <= GRID_DRAG_SLOP,
         onLongPress: () => this.info().showRelic(relic),
@@ -605,7 +635,16 @@ export class IdleExcavationPopup {
       if (!this.gridDragging || !pointer.isDown) return;
       this.gridDragMoved += Math.abs(pointer.velocity.y); scrollTo(this.gridDragOrigin + pointer.y);
     };
-    this.gridPointerUpHandler = () => { this.gridDragging = false; this.scene.time.delayedCall(0, () => { this.gridDragMoved = 0; }); };
+    this.gridPointerUpHandler = (pointer?: Phaser.Input.Pointer, objects?: Phaser.GameObjects.GameObject[]) => {
+      this.gridDragging = false;
+      this.scene.time.delayedCall(0, () => { this.gridDragMoved = 0; });
+      // 판 안의 입력면 밖에서 뗀 손은 고른 칸을 푼다 — 표시가 계속 떠 있으면 다 고른 뒤에도
+      // 할 일이 남은 것처럼 보인다. 슬롯·카드 위에서 뗀 손은 그 입력면의 일이다.
+      void pointer;
+      if ((objects?.length ?? 0) > 0 || this.selectedSlot === undefined || !this.draft) return;
+      this.selectedSlot = undefined;
+      this.paintSlotSelection();
+    };
     this.scene.input.on("pointerdown", this.gridPointerDownHandler);
     this.scene.input.on("pointermove", this.gridPointerMoveHandler);
     this.scene.input.on("pointerup", this.gridPointerUpHandler);
@@ -613,43 +652,84 @@ export class IdleExcavationPopup {
     this.scene.input.on("wheel", this.gridWheelHandler);
   }
 
-  /** 슬롯은 빈 면과 PortraitCard를 구분하고 어느 칸이 편집 대상인지 확대/발광으로 알린다. */
+  /** 편집 중 제목이 말하는 것. 선택만 바뀌어도 이 한 줄은 따라와야 한다. */
+  private editTitleText(): string {
+    if (this.saving) return "편성 저장 중…";
+    return this.selectedSlot === undefined ? "배치 편집" : `배치 편집 · 슬롯 ${this.selectedSlot + 1}/3`;
+  }
+
+  /**
+   * 고른 칸만 다시 그린다.
+   *
+   * **아래 칸의 그리드는 건드리지 않는다.** 칸을 하나 누를 때마다 목록을 통째로 다시 만들면
+   * 스크롤이 처음으로 돌아가고 카드 수십 장이 한 프레임에 새로 태어난다 — 정작 바뀐 것은
+   * "어디에 세울지" 하나뿐이다.
+   */
+  private paintSlotSelection(editable = Boolean(this.draft)): void {
+    this.slotPlateLayer?.removeAll(true);
+    this.slotChromeLayer?.removeAll(true);
+    this.slotSelectionAppliers.forEach((apply, index) => apply(editable && index === this.selectedSlot));
+    if (this.editTitle) {
+      const label = this.editTitle.list.find((child): child is Phaser.GameObjects.Text => child instanceof Phaser.GameObjects.Text);
+      label?.setText(this.editTitleText());
+    }
+    this.rosterLabel?.setText(this.selectedSlot === undefined ? "보유 렐릭" : `보유 렐릭 · ${this.selectedSlot + 1}번 칸에 배치`);
+    setDebugIdleExcavationSlots(
+      [0, 1, 2].map((index) => ({ index, x: BASE_WIDTH / 2 - 250 + index * 250, y: BASE_HEIGHT / 2 + STATUS_HERO.slotY, width: 210, height: 245 })),
+      editable ? this.selectedSlot : undefined,
+    );
+    const index = this.selectedSlot;
+    if (!editable || index === undefined) return;
+    const box = { x: -250 + index * 250, y: STATUS_HERO.slotY, width: 210, height: 245 };
+    if (this.slotPlateLayer) addFormationSlotSelection(this.scene, this.slotPlateLayer, box);
+    // 빼는 표식은 고른 칸에 누군가 서 있을 때만 선다.
+    if (this.slotChromeLayer && this.draft?.[index]) {
+      addFormationRemoveChip(this.scene, this.slotChromeLayer, box, () => {
+        if (this.saving || !this.draft) return;
+        this.draft = tapFormationSlot(this.draft, index, this.selectedSlot, "clear").formation as Formation;
+        this.selectedSlot = index;
+        this.refreshEditorSlots();
+      });
+    }
+  }
+
+  /** 편성이 바뀌었을 때만 슬롯 카드와 SD를 다시 세운다. 아래 칸의 그리드는 그대로 둔다. */
+  private refreshEditorSlots(): void {
+    if (!this.draft) return;
+    this.renderUpper(this.draft, true);
+    for (const [relicId, card] of this.rosterCards) card.setSelected(this.draft.includes(relicId));
+  }
+
+  /** 슬롯은 빈 면과 PortraitCard를 구분하고 어느 칸이 편집 대상인지 밑판·확대로 알린다. */
   private addSlots(parent: Phaser.GameObjects.Container, formation: Formation, editable: boolean): Array<Phaser.GameObjects.Container | undefined> {
     this.formationDragVisual?.destroy(); this.formationDragVisual = undefined;
     const cards: Array<Phaser.GameObjects.Container | undefined> = [];
     const dragSlots: FormationDragSlot[] = [];
+    this.slotSelectionAppliers.length = 0;
     formation.forEach((id, index) => {
       const x = -250 + index * 250;
       const relic = id ? RELICS.find((item) => item.id === id) : undefined;
-      // 고른 칸은 칸 바깥의 얇은 밑판이 알린다. SD가 카드 위에 서면 카드의 선택 발광이 가려진다.
-      if (editable && index === this.selectedSlot) addFormationSlotSelection(this.scene, parent, { x, y: STATUS_HERO.slotY, width: 210, height: 245 });
       if (relic) {
         const progress = session.relicProgress[relic.id];
         const card = new PortraitCard(this.scene, x, STATUS_HERO.slotY, { width: 210, height: 245, relicId: relic.id, label: relic.name, level: progress?.level ?? 1, rarity: relic.rarity, stars: (progress?.breakthrough ?? 0) + 1 });
-        card.setSelected(editable && index === this.selectedSlot);
         // 카드 내부 hit는 카드 자체 용도로 남기되 슬롯 선택은 아래 공용 입력면 하나만 담당한다.
         card.hit.disableInteractive(); parent.add(card); cards[index] = card;
+        this.slotSelectionAppliers.push((selected) => card.setSelected(selected));
       } else {
         const empty = this.scene.add.container(x, STATUS_HERO.slotY);
-        empty.add(drawLayer(this.scene, 0, 0, slantedRect(210, 245), { fill: COLOR.panel, alpha: HOLO.glassLight, edge: index === this.selectedSlot && editable ? COLOR.accent : COLOR.inkDimHex, edgeAlpha: 0.55 }));
+        // 테두리 색으로 선택을 알리지 않는다 — 뒤에 깔리는 밑판이 이미 그 말을 하고, 색을 바꾸려면
+        // 도형을 다시 그려야 해서 선택만 바뀌어도 판을 새로 만들게 된다.
+        empty.add(drawLayer(this.scene, 0, 0, slantedRect(210, 245), { fill: COLOR.panel, alpha: HOLO.glassLight, edge: COLOR.inkDimHex, edgeAlpha: 0.55 }));
         empty.add(this.scene.add.text(0, 0, `빈 슬롯\n${index + 1}`, textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim, align: "center" })).setOrigin(0.5));
-        if (editable && index === this.selectedSlot) empty.setScale(1.06);
         parent.add(empty);
+        this.slotSelectionAppliers.push((selected) => empty.setScale(selected ? 1.06 : 1));
       }
       // SD보다 나중에 추가한 투명 전용 입력면이 현황/편집의 동일한 210×245 슬롯 계약을 소유한다.
       const hit = this.scene.add.rectangle(x, STATUS_HERO.slotY, 210, 245, 0xffffff, 0).setName(`idle-excavation-slot-${index + 1}`).setDepth(100).setInteractive({ useHandCursor: true });
       parent.add(hit);
-      // 빼는 표식은 고른 칸에 누군가 서 있을 때만 선다. 입력면보다 나중에 붙어야 그 위에서 눌린다.
-      if (editable && index === this.selectedSlot && relic) {
-        addFormationRemoveChip(this.scene, parent, { x, y: STATUS_HERO.slotY, width: 210, height: 245 }, () => {
-          if (this.saving || !this.draft) return;
-          this.draft = tapFormationSlot(this.draft, index, this.selectedSlot, "clear").formation as Formation;
-          this.selectedSlot = index;
-          this.renderEditor();
-        });
-      }
       dragSlots.push({ hit, x: POPUP_CENTER.x - 250 + index * 250, y: POPUP_CENTER.y + STATUS_HERO.slotY, width: 210, height: 245 });
     });
+    this.paintSlotSelection(editable);
     // Puppet은 body의 로컬 좌표에 서며 renderer가 팝업의 변환과 alpha를 최종 화면에 합성한다.
     this.formationDragVisual = createFormationDragVisualController({
       scene: this.scene, slots: dragSlots, formation: () => formation, color: COLOR.accent,
@@ -684,22 +764,22 @@ export class IdleExcavationPopup {
         if (!editable) { this.beginEdit(index); return; }
         if (!this.draft) return;
         // 편집 중의 짧은 탭은 그 칸을 **고르기만** 한다. 이미 골라 둔 칸을 한 번 더 눌러야 비고,
-        // 그때도 뒤 칸은 당겨지지 않는다.
+        // 그때도 뒤 칸은 당겨지지 않는다. 고르기만 했다면 목록은 손대지 않는다.
         const result = tapFormationSlot(this.draft, index, this.selectedSlot);
         this.draft = result.formation as Formation;
         this.selectedSlot = result.selectedSlot;
-        this.renderEditor();
+        if (result.cleared) this.refreshEditorSlots();
+        else this.paintSlotSelection();
       },
       drop: (from, to) => {
         this.formationDragVisual?.endDrag();
         if (!editable || !this.draft || this.saving) return;
         this.draft = moveFormationSlot(this.draft, from, to) as Formation;
         this.selectedSlot = to;
-        // 저장 전에는 서버 응답과 Session을 건드리지 않고 편집 사본만 다시 그린다.
-        this.renderEditor();
+        // 저장 전에는 서버 응답과 Session을 건드리지 않고 슬롯 줄만 다시 세운다.
+        this.refreshEditorSlots();
       },
     }, { enabled: () => !this.saving, canDrag: () => editable });
-    setDebugIdleExcavationSlots(formation.map((_id, index) => ({ index, x: BASE_WIDTH / 2 - 250 + index * 250, y: BASE_HEIGHT / 2 + STATUS_HERO.slotY, width: 210, height: 245 })), editable ? this.selectedSlot : undefined);
     return cards;
   }
 

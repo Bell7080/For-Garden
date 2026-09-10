@@ -355,7 +355,11 @@ export class PortraitCard extends Phaser.GameObjects.Container {
         const subFontSize = Math.min(currencyRow ? 30 : 22, width / (currencyRow ? 7 : 12));
         // 재화 줄은 이름 **위**에 밑변을 맞춰 쌓고, 역할 문구는 예전처럼 이름 아래에 붙는다.
         const subBottom = baseline - nameSize * 1.24 - 4;
-        const subLeft = nameLeft + (options.subIcon ? subIconSize + (currencyRow ? 5 : 7) : 0);
+        // **재화 그림에는 투명 여백이 굽혀 있다.** 아이콘 상자 폭을 그대로 띄우면 그림과 수 사이가
+        // 보이는 것보다 넓게 벌어져, 한 덩어리여야 할 줄이 오른쪽으로 밀린 것처럼 읽힌다. 실제
+        // 그림이 차지하는 만큼만 띄운다.
+        const currencyIconLead = subIconSize * 0.78;
+        const subLeft = nameLeft + (options.subIcon ? (currencyRow ? currencyIconLead : subIconSize + 7) : 0);
         this.subText = scene.add
           .text(subLeft, currencyRow ? subBottom : baseline + 10, options.sub, textStyle({ role: "emphasis", size: subFontSize, color: currencyRow ? COLOR.ink : COLOR.accentText }))
           .setOrigin(0, currencyRow ? 1 : 0);

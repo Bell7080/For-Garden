@@ -39,8 +39,8 @@ export const TORIKA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageHeight: 1492,
   content: { left: 95, top: 69, right: 894, bottom: 1419 },
   cardZoom: 0.82,
-  /** 로비 세로 비율: 메론 기준. 1.08 m — 등신이 낮아 상자에 맞추면 혼자 가장 크게 섰다. */
-  lobbyZoom: 0.774,
+  /** 로비 세로 비율: 메론 기준. 1.26 m — 등신이 낮아 상자에 맞추면 혼자 가장 크게 섰다. */
+  lobbyZoom: 0.903,
 };
 
 /**
@@ -48,8 +48,8 @@ export const TORIKA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
  *
  * alpha > 16 경계는 178,23–972,1491이고, 관절은 중심1(467,454)·머리1(527,335)·
  * 눈1(472,312)·눈2(558,344)다. 기본 토리카 값을 복사하지 않고 같은 화면에서 나란히 비교했다.
- * `cardZoom` 0.792는 눈 간격의 카드 표시 크기를 기본 외형과 맞추고, `lobbyZoom` 0.715는 같은
- * 1.08 m 토리카의 눈–발끝 표시 길이를 맞춘다. 높은 중심 관절은 정보창 얼굴을 278px 내리므로
+ * `cardZoom` 0.792는 눈 간격의 카드 표시 크기를 기본 외형과 맞추고, `lobbyZoom` 0.834는 같은
+ * 1.26 m 토리카의 눈–발끝 표시 길이를 맞춘다. 높은 중심 관절은 정보창 얼굴을 278px 내리므로
  * `portraitOffsetY`로 되돌린다. 머리 장식은 대칭 카드 홈 안에 들어 `cardHeadEscape`는 불필요하다.
  */
 export const TORIKA_SKIN_001_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
@@ -57,7 +57,7 @@ export const TORIKA_SKIN_001_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageHeight: 1536,
   content: { left: 178, top: 23, right: 972, bottom: 1491 },
   cardZoom: 0.792,
-  lobbyZoom: 0.715,
+  lobbyZoom: 0.834,
   portraitOffsetY: -278,
 };
 
@@ -221,7 +221,7 @@ export const DODI_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   content: { left: 100, top: 76, right: 986, bottom: 1352 },
   // 오른쪽으로 뻗은 머리 깃털이 카드에서 대칭 홈의 오른쪽 대각선 모서리에 애매하게 걸렸다.
   cardHeadEscape: { right: 0.08 },
-  /** 로비 세로 비율: 메론 기준. 1.08 m — 토리카와 같은 키다. */
+  /** 로비 세로 비율: 메론 기준. 토리카 원화와 같은 등신이다. */
   lobbyZoom: 0.729,
 };
 

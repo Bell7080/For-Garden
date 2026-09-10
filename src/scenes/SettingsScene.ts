@@ -123,9 +123,13 @@ export class SettingsScene extends Phaser.Scene {
       this.content.add(new SettingsSelectRow(this, 90, y, '제한 시작', s.notifications.quietHoursStart, quietTimes, value => void settingsManager.updateNotificationPreferences({ quietHoursStart: value }))); y += 94;
       this.content.add(new SettingsSelectRow(this, 90, y, '제한 종료', s.notifications.quietHoursEnd, quietTimes, value => void settingsManager.updateNotificationPreferences({ quietHoursEnd: value }))); y += 94;
     } else if (this.activeTab === "play") {
-      section("연출 · 게임", 1140);
-      // 네 프레젠테이션 선택은 각각 공용 정책 소비자가 있으므로 효과 없는 임시 토글을 노출하지 않는다.
-      ([['전투 화면 흔들림','screenShake'],['피해 숫자','damageNumbers'],['연구 연출 단축','shortenExcavation'],['저사양 모드','lowSpecMode']] as const).forEach(([a,b]) => toggle(a,'presentation',b));
+      section("연출 · 게임", 1234);
+      // 기존 저사양 토글은 품질 선택과 의미가 겹쳐 제거하고, 서로 다른 연출 토글만 남긴다.
+      ([['전투 화면 흔들림','screenShake'],['피해 숫자','damageNumbers'],['연구 연출 단축','shortenExcavation']] as const).forEach(([a,b]) => toggle(a,'presentation',b));
+      // 홀로그램 선택 행의 강조색·눌림 확대를 그대로 재사용한다.
+      const qualityLabels = { high: "높음", balanced: "균형", low: "낮음" } as const;
+      this.content.add(new SettingsSelectRow(this,90,y,'그래픽 품질',s.presentation.graphicsQuality,['high','balanced','low'] as const,v=>settingsManager.update({presentation:{graphicsQuality:v}}),v=>qualityLabels[v])); y+=94;
+      this.content.add(new SettingsSelectRow(this,90,y,'프레임 제한',s.presentation.frameRateLimit,[30,60] as const,v=>settingsManager.update({presentation:{frameRateLimit:v}}),v=>`${v} FPS`)); y+=94;
       // 기존 선택 행의 크기 반응과 강조색을 재사용하고 저장값만 안정적인 영문 ID로 유지한다.
       const motionLabels = { default: "기본", reduced: "감소", off: "끔" } as const;
       this.content.add(new SettingsSelectRow(this,90,y,'전투 UI 움직임',s.presentation.battleUiMotion,['default','reduced','off'] as const,v=>settingsManager.update({presentation:{battleUiMotion:v}}),v=>motionLabels[v])); y+=94;

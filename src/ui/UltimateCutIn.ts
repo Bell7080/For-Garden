@@ -37,7 +37,7 @@ export class UltimateCutIn extends Phaser.GameObjects.Container {
   private portraitMaskGraphics?: Phaser.GameObjects.Graphics;
   private syncPortraitMask?: () => void;
 
-  private constructor(scene: Phaser.Scene, relic: RelicDef, private readonly presentation: Readonly<UltimatePresentation>, private readonly policy: { lowSpecMode: boolean; reduceFlashes: boolean }) {
+  private constructor(scene: Phaser.Scene, relic: RelicDef, private readonly presentation: Readonly<UltimatePresentation>, private readonly policy: { graphicsQuality: "high" | "balanced" | "low"; reduceFlashes: boolean }) {
     super(scene, 0, 0);
     scene.add.existing(this);
     this.setDepth(CUT_IN.depth);
@@ -60,7 +60,7 @@ export class UltimateCutIn extends Phaser.GameObjects.Container {
   }
 
   /** 캐시된 원화를 준비한 뒤에만 진입시켜 빈 컷인 프레임이 보이지 않게 한다. */
-  static async create(scene: Phaser.Scene, relic: RelicDef, presentation: Readonly<UltimatePresentation>, policy = { lowSpecMode: false, reduceFlashes: false }): Promise<UltimateCutIn> {
+  static async create(scene: Phaser.Scene, relic: RelicDef, presentation: Readonly<UltimatePresentation>, policy: { graphicsQuality: "high" | "balanced" | "low"; reduceFlashes: boolean } = { graphicsQuality: "high", reduceFlashes: false }): Promise<UltimateCutIn> {
     const cutIn = new UltimateCutIn(scene, relic, presentation, policy);
     // 외형 선택은 manager/resolver가 소유하고 컷인은 결정된 전신만 연출한다.
     const asset = relicAppearanceManager.portraitAssetFor(relic.id);
@@ -68,7 +68,7 @@ export class UltimateCutIn extends Phaser.GameObjects.Container {
     try {
       portrait = await spawnPuppet(scene, asset, {
         // 데이터의 기준점과 배율만 해석하며 렐릭 ID에 따른 UI 분기는 만들지 않는다.
-        focus: { anchor: "core", ...presentation.artworkOrigin }, height: 1280 * presentation.artworkScale * presentationPolicy(policy.lowSpecMode).fullBodyScale,
+        focus: { anchor: "core", ...presentation.artworkOrigin }, height: 1280 * presentation.artworkScale * presentationPolicy(policy.graphicsQuality).fullBodyScale,
       });
     } catch (error) {
       // 로딩 실패는 호출자에게 전달하되 await 전에 만든 빈 컨테이너는 이 경계에서 회수한다.

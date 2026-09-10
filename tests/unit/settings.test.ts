@@ -45,6 +45,20 @@ describe("settings", () => {
     expect(normalizeSettings({ presentation: { battleUiMotion: "invalid" } }).presentation.battleUiMotion).toBe("default");
   });
 
+  it("구버전 저사양 저장을 low로 이관하되 새 품질 명시값을 우선한다", () => {
+    // 예전 false는 기존 표준 화질이었으므로 새 기본 high를 유지한다.
+    expect(normalizeSettings({ presentation: { lowSpecMode: true } }).presentation.graphicsQuality).toBe("low");
+    expect(normalizeSettings({ presentation: { lowSpecMode: true, graphicsQuality: "balanced" } }).presentation.graphicsQuality).toBe("balanced");
+    expect(normalizeSettings({ presentation: { lowSpecMode: false } }).presentation.graphicsQuality).toBe("high");
+    expect(normalizeSettings({ presentation: { lowSpecMode: true } }).presentation).not.toHaveProperty("lowSpecMode");
+  });
+
+  it("잘못된 품질과 프레임 제한을 안전한 기본값으로 복구한다", () => {
+    // 허용 목록 밖의 문자열·숫자는 저장에 다시 남지 않는다.
+    expect(normalizeSettings({ presentation: { graphicsQuality: "ultra", frameRateLimit: 144 } }).presentation)
+      .toMatchObject({ graphicsQuality: "high", frameRateLimit: 60 });
+  });
+
   it("부분 변경을 보정해 저장하고 초기화하되 진행과 계정 상태는 보존한다", () => {
     const state = createDefaultSession(); state.wallet.gold = 77; state.cleared.add("stage-1"); state.settings.account = { provider: "google", displayId: "연동 연구원" };
     // 설정 외 진행 객체와 공개 계정 표시값을 함께 고정해 reset이 전체 세션 초기화로 번지지 않게 한다.

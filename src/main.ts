@@ -36,6 +36,8 @@ const game = new Phaser.Game({
   fps: {
     // 브라우저가 잠깐 늦어진 뒤 여러 업데이트를 몰아서 실행하며 버벅이는 현상을 완화한다.
     target: 60,
+    // 런타임 선택은 이 제한 경계의 간격만 바꾼다.
+    limit: 60,
     min: 30,
     smoothStep: true,
   },

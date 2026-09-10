@@ -70,6 +70,18 @@ describe("기여도 프레임 독립성", () => {
     expect(battleContributionSnapshot(split, "defense")).toEqual(battleContributionSnapshot(once, "defense"));
     expect(battleContributionSnapshot(split, "healing")).toEqual(battleContributionSnapshot(once, "healing"));
   });
+
+  it("30 FPS와 60 FPS에서 같은 실제 시간을 진행한 전투 결과가 같다", () => {
+    const arena = { left: 0, right: 600, top: 0, bottom: 1_000 };
+    const at30 = createSkirmish([getRelic("anky")], [getRelic("amo")], arena);
+    const at60 = createSkirmish([getRelic("anky")], [getRelic("amo")], arena);
+    // stepSkirmish는 렌더 횟수가 아닌 실제 초 dt를 받고 내부 최대 간격으로 같게 적분한다.
+    for (let frame = 0; frame < 30 * 5; frame += 1) stepSkirmish(at30, 1 / 30, () => 0.99);
+    for (let frame = 0; frame < 60 * 5; frame += 1) stepSkirmish(at60, 1 / 60, () => 0.99);
+    // 위치 보간과 잔여 쿨다운의 부동소수점 오차는 렌더 사이 상태이므로 제외하고, 판정 결과만 비교한다.
+    const outcome = (state: SkirmishState) => ({ phase: state.phase, elapsedSeconds: Math.round(state.elapsed), fighters: state.fighters.map(({ id, hp, energy }) => ({ id, hp, energy })), contributions: state.contributions });
+    expect(outcome(at30)).toEqual(outcome(at60));
+  });
 });
 
 describe("디안 귀속 늑대 생명주기", () => {

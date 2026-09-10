@@ -14,7 +14,8 @@ import {
   createSkirmish,
   currentAbilityPower,
   defensiveDefinition,
-  damageSummonedUnit,
+  isPartyFighter,
+  bloodscentOf,
   currentAttackSpeed,
   fireUltimate,
   findFighter,
@@ -72,199 +73,194 @@ describe("기여도 프레임 독립성", () => {
   });
 });
 
-describe("디안 귀속 늑대 생명주기", () => {
-  /** 재호출처럼 긴 시계를 maxCatchUp 상한과 무관하게 실제 프레임 단위로 흘린다. */
+describe("디안 무리 생명주기", () => {
+  /** 재소환처럼 긴 시계를 maxCatchUp 상한과 무관하게 실제 프레임 단위로 흘린다. */
   function advanceFor(state: SkirmishState, seconds: number): SkirmishEvent[] {
     const events: SkirmishEvent[] = [];
     for (let elapsed = 0; elapsed < seconds; elapsed += 0.05) events.push(...stepSkirmish(state, Math.min(0.05, seconds - elapsed)));
     return events;
   }
 
-  it("은 양 진영의 같은 디안도 소유자 기반 ID로 쿠로·시로를 따로 소환한다", () => {
+  /** 정의 순서가 곧 배열 순서라 이름이 아니라 귀속 관계로 찾는다. */
+  function wolvesOf(state: SkirmishState, ownerId: string) {
+    return state.fighters.filter((fighter) => fighter.summonOwnerId === ownerId);
+  }
+
+  it("은 늑대를 다른 전투원과 같은 몸으로 세우고 승패 판정에서만 뺀다", () => {
     const state = createSkirmish([getRelic("dian")], [getRelic("dian")], ARENA);
-    expect(state.summons.map(({ id }) => id)).toEqual([
-      "player-0:kuro", "player-0:shiro", "enemy-0:kuro", "enemy-0:shiro",
+    expect(state.fighters.map(({ id }) => id)).toEqual([
+      "player-0", "enemy-0", "player-0:kuro", "player-0:shiro", "enemy-0:kuro", "enemy-0:shiro",
     ]);
-    // 두 늑대가 모두 현장에 있는 시작 프레임부터 양쪽 디안은 단일 추적에서 숨는다.
-    expect(state.fighters.every(({ stealthFor }) => stealthFor === Number.POSITIVE_INFINITY)).toBe(true);
+    // 편성 칸만 전멸 판정에 든다 — 늑대가 살아 있다고 패배가 미뤄지지 않는다.
+    expect(state.fighters.filter(isPartyFighter).map(({ id }) => id)).toEqual(["player-0", "enemy-0"]);
+    // 두 늑대가 모두 서 있는 시작 프레임부터 양쪽 디안은 단일 추적에서 숨는다.
+    expect(state.fighters.filter(isPartyFighter).every(({ stealthFor }) => stealthFor === Number.POSITIVE_INFINITY)).toBe(true);
   });
 
-  it("은 한 마리 또는 양쪽이 회수되면 즉시 은신을 풀고, 둘 다 재호출된 뒤에만 되살린다", () => {
+  it("은 늑대 능력치를 주인의 한 축에서만 파생하고 무리 치명타를 함께 나눈다", () => {
+    const state = createSkirmish([getRelic("dian")], [getRelic("amo")], ARENA);
+    const [kuro, shiro] = wolvesOf(state, "player-0");
+    expect(kuro.def.stats.atk).toBeGreaterThan(0); expect(kuro.def.stats.ap).toBe(0);
+    expect(shiro.def.stats.ap).toBeGreaterThan(0); expect(shiro.def.stats.atk).toBe(0);
+    // 지휘자의 경계는 늑대에게도 걸린다. 지휘자 자신은 패시브 필드를 이미 읽으므로 0으로 남는다.
+    expect([kuro.packCritChance, shiro.packCritChance]).toEqual([20, 20]);
+    expect(state.fighters[0].packCritChance).toBe(0);
+  });
+
+  it("은 늑대 하나가 쓰러지면 즉시 은신과 무리 치명타를 함께 끄고, 다시 서면 되살린다", () => {
     const state = createSkirmish([getRelic("dian")], [getRelic("amo")], ARENA);
     const dian = state.fighters[0];
-    damageSummonedUnit(state, "player-0:kuro", Number.MAX_SAFE_INTEGER);
+    const [kuro, shiro] = wolvesOf(state, dian.id);
+    kuro.hp = 0;
+    stepSkirmish(state, 1 / 60);
     expect(dian.stealthFor).toBe(0);
-    damageSummonedUnit(state, "player-0:shiro", Number.MAX_SAFE_INTEGER);
-    expect(state.summons.filter(({ ownerFighterId, status }) => ownerFighterId === dian.id && status === "recalled")).toHaveLength(2);
+    expect(shiro.packCritChance).toBe(0);
 
-    // 적 행동을 멈춰 재호출 조건만 관찰하고, 긴 대기시간 직전에는 둘 다 여전히 회수 상태다.
+    // 적 행동을 멈춰 재소환 조건만 관찰한다. 긴 대기 직전에는 아직 서지 않는다.
     state.fighters[1].attackCooldown = 999;
-    advanceFor(state, 11.95);
-    expect(dian.stealthFor).toBe(0);
-    advanceFor(state, 0.1);
-    expect(state.summons.filter(({ ownerFighterId, status }) => ownerFighterId === dian.id && status === "active")).toHaveLength(2);
-    expect(state.summons.every((summon) => summon.hp === Math.round(summon.maxHp * 0.4))).toBe(true);
+    advanceFor(state, 11.9);
+    expect(isFighterAlive(kuro)).toBe(false);
+    const returned = advanceFor(state, 0.2);
+    expect(isFighterAlive(kuro)).toBe(true);
+    // 불완전한 체력으로 돌아와 늑대를 소모품처럼 던질 수 없게 한다.
+    expect(kuro.hp).toBe(Math.round(kuro.maxHp * 0.4));
+    expect(returned).toContainEqual(expect.objectContaining({ kind: "packSummon", fighterId: kuro.id }));
     expect(dian.stealthFor).toBe(Number.POSITIVE_INFINITY);
   });
 
-  it("은 은신 중에도 전장 광역 피해를 받고, 디안 사망 즉시 두 늑대를 회수한다", () => {
-    const state = createSkirmish([getRelic("dian"), getRelic("anky")], [getRelic("pontos")], ARENA);
-    const [dian] = state.fighters; const pontos = state.fighters[2];
-    pontos.energy = pontos.def.ultimate.cost;
-    const hpBefore = dian.hp;
-    fireUltimate(state, pontos.id, () => 0.99);
-    expect(dian.hp).toBeLessThan(hpBefore);
-
+  it("은 지휘자가 쓰러지면 두 늑대를 함께 거두고 다시 세우지 않는다", () => {
+    const state = createSkirmish([getRelic("dian"), getRelic("anky")], [getRelic("amo")], ARENA);
+    const dian = state.fighters[0];
     dian.hp = 0;
     stepSkirmish(state, 1 / 60);
-    expect(state.summons.filter(({ ownerFighterId }) => ownerFighterId === dian.id).every(({ status, hp }) => status === "recalled" && hp === 0)).toBe(true);
-    expect(dian.stealthFor).toBe(0);
+    expect(wolvesOf(state, dian.id).every((wolf) => !isFighterAlive(wolf))).toBe(true);
+    advanceFor(state, 13);
+    expect(wolvesOf(state, dian.id).every((wolf) => !isFighterAlive(wolf))).toBe(true);
   });
 
-  it("은 회수 중 시작된 폭주로 부활하지 않고 재호출 뒤 남은 시간만 강화한 다음 종료한다", () => {
+  it("은 주인의 폭주를 늑대의 몸이 함께 받고 함께 식는다", () => {
     const state = createSkirmish([getRelic("dian")], [getRelic("amo")], ARENA);
-    const dian = state.fighters[0]; const kuro = state.summons.find(({ summonId }) => summonId === "kuro")!;
-    // 회수 직후 폭주 상태를 열어도 소환수의 생명주기 시계는 별도로 유지된다.
-    damageSummonedUnit(state, kuro.id, Number.MAX_SAFE_INTEGER);
-    dian.ferocity = 100; dian.ferocityFever = true; kuro.resummonRemaining = 0.1;
-    const waiting = stepSkirmish(state, 0.05);
-    expect(kuro.status).toBe("recalled");
-    expect(waiting.some((event) => event.kind === "summonReturn")).toBe(false);
-
-    const returned = stepSkirmish(state, 0.06);
-    expect(returned).toContainEqual(expect.objectContaining({ kind: "summonReturn", summonId: kuro.id, ownerFighterId: dian.id }));
-    const buff = returned.find((event) => event.kind === "summonFrenzy" && event.summonId === kuro.id && event.active);
-    expect(buff?.kind === "summonFrenzy" ? buff.remainingSeconds : 8).toBeLessThan(8);
-    const ended = advanceFor(state, 8);
-    expect(ended).toContainEqual({ kind: "summonFrenzy", summonId: kuro.id, ownerFighterId: dian.id, active: false, remainingSeconds: 0 });
+    const dian = state.fighters[0];
+    const wolves = wolvesOf(state, dian.id);
+    // 폭주는 최대치에 **닿는 순간** 열린다. 값을 직접 100으로 적으면 그 경계를 지나지 않는다.
+    dian.ferocity = 99;
+    dian.x = state.fighters[1].x + 40; dian.y = state.fighters[1].y;
+    dian.attackCooldown = 0;
+    stepSkirmish(state, 1 / 60);
+    expect(dian.ferocityFever).toBe(true);
+    expect(wolves.every(({ ferocityFever }) => ferocityFever)).toBe(true);
+    // 폭주하는 몸의 강화는 늑대 자신의 야성 특성이 갖는다.
+    expect(wolves.every(({ def }) => def.ferocityTrait.effectId === "packBody")).toBe(true);
+    advanceFor(state, 12);
+    expect(dian.ferocityFever).toBe(false);
+    expect(wolves.every(({ ferocityFever }) => ferocityFever)).toBe(false);
   });
 });
 
-describe("디안 늑대 지휘 전투", () => {
-  /** 지휘 행동만 관찰하도록 적의 행동을 멈추고 디안의 시계를 즉시 준비한다. */
+describe("디안 합공과 목덜미", () => {
+  /** 지휘자의 행동만 관찰하도록 적의 행동을 멈추고 디안의 시계를 즉시 준비한다. */
   function readyDian(enemyCount = 2): { state: SkirmishState; dian: Fighter } {
     const enemies = Array.from({ length: enemyCount }, () => getRelic("amo"));
     const state = createSkirmish([getRelic("dian")], enemies, ARENA);
     const dian = state.fighters[0];
     dian.attackCooldown = 0;
     for (const enemy of state.fighters.slice(1)) enemy.attackCooldown = 999;
+    // 늑대의 자기 행동이 섞이지 않도록 시계를 멀리 둔다.
+    for (const wolf of state.fighters.filter((f) => f.summonOwnerId !== null)) wolf.attackCooldown = 999;
+    // 디안은 원거리지만 무한 사거리가 아니다. 첫 프레임에 손이 닿도록 표적 옆에 세운다.
+    dian.x = state.fighters[1].x + 40;
+    dian.y = state.fighters[1].y;
     return { state, dian };
   }
 
-  /** 한 프레임의 늑대 피해 사건만 추려 지휘자의 가짜 본체 타격이 섞이지 않았는지도 함께 검증한다. */
-  function wolfHits(events: SkirmishEvent[]) {
-    return events.filter((event): event is Extract<SkirmishEvent, { kind: "attack" }> => event.kind === "attack");
+  function hitsBy(events: SkirmishEvent[], id: string) {
+    return events.filter((event): event is Extract<SkirmishEvent, { kind: "attack" }> => event.kind === "attack" && event.attackerId === id);
   }
 
-  it("은 두 적을 쿠로·시로에게 나누고 다음 행동에는 선행 순서를 교대한다", () => {
-    const { state, dian } = readyDian();
-    const first = wolfHits(stepSkirmish(state, 0.01));
-    expect(first.map(({ attackerId, targetId }) => [attackerId, targetId])).toEqual([
-      ["player-0:kuro", "enemy-0"], ["player-0:shiro", "enemy-1"],
-    ]);
-    expect(first.some(({ attackerId }) => attackerId === dian.id)).toBe(false);
-
-    dian.attackCooldown = 0;
-    const second = wolfHits(stepSkirmish(state, 0.01));
-    expect(second.map(({ attackerId }) => attackerId)).toEqual(["player-0:shiro", "player-0:kuro"]);
-    expect(second[0].targetId).not.toBe(second[1].targetId);
+  it("은 척후로 전투력이 가장 높은 적을 무리의 첫 표적으로 삼는다", () => {
+    const state = createSkirmish([getRelic("dian")], [getRelic("amo"), getRelic("pontos")], ARENA);
+    const dian = state.fighters[0];
+    // 폰토스가 전투력이 훨씬 높다. 무리 셋이 모두 그 적을 첫 표적으로 든다.
+    expect(dian.targetId).toBe("enemy-1");
+    for (const wolf of state.fighters.filter((f) => f.summonOwnerId === dian.id)) expect(wolf.targetId).toBe("enemy-1");
   });
 
-  it("은 적이 하나면 물리 쿠로와 마법 시로가 같은 적에게 독립 피해를 준다", () => {
-    const { state } = readyDian(1);
-    const hits = wolfHits(stepSkirmish(state, 0.01));
-    expect(hits.map(({ targetId }) => targetId)).toEqual(["enemy-0", "enemy-0"]);
-    expect(hits.map(({ damageType }) => damageType)).toEqual(["physical", "magical"]);
-    // 서로 다른 파생 능력치와 기술 계수를 읽으므로 한 합산 피해를 반으로 복제하지 않는다.
-    expect(hits[0].amount).not.toBe(hits[1].amount);
-  });
-
-  it("은 폭주 중 쿠로 물리·시로 마법과 궁극기를 실제 늑대 출처로 남기되 디안 한 행에 합산한다", () => {
+  it("은 한 행동에 물리와 마법을 함께 내고 늑대가 모두 쓰러지면 번갈아 낸다", () => {
     const { state, dian } = readyDian(1);
-    dian.ferocityFever = true; dian.ferocity = 100;
-    const basic = wolfHits(stepSkirmish(state, 0.01));
+    const both = hitsBy(stepSkirmish(state, 0.01), dian.id);
+    expect(both.map(({ damageType }) => damageType)).toEqual(["physical", "magical"]);
+
+    for (const wolf of state.fighters.filter((f) => f.summonOwnerId === dian.id)) wolf.hp = 0;
+    stepSkirmish(state, 1 / 60);
+    dian.attackCooldown = 0;
+    const alone = hitsBy(stepSkirmish(state, 0.01), dian.id);
+    expect(alone).toHaveLength(1);
+  });
+
+  it("은 표적이 문턱 아래면 뒤로 순간이동해 목덜미를 물고 그 자리에 선다", () => {
+    const { state, dian } = readyDian(1);
+    const foe = state.fighters[1];
+    foe.hp = foe.maxHp * 0.2;
+    const before = { x: dian.x, y: dian.y };
+    const events = stepSkirmish(state, 0.01);
+    const finisher = events.find((event) => event.kind === "packFinisher");
+    expect(finisher).toBeDefined();
+    // 고정 피해 한 방이며 합공 두 축으로 갈리지 않는다.
+    expect(hitsBy(events, dian.id).map(({ damageType }) => damageType)).toEqual(["true"]);
+    // 물고 제자리로 돌아오지 않는다. 은신이라 적진 한가운데에 서 있어도 보이지 않는다.
+    expect({ x: dian.x, y: dian.y }).not.toEqual(before);
+    expect(dian.stealthFor).toBe(Number.POSITIVE_INFINITY);
+  });
+
+  it("은 목덜미가 들어갈 때마다 피 냄새를 쌓고 겹이 문턱과 합공을 함께 키운다", () => {
+    const { state, dian } = readyDian(1);
+    const foe = state.fighters[1];
+    foe.hp = foe.maxHp * 0.2;
+    stepSkirmish(state, 0.01);
+    expect(dian.bloodscent).toBe(1);
+    expect(bloodscentOf(state, state.fighters.find((f) => f.summonOwnerId === dian.id)!)).toBe(1);
+
+    // 겹당 5%씩 오르므로 3겹이면 40%까지 열린다.
+    dian.bloodscent = 3;
+    foe.hp = foe.maxHp * 0.38;
+    dian.attackCooldown = 0;
+    expect(stepSkirmish(state, 0.01).some((event) => event.kind === "packFinisher")).toBe(true);
+    // 상한을 넘겨 쌓이지 않는다.
+    expect(dian.bloodscent).toBe(3);
+  });
+
+  it("은 목덜미가 같은 순간의 합공보다 약해지지 않는다", () => {
+    const { state, dian } = readyDian(1);
+    const foe = state.fighters[1];
+    // 최대 체력이 아주 작으면 비례 피해만으로는 평타보다 약해진다. 하한이 그 구간을 막는다.
+    foe.maxHp = 40; foe.hp = 8;
+    const events = stepSkirmish(state, 0.01);
+    const nape = hitsBy(events, dian.id)[0];
+    expect(nape.amount).toBeGreaterThan(8 * 0.4);
+  });
+
+  it("은 궁극기가 쓰러진 늑대를 일으켜 세우고 셋이 함께 표적에 뛰어든다", () => {
+    const { state, dian } = readyDian(1);
+    const [kuro, shiro] = state.fighters.filter((f) => f.summonOwnerId === dian.id);
+    kuro.hp = 0;
+    stepSkirmish(state, 1 / 60);
     dian.energy = dian.def.ultimate.cost;
-    const ultimate = wolfHits(fireUltimate(state, dian.id));
-    const hits = [...basic, ...ultimate];
-    // 디버그 상세는 공격자 ID를 늑대로 보존하고 정산 주체는 별도 owner 필드로 명시한다.
-    expect(hits.map(({ attackerId, ownerFighterId, damageType }) => [attackerId, ownerFighterId, damageType])).toEqual([
-      ["player-0:kuro", dian.id, "physical"], ["player-0:shiro", dian.id, "magical"],
-      ["player-0:kuro", dian.id, "physical"], ["player-0:shiro", dian.id, "magical"],
-    ]);
+    const events = fireUltimate(state, dian.id);
+    expect(isFighterAlive(kuro)).toBe(true);
+    // 늑대 둘의 돌진과 지휘자의 목덜미가 한 행동에서 함께 나간다.
+    expect(hitsBy(events, kuro.id)).toHaveLength(1);
+    expect(hitsBy(events, shiro.id)).toHaveLength(1);
+    expect(events.some((event) => event.kind === "packFinisher")).toBe(true);
+    expect(dian.energy).toBe(0);
+  });
+
+  it("은 늑대가 낸 피해를 성장 주체인 지휘자 앞으로 쌓는다", () => {
+    const { state, dian } = readyDian(1);
+    dian.energy = dian.def.ultimate.cost;
+    fireUltimate(state, dian.id);
     const rows = battleContributionSnapshot(state, "attack");
     expect(rows.map(({ fighterId }) => fighterId)).toEqual([dian.id]);
-    expect(rows[0].attack.attackPower).toBeGreaterThan(0);
-    expect(rows[0].attack.abilityPower).toBeGreaterThan(0);
-    expect(state.contributions).not.toHaveProperty("player-0:kuro");
-    expect(state.contributions).not.toHaveProperty("player-0:shiro");
-  });
-
-  it("은 선행 늑대가 예약 대상을 처치해도 후행 늑대가 남은 적을 한 번만 공격한다", () => {
-    const { state } = readyDian();
-    state.fighters[1].hp = 1;
-    const hits = wolfHits(stepSkirmish(state, 0.01));
-    expect(hits).toHaveLength(2);
-    expect(hits.map(({ targetId }) => targetId)).toEqual(["enemy-0", "enemy-1"]);
-  });
-
-  it("은 근거리라 물기 전에 표적 옆으로 붙고 좌우 자리는 지휘 순서가 교대해도 그대로 둔다", () => {
-    const { state, dian } = readyDian(1);
-    const enemy = state.fighters[1];
-    const [kuro, shiro] = state.summons;
-    // 지휘 전에는 디안 곁에 서 있으므로 표적과 떨어져 있다.
-    expect(Math.hypot(kuro.x - enemy.x, kuro.y - enemy.y)).toBeGreaterThan(100);
-
-    const first = stepSkirmish(state, 0.01);
-    const moves = first.filter((event) => event.kind === "summonMove");
-    expect(moves.map((event) => event.kind === "summonMove" && event.summonId)).toEqual([kuro.id, shiro.id]);
-    // 같은 적을 둘이 물어도 좌우로 갈라 서고, 둘 다 표적에 닿는 거리 안에 든다.
-    expect([kuro.y, shiro.y]).toEqual([enemy.y, enemy.y]);
-    expect(kuro.x).toBeLessThan(enemy.x);
-    expect(shiro.x).toBeGreaterThan(enemy.x);
-    expect(Math.abs(kuro.x - enemy.x)).toBe(Math.abs(shiro.x - enemy.x));
-
-    // 다음 지휘는 선행 늑대가 바뀌지만 서는 쪽은 정의 순서를 그대로 지킨다.
-    const before = { kuro: kuro.x, shiro: shiro.x };
-    dian.attackCooldown = 0;
-    stepSkirmish(state, 0.01);
-    expect([kuro.x, shiro.x]).toEqual([before.kuro, before.shiro]);
-  });
-
-  it("은 회수된 늑대를 본체로 대체하지 않고 생존한 늑대만 공격시킨다", () => {
-    const { state, dian } = readyDian();
-    damageSummonedUnit(state, "player-0:kuro", Number.MAX_SAFE_INTEGER);
-    const hits = wolfHits(stepSkirmish(state, 0.01));
-    expect(hits.map(({ attackerId }) => attackerId)).toEqual(["player-0:shiro"]);
-    expect(hits.some(({ attackerId }) => attackerId === dian.id)).toBe(false);
-  });
-
-  it("은 궁극기 최약체를 HP 비율, 실제 HP, 안정적 fighter 순서로 고르고 사망 시 한 번 재지정한다", () => {
-    const { state, dian } = readyDian(3);
-    const [first, second, third] = state.fighters.slice(1);
-    first.hp = first.maxHp * 0.5;
-    second.maxHp *= 2; second.hp = second.maxHp * 0.5; // 같은 비율이면 실제 HP가 낮은 first가 우선이다.
-    third.hp = third.maxHp * 0.75;
-    dian.energy = dian.def.ultimate.cost;
-    const hits = wolfHits(fireUltimate(state, dian.id));
-    expect(hits.map(({ attackerId, targetId, damageType }) => [attackerId, targetId, damageType])).toEqual([
-      ["player-0:kuro", first.id, "physical"], ["player-0:shiro", first.id, "magical"],
-    ]);
-
-    // 동률이면 배열 앞 fighter가 먼저 맞고, 그 타격으로 죽으면 후행 늑대는 다음 순서로 옮긴다.
-    const retarget = readyDian(3); const enemies = retarget.state.fighters.slice(1);
-    enemies[0].hp = 1; enemies[1].hp = 1; enemies[2].hp = 2;
-    retarget.dian.energy = retarget.dian.def.ultimate.cost;
-    const redirected = wolfHits(fireUltimate(retarget.state, retarget.dian.id));
-    expect(redirected.map(({ targetId }) => targetId)).toEqual([enemies[0].id, enemies[1].id]);
-  });
-
-  it("은 한 늑대만 남아도 축소 궁극기를 실행하고 정상 비용을 모두 쓴다", () => {
-    const { state, dian } = readyDian();
-    damageSummonedUnit(state, "player-0:shiro", Number.MAX_SAFE_INTEGER);
-    dian.energy = dian.def.ultimate.cost;
-    const hits = wolfHits(fireUltimate(state, dian.id));
-    expect(hits.map(({ attackerId }) => attackerId)).toEqual(["player-0:kuro"]);
-    expect(dian.energy).toBe(0);
+    expect(state.contributions).not.toHaveProperty(`${dian.id}:kuro`);
   });
 });
 

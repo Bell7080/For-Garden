@@ -18,14 +18,13 @@ import {
   type ActiveCombatBuff,
   type SkirmishEvent,
   type SkirmishState,
-  type SummonedUnit,
   skirmishRelicResults,
 } from "../core/skirmish";
 import { getRelic } from "../data/relics";
 import { getBattleStage, getStageEnemies } from "../data/stages";
 import { getExpeditionNodeEnemies } from "../data/expeditionEnemies";
 import type { PuppetCreature, PuppetAsset } from "../puppets/assets";
-import { cancelMotion, flashHit, isHitFlashing, placePuppet, playMotion, spawnPuppet, SUMMON_SD_ASSETS, tintPuppet } from "../puppets/assets";
+import { cancelMotion, flashHit, isHitFlashing, placePuppet, playMotion, spawnPuppet, tintPuppet } from "../puppets/assets";
 import { session } from "../state/session";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { Button } from "../ui/Button";
@@ -83,8 +82,6 @@ import { ExpeditionRankingPopup } from "../ui/ExpeditionRankingPopup";
 import { ExpeditionScoreDetailPopup } from "../ui/ExpeditionScoreDetailPopup";
 import { BOSS_RESULT_LAYOUT, bossResultUtilityBounds } from "../ui/bossResultLayout";
 import type { CurrencyIconKey } from "../ui/currencyIcons";
-import { KeywordManager } from "../managers/KeywordManager";
-import { openSummonInfoPopup } from "../ui/SummonInfoPopup";
 import { hasMergedBattleHit, isPlayerUltimateReadyTransition } from "../core/hapticPolicy";
 
 /**
@@ -227,22 +224,6 @@ interface FighterView {
   dead: boolean;
 }
 
-/** 정산 대상 Fighter와 섞이지 않는 쿠로·시로 전용 화면 생명주기다. */
-interface SummonView {
-  creature: PuppetCreature;
-  asset: PuppetAsset;
-  summon: SummonedUnit;
-  /** Puppet 메시와 별도로 움직이고 회수 때 함께 제거되는 입력 영역이다. */
-  input: Phaser.GameObjects.Rectangle;
-  /**
-   * 늑대는 지휘자와 별개인 자기 체력을 갖는다.
-   *
-   * 그래서 머리 위 바도 따로 선다 — 디안의 프로필만 보면 앞에 나간 두 마리가 얼마나 버티는지
-   * 알 수 없고, 회수·재호출이 왜 일어났는지도 화면에서 설명되지 않는다.
-   */
-  hpBar: UnitHealthBar;
-}
-
 /** 하단 프로필 한 칸. 궁극기가 차면 카드 자체가 발동 버튼이 된다. */
 interface ProfileView {
   fighter: Fighter;
@@ -280,8 +261,6 @@ export class BattleScene extends Phaser.Scene {
   /** 전투 시작 시 고정해 카메라·게이지·카드가 같은 최종 움직임 정책을 소비한다. */
   private motion!: MotionPolicy;
   private views = new Map<string, FighterView>();
-  /** 소환수는 fighter 상세/프로필과 분리해 회수·재호출이 독립적으로 생성과 파괴를 반복한다. */
-  private summonViews = new Map<string, SummonView>();
   private profiles: ProfileView[] = [];
   private finished = false;
   /** 보스 제출에는 코어가 실제로 낸 공격 종류와 시각만 기록하며 피해 숫자는 넣지 않는다. */
@@ -323,7 +302,6 @@ export class BattleScene extends Phaser.Scene {
   /** 버프 상세도 전투 씬의 한 PopupLayer에 쌓아 입력·닫기 순서를 통일한다. */
   private buffPopups!: PopupLayer;
   /** 소환수→스킬→강조 용어가 전투의 한 PopupLayer 스택에 계속 쌓이게 하는 공용 키워드 경계다. */
-  private battleKeywords!: KeywordManager;
   /** 전투는 팝업 중에도 계속되며, 선택 ID로 최신 버프를 찾아 시간 갱신/종료 닫기를 수행한다. */
   private openBuff?: { key: string; controller: BattleBuffPopupController };
   /**
@@ -392,7 +370,6 @@ export class BattleScene extends Phaser.Scene {
       enemyBreakthroughs: [...stage.enemies].sort((a, b) => a.formationSlot - b.formationSlot).map(({ breakthrough }) => breakthrough),
     });
     this.views.clear();
-    this.summonViews.clear();
     this.profiles = [];
     this.allyInfoRef = undefined;
     this.finished = false;
@@ -416,7 +393,6 @@ export class BattleScene extends Phaser.Scene {
     // 적도 같은 정보창을 쓴다. 문맥만 "enemy"라 급여·돌파·유대·룬이 빠지고 현재 전투 줄이 붙는다.
     this.info = new CharacterInfoManager(this, 1001, "enemy");
     this.buffPopups = new PopupLayer(this, 2200);
-    this.battleKeywords = new KeywordManager(this, this.buffPopups);
     this.openBuff = undefined;
     // 파편·파문은 SD보다 앞이되 궁극기 컷인(900)보다는 뒤라 연출을 가리지 않는다.
     // 광역 범위만 배경 원화 위·SD 아래에 깔려 누가 어디 섰는지 가리지 않는다.
@@ -459,10 +435,7 @@ export class BattleScene extends Phaser.Scene {
       this.openBuff = undefined;
       this.views.forEach((view) => view.creature.destroy());
       this.views.clear();
-      // 비동기 재호출이 남았더라도 세 SD와 별도 입력 영역을 씬 밖으로 가져가지 않는다.
-      this.summonViews.forEach((view) => this.destroySummonView(view));
-      this.summonViews.clear();
-    });
+      });
   }
 
   /** 두 원격 경계를 manager 흐름에 맡기고, 성공하면 전리품을 포함한 최종판을 곧바로 연다. */
@@ -924,113 +897,20 @@ export class BattleScene extends Phaser.Scene {
     void this.pumpUltimateQueue();
   }
 
-  /** 재호출 사건 하나가 도착할 때만 Puppet과 입력면을 새로 만든다. 실패는 표시 한 마리에만 국한한다. */
-  private async spawnSummonView(summonId: string): Promise<void> {
-    if (this.summonViews.has(summonId)) return;
-    const summon = this.state.summons.find(({ id }) => id === summonId);
-    const owner = summon && this.state.fighters.find(({ id }) => id === summon.ownerFighterId);
-    const definition = owner?.def.summons?.find(({ id }) => id === summon?.summonId);
-    const asset = definition && SUMMON_SD_ASSETS[definition.sdAssetKey];
-    if (!summon || !owner || !definition || !asset || summon.status !== "active") return;
-    try {
-      const creature = await spawnPuppet(this, asset, { x: summon.x, groundY: summon.y, height: UNIT_HEIGHT * 0.82, flipX: summon.facing < 0 });
-      if (!this.scene.isActive() || summon.status !== "active") { creature.destroy(); return; }
-      // 입력면은 투명하지만 Puppet과 같은 좌표를 따라가며 회수 시 반드시 함께 파괴된다.
-      const input = this.add.rectangle(summon.x, summon.y - UNIT_HEIGHT * 0.41, 150, UNIT_HEIGHT * 0.9, 0xffffff, 0)
-        .setInteractive({ useHandCursor: true })
-        // 전투 SD 탭도 도감 태그와 같은 전용 팝업을 열며, 현재 전투용 최종 능력치를 그대로 쓴다.
-        .on("pointerdown", () => creature.setScale(creature.scaleX * 1.05, creature.scaleY * 1.05))
-        .on("pointerout", () => placePuppet(creature, asset, { x: summon.x, groundY: summon.y, height: UNIT_HEIGHT * 0.82, flipX: summon.facing < 0 }))
-        .on("pointerup", () => {
-          placePuppet(creature, asset, { x: summon.x, groundY: summon.y, height: UNIT_HEIGHT * 0.82, flipX: summon.facing < 0 });
-          playMotion(this, creature, "hit");
-          openSummonInfoPopup(this, this.buffPopups, this.battleKeywords, owner.def.stats, definition);
-        });
-      const hpBar = new UnitHealthBar(this, summon.side === "player" ? COLOR.hpFill : COLOR.hpEnemy, this.motion.effectiveBattleUiMotion)
-        .snap(summon.hp / summon.maxHp);
-      const view: SummonView = { creature, asset, summon, input, hpBar };
-      this.placeSummonChrome(view, summon.x, summon.y);
-      this.summonViews.set(summon.id, view);
-      playMotion(this, creature, "idle");
-    } catch (error) {
-      // 에셋 실패는 시뮬레이션/피해/승패와 무관하며 재호출 사건에서 다시 시도할 수 있다.
-      console.error(`[battle] 소환수 Puppet 로드 실패: ${asset.url}`, error);
-    }
-  }
-
-  /** 회수와 씬 종료가 공유하는 완전 정리 경계다. */
-  private destroySummonView(view: SummonView): void {
-    cancelMotion(view.creature);
-    this.tweens.killTweensOf(view.creature);
-    this.tweens.killTweensOf(view.hpBar);
-    this.tweens.killTweensOf(view.input);
-    view.input.destroy();
-    view.hpBar.destroy();
-    view.creature.destroy();
-  }
-
-  /** 늑대를 따라다니는 조각(입력면·체력 바)을 전투 좌표에 맞춰 세운다. */
-  private placeSummonChrome(view: SummonView, x: number, y: number): void {
-    view.input.setPosition(x, y - UNIT_HEIGHT * 0.41);
-    view.hpBar.setPosition(x, y - UNIT_HEIGHT * 0.82 - 26).setDepth(DEPTH.hpBar);
-  }
-
   /**
-   * 근거리 늑대가 표적 옆으로 붙는 한 걸음.
+   * 쓰러졌다 다시 선 몸을 화면으로 되돌린다.
    *
-   * 코어가 보낸 종점만 쓰고, 체력 바와 입력면은 SD와 같은 시간 동안 함께 따라간다 — 하나만
-   * 즉시 옮기면 달리는 동안 바가 먼저 도착해 몸과 따로 논다.
+   * 코어가 이미 좌표와 체력을 정해 두었으므로 화면은 숨겨 둔 것을 다시 보이게 하고 바를
+   * 새 값으로 스냅하기만 한다. 첫 소환도 같은 사건을 쓰므로 두 경로가 갈리지 않는다.
    */
-  private dashSummonView(view: SummonView, from: { x: number; y: number }, to: { x: number; y: number }): void {
-    playMotion(this, view.creature, "run");
-    const pose = { height: UNIT_HEIGHT * 0.82, flipX: view.summon.facing < 0 };
-    placePuppet(view.creature, view.asset, { x: from.x, groundY: from.y, ...pose });
-    const start = { x: view.creature.x, y: view.creature.y };
-    placePuppet(view.creature, view.asset, { x: to.x, groundY: to.y, ...pose });
-    const destination = { x: view.creature.x, y: view.creature.y };
-    view.creature.setPosition(start.x, start.y);
-    this.placeSummonChrome(view, from.x, from.y);
-    this.tweens.add({ targets: view.creature, ...destination, duration: 180, onComplete: () => playMotion(this, view.creature, "idle") });
-    this.tweens.add({ targets: view.input, x: to.x, y: to.y - UNIT_HEIGHT * 0.41, duration: 180 });
-    this.tweens.add({ targets: view.hpBar, x: to.x, y: to.y - UNIT_HEIGHT * 0.82 - 26, duration: 180 });
-  }
-
-  /** 코어 사건의 좌표와 시점만 읽어 소환수 표시를 갱신한다. */
-  private playSummonEvent(event: Extract<SkirmishEvent, { kind: "summon" | "summonMove" | "summonHit" | "summonRecall" | "summonReturn" | "summonUltimateCharge" | "summonFrenzy" }>): void {
-    if (event.kind === "summon" || event.kind === "summonReturn") { void this.spawnSummonView(event.summonId); return; }
-    const view = this.summonViews.get(event.summonId);
+  private reviveView(fighterId: string): void {
+    const view = this.views.get(fighterId);
     if (!view) return;
-    if (event.kind === "summonRecall") {
-      playMotion(this, view.creature, "down");
-      this.destroySummonView(view);
-      this.summonViews.delete(event.summonId);
-      return;
-    }
-    if (event.kind === "summonHit") {
-      // 늑대의 공격과 후방 디안의 명령 몸짓은 같은 판정 사건에서 시작한다.
-      playMotion(this, view.creature, "attack");
-      const owner = this.views.get(event.ownerFighterId);
-      if (owner) playMotion(this, owner.creature, "attack");
-      if (event.targetId === event.summonId) {
-        playMotion(this, view.creature, "hit");
-        // 맞은 쪽일 때만 바가 함께 반응한다. 잔량 자체는 매 프레임 코어에서 다시 읽는다.
-        view.hpBar.setValue({ currentHp: view.summon.hp, maxHp: view.summon.maxHp, damage: event.amount, cause: "damage" });
-      }
-      return;
-    }
-    if (event.kind === "summonFrenzy") {
-      tintPuppet(view.creature, event.active ? 0xff684f : 0xffffff);
-      return;
-    }
-    if (event.kind === "summonUltimateCharge") {
-      // 돌진 길이와 시작 시점은 사건 외에는 추론하지 않는다.
-      this.dashSummonView(view, event.from, event.to);
-      return;
-    }
-    // 근거리 지휘도 같은 걸음을 쓴다. 궁극기 사건 직후의 중복 move는 현재 tween을 보존한다.
-    if (event.kind === "summonMove" && this.tweens.getTweensOf(view.creature).length === 0) {
-      this.dashSummonView(view, event.from, event.to);
-    }
+    view.dead = false;
+    view.creature.setAlpha(1).setVisible(true);
+    view.shadow.setVisible(true);
+    view.hpBar.setVisible(true).snap(view.fighter.hp / view.fighter.maxHp);
+    playMotion(this, view.creature, "idle");
   }
 
   /** 공격·회복·사망·종료를 각각 구분되는 연출로 옮긴다. */
@@ -1206,12 +1086,21 @@ export class BattleScene extends Phaser.Scene {
       return undefined;
     }
 
-    if (event.kind === "summon" || event.kind === "summonMove" || event.kind === "summonHit"
-      || event.kind === "summonRecall" || event.kind === "summonReturn"
-      || event.kind === "summonUltimateCharge" || event.kind === "summonFrenzy") {
-      this.playSummonEvent(event);
+    // 늑대가 처음 서거나 다시 서는 순간이다. 몸은 이미 fighters 배열에 있으므로 표시만 되살린다.
+    if (event.kind === "packSummon") {
+      this.reviveView(event.fighterId);
       return undefined;
     }
+    // 두목이 표적 뒤로 사라졌다 나타나는 순간. 좌표는 코어가 정하고 화면은 그 자리에 내려놓는다.
+    if (event.kind === "packFinisher") {
+      const view = this.views.get(event.fighterId);
+      if (view) {
+        this.effects.burst("fever", event.x, event.y - UNIT_HEIGHT * 0.5, { color: view.feverTint, scale: 1 });
+        playMotion(this, view.creature, "attack");
+      }
+      return undefined;
+    }
+    if (event.kind === "bloodscent") return undefined;
 
     const attacker = this.views.get(event.attackerId);
     const target = this.views.get(event.targetId);
@@ -1672,12 +1561,6 @@ export class BattleScene extends Phaser.Scene {
    */
   private stepMeters(deltaMs: number): void {
     for (const view of this.views.values()) if (!view.dead) view.hpBar.step(deltaMs);
-    // 늑대의 잔량은 사건이 아니라 코어의 값이므로 매 프레임 읽는다 — 피해 경로마다 끼워 넣으면
-    // 한 곳만 빠뜨려도 그 순간 바가 멈춘 것처럼 보인다.
-    for (const view of this.summonViews.values()) {
-      view.hpBar.setValue(view.summon.hp / view.summon.maxHp);
-      view.hpBar.step(deltaMs);
-    }
     const motionFactor = this.motion.battleUiFactor;
     const k = motionFactor === 0 ? 1 : Math.min(1, (deltaMs / 1000) * METER_EASE * motionFactor);
     for (const profile of this.profiles) {

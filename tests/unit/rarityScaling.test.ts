@@ -133,10 +133,19 @@ describe("공통 부가 능력치", () => {
     expect(new Set(PLAYABLE_RELICS.map((r) => r.stats.moveSpeed)).size).toBeGreaterThan(3);
   });
 
+  it("은 소환 전용 개체도 필수 능력치와 스킬을 완전하게 직접 소유한다", () => {
+    const summons = RELICS.filter((relic) => relic.summonOnly === true);
+    expect(summons.map(({ id }) => id)).toEqual(["kuro", "shiro"]);
+    // 가챠에 서지 않으므로 등급 띠 밖이지만 정체성 규칙은 예외 없이 같다.
+    for (const summon of summons) expectCompleteIdentity(summon);
+    // 편성·가챠 목록에는 들어가지 않는다.
+    for (const summon of summons) expect(PLAYABLE_RELICS.map(({ id }) => id)).not.toContain(summon.id);
+  });
+
   it("은 디안도 소환수와 무관하게 공용 부가 능력치를 유지한다", () => {
     // 귀속 소환수는 별도 렐릭 전투력이 아니므로 이 검사는 오직 디안의 Stats만 대상으로 삼는다.
     const dian = getRelic("dian");
-    expect(dian.summons?.map(({ id }) => id)).toEqual(["kuro", "shiro"]);
+    expect(dian.summons?.map(({ def }) => def.id)).toEqual(["kuro", "shiro"]);
     for (const key of KEYS) expect(dian.stats[key], `dian ${key}`).toBe(COMMON_SECONDARY_STATS[key]);
     expect(combatPower(dian.stats)).toBeGreaterThanOrEqual(RARITY_STAT_BAND.SSR.min);
     expect(combatPower(dian.stats)).toBeLessThanOrEqual(RARITY_STAT_BAND.SSR.max);
@@ -168,7 +177,7 @@ describe("치명타형 정체성", () => {
     // 태생 치명타는 전 개체 공통이므로, 암살자·전사의 치명타형 성격은 읽히는 스킬이 만든다.
     const sources = PLAYABLE_RELICS.filter((relic) => relic.passive.criticalChancePercent !== undefined);
     expect(sources.map((relic) => [relic.id, relic.passive.criticalChancePercent])).toEqual([
-      ["rex", 25], ["spino", 10], ["luka", 15], ["delopi", 5], ["parua", 12],
+      ["rex", 25], ["spino", 10], ["luka", 15], ["delopi", 5], ["parua", 12], ["dian", 20],
     ]);
     // 값이 있는 개체는 태생 공통값 위에 그만큼을 더한 확률로 싸운다.
     for (const relic of sources) {

@@ -62,8 +62,6 @@ import { INFO_PORTRAIT_FOCUS, infoPortraitPlacement } from "./portraitPlacement"
 import { skinsForRelic, type RelicSkinDef } from "../data/relicSkins";
 import { relicSkinManager } from "../managers/RelicSkinManager";
 import { Button } from "./Button";
-import { openSummonInfoPopup } from "./SummonInfoPopup";
-import { canShowSummonInfo, summonKeyword, summonKeywordId } from "./summonInfoModel";
 
 export type { SkillInfoViewModel } from "./SkillPopup";
 
@@ -2070,9 +2068,8 @@ export class InfoManager {
       valueLabel,
       // 「세 개의 뿔」처럼 이름을 가진 주기 스택은 개체 전용 규칙어라 전역 사전이 아니라
       // 이 스킬을 여는 자리에서만 주입한다(메테의 스타카토와 같은 자리다).
-      keywordActions: summonTags.actions,
       contextualKeywords: [
-        ...summonTags.keywords,
+        ...summonTags,
         damageDetail, shieldDetail, healDetail,
         "kind" in skill ? undefined : periodicStackKeyword(skill as Skill),
         // 「고통의 희열」은 패시브 본문이 직접 가리키는 태그라 그 쪽지에도 함께 실린다.
@@ -2107,26 +2104,23 @@ export class InfoManager {
   }
 
   /**
-   * 패시브 본문이 가리키는 소환수 태그와, 그 태그가 열 전용 창을 함께 만든다.
+   * 지휘자의 패시브가 부르는 소환수를 쪽지 한 장으로 설명하는 문맥 사전이다.
    *
-   * 뜻풀이는 늘 붙는다 — 태그가 밑줄만 그어진 채 아무것도 열지 못하면 강조가 거짓말이 된다.
-   * 전용 창은 성장·스킬을 볼 수 있는 문맥에서만 얹어, 미보유 도감의 공개 정책을 그대로 지킨다.
+   * 늑대도 완전한 정의를 갖고 있으므로 문장을 손으로 적지 않고 그 정의에서 조립한다 —
+   * 수치를 고친 뒤 옛 문장이 남지 않고, 지휘자가 늘어도 같은 코드가 그대로 읽는다.
    */
-  private summonKeywordTags(): { keywords: readonly KeywordDef[]; actions?: Record<string, () => void> } {
-    const def = this.currentDef;
-    const summons = def?.summons ?? [];
-    if (!def || summons.length === 0) return { keywords: [] };
-    const ownerStats = this.publicProfile?.stats ?? relicProgression.getFinalStats(def.id);
-    const open = this.capabilities.showSummons && canShowSummonInfo(this.capabilities, this.ownedNow);
-    return {
-      keywords: summons.map((summon) => summonKeyword(summon, def.name)),
-      actions: open
-        ? Object.fromEntries(summons.map((summon) => [
-          summonKeywordId(summon),
-          () => openSummonInfoPopup(this.scene, this.popups, this.keywords, ownerStats, summon),
-        ]))
-        : undefined,
-    };
+  private summonKeywordTags(): readonly KeywordDef[] {
+    const summons = this.currentDef?.summons ?? [];
+    // 미보유 도감은 성장·스킬과 같은 정책으로 귀속 소환수도 감춘다.
+    if (!this.capabilities.showSummons || !this.ownedNow) return [];
+    return summons.map(({ def, growthStat }) => ({
+      id: `summon-${def.id}`,
+      term: def.name,
+      kind: "규칙" as const,
+      description: `${this.currentDef?.name ?? "지휘자"}에게 귀속된 근거리 소환수다.`
+        + ` ${growthStat === "atk" ? "공격력" : "주문력"}이 이 개체의 모든 능력치를 정하며 스스로 표적을 고르고 제 궁극기를 쓴다.`
+        + ` 일반 공격은 「${def.basic.name}」, 궁극기는 「${def.ultimate.name}」이다.`,
+    }));
   }
 
   /** 도감은 보유 여부를 전달해 정적 기록과 성장 정보의 잠금을 한곳에서 적용한다. */

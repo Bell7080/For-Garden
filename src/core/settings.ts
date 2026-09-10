@@ -34,12 +34,30 @@ export function excavationStageDuration(stage: ExcavationPresentationStage, shor
 
 export type SemanticColorKind = "element" | "rarity" | "status";
 
+export type ColorAssistPattern = "none" | "dots" | "diagonal" | "crosshatch";
+
+/** 알려진 게임 의미는 명시 표에 고정해 표시가 문자열 순서나 새 콘텐츠 추가에 흔들리지 않게 한다. */
+const COLOR_ASSIST_MARKS: Record<SemanticColorKind, Record<string, { glyph: string; pattern: Exclude<ColorAssistPattern, "none"> }>> = {
+  element: {
+    fire: { glyph: "▲", pattern: "diagonal" }, water: { glyph: "●", pattern: "dots" },
+    grass: { glyph: "◆", pattern: "crosshatch" }, earth: { glyph: "■", pattern: "dots" }, wind: { glyph: "✦", pattern: "diagonal" },
+  },
+  rarity: {
+    R: { glyph: "◇", pattern: "dots" }, SR: { glyph: "◆", pattern: "diagonal" }, SSR: { glyph: "✦", pattern: "crosshatch" },
+  },
+  status: {
+    buff: { glyph: "+", pattern: "dots" }, debuff: { glyph: "−", pattern: "diagonal" },
+    claimable: { glyph: "!", pattern: "crosshatch" }, claimed: { glyph: "×", pattern: "diagonal" }, normal: { glyph: "·", pattern: "dots" },
+    up: { glyph: "+", pattern: "dots" }, down: { glyph: "−", pattern: "diagonal" },
+  },
+};
+
 /** 색각 보조를 홀로그램 색 위에 겹칠 공용 비색상 표식으로 변환한다. */
 export function colorAssistPolicy(enabled: boolean, kind: SemanticColorKind, value: string) {
   if (!enabled) return { glyph: "", pattern: "none" as const };
-  const glyphs: Record<SemanticColorKind, readonly string[]> = {
-    element: ["◆", "▲", "●", "✦", "■"], rarity: ["◇", "◆", "✦", "✦✦"], status: ["+", "−", "!", "×"],
-  };
+  const known = COLOR_ASSIST_MARKS[kind][value];
+  if (known) return known;
+  const glyphs: Record<SemanticColorKind, readonly string[]> = { element: ["◆", "▲", "●", "✦", "■"], rarity: ["◇", "◆", "✦"], status: ["+", "−", "!", "×"] };
   // 안정적인 문자열 해시는 새 값에도 색과 무관한 동일 표식을 되돌려준다.
   const index = [...value].reduce((sum, char) => sum + char.charCodeAt(0), 0) % glyphs[kind].length;
   return { glyph: glyphs[kind][index], pattern: (["dots", "diagonal", "crosshatch"] as const)[index % 3] };

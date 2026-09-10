@@ -61,6 +61,22 @@ async function enterParty(page: import("@playwright/test").Page): Promise<void> 
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("party");
 }
 
+test("색각 보조 표식은 1080×1920 편성 카드와 상성 앵커에서 확대 글자와 겹치지 않는다", async ({ page }) => {
+  await startAfterOpening(page, (session) => {
+    // 가장 큰 공용 글자 배율과 색각 보조를 함께 켜 실제 저장→부트→프리팹 소비 경계를 지난다.
+    session.settings.accessibility.textScale = 1.3;
+    session.settings.accessibility.colorAssist = true;
+  });
+  await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+  await tapGame(page, BASE_WIDTH - 290, BASE_HEIGHT - 425); await tapGame(page, BASE_WIDTH / 2, 550);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("stageMap");
+  await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT - 180);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("party");
+  // captureGame은 CSS 크기가 아닌 기준 1080×1920 캔버스 픽셀로 회귀 산출물을 굽는다.
+  await captureGame(page, `test-results/${test.info().project.name}-color-assist-party-1080x1920.png`);
+});
+
 test("세로형 첫 방문은 오프닝을 끝내고 중복 입력 없이 로비로 한 번 전환한다", async ({ page }) => {
   const consoleErrors: string[] = [];
   page.on("console", (msg) => {

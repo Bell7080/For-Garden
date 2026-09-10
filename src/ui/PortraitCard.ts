@@ -11,6 +11,8 @@ import { addStarMark, RARITY_TONE } from "./rarityMark";
 import { COLOR, textStyle } from "./theme";
 import { portraitCardHeadWindow, portraitCardOverhang } from "./portraitGrid";
 import { addBookmarkMark } from "./bookmarkMark";
+import { session } from "../state/session";
+import { addColorAssistMark, COLOR_ASSIST_LAYOUT } from "./colorAssist";
 
 /** 카드 한 장의 조립 옵션. 크기와 라벨만 주면 나머지 연출은 프리팹이 맞춘다. */
 export interface PortraitCardOptions {
@@ -343,6 +345,10 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     }
 
     if (options.affinity) this.addAffinity(options.affinity, width, height);
+    if (options.rarity && !options.locked) {
+      // 희귀도는 속성과 반대쪽 고정 앵커를 사용해 두 의미가 카드 이름과 서로 밀지 않는다.
+      addColorAssistMark(scene, this, width / 2 - 72, -height / 2 + COLOR_ASSIST_LAYOUT.card.inset, COLOR_ASSIST_LAYOUT.card.size, session.settings.accessibility.colorAssist, "rarity", options.rarity);
+    }
 
     // 왼쪽 위는 크게 깎여 나가므로, 표식은 덜 깎인 오른쪽 위에 붙인다. 등급을 아는 카드는
     // 개체번호 대신 로마자 등급이 그 자리에 선다 — 카드에서 궁금한 것은 번호가 아니라 등급이다.
@@ -434,6 +440,8 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     // 카드의 원화는 밝고 복잡하다. 그늘을 진하게 줘야 실루엣이 옷 무늬에 묻히지 않는다.
     this.add(new AffinityBadge(this.scene, x, top, ELEMENT_ICON[affinity.element], main, 0.62));
     this.add(new AffinityBadge(this.scene, x, top + main * 0.94, ROLE_ICON[affinity.role], sub, 0.62));
+    // 속성 표식은 이름 흐름 밖 카드 모서리에 고정해 텍스트 배율이 커져도 밀리지 않는다.
+    addColorAssistMark(this.scene, this, x + main * 0.42, top - main * 0.38, COLOR_ASSIST_LAYOUT.card.size, session.settings.accessibility.colorAssist, "element", affinity.element);
   }
 
   /**

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { colorAssistPolicy, excavationStageDuration, presentationPolicy } from "../../src/core/settings";
 import { flashPolicy } from "../../src/ui/signatureEffects";
+import { COLOR_ASSIST_LAYOUT, COLOR_ASSIST_SURFACES } from "../../src/ui/colorAssist";
 
 /** 네 저장 토글의 on/off가 Phaser 없이도 각 소비 경계의 실제 정책 차이를 고정한다. */
 describe("settings presentation policies", () => {
@@ -12,6 +13,18 @@ describe("settings presentation policies", () => {
     expect(low.ringRatio).toBeLessThan(full.ringRatio);
     expect(low.fullBodyScale).toBeLessThan(full.fullBodyScale);
     expect(low).toMatchObject({ postProcessing: false, renderQuality: 0.75 });
+  });
+
+  it("대표 값은 종류별 글리프와 패턴에 명시적으로 고정된다", () => {
+    expect(colorAssistPolicy(true, "element", "fire")).toEqual({ glyph: "▲", pattern: "diagonal" });
+    expect(colorAssistPolicy(true, "element", "water")).toEqual({ glyph: "●", pattern: "dots" });
+    expect(colorAssistPolicy(true, "rarity", "SSR")).toEqual({ glyph: "✦", pattern: "crosshatch" });
+    expect(colorAssistPolicy(true, "status", "debuff")).toEqual({ glyph: "−", pattern: "diagonal" });
+  });
+
+  it("우선 화면은 모두 정적 장부와 텍스트 밖 고정 앵커를 가진다", () => {
+    expect(COLOR_ASSIST_SURFACES.map((surface) => surface.id)).toEqual(["battle-status-chip", "relic-card-and-info", "party-affinity", "reward-frame"]);
+    expect(COLOR_ASSIST_LAYOUT).toEqual({ card: { inset: 14, size: 30 }, statusChip: { inset: 5, size: 18 }, affinity: { offsetX: 31, size: 20 }, reward: { inset: 7, size: 22 } });
   });
 
   it("연구 연출 단축은 모든 단계 시간을 줄이되 읽기 하한을 지킨다", () => {

@@ -80,6 +80,17 @@ export interface DamagePopupRequest {
 }
 
 /**
+ * 저장된 "피해 숫자" 선택이 이 전투 텍스트를 숨기는지 정하는 순수 표시 정책이다.
+ *
+ * 이름 그대로 HP를 깎는 일반·고정·지속 피해 수치만 선택의 적용 범위다. 회복량, 보호막 획득량,
+ * 상태가 일으킨 별도 알림과 완전 방어 표식은 전투 판단 정보이므로 선택이 꺼져도 유지한다.
+ */
+export function shouldShowDamagePopup(request: DamagePopupRequest, damageNumbers: boolean): boolean {
+  const isDamageAmount = request.flavor === "damage" || request.flavor === "true" || request.flavor === "debuff";
+  return damageNumbers || !isDamageAmount;
+}
+
+/**
  * 코어의 공격 사건을 화면 효과가 소비할 최소 표현 모델로 옮긴다.
  *
  * `contributionAmount`와 보스 누적 점수는 정산용이고 `maxHp`는 크기 등급용 보조값일 뿐이다.

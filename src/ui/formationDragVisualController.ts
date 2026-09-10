@@ -23,6 +23,8 @@ export interface FormationDragVisualOptions {
   scene: Phaser.Scene;
   slots: readonly FormationVisualSlot[];
   formation: () => readonly (string | undefined | null)[];
+  /** 자리 제약. 확정과 같은 규칙을 넘겨야 미리보기와 놓은 결과가 갈리지 않는다. */
+  slotAllows?: (relicId: string | undefined, index: number) => boolean;
   color: number;
   /** 감광 범위도 화면 좌표다. 생략하면 슬롯 전체를 여유 있게 감싼다. */
   dimBounds?: { x: number; y: number; width: number; height: number };
@@ -70,7 +72,7 @@ export function createFormationDragVisualController(options: FormationDragVisual
     active.hovered = hovered < 0 ? undefined : hovered;
     zones.forEach((_zone, index) => paintZone(index, index === active?.hovered));
     const picked = options.formation().map((id) => id ?? undefined);
-    const preview = formationDragPreview(picked, from, active.hovered, slots.length);
+    const preview = formationDragPreview(picked, from, active.hovered, slots.length, options.slotAllows);
     options.renderPreview({ preview, pointer: { x, y }, from, hovered: active.hovered });
     options.onVisualState?.({ hovered: active.hovered, replacementVisible: preview.some((entry) => entry.moved) });
   };

@@ -38,7 +38,8 @@ function fightAndLog(party: readonly string[], seed: number): ExpeditionBossActi
       const target = state.fighters.find(({ id }) => id === event.targetId);
       // BattleScene의 기록 조건과 같은 줄을 쓴다 — 하나라도 달라지면 이 회귀가 실제를 검사하지 못한다.
       if (!state.boss || attacker?.side !== "player" || target?.side !== "enemy" || event.animate === false || event.followUp === true) continue;
-      const kind = event.skill === "staccato" || event.skill === "shimmer" ? "basic" : event.skill === "transfer" ? "ultimate" : event.skill;
+      const kind = event.skill === "staccato" || event.skill === "shimmer" || event.skill === "weakpoint"
+        ? "basic" : event.skill === "transfer" ? "ultimate" : event.skill;
       actions.push({ elapsedMs: Math.round((event.at ?? state.elapsed) * 1_000), actorId: attacker.def.id, kind });
     }
   }

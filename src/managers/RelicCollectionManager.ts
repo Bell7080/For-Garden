@@ -1,11 +1,12 @@
 import { BOND_XP_REWARD, grantBondXp } from "../core/bond";
 import type { RelicDef } from "../core/types";
+import { canStandInSlot } from "../core/formation";
 import { PLAYABLE_RELICS } from "../data/relics";
 import { createInitialRelicProgress, session, type Session } from "../state/session";
 import { saveManager } from "../state/SaveManager";
 
 /** 편성 실패를 UI와 테스트가 문자열 추측 없이 구분하기 위한 안정적인 사유 코드다. */
-export type SetPartyFailureReason = "wrong-size" | "duplicate" | "not-owned";
+export type SetPartyFailureReason = "wrong-size" | "duplicate" | "not-owned" | "slot-locked";
 
 /** 성공과 검증 실패를 판별 가능한 형태로 돌려주는 편성 확정 결과다. */
 export type SetPartyResult =
@@ -75,6 +76,10 @@ export class RelicCollectionManager {
     const unique = new Set(relicIds);
     if (relicIds.length !== 3) return { ok: false, reason: "wrong-size" };
     if (unique.size !== 3) return { ok: false, reason: "duplicate" };
+    // 자리 제약은 화면이 아니라 이 경계가 지킨다 — 드래그를 막아도 다른 화면에서 같은 배열이
+    // 들어오면 짝이 자기 자신이 되어 패시브가 통째로 빈다.
+    const blockedIndex = relicIds.findIndex((id, index) => !canStandInSlot(PLAYABLE_RELICS.find((relic) => relic.id === id), index, relicIds.length));
+    if (blockedIndex >= 0) return { ok: false, reason: "slot-locked", relicId: relicIds[blockedIndex] };
     const notOwnedId = relicIds.find((id) => !this.owns(id));
     if (notOwnedId !== undefined) return { ok: false, reason: "not-owned", relicId: notOwnedId };
 

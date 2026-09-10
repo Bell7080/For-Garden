@@ -469,3 +469,28 @@ export const PARUA_SD_METADATA: Omit<PuppetAsset, "url"> = {
   imageHeight: 1254,
   content: { left: 58, top: 11, right: 1196, bottom: 1244 },
 };
+
+/**
+ * 18번 슈테(스테고사우루스) 전신.
+ *
+ * ZIP 안 WebP의 alpha > 16 경계를 실측했다(5,8–1078,1446). 관절도 같은 좌표계에서 읽어
+ * 중심1(728,410)·머리1(671,313)·눈1(637,315)·눈2(714,269)이며, 셋 다 alpha 상자 안에 있어
+ * 카드·로비 배율이 그림 밖 관절에 기대지 않는다.
+ *
+ * 앉아 있는 포즈라 실루엣이 캔버스를 거의 채우지만(폭 1073/1087), 눈에서 발끝까지가 여전히
+ * 그림 높이의 80%라 다른 전신과 같은 방법으로 잰다.
+ */
+export const SHUTE_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1087,
+  imageHeight: 1447,
+  content: { left: 5, top: 8, right: 1078, bottom: 1446 },
+  /** 로비 세로 비율: 메론 기준. 1.46 m. */
+  lobbyZoom: 0.953,
+};
+
+/** 슈테 SD ZIP의 정사각 원본과 alpha > 16 경계다. 중심1(656,640)·머리1(589,501)을 함께 읽었다. */
+export const SHUTE_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254,
+  imageHeight: 1254,
+  content: { left: 31, top: 18, right: 1222, bottom: 1235 },
+};

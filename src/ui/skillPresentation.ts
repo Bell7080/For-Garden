@@ -23,6 +23,7 @@ export function targetingLabel(targeting?: Ultimate["targeting"]): string | unde
   if (targeting === "self") return "자신";
   if (targeting === "targetedCircle") return "지정한 원 안의 모든 적과 생존 아군";
   if (targeting === "chargeLine") return "[[charge|돌진]]해 뚫고 지나간 길의 모든 적";
+  if (targeting === "duo") return "듀오";
   return undefined;
 }
 
@@ -33,6 +34,8 @@ export function statusEffectLabel(effect?: CombatStatusEffect): string | undefin
   if (effect?.kind === "stagger") return "[[stagger|경직]]";
   if (effect?.kind === "bleed") return `[[bleed|출혈]] ${effect.seconds}초 · 매초 최대 체력 ${effect.maxHpPercentPerSecond}%`;
   if (effect?.kind === "poison") return `[[poison|중독]] ${effect.seconds}초`;
+  // 시간이 아니라 듀오의 다음 한 방으로 풀리는 표식이라 초를 적지 않는다.
+  if (effect?.kind === "weakpoint") return "[[weakpoint|약점 포착]]";
   // 시간으로 사라지지 않으므로 요약줄에도 초를 적지 않는다. 겹 상한은 태그가 말한다.
   if (effect?.kind === "vandalism") return "[[vandalism|밴덜리즘]]";
   if (effect?.kind === "taunt") return `[[taunt|도발]] ${effect.seconds}초`;
@@ -114,7 +117,7 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
   }
   // 덧셈형 확률도 플레이어에게는 일반적인 퍼센트 기호로 보여 주고 내부 산술 단위는 노출하지 않는다.
   if (trait.effectId === "teamMoveSpeedBonus") return `생존 아군 전체의 이동 속도가 ${trait.bonusPercent}% 빨라진다.`;
-  if (trait.effectId === "rexBattleQueen") return `치명타 확률과 모든 피해 흡혈이 각각 ${trait.criticalChancePoints}%, ${trait.allDamageLifeStealPoints}% 증가한다.`;
+  if (trait.effectId === "rexBattleQueen") return `[[bleed|출혈]] 중인 적을 공격하면 치명타가 확정되고, 모든 피해 흡혈이 ${trait.allDamageLifeStealPoints}% 증가한다.`;
   // 내부 효과명은 저장 호환성을 위해 도약으로 유지하지만, 플레이어에게는 실제 좌표 변경 규칙을 정확히 알린다.
   if (trait.effectId === "stealthLeap") return `체력 비율이 가장 낮은 적에게 [[teleport|순간이동]]해 ${trait.durationSeconds}초 동안 [[stealth|은신]]한다.`;
   if (trait.effectId === "selfAttackSpeedMultiplier") return `공격 속도가 ${trait.bonusPercent}% 증가한다.`;
@@ -182,6 +185,12 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
       + ` 체력 ${trait.kuro.executeBelowHpPercent}% 이하 적에게 주는 피해가 ${trait.kuro.executeDamagePercent}% 증가한다.`
       + ` 시로의 주문력이 ${trait.shiro.abilityPowerPercent}%, 공격 속도가 ${trait.shiro.attackSpeedPercent}%, 이동 속도가 ${trait.shiro.moveSpeedPercent}% 증가하고,`
       + ` 추적 피해가 ${trait.shiro.pursuitDamagePercent}% 증가한다.`;
+  }
+
+  if (trait.effectId === "duoBreakthrough") {
+    return "듀오의 표적을 체력이 가장 낮은 적으로 바꾸고 그리로 [[charge|돌진]]시켜,"
+      + ` 지나간 길의 적을 듀오의 [[basic-attack|기본 공격]] 위력으로 치고 [[knockback|날려버린다]].`
+      + ` 폭주 동안 듀오가 입힌 피해의 ${trait.allyRegenFromDuoDamagePercent}%만큼 모든 아군이 체력을 회복한다.`;
   }
 
   // 방어력 계수는 토리카처럼 추가 피해가 있는 범위 타격만 노출하고, 일반 전이 특성은 원래 피해 비율만 보여 준다.
@@ -310,6 +319,12 @@ function passiveHead(passive: Passive, atk?: number): string {
     const phasing = passive.phasesThroughFighters ? " 다른 전투원을 그대로 지나가고," : "";
     return `[[basic-attack|기본 공격]]을 낼 때마다 아직 때리지 않은 적으로 표적을 바꾼다. 모든 적을 때렸다면 처음부터 다시 돈다.`
       + `${phasing} 타격하는 순간까지 멈추지 않고 움직이며, 움직이는 동안 매초 ${charge}씩 더 찬다.`;
+  }
+  if (passive.kind === "duoLink" && passive.duoLink !== undefined) {
+    // 세 절이 각각 다른 일을 한다 — 짝을 짓고, 숨고, 같은 적을 노린다. 한 문장에 이으면
+    // 무엇이 조건이고 무엇이 결과인지 읽히지 않으므로 문장을 끊는다.
+    return `편성 가운데 자리의 아군과 듀오가 되어 그 곁에 붙어 다닌다. 듀오의 체력이 ${passive.value}% 이상인 동안 [[stealth|은신]]한다.`
+      + ` ${passive.duoLink.syncSeconds}초마다 듀오가 노리는 적을 함께 표적으로 삼는다. 듀오가 쓰러지면 다시 짝을 짓지 않는다.`;
   }
   if (passive.kind === "shimmerMark") return `적을 타격하면 반짝이는 표식을 남긴다. 표식이 없는 적을 타격하면 표식이 그 적에게 옮겨가며 [[ap|주문력]]의 ${passive.value}% [[magical-damage|마법 피해]]를 추가로 입힌다.`;
   if (passive.kind === "frostboundDominion") return `상성 계산에서 물이 아닌 얼음으로 취급된다. 얼음은 풀·물·땅에 유리하고 불에 불리하며 바람과는 무상성이다. 이미 [[chill|둔화]]가 최대 중첩인 적을 때리면 그 겹을 모두 소모해 [[frozen|빙결]]시킨다.`;
@@ -468,6 +483,12 @@ export function skillDescription(
       return `${volley.seconds}초 동안 [[basic-attack|기본 공격]]이 ${volley.hitCount}번 적중하는 [[combo|연격]]이 되고,`
         + ` [[attack-speed|공격 속도]]가 ${volley.attackSpeedPercent}% 오른다.`;
     }
+    // 듀오 한 명에게만 거는 지시. 대상이 전장 전체가 아니라는 것부터 말한다.
+    if ("teamBuff" in skill && skill.teamBuff?.kind === "order") {
+      const buff = skill.teamBuff;
+      return `듀오에게 ${buff.seconds}초 동안 [[attack-speed|공격 속도]] ${buff.attackSpeedPercent}%,`
+        + ` 치명타 확률 ${buff.criticalChancePoints}%, 흡혈 ${buff.lifeStealPoints}%를 부여한다.`;
+    }
     // 피해도 회복도 없는 지원 궁극기. 무엇을 얼마나 오래 거는지만 말한다.
     if ("teamBuff" in skill && skill.teamBuff?.kind === "tailwind") {
       const buff = skill.teamBuff;
@@ -609,6 +630,17 @@ function skillEffectClauses(skill: DescribedSkill, stats: SkillDescriptionStats)
   if (skill.allyEnergyGain !== undefined) {
     clauses.push({ text: `모든 생존 아군의 궁극기 게이지가 ${skill.allyEnergyGain} 오른다`, standalone: true });
   }
+  // 아군 전체가 아니라 듀오 한 명에게만 흘러간다. 두 값이 같으면 한 번만 말한다 — 다른
+  // 값이 되는 순간 다시 나열해야 한다.
+  if (skill.duoCharge !== undefined) {
+    const { energy, ferocity } = skill.duoCharge;
+    clauses.push({
+      text: energy === ferocity
+        ? `듀오의 궁극기 게이지와 [[ferocity|야성]]이 각각 ${energy} 오른다`
+        : `듀오의 궁극기 게이지가 ${energy}, [[ferocity|야성]]이 ${ferocity} 오른다`,
+      standalone: true,
+    });
+  }
   clauses.push(...statusClauses(skill));
   if ("damageTransfer" in skill && skill.damageTransfer) {
     clauses.push({ text: `그 적이 실제로 잃은 최종 HP 피해의 ${skill.damageTransfer.percent}%를 가장 가까운 다른 적에게 [[transfer|전이]]한다`, standalone: true });
@@ -681,6 +713,8 @@ function statusEffectClause(effect: CombatStatusEffect): string | undefined {
   if (effect.kind === "stun") return `${effect.seconds}초 동안 [[stun|기절]]시킨다`;
   // 뇌진탕의 수치와 치명타 배증은 키워드가 말하므로 본문은 걸린다는 사실만 적는다.
   if (effect.kind === "concussion") return `[[concussion|뇌진탕]]을 입힌다`;
+  // 터지는 위력과 회복 비율은 태그가 말하므로 본문은 표식을 남긴다는 사실만 적는다.
+  if (effect.kind === "weakpoint") return `[[weakpoint|약점 포착]]을 남긴다`;
   // 겹 상한과 터지는 위력은 태그가 말하므로 본문은 겹이 쌓인다는 사실만 적는다.
   if (effect.kind === "butcher") return `[[butcher|손질]]을 한 겹 쌓는다`;
   if (effect.kind === "stagger") return `[[stagger|경직]]시킨다`;

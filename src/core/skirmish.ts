@@ -135,6 +135,22 @@ export interface Fighter extends Combatant {
   retargetIn: number;
   /** 고품격 식재료가 다시 표적을 고르기까지 남은 시간(초). 0이 되는 프레임에 도약한다. */
   huntCooldown: number;
+  /**
+   * 듀오의 런타임 ID. 「듀오 랭크」를 가진 개체만 값을 갖는다.
+   *
+   * **한 번 정해지면 바뀌지 않는다.** 듀오가 쓰러져도 다른 아군으로 옮겨 붙지 않는 것이 이
+   * 패시브의 값이라, 여기서 다시 짝을 지어 주면 그 대가가 사라진다.
+   */
+  duoId: string | null;
+  /** 듀오의 표적을 다시 읽기까지 남은 시간(초). 0이 되는 프레임에 같은 적으로 갈아 낀다. */
+  duoSyncIn: number;
+  /**
+   * 지금 찍혀 있는 약점 포착. **듀오가 그 적을 때리는 순간 터지고 사라진다.**
+   *
+   * 표식을 찍은 개체의 ID를 함께 드는 이유는 피해가 그 개체의 주문력에서 나오기 때문이고,
+   * 누구의 듀오가 터뜨릴 수 있는지도 이 값으로만 판별한다 — 개체 이름으로 분기하지 않는다.
+   */
+  weakpoint: { sourceId: string; burstPower: number; duoHealPercent: number } | null;
   /** 남은 순풍 시간(초). 공격 속도·이동 속도를 함께 올리는 아군 전체 강화다. */
   tailwindFor: number;
   /** 지금 걸린 순풍의 수치. 여러 제공자가 겹치면 남은 시간이 긴 쪽의 값을 그대로 쓴다. */
@@ -465,7 +481,7 @@ export type SkirmishEvent =
       kind: "attack";
       attackerId: string;
       targetId: string;
-      skill: "basic" | "ultimate" | "staccato" | "transfer" | "shimmer";
+      skill: "basic" | "ultimate" | "staccato" | "transfer" | "shimmer" | "weakpoint";
       amount: number;
       /** 방어·저항·속성·대상 경감·무효화 전, 공격자가 실제로 만든 점수 기여값이다. */
       contributionAmount: number;
@@ -840,6 +856,9 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     butcher: null,
     // 첫 도약은 전투가 시작되고 조금 뒤다 — 첫 프레임에 뛰면 순간이동한 것으로만 보인다.
     huntCooldown: def.passive.kind === "gourmetHunt" ? def.passive.huntOpeningSeconds ?? 0 : 0,
+    duoId: null,
+    duoSyncIn: 0,
+    weakpoint: null,
     tailwindFor: 0,
     tailwind: null,
     tailwindTickIn: 0,
@@ -987,6 +1006,8 @@ export function createSkirmish(
   };
   // 지휘형 은신은 시간이 아니라 두 귀속 소환수의 생존 조건이 소유하므로 무기한 값으로 표시한다.
   refreshSummonCommanderStealth(state);
+  // 듀오는 편성 가운데 자리로 열리는 순간 한 번만 정해지고, 그 뒤로는 바뀌지 않는다.
+  linkDuos(state);
   // 시작 효과는 별도의 순수 단계에서 정확히 한 번 적용하고 사건은 첫 렌더 step까지 보존한다.
   state.initialEvents = initializeSkirmishAugments(state);
   // 최초 소환도 재호출과 같은 좌표 계약을 사용하며, 정산용 fighters 배열에는 넣지 않는다.
@@ -1173,6 +1194,10 @@ export function applyCombatStatusEffect(fighter: Fighter, effect: CombatStatusEf
   if (effect.kind === "overpaint") refreshOverpaint(fighter, { ...effect, seconds: effect.seconds * potency });
   if (effect.kind === "concussion") applyConcussion(fighter, effect, critical, events, state, sourceId);
   if (effect.kind === "butcher") applyButcher(fighter, effect, events, state, sourceId);
+  // 표식은 겹을 쌓지 않고 하나만 유지한다. 다시 찍으면 그 자리를 새 표식이 덮는다.
+  if (effect.kind === "weakpoint" && sourceId !== undefined) {
+    fighter.weakpoint = { sourceId, burstPower: effect.burstPower, duoHealPercent: effect.duoHealPercent };
+  }
   if (effect.kind === "curse") refreshCurse(fighter, { ...effect, seconds: effect.seconds * potency });
   if (effect.kind === "chill") refreshChill(fighter, effect);
   if (effect.kind === "frenzy") applyFrenzy(fighter, { ...effect, seconds: effect.seconds * potency }, sourceId);
@@ -2483,7 +2508,8 @@ export function moveSpeed(fighter: Fighter, state?: SkirmishState): number {
   const trait = fighter.def.ferocityTrait;
   const selfBonus = fighter.ferocityFever && (trait.effectId === "ichthyoDive" || trait.effectId === "graffitiRun")
     ? trait.moveSpeedPercent : 0;
-  const tailwindPercent = fighter.tailwindFor > 0 ? fighter.tailwind?.moveSpeedPercent ?? 0 : 0;
+  // 이동 속도를 데려오는 것은 순풍뿐이다 — 오더는 한 명의 화력만 올리고 걸음은 건드리지 않는다.
+  const tailwindPercent = fighter.tailwindFor > 0 && fighter.tailwind?.kind === "tailwind" ? fighter.tailwind.moveSpeedPercent : 0;
   // 둔화는 공격 속도와 같은 비율로 이동 속도도 함께 깎는다.
   const chillPercent = fighter.chill ? fighter.chill.stacks * fighter.chill.speedPercentPerStack : 0;
   // 여울은 상태가 아니라 지금 서 있는 자리라, 물 밖으로 나가면 같은 프레임에 풀린다.
@@ -2702,6 +2728,30 @@ function grantAllyEnergy(attacker: Fighter, skill: Skill, state: SkirmishState):
   }
 }
 
+/**
+ * 스킬이 실린 게이지를 **듀오 한 명에게만** 흘려보낸다.
+ *
+ * `grantAllyEnergy`(아군 전체)와 다른 축이다 — 그쪽은 전장 전체의 회전을 앞당기고, 이쪽은 한
+ * 명의 회전만 앞당긴다. 야성을 공용 경계(`gainFerocity`)로 넣는 이유는 유대 보정과 피버 진입
+ * 판정을 그대로 지나야 하기 때문이다.
+ */
+function grantDuoCharge(attacker: Fighter, skill: Skill, state: SkirmishState, events: SkirmishEvent[]): void {
+  const charge = skill.duoCharge;
+  if (charge === undefined) return;
+  const duo = duoOf(attacker, state);
+  if (duo === undefined || !isFighterAlive(duo)) return;
+  const threshold = duo.def.ultimate.chargeStartsAtHpPercent;
+  if (charge.energy > 0 && (threshold === undefined || duo.hp / duo.maxHp * 100 <= threshold)) {
+    duo.energy = Math.min(ULTIMATE_ENERGY_MAX, duo.energy + charge.energy);
+  }
+  if (charge.ferocity > 0) gainFerocity(duo, charge.ferocity, state, events);
+}
+
+/** 지금 이 개체에게 걸려 있는 「오더」. 순풍과 같은 슬롯을 쓰므로 종류를 확인하고 꺼낸다. */
+function activeOrder(fighter: Fighter): Extract<TeamBuff, { kind: "order" }> | undefined {
+  return fighter.tailwindFor > 0 && fighter.tailwind?.kind === "order" ? fighter.tailwind : undefined;
+}
+
 /** 순풍처럼 시간이 정해진 아군 전체 강화를 건다. 겹쳐 걸면 남은 시간이 더 긴 쪽으로 갱신된다. */
 function applyTeamBuff(target: Fighter, buff: TeamBuff): void {
   if (buff.seconds <= target.tailwindFor) return;
@@ -2718,7 +2768,7 @@ function applyTeamBuff(target: Fighter, buff: TeamBuff): void {
  * 아무것도 회복시키지 않는다. 긴급 회복과 같은 1초 틱·같은 회복 경계를 쓴다.
  */
 function tickTailwind(fighter: Fighter, dt: number, state: SkirmishState): SkirmishEvent[] {
-  const percent = fighter.tailwindFor > 0 ? fighter.tailwind?.maxHpRegenPercentPerSecond : undefined;
+  const percent = fighter.tailwindFor > 0 && fighter.tailwind?.kind === "tailwind" ? fighter.tailwind.maxHpRegenPercentPerSecond : undefined;
   if (percent === undefined || dt <= 0 || !isFighterAlive(fighter)) return [];
   fighter.tailwindTickIn -= Math.min(dt, fighter.tailwindFor);
   const events: SkirmishEvent[] = [];
@@ -2759,6 +2809,7 @@ function gainFerocity(fighter: Fighter, base: number, state: SkirmishState, even
       for (const other of state.fighters) if (other.targetId === fighter.id) { other.targetId = null; other.engaged = false; }
     }
     if (trait.effectId === "adamantBody") fighter.hastenedAttacksLeft = trait.hastenedAttacks;
+    if (trait.effectId === "duoBreakthrough") launchDuoBreakthrough(fighter, trait, state, events);
     // 마키는 폭주 진입 직후 세 번의 칼질을 회복과 폭딜로 바꾼다. 이전 폭주의 잔여치는 덮어쓴다.
     if (trait.effectId === "butcherFeast") {
       fighter.instantButcherAttacksLeft = trait.instantButcherAttacks;
@@ -3014,7 +3065,7 @@ function damageHealingRate(attacker: Fighter, skill: Skill, attackingInFever: bo
   // 매디 전용: 때리기 전부터 이미 빙결 중이던 적에게만 붙는 흡혈이다. 이번 타격이 새로 건
   // 빙결에는 적용하지 않는다 — 상태 효과는 이 계산 뒤에 적용된다.
   const frozenBonus = target.frozen !== null ? skill.damageHealingPercentIfFrozen ?? 0 : 0;
-  return attacker.def.stats.lifeSteal + fever + frozenBonus + (skill.damageHealingPercent ?? 0);
+  return attacker.def.stats.lifeSteal + fever + frozenBonus + (activeOrder(attacker)?.lifeStealPoints ?? 0) + (skill.damageHealingPercent ?? 0);
 }
 
 /** 아군의 원본 일반 공격 적중 하나를 소비해 폭주 중인 메테들의 스타카토를 한 번씩 발생시킨다. */
@@ -3511,8 +3562,12 @@ function strike(
   // "이 개체는 왜 치명타형인가"의 답이 늘 패시브에 있어야 하고, 새 개체가 그 값을 적기만 하면
   // 전투가 그대로 읽어야 한다.
   const passiveCritPoints = attacker.def.passive.criticalChancePercent ?? 0;
-  const criticalChance = attacker.def.stats.critChance + passiveCritPoints
-    + (attackingInFever && critTrait.effectId === "rexBattleQueen" ? critTrait.criticalChancePoints : 0);
+  // 「오더」가 더하는 치명타 확률도 퍼센트포인트다 — 곱하면 같은 지시가 개체마다 다른 값이 된다.
+  const criticalChance = attacker.def.stats.critChance + passiveCritPoints + (activeOrder(attacker)?.criticalChancePoints ?? 0);
+  // 「전투의 여왕은 나야.」 폭주 중에는 이미 물어뜯어 피가 흐르는 적을 다시 물면 확정 치명타다.
+  // 확률을 더하지 않는 이유는 그 축을 패시브가 이미 밀고 있어 폭주가 같은 말을 반복하기 때문이다.
+  const bleedingBite = attackingInFever && critTrait.effectId === "rexBattleQueen"
+    && critTrait.bleedingGuaranteedCritical && target.bleed !== null;
   const periodicCritical = !useUltimate ? attacker.def.basic.periodicCritical : undefined;
   if (periodicCritical) {
     // 행동마다 정확히 한 번 증가시키며 주기 끝은 0으로 되돌려 다음 네 공격을 독립적으로 센다.
@@ -3525,7 +3580,7 @@ function strike(
   const empowered = !useUltimate && attacker.empoweredBasic;
   if (empowered) attacker.empoweredBasic = false;
   // 확정 치명타는 RNG를 호출조차 하지 않아 이후 리플레이 난수열이 밀리지 않는다.
-  const critical = forcedCritical || empowered || isCriticalHit(Math.min(100, criticalChance), rng());
+  const critical = forcedCritical || empowered || bleedingBite || isCriticalHit(Math.min(100, criticalChance), rng());
   // 공속 복합 계수는 현재 기본 공속과 전투의 환희 누적을 읽되 폭주 임시 배율은 포함하지 않는다.
   const attackSpeedPower = useUltimate ? attacker.def.ultimate.attackSpeedPower ?? 0 : 0;
   const compositePower = attackSpeedPower > 0
@@ -3635,6 +3690,7 @@ function strike(
     else gainEnergy(attacker, state);
     // 아군 전체 충전은 시전자 자신의 충전과 같은 경계에서, 한 공격 행동에 한 번만 나눠 준다.
     grantAllyEnergy(attacker, skill, state);
+  grantDuoCharge(attacker, skill, state, events);
     gainFerocity(attacker, useUltimate ? FEROCITY_RULES.ultimateGain : FEROCITY_RULES.basicGain, state, events);
   }
   // 무효 공격은 실제 피격이 아니므로 피격 야성과 그에 따른 폭주 전환을 만들지 않는다.
@@ -3700,9 +3756,13 @@ function strike(
   // 덧칠된 적이 맞을 때마다 그 피해의 일부가 최저 체력 아군의 회복으로 돌아온다. 궁극기로
   // 덧칠이 지워지기 전에 정산해야 이번 타격의 몫이 빠지지 않는다.
   siphonOverpaintHealing(attacker, target, targetHpBefore - target.hp, state, events);
+  triggerDuoBreakthroughRegen(state, attacker, targetHpBefore - target.hp, events);
 
   // 궁극기·스타카토 사건은 제외하고, 실제 일반 공격의 각 적중(연격 포함)만 크레센도를 울린다.
   if (!useUltimate) { triggerCrescendoStaccato(state, target, events); triggerSharedOverpaint(state, target); }
+  // 표식은 궁극기로 터뜨려도 같은 한 번이다 — 슈테가 찍어 둔 자리를 듀오가 밟는 것이 조건이지
+  // 어느 손으로 밟았는지가 아니다.
+  triggerWeakpoint(state, attacker, target, events);
 
   // 개별 기본 공격·궁극기가 선언한 상태도 피해 처리 뒤 공용 저항/재적용 규칙을 그대로 사용한다.
   // 청산하는 타격은 같은 손으로 덧바르지 않는다 — 바르거나 터뜨리거나 한 번에 하나뿐이다.
@@ -3922,6 +3982,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
   if (useUltimate) attacker.energy -= ultimateCost(state, attacker, true);
   else gainEnergy(attacker, state);
   grantAllyEnergy(attacker, skill, state);
+  grantDuoCharge(attacker, skill, state, events);
   // 공격자 야성은 이번 공격의 모든 피해가 같은 시작 시점 배율을 쓰도록 대상 처리 뒤에 얻는다.
   const attackingInFever = attacker.ferocityFever;
   const critTrait = attacker.def.ferocityTrait;
@@ -3931,9 +3992,11 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
 
   for (const [index, target] of targets.entries()) {
     // 각 대상은 자기 방어력·속성·피버 경감을 사용하며 치명타도 독립 판정한다.
-    const criticalChance = Math.min(100, attacker.def.stats.critChance + passiveCritPoints
-      + (attackingInFever && critTrait.effectId === "rexBattleQueen" ? critTrait.criticalChancePoints : 0));
-    const critical = isCriticalHit(criticalChance, rng());
+    const criticalChance = Math.min(100, attacker.def.stats.critChance + passiveCritPoints + (activeOrder(attacker)?.criticalChancePoints ?? 0));
+    // 광역도 같은 조건을 쓴다 — 대상마다 출혈 여부가 다르므로 판정도 대상마다 따로 본다.
+    const bleedingBite = attackingInFever && critTrait.effectId === "rexBattleQueen"
+      && critTrait.bleedingGuaranteedCritical && target.bleed !== null;
+    const critical = bleedingBite || isCriticalHit(criticalChance, rng());
     // 덧칠 중첩은 **대상마다** 다르므로 위력도 대상마다 따로 더한다. 한 번 세어 모두에게
     // 같은 배율을 쓰면 가장 많이 칠한 적의 몫이 아무도 칠하지 않은 적에게까지 간다.
     // 폭발형 궁극기의 위력은 총량이 아니라 **겹당 값**이라 그 대상의 겹 수만큼 곱한다.
@@ -3955,6 +4018,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     // 따라 다른 일을 한다.
     if (!useUltimate) grantShieldFromDamage(attacker, hpBefore - target.hp, events);
     siphonOverpaintHealing(attacker, target, hpBefore - target.hp, state, events);
+    triggerDuoBreakthroughRegen(state, attacker, hpBefore - target.hp, events);
     // 완성작을 공개하고 나면 그림은 지워진다 — 쌓아 두고 매번 터뜨릴 수 있으면 상시 배율이 된다.
     if (detonation) target.overpaint = null;
     if (!resolution.ignored) gainFerocity(target, FEROCITY_RULES.hitGain, state, events);
@@ -4159,6 +4223,179 @@ function clampToArena(state: SkirmishState): void {
 }
 
 /** 두 늑대가 모두 현장에 있는 동안만 디안의 조건부 은신을 유지하고 추적 중인 단일 표적을 끊는다. */
+/** 지금 짝지어 둔 듀오. 이미 쓰러졌어도 ID는 남으므로 생존 판정은 호출부가 한다. */
+function duoOf(fighter: Fighter, state: SkirmishState): Fighter | undefined {
+  return fighter.duoId ? findFighter(state, fighter.duoId) : undefined;
+}
+
+/**
+ * 전투가 열리는 순간 듀오를 정한다.
+ *
+ * 짝은 **편성 가운데 자리**의 아군이다. "전투력이 가장 높은 아군"으로 두면 룬과 레벨에 따라
+ * 조용히 바뀌어 화면에서 왜 저 아이한테 붙었는지가 읽히지 않는다 — 자리는 플레이어가 직접
+ * 정하는 값이라 규칙이 그대로 보인다. 가운데가 자기 자신뿐이면 짝이 없다.
+ */
+function linkDuos(state: SkirmishState): void {
+  for (const fighter of state.fighters) {
+    if (fighter.def.passive.kind !== "duoLink") continue;
+    const party = state.fighters.filter((other) => other.side === fighter.side);
+    const middle = party[Math.floor((party.length - 1) / 2)];
+    fighter.duoId = middle !== undefined && middle.id !== fighter.id ? middle.id : null;
+  }
+}
+
+/**
+ * 「듀오 랭크」를 매 프레임 돌린다 — 은신, 표적 동기화, 곁에 붙는 목줄.
+ *
+ * 목줄을 걷는 힘과 따로 두는 이유는 슈테가 로스터에서 느린 축이기 때문이다. 표적만 복사하고
+ * 몸이 뒤에 남으면 사거리 밖에서 아무것도 못 하고, 그 평타가 이 개체의 엔진(충전과 표식)이라
+ * 그대로 한 슬롯이 비어 버린다.
+ */
+function updateDuoLink(fighter: Fighter, state: SkirmishState, dt: number): void {
+  const passive = fighter.def.passive;
+  const link = passive.duoLink;
+  if (passive.kind !== "duoLink" || link === undefined || !isFighterAlive(fighter)) return;
+  const duo = duoOf(fighter, state);
+  if (duo === undefined || !isFighterAlive(duo)) {
+    // 듀오가 쓰러지면 은신도 함께 풀린다. 다시 붙을 곳이 없으므로 남은 전투는 혼자 선다.
+    if (fighter.stealthFor === Number.POSITIVE_INFINITY) fighter.stealthFor = 0;
+    return;
+  }
+  // 은신은 듀오가 건강한 동안에만 돈다 — 듀오가 위험해지는 순간 슈테도 함께 노출된다.
+  const guarded = duo.hp / duo.maxHp * 100 >= passive.value;
+  fighter.stealthFor = guarded ? Number.POSITIVE_INFINITY : 0;
+  fighter.stealthBreaksOnBasic = false;
+  // 조건이 켜진 프레임에 이미 슈테를 쫓던 단일 대상도 즉시 표적을 잃는다.
+  if (guarded) for (const enemy of state.fighters) if (enemy.targetId === fighter.id) { enemy.targetId = null; enemy.engaged = false; }
+
+  // 표적은 **주기적으로** 다시 읽는다. 매 프레임 복사하면 루카의 표적 복사와 구별되지 않고,
+  // 전투 시작 한 번뿐이면 그 적이 죽는 순간 시체를 계속 노린다.
+  fighter.duoSyncIn -= dt;
+  if (fighter.duoSyncIn <= 0) {
+    fighter.duoSyncIn = link.syncSeconds;
+    const wanted = duo.targetId !== null ? findFighter(state, duo.targetId) : undefined;
+    if (wanted !== undefined && wanted.side !== fighter.side && isFighterAlive(wanted) && wanted.stealthFor <= 0
+      && wanted.id !== fighter.targetId) {
+      fighter.targetId = wanted.id;
+      fighter.engaged = false;
+      fighter.bestGap = Number.POSITIVE_INFINITY;
+      fighter.blockedFor = 0;
+    }
+  }
+
+  // 목줄이다. 스스로 걷는 몫과 별개로 **멀어진 만큼만** 끌려간다 — 상한이 있어 자기 이동
+  // 속도보다 빨리 달리지 않는다.
+  const dx = duo.x - fighter.x;
+  const dy = duo.y - fighter.y;
+  const gap = Math.hypot(dx, dy);
+  if (gap <= link.followDistance) return;
+  const step = Math.min(gap - link.followDistance, moveSpeed(fighter, state) * dt);
+  fighter.x += dx / gap * step;
+  fighter.y += dy / gap * step;
+}
+
+/**
+ * 「그거 아니라니까?」 폭주에 들어가는 순간 듀오를 가장 약해진 적으로 밀어 넣는다.
+ *
+ * 지원가의 폭주가 제 화력을 올리면 그 순간만 지원가가 아니게 된다. 그래서 이 폭주는 슈테를
+ * 건드리지 않고 **듀오의 자리와 방향만** 바꾼다. 통로의 피해가 듀오의 기본 공격 위력을 그대로
+ * 빌리는 것도 같은 이유다 — 여기 위력을 따로 적으면 듀오의 평타를 조정한 뒤 이 숫자만 옛
+ * 값으로 남아 같은 한 방이 두 수로 갈린다.
+ */
+function launchDuoBreakthrough(
+  fighter: Fighter,
+  trait: Extract<FerocityTrait, { effectId: "duoBreakthrough" }>,
+  state: SkirmishState,
+  events: SkirmishEvent[],
+): void {
+  const duo = duoOf(fighter, state);
+  if (duo === undefined || !isFighterAlive(duo)) return;
+  const weakest = state.fighters
+    .filter((other) => other.side !== duo.side && isFighterAlive(other) && other.stealthFor <= 0)
+    .reduce<Fighter | undefined>((chosen, other) => chosen === undefined || other.hp < chosen.hp ? other : chosen, undefined);
+  if (weakest === undefined) return;
+  duo.targetId = weakest.id;
+  duo.engaged = false;
+  duo.bestGap = Number.POSITIVE_INFINITY;
+  duo.blockedFor = 0;
+  // 표적 재검토 시계를 되감아 지시가 한 박자는 유지되게 한다. 되감지 않으면 돌진이 끝난
+  // 그 프레임에 평소 규칙이 가장 가까운 적으로 되돌려, 갈아 끼운 표적이 화면에 남지 않는다.
+  duo.retargetIn = SKIRMISH.retargetSeconds;
+  const path = chargePath(duo, state, { x: weakest.x, y: weakest.y });
+  const skill = { ...duo.def.basic, isCritical: false, kind: "basic" as const };
+  for (const enemy of state.fighters) {
+    if (enemy.side === duo.side || !isFighterAlive(enemy)) continue;
+    if (distanceToSegment(enemy, path.from, path.to) > trait.chargeRadius) continue;
+    const raw = Math.max(1, Math.round(computeDamage(duo, defensiveDefinition(enemy, state), skill)));
+    const contributionAmount = Math.max(0, computeDamageContribution(duo, skill));
+    const resolution = resolveReceivedDamage(enemy, raw);
+    const hpBefore = enemy.hp; const shieldBefore = enemy.shield.amount; const shieldProviderId = enemy.shield.providerId;
+    applyDamage(enemy, resolution.applied, events, state);
+    const credited = recordDamageContribution(state, duo.id, enemy, duo.def.basic.damageType, duo.def.basic.scalingStat ?? "atk", contributionAmount, resolution, hpBefore, shieldBefore, shieldProviderId);
+    events.push({ kind: "attack", attackerId: duo.id, targetId: enemy.id, skill: "basic", amount: resolution.applied,
+      contributionAmount: credited, critical: false, animate: false, damageType: duo.def.basic.damageType,
+      mitigated: resolution.reduced < resolution.raw });
+    if (!isFighterAlive(enemy)) continue;
+    // 밀어붙이는 길을 여는 폭주라, 통로에 남은 적은 그 자리에서 튕겨 나간다.
+    const dx = enemy.x - path.from.x;
+    const dy = enemy.y - path.from.y;
+    const gap = Math.hypot(dx, dy) || 1;
+    enemy.knockback = { remaining: trait.knockback.seconds, vx: dx / gap * trait.knockback.speed, vy: dy / gap * trait.knockback.speed, bouncesLeft: trait.knockback.bounces };
+    enemy.engaged = false;
+    events.push({ kind: "knockback", fighterId: enemy.id, seconds: trait.knockback.seconds, bounces: trait.knockback.bounces });
+  }
+  duo.x = path.to.x;
+  duo.y = path.to.y;
+  events.push({ kind: "areaImpact", attackerId: duo.id, ultimate: false, damageType: duo.def.basic.damageType,
+    area: { shape: "lane", from: path.from, to: path.to, halfWidth: trait.chargeRadius } });
+}
+
+/**
+ * 폭주 중인 슈테의 듀오가 깎은 HP만큼 아군 전체가 되살아난다.
+ *
+ * 회복을 만드는 것은 슈테지만 분모는 듀오의 손이다 — 지원가의 폭주가 "누가 얼마나 잘 싸우는가"
+ * 위에 얹히므로, 듀오를 밀어 넣는 앞 절과 같은 이야기를 한다. 실제로 깎인 HP만 세어 과잉
+ * 피해가 회복량이 되지 않게 한다.
+ */
+function triggerDuoBreakthroughRegen(state: SkirmishState, attacker: Fighter, hpLost: number, events: SkirmishEvent[]): void {
+  if (hpLost <= 0) return;
+  for (const shute of state.fighters) {
+    const trait = shute.def.ferocityTrait;
+    if (trait.effectId !== "duoBreakthrough" || !shute.ferocityFever || !isFighterAlive(shute) || shute.duoId !== attacker.id) continue;
+    for (const ally of aliveFighters(state, shute.side)) {
+      const amount = applyHealing(state, ally, hpLost * trait.allyRegenFromDuoDamagePercent / 100, shute.id);
+      if (amount > 0) events.push({ kind: "heal", fighterId: ally.id, amount, source: "passive", effect: { tag: "heal", intensity: 1 } });
+    }
+  }
+}
+
+/**
+ * 약점 포착이 터진다. **듀오가 그 적을 때리는 순간**이고, 표식은 그 한 번으로 사라진다.
+ *
+ * 남겨 두고 계속 터지게 하면 세 걸음마다 찍는 주기가 뜻을 잃고 슈테의 평타가 그냥 듀오의
+ * 상시 강화가 된다. 피해가 표식을 찍은 개체의 주문력에서 나오는 것도 같은 이유다 — 때린
+ * 쪽에서 뽑으면 같은 표식이 누가 밟느냐에 따라 다른 값이 되어, 슈테를 키운 몫이 돌아오지 않는다.
+ */
+function triggerWeakpoint(state: SkirmishState, attacker: Fighter, target: Fighter, events: SkirmishEvent[]): void {
+  const mark = target.weakpoint;
+  if (mark === null || !isFighterAlive(target)) return;
+  const spotter = findFighter(state, mark.sourceId);
+  if (spotter === undefined || spotter.duoId !== attacker.id) return;
+  target.weakpoint = null;
+  const skill = { power: mark.burstPower, damageType: "magical" as const, scalingStat: "ap" as const, isCritical: false, kind: "basic" as const };
+  const raw = Math.max(1, Math.round(computeDamage(spotter, defensiveDefinition(target, state), skill)));
+  const contributionAmount = Math.max(0, computeDamageContribution(spotter, skill));
+  const resolution = resolveReceivedDamage(target, raw);
+  const hpBefore = target.hp; const shieldBefore = target.shield.amount; const shieldProviderId = target.shield.providerId;
+  applyDamage(target, resolution.applied, events, state);
+  const credited = recordDamageContribution(state, spotter.id, target, "magical", "ap", contributionAmount, resolution, hpBefore, shieldBefore, shieldProviderId);
+  events.push({ kind: "attack", attackerId: spotter.id, targetId: target.id, skill: "weakpoint", amount: resolution.applied,
+    contributionAmount: credited, critical: false, animate: false, damageType: "magical", mitigated: resolution.reduced < resolution.raw });
+  // 회복은 표식을 터뜨린 듀오가 받는다. 앞에 나선 사람이 그만큼 버티는 구조다.
+  const healed = applyHealing(state, attacker, resolution.applied * mark.duoHealPercent / 100, spotter.id);
+  if (healed > 0) events.push({ kind: "heal", fighterId: attacker.id, amount: healed, source: "passive", effect: { tag: "heal", intensity: 1 } });
+}
+
 function refreshSummonCommanderStealth(state: SkirmishState): void {
   for (const owner of state.fighters.filter((fighter) => fighter.def.passive.kind === "summonCommander")) {
     const owned = state.summons.filter((summon) => summon.ownerFighterId === owner.id);
@@ -4696,6 +4933,9 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     }
   }
 
+  // 듀오 곁으로 끌려가는 목줄은 밀어내기 **앞**에 둔다. 뒤에 두면 서로 벌리는 힘을 목줄이
+  // 매 프레임 되감아, 슈테와 듀오가 한 점에 겹쳐 선다.
+  for (const fighter of state.fighters) updateDuoLink(fighter, state, dt);
   separate(state, dt);
   clampToArena(state);
   settle(state, events);
@@ -4711,6 +4951,12 @@ export function canFireUltimate(state: SkirmishState, fighter: Fighter): boolean
   // 지휘형도 최소 한 소환수가 현장에 있으면 남은 한 마리로 축소 궁극기를 정상 시전한다.
   if (fighter.def.passive.kind === "summonCommander") return activeOwnedSummons(state, fighter).length > 0
     && state.fighters.some((other) => other.side !== fighter.side && isFighterAlive(other) && other.stealthFor <= 0);
+  // 듀오에게만 거는 궁극기는 걸 상대가 살아 있어야 나간다 — 듀오가 쓰러지면 게이지가 차도
+  // 쓸 곳이 없다. 그것이 이 개체가 짊어지는 값이다.
+  if (fighter.def.ultimate.targeting === "duo") {
+    const duo = duoOf(fighter, state);
+    return duo !== undefined && isFighterAlive(duo);
+  }
   if (fighter.def.ultimate.targeting === "battlefieldAllies") return aliveFighters(state, fighter.side).length > 0;
   return state.fighters.some((other) => other.side !== fighter.side && isFighterAlive(other) && other.stealthFor <= 0);
 }
@@ -4739,6 +4985,16 @@ export function fireUltimate(
     commandSummonUltimate(attacker, state, events);
     attacker.attackCooldown = attackInterval(attacker, state);
     settle(state, events);
+    return events;
+  }
+  if (teamUltimate.targeting === "duo" && teamUltimate.teamBuff !== undefined) {
+    // 전장 전체가 아니라 듀오 한 명에게만 걸린다. 듀오가 쓰러졌으면 걸 곳이 없다.
+    const duo = duoOf(attacker, state);
+    if (duo === undefined || !isFighterAlive(duo)) return events;
+    attacker.energy -= ultimateCost(state, attacker, true);
+    applyTeamBuff(duo, teamUltimate.teamBuff);
+    events.push({ kind: "teamBuff", fighterId: duo.id, buff: teamUltimate.teamBuff, sourceId: attacker.id });
+    attacker.attackCooldown = attackInterval(attacker, state);
     return events;
   }
   if (teamUltimate.targeting === "battlefieldAllies" && teamUltimate.teamBuff !== undefined) {

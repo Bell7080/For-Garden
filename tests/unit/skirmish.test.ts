@@ -932,7 +932,11 @@ describe("단일 난전의 원정 보스 옵션", () => {
     expect(firstUltimateAt).toBeLessThanOrEqual(28);
     expect(survivorsAfterFirstUltimate).toBeGreaterThan(0);
     expect(state.elapsed).toBeGreaterThanOrEqual(24);
-    expect(state.elapsed).toBeLessThanOrEqual(38);
+    // 렉시아의 폭주가 치명타 확률 가산에서 「출혈 중인 적에게 확정 치명타」로 바뀐 뒤 38.8초다.
+    // 확정 치명타는 난수를 소비하지 않으므로 폭주가 도는 동안 이후 판정의 자리가 통째로 밀리고,
+    // 그 결과 같은 난수열이 다른 치명타 배열을 만든다. 이 구간이 재는 것은 정확한 초가 아니라
+    // "한 번은 버티고 결국 넘긴다"이므로 상한만 40초로 옮긴다.
+    expect(state.elapsed).toBeLessThanOrEqual(40);
     // 점수는 경감 뒤 실제로 감소한 HP와 같아 경감 전 계수나 과잉 피해로 부풀지 않는다.
     const playerAttackTotal = battleContributionSnapshot(state, "attack")
       .filter(({ fighterId }) => fighterId.startsWith("player"))
@@ -1983,21 +1987,34 @@ describe("렉시아 전투 계약", () => {
     expect(hit).toMatchObject({ critical: true, amount: computeDamage(boosted, foe, { ...rex.def.basic, kind: "basic", isCritical: true }) });
   });
 
-  it("은 폭주 중 치명타와 모든 피해 흡혈에 각각 25퍼센트포인트를 적용하고 종료 후 복구한다", () => {
-    const { state, rex } = readyRex();
+  it("은 폭주 중 출혈 중인 적을 물면 확정 치명타가 되고 모든 피해를 25% 흡혈한다", () => {
+    const { state, rex, foe } = readyRex();
     rex.hp = rex.maxHp / 2; rex.ferocity = 100; rex.ferocityFever = true;
+    // 이미 물어뜯어 피가 흐르는 자리를 다시 무는 상황이다. 확률이 아니라 이 상태가 조건이므로
+    // 태생 10% + 패시브 25퍼센트포인트로는 절대 터지지 않을 난수에서도 치명타가 나와야 한다.
+    foe.bleed = { remaining: 3, total: 3, tickIn: 1, percent: 2, sourceId: rex.id };
     const before = rex.hp;
-    const hit = stepSkirmish(state, 1 / 60, () => 0.55).find((event) => event.kind === "attack")!;
-    expect(hit).toMatchObject({ critical: true }); // 태생 10% + 패시브 25퍼센트포인트 + 폭주 25퍼센트포인트 = 60%
+    const hit = stepSkirmish(state, 1 / 60, () => 0.99).find((event) => event.kind === "attack")!;
+    expect(hit).toMatchObject({ critical: true });
     expect(rex.hp - before).toBeCloseTo(hit.amount * 0.25);
     rex.ferocityFever = false; rex.attackCooldown = 0; const hp = rex.hp;
     stepSkirmish(state, 1 / 60, () => 0.49);
     expect(rex.hp).toBe(hp);
   });
 
+  it("은 폭주 중이어도 출혈이 없는 적에게는 확정 치명타를 주지 않는다", () => {
+    const { state, rex, foe } = readyRex();
+    rex.ferocity = 100; rex.ferocityFever = true;
+    foe.bleed = null;
+    // 폭주가 확률 자체를 올리지 않으므로 태생 10% + 패시브 25퍼센트포인트(=35%)를 넘는
+    // 난수에서는 평타로 남는다. 예전 계약(확률 +25퍼센트포인트)이라면 여기서 치명타였다.
+    const hit = stepSkirmish(state, 1 / 60, () => 0.55).find((event) => event.kind === "attack")!;
+    expect(hit).toMatchObject({ critical: false });
+  });
+
   it("은 치명타 보너스를 모두 합산한 뒤 판정 직전에 100%로 제한한다", () => {
     const { state, rex } = readyRex();
-    // 기본 90% + 패시브 25퍼센트포인트 + 폭주 25퍼센트포인트 = 140%를 마지막에 100%로 제한한다.
+    // 기본 90% + 패시브 25퍼센트포인트 = 115%를 마지막에 100%로 제한한다.
     rex.def = { ...rex.def, stats: { ...rex.def.stats, critChance: 90 } };
     rex.ferocity = 100; rex.ferocityFever = true;
     const hit = stepSkirmish(state, 1 / 60, () => 0.999).find((event) => event.kind === "attack")!;
@@ -2405,6 +2422,7 @@ describe("스테라 정적 전투 계약", () => {
   it("의 궁극기는 피해 없이 생존 아군 전체에 순풍을 건다", () => {
     const { state, stella, ally } = stellaBattle();
     const buff = stella.def.ultimate.teamBuff!;
+    if (buff.kind !== "tailwind") throw new Error("스테라의 궁극기는 순풍이다");
     const enemy = state.fighters.find((fighter) => fighter.side === "enemy")!;
     const allySpeedBefore = currentAttackSpeed(ally, state);
     const allyMoveBefore = moveSpeed(ally, state);
@@ -2431,6 +2449,7 @@ describe("스테라 정적 전투 계약", () => {
   it("의 궁극기는 순풍이 도는 동안 매초 최대 체력의 비율만큼 아군을 회복시킨다", () => {
     const { state, stella, ally } = stellaBattle();
     const buff = stella.def.ultimate.teamBuff!;
+    if (buff.kind !== "tailwind") throw new Error("스테라의 궁극기는 순풍이다");
     // 긴급 회복과 같이 반올림 없이 최대 체력 비율을 그대로 더한다.
     const perTick = ally.maxHp * buff.maxHpRegenPercentPerSecond! / 100;
     ally.hp = 1; stella.hp = 1;
@@ -2457,7 +2476,9 @@ describe("스테라 정적 전투 계약", () => {
     fireUltimate(state, stella.id);
     ally.hp = 1;
     // 회복 값이 없는 순풍은 공속·이속만 올리고 아무것도 회복시키지 않는다.
-    ally.tailwind = { ...ally.tailwind!, maxHpRegenPercentPerSecond: undefined };
+    const granted = ally.tailwind!;
+    if (granted.kind !== "tailwind") throw new Error("스테라가 건 것은 순풍이다");
+    ally.tailwind = { ...granted, maxHpRegenPercentPerSecond: undefined };
     run(state, 2);
     expect(ally.hp).toBe(1);
     expect(currentAttackSpeed(ally, state)).toBeGreaterThan(ally.def.stats.attackSpeed);
@@ -4190,5 +4211,145 @@ describe("리파 — 제공자별 시약 반응", () => {
     expect(finished.state.phase).toBe("victory");
     expect(finished.targets[0].reagents).toEqual({});
     expect(finished.targets[0].reagentResistanceReductions).toEqual({});
+  });
+});
+
+describe("슈테 전투 계약 — 듀오 랭크", () => {
+  /**
+   * 슈테를 1번 자리, 듀오를 가운데(2번) 자리에 세운다.
+   *
+   * 자리로 짝을 정하는 규칙이라 편성 배열 자체가 이 테스트의 입력이다 — 전투력이나 개체 ID로
+   * 고르지 않으므로 능력치를 바꿔도 짝은 그대로여야 한다.
+   */
+  function duoBattle(): { state: SkirmishState; shute: Fighter; duo: Fighter; foe: Fighter } {
+    const state = newSkirmish(["shute", "rex", "dodo"], ["amo"]);
+    const [shute, duo] = state.fighters;
+    const foe = state.fighters.find((fighter) => fighter.side === "enemy")!;
+    return { state, shute, duo, foe };
+  }
+
+  it("은 편성 가운데 자리의 아군과 짝을 짓는다", () => {
+    const { shute, duo } = duoBattle();
+    expect(shute.def.id).toBe("shute");
+    expect(duo.def.id).toBe("rex");
+    expect(shute.duoId).toBe(duo.id);
+  });
+
+  it("은 듀오의 체력이 절반 이상인 동안에만 은신한다", () => {
+    const { state, shute, duo } = duoBattle();
+    run(state, 0.1);
+    expect(shute.stealthFor).toBe(Number.POSITIVE_INFINITY);
+    // 듀오가 위험해지는 순간 슈테도 함께 노출된다. 무너질 때 같이 무너지는 것이 이 개체의 값이다.
+    duo.hp = duo.maxHp * 0.4;
+    run(state, 0.1);
+    expect(shute.stealthFor).toBe(0);
+  });
+
+  it("은 듀오가 쓰러지면 은신이 풀리고 다시 짝을 짓지 않는다", () => {
+    const { state, shute, duo } = duoBattle();
+    run(state, 0.1);
+    const third = state.fighters.find((fighter) => fighter.side === "player" && fighter.id !== shute.id && fighter.id !== duo.id)!;
+    duo.hp = 0;
+    run(state, 0.2);
+    expect(shute.stealthFor).toBe(0);
+    // 남은 아군이 있어도 옮겨 붙지 않는다.
+    expect(shute.duoId).toBe(duo.id);
+    expect(shute.duoId).not.toBe(third.id);
+  });
+
+  it("의 일반 공격은 듀오의 궁극기와 야성만 채운다", () => {
+    const { state, shute, duo, foe } = duoBattle();
+    const third = state.fighters.find((fighter) => fighter.side === "player" && fighter.id !== shute.id && fighter.id !== duo.id)!;
+    shute.x = foe.x - 100; shute.y = foe.y; shute.attackCooldown = 0;
+    duo.attackCooldown = 99; third.attackCooldown = 99; foe.attackCooldown = 99;
+    const duoEnergyBefore = duo.energy; const thirdEnergyBefore = third.energy;
+    run(state, 0.1);
+    const charge = shute.def.basic.duoCharge!;
+    expect(duo.energy - duoEnergyBefore).toBe(charge.energy);
+    expect(duo.ferocity).toBeGreaterThan(0);
+    // 아군 전체 충전(`allyEnergyGain`)과 다른 축이라 셋째 아군은 그대로다.
+    expect(third.energy).toBe(thirdEnergyBefore);
+  });
+
+  it("의 세 번째 일반 공격이 약점 포착을 찍고, 듀오가 때리면 터지며 듀오를 회복시킨다", () => {
+    const { state, shute, duo, foe } = duoBattle();
+    const third = state.fighters.find((fighter) => fighter.side === "player" && fighter.id !== shute.id && fighter.id !== duo.id)!;
+    shute.x = foe.x - 100; shute.y = foe.y; shute.attackCooldown = 0;
+    duo.attackCooldown = 99; third.attackCooldown = 99; foe.attackCooldown = 99;
+    foe.hp = foe.maxHp * 100; foe.maxHp = foe.hp;
+    // 슈테만 세 번 때린다. 세 걸음마다 한 번이므로 셋째 타격에서야 표식이 선다.
+    for (let hit = 0; hit < 3; hit += 1) { shute.attackCooldown = 0; run(state, 0.1); }
+    expect(foe.weakpoint).toMatchObject({ sourceId: shute.id, burstPower: 120, duoHealPercent: 50 });
+
+    duo.hp = duo.maxHp / 2;
+    duo.x = foe.x - 100; duo.y = foe.y; duo.attackCooldown = 0;
+    shute.attackCooldown = 99;
+    const healthBefore = duo.hp;
+    const events = run(state, 0.1);
+    // 표식은 한 번으로 사라지고, 그 피해는 표식을 찍은 슈테가 낸 것으로 기록된다.
+    expect(foe.weakpoint).toBeNull();
+    expect(events.some((event) => event.kind === "attack" && event.skill === "weakpoint" && event.attackerId === shute.id)).toBe(true);
+    expect(duo.hp).toBeGreaterThan(healthBefore);
+  });
+
+  it("의 궁극기는 듀오 한 명에게만 오더를 걸고 듀오가 없으면 나가지 않는다", () => {
+    const { state, shute, duo } = duoBattle();
+    const third = state.fighters.find((fighter) => fighter.side === "player" && fighter.id !== shute.id && fighter.id !== duo.id)!;
+    shute.energy = shute.def.ultimate.cost;
+    const events = fireUltimate(state, shute.id);
+    const buff = shute.def.ultimate.teamBuff!;
+    expect(buff).toMatchObject({ kind: "order", attackSpeedPercent: 50, criticalChancePoints: 25, lifeStealPoints: 25, seconds: 6 });
+    expect(events.filter((event) => event.kind === "teamBuff").map((event) => event.kind === "teamBuff" && event.fighterId)).toEqual([duo.id]);
+    expect(duo.tailwind).toMatchObject({ kind: "order" });
+    // 전장 전체 강화와 다른 축이라 슈테 자신도 셋째 아군도 받지 않는다.
+    expect(shute.tailwind).toBeNull();
+    expect(third.tailwind).toBeNull();
+
+    duo.hp = 0;
+    shute.energy = shute.def.ultimate.cost;
+    expect(canFireUltimate(state, shute)).toBe(false);
+    expect(fireUltimate(state, shute.id)).toEqual([]);
+  });
+
+  it("의 오더는 듀오의 치명타 확률과 흡혈을 퍼센트포인트로 더한다", () => {
+    const { state, shute, duo, foe } = duoBattle();
+    shute.energy = shute.def.ultimate.cost;
+    fireUltimate(state, shute.id);
+    duo.hp = duo.maxHp / 2;
+    duo.x = foe.x - 100; duo.y = foe.y; duo.attackCooldown = 0;
+    shute.attackCooldown = 99; foe.attackCooldown = 99;
+    for (const other of state.fighters) if (other.id !== duo.id) other.attackCooldown = 99;
+    const healthBefore = duo.hp;
+    // 태생 10% + 패시브 25퍼센트포인트 = 35%로는 터지지 않는 난수가 오더 25를 더해 60%가 된다.
+    const hit = run(state, 0.1, () => 0.55)
+      .find((event): event is Extract<SkirmishEvent, { kind: "attack" }> => event.kind === "attack" && event.attackerId === duo.id)!;
+    expect(hit).toMatchObject({ critical: true });
+    // 렉시아 자신의 흡혈은 0이므로 여기서 돌아온 체력은 전부 오더의 몫이다.
+    expect(duo.hp - healthBefore).toBeCloseTo(hit.amount * 0.25);
+  });
+
+  it("의 폭주는 듀오를 체력이 가장 낮은 적으로 돌진시키고 통로의 적을 날려버린다", () => {
+    const state = newSkirmish(["shute", "rex", "dodo"], ["amo", "toby"]);
+    const [shute, duo] = state.fighters;
+    const [weak, strong] = state.fighters.filter((fighter) => fighter.side === "enemy");
+    // 돌진에 맞고도 살아남을 만큼은 남겨 둔다 — 쓰러지면 그 프레임에 표적이 다시 정해져
+    // 이 테스트가 재려는 "표적을 갈아 끼웠다"가 관찰되지 않는다.
+    weak.hp = weak.maxHp * 0.4;
+    strong.hp = strong.maxHp;
+    duo.targetId = strong.id;
+    // 돌진이 미는 거리는 이동 속도 × 0.9초라 짧다. 통로에 실제로 서 있는 적만 튕겨 나가므로
+    // 듀오와 약해진 적 사이에 남은 한 명을 세워 둔다.
+    duo.x = 400; duo.y = 1000;
+    weak.x = 900; weak.y = 1000;
+    strong.x = 480; strong.y = 1000;
+    // 폭주는 슈테가 직접 손을 낼 때 차오르므로 한 대 때릴 자리에 세운다.
+    shute.x = strong.x - 100; shute.y = strong.y; shute.attackCooldown = 0;
+    shute.ferocity = FEROCITY_RULES.max - 1;
+    const events = run(state, 0.2, () => 0);
+    expect(shute.ferocityFever).toBe(true);
+    // 표적이 갈아 끼워지고, 슈테 자신은 제자리에 남는다 — 지원가의 폭주가 제 화력을 올리지 않는다.
+    expect(duo.targetId).toBe(weak.id);
+    expect(events.some((event) => event.kind === "areaImpact" && event.attackerId === duo.id)).toBe(true);
+    expect(events.some((event) => event.kind === "knockback")).toBe(true);
   });
 });

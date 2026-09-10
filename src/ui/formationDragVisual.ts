@@ -75,9 +75,11 @@ export function formationDragPreview(
   from: number,
   hovered: number | undefined,
   slotCount: number,
+  /** 자리 제약. 확정과 같은 규칙을 넘겨야 보여 준 것과 놓은 결과가 갈리지 않는다. */
+  allow?: (relicId: string | undefined, index: number) => boolean,
 ): FormationSlotPreview[] {
   const swapped = hovered !== undefined && hovered !== from
-    ? moveFormationSlot(picked, from, hovered)
+    ? moveFormationSlot(picked, from, hovered, allow)
     : picked;
   return Array.from({ length: slotCount }, (_unused, slot) => ({
     relicId: swapped[slot],

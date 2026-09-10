@@ -24,7 +24,7 @@ import { autoPickParty, elementDistribution, relicAffinityDirection } from "../c
 import type { SetPartyFailureReason } from "../managers/RelicCollectionManager";
 import { AffinityDirection } from "../ui/AffinityDirection";
 import { removeFormationSlot } from "../core/formationSelection";
-import { moveFormationSlot } from "../core/formation";
+import { canStandInSlot, moveFormationSlot, settleFormationSlots } from "../core/formation";
 import { bindFormationDrag } from "../ui/formationDrag";
 import { FORMATION_DRAG_VISUAL } from "../ui/formationDragVisual";
 import { createFormationDragVisualController, type FormationDragVisualController } from "../ui/formationDragVisualController";
@@ -147,7 +147,7 @@ export class PartyScene extends Phaser.Scene {
     // 전투보다 낮게 보인다 — 스테이지 레벨 보정은 `getStageEnemies` 한 곳에만 있다.
     this.enemies = getStageEnemies(stage);
     // 손상된 런타임 파티만 보유 목록 기반 자동 편성으로 안전하게 대체한다.
-    if (this.picked.length !== 3) this.picked = autoPickParty(relicCollection.owned, this.enemies);
+    if (this.picked.length !== 3) this.picked = settleFormationSlots(autoPickParty(relicCollection.owned, this.enemies), (id, index) => this.slotAllows(id, index));
     this.add.text(cx, 70, `${stage.id}  ${stage.name}`, textStyle({ role: "display", size: 46 })).setOrigin(0.5, 0);
     this.add
       .text(cx, 132, "렐릭 3명 편성 — 고른 순서대로 왼쪽부터 선다", textStyle({ role: "body", size: 28, color: COLOR.inkDim }))
@@ -176,7 +176,7 @@ export class PartyScene extends Phaser.Scene {
       label: "자동 배치",
       fontSize: 26,
       onClick: () => {
-        this.picked = autoPickParty(relicCollection.owned, this.enemies);
+        this.picked = settleFormationSlots(autoPickParty(relicCollection.owned, this.enemies), (id, index) => this.slotAllows(id, index));
         this.refresh();
       },
     });
@@ -286,7 +286,8 @@ export class PartyScene extends Phaser.Scene {
     // 공용 표현기는 화면 좌표 Puppet을 기존 placePuppet 콜백으로 옮겨 컨테이너 변환에 기대지 않는다.
     this.dragVisual = createFormationDragVisualController({
       scene: this, slots: PREVIEW_COLUMNS.map((x) => ({ x, y: ALLY_ROW - PREVIEW_HEIGHT / 2, width: 210, height: PREVIEW_HEIGHT })),
-      formation: () => this.picked, color: COLOR.ally, zoneDepth: -11, dimDepth: -13,
+      formation: () => this.picked, slotAllows: (id, index) => this.slotAllows(id, index),
+      color: COLOR.ally, zoneDepth: -11, dimDepth: -13,
       dimBounds: { x: BASE_WIDTH / 2, y: (FRONT_LINE + ALLY_ROW + 120) / 2, width: BASE_WIDTH, height: ALLY_ROW + 120 - FRONT_LINE },
       labels: this.allySlots.flatMap((slot) => [slot.name, slot.slotLabel]),
       renderPreview: ({ preview, pointer }) => this.placeDragPreview(preview, pointer.x, pointer.y),
@@ -304,11 +305,19 @@ export class PartyScene extends Phaser.Scene {
       },
       drop: (from, to) => {
         this.dragVisual?.endDrag();
-        this.picked = moveFormationSlot(this.picked, from, to);
+        this.picked = moveFormationSlot(this.picked, from, to, (id, index) => this.slotAllows(id, index));
         // 미리보기로 옮겨 둔 SD는 확정 뒤 기존 비동기 재배치 경로가 제자리에 다시 세운다.
         this.refresh();
       },
     });
+  }
+
+  /**
+   * 그 자리에 그 개체를 세울 수 있는가. 확정 규칙(`canStandInSlot`)을 그대로 통과시킨다 —
+   * 화면이 따로 계산하면 보여 준 것과 놓은 결과가 갈린다.
+   */
+  private slotAllows(relicId: string | undefined, index: number): boolean {
+    return canStandInSlot(relicId === undefined ? undefined : getRelic(relicId), index, this.picked.length);
   }
 
   /** 공용 컨트롤러가 계산한 슬롯 결과를 기존 화면 좌표 Puppet 배치기로 그린다. */
@@ -497,10 +506,14 @@ export class PartyScene extends Phaser.Scene {
       this.picked.splice(at, 1);
     } else if (this.picked.length < 3) {
       this.picked.push(relicId);
+      // 고르는 순서 때문에 설 수 없는 자리에 놓이면 그 자리에서 바로 밀어 낸다 — 확정에서
+      // 거절하면 플레이어에게는 시작 버튼이 이유 없이 막힌 것으로만 보인다.
+      this.picked = settleFormationSlots(this.picked, (id, index) => this.slotAllows(id, index));
     } else {
       // 자동 배치 등으로 이미 3명이 찬 상태에서 새 카드를 누르면, 아무 반응도 없는 것처럼
       // 보이지 않도록 마지막 자리를 바로 바꾼다.
       this.picked[this.picked.length - 1] = relicId;
+      this.picked = settleFormationSlots(this.picked, (id, index) => this.slotAllows(id, index));
     }
     this.refresh();
   }

@@ -6,9 +6,10 @@ export { currentAbilityPower } from "./damage";
 import { drainFerocityFever, FEROCITY_RULES } from "./ferocity";
 import { breakthroughBonus } from "./relicProgression";
 import { augmentAppliesTo, bleedOnAttackEffect, conditionalAttackPowerMultiplier, expeditionAugmentStatMultipliers, type ExpeditionAugmentEffect, type ExpeditionAugmentTrigger, type ExpeditionTriggeredEffect } from "./expeditionAugments";
-import type { AttackSkill, BasicAttack, BasicAttackStep, CombatStatusEffect, FerocityTrait, ReachTier, RelicDef, Side, Skill, TeamBuff } from "./types";
+import type { BasicAttack, BasicAttackStep, CombatStatusEffect, FerocityTrait, ReachTier, RelicDef, Side, Skill, TeamBuff } from "./types";
 import { ULTIMATE_ENERGY_MAX } from "./ultimate";
 import { deriveSummonStats } from "./summonStats";
+import { combatPower } from "./combatPower";
 import { stealthTransition, type CombatEffectCue } from "./combatEffects";
 import {
   accumulateDamageContribution, addContribution, contributionOwnerId, contributionSnapshot, createBattleContributions, type BattleContributionRow, type BattleContributions,
@@ -131,6 +132,21 @@ export interface Fighter extends Combatant {
    * 덧칠과 달리 **지속 시간이 없다** — 세 번째 칼질이 곧 결과라 시간이 흘러 사라지지 않는다.
    */
   butcher: { stacks: number; maxStacks: number; burstPower: number } | null;
+  /**
+   * 이 전투원을 불러낸 지휘자의 ID. 스스로 편성에 선 개체는 null이다.
+   *
+   * 늑대도 다른 전투원과 **완전히 같은 몸**이라 표적·이동·상태이상·넉백 경로를 그대로 쓴다.
+   * 이 한 필드만 승패 판정·정산·프로필 줄에서 빼고, 기여도를 지휘자 앞으로 돌린다.
+   */
+  summonOwnerId: string | null;
+  /** 귀속 소환수만 갖는 재소환 규칙이다. 스스로 선 개체는 null이다. */
+  resummonRule: { enabled: boolean; cooldownSeconds: number; hpPercent: number } | null;
+  /** 쓰러진 귀속 소환수가 다시 설 때까지 남은 시간(초). 서 있는 동안에는 0이다. */
+  resummonIn: number;
+  /** 지휘자의 경계가 무리에게 나눠 준 치명타 확률(%). 조건이 깨지면 0으로 돌아간다. */
+  packCritChance: number;
+  /** 지금 쌓인 피 냄새 겹. 지휘자만 센다 — 늑대는 주인의 값을 읽는다. */
+  bloodscent: number;
   /** 표적을 다시 고르기까지 남은 시간(초). 0이 되는 프레임에 주위를 다시 잰다. */
   retargetIn: number;
   /** 고품격 식재료가 다시 표적을 고르기까지 남은 시간(초). 0이 되는 프레임에 도약한다. */
@@ -369,30 +385,10 @@ export interface Fighter extends Combatant {
 }
 
 /** 편성 캐릭터와 분리되어 승패·보상·유대 정산에 절대 들어가지 않는 귀속 전투 유닛이다. */
-export interface SummonedUnit {
-  /** `${ownerFighterId}:${summonId}` 계약으로 만든 전투 안의 유일한 ID다. */
-  id: string;
-  ownerFighterId: string;
-  summonId: string;
-  name: string;
-  side: Side;
-  stats: RelicDef["stats"];
-  hp: number;
-  maxHp: number;
-  x: number;
-  y: number;
-  facing: 1 | -1;
-  /** 현장에 없을 때만 양수로 흐르며 0이 되면 제한 체력으로 재호출된다. */
-  resummonRemaining: number;
-  status: "active" | "recalled";
-}
-
 export type SkirmishPhase = "fight" | "victory" | "defeat";
 
 export interface SkirmishState {
   fighters: Fighter[];
-  /** 편성 및 정산 배열과 의도적으로 분리한 전투 한정 소환수 목록이다. */
-  summons: SummonedUnit[];
   /** 중복 relicId와 무관하게 런타임 ID별로 누적하는 전투 결과의 단일 진실이다. */
   contributions: BattleContributions;
   arena: Arena;
@@ -470,13 +466,12 @@ export interface CreateSkirmishOptions {
 /** 씬이 모션·피격 숫자·사망 연출을 붙일 수 있도록 이번 프레임에 일어난 일만 모아 돌려준다. */
 export type SkirmishEvent =
   /** 소환수 사건은 언제나 런타임 ID와 성장·정산 주체를 함께 실어 씬이 정의를 역탐색하지 않게 한다. */
-  | { kind: "summon"; summonId: string; ownerFighterId: string; x: number; y: number }
-  | { kind: "summonMove"; summonId: string; ownerFighterId: string; from: { x: number; y: number }; to: { x: number; y: number } }
-  | { kind: "summonHit"; summonId: string; ownerFighterId: string; targetId: string; amount: number; damageType: "physical" | "magical" }
-  | { kind: "summonRecall"; summonId: string; ownerFighterId: string }
-  | { kind: "summonReturn"; summonId: string; ownerFighterId: string; x: number; y: number }
-  | { kind: "summonUltimateCharge"; summonId: string; ownerFighterId: string; from: { x: number; y: number }; to: { x: number; y: number } }
-  | { kind: "summonFrenzy"; summonId: string; ownerFighterId: string; active: boolean; remainingSeconds: number }
+  /** 귀속 소환수가 처음 서거나 쓰러진 뒤 다시 설 때 한 번씩 온다. 씬은 좌표만 읽는다. */
+  | { kind: "packSummon"; fighterId: string; ownerFighterId: string; x: number; y: number }
+  /** 지휘자가 표적 뒤로 순간이동해 무는 순간이다. 도착 좌표는 코어가 정한다. */
+  | { kind: "packFinisher"; fighterId: string; targetId: string; x: number; y: number }
+  /** 무리의 겹이 오르내린 순간이다. 화면은 지금 겹 수만 읽는다. */
+  | { kind: "bloodscent"; fighterId: string; stacks: number }
   | {
       kind: "attack";
       attackerId: string;
@@ -834,6 +829,11 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     // 시작하자마자 전원이 동시에 때리지 않도록 첫 공격만 조금씩 어긋나게 둔다.
     attackCooldown: index * 0.18,
     targetId: null,
+    summonOwnerId: null,
+    resummonRule: null,
+    resummonIn: 0,
+    packCritChance: 0,
+    bloodscent: 0,
     engaged: false,
     blockedFor: 0,
     bestGap: Number.POSITIVE_INFINITY,
@@ -940,28 +940,43 @@ export function spawnSpots(arena: Arena, side: Side, count = 3): { x: number; y:
   }));
 }
 
-/** 소유자의 앞쪽 좌우에 정의 순서대로 소환수를 세우며 런타임 ID는 소유자 ID를 이름공간으로 쓴다. */
-function createSummons(fighters: readonly Fighter[]): SummonedUnit[] {
-  return fighters.flatMap((owner) => (owner.def.summons ?? []).map((definition, index) => {
-    const stats = deriveSummonStats(owner.def.stats, definition);
-    // 플레이어의 앞은 위쪽, 적의 앞은 아래쪽이다. 좌우 간격은 같은 위치의 쌍둥이가 겹치지 않게 한다.
+/**
+ * 귀속 소환수를 **다른 전투원과 똑같은 몸**으로 만든다.
+ *
+ * 태생 능력치만 주인의 성장 축에서 파생하고, 나머지(패시브·일반·궁극·야성)는 제 정의가
+ * 그대로 갖는다. Fighter 배열에 함께 들어가므로 표적·이동·상태이상·넉백·체력 바가 별도
+ * 경로 없이 붙는다.
+ */
+function createPackFighters(owners: readonly Fighter[], augmentEffects: readonly ExpeditionAugmentEffect[]): Fighter[] {
+  return owners.flatMap((owner) => (owner.def.summons ?? []).map((spec, index) => {
+    const stats = deriveSummonStats(owner.def.stats, spec);
+    // 플레이어의 앞은 위쪽, 적의 앞은 아래쪽이다. 좌우로 갈라 세워 둘이 겹치지 않게 한다.
     const forward = owner.side === "player" ? -1 : 1;
-    return {
-      id: `${owner.id}:${definition.id}`,
-      ownerFighterId: owner.id,
-      summonId: definition.id,
-      name: definition.name,
-      side: owner.side,
-      stats,
-      hp: stats.hp,
-      maxHp: stats.hp,
-      x: owner.x + (index % 2 === 0 ? -70 : 70),
-      y: owner.y + forward * 90,
-      facing: owner.facing,
-      resummonRemaining: 0,
-      status: "active" as const,
-    };
+    const x = owner.x + (index % 2 === 0 ? -70 : 70);
+    const y = owner.y + forward * 90;
+    const wolf = makeFighter({ ...spec.def, stats }, owner.side, index, x, y, 0, 0, 1, augmentEffects);
+    // 편성 칸의 ID와 겹치지 않도록 주인 ID를 이름공간으로 쓴다. 기여도가 이 형태를 읽는다.
+    wolf.id = `${owner.id}:${spec.def.id}`;
+    wolf.summonOwnerId = owner.id;
+    wolf.resummonRule = spec.resummon;
+    wolf.facing = owner.facing;
+    return wolf;
   }));
+}
+
+/** 귀속 소환수가 낸 피해는 성장 주체인 지휘자 앞으로 쌓인다. 늑대는 제 줄을 갖지 않는다. */
+function packCreditId(fighter: Fighter): string {
+  return contributionOwnerId(fighter.id, fighter.summonOwnerId ?? undefined);
+}
+
+/** 편성으로 선 전투원만. 승패·정산·프로필 줄은 귀속 소환수를 세지 않는다. */
+export function isPartyFighter(fighter: Fighter): boolean {
+  return fighter.summonOwnerId === null;
+}
+
+/** 지휘자가 지금 부릴 수 있는, 살아서 전장에 선 늑대들이다. */
+function packOf(state: SkirmishState, owner: Fighter): Fighter[] {
+  return state.fighters.filter((wolf) => wolf.summonOwnerId === owner.id && isFighterAlive(wolf));
 }
 
 export function createSkirmish(
@@ -991,11 +1006,13 @@ export function createSkirmish(
     return fighter;
   });
   if (options.boss && !enemies.some(({ id }) => id === bossFighterId)) throw new RangeError("보스 전투원 ID는 적 편성에 존재해야 합니다.");
-  const fighters = [...players, ...enemies];
+  const party = [...players, ...enemies];
+  // 늑대는 편성 뒤에 붙는다. 배열 순서가 곧 동률 판정 순서라 편성 칸이 늘 앞에 온다.
+  const fighters = [...party, ...createPackFighters(party, options.augmentEffects ?? [])];
   const state: SkirmishState = {
     fighters,
-    summons: createSummons(fighters),
-    contributions: createBattleContributions(fighters.map(({ id }) => id)),
+    // 늑대가 낸 피해는 성장 주체인 지휘자 앞으로 쌓이므로 장부에 제 줄을 만들지 않는다.
+    contributions: createBattleContributions(party.map(({ id }) => id)),
     arena,
     phase: "fight",
     elapsed: 0,
@@ -1004,16 +1021,18 @@ export function createSkirmish(
     initialEvents: [],
     boss: options.boss ? { fighterId: bossFighterId, score: 0, survivedFor: 0, phaseIndex: 0, limitReached: false, phases: options.boss.phases, limitSeconds: options.boss.limitSeconds, damageRemainder: 0, tideWarning: false } : undefined,
   };
-  // 지휘형 은신은 시간이 아니라 두 귀속 소환수의 생존 조건이 소유하므로 무기한 값으로 표시한다.
-  refreshSummonCommanderStealth(state);
+  // 지휘형 은신과 무리 치명타는 시간이 아니라 두 늑대의 생존 조건이 소유한다.
+  refreshPackGuard(state);
   // 듀오는 편성 가운데 자리로 열리는 순간 한 번만 정해지고, 그 뒤로는 바뀌지 않는다.
   linkDuos(state);
   // 시작 효과는 별도의 순수 단계에서 정확히 한 번 적용하고 사건은 첫 렌더 step까지 보존한다.
   state.initialEvents = initializeSkirmishAugments(state);
-  // 최초 소환도 재호출과 같은 좌표 계약을 사용하며, 정산용 fighters 배열에는 넣지 않는다.
-  state.initialEvents.push(...state.summons.map((summon): SkirmishEvent => ({
-    kind: "summon", summonId: summon.id, ownerFighterId: summon.ownerFighterId, x: summon.x, y: summon.y,
+  // 최초 소환도 재소환과 같은 사건을 쓴다. 씬은 어느 쪽인지 구별하지 않아도 된다.
+  state.initialEvents.push(...state.fighters.filter((wolf) => wolf.summonOwnerId !== null).map((wolf): SkirmishEvent => ({
+    kind: "packSummon", fighterId: wolf.id, ownerFighterId: wolf.summonOwnerId ?? "", x: wolf.x, y: wolf.y,
   })));
+  // 척후. 늑대를 먼저 내보내 확인한 적 중 가장 위험한 하나를 무리 전체의 첫 표적으로 삼는다.
+  assignPackScoutTarget(state);
   // 무리 사냥이 있는 편만 기준 아군의 정상 최초 표적을 확정한 뒤 루카가 이를 복사한다.
   triggerPackHunt(state, "player");
   triggerPackHunt(state, "enemy");
@@ -1070,7 +1089,8 @@ export function skirmishRelicResults(state: SkirmishState): SkirmishRelicResult[
 /** 화면에는 전투원 자체나 누적 원본 대신 표시 메타데이터까지 복제한 읽기 전용 성격의 행만 준다. */
 export function battleContributionSnapshot(state: SkirmishState, category: ContributionCategory): BattleContributionRow[] {
   // 전투 패널은 아군 성과표이므로 사망 여부와 무관하게 최초 편성의 모든 아군만 복사한다.
-  return contributionSnapshot(state.contributions, state.fighters.filter((fighter) => fighter.side === "player").map((fighter, formationOrder) => ({
+  // 귀속 소환수는 편성 칸이 아니라 지휘자의 몫이므로 제 줄을 만들지 않는다.
+  return contributionSnapshot(state.contributions, state.fighters.filter((fighter) => fighter.side === "player" && isPartyFighter(fighter)).map((fighter, formationOrder) => ({
     id: fighter.id, formationOrder, name: fighter.def.name,
     // 현재 데이터 모델에서 초상 에셋의 안정 키는 렐릭 정의 ID이며 누적 키로는 사용하지 않는다.
     portraitId: fighter.def.id,
@@ -2390,6 +2410,8 @@ export function attackInterval(fighter: Fighter, state?: SkirmishState): number 
     : fighter.ferocityFever && trait.effectId === "splashDamage" && trait.attackSpeedBonusPercent !== undefined
       // 공격 속도 +20%는 공격 간격 -20%와 다르므로 증가된 속도로 간격을 나눈다.
       ? 1 / (1 + trait.attackSpeedBonusPercent / 100)
+      : fighter.ferocityFever && trait.effectId === "packBody"
+        ? 1 + trait.attackSpeedPercent / 100
       : fighter.ferocityFever && trait.effectId === "selfAttackSpeedMultiplier"
         // +100%는 공격 속도 x2이고, 속도의 역수인 공격 간격은 정확히 50%가 된다.
         ? 1 / (1 + trait.bonusPercent / 100)
@@ -2417,7 +2439,10 @@ export function defensiveDefinition(target: Fighter, state: SkirmishState): Figh
   // 저주는 저항만 깎는다. 오라와 같은 자리에서 곱해야 "올려 주는 것"과 "깎는 것"이 한 번씩만 든다.
   const shred = 1 - curseResistanceShred(target) / 100;
   // 모피 코트는 남이 아니라 폭주 중인 자기 자신에게만 붙는 배율이라 오라와 다른 자리에서 온다.
-  const furCoat = target.ferocityFever && target.def.ferocityTrait.effectId === "furCoat" ? target.def.ferocityTrait.defenseResistancePercent : 0;
+  const feverTrait = target.def.ferocityTrait;
+  const furCoat = target.ferocityFever && feverTrait.effectId === "furCoat" ? feverTrait.defenseResistancePercent
+    // 주인의 폭주를 함께 받는 몸도 같은 자리에서 방어·저항을 올린다.
+    : target.ferocityFever && feverTrait.effectId === "packBody" ? feverTrait.defenseResistancePercent : 0;
   // 토리카는 퍼센트가 아닌 실제값을 피해 계산용 사본에만 더해 정적 RelicDef를 보존한다.
   const torika = target.ferocityFever && target.def.ferocityTrait.effectId === "torikaBulwark" ? target.def.ferocityTrait : undefined;
   const reagentReduction = reagentResistanceReduction(target);
@@ -2836,10 +2861,10 @@ function gainFerocity(fighter: Fighter, base: number, state: SkirmishState, even
       if (trait.retriggerPackHunt) triggerPackHunt(state, fighter.side);
     }
     if (trait.effectId === "summonPackFrenzy") {
-      // 회수 중인 늑대는 건드리지 않는다. 재호출되면 그때 남은 폭주 시계만 전달한다.
-      const remainingSeconds = fighter.ferocity / FEROCITY_RULES.feverDrainPerSecond;
-      for (const summon of state.summons.filter((unit) => unit.ownerFighterId === fighter.id && unit.status === "active")) {
-        events.push({ kind: "summonFrenzy", summonId: summon.id, ownerFighterId: fighter.id, active: true, remainingSeconds });
+      // 지휘자는 자기 손이 달라지지 않는다. 대신 앞에 선 몸들이 주인의 시계를 그대로 받는다.
+      for (const wolf of state.fighters.filter((unit) => unit.summonOwnerId === fighter.id && isFighterAlive(unit))) {
+        wolf.ferocity = fighter.ferocity;
+        wolf.ferocityFever = true;
       }
     }
     if (trait.effectId === "torikaBulwark") {
@@ -3061,7 +3086,8 @@ function offensiveDefinition(attacker: Fighter): RelicDef {
 /** 직접 피해 회복률은 기본 능력치, 현재 폭주, 사용 스킬을 퍼센트포인트 덧셈으로 확정한다. */
 function damageHealingRate(attacker: Fighter, skill: Skill, attackingInFever: boolean, target: Fighter): number {
   const trait = attacker.def.ferocityTrait;
-  const fever = attackingInFever && trait.effectId === "rexBattleQueen" ? trait.allDamageLifeStealPoints : 0;
+  const fever = attackingInFever && trait.effectId === "rexBattleQueen" ? trait.allDamageLifeStealPoints
+    : attackingInFever && trait.effectId === "packBody" ? trait.lifeStealPoints : 0;
   // 매디 전용: 때리기 전부터 이미 빙결 중이던 적에게만 붙는 흡혈이다. 이번 타격이 새로 건
   // 빙결에는 적용하지 않는다 — 상태 효과는 이 계산 뒤에 적용된다.
   const frozenBonus = target.frozen !== null ? skill.damageHealingPercentIfFrozen ?? 0 : 0;
@@ -3563,7 +3589,9 @@ function strike(
   // 전투가 그대로 읽어야 한다.
   const passiveCritPoints = attacker.def.passive.criticalChancePercent ?? 0;
   // 「오더」가 더하는 치명타 확률도 퍼센트포인트다 — 곱하면 같은 지시가 개체마다 다른 값이 된다.
-  const criticalChance = attacker.def.stats.critChance + passiveCritPoints + (activeOrder(attacker)?.criticalChancePoints ?? 0);
+  const criticalChance = attacker.def.stats.critChance + passiveCritPoints + attacker.packCritChance
+    + (activeOrder(attacker)?.criticalChancePoints ?? 0)
+    + (attackingInFever && critTrait.effectId === "packBody" ? critTrait.criticalChancePoints : 0);
   // 「전투의 여왕은 나야.」 폭주 중에는 이미 물어뜯어 피가 흐르는 적을 다시 물면 확정 치명타다.
   // 확률을 더하지 않는 이유는 그 축을 패시브가 이미 밀고 있어 폭주가 같은 말을 반복하기 때문이다.
   const bleedingBite = attackingInFever && critTrait.effectId === "rexBattleQueen"
@@ -3635,7 +3663,7 @@ function strike(
   const dealt = applyDamage(target, amount, events, state);
   // 광란한 개체가 제 편을 때린 몫은 그 개체가 아니라 **광란을 건 쪽**이 만든 피해다. 여기서
   // 넘기지 않으면 광란으로 판을 뒤집은 시전자가 기여도 그래프에 0으로 남는다.
-  const creditedTo = attacker.frenzy?.sourceId ?? attacker.id;
+  const creditedTo = attacker.frenzy?.sourceId ?? packCreditId(attacker);
   const credited = recordDamageContribution(state, creditedTo, target, damageInput.damageType, damageInput.scalingStat, contributionAmount, resolution, targetHpBefore, shieldBefore, shieldProviderId);
   tryTriggerEmergencyRecovery(target); tryTriggerLowHpVanish(target, state);
   triggerCombatAugments(state, target, "onLowHp", events);
@@ -3844,7 +3872,7 @@ function strike(
       const secondaryHpBefore = secondary.hp;
       const secondaryShieldBefore = secondary.shield.amount; const secondaryShieldProviderId = secondary.shield.providerId;
       applyDamage(secondary, splashAmount, events, state);
-      const splashCredited = recordDamageContribution(state, attacker.id, secondary, damageInput.damageType, damageInput.scalingStat, splashContribution, splashResolution, secondaryHpBefore, secondaryShieldBefore, secondaryShieldProviderId);
+      const splashCredited = recordDamageContribution(state, packCreditId(attacker), secondary, damageInput.damageType, damageInput.scalingStat, splashContribution, splashResolution, secondaryHpBefore, secondaryShieldBefore, secondaryShieldProviderId);
       tryTriggerEmergencyRecovery(secondary); tryTriggerLowHpVanish(secondary, state);
       // 광역 피해도 공격자가 실제로 입힌 HP 피해이므로 같은 흡혈 규칙에 포함한다.
       healFromDamage(secondaryHpBefore - secondary.hp);
@@ -3992,7 +4020,9 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
 
   for (const [index, target] of targets.entries()) {
     // 각 대상은 자기 방어력·속성·피버 경감을 사용하며 치명타도 독립 판정한다.
-    const criticalChance = Math.min(100, attacker.def.stats.critChance + passiveCritPoints + (activeOrder(attacker)?.criticalChancePoints ?? 0));
+    const criticalChance = Math.min(100, attacker.def.stats.critChance + passiveCritPoints + attacker.packCritChance
+      + (activeOrder(attacker)?.criticalChancePoints ?? 0)
+      + (attackingInFever && critTrait.effectId === "packBody" ? critTrait.criticalChancePoints : 0));
     // 광역도 같은 조건을 쓴다 — 대상마다 출혈 여부가 다르므로 판정도 대상마다 따로 본다.
     const bleedingBite = attackingInFever && critTrait.effectId === "rexBattleQueen"
       && critTrait.bleedingGuaranteedCritical && target.bleed !== null;
@@ -4009,7 +4039,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     const hpBefore = target.hp;
     const shieldBefore = target.shield.amount; const shieldProviderId = target.shield.providerId;
     applyDamage(target, amount, events, state);
-    const credited = recordDamageContribution(state, attacker.id, target, damageInput.damageType, damageInput.scalingStat, contributionAmount, resolution, hpBefore, shieldBefore, shieldProviderId);
+    const credited = recordDamageContribution(state, packCreditId(attacker), target, damageInput.damageType, damageInput.scalingStat, contributionAmount, resolution, hpBefore, shieldBefore, shieldProviderId);
     tryTriggerEmergencyRecovery(target); tryTriggerLowHpVanish(target, state);
     triggerCombatAugments(state, target, "onLowHp", events);
     // 흡혈은 대상별 실제 HP 감소량만 더해 과잉 피해를 회복량으로 만들지 않는다.
@@ -4222,7 +4252,6 @@ function clampToArena(state: SkirmishState): void {
   }
 }
 
-/** 두 늑대가 모두 현장에 있는 동안만 디안의 조건부 은신을 유지하고 추적 중인 단일 표적을 끊는다. */
 /** 지금 짝지어 둔 듀오. 이미 쓰러졌어도 ID는 남으므로 생존 판정은 호출부가 한다. */
 function duoOf(fighter: Fighter, state: SkirmishState): Fighter | undefined {
   return fighter.duoId ? findFighter(state, fighter.duoId) : undefined;
@@ -4396,14 +4425,23 @@ function triggerWeakpoint(state: SkirmishState, attacker: Fighter, target: Fight
   if (healed > 0) events.push({ kind: "heal", fighterId: attacker.id, amount: healed, source: "passive", effect: { tag: "heal", intensity: 1 } });
 }
 
-function refreshSummonCommanderStealth(state: SkirmishState): void {
+/**
+ * 두 늑대가 모두 살아 있는 동안만 도는 지휘자의 경계다.
+ *
+ * 은신과 무리 치명타를 **한 자리에서** 켜고 끈다. 조건이 하나뿐인데 두 곳에서 재면 늑대가
+ * 쓰러진 프레임에 한쪽만 꺼져 화면과 판정이 갈린다.
+ */
+function refreshPackGuard(state: SkirmishState): void {
   for (const owner of state.fighters.filter((fighter) => fighter.def.passive.kind === "summonCommander")) {
-    const owned = state.summons.filter((summon) => summon.ownerFighterId === owner.id);
-    const guarded = isFighterAlive(owner) && owned.length > 0 && owned.every((summon) => summon.status === "active" && summon.hp > 0);
+    const wolves = state.fighters.filter((wolf) => wolf.summonOwnerId === owner.id);
+    const guarded = isFighterAlive(owner) && wolves.length > 0 && wolves.every(isFighterAlive);
     owner.stealthFor = guarded ? Number.POSITIVE_INFINITY : 0;
     owner.stealthBreaksOnBasic = false;
+    const shared = guarded ? owner.def.passive.criticalChancePercent ?? 0 : 0;
+    // 지휘자 자신은 패시브 필드를 이미 읽으므로 여기서 또 더하지 않는다. 나눠 받는 것은 늑대뿐이다.
+    for (const wolf of wolves) wolf.packCritChance = shared;
     if (!guarded) continue;
-    // 이미 디안을 쫓던 단일 대상도 조건이 켜진 프레임에 즉시 표적을 잃는다.
+    // 이미 지휘자를 쫓던 단일 대상도 조건이 켜진 프레임에 즉시 표적을 잃는다.
     for (const enemy of state.fighters) if (enemy.targetId === owner.id) {
       enemy.targetId = null;
       enemy.engaged = false;
@@ -4411,175 +4449,243 @@ function refreshSummonCommanderStealth(state: SkirmishState): void {
   }
 }
 
-/** 소환수 HP를 깎는 공용 경계다. 0 HP는 패배가 아니라 즉시 회수 상태가 된다. */
-export function damageSummonedUnit(state: SkirmishState, summonId: string, amount: number): number {
-  const summon = state.summons.find((candidate) => candidate.id === summonId);
-  if (!summon || summon.status !== "active" || amount <= 0 || state.phase !== "fight") return 0;
-  const before = summon.hp;
-  summon.hp = Math.max(0, summon.hp - amount);
-  if (summon.hp <= 0) {
-    summon.status = "recalled";
-    const owner = findFighter(state, summon.ownerFighterId);
-    const definition = owner?.def.summons?.find((entry) => entry.id === summon.summonId);
-    summon.resummonRemaining = definition?.resummon.enabled ? definition.resummon.cooldownSeconds : Number.POSITIVE_INFINITY;
-    refreshSummonCommanderStealth(state);
-    // 직접 피해 API는 사건 배열을 받지 않으므로 다음 step까지 코어의 시작 사건 큐에 보존한다.
-    state.initialEvents.push({ kind: "summonHit", summonId: summon.id, ownerFighterId: summon.ownerFighterId, targetId: summon.id, amount: before, damageType: "physical" });
-    state.initialEvents.push({ kind: "summonRecall", summonId: summon.id, ownerFighterId: summon.ownerFighterId });
-  } else {
-    state.initialEvents.push({ kind: "summonHit", summonId: summon.id, ownerFighterId: summon.ownerFighterId, targetId: summon.id, amount: before - summon.hp, damageType: "physical" });
+/**
+ * 척후. 늑대를 먼저 내보내 확인한 적 중 **전투력이 가장 높은 하나**를 무리의 첫 표적으로 삼는다.
+ *
+ * 첫 표적만 정한다 — 그 뒤로는 도발이든 사망이든 공용 표적 규칙이 그대로 옮긴다. 어린 대원
+ * 앞에서는 제일 위험한 놈이 먼저라는 것이 이 개체의 여는 수이고, 그 뒤의 판단까지 잠그면
+ * 무리가 죽지 않는 적 하나에 통째로 묶인다.
+ */
+function assignPackScoutTarget(state: SkirmishState): void {
+  for (const owner of state.fighters.filter((fighter) => fighter.def.passive.kind === "summonCommander")) {
+    const scouted = state.fighters
+      .filter((enemy) => enemy.side !== owner.side && isPartyFighter(enemy) && isFighterAlive(enemy))
+      // 전투력은 표시·정렬용 한 숫자다. 여기서도 피해 계산에 쓰지 않고 **누가 제일 위험한가**만 고른다.
+      .reduce<Fighter | undefined>((worst, enemy) => !worst || combatPower(enemy.def.stats) > combatPower(worst.def.stats) ? enemy : worst, undefined);
+    if (!scouted) continue;
+    for (const member of [owner, ...state.fighters.filter((wolf) => wolf.summonOwnerId === owner.id)]) {
+      member.targetId = scouted.id;
+      // 공용 재평가 시계를 처음부터 돌려 척후가 정한 표적이 첫 프레임에 덮이지 않게 한다.
+      member.retargetIn = SKIRMISH.retargetSeconds;
+    }
   }
-  return before - summon.hp;
 }
 
-/** 회수·재호출 시계를 갱신하며 주인 사망 및 전투 종료에서는 재호출 가능성을 즉시 없앤다. */
-function advanceSummons(state: SkirmishState, dt: number, events: SkirmishEvent[]): void {
-  for (const summon of state.summons) {
-    const owner = findFighter(state, summon.ownerFighterId);
-    const definition = owner?.def.summons?.find((entry) => entry.id === summon.summonId);
+/** 지휘자와 그 늑대들이 함께 읽는 지금 겹 수다. 값의 소유자는 지휘자 하나뿐이다. */
+export function bloodscentOf(state: SkirmishState, fighter: Fighter): number {
+  const owner = fighter.summonOwnerId ? findFighter(state, fighter.summonOwnerId) : fighter;
+  return owner?.bloodscent ?? 0;
+}
+
+/** 무리가 겹을 하나 얻는 유일한 경계다. 상한은 지휘자 패시브가 갖는다. */
+function gainBloodscent(owner: Fighter, events: SkirmishEvent[]): void {
+  const rule = owner.def.passive.bloodscent;
+  if (!rule || owner.bloodscent >= rule.maxStacks) return;
+  owner.bloodscent += 1;
+  events.push({ kind: "bloodscent", fighterId: owner.id, stacks: owner.bloodscent });
+}
+
+/**
+ * 쓰러진 늑대의 시계를 흘리고, 다 되면 주인의 앞쪽에 다시 세운다.
+ *
+ * 주인이 죽거나 전투가 끝나면 다시 서지 않는다 — 지휘자가 없는 무리는 없다.
+ */
+function advancePack(state: SkirmishState, dt: number, events: SkirmishEvent[]): void {
+  for (const wolf of state.fighters) {
+    if (wolf.summonOwnerId === null) continue;
+    const owner = findFighter(state, wolf.summonOwnerId);
+    const rule = wolf.resummonRule;
     if (!owner || !isFighterAlive(owner) || state.phase !== "fight") {
-      summon.status = "recalled";
-      summon.hp = 0;
-      summon.resummonRemaining = Number.POSITIVE_INFINITY;
+      if (isFighterAlive(wolf)) { wolf.hp = 0; clearDefeatedStatuses(wolf); events.push({ kind: "death", fighterId: wolf.id }); }
+      wolf.resummonIn = Number.POSITIVE_INFINITY;
       continue;
     }
-    if (summon.status === "active" && summon.hp <= 0) {
-      summon.status = "recalled";
-      summon.resummonRemaining = definition?.resummon.enabled ? definition.resummon.cooldownSeconds : Number.POSITIVE_INFINITY;
-    } else if (summon.status === "recalled" && Number.isFinite(summon.resummonRemaining)) {
-      summon.resummonRemaining = Math.max(0, summon.resummonRemaining - dt);
-      if (summon.resummonRemaining === 0 && definition?.resummon.enabled) {
-        summon.status = "active";
-        summon.hp = Math.max(1, Math.round(summon.maxHp * definition.resummon.hpPercent / 100));
-        // 돌아온 늑대는 움직이는 주인의 현재 앞쪽으로 다시 배치한다.
-        const siblingIndex = owner.def.summons?.findIndex((entry) => entry.id === summon.summonId) ?? 0;
-        summon.x = owner.x + (siblingIndex % 2 === 0 ? -70 : 70);
-        summon.y = owner.y + (owner.side === "player" ? -90 : 90);
-        events.push({ kind: "summonReturn", summonId: summon.id, ownerFighterId: owner.id, x: summon.x, y: summon.y });
-        if (owner.ferocityFever && owner.def.ferocityTrait.effectId === "summonPackFrenzy") {
-          events.push({ kind: "summonFrenzy", summonId: summon.id, ownerFighterId: owner.id, active: true,
-            remainingSeconds: owner.ferocity / FEROCITY_RULES.feverDrainPerSecond });
-        }
-      }
+    if (isFighterAlive(wolf)) { wolf.resummonIn = 0; continue; }
+    if (!rule?.enabled) { wolf.resummonIn = Number.POSITIVE_INFINITY; continue; }
+    // 쓰러진 프레임에 시계를 건다. 0으로 두면 다음 프레임에 곧바로 되살아난다.
+    if (wolf.resummonIn === 0) { wolf.resummonIn = rule.cooldownSeconds; continue; }
+    if (!Number.isFinite(wolf.resummonIn)) continue;
+    wolf.resummonIn = Math.max(0, wolf.resummonIn - dt);
+    if (wolf.resummonIn > 0) continue;
+    reviveWolf(state, owner, wolf, events);
+  }
+  refreshPackGuard(state);
+}
+
+/** 늑대 한 마리를 주인의 앞쪽에 다시 세운다. 재소환과 궁극기의 일으켜 세우기가 같은 경계를 쓴다. */
+function reviveWolf(state: SkirmishState, owner: Fighter, wolf: Fighter, events: SkirmishEvent[]): void {
+  const rule = wolf.resummonRule;
+  if (!rule?.enabled || isFighterAlive(wolf)) return;
+  wolf.hp = Math.max(1, Math.round(wolf.maxHp * rule.hpPercent / 100));
+  wolf.resummonIn = 0;
+  const index = (owner.def.summons ?? []).findIndex((spec) => wolf.id.endsWith(`:${spec.def.id}`));
+  wolf.x = Math.min(state.arena.right, Math.max(state.arena.left, owner.x + (index % 2 === 0 ? -70 : 70)));
+  wolf.y = Math.min(state.arena.bottom, Math.max(state.arena.top, owner.y + (owner.side === "player" ? -90 : 90)));
+  wolf.targetId = null;
+  wolf.engaged = false;
+  wolf.attackCooldown = 0;
+  // 주인이 이미 폭주 중이면 돌아온 몸도 그 자리에서 함께 끓는다.
+  wolf.ferocityFever = owner.ferocityFever;
+  wolf.ferocity = owner.ferocity;
+  events.push({ kind: "packSummon", fighterId: wolf.id, ownerFighterId: owner.id, x: wolf.x, y: wolf.y });
+}
+
+/**
+ * 지휘자의 한 행동. 합공 두 축이 함께 들어가고, 표적이 문턱 아래면 대신 목덜미가 나간다.
+ *
+ * 두 축을 하나의 위력으로 합치지 않는 이유는 방어력과 저항력이 각각 다르게 깎기 때문이다.
+ * 화면도 그래서 두 수를 따로 본다.
+ */
+function packStrike(attacker: Fighter, target: Fighter, state: SkirmishState, events: SkirmishEvent[], useUltimate: boolean): void {
+  const skill = useUltimate ? attacker.def.ultimate : attacker.def.basic;
+  const dual = attacker.def.basic.dualStrike;
+  if (!dual) return;
+  const stacks = attacker.bloodscent;
+  const rule = attacker.def.passive.bloodscent;
+  const amplify = 1 + stacks * (rule?.damagePercentPerStack ?? 0) / 100;
+  const wolves = packOf(state, attacker);
+  const assault = useUltimate ? attacker.def.ultimate.packAssault : undefined;
+  if (assault) {
+    /*
+     * 쓰러진 몸을 그 자리에서 되살리지 않는다 — 그러면 늑대를 잃는 일이 값을 잃지 않는다.
+     * 남은 대기 시간을 앞당길 뿐이고, 그 결과로 다 되면 그때 다시 선다.
+     */
+    for (const wolf of state.fighters.filter((unit) => unit.summonOwnerId === attacker.id && !isFighterAlive(unit))) {
+      if (!Number.isFinite(wolf.resummonIn) || wolf.resummonIn <= 0) continue;
+      wolf.resummonIn = Math.max(0, wolf.resummonIn - assault.resummonHasteSeconds);
+      // 앞당긴 결과로 지금 서게 됐다면 이 돌격에도 함께 나간다.
+      if (wolf.resummonIn === 0) reviveWolf(state, attacker, wolf, events);
     }
   }
-  refreshSummonCommanderStealth(state);
+  // 방금 일어난 몸까지 세도록 살아 있는 늑대를 다시 고른다.
+  if (assault) {
+    for (const wolf of packOf(state, attacker)) {
+      chargeWolfInto(state, wolf, target, events, assault.summonPowerPercent);
+    }
+  }
+
+  const finisher = skill.finisher;
+  const threshold = finisher ? finisher.thresholdPercent + stacks * finisher.thresholdPerStack : 0;
+  const openings = finisher !== undefined && target.hp / target.maxHp * 100 <= threshold;
+
+  // 늑대가 모두 쓰러져 있으면 두 축을 번갈아 낸다. 한 번에 둘 다 내는 것은 무리가 설 때뿐이다.
+  const alone = wolves.length === 0;
+  const axes: Array<{ power: number; damageType: "physical" | "magical"; scalingStat: "atk" | "ap" }> = alone
+    ? [attacker.basicCycleStep % 2 === 0
+      ? { power: dual.aloneAlternatePercent, damageType: "physical", scalingStat: "atk" }
+      : { power: dual.aloneAlternatePercent, damageType: "magical", scalingStat: "ap" }]
+    : [
+      { power: dual.attackPercent, damageType: "physical", scalingStat: "atk" },
+      { power: dual.abilityPercent, damageType: "magical", scalingStat: "ap" },
+    ];
+
+  let dealtTotal = 0;
+  if (openings && finisher) {
+    dealtTotal = strikeFinisher(attacker, target, state, events, finisher, axes, amplify, useUltimate);
+  } else {
+    for (const axis of axes) {
+      dealtTotal += commanderAxisHit(attacker, target, state, events, { ...axis, power: axis.power * amplify }, useUltimate);
+    }
+  }
+
+  if (dealtTotal > 0 && !isFighterAlive(target)) gainBloodscent(attacker, events);
+  if (useUltimate) attacker.energy -= ultimateCost(state, attacker, true);
+  else gainEnergy(attacker, state);
+  gainFerocity(attacker, useUltimate ? FEROCITY_RULES.ultimateGain : FEROCITY_RULES.basicGain, state, events);
+}
+
+/** 합공 한 축. 물리와 마법이 각자 방어력·저항력·속성 상성을 지나 따로 들어간다. */
+function commanderAxisHit(
+  attacker: Fighter,
+  target: Fighter,
+  state: SkirmishState,
+  events: SkirmishEvent[],
+  axis: { power: number; damageType: "physical" | "magical"; scalingStat: "atk" | "ap" },
+  useUltimate: boolean,
+): number {
+  const input = { power: axis.power, damageType: axis.damageType, scalingStat: axis.scalingStat, kind: useUltimate ? "ultimate" as const : "basic" as const, isCritical: false };
+  const raw = Math.max(1, Math.round(computeDamage(attacker, defensiveDefinition(target, state), input)));
+  const contribution = computeDamageContribution(attacker, input);
+  const resolution = resolveReceivedDamage(target, raw);
+  const hpBefore = target.hp; const shieldBefore = target.shield.amount; const provider = target.shield.providerId;
+  const dealt = applyDamage(target, resolution.applied, events, state);
+  const credited = recordDamageContribution(state, attacker.id, target, axis.damageType, axis.scalingStat, contribution, resolution, hpBefore, shieldBefore, provider);
+  events.push({ kind: "attack", attackerId: attacker.id, targetId: target.id, skill: useUltimate ? "ultimate" : "basic", amount: resolution.applied, contributionAmount: credited, critical: false, damageType: axis.damageType });
+  if (!isFighterAlive(target)) { clearDefeatedStatuses(target); events.push({ kind: "death", fighterId: target.id, sourceId: attacker.id }); }
+  return dealt;
 }
 
 /**
- * 늑대가 물기 위해 서는 자리와 표적 사이의 간격(px).
+ * 목덜미. 표적 뒤로 순간이동해 남은 체력에 비례하는 고정 피해를 준다.
  *
- * 쿠로·시로는 근거리 개체라 지휘를 받으면 제자리에서 쏘지 않고 표적 옆까지 붙는다. 궁극기
- * 돌진과 같은 값을 쓰므로 일반 지휘와 궁극기가 서로 다른 거리에서 무는 것처럼 보이지 않는다.
+ * **문 자리에 그대로 선다** — 물고 제자리로 돌아오면 앞뒤를 오가는 순간이동만 반복해 보인다.
+ * 은신은 풀리지 않으므로 적진 한가운데에 서 있어도 단일 대상에게는 보이지 않는다.
+ *
+ * 합공만큼은 반드시 준다. 비례 피해는 표적의 최대 체력이 작을수록 작아지므로, 하한이 없으면
+ * 마무리 한 방이 평소 한 방보다 약해지는 구간이 생긴다.
  */
-const SUMMON_BITE_GAP = 36;
+function strikeFinisher(
+  attacker: Fighter,
+  target: Fighter,
+  state: SkirmishState,
+  events: SkirmishEvent[],
+  finisher: NonNullable<BasicAttack["finisher"]>,
+  axes: ReadonlyArray<{ power: number; damageType: "physical" | "magical"; scalingStat: "atk" | "ap" }>,
+  amplify: number,
+  useUltimate: boolean,
+): number {
+  // 표적의 등 뒤. 아군 진영 반대쪽이라 무리가 앞을 막는 동안 두목이 뒤를 문다.
+  const behind = target.side === "player" ? 1 : -1;
+  attacker.x = Math.min(state.arena.right, Math.max(state.arena.left, target.x));
+  attacker.y = Math.min(state.arena.bottom, Math.max(state.arena.top, target.y + behind * 64));
+  attacker.facing = target.y >= attacker.y ? 1 : -1;
+  attacker.engaged = true;
+  attacker.bestGap = 0;
+  attacker.blockedFor = 0;
+  events.push({ kind: "packFinisher", fighterId: attacker.id, targetId: target.id, x: attacker.x, y: attacker.y });
 
-/**
- * 근거리 늑대를 표적 옆으로 옮기고 실제로 움직였는지 알린다.
- *
- * 좌표의 소유자는 코어라, 씬은 여기서 정한 자리를 사건으로 받아 그리기만 한다. 같은 적을 둘이
- * 함께 물어도 좌우로 갈라 서도록 `side`를 받는다.
- */
-function biteBeside(state: SkirmishState, unit: SummonedUnit, target: Fighter, side: 1 | -1): { from: { x: number; y: number }; to: { x: number; y: number }; moved: boolean } {
-  const from = { x: unit.x, y: unit.y };
-  unit.x = Math.min(state.arena.right, Math.max(state.arena.left, target.x + side * SUMMON_BITE_GAP));
-  unit.y = Math.min(state.arena.bottom, Math.max(state.arena.top, target.y));
-  // 무는 방향은 선 자리에서 표적을 향한다. 좌우가 뒤집히면 물어뜯는 순간 등을 보인다.
-  unit.facing = unit.x <= target.x ? 1 : -1;
-  return { from, to: { x: unit.x, y: unit.y }, moved: from.x !== unit.x || from.y !== unit.y };
+  const proportional = target.hp * finisher.remainingHpPercent / 100;
+  // 하한은 지금 합공이 냈을 피해다. 방어를 지나지 않는 값이라 실제로는 대개 비례 쪽이 크다.
+  const floor = axes.reduce((sum, axis) => sum + computeDamage(attacker, defensiveDefinition(target, state),
+    { power: axis.power * amplify, damageType: axis.damageType, scalingStat: axis.scalingStat, kind: "basic", isCritical: false }), 0);
+  const amount = Math.max(1, Math.round(Math.max(proportional, floor)));
+  const resolution = resolveReceivedDamage(target, amount);
+  const hpBefore = target.hp; const shieldBefore = target.shield.amount; const provider = target.shield.providerId;
+  const dealt = applyDamage(target, resolution.applied, events, state);
+  const credited = recordDamageContribution(state, attacker.id, target, "physical", "atk", amount, resolution, hpBefore, shieldBefore, provider);
+  events.push({ kind: "attack", attackerId: attacker.id, targetId: target.id, skill: useUltimate ? "ultimate" : "basic", amount: resolution.applied, contributionAmount: credited, critical: false, damageType: "true" });
+  if (!isFighterAlive(target)) { clearDefeatedStatuses(target); events.push({ kind: "death", fighterId: target.id, sourceId: attacker.id }); }
+  // 목덜미가 실제로 들어갔으면 무리가 피 냄새를 맡는다. 적이 하나뿐인 판에서도 겹이 돈다.
+  if (dealt > 0) gainBloodscent(attacker, events);
+  return dealt;
 }
 
-/**
- * 늑대가 표적의 어느 쪽에 서는지 정의 순서에서 정한다.
- *
- * 지휘 순서는 행동마다 교대하지만 서는 쪽은 그대로 둔다 — 순서를 따라 좌우가 뒤집히면 두
- * 늑대가 한 대 칠 때마다 서로 자리를 바꿔 화면에서 둘이 엉킨 것처럼 보인다.
- */
-function summonFlank(owner: Fighter, unit: SummonedUnit): 1 | -1 {
-  const index = owner.def.summons?.findIndex((entry) => entry.id === unit.summonId) ?? 0;
-  return index % 2 === 0 ? -1 : 1;
-}
-
-/** 지휘자가 현재 부릴 수 있는 늑대만 정의 순서(쿠로, 시로)대로 돌려준다. */
-function activeOwnedSummons(state: SkirmishState, owner: Fighter): Array<{ unit: SummonedUnit; definition: NonNullable<RelicDef["summons"]>[number] }> {
-  return (owner.def.summons ?? []).flatMap((definition) => {
-    const unit = state.summons.find((candidate) => candidate.ownerFighterId === owner.id && candidate.summonId === definition.id);
-    return unit?.status === "active" && unit.hp > 0 ? [{ unit, definition }] : [];
-  });
-}
-
-/** 소환수 한 마리의 파생 능력치로 한 번만 피해를 계산하고, 기여도는 성장 주체인 지휘자에게 귀속한다. */
-function strikeSummon(owner: Fighter, summon: SummonedUnit, skill: AttackSkill, target: Fighter, state: SkirmishState, events: SkirmishEvent[], ultimate: boolean): void {
-  const trait = owner.def.ferocityTrait;
-  const frenzy = owner.ferocityFever && trait.effectId === "summonPackFrenzy" ? trait : undefined;
-  const role = summon.summonId === "kuro" ? frenzy?.kuro : summon.summonId === "shiro" ? frenzy?.shiro : undefined;
-  // 강화는 계산용 사본에만 투영해 정적 소환수 능력치와 회수 중 HP를 바꾸지 않는다.
-  const stats = { ...summon.stats };
-  if (role && "attackPowerPercent" in role) stats.atk *= 1 + role.attackPowerPercent / 100;
-  if (role && "abilityPowerPercent" in role) stats.ap *= 1 + role.abilityPowerPercent / 100;
-  stats.attackSpeed *= 1 + (role?.attackSpeedPercent ?? 0) / 100;
-  stats.moveSpeed *= 1 + (role?.moveSpeedPercent ?? 0) / 100;
-  const proxy = { ...owner, id: summon.id, def: { ...owner.def, stats } };
-  let power = skill.power;
-  if (role && "pursuitDamagePercent" in role && ultimate) power *= 1 + role.pursuitDamagePercent / 100;
-  if (role && "executeDamagePercent" in role && target.hp / target.maxHp * 100 <= role.executeBelowHpPercent) power *= 1 + role.executeDamagePercent / 100;
-  const input = { ...skill, power, kind: ultimate ? "ultimate" as const : "basic" as const, isCritical: false };
-  const raw = Math.max(1, Math.round(computeDamage(proxy, defensiveDefinition(target, state), input)));
-  const contribution = computeDamageContribution(proxy, input);
+/** 지휘자의 궁극기가 늑대 하나를 표적 옆으로 던져 제 성장 축으로 한 번 물게 한다. */
+function chargeWolfInto(state: SkirmishState, wolf: Fighter, target: Fighter, events: SkirmishEvent[], powerPercent: number): void {
+  const magical = wolf.def.stats.ap > wolf.def.stats.atk;
+  const side = magical ? 1 : -1;
+  const from = { x: wolf.x, y: wolf.y };
+  wolf.x = Math.min(state.arena.right, Math.max(state.arena.left, target.x + side * 36));
+  wolf.y = Math.min(state.arena.bottom, Math.max(state.arena.top, target.y));
+  wolf.facing = wolf.x <= target.x ? 1 : -1;
+  wolf.engaged = true;
+  events.push({ kind: "areaImpact", attackerId: wolf.id, ultimate: true, damageType: magical ? "magical" : "physical",
+    area: { shape: "lane", from, to: { x: wolf.x, y: wolf.y }, halfWidth: 24 } });
+  const input = { power: powerPercent, damageType: magical ? "magical" as const : "physical" as const, scalingStat: magical ? "ap" as const : "atk" as const, kind: "ultimate" as const, isCritical: false };
+  const raw = Math.max(1, Math.round(computeDamage(wolf, defensiveDefinition(target, state), input)));
+  const contribution = computeDamageContribution(wolf, input);
   const resolution = resolveReceivedDamage(target, raw);
   const hpBefore = target.hp; const shieldBefore = target.shield.amount; const provider = target.shield.providerId;
   applyDamage(target, resolution.applied, events, state);
-  const credited = recordDamageContribution(state, contributionOwnerId(summon.id, owner.id), target, skill.damageType, skill.scalingStat, contribution, resolution, hpBefore, shieldBefore, provider);
-  events.push({ kind: "attack", attackerId: summon.id, ownerFighterId: owner.id, targetId: target.id, skill: ultimate ? "ultimate" : "basic", amount: resolution.applied, contributionAmount: credited, critical: false, damageType: skill.damageType });
-  events.push({ kind: "summonHit", summonId: summon.id, ownerFighterId: owner.id, targetId: target.id, amount: resolution.applied, damageType: skill.damageType });
-  if (!isFighterAlive(target)) events.push({ kind: "death", fighterId: target.id, sourceId: summon.id });
-}
-
-/** 일반 지휘는 서로 다른 표적을 예약하고 행동마다 선행 늑대를 교대한다. */
-function commandSummonBasic(owner: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
-  const wolves = activeOwnedSummons(state, owner);
-  const enemies = state.fighters.filter((fighter) => fighter.side !== owner.side && isFighterAlive(fighter) && fighter.stealthFor <= 0);
-  if (wolves.length === 0 || enemies.length === 0) return;
-  const ordered = owner.basicCycleStep % 2 === 0 ? wolves : [...wolves].reverse();
-  const reserved = new Map(ordered.map(({ unit }, index) => [unit.id, enemies[Math.min(index, enemies.length - 1)]]));
-  for (const { unit, definition } of ordered) {
-    // 선행 타격으로 예약 대상이 죽은 경우에만 현재 남은 적을 한 번 재탐색한다.
-    const target = reserved.get(unit.id);
-    const valid = target && isFighterAlive(target) ? target : enemies.find(isFighterAlive);
-    if (!valid) continue;
-    // 근거리라 먼저 붙는다. 서는 자리는 정의 순서로 갈라, 지휘 순서가 교대해도 좌우가 바뀌지 않는다.
-    const step = biteBeside(state, unit, valid, summonFlank(owner, unit));
-    if (step.moved) events.push({ kind: "summonMove", summonId: unit.id, ownerFighterId: owner.id, from: step.from, to: step.to });
-    strikeSummon(owner, unit, definition.skills.basic, valid, state, events, false);
-  }
-  owner.basicCycleStep = (owner.basicCycleStep + 1) % 2;
-  owner.energy = Math.min(ULTIMATE_ENERGY_MAX, owner.energy + owner.def.stats.energyGain);
-}
-
-/** 궁극기는 HP 비율, 실제 HP, fighter 배열 순으로 가장 약한 적을 정하고 양쪽 늑대를 보낸다. */
-function commandSummonUltimate(owner: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
-  const wolves = activeOwnedSummons(state, owner);
-  const weakest = (): Fighter | undefined => state.fighters.filter((fighter) => fighter.side !== owner.side && isFighterAlive(fighter) && fighter.stealthFor <= 0)
-    .reduce<Fighter | undefined>((best, fighter) => !best || fighter.hp / fighter.maxHp < best.hp / best.maxHp
-      || (fighter.hp / fighter.maxHp === best.hp / best.maxHp && fighter.hp < best.hp) ? fighter : best, undefined);
-  let target = weakest();
-  for (const [index, { unit, definition }] of wolves.entries()) {
-    if (!target || !isFighterAlive(target)) target = weakest(); // 돌진 중 사망하면 후행 늑대가 한 번만 재지정한다.
-    if (!target) break;
-    const side = index % 2 === 0 ? -1 : 1;
-    const { from, to } = biteBeside(state, unit, target, side);
-    events.push({ kind: "summonUltimateCharge", summonId: unit.id, ownerFighterId: owner.id, from, to });
-    events.push({ kind: "summonMove", summonId: unit.id, ownerFighterId: owner.id, from, to });
-    events.push({ kind: "areaImpact", attackerId: unit.id, ultimate: true, damageType: definition.skills.special.damageType,
-      area: { shape: "lane", from: { x: unit.x - side * 72, y: unit.y }, to: { x: unit.x, y: unit.y }, halfWidth: 24 } });
-    strikeSummon(owner, unit, definition.skills.special, target, state, events, true);
-  }
+  const credited = recordDamageContribution(state, packCreditId(wolf), target, input.damageType, input.scalingStat, contribution, resolution, hpBefore, shieldBefore, provider);
+  events.push({ kind: "attack", attackerId: wolf.id, ownerFighterId: wolf.summonOwnerId ?? undefined, targetId: target.id, skill: "ultimate", amount: resolution.applied, contributionAmount: credited, critical: false, damageType: input.damageType });
+  if (!isFighterAlive(target)) { clearDefeatedStatuses(target); events.push({ kind: "death", fighterId: target.id, sourceId: wolf.id }); }
 }
 
 function settle(state: SkirmishState, events: SkirmishEvent[]): void {
   if (state.phase !== "fight") return;
-  const playersLeft = aliveFighters(state, "player").length;
-  const enemiesLeft = aliveFighters(state, "enemy").length;
+  const playersLeft = aliveFighters(state, "player").filter(isPartyFighter).length;
+  const enemiesLeft = aliveFighters(state, "enemy").filter(isPartyFighter).length;
   // 불사 보스는 적 HP와 무관하게 아군 전멸만 정상 종료로 인정한다.
   if (state.boss && playersLeft === 0) state.phase = "defeat";
   else if (state.boss) return;
@@ -4592,13 +4698,13 @@ function settle(state: SkirmishState, events: SkirmishEvent[]): void {
     fighter.reagentResistanceReductions = {};
   }
   // 종료와 같은 프레임에 남아 있는 소환수도 결과 화면으로 넘어가기 전에 모두 회수한다.
-  advanceSummons(state, 0, events);
+  advancePack(state, 0, events);
   events.push({ kind: "finish", phase: state.phase });
 }
 
 function advance(state: SkirmishState, dt: number, rng: () => number, events: SkirmishEvent[]): void {
   state.elapsed += dt;
-  advanceSummons(state, dt, events);
+  advancePack(state, dt, events);
 
   // 각 폰토스가 소유한 누적 시계로 완전히 경과한 1초만 처리해 프레임 분할과 무관하게 만든다.
   for (const pontus of state.fighters) {
@@ -4781,20 +4887,6 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
       fighter.hop *= recovery;
       continue;
     }
-    // 지휘형은 자기 몸 대신 현장에 남은 소환수에게 한 행동 단위의 공격 명령을 내린다.
-    if (fighter.def.passive.kind === "summonCommander") {
-      fighter.hop *= recovery;
-      fighter.attackCooldown -= dt;
-      if (fighter.attackCooldown <= 0) {
-        const firedUltimate = fighter.side === "enemy" && canFireUltimate(state, fighter);
-        if (firedUltimate) {
-          fighter.energy -= ultimateCost(state, fighter, true);
-          commandSummonUltimate(fighter, state, events);
-        } else commandSummonBasic(fighter, state, events);
-        fighter.attackCooldown = attackInterval(fighter, state);
-      }
-      continue;
-    }
     // 표적을 남이 정해 주는 개체는 주기 재평가에서 뺀다 — 무리 사냥은 대장의 표적을 따라야
     // 하고, 고품격 식재료는 제 시계로 가장 약한 적을 고른다. 둘을 여기서 다시 재면 그 규칙이
     // 2초마다 조용히 덮인다.
@@ -4906,7 +4998,9 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
       // 아군 궁극기는 자동으로 나가지 않는다. 화면에서 누를 때만 fireUltimate로 들어온다.
       // 적 자동 궁극기도 수동 입력과 같은 생존·기절·게이지 코어 규칙을 통과한다.
       const firedUltimate = fighter.side === "enemy" && canFireUltimate(state, fighter);
-      strike(fighter, target, rng, state, events, firedUltimate);
+      // 합공은 한 행동에 두 축을 함께 내므로 단일 타격 경로를 지나지 않는다.
+      if (fighter.def.basic.dualStrike) packStrike(fighter, target, state, events, firedUltimate);
+      else strike(fighter, target, rng, state, events, firedUltimate);
       // 순환 걸음은 **행동 하나마다** 넘긴다. strike 안에서 넘기면 연격의 개별 적중과 광역
       // 처리기가 각자 한 걸음씩 삼켜, 한 번 휘두른 것이 두세 걸음을 지나간다.
       // 금강불괴의 남은 횟수도 같은 자리에서 하나 쓴다 — 세는 것이 적중이 아니라 행동이라
@@ -4949,7 +5043,7 @@ export function canFireUltimate(state: SkirmishState, fighter: Fighter): boolean
   // 광란 중에는 기본 공격만 나간다. 궁극기까지 아군에게 꽂히면 한 판이 그 한 번으로 갈린다.
   if (fighter.frenzy) return false;
   // 지휘형도 최소 한 소환수가 현장에 있으면 남은 한 마리로 축소 궁극기를 정상 시전한다.
-  if (fighter.def.passive.kind === "summonCommander") return activeOwnedSummons(state, fighter).length > 0
+  if (fighter.def.passive.kind === "summonCommander") return true
     && state.fighters.some((other) => other.side !== fighter.side && isFighterAlive(other) && other.stealthFor <= 0);
   // 듀오에게만 거는 궁극기는 걸 상대가 살아 있어야 나간다 — 듀오가 쓰러지면 게이지가 차도
   // 쓸 곳이 없다. 그것이 이 개체가 짊어지는 값이다.
@@ -4979,10 +5073,11 @@ export function fireUltimate(
   if (!attacker || !canFireUltimate(state, attacker)) return events;
 
   const teamUltimate = attacker.def.ultimate;
-  if (teamUltimate.summonCommand === "oppositeChargePair") {
-    // 회수된 늑대 몫은 본체가 메우지 않으며, 한 마리만 남아도 게이지는 정상 비용을 소비한다.
-    attacker.energy -= ultimateCost(state, attacker, true);
-    commandSummonUltimate(attacker, state, events);
+  if (attacker.def.basic.dualStrike && teamUltimate.packAssault) {
+    // 표적이 없으면 무리를 던질 곳도 없다. 게이지는 그대로 두고 아무 일도 일어나지 않는다.
+    const target = resolveTarget(state, attacker, true);
+    if (!target) return events;
+    packStrike(attacker, target, state, events, true);
     attacker.attackCooldown = attackInterval(attacker, state);
     settle(state, events);
     return events;
@@ -5150,9 +5245,10 @@ export function stepSkirmish(state: SkirmishState, dt: number, rng: () => number
     const tag = stealthTransition(stealthBefore.get(fighter.id) ?? 0, fighter.stealthFor);
     if (tag) events.push({ kind: "combatEffect", fighterId: fighter.id, effect: { tag, intensity: 1 } });
     if (frenzyBefore.get(fighter.id) && !fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "summonPackFrenzy") {
-      // 회수 여부와 무관하게 런타임 쌍 모두에 종료를 알려 뒤늦은 재호출이 옛 강화를 이어받지 않게 한다.
-      for (const summon of state.summons.filter((unit) => unit.ownerFighterId === fighter.id)) {
-        events.push({ kind: "summonFrenzy", summonId: summon.id, ownerFighterId: fighter.id, active: false, remainingSeconds: 0 });
+      // 주인의 폭주가 가라앉으면 앞에 선 몸도 함께 식는다. 남은 게이지도 같이 비운다.
+      for (const wolf of state.fighters.filter((unit) => unit.summonOwnerId === fighter.id)) {
+        wolf.ferocityFever = false;
+        wolf.ferocity = 0;
       }
     }
   }

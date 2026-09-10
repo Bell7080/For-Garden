@@ -1,291 +1,437 @@
 import Phaser from "phaser";
 import { INTERACTION_DEPARTMENT_LABEL, interactionDurationLabel } from "../data/interactionCities";
-import { currencyGuide } from "../data/currencyGuide";
+import { addFramedIcon } from "./itemFrame";
+import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
+import { formatCurrency } from "../core/formatCurrency";
 import { RELICS } from "../data/relics";
+import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import type { InteractionManager } from "../managers/InteractionManager";
+import { placePuppet, spawnPuppet, type PuppetCreature } from "../puppets/assets";
 import { session } from "../state/session";
 import type { InteractionDispatchSnapshot } from "../state/session";
 import { Button } from "./Button";
 import { PortraitCard } from "./PortraitCard";
-import { PORTRAIT_GRID_MASK_GAP, portraitGridContentHeight, portraitGridFirstRowY } from "./portraitGrid";
+import {
+  formationRosterColumnX,
+  formationRosterGrid,
+  PORTRAIT_GRID_MASK_GAP,
+  portraitGridContentHeight,
+  portraitGridFirstRowY,
+} from "./portraitGrid";
+import { addFormationRemoveChip, addFormationSlotSelection } from "./formationSlotChrome";
 import { addPopupBackgroundImage } from "./backgrounds";
 import { chipPoints, drawLayer, drawHairline, HOLO, slantedRect } from "./holo";
+import {
+  INTERACTION_CITY_ACTION,
+  INTERACTION_CITY_LOWER,
+  INTERACTION_CITY_PANEL,
+  INTERACTION_CITY_SLOT,
+  INTERACTION_CITY_SLOT_GROUND_OFFSET,
+} from "./interactionCityLayout";
 import type { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
 import { currencyRecordToRewardItems, openRewardPopup } from "./RewardPopup";
-import { autoAssignInteractionParty, interactionRemainingLabel, relicsAwayOnInteraction, type InteractionLayerView } from "./interactionLayerModel";
+import { interactionRemainingLabel, relicsAwayOnInteraction, autoAssignInteractionParty, type InteractionLayerView } from "./interactionLayerModel";
 import { combatPower } from "../core/combatPower";
+import { tapFormationSlot, tapRosterRelic, toFormationSlots, formationMembers } from "../core/formationSlots";
 import { bindLongPress } from "./longPressInfo";
+import { loadOwnedPuppet } from "./statusPuppetLoad";
 import { sceneInfoManager, type InfoManager } from "./info";
 
 /**
- * 창 한 장의 규격. 위(원화) · 설명 · **파견대 세 칸** · 보유 렐릭 그리드 · 조작 순서다.
+ * 도시 한 곳의 쪽지 — **발굴 배치와 같은 구조**다.
  *
- * 예전에는 칸 하나를 누를 때마다 목록이 아래에서 **올라와 덮었다.** 그래서 세 번을 고르는 동안
- * 목록이 세 번 열리고 닫혔고, 칸이 보이지 않는 순간에는 지금 누구를 세웠는지도 사라졌다.
- * 발굴 배치와 같은 구조로 바꾼다 — **세 칸과 목록이 한 화면에 함께 있고**, 칸을 누르는 것은
- * 화면을 여는 일이 아니라 어느 자리에 세울지 고르는 일이다.
+ * 위 칸에는 파견대 세 자리와 그 자리에 선 SD가 늘 서 있고, 아래 칸만 **도시 안내**와 **보유 렐릭
+ * 그리드**로 교대한다. 칸을 누르는 것은 새 화면을 여는 일이 아니라 어느 자리에 세울지 고르는
+ * 일이므로, 세워 둔 SD가 사라졌다 다시 나타나지 않는다.
  */
-const PANEL = { width: 900, height: 1240 } as const;
-const ART = { y: -462, height: 260 } as const;
-/** 설명·시간·기대 재화. 시간과 재화는 짧아 한 줄에 함께 선다. */
-const BRIEF = { descY: -312, lineY: -230, factsY: -205 } as const;
-const SLOT = { y: -40, width: 230, height: 250, gap: 26 } as const;
-/**
- * 보유 렐릭 그리드.
- *
- * 카드 크기와 줄 간격은 **발굴 배치와 같은 값**이다 — 같은 일을 하는 두 화면이 다른 크기의
- * 카드를 쓰면 얼굴이 화면마다 다르게 잘린다.
- */
-const GRID = { left: -380, right: 380, top: 145, bottom: 505, cardWidth: 215, cardHeight: 268, columnGap: 250, rowGap: 313, cols: 3 } as const;
+const PANEL = INTERACTION_CITY_PANEL;
+const SLOT = INTERACTION_CITY_SLOT;
+const SLOT_GROUND_OFFSET = INTERACTION_CITY_SLOT_GROUND_OFFSET;
+const LOWER = INTERACTION_CITY_LOWER;
+const ACTION = INTERACTION_CITY_ACTION;
+/** 한 줄에 몇 칸이고 카드가 얼마나 큰지는 화면이 정하지 않는다 — 폭만 주면 공용 규칙이 정한다. */
+const ROSTER = formationRosterGrid(LOWER.right - LOWER.left);
 /** 손가락이 이 거리 이상 움직여야 카드 선택이 아니라 스크롤로 판정한다. */
 const GRID_DRAG_SLOP = 12;
-const ACTION = { y: 560 } as const;
+/** 돌아오는 재화 액자 한 칸. 품목이 늘면 판을 키우지 않고 이 줄만 가로로 흐른다. */
+const REWARD_FRAME = { size: 92, gap: 18 } as const;
+/** 팝업 판(PopupLayer 기본 2000) 바로 위. 그 위에 열리는 보상 팝업보다는 아래에 남는다. */
+const SD_DEPTH = 2601;
+const BLUE = 0x55b9e8;
 
-/**
- * 도시 한 곳의 쪽지.
- *
- * **여기서 파견대를 세운다.** 세 칸 중 하나를 누르면 아직 나가지 않은 렐릭이 아래에서 올라와
- * 덮고, 고르면 다시 내려간다 — 칸과 목록을 한 화면에 나란히 두면 카드가 너무 작아져 얼굴로
- * 고를 수 없다.
- */
 export class InteractionCityPopup {
   private view?: InteractionLayerView;
+  /** 빈 자리를 `null`로 남기는 고정 세 자리. 빼도 뒤가 당겨지지 않는다. */
   private party: (string | null)[] = [null, null, null];
-  /** 지금 고른 자리. 발굴 배치와 같이 **늘 한 자리가 골라져 있다** — 목록을 눌렀을 때 어디에 설지가 정해져 있어야 손이 한 번에 끝난다. */
-  private selectedSlot = 0;
+  /** 목록을 눌렀을 때 캐릭터가 설 자리. 아무 칸도 고르지 않은 상태가 있다. */
+  private selectedSlot: number | undefined;
+  /** 아래 칸이 지금 무엇을 보여 주는가. 칸을 누르면 배치로, 취소하면 안내로 돌아온다. */
+  private editing = false;
   private busy = false;
   private gridScrollY = 0;
   private gridDragMoved = 0;
+  private body?: Phaser.GameObjects.Container;
+  /** 자리·SD가 사는 위 칸과 안내/그리드가 교대하는 아래 칸. */
+  private upper?: Phaser.GameObjects.Container;
+  private lower?: Phaser.GameObjects.Container;
+  private actions?: Phaser.GameObjects.Container;
+  /** 이미 세운 SD를 렐릭 ID로 붙잡아 둔다. 편성에서 빠지는 순간에만 폐기한다. */
+  private readonly puppets = new Map<string, PuppetCreature>();
+  private readonly puppetLoading = new Set<string>();
+  /** 목록 카드. 편성이 바뀌면 눌림 표시만 갈아 끼워 그리드를 다시 만들지 않는다. */
+  private readonly rosterCards = new Map<string, PortraitCard>();
+  private sdLayer?: Phaser.GameObjects.Container;
+  private chromeLayer?: Phaser.GameObjects.Container;
   private gridMask?: Phaser.GameObjects.Graphics;
+  private detachGrid?: () => void;
   private onChanged?: () => void;
   private onOpenJournal?: (cityId: string) => void;
 
   constructor(private readonly scene: Phaser.Scene, private readonly popups: PopupLayer, private readonly manager: InteractionManager) {}
 
   open(view: InteractionLayerView, hooks: { onChanged?: () => void; onOpenJournal?: (cityId: string) => void } = {}): void {
-    this.view = view; this.onChanged = hooks.onChanged; this.onOpenJournal = hooks.onOpenJournal;
-    this.party = [null, null, null];
-    this.selectedSlot = 0;
+    this.view = view;
+    this.onChanged = hooks.onChanged;
+    this.onOpenJournal = hooks.onOpenJournal;
+    this.party = toFormationSlots(view.state === "idle" ? [] : (view.dispatch?.party ?? []), 3);
+    this.selectedSlot = undefined;
+    this.editing = false;
     this.gridScrollY = 0;
     this.busy = false;
-    this.render();
-  }
-
-  private render(): void {
-    const view = this.view;
-    if (!view) return;
     this.popups.closeAll();
+
     const title = `${view.city.displayName} ${INTERACTION_DEPARTMENT_LABEL[view.city.department]}`;
-    this.popups.open({ width: PANEL.width, height: PANEL.height, title, dim: true, closeOnBackdrop: true }, (body) => {
-      this.buildArt(body, view);
-      this.buildBrief(body, view);
-      if (view.state === "away") this.buildAway(body, view);
-      else if (view.state === "done") this.buildDone(body, view);
-      else this.buildDispatch(body, view);
+    this.body = this.popups.open({ width: PANEL.width, height: PANEL.height, title, titleSize: 34, dim: true, closeOnBackdrop: true, onClose: () => this.dispose() }, (body) => {
+      body.setName("interaction-city-popup");
+      this.upper = this.scene.add.container(0, 0);
+      this.lower = this.scene.add.container(0, 0);
+      this.actions = this.scene.add.container(0, 0);
+      body.add([this.upper, this.lower, this.actions]);
+      // SD는 판 위에 서지만 판의 자식이라 팝업의 이동·배율·alpha를 그대로 물려받는다.
+      this.sdLayer = this.scene.add.container(0, 0).setName("interaction-party-sd").setDepth(SD_DEPTH);
+      body.add(this.sdLayer);
+      // 빼는 표식만 SD보다 앞선 층에 산다. 고른 칸의 밑판은 반대로 SD 뒤(upper)에 깔린다.
+      this.chromeLayer = this.scene.add.container(0, 0).setName("interaction-party-chrome").setDepth(SD_DEPTH + 2);
+      body.add(this.chromeLayer);
       // 일지는 그 도시에서만 쌓이므로 도시 쪽지가 유일한 진입점이다.
       if (this.onOpenJournal) body.add(new Button(this.scene, PANEL.width / 2 - 130, -PANEL.height / 2 + 96, {
-        width: 200, height: 62, fontSize: 22, label: "도시 일지", accentColor: 0x55b9e8,
+        width: 200, height: 62, fontSize: 22, label: "도시 일지", accentColor: BLUE,
         onClick: () => this.onOpenJournal?.(view.city.id),
       }));
     });
+    this.render();
   }
 
-  /** 상단 원화. 전용 원화가 오기 전까지 도시마다 다른 배경 키를 나눠 쓴다. */
-  private buildArt(body: Phaser.GameObjects.Container, view: InteractionLayerView): void {
-    const shape = chipPoints(PANEL.width - 24, ART.height, { bevel: { topLeft: 96, bottomRight: 96 } });
-    if (this.scene.textures.exists(view.city.illustration)) {
-      addPopupBackgroundImage(this.scene, body, view.city.illustration, { x: 0, y: ART.y, width: PANEL.width - 24, height: ART.height, maskShape: shape, overlayStrength: 0.5 });
-    } else {
-      body.add(drawLayer(this.scene, 0, ART.y, shape, { fill: COLOR.panel, alpha: HOLO.glass }));
+  /** 위 칸·아래 칸·조작을 지금 상태에 맞춘다. 팝업 판 자체는 다시 열지 않는다. */
+  private render(): void {
+    const view = this.view;
+    if (!view || !this.body) return;
+    this.renderSlots(view);
+    if (this.editing) this.renderRoster(view);
+    else this.renderBrief(view);
+    this.renderActions(view);
+  }
+
+  /**
+   * 파견대 세 자리.
+   *
+   * 나가 있거나 다녀온 파견은 고칠 수 없으므로 칸을 눌러도 아무 일도 일어나지 않는다. 아직
+   * 보내지 않은 도시만 칸을 눌러 자리를 고르고, 고른 자리에 누가 서 있으면 `−`가 함께 선다.
+   */
+  private renderSlots(view: InteractionLayerView): void {
+    const parent = this.upper;
+    if (!parent) return;
+    parent.removeAll(true);
+    this.chromeLayer?.removeAll(true);
+    const editable = view.state === "idle";
+    this.releaseUnusedPuppets();
+
+    if (view.state === "away") {
+      parent.add(this.scene.add.text(0, SLOT.y - SLOT.height / 2 - 52, `파견 중 · ${interactionRemainingLabel(view.remainingMs ?? 0)}`, textStyle({ role: "display", size: 34, color: "#a8ddf5" })).setOrigin(0.5));
+    } else if (view.state === "done") {
+      parent.add(this.scene.add.text(0, SLOT.y - SLOT.height / 2 - 52, "수령 대기", textStyle({ role: "display", size: 34, color: "#e0a83e" })).setOrigin(0.5));
     }
-  }
 
-  /** 가운데 — 설명과 **기대 재화**. 무엇이 돌아오는지가 보내는 이유다. */
-  private buildBrief(body: Phaser.GameObjects.Container, view: InteractionLayerView): void {
-    const left = -PANEL.width / 2 + 60;
-    body.add(this.scene.add.text(left, BRIEF.descY, view.city.description, textStyle({ role: "body", size: 25 })).setWordWrapWidth(PANEL.width - 120));
-    body.add(drawHairline(this.scene, 0, BRIEF.lineY, PANEL.width - 140, { color: 0x55b9e8, alpha: 0.32 }));
-    // 시간과 돌아오는 것은 짧아 한 줄에 함께 선다. 두 줄로 나누면 그만큼 그리드가 좁아진다.
-    body.add(this.scene.add.text(left, BRIEF.factsY, interactionDurationLabel(view.city.durationMinutes), textStyle({ role: "emphasis", size: 26, color: COLOR.accentText })).setOrigin(0, 0.5));
-    const rewards = view.city.rewards.map((entry) => `${currencyGuide(entry.currency).name} ${entry.amount.toLocaleString()}`).join("   ");
-    body.add(this.scene.add.text(PANEL.width / 2 - 60, BRIEF.factsY, rewards, textStyle({ role: "body", size: 25 })).setOrigin(1, 0.5));
-  }
-
-  /** 나가 있는 동안에는 누가 갔는지와 남은 시간만 남는다. */
-  private buildAway(body: Phaser.GameObjects.Container, view: InteractionLayerView): void {
-    body.add(this.scene.add.text(0, SLOT.y - SLOT.height / 2 - 40, `파견 중 · ${interactionRemainingLabel(view.remainingMs ?? 0)}`, textStyle({ role: "display", size: 34, color: "#a8ddf5" })).setOrigin(0.5));
-    this.buildSlots(body, (view.dispatch?.party ?? []).map((id) => id ?? null), false);
-  }
-
-  /** 다녀온 파견은 누르는 즉시 보상 영수증으로 이어진다. */
-  private buildDone(body: Phaser.GameObjects.Container, view: InteractionLayerView): void {
-    this.buildSlots(body, view.dispatch?.party ?? [], false);
-    body.add(new Button(this.scene, 0, ACTION.y, {
-      width: 460, height: 108, label: this.busy ? "수령 중…" : "보상 수령", variant: "primary",
-      accentColor: COLOR.missionClaim, onClick: () => void this.claim(view.dispatch),
-    }));
-  }
-
-  /**
-   * 아직 보내지 않은 층 — **세 칸과 목록이 한 화면에 함께 선다.**
-   *
-   * 발굴 배치와 같은 구조다. 칸을 누르는 것은 화면을 여는 일이 아니라 어느 자리에 세울지
-   * 고르는 일이고, 목록은 늘 그 아래에 있다.
-   */
-  private buildDispatch(body: Phaser.GameObjects.Container, view: InteractionLayerView): void {
-    this.buildSlots(body, this.party, true);
-    this.buildRoster(body, view);
-    const picked = this.party.filter((id): id is string => id !== null);
-    const button = new Button(this.scene, 0, ACTION.y, {
-      width: 460, height: 108, label: this.busy ? "보내는 중…" : "파견 보내기",
-      sub: `${picked.length} / 3`, variant: "primary", accentColor: 0x55b9e8, accentTextColor: "#d9f3ff",
-      onClick: () => void this.start(view),
-    });
-    button.setEnabled(!this.busy && picked.length >= view.city.partySize.min);
-    body.add(button);
-  }
-
-  /**
-   * 파견대 세 칸.
-   *
-   * **고른 칸은 발광으로 알린다.** 목록을 눌렀을 때 어디에 설지가 늘 정해져 있어야 손이 한 번에
-   * 끝난다. 이미 선 렐릭을 누르면 그 자리를 비우고, 빈 칸을 누르면 그 자리를 고른다.
-   */
-  private buildSlots(body: Phaser.GameObjects.Container, party: readonly (string | null)[], editable: boolean): void {
-    const step = SLOT.width + SLOT.gap;
-    for (let index = 0; index < 3; index += 1) {
-      const x = (index - 1) * step;
-      const relicId = party[index] ?? null;
-      const relic = relicId ? RELICS.find((entry) => entry.id === relicId) : undefined;
-      if (relic) {
-        const progress = relicProgression.getProgress(relic.id);
-        const card = new PortraitCard(this.scene, x, SLOT.y, {
-          width: SLOT.width, height: SLOT.height, relicId: relic.id,
-          label: relic.name, level: progress.level, rarity: relic.rarity, stars: relicProgression.getStars(relic.id),
-        });
-        card.hit.disableInteractive();
-        if (editable && index === this.selectedSlot) card.setSelected(true);
-        body.add(card);
+    this.party.forEach((relicId, index) => {
+      const x = (index - 1) * SLOT.step;
+      const box = { x, y: SLOT.y, width: SLOT.width, height: SLOT.height };
+      if (editable && index === this.selectedSlot) addFormationSlotSelection(this.scene, parent, box, BLUE);
+      if (relicId) {
+        parent.add(this.scene.add.ellipse(x, SLOT.y + SLOT_GROUND_OFFSET + 2, 172, 25, BLUE, 0.16));
+        this.standPuppet(relicId, x);
       } else {
-        const selected = editable && index === this.selectedSlot;
-        body.add(drawLayer(this.scene, x, SLOT.y, slantedRect(SLOT.width, SLOT.height, 18), {
+        parent.add(drawLayer(this.scene, x, SLOT.y, slantedRect(SLOT.width, SLOT.height, 18), {
           fill: COLOR.panel, alpha: HOLO.glassLight,
-          edge: selected ? 0x55b9e8 : COLOR.inkDimHex, edgeAlpha: selected ? 0.95 : 0.5,
+          edge: editable && index === this.selectedSlot ? BLUE : COLOR.inkDimHex, edgeAlpha: 0.55,
         }));
-        body.add(this.scene.add.text(x, SLOT.y, `${index + 1}`, textStyle({ role: "display", size: 40, color: selected ? "#d9f3ff" : COLOR.inkDim })).setOrigin(0.5));
+        parent.add(this.scene.add.text(x, SLOT.y, `${index + 1}`, textStyle({ role: "display", size: 40, color: COLOR.inkDim })).setOrigin(0.5));
       }
-      if (!editable) continue;
-      const hit = this.scene.add.rectangle(x, SLOT.y, SLOT.width, SLOT.height, 0xffffff, 0).setInteractive({ useHandCursor: true });
-      hit.on("pointerup", () => {
-        // 선 렐릭을 누르면 뺀다. 빈 칸을 누르면 그 자리를 고른다 — 둘 다 그 자리가 골라진 채로 남는다.
-        if (this.party[index]) this.party[index] = null;
-        this.selectedSlot = index;
-        this.render();
-      });
-      body.add(hit);
-    }
+      if (!editable) return;
+      const hit = this.scene.add.rectangle(x, SLOT.y, SLOT.width, SLOT.height, 0xffffff, 0)
+        .setName(`interaction-party-slot-${index + 1}`).setDepth(SD_DEPTH + 1).setInteractive({ useHandCursor: true });
+      hit.on("pointerup", () => this.tapSlot(index));
+      parent.add(hit);
+      // 빼는 표식은 SD보다 앞선 층에 선다 — 같은 컨테이너에 두면 머리에 가린다.
+      if (index === this.selectedSlot && relicId && this.chromeLayer) addFormationRemoveChip(this.scene, this.chromeLayer, box, () => this.tapSlot(index, "clear"));
+    });
   }
 
   /**
-   * 보유 렐릭 그리드. **늘 화면에 있다.**
+   * 칸을 누르면 그 자리를 고르고 아래 칸이 목록으로 바뀐다.
    *
-   * 이미 다른 도시에 나가 있는 렐릭은 아예 보여 주지 않는다 — 목록에 남겨 두고 누를 때 막으면
-   * 왜 안 되는지 화면이 말하지 않은 채 손만 헛돈다. 반대로 **이 파견대에 이미 선 렐릭은 남긴다.**
+   * 이미 고른 자리를 한 번 더 누르거나 `−`를 누를 때만 비고, 그때도 뒤 자리는 당겨지지 않는다.
+   */
+  private tapSlot(index: number, intent: "select" | "clear" = "select"): void {
+    if (this.busy) return;
+    const result = tapFormationSlot(this.party, index, this.selectedSlot, intent);
+    this.party = result.formation;
+    this.selectedSlot = result.selectedSlot;
+    // 비우려고 누른 손까지 목록을 열지는 않는다 — 비운 자리를 그대로 두고 보낼 수도 있다.
+    if (intent === "select" && !result.cleared) this.editing = true;
+    this.render();
+  }
+
+  /** 아래 칸 — 이 도시가 어떤 곳이고 얼마나 걸리며 무엇이 돌아오는가. */
+  private renderBrief(view: InteractionLayerView): void {
+    const parent = this.lower;
+    if (!parent) return;
+    this.teardownGrid();
+    parent.removeAll(true);
+    const artHeight = 250;
+    const artY = LOWER.top + artHeight / 2;
+    const shape = chipPoints(LOWER.right - LOWER.left, artHeight, { bevel: { topLeft: 96, bottomRight: 96 } });
+    if (this.scene.textures.exists(view.city.illustration)) {
+      addPopupBackgroundImage(this.scene, parent, view.city.illustration, { x: 0, y: artY, width: LOWER.right - LOWER.left, height: artHeight, maskShape: shape, overlayStrength: 0.5 });
+    } else {
+      parent.add(drawLayer(this.scene, 0, artY, shape, { fill: COLOR.panel, alpha: HOLO.glass }));
+    }
+
+    const left = LOWER.left + 10;
+    parent.add(this.scene.add.text(left, artY + artHeight / 2 + 26, view.city.description, textStyle({ role: "body", size: 25 })).setWordWrapWidth(LOWER.right - LOWER.left - 20));
+    const factsY = LOWER.bottom - 118;
+    parent.add(drawHairline(this.scene, 0, factsY - 34, LOWER.right - LOWER.left - 40, { color: BLUE, alpha: 0.32 }));
+    parent.add(this.scene.add.text(left, factsY, interactionDurationLabel(view.city.durationMinutes), textStyle({ role: "emphasis", size: 26, color: COLOR.accentText })).setOrigin(0, 0.5));
+
+    // **돌아오는 것은 글이 아니라 액자다.** 재화 이름을 늘어놓으면 무엇이 오는지 읽어야 알지만,
+    // 액자 한 줄은 훑기만 해도 보인다. 품목이 늘면 판을 키우지 않고 **가로로 흐른다** — 판이
+    // 커지면 위 칸의 파견대와 아래 조작이 함께 밀린다.
+    const rewardsY = LOWER.bottom - 52;
+    parent.add(this.scene.add.text(left, rewardsY - 62, "돌아오는 것", textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0, 0.5));
+    const rail = this.scene.add.container(0, rewardsY);
+    parent.add(rail);
+    const step = REWARD_FRAME.size + REWARD_FRAME.gap;
+    const startX = LOWER.left + 10 + REWARD_FRAME.size / 2;
+    view.city.rewards.forEach((entry, index) => {
+      addFramedIcon(this.scene, rail, startX + index * step, 0, REWARD_FRAME.size, CURRENCY_ICON_BY_WALLET[entry.currency], {
+        amount: formatCurrency(entry.amount),
+      });
+    });
+    this.attachRewardRail(parent, rail, view.city.rewards.length);
+  }
+
+  /**
+   * 돌아오는 것이 판보다 길면 그 줄만 가로로 흐른다.
+   *
+   * 세로로 접거나 판을 키우지 않는다 — 판이 커지면 위 칸의 파견대와 아래 조작이 함께 밀리고,
+   * 두 줄이 되면 "무엇이 오는가"가 한눈에 들어오지 않는다.
+   */
+  private attachRewardRail(parent: Phaser.GameObjects.Container, rail: Phaser.GameObjects.Container, count: number): void {
+    const viewLeft = LOWER.left + 10;
+    const viewWidth = LOWER.right - LOWER.left - 20;
+    const contentWidth = count * REWARD_FRAME.size + Math.max(0, count - 1) * REWARD_FRAME.gap;
+    const overflow = Math.max(0, contentWidth - viewWidth);
+    if (overflow === 0) return;
+    let originX = 0;
+    let downX = 0;
+    let dragging = false;
+    const hit = this.scene.add.rectangle(viewLeft + viewWidth / 2, rail.y, viewWidth, REWARD_FRAME.size + 16, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    hit.on("pointerdown", (pointer: Phaser.Input.Pointer) => { dragging = true; downX = pointer.x; originX = rail.x; });
+    hit.on("pointerup", () => { dragging = false; });
+    hit.on("pointerout", () => { dragging = false; });
+    hit.on("pointermove", (pointer: Phaser.Input.Pointer) => {
+      if (!dragging || !pointer.isDown) return;
+      rail.setX(Phaser.Math.Clamp(originX + (pointer.x - downX), -overflow, 0));
+    });
+    parent.add(hit);
+  }
+
+  /**
+   * 아래 칸 — 보유 렐릭 그리드.
+   *
+   * 이미 다른 도시에 나가 있는 렐릭은 아예 보여 주지 않는다. 목록에 남겨 두고 누를 때 막으면
+   * 왜 안 되는지 화면이 말하지 않은 채 손만 헛돈다. 반대로 **이 파견대에 이미 선 렐릭은 남긴다** —
    * 그래야 누르는 것만으로 두 자리를 맞바꿀 수 있다.
    */
-  private buildRoster(body: Phaser.GameObjects.Container, view: InteractionLayerView): void {
+  private renderRoster(view: InteractionLayerView): void {
+    const parent = this.lower;
+    if (!parent) return;
+    this.teardownGrid();
+    parent.removeAll(true);
+
     const away = relicsAwayOnInteraction(session.interaction.slots.filter((slot): slot is InteractionDispatchSnapshot => slot !== null));
     const roster = RELICS.filter((relic) => session.owned.has(relic.id) && !away.has(relic.id));
+    this.rosterCards.clear();
 
-    body.add(this.scene.add.text(GRID.left + 10, GRID.top - 40, `보유 렐릭 · ${this.selectedSlot + 1}번 자리에 배치`, textStyle({ role: "emphasis", size: 23, color: COLOR.accentText })).setOrigin(0, 0.5));
-    // 조작 설명 대신 **그 조작을 대신해 주는 단추**를 둔다. 교류에는 발굴의 생산 특화 같은
-    // 개체별 기준이 없어 고를 축이 전투력뿐이라, 발굴처럼 기준을 돌려 고르는 화살표는 두지 않는다.
-    body.add(new Button(this.scene, GRID.right - 90, GRID.top - 40, {
-      width: 170, height: 52, fontSize: 22, label: "자동 배치", accentColor: 0x55b9e8,
+    parent.add(this.scene.add.text(LOWER.left + 10, LOWER.top - 42, this.selectedSlot === undefined ? "보유 렐릭" : `보유 렐릭 · ${this.selectedSlot + 1}번 자리에 배치`, textStyle({ role: "emphasis", size: 23, color: COLOR.accentText })).setOrigin(0, 0.5));
+    // 조작 설명 대신 그 조작을 대신해 주는 단추를 둔다. 교류에는 발굴의 생산 특화 같은 개체별
+    // 기준이 없어 고를 축이 전투력뿐이라, 발굴처럼 기준을 돌려 고르는 화살표는 두지 않는다.
+    parent.add(new Button(this.scene, LOWER.right - 90, LOWER.top - 42, {
+      width: 170, height: 52, fontSize: 22, label: "자동 배치", accentColor: BLUE,
       onClick: () => {
-        this.party = autoAssignInteractionParty(
+        this.party = toFormationSlots(autoAssignInteractionParty(
           roster.map((relic) => ({ id: relic.id, power: combatPower(relicProgression.getFinalStats(relic.id)) })),
           view.city.partySize.max,
-        );
-        this.selectedSlot = Math.max(0, this.party.findIndex((id) => id === null));
+        ), 3);
+        this.selectedSlot = undefined;
         this.render();
       },
     }));
 
-    const viewportHeight = GRID.bottom - GRID.top;
-    const grid = this.scene.add.container(0, GRID.top + this.gridScrollY);
-    body.add(grid);
-    roster.forEach((relic, index) => {
-      const progress = relicProgression.getProgress(relic.id);
-      const x = -GRID.columnGap + (index % GRID.cols) * GRID.columnGap;
-      const y = portraitGridFirstRowY(0, GRID.cardHeight, PORTRAIT_GRID_MASK_GAP) + Math.floor(index / GRID.cols) * GRID.rowGap;
-      const placedAt = this.party.indexOf(relic.id);
-      const card = new PortraitCard(this.scene, x, y, {
-        width: GRID.cardWidth, height: GRID.cardHeight, relicId: relic.id,
-        label: relic.name, level: progress.level, rarity: relic.rarity, stars: relicProgression.getStars(relic.id),
-        affinity: { element: relic.element, role: relic.role },
-      });
-      // 이미 선 렐릭은 발광으로 알린다. 목록에서 지우지 않는 이유는 맞바꾸기 때문이다.
-      if (placedAt >= 0) card.setSelected(true);
-      bindLongPress(this.scene, card.hit, {
-        onTap: () => {
-          if (this.gridDragMoved > GRID_DRAG_SLOP) return;
-          const slot = this.selectedSlot;
-          const current = this.party[slot];
-          // 다른 자리에 이미 서 있으면 두 자리를 맞바꾼다. 그러지 않으면 같은 렐릭이 두 칸에 선다.
-          if (placedAt >= 0) this.party[placedAt] = current;
-          this.party[slot] = relic.id;
-          const next = this.party.findIndex((id) => id === null);
-          this.selectedSlot = next >= 0 ? next : slot;
-          this.render();
-        },
-        onLongPress: () => this.info().showRelic(relic),
-        depth: 2600,
-      });
-      grid.add(card);
-    });
     if (roster.length === 0) {
-      body.add(this.scene.add.text(0, GRID.top + viewportHeight / 2, "보낼 수 있는 렐릭이 없다", textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0.5));
+      parent.add(this.scene.add.text(0, (LOWER.top + LOWER.bottom) / 2, "보낼 수 있는 렐릭이 없다", textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0.5));
       return;
     }
 
-    const rows = Math.ceil(roster.length / GRID.cols);
-    const contentHeight = PORTRAIT_GRID_MASK_GAP + portraitGridContentHeight(rows, GRID.rowGap, GRID.cardHeight);
-    const minScroll = Math.min(0, viewportHeight - contentHeight);
+    const grid = this.scene.add.container(0, LOWER.top + this.gridScrollY);
+    parent.add(grid);
+    roster.forEach((relic, index) => {
+      const progress = relicProgression.getProgress(relic.id);
+      const x = formationRosterColumnX(ROSTER, index % ROSTER.columns);
+      const y = portraitGridFirstRowY(0, ROSTER.cardHeight, PORTRAIT_GRID_MASK_GAP) + Math.floor(index / ROSTER.columns) * ROSTER.rowStep;
+      const card = new PortraitCard(this.scene, x, y, {
+        width: ROSTER.cardWidth, height: ROSTER.cardHeight, relicId: relic.id,
+        label: relic.name, level: progress.level, rarity: relic.rarity, stars: relicProgression.getStars(relic.id),
+        affinity: { element: relic.element, role: relic.role },
+        // 이미 자리에 나가 있는 카드는 떠오르지 않고 눌려 들어간다.
+        selectedStyle: "pressed",
+      });
+      card.setSelected(this.party.includes(relic.id));
+      this.rosterCards.set(relic.id, card);
+      bindLongPress(this.scene, card.hit, {
+        onTap: () => {
+          // 이미 어느 칸에 선 렐릭이면 옮기지 않고 그 칸을 고른다.
+          const result = tapRosterRelic(this.party, this.selectedSlot, relic.id);
+          this.party = result.formation;
+          this.selectedSlot = result.selectedSlot;
+          this.renderSlots(view);
+          this.renderActions(view);
+          for (const [relicId, card] of this.rosterCards) card.setSelected(this.party.includes(relicId));
+        },
+        allowTap: () => this.gridDragMoved <= GRID_DRAG_SLOP,
+        onLongPress: () => this.info().showRelic(relic),
+        depth: SD_DEPTH + 2,
+      });
+      grid.add(card);
+    });
+
+    this.attachGridScroll(parent, grid, roster.length);
+  }
+
+  /** 아래 칸이 무엇을 보여 주든 주요 조작은 같은 높이에 선다. */
+  private renderActions(view: InteractionLayerView): void {
+    const parent = this.actions;
+    if (!parent) return;
+    parent.removeAll(true);
+    if (view.state === "away") return;
+    if (view.state === "done") {
+      parent.add(new Button(this.scene, 0, ACTION.y, {
+        width: 460, height: 108, label: this.busy ? "수령 중…" : "보상 수령", variant: "primary",
+        accentColor: COLOR.missionClaim, onClick: () => void this.claim(view.dispatch),
+      }));
+      return;
+    }
+
+    const picked = formationMembers(this.party);
+    // 배치 중에만 취소가 그 왼쪽에 나타난다 — 발굴과 같은 자리, 같은 폭이다.
+    if (this.editing) {
+      const cancel = new Button(this.scene, ACTION.cancelX, ACTION.y, {
+        width: 220, height: 82, label: "취소", onClick: () => { if (!this.busy) { this.editing = false; this.render(); } },
+      });
+      cancel.setEnabled(!this.busy);
+      parent.add(cancel);
+    }
+    const send = new Button(this.scene, this.editing ? ACTION.primaryX : 0, ACTION.y, {
+      width: this.editing ? 500 : 460, height: this.editing ? 92 : 108,
+      label: this.busy ? "보내는 중…" : "파견 보내기",
+      sub: `${picked.length} / 3`, variant: "primary", accentColor: BLUE, accentTextColor: "#d9f3ff",
+      onClick: () => void this.start(view),
+    });
+    send.setEnabled(!this.busy && picked.length >= view.city.partySize.min);
+    parent.add(send);
+  }
+
+  /** 아직 서 있지 않은 렐릭만 읽어 세우고, 이미 선 SD는 자리만 옮긴다. */
+  private standPuppet(relicId: string, x: number): void {
+    const layer = this.sdLayer;
+    if (!layer) return;
+    const groundY = SLOT.y + SLOT_GROUND_OFFSET;
+    const standing = this.puppets.get(relicId);
+    if (standing) {
+      placePuppet(standing, relicAppearanceManager.sdAssetFor(relicId), { x, groundY, height: 205 });
+      standing.setDepth(SD_DEPTH);
+      return;
+    }
+    if (this.puppetLoading.has(relicId)) return;
+    this.puppetLoading.add(relicId);
+    void loadOwnedPuppet({
+      spawn: () => spawnPuppet(this.scene, relicAppearanceManager.sdAssetFor(relicId), { x, groundY, height: 205, depth: SD_DEPTH }),
+      // 아래 칸이 몇 번을 바뀌어도 SD는 살아남는다. 버릴 때는 그 렐릭이 편성에서 빠질 때뿐이다.
+      isCurrent: () => Boolean(this.body) && layer === this.sdLayer && this.party.includes(relicId),
+      isDisplayable: (puppet) => Boolean(puppet.active && puppet.texture?.key && this.scene.textures.exists(puppet.texture.key)),
+      adopt: (puppet) => { puppet.disableInteractive(); layer.add(puppet); this.puppets.set(relicId, puppet); },
+    }).finally(() => this.puppetLoading.delete(relicId));
+  }
+
+  /** 편성에서 빠진 렐릭의 SD만 폐기한다. */
+  private releaseUnusedPuppets(): void {
+    for (const [relicId, puppet] of this.puppets) {
+      if (this.party.includes(relicId)) continue;
+      this.sdLayer?.remove(puppet, false);
+      puppet.destroy();
+      this.puppets.delete(relicId);
+    }
+  }
+
+  /** 보유 카드가 한 줄을 넘으면 드래그와 휠이 같은 연속 스크롤 값을 갱신한다. */
+  private attachGridScroll(parent: Phaser.GameObjects.Container, grid: Phaser.GameObjects.Container, relicCount: number): void {
+    const viewportHeight = LOWER.bottom - LOWER.top;
+    const rows = Math.ceil(relicCount / ROSTER.columns);
+    const contentHeight = PORTRAIT_GRID_MASK_GAP + portraitGridContentHeight(rows, ROSTER.rowStep, ROSTER.cardHeight);
+    const minScroll = Math.min(0, viewportHeight - contentHeight - 28);
     this.gridScrollY = Phaser.Math.Clamp(this.gridScrollY, minScroll, 0);
-    grid.setY(GRID.top + this.gridScrollY);
+    grid.setY(LOWER.top + this.gridScrollY);
 
     // 기하 마스크는 컨테이너 이동을 물려받지 않으므로 팝업 판이 자리를 잡은 뒤 월드 좌표로 맞춘다.
-    this.gridMask?.destroy();
     const mask = this.scene.make.graphics({});
     this.gridMask = mask;
     const syncMask = (): void => {
-      const matrix = body.getWorldTransformMatrix();
-      const topLeft = matrix.transformPoint(GRID.left, GRID.top);
+      const matrix = parent.getWorldTransformMatrix();
+      const topLeft = matrix.transformPoint(LOWER.left, LOWER.top);
       mask.clear().fillStyle(0xffffff, 1)
-        .fillRect(topLeft.x, topLeft.y, (GRID.right - GRID.left) * matrix.scaleX, viewportHeight * matrix.scaleY);
+        .fillRect(topLeft.x, topLeft.y, (LOWER.right - LOWER.left) * matrix.scaleX, viewportHeight * matrix.scaleY);
+      for (const child of grid.list) if (child instanceof PortraitCard) child.syncMask();
     };
     syncMask();
     grid.setMask(mask.createGeometryMask());
-    body.once(Phaser.GameObjects.Events.DESTROY, () => { mask.destroy(); if (this.gridMask === mask) this.gridMask = undefined; });
+    const ticker = this.scene.time.addEvent({ delay: 16, loop: true, callback: syncMask });
 
-    let dragging = false;
-    let originY = 0;
-    const inside = (pointer: Phaser.Input.Pointer): boolean => {
-      const matrix = body.getWorldTransformMatrix();
-      const topLeft = matrix.transformPoint(GRID.left, GRID.top);
-      const bottomRight = matrix.transformPoint(GRID.right, GRID.bottom);
-      return pointer.x >= topLeft.x && pointer.x <= bottomRight.x && pointer.y >= topLeft.y && pointer.y <= bottomRight.y;
-    };
     const scrollTo = (value: number): void => {
       this.gridScrollY = Phaser.Math.Clamp(value, minScroll, 0);
-      grid.setY(GRID.top + this.gridScrollY);
-      for (const child of grid.list) if (child instanceof PortraitCard) child.syncMask();
+      grid.setY(LOWER.top + this.gridScrollY);
+      syncMask();
     };
+    const inside = (pointer: Phaser.Input.Pointer): boolean => {
+      const matrix = parent.getWorldTransformMatrix();
+      const topLeft = matrix.transformPoint(LOWER.left, LOWER.top);
+      const bottomRight = matrix.transformPoint(LOWER.right, LOWER.bottom);
+      return pointer.x >= topLeft.x && pointer.x <= bottomRight.x && pointer.y >= topLeft.y && pointer.y <= bottomRight.y;
+    };
+    let dragging = false;
+    let originY = 0;
     const onDown = (pointer: Phaser.Input.Pointer): void => {
-      if (!inside(pointer)) return;
+      if (!inside(pointer) || minScroll === 0) return;
       dragging = true; originY = this.gridScrollY - pointer.y; this.gridDragMoved = 0;
     };
     const onMove = (pointer: Phaser.Input.Pointer): void => {
@@ -293,27 +439,52 @@ export class InteractionCityPopup {
       this.gridDragMoved = Math.max(this.gridDragMoved, Math.abs(pointer.y - pointer.downY));
       scrollTo(originY + pointer.y);
     };
-    const onUp = (): void => { dragging = false; };
+    const onUp = (_pointer: Phaser.Input.Pointer, objects: Phaser.GameObjects.GameObject[]): void => {
+      dragging = false;
+      // 칸·카드 밖에서 뗀 손은 고른 자리를 푼다. 표시가 계속 떠 있으면 다 고른 뒤에도 할 일이
+      // 남은 것처럼 보인다.
+      if (objects.length > 0 || this.selectedSlot === undefined) return;
+      this.selectedSlot = undefined;
+      this.render();
+    };
     const onWheel = (pointer: Phaser.Input.Pointer, _o: unknown, _dx: number, dy: number): void => { if (inside(pointer)) scrollTo(this.gridScrollY - dy); };
     this.scene.input.on("pointerdown", onDown); this.scene.input.on("pointermove", onMove);
     this.scene.input.on("pointerup", onUp); this.scene.input.on("pointerupoutside", onUp);
     this.scene.input.on("wheel", onWheel);
-    body.once(Phaser.GameObjects.Events.DESTROY, () => {
+    this.detachGrid = () => {
       this.scene.input.off("pointerdown", onDown); this.scene.input.off("pointermove", onMove);
       this.scene.input.off("pointerup", onUp); this.scene.input.off("pointerupoutside", onUp);
       this.scene.input.off("wheel", onWheel);
-    });
-    // 카드의 기하 마스크는 컨테이너 이동을 물려받지 않으므로 자리를 잡은 뒤 한 번 맞춘다.
-    this.scene.time.delayedCall(0, () => { syncMask(); for (const child of grid.list) if (child instanceof PortraitCard) child.syncMask(); });
+      ticker.remove(false);
+      mask.destroy();
+      if (this.gridMask === mask) this.gridMask = undefined;
+    };
+  }
+
+  /** 아래 칸이 바뀔 때마다 그리드의 전역 리스너·틱커·마스크를 함께 뗀다. */
+  private teardownGrid(): void {
+    this.detachGrid?.();
+    this.detachGrid = undefined;
+  }
+
+  /** 팝업이 닫히면 SD와 전역 리스너까지 남김없이 정리한다. */
+  private dispose(): void {
+    this.teardownGrid();
+    for (const puppet of this.puppets.values()) puppet.destroy();
+    this.puppets.clear();
+    this.puppetLoading.clear();
+    this.sdLayer = undefined; this.chromeLayer = undefined;
+    this.upper = undefined; this.lower = undefined; this.actions = undefined;
+    this.body = undefined;
   }
 
   /** 팝업은 열 때마다 새로 만들어지므로 정보창은 씬 보관대에서 꺼낸다. 팝업 판 위에 서야 해 층을 올린다. */
   private info(): InfoManager {
-    return sceneInfoManager(this.scene, { key: "interaction-relic", portraitDepth: 2601, baseDepth: 2600 });
+    return sceneInfoManager(this.scene, { key: "interaction-relic", portraitDepth: SD_DEPTH + 4, baseDepth: SD_DEPTH + 3 });
   }
 
   private async start(view: InteractionLayerView): Promise<void> {
-    const party = this.party.filter((id): id is string => id !== null);
+    const party = formationMembers(this.party);
     if (this.busy || party.length < view.city.partySize.min) return;
     this.busy = true; this.render();
     try {

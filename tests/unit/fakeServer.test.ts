@@ -385,7 +385,15 @@ describe("FakeServer", () => {
     await server.feedRelic("anky", 1);
     await server.interactInLobby("anky");
     expect(state.missions.progress).toMatchObject({ "daily-excavate": 1, "daily-salary": 1, "daily-lobby": 1 });
-    await expect(server.getMissions()).resolves.toMatchObject({ claimableCount: 6 });
+    // **완료만으로는 연구도가 오르지 않는다.** 그래서 아직 받을 수 있는 것은 임무 셋뿐이고
+    // 연구도 단계는 하나도 열리지 않는다.
+    await expect(server.getMissions()).resolves.toMatchObject({ claimableCount: 3 });
+    expect(state.missions.researchPoints.daily).toBe(0);
+    // 수령하는 순간 연구도가 60까지 오르고, **그 자리에서 열린 단계 보상까지 함께** 받는다 —
+    // 일괄 수령이 게이지만 채워 두고 보상을 다음 손으로 미루지 않게 한 계약이다.
+    const claim = await server.claimMissionRewards();
+    expect(state.missions.researchPoints.daily).toBe(60);
+    expect(claim.claimedResearchStageIds).toEqual(["daily:research-20", "daily:research-40", "daily:research-60"]);
   });
 });
 

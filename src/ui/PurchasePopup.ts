@@ -5,11 +5,13 @@ import { quotePurchase, totalGrantAmount } from "../core/purchase";
 import type { Wallet } from "../core/gacha";
 import { Button } from "./Button";
 import { chipPoints, drawHairline, drawLayer, HOLO } from "./holo";
-import { addItemFrame, ITEM_FRAME } from "./itemFrame";
+import { addFramedIcon } from "./itemFrame";
 import { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
 import { openRewardPopup, productGrantsToRewardItems } from "./RewardPopup";
 import { setDebugStorefrontControls } from "../debug";
+import { BACK_SLOT, IconButton } from "./IconButton";
+import { UI_ICON } from "./icons";
 
 /** 신규 상점과 무역이 같은 수량·표시·요청 잠금을 쓰는 공용 구매 작업판이다. */
 export class PurchasePopup {
@@ -17,6 +19,8 @@ export class PurchasePopup {
   private pending = false;
   private message = "";
   private repaint?: () => void;
+  /** 우하단 공용 슬롯의 돌아가기. 판과 함께 만들고 함께 없앤다. */
+  private back?: IconButton;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -31,16 +35,20 @@ export class PurchasePopup {
     this.quantity = product.defaultQuantity; this.pending = false; this.message = "";
     // 확인 창은 아직 아무것도 쓰지 않은 자리라 **판 밖을 눌러도 닫힌다** — 사지 않기로 한
     // 손이 오른쪽 위 X를 찾아 올라가야 할 이유가 없다. 실제 차감은 확정 버튼만 한다.
-    this.popups.open({ width: 820, height: 850, title: "구매 확인", dim: true, closeOnBackdrop: true }, (body, close) => {
+    // 돌아가기는 모서리 X가 아니라 다른 작업판과 같은 **우하단 공용 슬롯**에 선다. 그 자리를
+    // 이미 아래 화면(무역 등)이 쓰고 있으므로, 이 창의 것이 그 위에 서서 먼저 눌려야 한다.
+    this.popups.open({ width: 820, height: 850, title: "구매 확인", dim: true, closeOnBackdrop: true, hideCloseButton: true, onClose: () => { this.back?.destroy(); this.back = undefined; } }, (body, close) => {
       const view = this.scene.add.container(0, 0); body.add(view);
       const render = (): void => { view.removeAll(true); this.paint(view, product, close, onPurchased); };
       this.repaint = render;
       view.once(Phaser.GameObjects.Events.DESTROY, () => { this.repaint = undefined; });
       render();
+      this.back?.destroy();
+      this.back = new IconButton(this.scene, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: close }).setDepth(PURCHASE_BACK_DEPTH);
     });
   }
 
-  /** 아이콘부터 지급량·단가·수량·총가격·제한·확정 순으로 한눈에 읽히게 배치한다. */
+  /** 아이콘부터 지급량·가격·수량·총가격·제한·확정 순으로 한눈에 읽히게 배치한다. */
   private paint(view: Phaser.GameObjects.Container, product: ProductDto, close: () => void, onPurchased: (result: PurchaseProductResponse) => void | Promise<void>): void {
     // 이 수량 작업판은 재화 교환만 담당하며 다른 방식은 전용 확정 경계가 연다.
     if (product.acquisition.kind !== "currency") return;
@@ -54,14 +62,19 @@ export class PurchasePopup {
 
     // 상품 그림만 사방 액자로 두고 나머지는 홀로그램 면과 구분선만 사용한다.
     view.add(drawLayer(this.scene, 0, -215, chipPoints(690, 230, { bevel: { topLeft: 38, topRight: 0, bottomRight: 28, bottomLeft: 0 } }), { fill: 0x141b24, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.45 }));
-    view.add(addItemFrame(this.scene, -245, -215, 150));
-    view.add(this.scene.add.image(-245, -215, product.iconKey).setDisplaySize(150 * ITEM_FRAME.icon, 150 * ITEM_FRAME.icon));
-    view.add(this.scene.add.text(-135, -275, product.name, textStyle({ role: "display", size: 32 })).setOrigin(0, 0.5));
-    view.add(this.scene.add.text(-135, -212, `${grantLabel}  × ${formatCurrency(totalGrantAmount(unitGrant, quote.quantity))}`, textStyle({ role: "emphasis", size: 27, color: COLOR.accentText })).setOrigin(0, 0.5));
-    view.add(this.scene.add.text(-135, -157, `1개 지급 ${formatCurrency(unitGrant)}`, textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0, 0.5));
+    // **살 것을 얼굴로 먼저 읽게 한다.** 액자를 키우고 그림이 그 안을 거의 채우게 하며, 같은
+    // 그림을 검게 한 겹 뒤에 깔아 실루엣을 띄운다. 이번에 실제로 받는 수는 가방·보상 액자와
+    // 같은 자리(우하단)에 겹쳐, 글로 적힌 줄을 읽기 전에 그림만 보고도 알 수 있게 한다.
+    addFramedIcon(this.scene, view, -240, -215, 170, product.iconKey, {
+      amount: `×${formatCurrency(totalGrantAmount(unitGrant, quote.quantity))}`,
+    });
+    view.add(this.scene.add.text(-125, -272, product.name, textStyle({ role: "display", size: 32 })).setOrigin(0, 0.5));
+    view.add(this.scene.add.text(-125, -212, `${grantLabel} ${formatCurrency(totalGrantAmount(unitGrant, quote.quantity))}`, textStyle({ role: "emphasis", size: 27, color: COLOR.accentText })).setOrigin(0, 0.5));
+    view.add(this.scene.add.text(-125, -157, `1개당 ${formatCurrency(unitGrant)}`, textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0, 0.5));
 
     view.add(drawHairline(this.scene, 0, -55, 690, { color: COLOR.accent, alpha: 0.32 }));
-    this.addValueRow(view, -5, "단가", priceText(product.acquisition, product.acquisition.amount));
+    // "단가"는 상거래 장부의 말이다. 화면에는 사람이 쓰는 말로 적는다.
+    this.addValueRow(view, -5, "가격", priceText(product.acquisition, product.acquisition.amount));
     this.addValueRow(view, 75, "구매 개수", formatCurrency(quote.quantity));
     this.addValueRow(view, 155, "총가격", priceText(product.acquisition, quote.totalPrice), true);
     this.addValueRow(view, 235, "남은 구매 제한", `${formatCurrency(product.remaining)} / ${formatCurrency(product.purchaseLimit)}`);
@@ -117,6 +130,14 @@ export class PurchasePopup {
 
 /** PurchasePopup은 중앙 고정 작업판이므로 좌표 변환 기준도 한 상수로 둔다. */
 const BASE_CENTER = { x: 540, y: 960 } as const;
+
+/**
+ * 돌아가기가 서는 층.
+ *
+ * 아래 화면(무역·상점)이 이미 같은 우하단 슬롯에 제 돌아가기를 세워 두었으므로, 이 창의 것이
+ * 그보다 위에 있어야 한다 — 그러지 않으면 구매 확인이 떠 있는데 아래 화면이 닫힌다.
+ */
+const PURCHASE_BACK_DEPTH = 2400;
 
 /** 재화 교환 가격은 판별된 acquisition만 받아 다른 방식의 가짜 숫자를 만들지 않는다. */
 function priceText(acquisition: Extract<ProductDto["acquisition"], { kind: "currency" }>, amount: number): string {

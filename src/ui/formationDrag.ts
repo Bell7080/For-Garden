@@ -12,6 +12,13 @@ export interface FormationDragSlot {
 /** 컨트롤러는 입력 의도만 알리고 편성 배열·저장·고스트 UI는 호출자가 계속 소유한다. */
 export interface FormationGestureCallbacks {
   tap: (slot: number) => void;
+  /**
+   * 움직이지 않은 채 오래 누른 손.
+   *
+   * 그리드 카드가 꾹 누름으로 상세를 여는 것과 같은 계약이다 — 자리에 세워 둔 SD도 같은 손짓에
+   * 같은 창이 열려야 한다. 주지 않으면 예전처럼 아무 일도 하지 않고 취소된다.
+   */
+  longPress?: (slot: number) => void;
   dragStart: (slot: number, x: number, y: number) => void;
   dragMove: (slot: number, x: number, y: number) => void;
   drop: (from: number, to: number) => void;
@@ -80,6 +87,7 @@ export function bindFormationDrag(
     if (kind === "drag" && options.canDrag?.() === false) { callbacks.cancel("disabled", from); return; }
     if (wasDragging || kind === "drag") { if (target !== from) callbacks.drop(from, target); else callbacks.cancel("outside", from); }
     else if (kind === "tap") callbacks.tap(from);
+    else if (kind === "longTap" && callbacks.longPress) callbacks.longPress(from);
     else callbacks.cancel("outside", from);
   };
   const outside = (pointer: Phaser.Input.Pointer): void => { if (pointer.id === pointerId) cancel("outside"); };

@@ -97,8 +97,7 @@ export function applyMissionEvent(state: MissionState, event: MissionEvent, now:
     const previous = next.progress[mission.id] ?? 0;
     const progress = Math.min(mission.target, previous + amount);
     next.progress[mission.id] = progress;
-    // 연구도는 완료 전→완료 전이에서만 확정해 이벤트 재처리나 보상 재요청으로 오르지 않는다.
-    if (previous < mission.target && progress >= mission.target) next.researchPoints[mission.period] = Math.min(MAX_RESEARCH_POINTS, next.researchPoints[mission.period] + mission.researchPoints);
+    void previous;
   }
   return next;
 }
@@ -115,6 +114,36 @@ export function claimResearchStages(state: MissionState, period: MissionPeriod, 
     state: { ...state, progress: { ...state.progress }, claimedIds: [...state.claimedIds], researchPoints: { ...state.researchPoints }, claimedResearchStageIds: [...state.claimedResearchStageIds, ...ids] },
     claimedStageIds,
     cheesecakeEarned: claimedStageIds.reduce((sum, id) => sum + (RESEARCH_REWARD_STAGES.find((stage) => stage.id === id)?.rewardCheesecake ?? 0), 0),
+  };
+}
+
+/**
+ * 임무 보상을 수령할 때 함께 오르는 연구도.
+ *
+ * **완료가 아니라 수령이 연구도를 올린다.** 완료하는 순간 게이지가 저 혼자 차오르면, 정작
+ * 보상을 받는 손에는 아무 일도 일어나지 않아 두 값이 따로 노는 것처럼 보인다. 같은 임무를 두
+ * 번 수령할 수 없으므로(`claimedIds`) 이 합계도 한 번만 오른다.
+ */
+export function researchPointsForClaim(claimedMissionIds: readonly string[]): Record<MissionPeriod, number> {
+  const gained: Record<MissionPeriod, number> = { daily: 0, weekly: 0 };
+  for (const id of new Set(claimedMissionIds)) {
+    const mission = MISSIONS.find((candidate) => candidate.id === id);
+    if (mission) gained[mission.period] += mission.researchPoints;
+  }
+  return gained;
+}
+
+/** 수령한 임무의 연구도를 상한 안에서 더한 새 상태를 만든다. */
+export function addResearchPoints(state: MissionState, gained: Record<MissionPeriod, number>): MissionState {
+  return {
+    ...state,
+    progress: { ...state.progress },
+    claimedIds: [...state.claimedIds],
+    claimedResearchStageIds: [...state.claimedResearchStageIds],
+    researchPoints: {
+      daily: Math.min(MAX_RESEARCH_POINTS, state.researchPoints.daily + gained.daily),
+      weekly: Math.min(MAX_RESEARCH_POINTS, state.researchPoints.weekly + gained.weekly),
+    },
   };
 }
 

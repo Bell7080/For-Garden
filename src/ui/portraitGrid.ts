@@ -42,6 +42,58 @@ export function portraitGridFirstRowY(viewportTop: number, cardHeight: number, g
   return viewportTop + gap + portraitGridHeadroom(cardHeight) + cardHeight / 2;
 }
 
+/**
+ * 편성 목록은 어디서나 **네 칸이 한 줄**이다.
+ *
+ * 다섯 칸은 얼굴이 작아져 이름으로 고르게 되고, 세 칸은 한 줄에 담기는 수가 적어 같은 목록을
+ * 훨씬 길게 끌고 다닌다. 스토리·원정·발굴·교류 파견이 같은 일을 하므로 줄 수도 하나로 둔다 —
+ * 화면마다 다르면 같은 목록이 화면마다 다른 물건처럼 보인다.
+ */
+export const FORMATION_ROSTER_COLUMNS = 4;
+
+/** 편성 카드의 세로/가로 비례. 머리 관절 기준 잘라내기가 화면마다 같은 구도로 보이게 한다. */
+const FORMATION_CARD_ASPECT = 1.25;
+
+/** 카드 사이 가로 여백이 카드 폭에서 차지하는 비율. 옆 칸과 숨 쉴 틈만 남긴다. */
+const FORMATION_CARD_GAP_RATIO = 0.16;
+
+/** 줄 간격이 카드 높이에서 더 벌어지는 비율. 머리가 윗줄 이름띠에 닿을 만큼만 붙인다. */
+const FORMATION_ROW_GAP_RATIO = 0.17;
+
+export interface FormationRosterGrid {
+  columns: number;
+  cardWidth: number;
+  cardHeight: number;
+  /** 이웃한 두 칸의 중심 간 거리. */
+  columnStep: number;
+  /** 이웃한 두 줄의 중심 간 거리. */
+  rowStep: number;
+}
+
+/**
+ * 쓸 수 있는 가로 폭에서 편성 목록 한 줄의 규격을 구한다.
+ *
+ * 카드 크기를 화면마다 손으로 적지 않는다 — 적으면 창 폭이 바뀔 때 한 화면만 넘치거나 남는다.
+ * 칸 수는 고정이고 폭만 주면 나머지가 따라 나온다.
+ */
+export function formationRosterGrid(viewWidth: number, columns = FORMATION_ROSTER_COLUMNS): FormationRosterGrid {
+  const columnStep = viewWidth / columns;
+  const cardWidth = Math.round(columnStep / (1 + FORMATION_CARD_GAP_RATIO));
+  const cardHeight = Math.round(cardWidth * FORMATION_CARD_ASPECT);
+  return {
+    columns,
+    cardWidth,
+    cardHeight,
+    columnStep,
+    rowStep: cardHeight + Math.round(cardHeight * FORMATION_ROW_GAP_RATIO),
+  };
+}
+
+/** 목록 가운데를 원점으로 삼았을 때 열 번호(0부터)가 서는 x. */
+export function formationRosterColumnX(grid: FormationRosterGrid, column: number): number {
+  return (column - (grid.columns - 1) / 2) * grid.columnStep;
+}
+
 /** 줄 수와 줄 간격으로 그리드가 실제로 차지하는 세로 길이다. 머리 여유를 포함한다. */
 export function portraitGridContentHeight(rows: number, rowGap: number, cardHeight: number): number {
   if (rows <= 0) return 0;

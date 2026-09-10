@@ -7,7 +7,7 @@ import type { Fighter } from "../core/skirmish";
  * 겹 수와 남은 시간을 여기서 한 번만 만들고 둘 다 이 목록만 그린다. Phaser를 들여오지 않아
  * 순서·색·문구를 테스트가 그대로 고정할 수 있다.
  */
-export type UnitStatusId = "shell" | "stun" | "frozen" | "frenzy" | "taunt" | "bleed" | "poison" | "reagent" | "curse" | "chill" | "submerged" | "overpaint" | "butcher" | "vandalism" | "weakpoint";
+export type UnitStatusId = "packKuro" | "packShiro" | "shell" | "stun" | "frozen" | "frenzy" | "taunt" | "bleed" | "poison" | "reagent" | "curse" | "chill" | "submerged" | "overpaint" | "butcher" | "vandalism" | "weakpoint";
 
 export interface UnitStatusView {
   /** 같은 상태를 제공자가 여럿 걸 수 있을 때도 HUD 객체를 덮어쓰지 않는 전투 내 키다. */
@@ -30,6 +30,14 @@ export interface UnitStatusView {
 
 /** 상태별 색. 피해 수치의 디버프 색과 같은 계열을 쓴다. */
 export const UNIT_STATUS_COLOR: Readonly<Record<UnitStatusId, number>> = {
+  /*
+   * 무리 칩 둘. 검은 늑대는 이글거리는 재, 흰 늑대는 서리 푸른빛이다.
+   *
+   * 어두운 배경 원화 위에서 검정은 보이지 않으므로 털색을 그대로 쓰지 않고, 그 몸이 내는
+   * 피해의 결(물리·마법)로 가른다. 다른 칩과 같은 액자·같은 크기라 위계가 흔들리지 않는다.
+   */
+  packKuro: 0xd9603a,
+  packShiro: 0x4fa8e4,
   // 보호막 시각 효과와 같은 청록 계열을 사용해 조가비 소비 결과가 한 자원으로 읽히게 한다.
   shell: 0x62c6d8,
   stun: 0xf2c744,
@@ -64,8 +72,30 @@ function seconds(value: number): string {
  * 때리는지 자체를 바꾸기** 때문이다. 순서를 화면이 정하면 같은 상태가 개체마다 다른 자리에
  * 서서, 어디를 봐야 하는지 매번 다시 찾게 된다.
  */
-export function unitStatusViews(fighter: Fighter): UnitStatusView[] {
+export function unitStatusViews(fighter: Fighter, pack: readonly Fighter[] = []): UnitStatusView[] {
   const views: UnitStatusView[] = [];
+  /*
+   * 무리는 상태이상이 아니라 **지금 몇 마리가 서 있는가**다. 그래서 맨 앞에 선다 — 지휘자의
+   * 은신과 치명타가 이 둘의 생존에 통째로 걸려 있어 다른 무엇보다 먼저 읽혀야 한다.
+   *
+   * 살아 있으면 시계를 그리지 않는다. 쓰러진 몸만 남은 대기 시간만큼 덮여, 언제 다시 서는지가
+   * 다른 시간 상태와 같은 문법으로 읽힌다.
+   */
+  for (const wolf of pack) {
+    const alive = wolf.hp > 0;
+    const total = wolf.resummonRule?.cooldownSeconds ?? 0;
+    const remaining = Number.isFinite(wolf.resummonIn) ? wolf.resummonIn : 0;
+    views.push({
+      key: `pack:${wolf.def.id}`,
+      id: wolf.def.stats.ap > wolf.def.stats.atk ? "packShiro" : "packKuro",
+      name: wolf.def.name,
+      color: UNIT_STATUS_COLOR[wolf.def.stats.ap > wolf.def.stats.atk ? "packShiro" : "packKuro"],
+      // 서 있는 동안에는 시계를 돌리지 않는다. 덮인 만큼이 곧 남은 대기라는 규칙이 흐려진다.
+      remaining: alive ? undefined : remaining,
+      total: alive ? undefined : Math.max(total, remaining),
+      detail: alive ? "곁에 서 있다" : remaining > 0 ? `${seconds(remaining)} 뒤 다시 선다` : "다시 서지 않는다",
+    });
+  }
   if (fighter.shellGuard) {
     const shell = fighter.shellGuard;
     const maxStacks = fighter.def.passive.shellGuard?.maxStacks ?? shell.stacks;

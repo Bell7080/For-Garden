@@ -5,6 +5,89 @@ import type { BasicAttack, RelicDef } from "../core/types";
  * 렐릭 정의. 최종 30종을 목표로 하되, 지금은 파티 편성과 전투 규칙을 검증할 만큼만 둔다.
  * 밸런스 수치는 데이터일 뿐이므로 코드 수정 없이 여기서 조정한다.
  */
+/**
+ * 디안이 불러내는 두 늑대.
+ *
+ * 배열 밖 상수로 두는 이유는 **같은 객체**가 두 곳에서 쓰이기 때문이다 — 디안의 `summons`가
+ * 전투에 세울 정의로 품고, `RELICS`에도 함께 실려 정보창이 다른 개체와 같은 경로로 찾는다.
+ */
+const KURO_DEF: RelicDef = {
+  /**
+   * 검은 늑대 쿠로. 디안의 **공격력** 한 축에서만 자라는 물리 근거리 몸이다.
+   *
+   * 가챠에 서지 않으므로 등급 띠 밖이지만, 두 마리가 함께 나오는 만큼 R 개체 한 명보다
+   * 약하게 짠다 — 오각형의 주문 축이 통째로 비어 있어 같은 모양의 R보다 총량이 낮다.
+   */
+  id: "kuro",
+  summonOnly: true,
+  squad: "rogue",
+  name: "쿠로",
+  specimenNumber: "222",
+  projectName: "PACK ECHO",
+  excavationSite: "북아메리카 란초 라브레아 타르층",
+  fossilRecord: "우두머리 표본 곁에서 함께 발굴된 두 다이어울프 중 검은 털 개체다. 앞다리 근부착부가 두껍게 남아 몸을 던지는 돌격 습성이 확인됐다.",
+  catalogSummary: "디안에게 귀속된 검은 다이어울프. 디안의 공격력이 그대로 이 개체의 모든 수치가 된다.",
+  unlockRecord: { status: "recorded", text: "쿠로는 디안보다 먼저 문을 나선다. 낯선 소리가 나면 뒤도 돌아보지 않고 그쪽으로 달려가 서 있고, 디안이 부를 때까지 물러서지 않는다." },
+  squadNote: "쁘띠 로그의 앞. 디안이 가리키기 전에 먼저 달려가 길목에 선다.",
+  researcherTitle: "대장님",
+  rarity: "R",
+  portraitAssetId: "kuro",
+  origin: "다이어울프",
+  element: "fire",
+  role: "warrior",
+  reachTier: "melee",
+  excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 0, efficiencyMultiplier: 1.00 },
+  // 디안의 태생 공격력 160에서 파생한 값이며, 전투에서는 성장한 공격력으로 다시 계산된다.
+  stats: { hp: 704, def: 56, res: 56, atk: 158, ap: 0, attackSpeed: 104, moveSpeed: 109, critChance: 10, critDamage: 150, energyGain: 26, lifeSteal: 0, ferocityGain: 0 },
+  ferocityTrait: {
+    name: "무리의 몸", effectId: "packBody",
+    defenseResistancePercent: 50, attackSpeedPercent: 50, criticalChancePoints: 25, lifeStealPoints: 25,
+  },
+  passive: { id: "kuro-passive", name: "검은 이빨", kind: "summonDerived", iconAssetId: "skill-icon-buff", effectType: "buff", value: 0, desc: "디안의 공격력이 쿠로의 모든 능력치를 정한다." },
+  basic: { id: "kuro-basic", name: "물어뜯기", power: 45, iconAssetId: "skill-icon-physical", effectType: "physical", damageType: "physical", targeting: "single" },
+  ultimate: {
+    id: "kuro-ult", name: "검은 돌진", power: 150, iconAssetId: "skill-icon-physical", effectType: "physical",
+    damageType: "physical", cost: 100, targeting: "chargeLine", radius: 42,
+    statusEffects: [{ kind: "bleed", seconds: 3, maxHpPercentPerSecond: 2 }],
+  },
+};
+
+const SHIRO_DEF: RelicDef = {
+  /** 흰 늑대 시로. 디안의 **주문력** 한 축에서만 자라는 마법 근거리 몸이다. */
+  id: "shiro",
+  summonOnly: true,
+  squad: "rogue",
+  name: "시로",
+  specimenNumber: "223",
+  projectName: "PACK ECHO",
+  excavationSite: "북아메리카 란초 라브레아 타르층",
+  fossilRecord: "우두머리 표본 곁에서 함께 발굴된 두 다이어울프 중 흰 털 개체다. 두개골의 청각 기관이 유난히 발달해 먼 거리의 움직임을 읽었을 것으로 추정된다.",
+  catalogSummary: "디안에게 귀속된 흰 다이어울프. 디안의 주문력이 그대로 이 개체의 모든 수치가 된다.",
+  unlockRecord: { status: "recorded", text: "시로는 달려가지 않고 먼저 귀를 세운다. 쿠로가 뛰어든 뒤에 옆으로 돌아 들어가 빠져나갈 길을 막고, 디안이 물러설 때 마지막까지 그 자리에 남는다." },
+  squadNote: "쁘띠 로그의 옆. 쿠로가 앞을 막는 동안 빠져나갈 길목을 끊는다.",
+  researcherTitle: "대장님",
+  rarity: "R",
+  portraitAssetId: "shiro",
+  origin: "다이어울프",
+  element: "fire",
+  role: "assassin",
+  reachTier: "melee",
+  excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 0, efficiencyMultiplier: 1.00 },
+  // 디안의 태생 주문력 158에서 파생한 값이며, 전투에서는 성장한 주문력으로 다시 계산된다.
+  stats: { hp: 703, def: 58, res: 62, atk: 0, ap: 155, attackSpeed: 96, moveSpeed: 100, critChance: 10, critDamage: 150, energyGain: 26, lifeSteal: 0, ferocityGain: 0 },
+  ferocityTrait: {
+    name: "무리의 몸", effectId: "packBody",
+    defenseResistancePercent: 50, attackSpeedPercent: 50, criticalChancePoints: 25, lifeStealPoints: 25,
+  },
+  passive: { id: "shiro-passive", name: "흰 이빨", kind: "summonDerived", iconAssetId: "skill-icon-buff", effectType: "buff", value: 0, desc: "디안의 주문력이 시로의 모든 능력치를 정한다." },
+  basic: { id: "shiro-basic", name: "백색 포효", power: 45, iconAssetId: "skill-icon-magical", effectType: "magical", damageType: "magical", scalingStat: "ap", targeting: "single" },
+  ultimate: {
+    id: "shiro-ult", name: "서리 추적", power: 150, iconAssetId: "skill-icon-magical", effectType: "magical",
+    damageType: "magical", scalingStat: "ap", cost: 100, targeting: "chargeLine", radius: 42,
+    statusEffects: [{ kind: "chill", speedPercentPerStack: 15, maxStacks: 2 }],
+  },
+};
+
 export const RELICS: RelicDef[] = [
   {
     id: "rex",
@@ -103,13 +186,13 @@ export const RELICS: RelicDef[] = [
     fossilRecord: "모래폭풍 뒤 드러난 난각 군집 곁에서 어린 개체의 골격을 수습했다. 눌렸어도 볏과 짧은 뿔의 배열은 또렷했다.",
     observationProfile: {
       originYear: "약 6,800만 년 전",
-      // 유치원생 콘셉트의 인간형 신체 나잇대만 나타내며, 해츨링 후기 화석이 암시하는 순수한 성향과 함께 사용한다.
-      restorationYear: "E.C. 6년",
+      // 초등학생 또래의 인간형 신체 나잇대만 나타내며, 해츨링 후기 화석이 암시하는 순수한 성향과 함께 사용한다.
+      restorationYear: "E.C. 11년",
       lifeStage: "해츨링 후기",
-      height: "1.08 m",
+      height: "1.26 m",
       weight: "186 kg",
     },
-    catalogSummary: "유치원생 또래의 키를 지닌 트리케라톱스 해츨링 표본.",
+    catalogSummary: "초등학생 또래의 키를 지닌 트리케라톱스 해츨링 표본.",
     unlockRecord: { status: "recorded", text: "토리카는 작은 뿔로도 누군가의 앞을 막아 서려 한다. 겁이 나면 한 걸음 물러서지만, 지켜야 할 일이 생기면 자기 생각을 또박또박 말한다. 식사 시간에는 누구보다 씩씩하고 먹성도 좋아 마지막 접시까지 챙긴다. 칭찬을 받으면 볏 끝까지 붉어진 채 친구 몫부터 슬쩍 내미는 습관이 있다." },
     // 소속은 role이 아니라 나이와 성격이 정했다 — E.C. 6년 · 1.08 m의 해츨링이라 "유년형·소형
     // 렐릭은 쁘띠 로그"라는 배정 가이드에 그대로 걸린다. 스쿼드 안의 자리는 기존 둘과 겹치지
@@ -2282,8 +2365,10 @@ export const RELICS: RelicDef[] = [
   },
 
   {
-    // 디안 데이터 묶음은 우두머리 표본에서 복원된 한 렐릭만 성장 주체로 둔다. 쿠로·시로는
-    // 별도 RelicDef가 아니라 디안에게 귀속된 소환수이므로 획득·편성·유대·장비 슬롯을 만들지 않는다.
+    /**
+     * 디안 한 명만 성장 주체다. 쿠로·시로는 제 `RelicDef`를 온전히 갖되 `summonOnly`로 표시해
+     * 가챠·도감·편성에 서지 않고, 전투에 설 때 태생 능력치만 디안의 성장에서 파생한다.
+     */
     id: "dian",
     squad: "rogue",
     name: "디안",
@@ -2305,51 +2390,74 @@ export const RELICS: RelicDef[] = [
     // “두목”은 관계 인식이고 실제 발화 호칭은 쁘띠 로그의 허용 목록과 일치시킨다.
     researcherTitle: "대장님",
     rarity: "SSR",
-    // 디안 전용 전신은 소환수 SD와 분리해 도감·컷인에서만 사용한다.
+    // 디안 전용 전신은 늑대 SD와 분리해 도감·컷인에서만 사용한다.
     portraitAssetId: "dian",
     origin: "다이어울프",
     element: "fire",
     role: "assassin",
     reachTier: "ranged",
     excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 29, efficiencyMultiplier: 1.10 },
-    // SSR 띠 안에서 원거리 암살자의 낮은 내구와 빠른 행동을 표현하며 공용 부가 능력치는 유지한다.
-    stats: { hp: 840, def: 42, res: 44, atk: 164, ap: 118, attackSpeed: 128, moveSpeed: 132, critChance: 10, critDamage: 150, energyGain: 26, lifeSteal: 0, ferocityGain: 0 },
+    /**
+     * 생존 셋과 이동 속도를 로스터 최저로 내주고 공격 속도와 두 공격 축을 최고로 가져간다.
+     *
+     * 늑대가 살아 있는 동안 단일 대상에게 보이지 않으므로 체력·방어·저항이 낮아도 버틴다 —
+     * 대신 늑대를 잃는 순간이 실제로 위험해야 암살자의 낮은 생존력이 뜻을 갖는다. 이동 속도가
+     * 최저인 것도 정체성이다: 먼저 달려 나가는 것은 늑대고 두목은 가장 뒤에 남는다.
+     * 공격력과 주문력이 거의 같은 이유는 합공이 두 축을 한 번에 쓰기 때문이고, 늑대 둘도 각각
+     * 그 한 축에서만 자란다. 전투력 2453으로 SSR 띠(2340~2460) 안이다.
+     */
+    stats: { hp: 750, def: 40, res: 40, atk: 160, ap: 158, attackSpeed: 132, moveSpeed: 64, critChance: 10, critDamage: 150, energyGain: 26, lifeSteal: 0, ferocityGain: 0 },
     // 쿠로는 최종 공격력만, 시로는 최종 주문력만 읽는다. 서로 반대 능력치는 파생 결과에 섞이지 않는다.
     summons: [
       {
-        id: "kuro", name: "쿠로", sdAssetKey: "charSD_020_black", growthStat: "atk",
-        // 쿠로는 몸을 던지는 물리 돌격수라 공격·공속·이속 계수를 쌍둥이보다 높게 둔다.
-        scaling: { hp: 4.8, atk: 1.05, def: 0.42, res: 0.34, attackSpeed: 0.94, moveSpeed: 1.12, attackSpeedCap: 180, moveSpeedCap: 210 },
-        skills: {
-          basic: { id: "kuro-basic", name: "물어뜯기", power: 110, iconAssetId: "skill-icon-physical", effectType: "physical", damageType: "physical", targeting: "single" },
-          special: { id: "kuro-charge", name: "검은 돌진", power: 165, iconAssetId: "skill-icon-physical", effectType: "physical", damageType: "physical", targeting: "chargeLine", radius: 42 },
-        },
-        // 회수 뒤 긴 공백을 남기고 불완전한 체력으로 돌아와 늑대를 소모품처럼 던질 수 없게 한다.
-        resummon: { enabled: true, cooldownSeconds: 12, hpPercent: 40 },
+        def: KURO_DEF, growthStat: "atk",
+        // 정의의 태생 능력치가 그대로 나오도록 디안의 태생 공격력 160을 기준으로 잰 계수다.
+        scaling: { hp: 4.40, atk: 0.99, def: 0.35, res: 0.35, attackSpeed: 0.65, moveSpeed: 0.68, attackSpeedCap: 150, moveSpeedCap: 150 },
+        // 쓰러진 뒤 긴 공백을 남기고 불완전한 체력으로 돌아와 늑대를 소모품처럼 던질 수 없게 한다.
+        resummon: { enabled: true, cooldownSeconds: 20, hpPercent: 40 },
       },
       {
-        id: "shiro", name: "시로", sdAssetKey: "charSD_020_white", growthStat: "ap",
-        // 시로는 마법 피해와 추적 안정성을 맡아 주문 공격과 생존·이속 비중을 상대적으로 높인다.
-        scaling: { hp: 5.2, atk: 1.12, def: 0.48, res: 0.52, attackSpeed: 0.88, moveSpeed: 1.24, attackSpeedCap: 165, moveSpeedCap: 195 },
-        skills: {
-          basic: { id: "shiro-basic", name: "서리 추적", power: 115, iconAssetId: "skill-icon-magical", effectType: "magical", damageType: "magical", scalingStat: "ap", targeting: "single" },
-          special: { id: "shiro-pursuit", name: "흰 그림자", power: 180, iconAssetId: "skill-icon-magical", effectType: "magical", damageType: "magical", scalingStat: "ap", targeting: "single" },
-        },
-        resummon: { enabled: true, cooldownSeconds: 12, hpPercent: 40 },
+        def: SHIRO_DEF, growthStat: "ap",
+        scaling: { hp: 4.45, atk: 0.98, def: 0.37, res: 0.39, attackSpeed: 0.61, moveSpeed: 0.63, attackSpeedCap: 140, moveSpeedCap: 145 },
+        resummon: { enabled: true, cooldownSeconds: 20, hpPercent: 40 },
       },
     ],
-    // 디안 자신은 공격하지 않고 두 늑대를 지휘한다. 둘이 모두 현장에 있을 때만 단일 대상 추적을 피한다.
-    ferocityTrait: {
-      name: "무리", effectId: "summonPackFrenzy",
-      // 쿠로는 물리 마무리, 시로는 마법 추적에 무게를 두되 둘 모두 손과 발이 빨라진다.
-      kuro: { attackPowerPercent: 40, attackSpeedPercent: 30, moveSpeedPercent: 20, executeBelowHpPercent: 30, executeDamagePercent: 35 },
-      shiro: { abilityPowerPercent: 35, attackSpeedPercent: 20, moveSpeedPercent: 35, pursuitDamagePercent: 30 },
+    /**
+     * 자신은 그대로 두고 두 늑대를 함께 폭주시킨다.
+     *
+     * 무엇이 얼마나 오르는지는 여기 적지 않는다 — 그 값은 폭주하는 몸이 갖는다(`packBody`).
+     * 디안 자신은 폭주해도 때리는 손이 달라지지 않는다. 앞에 선 것은 늑대이기 때문이다.
+     */
+    ferocityTrait: { name: "무리", effectId: "summonPackFrenzy" },
+    passive: {
+      id: "dian-passive", name: "우두머리의 경계", kind: "summonCommander",
+      iconAssetId: "skill-icon-buff", effectType: "buff", value: 0,
+      // 치명타 가산은 개체 이름이 아니라 이 필드 하나로 읽히며, 무리 전체가 같은 값을 나눠 갖는다.
+      criticalChancePercent: 20,
+      bloodscent: { maxStacks: 3, damagePercentPerStack: 20 },
+      // 전용 분기가 문장을 짓는다. 이 사본은 화면에 뜨지 않는 데이터 문서용이다.
+      desc: "전투가 열리면 쿠로와 시로를 먼저 내보내고, 늑대가 확인한 적 중 전투력이 가장 높은 하나를 첫 표적으로 삼는다. 둘이 모두 살아 있는 동안 디안은 은신하고 무리 전체의 치명타 확률이 오른다.",
     },
-    passive: { id: "dian-passive", name: "우두머리의 경계", kind: "summonCommander", iconAssetId: "skill-icon-buff", effectType: "buff", value: 0, desc: "전투 시작 시 근거리 소환수 [[summon-kuro|쿠로]]와 [[summon-shiro|시로]]를 소환한다. 둘이 모두 현장에 있는 동안 단일 대상 공격의 표적이 되지 않는다." },
-    // 지휘 기술의 power/damageType은 UI 계약을 위한 대표값일 뿐이며 실제 피해는 각 늑대 기술이 낸다.
-    basic: { id: "dian-basic", name: "쿠로, 확인!", power: 105, iconAssetId: "skill-icon-physical", effectType: "physical", damageType: "physical", targeting: "single", summonCommand: "alternatingPair" },
-    ultimate: { id: "dian-ult", name: "시로, 지켜!", power: 260, iconAssetId: "skill-icon-physical", effectType: "physical", damageType: "physical", cost: 110, targeting: "single", summonCommand: "oppositeChargePair" },
+    /**
+     * 합공 한 번에 물리와 마법이 함께 들어간다. `power`는 목록·정렬이 읽는 대표값이고 실제
+     * 피해는 `dualStrike` 두 축이 각각 낸다.
+     */
+    basic: {
+      id: "dian-basic", name: "얘들아, 물어!", power: 45,
+      iconAssetId: "skill-icon-physical", effectType: "physical", damageType: "physical", targeting: "single",
+      dualStrike: { attackPercent: 45, abilityPercent: 45, aloneAlternatePercent: 25 },
+      finisher: { thresholdPercent: 25, thresholdPerStack: 5, remainingHpPercent: 30 },
+    },
+    /** 마무리는 같은 `finisher` 계약을 쓰되 문턱을 100으로 열어 체력과 무관하게 물게 한다. */
+    ultimate: {
+      id: "dian-ult", name: "약점을 공격해!", power: 150,
+      iconAssetId: "skill-icon-physical", effectType: "physical", damageType: "physical", cost: 110, targeting: "single",
+      packAssault: { resummonHasteSeconds: 10, summonPowerPercent: 150 },
+      finisher: { thresholdPercent: 100, thresholdPerStack: 0, remainingHpPercent: 30 },
+    },
   },
+  KURO_DEF,
+  SHIRO_DEF,
   {
     // 원정 최종층의 단독 보스. 리바이어던 멜빌레이의 거대한 턱과 심해 포식자 모티브를 담는다.
     id: "pontos",
@@ -2493,4 +2601,4 @@ export function getRelic(id: string): RelicDef {
 }
 
 /** 플레이어가 파티에 넣을 수 있는 렐릭. 이름 규칙이 아니라 명시적인 적 전용 계약을 따른다. */
-export const PLAYABLE_RELICS = RELICS.filter((relic) => relic.enemyOnly !== true);
+export const PLAYABLE_RELICS = RELICS.filter((relic) => relic.enemyOnly !== true && relic.summonOnly !== true);

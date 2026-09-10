@@ -19,8 +19,9 @@ export const BANNERS: Banner[] = [
     id: "fossil", pityGroupId: PITY_GROUP.STANDARD, name: "화석 연구", featuredRelicId: "anky",
     // 연구 방식과 픽업 대상은 각각 기능명·픽업 표식으로 이미 전달하므로 설명형 문구를 노출하지 않는다.
     currency: "fossil", costOne: 100, costTen: 900,
-    // 기존 R 90% 중 15%p를 회색 연구 부산물로 옮겨 네 슬롯 확률의 합을 1로 유지한다.
-    slotRates: { R: 0.75, SR: 0.09, SSR: 0.01, GRAY: 0.15 },
+    // 초기의 작은 R 풀을 너무 빨리 소진하지 않도록 대부분을 부산물로 돌린다. 10연 SR 보장은
+    // 그대로 남아 있어 한 묶음은 보통 SR 1장 안팎, R 1~2장, 나머지는 재화로 구성된다.
+    slotRates: { R: 0.12, SR: 0.04, SSR: 0.01, GRAY: 0.83 },
     grayRewards: [
       { kind: "gold", min: 1_000, max: 3_000, weight: 3 },
       { kind: "cheesecake", min: 5, max: 15, weight: 1 },
@@ -32,8 +33,8 @@ export const BANNERS: Banner[] = [
     id: "amber", pityGroupId: PITY_GROUP.LIMITED_PICKUP, name: "호박석 연구", featuredRelicId: "rex",
     // 재화의 희소도 같은 설계 메모도 배너 카피로 옮기지 않고 운영 데이터와 주석에만 남긴다.
     currency: "amber", costOne: 2, costTen: 18,
-    // 호박석도 R에서 같은 15%p를 분리해 배너 간 회색 결과의 의미를 통일한다.
-    slotRates: { R: 0.65, SR: 0.17, SSR: 0.03, GRAY: 0.15 },
+    // 비싼 호박석은 화석보다 렐릭 확률을 거의 두 배로 두되, 재화 결과가 여전히 과반이 되게 한다.
+    slotRates: { R: 0.22, SR: 0.08, SSR: 0.03, GRAY: 0.67 },
     grayRewards: [
       { kind: "gold", min: 3_000, max: 8_000, weight: 2 },
       { kind: "cheesecake", min: 15, max: 30, weight: 1 },

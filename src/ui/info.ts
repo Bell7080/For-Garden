@@ -28,7 +28,9 @@ import { PopupLayer } from "./PopupLayer";
 import { calculateObservationJournalFlow, OBSERVATION_JOURNAL_SIZE, withoutRepeatedProfileDetails } from "./observationJournalLayout";
 import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
-import { addStarMark } from "./rarityMark";
+import { addStarMark, STAR_ROMAN } from "./rarityMark";
+import { addFramedIcon } from "./itemFrame";
+import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { session } from "../state/session";
 import { addColorAssistMark, COLOR_ASSIST_LAYOUT } from "./colorAssist";
 import { addMarkChip } from "./MarkChip";
@@ -63,8 +65,6 @@ import { INFO_PORTRAIT_FOCUS, infoPortraitPlacement } from "./portraitPlacement"
 import { skinsForRelic, type RelicSkinDef } from "../data/relicSkins";
 import { relicSkinManager } from "../managers/RelicSkinManager";
 import { Button } from "./Button";
-import { openSummonInfoPopup } from "./SummonInfoPopup";
-import { canShowSummonInfo, summonKeyword, summonKeywordId } from "./summonInfoModel";
 
 export type { SkillInfoViewModel } from "./SkillPopup";
 
@@ -251,6 +251,15 @@ const BOND_STORY_STEPS: readonly { level: number; title: string }[] = [
 
 /** 돌파 버튼과 팝업이 함께 쓰는 색. 레벨(초록)과 갈라 놓아 다른 종류의 성장임을 알린다. */
 const BREAK_EDGE = 0xa88cf0;
+
+/**
+ * 한계 돌파 쪽지의 자리표.
+ *
+ * **올라가는 것은 별 개수가 아니라 등급이다.** 카드 오른쪽 위에 박히는 로마자 표식을 그대로
+ * 크게 세우고, 드는 재료는 가방·상점과 같은 액자로 둔다 — 여기서 사람이 정하는 것은 "지금
+ * 올릴 수 있나"이고, 그 답은 등급 두 글자와 액자 둘의 수가 전부 말한다.
+ */
+const BREAK_LAYOUT = { gradeY: -196, gradeSize: 96, capY: -96, unlockY: -44, costY: 66, costFrame: 124, costStep: 260, actionY: 226 } as const;
 
 /** 이만큼 누르고 있으면 한 번에 급여 팝업이 열린다(ms). */
 const FEED_HOLD_MS = 420;
@@ -830,48 +839,69 @@ export class InfoManager {
     if (!def) return;
     const progress = relicProgression.getProgress(def.id);
     const step = nextBreakthrough(progress.breakthrough);
-    this.popups.open({ width: 720, height: 460, title: "한계 돌파", tilt: -1.2, ...anchorOf(from) }, (body, close) => {
+    this.popups.open({ width: 780, height: 660, title: "한계 돌파", tilt: -1.2, ...anchorOf(from) }, (body, close) => {
       if (!step) {
-        body.add(this.scene.add.text(0, 20, "이미 별 다섯이다. 중복은 DNA 조각으로 쌓인다.", textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0.5).setWordWrapWidth(600));
+        body.add(this.scene.add.text(0, 20, "이미 " + STAR_ROMAN[STAR_ROMAN.length - 1] + " 등급이다. 중복은 DNA 조각으로 쌓인다.", textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0.5).setWordWrapWidth(640));
         return;
       }
       const cap = relicLevelCap(progress.breakthrough);
-      body.add(
-        this.scene.add
-          .text(0, -150, "별 " + relicStars(progress.breakthrough) + "  →  " + (relicStars(progress.breakthrough) + 1), textStyle({ role: "display", size: 34, color: COLOR.accentText }))
-          .setOrigin(0.5),
-      );
-      body.add(
-        this.scene.add
-          .text(0, -104, "레벨 상한 " + cap + "  →  " + step.levelCap + "   ·   " + step.label, textStyle({ role: "body", size: 23, color: COLOR.inkDim }))
-          .setOrigin(0.5),
-      );
-      const rows: [string, number, number][] = [
-        [def.name + " 파편", step.fragments, relicProgression.getFragments(def.id)],
-        ["치즈케이크", step.cheesecake, session.wallet.cheesecake],
+      // **올라가는 것은 별 개수가 아니라 등급이다.** 카드 오른쪽 위에 박히는 로마자와 같은
+      // 표식을 그대로 크게 세우고, 그 사이에 화살표만 둔다 — "1 → 2"라고 적으면 화면 어디에도
+      // 없는 숫자를 새로 배우게 된다.
+      addStarMark(this.scene, body, -140, BREAK_LAYOUT.gradeY, BREAK_LAYOUT.gradeSize, relicStars(progress.breakthrough));
+      body.add(this.scene.add.text(0, BREAK_LAYOUT.gradeY, "▶", textStyle({ role: "display", size: 34, color: COLOR.inkDim })).setOrigin(0.5));
+      addStarMark(this.scene, body, 140, BREAK_LAYOUT.gradeY, BREAK_LAYOUT.gradeSize, relicStars(progress.breakthrough) + 1);
+
+      // 상한은 이 조작이 실제로 바꾸는 값이라 등급 바로 아래에 같은 무게로 선다.
+      const capLine = this.scene.add.container(0, BREAK_LAYOUT.capY);
+      const capLabel = this.scene.add.text(0, 0, "레벨 상한", textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(1, 0.5);
+      const capFrom = this.scene.add.text(0, 0, String(cap), textStyle({ role: "display", size: 36, color: COLOR.inkDim })).setOrigin(0.5);
+      const capArrow = this.scene.add.text(0, 0, "▶", textStyle({ role: "display", size: 22, color: COLOR.inkDim })).setOrigin(0.5);
+      const capTo = this.scene.add.text(0, 0, String(step.levelCap), textStyle({ role: "display", size: 44, color: COLOR.accentText })).setOrigin(0.5);
+      const gap = 18;
+      const width = capLabel.width + gap + capFrom.width + gap + capArrow.width + gap + capTo.width;
+      let cursor = -width / 2;
+      capLabel.setX(cursor + capLabel.width); cursor += capLabel.width + gap;
+      capFrom.setX(cursor + capFrom.width / 2); cursor += capFrom.width + gap;
+      capArrow.setX(cursor + capArrow.width / 2); cursor += capArrow.width + gap;
+      capTo.setX(cursor + capTo.width / 2);
+      capLine.add([capLabel, capFrom, capArrow, capTo]);
+      body.add(capLine);
+      body.add(this.scene.add.text(0, BREAK_LAYOUT.unlockY, step.label, textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0.5).setWordWrapWidth(660));
+
+      // **드는 것은 액자로 세운다.** 재화가 서는 자리는 어디서나 같은 양식이라, 파편이 몇 개
+      // 남았는지도 가방·상점과 같은 얼굴로 읽힌다. 가진 수는 액자 우하단, 드는 수는 그 아래다.
+      const held = relicProgression.getFragments(def.id);
+      const costs: { texture: string; label: string; need: number; have: number }[] = [
+        { texture: CURRENCY_ICON_BY_WALLET.fossil, label: def.name + " 파편", need: step.fragments, have: held },
+        { texture: CURRENCY_ICON_BY_WALLET.cheesecake, label: "치즈케이크", need: step.cheesecake, have: session.wallet.cheesecake },
       ];
-      rows.forEach(([label, need, have], index) => {
-        const y = -40 + index * 60;
-        const enough = have >= need;
-        body.add(this.scene.add.text(-280, y, label, textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0, 0.5));
-        body.add(
-          this.scene.add
-            .text(280, y, have.toLocaleString() + " / " + need.toLocaleString(), textStyle({ role: "display", size: 28, color: enough ? COLOR.ink : COLOR.dangerText }))
-            .setOrigin(1, 0.5),
-        );
+      costs.forEach((cost, index) => {
+        const x = (index - (costs.length - 1) / 2) * BREAK_LAYOUT.costStep;
+        const enough = cost.have >= cost.need;
+        addFramedIcon(this.scene, body, x, BREAK_LAYOUT.costY, BREAK_LAYOUT.costFrame, cost.texture, {
+          amount: formatCurrency(cost.have),
+          amountColor: enough ? undefined : COLOR.dangerText,
+          color: enough ? COLOR.accent : COLOR.danger,
+        });
+        body.add(this.scene.add.text(x, BREAK_LAYOUT.costY + BREAK_LAYOUT.costFrame / 2 + 26, cost.label, textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0.5));
+        body.add(this.scene.add
+          .text(x, BREAK_LAYOUT.costY + BREAK_LAYOUT.costFrame / 2 + 58, "필요 " + formatCurrency(cost.need), textStyle({ role: "emphasis", size: 24, color: enough ? COLOR.ink : COLOR.dangerText }))
+          .setOrigin(0.5));
       });
-      const ready = canBreakThrough(progress, relicProgression.getFragments(def.id), session.wallet.cheesecake);
+
+      const ready = canBreakThrough(progress, held, session.wallet.cheesecake);
       const reason = progress.level < cap ? "레벨을 " + cap + "까지 올려야 한다." : ready ? "" : "재료가 부족하다.";
-      body.add(drawLayer(this.scene, 0, 130, slantedRect(360, 76, 14), {
+      body.add(drawLayer(this.scene, 0, BREAK_LAYOUT.actionY, slantedRect(420, 88, 16), {
         fill: ready ? 0x2d2440 : 0x161a20,
         alpha: ready ? 0.98 : 0.7,
         edge: BREAK_EDGE,
         edgeAlpha: ready ? 1 : 0.25,
       }));
-      body.add(this.scene.add.text(0, 130, "돌파하기", textStyle({ role: "display", size: 30, color: ready ? COLOR.ink : COLOR.inkDim })).setOrigin(0.5));
-      if (reason) body.add(this.scene.add.text(0, 186, reason, textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0.5));
+      body.add(this.scene.add.text(0, BREAK_LAYOUT.actionY, "돌파하기", textStyle({ role: "display", size: 34, color: ready ? COLOR.ink : COLOR.inkDim })).setOrigin(0.5));
+      if (reason) body.add(this.scene.add.text(0, BREAK_LAYOUT.actionY + 68, reason, textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0.5));
       if (!ready) return;
-      const hit = this.scene.add.rectangle(0, 130, 360, 76, 0xffffff, 0).setInteractive({ useHandCursor: true });
+      const hit = this.scene.add.rectangle(0, BREAK_LAYOUT.actionY, 420, 88, 0xffffff, 0).setInteractive({ useHandCursor: true });
       hit.on("pointerup", () => {
         close();
         void this.breakThrough();
@@ -913,7 +943,6 @@ export class InfoManager {
     if (!def) return;
     const progress = relicProgression.getProgress(def.id);
     const canFeed = canFeedRelic(progress, session.wallet.cheesecake);
-    const step = nextBreakthrough(progress.breakthrough);
     // Growth actions are derived from the current confirmed state, never from “did this tap level up?”.  At
     // the cap the note becomes an explicit route to breakthrough and explains why it is not yet available.
     const atCap = progress.level >= relicLevelCap(progress.breakthrough);
@@ -929,6 +958,23 @@ export class InfoManager {
       closeOnBackdrop: true,
       onClose: () => { this.feedPopupOpen = false; },
     }, (body, close) => {
+      // **쪽지는 한 번 먹였다고 닫히지 않는다.** 한 레벨씩 올리는 일은 보통 연달아 일어나므로,
+      // 누를 때마다 닫히면 같은 자리를 다시 길게 눌러 쪽지를 여는 손이 매번 더 든다. 값과
+      // 남은 여력만 다시 적고 그대로 남아, 화면의 다른 곳을 누를 때까지 이어서 누를 수 있다.
+      const paint = (): void => { if (this.feedPopupOpen) this.paintFeedBulk(body, close, paint, x, y); };
+      paint();
+    });
+  }
+
+  /** 한 번에 급여 쪽지의 내용. 먹일 때마다 값이 달라지므로 같은 판 위에 다시 그린다. */
+  private paintFeedBulk(body: Phaser.GameObjects.Container, close: () => void, repaint: () => void, x: number, y: number): void {
+    body.removeAll(true);
+    const def = this.currentDef;
+    if (!def) { close(); return; }
+    const progress = relicProgression.getProgress(def.id);
+    const step = nextBreakthrough(progress.breakthrough);
+    const atCap = progress.level >= relicLevelCap(progress.breakthrough);
+    {
       if (atCap) {
         const held = relicProgression.getFragments(def.id);
         const ready = !!step && canBreakThrough(progress, held, session.wallet.cheesecake);
@@ -959,13 +1005,12 @@ export class InfoManager {
         body.add(price.container);
         if (!enough) return;
         const hit = this.scene.add.rectangle(bx, 12, 212, 116, 0xffffff, 0).setInteractive({ useHandCursor: true });
-        hit.on("pointerup", () => {
-          close();
-          void this.feedLevels(levels);
-        });
+        // 먹인 뒤 쪽지를 닫지 않고 같은 판을 다시 적는다 — 레벨이 올라 다음 한 레벨의 값이
+        // 달라지므로, 남겨 두기만 하고 값을 그대로 두면 화면이 거짓말을 한다.
+        hit.on("pointerup", () => { void this.feedLevels(levels).then(repaint); });
         body.add(hit);
       });
-    });
+    }
   }
 
   /** 지금 레벨에서 목표 레벨까지 필요한 급여 횟수. 팝업의 소모량 표기와 실제 요청이 같은 값을 쓴다. */
@@ -2077,9 +2122,8 @@ export class InfoManager {
       valueLabel,
       // 「세 개의 뿔」처럼 이름을 가진 주기 스택은 개체 전용 규칙어라 전역 사전이 아니라
       // 이 스킬을 여는 자리에서만 주입한다(메테의 스타카토와 같은 자리다).
-      keywordActions: summonTags.actions,
       contextualKeywords: [
-        ...summonTags.keywords,
+        ...summonTags,
         damageDetail, shieldDetail, healDetail,
         "kind" in skill ? undefined : periodicStackKeyword(skill as Skill),
         // 「고통의 희열」은 패시브 본문이 직접 가리키는 태그라 그 쪽지에도 함께 실린다.
@@ -2114,26 +2158,23 @@ export class InfoManager {
   }
 
   /**
-   * 패시브 본문이 가리키는 소환수 태그와, 그 태그가 열 전용 창을 함께 만든다.
+   * 지휘자의 패시브가 부르는 소환수를 쪽지 한 장으로 설명하는 문맥 사전이다.
    *
-   * 뜻풀이는 늘 붙는다 — 태그가 밑줄만 그어진 채 아무것도 열지 못하면 강조가 거짓말이 된다.
-   * 전용 창은 성장·스킬을 볼 수 있는 문맥에서만 얹어, 미보유 도감의 공개 정책을 그대로 지킨다.
+   * 늑대도 완전한 정의를 갖고 있으므로 문장을 손으로 적지 않고 그 정의에서 조립한다 —
+   * 수치를 고친 뒤 옛 문장이 남지 않고, 지휘자가 늘어도 같은 코드가 그대로 읽는다.
    */
-  private summonKeywordTags(): { keywords: readonly KeywordDef[]; actions?: Record<string, () => void> } {
-    const def = this.currentDef;
-    const summons = def?.summons ?? [];
-    if (!def || summons.length === 0) return { keywords: [] };
-    const ownerStats = this.publicProfile?.stats ?? relicProgression.getFinalStats(def.id);
-    const open = this.capabilities.showSummons && canShowSummonInfo(this.capabilities, this.ownedNow);
-    return {
-      keywords: summons.map((summon) => summonKeyword(summon, def.name)),
-      actions: open
-        ? Object.fromEntries(summons.map((summon) => [
-          summonKeywordId(summon),
-          () => openSummonInfoPopup(this.scene, this.popups, this.keywords, ownerStats, summon),
-        ]))
-        : undefined,
-    };
+  private summonKeywordTags(): readonly KeywordDef[] {
+    const summons = this.currentDef?.summons ?? [];
+    // 미보유 도감은 성장·스킬과 같은 정책으로 귀속 소환수도 감춘다.
+    if (!this.capabilities.showSummons || !this.ownedNow) return [];
+    return summons.map(({ def, growthStat }) => ({
+      id: `summon-${def.id}`,
+      term: def.name,
+      kind: "규칙" as const,
+      description: `${this.currentDef?.name ?? "지휘자"}에게 귀속된 근거리 소환수다.`
+        + ` ${growthStat === "atk" ? "공격력" : "주문력"}이 이 개체의 모든 능력치를 정하며 스스로 표적을 고르고 제 궁극기를 쓴다.`
+        + ` 일반 공격은 「${def.basic.name}」, 궁극기는 「${def.ultimate.name}」이다.`,
+    }));
   }
 
   /** 도감은 보유 여부를 전달해 정적 기록과 성장 정보의 잠금을 한곳에서 적용한다. */

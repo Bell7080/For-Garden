@@ -226,7 +226,7 @@ describe("토리카 skin001 에셋 앵커 메타데이터", () => {
     expect(TORIKA_SKIN_001_PORTRAIT_METADATA).toMatchObject({
       imageWidth: 1024, imageHeight: 1536,
       content: { left: 178, top: 23, right: 972, bottom: 1491 },
-      cardZoom: 0.792, lobbyZoom: 0.715, portraitOffsetY: -278,
+      cardZoom: 0.792, lobbyZoom: 0.834, portraitOffsetY: -278,
     });
     expect(TORIKA_SKIN_001_SD_METADATA).toMatchObject({
       imageWidth: 1254, imageHeight: 1254,

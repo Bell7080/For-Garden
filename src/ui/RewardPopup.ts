@@ -1,12 +1,13 @@
 import Phaser from "phaser";
 import { formatCurrency } from "../core/formatCurrency";
 import { setDebugRewardPopup } from "../debug";
-import { chipPoints, drawHairline, drawInnerVignette, drawLayer, drawShapeOutline } from "./holo";
+import { drawHairline } from "./holo";
 import type { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { drawGlyph } from "./glyphs";
 import type { RewardPopupItem } from "./rewardPopupModel";
+import { addFramedIcon } from "./itemFrame";
 
 // 기존 호출부는 UI 진입점 하나만 알면 되도록 순수 표시 변환도 함께 다시 내보낸다.
 export { currencyRecordToRewardItems, productGrantsToRewardItems, type RewardPopupItem } from "./rewardPopupModel";
@@ -19,6 +20,14 @@ export interface RewardPopupOptions {
   /** 뒤 화면을 누르는 암전 강도. 기본은 원래 화면의 맥락이 남는 은은한 검정이다. */
   dimAlpha?: number;
   items: readonly RewardPopupItem[];
+  /**
+   * 판 **밖 아래**에 서는 한 줄.
+   *
+   * 재화가 아니라 **이번 결과로 얼마나 올랐는가**를 말하는 자리다(원정 노드의 점수 증가분).
+   * 액자로 세우면 지갑에 들어온 재화처럼 읽히고, 판 안에 넣으면 좁은 영수증이 더 좁아진다.
+   * 판이 낮아 아래에 빈 자리가 남으므로 거기에 글자만 세운다.
+   */
+  footnote?: string;
   onConfirm?: () => void;
 }
 
@@ -69,24 +78,16 @@ export function openRewardPopup(scene: Phaser.Scene, popups: PopupLayer, options
     const startX = -((items.length - 1) * REWARD_POPUP.gap) / 2;
     items.forEach((item, index) => {
       const x = startX + index * REWARD_POPUP.gap;
-      // 그림 한 장을 담는 칸만 사방 액자를 허용하는 기존 홀로그램 예외 규칙을 그대로 따른다.
-      const frame = chipPoints(REWARD_POPUP.frame, REWARD_POPUP.frame, {
-        bevel: { topLeft: 34, topRight: 0, bottomRight: 34, bottomLeft: 0 },
+      // 액자·그림·그늘·수량은 어디서나 같은 공용 프리팹 한 장이 그린다. 증가량인 것은 창 제목이
+      // 이미 말하므로 `+`를 붙이지 않는다.
+      const holder = addFramedIcon(scene, strip, x, REWARD_POPUP.frameY, REWARD_POPUP.frame, typeof item.icon === "string" ? item.icon : "", {
+        amount: formatCurrency(item.amount),
       });
-      strip.add(drawLayer(scene, x, REWARD_POPUP.frameY, frame, { fill: 0x101722, alpha: 0.98 }));
       // 계정 장식처럼 전용 텍스처가 없는 결과만 기존 홀로그램 글리프 체계로 대신한다.
-      if (typeof item.icon === "string") strip.add(scene.add.image(x, REWARD_POPUP.frameY, item.icon).setDisplaySize(120, 120));
-      else strip.add(drawGlyph(scene, item.icon.key, x, REWARD_POPUP.frameY, 100, COLOR.accent));
-      // 비네트가 아이콘 가장자리와 숫자 뒤를 눌러 작은 액자에서도 둘을 동시에 식별하게 한다.
-      strip.add(drawInnerVignette(scene, x, REWARD_POPUP.frameY, frame, { strength: 0.62 }));
-      strip.add(drawShapeOutline(scene, x, REWARD_POPUP.frameY, frame, { color: COLOR.accent, alpha: 0.82, width: 3 }));
-      // 증가량인 것은 창 제목이 이미 말하므로 +를 붙이지 않고, 검은 테두리로 액자 선과 떼어 놓는다.
-      const amount = scene.add.text(x + REWARD_POPUP.frame / 2 - 11, REWARD_POPUP.frameY + REWARD_POPUP.frame / 2 - 9, formatCurrency(item.amount), textStyle({ role: "display", size: 30, color: COLOR.accentText })).setOrigin(1, 1);
-      amount.setStroke("#000000", 6);
-      amount.setShadow(2, 3, "#000000", 2, false, true);
-      strip.add(amount);
+      if (typeof item.icon !== "string") holder.addAt(drawGlyph(scene, item.icon.key, 0, 0, REWARD_POPUP.frame * 0.56, COLOR.accent), 1);
       if (item.label) strip.add(scene.add.text(x, 91, item.label, textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0.5));
     });
+
     body.add(strip);
 
     // 내용만 잘라 액자들이 닫기 버튼이나 안전 여백을 침범하지 않게 한다.
@@ -95,6 +96,11 @@ export function openRewardPopup(scene: Phaser.Scene, popups: PopupLayer, options
     strip.setMask(maskShape.createGeometryMask());
 
     body.add(drawHairline(scene, 0, 108, 700, { color: COLOR.accent, alpha: 0.3 }));
+    if (options.footnote) {
+      body.add(scene.add.text(0, REWARD_POPUP.height / 2 + 54, options.footnote, textStyle({ role: "display", size: 38, color: COLOR.sortieText }))
+        .setOrigin(0.5)
+        .setShadow(0, 4, "#000000", 6, false, true));
+    }
     // 팝업 판이 아니라 화면 밑동에 반투명한 굵은 글자로 남겨, 누를 수 있는 곳이 화면 전체임을 알린다.
     hint = scene.add
       .text(scene.scale.width / 2, scene.scale.height - 130, overflow > 0 ? "좌우로 밀어 확인 · 화면을 눌러 확인" : "화면을 눌러 확인", textStyle({ role: "emphasis", size: 30, color: COLOR.ink }))

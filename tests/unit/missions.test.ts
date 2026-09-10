@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyMissionEvent, claimResearchStages, MISSIONS, missionPeriodKeys, normalizeMissions, type MissionState } from "../../src/core/missions";
+import { addResearchPoints, applyMissionEvent, researchPointsForClaim, claimResearchStages, MISSIONS, missionPeriodKeys, normalizeMissions, type MissionState } from "../../src/core/missions";
 
 /** 기간 경계 테스트가 공유하는 직렬화 가능한 진행 스냅샷이다. */
 const progressed = (): MissionState => ({
@@ -44,13 +44,17 @@ describe("mission rules", () => {
     expect(next.progress).toMatchObject({ "daily-excavate": 1, "weekly-excavate": 3 });
   });
 
-  it("임계값에 정확히 도달한 완료 전이에서만 연구도를 한 번 확정한다", () => {
+  it("완료만으로는 연구도가 오르지 않고, 수령이 한 번만 올린다", () => {
+    // 완료하는 순간 게이지가 저 혼자 차오르면 보상을 받는 손에는 아무 일도 일어나지 않아
+    // 두 값이 따로 논다. 연구도는 **수령**이 올리고, 같은 임무는 한 번만 수령할 수 있다.
     const now = new Date("2026-08-20T12:00:00Z");
     let state: MissionState = { dailyKey: "2026-08-20", weeklyKey: "2026-08-17", progress: {}, claimedIds: [], researchPoints: { daily: 0, weekly: 0 }, claimedResearchStageIds: [] };
     state = applyMissionEvent(state, { type: "battle_completed", victory: true }, now);
-    expect(state.researchPoints).toEqual({ daily: 20, weekly: 0 });
-    state = applyMissionEvent(state, { type: "battle_completed", victory: true }, now);
-    expect(state.researchPoints.daily).toBe(20);
+    expect(state.researchPoints).toEqual({ daily: 0, weekly: 0 });
+    expect(researchPointsForClaim(["daily-battle"])).toEqual({ daily: 20, weekly: 0 });
+    // 같은 ID를 여러 번 보내도 한 번만 센다 — 일괄 수령이 같은 임무를 중복으로 담아도 안전하다.
+    expect(researchPointsForClaim(["daily-battle", "daily-battle"])).toEqual({ daily: 20, weekly: 0 });
+    expect(addResearchPoints(state, researchPointsForClaim(["daily-battle"])).researchPoints).toEqual({ daily: 20, weekly: 0 });
   });
 
   it("여러 임무가 동시에 완료되면 통과한 여러 연구도 단계를 한 번씩 수령한다", () => {

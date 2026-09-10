@@ -5,7 +5,7 @@ import { AD_REWARD_SLOTS, findAdRewardSlot, type AdReward } from "../data/adRewa
 import { consumeRestorationEntry, normalizeDailyContent } from "../core/dailyContent";
 import { BREAKTHROUGH_CAP, canBreakThrough, canFeedRelic, feedRelic as calculateFeed, FEED_UNIT, nextBreakthrough, relicLevelCap, RELIC_STAR_CAP, relicStars } from "../core/relicProgression";
 import { BOND_XP_REWARD, grantBondXp, grantDailyLobbyBondXp } from "../core/bond";
-import { MAX_RESEARCH_POINTS, MISSIONS, RESEARCH_REWARD_STAGES, applyMissionEvent, claimResearchStages, claimableMissionIds, normalizeMissions, researchStageClaimId, type MissionPeriod } from "../core/missions";
+import { MAX_RESEARCH_POINTS, MISSIONS, RESEARCH_REWARD_STAGES, addResearchPoints, applyMissionEvent, claimResearchStages, claimableMissionIds, normalizeMissions, researchPointsForClaim, researchStageClaimId, type MissionPeriod } from "../core/missions";
 import { DAILY_RESTORATION, getStage } from "../data/stages";
 import { CONTENT_STAMINA_COSTS } from "../data/contentCosts";
 import { createInitialRelicProgress, session, type Session } from "../state/session";
@@ -896,7 +896,10 @@ export class FakeServer implements GameApi {
       if ((normalized.progress[id] ?? 0) < mission.target) throw new GameApiError("MISSION_NOT_COMPLETE", "완료하지 않은 임무입니다.");
     }
     const missionCheesecake = uniqueIds.reduce((sum, id) => sum + (MISSIONS.find((mission) => mission.id === id)?.rewardCheesecake ?? 0), 0);
-    let nextMissions = { ...normalized, claimedIds: [...normalized.claimedIds, ...uniqueIds] };
+    // **연구도는 수령이 올린다.** 완료하는 순간 저 혼자 차오르면 보상을 받는 손에는 아무 일도
+    // 일어나지 않아 두 값이 따로 논다. 그래서 이 자리에서 먼저 더한 뒤, 그 오른 값으로 단계
+    // 보상을 판정한다 — 일괄 수령이 게이지를 채우고 그 단계 보상까지 한 번에 주게 하려는 것이다.
+    let nextMissions = addResearchPoints({ ...normalized, claimedIds: [...normalized.claimedIds, ...uniqueIds] }, researchPointsForClaim(uniqueIds));
     const periods = researchPeriod ? [researchPeriod] : [...new Set(uniqueIds.map((id) => MISSIONS.find((mission) => mission.id === id)?.period).filter((period): period is MissionPeriod => period !== undefined))];
     const claimedResearchStageIds: string[] = [];
     let researchCheesecake = 0;

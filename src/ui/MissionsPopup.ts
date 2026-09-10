@@ -19,6 +19,8 @@ export class MissionsPopup {
   private period: "daily" | "weekly" = "daily";
   private missions: MissionDto[] = [];
   private research?: MissionListResponse["research"];
+  /** 수령 직전의 연구도. 다음 한 번의 렌더만 이 값에서 굴려 올린다. */
+  private rollFrom?: number;
   private body?: Phaser.GameObjects.Container;
   private list?: Phaser.GameObjects.Container;
   private status?: Phaser.GameObjects.Text;
@@ -76,7 +78,15 @@ export class MissionsPopup {
       // 기존 미수령 숫자 자리에는 이 임무가 완료 순간 확정하는 연구도를 직접 보여 준다.
       const research = this.scene.add.text(150, y - 50, `연구도 +${mission.researchPoints}`, textStyle({ role: "emphasis", size: 22, color: COLOR.accentText })).setOrigin(0, 0);
       const reward = new RewardFrame(this.scene, 365, y, { icon: "currency-cheesecake", amount: mission.rewardCheesecake, size: 116, state: mission.state, onClick: mission.claimable ? () => void this.claimOne(mission.id) : undefined });
-      const state = this.scene.add.text(275, y + 60, mission.claimed ? "수령 완료" : mission.claimable ? "수령 가능" : "진행 중", textStyle({ role: "body", size: 19, color: mission.claimable ? "#ffbf66" : COLOR.inkDim })).setOrigin(0.5, 0);
+      // **아직 못 받는 보상은 반투명하다.** 받을 수 있는 것과 같은 진하기로 서 있으면 "지금
+      // 누를 수 있는가"를 액자가 아니라 글자로 세어야 한다. 수령한 뒤의 눌린 어둠은
+      // `RewardFrame`의 `claimed` 상태가 이미 맡는다.
+      if (!mission.claimable && !mission.claimed) reward.setAlpha(0.45);
+      // 달성한 순간 한 번 반짝인다 — 목록을 보고 있는 사이에 열린 것을 눈이 놓치지 않게 한다.
+      if (mission.claimable) this.scene.tweens.add({ targets: reward, alpha: { from: 0.55, to: 1 }, duration: 260, ease: "Cubic.Out" });
+      // 상태 글자는 액자와 **같은 줄**에 선다. 액자 밑변보다 아래에 두면 카드 바닥에 붙어
+      // 어느 액자의 이야기인지 흐려진다.
+      const state = this.scene.add.text(258, y, mission.claimed ? "수령 완료" : mission.claimable ? "수령 가능" : "진행 중", textStyle({ role: "emphasis", size: 23, color: mission.claimable ? "#ffbf66" : COLOR.inkDim })).setOrigin(1, 0.5);
       this.list?.add([progress, research, reward, state]);
       if (mission.claimable) { const hit = this.scene.add.rectangle(0, y, list.cardWidth, list.cardHeight, 0xffffff, 0).setInteractive({ useHandCursor: true }); hit.on("pointerup", () => void this.claimOne(mission.id)); this.list?.add(hit); this.list?.bringToTop(reward); }
     });
@@ -90,8 +100,23 @@ export class MissionsPopup {
     // 팝업 안전 너비를 먼저 정해 게이지·양끝 액자·라벨이 모두 같은 왼쪽 기준선을 공유하게 한다.
     const track = researchTrackLayout(popupWidth, research.stages.map((stage) => stage.threshold));
     // 미달성 홈은 검정을 더 진하게 하고, 달성/미달성 전체 외곽은 흰 선으로 같은 최대 범위를 보여 준다.
-    const bar = new HoloBar(this.scene, track.barX, layout.barY, track.barWidth, layout.barHeight, { color: COLOR.missionClaim, trackAlpha: 0.82, outline: true }).addTo(this.list); bar.setValue(research.points / Math.max(1, research.maxPoints)); this.bars.push(bar);
-    this.list.add(this.scene.add.text(track.labelX, layout.barY + layout.labelOffsetY, `연구도 ${research.points}/${research.maxPoints}`, textStyle({ role: "emphasis", size: 23, color: COLOR.ink })).setOrigin(0, 0.5));
+    const bar = new HoloBar(this.scene, track.barX, layout.barY, track.barWidth, layout.barHeight, { color: COLOR.missionClaim, trackAlpha: 0.82, outline: true }).addTo(this.list); this.bars.push(bar);
+    const label = this.scene.add.text(track.labelX, layout.barY + layout.labelOffsetY, "", textStyle({ role: "emphasis", size: 23, color: COLOR.ink })).setOrigin(0, 0.5);
+    this.list.add(label);
+    // **연구도는 수령하는 손을 따라 스르륵 오른다.** 값이 순간이동하면 무엇 때문에 올랐는지
+    // 보이지 않는다. 수령 직전 값을 기억해 두었다가 거기서부터 굴린다(`rollFrom`).
+    const to = research.points;
+    const from = Math.min(this.rollFrom ?? to, to);
+    this.rollFrom = undefined;
+    const paint = (value: number): void => {
+      bar.setValue(value / Math.max(1, research.maxPoints));
+      label.setText(`연구도 ${Math.round(value)}/${research.maxPoints}`);
+    };
+    paint(from);
+    if (from < to) {
+      const roll = { value: from };
+      this.scene.tweens.add({ targets: roll, value: to, duration: 620, ease: "Cubic.Out", onUpdate: () => paint(roll.value), onComplete: () => paint(to) });
+    }
     research.stages.forEach((stage, index) => {
       const stageX = track.stageXs[index];
       // 게이지 자체의 기울기와 같은 / 눈금을 써 임계값이 수직 구분선이 아니라 그래프 마디로 읽힌다.
@@ -110,6 +135,9 @@ export class MissionsPopup {
 
   /** 응답 스냅샷으로 목록·알림·지갑을 함께 갱신한 뒤 서버가 확정한 지급분만 영수증에 싣는다. */
   private async applyClaim(result: ClaimMissionRewardsResponse): Promise<void> {
+    // 굴릴 시작점은 **수령 직전**의 값이다. 응답을 반영한 뒤에 읽으면 이미 오른 값이라 굴러갈
+    // 거리가 없다.
+    this.rollFrom = this.research?.[this.period]?.points;
     this.missions = result.missions; session.wallet = { ...result.wallet }; this.onWalletChanged?.();
     // 서버 응답의 단계 상태까지 다시 조회해 그래프와 알림 점이 같은 틱에 갱신되게 한다.
     const latest = await this.api.getMissions(); this.missions = latest.missions; this.research = latest.research;

@@ -28,7 +28,9 @@ import { PopupLayer } from "./PopupLayer";
 import { calculateObservationJournalFlow, OBSERVATION_JOURNAL_SIZE, withoutRepeatedProfileDetails } from "./observationJournalLayout";
 import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
-import { addStarMark } from "./rarityMark";
+import { addStarMark, STAR_ROMAN } from "./rarityMark";
+import { addFramedIcon } from "./itemFrame";
+import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { session } from "../state/session";
 import { addColorAssistMark, COLOR_ASSIST_LAYOUT } from "./colorAssist";
 import { addMarkChip } from "./MarkChip";
@@ -251,6 +253,15 @@ const BOND_STORY_STEPS: readonly { level: number; title: string }[] = [
 
 /** 돌파 버튼과 팝업이 함께 쓰는 색. 레벨(초록)과 갈라 놓아 다른 종류의 성장임을 알린다. */
 const BREAK_EDGE = 0xa88cf0;
+
+/**
+ * 한계 돌파 쪽지의 자리표.
+ *
+ * **올라가는 것은 별 개수가 아니라 등급이다.** 카드 오른쪽 위에 박히는 로마자 표식을 그대로
+ * 크게 세우고, 드는 재료는 가방·상점과 같은 액자로 둔다 — 여기서 사람이 정하는 것은 "지금
+ * 올릴 수 있나"이고, 그 답은 등급 두 글자와 액자 둘의 수가 전부 말한다.
+ */
+const BREAK_LAYOUT = { gradeY: -196, gradeSize: 96, capY: -96, unlockY: -44, costY: 66, costFrame: 124, costStep: 260, actionY: 226 } as const;
 
 /** 이만큼 누르고 있으면 한 번에 급여 팝업이 열린다(ms). */
 const FEED_HOLD_MS = 420;
@@ -830,48 +841,69 @@ export class InfoManager {
     if (!def) return;
     const progress = relicProgression.getProgress(def.id);
     const step = nextBreakthrough(progress.breakthrough);
-    this.popups.open({ width: 720, height: 460, title: "한계 돌파", tilt: -1.2, ...anchorOf(from) }, (body, close) => {
+    this.popups.open({ width: 780, height: 660, title: "한계 돌파", tilt: -1.2, ...anchorOf(from) }, (body, close) => {
       if (!step) {
-        body.add(this.scene.add.text(0, 20, "이미 별 다섯이다. 중복은 DNA 조각으로 쌓인다.", textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0.5).setWordWrapWidth(600));
+        body.add(this.scene.add.text(0, 20, "이미 " + STAR_ROMAN[STAR_ROMAN.length - 1] + " 등급이다. 중복은 DNA 조각으로 쌓인다.", textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0.5).setWordWrapWidth(640));
         return;
       }
       const cap = relicLevelCap(progress.breakthrough);
-      body.add(
-        this.scene.add
-          .text(0, -150, "별 " + relicStars(progress.breakthrough) + "  →  " + (relicStars(progress.breakthrough) + 1), textStyle({ role: "display", size: 34, color: COLOR.accentText }))
-          .setOrigin(0.5),
-      );
-      body.add(
-        this.scene.add
-          .text(0, -104, "레벨 상한 " + cap + "  →  " + step.levelCap + "   ·   " + step.label, textStyle({ role: "body", size: 23, color: COLOR.inkDim }))
-          .setOrigin(0.5),
-      );
-      const rows: [string, number, number][] = [
-        [def.name + " 파편", step.fragments, relicProgression.getFragments(def.id)],
-        ["치즈케이크", step.cheesecake, session.wallet.cheesecake],
+      // **올라가는 것은 별 개수가 아니라 등급이다.** 카드 오른쪽 위에 박히는 로마자와 같은
+      // 표식을 그대로 크게 세우고, 그 사이에 화살표만 둔다 — "1 → 2"라고 적으면 화면 어디에도
+      // 없는 숫자를 새로 배우게 된다.
+      addStarMark(this.scene, body, -140, BREAK_LAYOUT.gradeY, BREAK_LAYOUT.gradeSize, relicStars(progress.breakthrough));
+      body.add(this.scene.add.text(0, BREAK_LAYOUT.gradeY, "▶", textStyle({ role: "display", size: 34, color: COLOR.inkDim })).setOrigin(0.5));
+      addStarMark(this.scene, body, 140, BREAK_LAYOUT.gradeY, BREAK_LAYOUT.gradeSize, relicStars(progress.breakthrough) + 1);
+
+      // 상한은 이 조작이 실제로 바꾸는 값이라 등급 바로 아래에 같은 무게로 선다.
+      const capLine = this.scene.add.container(0, BREAK_LAYOUT.capY);
+      const capLabel = this.scene.add.text(0, 0, "레벨 상한", textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(1, 0.5);
+      const capFrom = this.scene.add.text(0, 0, String(cap), textStyle({ role: "display", size: 36, color: COLOR.inkDim })).setOrigin(0.5);
+      const capArrow = this.scene.add.text(0, 0, "▶", textStyle({ role: "display", size: 22, color: COLOR.inkDim })).setOrigin(0.5);
+      const capTo = this.scene.add.text(0, 0, String(step.levelCap), textStyle({ role: "display", size: 44, color: COLOR.accentText })).setOrigin(0.5);
+      const gap = 18;
+      const width = capLabel.width + gap + capFrom.width + gap + capArrow.width + gap + capTo.width;
+      let cursor = -width / 2;
+      capLabel.setX(cursor + capLabel.width); cursor += capLabel.width + gap;
+      capFrom.setX(cursor + capFrom.width / 2); cursor += capFrom.width + gap;
+      capArrow.setX(cursor + capArrow.width / 2); cursor += capArrow.width + gap;
+      capTo.setX(cursor + capTo.width / 2);
+      capLine.add([capLabel, capFrom, capArrow, capTo]);
+      body.add(capLine);
+      body.add(this.scene.add.text(0, BREAK_LAYOUT.unlockY, step.label, textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0.5).setWordWrapWidth(660));
+
+      // **드는 것은 액자로 세운다.** 재화가 서는 자리는 어디서나 같은 양식이라, 파편이 몇 개
+      // 남았는지도 가방·상점과 같은 얼굴로 읽힌다. 가진 수는 액자 우하단, 드는 수는 그 아래다.
+      const held = relicProgression.getFragments(def.id);
+      const costs: { texture: string; label: string; need: number; have: number }[] = [
+        { texture: CURRENCY_ICON_BY_WALLET.fossil, label: def.name + " 파편", need: step.fragments, have: held },
+        { texture: CURRENCY_ICON_BY_WALLET.cheesecake, label: "치즈케이크", need: step.cheesecake, have: session.wallet.cheesecake },
       ];
-      rows.forEach(([label, need, have], index) => {
-        const y = -40 + index * 60;
-        const enough = have >= need;
-        body.add(this.scene.add.text(-280, y, label, textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0, 0.5));
-        body.add(
-          this.scene.add
-            .text(280, y, have.toLocaleString() + " / " + need.toLocaleString(), textStyle({ role: "display", size: 28, color: enough ? COLOR.ink : COLOR.dangerText }))
-            .setOrigin(1, 0.5),
-        );
+      costs.forEach((cost, index) => {
+        const x = (index - (costs.length - 1) / 2) * BREAK_LAYOUT.costStep;
+        const enough = cost.have >= cost.need;
+        addFramedIcon(this.scene, body, x, BREAK_LAYOUT.costY, BREAK_LAYOUT.costFrame, cost.texture, {
+          amount: formatCurrency(cost.have),
+          amountColor: enough ? undefined : COLOR.dangerText,
+          color: enough ? COLOR.accent : COLOR.danger,
+        });
+        body.add(this.scene.add.text(x, BREAK_LAYOUT.costY + BREAK_LAYOUT.costFrame / 2 + 26, cost.label, textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0.5));
+        body.add(this.scene.add
+          .text(x, BREAK_LAYOUT.costY + BREAK_LAYOUT.costFrame / 2 + 58, "필요 " + formatCurrency(cost.need), textStyle({ role: "emphasis", size: 24, color: enough ? COLOR.ink : COLOR.dangerText }))
+          .setOrigin(0.5));
       });
-      const ready = canBreakThrough(progress, relicProgression.getFragments(def.id), session.wallet.cheesecake);
+
+      const ready = canBreakThrough(progress, held, session.wallet.cheesecake);
       const reason = progress.level < cap ? "레벨을 " + cap + "까지 올려야 한다." : ready ? "" : "재료가 부족하다.";
-      body.add(drawLayer(this.scene, 0, 130, slantedRect(360, 76, 14), {
+      body.add(drawLayer(this.scene, 0, BREAK_LAYOUT.actionY, slantedRect(420, 88, 16), {
         fill: ready ? 0x2d2440 : 0x161a20,
         alpha: ready ? 0.98 : 0.7,
         edge: BREAK_EDGE,
         edgeAlpha: ready ? 1 : 0.25,
       }));
-      body.add(this.scene.add.text(0, 130, "돌파하기", textStyle({ role: "display", size: 30, color: ready ? COLOR.ink : COLOR.inkDim })).setOrigin(0.5));
-      if (reason) body.add(this.scene.add.text(0, 186, reason, textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0.5));
+      body.add(this.scene.add.text(0, BREAK_LAYOUT.actionY, "돌파하기", textStyle({ role: "display", size: 34, color: ready ? COLOR.ink : COLOR.inkDim })).setOrigin(0.5));
+      if (reason) body.add(this.scene.add.text(0, BREAK_LAYOUT.actionY + 68, reason, textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0.5));
       if (!ready) return;
-      const hit = this.scene.add.rectangle(0, 130, 360, 76, 0xffffff, 0).setInteractive({ useHandCursor: true });
+      const hit = this.scene.add.rectangle(0, BREAK_LAYOUT.actionY, 420, 88, 0xffffff, 0).setInteractive({ useHandCursor: true });
       hit.on("pointerup", () => {
         close();
         void this.breakThrough();

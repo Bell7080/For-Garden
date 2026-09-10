@@ -4,6 +4,7 @@ import { SettingsManager } from "../../src/managers/SettingsManager";
 import { createDefaultSession } from "../../src/state/session";
 import type { PlatformFeedback, ScheduledNotification } from "../../src/api/PlatformFeedback";
 import { adjustForQuietHours, nextUtcDay } from "../../src/core/notificationSchedule";
+import { hasMergedBattleHit, hasRareExcavationResult, isPlayerUltimateReadyTransition, RARE_EXCAVATION_GRADES } from "../../src/core/hapticPolicy";
 
 /** 브라우저 API 없이 권한·예약·취소 호출을 관찰하는 테스트 전용 어댑터다. */
 function fakePlatform(permission: "default" | "granted" | "denied" | "unsupported" = "granted") {
@@ -69,6 +70,34 @@ describe("settings", () => {
     const state = createDefaultSession(); const platform = fakePlatform(); const manager = new SettingsManager(state, { save: vi.fn() }, platform);
     manager.update({ vibration: { enabled: false } }); expect(manager.haptic("battleHit")).toBe(false); expect(platform.haptic).not.toHaveBeenCalled();
     manager.update({ vibration: { enabled: true, combatHit: false } }); expect(manager.haptic("battleHit")).toBe(false); expect(platform.haptic).not.toHaveBeenCalled();
+    // 게이트가 열린 뒤에도 브라우저 어댑터의 미지원 false를 성공으로 가장하지 않고 보존한다.
+    platform.haptic.mockReturnValue(false); manager.update({ vibration: { combatHit: true } }); expect(manager.haptic("battleHit")).toBe(false);
+  });
+
+  it("다단 히트와 광역 피해를 사건 묶음당 한 번의 타격 요청으로 병합한다", () => {
+    // 후속 타격 수가 아니라 묶음의 양수 피해 존재만 반환해 호출자가 한 번만 진동하게 한다.
+    const hits = [
+      { kind: "attack", attackerId: "a", targetId: "b", skill: "basic", amount: 10, contributionAmount: 10, critical: false, damageType: "physical" },
+      { kind: "attack", attackerId: "a", targetId: "c", skill: "basic", amount: 8, contributionAmount: 8, critical: false, damageType: "physical", followUp: true },
+    ] as const;
+    expect(hasMergedBattleHit(hits)).toBe(true);
+    expect(hasMergedBattleHit([{ ...hits[0], amount: 0 }])).toBe(false);
+  });
+
+  it("궁극기 준비는 플레이어의 false에서 true 전환 순간에만 인정한다", () => {
+    // 준비 상태 유지, 소진 전환, 적 카드에는 같은 햅틱이 반복되거나 노출되지 않는다.
+    expect(isPlayerUltimateReadyTransition(false, true, "player")).toBe(true);
+    expect(isPlayerUltimateReadyTransition(true, true, "player")).toBe(false);
+    expect(isPlayerUltimateReadyTransition(true, false, "player")).toBe(false);
+    expect(isPlayerUltimateReadyTransition(false, true, "enemy")).toBe(false);
+  });
+
+  it("희귀 연구 결과 기준을 SR 이상으로 고정한다", () => {
+    // 정적 기준을 함께 검증해 화면 코드가 등급 순서를 임의로 다시 만들지 못하게 한다.
+    expect(RARE_EXCAVATION_GRADES).toEqual(["SR", "SSR"]);
+    expect(hasRareExcavationResult(["GRAY", "R"])).toBe(false);
+    expect(hasRareExcavationResult(["R", "SR"])).toBe(true);
+    expect(hasRareExcavationResult(["SSR"])).toBe(true);
   });
 
   it("토글만으로 권한을 묻지 않고 명시적 확인에서 거부를 처리한다", async () => {

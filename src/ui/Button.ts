@@ -3,6 +3,7 @@ import { drawGlyph, type GlyphName } from "./glyphs";
 import type { CurrencyIconKey } from "./currencyIcons";
 import { chipPoints, drawLayer, HOLO, perspectiveRect, slantedRect } from "./holo";
 import { COLOR, textStyle } from "./theme";
+import { settingsManager } from "../managers/SettingsManager";
 
 /** 버튼 탭과 스크롤 드래그를 구분하는 공용 게임 좌표 거리다. */
 export const BUTTON_DRAG_CANCEL_DISTANCE = 24;
@@ -206,7 +207,11 @@ export class Button extends Phaser.GameObjects.Container {
       const shouldClick = this.enabledState && !this.pressDragged;
       this.pressedPointerId = undefined;
       this.setScale(1);
-      if (shouldClick) opts.onClick();
+      if (shouldClick) {
+        // 활성 상태에서 드래그 없이 탭이 확정된 공용 입력 경계에서만 한 번 울린다.
+        settingsManager.haptic("uiTap");
+        opts.onClick();
+      }
     };
     const cancelPress = (): void => {
       this.pressedPointerId = undefined;

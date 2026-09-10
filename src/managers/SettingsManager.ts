@@ -35,7 +35,11 @@ export class SettingsManager extends EventTarget {
     return this.get();
   }
 
-  /** 개별/전체 설정이 모두 켜진 경우에만 의미 기반 햅틱을 플랫폼으로 전달한다. */
+  /**
+   * 개별/전체 설정이 모두 켜진 경우에만 의미 기반 햅틱을 플랫폼으로 전달한다.
+   * 이 메서드는 런타임의 유일한 진동 게이트다. 씬과 UI는 `PlatformFeedback.haptic`을 직접
+   * 호출하지 않아야 하며, 미지원 플랫폼의 false 반환도 성공으로 바꾸지 않고 그대로 돌려준다.
+   */
   haptic(pattern: HapticPattern): boolean {
     const v = this.get().vibration;
     const allowed = v.enabled && ({ uiTap: v.uiInput, battleHit: v.combatHit, ultimateReady: v.ultimate, rareExcavation: v.excavationResult })[pattern];

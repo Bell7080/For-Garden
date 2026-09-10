@@ -31,6 +31,7 @@ import { MileagePopup } from "../ui/MileagePopup";
 import { settingsManager } from "../managers/SettingsManager";
 import { colorAssistPolicy, excavationStageDuration } from "../core/settings";
 import { flashPolicy } from "../ui/signatureEffects";
+import { hasRareExcavationResult } from "../core/hapticPolicy";
 
 /** 마일리지 상점 버튼의 황금빛. 다른 버튼과 갈라 놓아 "쌓아 두었다 쓰는 곳"임을 알린다. */
 const MILEAGE_EDGE = 0xf2c744;
@@ -302,6 +303,8 @@ export class LabScene extends Phaser.Scene {
     const preferences = settingsManager.get();
     const request = this.presentation.begin();
     const rarity = highestRarity(results.map((result) => result.type === "relic" ? getRelic(result.relicId).rarity : result.grade));
+    // API가 확정한 전체 결과를 순수 희귀도 정책에 넣고, 10연이어도 결과 묶음당 한 번만 울린다.
+    if (hasRareExcavationResult([rarity])) settingsManager.haptic("rareExcavation");
     const meetings = firstMeetingRelicIds(results);
     this.presentationLayer?.destroy(true);
     const layer = this.add.container(0, 0).setDepth(900);

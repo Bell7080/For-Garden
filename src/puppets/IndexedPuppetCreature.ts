@@ -132,6 +132,8 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
   private readonly uvs: Float32Array;
   private positions: Float32Array;
   private buffers?: CreatureGpuBuffers;
+  /** 직전 갱신 때의 TimeStep 벽시계. 프레임 제한이 켜져도 실제 경과 시간을 잴 수 있게 한다. */
+  private lastLoopTime = -1;
 
   private constructor(scene: Phaser.Scene, puppet: Puppet, textureKey: string) {
     super(scene, 0, 0, textureKey);
@@ -170,8 +172,12 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
     // 이미 순회 목록에 담긴 콜백은 release()로 구독을 해제한 뒤 한 번 더 호출될 수 있으므로,
     // Phaser가 scene 참조를 비운 파괴 완료 개체는 game loop를 읽기 전에 즉시 건너뛴다.
     if (!this.active || !this.scene) return;
-    // 평탄화된 delta는 fps.min보다 느린 프레임의 시간을 잘라 버려 애니메이션을 느리게 만든다.
-    const elapsed = puppetElapsedMs(this.scene.game.loop.rawDelta, delta);
+    // 어느 값이 실제 경과 시간인지는 프레임 제한 여부에 따라 달라진다(runtimeStep.ts 참고).
+    // TimeStep.time은 rawDelta를 계속 더한 벽시계라 두 경우 모두에서 갱신 간격을 바로 준다.
+    const loop = this.scene.game.loop;
+    const loopElapsed = this.lastLoopTime >= 0 ? loop.time - this.lastLoopTime : undefined;
+    this.lastLoopTime = loop.time;
+    const elapsed = puppetElapsedMs(loop.rawDelta, delta, loopElapsed);
     // 편집기보다 긴 프레임을 한 번에 적분하면 pinnedSoft 발 주변의 spring이 튀므로 잘게 나눈다.
     const next = advancePuppet(this.puppet, elapsed / 1000);
     if (next) this.positions = next;

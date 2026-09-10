@@ -36,7 +36,9 @@ const game = new Phaser.Game({
   fps: {
     // 브라우저가 잠깐 늦어진 뒤 여러 업데이트를 몰아서 실행하며 버벅이는 현상을 완화한다.
     target: 60,
-    // 런타임 선택은 이 제한 경계의 간격만 바꾼다.
+    // 여기에 값이 있어야 TimeStep이 시작 시 stepLimitFPS를 묶어, 설정의 30/60 전환이 런타임에
+    // 반영된다. 실제 경계값은 부트의 `applyFrameRateLimit`이 다시 잡는다 — 1000/limit를 그대로
+    // 쓰면 60Hz에서 프레임이 절반으로 깎이므로, 이유는 config/gameConfig.ts에 적어 두었다.
     limit: 60,
     min: 30,
     smoothStep: true,

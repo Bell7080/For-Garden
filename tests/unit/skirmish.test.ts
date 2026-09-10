@@ -207,6 +207,29 @@ describe("디안 늑대 지휘 전투", () => {
     expect(hits.map(({ targetId }) => targetId)).toEqual(["enemy-0", "enemy-1"]);
   });
 
+  it("은 근거리라 물기 전에 표적 옆으로 붙고 좌우 자리는 지휘 순서가 교대해도 그대로 둔다", () => {
+    const { state, dian } = readyDian(1);
+    const enemy = state.fighters[1];
+    const [kuro, shiro] = state.summons;
+    // 지휘 전에는 디안 곁에 서 있으므로 표적과 떨어져 있다.
+    expect(Math.hypot(kuro.x - enemy.x, kuro.y - enemy.y)).toBeGreaterThan(100);
+
+    const first = stepSkirmish(state, 0.01);
+    const moves = first.filter((event) => event.kind === "summonMove");
+    expect(moves.map((event) => event.kind === "summonMove" && event.summonId)).toEqual([kuro.id, shiro.id]);
+    // 같은 적을 둘이 물어도 좌우로 갈라 서고, 둘 다 표적에 닿는 거리 안에 든다.
+    expect([kuro.y, shiro.y]).toEqual([enemy.y, enemy.y]);
+    expect(kuro.x).toBeLessThan(enemy.x);
+    expect(shiro.x).toBeGreaterThan(enemy.x);
+    expect(Math.abs(kuro.x - enemy.x)).toBe(Math.abs(shiro.x - enemy.x));
+
+    // 다음 지휘는 선행 늑대가 바뀌지만 서는 쪽은 정의 순서를 그대로 지킨다.
+    const before = { kuro: kuro.x, shiro: shiro.x };
+    dian.attackCooldown = 0;
+    stepSkirmish(state, 0.01);
+    expect([kuro.x, shiro.x]).toEqual([before.kuro, before.shiro]);
+  });
+
   it("은 회수된 늑대를 본체로 대체하지 않고 생존한 늑대만 공격시킨다", () => {
     const { state, dian } = readyDian();
     damageSummonedUnit(state, "player-0:kuro", Number.MAX_SAFE_INTEGER);

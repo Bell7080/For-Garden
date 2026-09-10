@@ -33,6 +33,8 @@ export interface SkillInfoViewModel {
   valueLabel?: string;
   /** 표시 수치를 눌렀을 때 해당 스킬의 능력치 출처와 배율을 설명한다. */
   contextualKeywords?: readonly KeywordDef[];
+  /** 뜻풀이 대신 전용 창을 여는 용어. 쿠로·시로처럼 쪽지 한 장으로 다 말할 수 없는 태그가 쓴다. */
+  keywordActions?: Readonly<Record<string, () => void>>;
   /** 코어의 대상 선택 계약. 반경 같은 개발 단위는 표시하지 않는다. */
   targeting?: Ultimate["targeting"];
   /** 코어가 실제 적용하는 상태 효과와 지속 시간이다. */

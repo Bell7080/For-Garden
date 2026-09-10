@@ -28,10 +28,10 @@ function summonSkills(summon: Readonly<SummonDef>): readonly SkillInfoViewModel[
   const attack = (kindLabel: string, skill: SummonDef["skills"]["basic"]): SkillInfoViewModel => ({
     name: skill.name, kindLabel, iconAssetId: skill.iconAssetId, effectType: skill.effectType,
     valueLabel: `${skill.power}%`, targeting: skill.targeting,
-    description: `${summon.name}가 [[damage|피해]]를 주는 고유 행동이다. 디안의 지휘 아래에서만 사용한다.`,
+    description: `${summon.name}가 [[damage|피해]]를 주는 고유 행동이다. 디안의 지휘를 받아 표적에게 붙어서 문다.`,
   });
   return [
-    { name: "무리의 동료", kindLabel: "패시브", iconAssetId: "skill-icon-buff", effectType: "buff", description: `디안에게 귀속된 소환수다. 쓰러지면 ${summon.resummon.cooldownSeconds}초 뒤 최대 체력의 ${summon.resummon.hpPercent}%로 돌아온다.` },
+    { name: "무리의 동료", kindLabel: "패시브", iconAssetId: "skill-icon-buff", effectType: "buff", description: `디안에게 귀속된 근거리 소환수다. 자기 체력을 따로 갖고 전장에 체력 바가 함께 서며, 쓰러지면 ${summon.resummon.cooldownSeconds}초 뒤 최대 체력의 ${summon.resummon.hpPercent}%로 돌아온다.` },
     attack("일반 공격", summon.skills.basic),
     attack("궁극기", summon.skills.special),
   ];
@@ -78,8 +78,8 @@ export function openSummonInfoPopup(scene: Phaser.Scene, popups: PopupLayer, key
 
     // 홀로그램 발판은 닫힌 판이 아니라 타원 광륜과 윗선만 겹쳐 배경을 가리지 않는다.
     const stand = scene.add.graphics({ x: L.standX, y: L.standY });
-    stand.fillStyle(COLOR.accent, 0.1).fillEllipse(0, 0, 330, 92);
-    stand.lineStyle(HOLO.lineWidth + 1, COLOR.accent, 0.7).strokeEllipse(0, -8, 300, 64);
+    stand.fillStyle(COLOR.accent, 0.1).fillEllipse(0, 0, L.standWidth, L.standWidth * 0.28);
+    stand.lineStyle(HOLO.lineWidth + 1, COLOR.accent, 0.7).strokeEllipse(0, -8, L.standRingWidth, L.standRingHeight);
     body.add(stand);
     const asset = SUMMON_SD_ASSETS[summon.sdAssetKey];
     if (asset) void spawnPuppet(scene, asset, { x: L.standX, groundY: L.standY, height: L.puppetHeight }).then((puppet) => {

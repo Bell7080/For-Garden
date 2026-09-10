@@ -234,6 +234,13 @@ interface SummonView {
   summon: SummonedUnit;
   /** Puppet 메시와 별도로 움직이고 회수 때 함께 제거되는 입력 영역이다. */
   input: Phaser.GameObjects.Rectangle;
+  /**
+   * 늑대는 지휘자와 별개인 자기 체력을 갖는다.
+   *
+   * 그래서 머리 위 바도 따로 선다 — 디안의 프로필만 보면 앞에 나간 두 마리가 얼마나 버티는지
+   * 알 수 없고, 회수·재호출이 왜 일어났는지도 화면에서 설명되지 않는다.
+   */
+  hpBar: UnitHealthBar;
 }
 
 /** 하단 프로필 한 칸. 궁극기가 차면 카드 자체가 발동 버튼이 된다. */
@@ -939,7 +946,11 @@ export class BattleScene extends Phaser.Scene {
           playMotion(this, creature, "hit");
           openSummonInfoPopup(this, this.buffPopups, this.battleKeywords, owner.def.stats, definition);
         });
-      this.summonViews.set(summon.id, { creature, asset, summon, input });
+      const hpBar = new UnitHealthBar(this, summon.side === "player" ? COLOR.hpFill : COLOR.hpEnemy, this.motion.effectiveBattleUiMotion)
+        .snap(summon.hp / summon.maxHp);
+      const view: SummonView = { creature, asset, summon, input, hpBar };
+      this.placeSummonChrome(view, summon.x, summon.y);
+      this.summonViews.set(summon.id, view);
       playMotion(this, creature, "idle");
     } catch (error) {
       // 에셋 실패는 시뮬레이션/피해/승패와 무관하며 재호출 사건에서 다시 시도할 수 있다.
@@ -951,8 +962,37 @@ export class BattleScene extends Phaser.Scene {
   private destroySummonView(view: SummonView): void {
     cancelMotion(view.creature);
     this.tweens.killTweensOf(view.creature);
+    this.tweens.killTweensOf(view.hpBar);
+    this.tweens.killTweensOf(view.input);
     view.input.destroy();
+    view.hpBar.destroy();
     view.creature.destroy();
+  }
+
+  /** 늑대를 따라다니는 조각(입력면·체력 바)을 전투 좌표에 맞춰 세운다. */
+  private placeSummonChrome(view: SummonView, x: number, y: number): void {
+    view.input.setPosition(x, y - UNIT_HEIGHT * 0.41);
+    view.hpBar.setPosition(x, y - UNIT_HEIGHT * 0.82 - 26).setDepth(DEPTH.hpBar);
+  }
+
+  /**
+   * 근거리 늑대가 표적 옆으로 붙는 한 걸음.
+   *
+   * 코어가 보낸 종점만 쓰고, 체력 바와 입력면은 SD와 같은 시간 동안 함께 따라간다 — 하나만
+   * 즉시 옮기면 달리는 동안 바가 먼저 도착해 몸과 따로 논다.
+   */
+  private dashSummonView(view: SummonView, from: { x: number; y: number }, to: { x: number; y: number }): void {
+    playMotion(this, view.creature, "run");
+    const pose = { height: UNIT_HEIGHT * 0.82, flipX: view.summon.facing < 0 };
+    placePuppet(view.creature, view.asset, { x: from.x, groundY: from.y, ...pose });
+    const start = { x: view.creature.x, y: view.creature.y };
+    placePuppet(view.creature, view.asset, { x: to.x, groundY: to.y, ...pose });
+    const destination = { x: view.creature.x, y: view.creature.y };
+    view.creature.setPosition(start.x, start.y);
+    this.placeSummonChrome(view, from.x, from.y);
+    this.tweens.add({ targets: view.creature, ...destination, duration: 180, onComplete: () => playMotion(this, view.creature, "idle") });
+    this.tweens.add({ targets: view.input, x: to.x, y: to.y - UNIT_HEIGHT * 0.41, duration: 180 });
+    this.tweens.add({ targets: view.hpBar, x: to.x, y: to.y - UNIT_HEIGHT * 0.82 - 26, duration: 180 });
   }
 
   /** 코어 사건의 좌표와 시점만 읽어 소환수 표시를 갱신한다. */
@@ -971,7 +1011,11 @@ export class BattleScene extends Phaser.Scene {
       playMotion(this, view.creature, "attack");
       const owner = this.views.get(event.ownerFighterId);
       if (owner) playMotion(this, owner.creature, "attack");
-      if (event.targetId === event.summonId) playMotion(this, view.creature, "hit");
+      if (event.targetId === event.summonId) {
+        playMotion(this, view.creature, "hit");
+        // 맞은 쪽일 때만 바가 함께 반응한다. 잔량 자체는 매 프레임 코어에서 다시 읽는다.
+        view.hpBar.setValue({ currentHp: view.summon.hp, maxHp: view.summon.maxHp, damage: event.amount, cause: "damage" });
+      }
       return;
     }
     if (event.kind === "summonFrenzy") {
@@ -980,23 +1024,12 @@ export class BattleScene extends Phaser.Scene {
     }
     if (event.kind === "summonUltimateCharge") {
       // 돌진 길이와 시작 시점은 사건 외에는 추론하지 않는다.
-      playMotion(this, view.creature, "run");
-      placePuppet(view.creature, view.asset, { x: event.from.x, groundY: event.from.y, height: UNIT_HEIGHT * 0.82, flipX: view.summon.facing < 0 });
-      const start = { x: view.creature.x, y: view.creature.y };
-      placePuppet(view.creature, view.asset, { x: event.to.x, groundY: event.to.y, height: UNIT_HEIGHT * 0.82, flipX: view.summon.facing < 0 });
-      const destination = { x: view.creature.x, y: view.creature.y };
-      view.creature.setPosition(start.x, start.y);
-      view.input.setPosition(event.from.x, event.from.y - UNIT_HEIGHT * 0.41);
-      this.tweens.add({ targets: view.creature, ...destination, duration: 180, onComplete: () => playMotion(this, view.creature, "idle") });
-      this.tweens.add({ targets: view.input, x: event.to.x, y: event.to.y - UNIT_HEIGHT * 0.41, duration: 180 });
+      this.dashSummonView(view, event.from, event.to);
       return;
     }
-    // 일반 이동도 코어가 보낸 종점만 사용한다. 궁극기 사건 직후의 중복 move는 현재 tween을 보존한다.
+    // 근거리 지휘도 같은 걸음을 쓴다. 궁극기 사건 직후의 중복 move는 현재 tween을 보존한다.
     if (event.kind === "summonMove" && this.tweens.getTweensOf(view.creature).length === 0) {
-      playMotion(this, view.creature, "run");
-      placePuppet(view.creature, view.asset, { x: event.to.x, groundY: event.to.y, height: UNIT_HEIGHT * 0.82, flipX: view.summon.facing < 0 });
-      view.input.setPosition(event.to.x, event.to.y - UNIT_HEIGHT * 0.41);
-      playMotion(this, view.creature, "idle");
+      this.dashSummonView(view, event.from, event.to);
     }
   }
 
@@ -1639,6 +1672,12 @@ export class BattleScene extends Phaser.Scene {
    */
   private stepMeters(deltaMs: number): void {
     for (const view of this.views.values()) if (!view.dead) view.hpBar.step(deltaMs);
+    // 늑대의 잔량은 사건이 아니라 코어의 값이므로 매 프레임 읽는다 — 피해 경로마다 끼워 넣으면
+    // 한 곳만 빠뜨려도 그 순간 바가 멈춘 것처럼 보인다.
+    for (const view of this.summonViews.values()) {
+      view.hpBar.setValue(view.summon.hp / view.summon.maxHp);
+      view.hpBar.step(deltaMs);
+    }
     const motionFactor = this.motion.battleUiFactor;
     const k = motionFactor === 0 ? 1 : Math.min(1, (deltaMs / 1000) * METER_EASE * motionFactor);
     for (const profile of this.profiles) {

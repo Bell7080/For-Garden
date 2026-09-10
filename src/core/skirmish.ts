@@ -4229,6 +4229,40 @@ function advanceSummons(state: SkirmishState, dt: number, events: SkirmishEvent[
   refreshSummonCommanderStealth(state);
 }
 
+/**
+ * 늑대가 물기 위해 서는 자리와 표적 사이의 간격(px).
+ *
+ * 쿠로·시로는 근거리 개체라 지휘를 받으면 제자리에서 쏘지 않고 표적 옆까지 붙는다. 궁극기
+ * 돌진과 같은 값을 쓰므로 일반 지휘와 궁극기가 서로 다른 거리에서 무는 것처럼 보이지 않는다.
+ */
+const SUMMON_BITE_GAP = 36;
+
+/**
+ * 근거리 늑대를 표적 옆으로 옮기고 실제로 움직였는지 알린다.
+ *
+ * 좌표의 소유자는 코어라, 씬은 여기서 정한 자리를 사건으로 받아 그리기만 한다. 같은 적을 둘이
+ * 함께 물어도 좌우로 갈라 서도록 `side`를 받는다.
+ */
+function biteBeside(state: SkirmishState, unit: SummonedUnit, target: Fighter, side: 1 | -1): { from: { x: number; y: number }; to: { x: number; y: number }; moved: boolean } {
+  const from = { x: unit.x, y: unit.y };
+  unit.x = Math.min(state.arena.right, Math.max(state.arena.left, target.x + side * SUMMON_BITE_GAP));
+  unit.y = Math.min(state.arena.bottom, Math.max(state.arena.top, target.y));
+  // 무는 방향은 선 자리에서 표적을 향한다. 좌우가 뒤집히면 물어뜯는 순간 등을 보인다.
+  unit.facing = unit.x <= target.x ? 1 : -1;
+  return { from, to: { x: unit.x, y: unit.y }, moved: from.x !== unit.x || from.y !== unit.y };
+}
+
+/**
+ * 늑대가 표적의 어느 쪽에 서는지 정의 순서에서 정한다.
+ *
+ * 지휘 순서는 행동마다 교대하지만 서는 쪽은 그대로 둔다 — 순서를 따라 좌우가 뒤집히면 두
+ * 늑대가 한 대 칠 때마다 서로 자리를 바꿔 화면에서 둘이 엉킨 것처럼 보인다.
+ */
+function summonFlank(owner: Fighter, unit: SummonedUnit): 1 | -1 {
+  const index = owner.def.summons?.findIndex((entry) => entry.id === unit.summonId) ?? 0;
+  return index % 2 === 0 ? -1 : 1;
+}
+
 /** 지휘자가 현재 부릴 수 있는 늑대만 정의 순서(쿠로, 시로)대로 돌려준다. */
 function activeOwnedSummons(state: SkirmishState, owner: Fighter): Array<{ unit: SummonedUnit; definition: NonNullable<RelicDef["summons"]>[number] }> {
   return (owner.def.summons ?? []).flatMap((definition) => {
@@ -4275,7 +4309,11 @@ function commandSummonBasic(owner: Fighter, state: SkirmishState, events: Skirmi
     // 선행 타격으로 예약 대상이 죽은 경우에만 현재 남은 적을 한 번 재탐색한다.
     const target = reserved.get(unit.id);
     const valid = target && isFighterAlive(target) ? target : enemies.find(isFighterAlive);
-    if (valid) strikeSummon(owner, unit, definition.skills.basic, valid, state, events, false);
+    if (!valid) continue;
+    // 근거리라 먼저 붙는다. 서는 자리는 정의 순서로 갈라, 지휘 순서가 교대해도 좌우가 바뀌지 않는다.
+    const step = biteBeside(state, unit, valid, summonFlank(owner, unit));
+    if (step.moved) events.push({ kind: "summonMove", summonId: unit.id, ownerFighterId: owner.id, from: step.from, to: step.to });
+    strikeSummon(owner, unit, definition.skills.basic, valid, state, events, false);
   }
   owner.basicCycleStep = (owner.basicCycleStep + 1) % 2;
   owner.energy = Math.min(ULTIMATE_ENERGY_MAX, owner.energy + owner.def.stats.energyGain);
@@ -4292,10 +4330,7 @@ function commandSummonUltimate(owner: Fighter, state: SkirmishState, events: Ski
     if (!target || !isFighterAlive(target)) target = weakest(); // 돌진 중 사망하면 후행 늑대가 한 번만 재지정한다.
     if (!target) break;
     const side = index % 2 === 0 ? -1 : 1;
-    const from = { x: unit.x, y: unit.y };
-    unit.x = Math.min(state.arena.right, Math.max(state.arena.left, target.x + side * 36));
-    unit.y = target.y;
-    const to = { x: unit.x, y: unit.y };
+    const { from, to } = biteBeside(state, unit, target, side);
     events.push({ kind: "summonUltimateCharge", summonId: unit.id, ownerFighterId: owner.id, from, to });
     events.push({ kind: "summonMove", summonId: unit.id, ownerFighterId: owner.id, from, to });
     events.push({ kind: "areaImpact", attackerId: unit.id, ultimate: true, damageType: definition.skills.special.damageType,

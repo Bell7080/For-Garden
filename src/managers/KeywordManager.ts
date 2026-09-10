@@ -11,6 +11,14 @@ export interface KeywordTextOptions {
   color?: string;
   /** 현재 스킬의 피해 산식처럼 문맥마다 달라지는 추가 용어 정의다. */
   contextualKeywords?: readonly KeywordDef[];
+  /**
+   * 용어 ID별로 뜻풀이 대신 열 화면을 지정한다.
+   *
+   * 정적 사전에 콜백을 넣지 않기 위해 **부른 화면이** 넘긴다 — 그래야 `src/data/keywords.ts`의
+   * 정적 정의가 임의 코드를 실행할 수 없고, 같은 태그가 문맥에 따라 뜻풀이로도, 전용 창으로도
+   * 열릴 수 있다. 지정하지 않은 용어는 지금처럼 뜻풀이 쪽지가 뜬다.
+   */
+  keywordActions?: Readonly<Record<string, () => void>>;
 }
 
 /**
@@ -56,7 +64,7 @@ export class KeywordManager {
             label.setPosition(x, y);
           }
           container.add(label);
-          if (segment.keyword) this.decorateKeyword(container, label, segment.keyword);
+          if (segment.keyword) this.decorateKeyword(container, label, segment.keyword, options.keywordActions);
           x += label.width;
         }
       });
@@ -68,7 +76,12 @@ export class KeywordManager {
   }
 
   /** 강조된 말에 밑줄과 입력 영역을 붙인다. */
-  private decorateKeyword(container: Phaser.GameObjects.Container, label: Phaser.GameObjects.Text, keyword: KeywordDef): void {
+  private decorateKeyword(
+    container: Phaser.GameObjects.Container,
+    label: Phaser.GameObjects.Text,
+    keyword: KeywordDef,
+    actions?: Readonly<Record<string, () => void>>,
+  ): void {
     const underline = this.scene.add.graphics();
     underline.lineStyle(2, COLOR.accent, 0.85);
     underline.lineBetween(label.x, label.y + label.height - 2, label.x + label.width, label.y + label.height - 2);
@@ -77,7 +90,11 @@ export class KeywordManager {
       .rectangle(label.x + label.width / 2, label.y + label.height / 2, label.width + 8, Math.max(label.height, 40), 0xffffff, 0)
       .setInteractive({ useHandCursor: true });
     // 누른 자리 위에 뜻이 뜬다. 화면을 새로 채우지 않고 읽던 글 위에 한 겹 얹힌다.
-    hit.on("pointerup", (pointer: Phaser.Input.Pointer) => this.explain(keyword, { x: pointer.worldX, y: pointer.worldY - 20 }));
+    const open = actions?.[keyword.id];
+    hit.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+      if (open) open();
+      else this.explain(keyword, { x: pointer.worldX, y: pointer.worldY - 20 });
+    });
     container.add(hit);
   }
 

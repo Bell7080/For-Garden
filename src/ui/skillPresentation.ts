@@ -95,10 +95,10 @@ function withoutKeywordTags(text: string): string {
 
 /** 요약과 본문이 같은 동적 키워드 사전을 쓰도록 순수 레이아웃 옵션을 한 경계에서 결합한다. */
 export function skillKeywordLayoutOptions(
-  skill: { contextualKeywords?: readonly KeywordDef[] },
-  options: Omit<KeywordTextOptions, "contextualKeywords">,
+  skill: { contextualKeywords?: readonly KeywordDef[]; keywordActions?: Readonly<Record<string, () => void>> },
+  options: Omit<KeywordTextOptions, "contextualKeywords" | "keywordActions">,
 ): KeywordTextOptions {
-  return { ...options, contextualKeywords: skill.contextualKeywords };
+  return { ...options, contextualKeywords: skill.contextualKeywords, keywordActions: skill.keywordActions };
 }
 
 /** 폭주 설명의 모든 수치를 실제 전투 계약에서 만들어 밸런스 조정 후 문구가 남지 않게 한다. */

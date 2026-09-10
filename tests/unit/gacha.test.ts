@@ -153,8 +153,8 @@ describe("운영 배너 데이터", () => {
   it("R 이상 렐릭과 회색 보상의 기대값이 운영 목표 범위 안이다", () => {
     // 범위는 economy-design.md의 독립 슬롯 목표를 허용 오차와 함께 기계적으로 고정한다.
     const targets = {
-      fossil: { relicRPlus: [0.849, 0.851], gold: [224, 226], cheesecake: [0.37, 0.38] },
-      amber: { relicRPlus: [0.849, 0.851], gold: [549, 551], cheesecake: [1.12, 1.13] },
+      fossil: { relicRPlus: [0.169, 0.171], gold: [1_244, 1_246], cheesecake: [2.07, 2.08] },
+      amber: { relicRPlus: [0.329, 0.331], gold: [2_456, 2_458], cheesecake: [5.02, 5.03] },
     } as const;
 
     for (const candidate of BANNERS) {
@@ -169,6 +169,15 @@ describe("운영 배너 데이터", () => {
       expect(expected.cheesecake).toBeGreaterThanOrEqual(target.cheesecake[0]);
       expect(expected.cheesecake).toBeLessThanOrEqual(target.cheesecake[1]);
     }
+  });
+
+  it("화석은 대부분 재화이고 호박석은 더 높은 렐릭 확률을 제공한다", () => {
+    const fossil = BANNERS.find((candidate) => candidate.id === "fossil")!;
+    const amber = BANNERS.find((candidate) => candidate.id === "amber")!;
+    // 출시 초기의 작은 R 풀을 보호하면서 비싼 호박석의 가치 차이도 고정한다.
+    expect(fossil.slotRates.GRAY).toBeGreaterThanOrEqual(0.8);
+    expect(amber.slotRates.GRAY).toBeGreaterThan(0.5);
+    expect(calculateBannerExpectations(amber).relicRPlus).toBeGreaterThan(calculateBannerExpectations(fossil).relicRPlus);
   });
 
   it("1회 기대값을 10회 분석 값으로 선형 합산한다", () => {

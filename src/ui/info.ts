@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import type { PuppetCreature } from "../puppets/assets";
+import { powerSavingPolicy } from "../core/settings";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import type { Combatant } from "../core/combatTypes";
 import { RUNE_PART_LABELS, RUNE_RARITY_LABELS, type RunePart } from "../core/runes";
@@ -1713,6 +1714,8 @@ export class InfoManager {
         // 복사 이미지나 전용 크롭 없이 장착과 같은 resolver가 돌려준 Puppet을 카드 바닥선에 세운다.
         void spawnPuppet(this.scene, asset, { x: 0, groundY: layout.puppetGroundY, height: layout.puppetHeight, depth: 1 }).then((puppet) => {
           if (!card.active) { puppet.destroy(); return; }
+          // 목록 카드 Puppet은 정보 전달을 바꾸지 않는 장식이므로 공용 유휴 갱신 예산을 적용한다.
+          puppet.setDecorativeUpdateFactor(powerSavingPolicy(session.settings).idlePuppetUpdateFactor);
           puppet.setAlpha(owned ? 1 : 0.28); card.addAt(puppet, 2);
         });
         card.add(this.scene.add.text(0, 310, entry.name, textStyle({ role: "display", size: 28, color: owned ? COLOR.ink : COLOR.inkDim, align: "center", wrap: 330 })).setOrigin(0.5));
@@ -1820,6 +1823,8 @@ export class InfoManager {
       ...infoPortraitPlacement(asset, PORTRAIT_FOCUS),
       depth: Math.max(this.portraitDepth, this.root.depth + 1),
     });
+    // 정보창의 전신 애니메이션만 절전하며 탭과 입력 반응은 원래 속도를 유지한다.
+    portrait.setDecorativeUpdateFactor(powerSavingPolicy(session.settings).idlePuppetUpdateFactor);
     if (request !== this.portraitRequest) { portrait.destroy(); return; }
     this.portrait?.destroy();
     this.portrait = portrait;
@@ -1845,6 +1850,8 @@ export class InfoManager {
       height: FIGURE.height,
       depth: 1004,
     });
+    // 비교용 전신도 같은 공용 정책을 소비해 정보창 내부에서 예산이 갈리지 않게 한다.
+    figure.setDecorativeUpdateFactor(powerSavingPolicy(session.settings).idlePuppetUpdateFactor);
     if (request !== this.figureRequest) { figure.destroy(); return; }
     this.figure?.destroy();
     this.figure = figure;

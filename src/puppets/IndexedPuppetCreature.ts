@@ -134,6 +134,9 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
   private buffers?: CreatureGpuBuffers;
   /** 직전 갱신 때의 TimeStep 벽시계. 프레임 제한이 켜져도 실제 경과 시간을 잴 수 있게 한다. */
   private lastLoopTime = -1;
+  /** 1보다 작은 값은 비전투 장식의 프레임 일부를 버리며 누락 시간을 다음 프레임에 합치지 않는다. */
+  private decorativeUpdateFactor = 1;
+  private decorativeUpdateCredit = 0;
 
   private constructor(scene: Phaser.Scene, puppet: Puppet, textureKey: string) {
     super(scene, 0, 0, textureKey);
@@ -166,6 +169,13 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
     return this.puppet.play(name, options);
   }
 
+  /** 전투 개체는 호출하지 않는 opt-in 장식 예산 경계다. */
+  setDecorativeUpdateFactor(factor: number): this {
+    this.decorativeUpdateFactor = Phaser.Math.Clamp(factor, 0, 1);
+    this.decorativeUpdateCredit = 0;
+    return this;
+  }
+
   /** Phaser scene update에서 원본 해상도의 변형 정점만 계산한다. */
   private step(_time: number, delta: number): void {
     // Scene UPDATE는 listener 목록을 순회하는 도중에도 씬 전환으로 개체를 파괴할 수 있다.
@@ -174,9 +184,17 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
     if (!this.active || !this.scene) return;
     // 어느 값이 실제 경과 시간인지는 프레임 제한 여부에 따라 달라진다(runtimeStep.ts 참고).
     // TimeStep.time은 rawDelta를 계속 더한 벽시계라 두 경우 모두에서 갱신 간격을 바로 준다.
+    // **버리는 프레임에서도 먼저 갱신한다** — 아래 두 조기 반환이 버린 시간은 그대로 잃어야
+    // 하고(장식 예산과 비가시성 모두 "따라잡지 않는다"가 계약이다), 여기서 갱신하지 않으면
+    // 다음에 도는 프레임이 그 시간까지 한꺼번에 삼켜 오히려 건너뛴 만큼을 되돌린다.
     const loop = this.scene.game.loop;
     const loopElapsed = this.lastLoopTime >= 0 ? loop.time - this.lastLoopTime : undefined;
     this.lastLoopTime = loop.time;
+    // 브라우저 비가시성은 저장된 절전과 별도 정지이며 hidden delta를 임의 애니메이션으로 따라잡지 않는다.
+    if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
+    this.decorativeUpdateCredit += this.decorativeUpdateFactor;
+    if (this.decorativeUpdateCredit < 1) return;
+    this.decorativeUpdateCredit -= 1;
     const elapsed = puppetElapsedMs(loop.rawDelta, delta, loopElapsed);
     // 편집기보다 긴 프레임을 한 번에 적분하면 pinnedSoft 발 주변의 spring이 튀므로 잘게 나눈다.
     const next = advancePuppet(this.puppet, elapsed / 1000);

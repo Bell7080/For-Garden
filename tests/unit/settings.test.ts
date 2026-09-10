@@ -22,7 +22,15 @@ describe("settings", () => {
     const first = createDefaultSettings(); const second = createDefaultSettings(); first.sound.masterVolume = 0;
     expect(second.sound.masterVolume).toBe(1);
     expect(second.game.skipUltimatePresentation).toBe(false);
+    expect(second.presentation.powerSaving).toBe(false);
     expect(normalizeSettings({ sound: { masterVolume: 8, musicVolume: -2 }, accessibility: { textScale: 9, reduceMotion: true }, game: { battleSpeed: 99, skipUltimatePresentation: "yes", textSpeed: "fast", language: "xx" }, account: { provider: "token", token: "secret" } })).toMatchObject({ sound: { masterVolume: 1, musicVolume: 0 }, accessibility: { textScale: 1, reduceMotion: true, reduceFlashes: false, colorAssist: false }, game: { battleSpeed: 1, skipUltimatePresentation: false, textSpeed: 1, language: "ko" }, account: { provider: "guest" } });
+  });
+
+  it("절전 선택을 불리언으로만 보존하고 구버전 저장에는 false를 채운다", () => {
+    // 접근성 설정과 별도 저장되어 둘을 함께 켜거나 각각 끌 수 있다.
+    expect(normalizeSettings({ presentation: {} }).presentation.powerSaving).toBe(false);
+    expect(normalizeSettings({ presentation: { powerSaving: true }, accessibility: { reduceMotion: false } })).toMatchObject({ presentation: { powerSaving: true }, accessibility: { reduceMotion: false } });
+    expect(normalizeSettings({ presentation: { powerSaving: "yes" } }).presentation.powerSaving).toBe(false);
   });
 
   it("보이스 없는 필수 대사를 숨기던 옛 자막 값을 폐기한다", () => {

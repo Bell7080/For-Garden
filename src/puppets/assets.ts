@@ -251,6 +251,11 @@ export const PARUA_ASSET: PuppetAsset = {
   ...PARUA_PORTRAIT_METADATA,
 };
 
+/** 20번 기본 SD는 디안, `_black`은 쿠로, `_white`는 시로라는 이름 대응을 보존한다. */
+export const DIAN_SD_ASSET: PuppetAsset = { url: `${base}puppets/charSD_020.zip`, ...DIAN_SD_METADATA };
+export const KURO_SD_ASSET: PuppetAsset = { url: `${base}puppets/charSD_020_black.zip`, ...KURO_SD_METADATA };
+export const SHIRO_SD_ASSET: PuppetAsset = { url: `${base}puppets/charSD_020_white.zip`, ...SHIRO_SD_METADATA };
+
 /** 20번 전신: 디안. black/white는 아래 SD 늑대의 털색이며 디안 자신의 변형명이 아니다. */
 export const DIAN_ASSET: PuppetAsset = { url: `${base}puppets/char_020.zip`, ...DIAN_PORTRAIT_METADATA };
 
@@ -341,6 +346,9 @@ const PORTRAIT_ASSETS = {
   pontos: PONTOS_ASSET,
   parua: PARUA_ASSET,
   dian: DIAN_ASSET,
+  // 늑대는 전신 원화가 따로 없다. SD 자체가 온전한 한 마리라 정보창도 같은 묶음을 세운다.
+  kuro: KURO_SD_ASSET,
+  shiro: SHIRO_SD_ASSET,
 } as const satisfies Record<PortraitAssetId, PuppetAsset>;
 
 /**
@@ -512,10 +520,6 @@ export const TIA_SD_ASSET: PuppetAsset = {
   ...TIA_SD_METADATA,
 };
 
-/** 20번 기본 SD는 디안, `_black`은 쿠로, `_white`는 시로라는 이름 대응을 보존한다. */
-export const DIAN_SD_ASSET: PuppetAsset = { url: `${base}puppets/charSD_020.zip`, ...DIAN_SD_METADATA };
-export const KURO_SD_ASSET: PuppetAsset = { url: `${base}puppets/charSD_020_black.zip`, ...KURO_SD_METADATA };
-export const SHIRO_SD_ASSET: PuppetAsset = { url: `${base}puppets/charSD_020_white.zip`, ...SHIRO_SD_METADATA };
 
 /** 소환 정의의 정적 키를 실제 SD에 연결하며 수집 가능한 렐릭 표에는 섞지 않는다. */
 export const SUMMON_SD_ASSETS: Readonly<Record<string, PuppetAsset>> = {
@@ -550,6 +554,8 @@ const ALLY_SD_ASSETS: Readonly<Record<string, PuppetAsset>> = {
   maddy: MADDY_SD_ASSET,
   parua: PARUA_SD_ASSET,
   dian: DIAN_SD_ASSET,
+  kuro: KURO_SD_ASSET,
+  shiro: SHIRO_SD_ASSET,
 };
 
 /**

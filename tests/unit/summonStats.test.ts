@@ -11,7 +11,7 @@ const FINAL_STATS: Stats = {
 
 /** 정적 정의에서 누락된 소환수를 즉시 드러내는 테스트 전용 조회 도우미다. */
 function dianSummon(id: "kuro" | "shiro") {
-  const summon = getRelic("dian").summons?.find((entry) => entry.id === id);
+  const summon = getRelic("dian").summons?.find((entry) => entry.def.id === id);
   if (!summon) throw new Error(`디안 소환수 ${id} 정의가 없습니다.`);
   return summon;
 }

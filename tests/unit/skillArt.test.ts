@@ -172,7 +172,8 @@ describe("노도니아 스킬 표시 계약", () => {
     expect(skillDescription(nodonia.basic)).toBe("적 한 명에게 최대 체력의 5% [[physical-damage|물리 피해]]를 준다.");
     // 공격력은 어디에도 쓰이지 않으므로 플레이어블 로스터 최저다 — 쓰지 않는 능력치를 높게
     // 적지 않는다. 적 전용 리파처럼 주문력만 쓰는 개체는 같은 원칙으로 더 낮을 수 있다.
-    const playable = RELICS.filter((def) => def.enemyOnly !== true);
+    // 소환 전용 개체는 쓰지 않는 축이 0이라 같은 이유로 비교에서 뺀다.
+    const playable = RELICS.filter((def) => def.enemyOnly !== true && def.summonOnly !== true);
     expect(Math.min(...playable.map((def) => def.stats.atk))).toBe(nodonia.stats.atk);
     // 방어·저항은 아군 탱커 중 최저이고 체력은 최고다. 아프지 않으면 재생이 할 일이 없다.
     // 적 전용 개체(폰토스·허스크)는 등급 띠 밖이라 비교에서 뺀다.
@@ -597,7 +598,7 @@ describe("스킬 설명문 양식 계약", () => {
         expect(body).toMatch(/^(적 한 명|자신의 주위 모든 적|표적과 그 주위의 적|전장의 모든 적|지정한 원 안의 모든 적|\[\[charge\|돌진\]\]해 뚫고 지나간 길의 모든 적)에게 /);
         // 그다음이 피해다. 실제 수치를 알 수 있으면 조회 가능한 태그로 보여 준다.
         expect(body).toContain("[[damage-value|");
-        expect(body).toMatch(/\[\[(physical|magical)-damage\|(물리|마법) 피해\]\]를 (준다|주고)/);
+        expect(body).toMatch(/\[\[(physical|magical)-damage\|(물리|마법) 피해\]\]를( 동시에)? (준다|주고)/);
       }
       expect(text.endsWith(".")).toBe(true);
     },

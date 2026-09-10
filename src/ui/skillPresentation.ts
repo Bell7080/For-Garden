@@ -93,6 +93,20 @@ function withoutKeywordTags(text: string): string {
   return text.replace(/\[\[[^\]|]+\|([^\]]+)\]\]/g, "$1");
 }
 
+/**
+ * 마무리 한 절.
+ *
+ * 문턱이 겹으로 자라므로 고정 문장을 적을 수 없다 — 지금 값과 겹당 증가를 함께 말한다.
+ */
+function finisherClause(finisher: NonNullable<BasicAttack["finisher"]>): string {
+  const always = finisher.thresholdPercent >= 100;
+  const grows = finisher.thresholdPerStack > 0
+    ? `(체력 ${finisher.thresholdPercent}% 이하, [[bloodscent|피 냄새]] 한 겹마다 ${finisher.thresholdPerStack}%씩 오른다)`
+    : `(체력 ${finisher.thresholdPercent}% 이하)`;
+  const when = always ? "체력과 무관하게" : `표적의 체력이 문턱 아래면 ${grows}`;
+  return ` ${when} 대신 [[nape|목덜미]]가 나가, 표적 뒤로 [[teleport|순간이동]]해 남은 체력의 ${finisher.remainingHpPercent}%만큼 [[fixed-damage|고정 피해]]를 준다.`;
+}
+
 /** 요약과 본문이 같은 동적 키워드 사전을 쓰도록 순수 레이아웃 옵션을 한 경계에서 결합한다. */
 export function skillKeywordLayoutOptions(
   skill: { contextualKeywords?: readonly KeywordDef[]; keywordActions?: Readonly<Record<string, () => void>> },
@@ -177,11 +191,17 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
     return `폭주 중 모든 일반 공격이 [[split-arrow|갈래화살]]이 되고 사거리가 ${trait.reachBonus} 증가한다.`;
   }
   if (trait.effectId === "summonPackFrenzy") {
-    // 두 늑대의 역할 차이와 네 가지 공통 강화 축을 데이터 숫자에서 그대로 설명한다.
-    return `쿠로의 공격력이 ${trait.kuro.attackPowerPercent}%, 공격 속도가 ${trait.kuro.attackSpeedPercent}%, 이동 속도가 ${trait.kuro.moveSpeedPercent}% 증가하고,`
-      + ` 체력 ${trait.kuro.executeBelowHpPercent}% 이하 적에게 주는 피해가 ${trait.kuro.executeDamagePercent}% 증가한다.`
-      + ` 시로의 주문력이 ${trait.shiro.abilityPowerPercent}%, 공격 속도가 ${trait.shiro.attackSpeedPercent}%, 이동 속도가 ${trait.shiro.moveSpeedPercent}% 증가하고,`
-      + ` 추적 피해가 ${trait.shiro.pursuitDamagePercent}% 증가한다.`;
+    // 수치를 적지 않는다 — 무엇이 얼마나 오르는지는 폭주하는 몸(늑대) 쪽 특성이 갖는다.
+    return "쿠로와 시로가 함께 폭주한다.";
+  }
+  if (trait.effectId === "packBody") {
+    // 방어·저항은 퍼센트가 아니라 실제 오르는 값으로 보여 준다. 같은 비율도 개체마다 오르는 양이 다르다.
+    const defense = stats === undefined ? undefined : Math.round(stats.defense * trait.defenseResistancePercent / 100);
+    const guard = defense === undefined
+      ? `방어력과 저항력이 ${trait.defenseResistancePercent}% 오르고`
+      : `방어력과 저항력이 각각 ${defense} 오르고`;
+    return `${guard} [[attack-speed|공격 속도]]가 ${trait.attackSpeedPercent}% 오른다.`
+      + ` 치명타 확률과 모든 피해 흡혈이 각각 ${trait.criticalChancePoints}%, ${trait.lifeStealPoints}% 증가한다.`;
   }
 
   // 방어력 계수는 토리카처럼 추가 피해가 있는 범위 타격만 노출하고, 일반 전이 특성은 원래 피해 비율만 보여 준다.
@@ -263,6 +283,14 @@ function passiveHead(passive: Passive, atk?: number): string {
       + ` 시약은 최대 ${reagent.maxStacks}겹까지 ${reagent.seconds}초 동안 유지되며, 최대 중첩이 되면 모두 소비해 [[reagent-reaction|시약 반응]]을 일으킨다.`
       + ` 반응한 적을 ${reagent.reactionPoisonSeconds}초 동안 [[poison|중독]]시키고 저항력을 ${reagent.resistanceReductionSeconds}초 동안 ${reagent.resistanceReductionPercent}% 낮춘다.`
       + ` 이어 현재 HP 비율이 가장 낮은 생존 아군 한 명을 그 아군 최대 체력의 ${reagent.lowestHpAllyHealMaxHpPercent}%만큼 회복한다.`;
+  }
+  if (passive.kind === "summonCommander") {
+    const crit = passive.criticalChancePercent;
+    const scent = passive.bloodscent;
+    const guard = crit === undefined ? "[[stealth|은신]]한다." : `[[stealth|은신]]하고 무리 전체의 치명타 확률이 ${crit}% 오른다.`;
+    const scentLine = scent === undefined ? "" : ` 무리는 [[bloodscent|피 냄새]]를 최대 ${scent.maxStacks}겹까지 쌓고, 겹마다 합공 피해가 ${scent.damagePercentPerStack}% 커진다.`;
+    return `전투가 열리면 귀속 소환수를 먼저 내보내고, 늑대가 확인한 적 중 전투력이 가장 높은 하나를 무리의 첫 표적으로 삼는다.`
+      + ` 둘이 모두 살아 있는 동안 ${guard} 적은 대신 앞에 선 늑대를 표적으로 삼는다.${scentLine}`;
   }
   if (passive.kind === "followHighestAttackAllyTarget") return `전투 시작 시 아군 중 공격력이 가장 높은 렐릭이 표적으로 삼은 적을 함께 표적으로 삼는다.`;
   if (passive.kind === "basicHitAttackSpeedStack") return `[[basic-attack|기본 공격]]이 실제 적중할 때마다 이번 전투 동안 [[attack-speed|공격 속도]]가 ${passive.value} 증가한다.`;
@@ -435,6 +463,20 @@ export function skillDescription(
   skill: DescribedSkill,
   stats: SkillDescriptionStats = {},
 ): string {
+  // 합공은 한 행동에 두 축이 함께 들어간다. 하나로 합친 위력이 없으므로 정형 문장을 따로 짓는다.
+  if ("dualStrike" in skill && skill.dualStrike !== undefined) {
+    const dual = skill.dualStrike;
+    const physical = stats.atk === undefined ? `공격력의 ${dual.attackPercent}%` : `[[damage-value|${Math.round(stats.atk.atk * dual.attackPercent / 100)}]]`;
+    const magical = stats.ap === undefined ? `주문력의 ${dual.abilityPercent}%` : `[[damage-value|${Math.round(stats.ap * dual.abilityPercent / 100)}]]`;
+    const assault = "packAssault" in skill && skill.packAssault !== undefined
+      ? ` 곁에 선 늑대가 모두 표적에게 돌진해 각자 성장 축의 ${skill.packAssault.summonPowerPercent}% 피해를 주고,`
+        + ` 쓰러진 늑대는 다시 설 때까지 남은 시간이 ${skill.packAssault.resummonHasteSeconds}초 앞당겨진다.`
+        + ` 그 자리에서 다시 서면 그 늑대도 함께 돌진한다.`
+      : "";
+    const finisher = skill.finisher === undefined ? "" : finisherClause(skill.finisher);
+    return `적 한 명에게 ${physical}의 [[physical-damage|물리 피해]]와 ${magical}의 [[magical-damage|마법 피해]]를 동시에 준다.`
+      + ` 귀속 소환수가 모두 쓰러져 있는 동안에는 두 피해를 각각 ${dual.aloneAlternatePercent}% 위력으로 번갈아 낸다.${assault}${finisher}`;
+  }
   // 순수 회복기는 때리는 대상이 없어 "대상 → 피해"로 시작할 수 없다. 회복 계약에서 바로 짓는다.
   if (skill.damageType === undefined || skill.power === undefined) {
     if ("healing" in skill && skill.healing?.kind === "teamMissingHpPercent") {

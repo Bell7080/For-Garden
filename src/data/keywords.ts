@@ -215,6 +215,18 @@ export const KEYWORDS: readonly KeywordDef[] = [
     description: "최대 체력에서 현재 체력을 뺀 값이다. 잃은 체력 비례 회복은 각 적중 직후의 값을 다시 계산한다.",
   },
   {
+    id: "bloodscent",
+    term: "피 냄새",
+    kind: "버프",
+    description: "무리가 사냥을 이어 갈수록 쌓이는 겹이다. 지휘자의 합공 피해를 키우고, 마무리가 열리는 체력 문턱을 함께 올린다. 한 전투 안에서만 쌓이며 상한에 닿으면 더 오르지 않는다.",
+  },
+  {
+    id: "nape",
+    term: "목덜미",
+    kind: "규칙",
+    description: "지휘자가 표적 뒤로 [[teleport|순간이동]]해 무는 마무리 한 방이다. 표적의 남은 체력에 비례하는 [[fixed-damage|고정 피해]]를 주며, 같은 순간의 일반 공격보다 약해지지 않는다. 문 자리에 그대로 서고 [[stealth|은신]]도 풀리지 않는다.",
+  },
+  {
     id: "physical-damage", term: "물리 피해", kind: "규칙",
     description: "공격력 또는 명시된 능력치로 계산하고 대상의 방어력으로 감소하는 피해다.",
   },

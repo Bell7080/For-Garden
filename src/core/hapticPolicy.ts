@@ -19,5 +19,5 @@ export function isPlayerUltimateReadyTransition(previous: boolean, next: boolean
  * 호출자가 사건마다 진동하지 않고 묶음마다 한 번만 묻기 때문에 광역과 다단 히트가 자연스럽게 병합된다.
  */
 export function hasMergedBattleHit(events: readonly SkirmishEvent[]): boolean {
-  return events.some((event) => (event.kind === "attack" || event.kind === "summonHit") && event.amount > 0);
+  return events.some((event) => event.kind === "attack" && event.amount > 0);
 }

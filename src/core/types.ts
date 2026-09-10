@@ -30,7 +30,7 @@ export type ReachTier = "melee" | "mid" | "ranged";
 export type RelicRarity = "R" | "SR" | "SSR";
 
 /** 전신 Puppet 레지스트리의 안정적인 데이터 키다. 파일 번호를 게임 데이터에 직접 노출하지 않는다. */
-export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "pontos" | "parua" | "dian";
+export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "pontos" | "parua" | "dian" | "kuro" | "shiro";
 
 /**
  * 저장 데이터에서 선택·소유 외형을 식별하는 안정적인 ID다.
@@ -118,10 +118,50 @@ interface SkillBase {
   /** UI가 피해·회복·강화 의미를 damageType 존재 여부와 무관하게 표현하는 분류다. */
   effectType: EffectType;
   /**
-   * 귀속 소환수에게 행동을 위임하는 지휘 계약이다. 지휘자는 피해를 만들지 않으며, 전투 코어는
-   * 현재 현장에 남은 소환수의 독립 능력치와 기술을 읽어 각 타격을 계산한다.
+   * 공격력과 주문력 두 축을 **한 번에** 쓰는 합공 계약이다.
+   *
+   * 두 번 때리는 것이 아니라 한 행동에 물리와 마법이 함께 들어간다. 위력을 하나로 합치지
+   * 않는 이유는 방어력과 저항력이 각각 다르게 깎기 때문이고, 그래서 화면도 두 수를 따로 본다.
    */
-  summonCommand?: "alternatingPair" | "oppositeChargePair";
+  /**
+   * 지휘자의 궁극기가 무리 전체를 한 표적에 던지는 계약이다.
+   *
+   * 늑대의 돌진 위력을 지휘자 정의에 적는 이유는 이것이 **지휘자의 기술**이기 때문이다 —
+   * 늑대 제 궁극기는 각자 게이지로 따로 나가고 그 위력은 각자 정의가 갖는다.
+   */
+  packAssault?: {
+    /**
+     * 쓰러진 귀속 소환수의 남은 부활 대기 시간을 이만큼 앞당긴다(초).
+     *
+     * 즉시 되살리지 않는 이유는 그러면 늑대를 잃는 일이 값을 잃지 않기 때문이다. 앞당긴
+     * 결과로 그 자리에서 다시 서면 그 몸도 이 돌격에 함께 나간다.
+     */
+    resummonHasteSeconds: number;
+    /** 각 소환수가 표적에게 내는 돌진 위력(%). 그 소환수의 성장 축에서 뽑는다. */
+    summonPowerPercent: number;
+  };
+  dualStrike?: {
+    /** 공격력에서 뽑는 물리 피해 배율(%). */
+    attackPercent: number;
+    /** 주문력에서 뽑는 마법 피해 배율(%). */
+    abilityPercent: number;
+    /** 귀속 소환수가 모두 쓰러져 있는 동안 물리와 마법을 번갈아 낼 때 쓰는 배율(%). */
+    aloneAlternatePercent: number;
+  };
+  /**
+   * 표적의 체력이 문턱 아래면 합공 대신 나가는 마무리 습격이다.
+   *
+   * 문턱은 고정값이 아니라 지금 쌓인 겹이 함께 정한다 — 무리가 사냥을 이어 갈수록 두목이
+   * 더 일찍 나선다.
+   */
+  finisher?: {
+    /** 겹이 없을 때의 문턱(대상 남은 체력 %). */
+    thresholdPercent: number;
+    /** 겹 하나가 문턱에 더하는 %. */
+    thresholdPerStack: number;
+    /** 표적의 **남은 체력**에서 뽑는 고정 피해 비율(%). */
+    remainingHpPercent: number;
+  };
   /**
    * 적중 뒤 공용 시약 처리 경로에 넘길 중첩 수다.
    *
@@ -753,8 +793,10 @@ export type PassiveKind =
   | "lowHpVanish"
   /** 델로피 전용: 전투가 시작되는 순간부터 정해진 시간 동안 은신한 채로 연다. */
   | "openingVanish"
-  /** 디안 전용: 귀속 소환수 둘을 지휘하며 둘이 모두 현장에 있을 때만 은신한다. */
+  /** 디안 전용: 귀속 소환수 둘을 불러 세우며 둘이 모두 살아 있는 동안 은신한다. */
   | "summonCommander"
+  /** 귀속 소환수 전용: 태생 능력치 전부가 주인의 한 축에서 파생한다. */
+  | "summonDerived"
   /** 엘라 전용: 쓰러질 피해를 가로채 전투당 한 번, 무적·행동불가로 버티며 되살아난다. */
   | "undyingTalisman"
   /** 노도니아 전용: 맞을수록 회복 중첩을 쌓는 패시브다. */
@@ -893,18 +935,26 @@ export type FerocityTrait = {
       bonusPercent: number;
     }
   | {
-      /** 디안 전용: 폭주 중 현장에 있는 귀속 늑대만 서로 다른 역할 계수로 강화한다. */
+      /**
+       * 지휘자 전용: 자신은 그대로 두고 **귀속 소환수를 함께 폭주시킨다.**
+       *
+       * 무엇이 얼마나 오르는지는 여기 적지 않는다 — 그 값은 폭주하는 몸(늑대) 쪽 야성 특성이
+       * 갖는다. 그래야 늑대가 늘어도 지휘자 정의를 고치지 않고, 화면도 늑대의 창에서 제
+       * 수치를 읽는다.
+       */
       effectId: "summonPackFrenzy";
-      kuro: {
-        attackPowerPercent: number; attackSpeedPercent: number; moveSpeedPercent: number;
-        /** 이 체력 비율 이하의 적에게 적용하는 마무리 피해 증가다. 무적이나 최종 피해 감소는 만들지 않는다. */
-        executeBelowHpPercent: number; executeDamagePercent: number;
-      };
-      shiro: {
-        abilityPowerPercent: number; attackSpeedPercent: number; moveSpeedPercent: number;
-        /** 추적 기술(`special`)에만 더하는 피해 증가다. */
-        pursuitDamagePercent: number;
-      };
+    }
+  | {
+      /** 귀속 소환수 전용: 주인의 폭주를 함께 받는 몸이 실제로 얻는 강화다. */
+      effectId: "packBody";
+      /** 방어력과 저항력이 함께 오르는 비율(%). 화면에는 실제 오르는 값으로 환산해 보여 준다. */
+      defenseResistancePercent: number;
+      /** 공격 속도가 오르는 비율(%). */
+      attackSpeedPercent: number;
+      /** 치명타 확률에 더하는 값(%). */
+      criticalChancePoints: number;
+      /** 모든 피해 흡혈에 더하는 값(%). */
+      lifeStealPoints: number;
     }
   | {
       effectId: "tailwindRally";
@@ -1143,6 +1193,18 @@ export interface Passive {
   /** 지속 효과인 패시브만 갖는 유지 시간(초). 전투와 표시가 함께 읽는 단일 계약이다. */
   durationSeconds?: number;
   /**
+   * 사냥을 이어 갈수록 무리 전체가 쌓는 겹이다.
+   *
+   * 한 자원이 **두 곳을 동시에** 움직인다 — 합공의 피해와 마무리가 열리는 문턱이다. 그래서
+   * 값을 스킬마다 흩지 않고 이 계약 하나에 두고, 문턱 쪽 몫만 그 스킬의 `finisher`가 읽는다.
+   */
+  bloodscent?: {
+    /** 쌓을 수 있는 최대 겹이다. */
+    maxStacks: number;
+    /** 겹 하나가 지휘자의 합공 피해에 더하는 비율(%)이다. */
+    damagePercentPerStack: number;
+  };
+  /**
    * 시약 중첩·반응의 전체 수치 계약이다. 리파 ID 전용 속성이 아니라 `reagentReaction`을
    * 선언하는 모든 캐릭터 정의가 전투 처리와 설명 생성에 함께 제공한다.
    */
@@ -1296,34 +1358,32 @@ export interface SummonScaling {
 }
 
 /** 소환수 전투 AI가 이름이나 소유 렐릭 ID 분기 없이 읽는 두 행동이다. */
-export interface SummonSkillSet {
-  /** 사거리 안의 표적에게 반복하는 일반 공격이다. */
-  basic: BasicAttack;
-  /** 기본 공격 사이에 사용하는 소환수 고유 행동이다. */
-  special: AttackSkill;
-}
-
-/** 독립 수집 대상이 아닌, 렐릭 한 명에게 귀속된 전투 중 소환수 정의다. */
+/**
+ * 렐릭 한 명에게 귀속된 소환수를 **어떻게 불러오는가**만 적는 계약이다.
+ *
+ * 소환수 자신의 정체성(태생 능력치·패시브·일반·궁극·야성)은 예외 없이 제 `RelicDef`가
+ * 갖는다 — 적과 아군이 같은 규칙을 쓰는 것과 같은 이유다. 여기에는 그 정의를 가리키는 ID와,
+ * 주인의 어느 능력치에서 얼마나 파생하는지만 둔다.
+ */
 export interface SummonDef {
-  /** 소유 렐릭 안에서 영구적으로 유지할 소환수 ID다. */
-  id: string;
-  /** 전투 UI와 기록에 표시할 이름이다. */
-  name: string;
-  /** Phaser 로더가 SD Puppet zip을 찾는 정적 에셋 키다. */
-  sdAssetKey: string;
+  /**
+   * 소환할 개체의 완전한 정의다. `summonOnly`로 표시해 가챠·도감·편성에서 뺀다.
+   *
+   * ID가 아니라 정의를 그대로 품는 이유는 전투 코어가 정적 데이터 표를 뒤지지 않게 하기
+   * 위해서다 — `src/core`는 `src/data`를 모르고, 필요한 것은 인자로 들어온다.
+   */
+  def: RelicDef;
   /** 주인의 최종 능력치 중 파생의 유일한 성장 기준이다. */
   growthStat: "atk" | "ap";
   /** 성장 기준 한 값에 곱할 능력치별 계수와 속도 상한이다. */
   scaling: SummonScaling;
-  /** 소환수 자신이 실행할 전투 행동 모음이다. */
-  skills: SummonSkillSet;
-  /** 쓰러진 뒤 같은 전투에서 다시 호출할 수 있는 규칙이다. */
+  /** 쓰러진 뒤 같은 전투에서 다시 불러오는 규칙이다. */
   resummon: {
-    /** 재호출을 허용하는지 여부다. */
+    /** 재소환을 허용하는지 여부다. */
     enabled: boolean;
-    /** 쓰러진 시점부터 재호출까지 기다리는 초다. */
+    /** 쓰러진 시점부터 다시 설 때까지 기다리는 초다. */
     cooldownSeconds: number;
-    /** 재호출 때 회복하는 소환수 최대 HP 비율이다. 전투 중 완전 회복을 만들지 않는다. */
+    /** 다시 설 때 회복하는 최대 HP 비율이다. 전투 중 완전 회복을 만들지 않는다. */
     hpPercent: number;
   };
 }
@@ -1342,6 +1402,13 @@ export interface RelicDef {
   identityFamilyId?: string;
   /** 가챠·보유 목록에는 들어가지 않고 적 편성에서만 사용하는 완전한 RelicDef임을 표시한다. */
   enemyOnly?: true;
+  /**
+   * 가챠·도감·편성에 서지 않고 **다른 렐릭이 불러낼 때만** 전장에 서는 개체임을 표시한다.
+   *
+   * 그래도 정의는 완전하다 — 태생 능력치와 네 슬롯을 제 정의가 온전히 소유한다. 전투에 설 때
+   * 태생 능력치만 주인의 성장에서 파생한 값으로 갈아 끼운다(`SummonDef.scaling`).
+   */
+  summonOnly?: true;
   /** 기절 지속 시간을 줄이는 비율(%). 정의하지 않으면 저항이 없고 100 이상이면 면역이다. */
   stunResistancePercent?: number;
   name: string;

@@ -85,6 +85,7 @@ import { BOSS_RESULT_LAYOUT, bossResultUtilityBounds } from "../ui/bossResultLay
 import type { CurrencyIconKey } from "../ui/currencyIcons";
 import { KeywordManager } from "../managers/KeywordManager";
 import { openSummonInfoPopup } from "../ui/SummonInfoPopup";
+import { hasMergedBattleHit, isPlayerUltimateReadyTransition } from "../core/hapticPolicy";
 
 /**
  * 여섯이 돌아다닐 수 있는 범위.
@@ -777,6 +778,8 @@ export class BattleScene extends Phaser.Scene {
       // 첫 공격 동작만 기다리되 나머지 사건(사망·종료)도 전부 연출로 옮긴다. `??=`의 오른쪽을
       // 조건부로 두면 첫 동작 이후의 사망 사건이 통째로 버려져 쓰러진 적이 계속 서 있었다.
       let attackMotion: MotionPlayback | undefined;
+      // 궁극기의 광역/다단 피해도 확정 사건 묶음 전체에서 한 번만 진동한다.
+      if (hasMergedBattleHit(events)) settingsManager.haptic("battleHit");
       events.forEach((event) => {
         // 컷인 뒤의 결정타만 빠르게 재생해 멈춘 전투가 즉시 이어지도록 한다.
         const playback = this.playEvent(event, timing.rate);
@@ -876,6 +879,8 @@ export class BattleScene extends Phaser.Scene {
     // 상태 종료와 좌표를 먼저 Puppet에 동기화한 뒤 공격 사건을 재생해야, 기절이 풀린 같은 스텝의
     // 공격 모션을 뒤늦은 idle 전환이 덮어쓰지 않는다.
     this.syncViews();
+    // 한 시뮬레이션 프레임의 유효 타격을 하나로 병합해 광역/연격이 기기를 연속 진동시키지 않게 한다.
+    if (hasMergedBattleHit(events)) settingsManager.haptic("battleHit");
     events.forEach((event) => this.playEvent(event));
     if (this.autoUltimate && !this.finished) this.fireReadyUltimates();
     this.refreshProfiles();
@@ -1658,6 +1663,8 @@ export class BattleScene extends Phaser.Scene {
 
   /** 준비 상태가 바뀔 때만 연출을 갈아 끼운다. 매 프레임 트윈을 다시 만들지 않는다. */
   private setUltimateReady(profile: ProfileView, ready: boolean): void {
+    // 화면 재생성이나 유지 프레임이 아니라 기존 false→true 경계의 플레이어 카드만 알린다.
+    if (isPlayerUltimateReadyTransition(profile.ready, ready, profile.fighter.side)) settingsManager.haptic("ultimateReady");
     profile.ready = ready;
     profile.pulse?.remove();
     profile.sweepTween?.remove();

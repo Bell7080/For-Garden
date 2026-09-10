@@ -5,14 +5,15 @@ import { COLOR_ASSIST_LAYOUT, COLOR_ASSIST_SURFACES } from "../../src/ui/colorAs
 
 /** 네 저장 토글의 on/off가 Phaser 없이도 각 소비 경계의 실제 정책 차이를 고정한다. */
 describe("settings presentation policies", () => {
-  it("저사양 모드는 파티클·파문·전신·후처리·렌더 품질 예산을 함께 낮춘다", () => {
-    const full = presentationPolicy(false);
-    const low = presentationPolicy(true);
-    expect(full).toEqual({ particleRatio: 1, ringRatio: 1, fullBodyScale: 1, postProcessing: true, renderQuality: 1 });
-    expect(low.particleRatio).toBeLessThan(full.particleRatio);
-    expect(low.ringRatio).toBeLessThan(full.ringRatio);
-    expect(low.fullBodyScale).toBeLessThan(full.fullBodyScale);
-    expect(low).toMatchObject({ postProcessing: false, renderQuality: 0.75 });
+  it("세 품질 프리셋은 게임 규칙이 아닌 명시적 렌더 예산만 단계별로 줄인다", () => {
+    const high = presentationPolicy("high");
+    const balanced = presentationPolicy("balanced");
+    const low = presentationPolicy("low");
+    expect(high).toEqual({ particleRatio: 1, ringRatio: 1, fullBodyScale: 1, postProcessing: true, renderQuality: 1 });
+    expect(balanced).toEqual({ particleRatio: 0.72, ringRatio: 0.75, fullBodyScale: 0.9, postProcessing: true, renderQuality: 0.9 });
+    expect(low).toEqual({ particleRatio: 0.45, ringRatio: 0.5, fullBodyScale: 0.78, postProcessing: false, renderQuality: 0.75 });
+    // 모든 작업량은 high → balanced → low 순서로만 줄어 프리셋 전환이 일관된다.
+    expect([high, balanced, low].map(({ particleRatio }) => particleRatio)).toEqual([1, 0.72, 0.45]);
   });
 
   it.each([

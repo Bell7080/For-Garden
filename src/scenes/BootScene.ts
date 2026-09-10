@@ -5,6 +5,7 @@ import { replaceSession, session } from "../state/session";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { setTextScale } from "../ui/textScale";
 import { EffectOverlayScene } from "./EffectOverlayScene";
+import { settingsManager } from "../managers/SettingsManager";
 
 export class BootScene extends Phaser.Scene {
   constructor() {
@@ -27,6 +28,8 @@ export class BootScene extends Phaser.Scene {
     relicProgression.grantStarterRunes();
     // 저장에서 복원한 접근성 배율을 어떤 씬도 생성되기 전에 공용 텍스트 계층에 반영한다.
     setTextScale(session.settings.accessibility.textScale);
+    // 정규화된 저장값을 Phaser TimeStep 하나에만 적용해 전투 시간과 렌더 빈도를 분리한다.
+    settingsManager.syncRuntime(this.game);
     // 글꼴·원화·Puppet 묶음은 타이틀이 로딩 화면 노릇을 하며 읽는다(scenes/loadingSteps.ts).
     // 부트는 저장 로드와 복구만 조율하고 곧바로 넘긴다.
     // 누른 자리에 답하는 겹은 씬 전환과 무관하게 계속 떠 있어야 하므로 start가 아니라 launch다.

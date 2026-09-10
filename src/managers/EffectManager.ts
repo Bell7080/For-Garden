@@ -6,7 +6,7 @@ import { flashPolicy, inkBlotPoints, mawTeeth, slashPoints, SIGNATURE_SPECS, typ
 import { damagePopupStyle, risingAlpha, shouldShowDamagePopup, type DamagePopupRequest } from "../ui/damageNumbers";
 import { battlefieldWashBands, groundAreaStyle, laneAreaPoints, radialAreaPoints, type GroundAreaRequest, type GroundAreaShape, type GroundAreaStyle } from "../ui/groundAreas";
 import { COLOR, textStyle } from "../ui/theme";
-import { motionPolicy, presentationPolicy, type MotionPolicy } from "../core/settings";
+import { motionPolicy, presentationPolicy, type GraphicsQuality, type MotionPolicy } from "../core/settings";
 import type { ActiveCombatDisplayEffect } from "../core/combatEffects";
 
 /**
@@ -39,8 +39,8 @@ export interface EffectManagerOptions {
   depth?: number;
   /** 호출 화면에서 확정한 공용 움직임 정책이다. 설정 원본을 받아 매니저가 다시 해석하지 않는다. */
   motion?: MotionPolicy;
-  /** 공용 예산 정책의 입력이며 이펙트 종류별 임의 저사양 분기를 금지한다. */
-  lowSpecMode?: boolean;
+  /** 공용 렌더 예산 정책의 입력이며 이펙트별 임의 품질 분기를 금지한다. */
+  graphicsQuality?: GraphicsQuality;
   /** 모든 타격·전용 연출 섬광이 공유하는 접근성 입력이다. */
   reduceFlashes?: boolean;
   /**
@@ -155,7 +155,7 @@ export class EffectManager {
     this.shakeEnabled = motion.cameraShakeFactor > 0;
     this.shakeFactor = motion.cameraShakeFactor;
     this.groundDepth = options.groundDepth ?? this.depth - 400;
-    this.quality = presentationPolicy(options.lowSpecMode ?? false);
+    this.quality = presentationPolicy(options.graphicsQuality ?? "high");
     this.flashes = flashPolicy(options.reduceFlashes ?? false);
     this.damageNumbers = options.damageNumbers;
     ensureEffectTextures(scene);
@@ -468,6 +468,8 @@ export class EffectManager {
 
   /** 가운데 섬광 한 장. 터지는 순간 가장 밝고 곧바로 꺼진다. */
   private openFlash(x: number, y: number, size: number, ms: number, alpha: number, color: number): void {
+    // 중심 광채는 판정 표시가 아닌 추가 후처리이므로 low에서만 생성 작업 자체를 생략한다.
+    if (!this.quality.postProcessing) return;
     const flash = this.scene.add.image(x, y, EFFECT_TEXTURE.glow)
       .setDisplaySize(size, size * 0.92)
       .setTint(color)

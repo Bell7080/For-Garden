@@ -1,19 +1,26 @@
+import type Phaser from "phaser";
 import { createDefaultSettings, normalizeSettings } from "../core/settings";
 import { saveManager, type SaveManager } from "../state/SaveManager";
 import { session, type GameSettings, type Session } from "../state/session";
 import { platformFeedback, type HapticPattern, type PlatformFeedback, type ScheduledNotification } from "../api/PlatformFeedback";
 import { setTextScale } from "../ui/textScale";
 import { adjustForQuietHours } from "../core/notificationSchedule";
+import { applyFrameRateLimit } from "../config/gameConfig";
 
 /** 설정 변경자가 저장과 알림을 빠뜨리지 않도록 한 공개 변경 경계다. */
 export class SettingsManager extends EventTarget {
   /** 알림 변경을 한 줄로 세워 느린 플랫폼 취소가 뒤의 사용자 선택보다 늦게 반영되지 않게 한다. */
   private notificationChanges: Promise<void> = Promise.resolve();
+  /** 부트가 등록한 Phaser 하나만 보관해 설정 변경을 코어 시계와 분리한다. */
+  private runtimeGame?: Phaser.Game;
 
   constructor(private readonly state: Session = session, private readonly saves: Pick<SaveManager, "save"> = saveManager, private readonly platform: PlatformFeedback = platformFeedback) { super(); }
 
   /** 외부 참조로 세션이 변경되지 않도록 정규화된 독립 스냅샷을 반환한다. */
   get(): GameSettings { return normalizeSettings(this.state.settings); }
+
+  /** 저장 로드 후와 사용자 변경이 같은 TimeStep 경계를 통과하게 한다. */
+  syncRuntime(game: Phaser.Game): void { this.runtimeGame = game; applyFrameRateLimit(game, this.get().presentation.frameRateLimit); }
 
   /** 섹션 단위 부분 변경을 합친 뒤 보정·저장·이벤트를 항상 같은 순서로 수행한다. */
   update(patch: { [K in keyof GameSettings]?: Partial<GameSettings[K]> }): GameSettings {
@@ -21,6 +28,7 @@ export class SettingsManager extends EventTarget {
     this.state.settings = normalizeSettings(merged);
     // 새로 그리는 모든 글자가 공용 스타일 배율을 사용하도록 한곳에서 동기화한다.
     setTextScale(this.state.settings.accessibility.textScale);
+    if (this.runtimeGame) applyFrameRateLimit(this.runtimeGame, this.state.settings.presentation.frameRateLimit);
     this.saves.save(this.state);
     this.dispatchEvent(new CustomEvent<GameSettings>("change", { detail: this.get() }));
     return this.get();
@@ -33,6 +41,7 @@ export class SettingsManager extends EventTarget {
     this.state.settings = { ...createDefaultSettings(), account };
     // 씬을 다시 그리기 전에도 이후 생성되는 글자가 즉시 기본 배율을 사용하도록 공용 배율을 먼저 맞춘다.
     setTextScale(this.state.settings.accessibility.textScale);
+    if (this.runtimeGame) applyFrameRateLimit(this.runtimeGame, this.state.settings.presentation.frameRateLimit);
     this.saves.save(this.state);
     this.dispatchEvent(new CustomEvent<GameSettings>("change", { detail: this.get() }));
     return this.get();

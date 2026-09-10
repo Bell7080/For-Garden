@@ -413,7 +413,7 @@ export class BattleScene extends Phaser.Scene {
     this.openBuff = undefined;
     // 파편·파문은 SD보다 앞이되 궁극기 컷인(900)보다는 뒤라 연출을 가리지 않는다.
     // 광역 범위만 배경 원화 위·SD 아래에 깔려 누가 어디 섰는지 가리지 않는다.
-    this.effects = new EffectManager(this, { depth: DEPTH.burst, groundDepth: DEPTH.ground, motion: this.motion, damageNumbers: currentSettings.presentation.damageNumbers, lowSpecMode: currentSettings.presentation.lowSpecMode, reduceFlashes: currentSettings.accessibility.reduceFlashes });
+    this.effects = new EffectManager(this, { depth: DEPTH.burst, groundDepth: DEPTH.ground, motion: this.motion, damageNumbers: currentSettings.presentation.damageNumbers, graphicsQuality: currentSettings.presentation.graphicsQuality, reduceFlashes: currentSettings.accessibility.reduceFlashes });
     this.combatEffects = new CombatEffectPresenter(this.effects);
     // 전장 전체를 때리는 궁극기는 그릴 경계가 없어 가장자리 워시로 알린다. 그 자리를 알려 준다.
     this.effects.setArena(this.state.arena);
@@ -739,7 +739,7 @@ export class BattleScene extends Phaser.Scene {
         try {
           // create 자체도 Puppet 로딩을 await하므로 생성 실패와 Scene 종료까지 같은 정리 경계로 감싼다.
           const accessibility = settingsManager.get();
-          this.activeCutIn = await UltimateCutIn.create(this, fighter.def, presentation, { lowSpecMode: accessibility.presentation.lowSpecMode, reduceFlashes: accessibility.accessibility.reduceFlashes });
+          this.activeCutIn = await UltimateCutIn.create(this, fighter.def, presentation, { graphicsQuality: accessibility.presentation.graphicsQuality, reduceFlashes: accessibility.accessibility.reduceFlashes });
           if (!this.sequenceValid(next.token, fighter)) return;
           await this.activeCutIn.play(timing);
         } finally {

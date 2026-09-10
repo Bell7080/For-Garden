@@ -5,6 +5,8 @@ import type { BattleUiMotion } from "../core/settings";
 import { chipPoints, drawInnerVignette, drawLayer, drawShapeOutline } from "./holo";
 import { battleBuffStackSpot } from "./battleStatusLayout";
 import { COLOR, textStyle } from "./theme";
+import { session } from "../state/session";
+import { addColorAssistMark, COLOR_ASSIST_LAYOUT } from "./colorAssist";
 
 /** 전투 프로필에 붙는 작은 버프 액자. 진행 Graphics는 생성 후 지우고 다시 그려 재사용한다. */
 export class BattleBuffChip extends Phaser.GameObjects.Container {
@@ -23,6 +25,8 @@ export class BattleBuffChip extends Phaser.GameObjects.Container {
     // 원화 위의 고대비 실루엣은 색각과 작은 화면에서도 효과 계열을 중복 부호화한다.
     this.add(this.drawEffectShape(size, battleBuffEffectShape(buff)));
     this.add([drawInnerVignette(scene, 0, 0, shape, { strength: 0.55 }), this.progress]);
+    // 효과 이름을 임의 도형으로 재해석하지 않고 공용 status 정책의 안정 키를 사용한다.
+    addColorAssistMark(scene, this, -size / 2 + COLOR_ASSIST_LAYOUT.statusChip.inset, -size / 2 + COLOR_ASSIST_LAYOUT.statusChip.inset, COLOR_ASSIST_LAYOUT.statusChip.size, session.settings.accessibility.colorAssist, "status", "buff");
     // 보이는 56px 액자보다 입력판을 넓혀 최소 64px 터치 영역을 확보한다.
     this.hit = scene.add.rectangle(0, 0, Math.max(64, size), Math.max(64, size), 0xffffff, 0).setInteractive({ useHandCursor: true });
     // 진행 정보는 모든 움직임 설정에서 유지하고, reduced/off는 눌림 장식의 크기만 줄인다.

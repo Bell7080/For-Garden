@@ -3,6 +3,8 @@ import { formatCurrency } from "../core/formatCurrency";
 import { chipPoints, drawInnerVignette, drawLayer, drawShapeOutline } from "./holo";
 import type { CurrencyIconKey } from "./currencyIcons";
 import { COLOR, textStyle } from "./theme";
+import { session } from "../state/session";
+import { addColorAssistMark, COLOR_ASSIST_LAYOUT } from "./colorAssist";
 
 /** 보상 액자의 상태색은 수령 가능/완료/진행 중을 카드와 같은 언어로 표현한다. */
 export type RewardFrameState = "normal" | "claimable" | "claimed";
@@ -20,6 +22,8 @@ export class RewardFrame extends Phaser.GameObjects.Container {
     this.add(scene.add.image(0, 0, options.icon).setDisplaySize(size * 0.78, size * 0.78).setAlpha(state === "claimed" ? 0.38 : 1));
     this.add(drawInnerVignette(scene, 0, 0, frame, { strength: 0.62 }));
     this.add(drawShapeOutline(scene, 0, 0, frame, { color, alpha: state === "claimed" ? 0.42 : 0.9, width: state === "claimable" ? 4 : 3 }));
+    // 수량의 텍스트 흐름과 반대 모서리를 고정 앵커로 사용해 1.3배에서도 겹치지 않는다.
+    addColorAssistMark(scene, this, -size / 2 + COLOR_ASSIST_LAYOUT.reward.inset, -size / 2 + COLOR_ASSIST_LAYOUT.reward.inset, COLOR_ASSIST_LAYOUT.reward.size, session.settings.accessibility.colorAssist, "status", state);
     // 수량은 아이콘과 분리된 정보가 되지 않도록 액자 모서리에 검은 외곽선과 함께 붙인다.
     const amount = scene.add.text(size / 2 - 8, size / 2 - 6, formatCurrency(options.amount), textStyle({ role: "display", size: Math.round(size * 0.23), color: state === "claimed" ? COLOR.inkDim : COLOR.accentText })).setOrigin(1, 1);
     amount.setStroke("#000000", 6); amount.setShadow(2, 3, "#000000", 2, false, true); this.add(amount);

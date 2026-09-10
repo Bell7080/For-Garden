@@ -28,6 +28,8 @@ import { calculateObservationJournalFlow, OBSERVATION_JOURNAL_SIZE, withoutRepea
 import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
 import { addStarMark } from "./rarityMark";
+import { session } from "../state/session";
+import { addColorAssistMark, COLOR_ASSIST_LAYOUT } from "./colorAssist";
 import { addMarkChip } from "./MarkChip";
 import { addRuneCard, addRuneFrame, RUNE_ACCENT, RUNE_CENTER_Y, runeTexture } from "./runeIcons";
 import { REACH_LABEL, STAT_TONE, reachToneHex } from "./statTones";
@@ -43,7 +45,6 @@ import { FALLBACK_SKILL_ICON } from "./skillIcons";
 import { skillArtFor, skillArtTint, SKILL_ART_WASH_ALPHA, type SkillArtSlot } from "./skillArt";
 import { gameApi } from "../api/FakeServer";
 import { BREAKTHROUGH_STEPS, canBreakThrough, canFeedRelic, FEED_UNIT, nextBreakthrough, relicExpToNext, relicLevelCap, RELIC_STAR_CAP, relicStars } from "../core/relicProgression";
-import { session } from "../state/session";
 import { BOND_FEROCITY_MULTIPLIER, BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL, BOND_XP_REWARD } from "../core/bond";
 import { getRelicCatalogDisclosure } from "../core/relicCatalog";
 import { observations } from "../managers/ObservationManager";
@@ -397,6 +398,8 @@ export class InfoManager {
   private readonly nameShadow: Phaser.GameObjects.Text;
   private readonly elementBadge: AffinityBadge;
   private readonly roleBadge: AffinityBadge;
+  /** 상세 대상을 바꿀 때 정책 표식 두 개만 교체하는 고정 앵커 층이다. */
+  private readonly colorAssistMarks: Phaser.GameObjects.Container;
   private readonly roleText: Phaser.GameObjects.Text;
   private readonly bookmarkBadge: BadgeHandle;
   private readonly favoriteBadge: BadgeHandle;
@@ -517,6 +520,8 @@ export class InfoManager {
     this.elementBadge = new AffinityBadge(scene, 0, 152, ELEMENT_ICON.fire, AFFINITY.main);
     this.roleBadge = new AffinityBadge(scene, 0, 152, ROLE_ICON.warrior, AFFINITY.sub);
     this.chrome.add([this.elementBadge, this.roleBadge]);
+    this.colorAssistMarks = scene.add.container(0, 0);
+    this.chrome.add(this.colorAssistMarks);
 
     this.bookmarkBadge = this.addBadge(84, 300, "bookmark", BOOKMARK_ON, () => this.toggleBookmark());
     this.favoriteBadge = this.addBadge(176, 300, "heart", FAVORITE_ON, () => this.toggleFavorite());
@@ -2151,6 +2156,12 @@ export class InfoManager {
     const badgeLeft = this.nameText.x + this.nameText.width + AFFINITY.gap;
     this.elementBadge.setIcon(ELEMENT_ICON[def.element], AFFINITY.main).setPosition(badgeLeft + AFFINITY.main / 2, 152).setVisible(owned);
     this.roleBadge.setIcon(ROLE_ICON[def.role], AFFINITY.sub).setPosition(badgeLeft + AFFINITY.main + AFFINITY.sub / 2 + 12, 158).setVisible(owned);
+    this.colorAssistMarks.removeAll(true);
+    if (owned) {
+      // 이름 너비와 무관한 화면 좌우 앵커라 1.3배 텍스트에서도 뱃지·탭을 침범하지 않는다.
+      addColorAssistMark(this.scene, this.colorAssistMarks, BASE_WIDTH - 72, 70, COLOR_ASSIST_LAYOUT.card.size, session.settings.accessibility.colorAssist, "rarity", def.rarity);
+      addColorAssistMark(this.scene, this.colorAssistMarks, BASE_WIDTH - 72, 112, COLOR_ASSIST_LAYOUT.card.size, session.settings.accessibility.colorAssist, "element", def.element);
+    }
     // 속성과 직군은 옆의 아이콘이 말한다. 같은 것을 글자로 또 적으면 줄만 길어진다.
     this.roleText.setText("NO." + def.specimenNumber + (owned ? "   " + def.origin : "   실루엣 기록"));
     this.refreshBadges();

@@ -1,6 +1,8 @@
 import Phaser from "phaser";
 import { HOLO } from "./holo";
 import type { AffinityDirection as Direction } from "../core/partyAffinity";
+import { session } from "../state/session";
+import { addColorAssistMark, COLOR_ASSIST_LAYOUT } from "./colorAssist";
 
 /** 상성 화살표의 상태색. 프리팹이 색과 겹침을 소유해 씬마다 다른 표식을 만들지 않게 한다. */
 const DIRECTION_COLOR: Record<Exclude<Direction, "neutral">, number> = {
@@ -39,6 +41,8 @@ export class AffinityDirection extends Phaser.GameObjects.Container {
   private readonly glow: Phaser.GameObjects.Graphics;
   private readonly face: Phaser.GameObjects.Graphics;
   private readonly edge: Phaser.GameObjects.Graphics;
+  /** 방향을 갱신할 때 이전 정책 표식이 쌓이지 않게 현재 한 개만 소유한다. */
+  private assist?: Phaser.GameObjects.Container;
 
   constructor(scene: Phaser.Scene, x: number, y: number, private readonly size = 54) {
     super(scene, x, y);
@@ -53,6 +57,7 @@ export class AffinityDirection extends Phaser.GameObjects.Container {
 
   /** 중립은 아무 라벨도 남기지 않고 컨테이너 전체를 숨긴다. */
   setDirection(direction: Direction): this {
+    this.assist?.destroy(); this.assist = undefined;
     if (direction === "neutral") return this.setVisible(false);
     const color = DIRECTION_COLOR[direction];
     // 기본 좌표는 뾰족한 끝이 위를 향하므로, 아래쪽 방향에서만 y를 뒤집는다.
@@ -82,6 +87,9 @@ export class AffinityDirection extends Phaser.GameObjects.Container {
     this.edge.clear().lineStyle(2, 0xffffff, 0.85);
     this.edge.lineBetween(shoulders[0].x, shoulders[0].y, tip.x, tip.y);
     this.edge.lineBetween(tip.x, tip.y, shoulders[1].x, shoulders[1].y);
+
+    // 화살표 색과 별개인 정책 표식은 플랫폼 쪽 고정 앵커에 두며 텍스트 폭을 사용하지 않는다.
+    this.assist = addColorAssistMark(this.scene, this, COLOR_ASSIST_LAYOUT.affinity.offsetX, 0, COLOR_ASSIST_LAYOUT.affinity.size, session.settings.accessibility.colorAssist, "status", direction);
 
     return this.setVisible(true);
   }

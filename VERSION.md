@@ -1,6 +1,6 @@
 # 버전 관리
 
-현재 버전: **v0.89.0**
+현재 버전: **v0.89.1**
 
 `VERSION.md`와 `package.json`의 `version`은 항상 같은 값을 쓰고, 타이틀(로딩) 화면 좌측
 하단 표기는 그 값을 그대로 읽는다. 화면에 손으로 적어 두지 않는다.
@@ -31,6 +31,29 @@
   그 이전의 초기 프로토타입 단계는 `v0.1.0` 항목 하나로 묶었다.
 
 ## 변경 이력
+
+## v0.89.1 — 2026-09-10
+
+**컨텍스트를 잃었다 되찾은 뒤 캐릭터가 통째로 사라지던 것을 고쳤다.** 모바일에서 앱을
+백그라운드로 보냈다 돌아오면 WebGL 컨텍스트가 날아가는 것이 정상 동작인데, Phaser는 제가 감싼
+자원(텍스처·버퍼·프로그램)만 `RESTORE_WEBGL` 시점에 되살리고 `IndexedPuppetCreature`가 raw `gl`로
+만든 program·buffer는 손대지 않는다. 게다가 `dispatchContextRestored`는 `this.gl`을 다시 대입하지
+않아 **복구 뒤에도 같은 객체**라, 그것으로 키를 삼은 program 캐시가 죽은 손잡이를 계속 돌려줬다.
+배경과 UI는 멀쩡히 그려지고 Puppet만 빠진 화면이 되며, 전화 한 통 받고 돌아오면 재현된다.
+
+- `Phaser.Renderer.Events.RESTORE_WEBGL`을 렌더러당 한 번만 구독해 GPU 세대를 올리고 program
+  캐시를 비운다. 개체마다 구독하면 전투 여섯이 같은 신호를 여섯 번 듣는다.
+- 개체별 버퍼는 만든 세대를 함께 들고 있다가 세대가 다르면 다시 만든다. **죽은 세대의 손잡이는
+  지우지 않는다** — 새 컨텍스트에 `deleteBuffer`를 부르면 `INVALID_OPERATION`이고, 죽은 컨텍스트의
+  자원은 브라우저가 알아서 회수한다.
+- 렌더 자체는 Phaser가 `contextLost` 동안 `render`·`preRender`·`postRender`를 모두 건너뛰므로
+  잃은 동안의 방어는 따로 두지 않았다.
+
+**회귀 검사는 픽셀이 아니라 죽은 program을 쓴 횟수로 센다**(`tests/e2e/webglContextRestore.spec.ts`).
+그것이 이 버그의 정의 그대로라 원화나 배치가 바뀌어도 흔들리지 않는다. 실측으로 고치기 전에는
+복구 후 35회, 고친 뒤 0회다. 소스 계약(`tests/unit/puppetPipelineBoundary.test.ts`)도 구독 순서와
+세대 검사를 함께 고정한다.
+
 
 ## v0.89.0 — 2026-09-10
 

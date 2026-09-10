@@ -58,7 +58,7 @@ import { battleHeaderText, createExpeditionBossSkirmishConfig, createExpeditionS
 import type { ExpeditionBossAction } from "../core/expeditionBoss";
 import { expeditionManager, ExpeditionBossSettlementError, ExpeditionBossSettlementFlow } from "../managers/ExpeditionManager";
 import { settingsManager } from "../managers/SettingsManager";
-import { battleUiMotionFactor } from "../core/settings";
+import { motionPolicy, type MotionPolicy } from "../core/settings";
 import type { SettleExpeditionRunResponse, SubmitExpeditionBossScoreResponse } from "../api/contracts";
 import { currencyRecordToRewardItems, openRewardPopup } from "../ui/RewardPopup";
 import { BATTLE_CONTROLS, BATTLE_STATUS_LAYOUT } from "../ui/battleStatusLayout";
@@ -270,6 +270,8 @@ export class BattleScene extends Phaser.Scene {
   /** init 입력은 씬 한 생명주기 동안 고정되며 원정 진행 상태는 매니저만 저장한다. */
   private battleInput: BattleSceneInputDto = { mode: "stage" };
   private state!: SkirmishState;
+  /** 전투 시작 시 고정해 카메라·게이지·카드가 같은 최종 움직임 정책을 소비한다. */
+  private motion!: MotionPolicy;
   private views = new Map<string, FighterView>();
   /** 소환수는 fighter 상세/프로필과 분리해 회수·재호출이 독립적으로 생성과 파괴를 반복한다. */
   private summonViews = new Map<string, SummonView>();
@@ -394,8 +396,8 @@ export class BattleScene extends Phaser.Scene {
     // 이전 전투/환경설정에서 저장한 조작 상태를 새 판의 시작값으로 그대로 복원한다.
     const currentSettings = settingsManager.get();
     const battleSettings = currentSettings.game;
-    // 전투 시작 시 하나의 설정 스냅샷을 모든 HUD와 카메라 연출에 동일하게 전달한다.
-    const battleUiMotion = currentSettings.presentation.battleUiMotion;
+    // 전투 시작 시 하나의 최종 정책 스냅샷을 모든 HUD와 카메라 연출에 동일하게 전달한다.
+    this.motion = motionPolicy(currentSettings);
     this.battleSpeed = battleSettings.battleSpeed;
     this.autoUltimate = battleSettings.autoUltimate;
     this.ultimateSequenceActive = false;
@@ -411,7 +413,7 @@ export class BattleScene extends Phaser.Scene {
     this.openBuff = undefined;
     // 파편·파문은 SD보다 앞이되 궁극기 컷인(900)보다는 뒤라 연출을 가리지 않는다.
     // 광역 범위만 배경 원화 위·SD 아래에 깔려 누가 어디 섰는지 가리지 않는다.
-    this.effects = new EffectManager(this, { depth: DEPTH.burst, groundDepth: DEPTH.ground, shake: currentSettings.presentation.screenShake, damageNumbers: currentSettings.presentation.damageNumbers, battleUiMotion, lowSpecMode: currentSettings.presentation.lowSpecMode, reduceFlashes: currentSettings.accessibility.reduceFlashes });
+    this.effects = new EffectManager(this, { depth: DEPTH.burst, groundDepth: DEPTH.ground, motion: this.motion, damageNumbers: currentSettings.presentation.damageNumbers, lowSpecMode: currentSettings.presentation.lowSpecMode, reduceFlashes: currentSettings.accessibility.reduceFlashes });
     this.combatEffects = new CombatEffectPresenter(this.effects);
     // 전장 전체를 때리는 궁극기는 그릴 경계가 없어 가장자리 워시로 알린다. 그 자리를 알려 준다.
     this.effects.setArena(this.state.arena);
@@ -612,7 +614,7 @@ export class BattleScene extends Phaser.Scene {
       const feverTint = skillArtTint(fighter.def.element, fighter.def.role);
       const shadow = this.add.ellipse(fighter.x, fighter.y + 4, 132, 24, 0x000000, 0.38);
       const barColor = fighter.side === "player" ? COLOR.hpFill : COLOR.hpEnemy;
-      const hpBar = new UnitHealthBar(this, barColor, settingsManager.get().presentation.battleUiMotion).snap(1);
+      const hpBar = new UnitHealthBar(this, barColor, this.motion.effectiveBattleUiMotion).snap(1);
       const statusChips = new UnitStatusChips(this);
       // 체력 바와 칩 줄을 함께 덮는 입력면. 둘 중 어디를 눌러도 지금 걸린 상태를 펼친다 —
       // 칩은 작아 "무엇이 걸렸나"까지만 말하고, 몇 겹이 얼마나 남았는지는 눌러서 읽는다.
@@ -650,7 +652,7 @@ export class BattleScene extends Phaser.Scene {
         relic: fighter.def, level: relicProgression.getProgress(fighter.def.id).level, stars: fighter.breakthrough + 1,
         currentHp: fighter.hp, maxHp: fighter.maxHp, ferocity: fighter.ferocity,
         active: false, readOnly: false, sub: fighter.def.ultimate.name,
-        battleUiMotion: settingsManager.get().presentation.battleUiMotion,
+        battleUiMotion: this.motion.effectiveBattleUiMotion,
       });
       const { card, glow, sweep, charge, hpLabel, hpBar, ferocityLabel, ferocityBar } = prefab;
       // 궁극기 게이지는 카드 위에 덮인 어둠이다. 시계 방향으로 걷히다가 다 차면 사라져
@@ -747,10 +749,8 @@ export class BattleScene extends Phaser.Scene {
           this.contributionPanel?.setInputLocked(false);
         }
         if (!this.sequenceValid(next.token, fighter)) return;
-        const presentationSettings = settingsManager.get().presentation;
-        const shakeFactor = presentationSettings.screenShake ? battleUiMotionFactor(presentationSettings.battleUiMotion) : 0;
-        // 끔에서는 카메라만 멈추고 뒤이어 재생되는 피해 숫자·색상·잔상 사건은 건드리지 않는다.
-        if (shakeFactor > 0) this.cameras.main.shake(180, presentation.cameraShakeIntensity * shakeFactor);
+        // 정책이 0이면 카메라만 멈추고 뒤이어 재생되는 피해 숫자·색상·잔상 사건은 건드리지 않는다.
+        if (this.motion.cameraShakeFactor > 0) this.cameras.main.shake(180, presentation.cameraShakeIntensity * this.motion.cameraShakeFactor);
       }
 
       // 스킵도 입력 순간의 낡은 상태를 믿지 않는다. 컷인 유무와 무관하게 발사 직전 생존·게이지·종료를 재검증한다.
@@ -1639,7 +1639,7 @@ export class BattleScene extends Phaser.Scene {
    */
   private stepMeters(deltaMs: number): void {
     for (const view of this.views.values()) if (!view.dead) view.hpBar.step(deltaMs);
-    const motionFactor = battleUiMotionFactor(settingsManager.get().presentation.battleUiMotion);
+    const motionFactor = this.motion.battleUiFactor;
     const k = motionFactor === 0 ? 1 : Math.min(1, (deltaMs / 1000) * METER_EASE * motionFactor);
     for (const profile of this.profiles) {
       const { fighter } = profile;

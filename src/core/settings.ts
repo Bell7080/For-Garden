@@ -15,6 +15,43 @@ export function battleUiMotionFactor(value: BattleUiMotion): number {
   return value === "default" ? 1 : value === "reduced" ? 0.4 : 0;
 }
 
+/** 저장 토글 사이의 우선순위를 렌더러가 재해석하지 않도록 확정한 움직임 정책이다. */
+export interface MotionPolicy {
+  /** 전투 카메라 흔들림에만 곱하며, 화면 흔들림을 끄면 접근성 선택과 무관하게 항상 0이다. */
+  cameraShakeFactor: number;
+  /** 전투 게이지·카드 반응에만 쓰는 최종 강도다. */
+  battleUiFactor: number;
+  /** 팝업·전환을 포함한 비필수 이동 거리에 공통으로 곱한다. */
+  nonEssentialDistanceFactor: number;
+  /** 반복 애니메이션 횟수에 공통으로 곱하며 0은 추가 반복을 허용하지 않는다. */
+  nonEssentialRepeatFactor: number;
+  /** 기존 전투 UI 프리팹에 넘길 수 있도록 최종 강도를 저장 열거형으로 표현한다. */
+  effectiveBattleUiMotion: BattleUiMotion;
+}
+
+/** 정책 계산에 필요한 저장 설정의 최소 읽기 계약이다. */
+export interface MotionPolicySettings {
+  presentation: Pick<GameSettings["presentation"], "screenShake" | "battleUiMotion">;
+  accessibility: Pick<GameSettings["accessibility"], "reduceMotion">;
+}
+
+/** 화면 흔들림·전체 움직임 감소·전투 UI 강도의 우선순위를 한 번에 계산하는 순수 함수다. */
+export function motionPolicy(settings: MotionPolicySettings): MotionPolicy {
+  // 전체 움직임 감소는 비필수 거리와 반복을 함께 줄이고 전투 UI의 최대 강도를 `reduced`로 막는다.
+  const globalFactor = settings.accessibility.reduceMotion ? 0.4 : 1;
+  const requestedBattleUiFactor = battleUiMotionFactor(settings.presentation.battleUiMotion);
+  const battleUiFactor = Math.min(requestedBattleUiFactor, globalFactor);
+  const effectiveBattleUiMotion: BattleUiMotion = battleUiFactor === 0 ? "off" : battleUiFactor < 1 ? "reduced" : "default";
+  return {
+    // 화면 흔들림 끄기가 최우선이며, 켠 경우에만 전체 움직임 감소의 공통 배율을 적용한다.
+    cameraShakeFactor: settings.presentation.screenShake ? globalFactor : 0,
+    battleUiFactor,
+    nonEssentialDistanceFactor: globalFactor,
+    nonEssentialRepeatFactor: settings.accessibility.reduceMotion ? 0 : 1,
+    effectiveBattleUiMotion,
+  };
+}
+
 /** 저사양 선택을 모든 프레젠테이션 소비자가 공유하는 명시적 렌더 예산으로 바꾼다. */
 export function presentationPolicy(lowSpecMode: boolean) {
   // 씬은 이 값을 다시 해석하지 않고 파티클·전신·후처리 경계에 그대로 전달한다.

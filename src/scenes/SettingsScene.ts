@@ -125,7 +125,7 @@ export class SettingsScene extends Phaser.Scene {
     } else if (this.activeTab === "play") {
       section("연출 · 게임", 1140);
       // 네 프레젠테이션 선택은 각각 공용 정책 소비자가 있으므로 효과 없는 임시 토글을 노출하지 않는다.
-      ([['화면 흔들림','screenShake'],['피해 숫자','damageNumbers'],['연구 연출 단축','shortenExcavation'],['저사양 모드','lowSpecMode']] as const).forEach(([a,b]) => toggle(a,'presentation',b));
+      ([['전투 화면 흔들림','screenShake'],['피해 숫자','damageNumbers'],['연구 연출 단축','shortenExcavation'],['저사양 모드','lowSpecMode']] as const).forEach(([a,b]) => toggle(a,'presentation',b));
       // 기존 선택 행의 크기 반응과 강조색을 재사용하고 저장값만 안정적인 영문 ID로 유지한다.
       const motionLabels = { default: "기본", reduced: "감소", off: "끔" } as const;
       this.content.add(new SettingsSelectRow(this,90,y,'전투 UI 움직임',s.presentation.battleUiMotion,['default','reduced','off'] as const,v=>settingsManager.update({presentation:{battleUiMotion:v}}),v=>motionLabels[v])); y+=94;
@@ -138,8 +138,7 @@ export class SettingsScene extends Phaser.Scene {
       section("접근성", 650);
       this.content.add(new SettingsSelectRow(this,90,y,'텍스트 크기',s.accessibility.textScale,[1,1.15,1.3] as const,value=>{ settingsManager.update({accessibility:{textScale:value}}); this.scene.restart({ tab: "access" }); })); y+=94;
       // 접근성 선택은 공용 효과·의미 표식 경계에서 소비하며 씬마다 별도 색이나 밝기를 만들지 않는다.
-      toggle('화면 흔들림 감소','accessibility','reduceMotion'); toggle('섬광 감소','accessibility','reduceFlashes'); toggle('색각 보조','accessibility','colorAssist');
-      this.content.add(this.add.text(90, y + 28, "텍스트 배율은 공용 스타일에 적용되며 장면 좌표는 변경하지 않습니다.", textStyle({ role: "body", size: 22, color: COLOR.inkDim, wrap: 850 }))); y += 120;
+      toggle('전체 움직임 감소','accessibility','reduceMotion'); toggle('섬광 감소','accessibility','reduceFlashes'); toggle('색각 보조','accessibility','colorAssist');
     } else {
       y = this.buildSupportRows(y, section);
     }

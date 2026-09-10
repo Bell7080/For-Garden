@@ -133,17 +133,16 @@ export class LobbyScene extends Phaser.Scene {
     this.buildUtilityRail();
     this.buildMissionEntry();
 
-    // 결투 — 기존 원정 자리는 추후 PvP가 들어올 독립 입구로 보존한다.
+    // 결투 — 기존 원정 자리를 독립 PvP 모드 선택 화면으로 연결한다.
     new Button(this, LOBBY_ACTION_BOUNDS.expedition.x, LOBBY_ACTION_BOUNDS.expedition.y, {
       width: LOBBY_ACTION_BOUNDS.expedition.width,
       height: LOBBY_ACTION_BOUNDS.expedition.height,
       label: "결투",
-      sub: "준비 중",
       fontSize: 34,
       // 출격과 성격이 다른 입구라 강조 양식을 쓰지 않는다. 같은 원근만 공유한다.
       perspective: "right",
       tilt: -6,
-      onClick: () => this.notReady("결투"),
+      onClick: () => this.scene.start("pvp"),
     });
 
     // 출격 — 로비에서 가장 큰 버튼이다. 주황빛 강조로 다른 입구와 구분한다.

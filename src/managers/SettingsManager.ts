@@ -7,6 +7,9 @@ import { adjustForQuietHours } from "../core/notificationSchedule";
 
 /** 설정 변경자가 저장과 알림을 빠뜨리지 않도록 한 공개 변경 경계다. */
 export class SettingsManager extends EventTarget {
+  /** 알림 변경을 한 줄로 세워 느린 플랫폼 취소가 뒤의 사용자 선택보다 늦게 반영되지 않게 한다. */
+  private notificationChanges: Promise<void> = Promise.resolve();
+
   constructor(private readonly state: Session = session, private readonly saves: Pick<SaveManager, "save"> = saveManager, private readonly platform: PlatformFeedback = platformFeedback) { super(); }
 
   /** 외부 참조로 세션이 변경되지 않도록 정규화된 독립 스냅샷을 반환한다. */
@@ -50,8 +53,33 @@ export class SettingsManager extends EventTarget {
   async confirmNotifications(): Promise<boolean> {
     const permission = this.platform.getNotificationPermission();
     const resolved = permission === "default" ? await this.platform.requestNotificationPermission() : permission;
-    this.update({ notifications: { enabled: resolved === "granted" } });
+    await this.updateNotificationPreferences({ enabled: resolved === "granted" });
     return resolved === "granted";
+  }
+
+  /**
+   * 알림 선택 저장과 이미 등록된 플랫폼 예약 해제를 직렬화하는 전용 변경 경계다.
+   * 조용한 시간 및 시작·종료 시각 변경에는 원래 만료 시각이 저장되어 있지 않으므로 기존 ID로
+   * 시각을 추측해 재예약하지 않는다. 해당 변경은 콘텐츠 소유자가 다음 예약을 만들 때부터 적용한다.
+   */
+  updateNotificationPreferences(patch: Partial<Omit<GameSettings["notifications"], "lastScheduledIds">>): Promise<GameSettings> {
+    let result!: GameSettings;
+    const apply = async (): Promise<void> => {
+      const previous = this.get().notifications;
+      result = this.update({ notifications: patch });
+      const current = result.notifications;
+      const kinds: ScheduledNotification["kind"][] = ["staminaFull", "dailyMission"];
+      // 전체 OFF는 두 종류를, 개별 ON→OFF는 그 종류만 정리한다.
+      const targets = !current.enabled
+        ? kinds
+        : kinds.filter(kind => previous[kind] && !current[kind]);
+      for (const kind of targets) await this.cancelNotification(kind);
+      result = this.get();
+    };
+    // 앞 작업이 실패해도 큐를 복구해 이후 사용자의 선택이 막히지 않게 한다.
+    const queued = this.notificationChanges.then(apply, apply);
+    this.notificationChanges = queued.then(() => undefined, () => undefined);
+    return queued.then(() => result);
   }
 
   /** 콘텐츠 시스템이 계산한 실제 만료 시각을 그대로 예약하고 마지막 ID를 저장한다. */
@@ -73,8 +101,11 @@ export class SettingsManager extends EventTarget {
   /** 설정 해제나 콘텐츠 갱신 시 저장된 예약 식별자까지 함께 정리한다. */
   async cancelNotification(kind: ScheduledNotification["kind"]): Promise<boolean> {
     const settings = this.get(); const id = settings.notifications.lastScheduledIds[kind]; if (!id) return false;
-    const cancelled = await this.platform.cancelNotification(id); const next = { ...settings.notifications.lastScheduledIds }; delete next[kind];
-    this.update({ notifications: { lastScheduledIds: next } }); return cancelled;
+    const cancelled = await this.platform.cancelNotification(id);
+    // 실패한 ID는 재시도할 수 있게 남기고, 대기 중 새 예약이 같은 종류를 대체했다면 새 ID도 보존한다.
+    if (!cancelled || this.get().notifications.lastScheduledIds[kind] !== id) return cancelled;
+    const next = { ...this.get().notifications.lastScheduledIds }; delete next[kind];
+    this.update({ notifications: { lastScheduledIds: next } }); return true;
   }
 }
 

@@ -71,7 +71,7 @@ describe("settings", () => {
     manager.update({ vibration: { enabled: false } }); expect(manager.haptic("battleHit")).toBe(false); expect(platform.haptic).not.toHaveBeenCalled();
     manager.update({ vibration: { enabled: true, combatHit: false } }); expect(manager.haptic("battleHit")).toBe(false); expect(platform.haptic).not.toHaveBeenCalled();
     // 게이트가 열린 뒤에도 브라우저 어댑터의 미지원 false를 성공으로 가장하지 않고 보존한다.
-    platform.haptic.mockReturnValue(false); manager.update({ vibration: { combatHit: true } }); expect(manager.haptic("battleHit")).toBe(false);
+    vi.mocked(platform.haptic).mockReturnValue(false); manager.update({ vibration: { combatHit: true } }); expect(manager.haptic("battleHit")).toBe(false);
   });
 
   it("다단 히트와 광역 피해를 사건 묶음당 한 번의 타격 요청으로 병합한다", () => {
@@ -112,6 +112,48 @@ describe("settings", () => {
     const request: ScheduledNotification = { id: "stamina-42", kind: "staminaFull", title: "충전 완료", body: "스테미나가 가득 찼습니다.", expiresAt: new Date(Date.now() + 60_000) };
     await expect(manager.scheduleNotification(request)).resolves.toBe("stamina-42"); expect(platform.cancelNotification).toHaveBeenCalledWith("old"); expect(platform.scheduleNotification).toHaveBeenCalledWith(request); expect(manager.get().notifications.lastScheduledIds.staminaFull).toBe("stamina-42");
     await expect(manager.cancelNotification("staminaFull")).resolves.toBe(true); expect(manager.get().notifications.lastScheduledIds.staminaFull).toBeUndefined();
+  });
+
+  it("전체 알림을 끄면 두 예약을 취소하고 성공한 ID만 저장에서 제거한다", async () => {
+    const state = createDefaultSession(); const platform = fakePlatform(); const save = vi.fn(); const manager = new SettingsManager(state, { save }, platform);
+    manager.update({ notifications: { enabled: true, lastScheduledIds: { staminaFull: "stamina-old", dailyMission: "daily-old" } } });
+    await manager.updateNotificationPreferences({ enabled: false });
+    // 전체 게이트와 각 플랫폼 ID가 한 변경 경계에서 함께 정리되어야 한다.
+    expect(platform.cancelNotification).toHaveBeenCalledWith("stamina-old"); expect(platform.cancelNotification).toHaveBeenCalledWith("daily-old");
+    expect(manager.get().notifications).toMatchObject({ enabled: false, lastScheduledIds: {} });
+  });
+
+  it("개별 알림을 끄면 다른 종류의 예약은 보존한다", async () => {
+    const state = createDefaultSession(); const platform = fakePlatform(); const manager = new SettingsManager(state, { save: vi.fn() }, platform);
+    manager.update({ notifications: { enabled: true, lastScheduledIds: { staminaFull: "stamina-old", dailyMission: "daily-old" } } });
+    await manager.updateNotificationPreferences({ staminaFull: false });
+    // 종류별 OFF는 대상 ID 하나만 플랫폼과 저장 모델 양쪽에서 제거한다.
+    expect(platform.cancelNotification).toHaveBeenCalledTimes(1); expect(platform.cancelNotification).toHaveBeenCalledWith("stamina-old");
+    expect(manager.get().notifications.lastScheduledIds).toEqual({ dailyMission: "daily-old" });
+  });
+
+  it("플랫폼 취소 실패 시 재시도할 예약 ID를 저장 모델에 남긴다", async () => {
+    const state = createDefaultSession(); const platform = fakePlatform(); vi.mocked(platform.cancelNotification).mockResolvedValue(false);
+    const manager = new SettingsManager(state, { save: vi.fn() }, platform);
+    manager.update({ notifications: { enabled: true, lastScheduledIds: { staminaFull: "retry-me" } } });
+    await manager.updateNotificationPreferences({ staminaFull: false });
+    // 선택값은 저장하되 실패한 플랫폼 예약을 성공한 것처럼 장부에서 지우지 않는다.
+    expect(manager.get().notifications.staminaFull).toBe(false);
+    expect(manager.get().notifications.lastScheduledIds.staminaFull).toBe("retry-me");
+  });
+
+  it("느린 비활성화 뒤 빠른 재활성화를 직렬화해 최신 선택을 보존한다", async () => {
+    const state = createDefaultSession(); const platform = fakePlatform(); let finishCancellation!: (cancelled: boolean) => void;
+    vi.mocked(platform.cancelNotification).mockImplementation(() => new Promise(resolve => { finishCancellation = resolve; }));
+    const manager = new SettingsManager(state, { save: vi.fn() }, platform);
+    manager.update({ notifications: { enabled: true, lastScheduledIds: { staminaFull: "stamina-old" } } });
+    const disabling = manager.updateNotificationPreferences({ enabled: false });
+    const reenabling = manager.updateNotificationPreferences({ enabled: true });
+    await vi.waitFor(() => expect(platform.cancelNotification).toHaveBeenCalledOnce());
+    finishCancellation(true); await Promise.all([disabling, reenabling]);
+    // 오래 걸린 OFF 정리가 끝난 뒤 최신 ON 변경이 실행되어 enabled를 다시 덮어쓰지 못한다.
+    expect(manager.get().notifications.enabled).toBe(true);
+    expect(manager.get().notifications.lastScheduledIds.staminaFull).toBeUndefined();
   });
 
   it("자정을 넘는 야간 제한과 같은 날 제한을 종료 시각으로 미룬다", () => {

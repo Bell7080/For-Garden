@@ -11,7 +11,7 @@ import { session } from "../state/session";
 import { Button } from "./Button";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { chipPoints, drawHairline, drawLayer } from "./holo";
-import { addItemFrame } from "./itemFrame";
+import { addFramedIcon } from "./itemFrame";
 import { formatCurrency } from "../core/formatCurrency";
 import { PopupLayer } from "./PopupLayer";
 import { addSectionTitle } from "./SectionTitle";
@@ -46,7 +46,7 @@ const TONE = { value: "#ffe9a3", timer: COLOR.inkDim } as const;
  * 이제 액자를 키우고 그 아래에 `+30`을 크게 세우며, 가진 수는 가방 칸과 같은 양식으로 **액자
  * 우하단**에 겹친다 — 같은 "얼마나 가졌나"가 화면마다 다른 자리에 서지 않게 한다.
  */
-const CELL = { frameY: -84, frameSize: 108, gainY: 6, nameY: 48, detailY: 82, buttonY: 112, buttonHeight: 62, padX: 14, iconRatio: 0.78 } as const;
+const CELL = { frameY: -84, frameSize: 108, gainY: 6, nameY: 48, detailY: 82, buttonY: 112, buttonHeight: 62, padX: 14 } as const;
 
 export class StaminaPopup {
   private readonly inventory = new InventoryManager(session);
@@ -88,11 +88,7 @@ export class StaminaPopup {
     view.add(drawLayer(this.scene, 0, LAYOUT.hero.y, panelShape(LAYOUT.hero.width, LAYOUT.hero.height), { fill: 0x101720, alpha: 0.9, edge: COLOR.accent, edgeAlpha: 0.35 }));
     // 시간 줄이 없는 순간(가득 참)에도 남은 둘이 위로 쏠리지 않도록 덩어리째 가운데에 세운다.
     const stack = heroStack(LAYOUT.hero.y, timer !== undefined);
-    view.add(addItemFrame(this.scene, 0, stack.frameY, LAYOUT.frameSize));
-    // 액자를 거의 채우고 같은 그림을 검게 한 겹 뒤에 깔아 실루엣을 띄운다.
-    const heroIcon = LAYOUT.frameSize * CELL.iconRatio;
-    view.add(this.scene.add.image(4, stack.frameY + 5, CURRENCY_ICON_BY_WALLET.stamina).setDisplaySize(heroIcon, heroIcon).setTint(0x000000).setAlpha(0.5));
-    view.add(this.scene.add.image(0, stack.frameY, CURRENCY_ICON_BY_WALLET.stamina).setDisplaySize(heroIcon, heroIcon));
+    addFramedIcon(this.scene, view, 0, stack.frameY, LAYOUT.frameSize, CURRENCY_ICON_BY_WALLET.stamina);
     view.add(this.scene.add.text(0, stack.valueY, `${amount.toLocaleString()} / ${maximum.toLocaleString()}`, textStyle({ role: "display", size: 52, color: TONE.value })).setOrigin(0.5).setShadow(2, 6, "#05070a", 7, false, true));
     if (timer && stack.timerY !== undefined) view.add(this.scene.add.text(0, stack.timerY, timer, textStyle({ role: "body", size: 22, color: TONE.timer })).setOrigin(0.5));
 
@@ -137,20 +133,13 @@ export class StaminaPopup {
     const cell = this.scene.add.container(x, LAYOUT.cell.y);
     const { width, height } = LAYOUT.cell;
     cell.add(drawLayer(this.scene, 0, 0, panelShape(width, height), { fill: 0x141a22, alpha: 0.94, edge: COLOR.accent, edgeAlpha: 0.28 }));
-    cell.add(addItemFrame(this.scene, 0, CELL.frameY, CELL.frameSize));
-
+    
     const view = this.cellContent(source, full);
-    if (view.texture && this.scene.textures.exists(view.texture)) {
-      // 액자를 거의 채우고 같은 그림을 검게 한 겹 뒤에 깔아 실루엣을 띄운다.
-      const iconSize = CELL.frameSize * CELL.iconRatio;
-      cell.add(this.scene.add.image(4, CELL.frameY + 5, view.texture).setDisplaySize(iconSize, iconSize).setTint(0x000000).setAlpha(0.5));
-      cell.add(this.scene.add.image(0, CELL.frameY, view.texture).setDisplaySize(iconSize, iconSize));
-    }
-    // 가진 수는 가방 칸·보상 액자와 같은 자리(액자 우하단)에 같은 양식으로 겹친다.
-    if (view.owned !== undefined) {
-      cell.add(this.scene.add
-        .text(CELL.frameSize / 2 - 6, CELL.frameY + CELL.frameSize / 2 - 4, formatCurrency(view.owned), textStyle({ role: "display", size: 26 }))
-        .setOrigin(1, 1).setStroke("#05070a", 4).setShadow(0, 2, "#05070a", 3, true, true));
+    // 액자·그림·가진 수는 가방 칸·보상 액자와 같은 공용 프리팹 한 장이 그린다.
+    if (view.texture) {
+      addFramedIcon(this.scene, cell, 0, CELL.frameY, CELL.frameSize, view.texture, {
+        amount: view.owned === undefined ? undefined : formatCurrency(view.owned),
+      });
     }
     // 회복량은 이 칸의 이유다. 이름보다 크게, 스테미나와 같은 색으로 세운다.
     cell.add(this.scene.add.text(0, CELL.gainY, `+${view.gain}`, textStyle({ role: "display", size: 40, color: TONE.value }))

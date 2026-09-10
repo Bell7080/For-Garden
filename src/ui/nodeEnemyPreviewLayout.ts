@@ -3,9 +3,10 @@
  *
  * **판은 SD가 서고도 남을 만큼 높다.** 좁게 잡으면 머리가 판 윗변의 구분선에 닿아 잘린 것처럼
  * 보인다 — 카드 그리드가 첫 줄에 머리 여유를 두는 것과 같은 이유다. 아래로도 이름·레벨 줄과
- * 종합 전투력 한 줄이 더 들어가므로 그만큼 키웠다.
+ * 총 전투력 한 줄이 더 들어가므로 그만큼 키웠고, 밑변과도 넉넉히 띄운다 — 마지막 줄이 판
+ * 밑변에 닿으면 판이 글자에 눌린 것처럼 보인다.
  */
-export const NODE_ENEMY_PREVIEW = { width: 900, height: 470, sdHeight: 200, tailGap: 96 } as const;
+export const NODE_ENEMY_PREVIEW = { width: 900, height: 520, sdHeight: 200, tailGap: 96 } as const;
 
 /** 판 안에서 한 적이 차지하는 세로 자리. 표식(속성·직군·돌파)이 이 상자의 모서리에 붙는다. */
 export const NODE_ENEMY_SLOT = {
@@ -13,12 +14,11 @@ export const NODE_ENEMY_SLOT = {
   ground: 118,
   /** 제목 아래 구분선. SD 머리 끝은 이 선에 닿지 않는다. */
   dividerY: -168,
-  /** 이름·레벨 줄과 그 아래 능력치 줄. */
-  nameY: 132,
-  statsY: 168,
-  /** 아래 구분선과 종합 전투력 한 줄. */
-  footerDividerY: 196,
-  powerY: 214,
+  /** 이름·레벨 줄. 체력은 적지 않는다 — 붙어 볼지 정하는 데 필요한 것은 총 전투력 하나다. */
+  nameY: 138,
+  /** 아래 구분선과 총 전투력 한 줄. 판 밑변과 넉넉히 떨어뜨린다. */
+  footerDividerY: 190,
+  powerY: 210,
 } as const;
 
 /** 1/3/5기 모두 같은 판 안에서 좌우 대칭을 이루는 SD 중심을 계산한다. */

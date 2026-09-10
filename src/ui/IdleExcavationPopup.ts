@@ -122,8 +122,8 @@ export class IdleExcavationPopup {
   private upper?: Phaser.GameObjects.Container;
   /** 현황 요약과 배치 그리드가 번갈아 사는 아래 칸이다. */
   private lower?: Phaser.GameObjects.Container;
-  /** 이미 선 SD와 같은 편성이면 다시 세우지 않기 위한 편성 지문이다. */
-  private sdFormationKey?: string;
+  /** 지금 SD를 읽는 중인 렐릭. 같은 렐릭을 두 번 읽지 않게 한다. */
+  private readonly sdLoading = new Set<string>();
   /** 로딩·오류 문구가 떠 있는 동안에는 현황이 본문을 통째로 다시 만든다. */
   private messageShown = false;
   /** 히어로 원화의 컨테이너 밖 마스크/이벤트까지 reset 때 함께 폐기한다. */
@@ -298,17 +298,8 @@ export class IdleExcavationPopup {
       upper.add(this.scene.add.text(-160, STATUS_HERO.headerY, `배치 ${formation.filter(Boolean).length}/3`, textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0, 0.5));
     }
     upper.add(drawHairline(this.scene, 0, -535, 760, { color: COLOR.accent, alpha: 0.42 }));
-    const cards = this.addSlots(upper, formation, editable);
-    const key = formation.join("|");
-    if (key === this.sdFormationKey && this.sdContainer) {
-      // 같은 편성이라 SD는 그대로다. 그 자리의 카드만 다시 감춰 두 겹으로 보이지 않게 한다.
-      formation.forEach((id, index) => { if (id && this.sdPuppetByRelicId.has(id)) cards[index]?.setVisible(false); });
-      return;
-    }
-    // 편성이 달라졌으면 서 있던 SD를 먼저 치운다. 그러지 않으면 옛 자리의 SD가 그대로 남는다.
-    this.clearStatusSD();
-    this.sdFormationKey = key;
-    this.loadStatusSD(formation, cards);
+    this.addSlots(upper, formation, editable);
+    this.syncStatusSD(formation);
   }
 
   private showMessage(message: string, state: "loading" | "error", retry = false): void {
@@ -700,30 +691,29 @@ export class IdleExcavationPopup {
     for (const [relicId, card] of this.rosterCards) card.setSelected(this.draft.includes(relicId));
   }
 
-  /** 슬롯은 빈 면과 PortraitCard를 구분하고 어느 칸이 편집 대상인지 밑판·확대로 알린다. */
-  private addSlots(parent: Phaser.GameObjects.Container, formation: Formation, editable: boolean): Array<Phaser.GameObjects.Container | undefined> {
+  /** 슬롯은 빈 판만 그리고 그 위에 SD가 선다. 어느 칸이 편집 대상인지는 밑판·확대가 알린다. */
+  private addSlots(parent: Phaser.GameObjects.Container, formation: Formation, editable: boolean): void {
     this.formationDragVisual?.destroy(); this.formationDragVisual = undefined;
-    const cards: Array<Phaser.GameObjects.Container | undefined> = [];
     const dragSlots: FormationDragSlot[] = [];
     this.slotSelectionAppliers.length = 0;
     formation.forEach((id, index) => {
       const x = -250 + index * 250;
       const relic = id ? RELICS.find((item) => item.id === id) : undefined;
+      // **칸에는 카드가 아니라 SD가 선다.** 예전에는 카드를 먼저 세우고 SD가 도착하면 감췄는데,
+      // 한 자리를 바꿀 때마다 세 칸이 카드로 돌아갔다가 다시 SD가 되어 화면이 통째로 새로고침
+      // 되는 것처럼 보였다. 칸은 빈 판만 그리고, 그 위에 SD가 살아남은 채로 자리만 옮긴다.
+      const slot = this.scene.add.container(x, STATUS_HERO.slotY);
+      slot.add(drawLayer(this.scene, 0, 0, slantedRect(210, 245), { fill: COLOR.panel, alpha: HOLO.glassLight, edge: COLOR.inkDimHex, edgeAlpha: 0.55 }));
       if (relic) {
-        const progress = session.relicProgress[relic.id];
-        const card = new PortraitCard(this.scene, x, STATUS_HERO.slotY, { width: 210, height: 245, relicId: relic.id, label: relic.name, level: progress?.level ?? 1, rarity: relic.rarity, stars: (progress?.breakthrough ?? 0) + 1 });
-        // 카드 내부 hit는 카드 자체 용도로 남기되 슬롯 선택은 아래 공용 입력면 하나만 담당한다.
-        card.hit.disableInteractive(); parent.add(card); cards[index] = card;
-        this.slotSelectionAppliers.push((selected) => card.setSelected(selected));
+        // 사방 테두리나 입체 판 대신 얇은 홀로그램 투영 그림자만 발 아래에 둔다.
+        slot.add(this.scene.add.ellipse(0, SLOT_GROUND_OFFSET + 2, 172, 25, COLOR.accent, 0.16));
       } else {
-        const empty = this.scene.add.container(x, STATUS_HERO.slotY);
-        // 테두리 색으로 선택을 알리지 않는다 — 뒤에 깔리는 밑판이 이미 그 말을 하고, 색을 바꾸려면
-        // 도형을 다시 그려야 해서 선택만 바뀌어도 판을 새로 만들게 된다.
-        empty.add(drawLayer(this.scene, 0, 0, slantedRect(210, 245), { fill: COLOR.panel, alpha: HOLO.glassLight, edge: COLOR.inkDimHex, edgeAlpha: 0.55 }));
-        empty.add(this.scene.add.text(0, 0, `빈 슬롯\n${index + 1}`, textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim, align: "center" })).setOrigin(0.5));
-        parent.add(empty);
-        this.slotSelectionAppliers.push((selected) => empty.setScale(selected ? 1.06 : 1));
+        slot.add(this.scene.add.text(0, 0, `빈 슬롯\n${index + 1}`, textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim, align: "center" })).setOrigin(0.5));
       }
+      parent.add(slot);
+      // 테두리 색으로 선택을 알리지 않는다 — 뒤에 깔리는 밑판이 이미 그 말을 하고, 색을 바꾸려면
+      // 도형을 다시 그려야 해서 선택만 바뀌어도 판을 새로 만들게 된다.
+      this.slotSelectionAppliers.push((selected) => slot.setScale(selected ? 1.06 : 1));
       // SD보다 나중에 추가한 투명 전용 입력면이 현황/편집의 동일한 210×245 슬롯 계약을 소유한다.
       const hit = this.scene.add.rectangle(x, STATUS_HERO.slotY, 210, 245, 0xffffff, 0).setName(`idle-excavation-slot-${index + 1}`).setDepth(100).setInteractive({ useHandCursor: true });
       parent.add(hit);
@@ -780,13 +770,12 @@ export class IdleExcavationPopup {
         this.refreshEditorSlots();
       },
     }, { enabled: () => !this.saving, canDrag: () => editable });
-    return cards;
   }
 
   /** 현황 전용 Puppet/tween을 중복 파괴 없이 비우고 진행 중 로딩도 무효화한다. */
   private clearStatusSD(): void {
     this.sdLoadGeneration += 1;
-    this.sdFormationKey = undefined;
+    this.sdLoading.clear();
     for (const tween of this.sdTweens) tween.stop();
     this.sdTweens.clear();
     // Container의 destroy(true)가 같은 Puppet을 다시 순회하지 않도록 먼저 소유권에서 떼고 폐기한다.
@@ -797,31 +786,50 @@ export class IdleExcavationPopup {
   }
 
   /**
-   * 확정 슬롯의 카드 위에 SD가 준비된 자리만 교체하며 실패한 자리는 카드 미리보기를 보존한다.
+   * 편성이 바뀐 만큼만 SD를 손본다.
+   *
+   * **이미 선 SD는 살려 두고 자리만 옮긴다.** 예전에는 편성이 한 글자라도 다르면 세 SD를 통째로
+   * 버리고 다시 읽어, 2번 칸을 바꿔도 1·3번이 함께 사라졌다가 카드로 한 번 나타난 뒤 SD로
+   * 돌아왔다. 버릴 때는 그 렐릭이 편성에서 빠질 때뿐이다.
    *
    * SD 레이어는 팝업 body의 자식이고 Puppet은 그 로컬 좌표를 쓴다. indexed renderer가 body의
    * 이동·배율·회전·alpha와 카메라를 합성하므로 팝업과 Puppet이 하나의 시각 계층으로 움직인다.
    */
-  private loadStatusSD(formation: Formation, cards: Array<Phaser.GameObjects.Container | undefined>): void {
-    // 로드 시작 자체가 새 세대다. clear 호출 횟수와 무관하게 이전 render와 같은 번호를 공유하지 않는다.
-    const generation = ++this.sdLoadGeneration;
+  private syncStatusSD(formation: Formation): void {
     const body = this.body;
     if (!body) return;
-    const layer = this.scene.add.container(0, 0).setName("idle-excavation-confirmed-sd").setDepth(SD_DEPTH);
-    body.add(layer);
-    this.sdContainer = layer;
+    if (!this.sdContainer) {
+      this.sdContainer = this.scene.add.container(0, 0).setName("idle-excavation-confirmed-sd").setDepth(SD_DEPTH);
+      body.add(this.sdContainer);
+    }
+    const layer = this.sdContainer;
+    // 편성에서 빠진 렐릭의 SD와 그 도약만 폐기한다.
+    for (const [relicId, puppet] of this.sdPuppetByRelicId) {
+      if (formation.includes(relicId)) continue;
+      layer.remove(puppet, false); puppet.destroy();
+      this.sdPuppets.delete(puppet);
+      this.sdPuppetByRelicId.delete(relicId);
+    }
+    const generation = ++this.sdLoadGeneration;
     formation.forEach((relicId, index) => {
       if (!relicId) return;
       const x = -250 + index * 250;
       const groundY = STATUS_HERO.slotY + SLOT_GROUND_OFFSET;
-      // 사방 테두리나 입체 판 대신 얇은 홀로그램 투영 그림자만 발 아래에 둔다.
-      layer.add(this.scene.add.ellipse(x, groundY + 2, 172, 25, COLOR.accent, 0.16));
-      void this.loadStatusPuppet(relicId, index, x, groundY, generation, layer, cards[index]);
+      const standing = this.sdPuppetByRelicId.get(relicId);
+      if (standing) {
+        placePuppet(standing, this.puppetLoader.assetFor(relicId), { x, groundY, height: 205 });
+        standing.setDepth(SD_DEPTH).setAlpha(1);
+        return;
+      }
+      if (this.sdLoading.has(relicId)) return;
+      this.sdLoading.add(relicId);
+      void this.loadStatusPuppet(relicId, index, x, groundY, generation, layer)
+        .finally(() => this.sdLoading.delete(relicId));
     });
   }
 
   /** 로딩 완료 시 현재 세대인지 재검증하며, 늦게 도착한 결과는 컨테이너에 넣지 않고 즉시 폐기한다. */
-  private async loadStatusPuppet(relicId: string, index: number, x: number, groundY: number, generation: number, layer: Phaser.GameObjects.Container, fallback?: Phaser.GameObjects.Container): Promise<void> {
+  private async loadStatusPuppet(relicId: string, index: number, x: number, groundY: number, generation: number, layer: Phaser.GameObjects.Container): Promise<void> {
     let asset;
     try { asset = this.puppetLoader.assetFor(relicId); } catch (error) {
       if (import.meta.env.DEV) console.warn(`[IdleExcavation] SD asset lookup failed (relic=${relicId}, asset=unresolved)`, error);
@@ -829,7 +837,8 @@ export class IdleExcavationPopup {
     }
     const result = await loadOwnedPuppet({
       spawn: () => this.puppetLoader.spawn(this.scene, asset, { x, groundY, height: 205, depth: SD_DEPTH }),
-      isCurrent: () => Boolean(this.body) && generation === this.sdLoadGeneration && layer === this.sdContainer,
+      // 판이 다시 그려져도 SD는 살아남는다. 늦게 온 결과는 그 렐릭이 아직 편성에 있을 때만 받는다.
+      isCurrent: () => Boolean(this.body) && generation <= this.sdLoadGeneration && layer === this.sdContainer,
       // ZIP은 열렸는데 텍스처가 없는 묶음만 걸러 낸다. 그 뒤의 가시성은 이 레이어가 통째로 책임진다.
       isDisplayable: (puppet) => Boolean(puppet.active && puppet.texture?.key && this.scene.textures.exists(puppet.texture.key)),
       adopt: (puppet) => {
@@ -840,8 +849,6 @@ export class IdleExcavationPopup {
         layer.add(puppet); this.sdPuppets.add(puppet);
         this.sdPuppetByRelicId.set(relicId, puppet);
         setDebugIdleExcavationSdReady(index);
-        // 성공한 자리만 카드를 감춘다. ZIP/텍스처 실패 시 카드를 그대로 남긴다.
-        fallback?.setVisible(false);
         // 팝업도 저장 토글을 직접 해석하지 않고 공용 정책의 거리·반복 배율만 소비한다.
         const motion = motionPolicy(session.settings);
         // 포물선 한 번을 직접 그린다. 같은 이징을 되감는 yoyo는 내려오는 동안에도 느려져
@@ -863,7 +870,7 @@ export class IdleExcavationPopup {
         this.sdTweens.add(tween);
       },
     });
-    // Puppet 실패는 슬롯 전체의 실패가 아니다. 개발 경고만 남기고 카드는 계속 표시한다.
+    // Puppet 실패는 슬롯 전체의 실패가 아니다. 개발 경고만 남기고 빈 판을 그대로 둔다.
     if (import.meta.env.DEV && result.status === "failed") console.warn(`[IdleExcavation] SD puppet spawn failed (relic=${relicId}, asset=${asset.url})`, result.error);
     if (import.meta.env.DEV && result.status === "discarded" && result.reason === "not-displayable") console.warn(`[IdleExcavation] SD puppet is not displayable (relic=${relicId}, asset=${asset.url})`);
   }

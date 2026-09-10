@@ -6,7 +6,7 @@ import { DEFAULT_INVENTORY_SORT, INVENTORY_LAYOUT, InventoryManager, inventoryGr
 import { session } from "../state/session";
 import { drawGlyph } from "./glyphs";
 import { chipPoints, drawHairline, drawLayer } from "./holo";
-import { addItemFrame } from "./itemFrame";
+import { addItemFrame, ITEM_FRAME } from "./itemFrame";
 import { INVENTORY_TAB_LAYOUT, inventoryCategoryTabPosition } from "./inventoryTabs";
 import { POPUP_TITLE_SIZE, PopupLayer } from "./PopupLayer";
 import { equippedRelicName, openRuneInfoPopup } from "./RunePopup";
@@ -33,13 +33,12 @@ const VIEWPORT = {
 } as const;
 
 /**
- * 액자가 카드 한 변에서 차지하는 비율과, 그 액자 안에서 그림이 차지하는 비율.
+ * 액자가 카드 한 변에서 차지하는 비율.
  *
- * `ratio`는 룬 카드(`addRuneCard`)와 같은 값을 써야 탭을 옮겨도 칸의 무게가 그대로다.
- * `icon`만 공용 `ITEM_FRAME.icon`보다 크다 — 가방 칸은 한 줄에 여럿이 서느라 액자 자체가
- * 작아서, 공용 비율로는 그림보다 빈 여백이 더 넓어 무엇이 든 칸인지 얼굴로 읽히지 않는다.
+ * 룬 카드(`addRuneCard`)와 같은 값을 써야 탭을 옮겨도 칸의 무게가 그대로다. 액자 안 그림
+ * 비율과 그늘은 공용 `ITEM_FRAME.icon`·`ITEM_FRAME.shadow`를 따른다.
  */
-const INVENTORY_ITEM_FRAME = { ratio: 0.89, icon: 0.78 } as const;
+const INVENTORY_ITEM_FRAME = { ratio: 0.89 } as const;
 
 /** 로비를 유지한 채 서버 확정 인벤토리를 표시하는 홀로그램 작업판이다. */
 export class InventoryPopup {
@@ -187,11 +186,10 @@ export class InventoryPopup {
     // 그림 한 장을 담는 칸이라 공용 액자 한 장을 쓴다.
     const frameSize = Math.min(cardWidth, cardHeight) * INVENTORY_ITEM_FRAME.ratio;
     card.add(addItemFrame(this.scene, 0, 0, frameSize));
-    // **그림은 액자를 거의 채운다.** 작은 그림에 넓은 여백이 남으면 무엇이 든 칸인지 얼굴이
-    // 아니라 글자로 세어야 한다. 밝은 원화 위에서 실루엣이 떨어져 나오도록 같은 그림을 검게
-    // 한 겹 뒤에 깐다 — 판을 깔면 액자 안에 상자가 하나 더 생긴다.
-    const iconSize = frameSize * INVENTORY_ITEM_FRAME.icon;
-    card.add(this.renderDefinitionIcon(item.definition.icon, 3, 4, iconSize, textureKeys, true));
+    // 그림·그늘은 공용 양식(`ITEM_FRAME.icon`·`shadow`)을 그대로 쓴다. glyph 대체 경로가
+    // 있는 정의라 `addFramedIcon` 대신 같은 값으로 직접 세운다.
+    const iconSize = frameSize * ITEM_FRAME.icon;
+    card.add(this.renderDefinitionIcon(item.definition.icon, ITEM_FRAME.shadow.offsetX, ITEM_FRAME.shadow.offsetY, iconSize, textureKeys, true));
     card.add(this.renderDefinitionIcon(item.definition.icon, 0, 0, iconSize, textureKeys));
     // 수량은 액자 오른쪽 아래에 겹친다. 보상 액자와 같은 자리라 화면이 달라도 같은 곳을 본다.
     // 골드처럼 자릿수가 큰 재화는 K·M으로 줄여 칸을 넘지 않게 한다 — 온전한 수는 눌러서 여는

@@ -14,6 +14,7 @@ import { Button } from "../ui/Button";
 import { addBackButton } from "../ui/IconButton";
 import { PortraitCard } from "../ui/PortraitCard";
 import { formationRosterColumnX, formationRosterGrid, PORTRAIT_GRID_MASK_GAP, portraitGridContentHeight, portraitGridFirstRowY } from "../ui/portraitGrid";
+import { addFramedIcon } from "../ui/itemFrame";
 import { PopupLayer } from "../ui/PopupLayer";
 import { COLOR, textStyle } from "../ui/theme";
 import { chipPoints, drawGlassFade, drawHairline, drawLayer, drawVignette, HOLO } from "../ui/holo";
@@ -35,7 +36,7 @@ import { placePuppet, portraitAssetFor, spawnPuppet, type PuppetCreature } from 
 import { loadOwnedPuppet } from "../ui/statusPuppetLoad";
 import { expeditionEnemyLevel, getExpeditionEncounterEnemies } from "../data/expeditionEnemies";
 import { formatCurrency } from "../core/formatCurrency";
-import { drawInnerVignette, drawShapeOutline } from "../ui/holo";
+import { drawInnerVignette } from "../ui/holo";
 import { CharacterInfoManager } from "../managers/CharacterInfoManager";
 import { bindLongPress } from "../ui/longPressInfo";
 import { groundedPortraitBounds } from "../ui/portraitPlacement";
@@ -294,15 +295,13 @@ export class ExpeditionScene extends Phaser.Scene {
     items.forEach(([icon, key], index) => {
       // 네 액자는 판 가운데에 모여 선다. 넓게 벌리면 네 재화가 각자 다른 정보처럼 읽힌다.
       const x = BASE_WIDTH / 2 + (index - 1.5) * LOOT.step; const y = LOOT.frameY; const size = 96;
-      const frame = chipPoints(size, size, { bevel: { topLeft: 20, bottomRight: 18 } });
-      drawLayer(this, x, y, frame, { fill: 0x101722, alpha: 0.98 });
-      this.add.image(x, y, icon).setDisplaySize(72, 72);
-      drawInnerVignette(this, x, y, frame, { strength: 0.58 });
-      drawShapeOutline(this, x, y, frame, { color: COLOR.accent, alpha: 0.74, width: 2 });
       const total = Math.floor(rewards[key] ?? 0);
       const capped = last?.cappedCurrencies.includes(key) ?? total >= EXPEDITION_NODE_REWARD_BALANCE[key].runCap;
-      // 수량은 보상 팝업처럼 액자 우하단에 겹치고 검은 스트로크로 아이콘에서 떼어 낸다.
-      this.add.text(x + 42, y + 40, `${formatCurrency(total)}${capped ? " MAX" : ""}`, textStyle({ role: "display", size: 20, color: capped ? "#ffd27a" : "#ffffff" })).setOrigin(1, 1).setStroke("#000000", 5);
+      // 액자·그림·그늘·수량은 가방·보상 팝업과 같은 공용 프리팹 한 장이 그린다.
+      addFramedIcon(this, undefined, x, y, size, icon, {
+        amount: `${formatCurrency(total)}${capped ? " MAX" : ""}`,
+        amountColor: capped ? "#ffd27a" : COLOR.ink,
+      });
       const gained = Math.floor(last?.rewards[key] ?? 0);
       // 방금 얻은 몫은 이번 한 판의 결과라 누적량보다 먼저 눈에 들어와야 한다.
       if (gained > 0) this.add.text(x, LOOT.gainY, `+${formatCurrency(gained)}`, textStyle({ role: "display", size: 28, color: COLOR.accentText })).setOrigin(0.5).setStroke("#000000", 5).setShadow(0, 3, "#000000", 4, true, true);

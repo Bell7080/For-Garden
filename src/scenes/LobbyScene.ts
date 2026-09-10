@@ -479,11 +479,8 @@ export class LobbyScene extends Phaser.Scene {
       .rectangle(cx, (STAGE_FLOOR + NAV_TOP) / 2, BASE_WIDTH, NAV_TOP - STAGE_FLOOR, COLOR.void, 0.24)
       .setDepth(-29);
     drawHairline(this, cx, STAGE_FLOOR, BASE_WIDTH, { color: COLOR.accent, alpha: 0.14 }).setDepth(-28);
-
-    this.add
-      .text(cx, 196, "이터널 시티 · 중앙 광장", textStyle({ role: "body", size: 26, color: COLOR.inkDim }))
-      .setOrigin(0.5, 0)
-      .setAlpha(0.85);
+    // 여기가 어디인지는 배경 원화가 이미 말한다. 자리 이름을 글자로 한 번 더 적으면 로비의
+    // 주인공(애착 렐릭) 위에 아무 조작도 바꾸지 않는 문장이 하나 더 얹힌다.
   }
 
   /**

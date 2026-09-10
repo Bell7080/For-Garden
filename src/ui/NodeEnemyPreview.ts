@@ -4,6 +4,7 @@ import { setDebugEnemyPreview } from "../debug";
 import { battleAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
 import { chipPoints, drawHairline, drawLayer } from "./holo";
 import { COLOR, textStyle } from "./theme";
+import { addUnitNameplate } from "./unitNameplate";
 import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
 import { addStarMark } from "./rarityMark";
@@ -73,24 +74,20 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
       this.add(new AffinityBadge(this.scene, badgeX, badgeTop, ELEMENT_ICON[enemy.element], badgeSize, 0.62));
       this.add(new AffinityBadge(this.scene, badgeX, badgeTop + badgeSize * 0.94, ROLE_ICON[enemy.role], badgeSize * 0.74, 0.62));
       addStarMark(this.scene, this, x + half - 20, badgeTop - 4, compact ? 34 : 42, growth.breakthrough + 1);
-      // 레벨과 이름은 카드의 이름줄과 같은 무게다 — 둘 다 강조색으로 크게 세우고 검은 획으로
-      // 배경에서 떼어 놓는다. 흐린 회색으로 적으면 SD 아래에서 읽히지 않는다.
-      const nameLine = this.scene.add
-        .text(x, NODE_ENEMY_SLOT.nameY, `LV.${growth.level}  ${enemy.name}`, textStyle({ role: "display", size: compact ? 24 : 30, color: COLOR.accentText }))
-        .setOrigin(0.5, 0);
-      nameLine.setStroke("#05070a", 4).setShadow(0, 2, "#05070a", 3, true, true);
-      this.add(nameLine);
-      this.add(this.scene.add.text(x, NODE_ENEMY_SLOT.statsY, `HP ${enemy.stats.hp.toLocaleString()}`, textStyle({ role: "emphasis", size: compact ? 18 : 21, color: COLOR.ink })).setOrigin(0.5, 0));
+      // 카드의 이름줄과 같은 규칙이다 — 레벨은 강조색, 이름은 흰색. 체력은 적지 않는다:
+      // 붙어 볼지 정하는 데 필요한 것은 개체별 수치가 아니라 판 아래의 총 전투력 하나다.
+      addUnitNameplate(this.scene, this, x, NODE_ENEMY_SLOT.nameY, growth.level, enemy.name, compact ? 24 : 30);
       const hit = this.scene.add.rectangle(x, ground - 70, compact ? 145 : 230, 300, 0xffffff, 0).setInteractive({ useHandCursor: true });
       hit.on("pointerup", () => this.options.onEnemyClick(enemy)); this.add(hit);
       void this.spawnEnemy(enemy.id, x, ground, compact ? 158 : NODE_ENEMY_PREVIEW.sdHeight, generation);
     });
     // **판 아래는 이 편성이 얼마나 센가 한 줄이다.** 개체별 수치를 다 읽지 않고도 붙어 볼지
     // 말지를 정할 수 있어야 한다. 전투력은 표시·정렬 전용이라 전투 계산에는 들어가지 않는다.
+    // 이름표는 짧게 둔다 — "예상"이나 "종합" 같은 수식은 무엇을 재는지 바꾸지 않는다.
     const power = this.options.enemies.reduce((sum, enemy) => sum + combatPower(enemy.stats), 0);
     this.add(drawHairline(this.scene, 0, NODE_ENEMY_SLOT.footerDividerY, NODE_ENEMY_PREVIEW.width - 60, { color: COLOR.accent, alpha: 0.28 }));
     this.add(this.scene.add
-      .text(0, NODE_ENEMY_SLOT.powerY, `예상 종합 전투력 ${power.toLocaleString()}`, textStyle({ role: "display", size: 28, color: COLOR.dangerText }))
+      .text(0, NODE_ENEMY_SLOT.powerY, `총 전투력 ${power.toLocaleString()}`, textStyle({ role: "display", size: 28, color: COLOR.dangerText }))
       .setOrigin(0.5, 0)
       .setShadow(0, 3, "#05070a", 4, false, true));
     // 상세 진입 E2E는 고정 숫자를 복제하지 않고 실제 적 입력 중심을 사용한다.

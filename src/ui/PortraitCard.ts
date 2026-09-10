@@ -360,12 +360,22 @@ export class PortraitCard extends Phaser.GameObjects.Container {
         // 그림이 차지하는 만큼만 띄운다.
         const currencyIconLead = subIconSize * 0.78;
         const subLeft = nameLeft + (options.subIcon ? (currencyRow ? currencyIconLead : subIconSize + 7) : 0);
+        // **재화 줄만 얇은 띠 하나를 뒤에 깐다.** 획 둘레를 두껍게 두르면 글자가 뭉개지고, 그렇다고
+        // 얇게만 두르면 노란 골드가 노란 옷 위에서 그대로 묻힌다. 글자 뒤로 낮게 깔린 어둠 한 겹이
+        // 대비를 원화와 무관하게 만들어 준다 — 카드 이름줄이 그라데이션 어둠 위에 앉는 것과 같다.
+        if (currencyRow) {
+          const bandTop = subBottom - subIconSize - 4;
+          const band = scene.add.graphics();
+          band.fillStyle(0x05070a, 0.5);
+          band.fillRect(-width / 2, bandTop, width, subIconSize + 10);
+          band.setMask(this.portraitMask.createGeometryMask());
+          this.add(band);
+        }
         this.subText = scene.add
           .text(subLeft, currencyRow ? subBottom : baseline + 10, options.sub, textStyle({ role: "emphasis", size: subFontSize, color: currencyRow ? COLOR.ink : COLOR.accentText }))
           .setOrigin(0, currencyRow ? 1 : 0);
-        // 밝은 원화 위에서도 수가 살아남도록 획 둘레를 검게 두른다. 판을 깔면 카드에 상자가
-        // 하나 더 생긴다. 띠는 **얇게** 둘러야 한다 — 두꺼우면 획 사이가 메워져 글자가 뭉갠다.
-        if (currencyRow) this.subText.setStroke("#05070a", 3).setShadow(0, 2, "#05070a", 3, true, true);
+        // 띠가 대비를 맡으므로 획 둘레는 **얕고 얇게**만 두른다 — 두꺼우면 획 사이가 메워진다.
+        if (currencyRow) this.subText.setStroke("#05070a", 2).setShadow(0, 1, "#05070a", 2, true, true);
         this.add(this.subText);
         if (options.subIcon && scene.textures.exists(options.subIcon)) {
           const iconY = currencyRow ? subBottom - subIconSize / 2 + 2 : baseline + 10 + subIconSize / 2;
@@ -373,7 +383,7 @@ export class PortraitCard extends Phaser.GameObjects.Container {
           // 재화 그림은 제 색을 갖는다 — tint를 먹이면 무슨 재화인지 알 수 없다. 대신 그림 뒤로
           // 같은 그림을 검게 한 겹 깔아 밝은 원화 위에서 실루엣이 떨어져 나오게 한다.
           if (currencyRow) {
-            this.add(scene.add.image(icon.x + 2, iconY + 3, options.subIcon).setDisplaySize(subIconSize, subIconSize).setTint(0x000000).setAlpha(0.55));
+            this.add(scene.add.image(icon.x + 3, iconY + 3, options.subIcon).setDisplaySize(subIconSize, subIconSize).setTint(0x000000).setAlpha(0.45));
           } else {
             icon.setTint(COLOR.accent).setAlpha(0.72);
           }

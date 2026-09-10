@@ -1,6 +1,8 @@
 import Phaser from "phaser";
 import { INTERACTION_DEPARTMENT_LABEL, interactionDurationLabel } from "../data/interactionCities";
-import { currencyGuide } from "../data/currencyGuide";
+import { addFramedIcon } from "./itemFrame";
+import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
+import { formatCurrency } from "../core/formatCurrency";
 import { RELICS } from "../data/relics";
 import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { relicProgression } from "../managers/RelicProgressionManager";
@@ -53,6 +55,8 @@ const ACTION = INTERACTION_CITY_ACTION;
 const ROSTER = formationRosterGrid(LOWER.right - LOWER.left);
 /** 손가락이 이 거리 이상 움직여야 카드 선택이 아니라 스크롤로 판정한다. */
 const GRID_DRAG_SLOP = 12;
+/** 돌아오는 재화 액자 한 칸. 품목이 늘면 판을 키우지 않고 이 줄만 가로로 흐른다. */
+const REWARD_FRAME = { size: 92, gap: 18 } as const;
 /** 팝업 판(PopupLayer 기본 2000) 바로 위. 그 위에 열리는 보상 팝업보다는 아래에 남는다. */
 const SD_DEPTH = 2601;
 const BLUE = 0x55b9e8;
@@ -206,12 +210,51 @@ export class InteractionCityPopup {
 
     const left = LOWER.left + 10;
     parent.add(this.scene.add.text(left, artY + artHeight / 2 + 26, view.city.description, textStyle({ role: "body", size: 25 })).setWordWrapWidth(LOWER.right - LOWER.left - 20));
-    const factsY = LOWER.bottom - 40;
+    const factsY = LOWER.bottom - 118;
     parent.add(drawHairline(this.scene, 0, factsY - 34, LOWER.right - LOWER.left - 40, { color: BLUE, alpha: 0.32 }));
-    // 시간과 돌아오는 것은 짧아 한 줄에 함께 선다.
     parent.add(this.scene.add.text(left, factsY, interactionDurationLabel(view.city.durationMinutes), textStyle({ role: "emphasis", size: 26, color: COLOR.accentText })).setOrigin(0, 0.5));
-    const rewards = view.city.rewards.map((entry) => `${currencyGuide(entry.currency).name} ${entry.amount.toLocaleString()}`).join("   ");
-    parent.add(this.scene.add.text(LOWER.right - 10, factsY, rewards, textStyle({ role: "body", size: 25 })).setOrigin(1, 0.5));
+
+    // **돌아오는 것은 글이 아니라 액자다.** 재화 이름을 늘어놓으면 무엇이 오는지 읽어야 알지만,
+    // 액자 한 줄은 훑기만 해도 보인다. 품목이 늘면 판을 키우지 않고 **가로로 흐른다** — 판이
+    // 커지면 위 칸의 파견대와 아래 조작이 함께 밀린다.
+    const rewardsY = LOWER.bottom - 52;
+    parent.add(this.scene.add.text(left, rewardsY - 62, "돌아오는 것", textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0, 0.5));
+    const rail = this.scene.add.container(0, rewardsY);
+    parent.add(rail);
+    const step = REWARD_FRAME.size + REWARD_FRAME.gap;
+    const startX = LOWER.left + 10 + REWARD_FRAME.size / 2;
+    view.city.rewards.forEach((entry, index) => {
+      addFramedIcon(this.scene, rail, startX + index * step, 0, REWARD_FRAME.size, CURRENCY_ICON_BY_WALLET[entry.currency], {
+        amount: formatCurrency(entry.amount),
+      });
+    });
+    this.attachRewardRail(parent, rail, view.city.rewards.length);
+  }
+
+  /**
+   * 돌아오는 것이 판보다 길면 그 줄만 가로로 흐른다.
+   *
+   * 세로로 접거나 판을 키우지 않는다 — 판이 커지면 위 칸의 파견대와 아래 조작이 함께 밀리고,
+   * 두 줄이 되면 "무엇이 오는가"가 한눈에 들어오지 않는다.
+   */
+  private attachRewardRail(parent: Phaser.GameObjects.Container, rail: Phaser.GameObjects.Container, count: number): void {
+    const viewLeft = LOWER.left + 10;
+    const viewWidth = LOWER.right - LOWER.left - 20;
+    const contentWidth = count * REWARD_FRAME.size + Math.max(0, count - 1) * REWARD_FRAME.gap;
+    const overflow = Math.max(0, contentWidth - viewWidth);
+    if (overflow === 0) return;
+    let originX = 0;
+    let downX = 0;
+    let dragging = false;
+    const hit = this.scene.add.rectangle(viewLeft + viewWidth / 2, rail.y, viewWidth, REWARD_FRAME.size + 16, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    hit.on("pointerdown", (pointer: Phaser.Input.Pointer) => { dragging = true; downX = pointer.x; originX = rail.x; });
+    hit.on("pointerup", () => { dragging = false; });
+    hit.on("pointerout", () => { dragging = false; });
+    hit.on("pointermove", (pointer: Phaser.Input.Pointer) => {
+      if (!dragging || !pointer.isDown) return;
+      rail.setX(Phaser.Math.Clamp(originX + (pointer.x - downX), -overflow, 0));
+    });
+    parent.add(hit);
   }
 
   /**

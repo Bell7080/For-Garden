@@ -9,6 +9,13 @@ import { COLOR, textStyle } from "./theme";
 import { setDebugStorefrontControls } from "../debug";
 import { BACK_SLOT } from "./IconButton";
 import { TRADE_POPUP_FAILURE_MODEL, TradePopupRequestGate, tradePopupModel } from "./tradePopupModel";
+import { chipPoints, drawLayer, HOLO } from "./holo";
+import { addFramedIcon } from "./itemFrame";
+import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
+import { formatCurrency } from "../core/formatCurrency";
+
+/** 교환 한 건이 서는 칸. 판 폭 안에서 액자 둘과 버튼 하나가 나란히 든다. */
+const TRADE_ROW = { width: 860, height: 168, firstY: -500, stepY: 190, frame: 96 } as const;
 
 /** 무역을 씬 전환 없이 로비 위 패키지 레이어로 여는 공개 프리팹이다. */
 export class TradePopup {
@@ -80,21 +87,49 @@ export class TradePopup {
     setDebugStorefrontControls({ trade: { products: [], retry: { x: 540, y: 960 + 55 }, back: { ...BACK_SLOT } } });
   }
 
-  /** 패키지 레이어의 각 행은 획득 방식에서 파생한 라벨과 사유만 표시한다. */
+  /**
+   * 무역의 교환 하나하나가 **제 판 위에 선다.**
+   *
+   * 예전에는 이름과 값이 판 위에 맨 글자로 늘어서고 버튼만 오른쪽에 있어, 어디까지가 한 건인지
+   * 줄 간격으로만 짐작해야 했다. 이제 한 건이 한 칸이고 그 안에 **주는 것**(액자 + 수량)과
+   * **받는 것**(액자 + 수량)이 화살표를 사이에 두고 마주 선다 — 무역은 사는 일이 아니라
+   * 바꾸는 일이라, 두 재화가 한 칸 안에서 함께 읽혀야 값을 견줄 수 있다.
+   */
   private render(): void {
     if (!this.productList?.active) return;
     // 동적 행만 비워 팝업 chrome(판·제목)의 수명은 PopupLayer가 끝까지 소유하게 한다.
     this.productList.removeAll(true);
     // 행 버튼과 로비 위 돌아가기만 노출해 E2E가 상품 데이터를 디버그 상태로 읽지 않게 한다.
-    setDebugStorefrontControls({ trade: { products: this.products.map((_, index) => ({ x: 540 + 245, y: 960 - 520 + index * 250 + 20 })), back: { ...BACK_SLOT } } });
+    setDebugStorefrontControls({ trade: { products: this.products.map((_, index) => ({ x: 540, y: 960 + TRADE_ROW.firstY + index * TRADE_ROW.stepY })), back: { ...BACK_SLOT } } });
     this.products.forEach((product, index) => {
-      const y = -520 + index * 250;
+      const y = TRADE_ROW.firstY + index * TRADE_ROW.stepY;
       const action = productActionModel(product.acquisition, { remaining: product.remaining, available: product.purchasable });
-      this.productList?.add(this.scene.add.text(-360, y, product.name, textStyle({ role: "emphasis", size: 29 })).setOrigin(0, 0.5));
-      this.productList?.add(this.scene.add.text(-360, y + 48, action.priceText, textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0, 0.5));
-      const button = new Button(this.scene, 245, y + 20, { width: 270, height: 76, label: action.label, onClick: () => this.openPurchase(product) });
-      button.setEnabled(!action.disabledReason); this.productList?.add(button);
-      if (action.disabledReason) this.productList?.add(this.scene.add.text(370, y + 70, action.disabledReason, textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(1, 0.5));
+      const row = this.scene.add.container(0, y);
+      row.add(drawLayer(this.scene, 0, 0, chipPoints(TRADE_ROW.width, TRADE_ROW.height, { bevel: { topLeft: 34, topRight: 0, bottomRight: 34, bottomLeft: 0 } }), {
+        fill: 0x141b24, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: action.disabledReason ? 0.22 : 0.5,
+      }));
+      row.add(this.scene.add.text(-TRADE_ROW.width / 2 + 28, -TRADE_ROW.height / 2 + 30, product.name, textStyle({ role: "display", size: 27 })).setOrigin(0, 0.5));
+
+      // 주는 것 → 받는 것. 액자·그림·수량은 어디서나 같은 공용 프리팹 한 장이 그린다.
+      const cost = product.acquisition;
+      if (cost.kind === "currency") {
+        addFramedIcon(this.scene, row, -TRADE_ROW.width / 2 + 92, 26, TRADE_ROW.frame, CURRENCY_ICON_BY_WALLET[cost.currency], {
+          amount: formatCurrency(cost.amount),
+          amountColor: action.disabledReason ? COLOR.dangerText : undefined,
+        });
+      }
+      row.add(this.scene.add.text(-TRADE_ROW.width / 2 + 176, 26, "▶", textStyle({ role: "display", size: 26, color: COLOR.inkDim })).setOrigin(0.5));
+      const grant = product.grants[0];
+      if (grant?.kind === "currency") {
+        addFramedIcon(this.scene, row, -TRADE_ROW.width / 2 + 258, 26, TRADE_ROW.frame, CURRENCY_ICON_BY_WALLET[grant.currency], { amount: formatCurrency(grant.amount) });
+      }
+
+      const button = new Button(this.scene, TRADE_ROW.width / 2 - 150, 20, { width: 250, height: 76, label: action.label, onClick: () => this.openPurchase(product) });
+      button.setEnabled(!action.disabledReason);
+      row.add(button);
+      // 왜 못 바꾸는지는 버튼 바로 아래 한 줄로 둔다 — 칸 밖에 적으면 어느 줄의 이야기인지 흐려진다.
+      if (action.disabledReason) row.add(this.scene.add.text(TRADE_ROW.width / 2 - 150, 74, action.disabledReason, textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0.5));
+      this.productList?.add(row);
     });
   }
 

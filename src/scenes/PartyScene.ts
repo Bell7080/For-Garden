@@ -26,6 +26,7 @@ import { AffinityDirection } from "../ui/AffinityDirection";
 import { AffinityBadge } from "../ui/AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "../ui/affinityIcons";
 import { addStarMark } from "../ui/rarityMark";
+import { addUnitNameplate } from "../ui/unitNameplate";
 import { combatPower } from "../core/combatPower";
 import { formationMembers, tapFormationSlot, tapRosterRelic, toFormationSlots } from "../core/formationSlots";
 import { moveFormationSlot } from "../core/formation";
@@ -49,6 +50,8 @@ const ALLY_ROW = 830;
 /** 두 줄을 가르는 대치선. 적 이름표 아래, 아군 머리 위에 놓는다. */
 const FRONT_LINE = 556;
 const PREVIEW_HEIGHT = 210;
+/** 두 편의 총 전투력이 마주 보는 줄. 대치선보다 아래, 두 줄의 가운데에 가깝게 둔다. */
+const POWER_ROW = 640;
 
 /**
  * 보유 렐릭 그리드의 배치표.
@@ -87,8 +90,6 @@ interface RosterCard {
 
 interface AllySlot {
   platform: Phaser.GameObjects.Ellipse;
-  name: Phaser.GameObjects.Text;
-  slotLabel: Phaser.GameObjects.Text;
   /** SD/받침의 왼쪽 아래에 고정되는 상성 방향 표식. 빈 자리와 중립에서는 숨긴다. */
   affinityDirection: AffinityDirection;
   /** 이 자리에 서 있는 SD. 편성이 바뀔 때마다 갈아 세운다. */
@@ -130,6 +131,8 @@ export class PartyScene extends Phaser.Scene {
    */
   private slotPlate?: Phaser.GameObjects.Container;
   private slotChrome?: Phaser.GameObjects.Container;
+  /** 아군 자리의 속성·돌파 표식과 이름줄. 편성이 바뀔 때마다 통째로 다시 그린다. */
+  private allyMarks?: Phaser.GameObjects.Container;
   private startButton!: Button;
   private hint!: Phaser.GameObjects.Text;
   /** 자동 배치와 자리별 방향 표식이 함께 참조하는 이번 스테이지의 적 정의다. */
@@ -290,13 +293,9 @@ export class PartyScene extends Phaser.Scene {
       const marks = this.add.container(0, 0).setDepth(3);
       addStarMark(this, marks, x + 104, badgeTop - 4, 42, snapshot.breakthrough + 1);
 
-      const nameLine = this.add
-        .text(x, ENEMY_ROW + 26, `LV.${snapshot.level}  ${def.name}`, textStyle({ role: "display", size: 30, color: COLOR.accentText }))
-        .setOrigin(0.5, 0);
-      nameLine.setStroke("#05070a", 4).setShadow(0, 2, "#05070a", 3, true, true);
-      this.add
-        .text(x, ENEMY_ROW + 66, `HP ${def.stats.hp.toLocaleString()}`, textStyle({ role: "emphasis", size: 21, color: COLOR.ink }))
-        .setOrigin(0.5, 0);
+      // 체력은 적지 않는다 — 붙어 볼지 정하는 데 필요한 것은 개체별 수치가 아니라 아래의
+      // 두 총 전투력이다. 이름줄은 노드 미리보기와 같은 프리팹을 쓴다(레벨 강조색·이름 흰색).
+      addUnitNameplate(this, undefined, x, ENEMY_ROW + 26, snapshot.level, def.name, 30);
       // **적을 누르면 상세가 열린다.** 옆에 물음표를 하나 더 세우면 SD와 표식 사이에 눌러야 할
       // 것이 둘이 되고, 정작 크게 서 있는 SD는 눌러도 아무 일이 없다.
       this.add.rectangle(x, ENEMY_ROW - PREVIEW_HEIGHT / 2, 210, PREVIEW_HEIGHT + 70, 0xffffff, 0)
@@ -307,38 +306,38 @@ export class PartyScene extends Phaser.Scene {
 
     // **대치선 위에는 두 편의 무게만 남긴다.** 속성 분포는 이미 각 SD의 아이콘이 말하고, "적"과
     // "아군"이라는 이름표는 위아래 자리가 이미 말한다. 대신 어느 쪽이 센지를 한 줄로 가른다.
+    // 대치선보다 조금 아래, 두 줄의 가운데에 가깝게 세운다 — 선 위에 붙이면 적 쪽 이름줄에
+    // 얹혀 적의 정보로 읽힌다.
     this.enemyPowerText = this.add
-      .text(BASE_WIDTH / 2 - 24, FRONT_LINE - 6, "", textStyle({ role: "display", size: 30, color: COLOR.dangerText }))
-      .setOrigin(1, 1)
+      .text(BASE_WIDTH / 2 - 30, POWER_ROW, "", textStyle({ role: "display", size: 30, color: COLOR.dangerText }))
+      .setOrigin(1, 0.5)
       .setShadow(0, 3, "#05070a", 4, false, true);
     this.allyPowerText = this.add
-      .text(BASE_WIDTH / 2 + 24, FRONT_LINE - 6, "", textStyle({ role: "display", size: 30, color: COLOR.accentText }))
-      .setOrigin(0, 1)
+      .text(BASE_WIDTH / 2 + 30, POWER_ROW, "", textStyle({ role: "display", size: 30, color: COLOR.accentText }))
+      .setOrigin(0, 0.5)
       .setShadow(0, 3, "#05070a", 4, false, true);
-    this.add.text(BASE_WIDTH / 2, FRONT_LINE - 6, "VS", textStyle({ role: "display", size: 24, color: COLOR.inkDim })).setOrigin(0.5, 1);
+    this.add.text(BASE_WIDTH / 2, POWER_ROW, "VS", textStyle({ role: "display", size: 24, color: COLOR.inkDim })).setOrigin(0.5, 0.5);
 
     PREVIEW_COLUMNS.forEach((x, slot) => {
       const platform = this.add.ellipse(x, ALLY_ROW, 210, 46, COLOR.panel, 0.85).setStrokeStyle(3, COLOR.ally).setDepth(-12);
-      const name = this.add.text(x, ALLY_ROW + 26, "―", textStyle({ role: "display", size: 28, color: COLOR.inkDim })).setOrigin(0.5, 0);
-      const slotLabel = this.add
-        .text(x, ALLY_ROW + 62, `${slot + 1}번 자리`, textStyle({ role: "body", size: 22, color: COLOR.inkDim }))
-        .setOrigin(0.5, 0);
       // 플랫폼의 좌측 하단에 붙여 SD가 비동기로 도착해도 표식 위치가 흔들리지 않게 한다.
       const affinityDirection = new AffinityDirection(this, x - 82, ALLY_ROW - 20).setDepth(2);
       // SD와 같은 높이의 투명 슬롯 면이 입력을 소유해 Puppet 로딩 성공 여부가 조작을 바꾸지 않는다.
       const hit = this.add.rectangle(x, ALLY_ROW - PREVIEW_HEIGHT / 2, 210, PREVIEW_HEIGHT, 0xffffff, 0)
         .setName(`party-ally-slot-${slot + 1}`).setDepth(3).setInteractive({ useHandCursor: true });
-      this.allySlots.push({ platform, name, slotLabel, affinityDirection, request: 0, hit });
+      this.allySlots.push({ platform, affinityDirection, request: 0, hit });
     });
-    // 편성이 바뀔 때마다 통째로 다시 그리므로 슬롯 자체(받침·이름·입력면)와 수명을 나눠 둔다.
+    // 편성이 바뀔 때마다 통째로 다시 그리므로 슬롯 자체(받침·입력면)와 수명을 나눠 둔다.
     this.slotPlate = this.add.container(0, 0).setDepth(-14);
     this.slotChrome = this.add.container(0, 0).setDepth(5);
+    // 아군의 이름줄·속성·돌파 표식은 편성이 바뀔 때마다 통째로 다시 그린다. 적과 같은 어휘를
+    // 쓰되 SD보다 앞에 서야 표식이 머리에 가리지 않는다.
+    this.allyMarks = this.add.container(0, 0).setDepth(6);
     // 공용 표현기는 화면 좌표 Puppet을 기존 placePuppet 콜백으로 옮겨 컨테이너 변환에 기대지 않는다.
     this.dragVisual = createFormationDragVisualController({
       scene: this, slots: PREVIEW_COLUMNS.map((x) => ({ x, y: ALLY_ROW - PREVIEW_HEIGHT / 2, width: 210, height: PREVIEW_HEIGHT })),
       formation: () => this.picked, color: COLOR.ally, zoneDepth: -11, dimDepth: -13,
       dimBounds: { x: BASE_WIDTH / 2, y: (FRONT_LINE + ALLY_ROW + 120) / 2, width: BASE_WIDTH, height: ALLY_ROW + 120 - FRONT_LINE },
-      labels: this.allySlots.flatMap((slot) => [slot.name, slot.slotLabel]),
       renderPreview: ({ preview, pointer }) => this.placeDragPreview(preview, pointer.x, pointer.y),
       restore: () => this.restoreDragPuppets(),
     });
@@ -351,6 +350,8 @@ export class PartyScene extends Phaser.Scene {
       // 짧은 탭은 그 자리를 **고르기만** 한다. 이미 골라 둔 자리를 한 번 더 눌러야 비고, 그때도
       // 뒤 자리는 당겨지지 않는다 — 2번을 비워도 3번은 3번에 그대로 선다.
       tap: (slot) => this.tapSlot(slot),
+      // 자리에 세워 둔 SD도 그리드 카드와 같은 손짓으로 상세가 열린다.
+      longPress: (slot) => { const id = this.picked[slot]; if (id) this.info.showRelic(getRelic(id)); },
       drop: (from, to) => {
         this.dragVisual?.endDrag();
         this.picked = moveFormationSlot(this.picked, from, to);
@@ -592,20 +593,31 @@ export class PartyScene extends Phaser.Scene {
 
     const plate = this.slotPlate;
     const chrome = this.slotChrome;
+    const marks = this.allyMarks;
     plate?.removeAll(true);
     chrome?.removeAll(true);
+    marks?.removeAll(true);
     this.allySlots.forEach((slot, i) => {
       const id = this.picked[i] ?? undefined;
       const standing = slot.creature !== undefined;
-      slot.name.setText(id ? getRelic(id).name : "―");
-      slot.name.setColor(id ? COLOR.ink : COLOR.inkDim);
       slot.platform.setAlpha(id ? 1 : 0.55);
-      slot.slotLabel.setAlpha(id ? 1 : 0.75);
       // 빈 슬롯 및 전체 관계가 상쇄된 중립은 텍스트 대신 표식 자체를 완전히 숨긴다.
       slot.affinityDirection.setDirection(id ? relicAffinityDirection(getRelic(id), this.enemies) : "neutral");
       // 이미 그 렐릭이 서 있으면 다시 세우지 않는다.
       if (!id || !standing || slot.currentId !== id) void this.fillAllySlot(slot, i, id);
       slot.currentId = id;
+
+      // **아군도 적과 같은 어휘로 선다** — 속성·직군은 왼쪽 위 아이콘, 돌파는 오른쪽 위 로마자,
+      // 레벨과 이름은 한 줄에(레벨 강조색·이름 흰색). "1번 자리" 같은 글자는 두지 않는다:
+      // 자리는 왼쪽부터 순서 그대로이고, 그 글자가 정작 이름줄보다 아래에서 자리만 차지했다.
+      if (marks && id) {
+        const def = getRelic(id);
+        const badgeTop = ALLY_ROW - PREVIEW_HEIGHT + 34;
+        marks.add(new AffinityBadge(this, PREVIEW_COLUMNS[i] - 104, badgeTop, ELEMENT_ICON[def.element], 52, 0.62));
+        marks.add(new AffinityBadge(this, PREVIEW_COLUMNS[i] - 104, badgeTop + 49, ROLE_ICON[def.role], 38, 0.62));
+        addStarMark(this, marks, PREVIEW_COLUMNS[i] + 104, badgeTop - 4, 42, relicProgression.getStars(id));
+        addUnitNameplate(this, marks, PREVIEW_COLUMNS[i], ALLY_ROW + 26, relicProgression.getProgress(id).level, def.name, 30);
+      }
 
       if (!chrome || !plate) return;
       const box = { x: PREVIEW_COLUMNS[i], y: ALLY_ROW - PREVIEW_HEIGHT / 2, width: 210, height: PREVIEW_HEIGHT };

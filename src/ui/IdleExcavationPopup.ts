@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import type { AdOperationsConfigResponse, AdPresentationResult, AdSlotOperationsDto, GameApi, HarvestExcavationResponse, IdleExcavationResponse } from "../api/contracts";
+import { motionPolicy } from "../core/settings";
 import { emptyExcavationAmounts, EXCAVATION_CURRENCIES, excavationProductionDisplayModel, excavationStorageFillRatio, excavationStorageLimitSeconds, nextExcavationSlot, placeExcavationRelic, type ExcavationCurrency, type IdleExcavationState } from "../core/idleExcavation";
 import { RELICS } from "../data/relics";
 import { placePuppet, spawnPuppet, type PuppetAsset, type PuppetCreature } from "../puppets/assets";
@@ -741,23 +742,24 @@ export class IdleExcavationPopup {
         setDebugIdleExcavationSdReady(index);
         // 성공한 자리만 카드를 감춘다. ZIP/텍스처 실패 시 카드를 그대로 남긴다.
         fallback?.setVisible(false);
-        const reduced = session.settings.accessibility.reduceMotion;
+        // 팝업도 저장 토글을 직접 해석하지 않고 공용 정책의 거리·반복 배율만 소비한다.
+        const motion = motionPolicy(session.settings);
         // 포물선 한 번을 직접 그린다. 같은 이징을 되감는 yoyo는 내려오는 동안에도 느려져
         // 뛰는 것이 아니라 땅으로 가라앉는 것처럼 보인다.
         // Puppet는 Mesh라 원점이 이미지 한가운데다. `groundY`는 발끝이라 그 값으로 y를 움직이면
         // 캐릭터가 제 키의 절반만큼 땅으로 꺼진다 — 지금까지 발굴 모션이 내려가 보이던 이유다.
         const restY = puppet.y;
         const hop = { progress: 0 };
-        const tween = this.scene.tweens.add(reduced
-          ? { targets: puppet, scaleX: puppet.scaleX * 1.025, scaleY: puppet.scaleY * 1.025, alpha: 0.9, duration: 420, delay: HOP.delays[index], hold: HOP.rests[index], yoyo: true, repeat: -1 }
-          : {
-              targets: hop, progress: 1, ease: "Linear",
-              duration: HOP.duration + index * 40, delay: HOP.delays[index],
-              repeat: -1, repeatDelay: HOP.rests[index],
-              onUpdate: () => { puppet.y = restY - HOP.rise * (1 - (2 * hop.progress - 1) ** 2); },
-              // 쉬는 동안에는 정확히 제자리에 서 있어야 다음 도약이 바닥에서 시작한다.
-              onRepeat: () => { puppet.y = restY; },
-            });
+        const tween = this.scene.tweens.add({
+          targets: hop, progress: 1, ease: "Linear",
+          duration: HOP.duration + index * 40, delay: HOP.delays[index],
+          // 전체 움직임 감소에서는 첫 동작만 보여 주고 무한 반복을 제거한다.
+          repeat: motion.nonEssentialRepeatFactor === 0 ? 0 : -1, repeatDelay: HOP.rests[index],
+          onUpdate: () => { puppet.y = restY - HOP.rise * motion.nonEssentialDistanceFactor * (1 - (2 * hop.progress - 1) ** 2); },
+          // 쉬는 동안에는 정확히 제자리에 서 있어야 다음 도약이 바닥에서 시작한다.
+          onRepeat: () => { puppet.y = restY; },
+          onComplete: () => { puppet.y = restY; },
+        });
         this.sdTweens.add(tween);
       },
     });
@@ -774,9 +776,10 @@ export class IdleExcavationPopup {
       if (!puppet || !this.sdContainer) continue;
       const icon = this.scene.add.image(puppet.x, puppet.y - 165, EXCAVATION_CURRENCY_ICON[currency]).setDisplaySize(42, 42).setAlpha(0);
       this.sdContainer.add(icon);
-      const reduced = session.settings.accessibility.reduceMotion;
-      this.scene.tweens.add({ targets: puppet, scaleX: puppet.scaleX * 1.1, scaleY: puppet.scaleY * 1.1, duration: reduced ? 90 : 130, yoyo: true, ease: "Back.easeOut" });
-      this.scene.tweens.add({ targets: icon, y: icon.y - (reduced ? 20 : 55), alpha: { from: 1, to: 0 }, duration: reduced ? 420 : 720, ease: "Sine.easeOut", onComplete: () => icon.destroy() });
+      // 생산 반응의 이동 거리도 같은 공용 배율을 써 팝업만 별도 강도를 만들지 않는다.
+      const motion = motionPolicy(session.settings);
+      this.scene.tweens.add({ targets: puppet, scaleX: puppet.scaleX * (1 + 0.1 * motion.nonEssentialDistanceFactor), scaleY: puppet.scaleY * (1 + 0.1 * motion.nonEssentialDistanceFactor), duration: 130, yoyo: true, ease: "Back.easeOut" });
+      this.scene.tweens.add({ targets: icon, y: icon.y - 55 * motion.nonEssentialDistanceFactor, alpha: { from: 1, to: 0 }, duration: 720, ease: "Sine.easeOut", onComplete: () => icon.destroy() });
     }
   }
 

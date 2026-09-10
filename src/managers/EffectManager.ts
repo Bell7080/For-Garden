@@ -6,7 +6,7 @@ import { flashPolicy, inkBlotPoints, mawTeeth, slashPoints, SIGNATURE_SPECS, typ
 import { damagePopupStyle, risingAlpha, shouldShowDamagePopup, type DamagePopupRequest } from "../ui/damageNumbers";
 import { battlefieldWashBands, groundAreaStyle, laneAreaPoints, radialAreaPoints, type GroundAreaRequest, type GroundAreaShape, type GroundAreaStyle } from "../ui/groundAreas";
 import { COLOR, textStyle } from "../ui/theme";
-import { battleUiMotionFactor, presentationPolicy, type BattleUiMotion } from "../core/settings";
+import { motionPolicy, presentationPolicy, type MotionPolicy } from "../core/settings";
 import type { ActiveCombatDisplayEffect } from "../core/combatEffects";
 
 /**
@@ -37,10 +37,8 @@ export interface EffectManagerOptions {
   damageNumbers: boolean;
   /** 파편과 파문이 서는 깊이. 수치 글자는 그보다 한 겹 위에 선다. */
   depth?: number;
-  /** 큰 한 방에 화면을 흔들지 여부. 지도·로비처럼 조작이 이어지는 화면은 끈다. */
-  shake?: boolean;
-  /** 체력 HUD와 같은 저장 선택으로 카메라 흔들림 세기만 조절한다. */
-  battleUiMotion?: BattleUiMotion;
+  /** 호출 화면에서 확정한 공용 움직임 정책이다. 설정 원본을 받아 매니저가 다시 해석하지 않는다. */
+  motion?: MotionPolicy;
   /** 공용 예산 정책의 입력이며 이펙트 종류별 임의 저사양 분기를 금지한다. */
   lowSpecMode?: boolean;
   /** 모든 타격·전용 연출 섬광이 공유하는 접근성 입력이다. */
@@ -149,8 +147,13 @@ export class EffectManager {
   constructor(scene: Phaser.Scene, options: EffectManagerOptions) {
     this.scene = scene;
     this.depth = options.depth ?? 300;
-    this.shakeEnabled = options.shake ?? true;
-    this.shakeFactor = battleUiMotionFactor(options.battleUiMotion ?? "default");
+    // 비전투 오버레이의 기본값도 정책 함수로 만들어 모든 흔들림 우선순위를 한 경계에 둔다.
+    const motion = options.motion ?? motionPolicy({
+      presentation: { screenShake: true, battleUiMotion: "default" },
+      accessibility: { reduceMotion: false },
+    });
+    this.shakeEnabled = motion.cameraShakeFactor > 0;
+    this.shakeFactor = motion.cameraShakeFactor;
     this.groundDepth = options.groundDepth ?? this.depth - 400;
     this.quality = presentationPolicy(options.lowSpecMode ?? false);
     this.flashes = flashPolicy(options.reduceFlashes ?? false);

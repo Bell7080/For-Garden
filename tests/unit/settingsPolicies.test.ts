@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { colorAssistPolicy, excavationStageDuration, presentationPolicy } from "../../src/core/settings";
+import { colorAssistPolicy, excavationStageDuration, motionPolicy, presentationPolicy } from "../../src/core/settings";
 import { flashPolicy } from "../../src/ui/signatureEffects";
 import { COLOR_ASSIST_LAYOUT, COLOR_ASSIST_SURFACES } from "../../src/ui/colorAssist";
 
@@ -13,6 +13,21 @@ describe("settings presentation policies", () => {
     expect(low.ringRatio).toBeLessThan(full.ringRatio);
     expect(low.fullBodyScale).toBeLessThan(full.fullBodyScale);
     expect(low).toMatchObject({ postProcessing: false, renderQuality: 0.75 });
+  });
+
+  it.each([
+    // 화면 흔들림, 전체 감소, 전투 UI 선택, 카메라, 전투 UI, 거리, 반복의 최종값을 조합별로 고정한다.
+    [true, false, "default", 1, 1, 1, 1],
+    [false, false, "default", 0, 1, 1, 1],
+    [true, true, "default", 0.4, 0.4, 0.4, 0],
+    [false, true, "default", 0, 0.4, 0.4, 0],
+    [true, false, "reduced", 1, 0.4, 1, 1],
+    [true, true, "reduced", 0.4, 0.4, 0.4, 0],
+    [true, false, "off", 1, 0, 1, 1],
+    [true, true, "off", 0.4, 0, 0.4, 0],
+  ] as const)("움직임 정책 조합 %#의 최종 배율을 고정한다", (screenShake, reduceMotion, battleUiMotion, camera, battleUi, distance, repeats) => {
+    const policy = motionPolicy({ presentation: { screenShake, battleUiMotion }, accessibility: { reduceMotion } });
+    expect(policy).toMatchObject({ cameraShakeFactor: camera, battleUiFactor: battleUi, nonEssentialDistanceFactor: distance, nonEssentialRepeatFactor: repeats });
   });
 
   it("대표 값은 종류별 글리프와 패턴에 명시적으로 고정된다", () => {

@@ -351,7 +351,9 @@ function passiveHead(passive: Passive, atk?: number): string {
   if (passive.kind === "duoLink" && passive.duoLink !== undefined) {
     // 세 절이 각각 다른 일을 한다 — 짝을 짓고, 숨고, 같은 적을 노린다. 한 문장에 이으면
     // 무엇이 조건이고 무엇이 결과인지 읽히지 않으므로 문장을 끊는다.
-    return `[[duo|듀오]]의 체력이 ${passive.value}% 이상인 동안 [[stealth|은신]]한다. 듀오가 쓰러지면 다시 짝을 짓지 않는다.`;
+    // **짝을 맺는 것이 한 번뿐이라는 말이 맨 앞에 선다.** 그 한 줄이 "쓰러져도 다시 짝을
+    // 짓지 않는다"까지 함께 말하므로 뒤에 한 문장을 더 달지 않는다. 누구와 맺는지는 태그의 몫이다.
+    return `전투 시작 시 한 번, 아군 한 명과 [[duo|듀오]]를 맺는다. 듀오의 체력이 ${passive.value}% 이상인 동안 [[stealth|은신]]한다.`;
   }
   if (passive.kind === "shimmerMark") return `적을 타격하면 반짝이는 표식을 남긴다. 표식이 없는 적을 타격하면 표식이 그 적에게 옮겨가며 [[ap|주문력]]의 ${passive.value}% [[magical-damage|마법 피해]]를 추가로 입힌다.`;
   if (passive.kind === "frostboundDominion") return `상성 계산에서 물이 아닌 얼음으로 취급된다. 얼음은 풀·물·땅에 유리하고 불에 불리하며 바람과는 무상성이다. 이미 [[chill|둔화]]가 최대 중첩인 적을 때리면 그 겹을 모두 소모해 [[frozen|빙결]]시킨다.`;

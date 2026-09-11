@@ -1066,6 +1066,9 @@ export class BattleScene extends Phaser.Scene {
     if (event.kind === "charge") {
       // 바닥 자국은 `areaImpact`가 통로 모양 그대로 그린다 — 여기서 경로 길이만 한 마름모를 더
       // 깔면 실제 판정폭(반폭 110px)보다 훨씬 넓은 범위를 보여 주게 된다.
+      // 달리는 그림은 코어의 잔상(`chargeGlide`)이 만들고, 여기서는 그동안의 동작만 바꾼다.
+      const runner = this.views.get(event.fighterId);
+      if (runner) playMotion(this, runner.creature, "run");
       return undefined;
     }
 

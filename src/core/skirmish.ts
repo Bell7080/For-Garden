@@ -82,6 +82,13 @@ export interface Fighter extends Combatant {
    */
   dashX: number;
   dashY: number;
+  /**
+   * 돌진 잔상이 실제 자리까지 따라붙기까지 남은 시간(초).
+   *
+   * 0보다 크면 `dashX`·`dashY`가 지수가 아니라 **일정한 속도로** 줄어든다. 달려간 거리는
+   * 짧은 밀림과 달리 크므로, 같은 감쇠를 쓰면 도착 직전이 길게 늘어진다.
+   */
+  chargeGlide: number;
   /** 달릴 때 떠오르는 높이(px). 0이면 땅에 붙어 있다. */
   hop: number;
   /** 통통 튀는 주기의 현재 위상. 이동을 멈춰도 이어서 센다. */
@@ -684,6 +691,18 @@ export const SKIRMISH = {
   knockback: 20,
   /** 튀어나간 거리와 밀려난 거리가 제자리로 돌아오는 속도. 클수록 빨리 복귀한다. */
   recover: 9,
+  /**
+   * 돌진한 몸이 **지나온 길을 실제로 달리는** 데 걸리는 시간(초).
+   *
+   * 판정과 좌표는 한 프레임에 끝나지만(먼저 옮기면 판정 기준선이 이미 지나온 길이 된다),
+   * 그림까지 같은 프레임에 도착하면 순간이동으로 보인다. 그래서 그림만 출발점에 남겨 두고
+   * 이 시간 동안 **일정한 속도로** 따라붙인다 — `recover`의 지수 감쇠를 쓰면 처음만 빠르고
+   * 끝이 늘어져 달린 것이 아니라 미끄러진 것으로 읽힌다.
+   *
+   * 그동안 몸은 길 위의 누구와도 부딪치지 않는다. 실제 자리는 이미 끝점이라 밀어내기·겹침이
+   * 그림을 건드리지 않기 때문이고, 그것이 곧 "뚫고 지나간다"는 그림이다.
+   */
+  chargeGlideSeconds: 0.34,
   /** 달릴 때 튀어 오르는 최대 높이(px). */
   hopHeight: 24,
   /** 이동 속도 100 기준 초당 튀는 횟수. 빠를수록 더 자주 통통거린다. */
@@ -839,6 +858,7 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     bestGap: Number.POSITIVE_INFINITY,
     wander: index * 2.1 + (side === "player" ? 0 : 1.05),
     dashX: 0,
+    chargeGlide: 0,
     dashY: 0,
     hop: 0,
     // 여섯이 같은 박자로 뛰지 않도록 시작 위상을 어긋나게 둔다.
@@ -950,10 +970,16 @@ export function spawnSpots(arena: Arena, side: Side, count = 3): { x: number; y:
 function createPackFighters(owners: readonly Fighter[], augmentEffects: readonly ExpeditionAugmentEffect[]): Fighter[] {
   return owners.flatMap((owner) => (owner.def.summons ?? []).map((spec, index) => {
     const stats = deriveSummonStats(owner.def.stats, spec);
-    // 플레이어의 앞은 위쪽, 적의 앞은 아래쪽이다. 좌우로 갈라 세워 둘이 겹치지 않게 한다.
+    /*
+     * **지휘자의 등 뒤에서 선다.**
+     *
+     * 앞에 세우면 전투가 열리는 순간 늑대가 전장에서 가장 앞선 몸이 되어 적 전원의 첫 표적이
+     * 되고, 달려 나가 보기도 전에 쓰러진다. 뒤에서 나타나 지휘자를 지나쳐 달려 나가면 붙는
+     * 시점이 그만큼 늦고, 화면에서도 불려 나온 것으로 읽힌다.
+     */
     const forward = owner.side === "player" ? -1 : 1;
     const x = owner.x + (index % 2 === 0 ? -70 : 70);
-    const y = owner.y + forward * 90;
+    const y = owner.y - forward * 90;
     const wolf = makeFighter({ ...spec.def, stats }, owner.side, index, x, y, 0, 0, 1, augmentEffects);
     // 편성 칸의 ID와 겹치지 않도록 주인 ID를 이름공간으로 쓴다. 기여도가 이 형태를 읽는다.
     wolf.id = `${owner.id}:${spec.def.id}`;
@@ -2595,6 +2621,18 @@ function chargePath(attacker: Fighter, state: SkirmishState, aim: { x: number; y
   };
 }
 
+/**
+ * 돌진한 몸의 그림을 출발점에 남겨 둔다.
+ *
+ * 좌표는 이미 끝점이므로 판정·밀어내기는 도착한 자리로 돌고, 그림만 길을 달려 따라온다.
+ * 그래서 통로 위의 누구와도 부딪치지 않고 그대로 뚫고 지나간 것처럼 보인다.
+ */
+function beginChargeGlide(fighter: Fighter, from: { x: number; y: number }): void {
+  fighter.dashX = from.x - fighter.x;
+  fighter.dashY = from.y - fighter.y;
+  fighter.chargeGlide = SKIRMISH.chargeGlideSeconds;
+}
+
 /** 점과 선분 사이의 최단 거리. 통로 안에 들어왔는지를 재는 데만 쓴다. */
 function distanceToSegment(point: { x: number; y: number }, from: { x: number; y: number }, to: { x: number; y: number }): number {
   const dx = to.x - from.x;
@@ -4003,6 +4041,8 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     attacker.x = charge.to.x;
     attacker.y = charge.to.y;
     attacker.engaged = false;
+    // 그림만 출발점에 남겨 둔다. 이 잔상이 줄어드는 동안 몸이 길을 달려 들어간다.
+    beginChargeGlide(attacker, charge.from);
     events.push({ kind: "charge", fighterId: attacker.id, from: charge.from, to: charge.to });
   }
 
@@ -4524,7 +4564,8 @@ function reviveWolf(state: SkirmishState, owner: Fighter, wolf: Fighter, events:
   wolf.resummonIn = 0;
   const index = (owner.def.summons ?? []).findIndex((spec) => wolf.id.endsWith(`:${spec.def.id}`));
   wolf.x = Math.min(state.arena.right, Math.max(state.arena.left, owner.x + (index % 2 === 0 ? -70 : 70)));
-  wolf.y = Math.min(state.arena.bottom, Math.max(state.arena.top, owner.y + (owner.side === "player" ? -90 : 90)));
+  // 처음 설 때와 같은 자리다 — 지휘자의 등 뒤에서 나와 다시 달려 나간다.
+  wolf.y = Math.min(state.arena.bottom, Math.max(state.arena.top, owner.y + (owner.side === "player" ? 90 : -90)));
   wolf.targetId = null;
   wolf.engaged = false;
   wolf.attackCooldown = 0;
@@ -4673,6 +4714,7 @@ function chargeWolfInto(state: SkirmishState, wolf: Fighter, target: Fighter, ev
   wolf.y = Math.min(state.arena.bottom, Math.max(state.arena.top, target.y));
   wolf.facing = wolf.x <= target.x ? 1 : -1;
   wolf.engaged = true;
+  beginChargeGlide(wolf, from);
   events.push({ kind: "areaImpact", attackerId: wolf.id, ultimate: true, damageType: magical ? "magical" : "physical",
     area: { shape: "lane", from, to: { x: wolf.x, y: wolf.y }, halfWidth: 24 } });
   const input = { power: powerPercent, damageType: magical ? "magical" as const : "physical" as const, scalingStat: magical ? "ap" as const : "atk" as const, kind: "ultimate" as const, isCritical: false };
@@ -4778,6 +4820,15 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     if (fighter.shellGuard) {
       const remaining = fighter.shellGuard.remaining - dt;
       fighter.shellGuard = remaining <= EMERGENCY_RECOVERY.epsilon ? null : { ...fighter.shellGuard, remaining };
+    }
+    if (fighter.chargeGlide > 0) {
+      // 남은 시간에 비례해 줄이면 매 프레임 같은 거리를 움직여 달리는 그림이 된다.
+      const before = fighter.chargeGlide;
+      fighter.chargeGlide = Math.max(0, before - dt);
+      const left = fighter.chargeGlide / before;
+      fighter.dashX *= left;
+      fighter.dashY *= left;
+      continue;
     }
     fighter.dashX *= recovery;
     fighter.dashY *= recovery;

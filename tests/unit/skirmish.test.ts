@@ -109,6 +109,23 @@ describe("디안 무리 생명주기", () => {
     expect(state.fighters.filter(isPartyFighter).every(({ stealthFor }) => stealthFor === Number.POSITIVE_INFINITY)).toBe(true);
   });
 
+  it("은 늑대를 지휘자의 등 뒤에 세워 첫 표적이 되지 않게 한다", () => {
+    const state = createSkirmish([getRelic("dian")], [getRelic("amo")], ARENA);
+    const dian = state.fighters[0];
+    const wolves = wolvesOf(state, dian.id);
+    // 아군은 아래쪽에서 출발한다. 늑대가 지휘자보다 **아래**에 서야 앞에 나서지 않은 것이다.
+    // 지휘자가 판 끝에 서 있으면 그 뒤가 없어 같은 줄까지만 물러난다 — 그래도 앞서지는 않는다.
+    for (const wolf of wolves) expect(wolf.y, wolf.def.name).toBeGreaterThanOrEqual(dian.y);
+    // 다시 설 때도 같은 자리에서 나온다 — 앞에서 부활하면 그 프레임에 바로 표적이 된다.
+    // 선 자리는 사건이 들고 오므로, 그 뒤의 자유로운 걸음과 섞지 않고 사건만 본다.
+    wolves[0].hp = 0;
+    stepSkirmish(state, 1 / 60);
+    wolves[0].resummonIn = 0.01;
+    const returned = stepSkirmish(state, 0.05)
+      .find((event) => event.kind === "packSummon" && event.fighterId === wolves[0].id);
+    expect(returned?.kind === "packSummon" ? returned.y : 0).toBeGreaterThanOrEqual(dian.y);
+  });
+
   it("은 늑대 능력치를 주인의 한 축에서만 파생하고 무리 치명타를 함께 나눈다", () => {
     const state = createSkirmish([getRelic("dian")], [getRelic("amo")], ARENA);
     const [kuro, shiro] = wolvesOf(state, "player-0");
@@ -222,6 +239,29 @@ describe("디안 합공과 목덜미", () => {
     // 물고 제자리로 돌아오지 않는다. 은신이라 적진 한가운데에 서 있어도 보이지 않는다.
     expect({ x: dian.x, y: dian.y }).not.toEqual(before);
     expect(dian.stealthFor).toBe(Number.POSITIVE_INFINITY);
+  });
+
+  it("은 돌진한 몸의 그림만 출발점에 남겨 길을 달리게 한다", () => {
+    const { state, dian } = readyDian(1);
+    const [kuro] = state.fighters.filter((f) => f.summonOwnerId === dian.id);
+    const before = { x: kuro.x, y: kuro.y };
+    dian.energy = dian.def.ultimate.cost;
+    fireUltimate(state, dian.id);
+    // 실제 좌표는 이미 도착점이라 판정과 밀어내기가 그 자리에서 돈다.
+    expect({ x: kuro.x, y: kuro.y }).not.toEqual(before);
+    // 그림은 출발점에 남아 있다 — 잔상을 더하면 떠난 자리가 나온다.
+    expect(Math.round(kuro.x + kuro.dashX)).toBe(Math.round(before.x));
+    expect(Math.round(kuro.y + kuro.dashY)).toBe(Math.round(before.y));
+    expect(kuro.chargeGlide).toBeGreaterThan(0);
+
+    // 잔상은 일정한 속도로 줄어든다. 절반쯤 흐르면 절반쯤 남는다.
+    const glide = kuro.chargeGlide;
+    const start = Math.hypot(kuro.dashX, kuro.dashY);
+    stepSkirmish(state, glide / 2);
+    expect(Math.hypot(kuro.dashX, kuro.dashY) / start).toBeCloseTo(0.5, 1);
+    stepSkirmish(state, glide);
+    expect(kuro.chargeGlide).toBe(0);
+    expect(Math.hypot(kuro.dashX, kuro.dashY)).toBeCloseTo(0, 3);
   });
 
   it("은 목덜미가 들어갈 때마다 피 냄새를 쌓고 겹이 문턱과 합공을 함께 키운다", () => {

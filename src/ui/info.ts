@@ -2178,12 +2178,25 @@ export class InfoManager {
         + ` 일반 공격은 「${def.basic.name}」, 궁극기는 「${def.ultimate.name}」이다.`,
     }));
     // 겹당 수치와 상한은 지휘자마다 다를 수 있으므로 전역 사전이 아니라 그 창이 데이터에서 만든다.
+    // 겹당 수치와 상한, 문턱 증가폭은 지휘자마다 다르므로 전역 사전이 아니라 그 정의에서 만든다.
+    const finisher = owner?.basic.finisher;
     if (scent) {
+      const threshold = finisher === undefined || finisher.thresholdPerStack <= 0
+        ? ""
+        : ` [[nape|목덜미]]가 열리는 체력 문턱이 ${finisher.thresholdPerStack}% 오른다.`;
       tags.push({
         id: "bloodscent", term: "피 냄새", kind: "버프",
-        description: `무리가 사냥을 이어 갈수록 쌓이는 겹이다. 최대 ${scent.maxStacks}겹까지 쌓이고,`
-          + ` 겹마다 ${owner?.name ?? "지휘자"}의 일반 공격 피해가 ${scent.damagePercentPerStack}% 커지며 [[nape|목덜미]]가 열리는 체력 문턱도 함께 오른다.`
-          + ` 한 전투 안에서만 쌓인다.`,
+        description: `표적이 쓰러지거나 [[nape|목덜미]]가 들어갈 때마다 한 겹 얻고 최대 ${scent.maxStacks}겹까지 쌓인다.`
+          + ` 겹마다 일반 공격 피해가 ${scent.damagePercentPerStack}% 커지고,${threshold}`
+          + ` 전투가 끝나면 사라진다.`,
+      });
+    }
+    // 목덜미도 비례 수치를 아는 자리에서는 실제 값으로 말한다.
+    if (finisher) {
+      tags.push({
+        id: "nape", term: "목덜미", kind: "규칙",
+        description: `표적 뒤로 [[teleport|순간이동]]해 표적의 남은 체력의 ${finisher.remainingHpPercent}%만큼 [[fixed-damage|고정 피해]]를 준다.`
+          + ` 방어력과 저항력을 무시하며 [[stealth|은신]]은 풀리지 않는다.`,
       });
     }
     return tags;

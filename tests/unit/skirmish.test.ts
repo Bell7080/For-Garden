@@ -2806,10 +2806,10 @@ describe("파치 정적 전투 계약", () => {
     expect(pachi.hp).toBeLessThanOrEqual(0);
   });
 
-  it("의 기본 공격은 네 번째 타격에만 기절과 뇌진탕을 건다", () => {
+  it("의 기본 공격은 세 번째 타격에만 기절과 뇌진탕을 건다", () => {
     const { state, pachi, enemy } = pachiBattle();
     const every = pachi.def.basic.statusEffectEvery!;
-    expect(every).toBe(4);
+    expect(every).toBe(3);
     const concussion = pachi.def.basic.statusEffects!.find((effect) => effect.kind === "concussion")!;
     if (concussion.kind !== "concussion") throw new Error("뇌진탕 효과가 아니다");
 
@@ -2820,7 +2820,7 @@ describe("파치 정적 전투 계약", () => {
       enemy.stunnedFor = 0;
       events.push(...stepSkirmish(state, 1 / 60));
       const rang = events.filter((event) => event.kind === "concussion");
-      // 네 번째 배트에서만 헬멧이 울린다.
+      // 세 번째 배트에서만 헬멧이 울린다.
       expect(rang, `${hit}타`).toHaveLength(hit === every ? 1 : 0);
     }
     expect(enemy.stunnedFor).toBeGreaterThan(0);
@@ -2858,7 +2858,7 @@ describe("파치 정적 전투 계약", () => {
     expect(pachi.x).toBeLessThanOrEqual(state.arena.right);
   });
 
-  it("의 4타 카운터는 본인 프로필의 버프 칩으로 붙는다", () => {
+  it("의 3타 카운터는 본인 프로필의 버프 칩으로 붙는다", () => {
     const { state, pachi, enemy } = pachiBattle(["amo"]);
     const every = pachi.def.basic.statusEffectEvery!;
     // 주기 타격은 적이 아니라 **때린 쪽**의 값이다 — 다음 한 방을 정하는 것이 그 개체의 타수다.
@@ -2869,9 +2869,78 @@ describe("파치 정적 전투 계약", () => {
     expect(buff.stacks).toBe(1);
     // 시간이 아니라 타격 수가 채우므로 시계를 두지 않는다.
     expect(buff.timing.kind).toBe("conditional");
-    // 한 바퀴를 돌면(4타) 다시 0이 되어 칩이 사라진다.
+    // 한 바퀴를 돌면(3타) 다시 0이 되어 칩이 사라진다.
     for (let hit = 1; hit < every; hit += 1) { pachi.attackCooldown = 0; enemy.stunnedFor = 0; stepSkirmish(state, 1 / 60); }
     expect(activeCombatBuffs(state, pachi.id)).toEqual([]);
+  });
+
+  it("의 뇌진탕은 울린 피해의 40%를 때린 쪽의 보호막으로 돌린다", () => {
+    // 흡혈과 같은 자리에서 같은 값을 읽으므로, 막에 다 먹힌 타격은 막을 만들지 않는다.
+    const { state, pachi, enemy } = pachiBattle();
+    // 상한이 걸리지 않는 평범한 덩치로 세워 40%라는 비율 자체를 검사한다.
+    enemy.maxHp = 1_200; enemy.hp = 1_200;
+    const passive = pachi.def.passive;
+    const events: SkirmishEvent[] = [];
+    for (let hit = 0; hit < pachi.def.basic.statusEffectEvery!; hit += 1) {
+      pachi.attackCooldown = 0; enemy.stunnedFor = 0;
+      events.push(...stepSkirmish(state, 1 / 60));
+    }
+    const rang = events.find((event): event is Extract<SkirmishEvent, { kind: "concussion" }> => event.kind === "concussion")!;
+    // 막은 **울린 그 피해**에서 나온다 — 공격력이 아니라 헬멧이 울린 만큼이 곧 두께다.
+    const expected = Math.round(rang.amount * passive.concussionShieldPercent! / 100);
+    expect(pachi.shield.amount).toBe(expected);
+    expect(pachi.shield.providerId).toBe(pachi.id);
+    const granted = events.find((event): event is Extract<SkirmishEvent, { kind: "shieldGranted" }> =>
+      event.kind === "shieldGranted" && event.fighterId === pachi.id)!;
+    expect(granted.amount).toBe(expected);
+  });
+
+  it("의 뇌진탕 보호막은 체력이 무한한 상대에게도 자기 최대 체력 비율에서 멈춘다", () => {
+    const { state, pachi, enemy } = pachiBattle();
+    // 불사 관측 보스처럼 최대 체력이 무한에 가까우면 최대 체력 비례 피해도 함께 무한해진다.
+    enemy.maxHp = Number.MAX_SAFE_INTEGER; enemy.hp = Number.MAX_SAFE_INTEGER;
+    for (let hit = 0; hit < pachi.def.basic.statusEffectEvery!; hit += 1) {
+      pachi.attackCooldown = 0; enemy.stunnedFor = 0;
+      stepSkirmish(state, 1 / 60);
+    }
+    expect(pachi.shield.amount).toBe(Math.round(pachi.maxHp * pachi.def.passive.concussionShieldCapMaxHpPercent! / 100));
+  });
+
+  it("의 폭주는 들어가는 순간 뇌진탕을 장전한다", () => {
+    const { state, pachi, enemy } = pachiBattle();
+    const trait = pachi.def.ferocityTrait;
+    if (trait.effectId !== "knockbackSlam") throw new Error("파치의 폭주 특성이 아니다");
+    expect(trait.loadsStatusCycleOnEntry).toBe(true);
+    // 폭주 직전까지 한 대도 때리지 않은 자리에서 연다 — 장전이 없으면 세 대를 더 때려야 한다.
+    expect(pachi.statusHitCount).toBe(0);
+    pachi.ferocity = FEROCITY_RULES.max - FEROCITY_RULES.basicGain;
+    pachi.attackCooldown = 0; enemy.stunnedFor = 0;
+    const entry = stepSkirmish(state, 1 / 60, () => 0.999999);
+
+    expect(pachi.ferocityFever).toBe(true);
+    // 야성은 때린 그 순간에 차므로, 장전된 배트는 폭주를 연 **그 한 방**에서 바로 울린다.
+    const rang = entry.find((event): event is Extract<SkirmishEvent, { kind: "concussion" }> => event.kind === "concussion")!;
+    expect(rang.critical).toBe(true);
+    // 울린 뒤에는 주기가 처음부터 다시 돈다 — 폭주가 한 바퀴를 통째로 건너뛴 셈이다.
+    expect(pachi.statusHitCount).toBe(0);
+  });
+
+  it("의 폭주 장전은 때리지 않고 차오른 야성에서도 다음 한 방을 울린다", () => {
+    const { state, pachi, enemy } = pachiBattle();
+    const every = pachi.def.basic.statusEffectEvery!;
+    // 맞아서 차오른 야성으로 폭주에 들면 그 프레임에는 때린 타격이 없다.
+    pachi.ferocity = FEROCITY_RULES.max - FEROCITY_RULES.hitGain;
+    pachi.attackCooldown = 99;
+    enemy.attackCooldown = 0; enemy.targetId = pachi.id; enemy.engaged = true;
+    enemy.x = pachi.x + 10;
+    for (let frame = 0; frame < 120 && !pachi.ferocityFever; frame += 1) stepSkirmish(state, 1 / 60, () => 0.999999);
+    expect(pachi.ferocityFever).toBe(true);
+    // 주기에서 한 대 모자란 자리에 서 있으므로 다음 한 방이 곧 헬멧을 울린다.
+    expect(pachi.statusHitCount).toBe(every - 1);
+
+    pachi.attackCooldown = 0; enemy.stunnedFor = 0;
+    const next = stepSkirmish(state, 1 / 60, () => 0.999999);
+    expect(next.some((event) => event.kind === "concussion")).toBe(true);
   });
 
   it("의 폭주는 뇌진탕을 확정 치명타로 만들고 그 적을 튕겨 날린다", () => {

@@ -174,7 +174,11 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
   }
   // 몇 번 튕기는지도 몇 초인지도 적지 않는다. 날아가는 그림이 곧 그 답이고, 그 수가 플레이어의
   // 다음 조작을 바꾸지 않는다 — 태그가 "날아가는 동안 움직이지도 때리지도 못한다"까지 말한다.
-  if (trait.effectId === "knockbackSlam") return `[[concussion|뇌진탕]]이 확정 치명타가 되고, 그 적을 [[knockback|날려버린다]]. 날려버린 뒤에는 가장 가까운 적을 표적으로 다시 지정한다.`;
+  if (trait.effectId === "knockbackSlam") {
+    // 장전은 주기를 건드리는 값이라 본문이 직접 말한다 — 뇌진탕 태그가 말하는 몫이 아니다.
+    const loaded = trait.loadsStatusCycleOnEntry ? `폭주에 들어가면 [[concussion|뇌진탕]]이 곧바로 장전된다. ` : "";
+    return `${loaded}[[concussion|뇌진탕]]이 확정 치명타가 되고, 그 적을 [[knockback|날려버린다]]. 날려버린 뒤에는 가장 가까운 적을 표적으로 다시 지정한다.`;
+  }
   // 광란은 시간이 스킬마다 다르므로(궁극 4초 · 폭주 2초) 태그가 아니라 본문이 초를 적는다.
   if (trait.effectId === "frenzyGaze") return `폭주 중 [[basic-attack|기본 공격]]에 적중한 적을 ${trait.seconds}초 동안 [[frenzy|광란]]시킨다. 전이된 타격으로는 발동하지 않는다.`;
   // 최대 체력이 아니라 **잃은 체력** 비례라는 것이 이 폭주의 전부다 — 앞에 서서 맞는 것이
@@ -348,7 +352,15 @@ function passiveHead(passive: Passive, atk?: number): string {
   if (passive.kind === "abyssalPressure") return `완전히 경과한 매초 기본 [[ap|주문력]]의 ${passive.apPercentPerSecond}%가 복리로 누적된다. 현재 체력이 최대 체력의 100%에서 ${passive.maxReductionAtHpPercent}%로 낮아질수록 받는 모든 피해 감소가 ${passive.baseDamageReductionPercent}%에서 ${passive.maxDamageReductionPercent}%까지 선형으로 증가하며, 그 이하에서는 최대치로 제한된다. 최종 받는 피해가 ${passive.ignoreDamageAtOrBelow} 이하인 공격은 무효화한다.`;
   if (passive.kind === "gourmetHunt") return `전투를 시작할 때 현재 체력이 가장 낮은 적을 표적으로 삼고 그 자리로 [[teleport|순간이동]]한다. 적을 처치하면 즉시, 그 밖에는 ${passive.huntCooldownSeconds}초마다 다시 고른다. 적에게 피해를 입으면 ${passive.damageStealthSeconds}초 동안 [[stealth|은신]]한다. 전투당 최대 ${passive.damageStealthMaxTriggers}번 발동한다.`;
   if (passive.kind === "cursedInsight") return `[[curse|저주]]에 걸린 적에게 [[basic-attack|기본 공격]]을 직접 적중시킬 때마다 이번 전투 동안 [[ap|주문력]]이 ${passive.value}% 증가한다. 최대 ${passive.maxStacks}회까지 쌓이며, [[transfer|전이]]된 타격으로는 발동하지 않는다.`;
-  if (passive.kind === "impactCap") return `한 번에 받는 피해가 최대 체력의 ${passive.impactCapMaxHpPercent}%를 넘지 않는다.`;
+  if (passive.kind === "impactCap") {
+    // 막은 맞은 쪽 최대 체력에서 나오는 값이라 미리 환산할 수 없다 — 명중 시점의 상대값만
+    // %로 남긴다는 규칙 그대로다.
+    const shield = passive.concussionShieldPercent === undefined ? ""
+      : ` [[concussion|뇌진탕]]이 입힌 피해의 ${passive.concussionShieldPercent}%만큼 보호막을 얻는다.`
+        + (passive.concussionShieldCapMaxHpPercent === undefined ? ""
+          : ` 한 번에 두르는 보호막은 최대 체력의 ${passive.concussionShieldCapMaxHpPercent}%를 넘지 않는다.`);
+    return `한 번에 받는 피해가 최대 체력의 ${passive.impactCapMaxHpPercent}%를 넘지 않는다.${shield}`;
+  }
   if (passive.kind === "overpaintSiphon") return `모든 아군이 [[overpaint|덧칠]]된 적을 맞히면 그 피해의 ${passive.value}%만큼 자신의 체력을 회복한다. 표적의 [[overpaint|덧칠]]이 최대로 쌓이면 다른 적으로 표적을 옮긴다.`;
   if (passive.kind === "lowHpVanish") return `전투당 한 번, 체력이 절반 이하가 되면 ${passive.durationSeconds}초 동안 [[stealth|은신]]해 표적에서 벗어난다.`;
   if (passive.kind === "openingVanish") return `전투를 시작할 때 ${passive.durationSeconds}초 동안 [[stealth|은신]] 상태로 진입한다.`;

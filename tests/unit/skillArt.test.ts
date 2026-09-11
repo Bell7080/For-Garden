@@ -1041,6 +1041,61 @@ describe("파루아 표시 계약", () => {
   });
 });
 
+describe("테리사 표시 계약", () => {
+  const terisa = RELICS.find((relic) => relic.id === "terisa")!;
+
+  it("의 패시브는 자신도 후보라는 것과 상한을 함께 말한다", () => {
+    // 근거리에서 제일 많이 맞는 몸이 본인이라, 그 한 줄이 빠지면 "남만 꿰매 주고 자기는
+    // 그냥 맞는 개체"로 읽힌다. 상한은 게이지에서 "얼마나 버티나"가 읽히게 하는 값이라
+    // 본문이 함께 적는다.
+    if (terisa.passive.kind !== "sutureStitch") throw new Error("테리사 패시브 계약이 바뀌었다");
+    const body = passiveDescription(terisa.passive);
+    expect(body).toContain("자신을 포함해 현재 HP 비율이 가장 낮은 생존 아군");
+    expect(body).toContain(`그 피해의 ${terisa.passive.suture!.damagePercent}%`);
+    expect(body).toContain(`최대 체력의 ${terisa.passive.suture!.maxHpCapPercent}%`);
+    // 버티기를 보호막으로만 짠다 — 숨은 배율로 덜 맞게 만드는 문장이 섞이면 안 된다.
+    expect(body).not.toContain("감소");
+  });
+
+  it("의 폭주는 가봉의 수치를 되풀이하지 않고 어디로 들어가는지만 바꾼다", () => {
+    // 비율과 상한은 패시브 하나가 갖는다. 여기에 값을 또 적으면 패시브를 조정한 뒤 폭주만
+    // 옛 값으로 남아 같은 실이 위아래에서 두 수로 보인다.
+    if (terisa.ferocityTrait.effectId !== "cautery") throw new Error("테리사 야성 계약이 바뀌었다");
+    const body = ferocityTraitDescription(terisa.ferocityTrait);
+    expect(body).toContain(`공격 속도가 ${terisa.ferocityTrait.attackSpeedPercent}%`);
+    expect(body).toContain("즉시 회복으로 바뀐다");
+    // 공속 값과 가봉 비율이 우연히 같은 수일 수 있으므로, 수가 아니라 **그 수를 말하는 문구**가
+    // 없는지로 확인한다 — 비율과 상한을 다시 말하는 순간 두 곳이 갈릴 자리가 생긴다.
+    expect(body).not.toContain("입힌 피해의");
+    expect(body).not.toContain("최대 체력의");
+  });
+
+  it("의 궁극기는 나눠 갖는다는 것을 본문이 직접 말한다", () => {
+    // "한 명당 얼마"가 아니라 **총량을 나눈다**는 것이 이 궁극기의 전부다 — 그래야 한 번에
+    // 여럿을 벨수록 팀이 두꺼워지는 규칙이 문장에서도 읽힌다.
+    const ultimate = terisa.ultimate;
+    if (!("allyShieldFromDamagePercent" in ultimate)) throw new Error("테리사 궁극기 계약이 바뀌었다");
+    const body = skillDescription(ultimate, { damage: 162 });
+    expect(body).toContain("자신의 주위 모든 적에게");
+    expect(body).toContain(`입힌 피해의 총합 중 ${ultimate.allyShieldFromDamagePercent}%`);
+    expect(body).toContain("똑같이 나눠 보호막으로 얻는다");
+  });
+
+  it("의 평타는 세 걸음이 저마다 다른 일을 해 제 줄을 갖는다", () => {
+    // 같은 문장이 두 번 서면 걸음을 나눈 뜻이 사라진다 — 안감만 제 몫을 덧대고, 마지막
+    // 걸음만 둘레를 함께 벤다.
+    expect(terisa.basic.desc).toBeUndefined();
+    expect(skillDescription(terisa.basic, { cycleDamage: [64, 64, 46] })).toBe([
+      "다음 3가지를 차례로 반복한다.",
+      "「겉감」 적 한 명에게 [[damage-value|64]]의 [[physical-damage|물리 피해]]를 준다.",
+      "「안감」 적 한 명에게 [[damage-value|64]]의 [[physical-damage|물리 피해]]를 주고, 입힌 피해의 30%만큼 보호막을 얻는다.",
+      "「엇갈려 자르기」 자신의 주위 모든 적에게 [[damage-value|46]]의 [[physical-damage|물리 피해]]를 준다.",
+    ].join("\n"));
+    // 전투 엔진의 반경(px)은 문장에 새지 않고 대상 범위 문구로만 나온다.
+    expect(skillDescription(terisa.basic)).not.toContain(String(terisa.basic.cycle![2].radius));
+  });
+});
+
 describe("슈테 스킬 표시 계약", () => {
   const shute = RELICS.find((def) => def.id === "shute")!;
 

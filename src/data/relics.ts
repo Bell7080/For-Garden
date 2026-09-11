@@ -2155,6 +2155,110 @@ export const RELICS: RelicDef[] = [
     },
   },
   {
+    id: "terisa",
+    squad: "rune",
+    name: "테리사",
+    specimenNumber: "078",
+    projectName: "SILENT SUTURE",
+    excavationSite: "몽골 네메그트층 알탄울라 사면",
+    // 발굴 기록은 장소·보존 상태·복원 연구 특징만 담고, 복원 이후 생활 관찰과 분리한다.
+    fossilRecord: "사면이 무너진 자리에서 앞발 한 쌍만 온전히 드러났다. 1m에 가까운 손톱 뼈가 세 개씩 나란히 남아 있었고, 끝이 부러지지 않은 표본은 이것이 처음이다.",
+    observationProfile: {
+      originYear: "약 7천만 년 전",
+      // E.C.는 테리사의 인간형 신체 나잇대이며, 케어실에서 남을 돌보는 위치에 맞춰 20년대 직전에 둔다.
+      restorationYear: "E.C. 19년",
+      lifeStage: "성체",
+      height: "1.72 m",
+      weight: "50 kg",
+    },
+    catalogSummary: "신장 1.72m, 체중 50kg의 인간형 체격에 손가락마다 길게 뻗은 낫 모양 갈퀴가 확인된 성체 테리지노사우루스 화석 기반 표본.",
+    unlockRecord: { status: "recorded", text: "테리사는 말을 아끼고 대신 손을 움직인다. 파장이 튄 개체가 케어실에 실려 오면 아무것도 묻지 않고 찢어진 자리부터 꿰매 놓는데, 실이 모자라면 제 수도복 자락을 갈퀴로 그어 뜯어 쓴다. 그 갈퀴로 남을 다치게 한 기록은 아직 없다. 다 꿰맨 뒤에는 송곳니를 드러내고 웃으며 다음 사람을 부른다." },
+    squadNote: "사일런트 룬의 재봉 담당. 케어실에 실려 온 개체의 옷과 몸을 말없이 꿰매고, 실이 떨어지면 제 수도복을 그어 뜯어 쓴다.",
+    researcherTitle: "아가",
+    rarity: "SR",
+    portraitAssetId: "terisa",
+    origin: "테리지노사우루스",
+    // 불은 갈퀴를 달궈 지지는 쪽에서 온다 — 자르는 손과 지혈하는 손이 같은 손이다.
+    element: "fire",
+    role: "support",
+    // 제 손으로 직접 잘라야 아군이 꿰매지므로 적 한가운데로 파고드는 지원가다.
+    reachTier: "melee",
+    excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 0.68, efficiencyMultiplier: 1.08 },
+    /*
+     * 근거리 지원가라 전사보다 두껍고 탱커보다는 얇은 자리에 선다(전투력 2303, SR 띠 안).
+     *
+     * 화력을 전사보다 낮게 두어도 손해가 아닌 이유는 「가봉」이 **피해의 비율**을 옮기기
+     * 때문이다 — 값어치가 공격력이 아니라 **얼마나 자주 자르느냐**에서 나오므로 공속을
+     * 로스터 상위에 두고, 수도복을 끌고 걷는 개체라 이속은 하위에 둔다.
+     * 주문력을 쓰는 스킬이 하나도 없어 낮게 둔다.
+     */
+    stats: {
+      hp: 1220,
+      def: 92,
+      res: 78,
+      atk: 116,
+      ap: 38,
+      attackSpeed: 108,
+      moveSpeed: 88,
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 0,
+    },
+    // 수치를 여기 적지 않는다 — 옮기는 비율과 상한은 「가봉」 하나가 갖고, 폭주는 그 몫이
+    // 보호막으로 가는지 회복으로 가는지만 바꾼다.
+    ferocityTrait: { name: "지짐", effectId: "cautery", attackSpeedPercent: 40 },
+    passive: {
+      // kind가 sutureStitch인 패시브는 passiveDescription()이 구조화 필드로 문장을 만드므로
+      // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
+      id: "terisa-passive",
+      name: "가봉(假縫)",
+      kind: "sutureStitch",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      value: 0,
+      suture: { damagePercent: 40, maxHpCapPercent: 25 },
+      desc: "기본 공격이 적중할 때마다 그 피해의 40%만큼 자신을 포함해 현재 HP 비율이 가장 낮은 생존 아군에게 보호막을 부여한다. 한 번에 부여하는 보호막은 그 아군 최대 체력의 25%를 넘지 않는다.",
+    },
+    basic: {
+      id: "terisa-basic",
+      name: "가위질",
+      power: 55,
+      scalingStat: "atk",
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      targeting: "single",
+      /*
+       * 세 걸음이 저마다 다른 일을 한다 — 겉감은 그냥 긋고, 안감은 **제 몫**을 덧대고,
+       * 엇갈려 자르기는 둘레를 한 번에 벤다. 마지막 걸음이 광역인 이유는 「가봉」이 적중마다
+       * 구르기 때문이다: 여럿을 한 번에 그으면 그만큼 여러 번 꿰매져 순환 끝에서 팀이
+       * 두꺼워진다. 위력을 낮춰 둔 것이 그 몫의 값이다.
+       */
+      cycle: [
+        { name: "겉감", power: 55 },
+        { name: "안감", power: 55, shieldFromDamagePercent: 30 },
+        { name: "엇갈려 자르기", power: 40, targeting: "nearbyEnemies", radius: 150 },
+      ],
+    },
+    ultimate: {
+      id: "terisa-ult",
+      name: "성의(聖衣)",
+      power: 140,
+      scalingStat: "atk",
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      cost: 150,
+      targeting: "nearbyEnemies",
+      radius: 200,
+      // 한 번에 여럿을 벨수록 팀이 두꺼워지는 것이 이 궁극기의 전부다. 그래서 적 한가운데로
+      // 파고들 이유가 생기고, 그것이 이 지원가가 근거리인 두 번째 이유다.
+      allyShieldFromDamagePercent: 60,
+    },
+  },
+  {
     id: "parua",
     squad: "rogue",
     name: "파루아",

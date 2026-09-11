@@ -494,3 +494,38 @@ export const SHUTE_SD_METADATA: Omit<PuppetAsset, "url"> = {
   imageHeight: 1254,
   content: { left: 31, top: 18, right: 1222, bottom: 1235 },
 };
+
+/**
+ * 19번 테리사(테리지노사우루스) 전신.
+ *
+ * ZIP 안 WebP의 alpha > 16 경계를 실측했다(36,12–1077,1415). 관절도 같은 좌표계에서 읽어
+ * 중심1(509,274)·머리1(484,159)·눈1(468,172)·눈2(536,145)이며, 넷 다 alpha 상자 안에 있다.
+ *
+ * **발 관절(792,1619 · 424,1518)은 그림 밖에 박혀 있다.** 캔버스 높이가 1446인데 발1이
+ * 1619라, 그것으로 바닥선을 잡으면 이 개체만 공중에 뜬다 — 바닥선은 늘 alpha 경계
+ * (`content.bottom`)가 잡는다.
+ *
+ * 양손의 갈퀴가 좌우 끝까지 뻗어 실루엣이 캔버스를 거의 채우지만(폭 1041/1088), 그 갈퀴는
+ * 어깨 높이에서 벌어져 머리 위 여백을 키우지 않으므로 카드 쪽 `cardTop` 보정은 필요 없다.
+ */
+export const TERISA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1088,
+  imageHeight: 1446,
+  content: { left: 36, top: 12, right: 1077, bottom: 1415 },
+  /**
+   * 카드 배율은 `content` **폭**으로 정해지는데, 좌우로 벌린 갈퀴가 실루엣을 캔버스 폭의
+   * 96%까지 넓혀 얼굴만 작아졌다(렉시아의 낫과 같은 함정이다 — 그 갈퀴는 카드 잘라내기에서
+   * 버려지는데도 배율만 끌어내렸다). 카드 규격이 아니라 이 값으로 되돌린다 — 값은 카드
+   * 얼굴 크기 회귀 테스트의 중앙값에 맞춰 구했다.
+   */
+  cardZoom: 1.08,
+  /** 로비 세로 비율: 메론 기준. 1.72 m — 보정 없이 세우면 1.709 m로 서므로 살짝 키운다. */
+  lobbyZoom: 1.007,
+};
+
+/** 테리사 SD ZIP의 정사각 원본과 alpha > 16 경계다. 중심1(587,564)·머리1(522,405)을 함께 읽었다. */
+export const TERISA_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254,
+  imageHeight: 1254,
+  content: { left: 34, top: 32, right: 1219, bottom: 1222 },
+};

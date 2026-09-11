@@ -30,7 +30,7 @@ export type ReachTier = "melee" | "mid" | "ranged";
 export type RelicRarity = "R" | "SR" | "SSR";
 
 /** 전신 Puppet 레지스트리의 안정적인 데이터 키다. 파일 번호를 게임 데이터에 직접 노출하지 않는다. */
-export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "pontos" | "parua" | "dian" | "kuro" | "shiro" | "shute";
+export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "pontos" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa";
 
 /**
  * 저장 데이터에서 선택·소유 외형을 식별하는 안정적인 ID다.
@@ -240,6 +240,15 @@ export type AttackSkill = SkillBase & {
    * 발라 둔 독(주문력)을 함께 쓰는 것이 그 예다.
    */
   secondaryScaling?: { stat: "atk" | "ap" | "def" | "hp"; power: number };
+  /**
+   * 이 기술이 실제로 깎은 HP 총량의 이 비율(%)을 **생존 아군 전원이 똑같이 나눠** 보호막으로 받는다.
+   *
+   * `shieldFromDamagePercent`와 다른 축이다 — 그쪽은 때린 본인만 단단해지고, 이쪽은 한 번에
+   * 여럿을 벨수록 팀이 두꺼워진다. 대상마다 따로 나누지 않고 **한 기술이 낸 총량**을 한 번에
+   * 쪼개는 이유는, 대상별로 나누면 적이 하나일 때와 여섯일 때 아군이 받는 몫이 대상 수에
+   * 비례해 갈리지 않고 한 명당 값이 그대로 남기 때문이다. 시전자도 아군 후보에 포함된다.
+   */
+  allyShieldFromDamagePercent?: number;
   healing?: never;
   teamBuff?: never;
   selfSetup?: never;
@@ -893,7 +902,19 @@ export type PassiveKind =
    * 은신해 단일 대상 표적에서 빠진다. 듀오가 쓰러지면 다시 붙지 않는다 — 그 순간 이 개체가
    * 아무것도 아니게 되는 것이 이 패시브의 값이다.
    */
-  | "duoLink";
+  | "duoLink"
+  /**
+   * 테리사 전용: **적을 자른 만큼 아군이 꿰매진다.**
+   *
+   * 기본 공격이 실제로 깎은 HP의 일부를 현재 HP 비율이 가장 낮은 생존 아군에게 보호막으로
+   * 돌린다. 아모의 조가비처럼 **자신도 후보에 남는다** — 근거리에서 제일 많이 맞는 것이
+   * 본인이라, 위험해지는 순간 실이 자기에게 돌아오는 것이 이 개체가 앞에 설 수 있는 이유다.
+   *
+   * 「받는 피해 감소」를 쓰지 않는 규칙 그대로 버티기를 **눈에 보이는 보호막**으로만 짠다.
+   * 보호막인 이유는 아직 맞지 않은 몸에도 미리 덧댈 수 있어야 하기 때문이다 — 그 실을 그
+   * 자리에서 지져 회복으로 바꾸는 것은 폭주(`cautery`)의 몫이다.
+   */
+  | "sutureStitch";
 
 /** 전투 엔진이 판별하는 야성 특성 효과 ID다. 새 효과는 수치 계약과 함께 명시적으로 추가한다. */
 export type FerocityEffectId =
@@ -940,7 +961,9 @@ export type FerocityEffectId =
   /** 캐릭터 ID와 무관하게 폭주 진입 시 시약 살포와 자기 가속을 함께 적용한다. */
   | "reagentDoping"
   /** 슈테 전용: 폭주 진입 시 듀오를 체력이 가장 낮은 적으로 돌진시키고, 그 뒤로 팀 재생을 돌린다. */
-  | "duoBreakthrough";
+  | "duoBreakthrough"
+  /** 테리사 전용: 폭주 중 「가봉」이 보호막 대신 즉시 회복으로 들어가고 자기 공격 속도가 오른다. */
+  | "cautery";
 
 /**
  * 개체별 피버 발현 정적 데이터다.
@@ -1224,6 +1247,18 @@ export type FerocityTrait = {
       allyRegenFromDuoDamagePercent: number;
     }
   | {
+      /**
+       * 「지짐」. 갈퀴가 달아올라 **꿰매는 대신 지진다.**
+       *
+       * 수치를 여기 다시 적지 않는 이유는, 무엇이 얼마나 옮겨 가는지는 「가봉」 계약
+       * (`Passive.suture`) 하나가 갖기 때문이다 — 같은 비율·같은 상한이 보호막에서 회복으로
+       * 바뀌기만 한다. 여기에 값을 또 적으면 패시브를 조정한 뒤 폭주만 옛 값으로 남는다.
+       */
+      effectId: "cautery";
+      /** 폭주 중 자기 공격 속도에 곱하는 증가율(%). 자를수록 꿰매는 개체라 속도가 곧 지원량이다. */
+      attackSpeedPercent: number;
+    }
+  | {
       /** 리파 ID가 아니라 이 계약을 선언한 모든 캐릭터가 사용할 수 있는 시약 도핑 효과다. */
       effectId: "reagentDoping";
       /** 모든 생존 적에게 폭주 진입 시 부여할 시약 수로, 캐릭터 ID 대신 정의가 결정한다. */
@@ -1345,6 +1380,19 @@ export interface Passive {
     selfShieldMaxHpPercent: number;
     /** 소비 시 선정된 아군에게 주는 그 아군 최대 체력 비례 보호막(%)이다. */
     lowestHpAllyShieldMaxHpPercent: number;
+  };
+  /**
+   * 「가봉」 계약. 기본 공격이 깎은 HP를 아군의 보호막으로 옮기는 두 값이다.
+   *
+   * 상한을 **대상의 최대 체력 비율**로 두는 이유는, 비율만 있으면 공격력이 자란 뒤 한 대가
+   * 아군의 체력 바를 통째로 덮는 보호막이 되어 "얼마나 버티나"가 게이지에서 읽히지 않기
+   * 때문이다. 한 번에 붙는 몫을 끊어야 여러 번 꿰매는 손이 화면에 남는다.
+   */
+  suture?: {
+    /** 실제로 깎은 HP 중 아군에게 옮기는 비율(%). */
+    damagePercent: number;
+    /** 한 번에 붙을 수 있는 보호막의 상한(대상 최대 체력 %). */
+    maxHpCapPercent: number;
   };
   /** 전투 한정 누적 패시브가 쌓을 수 있는 최대 횟수. 상한이 없으면 한 판이 길수록 끝없이 자란다. */
   maxStacks?: number;

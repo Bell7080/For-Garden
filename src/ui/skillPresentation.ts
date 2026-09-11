@@ -203,6 +203,11 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
       + ` 폭주 중 조가비 내부 재사용 대기시간이 ${trait.shellCooldownSecondsDuringFever}초로 줄어든다.`;
   }
 
+  if (trait.effectId === "cautery") {
+    // 비율도 상한도 적지 않는다 — 그 수치는 「가봉」이 갖고, 폭주는 **어디로 들어가는지**만
+    // 바꾼다. 여기에 값을 다시 적으면 패시브를 조정한 뒤 폭주만 옛 값으로 남는다.
+    return `공격 속도가 ${trait.attackSpeedPercent}% 증가하고, 부여하던 보호막이 같은 양의 즉시 회복으로 바뀐다.`;
+  }
   if (trait.effectId === "splitVolley") {
     // 순환을 기다리지 않는다는 것과 사거리가 는다는 것 둘만 말한다. 갈래화살이 무엇인지는
     // 태그가 이미 말하므로 여기서 되풀이하지 않는다.
@@ -381,6 +386,13 @@ function passiveHead(passive: Passive, atk?: number): string {
     // **짝을 맺는 것이 한 번뿐이라는 말이 맨 앞에 선다.** 그 한 줄이 "쓰러져도 다시 짝을
     // 짓지 않는다"까지 함께 말하므로 뒤에 한 문장을 더 달지 않는다. 누구와 맺는지는 태그의 몫이다.
     return `전투 시작 시 한 번, 아군 한 명과 [[duo|듀오]]를 맺는다. 듀오의 체력이 ${passive.value}% 이상인 동안 [[stealth|은신]]한다.`;
+  }
+  if (passive.kind === "sutureStitch" && passive.suture !== undefined) {
+    // 자신도 후보라는 말을 함께 적는다 — 근거리에서 제일 많이 맞는 몸이 본인이라, 그 한 줄이
+    // 없으면 "남만 꿰매 주고 자기는 그냥 맞는 개체"로 읽힌다.
+    return `[[basic-attack|기본 공격]]이 적중할 때마다 그 피해의 ${passive.suture.damagePercent}%만큼`
+      + ` 자신을 포함해 현재 HP 비율이 가장 낮은 생존 아군에게 보호막을 부여한다.`
+      + ` 한 번에 부여하는 보호막은 그 아군 최대 체력의 ${passive.suture.maxHpCapPercent}%를 넘지 않는다.`;
   }
   if (passive.kind === "shimmerMark") return `적을 타격하면 반짝이는 표식을 남긴다. 표식이 없는 적을 타격하면 표식이 그 적에게 옮겨가며 [[ap|주문력]]의 ${passive.value}% [[magical-damage|마법 피해]]를 추가로 입힌다.`;
   if (passive.kind === "frostboundDominion") return `상성 계산에서 물이 아닌 얼음으로 취급된다. 얼음은 풀·물·땅에 유리하고 불에 불리하며 바람과는 무상성이다. 이미 [[chill|둔화]]가 최대 중첩인 적을 때리면 그 겹을 모두 소모해 [[frozen|빙결]]시킨다.`;
@@ -685,6 +697,11 @@ function skillEffectClauses(skill: DescribedSkill, stats: SkillDescriptionStats)
   }
   if ("shieldFromDamagePercent" in skill && skill.shieldFromDamagePercent !== undefined) {
     clauses.push({ text: `입힌 피해의 ${skill.shieldFromDamagePercent}%만큼 보호막을 얻는다`, joinWithComma: true });
+  }
+  if ("allyShieldFromDamagePercent" in skill && skill.allyShieldFromDamagePercent !== undefined) {
+    // 나눠 갖는다는 말이 핵심이다 — 여럿을 함께 벨수록 한 명이 받는 몫이 커지는 것이 아니라
+    // 총량이 커지고, 그 총량을 아군 수로 나눈다.
+    clauses.push({ text: `입힌 피해의 총합 중 ${skill.allyShieldFromDamagePercent}%를 자신을 포함한 모든 생존 아군이 똑같이 나눠 보호막으로 얻는다`, joinWithComma: true });
   }
   // 몇 초 날아가고 몇 번 튕기는지는 적지 않는다 — 날아가는 그림이 곧 그 답이고, 태그가
   // "날아가는 동안 움직이지도 때리지도 못한다"까지 이미 말한다.

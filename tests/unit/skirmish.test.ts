@@ -4451,3 +4451,105 @@ describe("슈테 전투 계약 — 듀오 랭크", () => {
     expect(events.some((event) => event.kind === "knockback")).toBe(true);
   });
 });
+
+/**
+ * 「가봉」 — 적을 자른 만큼 아군이 꿰매진다.
+ *
+ * 이 개체가 근거리 지원가인 이유가 이 규칙 하나에 들어 있다. 화면이 아니라 코어가 보호막을
+ * 옮기므로, 누가 받는지·얼마나 받는지·폭주에서 어디로 들어가는지를 여기서 고정한다.
+ */
+describe("테리사 「가봉」", () => {
+  const SUTURE_ARENA: Arena = { left: 0, right: 600, top: 0, bottom: 1_000 };
+
+  /** 실제 걸음과 사거리로 한 대라도 때릴 때까지 돌린다. 첫 프레임에는 아직 붙지 않았다. */
+  function runUntilStitch(state: SkirmishState, seconds = 20): SkirmishEvent[] {
+    const collected: SkirmishEvent[] = [];
+    for (let frame = 0; frame < seconds * 60; frame += 1) {
+      collected.push(...stepSkirmish(state, 1 / 60));
+      if (collected.some((event) => event.kind === "shieldGranted" || event.kind === "heal")) break;
+    }
+    return collected;
+  }
+
+  it("은 현재 HP 비율이 가장 낮은 아군에게 보호막을 꿰맨다", () => {
+    const state = createSkirmish([getRelic("terisa"), getRelic("anky")], [getRelic("amo")], SUTURE_ARENA);
+    const terisa = state.fighters.find((fighter) => fighter.def.id === "terisa")!;
+    const torika = state.fighters.find((fighter) => fighter.def.id === "anky")!;
+    torika.hp = Math.round(torika.maxHp * 0.2);
+    const events = runUntilStitch(state);
+    const stitch = events.find((event) => event.kind === "shieldGranted" && event.providerId === terisa.id);
+    expect(stitch).toBeDefined();
+    if (stitch?.kind !== "shieldGranted") throw new Error("보호막 사건이 아니다");
+    // 자신이 아니라 더 위태로운 아군이 먼저 꿰매진다.
+    expect(stitch.fighterId).toBe(torika.id);
+    expect(stitch.amount).toBeGreaterThan(0);
+    // 한 번에 붙는 몫은 그 아군의 몸이 정한 상한을 넘지 않는다.
+    expect(stitch.amount).toBeLessThanOrEqual(Math.round(torika.maxHp * terisa.def.passive.suture!.maxHpCapPercent / 100));
+  });
+
+  it("은 자신이 가장 위태로우면 제 몸을 꿰맨다", () => {
+    // 근거리에서 제일 많이 맞는 것이 본인이라, 이 되돌아옴이 없으면 앞에 설 수 없다.
+    const state = createSkirmish([getRelic("terisa"), getRelic("anky")], [getRelic("amo")], SUTURE_ARENA);
+    const terisa = state.fighters.find((fighter) => fighter.def.id === "terisa")!;
+    terisa.hp = Math.round(terisa.maxHp * 0.1);
+    const events = runUntilStitch(state);
+    const stitch = events.find((event) => event.kind === "shieldGranted" && event.providerId === terisa.id);
+    if (stitch?.kind !== "shieldGranted") throw new Error("보호막 사건이 아니다");
+    expect(stitch.fighterId).toBe(terisa.id);
+  });
+
+  it("은 폭주 중에는 같은 몫을 보호막이 아니라 즉시 회복으로 넣는다", () => {
+    const state = createSkirmish([getRelic("terisa"), getRelic("anky")], [getRelic("amo")], SUTURE_ARENA);
+    const terisa = state.fighters.find((fighter) => fighter.def.id === "terisa")!;
+    const torika = state.fighters.find((fighter) => fighter.def.id === "anky")!;
+    torika.hp = Math.round(torika.maxHp * 0.2);
+    terisa.ferocityFever = true;
+    const events: SkirmishEvent[] = [];
+    for (let frame = 0; frame < 20 * 60; frame += 1) {
+      // 폭주 게이지는 스스로 줄어든다. 여기서 보려는 것은 "폭주 중 어디로 들어가나"뿐이라
+      // 그 상태를 계속 유지시키고, 실이 처음 옮겨 간 순간에 멈춘다.
+      terisa.ferocityFever = true;
+      events.push(...stepSkirmish(state, 1 / 60));
+      if (events.some((event) => (event.kind === "heal" || event.kind === "shieldGranted") && event.fighterId === torika.id)) break;
+    }
+    // 지지는 손이라 아군에게 막을 두르지 않는다 — 같은 실이 회복으로 들어간다.
+    // (제 몫을 덧대는 「안감」 걸음의 자기 보호막은 이 규칙과 다른 축이라 그대로 남는다.)
+    expect(events.some((event) => event.kind === "shieldGranted" && event.providerId === terisa.id && event.fighterId === torika.id)).toBe(false);
+    expect(events.some((event) => event.kind === "heal" && event.fighterId === torika.id)).toBe(true);
+  });
+
+  it("의 폭주는 자기 공격 간격을 실제로 줄인다", () => {
+    const state = createSkirmish([getRelic("terisa")], [getRelic("amo")], SUTURE_ARENA);
+    const terisa = state.fighters.find((fighter) => fighter.def.id === "terisa")!;
+    const calm = attackInterval(terisa, state);
+    terisa.ferocityFever = true;
+    if (terisa.def.ferocityTrait.effectId !== "cautery") throw new Error("테리사 야성 계약이 바뀌었다");
+    expect(attackInterval(terisa, state)).toBeCloseTo(calm / (1 + terisa.def.ferocityTrait.attackSpeedPercent / 100), 5);
+  });
+});
+
+/** 「성의」 — 한 번에 여럿을 벨수록 팀이 두꺼워진다. */
+describe("테리사 「성의」", () => {
+  const VESTMENT_ARENA: Arena = { left: 0, right: 600, top: 0, bottom: 1_000 };
+
+  it("은 낸 피해의 총합을 아군 전원이 똑같이 나눠 두른다", () => {
+    const state = createSkirmish(
+      [getRelic("terisa"), getRelic("anky")],
+      [getRelic("amo"), getRelic("toby")],
+      VESTMENT_ARENA,
+    );
+    const terisa = state.fighters.find((fighter) => fighter.def.id === "terisa")!;
+    // 붙어서 때릴 수 있는 자리까지 걸어 들어간 뒤에 쏜다 — 아무도 못 맞히면 나눌 몫이 없다.
+    for (let frame = 0; frame < 20 * 60 && terisa.engaged === false; frame += 1) stepSkirmish(state, 1 / 60);
+    const allies = aliveFighters(state, terisa.side);
+    const before = new Map(allies.map((ally) => [ally.id, ally.shield.amount]));
+    terisa.energy = terisa.def.ultimate.cost;
+    const events = fireUltimate(state, terisa.id);
+    const granted = events.filter((event) => event.kind === "shieldGranted" && event.providerId === terisa.id);
+    expect(granted.length).toBe(allies.length);
+    // 한 명당 값이 아니라 총량을 나눈 값이라 모두가 같은 몫을 받는다.
+    const amounts = granted.map((event) => event.kind === "shieldGranted" ? event.amount : 0);
+    expect(new Set(amounts).size).toBe(1);
+    for (const ally of allies) expect(ally.shield.amount).toBeGreaterThan(before.get(ally.id)!);
+  });
+});

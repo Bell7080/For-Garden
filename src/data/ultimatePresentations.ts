@@ -86,6 +86,9 @@ export const ULTIMATE_PRESENTATIONS: Readonly<Record<string, UltimatePresentatio
   // 때리지 않고 지시만 하는 궁극기라 확대도 흔들림도 가장 얕다 — 화면이 크게 흔들리면
   // 정작 세지는 것은 듀오인데 슈테가 큰 한 방을 낸 것처럼 읽힌다.
   shute: { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkScale: 0.98, cutInHoldMs: 130, zoomScale: 1.04, zoomMs: 92, cameraShakeIntensity: 0.003 },
+  // 주위를 한 바퀴 긋고 그 몫을 아군에게 나눠 주는 궁극기라, 한 방의 무게보다 **한 번에
+  // 여럿을 벤다**가 읽혀야 한다. 확대는 얕게 두고 흔들림만 광역답게 남긴다.
+  terisa: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 1.02, cutInHoldMs: 145, zoomScale: 1.16, zoomMs: 104, cameraShakeIntensity: 0.008 },
   "toby": { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", cutInHoldMs: 135, zoomScale: 1.2, zoomMs: 110, cameraShakeIntensity: 0.008 },
   "amo": { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.94, zoomScale: 1.24, zoomMs: 115, cameraShakeIntensity: 0.009 },
   "ripa": { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkScale: 0.92, artworkOrigin: { x: 650, y: 770 }, zoomScale: 1.16, cameraShakeIntensity: 0.007 },

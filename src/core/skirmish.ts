@@ -1619,10 +1619,61 @@ function gainElation(target: Fighter): void {
 
 /** 기존 보호막 사건과 제공자 슬롯을 함께 갱신해 방어 기여도와 화면 효과가 같은 원천을 보게 한다. */
 function grantProvidedShield(provider: Fighter, target: Fighter, percent: number, events: SkirmishEvent[]): void {
-  const amount = Math.max(1, Math.round(target.maxHp * percent / 100));
+  grantShieldAmount(provider, target, Math.max(1, Math.round(target.maxHp * percent / 100)), events);
+}
+
+/** 최대 체력 비율이 아니라 **이미 정해진 값**을 그대로 두르는 자리. 비율 쪽도 같은 경계를 지난다. */
+function grantShieldAmount(provider: Fighter, target: Fighter, amount: number, events: SkirmishEvent[]): void {
+  if (amount <= 0) return;
   target.shield.amount += amount;
   target.shield.providerId = provider.id;
   events.push({ kind: "shieldGranted", fighterId: target.id, providerId: provider.id, amount, remaining: target.shield.amount, effect: { tag: "shieldGain", intensity: 1 } });
+}
+
+/** 현재 HP **비율**이 가장 낮은 생존 아군. 자신도 후보이며 동률은 편성 순서로 확정한다. */
+function lowestHpRatioAlly(state: SkirmishState, side: Side): Fighter | undefined {
+  return aliveFighters(state, side).reduce<Fighter | undefined>((chosen, fighter) =>
+    chosen === undefined || fighter.hp / fighter.maxHp < chosen.hp / chosen.maxHp ? fighter : chosen, undefined);
+}
+
+/**
+ * 「가봉」 — 기본 공격이 깎은 HP의 일부를 가장 위태로운 아군에게 꿰맨다.
+ *
+ * 흡혈·자기 보호막과 **같은 값**(과잉 피해를 뺀 실제 HP 손실)을 읽는다. 연격의 두 타격은
+ * 각각 이 자리를 지나므로 한 번 휘두른 손이 두 번 꿰맨다 — 그것이 순환 마지막 걸음의 값이다.
+ *
+ * 폭주(`cautery`) 중에는 같은 몫이 보호막이 아니라 **즉시 회복**으로 들어간다. 미리 덧대는
+ * 천이 그 자리에서 지지는 손으로 바뀌는 것이 이 개체 폭주의 전부라, 비율과 상한은 그대로 쓴다.
+ */
+function stitchSuture(attacker: Fighter, dealt: number, state: SkirmishState, events: SkirmishEvent[]): void {
+  const plan = attacker.def.passive.suture;
+  if (attacker.def.passive.kind !== "sutureStitch" || plan === undefined) return;
+  if (dealt <= 0 || !isFighterAlive(attacker)) return;
+  const ally = lowestHpRatioAlly(state, attacker.side);
+  if (ally === undefined) return;
+  // 상한은 대상의 몸이 정한다 — 공격력이 자란 뒤 한 대가 체력 바를 통째로 덮지 않게 한다.
+  const amount = Math.min(Math.round(dealt * plan.damagePercent / 100), Math.round(ally.maxHp * plan.maxHpCapPercent / 100));
+  if (amount <= 0) return;
+  if (attacker.ferocityFever && attacker.def.ferocityTrait.effectId === "cautery") {
+    const healed = applyHealing(state, ally, amount, attacker.id);
+    if (healed > 0) events.push({ kind: "heal", fighterId: ally.id, amount: healed, source: "passive", effect: { tag: "heal", intensity: 1 } });
+    return;
+  }
+  grantShieldAmount(attacker, ally, amount, events);
+}
+
+/**
+ * 「성의 재단」 — 이 기술이 낸 피해 총량을 생존 아군이 **똑같이 나눠** 두른다.
+ *
+ * 대상마다 따로 나누지 않는 이유는 한 번에 여럿을 벨수록 팀이 두꺼워지는 것이 이 궁극기의
+ * 전부이기 때문이다 — 대상별로 한 명당 값을 주면 적이 하나든 여섯이든 아군이 받는 몫이 같다.
+ */
+function shareShieldFromDamage(attacker: Fighter, percent: number | undefined, dealt: number, state: SkirmishState, events: SkirmishEvent[]): void {
+  if (percent === undefined || percent <= 0 || dealt <= 0) return;
+  const allies = aliveFighters(state, attacker.side);
+  if (allies.length === 0) return;
+  const share = Math.round(dealt * percent / 100 / allies.length);
+  for (const ally of allies) grantShieldAmount(attacker, ally, share, events);
 }
 
 /** 조가비 상한 소비는 겹을 먼저 비우고 쿨다운을 건 뒤 보호막을 준다. 보호막 후속 피해가 같은 발동을 재귀 호출하지 않게 하는 순서다. */
@@ -2448,6 +2499,9 @@ export function attackInterval(fighter: Fighter, state?: SkirmishState): number 
       : fighter.ferocityFever && trait.effectId === "venomousEncore"
         // 바르고 터뜨리기를 번갈아 하는 손이라 속도가 곧 그 주기다. 같은 역수 규칙을 쓴다.
         ? 1 / (1 + trait.attackSpeedBonusPercent / 100)
+      : fighter.ferocityFever && trait.effectId === "cautery"
+        // 자를수록 꿰매는 개체라 속도가 곧 지원량이다. 다른 자기 가속과 같은 역수 규칙을 쓴다.
+        ? 1 / (1 + trait.attackSpeedPercent / 100)
       : 1;
   return Math.max(SKIRMISH.minimumAttackInterval, ((SKIRMISH.attackInterval * 100) / Math.max(1, currentAttackSpeed(fighter, state))) * feverMultiplier);
 }
@@ -3744,6 +3798,9 @@ function strike(
   };
   healFromDamage(dealt);
   if (!useUltimate) grantShieldFromDamage(attacker, dealt, events);
+  if (!useUltimate) stitchSuture(attacker, targetHpBefore - target.hp, state, events);
+  // 단일 타격으로 들어와도 같은 계약이 돈다 — 경로가 갈리면 같은 기술이 대상 수에 따라 다른 일을 한다.
+  shareShieldFromDamage(attacker, skill.allyShieldFromDamagePercent, targetHpBefore - target.hp, state, events);
   if (!useUltimate && attacker.def.basic.lowestHpAllyHealingFromDamagePercent !== undefined) {
     const ally = lowestCurrentHpAlly(state, attacker.side);
     if (ally) {
@@ -4058,6 +4115,8 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
   // 광역 궁극기도 단일 타격과 동일하게 패시브 치명타 확률을 퍼센트포인트로 취급한다.
   const passiveCritPoints = attacker.def.passive.criticalChancePercent ?? 0;
   const damageAttacker = { ...attacker, def: offensiveDefinition(attacker) };
+  // 「성의 재단」이 아군에게 나눠 두를 몫의 원천. 대상별이 아니라 이 기술의 총량이다.
+  let sharedShieldSource = 0;
 
   for (const [index, target] of targets.entries()) {
     // 각 대상은 자기 방어력·속성·피버 경감을 사용하며 치명타도 독립 판정한다.
@@ -4088,6 +4147,9 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     // 보호막 전환도 같은 값을 읽는다 — 단일과 광역에서 규칙이 갈리면 같은 걸음이 대상 수에
     // 따라 다른 일을 한다.
     if (!useUltimate) grantShieldFromDamage(attacker, hpBefore - target.hp, events);
+    if (!useUltimate) stitchSuture(attacker, hpBefore - target.hp, state, events);
+    // 나눠 두르는 몫은 대상마다가 아니라 이 기술의 총량에서 나오므로 여기서 모으기만 한다.
+    sharedShieldSource += hpBefore - target.hp;
     siphonOverpaintHealing(attacker, target, hpBefore - target.hp, state, events);
     triggerDuoBreakthroughRegen(state, attacker, hpBefore - target.hp, events);
     // 완성작을 공개하고 나면 그림은 지워진다 — 쌓아 두고 매번 터뜨릴 수 있으면 상시 배율이 된다.
@@ -4134,6 +4196,8 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     }
     state.log.push(`${attacker.def.name} → ${target.def.name} ${amount}`);
   }
+  // 이 계약은 공격 스킬만 갖는다. 좁히지 않고 읽으면 지원 궁극기까지 같은 자리를 지나간다.
+  shareShieldFromDamage(attacker, "allyShieldFromDamagePercent" in skill ? skill.allyShieldFromDamagePercent : undefined, sharedShieldSource, state, events);
   // 혼합 궁극기의 회복은 같은 원 경계(거리 <= 반경)를 공유하며 주문력 200% 같은 정적 계수를 읽는다.
   for (const ally of healingTargets) {
     const healed = applyHealing(state, ally, currentAbilityPower(attacker) * (ultimate?.allyHealingPower ?? 0) / 100, attacker.id);

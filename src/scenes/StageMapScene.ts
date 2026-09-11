@@ -290,6 +290,8 @@ export class StageMapScene extends Phaser.Scene {
     const enemies = getStageEnemies(stage);
     this.enemyPreview.showAt(scroll - index * NODE_GAP, {
       title: `${stage.id}  ${stage.name}`, growth: stage.enemies, enemies,
+      // 서사가 없는 관문은 `undefined`가 그대로 넘어가 직전 노드의 줄이 남지 않는다.
+      situation: stage.situation,
       // 전투 전에도 전투와 동일한 공용 적 정보창으로 연결한다.
       onEnemyClick: (enemy) => {
         // 복사본 ID와 일치하는 슬롯의 개별 성장 상태를 상세 정보에도 전달한다.

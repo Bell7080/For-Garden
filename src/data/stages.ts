@@ -64,6 +64,32 @@ const LATER_CHAPTER_LEVELS: readonly number[] = [
   25, 25, 25, 25, 26, 26, 26, 26, 26, 27,
 ];
 
+/**
+ * 관문 한 줄(`BattleStageDef.situation`).
+ *
+ * **예고편이 아니라 진행 상황이다.** 1장은 수송 열차 피습 하나가 이어지는 장면이라
+ * (`docs/lore.md` §6) 관문마다 독립된 예고를 쓰면 열 편의 단편이 된다. 그래서 각 줄은
+ * "이번 화에 이런 일이"가 아니라 **"지금 어디까지 왔는가"**를 적는다.
+ *
+ * 서사가 아직 정해지지 않은 장은 빈 배열로 둔다 — 없는 줄은 화면이 그리지 않는다.
+ */
+const CHAPTER_SITUATIONS: readonly (readonly string[])[] = [
+  [
+    "불타는 객차에서 빠져나왔다. 도시는 아직 멀다.",
+    "추격조가 깨진 유리 지붕을 밟고 내려온다.",
+    "물에 잠긴 배양조 사이로 발소리가 흩어진다.",
+    "부서진 진열장마다 같은 손자국이 남아 있다.",
+    "관제탑 무전이 끊긴 지 오래다. 응답하는 것은 적뿐이다.",
+    "구조 신호를 보내려면 무너진 안테나부터 되살려야 한다.",
+    "폐기된 것들이 일어나 길을 막는다.",
+    "코마의 흔적이 배수로 아래로 이어진다.",
+    "봉쇄문 너머에서 무언가가 기다리고 있다.",
+    "경계문 앞. 더 물러설 곳이 없다.",
+  ],
+  [],
+  [],
+];
+
 const CHAPTER_CONTENT = [
   { title: "제 1 구역", subtitle: "격리 구역 — 이터널 시티 외곽", names: ["격리 구역", "붕괴한 온실", "침수된 배양실", "표본 보관고", "제1구역 관제탑", "무너진 통신소", "폐기물 처리장", "지하 배수로", "봉쇄된 정거장", "구역 경계문"] },
   { title: "제 2 구역", subtitle: "잔향 지구 — 침묵한 산업 회랑", names: ["잔향 진입로", "녹슨 조립동", "냉각 수로", "동력 중계실", "파손된 승강장", "무인 생산선", "압력 격실", "재처리 용광로", "중앙 운송로", "잔향 지구 관문"] },
@@ -100,6 +126,8 @@ export const CHAPTERS: readonly ChapterDef[] = CHAPTER_CONTENT.map((content, cha
       // 마지막 심층 관문은 원정 최종층과 같은 폰토스를 세워 등록된 보스가 스테이지에서도 고립되지 않게 한다.
       enemies: chapter === 1 ? CHAPTER_ONE_ENEMIES[orderIndex] : laterChapterEnemies,
       rewards: { firstClearCheesecake: 30 + globalOrder * 5, repeatClearCheesecake: 10 + globalOrder * 2 },
+      // 아직 서사가 없는 장은 이 값이 비어 있고, 화면은 그 줄을 그리지 않는다.
+      situation: CHAPTER_SITUATIONS[chapterIndex]?.[orderIndex],
     };
   });
   return { id: chapter, title: content.title, subtitle: content.subtitle, prerequisiteStageId, stages };

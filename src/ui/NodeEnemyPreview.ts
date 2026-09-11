@@ -10,10 +10,12 @@ import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
 import { addStarMark } from "./rarityMark";
 import { combatPower } from "../core/combatPower";
 
-import { anchorEnemyPreview, enemyPreviewColumns, enemyPreviewSlotHalfWidth, NODE_ENEMY_PREVIEW, NODE_ENEMY_SLOT } from "./nodeEnemyPreviewLayout";
+import { anchorEnemyPreview, enemyPreviewColumns, enemyPreviewSlotHalfWidth, NODE_ENEMY_PREVIEW, NODE_ENEMY_SITUATION, NODE_ENEMY_SLOT } from "./nodeEnemyPreviewLayout";
 
 export interface NodeEnemyPreviewOptions {
   title: string;
+  /** 제목 아래 한 줄. 비우면 그 줄을 그리지 않는다 — 서사가 없는 관문은 예전 그대로다. */
+  situation?: string;
   /** 렌더된 적과 같은 슬롯 순서의 공개 성장 상태다. */
   growth: readonly Pick<StageEnemyDef, "level" | "breakthrough">[];
   enemies: readonly RelicDef[];
@@ -45,7 +47,7 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
   }
 
   /** 새 노드의 제목·레벨·편성을 원자적으로 갈아 끼우고 노드에 꼬리를 붙인다. */
-  showAt(nodeY: number, options: Partial<Pick<NodeEnemyPreviewOptions, "title" | "growth" | "enemies" | "onEnemyClick">> = {}): void {
+  showAt(nodeY: number, options: Partial<Pick<NodeEnemyPreviewOptions, "title" | "situation" | "growth" | "enemies" | "onEnemyClick">> = {}): void {
     this.options = { ...this.options, ...options };
     this.removeAll(true); this.clearPuppets();
     const generation = ++this.generation;
@@ -54,8 +56,20 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
     const bevel = Math.min(NODE_ENEMY_PREVIEW.width, NODE_ENEMY_PREVIEW.height) * 0.16;
     this.add(drawLayer(this.scene, 0, 0, chipPoints(NODE_ENEMY_PREVIEW.width, NODE_ENEMY_PREVIEW.height, { bevel: { topLeft: bevel, bottomRight: bevel } }), { fill: 0x0b0f15, alpha: 0.92, edge: COLOR.accent, edgeAlpha: 0.55 }));
     this.tail = this.scene.add.graphics(); this.add(this.tail); this.drawTail(above);
-    this.add(this.scene.add.text(-NODE_ENEMY_PREVIEW.width / 2 + bevel * 0.7, NODE_ENEMY_SLOT.dividerY - 50, this.options.title, textStyle({ role: "display", size: 32 })).setOrigin(0, 0));
-    this.add(this.scene.add.text(NODE_ENEMY_PREVIEW.width / 2 - 30, NODE_ENEMY_SLOT.dividerY - 46, "적 편성", textStyle({ role: "emphasis", size: 22, color: COLOR.dangerText })).setOrigin(1, 0));
+    const titleLeft = -NODE_ENEMY_PREVIEW.width / 2 + bevel * 0.7;
+    this.add(this.scene.add.text(titleLeft, NODE_ENEMY_SLOT.titleY, this.options.title, textStyle({ role: "display", size: 32 })).setOrigin(0, 0));
+    this.add(this.scene.add.text(NODE_ENEMY_PREVIEW.width / 2 - 30, NODE_ENEMY_SLOT.titleY + 4, "적 편성", textStyle({ role: "emphasis", size: 22, color: COLOR.dangerText })).setOrigin(1, 0));
+    // **관문 한 줄은 제목 바로 아래에 선다.** 판 아래로 내리면 총 전투력과 같은 무게가 되고,
+    // 별도 판으로 빼면 아무도 열지 않는다 — 이유는 `nodeEnemyPreviewLayout`에 적어 두었다.
+    // 문장이므로 역할은 `body`다. 제목이 `display`라 위계는 저절로 갈린다.
+    if (this.options.situation) {
+      const wrap = NODE_ENEMY_PREVIEW.width - NODE_ENEMY_SITUATION.wrapInset * 2;
+      // 역할은 스타일을 여는 줄에 **함께** 적는다 — 글꼴 규칙 테스트가 줄 단위로 역할 누락을
+      // 잡으므로, 여러 줄로 펼치면 역할을 골랐는데도 고르지 않은 호출로 읽힌다.
+      this.add(this.scene.add
+        .text(titleLeft, NODE_ENEMY_SITUATION.y, this.options.situation, textStyle({ role: "body", size: NODE_ENEMY_SITUATION.size, color: COLOR.inkDim, wrap }))
+        .setOrigin(0, 0));
+    }
     this.add(drawHairline(this.scene, 0, NODE_ENEMY_SLOT.dividerY, NODE_ENEMY_PREVIEW.width - 60, { color: COLOR.accent, alpha: 0.35 }));
     const columns = enemyPreviewColumns(this.options.enemies.length);
     const compact = columns.length > 3;

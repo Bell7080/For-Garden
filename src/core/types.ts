@@ -1788,6 +1788,17 @@ export interface BattleStageDef extends StageBase {
   kind: "battle";
   enemies: [StageEnemyDef, StageEnemyDef, StageEnemyDef];
   rewards: { firstClearCheesecake: number; repeatClearCheesecake: number };
+  /**
+   * 관문 한 줄 — **예고가 아니라 지금 어디까지 왔는가**다.
+   *
+   * 1장은 열 개의 사건이 아니라 습격 하나가 이어지는 장면이라(`docs/lore.md` §6), 관문마다
+   * 독립된 예고편을 쓰면 열 편의 단편이 된다. 그래서 이 줄은 상황 로그로 적는다.
+   *
+   * **비워 두어도 된다.** 없으면 노드 미리보기가 그 줄을 그리지 않으므로, 서사가 정해진
+   * 관문부터 하나씩 채운다. 인물과 대화가 필요한 장면은 이 줄이 아니라 `StoryStageDef`
+   * 노드가 맡는다 — 두 층의 경계는 `docs/design-gaps.md` 8번에 있다.
+   */
+  situation?: string;
 }
 
 /** 스토리 노드는 DialogueStory를 가리키며 가짜 전투 데이터를 요구하지 않는다. */

@@ -208,9 +208,9 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
   }
 
   if (trait.effectId === "duoBreakthrough") {
-    return "듀오의 표적을 체력이 가장 낮은 적으로 바꾸고 그리로 [[charge|돌진]]시켜,"
-      + ` 지나간 길의 적을 듀오의 [[basic-attack|기본 공격]] 위력으로 치고 [[knockback|날려버린다]].`
-      + ` 폭주 동안 듀오가 입힌 피해의 ${trait.allyRegenFromDuoDamagePercent}%만큼 모든 아군이 체력을 회복한다.`;
+    return "[[duo|듀오]]를 체력이 가장 낮은 적으로 [[charge|돌진]]시킨다."
+      + ` 길 위의 적은 듀오의 [[basic-attack|기본 공격]] 피해를 받고 [[knockback|날아간다]].`
+      + ` 폭주 동안 듀오가 입힌 피해의 ${trait.allyRegenFromDuoDamagePercent}%만큼 모든 아군이 회복한다.`;
   }
 
   // 방어력 계수는 토리카처럼 추가 피해가 있는 범위 타격만 노출하고, 일반 전이 특성은 원래 피해 비율만 보여 준다.
@@ -351,8 +351,7 @@ function passiveHead(passive: Passive, atk?: number): string {
   if (passive.kind === "duoLink" && passive.duoLink !== undefined) {
     // 세 절이 각각 다른 일을 한다 — 짝을 짓고, 숨고, 같은 적을 노린다. 한 문장에 이으면
     // 무엇이 조건이고 무엇이 결과인지 읽히지 않으므로 문장을 끊는다.
-    return `편성 가운데 자리의 아군과 듀오가 되어 그 곁에 붙어 다닌다. 듀오의 체력이 ${passive.value}% 이상인 동안 [[stealth|은신]]한다.`
-      + ` ${passive.duoLink.syncSeconds}초마다 듀오가 노리는 적을 함께 표적으로 삼는다. 듀오가 쓰러지면 다시 짝을 짓지 않는다.`;
+    return `[[duo|듀오]]의 체력이 ${passive.value}% 이상인 동안 [[stealth|은신]]한다. 듀오가 쓰러지면 다시 짝을 짓지 않는다.`;
   }
   if (passive.kind === "shimmerMark") return `적을 타격하면 반짝이는 표식을 남긴다. 표식이 없는 적을 타격하면 표식이 그 적에게 옮겨가며 [[ap|주문력]]의 ${passive.value}% [[magical-damage|마법 피해]]를 추가로 입힌다.`;
   if (passive.kind === "frostboundDominion") return `상성 계산에서 물이 아닌 얼음으로 취급된다. 얼음은 풀·물·땅에 유리하고 불에 불리하며 바람과는 무상성이다. 이미 [[chill|둔화]]가 최대 중첩인 적을 때리면 그 겹을 모두 소모해 [[frozen|빙결]]시킨다.`;
@@ -528,7 +527,7 @@ export function skillDescription(
     // 듀오 한 명에게만 거는 지시. 대상이 전장 전체가 아니라는 것부터 말한다.
     if ("teamBuff" in skill && skill.teamBuff?.kind === "order") {
       const buff = skill.teamBuff;
-      return `듀오에게 ${buff.seconds}초 동안 [[attack-speed|공격 속도]] ${buff.attackSpeedPercent}%,`
+      return `[[duo|듀오]]에게 ${buff.seconds}초 동안 [[attack-speed|공격 속도]] ${buff.attackSpeedPercent}%,`
         + ` 치명타 확률 ${buff.criticalChancePoints}%, 흡혈 ${buff.lifeStealPoints}%를 부여한다.`;
     }
     // 피해도 회복도 없는 지원 궁극기. 무엇을 얼마나 오래 거는지만 말한다.
@@ -678,8 +677,8 @@ function skillEffectClauses(skill: DescribedSkill, stats: SkillDescriptionStats)
     const { energy, ferocity } = skill.duoCharge;
     clauses.push({
       text: energy === ferocity
-        ? `듀오의 궁극기 게이지와 [[ferocity|야성]]이 각각 ${energy} 오른다`
-        : `듀오의 궁극기 게이지가 ${energy}, [[ferocity|야성]]이 ${ferocity} 오른다`,
+        ? `[[duo|듀오]]의 궁극기 게이지와 [[ferocity|야성]]이 각각 ${energy} 오른다`
+        : `[[duo|듀오]]의 궁극기 게이지가 ${energy}, [[ferocity|야성]]이 ${ferocity} 오른다`,
       standalone: true,
     });
   }

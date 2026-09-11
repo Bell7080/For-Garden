@@ -4244,23 +4244,36 @@ describe("리파 — 제공자별 시약 반응", () => {
 
 describe("슈테 전투 계약 — 듀오 랭크", () => {
   /**
-   * 슈테를 1번 자리, 듀오를 가운데(2번) 자리에 세운다.
+   * 슈테를 2번 자리에 세워 왼쪽 이웃(1번)이 듀오가 되게 한다.
    *
    * 자리로 짝을 정하는 규칙이라 편성 배열 자체가 이 테스트의 입력이다 — 전투력이나 개체 ID로
    * 고르지 않으므로 능력치를 바꿔도 짝은 그대로여야 한다.
    */
   function duoBattle(): { state: SkirmishState; shute: Fighter; duo: Fighter; foe: Fighter } {
-    const state = newSkirmish(["shute", "rex", "dodo"], ["amo"]);
-    const [shute, duo] = state.fighters;
+    const state = newSkirmish(["rex", "shute", "dodo"], ["amo"]);
+    const [duo, shute] = state.fighters;
     const foe = state.fighters.find((fighter) => fighter.side === "enemy")!;
     return { state, shute, duo, foe };
   }
 
-  it("은 편성 가운데 자리의 아군과 짝을 짓는다", () => {
+  it("은 바로 왼쪽에 선 아군과 짝을 짓는다", () => {
     const { shute, duo } = duoBattle();
     expect(shute.def.id).toBe("shute");
     expect(duo.def.id).toBe("rex");
     expect(shute.duoId).toBe(duo.id);
+  });
+
+  it("은 왼쪽이 비어 있으면 오른쪽 아군과 짝을 짓는다", () => {
+    // 맨 앞 칸에 서도 짝이 생기므로 이 개체는 자리 제약을 갖지 않는다. 칸이 넷·여섯으로
+    // 늘어나도 같은 규칙이 그대로 선다.
+    const state = newSkirmish(["shute", "rex", "dodo"], ["amo"]);
+    const [shute, right] = state.fighters;
+    expect(shute.duoId).toBe(right.id);
+  });
+
+  it("은 혼자 싸우는 편성에서만 짝이 없다", () => {
+    const state = newSkirmish(["shute"], ["amo"]);
+    expect(state.fighters[0].duoId).toBeNull();
   });
 
   it("은 듀오의 체력이 절반 이상인 동안에만 은신한다", () => {

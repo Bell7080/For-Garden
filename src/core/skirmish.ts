@@ -1023,7 +1023,7 @@ export function createSkirmish(
   };
   // 지휘형 은신과 무리 치명타는 시간이 아니라 두 늑대의 생존 조건이 소유한다.
   refreshPackGuard(state);
-  // 듀오는 편성 가운데 자리로 열리는 순간 한 번만 정해지고, 그 뒤로는 바뀌지 않는다.
+  // 듀오는 바로 옆에 선 아군으로 열리는 순간 한 번만 정해지고, 그 뒤로는 바뀌지 않는다.
   linkDuos(state);
   // 시작 효과는 별도의 순수 단계에서 정확히 한 번 적용하고 사건은 첫 렌더 step까지 보존한다.
   state.initialEvents = initializeSkirmishAugments(state);
@@ -4260,16 +4260,20 @@ function duoOf(fighter: Fighter, state: SkirmishState): Fighter | undefined {
 /**
  * 전투가 열리는 순간 듀오를 정한다.
  *
- * 짝은 **편성 가운데 자리**의 아군이다. "전투력이 가장 높은 아군"으로 두면 룬과 레벨에 따라
- * 조용히 바뀌어 화면에서 왜 저 아이한테 붙었는지가 읽히지 않는다 — 자리는 플레이어가 직접
- * 정하는 값이라 규칙이 그대로 보인다. 가운데가 자기 자신뿐이면 짝이 없다.
+ * 짝은 **바로 왼쪽에 선 아군**이고, 왼쪽이 비어 있으면 오른쪽이다. "전투력이 가장 높은 아군"으로
+ * 두면 룬과 레벨에 따라 조용히 바뀌어 화면에서 왜 저 아이한테 붙었는지가 읽히지 않는다 —
+ * 이웃은 플레이어가 직접 옮기는 자리라 규칙이 그대로 보이고, **칸이 몇 개든 같은 문장으로
+ * 선다.** 가운데 자리로 정하면 칸이 넷·여섯으로 늘어나는 순간 가운데가 어디인지부터 애매해진다.
+ *
+ * 그래서 이 개체는 자리 제약을 갖지 않는다 — 어느 칸에 서도 이웃이 하나는 있다. 혼자 싸우는
+ * 편성에서만 짝이 없다.
  */
 function linkDuos(state: SkirmishState): void {
   for (const fighter of state.fighters) {
     if (fighter.def.passive.kind !== "duoLink") continue;
     const party = state.fighters.filter((other) => other.side === fighter.side);
-    const middle = party[Math.floor((party.length - 1) / 2)];
-    fighter.duoId = middle !== undefined && middle.id !== fighter.id ? middle.id : null;
+    const at = party.indexOf(fighter);
+    fighter.duoId = (party[at - 1] ?? party[at + 1])?.id ?? null;
   }
 }
 

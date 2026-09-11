@@ -29,7 +29,7 @@ import { addStarMark } from "../ui/rarityMark";
 import { addUnitNameplate } from "../ui/unitNameplate";
 import { combatPower } from "../core/combatPower";
 import { formationMembers, tapFormationSlot, tapRosterRelic, toFormationSlots } from "../core/formationSlots";
-import { canStandInSlot, moveFormationSlot } from "../core/formation";
+import { moveFormationSlot } from "../core/formation";
 import { addFormationRemoveChip, addFormationSlotSelection } from "../ui/formationSlotChrome";
 import { bindFormationDrag } from "../ui/formationDrag";
 import { FORMATION_DRAG_VISUAL } from "../ui/formationDragVisual";
@@ -336,8 +336,7 @@ export class PartyScene extends Phaser.Scene {
     // 공용 표현기는 화면 좌표 Puppet을 기존 placePuppet 콜백으로 옮겨 컨테이너 변환에 기대지 않는다.
     this.dragVisual = createFormationDragVisualController({
       scene: this, slots: PREVIEW_COLUMNS.map((x) => ({ x, y: ALLY_ROW - PREVIEW_HEIGHT / 2, width: 210, height: PREVIEW_HEIGHT })),
-      formation: () => this.picked, slotAllows: (id, index) => this.slotAllows(id, index),
-      color: COLOR.ally, zoneDepth: -11, dimDepth: -13,
+      formation: () => this.picked, color: COLOR.ally, zoneDepth: -11, dimDepth: -13,
       dimBounds: { x: BASE_WIDTH / 2, y: (FRONT_LINE + ALLY_ROW + 120) / 2, width: BASE_WIDTH, height: ALLY_ROW + 120 - FRONT_LINE },
       renderPreview: ({ preview, pointer }) => this.placeDragPreview(preview, pointer.x, pointer.y),
       restore: () => this.restoreDragPuppets(),
@@ -355,7 +354,7 @@ export class PartyScene extends Phaser.Scene {
       longPress: (slot) => { const id = this.picked[slot]; if (id) this.info.showRelic(getRelic(id)); },
       drop: (from, to) => {
         this.dragVisual?.endDrag();
-        this.picked = moveFormationSlot(this.picked, from, to, (id, index) => this.slotAllows(id ?? undefined, index));
+        this.picked = moveFormationSlot(this.picked, from, to);
         this.selectedSlot = to;
         // 미리보기로 옮겨 둔 SD는 확정 뒤 기존 비동기 재배치 경로가 제자리에 다시 세운다.
         this.refresh();
@@ -389,14 +388,6 @@ export class PartyScene extends Phaser.Scene {
   }
 
   /** 공용 컨트롤러가 계산한 슬롯 결과를 기존 화면 좌표 Puppet 배치기로 그린다. */
-  /**
-   * 그 자리에 그 개체를 세울 수 있는가. 확정 규칙(`canStandInSlot`)을 그대로 통과시킨다 —
-   * 화면이 따로 계산하면 보여 준 것과 놓은 결과가 갈린다.
-   */
-  private slotAllows(relicId: string | undefined, index: number): boolean {
-    return canStandInSlot(relicId === undefined ? undefined : getRelic(relicId), index, this.picked.length);
-  }
-
   private placeDragPreview(preview: import("../ui/formationDragVisual").FormationSlotPreview[], x: number, y: number): void {
     preview.forEach((entry, index) => {
       const creature = this.allySlots[index].creature;
@@ -585,7 +576,7 @@ export class PartyScene extends Phaser.Scene {
    * 고른다 — 자세한 계약은 `tapRosterRelic`에 있다.
    */
   private toggle(relicId: string): void {
-    const result = tapRosterRelic(this.picked, this.selectedSlot, relicId, (id, index) => this.slotAllows(id, index));
+    const result = tapRosterRelic(this.picked, this.selectedSlot, relicId);
     this.picked = result.formation;
     this.selectedSlot = result.selectedSlot;
     this.refresh();

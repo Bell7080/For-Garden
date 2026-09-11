@@ -44,19 +44,7 @@ export function clearFormationSlot(formation: FormationSlots, index: number): (s
  * 채운 뒤에도 **선택은 그 자리에 머문다** — 다음 빈 칸으로 밀면 방금 세운 렐릭을 곧바로 다시
  * 바꿔 볼 수 없고, 사람이 고른 자리가 사람이 누르지 않은 곳으로 옮겨 간다.
  */
-export function tapRosterRelic(
-  formation: FormationSlots,
-  selectedSlot: number | undefined,
-  relicId: string,
-  /**
-   * 자리 제약. 그 칸에 그 렐릭을 세울 수 없으면 아무 일도 하지 않는다.
-   *
-   * 세울 수 없는 칸을 고른 채 누르면 **조용히 다른 칸으로 옮기지 않는다** — 사람이 고른 자리가
-   * 사람이 누르지 않은 곳으로 옮겨 가면, 방금 무엇을 한 것인지 화면에서 읽히지 않는다. 아무 칸도
-   * 고르지 않았을 때만 세울 수 있는 빈 칸을 찾는다.
-   */
-  allow?: (relicId: string, index: number) => boolean,
-): FormationSlotTap {
+export function tapRosterRelic(formation: FormationSlots, selectedSlot: number | undefined, relicId: string): FormationSlotTap {
   const placedAt = formation.indexOf(relicId);
   if (placedAt >= 0) return { formation: copy(formation), selectedSlot: placedAt, cleared: false };
   const next = copy(formation);
@@ -64,10 +52,8 @@ export function tapRosterRelic(
   // 상관없어 칸을 먼저 누르게 하는 것이 손만 늘리는 일이기 때문이다. 반대로 이미 다 찼다면
   // 누구를 물릴지는 사람이 정해야 하므로 아무 일도 하지 않는다 — 마지막 칸을 임의로 바꾸면
   // 누르지 않은 자리의 캐릭터가 사라진다.
-  const target = selectedSlot ?? next.findIndex((id, index) => id === null && (allow === undefined || allow(relicId, index)));
-  if (!inRange(formation, target) || (allow !== undefined && !allow(relicId, target))) {
-    return { formation: next, selectedSlot, cleared: false };
-  }
+  const target = selectedSlot ?? next.indexOf(null);
+  if (!inRange(formation, target)) return { formation: next, selectedSlot, cleared: false };
   next[target] = relicId;
   return { formation: next, selectedSlot: target, cleared: false };
 }

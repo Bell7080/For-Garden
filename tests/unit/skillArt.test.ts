@@ -968,11 +968,21 @@ describe("파루아 표시 계약", () => {
 describe("슈테 스킬 표시 계약", () => {
   const shute = RELICS.find((def) => def.id === "shute")!;
 
-  it("의 패시브는 자리·은신 경계·표적 주기를 데이터에서 문장으로 만든다", () => {
+  it("의 패시브는 짝을 짓는 규칙을 태그에 넘기고 이 개체만의 값만 말한다", () => {
+    // 짝이 누구인지·얼마나 자주 표적을 맞추는지는 규칙어가 말한다. 본문에 다 풀어 적으면
+    // 네 문장이 되어 정작 이 개체의 값(은신 경계와 그 대가)이 그 사이에 묻힌다.
     expect(passiveDescription(shute.passive)).toBe(
-      "편성 가운데 자리의 아군과 듀오가 되어 그 곁에 붙어 다닌다. 듀오의 체력이 50% 이상인 동안 [[stealth|은신]]한다."
-      + " 2초마다 듀오가 노리는 적을 함께 표적으로 삼는다. 듀오가 쓰러지면 다시 짝을 짓지 않는다.",
+      "[[duo|듀오]]의 체력이 50% 이상인 동안 [[stealth|은신]]한다. 듀오가 쓰러지면 다시 짝을 짓지 않는다.",
     );
+  });
+
+  it("의 듀오 태그는 본문이 되풀이하지 않는 짝짓기 규칙을 가진다", () => {
+    const duo = KEYWORDS.find(({ id }) => id === "duo")!;
+    const link = shute.passive.duoLink!;
+    // 표적을 다시 읽는 주기는 데이터가 소유하고 태그가 그 값을 말한다 — 둘이 갈리면 화면이
+    // 실제로 도는 규칙과 다른 수를 보여 준다.
+    expect(duo.description).toContain(`${link.syncSeconds}초마다`);
+    expect(passiveDescription(shute.passive)).not.toContain(`${link.syncSeconds}초`);
   });
 
   it("의 일반 공격은 듀오 충전과 약점 포착을 한 문장씩 말한다", () => {
@@ -980,21 +990,22 @@ describe("슈테 스킬 표시 계약", () => {
     expect(description).toContain("[[damage-value|86]]");
     // 아군 전체 충전과 다른 축이라 "모든 생존 아군"이라고 적지 않는다.
     expect(description).not.toContain("모든 생존 아군");
-    expect(description).toContain("듀오의 궁극기 게이지와 [[ferocity|야성]]이 각각 5 오른다");
+    expect(description).toContain("[[duo|듀오]]의 궁극기 게이지와 [[ferocity|야성]]이 각각 5 오른다");
     expect(description).toContain("[[weakpoint|약점 포착]]");
   });
 
   it("의 궁극기는 듀오 한 명에게 거는 지시로 적는다", () => {
     expect(skillDescription(shute.ultimate)).toBe(
-      "듀오에게 6초 동안 [[attack-speed|공격 속도]] 50%, 치명타 확률 25%, 흡혈 25%를 부여한다.",
+      "[[duo|듀오]]에게 6초 동안 [[attack-speed|공격 속도]] 50%, 치명타 확률 25%, 흡혈 25%를 부여한다.",
     );
     expect(targetingLabel(shute.ultimate.targeting)).toBe("듀오");
   });
 
-  it("의 폭주는 듀오를 밀어 넣는 절과 팀 재생 절로 나눠 적는다", () => {
+  it("의 폭주는 절마다 한 가지만 말하고 짝짓기 규칙은 태그에 맡긴다", () => {
     const description = ferocityTraitDescription(shute.ferocityTrait);
+    expect(description).toContain("[[duo|듀오]]");
     expect(description).toContain("[[charge|돌진]]");
-    expect(description).toContain("[[knockback|날려버린다]]");
+    expect(description).toContain("[[knockback|날아간다]]");
     expect(description).toContain("듀오가 입힌 피해의 5%");
     // 지원가의 폭주라 자기 능력치를 올리는 절이 없다.
     expect(description).not.toContain("자신");
@@ -1008,6 +1019,8 @@ describe("슈테 스킬 표시 계약", () => {
     if (effect?.kind !== "weakpoint") throw new Error("슈테의 일반 공격은 약점 포착을 찍는다");
     expect(weakpoint.description).toContain(`${effect.burstPower}%`);
     expect(weakpoint.description).toContain(`${effect.duoHealPercent}%`);
+    // 터뜨리는 것이 누구인지도 본문이 아니라 듀오 태그가 말한다.
+    expect(weakpoint.description).toContain("[[duo|듀오]]");
     expect(skillDescription(shute.basic, { damage: 86 })).not.toContain(`${effect.burstPower}%`);
   });
 });

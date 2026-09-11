@@ -2167,14 +2167,26 @@ export class InfoManager {
     const summons = this.currentDef?.summons ?? [];
     // 미보유 도감은 성장·스킬과 같은 정책으로 귀속 소환수도 감춘다.
     if (!this.capabilities.showSummons || !this.ownedNow) return [];
-    return summons.map(({ def, growthStat }) => ({
+    const owner = this.currentDef;
+    const scent = owner?.passive.bloodscent;
+    const tags: KeywordDef[] = summons.map(({ def, growthStat }) => ({
       id: `summon-${def.id}`,
       term: def.name,
       kind: "규칙" as const,
-      description: `${this.currentDef?.name ?? "지휘자"}에게 귀속된 근거리 소환수다.`
+      description: `${owner?.name ?? "지휘자"}에게 귀속된 근거리 소환수다.`
         + ` ${growthStat === "atk" ? "공격력" : "주문력"}이 이 개체의 모든 능력치를 정하며 스스로 표적을 고르고 제 궁극기를 쓴다.`
         + ` 일반 공격은 「${def.basic.name}」, 궁극기는 「${def.ultimate.name}」이다.`,
     }));
+    // 겹당 수치와 상한은 지휘자마다 다를 수 있으므로 전역 사전이 아니라 그 창이 데이터에서 만든다.
+    if (scent) {
+      tags.push({
+        id: "bloodscent", term: "피 냄새", kind: "버프",
+        description: `무리가 사냥을 이어 갈수록 쌓이는 겹이다. 최대 ${scent.maxStacks}겹까지 쌓이고,`
+          + ` 겹마다 ${owner?.name ?? "지휘자"}의 일반 공격 피해가 ${scent.damagePercentPerStack}% 커지며 [[nape|목덜미]]가 열리는 체력 문턱도 함께 오른다.`
+          + ` 한 전투 안에서만 쌓인다.`,
+      });
+    }
+    return tags;
   }
 
   /** 도감은 보유 여부를 전달해 정적 기록과 성장 정보의 잠금을 한곳에서 적용한다. */

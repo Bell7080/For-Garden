@@ -334,7 +334,8 @@ describe("폰토스 스킬 표시 계약", () => {
 describe("렉시아 스킬 표시 계약", () => {
   it("은 폭주·패시브·출혈·궁극기 회복을 현재 데이터에서 문장화한다", () => {
     const rex = RELICS.find((def) => def.id === "rex")!;
-    expect(ferocityTraitDescription(rex.ferocityTrait)).toBe("치명타 확률과 모든 피해 흡혈이 각각 25%, 25% 증가한다.");
+    // 두 값이 같으므로 한 번만 말한다. 서로 달라지는 순간 다시 나열한다.
+    expect(ferocityTraitDescription(rex.ferocityTrait)).toBe("치명타 확률과 모든 피해 흡혈이 모두 25% 증가한다.");
     expect(passiveDescription(rex.passive)).toBe("전투 시작 시, 공격 속도·공격력·치명타 확률·치명타 피해가 모두 25% 오른다.");
     expect(statusEffectLabel(rex.basic.statusEffects?.[0])).toBe("[[bleed|출혈]] 3초 · 매초 최대 체력 2%");
     expect(targetingLabel(rex.ultimate.targeting)).toBe("적 한 명");
@@ -593,9 +594,21 @@ describe("스킬 설명문 양식 계약", () => {
         });
       // 걸음마다 **줄**을 나눈다 — 한 줄로 이으면 어디서 걸음이 바뀌는지 「」를 눈으로 찾아야 한다.
       if (cycle !== undefined && !uniformHead) expect(text.startsWith(`다음 ${cycle.length}가지를 차례로 반복한다.\n`)).toBe(true);
+      /*
+       * **피해를 남의 능력치로 내는 스킬은 실제 수치를 적을 수 없다.**
+       *
+       * 무리 돌격은 지휘자가 때리는 것이 아니라 귀속 소환수가 제 능력치로 무는 것이라, 이
+       * 패널이 아는 수치로는 그 값을 만들 수 없다. 없는 수를 지어내느니 위력 %로 두는 것이
+       * 규칙에 맞다 — 도감에서 능력치를 모를 때 %로 되돌아가는 것과 같은 이유다.
+       */
+      const borrowsSummonStats = "packAssault" in skill && skill.packAssault !== undefined;
       for (const body of bodies) {
         // 대상이 먼저다. 무엇을 때리는지 모른 채 수치부터 읽게 하지 않는다.
         expect(body).toMatch(/^(적 한 명|자신의 주위 모든 적|표적과 그 주위의 적|전장의 모든 적|지정한 원 안의 모든 적|\[\[charge\|돌진\]\]해 뚫고 지나간 길의 모든 적)에게 /);
+        if (borrowsSummonStats) {
+          expect(body).toMatch(/\d+% 위력/);
+          continue;
+        }
         // 그다음이 피해다. 실제 수치를 알 수 있으면 조회 가능한 태그로 보여 준다.
         expect(body).toContain("[[damage-value|");
         expect(body).toMatch(/\[\[(physical|magical)-damage\|(물리|마법) 피해\]\]를( 동시에)? (준다|주고)/);
@@ -603,6 +616,61 @@ describe("스킬 설명문 양식 계약", () => {
       expect(text.endsWith(".")).toBe(true);
     },
   );
+
+  it("디안 무리는 소환을 이름으로 말하고 같은 수치를 두 번 적지 않는다", () => {
+    const dian = RELICS.find((def) => def.id === "dian")!;
+    const body = passiveDescription(dian.passive, dian.stats.atk);
+    // 무엇을 부르는지가 먼저다. 이름 없이 "귀속 소환수"라고만 하면 누구인지 눌러 볼 수도 없다.
+    expect(body).toContain("[[summon-kuro|쿠로]]");
+    expect(body).toContain("[[summon-shiro|시로]]");
+    // 치명타는 제 문장에서 이미 말하므로 공용 절이 뒤에 또 붙지 않는다.
+    expect(body.match(/치명타 확률/g)).toHaveLength(1);
+    // 겹당 수치는 태그가 말한다. 패시브는 **언제 얻는가**만 적는다.
+    expect(body).toContain("[[bloodscent|피 냄새]]를 한 겹 얻는다");
+    expect(body).not.toContain("겹마다");
+  });
+
+  it("디안의 두 축과 마무리는 한 문장 안에서 섞이지 않는다", () => {
+    const dian = RELICS.find((def) => def.id === "dian")!;
+    const stats = { ap: 158, atk: { atk: 160, attackSpeed: 132 } };
+    const basic = skillDescription(dian.basic, stats);
+    // 합공은 두 축을 각각 실제 수치로 보여 준다 — 하나로 합치면 방어와 저항이 다르게 깎는 것이 숨는다.
+    expect(basic.match(/\[\[damage-value\|/g)).toHaveLength(2);
+    expect(basic).toContain("동시에 준다");
+    // 마무리는 조건과 값이 제 문장으로 서고, 문턱이 자라는 규칙은 주어가 달라 또 끊는다.
+    expect(basic).toContain("표적의 체력이 25% 이하면 대신 [[nape|목덜미]]가 들어가");
+    expect(basic).toContain("이 문턱은 [[bloodscent|피 냄새]] 한 겹마다 5%씩 오른다.");
+
+    const ultimate = skillDescription(dian.ultimate, stats);
+    // 궁극기의 마무리에는 문턱이 없다. "100% 이하"라고 적으면 없는 조건을 찾게 만든다.
+    expect(ultimate).toContain("이어 체력과 무관하게 [[nape|목덜미]]가 들어가");
+    expect(ultimate).not.toContain("100% 이하");
+    expect(ultimate).toContain("10초 앞당겨지고");
+  });
+
+  it("쿠로·시로는 누가 불러내는지와 어느 축에서 자라는지를 함께 말한다", () => {
+    for (const [id, axis] of [["kuro", "공격력"], ["shiro", "주문력"]] as const) {
+      const wolf = RELICS.find((def) => def.id === id)!;
+      const body = passiveDescription(wolf.passive, wolf.stats.atk);
+      expect(body, id).toContain("디안이 전투 시작 시 불러내는 귀속 소환수다");
+      expect(body, id).toContain(`디안의 ${axis}이`);
+      // 폭주는 같은 값이 함께 오르므로 한 번만 말하고, 방어·저항은 실제로 오르는 값으로 보여 준다.
+      const fever = ferocityTraitDescription(wolf.ferocityTrait, { attack: wolf.stats.atk, defense: wolf.stats.def });
+      expect(fever, id).toMatch(/방어력과 저항력이 \d+씩 오르고/);
+      expect(fever, id).toContain("치명타 확률과 모든 피해 흡혈이 모두 25% 증가한다.");
+    }
+  });
+
+  it("둔화는 겹당 수치와 상한을 태그가 아니라 본문이 적는다", () => {
+    // 매디와 시로가 같은 규칙어를 서로 다른 수치로 쓰므로, 태그가 못 박으면 한쪽이 거짓말이 된다.
+    const chill = KEYWORDS.find((keyword) => keyword.id === "chill")!;
+    expect(chill.description).not.toMatch(/\d+%/);
+    expect(chill.description).not.toContain("겹까지");
+    const shiro = skillDescription(RELICS.find((def) => def.id === "shiro")!.ultimate, { ap: 158 });
+    const maddy = skillDescription(RELICS.find((def) => def.id === "maddy")!.basic, { atk: { atk: 120, attackSpeed: 100 }, damage: 123 });
+    expect(shiro).toContain("최대 2겹까지 겹마다 공격 속도와 이동 속도를 15% 낮춘다");
+    expect(maddy).toContain("최대 3겹까지 겹마다 공격 속도와 이동 속도를 5% 낮춘다");
+  });
 
   it("은 공격·정형 회복 스킬의 설명 원문을 데이터에 남기지 않는다", () => {
     // 문장은 구조화 필드 하나에서만 나온다. 원문을 함께 두면 수치를 조정한 뒤 옛 문장이 남는다.

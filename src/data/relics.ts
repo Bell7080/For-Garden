@@ -43,7 +43,7 @@ const KURO_DEF: RelicDef = {
     name: "무리의 몸", effectId: "packBody",
     defenseResistancePercent: 50, attackSpeedPercent: 50, criticalChancePoints: 25, lifeStealPoints: 25,
   },
-  passive: { id: "kuro-passive", name: "검은 이빨", kind: "summonDerived", iconAssetId: "skill-icon-buff", effectType: "buff", value: 0, desc: "디안의 공격력이 쿠로의 모든 능력치를 정한다." },
+  passive: { id: "kuro-passive", name: "검은 이빨", kind: "summonDerived", iconAssetId: "skill-icon-buff", effectType: "buff", value: 0, desc: "디안이 전투 시작 시 불러내는 귀속 소환수다. 디안의 공격력이 쿠로의 체력·공격력·방어력·저항력·공격 속도·이동 속도를 모두 정한다." },
   basic: { id: "kuro-basic", name: "물어뜯기", power: 45, iconAssetId: "skill-icon-physical", effectType: "physical", damageType: "physical", targeting: "single" },
   ultimate: {
     id: "kuro-ult", name: "검은 돌진", power: 150, iconAssetId: "skill-icon-physical", effectType: "physical",
@@ -79,7 +79,7 @@ const SHIRO_DEF: RelicDef = {
     name: "무리의 몸", effectId: "packBody",
     defenseResistancePercent: 50, attackSpeedPercent: 50, criticalChancePoints: 25, lifeStealPoints: 25,
   },
-  passive: { id: "shiro-passive", name: "흰 이빨", kind: "summonDerived", iconAssetId: "skill-icon-buff", effectType: "buff", value: 0, desc: "디안의 주문력이 시로의 모든 능력치를 정한다." },
+  passive: { id: "shiro-passive", name: "흰 이빨", kind: "summonDerived", iconAssetId: "skill-icon-buff", effectType: "buff", value: 0, desc: "디안이 전투 시작 시 불러내는 귀속 소환수다. 디안의 주문력이 시로의 체력·주문력·방어력·저항력·공격 속도·이동 속도를 모두 정한다." },
   basic: { id: "shiro-basic", name: "백색 포효", power: 45, iconAssetId: "skill-icon-magical", effectType: "magical", damageType: "magical", scalingStat: "ap", targeting: "single" },
   ultimate: {
     id: "shiro-ult", name: "서리 추적", power: 150, iconAssetId: "skill-icon-magical", effectType: "magical",
@@ -2331,7 +2331,7 @@ export const RELICS: RelicDef[] = [
       criticalChancePercent: 20,
       bloodscent: { maxStacks: 3, damagePercentPerStack: 20 },
       // 전용 분기가 문장을 짓는다. 이 사본은 화면에 뜨지 않는 데이터 문서용이다.
-      desc: "전투가 열리면 쿠로와 시로를 먼저 내보내고, 늑대가 확인한 적 중 전투력이 가장 높은 하나를 첫 표적으로 삼는다. 둘이 모두 살아 있는 동안 디안은 은신하고 무리 전체의 치명타 확률이 오른다.",
+      desc: "전투 시작 시 쿠로와 시로를 소환하고, 두 늑대가 확인한 적 중 전투력이 가장 높은 하나를 무리의 첫 표적으로 삼는다. 둘이 모두 살아 있는 동안 은신해 단일 대상 공격의 표적이 되지 않고 무리 전체의 치명타 확률이 오른다.",
     },
     /**
      * 합공 한 번에 물리와 마법이 함께 들어간다. `power`는 목록·정렬이 읽는 대표값이고 실제

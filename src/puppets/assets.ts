@@ -32,6 +32,8 @@ import {
   PARUA_PORTRAIT_METADATA,
   MADDY_SD_METADATA,
   PARUA_SD_METADATA,
+  SHUTE_PORTRAIT_METADATA,
+  SHUTE_SD_METADATA,
   METTE_PORTRAIT_METADATA,
   METTE_SD_METADATA,
   PONTOS_PORTRAIT_METADATA,
@@ -245,6 +247,12 @@ export const MADDY_ASSET: PuppetAsset = {
   ...MADDY_PORTRAIT_METADATA,
 };
 
+/** 18번 전신 일러스트: 슈테(스테고사우루스). */
+export const SHUTE_ASSET: PuppetAsset = {
+  url: `${base}puppets/char_018.zip`,
+  ...SHUTE_PORTRAIT_METADATA,
+};
+
 /** 21번 전신 일러스트: 파루아(파라사우롤로푸스). */
 export const PARUA_ASSET: PuppetAsset = {
   url: `${base}puppets/char_021.zip`,
@@ -346,6 +354,7 @@ const PORTRAIT_ASSETS = {
   pontos: PONTOS_ASSET,
   parua: PARUA_ASSET,
   dian: DIAN_ASSET,
+  shute: SHUTE_ASSET,
   // 늑대는 전신 원화가 따로 없다. SD 자체가 온전한 한 마리라 정보창도 같은 묶음을 세운다.
   kuro: KURO_SD_ASSET,
   shiro: SHIRO_SD_ASSET,
@@ -502,6 +511,12 @@ export const DEINA_SD_ASSET: PuppetAsset = {
   ...DEINA_SD_METADATA,
 };
 
+/** 18번 SD: 슈테. */
+export const SHUTE_SD_ASSET: PuppetAsset = {
+  url: `${base}puppets/charSD_018.zip`,
+  ...SHUTE_SD_METADATA,
+};
+
 /** 21번 SD: 파루아. */
 export const PARUA_SD_ASSET: PuppetAsset = {
   url: `${base}puppets/charSD_021.zip`,
@@ -554,6 +569,7 @@ const ALLY_SD_ASSETS: Readonly<Record<string, PuppetAsset>> = {
   maddy: MADDY_SD_ASSET,
   parua: PARUA_SD_ASSET,
   dian: DIAN_SD_ASSET,
+  shute: SHUTE_SD_ASSET,
   kuro: KURO_SD_ASSET,
   shiro: SHIRO_SD_ASSET,
 };

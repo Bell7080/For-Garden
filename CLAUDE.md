@@ -940,6 +940,15 @@
   회귀 검증한다.
 - 최신 PuppetForge를 반영하려면 `main`의 최신 커밋 SHA로 `package.json`을 바꾸고
   `npm install`로 lockfile을 갱신한다. SHA를 그대로 두면 npm은 절대 새 커밋을 가져오지 않는다.
+- **WebGL 컨텍스트 복구를 반드시 함께 처리한다.** 모바일에서 앱을 백그라운드로 보냈다 돌아오면
+  컨텍스트가 날아가는 것이 정상 동작이고, Phaser는 **제가 감싼 자원만** 되살린다. `raw gl`로 만든
+  program·buffer는 손대지 않으며, **복구 뒤에도 `renderer.gl`은 같은 객체**라 그것으로 키를 삼은
+  캐시가 죽은 손잡이를 계속 돌려준다 — v0.90.0까지 돌아온 화면에서 캐릭터만 통째로 사라졌다.
+  `IndexedPuppetCreature`는 `Phaser.Renderer.Events.RESTORE_WEBGL`에서 세대를 올려 program 캐시를
+  비우고 개체별 버퍼를 다시 만든다. **죽은 세대의 손잡이는 지우지도 않는다** — 새 컨텍스트에
+  지우라고 하면 `INVALID_OPERATION`이다. 새로 raw GL 자원을 만들면 그 세대 검사에 함께 태운다.
+  회귀는 `tests/e2e/webglContextRestore.spec.ts`가 **죽은 program을 쓴 횟수**로 잡는다(픽셀이
+  아니라 버그의 정의 그대로라 원화가 바뀌어도 흔들리지 않는다).
 - **Puppet은 Phaser의 로컬 좌표 계층을 그대로 쓴다.** indexed renderer가 부모 컨테이너의
   이동·배율·회전·alpha와 카메라 행렬을 합성하므로, 팝업·카드의 자식으로 넣고 그 부모 기준 로컬
   좌표로 배치한다. 화면 포인터를 따라가는 연출만 부모 행렬의 역변환으로 로컬 좌표를 구한다.

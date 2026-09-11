@@ -30,7 +30,7 @@ export type ReachTier = "melee" | "mid" | "ranged";
 export type RelicRarity = "R" | "SR" | "SSR";
 
 /** 전신 Puppet 레지스트리의 안정적인 데이터 키다. 파일 번호를 게임 데이터에 직접 노출하지 않는다. */
-export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "pontos" | "parua" | "dian" | "kuro" | "shiro";
+export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "pontos" | "parua" | "dian" | "kuro" | "shiro" | "shute";
 
 /**
  * 저장 데이터에서 선택·소유 외형을 식별하는 안정적인 ID다.
@@ -179,6 +179,14 @@ interface SkillBase {
   /** 이 스킬을 쓸 때마다 생존 아군 전체가 함께 얻는 궁극기 게이지다. 시전자 자신도 포함한다. */
   allyEnergyGain?: number;
   /**
+   * 적중할 때마다 **듀오 한 명에게만** 흘려보내는 게이지다(`duoLink` 패시브가 있을 때만 돈다).
+   *
+   * `allyEnergyGain`(아군 전체)과 다른 축이다 — 그쪽은 전장 전체의 회전을 앞당기고, 이쪽은
+   * 한 명의 회전만 앞당긴다. 야성을 함께 싣는 이유는 슈테가 궁극기와 폭주 둘 다를 밀어 주는
+   * 개체이기 때문이고, 두 값을 따로 적어 두면 한쪽만 조정한 뒤 다른 쪽이 옛 값으로 남는다.
+   */
+  duoCharge?: { energy: number; ferocity: number };
+  /**
    * 선언한 상태 효과를 **매 N번째 타격에만** 건다. 없으면 적중할 때마다 건다.
    *
    * 확정 치명타(`periodicCritical`)와 다른 축이다 — 그쪽은 피해를 키우고, 이쪽은 부가 효과의
@@ -190,7 +198,7 @@ interface SkillBase {
    * `chargeLine`은 지금 보고 있는 방향으로 **뚫고 지나가며** 통로 안의 적을 모두 친다.
    * 나아가는 거리는 이동 속도에 비례하므로, 발이 빠른 개체일수록 더 멀리 밀고 들어간다.
    */
-  targeting?: "single" | "nearbyEnemies" | "splitShot" | "battlefieldEnemies" | "battlefieldAllies" | "self" | "targetedCircle" | "chargeLine";
+  targeting?: "single" | "nearbyEnemies" | "splitShot" | "battlefieldEnemies" | "battlefieldAllies" | "duo" | "self" | "targetedCircle" | "chargeLine";
   /** 원형 범위의 반경이자, `chargeLine`에서는 지나간 통로의 **반폭**이다. */
   radius?: number;
   /** `splitShot`이 표적을 포함해 한 번에 맞히는 최대 인원이다. */
@@ -385,24 +393,49 @@ export type SupportSkill = SkillBase & {
   teamBuff: TeamBuff;
 };
 
-/** 지속 시간을 가진 아군 전체 강화 계약이다. 새 강화가 생기면 `kind`를 늘린다. */
-export type TeamBuff = {
-  kind: "tailwind";
-  /** 공격 속도에 곱하는 비율(%)이다. */
-  attackSpeedPercent: number;
-  /** 이동 속도에 곱하는 비율(%)이다. */
-  moveSpeedPercent: number;
-  /** 유지 시간(초). 겹쳐 걸면 남은 시간이 더 긴 쪽으로 갱신된다. */
-  seconds: number;
-  /**
-   * 순풍이 도는 동안 매초 회복시킬 최대 체력 비율(%)이다.
-   *
-   * **순풍 자체의 효과가 아니라 이 순풍을 건 스킬이 얹는 값이다.** 키워드에 넣으면 누가 걸어
-   * 준 순풍이든 회복이 따라와 지원가 한 명이 팀 회복까지 겸하게 된다. 여기 두면 스테라가
-   * 건 순풍만 회복을 데려온다.
-   */
-  maxHpRegenPercentPerSecond?: number;
-};
+/**
+ * 지속 시간을 가진 아군 강화 계약이다. 새 강화가 생기면 `kind`를 늘린다.
+ *
+ * **누구에게 걸리는지는 이 계약이 아니라 스킬의 `targeting`이 정한다** — `battlefieldAllies`는
+ * 생존 아군 전체이고, `duo`는 듀오 한 명이다. 여기에 대상까지 적으면 같은 강화를 다른 범위로
+ * 거는 개체가 생길 때마다 종류가 둘로 갈린다.
+ */
+export type TeamBuff =
+  | {
+      kind: "tailwind";
+      /** 공격 속도에 곱하는 비율(%)이다. */
+      attackSpeedPercent: number;
+      /** 이동 속도에 곱하는 비율(%)이다. */
+      moveSpeedPercent: number;
+      /** 유지 시간(초). 겹쳐 걸면 남은 시간이 더 긴 쪽으로 갱신된다. */
+      seconds: number;
+      /**
+       * 순풍이 도는 동안 매초 회복시킬 최대 체력 비율(%)이다.
+       *
+       * **순풍 자체의 효과가 아니라 이 순풍을 건 스킬이 얹는 값이다.** 키워드에 넣으면 누가 걸어
+       * 준 순풍이든 회복이 따라와 지원가 한 명이 팀 회복까지 겸하게 된다. 여기 두면 스테라가
+       * 건 순풍만 회복을 데려온다.
+       */
+      maxHpRegenPercentPerSecond?: number;
+    }
+  | {
+      /**
+       * 「오더」. 지시를 받은 한 명이 그 시간 동안 화력을 통째로 올린다.
+       *
+       * 순풍과 다른 축이다 — 그쪽은 전장 전체의 걸음과 손을 빠르게 만들고, 이쪽은 **한 명에게만**
+       * 걸려 그 한 명이 판을 끝내게 만든다. 치명타와 흡혈을 퍼센트포인트로 더하는 이유는 태생
+       * 부가 능력치가 전 개체 공통이기 때문이다 — 곱하면 같은 지시가 개체마다 다른 값이 된다.
+       */
+      kind: "order";
+      /** 공격 속도에 곱하는 비율(%)이다. */
+      attackSpeedPercent: number;
+      /** 기존 치명타 확률에 그대로 더하는 퍼센트포인트다. */
+      criticalChancePoints: number;
+      /** 실제 HP 피해에 더해지는 모든 피해 흡혈(퍼센트포인트)이다. */
+      lifeStealPoints: number;
+      /** 유지 시간(초). 겹쳐 걸면 남은 시간이 더 긴 쪽으로 갱신된다. */
+      seconds: number;
+    };
 
 /** 모든 스킬의 판별 유니온이며 `damageType in skill`로 공격 여부를 좁힌다. */
 export type Skill = AttackSkill | HealingSkill | SupportSkill | SetupSkill;
@@ -575,6 +608,23 @@ export type CombatStatusEffect =
       attackPercentPerSecond: number;
       /** 매 틱 시전자 주문력에서 함께 뽑는 비율(%). 둘을 더한 값이 한 틱의 마법 피해다. */
       abilityPercentPerSecond: number;
+    }
+  | {
+      /**
+       * 약점 포착. 슈테가 찍어 둔 표식이고, **듀오가 그 적을 때리는 순간 터지고 사라진다.**
+       *
+       * 덧칠과 다른 축이다 — 덧칠은 겹을 쌓아 두고 파티 전체의 피해를 키우지만, 이쪽은 겹이
+       * 없고 **한 번 쓰면 사라진다.** 남겨 두고 계속 터지게 하면 세 걸음마다 찍는 주기가 뜻을
+       * 잃고, 슈테의 평타가 그냥 듀오의 상시 강화가 된다.
+       *
+       * 피해는 **표식을 찍은 슈테의 주문력**에서 나온다. 때린 듀오의 능력치에서 뽑으면 같은
+       * 표식이 누가 밟느냐에 따라 다른 값이 되어, 슈테를 키운 몫이 화면에 돌아오지 않는다.
+       */
+      kind: "weakpoint";
+      /** 터질 때 표식을 찍은 개체의 주문력에서 뽑는 마법 피해 비율(%). */
+      burstPower: number;
+      /** 그 피해의 이 비율(%)만큼 때린 듀오가 회복한다. */
+      duoHealPercent: number;
     }
   | {
       /**
@@ -755,6 +805,7 @@ export type Ultimate = Skill & {
     }
   | { /** 거리에 상관없이 전장의 모든 생존 적을 공격한다. */ targeting: "battlefieldEnemies" }
   | { /** 거리에 상관없이 모든 생존 아군에게 비공격 효과를 적용한다. */ targeting: "battlefieldAllies" }
+  | { /** 「듀오 랭크」가 짝지어 둔 **한 명에게만** 비공격 효과를 적용한다. 듀오가 없으면 나가지 않는다. */ targeting: "duo" }
   | { /** 아무도 때리지 않고 시전자 자신에게만 적용한다. 피해는 이어질 일반 공격의 몫이다. */ targeting: "self" }
   | {
       /** 사용자가 전장 사각형의 경계를 포함해 지정한 위치를 중심으로 판정한다. 범위 밖 입력은 전장 경계로 보정한다. */
@@ -834,7 +885,15 @@ export type PassiveKind =
    */
   | "farthestFocus"
   /** 캐릭터 ID와 무관하게 구조화된 시약 중첩과 반응 보상을 해석한다. */
-  | "reagentReaction";
+  | "reagentReaction"
+  /**
+   * 슈테 전용: 편성에서 바로 왼쪽에 선 아군과 **듀오**가 되어 그 곁에 붙어 다닌다.
+   *
+   * 표적을 스스로 고르지 않고 듀오가 노리는 적을 주기적으로 따라가며, 듀오가 건강한 동안에는
+   * 은신해 단일 대상 표적에서 빠진다. 듀오가 쓰러지면 다시 붙지 않는다 — 그 순간 이 개체가
+   * 아무것도 아니게 되는 것이 이 패시브의 값이다.
+   */
+  | "duoLink";
 
 /** 전투 엔진이 판별하는 야성 특성 효과 ID다. 새 효과는 수치 계약과 함께 명시적으로 추가한다. */
 export type FerocityEffectId =
@@ -879,7 +938,9 @@ export type FerocityEffectId =
   /** 아모 전용: 폭주 진입 정화·즉시 조가비·단축 내부 쿨다운을 한 계약으로 식별한다. */
   | "shellResolve"
   /** 캐릭터 ID와 무관하게 폭주 진입 시 시약 살포와 자기 가속을 함께 적용한다. */
-  | "reagentDoping";
+  | "reagentDoping"
+  /** 슈테 전용: 폭주 진입 시 듀오를 체력이 가장 낮은 적으로 돌진시키고, 그 뒤로 팀 재생을 돌린다. */
+  | "duoBreakthrough";
 
 /**
  * 개체별 피버 발현 정적 데이터다.
@@ -1043,8 +1104,18 @@ export type FerocityTrait = {
     }
   | {
       effectId: "rexBattleQueen";
-      /** 기존 확률에 그대로 더하는 치명타 확률(퍼센트포인트)이다. 25는 20%를 45%로 만든다. */
-      criticalChancePoints: number;
+      /**
+       * 폭주 중 **출혈 중인 적을 때리면 확정 치명타**가 된다.
+       *
+       * 예전에는 치명타 확률을 퍼센트포인트로 더했는데, 그 축은 패시브가 이미 밀고 있어
+       * 폭주가 같은 말을 반복했고 화면에서는 노란 숫자가 조금 더 자주 뜨는 것이 전부였다.
+       * 렉시아의 평타가 이미 출혈을 남기므로, 물어뜯은 자리를 다시 무는 것을 조건으로 두면
+       * "왜 이 개체가 치명타형인가"가 숨은 확률이 아니라 눈에 보이는 상태로 설명된다.
+       *
+       * 주기 확정 치명타(`periodicCritical`)와 같은 규칙이라 난수를 소비하지 않는다 —
+       * 굴리고 버리면 같은 판의 다른 판정까지 자리가 밀린다.
+       */
+      bleedingGuaranteedCritical: true;
       /** 실제 HP 피해에 더해지는 모든 피해 흡혈(퍼센트포인트)이다. 기본 능력치·스킬 흡혈과 덧셈한다. */
       allDamageLifeStealPoints: number;
     }
@@ -1138,6 +1209,21 @@ export type FerocityTrait = {
       shellCooldownSecondsDuringFever: number;
     }
   | {
+      /**
+       * 「그거 아니라니까?」 폭주 진입 순간 듀오의 표적을 체력이 가장 낮은 적으로 갈아 끼우고
+       * 그리로 **돌진시킨다.** 돌진은 듀오의 기본 공격 위력을 그대로 빌려 통로의 적을 치고
+       * 주위로 날려버린다 — 여기에 위력을 따로 적으면 듀오의 평타를 조정한 뒤 이 숫자만
+       * 옛 값으로 남아 같은 한 방이 두 수로 갈린다.
+       */
+      effectId: "duoBreakthrough";
+      /** 돌진이 지나간 통로의 반폭(px)이다. */
+      chargeRadius: number;
+      /** 통로에 든 적이 튕겨 나가는 값이다. 파치의 날려버림과 같은 궤적 규칙(`KNOCKBACK`)을 쓴다. */
+      knockback: { seconds: number; speed: number; bounces: number };
+      /** 폭주 동안 듀오가 입힌 피해의 이 비율(%)만큼 생존 아군 전체가 회복한다. 슈테 자신도 포함한다. */
+      allyRegenFromDuoDamagePercent: number;
+    }
+  | {
       /** 리파 ID가 아니라 이 계약을 선언한 모든 캐릭터가 사용할 수 있는 시약 도핑 효과다. */
       effectId: "reagentDoping";
       /** 모든 생존 적에게 폭주 진입 시 부여할 시약 수로, 캐릭터 ID 대신 정의가 결정한다. */
@@ -1203,6 +1289,18 @@ export interface Passive {
     maxStacks: number;
     /** 겹 하나가 지휘자의 합공 피해에 더하는 비율(%)이다. */
     damagePercentPerStack: number;
+  };
+  /**
+   * 「듀오 랭크」 계약. 붙어 다니는 거리와 표적을 다시 맞추는 주기를 함께 든다.
+   *
+   * 은신 경계는 다른 패시브와 같은 자리(`value`)를 쓴다 — 듀오의 현재 체력이 이 비율 이상인
+   * 동안에만 숨는다.
+   */
+  duoLink?: {
+    /** 듀오에게서 이 거리 안까지 따라붙는다. 사거리보다 짧아야 듀오보다 앞에 서지 않는다. */
+    followDistance: number;
+    /** 듀오의 표적을 다시 읽는 주기(초). 매 프레임 복사하면 루카의 표적 복사와 구별되지 않는다. */
+    syncSeconds: number;
   };
   /**
    * 시약 중첩·반응의 전체 수치 계약이다. 리파 ID 전용 속성이 아니라 `reagentReaction`을

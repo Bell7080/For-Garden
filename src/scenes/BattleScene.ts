@@ -1116,7 +1116,9 @@ export class BattleScene extends Phaser.Scene {
       // `animate`로 걸러 내면 같은 밀리초에 평타가 두 번 기록되어 서버 쿨다운 검증이 제출
       // 전체를 거절했고(v0.66.1까지 폰토스 정산이 "다시 시도"만 남긴 원인), 그래서 코어가
       // 표시하는 `followUp`을 읽는다. transfer는 animate=false라 여기 닿지 않는다.
-      const replayKind = event.skill === "staccato" || event.skill === "shimmer" ? "basic" : event.skill === "transfer" ? "ultimate" : event.skill;
+      // 약점 포착도 표식을 찍은 개체가 낸 추가타라 원본 행동인 평타에 접는다 — 스타카토와 같다.
+      const replayKind = event.skill === "staccato" || event.skill === "shimmer" || event.skill === "weakpoint"
+        ? "basic" : event.skill === "transfer" ? "ultimate" : event.skill;
       // 프레임이 끝난 지금이 아니라 코어가 못 박은 타격 시각을 적는다(`at`).
       this.bossActions.push({ elapsedMs: Math.round((event.at ?? this.state.elapsed) * 1_000), actorId: attacker.fighter.def.id, kind: replayKind });
     }

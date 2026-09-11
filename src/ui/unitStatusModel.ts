@@ -7,7 +7,7 @@ import type { Fighter } from "../core/skirmish";
  * 겹 수와 남은 시간을 여기서 한 번만 만들고 둘 다 이 목록만 그린다. Phaser를 들여오지 않아
  * 순서·색·문구를 테스트가 그대로 고정할 수 있다.
  */
-export type UnitStatusId = "packKuro" | "packShiro" | "shell" | "stun" | "frozen" | "frenzy" | "taunt" | "bleed" | "poison" | "reagent" | "curse" | "chill" | "submerged" | "overpaint" | "butcher" | "vandalism";
+export type UnitStatusId = "packKuro" | "packShiro" | "shell" | "stun" | "frozen" | "frenzy" | "taunt" | "bleed" | "poison" | "reagent" | "curse" | "chill" | "submerged" | "overpaint" | "butcher" | "vandalism" | "weakpoint";
 
 export interface UnitStatusView {
   /** 같은 상태를 제공자가 여럿 걸 수 있을 때도 HUD 객체를 덮어쓰지 않는 전투 내 키다. */
@@ -54,6 +54,9 @@ export const UNIT_STATUS_COLOR: Readonly<Record<UnitStatusId, number>> = {
   // 칩이 같은 물이라는 것이 읽힌다.
   submerged: 0x2f86c4,
   overpaint: 0x62c6d8,
+  // 관측 신호의 노란빛. 다른 디버프처럼 눌러 두지 않는 이유는 이것이 지속 피해가 아니라
+  // **다음 한 방을 알리는 표식**이라, 듀오가 어디를 밟아야 하는지가 먼저 읽혀야 하기 때문이다.
+  weakpoint: 0xe8c33a,
   butcher: 0xc07fa4,
   vandalism: 0xd45aa8,
 };
@@ -157,6 +160,13 @@ export function unitStatusViews(fighter: Fighter, pack: readonly Fighter[] = [])
       stacks: reagent.stacks, stackSlots: 3,
       remaining: reagent.remaining, total: Math.max(reagent.total, reagent.remaining),
       detail: `${reagent.stacks}/3겹 · ${seconds(reagent.remaining)} 남음`,
+    });
+  }
+  if (fighter.weakpoint) {
+    views.push({
+      id: "weakpoint", name: "약점 포착", color: UNIT_STATUS_COLOR.weakpoint,
+      // 시간이 흘러 사라지지 않고 듀오의 다음 한 방으로만 풀리므로 시계를 그리지 않는다.
+      detail: "듀오가 때리면 추가 피해",
     });
   }
   if (fighter.overpaint) {

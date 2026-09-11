@@ -132,7 +132,9 @@ export const RELICS: RelicDef[] = [
       lifeSteal: 0,
       ferocityGain: 0,
     },
-    ferocityTrait: { name: "전투의 여왕은 나야.", effectId: "rexBattleQueen", criticalChancePoints: 25, allDamageLifeStealPoints: 25 },
+    // 치명타 확률 가산은 패시브가 이미 미는 축이라 폭주가 같은 말을 반복했다. 지금은 자기가
+    // 남긴 출혈을 조건으로 삼아, 물어뜯은 자리를 다시 무는 것이 곧 확정 치명타다.
+    ferocityTrait: { name: "전투의 여왕은 나야.", effectId: "rexBattleQueen", bleedingGuaranteedCritical: true, allDamageLifeStealPoints: 25 },
     passive: {
       id: "rex-passive",
       name: "전투는 메이드의 소양이기에.",
@@ -2259,6 +2261,109 @@ export const RELICS: RelicDef[] = [
       selfVolley: { seconds: 5, hitCount: 2, attackSpeedPercent: 40 },
     },
   },
+  {
+    id: "shute",
+    squad: "eye",
+    name: "슈테",
+    specimenNumber: "205",
+    projectName: "DUO RANK",
+    excavationSite: "미국 콜로라도 모리슨층 제3채석장",
+    // 발굴 기록은 장소·보존 상태·복원 연구 특징만 담고, 복원 이후 생활 관찰과 분리한다.
+    fossilRecord: "채석장 바닥의 이암에 등판 열일곱 장이 무너지지 않고 두 줄로 늘어선 채 남아 있었다. 판마다 혈관이 지나간 홈이 촘촘해, 복원 연구는 그 홈이 열을 버리는 길인지 신호를 보내는 길인지부터 갈라야 했다.",
+    observationProfile: {
+      originYear: "약 1억 5천만 년 전",
+      // 말수가 적고 화면 앞에서만 길게 말하는 또래의 외형·정서에 맞춰 E.C. 15년으로 둔다.
+      restorationYear: "E.C. 15년",
+      lifeStage: "아성체",
+      height: "1.46 m",
+      weight: "39 kg",
+    },
+    catalogSummary: "신장 1.46m, 체중 39kg의 인간형 체격에 신호를 실어 보내는 등판 두 줄과 네 갈래 꼬리 가시가 확인된 아성체 스테고사우루스 표본.",
+    unlockRecord: { status: "recorded", text: "슈테는 관제탑에 올라오지 않는다. 제 방에 화면을 여덟 장 띄워 놓고 거기서 전장을 본다. 말을 걸면 대답이 한 박자 늦고 대체로 짧지만, 한 명을 정해 놓고는 그 한 명에게만 끝없이 말한다 — 어디로 돌아라, 지금 들어가라, 그거 아니라니까. 등판은 그때 색이 돈다. 판이 밝아진 방향에 정확히 그 아이가 보고 있는 곳이 있어, 시그널 아이 선임들은 슈테의 등을 보고 전황을 읽는 법을 따로 익혔다. 잘했다고 하면 화면 쪽으로 고개를 돌리고 그럭저럭이라고만 한다." },
+    squadNote: "시그널 아이의 전담 오더. 광역 관측을 나눠 맡는 다른 담당들과 달리 한 판에 한 명만 붙잡고 끝까지 따라다니며, 그 한 명이 쓰러지면 남은 시간 동안 아무 신호도 내지 않는다.",
+    // 관제 절차를 통째로 외워 오는 개체라 스쿼드가 지시자에게 쓰는 호칭을 그대로 연구원에게 돌린다.
+    researcherTitle: "오더",
+    rarity: "SSR",
+    portraitAssetId: "shute",
+    origin: "스테고사우루스",
+    element: "earth",
+    role: "support",
+    // 듀오 곁에 붙어 다니되 듀오보다 앞에 서지 않는 자리다.
+    reachTier: "mid",
+    // 관측 기록을 그대로 자산으로 바꾸는 담당이라 발굴 특화도 다이아 쪽에 붙인다.
+    excavationTrait: { primaryCurrency: "gems", baseProductionPerHour: 0.26, efficiencyMultiplier: 1.13 },
+    /*
+     * **모든 스킬이 주문력에서 나온다.** 평타도 약점 포착의 추가 피해도 주문력 하나를 읽으므로
+     * 공격력은 로스터 최하로 둔다 — 쓰지 않는 값을 높게 적으면 실전에 없는 힘이 전투력만 부풀린다.
+     *
+     * 이동 속도 96은 느린 편이다. 스테고사우루스는 원래 빠른 개체가 아니고, 혼자서는 전장을
+     * 따라다니지 못한다는 것이 이 개체가 **붙어 다니는 이유**다. 다만 듀오를 놓칠 만큼 느리면
+     * 평타가 통째로 비므로 따라붙을 만큼은 준다.
+     */
+    stats: {
+      hp: 1000,
+      def: 62,
+      res: 108,
+      atk: 48,
+      ap: 172,
+      attackSpeed: 108,
+      moveSpeed: 96,
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 0,
+    },
+    // 폭주는 슈테 자신이 세지는 것이 아니라 **듀오를 밀어 넣는다.** 지원가의 폭주가 제 화력을
+    // 올리면 그 순간만 지원가가 아니게 된다.
+    ferocityTrait: {
+      name: "그거 아니라니까?",
+      effectId: "duoBreakthrough",
+      chargeRadius: 120,
+      // 파치가 때려서 날리는 것과 같은 궤적이되 한 뼘 짧다 — 밀어붙이는 길을 여는 것이지
+      // 전장 밖으로 치우는 것이 아니다.
+      knockback: { seconds: 1.1, speed: 1600, bounces: 2 },
+      allyRegenFromDuoDamagePercent: 5,
+    },
+    passive: {
+      // kind가 duoLink인 패시브는 passiveDescription()이 구조화 필드로 다시 문장을 만들므로
+      // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
+      id: "shute-passive",
+      name: "듀오 랭크",
+      kind: "duoLink",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      // 은신 경계는 듀오의 현재 체력 비율이다. 표시에도 이 값을 그대로 쓴다.
+      value: 50,
+      duoLink: { followDistance: 180, syncSeconds: 2 },
+      desc: "전투 시작 시 한 번, 바로 왼쪽에 선 아군과 듀오를 맺어 그 곁에 붙어 다니고 듀오의 표적을 함께 노린다. 듀오의 체력이 50% 이상인 동안 은신한다.",
+    },
+    basic: {
+      id: "shute-basic",
+      name: "공격 핑",
+      power: 50,
+      iconAssetId: "skill-icon-magical",
+      effectType: "magical",
+      damageType: "magical",
+      targeting: "single",
+      // 지원가의 값어치는 제 피해가 아니라 듀오의 궁극기와 폭주가 얼마나 빨리 돌아오느냐다.
+      duoCharge: { energy: 5, ferocity: 5 },
+      // 세 걸음마다 한 번만 찍는다. 매 타격마다 찍으면 표식이 상시 강화가 되어 주기가 뜻을 잃는다.
+      statusEffectEvery: 3,
+      statusEffects: [{ kind: "weakpoint", burstPower: 120, duoHealPercent: 50 }],
+    },
+    ultimate: {
+      id: "shute-ult",
+      name: "오더 좀 들어라!",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      cost: 150,
+      // 피해도 회복도 없는 순수 지원 궁극기이며, 전장 전체가 아니라 듀오 한 명에게만 걸린다.
+      targeting: "duo",
+      teamBuff: { kind: "order", attackSpeedPercent: 50, criticalChancePoints: 25, lifeStealPoints: 25, seconds: 6 },
+    },
+  },
+
   {
     /**
      * 디안 한 명만 성장 주체다. 쿠로·시로는 제 `RelicDef`를 온전히 갖되 `summonOnly`로 표시해

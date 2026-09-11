@@ -78,7 +78,8 @@ describe("토리카 스킬 표시 계약", () => {
     // UI가 ID별 예외 없이 같은 정적 데이터를 읽을 수 있도록 모든 궁극기의 계약을 검사한다.
     // 순수 회복 궁극기는 적 대상 네 종류와 분리된 전장 전체 아군 계약을 사용하고,
     // 아무도 때리지 않고 자리만 잡는 궁극기(델로피)는 자신만 가리키는 계약을 쓴다.
-    for (const def of RELICS) expect(["single", "nearbyEnemies", "battlefieldEnemies", "battlefieldAllies", "self", "targetedCircle", "chargeLine"]).toContain(def.ultimate.targeting);
+    // 듀오 한 명에게만 거는 궁극기(슈테)는 전장 전체 아군과 다른 계약이다.
+    for (const def of RELICS) expect(["single", "nearbyEnemies", "battlefieldEnemies", "battlefieldAllies", "duo", "self", "targetedCircle", "chargeLine"]).toContain(def.ultimate.targeting);
     const torika = RELICS.find((def) => def.id === "anky")!;
     expect(torika.ultimate).toMatchObject({
       targeting: "nearbyEnemies",
@@ -334,8 +335,7 @@ describe("폰토스 스킬 표시 계약", () => {
 describe("렉시아 스킬 표시 계약", () => {
   it("은 폭주·패시브·출혈·궁극기 회복을 현재 데이터에서 문장화한다", () => {
     const rex = RELICS.find((def) => def.id === "rex")!;
-    // 두 값이 같으므로 한 번만 말한다. 서로 달라지는 순간 다시 나열한다.
-    expect(ferocityTraitDescription(rex.ferocityTrait)).toBe("치명타 확률과 모든 피해 흡혈이 모두 25% 증가한다.");
+    expect(ferocityTraitDescription(rex.ferocityTrait)).toBe("[[bleed|출혈]] 중인 적을 공격하면 치명타가 확정되고, 모든 피해 흡혈이 25% 증가한다.");
     expect(passiveDescription(rex.passive)).toBe("전투 시작 시, 공격 속도·공격력·치명타 확률·치명타 피해가 모두 25% 오른다.");
     expect(statusEffectLabel(rex.basic.statusEffects?.[0])).toBe("[[bleed|출혈]] 3초 · 매초 최대 체력 2%");
     expect(targetingLabel(rex.ultimate.targeting)).toBe("적 한 명");
@@ -480,6 +480,7 @@ describe("스테라 스킬 표시 계약", () => {
   it("의 궁극기는 피해가 아니라 순풍과 그 시간, 자기 몫의 회복만 말한다", () => {
     const def = stella();
     const buff = def.ultimate.teamBuff!;
+    if (buff.kind !== "tailwind") throw new Error("스테라의 궁극기는 순풍이다");
     expect(def.ultimate).toMatchObject({
       targeting: "battlefieldAllies",
       teamBuff: { kind: "tailwind", attackSpeedPercent: 20, moveSpeedPercent: 20, maxHpRegenPercentPerSecond: 2 },
@@ -1028,5 +1029,67 @@ describe("파루아 표시 계약", () => {
     expect(split.power * 2).toBe(parua.basic.cycle![0].power);
     expect(keyword("split-arrow").description).toContain("최대 세 명");
     expect(keyword("split-arrow").description).toContain("50%");
+  });
+});
+
+describe("슈테 스킬 표시 계약", () => {
+  const shute = RELICS.find((def) => def.id === "shute")!;
+
+  it("의 패시브는 짝을 짓는 규칙을 태그에 넘기고 이 개체만의 값만 말한다", () => {
+    // 짝이 누구인지·얼마나 자주 표적을 맞추는지는 규칙어가 말한다. 본문에 다 풀어 적으면
+    // 네 문장이 되어 정작 이 개체의 값(은신 경계와 그 대가)이 그 사이에 묻힌다.
+    expect(passiveDescription(shute.passive)).toBe(
+      "전투 시작 시 한 번, 아군 한 명과 [[duo|듀오]]를 맺는다. 듀오의 체력이 50% 이상인 동안 [[stealth|은신]]한다.",
+    );
+    // "한 번"이 쓰러진 뒤 다시 맺지 않는다는 것까지 말하므로 그 문장을 따로 달지 않는다.
+    expect(passiveDescription(shute.passive)).not.toContain("다시 짝을 짓지 않는다");
+  });
+
+  it("의 듀오 태그는 본문이 되풀이하지 않는 짝짓기 규칙을 가진다", () => {
+    const duo = KEYWORDS.find(({ id }) => id === "duo")!;
+    const link = shute.passive.duoLink!;
+    // 표적을 다시 읽는 주기는 데이터가 소유하고 태그가 그 값을 말한다 — 둘이 갈리면 화면이
+    // 실제로 도는 규칙과 다른 수를 보여 준다.
+    expect(duo.description).toContain(`${link.syncSeconds}초마다`);
+    expect(passiveDescription(shute.passive)).not.toContain(`${link.syncSeconds}초`);
+  });
+
+  it("의 일반 공격은 듀오 충전과 약점 포착을 한 문장씩 말한다", () => {
+    const description = skillDescription(shute.basic, { damage: 86 });
+    expect(description).toContain("[[damage-value|86]]");
+    // 아군 전체 충전과 다른 축이라 "모든 생존 아군"이라고 적지 않는다.
+    expect(description).not.toContain("모든 생존 아군");
+    expect(description).toContain("[[duo|듀오]]의 궁극기 게이지와 [[ferocity|야성]]이 각각 5 오른다");
+    expect(description).toContain("[[weakpoint|약점 포착]]");
+  });
+
+  it("의 궁극기는 듀오 한 명에게 거는 지시로 적는다", () => {
+    expect(skillDescription(shute.ultimate)).toBe(
+      "[[duo|듀오]]에게 6초 동안 [[attack-speed|공격 속도]] 50%, 치명타 확률 25%, 흡혈 25%를 부여한다.",
+    );
+    expect(targetingLabel(shute.ultimate.targeting)).toBe("듀오");
+  });
+
+  it("의 폭주는 절마다 한 가지만 말하고 짝짓기 규칙은 태그에 맡긴다", () => {
+    const description = ferocityTraitDescription(shute.ferocityTrait);
+    expect(description).toContain("[[duo|듀오]]");
+    expect(description).toContain("[[charge|돌진]]");
+    expect(description).toContain("[[knockback|날아간다]]");
+    expect(description).toContain("듀오가 입힌 피해의 5%");
+    // 지원가의 폭주라 자기 능력치를 올리는 절이 없다.
+    expect(description).not.toContain("자신");
+  });
+
+  it("의 약점 포착 태그는 본문이 되풀이하지 않는 수치를 가진다", () => {
+    // 쓰는 개체가 슈테 하나뿐이라 태그가 수치를 가져도 된다 — 둘째 개체가 생기면 출혈처럼
+    // 시간·비율을 본문으로 옮기고 태그는 무엇인지만 말하게 바꾼다.
+    const weakpoint = KEYWORDS.find(({ id }) => id === "weakpoint")!;
+    const effect = shute.basic.statusEffects?.[0];
+    if (effect?.kind !== "weakpoint") throw new Error("슈테의 일반 공격은 약점 포착을 찍는다");
+    expect(weakpoint.description).toContain(`${effect.burstPower}%`);
+    expect(weakpoint.description).toContain(`${effect.duoHealPercent}%`);
+    // 터뜨리는 것이 누구인지도 본문이 아니라 듀오 태그가 말한다.
+    expect(weakpoint.description).toContain("[[duo|듀오]]");
+    expect(skillDescription(shute.basic, { damage: 86 })).not.toContain(`${effect.burstPower}%`);
   });
 });

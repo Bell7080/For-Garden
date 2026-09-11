@@ -25,6 +25,31 @@ interface CreatureGpuBuffers {
 
 const programs = new WeakMap<WebGLRenderingContext, SharedGpuProgram>();
 
+/**
+ * 컨텍스트가 복구될 때마다 오른다. 이 세대가 다른 GPU 손잡이는 이미 죽은 것이다.
+ *
+ * 모바일에서 앱을 백그라운드로 보냈다 돌아오면 WebGL 컨텍스트가 날아가는 것이 정상 동작이다.
+ * Phaser는 제가 감싼 자원(텍스처·버퍼·프로그램)을 `RESTORE_WEBGL` 시점에 다시 만들지만,
+ * 여기서 raw `gl.createProgram`·`gl.createBuffer`로 만든 것은 감싸이지 않아 손대지 않는다.
+ * 게다가 **복구 뒤에도 `renderer.gl`은 같은 객체**라(`dispatchContextRestored`가 다시 대입하지
+ * 않는다) 위 WeakMap이 죽은 program을 계속 돌려준다 — 그대로 두면 돌아온 화면에서 모든
+ * 캐릭터가 그려지지 않는다.
+ */
+let gpuGeneration = 0;
+
+/** 렌더러 하나에 복구 구독을 한 번만 건다. 개체마다 걸면 전투 여섯이 여섯 번 듣는다. */
+const contextWatched = new WeakSet<Phaser.Renderer.WebGL.WebGLRenderer>();
+
+function watchContextRestore(renderer: Phaser.Renderer.WebGL.WebGLRenderer): void {
+  if (contextWatched.has(renderer)) return;
+  contextWatched.add(renderer);
+  renderer.on(Phaser.Renderer.Events.RESTORE_WEBGL, () => {
+    gpuGeneration += 1;
+    // 같은 gl 객체에 죽은 program이 물려 있으므로 캐시를 비워 다음 draw가 다시 만들게 한다.
+    programs.delete(renderer.gl);
+  });
+}
+
 const VERTEX_SHADER = `
 attribute vec2 aPosition;
 attribute vec2 aUv;
@@ -132,6 +157,8 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
   private readonly uvs: Float32Array;
   private positions: Float32Array;
   private buffers?: CreatureGpuBuffers;
+  /** 지금 들고 있는 버퍼를 만든 컨텍스트 세대. 다르면 죽은 손잡이라 지우지도 쓰지도 않는다. */
+  private buffersGeneration = -1;
   /** 직전 갱신 때의 TimeStep 벽시계. 프레임 제한이 켜져도 실제 경과 시간을 잴 수 있게 한다. */
   private lastLoopTime = -1;
   /** 1보다 작은 값은 비전투 장식의 프레임 일부를 버리며 누락 시간을 다음 프레임에 합치지 않는다. */
@@ -203,7 +230,10 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
 
   /** 최초 렌더 때만 GPU Buffer를 만들며, UV와 index는 이후 다시 올리지 않는다. */
   private ensureBuffers(gl: WebGLRenderingContext): CreatureGpuBuffers {
-    if (this.buffers) return this.buffers;
+    if (this.buffers && this.buffersGeneration === gpuGeneration) return this.buffers;
+    // 컨텍스트가 죽었다 살아난 뒤라면 예전 손잡이는 **다른 컨텍스트의 것**이라 새 컨텍스트에
+    // 지우라고 하면 오류가 난다. 지우지 않고 그냥 버린 뒤 다시 만든다.
+    this.buffers = undefined;
     const position = gl.createBuffer();
     const uv = gl.createBuffer();
     const index = gl.createBuffer();
@@ -214,6 +244,7 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, index);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.indices, gl.STATIC_DRAW);
     this.buffers = { position, uv, index };
+    this.buffersGeneration = gpuGeneration;
     return this.buffers;
   }
 
@@ -230,6 +261,8 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
     renderer.pipelines.clear();
     try {
       const gl = renderer.gl;
+      // 복구 신호를 듣지 않으면 컨텍스트가 돌아온 뒤 죽은 program으로 계속 그린다.
+      watchContextRestore(renderer);
       const shared = programs.get(gl) ?? createProgram(gl);
       programs.set(gl, shared);
       const buffers = this.ensureBuffers(gl);
@@ -276,10 +309,14 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
   private release(): void {
     this.scene.events.off(Phaser.Scenes.Events.UPDATE, this.step, this);
     if (!this.buffers) return;
-    const gl = (this.scene.game.renderer as Phaser.Renderer.WebGL.WebGLRenderer).gl;
-    gl.deleteBuffer(this.buffers.position);
-    gl.deleteBuffer(this.buffers.uv);
-    gl.deleteBuffer(this.buffers.index);
+    // 컨텍스트가 바뀐 뒤라면 이 손잡이는 죽은 컨텍스트의 것이다. 새 컨텍스트에 지우라고 하면
+    // INVALID_OPERATION이므로 참조만 버린다 — 죽은 컨텍스트의 자원은 브라우저가 회수한다.
+    if (this.buffersGeneration === gpuGeneration) {
+      const gl = (this.scene.game.renderer as Phaser.Renderer.WebGL.WebGLRenderer).gl;
+      gl.deleteBuffer(this.buffers.position);
+      gl.deleteBuffer(this.buffers.uv);
+      gl.deleteBuffer(this.buffers.index);
+    }
     this.buffers = undefined;
   }
 }

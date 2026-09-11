@@ -38,11 +38,13 @@ describe("교류 층 모델", () => {
     expect([...away]).toEqual(["anky"]);
   });
 
-  it("남은 시간은 1분 미만일 때만 초를 말한다", () => {
+  it("남은 시간은 초까지 도는 시계 한 모양으로 선다", () => {
     expect(interactionRemainingLabel(0)).toBe("완료");
-    expect(interactionRemainingLabel(30_000)).toBe("30초");
-    expect(interactionRemainingLabel(90_000)).toBe("2분");
-    expect(interactionRemainingLabel(3_600_000)).toBe("1시간");
-    expect(interactionRemainingLabel(3_600_000 + 600_000)).toBe("1시간 10분");
+    expect(interactionRemainingLabel(30_000)).toBe("00:00:30");
+    expect(interactionRemainingLabel(90_000)).toBe("00:01:30");
+    expect(interactionRemainingLabel(3_600_000)).toBe("01:00:00");
+    expect(interactionRemainingLabel(3_600_000 + 600_000)).toBe("01:10:00");
+    // 하루를 넘는 파견도 시간 자리를 그대로 이어 적는다.
+    expect(interactionRemainingLabel(24 * 3_600_000)).toBe("24:00:00");
   });
 });

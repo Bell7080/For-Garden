@@ -12,10 +12,15 @@ describe("교류 층 자리", () => {
     expect(xs[0]).toBe(BASE_WIDTH / 2);
   });
 
-  it("양 끝은 화면 밖으로 조금 넘친다", () => {
+  it("네 변이 모두 화면 안에 든다 — 밖으로 뻗으면 어디까지가 한 층인지 화면에 없다", () => {
     const spot = interactionLayerSpot(0);
-    expect(spot.x - half).toBeLessThan(0);
-    expect(spot.x + half).toBeGreaterThan(BASE_WIDTH);
+    expect(spot.x - half).toBeGreaterThan(0);
+    expect(spot.x + half).toBeLessThan(BASE_WIDTH);
+  });
+
+  it("양옆 여백이 같다 — 가운데 선 버튼이라 한쪽으로 쏠리지 않는다", () => {
+    const spot = interactionLayerSpot(0);
+    expect(spot.x - half).toBeCloseTo(BASE_WIDTH - (spot.x + half));
   });
 
   it("층은 위에서 아래로 같은 간격으로 쌓인다", () => {
@@ -27,11 +32,12 @@ describe("교류 층 자리", () => {
     expect(INTERACTION_LAYER.step).toBeGreaterThan(INTERACTION_LAYER.height);
   });
 
-  it("글 시작선이 화면 안으로 들어온다", () => {
-    // 층이 화면보다 넓어 판 왼쪽 변은 화면 밖이다. 변에 붙여 시작하면 이름이 잘려 나간다.
-    const leftEdgeOnScreen = BASE_WIDTH / 2 - INTERACTION_LAYER.width / 2;
-    expect(leftEdgeOnScreen).toBeLessThan(0);
-    expect(leftEdgeOnScreen + INTERACTION_LAYER.padding + INTERACTION_LAYER.textInset).toBeGreaterThan(0);
+  it("글 시작선이 판 안에 머문다", () => {
+    // 판이 화면 안에 통째로 들어오므로 시작선도 판 왼쪽 변 안쪽이면 된다. 판 폭의 절반을
+    // 넘기면 이름이 가운데를 지나 원화가 가장 진한 자리에서 시작한다.
+    const inset = INTERACTION_LAYER.padding + INTERACTION_LAYER.textInset;
+    expect(inset).toBeGreaterThan(0);
+    expect(inset).toBeLessThan(INTERACTION_LAYER.width / 2);
     expect(INTERACTION_LAYER.padding * 2).toBeLessThan(INTERACTION_LAYER.height);
   });
 

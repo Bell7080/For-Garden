@@ -3,6 +3,7 @@ import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { chipPoints, drawLayer, HOLO } from "./holo";
 import { COLOR, textStyle } from "./theme";
 import { UI_ICON } from "./icons";
+import { BACK_BUTTON_SIZE, popupBackButtonSpot } from "./popupGeometry";
 
 export interface IconButtonOptions {
   /** 텍스처 키. `UI_ICON`의 값을 쓴다. */
@@ -83,8 +84,9 @@ export function addPopupBackButton(
   height: number,
   onClick: () => void,
 ): IconButton {
-  // 버튼 전체가 판 안에 머물도록 반지름과 여백을 합친 72px을 각 변에서 뗀다.
-  const button = new IconButton(scene, width / 2 - 72, height / 2 - 72, { icon: UI_ICON.back, onClick });
+  // 자리는 판의 깎인 모서리에서 나온다 — 두 변에서 같은 만큼만 들어가면 버튼이 그 빗변을 넘는다.
+  const spot = popupBackButtonSpot(width, height, BACK_BUTTON_SIZE);
+  const button = new IconButton(scene, spot.x, spot.y, { icon: UI_ICON.back, size: BACK_BUTTON_SIZE, onClick });
   parent.add(button);
   return button;
 }

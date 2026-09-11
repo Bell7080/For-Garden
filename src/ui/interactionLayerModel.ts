@@ -56,20 +56,23 @@ export function relicsAwayOnInteraction(dispatches: readonly InteractionDispatch
 }
 
 /**
- * 남은 시간을 화면 문구로 바꾼다.
+ * 남은 시간을 화면 문구로 바꾼다 — **초까지 도는 `00:00:00` 한 모양뿐이다.**
  *
- * 초 단위까지 보여 주는 것은 1분 미만일 때뿐이다 — 몇 시간짜리 파견에서 초가 흐르면 읽을 것이
- * 늘기만 하고 다음 조작은 달라지지 않는다.
+ * 예전에는 길이에 따라 "3시간 20분"과 "30초"를 오갔다. 그러면 같은 자리의 글이 몇 분마다 자리
+ * 수까지 바뀌어 층이 들썩였고, 무엇보다 **줄어드는 것이 보이지 않았다** — 3시간짜리 파견은
+ * 20분 동안 같은 글자로 서 있었다. 초가 도는 시계는 그 자리에서 기다려도 되는지를 바로 말한다.
+ *
+ * 시간 자리는 하루를 넘는 파견(24시간)도 그대로 이어 적는다. 남은 시간이 없으면 시계가 아니라
+ * 끝났다고 말한다 — `00:00:00`은 다녀왔다는 뜻으로는 읽히지 않는다.
  */
 export function interactionRemainingLabel(remainingMs: number): string {
   if (remainingMs <= 0) return "완료";
   const totalSeconds = Math.ceil(remainingMs / 1000);
-  if (totalSeconds < 60) return `${totalSeconds}초`;
-  const minutes = Math.ceil(totalSeconds / 60);
-  if (minutes < 60) return `${minutes}분`;
-  const hours = Math.floor(minutes / 60);
-  const restMinutes = minutes % 60;
-  return restMinutes === 0 ? `${hours}시간` : `${hours}시간 ${restMinutes}분`;
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  const pad = (value: number): string => value.toString().padStart(2, "0");
+  return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
 }
 
 /**

@@ -5,13 +5,10 @@ import { UI_ICON } from "./icons";
 import { addSectionTitle } from "./SectionTitle";
 import { COLOR, textStyle } from "./theme";
 import { setDebugPopupTitles } from "../debug";
-import { BACK_SLOT, POPUP_BACK_BUTTON_DEPTH, POPUP_BODY_BEVEL_RATIO, POPUP_CLOSE_LAYOUT, tiltedPopupSize } from "./popupGeometry";
+import { BACK_SLOT, POPUP_BACK_BUTTON_DEPTH, POPUP_BODY_BEVEL_RATIO, POPUP_CLOSE_LAYOUT, POPUP_TITLE_SIZE, tiltedPopupSize } from "./popupGeometry";
 
-/** 쪽지와 화면을 대부분 차지하는 작업판이 공유하는 제목 위계다. */
-export const POPUP_TITLE_SIZE = {
-  note: 26,
-  workboard: 34,
-} as const;
+/** 제목 위계는 순수 배치표가 갖고 여기서는 다시 내보내기만 한다. */
+export { POPUP_TITLE_SIZE };
 
 /** 팝업 한 장을 여는 데 필요한 것. 내용은 콜백이 컨테이너에 직접 채운다. */
 export interface PopupOptions {

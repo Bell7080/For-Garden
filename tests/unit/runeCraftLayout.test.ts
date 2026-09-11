@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
-import { BACK_BUTTON_SIZE, BACK_SLOT } from "../../src/ui/popupGeometry";
+import { BACK_BUTTON_SIZE, BACK_SLOT, fitsInsidePopupBevel, POPUP_TITLE_SIZE, popupTitleBand } from "../../src/ui/popupGeometry";
 import {
   RUNE_CRAFT_MARKS,
   RUNE_CRAFT_PANEL,
@@ -131,5 +131,64 @@ describe("판 밖 우하단 뒤로가기", () => {
   it("뒤로가기는 화면 안에 있다", () => {
     expect(BACK_SLOT.x + BACK_BUTTON_SIZE / 2).toBeLessThanOrEqual(BASE_WIDTH);
     expect(BACK_SLOT.y + BACK_BUTTON_SIZE / 2).toBeLessThanOrEqual(BASE_HEIGHT);
+  });
+});
+
+describe("룬 판의 액자와 글자가 판 안에서 서로 비켜선다", () => {
+  /** 두 판의 모든 등급 조합. 깎임은 판 높이에 따라 달라지므로 줄 수마다 다시 잰다. */
+  const craftCases = CASES.map(({ rarity, mainCount, subCount }) => {
+    const layout = runeCraftLayout({ mainCount, subCount });
+    return { rarity, layout, panel: { width: RUNE_CRAFT_PANEL.width, height: layout.height } };
+  });
+
+  it("세공 판의 룬 액자가 깎인 모서리 안에 든다", () => {
+    // 예전 자리(-378, 126)는 액자 윗변이 대각선을 45.6px 넘어 판 밖에 떠 있었다.
+    const frame = RUNE_CRAFT_PANEL.frame;
+    for (const { rarity, panel } of craftCases) {
+      const box = { left: frame.x - frame.size / 2, top: frame.y - frame.size / 2 };
+      expect(fitsInsidePopupBevel(panel, box, 8), rarity).toBe(true);
+    }
+  });
+
+  it("세공 판의 이름줄이 액자를 침범하지 않는다", () => {
+    // 예전 textX(-324)는 액자 오른쪽 변(-312)보다 왼쪽이라 글자가 조각 위에 겹쳐 찍혔다.
+    const frame = RUNE_CRAFT_PANEL.frame;
+    expect(RUNE_CRAFT_PANEL.textX).toBeGreaterThan(frame.x + frame.size / 2 + 12);
+  });
+
+  it("세공 판의 이름줄과 지갑 칸이 서로 떨어져 있다", () => {
+    const panel = RUNE_CRAFT_PANEL;
+    const nameRight = panel.textX + panel.nameWrap;
+    const walletLeft = panel.wallet.x - panel.wallet.width / 2;
+    expect(nameRight).toBeLessThan(walletLeft);
+    // 지갑 칸도 판 오른쪽 변을 넘지 않는다(오른쪽 위는 깎이지 않으므로 직선이다).
+    expect(panel.wallet.x + panel.wallet.width / 2).toBeLessThanOrEqual(panel.width / 2);
+  });
+
+  it("세공 판의 액자가 제목표 아래에서 시작한다", () => {
+    // 제목표는 윗변에 걸터앉아 위아래로 제 높이의 절반씩 차지한다.
+    const titleBand = popupTitleBand(POPUP_TITLE_SIZE.workboard);
+    expect(RUNE_CRAFT_PANEL.frame.y - RUNE_CRAFT_PANEL.frame.size / 2).toBeGreaterThan(titleBand);
+  });
+
+  it("세공 판의 확률 줄이 액자 아래에서 시작한다", () => {
+    const frameBottom = RUNE_CRAFT_PANEL.frame.y + RUNE_CRAFT_PANEL.frame.size / 2;
+    expect(RUNE_CRAFT_PANEL.chanceLabelY).toBeGreaterThan(frameBottom);
+  });
+
+  it("쪽지의 액자와 표식 칩도 깎인 모서리 안에 든다", () => {
+    for (const { rarity, subCount } of CASES) {
+      const layout = runeNoteLayout(2 + subCount);
+      const panel = { width: RUNE_NOTE_PANEL.width, height: layout.height };
+      const frame = RUNE_NOTE_PANEL.frame;
+      expect(fitsInsidePopupBevel(panel, { left: frame.x - frame.size / 2, top: frame.y - frame.size / 2 }, 8), rarity).toBe(true);
+      const chip = RUNE_NOTE_PANEL.chip;
+      expect(fitsInsidePopupBevel(panel, { left: chip.x - chip.size / 2, top: chip.y - chip.size / 2 }, 4), rarity).toBe(true);
+    }
+  });
+
+  it("쪽지의 이름줄이 액자를 침범하지 않는다", () => {
+    const frame = RUNE_NOTE_PANEL.frame;
+    expect(RUNE_NOTE_PANEL.textX).toBeGreaterThan(frame.x + frame.size / 2 + 12);
   });
 });

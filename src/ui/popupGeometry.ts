@@ -17,6 +17,57 @@ export function tiltedPopupSize(width: number, height: number, tilt = 0): { widt
  */
 export const POPUP_BODY_BEVEL_RATIO = 0.14;
 
+/**
+ * 쪽지와 화면을 대부분 차지하는 작업판이 공유하는 제목 위계다.
+ *
+ * Phaser를 들여오는 `PopupLayer`가 아니라 이 배치표가 갖는다 — 판 위의 무언가가 제목표 띠를
+ * 침범하지 않는지 확인하는 순수 테스트가 같은 값을 읽어야 하기 때문이다(`BACK_SLOT`과 같은 이유).
+ */
+export const POPUP_TITLE_SIZE = {
+  note: 26,
+  workboard: 34,
+} as const;
+
+/**
+ * 제목표가 윗변에 걸터앉아 차지하는 **위아래 절반** 높이.
+ *
+ * `addSectionTitle`이 제 높이를 `size * 1.52`로 잡고 판 윗변을 가운데로 삼으므로, 판 위쪽에
+ * 무언가를 세울 때 이만큼은 비워야 글자와 겹치지 않는다.
+ */
+export function popupTitleBand(size: number): number {
+  return Math.round(size * 1.52) / 2;
+}
+
+/**
+ * 판 왼쪽 경계의 x — **깎인 모서리 안에서는 대각선이다.**
+ *
+ * 팝업 몸판은 왼쪽 위를 짧은 변의 14%만큼 비스듬히 깎는다(`POPUP_BODY_BEVEL_RATIO`). 그래서
+ * 판 왼쪽에 무언가를 세울 때 `-width / 2`를 기준으로 잡으면 **위쪽에서만 조용히 판 밖으로
+ * 삐져나온다** — 높이가 폭보다 큰 긴 판에서는 깎임이 130px을 넘어 액자 하나가 통째로 나간다
+ * (v0.95.1의 룬 세공 액자가 45.6px 나가 있었다).
+ *
+ * `y`는 판 윗변에서 아래로 잰 거리다. 그리는 쪽과 검사하는 쪽이 같은 함수를 읽어야 한쪽만
+ * 고쳐지는 일이 없다.
+ */
+export function popupLeftEdgeAt(width: number, height: number, y: number): number {
+  const bevel = Math.min(width, height) * POPUP_BODY_BEVEL_RATIO;
+  return y >= bevel ? -width / 2 : -width / 2 + (bevel - y);
+}
+
+/**
+ * 왼쪽 위 깎임 안에 상자 하나가 온전히 드는가.
+ *
+ * 상자의 **왼쪽 위 꼭짓점**만 보면 된다 — 깎임은 그 모서리 하나뿐이고, 대각선이라 그 점이
+ * 안에 들면 나머지 세 점도 안에 든다.
+ */
+export function fitsInsidePopupBevel(
+  panel: { width: number; height: number },
+  box: { left: number; top: number },
+  margin = 0,
+): boolean {
+  return box.left - margin >= popupLeftEdgeAt(panel.width, panel.height, box.top - margin);
+}
+
 /** 공용 닫기 조작의 판 모서리 기준 배치다. 렌더링과 정적 입력면 검사가 같은 수치를 쓴다. */
 export const POPUP_CLOSE_LAYOUT = { centerInset: 40, hitSize: 84 } as const;
 

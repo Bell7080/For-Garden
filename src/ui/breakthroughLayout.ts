@@ -1,0 +1,105 @@
+/**
+ * 한계 돌파 두 창의 **순수 배치표**.
+ *
+ * 창이 둘이다 — 별 옆의 버튼이 여는 **확정 창**(드는 재료와 열리는 효과 하나)과, 등급 돋보기가
+ * 여는 **표**(별 다섯까지 무엇이 열리는지 한눈에)다. 두 창의 값을 한 파일에 두는 이유는 같은
+ * 기능의 두 얼굴이라, 한쪽만 고치면 같은 별이 창마다 다른 것을 말하기 때문이다.
+ *
+ * 모든 `y`는 **판 윗변에서 아래로 잰 거리(px)**다. 화면은 `판 중심 - 높이/2`에 이 값을 더한다.
+ * 높이를 손으로 적지 않고 쌓인 내용에서 거꾸로 구하는 것도 다른 판과 같다.
+ */
+import { BASE_HEIGHT } from "../config/gameConfig";
+import { POPUP_BODY_BEVEL_RATIO } from "./popupGeometry";
+
+/**
+ * 확정 창 — 드는 재료 셋과 이 별에서 열리는 효과 한 줄.
+ *
+ * 「돌파하기」는 액자 밑의 두 줄(이름·`필요 N`)보다 충분히 내려앉아야 한다. 붙이면 버튼 판이
+ * 그 글자를 파고들어 요구 수치가 버튼에 눌린 것처럼 보인다.
+ */
+export const BREAK_CONFIRM = {
+  width: 780,
+  height: 760,
+  gradeY: 108,
+  gradeSize: 96,
+  capY: 208,
+  costY: 370,
+  costFrame: 124,
+  costStep: 236,
+  actionY: 566,
+  action: { width: 420, height: 88 },
+  /** 전용 효과 줄이 있을 때 판이 길어지는 몫과 그 줄의 자리. */
+  effectExtra: 130,
+  effectY: 646,
+} as const;
+
+/**
+ * 표 — **별마다 무엇이 열리는가**만 읽는 창이다.
+ *
+ * 여기에는 파편 수도, 가진 파편도, 별 몇 개인지도 적지 않는다. 그 셋은 **확정 창**이 이미
+ * 말하고(액자 셋과 `필요 N`), 여기서 다시 말하면 같은 수가 두 창에 서서 어느 쪽이 맞는지
+ * 물어보게 된다. 이 창이 맡는 것은 "다섯까지 키우면 이 개체가 무엇을 얻는가" 하나다.
+ *
+ * 안내 문구도 두지 않는다 — "연구소에서 같은 개체를 다시 획득하면 파편이 쌓인다" 같은 설명은
+ * 규칙을 옮겨 적은 것이라 플레이어가 지금 할 일을 바꾸지 않는다(화면 문구 규칙).
+ */
+export const BREAK_STEPS = {
+  /** 설명이 두 줄로 들어갈 만큼 넓다. 좁으면 네 줄이 모두 세 줄짜리 문단이 된다. */
+  width: 980,
+  /** 판 가운데가 앉는 화면 y. 돋보기 자리에 붙이지 않고 **화면 가운데**에 세운다. */
+  centerY: BASE_HEIGHT / 2,
+  /** 줄 판이 판 좌우에서 안으로 들어오는 여백(양쪽 합). */
+  rowInset: 88,
+  /** 첫 줄 가운데. 제목표 띠와 깎인 모서리를 함께 피한다. */
+  firstRowY: 196,
+  row: { height: 138, step: 154 },
+  /** 줄 안에서 별 표식이 서는 자리와 크기. */
+  star: { x: -368, size: 32 },
+  /** 줄 안에서 스킬 액자가 서는 자리와 크기. */
+  icon: { x: -262, size: 108 },
+  /** 설명 글이 시작하는 x와 줄 오른쪽 변에서 남기는 여백. */
+  textX: -176,
+  textRightMargin: 26,
+  textSize: 23,
+  /** 마지막 줄 아래끝에서 판 밑변까지. */
+  bottomMargin: 56,
+} as const;
+
+/** 표 한 장의 자리. `y`는 모두 판 윗변 기준이다. */
+export interface BreakthroughStepsLayout {
+  height: number;
+  rowWidth: number;
+  rows: readonly number[];
+  /** 설명 글이 넘지 않아야 하는 폭. */
+  textWrap: number;
+}
+
+/** 단계 수에서 표의 높이와 모든 줄 자리를 구한다. */
+export function breakthroughStepsLayout(stepCount: number): BreakthroughStepsLayout {
+  const panel = BREAK_STEPS;
+  const rows = Array.from({ length: Math.max(0, stepCount) }, (_, index) => panel.firstRowY + index * panel.row.step);
+  const lastBottom = (rows.at(-1) ?? panel.firstRowY) + panel.row.height / 2;
+  const rowWidth = panel.width - panel.rowInset;
+  return {
+    height: lastBottom + panel.bottomMargin,
+    rowWidth,
+    // 설명은 줄 판 안에서 오른쪽 여백까지만 흐른다.
+    textWrap: rowWidth / 2 - panel.textRightMargin - panel.textX,
+    rows,
+  };
+}
+
+/**
+ * 표의 첫 줄이 깎인 왼쪽 위 모서리를 피하는지.
+ *
+ * 판이 980 × (4단계에서 714)이라 깎임은 짧은 변(714)의 14% — 100px이다. 별 표식은 줄의 가장
+ * 왼쪽에 서므로 그 점이 대각선 안에 들어야 한다.
+ */
+export function stepsFirstRowClearsBevel(layout: BreakthroughStepsLayout): boolean {
+  const bevel = Math.min(BREAK_STEPS.width, layout.height) * POPUP_BODY_BEVEL_RATIO;
+  const rowTop = (layout.rows[0] ?? BREAK_STEPS.firstRowY) - BREAK_STEPS.row.height / 2;
+  const starLeft = BREAK_STEPS.star.x - BREAK_STEPS.star.size;
+  // 깎임보다 아래에서 시작하면 왼쪽 변이 직선이므로 줄 판 폭만 지키면 된다.
+  if (rowTop >= bevel) return starLeft >= -BREAK_STEPS.width / 2;
+  return starLeft >= -BREAK_STEPS.width / 2 + (bevel - rowTop);
+}

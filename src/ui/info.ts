@@ -24,7 +24,7 @@ import { addPopupBackgroundImage, addSceneBackground, BACKGROUND } from "./backg
 import { addBackButton } from "./IconButton";
 import { chipPoints, drawGlassFade, drawHairline, drawInnerVignette, drawLayer, drawShapeEdge, drawShapeOutline, drawVignette, HOLO, perspectiveRect, slantedRect, toPoints } from "./holo";
 import { drawGlyph } from "./glyphs";
-import { PopupLayer } from "./PopupLayer";
+import { PopupLayer, POPUP_TITLE_SIZE } from "./PopupLayer";
 import { calculateObservationJournalFlow, OBSERVATION_JOURNAL_SIZE, withoutRepeatedProfileDetails } from "./observationJournalLayout";
 import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
@@ -46,10 +46,11 @@ import { openSkillPopup, type SkillInfoViewModel } from "./SkillPopup";
 import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { relicCollection } from "../managers/RelicCollectionManager";
 import { COLOR, textStyle } from "./theme";
-import { FALLBACK_SKILL_ICON } from "./skillIcons";
-import { skillArtFor, skillArtTint, SKILL_ART_WASH_ALPHA, type SkillArtSlot } from "./skillArt";
+import { skillArtFor, skillArtTint, type SkillArtSlot } from "./skillArt";
+import { addSkillIconFrame, SKILL_SLOT_LABEL } from "./SkillIconFrame";
+import { BREAK_CONFIRM, BREAK_STEPS, breakthroughStepsLayout } from "./breakthroughLayout";
 import { gameApi } from "../api/FakeServer";
-import { BREAKTHROUGH_STEPS, breakthroughFragmentCost, canBreakThrough, canFeedRelic, FEED_UNIT, nextBreakthrough, relicExpToNext, relicLevelCap, RELIC_STAR_CAP, relicStars } from "../core/relicProgression";
+import { BREAKTHROUGH_STEPS, breakthroughFragmentCost, canBreakThrough, canFeedRelic, FEED_UNIT, nextBreakthrough, relicExpToNext, relicLevelCap, relicStars } from "../core/relicProgression";
 import { BOND_FEROCITY_MULTIPLIER, BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL, BOND_XP_REWARD } from "../core/bond";
 import { getRelicCatalogDisclosure } from "../core/relicCatalog";
 import { observations } from "../managers/ObservationManager";
@@ -261,27 +262,6 @@ const BREAK_EDGE = 0xa88cf0;
  * 크게 세우고, 드는 재료는 가방·상점과 같은 액자로 둔다 — 여기서 사람이 정하는 것은 "지금
  * 올릴 수 있나"이고, 그 답은 등급 두 글자와 액자 둘의 수가 전부 말한다.
  */
-/**
- * 한계 돌파 창의 자리. `y`는 모두 **판 윗변 기준**이다.
- *
- * 전용 효과 줄이 있으면 판이 그만큼 길어지므로 자리를 판 가운데에서 재면 있는 개체와 없는
- * 개체에서 같은 줄이 다른 곳에 선다. 「돌파하기」는 요구 수치 줄(`필요 N`)보다 충분히 내려
- * 두 글자가 겹치지 않게 한다 — 예전에는 액자 아래 두 줄이 버튼 판을 파고들었다.
- */
-const BREAK_LAYOUT = {
-  height: 760,
-  gradeY: 108,
-  gradeSize: 96,
-  capY: 208,
-  costY: 370,
-  costFrame: 124,
-  costStep: 236,
-  actionY: 566,
-  /** 전용 효과 줄이 있을 때 판이 길어지는 몫과 그 줄의 자리. */
-  effectExtra: 130,
-  effectY: 646,
-} as const;
-
 /** 돌파 한 번에 드는 것. 셋이 같은 액자를 쓰지만 담기는 것이 달라 판별 합집합으로 둔다. */
 type BreakthroughCost =
   | { kind: "level"; label: string; need: number; have: number }
@@ -881,7 +861,7 @@ export class InfoManager {
     const step = nextBreakthrough(progress.breakthrough);
     const effect = step ? breakthroughEffectText(def, step.slot) : undefined;
     // 전용 효과 줄이 있으면 그만큼 판이 길어진다. 없는 개체에서 빈 자리를 남기지 않는다.
-    const height = BREAK_LAYOUT.height + (effect ? BREAK_LAYOUT.effectExtra : 0);
+    const height = BREAK_CONFIRM.height + (effect ? BREAK_CONFIRM.effectExtra : 0);
     this.popups.open({ width: 780, height, title: "한계 돌파", tilt: -1.2, ...anchorOf(from) }, (body, close) => {
       if (!step) {
         body.add(this.scene.add.text(0, 20, "이미 " + STAR_ROMAN[STAR_ROMAN.length - 1] + " 등급이다. 중복은 DNA 조각으로 쌓인다.", textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0.5).setWordWrapWidth(640));
@@ -892,12 +872,12 @@ export class InfoManager {
       // **올라가는 것은 별 개수가 아니라 등급이다.** 카드 오른쪽 위에 박히는 로마자와 같은
       // 표식을 그대로 크게 세우고, 그 사이에 화살표만 둔다 — "1 → 2"라고 적으면 화면 어디에도
       // 없는 숫자를 새로 배우게 된다.
-      addStarMark(this.scene, body, -140, top + BREAK_LAYOUT.gradeY, BREAK_LAYOUT.gradeSize, relicStars(progress.breakthrough));
-      body.add(this.scene.add.text(0, top + BREAK_LAYOUT.gradeY, "▶", textStyle({ role: "display", size: 34, color: COLOR.inkDim })).setOrigin(0.5));
-      addStarMark(this.scene, body, 140, top + BREAK_LAYOUT.gradeY, BREAK_LAYOUT.gradeSize, relicStars(progress.breakthrough) + 1);
+      addStarMark(this.scene, body, -140, top + BREAK_CONFIRM.gradeY, BREAK_CONFIRM.gradeSize, relicStars(progress.breakthrough));
+      body.add(this.scene.add.text(0, top + BREAK_CONFIRM.gradeY, "▶", textStyle({ role: "display", size: 34, color: COLOR.inkDim })).setOrigin(0.5));
+      addStarMark(this.scene, body, 140, top + BREAK_CONFIRM.gradeY, BREAK_CONFIRM.gradeSize, relicStars(progress.breakthrough) + 1);
 
       // 상한은 이 조작이 실제로 바꾸는 값이라 등급 바로 아래에 같은 무게로 선다.
-      const capLine = this.scene.add.container(0, top + BREAK_LAYOUT.capY);
+      const capLine = this.scene.add.container(0, top + BREAK_CONFIRM.capY);
       const capLabel = this.scene.add.text(0, 0, "레벨 상한", textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(1, 0.5);
       const capFrom = this.scene.add.text(0, 0, String(cap), textStyle({ role: "display", size: 36, color: COLOR.inkDim })).setOrigin(0.5);
       const capArrow = this.scene.add.text(0, 0, "▶", textStyle({ role: "display", size: 22, color: COLOR.inkDim })).setOrigin(0.5);
@@ -916,24 +896,24 @@ export class InfoManager {
       // 파편은 그 개체의 얼굴이 크게 박힌 보석 조각이다. 가진 수는 액자 우하단, 드는 수는 그 아래다.
       const held = relicProgression.getFragments(def.id);
       const fragmentCost = breakthroughFragmentCost(def.rarity, progress.breakthrough);
-      const costY = top + BREAK_LAYOUT.costY;
+      const costY = top + BREAK_CONFIRM.costY;
       const costs: BreakthroughCost[] = [
         { kind: "level", label: "레벨", need: cap, have: progress.level },
         { kind: "fragment", label: def.name + " 파편", need: fragmentCost, have: held },
         { kind: "currency", texture: CURRENCY_ICON_BY_WALLET.cheesecake, label: "치즈케이크", need: step.cheesecake, have: session.wallet.cheesecake },
       ];
       costs.forEach((cost, index) => {
-        const x = (index - (costs.length - 1) / 2) * BREAK_LAYOUT.costStep;
+        const x = (index - (costs.length - 1) / 2) * BREAK_CONFIRM.costStep;
         const enough = cost.have >= cost.need;
         this.addBreakthroughCost(body, x, costY, cost, enough, def);
-        body.add(this.scene.add.text(x, costY + BREAK_LAYOUT.costFrame / 2 + 26, cost.label, textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0.5).setWordWrapWidth(BREAK_LAYOUT.costStep - 12));
+        body.add(this.scene.add.text(x, costY + BREAK_CONFIRM.costFrame / 2 + 26, cost.label, textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0.5).setWordWrapWidth(BREAK_CONFIRM.costStep - 12));
         body.add(this.scene.add
-          .text(x, costY + BREAK_LAYOUT.costFrame / 2 + 58, "필요 " + formatCurrency(cost.need), textStyle({ role: "emphasis", size: 24, color: enough ? COLOR.ink : COLOR.dangerText }))
+          .text(x, costY + BREAK_CONFIRM.costFrame / 2 + 58, "필요 " + formatCurrency(cost.need), textStyle({ role: "emphasis", size: 24, color: enough ? COLOR.ink : COLOR.dangerText }))
           .setOrigin(0.5));
       });
 
       const ready = canBreakThrough(def.rarity, progress, held, session.wallet.cheesecake);
-      const actionY = top + BREAK_LAYOUT.actionY;
+      const actionY = top + BREAK_CONFIRM.actionY;
       body.add(drawLayer(this.scene, 0, actionY, slantedRect(420, 88, 16), {
         fill: ready ? 0x2d2440 : 0x161a20,
         alpha: ready ? 0.98 : 0.7,
@@ -946,7 +926,7 @@ export class InfoManager {
       // 세워 공용 안내문(회색)과 무게를 가른다.
       if (effect) {
         body.add(this.scene.add
-          .text(0, top + BREAK_LAYOUT.effectY, effect, textStyle({ role: "emphasis", size: 23, color: COLOR.accentText, align: "center", lineSpacing: 8 }))
+          .text(0, top + BREAK_CONFIRM.effectY, effect, textStyle({ role: "emphasis", size: 23, color: COLOR.accentText, align: "center", lineSpacing: 8 }))
           .setOrigin(0.5, 0)
           .setWordWrapWidth(660));
       }
@@ -975,7 +955,7 @@ export class InfoManager {
     enough: boolean,
     def: RelicDef,
   ): void {
-    const size = BREAK_LAYOUT.costFrame;
+    const size = BREAK_CONFIRM.costFrame;
     const color = enough ? COLOR.accent : COLOR.danger;
     if (cost.kind === "fragment") {
       body.add(new FaceFrame(this.scene, x, y, {
@@ -1511,44 +1491,69 @@ export class InfoManager {
    * 별 하나에서 시작해 다섯까지 오르는 길을 한 장에 세운다. 단계마다 드는 **그 개체의 파편**과
    * 열리는 효과·레벨 상한을 함께 적어, 연구소 중복 획득이 무엇으로 돌아오는지 여기서 다 읽히게 한다.
    */
-  private openBreakthroughSteps(from: PopupSource): void {
+  private openBreakthroughSteps(_from: PopupSource): void {
     const def = this.currentDef;
     if (!def) return;
     const progress = relicProgression.getProgress(def.id);
     const stars = this.publicProfile ? Math.max(1, this.publicProfile.stars) : relicStars(progress.breakthrough);
-    const held = this.publicProfile ? 0 : relicProgression.getFragments(def.id);
-    this.popups.open({ width: 900, height: 700, title: "한계 돌파", tilt: -1.2, ...anchorOf(from) }, (body) => {
-      body.add(this.scene.add.text(-390, -262, "연구소에서 같은 개체를 다시 획득하면 그 개체의 파편이 쌓인다.", textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0, 0));
-      body.add(this.scene.add.text(-390, -226, "파편으로 한계를 돌파할 때마다 별이 하나 오른다.", textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0, 0));
+    const layout = breakthroughStepsLayout(BREAKTHROUGH_STEPS.length);
+    // **돋보기 자리에 붙이지 않고 화면 가운데에 선다.** 네 줄이 저마다 설명을 이고 있어 판이
+    // 길어지는데, 돋보기에 붙이면 그 판이 화면 한쪽으로 쏠려 위나 아래가 잘린다.
+    this.popups.open({
+      width: BREAK_STEPS.width,
+      height: layout.height,
+      y: BREAK_STEPS.centerY,
+      title: "한계 돌파",
+      titleSize: POPUP_TITLE_SIZE.workboard,
+      dim: true,
+      backButton: true,
+    }, (body) => {
+      const top = -layout.height / 2;
       BREAKTHROUGH_STEPS.forEach((entry, index) => {
         // 돌파 한 번이 별 하나다. 표의 첫 줄이 곧 "별 둘로 가는 길"이다.
         const star = index + 2;
-        const y = -140 + index * 84;
+        const y = top + layout.rows[index];
         const reached = stars >= star;
-        body.add(drawLayer(this.scene, 0, y, slantedRect(700, 70, 14), {
+        body.add(drawLayer(this.scene, 0, y, slantedRect(layout.rowWidth, BREAK_STEPS.row.height, 16), {
           fill: reached ? 0x2a2418 : 0x121820,
           alpha: reached ? 0.95 : 0.7,
           edge: COLOR.accent,
           edgeAlpha: reached ? 0.9 : 0.2,
         }));
-        const mark = this.scene.add.container(-306, y);
-        addStarMark(this.scene, mark, 0, 0, 30, star);
+        const mark = this.scene.add.container(BREAK_STEPS.star.x, y);
+        addStarMark(this.scene, mark, 0, 0, BREAK_STEPS.star.size, star);
         mark.setAlpha(reached ? 1 : 0.45);
         body.add(mark);
-        body.add(this.scene.add.text(-268, y, "파편 " + breakthroughFragmentCost(def.rarity, index), textStyle({ role: "display", size: 24, color: reached ? COLOR.accentText : COLOR.inkDim })).setOrigin(0, 0.5));
+        // **어느 기술이 열리는지는 그 기술의 액자가 말한다.** 정보창 아래 네 칸과 같은 프리팹을
+        // 써서 같은 그림·같은 이름으로 서므로, 표를 읽다가 "이게 뭐였지"로 돌아가지 않는다.
+        const icon = addSkillIconFrame(this.scene, {
+          size: BREAK_STEPS.icon.size,
+          slot: entry.slot,
+          relicId: def.id,
+          fallbackIcon: this.slotFallbackIcon(def, entry.slot),
+          element: def.element,
+          role: def.role,
+          label: SKILL_SLOT_LABEL[entry.slot],
+          dimmed: !reached,
+        });
+        icon.setPosition(BREAK_STEPS.icon.x, y);
+        body.add(icon);
         // 열리는 것은 **이 개체의** 효과다. 문구는 정의에서 조립하므로 화면이 따로 적지 않고,
         // 아직 설계하지 않은 개체는 어느 슬롯이 열리는지만 말한다.
         const opens = breakthroughEffectText(def, entry.slot) ?? BREAKTHROUGH_SLOT_LABEL[entry.slot];
-        body.add(this.scene.add.text(-140, y, opens, textStyle({ role: "body", size: 20, color: reached ? COLOR.ink : COLOR.inkDim })).setOrigin(0, 0.5).setWordWrapWidth(400));
+        body.add(this.scene.add
+          .text(BREAK_STEPS.textX, y, opens, textStyle({ role: "body", size: BREAK_STEPS.textSize, color: reached ? COLOR.ink : COLOR.inkDim, wrap: layout.textWrap, lineSpacing: 8 }))
+          .setOrigin(0, 0.5));
       });
-      const line = this.publicProfile
-        ? "별 " + stars + " / " + RELIC_STAR_CAP
-        : "별 " + stars + " / " + RELIC_STAR_CAP + "   ·   가진 파편 " + held;
-      body.add(this.scene.add.text(0, 250, line, textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0.5));
-      if (stars >= RELIC_STAR_CAP) {
-        body.add(this.scene.add.text(0, 288, "별 다섯 뒤의 중복은 DNA 조각으로 쌓인다.", textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0.5));
-      }
     });
+  }
+
+  /** 그 슬롯의 공용 효과 아이콘. 전용 아트가 없는 개체도 액자가 빈 칸으로 남지 않게 한다. */
+  private slotFallbackIcon(def: RelicDef, slot: SkillArtSlot): string | undefined {
+    if (slot === "basic") return def.basic.iconAssetId;
+    if (slot === "ultimate") return def.ultimate.iconAssetId;
+    if (slot === "passive") return def.passive.iconAssetId;
+    return undefined;
   }
 
   /**
@@ -2015,44 +2020,22 @@ export class InfoManager {
       ["일반 공격", def.basic, undefined, "basic"],
       ["궁극기", def.ultimate, def.ultimate.cost, "ultimate"],
     ];
-    const tint = skillArtTint(def.element, def.role);
     entries.forEach(([kindLabel, skill, gaugeCost, slot], index) => {
       const size = SKILL_ICON.size;
       const container = this.scene.add.container(SKILL_ICON.x + index * SKILL_ICON.step, BASE_HEIGHT - 196);
-      const bevel = { topLeft: size * 0.26, topRight: 0, bottomRight: size * 0.26, bottomLeft: 0 };
-      const chip = chipPoints(size, size, { bevel });
-      // 아이콘은 **액자**다. 배경 원화가 비쳐 보이면 그림 두 장이 겹쳐 무엇이 스킬인지 흐려지므로
-      // 판을 불투명하게 채우고 사방을 한 줄로 두른다(화면의 다른 판과 다른 이유가 이것이다).
-      container.add(drawLayer(this.scene, 0, 0, chip, {
-        fill: index === 2 ? 0x241f16 : 0x11161d,
-        alpha: 1,
-        edge: COLOR.accent,
-        edgeAlpha: index === 2 ? 0.9 : 0.45,
+      // 액자는 **공용 프리팹 한 장**이다(`addSkillIconFrame`). 돌파 표도 같은 장을 쓰므로 두
+      // 곳에서 같은 궁극기가 다른 무게로 보이지 않는다.
+      container.add(addSkillIconFrame(this.scene, {
+        size,
+        slot,
+        relicId: def.id,
+        fallbackIcon: skill.iconAssetId,
+        element: def.element,
+        role: def.role,
+        label: kindLabel,
+        // 궁극기 한 칸만 강조한다. 한 화면에 강조가 여럿이면 위계가 사라진다.
+        emphasis: index === 2,
       }));
-      const innerSize = size - 16;
-      const inner = chipPoints(innerSize, innerSize - 14, {
-        bevel: { topLeft: innerSize * 0.22, topRight: 0, bottomRight: innerSize * 0.22, bottomLeft: 0 },
-      });
-      container.add(drawLayer(this.scene, 0, -6, inner, { fill: 0x05080c, alpha: 1, shadow: false }));
-      const art = skillArtFor(def.id, slot);
-      // 그림 자리에 같은 색을 아주 옅게 한 겹 깔아 아이콘이 색판 위에 앉은 것처럼 보이게 한다.
-      // 전용 아트가 아직 없는 개체(적 등)도 같은 색판을 깐다 — 그림만 공용 아이콘일 뿐 액자는
-      // 같은 체계여야, 아군 창과 적 창이 서로 다른 화면처럼 보이지 않는다.
-      container.add(drawLayer(this.scene, 0, -6, inner, { fill: tint, alpha: art ? SKILL_ART_WASH_ALPHA : SKILL_ART_WASH_ALPHA * 0.7, shadow: false }));
-      // 테두리 안쪽으로 스며드는 어둠. 그림이 액자 안으로 들어앉아 보인다.
-      container.add(drawInnerVignette(this.scene, 0, -6, inner, { strength: 0.55 }));
-      const texture = art ?? (this.scene.textures.exists(skill.iconAssetId) ? skill.iconAssetId : FALLBACK_SKILL_ICON);
-      const image = this.scene.add.image(0, -8, texture).setDisplaySize(size * (art ? 0.74 : 0.52), size * (art ? 0.74 : 0.52));
-      // 전용 일러스트는 흰 실루엣이라 여기서 속성·직군을 섞은 색을 입는다.
-      if (art) image.setTint(tint);
-      container.add(image);
-      // 액자 안의 이름은 그림 다음으로 먼저 읽히는 것이라 굵고 크게 둔다.
-      const kindStyle = index === 2
-        ? textStyle({ role: "display", size: 25, color: COLOR.accentText })
-        : textStyle({ role: "display", size: 25, color: COLOR.ink });
-      container.add(this.scene.add.text(0, size / 2 - 27, kindLabel, kindStyle).setOrigin(0.5));
-      // 액자 테두리. 채운 판 위에 한 줄을 얹어 배경 원화와 확실히 갈라 놓는다.
-      container.add(drawShapeOutline(this.scene, 0, 0, chip, { color: COLOR.accent, alpha: index === 2 ? 0.75 : 0.42, width: 3 }));
       const hit = this.scene.add.rectangle(0, 0, size, size, 0xffffff, 0).setInteractive({ useHandCursor: true });
       hit.on("pointerdown", () => container.setScale(1.08));
       hit.on("pointerout", () => { if (!this.popups.isOpen) container.setScale(1); });

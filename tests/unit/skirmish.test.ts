@@ -1589,10 +1589,10 @@ describe("도디 정적 전투 계약", () => {
     expect(heal?.amount).toBe(3 * getRelic("dodo").basic.lowestHpAllyHealingFromDamagePercent! / 100);
   });
 
-  it("지정 원의 경계를 포함해 광역 피해·회복을 적용하고 게이지 250을 소비한다", () => {
+  it("지정 원의 경계를 포함해 광역 피해·회복을 적용하고 제 게이지를 소비한다", () => {
     const state = readyDodiBattle(["dodo", "rex", "anky"], ["amo", "toby"]);
     const [dodi, insideAlly, outsideAlly, boundaryEnemy, outsideEnemy] = state.fighters;
-    const center = { x: 500, y: 900 }; dodi.energy = 250;
+    const center = { x: 500, y: 900 }; dodi.energy = dodi.def.ultimate.cost;
     insideAlly.hp -= 300; outsideAlly.hp -= 300;
     insideAlly.x = 500; insideAlly.y = 900; outsideAlly.x = 861; outsideAlly.y = 900;
     boundaryEnemy.x = 860; boundaryEnemy.y = 900; outsideEnemy.x = 861; outsideEnemy.y = 900;
@@ -1605,7 +1605,7 @@ describe("도디 정적 전투 계약", () => {
 
   it("도디의 범위 밖 지정점은 경계를 포함한 전장 사각형으로 보정한다", () => {
     const state = readyDodiBattle(["dodo"], ["amo"]); const [dodi, enemy] = state.fighters;
-    dodi.energy = 250; enemy.x = state.arena.right; enemy.y = state.arena.bottom;
+    dodi.energy = dodi.def.ultimate.cost; enemy.x = state.arena.right; enemy.y = state.arena.bottom;
     const events = fireUltimate(state, dodi.id, () => 0.99, { x: state.arena.right + 999, y: state.arena.bottom + 999 });
     expect(events).toContainEqual(expect.objectContaining({ kind: "attack", targetId: enemy.id }));
   });
@@ -2106,10 +2106,10 @@ describe("렉시아 전투 계약", () => {
     expect(hit).toMatchObject({ critical: true });
   });
 
-  it("은 300% 단일 궁극기에 게이지 110을 쓰고 실제 피해의 50%만 상한까지 회복한다", () => {
+  it("은 300% 단일 궁극기에 제 게이지를 쓰고 실제 피해의 50%만 상한까지 회복한다", () => {
     const { state, rex, foe } = readyRex();
-    expect(rex.def.ultimate).toMatchObject({ power: 300, cost: 110, targeting: "single", damageHealingPercent: 50 });
-    rex.energy = 110; rex.hp = rex.maxHp - 10; foe.hp = 5;
+    expect(rex.def.ultimate).toMatchObject({ power: 300, targeting: "single", damageHealingPercent: 50 });
+    rex.energy = rex.def.ultimate.cost; rex.hp = rex.maxHp - 10; foe.hp = 5;
     const events = fireUltimate(state, rex.id, () => 0.99);
     const hit = events.find((event) => event.kind === "attack")!;
     expect(hit.amount).toBeGreaterThan(foe.hp); // 사건의 계산 피해는 남은 HP보다 커도 회복은 실제 5만 본다.
@@ -2118,7 +2118,7 @@ describe("렉시아 전투 계약", () => {
 
     const capped = readyRex();
     capped.rex.def = { ...capped.rex.def, stats: { ...capped.rex.def.stats, lifeSteal: 10 } };
-    capped.rex.ferocity = 100; capped.rex.ferocityFever = true; capped.rex.energy = 110;
+    capped.rex.ferocity = 100; capped.rex.ferocityFever = true; capped.rex.energy = capped.rex.def.ultimate.cost;
     capped.rex.hp = capped.rex.maxHp - 1;
     fireUltimate(capped.state, capped.rex.id, () => 0.99);
     // 기본 10퍼센트포인트 + 폭주 25퍼센트포인트 + 궁극기 50퍼센트포인트를 합산해도 최대 체력을 넘지 않는다.
@@ -2132,7 +2132,7 @@ describe("렉시아 전투 계약", () => {
     // 대상의 전방 경감 패시브도 제거해 문서의 방어력 0·동일 속성 산술만 분리한다.
     foe.def = { ...foe.def, element: "fire", passive: rex.def.passive, stats: { ...foe.def.stats, def: 0 } };
     foe.hp = foe.maxHp = 2_000;
-    rex.hp = 100; rex.ferocity = 100; rex.ferocityFever = true; rex.energy = 110;
+    rex.hp = 100; rex.ferocity = 100; rex.ferocityFever = true; rex.energy = rex.def.ultimate.cost;
     const hit = fireUltimate(state, rex.id, () => 0.99).find((event) => event.kind === "attack")!;
     expect(hit).toMatchObject({ critical: false, amount: 800 });
     // 기본 10퍼센트포인트 + 폭주 25퍼센트포인트 + 궁극기 50퍼센트포인트 = 85%이며 회복량 자체는 재반올림하지 않는다.
@@ -2806,10 +2806,10 @@ describe("파치 정적 전투 계약", () => {
     expect(pachi.hp).toBeLessThanOrEqual(0);
   });
 
-  it("의 기본 공격은 네 번째 타격에만 기절과 뇌진탕을 건다", () => {
+  it("의 기본 공격은 세 번째 타격에만 기절과 뇌진탕을 건다", () => {
     const { state, pachi, enemy } = pachiBattle();
     const every = pachi.def.basic.statusEffectEvery!;
-    expect(every).toBe(4);
+    expect(every).toBe(3);
     const concussion = pachi.def.basic.statusEffects!.find((effect) => effect.kind === "concussion")!;
     if (concussion.kind !== "concussion") throw new Error("뇌진탕 효과가 아니다");
 
@@ -2820,7 +2820,7 @@ describe("파치 정적 전투 계약", () => {
       enemy.stunnedFor = 0;
       events.push(...stepSkirmish(state, 1 / 60));
       const rang = events.filter((event) => event.kind === "concussion");
-      // 네 번째 배트에서만 헬멧이 울린다.
+      // 세 번째 배트에서만 헬멧이 울린다.
       expect(rang, `${hit}타`).toHaveLength(hit === every ? 1 : 0);
     }
     expect(enemy.stunnedFor).toBeGreaterThan(0);
@@ -2858,7 +2858,7 @@ describe("파치 정적 전투 계약", () => {
     expect(pachi.x).toBeLessThanOrEqual(state.arena.right);
   });
 
-  it("의 4타 카운터는 본인 프로필의 버프 칩으로 붙는다", () => {
+  it("의 3타 카운터는 본인 프로필의 버프 칩으로 붙는다", () => {
     const { state, pachi, enemy } = pachiBattle(["amo"]);
     const every = pachi.def.basic.statusEffectEvery!;
     // 주기 타격은 적이 아니라 **때린 쪽**의 값이다 — 다음 한 방을 정하는 것이 그 개체의 타수다.
@@ -2869,9 +2869,78 @@ describe("파치 정적 전투 계약", () => {
     expect(buff.stacks).toBe(1);
     // 시간이 아니라 타격 수가 채우므로 시계를 두지 않는다.
     expect(buff.timing.kind).toBe("conditional");
-    // 한 바퀴를 돌면(4타) 다시 0이 되어 칩이 사라진다.
+    // 한 바퀴를 돌면(3타) 다시 0이 되어 칩이 사라진다.
     for (let hit = 1; hit < every; hit += 1) { pachi.attackCooldown = 0; enemy.stunnedFor = 0; stepSkirmish(state, 1 / 60); }
     expect(activeCombatBuffs(state, pachi.id)).toEqual([]);
+  });
+
+  it("의 뇌진탕은 울린 피해의 40%를 때린 쪽의 보호막으로 돌린다", () => {
+    // 흡혈과 같은 자리에서 같은 값을 읽으므로, 막에 다 먹힌 타격은 막을 만들지 않는다.
+    const { state, pachi, enemy } = pachiBattle();
+    // 상한이 걸리지 않는 평범한 덩치로 세워 40%라는 비율 자체를 검사한다.
+    enemy.maxHp = 1_200; enemy.hp = 1_200;
+    const passive = pachi.def.passive;
+    const events: SkirmishEvent[] = [];
+    for (let hit = 0; hit < pachi.def.basic.statusEffectEvery!; hit += 1) {
+      pachi.attackCooldown = 0; enemy.stunnedFor = 0;
+      events.push(...stepSkirmish(state, 1 / 60));
+    }
+    const rang = events.find((event): event is Extract<SkirmishEvent, { kind: "concussion" }> => event.kind === "concussion")!;
+    // 막은 **울린 그 피해**에서 나온다 — 공격력이 아니라 헬멧이 울린 만큼이 곧 두께다.
+    const expected = Math.round(rang.amount * passive.concussionShieldPercent! / 100);
+    expect(pachi.shield.amount).toBe(expected);
+    expect(pachi.shield.providerId).toBe(pachi.id);
+    const granted = events.find((event): event is Extract<SkirmishEvent, { kind: "shieldGranted" }> =>
+      event.kind === "shieldGranted" && event.fighterId === pachi.id)!;
+    expect(granted.amount).toBe(expected);
+  });
+
+  it("의 뇌진탕 보호막은 체력이 무한한 상대에게도 자기 최대 체력 비율에서 멈춘다", () => {
+    const { state, pachi, enemy } = pachiBattle();
+    // 불사 관측 보스처럼 최대 체력이 무한에 가까우면 최대 체력 비례 피해도 함께 무한해진다.
+    enemy.maxHp = Number.MAX_SAFE_INTEGER; enemy.hp = Number.MAX_SAFE_INTEGER;
+    for (let hit = 0; hit < pachi.def.basic.statusEffectEvery!; hit += 1) {
+      pachi.attackCooldown = 0; enemy.stunnedFor = 0;
+      stepSkirmish(state, 1 / 60);
+    }
+    expect(pachi.shield.amount).toBe(Math.round(pachi.maxHp * pachi.def.passive.concussionShieldCapMaxHpPercent! / 100));
+  });
+
+  it("의 폭주는 들어가는 순간 뇌진탕을 장전한다", () => {
+    const { state, pachi, enemy } = pachiBattle();
+    const trait = pachi.def.ferocityTrait;
+    if (trait.effectId !== "knockbackSlam") throw new Error("파치의 폭주 특성이 아니다");
+    expect(trait.loadsStatusCycleOnEntry).toBe(true);
+    // 폭주 직전까지 한 대도 때리지 않은 자리에서 연다 — 장전이 없으면 세 대를 더 때려야 한다.
+    expect(pachi.statusHitCount).toBe(0);
+    pachi.ferocity = FEROCITY_RULES.max - FEROCITY_RULES.basicGain;
+    pachi.attackCooldown = 0; enemy.stunnedFor = 0;
+    const entry = stepSkirmish(state, 1 / 60, () => 0.999999);
+
+    expect(pachi.ferocityFever).toBe(true);
+    // 야성은 때린 그 순간에 차므로, 장전된 배트는 폭주를 연 **그 한 방**에서 바로 울린다.
+    const rang = entry.find((event): event is Extract<SkirmishEvent, { kind: "concussion" }> => event.kind === "concussion")!;
+    expect(rang.critical).toBe(true);
+    // 울린 뒤에는 주기가 처음부터 다시 돈다 — 폭주가 한 바퀴를 통째로 건너뛴 셈이다.
+    expect(pachi.statusHitCount).toBe(0);
+  });
+
+  it("의 폭주 장전은 때리지 않고 차오른 야성에서도 다음 한 방을 울린다", () => {
+    const { state, pachi, enemy } = pachiBattle();
+    const every = pachi.def.basic.statusEffectEvery!;
+    // 맞아서 차오른 야성으로 폭주에 들면 그 프레임에는 때린 타격이 없다.
+    pachi.ferocity = FEROCITY_RULES.max - FEROCITY_RULES.hitGain;
+    pachi.attackCooldown = 99;
+    enemy.attackCooldown = 0; enemy.targetId = pachi.id; enemy.engaged = true;
+    enemy.x = pachi.x + 10;
+    for (let frame = 0; frame < 120 && !pachi.ferocityFever; frame += 1) stepSkirmish(state, 1 / 60, () => 0.999999);
+    expect(pachi.ferocityFever).toBe(true);
+    // 주기에서 한 대 모자란 자리에 서 있으므로 다음 한 방이 곧 헬멧을 울린다.
+    expect(pachi.statusHitCount).toBe(every - 1);
+
+    pachi.attackCooldown = 0; enemy.stunnedFor = 0;
+    const next = stepSkirmish(state, 1 / 60, () => 0.999999);
+    expect(next.some((event) => event.kind === "concussion")).toBe(true);
   });
 
   it("의 폭주는 뇌진탕을 확정 치명타로 만들고 그 적을 튕겨 날린다", () => {
@@ -4525,6 +4594,36 @@ describe("테리사 「가봉」", () => {
     terisa.ferocityFever = true;
     if (terisa.def.ferocityTrait.effectId !== "cautery") throw new Error("테리사 야성 계약이 바뀌었다");
     expect(attackInterval(terisa, state)).toBeCloseTo(calm / (1 + terisa.def.ferocityTrait.attackSpeedPercent / 100), 5);
+  });
+});
+
+/** 순환 한 걸음이 거는 짧은 은신. 앞에 선 몸이 계속 맞고만 있지 않게 어그로를 흩는다. */
+describe("테리사 「겉감」의 짧은 은신", () => {
+  const STEALTH_ARENA: Arena = { left: 0, right: 600, top: 0, bottom: 1_000 };
+
+  it("은 첫 걸음이 적중한 뒤에만 걸리고 정해진 시간만 남는다", () => {
+    const state = createSkirmish([getRelic("terisa")], [getRelic("amo")], STEALTH_ARENA);
+    const terisa = state.fighters.find((fighter) => fighter.def.id === "terisa")!;
+    const first = terisa.def.basic.cycle![0];
+    expect(first.selfStealthSeconds).toBeGreaterThan(0);
+    // 붙기 전에는 때린 적이 없으므로 숨지 않는다.
+    expect(terisa.stealthFor).toBe(0);
+    for (let frame = 0; frame < 20 * 60 && terisa.stealthFor <= 0; frame += 1) stepSkirmish(state, 1 / 60);
+    // 걸리는 순간의 값은 정의가 정한다 — 화면과 전투가 같은 수를 읽는다.
+    expect(terisa.stealthFor).toBeLessThanOrEqual(first.selfStealthSeconds!);
+    expect(terisa.stealthFor).toBeGreaterThan(0);
+  });
+
+  it("은 숨어 있는 동안 단일 표적에서 빠진다", () => {
+    const state = createSkirmish([getRelic("terisa"), getRelic("anky")], [getRelic("amo")], STEALTH_ARENA);
+    const terisa = state.fighters.find((fighter) => fighter.def.id === "terisa")!;
+    const foe = state.fighters.find((fighter) => fighter.side === "enemy")!;
+    for (let frame = 0; frame < 20 * 60; frame += 1) {
+      stepSkirmish(state, 1 / 60);
+      // 숨은 프레임에는 그 적이 테리사를 표적으로 들고 있지 않다.
+      if (terisa.stealthFor > 0) { expect(foe.targetId).not.toBe(terisa.id); return; }
+    }
+    throw new Error("은신이 한 번도 걸리지 않았다");
   });
 });
 

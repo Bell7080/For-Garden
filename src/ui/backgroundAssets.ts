@@ -33,6 +33,17 @@ export const BACKGROUND = {
   expeditionField: "background-expedition-field",
   /** 인물이 없는 침수 도시 원경이다(Content2_001background). 기록 화면과 순위 팝업의 환경층을 맡는다. */
   expeditionRanking: "background-expedition-ranking",
+  /**
+   * 케이크 대작전·현상수배·레이드의 **전투 필드**다(ContentN_001field).
+   *
+   * 원정 필드(`expeditionField`)와 같은 자리·같은 세로 규격이고, 콘텐츠마다 다른 장소라 키를
+   * 따로 갖는다. **아직 어느 화면도 읽지 않는다** — 세 콘텐츠의 전투가 아직 없기 때문이다.
+   * 원화가 먼저 준비돼 미리 등록만 해 두었고, 전투를 붙일 때 `addSceneBackground`에 이 키를
+   * 넘기면 된다(경로·해제 규칙은 이미 이 표와 `backgroundResidency.ts`가 갖는다).
+   */
+  cakeField: "background-cake-field",
+  bountyField: "background-bounty-field",
+  raidField: "background-raid-field",
   /** 케이크 대작전 진입 화면 배경이다(Content3_001background). */
   sortieCake: "background-sortie-cake",
   /** 현상수배 진입 화면 배경이다(Content4_001background). */
@@ -86,6 +97,11 @@ export const BACKGROUND_ASSETS = [
   [BACKGROUND.sortieCake, "sprites/content/Content3_001background.webp"],
   [BACKGROUND.sortieBounty, "sprites/content/Content4_001background.webp"],
   [BACKGROUND.sortieRaid, "sprites/content/Content5_001background.webp"],
+  // 세 콘텐츠의 전투 필드. 쓰는 화면이 생기기 전이지만 경로를 여기 두어야 그 화면이 키 하나만
+  // 넘기면 되고, 부트가 미리 읽지 않으므로 지금 메모리를 차지하지 않는다.
+  [BACKGROUND.cakeField, "sprites/content/Content3_001field.webp"],
+  [BACKGROUND.bountyField, "sprites/content/Content4_001field.webp"],
+  [BACKGROUND.raidField, "sprites/content/Content5_001field.webp"],
   // 교류 도시 원화는 세로 화면 배경이 아니라 판 안에 잘려 들어가는 가로 그림이다.
   [BACKGROUND.interactionDoppelParlor, "sprites/background/background_012.webp"],
   // 타이틀은 TitleScene이 직접 먼저 읽지만(그 화면이 곧 로딩 화면이다) 경로가 이 표에 있어야

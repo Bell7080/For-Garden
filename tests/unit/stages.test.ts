@@ -23,17 +23,22 @@ describe("stage enemy design", () => {
     // 비교표는 캐릭터별 [레벨, 돌파]로 읽어 배열 배치 변경과 독립적으로 검증한다.
     const growthAt = (index: number) => Object.fromEntries(battles[index].enemies.map(({ relicId, level, breakthrough }) => [getRelic(relicId).name, [level, breakthrough]]));
     const ladder = Array.from({ length: 10 }, (_, index) => growthAt(index));
+    /*
+     * **셋이 같은 레벨·같은 돌파로 선다.** 예전에는 적마다 한두 레벨씩 어긋나 있었는데, 그
+     * 미세한 차이는 화면에서 읽히지 않으면서 난이도를 거꾸로 푸는 계산만 어렵게 했다.
+     * 값은 `stageBalance.ts`의 성장 곡선에서 풀었다 — 1-10에서 성장 없는 파티가 정확히 막힌다.
+     */
     expect(ladder).toEqual([
-      { 아모: [2, 0], 토비: [2, 0], 리파: [2, 0] },
-      { 아모: [2, 0], 토비: [3, 0], 리파: [2, 0] },
-      { 아모: [3, 0], 토비: [4, 0], 리파: [3, 0] },
-      { 아모: [4, 0], 토비: [5, 0], 리파: [4, 0] },
-      { 아모: [4, 0], 토비: [5, 0], 리파: [5, 0] },
-      { 아모: [5, 0], 토비: [5, 0], 리파: [5, 0] },
-      { 아모: [5, 0], 토비: [6, 0], 리파: [6, 0] },
-      { 아모: [6, 1], 토비: [6, 0], 리파: [6, 0] },
-      { 아모: [6, 1], 토비: [6, 1], 리파: [6, 1] },
-      { 아모: [6, 1], 코마: [6, 1], 리파: [6, 1] },
+      { 아모: [6, 0], 토비: [6, 0], 리파: [6, 0] },
+      { 아모: [9, 0], 토비: [9, 0], 리파: [9, 0] },
+      { 아모: [10, 0], 토비: [10, 0], 리파: [10, 0] },
+      { 아모: [11, 0], 토비: [11, 0], 리파: [11, 0] },
+      { 아모: [12, 0], 토비: [12, 0], 리파: [12, 0] },
+      { 아모: [13, 0], 토비: [13, 0], 리파: [13, 0] },
+      { 아모: [14, 0], 토비: [14, 0], 리파: [14, 0] },
+      { 아모: [15, 1], 토비: [15, 1], 리파: [15, 1] },
+      { 아모: [16, 1], 토비: [16, 1], 리파: [16, 1] },
+      { 아모: [17, 1], 코마: [17, 1], 리파: [17, 1] },
     ]);
     /*
      * **레벨은 관문을 따라 내려가지 않는다.** 1-10까지 마지막 관문이 직전보다 쉬운 구간이
@@ -54,12 +59,18 @@ describe("stage enemy design", () => {
     // 레벨 1로 남아 관문이 직전보다 쉬웠던 적이 있다(v0.77.2에서 고쳤다).
     const boss = ladder[9];
     expect(boss["코마"][0]).toBeGreaterThanOrEqual(Math.max(boss["아모"][0], boss["리파"][0]));
+    /*
+     * 마지막 관문의 **모든** 적이 제 태생값보다 자라 있는지 본다.
+     *
+     * 예전에는 토비 하나만 집어 비교했는데, 그 관문의 구성이 바뀌면(지금은 아모·폰토스·리파다)
+     * 찾지 못한 개체가 `undefined`로 빠져 검사 자체가 사라진다. 구성과 무관한 검사로 바꾼다.
+     */
     const finalEnemies = getStageEnemies(battles[29]);
-    // 배열 첫 칸의 다른 개체와 비교하지 않고, 토비 자신의 태생값보다 성장했는지를 검증한다.
-    const baseToby = getRelic(FIXED_STAGE_ENEMIES[0]);
-    const finalToby = finalEnemies.find((enemy) => enemy.id === baseToby.id);
-    expect(finalToby?.stats.hp).toBeGreaterThan(baseToby.stats.hp);
-    expect(baseToby.stats.hp).toBe(1000);
+    expect(finalEnemies).toHaveLength(3);
+    for (const enemy of finalEnemies) {
+      expect(enemy.stats.hp, enemy.name).toBeGreaterThan(getRelic(enemy.id).stats.hp);
+    }
+    expect(getRelic(FIXED_STAGE_ENEMIES[0]).stats.hp).toBe(1000);
   });
 
   it("1-1부터 1-10까지 재등장한 캐릭터의 레벨이나 돌파가 메타데이터 없이 역행하지 않는다", () => {

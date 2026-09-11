@@ -32,8 +32,11 @@ def bake(source: Path, target: Path) -> None:
 
 
 def main() -> None:
-    backgrounds = sorted(PUBLIC.glob("background_*.png"))
-    contents = sorted(PUBLIC.glob("Content*.png"))
+    # 원본은 `public/` 바로 아래에 올리는 것이 규칙이지만, **구운 결과가 사는 폴더에 그대로
+    # 떨어뜨리는 일이 잦다**(아트를 교체할 때 기존 WebP 옆에 새 PNG를 놓는다). 두 자리를 모두
+    # 훑어 같은 규칙으로 굽는다 — 한 자리만 보면 PNG가 그대로 저장소에 남고 빌드에 실려 나간다.
+    backgrounds = sorted({*PUBLIC.glob("background_*.png"), *BACKGROUND_TARGET.glob("*.png")})
+    contents = sorted({*PUBLIC.glob("Content*.png"), *CONTENT_TARGET.glob("*.png")})
     if not backgrounds and not contents:
         print("구울 원본이 없다. public/background_00N.png 또는 public/ContentN_00M.png를 올린 뒤 다시 실행한다.")
         return

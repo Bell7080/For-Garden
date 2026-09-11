@@ -168,7 +168,7 @@ export const RELICS: RelicDef[] = [
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
-      cost: 110,
+      cost: 210,
       damageHealingPercent: 50,
       // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
       targeting: "single",
@@ -288,7 +288,7 @@ export const RELICS: RelicDef[] = [
       effectType: "physical",
       damageType: "physical",
       // 광역 제어가 이 개체의 값이므로 게이지를 낮춰 더 자주 돌게 한다.
-      cost: 100,
+      cost: 90,
       // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
       targeting: "nearbyEnemies",
       // 반경은 전투 엔진의 대상 판정용 값이며 플레이어에게는 이해하기 쉬운 대상 범위로 바꿔 표시한다.
@@ -398,7 +398,7 @@ export const RELICS: RelicDef[] = [
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
-      cost: 200,
+      cost: 100,
       // 공격력 200%에 현재 공격 속도 150%를 더해, 두 성장 축을 함께 쓰되 공속 누적의 비중은 절제한다.
       attackSpeedPower: 150,
       // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
@@ -567,7 +567,7 @@ export const RELICS: RelicDef[] = [
       iconAssetId: "skill-icon-magical",
       effectType: "magical",
       damageType: "magical",
-      cost: 250,
+      cost: 100,
       allyHealingPower: 200,
       // 지정점 중심의 넓은 원 경계 안에서 적 피해와 아군 회복을 한 번에 판정한다.
       targeting: "targetedCircle",
@@ -657,7 +657,7 @@ export const RELICS: RelicDef[] = [
       iconAssetId: "skill-icon-magical",
       effectType: "magical",
       damageType: "magical",
-      cost: 240,
+      cost: 90,
       // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
       targeting: "nearbyEnemies",
       radius: 300,
@@ -742,7 +742,7 @@ export const RELICS: RelicDef[] = [
       name: "상승 기류",
       iconAssetId: "skill-icon-buff",
       effectType: "buff",
-      cost: 200,
+      cost: 180,
       // 피해도 회복도 없는 순수 지원 궁극기다. 코어는 teamBuff 계약만 읽는다.
       targeting: "battlefieldAllies",
       // 지속 회복은 순풍 태그가 아니라 이 궁극기가 얹는 값이다 — 다른 개체가 건 순풍은 회복을 데려오지 않는다.
@@ -838,7 +838,7 @@ export const RELICS: RelicDef[] = [
       iconAssetId: "skill-icon-magical",
       effectType: "magical",
       damageType: "magical",
-      cost: 260,
+      cost: 110,
       // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
       targeting: "battlefieldEnemies",
     },
@@ -893,6 +893,8 @@ export const RELICS: RelicDef[] = [
     ferocityTrait: {
       name: "야, 비켜!",
       effectId: "knockbackSlam",
+      // 폭주가 열리는 순간 배트가 이미 장전되어 있다 — 다음 한 방이 곧 헬멧을 울린다.
+      loadsStatusCycleOnEntry: true,
       seconds: 1.6,
       // 곡선을 그리며 굴러가는 것이 아니라 **따악 맞고 튀어 나가는** 속도다.
       speed: 2400,
@@ -910,7 +912,12 @@ export const RELICS: RelicDef[] = [
       value: 40,
       // 한 방에 들어올 수 있는 피해의 상한(최대 체력 %)이다. 이하의 타격은 그대로 다 맞는다.
       impactCapMaxHpPercent: 40,
-      desc: "한 방에 받는 피해가 최대 체력의 40%를 넘지 않는다.",
+      // 뇌진탕이 깎은 만큼을 안전모가 되받아 두른다. 큰 한 방은 상한이 누르고, 그 사이의
+      // 잔타는 이 막이 받는다.
+      concussionShieldPercent: 40,
+      // 평범한 적에게는 걸리지 않는 선이다. 체력이 무한한 불사 보스를 때릴 때만 막을 붙잡는다.
+      concussionShieldCapMaxHpPercent: 25,
+      desc: "한 방에 받는 피해가 최대 체력의 40%를 넘지 않는다. 뇌진탕이 입힌 피해의 40%만큼 보호막을 얻으며, 한 번에 두르는 보호막은 최대 체력의 25%를 넘지 않는다.",
     },
     basic: {
       id: "pachi-basic",
@@ -920,8 +927,8 @@ export const RELICS: RelicDef[] = [
       effectType: "physical",
       damageType: "physical",
       targeting: "single",
-      // 네 번째 배트가 헬멧을 울린다. 확정 치명타(periodicCritical)와 달리 부가 효과의 주기다.
-      statusEffectEvery: 4,
+      // 세 번째 배트가 헬멧을 울린다. 확정 치명타(periodicCritical)와 달리 부가 효과의 주기다.
+      statusEffectEvery: 3,
       statusEffects: [
         { kind: "stun", seconds: 1 },
         { kind: "concussion", maxHpPercent: 5, criticalMaxHpPercent: 15 },
@@ -934,7 +941,7 @@ export const RELICS: RelicDef[] = [
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
-      cost: 250,
+      cost: 110,
       // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
       targeting: "chargeLine",
       // 뚫고 지나가는 통로의 반폭(px)이다. 나아가는 거리는 이동 속도가 정한다.
@@ -1037,7 +1044,7 @@ export const RELICS: RelicDef[] = [
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
-      cost: 220,
+      cost: 90,
       // 처치했을 때만 돌려받는다. 살아남으면 아무것도 없다.
       energyRefundOnKill: 200,
       // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
@@ -1129,7 +1136,7 @@ export const RELICS: RelicDef[] = [
       iconAssetId: "skill-icon-magical",
       effectType: "magical",
       damageType: "magical",
-      cost: 200,
+      cost: 120,
       // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
       targeting: "battlefieldEnemies",
       // 저주받은 적이 하나도 없으면 가장 가까운 적에게 먼저 씌운다 — 그러지 않으면 게이지가
@@ -1223,7 +1230,7 @@ export const RELICS: RelicDef[] = [
       name: "그랜드 피날레",
       iconAssetId: "skill-icon-fixed",
       effectType: "fixed",
-      cost: 150,
+      cost: 90,
       // 아무도 때리지 않는다. 자리를 잡는 것이 전부이고 피해는 이어질 트릭 카드 한 장이 낸다.
       targeting: "self",
       // 위력을 적지 않는다. 이 궁극기의 피해는 곧 이어질 트릭 카드 한 장의 몫이라, 여기에
@@ -1437,7 +1444,7 @@ export const RELICS: RelicDef[] = [
       name: "인(引)",
       iconAssetId: "skill-icon-buff",
       effectType: "buff",
-      cost: 140,
+      cost: 110,
       // 아무도 때리지 않는다. 끌어당겨 붙잡아 두고 버틴 시간을 보호막으로 바꾸는 것이 전부다.
       targeting: "self",
       // 불러 놓고 그 자리에서 덮는다. 끝난 뒤에 돌려받으면 순서가 거꾸로다 — 끌어당겨 도발한
@@ -1896,7 +1903,7 @@ export const RELICS: RelicDef[] = [
     },
     ultimate: {
       id: "mette-ult", name: "전장의 찬가", iconAssetId: "skill-icon-healing", effectType: "healing",
-      cost: 80, targeting: "battlefieldAllies", healing: { kind: "teamMissingHpPercent", percent: 15 },
+      cost: 90, targeting: "battlefieldAllies", healing: { kind: "teamMissingHpPercent", percent: 15 },
     },
   },
   {
@@ -2070,7 +2077,7 @@ export const RELICS: RelicDef[] = [
        * 표준 전투에서 게이지가 257에서 끝났다. 220이면 10~11초에 한 번 나가 마무리로 선다 —
        * 전장 광역인 케리스(200)보다 위, 메론(260)보다 아래라는 자리도 그대로다.
        */
-      cost: 220,
+      cost: 90,
       targeting: "battlefieldEnemies",
       channel: {
         seconds: 5,
@@ -2167,7 +2174,7 @@ export const RELICS: RelicDef[] = [
       iconAssetId: "skill-icon-magical",
       effectType: "magical",
       damageType: "magical",
-      cost: 210,
+      cost: 190,
       targeting: "battlefieldEnemies",
       channel: { seconds: 5 },
       statusEffects: [{ kind: "chill", speedPercentPerStack: 5, maxStacks: 3 }],
@@ -2256,7 +2263,12 @@ export const RELICS: RelicDef[] = [
        * 두꺼워진다. 위력을 낮춰 둔 것이 그 몫의 값이다.
        */
       cycle: [
-        { name: "겉감", power: 55 },
+        /*
+         * 첫 걸음만 **짧게 사라진다.** 앞에 서야 실이 도는 개체인데 그 자리에서 계속 맞고만
+         * 있으면 꿰매기 전에 먼저 쓰러진다 — 순환 한 바퀴마다 어그로를 한 번 끊어 준다.
+         * 0.5초인 이유는 표적을 흩기에는 충분하고 한 대를 통째로 거르기에는 짧기 때문이다.
+         */
+        { name: "겉감", power: 55, selfStealthSeconds: 0.5 },
         { name: "안감", power: 55, shieldFromDamagePercent: 30 },
         { name: "엇갈려 자르기", power: 40, targeting: "nearbyEnemies", radius: 150 },
       ],
@@ -2269,7 +2281,7 @@ export const RELICS: RelicDef[] = [
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
-      cost: 150,
+      cost: 110,
       targeting: "nearbyEnemies",
       radius: 200,
       // 한 번에 여럿을 벨수록 팀이 두꺼워지는 것이 이 궁극기의 전부다. 그래서 적 한가운데로
@@ -2374,7 +2386,7 @@ export const RELICS: RelicDef[] = [
       name: "이제, 숲이 보여요",
       iconAssetId: "skill-icon-buff",
       effectType: "buff",
-      cost: 200,
+      cost: 150,
       // 아무도 때리지 않는다. 5초 동안 손이 달라지는 것이 전부이고 피해는 그 손들의 몫이다.
       targeting: "self",
       /*
@@ -2480,7 +2492,7 @@ export const RELICS: RelicDef[] = [
       name: "오더 좀 들어라!",
       iconAssetId: "skill-icon-buff",
       effectType: "buff",
-      cost: 150,
+      cost: 210,
       // 피해도 회복도 없는 순수 지원 궁극기이며, 전장 전체가 아니라 듀오 한 명에게만 걸린다.
       targeting: "duo",
       teamBuff: { kind: "order", attackSpeedPercent: 50, criticalChancePoints: 25, lifeStealPoints: 25, seconds: 6 },
@@ -2578,7 +2590,7 @@ export const RELICS: RelicDef[] = [
     /** 마무리는 같은 `finisher` 계약을 쓰되 문턱을 100으로 열어 체력과 무관하게 물게 한다. */
     ultimate: {
       id: "dian-ult", name: "약점을 공격해!", power: 150,
-      iconAssetId: "skill-icon-physical", effectType: "physical", damageType: "physical", cost: 110, targeting: "single",
+      iconAssetId: "skill-icon-physical", effectType: "physical", damageType: "physical", cost: 130, targeting: "single",
       packAssault: { resummonHasteSeconds: 10, summonPowerPercent: 150 },
       finisher: { thresholdPercent: 100, thresholdPerStack: 0, remainingHpPercent: 30 },
     },

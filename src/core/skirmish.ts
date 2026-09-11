@@ -1311,6 +1311,9 @@ function applyConcussion(
   const amount = Math.max(1, Math.round(target.maxHp * percent / 100));
   const dealt = applyDamage(target, amount, events, state);
   events.push({ kind: "concussion", fighterId: target.id, amount: dealt, critical: struck, sourceId });
+  // 울린 만큼을 때린 쪽이 되받아 두른다. 개체 이름이 아니라 패시브의 필드 하나만 읽으므로
+  // 다른 개체가 같은 패시브를 갖게 되어도 분기가 늘지 않는다.
+  if (attacker) grantConcussionShield(attacker, dealt, events);
   if (!isFighterAlive(target)) {
     clearDefeatedStatuses(target);
     events.push({ kind: "death", fighterId: target.id, sourceId });
@@ -1318,6 +1321,21 @@ function applyConcussion(
   }
   // 날려버림은 폭주가 얹는 몫이라 뇌진탕이 실제로 울린 뒤에 따로 붙는다.
   if (slam && attacker) launchKnockback(target, attacker, slam, state, events);
+}
+
+/**
+ * 「무면허 안전제일」 — 뇌진탕이 실제로 깎은 HP의 일부를 때린 쪽의 보호막으로 돌린다.
+ *
+ * 상한 패시브는 큰 한 방만 누르므로 그 사이의 잔타를 버틸 자원이 없었다. 막은 그 몫이다.
+ * 대상이 쓰러진 타격에서도 두른다 — 이미 울린 피해라, 마지막 한 방만 값이 없어질 이유가 없다.
+ */
+function grantConcussionShield(attacker: Fighter, dealt: number, events: SkirmishEvent[]): void {
+  const passive = attacker.def.passive;
+  const percent = passive.concussionShieldPercent ?? 0;
+  if (percent <= 0 || dealt <= 0 || !isFighterAlive(attacker)) return;
+  // 상한은 자기 최대 체력에서 잰다 — 맞은 쪽 체력이 무한한 불사 보스에서도 막이 무한해지지 않는다.
+  const cap = attacker.maxHp * (passive.concussionShieldCapMaxHpPercent ?? 100) / 100;
+  grantShieldAmount(attacker, attacker, Math.max(1, Math.round(Math.min(dealt * percent / 100, cap))), events);
 }
 
 /** 지금 폭주 중이라 날려버림을 얹는 개체인가. 파치의 폭주만 이 특성을 갖는다. */
@@ -1645,6 +1663,23 @@ function grantShieldAmount(provider: Fighter, target: Fighter, amount: number, e
   target.shield.amount += amount;
   target.shield.providerId = provider.id;
   events.push({ kind: "shieldGranted", fighterId: target.id, providerId: provider.id, amount, remaining: target.shield.amount, effect: { tag: "shieldGain", intensity: 1 } });
+}
+
+/**
+ * 이번 걸음이 끝나는 순간 시전자가 잠깐 사라진다.
+ *
+ * **표적을 따로 끊지 않는다.** 저체력 소멸·피격 은신은 보고 있던 적의 어그로까지 지우지만,
+ * 표적 재지정이 이미 `stealthFor > 0`인 상대를 버리므로 짧은 걸음에는 그 한 줄이 필요 없다.
+ *
+ * 이 걸음의 값은 공짜가 아니다 — 사라진 0.5초 동안 적은 **다른 아군**을 때린다. 테리사에게
+ * 넣어 보니 본인 사망률은 90%에서 33%로 내려갔지만 긴 전투 팀 승률은 92%에서 74%로 떨어졌다.
+ * 앞에 선 몸이 주기적으로 빠지는 대가이므로, 새 개체에 이 필드를 줄 때는 그 몫이 어디로
+ * 넘어가는지 함께 잰다.
+ */
+function stealthAfterStep(attacker: Fighter, state: SkirmishState): void {
+  const seconds = currentBasicStep(attacker)?.selfStealthSeconds ?? 0;
+  if (seconds <= 0 || !isFighterAlive(attacker) || state.phase !== "fight") return;
+  attacker.stealthFor = Math.max(attacker.stealthFor, seconds);
 }
 
 /** 현재 HP **비율**이 가장 낮은 생존 아군. 자신도 후보이며 동률은 편성 순서로 확정한다. */
@@ -3082,6 +3117,11 @@ function gainFerocity(fighter: Fighter, base: number, state: SkirmishState, even
       // 이미 스피나를 추적하던 모든 상대도 즉시 대기/재탐색 상태로 돌린다.
       for (const other of state.fighters) if (other.targetId === fighter.id) { other.targetId = null; other.engaged = false; }
     }
+    // 폭주가 열리는 순간 배트를 장전해 둔다. 주기에서 한 대 모자란 값으로 맞춰 두므로,
+    // 프로필의 겹 칩도 "다음 한 방에 터진다"를 그대로 보여 준다.
+    if (trait.effectId === "knockbackSlam" && trait.loadsStatusCycleOnEntry) {
+      fighter.statusHitCount = Math.max(0, (fighter.def.basic.statusEffectEvery ?? 1) - 1);
+    }
     if (trait.effectId === "adamantBody") fighter.hastenedAttacksLeft = trait.hastenedAttacks;
     if (trait.effectId === "duoBreakthrough") launchDuoBreakthrough(fighter, trait, state, events);
     // 마키는 폭주 진입 직후 세 번의 칼질을 회복과 폭딜로 바꾼다. 이전 폭주의 잔여치는 덮어쓴다.
@@ -3960,6 +4000,7 @@ function strike(
   healFromDamage(dealt);
   if (!useUltimate) grantShieldFromDamage(attacker, dealt, events);
   if (!useUltimate) stitchSuture(attacker, targetHpBefore - target.hp, state, events);
+  if (!useUltimate) stealthAfterStep(attacker, state);
   // 단일 타격으로 들어와도 같은 계약이 돈다 — 경로가 갈리면 같은 기술이 대상 수에 따라 다른 일을 한다.
   shareShieldFromDamage(attacker, skill.allyShieldFromDamagePercent, targetHpBefore - target.hp, state, events);
   if (!useUltimate && attacker.def.basic.lowestHpAllyHealingFromDamagePercent !== undefined) {
@@ -4360,6 +4401,8 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     }
     state.log.push(`${attacker.def.name} → ${target.def.name} ${amount}`);
   }
+  // 광역 걸음도 같은 자리에서 사라진다 — 경로가 갈리면 같은 걸음이 대상 수에 따라 다른 일을 한다.
+  if (!useUltimate) stealthAfterStep(attacker, state);
   // 이 계약은 공격 스킬만 갖는다. 좁히지 않고 읽으면 지원 궁극기까지 같은 자리를 지나간다.
   shareShieldFromDamage(attacker, "allyShieldFromDamagePercent" in skill ? skill.allyShieldFromDamagePercent : undefined, sharedShieldSource, state, events);
   // 혼합 궁극기의 회복은 같은 원 경계(거리 <= 반경)를 공유하며 주문력 200% 같은 정적 계수를 읽는다.

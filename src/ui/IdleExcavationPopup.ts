@@ -16,7 +16,7 @@ import { autoAssignExcavation, EXCAVATION_AUTO_MODE_LABEL, EXCAVATION_AUTO_MODES
 import { bindLongPress } from "./longPressInfo";
 import { type InfoManager, sceneInfoManager } from "./info";
 import { formationRosterColumnX, formationRosterGrid, PORTRAIT_GRID_MASK_GAP, portraitGridContentHeight, portraitGridFirstRowY } from "./portraitGrid";
-import { addFormationRemoveChip, addFormationSlotSelection } from "./formationSlotChrome";
+import { addFormationRemoveChip, addFormationSlotPlate, addFormationSlotSelection } from "./formationSlotChrome";
 import type { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
@@ -703,13 +703,10 @@ export class IdleExcavationPopup {
       // 한 자리를 바꿀 때마다 세 칸이 카드로 돌아갔다가 다시 SD가 되어 화면이 통째로 새로고침
       // 되는 것처럼 보였다. 칸은 빈 판만 그리고, 그 위에 SD가 살아남은 채로 자리만 옮긴다.
       const slot = this.scene.add.container(x, STATUS_HERO.slotY);
-      slot.add(drawLayer(this.scene, 0, 0, slantedRect(210, 245), { fill: COLOR.panel, alpha: HOLO.glassLight, edge: COLOR.inkDimHex, edgeAlpha: 0.55 }));
-      if (relic) {
-        // 사방 테두리나 입체 판 대신 얇은 홀로그램 투영 그림자만 발 아래에 둔다.
-        slot.add(this.scene.add.ellipse(0, SLOT_GROUND_OFFSET + 2, 172, 25, COLOR.accent, 0.16));
-      } else {
-        slot.add(this.scene.add.text(0, 0, `빈 슬롯\n${index + 1}`, textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim, align: "center" })).setOrigin(0.5));
-      }
+      // 칸의 밑판·발밑 그림자·빈 자리 번호는 네 편성 화면이 공유하는 한 장이다.
+      addFormationSlotPlate(this.scene, slot, { x: 0, y: 0, width: 210, height: 245 }, {
+        accent: COLOR.accent, occupied: Boolean(relic), index, groundOffset: SLOT_GROUND_OFFSET,
+      });
       parent.add(slot);
       // 테두리 색으로 선택을 알리지 않는다 — 뒤에 깔리는 밑판이 이미 그 말을 하고, 색을 바꾸려면
       // 도형을 다시 그려야 해서 선택만 바뀌어도 판을 새로 만들게 된다.

@@ -45,7 +45,7 @@ import { BattleProfile } from "../ui/BattleProfile";
 import { BATTLE_PROFILE_LAYOUT } from "../ui/battleStatusLayout";
 import { formationMembers, tapFormationSlot, tapRosterRelic, toFormationSlots } from "../core/formationSlots";
 import { moveFormationSlot } from "../core/formation";
-import { addFormationRemoveChip, addFormationSlotSelection } from "../ui/formationSlotChrome";
+import { addFormationRemoveChip, addFormationSlotPlate, addFormationSlotSelection } from "../ui/formationSlotChrome";
 import { bindFormationDrag, type FormationDragSlot } from "../ui/formationDrag";
 import { FORMATION_DRAG_VISUAL } from "../ui/formationDragVisual";
 import { createFormationDragVisualController, type FormationDragVisualController } from "../ui/formationDragVisualController";
@@ -63,7 +63,8 @@ const ROSTER_VIEWPORT = { top: 705, bottom: 1500 } as const;
 /** 손가락이 이 거리 이상 움직여야 카드 선택이 아니라 스크롤로 판정한다. */
 const ROSTER_DRAG_SLOP = 12;
 /** 발굴 편성처럼 화면 상단에서 순서를 먼저 읽는 1/2/3 슬롯 규격이다. */
-const FORMATION = { y: 540, firstX: 230, stepX: 310, width: 250, height: 290 } as const;
+/** `groundOffset`은 칸 중심에서 SD가 발을 딛는 줄까지의 거리다 — 발밑 그림자와 SD가 함께 읽는다. */
+const FORMATION = { y: 540, firstX: 230, stepX: 310, width: 250, height: 290, groundOffset: 120 } as const;
 /**
  * 원정 첫 화면(주간 기록)의 자리표.
  *
@@ -916,15 +917,13 @@ export class ExpeditionScene extends Phaser.Scene {
       const x = FORMATION.firstX + index * FORMATION.stepX;
       const box = { x, y: FORMATION.y, width: FORMATION.width, height: FORMATION.height };
       if (index === this.selectedSlot) addFormationSlotSelection(this, layer, box, COLOR.sortie);
-      // 번호는 카드 위 독립 표식으로 두어 SD가 나타나도 편성 순서를 잃지 않는다.
-      layer.add(this.add.text(x, FORMATION.y - 172, `${index + 1}`, textStyle({ role: "display", size: 30, color: COLOR.sortieText })).setOrigin(0.5));
       const relicId = this.selected[index];
-      if (!relicId) {
-        layer.add(drawLayer(this, x, FORMATION.y, chipPoints(FORMATION.width, FORMATION.height, { bevel: { topLeft: 24, bottomRight: 18 } }), { fill: COLOR.panel, alpha: HOLO.glassLight, edge: COLOR.inkDimHex, edgeAlpha: 0.42 }));
-      } else {
-        layer.add(this.add.ellipse(x, FORMATION.y + 120, 190, 28, COLOR.sortie, 0.18));
-        this.standFormationPuppet(relicId, x, generation);
-      }
+      // 칸의 밑판·발밑 그림자·빈 자리 번호는 네 편성 화면이 공유하는 한 장이다. 예전에는 이
+      // 화면만 깎은 칩을 **빈 칸에만** 깔아, 같은 세 자리가 발굴·파견과 다른 판 위에 섰다.
+      addFormationSlotPlate(this, layer, box, {
+        accent: COLOR.sortie, occupied: Boolean(relicId), index, groundOffset: FORMATION.groundOffset,
+      });
+      if (relicId) this.standFormationPuppet(relicId, x, generation);
       // 공용 슬롯 면은 SD보다 위에서 입력을 맡고, SD 자체는 계속 비대화형으로 둔다.
       const hit = this.add.rectangle(x, FORMATION.y, FORMATION.width, FORMATION.height, 0xffffff, 0)
         .setName(`expedition-formation-slot-${index + 1}`).setDepth(4).setInteractive({ useHandCursor: true });
@@ -944,7 +943,7 @@ export class ExpeditionScene extends Phaser.Scene {
           const lifted = preview[index]?.lifted;
           const target = preview.findIndex((entry) => entry.relicId === relicId);
           const x = lifted ? pointer.x : FORMATION.firstX + (target < 0 ? index : target) * FORMATION.stepX;
-          const groundY = lifted ? pointer.y + FORMATION.height / 2 : FORMATION.y + 120;
+          const groundY = lifted ? pointer.y + FORMATION.height / 2 : FORMATION.y + FORMATION.groundOffset;
           placePuppet(puppet, relicAppearanceManager.sdAssetFor(relicId), { x, groundY, height: lifted ? 250 * FORMATION_DRAG_VISUAL.liftScale : 250 });
           puppet.setDepth(lifted ? 20 : 2).setAlpha(lifted ? FORMATION_DRAG_VISUAL.liftAlpha : target === index ? 1 : FORMATION_DRAG_VISUAL.previewAlpha);
         });
@@ -952,7 +951,7 @@ export class ExpeditionScene extends Phaser.Scene {
       restore: () => this.selected.forEach((relicId, index) => {
         if (!relicId) return;
         const puppet = this.formationPuppets.get(relicId); if (!puppet) return;
-        placePuppet(puppet, relicAppearanceManager.sdAssetFor(relicId), { x: FORMATION.firstX + index * FORMATION.stepX, groundY: FORMATION.y + 120, height: 250 });
+        placePuppet(puppet, relicAppearanceManager.sdAssetFor(relicId), { x: FORMATION.firstX + index * FORMATION.stepX, groundY: FORMATION.y + FORMATION.groundOffset, height: 250 });
         puppet.setDepth(2).setAlpha(1);
       }),
       onVisualState: (state) => setDebugFormationDragVisual(state ? { owner: "expedition", ...state } : undefined),
@@ -978,7 +977,7 @@ export class ExpeditionScene extends Phaser.Scene {
 
   /** 아직 서 있지 않은 렐릭만 읽어 세우고, 이미 선 SD는 자리만 옮긴다. */
   private standFormationPuppet(relicId: string, x: number, generation: number): void {
-    const groundY = FORMATION.y + 120;
+    const groundY = FORMATION.y + FORMATION.groundOffset;
     const standing = this.formationPuppets.get(relicId);
     if (standing) {
       placePuppet(standing, relicAppearanceManager.sdAssetFor(relicId), { x, groundY, height: 250 });

@@ -1,7 +1,8 @@
 import Phaser from "phaser";
 import { drawGlyph } from "./glyphs";
 import { chipPoints, drawLayer, HOLO, slantedRect } from "./holo";
-import { COLOR } from "./theme";
+import { FORMATION_SLOT_PLATE } from "./formationSlotStyle";
+import { COLOR, textStyle } from "./theme";
 
 /**
  * 편성 자리의 겉치레 — 고른 칸과 빼는 표식.
@@ -74,4 +75,44 @@ export function addFormationRemoveChip(
   hit.on("pointerup", () => { chip.setScale(1); onRemove(); });
   chip.add(hit);
   parent.add(chip);
+}
+
+export interface FormationSlotPlateOptions {
+  /** 이 콘텐츠의 강조색. 발밑 그림자가 그 색을 옅게 쓴다. */
+  accent?: number;
+  /** 이 칸에 누군가 서 있는가. */
+  occupied: boolean;
+  /** 자리 번호(0부터). 빈 칸이 이 수를 적는다. */
+  index: number;
+  /** 판 중심에서 SD가 발을 딛는 줄까지의 거리. */
+  groundOffset: number;
+}
+
+/** 칸 하나의 밑판과 그 위의 발밑 그림자(또는 빈 자리 번호)를 그린다. */
+export function addFormationSlotPlate(
+  scene: Phaser.Scene,
+  parent: Phaser.GameObjects.Container,
+  box: FormationSlotBox,
+  options: FormationSlotPlateOptions,
+): void {
+  parent.add(drawLayer(scene, box.x, box.y, slantedRect(box.width, box.height), {
+    fill: COLOR.panel,
+    alpha: HOLO.glassLight,
+    edge: COLOR.inkDimHex,
+    edgeAlpha: FORMATION_SLOT_PLATE.edgeAlpha,
+  }));
+  if (options.occupied) {
+    // 사방 테두리나 입체 받침 대신 얇은 홀로그램 투영 그림자만 발 아래에 둔다.
+    parent.add(scene.add.ellipse(
+      box.x,
+      box.y + options.groundOffset + 2,
+      box.width * FORMATION_SLOT_PLATE.groundWidthRatio,
+      FORMATION_SLOT_PLATE.groundHeight,
+      options.accent ?? COLOR.accent,
+      FORMATION_SLOT_PLATE.groundAlpha,
+    ));
+    return;
+  }
+  const style = textStyle({ role: "emphasis", size: FORMATION_SLOT_PLATE.emptyFontSize, color: COLOR.inkDim, align: "center" });
+  parent.add(scene.add.text(box.x, box.y, `빈 슬롯\n${options.index + 1}`, style).setOrigin(0.5));
 }

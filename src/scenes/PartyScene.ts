@@ -19,6 +19,7 @@ import { PortraitCard } from "../ui/PortraitCard";
 import { formationRosterColumnX, formationRosterGrid, PORTRAIT_GRID_MASK_GAP, portraitGridContentHeight, portraitGridFirstRowY, portraitGridHeadroom } from "../ui/portraitGrid";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { COLOR, textStyle } from "../ui/theme";
+import { drawLayer, HOLO, slantedRect } from "../ui/holo";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { autoPickParty, relicAffinityDirection } from "../core/partyAffinity";
 import type { SetPartyFailureReason } from "../managers/RelicCollectionManager";
@@ -30,7 +31,8 @@ import { addUnitNameplate } from "../ui/unitNameplate";
 import { combatPower } from "../core/combatPower";
 import { formationMembers, tapFormationSlot, tapRosterRelic, toFormationSlots } from "../core/formationSlots";
 import { moveFormationSlot } from "../core/formation";
-import { addFormationRemoveChip, addFormationSlotSelection } from "../ui/formationSlotChrome";
+import { addFormationRemoveChip, addFormationSlotPlate, addFormationSlotSelection } from "../ui/formationSlotChrome";
+import { PARTY_ALLY_PLATE, PARTY_POWER_PLATE, PARTY_PREVIEW, PARTY_PREVIEW_COLUMNS, partyAllyGroundOffset, partyAllyPlateBox, partyAllySlotBox } from "../ui/partyPreviewLayout";
 import { bindFormationDrag } from "../ui/formationDrag";
 import { FORMATION_DRAG_VISUAL } from "../ui/formationDragVisual";
 import { createFormationDragVisualController, type FormationDragVisualController } from "../ui/formationDragVisualController";
@@ -44,14 +46,14 @@ import { partyEntryErrorView } from "./partyEntryError";
  * 실시간 난전에는 전방·후방이 없다. 전투가 시작될 때와 똑같이 적 셋이 위에, 아군 셋이 아래에
  * 나란히 서고, 고른 순서가 왼쪽부터의 자리를 정한다.
  */
-const PREVIEW_COLUMNS = [270, 540, 810];
-const ENEMY_ROW = 430;
-const ALLY_ROW = 830;
+const PREVIEW_COLUMNS = PARTY_PREVIEW_COLUMNS;
+const ENEMY_ROW = PARTY_PREVIEW.enemyRow;
+const ALLY_ROW = PARTY_PREVIEW.allyRow;
 /** 두 줄을 가르는 대치선. 적 이름표 아래, 아군 머리 위에 놓는다. */
-const FRONT_LINE = 556;
-const PREVIEW_HEIGHT = 210;
-/** 두 편의 총 전투력이 마주 보는 줄. 대치선보다 아래, 두 줄의 가운데에 가깝게 둔다. */
-const POWER_ROW = 640;
+const FRONT_LINE = PARTY_PREVIEW.frontLine;
+const PREVIEW_HEIGHT = PARTY_PREVIEW.height;
+/** 두 편의 총 전투력이 마주 보는 줄. 대치선 위에 걸터앉는다. */
+const POWER_ROW = PARTY_PREVIEW.frontLine;
 
 /**
  * 보유 렐릭 그리드의 배치표.
@@ -89,8 +91,7 @@ interface RosterCard {
 }
 
 interface AllySlot {
-  platform: Phaser.GameObjects.Ellipse;
-  /** SD/받침의 왼쪽 아래에 고정되는 상성 방향 표식. 빈 자리와 중립에서는 숨긴다. */
+  /** 칸 왼쪽 아래에 고정되는 상성 방향 표식. 빈 자리와 중립에서는 숨긴다. */
   affinityDirection: AffinityDirection;
   /** 이 자리에 서 있는 SD. 편성이 바뀔 때마다 갈아 세운다. */
   creature?: PuppetCreature;
@@ -306,8 +307,17 @@ export class PartyScene extends Phaser.Scene {
 
     // **대치선 위에는 두 편의 무게만 남긴다.** 속성 분포는 이미 각 SD의 아이콘이 말하고, "적"과
     // "아군"이라는 이름표는 위아래 자리가 이미 말한다. 대신 어느 쪽이 센지를 한 줄로 가른다.
-    // 대치선보다 조금 아래, 두 줄의 가운데에 가깝게 세운다 — 선 위에 붙이면 적 쪽 이름줄에
-    // 얹혀 적의 정보로 읽힌다.
+    //
+    // **줄은 대치선 위에 걸터앉고 판 한 장을 깐다.** 예전에는 선보다 아래, 두 줄의 가운데에
+    // 맨 글자로 섰는데 그 자리가 곧 아군 SD의 머리라 정수리에 얹혔고, 밝은 배경 원화 위에서는
+    // 그림자만으로 떨어져 나오지도 못했다. 판이 배경과 글자를 가르고, 대치선은 그 판 양옆으로
+    // 이어져 "여기가 두 편이 마주 보는 자리"를 한 번 더 말한다.
+    drawLayer(this, BASE_WIDTH / 2, POWER_ROW, slantedRect(PARTY_POWER_PLATE.width, PARTY_POWER_PLATE.height), {
+      fill: COLOR.panel,
+      alpha: HOLO.glass,
+      edge: COLOR.panelEdge,
+      edgeAlpha: 0.85,
+    });
     this.enemyPowerText = this.add
       .text(BASE_WIDTH / 2 - 30, POWER_ROW, "", textStyle({ role: "display", size: 30, color: COLOR.dangerText }))
       .setOrigin(1, 0.5)
@@ -319,13 +329,15 @@ export class PartyScene extends Phaser.Scene {
     this.add.text(BASE_WIDTH / 2, POWER_ROW, "VS", textStyle({ role: "display", size: 24, color: COLOR.inkDim })).setOrigin(0.5, 0.5);
 
     PREVIEW_COLUMNS.forEach((x, slot) => {
-      const platform = this.add.ellipse(x, ALLY_ROW, 210, 46, COLOR.panel, 0.85).setStrokeStyle(3, COLOR.ally).setDepth(-12);
-      // 플랫폼의 좌측 하단에 붙여 SD가 비동기로 도착해도 표식 위치가 흔들리지 않게 한다.
+      // 칸의 밑판은 편성이 바뀔 때마다 다시 그리므로 여기서 세우지 않는다 — 서 있는 자리와 빈
+      // 자리가 다른 것을 담기 때문이다(발굴·원정·파견과 같은 공용 판 한 장).
+      // 칸의 좌측 하단에 붙여 SD가 비동기로 도착해도 표식 위치가 흔들리지 않게 한다.
       const affinityDirection = new AffinityDirection(this, x - 82, ALLY_ROW - 20).setDepth(2);
       // SD와 같은 높이의 투명 슬롯 면이 입력을 소유해 Puppet 로딩 성공 여부가 조작을 바꾸지 않는다.
-      const hit = this.add.rectangle(x, ALLY_ROW - PREVIEW_HEIGHT / 2, 210, PREVIEW_HEIGHT, 0xffffff, 0)
+      const box = partyAllySlotBox(slot);
+      const hit = this.add.rectangle(box.x, box.y, box.width, box.height, 0xffffff, 0)
         .setName(`party-ally-slot-${slot + 1}`).setDepth(3).setInteractive({ useHandCursor: true });
-      this.allySlots.push({ platform, affinityDirection, request: 0, hit });
+      this.allySlots.push({ affinityDirection, request: 0, hit });
     });
     // 편성이 바뀔 때마다 통째로 다시 그리므로 슬롯 자체(받침·입력면)와 수명을 나눠 둔다.
     this.slotPlate = this.add.container(0, 0).setDepth(-14);
@@ -335,14 +347,16 @@ export class PartyScene extends Phaser.Scene {
     this.allyMarks = this.add.container(0, 0).setDepth(6);
     // 공용 표현기는 화면 좌표 Puppet을 기존 placePuppet 콜백으로 옮겨 컨테이너 변환에 기대지 않는다.
     this.dragVisual = createFormationDragVisualController({
-      scene: this, slots: PREVIEW_COLUMNS.map((x) => ({ x, y: ALLY_ROW - PREVIEW_HEIGHT / 2, width: 210, height: PREVIEW_HEIGHT })),
+      scene: this, slots: PREVIEW_COLUMNS.map((_x, slot) => partyAllySlotBox(slot)),
       formation: () => this.picked, color: COLOR.ally, zoneDepth: -11, dimDepth: -13,
-      dimBounds: { x: BASE_WIDTH / 2, y: (FRONT_LINE + ALLY_ROW + 120) / 2, width: BASE_WIDTH, height: ALLY_ROW + 120 - FRONT_LINE },
+      // 감광은 아군 칸이 사는 띠만 덮는다. 대치선부터 덮으면 그 위에 걸터앉은 전투력 판까지 함께
+      // 어두워져, 끄는 동안 두 편의 무게가 먼저 사라진다.
+      dimBounds: { x: BASE_WIDTH / 2, y: (PARTY_ALLY_PLATE.top + ALLY_ROW + 120) / 2, width: BASE_WIDTH, height: ALLY_ROW + 120 - PARTY_ALLY_PLATE.top },
       renderPreview: ({ preview, pointer }) => this.placeDragPreview(preview, pointer.x, pointer.y),
       restore: () => this.restoreDragPuppets(),
     });
     // 보유 카드의 상세 정보 장기 누름과 겹치지 않도록 드래그 시작점은 이 상단 SD 입력면뿐이다.
-    bindFormationDrag(this, this.allySlots.map((slot, index) => ({ hit: slot.hit, x: PREVIEW_COLUMNS[index], y: ALLY_ROW - PREVIEW_HEIGHT / 2, width: 210, height: PREVIEW_HEIGHT })), {
+    bindFormationDrag(this, this.allySlots.map((slot, index) => ({ hit: slot.hit, ...partyAllySlotBox(index) })), {
       // 배열과 저장은 `drop`에서만 바뀐다. 아래 둘은 화면에만 손대므로 취소해도 편성이 남지 않는다.
       dragStart: (slot, x, y) => this.dragVisual?.beginDrag(slot, x, y),
       dragMove: (slot, x, y) => this.dragVisual?.moveDrag(slot, x, y),
@@ -600,7 +614,6 @@ export class PartyScene extends Phaser.Scene {
     this.allySlots.forEach((slot, i) => {
       const id = this.picked[i] ?? undefined;
       const standing = slot.creature !== undefined;
-      slot.platform.setAlpha(id ? 1 : 0.55);
       // 빈 슬롯 및 전체 관계가 상쇄된 중립은 텍스트 대신 표식 자체를 완전히 숨긴다.
       slot.affinityDirection.setDirection(id ? relicAffinityDirection(getRelic(id), this.enemies) : "neutral");
       // 이미 그 렐릭이 서 있으면 다시 세우지 않는다.
@@ -620,8 +633,13 @@ export class PartyScene extends Phaser.Scene {
       }
 
       if (!chrome || !plate) return;
-      const box = { x: PREVIEW_COLUMNS[i], y: ALLY_ROW - PREVIEW_HEIGHT / 2, width: 210, height: PREVIEW_HEIGHT };
+      const box = partyAllySlotBox(i);
       if (i === this.selectedSlot) addFormationSlotSelection(this, plate, box, COLOR.ally);
+      // 고른 칸 밑판 **위에** 칸 판을 깐다(발굴과 같은 순서). 밑판이 칸 판을 덮으면 고른 자리만
+      // 다른 색 유리가 되어, 판이 아니라 칠이 바뀐 것처럼 보인다.
+      addFormationSlotPlate(this, plate, partyAllyPlateBox(i), {
+        accent: COLOR.ally, occupied: Boolean(id), index: i, groundOffset: partyAllyGroundOffset(),
+      });
       // 빼는 표식은 **고른 자리에 누군가 서 있을 때만** 선다. 늘 세워 두면 세 자리 위에 붉은
       // 표식이 셋 늘어서 SD보다 먼저 읽힌다.
       if (i === this.selectedSlot && id) addFormationRemoveChip(this, chrome, box, () => this.tapSlot(i, "clear"));

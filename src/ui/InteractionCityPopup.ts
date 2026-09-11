@@ -19,9 +19,9 @@ import {
   portraitGridContentHeight,
   portraitGridFirstRowY,
 } from "./portraitGrid";
-import { addFormationRemoveChip, addFormationSlotSelection } from "./formationSlotChrome";
+import { addFormationRemoveChip, addFormationSlotPlate, addFormationSlotSelection } from "./formationSlotChrome";
 import { addPopupBackgroundImage } from "./backgrounds";
-import { chipPoints, drawLayer, drawHairline, HOLO, slantedRect } from "./holo";
+import { chipPoints, drawLayer, drawHairline, HOLO } from "./holo";
 import {
   INTERACTION_CITY_ACTION,
   INTERACTION_CITY_LOWER,
@@ -158,16 +158,12 @@ export class InteractionCityPopup {
       const x = (index - 1) * SLOT.step;
       const box = { x, y: SLOT.y, width: SLOT.width, height: SLOT.height };
       if (editable && index === this.selectedSlot) addFormationSlotSelection(this.scene, parent, box, BLUE);
-      if (relicId) {
-        parent.add(this.scene.add.ellipse(x, SLOT.y + SLOT_GROUND_OFFSET + 2, 172, 25, BLUE, 0.16));
-        this.standPuppet(relicId, x);
-      } else {
-        parent.add(drawLayer(this.scene, x, SLOT.y, slantedRect(SLOT.width, SLOT.height, 18), {
-          fill: COLOR.panel, alpha: HOLO.glassLight,
-          edge: editable && index === this.selectedSlot ? BLUE : COLOR.inkDimHex, edgeAlpha: 0.55,
-        }));
-        parent.add(this.scene.add.text(x, SLOT.y, `${index + 1}`, textStyle({ role: "display", size: 40, color: COLOR.inkDim })).setOrigin(0.5));
-      }
+      // 칸의 밑판·발밑 그림자·빈 자리 번호는 네 편성 화면이 공유하는 한 장이다. 판은 서 있든
+      // 비었든 늘 깔린다 — 세 칸이 같은 판 위에 서야 무엇을 더 고를 수 있는지가 보인다.
+      addFormationSlotPlate(this.scene, parent, box, {
+        accent: BLUE, occupied: Boolean(relicId), index, groundOffset: SLOT_GROUND_OFFSET,
+      });
+      if (relicId) this.standPuppet(relicId, x);
       if (!editable) return;
       const hit = this.scene.add.rectangle(x, SLOT.y, SLOT.width, SLOT.height, 0xffffff, 0)
         .setName(`interaction-party-slot-${index + 1}`).setDepth(SD_DEPTH + 1).setInteractive({ useHandCursor: true });

@@ -118,21 +118,20 @@ describe("디안 무리 생명주기", () => {
     }
   });
 
-  it("은 늑대를 지휘자의 등 뒤에 세워 첫 표적이 되지 않게 한다", () => {
+  it("은 늑대를 지휘자의 앞에 세워 전선이 실제로 앞에 서게 한다", () => {
     const state = createSkirmish([getRelic("dian")], [getRelic("amo")], ARENA);
     const dian = state.fighters[0];
     const wolves = wolvesOf(state, dian.id);
-    // 아군은 아래쪽에서 출발한다. 늑대가 지휘자보다 **아래**에 서야 앞에 나서지 않은 것이다.
-    // 지휘자가 판 끝에 서 있으면 그 뒤가 없어 같은 줄까지만 물러난다 — 그래도 앞서지는 않는다.
-    for (const wolf of wolves) expect(wolf.y, wolf.def.name).toBeGreaterThanOrEqual(dian.y);
-    // 다시 설 때도 같은 자리에서 나온다 — 앞에서 부활하면 그 프레임에 바로 표적이 된다.
-    // 선 자리는 사건이 들고 오므로, 그 뒤의 자유로운 걸음과 섞지 않고 사건만 본다.
+    // 아군은 아래쪽에서 출발한다. 늑대가 지휘자보다 **위**에 서야 앞을 막은 것이다.
+    for (const wolf of wolves) expect(wolf.y, wolf.def.name).toBeLessThan(dian.y);
+
+    // 다시 설 때도 같은 자리에서 나온다. 선 자리는 사건이 들고 오므로 그 뒤의 걸음과 섞지 않는다.
     wolves[0].hp = 0;
     stepSkirmish(state, 1 / 60);
     wolves[0].resummonIn = 0.01;
     const returned = stepSkirmish(state, 0.05)
       .find((event) => event.kind === "packSummon" && event.fighterId === wolves[0].id);
-    expect(returned?.kind === "packSummon" ? returned.y : 0).toBeGreaterThanOrEqual(dian.y);
+    expect(returned?.kind === "packSummon" ? returned.y : 0).toBeLessThan(dian.y);
   });
 
   it("은 늑대 능력치를 주인의 한 축에서만 파생하고 무리 치명타를 함께 나눈다", () => {

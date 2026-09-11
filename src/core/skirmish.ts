@@ -971,15 +971,16 @@ function createPackFighters(owners: readonly Fighter[], augmentEffects: readonly
   return owners.flatMap((owner) => (owner.def.summons ?? []).map((spec, index) => {
     const stats = deriveSummonStats(owner.def.stats, spec);
     /*
-     * **지휘자의 등 뒤에서 선다.**
+     * **지휘자의 앞에 선다.**
      *
-     * 앞에 세우면 전투가 열리는 순간 늑대가 전장에서 가장 앞선 몸이 되어 적 전원의 첫 표적이
-     * 되고, 달려 나가 보기도 전에 쓰러진다. 뒤에서 나타나 지휘자를 지나쳐 달려 나가면 붙는
-     * 시점이 그만큼 늦고, 화면에서도 불려 나온 것으로 읽힌다.
+     * 늑대가 곧 전선이다 — 둘이 살아 있는 동안 지휘자는 단일 대상에게 보이지 않으므로 앞을
+     * 막는 몸이 실제로 앞에 서야 그 규칙이 화면에서 읽힌다. 먼저 표적이 되는 것은 대가가
+     * 아니라 이 편성이 파는 값이고, 그래서 늑대가 쓰러지는 순간 지휘자가 그대로 노출된다.
      */
+    // 플레이어의 앞은 위쪽, 적의 앞은 아래쪽이다. 좌우로 갈라 세워 둘이 겹치지 않게 한다.
     const forward = owner.side === "player" ? -1 : 1;
     const x = owner.x + (index % 2 === 0 ? -70 : 70);
-    const y = owner.y - forward * 90;
+    const y = owner.y + forward * 90;
     const wolf = makeFighter({ ...spec.def, stats }, owner.side, index, x, y, 0, 0, 1, augmentEffects);
     // 편성 칸의 ID와 겹치지 않도록 주인 ID를 이름공간으로 쓴다. 기여도가 이 형태를 읽는다.
     wolf.id = `${owner.id}:${spec.def.id}`;
@@ -4564,8 +4565,8 @@ function reviveWolf(state: SkirmishState, owner: Fighter, wolf: Fighter, events:
   wolf.resummonIn = 0;
   const index = (owner.def.summons ?? []).findIndex((spec) => wolf.id.endsWith(`:${spec.def.id}`));
   wolf.x = Math.min(state.arena.right, Math.max(state.arena.left, owner.x + (index % 2 === 0 ? -70 : 70)));
-  // 처음 설 때와 같은 자리다 — 지휘자의 등 뒤에서 나와 다시 달려 나간다.
-  wolf.y = Math.min(state.arena.bottom, Math.max(state.arena.top, owner.y + (owner.side === "player" ? 90 : -90)));
+  // 처음 설 때와 같은 자리다 — 지휘자의 앞을 다시 막아선다.
+  wolf.y = Math.min(state.arena.bottom, Math.max(state.arena.top, owner.y + (owner.side === "player" ? -90 : 90)));
   wolf.targetId = null;
   wolf.engaged = false;
   wolf.attackCooldown = 0;

@@ -75,6 +75,15 @@ export interface PortraitCardOptions {
    * 수 있는 것처럼 읽힌다.
    */
   selectedStyle?: "glow" | "pressed";
+  /**
+   * 머리를 칩 위로 내보낼지.
+   *
+   * 기본(`overhang`)은 정수리가 칩 윗변 밖으로 빠져나오는 카드다 — 목록에서 얼굴이 판에
+   * 갇히지 않아 한 장씩 서 있는 것처럼 읽힌다. `inside`는 그 홈을 닫고 얼굴까지 칸 안에
+   * 가둔다: 여러 칸이 서로 다른 줄 간격 없이 **빈틈없이 맞물려야 하는 판**(연구 결과판)에서는
+   * 빠져나온 머리가 윗줄 칸을 침범해 어느 칸이 어디까지인지 흐려진다.
+   */
+  head?: "overhang" | "inside";
 }
 
 /** 눌린 카드. 검은 반투명 한 겹과 아주 조금의 축소만으로 "이미 나갔다"를 말한다. */
@@ -213,8 +222,10 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     );
 
     this.bodyHeight = height;
-    // 머리가 칩 위로 빠져나올 여유. 카드가 납작할수록 조금만 내민다.
-    this.overhang = portraitCardOverhang(this.bodyHeight);
+    // 머리가 칩 위로 빠져나올 여유. 카드가 납작할수록 조금만 내민다. 홈을 닫은 카드는
+    // 돌출이 없으므로 그리드가 머리 몫의 여유를 따로 비우지 않아도 된다.
+    const headInside = options.head === "inside";
+    this.overhang = headInside ? 0 : portraitCardOverhang(this.bodyHeight);
     const chipWidth = width - CHIP_INSET * 2;
     // 깎는 길이는 카드 크기를 따라간다. 작은 카드에서 모서리만 크게 잘려 나가지 않게 한다.
     const unit = Math.min(chipWidth, this.bodyHeight);
@@ -229,13 +240,16 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     // 홈은 위로 벌어지는 사다리꼴이다 — 잘린 모서리를 피해야 하는 것은 홈이 칩 윗변과 만나는
     // 한 줄뿐이라, 그보다 위는 넓게 열어 정수리 옆이 세로로 베이지 않게 한다. 그래도 모자란
     // 원화만 asset의 `cardHeadEscape`로 한쪽을 더 연다.
-    const headWindow = portraitCardHeadWindow(
-      chipWidth,
-      bevel.topLeft,
-      bevel.topRight,
-      CHIP_NOTCH_WIDTH,
-      resolvedPortraitAsset(options).cardHeadEscape,
-    );
+    // 홈을 닫으면 폭이 0이라 칩 윗변이 그대로 이어진다(`chipPoints`는 0을 열지 않는다).
+    const headWindow = headInside
+      ? { width: 0, offsetX: 0, topWidth: 0, topOffsetX: 0 }
+      : portraitCardHeadWindow(
+          chipWidth,
+          bevel.topLeft,
+          bevel.topRight,
+          CHIP_NOTCH_WIDTH,
+          resolvedPortraitAsset(options).cardHeadEscape,
+        );
 
     // 고르거나 애착으로 세운 카드에만 켜지는 발광. 테두리를 두르는 대신 카드 전체가 은은하게 빛난다.
     this.glow = scene.add.graphics({ x: 0, y: bodyCenter }).setVisible(false);

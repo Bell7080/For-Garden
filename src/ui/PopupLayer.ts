@@ -3,7 +3,7 @@ import { chipPoints, drawLayer, drawShapeEdge, HOLO } from "./holo";
 import { addSectionTitle } from "./SectionTitle";
 import { COLOR, textStyle } from "./theme";
 import { setDebugPopupTitles } from "../debug";
-import { POPUP_CLOSE_LAYOUT, tiltedPopupSize } from "./popupGeometry";
+import { POPUP_BODY_BEVEL_RATIO, POPUP_CLOSE_LAYOUT, tiltedPopupSize } from "./popupGeometry";
 
 /** 쪽지와 화면을 대부분 차지하는 작업판이 공유하는 제목 위계다. */
 export const POPUP_TITLE_SIZE = {
@@ -158,7 +158,7 @@ export class PopupLayer {
     if (options.tilt) body.setRotation(Phaser.Math.DegToRad(options.tilt));
     const unit = Math.min(width, height);
     const shape = chipPoints(width, height, {
-      bevel: { topLeft: unit * 0.14, topRight: 0, bottomRight: unit * 0.14, bottomLeft: 0 },
+      bevel: { topLeft: unit * POPUP_BODY_BEVEL_RATIO, topRight: 0, bottomRight: unit * POPUP_BODY_BEVEL_RATIO, bottomLeft: 0 },
     });
     body.add(drawLayer(this.scene, 0, 0, shape, { fill: 0x0b0f15, alpha: 0.96, edge: COLOR.accent, edgeAlpha: 0.6 }));
     // 판 자체가 입력을 삼킨다. 몸판은 그림(Graphics)이라 입력을 받지 않으므로, 이것이 없으면

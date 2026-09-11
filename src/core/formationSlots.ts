@@ -34,6 +34,20 @@ export function clearFormationSlot(formation: FormationSlots, index: number): (s
 }
 
 /**
+ * 방금 채운 자리 **다음의 빈 칸**.
+ *
+ * 뒤로 한 바퀴 돌아 앞쪽 빈 칸까지 본다 — 3번을 먼저 채운 손이 1번을 채우러 다시 칸을 누를
+ * 이유가 없다. 남은 빈 칸이 없으면 `undefined`다.
+ */
+export function nextEmptySlot(formation: FormationSlots, from: number): number | undefined {
+  for (let step = 1; step <= formation.length; step += 1) {
+    const index = (from + step) % formation.length;
+    if (formation[index] === null || formation[index] === undefined) return index;
+  }
+  return undefined;
+}
+
+/**
  * 목록의 카드를 누른 결과.
  *
  * **이미 어느 칸에 선 렐릭을 누르면 그 칸을 고른다.** 고른 칸으로 끌어오지 않는다 — 목록에서
@@ -41,8 +55,10 @@ export function clearFormationSlot(formation: FormationSlots, index: number): (s
  * 것이지, 다른 칸으로 옮기려는 것이 아니다. 옮기는 일은 칸을 끌어서 한다.
  *
  * 아직 어디에도 없는 렐릭은 **고른 칸**에 선다. 그 칸에 누가 서 있었다면 그대로 갈아 끼운다.
- * 채운 뒤에도 **선택은 그 자리에 머문다** — 다음 빈 칸으로 밀면 방금 세운 렐릭을 곧바로 다시
- * 바꿔 볼 수 없고, 사람이 고른 자리가 사람이 누르지 않은 곳으로 옮겨 간다.
+ * 채운 뒤에는 **옆의 빈 칸으로 선택이 옮겨 간다** — 셋을 채우는 동안에는 목록만 세 번 누르면
+ * 편성이 끝나야 하고, 칸을 한 번 누르고 카드를 한 번 누르는 두 박자를 세 번 되풀이하게 하면
+ * 손이 두 배로 든다. 빈 칸이 남지 않았을 때만 방금 채운 자리에 머문다 — 그때는 다음에 오는
+ * 손이 대개 방금 세운 렐릭을 바꿔 보려는 손이다.
  */
 export function tapRosterRelic(formation: FormationSlots, selectedSlot: number | undefined, relicId: string): FormationSlotTap {
   const placedAt = formation.indexOf(relicId);
@@ -55,7 +71,7 @@ export function tapRosterRelic(formation: FormationSlots, selectedSlot: number |
   const target = selectedSlot ?? next.indexOf(null);
   if (!inRange(formation, target)) return { formation: next, selectedSlot, cleared: false };
   next[target] = relicId;
-  return { formation: next, selectedSlot: target, cleared: false };
+  return { formation: next, selectedSlot: nextEmptySlot(next, target) ?? target, cleared: false };
 }
 
 /**

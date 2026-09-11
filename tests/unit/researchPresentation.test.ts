@@ -8,7 +8,17 @@ describe("연구소 획득 연구 연출 상태", () => {
     expect(controller.stage).toBe("research");
     expect(controller.advance()).toBe("crack");
     expect(controller.advance()).toBe("rarityReveal");
+    expect(controller.advance()).toBe("chips");
+    expect(controller.advance()).toBe("cards");
+    controller.begin();
     expect(controller.skipAll()).toBe("cards");
+  });
+
+  it("첫 대면을 자동 단계로 두지 않는다", () => {
+    // 새로 만난 렐릭이 든 칸을 여는 그 순간의 연출이다. 자동으로 흘러가는 목록에 끼우면
+    // 어느 칸에서 나왔는지와 무관하게 먼저 재생되어 칸을 열 이유가 사라진다.
+    expect(RESEARCH_PRESENTATION_STAGES).not.toContain("firstMeeting" as never);
+    expect(RESEARCH_PRESENTATION_STAGES.indexOf("chips")).toBeLessThan(RESEARCH_PRESENTATION_STAGES.indexOf("cards"));
   });
 
   it("연속 요청과 씬 정리로 오래된 비동기 요청을 무효화한다", () => {

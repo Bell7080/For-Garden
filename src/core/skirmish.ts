@@ -1294,6 +1294,9 @@ function applyConcussion(
   const amount = Math.max(1, Math.round(target.maxHp * percent / 100));
   const dealt = applyDamage(target, amount, events, state);
   events.push({ kind: "concussion", fighterId: target.id, amount: dealt, critical: struck, sourceId });
+  // 울린 만큼을 때린 쪽이 되받아 두른다. 개체 이름이 아니라 패시브의 필드 하나만 읽으므로
+  // 다른 개체가 같은 패시브를 갖게 되어도 분기가 늘지 않는다.
+  if (attacker) grantConcussionShield(attacker, dealt, events);
   if (!isFighterAlive(target)) {
     clearDefeatedStatuses(target);
     events.push({ kind: "death", fighterId: target.id, sourceId });
@@ -1301,6 +1304,21 @@ function applyConcussion(
   }
   // 날려버림은 폭주가 얹는 몫이라 뇌진탕이 실제로 울린 뒤에 따로 붙는다.
   if (slam && attacker) launchKnockback(target, attacker, slam, state, events);
+}
+
+/**
+ * 「무면허 안전제일」 — 뇌진탕이 실제로 깎은 HP의 일부를 때린 쪽의 보호막으로 돌린다.
+ *
+ * 상한 패시브는 큰 한 방만 누르므로 그 사이의 잔타를 버틸 자원이 없었다. 막은 그 몫이다.
+ * 대상이 쓰러진 타격에서도 두른다 — 이미 울린 피해라, 마지막 한 방만 값이 없어질 이유가 없다.
+ */
+function grantConcussionShield(attacker: Fighter, dealt: number, events: SkirmishEvent[]): void {
+  const passive = attacker.def.passive;
+  const percent = passive.concussionShieldPercent ?? 0;
+  if (percent <= 0 || dealt <= 0 || !isFighterAlive(attacker)) return;
+  // 상한은 자기 최대 체력에서 잰다 — 맞은 쪽 체력이 무한한 불사 보스에서도 막이 무한해지지 않는다.
+  const cap = attacker.maxHp * (passive.concussionShieldCapMaxHpPercent ?? 100) / 100;
+  grantShieldAmount(attacker, attacker, Math.max(1, Math.round(Math.min(dealt * percent / 100, cap))), events);
 }
 
 /** 지금 폭주 중이라 날려버림을 얹는 개체인가. 파치의 폭주만 이 특성을 갖는다. */
@@ -2942,6 +2960,11 @@ function gainFerocity(fighter: Fighter, base: number, state: SkirmishState, even
       leapToLowestHpEnemy(fighter, state, trait.landingDistance);
       // 이미 스피나를 추적하던 모든 상대도 즉시 대기/재탐색 상태로 돌린다.
       for (const other of state.fighters) if (other.targetId === fighter.id) { other.targetId = null; other.engaged = false; }
+    }
+    // 폭주가 열리는 순간 배트를 장전해 둔다. 주기에서 한 대 모자란 값으로 맞춰 두므로,
+    // 프로필의 겹 칩도 "다음 한 방에 터진다"를 그대로 보여 준다.
+    if (trait.effectId === "knockbackSlam" && trait.loadsStatusCycleOnEntry) {
+      fighter.statusHitCount = Math.max(0, (fighter.def.basic.statusEffectEvery ?? 1) - 1);
     }
     if (trait.effectId === "adamantBody") fighter.hastenedAttacksLeft = trait.hastenedAttacks;
     if (trait.effectId === "duoBreakthrough") launchDuoBreakthrough(fighter, trait, state, events);

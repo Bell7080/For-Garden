@@ -30,6 +30,7 @@ import { ExcavationCurrencyFrame, formatRate } from "./ExcavationCurrencyFrame";
 import { excavationAdOfferDisplayModel, type ExcavationAdOfferId } from "./excavationAdOfferModel";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { loadOwnedPuppet } from "./statusPuppetLoad";
+import { startPuppetHop } from "./puppetHop";
 import { BACK_SLOT } from "./IconButton";
 import { moveFormationSlot } from "../core/formation";
 import { bindFormationDrag, type FormationDragSlot } from "./formationDrag";
@@ -72,13 +73,6 @@ const SLOT_GROUND_OFFSET = 110;
  * 같은 높이에 서고, 취소는 배치 중에만 그 왼쪽에 나타났다 사라진다.
  */
 const BOTTOM_ACTION = { y: 545, cancelX: -280, primaryX: 125 } as const;
-/**
- * 통통 튀는 발굴 모션.
- *
- * 올라갈 때 감속하고 내려올 때 가속하는 포물선이라야 착지가 보인다. 좌우로 같은 이징을
- * 되감으면 내려오는 동안에도 느려져 땅으로 가라앉는 것처럼 읽힌다.
- */
-const HOP = { rise: 42, duration: 460, delays: [180, 570, 930], rests: [520, 780, 640] } as const;
 /** 팝업 로컬 좌표를 게임 좌표로 바꾸는 디버그 입력 계약이다. */
 const POPUP_CENTER = { x: BASE_WIDTH / 2, y: BASE_HEIGHT / 2 } as const;
 type Formation = IdleExcavationState["assignedRelicIds"];
@@ -846,25 +840,8 @@ export class IdleExcavationPopup {
         layer.add(puppet); this.sdPuppets.add(puppet);
         this.sdPuppetByRelicId.set(relicId, puppet);
         setDebugIdleExcavationSdReady(index);
-        // 팝업도 저장 토글을 직접 해석하지 않고 공용 정책의 거리·반복 배율만 소비한다.
-        const motion = motionPolicy(session.settings);
-        // 포물선 한 번을 직접 그린다. 같은 이징을 되감는 yoyo는 내려오는 동안에도 느려져
-        // 뛰는 것이 아니라 땅으로 가라앉는 것처럼 보인다.
-        // Puppet는 Mesh라 원점이 이미지 한가운데다. `groundY`는 발끝이라 그 값으로 y를 움직이면
-        // 캐릭터가 제 키의 절반만큼 땅으로 꺼진다 — 지금까지 발굴 모션이 내려가 보이던 이유다.
-        const restY = puppet.y;
-        const hop = { progress: 0 };
-        const tween = this.scene.tweens.add({
-          targets: hop, progress: 1, ease: "Linear",
-          duration: HOP.duration + index * 40, delay: HOP.delays[index],
-          // 전체 움직임 감소에서는 첫 동작만 보여 주고 무한 반복을 제거한다.
-          repeat: motion.nonEssentialRepeatFactor === 0 ? 0 : -1, repeatDelay: HOP.rests[index],
-          onUpdate: () => { puppet.y = restY - HOP.rise * motion.nonEssentialDistanceFactor * (1 - (2 * hop.progress - 1) ** 2); },
-          // 쉬는 동안에는 정확히 제자리에 서 있어야 다음 도약이 바닥에서 시작한다.
-          onRepeat: () => { puppet.y = restY; },
-          onComplete: () => { puppet.y = restY; },
-        });
-        this.sdTweens.add(tween);
+        // 통통 튀는 모션은 파견과 나눠 쓰는 공용 규칙 하나가 갖는다. 여기서는 칸 번호만 준다.
+        this.sdTweens.add(startPuppetHop(this.scene, puppet, index));
       },
     });
     // Puppet 실패는 슬롯 전체의 실패가 아니다. 개발 경고만 남기고 빈 판을 그대로 둔다.

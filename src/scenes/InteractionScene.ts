@@ -17,14 +17,17 @@ import { InteractionCityPopup } from "../ui/InteractionCityPopup";
 import { InteractionJournalPopup } from "../ui/InteractionJournalPopup";
 import { INTERACTION_LAYER, interactionLayersHeight, interactionLayerSpot } from "../ui/interactionLayerLayout";
 import { interactionLayerViews, interactionRemainingLabel, type InteractionLayerView } from "../ui/interactionLayerModel";
+import { coverCrop } from "../ui/coverCrop";
 
 const BLUE = 0x55b9e8;
 
 /** 층을 덮는 원화의 진하기. 글자가 그 위에서 읽혀야 하므로 절반을 넘기지 않는다. */
 const ART_ALPHA = 0.5;
 /** 양 끝에서 판 색으로 녹는 폭(px)과 그 끝의 진하기. */
-const ART_FADE_WIDTH = 300;
+const ART_FADE_WIDTH = 260;
 const ART_FADE_ALPHA = 0.98;
+/** 남은 시간이 초까지 도는 시계라 초가 바뀌는 순간을 놓치지 않을 만큼만 자주 본다. */
+const CLOCK_TICK_MS = 200;
 
 /**
  * 교류 — 외부 도시를 층으로 쌓아 위에서 아래로 고른다.
@@ -35,8 +38,19 @@ const ART_FADE_ALPHA = 0.98;
  */
 export class InteractionScene extends Phaser.Scene {
   private readonly popups = new PopupLayer(this, 2600);
-  private serverNow = Date.now();
+  /**
+   * 서버 시계와 이 기기 시계의 차이.
+   *
+   * 남은 시간을 초마다 1000씩 빼면 화면이 멈췄다 돌아오는 사이(탭 전환·잠금)에 흐른 시간을
+   * 통째로 잃어 시계가 실제보다 느려진다. 기준 하나만 잡아 두고 **읽을 때마다 지금 시각을**
+   * 더한다 — 그래야 몇 시간 뒤에 다시 봐도 남은 시간이 어긋나지 않는다.
+   */
+  private serverOffset = 0;
   private layers?: Phaser.GameObjects.Container;
+  /** 지금 그려 둔 층 목록이 무엇이었는지. 상태가 바뀐 순간에만 다시 그린다. */
+  private layerSignature = "";
+  /** 초마다 글자만 갈아 끼우는 남은 시간 줄. 층 순서와 같은 자리에 들어간다. */
+  private remainingLabels: (Phaser.GameObjects.Text | undefined)[] = [];
   private layerMask?: Phaser.GameObjects.Graphics;
   private scrollY = 0;
   private minScroll = 0;
@@ -66,9 +80,10 @@ export class InteractionScene extends Phaser.Scene {
     this.buildScrollArea();
     this.buildBackArea();
 
-    void interactionManager.refresh().then((response) => { this.serverNow = Date.parse(response.serverTime); this.drawLayers(); });
-    // 남은 시간은 초마다 흐른다. 층이 다시 그려져도 스크롤 위치는 그대로 남는다.
-    this.time.addEvent({ delay: 1000, loop: true, callback: () => { this.serverNow += 1000; this.drawLayers(); } });
+    void interactionManager.refresh().then((response) => { this.syncClock(response.serverTime); this.drawLayers(); });
+    // 남은 시간은 실시간으로 흐른다. 시계만 도는 동안에는 글자만 갈아 끼우고 층은 그대로 두어
+    // 스크롤 위치도, 읽고 있던 원화도 흔들리지 않는다.
+    this.time.addEvent({ delay: CLOCK_TICK_MS, loop: true, callback: () => this.tickClock() });
   }
 
   /** 버튼과 외부 씬 이동 계약이 공유하는 교환소의 단일 진입점이다. */
@@ -118,14 +133,52 @@ export class InteractionScene extends Phaser.Scene {
     this.layers?.setY(this.scrollY);
   }
 
+  /** 서버가 확정한 시각에 맞춰 기기 시계와의 차이만 잡아 둔다. */
+  private syncClock(serverTime: string): void {
+    const parsed = Date.parse(serverTime);
+    this.serverOffset = Number.isFinite(parsed) ? parsed - Date.now() : 0;
+  }
+
+  /** 지금 서버 시각. 읽을 때마다 흐른 시간이 그대로 반영된다. */
+  private serverNow(): number {
+    return Date.now() + this.serverOffset;
+  }
+
+  private currentViews(): InteractionLayerView[] {
+    const dispatches = session.interaction.slots.filter((slot): slot is InteractionDispatchSnapshot => slot !== null);
+    return interactionLayerViews(session.playerResearch.level, dispatches, this.serverNow());
+  }
+
+  /**
+   * 층이 무엇이고 어떤 상태인지만 추린 것.
+   *
+   * 이 줄이 그대로면 다시 그릴 이유가 없다 — 초가 흐르는 동안 층을 통째로 새로 만들면 원화를
+   * 매초 다시 세우고 스크롤도 함께 흔들린다.
+   */
+  private static signature(views: readonly InteractionLayerView[]): string {
+    return views.map((view) => `${view.city.id}:${view.state}:${view.dispatch?.dispatchId ?? ""}`).join("|");
+  }
+
+  /** 초가 흐른 결과. 상태가 바뀐 순간에만 다시 그리고, 그 밖에는 시계 글자만 갈아 끼운다. */
+  private tickClock(): void {
+    if (!this.layers) return;
+    const views = this.currentViews();
+    if (InteractionScene.signature(views) !== this.layerSignature) { this.drawLayers(); return; }
+    views.forEach((view, index) => {
+      if (view.state !== "away") return;
+      this.remainingLabels[index]?.setText(`파견 중 · ${interactionRemainingLabel(view.remainingMs ?? 0)}`);
+    });
+  }
+
   /** 서버가 확정한 파견 목록만 읽어 층 상태를 다시 그린다. */
   private drawLayers(): void {
     const container = this.layers;
     if (!container) return;
     container.removeAll(true);
-    const dispatches = session.interaction.slots.filter((slot): slot is InteractionDispatchSnapshot => slot !== null);
-    const views = interactionLayerViews(session.playerResearch.level, dispatches, this.serverNow);
+    const views = this.currentViews();
+    this.remainingLabels = [];
     views.forEach((view, index) => container.add(this.buildLayer(view, index)));
+    this.layerSignature = InteractionScene.signature(views);
 
     const viewportHeight = INTERACTION_LAYER.viewport.bottom - INTERACTION_LAYER.viewport.top;
     const contentBottom = INTERACTION_LAYER.firstY + interactionLayersHeight(views.length) - INTERACTION_LAYER.height / 2;
@@ -153,14 +206,18 @@ export class InteractionScene extends Phaser.Scene {
       edgeAlpha: locked ? 0.28 : 0.85,
     }));
 
-    // **원화가 층 전체를 덮는다.** 왼쪽 한 칸에만 눕히면 나머지가 빈 띠로 남아 도시마다 다른
-    // 곳이라는 것이 이름으로만 읽혔다. 대신 **양 끝으로 갈수록 판 색에 녹여** 가운데만 그림이
-    // 남게 한다 — 그 덕에 기울어진 좌우 변도 이미 투명한 자리라 마스크가 필요 없다. 마스크를
-    // 쓰지 않는 것이 중요한데, 이 목록은 세로로 흐르고 기하 마스크는 컨테이너 이동을 물려받지
-    // 않아 스크롤하는 순간 원화만 제자리에 남기 때문이다.
+    // **원화가 층 전체를 덮되 늘어나지는 않는다.** 상자 크기에 맞춰 넣으면(`setDisplaySize`)
+    // 원화마다 비율이 달라 세로로 눌린 그림이 되었다. 대신 제 비율 그대로 키워 **넘치는 만큼만
+    // 잘라 낸다**(`coverCrop`) — 일부만 보여도 좋으니 생김새가 바뀌지 않는 쪽을 고른다.
+    //
+    // 자르는 것은 기하 마스크가 아니라 **이미지 자신의 crop**이다. 이 목록은 세로로 흐르는데
+    // 기하 마스크는 컨테이너 이동을 물려받지 않아, 마스크로 씌우면 스크롤하는 순간 원화만
+    // 제자리에 남는다. 양 끝은 여전히 판 색으로 녹여 글이 그림 위에서 읽히게 한다.
     if (!locked && this.textures.exists(view.city.illustration)) {
       const art = this.add.image(0, 0, view.city.illustration);
-      art.setDisplaySize(width, height);
+      const crop = coverCrop(art.width, art.height, width, height);
+      art.setScale(crop.scale);
+      art.setCrop(crop.cropX, crop.cropY, crop.cropWidth, crop.cropHeight);
       art.setAlpha(ART_ALPHA);
       layer.add(art);
       const fade = this.add.graphics();
@@ -193,7 +250,10 @@ export class InteractionScene extends Phaser.Scene {
       // 나가 있는 동안에는 층 위에 한 겹을 더 덮는다. 완료는 덮지 않고 색으로 알린다.
       if (view.state === "away") layer.add(drawLayer(this, 0, 0, shape, { fill: COLOR.void, alpha: 0.62 }));
       const label = view.state === "away" ? `파견 중 · ${interactionRemainingLabel(view.remainingMs ?? 0)}` : "수령 대기";
-      layer.add(this.add.text(textX, 52, label, textStyle({ role: "emphasis", size: 28, color: view.state === "away" ? "#a8ddf5" : "#e0a83e" })).setOrigin(0, 0.5));
+      const text = this.add.text(textX, 52, label, textStyle({ role: "emphasis", size: 28, color: view.state === "away" ? "#a8ddf5" : "#e0a83e" })).setOrigin(0, 0.5);
+      layer.add(text);
+      // 시계는 이 줄 하나만 초마다 갈아 끼운다 — 층을 다시 만들면 원화까지 매초 새로 선다.
+      if (view.state === "away") this.remainingLabels[index] = text;
     }
 
     if (!locked) {
@@ -209,8 +269,11 @@ export class InteractionScene extends Phaser.Scene {
     this.cityPopup ??= new InteractionCityPopup(this, this.popups, interactionManager);
     this.journalPopup ??= new InteractionJournalPopup(this, this.popups, interactionManager);
     this.cityPopup.open(view, {
-      onChanged: () => { void interactionManager.refresh().then((response) => { this.serverNow = Date.parse(response.serverTime); this.drawLayers(); }); },
+      onChanged: () => { void interactionManager.refresh().then((response) => { this.syncClock(response.serverTime); this.drawLayers(); }); },
       onOpenJournal: (cityId) => this.journalPopup!.open(cityId),
+      // 쪽지의 시계도 씬이 서버와 맞춰 둔 같은 시각을 읽는다 — 두 곳이 따로 세면 층과 쪽지의
+      // 남은 시간이 어긋난다.
+      now: () => this.serverNow(),
     });
   }
 }

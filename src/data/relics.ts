@@ -874,6 +874,8 @@ export const RELICS: RelicDef[] = [
     ferocityTrait: {
       name: "야, 비켜!",
       effectId: "knockbackSlam",
+      // 폭주가 열리는 순간 배트가 이미 장전되어 있다 — 다음 한 방이 곧 헬멧을 울린다.
+      loadsStatusCycleOnEntry: true,
       seconds: 1.6,
       // 곡선을 그리며 굴러가는 것이 아니라 **따악 맞고 튀어 나가는** 속도다.
       speed: 2400,
@@ -891,7 +893,12 @@ export const RELICS: RelicDef[] = [
       value: 40,
       // 한 방에 들어올 수 있는 피해의 상한(최대 체력 %)이다. 이하의 타격은 그대로 다 맞는다.
       impactCapMaxHpPercent: 40,
-      desc: "한 방에 받는 피해가 최대 체력의 40%를 넘지 않는다.",
+      // 뇌진탕이 깎은 만큼을 안전모가 되받아 두른다. 큰 한 방은 상한이 누르고, 그 사이의
+      // 잔타는 이 막이 받는다.
+      concussionShieldPercent: 40,
+      // 평범한 적에게는 걸리지 않는 선이다. 체력이 무한한 불사 보스를 때릴 때만 막을 붙잡는다.
+      concussionShieldCapMaxHpPercent: 25,
+      desc: "한 방에 받는 피해가 최대 체력의 40%를 넘지 않는다. 뇌진탕이 입힌 피해의 40%만큼 보호막을 얻으며, 한 번에 두르는 보호막은 최대 체력의 25%를 넘지 않는다.",
     },
     basic: {
       id: "pachi-basic",
@@ -901,8 +908,8 @@ export const RELICS: RelicDef[] = [
       effectType: "physical",
       damageType: "physical",
       targeting: "single",
-      // 네 번째 배트가 헬멧을 울린다. 확정 치명타(periodicCritical)와 달리 부가 효과의 주기다.
-      statusEffectEvery: 4,
+      // 세 번째 배트가 헬멧을 울린다. 확정 치명타(periodicCritical)와 달리 부가 효과의 주기다.
+      statusEffectEvery: 3,
       statusEffects: [
         { kind: "stun", seconds: 1 },
         { kind: "concussion", maxHpPercent: 5, criticalMaxHpPercent: 15 },

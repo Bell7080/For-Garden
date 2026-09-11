@@ -3,9 +3,24 @@ import { startAfterOpening } from "./openingSave";
 import { canvasBox, captureGame, gamePoint, tap, tapUntil } from "./canvasInput";
 import { ExpeditionManager } from "../../src/managers/ExpeditionManager";
 import { expeditionNodePosition, focusExpeditionFloor } from "../../src/ui/expeditionLayout";
+import { BACK_BUTTON_SIZE, popupBackButtonSpot } from "../../src/ui/popupGeometry";
 
 const BASE_WIDTH = 1080;
 const BASE_HEIGHT = 1920;
+
+/**
+ * 큰 작업판의 우하단 뒤로가기를 누를 자리.
+ *
+ * 좌표를 손으로 적지 않는다 — 판의 깎인 모서리에서 나오는 값이라, 여기 박아 두면 배치를 고칠
+ * 때 화면은 멀쩡한데 이 스펙만 엉뚱한 곳을 누른다.
+ */
+function popupBackPoint(width: number, height: number): { x: number; y: number } {
+  const spot = popupBackButtonSpot(width, height, BACK_BUTTON_SIZE);
+  return { x: BASE_WIDTH / 2 + spot.x, y: BASE_HEIGHT / 2 + spot.y };
+}
+
+/** 원정 주간 기록 판은 화면에서 사방 여백만 남기고 열린다. */
+const RANKING_BACK = popupBackPoint(BASE_WIDTH - 100, BASE_HEIGHT - 180);
 
 /** 기준 게임 좌표를 누른다. 실제 입력은 공용 `canvasInput`이 맡는다. */
 const tapGame = tap;
@@ -184,13 +199,13 @@ test("출격 선택판에서 원정대 3기를 골라 진행 중 상태로 저�
   await page.waitForTimeout(700);
   await captureGame(page, `test-results/${test.info().project.name}-expedition-ranking-popup.png`);
   // 닫힌 팝업의 우하단 공용 뒤로가기로 기록 화면에 복귀한다.
-  await tapGame(page, 918, 1758);
+  await tapGame(page, RANKING_BACK.x, RANKING_BACK.y);
   await page.waitForTimeout(500);
   await tapGame(page, 717, 1610);
   await page.waitForTimeout(700);
   await captureGame(page, `test-results/${test.info().project.name}-expedition-reward-popup.png`);
-  // 주간 보상 팝업도 공용 뒤로가기로 닫아 편성 전환 입력을 가리지 않게 한다.
-  await tapGame(page, 918, 1758);
+  // 기록 보상 판은 고를 것이 없는 읽기 판이라 판 바깥을 눌러 닫는다.
+  await tapGame(page, RANKING_BACK.x, RANKING_BACK.y);
   await page.waitForTimeout(500);
 
   // 하단 출격 버튼이 편성 단계를 연다. 씬 재시작과 SD 로딩을 기다린 뒤 카드를 누른다.

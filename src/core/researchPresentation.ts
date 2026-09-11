@@ -1,12 +1,47 @@
-import type { ResearchGrade } from "./gacha";
+import type { QuantityRewardKind, ResearchGrade } from "./gacha";
+import type { RelicRarity } from "./types";
 import type { PullResultDto } from "../api/contracts";
 
 /**
  * 서버 확정 뒤 재생되는 연구소 획득 연구의 연출 순서. 결과 화면 전에는 카드 내용을 노출하지 않는다.
  * CLAUDE.md의 용어 경계에 따라 이 런타임 전용 단계는 배치형 자원 `idleExcavation`과 이름을 공유하지 않는다.
+ *
+ * `chips`는 뒤집힌 칸이 깔린 결과판이고 `cards`는 그 칸이 전부 열린 상태다. **첫 대면은 단계가
+ * 아니다** — 새로 만난 렐릭이 든 칸을 여는 그 순간의 연출이라, 자동으로 흘러가는 이 목록에
+ * 끼우면 어느 칸에서 나왔는지와 무관하게 먼저 재생되어 칸을 열 이유가 사라진다.
  */
-export const RESEARCH_PRESENTATION_STAGES = ["research", "crack", "rarityReveal", "firstMeeting", "cards"] as const;
+export const RESEARCH_PRESENTATION_STAGES = ["research", "crack", "rarityReveal", "chips", "cards"] as const;
 export type ResearchPresentationStage = typeof RESEARCH_PRESENTATION_STAGES[number];
+
+/**
+ * 결과판의 칸 하나가 보여 주는 것.
+ *
+ * 뒤집힌 칸의 색은 `grade`가 정하고, 열었을 때 서는 것은 `kind`가 정한다 — 새로 만난 렐릭만
+ * 카드로 서고 나머지는 전부 같은 액자 한 장이다. 렐릭 정의를 직접 읽지 않는 이유는 이 규칙이
+ * 데이터 표가 늘어도 그대로여야 하기 때문이다.
+ */
+export type ResearchSlotView =
+  | { kind: "relic"; relicId: string; grade: RelicRarity }
+  | { kind: "fragment"; relicId: string; amount: number; grade: RelicRarity }
+  | { kind: "dna"; amount: number; grade: "GRAY" }
+  | { kind: "currency"; currency: QuantityRewardKind; amount: number; grade: "GRAY" };
+
+/** 서버 슬롯을 결과판이 그대로 그릴 수 있는 표시 계약으로 바꾼다. 순서는 추첨 순서 그대로다. */
+export function researchSlotViews(
+  results: readonly PullResultDto[],
+  rarityOf: (relicId: string) => RelicRarity,
+): ResearchSlotView[] {
+  return results.map((result) => {
+    if (result.type === "currency") {
+      return { kind: "currency", currency: result.currency, amount: result.amount, grade: "GRAY" } as const;
+    }
+    const grade = rarityOf(result.relicId);
+    if (result.kind === "new") return { kind: "relic", relicId: result.relicId, grade } as const;
+    // 별 다섯에 닿은 개체의 중복만 공용 DNA 조각이 된다. 그 칸은 개체가 아니라 재화를 말한다.
+    if (result.kind === "overflow") return { kind: "dna", amount: result.overflowFragments, grade: "GRAY" } as const;
+    return { kind: "fragment", relicId: result.relicId, amount: result.fragments, grade } as const;
+  });
+}
 
 const RARITY_WEIGHT: Record<ResearchGrade, number> = { GRAY: 0, R: 1, SR: 2, SSR: 3 };
 

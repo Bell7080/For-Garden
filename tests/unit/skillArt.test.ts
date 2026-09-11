@@ -893,19 +893,22 @@ describe("파치 스킬 표시 계약", () => {
 
   it("의 패시브는 상한 하나만 말한다", () => {
     const def = pachi();
-    // 아무리 센 공격이든 세 대는 버틴다는 것이 이 패시브의 전부다.
+    // 아무리 센 공격이든 세 대는 버틴다는 것, 그리고 그 사이의 잔타를 받아 내는 막이 이 패시브의
+    // 전부다. 막의 크기는 맞은 쪽 최대 체력에서 나오는 값이라 미리 환산하지 못해 %로 남는다.
     expect(passiveDescription(def.passive, def.stats.atk)).toBe(
-      "한 번에 받는 피해가 최대 체력의 40%를 넘지 않는다.",
+      "한 번에 받는 피해가 최대 체력의 40%를 넘지 않는다."
+      + " [[concussion|뇌진탕]]이 입힌 피해의 40%만큼 보호막을 얻는다."
+      + " 한 번에 두르는 보호막은 최대 체력의 25%를 넘지 않는다.",
     );
   });
 
-  it("의 기본 공격은 네 번째 타격에만 걸린다는 사실을 본문이 말한다", () => {
+  it("의 기본 공격은 세 번째 타격에만 걸린다는 사실을 본문이 말한다", () => {
     const def = pachi();
-    expect(def.basic.statusEffectEvery).toBe(4);
+    expect(def.basic.statusEffectEvery).toBe(3);
     // 뇌진탕의 수치와 치명타 배증은 태그가 말하므로 본문이 되풀이하지 않는다.
     // 기절은 뇌진탕과 같은 타격에 함께 걸리므로 문장을 끊지 않고 이어 붙인다.
     expect(skillDescription(def.basic, { damage: 118 })).toBe(
-      "적 한 명에게 [[damage-value|118]]의 [[physical-damage|물리 피해]]를 준다. 매 4번째 공격마다 [[concussion|뇌진탕]]을 입히고 1초 동안 [[stun|기절]]시킨다.",
+      "적 한 명에게 [[damage-value|118]]의 [[physical-damage|물리 피해]]를 준다. 매 3번째 공격마다 [[concussion|뇌진탕]]을 입히고 1초 동안 [[stun|기절]]시킨다.",
     );
   });
 
@@ -923,7 +926,9 @@ describe("파치 스킬 표시 계약", () => {
     // 둘 다 플레이어의 다음 조작을 바꾸지 않는다 — 날아가는 그림이 곧 그 답이고, 무엇을 못
     // 하는지는 태그가 말한다.
     expect(ferocityTraitDescription(trait)).toBe(
-      "[[concussion|뇌진탕]]이 확정 치명타가 되고, 그 적을 [[knockback|날려버린다]]. 날려버린 뒤에는 가장 가까운 적을 표적으로 다시 지정한다.",
+      "폭주에 들어가면 [[concussion|뇌진탕]]이 곧바로 장전된다."
+      + " [[concussion|뇌진탕]]이 확정 치명타가 되고, 그 적을 [[knockback|날려버린다]]."
+      + " 날려버린 뒤에는 가장 가까운 적을 표적으로 다시 지정한다.",
     );
   });
 

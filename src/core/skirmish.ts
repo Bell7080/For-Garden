@@ -5050,9 +5050,14 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     // 폭주 중 때리기를 놓는 개체는 여기서 손을 멈춘다 — 게이지도 야성도 오르지 않고, 그래서
     // 이 개체의 짧은 도발도 함께 멈춘다. 그 대가가 매초 흩뿌려지는 낙서다.
     if (fighter.attackCooldown <= 0 && !feverKeepsRunning) {
-      // 아군 궁극기는 자동으로 나가지 않는다. 화면에서 누를 때만 fireUltimate로 들어온다.
-      // 적 자동 궁극기도 수동 입력과 같은 생존·기절·게이지 코어 규칙을 통과한다.
-      const firedUltimate = fighter.side === "enemy" && canFireUltimate(state, fighter);
+      /*
+       * 아군 궁극기는 자동으로 나가지 않는다. 화면에서 누를 때만 `fireUltimate`로 들어온다.
+       *
+       * **귀속 소환수는 예외다** — 화면에 그 버튼이 없으므로 여기서 나가지 않으면 자기 게이지를
+       * 가득 채우고도 영영 쓰지 못한다. 자동 궁극기 설정은 플레이어가 누를 수 있는 몸의
+       * 이야기라 늑대의 행동을 끄지 않는다. 적 자동 궁극기와 같은 생존·기절·게이지 규칙을 지난다.
+       */
+      const firedUltimate = (fighter.side === "enemy" || fighter.summonOwnerId !== null) && canFireUltimate(state, fighter);
       // 합공은 한 행동에 두 축을 함께 내므로 단일 타격 경로를 지나지 않는다.
       if (fighter.def.basic.dualStrike) packStrike(fighter, target, state, events, firedUltimate);
       else strike(fighter, target, rng, state, events, firedUltimate);

@@ -10,6 +10,7 @@ import {
   createSkirmish,
   fireUltimate,
   isFighterAlive,
+  isPartyFighter,
   renderPose,
   stepSkirmish,
   teamHp,
@@ -625,7 +626,7 @@ export class BattleScene extends Phaser.Scene {
       bottomAlpha: 0.9,
     });
     drawHairline(this, BASE_WIDTH / 2, PROFILE_TOP + 20, BASE_WIDTH, { color: COLOR.accent, alpha: 0.2 });
-    this.playerFighters().forEach((fighter, index) => {
+    this.partyFighters().forEach((fighter, index) => {
       const x = 190 + index * 350;
       // 세 화면은 같은 프리팹을 쓰며 전투 씬은 실시간 입력만 연결한다.
       const prefab = new BattleProfile(this, x, 1620, {
@@ -809,6 +810,16 @@ export class BattleScene extends Phaser.Scene {
   }
 
   /**
+   * 편성 칸에 선 아군만.
+   *
+   * 귀속 소환수도 같은 배열에 있지만 **편성 칸이 아니다** — 프로필 줄·기여도 그래프·결과
+   * 정산은 칸 수만큼만 세워야 한다. 늑대 몫은 성장 주체인 지휘자 줄에 이미 합쳐져 있다.
+   */
+  private partyFighters(): Fighter[] {
+    return this.playerFighters().filter(isPartyFighter);
+  }
+
+  /**
    * 매 프레임 시뮬레이션을 굴리고 그 결과만 화면에 옮긴다.
    *
    * 프레임 간격이 아니라 실제 시계로 시간을 흘린다. Phaser가 넘겨주는 delta는 평활화를 거쳐
@@ -887,10 +898,14 @@ export class BattleScene extends Phaser.Scene {
     this.contributionPanel.update({ category: this.contributionCategory, rows: battleContributionSnapshot(this.state, this.contributionCategory) });
   }
 
-  /** 자동 모드에서는 살아 있고 준비된 아군을 편성 순서대로 한 번씩 발동한다. */
+  /**
+   * 자동 모드에서는 살아 있고 준비된 아군을 편성 순서대로 한 번씩 발동한다.
+   *
+   * 귀속 소환수는 여기서 빠진다 — 자동 설정과 무관하게 코어가 제 게이지로 알아서 쓴다.
+   */
   private fireReadyUltimates(): void {
     if (this.ultimateSequenceActive) return;
-    for (const fighter of this.playerFighters()) {
+    for (const fighter of this.partyFighters()) {
       if (!canFireUltimate(this.state, fighter)) continue;
       enqueueUltimate(this.ultimateSequence, fighter.id);
     }
@@ -1636,9 +1651,9 @@ export class BattleScene extends Phaser.Scene {
       phase: this.state.phase,
       elapsed: Math.round(this.state.elapsed * 10) / 10,
       playerOrder: aliveFighters(this.state, "player").map((fighter) => fighter.def.name),
-      ultimateReady: this.playerFighters().filter((fighter) => canFireUltimate(this.state, fighter)).map((fighter) => fighter.def.name),
+      ultimateReady: this.partyFighters().filter((fighter) => canFireUltimate(this.state, fighter)).map((fighter) => fighter.def.name),
       // 렉시아의 치우친 얼굴과 스피나의 큰 돌출 머리를 같은 프레임에서 고정할 수 있게 읽기만 노출한다.
-      chargeRatios: this.playerFighters().map((fighter) => Math.min(1, fighter.energy / fighter.def.ultimate.cost)),
+      chargeRatios: this.partyFighters().map((fighter) => Math.min(1, fighter.energy / fighter.def.ultimate.cost)),
       playerHp: teamHp(this.state, "player"),
       enemyHp: teamHp(this.state, "enemy"),
       speed: this.battleSpeed,
@@ -1669,7 +1684,7 @@ export class BattleScene extends Phaser.Scene {
     if (this.finished) return;
     this.finished = true;
     // 비동기 정산보다 먼저 아군 세 분류를 깊은 복사해 이후 state 사망 연출·HP 변경과 분리한다.
-    const fighters = this.state.fighters.filter(({ side }) => side === "player").map((fighter, formationOrder) => ({
+    const fighters = this.partyFighters().map((fighter, formationOrder) => ({
       id: fighter.id, formationOrder, name: fighter.def.name, portraitId: fighter.def.id,
     }));
     this.contributionResult = createBattleContributionResult(this.state.contributions, fighters, "player");

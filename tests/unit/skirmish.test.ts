@@ -109,6 +109,15 @@ describe("디안 무리 생명주기", () => {
     expect(state.fighters.filter(isPartyFighter).every(({ stealthFor }) => stealthFor === Number.POSITIVE_INFINITY)).toBe(true);
   });
 
+  it("은 정산 장부에도 결과 줄에도 늑대의 빈 줄을 만들지 않는다", () => {
+    const state = createSkirmish([getRelic("dian")], [getRelic("amo")], ARENA);
+    // 장부는 편성 칸으로만 열린다 — 0으로 채워진 줄도 그래프에서는 한 칸을 차지한다.
+    expect(Object.keys(state.contributions)).toEqual(["player-0", "enemy-0"]);
+    for (const category of ["attack", "defense", "healing"] as const) {
+      expect(battleContributionSnapshot(state, category).map(({ fighterId }) => fighterId)).toEqual(["player-0"]);
+    }
+  });
+
   it("은 늑대를 지휘자의 등 뒤에 세워 첫 표적이 되지 않게 한다", () => {
     const state = createSkirmish([getRelic("dian")], [getRelic("amo")], ARENA);
     const dian = state.fighters[0];

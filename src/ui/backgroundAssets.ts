@@ -40,6 +40,11 @@ export const BACKGROUND = {
   /** 레이드 진입 화면 배경이다(Content5_001background). */
   sortieRaid: "background-sortie-raid",
   /**
+   * 복제인간 연구 도시 **도플**의 중앙 응접실이다. 교류 첫 창구가 쓰는 가로 원화이며,
+   * 화면 배경이 아니라 층 버튼과 도시 쪽지 안에서 `coverCrop`으로 잘려 들어간다.
+   */
+  interactionDoppelParlor: "background-interaction-doppel-parlor",
+  /**
    * 타이틀(로딩) 화면 전용 원화다. 화면 자체가 로딩 화면이라 다른 배경처럼 이 표의
    * `BACKGROUND_ASSETS`(로딩 단계 안에서 읽힘)로 적재할 수 없다 — `TitleScene`이
    * 씬 진입 직후 이 키로 직접 읽는다.
@@ -81,6 +86,8 @@ export const BACKGROUND_ASSETS = [
   [BACKGROUND.sortieCake, "sprites/content/Content3_001background.webp"],
   [BACKGROUND.sortieBounty, "sprites/content/Content4_001background.webp"],
   [BACKGROUND.sortieRaid, "sprites/content/Content5_001background.webp"],
+  // 교류 도시 원화는 세로 화면 배경이 아니라 판 안에 잘려 들어가는 가로 그림이다.
+  [BACKGROUND.interactionDoppelParlor, "sprites/background/background_012.webp"],
   // 타이틀은 TitleScene이 직접 먼저 읽지만(그 화면이 곧 로딩 화면이다) 경로가 이 표에 있어야
   // 로비로 넘어간 뒤 25MB를 내리고, 되돌아왔을 때 다시 읽을 수 있다.
   [BACKGROUND.title, "sprites/background/background_011.webp"],

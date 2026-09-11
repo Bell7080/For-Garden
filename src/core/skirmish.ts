@@ -981,7 +981,7 @@ function createPackFighters(owners: readonly Fighter[], augmentEffects: readonly
     const forward = owner.side === "player" ? -1 : 1;
     const x = owner.x + (index % 2 === 0 ? -70 : 70);
     const y = owner.y + forward * 90;
-    const wolf = makeFighter({ ...spec.def, stats }, owner.side, index, x, y, 0, 0, 1, augmentEffects);
+    const wolf = makeFighter({ ...spec.def, stats }, owner.side, index, x, y, 0, 0, spec.bodyScale ?? 1, augmentEffects);
     // 편성 칸의 ID와 겹치지 않도록 주인 ID를 이름공간으로 쓴다. 기여도가 이 형태를 읽는다.
     wolf.id = `${owner.id}:${spec.def.id}`;
     wolf.summonOwnerId = owner.id;

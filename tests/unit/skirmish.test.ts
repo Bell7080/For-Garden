@@ -107,6 +107,15 @@ describe("디안 무리 생명주기", () => {
     expect(state.fighters.filter(isPartyFighter).map(({ id }) => id)).toEqual(["player-0", "enemy-0"]);
     // 두 늑대가 모두 서 있는 시작 프레임부터 양쪽 디안은 단일 추적에서 숨는다.
     expect(state.fighters.filter(isPartyFighter).every(({ stealthFor }) => stealthFor === Number.POSITIVE_INFINITY)).toBe(true);
+    /*
+     * **몸은 같아도 키는 지휘자보다 낮다.**
+     *
+     * 표시 배율을 계약이 아니라 화면이 정하면 늑대를 세우는 곳마다 다시 골라야 하고, 편성원과
+     * 같은 키로 서는 순간 네발짐승은 폭만 남아 뚱뚱해 보인다. 그 값이 데이터에 있는지만 본다.
+     */
+    for (const wolf of wolvesOf(state, "player-0")) {
+      expect(wolf.bodyScale, wolf.def.name).toBeLessThan(state.fighters[0].bodyScale);
+    }
   });
 
   it("은 정산 장부에도 결과 줄에도 늑대의 빈 줄을 만들지 않는다", () => {

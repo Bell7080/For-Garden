@@ -2413,12 +2413,16 @@ export const RELICS: RelicDef[] = [
         def: KURO_DEF, growthStat: "atk",
         // 정의의 태생 능력치가 그대로 나오도록 디안의 태생 공격력 160을 기준으로 잰 계수다.
         scaling: { hp: 4.40, atk: 0.99, def: 0.35, res: 0.35, attackSpeed: 0.65, moveSpeed: 0.68, attackSpeedCap: 150, moveSpeedCap: 150 },
+        // 편성원과 같은 키로 세우면 사람만 한 늑대가 되어 폭만 남는다. 둘은 지휘자보다 낮게 선다.
+        bodyScale: 0.78,
         // 쓰러진 뒤 긴 공백을 남기고 불완전한 체력으로 돌아와 늑대를 소모품처럼 던질 수 없게 한다.
         resummon: { enabled: true, cooldownSeconds: 20, hpPercent: 40 },
       },
       {
         def: SHIRO_DEF, growthStat: "ap",
         scaling: { hp: 4.45, atk: 0.98, def: 0.37, res: 0.39, attackSpeed: 0.61, moveSpeed: 0.63, attackSpeedCap: 140, moveSpeedCap: 145 },
+        // 같은 몸집으로 읽혀야 하는 한 쌍이라 털색만 다른 쿠로와 같은 배율을 쓴다.
+        bodyScale: 0.78,
         resummon: { enabled: true, cooldownSeconds: 20, hpPercent: 40 },
       },
     ],

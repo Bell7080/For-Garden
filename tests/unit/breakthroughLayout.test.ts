@@ -11,6 +11,9 @@ import { BREAKTHROUGH_STEPS } from "../../src/core/relicProgression";
 import { breakthroughEffectText } from "../../src/ui/skillPresentation";
 import { getRelic } from "../../src/data/relics";
 
+/** `info.ts`는 Phaser를 들여오므로 node 환경에서는 소스 문자열로만 읽는다. */
+const INFO_SOURCE = Object.values(import.meta.glob("../../src/ui/info.ts", { query: "?raw", import: "default", eager: true }) as Record<string, string>)[0];
+
 const LAYOUT = breakthroughStepsLayout(BREAKTHROUGH_STEPS.length);
 
 describe("한계 돌파 표", () => {
@@ -102,5 +105,51 @@ describe("한계 돌파 확정 창", () => {
   it("은 두 창이 같은 별 수를 말한다", () => {
     // 표의 줄 수와 확정 창이 뚫는 단계 수가 갈리면 한 창에만 있는 별이 생긴다.
     expect(LAYOUT.rows).toHaveLength(BREAKTHROUGH_STEPS.length);
+  });
+});
+
+describe("한계 돌파 표의 열림 표시", () => {
+  const { reached, locked } = BREAK_STEPS.tone;
+
+  /** 24비트 색의 대략적인 밝기. 두 결의 면을 견줄 때만 쓴다. */
+  function luminance(color: number): number {
+    return 0.2126 * ((color >> 16) & 0xff) + 0.7152 * ((color >> 8) & 0xff) + 0.0722 * (color & 0xff);
+  }
+
+  it("은 아직 안 열린 줄도 또렷하게 읽힌다", () => {
+    // 별 하나로 시작하는 개체는 **네 줄이 모두** 안 열린 줄이다. 어둡게 누르면 이 창을 처음
+    // 여는 사람이 캄캄한 판 넷을 본다 — 예전에는 면이 0.7, 윗선이 0.2, 액자가 0.42였다.
+    expect(locked.alpha).toBeGreaterThanOrEqual(0.9);
+    expect(locked.edgeAlpha).toBeGreaterThanOrEqual(0.4);
+    expect(BREAK_STEPS.lockedIconAlpha).toBeGreaterThanOrEqual(0.8);
+  });
+
+  it("은 두 줄의 면 진하기가 거의 같다", () => {
+    // 가르는 것은 밝기가 아니라 결이다. 면 진하기까지 벌리면 안 열린 줄이 다시 가라앉는다.
+    expect(Math.abs(reached.alpha - locked.alpha)).toBeLessThanOrEqual(0.05);
+  });
+
+  it("은 열린 줄이 따뜻하고 안 열린 줄이 차갑다", () => {
+    const warm = (color: number): number => ((color >> 16) & 0xff) - (color & 0xff);
+    // 열린 줄은 붉은빛이 파란빛보다 세고(호박), 안 열린 줄은 그 반대(남색)다.
+    expect(warm(reached.fill)).toBeGreaterThan(0);
+    expect(warm(locked.fill)).toBeLessThan(0);
+  });
+
+  it("은 안 열린 줄의 면이 캄캄하지 않다", () => {
+    // 예전 면(0x121820)보다 밝아야 그 위의 흰 글자가 판에서 떠오른다.
+    expect(luminance(locked.fill)).toBeGreaterThan(luminance(0x121820));
+  });
+
+  it("은 어디까지 왔는지를 별 표식이 말한다", () => {
+    // 글과 그림을 누르지 않는 대신 이 표식만 흐려진다.
+    expect(locked.star).toBeLessThan(reached.star);
+    expect(reached.star).toBe(1);
+  });
+
+  it("은 설명을 두 줄 다 같은 잉크로 적는다", () => {
+    // 어느 쪽이든 읽으러 온 내용이라 안 열린 줄의 설명도 흐리게 적지 않는다.
+    expect(INFO_SOURCE).toContain("color: COLOR.ink, wrap: layout.textWrap");
+    expect(INFO_SOURCE).not.toContain("reached ? COLOR.ink : COLOR.inkDim");
   });
 });

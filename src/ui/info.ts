@@ -1514,15 +1514,20 @@ export class InfoManager {
         const star = index + 2;
         const y = top + layout.rows[index];
         const reached = stars >= star;
+        // 열린 줄과 안 열린 줄을 **밝기가 아니라 결**로 가른다(`BREAK_STEPS.tone` 주석 참고).
+        // 별 하나로 시작하는 개체는 네 줄이 모두 안 열린 줄이라, 어둡게 누르면 이 창을 처음
+        // 여는 사람이 캄캄한 판 넷을 본다.
+        const tone = reached ? BREAK_STEPS.tone.reached : BREAK_STEPS.tone.locked;
         body.add(drawLayer(this.scene, 0, y, slantedRect(layout.rowWidth, BREAK_STEPS.row.height, 16), {
-          fill: reached ? 0x2a2418 : 0x121820,
-          alpha: reached ? 0.95 : 0.7,
+          fill: tone.fill,
+          alpha: tone.alpha,
           edge: COLOR.accent,
-          edgeAlpha: reached ? 0.9 : 0.2,
+          edgeAlpha: tone.edgeAlpha,
         }));
         const mark = this.scene.add.container(BREAK_STEPS.star.x, y);
         addStarMark(this.scene, mark, 0, 0, BREAK_STEPS.star.size, star);
-        mark.setAlpha(reached ? 1 : 0.45);
+        // "어디까지 왔는가"는 별이 맡는다 — 글과 그림을 누르지 않는 대신 이 표식만 흐려진다.
+        mark.setAlpha(tone.star);
         body.add(mark);
         // **어느 기술이 열리는지는 그 기술의 액자가 말한다.** 정보창 아래 네 칸과 같은 프리팹을
         // 써서 같은 그림·같은 이름으로 서므로, 표를 읽다가 "이게 뭐였지"로 돌아가지 않는다.
@@ -1534,7 +1539,8 @@ export class InfoManager {
           element: def.element,
           role: def.role,
           label: SKILL_SLOT_LABEL[entry.slot],
-          dimmed: !reached,
+          // 액자는 그 줄의 주제라 안 열린 줄에서도 어느 기술인지 알아볼 수 있어야 한다.
+          dimAlpha: reached ? undefined : BREAK_STEPS.lockedIconAlpha,
         });
         icon.setPosition(BREAK_STEPS.icon.x, y);
         body.add(icon);
@@ -1542,7 +1548,7 @@ export class InfoManager {
         // 아직 설계하지 않은 개체는 어느 슬롯이 열리는지만 말한다.
         const opens = breakthroughEffectText(def, entry.slot) ?? BREAKTHROUGH_SLOT_LABEL[entry.slot];
         body.add(this.scene.add
-          .text(BREAK_STEPS.textX, y, opens, textStyle({ role: "body", size: BREAK_STEPS.textSize, color: reached ? COLOR.ink : COLOR.inkDim, wrap: layout.textWrap, lineSpacing: 8 }))
+          .text(BREAK_STEPS.textX, y, opens, textStyle({ role: "body", size: BREAK_STEPS.textSize, color: COLOR.ink, wrap: layout.textWrap, lineSpacing: 8 }))
           .setOrigin(0, 0.5));
       });
     });

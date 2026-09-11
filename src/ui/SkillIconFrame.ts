@@ -32,8 +32,13 @@ export interface SkillIconFrameOptions {
   label?: string;
   /** 이 칸이 화면에서 가장 중요한 하나인지. 테두리와 글자가 강조색을 얻는다. */
   emphasis?: boolean;
-  /** 아직 열리지 않은 칸. 그림과 글자가 함께 흐려진다. */
-  dimmed?: boolean;
+  /**
+   * 아직 열리지 않은 칸의 진하기. 비우면 흐리지 않는다.
+   *
+   * `boolean`이 아니라 **값**으로 받는다 — 얼마나 흐릴지는 그 화면이 무엇을 읽히려 하는지에
+   * 달렸고, 한 값으로 못 박으면 액자가 주제인 자리(돌파 표)에서 그림을 알아볼 수 없다.
+   */
+  dimAlpha?: number;
 }
 
 /** 슬롯의 짧은 이름. 정보창 아이콘과 돌파 표가 같은 말을 쓰도록 한 표만 둔다. */
@@ -46,7 +51,7 @@ export const SKILL_SLOT_LABEL: Readonly<Record<SkillArtSlot, string>> = {
 
 /** 액자 한 장을 만들어 컨테이너로 돌려준다. 부른 쪽이 자리를 잡고 입력을 붙인다. */
 export function addSkillIconFrame(scene: Phaser.Scene, options: SkillIconFrameOptions): Phaser.GameObjects.Container {
-  const { size, emphasis = false, dimmed = false } = options;
+  const { size, emphasis = false } = options;
   const frame = scene.add.container(0, 0);
   const tint = skillArtTint(options.element, options.role);
   const chip = chipPoints(size, size, {
@@ -88,7 +93,7 @@ export function addSkillIconFrame(scene: Phaser.Scene, options: SkillIconFrameOp
   }
   // 액자 테두리. 채운 판 위에 한 줄을 얹어 배경 원화와 확실히 갈라 놓는다.
   frame.add(drawShapeOutline(scene, 0, 0, chip, { color: COLOR.accent, alpha: emphasis ? 0.75 : 0.42, width: 3 }));
-  if (dimmed) frame.setAlpha(SKILL_ICON_FRAME.dimAlpha);
+  if (options.dimAlpha !== undefined) frame.setAlpha(options.dimAlpha);
   return frame;
 }
 
@@ -108,8 +113,6 @@ const SKILL_ICON_FRAME = {
   labelRatio: 0.167,
   artRatio: 0.74,
   iconRatio: 0.52,
-  /** 아직 열리지 않은 칸의 진하기. */
-  dimAlpha: 0.42,
 } as const;
 
 export { SKILL_ICON_FRAME };

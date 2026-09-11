@@ -313,12 +313,20 @@ function passiveHead(passive: Passive, atk?: number): string {
   if (passive.kind === "summonCommander") {
     const crit = passive.criticalChancePercent;
     const guard = crit === undefined
-      ? `[[stealth|은신]]해 단일 대상 공격의 표적이 되지 않는다.`
-      : `[[stealth|은신]]해 단일 대상 공격의 표적이 되지 않고, 무리 전체의 치명타 확률이 ${crit}% 오른다.`;
+      ? `[[stealth|은신]]해 단일 표적 공격의 표적에서 빠진다.`
+      : `[[stealth|은신]]해 단일 표적 공격의 표적에서 빠지고, 무리 전체의 치명타 확률이 ${crit}% 오른다.`;
+    /*
+     * **혼자 남는 순간을 본문이 직접 말한다.**
+     *
+     * 조건절만 읽고 그 반대를 알아서 뒤집으라고 두면 "늑대가 없어도 계속 숨어 있다"로 읽힌다 —
+     * 실제로는 그 프레임에 은신이 풀려 지휘자가 그대로 맞는 몸이 되고, 그것이 이 편성이 파는
+     * 값이다. 주어가 달라지는 절이라 제 문장으로 세운다.
+     */
+    const exposed = ` 한 마리라도 쓰러지면 은신이 풀려 다시 표적이 된다.`;
     // 피 냄새의 겹당 수치와 상한은 태그가 말한다. 여기서는 **언제 얻는가**만 적는다.
     const scent = passive.bloodscent === undefined ? "" : ` 표적이 쓰러지거나 [[nape|목덜미]]가 들어갈 때마다 [[bloodscent|피 냄새]]를 한 겹 얻는다.`;
     return `전투 시작 시 [[summon-kuro|쿠로]]와 [[summon-shiro|시로]]를 소환하고, 두 늑대가 확인한 적 중 전투력이 가장 높은 하나를 무리의 첫 표적으로 삼는다.`
-      + ` 둘이 모두 살아 있는 동안 ${guard}${scent}`;
+      + ` 둘이 모두 살아 있는 동안 ${guard}${exposed}${scent}`;
   }
   if (passive.kind === "followHighestAttackAllyTarget") return `전투 시작 시 아군 중 공격력이 가장 높은 렐릭이 표적으로 삼은 적을 함께 표적으로 삼는다.`;
   if (passive.kind === "basicHitAttackSpeedStack") return `[[basic-attack|기본 공격]]이 실제 적중할 때마다 이번 전투 동안 [[attack-speed|공격 속도]]가 ${passive.value} 증가한다.`;

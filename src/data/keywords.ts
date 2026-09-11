@@ -182,7 +182,7 @@ export const KEYWORDS: readonly KeywordDef[] = [
   },
   {
     id: "stealth", term: "은신", kind: "버프",
-    description: "지속되는 동안 적의 단일 대상 선택에서 제외된다. 시간이 끝나면 다시 대상으로 선택될 수 있다.",
+    description: "지속되는 동안 적의 단일 표적 공격이 고르는 표적에서 빠진다. 은신이 풀리면 다시 표적이 된다.",
   },
   {
     id: "transfer", term: "전이", kind: "규칙",

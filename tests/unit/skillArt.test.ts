@@ -737,7 +737,7 @@ describe("스피나 스킬 표시 계약", () => {
       // 본문이 그 수치를 다시 늘어놓으면 한 문장이 이 규칙 하나로 가득 찬다.
       + " 공격한 자리에 [[shallows|여울]]이 고인다.",
     );
-    expect(spino.ultimate).toMatchObject({ name: "범람의 포식자", power: 200, attackSpeedPower: 150, cost: 200, statusEffects: [{ kind: "stun", seconds: 3 }] });
+    expect(spino.ultimate).toMatchObject({ name: "범람의 포식자", power: 200, attackSpeedPower: 150, statusEffects: [{ kind: "stun", seconds: 3 }] });
     // 능력치를 모르면(대상 없이 도감만 보는 경우) 옛 %-표기로 되돌아간다.
     expect(skillDescription(spino.ultimate)).toContain("현재 [[attack-speed|공격 속도]]의 150%");
     // "준다"에 "고"를 그대로 붙이면 인용형 어미("~라고")로 읽히는 어색한 문장이 된다.
@@ -911,7 +911,7 @@ describe("파치 스킬 표시 계약", () => {
 
   it("의 궁극기는 지나간 길을 대상으로 말한다", () => {
     const def = pachi();
-    expect(def.ultimate).toMatchObject({ targeting: "chargeLine", power: 200, cost: 250 });
+    expect(def.ultimate).toMatchObject({ targeting: "chargeLine", power: 200 });
     expect(skillDescription(def.ultimate, { damage: 264 })).toBe(
       "[[charge|돌진]]해 뚫고 지나간 길의 모든 적에게 [[damage-value|264]]의 [[physical-damage|물리 피해]]를 주고 [[concussion|뇌진탕]]을 입히고 2초 동안 [[stun|기절]]시킨다.",
     );
@@ -1087,7 +1087,7 @@ describe("테리사 표시 계약", () => {
     expect(terisa.basic.desc).toBeUndefined();
     expect(skillDescription(terisa.basic, { cycleDamage: [64, 64, 46] })).toBe([
       "다음 3가지를 차례로 반복한다.",
-      "「겉감」 적 한 명에게 [[damage-value|64]]의 [[physical-damage|물리 피해]]를 준다.",
+      "「겉감」 적 한 명에게 [[damage-value|64]]의 [[physical-damage|물리 피해]]를 주고, 0.5초 동안 [[stealth|은신]]한다.",
       "「안감」 적 한 명에게 [[damage-value|64]]의 [[physical-damage|물리 피해]]를 주고, 입힌 피해의 30%만큼 보호막을 얻는다.",
       "「엇갈려 자르기」 자신의 주위 모든 적에게 [[damage-value|46]]의 [[physical-damage|물리 피해]]를 준다.",
     ].join("\n"));

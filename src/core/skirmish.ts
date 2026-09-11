@@ -1630,6 +1630,23 @@ function grantShieldAmount(provider: Fighter, target: Fighter, amount: number, e
   events.push({ kind: "shieldGranted", fighterId: target.id, providerId: provider.id, amount, remaining: target.shield.amount, effect: { tag: "shieldGain", intensity: 1 } });
 }
 
+/**
+ * 이번 걸음이 끝나는 순간 시전자가 잠깐 사라진다.
+ *
+ * **표적을 따로 끊지 않는다.** 저체력 소멸·피격 은신은 보고 있던 적의 어그로까지 지우지만,
+ * 표적 재지정이 이미 `stealthFor > 0`인 상대를 버리므로 짧은 걸음에는 그 한 줄이 필요 없다.
+ *
+ * 이 걸음의 값은 공짜가 아니다 — 사라진 0.5초 동안 적은 **다른 아군**을 때린다. 테리사에게
+ * 넣어 보니 본인 사망률은 90%에서 33%로 내려갔지만 긴 전투 팀 승률은 92%에서 74%로 떨어졌다.
+ * 앞에 선 몸이 주기적으로 빠지는 대가이므로, 새 개체에 이 필드를 줄 때는 그 몫이 어디로
+ * 넘어가는지 함께 잰다.
+ */
+function stealthAfterStep(attacker: Fighter, state: SkirmishState): void {
+  const seconds = currentBasicStep(attacker)?.selfStealthSeconds ?? 0;
+  if (seconds <= 0 || !isFighterAlive(attacker) || state.phase !== "fight") return;
+  attacker.stealthFor = Math.max(attacker.stealthFor, seconds);
+}
+
 /** 현재 HP **비율**이 가장 낮은 생존 아군. 자신도 후보이며 동률은 편성 순서로 확정한다. */
 function lowestHpRatioAlly(state: SkirmishState, side: Side): Fighter | undefined {
   return aliveFighters(state, side).reduce<Fighter | undefined>((chosen, fighter) =>
@@ -3799,6 +3816,7 @@ function strike(
   healFromDamage(dealt);
   if (!useUltimate) grantShieldFromDamage(attacker, dealt, events);
   if (!useUltimate) stitchSuture(attacker, targetHpBefore - target.hp, state, events);
+  if (!useUltimate) stealthAfterStep(attacker, state);
   // 단일 타격으로 들어와도 같은 계약이 돈다 — 경로가 갈리면 같은 기술이 대상 수에 따라 다른 일을 한다.
   shareShieldFromDamage(attacker, skill.allyShieldFromDamagePercent, targetHpBefore - target.hp, state, events);
   if (!useUltimate && attacker.def.basic.lowestHpAllyHealingFromDamagePercent !== undefined) {
@@ -4196,6 +4214,8 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     }
     state.log.push(`${attacker.def.name} → ${target.def.name} ${amount}`);
   }
+  // 광역 걸음도 같은 자리에서 사라진다 — 경로가 갈리면 같은 걸음이 대상 수에 따라 다른 일을 한다.
+  if (!useUltimate) stealthAfterStep(attacker, state);
   // 이 계약은 공격 스킬만 갖는다. 좁히지 않고 읽으면 지원 궁극기까지 같은 자리를 지나간다.
   shareShieldFromDamage(attacker, "allyShieldFromDamagePercent" in skill ? skill.allyShieldFromDamagePercent : undefined, sharedShieldSource, state, events);
   // 혼합 궁극기의 회복은 같은 원 경계(거리 <= 반경)를 공유하며 주문력 200% 같은 정적 계수를 읽는다.

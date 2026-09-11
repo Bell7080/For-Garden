@@ -460,7 +460,7 @@ export function allyHealPowerKeyword(percent: number, ap?: number): KeywordDef |
  * 필드(보호막 전환)까지 이 유니온이 함께 든다 — 그래야 걸음 하나를 설명할 때도 같은 절
  * 조립기를 그대로 지나간다.
  */
-export type DescribedSkill = Skill | BasicAttack | Ultimate | (BasicAttack & Pick<BasicAttackStep, "shieldFromDamagePercent" | "pull">);
+export type DescribedSkill = Skill | BasicAttack | Ultimate | (BasicAttack & Pick<BasicAttackStep, "shieldFromDamagePercent" | "selfStealthSeconds" | "pull">);
 
 export interface SkillDescriptionStats {
   /** 회복량을 실제 값으로 환산할 때 쓴다. */
@@ -640,6 +640,7 @@ export function skillDescription(
         statusEffects: step.statusEffects,
         damageHealingPercent: step.damageHealingPercent,
         shieldFromDamagePercent: step.shieldFromDamagePercent,
+        selfStealthSeconds: step.selfStealthSeconds,
         pull: step.pull,
       } as DescribedSkill;
       return `「${step.name}」 ${skillDescription(stepSkill, { ...stats, damage: stats.cycleDamage?.[index] })}`;
@@ -697,6 +698,10 @@ function skillEffectClauses(skill: DescribedSkill, stats: SkillDescriptionStats)
   }
   if ("shieldFromDamagePercent" in skill && skill.shieldFromDamagePercent !== undefined) {
     clauses.push({ text: `입힌 피해의 ${skill.shieldFromDamagePercent}%만큼 보호막을 얻는다`, joinWithComma: true });
+  }
+  if ("selfStealthSeconds" in skill && skill.selfStealthSeconds !== undefined) {
+    // 몇 초인지는 걸음마다 다를 수 있으므로 본문이 적는다 — 태그는 은신이 무엇인지만 말한다.
+    clauses.push({ text: `${skill.selfStealthSeconds}초 동안 [[stealth|은신]]한다`, joinWithComma: true });
   }
   if ("allyShieldFromDamagePercent" in skill && skill.allyShieldFromDamagePercent !== undefined) {
     // 나눠 갖는다는 말이 핵심이다 — 여럿을 함께 벨수록 한 명이 받는 몫이 커지는 것이 아니라

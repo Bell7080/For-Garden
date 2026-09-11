@@ -1,11 +1,11 @@
 import Phaser from "phaser";
 import type { PuppetCreature } from "../puppets/assets";
 import { BASE_WIDTH } from "../config/gameConfig";
-import { setDebugScene } from "../debug";
+import { setDebugResearchBoard, setDebugScene } from "../debug";
 import { gameApi } from "../api/FakeServer";
 import { GameApiError, type PullResultDto } from "../api/contracts";
 import { canPull, pullCost, type Banner, type ResearchGrade } from "../core/gacha";
-import { ResearchPresentationController, firstMeetingRelicIds, highestRarity } from "../core/researchPresentation";
+import { ResearchPresentationController, highestRarity, researchSlotViews } from "../core/researchPresentation";
 import { BANNERS } from "../data/banners";
 import { getRelic } from "../data/relics";
 import {
@@ -17,38 +17,26 @@ import { session } from "../state/session";
 import { BottomNav, NAV_TOP } from "../ui/BottomNav";
 import { Button } from "../ui/Button";
 import { TopBar } from "../ui/TopBar";
-import { drawLayer, drawRoundedLayer, HOLO, slantedRect } from "../ui/holo";
+import { drawLayer, drawRoundedLayer, HOLO, slantedRect, toPoints } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
-import { PortraitCard } from "../ui/PortraitCard";
-import { RewardFrame } from "../ui/RewardFrame";
-import { CURRENCY_ICON_BY_WALLET } from "../ui/currencyIcons";
+import { CRACK_BRANCHES, FOSSIL_CRACK, crackBranchPoints, fossilShards, shardPoints } from "../ui/fossilCrack";
+import { researchBoardLayout } from "../ui/researchBoardLayout";
+import { ResearchSlotTile } from "../ui/ResearchSlotTile";
 import { firstMeetingLine } from "../data/relicFirstMeetings";
 import { audioManager, type AudioScope } from "../managers/AudioManager";
-import { relicProgression } from "../managers/RelicProgressionManager";
 import { PopupLayer } from "../ui/PopupLayer";
 import { MileagePopup } from "../ui/MileagePopup";
 import { settingsManager } from "../managers/SettingsManager";
 import { colorAssistPolicy, excavationStageDuration } from "../core/settings";
 import { flashPolicy } from "../ui/signatureEffects";
 import { hasRareExcavationResult } from "../core/hapticPolicy";
-import { portraitGridFirstRowY } from "../ui/portraitGrid";
 
 /** 마일리지 상점 버튼의 황금빛. 다른 버튼과 갈라 놓아 "쌓아 두었다 쓰는 곳"임을 알린다. */
 const MILEAGE_EDGE = 0xf2c744;
 
 /** 배너 그림이 서는 바닥. */
 const BANNER_FLOOR = 1240;
-
-/** 10연 결과는 공용 카드의 돌출 머리까지 포함해 서로 겹치지 않는 2×5 규격으로 배치한다. */
-const RESULT_GRID = {
-  cardWidth: 400,
-  cardHeight: 180,
-  columnX: [275, 805],
-  viewportTop: 300,
-  rowGap: 245,
-  edgeGap: 12,
-} as const;
 
 /**
  * 연구소 — 화석과 호박석으로 렐릭을 복원하는 기존 연구 시설이다.
@@ -74,11 +62,21 @@ export class LabScene extends Phaser.Scene {
   private presentationLayer?: Phaser.GameObjects.Container;
   /** 단계 넘기기가 현재 기다리는 타이머를 즉시 깨우는 훅이다. */
   private finishStage?: () => void;
+  /** 결과판 단계에서 화면 아무 곳을 눌렀을 때 할 일. 자동 단계 중에는 비어 있다. */
+  private boardTap?: () => void;
   /** 씬 종료 뒤 비동기 연출의 늦은 효과음 요청이 재생되지 않게 하는 오디오 수명 범위다. */
   private audioScope?: AudioScope;
   /** 마일리지 교환은 유료 상점 씬과 분리된 연구소 로컬 레이어에만 열린다. */
   private popupLayer?: PopupLayer;
   private mileagePopup?: MileagePopup;
+  /** 결과판에 깔린 칸들. 몇 칸이 남았는지가 안내 문구와 화면 터치의 뜻을 정한다. */
+  private boardTiles: ResearchSlotTile[] = [];
+  private boardHint?: Phaser.GameObjects.Text;
+  private boardOpenAll?: Button;
+  private boardLayer?: Phaser.GameObjects.Container;
+  /** 칸을 여는 동안에도 연출 시간이 갈리지 않게 판이 열릴 때의 설정 스냅샷을 든다. */
+  private boardShortened = false;
+  private boardRequest = 0;
 
   constructor() {
     super("lab");
@@ -160,6 +158,12 @@ export class LabScene extends Phaser.Scene {
       this.showcase = undefined;
       this.presentation.invalidate();
       this.finishStage?.();
+      this.boardTap = undefined;
+      this.boardTiles = [];
+      this.boardHint = undefined;
+      this.boardOpenAll = undefined;
+      this.boardLayer = undefined;
+      setDebugResearchBoard(undefined);
       this.presentationLayer?.destroy(true);
       this.presentationLayer = undefined;
       this.audioScope?.release();
@@ -308,7 +312,7 @@ export class LabScene extends Phaser.Scene {
     });
   }
 
-  /** 서버 확정 등급을 복권처럼 암시한 뒤 균열→첫 대면→카드 순서로 재생한다. */
+  /** 서버 확정 등급을 복권처럼 암시한 뒤 균열→결과판 순서로 재생한다. */
   private async playPresentation(results: PullResultDto[]): Promise<void> {
     // 한 연출 도중 설정을 다시 읽어 단계별 시간이 서로 갈리지 않도록 시작 시 스냅샷을 고정한다.
     const preferences = settingsManager.get();
@@ -316,17 +320,21 @@ export class LabScene extends Phaser.Scene {
     const rarity = highestRarity(results.map((result) => result.type === "relic" ? getRelic(result.relicId).rarity : result.grade));
     // API가 확정한 전체 결과를 순수 희귀도 정책에 넣고, 10연이어도 결과 묶음당 한 번만 울린다.
     if (hasRareExcavationResult([rarity])) settingsManager.haptic("rareExcavation");
-    const meetings = firstMeetingRelicIds(results);
     this.presentationLayer?.destroy(true);
     const layer = this.add.container(0, 0).setDepth(900);
     this.presentationLayer = layer;
-    // 캐릭터 획득 연구는 현재 연구소 배경 위에서 이어지며, 자원 발굴 원화는 팝업과 혼동하지 않게 배제한다.
-    const shade = this.add.rectangle(BASE_WIDTH / 2, 960, BASE_WIDTH, 1920, COLOR.void, 0.82).setInteractive();
+    // 결과가 나오는 동안에는 뒤 화면을 짙게 덮는다. 얇은 암막으로는 배너 제목·확률 정보·연구
+    // 버튼이 그대로 비쳐, 뒤집힌 칸과 글자가 어느 화면의 것인지 뒤섞여 읽힌다.
+    const shade = this.add.rectangle(BASE_WIDTH / 2, 960, BASE_WIDTH, 1920, COLOR.void, 0.93).setInteractive();
     layer.add(shade);
     // 단계 콘텐츠만 교체해 고정 입력면과 건너뛰기 버튼을 실수로 파괴하지 않는다.
     const content = this.add.container(0, 0);
     layer.add(content);
-    shade.on("pointerup", () => this.finishStage?.());
+    // 자동 단계와 첫 대면은 기다리는 타이머를 깨우고, 결과판에서는 칸을 열거나 화면을 닫는다.
+    shade.on("pointerup", () => {
+      if (this.finishStage) { this.finishStage(); return; }
+      this.boardTap?.();
+    });
     const skip = new Button(this, BASE_WIDTH - 150, 100, { width: 230, height: 70, label: "전체 건너뛰기", fontSize: 22, onClick: () => {
       this.presentation.skipAll();
       this.finishStage?.();
@@ -340,7 +348,7 @@ export class LabScene extends Phaser.Scene {
 
     if (!this.presentation.wasSkipped) {
       content.removeAll(true);
-      this.drawCrack(content, rarity);
+      this.breakFossil(content, rarity);
       this.cameras.main.shake(rarity === "SSR" ? 420 : 260, rarity === "SSR" ? 0.012 : 0.006);
       // 등급은 시각 연출에만 쓰며 사운드는 의미 키와 중앙 버스 설정으로 일관되게 재생한다.
       this.audioScope?.play("research.crack");
@@ -354,33 +362,71 @@ export class LabScene extends Phaser.Scene {
       await this.waitForStage(excavationStageDuration("rarity", preferences.presentation.shortenExcavation), request);
       this.presentation.advance();
     }
+    if (!this.presentation.isCurrent(request)) return;
 
-    for (const relicId of meetings) {
-      if (!this.presentation.isCurrent(request) || this.presentation.wasSkipped) break;
-      await this.showFirstMeeting(content, relicId, request, preferences.presentation.shortenExcavation);
-    }
-    if (!this.presentation.wasSkipped) this.presentation.advance();
-    if (this.presentation.isCurrent(request)) {
-      skip.destroy();
-      this.showResultCards(content, layer, results);
-    }
+    skip.destroy();
+    this.showResultBoard(content, layer, results, request);
   }
 
-  /** 고비용 영상 대신 Graphics 선과 작은 원 파편 tween으로 균열을 만든다. */
-  private drawCrack(layer: Phaser.GameObjects.Container, rarity: ResearchGrade): void {
+  /**
+   * 화석을 깬다.
+   *
+   * 화석 그림 한 장이 흔들리다 균열이 번지고, 껍질이 마름모 조각으로 튀며 안에서 등급색 빛이
+   * 새어 나온다. 모양과 흩어지는 방향은 `src/ui/fossilCrack.ts`가 갖는다 — 좌표를 씬에 적으면
+   * 크기를 바꿀 때마다 그림이 갈린다.
+   */
+  private breakFossil(layer: Phaser.GameObjects.Container, rarity: ResearchGrade): void {
     const color = this.rarityColor(rarity);
-    const graphics = this.add.graphics();
-    graphics.lineStyle(rarity === "SSR" ? 10 : 6, color, 1);
-    const branches = [[540, 450, 500, 690, 585, 850, 490, 1080], [540, 450, 650, 620, 620, 820], [500, 690, 350, 790, 300, 970]];
-    for (const points of branches) graphics.strokePoints(points.reduce<Phaser.Math.Vector2[]>((all, value, index) => {
-      if (index % 2 === 0) all.push(new Phaser.Math.Vector2(value, points[index + 1]));
-      return all;
-    }, []));
-    layer.add(graphics);
-    for (let index = 0; index < 12; index += 1) {
-      const mote = this.add.circle(540, 720, 3 + (index % 4), color, 0.9);
-      layer.add(mote);
-      this.tweens.add({ targets: mote, x: 300 + ((index * 83) % 480), y: 500 + ((index * 137) % 620), alpha: 0, duration: 500 });
+    const cx = BASE_WIDTH / 2;
+    const cy = FOSSIL_CRACK.centerY;
+    const size = FOSSIL_CRACK.size;
+
+    // 껍질 안에서 새어 나오는 빛. 겹쳐 밝아지는 합성이라 **옅게** 깔고 크게 부풀리지 않는다 —
+    // 진하게 두면 밝은 배경 원화 위에서 하얗게 뭉개져 정작 봐야 할 껍질과 조각이 그 속에 묻힌다.
+    const core = this.add.graphics({ x: cx, y: cy }).setBlendMode(Phaser.BlendModes.ADD);
+    core.fillStyle(color, 0.32);
+    core.fillPoints(toPoints(shardPoints(size * 0.34)), true);
+    core.setScale(0.2).setAlpha(0);
+    layer.add(core);
+    this.tweens.add({ targets: core, scale: 1.2, alpha: 0.55, duration: 220, delay: 120, yoyo: true, hold: 40 });
+
+    const shell = this.textures.exists("currency-fossil")
+      ? this.add.image(cx, cy, "currency-fossil").setDisplaySize(size, size)
+      : undefined;
+    if (shell) {
+      layer.add(shell);
+      // 깨지기 직전의 떨림. 짧게 좌우로만 흔들어 껍질이 버티는 것처럼 보이게 한다.
+      this.tweens.add({ targets: shell, x: cx + 7, duration: 46, yoyo: true, repeat: 3 });
+      this.tweens.add({ targets: shell, alpha: 0, scaleX: shell.scaleX * 1.12, scaleY: shell.scaleY * 1.12, duration: 220, delay: 180 });
+    }
+
+    const crack = this.add.graphics({ x: cx, y: cy });
+    crack.lineStyle(rarity === "SSR" ? 9 : 6, color, 1);
+    for (const branch of CRACK_BRANCHES) crack.strokePoints(toPoints(crackBranchPoints(branch, size)), false);
+    crack.setAlpha(0);
+    layer.add(crack);
+    this.tweens.add({ targets: crack, alpha: 1, duration: 120, delay: 60 });
+    this.tweens.add({ targets: crack, alpha: 0, duration: 200, delay: 240 });
+
+    // 껍질 조각. 잔뜩 흩뿌리지 않고 한 자리 수로 끊는다.
+    for (const shard of fossilShards()) {
+      const piece = this.add.graphics({ x: cx, y: cy });
+      piece.fillStyle(0x0b0d10, 0.95);
+      piece.fillPoints(toPoints(shardPoints(shard.size)), true);
+      piece.lineStyle(2, color, 0.9);
+      piece.strokePoints(toPoints(shardPoints(shard.size)), true);
+      layer.add(piece);
+      this.tweens.add({
+        targets: piece,
+        x: cx + Math.cos(shard.angle) * shard.distance,
+        y: cy + Math.sin(shard.angle) * shard.distance,
+        angle: shard.spin,
+        alpha: 0,
+        // 균열 단계(700ms) 안에서 끝나야 한다. 넘기면 다음 단계가 날아가는 조각을 잘라 낸다.
+        duration: 480,
+        delay: 140,
+        ease: "Quad.easeOut",
+      });
     }
   }
 
@@ -402,18 +448,27 @@ export class LabScene extends Phaser.Scene {
     return rarity === "SSR" ? COLOR.raritySSR : rarity === "SR" ? COLOR.raritySR : rarity === "R" ? COLOR.rarityR : COLOR.researchGray;
   }
 
-  /** 신규 Puppet 로딩 실패도 연출을 멈추지 않고 이름과 대사 텍스트로 대체한다. */
-  private async showFirstMeeting(layer: Phaser.GameObjects.Container, relicId: string, request: number, shortened: boolean): Promise<void> {
-    layer.removeAll(true);
+  /**
+   * 첫 대면.
+   *
+   * 새로 만난 렐릭이 든 칸을 연 **그 순간**에만 재생한다. 결과판을 덮는 제 암막을 깔아 그동안
+   * 다른 칸이 눌리지 않게 하고, 화면을 누르면 곧바로 판으로 돌아온다. 신규 Puppet 로딩 실패도
+   * 연출을 멈추지 않고 이름과 대사 텍스트로 대체한다.
+   */
+  private async showFirstMeeting(relicId: string, request: number, shortened: boolean): Promise<void> {
     const def = getRelic(relicId);
+    const layer = this.add.container(0, 0).setDepth(1200);
+    this.presentationLayer?.add(layer);
+    layer.add(this.add.rectangle(BASE_WIDTH / 2, 960, BASE_WIDTH, 1920, COLOR.void, 0.88).setInteractive()
+      .on("pointerup", () => this.finishStage?.()));
     let standing: PuppetCreature | undefined;
     try {
-      standing = await spawnPuppet(this, portraitAssetFor(def.portraitAssetId), { x: BASE_WIDTH / 2, groundY: 1260, height: 900, depth: 905 });
+      standing = await spawnPuppet(this, portraitAssetFor(def.portraitAssetId), { x: BASE_WIDTH / 2, groundY: 1260, height: 900, depth: 1205 });
     } catch {
       // 부트 캐시나 WebGL 복제가 실패해도 첫 대면 정보는 텍스트로 온전히 전달한다.
       layer.add(this.add.text(BASE_WIDTH / 2, 650, `[${def.name} 스탠딩을 불러오지 못했습니다]`, textStyle({ role: "body", size: 30, color: COLOR.inkDim })).setOrigin(0.5));
     }
-    if (!this.presentation.isCurrent(request)) { standing?.destroy(); return; }
+    if (!this.presentation.isCurrent(request)) { standing?.destroy(); layer.destroy(true); return; }
     layer.add(drawLayer(this, BASE_WIDTH / 2, 1470, slantedRect(900, 250), {
       fill: 0x141920, alpha: HOLO.glass, edge: this.rarityColor(def.rarity), edgeAlpha: 0.8,
     }));
@@ -421,53 +476,112 @@ export class LabScene extends Phaser.Scene {
     layer.add(this.add.text(BASE_WIDTH / 2, 1500, firstMeetingLine(relicId), textStyle({ role: "body", size: 30, wrap: 780, align: "center" })).setOrigin(0.5));
     await this.waitForStage(excavationStageDuration("firstMeeting", shortened), request);
     standing?.destroy();
+    layer.destroy(true);
   }
 
-  /** 한 장과 10연 모두 같은 프로필 카드 그리드로 신규/DNA 결과를 읽게 한다. */
-  private showResultCards(content: Phaser.GameObjects.Container, layer: Phaser.GameObjects.Container, results: PullResultDto[]): void {
+  /**
+   * 결과판.
+   *
+   * 열 칸이 **뒤집힌 채로** 깔린다. 칸은 등급색만 말하고, 누르면 섬광과 함께 그 칸의 결과가
+   * 들어온다 — 새로 만난 렐릭만 카드로 서고 나머지는 파편·재화 액자 한 장이라, 다 열고 나면
+   * 액자들 사이에서 새 렐릭만 세로로 크게 남는다.
+   *
+   * 확인 버튼을 두지 않는다. 고를 것이 없는 영수증이라 **화면 아무 곳이나 누르면** 다음 칸이
+   * 열리고, 다 열린 뒤에는 같은 손짓으로 닫힌다. 그 말은 판 안이 아니라 화면 밑동에서 한다.
+   */
+  private showResultBoard(
+    content: Phaser.GameObjects.Container,
+    layer: Phaser.GameObjects.Container,
+    results: PullResultDto[],
+    request: number,
+  ): void {
     const cx = BASE_WIDTH / 2;
+    const shortened = settingsManager.get().presentation.shortenExcavation;
     content.removeAll(true);
-    content.add(this.add.text(cx, 210, "연구 결과", textStyle({ role: "display", size: 52 })).setOrigin(0.5));
+    const board = researchBoardLayout(results.length, BASE_WIDTH);
+    content.add(this.add.text(cx, board.titleY, "연구 결과", textStyle({ role: "display", size: 52 })).setOrigin(0.5));
 
-    results.forEach((result, index) => {
-      const single = results.length === 1;
-      // 공용 그리드의 머리 여유 계산을 사용한다. 이전 230px 줄 간격은 210px 카드 위로 나온
-      // 머리와 다음 줄 표식이 겹쳤으므로, 카드 자체를 조금 줄이고 행·열 사이를 넉넉히 벌린다.
-      const x = single ? cx : RESULT_GRID.columnX[index % 2];
-      const y = single
-        ? 850
-        : portraitGridFirstRowY(RESULT_GRID.viewportTop, RESULT_GRID.cardHeight, RESULT_GRID.edgeGap)
-          + Math.floor(index / 2) * RESULT_GRID.rowGap;
-      if (result.type === "currency") {
-        // 공용 액자 문법을 그대로 써 아이콘·비네팅·사방 외곽선·우하단 수량을 중복 구현하지 않는다.
-        const reward = new RewardFrame(this, x, y, { icon: CURRENCY_ICON_BY_WALLET[result.currency], amount: result.amount, size: single ? 420 : RESULT_GRID.cardHeight, color: COLOR.researchGray });
-        reward.setDepth(902); content.add(reward); return;
-      }
-      const def = getRelic(result.relicId);
-      const badge = result.kind === "new"
-        ? "신규"
-        : result.kind === "fragment"
-          ? `파편 +${result.fragments}`
-          : `DNA 조각 +${result.overflowFragments}`;
-      const card = new PortraitCard(this, x, y, {
-        width: single ? 520 : RESULT_GRID.cardWidth, height: single ? 720 : RESULT_GRID.cardHeight,
-        portraitAssetId: def.portraitAssetId,
-        label: def.name, sub: badge, rarity: def.rarity, stars: relicProgression.getStars(def.id),
-      });
-      card.setDepth(902);
-      content.add(card);
-      // 등급 테두리는 기존 금속 패널을 유지하면서 보조 토큰만 더한다.
-      card.setSelected(true, this.rarityColor(def.rarity));
+    this.boardRequest = request;
+    this.boardShortened = shortened;
+    this.boardLayer = layer;
+    const views = researchSlotViews(results, (relicId) => getRelic(relicId).rarity);
+    this.boardTiles = views.map((view, index) => {
+      const cell = board.cells[index];
+      return new ResearchSlotTile(this, cell.x, cell.y, {
+        view,
+        width: board.tileWidth,
+        height: board.tileHeight,
+        frameSize: board.frameSize,
+      }, (tile) => void this.openSlot(tile));
     });
+    for (const tile of this.boardTiles) { content.add(tile); tile.syncMasks(); }
 
-    const close = new Button(this, cx, NAV_TOP - 200, {
-      width: 400,
-      height: 120,
-      label: "확인",
-      fontSize: 36,
-      onClick: () => { layer.destroy(true); this.presentationLayer = undefined; },
-    });
-    content.add(close);
+    const hint = this.add
+      .text(cx, board.hintY, "", textStyle({ role: "emphasis", size: 30, color: COLOR.ink }))
+      .setOrigin(0.5)
+      .setAlpha(0.62);
+    hint.setShadow(0, 3, "#000000", 4, false, true);
+    content.add(hint);
+    this.boardHint = hint;
+
+    // 한 칸씩 여는 손이 지치지 않게 남은 칸을 한 번에 여는 길도 둔다. 다 열리면 사라진다.
+    this.boardOpenAll = new Button(this, BASE_WIDTH - 150, 100, { width: 230, height: 70, label: "모두 열기", fontSize: 22, onClick: () => this.openEverySlot() });
+    layer.add(this.boardOpenAll);
+
+    // 전체 건너뛰기는 결과까지 건너뛴다는 뜻이다. 판을 깔되 칸은 이미 다 열려 있다.
+    if (this.presentation.wasSkipped) this.openEverySlot();
+    else this.syncBoard();
+  }
+
+  /** 남은 칸을 한 번에 연다. 첫 대면은 재생하지 않는다 — 여러 명이 줄줄이 이어지면 기다림이 된다. */
+  private openEverySlot(): void {
+    for (const tile of this.boardTiles) tile.reveal(true);
+    this.syncBoard();
+  }
+
+  /**
+   * 칸 하나를 연다.
+   *
+   * 새로 만난 렐릭이면 그 자리에서 곧바로 첫 대면이 이어진다 — 자동 단계로 미리 재생하면
+   * 어느 칸에서 나왔는지와 무관해져 칸을 열 이유가 사라진다.
+   */
+  private async openSlot(tile: ResearchSlotTile): Promise<void> {
+    // 첫 대면이 재생되는 동안 들어온 터치는 그 연출을 넘기는 몫이므로 칸을 열지 않는다.
+    if (this.finishStage || !tile.reveal()) return;
+    this.audioScope?.play("research.crack");
+    this.syncBoard();
+    if (tile.view.kind !== "relic") return;
+    const request = this.boardRequest;
+    await this.showFirstMeeting(tile.view.relicId, request, this.boardShortened);
+    if (this.presentation.isCurrent(request)) this.syncBoard();
+  }
+
+  /** 남은 칸 수에 따라 안내 문구·모두 열기 버튼·화면 터치의 뜻을 함께 맞춘다. */
+  private syncBoard(): void {
+    const closed = this.boardTiles.filter((tile) => !tile.opened);
+    setDebugResearchBoard({ slots: this.boardTiles.length, opened: this.boardTiles.length - closed.length });
+    if (closed.length > 0) {
+      this.boardHint?.setText("칸을 눌러 확인");
+      this.boardTap = () => void this.openSlot(closed[0]);
+      return;
+    }
+    this.boardHint?.setText("화면을 눌러 돌아가기");
+    this.boardOpenAll?.destroy();
+    this.boardOpenAll = undefined;
+    this.presentation.advance();
+    this.boardTap = () => this.closeBoard();
+  }
+
+  /** 결과판을 치운다. 판이 사라지면 화면 터치는 다시 연구소 조작으로 돌아간다. */
+  private closeBoard(): void {
+    this.boardTap = undefined;
+    this.boardTiles = [];
+    this.boardHint = undefined;
+    this.boardOpenAll = undefined;
+    setDebugResearchBoard(undefined);
+    this.boardLayer?.destroy(true);
+    this.boardLayer = undefined;
+    this.presentationLayer = undefined;
   }
 
   private refresh(): void {

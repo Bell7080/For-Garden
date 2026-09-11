@@ -124,6 +124,8 @@ export interface DebugState {
   };
   /** 상품명·재화 대신 현재 렌더 탭과 스크롤 위치만 관찰하는 표시 계약이다. */
   shopView?: { category: "general" | "enhancement" | "rune"; scrollY: number; minScrollY: number };
+  /** 연구 결과판에 깔린 칸 수와 그중 열린 칸 수. 결과 내용은 공개하지 않는다. */
+  researchBoard?: { slots: number; opened: number };
 }
 
 /** 자동화에 공개하는 좌표는 누를 중심점 두 숫자만 가진다. */
@@ -186,6 +188,9 @@ export function setDebugInventoryCategory(category: DebugState["inventoryCategor
 
 /** 실제 우편 응답 집계만 노출해 E2E가 점 해제와 수령 가능 수 변화를 확인한다. */
 export function setDebugMailPopup(state: DebugState["mailPopup"]): void { ensure().mailPopup = state; }
+
+/** 뒤집힌 칸이 몇 장 남았는지만 알린다. 어느 칸에 무엇이 들었는지는 열기 전까지 공개하지 않는다. */
+export function setDebugResearchBoard(board: DebugState["researchBoard"]): void { ensure().researchBoard = board; }
 
 /** 현재 탭을 다시 그릴 때 실제 이미지로 사용한 키만 복사해 이전 렌더의 잔여값을 막는다. */
 export function setDebugInventoryTextureKeys(keys: readonly string[] | undefined): void {

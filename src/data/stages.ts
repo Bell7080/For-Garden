@@ -5,47 +5,65 @@ import { getRelic } from "./relics";
 /** 챕터 1의 기본 악당 셋은 영구 캐릭터 ID만 공유하고 성장 상태는 각 스테이지가 소유한다. */
 export const FIXED_STAGE_ENEMIES = ["toby", "amo", "ripa"] as const;
 
+/**
+ * 세 적이 서는 **자리 순서**(앞 → 뒤). 모든 챕터가 같은 배치를 쓴다.
+ *
+ * 아모가 맨 앞이다 — 셋 중 유일한 탱커라 앞을 맡고, 종이 방어의 리파가 맨 뒤에 선다.
+ * 예전에는 챕터마다 이 셋을 한 칸씩 회전시켰는데, 그러면 2·3장에서 탱커가 뒷줄로 밀려
+ * 레벨을 올려도 난이도가 되지 않았다(적 Lv40에서 1-7은 잔여 2%인데 3-7은 100%였다).
+ */
+const STAGE_ENEMY_FORMATION = ["amo", "toby", "ripa"] as const;
+
 /** 스테이지 난이도를 캐릭터 수치가 아닌 공개 성장 축과 검증 가능한 배치로만 표현한다. */
 function enemyGrowth(relicId: string, level: number, breakthrough: number, formationSlot: 0 | 1 | 2): StageEnemyDef {
   return { relicId, level, breakthrough, formationSlot };
 }
 
 /**
- * 1장의 적 사다리. **레벨은 관문을 따라 내려가지 않는다** — 세 마리 모두 단조 증가하고,
- * 한계 돌파는 레벨을 초기화하지 않으므로 1-8 이후에도 직전 레벨을 유지한다.
+ * 1장의 적 사다리. **세 마리가 같은 레벨·같은 돌파로 선다.**
  *
- * 값은 `tests/unit/stageDifficulty.test.ts`의 잔여 체력 띠에서 거꾸로 구했다. 공멸 3인조의
- * 패시브를 읽히는 스킬로 다시 짜면서(v0.75.1) 적이 전 구간에서 약해져 1장이 통째로 위로
- * 밀렸고, 특히 **1-10이 1-9보다 쉬웠다** — 마지막 관문의 코마만 레벨 1로 남아 있었기 때문이다.
- * 지금 곡선은 88.6% → 76.6% → 73.9% → 70.1% → 66.5%로 끝까지 내려간다.
+ * 값은 눈대중이 아니라 `src/core/stageBalance.ts`의 성장 곡선에서 거꾸로 풀었다. 스토리
+ * 첫 클리어 보상만 받은 **바닥 파티**(토리카·도디·파루아 — SSR을 전제하지 않는다)를
+ * 두 갈래로 세우고 —
+ * 한 명에게 몰아준 쪽과 셋에게 고르게 나눈 쪽 — 둘 다 전승하는 최고 적 레벨(전멸선)을
+ * 찾은 뒤, 관문 순서에 따라 그 선에 35%에서 90%까지 다가서게 했다.
+ *
+ * 예전 값(2~6)은 그 곡선이 없어서 **1레벨 셋이 조합만 맞추면 2-3까지 밀렸다** — 1장 내내
+ * 잔여 체력이 89~96%였고, 관문이 요구하는 힘이 관문을 밀어 얻는 힘보다 느리게 자랐다.
  */
-const CHAPTER_ONE_ENEMIES: readonly [StageEnemyDef, StageEnemyDef, StageEnemyDef][] = [
-  [enemyGrowth("amo", 2, 0, 0), enemyGrowth("toby", 2, 0, 1), enemyGrowth("ripa", 2, 0, 2)],
-  [enemyGrowth("amo", 2, 0, 0), enemyGrowth("toby", 3, 0, 1), enemyGrowth("ripa", 2, 0, 2)],
-  [enemyGrowth("amo", 3, 0, 0), enemyGrowth("toby", 4, 0, 1), enemyGrowth("ripa", 3, 0, 2)],
-  [enemyGrowth("amo", 4, 0, 0), enemyGrowth("toby", 5, 0, 1), enemyGrowth("ripa", 4, 0, 2)],
-  [enemyGrowth("amo", 4, 0, 0), enemyGrowth("toby", 5, 0, 1), enemyGrowth("ripa", 5, 0, 2)],
-  [enemyGrowth("amo", 5, 0, 0), enemyGrowth("toby", 5, 0, 1), enemyGrowth("ripa", 5, 0, 2)],
-  [enemyGrowth("amo", 5, 0, 0), enemyGrowth("toby", 6, 0, 1), enemyGrowth("ripa", 6, 0, 2)],
-  [enemyGrowth("amo", 6, 1, 0), enemyGrowth("toby", 6, 0, 1), enemyGrowth("ripa", 6, 0, 2)],
-  [enemyGrowth("amo", 6, 1, 0), enemyGrowth("toby", 6, 1, 1), enemyGrowth("ripa", 6, 1, 2)],
-  /*
-   * 코마도 일반 RelicDef를 사용하는 중간보스이며, 아모와 리파가 앞뒤에서 전열을 완성한다.
-   *
-   * 셋을 같은 레벨로 두는 이유는 **보스가 호위보다 낮은 레벨로 서지 않게** 하기 위해서다.
-   * 코마는 SR급이라 레벨이 아니라 등급과 능력치로 앞선다 — 실제로 이 관문에서 코마의 레벨을
-   * 1에서 6까지 올려 봐도 잔여 체력이 63.9%에서 57.3%까지만 움직인다.
-   *
-   * 잔여 57.3%로 직전 관문(70.1%)에서 한 번에 내려앉는데, 그것이 `CHAPTER_ONE_DIFFICULTY_GOALS`
-   * 가 이 관문에 적어 둔 `midBoss` 관문의 뜻이다.
-   */
-  [enemyGrowth("amo", 6, 1, 0), enemyGrowth("husk-koma", 6, 1, 1), enemyGrowth("ripa", 6, 1, 2)],
-];
+const CHAPTER_ONE_LEVELS: readonly number[] = [6, 9, 10, 11, 12, 13, 14, 15, 16, 17];
+
+/** 1장 후반 셋만 별 둘로 서서 마지막 세 관문의 무게를 레벨이 아닌 축으로도 올린다. */
+const CHAPTER_ONE_BREAKTHROUGHS: readonly number[] = [0, 0, 0, 0, 0, 0, 0, 1, 1, 1];
+
+const CHAPTER_ONE_ENEMIES: readonly [StageEnemyDef, StageEnemyDef, StageEnemyDef][] =
+  CHAPTER_ONE_LEVELS.map((level, index) => {
+    const breakthrough = CHAPTER_ONE_BREAKTHROUGHS[index] ?? 0;
+    // 마지막 관문만 중간보스 코마가 토비 자리를 대신한다. 호위보다 낮은 레벨로 서지 않는다.
+    const ids = index === CHAPTER_ONE_LEVELS.length - 1 ? ["amo", "husk-koma", "ripa"] : ["amo", "toby", "ripa"];
+    return ids.map((id, slot) => enemyGrowth(id, level, breakthrough, slot as 0 | 1 | 2)) as
+      [StageEnemyDef, StageEnemyDef, StageEnemyDef];
+  });
 
 /**
  * 스테이지. 지도에서 아래에서 위로 올라가는 순서 그대로다.
  * 적은 언제나 3명으로 구성된다.
  */
+/**
+ * 2·3장의 적 레벨. 1장과 같은 곡선의 이어짐이며 **레벨은 끝까지 뒤로 가지 않는다.**
+ *
+ * 같은 레벨이 두세 관문씩 이어지는 구간이 있는 것은 그때 단조 하한이 곡선보다 높기 때문이다 —
+ * 바닥 파티의 전멸선은 스토리 보상만으로 자라므로 뒤로 갈수록 천천히 오른다. 곡선을 더 크게
+ * 그리려면 적 레벨이 아니라 **스토리 보상**을 키워 파티가 더 빨리 자라게 해야 한다.
+ *
+ * 마지막 3-10만 곡선의 연장(31 → 32)으로 적었다. 그 관문의 폰토스는 원정 최종층 개체라
+ * 바닥 파티가 어떤 레벨에서도 이기지 못해 기준점이 될 수 없고, 스토리에서는 추후 뺀다.
+ */
+const LATER_CHAPTER_LEVELS: readonly number[] = [
+  18, 19, 20, 21, 21, 21, 22, 23, 23, 24,
+  25, 25, 25, 25, 26, 26, 26, 26, 26, 27,
+];
+
 const CHAPTER_CONTENT = [
   { title: "제 1 구역", subtitle: "격리 구역 — 이터널 시티 외곽", names: ["격리 구역", "붕괴한 온실", "침수된 배양실", "표본 보관고", "제1구역 관제탑", "무너진 통신소", "폐기물 처리장", "지하 배수로", "봉쇄된 정거장", "구역 경계문"] },
   { title: "제 2 구역", subtitle: "잔향 지구 — 침묵한 산업 회랑", names: ["잔향 진입로", "녹슨 조립동", "냉각 수로", "동력 중계실", "파손된 승강장", "무인 생산선", "압력 격실", "재처리 용광로", "중앙 운송로", "잔향 지구 관문"] },
@@ -59,12 +77,20 @@ export const CHAPTERS: readonly ChapterDef[] = CHAPTER_CONTENT.map((content, cha
   const stages = content.names.map((name, orderIndex): StageDef => {
     const chapterOrder = orderIndex + 1;
     const globalOrder = chapterIndex * 10 + orderIndex;
-    // 후속 챕터의 임시 성장도 1장의 최고 성장보다 낮아지지 않게 이어 두되 최종 관문에는 보스를 세운다.
+    /*
+     * **자리를 돌리지 않는다.** 예전에는 챕터마다 같은 셋을 한 칸씩 회전시켰는데, 그러면
+     * 탱커(아모)가 뒷줄로 밀리고 종이 방어의 리파가 앞에 선다. 실제로 재 보니 3-7이 같은
+     * 적 레벨에서 1-7보다 **쉬웠다** — 적 Lv40에서 1-7은 잔여 2%인데 3-7은 100%였다.
+     * 앞이 무너지는 배치는 레벨을 아무리 올려도 난이도가 되지 않으므로 1장의 배치를 이어 쓴다.
+     *
+     * 3-10의 폰토스는 원정 최종층 개체라 스토리에서는 추후 뺀다. 난이도 기준점으로도 쓰지
+     * 않았다 — 바닥 파티가 어떤 레벨에서도 이기지 못해 곡선을 그릴 수 없기 때문이다.
+     */
     const laterChapterIds = chapter === 3 && chapterOrder === 10
-      ? ["toby", "pontos", "ripa"]
-      : [...FIXED_STAGE_ENEMIES.slice(chapterIndex), ...FIXED_STAGE_ENEMIES.slice(0, chapterIndex)];
+      ? ["amo", "pontos", "ripa"]
+      : [...STAGE_ENEMY_FORMATION];
     const laterChapterEnemies = laterChapterIds.map((relicId, slot) =>
-      enemyGrowth(relicId, globalOrder + 1, Math.floor(globalOrder / 10), slot as 0 | 1 | 2),
+      enemyGrowth(relicId, LATER_CHAPTER_LEVELS[globalOrder - 10] ?? globalOrder + 1, Math.floor(globalOrder / 10), slot as 0 | 1 | 2),
     ) as [StageEnemyDef, StageEnemyDef, StageEnemyDef];
     return {
       kind: "battle",

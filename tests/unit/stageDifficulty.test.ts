@@ -1,92 +1,164 @@
 import { describe, expect, it } from "vitest";
 import {
   CHAPTER_ONE_DIFFICULTY_GOALS, STAGE_DIFFICULTY_ADJUSTMENT_ORDER, inspectStageDifficulty,
-  selectReferenceParties, selectableRPartyPairs,
+  selectReferenceParties, selectableRPartyPairs, summarizeStageDifficulty,
 } from "../../src/core/stageDifficulty";
-import { getBattleStage, getStageEnemies } from "../../src/data/stages";
+import { CHAPTERS, getBattleStage, getStageEnemies } from "../../src/data/stages";
 import { getRelic, PLAYABLE_RELICS } from "../../src/data/relics";
-import type { RelicDef } from "../../src/core/types";
+import { applyLevelGrowth } from "../../src/core/relicProgression";
+import { RUNE_GENERATION_RULES } from "../../src/core/runes";
+import { storyFloorGrowth, type InvestmentShape } from "../../src/core/stageBalance";
+import type { RelicDef, Stats } from "../../src/core/types";
 
 /** 단일 운 좋은 판 대신 치명타 순서를 달리하는 재현 가능한 표본 여덟 개를 공통으로 사용한다. */
 const SEEDS = [1, 2, 3, 4, 5, 6, 7, 8] as const;
 
+/**
+ * 난이도 검수의 기준 로스터.
+ *
+ * **SSR이 있다고 전제하지 않는다.** 스타트 이벤트로 한둘 쥐고 시작하는 사람이 많더라도 그것을
+ * 바닥으로 삼으면 못 뽑은 사람이 그대로 막힌다. 초반에 확실히 손에 드는 셋으로 세우고, 몰아줄
+ * 자리는 이 중 유일한 딜러인 파루아다 — 탱커에게 몰아주는 사람은 없다.
+ */
+const FLOOR_ROSTER = ["anky", "dodo", "parua"] as const;
+
+/** 자원을 몰아줄 자리. 편성 순서는 진형이 정하므로 누구에게 몰아주는지는 따로 적는다. */
+const FLOOR_CARRY_INDEX = 2;
+
+/** 초록 룬 하나가 주 옵션 하나를 올리는 폭. 강화·각인은 세지 않는다("룬 작 대충"). */
+const GREEN_RUNE = RUNE_GENERATION_RULES.uncommon.mainBase;
+
+function grown(def: RelicDef, level: number, runes: number): RelicDef {
+  const stats = { ...applyLevelGrowth(def.stats, level, def.rarity) };
+  // 세 칸에 체력·공격력·방어력을 하나씩 끼운 상태로 본다.
+  const keys: (keyof Stats)[] = ["hp", "atk", "def"];
+  for (let index = 0; index < runes; index += 1) {
+    const key = keys[index];
+    if (key) stats[key] = Math.round(stats[key] * (1 + GREEN_RUNE / 100));
+  }
+  return { ...def, stats };
+}
+
+/** 그 관문을 **열기 전까지** 받은 첫 클리어 치즈케이크 누적. 데이터에서 직접 더한다. */
+function cheesecakeBefore(globalOrder: number): number {
+  const battles = CHAPTERS.flatMap(({ stages }) => stages).filter((stage) => stage.kind === "battle");
+  return battles.slice(0, globalOrder).reduce((sum, stage) =>
+    sum + (stage.kind === "battle" ? stage.rewards.firstClearCheesecake : 0), 0);
+}
+
+/** 스토리 보상만으로 자란 바닥 파티. 몰아주기와 균등 분배 두 갈래를 같은 예산에서 만든다. */
+function floorParty(globalOrder: number, shape: InvestmentShape): RelicDef[] {
+  const growth = storyFloorGrowth(cheesecakeBefore(globalOrder), globalOrder, shape, FLOOR_CARRY_INDEX);
+  return FLOOR_ROSTER.map((id, index) => grown(getRelic(id), growth.levels[index] ?? 1, growth.runes[index] ?? 0));
+}
+
+const BATTLE_STAGES = CHAPTERS.flatMap(({ stages }) => stages)
+  .filter((stage): stage is Extract<typeof stage, { kind: "battle" }> => stage.kind === "battle")
+  .map((stage, index) => ({ stage, globalOrder: index }));
+
+/** 폰토스는 원정 최종층 개체라 바닥 파티가 어떤 레벨에서도 이기지 못한다. 스토리에서는 추후 뺀다. */
+const EXPEDITION_BOSS_STAGES = BATTLE_STAGES.filter(({ stage }) => stage.enemies.some(({ relicId }) => relicId === "pontos"));
+const STORY_STAGES = BATTLE_STAGES.filter((entry) => !EXPEDITION_BOSS_STAGES.includes(entry));
+
 /** 요구된 대표 관문은 수치 조정 PR에서 의도하지 않은 체감 변화를 즉시 보여 주도록 고정한다. */
 const BASELINES = {
   /*
-   * **v0.93.0에서 통째로 다시 쟀다.** 궁극기 게이지를 개체별 실측 성능에 맞춰 다시 매기면서
-   * 중앙 비용이 200에서 110으로 내려갔고, 그만큼 아군 궁극기가 실제로 나가기 시작해 챕터 1이
-   * 전반적으로 짧고 쉬워졌다(1-5는 40초·잔여 65%에서 22초·잔여 88%로). 적 정의의 비용은
-   * 건드리지 않았으므로 이 변화는 순수한 아군 강화다.
+   * **v0.94.0에서 성장 곡선 기준으로 다시 잡았다.** 예전 띠는 1레벨 파티를 기준으로 삼고
+   * 있었는데, 그 파티가 1장을 잔여 90%대로 통과하고 2-3까지 밀었다 — 관문이 요구하는 힘이
+   * 관문을 밀어 얻는 힘보다 느리게 자랐다는 뜻이다. 지금 띠는 `stageBalance.ts`의 바닥 파티
+   * (스토리 첫 클리어 보상만 받은 상태)를 **균등 분배**로 세워 잰 값이다.
    *
-   * 예전 난이도를 그대로 되살리려면 비용표 전체에 약 1.8배를 곱하면 되지만(실측으로 1-5
-   * 38.3초·1-9 41.1초로 옛 띠에 다시 들어온다) 그러면 강한 궁극기가 다시 사거리 밖으로
-   * 나가므로, 난이도는 비용이 아니라 **적 쪽 수치**로 되잡는다.
+   * 3장에서 띠가 오히려 올라가는 것은 난이도가 내려가서가 아니라 **바닥 파티가 거기서 더
+   * 자라지 못하기 때문**이다 — 돌파 없이는 레벨 상한이 20이고 스토리 보상은 파편을 주지
+   * 않는다. 3장을 더 조이려면 적 레벨이 아니라 그 성장 축을 먼저 열어야 한다.
    */
-  "1-1": { duration: [17.5, 19.5], hp: [0.97, 1] },
-  "1-4": { duration: [20.5, 22.5], hp: [0.84, 0.9] },
-  "1-5": { duration: [21, 23], hp: [0.85, 0.91] },
-  "1-9": { duration: [18.5, 20.5], hp: [0.7, 0.76] },
-  "1-10": { duration: [18.5, 20.5], hp: [0.61, 0.67] },
+  "1-1": { hp: [0.67, 0.79] },
+  "1-5": { hp: [0.65, 0.77] },
+  "1-10": { hp: [0.66, 0.78] },
+  "2-5": { hp: [0.66, 0.78] },
+  "2-10": { hp: [0.66, 0.78] },
+  "3-5": { hp: [0.7, 0.82] },
+  "3-9": { hp: [0.74, 0.86] },
 } as const;
 
-/** 교체 직전 네 기술을 데이터 복제본으로만 재현한다. 실제 인게임 정의에 종료 코드를 남기지 않는다. */
-function legacyRipa(): RelicDef {
-  const current = getRelic("ripa");
-  return {
-    ...current,
-    ferocityTrait: { name: "역풍", effectId: "teamMoveSpeedBonus", bonusPercent: 12 },
-    passive: { id: "ripa-passive", name: "퇴적 잠복", kind: "lowHpVanish", iconAssetId: "skill-icon-buff", effectType: "buff", value: 3, durationSeconds: 3, desc: "" },
-    basic: { ...current.basic, name: "마디 파동", power: 100, reagentStacks: undefined },
-    ultimate: {
-      id: "ripa-ult", name: "퇴적류 확산", iconAssetId: "skill-icon-magical", effectType: "magical",
-      damageType: "magical", power: 150, cost: 100, targeting: "single",
-    },
-  };
-}
-
 describe("Phaser 없는 챕터 난이도 검수", () => {
-  it.each(["1-1", "1-5", "1-10"] as const)("%s의 교체 전후 생존 HP와 전투 결과를 같은 난수열로 기록한다", (stageId) => {
-    const enemies = getStageEnemies(getBattleStage(stageId));
-    const party = selectReferenceParties(getRelic("anky"), PLAYABLE_RELICS, enemies, SEEDS).favorable;
-    // 성장된 스테이지 능력치는 그대로 두고 스킬 계약만 옛 정의로 바꿔 비교 축을 하나로 제한한다.
-    const beforeEnemies = enemies.map((enemy) => enemy.id === "ripa" ? { ...legacyRipa(), stats: enemy.stats } : enemy);
-    const before = inspectStageDifficulty(party, beforeEnemies, SEEDS).auto;
-    const after = inspectStageDifficulty(party, enemies, SEEDS).auto;
-    const comparison = {
-      before: { won: before.winRate, survivingHp: Number(before.playerHpRatio.mean.toFixed(4)) },
-      after: { won: after.winRate, survivingHp: Number(after.playerHpRatio.mean.toFixed(4)) },
-    };
-    // 세 관문은 방향이 서로 달라 단일 "상향/하향" 주장 대신 측정값 자체를 회귀 계약으로 남긴다.
-    expect(comparison).toEqual({
-      // v0.93.0의 궁극기 게이지 재조정 뒤 다시 잰 값이다. 세 관문 모두 아군 잔여 HP가 올랐다.
-      "1-1": { before: { won: 1, survivingHp: 1 }, after: { won: 1, survivingHp: 0.9988 } },
-      "1-5": { before: { won: 1, survivingHp: 0.9919 }, after: { won: 1, survivingHp: 0.8807 } },
-      "1-10": { before: { won: 1, survivingHp: 0.6781 }, after: { won: 1, survivingHp: 0.6381 } },
-    }[stageId]);
+  /*
+   * **스토리는 막히지 않는다.** 보상만 받아 온 사람이 자원을 어떻게 나눠 썼든 통과해야 하며,
+   * 그 두 갈래가 이 검수의 바닥이다. 여기서 한 관문이라도 100%를 놓치면 그 관문은 바닥
+   * 파티가 넘을 수 없는 벽이 된 것이다.
+   */
+  it("균등하게 키운 바닥 파티는 모든 스토리 관문을 안정적으로 넘는다", () => {
+    for (const { stage, globalOrder } of STORY_STAGES) {
+      const report = summarizeStageDifficulty(floorParty(globalOrder, "spread"), getStageEnemies(stage), SEEDS, "auto");
+      expect(report.winRate, stage.id).toBe(1);
+    }
   });
 
-  it("토리카와 선택 가능한 R 두 명의 최선·최악 기준 파티를 실제 조합 탐색으로 만든다", () => {
-    const enemies = getStageEnemies(getBattleStage("1-1"));
-    const pairs = selectableRPartyPairs(PLAYABLE_RELICS);
-    const parties = selectReferenceParties(getRelic("anky"), PLAYABLE_RELICS, enemies, SEEDS);
-    // 새 R이 추가되면 조합 수와 최선/최악 선택이 자동으로 넓어진다 — 파루아가 들어와 셋이 됐다.
-    // 궁극기 게이지를 성능에 맞춰 다시 매긴 v0.93.0에서 최선 조합이 파루아에서 티아로 바뀌었다:
-    // 티아의 궁극기가 240에서 90으로 내려와 1-1 안에서 실제로 나가게 됐기 때문이다.
-    expect(pairs.map((pair) => pair.map(({ id }) => id))).toEqual([["dodo", "tia"], ["dodo", "parua"], ["tia", "parua"]]);
-    expect(parties.favorable.map(({ id }) => id)).toEqual(["anky", "dodo", "tia"]);
-    // 새 리파의 초반 광역 준비 시간이 원거리 조합의 실제 순위를 바꿨으므로 탐색 결과를 고정한다.
-    expect(parties.unfavorable.map(({ id }) => id)).toEqual(["anky", "tia", "parua"]);
+  /*
+   * **몰아주기는 아슬아슬하다.** 캐리 하나에 전부 넣으면 나머지 둘이 1레벨 맨몸이라 난수열에
+   * 따라 한 판씩 진다 — 그것이 몰아주기가 치르는 값이고, 다시 눌러 넘을 수 있는 선이면 된다.
+   * 여기서 이 선이 무너지면 그 관문은 캐리 편성으로는 넘을 수 없는 벽이 된 것이다.
+   */
+  it("몰아 키운 바닥 파티도 모든 스토리 관문을 다시 눌러 넘을 수 있다", () => {
+    for (const { stage, globalOrder } of STORY_STAGES) {
+      const report = summarizeStageDifficulty(floorParty(globalOrder, "carry"), getStageEnemies(stage), SEEDS, "auto");
+      expect(report.winRate, stage.id).toBeGreaterThanOrEqual(0.75);
+    }
+  });
+
+  /*
+   * **키우지 않으면 막힌다.** 같은 로스터를 1레벨·룬 없이 세운 파티다. 1장은 배우는 구간이라
+   * 끝까지 따라오지만 마지막 관문에서 멈춰야 한다 — 예전에는 이 파티가 1장을 잔여 90%대로
+   * 지나 2-3까지 밀었고, 그것이 이번 조정의 출발점이었다.
+   */
+  it("성장하지 않은 파티는 1장 마지막에서 막힌다", () => {
+    const bare = FLOOR_ROSTER.map((id) => getRelic(id));
+    const winRateAt = (stageId: string) =>
+      summarizeStageDifficulty(bare, getStageEnemies(getBattleStage(stageId)), SEEDS, "auto").winRate;
+    // 1장은 배우는 구간이라 끝까지 따라오지만, 마지막 관문에서 정확히 막힌다.
+    expect(winRateAt("1-9")).toBe(1);
+    expect(winRateAt("1-10")).toBe(0);
+    expect(winRateAt("2-7")).toBe(0);
+  });
+
+  /*
+   * **한 명을 키워 혼자 보내는 것으로는 2장을 넘지 못한다.** 편성 칸이 셋인 이유가 여기 있다 —
+   * 11레벨 스피나 하나가 룬까지 끼고도 2장 전체를 뚫던 것이 이번 조정 전의 상태다.
+   */
+  it("하이퍼 캐리 혼자서는 2장을 끝내지 못한다", () => {
+    const solo = [grown(getRelic("spino"), 11, 3)];
+    const winRateAt = (stageId: string) =>
+      summarizeStageDifficulty(solo, getStageEnemies(getBattleStage(stageId)), SEEDS, "auto").winRate;
+    expect(winRateAt("1-5")).toBe(1);
+    // 2장 후반에서 무너지고 3장에서는 한 판도 넘지 못한다.
+    expect(winRateAt("2-10")).toBeLessThanOrEqual(0.25);
+    expect(winRateAt("3-5")).toBe(0);
+  });
+
+  /** 적 레벨은 스토리 내내 뒤로 가지 않는다. 새 구역이 직전 구역보다 약해 보이면 곡선이 끊긴 것이다. */
+  it("적 레벨은 관문 순서를 따라 단조 증가한다", () => {
+    const levels = BATTLE_STAGES.map(({ stage }) => stage.enemies[0].level);
+    for (let index = 1; index < levels.length; index += 1) {
+      expect(levels[index], `${BATTLE_STAGES[index].stage.id}`).toBeGreaterThanOrEqual(levels[index - 1]);
+    }
+    // 곡선이 실제로 크게 그려지는지 — 처음과 끝이 네 배 넘게 벌어진다.
+    expect(levels[levels.length - 1] / levels[0]).toBeGreaterThan(4);
+  });
+
+  /** 세 적은 모든 챕터에서 같은 자리에 선다. 회전시키면 탱커가 뒷줄로 밀려 난이도가 무너진다. */
+  it("적 배치는 챕터가 바뀌어도 같은 순서를 지킨다", () => {
+    for (const { stage } of STORY_STAGES) {
+      expect(stage.enemies.map(({ relicId }) => relicId), stage.id).toEqual(["amo", "toby", "ripa"].map(
+        (id, slot) => stage.id === "1-10" && slot === 1 ? "husk-koma" : id,
+      ));
+    }
   });
 
   it.each(Object.entries(BASELINES))("%s의 여러 고정 난수열 결과와 상세 지표를 기준 범위에 둔다", (stageId, baseline) => {
-    const enemies = getStageEnemies(getBattleStage(stageId));
-    const party = selectReferenceParties(getRelic("anky"), PLAYABLE_RELICS, enemies, SEEDS).favorable;
-    const report = inspectStageDifficulty(party, enemies, SEEDS);
+    const entry = STORY_STAGES.find(({ stage }) => stage.id === stageId)!;
+    const report = inspectStageDifficulty(floorParty(entry.globalOrder, "spread"), getStageEnemies(entry.stage), SEEDS);
 
-    // 현재 초반 초안의 승률도 명시해 이후 성장 관문 수치 조정이 조용히 섞이지 않게 한다.
     expect(report.auto.winRate).toBe(1);
-    expect(report.auto.durationSeconds.mean).toBeGreaterThanOrEqual(baseline.duration[0]);
-    expect(report.auto.durationSeconds.mean).toBeLessThanOrEqual(baseline.duration[1]);
     expect(report.auto.playerHpRatio.mean).toBeGreaterThanOrEqual(baseline.hp[0]);
     expect(report.auto.playerHpRatio.mean).toBeLessThanOrEqual(baseline.hp[1]);
     expect(report.auto.runs).toHaveLength(SEEDS.length);
@@ -95,12 +167,22 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
       expect(run.enemyContributions).toHaveLength(3);
       expect(run.enemyContributions.every(({ damage, healing, damageAbsorbed }) => damage >= 0 && healing >= 0 && damageAbsorbed >= 0)).toBe(true);
       expect(run.ultimateUses).toBeGreaterThan(0);
-      // R 띠 적을 상대하면 아군 한 명이 먼저 쓰러지는 난수열도 생기지만 최종 자동 승리는 유지된다.
-      // 첫 전투불능 기록 자체와 시각은 계속 요구하되, 어느 진영이 먼저인지는 결과 지표로 관찰한다.
       expect(run.firstDefeat).toEqual(expect.objectContaining({ at: expect.any(Number) }));
       expect(["player", "enemy"]).toContain(run.firstDefeat?.side);
     }
     expect(report.manualDelta).toEqual(expect.objectContaining({ winRate: expect.any(Number), durationSeconds: expect.any(Number), playerHpRatio: expect.any(Number) }));
+  });
+
+  it("토리카와 선택 가능한 R 두 명의 최선·최악 기준 파티를 실제 조합 탐색으로 만든다", () => {
+    const enemies = getStageEnemies(getBattleStage("1-1"));
+    const pairs = selectableRPartyPairs(PLAYABLE_RELICS);
+    const parties = selectReferenceParties(getRelic("anky"), PLAYABLE_RELICS, enemies, SEEDS);
+    // 새 R이 추가되면 조합 수와 최선/최악 선택이 자동으로 넓어진다 — 파루아가 들어와 셋이 됐다.
+    // 1-1의 적이 Lv2에서 Lv7로 오르면서 최선 조합이 티아에서 파루아로 돌아왔다: 적이 단단해질수록
+    // 사거리 밖에서 쏘는 쪽이 근접 티아보다 덜 맞는다.
+    expect(pairs.map((pair) => pair.map(({ id }) => id))).toEqual([["dodo", "tia"], ["dodo", "parua"], ["tia", "parua"]]);
+    expect(parties.favorable.map(({ id }) => id)).toEqual(["anky", "dodo", "parua"]);
+    expect(parties.unfavorable.map(({ id }) => id)).toEqual(["anky", "tia", "parua"]);
   });
 
   it("장 목표와 허용 조정 순서를 전용 배율 없이 공개한다", () => {

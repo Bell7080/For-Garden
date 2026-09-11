@@ -4,9 +4,9 @@ import { computeDamage, computeDamageContribution, currentAbilityPower, isCritic
 // 전투 HUD와 피해 공식이 동일한 현재 주문력 계산을 소비하도록 공용 헬퍼를 다시 노출한다.
 export { currentAbilityPower } from "./damage";
 import { drainFerocityFever, FEROCITY_RULES } from "./ferocity";
-import { breakthroughBonus } from "./relicProgression";
+import { breakthroughBonus, isBreakthroughSlotOpen, type BreakthroughSlot } from "./relicProgression";
 import { augmentAppliesTo, bleedOnAttackEffect, conditionalAttackPowerMultiplier, expeditionAugmentStatMultipliers, type ExpeditionAugmentEffect, type ExpeditionAugmentTrigger, type ExpeditionTriggeredEffect } from "./expeditionAugments";
-import type { BasicAttack, BasicAttackStep, CombatStatusEffect, FerocityTrait, ReachTier, RelicDef, Side, Skill, TeamBuff } from "./types";
+import type { BasicAttack, BasicAttackStep, BreakthroughEffects, CombatStatusEffect, FerocityTrait, ReachTier, RelicDef, Side, Skill, Stats, TeamBuff } from "./types";
 import { ULTIMATE_ENERGY_MAX } from "./ultimate";
 import { deriveSummonStats } from "./summonStats";
 import { combatPower } from "./combatPower";
@@ -268,6 +268,21 @@ export interface Fighter extends Combatant {
   basicAttackCount: number;
   /** 순환 기본 공격(엘라의 발경)이 다음에 낼 걸음이다. 순환이 없는 개체는 늘 0이다. */
   basicCycleStep: number;
+  /**
+   * 이번 폭주 동안 실제로 받은 피해의 누적.
+   *
+   * 폭주 돌파(`FerocityBreakthrough`)가 **끝나는 순간** 이 값으로 보호막을 짓는다. 매 프레임
+   * 세지 않고 피해 경계 한 곳(`applyDamage`)에서만 더하므로, 출혈·중독처럼 공격이 아닌 경로로
+   * 받은 몫도 빠지지 않는다. 폭주에 들어갈 때 0으로 되돌린다.
+   */
+  feverDamageTaken: number;
+  /**
+   * 궁극기 돌파(`UltimateBreakthrough`)가 더 떨어뜨릴 남은 타격.
+   *
+   * 게이지를 다시 쓰지 않고 야성도 다시 올리지 않는다 — 자원은 시전한 그 한 번의 몫이다
+   * (채널링 궁극기의 `artChannel`과 같은 규칙이라 같은 방식으로 시계만 돈다).
+   */
+  breakthroughEcho: { nextIn: number; casts: number } | null;
   /**
    * 금강불괴가 아직 빠르게 내줄 수 있는 기본 공격 횟수다.
    *
@@ -913,6 +928,8 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     conditionalAttackPowerMultiplier: (hpPercent) => side === "player" ? conditionalAttackPowerMultiplier(augmentEffects, def.id, hpPercent) : 1,
     basicAttackCount: 0,
     basicCycleStep: 0,
+    feverDamageTaken: 0,
+    breakthroughEcho: null,
     hastenedAttacksLeft: 0,
     instantButcherAttacksLeft: 0,
     instantButcherPending: false,
@@ -1918,6 +1935,142 @@ function tickArtChannel(fighter: Fighter, dt: number, state: SkirmishState, even
 }
 
 /**
+ * 한계 돌파가 연 **그 개체만의 효과**들.
+ *
+ * 넷 모두 같은 문을 지난다 — 그 슬롯이 이 별에서 열려 있는지(`isBreakthroughSlotOpen`)와 그
+ * 개체가 그 슬롯을 정의했는지(`RelicDef.breakthroughEffects`)다. 씬도 전투도 개체 이름으로
+ * 분기하지 않으므로, 새 개체에 효과를 붙일 때 고칠 곳은 데이터 한 곳뿐이다.
+ *
+ * 새 효과 종류를 더할 때는 **문구도 함께** 만든다(`breakthroughEffectText`) — 한쪽만 늘면
+ * 화면이 말하는 것과 전투가 하는 것이 갈린다.
+ */
+function openedBreakthrough<S extends BreakthroughSlot, T>(
+  fighter: Fighter,
+  slot: S,
+  pick: (effects: BreakthroughEffects) => T | undefined,
+): T | undefined {
+  if (!isBreakthroughSlotOpen(fighter.breakthrough, slot)) return undefined;
+  const effects = fighter.def.breakthroughEffects;
+  return effects ? pick(effects) : undefined;
+}
+
+/** 반경 안의 살아 있는 적을 공용 도발 상태로 끌어당긴다. 폭주 진입 도발과 같은 경계를 쓴다. */
+function tauntEnemiesAround(
+  fighter: Fighter,
+  radius: number,
+  seconds: number,
+  state: SkirmishState,
+  events: SkirmishEvent[],
+): void {
+  for (const enemy of state.fighters) {
+    if (enemy.side === fighter.side || !isFighterAlive(enemy)) continue;
+    if (Math.hypot(enemy.x - fighter.x, enemy.y - fighter.y) > radius) continue;
+    applyCombatStatusEffect(enemy, { kind: "taunt", seconds }, events, state, fighter.id);
+  }
+}
+
+/**
+ * 기본 공격 돌파 — **주기가 채워지는 한 방**에만 얹힌다.
+ *
+ * 평타마다 붙이면 탱커 한 명이 전열을 영구히 잠근다. 이미 있는 주기 계약을 그대로 타므로
+ * 세 번에 한 번만 일어나고, 그 수는 자기 프로필의 칩이 들고 있어 플레이어가 셀 수 있다.
+ */
+function applyBasicBreakthrough(attacker: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
+  const effect = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
+  if (!effect || !isFighterAlive(attacker)) return;
+  const healed = applyHealing(state, attacker, attacker.def.stats[effect.healScalingStat as keyof Stats] * effect.healPercent / 100);
+  if (healed > 0) events.push({ kind: "heal", fighterId: attacker.id, amount: healed, source: "passive", effect: { tag: "heal", intensity: 1.2 } });
+  tauntEnemiesAround(attacker, effect.tauntRadius, effect.tauntSeconds, state, events);
+}
+
+/** 궁극기 돌파의 시계를 켠다. 이미 돌고 있으면 새로 시전한 쪽으로 덮는다. */
+function armUltimateBreakthrough(attacker: Fighter): void {
+  const effect = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
+  if (!effect || effect.casts <= 0) return;
+  attacker.breakthroughEcho = { nextIn: effect.intervalSeconds, casts: effect.casts };
+}
+
+/**
+ * 궁극기 돌파의 시계. 남은 타격마다 **같은 궁극기를 줄어든 위력으로** 다시 떨어뜨린다.
+ *
+ * `strikeAreaAttack`을 다시 부르지 않고 전용 경로를 쓰는 이유는 채널링과 같다 — 그 함수는
+ * 게이지·야성·쿨다운까지 함께 건드리므로, 자원을 쓰지 않아야 하는 되풀이에는 쓸 수 없다.
+ */
+function tickUltimateBreakthrough(fighter: Fighter, dt: number, state: SkirmishState, events: SkirmishEvent[]): void {
+  const echo = fighter.breakthroughEcho;
+  if (!echo) return;
+  if (!isFighterAlive(fighter)) { fighter.breakthroughEcho = null; return; }
+  const effect = openedBreakthrough(fighter, "ultimate", (effects) => effects.ultimate);
+  if (!effect) { fighter.breakthroughEcho = null; return; }
+  const nextIn = echo.nextIn - dt;
+  if (nextIn > EMERGENCY_RECOVERY.epsilon) { fighter.breakthroughEcho = { ...echo, nextIn }; return; }
+  const casts = echo.casts - 1;
+  fighter.breakthroughEcho = casts > 0 ? { nextIn: nextIn + effect.intervalSeconds, casts } : null;
+
+  const ultimate = fighter.def.ultimate;
+  if (!("damageType" in ultimate) || ultimate.damageType === undefined || ultimate.power === undefined) return;
+  const radius = "radius" in ultimate && typeof ultimate.radius === "number" ? ultimate.radius : Number.POSITIVE_INFINITY;
+  const attacker = { ...fighter, def: offensiveDefinition(fighter) };
+  // 위력만 줄인 같은 궁극기다. 대상·속성·상태 효과는 본 타격과 같은 계약을 그대로 읽는다.
+  const input = { ...ultimate, power: ultimate.power * effect.powerPercent / 100, isCritical: false, kind: "ultimate" as const };
+  const targets = state.fighters.filter((other) => other.side !== fighter.side && isFighterAlive(other)
+    && Math.hypot(other.x - fighter.x, other.y - fighter.y) <= radius);
+  if (targets.length === 0) return;
+  // 바닥 표시는 본 타격과 같은 모양이라 "같은 기술이 다시 떨어졌다"가 읽힌다.
+  events.push({ kind: "areaImpact", attackerId: fighter.id, ultimate: true, damageType: ultimate.damageType,
+    area: Number.isFinite(radius) ? { shape: "radial", x: fighter.x, y: fighter.y, radius } : { shape: "battlefield" } });
+  for (const other of targets) {
+    const raw = Math.max(1, Math.round(computeDamage(attacker, defensiveDefinition(other, state), input)));
+    const resolution = resolveReceivedDamage(other, raw);
+    const hpBefore = other.hp;
+    const shieldBefore = other.shield.amount; const shieldProviderId = other.shield.providerId;
+    applyDamage(other, resolution.applied, events, state);
+    const credited = recordDamageContribution(state, fighter.id, other, ultimate.damageType, ultimate.scalingStat, computeDamageContribution(attacker, input), resolution, hpBefore, shieldBefore, shieldProviderId);
+    events.push({ kind: "attack", attackerId: fighter.id, targetId: other.id, skill: "ultimate", amount: resolution.applied,
+      contributionAmount: credited, critical: false, animate: false, damageType: ultimate.damageType, mitigated: resolution.reduced < resolution.raw, followUp: true });
+    if (isFighterAlive(other)) applySkillStatuses(other, ultimate, events, state, fighter.id, false);
+    if (!isFighterAlive(other)) {
+      clearDefeatedStatuses(other);
+      events.push({ kind: "death", fighterId: other.id, sourceId: fighter.id });
+    }
+  }
+}
+
+/**
+ * 폭주 돌파 — 폭주가 **끝나는 순간**에만 값을 치른다.
+ *
+ * 폭주 중에 주면 이미 세진 시간만 더 세지고, 끝나고 가장 약해지는 자리를 메우지 못한다.
+ */
+function applyFerocityBreakthrough(fighter: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
+  const taken = fighter.feverDamageTaken;
+  fighter.feverDamageTaken = 0;
+  const effect = openedBreakthrough(fighter, "ferocity", (effects) => effects.ferocity);
+  if (!effect || !isFighterAlive(fighter) || taken <= 0) return;
+  const shield = Math.round(taken * effect.shieldPercentOfDamageTaken / 100);
+  if (shield > 0) grantShieldAmount(fighter, fighter, shield, events);
+  tauntEnemiesAround(fighter, effect.tauntRadius, effect.tauntSeconds, state, events);
+}
+
+/**
+ * 패시브 돌파 — 자기 패시브가 돌 때 **그 회복을 아군과 나눈다.**
+ *
+ * 새 발동 조건을 만들지 않고 패시브의 조건(체력 절반 등)을 그대로 탄다. 아군에게 걸리는 것은
+ * 같은 지속 회복이라, 화면도 이미 있는 회복 사건 하나로 읽는다.
+ */
+function applyPassiveBreakthrough(fighter: Fighter, state: SkirmishState): void {
+  const effect = openedBreakthrough(fighter, "passive", (effects) => effects.passive);
+  const regeneration = fighter.regeneration;
+  if (!effect || !regeneration) return;
+  for (const ally of state.fighters) {
+    if (ally.side !== fighter.side || ally.id === fighter.id || !isFighterAlive(ally)) continue;
+    const shared = regeneration.percentPerTick * effect.percent / 100;
+    // 이미 도는 회복이 더 굵으면 덮지 않는다 — 나눠 받은 몫이 제 패시브를 깎으면 안 된다.
+    if (ally.regeneration && ally.regeneration.percentPerTick >= shared) continue;
+    ally.regeneration = { remaining: regeneration.remaining, tickIn: EMERGENCY_RECOVERY.tickSeconds, percentPerTick: shared };
+  }
+}
+
+/**
  * 궁극기가 건 은신을 기본 공격 한 번으로 푼다. 패시브의 전투 시작 은신은 건드리지 않는다.
  *
  * 시간만으로 끊으면 혼자 남은 판에서 아무도 자신을 고르지 못하는 채로 계속 때리게 되어
@@ -2131,7 +2284,7 @@ function tickPoison(fighter: Fighter, dt: number, state: SkirmishState, events: 
     applyDamage(fighter, amount, events, state);
     if (poison.sourceId) addContribution(state.contributions, poison.sourceId, "attack", hpBefore - fighter.hp, "abilityPower");
     events.push({ kind: "poison", fighterId: fighter.id, amount, started: false });
-    tryTriggerEmergencyRecovery(fighter); tryTriggerLowHpVanish(fighter, state);
+    tryTriggerEmergencyRecovery(fighter, state); tryTriggerLowHpVanish(fighter, state);
     state.log.push(`${fighter.def.name} 중독 ${amount}`);
     poison.tickIn += 1;
     if (!isFighterAlive(fighter)) {
@@ -2161,7 +2314,7 @@ function liquidatePoison(target: Fighter, state: SkirmishState, events: Skirmish
   applyDamage(target, amount, events, state);
   if (poison.sourceId) addContribution(state.contributions, poison.sourceId, "attack", hpBefore - target.hp, "abilityPower");
   events.push({ kind: "poisonLiquidated", fighterId: target.id, amount, ticks: pendingTicks });
-  tryTriggerEmergencyRecovery(target); tryTriggerLowHpVanish(target, state);
+  tryTriggerEmergencyRecovery(target, state); tryTriggerLowHpVanish(target, state);
   state.log.push(`${target.def.name} 중독 청산 ${amount}`);
   if (!isFighterAlive(target)) {
     clearDefeatedStatuses(target);
@@ -2919,6 +3072,9 @@ function gainFerocity(fighter: Fighter, base: number, state: SkirmishState, even
   // 처음 최대치에 닿은 순간 피버 카운트다운을 켠다.
   if (before < FEROCITY_RULES.max && fighter.ferocity >= FEROCITY_RULES.max) {
     fighter.ferocityFever = true;
+    // 이번 폭주에서 받는 피해만 센다. 지난 폭주의 몫이 남아 있으면 두 번째 폭주가 첫 번째의
+    // 피해로 보호막을 짓는다.
+    fighter.feverDamageTaken = 0;
     const trait = fighter.def.ferocityTrait;
     if (trait.effectId === "stealthLeap") {
       fighter.stealthFor = trait.durationSeconds;
@@ -3272,7 +3428,7 @@ export function tryTriggerLowHpVanish(fighter: Fighter, state: SkirmishState): b
  * 외부 시계나 난수를 읽지 않는 결정적 헬퍼이며, `passiveTriggered`가 전투당 한 번뿐인 발동권을
  * Fighter 안에서 소유한다. 정확히 최대 HP의 50%인 순간도 발동 경계에 포함한다.
  */
-export function tryTriggerEmergencyRecovery(fighter: Fighter): boolean {
+export function tryTriggerEmergencyRecovery(fighter: Fighter, state?: SkirmishState): boolean {
   if (fighter.def.passive.kind !== "emergencyRecovery" || !isFighterAlive(fighter)
     || fighter.hp > fighter.maxHp * 0.5 || fighter.passiveTriggered) return false;
 
@@ -3286,6 +3442,8 @@ export function tryTriggerEmergencyRecovery(fighter: Fighter): boolean {
     // 패시브 value의 단위는 1초 틱마다 회복하는 최대 HP 비율(%)이다.
     percentPerTick: fighter.def.passive.value,
   };
+  // 패시브 돌파는 이 발동 하나에 얹힌다. 새 조건을 만들지 않으므로 아군 몫도 여기서만 갈린다.
+  if (state) applyPassiveBreakthrough(fighter, state);
   return true;
 }
 
@@ -3389,6 +3547,9 @@ function applyDamage(target: Fighter, amount: number, events: SkirmishEvent[], s
   // 마지막 관문이라, 출혈·중독·뇌진탕까지 한 규칙으로 나뉜다.
   amount -= shareWithBulwark(target, amount, events, state);
   if (amount <= 0) return 0;
+  // 폭주 돌파가 끝날 때 쓸 누적이다. 모든 피해 원천의 마지막 관문이라 출혈·중독처럼 공격이
+  // 아닌 경로로 받은 몫도 빠지지 않고, 앞에 선 아군이 대신 받은 몫은 이미 떼어져 있다.
+  if (target.ferocityFever) target.feverDamageTaken += amount;
   const hpBefore = target.hp;
   if (target.shield.amount > 0) {
     const absorbed = Math.min(target.shield.amount, amount);
@@ -3537,7 +3698,7 @@ function tickBleed(fighter: Fighter, dt: number, state: SkirmishState, events: S
     if (bleed.sourceId) addContribution(state.contributions, bleed.sourceId, "attack", hpBefore - fighter.hp, "attackPower");
     events.push({ kind: "bleed", fighterId: fighter.id, amount, started: false });
     // 출혈도 직접 공격과 동일한 HP 변경 경계를 통과해야 패시브 발동 시점이 일관된다.
-    tryTriggerEmergencyRecovery(fighter); tryTriggerLowHpVanish(fighter, state);
+    tryTriggerEmergencyRecovery(fighter, state); tryTriggerLowHpVanish(fighter, state);
     state.log.push(`${fighter.def.name} 출혈 ${amount}`);
     bleed.tickIn += 1;
     if (!isFighterAlive(fighter)) {
@@ -3758,7 +3919,7 @@ function strike(
   // 넘기지 않으면 광란으로 판을 뒤집은 시전자가 기여도 그래프에 0으로 남는다.
   const creditedTo = attacker.frenzy?.sourceId ?? packCreditId(attacker);
   const credited = recordDamageContribution(state, creditedTo, target, damageInput.damageType, damageInput.scalingStat, contributionAmount, resolution, targetHpBefore, shieldBefore, shieldProviderId);
-  tryTriggerEmergencyRecovery(target); tryTriggerLowHpVanish(target, state);
+  tryTriggerEmergencyRecovery(target, state); tryTriggerLowHpVanish(target, state);
   triggerCombatAugments(state, target, "onLowHp", events);
   // 맞은 그 순간 희열이 오른다. 대신 받은 몫이 아니라 **실제로 날아온 공격**만 세는 자리다.
   gainElation(target);
@@ -3896,6 +4057,9 @@ function strike(
   if (isFighterAlive(target) && statusEffectsLandThisHit(attacker, skill, useUltimate)) {
     applySkillStatuses(target, encoreLiquidation ? withoutPoison(skill) : skill, events, state, attacker.id, critical);
     maybeFreezeAtMaxChill(attacker, target, events, state);
+    // 기본 공격 돌파는 **주기가 채워지는 그 한 방**에만 얹힌다. 상태를 거는 판정이 곧 그
+    // 주기이므로 같은 문 안에서 함께 돈다 — 따로 세면 두 셈이 한 박자씩 어긋난다.
+    if (!useUltimate) applyBasicBreakthrough(attacker, state, events);
   }
   // 채널링이 도는 동안에는 손이 닿은 적에게만 한 겹이 더 붙는다. 틱이 거는 상태(전장 전체)와
   // 다른 축이라 스킬 정의도 따로 든다 — 씬도 전투도 개체 이름으로 분기하지 않는다.
@@ -3969,7 +4133,7 @@ function strike(
       const secondaryShieldBefore = secondary.shield.amount; const secondaryShieldProviderId = secondary.shield.providerId;
       applyDamage(secondary, splashAmount, events, state);
       const splashCredited = recordDamageContribution(state, packCreditId(attacker), secondary, damageInput.damageType, damageInput.scalingStat, splashContribution, splashResolution, secondaryHpBefore, secondaryShieldBefore, secondaryShieldProviderId);
-      tryTriggerEmergencyRecovery(secondary); tryTriggerLowHpVanish(secondary, state);
+      tryTriggerEmergencyRecovery(secondary, state); tryTriggerLowHpVanish(secondary, state);
       // 광역 피해도 공격자가 실제로 입힌 HP 피해이므로 같은 흡혈 규칙에 포함한다.
       healFromDamage(secondaryHpBefore - secondary.hp);
       events.push({ kind: "attack", attackerId: attacker.id, targetId: secondary.id, skill: useUltimate ? "ultimate" : "basic", amount: splashAmount, contributionAmount: splashCredited, critical,
@@ -4140,7 +4304,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     const shieldBefore = target.shield.amount; const shieldProviderId = target.shield.providerId;
     applyDamage(target, amount, events, state);
     const credited = recordDamageContribution(state, packCreditId(attacker), target, damageInput.damageType, damageInput.scalingStat, contributionAmount, resolution, hpBefore, shieldBefore, shieldProviderId);
-    tryTriggerEmergencyRecovery(target); tryTriggerLowHpVanish(target, state);
+    tryTriggerEmergencyRecovery(target, state); tryTriggerLowHpVanish(target, state);
     triggerCombatAugments(state, target, "onLowHp", events);
     // 흡혈은 대상별 실제 HP 감소량만 더해 과잉 피해를 회복량으로 만들지 않는다.
     applyHealing(state, attacker, (hpBefore - target.hp) * damageHealingRate(attacker, skill, attackingInFever, target) / 100);
@@ -5325,6 +5489,8 @@ export function fireUltimate(
   if (channel && channel.seconds > 1) {
     attacker.artChannel = { remaining: channel.seconds - 1, total: channel.seconds, tickIn: 1 };
   }
+  // 궁극기 돌파도 같은 자리에서 시계를 켠다 — 시전 순간이 첫 타격이고 되풀이는 그 뒤부터다.
+  armUltimateBreakthrough(attacker);
   // 수동 궁극기도 평타와 동일하게 명시적 보스 ID의 경감 전 기여만 점수화한다.
   if (state.boss && target.id === state.boss.fighterId) {
     state.boss.score += events.reduce((sum, event) => sum + (event.kind === "attack" && event.attackerId === attacker.id && event.targetId === state.boss!.fighterId ? event.contributionAmount : 0), 0);
@@ -5362,7 +5528,14 @@ export function stepSkirmish(state: SkirmishState, dt: number, rng: () => number
       if (event.kind === "attack") event.at = state.elapsed;
     }
     // 최대치에서 시작한 피버는 공격 여부와 무관하게 실제 전투 시간만큼 자연 감소한다.
-    state.fighters.forEach((fighter) => drainFerocityFever(fighter, step));
+    // 폭주 돌파는 **가라앉는 그 프레임**에 값을 치른다 — 타이머 값이 아니라 전후 경계를
+    // 비교해야 한 번만 터진다(은신·광란 전환과 같은 방식이다).
+    state.fighters.forEach((fighter) => {
+      const feverBefore = fighter.ferocityFever;
+      drainFerocityFever(fighter, step);
+      if (feverBefore && !fighter.ferocityFever) applyFerocityBreakthrough(fighter, state, events);
+    });
+    state.fighters.forEach((fighter) => tickUltimateBreakthrough(fighter, step, state, events));
     remaining -= step;
   }
   // 타이머 값 자체가 아니라 호출 전후 경계를 비교해 진입·연장·해제를 명확히 구분한다.

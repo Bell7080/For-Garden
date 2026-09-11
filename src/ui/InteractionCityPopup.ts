@@ -43,7 +43,6 @@ import { combatPower } from "../core/combatPower";
 import { tapFormationSlot, tapRosterRelic, toFormationSlots, formationMembers } from "../core/formationSlots";
 import { bindLongPress } from "./longPressInfo";
 import { CurrencyGuidePopup } from "./CurrencyGuidePopup";
-import { addPopupBackButton } from "./IconButton";
 import { startPuppetHop } from "./puppetHop";
 import { loadOwnedPuppet } from "./statusPuppetLoad";
 import { sceneInfoManager, type InfoManager } from "./info";
@@ -149,7 +148,7 @@ export class InteractionCityPopup {
     const title = `${view.city.displayName} ${INTERACTION_DEPARTMENT_LABEL[view.city.department]}`;
     // 오른쪽 위 X 대신 **화면과 같은 우하단 뒤로가기**를 쓴다. 이 쪽지는 읽고 마는 쪽지가 아니라
     // 편성을 세우고 보내는 작업판이라, 닫는 손이 화면의 다른 작업판과 같은 자리에 있어야 한다.
-    this.body = this.popups.open({ width: PANEL.width, height: PANEL.height, title, titleSize: 34, dim: true, closeOnBackdrop: true, hideCloseButton: true, onClose: () => this.dispose() }, (body, close) => {
+    this.body = this.popups.open({ width: PANEL.width, height: PANEL.height, title, titleSize: 34, dim: true, closeOnBackdrop: true, backButton: true, onClose: () => this.dispose() }, (body) => {
       body.setName("interaction-city-popup");
       // **판 뒤에는 그 도시의 원화가 은은하게 깔린다.** 빈 남색 판 위에 칸과 글만 서면 어느
       // 도시의 쪽지인지 제목 한 줄로만 읽힌다. 아래 칸이 또렷하게 세우는 그 원화를 판 전체에
@@ -175,7 +174,6 @@ export class InteractionCityPopup {
         width: 200, height: 62, fontSize: 22, label: "도시 일지", accentColor: BLUE,
         onClick: () => this.onOpenJournal?.(view.city.id),
       }));
-      addPopupBackButton(this.scene, body, PANEL.width, PANEL.height, close);
     });
     // 나가 있는 동안에는 남은 시간이 초까지 돈다. 그 줄 하나만 갈아 끼워 SD와 칸은 그대로 둔다.
     this.clock = this.scene.time.addEvent({ delay: CLOCK_TICK_MS, loop: true, callback: () => this.tickClock() });

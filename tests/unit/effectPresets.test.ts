@@ -55,6 +55,27 @@ describe("이펙트 배치표", () => {
     expect(EFFECT_PRESETS.tapBattle.rings).toBe(0);
   });
 
+  it("세공 성공은 실패보다 세고, 각인은 그 둘보다 크다", () => {
+    // 세 결과가 같은 무게로 터지면 색만으로 갈려 무엇이 성공이었는지 눈에 남지 않고,
+    // 되돌릴 수 없는 마지막 한 번(각인)이 연타 속에 묻힌다.
+    expect(EFFECT_PRESETS.craftSuccess.flash).toBeGreaterThan(EFFECT_PRESETS.craftFail.flash);
+    expect(EFFECT_PRESETS.craftSuccess.flashAlpha).toBeGreaterThan(EFFECT_PRESETS.craftFail.flashAlpha);
+    expect(EFFECT_PRESETS.craftSuccess.rings).toBeGreaterThan(EFFECT_PRESETS.craftFail.rings);
+    expect(EFFECT_PRESETS.craftEngrave.rings).toBeGreaterThan(EFFECT_PRESETS.craftSuccess.rings);
+    expect(EFFECT_PRESETS.craftEngrave.shards).toBeGreaterThan(EFFECT_PRESETS.craftSuccess.shards);
+  });
+
+  it("세공 성공은 위로 튀고 실패만 아래로 흘러내린다", () => {
+    expect(EFFECT_PRESETS.craftSuccess.gravity).toBeLessThan(0);
+    expect(EFFECT_PRESETS.craftFail.gravity).toBeGreaterThan(0);
+  });
+
+  it("세공은 메뉴의 조작 반응보다 세지만 궁극기만큼 벌어지지는 않는다", () => {
+    // 한 줄에 세 번씩 반복하는 일이라 궁극기 무게로 터지면 화면이 매번 하얗게 뜬다.
+    expect(EFFECT_PRESETS.craftSuccess.ringRadius).toBeGreaterThan(EFFECT_PRESETS.tap.ringRadius);
+    expect(EFFECT_PRESETS.craftEngrave.ringRadius).toBeLessThan(EFFECT_PRESETS.ultimate.ringRadius);
+  });
+
   it("누른 자리는 강조색이 아니라 푸른빛이다", () => {
     // 금색은 재화·보상·강조를 뜻하므로 아무 데나 눌러도 뜨는 반응에 쓰면 뜻이 섞인다.
     const blue = EFFECT_TAP_COLOR & 0xff;

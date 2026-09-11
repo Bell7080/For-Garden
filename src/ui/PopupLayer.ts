@@ -1,9 +1,11 @@
 import Phaser from "phaser";
 import { chipPoints, drawLayer, drawShapeEdge, HOLO } from "./holo";
+import { IconButton } from "./IconButton";
+import { UI_ICON } from "./icons";
 import { addSectionTitle } from "./SectionTitle";
 import { COLOR, textStyle } from "./theme";
 import { setDebugPopupTitles } from "../debug";
-import { POPUP_BODY_BEVEL_RATIO, POPUP_CLOSE_LAYOUT, tiltedPopupSize } from "./popupGeometry";
+import { BACK_SLOT, POPUP_BACK_BUTTON_DEPTH, POPUP_BODY_BEVEL_RATIO, POPUP_CLOSE_LAYOUT, tiltedPopupSize } from "./popupGeometry";
 
 /** 쪽지와 화면을 대부분 차지하는 작업판이 공유하는 제목 위계다. */
 export const POPUP_TITLE_SIZE = {
@@ -38,6 +40,15 @@ export interface PopupOptions {
   titleSize?: number;
   /** 화면 자체의 뒤로가기 조작을 쓰는 큰 패널은 팝업 모서리의 중복 X를 숨긴다. */
   hideCloseButton?: boolean;
+  /**
+   * 판 **밖** 우하단의 공용 뒤로가기를 세운다. 켜면 모서리 X는 서지 않는다.
+   *
+   * 오른쪽 위 X는 판 안에 있어 읽던 손이 판을 가로질러 올라가야 하고, 판 크기마다 그 자리가
+   * 달라진다. 한동안 머무는 작업판은 화면의 뒤로가기와 **같은 자리·같은 모양**으로 닫는다
+   * (`BACK_SLOT` — 엄지가 닿는 오른쪽 아래). 아래 화면이 이미 그 자리를 쓰고 있으므로 이 층의
+   * 것이 그보다 위에 서서 먼저 눌리고, 판이 닫히면 함께 사라진다.
+   */
+  backButton?: boolean;
   /**
    * 누른 자리. 주면 그 위(자리가 없으면 아래)에 붙는다.
    * 화면 밖으로 나가지 않도록 가장자리에서 안쪽으로 밀어 넣는다.
@@ -180,7 +191,7 @@ export class PopupLayer {
       // 발굴 원화처럼 늦게 생성되는 큰 이미지가 `/발굴` 제목표를 덮던 문제도 이 한 규칙으로 막는다.
       titleChrome.push(addSectionTitle(this.scene, -width / 2 + unit * 0.1, -height / 2, options.title, { size: options.titleSize ?? POPUP_TITLE_SIZE.note, parent: body }).setDepth(1000));
       // 닫기는 기본적으로 오른쪽 위에 두되, 화면 chrome이 닫기를 맡으면 중복 조작을 만들지 않는다.
-      if (!options.hideCloseButton) {
+      if (!options.hideCloseButton && !options.backButton) {
         const closeButton = this.scene.add.container(width / 2 - POPUP_CLOSE_LAYOUT.centerInset, -height / 2 + POPUP_CLOSE_LAYOUT.centerInset);
         const mark = this.scene.add.graphics();
         mark.lineStyle(HOLO.lineWidth + 1, 0xc9ccd2, 0.9);
@@ -195,6 +206,13 @@ export class PopupLayer {
         closeButton.setDepth(1000); hit.setDepth(1000);
         titleChrome.push(closeButton, hit);
       }
+    }
+    if (options.backButton) {
+      // 판이 아니라 **화면**에 세운다. 판 안에 두면 판을 옮기거나 기울일 때 함께 돌아가고,
+      // 판 밖 우하단이라는 자리 자체가 사라진다. 층이 닫힐 때 같이 지운다.
+      const back = new IconButton(this.scene, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: () => close() })
+        .setDepth(POPUP_BACK_BUTTON_DEPTH + this.stack.length * 2);
+      layer.once(Phaser.GameObjects.Events.DESTROY, () => back.destroy());
     }
     if (options.closeOnBackdrop !== false) {
       // A popup is commonly created by another object's `pointerup`.  Registering the backdrop in that

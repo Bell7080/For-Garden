@@ -6,13 +6,16 @@ import { canEngraveRune, canEnhanceRune, RUNE_PART_LABELS, RUNE_RARITY_LABELS, r
 import { runeEnhancementGoldCost } from "../data/runes";
 import { RELICS } from "../data/relics";
 import { InventoryManager } from "../managers/InventoryManager";
+import { burstOverlayEffect } from "../managers/overlayEffects";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { session } from "../state/session";
 import { Button } from "./Button";
 import { drawGlyph } from "./glyphs";
 import { drawHairline, drawLayer, slantedRect, toPoints } from "./holo";
-import { PopupLayer } from "./PopupLayer";
-import { addChanceLine, addEmptyRuneMark, addRuneFrame, addRuneMark, RUNE_ACCENT, RUNE_MARK } from "./runeIcons";
+import { PopupLayer, POPUP_TITLE_SIZE } from "./PopupLayer";
+import { RUNE_CRAFT_MARKS, RUNE_CRAFT_PANEL, RUNE_NOTE_PANEL, runeCraftLayout, runeNoteLayout } from "./runeCraftLayout";
+import { planRuneCraftTap, RUNE_CRAFT_IMPACT, RUNE_CRAFT_STRIKE, RUNE_MARK, type RuneCraftImpactKind } from "./runeCraftMotion";
+import { addEmptyRuneMark, addRuneFrame, addRuneMark, RUNE_ACCENT, RuneChanceLine } from "./runeIcons";
 import { addCurrencyChip } from "./CurrencyChip";
 import { addMarkChip } from "./MarkChip";
 import { formatCurrency } from "../core/formatCurrency";
@@ -31,23 +34,10 @@ export const RUNE_STAT_LABEL: Readonly<Record<RuneStatKey, string>> = {
 };
 
 /** 쪽지의 옵션 줄에 붙는 각인 표식. 이름을 밀어내지 않을 만큼만 작다. */
-const NOTE_ENGRAVE_MARK = { outer: 10, gap: 16 } as const;
-
-/** 세공 표식의 크기. 각인도 같은 다이아라 크기를 거의 맞추고 색으로만 갈린다. */
-const MARK = { outer: 17, engrave: 18, step: 52, firstX: 110, engraveX: 286 } as const;
-
-/**
- * 세공 화면의 크기와 자리.
- *
- * 화면 한가운데에 뜬다. 조각을 누른 자리에 붙이면 팝업이 화면 아래쪽으로 쏠려 위쪽 절반이
- * 통째로 빈다 — 세공은 쪽지가 아니라 한동안 머무는 작업 화면이다.
- */
-const CRAFT = { width: 740, height: 980, x: 540, y: 940 } as const;
+const NOTE_ENGRAVE_MARK = { outer: 12, gap: 20 } as const;
 
 export interface RunePopupOptions {
   runeInstanceId: string;
-  /** 누른 조각/목록 칸의 화면 좌표다. PopupLayer가 화면 안으로 밀어 넣는다. */
-  anchor?: { x: number; y: number };
   onClose?: () => void;
   /** 테스트와 실제 HTTP 구현 교체를 위해 API 경계를 주입할 수 있다. */
   api?: GameApi;
@@ -127,8 +117,8 @@ function requestRuneName(scene: Phaser.Scene, current: string, commit: (name: st
  * 화면에서 눈대중으로 정하면 장착이 붙는 순간 세 판이 서로 겹치기 때문이다.
  */
 const RUNE_NOTE_BUTTONS = {
-  plain: { width: 236, craftX: -70, equipX: 0, sellX: 140 },
-  withEquip: { width: 140, craftX: -122, equipX: 28, sellX: 152 },
+  plain: { width: 300, craftX: -100, equipX: 0, sellX: 200 },
+  withEquip: { width: 180, craftX: -180, equipX: 10, sellX: 210 },
   /**
    * 이미 끼워져 있는 룬의 줄. 세공과 해제 둘뿐이라 같은 폭으로 나란히 선다.
    *
@@ -136,22 +126,14 @@ const RUNE_NOTE_BUTTONS = {
    * 남겨 두면 "왜 안 되는가"를 창이 말하지 않은 채 자리만 차지한다. 그 자리에 지금 할 수
    * 있는 조작(해제)을 세운다.
    */
-  equipped: { width: 176, craftX: -94, equipX: 94, sellX: 0 },
-  sellWidth: 84,
-  sellHeight: 54,
+  equipped: { width: 220, craftX: -120, equipX: 120, sellX: 0 },
+  sellWidth: 110,
+  sellHeight: 60,
   /** 되돌릴 수 없는 조작 하나뿐인 색. 강조색(금)과 갈라 두어 실수로 눌리지 않게 한다. */
   sellAccent: 0xd9455a,
   sellText: "#ffc3cb",
 } as const;
 
-/**
- * 쪽지 왼쪽 위의 표식 칩 한 줄.
- *
- * `MARK_ROW`는 그 줄이 차지하는 높이라, 칩이 생기면서 아래 내용이 함께 내려간다 —
- * 판만 키우고 자리를 그대로 두면 칩이 액자 위에 겹친다.
- */
-const MARK_CHIP = { size: 46, row: 56, x: -180, gap: 56 } as const;
-const MARK_ROW = MARK_CHIP.row;
 /** 잠금은 서늘한 강철빛, 즐겨찾기는 정보창 별과 같은 노랑이다. */
 const MARK_ON = { locked: 0x9fd8ff, bookmarked: 0xf2c744 } as const;
 
@@ -170,13 +152,13 @@ interface RuneMarkChips {
 function addRuneMarkChips(
   scene: Phaser.Scene,
   body: Phaser.GameObjects.Container,
-  top: number,
+  y: number,
   instanceId: string,
   api: GameApi,
   onChanged: (rune: RuneInstance) => void,
 ): RuneMarkChips {
   const inventory = new InventoryManager(session);
-  const y = top + MARK_CHIP.row / 2 + 22;
+  const chip = RUNE_NOTE_PANEL.chip;
   let current = session.runeInventory.find((rune) => rune.instanceId === instanceId);
   let pending = false;
   const chips: { key: "locked" | "bookmarked"; handle: ReturnType<typeof addMarkChip> }[] = [];
@@ -191,76 +173,79 @@ function addRuneMarkChips(
       .then((rune) => { paint(rune); onChanged(rune); })
       .finally(() => { pending = false; });
   };
-  chips.push({ key: "locked", handle: addMarkChip(scene, body, MARK_CHIP.x, y, { glyph: "lock", onColor: MARK_ON.locked, size: MARK_CHIP.size, onToggle: () => toggle("locked") }) });
-  chips.push({ key: "bookmarked", handle: addMarkChip(scene, body, MARK_CHIP.x + MARK_CHIP.gap, y, { glyph: "bookmark", onColor: MARK_ON.bookmarked, size: MARK_CHIP.size, onToggle: () => toggle("bookmarked") }) });
+  chips.push({ key: "locked", handle: addMarkChip(scene, body, chip.x, y, { glyph: "lock", onColor: MARK_ON.locked, size: chip.size, onToggle: () => toggle("locked") }) });
+  chips.push({ key: "bookmarked", handle: addMarkChip(scene, body, chip.x + chip.gap, y, { glyph: "bookmark", onColor: MARK_ON.bookmarked, size: chip.size, onToggle: () => toggle("bookmarked") }) });
   return { paint };
 }
 
 /**
- * 룬을 누르면 먼저 열리는 간소한 쪽지.
+ * 룬을 누르면 먼저 열리는 쪽지.
  *
  * 세공은 골드를 쓰고 결과가 되돌아오지 않는 조작이라, 룬을 눌렀다고 바로 그 화면을 열지
  * 않는다. 여기서는 무엇을 가진 룬인지만 읽고 — 옵션과 지금 어디에 끼워져 있는지 — 다음
  * 행동(세공·장착)은 손으로 한 번 더 고르게 한다.
+ *
+ * **누른 자리에 붙이지 않고 화면 가운데에 선다.** 옵션 다섯 줄과 버튼 줄을 담을 만큼 커진
+ * 판을 조각 위에 붙이면 화면 가장자리로 밀려 판 밖 우하단 뒤로가기와 겹치고, 어디를 눌렀는지에
+ * 따라 같은 창이 매번 다른 자리에서 열린다.
  */
 export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, options: RuneInfoPopupOptions): void {
   const rune = session.runeInventory.find(({ instanceId }) => instanceId === options.runeInstanceId);
   if (!rune) return;
+  const panel = RUNE_NOTE_PANEL;
   const accent = RUNE_ACCENT[rune.rarity];
   const rarity = RUNE_RARITY_LABELS[rune.rarity];
   const stats = [...rune.mainStats, ...rune.subStats];
-  // 쪽지는 작다. 무엇을 가진 룬인지만 읽는 창이라 옵션 줄도 바짝 붙여, 이름과 수치가 한
-  // 덩어리로 눈에 들어오게 한다. 크게 벌려 두면 몇 줄 안 되는 내용이 넓은 판에 흩어진다.
-  // 표식 칩 한 줄이 머리글 아래에 서므로 그만큼 아래 내용이 내려간다.
-  const height = 336 + MARK_ROW + stats.length * 40;
-  popups.open({ width: 448, height, title: "룬", anchor: options.anchor, dim: true, onClose: options.onClose }, (body, close) => {
-    const top = -height / 2;
+  // 높이는 손으로 적지 않고 실제로 쌓인 옵션 줄에서 거꾸로 구한다 — 박아 두면 고급 룬은 아래가
+  // 통째로 비고 전설 룬은 마지막 줄이 판을 넘는다.
+  const layout = runeNoteLayout(stats.length);
+  popups.open({ width: panel.width, height: layout.height, title: "룬", y: panel.centerY, dim: true, backButton: true, onClose: options.onClose }, (body, close) => {
+    const top = -layout.height / 2;
     // 판매 버튼은 자물쇠 칩이 다시 칠할 대상이라 먼저 만들고, 자리는 아래 버튼 줄에서 정한다.
     const sell = new Button(scene, 0, 0, {
-      width: RUNE_NOTE_BUTTONS.sellWidth, height: RUNE_NOTE_BUTTONS.sellHeight, label: "판매", fontSize: 20,
+      width: RUNE_NOTE_BUTTONS.sellWidth, height: RUNE_NOTE_BUTTONS.sellHeight, label: "판매", fontSize: 22,
       accentColor: RUNE_NOTE_BUTTONS.sellAccent, accentTextColor: RUNE_NOTE_BUTTONS.sellText,
       onClick: () => { void new InventoryManager(session).sellRunes(options.api ?? gameApi, [rune.instanceId]).then(() => close()); },
     });
     // 잠금과 즐겨찾기는 **머리글 아래 왼쪽 위**에 작은 칩 두 장으로 선다. 무엇을 가진
     // 룬인지 읽기 전에 "골라 둔 것인가"가 먼저 보이는 자리이고, 판매를 막는 자물쇠가
     // 판매 버튼 옆이 아니라 표식 자리에 있어야 실수로 함께 눌리지 않는다.
-    const marks = addRuneMarkChips(scene, body, top, rune.instanceId, options.api ?? gameApi, (next) => {
+    const marks = addRuneMarkChips(scene, body, top + panel.chip.y, rune.instanceId, options.api ?? gameApi, (next) => {
       // 자물쇠가 걸린 동안에는 판매 자체를 막는다. 서버도 같은 이유로 거부한다.
       if (!equipped) sell.setEnabled(!next.locked);
       options.onChanged?.(next);
     });
-    // 머리글("룬")이 창 맨 위에 서므로 그 아래로 한 줄 비우고 시작한다. 액자를 위로 붙이면
-    // 조각이 머리글에 잘려 무엇인지 알아볼 수 없다.
-    body.add(addRuneFrame(scene, -140, top + MARK_ROW + 122, 108, rune.rarity, rune.part, { mainStats: rune.mainStats, engraved: rune.engravings.length > 0 }));
-    body.add(scene.add.text(-76, top + MARK_ROW + 78, rarity + "  ·  " + RUNE_PART_LABELS[rune.part], textStyle({ role: "emphasis", size: 18, color: hex(accent) })).setOrigin(0, 0));
-    body.add(scene.add.text(-76, top + MARK_ROW + 102, rune.customName ?? `${rarity} 룬`, textStyle({ role: "display", size: 25 })).setOrigin(0, 0).setWordWrapWidth(204));
-    body.add(scene.add.text(-76, top + MARK_ROW + 140, equippedLine(rune.instanceId), textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0, 0));
-    body.add(drawHairline(scene, 0, top + MARK_ROW + 180, 356, { color: accent, alpha: 0.45 }));
+    body.add(addRuneFrame(scene, panel.frame.x, top + panel.frame.y, panel.frame.size, rune.rarity, rune.part, { mainStats: rune.mainStats, engraved: rune.engravings.length > 0 }));
+    body.add(scene.add.text(panel.textX, top + panel.rarityY, rarity + "  ·  " + RUNE_PART_LABELS[rune.part], textStyle({ role: "emphasis", size: 20, color: hex(accent) })).setOrigin(0, 0));
+    body.add(scene.add.text(panel.textX, top + panel.nameY, rune.customName ?? `${rarity} 룬`, textStyle({ role: "display", size: 29 })).setOrigin(0, 0).setWordWrapWidth(panel.nameWrap));
+    body.add(scene.add.text(panel.textX, top + panel.equippedY, equippedLine(rune.instanceId), textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0, 0));
+    body.add(drawHairline(scene, 0, top + panel.hairlineY, panel.hairlineWidth, { color: accent, alpha: 0.45 }));
 
+    const statLeft = -panel.width / 2 + panel.statInset;
     stats.forEach((stat, index) => {
-      const y = top + MARK_ROW + 212 + index * 40;
+      const y = top + layout.statRows[index];
       const main = index < rune.mainStats.length;
       // 주 옵션은 강조, 보조는 본문이다. 역할은 조건식이 아니라 두 갈래로 명시해서 고른다.
       const nameStyle = main
-        ? textStyle({ role: "emphasis", size: 22, color: COLOR.ink })
-        : textStyle({ role: "body", size: 21, color: COLOR.inkDim });
-      const name = scene.add.text(-168, y, RUNE_STAT_LABEL[stat.key], nameStyle).setOrigin(0, 0.5);
+        ? textStyle({ role: "emphasis", size: 24, color: COLOR.ink })
+        : textStyle({ role: "body", size: 22, color: COLOR.inkDim });
+      const name = scene.add.text(statLeft, y, RUNE_STAT_LABEL[stat.key], nameStyle).setOrigin(0, 0.5);
       body.add(name);
       // 각인한 옵션은 **이름 옆에서 바로** 읽혀야 한다. 어느 줄이 완성된 줄인지 알려고 세공
       // 화면을 다시 열게 하지 않는다. 표식은 세공 화면과 같은 다이아이고 크기만 작다.
       if (rune.engravings.some(({ statKey }) => statKey === stat.key)) {
-        addRuneMark(scene, body, -168 + name.width + NOTE_ENGRAVE_MARK.gap, y, NOTE_ENGRAVE_MARK.outer, "engrave");
+        addRuneMark(scene, body, statLeft + name.width + NOTE_ENGRAVE_MARK.gap, y, NOTE_ENGRAVE_MARK.outer, "engrave");
       }
-      body.add(scene.add.text(168, y, `+${stat.value}%`, textStyle({ role: "display", size: 22, color: main ? hex(accent) : COLOR.ink })).setOrigin(1, 0.5));
+      body.add(scene.add.text(-statLeft, y, `+${stat.value}%`, textStyle({ role: "display", size: 24, color: main ? hex(accent) : COLOR.ink })).setOrigin(1, 0.5));
     });
 
     // 세공 진행은 숫자 하나로만 알린다. 자세한 결과 표식은 세공 화면이 맡는다.
     const attempts = runeEnhancementAttempts(rune);
     const total = runeTotalEnhancementAttempts(rune.rarity);
     const progress = rune.engravings.length > 0 ? "각인 완료" : `세공 ${attempts} / ${total}`;
-    body.add(scene.add.text(0, top + MARK_ROW + 212 + stats.length * 40 + 2, progress, textStyle({ role: "body", size: 19, color: COLOR.inkDim })).setOrigin(0.5, 0));
+    body.add(scene.add.text(0, top + layout.progressY, progress, textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0.5, 0));
 
-    const buttonY = height / 2 - 56;
+    const buttonY = top + layout.buttonY;
     const equip = options.equip;
     const slot = equippedRuneSlot(rune.instanceId);
     const equipped = slot !== undefined;
@@ -271,7 +256,7 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
     // 해제 둘만 나란히 선다.
     const main = equipped ? RUNE_NOTE_BUTTONS.equipped : equip ? RUNE_NOTE_BUTTONS.withEquip : RUNE_NOTE_BUTTONS.plain;
     const craft = new Button(scene, main.craftX, buttonY, {
-      width: main.width, height: 68, label: "세공", fontSize: 24, variant: "primary", accentColor: accent,
+      width: main.width, height: panel.buttonHeight, label: "세공", fontSize: 26, variant: "primary", accentColor: accent,
       onClick: () => {
         close();
         openRunePopup(scene, popups, options);
@@ -289,7 +274,7 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
     if (slot) {
       // 해제는 되돌릴 수 있는 조작이라 판매처럼 붉게 물러나지 않고 세공과 나란히 선다.
       body.add(new Button(scene, main.equipX, buttonY, {
-        width: main.width, height: 68, label: "해제", fontSize: 24,
+        width: main.width, height: panel.buttonHeight, label: "해제", fontSize: 26,
         onClick: () => {
           void relicProgression.unequipRune(slot.relicId, slot.slotIndex).then(() => {
             close();
@@ -301,7 +286,7 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
       }));
     } else if (equip) {
       body.add(new Button(scene, main.equipX, buttonY, {
-        width: main.width, height: 68, label: "장착", fontSize: 24,
+        width: main.width, height: panel.buttonHeight, label: "장착", fontSize: 26,
         onClick: () => {
           void relicProgression.equipRune(equip.relicId, equip.slotIndex, rune.instanceId).then(() => {
             close();
@@ -317,13 +302,6 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
   });
 }
 
-/**
- * 룬 세공(강화·각인) 화면.
- *
- * 위쪽 한 줄이 지금의 성공·실패 확률이고, 아래 각 옵션 줄에는 세공의 결과가 별로 박힌다 —
- * 성공은 푸른 별, 실패는 다크체리, 맨 뒤 빈 자리는 각인의 노란 별 몫이다. 시도할 때마다 다시
- * 그리므로 확률 선이 곧바로 좌우로 밀린다.
- */
 /**
  * 다음으로 세공할 줄.
  *
@@ -342,44 +320,167 @@ function nextCraftTarget(rune: RuneInstance, current?: RuneStatKey): RuneStatKey
   return undefined;
 }
 
+/** 아직 비어 있는 칸 하나. 누른 순간의 예고가 어느 크기로 번질지 함께 들고 있는다. */
+interface EmptySlot {
+  mark: Phaser.GameObjects.Container;
+  outer: number;
+}
+
+/**
+ * 룬 세공(강화·각인) 화면.
+ *
+ * 위쪽 한 줄이 지금의 성공·실패 확률이고, 아래 각 옵션 줄에는 세공의 결과가 다이아로 박힌다 —
+ * 성공은 푸른빛, 실패는 다크체리, 맨 뒤 빈 자리는 각인의 금빛 몫이다.
+ *
+ * **결과는 그려지는 것이 아니라 박히는 것이다.** 표식 하나가 크게 나타나 제 크기로 꽂히고
+ * 그 자리에서 파편이 터지며, 확률 줄과 두 수치는 새 값으로 스르륵 흘러간다. 그리고 응답을
+ * 기다리는 동안 누른 손도 세어 둔다(`planRuneCraftTap`) — 한 줄에 세 번씩 두드리는 일이라
+ * 기다리는 동안의 입력을 버리면 연타가 한 번으로 줄어든다.
+ */
 export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: RunePopupOptions): void {
   const api = options.api ?? gameApi;
   // 룬을 바꾸는 모든 요청은 이 경계를 지나 Session 반영과 목록 갱신 신호를 함께 낸다.
   const inventory = new InventoryManager(session);
   let rune = session.runeInventory.find(({ instanceId }) => instanceId === options.runeInstanceId);
   if (!rune) return;
+  const panel = RUNE_CRAFT_PANEL;
+  const marks = RUNE_CRAFT_MARKS;
+  const layout = runeCraftLayout({ mainCount: rune.mainStats.length, subCount: rune.subStats.length });
   let selected: RuneStatKey | undefined;
   let pending = false;
-  popups.open({ width: CRAFT.width, height: CRAFT.height, title: "룬 세공", x: CRAFT.x, y: CRAFT.y, dim: true, onClose: options.onClose }, (body) => {
+  /** 응답을 기다리는 동안 눌러 둔 세공 수. 각인은 절대 쌓이지 않는다. */
+  let queued = 0;
+  /** 확률 줄이 지금 보여 주고 있는 값. 판을 다시 그려도 이 값에서 이어 흘러간다. */
+  let chanceShown = rune.currentSuccessChance;
+  /** 방금 박힌 결과. 다시 그릴 때 그 표식 하나만 크게 나타났다가 앉는다. */
+  let landed: { statKey: RuneStatKey; slot: number; kind: RuneCraftImpactKind } | undefined;
+  popups.open({ width: panel.width, height: layout.height, title: "룬 세공", y: panel.centerY, titleSize: POPUP_TITLE_SIZE.workboard, dim: true, backButton: true, onClose: options.onClose }, (body) => {
     const content = scene.add.container(0, 0);
     body.add(content);
+    /** 이번 그림에서 비어 있는 칸들. 누른 순간 그 자리에 예고를 번지게 한다. */
+    const empties = new Map<string, EmptySlot>();
+
+    /** 지금 이 순간 세공·각인 요청을 보낼 수 있는지. 대기열의 다음 한 번도 매번 다시 묻는다. */
+    const craftable = (): boolean => {
+      const current = rune!;
+      if (!selected || current.engravings.length > 0) return false;
+      if (current.enhancementComplete) return canEngraveRune(current);
+      if (!canEnhanceRune(current, selected)) return false;
+      return session.wallet.gold >= runeEnhancementGoldCost(current.rarity, runeEnhancementAttempts(current));
+    };
+
+    /**
+     * 결과 하나를 제자리에 박는다.
+     *
+     * 파편은 판 **위**에서 터진다(`burstOverlayEffect`) — 판 안에서 터뜨리면 깊이 2000대의
+     * 판 층에 묻힌다. 자리는 표식의 실제 월드 좌표라 판을 옮겨도 따라간다.
+     */
+    const land = (mark: Phaser.GameObjects.Container, kind: RuneCraftImpactKind): void => {
+      const spec = RUNE_CRAFT_IMPACT[kind];
+      const at = mark.getWorldTransformMatrix();
+      burstOverlayEffect(spec.effect, at.tx, at.ty, RUNE_MARK[kind].halo);
+      const restY = mark.y;
+      mark.setScale(spec.fromScale).setY(restY + spec.fromY);
+      scene.tweens.add({ targets: mark, scale: 1, y: restY, duration: spec.settleMs, ease: spec.ease });
+      if (spec.kickPx <= 0) return;
+      // 각인만 판을 한 번 때린다. 세공까지 흔들면 연타 내내 판이 떨려 마지막 한 번이 묻힌다.
+      scene.tweens.add({ targets: content, x: spec.kickPx, duration: 60, yoyo: true, repeat: 1, ease: "Sine.InOut", onComplete: () => content.setX(0) });
+    };
+
+    /**
+     * 누른 순간 목표 칸에서 한 번 번지는 예고.
+     *
+     * 서버가 답하기까지 한 박자가 비어, 그동안 아무 일도 없으면 연타가 먹지 않은 것처럼 보인다.
+     * 결과 색을 미리 말할 수 없으므로 흰빛으로 "때렸다"까지만 알린다. 이미 날아간 요청과 눌러
+     * 둔 수만큼 칸을 건너뛰어, 두 번 누르면 두 칸이 차례로 번진다.
+     */
+    const strike = (statKey: RuneStatKey, inFlight: number): void => {
+      const done = rune!.enhancementHistory[statKey]?.length ?? 0;
+      const slot = empties.get(`${statKey}:${done + inFlight}`);
+      if (!slot) return;
+      const flash = scene.add
+        .star(0, 0, 4, slot.outer * 0.34, slot.outer, RUNE_CRAFT_STRIKE.color, RUNE_CRAFT_STRIKE.alpha)
+        .setBlendMode(Phaser.BlendModes.ADD);
+      slot.mark.add(flash);
+      scene.tweens.add({ targets: flash, scale: RUNE_CRAFT_STRIKE.scale, alpha: 0, duration: RUNE_CRAFT_STRIKE.ms, ease: "Quad.Out", onComplete: () => flash.destroy() });
+    };
+
+    /** 요청 한 번. 끝나면 눌러 둔 만큼 이어서 보낸다. */
+    const craft = async (): Promise<void> => {
+      const statKey = selected;
+      if (!statKey || !craftable()) { queued = 0; return; }
+      const engraving = rune!.enhancementComplete;
+      pending = true;
+      try {
+        // 세공·각인은 반드시 manager를 지난다 — 그래야 가방 목록도 같은 순간에 다시 그려진다.
+        const response = engraving
+          ? await inventory.engraveRune(api, rune!.instanceId, statKey)
+          : await inventory.enhanceRune(api, rune!.instanceId, statKey);
+        rune = response.rune;
+        options.onChanged?.(rune);
+        const succeeded = "succeeded" in response && response.succeeded;
+        landed = engraving
+          ? { statKey, slot: -1, kind: "engrave" }
+          : { statKey, slot: (rune.enhancementHistory[statKey]?.length ?? 1) - 1, kind: succeeded ? "success" : "fail" };
+        // 세공은 고른 줄을 그대로 이어 간다. 그 줄이 다 차면 다음 줄로 넘어가고, 모든
+        // 세공이 끝나 각인만 남으면 손을 뗀다 — 각인은 되돌릴 수 없는 한 번의 선택이라
+        // 무엇에 새길지는 반드시 사람이 다시 고른다.
+        selected = rune.enhancementComplete ? undefined : nextCraftTarget(rune, statKey);
+        pending = false;
+        render(engraving ? "룬을 완성했습니다." : succeeded ? "세공 성공" : "세공 실패");
+      } catch (error) {
+        pending = false;
+        queued = 0;
+        render(error instanceof Error ? error.message : "요청을 완료하지 못했습니다.");
+        return;
+      }
+      if (queued <= 0) return;
+      queued -= 1;
+      if (craftable()) void craft();
+      else queued = 0;
+    };
+
+    /** 버튼을 누른 한 번. 곧바로 보내거나, 기다리는 중이면 쌓아 둔다. */
+    const press = (): void => {
+      if (!selected) return;
+      const plan = planRuneCraftTap({ pending, queued, repeatable: !rune!.enhancementComplete });
+      if (plan === "drop") return;
+      const inFlight = (pending ? 1 : 0) + queued;
+      if (plan === "queue") { queued += 1; strike(selected, inFlight); return; }
+      if (!craftable()) return;
+      if (!rune!.enhancementComplete) strike(selected, inFlight);
+      void craft();
+    };
 
     const render = (notice = ""): void => {
       content.removeAll(true);
-      const accent = RUNE_ACCENT[rune!.rarity];
-      const rarity = RUNE_RARITY_LABELS[rune!.rarity];
-      const displayName = rune!.customName ?? `${rarity} 룬`;
-      const top = -CRAFT.height / 2;
-      const half = CRAFT.width / 2;
-      content.add(addRuneFrame(scene, -half + 82, top + 118, 112, rune!.rarity, rune!.part, { mainStats: rune!.mainStats, engraved: rune!.engravings.length > 0 }));
-      content.add(scene.add.text(-half + 146, top + 78, rarity + "  ·  " + RUNE_PART_LABELS[rune!.part], textStyle({ role: "emphasis", size: 20, color: hex(accent) })).setOrigin(0, 0));
-      const nameText = scene.add.text(-half + 146, top + 104, displayName, textStyle({ role: "display", size: 28 })).setOrigin(0, 0).setWordWrapWidth(260);
+      content.setX(0);
+      empties.clear();
+      const current = rune!;
+      const accent = RUNE_ACCENT[current.rarity];
+      const rarity = RUNE_RARITY_LABELS[current.rarity];
+      const displayName = current.customName ?? `${rarity} 룬`;
+      const top = -layout.height / 2;
+      const half = panel.width / 2;
+      content.add(addRuneFrame(scene, panel.frame.x, top + panel.frame.y, panel.frame.size, current.rarity, current.part, { mainStats: current.mainStats, engraved: current.engravings.length > 0 }));
+      content.add(scene.add.text(panel.textX, top + panel.rarityY, rarity + "  ·  " + RUNE_PART_LABELS[current.part], textStyle({ role: "emphasis", size: 21, color: hex(accent) })).setOrigin(0, 0));
+      const nameText = scene.add.text(panel.textX, top + panel.nameY, displayName, textStyle({ role: "display", size: 32 })).setOrigin(0, 0).setWordWrapWidth(panel.nameWrap);
       content.add(nameText);
-      content.add(scene.add.text(-half + 146, top + 146, equippedLine(rune!.instanceId), textStyle({ role: "body", size: 19, color: COLOR.inkDim })).setOrigin(0, 0));
+      content.add(scene.add.text(panel.textX, top + panel.equippedY, equippedLine(current.instanceId), textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0, 0));
       // 보유 골드는 로비 상단과 같은 칸으로 세운다. 세공은 골드를 쓰는 화면이라 지갑이 늘
       // 보여야 하고, 같은 값이 화면마다 다른 모양으로 보이지 않게 한다.
-      addCurrencyChip(scene, half - 122, top + 92, "currency-gold", {
-        width: 156,
-        height: 56,
+      addCurrencyChip(scene, panel.wallet.x, top + panel.wallet.y, "currency-gold", {
+        width: panel.wallet.width,
+        height: panel.wallet.height,
         color: "#ffdf9a",
         parent: content,
       }).setText(formatCurrency(session.wallet.gold));
       // 연필은 씬에서 직접 작도하지 않고 glyph 공용 시스템의 edit 표식을 쓴다. 이름 바로
       // 옆에 서야 무엇을 고치는 단추인지 읽힌다 — 오른쪽 끝에 두면 그 아래 확률 글자와 겹친다.
-      const pencilX = Math.min(-half + 146 + nameText.width + 30, half - 244);
-      const pencilY = top + 122;
-      content.add(drawGlyph(scene, "edit", pencilX, pencilY, 32, accent));
-      const renameHit = scene.add.rectangle(pencilX, pencilY, 74, 74, 0xffffff, 0).setInteractive({ useHandCursor: true });
+      const pencilX = Math.min(panel.textX + nameText.width + 32, half - 264);
+      const pencilY = top + panel.nameY + 16;
+      content.add(drawGlyph(scene, "edit", pencilX, pencilY, 34, accent));
+      const renameHit = scene.add.rectangle(pencilX, pencilY, 78, 78, 0xffffff, 0).setInteractive({ useHandCursor: true });
       // 연필은 이름 글자 폭만큼 밀려 서므로 자리를 화면이 알린다 — 스펙이 좌표를 적어 두면
       // 이름이 바뀌는 순간 조용히 빗나간다(보상 팝업의 확인 버튼과 같은 방식이다). 판이 제자리를
       // 잡은 다음 프레임에 재야 컨테이너 이동·기울임이 모두 반영된 실제 화면 좌표가 나온다.
@@ -394,25 +495,28 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
         try {
           const response = await inventory.renameRune(api, rune!.instanceId, value);
           rune = response.rune; options.onChanged?.(rune);
-          // render()가 세공 버튼을 새로 만들므로, 그 버튼의 allowed 계산이 이 요청을 아직
-          // 진행 중인 것으로 보지 않도록 다시 그리기 전에 먼저 풀어 둔다.
           pending = false;
           render("이름을 저장했습니다.");
         } catch (error) { pending = false; throw error; }
       }));
       content.add(renameHit);
 
-      // 확률 줄 — 한 줄을 성공과 실패가 나눠 가진다. 시도할 때마다 가르는 지점이 움직인다.
-      const completed = rune!.enhancementComplete;
-      const chance = rune!.currentSuccessChance;
-      const chanceY = top + 230;
+      // 확률 줄 — 한 줄을 성공과 실패가 나눠 가지고, 그 위의 두 수치가 같은 값을 함께 읽는다.
+      // 결과가 막 박힌 그림에서만 흘러간다. 줄을 고르느라 다시 그릴 때도 흘리면 아무 일도
+      // 없었는데 게이지가 움직인다.
+      const completed = current.enhancementComplete;
       if (!completed) {
-        content.add(scene.add.text(-half + 36, chanceY - 24, `성공 ${Math.round(chance * 100)}%`, textStyle({ role: "emphasis", size: 21, color: hex(RUNE_MARK.success.body) })).setOrigin(0, 1));
-        content.add(scene.add.text(half - 36, chanceY - 24, `실패 ${Math.round((1 - chance) * 100)}%`, textStyle({ role: "emphasis", size: 21, color: hex(RUNE_MARK.fail.halo) })).setOrigin(1, 1));
-        addChanceLine(scene, content, 0, chanceY, CRAFT.width - 88, chance);
+        const line = new RuneChanceLine(scene, content, 0, top + panel.chanceBarY, layout.rowWidth, {
+          labelSize: panel.chanceLabelSize,
+          labelBaselineY: panel.chanceBarY - panel.chanceLabelY,
+          labelInset: panel.chanceLabelInset,
+          from: chanceShown,
+          onRoll: (shown) => { chanceShown = shown; },
+        });
+        line.rollTo(current.currentSuccessChance, landed !== undefined);
       } else {
-        const done = rune!.engravings.length > 0 ? "모든 세공이 끝났습니다." : "각인을 진행해 룬을 완성해 주세요.";
-        content.add(scene.add.text(0, chanceY - 12, done, textStyle({ role: "emphasis", size: 23, color: hex(accent) })).setOrigin(0.5, 0.5));
+        const done = current.engravings.length > 0 ? "모든 세공이 끝났습니다." : "각인을 진행해 룬을 완성해 주세요.";
+        content.add(scene.add.text(0, top + panel.chanceBarY - 12, done, textStyle({ role: "emphasis", size: 25, color: hex(accent) })).setOrigin(0.5, 0.5));
       }
 
       /**
@@ -422,9 +526,9 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
        * 무엇이 이 룬의 중심인지 읽히지 않는다 — 주 옵션은 크고 두껍게, 보조는 지금 크기로 둔다.
        */
       const drawRow = (stat: { key: RuneStatKey; value: number }, y: number, height: number, main: boolean): void => {
-        const usable = completed ? canEngraveRune(rune!) : canEnhanceRune(rune!, stat.key);
+        const usable = completed ? canEngraveRune(current) : canEnhanceRune(current, stat.key);
         const chosen = selected === stat.key;
-        const width = CRAFT.width - 88;
+        const width = layout.rowWidth;
         content.add(drawLayer(scene, 0, y, slantedRect(width, height, 12), {
           fill: chosen ? 0x223243 : main ? 0x121a23 : 0x0e141b,
           alpha: 0.98,
@@ -442,41 +546,44 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
           content.add(bar);
         }
         const labelStyle = main
-          ? textStyle({ role: "display", size: 27, color: chosen ? COLOR.accentText : COLOR.ink })
-          : textStyle({ role: "emphasis", size: 21, color: chosen ? COLOR.accentText : COLOR.inkDim });
-        content.add(scene.add.text(-width / 2 + (chosen ? 36 : 22), y, `${RUNE_STAT_LABEL[stat.key]}  +${stat.value}%`, labelStyle).setOrigin(0, 0.5).setWordWrapWidth(290));
-        const history = rune!.enhancementHistory[stat.key] ?? [];
-        const outer = main ? MARK.outer : MARK.outer - 3;
+          ? textStyle({ role: "display", size: 29, color: chosen ? COLOR.accentText : COLOR.ink })
+          : textStyle({ role: "emphasis", size: 23, color: chosen ? COLOR.accentText : COLOR.inkDim });
+        content.add(scene.add.text(-width / 2 + (chosen ? 36 : 24), y, `${RUNE_STAT_LABEL[stat.key]}  +${stat.value}%`, labelStyle).setOrigin(0, 0.5).setWordWrapWidth(marks.labelWrap));
+        const history = current.enhancementHistory[stat.key] ?? [];
+        const outer = main ? marks.mainOuter : marks.subOuter;
         for (let slot = 0; slot < 3; slot += 1) {
           const result = history[slot];
-          const x = MARK.firstX + slot * MARK.step;
-          if (!result) addEmptyRuneMark(scene, content, x, y, outer);
-          else addRuneMark(scene, content, x, y, outer, result.succeeded ? "success" : "fail");
+          const x = marks.firstX + slot * marks.step;
+          if (!result) {
+            empties.set(`${stat.key}:${slot}`, { mark: addEmptyRuneMark(scene, content, x, y, outer), outer });
+            continue;
+          }
+          const kind: RuneCraftImpactKind = result.succeeded ? "success" : "fail";
+          const mark = addRuneMark(scene, content, x, y, outer, kind);
+          if (landed && landed.statKey === stat.key && landed.slot === slot) land(mark, kind);
         }
-        // 각인 자리는 세 칸 뒤의 빈 공간이다. 각인된 옵션에만 노란 별이 크게 박힌다.
-        const engraving = rune!.engravings.find(({ statKey }) => statKey === stat.key);
-        if (engraving) addRuneMark(scene, content, MARK.engraveX, y, MARK.engrave, "engrave");
+        // 각인 자리는 세 칸 뒤의 빈 공간이다. 각인된 옵션에만 금빛 다이아가 박힌다.
+        const engraving = current.engravings.find(({ statKey }) => statKey === stat.key);
+        if (engraving) {
+          const mark = addRuneMark(scene, content, marks.engraveX, y, marks.engraveOuter, "engrave");
+          if (landed && landed.statKey === stat.key && landed.slot === -1) land(mark, "engrave");
+        }
         const hit = scene.add.rectangle(0, y, width, height, 0xffffff, 0).setInteractive({ useHandCursor: usable });
         hit.on("pointerup", () => { if (!pending && usable) { selected = stat.key; render(); } });
         content.add(hit);
       };
 
-      let y = top + 282;
-      content.add(scene.add.text(-CRAFT.width / 2 + 44, y, "주 옵션", textStyle({ role: "emphasis", size: 20, color: hex(accent) })).setOrigin(0, 0.5));
-      y += 58;
-      rune!.mainStats.forEach((stat) => { drawRow(stat, y, 76, true); y += 86; });
-      y += 8;
-      content.add(scene.add.text(-CRAFT.width / 2 + 44, y, "보조 옵션", textStyle({ role: "emphasis", size: 20, color: COLOR.inkDim })).setOrigin(0, 0.5));
-      y += 48;
-      if (rune!.subStats.length === 0) {
-        content.add(scene.add.text(0, y + 10, "이 등급에는 보조 옵션이 없다", textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0.5, 0.5));
+      content.add(scene.add.text(-half + 44, top + panel.mainLabelY, "주 옵션", textStyle({ role: "emphasis", size: 21, color: hex(accent) })).setOrigin(0, 0.5));
+      current.mainStats.forEach((stat, index) => drawRow(stat, top + layout.mainRows[index], panel.mainRow.height, true));
+      content.add(scene.add.text(-half + 44, top + layout.subLabelY, "보조 옵션", textStyle({ role: "emphasis", size: 21, color: COLOR.inkDim })).setOrigin(0, 0.5));
+      if (current.subStats.length === 0) {
+        content.add(scene.add.text(0, top + layout.emptySubY, "이 등급에는 보조 옵션이 없다", textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0.5, 0.5));
       }
-      rune!.subStats.forEach((stat) => { drawRow(stat, y, 56, false); y += 64; });
+      current.subStats.forEach((stat, index) => drawRow(stat, top + layout.subRows[index], panel.subRow.height, false));
 
-      const footerY = CRAFT.height / 2 - 160;
-      content.add(drawHairline(scene, 0, footerY - 38, CRAFT.width - 88, { color: accent, alpha: 0.4 }));
-      const engraved = rune!.engravings.length > 0;
-      const cost = completed ? 0 : runeEnhancementGoldCost(rune!.rarity, runeEnhancementAttempts(rune!));
+      content.add(drawHairline(scene, 0, top + layout.hairlineY, layout.rowWidth, { color: accent, alpha: 0.4 }));
+      const engraved = current.engravings.length > 0;
+      const cost = completed ? 0 : runeEnhancementGoldCost(current.rarity, runeEnhancementAttempts(current));
       const affordable = completed || session.wallet.gold >= cost;
       const reason = engraved
         ? "모든 세공이 끝났습니다."
@@ -486,34 +593,25 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
       // 방금 무슨 일이 있었는지는 버튼 바로 위에 크게 박는다. 손이 머무는 자리에서 결과가
       // 나오지 않으면 확률만 바뀐 채 무엇이 성공이었는지 되짚어야 한다.
       const resultStyle = notice.includes("성공")
-        ? textStyle({ role: "display", size: 30, color: hex(RUNE_MARK.success.body) })
+        ? textStyle({ role: "display", size: 32, color: hex(RUNE_MARK.success.halo) })
         : notice.includes("실패")
-          ? textStyle({ role: "display", size: 30, color: hex(RUNE_MARK.fail.halo) })
+          ? textStyle({ role: "display", size: 32, color: hex(RUNE_MARK.fail.glow) })
           : notice
-            ? textStyle({ role: "display", size: 30, color: hex(accent) })
-            : textStyle({ role: "body", size: 20, color: COLOR.inkDim });
-      content.add(scene.add.text(0, notice ? footerY - 18 : footerY - 6, notice || reason, resultStyle).setOrigin(0.5, 0));
-      const allowed = !pending && !!selected && !engraved && affordable;
+            ? textStyle({ role: "display", size: 32, color: hex(accent) })
+            : textStyle({ role: "body", size: 21, color: COLOR.inkDim });
+      content.add(scene.add.text(0, top + layout.noticeY, notice || reason, resultStyle).setOrigin(0.5, 0));
       // 비용은 안내문이 아니라 **누르는 것 위**에 박는다. 재화 이름은 글자 대신 아이콘이다.
-      const action = new Button(scene, 0, footerY + 82, { width: 500, height: 78, label: completed ? "각인 확정" : "세공", variant: "primary", accentColor: accent, cost: completed ? undefined : { icon: "currency-gold", amount: cost, affordable }, onClick: async () => {
-        if (!allowed || !selected || pending) return;
-        pending = true; action.setEnabled(false);
-        try {
-          // 세공·각인은 반드시 manager를 지난다 — 그래야 가방 목록도 같은 순간에 다시 그려진다.
-          const response = completed ? await inventory.engraveRune(api, rune!.instanceId, selected) : await inventory.enhanceRune(api, rune!.instanceId, selected);
-          rune = response.rune; options.onChanged?.(rune);
-          // 세공은 고른 줄을 그대로 이어 간다. 그 줄이 다 차면 다음 줄로 넘어가고, 모든
-          // 세공이 끝나 각인만 남으면 손을 뗀다 — 각인은 되돌릴 수 없는 한 번의 선택이라
-          // 무엇에 새길지는 반드시 사람이 다시 고른다.
-          selected = rune.enhancementComplete ? undefined : nextCraftTarget(rune, selected);
-          // render()가 새 버튼을 즉시 만들므로, 그 버튼의 allowed 계산이 아직 진행 중인 요청을
-          // 보지 않도록 다시 그리기 전에 먼저 풀어 둔다 — 그러지 않으면 이어지는 세공마다
-          // 방금 만든 버튼이 꺼진 채로 나와 곧바로 다시 누를 수 없었다.
-          pending = false;
-          render(completed ? "룬을 완성했습니다." : ("succeeded" in response && response.succeeded ? "세공 성공" : "세공 실패"));
-        } catch (error) { pending = false; render(error instanceof Error ? error.message : "요청을 완료하지 못했습니다."); }
-      }}).setEnabled(allowed);
+      // **기다리는 동안에도 꺼지지 않는다** — 눌린 버튼이 흐려지면 연타가 막히고, 실제로
+      // 보낼 수 있는지는 `craftable()`이 요청 직전에 다시 묻는다.
+      const action = new Button(scene, 0, top + layout.buttonY, {
+        width: panel.button.width, height: panel.button.height,
+        label: completed ? "각인 확정" : "세공", variant: "primary", accentColor: accent,
+        cost: completed ? undefined : { icon: "currency-gold", amount: cost, affordable },
+        onClick: press,
+      }).setEnabled(!!selected && !engraved && affordable);
       content.add(action);
+      // 박힘은 이 그림에서만 한 번 일어난다. 지우지 않으면 줄을 고를 때마다 같은 표식이 다시 꽂힌다.
+      landed = undefined;
     };
     render();
   });

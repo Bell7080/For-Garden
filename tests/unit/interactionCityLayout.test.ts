@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { BACK_BUTTON_SIZE, POPUP_BODY_BEVEL_RATIO, popupBackButtonSpot } from "../../src/ui/popupGeometry";
+import { BASE_HEIGHT } from "../../src/config/gameConfig";
+import { BACK_BUTTON_SIZE, BACK_SLOT } from "../../src/ui/popupGeometry";
 import {
   INTERACTION_CITY_ACTION,
   INTERACTION_CITY_BRIEF_ART,
@@ -54,24 +55,19 @@ describe("도시 쪽지의 안내 줄", () => {
     expect(FRAME.gap).toBeGreaterThan(0);
   });
 
-  it("은 우하단 뒤로가기가 깎인 모서리 안에 머문다", () => {
-    // 두 변에서 같은 만큼만 들어가면 버튼이 빗변을 넘어 판 밖으로 삐져나온다.
-    const { width, height } = INTERACTION_CITY_PANEL;
-    const spot = popupBackButtonSpot(width, height, BACK_BUTTON_SIZE);
-    const bevel = Math.min(width, height) * POPUP_BODY_BEVEL_RATIO;
-    const outerCorner = (spot.x + BACK_BUTTON_SIZE / 2) + (spot.y + BACK_BUTTON_SIZE / 2);
-    expect(outerCorner).toBeLessThanOrEqual(width / 2 + height / 2 - bevel);
+  it("은 판이 화면 공용 뒤로가기 자리를 덮지 않는다", () => {
+    // 뒤로가기는 판 안이 아니라 **화면의 우하단 공용 슬롯**에 선다. 판이 그 자리까지 내려오면
+    // 판 위에 얹힌 버튼이 되어 "판 밖으로 물러난다"는 뜻이 사라진다.
+    const bottom = BASE_HEIGHT / 2 + INTERACTION_CITY_PANEL.height / 2;
+    expect(bottom).toBeLessThan(BACK_SLOT.y - BACK_BUTTON_SIZE / 2);
   });
 
-  it("은 뒤로가기가 조작 줄의 어느 버튼과도 겹치지 않는다", () => {
-    // **배치 중이 가장 빡빡하다** — 취소가 왼쪽에 서면서 보내기가 오른쪽으로 밀려 뒤로가기 쪽으로
-    // 다가선다. 그때 겹치면 보내려는 손이 판을 닫는다.
-    const spot = popupBackButtonSpot(INTERACTION_CITY_PANEL.width, INTERACTION_CITY_PANEL.height, BACK_BUTTON_SIZE);
-    const backLeft = spot.x - BACK_BUTTON_SIZE / 2;
+  it("은 조작 줄이 판 안에 머문다", () => {
+    // 닫는 손은 판 밖에 있으므로 조작 줄은 판 폭만 지키면 된다.
     const action = INTERACTION_CITY_ACTION;
-    expect(backLeft).toBeGreaterThan(action.width / 2);
-    expect(backLeft).toBeGreaterThan(action.primaryX + action.editingWidth / 2);
-    expect(backLeft).toBeGreaterThan(action.cancelX + action.cancelWidth / 2);
+    const half = INTERACTION_CITY_PANEL.width / 2;
+    expect(action.primaryX + action.editingWidth / 2).toBeLessThan(half);
+    expect(action.cancelX + action.cancelWidth / 2).toBeLessThan(half);
   });
 
   it("은 배치 중의 취소와 보내기가 서로 붙지 않는다", () => {

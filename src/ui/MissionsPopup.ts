@@ -6,7 +6,6 @@ import { notificationManager } from "../managers/NotificationManager";
 import { session } from "../state/session";
 import { Button } from "./Button";
 import { chipPoints, drawLayer, HoloBar, HOLO } from "./holo";
-import { addPopupBackButton } from "./IconButton";
 import { POPUP_TITLE_SIZE, type PopupLayer } from "./PopupLayer";
 import { RewardFrame } from "./RewardFrame";
 import { openRewardPopup } from "./RewardPopup";
@@ -37,15 +36,13 @@ export class MissionsPopup {
     const { popup, header, tabs, footer } = MISSIONS_POPUP_LAYOUT;
     const width = BASE_WIDTH - popup.widthInset;
     const height = BASE_HEIGHT - popup.heightInset;
-    this.popups.open({ width, height, title: "임무 기록", titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: 0.72, closeOnBackdrop: false, hideCloseButton: true, onClose: () => { this.destroyContent(); this.body = undefined; this.onClose?.(); } }, (body, close) => {
+    this.popups.open({ width, height, title: "임무 기록", titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: 0.72, closeOnBackdrop: false, backButton: true, onClose: () => { this.destroyContent(); this.body = undefined; this.onClose?.(); } }, (body) => {
       this.body = body;
       // 커진 작업판 제목 아래에 상태 줄을 충분히 내려 두어 머리글과 본문이 한 덩어리로 겹치지 않게 한다.
       this.status = this.scene.add.text(header.statusX, header.statusY, "동기화 중", textStyle({ role: "body", size: 23, color: COLOR.inkDim })).setOrigin(1, 0); body.add(this.status);
       body.add(new Button(this.scene, -tabs.centerX, tabs.centerY, { width: tabs.width, height: tabs.height, label: "일일", onClick: () => this.select("daily") }));
       body.add(new Button(this.scene, tabs.centerX, tabs.centerY, { width: tabs.width, height: tabs.height, label: "주간", onClick: () => this.select("weekly") }));
       body.add(new Button(this.scene, 0, footer.buttonY, { width: footer.buttonWidth, height: footer.buttonHeight, label: "완료 보상 일괄 수령", variant: "primary", onClick: () => void this.claimAll() }));
-      // 작업을 끝내는 유일한 닫기 조작은 다른 화면과 같은 우하단 돌아가기 버튼이다.
-      addPopupBackButton(this.scene, body, width, height, close);
       void this.refresh();
     });
   }

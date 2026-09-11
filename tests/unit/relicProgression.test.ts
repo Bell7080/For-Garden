@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { breakthroughBonus, BREAKTHROUGH_STEPS, calculateFinalStats, canBreakThrough, canFeedRelic, canLevelUpRelic, feedRelic, FEED_UNIT, levelUpRelic, nextBreakthrough, relicLevelCap, RELIC_LEVEL_CAP, RELIC_STAR_CAP, relicExpToNext, relicLevelUpCost, relicStars } from "../../src/core/relicProgression";
+import { breakthroughBonus, breakthroughFragmentCost, breakthroughSlotStar, BREAKTHROUGH_STEPS, calculateFinalStats, canBreakThrough, isBreakthroughSlotOpen, openedBreakthroughSlots, canFeedRelic, canLevelUpRelic, feedRelic, FEED_UNIT, levelUpRelic, nextBreakthrough, relicLevelCap, RELIC_LEVEL_CAP, RELIC_STAR_CAP, relicExpToNext, relicLevelUpCost, relicStars } from "../../src/core/relicProgression";
 import { combatPower } from "../../src/core/combatPower";
 import type { RelicProgress, Stats } from "../../src/core/types";
 import { RelicProgressionManager } from "../../src/managers/RelicProgressionManager";
@@ -173,11 +173,44 @@ describe("돌파", () => {
 
   it("는 레벨을 상한까지 채우고 그 개체의 파편이 있어야 할 수 있다", () => {
     const step = nextBreakthrough(0)!;
-    expect(canBreakThrough(base(), step.fragments, step.cheesecake)).toBe(false); // 레벨이 상한에 못 미친다
+    const need = breakthroughFragmentCost("SR", 0);
+    expect(canBreakThrough("SR", base(), need, step.cheesecake)).toBe(false); // 레벨이 상한에 못 미친다
     const maxed = { ...base(), level: RELIC_LEVEL_CAP };
-    expect(canBreakThrough(maxed, step.fragments, step.cheesecake)).toBe(true);
-    expect(canBreakThrough(maxed, step.fragments - 1, step.cheesecake)).toBe(false);
-    expect(canBreakThrough(maxed, step.fragments, step.cheesecake - 1)).toBe(false);
+    expect(canBreakThrough("SR", maxed, need, step.cheesecake)).toBe(true);
+    expect(canBreakThrough("SR", maxed, need - 1, step.cheesecake)).toBe(false);
+    expect(canBreakThrough("SR", maxed, need, step.cheesecake - 1)).toBe(false);
+  });
+
+  it("는 파편 수를 등급이 정하고 마지막 별만 더 든다", () => {
+    // 같은 개체를 다시 만나는 빈도가 등급마다 다르므로 파편 수도 등급이 정한다.
+    expect(breakthroughFragmentCost("SSR", 0)).toBeLessThan(breakthroughFragmentCost("SR", 0));
+    expect(breakthroughFragmentCost("SR", 0)).toBeLessThan(breakthroughFragmentCost("R", 0));
+    for (const rarity of ["SSR", "SR", "R"] as const) {
+      const last = BREAKTHROUGH_STEPS.length - 1;
+      for (let step = 0; step < last; step += 1) {
+        expect(breakthroughFragmentCost(rarity, step)).toBe(breakthroughFragmentCost(rarity, 0));
+      }
+      expect(breakthroughFragmentCost(rarity, last)).toBeGreaterThan(breakthroughFragmentCost(rarity, 0));
+    }
+    // 치즈케이크도 같은 이유로 단계마다 오른다.
+    for (let step = 1; step < BREAKTHROUGH_STEPS.length; step += 1) {
+      expect(BREAKTHROUGH_STEPS[step].cheesecake).toBeGreaterThan(BREAKTHROUGH_STEPS[step - 1].cheesecake);
+    }
+    // SSR 한 장으로 뚫리는 등급이라도 마지막 별은 두 장이 필요하다.
+    expect(canBreakThrough("SSR", { ...base(), level: relicLevelCap(3), breakthrough: 3 }, 1, 99_999)).toBe(false);
+    expect(canBreakThrough("SSR", { ...base(), level: relicLevelCap(3), breakthrough: 3 }, 2, 99_999)).toBe(true);
+  });
+
+  it("는 별마다 다른 슬롯을 열고 순서가 손에 닿는 것부터다", () => {
+    expect(BREAKTHROUGH_STEPS.map((step) => step.slot)).toEqual(["basic", "ultimate", "ferocity", "passive"]);
+    expect(openedBreakthroughSlots(0)).toEqual([]);
+    expect(openedBreakthroughSlots(2)).toEqual(["basic", "ultimate"]);
+    expect(isBreakthroughSlotOpen(1, "basic")).toBe(true);
+    expect(isBreakthroughSlotOpen(1, "ultimate")).toBe(false);
+    expect(isBreakthroughSlotOpen(BREAKTHROUGH_STEPS.length, "passive")).toBe(true);
+    // 별 둘이 첫 슬롯을 연다. 표의 첫 줄이 곧 "별 둘로 가는 길"이다.
+    expect(breakthroughSlotStar("basic")).toBe(2);
+    expect(breakthroughSlotStar("passive")).toBe(RELIC_STAR_CAP);
   });
 
   it("뒤에는 열린 상한까지 다시 급여할 수 있다", () => {

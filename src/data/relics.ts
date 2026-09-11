@@ -228,6 +228,25 @@ export const RELICS: RelicDef[] = [
     // 320px 도발은 기존 폭주 반경 220보다 넓어 전열 주변의 복수 적을 확실히 붙잡되 전장 전체는 덮지 않는다.
     // 도발은 진입 때 한 번만 3초간 걸어 폭주 내내 표적을 강제하지 않고, 그 뒤에는 적의 공용 재지정을 허용한다.
     ferocityTrait: { name: "이제 못참아!", effectId: "torikaBulwark", maxHpRegenPercentPerSecond: 5, defenseBonus: 80, resistanceBonus: 60, tauntRadius: 320, tauntDurationSeconds: 3 },
+    // 별 넷이 이 개체를 **여엿한 탱커**로 완성한다. 넷 다 "막아 선다"는 한 방향을 향하고,
+    // 열리는 순서가 곧 그 방향의 단계다 — 기본 공격에 자급 회복과 도발이 붙고(II), 궁극기가
+    // 제어를 두 번 더 뿌리고(III), 폭주 뒤의 가장 약한 자리를 보호막이 메우며(IV), 마지막에
+    // 자기 회복을 팀 회복으로 나눈다(V). 도발 반경은 폭주와 같은 320px을 쓴다 — 같은 개체가
+    // 거는 "넓은 범위"가 기술마다 다르면 어디까지 끌어당기는지 플레이어가 셀 수 없다.
+    breakthroughEffects: {
+      // 기본 공격의 셋째 뿔에 얹는다. 방어력의 60%는 방어형 성장이 곧 유지력이 되게 하고,
+      // 1초 도발은 궁극기의 3초보다 짧아 평타가 제어를 대신하지 않는다.
+      basic: { kind: "periodicGuard", healScalingStat: "def", healPercent: 60, tauntRadius: 320, tauntSeconds: 1 },
+      // 지각 붕괴가 1.5초 간격으로 두 번 더 떨어진다. 위력 25%라 총량은 본 타격의 1.5배지만,
+      // 궁극기가 거는 기절이 세 번 나눠 들어와 전열 점유 시간이 길어지는 쪽이 값이다.
+      ultimate: { kind: "echo", casts: 2, intervalSeconds: 1.5, powerPercent: 25 },
+      // 폭주가 끝나는 순간 그동안 받은 피해의 30%가 보호막으로 남는다. 폭주 중에 주면 이미
+      // 단단한 시간만 더 단단해지고, 끝난 뒤 가장 약해지는 자리를 메우지 못한다.
+      ferocity: { kind: "feverBulwark", shieldPercentOfDamageTaken: 30, tauntRadius: 320, tauntSeconds: 2 },
+      // 「온화한 방패」가 돌 때 그 회복의 25%를 모든 아군이 함께 받는다. 자기 패시브의 조건을
+      // 그대로 타므로 새 발동 조건이 늘지 않는다.
+      passive: { kind: "sharedRecovery", percent: 25 },
+    },
     passive: {
       id: "anky-passive",
       name: "온화한 방패",

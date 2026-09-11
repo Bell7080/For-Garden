@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { PuppetBone } from "puppetforge";
 import {
   computeAnchoredPlacement,
+  computeFaceFrame,
   computeHeadCardFrame,
   findAnchorBone,
   findGroundBones,
@@ -125,6 +126,63 @@ describe("코어 기준 배치", () => {
     const flipped = computeAnchoredPlacement(FRAME, anchors.core, { x: 540, y: 1000, height: 2280, flipX: true });
     expect(flipped.x - 540).toBeCloseTo(540 - normal.x);
     expect(flipped.y).toBeCloseTo(normal.y);
+  });
+});
+
+describe("얼굴 액자 잘라내기", () => {
+  const anchors = resolveAnchors(BONES, FRAME);
+  const options = { size: 66, crop: 0.34, anchorY: 0.52 } as const;
+
+  it("는 잘라낸 상자가 액자 한 변과 정확히 같아 그림이 칸 안에서만 그려진다", () => {
+    const face = computeFaceFrame(FRAME, anchors.head, options);
+    expect(face.cropWidth * face.scale).toBeCloseTo(options.size);
+    expect(face.cropHeight * face.scale).toBeCloseTo(options.size);
+    // 정사각이라 얼굴이 좌우로 늘어나지 않는다.
+    expect(face.cropWidth).toBeCloseTo(face.cropHeight);
+  });
+
+  it("는 카드보다 얼굴을 훨씬 크게 당긴다", () => {
+    const face = computeFaceFrame(FRAME, anchors.head, options);
+    const card = computeHeadCardFrame(FRAME, anchors.head, { width: options.size, height: options.size, fillRatio: 0.95, headroom: 0.4 });
+    // 예전에는 카드와 같은 기준을 써서 66px 칸에서 얼굴이 4분의 1밖에 차지하지 않았다.
+    expect(face.scale).toBeGreaterThan(card.scale * 2);
+  });
+
+  it("는 눈·입이 액자 안에 들어온다", () => {
+    const face = computeFaceFrame(FRAME, anchors.head, options);
+    for (const point of [anchors.head, { x: 554, y: 416 }, { x: 591, y: 483 }]) {
+      expect(point.x).toBeGreaterThanOrEqual(face.cropX);
+      expect(point.x).toBeLessThanOrEqual(face.cropX + face.cropWidth);
+      expect(point.y).toBeGreaterThanOrEqual(face.cropY);
+      expect(point.y).toBeLessThanOrEqual(face.cropY + face.cropHeight);
+    }
+  });
+
+  it("는 상자를 이미지 밖으로 내보내지 않는다", () => {
+    for (const head of [{ x: 5, y: 5 }, { x: FRAME.imageWidth - 3, y: FRAME.imageHeight - 3 }]) {
+      const face = computeFaceFrame(FRAME, head, options);
+      expect(face.cropX).toBeGreaterThanOrEqual(0);
+      expect(face.cropY).toBeGreaterThanOrEqual(0);
+      expect(face.cropX + face.cropWidth).toBeLessThanOrEqual(FRAME.imageWidth);
+      expect(face.cropY + face.cropHeight).toBeLessThanOrEqual(FRAME.imageHeight);
+    }
+  });
+
+  it("는 실제 원화 모두에서 액자를 꽉 채우고 두 눈을 담는다", () => {
+    // 등신이 크게 다른 원화들이 같은 액자에 나란히 선다. 하나라도 상자가 이미지보다 커지면
+    // 그 개체만 그림이 칸 안에서 작게 떠 보이고, 눈이 밖으로 나가면 얼굴이 잘린다.
+    // 화면(`FaceFrame`)과 같은 식으로 등신 보정(`cardZoom`)까지 통과시킨다.
+    for (const { name, metadata, head, eyes } of REAL_PORTRAITS) {
+      const crop = options.crop / ((metadata.cardZoom ?? 1) * (metadata.portraitZoom ?? 1));
+      const face = computeFaceFrame(metadata, head, { ...options, crop });
+      expect(face.cropWidth * face.scale, name).toBeCloseTo(options.size);
+      for (const eye of eyes) {
+        expect(eye.x, name).toBeGreaterThanOrEqual(face.cropX);
+        expect(eye.x, name).toBeLessThanOrEqual(face.cropX + face.cropWidth);
+        expect(eye.y, name).toBeGreaterThanOrEqual(face.cropY);
+        expect(eye.y, name).toBeLessThanOrEqual(face.cropY + face.cropHeight);
+      }
+    }
   });
 });
 

@@ -27,7 +27,7 @@ export class InteractionJournalPopup {
   /** 발견된 제목만 목록에 만들고 미발견 행은 원문 대신 잠금 상태로 남긴다. */
   open(cityId: string): void {
     const journals = journalsForCity(cityId);
-    this.popups.open({ width: 900, height: 980, title: "도시 일지", dim: true, closeOnBackdrop: true }, (body) => {
+    this.popups.open({ width: 900, height: 980, title: "도시 일지", dim: true, closeOnBackdrop: true, backButton: true }, (body) => {
       if (journals.length === 0) {
         body.add(this.scene.add.text(0, 0, "아직 이 도시의 기록이 없다", textStyle({ role: "body", size: 28, color: "#8d97a5" })).setOrigin(0.5));
         return;
@@ -52,7 +52,7 @@ export class InteractionJournalPopup {
   private openJournal(journal: InteractionJournal): void {
     this.manager.markJournalRead(journal.id);
     if (journal.body) {
-      this.popups.open({ width: 860, height: 620, title: journal.title, dim: true, closeOnBackdrop: true }, (body) => body.add(this.scene.add.text(-360, -170, journal.body!, textStyle({ role: "body", size: 30, wrap: 720, lineSpacing: 12 }))));
+      this.popups.open({ width: 860, height: 620, title: journal.title, dim: true, closeOnBackdrop: true, backButton: true }, (body) => body.add(this.scene.add.text(-360, -170, journal.body!, textStyle({ role: "body", size: 30, wrap: 720, lineSpacing: 12 }))));
       return;
     }
     const story = journal.dialogueStory;

@@ -24,7 +24,13 @@ export type EffectKind =
   /** 메뉴에서 화면을 누른 자리. 근미래 홀로그램 장비의 결이다. */
   | "tap"
   /** 전장에서 화면을 누른 자리. 같은 조작이라도 전장에서는 작게 튀는 결로 답한다. */
-  | "tapBattle";
+  | "tapBattle"
+  /** 룬 세공 성공이 박히는 자리. */
+  | "craftSuccess"
+  /** 룬 세공 실패가 가라앉는 자리. */
+  | "craftFail"
+  /** 룬 하나에 한 번뿐인 각인이 박히는 자리. */
+  | "craftEngrave";
 
 export interface BurstSpec {
   /** 튀어 나가는 마름모 파편 수. 한 자리 수를 넘기지 않는다. */
@@ -113,6 +119,24 @@ export const EFFECT_PRESETS: Record<EffectKind, BurstSpec> = {
     shards: 3, speed: [140, 260], gravity: -80, life: [200, 300], shardScale: 0.42,
     rings: 0, ringRadius: 0, ringMs: 0, ringWidth: 0, flash: 30, flashAlpha: 0.45, flashMs: 150, spin: 320,
   },
+  craftSuccess: {
+    // 세공 성공은 "깡" 하고 박힌다. 조각이 위로 튀고 파문 한 겹이 빠르게 벌어진다 — 메뉴의
+    // 얇은 파문(`tap`)보다 세지만, 한 줄에 세 번씩 반복되는 일이라 궁극기만큼 벌어지지는 않는다.
+    shards: 6, speed: [220, 420], gravity: -120, life: [240, 380], shardScale: 0.8,
+    rings: 1, ringRadius: 104, ringMs: 260, ringWidth: 7, flash: 62, flashAlpha: 0.55, flashMs: 170, spin: 300,
+  },
+  craftFail: {
+    // 실패는 가라앉는다. 조각이 적고 아래로 흘러내리며 섬광은 자국만 남을 만큼 옅다 —
+    // 성공과 같은 무게로 터지면 무엇이 성공이었는지 색으로만 갈려 눈에 남지 않는다.
+    shards: 4, speed: [120, 230], gravity: 100, life: [260, 420], shardScale: 0.62,
+    rings: 0, ringRadius: 0, ringMs: 0, ringWidth: 0, flash: 26, flashAlpha: 0.22, flashMs: 220, spin: 120,
+  },
+  craftEngrave: {
+    // 각인은 룬 하나에 한 번뿐이라 파문 두 겹에 큰 섬광을 쓴다. 세공과 같은 무게로 터지면
+    // 되돌릴 수 없는 마지막 한 번이 연타 속에 묻힌다.
+    shards: 8, speed: [300, 560], gravity: -80, life: [340, 520], shardScale: 1.15,
+    rings: 2, ringRadius: 168, ringMs: 340, ringWidth: 9, flash: 116, flashAlpha: 0.6, flashMs: 260, spin: 240,
+  },
 };
 
 /**
@@ -133,8 +157,13 @@ export const EFFECT_TAP_COLOR = 0x59d9ff;
 export const EFFECT_BUDGET = {
   /** 한 프레임에 여는 최대 이펙트 수. */
   perFrame: 3,
-  /** 같은 종류를 다시 여는 최소 간격(ms). 궁극기·폭주처럼 드문 것은 막지 않는다. */
-  minGapMs: { basic: 45, heal: 90, shield: 90, passive: 120, tap: 40, tapBattle: 40, ultimate: 0, fever: 0, death: 0 } as Record<EffectKind, number>,
+  /**
+   * 같은 종류를 다시 여는 최소 간격(ms). 궁극기·폭주처럼 드문 것은 막지 않는다.
+   *
+   * 세공도 막지 않는다 — 손이 누른 만큼 결과가 박혀야 연타가 화면에 남는다. 한 번에 하나씩
+   * 서버 응답을 기다려 열리므로 한 프레임에 몰릴 일도 없다.
+   */
+  minGapMs: { basic: 45, heal: 90, shield: 90, passive: 120, tap: 40, tapBattle: 40, ultimate: 0, fever: 0, death: 0, craftSuccess: 0, craftFail: 0, craftEngrave: 0 } as Record<EffectKind, number>,
   /** 살아 있는 파문의 상한. 넘으면 가장 오래된 것을 즉시 회수한다. */
   maxRings: 14,
   /** 살아 있는 수치 글자의 상한. */

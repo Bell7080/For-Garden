@@ -1,4 +1,4 @@
-import { calculateFinalStats, relicStars } from "../core/relicProgression";
+import { calculateFinalStats, relicStars, remainingBreakthroughCost } from "../core/relicProgression";
 import type { RelicProgress, Stats } from "../core/types";
 import { getRelic } from "../data/relics";
 import { createStarterRunes } from "../data/runes";
@@ -95,6 +95,26 @@ export class RelicProgressionManager {
     });
     const def = getRelic(relicId);
     return calculateFinalStats(def.stats, progress, gems, def.rarity);
+  }
+
+  /**
+   * 그 개체를 별 다섯까지 키우는 데 필요한 재료를 한 번에 지급한다 — **테스트 전용 진입점**이다.
+   *
+   * 돌파는 레벨 상한 → 파편 → 치즈케이크 셋이 동시에 맞아야 되는 조작이라, 지급 없이 확인하려면
+   * 연구소에서 같은 개체를 여러 번 뽑고 수십 번 급여해야 한다. 여기서는 **재료만** 주고 돌파
+   * 자체는 사람이 누른다 — 자동으로 뚫어 버리면 확인하려는 그 화면을 지나쳐 버린다.
+   *
+   * 수치는 화면이 아니라 순수 규칙(`remainingBreakthroughCost`)에서 나오므로, 단계표나 등급별
+   * 파편 수를 고치면 지급량도 함께 따라간다. 정식 획득 경로가 충분해지면 이 메서드를 지운다.
+   */
+  grantBreakthroughSetForDebug(relicId: string): { fragments: number; cheesecake: number } {
+    const def = getRelic(relicId);
+    const progress = this.ownedProgress(relicId);
+    const cost = remainingBreakthroughCost(def.rarity, progress);
+    this.state.relicFragments[relicId] = (this.state.relicFragments[relicId] ?? 0) + cost.fragments;
+    this.state.wallet.cheesecake += cost.cheesecake;
+    this.persistSharedSession();
+    return cost;
   }
 
   /** 성장 트랜잭션이 끝난 뒤에만 저장해 중간 상태가 남지 않게 한다. */

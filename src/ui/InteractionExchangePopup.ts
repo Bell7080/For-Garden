@@ -12,7 +12,7 @@ export class InteractionExchangePopup {
   private content?: Phaser.GameObjects.Container;
   constructor(private readonly scene: Phaser.Scene, private readonly popups: PopupLayer, private readonly manager: InteractionManager) {}
 
-  open(): void { this.popups.open({ width: 880, height: 1040, title: "교환소", dim: true, closeOnBackdrop: true }, (body) => { this.content = this.scene.add.container(0, 20); body.add(this.content); void this.refresh(); }); }
+  open(): void { this.popups.open({ width: 880, height: 1040, title: "교환소", dim: true, closeOnBackdrop: true, backButton: true }, (body) => { this.content = this.scene.add.container(0, 20); body.add(this.content); void this.refresh(); }); }
   /** 공용 PopupLayer의 chrome을 보존하고 동적 콘텐츠 컨테이너의 자식만 교체한다. */
   private async refresh(result = ""): Promise<void> { const list = await this.manager.exchangeOffers(); const content = this.content; if (!content?.active) return; content.removeAll(true); list.offers.forEach((offer, index) => this.paintRow(content, offer, index, result)); }
   /** 화면에는 의사결정에 필요한 보유량·요구량·결과·남은 횟수만 둔다. */

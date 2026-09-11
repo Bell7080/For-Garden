@@ -18,6 +18,8 @@ import { openSaveConflictPopup, type SaveConflictChoice } from "../ui/SaveConfli
 import { PopupLayer } from "../ui/PopupLayer";
 import { validateSettingsReturn, type SettingsEntryData, type SettingsReturnScene } from "./settingsNavigation";
 import { relicCollection } from "../managers/RelicCollectionManager";
+import { relicProgression } from "../managers/RelicProgressionManager";
+import { getRelic } from "../data/relics";
 import { openPolicyDocument, type PolicyPath } from "./policyNavigation";
 
 /** 상단 탭은 긴 설정을 의미 단위로 나눠 좁은 화면에서도 한 섹션만 스크롤하게 한다. */
@@ -158,7 +160,7 @@ export class SettingsScene extends Phaser.Scene {
     this.content.add(this.add.text(90, y, `상태  ${account.kind === "guest" ? "게스트" : "연동됨"}\n제공자  ${account.provider.toUpperCase()}\n식별 ID  ${account.maskedId}`, textStyle({ role: "body", size: 26, color: COLOR.inkDim, lineSpacing: 10 }))); y += 150;
     if (account.kind === "guest") { this.addTextAction(90, y, "Google 연동", () => void this.login("google")); this.addTextAction(350, y, "Apple 연동", () => void this.login("apple")); }
     else { this.addTextAction(90, y, "로그아웃", () => this.confirmAccountAction("로그아웃", "계정 연결만 해제합니다. 저장 데이터 초기화와 서버 데이터 삭제는 실행하지 않습니다.", () => accountApi.logout()), true); }
-    y += 120; y = section("고객지원 · 데이터", 752);
+    y += 120; y = section("고객지원 · 데이터", 844);
     this.addTextAction(90, y, "캐시 정리", () => void this.clearCache()); y += 92;
     this.addTextAction(90, y, "이용약관", () => this.openPolicy("/terms")); y += 92;
     this.addTextAction(90, y, "개인정보 처리방침", () => this.openPolicy("/privacy")); y += 92;
@@ -167,6 +169,9 @@ export class SettingsScene extends Phaser.Scene {
     this.addTextAction(90, y, "저장 데이터 초기화", () => this.confirmLocalReset(), true); y += 92;
     // 스타터 렐릭 추가처럼 저장 마이그레이션이 소급하지 않는 변경을 QA가 재설치 없이 확인하는 임시 진입점이다.
     this.addTextAction(90, y, "모든 캐릭터 획득", () => this.grantAllRelics()); y += 92;
+    // 한계 돌파는 레벨 상한·파편·치즈케이크 셋이 동시에 맞아야 열리는 조작이라, 재료 없이는
+    // 그 화면과 별마다 열리는 개체 효과를 확인할 방법이 없다. 재료만 주고 돌파는 사람이 누른다.
+    this.addTextAction(90, y, "토리카 돌파 세트", () => this.grantBreakthroughSet("anky")); y += 92;
     this.addTextAction(90, y, "계정 탈퇴", () => this.confirmAccountAction("계정 탈퇴", "연동 계정의 서버 진행과 계정 정보 삭제를 요청합니다. 기기의 로컬 저장 초기화와는 별도입니다.", () => accountApi.requestWithdrawal()), true); y += 110;
     return y;
   }
@@ -202,6 +207,23 @@ export class SettingsScene extends Phaser.Scene {
     this.popups.confirm({ title: "저장 데이터 초기화", message: "1단계: 이 기기의 로컬 진행만 삭제합니다. 로그아웃하지 않으며 연동 계정의 서버 데이터는 삭제하지 않습니다.", confirmLabel: "다음", destructive: true }, () => {
       this.popups.confirm({ title: "최종 확인", message: "2단계: 삭제한 로컬 진행은 복구할 수 없습니다. 정말 초기화하시겠습니까?", confirmLabel: "초기화", destructive: true }, () => { saveManager.reset(); this.scene.start("boot"); });
     });
+  }
+
+  /** 별 다섯까지 남은 재료를 한 번에 넣고 실제로 지급한 수만 알린다. */
+  private grantBreakthroughSet(relicId: string): void {
+    if (!session.owned.has(relicId)) {
+      this.popups.confirm({ title: "돌파 세트", message: "먼저 그 캐릭터를 보유해야 합니다.", confirmLabel: "확인" }, () => undefined);
+      return;
+    }
+    const granted = relicProgression.grantBreakthroughSetForDebug(relicId);
+    const name = getRelic(relicId).name;
+    this.popups.confirm({
+      title: name + " 돌파 세트",
+      message: granted.fragments > 0 || granted.cheesecake > 0
+        ? `${name} 파편 ${granted.fragments}개와 치즈케이크 ${granted.cheesecake.toLocaleString()}개를 지급했습니다. 급여로 상한까지 올린 뒤 별 옆의 한계 돌파를 누릅니다.`
+        : "이미 별 다섯까지 키운 캐릭터입니다.",
+      confirmLabel: "확인",
+    }, () => undefined);
   }
 
   /** 미보유 렐릭만 채워 넣고 몇 명이 새로 늘었는지만 짧게 알린다. */

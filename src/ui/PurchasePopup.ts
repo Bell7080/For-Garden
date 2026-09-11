@@ -10,8 +10,6 @@ import { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
 import { openRewardPopup, productGrantsToRewardItems } from "./RewardPopup";
 import { setDebugStorefrontControls } from "../debug";
-import { BACK_SLOT, IconButton } from "./IconButton";
-import { UI_ICON } from "./icons";
 
 /** 신규 상점과 무역이 같은 수량·표시·요청 잠금을 쓰는 공용 구매 작업판이다. */
 export class PurchasePopup {
@@ -20,7 +18,6 @@ export class PurchasePopup {
   private message = "";
   private repaint?: () => void;
   /** 우하단 공용 슬롯의 돌아가기. 판과 함께 만들고 함께 없앤다. */
-  private back?: IconButton;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -35,16 +32,15 @@ export class PurchasePopup {
     this.quantity = product.defaultQuantity; this.pending = false; this.message = "";
     // 확인 창은 아직 아무것도 쓰지 않은 자리라 **판 밖을 눌러도 닫힌다** — 사지 않기로 한
     // 손이 오른쪽 위 X를 찾아 올라가야 할 이유가 없다. 실제 차감은 확정 버튼만 한다.
-    // 돌아가기는 모서리 X가 아니라 다른 작업판과 같은 **우하단 공용 슬롯**에 선다. 그 자리를
-    // 이미 아래 화면(무역 등)이 쓰고 있으므로, 이 창의 것이 그 위에 서서 먼저 눌려야 한다.
-    this.popups.open({ width: 820, height: 850, title: "구매 확인", dim: true, closeOnBackdrop: true, hideCloseButton: true, onClose: () => { this.back?.destroy(); this.back = undefined; } }, (body, close) => {
+    // 돌아가기는 모서리 X가 아니라 다른 작업판과 같은 **우하단 공용 슬롯**에 선다. 자리와
+    // 층은 팝업 층(`backButton`)이 소유한다 — 창마다 IconButton을 손으로 세우면 아래 화면이
+    // 이미 쓰고 있는 같은 자리와의 층 순서를 창마다 다시 정하게 된다.
+    this.popups.open({ width: 820, height: 850, title: "구매 확인", dim: true, closeOnBackdrop: true, backButton: true }, (body, close) => {
       const view = this.scene.add.container(0, 0); body.add(view);
       const render = (): void => { view.removeAll(true); this.paint(view, product, close, onPurchased); };
       this.repaint = render;
       view.once(Phaser.GameObjects.Events.DESTROY, () => { this.repaint = undefined; });
       render();
-      this.back?.destroy();
-      this.back = new IconButton(this.scene, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: close }).setDepth(PURCHASE_BACK_DEPTH);
     });
   }
 
@@ -130,14 +126,6 @@ export class PurchasePopup {
 
 /** PurchasePopup은 중앙 고정 작업판이므로 좌표 변환 기준도 한 상수로 둔다. */
 const BASE_CENTER = { x: 540, y: 960 } as const;
-
-/**
- * 돌아가기가 서는 층.
- *
- * 아래 화면(무역·상점)이 이미 같은 우하단 슬롯에 제 돌아가기를 세워 두었으므로, 이 창의 것이
- * 그보다 위에 있어야 한다 — 그러지 않으면 구매 확인이 떠 있는데 아래 화면이 닫힌다.
- */
-const PURCHASE_BACK_DEPTH = 2400;
 
 /** 재화 교환 가격은 판별된 acquisition만 받아 다른 방식의 가짜 숫자를 만들지 않는다. */
 function priceText(acquisition: Extract<ProductDto["acquisition"], { kind: "currency" }>, amount: number): string {

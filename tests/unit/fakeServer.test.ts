@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { FakeServer } from "../../src/api/FakeServer";
-import { BREAKTHROUGH_STEPS, RELIC_LEVEL_CAP } from "../../src/core/relicProgression";
+import { breakthroughFragmentCost, BREAKTHROUGH_STEPS, RELIC_LEVEL_CAP } from "../../src/core/relicProgression";
 import { GameApiError } from "../../src/api/contracts";
 import { createInitialPlayerResearchProgress, type Session } from "../../src/state/session";
 import { createRuneInstance, enhanceRune as applyRuneEnhancement, runeEnhancementIncrease, type RuneInstance, type RuneStatKey } from "../../src/core/runes";
@@ -234,7 +234,8 @@ describe("FakeServer", () => {
     const state = makeSession();
     const step = BREAKTHROUGH_STEPS[0];
     state.relicProgress.anky = { ...state.relicProgress.anky, level: RELIC_LEVEL_CAP, exp: 0 };
-    state.relicFragments.anky = step.fragments; state.wallet.cheesecake = step.cheesecake;
+    // 앙키(토리카)는 SR이라 한 단계에 파편 둘이 든다.
+    state.relicFragments.anky = breakthroughFragmentCost("SR", 0); state.wallet.cheesecake = step.cheesecake;
     const server = new FakeServer(state, { latencyMs: 0 });
     await expect(server.feedRelic("anky")).rejects.toMatchObject({ code: "RELIC_MAX_LEVEL" });
     const response = await server.breakThroughRelic("anky");

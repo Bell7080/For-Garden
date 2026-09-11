@@ -1,9 +1,8 @@
 import Phaser from "phaser";
-import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { chipPoints, drawLayer, HOLO } from "./holo";
 import { COLOR, textStyle } from "./theme";
 import { UI_ICON } from "./icons";
-import { BACK_BUTTON_SIZE, popupBackButtonSpot } from "./popupGeometry";
+import { BACK_BUTTON_SIZE, BACK_SLOT as BACK_SLOT_SPOT } from "./popupGeometry";
 
 export interface IconButtonOptions {
   /** 텍스처 키. `UI_ICON`의 값을 쓴다. */
@@ -27,7 +26,7 @@ export class IconButton extends Phaser.GameObjects.Container {
 
   constructor(scene: Phaser.Scene, x: number, y: number, options: IconButtonOptions) {
     super(scene, x, y);
-    const size = options.size ?? 108;
+    const size = options.size ?? BACK_BUTTON_SIZE;
 
     // 되돌아가는 방향인 왼쪽 아래를 크게 깎고 마주 보는 오른쪽 위를 조금 깎는다.
     // 네 모서리를 고르게 깎으면 반듯한 팔각형이 되어 방향이 사라진다.
@@ -68,25 +67,10 @@ export class IconButton extends Phaser.GameObjects.Container {
   }
 }
 
-/** 뒤로가기의 고정 자리. 엄지가 닿는 오른쪽 아래 구석이다. */
-export const BACK_SLOT = { x: BASE_WIDTH - 106, y: BASE_HEIGHT - 120 } as const;
+/** 뒤로가기의 고정 자리. 값은 순수 배치표가 갖고 여기서는 다시 내보내기만 한다. */
+export { BACK_SLOT } from "./popupGeometry";
 
 /** 화면을 벗어나는 유일한 버튼. 자리와 생김새를 씬마다 다시 정하지 않는다. */
 export function addBackButton(scene: Phaser.Scene, onClick: () => void): IconButton {
-  return new IconButton(scene, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick });
-}
-
-/** 큰 팝업 안에서도 화면과 같은 뒤로가기 모양을 우하단 안전 여백에 고정한다. */
-export function addPopupBackButton(
-  scene: Phaser.Scene,
-  parent: Phaser.GameObjects.Container,
-  width: number,
-  height: number,
-  onClick: () => void,
-): IconButton {
-  // 자리는 판의 깎인 모서리에서 나온다 — 두 변에서 같은 만큼만 들어가면 버튼이 그 빗변을 넘는다.
-  const spot = popupBackButtonSpot(width, height, BACK_BUTTON_SIZE);
-  const button = new IconButton(scene, spot.x, spot.y, { icon: UI_ICON.back, size: BACK_BUTTON_SIZE, onClick });
-  parent.add(button);
-  return button;
+  return new IconButton(scene, BACK_SLOT_SPOT.x, BACK_SLOT_SPOT.y, { icon: UI_ICON.back, onClick });
 }

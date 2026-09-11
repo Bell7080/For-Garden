@@ -5,6 +5,7 @@ import { RELICS, sortRelicsBySpecimenNumber } from "../../src/data/relics";
 import { compareBookmarkedOwnedRelics } from "../../src/core/relicCatalog";
 import type { Session } from "../../src/state/session";
 import { captureGame, tap, tapUntil } from "./canvasInput";
+import { RUNE_CRAFT_PANEL, runeCraftLayout } from "../../src/ui/runeCraftLayout";
 
 const W = 1080;
 const H = 1920;
@@ -98,7 +99,11 @@ test("골드 부족이면 능력치를 골라도 강화 요청을 잠근다", as
   });
   await openFirstRune(page);
   // 첫 능력치 행을 골라도 비용보다 보유 골드가 적어 서버 요청이 발생하지 않는다.
-  await tap(page, 540, 610);
-  await tap(page, 540, 1452);
+  // 판 높이는 옵션 줄 수에서 나오므로(고급 룬은 보조 옵션이 없다) 좌표를 적어 두지 않고
+  // 화면과 **같은 배치표**를 통과시킨다 — 적어 두면 판이 커질 때 조용히 빗나간다.
+  const craft = runeCraftLayout({ mainCount: 2, subCount: 0 });
+  const craftTop = RUNE_CRAFT_PANEL.centerY - craft.height / 2;
+  await tap(page, W / 2, craftTop + craft.mainRows[0]);
+  await tap(page, W / 2, craftTop + craft.buttonY);
   await captureGame(page, `test-results/${test.info().project.name}-rune-insufficient-gold.png`);
 });

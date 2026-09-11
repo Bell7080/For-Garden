@@ -1,7 +1,8 @@
 import type { DamagePreview } from "../core/damage";
 import type { KeywordDef } from "../data/keywords";
 import type { KeywordTextOptions } from "../managers/KeywordManager";
-import type { BasicAttack, BasicAttackStep, CombatStatusEffect, FerocityTrait, Passive, Skill, Ultimate } from "../core/types";
+import type { BreakthroughSlot } from "../core/relicProgression";
+import type { BasicAttack, BasicAttackStep, CombatStatusEffect, FerocityTrait, Passive, RelicDef, Skill, Ultimate } from "../core/types";
 
 /**
  * 순수 회복형 궁극기(메테 등)는 damageType/power가 없어 피해 미리보기를 만들 수 없다.
@@ -879,4 +880,73 @@ function skillDamagePhrase(skill: DescribedSkill, stats: SkillDescriptionStats):
 /** 스킬별 피해 회복은 최대 체력 회복과 다른 계약이므로 실제 피해 기준임을 명시한다. */
 export function damageHealingLabel(percent?: number): string | undefined {
   return percent === undefined ? undefined : `실제 피해의 ${percent}% 회복`;
+}
+
+/**
+ * 아직 전용 효과를 설계하지 않은 개체가 그 별에서 **무엇이 열리는지**만 말하는 한 줄.
+ *
+ * "효과 없음"이라고 적지 않는다 — 열리는 자리는 이미 정해져 있고 내용만 아직 없으므로,
+ * 없는 규칙을 말하는 대신 어느 기술이 달라질 자리인지를 알린다.
+ */
+export const BREAKTHROUGH_SLOT_LABEL: Readonly<Record<BreakthroughSlot, string>> = {
+  basic: "기본 공격 강화",
+  ultimate: "궁극기 강화",
+  ferocity: "폭주 강화",
+  passive: "패시브 강화",
+};
+
+/**
+ * 한계 돌파가 연 **그 개체만의 효과** 한 줄.
+ *
+ * 슬롯마다 문장을 적어 두지 않고 계약에서 조립한다 — 수치를 고친 뒤 옛 문장이 그대로 남는 일을
+ * 막는 것이 네 슬롯의 설명문과 같은 이유다. 기술 이름도 손으로 적지 않고 그 개체의 정의에서
+ * 읽으므로(「세 개의 뿔」·「지각 붕괴」), 이름을 고치면 이 줄도 함께 따라간다.
+ *
+ * 정의하지 않은 슬롯은 `undefined`다. 화면은 그 줄을 아예 그리지 않는다 — 아직 설계하지 않은
+ * 개체에 "효과 없음"이라고 적으면 없는 규칙을 말하는 셈이다.
+ */
+export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot): string | undefined {
+  const effects = def.breakthroughEffects;
+  if (!effects) return undefined;
+  if (slot === "basic" && effects.basic) {
+    const effect = effects.basic;
+    // 주기 이름이 있으면 그것이 이 효과가 얹히는 그 한 방의 이름이다(칩에 뜨는 이름과 같다).
+    const trigger = def.basic.statusEffectStackName ?? def.basic.name;
+    const stat = statScalingLabel(effect.healScalingStat);
+    return `「${trigger}」 발동 시 ${stat}의 ${trim(effect.healPercent)}%에 해당하는 체력을 회복하고`
+      + ` 넓은 범위의 적을 ${trim(effect.tauntSeconds)}초 동안 도발한다.`;
+  }
+  if (slot === "ultimate" && effects.ultimate) {
+    const effect = effects.ultimate;
+    return `피해량의 ${trim(effect.powerPercent)}%에 해당하는 「${def.ultimate.name}」을`
+      + ` ${trim(effect.intervalSeconds)}초 간격으로 ${countLabel(effect.casts)} 번 더 시전한다.`;
+  }
+  if (slot === "ferocity" && effects.ferocity) {
+    const effect = effects.ferocity;
+    return `폭주가 끝날 때, 폭주 동안 받은 피해량의 ${trim(effect.shieldPercentOfDamageTaken)}%에 해당하는 보호막을 얻고`
+      + ` 넓은 범위의 적에게 ${trim(effect.tauntSeconds)}초 동안 한 번 더 도발한다.`;
+  }
+  if (slot === "passive" && effects.passive) {
+    return `「${def.passive.name}」이 발동될 때 모든 아군에게 그 회복량의 ${trim(effects.passive.percent)}%를 나눈다.`;
+  }
+  return undefined;
+}
+
+/** 회복·피해의 기준이 되는 능력치 이름. 스킬 본문이 쓰는 것과 같은 표를 읽는다. */
+function statScalingLabel(stat: string): string {
+  if (stat === "def") return "방어력";
+  if (stat === "res") return "저항력";
+  if (stat === "ap") return "주문력";
+  if (stat === "hp") return "최대 체력";
+  return "공격력";
+}
+
+/** 소수 없는 값은 소수점을 적지 않는다. `1.50초`처럼 읽히면 정밀해 보이지만 뜻은 같다. */
+function trim(value: number): string {
+  return Number.isInteger(value) ? String(value) : String(Number(value.toFixed(2)));
+}
+
+/** 횟수를 세는 우리말. 넷을 넘으면 숫자가 더 빨리 읽힌다. */
+function countLabel(count: number): string {
+  return ["", "한", "두", "세", "네"][count] ?? String(count);
 }

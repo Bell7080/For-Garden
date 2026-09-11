@@ -255,3 +255,47 @@ export function computeHeadCardFrame(
 
   return { cropX, cropY, cropWidth, cropHeight, scale, clipsContentTop: cropY > contentTop };
 }
+
+/**
+ * 얼굴 액자(`FaceFrame`)가 쓰는 **정사각 잘라내기**.
+ *
+ * 카드 잘라내기(`computeHeadCardFrame`)를 그대로 쓸 수 없는 이유가 둘이다.
+ *
+ * 1. 카드는 상반신을 담는 **세로** 상자라 정수리 위 여백을 `headroom`으로 잡고, 머리보다 높이
+ *    솟은 부위 때문에 시작점이 밀리는 것을 `MAX_HEAD_DROP_RATIO`로 죈다. 얼굴만 담는 좁은
+ *    정사각 상자에 그 죔쇠를 그대로 적용하면 상자 높이가 작아 죔쇠가 늘 걸리고, 시작점이
+ *    정수리보다 한참 아래로 내려가 머리 윗부분이 통째로 사라진다.
+ * 2. 카드는 "인물 폭이 카드에 꽉 차게"를 노리므로 확대율이 낮다. 기여도 줄이나 파편 액자처럼
+ *    **작은 칸에서 누구인지 알아봐야 하는 자리**는 얼굴이 칸을 채울 만큼 더 크게 당겨야 한다.
+ *
+ * 그래서 상자는 머리 관절을 기준으로 **정사각**으로 잡고, 잘라낸 크기가 액자 한 변과 정확히
+ * 같아지도록 배율을 거꾸로 구한다 — 그러면 그림이 **액자 안에서만** 그려지고(내부 클리핑)
+ * 칸 밖으로 새지 않는다. 상자는 늘 이미지 안에 머문다.
+ */
+export function computeFaceFrame(
+  frame: AnchorFrame,
+  head: AnchorPoint,
+  options: {
+    /** 액자 한 변(px). */
+    size: number;
+    /** 실루엣 폭 대비 잘라낼 정사각 한 변. 작을수록 얼굴이 크게 당겨진다. */
+    crop: number;
+    /** 상자 안에서 머리 관절이 위에서 얼마나 내려온 자리에 서는지(0~1). */
+    anchorY: number;
+  },
+): CardFrame {
+  const contentWidth = frame.content.right - frame.content.left;
+  // 이미지보다 큰 상자는 만들 수 없다 — 넘기면 잘라낸 크기가 액자보다 작아져 그림이 칸 안에서
+  // 떠 보인다.
+  const side = Math.max(1, Math.min(contentWidth * options.crop, frame.imageWidth, frame.imageHeight));
+  const clamp = (value: number, max: number): number => Math.min(Math.max(value, 0), Math.max(max, 0));
+  return {
+    cropX: clamp(head.x - side / 2, frame.imageWidth - side),
+    cropY: clamp(head.y - side * options.anchorY, frame.imageHeight - side),
+    cropWidth: side,
+    cropHeight: side,
+    scale: options.size / side,
+    // 얼굴 액자는 정수리 위 장식을 **일부러** 잘라 얼굴을 당긴다. 카드와 달리 경고가 아니다.
+    clipsContentTop: clamp(head.y - side * options.anchorY, frame.imageHeight - side) > frame.content.top,
+  };
+}

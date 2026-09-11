@@ -3,24 +3,18 @@ import { startAfterOpening } from "./openingSave";
 import { canvasBox, captureGame, gamePoint, tap, tapUntil } from "./canvasInput";
 import { ExpeditionManager } from "../../src/managers/ExpeditionManager";
 import { expeditionNodePosition, focusExpeditionFloor } from "../../src/ui/expeditionLayout";
-import { BACK_BUTTON_SIZE, popupBackButtonSpot } from "../../src/ui/popupGeometry";
+import { BACK_SLOT } from "../../src/ui/popupGeometry";
 
 const BASE_WIDTH = 1080;
 const BASE_HEIGHT = 1920;
 
 /**
- * 큰 작업판의 우하단 뒤로가기를 누를 자리.
+ * 작업판의 뒤로가기를 누를 자리.
  *
- * 좌표를 손으로 적지 않는다 — 판의 깎인 모서리에서 나오는 값이라, 여기 박아 두면 배치를 고칠
- * 때 화면은 멀쩡한데 이 스펙만 엉뚱한 곳을 누른다.
+ * 좌표를 손으로 적지 않는다 — 팝업의 뒤로가기는 판 안이 아니라 **화면의 공용 우하단 슬롯**에
+ * 서므로(`PopupLayer`의 `backButton`), 판 크기가 달라도 같은 한 점이다.
  */
-function popupBackPoint(width: number, height: number): { x: number; y: number } {
-  const spot = popupBackButtonSpot(width, height, BACK_BUTTON_SIZE);
-  return { x: BASE_WIDTH / 2 + spot.x, y: BASE_HEIGHT / 2 + spot.y };
-}
-
-/** 원정 주간 기록 판은 화면에서 사방 여백만 남기고 열린다. */
-const RANKING_BACK = popupBackPoint(BASE_WIDTH - 100, BASE_HEIGHT - 180);
+const RANKING_BACK = BACK_SLOT;
 
 /** 기준 게임 좌표를 누른다. 실제 입력은 공용 `canvasInput`이 맡는다. */
 const tapGame = tap;

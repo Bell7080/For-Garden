@@ -18,17 +18,34 @@ export const RELIC_LEVEL_CAP = 20;
  * 올리고 돌파는 DNA를 쓰는 별개의 축이었지만, 같은 것(중복 획득)을 두 축으로 세면 어느 쪽을
  * 키우는 중인지 읽히지 않아 하나로 합쳤다.
  */
+/**
+ * 돌파가 여는 **슬롯**.
+ *
+ * 별이 오를 때마다 그 개체의 다른 기술이 열린다 — 기본 공격 → 궁극기 → 폭주 → 패시브 순이다.
+ * 순서를 이렇게 둔 이유는 **손에 먼저 닿는 것부터** 열리기 때문이다: 기본 공격은 전투 내내
+ * 나가고, 궁극기는 게이지를 채워야 하며, 폭주는 저절로 오고, 패시브는 조건이 맞아야 돈다.
+ *
+ * 무엇이 일어나는지는 단계가 아니라 **개체**가 정한다(`RelicDef.breakthroughEffects`). 예전에는
+ * 단계마다 "일반 공격 피해 +25%" 같은 공용 배율이 붙어 있었지만, 그러면 어느 개체를 뚫어도
+ * 같은 숫자가 올라 "이 캐릭터를 끝까지 키우면 무엇이 달라지는가"를 말하지 못했다.
+ */
+export type BreakthroughSlot = "basic" | "ultimate" | "ferocity" | "passive";
+
 export interface BreakthroughStep {
   /** 이 단계를 열었을 때의 레벨 상한. */
   levelCap: number;
-  /** 그 개체의 파편 소모량. 공용 재화가 아니라 **그 캐릭터의 파편**이다. */
-  fragments: number;
+  /** 이 별에서 열리는 슬롯. 개체별 효과와 전투 분기가 같은 키를 읽는다. */
+  slot: BreakthroughSlot;
   cheesecake: number;
-  /** 이 별에서 열리는 효과. 화면은 문구를 따로 적지 않는다. */
-  label: string;
-  /** 모든 능력치에 더해지는 백분율. 없으면 0이다. */
+  /**
+   * 모든 능력치에 더해지는 백분율. 없으면 0이다.
+   *
+   * **화면에 글로 적지 않는다.** 능력치 판(오각형)이 이미 오른 값을 보여 주므로, 돌파 창이
+   * "모든 능력치 +15%"라고 한 줄 더 적으면 그 창에서 읽어야 할 것(개체 전용 효과)이 공용
+   * 수치 안내에 묻힌다. 값 자체는 적·아군의 성장 기준이라 그대로 둔다.
+   */
   statPercent?: number;
-  /** 일반 공격 피해 배율 증가(0.25 = +25%). */
+  /** 일반 공격 피해 배율 증가(0.25 = +25%). 같은 이유로 글로 적지 않는다. */
   basicDamage?: number;
   /** 궁극기 피해 배율 증가. */
   ultimateDamage?: number;
@@ -37,11 +54,38 @@ export interface BreakthroughStep {
 }
 
 export const BREAKTHROUGH_STEPS: readonly BreakthroughStep[] = [
-  { levelCap: 30, fragments: 2, cheesecake: 200, label: "일반 공격 피해 +25%", basicDamage: 0.25 },
-  { levelCap: 40, fragments: 4, cheesecake: 500, label: "궁극기 피해 +25%", ultimateDamage: 0.25 },
-  { levelCap: 50, fragments: 8, cheesecake: 1000, label: "모든 능력치 +15%", statPercent: 15 },
-  { levelCap: 60, fragments: 16, cheesecake: 2000, label: "전투 시작 시 궁극기 준비", readyUltimate: true },
+  { levelCap: 30, slot: "basic", cheesecake: 200, basicDamage: 0.25 },
+  { levelCap: 40, slot: "ultimate", cheesecake: 500, ultimateDamage: 0.25 },
+  { levelCap: 50, slot: "ferocity", cheesecake: 1000, statPercent: 15 },
+  { levelCap: 60, slot: "passive", cheesecake: 2000, readyUltimate: true },
 ];
+
+/**
+ * 등급별 한 단계 파편 수.
+ *
+ * 같은 개체를 다시 만나는 빈도가 등급마다 다르므로 **파편 수도 등급이 정한다** — SSR은 한 장이
+ * 곧 한 단계지만 R은 다섯 장을 모아야 한다. 표를 하나로 두지 않고 단계마다 수를 적어 두면
+ * 등급이 늘 때마다 네 줄을 함께 고쳐야 한다.
+ *
+ * **마지막 별만 더 든다.** 별 다섯은 그 개체를 끝까지 키운 표식인데 앞 단계와 같은 값이면
+ * SSR은 네 번 다시 만나는 것으로 끝난다. 치즈케이크도 같은 이유로 단계마다 오른다.
+ */
+export const BREAKTHROUGH_FRAGMENTS: Readonly<Record<RelicRarity, { step: number; final: number }>> = {
+  SSR: { step: 1, final: 2 },
+  SR: { step: 2, final: 4 },
+  R: { step: 5, final: 10 },
+};
+
+/**
+ * 지금 단계에서 다음 별로 가는 데 드는 그 개체의 파편 수.
+ *
+ * 등급을 **필수 인자**로 받는다 — 기본값을 두면 새 호출부가 등급을 빠뜨린 채 모두 SSR 값으로
+ * 뚫린다(`applyLevelGrowth`와 같은 이유다).
+ */
+export function breakthroughFragmentCost(rarity: RelicRarity, breakthrough: number): number {
+  const cost = BREAKTHROUGH_FRAGMENTS[rarity];
+  return breakthrough >= BREAKTHROUGH_CAP - 1 ? cost.final : cost.step;
+}
 
 /** 한계를 몇 번까지 뚫을 수 있는지. 별 하나에서 시작하므로 최대 별은 이 값 + 1이다. */
 export const BREAKTHROUGH_CAP = BREAKTHROUGH_STEPS.length;
@@ -76,14 +120,14 @@ export function nextBreakthrough(breakthrough: number): BreakthroughStep | undef
  * 레벨을 상한까지 채운 뒤에만 뚫을 수 있다. 그래야 돌파가 "더 키우고 싶을 때 하는 선택"이
  * 되고, 파편을 미리 태워 두는 낭비가 생기지 않는다. `fragments`는 **그 개체의** 파편 수다.
  */
-export function canBreakThrough(progress: RelicProgress, fragments: number, cheesecake: number): boolean {
+export function canBreakThrough(rarity: RelicRarity, progress: RelicProgress, fragments: number, cheesecake: number): boolean {
   const step = nextBreakthrough(progress.breakthrough);
   if (!step) return false;
   if (progress.level < relicLevelCap(progress.breakthrough)) return false;
-  return fragments >= step.fragments && cheesecake >= step.cheesecake;
+  return fragments >= breakthroughFragmentCost(rarity, progress.breakthrough) && cheesecake >= step.cheesecake;
 }
 
-/** 지금까지 열린 별의 효과를 한 값으로 합친다. 전투와 UI가 같은 표를 본다. */
+/** 지금까지 열린 별의 공용 전투 보정을 한 값으로 합친다. 전투와 능력치 계산이 같은 표를 본다. */
 export function breakthroughBonus(breakthrough: number): { statPercent: number; basicDamage: number; ultimateDamage: number; readyUltimate: boolean } {
   const opened = BREAKTHROUGH_STEPS.slice(0, Math.max(0, Math.min(BREAKTHROUGH_CAP, breakthrough)));
   return {
@@ -92,6 +136,61 @@ export function breakthroughBonus(breakthrough: number): { statPercent: number; 
     ultimateDamage: opened.reduce((sum, entry) => sum + (entry.ultimateDamage ?? 0), 0),
     readyUltimate: opened.some((entry) => entry.readyUltimate === true),
   };
+}
+
+/**
+ * 지금 별에서 열려 있는 슬롯들.
+ *
+ * 전투와 화면이 같은 목록을 읽는다 — 어느 슬롯이 열렸는지 판단을 두 곳에서 하면 화면에는
+ * 켜져 있는데 전투에서는 돌지 않는 효과가 생긴다.
+ */
+export function openedBreakthroughSlots(breakthrough: number): readonly BreakthroughSlot[] {
+  return BREAKTHROUGH_STEPS.slice(0, Math.max(0, Math.min(BREAKTHROUGH_CAP, breakthrough))).map((step) => step.slot);
+}
+
+/** 그 슬롯이 이 별에서 열려 있는지. 전투의 모든 돌파 분기가 이 한 문을 지난다. */
+export function isBreakthroughSlotOpen(breakthrough: number, slot: BreakthroughSlot): boolean {
+  return openedBreakthroughSlots(breakthrough).includes(slot);
+}
+
+/** 그 슬롯을 여는 별(로마자로 세는 수). 화면이 "몇 번째 별에서 열리는가"를 적을 때 쓴다. */
+export function breakthroughSlotStar(slot: BreakthroughSlot): number {
+  const index = BREAKTHROUGH_STEPS.findIndex((step) => step.slot === slot);
+  return index < 0 ? RELIC_STAR_CAP : index + 2;
+}
+
+/**
+ * 지금 상태에서 **별 다섯까지** 가는 데 드는 재료 전부.
+ *
+ * 급여로 올려야 하는 레벨까지 함께 센다 — 돌파는 레벨을 상한까지 채운 뒤에만 되므로, 파편과
+ * 돌파 치즈케이크만 세면 실제로는 한 단계도 뚫을 수 없는 수를 알려 주게 된다.
+ *
+ * 순수 계산이라 화면·테스트 지급·안내가 같은 값을 읽는다.
+ */
+export function remainingBreakthroughCost(rarity: RelicRarity, progress: RelicProgress): { fragments: number; cheesecake: number } {
+  let fragments = 0;
+  let cheesecake = 0;
+  let level = progress.level;
+  let exp = progress.exp;
+  for (let step = progress.breakthrough; step < BREAKTHROUGH_CAP; step += 1) {
+    // 그 단계의 상한까지 먹인다. 한 레벨에 드는 급여 횟수는 남은 경험치에서 나온다.
+    const cap = relicLevelCap(step);
+    while (level < cap) {
+      cheesecake += Math.ceil((relicExpToNext(level) - exp) / FEED_UNIT.exp) * FEED_UNIT.cheesecake;
+      level += 1;
+      exp = 0;
+    }
+    fragments += breakthroughFragmentCost(rarity, step);
+    cheesecake += BREAKTHROUGH_STEPS[step].cheesecake;
+  }
+  // 마지막 별을 뚫은 뒤 열리는 상한까지도 채울 수 있게 함께 센다.
+  const finalCap = relicLevelCap(BREAKTHROUGH_CAP);
+  while (level < finalCap) {
+    cheesecake += Math.ceil((relicExpToNext(level) - exp) / FEED_UNIT.exp) * FEED_UNIT.cheesecake;
+    level += 1;
+    exp = 0;
+  }
+  return { fragments, cheesecake };
 }
 
 /** 급여 한 번에 드는 치즈케이크와 그때 오르는 경험치. */

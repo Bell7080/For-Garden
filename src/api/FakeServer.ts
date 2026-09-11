@@ -3,7 +3,7 @@ import { BANNERS } from "../data/banners";
 import { RELICS } from "../data/relics";
 import { AD_REWARD_SLOTS, findAdRewardSlot, type AdReward } from "../data/adRewards";
 import { consumeRestorationEntry, normalizeDailyContent } from "../core/dailyContent";
-import { BREAKTHROUGH_CAP, canBreakThrough, canFeedRelic, feedRelic as calculateFeed, FEED_UNIT, nextBreakthrough, relicLevelCap, RELIC_STAR_CAP, relicStars } from "../core/relicProgression";
+import { BREAKTHROUGH_CAP, breakthroughFragmentCost, canBreakThrough, canFeedRelic, feedRelic as calculateFeed, FEED_UNIT, nextBreakthrough, relicLevelCap, RELIC_STAR_CAP, relicStars } from "../core/relicProgression";
 import { BOND_XP_REWARD, grantBondXp, grantDailyLobbyBondXp } from "../core/bond";
 import { MAX_RESEARCH_POINTS, MISSIONS, RESEARCH_REWARD_STAGES, addResearchPoints, applyMissionEvent, claimResearchStages, claimableMissionIds, normalizeMissions, researchPointsForClaim, researchStageClaimId, type MissionPeriod } from "../core/missions";
 import { DAILY_RESTORATION, getStage } from "../data/stages";
@@ -755,11 +755,15 @@ export class FakeServer implements GameApi {
     if (!step) throw new GameApiError("RELIC_MAX_LEVEL", "더 뚫을 천장이 없습니다.");
     if (current.level < relicLevelCap(current.breakthrough)) throw new GameApiError("RELIC_MAX_LEVEL", "레벨을 상한까지 올려야 돌파할 수 있습니다.");
     const held = this.state.relicFragments[relicId] ?? 0;
-    if (!canBreakThrough(current, held, this.state.wallet.cheesecake)) throw new GameApiError("INSUFFICIENT_CURRENCY", "돌파 재료가 부족합니다.");
+    // 파편 수는 **등급**이 정한다(`BREAKTHROUGH_FRAGMENTS`) — SSR은 한 장으로 한 단계지만
+    // R은 다섯 장을 모아야 한다. 등급을 모르는 채로는 검사도 차감도 할 수 없다.
+    const rarity = RELICS.find(({ id }) => id === relicId)?.rarity ?? "R";
+    const fragmentCost = breakthroughFragmentCost(rarity, current.breakthrough);
+    if (!canBreakThrough(rarity, current, held, this.state.wallet.cheesecake)) throw new GameApiError("INSUFFICIENT_CURRENCY", "돌파 재료가 부족합니다.");
     const breakthrough = current.breakthrough + 1;
     const nextProgress = { ...this.state.relicProgress, [relicId]: { ...current, breakthrough } };
     // 파편은 그 개체의 것만 줄어든다. 공용 재화가 아니므로 다른 개체의 진행에 영향이 없다.
-    const nextFragments = { ...this.state.relicFragments, [relicId]: held - step.fragments };
+    const nextFragments = { ...this.state.relicFragments, [relicId]: held - fragmentCost };
     const nextWallet = { ...this.state.wallet, cheesecake: this.state.wallet.cheesecake - step.cheesecake };
     this.persist({ ...this.state, relicProgress: nextProgress, relicFragments: nextFragments, wallet: nextWallet });
     this.state.relicProgress = nextProgress; this.state.relicFragments = nextFragments; this.state.wallet = nextWallet;

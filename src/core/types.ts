@@ -1642,7 +1642,88 @@ export interface RelicDef {
   ferocityTrait: FerocityTrait;
   basic: BasicAttack;
   ultimate: Ultimate;
+  /**
+   * 한계 돌파가 여는 **이 개체만의 추가 효과**.
+   *
+   * 별이 오를 때마다 다른 슬롯이 열린다(`BREAKTHROUGH_STEPS`의 `slot` — 기본 공격 → 궁극기 →
+   * 폭주 → 패시브). 무엇이 일어나는지는 단계가 아니라 개체가 정하므로 여기 둔다.
+   *
+   * **문장을 적어 두지 않는다.** 화면 문구는 `breakthroughEffectText`가 이 계약에서 조립하며,
+   * 그래야 수치를 고친 뒤 옛 문장이 그대로 남는 일이 없다. 슬롯을 비워 두면 그 별에서는 공용
+   * 보정만 오르고 전용 효과 줄이 서지 않는다 — 아직 설계하지 않은 개체는 비워 둔다.
+   */
+  breakthroughEffects?: BreakthroughEffects;
 }
+
+/** 돌파 슬롯별 전용 효과. 비어 있는 슬롯은 전용 효과 없이 공용 보정만 오른다. */
+export interface BreakthroughEffects {
+  basic?: BasicBreakthrough;
+  ultimate?: UltimateBreakthrough;
+  ferocity?: FerocityBreakthrough;
+  passive?: PassiveBreakthrough;
+}
+
+/**
+ * 기본 공격 돌파.
+ *
+ * `periodicGuard`는 **주기가 채워지는 한 방**(토리카의 「세 개의 뿔」)에만 얹힌다. 평타마다
+ * 회복과 도발이 붙으면 탱커가 한 명으로 전열을 잠그므로, 이미 있는 주기 계약
+ * (`BasicAttack.statusEffectEvery`)을 그대로 타고 세 번에 한 번만 일어난다.
+ */
+export type BasicBreakthrough = {
+  kind: "periodicGuard";
+  /** 회복량의 기준이 되는 능력치. 방어형 개체는 방어력에서 나온다. */
+  healScalingStat: keyof Stats;
+  /** 그 능력치의 몇 %를 회복하는지. */
+  healPercent: number;
+  /** 함께 거는 도발이 닿는 전장 반경(px). */
+  tauntRadius: number;
+  /** 공용 도발 상태에 넘기는 지속시간(초). */
+  tauntSeconds: number;
+};
+
+/**
+ * 궁극기 돌파.
+ *
+ * `echo`는 **같은 궁극기를 줄어든 위력으로 몇 번 더** 떨어뜨린다. 게이지를 다시 쓰지 않고
+ * 야성도 다시 올리지 않는다 — 자원은 시전한 그 한 번의 몫이고, 여기서 다시 세면 한 번의
+ * 궁극기가 세 번이 된다(채널링 궁극기와 같은 규칙이다).
+ */
+export type UltimateBreakthrough = {
+  kind: "echo";
+  /** 본 타격 뒤에 더 떨어지는 횟수. */
+  casts: number;
+  /** 떨어지는 간격(초). */
+  intervalSeconds: number;
+  /** 본 위력의 몇 %로 떨어지는지. */
+  powerPercent: number;
+};
+
+/**
+ * 폭주 돌파.
+ *
+ * `feverBulwark`는 폭주가 **끝나는 순간** 값을 치른다. 폭주 중에 주면 이미 세진 상태가 더
+ * 세져 그 시간만 부풀고, 끝나고 가장 약해지는 자리를 메우지 못한다.
+ */
+export type FerocityBreakthrough = {
+  kind: "feverBulwark";
+  /** 폭주 동안 실제로 받은 피해의 몇 %를 보호막으로 돌려받는지. */
+  shieldPercentOfDamageTaken: number;
+  tauntRadius: number;
+  tauntSeconds: number;
+};
+
+/**
+ * 패시브 돌파.
+ *
+ * `sharedRecovery`는 그 개체의 패시브 회복이 돌 때 **모든 아군에게 그 일부를 나눈다.** 자기
+ * 패시브의 조건(체력 절반 등)을 그대로 타므로 새 발동 조건을 만들지 않는다.
+ */
+export type PassiveBreakthrough = {
+  kind: "sharedRecovery";
+  /** 자기 패시브 회복량의 몇 %를 아군에게 나누는지. */
+  percent: number;
+};
 
 /** 지도 노드가 공유하는 식별자와 명시적 경로 조건이다. */
 interface StageBase {

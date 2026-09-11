@@ -6,7 +6,6 @@ import { MailManager } from "../managers/MailManager";
 import { session } from "../state/session";
 import { Button } from "./Button";
 import { chipPoints, drawLayer, HOLO } from "./holo";
-import { addPopupBackButton } from "./IconButton";
 import type { PopupLayer } from "./PopupLayer";
 import { POPUP_TITLE_SIZE } from "./PopupLayer";
 import { RewardFrame } from "./RewardFrame";
@@ -25,7 +24,7 @@ export class MailPopup {
   constructor(private readonly scene: Phaser.Scene, private readonly popups: PopupLayer, api: GameApi = gameApi, private readonly onClose?: () => void) { this.manager = new MailManager(api, session); }
 
   /** 로비 위에 작업판 한 장만 열고 목록 조회 후 알림 점을 즉시 동기화한다. */
-  open(): void { if (this.body) return; const width = BASE_WIDTH - 100; const height = BASE_HEIGHT - 180; this.popups.open({ width, height, title: "우편함", titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: 0.72, closeOnBackdrop: false, hideCloseButton: true, onClose: () => { this.unsubscribeMail?.(); this.unsubscribeMail = undefined; this.content?.destroy(); this.body = undefined; this.onClose?.(); } }, (body, close) => { this.body = body; this.unsubscribeMail = managerEvents.subscribe("mail", ({ list }) => { this.result = list; setDebugMailPopup({ open: true, unreadCount: list.unreadCount, claimableCount: list.claimableCount }); this.render(); }); body.add(new Button(this.scene, 0, height / 2 - 118, { width: 420, height: 82, label: "첨부 보상 일괄 수령", variant: "primary", onClick: () => void this.claimAll() })); addPopupBackButton(this.scene, body, width, height, close); void this.refresh(); }); }
+  open(): void { if (this.body) return; const width = BASE_WIDTH - 100; const height = BASE_HEIGHT - 180; this.popups.open({ width, height, title: "우편함", titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: 0.72, closeOnBackdrop: false, backButton: true, onClose: () => { this.unsubscribeMail?.(); this.unsubscribeMail = undefined; this.content?.destroy(); this.body = undefined; this.onClose?.(); } }, (body) => { this.body = body; this.unsubscribeMail = managerEvents.subscribe("mail", ({ list }) => { this.result = list; setDebugMailPopup({ open: true, unreadCount: list.unreadCount, claimableCount: list.claimableCount }); this.render(); }); body.add(new Button(this.scene, 0, height / 2 - 118, { width: 420, height: 82, label: "첨부 보상 일괄 수령", variant: "primary", onClick: () => void this.claimAll() })); void this.refresh(); }); }
 
   /** 서버 목록을 다시 받아 렌더하고 열기 자체로 달라질 수 있는 점도 갱신한다. */
   private async refresh(): Promise<void> { await this.manager.list(); }

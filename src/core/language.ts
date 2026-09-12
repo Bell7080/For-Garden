@@ -35,7 +35,7 @@ export type LanguageId = typeof LANGUAGE_IDS[number];
  * **번역이 들어오면 그 언어를 여기 더한다.** `LANGUAGE_IDS`는 이미 그 코드를 받아들이므로 저장
  * 마이그레이션은 필요 없다.
  */
-export const SELECTABLE_LANGUAGE_IDS: ReadonlyArray<LanguageId> = ["ko", "ja"];
+export const SELECTABLE_LANGUAGE_IDS: ReadonlyArray<LanguageId> = ["ko", "en", "ja"];
 
 /** 저장에 값이 없거나 알 수 없을 때 되돌아가는 언어다. */
 export const DEFAULT_LANGUAGE: LanguageId = "ko";

@@ -55,7 +55,7 @@ describe("덮어쓰기 표", () => {
   it("는 다 채운 언어에 구멍을 내지 않는다", () => {
     // 한 언어를 다 채우고 나면 그 뒤로는 **빠뜨린 자리가 곧 회귀**다 — 새 개체를 넣은 사람이
     // 그 언어만 한국어로 남기는 일을 막는다. 아직 채우는 중인 언어는 여기 오르지 않는다.
-    const COMPLETE = ["ja"];
+    const COMPLETE = ["en", "ja"];
     const known = registeredDataTexts().map(({ key }) => key);
     for (const [path, overlay] of Object.entries(OVERLAYS)) {
       if (!COMPLETE.includes(languageOf(path))) continue;

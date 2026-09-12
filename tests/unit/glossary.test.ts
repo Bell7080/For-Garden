@@ -45,6 +45,18 @@ describe("용어 사전", () => {
   });
 });
 
+/**
+ * 그 번역이 사전의 표기를 쓰고 있는가.
+ *
+ * **굴절하는 언어가 있어 글자 그대로 견주지 않는다.** 영어는 같은 말이 `Feed`·`Feeding`·
+ * `Relics`처럼 모양을 바꾸므로, 대소문자를 무시하고 표기의 **어간**(끝의 `e`를 턴 것)이 들어
+ * 있는지로 본다 — `Restore`는 `Restoration`과 같은 어간이다. CJK에는 아무 영향이 없다.
+ */
+const usesForm = (translated: string, expected: string): boolean => {
+  const stem = expected.toLowerCase().replace(/e$/, "");
+  return translated.toLowerCase().includes(stem);
+};
+
 describe("번역 표의 용어", () => {
   it("는 사전이 정한 표기를 그대로 쓴다", () => {
     // 같은 말이 화면마다 다르게 번역되면 플레이어는 두 가지가 있는 줄 안다.
@@ -61,7 +73,7 @@ describe("번역 표의 용어", () => {
           if (GLOSSARY_EXCEPTIONS[key]?.includes(id)) continue;
           const expected = glossaryForm(id, language);
           if (expected === undefined) continue;
-          if (!translated.includes(expected)) drifted.push(`${language} ${key}: ${korean} → ${expected} 없음 (${translated})`);
+          if (!usesForm(translated, expected)) drifted.push(`${language} ${key}: ${korean} → ${expected} 없음 (${translated})`);
         }
       }
     }

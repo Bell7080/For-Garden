@@ -1118,8 +1118,14 @@
   `발굴`은 캐릭터를 뽑는 일이 아니라 배치해 두고 자원을 걷는 방치형이고, 뽑기는 `연구`다.
   **한 언어를 정하면 그 언어의 모든 용어를 함께 정한다.** 절반만 채우면 나머지는 옮기는 사람이
   그때그때 새로 짓는다.
-- **번역이 들어오면 세 곳에 한 줄씩 더한다.** `catalog.ts`의 내려받기 목록,
-  `SELECTABLE_LANGUAGE_IDS`, 그리고 글꼴이 필요하면 `scripts/prepare_fonts.py`를 다시 돌린다.
+- **번역이 들어오면 다섯 곳에 한 줄씩 더한다.** `catalog.ts`의 내려받기 목록,
+  `dataText.ts`의 덮어쓰기 목록, `SELECTABLE_LANGUAGE_IDS`, `tests/unit/dataText.test.ts`의
+  `COMPLETE`, `tests/e2e/languageWalk.spec.ts`의 `WALKED`. 글꼴이 필요하면
+  `scripts/prepare_fonts.py`를 다시 돌린다 — 라틴·키릴은 NEXON Kart가 이미 덮으므로 필요 없다.
+- **굴절하는 언어는 용어 사전 대조가 어간으로 돈다.** 끝의 `e`를 떼고 대소문자 없이 포함을
+  보므로 `Restore`가 `Restoration`을, `Feed`가 `Feeding`을 받아들인다. **한국어의 포함 관계도
+  함께 지킨다** — `연구소`가 `연구`를 품으므로 영어도 `Research Lab`이 `Research`를 품어야 한다.
+  한쪽만 정하면 검사가 통과하지 못한다.
 
 ### 정적 콘텐츠의 문구
 

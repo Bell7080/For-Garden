@@ -10,17 +10,30 @@ import { describe, expect, it } from "vitest";
  * 지금은 덮는 대신 **그림을 안쪽 정사각에 들인다** — 그래서 "그 안쪽 비율을 쓰는가"와
  * "덮기·마스크로 되돌아가지 않았는가"를 계약으로 잡는다.
  */
-const SOURCE = import.meta.glob("../../src/ui/{FaceFrame,itemFrame}.ts", { query: "?raw", import: "default", eager: true }) as Record<string, string>;
+const SOURCE = import.meta.glob("../../src/ui/{FaceFrame,itemFrame,faceTexture}.ts", { query: "?raw", import: "default", eager: true }) as Record<string, string>;
 const FACE_FRAME_SOURCE = Object.entries(SOURCE).find(([path]) => path.endsWith("FaceFrame.ts"))![1];
 /** `itemFrame.ts`는 Phaser를 들여오므로 node 환경에서는 소스 문자열로만 읽는다. */
 const ITEM_FRAME_SOURCE = Object.entries(SOURCE).find(([path]) => path.endsWith("itemFrame.ts"))![1];
+const FACE_TEXTURE_SOURCE = Object.entries(SOURCE).find(([path]) => path.endsWith("faceTexture.ts"))![1];
 
 describe("얼굴 액자의 모서리 끊기", () => {
-  it("는 그림을 액자 안쪽 정사각에 들인다", () => {
-    // 78%(`ITEM_FRAME.icon`)면 네 꼭짓점이 모두 깎인 대각선 안쪽에 들어온다 — 재화 액자가
-    // 이미 쓰는 비율이라 두 액자가 같은 규격으로 읽힌다.
-    expect(FACE_FRAME_SOURCE).toContain("const inner = size * ITEM_FRAME.icon");
-    expect(FACE_FRAME_SOURCE).toContain("size: inner,");
+  it("는 얼굴을 액자 한 변까지 꽉 채운다", () => {
+    // 재화 아이콘은 사방 여백(78%)이 규격이지만 **얼굴은 차야 누구인지 읽힌다.** 안쪽 정사각에
+    // 들이면 뿔은 없어지지만 액자 안에 빈 테가 한 겹 남아 얼굴만 작아진다.
+    expect(FACE_FRAME_SOURCE).toContain("setDisplaySize(size, size)");
+    expect(FACE_FRAME_SOURCE).not.toContain("size * ITEM_FRAME.icon");
+  });
+
+  it("는 깎인 모서리를 그림을 구울 때 지운다", () => {
+    // 덮는 것도 마스크도 아니라 **그림 자체에서** 잘라 낸다 — 남는 자리가 투명이라 뿔이 없고,
+    // 컨테이너가 움직여도 어긋날 것이 없다.
+    expect(FACE_TEXTURE_SOURCE).toContain('globalCompositeOperation = "destination-in"');
+    expect(FACE_TEXTURE_SOURCE).not.toContain("createGeometryMask");
+  });
+
+  it("는 같은 원화·같은 크기를 한 번만 굽는다", () => {
+    // 원정 순위 줄은 100줄이 선다. 줄마다 구우면 그만큼이 그대로 첫 프레임 비용이 된다.
+    expect(FACE_TEXTURE_SOURCE).toContain("if (scene.textures.exists(key)) return key;");
   });
 
   it("는 잘린 모서리를 판 색으로 덮지 않는다", () => {
@@ -34,9 +47,12 @@ describe("얼굴 액자의 모서리 끊기", () => {
     expect(FACE_FRAME_SOURCE).not.toContain("createGeometryMask");
   });
 
-  it("는 파편의 결도 같은 안쪽 정사각 안에서만 그린다", () => {
-    // 액자 한 변까지 채우면 깎인 두 모서리로 빛이 새어 액자 밖에 색 조각이 남는다.
-    expect(FACE_FRAME_SOURCE).not.toMatch(/fillRect\(-half, -half \+ size \*/);
+  it("는 파편의 결도 액자 도형 안으로 잘라 그린다", () => {
+    // 액자 한 변까지 네모로 칠하면 깎인 두 모서리로 빛이 새어 액자 밖에 색 조각이 남는다 —
+    // 마스크가 아니라 칠할 도형 자체를 자른다(룬 액자 뒷배경과 같은 방법).
+    expect(FACE_FRAME_SOURCE).not.toContain("fillRect(");
+    expect(FACE_FRAME_SOURCE).toContain("clipRectToShape");
+    expect(FACE_FRAME_SOURCE).toContain("clipPolygonToShape");
   });
 
   it("는 액자가 왼쪽 위·오른쪽 아래만 깎는다", () => {

@@ -279,12 +279,12 @@ const SWIPE_DISTANCE = 110;
 const RUNE_GAP = 0.955;
 
 /** 능력치 칩에서 쓰는 다섯 축과 색. */
-const STAT_CHIPS: readonly { key: keyof Stats; label: TextKey; color: number }[] = [
-  { key: "hp", label: "stat.hp", color: STAT_TONE.hp },
-  { key: "atk", label: "stat.atk.short", color: STAT_TONE.atk },
-  { key: "def", label: "stat.def.short", color: STAT_TONE.def },
-  { key: "res", label: "stat.res.short", color: STAT_TONE.res },
-  { key: "ap", label: "stat.ap.short", color: STAT_TONE.ap },
+const STAT_CHIPS: readonly { key: keyof Stats; labelKey: TextKey; color: number }[] = [
+  { key: "hp", labelKey: "stat.hp", color: STAT_TONE.hp },
+  { key: "atk", labelKey: "stat.atk.short", color: STAT_TONE.atk },
+  { key: "def", labelKey: "stat.def.short", color: STAT_TONE.def },
+  { key: "res", labelKey: "stat.res.short", color: STAT_TONE.res },
+  { key: "ap", labelKey: "stat.ap.short", color: STAT_TONE.ap },
 ];
 
 /**
@@ -305,12 +305,12 @@ const RUNE_PICKER = { columns: 4, cardWidth: 180, cardHeight: 180, cellWidth: 20
 const EXTRA_STATS_POPUP_Y = 920;
 
 /** 돋보기로만 여는 보조 능력치. 평소에는 다섯 축만 보여 화면을 비운다. */
-const EXTRA_STATS: readonly { key: keyof Stats; label: TextKey; suffix?: string }[] = [
-  { key: "attackSpeed", label: "stat.attackSpeed" },
-  { key: "moveSpeed", label: "stat.moveSpeed" },
-  { key: "critChance", label: "stat.critChance", suffix: "%" },
-  { key: "critDamage", label: "stat.critDamage", suffix: "%" },
-  { key: "energyGain", label: "stat.energyGain" },
+const EXTRA_STATS: readonly { key: keyof Stats; labelKey: TextKey; suffix?: string }[] = [
+  { key: "attackSpeed", labelKey: "stat.attackSpeed" },
+  { key: "moveSpeed", labelKey: "stat.moveSpeed" },
+  { key: "critChance", labelKey: "stat.critChance", suffix: "%" },
+  { key: "critDamage", labelKey: "stat.critDamage", suffix: "%" },
+  { key: "energyGain", labelKey: "stat.energyGain" },
 ];
 
 /**
@@ -2472,7 +2472,7 @@ export function openExtraStatsPopup(
       const base = def.stats[chip.key];
       const gain = stats[chip.key] - base;
       // 칸의 축 이름과 같은 색이라 그래프에서 본 축을 그대로 따라 읽는다.
-      body.add(scene.add.text(-edge, y, chip.label, textStyle({ role: "display", size: 30, color: `#${chip.color.toString(16).padStart(6, "0")}` })).setOrigin(0, 0.5));
+      body.add(scene.add.text(-edge, y, t(chip.labelKey), textStyle({ role: "display", size: 30, color: `#${chip.color.toString(16).padStart(6, "0")}` })).setOrigin(0, 0.5));
       body.add(scene.add.text(edge, y - 12, stats[chip.key].toLocaleString(), textStyle({ role: "display", size: 36 })).setOrigin(1, 0.5));
       const detail = gain > 0 ? t("info.stats.baseWithGain", { base: base.toLocaleString(), gain: gain.toLocaleString() }) : t("info.stats.base", { base: base.toLocaleString() });
       const detailStyle = gain > 0
@@ -2495,7 +2495,7 @@ export function openExtraStatsPopup(
     );
     EXTRA_STATS.forEach((row, index) => {
       const y = top + 772 + index * 76;
-      body.add(scene.add.text(-edge, y, row.label, textStyle({ role: "body", size: 28, color: COLOR.inkDim })).setOrigin(0, 0.5));
+      body.add(scene.add.text(-edge, y, t(row.labelKey), textStyle({ role: "body", size: 28, color: COLOR.inkDim })).setOrigin(0, 0.5));
       body.add(scene.add.text(edge, y, stats[row.key].toLocaleString() + (row.suffix ?? ""), textStyle({ role: "display", size: 33 })).setOrigin(1, 0.5));
       if (index < EXTRA_STATS.length - 1) body.add(drawHairline(scene, 0, y + 38, width - 68, { color: COLOR.accent, alpha: 0.14 }));
     });

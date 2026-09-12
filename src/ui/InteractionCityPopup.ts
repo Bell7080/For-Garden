@@ -280,11 +280,14 @@ export class InteractionCityPopup {
     const artHeight = BRIEF_ART.height;
     const artY = LOWER.top + artHeight / 2;
     const shape = chipPoints(LOWER.right - LOWER.left, artHeight, { bevel: { topLeft: 96, bottomRight: 96 } });
-    if (this.scene.textures.exists(view.city.illustration)) {
-      this.briefArt = addPopupBackgroundImage(this.scene, parent, view.city.illustration, { x: 0, y: artY, width: LOWER.right - LOWER.left, height: artHeight, maskShape: shape, overlayStrength: 0.5 });
-    } else {
-      parent.add(drawLayer(this.scene, 0, artY, shape, { fill: COLOR.panel, alpha: HOLO.glass }));
-    }
+    // **판을 먼저 깔고 그 위에 원화를 얹는다.** 예전에는 이미 올라온 텍스처만 세우고 아니면 판
+    // 하나로 끝냈는데, 부트가 미리 읽는 두 장 말고는 **어느 도시 원화도 그 순간에는 없어서**
+    // 늘 빈 판만 보였다. 원화는 들어올 때 읽고 나올 때 내리는 것이 규칙이므로(`backgrounds.ts`),
+    // 도착하기 전까지는 이 판이 그 자리를 지키고 도착하면 그 위에 그려진다.
+    parent.add(drawLayer(this.scene, 0, artY, shape, { fill: COLOR.panel, alpha: HOLO.glass }));
+    // 판 비율에 맞춰 늘이지 않고 `cover`로 키운 뒤 넘치는 쪽만 마스크가 자른다 — 가로 원화가
+    // 세로 칸에 들어가도 찌그러지지 않는다.
+    this.briefArt = addPopupBackgroundImage(this.scene, parent, view.city.illustration, { x: 0, y: artY, width: LOWER.right - LOWER.left, height: artHeight, maskShape: shape, overlayStrength: 0.5 });
 
     const left = LOWER.left + 10;
     parent.add(this.scene.add.text(left, artY + artHeight / 2 + BRIEF_ART.descriptionGap, view.city.description, textStyle({ role: "body", size: BRIEF_ART.descriptionSize })).setWordWrapWidth(LOWER.right - LOWER.left - 20));
@@ -488,7 +491,6 @@ export class InteractionCityPopup {
       this.stopHop(relicId);
       placePuppet(standing, relicAppearanceManager.sdAssetFor(relicId), { x, groundY, height: 205 });
       standing.setDepth(SD_DEPTH);
-      this.hops.set(relicId, startPuppetHop(this.scene, standing, this.party.indexOf(relicId)));
       return;
     }
     if (this.puppetLoading.has(relicId)) return;
@@ -500,8 +502,9 @@ export class InteractionCityPopup {
       isDisplayable: (puppet) => Boolean(puppet.active && puppet.texture?.key && this.scene.textures.exists(puppet.texture.key)),
       adopt: (puppet) => {
         puppet.disableInteractive(); layer.add(puppet); this.puppets.set(relicId, puppet);
-        // 발굴과 같은 통통 튀는 모션이다. 규칙은 `puppetHop` 한 곳이 갖고 여기서는 칸 번호만 준다.
-        this.hops.set(relicId, startPuppetHop(this.scene, puppet, this.party.indexOf(relicId)));
+        // **세워 두는 동안에는 뛰지 않는다.** 자리를 고르는 내내 통통 튀면 그 움직임이 "지금
+        // 무슨 일이 일어났다"를 말하지 못하고, 어느 칸을 고르는 중인지도 흐려진다. 뛰는 것은
+        // 보내는 순간의 배웅 한 번뿐이다(`hopFarewell`).
       },
     }).finally(() => this.puppetLoading.delete(relicId));
   }
@@ -628,10 +631,23 @@ export class InteractionCityPopup {
     if (this.busy || party.length < view.city.partySize.min) return;
     this.busy = true; this.render();
     try {
-      await this.manager.start(view.city.id, party);
+      // 보내는 순간에만 한 번 뛴다 — 서버가 답하는 동안 배웅이 지나가므로 기다림이 늘지 않는다.
+      const farewell = this.hopFarewell();
+      await Promise.all([this.manager.start(view.city.id, party), farewell]);
       this.popups.closeAll();
       this.onChanged?.();
     } finally { this.busy = false; }
+  }
+
+  /** 서 있는 SD가 한 번씩 폴짝 뛴다. 칸마다 박자가 달라 셋이 한 몸으로 흔들리지 않는다. */
+  private async hopFarewell(): Promise<void> {
+    const jumps = [...this.puppets].map(([relicId, puppet]) => new Promise<void>((resolve) => {
+      this.stopHop(relicId);
+      const tween = startPuppetHop(this.scene, puppet, Math.max(0, this.party.indexOf(relicId)), { once: true });
+      tween.once(Phaser.Tweens.Events.TWEEN_COMPLETE, () => { this.stopHop(relicId); resolve(); });
+      this.hops.set(relicId, tween);
+    }));
+    await Promise.all(jumps);
   }
 
   private async claim(dispatch: InteractionDispatchSnapshot | undefined): Promise<void> {

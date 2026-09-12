@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import type { PortraitAssetId } from "../core/types";
 import { computeFaceFrame } from "../puppets/anchors";
 import { loadPortraitTexture, portraitAssetFor } from "../puppets/assets";
+import { bakeFaceTexture, clipRectToShape, faceClipShape } from "./faceTexture";
 import { chipPoints, drawInnerVignette, drawLayer, drawShapeInnerGlow, drawShapeOutline } from "./holo";
 import { ITEM_FRAME } from "./itemFrame";
 import { COLOR, textStyle } from "./theme";
@@ -14,10 +15,10 @@ import { COLOR, textStyle } from "./theme";
  * 아니라 얼굴일 뿐이라, 연구 결과판에서 중복 파편과 재화가 나란히 서도 두 종류의 액자로
  * 보이지 않는다.
  *
- * 카드(`PortraitCard`)처럼 머리가 밖으로 빠져나오는 홈을 두지 않고, 액자 안쪽 정사각
- * (`ITEM_FRAME.icon`)에 얼굴을 크게 담는다 — 재화 액자가 그림을 들이는 그 비율이라 둘이
- * 나란히 서도 한 규격으로 읽힌다. 기여도 그래프처럼 이름만으로는 누구인지 한눈에 읽히지
- * 않는 자리에 쓴다.
+ * 카드(`PortraitCard`)처럼 머리가 밖으로 빠져나오는 홈을 두지 않고, **액자를 꽉 채워** 얼굴을
+ * 담는다 — 재화 아이콘은 사방 여백이 규격이지만 얼굴은 차야 누구인지 읽힌다. 깎인 두 모서리는
+ * 덮지도 마스크로 자르지도 않고 **그림을 구울 때 잘라 낸다**(`faceTexture.ts`). 기여도 그래프처럼
+ * 이름만으로는 누구인지 한눈에 읽히지 않는 자리에 쓴다.
  */
 export class FaceFrame extends Phaser.GameObjects.Container {
   private disposed = false;
@@ -74,24 +75,15 @@ export class FaceFrame extends Phaser.GameObjects.Container {
     // 카드 잘라내기가 아니라 **얼굴 전용 정사각 잘라내기**를 쓴다(`computeFaceFrame` 주석 참고).
     // 등신이 낮아 얼굴이 큰 원화는 카드와 같은 기준(`cardZoom`)으로 되돌려, 같은 액자에 나란히
     // 서도 얼굴 크기가 개체마다 튀지 않게 한다.
-    // **얼굴은 액자 안쪽에 온전히 든다.** 예전에는 액자 한 변을 꽉 채워 그렸는데, 액자는
-    // 왼쪽 위·오른쪽 아래가 비스듬히 깎인 도형이라 그 두 모서리에서 그림이 밖으로 나갔다.
-    // 그때는 잘려 나간 삼각형을 판 색으로 덮어 가렸지만, 그 삼각형은 액자 **바깥**이라 외곽선
-    // 너머로 검게 삐져나온 뿔처럼 보였다(원정 순위 줄과 기여도 줄이 그랬다).
-    // 그림을 `ITEM_FRAME.icon`(78%)으로 들이면 네 꼭짓점이 전부 깎인 대각선 안쪽에 들어온다 —
-    // 재화 액자가 이미 쓰는 그 비율이라 두 액자가 같은 규격으로 읽힌다.
-    const inner = size * ITEM_FRAME.icon;
     const face = computeFaceFrame(asset, anchors.head, {
-      size: inner,
+      size,
       crop: FACE_FRAME.crop / ((asset.cardZoom ?? 1) * (asset.portraitZoom ?? 1)),
       anchorY: FACE_FRAME.anchorY,
     });
-    const originX = -inner / 2 - face.cropX * face.scale;
-    const originY = -inner / 2 - face.cropY * face.scale;
-    const image = scene.add.image(originX, originY, key).setOrigin(0, 0).setScale(face.scale);
-    // `setCrop`은 텍스처 좌표계를 네모로 자른다. 배율이 그 상자를 안쪽 정사각과 같게 맞추므로
-    // 네 변이 깎인 대각선 안에서 끊긴다.
-    image.setCrop(face.cropX, face.cropY, face.cropWidth, face.cropHeight);
+    // **액자 한 변을 꽉 채우고, 깎인 두 모서리는 구울 때 지운다.** 덮으면 액자 바깥에 검은 뿔이
+    // 남고(v0.105.0까지), 안쪽 정사각에 들이면 얼굴이 작아진다(v0.108.0까지).
+    const baked = bakeFaceTexture(scene, key, size, { x: face.cropX, y: face.cropY, side: face.cropWidth });
+    const image = scene.add.image(0, 0, baked).setDisplaySize(size, size);
     if (options.tint) image.setTint(options.tint);
     this.addAt(image, 1);
   }
@@ -128,33 +120,72 @@ const FACE_FRAME = { crop: 0.34, anchorY: 0.52 } as const;
  */
 function paintGlassSheen(scene: Phaser.Scene, size: number, color: number): Phaser.GameObjects.Container {
   const glass = scene.add.container(0, 0);
-  // 띠와 광택도 얼굴과 **같은 안쪽 정사각** 안에서만 그린다. 액자 한 변까지 채우면 깎인 두
-  // 모서리로 빛이 새어 액자 밖에 색 조각이 남는다.
-  const inner = size * ITEM_FRAME.icon;
-  const half = inner / 2;
+  // 띠와 광택도 얼굴과 **같은 도형 안에서만** 그린다. 액자 한 변까지 네모로 칠하면 깎인 두
+  // 모서리로 빛이 새어 액자 밖에 색 조각이 남는다 — 마스크가 아니라 칠할 도형을 잘라 둔다.
+  const shape = faceClipShape(size);
+  const half = size / 2;
   // 물낯. 가로로 누운 띠가 위아래로 진하기를 달리하며 지나간다 — 경계를 긋지 않으므로 조각난
   // 것이 아니라 한 면이 일렁이는 것으로 읽힌다.
   const ripple = scene.add.graphics().setBlendMode(Phaser.BlendModes.ADD);
   GLASS_SHEEN.ripples.forEach(({ at, height, alpha }) => {
+    const band = clipRectToShape({ left: -half, top: -half + size * at, width: size, height: size * height }, shape);
+    if (band.length < 6) return;
     ripple.fillStyle(color, alpha);
-    ripple.fillRect(-half, -half + inner * at, inner, inner * height);
+    ripple.fillPoints(toPoints(band), true);
   });
   glass.add(ripple);
   // 유리의 광택 한 줄. 왼쪽 위에서 오른쪽 아래로 비스듬히 지나가는 좁은 띠다.
   const sheen = scene.add.graphics().setBlendMode(Phaser.BlendModes.ADD);
   sheen.fillStyle(GLASS_SHEEN.sheen, GLASS_SHEEN.sheenAlpha);
-  sheen.fillPoints([
-    new Phaser.Geom.Point(-half, -half + inner * GLASS_SHEEN.sheenAt),
-    new Phaser.Geom.Point(-half + inner * GLASS_SHEEN.sheenWidth, -half),
-    new Phaser.Geom.Point(half, -half + inner * GLASS_SHEEN.sheenAt),
-    new Phaser.Geom.Point(half - inner * GLASS_SHEEN.sheenWidth, half),
-  ], true);
+  sheen.fillPoints(toPoints(clipPolygonToShape([
+    -half, -half + size * GLASS_SHEEN.sheenAt,
+    -half + size * GLASS_SHEEN.sheenWidth, -half,
+    half, -half + size * GLASS_SHEEN.sheenAt,
+    half - size * GLASS_SHEEN.sheenWidth, half,
+  ], shape)), true);
   glass.add(sheen);
   // 유리 안쪽에서 번지는 등급색. 빛이 조각을 통과해 액자 안으로 스며드는 몫이다.
-  glass.add(drawShapeInnerGlow(scene, 0, 0, chipPoints(size, size, {
-    bevel: { topLeft: size * ITEM_FRAME.bevel, topRight: 0, bottomRight: size * ITEM_FRAME.bevel, bottomLeft: 0 },
-  }), { color, strength: GLASS_SHEEN.glow, depth: GLASS_SHEEN.glowDepth }));
+  glass.add(drawShapeInnerGlow(scene, 0, 0, shape, { color, strength: GLASS_SHEEN.glow, depth: GLASS_SHEEN.glowDepth }));
   return glass;
+}
+
+/** 평평한 좌표 배열을 Phaser 점 목록으로. */
+function toPoints(flat: readonly number[]): Phaser.Geom.Point[] {
+  const points: Phaser.Geom.Point[] = [];
+  for (let index = 0; index < flat.length; index += 2) points.push(new Phaser.Geom.Point(flat[index], flat[index + 1]));
+  return points;
+}
+
+/** 볼록한 두 도형의 교집합. 광택 띠(마름모)를 액자 도형 안으로 잘라 낸다. */
+function clipPolygonToShape(subject: readonly number[], clip: readonly number[]): number[] {
+  let polygon = [...subject];
+  const count = clip.length / 2;
+  for (let edge = 0; edge < count; edge += 1) {
+    const ax = clip[edge * 2];
+    const ay = clip[edge * 2 + 1];
+    const bx = clip[((edge + 1) % count) * 2];
+    const by = clip[((edge + 1) % count) * 2 + 1];
+    // 칩 도형은 시계 방향이므로 왼쪽이 바깥이다. 외적의 부호로 안팎을 가른다.
+    const inside = (x: number, y: number): number => (bx - ax) * (y - ay) - (by - ay) * (x - ax);
+    const next: number[] = [];
+    const points = polygon.length / 2;
+    for (let i = 0; i < points; i += 1) {
+      const px = polygon[i * 2];
+      const py = polygon[i * 2 + 1];
+      const qx = polygon[((i + 1) % points) * 2];
+      const qy = polygon[((i + 1) % points) * 2 + 1];
+      const pv = inside(px, py);
+      const qv = inside(qx, qy);
+      if (pv <= 0) next.push(px, py);
+      if ((pv <= 0) !== (qv <= 0)) {
+        const t = pv / (pv - qv);
+        next.push(px + (qx - px) * t, py + (qy - py) * t);
+      }
+    }
+    polygon = next;
+    if (polygon.length === 0) return polygon;
+  }
+  return polygon;
 }
 
 /**

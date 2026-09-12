@@ -34,10 +34,10 @@ export const RANKING_LIST = {
  * (`RARITY_GEM`)과 같은 결의 금·은·동 한 쌍씩이며, 그 아래 줄은 지금까지의 회색 그대로다.
  */
 export const RANKING_MEDALS = [
-  { rank: 1, fill: 0x3a2f16, edge: 0xe8c25a, text: "#f5d98a", label: "ranking.medal.1" },
-  { rank: 2, fill: 0x2b2f36, edge: 0xc3ccd6, text: "#dfe6ee", label: "ranking.medal.2" },
-  { rank: 3, fill: 0x33251b, edge: 0xc08652, text: "#e0a274", label: "ranking.medal.3" },
-] as const satisfies ReadonlyArray<{ rank: number; fill: number; edge: number; text: string; label: TextKey }>;
+  { rank: 1, fill: 0x3a2f16, edge: 0xe8c25a, text: "#f5d98a", labelKey: "ranking.medal.1" },
+  { rank: 2, fill: 0x2b2f36, edge: 0xc3ccd6, text: "#dfe6ee", labelKey: "ranking.medal.2" },
+  { rank: 3, fill: 0x33251b, edge: 0xc08652, text: "#e0a274", labelKey: "ranking.medal.3" },
+] as const satisfies ReadonlyArray<{ rank: number; fill: number; edge: number; text: string; labelKey: TextKey }>;
 
 export type RankingMedal = (typeof RANKING_MEDALS)[number];
 

@@ -65,7 +65,7 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
     unlock: { researchLevel: 1 }, durationMinutes: 10, partySize: { min: 1, max: 3 },
     recommended: { elements: ["water"], squads: ["rune"], tags: ["garden"] },
     rewards: [{ currency: "gold", amount: 600, weight: 6 }, { currency: "cheesecake", amount: 1, weight: 2 }],
-    clueJournalId: "interaction-central-01", illustration: "background-lobby",
+    clueJournalId: "interaction-central-01", illustration: "background-interaction-central-garden",
   },
   {
     id: "central-council", displayName: "중앙 정원구", department: "council",

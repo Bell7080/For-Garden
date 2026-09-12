@@ -20,8 +20,8 @@ import { managerEvents } from "../managers/ManagerEvents";
 import { CurrencyGuidePopup } from "./CurrencyGuidePopup";
 import type { CurrencyGuideAction } from "../data/currencyGuide";
 
-const CATEGORIES: readonly { id: ItemCategory; label: TextKey }[] = [
-  { id: "rune", label: "inventory.tab.rune" }, { id: "currency", label: "inventory.tab.currency" }, { id: "consumable", label: "inventory.tab.consumable" }, { id: "material", label: "inventory.tab.material" },
+const CATEGORIES: readonly { id: ItemCategory; labelKey: TextKey }[] = [
+  { id: "rune", labelKey: "inventory.tab.rune" }, { id: "currency", labelKey: "inventory.tab.currency" }, { id: "consumable", labelKey: "inventory.tab.consumable" }, { id: "material", labelKey: "inventory.tab.material" },
 ];
 // 900px 작업판에서 좌우 48px만 안전 여백으로 남기고 본문이 나머지를 모두 사용한다.
 const POPUP_WIDTH = 900; const POPUP_HEIGHT = 1510; const BODY_SAFE_X = 48; const LIST_TOP = -550; const TAB_CLEARANCE = 20;
@@ -40,6 +40,13 @@ const VIEWPORT = {
  * 비율과 그늘은 공용 `ITEM_FRAME.icon`·`ITEM_FRAME.shadow`를 따른다.
  */
 const INVENTORY_ITEM_FRAME = { ratio: 0.89 } as const;
+/**
+ * 탭 이름표의 글자 크기와 줄이는 한계.
+ *
+ * 탭 폭은 넷이 나눠 갖는 고정값인데 낱말 길이는 언어가 정한다. 넘치면 글자만 가로로 줄이고,
+ * 그래도 안 들면 거기서 멈춘다 — 더 줄이면 읽을 수 없는 글자가 된다.
+ */
+const TAB_LABEL = { size: 27, padX: 22, minScale: 0.68 } as const;
 
 /** 로비를 유지한 채 서버 확정 인벤토리를 표시하는 홀로그램 작업판이다. */
 export class InventoryPopup {
@@ -128,7 +135,14 @@ export class InventoryPopup {
       edge: selected ? COLOR.accent : COLOR.panelEdge,
       edgeAlpha: selected ? 0.9 : 0.7,
     }));
-    tabContainer.add(this.scene.add.text(0, 1, tab.label, textStyle({ role: "emphasis", size: 27, color: selected ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5));
+    // **문구 표를 지난다.** 키를 그대로 그리면 화면에 `inventory.tab.rune`이 선다 — 한국어에서도
+    // 같았지만 다른 언어에서 더 길어져 탭 밖으로 넘치며 눈에 띄었다.
+    const label = this.scene.add.text(0, 1, t(tab.labelKey), textStyle({ role: "emphasis", size: TAB_LABEL.size, color: selected ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5);
+    // 낱말 길이는 언어가 정한다(`룬` 한 글자 ↔ `Consumable` 열 글자). 탭 폭은 넷이 나눠 갖는
+    // 고정값이라 넘치는 만큼 글자를 줄인다 — 탭을 넓히면 네 칸이 팝업 밖으로 나간다.
+    const room = (width - TAB_LABEL.padX) / selectedScale;
+    if (label.width > room) label.setScale(Math.max(TAB_LABEL.minScale, room / label.width), 1);
+    tabContainer.add(label);
     if (index < CATEGORIES.length - 1) {
       // 면 사이의 짧은 세로 머리선만으로 인접 탭의 경계를 보조한다.
       tabContainer.add(drawHairline(this.scene, width / 2 + INVENTORY_TAB_LAYOUT.gap / 2, 0, height * 0.52, { color: COLOR.panelEdge, alpha: 0.55 }).setRotation(Math.PI / 2));
@@ -145,10 +159,10 @@ export class InventoryPopup {
 
   /** 기존 탭처럼 크기와 강조색만으로 선택을 알리고 누르면 정렬 및 스크롤 원점을 갱신한다. */
   private addSortControls(body: Phaser.GameObjects.Container): void {
-    const keys: readonly { key: InventorySort["key"]; label: TextKey }[] = [{ key: "acquired", label: "inventory.sort.acquired" }, { key: "rarity", label: "inventory.sort.rarity" }, { key: "part", label: "inventory.sort.part" }, { key: "enhancement", label: "inventory.sort.craft" }, { key: "equipped", label: "inventory.sort.equipped" }];
-    keys.forEach(({ key, label }, index) => {
+    const keys: readonly { key: InventorySort["key"]; labelKey: TextKey }[] = [{ key: "acquired", labelKey: "inventory.sort.acquired" }, { key: "rarity", labelKey: "inventory.sort.rarity" }, { key: "part", labelKey: "inventory.sort.part" }, { key: "enhancement", labelKey: "inventory.sort.craft" }, { key: "equipped", labelKey: "inventory.sort.equipped" }];
+    keys.forEach(({ key, labelKey }, index) => {
       const selected = this.sort.key === key; const node = this.scene.add.container(-300 + index * 150, -620).setScale(selected ? 1.12 : 1);
-      node.add(this.scene.add.text(0, 0, `${t(label)}${selected ? (this.sort.direction === "asc" ? " ↑" : " ↓") : ""}`, textStyle({ role: "emphasis", size: 20, color: selected ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5));
+      node.add(this.scene.add.text(0, 0, `${t(labelKey)}${selected ? (this.sort.direction === "asc" ? " ↑" : " ↓") : ""}`, textStyle({ role: "emphasis", size: 20, color: selected ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5));
       const hit = this.scene.add.rectangle(0, 0, 130, 54, 0xffffff, 0).setInteractive({ useHandCursor: true });
       hit.on("pointerdown", () => node.setScale(1.16));
       hit.on("pointerup", () => { this.sort = { key, direction: selected && this.sort.direction === "asc" ? "desc" : "asc" }; this.render(body); });

@@ -11,6 +11,10 @@
 화면 배경이 아닌 콘텐츠 원화(`public/ContentN_00M.png` — 출격 진입 버튼 일러스트 등)도 같은
 이유로 여기서 굽는다. 이쪽은 `sprites/background`가 아니라 `sprites/content`에 같은 이름의
 WebP로 남는다. 다른 원화 스프라이트처럼 `public/` 바로 아래를 비워 두기 위해서다.
+
+교류 도시 원화(`public/교류 배경00N.png`)는 세로 배경이 아니라 **판 안에 잘려 들어가는 가로
+그림**이라 이름만 `interaction_00N.webp`로 바꿔 굽는다. 아트 파일이 한글 이름으로 오므로 그
+이름을 그대로 키로 쓰지 않는다 — 경로에 한글이 섞이면 배포 URL 인코딩이 환경마다 갈린다.
 """
 from pathlib import Path
 import sys
@@ -37,13 +41,17 @@ def main() -> None:
     # 훑어 같은 규칙으로 굽는다 — 한 자리만 보면 PNG가 그대로 저장소에 남고 빌드에 실려 나간다.
     backgrounds = sorted({*PUBLIC.glob("background_*.png"), *BACKGROUND_TARGET.glob("*.png")})
     contents = sorted({*PUBLIC.glob("Content*.png"), *CONTENT_TARGET.glob("*.png")})
-    if not backgrounds and not contents:
+    interactions = sorted({*PUBLIC.glob("교류 배경*.png"), *BACKGROUND_TARGET.glob("교류 배경*.png")})
+    if not backgrounds and not contents and not interactions:
         print("구울 원본이 없다. public/background_00N.png 또는 public/ContentN_00M.png를 올린 뒤 다시 실행한다.")
         return
     for source in backgrounds:
         bake(source, BACKGROUND_TARGET / f"{source.stem}.webp")
     for source in contents:
         bake(source, CONTENT_TARGET / f"{source.stem}.webp")
+    for source in interactions:
+        number = "".join(ch for ch in source.stem if ch.isdigit()) or "001"
+        bake(source, BACKGROUND_TARGET / f"interaction_{number.zfill(3)}.webp")
 
 
 if __name__ == "__main__":

@@ -22,8 +22,12 @@ export const PUPPET_HOP = { rise: 42, duration: 460, delays: [180, 570, 930], re
  *
  * 전체 움직임 감소에서는 거리를 줄이고 무한 반복을 없앤다. 되돌려 받는 tween은 부르는 쪽이
  * 붙잡아 두었다가 SD를 버릴 때 함께 멈춘다.
+ *
+ * **한 번만 뛸 수도 있다**(`once`). 세워 두는 내내 뛰면 그 움직임이 "지금 무슨 일이 일어났다"를
+ * 말하지 못한다 — 교류 파견은 자리를 고르는 동안에는 가만히 서 있고, 보내는 순간에만 한 번
+ * 뛰어 배웅한다.
  */
-export function startPuppetHop(scene: Phaser.Scene, puppet: PuppetCreature, index: number): Phaser.Tweens.Tween {
+export function startPuppetHop(scene: Phaser.Scene, puppet: PuppetCreature, index: number, options: { once?: boolean } = {}): Phaser.Tweens.Tween {
   const motion = motionPolicy(session.settings);
   const restY = puppet.y;
   const hop = { progress: 0 };
@@ -31,7 +35,7 @@ export function startPuppetHop(scene: Phaser.Scene, puppet: PuppetCreature, inde
     targets: hop, progress: 1, ease: "Linear",
     duration: PUPPET_HOP.duration + index * 40,
     delay: PUPPET_HOP.delays[index % PUPPET_HOP.delays.length],
-    repeat: motion.nonEssentialRepeatFactor === 0 ? 0 : -1,
+    repeat: options.once || motion.nonEssentialRepeatFactor === 0 ? 0 : -1,
     repeatDelay: PUPPET_HOP.rests[index % PUPPET_HOP.rests.length],
     onUpdate: () => { puppet.y = restY - PUPPET_HOP.rise * motion.nonEssentialDistanceFactor * (1 - (2 * hop.progress - 1) ** 2); },
     // 쉬는 동안에는 정확히 제자리에 서 있어야 다음 도약이 바닥에서 시작한다.

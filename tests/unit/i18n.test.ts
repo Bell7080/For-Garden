@@ -163,6 +163,35 @@ describe("굳은 문구", () => {
     }
     expect(offenders).toEqual([]);
   });
+
+  it("은 문구 키를 그대로 그리지 않는다", () => {
+    // 표에 담아 둔 `TextKey`를 `t()` 없이 `add.text`에 넘기면 화면에 `inventory.tab.rune`이
+    // 그대로 선다 — 어느 언어에서나 틀리지만, 낱말이 아니라 점 찍힌 키라 길이까지 달라져
+    // 탭 밖으로 넘친다(가방의 카테고리 탭과 능력치 상세의 다섯 축이 그랬다).
+    //
+    // 그래서 **키를 담는 자리는 이름이 `...Key`로 끝난다.** 이미 번역된 문자열을 담는 `label`과
+    // 이름으로 갈라 두면, 그리는 자리에서 `t()`가 빠진 것이 읽는 것만으로 보인다.
+    const offenders: string[] = [];
+    for (const [path, code] of Object.entries(SOURCES)) {
+      if (path.startsWith("../../src/i18n/")) continue;
+      for (const [index, line] of code.split("\n").entries()) {
+        const match = /\.text\(\s*[^,]+,\s*[^,]+,\s*([A-Za-z_$][\w$]*\.\w*Key)\s*,/.exec(line);
+        if (match) offenders.push(`${path}:${index + 1} ${match[1]}`);
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  it("은 문구 키를 담는 자리를 이름으로 갈라 둔다", () => {
+    // `label: TextKey`는 이미 번역된 문자열을 담는 `label: string`과 이름이 같아, 그리는 자리에서
+    // `t()`가 빠져도 눈에 띄지 않는다.
+    const offenders: string[] = [];
+    for (const [path, code] of Object.entries(SOURCES)) {
+      if (path.startsWith("../../src/i18n/")) continue;
+      if (/\blabel\s*:\s*TextKey/.test(code)) offenders.push(path);
+    }
+    expect(offenders).toEqual([]);
+  });
 });
 
 describe("화면 문구", () => {

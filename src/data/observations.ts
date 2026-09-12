@@ -1,4 +1,5 @@
 import type { DialogueStory } from "../core/dialogue";
+import { registerDataText } from "../i18n";
 
 /** 선택지는 성격 단서와 습성 문장만 열며, 서로 다른 선택을 같은 미화 표현으로 합치지 않는다. */
 export interface ObservationChoice { id: string; label: string; personalityTag: string; habitKey: string; }
@@ -91,6 +92,9 @@ export const RELIC_OBSERVATION_QUESTIONS: Readonly<Record<string, readonly Obser
 
 interface ObservationReaction { intro: string; replies: Readonly<Record<string, string>>; habits: Readonly<Record<string, string>>; }
 
+/** 반응표가 아직 없는 개체가 쓰는 기본 문구. 화면에 그대로 서므로 번역 대상이다. */
+export const OBSERVATION_FALLBACK = { intro: "무엇이 궁금한지 말해 줘.", habit: "새로운 반응 양식을 기록했다." };
+
 /** 대답과 일지 문장을 한 반응표에 묶어 캐릭터 설정과 저장 결과가 어긋나지 않게 한다. */
 export const REACTIONS: Readonly<Record<string, ObservationReaction>> = {
   anky: { intro: "천천히 물어봐. 생각해 볼게.", replies: {
@@ -168,7 +172,7 @@ export function observationQuestionForRelicAndDate(relicId: string, utcDate: str
 /** 기존 DialogueStory 실행기가 읽는 일일 인터뷰도 렐릭별 단일 선택 함수를 사용한다. */
 export function createObservationStory(relicId: string, relicName: string, utcDate: string): DialogueStory {
   const question = observationQuestionForRelicAndDate(relicId, utcDate);
-  const reaction = REACTIONS[relicId] ?? { intro: "무엇이 궁금한지 말해 줘.", replies: {}, habits: {} };
+  const reaction = REACTIONS[relicId] ?? { intro: OBSERVATION_FALLBACK.intro, replies: {}, habits: {} };
   return { id: `observation.${utcDate}.${relicId}`, startNodeId: "intro", nodes: [
     { id: "intro", speaker: relicName, body: reaction.intro, nextId: "question" },
     { id: "question", speaker: "연구원", body: question.prompt, choices: question.choices.map((choice) => ({ id: choice.id, label: choice.label, nextId: `reply-${choice.id}` })) },
@@ -181,5 +185,31 @@ export function observationDiscovery(relicId: string, utcDate: string, choiceId:
   const question = observationQuestionForRelicAndDate(relicId, utcDate);
   const choice = question.choices.find(({ id }) => id === choiceId);
   if (!choice) throw new RangeError("현재 관찰 질문에 없는 답변입니다.");
-  return { question, choice, habit: REACTIONS[relicId]?.habits[choice.habitKey] ?? "새로운 반응 양식을 기록했다." };
+  return { question, choice, habit: REACTIONS[relicId]?.habits[choice.habitKey] ?? OBSERVATION_FALLBACK.habit };
 }
+
+/** 관찰 인터뷰의 질문·선택지·반응을 언어별로 덮어쓸 수 있게 등록한다. */
+function registerQuestions(questions: readonly ObservationQuestion[]): void {
+  for (const question of questions) {
+    registerDataText(question, "prompt", `observation.${question.id}.prompt`);
+    for (const choice of question.choices) {
+      registerDataText(choice, "label", `observation.${question.id}.${choice.id}.label`);
+      // 성격 단서는 관찰 일지에 그대로 적히므로 함께 옮긴다.
+      registerDataText(choice, "personalityTag", `observation.${question.id}.${choice.id}.tag`);
+    }
+  }
+}
+registerQuestions(COMMON_OBSERVATION_QUESTIONS);
+for (const [relicId, questions] of Object.entries(RELIC_OBSERVATION_QUESTIONS)) {
+  void relicId;
+  registerQuestions(questions);
+}
+for (const [relicId, reaction] of Object.entries(REACTIONS)) {
+  registerDataText(reaction, "intro", `reaction.${relicId}.intro`);
+  for (const key of Object.keys(reaction.replies)) registerDataText(reaction.replies, key, `reaction.${relicId}.reply.${key}`);
+  for (const key of Object.keys(reaction.habits)) registerDataText(reaction.habits, key, `reaction.${relicId}.habit.${key}`);
+}
+
+/** 반응표가 없는 개체가 쓰는 기본 문구도 화면에 서므로 함께 등록한다. */
+registerDataText(OBSERVATION_FALLBACK, "intro", "observation.fallback.intro");
+registerDataText(OBSERVATION_FALLBACK, "habit", "observation.fallback.habit");

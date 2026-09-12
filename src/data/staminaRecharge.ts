@@ -1,4 +1,5 @@
 import { findAdRewardSlot, type AdRewardSlot } from "./adRewards";
+import { registerDataText } from "../i18n";
 import type { ItemDefinition } from "./items";
 import { findItem } from "./items";
 
@@ -53,4 +54,9 @@ export function staminaAdSlot(slotId: string): { slot: AdRewardSlot; amount: num
   const slot = findAdRewardSlot(slotId);
   if (!slot || slot.reward.kind !== "currency" || slot.reward.currency !== "stamina") return undefined;
   return { slot, amount: slot.reward.amount };
+}
+
+/** 스테미나 충전 수단의 이름을 언어별로 덮어쓸 수 있게 등록한다. */
+for (const source of STAMINA_RECHARGE_SOURCES) {
+  registerDataText(source, "name", `stamina.source.${source.id}.name`);
 }

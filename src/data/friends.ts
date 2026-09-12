@@ -1,4 +1,5 @@
 import type { PublicProfileHeaderDto } from "../api/contracts";
+import { registerDataText } from "../i18n";
 
 /** 친구 목록과 프로필 화면이 공유하는 최소 공개 프로필이다. 실제 서비스에서는 서버 DTO로 교체한다. */
 export interface FriendProfile extends PublicProfileHeaderDto {
@@ -17,3 +18,16 @@ export const PREVIEW_FRIENDS: readonly FriendProfile[] = [
   // 두 번째 샘플은 선택 기록과 수식어가 없는 정상 응답을 검수하며 빈 상태 문구 대신 렌더링 생략을 확인한다.
   { id: "friend-moss", displayName: "이끼연구소", level: 19, status: "오늘도 천천히 복원", lastActive: "12분 전", equippedModifiers: [], favoriteRelic: { relicId: "anky", level: 18, stars: 4, stats: { hp: 1420, def: 128, res: 92, atk: 74, ap: 52, attackSpeed: 78, moveSpeed: 72, critChance: 5, critDamage: 140, energyGain: 20, lifeSteal: 0, ferocityGain: 0 }, skillIds: ["anky-basic", "anky-passive", "anky-ultimate"] }, competitiveStats: {} },
 ];
+
+/** 표본 친구의 상태 문구를 언어별로 덮어쓸 수 있게 등록한다. 표시 이름은 계정 이름이라 그대로 둔다. */
+for (const friend of PREVIEW_FRIENDS) {
+  registerDataText(friend, "status", `friend.${friend.id}.status`);
+  registerDataText(friend, "lastActive", `friend.${friend.id}.lastActive`);
+}
+
+/** 표본 친구의 경쟁 기록 표시값도 화면에 서므로 등록한다. */
+for (const friend of PREVIEW_FRIENDS) {
+  const stats = friend.competitiveStats;
+  if (stats.highestStage) registerDataText(stats.highestStage, "displayValue", `friend.${friend.id}.highestStage`);
+  if (stats.arenaTier) registerDataText(stats.arenaTier, "displayName", `friend.${friend.id}.arenaTier`);
+}

@@ -5,7 +5,7 @@ import { session, type GameSettings, type Session } from "../state/session";
 import { platformFeedback, type HapticPattern, type PlatformFeedback, type ScheduledNotification } from "../api/PlatformFeedback";
 import { setTextScale } from "../ui/textScale";
 import { setFontLanguage } from "../ui/fonts";
-import { setTextLanguage } from "../i18n";
+import { setDataLanguage, setTextLanguage } from "../i18n";
 import { adjustForQuietHours } from "../core/notificationSchedule";
 import { applyFrameRateLimit } from "../config/gameConfig";
 
@@ -34,6 +34,7 @@ export class SettingsManager extends EventTarget {
     // 글자는 옛 글꼴·옛 문구로 남는다.
     setFontLanguage(this.state.settings.game.language);
     setTextLanguage(this.state.settings.game.language);
+    setDataLanguage(this.state.settings.game.language);
     if (this.runtimeGame) applyFrameRateLimit(this.runtimeGame, this.state.settings.presentation.frameRateLimit);
     this.saves.save(this.state);
     this.dispatchEvent(new CustomEvent<GameSettings>("change", { detail: this.get() }));
@@ -51,6 +52,7 @@ export class SettingsManager extends EventTarget {
     // 글자는 옛 글꼴·옛 문구로 남는다.
     setFontLanguage(this.state.settings.game.language);
     setTextLanguage(this.state.settings.game.language);
+    setDataLanguage(this.state.settings.game.language);
     if (this.runtimeGame) applyFrameRateLimit(this.runtimeGame, this.state.settings.presentation.frameRateLimit);
     this.saves.save(this.state);
     this.dispatchEvent(new CustomEvent<GameSettings>("change", { detail: this.get() }));

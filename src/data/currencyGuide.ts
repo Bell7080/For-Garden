@@ -1,4 +1,5 @@
 import type { WalletItemKey } from "./items";
+import { registerDataText } from "../i18n";
 
 /** 안내창이 직접 진행 상태를 바꾸지 않고 바깥 화면에 요청할 수 있는 이동 명령이다. */
 export type CurrencyGuideAction =
@@ -34,3 +35,14 @@ export const CURRENCY_GUIDE = {
 
 /** 외부 입력도 항상 완전성 검사를 통과한 카탈로그에서만 조회한다. */
 export function currencyGuide(key: WalletItemKey): CurrencyGuideEntry { return CURRENCY_GUIDE[key]; }
+
+/** 재화 안내의 이름·설명·획득처·사용처를 언어별로 덮어쓸 수 있게 등록한다. */
+for (const entry of Object.values(CURRENCY_GUIDE)) {
+  const key = (field: string): string => `currency.${entry.key}.${field}`;
+  registerDataText(entry, "name", key("name"));
+  registerDataText(entry, "lore", key("lore"));
+  // 목록은 자리마다 키를 갖는다 — 언어마다 항목 수가 달라지면 안 되는 표라 번호로 묶는다.
+  entry.sources.forEach((_, index) => registerDataText(entry.sources as unknown as Record<string, unknown>, String(index), key(`source.${index}`)));
+  entry.uses.forEach((_, index) => registerDataText(entry.uses as unknown as Record<string, unknown>, String(index), key(`use.${index}`)));
+  if ("action" in entry && entry.action) registerDataText(entry.action, "label", key("action"));
+}

@@ -1,4 +1,5 @@
 import type { Banner } from "../core/gacha";
+import { registerDataText } from "../i18n";
 import type { RelicRarity } from "../core/types";
 import { PLAYABLE_RELICS } from "./relics";
 
@@ -48,4 +49,9 @@ export function getBanner(id: string): Banner {
   const found = BANNERS.find((banner) => banner.id === id);
   if (!found) throw new Error(`알 수 없는 배너 id: ${id}`);
   return found;
+}
+
+/** 배너 이름을 언어별로 덮어쓸 수 있게 등록한다. */
+for (const banner of BANNERS) {
+  registerDataText(banner, "name", `banner.${banner.id}.name`);
 }

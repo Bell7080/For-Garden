@@ -1,3 +1,4 @@
+import { registerDataText } from "../i18n";
 /** PvP 선택판과 상세 화면이 함께 사용하는 식별자다. 저장 데이터나 전투 규칙은 담지 않는다. */
 export type PvpModeId = "arena" | "boss-duel" | "brawl" | "training";
 
@@ -23,4 +24,11 @@ export const PVP_MODES: readonly PvpModeDefinition[] = [
 /** 잘못된 외부 진입이 있더라도 첫 모드로 안전하게 수렴시키는 순수 조회 경계다. */
 export function getPvpMode(id: unknown): PvpModeDefinition {
   return PVP_MODES.find((mode) => mode.id === id) ?? PVP_MODES[0];
+}
+
+/** 결투 모드의 이름과 설명을 언어별로 덮어쓸 수 있게 등록한다. */
+for (const mode of PVP_MODES) {
+  registerDataText(mode, "label", `pvp.${mode.id}.label`);
+  registerDataText(mode, "title", `pvp.${mode.id}.title`);
+  registerDataText(mode, "scope", `pvp.${mode.id}.scope`);
 }

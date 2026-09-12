@@ -1,4 +1,5 @@
 import { applyBreakthrough, applyLevelGrowth } from "../core/relicProgression";
+import { registerDataText } from "../i18n";
 import type { ChapterDef, RelicDef, StageDef, StageEnemyDef } from "../core/types";
 import { getRelic } from "./relics";
 
@@ -178,3 +179,17 @@ export function getStageEnemies(stage: Extract<StageDef, { kind: "battle" }>): [
     return { ...base, stats: applyBreakthrough(leveled, enemy.breakthrough) };
   }) as [RelicDef, RelicDef, RelicDef];
 }
+
+/** 장 제목과 스테이지 이름, 상황 문구를 언어별로 덮어쓸 수 있게 등록한다. */
+for (const chapter of CHAPTERS) {
+  registerDataText(chapter, "title", `chapter.${chapter.id}.title`);
+  registerDataText(chapter, "subtitle", `chapter.${chapter.id}.subtitle`);
+  for (const stage of chapter.stages) {
+    registerDataText(stage, "name", `stage.${stage.id}.name`);
+    registerDataText(stage, "situation", `stage.${stage.id}.situation`);
+  }
+}
+
+/** 곁가지 스테이지와 일일 복원의 이름도 함께 등록한다. */
+registerDataText(SIDE_STORY_STAGE, "name", `stage.${SIDE_STORY_STAGE.id}.name`);
+registerDataText(DAILY_RESTORATION, "name", "stage.dailyRestoration.name");

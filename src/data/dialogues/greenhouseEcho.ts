@@ -1,4 +1,5 @@
 import type { DialogueStory } from "../../core/dialogue";
+import { registerDialogueTexts } from "./registerDialogue";
 
 /** 1-5 뒤에 선택해서 읽는 짧은 기록으로, 본편 전투 진행과 보상을 분리한다. */
 export const GREENHOUSE_ECHO: DialogueStory = {
@@ -10,3 +11,5 @@ export const GREENHOUSE_ECHO: DialogueStory = {
     { id: "promise", speaker: "토리카", body: "기록해 두자. 길을 계속 가더라도, 이 작은 정원은 잊히지 않게.", standing: "torika" },
   ],
 };
+
+registerDialogueTexts(GREENHOUSE_ECHO);

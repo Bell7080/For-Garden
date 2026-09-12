@@ -1,3 +1,4 @@
+import { registerDataText } from "../i18n";
 /** 인벤토리가 표시하고 서버가 해석하는 정적 아이템 분류다. */
 export type ItemCategory = "rune" | "currency" | "consumable" | "material";
 
@@ -50,3 +51,9 @@ export const ITEMS = [
 
 /** 외부 입력 ID는 반드시 정적 카탈로그를 통과한다. */
 export function findItem(id: string): ItemDefinition | undefined { return ITEMS.find((item) => item.id === id); }
+
+/** 아이템 이름과 설명을 언어별로 덮어쓸 수 있게 등록한다. */
+for (const item of ITEMS) {
+  registerDataText(item, "name", `item.${item.id}.name`);
+  registerDataText(item, "description", `item.${item.id}.description`);
+}

@@ -1,3 +1,4 @@
+import { registerDataText } from "../i18n";
 /** 수식어 희귀도는 저장 문자열이 아니라 정적 표시와 테마 역할을 찾는 안정적인 분류다. */
 export type ProfileModifierRarity = "common" | "rare" | "epic" | "legendary";
 
@@ -17,3 +18,8 @@ export const PROFILE_MODIFIERS: readonly ProfileModifierDefinition[] = [
 
 /** 손상되거나 삭제된 ID를 표시명으로 추측하지 않도록 안전하게 정의를 찾는다. */
 export function findProfileModifier(id: string): ProfileModifierDefinition | undefined { return PROFILE_MODIFIERS.find((definition) => definition.id === id); }
+
+/** 프로필 수식어를 언어별로 덮어쓸 수 있게 등록한다. */
+for (const modifier of PROFILE_MODIFIERS) {
+  registerDataText(modifier, "displayName", `modifier.${modifier.id}.name`);
+}

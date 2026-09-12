@@ -81,6 +81,7 @@ export const EXPEDITION_NON_COMBAT_TYPES = ["rest", "treasure"] as const;
 /** @deprecated 증강 상세 정의는 expeditionAugments.ts가 소유하며 이 목록은 저장 호환 조회만 제공한다. */
 export { EXPEDITION_AUGMENTS } from "./expeditionAugments";
 import { EXPEDITION_AUGMENTS } from "./expeditionAugments";
+import { registerDataText } from "../i18n";
 export const EXPEDITION_AUGMENT_IDS = EXPEDITION_AUGMENTS.map(({ id }) => id);
 
 /** 노드 완료 전까지 런 안에 보류할 수 있는 보상 종류다. */
@@ -162,3 +163,6 @@ export const EXPEDITION_WEEKLY_POLICY = { resetWeekdayUtc: 1, resetHourUtc: 0, t
  * 향해 누적 점수를 계속 쌓을 수 있기 때문이다. 소탕도 원정 한 판으로 세어 주간 횟수를 소비한다.
  */
 export const EXPEDITION_SWEEP_POLICY = { allTimeBestScoreRatio: 0.8, lootRatio: 0.5 } as const;
+
+/** 보스 단계 이름을 언어별로 덮어쓸 수 있게 등록한다. */
+EXPEDITION_BOSS_BALANCE.phases.forEach((phase, index) => registerDataText(phase, "label", `expedition.phase.${index}`));

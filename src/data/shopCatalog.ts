@@ -1,4 +1,5 @@
 import { SHOP_PRODUCTS } from "./products";
+import { registerDataText } from "../i18n";
 import type { ProductDefinition, ProductStorefront, ShopCategory, ShopProductIconKey } from "./products";
 
 /** 기존 import 경로를 유지하면서 상품 계약의 단일 소유자인 products를 공개한다. */
@@ -34,3 +35,16 @@ export const PRODUCTS: readonly ProductDefinition[] = [...SHOP_PRODUCTS, ...LEGA
 
 /** 화면 모델과 서버 검증이 공유하는 명시적 storefront 목록이다. */
 export const PRODUCT_STOREFRONTS: readonly ProductStorefront[] = ["shop", "trade", "premium"];
+
+/** 상점 탭 이름을 언어별로 덮어쓸 수 있게 등록한다. */
+for (const tab of SHOP_TABS) registerDataText(tab, "label", `shop.tab.${tab.id}`);
+/** 상품 이름과 설명도 함께 등록한다. */
+for (const product of PRODUCTS) {
+  registerDataText(product, "name", `product.${product.id}.name`);
+  registerDataText(product, "description", `product.${product.id}.description`);
+}
+
+/** 프로필 장식처럼 지급품 자체가 이름을 가진 것도 화면에 서므로 등록한다. */
+for (const product of PRODUCTS) {
+  product.grants?.forEach((grant, index) => registerDataText(grant, "name", `product.${product.id}.grant.${index}`));
+}

@@ -1,4 +1,5 @@
 import type { SquadId } from "../core/types";
+import { registerDataText } from "../i18n";
 
 /**
  * 이터널 시티 5대 자치 스쿼드.
@@ -89,3 +90,11 @@ export function squadEmblemKey(squad: SquadId): string {
 export const SQUAD_EMBLEM_ASSETS: ReadonlyArray<readonly [string, string]> = (Object.keys(SQUADS) as SquadId[])
   .filter((squad) => SQUADS[squad].hasEmblem)
   .map((squad) => [squadEmblemKey(squad), `/sprites/factions/${squad}.webp`] as const);
+
+/** 스쿼드 이름과 역할, 연구원 호칭을 언어별로 덮어쓸 수 있게 등록한다. 라틴 표기는 그대로 둔다. */
+for (const squad of Object.values(SQUADS)) {
+  registerDataText(squad, "name", `squad.${squad.id}.name`);
+  registerDataText(squad, "duty", `squad.${squad.id}.duty`);
+  squad.researcherTitles.forEach((_, index) =>
+    registerDataText(squad.researcherTitles as unknown as Record<string, unknown>, String(index), `squad.${squad.id}.title.${index}`));
+}

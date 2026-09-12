@@ -1,3 +1,4 @@
+import { registerDataText } from "../i18n";
 /** 유대 레벨별 대사 ID는 번역 문구와 분리해 콘텐츠 교체 시 저장/규칙을 건드리지 않는다. */
 const GENERIC_IDS = Array.from({ length: 11 }, (_, level) => `bond.generic.${level}`);
 export const BOND_DIALOGUE_IDS: Readonly<Record<string, readonly string[]>> = {
@@ -21,3 +22,9 @@ export function bondDialogue(relicId: string, bondLevel: number, interactionInde
   const lineLevel = Math.max(0, Math.min(10, bondLevel + offset));
   return { id: (BOND_DIALOGUE_IDS[relicId] ?? GENERIC_IDS)[lineLevel], text: lines[lineLevel] };
 }
+
+/** 유대 대사를 개체와 레벨로 덮어쓸 수 있게 등록한다. 대사 ID는 저장 계약이라 그대로 둔다. */
+for (const [relicId, lines] of Object.entries(STARTER_LINES)) {
+  lines.forEach((_, level) => registerDataText(lines as unknown as Record<string, unknown>, String(level), `bond.${relicId}.${level}`));
+}
+GENERIC_LINES.forEach((_, level) => registerDataText(GENERIC_LINES as unknown as Record<string, unknown>, String(level), `bond.generic.${level}`));

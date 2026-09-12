@@ -1,4 +1,5 @@
 import type { DialogueStory } from "../core/dialogue";
+import { registerDataText } from "../i18n";
 import { INTERACTION_CENTRAL_JOURNAL } from "./dialogues/interactionCentralJournal";
 
 /** 교류에서 발견하는 기록 정의다. 본문과 분기 대사는 서로 배타적이라 잠긴 기록의 원문을 읽을 수 없다. */
@@ -17,3 +18,9 @@ export const INTERACTION_JOURNALS: readonly InteractionJournal[] = [
 export function journalsForCity(cityId: string): InteractionJournal[] { return INTERACTION_JOURNALS.filter((journal) => journal.cityId === cityId).sort((a, b) => a.discoveryOrder - b.discoveryOrder || a.id.localeCompare(b.id)); }
 /** 저장 검증과 manager 입력 검증이 표시 문자열 대신 정적 ID만 신뢰하도록 한다. */
 export function findInteractionJournal(id: string): InteractionJournal | undefined { return INTERACTION_JOURNALS.find((journal) => journal.id === id); }
+
+/** 교류 기록의 제목과 본문을 언어별로 덮어쓸 수 있게 등록한다. */
+for (const journal of INTERACTION_JOURNALS) {
+  registerDataText(journal, "title", `journal.${journal.id}.title`);
+  registerDataText(journal, "body", `journal.${journal.id}.body`);
+}

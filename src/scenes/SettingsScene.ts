@@ -4,7 +4,7 @@ import { setDebugScene } from "../debug";
 import { settingsManager } from "../managers/SettingsManager";
 import { LANGUAGE_NATIVE_NAME, SELECTABLE_LANGUAGE_IDS } from "../core/language";
 import { loadGameFonts } from "../ui/fonts";
-import { loadTextCatalog, t, type TextKey } from "../i18n";
+import { loadDataOverlay, loadTextCatalog, t, type TextKey } from "../i18n";
 import { saveManager } from "../state/SaveManager";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { addBackButton } from "../ui/IconButton";
@@ -157,7 +157,7 @@ export class SettingsScene extends Phaser.Scene {
         settingsManager.update({game:{language:v}});
         // 글꼴 스택과 문구 표가 함께 바뀌므로, 둘 다 도착한 뒤에 다시 그린다. Phaser Text는 그린
         // 순간의 글꼴로 텍스처를 굳으니 받기 전에 그리면 대체 글꼴 상태로 남는다.
-        void Promise.all([loadGameFonts(v), loadTextCatalog(v)]).then(()=>{ if (this.scene.isActive()) this.scene.restart({ tab: "play", returnScene: this.returnScene, returnData: this.returnData }); });
+        void Promise.all([loadGameFonts(v), loadTextCatalog(v), loadDataOverlay(v)]).then(()=>{ if (this.scene.isActive()) this.scene.restart({ tab: "play", returnScene: this.returnScene, returnData: this.returnData }); });
       },v=>LANGUAGE_NATIVE_NAME[v])); y+=110;
       }
     } else if (this.activeTab === "access") {

@@ -1,4 +1,5 @@
 import type { Wallet } from "../core/gacha";
+import { registerDataText } from "../i18n";
 import type { WalletItemKey } from "./items";
 
 /** 교류 표본 교환의 제한 주기. 서버 시계로만 주기 키를 계산한다. */
@@ -10,3 +11,6 @@ export interface InteractionExchangeOffer { readonly id: string; readonly name: 
 export const INTERACTION_EXCHANGE_OFFERS = [{ id: "night-sr-psychic-sample-cheesecake", name: "나이트 표본 교환", requiredCityId: "night-ward", cost: { itemId: "sr-psychic-sample", amount: 1 }, grants: [{ kind: "currency", currency: "cheesecake", amount: 100 }], refresh: "weekly", exchangeLimit: 5, iconKey: "cheesecake" }] as const satisfies readonly InteractionExchangeOffer[];
 /** 외부 요청 ID는 반드시 교류 전용 운영 표를 통과한다. */
 export function findInteractionExchangeOffer(id: string): InteractionExchangeOffer | undefined { return INTERACTION_EXCHANGE_OFFERS.find((offer) => offer.id === id); }
+
+/** 교환소 항목의 이름을 언어별로 덮어쓸 수 있게 등록한다. */
+for (const offer of INTERACTION_EXCHANGE_OFFERS) registerDataText(offer, "name", `exchange.${offer.id}.name`);

@@ -1,4 +1,5 @@
 import type { DialogueStory } from "../../core/dialogue";
+import { registerDialogueTexts } from "./registerDialogue";
 
 /** 오프닝의 문장과 분기는 씬에서 분리해 번역·검수와 회상 재사용이 가능하게 둔다. */
 export const OPENING_TRAIN: DialogueStory = {
@@ -20,3 +21,5 @@ export const OPENING_TRAIN: DialogueStory = {
     { id: "end", speaker: "토리카", body: "어서 와요, 연구원님.", standing: "torika", expression: "smile", motion: "idle" },
   ],
 };
+
+registerDialogueTexts(OPENING_TRAIN);

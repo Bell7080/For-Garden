@@ -2,7 +2,7 @@ import type Phaser from "phaser";
 import { preloadPuppetAssets, PUPPET_PRELOAD_GROUPS } from "../puppets/assets";
 import { BACKGROUND_ASSETS, BACKGROUND_BOOT_KEYS } from "../ui/backgrounds";
 import { loadGameFonts } from "../ui/fonts";
-import { loadTextCatalog } from "../i18n";
+import { loadDataOverlay, loadTextCatalog } from "../i18n";
 import { settingsManager } from "../managers/SettingsManager";
 import { UI_ICON_ASSETS } from "../ui/icons";
 import { AFFINITY_ICON_ASSETS } from "../ui/affinityIcons";
@@ -96,7 +96,7 @@ export const LOADING_STEPS: ReadonlyArray<LoadingStep> = [
     // 열한 언어를 함께 받는다. 둘은 같은 시점에 있어야 하므로 한 단계로 묶는다.
     run: () => {
       const language = settingsManager.get().game.language;
-      return Promise.all([loadGameFonts(language), loadTextCatalog(language)]).then(() => undefined);
+      return Promise.all([loadGameFonts(language), loadTextCatalog(language), loadDataOverlay(language)]).then(() => undefined);
     },
   },
   {

@@ -1,4 +1,5 @@
 import type { Wallet } from "../core/gacha";
+import { registerDataText } from "../i18n";
 import type { Element } from "../core/types";
 import type { SquadId } from "./factions";
 
@@ -126,3 +127,16 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
 
 /** 외부 입력은 언제나 이 조회를 거쳐 알려진 도시만 사용한다. */
 export function findInteractionCity(id: string): InteractionCity | undefined { return INTERACTION_CITIES.find(city => city.id === id); }
+
+/** 교류 도시의 이름과 설명을 언어별로 덮어쓸 수 있게 등록한다. */
+for (const city of INTERACTION_CITIES) {
+  registerDataText(city, "name", `city.${city.id}.name`);
+  registerDataText(city, "description", `city.${city.id}.description`);
+}
+for (const [department, label] of Object.entries(INTERACTION_DEPARTMENT_LABEL)) {
+  void label;
+  registerDataText(INTERACTION_DEPARTMENT_LABEL as unknown as Record<string, unknown>, department, `city.department.${department}`);
+}
+
+/** 도시의 표시 이름은 창구마다 따로 서므로 도시 ID로 등록한다. */
+for (const city of INTERACTION_CITIES) registerDataText(city, "displayName", `city.${city.id}.displayName`);

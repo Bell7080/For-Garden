@@ -5,7 +5,7 @@ import { replaceSession, session } from "../state/session";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { setTextScale } from "../ui/textScale";
 import { setFontLanguage } from "../ui/fonts";
-import { setTextLanguage, type TextKey } from "../i18n";
+import { setDataLanguage, setTextLanguage, type TextKey } from "../i18n";
 import { matchLanguage } from "../core/language";
 import { EffectOverlayScene } from "./EffectOverlayScene";
 import { settingsManager } from "../managers/SettingsManager";
@@ -45,6 +45,7 @@ export class BootScene extends Phaser.Scene {
     // 글꼴로 텍스처를 굳히므로, 나중에 정하면 이미 그린 글자가 대체 글꼴로 남는다.
     setFontLanguage(session.settings.game.language);
     setTextLanguage(session.settings.game.language);
+    setDataLanguage(session.settings.game.language);
     // 정규화된 저장값을 Phaser TimeStep 하나에만 적용해 전투 시간과 렌더 빈도를 분리한다.
     settingsManager.syncRuntime(this.game);
     // 글꼴·원화·Puppet 묶음은 타이틀이 로딩 화면 노릇을 하며 읽는다(scenes/loadingSteps.ts).

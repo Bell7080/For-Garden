@@ -1,4 +1,5 @@
 import { BLEED, FROZEN, POISON } from "../core/skirmish";
+import { registerDataText } from "../i18n";
 
 /**
  * 스킬 설명 안에서 다시 눌러 볼 수 있는 용어 사전.
@@ -303,4 +304,11 @@ export function parseKeywordText(text: string, contextualKeywords: readonly Keyw
   }
   if (cursor < text.length) segments.push({ text: text.slice(cursor) });
   return segments;
+}
+
+/** 규칙어의 표기와 설명을 언어별로 덮어쓸 수 있게 등록한다. `kind`는 분류 이름이라 함께 옮긴다. */
+for (const keyword of KEYWORDS) {
+  registerDataText(keyword, "term", `keyword.${keyword.id}.term`);
+  registerDataText(keyword, "kind", `keyword.${keyword.id}.kind`);
+  registerDataText(keyword, "description", `keyword.${keyword.id}.description`);
 }

@@ -129,12 +129,11 @@ export class InventoryPopup {
    */
   private addCategoryTab(body: Phaser.GameObjects.Container, tab: (typeof CATEGORIES)[number], index: number): void {
     const { x, y } = inventoryCategoryTabPosition(index);
-    const { width, height, gap } = INVENTORY_TAB_LAYOUT;
+    const { width, height } = INVENTORY_TAB_LAYOUT;
     // **문구 표를 지난다.** 키를 그대로 넘기면 화면에 `inventory.tab.rune`이 선다 — 한국어에서도
     // 같았지만 다른 언어에서 더 길어져 탭 밖으로 넘치며 눈에 띄었다.
     addCategoryTab(this.scene, body, {
       x, y, width, height, label: t(tab.labelKey), selected: tab.id === this.category,
-      divider: index < CATEGORIES.length - 1 ? gap : undefined,
       onSelect: () => { this.category = tab.id; this.render(body); },
     });
   }

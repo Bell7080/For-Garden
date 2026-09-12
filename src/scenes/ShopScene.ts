@@ -12,9 +12,10 @@ import { SHOP_MERCHANT } from "../data/shopPresentation";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { addPriceBar } from "../ui/priceTag";
 import { addCategoryTab } from "../ui/CategoryTab";
+import { addSectionTitle } from "../ui/SectionTitle";
 import { addBackButton } from "../ui/IconButton";
 import { addItemFrame, ITEM_FRAME } from "../ui/itemFrame";
-import { chipPoints, drawFrameVignette, drawHairline, drawLayer, drawShapeEdge, drawVignette, HOLO, slantedRect } from "../ui/holo";
+import { chipPoints, drawFrameVignette, drawLayer, drawShapeEdge, drawVignette, HOLO, slantedRect } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
 import { TopBar } from "../ui/TopBar";
 import { PopupLayer } from "../ui/PopupLayer";
@@ -22,9 +23,9 @@ import { PurchasePopup } from "../ui/PurchasePopup";
 import { session } from "../state/session";
 import { productsForShopCategory, shopModel } from "../ui/shopModel";
 import {
-  SHOP_BOARD, SHOP_CARD, SHOP_SHELF, SHOP_STAGE, SHOP_TAB_ROW,
-  shopBoardSize, shopCardSpot, shopCardWidth, shopGridContentHeight, shopGridViewport,
-  shopShelfWidth, shopShelfY, shopTabSpot,
+  SHOP_BOARD, SHOP_CARD, SHOP_CASE, SHOP_SHELF, SHOP_STAGE, SHOP_TAB_ROW,
+  shopBoardSize, shopCardSpot, shopCardWidth, shopCaseRect, shopGridContentHeight, shopGridViewport,
+  shopShelfWidth, shopShelfY, shopTabSpot, shopTitleLeft,
 } from "../ui/shopLayout";
 
 /**
@@ -124,26 +125,28 @@ export class ShopScene extends Phaser.Scene {
     const shape = chipPoints(width, height, { bevel: { topLeft: 56, topRight: 0, bottomRight: 0, bottomLeft: 0 } });
     this.add.existing(drawLayer(this, centerX, centerY, shape, { fill: 0x10161d, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.7 }).setDepth(6));
     this.add.existing(drawFrameVignette(this, centerX, centerY, width, height, { strength: 0.45 }).setDepth(6));
-    this.add.text(SHOP_BOARD.left + SHOP_BOARD.padX, SHOP_BOARD.top + SHOP_BOARD.headerY, t("shop.exchangeList"), textStyle({ role: "emphasis", size: 27, color: COLOR.accentText })).setOrigin(0, 0.5).setDepth(7);
-    this.add.existing(drawHairline(this, centerX, SHOP_BOARD.top + SHOP_BOARD.hairlineY, width - SHOP_BOARD.padX * 2, { color: COLOR.accent, alpha: 0.4 }).setDepth(7));
     this.createCase();
   }
 
   /**
-   * 격자가 흐르는 자리를 한 겹 **파 놓는다**.
+   * 격자가 흐르는 자리를 한 겹 **파 놓고**, 그 윗변에 제목표를 걸터앉힌다.
    *
-   * 상품이 판 위에 얹혀 있으면 목록이고, 안으로 들어가 있으면 전시대가 된다 — 창보다 조금 넓은
-   * 어두운 면과 네 변 비네트가 그 깊이를 만든다. 이 면은 흐르지 않으므로 격자 컨테이너 밖,
-   * 판과 칸 사이 층에 둔다.
+   * 상품이 전시대 위에 얹혀 있으면 목록이고, 안으로 들어가 있으면 전시대가 된다 — 창보다 사방으로
+   * 조금 더 품는 어두운 면과 네 변 비네트가 그 깊이를 만든다. 이 면은 흐르지 않으므로 격자
+   * 컨테이너 밖, 전시대와 칸 사이 층에 둔다.
+   *
+   * **머리글은 맨 글자가 아니라 공용 제목표다**(`addSectionTitle`). 판 위에 글자만 적고 아래에
+   * 구분선을 그었을 때는, 같은 위계의 글이 다른 화면에서는 판에 걸터앉고 여기서만 맨 글자로 섰다.
    */
   private createCase(): void {
-    const view = shopGridViewport();
-    const width = view.right - view.left + SHOP_SHELF.overhang * 2 + 12;
-    const height = view.bottom - view.top + 24;
-    const x = (view.left + view.right) / 2;
-    const y = (view.top + view.bottom) / 2;
-    this.add.existing(drawLayer(this, x, y, slantedRect(width, height, 14), { fill: 0x070b11, alpha: 0.62, shadow: false }).setDepth(7));
+    const rect = shopCaseRect();
+    const width = rect.right - rect.left;
+    const height = rect.bottom - rect.top;
+    const x = (rect.left + rect.right) / 2;
+    const y = (rect.top + rect.bottom) / 2;
+    this.add.existing(drawLayer(this, x, y, slantedRect(width, height, 16), { fill: 0x0a1018, alpha: 0.78, shadow: false }).setDepth(7));
     this.add.existing(drawFrameVignette(this, x, y, width, height, { strength: 0.55 }).setDepth(7));
+    addSectionTitle(this, shopTitleLeft(), rect.top, t("shop.exchangeList"), { size: SHOP_CASE.titleSize }).setDepth(8);
   }
 
   /**
@@ -291,7 +294,6 @@ export class ShopScene extends Phaser.Scene {
       addCategoryTab(this, this.tabRow, {
         x, y, width: SHOP_TAB_ROW.width, height: SHOP_TAB_ROW.height,
         label: tab.label, selected: tab.id === this.selectedCategory,
-        divider: index < SHOP_TABS.length - 1 ? SHOP_TAB_ROW.gap : undefined,
         onSelect: () => this.selectCategory(tab.id),
       });
     });

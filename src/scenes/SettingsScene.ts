@@ -220,8 +220,8 @@ export class SettingsScene extends Phaser.Scene {
     this.popups.confirm({
       title: name + " 돌파 세트",
       message: granted.fragments > 0 || granted.cheesecake > 0
-        ? `${name} 파편 ${granted.fragments}개와 치즈케이크 ${granted.cheesecake.toLocaleString()}개를 지급했습니다. 급여로 상한까지 올린 뒤 별 옆의 한계 돌파를 누릅니다.`
-        : "이미 별 다섯까지 키운 캐릭터입니다.",
+        ? `${name} 파편 ${granted.fragments}개와 치즈케이크 ${granted.cheesecake.toLocaleString()}개를 지급했습니다. 급여로 상한까지 올린 뒤 돌파 등급 옆의 한계 돌파를 누릅니다.`
+        : "이미 돌파 등급 V까지 키운 캐릭터입니다.",
       confirmLabel: "확인",
     }, () => undefined);
   }

@@ -6,11 +6,9 @@ describe("정보창 권한", () => {
   it("소유자만 플레이어 세션을 변경할 수 있다", () => {
     expect(capabilitiesFor("owner").mutateProgress).toBe(true);
     expect(capabilitiesFor("friend").mutateProgress).toBe(false);
-    expect(capabilitiesFor("enemy").mutateProgress).toBe(false);
   });
 
-  it("친구와 적은 유대를 공개하지 않고 능력치는 그대로 보여 준다", () => {
-    expect(capabilitiesFor("friend")).toMatchObject({ showBond: false, showGrowth: true, showRuntimeCombat: false, showSummons: true });
-    expect(capabilitiesFor("enemy")).toMatchObject({ showBond: false, showGrowth: true, showRuntimeCombat: true, showSummons: true });
+  it("친구는 유대를 공개하지 않고 능력치는 그대로 보여 준다", () => {
+    expect(capabilitiesFor("friend")).toMatchObject({ showBond: false, showGrowth: true, showSummons: true });
   });
 });

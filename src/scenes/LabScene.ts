@@ -286,7 +286,7 @@ export class LabScene extends Phaser.Scene {
       "같은 그룹의 교체 배너로 천장·픽업 확정 이월",
       "10연 마지막 슬롯 SR 이상 보장 (SSR 천장 우선)",
       "중복 보상  해당 렐릭 파편 +1 · 파편을 모아 한계 돌파",
-      "별 V 달성 이후 중복은 공용 DNA 조각 +1",
+      "돌파 등급 V 달성 이후 중복은 공용 DNA 조각 +1",
     ].join("\n");
     overlay.add(this.add.text(cx, 700, policy, textStyle({ role: "body", size: 25, color: COLOR.inkDim, align: "center", lineSpacing: 13, wrap: 760 })).setOrigin(0.5, 0));
     const close = new Button(this, cx, 1190, { width: 320, height: 100, label: "확인", fontSize: 32, onClick: () => overlay.destroy() });

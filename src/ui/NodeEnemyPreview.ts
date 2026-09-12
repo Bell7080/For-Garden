@@ -7,7 +7,7 @@ import { COLOR, textStyle } from "./theme";
 import { addUnitNameplate } from "./unitNameplate";
 import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
-import { addStarMark } from "./rarityMark";
+import { addBreakthroughGradeMark } from "./rarityMark";
 import { combatPower } from "../core/combatPower";
 
 import { anchorEnemyPreview, enemyPreviewColumns, enemyPreviewSlotHalfWidth, NODE_ENEMY_PREVIEW, NODE_ENEMY_SITUATION, NODE_ENEMY_SLOT } from "./nodeEnemyPreviewLayout";
@@ -17,12 +17,12 @@ export interface NodeEnemyPreviewOptions {
   /** 제목 아래 한 줄. 비우면 그 줄을 그리지 않는다 — 서사가 없는 관문은 예전 그대로다. */
   situation?: string;
   /** 렌더된 적과 같은 슬롯 순서의 공개 성장 상태다. */
-  growth: readonly Pick<StageEnemyDef, "level" | "breakthrough">[];
+  growth: readonly Pick<StageEnemyDef, "level" | "breakthrough" | "ferocityLevel">[];
   enemies: readonly RelicDef[];
   top: number;
   bottom: number;
   depth?: number;
-  onEnemyClick: (enemy: RelicDef) => void;
+  onEnemyClick: (enemy: RelicDef, growth: Pick<StageEnemyDef, "level" | "breakthrough" | "ferocityLevel">) => void;
 }
 
 /** 스토리와 원정 지도가 공유하는 노드 부착형 적 SD 편성 프리팹이다. */
@@ -87,12 +87,13 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
       const badgeTop = NODE_ENEMY_SLOT.dividerY + 46;
       this.add(new AffinityBadge(this.scene, badgeX, badgeTop, ELEMENT_ICON[enemy.element], badgeSize, 0.62));
       this.add(new AffinityBadge(this.scene, badgeX, badgeTop + badgeSize * 0.94, ROLE_ICON[enemy.role], badgeSize * 0.74, 0.62));
-      addStarMark(this.scene, this, x + half - 20, badgeTop - 4, compact ? 34 : 42, growth.breakthrough + 1);
+      addBreakthroughGradeMark(this.scene, this, x + half - 20, badgeTop - 4, compact ? 34 : 42, growth.breakthrough + 1);
       // 카드의 이름줄과 같은 규칙이다 — 레벨은 강조색, 이름은 흰색. 체력은 적지 않는다:
       // 붙어 볼지 정하는 데 필요한 것은 개체별 수치가 아니라 판 아래의 총 전투력 하나다.
-      addUnitNameplate(this.scene, this, x, NODE_ENEMY_SLOT.nameY, growth.level, enemy.name, compact ? 24 : 30);
+      addUnitNameplate(this.scene, this, x, NODE_ENEMY_SLOT.nameY, growth.level, enemy.name, compact ? 24 : 30, growth.ferocityLevel ?? 0);
       const hit = this.scene.add.rectangle(x, ground - 70, compact ? 145 : 230, 300, 0xffffff, 0).setInteractive({ useHandCursor: true });
-      hit.on("pointerup", () => this.options.onEnemyClick(enemy)); this.add(hit);
+      // 누른 칸의 성장 상태를 함께 넘긴다 — 화면이 배열 index로 다시 찾으면 순서가 바뀌는 날 어긋난다.
+      hit.on("pointerup", () => this.options.onEnemyClick(enemy, growth)); this.add(hit);
       void this.spawnEnemy(enemy.id, x, ground, compact ? 158 : NODE_ENEMY_PREVIEW.sdHeight, generation);
     });
     // **판 아래는 이 편성이 얼마나 센가 한 줄이다.** 개체별 수치를 다 읽지 않고도 붙어 볼지

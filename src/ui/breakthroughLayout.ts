@@ -74,8 +74,8 @@ export const BREAK_STEPS = {
    * 어느 쪽이든 읽으러 온 내용이기 때문이다. "어디까지 왔는가"는 별 표식이 말한다.
    */
   tone: {
-    reached: { fill: 0x2a2418, alpha: 0.95, edgeAlpha: 0.9, star: 1 },
-    locked: { fill: 0x161d27, alpha: 0.92, edgeAlpha: 0.42, star: 0.5 },
+    reached: { fill: 0x2a2418, alpha: 0.95, edgeAlpha: 0.9, gradeMark: 1 },
+    locked: { fill: 0x161d27, alpha: 0.92, edgeAlpha: 0.42, gradeMark: 0.5 },
   },
   /**
    * 아직 안 열린 줄의 스킬 액자 진하기.
@@ -84,8 +84,8 @@ export const BREAK_STEPS = {
    * 읽을 수 없었다 — 이 창에서 액자를 세운 이유가 사라진다.
    */
   lockedIconAlpha: 0.82,
-  /** 줄 안에서 별 표식이 서는 자리와 크기. */
-  star: { x: -368, size: 32 },
+  /** 줄 안에서 돌파 등급 표식이 서는 자리와 크기. */
+  gradeMark: { x: -368, size: 32 },
   /** 줄 안에서 스킬 액자가 서는 자리와 크기. */
   icon: { x: -262, size: 108 },
   /** 설명 글이 시작하는 x와 줄 오른쪽 변에서 남기는 여백. */
@@ -129,14 +129,14 @@ export function breakthroughStepsLayout(stepCount: number): BreakthroughStepsLay
 /**
  * 표의 첫 줄이 깎인 왼쪽 위 모서리를 피하는지.
  *
- * 판이 980 × (4단계에서 714)이라 깎임은 짧은 변(714)의 14% — 100px이다. 별 표식은 줄의 가장
+ * 판이 980 × (4단계에서 714)이라 깎임은 짧은 변(714)의 14% — 100px이다. 돌파 등급 표식은 줄의 가장
  * 왼쪽에 서므로 그 점이 대각선 안에 들어야 한다.
  */
 export function stepsFirstRowClearsBevel(layout: BreakthroughStepsLayout): boolean {
   const bevel = Math.min(BREAK_STEPS.width, layout.height) * POPUP_BODY_BEVEL_RATIO;
   const rowTop = (layout.rows[0] ?? BREAK_STEPS.firstRowY) - BREAK_STEPS.row.height / 2;
-  const starLeft = BREAK_STEPS.star.x - BREAK_STEPS.star.size;
+  const markLeft = BREAK_STEPS.gradeMark.x - BREAK_STEPS.gradeMark.size;
   // 깎임보다 아래에서 시작하면 왼쪽 변이 직선이므로 줄 판 폭만 지키면 된다.
-  if (rowTop >= bevel) return starLeft >= -BREAK_STEPS.width / 2;
-  return starLeft >= -BREAK_STEPS.width / 2 + (bevel - rowTop);
+  if (rowTop >= bevel) return markLeft >= -BREAK_STEPS.width / 2;
+  return markLeft >= -BREAK_STEPS.width / 2 + (bevel - rowTop);
 }

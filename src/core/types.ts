@@ -74,9 +74,9 @@ export interface RelicProgress {
   /** 현재 레벨에서 다음 레벨까지 쌓은 경험치다. 레벨이 오르면 남은 만큼만 이월한다. */
   exp: number;
   /**
-   * 한계 돌파 단계(0~4). 화면에 서는 **별**은 이 값 + 1이다(`relicStars`).
+   * 한계 돌파 단계(0~4). 화면에 서는 **돌파 등급**은 이 값 + 1이다(`breakthroughGrade`).
    *
-   * 레벨이 "얼마나 먹였나"라면 별은 "같은 개체를 몇 번 더 만났나"다. 연구소 중복 획득으로 모은 그
+   * 레벨이 "얼마나 먹였나"라면 돌파 등급은 "같은 개체를 몇 번 더 만났나"다. 연구소 중복 획득으로 모은 그
    * 개체의 파편을 써서 올리며, 한 단계마다 레벨 상한과 해금 효과가 함께 열린다.
    */
   breakthrough: number;
@@ -1779,8 +1779,25 @@ export interface StageEnemyDef {
   level: number;
   /** 플레이어 렐릭과 같은 한계 돌파 공식을 적용할 정수 단계다. */
   breakthrough: number;
+  /**
+   * **야성으로 얹히는 추가 레벨.**
+   *
+   * 같은 개체가 같은 레벨로 서 있는데도 더 사납다 — 관문이 어려워지는 몫을 캐릭터가 자란 것
+   * (`level`)과 **난폭해진 것**으로 가른다. 표시도 그렇게 갈라, 화면은 `LV.30` 옆에 작고 붉은
+   * `+2`를 붙인다(`addUnitNameplate`의 `bonusLevel`).
+   *
+   * 값은 레벨과 **같은 성장 공식**을 지난다 — 레벨 32와 레벨 30 +2는 능력치가 같다. 그래서
+   * 난이도를 조일 때 개체 정의나 스테이지 전용 배율을 만들 필요가 없고, 관문 하나의 무게만
+   * 이 수 하나로 움직인다.
+   */
+  ferocityLevel?: number;
   /** 배열 순서와 무관하게 전열(0)에서 후열(2)까지의 전투 배치를 고정한다. */
   formationSlot: 0 | 1 | 2;
+}
+
+/** 그 개체가 실제로 싸우는 레벨 — 자란 레벨에 야성으로 얹힌 몫을 더한 값이다. */
+export function effectiveEnemyLevel(enemy: Pick<StageEnemyDef, "level" | "ferocityLevel">): number {
+  return enemy.level + Math.max(0, enemy.ferocityLevel ?? 0);
 }
 
 /** 전투 노드만 적별 성장 스냅샷과 전투 보상을 소유한다. */

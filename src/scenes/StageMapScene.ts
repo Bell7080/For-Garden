@@ -4,7 +4,7 @@ import type { StageDef } from "../core/types";
 import { setDebugScene } from "../debug";
 import { CHAPTERS, SIDE_STORY_STAGE, STAGES, getStageEnemies } from "../data/stages";
 import { latestUnlockedStage } from "../core/stageProgress";
-import { CharacterInfoManager } from "../managers/CharacterInfoManager";
+import { EnemyInfoPopup } from "../ui/EnemyInfoPopup";
 import { storyManager } from "../managers/StoryManager";
 import { isStageUnlocked, session } from "../state/session";
 import { Button } from "../ui/Button";
@@ -38,7 +38,9 @@ const CHROME_DEPTH = 50;
  * 자동으로 올라간다. 스테이지를 고르면 그 스테이지의 적이 위에서 내려온다.
  */
 export class StageMapScene extends Phaser.Scene {
-  private info!: CharacterInfoManager;
+  private info!: EnemyInfoPopup;
+  /** 적 팝업과 그 위에 쌓이는 스킬·용어 쪽지가 함께 사는 층이다. */
+  private enemyPopups!: PopupLayer;
   /** 스크롤되는 지도 본체. 노드와 경로선이 전부 이 안에 있다. */
   private map!: Phaser.GameObjects.Container;
   private nodes = new Map<string, { ring: Phaser.GameObjects.Arc; label: Phaser.GameObjects.Text }>();
@@ -109,7 +111,9 @@ export class StageMapScene extends Phaser.Scene {
     }).setDepth(CHROME_DEPTH);
     addBackButton(this, () => this.scene.start("lobby")).setDepth(CHROME_DEPTH);
 
-    this.info = new CharacterInfoManager(this, 1001, "enemy");
+    // 적은 정보창 씬이 아니라 팝업 한 장으로 연다 — 유대·급여·룬이 없어 판을 다 쓰면 초라하다.
+    this.enemyPopups = new PopupLayer(this, 2200);
+    this.info = new EnemyInfoPopup(this, this.enemyPopups);
     // 들어오면 가장 최근에 열린 스테이지로 올라가 그 스테이지를 고른 상태로 시작한다.
     const latest = this.latestUnlocked();
     this.currentChapter = latest.chapter ?? 1;
@@ -293,11 +297,8 @@ export class StageMapScene extends Phaser.Scene {
       // 서사가 없는 관문은 `undefined`가 그대로 넘어가 직전 노드의 줄이 남지 않는다.
       situation: stage.situation,
       // 전투 전에도 전투와 동일한 공용 적 정보창으로 연결한다.
-      onEnemyClick: (enemy) => {
-        // 복사본 ID와 일치하는 슬롯의 개별 성장 상태를 상세 정보에도 전달한다.
-        const growth = stage.enemies[enemies.indexOf(enemy)];
-        this.info.showEnemy(enemy, { level: growth?.level ?? 1 });
-      },
+      // 미리보기가 그 칸의 성장 상태를 함께 넘긴다 — 화면이 배열에서 다시 찾지 않는다.
+      onEnemyClick: (enemy, growth) => this.info.show({ def: enemy, level: growth.level, breakthrough: growth.breakthrough, ferocityLevel: growth.ferocityLevel }),
     });
   }
 

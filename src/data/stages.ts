@@ -1,5 +1,5 @@
 import { applyBreakthrough, applyLevelGrowth } from "../core/relicProgression";
-import type { ChapterDef, RelicDef, StageDef, StageEnemyDef } from "../core/types";
+import { effectiveEnemyLevel, type ChapterDef, type RelicDef, type StageDef, type StageEnemyDef } from "../core/types";
 import { getRelic } from "./relics";
 
 /** 챕터 1의 기본 악당 셋은 영구 캐릭터 ID만 공유하고 성장 상태는 각 스테이지가 소유한다. */
@@ -15,27 +15,32 @@ export const FIXED_STAGE_ENEMIES = ["toby", "amo", "ripa"] as const;
 const STAGE_ENEMY_FORMATION = ["amo", "toby", "ripa"] as const;
 
 /** 스테이지 난이도를 캐릭터 수치가 아닌 공개 성장 축과 검증 가능한 배치로만 표현한다. */
-function enemyGrowth(relicId: string, level: number, breakthrough: number, formationSlot: 0 | 1 | 2): StageEnemyDef {
-  return { relicId, level, breakthrough, formationSlot };
+function enemyGrowth(relicId: string, level: number, breakthrough: number, formationSlot: 0 | 1 | 2, ferocityLevel = 0): StageEnemyDef {
+  return { relicId, level, breakthrough, formationSlot, ...(ferocityLevel > 0 ? { ferocityLevel } : {}) };
 }
 
 /**
- * 1장의 적 사다리. **세 마리가 같은 레벨·같은 돌파로 선다.**
+ * 1장의 적 사다리 — **자란 레벨과 난폭해진 몫을 나눠 적는다.**
  *
- * 값은 눈대중이 아니라 `src/core/stageBalance.ts`의 성장 곡선에서 거꾸로 풀었다. 스토리
- * 첫 클리어 보상만 받은 **바닥 파티**(토리카·도디·파루아 — SSR을 전제하지 않는다)를
- * 두 갈래로 세우고 —
- * 한 명에게 몰아준 쪽과 셋에게 고르게 나눈 쪽 — 둘 다 전승하는 최고 적 레벨(전멸선)을
- * 찾은 뒤, 관문 순서에 따라 그 선에 35%에서 90%까지 다가서게 했다.
+ * 관문이 무거워지는 몫은 두 축에서 온다. `CHAPTER_ONE_LEVELS`는 그 개체가 **얼마나 자랐나**
+ * (화면에 흰 `LV.n`), `CHAPTER_ONE_FEROCITY`는 야성으로 **얼마나 난폭해졌나**(그 옆의 붉은
+ * `+n`)다. 둘은 같은 성장 공식을 지나므로 전투에서는 합이 곧 그 개체의 레벨이지만, 화면에서는
+ * "잡졸이 갑자기 30레벨이 됐다"가 아니라 "같은 개체가 사나워졌다"로 읽힌다.
  *
- * 예전 값(2~6)은 그 곡선이 없어서 **1레벨 셋이 조합만 맞추면 2-3까지 밀렸다** — 1장 내내
- * 잔여 체력이 89~96%였고, 관문이 요구하는 힘이 관문을 밀어 얻는 힘보다 느리게 자랐다.
+ * 합(실효 레벨)은 눈대중이 아니라 `src/core/stageBalance.ts`의 곡선에서 거꾸로 푼다. 스토리
+ * 첫 클리어 보상만 받은 **바닥 파티**(토리카·도디·파루아 — SSR을 전제하지 않는다)를 두 갈래
+ * (몰아주기·균등)로 세워 둘 다 전승하는 최고 적 레벨(전멸선)을 찾고, 관문 순서에 따라 그
+ * 선에 35%에서 100%까지 다가서게 한다. 값을 손으로 고치지 말고 그 선을 다시 재서 이 표를
+ * 갈아 끼운다.
  *
- * **v0.97.0에서 같은 절차로 다시 풀었다.** 성장이 오각형의 다섯 주능력치만 올리게 되면서
- * (공속·이속·치명타·충전량은 레벨로 오르지 않는다) 양쪽의 레벨당 무게가 함께 가벼워져
- * 전멸선이 움직였다. 값을 손으로 고치지 말고 전멸선을 다시 재서 이 표만 갈아 끼운다.
+ * **v0.98.0에서 다시 풀었다.** 적 셋이 R 띠의 위쪽으로 올라와(공멸 3인조 2085~2098 → 2186~2187)
+ * 같은 레벨이 더 무거워졌고, 전멸선이 그만큼 내려왔다. 실효 레벨의 약 4분의 1을 야성 몫으로
+ * 떼어 두 표로 나눴다.
  */
-const CHAPTER_ONE_LEVELS: readonly number[] = [5, 8, 9, 10, 12, 13, 15, 15, 16, 19];
+const CHAPTER_ONE_LEVELS: readonly number[] = [4, 5, 6, 7, 7, 8, 9, 9, 10, 10];
+
+/** 1장에서 야성으로 얹히는 몫. 관문이 뒤로 갈수록 같은 개체가 더 사나워진다. */
+const CHAPTER_ONE_FEROCITY: readonly number[] = [1, 2, 2, 2, 3, 3, 3, 3, 3, 4];
 
 /** 1장 후반 셋만 별 둘로 서서 마지막 세 관문의 무게를 레벨이 아닌 축으로도 올린다. */
 const CHAPTER_ONE_BREAKTHROUGHS: readonly number[] = [0, 0, 0, 0, 0, 0, 0, 1, 1, 1];
@@ -45,7 +50,8 @@ const CHAPTER_ONE_ENEMIES: readonly [StageEnemyDef, StageEnemyDef, StageEnemyDef
     const breakthrough = CHAPTER_ONE_BREAKTHROUGHS[index] ?? 0;
     // 마지막 관문만 중간보스 코마가 토비 자리를 대신한다. 호위보다 낮은 레벨로 서지 않는다.
     const ids = index === CHAPTER_ONE_LEVELS.length - 1 ? ["amo", "husk-koma", "ripa"] : ["amo", "toby", "ripa"];
-    return ids.map((id, slot) => enemyGrowth(id, level, breakthrough, slot as 0 | 1 | 2)) as
+    const ferocity = CHAPTER_ONE_FEROCITY[index] ?? 0;
+    return ids.map((id, slot) => enemyGrowth(id, level, breakthrough, slot as 0 | 1 | 2, ferocity)) as
       [StageEnemyDef, StageEnemyDef, StageEnemyDef];
   });
 
@@ -64,8 +70,14 @@ const CHAPTER_ONE_ENEMIES: readonly [StageEnemyDef, StageEnemyDef, StageEnemyDef
  * 바닥 파티가 어떤 레벨에서도 이기지 못해 기준점이 될 수 없고, 스토리에서는 추후 뺀다.
  */
 const LATER_CHAPTER_LEVELS: readonly number[] = [
-  19, 19, 19, 19, 19, 19, 19, 20, 20, 22,
-  24, 25, 25, 26, 29, 29, 29, 29, 30, 31,
+  10, 10, 10, 10, 10, 10, 10, 10, 10, 11,
+  12, 13, 14, 14, 15, 15, 16, 17, 17, 18,
+];
+
+/** 2·3장의 야성 몫. 1장과 같은 결로 이어지며 실효 레벨(레벨 + 야성)은 끝까지 뒤로 가지 않는다. */
+const LATER_CHAPTER_FEROCITY: readonly number[] = [
+  5, 5, 5, 6, 6, 6, 6, 7, 7, 7,
+  7, 7, 8, 8, 8, 8, 9, 9, 9, 9,
 ];
 
 /**
@@ -120,7 +132,7 @@ export const CHAPTERS: readonly ChapterDef[] = CHAPTER_CONTENT.map((content, cha
       ? ["amo", "pontos", "ripa"]
       : [...STAGE_ENEMY_FORMATION];
     const laterChapterEnemies = laterChapterIds.map((relicId, slot) =>
-      enemyGrowth(relicId, LATER_CHAPTER_LEVELS[globalOrder - 10] ?? globalOrder + 1, Math.floor(globalOrder / 10), slot as 0 | 1 | 2),
+      enemyGrowth(relicId, LATER_CHAPTER_LEVELS[globalOrder - 10] ?? globalOrder + 1, Math.floor(globalOrder / 10), slot as 0 | 1 | 2, LATER_CHAPTER_FEROCITY[globalOrder - 10] ?? 0),
     ) as [StageEnemyDef, StageEnemyDef, StageEnemyDef];
     return {
       kind: "battle",
@@ -174,7 +186,9 @@ export function getStageEnemies(stage: Extract<StageDef, { kind: "battle" }>): [
   // 배열을 재정렬해도 실제 전투 배치는 formationSlot이라는 데이터 계약을 따른다.
   return [...stage.enemies].sort((a, b) => a.formationSlot - b.formationSlot).map((enemy) => {
     const base = getRelic(enemy.relicId);
-    const leveled = applyLevelGrowth(base.stats, enemy.level, base.rarity);
+    // 야성으로 얹힌 몫도 레벨과 **같은 성장 공식**을 지난다 — 스테이지 전용 배율을 만들지 않고,
+    // 관문의 무게를 그 수 하나로 움직이기 위해서다.
+    const leveled = applyLevelGrowth(base.stats, effectiveEnemyLevel(enemy), base.rarity);
     return { ...base, stats: applyBreakthrough(leveled, enemy.breakthrough) };
   }) as [RelicDef, RelicDef, RelicDef];
 }

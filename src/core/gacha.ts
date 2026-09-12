@@ -224,7 +224,7 @@ export interface AcquisitionOutcome {
 /**
  * 슬롯 순서대로 신규/파편/마일리지를 계산하는 Phaser 비의존 순수 규칙이다.
  *
- * 중복 한 장은 **그 개체의 파편** 한 개다. 별이 이미 다섯인 개체(`starsById`가 상한)만
+ * 중복 한 장은 **그 개체의 파편** 한 개다. 별이 이미 다섯인 개체(`breakthroughGradeById`가 상한)만
  * 공용 DNA 조각으로 바뀐다 — 더 올릴 별이 없는 파편은 쓸 곳이 없기 때문이다.
  */
 export function resolveAcquisitions(
@@ -232,7 +232,7 @@ export function resolveAcquisitions(
   fragmentsById: Readonly<Record<string, number>>,
   results: readonly string[],
   /** 개체별 현재 별(1~5). 주지 않은 개체는 별 하나로 본다. */
-  starsById: Readonly<Record<string, number>> = {},
+  breakthroughGradeById: Readonly<Record<string, number>> = {},
   maxStars = 5,
 ): AcquisitionOutcome {
   const owned = new Set(ownedRelicIds);
@@ -250,7 +250,7 @@ export function resolveAcquisitions(
       continue;
     }
     duplicateRelicIds.push(relicId);
-    if ((starsById[relicId] ?? 1) >= maxStars) {
+    if ((breakthroughGradeById[relicId] ?? 1) >= maxStars) {
       // 별 다섯에 닿은 개체의 중복 한 장은 공용 DNA 조각 한 개(마일리지)로 바뀐다.
       overflowFragments += 1;
       slots.push({ relicId, kind: "overflow", fragments: 0, overflowFragments: 1 });

@@ -1,4 +1,4 @@
-import { calculateFinalStats, relicStars, remainingBreakthroughCost } from "../core/relicProgression";
+import { calculateFinalStats, breakthroughGrade, remainingBreakthroughCost } from "../core/relicProgression";
 import type { RelicProgress, Stats } from "../core/types";
 import { getRelic } from "../data/relics";
 import { createStarterRunes } from "../data/runes";
@@ -33,8 +33,8 @@ export class RelicProgressionManager {
   }
 
   /** 지금 별(1~5). 화면은 돌파 단계가 아니라 이 값을 읽는다. */
-  getStars(relicId: string): number {
-    return relicStars(this.getProgress(relicId).breakthrough);
+  getBreakthroughGrade(relicId: string): number {
+    return breakthroughGrade(this.getProgress(relicId).breakthrough);
   }
 
   /** 그 개체의 파편 보유량. 없으면 0이다 — 없는 개체를 위해 표를 만들지 않는다. */

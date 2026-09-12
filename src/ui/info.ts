@@ -29,7 +29,7 @@ import { calculateObservationJournalFlow, OBSERVATION_JOURNAL_SIZE, withoutRepea
 import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
 import { BREAKTHROUGH_SLOT_LABEL, breakthroughEffectText } from "./skillPresentation";
-import { addStarMark, RARITY_TONE, STAR_ROMAN } from "./rarityMark";
+import { addBreakthroughGradeMark, RARITY_TONE, BREAKTHROUGH_GRADE_ROMAN } from "./rarityMark";
 import { addFramedIcon, addItemFrame } from "./itemFrame";
 import { FaceFrame } from "./FaceFrame";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
@@ -50,14 +50,13 @@ import { skillArtFor, skillArtTint, type SkillArtSlot } from "./skillArt";
 import { addSkillIconFrame, SKILL_SLOT_LABEL } from "./SkillIconFrame";
 import { BREAK_CONFIRM, BREAK_STEPS, breakthroughStepsLayout } from "./breakthroughLayout";
 import { gameApi } from "../api/FakeServer";
-import { BREAKTHROUGH_STEPS, breakthroughFragmentCost, canBreakThrough, canFeedRelic, FEED_UNIT, isBreakthroughSlotOpen, nextBreakthrough, relicExpToNext, relicLevelCap, relicStars } from "../core/relicProgression";
+import { BREAKTHROUGH_STEPS, breakthroughFragmentCost, canBreakThrough, canFeedRelic, FEED_UNIT, isBreakthroughSlotOpen, nextBreakthrough, relicExpToNext, relicLevelCap, breakthroughGrade } from "../core/relicProgression";
 import { BOND_FEROCITY_MULTIPLIER, BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL, BOND_XP_REWARD } from "../core/bond";
 import { getRelicCatalogDisclosure } from "../core/relicCatalog";
 import { observations } from "../managers/ObservationManager";
 import { clampObservationPage, sortedObservationHistory } from "./observationHistory";
 import { observationQuestionForRelicAndDate } from "../data/observations";
 import type { PublicRelicProfileDto } from "../api/contracts";
-import type { Fighter } from "../core/skirmish";
 import { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../core/infoCapabilities";
 import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, overpaintDetonationDamageKeyword, elationKeyword, passiveShieldKeyword, periodicStackKeyword, skillDescription } from "./skillPresentation";
 import type { KeywordDef } from "../data/keywords";
@@ -154,7 +153,7 @@ const BOND_HEART_SIZE = 59;
  * 위 → 가운데 → 아래 순서로 색이 넘어간다. SSR은 황금 호박, SR은 보랏빛에서 분홍, R은
  * 청량한 푸른빛이다. 등급은 화면마다 다른 색으로 칠하지 않는다.
  */
-const RARITY_GEM: Record<RelicRarity, readonly [string, string, string]> = {
+export const RARITY_GEM: Record<RelicRarity, readonly [string, string, string]> = {
   SSR: ["#fff3c4", "#ffc247", "#c78a1c"],
   SR: ["#ffe2ff", "#e070f5", "#9b3fc0"],
   R: ["#e8fbff", "#5fd4ff", "#2f9ad4"],
@@ -167,7 +166,7 @@ const AFFINITY = { main: 96, sub: 72, gap: 30 } as const;
 const STAT_RADAR_RADIUS = 128;
 
 /** 정보창의 등급 표식 기준 크기. 로마자 한 글자가 이 두 배 높이로 선다. */
-const STAR_SIZE = 34;
+const GRADE_MARK_SIZE = 34;
 
 /**
  * 야성 뱃지의 색.
@@ -258,7 +257,7 @@ const BREAK_EDGE = 0xa88cf0;
 /**
  * 한계 돌파 쪽지의 자리표.
  *
- * **올라가는 것은 별 개수가 아니라 등급이다.** 카드 오른쪽 위에 박히는 로마자 표식을 그대로
+ * **올라가는 것은 칸 수가 아니라 돌파 등급이다.** 카드 오른쪽 위에 박히는 로마자 표식을 그대로
  * 크게 세우고, 드는 재료는 가방·상점과 같은 액자로 둔다 — 여기서 사람이 정하는 것은 "지금
  * 올릴 수 있나"이고, 그 답은 등급 두 글자와 액자 둘의 수가 전부 말한다.
  */
@@ -318,7 +317,7 @@ const EXTRA_STATS: readonly { key: keyof Stats; label: string; suffix?: string }
  * 팝업은 새 화면이 아니라 누른 것 위에 얹히는 쪽지다. 그래서 여는 쪽은 언제나 "어디를
  * 눌렀는지"와 "닫히면 무엇을 되돌릴지"를 함께 넘긴다.
  */
-interface PopupSource {
+export interface PopupSource {
   x: number;
   y: number;
   onClose: () => void;
@@ -423,7 +422,7 @@ export class InfoManager {
   private readonly bookmarkBadge: BadgeHandle;
   private readonly favoriteBadge: BadgeHandle;
 
-  private readonly starRow: Phaser.GameObjects.Container;
+  private readonly gradeRow: Phaser.GameObjects.Container;
   private readonly levelValue: Phaser.GameObjects.Text;
   private readonly levelCap: Phaser.GameObjects.Text;
   private readonly expBar: Gauge;
@@ -481,8 +480,6 @@ export class InfoManager {
   /** 생성 시 고정한 문맥 덕분에 읽기 전용 창이 도중에 소유자 권한으로 승격되지 않는다. */
   private readonly capabilities: Readonly<InfoCapabilities>;
   private publicProfile?: PublicRelicProfileDto;
-  /** 전투 중인 적에게만 붙는 현재 체력·게이지·상태이상 한 줄. */
-  private readonly combatLine: Phaser.GameObjects.Text;
 
   /** 정보창이 닫힐 때 목록 화면이 카드 표시를 다시 맞출 수 있게 알린다. */
   onClose?: () => void;
@@ -528,12 +525,7 @@ export class InfoManager {
     this.nameShadow = scene.add.text(52, 112, "", textStyle({ role: "display", size: 84, color: "#05070a" })).setOrigin(0, 0).setAlpha(0.85);
     this.nameText = scene.add.text(46, 104, "", textStyle({ role: "display", size: 84 })).setOrigin(0, 0);
     this.roleText = scene.add.text(50, 206, "", textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0, 0);
-    // 개체번호 줄 바로 아래다. 지금 값이라 붉게 쓰고, 전투 밖에서는 아예 감춘다.
-    this.combatLine = scene.add
-      .text(50, 240, "", textStyle({ role: "emphasis", size: 23, color: COLOR.dangerText }))
-      .setOrigin(0, 0)
-      .setVisible(false);
-    this.chrome.add([this.rarityGlow, this.rarityText, this.nameShadow, this.nameText, this.roleText, this.combatLine]);
+    this.chrome.add([this.rarityGlow, this.rarityText, this.nameShadow, this.nameText, this.roleText]);
     // 이름 오른쪽에 속성과 직군을 세운다. 이름 줄에 붙어 있어야 "이 개체가 무엇인지"가 한
     // 덩어리로 읽힌다. 카드와 마찬가지로 속성이 크고 직군이 조금 작다.
     this.elementBadge = new AffinityBadge(scene, 0, 152, ELEMENT_ICON.fire, AFFINITY.main);
@@ -548,10 +540,10 @@ export class InfoManager {
     if (this.capabilities.mutateProgress) this.addJournalButton(268, 300);
     this.addMagnifier(84, 392, (from) => this.enterGallery(from.onClose));
 
-    // 별은 오른쪽, 돌파 버튼은 그 왼쪽이다. 별이 오른쪽 돋보기(돌파 단계표) 바로 옆에 서야
+    // 돌파 등급은 오른쪽, 돌파 버튼은 그 왼쪽이다. 등급이 오른쪽 돋보기(돌파 단계표) 바로 옆에 서야
     // 표식과 그 표식을 자세히 보는 입구가 한 덩어리로 읽힌다.
-    this.starRow = scene.add.container(COLUMN.x + 132, 150);
-    this.chrome.add(this.starRow);
+    this.gradeRow = scene.add.container(COLUMN.x + 132, 150);
+    this.chrome.add(this.gradeRow);
     this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 30, 158, (from) => this.openBreakthroughSteps(from));
 
     // 오른쪽 수치는 칸마다 판을 따로 깐다. 대신 칸의 내용물을 그 판 **안에** 넣어 판과 같은
@@ -586,7 +578,7 @@ export class InfoManager {
       this.expBar.objects.forEach((object) => object.setVisible(false));
       this.expLabel.setVisible(false);
     }
-    // 한계 돌파는 별을 올리는 일이라 레벨 칸이 아니라 **별 옆**에 선다. 파편이 모였는지도
+    // 한계 돌파는 등급을 올리는 일이라 레벨 칸이 아니라 **돌파 등급 옆**에 선다. 파편이 모였는지도
     // 그 자리에서 읽혀야 "지금 초월할 수 있는가"가 한눈에 들어온다.
     this.breakButton = this.addBreakButton(COLUMN.x - 78, 150, this.chrome);
     const feed = this.addFeedButton(COLUMN.x, 546, COLUMN.width - 130, 98, levelPanel);
@@ -597,7 +589,7 @@ export class InfoManager {
 
     // 유대.
     const bondHeart = scene.add.container(COLUMN.x - COLUMN.width / 2 + 92, 710);
-    // 하트도 별과 같은 방식이다 — 그림자·빛무리·몸통을 겹으로 쌓고 어두운 선으로 마무리한다.
+    // 하트도 돌파 등급 표식과 같은 방식이다 — 그림자·빛무리·몸통을 겹으로 쌓고 어두운 선으로 마무리한다.
     bondHeart.add(paintBondHeart(scene, BOND_HEART_SIZE));
     this.bondValue = scene.add.text(0, 1, "", textStyle({ role: "display", size: 32 })).setOrigin(0.5);
     bondHeart.add(this.bondValue);
@@ -699,21 +691,7 @@ export class InfoManager {
 
   /** 더 볼 것이 있다는 표시. 자리만 다를 뿐 생김새와 크기는 같다. */
   private addMagnifier(x: number, y: number, onClick: (from: PopupSource) => void, panel?: Phaser.GameObjects.Container): void {
-    // 자리는 늘 판의 오른쪽 끝 안쪽이다. 끝에 붙어야 "이 칸에 딸린 것"으로 읽히고, 안쪽으로
-    // 조금 들여야 기울어진 변에 걸치지 않는다.
-    const container = this.scene.add.container(x, y);
-    // 작고 흐린 회색이다. 이것은 "더 있다"는 힌트일 뿐이라, 옆의 수치보다 먼저 눈에 들어오면
-    // 안 된다. 대신 작아진 만큼 선은 굵게 줘야 형태가 뭉개지지 않는다.
-    container.add(drawGlyph(this.scene, "magnifier", 0, 0, 30, 0xb9c0ca, 0.42, 4));
-    const hit = this.scene.add.rectangle(x, y, 78, 78, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    hit.on("pointerdown", () => container.setScale(1.15));
-    hit.on("pointerout", () => { if (!this.popups.isOpen) container.setScale(1); });
-    hit.on("pointerup", () => {
-      container.setScale(1.15);
-      onClick({ x, y: y - 26, onClose: () => container.setScale(1) });
-    });
-    if (panel) attach(panel, container, hit);
-    else this.chrome.add([container, hit]);
+    addInfoMagnifier(this.scene, this.popups, panel ?? this.chrome, x, y, onClick, panel !== undefined);
   }
 
   /**
@@ -802,8 +780,8 @@ export class InfoManager {
   /**
    * 한계 돌파 버튼.
    *
-   * **별 바로 옆**에 붙는다 — 올리는 것이 별이라 별과 같은 줄에 있어야 무엇이 오르는지가
-   * 눌러 보기 전에 읽힌다. 아래 줄에는 지금 가진 파편과 다음 별에 드는 파편을 함께 적고,
+   * **돌파 등급 바로 옆**에 붙는다 — 올리는 것이 등급이라 같은 줄에 있어야 무엇이 오르는지가
+   * 눌러 보기 전에 읽힌다. 아래 줄에는 지금 가진 파편과 다음 등급에 드는 파편을 함께 적고,
    * 누르면 남은 재료를 마저 보여 준 뒤 거기서 확정한다.
    */
   private addBreakButton(x: number, y: number, panel: Phaser.GameObjects.Container): { container: Phaser.GameObjects.Container; label: Phaser.GameObjects.Text; cost: Phaser.GameObjects.Text } {
@@ -834,7 +812,7 @@ export class InfoManager {
     const need = def && step ? breakthroughFragmentCost(def.rarity, progress.breakthrough) : 0;
     const ready = this.ownedNow && def !== undefined && canBreakThrough(def.rarity, progress, held, session.wallet.cheesecake);
     this.breakButton?.container.setAlpha(step ? (ready ? 1 : 0.62) : 0.35);
-    this.breakButton?.label.setText(step ? "한계 돌파" : "별 최대");
+    this.breakButton?.label.setText(step ? "한계 돌파" : "돌파 최대");
     this.breakButton?.label.setColor(ready ? COLOR.ink : COLOR.inkDim);
     // 파편이 몇 개 모였는지는 버튼이 직접 말한다. 눌러 보고서야 아는 값이면 늦다.
     this.breakButton?.cost.setText(step ? held + " / " + need : "");
@@ -853,6 +831,16 @@ export class InfoManager {
    * ("모든 능력치 +15%")은 능력치 판이 이미 보여 주므로 여기 적지 않는다 — 적으면 이 창에서
    * 읽어야 할 것이 공용 수치 안내에 묻힌다.
    */
+  /** 한계 돌파 테크트리. 표는 적 팝업과 **같은 함수**가 그린다. */
+  private openBreakthroughSteps(_from: PopupSource): void {
+    const def = this.currentDef;
+    if (!def) return;
+    const grade = this.publicProfile
+      ? Math.max(1, this.publicProfile.breakthroughGrade)
+      : breakthroughGrade(relicProgression.getProgress(def.id).breakthrough);
+    openBreakthroughStepsPopup(this.scene, this.popups, def, grade);
+  }
+
   private openBreakthrough(from: PopupSource): void {
     if (!this.capabilities.mutateProgress) return;
     const def = this.currentDef;
@@ -862,17 +850,17 @@ export class InfoManager {
     const height = BREAK_CONFIRM.height;
     this.popups.open({ width: 780, height, title: "한계 돌파", tilt: -1.2, ...anchorOf(from) }, (body, close) => {
       if (!step) {
-        body.add(this.scene.add.text(0, 20, "이미 " + STAR_ROMAN[STAR_ROMAN.length - 1] + " 등급이다. 중복은 DNA 조각으로 쌓인다.", textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0.5).setWordWrapWidth(640));
+        body.add(this.scene.add.text(0, 20, "이미 돌파 등급 " + BREAKTHROUGH_GRADE_ROMAN[BREAKTHROUGH_GRADE_ROMAN.length - 1] + "이다. 중복은 DNA 조각으로 쌓인다.", textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0.5).setWordWrapWidth(640));
         return;
       }
       const top = -height / 2;
       const cap = relicLevelCap(progress.breakthrough);
-      // **올라가는 것은 별 개수가 아니라 등급이다.** 카드 오른쪽 위에 박히는 로마자와 같은
+      // **올라가는 것은 칸 수가 아니라 돌파 등급이다.** 카드 오른쪽 위에 박히는 로마자와 같은
       // 표식을 그대로 크게 세우고, 그 사이에 화살표만 둔다 — "1 → 2"라고 적으면 화면 어디에도
       // 없는 숫자를 새로 배우게 된다.
-      addStarMark(this.scene, body, -140, top + BREAK_CONFIRM.gradeY, BREAK_CONFIRM.gradeSize, relicStars(progress.breakthrough));
+      addBreakthroughGradeMark(this.scene, body, -140, top + BREAK_CONFIRM.gradeY, BREAK_CONFIRM.gradeSize, breakthroughGrade(progress.breakthrough));
       body.add(this.scene.add.text(0, top + BREAK_CONFIRM.gradeY, "▶", textStyle({ role: "display", size: 34, color: COLOR.inkDim })).setOrigin(0.5));
-      addStarMark(this.scene, body, 140, top + BREAK_CONFIRM.gradeY, BREAK_CONFIRM.gradeSize, relicStars(progress.breakthrough) + 1);
+      addBreakthroughGradeMark(this.scene, body, 140, top + BREAK_CONFIRM.gradeY, BREAK_CONFIRM.gradeSize, breakthroughGrade(progress.breakthrough) + 1);
 
       // 상한은 이 조작이 실제로 바꾸는 값이라 등급 바로 아래에 같은 무게로 선다.
       const capLine = this.scene.add.container(0, top + BREAK_CONFIRM.capY);
@@ -1014,7 +1002,7 @@ export class InfoManager {
     // Growth actions are derived from the current confirmed state, never from “did this tap level up?”.  At
     // the cap the note becomes an explicit route to breakthrough and explains why it is not yet available.
     // **만렙에서는 쪽지를 열지 않는다.** 먹일 것이 없는 자리에 "레벨 상한 · 한계 돌파"를
-    // 적어 두면 같은 말을 별 옆의 돌파 버튼이 이미 하고 있고, 그 쪽지에는 누를 것도 없다.
+    // 적어 두면 같은 말을 돌파 등급 옆의 버튼이 이미 하고 있고, 그 쪽지에는 누를 것도 없다.
     if (!canFeed) return;
     this.feedPopupOpen = true;
     this.popups.open({
@@ -1042,7 +1030,7 @@ export class InfoManager {
     if (!def) { close(); return; }
     const progress = relicProgression.getProgress(def.id);
     // 상한에 닿는 순간 쪽지가 스스로 닫힌다 — 더 먹일 수 없는 판에 남아 있을 이유가 없고,
-    // 다음에 할 일(한계 돌파)은 별 옆의 버튼이 제 자리에서 말한다.
+    // 다음에 할 일(한계 돌파)은 돌파 등급 옆의 버튼이 제 자리에서 말한다.
     if (progress.level >= relicLevelCap(progress.breakthrough)) { close(); return; }
     {
       ([["1 레벨", 1], ["10 레벨", 10]] as const).forEach(([label, levels], index) => {
@@ -1459,82 +1447,6 @@ export class InfoManager {
     });
   }
 
-  /**
-   * 한계 돌파 테크트리.
-   *
-   * 별 하나에서 시작해 다섯까지 오르는 길을 한 장에 세운다. 단계마다 드는 **그 개체의 파편**과
-   * 열리는 효과·레벨 상한을 함께 적어, 연구소 중복 획득이 무엇으로 돌아오는지 여기서 다 읽히게 한다.
-   */
-  private openBreakthroughSteps(_from: PopupSource): void {
-    const def = this.currentDef;
-    if (!def) return;
-    const progress = relicProgression.getProgress(def.id);
-    const stars = this.publicProfile ? Math.max(1, this.publicProfile.stars) : relicStars(progress.breakthrough);
-    const layout = breakthroughStepsLayout(BREAKTHROUGH_STEPS.length);
-    // **돋보기 자리에 붙이지 않고 화면 가운데에 선다.** 네 줄이 저마다 설명을 이고 있어 판이
-    // 길어지는데, 돋보기에 붙이면 그 판이 화면 한쪽으로 쏠려 위나 아래가 잘린다.
-    this.popups.open({
-      width: BREAK_STEPS.width,
-      height: layout.height,
-      y: BREAK_STEPS.centerY,
-      title: "한계 돌파",
-      titleSize: POPUP_TITLE_SIZE.workboard,
-      dim: true,
-      backButton: true,
-    }, (body) => {
-      const top = -layout.height / 2;
-      BREAKTHROUGH_STEPS.forEach((entry, index) => {
-        // 돌파 한 번이 별 하나다. 표의 첫 줄이 곧 "별 둘로 가는 길"이다.
-        const star = index + 2;
-        const y = top + layout.rows[index];
-        const reached = stars >= star;
-        // 열린 줄과 안 열린 줄을 **밝기가 아니라 결**로 가른다(`BREAK_STEPS.tone` 주석 참고).
-        // 별 하나로 시작하는 개체는 네 줄이 모두 안 열린 줄이라, 어둡게 누르면 이 창을 처음
-        // 여는 사람이 캄캄한 판 넷을 본다.
-        const tone = reached ? BREAK_STEPS.tone.reached : BREAK_STEPS.tone.locked;
-        body.add(drawLayer(this.scene, 0, y, slantedRect(layout.rowWidth, BREAK_STEPS.row.height, 16), {
-          fill: tone.fill,
-          alpha: tone.alpha,
-          edge: COLOR.accent,
-          edgeAlpha: tone.edgeAlpha,
-        }));
-        const mark = this.scene.add.container(BREAK_STEPS.star.x, y);
-        addStarMark(this.scene, mark, 0, 0, BREAK_STEPS.star.size, star);
-        // "어디까지 왔는가"는 별이 맡는다 — 글과 그림을 누르지 않는 대신 이 표식만 흐려진다.
-        mark.setAlpha(tone.star);
-        body.add(mark);
-        // **어느 기술이 열리는지는 그 기술의 액자가 말한다.** 정보창 아래 네 칸과 같은 프리팹을
-        // 써서 같은 그림·같은 이름으로 서므로, 표를 읽다가 "이게 뭐였지"로 돌아가지 않는다.
-        const icon = addSkillIconFrame(this.scene, {
-          size: BREAK_STEPS.icon.size,
-          slot: entry.slot,
-          relicId: def.id,
-          fallbackIcon: this.slotFallbackIcon(def, entry.slot),
-          element: def.element,
-          role: def.role,
-          label: SKILL_SLOT_LABEL[entry.slot],
-          // 액자는 그 줄의 주제라 안 열린 줄에서도 어느 기술인지 알아볼 수 있어야 한다.
-          dimAlpha: reached ? undefined : BREAK_STEPS.lockedIconAlpha,
-        });
-        icon.setPosition(BREAK_STEPS.icon.x, y);
-        body.add(icon);
-        // 열리는 것은 **이 개체의** 효과다. 문구는 정의에서 조립하므로 화면이 따로 적지 않고,
-        // 아직 설계하지 않은 개체는 어느 슬롯이 열리는지만 말한다.
-        const opens = breakthroughEffectText(def, entry.slot) ?? BREAKTHROUGH_SLOT_LABEL[entry.slot];
-        body.add(this.scene.add
-          .text(BREAK_STEPS.textX, y, opens, textStyle({ role: "body", size: BREAK_STEPS.textSize, color: COLOR.ink, wrap: layout.textWrap, lineSpacing: 8 }))
-          .setOrigin(0, 0.5));
-      });
-    });
-  }
-
-  /** 그 슬롯의 공용 효과 아이콘. 전용 아트가 없는 개체도 액자가 빈 칸으로 남지 않게 한다. */
-  private slotFallbackIcon(def: RelicDef, slot: SkillArtSlot): string | undefined {
-    if (slot === "basic") return def.basic.iconAssetId;
-    if (slot === "ultimate") return def.ultimate.iconAssetId;
-    if (slot === "passive") return def.passive.iconAssetId;
-    return undefined;
-  }
 
   /**
    * 좌우로 밀어 옆 캐릭터로 넘긴다.
@@ -1731,65 +1643,7 @@ export class InfoManager {
   private openExtraStats(from: PopupSource): void {
     const def = this.currentDef;
     if (!def) return;
-    const stats = relicProgression.getFinalStats(def.id);
-    // 판은 글자가 들어가는 만큼만 넓다. 남는 여백은 읽는 데 도움이 되지 않고 뒤 화면만 가린다.
-    const width = 700;
-    const edge = width / 2 - 34;
-    const height = 1150;
-    // 이 창만 **누른 자리에 붙지 않고 화면 가운데에 선다.** 열두 줄이 쌓인 성적표라 돋보기에
-    // 매달면 판이 통째로 아래로 밀려 마지막 줄이 화면 밑변에 붙는다(v0.58.0까지 그랬다) —
-    // 손이 닿기도 읽기도 어려운 자리다. 관찰 기록판과 같은 이유로 자리를 고정한다.
-    this.popups.open({
-      width, height, title: "능력치 상세", tilt: -1.2,
-      x: BASE_WIDTH / 2, y: EXTRA_STATS_POPUP_Y, onClose: from.onClose,
-    }, (body) => {
-      // 칸에는 오각형이 서 있으므로 여기서는 **숫자**를 맡는다. 총 전투력이 먼저 오고, 다섯
-      // 축의 정확한 값과 기본값 대비 상승분, 그 아래에 오각형에 없는 세부 수치가 온다.
-      const top = -height / 2;
-      // 총 전투력은 판때기 없이 맨 글자로 선다. 이 창에서 가장 굵고 큰 수라 판을 깔지 않아도
-      // 저절로 맨 앞에 읽히고, 판을 깔면 아래 목록과 다른 종류의 값처럼 보인다.
-      body.add(this.scene.add.text(-edge, top + 100, "전투력", textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5));
-      body.add(
-        this.scene.add
-          .text(edge, top + 100, combatPower(stats).toLocaleString(), textStyle({ role: "display", size: 52 }))
-          .setOrigin(1, 0.5)
-          .setScale(1, 1.12)
-          .setShadow(3, 6, "#05070a", 8, false, true),
-      );
-      body.add(drawHairline(this.scene, 0, top + 142, width - 68, { color: COLOR.accent, alpha: 0.3 }));
-      STAT_CHIPS.forEach((chip, index) => {
-        const y = top + 204 + index * 84;
-        const base = def.stats[chip.key];
-        const gain = stats[chip.key] - base;
-        // 칸의 축 이름과 같은 색이라 그래프에서 본 축을 그대로 따라 읽는다.
-        body.add(this.scene.add.text(-edge, y, chip.label, textStyle({ role: "display", size: 30, color: `#${chip.color.toString(16).padStart(6, "0")}` })).setOrigin(0, 0.5));
-        body.add(this.scene.add.text(edge, y - 12, stats[chip.key].toLocaleString(), textStyle({ role: "display", size: 36 })).setOrigin(1, 0.5));
-        const detail = gain > 0 ? `기본 ${base.toLocaleString()}   +${gain.toLocaleString()}` : `기본 ${base.toLocaleString()}`;
-        const detailStyle = gain > 0
-          ? textStyle({ role: "body", size: 21, color: COLOR.accentText })
-          : textStyle({ role: "body", size: 21, color: COLOR.inkDim });
-        body.add(this.scene.add.text(edge, y + 22, detail, detailStyle).setOrigin(1, 0.5));
-        body.add(drawHairline(this.scene, 0, y + 42, width - 68, { color: COLOR.accent, alpha: 0.14 }));
-      });
-      // 사거리는 오각형에 없는 축이라 다섯 줄 **아래**에 한 줄로 붙는다. 값이 아니라 단계라
-      // 기본값 대비 상승분이 없고, 단계 자체를 색이 말한다(근거리 붉은색·중거리 푸른색·원거리 노란색).
-      const reachY = top + 204 + STAT_CHIPS.length * 84;
-      const reachHex = reachToneHex(def.reachTier);
-      body.add(this.scene.add.text(-edge, reachY, "사거리", textStyle({ role: "display", size: 30, color: reachHex })).setOrigin(0, 0.5));
-      body.add(this.scene.add.text(edge, reachY, REACH_LABEL[def.reachTier], textStyle({ role: "display", size: 36, color: reachHex })).setOrigin(1, 0.5));
-      body.add(drawHairline(this.scene, 0, reachY + 42, width - 68, { color: COLOR.accent, alpha: 0.14 }));
-      body.add(
-        this.scene.add
-          .text(-edge, top + 700, "세부 능력치", textStyle({ role: "emphasis", size: 26, color: COLOR.accentText }))
-          .setOrigin(0, 0),
-      );
-      EXTRA_STATS.forEach((row, index) => {
-        const y = top + 772 + index * 76;
-        body.add(this.scene.add.text(-edge, y, row.label, textStyle({ role: "body", size: 28, color: COLOR.inkDim })).setOrigin(0, 0.5));
-        body.add(this.scene.add.text(edge, y, stats[row.key].toLocaleString() + (row.suffix ?? ""), textStyle({ role: "display", size: 33 })).setOrigin(1, 0.5));
-        if (index < EXTRA_STATS.length - 1) body.add(drawHairline(this.scene, 0, y + 38, width - 68, { color: COLOR.accent, alpha: 0.14 }));
-      });
-    });
+    openExtraStatsPopup(this.scene, this.popups, def, relicProgression.getFinalStats(def.id), from);
   }
 
   /** 추가 외형이 있는 렐릭에게만 공용 외형 선택 진입점을 세운다. */
@@ -2043,192 +1897,34 @@ export class InfoManager {
    * 이름 두 글자로 알리고, 자세한 것은 눌렀을 때 그 위에 뜨는 쪽지가 맡는다.
    */
   private addFerocityBadge(x: number, y: number, def: RelicDef): void {
-    // 스킬 아이콘의 자식으로 두면 아이콘을 눌러 커질 때 뱃지까지 함께 커져, 패시브를 눌렀는데
-    // 야성까지 눌린 것처럼 보인다. 자리만 아이콘 위로 잡고 층은 따로 세운다.
-    // 스킬 아이콘(150)보다는 작게 두되, 그림이 무엇인지 알아볼 만큼은 키운다. 너무 작으면
-    // 폭주 일러스트가 점처럼 뭉갠다.
-    const badgeSize = 96;
-    const badge = this.scene.add.container(x, y);
-    const shape = chipPoints(badgeSize, badgeSize, {
-      bevel: { topLeft: badgeSize * 0.34, topRight: 0, bottomRight: badgeSize * 0.34, bottomLeft: 0 },
-    });
-    badge.add(drawLayer(this.scene, 0, 0, shape, { fill: FEROCITY_BADGE, alpha: 1, edge: 0xf0a58a, edgeAlpha: 0.8, glow: { color: 0x8f3a2a, strength: 0.35, height: 0.6 } }));
-    badge.add(drawInnerVignette(this.scene, 0, 0, shape, { strength: 0.4 }));
-    // 폭주도 스킬 넷 중 하나라 전용 일러스트를 쓴다. 다만 붉은 판 위에서는 속성 색을 그대로
-    // 얹으면 판에 묻히므로, 여기서만 야성의 살구빛을 쓴다 — 이 뱃지는 개체 구분이 아니라
-    // "야성이 이렇게 터진다"를 알리는 자리이기 때문이다.
-    const art = skillArtFor(def.id, "ferocity");
-    if (art) {
-      badge.add(this.scene.add.image(0, -13, art).setDisplaySize(badgeSize * 0.64, badgeSize * 0.64).setTint(0xffd9c4));
-    } else {
-      badge.add(drawGlyph(this.scene, "ferocity", 0, -13, badgeSize * 0.46, 0xffd9c4));
-    }
-    // 스킬 액자와 같은 방식으로 이름을 안쪽 아래에 단다. 셋과 나란히 읽히려면 이름이 있어야 한다.
-    badge.add(this.scene.add.text(0, badgeSize / 2 - 23, "폭주", textStyle({ role: "display", size: 19, color: "#ffd9c4" })).setOrigin(0.5));
-    // 입력 영역도 뱃지 크기에 딱 맞춘다. 넓게 잡으면 아래 아이콘의 터치를 가로챈다.
-    const hit = this.scene.add.rectangle(0, 0, badgeSize, badgeSize, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    hit.on("pointerdown", () => badge.setScale(1.1));
-    hit.on("pointerout", () => { if (!this.popups.isOpen) badge.setScale(1); });
-    hit.on("pointerup", () => {
-      badge.setScale(1.1);
-      this.openFerocityTrait(def, { x, y: y - badgeSize / 2 - 12, onClose: () => badge.setScale(1) });
-    });
-    badge.add(drawShapeOutline(this.scene, 0, 0, shape, { color: 0xf0a58a, alpha: 0.65, width: 3 }));
-    badge.add(hit);
-    this.chrome.add(badge);
     // 스킬 아이콘과 같은 목록에 담아 미보유 개체에서 함께 숨고 다시 그릴 때 함께 지워진다.
-    this.skillIcons.push(badge);
+    this.skillIcons.push(addInfoFerocityBadge(this.scene, this.popups, this.chrome, x, y, def, (from) => this.openFerocityTrait(def, from)));
   }
 
-  /** 개체별 폭주 발현 설명. 야성 규칙 자체는 강조된 말을 눌러 다시 열 수 있다. */
+  /** 이 창이 연 개체의 최종 정의와 열린 돌파 등급의 몫으로 공용 폭주 쪽지를 연다. */
   private openFerocityTrait(def: RelicDef, from: PopupSource): void {
-    // 피해 수치가 있는 폭주만 현재 능력치로 환산한다. 토리카의 새 탱커 계약은 자체 실제값을 그대로 보여 준다.
-    const { atk: attack, def: defense, ap: abilityPower } = relicProgression.getFinalStats(def.id);
-    const defensePercent = def.ferocityTrait.effectId === "splashDamage" ? def.ferocityTrait.defenseDamagePercent : undefined;
-    const attackPercent = def.ferocityTrait.effectId === "crescendoStaccato" ? def.ferocityTrait.damagePercent : undefined;
-    // 남아 있는 공격형 폭주 추가 피해도 일반 스킬과 같은 수치 링크를 써서 별도 팝업을 만들지 않는다.
-    const convertedDamage = defensePercent !== undefined ? Math.round(defense * defensePercent / 100)
-      : attackPercent !== undefined ? Math.round(attack * attackPercent / 100)
-      : undefined;
-    const damageSourceLabel = defensePercent !== undefined ? "방어력" : "공격력";
-    const contextualKeywords: KeywordDef[] = [];
-    // 금강불괴가 덮는 막도 퍼센트가 아니라 실제로 덮이는 값으로 보여 준다.
-    if (def.ferocityTrait.effectId === "adamantBody") contextualKeywords.push({
-      id: "shield-value", term: String(Math.round(def.stats.hp * def.ferocityTrait.shieldMaxHpPercent / 100)), kind: "규칙",
-      description: `현재 최대 체력에서 ${def.ferocityTrait.shieldMaxHpPercent}%를 받아 계산한 보호막 수치다.`,
-    });
-    if (convertedDamage !== undefined) contextualKeywords.push({
-      id: "damage-value", term: String(convertedDamage), kind: "규칙",
-      description: `현재 ${damageSourceLabel}에서 ${defensePercent ?? attackPercent}%를 받아 계산한 추가 피해 수치다.`,
-    });
-    // 메테의 스타카토 추가타는 기본 공격과 같은 효과를 다시 부르는 것이므로 그 뜻을 여기서 짧게 설명한다.
-    if (def.ferocityTrait.effectId === "crescendoStaccato") contextualKeywords.push({
-      id: "mette-staccato", term: "스타카토", kind: "규칙",
-      description: "메테의 [[basic-attack|기본 공격]]과 같은 마법 추가타다. 적중한 대상을 [[stagger|경직]]시킨다.",
-    });
-    // 폭주도 패시브와 같은 정형 상세창을 사용한다. 별도 제목 레이어 없이 아이콘 옆에서
-    // 스킬 종류·이름·발현 유형을 한 번에 읽게 한다.
-    openSkillPopup(this.scene, this.popups, this.keywords, {
-      name: def.ferocityTrait.name,
-      kindLabel: "폭주",
-      iconAssetId: "skill-icon-buff",
-      art: skillArtFor(def.id, "ferocity"),
-      tint: skillArtTint(def.element, def.role),
-      effectType: "buff",
-      valueLabel: "야성 발현",
-      contextualKeywords: contextualKeywords.length > 0 ? contextualKeywords : undefined,
-      // 폭주도 돌파가 효과를 붙이는 슬롯이라 같은 노란 줄을 얻는다.
-      breakthroughEffect: this.publicProfile || !isBreakthroughSlotOpen(relicProgression.getProgress(def.id).breakthrough, "ferocity")
+    const finalDef = { ...def, stats: relicProgression.getFinalStats(def.id) };
+    const breakthrough = relicProgression.getProgress(def.id).breakthrough;
+    openFerocityTraitPopup(this.scene, this.popups, this.keywords, finalDef, from, {
+      breakthroughEffect: this.publicProfile || !isBreakthroughSlotOpen(breakthrough, "ferocity")
         ? undefined : breakthroughEffectText(def, "ferocity"),
-      // 설명 수치는 전투가 읽는 특성 필드에서 생성해 정적 문구와 실제 효과가 갈라지지 않는다.
-      description: "[[ferocity|야성 게이지]]가 가득 차면 폭주한다. "
-        + ferocityTraitDescription(def.ferocityTrait, { attack, defense, maxHp: def.stats.hp, abilityPower }),
-    }, from);
+    });
   }
 
-  /** 읽기 전용 도감에 실제 방어력을 가정하지 않은 스킬 능력치 배율을 만든다. */
+  /** 이 창이 열고 있는 개체의 최종 정의로 공용 조립기를 부른다. */
   private skillViewModel(kindLabel: string, skill: Skill | Passive, gaugeCost?: number, slot?: SkillArtSlot): SkillInfoViewModel {
-    // 레벨·돌파·장착 룬을 모두 반영한 정의를 미리보기에 넘겨 74 같은 기본치가 성장 후에 남지 않게 한다.
-    const finalDef = this.currentDef && { ...this.currentDef, stats: relicProgression.getFinalStats(this.currentDef.id) };
-    const attacker: Combatant | undefined = finalDef && {
-      def: finalDef, hp: finalDef.stats.hp, maxHp: finalDef.stats.hp,
-      energy: 0, ferocity: 0, bondLevel: 0, ferocityFever: false,
-      breakthrough: relicProgression.getProgress(finalDef.id).breakthrough,
-    };
-    // 최대 체력 비례 보호막은 **퍼센트가 아니라 실제로 덮이는 값**으로 보여 준다. 성장한
-    // 정의를 읽으므로 레벨·룬으로 체력이 변하면 그 숫자도 함께 변한다.
-    const maxHp = attacker?.def.stats.hp;
-    const guardShield = "selfGuard" in skill && skill.selfGuard !== undefined && maxHp !== undefined
-      ? Math.round(maxHp * skill.selfGuard.shieldMaxHpPercent / 100) : undefined;
-    // 공격 속도 복합 궁극기(스피나 등)는 위력만 보는 previewSkillDamage로는 실제 한 방의
-    // 절반만 계산되므로, 상단 라벨과 본문이 같은 하나의 합산 수치를 쓰도록 먼저 따로 구한다.
-    const attackSpeedPower = "attackSpeedPower" in skill ? (skill as Ultimate).attackSpeedPower : undefined;
-    const compositeDamage = attackSpeedPower !== undefined
-      ? attackSpeedCompositeDamageKeyword(skill as Ultimate, attacker?.def.stats.atk, attacker?.def.stats.attackSpeed)
-      : undefined;
-    const preview = !compositeDamage && attacker && canPreviewSkillDamage(skill, kindLabel)
-      ? previewSkillDamage(attacker, skill as Skill) : undefined;
-    // 순환 기본 공격은 걸음마다 위력이 통째로 달라 한 수로 말할 수 없다. 걸음마다 같은
-    // 미리보기 경계를 지나 제 수치를 구하고, 본문이 그 순서 그대로 읽는다.
-    const cycle = "cycle" in skill ? (skill as BasicAttack).cycle : undefined;
-    const cycleDamage = cycle && attacker && canPreviewSkillDamage(skill, kindLabel)
-      ? cycle.map((step) => {
-        const stepPreview = previewSkillDamage(attacker, { ...(skill as Skill), power: step.power } as Skill);
-        return stepPreview.kind === "scaling" ? stepPreview.amount : 0;
-      })
-      : undefined;
-    // 덧칠 폭발 궁극기의 위력은 겹당 값이라, 상단 라벨만 겹을 다 쌓았을 때의 최대 피해를 말한다.
-    // 겹 상한은 궁극기가 아니라 그 덧칠을 만드는 기본 공격이 갖고 있으므로 거기서 읽는다.
-    const overpaintCap = finalDef?.basic.statusEffects?.find((effect) => effect.kind === "overpaint");
-    const detonationDamage = "overpaintDetonation" in skill && (skill as Ultimate).overpaintDetonation === true
-      ? overpaintDetonationDamageKeyword(preview?.kind === "scaling" ? preview.amount : undefined,
-        overpaintCap?.kind === "overpaint" ? overpaintCap.maxStacks : undefined)
-      : undefined;
-    const damageDetail = compositeDamage ?? detonationDamage ?? damageKeyword(preview);
-    // 귀속 소환수는 이름표 버튼이 아니라 **패시브 본문의 태그**로 연다. 화면 어딘가에 버튼을
-    // 따로 세우면 "누구를 부르는가"가 그 패시브를 읽는 자리와 갈라져, 같은 사실이 두 곳에 선다.
-    const summonTags = this.summonKeywordTags();
-    const shieldDetail = "kind" in skill ? passiveShieldKeyword(skill as Passive, attacker?.def.stats.atk) : undefined;
-    const allyHealingPower = "allyHealingPower" in skill ? (skill as Ultimate).allyHealingPower : undefined;
-    const healDetail = allyHealingPower !== undefined ? allyHealPowerKeyword(allyHealingPower, attacker?.def.stats.ap) : undefined;
-    const valueLabel = compositeDamage
-      ? `피해량 [[damage-value|${compositeDamage.term}]]`
-      : detonationDamage
-        ? `예상 최대 피해량 [[damage-value|${detonationDamage.term}]]`
-        : preview?.kind === "scaling"
-          ? `${preview.label} [[damage-value|${preview.amount}]]`
-          : undefined;
-    // **열린 별의 몫만 넘긴다.** 아직 뚫지 않은 단계의 효과를 쪽지에 적으면 지금 싸우는 이
+    // 레벨·돌파·장착 룬을 모두 반영한 정의를 넘겨 74 같은 기본치가 성장 후에 남지 않게 한다.
+    const def = this.currentDef!;
+    const finalDef = { ...def, stats: relicProgression.getFinalStats(def.id) };
+    const breakthrough = relicProgression.getProgress(def.id).breakthrough;
+    // **열린 돌파 등급의 몫만 넘긴다.** 아직 뚫지 않은 단계의 효과를 쪽지에 적으면 지금 싸우는 이
     // 개체가 하지 않는 일을 말하게 된다 — 무엇이 열리는지는 등급 돋보기가 여는 표가 맡는다.
-    const breakthroughEffect = this.currentDef && slot && !this.publicProfile
-      && isBreakthroughSlotOpen(relicProgression.getProgress(this.currentDef.id).breakthrough, slot)
-      ? breakthroughEffectText(this.currentDef, slot) : undefined;
-    return {
-      name: skill.name,
-      kindLabel,
-      iconAssetId: skill.iconAssetId as SkillIconAssetId,
-      breakthroughEffect,
-      // 전용 일러스트가 있으면 팝업도 같은 그림과 같은 색을 쓴다. 아이콘과 쪽지가 갈라지면
-      // 어느 스킬을 눌렀는지 되짚어야 한다.
-      art: this.currentDef && slot ? skillArtFor(this.currentDef.id, slot) : undefined,
-      tint: this.currentDef && skillArtTint(this.currentDef.element, this.currentDef.role),
-      effectType: skill.effectType,
-      valueLabel,
-      // 「세 개의 뿔」처럼 이름을 가진 주기 스택은 개체 전용 규칙어라 전역 사전이 아니라
-      // 이 스킬을 여는 자리에서만 주입한다(메테의 스타카토와 같은 자리다).
-      contextualKeywords: [
-        ...summonTags,
-        damageDetail, shieldDetail, healDetail,
-        "kind" in skill ? undefined : periodicStackKeyword(skill as Skill),
-        // 「고통의 희열」은 패시브 본문이 직접 가리키는 태그라 그 쪽지에도 함께 실린다.
-        "kind" in skill ? elationKeyword(skill as Passive) : undefined,
-        // 「인」이 덮는 막도 실제 값으로 보여 주고, 어디서 나온 수인지 눌러 읽게 한다.
-        guardShield === undefined || !("selfGuard" in skill) || skill.selfGuard === undefined ? undefined : {
-          id: "shield-value", term: String(guardShield), kind: "규칙" as const,
-          description: `현재 최대 체력에서 ${skill.selfGuard.shieldMaxHpPercent}%를 받아 계산한 보호막 수치다.`,
-        },
-      ].filter((item): item is KeywordDef => item !== undefined),
-      // 정적 문장에서 수치를 재해석하지 않고 전투 정의를 그대로 팝업에 넘긴다.
-      targeting: "targeting" in skill ? skill.targeting as Ultimate["targeting"] : undefined,
-      statusEffects: "statusEffects" in skill ? skill.statusEffects : undefined,
-      durationSeconds: "durationSeconds" in skill ? skill.durationSeconds as number : undefined,
-      recoveryPercent: "kind" in skill && skill.kind === "emergencyRecovery" && "value" in skill
-        ? skill.value as number
-        : undefined,
-      damageHealingPercent: "damageHealingPercent" in skill ? skill.damageHealingPercent as number : undefined,
-      gaugeCost,
-      // 구조화된 연격·복합 계수는 정적 설명을 복제하지 않고 키워드가 연결된 공용 문장으로 표시한다.
-      description: "kind" in skill
-        ? passiveDescription(skill as Passive, attacker?.def.stats.atk)
-        : skillDescription(skill as Skill, {
-          ap: attacker?.def.stats.ap,
-          atk: attacker && { atk: attacker.def.stats.atk, attackSpeed: attacker.def.stats.attackSpeed },
-          // 본문은 아이콘 위 라벨과 **같은** 수치를 받아 쓴다. 따로 계산하면 위아래가 갈린다.
-          damage: preview?.kind === "scaling" ? preview.amount : undefined,
-          cycleDamage,
-          maxHp,
-        }),
-    };
+    const breakthroughEffect = slot && !this.publicProfile && isBreakthroughSlotOpen(breakthrough, slot)
+      ? breakthroughEffectText(def, slot) : undefined;
+    return buildSkillViewModel({
+      def: finalDef, breakthrough, kindLabel, skill, gaugeCost, slot,
+      summonTags: this.summonKeywordTags(), breakthroughEffect,
+    });
   }
 
   /**
@@ -2279,7 +1975,6 @@ export class InfoManager {
   /** 도감은 보유 여부를 전달해 정적 기록과 성장 정보의 잠금을 한곳에서 적용한다. */
   showRelic(def: RelicDef, owned = true): void {
     this.publicProfile = undefined;
-    this.combatLine.setVisible(false);
     this.openCharacter(def, owned);
   }
 
@@ -2288,34 +1983,7 @@ export class InfoManager {
     this.publicProfile = profile;
     const def = RELICS.find((relic) => relic.id === profile.relicId);
     if (!def) throw new Error(`알 수 없는 공개 렐릭 id: ${profile.relicId}`);
-    this.combatLine.setVisible(false);
     this.openCharacter(def, true);
-  }
-
-  /**
-   * 적 하나를 연다.
-   *
-   * 친구 창과 같은 판을 쓰고 급여·돌파·유대·룬만 빠진다. 적을 위한 화면을 따로 만들지 않는
-   * 이유는, 정보창이 좋아질 때 그 화면만 옛 모습으로 남기 때문이다.
-   *
-   * `def.stats`는 이미 스테이지 레벨이 반영된 값이다(`getStageEnemies`). 창이 레벨 보정을
-   * 다시 하지 않아야 지도·편성·전투가 같은 수치를 보여 준다.
-   */
-  showEnemy(def: RelicDef, options: { level?: number; live?: Fighter } = {}): void {
-    // 보스도 호출자가 지정한 표시 레벨을 공개 프로필에 보존하며 일반 적의 기본 LV.1은 유지한다.
-    this.publicProfile = {
-      relicId: def.id,
-      level: options.level ?? 1,
-      stars: 0,
-      stats: { ...def.stats },
-      skillIds: [def.passive.id, def.basic.id, def.ultimate.id],
-    };
-    this.openCharacter(def, true);
-    const live = options.live;
-    this.combatLine.setVisible(this.capabilities.showRuntimeCombat && live !== undefined);
-    if (!live) return;
-    const ailment = live.bleed ? `출혈 ${Math.ceil(live.bleed.remaining)}초` : "상태이상 없음";
-    this.combatLine.setText(`HP ${Math.ceil(live.hp)} / ${live.maxHp}   ·   궁극 ${Math.round(live.energy)}   ·   야성 ${Math.round(live.ferocity)}   ·   ${ailment}`);
   }
 
   /** 정적 렐릭 정의만 받아 읽기 전용 상세 화면의 상태를 교체한다. */
@@ -2387,17 +2055,17 @@ export class InfoManager {
   }
 
   /**
-   * 별은 다섯 칸이 아니라 로마자 한 글자다. 모양과 색은 `rarityMark.ts`가 정한다.
+   * 돌파 등급은 다섯 칸이 아니라 로마자 한 글자다. 모양과 색은 `rarityMark.ts`가 정한다.
    *
    * 세는 것은 희귀도가 아니라 한계 돌파 단계다. 친구·적처럼 공개 프로필로 여는 창은 그쪽이
-   * 알려 준 별을 그대로 쓰고, 값이 없으면 모든 개체의 시작인 별 하나로 본다.
+   * 알려 준 등급을 그대로 쓰고, 값이 없으면 모든 개체의 시작인 1등급으로 본다.
    */
   private paintStars(def: RelicDef): void {
-    this.starRow.removeAll(true);
-    const stars = this.publicProfile
-      ? Math.max(1, this.publicProfile.stars)
-      : relicStars(relicProgression.getProgress(def.id).breakthrough);
-    addStarMark(this.scene, this.starRow, 0, 0, STAR_SIZE * 2, stars);
+    this.gradeRow.removeAll(true);
+    const grade = this.publicProfile
+      ? Math.max(1, this.publicProfile.breakthroughGrade)
+      : breakthroughGrade(relicProgression.getProgress(def.id).breakthrough);
+    addBreakthroughGradeMark(this.scene, this.gradeRow, 0, 0, GRADE_MARK_SIZE * 2, grade);
   }
 
   /** 레벨·경험치·유대·능력치·젬을 지금 상태로 다시 칠한다. */
@@ -2547,4 +2215,433 @@ function runeSpot(size: number, index: number): { x: number; y: number } {
   const radius = size * 0.3;
   const rad = Phaser.Math.DegToRad(midDegrees);
   return { x: Math.cos(rad) * radius, y: Math.sin(rad) * radius };
+}
+
+/**
+ * 스킬 쪽지 한 장의 표시 계약을 **정의에서 조립한다.**
+ *
+ * 정보창(아군·친구)과 적 전용 팝업이 같은 함수를 쓴다 — 화면마다 따로 만들면 같은 궁극기가
+ * 어디서는 실제 피해로, 어디서는 위력 %로 적히고 돌파로 붙은 줄이 한쪽에만 선다.
+ * `def`는 **이미 최종 능력치가 반영된 정의**여야 한다(레벨·돌파·룬 또는 스테이지 성장).
+ */
+export function buildSkillViewModel(options: {
+def: RelicDef;
+breakthrough: number;
+kindLabel: string;
+skill: Skill | Passive;
+gaugeCost?: number;
+slot?: SkillArtSlot;
+/** 지휘자의 귀속 소환수 설명. 감추는 문맥(미보유 도감)은 빈 배열을 넘긴다. */
+summonTags?: readonly KeywordDef[];
+/** 한계 돌파로 이 슬롯에 붙은 효과를 노란 줄로 함께 세울지. 열린 돌파 등급의 몫만 넘긴다. */
+breakthroughEffect?: string;
+}): SkillInfoViewModel {
+const { def: finalDef, kindLabel, skill, gaugeCost, slot, breakthroughEffect } = options;
+  const attacker: Combatant | undefined = finalDef && {
+    def: finalDef, hp: finalDef.stats.hp, maxHp: finalDef.stats.hp,
+    energy: 0, ferocity: 0, bondLevel: 0, ferocityFever: false,
+    breakthrough: options.breakthrough,
+  };
+  // 최대 체력 비례 보호막은 **퍼센트가 아니라 실제로 덮이는 값**으로 보여 준다. 성장한
+  // 정의를 읽으므로 레벨·룬으로 체력이 변하면 그 숫자도 함께 변한다.
+  const maxHp = attacker?.def.stats.hp;
+  const guardShield = "selfGuard" in skill && skill.selfGuard !== undefined && maxHp !== undefined
+    ? Math.round(maxHp * skill.selfGuard.shieldMaxHpPercent / 100) : undefined;
+  // 공격 속도 복합 궁극기(스피나 등)는 위력만 보는 previewSkillDamage로는 실제 한 방의
+  // 절반만 계산되므로, 상단 라벨과 본문이 같은 하나의 합산 수치를 쓰도록 먼저 따로 구한다.
+  const attackSpeedPower = "attackSpeedPower" in skill ? (skill as Ultimate).attackSpeedPower : undefined;
+  const compositeDamage = attackSpeedPower !== undefined
+    ? attackSpeedCompositeDamageKeyword(skill as Ultimate, attacker?.def.stats.atk, attacker?.def.stats.attackSpeed)
+    : undefined;
+  const preview = !compositeDamage && attacker && canPreviewSkillDamage(skill, kindLabel)
+    ? previewSkillDamage(attacker, skill as Skill) : undefined;
+  // 순환 기본 공격은 걸음마다 위력이 통째로 달라 한 수로 말할 수 없다. 걸음마다 같은
+  // 미리보기 경계를 지나 제 수치를 구하고, 본문이 그 순서 그대로 읽는다.
+  const cycle = "cycle" in skill ? (skill as BasicAttack).cycle : undefined;
+  const cycleDamage = cycle && attacker && canPreviewSkillDamage(skill, kindLabel)
+    ? cycle.map((step) => {
+      const stepPreview = previewSkillDamage(attacker, { ...(skill as Skill), power: step.power } as Skill);
+      return stepPreview.kind === "scaling" ? stepPreview.amount : 0;
+    })
+    : undefined;
+  // 덧칠 폭발 궁극기의 위력은 겹당 값이라, 상단 라벨만 겹을 다 쌓았을 때의 최대 피해를 말한다.
+  // 겹 상한은 궁극기가 아니라 그 덧칠을 만드는 기본 공격이 갖고 있으므로 거기서 읽는다.
+  const overpaintCap = finalDef?.basic.statusEffects?.find((effect) => effect.kind === "overpaint");
+  const detonationDamage = "overpaintDetonation" in skill && (skill as Ultimate).overpaintDetonation === true
+    ? overpaintDetonationDamageKeyword(preview?.kind === "scaling" ? preview.amount : undefined,
+      overpaintCap?.kind === "overpaint" ? overpaintCap.maxStacks : undefined)
+    : undefined;
+  const damageDetail = compositeDamage ?? detonationDamage ?? damageKeyword(preview);
+  // 귀속 소환수는 이름표 버튼이 아니라 **패시브 본문의 태그**로 연다. 화면 어딘가에 버튼을
+  // 따로 세우면 "누구를 부르는가"가 그 패시브를 읽는 자리와 갈라져, 같은 사실이 두 곳에 선다.
+  const summonTags = options.summonTags ?? [];
+  const shieldDetail = "kind" in skill ? passiveShieldKeyword(skill as Passive, attacker?.def.stats.atk) : undefined;
+  const allyHealingPower = "allyHealingPower" in skill ? (skill as Ultimate).allyHealingPower : undefined;
+  const healDetail = allyHealingPower !== undefined ? allyHealPowerKeyword(allyHealingPower, attacker?.def.stats.ap) : undefined;
+  const valueLabel = compositeDamage
+    ? `피해량 [[damage-value|${compositeDamage.term}]]`
+    : detonationDamage
+      ? `예상 최대 피해량 [[damage-value|${detonationDamage.term}]]`
+      : preview?.kind === "scaling"
+        ? `${preview.label} [[damage-value|${preview.amount}]]`
+        : undefined;
+  return {
+    name: skill.name,
+    kindLabel,
+    iconAssetId: skill.iconAssetId as SkillIconAssetId,
+    breakthroughEffect,
+    // 전용 일러스트가 있으면 팝업도 같은 그림과 같은 색을 쓴다. 아이콘과 쪽지가 갈라지면
+    // 어느 스킬을 눌렀는지 되짚어야 한다.
+    art: slot ? skillArtFor(finalDef.id, slot) : undefined,
+    tint: skillArtTint(finalDef.element, finalDef.role),
+    effectType: skill.effectType,
+    valueLabel,
+    // 「세 개의 뿔」처럼 이름을 가진 주기 스택은 개체 전용 규칙어라 전역 사전이 아니라
+    // 이 스킬을 여는 자리에서만 주입한다(메테의 스타카토와 같은 자리다).
+    contextualKeywords: [
+      ...summonTags,
+      damageDetail, shieldDetail, healDetail,
+      "kind" in skill ? undefined : periodicStackKeyword(skill as Skill),
+      // 「고통의 희열」은 패시브 본문이 직접 가리키는 태그라 그 쪽지에도 함께 실린다.
+      "kind" in skill ? elationKeyword(skill as Passive) : undefined,
+      // 「인」이 덮는 막도 실제 값으로 보여 주고, 어디서 나온 수인지 눌러 읽게 한다.
+      guardShield === undefined || !("selfGuard" in skill) || skill.selfGuard === undefined ? undefined : {
+        id: "shield-value", term: String(guardShield), kind: "규칙" as const,
+        description: `현재 최대 체력에서 ${skill.selfGuard.shieldMaxHpPercent}%를 받아 계산한 보호막 수치다.`,
+      },
+    ].filter((item): item is KeywordDef => item !== undefined),
+    // 정적 문장에서 수치를 재해석하지 않고 전투 정의를 그대로 팝업에 넘긴다.
+    targeting: "targeting" in skill ? skill.targeting as Ultimate["targeting"] : undefined,
+    statusEffects: "statusEffects" in skill ? skill.statusEffects : undefined,
+    durationSeconds: "durationSeconds" in skill ? skill.durationSeconds as number : undefined,
+    recoveryPercent: "kind" in skill && skill.kind === "emergencyRecovery" && "value" in skill
+      ? skill.value as number
+      : undefined,
+    damageHealingPercent: "damageHealingPercent" in skill ? skill.damageHealingPercent as number : undefined,
+    gaugeCost,
+    // 구조화된 연격·복합 계수는 정적 설명을 복제하지 않고 키워드가 연결된 공용 문장으로 표시한다.
+    description: "kind" in skill
+      ? passiveDescription(skill as Passive, attacker?.def.stats.atk)
+      : skillDescription(skill as Skill, {
+        ap: attacker?.def.stats.ap,
+        atk: attacker && { atk: attacker.def.stats.atk, attackSpeed: attacker.def.stats.attackSpeed },
+        // 본문은 아이콘 위 라벨과 **같은** 수치를 받아 쓴다. 따로 계산하면 위아래가 갈린다.
+        damage: preview?.kind === "scaling" ? preview.amount : undefined,
+        cycleDamage,
+        maxHp,
+      }),
+  };
+}
+
+/**
+ * 개체별 폭주 발현 쪽지. 야성 규칙 자체는 강조된 말을 눌러 다시 열 수 있다.
+ *
+ * 정보창과 적 팝업이 같은 함수를 쓴다 — `def`는 **이미 최종 능력치가 반영된 정의**이며,
+ * 수치는 그 정의에서만 나온다(화면이 레벨 보정을 다시 하지 않는다).
+ */
+export function openFerocityTraitPopup(
+  scene: Phaser.Scene,
+  popups: PopupLayer,
+  keywords: KeywordManager,
+  def: RelicDef,
+  from: PopupSource,
+  options: { breakthroughEffect?: string } = {},
+): void {
+  // 피해 수치가 있는 폭주만 현재 능력치로 환산한다. 토리카의 새 탱커 계약은 자체 실제값을 그대로 보여 준다.
+  const { atk: attack, def: defense, ap: abilityPower } = def.stats;
+  const defensePercent = def.ferocityTrait.effectId === "splashDamage" ? def.ferocityTrait.defenseDamagePercent : undefined;
+  const attackPercent = def.ferocityTrait.effectId === "crescendoStaccato" ? def.ferocityTrait.damagePercent : undefined;
+  // 남아 있는 공격형 폭주 추가 피해도 일반 스킬과 같은 수치 링크를 써서 별도 팝업을 만들지 않는다.
+  const convertedDamage = defensePercent !== undefined ? Math.round(defense * defensePercent / 100)
+    : attackPercent !== undefined ? Math.round(attack * attackPercent / 100)
+    : undefined;
+  const damageSourceLabel = defensePercent !== undefined ? "방어력" : "공격력";
+  const contextualKeywords: KeywordDef[] = [];
+  // 금강불괴가 덮는 막도 퍼센트가 아니라 실제로 덮이는 값으로 보여 준다.
+  if (def.ferocityTrait.effectId === "adamantBody") contextualKeywords.push({
+    id: "shield-value", term: String(Math.round(def.stats.hp * def.ferocityTrait.shieldMaxHpPercent / 100)), kind: "규칙",
+    description: `현재 최대 체력에서 ${def.ferocityTrait.shieldMaxHpPercent}%를 받아 계산한 보호막 수치다.`,
+  });
+  if (convertedDamage !== undefined) contextualKeywords.push({
+    id: "damage-value", term: String(convertedDamage), kind: "규칙",
+    description: `현재 ${damageSourceLabel}에서 ${defensePercent ?? attackPercent}%를 받아 계산한 추가 피해 수치다.`,
+  });
+  // 메테의 스타카토 추가타는 기본 공격과 같은 효과를 다시 부르는 것이므로 그 뜻을 여기서 짧게 설명한다.
+  if (def.ferocityTrait.effectId === "crescendoStaccato") contextualKeywords.push({
+    id: "mette-staccato", term: "스타카토", kind: "규칙",
+    description: "메테의 [[basic-attack|기본 공격]]과 같은 마법 추가타다. 적중한 대상을 [[stagger|경직]]시킨다.",
+  });
+  // 폭주도 패시브와 같은 정형 상세창을 사용한다. 별도 제목 레이어 없이 아이콘 옆에서
+  // 스킬 종류·이름·발현 유형을 한 번에 읽게 한다.
+  openSkillPopup(scene, popups, keywords, {
+    name: def.ferocityTrait.name,
+    kindLabel: "폭주",
+    iconAssetId: "skill-icon-buff",
+    art: skillArtFor(def.id, "ferocity"),
+    tint: skillArtTint(def.element, def.role),
+    effectType: "buff",
+    valueLabel: "야성 발현",
+    contextualKeywords: contextualKeywords.length > 0 ? contextualKeywords : undefined,
+    // 폭주도 돌파가 효과를 붙이는 슬롯이라 같은 노란 줄을 얻는다. 열렸는지는 부르는 쪽이 안다.
+    breakthroughEffect: options.breakthroughEffect,
+    // 설명 수치는 전투가 읽는 특성 필드에서 생성해 정적 문구와 실제 효과가 갈라지지 않는다.
+    description: "[[ferocity|야성 게이지]]가 가득 차면 폭주한다. "
+      + ferocityTraitDescription(def.ferocityTrait, { attack, defense, maxHp: def.stats.hp, abilityPower }),
+  }, from);
+}
+
+/**
+ * 그 슬롯의 공용 대체 아이콘. 전용 일러스트가 없는 개체가 빈 액자로 서지 않게 한다.
+ */
+export function slotFallbackIcon(def: RelicDef, slot: SkillArtSlot): string | undefined {
+  if (slot === "basic") return def.basic.iconAssetId;
+  if (slot === "ultimate") return def.ultimate.iconAssetId;
+  if (slot === "passive") return def.passive.iconAssetId;
+  return undefined;
+}
+
+/**
+ * 더 볼 것이 있다는 표시 — 정보창과 적 팝업이 같은 한 장을 쓴다.
+ *
+ * 자리는 늘 판의 오른쪽 끝 안쪽이다. 끝에 붙어야 "이 칸에 딸린 것"으로 읽히고, 안쪽으로
+ * 조금 들여야 기울어진 변에 걸치지 않는다. 작고 흐린 회색인 것은 이것이 "더 있다"는 힌트일
+ * 뿐이기 때문이고, 작아진 만큼 선만 굵게 준다.
+ */
+export function addInfoMagnifier(
+  scene: Phaser.Scene,
+  popups: PopupLayer,
+  parent: Phaser.GameObjects.Container,
+  x: number,
+  y: number,
+  onClick: (from: PopupSource) => void,
+  /** 기울어진 칸 안에 넣을 때는 칸의 국소 좌표로 옮겨 함께 기울게 한다. */
+  intoPanel = false,
+): void {
+  const container = scene.add.container(x, y);
+  container.add(drawGlyph(scene, "magnifier", 0, 0, 30, 0xb9c0ca, 0.42, 4));
+  const hit = scene.add.rectangle(x, y, 78, 78, 0xffffff, 0).setInteractive({ useHandCursor: true });
+  hit.on("pointerdown", () => container.setScale(1.15));
+  hit.on("pointerout", () => { if (!popups.isOpen) container.setScale(1); });
+  hit.on("pointerup", () => {
+    container.setScale(1.15);
+    onClick({ x, y: y - 26, onClose: () => container.setScale(1) });
+  });
+  if (intoPanel) attach(parent, container, hit);
+  else parent.add([container, hit]);
+}
+
+/**
+ * 오른쪽 기둥의 칸 하나 — 정보창과 적 팝업이 같은 모양을 쓴다.
+ *
+ * 판만 기울고 그 위의 글자와 칩이 반듯하면 종이를 얹어 둔 것처럼 어긋난다. 그래서 판을
+ * 돌려주고, 칸의 내용물은 전부 이 컨테이너 **안에** 넣어 같은 각도로 함께 기운다.
+ */
+export function addInfoPanel(
+  scene: Phaser.Scene,
+  parent: Phaser.GameObjects.Container,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+): Phaser.GameObjects.Container {
+  const panel = scene.add.container(x, y).setRotation(Phaser.Math.DegToRad(PANEL_TILT));
+  // 좁아지는 양을 비율이 아니라 픽셀로 고정한다. 비율로 두면 높은 판이 더 많이 좁아져
+  // 판마다 변의 기울기가 달라지고, 네 장이 저마다 다른 방향으로 노는 것처럼 보인다.
+  const shape = perspectiveRect(width, height, { tall: "right", taper: (2 * PANEL_TAPER) / height });
+  panel.add(drawLayer(scene, 0, 0, shape, { fill: 0x0b0f15, alpha: 0.6, edge: COLOR.accent, edgeAlpha: 0.4 }));
+  panel.add(drawShapeEdge(scene, 0, 0, shape, "bottom", { color: COLOR.accent, alpha: 0.22, inset: 10 }));
+  parent.add(panel);
+  return panel;
+}
+
+/** 정보창 구석의 SD 받침 — 타원 두 겹과 얇은 선, 그리고 이름표 한 줄. */
+export function addInfoFigureStand(scene: Phaser.Scene, parent: Phaser.GameObjects.Container, x: number, y: number): void {
+  parent.add(scene.add.ellipse(x, y + 6, 206, 52, COLOR.void, 0.55));
+  parent.add(scene.add.ellipse(x, y, 192, 44, 0x141920, 0.92));
+  parent.add(drawHairline(scene, x, y - 20, 172, { color: COLOR.accent, alpha: 0.4 }));
+  parent.add(scene.add.text(x, y + 32, "IN-GAME SD", textStyle({ role: "body", size: 17, color: COLOR.inkDim })).setOrigin(0.5, 0));
+}
+
+export function openBreakthroughStepsPopup(
+scene: Phaser.Scene,
+popups: PopupLayer,
+def: RelicDef,
+grade: number,
+): void {
+const layout = breakthroughStepsLayout(BREAKTHROUGH_STEPS.length);
+  // **돋보기 자리에 붙이지 않고 화면 가운데에 선다.** 네 줄이 저마다 설명을 이고 있어 판이
+  // 길어지는데, 돋보기에 붙이면 그 판이 화면 한쪽으로 쏠려 위나 아래가 잘린다.
+popups.open({
+    width: BREAK_STEPS.width,
+    height: layout.height,
+    y: BREAK_STEPS.centerY,
+    title: "한계 돌파",
+    titleSize: POPUP_TITLE_SIZE.workboard,
+    dim: true,
+    backButton: true,
+  }, (body) => {
+    const top = -layout.height / 2;
+    BREAKTHROUGH_STEPS.forEach((entry, index) => {
+      // 돌파 한 번이 등급 하나다. 표의 첫 줄이 곧 "II로 가는 길"이다.
+      const rowGrade = index + 2;
+      const y = top + layout.rows[index];
+      const reached = grade >= rowGrade;
+      // 열린 줄과 안 열린 줄을 **밝기가 아니라 결**로 가른다(`BREAK_STEPS.tone` 주석 참고).
+      // 등급 하나로 시작하는 개체는 네 줄이 모두 안 열린 줄이라, 어둡게 누르면 이 창을 처음
+      // 여는 사람이 캄캄한 판 넷을 본다.
+      const tone = reached ? BREAK_STEPS.tone.reached : BREAK_STEPS.tone.locked;
+      body.add(drawLayer(scene, 0, y, slantedRect(layout.rowWidth, BREAK_STEPS.row.height, 16), {
+        fill: tone.fill,
+        alpha: tone.alpha,
+        edge: COLOR.accent,
+        edgeAlpha: tone.edgeAlpha,
+      }));
+      const mark = scene.add.container(BREAK_STEPS.gradeMark.x, y);
+      addBreakthroughGradeMark(scene, mark, 0, 0, BREAK_STEPS.gradeMark.size, rowGrade);
+      // "어디까지 왔는가"는 돌파 등급 표식이 맡는다 — 글과 그림을 누르지 않는 대신 이 표식만 흐려진다.
+      mark.setAlpha(tone.gradeMark);
+      body.add(mark);
+      // **어느 기술이 열리는지는 그 기술의 액자가 말한다.** 정보창 아래 네 칸과 같은 프리팹을
+      // 써서 같은 그림·같은 이름으로 서므로, 표를 읽다가 "이게 뭐였지"로 돌아가지 않는다.
+      const icon = addSkillIconFrame(scene, {
+        size: BREAK_STEPS.icon.size,
+        slot: entry.slot,
+        relicId: def.id,
+        fallbackIcon: slotFallbackIcon(def, entry.slot),
+        element: def.element,
+        role: def.role,
+        label: SKILL_SLOT_LABEL[entry.slot],
+        // 액자는 그 줄의 주제라 안 열린 줄에서도 어느 기술인지 알아볼 수 있어야 한다.
+        dimAlpha: reached ? undefined : BREAK_STEPS.lockedIconAlpha,
+      });
+      icon.setPosition(BREAK_STEPS.icon.x, y);
+      body.add(icon);
+      // 열리는 것은 **이 개체의** 효과다. 문구는 정의에서 조립하므로 화면이 따로 적지 않고,
+      // 아직 설계하지 않은 개체는 어느 슬롯이 열리는지만 말한다.
+      const opens = breakthroughEffectText(def, entry.slot) ?? BREAKTHROUGH_SLOT_LABEL[entry.slot];
+      body.add(scene.add
+        .text(BREAK_STEPS.textX, y, opens, textStyle({ role: "body", size: BREAK_STEPS.textSize, color: COLOR.ink, wrap: layout.textWrap, lineSpacing: 8 }))
+        .setOrigin(0, 0.5));
+    });
+  });
+}
+
+/** 그 슬롯의 공용 효과 아이콘. 전용 아트가 없는 개체도 액자가 빈 칸으로 남지 않게 한다. */
+
+export function openExtraStatsPopup(
+scene: Phaser.Scene,
+popups: PopupLayer,
+def: RelicDef,
+stats: Stats,
+from: PopupSource,
+): void {
+  // 판은 글자가 들어가는 만큼만 넓다. 남는 여백은 읽는 데 도움이 되지 않고 뒤 화면만 가린다.
+  const width = 700;
+  const edge = width / 2 - 34;
+  const height = 1150;
+  // 이 창만 **누른 자리에 붙지 않고 화면 가운데에 선다.** 열두 줄이 쌓인 성적표라 돋보기에
+  // 매달면 판이 통째로 아래로 밀려 마지막 줄이 화면 밑변에 붙는다(v0.58.0까지 그랬다) —
+  // 손이 닿기도 읽기도 어려운 자리다. 관찰 기록판과 같은 이유로 자리를 고정한다.
+popups.open({
+    width, height, title: "능력치 상세", tilt: -1.2,
+    x: BASE_WIDTH / 2, y: EXTRA_STATS_POPUP_Y, onClose: from.onClose,
+  }, (body) => {
+    // 칸에는 오각형이 서 있으므로 여기서는 **숫자**를 맡는다. 총 전투력이 먼저 오고, 다섯
+    // 축의 정확한 값과 기본값 대비 상승분, 그 아래에 오각형에 없는 세부 수치가 온다.
+    const top = -height / 2;
+    // 총 전투력은 판때기 없이 맨 글자로 선다. 이 창에서 가장 굵고 큰 수라 판을 깔지 않아도
+    // 저절로 맨 앞에 읽히고, 판을 깔면 아래 목록과 다른 종류의 값처럼 보인다.
+    body.add(scene.add.text(-edge, top + 100, "전투력", textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5));
+    body.add(
+      scene.add
+        .text(edge, top + 100, combatPower(stats).toLocaleString(), textStyle({ role: "display", size: 52 }))
+        .setOrigin(1, 0.5)
+        .setScale(1, 1.12)
+        .setShadow(3, 6, "#05070a", 8, false, true),
+    );
+    body.add(drawHairline(scene, 0, top + 142, width - 68, { color: COLOR.accent, alpha: 0.3 }));
+    STAT_CHIPS.forEach((chip, index) => {
+      const y = top + 204 + index * 84;
+      const base = def.stats[chip.key];
+      const gain = stats[chip.key] - base;
+      // 칸의 축 이름과 같은 색이라 그래프에서 본 축을 그대로 따라 읽는다.
+      body.add(scene.add.text(-edge, y, chip.label, textStyle({ role: "display", size: 30, color: `#${chip.color.toString(16).padStart(6, "0")}` })).setOrigin(0, 0.5));
+      body.add(scene.add.text(edge, y - 12, stats[chip.key].toLocaleString(), textStyle({ role: "display", size: 36 })).setOrigin(1, 0.5));
+      const detail = gain > 0 ? `기본 ${base.toLocaleString()}   +${gain.toLocaleString()}` : `기본 ${base.toLocaleString()}`;
+      const detailStyle = gain > 0
+        ? textStyle({ role: "body", size: 21, color: COLOR.accentText })
+        : textStyle({ role: "body", size: 21, color: COLOR.inkDim });
+      body.add(scene.add.text(edge, y + 22, detail, detailStyle).setOrigin(1, 0.5));
+      body.add(drawHairline(scene, 0, y + 42, width - 68, { color: COLOR.accent, alpha: 0.14 }));
+    });
+    // 사거리는 오각형에 없는 축이라 다섯 줄 **아래**에 한 줄로 붙는다. 값이 아니라 단계라
+    // 기본값 대비 상승분이 없고, 단계 자체를 색이 말한다(근거리 붉은색·중거리 푸른색·원거리 노란색).
+    const reachY = top + 204 + STAT_CHIPS.length * 84;
+    const reachHex = reachToneHex(def.reachTier);
+    body.add(scene.add.text(-edge, reachY, "사거리", textStyle({ role: "display", size: 30, color: reachHex })).setOrigin(0, 0.5));
+    body.add(scene.add.text(edge, reachY, REACH_LABEL[def.reachTier], textStyle({ role: "display", size: 36, color: reachHex })).setOrigin(1, 0.5));
+    body.add(drawHairline(scene, 0, reachY + 42, width - 68, { color: COLOR.accent, alpha: 0.14 }));
+    body.add(
+      scene.add
+        .text(-edge, top + 700, "세부 능력치", textStyle({ role: "emphasis", size: 26, color: COLOR.accentText }))
+        .setOrigin(0, 0),
+    );
+    EXTRA_STATS.forEach((row, index) => {
+      const y = top + 772 + index * 76;
+      body.add(scene.add.text(-edge, y, row.label, textStyle({ role: "body", size: 28, color: COLOR.inkDim })).setOrigin(0, 0.5));
+      body.add(scene.add.text(edge, y, stats[row.key].toLocaleString() + (row.suffix ?? ""), textStyle({ role: "display", size: 33 })).setOrigin(1, 0.5));
+      if (index < EXTRA_STATS.length - 1) body.add(drawHairline(scene, 0, y + 38, width - 68, { color: COLOR.accent, alpha: 0.14 }));
+    });
+  });
+}
+
+/**
+ * 패시브 아이콘 위에 붙는 야성(피버) 뱃지 — 정보창과 적 팝업이 같은 한 장을 쓴다.
+ *
+ * 야성은 모든 개체가 공유하는 규칙이지만 어떻게 터지는지는 개체마다 다르다. 그 차이만
+ * 이름 두 글자로 알리고, 자세한 것은 눌렀을 때 그 위에 뜨는 쪽지가 맡는다.
+ */
+export function addInfoFerocityBadge(
+scene: Phaser.Scene,
+popups: PopupLayer,
+parent: Phaser.GameObjects.Container,
+x: number,
+y: number,
+def: RelicDef,
+onOpen: (from: PopupSource) => void,
+): Phaser.GameObjects.Container {
+  // 스킬 아이콘의 자식으로 두면 아이콘을 눌러 커질 때 뱃지까지 함께 커져, 패시브를 눌렀는데
+  // 야성까지 눌린 것처럼 보인다. 자리만 아이콘 위로 잡고 층은 따로 세운다.
+  // 스킬 아이콘(150)보다는 작게 두되, 그림이 무엇인지 알아볼 만큼은 키운다. 너무 작으면
+  // 폭주 일러스트가 점처럼 뭉갠다.
+  const badgeSize = 96;
+  const badge = scene.add.container(x, y);
+  const shape = chipPoints(badgeSize, badgeSize, {
+    bevel: { topLeft: badgeSize * 0.34, topRight: 0, bottomRight: badgeSize * 0.34, bottomLeft: 0 },
+  });
+  badge.add(drawLayer(scene, 0, 0, shape, { fill: FEROCITY_BADGE, alpha: 1, edge: 0xf0a58a, edgeAlpha: 0.8, glow: { color: 0x8f3a2a, strength: 0.35, height: 0.6 } }));
+  badge.add(drawInnerVignette(scene, 0, 0, shape, { strength: 0.4 }));
+  // 폭주도 스킬 넷 중 하나라 전용 일러스트를 쓴다. 다만 붉은 판 위에서는 속성 색을 그대로
+  // 얹으면 판에 묻히므로, 여기서만 야성의 살구빛을 쓴다 — 이 뱃지는 개체 구분이 아니라
+  // "야성이 이렇게 터진다"를 알리는 자리이기 때문이다.
+  const art = skillArtFor(def.id, "ferocity");
+  if (art) {
+    badge.add(scene.add.image(0, -13, art).setDisplaySize(badgeSize * 0.64, badgeSize * 0.64).setTint(0xffd9c4));
+  } else {
+    badge.add(drawGlyph(scene, "ferocity", 0, -13, badgeSize * 0.46, 0xffd9c4));
+  }
+  // 스킬 액자와 같은 방식으로 이름을 안쪽 아래에 단다. 셋과 나란히 읽히려면 이름이 있어야 한다.
+  badge.add(scene.add.text(0, badgeSize / 2 - 23, "폭주", textStyle({ role: "display", size: 19, color: "#ffd9c4" })).setOrigin(0.5));
+  // 입력 영역도 뱃지 크기에 딱 맞춘다. 넓게 잡으면 아래 아이콘의 터치를 가로챈다.
+  const hit = scene.add.rectangle(0, 0, badgeSize, badgeSize, 0xffffff, 0).setInteractive({ useHandCursor: true });
+  hit.on("pointerdown", () => badge.setScale(1.1));
+  hit.on("pointerout", () => { if (!popups.isOpen) badge.setScale(1); });
+  hit.on("pointerup", () => {
+    badge.setScale(1.1);
+    onOpen({ x, y: y - badgeSize / 2 - 12, onClose: () => badge.setScale(1) });
+  });
+  badge.add(drawShapeOutline(scene, 0, 0, shape, { color: 0xf0a58a, alpha: 0.65, width: 3 }));
+  badge.add(hit);
+  parent.add(badge);
+  return badge;
 }

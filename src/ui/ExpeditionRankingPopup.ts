@@ -8,7 +8,7 @@ import { FaceFrame } from "./FaceFrame";
 import { POPUP_TITLE_SIZE, type PopupLayer } from "./PopupLayer";
 import { addPopupBackgroundImage, BACKGROUND } from "./backgrounds";
 import { chipPoints, drawFrameVignette, drawLayer, HOLO } from "./holo";
-import { POPUP_BODY_BEVEL_RATIO } from "./popupGeometry";
+import { popupArtShape, popupBodyShapeMask } from "./popupArt";
 import {
   RANKING_LIST, RANKING_VISIBLE_RANKS, placeholderRankingEntries, rankedLeaderboard, rankingMedal,
   rankingRowY, rankingScrollMetrics,
@@ -41,7 +41,7 @@ export class ExpeditionRankingPopup {
       addPopupBackgroundImage(this.scene, body, BACKGROUND.expeditionField, { x: 0, y: 0, width, height, maskShape: shape, imageAlpha: 0.12, overlayStrength: 0 });
       // 가장자리를 안쪽으로 살짝 눌러 원화가 판 테두리에서 끊기지 않고 가라앉게 한다. 줄여 가며
       // 두르는 옛 비네트는 가로세로 비율이 다른 판에서 검은 잔상을 남기므로 쓰지 않는다.
-      body.add(drawFrameVignette(this.scene, 0, 0, width, height, { strength: 0.5, spread: 0.18 }).setMask(this.shapeMaskFor(body, shape)));
+      body.add(drawFrameVignette(this.scene, 0, 0, width, height, { strength: 0.5, spread: 0.18 }).setMask(popupBodyShapeMask(this.scene, body, shape)));
       void this.refresh();
     });
   }
@@ -159,26 +159,7 @@ export class ExpeditionRankingPopup {
     this.content?.add(new Button(this.scene, 0, 90, { width: 280, height: 76, label: "새로고침", onClick: () => void this.refresh() }));
   }
 
-  /**
-   * 판과 같은 실루엣의 마스크. **렌더 직전마다 월드 좌표를 다시 맞춘다.**
-   *
-   * 팝업은 열릴 때 0.96에서 1로 커지며 떠오르는데, 그 순간의 행렬로 한 번만 만들면 마스크가
-   * 4% 작은 채로 굳어 원화 가장자리가 잘린다. 판이 사라질 때 함께 거둔다.
-   */
-  private shapeMaskFor(body: Phaser.GameObjects.Container, shape: readonly number[]): Phaser.Display.Masks.GeometryMask {
-    const graphics = this.scene.make.graphics({});
-    const sync = (): void => {
-      if (!body.active || !graphics.active) return;
-      graphics.clear().fillStyle(0xffffff, 1).fillPoints(bodyPoints(body, shape), true);
-    };
-    this.scene.events.on(Phaser.Scenes.Events.PRE_RENDER, sync);
-    sync();
-    body.once(Phaser.GameObjects.Events.DESTROY, () => {
-      this.scene.events.off(Phaser.Scenes.Events.PRE_RENDER, sync);
-      graphics.destroy();
-    });
-    return graphics.createGeometryMask();
-  }
+
 
   /** 마스크는 표시 목록 밖에 있으므로 목록을 갈아 끼울 때 함께 지운다. */
   private destroyListMask(): void {
@@ -195,18 +176,3 @@ export class ExpeditionRankingPopup {
 }
 
 /** 팝업 몸판과 **같은 실루엣**. 값이 두 곳에 있으면 한쪽만 고쳐 그림이 판 밖으로 나간다. */
-function popupArtShape(width: number, height: number): number[] {
-  const unit = Math.min(width, height) * POPUP_BODY_BEVEL_RATIO;
-  return chipPoints(width, height, { bevel: { topLeft: unit, topRight: 0, bottomRight: unit, bottomLeft: 0 } });
-}
-
-/** 로컬 도형을 지금의 월드 좌표로 옮긴다. 비네트 마스크도 원화와 같은 실루엣을 쓴다. */
-function bodyPoints(body: Phaser.GameObjects.Container, shape: readonly number[]): Phaser.Geom.Point[] {
-  const matrix = body.getWorldTransformMatrix();
-  const points: Phaser.Geom.Point[] = [];
-  for (let index = 0; index < shape.length; index += 2) {
-    const point = matrix.transformPoint(shape[index], shape[index + 1]);
-    points.push(new Phaser.Geom.Point(point.x, point.y));
-  }
-  return points;
-}

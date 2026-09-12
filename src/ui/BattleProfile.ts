@@ -35,7 +35,7 @@ interface BuffChipView { container: BattleBuffChip; slot: number }
 export interface BattleProfileOptions {
   relic: RelicDef;
   level: number;
-  stars: number;
+  breakthroughGrade: number;
   currentHp: number;
   maxHp: number;
   ferocity: number;
@@ -80,7 +80,7 @@ export class BattleProfile extends Phaser.GameObjects.Container {
     this.card = new PortraitCard(scene, 0, 0, {
       width: L.cardWidth, height: L.cardHeight, relicId: options.relic.id,
       label: options.relic.name, level: options.level,
-      sub: options.sub, rarity: options.relic.rarity, stars: options.stars,
+      sub: options.sub, rarity: options.relic.rarity, breakthroughGrade: options.breakthroughGrade,
     });
     // 몸통은 닫힌 칩 기하를 쓰고 돌출 머리는 원화 알파 복제를 쓴다. 카드 전체 도형 하나를
     // 칠하면 머리 옆 투명 공간까지 검은 면이 되므로 두 표시를 카드 공개 API에서만 묶는다.

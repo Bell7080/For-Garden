@@ -88,7 +88,7 @@ export class FriendsScene extends Phaser.Scene {
     const modifiers = friend.equippedModifiers.map((entry, index) => this.add.text(360 + index * 190, 405, entry.displayName, textStyle({ role: "emphasis", size: 21, color: COLOR.accentText })).setOrigin(0, 0.5));
     const favorite = friend.favoriteRelic;
     const relic = getRelic(favorite.relicId);
-    const card = new PortraitCard(this, BASE_WIDTH / 2, 770, { width: 430, height: 500, asset: portraitAssetForSkin(relic.portraitAssetId, favorite.equippedSkinId), label: relic.name, level: favorite.level, rarity: relic.rarity, stars: favorite.stars, affinity: { element: relic.element, role: relic.role } });
+    const card = new PortraitCard(this, BASE_WIDTH / 2, 770, { width: 430, height: 500, asset: portraitAssetForSkin(relic.portraitAssetId, favorite.equippedSkinId), label: relic.name, level: favorite.level, rarity: relic.rarity, breakthroughGrade: favorite.breakthroughGrade, affinity: { element: relic.element, role: relic.role } });
     // 렐릭 카드는 서버 공개 DTO만 넘기는 공용 읽기 전용 정보창의 진입점이다.
     card.hit.on("pointerup", () => this.info.showFriend(favorite));
     const status = this.add.text(BASE_WIDTH / 2, 1050, `“${friend.status}”`, textStyle({ role: "body", size: 30, color: COLOR.ink })).setOrigin(0.5);

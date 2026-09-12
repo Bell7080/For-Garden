@@ -127,6 +127,11 @@ export class PopupLayer {
     return this.stack.length > 0;
   }
 
+  /** 이 층이 서는 밑 깊이. 판 위에 Puppet을 세우는 화면이 층을 손으로 적지 않게 한다. */
+  get baseDepth(): number {
+    return this.depth;
+  }
+
   /** 파괴적 동작이 화면마다 제각각 구현되지 않도록 같은 팝업 위에 확인/취소를 제공한다. */
   confirm(options: { title: string; message: string; confirmLabel: string; destructive?: boolean }, onConfirm: () => void): void {
     this.open({ width: 820, height: 390, title: options.title, dim: true, closeOnBackdrop: false }, (body, close) => {

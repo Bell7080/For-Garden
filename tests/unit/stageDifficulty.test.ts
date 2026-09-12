@@ -63,21 +63,20 @@ const STORY_STAGES = BATTLE_STAGES.filter((entry) => !EXPEDITION_BOSS_STAGES.inc
 /** 요구된 대표 관문은 수치 조정 PR에서 의도하지 않은 체감 변화를 즉시 보여 주도록 고정한다. */
 const BASELINES = {
   /*
-   * **v0.97.0에서 다시 잡았다.** 성장이 오각형의 다섯 주능력치만 올리게 되면서(공속·이속·
-   * 치명타·충전량은 레벨로 오르지 않는다) 양쪽의 레벨당 무게가 함께 가벼워졌고, `stages.ts`의
-   * 적 레벨 사다리도 같은 절차로 전멸선에서 다시 풀었다. 띠는 그 새 사다리 위에서 바닥 파티
-   * (스토리 첫 클리어 보상만 받은 상태)를 **균등 분배**로 세워 잰 값이다.
+   * **v0.98.0에서 다시 잡았다.** 적 셋이 R 띠의 위쪽으로 올라오고(2085~2098 → 2185~2187) 관문의
+   * 무게가 **레벨과 야성 추가 레벨 둘로 갈리면서** 사다리를 같은 절차로 다시 풀었다 — 전멸선을
+   * 실제 전투로 찾고 그 선에 관문 순서만큼 다가서게 한 뒤, 실효 레벨의 약 4분의 1을 야성 몫으로
+   * 떼어 두 표로 나눴다(`stages.ts`).
    *
-   * 2·3장 띠가 1장보다 낮은 자리에서 평평한 것은 난이도가 오르내려서가 아니라 **바닥 파티가
-   * 거기서 더 자라지 못하기 때문**이다 — 돌파 없이는 레벨 상한이 20이고 스토리 보상은 파편을
-   * 주지 않는다. 더 조이려면 적 레벨이 아니라 그 성장 축을 먼저 열어야 한다.
+   * 띠가 1장부터 3장까지 거의 평평한 것은 난이도가 고르다는 뜻이 아니라 **바닥 파티가 관문과
+   * 같은 속도로 자란다**는 뜻이다 — 잔여 체력은 고원에 머물다 전멸선에서 한 번에 떨어진다.
    */
-  "1-1": { hp: [0.72, 0.84] },
-  "1-5": { hp: [0.63, 0.75] },
-  "1-10": { hp: [0.6, 0.72] },
-  "2-5": { hp: [0.63, 0.75] },
-  "2-10": { hp: [0.63, 0.75] },
-  "3-5": { hp: [0.61, 0.73] },
+  "1-1": { hp: [0.63, 0.75] },
+  "1-5": { hp: [0.61, 0.73] },
+  "1-10": { hp: [0.61, 0.73] },
+  "2-5": { hp: [0.62, 0.74] },
+  "2-10": { hp: [0.62, 0.74] },
+  "3-5": { hp: [0.62, 0.74] },
   "3-9": { hp: [0.61, 0.73] },
 } as const;
 
@@ -123,11 +122,10 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
     const bare = FLOOR_ROSTER.map((id) => getRelic(id));
     const winRateAt = (stageId: string) =>
       summarizeStageDifficulty(bare, getStageEnemies(getBattleStage(stageId)), SEEDS, "auto").winRate;
-    // 2장 끝에서 이미 한두 판을 놓치고, 3장에 들어서면 계단처럼 내려간다.
-    expect(winRateAt("2-10")).toBeLessThanOrEqual(0.75);
-    expect(winRateAt("3-1")).toBeLessThanOrEqual(0.625);
-    expect(winRateAt("3-3")).toBeLessThanOrEqual(0.25);
-    expect(winRateAt("3-5")).toBe(0);
+    // 2장 중반부터 한두 판을 놓치고, 3장에 들어서면 계단처럼 내려가 끝에서 한 판도 못 넘긴다.
+    expect(winRateAt("2-5")).toBeLessThanOrEqual(0.875);
+    expect(winRateAt("3-3")).toBeLessThanOrEqual(0.5);
+    expect(winRateAt("3-9")).toBe(0);
   });
 
   /*
@@ -139,10 +137,10 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
     const winRateAt = (stageId: string) =>
       summarizeStageDifficulty(solo, getStageEnemies(getBattleStage(stageId)), SEEDS, "auto").winRate;
     expect(winRateAt("1-5")).toBe(1);
-    // 2장 중반부터 반 이상 지고 3장에서는 사실상 넘지 못한다. 편성 칸이 셋인 이유다.
-    expect(winRateAt("2-5")).toBeLessThanOrEqual(0.625);
-    expect(winRateAt("2-10")).toBeLessThanOrEqual(0.5);
-    expect(winRateAt("3-5")).toBeLessThanOrEqual(0.125);
+    // 2장 끝에서 흔들리고 3장에서는 대부분 진다. 편성 칸이 셋인 이유다 — 혼자 밀 수 있는
+    // 구간은 있어도 그 구간이 끝나는 자리가 분명해야 한다.
+    expect(winRateAt("2-10")).toBeLessThanOrEqual(0.75);
+    expect(winRateAt("3-5")).toBeLessThanOrEqual(0.5);
   });
 
   /** 적 레벨은 스토리 내내 뒤로 가지 않는다. 새 구역이 직전 구역보다 약해 보이면 곡선이 끊긴 것이다. */

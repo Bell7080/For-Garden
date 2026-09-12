@@ -239,7 +239,7 @@ describe("FakeServer", () => {
     const server = new FakeServer(state, { latencyMs: 0 });
     await expect(server.feedRelic("anky")).rejects.toMatchObject({ code: "RELIC_MAX_LEVEL" });
     const response = await server.breakThroughRelic("anky");
-    expect(response).toMatchObject({ relicId: "anky", breakthrough: 1, levelCap: step.levelCap, stars: 2, fragments: 0 });
+    expect(response).toMatchObject({ relicId: "anky", breakthrough: 1, levelCap: step.levelCap, breakthroughGrade: 2, fragments: 0 });
     expect(state.relicFragments.anky).toBe(0);
     expect(state.wallet).toMatchObject({ cheesecake: 0 });
     await expect(server.breakThroughRelic("anky")).rejects.toMatchObject({ code: "RELIC_MAX_LEVEL" });

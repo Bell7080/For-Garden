@@ -48,10 +48,10 @@ describe("한계 돌파 표", () => {
     expect(stepsFirstRowClearsBevel(LAYOUT)).toBe(true);
   });
 
-  it("은 별 표식·액자·설명이 줄 안에서 차례로 서고 겹치지 않는다", () => {
+  it("은 돌파 등급 표식·액자·설명이 줄 안에서 차례로 서고 겹치지 않는다", () => {
     const half = LAYOUT.rowWidth / 2;
-    const starLeft = BREAK_STEPS.star.x - BREAK_STEPS.star.size;
-    const starRight = BREAK_STEPS.star.x + BREAK_STEPS.star.size;
+    const starLeft = BREAK_STEPS.gradeMark.x - BREAK_STEPS.gradeMark.size;
+    const starRight = BREAK_STEPS.gradeMark.x + BREAK_STEPS.gradeMark.size;
     const iconLeft = BREAK_STEPS.icon.x - BREAK_STEPS.icon.size / 2;
     const iconRight = BREAK_STEPS.icon.x + BREAK_STEPS.icon.size / 2;
     expect(starLeft).toBeGreaterThan(-half);
@@ -143,10 +143,10 @@ describe("한계 돌파 표의 열림 표시", () => {
     expect(luminance(locked.fill)).toBeGreaterThan(luminance(0x121820));
   });
 
-  it("은 어디까지 왔는지를 별 표식이 말한다", () => {
+  it("은 어디까지 왔는지를 돌파 등급 표식이 말한다", () => {
     // 글과 그림을 누르지 않는 대신 이 표식만 흐려진다.
-    expect(locked.star).toBeLessThan(reached.star);
-    expect(reached.star).toBe(1);
+    expect(locked.gradeMark).toBeLessThan(reached.gradeMark);
+    expect(reached.gradeMark).toBe(1);
   });
 
   it("은 설명을 두 줄 다 같은 잉크로 적는다", () => {

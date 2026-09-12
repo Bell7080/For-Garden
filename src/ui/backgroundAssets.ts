@@ -56,12 +56,6 @@ export const BACKGROUND = {
    */
   interactionDoppelParlor: "background-interaction-doppel-parlor",
   /**
-   * 중앙 정원구의 온실 회랑이다. 교류 첫 도시(`central-garden`)가 쓰는 가로 원화이며, 다른
-   * 도시 원화처럼 판 안에서 `cover`로 잘려 들어간다 — 판 비율에 맞춰 늘이지 않으므로 그림이
-   * 찌그러지지 않고, 넘치는 쪽만 마스크가 자른다.
-   */
-  interactionCentralGarden: "background-interaction-central-garden",
-  /**
    * 타이틀(로딩) 화면 전용 원화다. 화면 자체가 로딩 화면이라 다른 배경처럼 이 표의
    * `BACKGROUND_ASSETS`(로딩 단계 안에서 읽힘)로 적재할 수 없다 — `TitleScene`이
    * 씬 진입 직후 이 키로 직접 읽는다.
@@ -110,8 +104,6 @@ export const BACKGROUND_ASSETS = [
   [BACKGROUND.raidField, "sprites/content/Content5_001field.webp"],
   // 교류 도시 원화는 세로 화면 배경이 아니라 판 안에 잘려 들어가는 가로 그림이다.
   [BACKGROUND.interactionDoppelParlor, "sprites/background/background_012.webp"],
-  // 교류 도시 원화는 `prepare_backgrounds.py`가 `interaction_00N.webp`로 구워 둔다.
-  [BACKGROUND.interactionCentralGarden, "sprites/background/interaction_001.webp"],
   // 타이틀은 TitleScene이 직접 먼저 읽지만(그 화면이 곧 로딩 화면이다) 경로가 이 표에 있어야
   // 로비로 넘어간 뒤 25MB를 내리고, 되돌아왔을 때 다시 읽을 수 있다.
   [BACKGROUND.title, "sprites/background/background_011.webp"],

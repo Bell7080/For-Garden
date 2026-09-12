@@ -90,7 +90,7 @@ describe("SaveManager", () => {
     legacy.bookmarkedRelicIds = ["husk-shell", "amo", "husk-raptor"];
     legacy.relicFragments = { "husk-shell": 7, "husk-raptor": 2 };
     legacy.idleExcavation.assignedRelicIds = ["husk-shell", null, "husk-wing"];
-    legacy.interaction = { slots: [{ dispatchId: "legacy-dispatch", cityId: "cairo", startedAt: "2026-08-25T00:00:00Z", completesAt: "2026-08-25T01:00:00Z", party: ["husk-shell", "amo", "husk-raptor"], rewardSeed: "seed", reward: { currency: "gold", amount: 1 }, claimed: false }], claimedRequestIds: [] };
+    legacy.interaction = { slots: [{ dispatchId: "legacy-dispatch", cityId: "doppel-parlor", startedAt: "2026-08-25T00:00:00Z", completesAt: "2026-08-25T01:00:00Z", party: ["husk-shell", "amo", "husk-raptor"], rewardSeed: "seed", reward: { currency: "gold", amount: 1 }, claimed: false }], claimedRequestIds: [] };
     legacy.observationRecords = [{ date: "2026-08-25", relicId: "husk-wing", storyId: "story", questionId: "question", question: "질문", choiceId: "choice", answer: "답", personalityTag: "tag", discoveredHabit: "habit" }];
     legacy.expedition.lastParty = ["husk-shell", "amo", "husk-raptor", "husk-wing"];
     legacy.expedition.run.relics.forEach((relic: { relicId: string }) => { relic.relicId = replacements.find(([id]) => id === relic.relicId)?.[1] ?? relic.relicId; });
@@ -106,7 +106,16 @@ describe("SaveManager", () => {
     expect(loaded.relicFragments).toMatchObject({ amo: 7, toby: 2 });
     expect(loaded.idleExcavation.assignedRelicIds).toEqual(["amo", null, "ripa"]);
     expect(loaded.interaction.slots[0]?.party).toEqual(["amo", "toby"]);
-    expect(loaded.observationRecords[0].relicId).toBe("ripa");
+    // 도시 사다리가 바뀌어 없어진 id로 나가 있던 파견은 슬롯을 비운다 — 매니저가
+    // `findInteractionCity`가 비면 곧바로 던져 그 저장은 교류 화면 자체를 열지 못한다.
+    const orphan = structuredClone(legacy) as { interaction: { slots: ({ cityId: string } | null)[] } };
+    const orphanSlot = orphan.interaction.slots[0];
+    if (orphanSlot) orphanSlot.cityId = "no-such-city";
+    storage.setItem(SAVE_STORAGE_KEY, JSON.stringify(orphan));
+    const reloaded = new SaveManager(storage).load();
+    expect(reloaded).not.toBeNull();
+    expect(reloaded?.interaction.slots[0]).toBeNull();
+    expect(loaded.observationRecords[0]?.relicId).toBe("ripa");
     expect(loaded.expedition.lastParty).toEqual(["amo", "toby", "ripa"]);
     expect(loaded.expedition.run?.relics.map(({ relicId }) => relicId)).toEqual(["amo", "toby", "ripa"]);
     expect(loaded.expedition.run?.selectedAugments[0].targetRelicId).toBe("amo");

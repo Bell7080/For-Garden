@@ -14,6 +14,7 @@ import { EXPEDITION_AUGMENT_IDS, EXPEDITION_REWARD_IDS } from "../data/expeditio
 import { validateExpeditionMap } from "../core/expeditionMap";
 import type { ExpeditionRunState } from "./session";
 import { staminaMaxForResearchLevel } from "../core/stamina";
+import { findInteractionCity } from "../data/interactionCities";
 import { INTERACTION_JOURNALS } from "../data/interactionJournals";
 import { defaultUnlockedRelicSkinIds, RELIC_SKINS } from "../data/relicSkins";
 
@@ -345,6 +346,16 @@ export class SaveManager {
     const expedition = { weekKey: savedExpedition?.weekKey ?? "", playsThisWeek: savedExpedition?.playsThisWeek ?? 0, bestScore: savedExpedition?.bestScore ?? 0, allTimeBestScore: savedExpedition?.allTimeBestScore ?? savedExpedition?.bestScore ?? 0, lastParty, run: normalizeExpeditionRun(savedExpedition?.run, ownedIds) };
     // 교류 도입 전 저장에는 서버 파견이 없으므로 빈 슬롯으로 명시 이관한다.
     const interaction = Number(legacy.saveVersion) >= 30 && legacy.interaction && typeof legacy.interaction === "object" ? structuredClone(legacy.interaction) : createEmptyInteractionProgress();
+    // **없어진 도시로 나가 있던 파견은 버린다.** 도시 사다리가 바뀌면 그 id를 가리키던 슬롯이
+    // 남는데, 매니저는 `findInteractionCity`가 비면 곧바로 던지므로 그 저장은 교류 화면 자체를
+    // 열지 못한다. 나가 있던 파견 하나를 잃는 쪽이 화면이 통째로 막히는 것보다 낫다.
+    const interactionSlots = (interaction as { slots?: unknown[] }).slots;
+    if (Array.isArray(interactionSlots)) {
+      (interaction as { slots: unknown[] }).slots = interactionSlots.map((slot) => {
+        const cityId = slot && typeof slot === "object" ? (slot as { cityId?: unknown }).cityId : undefined;
+        return typeof cityId === "string" && findInteractionCity(cityId) === undefined ? null : slot;
+      });
+    }
     // v12는 정적 정의 ID를 소유권과 슬롯에 함께 썼다. 결정적 ID로 인스턴스를 만들고 모든 슬롯을 같은 표로 치환한다.
     const isV12OrOlder = legacy.saveVersion === undefined || Number(legacy.saveVersion) <= 12;
     const legacyOwned = Array.isArray(legacy.ownedHeartGemIds) ? legacy.ownedHeartGemIds.filter((id): id is string => typeof id === "string") : [];

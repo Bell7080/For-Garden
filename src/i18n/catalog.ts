@@ -8,6 +8,7 @@
  */
 
 import { DEFAULT_LANGUAGE, type LanguageId } from "../core/language";
+import { pickParticle } from "../core/koreanParticle";
 import { KO, type TextKey } from "./ko";
 
 export type { TextKey };
@@ -61,7 +62,20 @@ export function setTextLanguage(language: LanguageId): void {
   active = language;
 }
 
-const PLACEHOLDER = /\{(\w+)\}/g;
+/**
+ * 자리 표시 셋 — `{name}`, 그리고 한국어 표만 쓰는 `{name:을}`·`{name!을}`.
+ *
+ * 뒤의 둘은 **받침을 보고 조사를 고른다.** 표에 `을` 한 글자를 적어 두면 이름이 바뀌는 순간
+ * 그 문장이 틀린다(「지각 붕괴」을 → 를).
+ *
+ * - `{name:을}` — 값과 그 뒤의 조사를 한 자리가 함께 채운다.
+ * - `{name!을}` — **조사만** 채운다. 값은 그 앞의 `{name}`이 이미 세웠고, 그 사이에 표가
+ *   따옴표를 두를 수 있다. 언어마다 이름을 묶는 방법이 다르므로(한국어 `「」`, 영어 `""`)
+ *   값에 괄호를 미리 붙여 넘기면 영어 문장 한가운데에 `「」`가 선다.
+ *
+ * 자리 이름은 어느 쪽이든 `name` 하나라, 조사가 없는 언어의 표는 `{name}`만 쓰면 된다.
+ */
+const PLACEHOLDER = /\{(\w+)([:!])?([^}\s]+)?\}/g;
 
 /**
  * 문구 하나를 고른다.
@@ -73,8 +87,12 @@ const PLACEHOLDER = /\{(\w+)\}/g;
 export function t(key: TextKey, params?: Readonly<Record<string, string | number | undefined>>): string {
   const text = loaded.get(active)?.[key] ?? KO[key];
   if (!params) return text;
-  return text.replace(PLACEHOLDER, (whole, name: string) => {
+  return text.replace(PLACEHOLDER, (whole, name: string, mode?: string, particle?: string) => {
     const value = params[name];
-    return value === undefined ? whole : String(value);
+    if (value === undefined) return whole;
+    const filled = String(value);
+    if (mode === undefined || particle === undefined) return filled;
+    // `!`는 조사만 남긴다 — 값은 그 앞의 `{name}`이 이미 세웠다.
+    return (mode === "!" ? "" : filled) + pickParticle(filled, particle);
   });
 }

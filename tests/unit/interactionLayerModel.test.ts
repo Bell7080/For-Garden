@@ -21,20 +21,20 @@ describe("교류 층 모델", () => {
   });
 
   it("나가 있는 층과 다녀온 층을 남은 시간으로 가른다", () => {
-    const away = interactionLayerViews(99, [dispatch("central-garden")], NOW);
+    const away = interactionLayerViews(99, [dispatch("doppel-parlor")], NOW);
     expect(away[0].state).toBe("away");
     expect(away[0].remainingMs).toBe(60_000);
-    const done = interactionLayerViews(99, [dispatch("central-garden", { completesAt: new Date(NOW).toISOString() })], NOW);
+    const done = interactionLayerViews(99, [dispatch("doppel-parlor", { completesAt: new Date(NOW).toISOString() })], NOW);
     expect(done[0].state).toBe("done");
   });
 
   it("수령을 마친 파견은 층을 다시 비운다", () => {
-    const views = interactionLayerViews(99, [dispatch("central-garden", { claimed: true })], NOW);
+    const views = interactionLayerViews(99, [dispatch("doppel-parlor", { claimed: true })], NOW);
     expect(views[0].state).toBe("idle");
   });
 
   it("나가 있는 렐릭은 다시 보낼 수 없다 — 수령한 파견은 풀려난다", () => {
-    const away = relicsAwayOnInteraction([dispatch("central-garden"), dispatch("night-ward", { party: ["rex", "spino"], claimed: true })]);
+    const away = relicsAwayOnInteraction([dispatch("doppel-parlor"), dispatch("night-ward", { party: ["rex", "spino"], claimed: true })]);
     expect([...away]).toEqual(["anky"]);
   });
 

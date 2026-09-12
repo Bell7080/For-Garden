@@ -12,7 +12,9 @@ const SOURCES = import.meta.glob("../../src/**/*.ts", { query: "?raw", import: "
  */
 const CATALOGS = import.meta.glob("../../src/i18n/*/index.ts", { import: "default", eager: true }) as Record<string, Record<string, string>>;
 
-const placeholders = (text: string): string[] => [...text.matchAll(/\{(\w+)\}/g)].map((match) => match[1]).sort();
+// 자리 표시는 `{name}`·`{name:을}`·`{name!을}` 세 꼴이다. 조사는 한국어 표만 쓰므로 자리
+// 이름만 견주고, 한 문장이 같은 이름을 두 번 쓰는 자리(`「{name}」{name!을}`)는 한 번으로 센다.
+const placeholders = (text: string): string[] => [...new Set([...text.matchAll(/\{(\w+)[:!]?[^}\s]*\}/g)].map((match) => match[1]))].sort();
 
 describe("문구 표", () => {
   it("은 빈 값을 두지 않는다", () => {
@@ -125,6 +127,8 @@ const KOREAN_ALLOWED: Readonly<Record<string, string>> = {
   "../../src/ui/expeditionRankingLayout.ts": "표본 순위의 계정 이름",
   // 한국어가 원본이고 다른 언어만 덮어쓴다(정적 콘텐츠와 같은 경계).
   "../../src/core/missions.ts": "임무 제목 — registerDataText로 덮는다",
+  // 조사 자체가 한국어 문법 규칙이다. 화면에 문장으로 서지 않고, 표가 적은 조사를 고를 뿐이다.
+  "../../src/core/koreanParticle.ts": "한국어 조사 규칙",
 };
 
 /**

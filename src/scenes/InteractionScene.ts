@@ -7,8 +7,8 @@ import { session } from "../state/session";
 import type { InteractionDispatchSnapshot } from "../state/session";
 import { Button } from "../ui/Button";
 import { addBackButton } from "../ui/IconButton";
-import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
-import { drawFrameVignette, drawGlassFade, drawHairline, drawLayer, HOLO, slantedRect } from "../ui/holo";
+import { addSceneBackground, BACKGROUND, useBackgroundTexture } from "../ui/backgrounds";
+import { drawFrameVignette, drawGlassFade, drawHairline, drawLayer, drawVignette, HOLO, slantedRect } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
 import { TopBar } from "../ui/TopBar";
 import { setDebugScene, setDebugStorefrontControls } from "../debug";
@@ -67,7 +67,12 @@ export class InteractionScene extends Phaser.Scene {
     setDebugScene("interaction", t("interaction.title"));
     // TODO(art): 전용 원화 전까지 loadingSteps가 이미 읽는 로비 배경을 임시 사용한다.
     addSceneBackground(this, BACKGROUND.lobby);
-    this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.66);
+    // **평평한 검은 판 한 장으로만 누르지 않는다.** 0.66짜리 면을 화면 전체에 깔면 배경 원화가
+    // 통째로 잿빛이 되어 층 안의 도시 원화만 홀로 밝게 떠오른다. 고르게 누르는 몫은 한 뼘
+    // 덜어 내고, 나머지는 네 변에서 안으로 사라지는 비네트가 맡는다 — 가운데의 목록으로 눈이
+    // 먼저 가고, 가장자리의 제목·뒤로가기는 그 어둠 위에서 읽힌다.
+    this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.5).setDepth(-27);
+    drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { depth: -26, strength: 0.7 });
     new TopBar(this, 40, { currencies: "none", onSettings: () => this.scene.start("settings", { returnScene: "interaction" }) });
     this.add.text(52, 150, t("interaction.title"), textStyle({ role: "display", size: 50, color: "#a8ddf5" }));
     this.add.text(56, 216, t("interaction.subtitle"), textStyle({ role: "body", size: 24, color: COLOR.inkDim }));
@@ -214,13 +219,20 @@ export class InteractionScene extends Phaser.Scene {
     // 자르는 것은 기하 마스크가 아니라 **이미지 자신의 crop**이다. 이 목록은 세로로 흐르는데
     // 기하 마스크는 컨테이너 이동을 물려받지 않아, 마스크로 씌우면 스크롤하는 순간 원화만
     // 제자리에 남는다. 양 끝은 여전히 판 색으로 녹여 글이 그림 위에서 읽히게 한다.
-    if (!locked && this.textures.exists(view.city.illustration)) {
-      const art = this.add.image(0, 0, view.city.illustration);
-      const crop = coverCrop(art.width, art.height, width, height);
-      art.setScale(crop.scale);
-      art.setCrop(crop.cropX, crop.cropY, crop.cropWidth, crop.cropHeight);
-      art.setAlpha(ART_ALPHA);
+    //
+    // **여기서 `textures.exists`로 가르지 않는다.** 부트가 미리 읽는 두 장 말고는 어느 도시
+    // 원화도 목록이 그려지는 순간에는 올라와 있지 않아, 물어보고 세우면 층은 늘 빈 판이었다.
+    // 판을 먼저 깔고 도착하는 대로 그 위에 그린다 — 원화가 사는 동안만 붙잡는 일은
+    // `useBackgroundTexture`가 맡는다.
+    if (!locked) {
+      const art = this.add.image(0, 0, "__DEFAULT").setAlpha(0);
       layer.add(art);
+      useBackgroundTexture(this, art, view.city.illustration, (loaded) => {
+        const crop = coverCrop(loaded.width, loaded.height, width, height);
+        loaded.setScale(crop.scale);
+        loaded.setCrop(crop.cropX, crop.cropY, crop.cropWidth, crop.cropHeight);
+        this.tweens.add({ targets: loaded, alpha: ART_ALPHA, duration: 160 });
+      });
       const fade = this.add.graphics();
       // 왼쪽은 불투명 → 투명, 오른쪽은 투명 → 불투명. 두 끝이 판 색으로 녹아 붙여 넣은
       // 섬네일처럼 각진 경계가 남지 않는다. 위아래로 흐르는 공용 `drawGlassFade`는 쓰지 않는다.

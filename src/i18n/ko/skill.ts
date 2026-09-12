@@ -258,9 +258,9 @@ export const SKILL_KO = {
   "skill.breakthrough.passive": "패시브 강화",
   "skill.breakthrough.effect.basic": "「{trigger}」 발동 시 {stat}의 {percent}%에 해당하는 [[hp|체력]]을 회복하고 넓은 범위의 적을 {seconds}초 동안 [[taunt|도발]]한다.",
   "skill.breakthrough.effect.basicValue": "「{trigger}」 발동 시 {heal}만큼 [[hp|체력]]을 회복하고 넓은 범위의 적을 {seconds}초 동안 [[taunt|도발]]한다.",
-  "skill.breakthrough.effect.ultimate": "피해량의 {percent}%에 해당하는 「{name}」을 {seconds}초 간격으로 {casts} 번 더 시전한다.",
+  "skill.breakthrough.effect.ultimate": "피해량의 {percent}%에 해당하는 「{name}」{name!을} {seconds}초 간격으로 {casts} 번 더 시전한다.",
   "skill.breakthrough.effect.ferocity": "[[ferocity|폭주]]가 끝날 때, 폭주 동안 받은 피해량의 {percent}%에 해당하는 보호막을 얻고 넓은 범위의 적에게 {seconds}초 동안 한 번 더 [[taunt|도발]]한다.",
-  "skill.breakthrough.effect.passive": "「{name}」이 발동될 때 모든 아군에게 그 회복량의 {percent}%를 나눈다.",
+  "skill.breakthrough.effect.passive": "「{name}」{name!이} 발동될 때 모든 아군에게 그 회복량의 {percent}%를 나눈다.",
 
   // ── 정보창이 스킬 쪽지에 주입하는 문맥 사전 ─────────────────────────────
   "skill.keyword.shield.fromMaxHp": "현재 최대 체력에서 {percent}%를 받아 계산한 보호막 수치다.",

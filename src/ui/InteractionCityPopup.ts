@@ -222,7 +222,7 @@ export class InteractionCityPopup {
       addFormationSlotPlate(this.scene, parent, box, {
         accent: BLUE, occupied: Boolean(relicId), index, groundOffset: SLOT_GROUND_OFFSET,
       });
-      if (relicId) this.standPuppet(relicId, x);
+      if (relicId) this.standPuppet(relicId, x, view.state === "away");
       if (!editable) return;
       const hit = this.scene.add.rectangle(x, SLOT.y, SLOT.width, SLOT.height, 0xffffff, 0)
         .setName(`interaction-party-slot-${index + 1}`).setDepth(SD_DEPTH + 1).setInteractive({ useHandCursor: true });
@@ -479,8 +479,15 @@ export class InteractionCityPopup {
     parent.add(send);
   }
 
-  /** 아직 서 있지 않은 렐릭만 읽어 세우고, 이미 선 SD는 자리만 옮긴다. */
-  private standPuppet(relicId: string, x: number): void {
+  /**
+   * 아직 서 있지 않은 렐릭만 읽어 세우고, 이미 선 SD는 자리만 옮긴다.
+   *
+   * **뛰는 것은 나가 있는 동안뿐이다**(`hop`). 자리를 고르는 내내 통통 튀면 그 움직임이 "지금
+   * 무슨 일이 일어났다"를 말하지 못하고 어느 칸을 고르는 중인지도 흐려지므로 배치 중에는
+   * 가만히 선다. 보내고 나면 그 칸은 더 고칠 것이 없어, 되풀이되는 도약이 "지금 나가 있다"를
+   * 남은 시간 줄과 함께 말한다.
+   */
+  private standPuppet(relicId: string, x: number, hop = false): void {
     const layer = this.sdLayer;
     if (!layer) return;
     const groundY = SLOT.y + SLOT_GROUND_OFFSET;
@@ -491,6 +498,7 @@ export class InteractionCityPopup {
       this.stopHop(relicId);
       placePuppet(standing, relicAppearanceManager.sdAssetFor(relicId), { x, groundY, height: 205 });
       standing.setDepth(SD_DEPTH);
+      if (hop) this.startHop(relicId, standing);
       return;
     }
     if (this.puppetLoading.has(relicId)) return;
@@ -502,9 +510,8 @@ export class InteractionCityPopup {
       isDisplayable: (puppet) => Boolean(puppet.active && puppet.texture?.key && this.scene.textures.exists(puppet.texture.key)),
       adopt: (puppet) => {
         puppet.disableInteractive(); layer.add(puppet); this.puppets.set(relicId, puppet);
-        // **세워 두는 동안에는 뛰지 않는다.** 자리를 고르는 내내 통통 튀면 그 움직임이 "지금
-        // 무슨 일이 일어났다"를 말하지 못하고, 어느 칸을 고르는 중인지도 흐려진다. 뛰는 것은
-        // 보내는 순간의 배웅 한 번뿐이다(`hopFarewell`).
+        // 배치 중에는 가만히 서 있고(위 주석), 나가 있는 동안에만 되풀이해 뛴다.
+        if (hop) this.startHop(relicId, puppet);
       },
     }).finally(() => this.puppetLoading.delete(relicId));
   }
@@ -518,6 +525,12 @@ export class InteractionCityPopup {
       puppet.destroy();
       this.puppets.delete(relicId);
     }
+  }
+
+  /** 그 SD가 제자리에서 되풀이해 뛰게 한다. 이미 뛰고 있으면 그대로 둔다. */
+  private startHop(relicId: string, puppet: PuppetCreature): void {
+    if (this.hops.has(relicId)) return;
+    this.hops.set(relicId, startPuppetHop(this.scene, puppet, Math.max(0, this.party.indexOf(relicId))));
   }
 
   private stopHop(relicId: string): void {

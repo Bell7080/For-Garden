@@ -60,12 +60,16 @@ export function interactionDurationLabel(minutes: number): string {
  */
 export const INTERACTION_CITIES: readonly InteractionCity[] = [
   {
-    id: "central-garden", displayName: "중앙 정원구", department: "exchange",
-    description: "복원 개체와 시민이 처음 인사를 나누는 푸른 온실 회랑. 짧게 다녀와도 손에 무언가 남는다.",
+    // 사다리의 첫 칸이다(`docs/interaction-cities.md` §2). **도플이 먼저인 이유**는 주인공과
+    // 가장 가까운 도시이기 때문이다 — 이터널의 전임 연구원 전원이 도플의 복제체였고, 주인공은
+    // 그들의 빈자리에 앉은 사람이다. 응접실은 그 사실을 아직 말하지 않고 "전임자들"이라는 실만
+    // 흘린다.
+    id: "doppel-parlor", displayName: "도플 · 중앙 연구소 응접실", department: "exchange",
+    description: "도플의 중앙 연구소 한쪽에 딸린 응접실. 손님을 앉혀 두고 연구 일지를 한 장씩 내어 준다.",
     unlock: { researchLevel: 1 }, durationMinutes: 10, partySize: { min: 1, max: 3 },
     recommended: { elements: ["water"], squads: ["rune"], tags: ["garden"] },
     rewards: [{ currency: "gold", amount: 600, weight: 6 }, { currency: "cheesecake", amount: 1, weight: 2 }],
-    clueJournalId: "interaction-central-01", illustration: "background-interaction-central-garden",
+    clueJournalId: "interaction-doppel-01", illustration: "background-interaction-doppel-parlor",
   },
   {
     id: "central-council", displayName: "중앙 정원구", department: "council",

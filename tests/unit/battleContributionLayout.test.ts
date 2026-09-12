@@ -51,10 +51,14 @@ describe("battle contribution panel layout", () => {
     expect(L.slideOutX + panel.left + panel.width).toBeLessThanOrEqual(0);
   });
 
-  it("여는 칩은 배속 칩과 같은 열·같은 크기로 전투 조작 줄에 선다", () => {
-    expect(CONTRIBUTION_TOGGLE.x).toBe(BATTLE_CONTROLS.speedX);
-    // 배속 바로 위 한 칸(자동 궁극기 위의 연출 칩과 같은 간격)이다.
-    expect(CONTRIBUTION_TOGGLE.y).toBe(BATTLE_CONTROLS.rowY - BATTLE_CONTROLS.stackGap);
+  it("여는 칩은 배속 칩과 같은 가로선의 왼쪽 끝에 선다", () => {
+    // 같은 줄이라 조작이 한 층으로 읽히고, 왼쪽 끝이라 열리는 판(화면 왼쪽)과 같은 쪽을 가리킨다.
+    expect(CONTRIBUTION_TOGGLE.y).toBe(BATTLE_CONTROLS.rowY);
+    expect(CONTRIBUTION_TOGGLE.x).toBeLessThan(BATTLE_CONTROLS.speedX);
+    // 펼친 판 바로 아래로 이어져 판과 손잡이가 한 덩어리로 읽힌다.
+    const panel = battleContributionBounds(true);
+    expect(L.collapsed.left).toBe(panel.left);
+    expect(L.collapsed.top).toBeGreaterThanOrEqual(panel.top + panel.height - 1);
     expect(CONTRIBUTION_TOGGLE.width).toBeLessThanOrEqual(180);
     expect(CONTRIBUTION_TOGGLE.height).toBeLessThanOrEqual(80);
     // 접힌 상태에서 화면에 남는 것이 곧 그 칩이다.

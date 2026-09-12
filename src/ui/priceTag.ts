@@ -133,35 +133,48 @@ export const PRICE_BAR = {
   valueSize: 38,
 } as const;
 
-/** 값 줄 한 장(이름표 + 재화 그림 + 수)을 세운다. */
+/**
+ * 값 줄 한 장(이름표 + 재화 그림 + 수)을 세운다.
+ *
+ * 이름표를 비우면 그림과 수가 **줄 가운데로 모인다** — 무역 카드처럼 그 줄이 값 하나만 말하는
+ * 자리는 왼쪽에 세울 이름이 없고, 한쪽으로 붙이면 넓은 판 끝에 매달린 것으로 읽힌다.
+ */
 export function addPriceBar(
   scene: Phaser.Scene,
   parent: Phaser.GameObjects.Container | undefined,
   x: number,
   y: number,
   width: number,
-  label: string,
+  label: string | undefined,
   currency: WalletItemKey,
   amount: number,
-  options: { short?: boolean } = {},
+  options: { short?: boolean; height?: number; iconAlpha?: number } = {},
 ): Phaser.GameObjects.Container {
+  const height = options.height ?? PRICE_BAR.height;
   const bar = scene.add.container(x, y);
-  bar.add(drawLayer(scene, 0, 0, slantedRect(width, PRICE_BAR.height), {
+  bar.add(drawLayer(scene, 0, 0, slantedRect(width, height), {
     fill: 0x141b24, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.45,
   }));
-  bar.add(scene.add.text(-width / 2 + PRICE_BAR.padX, 0, label, textStyle({ role: "body", size: PRICE_BAR.labelSize, color: COLOR.inkDim })).setOrigin(0, 0.5));
-  // 수부터 오른쪽 변에 붙이고 그림을 그 왼쪽에 바짝 세운다 — 자릿수가 늘어도 줄이 흔들리지 않는다.
+  if (label !== undefined) {
+    bar.add(scene.add.text(-width / 2 + PRICE_BAR.padX, 0, label, textStyle({ role: "body", size: PRICE_BAR.labelSize, color: COLOR.inkDim })).setOrigin(0, 0.5));
+  }
   const value = scene.add
-    .text(width / 2 - PRICE_BAR.padX, 0, formatCurrency(amount), textStyle({ role: "display", size: PRICE_BAR.valueSize, color: options.short ? COLOR.dangerText : COLOR.accentText }))
+    .text(0, 0, formatCurrency(amount), textStyle({ role: "display", size: PRICE_BAR.valueSize, color: options.short ? COLOR.dangerText : COLOR.accentText }))
     .setOrigin(1, 0.5)
     .setScale(1, 1.08)
+    .setAlpha(options.iconAlpha ?? 1)
     .setShadow(2, 3, "#04060a", 0, true, true);
-  bar.add(value);
   const iconKey = CURRENCY_ICON_BY_WALLET[currency];
-  if (scene.textures.exists(iconKey)) {
-    const iconX = width / 2 - PRICE_BAR.padX - value.width - PRICE_BAR.gap - PRICE_BAR.icon / 2;
-    bar.add(scene.add.image(iconX + 3, 4, iconKey).setDisplaySize(PRICE_BAR.icon, PRICE_BAR.icon).setTint(0x000000).setAlpha(0.5));
-    bar.add(scene.add.image(iconX, 0, iconKey).setDisplaySize(PRICE_BAR.icon, PRICE_BAR.icon));
+  const hasIcon = scene.textures.exists(iconKey);
+  // 그림과 수를 한 덩어리로 재고 나서 세운다 — 이름표가 있으면 오른쪽 변에, 없으면 가운데에.
+  const span = value.width + (hasIcon ? PRICE_BAR.gap + PRICE_BAR.icon : 0);
+  const right = label === undefined ? span / 2 : width / 2 - PRICE_BAR.padX;
+  value.setX(right);
+  bar.add(value);
+  if (hasIcon) {
+    const iconX = right - value.width - PRICE_BAR.gap - PRICE_BAR.icon / 2;
+    bar.add(scene.add.image(iconX + 3, 4, iconKey).setDisplaySize(PRICE_BAR.icon, PRICE_BAR.icon).setTint(0x000000).setAlpha(0.5 * (options.iconAlpha ?? 1)));
+    bar.add(scene.add.image(iconX, 0, iconKey).setDisplaySize(PRICE_BAR.icon, PRICE_BAR.icon).setAlpha(options.iconAlpha ?? 1));
   }
   if (parent) parent.add(bar);
   return bar;

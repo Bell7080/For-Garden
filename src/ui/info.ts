@@ -51,7 +51,7 @@ import { skillArtFor, skillArtTint, type SkillArtSlot } from "./skillArt";
 import { addSkillIconFrame, skillSlotLabel } from "./SkillIconFrame";
 import { BREAK_CONFIRM, BREAK_STEPS, breakConfirmHeight, breakthroughStepsLayout } from "./breakthroughLayout";
 import { gameApi } from "../api/FakeServer";
-import { BREAKTHROUGH_STEPS, breakthroughFragmentCost, canBreakThrough, canFeedRelic, FEED_UNIT, isBreakthroughSlotOpen, nextBreakthrough, relicExpToNext, relicLevelCap, breakthroughGrade } from "../core/relicProgression";
+import { BREAKTHROUGH_STEPS, breakthroughFragmentCost, type BreakthroughStep, canBreakThrough, canFeedRelic, FEED_UNIT, isBreakthroughSlotOpen, nextBreakthrough, relicExpToNext, relicLevelCap, breakthroughGrade } from "../core/relicProgression";
 import { BOND_FEROCITY_MULTIPLIER, BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL, BOND_XP_REWARD } from "../core/bond";
 import { getRelicCatalogDisclosure } from "../core/relicCatalog";
 import { observations } from "../managers/ObservationManager";
@@ -255,6 +255,15 @@ const BOND_STORY_STEPS: readonly { level: number; title: () => string }[] = [
 
 /** 돌파 버튼과 팝업이 함께 쓰는 색. 레벨(초록)과 갈라 놓아 다른 종류의 성장임을 알린다. */
 const BREAK_EDGE = 0xa88cf0;
+
+/**
+ * 한계 돌파 버튼의 규격.
+ *
+ * 드는 것이 둘(파편·치즈케이크)이라 값 줄이 길어졌다 — 예전 196폭에 그림 둘과 수 둘을 넣으면
+ * 글자가 판을 넘는다. 그림은 수와 **바짝** 붙이고 두 덩어리 사이만 벌려, 어느 수가 어느
+ * 재화의 것인지 간격으로 읽히게 한다.
+ */
+const BREAK_BUTTON = { width: 260, height: 86, labelY: -18, costY: 18, costSize: 19, icon: 26, gap: 5, pairGap: 18 } as const;
 
 /**
  * 한계 돌파 쪽지의 자리표.
@@ -478,7 +487,7 @@ export class InfoManager {
   private sliding = false;
   /** 급여 버튼의 켜짐·꺼짐 판 두 장. */
   /** 돌파 버튼. 레벨 옆에 붙어 지금 뚫을 수 있는지를 진하기로 알린다. */
-  private breakButton?: { container: Phaser.GameObjects.Container; label: Phaser.GameObjects.Text; cost: Phaser.GameObjects.Text };
+  private breakButton?: { container: Phaser.GameObjects.Container; label: Phaser.GameObjects.Text; cost: Phaser.GameObjects.Container };
   private feedPlate?: { on: Phaser.GameObjects.Graphics; off: Phaser.GameObjects.Graphics };
   /** 급여 버튼의 치즈케이크 값줄 — `가진 수/한 번에 드는 수`. */
   private feedCost?: Phaser.GameObjects.Text;
@@ -788,14 +797,15 @@ export class InfoManager {
    * 눌러 보기 전에 읽힌다. 아래 줄에는 지금 가진 파편과 다음 별에 드는 파편을 함께 적고,
    * 누르면 남은 재료를 마저 보여 준 뒤 거기서 확정한다.
    */
-  private addBreakButton(x: number, y: number, panel: Phaser.GameObjects.Container): { container: Phaser.GameObjects.Container; label: Phaser.GameObjects.Text; cost: Phaser.GameObjects.Text } {
+  private addBreakButton(x: number, y: number, panel: Phaser.GameObjects.Container): { container: Phaser.GameObjects.Container; label: Phaser.GameObjects.Text; cost: Phaser.GameObjects.Container } {
     const container = this.scene.add.container(x, y);
-    const shape = slantedRect(196, 74, 12);
+    const shape = slantedRect(BREAK_BUTTON.width, BREAK_BUTTON.height, 12);
     container.add(drawLayer(this.scene, 0, 0, shape, { fill: 0x24202f, alpha: 0.94, edge: BREAK_EDGE, edgeAlpha: 0.9, glow: { color: BREAK_EDGE, strength: 0.4, height: 0.6 } }));
-    const label = this.scene.add.text(0, -12, t("info.breakthrough"), textStyle({ role: "display", size: 26 })).setOrigin(0.5);
-    const cost = this.scene.add.text(0, 18, "", textStyle({ role: "emphasis", size: 20, color: COLOR.accentText })).setOrigin(0.5);
+    const label = this.scene.add.text(0, BREAK_BUTTON.labelY, t("info.breakthrough"), textStyle({ role: "display", size: 26 })).setOrigin(0.5);
+    // 드는 것 둘(파편·치즈케이크)이 한 줄에 서므로 글자 하나가 아니라 담는 칸이다.
+    const cost = this.scene.add.container(0, BREAK_BUTTON.costY);
     container.add([label, cost]);
-    const hit = this.scene.add.rectangle(0, 0, 204, 86, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    const hit = this.scene.add.rectangle(0, 0, BREAK_BUTTON.width + 8, BREAK_BUTTON.height + 12, 0xffffff, 0).setInteractive({ useHandCursor: true });
     hit.on("pointerdown", () => container.setScale(1.08));
     hit.on("pointerout", () => { if (!this.popups.isOpen) container.setScale(1); });
     hit.on("pointerup", () => {
@@ -818,9 +828,48 @@ export class InfoManager {
     this.breakButton?.container.setAlpha(step ? (ready ? 1 : 0.62) : 0.35);
     this.breakButton?.label.setText(step ? t("info.breakthrough") : t("info.breakthrough.gradeMax"));
     this.breakButton?.label.setColor(ready ? COLOR.ink : COLOR.inkDim);
-    // 파편이 몇 개 모였는지는 버튼이 직접 말한다. 눌러 보고서야 아는 값이면 늦다.
-    this.breakButton?.cost.setText(step ? held + " / " + need : "");
-    this.breakButton?.cost.setColor(step && held < need ? COLOR.dangerText : COLOR.accentText);
+    this.paintBreakCost(def, step, held, need);
+  }
+
+  /**
+   * 버튼이 직접 말하는 **드는 것 둘** — 그 개체의 파편과 치즈케이크.
+   *
+   * 예전에는 파편만 맨 숫자로 `200 / 5`라 적어, 무엇의 200인지도 치즈케이크가 든다는 것도
+   * 눌러 보고서야 알았다. 지금은 둘 다 **그림 + 가진 수 / 드는 수**로 서고 모자란 쪽만 붉다.
+   *
+   * **액자를 쓰지 않는다** — 버튼 판 안에 액자를 넣으면 판이 두 겹으로 보인다(재화 비용 표기와
+   * 같은 규칙). 파편 그림은 확정 창의 보석 조각과 같은 얼굴을 액자 없이 세운 것이다.
+   */
+  private paintBreakCost(def: RelicDef | undefined, step: BreakthroughStep | undefined, held: number, need: number): void {
+    const row = this.breakButton?.cost;
+    if (!row) return;
+    row.removeAll(true);
+    if (!def || !step) return;
+    const cheesecake = session.wallet.cheesecake;
+    const pairs = [
+      { short: held < need, text: `${formatCurrency(held)}/${formatCurrency(need)}` },
+      { short: cheesecake < step.cheesecake, text: `${formatCurrency(cheesecake)}/${formatCurrency(step.cheesecake)}` },
+    ];
+    const values = pairs.map(({ short, text }) => this.scene.add
+      .text(0, 0, text, textStyle({ role: "emphasis", size: BREAK_BUTTON.costSize, color: short ? COLOR.dangerText : COLOR.accentText }))
+      .setOrigin(0, 0.5));
+    // 그림과 수를 한 덩어리로 재고 나서 줄 가운데에 세운다 — 자릿수가 늘어도 줄이 흔들리지 않는다.
+    const widths = values.map((value) => BREAK_BUTTON.icon + BREAK_BUTTON.gap + value.width);
+    const span = widths.reduce((sum, width) => sum + width, 0) + BREAK_BUTTON.pairGap;
+    let cursor = -span / 2;
+    values.forEach((value, index) => {
+      const iconX = cursor + BREAK_BUTTON.icon / 2;
+      if (index === 0) {
+        // 파편은 그 개체의 얼굴 조각이다. 액자 없이 그림만 세운다.
+        row.add(new FaceFrame(this.scene, iconX, 0, { portraitAssetId: def.portraitAssetId, size: BREAK_BUTTON.icon, bare: true }));
+      } else {
+        const key = CURRENCY_ICON_BY_WALLET.cheesecake;
+        if (this.scene.textures.exists(key)) row.add(this.scene.add.image(iconX, 0, key).setDisplaySize(BREAK_BUTTON.icon, BREAK_BUTTON.icon));
+      }
+      value.setX(cursor + BREAK_BUTTON.icon + BREAK_BUTTON.gap);
+      row.add(value);
+      cursor += widths[index] + BREAK_BUTTON.pairGap;
+    });
   }
 
   /**

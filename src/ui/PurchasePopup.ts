@@ -5,9 +5,9 @@ import { formatCurrency } from "../core/formatCurrency";
 import { quotePurchase, totalGrantAmount } from "../core/purchase";
 import type { Wallet } from "../core/gacha";
 import { Button } from "./Button";
-import { chipPoints, drawHairline, drawLayer, HOLO, slantedRect } from "./holo";
+import { chipPoints, drawHairline, drawLayer, HOLO } from "./holo";
 import { addFramedIcon } from "./itemFrame";
-import { addPriceBar, addPriceTag, PRICE_TAG, priceTagRightCenter } from "./priceTag";
+import { addPriceBar } from "./priceTag";
 import { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
 import { openRewardPopup, productGrantsToRewardItems } from "./RewardPopup";
@@ -107,10 +107,13 @@ export class PurchasePopup {
     view.add(drawHairline(this.scene, 0, QUANTITY.hairlineY, QUANTITY.rowWidth, { color: COLOR.accent, alpha: 0.32 }));
     // 값은 글이 아니라 **받는 것과 같은 액자**로 선다. 재화 이름을 적지 않는 이유는 그림이
     // 이미 어느 재화인지 말하기 때문이고, 모자란 값만 그 수가 붉어져 이유를 스스로 말한다.
+    // **값 줄만 판을 깐다.** 무역 묶음 확인판과 같은 양식이다 — 이름표와 (재화 그림 + 수)가
+    // 판 한 장의 두 끝에서 마주 본다. 개수·남은 제한은 재화가 아니라 그냥 수라, 같은 판을 깔면
+    // 네 줄이 모두 값처럼 읽혀 정작 얼마를 치르는지가 묻힌다.
     this.addPriceRow(view, quantityRowY(0), t("shop.purchase.price"), acquisition.currency, acquisition.amount);
     this.addValueRow(view, quantityRowY(1), t("shop.purchase.count"), formatCurrency(quote.quantity));
     this.addPriceRow(view, quantityRowY(2), t("shop.purchase.total"), acquisition.currency, quote.totalPrice, {
-      emphasized: true, short: balance < quote.totalPrice,
+      short: balance < quote.totalPrice,
     });
     this.addValueRow(view, quantityRowY(3), t("shop.purchase.remaining"), `${formatCurrency(product.remaining)} / ${formatCurrency(product.purchaseLimit)}`);
 
@@ -162,7 +165,7 @@ export class PurchasePopup {
     addPriceBar(this.scene, view, 0, PACKAGE.priceY, PACKAGE.barWidth, t("shop.purchase.price"), acquisition.currency, acquisition.amount, {
       short: this.wallet[acquisition.currency] < acquisition.amount,
     });
-    this.addValueRow(view, PACKAGE.limitY, t("shop.purchase.limit"), tradePackageLimitLabel(product.refresh, product.purchaseLimit, product.remaining), false, false);
+    this.addValueRow(view, PACKAGE.limitY, t("shop.purchase.limit"), tradePackageLimitLabel(product.refresh, product.purchaseLimit, product.remaining));
 
     const balance = this.wallet[acquisition.currency];
     const canPurchase = product.purchasable && product.remaining > 0 && balance >= acquisition.amount && !this.pending;
@@ -174,24 +177,10 @@ export class PurchasePopup {
     if (status) view.add(this.scene.add.text(0, PACKAGE.statusY, status, textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0.5));
   }
 
-  /** 이름과 값을 같은 기준선에 놓아 가격 비교 시 시선이 흔들리지 않게 한다. */
-  private addValueRow(view: Phaser.GameObjects.Container, y: number, label: string, value: string, emphasized = false, plate = true): void {
-    if (plate) this.addRowPlate(view, y);
+  /** 재화가 아닌 값 한 줄 — **판을 깔지 않고 글자만** 이름표와 마주 세운다. */
+  private addValueRow(view: Phaser.GameObjects.Container, y: number, label: string, value: string): void {
     view.add(this.scene.add.text(QUANTITY.rowLeft, y, label, textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5));
-    view.add(this.scene.add.text(QUANTITY.rowRight, y, value, textStyle({ role: "emphasis", size: emphasized ? 31 : 26, color: emphasized ? COLOR.accentText : COLOR.ink })).setOrigin(1, 0.5));
-  }
-
-  /**
-   * 값 줄의 밑판.
-   *
-   * 값이 글자에서 액자로 바뀌면서 줄이 두꺼워졌다 — 얇은 구분선만 두면 액자가 아무것도 없는
-   * 자리에 홀로 떠 보인다. 판 한 장을 깔면 액자가 줄 **안**에 선 것으로 읽히고, 이름표와 값이
-   * 같은 줄의 두 끝이라는 것도 함께 보인다.
-   */
-  private addRowPlate(view: Phaser.GameObjects.Container, y: number): void {
-    view.add(drawLayer(this.scene, 0, y, slantedRect(QUANTITY.rowWidth, QUANTITY.rowHeight), {
-      fill: 0x121924, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.28,
-    }));
+    view.add(this.scene.add.text(QUANTITY.rowRight, y, value, textStyle({ role: "emphasis", size: 26, color: COLOR.ink })).setOrigin(1, 0.5));
   }
 
   /**
@@ -205,12 +194,9 @@ export class PurchasePopup {
     label: string,
     currency: Extract<ProductDto["acquisition"], { kind: "currency" }>["currency"],
     amount: number,
-    options: { emphasized?: boolean; short?: boolean } = {},
+    options: { short?: boolean } = {},
   ): void {
-    this.addRowPlate(view, y);
-    view.add(this.scene.add.text(QUANTITY.rowLeft, y, label, textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5));
-    const size = options.emphasized ? PRICE_TAG.emphasizedSize : PRICE_TAG.size;
-    addPriceTag(this.scene, view, priceTagRightCenter(QUANTITY.rowRight, size), y, currency, amount, { size, short: options.short });
+    addPriceBar(this.scene, view, 0, y, QUANTITY.rowWidth, label, currency, amount, { short: options.short });
   }
 
   /** 버튼 입력도 모델을 다시 통과시켜 렌더링 수치와 요청 수량이 갈리지 않게 한다. */

@@ -39,6 +39,11 @@ export class FaceFrame extends Phaser.GameObjects.Container {
      * 물낯처럼 일렁이는 띠와 광택 한 줄이 얹혀, 같은 액자 규격을 지키면서 결만 유리로 바꾼다.
      */
     gem?: number;
+    /**
+     * **액자 없이 그림만** 세운다. 버튼 안처럼 판을 한 겹 더 깔 수 없는 자리만 켠다 —
+     * 버튼 판 안에 액자를 넣으면 판이 두 겹으로 보인다(재화 비용 표기와 같은 규칙).
+     */
+    bare?: boolean;
   }) {
     super(scene, x, y);
     scene.add.existing(this);
@@ -46,8 +51,12 @@ export class FaceFrame extends Phaser.GameObjects.Container {
     const shape = chipPoints(size, size, {
       bevel: { topLeft: size * ITEM_FRAME.bevel, topRight: 0, bottomRight: size * ITEM_FRAME.bevel, bottomLeft: 0 },
     });
-    this.add(drawLayer(scene, 0, 0, shape, { fill: ITEM_FRAME.fill, alpha: ITEM_FRAME.fillAlpha }));
+    if (!options.bare) this.add(drawLayer(scene, 0, 0, shape, { fill: ITEM_FRAME.fill, alpha: ITEM_FRAME.fillAlpha }));
     void this.loadFace(scene, options, size);
+    if (options.bare) {
+      this.once(Phaser.GameObjects.Events.DESTROY, () => { this.disposed = true; });
+      return;
+    }
     // 파편은 **빛을 통과시키는 유리**다. 얼굴 위로 물낯처럼 일렁이는 띠와 광택 한 줄을 얹어,
     // 같은 액자를 쓰면서도 기여도 줄의 프로필과 다른 것으로 읽히게 한다.
     if (options.gem !== undefined) this.add(paintGlassSheen(scene, size, options.gem));
@@ -85,7 +94,8 @@ export class FaceFrame extends Phaser.GameObjects.Container {
     const baked = bakeFaceTexture(scene, key, size, { x: face.cropX, y: face.cropY, side: face.cropWidth });
     const image = scene.add.image(0, 0, baked).setDisplaySize(size, size);
     if (options.tint) image.setTint(options.tint);
-    this.addAt(image, 1);
+    // 액자를 깐 경우 면 바로 위(1번)에, 그림만 세우는 경우 그대로 맨 앞에 놓는다.
+    this.addAt(image, this.length > 0 ? 1 : 0);
   }
 }
 
@@ -137,12 +147,15 @@ function paintGlassSheen(scene: Phaser.Scene, size: number, color: number): Phas
   // 유리의 광택 한 줄. 왼쪽 위에서 오른쪽 아래로 비스듬히 지나가는 좁은 띠다.
   const sheen = scene.add.graphics().setBlendMode(Phaser.BlendModes.ADD);
   sheen.fillStyle(GLASS_SHEEN.sheen, GLASS_SHEEN.sheenAlpha);
-  sheen.fillPoints(toPoints(clipPolygonToShape([
+  // **빈 점 목록을 넘기지 않는다.** Phaser의 `fillPoints`는 첫 점을 곧바로 읽어 예외를 던지고,
+  // 그 예외가 액자를 세우던 창을 그리다 말게 만든다.
+  const sheenShape = clipPolygonToShape([
     -half, -half + size * GLASS_SHEEN.sheenAt,
     -half + size * GLASS_SHEEN.sheenWidth, -half,
     half, -half + size * GLASS_SHEEN.sheenAt,
     half - size * GLASS_SHEEN.sheenWidth, half,
-  ], shape)), true);
+  ], shape);
+  if (sheenShape.length >= 6) sheen.fillPoints(toPoints(sheenShape), true);
   glass.add(sheen);
   // 유리 안쪽에서 번지는 등급색. 빛이 조각을 통과해 액자 안으로 스며드는 몫이다.
   glass.add(drawShapeInnerGlow(scene, 0, 0, shape, { color, strength: GLASS_SHEEN.glow, depth: GLASS_SHEEN.glowDepth }));
@@ -156,17 +169,30 @@ function toPoints(flat: readonly number[]): Phaser.Geom.Point[] {
   return points;
 }
 
-/** 볼록한 두 도형의 교집합. 광택 띠(마름모)를 액자 도형 안으로 잘라 낸다. */
+/**
+ * 볼록한 두 도형의 교집합. 광택 띠(마름모)를 액자 도형 안으로 잘라 낸다.
+ *
+ * **어느 쪽이 안인지는 도형이 감긴 방향이 정한다.** 화면 좌표는 y가 아래로 가므로 눈에 보이는
+ * 시계 방향이 수학의 반시계 방향과 부호가 뒤집힌다 — 부호를 손으로 적어 두었더니 안팎이 반대로
+ * 잡혀 **잘라낸 결과가 통째로 비었고**, 빈 점 목록을 받은 `fillPoints`가 예외를 던져 그 액자를
+ * 세우던 창이 그리다 말았다(한계 돌파 확정 창이 그랬다). 그래서 감긴 방향을 **재서** 정한다.
+ */
 function clipPolygonToShape(subject: readonly number[], clip: readonly number[]): number[] {
   let polygon = [...subject];
   const count = clip.length / 2;
+  // 신발끈 공식의 부호가 곧 감긴 방향이다. 안쪽은 그 부호와 같은 쪽이다.
+  let twiceArea = 0;
+  for (let i = 0; i < count; i += 1) {
+    const j = (i + 1) % count;
+    twiceArea += clip[i * 2] * clip[j * 2 + 1] - clip[j * 2] * clip[i * 2 + 1];
+  }
+  const sign = twiceArea >= 0 ? 1 : -1;
   for (let edge = 0; edge < count; edge += 1) {
     const ax = clip[edge * 2];
     const ay = clip[edge * 2 + 1];
     const bx = clip[((edge + 1) % count) * 2];
     const by = clip[((edge + 1) % count) * 2 + 1];
-    // 칩 도형은 시계 방향이므로 왼쪽이 바깥이다. 외적의 부호로 안팎을 가른다.
-    const inside = (x: number, y: number): number => (bx - ax) * (y - ay) - (by - ay) * (x - ax);
+    const inside = (x: number, y: number): number => sign * ((bx - ax) * (y - ay) - (by - ay) * (x - ax));
     const next: number[] = [];
     const points = polygon.length / 2;
     for (let i = 0; i < points; i += 1) {
@@ -176,8 +202,9 @@ function clipPolygonToShape(subject: readonly number[], clip: readonly number[])
       const qy = polygon[((i + 1) % points) * 2 + 1];
       const pv = inside(px, py);
       const qv = inside(qx, qy);
-      if (pv <= 0) next.push(px, py);
-      if ((pv <= 0) !== (qv <= 0)) {
+      if (pv >= 0) next.push(px, py);
+      if ((pv >= 0) !== (qv >= 0)) {
+        // 부호가 다르면 그 사이에서 반드시 변을 지난다 — 나누는 값이 0이 될 수 없다.
         const t = pv / (pv - qv);
         next.push(px + (qx - px) * t, py + (qy - py) * t);
       }

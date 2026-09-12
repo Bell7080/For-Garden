@@ -24,9 +24,12 @@ describe("값 액자", () => {
     expect(source("priceTag")).toContain("options.short ? COLOR.dangerText : COLOR.accentText");
   });
 
+  // 값이 서는 자리는 둘 중 하나다 — 여럿이 나란히 서는 자리는 **액자**(`addPriceTag`),
+  // 그 줄이 값 하나만 말하는 자리는 **가로로 긴 줄**(`addPriceBar`)이다. 맨 글자로 되돌아간
+  // 화면이 없는지만 확인한다.
   for (const screen of ["PurchasePopup", "TradePackageCard", "InteractionExchangePopup", "ShopScene", "PremiumScene"]) {
     it(`는 ${screen}의 값 자리를 맡는다`, () => {
-      expect(source(screen)).toMatch(/addPriceTag|addItemPriceTag/);
+      expect(source(screen)).toMatch(/addPriceTag|addItemPriceTag|addPriceBar/);
     });
   }
 

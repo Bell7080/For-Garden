@@ -15,7 +15,7 @@ const BASE = {
   /** 제목표가 윗변에 걸터앉으므로 첫 카드는 그보다 아래에서 시작한다. */
   topPad: 104,
   bottomPad: 84,
-  cardHeight: 300,
+  cardHeight: 320,
   cardGap: 28,
   /** 카드 안 왼쪽·오른쪽 안쪽 여백. 깎인 모서리를 피해 글과 액자가 앉는 선이다. */
   cardPadX: 36,
@@ -34,6 +34,10 @@ export interface TradePackageCardMetrics {
   frameY: number;
   frameSize: number;
   costY: number;
+  /** 값 줄 판의 폭. 카드 가운데에 서므로 카드 폭을 다 쓰지 않는다. */
+  costWidth: number;
+  /** 값 줄 판의 높이. 카드 안에 드는 줄이라 확인판의 값 줄보다 얇다. */
+  costHeight: number;
   limitY: number;
   /** 글과 액자가 앉는 좌·우 선. */
   left: number;
@@ -63,8 +67,13 @@ export function tradePackageCardMetrics(width = BASE.width - BASE.padX * 2, heig
     hairlineY: top + 78,
     frameY: top + 78 + 24 + BASE.frame / 2,
     frameSize: BASE.frame,
-    costY: height / 2 - 44,
-    limitY: height / 2 - 40,
+    // **값은 카드 가운데에 판 한 장으로 선다.** 왼쪽 아래에 작은 액자로 두었을 때는 받는 것
+    // (큰 액자 여럿)과 무게가 갈려 카드 구석에 붙은 표처럼 읽혔다. 제한 문구는 그 판 오른쪽
+    // 옆에 서서 같은 줄을 나눠 쓴다.
+    costY: height / 2 - 56,
+    costWidth: 300,
+    costHeight: 62,
+    limitY: height / 2 - 56,
     left, right,
     // 액자는 왼쪽에 붙이지 않고 **가운데로 모은다** — 한 장만 주는 패키지에서 카드 오른쪽
     // 절반이 통째로 비어 무엇을 기다리는 자리처럼 보이기 때문이다.

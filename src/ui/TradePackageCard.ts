@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { formatCurrency } from "../core/formatCurrency";
-import { addPriceTag, PRICE_TAG } from "./priceTag";
+import { addPriceBar } from "./priceTag";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { chipPoints, drawFrameVignette, drawHairline, drawLayer, slantedRect } from "./holo";
 import { addFramedIcon } from "./itemFrame";
@@ -129,12 +129,13 @@ export class TradePackageCard extends Phaser.GameObjects.Container {
       });
     });
 
-    // **드는 것도 받는 것과 같은 액자다.** 맨 그림 옆에 수를 적어 두었을 때는 같은 젬이 위에서는
-    // 액자 안에, 아래에서는 글로 서서 한 카드 안에 두 양식이 보였다.
+    // **값은 카드 가운데에 판 한 장으로 선다** — 구매 확인판의 값 줄과 같은 양식이라(`addPriceBar`)
+    // 눌러서 열어도 방금 보던 표기가 그대로 이어진다. 이름표는 비운다: 이 줄이 말하는 것이
+    // 값 하나뿐이라 그림과 수가 판 가운데로 모인다.
     if (view.cost) {
-      addPriceTag(scene, this, metrics.left + PRICE_TAG.size / 2, metrics.costY, view.cost.currency, view.cost.amount, {
+      addPriceBar(scene, this, 0, metrics.costY, metrics.costWidth, undefined, view.cost.currency, view.cost.amount, {
+        height: metrics.costHeight,
         iconAlpha: view.soldOut ? 0.6 : 1,
-        color: accent,
       });
     }
     // 왜 지금 못 사는지는 제한 줄이 그대로 말한다(`소진`). 개발 상태 문구를 따로 적지 않는다.

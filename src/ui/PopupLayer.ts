@@ -247,7 +247,15 @@ export class PopupLayer {
     this.chromeByBody.set(body, titleChrome);
     body.once(Phaser.GameObjects.Events.DESTROY, () => this.chromeByBody.delete(body));
 
-    build(body, close);
+    // **내용을 채우다 넘어져도 창은 창으로 남는다.** 예전에는 본문이 예외를 던지면 그 뒤에 오는
+    // 등장 연출·제목 기록·스택 등록이 통째로 건너뛰어져, 반쯤 그린 판이 **닫히지도 않는 채로**
+    // 화면에 남았다(돌파 확정 창이 그랬다 — 액자 하나가 던진 예외에 「돌파하기」까지 사라졌다).
+    // 로딩 단계와 같은 태도다: 한 조각이 실패해도 다음 조각과 조작은 살려 둔다.
+    try {
+      build(body, close);
+    } catch (error) {
+      console.error("팝업 본문을 그리다 실패했습니다.", error);
+    }
     // 배경 원화를 까는 큰 팝업은 내용이 제목 뒤로 들어오므로, 채운 뒤 머리글을 한 번 더 맨 위로 올린다.
     this.raiseChrome(body);
 

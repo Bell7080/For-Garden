@@ -2,6 +2,7 @@ import type Phaser from "phaser";
 import { preloadPuppetAssets, PUPPET_PRELOAD_GROUPS } from "../puppets/assets";
 import { BACKGROUND_ASSETS, BACKGROUND_BOOT_KEYS } from "../ui/backgrounds";
 import { loadGameFonts } from "../ui/fonts";
+import { loadTextCatalog } from "../i18n";
 import { settingsManager } from "../managers/SettingsManager";
 import { UI_ICON_ASSETS } from "../ui/icons";
 import { AFFINITY_ICON_ASSETS } from "../ui/affinityIcons";
@@ -88,8 +89,12 @@ const CONTENT_ART_ASSETS = [
 export const LOADING_STEPS: ReadonlyArray<LoadingStep> = [
   {
     label: "글꼴",
-    // 그 언어가 실제로 쓰는 글꼴만 내려받는다 — 일곱 언어를 모두 올리면 첫 로딩이 그만큼 늘어난다.
-    run: () => loadGameFonts(settingsManager.get().game.language),
+    // 그 언어가 실제로 쓰는 글꼴과 문구 표만 내려받는다 — 전부 올리면 한국어만 쓰는 사람도
+    // 열한 언어를 함께 받는다. 둘은 같은 시점에 있어야 하므로 한 단계로 묶는다.
+    run: () => {
+      const language = settingsManager.get().game.language;
+      return Promise.all([loadGameFonts(language), loadTextCatalog(language)]).then(() => undefined);
+    },
   },
   {
     label: "배경 원화",

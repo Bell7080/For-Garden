@@ -460,6 +460,13 @@ export type Skill = AttackSkill | HealingSkill | SupportSkill | SetupSkill;
 export type BasicAttackStep = {
   /** 이 걸음의 이름. 설명문이 걸음을 차례로 늘어놓을 때 쓴다. */
   name: string;
+  /**
+   * 이 걸음이 곧 규칙어일 때 그 사전 ID.
+   *
+   * 이름으로 사전을 뒤지지 않는 이유는 이름이 언어를 따라 바뀌기 때문이다 — 「갈래화살」로
+   * 찾으면 다른 언어에서는 그 걸음만 눌러 볼 수 없는 맨 글자가 된다.
+   */
+  keywordId?: string;
   power: number;
   /**
    * 걸음마다 혼자만 광역일 수 있다. 생략하면 단일 대상이다.

@@ -35,7 +35,12 @@ describe("문구 표", () => {
       .filter(([path]) => !path.startsWith("../../src/i18n/"))
       .map(([, text]) => text)
       .join("\n");
-    const unused = Object.keys(KO).filter((key) => !code.includes(`"${key}"`));
+    // 키를 `\`skill.target.${targeting}\``처럼 조립해 부르는 자리도 쓰는 것으로 본다 — 분기마다
+    // 키를 손으로 늘어놓게 하면 갈래가 늘 때 그중 하나를 빠뜨린다.
+    const prefixes = [...code.matchAll(/`([a-z][\w.]*)\.\$\{/g)].map((match) => `${match[1]}.`);
+    const unused = Object.keys(KO)
+      .filter((key) => !code.includes(`"${key}"`))
+      .filter((key) => !prefixes.some((prefix) => key.startsWith(prefix)));
     expect(unused).toEqual([]);
   });
 });
@@ -161,6 +166,10 @@ const MIGRATED = [
   "../../src/ui/staminaDisplay.ts",
   "../../src/ui/statTones.ts",
   "../../src/ui/tradePopupModel.ts",
+  "../../src/ui/skillPresentation.ts",
+  "../../src/ui/info.ts",
+  "../../src/managers/KeywordManager.ts",
+  "../../src/core/damage.ts",
 ];
 
 /**
@@ -169,7 +178,7 @@ const MIGRATED = [
  * `console.*`는 개발자만 보는 기록이고, `setDebug*`가 넘기는 화면 이름은 화면에 그리지 않고
  * E2E가 어느 화면인지 확인하는 데만 쓴다 — 언어를 따라 바뀌면 그 확인이 언어마다 갈린다.
  */
-const isDeveloperLine = (line: string): boolean => /console\.|setDebug|throw new Error/.test(line);
+const isDeveloperLine = (line: string): boolean => /console\.|setDebug|throw new \w*Error/.test(line);
 
 describe("화면 문구", () => {
   it("은 이관을 마친 화면에 한글을 남기지 않는다", () => {

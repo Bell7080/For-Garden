@@ -10,12 +10,20 @@ import { registerDataText } from "../i18n";
  *
  * 설명문에서는 `[[keyword-id]]` 또는 `[[keyword-id|보여 줄 말]]`로 표시한다.
  */
+/** 쪽지 머리에 뜨는 분류. 값은 표기가 아니라 문구 표가 읽는 ID다. */
+export type KeywordKind = "debuff" | "buff" | "state" | "rule";
+
 export interface KeywordDef {
   id: string;
   /** 강조되어 보이는 기본 표기. 문법에서 별칭을 주면 그쪽이 우선한다. */
   term: string;
-  /** 상태이상인지 강화인지처럼 한눈에 성격을 알리는 짧은 분류. */
-  kind: "디버프" | "버프" | "상태" | "규칙";
+  /**
+   * 상태이상인지 강화인지처럼 한눈에 성격을 알리는 짧은 분류.
+   *
+   * **표기가 아니라 ID다.** 쪽지 머리에 뜨는 글자는 `KeywordManager`가 문구 표에서 고른다 —
+   * 정적 정의가 한국어를 들고 있으면 언어를 바꿔도 그 줄만 한국어로 남는다.
+   */
+  kind: KeywordKind;
   description: string;
 }
 
@@ -23,185 +31,185 @@ export const KEYWORDS: readonly KeywordDef[] = [
   {
     id: "burn",
     term: "화상",
-    kind: "디버프",
+    kind: "debuff",
     description: "매 초 공격력의 4%만큼 고정 피해를 입는다. 겹쳐 걸면 지속 시간만 늘어난다.",
   },
   {
     id: "guard",
     term: "방어 태세",
-    kind: "버프",
+    kind: "buff",
     description: "받는 물리 피해가 줄어든다. 같은 종류의 감소 효과와는 곱해서 적용한다.",
   },
   {
     id: "ferocity",
     term: "야성",
-    kind: "규칙",
+    kind: "rule",
     description: "전투 중 쌓이는 원종의 본능이다. 가득 차면 폭주해 피해가 크게 오르고, 그 상태에서도 궁극기를 쓸 수 있다. 유대 레벨이 높을수록 빨리 쌓이며, 폭주는 시간이 지나면 스스로 가라앉는다.",
   },
   {
     id: "reagent",
     term: "시약",
-    kind: "상태",
+    kind: "state",
     // 수치는 각 캐릭터의 구조화 계약이 소유하고, 전역 사전은 모든 사용자에게 공통인 문맥만 설명한다.
     description: "공격으로 적에게 남기는 제공자별 중첩이다. 같은 제공자가 다시 부여하면 유지 시간이 갱신되고, 최대 중첩에 도달하면 모두 소비해 시약 반응을 일으킨다.",
   },
   {
     id: "reagent-reaction",
     term: "시약 반응",
-    kind: "규칙",
+    kind: "rule",
     // 중독·회복·저항력 감소 수치는 패시브 본문이 계약에서 조립하므로 키워드는 발동 맥락만 맡는다.
     description: "최대 중첩의 시약을 소비해 대상에게 중독과 저항력 감소를 남기고, 현재 HP 비율이 가장 낮은 생존 아군 한 명을 회복한다.",
   },
   {
     id: "shell",
     term: "조가비",
-    kind: "버프",
+    kind: "buff",
     // 겹·시간·보호막 수치는 각 아모 스킬의 구조화 데이터에서 본문을 만들고, 사전은 공통 규칙만 설명한다.
     description: "피해를 받고 살아남을 때 쌓이는 아모의 버프다. 최대 중첩을 소비하면 자신과 현재 HP 비율이 가장 낮은 다른 생존 아군에게 보호막을 준다.",
   },
   {
     id: "bleed",
     term: "출혈",
-    kind: "디버프",
+    kind: "debuff",
     description: `${BLEED.seconds}초 동안 매초 최대 체력의 ${BLEED.percentPerSecond}% 고정 피해를 입는다. 방어력으로 줄일 수 없다.`,
   },
   {
     // 작은 출혈은 별도 검색어로 노출해 표준 출혈과 같은 효과처럼 오인하지 않게 한다.
     id: "minor-bleed",
     term: "작은 출혈",
-    kind: "디버프",
+    kind: "debuff",
     description: `${BLEED.minor.seconds}초 동안 매초 최대 체력의 ${BLEED.minor.percentPerSecond}% 고정 피해를 입는다. 약한 재적용은 더 강한 출혈을 덮지 않는다.`,
   },
   // 중독은 쓰는 개체가 델로피 하나뿐이라 태그가 매초 계수를 가진다. 다만 **시간**은 출혈과
   // 같은 이유로 스킬마다 본문이 적는다 — 시간이 다른 개체가 생기는 순간 태그가 거짓말이 된다.
   {
-    id: "poison", term: "중독", kind: "디버프",
+    id: "poison", term: "중독", kind: "debuff",
     description: `시전자의 공격력 ${POISON.attackPercentPerSecond}%와 주문력 ${POISON.abilityPercentPerSecond}%를 합친 [[magical-damage|마법 피해]]를 매초 입는다. 매초 얼마인지는 바르는 순간 한 번 정해지며, 세기가 맞은 쪽이 아니라 바른 쪽에서 나오므로 더 아픈 독이 덮으면 그 값이 남는다.`,
   },
   {
-    id: "liquidate", term: "청산", kind: "규칙",
+    id: "liquidate", term: "청산", kind: "rule",
     description: "남은 지속 피해를 한 번에 몰아서 받고 그 상태가 사라진다. 앞으로 받았을 몫을 먼저 받는 것이라 총량은 그대로 두고 시점만 당긴다.",
   },
   {
-    id: "stagger", term: "경직", kind: "디버프",
+    id: "stagger", term: "경직", kind: "debuff",
     description: "약 0.1초 동안 행동을 멈춘다. 짧지만 진행 중인 시전을 끊을 수 있다.",
   },
   {
-    id: "overpaint", term: "덧칠", kind: "디버프",
+    id: "overpaint", term: "덧칠", kind: "debuff",
     description: "한 겹마다 그 적이 받는 모든 피해가 6% 커진다. 최대 4겹까지 쌓이고 10초 동안 남으며, 다시 칠하면 유지 시간이 처음부터 다시 흐른다.",
   },
   // 듀오·약점 포착 둘 다 쓰는 개체가 슈테 하나뿐이라 태그가 수치를 가진다. 둘째 개체가 이
   // 규칙어를 갖게 되면 출혈처럼 수치를 본문으로 옮기고 태그는 무엇인지만 말하게 바꾼다.
   {
-    id: "duo", term: "듀오", kind: "버프",
+    id: "duo", term: "듀오", kind: "buff",
     description: "전투가 시작될 때 편성에서 자기 바로 왼쪽에 선 아군과 짝을 짓는다. 왼쪽이 비어 있으면 오른쪽이다. 짝은 전투 내내 바뀌지 않으며, 그 곁에 붙어 다니고 2초마다 듀오가 노리는 적을 함께 표적으로 삼는다.",
   },
   {
-    id: "weakpoint", term: "약점 포착", kind: "디버프",
+    id: "weakpoint", term: "약점 포착", kind: "debuff",
     description: "[[duo|듀오]]가 그 적을 때리면 터진다. 표식을 남긴 개체의 [[ap|주문력]] 120%에 해당하는 [[magical-damage|마법 피해]]를 주고, 그 피해의 50%만큼 듀오가 체력을 회복한다. 터지면 사라지고 시간이 흘러 사라지지는 않는다.",
   },
   {
-    id: "butcher", term: "손질", kind: "디버프",
+    id: "butcher", term: "손질", kind: "debuff",
     description: "3겹이 쌓이면 그 자리에서 터져 공격력의 120%에 해당하는 물리 피해를 준다. 터진 뒤 겹은 0으로 돌아가며, 시간이 흘러 사라지지 않는다.",
   },
   // 밴덜리즘도 쓰는 개체가 데이 하나뿐이라 태그가 수치를 가진다. 둘째 개체가 이 규칙어를
   // 갖게 되면 출혈처럼 시간·비율을 본문으로 옮기고 태그는 무엇인지만 말하게 바꾼다.
   {
-    id: "vandalism", term: "밴덜리즘", kind: "디버프",
+    id: "vandalism", term: "밴덜리즘", kind: "debuff",
     description: "한 겹마다 그 적의 공격력과 주문력이 5% 낮아지며, 시간이 흘러 사라지지 않는다. 5겹째에 그 자리에서 터져 칠한 쪽 주문력의 125%에 해당하는 마법 피해를 주고 겹은 0으로 돌아간다.",
   },
   // 저주·광란은 쓰는 개체가 케리스 하나뿐이라 태그가 수치를 가져도 된다. 다만 광란의 **시간**은
   // 스킬마다 다르므로(궁극 4초 · 폭주 2초) 태그가 아니라 본문이 적는다 — 출혈과 같은 이유다.
   {
-    id: "curse", term: "저주", kind: "디버프",
+    id: "curse", term: "저주", kind: "debuff",
     description: "한 겹마다 그 적의 저항력이 15% 낮아진다. 최대 3겹까지 쌓이고 8초 동안 남으며, 다시 걸면 유지 시간이 처음부터 다시 흐른다. 저항력만 낮추므로 마법 피해에만 듣는다.",
   },
   {
-    id: "frenzy", term: "광란", kind: "디버프",
+    id: "frenzy", term: "광란", kind: "debuff",
     description: "공격 속도가 50% 높아지는 대신 가장 가까운 자기 편을 공격한다. 때릴 자기 편이 남지 않으면 제자리에서 자신을 공격한다. 광란 중에는 궁극기를 쓰지 못한다.",
   },
   {
-    id: "concussion", term: "뇌진탕", kind: "디버프",
+    id: "concussion", term: "뇌진탕", kind: "debuff",
     description: "최대 체력의 5%에 해당하는 피해. 치명타 발동 시 15%에 해당하는 피해. 방어력과 속성을 지나쳐 맞은 순간 한 번에 들어간다.",
   },
   {
-    id: "knockback", term: "날려버림", kind: "디버프",
+    id: "knockback", term: "날려버림", kind: "debuff",
     description: "튕겨 나간 적이 전장의 벽을 튀기며 날아다닌다. 날아가는 동안에는 움직이지도 때리지도 못한다.",
   },
   {
-    id: "charge", term: "돌진", kind: "규칙",
+    id: "charge", term: "돌진", kind: "rule",
     description: "멈추지 않고 뚫고 지나간다. 나아가는 거리는 이동 속도가 정하므로 발이 빠를수록 더 깊이 파고들며, 지나간 길에 있던 적은 모두 맞는다.",
   },
   {
-    id: "tailwind", term: "순풍", kind: "버프",
+    id: "tailwind", term: "순풍", kind: "buff",
     description: "정해진 시간 동안 공격 속도와 이동 속도가 각각 20% 오른다. 같은 순풍을 다시 받으면 남은 시간이 더 긴 쪽으로 갱신된다.",
   },
   {
-    id: "regeneration", term: "지속 회복", kind: "버프",
+    id: "regeneration", term: "지속 회복", kind: "buff",
     description: "정해진 시간 동안 일정한 간격으로 체력을 회복한다.",
   },
   {
-    id: "stun", term: "기절", kind: "디버프",
+    id: "stun", term: "기절", kind: "debuff",
     description: "지속되는 동안 이동하거나 공격하거나 스킬을 사용할 수 없다.",
   },
   // 둔화·빙결은 쓰는 개체가 매디 하나뿐이라 태그가 수치를 가진다. 둘째 개체가 이 규칙어를
   // 갖게 되면 출혈처럼 겹 수·시간을 본문으로 옮기고 태그는 무엇인지만 말하게 바꾼다.
   {
-    id: "chill", term: "둔화", kind: "디버프",
+    id: "chill", term: "둔화", kind: "debuff",
     // 겹당 비율과 상한은 스킬마다 다르므로 본문이 적는다(출혈과 같은 이유다). 태그는 그것이
     // 무엇인지와 어느 상태와 겹치지 않는지만 말한다.
     description: "겹이 쌓일수록 공격 속도와 이동 속도가 함께 낮아진다. [[frozen|빙결]] 중에는 새로 걸리지 않는다.",
   },
   {
-    id: "frozen", term: "빙결", kind: "디버프",
+    id: "frozen", term: "빙결", kind: "debuff",
     description: `${FROZEN.seconds}초 동안 [[stun|기절]]과 같이 완전히 행동할 수 없다. 풀리는 순간 최대 체력의 ${FROZEN.maxHpPercentOnExpire}%에 해당하는 [[fixed-damage|고정 피해]]를 입는다.`,
   },
   {
-    id: "hp", term: "체력", kind: "규칙",
+    id: "hp", term: "체력", kind: "rule",
     description: "전투에서 버틸 수 있는 생명력이다. 모두 소진되면 전투할 수 없다.",
   },
   {
-    id: "atk", term: "공격력", kind: "규칙",
+    id: "atk", term: "공격력", kind: "rule",
     description: "기본 공격과 일부 스킬의 실제 피해량을 정하는 수치다.",
   },
   {
-    id: "def", term: "방어력", kind: "규칙",
+    id: "def", term: "방어력", kind: "rule",
     description: "받는 물리 피해를 줄이고 일부 방어형 스킬의 실제 피해량을 정한다.",
   },
   {
-    id: "ap", term: "주문력", kind: "규칙",
+    id: "ap", term: "주문력", kind: "rule",
     description: "마법 스킬과 일부 회복 스킬의 실제 수치를 정하는 능력치다.",
   },
   // 스피나처럼 하나의 스킬에 여러 전투 규칙이 얽힌 경우에도 짧은 본문에서 세부 규칙을 다시 열어 볼 수 있게 한다.
   {
-    id: "basic-attack", term: "기본 공격", kind: "규칙",
+    id: "basic-attack", term: "기본 공격", kind: "rule",
     description: "게이지를 소비하지 않고 공격 주기마다 사용하는 공격이다. 적중할 때마다 발동하는 효과의 기준이 된다.",
   },
   {
-    id: "attack-speed", term: "공격 속도", kind: "규칙",
+    id: "attack-speed", term: "공격 속도", kind: "rule",
     description: "기본 공격 사이의 간격을 정하는 수치다. 높을수록 더 자주 공격하며, 일부 스킬은 현재 수치를 피해로 바꾼다.",
   },
   {
-    id: "stealth", term: "은신", kind: "버프",
+    id: "stealth", term: "은신", kind: "buff",
     description: "지속되는 동안 적의 단일 표적 공격이 고르는 표적에서 빠진다. 은신이 풀리면 다시 표적이 된다.",
   },
   {
-    id: "transfer", term: "전이", kind: "규칙",
+    id: "transfer", term: "전이", kind: "rule",
     description: "처음 계산한 순수 피해가 아니라 치명타·방어·보호막·받는 피해 경감·무효화와 과잉 피해 제한을 모두 거친 뒤 주 대상이 실제로 잃은 최종 HP 피해를 기준으로 일부를 다른 대상에게 옮긴다.",
   },
   {
-    id: "pack-hunt", term: "무리 사냥", kind: "버프",
+    id: "pack-hunt", term: "무리 사냥", kind: "buff",
     description: "아군 중 전투 시작 공격력이 가장 높은 렐릭의 현재 표적을 함께 노린다. 공격력이 같으면 편성 순서가 앞선 렐릭을 따른다.",
   },
   // 순간이동은 이동 애니메이션처럼 보이더라도 경로·속도·시간 계산을 거치지 않는 좌표 변경 규칙이다.
   {
-    id: "teleport", term: "순간이동", kind: "규칙",
+    id: "teleport", term: "순간이동", kind: "rule",
     description: "이동 경로를 거치지 않고 즉시 목표 지점으로 위치를 변경한다. 이동 속도나 이동 시간의 영향을 받지 않는다.",
   },
   {
     // 쓰는 개체가 파루아 하나뿐이라 태그가 수치를 갖는다(덧칠·뇌진탕·손질과 같은 처리).
     // 둘째 개체가 생기면 출혈처럼 수치를 본문으로 옮긴다.
-    id: "split-arrow", term: "갈래화살", kind: "규칙",
+    id: "split-arrow", term: "갈래화살", kind: "rule",
     description: "화살이 갈라져 표적과 그 주위의 적을 최대 세 명까지 함께 맞힌다. 각 화살의 위력은 일반 공격의 50%다.",
   },
   {
@@ -212,25 +220,25 @@ export const KEYWORDS: readonly KeywordDef[] = [
      * 사거리와 상한은 코어의 `FOCUS`가 갖는다. 이 문장은 그 값을 옮겨 적은 것이라
      * `tests/unit/skillArt.test.ts`가 둘이 갈리지 않는지 검사한다.
      */
-    id: "focus", term: "집중", kind: "규칙",
+    id: "focus", term: "집중", kind: "rule",
     description: "공격이 적중할 때마다 1겹 쌓이며 최대 15겹까지 유지된다. 1겹마다 공격력이 2%, 사거리가 16 오르고 이번 전투 동안 사라지지 않는다.",
   },
   {
-    id: "shallows", term: "여울", kind: "규칙",
+    id: "shallows", term: "여울", kind: "rule",
     description: "기본 공격을 낸 자리에 얕은 물이 고인다. 판은 한 곳만 유지되며 공격할 때마다 자리와 시간이 갱신된다. 여울에 잠긴 적은 이동 속도가 35% 느려지고 물 밖으로 나가면 곧바로 풀린다. 여울에 잠긴 적을 때리면 연격이 확정 발동한다.",
   },
   {
-    id: "combo", term: "연격", kind: "규칙",
+    id: "combo", term: "연격", kind: "rule",
     description: "한 번의 기본 공격 행동이 여러 번 적중한다. 각 타격은 적중 효과와 타격 직후 회복을 각각 발동한다.",
   },
   {
-    id: "missing-hp", term: "잃은 체력", kind: "규칙",
+    id: "missing-hp", term: "잃은 체력", kind: "rule",
     description: "최대 체력에서 현재 체력을 뺀 값이다. 잃은 체력 비례 회복은 각 적중 직후의 값을 다시 계산한다.",
   },
   {
     id: "bloodscent",
     term: "피 냄새",
-    kind: "버프",
+    kind: "buff",
     /*
      * 겹당 수치와 상한은 지휘자마다 다를 수 있어 그 창이 문맥 사전으로 주입한다. 여기에는
      * **언제 얻고 무엇이 오르는가**만 둔다 — 수치를 못 박으면 둘째 지휘자가 생기는 순간
@@ -241,35 +249,35 @@ export const KEYWORDS: readonly KeywordDef[] = [
   {
     id: "nape",
     term: "목덜미",
-    kind: "규칙",
+    kind: "rule",
     description: "지휘자가 표적 뒤로 [[teleport|순간이동]]해 표적의 남은 체력에 비례하는 [[fixed-damage|고정 피해]]를 준다. 방어력과 저항력을 무시하며 [[stealth|은신]]은 풀리지 않는다.",
   },
   {
-    id: "physical-damage", term: "물리 피해", kind: "규칙",
+    id: "physical-damage", term: "물리 피해", kind: "rule",
     description: "공격력 또는 명시된 능력치로 계산하고 대상의 방어력으로 감소하는 피해다.",
   },
   {
-    id: "magical-damage", term: "마법 피해", kind: "규칙",
+    id: "magical-damage", term: "마법 피해", kind: "rule",
     description: "주문력 또는 명시된 능력치로 계산하고 대상의 저항력으로 감소하는 피해다.",
   },
   {
-    id: "taunt", term: "도발", kind: "디버프",
+    id: "taunt", term: "도발", kind: "debuff",
     description: "도발한 상대를 강제로 표적으로 삼는다. 행동을 막지 않으므로 공격도 스킬도 그대로 나가지만, 그 방향이 정해진다.",
   },
   {
-    id: "pull", term: "끌어당김", kind: "규칙",
+    id: "pull", term: "끌어당김", kind: "rule",
     description: "이동 경로를 거치지 않고 시전자 쪽으로 즉시 자리를 옮긴다. 이동 속도의 영향을 받지 않는다.",
   },
   {
-    id: "invulnerable", term: "무적", kind: "버프",
+    id: "invulnerable", term: "무적", kind: "buff",
     description: "받는 모든 피해가 들어가지 않는다. 보호막도 깎이지 않으며, 지속 피해와 고정 피해까지 함께 막는다.",
   },
   {
-    id: "fixed-damage", term: "고정 피해", kind: "규칙",
+    id: "fixed-damage", term: "고정 피해", kind: "rule",
     description: "대상의 방어력·저항력을 지나쳐 그대로 들어가는 피해다. 속성 상성과 받는 피해 경감은 그대로 거친다.",
   },
   {
-    id: "crowd-control", term: "군중제어", kind: "규칙",
+    id: "crowd-control", term: "군중제어", kind: "rule",
     description: "기절·경직처럼 대상의 행동을 막는 효과를 통틀어 부르는 말이다.",
   },
 ];
@@ -306,9 +314,13 @@ export function parseKeywordText(text: string, contextualKeywords: readonly Keyw
   return segments;
 }
 
-/** 규칙어의 표기와 설명을 언어별로 덮어쓸 수 있게 등록한다. `kind`는 분류 이름이라 함께 옮긴다. */
+/**
+ * 규칙어의 표기와 설명을 언어별로 덮어쓸 수 있게 등록한다.
+ *
+ * `kind`는 옮기지 않는다 — 표기가 아니라 문구 표가 읽는 ID라, 덮어쓰면 쪽지 머리가 키를
+ * 찾지 못한다. 그 낱말은 `skill.keywordKind.*`가 갖는다.
+ */
 for (const keyword of KEYWORDS) {
   registerDataText(keyword, "term", `keyword.${keyword.id}.term`);
-  registerDataText(keyword, "kind", `keyword.${keyword.id}.kind`);
   registerDataText(keyword, "description", `keyword.${keyword.id}.description`);
 }

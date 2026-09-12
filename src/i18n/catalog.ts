@@ -66,9 +66,10 @@ const PLACEHOLDER = /\{(\w+)\}/g;
  * 문구 하나를 고른다.
  *
  * `{이름}` 자리는 `params`가 채운다. 채울 값이 없으면 자리 표시를 그대로 남긴다 — 조용히 비우면
- * "파편 개를 지급했습니다"처럼 뜻이 빠진 문장이 화면에 선다.
+ * "파편 개를 지급했습니다"처럼 뜻이 빠진 문장이 화면에 선다. 값으로 `undefined`를 넘긴 자리도
+ * 같다: 데이터에 없는 수치가 `undefined`라는 글자로 화면에 서지 않게 한다.
  */
-export function t(key: TextKey, params?: Readonly<Record<string, string | number>>): string {
+export function t(key: TextKey, params?: Readonly<Record<string, string | number | undefined>>): string {
   const text = loaded.get(active)?.[key] ?? KO[key];
   if (!params) return text;
   return text.replace(PLACEHOLDER, (whole, name: string) => {

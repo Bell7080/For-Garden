@@ -28,7 +28,7 @@ import { PopupLayer, POPUP_TITLE_SIZE } from "./PopupLayer";
 import { calculateObservationJournalFlow, OBSERVATION_JOURNAL_SIZE, withoutRepeatedProfileDetails } from "./observationJournalLayout";
 import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
-import { BREAKTHROUGH_SLOT_LABEL, breakthroughEffectText } from "./skillPresentation";
+import { breakthroughSlotLabel, breakthroughEffectText } from "./skillPresentation";
 import { addStarMark, RARITY_TONE, STAR_ROMAN } from "./rarityMark";
 import { addFramedIcon, addItemFrame } from "./itemFrame";
 import { FaceFrame } from "./FaceFrame";
@@ -1530,7 +1530,7 @@ export class InfoManager {
         body.add(icon);
         // 열리는 것은 **이 개체의** 효과다. 문구는 정의에서 조립하므로 화면이 따로 적지 않고,
         // 아직 설계하지 않은 개체는 어느 슬롯이 열리는지만 말한다.
-        const opens = breakthroughEffectText(def, entry.slot) ?? BREAKTHROUGH_SLOT_LABEL[entry.slot];
+        const opens = breakthroughEffectText(def, entry.slot) ?? breakthroughSlotLabel(entry.slot);
         body.add(this.scene.add
           .text(BREAK_STEPS.textX, y, opens, textStyle({ role: "body", size: BREAK_STEPS.textSize, color: COLOR.ink, wrap: layout.textWrap, lineSpacing: 8 }))
           .setOrigin(0, 0.5));
@@ -2100,21 +2100,21 @@ export class InfoManager {
     const convertedDamage = defensePercent !== undefined ? Math.round(defense * defensePercent / 100)
       : attackPercent !== undefined ? Math.round(attack * attackPercent / 100)
       : undefined;
-    const damageSourceLabel = defensePercent !== undefined ? "방어력" : "공격력";
+    const damageSourceLabel = t(defensePercent !== undefined ? "skill.stat.def" : "skill.stat.atk");
     const contextualKeywords: KeywordDef[] = [];
     // 금강불괴가 덮는 막도 퍼센트가 아니라 실제로 덮이는 값으로 보여 준다.
     if (def.ferocityTrait.effectId === "adamantBody") contextualKeywords.push({
-      id: "shield-value", term: String(Math.round(def.stats.hp * def.ferocityTrait.shieldMaxHpPercent / 100)), kind: "규칙",
-      description: `현재 최대 체력에서 ${def.ferocityTrait.shieldMaxHpPercent}%를 받아 계산한 보호막 수치다.`,
+      id: "shield-value", term: String(Math.round(def.stats.hp * def.ferocityTrait.shieldMaxHpPercent / 100)), kind: "rule",
+      description: t("skill.keyword.shield.fromMaxHp", { percent: def.ferocityTrait.shieldMaxHpPercent }),
     });
     if (convertedDamage !== undefined) contextualKeywords.push({
-      id: "damage-value", term: String(convertedDamage), kind: "규칙",
-      description: `현재 ${damageSourceLabel}에서 ${defensePercent ?? attackPercent}%를 받아 계산한 추가 피해 수치다.`,
+      id: "damage-value", term: String(convertedDamage), kind: "rule",
+      description: t("skill.keyword.damage.bonus", { stat: damageSourceLabel, percent: defensePercent ?? attackPercent }),
     });
     // 메테의 스타카토 추가타는 기본 공격과 같은 효과를 다시 부르는 것이므로 그 뜻을 여기서 짧게 설명한다.
     if (def.ferocityTrait.effectId === "crescendoStaccato") contextualKeywords.push({
-      id: "mette-staccato", term: "스타카토", kind: "규칙",
-      description: "메테의 [[basic-attack|기본 공격]]과 같은 마법 추가타다. 적중한 대상을 [[stagger|경직]]시킨다.",
+      id: "mette-staccato", term: t("skill.keyword.staccato.term"), kind: "rule",
+      description: t("skill.keyword.staccato.description"),
     });
     // 폭주도 패시브와 같은 정형 상세창을 사용한다. 별도 제목 레이어 없이 아이콘 옆에서
     // 스킬 종류·이름·발현 유형을 한 번에 읽게 한다.
@@ -2125,13 +2125,13 @@ export class InfoManager {
       art: skillArtFor(def.id, "ferocity"),
       tint: skillArtTint(def.element, def.role),
       effectType: "buff",
-      valueLabel: "야성 발현",
+      valueLabel: t("skill.ferocity.valueLabel"),
       contextualKeywords: contextualKeywords.length > 0 ? contextualKeywords : undefined,
       // 폭주도 돌파가 효과를 붙이는 슬롯이라 같은 노란 줄을 얻는다.
       breakthroughEffect: this.publicProfile || !isBreakthroughSlotOpen(relicProgression.getProgress(def.id).breakthrough, "ferocity")
         ? undefined : breakthroughEffectText(def, "ferocity"),
       // 설명 수치는 전투가 읽는 특성 필드에서 생성해 정적 문구와 실제 효과가 갈라지지 않는다.
-      description: "[[ferocity|야성 게이지]]가 가득 차면 폭주한다. "
+      description: t("skill.ferocity.head")
         + ferocityTraitDescription(def.ferocityTrait, { attack, defense, maxHp: def.stats.hp, abilityPower }),
     }, from);
   }
@@ -2156,12 +2156,12 @@ export class InfoManager {
     const compositeDamage = attackSpeedPower !== undefined
       ? attackSpeedCompositeDamageKeyword(skill as Ultimate, attacker?.def.stats.atk, attacker?.def.stats.attackSpeed)
       : undefined;
-    const preview = !compositeDamage && attacker && canPreviewSkillDamage(skill, kindLabel)
+    const preview = !compositeDamage && attacker && canPreviewSkillDamage(skill)
       ? previewSkillDamage(attacker, skill as Skill) : undefined;
     // 순환 기본 공격은 걸음마다 위력이 통째로 달라 한 수로 말할 수 없다. 걸음마다 같은
     // 미리보기 경계를 지나 제 수치를 구하고, 본문이 그 순서 그대로 읽는다.
     const cycle = "cycle" in skill ? (skill as BasicAttack).cycle : undefined;
-    const cycleDamage = cycle && attacker && canPreviewSkillDamage(skill, kindLabel)
+    const cycleDamage = cycle && attacker && canPreviewSkillDamage(skill)
       ? cycle.map((step) => {
         const stepPreview = previewSkillDamage(attacker, { ...(skill as Skill), power: step.power } as Skill);
         return stepPreview.kind === "scaling" ? stepPreview.amount : 0;
@@ -2182,11 +2182,11 @@ export class InfoManager {
     const allyHealingPower = "allyHealingPower" in skill ? (skill as Ultimate).allyHealingPower : undefined;
     const healDetail = allyHealingPower !== undefined ? allyHealPowerKeyword(allyHealingPower, attacker?.def.stats.ap) : undefined;
     const valueLabel = compositeDamage
-      ? `피해량 [[damage-value|${compositeDamage.term}]]`
+      ? t("skill.label.compositeDamage", { amount: compositeDamage.term })
       : detonationDamage
-        ? `예상 최대 피해량 [[damage-value|${detonationDamage.term}]]`
+        ? t("skill.label.detonationDamage", { amount: detonationDamage.term })
         : preview?.kind === "scaling"
-          ? `${preview.label} [[damage-value|${preview.amount}]]`
+          ? `${t(preview.label === "damage" ? "skill.label.damageAmount" : "skill.label.expectedDamage")} [[damage-value|${preview.amount}]]`
           : undefined;
     // **열린 별의 몫만 넘긴다.** 아직 뚫지 않은 단계의 효과를 쪽지에 적으면 지금 싸우는 이
     // 개체가 하지 않는 일을 말하게 된다 — 무엇이 열리는지는 등급 돋보기가 여는 표가 맡는다.
@@ -2214,8 +2214,8 @@ export class InfoManager {
         "kind" in skill ? elationKeyword(skill as Passive) : undefined,
         // 「인」이 덮는 막도 실제 값으로 보여 주고, 어디서 나온 수인지 눌러 읽게 한다.
         guardShield === undefined || !("selfGuard" in skill) || skill.selfGuard === undefined ? undefined : {
-          id: "shield-value", term: String(guardShield), kind: "규칙" as const,
-          description: `현재 최대 체력에서 ${skill.selfGuard.shieldMaxHpPercent}%를 받아 계산한 보호막 수치다.`,
+          id: "shield-value", term: String(guardShield), kind: "rule" as const,
+          description: t("skill.keyword.shield.fromMaxHp", { percent: skill.selfGuard.shieldMaxHpPercent }),
         },
       ].filter((item): item is KeywordDef => item !== undefined),
       // 정적 문장에서 수치를 재해석하지 않고 전투 정의를 그대로 팝업에 넘긴다.
@@ -2256,10 +2256,12 @@ export class InfoManager {
     const tags: KeywordDef[] = summons.map(({ def, growthStat }) => ({
       id: `summon-${def.id}`,
       term: def.name,
-      kind: "규칙" as const,
-      description: `${owner?.name ?? "지휘자"}에게 귀속된 근거리 소환수다.`
-        + ` ${growthStat === "atk" ? "공격력" : "주문력"}이 이 개체의 모든 능력치를 정하며 스스로 표적을 고르고 제 궁극기를 쓴다.`
-        + ` 일반 공격은 「${def.basic.name}」, 궁극기는 「${def.ultimate.name}」이다.`,
+      kind: "rule" as const,
+      description: t("skill.keyword.summon.description", {
+        owner: owner?.name ?? t("skill.keyword.summon.owner"),
+        stat: t(growthStat === "atk" ? "skill.stat.atk" : "skill.stat.ap"),
+        basic: def.basic.name, ultimate: def.ultimate.name,
+      }),
     }));
     // 겹당 수치와 상한은 지휘자마다 다를 수 있으므로 전역 사전이 아니라 그 창이 데이터에서 만든다.
     // 겹당 수치와 상한, 문턱 증가폭은 지휘자마다 다르므로 전역 사전이 아니라 그 정의에서 만든다.
@@ -2267,20 +2269,19 @@ export class InfoManager {
     if (scent) {
       const threshold = finisher === undefined || finisher.thresholdPerStack <= 0
         ? ""
-        : ` [[nape|목덜미]]가 열리는 체력 문턱이 ${finisher.thresholdPerStack}% 오른다.`;
+        : t("skill.keyword.bloodscent.threshold", { percent: finisher.thresholdPerStack });
       tags.push({
-        id: "bloodscent", term: "피 냄새", kind: "버프",
-        description: `표적이 쓰러지거나 [[nape|목덜미]]가 들어갈 때마다 한 겹 얻고 최대 ${scent.maxStacks}겹까지 쌓인다.`
-          + ` 겹마다 일반 공격 피해가 ${scent.damagePercentPerStack}% 커지고,${threshold}`
-          + ` 전투가 끝나면 사라진다.`,
+        id: "bloodscent", term: t("skill.keyword.bloodscent.term"), kind: "buff",
+        description: t("skill.keyword.bloodscent.description", {
+          stacks: scent.maxStacks, percent: scent.damagePercentPerStack, threshold,
+        }),
       });
     }
     // 목덜미도 비례 수치를 아는 자리에서는 실제 값으로 말한다.
     if (finisher) {
       tags.push({
-        id: "nape", term: "목덜미", kind: "규칙",
-        description: `표적 뒤로 [[teleport|순간이동]]해 표적의 남은 체력의 ${finisher.remainingHpPercent}%만큼 [[fixed-damage|고정 피해]]를 준다.`
-          + ` 방어력과 저항력을 무시하며 [[stealth|은신]]은 풀리지 않는다.`,
+        id: "nape", term: t("skill.keyword.nape.term"), kind: "rule",
+        description: t("skill.keyword.nape.description", { percent: finisher.remainingHpPercent }),
       });
     }
     return tags;

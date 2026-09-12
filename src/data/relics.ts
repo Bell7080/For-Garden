@@ -2379,7 +2379,7 @@ export const RELICS: RelicDef[] = [
       cycle: [
         { name: "신중한 일격...! 이에요...", power: 90 },
         { name: "신중한 일격...! 이에요...", power: 90 },
-        { name: "갈래화살", power: 45, targeting: "splitShot", maxTargets: 3 },
+        { name: "갈래화살", keywordId: "split-arrow", power: 45, targeting: "splitShot", maxTargets: 3 },
       ],
     } satisfies BasicAttack,
     ultimate: {

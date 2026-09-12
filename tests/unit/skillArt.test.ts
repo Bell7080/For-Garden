@@ -109,7 +109,7 @@ describe("토리카 스킬 표시 계약", () => {
 
     // 태그 본문은 실제 전투가 읽는 필드에서 짓는다 — 주기·수치를 조정하면 문장도 함께 바뀐다.
     const stack = periodicStackKeyword(torika.basic)!;
-    expect(stack).toMatchObject({ id: "anky-basic-stack", term: "세 개의 뿔", kind: "규칙" });
+    expect(stack).toMatchObject({ id: "anky-basic-stack", term: "세 개의 뿔", kind: "rule" });
     expect(stack.description).toBe("기본 공격 한 번마다 한 겹씩 쌓이고 3겹째에 터진다. 터지는 타격은 방어력의 50%에 해당하는 물리 피해를 추가로 주고 0.5초 동안 기절시킨다. 터진 뒤 겹은 0으로 돌아간다.");
     // **태그 팝업 안에는 또 다른 태그를 두지 않는다** — 그 안에서 여는 설명은 화면의 임시
     // 사전을 물려받지 못해 눌러도 아무것도 열리지 않는다.
@@ -118,7 +118,7 @@ describe("토리카 스킬 표시 계약", () => {
     expect(periodicStackKeyword(RELICS.find((def) => def.id === "pachi")!.basic)).toBeUndefined();
   });
   it("은 일반 공격과 궁극기의 피해 출처를 공용 상세 정의로 만든다", () => {
-    expect(damageKeyword({ kind: "scaling", amount: 128, power: 100, stat: "공격력", label: "피해량" })).toMatchObject({
+    expect(damageKeyword({ kind: "scaling", amount: 128, power: 100, stat: "atk", label: "damage" })).toMatchObject({
       id: "damage-value",
       term: "128",
       description: "현재 공격력에서 100%를 받아 계산한 피해 수치다.",
@@ -127,7 +127,7 @@ describe("토리카 스킬 표시 계약", () => {
 
   it("은 폭주 본문에도 동적 피해 키워드 사전을 전달한다", () => {
     // 실제 팝업 계약을 최소 구성해 본문 레이아웃에서 피해 수치 링크가 빠지는 회귀를 막는다.
-    const damage = damageKeyword({ kind: "scaling", amount: 19, power: 15, stat: "방어력", label: "피해량" })!;
+    const damage = damageKeyword({ kind: "scaling", amount: 19, power: 15, stat: "def", label: "damage" })!;
     const skill: SkillInfoViewModel = {
       name: "다들 그만해!", kindLabel: "폭주", iconAssetId: "skill-icon-buff",
       effectType: "buff", description: "[[damage-value|19]]만큼 추가 피해", contextualKeywords: [damage],
@@ -143,7 +143,7 @@ describe("노도니아 스킬 표시 계약", () => {
     expect(passiveDescription(nodonia.passive, nodonia.stats.atk))
       .toBe("적에게 피격당할 때마다 [[nodonia-elation|희열]]이 한 겹 쌓인다.");
     const tag = elationKeyword(nodonia.passive)!;
-    expect(tag).toMatchObject({ id: "nodonia-elation", term: "희열", kind: "버프" });
+    expect(tag).toMatchObject({ id: "nodonia-elation", term: "희열", kind: "buff" });
     expect(tag.description).toBe(
       "한 겹마다 매초 최대 체력의 0.4%를 회복하며 최대 10겹까지 쌓인다."
       + " 5초 동안 남으며 다시 맞으면 유지 시간이 처음부터 다시 흐른다.",
@@ -325,7 +325,7 @@ describe("폰토스 스킬 표시 계약", () => {
   it("은 구조화된 AP 계수·전장 전체 대상·5초 기절을 공용 문구로 자동 표시한다", () => {
     const pontos = RELICS.find((def) => def.id === "pontos")!;
     // 팝업 조립부가 사용하는 세 순수 경계를 검사해 캐릭터 ID 전용 문구가 필요 없음을 고정한다.
-    expect(damageKeyword({ kind: "scaling", amount: 480, power: pontos.ultimate.power!, stat: "주문력", label: "피해량" })?.description)
+    expect(damageKeyword({ kind: "scaling", amount: 480, power: pontos.ultimate.power!, stat: "ap", label: "damage" })?.description)
       .toBe("현재 주문력에서 500%를 받아 계산한 피해 수치다.");
     expect(targetingLabel(pontos.ultimate.targeting)).toBe("전장의 모든 적");
     expect(statusEffectLabel(pontos.ultimate.statusEffects?.[0])).toBe("[[stun|기절]] 5초");
@@ -348,9 +348,11 @@ describe("메테 스킬 표시 계약", () => {
     const mette = RELICS.find((def) => def.id === "mette")!;
     // damageType/power가 없는 궁극기에 previewSkillDamage를 시도하면 예외가 나 정보창
     // 스킬 팝업이 통째로 열리지 않았다 — 이 판별이 그 앞단 가드다.
-    expect(canPreviewSkillDamage(mette.ultimate, "궁극기")).toBe(false);
-    expect(canPreviewSkillDamage(mette.basic, "일반 공격")).toBe(true);
-    expect(canPreviewSkillDamage(mette.basic, "패시브")).toBe(false);
+    expect(canPreviewSkillDamage(mette.ultimate)).toBe(false);
+    expect(canPreviewSkillDamage(mette.basic)).toBe(true);
+    // 패시브는 화면에 뜨는 종류 이름이 아니라 정의의 모양(`kind`)으로 가른다 — 이름으로
+    // 가르면 언어를 바꾸는 순간 이 가드가 통째로 풀린다.
+    expect(canPreviewSkillDamage(mette.passive)).toBe(false);
   });
 
   it("은 폭주·패시브의 % 수치를 실제 능력치로 환산한 태그로 만든다", () => {
@@ -523,7 +525,7 @@ describe("델로피 스킬 표시 계약", () => {
 
   it("은 위력을 나눠 가진 두 능력치를 라벨과 본문이 같은 값으로 말한다", () => {
     // 한쪽 축만 적으면 실제 피해의 절반이 어디서 왔는지 설명되지 않는다.
-    const preview = { kind: "scaling", amount: 114, power: 50, stat: "공격력", secondary: { power: 50, stat: "주문력" }, label: "피해량" } as const;
+    const preview = { kind: "scaling", amount: 114, power: 50, stat: "atk", secondary: { power: 50, stat: "ap" }, label: "damage" } as const;
     expect(damageKeyword(preview)?.description).toBe("현재 공격력의 50%와 주문력의 50%를 더해 계산한 피해 수치다.");
     // 능력치를 아는 자리는 태그 하나로, 모르는 자리(도감)는 두 축을 모두 말하는 %로 되돌아간다.
     expect(skillDescription(delopi.basic, { damage: 114 })).toBe("적 한 명에게 [[damage-value|114]]의 [[physical-damage|물리 피해]]를 주고 3초 동안 [[poison|중독]]시킨다.");
@@ -542,7 +544,7 @@ describe("델로피 스킬 표시 계약", () => {
     // 피해 수치를 적지 않는다 — 그 한 방은 이어질 트릭 카드의 몫이라 두 곳이 갈리면 안 된다.
     expect(delopi.ultimate.power).toBeUndefined();
     expect(targetingLabel(delopi.ultimate.targeting)).toBe("자신");
-    expect(canPreviewSkillDamage(delopi.ultimate, "궁극기")).toBe(false);
+    expect(canPreviewSkillDamage(delopi.ultimate)).toBe(false);
     const text = skillDescription(delopi.ultimate);
     expect(text).toBe("3초 동안 [[stealth|은신]]하고 체력이 가장 낮은 적에게 [[teleport|순간이동]]한다. 이후 처음 적중하는 [[basic-attack|기본 공격]]이 확정 치명타가 되고 방어력을 무시하는 [[fixed-damage|고정 피해]]로 들어간다. 그 공격과 함께 [[stealth|은신]]이 풀린다.");
     // **언제 풀리는지는 그 한 방을 언제 쓸지 정하는 정보다.** 시간만으로 끊으면 혼자 남은 판에서

@@ -14,7 +14,7 @@ import {
   openBreakthroughStepsPopup, openExtraStatsPopup, openFerocityTraitPopup, RARITY_GEM, slotFallbackIcon,
 } from "./info";
 import type { PopupLayer } from "./PopupLayer";
-import { drawGlassFade } from "./holo";
+import { drawFrameVignette, drawGlassFade, drawShapeOutline } from "./holo";
 import { popupArtShape, popupBodyShapeMask } from "./popupArt";
 import { addBreakthroughGradeMark } from "./rarityMark";
 import { addSectionTitle } from "./SectionTitle";
@@ -23,7 +23,7 @@ import { openSkillPopup } from "./SkillPopup";
 import { breakthroughEffectText } from "./skillPresentation";
 import type { SkillArtSlot } from "./skillArt";
 import { StatRadar } from "./StatRadar";
-import { REACH_LABEL, STAT_TONE, reachToneHex } from "./statTones";
+import { REACH_LABEL, STAT_TONE } from "./statTones";
 import { COLOR, textStyle } from "./theme";
 
 /** 그 적이 실제로 서 있는 상태. 화면이 레벨 보정을 다시 하지 않고 배치된 값을 그대로 받는다. */
@@ -80,6 +80,24 @@ export class EnemyInfoPopup {
       // 깎인 모서리 밖으로 나가지 않게 한다.
       const shape = popupArtShape(ENEMY_INFO.width, ENEMY_INFO.height);
       addPopupBackgroundImage(this.scene, body, BACKGROUND.info, { x: 0, y: 0, width: ENEMY_INFO.width, height: ENEMY_INFO.height, maskShape: shape, overlayStrength: 0.62 });
+      // 정보창은 원화 위에 **은은한 검은 면 한 겹**을 깔아 인물과 글자를 앞으로 끌어낸다.
+      // 같은 값(`COLOR.void` 0.52)을 그대로 쓰고 판과 같은 실루엣으로 자른다.
+      body.add(this.scene.add.rectangle(0, 0, ENEMY_INFO.width, ENEMY_INFO.height, COLOR.void, 0.52).setMask(popupBodyShapeMask(this.scene, body, shape)));
+      // 가장자리 누르기도 정보창과 **같은 세기**(0.6)다. 화면이 아니라 판 안에서 가운데로 눈이 간다.
+      body.add(drawFrameVignette(this.scene, 0, 0, ENEMY_INFO.width, ENEMY_INFO.height, { strength: 0.6, spread: 0.18 }).setMask(popupBodyShapeMask(this.scene, body, shape)));
+      /*
+       * **이 창만 사방 외곽선을 두른다.**
+       *
+       * 홀로그램 규칙은 판때기에 테두리를 두르지 않지만(위·구분선만), 이 판은 배경 원화 위에
+       * 원화 한 장을 통째로 세우고 그 원화가 판 밑변에서 잘린다 — 선이 없으면 어디까지가 창이고
+       * 어디부터가 뒤 화면인지 흐려져 잘린 단면이 "덜 그려진 것"처럼 보인다. 선은 **몸판과 같은
+       * 도형**을 따라가므로 깎인 두 모서리도 그대로 돈다.
+       *
+       * 판(`body`)에 넣는 이유는 제목표 때문이다 — 제목은 윗변에 걸터앉아 있어, 원화 위층에
+       * 두르면 선이 `/정보창` 한가운데를 가로지른다. 판에 두면 `raiseChrome`이 제목을 그 위로
+       * 다시 올려 준다.
+       */
+      body.add(drawShapeOutline(this.scene, 0, 0, shape, { color: COLOR.accent, alpha: 0.55, width: 3 }));
       // 원화와 SD는 판 위에 서지만 그 위의 칸·액자에는 가려야 한다. Puppet은 컨테이너 변환을
       // 물려받지 않아 판 안에 넣을 수 없으므로, 팝업 층과 다음 팝업(쪽지) 사이에 두 층을 낸다.
       const depth = body.parentContainer?.depth ?? this.popups.baseDepth;
@@ -180,7 +198,7 @@ export class EnemyInfoPopup {
     // 사거리는 오각형에 없는 축이라 제목 바로 아래에 이름표처럼 한 줄로만 선다.
     panel.add(scene.add
       .text(reach.offsetX, reach.offsetY, `사거리 · ${REACH_LABEL[def.reachTier]}`, textStyle({ role: "body", size: 22, color: COLOR.inkDim }))
-      .setOrigin(0, 0.5).setColor(reachToneHex(def.reachTier)));
+      .setOrigin(0, 0.5));
     const chart = new StatRadar(scene, 0, radar.offsetY, radar.radius, {
       size: 24,
       colors: Object.fromEntries((["hp", "atk", "ap", "def", "res"] as const).map((key) => [key, `#${STAT_TONE[key].toString(16).padStart(6, "0")}`])),

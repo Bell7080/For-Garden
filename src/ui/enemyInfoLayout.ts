@@ -44,22 +44,23 @@ export const ENEMY_INFO = {
    *
    * 두 칸이 같은 x·같은 폭이라 한 벌로 읽히고, 제목은 판 윗변에 걸터앉는다.
    */
-  column: { x: 190, width: 392 },
+  column: { x: 190, width: 404 },
   /** 돌파 등급 표식과 돌파 단계표 돋보기. 정보창과 같이 **레벨 칸 위**에 선다. */
   gradeRow: { x: 300, y: -520, size: 68 },
   gradeMagnifier: { x: 356, y: -512 },
   /** 레벨 칸 — 읽기 전용이라 경험치·급여가 빠진 정보창의 축소 판과 같은 높이다. */
   levelPanel: { top: -430, height: 168 },
   /** 능력치 칸. 오각형 반지름·사거리 줄·돋보기 자리가 모두 정보창과 같은 간격이다. */
-  statPanel: { top: -214, height: 430 },
-  radar: { radius: 128, offsetY: 38 },
+  statPanel: { top: -214, height: 450 },
+  radar: { radius: 128, offsetY: 40 },
   /**
    * 사거리 한 줄.
    *
-   * 정보창보다 칸이 좁아 제목 바로 아래 같은 높이에 두면 오각형의 **위 축 이름표**와 부딪힌다.
-   * 한 뼘 위로 올려 제목 띠 바로 아래에 앉힌다.
+   * 정보창과 같이 제목 바로 아래에 회색으로 눕는다 — 늘 떠 있는 자리는 균형이 먼저 읽혀야
+   * 하므로 색은 상세 팝업이 맡는다. 칸이 정보창보다 좁아 그 높이 그대로 두면 오각형의 **위 축
+   * 이름표**와 부딪히므로 한 뼘만 위로 올린다.
    */
-  reach: { offsetX: -154, offsetY: -186 },
+  reach: { offsetX: -160, offsetY: -178 },
   statMagnifier: { offsetY: -148 },
   /**
    * 전신 원화.
@@ -74,7 +75,7 @@ export const ENEMY_INFO = {
   /** 패시브 액자 위에 얹히는 폭주 뱃지. 정보창과 같은 높이 차이를 지킨다. */
   ferocityBadgeOffsetY: -139,
   /** 오른쪽 아래 SD 받침. */
-  figure: { x: 292, groundY: 556, height: 200 },
+  figure: { x: 258, groundY: 520, height: 200 },
 } as const;
 
 /** 오른쪽 칸 하나의 중심 y. 표는 윗변으로 적고 그리는 쪽은 가운데를 쓴다. */

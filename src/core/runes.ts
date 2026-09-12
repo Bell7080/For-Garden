@@ -4,6 +4,8 @@
  * 난수는 호출자가 주입하며, 생성된 인스턴스는 JSON으로 그대로 직렬화할 수 있다.
  */
 
+import { t } from "../i18n";
+
 /**
  * 룬이 들어가는 자리(파츠).
  *
@@ -13,23 +15,34 @@
  */
 export type RunePart = 0 | 1 | 2;
 
-/** 파츠의 한국어 표시명. 자리 번호를 화면마다 다시 짓지 않는다. */
-export const RUNE_PART_LABELS: Readonly<Record<RunePart, string>> = {
-  0: "1번 조각",
-  1: "2번 조각",
-  2: "3번 조각",
-};
+/**
+ * 파츠의 표시명. 자리 번호를 화면마다 다시 짓지 않는다.
+ *
+ * 표가 아니라 함수인 이유는 **표는 모듈을 읽는 순간 굳기 때문이다** — 언어를 바꿔도 그때
+ * 고른 낱말이 그대로 남는다.
+ */
+export function runePartLabel(part: RunePart): string {
+  return t(`rune.part.${part}`);
+}
 
 /** 룬 희귀도다. 낮은 단계부터 고급·희귀·영웅·전설 순이며 한국어 표기는 `RUNE_RARITY_LABELS`만 소유한다. */
 export type RuneRarity = "uncommon" | "rare" | "epic" | "legendary";
 
-/** 희귀도의 한국어 표시명이다. UI가 같은 문자열을 다시 정의하지 않게 하는 단일 매핑이다. */
-export const RUNE_RARITY_LABELS: Readonly<Record<RuneRarity, string>> = {
-  uncommon: "고급",
-  rare: "희귀",
-  epic: "영웅",
-  legendary: "전설",
-};
+/** 희귀도의 표시명이다. UI가 같은 문자열을 다시 정의하지 않게 하는 단일 경계다. */
+export function runeRarityLabel(rarity: RuneRarity): string {
+  return t(`rune.rarity.${rarity}`);
+}
+
+/**
+ * 목록과 영수증에 서는 룬의 이름.
+ *
+ * 저장에 남은 `baseName`을 그대로 그리지 않는다 — 그 값은 **만들어진 순간의 언어**로 굳어
+ * 있어, 언어를 바꾼 사람의 가방에서 그 줄만 옛 언어로 남는다. 직접 붙인 이름만 사람이 쓴
+ * 글이라 그대로 두고, 나머지는 지금 언어로 다시 짓는다.
+ */
+export function runeDisplayName(rune: { customName: string | null; part: RunePart }): string {
+  return rune.customName ?? t("rune.baseName", { part: runePartLabel(rune.part) });
+}
 
 /** 룬이 올릴 수 있는 전투 수치 키다. 수치는 덧셈형 퍼센트포인트 또는 곱셈형 증가율(%)이다. */
 export type RuneStatKey =

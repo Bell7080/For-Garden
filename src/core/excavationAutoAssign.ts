@@ -1,6 +1,7 @@
 import type { ExcavationCurrency, IdleExcavationState } from "./idleExcavation";
 import { relicExcavationProduction } from "./idleExcavation";
 import type { RelicDef, RelicProgress } from "./types";
+import { t } from "../i18n";
 
 /**
  * 발굴 자동 배치의 기준.
@@ -14,14 +15,10 @@ export type ExcavationAutoMode = "balanced" | "cheesecake" | "fossil" | "gold" |
 /** 화면이 화살표로 돌려 가며 고르는 순서다. 목록이 곧 순환 순서라 화면이 따로 적지 않는다. */
 export const EXCAVATION_AUTO_MODES: readonly ExcavationAutoMode[] = ["balanced", "cheesecake", "fossil", "gold", "gems"] as const;
 
-/** 기준의 이름. 화면은 이 표만 읽고 제 문구를 만들지 않는다. */
-export const EXCAVATION_AUTO_MODE_LABEL: Readonly<Record<ExcavationAutoMode, string>> = {
-  balanced: "골고루",
-  cheesecake: "치즈케이크",
-  fossil: "화석",
-  gold: "골드",
-  gems: "젬",
-};
+/** 기준의 이름. 화면은 이 경계만 읽고 제 문구를 만들지 않는다. */
+export function excavationAutoModeLabel(mode: ExcavationAutoMode): string {
+  return t(`excavation.auto.${mode}`);
+}
 
 /** 치우친 기준이 노리는 재화. 균형에는 없다. */
 const MODE_CURRENCY: Readonly<Record<Exclude<ExcavationAutoMode, "balanced">, ExcavationCurrency>> = {

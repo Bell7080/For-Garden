@@ -70,6 +70,14 @@ const DATA_SOURCES = import.meta.glob("../../src/data/**/*.ts", { query: "?raw",
 import.meta.glob("../../src/data/**/*.ts", { eager: true });
 
 /**
+ * `src/data` 밖에서 같은 경계를 쓰는 표.
+ *
+ * 임무 목록은 운영 중 늘어나는 정적 콘텐츠지만 진행 규칙과 한 파일에 산다 — 덮어쓰기 키가
+ * 등록된 것으로 보이려면 이 검사도 그 모듈을 읽어야 한다.
+ */
+import "../../src/core/missions";
+
+/**
  * 화면에 뜨지 않아 등록하지 않는 자리. **비우려고 적지 않는다** — 왜 표시 문구가 아닌지를
  * 함께 남긴다. 파일 전체면 `"all"`, 몇 줄뿐이면 그 글만 적는다.
  */

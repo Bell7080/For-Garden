@@ -6,6 +6,7 @@ import { EXPEDITION_COMBAT_BALANCE } from "../data/expedition";
 import { EXPEDITION_BOSS_BALANCE } from "../data/expedition";
 import type { BattleStageDef, RelicDef } from "./types";
 import type { FighterInitialState, SkirmishBossPhase, SkirmishRelicResult } from "./skirmish";
+import { t } from "../i18n";
 
 /** 원정 씬이 전투 씬에 넘기는 직렬화 가능한 입력이다. 전투 씬은 Session 편성을 추측하지 않는다. */
 export interface ExpeditionBattleInputDto {
@@ -101,11 +102,15 @@ export function normalizeBattleSceneInput(input?: unknown): BattleSceneInputDto 
 /** 모드별 상단 문구를 분리해 원정 화면이 선택된 스토리 이름을 읽지 않게 한다. */
 export function battleHeaderText(input: BattleSceneInputDto, stage: Pick<BattleStageDef, "id" | "name"> & { enemies: readonly Pick<BattleStageDef["enemies"][number], "level" | "breakthrough">[] }): string {
   // 서로 다른 성장 상태도 숨기지 않도록 슬롯 순서대로 간결하게 요약한다.
-  if (input.mode === "stage") return `${stage.id} · ${stage.name} · 적 ${stage.enemies.map(({ level, breakthrough }) => `LV.${level}/★${breakthrough + 1}`).join(" · ")}`;
-  if (input.mode === "expeditionBoss") return `원정 ${input.floor}층 · 불사 관측 보스`;
+  if (input.mode === "stage") {
+    return t("battle.header.stage", {
+      id: stage.id, name: stage.name,
+      enemies: stage.enemies.map(({ level, breakthrough }) => `LV.${level}/★${breakthrough + 1}`).join(" · "),
+    });
+  }
+  if (input.mode === "expeditionBoss") return t("battle.header.expeditionBoss", { floor: input.floor });
   // 노드 유형은 저장/정산용 영문값 대신 플레이어가 구분할 수 있는 전투 명칭으로 표시한다.
-  const nodeLabel: Record<ExpeditionBattleInputDto["nodeType"], string> = { normal: "일반 전투", elite: "정예 전투", horde: "군집 전투" };
-  return `원정 ${input.floor}층 · ${nodeLabel[input.nodeType]}`;
+  return t("battle.header.expedition", { floor: input.floor, node: t(`battle.node.${input.nodeType}`) });
 }
 
 /** 저장 선택을 전투 코어가 소비하는 효과로 바꾸며 비전투 회복 효과는 이 목록에서 제외한다. */

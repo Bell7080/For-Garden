@@ -1,5 +1,6 @@
 /** 가방·스테미나 창·출격 미리보기의 일본어 표. */
 export const INVENTORY_JA = {
+  "inventory.rune.equipped": "装着 · {name}",
   "inventory.title": "バッグ",
   "inventory.tab.rune": "ルーン",
   "inventory.tab.currency": "通貨",

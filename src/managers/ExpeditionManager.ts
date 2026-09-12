@@ -8,6 +8,7 @@ import { saveManager, type SaveManager } from "../state/SaveManager";
 import { session, type ExpeditionRunState, type Session } from "../state/session";
 import type { GameApi, SettleExpeditionRunResponse, SubmitExpeditionBossScoreResponse } from "../api/contracts";
 import type { ExpeditionBossAction } from "../core/expeditionBoss";
+import { t } from "../i18n";
 
 /** UI가 소비하는 원정 요약이며 변경 가능한 Session 참조는 노출하지 않는다. */
 export interface ExpeditionStatus {
@@ -259,7 +260,7 @@ export const expeditionManager = new ExpeditionManager();
 /** 어느 원격 경계에서 멈췄는지 UI와 테스트가 문자열 추측 없이 구분하는 실패다. */
 export class ExpeditionBossSettlementError extends Error {
   constructor(readonly phase: "score" | "settlement", readonly cause: unknown) {
-    super(phase === "score" ? "점수를 제출하지 못했습니다." : "점수는 제출했지만 정산을 마치지 못했습니다.");
+    super(phase === "score" ? t("error.expedition.submit") : t("error.expedition.settle"));
   }
 }
 

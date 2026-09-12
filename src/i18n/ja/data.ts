@@ -62,4 +62,12 @@ export default {
   "relic.shute.origin": "ステゴサウルス",
   "relic.dian.origin": "ダイアウルフ",
   "relic.pontos.origin": "リヴィアタン・メルビレイ",
-} as const;
+
+  // ── 任務 ────────────────────────────────────────────────────────────────
+  "mission.daily-battle.title": "戦闘完了 1回",
+  "mission.daily-excavate.title": "研究所でのキャラクター研究 1回",
+  "mission.daily-salary.title": "給餌 1回",
+  "mission.daily-lobby.title": "ロビー交流 1回",
+  "mission.weekly-battle.title": "戦闘完了 5回",
+  "mission.weekly-excavate.title": "研究所でのキャラクター研究 10回",
+};

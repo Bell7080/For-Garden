@@ -20,5 +20,6 @@ import { MISSIONS_JA } from "./missions";
 import { INVENTORY_JA } from "./inventory";
 import { MISC_JA } from "./misc";
 import { SKILL_JA } from "./skill";
+import { SYSTEM_JA } from "./system";
 
-export default { ...SETTINGS_JA, ...LOBBY_JA, ...COMMON_JA, ...INFO_JA, ...STATUS_JA, ...LAB_JA, ...EXPEDITION_JA, ...BATTLE_JA, ...EXCAVATION_JA, ...AUGMENT_JA, ...FRIENDS_JA, ...RUNE_JA, ...PARTY_JA, ...EXPEDITION_REWARD_JA, ...SAVE_CONFLICT_JA, ...INTERACTION_JA, ...SHOP_JA, ...MISSIONS_JA, ...INVENTORY_JA, ...MISC_JA, ...SKILL_JA };
+export default { ...SETTINGS_JA, ...LOBBY_JA, ...COMMON_JA, ...INFO_JA, ...STATUS_JA, ...LAB_JA, ...EXPEDITION_JA, ...BATTLE_JA, ...EXCAVATION_JA, ...AUGMENT_JA, ...FRIENDS_JA, ...RUNE_JA, ...PARTY_JA, ...EXPEDITION_REWARD_JA, ...SAVE_CONFLICT_JA, ...INTERACTION_JA, ...SHOP_JA, ...MISSIONS_JA, ...INVENTORY_JA, ...MISC_JA, ...SKILL_JA, ...SYSTEM_JA };

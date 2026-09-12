@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 /** 계정 제공자. 인증 비밀이 아니라 화면에 공개해도 되는 분류만 표현한다. */
 export type AccountProvider = "guest" | "google" | "apple";
 
@@ -78,7 +79,7 @@ export interface AccountApi {
   mergeGuestSave(request: GuestSaveMergeRequest): Promise<AccountResult<RemoteSaveDocument>>;
 }
 
-const UNSUPPORTED = "이 빌드에는 계정 플랫폼 SDK가 연결되어 있지 않습니다.";
+const UNSUPPORTED = t("error.account.noSdk");
 
 /** SDK가 없는 웹 프로토타입은 성공을 가장하지 않고 모든 원격 동작에 명확한 미지원 결과를 준다. */
 export class UnsupportedAccountApi implements AccountApi {

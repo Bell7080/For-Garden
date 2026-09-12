@@ -3,7 +3,7 @@ import { t, type TextKey } from "../i18n";
 import type { GameApi } from "../api/contracts";
 import { gameApi } from "../api/FakeServer";
 import { setDebugRuneForgeRename, setDebugRuneNoteCraft } from "../debug";
-import { canEngraveRune, canEnhanceRune, RUNE_PART_LABELS, RUNE_RARITY_LABELS, runeEnhancementAttempts, runeTotalEnhancementAttempts, type RuneInstance, type RuneStatKey } from "../core/runes";
+import { canEngraveRune, canEnhanceRune, runePartLabel, runeRarityLabel, runeEnhancementAttempts, runeTotalEnhancementAttempts, type RuneInstance, type RuneStatKey } from "../core/runes";
 import { runeEnhancementGoldCost } from "../data/runes";
 import { RELICS } from "../data/relics";
 import { InventoryManager } from "../managers/InventoryManager";
@@ -198,7 +198,7 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
   if (!rune) return;
   const panel = RUNE_NOTE_PANEL;
   const accent = RUNE_ACCENT[rune.rarity];
-  const rarity = RUNE_RARITY_LABELS[rune.rarity];
+  const rarity = runeRarityLabel(rune.rarity);
   const stats = [...rune.mainStats, ...rune.subStats];
   // 높이는 손으로 적지 않고 실제로 쌓인 옵션 줄에서 거꾸로 구한다 — 박아 두면 고급 룬은 아래가
   // 통째로 비고 전설 룬은 마지막 줄이 판을 넘는다.
@@ -220,7 +220,7 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
       options.onChanged?.(next);
     });
     body.add(addRuneFrame(scene, panel.frame.x, top + panel.frame.y, panel.frame.size, rune.rarity, rune.part, { mainStats: rune.mainStats, engraved: rune.engravings.length > 0 }));
-    body.add(scene.add.text(panel.textX, top + panel.rarityY, rarity + "  ·  " + RUNE_PART_LABELS[rune.part], textStyle({ role: "emphasis", size: 20, color: hex(accent) })).setOrigin(0, 0));
+    body.add(scene.add.text(panel.textX, top + panel.rarityY, rarity + "  ·  " + runePartLabel(rune.part), textStyle({ role: "emphasis", size: 20, color: hex(accent) })).setOrigin(0, 0));
     body.add(scene.add.text(panel.textX, top + panel.nameY, rune.customName ?? t("rune.named", { rarity }), textStyle({ role: "display", size: 29 })).setOrigin(0, 0).setWordWrapWidth(panel.nameWrap));
     body.add(scene.add.text(panel.textX, top + panel.equippedY, equippedLine(rune.instanceId), textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0, 0));
     body.add(drawHairline(scene, 0, top + panel.hairlineY, panel.hairlineWidth, { color: accent, alpha: 0.45 }));
@@ -462,12 +462,12 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
       empties.clear();
       const current = rune!;
       const accent = RUNE_ACCENT[current.rarity];
-      const rarity = RUNE_RARITY_LABELS[current.rarity];
+      const rarity = runeRarityLabel(current.rarity);
       const displayName = current.customName ?? t("rune.named", { rarity });
       const top = -layout.height / 2;
       const half = panel.width / 2;
       content.add(addRuneFrame(scene, panel.frame.x, top + panel.frame.y, panel.frame.size, current.rarity, current.part, { mainStats: current.mainStats, engraved: current.engravings.length > 0 }));
-      content.add(scene.add.text(panel.textX, top + panel.rarityY, rarity + "  ·  " + RUNE_PART_LABELS[current.part], textStyle({ role: "emphasis", size: 21, color: hex(accent) })).setOrigin(0, 0));
+      content.add(scene.add.text(panel.textX, top + panel.rarityY, rarity + "  ·  " + runePartLabel(current.part), textStyle({ role: "emphasis", size: 21, color: hex(accent) })).setOrigin(0, 0));
       const nameText = scene.add.text(panel.textX, top + panel.nameY, displayName, textStyle({ role: "display", size: 32 })).setOrigin(0, 0).setWordWrapWidth(panel.nameWrap);
       content.add(nameText);
       content.add(scene.add.text(panel.textX, top + panel.equippedY, equippedLine(current.instanceId), textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0, 0));

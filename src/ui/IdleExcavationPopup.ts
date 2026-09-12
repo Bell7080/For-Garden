@@ -13,7 +13,7 @@ import { notificationManager } from "../managers/NotificationManager";
 import { Button } from "./Button";
 import { chipPoints, drawHairline, drawLayer, HOLO, HoloBar, slantedRect } from "./holo";
 import { PortraitCard } from "./PortraitCard";
-import { autoAssignExcavation, EXCAVATION_AUTO_MODE_LABEL, EXCAVATION_AUTO_MODES, type ExcavationAutoMode, type ExcavationCandidate } from "../core/excavationAutoAssign";
+import { autoAssignExcavation, excavationAutoModeLabel, EXCAVATION_AUTO_MODES, type ExcavationAutoMode, type ExcavationCandidate } from "../core/excavationAutoAssign";
 import { bindLongPress } from "./longPressInfo";
 import { type InfoManager, sceneInfoManager } from "./info";
 import { formationRosterColumnX, formationRosterGrid, PORTRAIT_GRID_MASK_GAP, portraitGridContentHeight, portraitGridFirstRowY } from "./portraitGrid";
@@ -495,7 +495,7 @@ export class IdleExcavationPopup {
     const autoY = GRID_VIEW.top - 42;
     content.add(new Button(this.scene, GRID_VIEW.right - 205, autoY, {
       width: 190, height: 56, fontSize: 22,
-      label: t("excavation.autoPlace"), sub: EXCAVATION_AUTO_MODE_LABEL[this.autoMode],
+      label: t("excavation.autoPlace"), sub: excavationAutoModeLabel(this.autoMode),
       onClick: () => {
         if (this.saving || !this.draft) return;
         this.draft = autoAssignExcavation(this.autoCandidates(), this.autoMode);

@@ -3,6 +3,7 @@ import { STAGES } from "../data/stages";
 import { highestClearedStage } from "../core/stageProgress";
 import type { PortraitAssetId } from "../core/types";
 import type { Session } from "./session";
+import { t } from "../i18n";
 
 /** TopBar와 정보창이 공유하는 공개 표시 전용 모델이며 인증·계정 내부 키는 의도적으로 없다. */
 export interface PlayerProfileDisplay {
@@ -25,7 +26,7 @@ export interface PlayerCompetitiveStats {
   favoriteRelic: { relicId: string; displayName: string; portraitAssetId: PortraitAssetId } | null;
   arenaTier?: { tierId: string; displayName: string };
   highestStage: { stageId: string; displayValue: string } | null;
-  expedition: { label: "역대 최고"; score: number };
+  expedition: { label: string; score: number };
 }
 
 /** 문자열만 저장하지 않고 화면 의미와 안정적인 ID를 함께 보존하는 JSON 안전 공개 수식어다. */
@@ -37,7 +38,6 @@ export interface PublicProfileModifier {
 
 /** 진행 수치를 제외한 공개 프로필의 비진행 표시 기본값이다. */
 const DEFAULT_PUBLIC_PROFILE = {
-  displayName: "연구원",
   profileFrameKey: "holo-cyan",
 } as const;
 
@@ -48,10 +48,12 @@ export function playerProfileDisplay(state: Session, equippedModifiers: readonly
   const stage = highestClearedStage(STAGES, state.cleared);
   return {
     ...DEFAULT_PUBLIC_PROFILE,
+    // 기본 이름은 표가 아니라 부를 때 고른다 — 표는 모듈을 읽는 순간 굳어 언어를 따라오지 않는다.
+    displayName: t("profile.defaultName"),
     // 화면은 경험치 공식이나 기본값을 소유하지 않고 API/manager 경계를 거친 세션 값을 표시한다.
     ...state.playerResearch,
-    displayId: state.settings.account.displayId.trim() || "게스트",
-    representativeRelic: relic?.name ?? "미지정",
+    displayId: state.settings.account.displayId.trim() || t("profile.guest"),
+    representativeRelic: relic?.name ?? t("profile.noFavorite"),
     competitiveStats: {
       // 애착 ID와 공용 초상 에셋 ID만 공개하며, 정의가 손상된 ID면 이름만 추측하지 않고 항목을 비운다.
       favoriteRelic: relic ? { relicId: relic.id, displayName: relic.name, portraitAssetId: relic.portraitAssetId } : null,
@@ -59,7 +61,7 @@ export function playerProfileDisplay(state: Session, equippedModifiers: readonly
       ...(arenaTier ? { arenaTier: { ...arenaTier } } : {}),
       highestStage: stage ? { stageId: stage.id, displayValue: `${stage.id} ${stage.name}` } : null,
       // 장기 성취 프로필이므로 주간 초기화 값이 아닌 명시적인 역대 최고만 표시한다.
-      expedition: { label: "역대 최고", score: Math.max(0, state.expedition.allTimeBestScore) },
+      expedition: { label: t("profile.expeditionBest"), score: Math.max(0, state.expedition.allTimeBestScore) },
     },
     // 이 함수는 표시 모델만 조립한다. 획득 여부를 알 수 있는 manager가 검증한 복사본만 받는다.
     equippedModifiers: equippedModifiers.map((modifier) => ({ ...modifier })),

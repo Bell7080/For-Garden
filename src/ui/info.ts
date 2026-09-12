@@ -3,7 +3,7 @@ import type { PuppetCreature } from "../puppets/assets";
 import { powerSavingPolicy } from "../core/settings";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import type { Combatant } from "../core/combatTypes";
-import { RUNE_PART_LABELS, RUNE_RARITY_LABELS, type RunePart } from "../core/runes";
+import { runePartLabel, runeRarityLabel, type RunePart } from "../core/runes";
 import { previewSkillDamage } from "../core/damage";
 import type { BasicAttack, Element, RelicDef, RelicProgress, RelicRarity, Role, Passive, Skill, SkillIconAssetId, Stats, Ultimate } from "../core/types";
 import { setDebugFeedButton, setDebugInfoGemSlots, setDebugInfoOpen } from "../debug";
@@ -1176,7 +1176,7 @@ export class InfoManager {
         piece.setDisplaySize(size, size).setScale(piece.scaleX * (gem ? 1 : RUNE_GAP), piece.scaleY * (gem ? 1 : RUNE_GAP));
         if (gem) {
           glow.setTexture(runeTexture(gem.rarity, index)).setTint(RUNE_ACCENT[gem.rarity]).setAlpha(0.4);
-          label.setText(index + 1 + "   " + (gem.customName ?? t("info.rune.named", { rarity: RUNE_RARITY_LABELS[gem.rarity] }))).setColor(COLOR.ink);
+          label.setText(index + 1 + "   " + (gem.customName ?? t("info.rune.named", { rarity: runeRarityLabel(gem.rarity) }))).setColor(COLOR.ink);
         } else {
           glow.setAlpha(0);
           label.setText(index + 1 + t("info.rune.emptySlot")).setColor(COLOR.inkDim);
@@ -1205,7 +1205,7 @@ export class InfoManager {
     const pickerHeight = Math.min(BASE_HEIGHT - 120, RUNE_PICKER.headerHeight + (rows - 1) * RUNE_PICKER.cellHeight + RUNE_PICKER.cardHeight / 2 + 48);
     // 룬을 다루는 판은 모두 **판 밖 우하단의 공용 뒤로가기**로 닫는다. 가방 → 쪽지 → 세공이
     // 이어지는 흐름에서 닫는 자리가 판마다 달라지면 한 손짓으로 물러날 수 없다.
-    this.popups.open({ width: pickerWidth, height: pickerHeight, title: t("info.rune.bag", { part: RUNE_PART_LABELS[index as RunePart] }), dim: true, backButton: true }, (body, close) => {
+    this.popups.open({ width: pickerWidth, height: pickerHeight, title: t("info.rune.bag", { part: runePartLabel(index as RunePart) }), dim: true, backButton: true }, (body, close) => {
       const top = -pickerHeight / 2;
       // 비우기는 격자 위 한 줄이다. 룬 카드와 섞이면 실수로 누르기 쉽다.
       body.add(drawLayer(this.scene, 0, top + 128, slantedRect(pickerWidth - 96, 66, 12), { fill: 0x141a22, alpha: 0.92, edge: COLOR.accent, edgeAlpha: 0.3 }));
@@ -1717,10 +1717,10 @@ export class InfoManager {
         }));
         // 자리마다 들어갈 조각이 정해져 있으므로 빈 칸도 제 조각을 옅게 세워 둔다.
         body.add(addRuneFrame(this.scene, -272, y, 92, gem?.rarity, index as RunePart, { mainStats: gem?.mainStats, engraved: (gem?.engravings.length ?? 0) > 0 }));
-        body.add(this.scene.add.text(-206, y - 26, RUNE_PART_LABELS[index as RunePart], textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0, 0));
+        body.add(this.scene.add.text(-206, y - 26, runePartLabel(index as RunePart), textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0, 0));
         body.add(
           this.scene.add
-            .text(-206, y + 2, gem ? (gem.customName ?? t("info.rune.named", { rarity: RUNE_RARITY_LABELS[gem.rarity] })) : t("info.rune.empty"), textStyle({ role: "display", size: 28, color: gem ? COLOR.ink : COLOR.inkDim }))
+            .text(-206, y + 2, gem ? (gem.customName ?? t("info.rune.named", { rarity: runeRarityLabel(gem.rarity) })) : t("info.rune.empty"), textStyle({ role: "display", size: 28, color: gem ? COLOR.ink : COLOR.inkDim }))
             .setOrigin(0, 0),
         );
         if (gem) {

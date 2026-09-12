@@ -1,6 +1,7 @@
 import type { AccountApi, AccountFailureCode, AccountResult, ProgressSummary, RemoteSaveMetadata, RemoteSavePrecondition } from "./AccountApi";
 import type { SaveManager } from "../state/SaveManager";
 import type { Session } from "../state/session";
+import { t } from "../i18n";
 
 /** 로그인 뒤 충돌 UI가 결정할 수 있는 세 가지 명시적 결과다. */
 export type SaveSyncChoice = "local" | "remote" | "cancel";
@@ -46,7 +47,7 @@ export class AccountSaveSync {
     if (metadata.dataHash === localHash) return { ok: true, value: undefined };
 
     const choice = await choose(summarizeLocalSave(local), metadata.summary);
-    if (choice === "cancel") return { ok: false, code: "conflict-cancelled", message: "저장 선택을 취소했습니다." };
+    if (choice === "cancel") return { ok: false, code: "conflict-cancelled", message: t("error.save.cancelled") };
     if (choice === "local") return guestMergeRequestId
       // 병합 결과와 재화·인벤토리 중복 판정은 전부 서버가 소유하며 클라이언트는 DTO를 합산하지 않는다.
       ? this.mergeAndImport({ requestId: guestMergeRequestId, guestData: data, expectedRemote: precondition(metadata) })
@@ -55,9 +56,9 @@ export class AccountSaveSync {
     const downloaded = await this.api.downloadRemoteSave();
     if (!downloaded.ok) return downloaded;
     // 메타 조회 뒤 서버가 바뀌었으면 처음 보여 준 선택과 다른 본문을 적용하지 않는다.
-    if (downloaded.value.metadata.revision !== metadata.revision || downloaded.value.metadata.etag !== metadata.etag) return this.failure("save-conflict", "선택 중 서버 저장이 갱신되었습니다.");
+    if (downloaded.value.metadata.revision !== metadata.revision || downloaded.value.metadata.etag !== metadata.etag) return this.failure("save-conflict", t("error.save.changed"));
     try { this.saves.importRemote(downloaded.value.data); }
-    catch { return this.failure("invalid-remote-save", "서버 저장을 검증할 수 없습니다."); }
+    catch { return this.failure("invalid-remote-save", t("error.save.invalid")); }
     return { ok: true, value: undefined };
   }
 
@@ -68,7 +69,7 @@ export class AccountSaveSync {
     const merged = await this.api.mergeGuestSave(request);
     if (!merged.ok) return merged;
     try { this.saves.importRemote(merged.value.data); }
-    catch { return this.failure("invalid-remote-save", "서버 병합 저장을 검증할 수 없습니다."); }
+    catch { return this.failure("invalid-remote-save", t("error.save.mergeInvalid")); }
     return { ok: true, value: undefined };
   }
   private failure(code: AccountFailureCode, message: string): AccountResult<void> { return { ok: false, code, message }; }

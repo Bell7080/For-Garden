@@ -12,7 +12,7 @@ import {
   enhanceRune,
   RUNE_ENHANCEMENT_RULES,
   RUNE_GENERATION_RULES,
-  RUNE_RARITY_LABELS,
+  runeRarityLabel,
   RUNE_SUB_STAT_COUNTS,
   runeCombatModifiers,
   runeEnhancementIncrease,
@@ -55,7 +55,7 @@ describe("룬 도메인", () => {
   });
 
   it("한국어 희귀도 표기와 희귀도별 보조 옵션 수를 한 규칙으로 제공한다", () => {
-    expect(RUNE_RARITY_LABELS).toEqual({ uncommon: "고급", rare: "희귀", epic: "영웅", legendary: "전설" });
+    expect((["uncommon", "rare", "epic", "legendary"] as const).map(runeRarityLabel)).toEqual(["고급", "희귀", "영웅", "전설"]);
     for (const rarity of Object.keys(RUNE_SUB_STAT_COUNTS) as RuneRarity[]) {
       const rune = makeRune(rarity);
       expect(rune.mainStats).toHaveLength(2);

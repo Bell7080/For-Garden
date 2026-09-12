@@ -11,7 +11,7 @@ import { addItemFrame, ITEM_FRAME } from "./itemFrame";
 import { INVENTORY_TAB_LAYOUT, inventoryCategoryTabPosition } from "./inventoryTabs";
 import { POPUP_TITLE_SIZE, PopupLayer } from "./PopupLayer";
 import { equippedRelicName, openRuneInfoPopup } from "./RunePopup";
-import { RUNE_PART_LABELS, RUNE_RARITY_LABELS } from "../core/runes";
+import { runeDisplayName, runePartLabel, runeRarityLabel } from "../core/runes";
 import { addRuneCard, runeTexture } from "./runeIcons";
 import { COLOR, textStyle } from "./theme";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
@@ -231,12 +231,12 @@ export class InventoryPopup {
     return shade(drawGlyph(this.scene, icon.kind === "glyph" ? icon.key : ITEM_ICON_FALLBACK, x, y, size * 0.7, shadow ? 0x000000 : COLOR.accent));
   }
 
-  private label(item: InventoryDisplayItem): string { return item.kind === "rune" ? item.rune.customName ?? item.rune.baseName : item.definition.name; }
+  private label(item: InventoryDisplayItem): string { return item.kind === "rune" ? runeDisplayName(item.rune) : item.definition.name; }
   private description(item: InventoryDisplayItem): string {
     if (item.kind !== "rune") return item.definition.description;
     // 카드에는 선택에 필요한 등급·부위·장착 상태만 두고 정적 개발 설명은 반복하지 않는다.
     const equipped = equippedRelicName(item.rune.instanceId);
-    return `${RUNE_RARITY_LABELS[item.rune.rarity]} · ${RUNE_PART_LABELS[item.rune.part]}${equipped ? `\n장착 · ${equipped}` : ""}`;
+    return `${runeRarityLabel(item.rune.rarity)} · ${runePartLabel(item.rune.part)}${equipped ? `\n${t("inventory.rune.equipped", { name: equipped })}` : ""}`;
   }
 
   /** 룬은 기존 정보창, 소비품은 확인 후 서버 결과, 재화·재료는 읽기 전용 상세로 연결한다. */

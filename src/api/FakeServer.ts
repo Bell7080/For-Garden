@@ -26,7 +26,7 @@ import { DNA_EXCHANGE_OFFERS, WALLET_CAPS } from "../data/economy";
 import { EVENTS, findEventByProductId, findEventByStageId } from "../data/events";
 import type { EventDefinition } from "../data/events/types";
 import type { EnterEventStageResponse, EventListResponse } from "./contracts";
-import { assertValidRuneInstance, canEngraveRune, canEnhanceRune, generateRune, RUNE_PART_LABELS, type RunePart, engraveRune as applyRuneEngraving, enhanceRune as applyRuneEnhancement, runeEnhancementAttempts, runeEnhancementIncrease, type RuneInstance, type RuneRarity } from "../core/runes";
+import { assertValidRuneInstance, canEngraveRune, canEnhanceRune, generateRune, runePartLabel, type RunePart, engraveRune as applyRuneEngraving, enhanceRune as applyRuneEnhancement, runeEnhancementAttempts, runeEnhancementIncrease, type RuneInstance, type RuneRarity } from "../core/runes";
 import { runeEnhancementGoldCost, runeSellValue } from "../data/runes";
 import { findItem } from "../data/items";
 import { staminaCurrencyRecharge } from "../data/staminaRecharge";
@@ -47,6 +47,7 @@ import { RelicProgressionManager } from "../managers/RelicProgressionManager";
 import { expeditionBattleEffects } from "../core/expeditionBattle";
 import { settingsManager } from "../managers/SettingsManager";
 import { nextUtcDay } from "../core/notificationSchedule";
+import { t } from "../i18n";
 
 /** 사용자 룬 이름의 서버 정책이다. UI 글자 수와 무관하게 API 경계가 최종 권한을 가진다. */
 export const MAX_RUNE_NAME_LENGTH = 20;
@@ -136,10 +137,10 @@ export class FakeServer implements GameApi {
     this.notificationScheduler = options.notificationScheduler ?? (state === session ? settingsManager : undefined);
     // 절대 시각을 고정해 테스트와 개발 빌드에서 내용·순서가 언제나 같게 한다.
     this.mails = [
-      { id: "welcome-supply", title: "중앙 연구소 보급품", sender: "연구지원국", body: "새로운 조사 활동을 위한 보급품입니다.", sentAt: "2026-08-29T00:00:00.000Z", expiresAt: "2099-12-31T23:59:59.000Z", read: false, claimed: false, rewards: [{ kind: "currency", currency: "gold", amount: 1200 }] },
-      { id: "field-notice", title: "광장 안전 점검 안내", sender: "도시관리국", body: "중앙 광장 안전 점검이 완료되었습니다.", sentAt: "2026-08-28T00:00:00.000Z", expiresAt: null, read: false, claimed: false, rewards: [] },
-      { id: "archive-gift", title: "기록 보존 감사품", sender: "기록보존실", body: "기록 제공에 감사드립니다.", sentAt: "2026-08-27T00:00:00.000Z", expiresAt: null, read: true, claimed: true, rewards: [{ kind: "currency", currency: "gems", amount: 10 }] },
-      { id: "expired-supply", title: "지난 주 현장 보급", sender: "현장지원반", body: "수령 기간이 종료된 보급품입니다.", sentAt: "2026-08-01T00:00:00.000Z", expiresAt: "2026-08-10T00:00:00.000Z", read: true, claimed: false, rewards: [{ kind: "currency", currency: "fossil", amount: 50 }] },
+      { id: "welcome-supply", title: t("mail.welcome.title"), sender: t("mail.welcome.sender"), body: t("mail.welcome.body"), sentAt: "2026-08-29T00:00:00.000Z", expiresAt: "2099-12-31T23:59:59.000Z", read: false, claimed: false, rewards: [{ kind: "currency", currency: "gold", amount: 1200 }] },
+      { id: "field-notice", title: t("mail.notice.title"), sender: t("mail.notice.sender"), body: t("mail.notice.body"), sentAt: "2026-08-28T00:00:00.000Z", expiresAt: null, read: false, claimed: false, rewards: [] },
+      { id: "archive-gift", title: t("mail.archive.title"), sender: t("mail.archive.sender"), body: t("mail.archive.body"), sentAt: "2026-08-27T00:00:00.000Z", expiresAt: null, read: true, claimed: true, rewards: [{ kind: "currency", currency: "gems", amount: 10 }] },
+      { id: "expired-supply", title: t("mail.expired.title"), sender: t("mail.expired.sender"), body: t("mail.expired.body"), sentAt: "2026-08-01T00:00:00.000Z", expiresAt: "2026-08-10T00:00:00.000Z", read: true, claimed: false, rewards: [{ kind: "currency", currency: "fossil", amount: 50 }] },
     ];
   }
 
@@ -336,7 +337,7 @@ export class FakeServer implements GameApi {
 
   /** 단일 개발 계정도 운영과 같은 점수 내림차순/최초 달성 오름차순 정책을 명시한다. */
   async getExpeditionLeaderboard(limit = 100): Promise<ExpeditionLeaderboardResponse> {
-    await this.delay(); this.normalizeBossWeek(this.now()); const entries = this.bossWeek.bestScore > 0 ? [{ rank: 1, playerId: "local-player", displayName: "연구원", score: this.bossWeek.bestScore, achievedAt: this.bossWeek.achievedAt, isMe: true, favoriteRelicId: this.state.favorite }] : [];
+    await this.delay(); this.normalizeBossWeek(this.now()); const entries = this.bossWeek.bestScore > 0 ? [{ rank: 1, playerId: "local-player", displayName: t("profile.defaultName"), score: this.bossWeek.bestScore, achievedAt: this.bossWeek.achievedAt, isMe: true, favoriteRelicId: this.state.favorite }] : [];
     return { weekKey: this.bossWeek.weekKey, tieBreakPolicy: "earliest-achieved-at", entries: entries.slice(0, Math.max(0, limit)) };
   }
 
@@ -877,7 +878,7 @@ export class FakeServer implements GameApi {
     this.state.missions = normalized;
     const resetAt = nextUtcDay(this.now());
     // 임무 기간을 실제로 정규화하는 API 경계에서 다음 UTC 갱신도 함께 예약한다.
-    void this.notificationScheduler?.scheduleNotification({ id: `daily-mission:${resetAt.toISOString()}`, kind: "dailyMission", title: "일일 임무 갱신", body: "새로운 일일 임무가 시작되었습니다.", expiresAt: resetAt });
+    void this.notificationScheduler?.scheduleNotification({ id: `daily-mission:${resetAt.toISOString()}`, kind: "dailyMission", title: t("mail.daily.title"), body: t("mail.daily.body"), expiresAt: resetAt });
     return this.missionListDto(normalized);
   }
 
@@ -929,7 +930,7 @@ export class FakeServer implements GameApi {
     const products = PRODUCTS.filter((product) => product.storefront === storefront && this.isVisible(product, now)).map((product) => {
       const remaining = this.remaining(product, now);
       const premium = product.acquisition.kind === "platform_payment";
-      return { ...product, remaining, purchasable: !premium && remaining > 0, disabledReason: premium ? "서버 영수증 검증 연결 전에는 구매할 수 없습니다." : remaining <= 0 ? "구매 제한에 도달했습니다." : undefined };
+      return { ...product, remaining, purchasable: !premium && remaining > 0, disabledReason: premium ? t("error.purchase.unverified") : remaining <= 0 ? t("error.purchase.limit") : undefined };
     });
     return { products, serverTime: now.toISOString() };
   }
@@ -1186,7 +1187,7 @@ export class FakeServer implements GameApi {
     this.state.staminaUpdatedAt = settled.updatedAt;
     const fullAt = staminaTiming(settled.amount, maximum, settled.updatedAt).fullAt;
     // 정산 경계가 완충 시각을 소유하므로 화면이 DTO를 해석해 예약하지 않는다.
-    if (fullAt) void this.notificationScheduler?.scheduleNotification({ id: `stamina-full:${fullAt}`, kind: "staminaFull", title: "스테미나 충전 완료", body: "스테미나가 모두 충전되었습니다.", expiresAt: new Date(fullAt) });
+    if (fullAt) void this.notificationScheduler?.scheduleNotification({ id: `stamina-full:${fullAt}`, kind: "staminaFull", title: t("mail.stamina.title"), body: t("mail.stamina.body"), expiresAt: new Date(fullAt) });
     else void this.notificationScheduler?.cancelNotification("staminaFull");
   }
 
@@ -1231,7 +1232,7 @@ export class FakeServer implements GameApi {
     do { instanceId = `rune-${this.now().getTime()}-${this.runeIssueSequence++}`; } while (occupied.has(instanceId));
     // 자리도 서버가 정한다. 어느 칸의 룬이 나올지는 획득의 일부다.
     const part = Math.min(2, Math.floor(this.random() * 3)) as RunePart;
-    return { ...generateRune({ instanceId, baseName: `${RUNE_PART_LABELS[part]} 룬`, rarity, part, random: this.random }), sequence: this.now().getTime() * 1000 + this.runeIssueSequence };
+    return { ...generateRune({ instanceId, baseName: t("rune.baseName", { part: runePartLabel(part) }), rarity, part, random: this.random }), sequence: this.now().getTime() * 1000 + this.runeIssueSequence };
   }
 
   /** 보유 인벤토리에서만 룬을 찾아 존재 여부와 소유권을 한 번에 확정한다. */

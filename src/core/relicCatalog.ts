@@ -1,4 +1,5 @@
 import type { RelicDef } from "./types";
+import { t } from "../i18n";
 
 /** 즐겨찾기 정렬에 필요한 최소 유대 기록이라 저장 모델과 비교 규칙을 느슨하게 결합한다. */
 export interface CatalogBondOrder {
@@ -47,6 +48,6 @@ export function getRelicCatalogDisclosure(def: RelicDef, owned: boolean): RelicC
     projectName: def.projectName,
     origin: def.origin,
     excavationSite: def.excavationSite,
-    record: def.unlockRecord.status === "recorded" ? def.unlockRecord.text : "설정 기록이 잠금 상태입니다.",
+    record: def.unlockRecord.status === "recorded" ? def.unlockRecord.text : t("error.profile.locked"),
   };
 }

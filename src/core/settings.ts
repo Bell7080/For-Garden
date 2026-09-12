@@ -149,7 +149,9 @@ export function createDefaultSettings(): GameSettings {
     accessibility: { textScale: 1, reduceMotion: false, reduceFlashes: false, colorAssist: false },
     // 궁극기 스킵은 연출 품질이 아니라 전투 조작이며 기본적으로 완전한 시퀀스를 보여 준다.
     game: { battleSpeed: 1, autoUltimate: false, skipUltimatePresentation: false, textSpeed: 1, language: DEFAULT_LANGUAGE },
-    account: { provider: "guest", displayId: "게스트" },
+    // 이름을 적어 두지 않는다 — 저장에 굳으면 언어를 바꿔도 그 줄만 옛 언어로 남는다.
+    // 빈 값은 화면이 부를 때 `profile.guest`로 메운다.
+    account: { provider: "guest", displayId: "" },
   };
 }
 

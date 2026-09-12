@@ -421,7 +421,13 @@ export interface ExpeditionWeeklyBestResponse { weekKey: string; bestScore: numb
 export interface ClaimExpeditionRewardRequest { requestId: string; stageId: string; }
 export interface ClaimExpeditionRewardResponse { weekKey: string; stageId: string; claimedStageIds: string[]; reward: { currency: "gold" | "fossil" | "gems"; amount: number }; alreadyClaimed: boolean; wallet: PlayerStateDto["wallet"]; }
 /** 동점은 최고 점수 달성 시각이 빠른 이용자를 우선하며 그 뒤 안정적인 playerId 순으로 정렬한다. */
-export interface ExpeditionLeaderboardEntry { rank: number; playerId: string; displayName: string; score: number; achievedAt: string; isMe: boolean; }
+/**
+ * 순위 한 줄.
+ *
+ * `favoriteRelicId`는 그 사람의 **애착 렐릭**이며 순위표가 얼굴을 세우는 유일한 근거다 —
+ * 화면이 playerId로 아무 개체나 골라 세우면 서버가 말한 적 없는 프로필을 그리게 된다.
+ */
+export interface ExpeditionLeaderboardEntry { rank: number; playerId: string; displayName: string; score: number; achievedAt: string; isMe: boolean; favoriteRelicId?: string; }
 export interface ExpeditionLeaderboardResponse { weekKey: string; tieBreakPolicy: "earliest-achieved-at"; entries: ExpeditionLeaderboardEntry[]; }
 /** 직접 플레이하지 않고 역대 최고 점수 일부와 절반의 노드 클리어 전리품만 즉시 정산하는 소탕 요청이다. */
 export interface SweepExpeditionRequest { requestId: string; }

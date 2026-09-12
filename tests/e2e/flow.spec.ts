@@ -5,6 +5,7 @@ import { captureGame, drag, longPress, tap, tapUntil } from "./canvasInput";
 // 조작 칩 좌표는 화면이 소유한 배치표에서 읽는다 — 스펙이 숫자를 다시 적으면 칩이 움직일
 // 때마다 여기만 옛 자리를 두드린다.
 import { BATTLE_CONTROLS } from "../../src/ui/battleStatusLayout";
+import { CONTRIBUTION_TOGGLE } from "../../src/ui/battleContributionLayout";
 
 const BASE_WIDTH = 1080;
 const BASE_HEIGHT = 1920;
@@ -156,7 +157,8 @@ test("궁극기 카드 몸통과 돌출 머리는 빈·중간·꽉 참에서 한
 test("전투 기여도 판을 열고 세 분류를 바꾼 뒤 접어 1080×1920 테마를 보존한다", async ({ page }, testInfo) => {
   await page.setViewportSize({ width: BASE_WIDTH, height: BASE_HEIGHT });
   await enterBattle(page);
-  await tap(page, 68, 960);
+  // 판을 여는 칩은 전투 조작 줄(배속 칩 바로 위)에 선다 — 자리는 순수 배치표가 갖는다.
+  await tap(page, CONTRIBUTION_TOGGLE.x, CONTRIBUTION_TOGGLE.y);
   await expect.poll(async () => (await battle(page))?.contributionPanel?.expanded).toBe(true);
   // 84×76 직접 선택 영역의 중앙을 차례로 눌러 모바일에서 분류 순환을 검증한다.
   await tap(page, 234, 620);
@@ -166,8 +168,9 @@ test("전투 기여도 판을 열고 세 분류를 바꾼 뒤 접어 1080×1920 
   await tap(page, 150, 620);
   await expect.poll(async () => (await battle(page))?.contributionPanel?.category).toBe("attack");
   await captureGame(page, `test-results/${testInfo.project.name}-battle-contribution-expanded-1080x1920.png`);
-  // 그래프 칩은 펼친 판 위를 덮어 감춰지므로, 접는 길은 판 밖 아무 곳이나 누르는 것이다.
-  await tap(page, 800, 400);
+  // 같은 칩을 다시 눌러 접는다. 판 밖 아무 곳이나 눌러도 접히지만, 그 칩은 판 밖이라
+  // 그 한 번이 접기와 펴기로 갈리지 않아야 한다.
+  await tap(page, CONTRIBUTION_TOGGLE.x, CONTRIBUTION_TOGGLE.y);
   await expect.poll(async () => (await battle(page))?.contributionPanel?.expanded).toBe(false);
 });
 

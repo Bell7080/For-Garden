@@ -85,7 +85,14 @@ export function resolveExpeditionBossBattle(input: ExpeditionBossReplayInput, ac
     if (!Number.isInteger(action.elapsedMs) || action.elapsedMs < cursorMs || action.elapsedMs > EXPEDITION_BOSS_BALANCE.maximumDurationMs) throw new Error("INVALID_BOSS_BATTLE_INPUT");
     while (cursorMs < action.elapsedMs && state.phase === "fight") { const slice = Math.min(50, action.elapsedMs - cursorMs); stepSkirmish(state, slice / 1_000, rng); cursorMs += slice; }
     const fighter = state.fighters.find(({ side, def }) => side === "player" && def.id === action.actorId);
-    if (!fighter || !isFighterAlive(fighter)) throw new Error("INVALID_BOSS_BATTLE_INPUT");
+    // 편성에 없는 개체의 행동은 조작이므로 제출 전체를 거절한다.
+    if (!fighter) throw new Error("INVALID_BOSS_BATTLE_INPUT");
+    // **재현에서 이미 쓰러진 개체의 행동은 버리기만 한다.** 재현은 실제 판과 자리·표적·보스
+    // 공격 순서가 조금씩 달라 누가 먼저 쓰러지는지가 어긋나는데, 그 어긋남으로 **제출 전체를**
+    // 거절하면 규칙대로 싸운 판이 "정산 실패 · 다시 시도"로 끝난다(성장 규칙을 손댈 때마다 이
+    // 검증이 무더기로 터진 이유다). 버리는 쪽은 점수를 **깎기만** 하므로 조작에 쓸 수 없고,
+    // 재현으로 설명되지 않을 만큼 빠른 행동은 아래 재사용 대기 검사가 그대로 거절한다.
+    if (!isFighterAlive(fighter)) continue;
     const key = `${action.actorId}:${action.kind}`;
     if (action.elapsedMs + 1e-6 < (readyAt.get(key) ?? -Infinity)) throw new Error("INVALID_BOSS_BATTLE_INPUT");
     replayLoggedBossAction(state, action.actorId, action.kind, rng);

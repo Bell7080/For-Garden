@@ -336,7 +336,7 @@ export class FakeServer implements GameApi {
 
   /** 단일 개발 계정도 운영과 같은 점수 내림차순/최초 달성 오름차순 정책을 명시한다. */
   async getExpeditionLeaderboard(limit = 100): Promise<ExpeditionLeaderboardResponse> {
-    await this.delay(); this.normalizeBossWeek(this.now()); const entries = this.bossWeek.bestScore > 0 ? [{ rank: 1, playerId: "local-player", displayName: "연구원", score: this.bossWeek.bestScore, achievedAt: this.bossWeek.achievedAt, isMe: true }] : [];
+    await this.delay(); this.normalizeBossWeek(this.now()); const entries = this.bossWeek.bestScore > 0 ? [{ rank: 1, playerId: "local-player", displayName: "연구원", score: this.bossWeek.bestScore, achievedAt: this.bossWeek.achievedAt, isMe: true, favoriteRelicId: this.state.favorite }] : [];
     return { weekKey: this.bossWeek.weekKey, tieBreakPolicy: "earliest-achieved-at", entries: entries.slice(0, Math.max(0, limit)) };
   }
 

@@ -291,22 +291,40 @@ export function applyStatPercent(stats: Stats, effect: HeartGemStatEffect): Stat
 }
 
 /**
- * 레벨 1은 기본치이며 이후 레벨마다 모든 능력치를 **등급이 정한 비율**로 높인다.
+ * 성장이 실제로 올리는 능력치 — **오각형에 서 있는 다섯뿐이다.**
+ *
+ * 예전에는 레벨과 별이 `Stats`의 **모든** 키를 같은 비율로 올렸다. 그래서 60레벨이 된 개체는
+ * 공격 속도·이동 속도·치명타 확률·치명타 피해·충전량·흡혈까지 함께 두 배 가까이 올라, 태생
+ * 10%였던 치명타가 확정타가 되고 공격 속도가 붙는 순간 전투가 끝났다(토리카를 60까지 올리니
+ * 무적이 된 것이 그 때문이다).
+ *
+ * 부가 능력치는 **전 개체가 같은 값을 쓰는 공통값**(`COMMON_SECONDARY_STATS`)이고, 공격·이동
+ * 속도는 **그 개체의 정체성**이다. 둘 다 "얼마나 먹였나"로 흔들려서는 안 되고, 필요한 개체는
+ * 읽히는 스킬(패시브·폭주·룬)로 끌어다 쓴다 — 그래야 왜 그 개체가 치명타형인지가 숨은 배율이
+ * 아니라 화면에 선 문장으로 설명된다.
+ */
+export const GROWTH_STAT_KEYS: readonly (keyof Stats)[] = ["hp", "def", "res", "atk", "ap"];
+
+/** 성장 배율 한 번. 다섯 주능력치에만 같은 비율을 얹는다. */
+function growthPercent(percent: number): HeartGemStatEffect {
+  return Object.fromEntries(GROWTH_STAT_KEYS.map((key) => [key, percent])) as HeartGemStatEffect;
+}
+
+/**
+ * 레벨 1은 기본치이며 이후 레벨마다 **주능력치 다섯**을 등급이 정한 비율로 높인다.
  *
  * 등급을 받는 자리를 선택이 아니라 필수로 둔 이유는, 기본값을 두면 새 호출부가 등급을
  * 빠뜨린 채 모두 같은 속도로 자라기 때문이다. 비율은 `RARITY_LEVEL_GROWTH` 한 표에만 있다.
  */
 export function applyLevelGrowth(base: Stats, level: number, rarity: RelicRarity): Stats {
   if (!Number.isInteger(level) || level < 1) throw new RangeError("레벨은 1 이상의 정수여야 합니다.");
-  const percent = (level - 1) * RARITY_LEVEL_GROWTH[rarity];
-  return applyStatPercent(base, Object.fromEntries(STAT_KEYS.map((key) => [key, percent])) as HeartGemStatEffect);
+  return applyStatPercent(base, growthPercent((level - 1) * RARITY_LEVEL_GROWTH[rarity]));
 }
 
-/** 별이 능력치를 직접 올리는 것은 셋째 돌파뿐이다. 나머지 단계는 전투 규칙을 바꾼다. */
+/** 별이 능력치를 직접 올리는 것은 셋째 돌파뿐이고, 그 몫도 주능력치 다섯에만 얹힌다. */
 export function applyBreakthrough(stats: Stats, breakthrough: number): Stats {
   if (!Number.isInteger(breakthrough) || breakthrough < 0 || breakthrough > BREAKTHROUGH_CAP) throw new RangeError("돌파 단계가 범위를 벗어났습니다.");
-  const percent = breakthroughBonus(breakthrough).statPercent;
-  return applyStatPercent(stats, Object.fromEntries(STAT_KEYS.map((key) => [key, percent])) as HeartGemStatEffect);
+  return applyStatPercent(stats, growthPercent(breakthroughBonus(breakthrough).statPercent));
 }
 
 /** 장착된 Heart Gem을 슬롯 순서대로 적용해 저장 순서까지 계산 규칙의 일부로 고정한다. */

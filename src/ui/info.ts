@@ -30,7 +30,7 @@ import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
 import { BREAKTHROUGH_SLOT_LABEL, breakthroughEffectText } from "./skillPresentation";
 import { addStarMark, RARITY_TONE, STAR_ROMAN } from "./rarityMark";
-import { addFramedIcon, addItemFrame, ITEM_FRAME } from "./itemFrame";
+import { addFramedIcon, addItemFrame } from "./itemFrame";
 import { FaceFrame } from "./FaceFrame";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { session } from "../state/session";
@@ -50,7 +50,7 @@ import { skillArtFor, skillArtTint, type SkillArtSlot } from "./skillArt";
 import { addSkillIconFrame, SKILL_SLOT_LABEL } from "./SkillIconFrame";
 import { BREAK_CONFIRM, BREAK_STEPS, breakthroughStepsLayout } from "./breakthroughLayout";
 import { gameApi } from "../api/FakeServer";
-import { BREAKTHROUGH_STEPS, breakthroughFragmentCost, canBreakThrough, canFeedRelic, FEED_UNIT, nextBreakthrough, relicExpToNext, relicLevelCap, relicStars } from "../core/relicProgression";
+import { BREAKTHROUGH_STEPS, breakthroughFragmentCost, canBreakThrough, canFeedRelic, FEED_UNIT, isBreakthroughSlotOpen, nextBreakthrough, relicExpToNext, relicLevelCap, relicStars } from "../core/relicProgression";
 import { BOND_FEROCITY_MULTIPLIER, BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL, BOND_XP_REWARD } from "../core/bond";
 import { getRelicCatalogDisclosure } from "../core/relicCatalog";
 import { observations } from "../managers/ObservationManager";
@@ -859,9 +859,7 @@ export class InfoManager {
     if (!def) return;
     const progress = relicProgression.getProgress(def.id);
     const step = nextBreakthrough(progress.breakthrough);
-    const effect = step ? breakthroughEffectText(def, step.slot) : undefined;
-    // 전용 효과 줄이 있으면 그만큼 판이 길어진다. 없는 개체에서 빈 자리를 남기지 않는다.
-    const height = BREAK_CONFIRM.height + (effect ? BREAK_CONFIRM.effectExtra : 0);
+    const height = BREAK_CONFIRM.height;
     this.popups.open({ width: 780, height, title: "한계 돌파", tilt: -1.2, ...anchorOf(from) }, (body, close) => {
       if (!step) {
         body.add(this.scene.add.text(0, 20, "이미 " + STAR_ROMAN[STAR_ROMAN.length - 1] + " 등급이다. 중복은 DNA 조각으로 쌓인다.", textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0.5).setWordWrapWidth(640));
@@ -921,15 +919,8 @@ export class InfoManager {
         edgeAlpha: ready ? 1 : 0.25,
       }));
       body.add(this.scene.add.text(0, actionY, "돌파하기", textStyle({ role: "display", size: 34, color: ready ? COLOR.ink : COLOR.inkDim })).setOrigin(0.5));
-      // **이 별에서 열리는 그 개체의 효과**는 판 맨 아래에 노란 굵은 글씨로 선다. 돌파를 누르기
-      // 전에 "무엇이 달라지는가"를 읽는 자리라 조작보다 아래에 두고, 재화 색과 같은 금색으로
-      // 세워 공용 안내문(회색)과 무게를 가른다.
-      if (effect) {
-        body.add(this.scene.add
-          .text(0, top + BREAK_CONFIRM.effectY, effect, textStyle({ role: "emphasis", size: 23, color: COLOR.accentText, align: "center", lineSpacing: 8 }))
-          .setOrigin(0.5, 0)
-          .setWordWrapWidth(660));
-      }
+      // 열리는 효과를 여기 적지 않는다 — 등급 돋보기가 여는 표와 그 기술의 스킬 쪽지가 이미
+      // 말하고(돌파로 붙은 줄은 노란 글씨로 선다), 이 창은 드는 것과 확정만 맡는다.
       if (!ready) return;
       const hit = this.scene.add.rectangle(0, actionY, 420, 88, 0xffffff, 0).setInteractive({ useHandCursor: true });
       hit.on("pointerup", () => {
@@ -975,18 +966,16 @@ export class InfoManager {
       });
       return;
     }
-    // 레벨 액자는 그림 대신 글자 둘이 든다 — 위에 `Lv`, 아래에 요구 레벨이다. 그림 파일을
+    // 레벨 액자는 그림 대신 글자 둘이 든다 — 위에 `Lv`, 아래에 **지금 레벨**이다. 그림 파일을
     // 새로 굽지 않는 이유는 이 값이 아이콘이 아니라 숫자이기 때문이다.
+    //
+    // **우하단에 레벨을 또 적지 않는다.** 다른 두 액자는 그림이 무엇인지 말하고 우하단이 가진
+    // 수를 말하는데, 레벨 액자는 그림 자리가 이미 숫자라 우하단에 같은 성격의 수를 겹치면 한
+    // 칸에 레벨이 두 번 선다. 드는 값(`필요 N`)은 세 칸이 함께 쓰는 아래 줄이 말한다.
     const frame = addItemFrame(this.scene, x, y, size, { color });
     body.add(frame);
     frame.add(this.scene.add.text(0, -size * 0.16, "Lv", textStyle({ role: "emphasis", size: Math.round(size * 0.2), color: COLOR.inkDim })).setOrigin(0.5));
-    frame.add(this.scene.add.text(0, size * 0.14, String(cost.need), textStyle({ role: "display", size: Math.round(size * 0.34), color: enough ? COLOR.ink : COLOR.dangerText })).setOrigin(0.5).setScale(1, 1.1));
-    // 가진 값은 재화 액자와 같은 우하단이다. 자리를 옮기면 셋이 서로 다른 곳을 보게 된다.
-    frame.add(this.scene.add
-      .text(size / 2 - 8, size / 2 - 6, formatCurrency(cost.have), textStyle({ role: "display", size: Math.max(18, Math.round(size * ITEM_FRAME.amountRatio)), color: enough ? COLOR.accentText : COLOR.dangerText }))
-      .setOrigin(1, 1)
-      .setStroke("#000000", 6)
-      .setShadow(2, 3, "#000000", 2, false, true));
+    frame.add(this.scene.add.text(0, size * 0.14, formatCurrency(cost.have), textStyle({ role: "display", size: Math.round(size * 0.34), color: enough ? COLOR.ink : COLOR.dangerText })).setOrigin(0.5).setScale(1, 1.1));
   }
 
   /** 재료 차감과 단계 확정은 서버가 한 처리로 맡는다. 화면은 결과만 다시 그린다. */
@@ -1024,8 +1013,9 @@ export class InfoManager {
     const canFeed = canFeedRelic(progress, session.wallet.cheesecake);
     // Growth actions are derived from the current confirmed state, never from “did this tap level up?”.  At
     // the cap the note becomes an explicit route to breakthrough and explains why it is not yet available.
-    const atCap = progress.level >= relicLevelCap(progress.breakthrough);
-    if (!canFeed && !atCap) return;
+    // **만렙에서는 쪽지를 열지 않는다.** 먹일 것이 없는 자리에 "레벨 상한 · 한계 돌파"를
+    // 적어 두면 같은 말을 별 옆의 돌파 버튼이 이미 하고 있고, 그 쪽지에는 누를 것도 없다.
+    if (!canFeed) return;
     this.feedPopupOpen = true;
     this.popups.open({
       width: 500,
@@ -1040,37 +1030,21 @@ export class InfoManager {
       // **쪽지는 한 번 먹였다고 닫히지 않는다.** 한 레벨씩 올리는 일은 보통 연달아 일어나므로,
       // 누를 때마다 닫히면 같은 자리를 다시 길게 눌러 쪽지를 여는 손이 매번 더 든다. 값과
       // 남은 여력만 다시 적고 그대로 남아, 화면의 다른 곳을 누를 때까지 이어서 누를 수 있다.
-      const paint = (): void => { if (this.feedPopupOpen) this.paintFeedBulk(body, close, paint, x, y); };
+      const paint = (): void => { if (this.feedPopupOpen) this.paintFeedBulk(body, close, paint); };
       paint();
     });
   }
 
   /** 한 번에 급여 쪽지의 내용. 먹일 때마다 값이 달라지므로 같은 판 위에 다시 그린다. */
-  private paintFeedBulk(body: Phaser.GameObjects.Container, close: () => void, repaint: () => void, x: number, y: number): void {
+  private paintFeedBulk(body: Phaser.GameObjects.Container, close: () => void, repaint: () => void): void {
     body.removeAll(true);
     const def = this.currentDef;
     if (!def) { close(); return; }
     const progress = relicProgression.getProgress(def.id);
-    const step = nextBreakthrough(progress.breakthrough);
-    const atCap = progress.level >= relicLevelCap(progress.breakthrough);
+    // 상한에 닿는 순간 쪽지가 스스로 닫힌다 — 더 먹일 수 없는 판에 남아 있을 이유가 없고,
+    // 다음에 할 일(한계 돌파)은 별 옆의 버튼이 제 자리에서 말한다.
+    if (progress.level >= relicLevelCap(progress.breakthrough)) { close(); return; }
     {
-      if (atCap) {
-        const held = relicProgression.getFragments(def.id);
-        const need = step ? breakthroughFragmentCost(def.rarity, progress.breakthrough) : 0;
-        const ready = !!step && canBreakThrough(def.rarity, progress, held, session.wallet.cheesecake);
-        body.add(this.scene.add.text(0, -26, step ? "레벨 상한 · 한계 돌파" : "최대 성장", textStyle({ role: "display", size: 28, color: ready ? COLOR.ink : COLOR.inkDim })).setOrigin(0.5));
-        const reason = !step ? "별 최대" : progress.level < relicLevelCap(progress.breakthrough) ? "레벨 상한 필요" : held < need ? `파편 부족 ${held} / ${need}` : session.wallet.cheesecake < step.cheesecake ? `치즈케이크 부족 ${session.wallet.cheesecake} / ${step.cheesecake}` : "돌파 가능";
-        body.add(this.scene.add.text(0, 22, reason, textStyle({ role: "body", size: 21, color: ready ? COLOR.accentText : COLOR.dangerText })).setOrigin(0.5));
-        if (step) {
-          const route = this.scene.add.rectangle(0, 72, 300, 64, 0xffffff, 0).setInteractive({ useHandCursor: true });
-          route.on("pointerup", () => {
-            close();
-            this.openBreakthrough({ x, y: y + 80, onClose: () => undefined });
-          });
-          body.add([this.scene.add.text(0, 72, "한계 돌파 보기", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0.5), route]);
-        }
-        return;
-      }
       ([["1 레벨", 1], ["10 레벨", 10]] as const).forEach(([label, levels], index) => {
         const bx = index === 0 ? -118 : 118;
         const cost = this.feedsForLevels(levels) * FEED_UNIT.cheesecake;
@@ -2143,6 +2117,9 @@ export class InfoManager {
       effectType: "buff",
       valueLabel: "야성 발현",
       contextualKeywords: contextualKeywords.length > 0 ? contextualKeywords : undefined,
+      // 폭주도 돌파가 효과를 붙이는 슬롯이라 같은 노란 줄을 얻는다.
+      breakthroughEffect: this.publicProfile || !isBreakthroughSlotOpen(relicProgression.getProgress(def.id).breakthrough, "ferocity")
+        ? undefined : breakthroughEffectText(def, "ferocity"),
       // 설명 수치는 전투가 읽는 특성 필드에서 생성해 정적 문구와 실제 효과가 갈라지지 않는다.
       description: "[[ferocity|야성 게이지]]가 가득 차면 폭주한다. "
         + ferocityTraitDescription(def.ferocityTrait, { attack, defense, maxHp: def.stats.hp, abilityPower }),
@@ -2201,10 +2178,16 @@ export class InfoManager {
         : preview?.kind === "scaling"
           ? `${preview.label} [[damage-value|${preview.amount}]]`
           : undefined;
+    // **열린 별의 몫만 넘긴다.** 아직 뚫지 않은 단계의 효과를 쪽지에 적으면 지금 싸우는 이
+    // 개체가 하지 않는 일을 말하게 된다 — 무엇이 열리는지는 등급 돋보기가 여는 표가 맡는다.
+    const breakthroughEffect = this.currentDef && slot && !this.publicProfile
+      && isBreakthroughSlotOpen(relicProgression.getProgress(this.currentDef.id).breakthrough, slot)
+      ? breakthroughEffectText(this.currentDef, slot) : undefined;
     return {
       name: skill.name,
       kindLabel,
       iconAssetId: skill.iconAssetId as SkillIconAssetId,
+      breakthroughEffect,
       // 전용 일러스트가 있으면 팝업도 같은 그림과 같은 색을 쓴다. 아이콘과 쪽지가 갈라지면
       // 어느 스킬을 눌렀는지 되짚어야 한다.
       art: this.currentDef && slot ? skillArtFor(this.currentDef.id, slot) : undefined,
@@ -2446,7 +2429,9 @@ export class InfoManager {
     this.feedLabel.setText(maxed ? "최대 레벨" : "급여하기");
     // 급여는 치즈케이크를 먹이는 일이라 버튼이 그 수를 직접 말한다. 상단 줄과 같은 세션 지갑을
     // 읽으므로 두 곳의 값이 갈라지지 않는다.
-    this.feedCost?.setText(formatCurrency(session.wallet.cheesecake) + "/" + (maxed ? "—" : String(FEED_UNIT.cheesecake)));
+    // 만렙에서는 보유/비용 대신 **MAX** 한 마디만 남긴다. 먹일 수 없는 판에서 `보유/—`는
+    // 치즈케이크가 모자란 것처럼 읽히고, 정작 "다 컸다"는 말을 하지 않는다.
+    this.feedCost?.setText(maxed ? "MAX" : formatCurrency(session.wallet.cheesecake) + "/" + String(FEED_UNIT.cheesecake));
     // 모자라면 줄 전체가 붉어진다. 두 수 중 하나만 물들이면 어느 쪽이 모자란 것인지 되레 헷갈린다.
     this.feedCost?.setColor(!maxed && session.wallet.cheesecake < FEED_UNIT.cheesecake ? COLOR.dangerText : FEED_TEXT);
     this.feedCostLayout?.();

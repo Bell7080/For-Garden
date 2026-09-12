@@ -49,9 +49,20 @@ export interface SkillInfoViewModel {
   gaugeCost?: number;
   /** `[[keyword]]` 문법을 쓸 수 있는 설명문. */
   description: string;
+  /**
+   * 한계 돌파로 **이 슬롯에 붙은** 효과 한 줄.
+   *
+   * 본문에 이어 붙이지 않고 한 줄 띄워 노란 글씨로 세운다 — 별을 올려 받은 몫은 원래 스킬이
+   * 하는 일이 아니라 그 위에 얹힌 것이라, 같은 색으로 이어지면 처음부터 있던 효과로 읽힌다.
+   * 열리지 않은 별의 효과는 여기 오지 않는다(`isBreakthroughSlotOpen`).
+   */
+  breakthroughEffect?: string;
 }
 
 const POPUP = { width: 880, height: 620 } as const;
+
+/** 돌파로 붙은 줄이 차지하는 몫. 있을 때만 판이 그만큼 길어진다. */
+const BREAKTHROUGH_LINE = { extraHeight: 150, gap: 34, label: "한계 돌파", size: 25 } as const;
 
 /**
  * 스킬 하나를 설명하는 정형 팝업.
@@ -68,15 +79,16 @@ export function openSkillPopup(
   /** 누른 아이콘 자리와 눌린 상태를 되돌릴 콜백. 쪽지가 그 위에 얹히게 한다. */
   from?: { x: number; y: number; onClose?: () => void },
 ): void {
+  const height = POPUP.height + (skill.breakthroughEffect ? BREAKTHROUGH_LINE.extraHeight : 0);
   popups.open({
     width: POPUP.width,
-    height: POPUP.height,
+    height,
     tilt: -1.2,
     anchor: from && { x: from.x, y: from.y },
     onClose: from?.onClose,
   }, (body) => {
     const left = -POPUP.width / 2;
-    const top = -POPUP.height / 2;
+    const top = -height / 2;
 
     // 아이콘 칩. 도감 스킬 목록과 같은 모양이라 어느 스킬을 눌렀는지 이어서 읽힌다.
     const iconSize = 132;
@@ -135,9 +147,24 @@ export function openSkillPopup(
     description.setPosition(left + 60, top + 268);
     body.add(description);
 
+    // **돌파로 붙은 줄은 한 줄 띄우고 노랗게 선다.** 본문 바로 아래에 같은 색으로 이으면
+    // 처음부터 있던 효과로 읽히므로, 별 표식과 같은 금색 이름표를 앞에 세워 "나중에 얹힌
+    // 것"임을 한눈에 알린다.
+    if (skill.breakthroughEffect) {
+      const gapY = description.y + description.height + BREAKTHROUGH_LINE.gap;
+      body.add(drawHairline(scene, 0, gapY - 12, POPUP.width - 96, { color: COLOR.accent, alpha: 0.28 }));
+      const mark = scene.add
+        .text(left + 60, gapY + 8, BREAKTHROUGH_LINE.label, textStyle({ role: "display", size: BREAKTHROUGH_LINE.size, color: COLOR.accentText }))
+        .setOrigin(0, 0);
+      body.add(mark);
+      body.add(keywords.layout(skill.breakthroughEffect, skillKeywordLayoutOptions(skill, {
+        width: POPUP.width - 120, size: 26, lineSpacing: 10, color: COLOR.accentText,
+      })).setPosition(left + 60, gapY + 8 + mark.height + 10));
+    }
+
     body.add(
       scene.add
-        .text(0, POPUP.height / 2 - 44, "강조된 말을 누르면 뜻이 열린다", textStyle({ role: "body", size: 20, color: COLOR.inkDim }))
+        .text(0, height / 2 - 44, "강조된 말을 누르면 뜻이 열린다", textStyle({ role: "body", size: 20, color: COLOR.inkDim }))
         .setOrigin(0.5, 0.5),
     );
   });

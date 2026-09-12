@@ -976,7 +976,7 @@ describe("단일 난전의 원정 보스 옵션", () => {
     expect(state.phase).toBe("defeat"); expect(state.boss?.survivedFor).toBeGreaterThan(0); expect(events).toContainEqual({ kind: "finish", phase: "defeat" });
   });
 
-  it("표준 5인 파티는 폰토스의 첫 해일을 버티고 고정된 생존·점수 구간에 든다", () => {
+  it("표준 5인 파티는 폰토스 앞에서 오래 버티고 전멸로 끝나며 점수가 실제 감소 체력과 같다", () => {
     const partyIds = ["anky", "rex", "spino", "dodo", "mette"];
     // 플레이어는 통상 1돌파 전 상한인 20레벨, 최종 보스는 20층 boss 보정이 더해진 25레벨이다.
     const party = partyIds.map((id) => {
@@ -987,47 +987,38 @@ describe("단일 난전의 원정 보스 옵션", () => {
     const pontos = { ...basePontos, stats: applyLevelGrowth(basePontos.stats, 25, basePontos.rarity) };
     const state = createSkirmish(party, [pontos], ARENA);
     let firstUltimateAt: number | undefined;
-    let survivorsAfterFirstUltimate = 0;
-    for (let frame = 0; frame < 60 * 40 && state.phase === "fight"; frame += 1) {
+    let survivorsAt30 = 0;
+    for (let frame = 0; frame < 60 * 90 && state.phase === "fight"; frame += 1) {
       const events = stepSkirmish(state, 1 / 60, () => 0.99);
+      if (state.elapsed >= 30 && survivorsAt30 === 0) survivorsAt30 = aliveFighters(state, "player").length;
       for (const event of events) {
         if (event.kind !== "attack") continue;
         if (event.attackerId === "enemy-0" && event.skill === "ultimate" && firstUltimateAt === undefined) {
           firstUltimateAt = state.elapsed;
-          survivorsAfterFirstUltimate = aliveFighters(state, "player").length;
         }
       }
     }
-    // 첫 해일은 위협적이지만 즉시 전멸시키지 않고, 전체 전투는 30초 안팎의 최종 관문으로 끝난다.
-    // 상한은 도디 일반 공격을 70%→50%로 낮춘 v0.45.0에서 30초에서 34초로, 등급별 성장으로
-    // SSR 보스가 함께 단단해진 v0.51.0에서 38초로 넓혔다 — 파티와 보스의 화력이 같이 오르내리면
-    // 같은 보스를 넘기는 데 걸리는 시간이 이 구간이 재는 값 자체다.
-    // 등급별 레벨 성장(v0.51.0)에서 SSR 보스가 레벨당 2.2%로 자라 공속이 함께 올랐다.
-    // 첫 해일이 그만큼 일찍 오므로 구간을 17초부터로 넓혔다 — 이 값이 재는 것은 "즉시 전멸이
-    // 아니라 한 번은 버틴다"이지 정확한 초가 아니다.
-    // 사거리 단계(v0.58.0)에서 도디·메테가 뒷줄에 남아 보스에게 덜 맞으므로 보스의 충전이
-    // 그만큼 늦다. 뒷줄이 안전해지는 것이 이 기능이 노린 결과라 구간을 넓혔다 — 단계 간격을
-    // 250/340에서 300/430으로 더 벌린 뒤에는 26.4초라 상한을 28초로 다시 옮겼다.
-    // 토리카가 들이받기에 1초 기절을 갖게 된 뒤에도 이 구간은 그대로다 — 폰토스의 기절 저항
-    // 85%가 그 몫을 되돌려 놓기 때문이다. 저항이 없으면 첫 해일이 72.7초로 밀려 이 검사가
-    // 먼저 무너진다.
-    expect(firstUltimateAt).toBeGreaterThanOrEqual(17);
-    // 스피나의 여울(v0.78.0)이 들어온 뒤에도 이 구간은 그대로다 — 잠김은 이동 속도만 깎고,
-    // 물이 메워 준 한 대는 회복도 공속 누적도 돌리지 않아 파티의 지속력이 예전과 같다.
-    expect(firstUltimateAt).toBeLessThanOrEqual(28);
-    expect(survivorsAfterFirstUltimate).toBeGreaterThan(0);
-    expect(state.elapsed).toBeGreaterThanOrEqual(24);
-    // 렉시아의 폭주가 치명타 확률 가산에서 「출혈 중인 적에게 확정 치명타」로 바뀐 뒤 38.8초다.
-    // 확정 치명타는 난수를 소비하지 않으므로 폭주가 도는 동안 이후 판정의 자리가 통째로 밀리고,
-    // 그 결과 같은 난수열이 다른 치명타 배열을 만든다. 이 구간이 재는 것은 정확한 초가 아니라
-    // "한 번은 버티고 결국 넘긴다"이므로 상한만 40초로 옮긴다.
-    expect(state.elapsed).toBeLessThanOrEqual(40);
+    /*
+     * **최종층 보스는 넘기는 상대가 아니라 점수를 재는 벽이다.** 실제 원정에서 폰토스는 무한
+     * 체력으로 서고 판은 늘 전멸로 끝난다(`resolveExpeditionBossBattle`). 이 검사가 재는 것은
+     * "즉시 쓸려 나가지 않고 한참 싸운다"와 "점수가 실제로 깎은 체력과 같다"다.
+     *
+     * v0.97.0에서 성장이 주능력치 다섯만 올리게 되자(공속·치명타·충전량은 레벨로 오르지 않는다)
+     * 양쪽의 화력이 함께 낮아져 판이 길어졌다 — 20레벨 다섯이 25레벨 폰토스를 쓰러뜨리던
+     * 38초짜리 판이, 이제 40초를 넘겨 버티다 전멸하는 판이 된다. 보스의 첫 해일도 충전량이
+     * 태생 그대로라 그만큼 늦게 온다.
+     */
+    expect(survivorsAt30).toBeGreaterThan(0);
+    expect(firstUltimateAt).toBeGreaterThanOrEqual(30);
+    expect(state.phase).toBe("defeat");
+    expect(state.elapsed).toBeGreaterThanOrEqual(35);
+    expect(state.elapsed).toBeLessThanOrEqual(60);
     // 점수는 경감 뒤 실제로 감소한 HP와 같아 경감 전 계수나 과잉 피해로 부풀지 않는다.
     const playerAttackTotal = battleContributionSnapshot(state, "attack")
       .filter(({ fighterId }) => fighterId.startsWith("player"))
       .reduce((sum, row) => sum + row.total, 0);
     expect(playerAttackTotal).toBe(pontos.stats.hp - state.fighters.find((fighter) => fighter.side === "enemy")!.hp);
-    // 300 비용을 7회 타격으로 채우므로 두 해일 사이의 이론상 최소 간격도 5초 기절보다 충분히 길다.
+    // 300 비용을 채우는 데 드는 타격이 늘어나 두 해일 사이의 이론상 최소 간격도 함께 길어졌다.
     const boss = state.fighters.find((fighter) => fighter.side === "enemy")!;
     const minimumUltimateGap = attackInterval(boss, state) * Math.ceil(boss.def.ultimate.cost / boss.def.stats.energyGain);
     expect(minimumUltimateGap).toBeGreaterThanOrEqual(12.5);

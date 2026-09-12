@@ -96,10 +96,12 @@ describe("한계 돌파 확정 창", () => {
     expect(span).toBeLessThan(BREAK_CONFIRM.width);
   });
 
-  it("은 효과 줄이 있을 때만 판이 길어지고 그 줄이 판 안에 든다", () => {
-    const tall = BREAK_CONFIRM.height + BREAK_CONFIRM.effectExtra;
-    expect(BREAK_CONFIRM.effectY).toBeGreaterThan(BREAK_CONFIRM.actionY + BREAK_CONFIRM.action.height / 2);
-    expect(BREAK_CONFIRM.effectY).toBeLessThan(tall);
+  it("은 확정 조작 아래에 다른 줄을 두지 않는다", () => {
+    // 열리는 효과 문장은 등급 돋보기가 여는 표와 그 기술의 스킬 쪽지가 말한다. 확정 창에 다시
+    // 두면 판만 길어지고, 같은 문장이 세 곳에 서서 어느 것이 최신인지 알 수 없다.
+    expect(Object.keys(BREAK_CONFIRM)).not.toContain("effectY");
+    expect(Object.keys(BREAK_CONFIRM)).not.toContain("effectExtra");
+    expect(BREAK_CONFIRM.actionY + BREAK_CONFIRM.action.height / 2).toBeLessThan(BREAK_CONFIRM.height / 2 + BREAK_CONFIRM.height / 2);
   });
 
   it("은 두 창이 같은 별 수를 말한다", () => {

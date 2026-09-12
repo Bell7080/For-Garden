@@ -8,6 +8,14 @@ import { HoloBar } from "./holo";
 import type { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
 
+/**
+ * 결과 기여도 한 줄의 자리.
+ *
+ * 얼굴 액자를 키우고 막대를 그만큼 줄인 값이 여기 한 곳에 있다 — 화면에 손으로 적으면 다섯
+ * 줄 중 하나만 고쳐도 줄이 어긋난다.
+ */
+const CONTRIBUTION_ROW = { faceX: -396, faceSize: 120, nameX: -316, barX: 40, barY: 74, barWidth: 640, barHeight: 16 } as const;
+
 /** 결과판 위에 쌓이며 원본 결과판이나 서버 영수증 객체를 소유·파괴하지 않는 공용 기여도 판이다. */
 export class BattleContributionPopup {
   constructor(private readonly scene: Phaser.Scene, private readonly popups: PopupLayer) {}
@@ -47,13 +55,14 @@ export class BattleContributionPopup {
           const y = -330 + index * 158;
           // 긴 이름은 말줄임으로 막대와 K/M 축약 수치의 고정 열을 침범하지 않는다.
           const name = row.source.name.length > 14 ? `${row.source.name.slice(0, 13)}…` : row.source.name;
-          // 이름만으로는 늘어선 다섯 줄에서 누구인지 한눈에 읽히지 않아, 재화 액자와 같은
-          // 사각 액자에 얼굴을 담아 이름 앞에 붙인다.
+          // **먼저 읽어야 하는 것은 누구인가다.** 이름만으로는 늘어선 다섯 줄에서 한눈에
+          // 읽히지 않아 얼굴 액자를 크게 세우고, 그만큼 막대를 짧게 줄였다 — 막대는 서로
+          // 견주는 길이라 조금 짧아져도 뜻이 그대로지만, 얼굴은 작으면 누구인지 알 수 없다.
           const relic = getRelic(row.source.portraitId);
-          content.add(new FaceFrame(this.scene, -418, y, { portraitAssetId: relic.portraitAssetId, size: 88 }));
-          content.add(this.scene.add.text(-350, y, name, textStyle({ role: "body", size: 27, color: COLOR.ink })).setOrigin(0, 0.5).setFixedSize(480, 48));
-          content.add(this.scene.add.text(360, y, row.value, textStyle({ role: "display", size: 27, color: COLOR.inkDim })).setOrigin(1, 0.5));
-          const bar = new HoloBar(this.scene, 0, y + 55, 720, 18, { color: rows.color, trackAlpha: 0.48 });
+          content.add(new FaceFrame(this.scene, CONTRIBUTION_ROW.faceX, y, { portraitAssetId: relic.portraitAssetId, size: CONTRIBUTION_ROW.faceSize }));
+          content.add(this.scene.add.text(CONTRIBUTION_ROW.nameX, y, name, textStyle({ role: "body", size: 28, color: COLOR.ink })).setOrigin(0, 0.5).setFixedSize(440, 48));
+          content.add(this.scene.add.text(360, y, row.value, textStyle({ role: "display", size: 28, color: COLOR.inkDim })).setOrigin(1, 0.5));
+          const bar = new HoloBar(this.scene, CONTRIBUTION_ROW.barX, y + CONTRIBUTION_ROW.barY, CONTRIBUTION_ROW.barWidth, CONTRIBUTION_ROW.barHeight, { color: rows.color, trackAlpha: 0.48 });
           bar.setValue(row.fill, rows.color); bar.addTo(content);
         });
       };

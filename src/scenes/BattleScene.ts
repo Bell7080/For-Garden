@@ -67,6 +67,7 @@ import { openUnitStatusPopup } from "../ui/UnitStatusPopup";
 import { unitStatusViews } from "../ui/unitStatusModel";
 import { BattleProfile } from "../ui/BattleProfile";
 import { BattleContributionPanel } from "../ui/BattleContributionPanel";
+import { CONTRIBUTION_TOGGLE } from "../ui/battleContributionLayout";
 import { battleContributionMvp, createBattleContributionResult, withConfirmedAttackTotal, type BattleContributionResult, type ContributionCategory } from "../core/battleContribution";
 import { BattleContributionPopup } from "../ui/BattleContributionPopup";
 import { StageCompletePopup, type StageCompleteFighter } from "../ui/StageCompletePopup";
@@ -296,6 +297,8 @@ export class BattleScene extends Phaser.Scene {
   private speedChip!: ControlChip;
   private autoChip!: ControlChip;
   private presentationChip!: ControlChip;
+  /** 기여도 판을 여닫는 칩. 배속 칩과 같은 열에 서고 판이 아니라 화면이 소유한다. */
+  private contributionChip!: ControlChip;
   /** 적 상세는 플레이어 성장 입력을 만들지 않는 전투 읽기 전용 창이다. */
   private info!: CharacterInfoManager;
   /** 꾹 눌러 처음 열 때만 만들어지는 아군 창. 만들기 전에는 멈춤 판단에서도 없는 셈이다. */
@@ -544,8 +547,15 @@ export class BattleScene extends Phaser.Scene {
         refreshPresentationChip(); this.refreshDebug();
       },
     });
+    // **기여도 판도 같은 줄에서 연다.** 예전에는 판 왼쪽에 전용 그래프 칩이 붙어 있어, 조작은
+    // 우하단에 모였는데 이것만 화면을 가로질러 가야 했고 펼친 판이 그 칩을 덮어 감췄다 되살려야
+    // 했다. 자리는 `CONTRIBUTION_TOGGLE` 한 곳이 정한다.
+    this.contributionChip = new ControlChip(this, CONTRIBUTION_TOGGLE.x, CONTRIBUTION_TOGGLE.y, {
+      icon: "bar-chart", label: "기여도", width: CONTRIBUTION_TOGGLE.width, height: CONTRIBUTION_TOGGLE.height,
+      onClick: () => { this.contributionPanel?.toggle(); this.contributionChip.setActive(this.contributionPanel?.state.expanded ?? false); this.refreshDebug(); },
+    });
     // 전장 아래쪽에 서므로 SD·체력 바보다 앞에 둔다.
-    for (const chip of [this.speedChip, this.autoChip, this.presentationChip]) chip.setDepth(BATTLE_CONTROLS.depth);
+    for (const chip of [this.speedChip, this.autoChip, this.presentationChip, this.contributionChip]) chip.setDepth(BATTLE_CONTROLS.depth);
     // 복원된 값도 첫 클릭 전부터 켜짐 색으로 읽히게 한다.
     this.speedChip.setActive(this.battleSpeed > 1);
     this.autoChip.setActive(this.autoUltimate);
@@ -835,6 +845,9 @@ export class BattleScene extends Phaser.Scene {
     // 게이지는 연출 중에도 계속 따라붙는다. 여기서 멈추면 연출이 끝나는 순간 값이 점프한다.
     this.stepMeters(elapsed);
     this.refreshContribution(false, now);
+    // 판은 밖을 눌러서도 접히므로 칩의 켜짐은 판의 실제 상태를 매 프레임 따라간다.
+    const expanded = this.contributionPanel?.state.expanded ?? false;
+    if (this.contributionChip && this.contributionChip.isActive() !== expanded) this.contributionChip.setActive(expanded);
     this.syncCombatEffects();
     // 판이 떠 있는 동안에는 코어 시간만 멈춘다. 화면 tween과 게이지 추격은 그대로 돌아
     // 판을 닫는 순간 값이 점프하지 않는다. lastStepAt은 위에서 이미 지금으로 밀어 두었으므로
@@ -885,16 +898,18 @@ export class BattleScene extends Phaser.Scene {
    * 화면이 통째로 얼어 버린 것처럼 보인다.
    */
   private simulationPaused(): boolean {
-    // 펼친 기여도 판도 화면을 덮고 읽는 판이라 같이 멈춘다. 읽는 동안 뒤에서 전투가 끝나 버리면
-    // 판을 접었을 때 돌아갈 전장이 없다.
-    return anyPopupOpen() || this.info.isOpen || (this.allyInfoRef?.isOpen ?? false)
-      || (this.contributionPanel?.state.expanded ?? false);
+    // **펼친 기여도 판은 전투를 멈추지 않는다.** 그 판은 창이 아니라 화면 한쪽에 붙는 순위표라,
+    // 열어 둔 채로 순위가 실시간으로 바뀌는 것을 보는 것이 그 판의 쓸모다 — 멈추면 열어 볼
+    // 때마다 전투가 서고, 다시 접을 때까지 아무 일도 일어나지 않는다.
+    return anyPopupOpen() || this.info.isOpen || (this.allyInfoRef?.isOpen ?? false);
   }
 
   /** 제한 주기 또는 카테고리 입력 때만 코어의 불변 표시 스냅샷을 프리팹에 전달한다. */
   private refreshContribution(force = false, now = performance.now()): void {
     if (!this.contributionPanel || (!force && now < this.contributionRefreshAt)) return;
-    this.contributionRefreshAt = now + 350;
+    // 순위가 바뀌는 것을 보는 판이라 갱신이 너무 느리면 값이 뚝뚝 끊겨 보인다. 줄이 자리를
+    // 옮기는 tween(260ms)보다 짧게 두면 옮기는 중에 다시 옮기라고 하므로 그보다 길게 잡는다.
+    this.contributionRefreshAt = now + 300;
     this.contributionPanel.update({ category: this.contributionCategory, rows: battleContributionSnapshot(this.state, this.contributionCategory) });
   }
 

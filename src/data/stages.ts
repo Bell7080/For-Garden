@@ -30,8 +30,12 @@ function enemyGrowth(relicId: string, level: number, breakthrough: number, forma
  *
  * 예전 값(2~6)은 그 곡선이 없어서 **1레벨 셋이 조합만 맞추면 2-3까지 밀렸다** — 1장 내내
  * 잔여 체력이 89~96%였고, 관문이 요구하는 힘이 관문을 밀어 얻는 힘보다 느리게 자랐다.
+ *
+ * **v0.97.0에서 같은 절차로 다시 풀었다.** 성장이 오각형의 다섯 주능력치만 올리게 되면서
+ * (공속·이속·치명타·충전량은 레벨로 오르지 않는다) 양쪽의 레벨당 무게가 함께 가벼워져
+ * 전멸선이 움직였다. 값을 손으로 고치지 말고 전멸선을 다시 재서 이 표만 갈아 끼운다.
  */
-const CHAPTER_ONE_LEVELS: readonly number[] = [6, 9, 10, 11, 12, 13, 14, 15, 16, 17];
+const CHAPTER_ONE_LEVELS: readonly number[] = [5, 8, 9, 10, 12, 13, 15, 15, 16, 19];
 
 /** 1장 후반 셋만 별 둘로 서서 마지막 세 관문의 무게를 레벨이 아닌 축으로도 올린다. */
 const CHAPTER_ONE_BREAKTHROUGHS: readonly number[] = [0, 0, 0, 0, 0, 0, 0, 1, 1, 1];
@@ -60,8 +64,8 @@ const CHAPTER_ONE_ENEMIES: readonly [StageEnemyDef, StageEnemyDef, StageEnemyDef
  * 바닥 파티가 어떤 레벨에서도 이기지 못해 기준점이 될 수 없고, 스토리에서는 추후 뺀다.
  */
 const LATER_CHAPTER_LEVELS: readonly number[] = [
-  18, 19, 20, 21, 21, 21, 22, 23, 23, 24,
-  25, 25, 25, 25, 26, 26, 26, 26, 26, 27,
+  19, 19, 19, 19, 19, 19, 19, 20, 20, 22,
+  24, 25, 25, 26, 29, 29, 29, 29, 30, 31,
 ];
 
 /**

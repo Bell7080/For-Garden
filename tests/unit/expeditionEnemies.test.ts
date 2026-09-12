@@ -36,7 +36,9 @@ describe("원정 노드 적 편성", () => {
     const normalSsr = [getRelic("rex"), getRelic("spino"), getRelic("mette")]
       .map((relic) => ({ ...relic, stats: applyLevelGrowth(relic.stats, 25, relic.rarity) }));
     // 레벨 25(20층 + boss 5)에 SSR 성장률 2.2%/레벨을 적용한 52.8% 성장의 실제 전투 수치다.
-    expect(pontos.stats).toMatchObject({ hp: 4278, def: 275, res: 199, ap: 153, attackSpeed: 84, energyGain: 46 });
+    // **공격 속도와 충전량은 태생 그대로 남는다** — 성장은 오각형의 다섯 주능력치만 올린다
+    // (`GROWTH_STAT_KEYS`). 보스도 아군과 같은 규칙을 쓰므로 여기서 예외를 만들지 않는다.
+    expect(pontos.stats).toMatchObject({ hp: 4278, def: 275, res: 199, ap: 153, attackSpeed: 55, energyGain: 30 });
     // 생존 축은 최종 보스가 일반 적 전체를 넘는다.
     for (const key of ["hp", "def", "res"] as const) {
       expect(pontos.stats[key]).toBeGreaterThan(Math.max(...normalEnemies.map((enemy) => enemy.stats[key])));

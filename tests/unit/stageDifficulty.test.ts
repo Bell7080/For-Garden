@@ -63,22 +63,22 @@ const STORY_STAGES = BATTLE_STAGES.filter((entry) => !EXPEDITION_BOSS_STAGES.inc
 /** 요구된 대표 관문은 수치 조정 PR에서 의도하지 않은 체감 변화를 즉시 보여 주도록 고정한다. */
 const BASELINES = {
   /*
-   * **v0.94.0에서 성장 곡선 기준으로 다시 잡았다.** 예전 띠는 1레벨 파티를 기준으로 삼고
-   * 있었는데, 그 파티가 1장을 잔여 90%대로 통과하고 2-3까지 밀었다 — 관문이 요구하는 힘이
-   * 관문을 밀어 얻는 힘보다 느리게 자랐다는 뜻이다. 지금 띠는 `stageBalance.ts`의 바닥 파티
+   * **v0.97.0에서 다시 잡았다.** 성장이 오각형의 다섯 주능력치만 올리게 되면서(공속·이속·
+   * 치명타·충전량은 레벨로 오르지 않는다) 양쪽의 레벨당 무게가 함께 가벼워졌고, `stages.ts`의
+   * 적 레벨 사다리도 같은 절차로 전멸선에서 다시 풀었다. 띠는 그 새 사다리 위에서 바닥 파티
    * (스토리 첫 클리어 보상만 받은 상태)를 **균등 분배**로 세워 잰 값이다.
    *
-   * 3장에서 띠가 오히려 올라가는 것은 난이도가 내려가서가 아니라 **바닥 파티가 거기서 더
-   * 자라지 못하기 때문**이다 — 돌파 없이는 레벨 상한이 20이고 스토리 보상은 파편을 주지
-   * 않는다. 3장을 더 조이려면 적 레벨이 아니라 그 성장 축을 먼저 열어야 한다.
+   * 2·3장 띠가 1장보다 낮은 자리에서 평평한 것은 난이도가 오르내려서가 아니라 **바닥 파티가
+   * 거기서 더 자라지 못하기 때문**이다 — 돌파 없이는 레벨 상한이 20이고 스토리 보상은 파편을
+   * 주지 않는다. 더 조이려면 적 레벨이 아니라 그 성장 축을 먼저 열어야 한다.
    */
-  "1-1": { hp: [0.67, 0.79] },
-  "1-5": { hp: [0.65, 0.77] },
-  "1-10": { hp: [0.66, 0.78] },
-  "2-5": { hp: [0.66, 0.78] },
-  "2-10": { hp: [0.66, 0.78] },
-  "3-5": { hp: [0.7, 0.82] },
-  "3-9": { hp: [0.74, 0.86] },
+  "1-1": { hp: [0.72, 0.84] },
+  "1-5": { hp: [0.63, 0.75] },
+  "1-10": { hp: [0.6, 0.72] },
+  "2-5": { hp: [0.63, 0.75] },
+  "2-10": { hp: [0.63, 0.75] },
+  "3-5": { hp: [0.61, 0.73] },
+  "3-9": { hp: [0.61, 0.73] },
 } as const;
 
 describe("Phaser 없는 챕터 난이도 검수", () => {
@@ -107,18 +107,27 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
   });
 
   /*
-   * **키우지 않으면 막힌다.** 같은 로스터를 1레벨·룬 없이 세운 파티다. 1장은 배우는 구간이라
-   * 끝까지 따라오지만 마지막 관문에서 멈춰야 한다 — 예전에는 이 파티가 1장을 잔여 90%대로
-   * 지나 2-3까지 밀었고, 그것이 이번 조정의 출발점이었다.
+   * **키우지 않으면 막힌다 — 다만 그 벽은 이제 3장이다.**
+   *
+   * 같은 로스터를 1레벨·룬 없이 세운 파티다. v0.97.0에서 성장이 주능력치 다섯만 올리게 되자
+   * **레벨 하나의 무게가 양쪽에서 함께 가벼워졌고**, 맨몸과 바닥 파티 사이의 간격도 그만큼
+   * 좁아졌다 — 예전에는 적 공격 속도·치명타가 레벨과 함께 자라 1-10에서 맨몸을 정확히
+   * 끊었지만, 지금 그 자리에서 맨몸을 끊으려면 적 레벨을 바닥 파티의 전멸선 위로 올려야
+   * 한다(그러면 보상만 받아 온 사람이 막힌다). 그래서 벽은 승률이 계단처럼 내려가는 3장으로
+   * 옮겨 갔다: 2-10에서 흔들리기 시작해 3-3에서 대부분 지고 3-5에서 한 판도 넘지 못한다.
+   *
+   * **1장에서 성장을 가르치는 관문은 적 레벨로 되돌릴 수 없다.** 되돌리려면 남은 축(적 구성·
+   * 돌파·보상 시점)을 먼저 손봐야 하므로 그 조정은 별도로 다룬다.
    */
-  it("성장하지 않은 파티는 1장 마지막에서 막힌다", () => {
+  it("성장하지 않은 파티는 3장에서 무너진다", () => {
     const bare = FLOOR_ROSTER.map((id) => getRelic(id));
     const winRateAt = (stageId: string) =>
       summarizeStageDifficulty(bare, getStageEnemies(getBattleStage(stageId)), SEEDS, "auto").winRate;
-    // 1장은 배우는 구간이라 끝까지 따라오지만, 마지막 관문에서 정확히 막힌다.
-    expect(winRateAt("1-9")).toBe(1);
-    expect(winRateAt("1-10")).toBe(0);
-    expect(winRateAt("2-7")).toBe(0);
+    // 2장 끝에서 이미 한두 판을 놓치고, 3장에 들어서면 계단처럼 내려간다.
+    expect(winRateAt("2-10")).toBeLessThanOrEqual(0.75);
+    expect(winRateAt("3-1")).toBeLessThanOrEqual(0.625);
+    expect(winRateAt("3-3")).toBeLessThanOrEqual(0.25);
+    expect(winRateAt("3-5")).toBe(0);
   });
 
   /*
@@ -130,9 +139,10 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
     const winRateAt = (stageId: string) =>
       summarizeStageDifficulty(solo, getStageEnemies(getBattleStage(stageId)), SEEDS, "auto").winRate;
     expect(winRateAt("1-5")).toBe(1);
-    // 2장 후반에서 무너지고 3장에서는 한 판도 넘지 못한다.
-    expect(winRateAt("2-10")).toBeLessThanOrEqual(0.25);
-    expect(winRateAt("3-5")).toBe(0);
+    // 2장 중반부터 반 이상 지고 3장에서는 사실상 넘지 못한다. 편성 칸이 셋인 이유다.
+    expect(winRateAt("2-5")).toBeLessThanOrEqual(0.625);
+    expect(winRateAt("2-10")).toBeLessThanOrEqual(0.5);
+    expect(winRateAt("3-5")).toBeLessThanOrEqual(0.125);
   });
 
   /** 적 레벨은 스토리 내내 뒤로 가지 않는다. 새 구역이 직전 구역보다 약해 보이면 곡선이 끊긴 것이다. */
@@ -178,10 +188,10 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
     const pairs = selectableRPartyPairs(PLAYABLE_RELICS);
     const parties = selectReferenceParties(getRelic("anky"), PLAYABLE_RELICS, enemies, SEEDS);
     // 새 R이 추가되면 조합 수와 최선/최악 선택이 자동으로 넓어진다 — 파루아가 들어와 셋이 됐다.
-    // 1-1의 적이 Lv2에서 Lv7로 오르면서 최선 조합이 티아에서 파루아로 돌아왔다: 적이 단단해질수록
-    // 사거리 밖에서 쏘는 쪽이 근접 티아보다 덜 맞는다.
+    // v0.97.0에서 최선 조합이 파루아에서 다시 티아로 돌아왔다: 적의 공격 속도가 레벨과 함께
+    // 자라지 않게 되어 맞는 횟수가 줄고, 붙어서 때리는 쪽이 다시 이득을 본다.
     expect(pairs.map((pair) => pair.map(({ id }) => id))).toEqual([["dodo", "tia"], ["dodo", "parua"], ["tia", "parua"]]);
-    expect(parties.favorable.map(({ id }) => id)).toEqual(["anky", "dodo", "parua"]);
+    expect(parties.favorable.map(({ id }) => id)).toEqual(["anky", "dodo", "tia"]);
     expect(parties.unfavorable.map(({ id }) => id)).toEqual(["anky", "tia", "parua"]);
   });
 

@@ -23,7 +23,9 @@ export type Catalog = Partial<Record<TextKey, string>>;
  *
  * **번역이 들어오면 여기 한 줄, `SELECTABLE_LANGUAGE_IDS`에 한 줄을 더한다.**
  */
-const LOADERS: Partial<Record<LanguageId, () => Promise<{ default: Catalog }>>> = {};
+const LOADERS: Partial<Record<LanguageId, () => Promise<{ default: Catalog }>>> = {
+  ja: () => import("./ja"),
+};
 
 /** 지금까지 받아 둔 표. 한국어는 대체본이라 처음부터 들어 있다. */
 const loaded = new Map<LanguageId, Catalog>([[DEFAULT_LANGUAGE, KO]]);

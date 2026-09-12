@@ -10,9 +10,18 @@ export type ExpeditionLayoutRegion = "rewards" | "map" | "augments" | "relics" |
 export const EXPEDITION_LAYOUT: Readonly<Record<ExpeditionLayoutRegion, { top: number; bottom: number }>> = {
   // 전리품 판 아래에 점수 한 줄이 판때기 없이 맨 글자로 서므로, 그 줄까지 이 구역이 품는다.
   rewards: { top: 116, bottom: 340 },
-  map: { top: 362, bottom: 1138 },
-  augments: { top: 1162, bottom: 1234 },
-  relics: { top: 1271, bottom: 1734 },
+  map: { top: 362, bottom: 1107 },
+  /*
+   * **전체 적용 증강 칩 줄.**
+   *
+   * 아래 생존 HUD의 **개인 증강 칩**(프로필 로컬 -229, 화면 1211부터)과 겹치지 않아야 한다 —
+   * 두 줄이 맞닿으면 같은 생김새의 칩이 위아래로 붙어, 어디까지가 전체 몫이고 어디부터가 그
+   * 캐릭터의 몫인지 읽히지 않는다. 예전 값(1162~1234)은 개인 칩 줄과 실제로 7px 겹쳤다 —
+   * `relics` 구역이 개인 칩을 세지 않은 옛 bounds(1271)로 적혀 있어 표에서는 드러나지 않았다.
+   */
+  augments: { top: 1127, bottom: 1183 },
+  /** 개인 증강 칩 줄까지 품은 실제 프로필 bounds다(`battleProfileBounds(..., true)`). */
+  relics: { top: 1203, bottom: 1734 },
   actions: { top: 1756, bottom: 1902 },
 };
 
@@ -23,7 +32,7 @@ export const EXPEDITION_LAYOUT: Readonly<Record<ExpeditionLayoutRegion, { top: n
  * 멈춰야 한다. 위로는 전리품 판과 그 아래 원정 점수 줄을 덮지 않도록 지도 구역에서 시작한다.
  * 높이를 늘릴 때는 이 계약을 함께 확인한다.
  */
-export const EXPEDITION_AUGMENT_POPUP = { width: 940, height: 840, centerY: 780 } as const;
+export const EXPEDITION_AUGMENT_POPUP = { width: 940, height: 840, centerY: 760 } as const;
 
 /** 인접 구역의 최소 여백을 계산해 모바일 세로 화면에서 겹침을 순수하게 검증한다. */
 export function expeditionLayoutGaps(): number[] {

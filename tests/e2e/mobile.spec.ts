@@ -2,7 +2,10 @@ import { test, expect } from "@playwright/test";
 import { startAfterOpening } from "./openingSave";
 import { canvasBox, captureGame, gamePoint, tap, tapUntil } from "./canvasInput";
 import { ExpeditionManager } from "../../src/managers/ExpeditionManager";
-import { expeditionNodePosition, focusExpeditionFloor } from "../../src/ui/expeditionLayout";
+import { EXPEDITION_LAYOUT, expeditionNodePosition, focusExpeditionFloor } from "../../src/ui/expeditionLayout";
+
+/** 지도가 실제로 쓰는 세로 안전 영역. 좌표를 손으로 적으면 배치표를 고친 날 노드를 빗나간다. */
+const MAP_VIEW = EXPEDITION_LAYOUT.map;
 import { BACK_SLOT } from "../../src/ui/popupGeometry";
 
 const BASE_WIDTH = 1080;
@@ -269,7 +272,7 @@ test("폰토스 종료 결과판에서 로비로 이동하면 원정은 비활�
     if (!result.ok) throw new Error(`폰토스 E2E 준비 실패: ${result.reason}`);
     const boss = result.run.nodes.find(({ floor, type }) => floor === 20 && type === "boss")!;
     const point = expeditionNodePosition(boss.floor, boss.column);
-    bossPoint = { x: point.x, y: 316 + point.y + focusExpeditionFloor(20, 1138 - 316) };
+    bossPoint = { x: point.x, y: MAP_VIEW.top + point.y + focusExpeditionFloor(20, MAP_VIEW.bottom - MAP_VIEW.top) };
   });
   await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
@@ -293,14 +296,14 @@ test("폰토스 종료 결과판에서 로비로 이동하면 원정은 비활�
 
 test("원정 전투 노드는 지도 안 공용 편성판을 붙이고 적 상세 정보창으로 진입한다", async ({ page }) => {
   let reachableX = BASE_WIDTH / 2;
-  let reachableY = (316 + 1138) / 2;
+  let reachableY = (MAP_VIEW.top + MAP_VIEW.bottom) / 2;
   await startAfterOpening(page, (session) => {
     // 실제 매니저가 만든 1층 전투 노드를 사용해 저장 구조와 지도 열 배치를 테스트가 위조하지 않는다.
     const manager = new ExpeditionManager(session, { save: () => undefined }, () => new Date());
     manager.start([...session.owned].slice(0, 3));
     const node = session.expedition.run!.nodes.find(({ floor, type }) => floor === 1 && ["normal", "elite", "horde"].includes(type))!;
     const point = expeditionNodePosition(node.floor, node.column);
-    reachableX = point.x; reachableY = 316 + point.y + focusExpeditionFloor(1, 1138 - 316);
+    reachableX = point.x; reachableY = MAP_VIEW.top + point.y + focusExpeditionFloor(1, MAP_VIEW.bottom - MAP_VIEW.top);
   });
   await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");

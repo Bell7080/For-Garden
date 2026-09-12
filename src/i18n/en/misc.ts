@@ -14,7 +14,6 @@ export const MISC_EN = {
   "contribution.title": "Battle Contribution",
   "contribution.totals": "Server confirmed {confirmed} · Replay {replay}",
   "contribution.allies": "Ally Contribution",
-  "contribution.back": "Back",
   "augment.pick.title": "Choose an Augment {round} / {total}",
   "augment.pick.protocol": "Combat Protocol",
   "augment.pick.targetNote": "For single Augments, pick the target from the Expedition team below",

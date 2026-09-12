@@ -36,6 +36,5 @@ export const BATTLE_KO = {
   "battle.result.save": "결과 저장",
   "battle.result.settle": "종료 정산",
   "battle.result.defeatLoot": "패배 전리품 정산",
-  "battle.result.nodeLoot": "교전 획득 전리품",
   "battle.result.nodeScore": "원정 점수 +{score}",
 } as const;

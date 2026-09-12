@@ -1749,13 +1749,9 @@ export class BattleScene extends Phaser.Scene {
       const result = await gameApi.completeStage(stage.id);
       if (!this.scene.isActive()) return;
       const popups = new PopupLayer(this, 2200);
-      const mvpFighterId = this.contributionResult ? battleContributionMvp(this.contributionResult) : undefined;
-      const fighters: StageCompleteFighter[] = this.state.fighters
-        .filter(({ side }) => side === "player")
-        .map((fighter) => ({ relicId: fighter.def.id, isMvp: fighter.id === mvpFighterId }));
+      const fighters = this.stageCompleteFighters();
       new StageCompletePopup(this, popups).open({
-        cheesecakeEarned: result.cheesecakeEarned,
-        firstClear: result.firstClear,
+        reward: { kind: "storyClear", cheesecakeEarned: result.cheesecakeEarned, firstClear: result.firstClear },
         fighters,
         onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),
         onConfirm: () => this.scene.start("stageMap"),
@@ -1766,6 +1762,19 @@ export class BattleScene extends Phaser.Scene {
       this.add.text(BASE_WIDTH / 2, 900, t("battle.result.saveFailed"), textStyle({ role: "body", size: 30, color: COLOR.ink })).setOrigin(0.5).setDepth(101);
       new Button(this, BASE_WIDTH / 2, 1010, { width: 400, height: 100, label: t("battle.result.retry"), onClick: () => void this.finishStageVictory(stage) }).setDepth(101);
     }
+  }
+
+  /**
+   * 결과판이 세울 편성 스냅샷. **누가 이번 판을 끌었는가**(MVP)까지 함께 정한다.
+   *
+   * 스토리와 원정이 같은 결과판을 쓰므로 이 계산도 한 곳에만 둔다 — 두 곳에서 따로 고르면
+   * 한쪽만 고친 날 같은 전투가 화면마다 다른 MVP를 세운다.
+   */
+  private stageCompleteFighters(): StageCompleteFighter[] {
+    const mvpFighterId = this.contributionResult ? battleContributionMvp(this.contributionResult) : undefined;
+    return this.state.fighters
+      .filter(({ side }) => side === "player")
+      .map((fighter) => ({ relicId: fighter.def.id, isMvp: fighter.id === mvpFighterId }));
   }
 
   /** 결과 확인 탭을 직렬화하고 HP 저장, 증강 또는 정산이 끝난 뒤에만 다음 화면을 연다. */
@@ -1787,13 +1796,24 @@ export class BattleScene extends Phaser.Scene {
           }).catch(() => { saving = false; });
           return;
         }
-        // 승리 노드에서 서버가 새로 만든 전리품만 영수증에 표시하고, 확인 뒤 지도로 돌아간다.
-        // 점수 증가분도 여기서 함께 말한다 — 지도로 돌아가 합계만 보면 이번 판이 얼마를 보탰는지
-        // 알 수 없고, 노드마다 다른 층·잔여 HP가 점수를 바꾼다는 것도 읽히지 않는다.
-        openRewardPopup(this, new PopupLayer(this, 2200), {
-          title: t("battle.result.nodeLoot"),
-          items: currencyRecordToRewardItems(nodeResult.rewards),
-          footnote: nodeResult.nodeScore > 0 ? t("battle.result.nodeScore", { score: Math.floor(nodeResult.nodeScore).toLocaleString() }) : undefined,
+        /*
+         * 승리 노드도 **스토리와 같은 결과판**을 쓴다.
+         *
+         * 예전에는 「원정 교전 승리」 뒤에 전리품만 담은 `RewardPopup`이 따로 떴다. 창이 둘이면
+         * 이번 판을 누가 끌었는지(MVP)는 어디에도 없고, 전리품을 보려면 방금 본 편성을 닫아야
+         * 했다. 승리 표제 · 편성 SD와 MVP · 전리품 · 점수 증가분을 한 판에 쌓는다.
+         */
+        const popups = new PopupLayer(this, 2200);
+        new StageCompletePopup(this, popups).open({
+          reward: {
+            kind: "loot",
+            items: currencyRecordToRewardItems(nodeResult.rewards),
+            // 점수 증가분은 여기서 함께 말한다 — 지도로 돌아가 합계만 보면 이번 판이 얼마를
+            // 보탰는지 알 수 없고, 노드마다 다른 층·잔여 HP가 점수를 바꾼다는 것도 읽히지 않는다.
+            footnote: nodeResult.nodeScore > 0 ? t("battle.result.nodeScore", { score: Math.floor(nodeResult.nodeScore).toLocaleString() }) : undefined,
+          },
+          fighters: this.stageCompleteFighters(),
+          onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),
           onConfirm: () => this.scene.start("expedition"),
         });
       }).catch(() => { saving = false; });

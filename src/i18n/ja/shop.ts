@@ -1,0 +1,27 @@
+/** 구매 확인 팝업과 프리미엄 화면의 일본어 표. */
+export const SHOP_JA = {
+  "shop.purchase.package": "パッケージ購入",
+  "shop.purchase.confirm": "購入確認",
+  "shop.purchase.grant": "付与品",
+  "shop.purchase.unitGrant": "1個あたり {amount}",
+  "shop.purchase.price": "価格",
+  "shop.purchase.count": "購入個数",
+  "shop.purchase.total": "合計価格",
+  "shop.purchase.remaining": "残りの購入制限",
+  "shop.purchase.limit": "購入制限",
+  "shop.purchase.busy": "処理中",
+  "shop.purchase.buy": "購入",
+  "shop.purchase.blocked": "購入できません。",
+  "shop.purchase.needMore": "残高または購入制限が足りません。",
+  "shop.purchase.needCurrency": "通貨が足りません。",
+  "shop.purchase.value": "お得度 {percent}%",
+  "shop.purchase.rewardTitle": "購入報酬",
+  "shop.purchase.failed": "購入に失敗しました。",
+
+  "shop.premium.title": "プレミアム",
+  "shop.premium.passBenefit": "広告報酬を即時受け取り  ·  {duration}\n広告利用者と同じ基本報酬 · スロットごとのUTC日次上限",
+  "shop.premium.forever": "永久",
+  "shop.premium.duration": "有効期間 {days}日",
+  "shop.premium.remaining": "残りの購入 {remaining}/{limit}",
+  "shop.premium.purchased": "購入が完了しました。",
+} as const;

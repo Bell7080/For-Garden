@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 /** 발굴 팝업이 지원하는 광고 두 종류만 클라이언트 표시 계약으로 고정한다. */
 export type ExcavationAdOfferId = "excavation-harvest" | "excavation-storage";
 
@@ -12,8 +13,8 @@ export interface ExcavationAdOfferDisplayModel {
 
 /** 서버는 효과와 한도를 소유하고, 클라이언트는 슬롯 ID별 짧고 안정적인 한국어 표기를 소유한다. */
 const LABEL_BY_SLOT: Record<ExcavationAdOfferId, string> = {
-  "excavation-harvest": "생산량 ×1.5",
-  "excavation-storage": "보관량 ×2",
+  "excavation-harvest": t("excavation.ad.production"),
+  "excavation-storage": t("excavation.ad.storage"),
 };
 
 /** 남은 횟수를 그대로 사용량처럼 보이지 않도록 used = limit - remaining을 명시적으로 계산한다. */

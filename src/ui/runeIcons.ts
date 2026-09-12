@@ -1,4 +1,5 @@
 import type { HeartGemRarity } from "../data/heartGems";
+import { t } from "../i18n";
 import Phaser from "phaser";
 import type { RuneInstance, RuneMainStatKey, RunePart } from "../core/runes";
 import { drawGlyph } from "./glyphs";
@@ -417,8 +418,8 @@ export class RuneChanceLine {
     graphics.lineStyle(2, 0xffffff, 0.75);
     graphics.lineBetween(split - slant / 2, bottomY + 2, split + slant / 2, topY - 2);
     const percent = Math.round(clamped * 100);
-    for (const text of this.successLabel) text.setText(`성공 ${percent}%`);
-    for (const text of this.failLabel) text.setText(`실패 ${100 - percent}%`);
+    for (const text of this.successLabel) text.setText(t("rune.chanceSuccess", { percent }));
+    for (const text of this.failLabel) text.setText(t("rune.chanceFail", { percent: 100 - percent }));
   }
 }
 

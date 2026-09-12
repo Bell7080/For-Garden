@@ -1,3 +1,5 @@
+import { registerDataText } from "../i18n";
+
 /** 서버가 수집한 도메인 행동을 일일·주간 임무 진행도로 바꾸는 순수 규칙이다. */
 
 /** 임무 갱신을 일으키는, API 처리 성공 이후의 도메인 이벤트다. */
@@ -43,6 +45,16 @@ export const MISSIONS: readonly MissionDefinition[] = [
   { id: "weekly-battle", period: "weekly", title: "전투 완료 5회", target: 5, rewardCheesecake: 100, researchPoints: 60, event: "battle_completed" },
   { id: "weekly-excavate", period: "weekly", title: "연구소 캐릭터 연구 10회", target: 10, rewardCheesecake: 100, researchPoints: 60, event: "relic_research_completed" },
 ];
+
+/**
+ * 임무 제목을 언어별로 덮어쓸 수 있게 등록한다.
+ *
+ * 정적 콘텐츠와 같은 경계를 쓰는 이유는 이 표가 **운영 중 늘어나는 목록**이기 때문이다 —
+ * 한국어는 여기 그대로 두고 다른 언어만 임무 ID로 덮는다.
+ */
+for (const mission of MISSIONS) {
+  registerDataText(mission, "title", `mission.${mission.id}.title`);
+}
 
 /** 두 기간이 함께 쓰는 임계값과 보상을 이 표 하나에서만 운영한다. */
 export const RESEARCH_REWARD_STAGES = [20, 40, 60, 80, 100, 120].map((threshold, index) => ({

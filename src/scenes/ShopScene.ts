@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { t } from "../i18n";
 import { gameApi } from "../api/FakeServer";
 import type { ProductDto, PurchaseProductResponse } from "../api/contracts";
 import { formatCurrency } from "../core/formatCurrency";
@@ -45,14 +46,14 @@ export class ShopScene extends Phaser.Scene {
   constructor() { super("shop"); }
 
   create(): void {
-    setDebugScene("shop", "상점");
+    setDebugScene("shop", t("shop.title"));
     // 최종 상점 쇼케이스 배경은 공용 로딩 표에서 먼저 읽혀 씬 진입 중 로더가 튀어나오지 않는다.
     addSceneBackground(this, BACKGROUND.shop);
     drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { depth: -20, strength: 0.76 });
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.56).setDepth(-19);
     this.topBar = new TopBar(this, 40, { onSettings: () => this.scene.start("settings", { returnScene: "lobby" }) });
-    this.add.text(54, 170, "상점", textStyle({ role: "display", size: 54 })).setOrigin(0, 0);
-    this.add.text(LIST_VIEW.left, 246, "교환 목록", textStyle({ role: "emphasis", size: 27, color: COLOR.accentText })).setOrigin(0, 0);
+    this.add.text(54, 170, t("shop.title"), textStyle({ role: "display", size: 54 })).setOrigin(0, 0);
+    this.add.text(LIST_VIEW.left, 246, t("shop.exchangeList"), textStyle({ role: "emphasis", size: 27, color: COLOR.accentText })).setOrigin(0, 0);
     drawHairline(this, (LIST_VIEW.left + LIST_VIEW.right) / 2, 302, LIST_VIEW.right - LIST_VIEW.left, { color: COLOR.accent, alpha: 0.4 });
     // 목록 컨테이너는 비동기 생성되므로 공용 돌아가기를 그보다 높은 고정 계층에 둔다.
     addBackButton(this, () => this.scene.start("lobby")).setDepth(1000);
@@ -142,7 +143,7 @@ export class ShopScene extends Phaser.Scene {
       card.add(this.add.image(priceX - 44, 91, CURRENCY_ICON_BY_WALLET[product.acquisition.currency]).setDisplaySize(34, 34));
       card.add(this.add.text(priceX - 20, 91, formatCurrency(product.acquisition.amount), textStyle({ role: "emphasis", size: 25, color: COLOR.accentText })).setOrigin(0, 0.5));
     }
-    card.add(this.add.text(-width / 2 + 206, 78, `남은 교환 ${formatCurrency(product.remaining)}/${formatCurrency(product.purchaseLimit)}`, textStyle({ role: "body", size: 20, color: product.purchasable ? COLOR.ink : COLOR.inkDim })).setOrigin(0, 0));
+    card.add(this.add.text(-width / 2 + 206, 78, t("shop.exchangeRemaining", { remaining: formatCurrency(product.remaining), limit: formatCurrency(product.purchaseLimit) }), textStyle({ role: "body", size: 20, color: product.purchasable ? COLOR.ink : COLOR.inkDim })).setOrigin(0, 0));
     const hit = this.add.rectangle(0, 0, width, LIST_LAYOUT.cardHeight, 0xffffff, 0).setInteractive({ useHandCursor: product.purchasable });
     hit.on("pointerdown", () => card.setScale(1.04));
     hit.on("pointerout", () => card.setScale(1));
@@ -153,7 +154,7 @@ export class ShopScene extends Phaser.Scene {
       // 스크롤 드래그가 끝난 손을 구매 탭으로 오인하지 않는다.
       if (this.draggedDistance <= LIST_LAYOUT.dragSlop) {
         // 비활성 상품도 이유와 상세 정보를 읽을 수 있으며 카드 탭 자체는 절대 즉시 구매하지 않는다.
-        new PurchasePopup(this, this.popups, gameApi, session.wallet).open(product, async (result) => { this.applyPurchaseResult(result); this.notice("교환이 완료되었습니다."); await this.refresh(); });
+        new PurchasePopup(this, this.popups, gameApi, session.wallet).open(product, async (result) => { this.applyPurchaseResult(result); this.notice(t("shop.exchangeDone")); await this.refresh(); });
       }
     });
     card.add(hit);

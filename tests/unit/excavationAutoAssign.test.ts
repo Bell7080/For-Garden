@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { autoAssignExcavation, EXCAVATION_AUTO_MODES, EXCAVATION_AUTO_MODE_LABEL, type ExcavationCandidate } from "../../src/core/excavationAutoAssign";
+import { autoAssignExcavation, EXCAVATION_AUTO_MODES, excavationAutoModeLabel, type ExcavationCandidate } from "../../src/core/excavationAutoAssign";
 import { RELICS } from "../../src/data/relics";
 
 const candidates: ExcavationCandidate[] = RELICS.map((def) => ({ def, progress: { level: 1, breakthrough: 0 } }));
@@ -41,6 +41,6 @@ describe("발굴 자동 배치", () => {
   });
 
   it("기준마다 이름이 있다", () => {
-    for (const mode of EXCAVATION_AUTO_MODES) expect(EXCAVATION_AUTO_MODE_LABEL[mode].length).toBeGreaterThan(0);
+    for (const mode of EXCAVATION_AUTO_MODES) expect(excavationAutoModeLabel(mode).length).toBeGreaterThan(0);
   });
 });

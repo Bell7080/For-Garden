@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { t } from "../i18n";
 import type { GameApi, MissionDto, ClaimMissionRewardsResponse, MissionListResponse } from "../api/contracts";
 import { gameApi } from "../api/FakeServer";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
@@ -36,19 +37,19 @@ export class MissionsPopup {
     const { popup, header, tabs, footer } = MISSIONS_POPUP_LAYOUT;
     const width = BASE_WIDTH - popup.widthInset;
     const height = BASE_HEIGHT - popup.heightInset;
-    this.popups.open({ width, height, title: "임무 기록", titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: 0.72, closeOnBackdrop: false, backButton: true, onClose: () => { this.destroyContent(); this.body = undefined; this.onClose?.(); } }, (body) => {
+    this.popups.open({ width, height, title: t("missions.title"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: 0.72, closeOnBackdrop: false, backButton: true, onClose: () => { this.destroyContent(); this.body = undefined; this.onClose?.(); } }, (body) => {
       this.body = body;
       // 커진 작업판 제목 아래에 상태 줄을 충분히 내려 두어 머리글과 본문이 한 덩어리로 겹치지 않게 한다.
-      this.status = this.scene.add.text(header.statusX, header.statusY, "동기화 중", textStyle({ role: "body", size: 23, color: COLOR.inkDim })).setOrigin(1, 0); body.add(this.status);
-      body.add(new Button(this.scene, -tabs.centerX, tabs.centerY, { width: tabs.width, height: tabs.height, label: "일일", onClick: () => this.select("daily") }));
-      body.add(new Button(this.scene, tabs.centerX, tabs.centerY, { width: tabs.width, height: tabs.height, label: "주간", onClick: () => this.select("weekly") }));
-      body.add(new Button(this.scene, 0, footer.buttonY, { width: footer.buttonWidth, height: footer.buttonHeight, label: "완료 보상 일괄 수령", variant: "primary", onClick: () => void this.claimAll() }));
+      this.status = this.scene.add.text(header.statusX, header.statusY, t("missions.syncing"), textStyle({ role: "body", size: 23, color: COLOR.inkDim })).setOrigin(1, 0); body.add(this.status);
+      body.add(new Button(this.scene, -tabs.centerX, tabs.centerY, { width: tabs.width, height: tabs.height, label: t("missions.tab.daily"), onClick: () => this.select("daily") }));
+      body.add(new Button(this.scene, tabs.centerX, tabs.centerY, { width: tabs.width, height: tabs.height, label: t("missions.tab.weekly"), onClick: () => this.select("weekly") }));
+      body.add(new Button(this.scene, 0, footer.buttonY, { width: footer.buttonWidth, height: footer.buttonHeight, label: t("missions.claimAll"), variant: "primary", onClick: () => void this.claimAll() }));
       void this.refresh();
     });
   }
 
   private select(period: "daily" | "weekly"): void { this.period = period; this.render(); }
-  private async refresh(): Promise<void> { const result = await this.api.getMissions(); this.missions = result.missions; this.research = result.research; this.status?.setText(`미수령 ${result.claimableCount}`); this.render(); }
+  private async refresh(): Promise<void> { const result = await this.api.getMissions(); this.missions = result.missions; this.research = result.research; this.status?.setText(t("missions.unclaimed", { count: result.claimableCount })); this.render(); }
   private destroyContent(): void { this.bars.forEach((bar) => bar.destroy()); this.bars = []; this.list?.destroy(); this.list = undefined; }
 
   /** 카드와 보상 액자 모두 같은 콜백을 받으며 수령 완료 행은 명확히 흐리게 남긴다. */
@@ -73,7 +74,7 @@ export class MissionsPopup {
       // 진행 수는 게이지 끝에 바로 붙여 시선이 카드 반대편까지 왕복하지 않게 한다.
       const progress = this.scene.add.text(150, y + 18, mission.progressLabel, textStyle({ role: "emphasis", size: 24, color: mission.claimed ? COLOR.inkDim : COLOR.ink })).setOrigin(0, 0);
       // 기존 미수령 숫자 자리에는 이 임무가 완료 순간 확정하는 연구도를 직접 보여 준다.
-      const research = this.scene.add.text(150, y - 50, `연구도 +${mission.researchPoints}`, textStyle({ role: "emphasis", size: 22, color: COLOR.accentText })).setOrigin(0, 0);
+      const research = this.scene.add.text(150, y - 50, t("missions.researchPoints", { points: mission.researchPoints }), textStyle({ role: "emphasis", size: 22, color: COLOR.accentText })).setOrigin(0, 0);
       const reward = new RewardFrame(this.scene, 365, y, { icon: "currency-cheesecake", amount: mission.rewardCheesecake, size: 116, state: mission.state, onClick: mission.claimable ? () => void this.claimOne(mission.id) : undefined });
       // **아직 못 받는 보상은 반투명하다.** 받을 수 있는 것과 같은 진하기로 서 있으면 "지금
       // 누를 수 있는가"를 액자가 아니라 글자로 세어야 한다. 수령한 뒤의 눌린 어둠은
@@ -83,7 +84,7 @@ export class MissionsPopup {
       if (mission.claimable) this.scene.tweens.add({ targets: reward, alpha: { from: 0.55, to: 1 }, duration: 260, ease: "Cubic.Out" });
       // 상태 글자는 액자와 **같은 줄**에 선다. 액자 밑변보다 아래에 두면 카드 바닥에 붙어
       // 어느 액자의 이야기인지 흐려진다.
-      const state = this.scene.add.text(258, y, mission.claimed ? "수령 완료" : mission.claimable ? "수령 가능" : "진행 중", textStyle({ role: "emphasis", size: 23, color: mission.claimable ? "#ffbf66" : COLOR.inkDim })).setOrigin(1, 0.5);
+      const state = this.scene.add.text(258, y, mission.claimed ? t("missions.state.claimed") : mission.claimable ? t("missions.state.claimable") : t("missions.state.inProgress"), textStyle({ role: "emphasis", size: 23, color: mission.claimable ? "#ffbf66" : COLOR.inkDim })).setOrigin(1, 0.5);
       this.list?.add([progress, research, reward, state]);
       if (mission.claimable) { const hit = this.scene.add.rectangle(0, y, list.cardWidth, list.cardHeight, 0xffffff, 0).setInteractive({ useHandCursor: true }); hit.on("pointerup", () => void this.claimOne(mission.id)); this.list?.add(hit); this.list?.bringToTop(reward); }
     });
@@ -107,7 +108,7 @@ export class MissionsPopup {
     this.rollFrom = undefined;
     const paint = (value: number): void => {
       bar.setValue(value / Math.max(1, research.maxPoints));
-      label.setText(`연구도 ${Math.round(value)}/${research.maxPoints}`);
+      label.setText(t("missions.researchGauge", { value: Math.round(value), max: research.maxPoints }));
     };
     paint(from);
     if (from < to) {
@@ -139,11 +140,11 @@ export class MissionsPopup {
     // 서버 응답의 단계 상태까지 다시 조회해 그래프와 알림 점이 같은 틱에 갱신되게 한다.
     const latest = await this.api.getMissions(); this.missions = latest.missions; this.research = latest.research;
     const count = result.claimedIds.length + result.claimedResearchStageIds.length;
-    this.status?.setText(count ? `수령 ${count}건` : "수령할 보상 없음"); this.render();
+    this.status?.setText(count ? t("missions.claimedCount", { count }) : t("missions.nothingToClaim")); this.render();
     await notificationManager.refresh();
-    openRewardPopup(this.scene, this.popups, { title: "임무 보상", items: [
-      { icon: "currency-cheesecake", amount: result.rewards.missionCheesecake, label: "임무" },
-      { icon: "currency-cheesecake", amount: result.rewards.researchCheesecake, label: "연구도 단계" },
+    openRewardPopup(this.scene, this.popups, { title: t("missions.rewardTitle"), items: [
+      { icon: "currency-cheesecake", amount: result.rewards.missionCheesecake, label: t("missions.entry") },
+      { icon: "currency-cheesecake", amount: result.rewards.researchCheesecake, label: t("missions.researchStage") },
     ] });
   }
 }

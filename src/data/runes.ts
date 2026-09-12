@@ -1,4 +1,5 @@
-import { generateRune, RUNE_PART_LABELS, type RuneInstance, type RunePart, type RuneRarity, type RuneStatKey } from "../core/runes";
+import { generateRune, runePartLabel, type RuneInstance, type RunePart, type RuneRarity, type RuneStatKey } from "../core/runes";
+import { t } from "../i18n";
 
 /** 옵션 수치 단위. percent는 기존 수치에 곱하고 percentagePoint는 게이지/확률에 그대로 더한다. */
 export type RuneStatUnit = "percent" | "percentagePoint";
@@ -64,7 +65,7 @@ export const STARTER_RUNE_PARTS: readonly RunePart[] = [0, 1, 2, 0, 1, 2, 0, 1, 
 export function createStarterRunes(random: () => number): RuneInstance[] {
   return STARTER_RUNE_RARITIES.map((rarity, index) => generateRune({
     instanceId: `starter-rune-${index + 1}`,
-    baseName: `${RUNE_PART_LABELS[STARTER_RUNE_PARTS[index]]} 룬`,
+    baseName: t("rune.baseName", { part: runePartLabel(STARTER_RUNE_PARTS[index]) }),
     rarity,
     part: STARTER_RUNE_PARTS[index],
     random,

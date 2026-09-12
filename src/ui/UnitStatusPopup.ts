@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { t } from "../i18n";
 import type { PopupLayer } from "./PopupLayer";
 import { drawHairline } from "./holo";
 import { COLOR, textStyle } from "./theme";
@@ -23,7 +24,7 @@ export function openUnitStatusPopup(
   // 글자가 들어가는 만큼만 넓다. 남는 여백은 읽는 데 도움이 되지 않고 전장만 가린다.
   const width = 620;
   const height = 150 + views.length * rowHeight;
-  popups.open({ width, height, title: `${name} · 상태`, anchor, tilt: -1.2 }, (content) => {
+  popups.open({ width, height, title: t("unitStatus.title", { name }), anchor, tilt: -1.2 }, (content) => {
     const top = -height / 2 + 118;
     views.forEach((view, index) => {
       const y = top + index * rowHeight;

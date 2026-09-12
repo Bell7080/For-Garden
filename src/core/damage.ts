@@ -4,20 +4,25 @@ import { breakthroughBonus } from "./relicProgression";
 import type { Skill } from "./types";
 import type { Combatant, DamageInput } from "./combatTypes";
 
-/** 미리보기와 태그가 함께 읽는 능력치 이름이다. */
-export type ScalingStatLabel = "공격력" | "주문력" | "방어력" | "체력";
+/**
+ * 미리보기와 태그가 함께 읽는 능력치.
+ *
+ * **표기가 아니라 ID다.** 어느 능력치인지만 말하고 화면에 설 낱말은 문구 표가 고른다 —
+ * 순수 규칙이 한국어를 들고 있으면 언어를 바꿔도 그 수치의 이름만 한국어로 남는다.
+ */
+export type ScalingStatId = "atk" | "ap" | "def" | "hp";
 
 /** 정보창이 확정 피해와 대상 없는 능력치 배율을 구분하는 미리보기 결과다. */
 export type DamagePreview =
-  | { kind: "damage"; amount: number; label: "예상 피해" }
+  | { kind: "damage"; amount: number; label: "expected" }
   | {
       kind: "scaling";
       amount: number;
       power: number;
-      stat: ScalingStatLabel;
+      stat: ScalingStatId;
       /** 위력을 두 능력치가 나눠 갖는 스킬만 갖는 여벌 축이다. 태그 문장이 두 축을 함께 말한다. */
-      secondary?: { power: number; stat: ScalingStatLabel };
-      label: "피해량";
+      secondary?: { power: number; stat: ScalingStatId };
+      label: "damage";
     };
 
 /** 주입된 0 이상 1 미만 판정값으로 치명타 여부를 결정한다. */
@@ -83,12 +88,12 @@ export function previewSkillDamage(attacker: Combatant, skill: Skill, target?: C
     throw new TypeError("비공격 스킬은 피해를 미리 볼 수 없습니다.");
   }
   if (!target) {
-    const label = (stat: DamageInput["scalingStat"]): ScalingStatLabel =>
-      stat === "def" ? "방어력" : stat === "hp" ? "체력"
-        : stat === "atk" || (stat === undefined && skill.damageType === "physical") ? "공격력" : "주문력";
+    const label = (stat: DamageInput["scalingStat"]): ScalingStatId =>
+      stat === "def" ? "def" : stat === "hp" ? "hp"
+        : stat === "atk" || (stat === undefined && skill.damageType === "physical") ? "atk" : "ap";
     const base = (stat: DamageInput["scalingStat"]): number =>
       stat === "def" ? attacker.def.stats.def : stat === "hp" ? attacker.def.stats.hp
-        : label(stat) === "공격력" ? attacker.def.stats.atk : attacker.def.stats.ap;
+        : label(stat) === "atk" ? attacker.def.stats.atk : attacker.def.stats.ap;
     const primary = base(skill.scalingStat) * skill.power / 100;
     const secondary = skill.secondaryScaling;
     return {
@@ -98,8 +103,8 @@ export function previewSkillDamage(attacker: Combatant, skill: Skill, target?: C
       power: skill.power,
       stat: label(skill.scalingStat),
       secondary: secondary && { power: secondary.power, stat: label(secondary.stat) },
-      label: "피해량",
+      label: "damage",
     };
   }
-  return { kind: "damage", amount: computeDamage(attacker, target, { ...skill, isCritical: false }), label: "예상 피해" };
+  return { kind: "damage", amount: computeDamage(attacker, target, { ...skill, isCritical: false }), label: "expected" };
 }

@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { t } from "../i18n";
 import { gameApi } from "../api/FakeServer";
 import { GameApiError, type AdSlotOperationsDto } from "../api/contracts";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
@@ -228,8 +229,8 @@ export class ExpeditionScene extends Phaser.Scene {
       drawGlassFade(this, BASE_WIDTH / 2, BASE_HEIGHT - 180, BASE_WIDTH, 360, { topAlpha: 0, bottomAlpha: HOLO.glass }).setDepth(-24);
     }
 
-    this.add.text(54, 34, "주간 원정", textStyle({ role: "display", size: 48 })).setOrigin(0, 0);
-    this.add.text(54, 94, `이번 주 ${status.playsThisWeek}회  ·  주간 최고 점수 ${status.bestScore.toLocaleString()}`, textStyle({ role: "emphasis", size: 25, color: COLOR.accentText })).setOrigin(0, 0);
+    this.add.text(54, 34, t("expedition.weekly.title"), textStyle({ role: "display", size: 48 })).setOrigin(0, 0);
+    this.add.text(54, 94, t("expedition.weekly.summary", { plays: status.playsThisWeek, best: status.bestScore.toLocaleString() }), textStyle({ role: "emphasis", size: 25, color: COLOR.accentText })).setOrigin(0, 0);
     drawHairline(this, BASE_WIDTH / 2, 224, BASE_WIDTH - 108, { color: COLOR.accent, alpha: 0.34 });
 
     if (status.active) this.buildActive(status.active.score, status.run?.selectedAugments ?? []);
@@ -251,7 +252,7 @@ export class ExpeditionScene extends Phaser.Scene {
     // 쌓았는가**를 맡는다. 같은 수를 두 자리에 적으면 어느 쪽이 무엇인지 흐려진다.
     const weekly = this.add.text(BASE_WIDTH - 54, 94, "", textStyle({ role: "emphasis", size: 25, color: COLOR.sortieText })).setOrigin(1, 0);
     void gameApi.getExpeditionWeeklyBest()
-      .then((best) => { if (weekly.active) weekly.setText(`주간 누적 점수 ${best.cumulativeScore.toLocaleString()}`); })
+      .then((best) => { if (weekly.active) weekly.setText(t("expedition.weekly.cumulative", { score: best.cumulativeScore.toLocaleString() })); })
       // 조회에 실패하면 그 자리를 비운다 — 못 읽었다는 말은 플레이어가 지금 할 일을 바꾸지 않는다.
       .catch(() => { if (weekly.active) weekly.setText(""); });
     // 지도 HUD는 마지막 노드 증가분이 아니라 서버 저장 런 합계를 명시적으로 넘긴다.
@@ -272,12 +273,12 @@ export class ExpeditionScene extends Phaser.Scene {
     this.input.on("pointerdown", dismissOutsideMap);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.input.off("pointerdown", dismissOutsideMap));
     // 스토리 지도처럼 출격은 팝업 안이 아니라 화면 하단의 고정 행동선에 한 번만 둔다.
-    this.startButton = new Button(this, BASE_WIDTH / 2, 1810, { width: 340, height: 108, label: "출  격", variant: "primary", accentColor: COLOR.sortie, accentTextColor: COLOR.sortieText, onClick: () => this.selectedNode && this.confirmNodeSortie(this.selectedNode) });
+    this.startButton = new Button(this, BASE_WIDTH / 2, 1810, { width: 340, height: 108, label: t("expedition.sortie"), variant: "primary", accentColor: COLOR.sortie, accentTextColor: COLOR.sortieText, onClick: () => this.selectedNode && this.confirmNodeSortie(this.selectedNode) });
     this.startButton.setEnabled(false);
     if (run.pendingAugmentReward) this.openAugmentReward();
     // 포기는 전리품 판(획득 전리품 + 점수) 위, 화면 우상단 구석에 작게 둔다 — 판과 겹치지
     // 않으면서도 작고 붉은 파괴 조작이라 손이 쉽게 닿지 않게 한다.
-    new Button(this, BASE_WIDTH - 90, 46, { width: 140, height: 44, label: "포기하기", fontSize: 16, fill: 0x431d20, accentColor: COLOR.danger, accentTextColor: COLOR.dangerText, onClick: () => this.confirmAbandon() });
+    new Button(this, BASE_WIDTH - 90, 46, { width: 140, height: 44, label: t("expedition.abandon"), fontSize: 16, fill: 0x431d20, accentColor: COLOR.danger, accentTextColor: COLOR.dangerText, onClick: () => this.confirmAbandon() });
   }
 
   /** 런에서만 누적되는 네 재화를 보상 팝업과 같은 액자·우하단 수량 문법으로 묶는다. */
@@ -292,7 +293,7 @@ export class ExpeditionScene extends Phaser.Scene {
     ] as const;
     // 지도 위에 떠 있는 하나의 전리품 레이어로 읽히도록 제목과 얇은 상단선을 먼저 놓는다.
     drawLayer(this, BASE_WIDTH / 2, LOOT.panelY, chipPoints(972, LOOT.panelHeight, { bevel: { topLeft: 30, bottomRight: 22 } }), { fill: 0x0d131b, alpha: 0.82, edge: COLOR.accent, edgeAlpha: 0.55 });
-    this.add.text(86, 137, "획득 전리품", textStyle({ role: "display", size: 25, color: COLOR.accentText })).setOrigin(0, 0.5);
+    this.add.text(86, 137, t("expedition.loot"), textStyle({ role: "display", size: 25, color: COLOR.accentText })).setOrigin(0, 0.5);
     items.forEach(([icon, key], index) => {
       // 네 액자는 판 가운데에 모여 선다. 넓게 벌리면 네 재화가 각자 다른 정보처럼 읽힌다.
       const x = BASE_WIDTH / 2 + (index - 1.5) * LOOT.step; const y = LOOT.frameY; const size = 96;
@@ -314,7 +315,7 @@ export class ExpeditionScene extends Phaser.Scene {
     // 전리품 판의 강조선과 다투고, 이 줄만 다른 화면에서 온 것처럼 보인다.
     // 이름표와 수는 **같은 크기·같은 색**이다. 둘을 다르게 두면 한 줄이 두 정보로 갈린다.
     // 재화 레코드로 점수를 추론하지 않는다. 호출자가 고른 서버 확정 범위를 라벨까지 함께 보낸다.
-    const scoreLabel = confirmedScore.scope === "node" ? "노드 점수" : "원정 점수";
+    const scoreLabel = confirmedScore.scope === "node" ? t("expedition.nodeScore") : t("expedition.score");
     this.add
       .text(BASE_WIDTH / 2, LOOT.scoreY, `${scoreLabel} : ${Math.floor(confirmedScore.value).toLocaleString()}`, textStyle({ role: "display", size: 42, color: COLOR.ink }))
       .setOrigin(0.5)
@@ -348,7 +349,7 @@ export class ExpeditionScene extends Phaser.Scene {
     if (!run || run.relics.every(({ alive }) => !alive) || run.pendingAugmentReward) return;
     // 전투 노드는 스토리 지도처럼 적 정보를 먼저 열며, 팝업의 출전 버튼 전에는 상태를 바꾸지 않는다.
     if (["normal", "elite", "horde", "boss"].includes(node.type)) {
-      const names: Record<string, string> = { normal: "일반 조우", elite: "정예 조우", horde: "군집 조우", boss: "원정 보스" };
+      const names: Record<string, string> = { normal: t("expedition.node.normal"), elite: t("expedition.node.elite"), horde: t("expedition.node.swarm"), boss: t("expedition.node.boss") };
       // 최종 보스는 높은 고정 표시 스탯을 유지하되 정보 등급은 기획 표기인 LV.20으로 통일한다.
       const level = node.type === "boss" && node.floor === 20 ? 20 : expeditionEnemyLevel(node.type, node.floor);
       const enemies = getExpeditionEncounterEnemies(node.type, node.floor);
@@ -356,12 +357,12 @@ export class ExpeditionScene extends Phaser.Scene {
       // 선택 세대가 바뀌면 프리팹이 기존 SD와 늦게 끝난 로드 요청을 함께 폐기한다.
       // 원정은 아직 슬롯별 돌파가 없지만 같은 미리보기 계약에 각 슬롯의 성장 상태를 명시한다.
       const growth = enemies.map(() => ({ level, breakthrough: 0 }));
-      this.enemyPreview?.showAt(nodeY, { title: `${node.floor}층 · ${names[node.type]}`, growth, enemies, onEnemyClick: (enemy, slot) => this.enemyInfo?.show({ def: enemy, level: slot.level, breakthrough: slot.breakthrough, ferocityLevel: slot.ferocityLevel }) });
+      this.enemyPreview?.showAt(nodeY, { title: t("expedition.node.title", { floor: node.floor, type: names[node.type] }), growth, enemies, onEnemyClick: (enemy, slot) => this.enemyInfo?.show({ def: enemy, level: slot.level, breakthrough: slot.breakthrough, ferocityLevel: slot.ferocityLevel }) });
       return;
     }
     this.nodeTransitionPending = true;
     if (node.type === "rest") {
-      this.popups.confirm({ title: "휴식", message: "원정대를 회복하고 이 휴식 지점을 완료합니다.", confirmLabel: "휴식하기" }, () => {
+      this.popups.confirm({ title: t("expedition.node.rest"), message: t("expedition.node.restBody"), confirmLabel: t("expedition.node.restConfirm") }, () => {
         this.nodeTransitionPending = true;
         // 매니저의 단일 저장이 실패하면 잠금을 풀 뿐, 부분 회복 상태는 존재하지 않는다.
         if (expeditionManager.completeRestNode(node.id)) this.scene.restart();
@@ -471,11 +472,11 @@ export class ExpeditionScene extends Phaser.Scene {
     const rows = expeditionAugmentRows(augments, order);
     const lines = rows.reduce((sum, row) => sum + row.badges.length, 0);
     const height = Math.min(1180, 230 + rows.length * 54 + lines * 78);
-    this.popups.open({ width: 880, height, title: `확정 증강 ${augments.length}`, dim: true }, (body) => {
+    this.popups.open({ width: 880, height, title: t("expedition.augment.confirmed", { count: augments.length }), dim: true }, (body) => {
       let y = -height / 2 + 130;
       for (const row of rows) {
         if (row.relicId === undefined) {
-          body.add(this.add.text(-390, y, "전체 적용", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0.5));
+          body.add(this.add.text(-390, y, t("expedition.augment.applyAll"), textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0.5));
         } else {
           const relic = getRelic(row.relicId);
           body.add(new FaceFrame(this, -366, y, { portraitAssetId: relic.portraitAssetId, size: 68 }));
@@ -577,10 +578,10 @@ export class ExpeditionScene extends Phaser.Scene {
   private confirmAbandon(): void {
     const run = expeditionManager.status().run; if (!run) return;
     const reward = Object.values(run.pendingRewards).reduce((sum, amount) => sum + Math.floor(amount), 0);
-    this.popups.confirm({ title: "원정 포기", message: `임시 보상 ${reward.toLocaleString()}개가 지갑으로 이전됩니다.\n이번 런의 최고 점수는 주간 기록에 반영되지 않습니다.`, confirmLabel: "포기 확정", destructive: true }, async () => {
+    this.popups.confirm({ title: t("expedition.abandon.title"), message: t("expedition.abandon.body", { reward: reward.toLocaleString() }), confirmLabel: t("expedition.abandon.confirm"), destructive: true }, async () => {
       const settlement = await gameApi.settleExpeditionRun({ runId: run.runId, settlementId: `${run.runId}:abandon`, outcome: "abandoned" });
       // 지갑 상한 적용 뒤 실제 들어온 양만 영수증에 표시하고 확인 후 로비로 돌아간다.
-      openRewardPopup(this, this.popups, { title: "포기 전리품 정산", items: currencyRecordToRewardItems(settlement.granted), onConfirm: () => this.scene.start("lobby") });
+      openRewardPopup(this, this.popups, { title: t("expedition.abandon.settle"), items: currencyRecordToRewardItems(settlement.granted), onConfirm: () => this.scene.start("lobby") });
     });
   }
 
@@ -592,7 +593,7 @@ export class ExpeditionScene extends Phaser.Scene {
    */
   private buildRanking(status = expeditionManager.status()): void {
     void this.loadBossPortrait();
-    this.renderMyScore("기록 동기화 중");
+    this.renderMyScore(t("expedition.syncing"));
     void this.refreshMyScore();
 
     const { utility, actions } = RANKING;
@@ -600,20 +601,20 @@ export class ExpeditionScene extends Phaser.Scene {
     const utilityLeftX = BASE_WIDTH / 2 - utilityTotal / 2 + utility.width / 2;
     const utilityRightX = BASE_WIDTH / 2 + utilityTotal / 2 - utility.width / 2;
     // 보스 전신(depth 5)보다 위에 그려야 발끝·옷자락 뒤로 조작이 숨지 않는다.
-    new Button(this, utilityLeftX, utility.y, { width: utility.width, height: utility.height, label: "랭킹", fontSize: 26, onClick: () => new ExpeditionRankingPopup(this, this.popups).open() }).setDepth(12);
-    new Button(this, utilityRightX, utility.y, { width: utility.width, height: utility.height, label: "주간 보상", fontSize: 26, onClick: () => void new ExpeditionRewardPopup(this, this.popups).open() }).setDepth(12);
+    new Button(this, utilityLeftX, utility.y, { width: utility.width, height: utility.height, label: t("expedition.ranking"), fontSize: 26, onClick: () => new ExpeditionRankingPopup(this, this.popups).open() }).setDepth(12);
+    new Button(this, utilityRightX, utility.y, { width: utility.width, height: utility.height, label: t("expedition.weeklyReward"), fontSize: 26, onClick: () => void new ExpeditionRewardPopup(this, this.popups).open() }).setDepth(12);
 
     const actionsTotal = actions.sortieWidth + actions.sweepWidth + actions.gap;
     const sortieX = BASE_WIDTH / 2 - actionsTotal / 2 + actions.sortieWidth / 2;
     const sweepX = BASE_WIDTH / 2 + actionsTotal / 2 - actions.sweepWidth / 2;
     new Button(this, sortieX, actions.y, {
-      width: actions.sortieWidth, height: actions.height, label: "출  격",
-      sub: `이번 주 ${status.playsThisWeek} / ${EXPEDITION_WEEKLY_POLICY.maxPlaysPerWeek}회`, fontSize: 40,
+      width: actions.sortieWidth, height: actions.height, label: t("expedition.sortie"),
+      sub: t("expedition.weekly.plays", { plays: status.playsThisWeek, max: EXPEDITION_WEEKLY_POLICY.maxPlaysPerWeek }), fontSize: 40,
       variant: "primary", accentColor: COLOR.sortie, accentTextColor: COLOR.sortieText,
       onClick: () => this.scene.restart({ stage: "preparation" }),
     }).setEnabled(status.canStartRun).setDepth(12);
     // 소탕은 원정 기회를 그대로 소비하므로 남은 횟수와 참조할 역대 최고점이 모두 있어야 누를 수 있다.
-    this.sweepButton = new Button(this, sweepX, actions.y, { width: actions.sweepWidth, height: actions.height, label: "소  탕", fontSize: 32, onClick: () => this.confirmSweep() }).setDepth(12);
+    this.sweepButton = new Button(this, sweepX, actions.y, { width: actions.sweepWidth, height: actions.height, label: t("expedition.sweep"), fontSize: 32, onClick: () => this.confirmSweep() }).setDepth(12);
     this.sweepButton.setEnabled(status.canStartRun && status.allTimeBestScore > 0);
   }
 
@@ -644,10 +645,10 @@ export class ExpeditionScene extends Phaser.Scene {
     const left = -score.width / 2 + 48;
     const right = score.width / 2 - 48;
     const top = -score.height / 2 + 40;
-    panel.add(this.add.text(left, top, "내 주간 최고 점수", textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0, 0));
+    panel.add(this.add.text(left, top, t("expedition.weekly.myBest"), textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0, 0));
     panel.add(this.add.text(left, top + 32, (best?.bestScore ?? 0).toLocaleString(), textStyle({ role: "display", size: 52, color: COLOR.accentText })).setOrigin(0, 0));
-    panel.add(this.add.text(right, top, best?.rank ? `주간 ${best.rank}위` : "미등재", textStyle({ role: "emphasis", size: 26, color: COLOR.sortieText })).setOrigin(1, 0));
-    panel.add(this.add.text(right, top + 90, `주간 누적 원정 점수 ${(best?.cumulativeScore ?? 0).toLocaleString()}`, textStyle({ role: "body", size: 20, color: COLOR.ink })).setOrigin(1, 0));
+    panel.add(this.add.text(right, top, best?.rank ? t("expedition.weekly.rank", { rank: best.rank }) : t("expedition.weekly.unranked"), textStyle({ role: "emphasis", size: 26, color: COLOR.sortieText })).setOrigin(1, 0));
+    panel.add(this.add.text(right, top + 90, t("expedition.weekly.cumulativeLine", { score: (best?.cumulativeScore ?? 0).toLocaleString() }), textStyle({ role: "body", size: 20, color: COLOR.ink })).setOrigin(1, 0));
   }
 
   /** 내 최고 순위는 순위표에만 있으므로 두 조회를 함께 묶는다. */
@@ -655,12 +656,12 @@ export class ExpeditionScene extends Phaser.Scene {
     try {
       const [best, leaderboard] = await Promise.all([gameApi.getExpeditionWeeklyBest(), gameApi.getExpeditionLeaderboard(10)]);
       if (!this.scene.isActive() || this.stage !== "ranking") return;
-      if (best.weekKey !== leaderboard.weekKey) { this.renderMyScore("주차가 바뀌었습니다. 다시 들어와 주세요."); return; }
+      if (best.weekKey !== leaderboard.weekKey) { this.renderMyScore(t("expedition.weekly.rolled")); return; }
       const mine = leaderboard.entries.find((entry) => entry.isMe);
       this.renderMyScore("", { rank: mine?.rank, bestScore: best.bestScore, cumulativeScore: best.cumulativeScore });
     } catch {
       if (!this.scene.isActive() || this.stage !== "ranking") return;
-      this.renderMyScore("기록을 불러오지 못했습니다");
+      this.renderMyScore(t("expedition.weekly.loadFailed"));
     }
   }
 
@@ -668,9 +669,9 @@ export class ExpeditionScene extends Phaser.Scene {
   private confirmSweep(): void {
     if (this.sweepPending) return;
     this.popups.confirm({
-      title: "소탕",
-      message: "역대 최고 점수의 80%를 주간 기록에, 노드 클리어 전리품의 50%를 즉시 지급합니다.\n이번 주 원정 기회 1회를 사용하며 되돌릴 수 없습니다.",
-      confirmLabel: "소탕하기",
+      title: t("expedition.sweep.title"),
+      message: t("expedition.sweep.body"),
+      confirmLabel: t("expedition.sweep.confirm"),
     }, () => void this.sweep());
   }
 
@@ -681,15 +682,15 @@ export class ExpeditionScene extends Phaser.Scene {
     try {
       const requestId = globalThis.crypto?.randomUUID?.() ?? `expedition-sweep-${Date.now()}-${Math.random().toString(36).slice(2)}`;
       const result = await gameApi.sweepExpedition({ requestId });
-      openRewardPopup(this, this.popups, { title: "소탕 완료", items: currencyRecordToRewardItems(result.granted), onConfirm: () => this.scene.restart() });
+      openRewardPopup(this, this.popups, { title: t("expedition.sweep.done"), items: currencyRecordToRewardItems(result.granted), onConfirm: () => this.scene.restart() });
     } catch (error) {
       const code = error instanceof GameApiError ? error.code : undefined;
       const message: Partial<Record<string, string>> = {
-        EXPEDITION_SCORE_REQUIRED: "소탕할 기준 점수가 없습니다",
-        EXPEDITION_WEEKLY_LIMIT: "이번 주 원정 기회를 모두 사용했습니다",
-        EXPEDITION_ALREADY_ACTIVE: "진행 중인 원정이 있습니다",
+        EXPEDITION_SCORE_REQUIRED: t("expedition.sweep.noBaseline"),
+        EXPEDITION_WEEKLY_LIMIT: t("expedition.noPlaysLeft"),
+        EXPEDITION_ALREADY_ACTIVE: t("expedition.runInProgress"),
       };
-      this.renderMyScore(message[code ?? ""] ?? "소탕에 실패했습니다");
+      this.renderMyScore(message[code ?? ""] ?? t("expedition.sweep.failed"));
       this.sweepPending = false;
       this.sweepButton?.setEnabled(true);
     }
@@ -701,10 +702,10 @@ export class ExpeditionScene extends Phaser.Scene {
     const saved = session.expedition.lastParty.filter((id, index, ids) => session.owned.has(id) && ids.indexOf(id) === index);
     this.selected = toFormationSlots(saved.length === 3 ? saved : [...session.owned].slice(0, 3), 3);
     this.selectedSlot = undefined;
-    this.add.text(BASE_WIDTH / 2, 292, "원정대 3기 선택", textStyle({ role: "emphasis", size: 32 })).setOrigin(0.5);
+    this.add.text(BASE_WIDTH / 2, 292, t("expedition.party.title"), textStyle({ role: "emphasis", size: 32 })).setOrigin(0.5);
     if (import.meta.env.DEV) {
       // 임시 개발 도구: Session을 건드리지 않고 매니저가 만든 실제 20층 노드를 열어 미리보기와 출격 흐름을 그대로 검수한다.
-      new Button(this, 170, 292, { width: 230, height: 68, label: "DEV · 20층", fontSize: 21, fill: 0x3b2330, accentColor: COLOR.sortie, accentTextColor: COLOR.sortieText, onClick: () => this.openDevelopmentBossShortcut() });
+      new Button(this, 170, 292, { width: 230, height: 68, label: t("expedition.party.devFloor"), fontSize: 21, fill: 0x3b2330, accentColor: COLOR.sortie, accentTextColor: COLOR.sortieText, onClick: () => this.openDevelopmentBossShortcut() });
     }
     // 서버가 빠른 원정을 열어 두었을 때만 버튼이 생긴다. 조회 중이라거나 열리지 않았다는 말은
     // 플레이어의 선택을 바꾸지 않으므로 화면에 남기지 않는다.
@@ -713,11 +714,11 @@ export class ExpeditionScene extends Phaser.Scene {
 
     this.buildRosterGrid();
 
-    this.hint = this.add.text(BASE_WIDTH / 2, 1550, "3기를 선택하세요", textStyle({ role: "body", size: 27, color: COLOR.inkDim })).setOrigin(0.5);
+    this.hint = this.add.text(BASE_WIDTH / 2, 1550, t("expedition.party.needThree"), textStyle({ role: "body", size: 27, color: COLOR.inkDim })).setOrigin(0.5);
     this.startButton = new Button(this, BASE_WIDTH / 2, 1680, {
       width: 560,
       height: 132,
-      label: "원정 시작",
+      label: t("expedition.party.start"),
       sub: "0 / 3",
       fontSize: 42,
       variant: "primary",
@@ -828,7 +829,7 @@ export class ExpeditionScene extends Phaser.Scene {
       this.scene.restart();
       return;
     }
-    this.hint?.setText(result.reason === "developmentOnly" ? "개발 빌드에서만 사용할 수 있습니다" : this.failureMessage(result.reason));
+    this.hint?.setText(result.reason === "developmentOnly" ? t("expedition.devOnly") : this.failureMessage(result.reason));
   }
 
   /** 서버가 활성화한 슬롯의 문구·비율·일일/주간 한도만 준비 화면에 결합한다. */
@@ -848,7 +849,7 @@ export class ExpeditionScene extends Phaser.Scene {
       // 주 행동과 떨어진 낮고 작은 중립 버튼으로 위계를 명확히 나눈다. 버튼이 보상과 남은
       // 횟수를 직접 말하므로 별도 상태 문구를 두지 않는다.
       this.quickButton?.destroy();
-      this.quickButton = new Button(this, 230, 1800, { width: 340, height: 84, label: slot.displayText, sub: `골드 ${expected.toLocaleString()} · 오늘 ${dailyRemaining}회`, fontSize: 25, subFontSize: 18, onClick: () => void this.claimQuickExpedition(slot) });
+      this.quickButton = new Button(this, 230, 1800, { width: 340, height: 84, label: slot.displayText, sub: t("expedition.quick.sub", { gold: expected.toLocaleString(), remaining: dailyRemaining }), fontSize: 25, subFontSize: 18, onClick: () => void this.claimQuickExpedition(slot) });
     } catch { /* 조회 실패는 그 자리를 비운다. 실패했다는 말은 플레이어가 할 일을 바꾸지 않는다. */ }
   }
 
@@ -858,7 +859,7 @@ export class ExpeditionScene extends Phaser.Scene {
     this.quickClaimPending = true; this.quickButton?.setEnabled(false);
     try {
       const token = completedAdToken(await presentRewardedAd(slot.slotId));
-      if (!token) { this.hint?.setText("광고가 취소되었습니다"); this.quickButton?.setEnabled(true); return; }
+      if (!token) { this.hint?.setText(t("expedition.quick.cancelled")); this.quickButton?.setEnabled(true); return; }
       const requestId = globalThis.crypto?.randomUUID?.() ?? `quick-expedition-${Date.now()}-${Math.random().toString(36).slice(2)}`;
       const result = await gameApi.claimAdReward({ slotId: "quick-expedition", verificationToken: token, requestId });
       const gained = Math.max(0, result.granted.gold ?? 0);
@@ -866,17 +867,17 @@ export class ExpeditionScene extends Phaser.Scene {
       session.wallet = { ...result.wallet };
       session.dailyAdRewards = { date: result.dailyAdRewards.date, claimsBySlot: { ...result.dailyAdRewards.claimsBySlot }, requestIds: session.dailyAdRewards.requestIds };
       await this.loadQuickExpeditionOffer();
-      if (gained === 0) this.hint?.setText("골드 지갑이 가득 찼습니다");
-      else openRewardPopup(this, this.popups, { title: "빠른 원정 완료", items: [{ icon: "currency-gold", amount: gained, label: "실제 지갑 증가" }] });
+      if (gained === 0) this.hint?.setText(t("expedition.quick.walletFull"));
+      else openRewardPopup(this, this.popups, { title: t("expedition.quick.done"), items: [{ icon: "currency-gold", amount: gained, label: t("expedition.quick.walletGain") }] });
     } catch (error) {
       const code = error instanceof GameApiError ? error.code : undefined;
       const message: Partial<Record<string, string>> = {
-        AD_TOKEN_INVALID: "광고 검증에 실패했습니다 · 다시 시도하세요",
-        AD_DAILY_LIMIT: "오늘 횟수를 모두 사용했습니다 · 내일 다시 오세요",
-        AD_WEEKLY_LIMIT: "이번 주 횟수를 모두 사용했습니다 · 다음 주에 다시 오세요",
-        EXPEDITION_SCORE_REQUIRED: "기준 점수가 없습니다 · 원정 최고점을 먼저 기록하세요",
+        AD_TOKEN_INVALID: t("expedition.quick.verifyFailed"),
+        AD_DAILY_LIMIT: t("expedition.quick.dailyUsed"),
+        AD_WEEKLY_LIMIT: t("expedition.quick.weeklyUsed"),
+        EXPEDITION_SCORE_REQUIRED: t("expedition.quick.noBaseline"),
       };
-      this.hint?.setText(message[code ?? ""] ?? "잠시 후 다시 시도해 주세요");
+      this.hint?.setText(message[code ?? ""] ?? t("expedition.quick.retryLater"));
       this.quickButton?.setEnabled(!["AD_DAILY_LIMIT", "AD_WEEKLY_LIMIT", "EXPEDITION_SCORE_REQUIRED"].includes(code ?? ""));
     } finally {
       this.quickClaimPending = false;
@@ -1044,7 +1045,7 @@ export class ExpeditionScene extends Phaser.Scene {
     const count = formationMembers(this.selected).length;
     this.cards.forEach((card, id) => card.setSelected(this.selected.includes(id), COLOR.sortie));
     this.startButton?.setSub(`${count} / 3`).setEnabled(count === 3);
-    this.hint.setText(count === 3 ? "출발 준비 완료" : "3기를 선택하세요");
+    this.hint.setText(count === 3 ? t("expedition.party.ready") : t("expedition.party.needThree"));
     // Canvas 밖 모바일 E2E에는 렐릭 정보 없이 실제 슬롯 입력 중심과 표시 인원수만 공개한다.
     setDebugExpeditionFormation({ selectedCount: count, slots: [0, 1, 2].map((index) => ({ x: FORMATION.firstX + index * FORMATION.stepX, y: FORMATION.y })) });
   }
@@ -1062,9 +1063,9 @@ export class ExpeditionScene extends Phaser.Scene {
 
   /** 공개 실패 코드를 화면에 필요한 짧은 행동 문구로만 바꾼다. */
   private failureMessage(reason: StartExpeditionFailure): string {
-    if (reason === "alreadyActive") return "진행 중인 원정이 있습니다";
-    if (reason === "notOwned") return "보유 렐릭만 선택할 수 있습니다";
-    if (reason === "weeklyLimitReached") return "이번 주 원정 기회를 모두 사용했습니다";
-    return "서로 다른 렐릭 3기를 선택하세요";
+    if (reason === "alreadyActive") return t("expedition.runInProgress");
+    if (reason === "notOwned") return t("expedition.party.ownedOnly");
+    if (reason === "weeklyLimitReached") return t("expedition.noPlaysLeft");
+    return t("expedition.party.distinct");
   }
 }

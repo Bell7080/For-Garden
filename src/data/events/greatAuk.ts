@@ -1,4 +1,5 @@
 import type { BattleStageDef } from "../../core/types";
+import { registerDataText } from "../../i18n";
 import { GREAT_AUK_REPORT } from "../dialogues/greatAukReport";
 import { FIXED_STAGE_ENEMIES } from "../stages";
 import type { EventDefinition } from "./types";
@@ -29,3 +30,8 @@ export const GREAT_AUK_EVENT: EventDefinition = {
   ],
   exchangeProductIds: ["event-great-auk-supplies"],
 };
+
+/** 이벤트 이름과 임무 제목을 언어별로 덮어쓸 수 있게 등록한다. */
+registerDataText(GREAT_AUK_SHORE, "name", "event.greatAuk.stage.name");
+registerDataText(GREAT_AUK_EVENT, "title", "event.greatAuk.title");
+for (const mission of GREAT_AUK_EVENT.missions) registerDataText(mission, "title", `event.greatAuk.mission.${mission.id}`);

@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { t, type TextKey } from "../i18n";
 import type { GameApi } from "../api/contracts";
 import { ITEM_ICON_FALLBACK, type ItemCategory, type ItemIcon } from "../data/items";
 import { setDebugInventoryCategory, setDebugInventoryTextureKeys } from "../debug";
@@ -10,7 +11,7 @@ import { addItemFrame, ITEM_FRAME } from "./itemFrame";
 import { INVENTORY_TAB_LAYOUT, inventoryCategoryTabPosition } from "./inventoryTabs";
 import { POPUP_TITLE_SIZE, PopupLayer } from "./PopupLayer";
 import { equippedRelicName, openRuneInfoPopup } from "./RunePopup";
-import { RUNE_PART_LABELS, RUNE_RARITY_LABELS } from "../core/runes";
+import { runeDisplayName, runePartLabel, runeRarityLabel } from "../core/runes";
 import { addRuneCard, runeTexture } from "./runeIcons";
 import { COLOR, textStyle } from "./theme";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
@@ -19,8 +20,8 @@ import { managerEvents } from "../managers/ManagerEvents";
 import { CurrencyGuidePopup } from "./CurrencyGuidePopup";
 import type { CurrencyGuideAction } from "../data/currencyGuide";
 
-const CATEGORIES: readonly { id: ItemCategory; label: string }[] = [
-  { id: "rune", label: "룬" }, { id: "currency", label: "재화" }, { id: "consumable", label: "소비품" }, { id: "material", label: "재료" },
+const CATEGORIES: readonly { id: ItemCategory; label: TextKey }[] = [
+  { id: "rune", label: "inventory.tab.rune" }, { id: "currency", label: "inventory.tab.currency" }, { id: "consumable", label: "inventory.tab.consumable" }, { id: "material", label: "inventory.tab.material" },
 ];
 // 900px 작업판에서 좌우 48px만 안전 여백으로 남기고 본문이 나머지를 모두 사용한다.
 const POPUP_WIDTH = 900; const POPUP_HEIGHT = 1510; const BODY_SAFE_X = 48; const LIST_TOP = -550; const TAB_CLEARANCE = 20;
@@ -60,7 +61,7 @@ export class InventoryPopup {
   open(): void {
     if (this.body) return;
     const width = POPUP_WIDTH; const height = POPUP_HEIGHT;
-    this.body = this.popups.open({ width, height, title: "가방", titleSize: POPUP_TITLE_SIZE.workboard, dim: true, closeOnBackdrop: false, hideCloseButton: true, onClose: () => { this.unsubscribeInventory?.(); this.unsubscribeInventory = undefined; this.destroyMask(); setDebugInventoryCategory(undefined); this.body = undefined; this.view = undefined; this.closePopup = undefined; this.onClose?.(); } }, (body, close) => {
+    this.body = this.popups.open({ width, height, title: t("inventory.title"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, closeOnBackdrop: false, hideCloseButton: true, onClose: () => { this.unsubscribeInventory?.(); this.unsubscribeInventory = undefined; this.destroyMask(); setDebugInventoryCategory(undefined); this.body = undefined; this.view = undefined; this.closePopup = undefined; this.onClose?.(); } }, (body, close) => {
       // 외부 돌아가기 버튼은 stack 최상단이 아니라 이 가방 판을 정확히 가리켜야 한다.
       this.closePopup = close;
       // 공용 팝업 판과 제목은 보존하고 교체 가능한 내용 전용 컨테이너만 다시 그린다.
@@ -144,10 +145,10 @@ export class InventoryPopup {
 
   /** 기존 탭처럼 크기와 강조색만으로 선택을 알리고 누르면 정렬 및 스크롤 원점을 갱신한다. */
   private addSortControls(body: Phaser.GameObjects.Container): void {
-    const keys: readonly { key: InventorySort["key"]; label: string }[] = [{ key: "acquired", label: "획득순" }, { key: "rarity", label: "등급" }, { key: "part", label: "부위" }, { key: "enhancement", label: "세공" }, { key: "equipped", label: "장착" }];
+    const keys: readonly { key: InventorySort["key"]; label: TextKey }[] = [{ key: "acquired", label: "inventory.sort.acquired" }, { key: "rarity", label: "inventory.sort.rarity" }, { key: "part", label: "inventory.sort.part" }, { key: "enhancement", label: "inventory.sort.craft" }, { key: "equipped", label: "inventory.sort.equipped" }];
     keys.forEach(({ key, label }, index) => {
       const selected = this.sort.key === key; const node = this.scene.add.container(-300 + index * 150, -620).setScale(selected ? 1.12 : 1);
-      node.add(this.scene.add.text(0, 0, `${label}${selected ? (this.sort.direction === "asc" ? " ↑" : " ↓") : ""}`, textStyle({ role: "emphasis", size: 20, color: selected ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5));
+      node.add(this.scene.add.text(0, 0, `${t(label)}${selected ? (this.sort.direction === "asc" ? " ↑" : " ↓") : ""}`, textStyle({ role: "emphasis", size: 20, color: selected ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5));
       const hit = this.scene.add.rectangle(0, 0, 130, 54, 0xffffff, 0).setInteractive({ useHandCursor: true });
       hit.on("pointerdown", () => node.setScale(1.16));
       hit.on("pointerup", () => { this.sort = { key, direction: selected && this.sort.direction === "asc" ? "desc" : "asc" }; this.render(body); });
@@ -230,12 +231,12 @@ export class InventoryPopup {
     return shade(drawGlyph(this.scene, icon.kind === "glyph" ? icon.key : ITEM_ICON_FALLBACK, x, y, size * 0.7, shadow ? 0x000000 : COLOR.accent));
   }
 
-  private label(item: InventoryDisplayItem): string { return item.kind === "rune" ? item.rune.customName ?? item.rune.baseName : item.definition.name; }
+  private label(item: InventoryDisplayItem): string { return item.kind === "rune" ? runeDisplayName(item.rune) : item.definition.name; }
   private description(item: InventoryDisplayItem): string {
     if (item.kind !== "rune") return item.definition.description;
     // 카드에는 선택에 필요한 등급·부위·장착 상태만 두고 정적 개발 설명은 반복하지 않는다.
     const equipped = equippedRelicName(item.rune.instanceId);
-    return `${RUNE_RARITY_LABELS[item.rune.rarity]} · ${RUNE_PART_LABELS[item.rune.part]}${equipped ? `\n장착 · ${equipped}` : ""}`;
+    return `${runeRarityLabel(item.rune.rarity)} · ${runePartLabel(item.rune.part)}${equipped ? `\n${t("inventory.rune.equipped", { name: equipped })}` : ""}`;
   }
 
   /** 룬은 기존 정보창, 소비품은 확인 후 서버 결과, 재화·재료는 읽기 전용 상세로 연결한다. */
@@ -245,9 +246,9 @@ export class InventoryPopup {
     if (item.kind === "rune") { openRuneInfoPopup(this.scene, this.popups, { runeInstanceId: item.rune.instanceId, api: this.api }); return; }
     // 재화 카드는 상단 칩과 같은 안내 프리팹을 스택 위에 쌓아 가방 자체를 보존한다.
     if (item.category === "currency" && item.definition.icon.kind === "currency") { new CurrencyGuidePopup(this.scene, this.popups, this.onCurrencyAction).open(item.definition.icon.key); return; }
-    if (item.category !== "consumable") { this.popups.open({ width: 440, height: 280, title: this.label(item), anchor, dim: true }, (body) => body.add(this.scene.add.text(0, 0, `${this.description(item)}\n\n보유 ${item.quantity}`, textStyle({ role: "body", size: 22, align: "center", wrap: 340 })).setOrigin(0.5))); return; }
+    if (item.category !== "consumable") { this.popups.open({ width: 440, height: 280, title: this.label(item), anchor, dim: true }, (body) => body.add(this.scene.add.text(0, 0, t("inventory.itemDetail", { description: this.description(item), quantity: item.quantity }), textStyle({ role: "body", size: 22, align: "center", wrap: 340 })).setOrigin(0.5))); return; }
     // 지갑 갱신은 InventoryManager.useConsumable이 이미 managerEvents로 발행하므로(TopBar가 구독)
     // 여기서 다시 알리지 않는다.
-    this.popups.confirm({ title: this.label(item), message: "아이템을 1개 사용하시겠습니까?", confirmLabel: "사용" }, () => { void this.inventory.useConsumable(this.api, item.id).then((result) => { this.popups.open({ width: 440, height: 250, title: "사용 완료", dim: true }, (body) => body.add(this.scene.add.text(0, 0, `스테미나 +${result.appliedAmount}`, textStyle({ role: "emphasis", size: 26, color: COLOR.accentText })).setOrigin(0.5))); if (this.view) this.render(this.view); }); });
+    this.popups.confirm({ title: this.label(item), message: t("inventory.useConfirm"), confirmLabel: t("inventory.use") }, () => { void this.inventory.useConsumable(this.api, item.id).then((result) => { this.popups.open({ width: 440, height: 250, title: t("inventory.useDone"), dim: true }, (body) => body.add(this.scene.add.text(0, 0, t("inventory.staminaGained", { amount: result.appliedAmount }), textStyle({ role: "emphasis", size: 26, color: COLOR.accentText })).setOrigin(0.5))); if (this.view) this.render(this.view); }); });
   }
 }

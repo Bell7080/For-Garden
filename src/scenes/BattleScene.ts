@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { t } from "../i18n";
 import { gameApi } from "../api/FakeServer";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { FEROCITY_RULES } from "../core/ferocity";
@@ -343,8 +344,8 @@ export class BattleScene extends Phaser.Scene {
     this.bossScoreTarget = this.bossScoreShown;
     this.bossScoreScale = 1;
     this.bossScoreLabel = this.add.text(BASE_WIDTH / 2, 78, this.bossScoreShown.toLocaleString(), textStyle({ role: "display", size: 58, color: COLOR.sortieText })).setOrigin(0.5, 0).setDepth(90);
-    this.bossPhaseLabel = this.add.text(42, 140, "관측 · 00:00", textStyle({ role: "emphasis", size: 25, color: COLOR.accentText })).setDepth(90);
-    this.bossBestLabel = this.add.text(42, 180, "일반 스테이지 0  ·  보스전 0", textStyle({ role: "emphasis", size: 25, color: COLOR.ink })).setDepth(90);
+    this.bossPhaseLabel = this.add.text(42, 140, t("battle.boss.phase"), textStyle({ role: "emphasis", size: 25, color: COLOR.accentText })).setDepth(90);
+    this.bossBestLabel = this.add.text(42, 180, t("battle.boss.scoreLine", { normal: 0, boss: 0 }), textStyle({ role: "emphasis", size: 25, color: COLOR.ink })).setDepth(90);
   }
 
   /** Phaser scene data를 명시 DTO로 받아 일반 스테이지와 원정 결과 경계를 분리한다. */
@@ -460,10 +461,10 @@ export class BattleScene extends Phaser.Scene {
       // 시도"만 남고 눌러도 같은 자리에서 같은 이유로 막혔다 — 서버가 거절한 것인지, 이미
       // 정산된 런인지, 결과판을 그리다 터진 것인지 아무도 알 수 없었다.
       console.error("[expedition] 보스 정산 실패", error);
-      const reason = error instanceof ExpeditionBossSettlementError ? error.message : "결과 화면을 복구하지 못했습니다.";
+      const reason = error instanceof ExpeditionBossSettlementError ? error.message : t("battle.settle.failed");
       this.add.text(BASE_WIDTH / 2, 970, reason, textStyle({ role: "body", size: 27, color: COLOR.dangerText, align: "center", wrap: BASE_WIDTH - 220 })).setOrigin(0.5).setDepth(201);
       // 같은 버튼은 저장된 요청 ID로 전체 체인을 재시도하므로 성공한 서버 제출도 중복 누적되지 않는다.
-      new Button(this, BASE_WIDTH / 2, 1050, { width: 460, height: 100, label: "정산 다시 시도", onClick: () => void this.submitAndSettleBoss(input, actions) }).setDepth(201);
+      new Button(this, BASE_WIDTH / 2, 1050, { width: 460, height: 100, label: t("battle.settle.retry"), onClick: () => void this.submitAndSettleBoss(input, actions) }).setDepth(201);
     }
   }
 
@@ -474,26 +475,26 @@ export class BattleScene extends Phaser.Scene {
     // 최종판은 전장 HUD·잔존 피해 숫자까지 완전히 덮어 별도 화면처럼 읽히게 한다.
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.96).setDepth(5000);
     const layout = BOSS_RESULT_LAYOUT;
-    this.add.text(layout.title.x, layout.title.y, "원정 관측 완료", textStyle({ role: "display", size: 60, color: COLOR.accentText })).setOrigin(0.5).setDepth(5001);
+    this.add.text(layout.title.x, layout.title.y, t("battle.settle.done"), textStyle({ role: "display", size: 60, color: COLOR.accentText })).setOrigin(0.5).setDepth(5001);
     const rewardItems = currencyRecordToRewardItems(settlement.granted);
     // 정산 재화는 문자열로 점수에 붙이지 않고 기존 RewardFrame 액자 문법을 그대로 재사용한다.
     drawLayer(this, BASE_WIDTH / 2, layout.rewards.top + layout.rewards.height / 2, chipPoints(layout.rewards.width, layout.rewards.height, { bevel: { topLeft: 34, bottomRight: 28 } }), { fill: 0x0d131b, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.5 }).setDepth(5001);
-    this.add.text(BASE_WIDTH / 2, layout.rewards.top + 54, "정산 보상", textStyle({ role: "display", size: 28, color: COLOR.accentText })).setOrigin(0.5).setDepth(5002);
+    this.add.text(BASE_WIDTH / 2, layout.rewards.top + 54, t("battle.settle.reward"), textStyle({ role: "display", size: 28, color: COLOR.accentText })).setOrigin(0.5).setDepth(5002);
     if (rewardItems.length === 0) {
-      this.add.text(BASE_WIDTH / 2, layout.rewards.top + 190, "정산 재화 없음", textStyle({ role: "body", size: 25, color: COLOR.inkDim })).setOrigin(0.5).setDepth(5002);
+      this.add.text(BASE_WIDTH / 2, layout.rewards.top + 190, t("battle.settle.noReward"), textStyle({ role: "body", size: 25, color: COLOR.inkDim })).setOrigin(0.5).setDepth(5002);
     } else {
       const startX = BASE_WIDTH / 2 - ((rewardItems.length - 1) * layout.rewards.frameGap) / 2;
       // currencyRecordToRewardItems는 이 경로에서 CurrencyIconKey만 만들며 다른 상품 글리프는 받지 않는다.
       rewardItems.forEach((item, index) => new RewardFrame(this, startX + index * layout.rewards.frameGap, layout.rewards.top + 205, { icon: item.icon as CurrencyIconKey, amount: item.amount, size: layout.rewards.frameSize }).setDepth(5002));
     }
     // 기본 결과판은 최종 총점만 크게 남긴다. 구성값은 서버 영수증 그대로 별도 상세 팝업에 건넨다.
-    this.add.text(BASE_WIDTH / 2, layout.score.top + 105, "이번 원정 점수", textStyle({ role: "body", size: 27, color: COLOR.inkDim })).setOrigin(0.5).setDepth(5001);
+    this.add.text(BASE_WIDTH / 2, layout.score.top + 105, t("battle.settle.score"), textStyle({ role: "body", size: 27, color: COLOR.inkDim })).setOrigin(0.5).setDepth(5001);
     const scoreText = this.add.text(BASE_WIDTH / 2, layout.score.top + 225, score.runScore.toLocaleString(), textStyle({ role: "display", size: 76, color: "#ffffff", align: "center" })).setOrigin(0.5).setDepth(5001);
     scoreText.setStroke("#000000", 6).setShadow(0, 4, "#000000", 4, false, true);
     const popups = new PopupLayer(this, 6000);
     // 총점 바로 아래의 작은 보조 조작만 세부 점수로 이어져 기본 화면의 정보 위계를 흐리지 않는다.
-    new Button(this, BASE_WIDTH / 2, layout.score.top + 350, { width: 160, height: 62, label: "상세", fontSize: 22, onClick: () => new ExpeditionScoreDetailPopup(this, popups).open(score) }).setDepth(5001);
-    new Button(this, BASE_WIDTH / 2, layout.lobby.top + layout.lobby.height / 2, { width: layout.lobby.width, height: layout.lobby.height, label: "로비로", variant: "primary", onClick: () => {
+    new Button(this, BASE_WIDTH / 2, layout.score.top + 350, { width: 160, height: 62, label: t("battle.settle.detail"), fontSize: 22, onClick: () => new ExpeditionScoreDetailPopup(this, popups).open(score) }).setDepth(5001);
+    new Button(this, BASE_WIDTH / 2, layout.lobby.top + layout.lobby.height / 2, { width: layout.lobby.width, height: layout.lobby.height, label: t("battle.settle.toLobby"), variant: "primary", onClick: () => {
       if (this.bossLeaving) return;
       this.bossLeaving = true;
       // 성공 정산은 다시 요청하지 않는다. Boot가 서버 최신본을 읽고 저장 검증·마이그레이션을 거친다.
@@ -502,8 +503,8 @@ export class BattleScene extends Phaser.Scene {
     setDebugBossResult({ visible: true, lobby: { x: BASE_WIDTH / 2, y: layout.lobby.top + layout.lobby.height / 2 } });
     const [weekly, contribution] = bossResultUtilityBounds();
     // 기록과 기여도는 같은 보조 행동선에 두고, 로비 주 행동은 그 아래 독립 안전 영역에 둔다.
-    new Button(this, weekly.left + weekly.width / 2, weekly.top + weekly.height / 2, { width: weekly.width, height: weekly.height, label: "주간 기록", fontSize: 27, onClick: () => new ExpeditionRankingPopup(this, popups).open() }).setDepth(5001);
-    new Button(this, contribution.left + contribution.width / 2, contribution.top + contribution.height / 2, { width: contribution.width, height: contribution.height, label: "기여도", fontSize: 27, onClick: () => this.openContributionPopup(popups) }).setDepth(5001);
+    new Button(this, weekly.left + weekly.width / 2, weekly.top + weekly.height / 2, { width: weekly.width, height: weekly.height, label: t("battle.settle.weeklyRecord"), fontSize: 27, onClick: () => new ExpeditionRankingPopup(this, popups).open() }).setDepth(5001);
+    new Button(this, contribution.left + contribution.width / 2, contribution.top + contribution.height / 2, { width: contribution.width, height: contribution.height, label: t("battle.contribution"), fontSize: 27, onClick: () => this.openContributionPopup(popups) }).setDepth(5001);
   }
 
   /** 같은 PopupLayer 위에 읽기 전용 판을 쌓아 닫은 뒤 기존 결과 조작이 그대로 남게 한다. */
@@ -521,34 +522,34 @@ export class BattleScene extends Phaser.Scene {
     const width = 170;
     this.speedChip = new ControlChip(this, BATTLE_CONTROLS.speedX, BATTLE_CONTROLS.rowY, {
       icon: "speed",
-      label: `${this.battleSpeed}배속`,
+      label: t("battle.chip.speed", { speed: this.battleSpeed }),
       width,
       onClick: () => {
         this.battleSpeed = nextBattleSpeed(this.battleSpeed);
         // 판이 바뀌거나 앱을 다시 열어도 마지막 선택을 유지하도록 공용 저장 경계를 통과한다.
         settingsManager.update({ game: { battleSpeed: this.battleSpeed } });
-        this.speedChip.setLabel(`${this.battleSpeed}배속`).setActive(this.battleSpeed > 1);
+        this.speedChip.setLabel(t("battle.chip.speed", { speed: this.battleSpeed })).setActive(this.battleSpeed > 1);
         this.refreshDebug();
       },
     });
     this.autoChip = new ControlChip(this, BATTLE_CONTROLS.rightX, BATTLE_CONTROLS.rowY, {
       icon: "auto",
-      label: this.autoUltimate ? "궁극 ON" : "궁극 OFF",
+      label: this.autoUltimate ? t("battle.chip.autoOn") : t("battle.chip.autoOff"),
       width,
       onClick: () => {
         this.autoUltimate = !this.autoUltimate;
         // 자동 궁극기도 배속과 같은 플레이 습관이므로 토글하는 즉시 저장한다.
         settingsManager.update({ game: { autoUltimate: this.autoUltimate } });
-        this.autoChip.setLabel(this.autoUltimate ? "궁극 ON" : "궁극 OFF").setActive(this.autoUltimate);
+        this.autoChip.setLabel(this.autoUltimate ? t("battle.chip.autoOn") : t("battle.chip.autoOff")).setActive(this.autoUltimate);
         this.refreshDebug();
       },
     });
     const refreshPresentationChip = (): void => {
       const skipped = settingsManager.get().game.skipUltimatePresentation;
-      this.presentationChip.setLabel(skipped ? "연출 스킵" : "연출 ON").setActive(skipped);
+      this.presentationChip.setLabel(skipped ? t("battle.chip.skipOn") : t("battle.chip.skipOff")).setActive(skipped);
     };
     this.presentationChip = new ControlChip(this, BATTLE_CONTROLS.rightX, BATTLE_CONTROLS.rowY - BATTLE_CONTROLS.stackGap, {
-      icon: "auto", label: "연출 ON", width,
+      icon: "auto", label: t("battle.chip.skipOff"), width,
       onClick: () => {
         // 전투 흐름을 바꾸는 값은 세션을 직접 고치지 않고 공용 manager 경계에서 즉시 영속화한다.
         settingsManager.update({ game: { skipUltimatePresentation: !settingsManager.get().game.skipUltimatePresentation } });
@@ -559,7 +560,7 @@ export class BattleScene extends Phaser.Scene {
     // 우하단에 모였는데 이것만 화면을 가로질러 가야 했고 펼친 판이 그 칩을 덮어 감췄다 되살려야
     // 했다. 자리는 `CONTRIBUTION_TOGGLE` 한 곳이 정한다.
     this.contributionChip = new ControlChip(this, CONTRIBUTION_TOGGLE.x, CONTRIBUTION_TOGGLE.y, {
-      icon: "bar-chart", label: "기여도", width: CONTRIBUTION_TOGGLE.width, height: CONTRIBUTION_TOGGLE.height,
+      icon: "bar-chart", label: t("battle.contribution"), width: CONTRIBUTION_TOGGLE.width, height: CONTRIBUTION_TOGGLE.height,
       onClick: () => { this.contributionPanel?.toggle(); this.contributionChip.setActive(this.contributionPanel?.state.expanded ?? false); this.refreshDebug(); },
     });
     // 전장 아래쪽에 서므로 SD·체력 바보다 앞에 둔다.
@@ -883,9 +884,9 @@ export class BattleScene extends Phaser.Scene {
       this.bossScoreScale = Math.max(1, this.bossScoreScale - elapsed / 260);
       if (this.bossScoreTarget > previousTarget) this.bossScoreScale = Math.max(this.bossScoreScale, 1 + scoreMotion.punch);
       this.bossScoreLabel?.setText(this.bossScoreShown.toLocaleString()).setScale(this.bossScoreScale);
-      this.bossPhaseLabel?.setText(`${phase.label}${boss.tideWarning ? " · 해일 예고" : boss.limitReached ? " · LIMIT" : ""} · ${String(Math.floor(boss.survivedFor / 60)).padStart(2, "0")}:${String(Math.floor(boss.survivedFor) % 60).padStart(2, "0")}`);
+      this.bossPhaseLabel?.setText(t("battle.boss.phaseLine", { phase: phase.label, warning: boss.tideWarning ? t("battle.boss.tideWarning") : boss.limitReached ? t("battle.boss.limit") : "", time: `${String(Math.floor(boss.survivedFor / 60)).padStart(2, "0")}:${String(Math.floor(boss.survivedFor) % 60).padStart(2, "0")}` }));
       // 좌측 기존 정보 영역은 총점과 중복하지 않고 런을 이루는 두 점수의 세부값만 짧게 표시한다.
-      this.bossBestLabel?.setText(`일반 스테이지 ${normalScore.toLocaleString()}  ·  보스전 ${boss.score.toLocaleString()}`);
+      this.bossBestLabel?.setText(t("battle.boss.scoreLine", { normal: normalScore.toLocaleString(), boss: boss.score.toLocaleString() }));
     }
     // 상태 종료와 좌표를 먼저 Puppet에 동기화한 뒤 공격 사건을 재생해야, 기절이 풀린 같은 스텝의
     // 공격 모션을 뒤늦은 idle 전환이 덮어쓰지 않는다.
@@ -1154,7 +1155,7 @@ export class BattleScene extends Phaser.Scene {
       // 서버가 성장 스냅샷으로 재현할 수 있도록 ID·종류·코어 시각만 남기고 event.amount는 버린다.
       // 추가 사건은 원본 행동에 접는다. **연격 둘째 타는 제 모션을 갖지만 행동은 하나다** —
       // `animate`로 걸러 내면 같은 밀리초에 평타가 두 번 기록되어 서버 쿨다운 검증이 제출
-      // 전체를 거절했고(v0.66.1까지 폰토스 정산이 "다시 시도"만 남긴 원인), 그래서 코어가
+      // 전체를 거절했고(v0.66.1까지 폰토스 정산이 t("battle.result.retry")만 남긴 원인), 그래서 코어가
       // 표시하는 `followUp`을 읽는다. transfer는 animate=false라 여기 닿지 않는다.
       // 약점 포착도 표식을 찍은 개체가 낸 추가타라 원본 행동인 평타에 접는다 — 스타카토와 같다.
       const replayKind = event.skill === "staccato" || event.skill === "shimmer" || event.skill === "weakpoint"
@@ -1628,7 +1629,7 @@ export class BattleScene extends Phaser.Scene {
       profile.prefab.setMeters(profile.hpShown, fighter.maxHp, profile.ferocityShown, !alive);
       profile.ferocityBar.setValue(profile.ferocityShown / FEROCITY_RULES.max, ferocityColor);
       // 피버는 플레이어가 끄고 켜는 것이 아니라 스스로 가라앉으므로, 보상 상태와 남은 양만 알린다.
-      profile.ferocityLabel.setText(`${fever ? "폭주" : "야성"} ${Math.round(profile.ferocityShown)} / ${FEROCITY_RULES.max}`)
+      profile.ferocityLabel.setText(t(fever ? "battle.gauge.frenzy" : "battle.gauge.ferocity", { value: Math.round(profile.ferocityShown), max: FEROCITY_RULES.max }))
         .setColor(fever || fighter.ferocity >= 80 ? COLOR.ferocityHotText : FEROCITY_TEXT);
     }
   }
@@ -1722,12 +1723,12 @@ export class BattleScene extends Phaser.Scene {
     const stage = getBattleStage(session.selectedStageId ?? "1-1");
     if (!won) {
       this.add.rectangle(BASE_WIDTH / 2, 930, BASE_WIDTH, 420, COLOR.void, 0.84).setDepth(100);
-      this.add.text(BASE_WIDTH / 2, 840, "작전 실패", textStyle({ role: "display", size: 68, color: COLOR.dangerText })).setOrigin(0.5).setDepth(101);
-      this.add.text(BASE_WIDTH / 2, 930, "획득 보상 없음", textStyle({ role: "body", size: 28, color: COLOR.ink, align: "center", lineSpacing: 8 })).setOrigin(0.5).setDepth(101);
-      new Button(this, BASE_WIDTH / 2, 1050, { width: 400, height: 110, label: "지도로", fontSize: 34, onClick: () => {
+      this.add.text(BASE_WIDTH / 2, 840, t("battle.result.defeat"), textStyle({ role: "display", size: 68, color: COLOR.dangerText })).setOrigin(0.5).setDepth(101);
+      this.add.text(BASE_WIDTH / 2, 930, t("battle.result.noReward"), textStyle({ role: "body", size: 28, color: COLOR.ink, align: "center", lineSpacing: 8 })).setOrigin(0.5).setDepth(101);
+      new Button(this, BASE_WIDTH / 2, 1050, { width: 400, height: 110, label: t("battle.result.toMap"), fontSize: 34, onClick: () => {
         void gameApi.completeStage(stage.id, false).finally(() => this.scene.start("stageMap"));
       } }).setDepth(101);
-      new Button(this, BASE_WIDTH / 2, 1175, { width: 300, height: 76, label: "기여도", fontSize: 27, onClick: () => this.openContributionPopup() }).setDepth(101);
+      new Button(this, BASE_WIDTH / 2, 1175, { width: 300, height: 76, label: t("battle.contribution"), fontSize: 27, onClick: () => this.openContributionPopup() }).setDepth(101);
       return;
     }
     void this.finishStageVictory(stage);
@@ -1759,17 +1760,17 @@ export class BattleScene extends Phaser.Scene {
     } catch {
       // 승리는 이미 확정됐으므로 전장으로 되돌리지 않고, 같은 저장 요청만 다시 시도하게 한다.
       this.add.rectangle(BASE_WIDTH / 2, 930, BASE_WIDTH, 420, COLOR.void, 0.84).setDepth(100);
-      this.add.text(BASE_WIDTH / 2, 900, "결과를 저장하지 못했습니다", textStyle({ role: "body", size: 30, color: COLOR.ink })).setOrigin(0.5).setDepth(101);
-      new Button(this, BASE_WIDTH / 2, 1010, { width: 400, height: 100, label: "다시 시도", onClick: () => void this.finishStageVictory(stage) }).setDepth(101);
+      this.add.text(BASE_WIDTH / 2, 900, t("battle.result.saveFailed"), textStyle({ role: "body", size: 30, color: COLOR.ink })).setOrigin(0.5).setDepth(101);
+      new Button(this, BASE_WIDTH / 2, 1010, { width: 400, height: 100, label: t("battle.result.retry"), onClick: () => void this.finishStageVictory(stage) }).setDepth(101);
     }
   }
 
   /** 결과 확인 탭을 직렬화하고 HP 저장, 증강 또는 정산이 끝난 뒤에만 다음 화면을 연다. */
   private finishExpeditionBattle(input: ExpeditionBattleInputDto, won: boolean): void {
     this.add.rectangle(BASE_WIDTH / 2, 930, BASE_WIDTH, 420, COLOR.void, 0.84).setDepth(100);
-    this.add.text(BASE_WIDTH / 2, 850, won ? "원정 교전 승리" : "원정대 전멸", textStyle({ role: "display", size: 62, color: won ? COLOR.accentText : COLOR.dangerText })).setOrigin(0.5).setDepth(101);
+    this.add.text(BASE_WIDTH / 2, 850, won ? t("battle.result.expeditionWin") : t("battle.result.expeditionLose"), textStyle({ role: "display", size: 62, color: won ? COLOR.accentText : COLOR.dangerText })).setOrigin(0.5).setDepth(101);
     let saving = false;
-    new Button(this, BASE_WIDTH / 2, 1030, { width: 440, height: 110, label: won ? "결과 저장" : "종료 정산", onClick: () => {
+    new Button(this, BASE_WIDTH / 2, 1030, { width: 440, height: 110, label: won ? t("battle.result.save") : t("battle.result.settle"), onClick: () => {
       if (saving) return;
       saving = true;
       // 시작부터 사망해 불참한 렐릭도 원래 ID·HP·생존 상태로 종료 DTO에 다시 합친다.
@@ -1779,7 +1780,7 @@ export class BattleScene extends Phaser.Scene {
         if (!won) {
           // 전멸은 추가 지도 입력을 거치지 않고 같은 멱등 정산 경계로 끝낸다.
           void gameApi.settleExpeditionRun({ runId: input.runId, settlementId: `${input.runId}:defeat`, outcome: "abandoned" }).then((settlement) => {
-            openRewardPopup(this, new PopupLayer(this, 2200), { title: "패배 전리품 정산", items: currencyRecordToRewardItems(settlement.granted), onConfirm: () => this.scene.start("lobby") });
+            openRewardPopup(this, new PopupLayer(this, 2200), { title: t("battle.result.defeatLoot"), items: currencyRecordToRewardItems(settlement.granted), onConfirm: () => this.scene.start("lobby") });
           }).catch(() => { saving = false; });
           return;
         }
@@ -1787,15 +1788,15 @@ export class BattleScene extends Phaser.Scene {
         // 점수 증가분도 여기서 함께 말한다 — 지도로 돌아가 합계만 보면 이번 판이 얼마를 보탰는지
         // 알 수 없고, 노드마다 다른 층·잔여 HP가 점수를 바꾼다는 것도 읽히지 않는다.
         openRewardPopup(this, new PopupLayer(this, 2200), {
-          title: "교전 획득 전리품",
+          title: t("battle.result.nodeLoot"),
           items: currencyRecordToRewardItems(nodeResult.rewards),
-          footnote: nodeResult.nodeScore > 0 ? `원정 점수 +${Math.floor(nodeResult.nodeScore).toLocaleString()}` : undefined,
+          footnote: nodeResult.nodeScore > 0 ? t("battle.result.nodeScore", { score: Math.floor(nodeResult.nodeScore).toLocaleString() }) : undefined,
           onConfirm: () => this.scene.start("expedition"),
         });
       }).catch(() => { saving = false; });
     } }).setDepth(101);
     // 일반 원정 결과에서도 정산 전후와 무관하게 finish 시점의 같은 스냅샷을 확인한다.
-    new Button(this, BASE_WIDTH / 2, 1160, { width: 300, height: 76, label: "기여도", fontSize: 27, onClick: () => this.openContributionPopup() }).setDepth(101);
+    new Button(this, BASE_WIDTH / 2, 1160, { width: 300, height: 76, label: t("battle.contribution"), fontSize: 27, onClick: () => this.openContributionPopup() }).setDepth(101);
   }
 
   /** 종료 경로마다 큐·트윈·입력 잠금을 같은 방식으로 정리한다. */

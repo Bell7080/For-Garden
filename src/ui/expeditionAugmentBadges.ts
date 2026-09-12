@@ -1,4 +1,5 @@
 import { getExpeditionAugment, type ExpeditionAugmentDef } from "../data/expeditionAugments";
+import { t } from "../i18n";
 import type { ExpeditionAugmentSelection } from "../core/expeditionRewards";
 import { BLEED } from "../core/skirmish";
 
@@ -31,33 +32,34 @@ export interface AugmentBadgeView {
 
 /** 선택 화면과 확정 목록이 공유하는 효과 수치 표기다. 운영 데이터의 값을 문구에 다시 적지 않는다. */
 export function expeditionAugmentEffectLabel(def: ExpeditionAugmentDef): string {
-  const labels = { maxHpPercent: "최대 체력", defensePercent: "방어력", resistancePercent: "저항력", attackPowerPercent: "공격력", spellPowerPercent: "주문력", attackSpeedPercent: "공격 속도", initialShieldPercent: "시작 보호막", statusPotencyPercent: "상태 위력" } as const;
-  if (def.effect.kind in labels && "percent" in def.effect) return `${labels[def.effect.kind as keyof typeof labels]} +${def.effect.percent}%`;
-  if (def.effect.kind === "healAfterBattlePercent") return `전투 후 체력 +${def.effect.percent}%`;
-  if (def.effect.kind === "lowHpAttackPowerPercent") return `체력 ${def.effect.belowHpPercent}% 이하\n공격력 +${def.effect.percent}%`;
+  // 능력치 이름은 공용 표에서 읽는다 — 화면마다 다시 적으면 한 곳만 고쳐도 나머지가 옛 이름으로 남는다.
+  const labels = { maxHpPercent: "augment.stat.maxHp", defensePercent: "stat.def", resistancePercent: "stat.res", attackPowerPercent: "stat.atk", spellPowerPercent: "stat.ap", attackSpeedPercent: "stat.attackSpeed", initialShieldPercent: "augment.stat.initialShield", statusPotencyPercent: "augment.stat.statusPotency" } as const;
+  if (def.effect.kind in labels && "percent" in def.effect) return t("augment.percent", { label: t(labels[def.effect.kind as keyof typeof labels]), percent: def.effect.percent });
+  if (def.effect.kind === "healAfterBattlePercent") return t("augment.healAfterBattle", { percent: def.effect.percent });
+  if (def.effect.kind === "lowHpAttackPowerPercent") return t("augment.lowHpAttack", { threshold: def.effect.belowHpPercent, percent: def.effect.percent });
   if (def.effect.kind === "bleedOnAttack") {
     // 이름과 수치는 강도별 공용 전투 규칙에서 읽어 데이터와 화면의 복제 상수를 없앤다.
     const bleed = def.effect.strength === "standard" ? BLEED : BLEED.minor;
-    const name = def.effect.strength === "standard" ? "출혈" : "작은 출혈";
-    return `${def.effect.everyNAttacks}회 공격마다 ${name}\n초당 최대 체력 ${bleed.percentPerSecond}% · ${bleed.seconds}초`;
+    const name = t(def.effect.strength === "standard" ? "augment.bleed.standard" : "augment.bleed.minor");
+    return t("augment.bleedOnAttack", { everyN: def.effect.everyNAttacks, name, perSecond: bleed.percentPerSecond, seconds: bleed.seconds });
   }
   if (def.effect.kind === "triggered") {
     // 운영 payload의 판별 필드만 읽어 카드 설명을 만들며 실행 함수나 자유 형식 문장을 허용하지 않는다.
     const payload = def.effect.payload;
-    if (payload.kind === "shield") return `전투 시작 보호막 ${payload.maxHpPercent}%`;
-    if (payload.kind === "ultimateCostReduction") return `첫 궁극기 비용 -${payload.percent}%`;
-    if (payload.kind === "status") return `${def.effect.trigger === "onCritical" ? "치명타 시" : "적중 시"} ${payload.status.kind}`;
-    if (payload.kind === "conditionalBonusDamage") return `${payload.requiresStatus === "curse" ? "저주" : "기절"} 대상 피해 +${payload.percent}%`;
-    if (payload.kind === "lowHpDefense") return `체력 ${payload.belowHpPercent}% 이하\n방어·저항 +${payload.defensePercent}%`;
-    return `처치 시 체력 +${payload.maxHpPercent}%`;
+    if (payload.kind === "shield") return t("augment.shield", { percent: payload.maxHpPercent });
+    if (payload.kind === "ultimateCostReduction") return t("augment.ultimateCost", { percent: payload.percent });
+    if (payload.kind === "status") return t("augment.statusTrigger", { trigger: t(def.effect.trigger === "onCritical" ? "augment.trigger.critical" : "augment.trigger.hit"), status: payload.status.kind });
+    if (payload.kind === "conditionalBonusDamage") return t("augment.conditionalDamage", { status: t(payload.requiresStatus === "curse" ? "augment.status.curse" : "augment.status.stun"), percent: payload.percent });
+    if (payload.kind === "lowHpDefense") return t("augment.lowHpDefense", { threshold: payload.belowHpPercent, percent: payload.defensePercent });
+    return t("augment.healOnKill", { percent: payload.maxHpPercent });
   }
   // 위 분기가 모든 판별 가능한 효과를 다루며, 이 반환은 향후 데이터 종류 추가 시 안전한 표시다.
-  return "효과";
+  return t("augment.effect");
 }
 
 /** 등급과 범위를 짧은 인게임 표기로 바꾸되 실제 판정은 정적 데이터의 값을 그대로 사용한다. */
 export function expeditionAugmentMetaLabel(def: ExpeditionAugmentDef): string {
-  return `${def.rarity === "ssr" ? "SSR" : "SR"} · ${def.target === "party" ? "전체" : "개인"}`;
+  return t("augment.meta", { rarity: def.rarity === "ssr" ? "SSR" : "SR", target: t(def.target === "party" ? "augment.target.party" : "augment.target.single") });
 }
 
 /** 효과 종류가 곧 문양이다. 같은 효과는 어느 증강이든 같은 그림으로 읽힌다. */

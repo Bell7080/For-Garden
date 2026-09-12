@@ -3,7 +3,7 @@ import type { PuppetCreature } from "../puppets/assets";
 import { powerSavingPolicy } from "../core/settings";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import type { Combatant } from "../core/combatTypes";
-import { RUNE_PART_LABELS, RUNE_RARITY_LABELS, type RunePart } from "../core/runes";
+import { runePartLabel, runeRarityLabel, type RunePart } from "../core/runes";
 import { previewSkillDamage } from "../core/damage";
 import type { BasicAttack, Element, RelicDef, RelicProgress, RelicRarity, Role, Passive, Skill, SkillIconAssetId, Stats, Ultimate } from "../core/types";
 import { setDebugFeedButton, setDebugInfoGemSlots, setDebugInfoOpen } from "../debug";
@@ -28,7 +28,7 @@ import { PopupLayer, POPUP_TITLE_SIZE } from "./PopupLayer";
 import { calculateObservationJournalFlow, OBSERVATION_JOURNAL_SIZE, withoutRepeatedProfileDetails } from "./observationJournalLayout";
 import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
-import { BREAKTHROUGH_SLOT_LABEL, breakthroughEffectText } from "./skillPresentation";
+import { breakthroughSlotLabel, breakthroughEffectText } from "./skillPresentation";
 import { addBreakthroughGradeMark, RARITY_TONE, BREAKTHROUGH_GRADE_ROMAN } from "./rarityMark";
 import { addFramedIcon, addItemFrame } from "./itemFrame";
 import { FaceFrame } from "./FaceFrame";
@@ -38,7 +38,8 @@ import { addColorAssistMark, COLOR_ASSIST_LAYOUT } from "./colorAssist";
 import { addMarkChip } from "./MarkChip";
 import { addRuneCard, addRuneFrame, RUNE_ACCENT, RUNE_CENTER_Y, runeTexture } from "./runeIcons";
 import { REACH_LABEL, STAT_TONE, reachToneHex } from "./statTones";
-import { equippedRelicName, openRuneInfoPopup, RUNE_STAT_LABEL } from "./RunePopup";
+import { equippedRelicName, openRuneInfoPopup, runeStatLabel } from "./RunePopup";
+import { t, type TextKey } from "../i18n";
 import { combatPower } from "../core/combatPower";
 import { StatRadar } from "./StatRadar";
 import { addSectionTitle } from "./SectionTitle";
@@ -153,7 +154,7 @@ const BOND_HEART_SIZE = 59;
  * 위 → 가운데 → 아래 순서로 색이 넘어간다. SSR은 황금 호박, SR은 보랏빛에서 분홍, R은
  * 청량한 푸른빛이다. 등급은 화면마다 다른 색으로 칠하지 않는다.
  */
-export const RARITY_GEM: Record<RelicRarity, readonly [string, string, string]> = {
+const RARITY_GEM: Record<RelicRarity, readonly [string, string, string]> = {
   SSR: ["#fff3c4", "#ffc247", "#c78a1c"],
   SR: ["#ffe2ff", "#e070f5", "#9b3fc0"],
   R: ["#e8fbff", "#5fd4ff", "#2f9ad4"],
@@ -166,7 +167,7 @@ const AFFINITY = { main: 96, sub: 72, gap: 30 } as const;
 const STAT_RADAR_RADIUS = 128;
 
 /** 정보창의 등급 표식 기준 크기. 로마자 한 글자가 이 두 배 높이로 선다. */
-const GRADE_MARK_SIZE = 34;
+const STAR_SIZE = 34;
 
 /**
  * 야성 뱃지의 색.
@@ -245,10 +246,10 @@ function feedCostRow(
  * 여기서는 그 id만 가리키게 바꾼다 — 대사를 화면에 적어 두지 않기 위해서다.
  */
 const BOND_STORY_STEPS: readonly { level: number; title: string }[] = [
-  { level: 2, title: "1화 · 첫 인사" },
-  { level: 4, title: "2화 · 사육장의 밤" },
-  { level: 7, title: "3화 · 옛 기억의 조각" },
-  { level: 10, title: "4화 · 이터널 시티의 끝" },
+  { level: 2, title: t("info.story.1") },
+  { level: 4, title: t("info.story.2") },
+  { level: 7, title: t("info.story.3") },
+  { level: 10, title: t("info.story.4") },
 ];
 
 /** 돌파 버튼과 팝업이 함께 쓰는 색. 레벨(초록)과 갈라 놓아 다른 종류의 성장임을 알린다. */
@@ -257,7 +258,7 @@ const BREAK_EDGE = 0xa88cf0;
 /**
  * 한계 돌파 쪽지의 자리표.
  *
- * **올라가는 것은 칸 수가 아니라 돌파 등급이다.** 카드 오른쪽 위에 박히는 로마자 표식을 그대로
+ * **올라가는 것은 별 개수가 아니라 등급이다.** 카드 오른쪽 위에 박히는 로마자 표식을 그대로
  * 크게 세우고, 드는 재료는 가방·상점과 같은 액자로 둔다 — 여기서 사람이 정하는 것은 "지금
  * 올릴 수 있나"이고, 그 답은 등급 두 글자와 액자 둘의 수가 전부 말한다.
  */
@@ -277,12 +278,12 @@ const SWIPE_DISTANCE = 110;
 const RUNE_GAP = 0.955;
 
 /** 능력치 칩에서 쓰는 다섯 축과 색. */
-const STAT_CHIPS: readonly { key: keyof Stats; label: string; color: number }[] = [
-  { key: "hp", label: "체력", color: STAT_TONE.hp },
-  { key: "atk", label: "공격", color: STAT_TONE.atk },
-  { key: "def", label: "방어", color: STAT_TONE.def },
-  { key: "res", label: "저항", color: STAT_TONE.res },
-  { key: "ap", label: "주문", color: STAT_TONE.ap },
+const STAT_CHIPS: readonly { key: keyof Stats; label: TextKey; color: number }[] = [
+  { key: "hp", label: "stat.hp", color: STAT_TONE.hp },
+  { key: "atk", label: "stat.atk.short", color: STAT_TONE.atk },
+  { key: "def", label: "stat.def.short", color: STAT_TONE.def },
+  { key: "res", label: "stat.res.short", color: STAT_TONE.res },
+  { key: "ap", label: "stat.ap.short", color: STAT_TONE.ap },
 ];
 
 /**
@@ -303,12 +304,12 @@ const RUNE_PICKER = { columns: 4, cardWidth: 180, cardHeight: 180, cellWidth: 20
 const EXTRA_STATS_POPUP_Y = 920;
 
 /** 돋보기로만 여는 보조 능력치. 평소에는 다섯 축만 보여 화면을 비운다. */
-const EXTRA_STATS: readonly { key: keyof Stats; label: string; suffix?: string }[] = [
-  { key: "attackSpeed", label: "공격 속도" },
-  { key: "moveSpeed", label: "이동 속도" },
-  { key: "critChance", label: "치명타 확률", suffix: "%" },
-  { key: "critDamage", label: "치명타 피해", suffix: "%" },
-  { key: "energyGain", label: "궁극기 충전량" },
+const EXTRA_STATS: readonly { key: keyof Stats; label: TextKey; suffix?: string }[] = [
+  { key: "attackSpeed", label: "stat.attackSpeed" },
+  { key: "moveSpeed", label: "stat.moveSpeed" },
+  { key: "critChance", label: "stat.critChance", suffix: "%" },
+  { key: "critDamage", label: "stat.critDamage", suffix: "%" },
+  { key: "energyGain", label: "stat.energyGain" },
 ];
 
 /**
@@ -317,7 +318,7 @@ const EXTRA_STATS: readonly { key: keyof Stats; label: string; suffix?: string }
  * 팝업은 새 화면이 아니라 누른 것 위에 얹히는 쪽지다. 그래서 여는 쪽은 언제나 "어디를
  * 눌렀는지"와 "닫히면 무엇을 되돌릴지"를 함께 넘긴다.
  */
-export interface PopupSource {
+interface PopupSource {
   x: number;
   y: number;
   onClose: () => void;
@@ -353,10 +354,19 @@ interface GemSlot {
   paint(gemId: string | null): void;
 }
 
+/**
+ * 역할·속성의 이름표.
+ *
+ * 상수가 아니라 함수인 이유는 언어가 바뀌면 이름도 바뀌기 때문이다 — 모듈이 읽히는 순간의
+ * 문구로 굳으면 언어를 바꿔도 그 자리만 옛 이름으로 남는다.
+ */
+const ROLE_KEY: Record<Role, TextKey> = { warrior: "role.warrior", tank: "role.tank", assassin: "role.assassin", support: "role.support" };
+const ELEMENT_KEY: Record<Element, TextKey> = { fire: "element.fire", water: "element.water", grass: "element.grass", earth: "element.earth", wind: "element.wind" };
+
 /** 역할은 전투 공식을 바꾸지 않는 특화 태그로만 노출한다. */
-export const ROLE_LABEL: Record<Role, string> = { warrior: "전사", tank: "탱커", assassin: "암살자", support: "지원가" };
-/** 상세 정보에서 코드 키 대신 일관된 한국어 속성명을 보여 준다. */
-export const ELEMENT_LABEL: Record<Element, string> = { fire: "불", water: "물", grass: "풀", earth: "땅", wind: "바람" };
+export function roleLabel(role: Role): string { return t(ROLE_KEY[role]); }
+/** 상세 정보에서 코드 키 대신 일관된 속성명을 보여 준다. */
+export function elementLabel(element: Element): string { return t(ELEMENT_KEY[element]); }
 
 /** `?` 도움말 배지의 클릭이 아래 카드 입력으로 전파되지 않게 한다. */
 export function addHelpBadge(scene: Phaser.Scene, x: number, y: number, onClick: () => void, radius = 26): Phaser.GameObjects.Container {
@@ -422,7 +432,7 @@ export class InfoManager {
   private readonly bookmarkBadge: BadgeHandle;
   private readonly favoriteBadge: BadgeHandle;
 
-  private readonly gradeRow: Phaser.GameObjects.Container;
+  private readonly starRow: Phaser.GameObjects.Container;
   private readonly levelValue: Phaser.GameObjects.Text;
   private readonly levelCap: Phaser.GameObjects.Text;
   private readonly expBar: Gauge;
@@ -540,10 +550,10 @@ export class InfoManager {
     if (this.capabilities.mutateProgress) this.addJournalButton(268, 300);
     this.addMagnifier(84, 392, (from) => this.enterGallery(from.onClose));
 
-    // 돌파 등급은 오른쪽, 돌파 버튼은 그 왼쪽이다. 등급이 오른쪽 돋보기(돌파 단계표) 바로 옆에 서야
+    // 별은 오른쪽, 돌파 버튼은 그 왼쪽이다. 별이 오른쪽 돋보기(돌파 단계표) 바로 옆에 서야
     // 표식과 그 표식을 자세히 보는 입구가 한 덩어리로 읽힌다.
-    this.gradeRow = scene.add.container(COLUMN.x + 132, 150);
-    this.chrome.add(this.gradeRow);
+    this.starRow = scene.add.container(COLUMN.x + 132, 150);
+    this.chrome.add(this.starRow);
     this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 30, 158, (from) => this.openBreakthroughSteps(from));
 
     // 오른쪽 수치는 칸마다 판을 따로 깐다. 대신 칸의 내용물을 그 판 **안에** 넣어 판과 같은
@@ -561,7 +571,7 @@ export class InfoManager {
     gemPanel.setVisible(this.capabilities.mutateProgress);
 
     // 레벨 · 경험치 · 급여.
-    this.addSectionTitle("레벨", 442 - 166);
+    this.addSectionTitle(t("info.level"), 442 - 166);
     this.levelValue = scene.add
       .text(COLUMN.x - COLUMN.width / 2 + 54, 300, "", textStyle({ role: "display", size: 96 }))
       .setOrigin(0, 0)
@@ -578,7 +588,7 @@ export class InfoManager {
       this.expBar.objects.forEach((object) => object.setVisible(false));
       this.expLabel.setVisible(false);
     }
-    // 한계 돌파는 등급을 올리는 일이라 레벨 칸이 아니라 **돌파 등급 옆**에 선다. 파편이 모였는지도
+    // 한계 돌파는 별을 올리는 일이라 레벨 칸이 아니라 **별 옆**에 선다. 파편이 모였는지도
     // 그 자리에서 읽혀야 "지금 초월할 수 있는가"가 한눈에 들어온다.
     this.breakButton = this.addBreakButton(COLUMN.x - 78, 150, this.chrome);
     const feed = this.addFeedButton(COLUMN.x, 546, COLUMN.width - 130, 98, levelPanel);
@@ -589,18 +599,18 @@ export class InfoManager {
 
     // 유대.
     const bondHeart = scene.add.container(COLUMN.x - COLUMN.width / 2 + 92, 710);
-    // 하트도 돌파 등급 표식과 같은 방식이다 — 그림자·빛무리·몸통을 겹으로 쌓고 어두운 선으로 마무리한다.
+    // 하트도 별과 같은 방식이다 — 그림자·빛무리·몸통을 겹으로 쌓고 어두운 선으로 마무리한다.
     bondHeart.add(paintBondHeart(scene, BOND_HEART_SIZE));
     this.bondValue = scene.add.text(0, 1, "", textStyle({ role: "display", size: 32 })).setOrigin(0.5);
     bondHeart.add(this.bondValue);
     this.bondBar = new Gauge(scene, COLUMN.x + 40, 718, COLUMN.width - 184, 14, BOND_HEART);
     this.bondLabel = scene.add.text(COLUMN.x - COLUMN.width / 2 + 152, 738, "", textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0, 0);
     attach(bondPanel, bondHeart, ...this.bondBar.objects, this.bondLabel);
-    this.addSectionTitle("유대", 706 - 72).setVisible(this.capabilities.showBond);
+    this.addSectionTitle(t("info.section.bond"), 706 - 72).setVisible(this.capabilities.showBond);
     this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 30, 686, (from) => this.openBondDetail(from), bondPanel);
 
     // 능력치.
-    this.addSectionTitle("능력치", 1024 - 198);
+    this.addSectionTitle(t("info.section.stats"), 1024 - 198);
     this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 30, 876, (from) => this.openExtraStats(from), statPanel);
     // 사거리는 오각형에 없는 축이라 제목 바로 아래에 이름표처럼 한 줄로만 선다. 색은 상세
     // 팝업이 맡고 여기서는 회색으로 물러난다 — 늘 떠 있는 자리는 균형이 먼저 읽혀야 한다.
@@ -622,7 +632,7 @@ export class InfoManager {
     attach(statPanel, this.statRadar);
 
     // 하트 젬 — 하트 하나를 셋으로 가른 자리.
-    this.addSectionTitle("룬", 1398 - 146).setVisible(this.capabilities.mutateProgress);
+    this.addSectionTitle(t("info.section.rune"), 1398 - 146).setVisible(this.capabilities.mutateProgress);
     this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 30, 1316, (from) => this.openRuneOverview(from), gemPanel);
     for (let index = 0; index < 3; index += 1) this.gemSlots.push(this.addGemSlot(index, gemPanel));
 
@@ -638,14 +648,7 @@ export class InfoManager {
    * 돌려주고, 칸의 내용물은 전부 이 컨테이너 **안에** 넣어 같은 각도로 함께 기운다.
    */
   private addPanel(x: number, y: number, width: number, height: number): Phaser.GameObjects.Container {
-    const panel = this.scene.add.container(x, y).setRotation(Phaser.Math.DegToRad(PANEL_TILT));
-    // 좁아지는 양을 비율이 아니라 픽셀로 고정한다. 비율로 두면 높은 판이 더 많이 좁아져
-    // 판마다 변의 기울기가 달라지고, 네 장이 저마다 다른 방향으로 노는 것처럼 보인다.
-    const shape = perspectiveRect(width, height, { tall: "right", taper: (2 * PANEL_TAPER) / height });
-    panel.add(drawLayer(this.scene, 0, 0, shape, { fill: 0x0b0f15, alpha: 0.6, edge: COLOR.accent, edgeAlpha: 0.4 }));
-    panel.add(drawShapeEdge(this.scene, 0, 0, shape, "bottom", { color: COLOR.accent, alpha: 0.22, inset: 10 }));
-    this.column.add(panel);
-    return panel;
+    return addInfoPanel(this.scene, this.column, x, y, width, height);
   }
 
   /**
@@ -719,7 +722,7 @@ export class InfoManager {
       glow: { color: FEED_AMBER, strength: 0.45, height: 0.7 },
     });
     container.add([off, on]);
-    const label = this.scene.add.text(0, -height / 2 + 22, "급여하기", textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0.5);
+    const label = this.scene.add.text(0, -height / 2 + 22, t("info.feed"), textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0.5);
     container.add(label);
     const row = feedCostRow(this.scene, 0, 16, width - 40, 54, 36);
     this.feedCost = row.text;
@@ -780,15 +783,15 @@ export class InfoManager {
   /**
    * 한계 돌파 버튼.
    *
-   * **돌파 등급 바로 옆**에 붙는다 — 올리는 것이 등급이라 같은 줄에 있어야 무엇이 오르는지가
-   * 눌러 보기 전에 읽힌다. 아래 줄에는 지금 가진 파편과 다음 등급에 드는 파편을 함께 적고,
+   * **별 바로 옆**에 붙는다 — 올리는 것이 별이라 별과 같은 줄에 있어야 무엇이 오르는지가
+   * 눌러 보기 전에 읽힌다. 아래 줄에는 지금 가진 파편과 다음 별에 드는 파편을 함께 적고,
    * 누르면 남은 재료를 마저 보여 준 뒤 거기서 확정한다.
    */
   private addBreakButton(x: number, y: number, panel: Phaser.GameObjects.Container): { container: Phaser.GameObjects.Container; label: Phaser.GameObjects.Text; cost: Phaser.GameObjects.Text } {
     const container = this.scene.add.container(x, y);
     const shape = slantedRect(196, 74, 12);
     container.add(drawLayer(this.scene, 0, 0, shape, { fill: 0x24202f, alpha: 0.94, edge: BREAK_EDGE, edgeAlpha: 0.9, glow: { color: BREAK_EDGE, strength: 0.4, height: 0.6 } }));
-    const label = this.scene.add.text(0, -12, "한계 돌파", textStyle({ role: "display", size: 26 })).setOrigin(0.5);
+    const label = this.scene.add.text(0, -12, t("info.breakthrough"), textStyle({ role: "display", size: 26 })).setOrigin(0.5);
     const cost = this.scene.add.text(0, 18, "", textStyle({ role: "emphasis", size: 20, color: COLOR.accentText })).setOrigin(0.5);
     container.add([label, cost]);
     const hit = this.scene.add.rectangle(0, 0, 204, 86, 0xffffff, 0).setInteractive({ useHandCursor: true });
@@ -812,7 +815,7 @@ export class InfoManager {
     const need = def && step ? breakthroughFragmentCost(def.rarity, progress.breakthrough) : 0;
     const ready = this.ownedNow && def !== undefined && canBreakThrough(def.rarity, progress, held, session.wallet.cheesecake);
     this.breakButton?.container.setAlpha(step ? (ready ? 1 : 0.62) : 0.35);
-    this.breakButton?.label.setText(step ? "한계 돌파" : "돌파 최대");
+    this.breakButton?.label.setText(step ? t("info.breakthrough") : t("info.breakthrough.gradeMax"));
     this.breakButton?.label.setColor(ready ? COLOR.ink : COLOR.inkDim);
     // 파편이 몇 개 모였는지는 버튼이 직접 말한다. 눌러 보고서야 아는 값이면 늦다.
     this.breakButton?.cost.setText(step ? held + " / " + need : "");
@@ -831,16 +834,6 @@ export class InfoManager {
    * ("모든 능력치 +15%")은 능력치 판이 이미 보여 주므로 여기 적지 않는다 — 적으면 이 창에서
    * 읽어야 할 것이 공용 수치 안내에 묻힌다.
    */
-  /** 한계 돌파 테크트리. 표는 적 팝업과 **같은 함수**가 그린다. */
-  private openBreakthroughSteps(_from: PopupSource): void {
-    const def = this.currentDef;
-    if (!def) return;
-    const grade = this.publicProfile
-      ? Math.max(1, this.publicProfile.breakthroughGrade)
-      : breakthroughGrade(relicProgression.getProgress(def.id).breakthrough);
-    openBreakthroughStepsPopup(this.scene, this.popups, def, grade);
-  }
-
   private openBreakthrough(from: PopupSource): void {
     if (!this.capabilities.mutateProgress) return;
     const def = this.currentDef;
@@ -848,14 +841,14 @@ export class InfoManager {
     const progress = relicProgression.getProgress(def.id);
     const step = nextBreakthrough(progress.breakthrough);
     const height = BREAK_CONFIRM.height;
-    this.popups.open({ width: 780, height, title: "한계 돌파", tilt: -1.2, ...anchorOf(from) }, (body, close) => {
+    this.popups.open({ width: 780, height, title: t("info.breakthrough"), tilt: -1.2, ...anchorOf(from) }, (body, close) => {
       if (!step) {
-        body.add(this.scene.add.text(0, 20, "이미 돌파 등급 " + BREAKTHROUGH_GRADE_ROMAN[BREAKTHROUGH_GRADE_ROMAN.length - 1] + "이다. 중복은 DNA 조각으로 쌓인다.", textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0.5).setWordWrapWidth(640));
+        body.add(this.scene.add.text(0, 20, t("info.breakthrough.alreadyMax", { rarity: BREAKTHROUGH_GRADE_ROMAN[BREAKTHROUGH_GRADE_ROMAN.length - 1] }), textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0.5).setWordWrapWidth(640));
         return;
       }
       const top = -height / 2;
       const cap = relicLevelCap(progress.breakthrough);
-      // **올라가는 것은 칸 수가 아니라 돌파 등급이다.** 카드 오른쪽 위에 박히는 로마자와 같은
+      // **올라가는 것은 별 개수가 아니라 등급이다.** 카드 오른쪽 위에 박히는 로마자와 같은
       // 표식을 그대로 크게 세우고, 그 사이에 화살표만 둔다 — "1 → 2"라고 적으면 화면 어디에도
       // 없는 숫자를 새로 배우게 된다.
       addBreakthroughGradeMark(this.scene, body, -140, top + BREAK_CONFIRM.gradeY, BREAK_CONFIRM.gradeSize, breakthroughGrade(progress.breakthrough));
@@ -864,7 +857,7 @@ export class InfoManager {
 
       // 상한은 이 조작이 실제로 바꾸는 값이라 등급 바로 아래에 같은 무게로 선다.
       const capLine = this.scene.add.container(0, top + BREAK_CONFIRM.capY);
-      const capLabel = this.scene.add.text(0, 0, "레벨 상한", textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(1, 0.5);
+      const capLabel = this.scene.add.text(0, 0, t("info.level.cap"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(1, 0.5);
       const capFrom = this.scene.add.text(0, 0, String(cap), textStyle({ role: "display", size: 36, color: COLOR.inkDim })).setOrigin(0.5);
       const capArrow = this.scene.add.text(0, 0, "▶", textStyle({ role: "display", size: 22, color: COLOR.inkDim })).setOrigin(0.5);
       const capTo = this.scene.add.text(0, 0, String(step.levelCap), textStyle({ role: "display", size: 44, color: COLOR.accentText })).setOrigin(0.5);
@@ -884,9 +877,9 @@ export class InfoManager {
       const fragmentCost = breakthroughFragmentCost(def.rarity, progress.breakthrough);
       const costY = top + BREAK_CONFIRM.costY;
       const costs: BreakthroughCost[] = [
-        { kind: "level", label: "레벨", need: cap, have: progress.level },
-        { kind: "fragment", label: def.name + " 파편", need: fragmentCost, have: held },
-        { kind: "currency", texture: CURRENCY_ICON_BY_WALLET.cheesecake, label: "치즈케이크", need: step.cheesecake, have: session.wallet.cheesecake },
+        { kind: "level", label: t("info.level"), need: cap, have: progress.level },
+        { kind: "fragment", label: t("info.breakthrough.fragment", { name: def.name }), need: fragmentCost, have: held },
+        { kind: "currency", texture: CURRENCY_ICON_BY_WALLET.cheesecake, label: t("info.breakthrough.cheesecake"), need: step.cheesecake, have: session.wallet.cheesecake },
       ];
       costs.forEach((cost, index) => {
         const x = (index - (costs.length - 1) / 2) * BREAK_CONFIRM.costStep;
@@ -894,7 +887,7 @@ export class InfoManager {
         this.addBreakthroughCost(body, x, costY, cost, enough, def);
         body.add(this.scene.add.text(x, costY + BREAK_CONFIRM.costFrame / 2 + 26, cost.label, textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0.5).setWordWrapWidth(BREAK_CONFIRM.costStep - 12));
         body.add(this.scene.add
-          .text(x, costY + BREAK_CONFIRM.costFrame / 2 + 58, "필요 " + formatCurrency(cost.need), textStyle({ role: "emphasis", size: 24, color: enough ? COLOR.ink : COLOR.dangerText }))
+          .text(x, costY + BREAK_CONFIRM.costFrame / 2 + 58, t("info.breakthrough.need", { count: formatCurrency(cost.need) }), textStyle({ role: "emphasis", size: 24, color: enough ? COLOR.ink : COLOR.dangerText }))
           .setOrigin(0.5));
       });
 
@@ -906,7 +899,7 @@ export class InfoManager {
         edge: BREAK_EDGE,
         edgeAlpha: ready ? 1 : 0.25,
       }));
-      body.add(this.scene.add.text(0, actionY, "돌파하기", textStyle({ role: "display", size: 34, color: ready ? COLOR.ink : COLOR.inkDim })).setOrigin(0.5));
+      body.add(this.scene.add.text(0, actionY, t("info.breakthrough.do"), textStyle({ role: "display", size: 34, color: ready ? COLOR.ink : COLOR.inkDim })).setOrigin(0.5));
       // 열리는 효과를 여기 적지 않는다 — 등급 돋보기가 여는 표와 그 기술의 스킬 쪽지가 이미
       // 말하고(돌파로 붙은 줄은 노란 글씨로 선다), 이 창은 드는 것과 확정만 맡는다.
       if (!ready) return;
@@ -1002,7 +995,7 @@ export class InfoManager {
     // Growth actions are derived from the current confirmed state, never from “did this tap level up?”.  At
     // the cap the note becomes an explicit route to breakthrough and explains why it is not yet available.
     // **만렙에서는 쪽지를 열지 않는다.** 먹일 것이 없는 자리에 "레벨 상한 · 한계 돌파"를
-    // 적어 두면 같은 말을 돌파 등급 옆의 버튼이 이미 하고 있고, 그 쪽지에는 누를 것도 없다.
+    // 적어 두면 같은 말을 별 옆의 돌파 버튼이 이미 하고 있고, 그 쪽지에는 누를 것도 없다.
     if (!canFeed) return;
     this.feedPopupOpen = true;
     this.popups.open({
@@ -1010,7 +1003,7 @@ export class InfoManager {
       height: 250,
       x,
       y: y + 150,
-      title: "한 번에 급여",
+      title: t("info.feed.bulk"),
       hideCloseButton: true,
       closeOnBackdrop: true,
       onClose: () => { this.feedPopupOpen = false; },
@@ -1030,10 +1023,10 @@ export class InfoManager {
     if (!def) { close(); return; }
     const progress = relicProgression.getProgress(def.id);
     // 상한에 닿는 순간 쪽지가 스스로 닫힌다 — 더 먹일 수 없는 판에 남아 있을 이유가 없고,
-    // 다음에 할 일(한계 돌파)은 돌파 등급 옆의 버튼이 제 자리에서 말한다.
+    // 다음에 할 일(한계 돌파)은 별 옆의 버튼이 제 자리에서 말한다.
     if (progress.level >= relicLevelCap(progress.breakthrough)) { close(); return; }
     {
-      ([["1 레벨", 1], ["10 레벨", 10]] as const).forEach(([label, levels], index) => {
+      ([[t("info.feed.one"), 1], [t("info.feed.ten"), 10]] as const).forEach(([label, levels], index) => {
         const bx = index === 0 ? -118 : 118;
         const cost = this.feedsForLevels(levels) * FEED_UNIT.cheesecake;
         const enough = session.wallet.cheesecake >= cost;
@@ -1154,10 +1147,10 @@ export class InfoManager {
         piece.setDisplaySize(size, size).setScale(piece.scaleX * (gem ? 1 : RUNE_GAP), piece.scaleY * (gem ? 1 : RUNE_GAP));
         if (gem) {
           glow.setTexture(runeTexture(gem.rarity, index)).setTint(RUNE_ACCENT[gem.rarity]).setAlpha(0.4);
-          label.setText(index + 1 + "   " + (gem.customName ?? `${RUNE_RARITY_LABELS[gem.rarity]} 룬`)).setColor(COLOR.ink);
+          label.setText(index + 1 + "   " + (gem.customName ?? t("info.rune.named", { rarity: runeRarityLabel(gem.rarity) }))).setColor(COLOR.ink);
         } else {
           glow.setAlpha(0);
-          label.setText(index + 1 + "   빈 자리").setColor(COLOR.inkDim);
+          label.setText(index + 1 + t("info.rune.emptySlot")).setColor(COLOR.inkDim);
         }
       },
     };
@@ -1183,11 +1176,11 @@ export class InfoManager {
     const pickerHeight = Math.min(BASE_HEIGHT - 120, RUNE_PICKER.headerHeight + (rows - 1) * RUNE_PICKER.cellHeight + RUNE_PICKER.cardHeight / 2 + 48);
     // 룬을 다루는 판은 모두 **판 밖 우하단의 공용 뒤로가기**로 닫는다. 가방 → 쪽지 → 세공이
     // 이어지는 흐름에서 닫는 자리가 판마다 달라지면 한 손짓으로 물러날 수 없다.
-    this.popups.open({ width: pickerWidth, height: pickerHeight, title: "룬 가방 · " + RUNE_PART_LABELS[index as RunePart], dim: true, backButton: true }, (body, close) => {
+    this.popups.open({ width: pickerWidth, height: pickerHeight, title: t("info.rune.bag", { part: runePartLabel(index as RunePart) }), dim: true, backButton: true }, (body, close) => {
       const top = -pickerHeight / 2;
       // 비우기는 격자 위 한 줄이다. 룬 카드와 섞이면 실수로 누르기 쉽다.
       body.add(drawLayer(this.scene, 0, top + 128, slantedRect(pickerWidth - 96, 66, 12), { fill: 0x141a22, alpha: 0.92, edge: COLOR.accent, edgeAlpha: 0.3 }));
-      body.add(this.scene.add.text(0, top + 128, "비우기", textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0.5));
+      body.add(this.scene.add.text(0, top + 128, t("info.rune.clear"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0.5));
       const clearHit = this.scene.add.rectangle(0, top + 128, pickerWidth - 96, 66, 0xffffff, 0).setInteractive({ useHandCursor: true });
       clearHit.on("pointerup", () => void relicProgression.unequipRune(def.id, index).then(() => { close(); this.refreshGrowth(); }));
       body.add(clearHit);
@@ -1229,22 +1222,22 @@ export class InfoManager {
     // 무엇인지"가 느리게 읽힌다.
     const identityLines: { label: string; value: string }[] = disclosure.access === "full"
       ? [
-          { label: "개체번호", value: "NO." + disclosure.specimenNumber },
-          { label: "프로젝트", value: disclosure.projectName },
-          { label: "기원", value: disclosure.origin },
-          { label: "발굴지", value: disclosure.excavationSite },
+          { label: t("info.journal.id"), value: "NO." + disclosure.specimenNumber },
+          { label: t("info.journal.project"), value: disclosure.projectName },
+          { label: t("info.journal.origin"), value: disclosure.origin },
+          { label: t("info.journal.site"), value: disclosure.excavationSite },
           ...(def.observationProfile ? [
-            { label: "기원 연대", value: def.observationProfile.originYear },
+            { label: t("info.journal.era"), value: def.observationProfile.originYear },
             // 복원 연도는 저장된 경과 시간이 아니라 정적 도감의 세계관 나잇대만 단독으로 표시한다.
-            { label: "복원 연도", value: def.observationProfile.restorationYear },
-            { label: "성장 단계", value: `${def.observationProfile.lifeStage} · 키 ${def.observationProfile.height} · 몸무게 ${def.observationProfile.weight}` },
+            { label: t("info.journal.restoredYear"), value: def.observationProfile.restorationYear },
+            { label: t("info.journal.lifeStage"), value: t("info.journal.lifeStageValue", { stage: def.observationProfile.lifeStage, height: def.observationProfile.height, weight: def.observationProfile.weight }) },
           ] : []),
         ]
       : [
-          { label: "개체번호", value: "NO." + disclosure.specimenNumber },
-          { label: "프로젝트", value: "기록 없음" },
-          { label: "기원", value: "미상" },
-          { label: "발굴지", value: "미상" },
+          { label: t("info.journal.id"), value: "NO." + disclosure.specimenNumber },
+          { label: t("info.journal.project"), value: t("info.journal.noRecord") },
+          { label: t("info.journal.origin"), value: t("info.journal.unknown") },
+          { label: t("info.journal.site"), value: t("info.journal.unknown") },
         ];
 
     // 텍스트를 먼저 만들어 실제 height를 얻는다. 이후 배치는 줄 수나 개체별 문단 길이를 추측하지 않는다.
@@ -1252,22 +1245,22 @@ export class InfoManager {
     // 상단 정보는 확대된 표식의 실제 왼쪽 외곽(복제 그림자 포함) 전까지만 사용한다.
     const metadataWidth = JOURNAL_SQUAD_MARK.x + markBounds.left - JOURNAL_SQUAD_MARK.metadataGap - bodyLeft;
     const identity = this.buildJournalIdentity(identityLines, metadataWidth, journal.font.regular, journal.spacing.line);
-    const rawRecord = disclosure.access === "full" ? disclosure.record : def.catalogSummary + "\n\n상세 기록은 개체 획득 후 해제됩니다.";
+    const rawRecord = disclosure.access === "full" ? disclosure.record : def.catalogSummary + t("info.journal.lockedNotice");
     const excavationRecord = withoutRepeatedProfileDetails(rawRecord, def.observationProfile?.height, def.observationProfile?.weight);
     const excavation = this.keywords.layout(excavationRecord, { width: journal.body.width, size: journal.font.large, color: COLOR.inkDim, lineSpacing: journal.spacing.line });
     // 다른 스쿼드를 향한 동경은 unlockRecord의 관찰 문장이 담당하므로, 여기서는 소속 메모만 그린다.
     const squad = disclosure.access === "full" && def.squadNote
       ? this.scene.add.text(0, 0, def.squadNote, textStyle({ role: "body", size: journal.font.small, color: COLOR.inkDim, lineSpacing: journal.spacing.compactLine, wrap: journal.body.width })).setOrigin(0, 0)
       : undefined;
-    const observationHeading = this.scene.add.text(0, 0, "복원 후 관찰 기록", textStyle({ role: "emphasis", size: journal.font.regular, color: COLOR.ink })).setOrigin(0, 0);
+    const observationHeading = this.scene.add.text(0, 0, t("info.journal.afterRestoration"), textStyle({ role: "emphasis", size: journal.font.regular, color: COLOR.ink })).setOrigin(0, 0);
     // 이 판에는 가장 최근 관찰 기록 한 건만 둔다. 쌓인 전체 이력은 별도 레이어(관찰 기록)가
     // 한 건씩 넘겨 보여 준다 — 매일 쌓이는 인터뷰를 전부 여기 밀어 넣으면 캐릭터 소개보다
     // 로그가 더 길어진다.
     const allEntries = observations.recordFor(def.id);
     const entries = allEntries.slice(-1).reverse();
     const observationCopy = entries.length
-      ? entries.map((entry) => `${entry.date}  ·  #${entry.personalityTag}\nQ. ${entry.question}\nA. ${entry.answer}\n발견  ${entry.discoveredHabit}`).join("\n\n")
-      : "아직 기록된 관찰이 없습니다.";
+      ? entries.map((entry) => t("info.journal.entry", { date: entry.date, tag: entry.personalityTag, question: entry.question, answer: entry.answer, habit: entry.discoveredHabit })).join("\n\n")
+      : t("info.journal.noObservation");
     const observation = this.scene.add.text(0, 0, observationCopy, textStyle({ role: "body", size: entries.length ? journal.font.regular : journal.font.small, color: COLOR.ink, lineSpacing: journal.spacing.compactLine, wrap: journal.body.width })).setOrigin(0, 0);
     // 링크 한 줄만큼 흐름 계산에 미리 더해 둔다 — 그러지 않으면 바로 아래 인터뷰 조작과 겹친다.
     const historyLinkHeight = allEntries.length > 1 ? journal.spacing.compactLine + journal.font.small + 16 : 0;
@@ -1277,7 +1270,7 @@ export class InfoManager {
       observationHeading: observationHeading.height, observation: observation.height + historyLinkHeight, action: actionHeight,
     });
 
-    this.popups.open({ width: journal.popup.width, height: flow.popupHeight, title: "관찰 일지", titleSize: journal.font.title, tilt: journal.popup.tilt, ...anchorOf(from) }, (body, close) => {
+    this.popups.open({ width: journal.popup.width, height: flow.popupHeight, title: t("info.journal.title"), titleSize: journal.font.title, tilt: journal.popup.tilt, ...anchorOf(from) }, (body, close) => {
       const artWidth = journal.popup.width - journal.art.inset * 2;
       const artHeight = flow.popupHeight - journal.art.inset * 2;
       if (this.scene.textures.exists("content-observation-journal")) {
@@ -1299,7 +1292,7 @@ export class InfoManager {
       if (allEntries.length > 1) {
         // 이 개체의 다른 날짜 기록은 여기 밀어 넣지 않고 전용 레이어에서 한 건씩 넘겨 본다.
         const linkY = y(flow.observationY) + observation.height + journal.spacing.compactLine;
-        const link = this.scene.add.text(bodyLeft, linkY, `전체 기록 보기 (${allEntries.length}건)`, textStyle({ role: "emphasis", size: journal.font.small, color: COLOR.accentText })).setOrigin(0, 0);
+        const link = this.scene.add.text(bodyLeft, linkY, t("info.journal.viewAll", { count: allEntries.length }), textStyle({ role: "emphasis", size: journal.font.small, color: COLOR.accentText })).setOrigin(0, 0);
         content.add(link);
         // 글자 자체보다 넉넉한 손끝 크기의 히트 영역을 따로 둔다 — 작은 글자 그대로 입력을
         // 받으면 모바일에서 자주 빗나간다.
@@ -1323,7 +1316,7 @@ export class InfoManager {
         const canStart = observations.canStart(def.id, utcDate);
         const trigger = this.scene.add.container(0, flow.actionY + actionHeight / 2);
         trigger.add(drawLayer(this.scene, 0, 0, slantedRect(interview.trigger.width, interview.trigger.height, interview.trigger.bevel), { fill: canStart ? 0x141a22 : 0x10141a, alpha: canStart ? 0.92 : 0.58, edge: COLOR.accent, edgeAlpha: canStart ? 0.4 : 0.16 }));
-        trigger.add(this.scene.add.text(0, 0, canStart ? "관찰 인터뷰 열기" : "오늘의 관찰 인터뷰 완료", textStyle({ role: "emphasis", size: journal.font.large, color: canStart ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5));
+        trigger.add(this.scene.add.text(0, 0, canStart ? t("info.interview.open") : t("info.interview.doneToday"), textStyle({ role: "emphasis", size: journal.font.large, color: canStart ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5));
         let interviewState: ObservationInterviewPanelState = { open: false, completedToday: !canStart };
         if (canStart) {
           const hit = this.scene.add.rectangle(0, 0, interview.trigger.width, interview.trigger.height, 0xffffff, 0).setInteractive({ useHandCursor: true });
@@ -1332,7 +1325,7 @@ export class InfoManager {
             trigger.setScale(1); if (interviewState.open) { this.popups.closeTop(); return; }
             interviewState = observationInterviewPanelState(interviewState, "toggle");
             const question = observationQuestionForRelicAndDate(def.id, utcDate);
-            this.popups.open({ ...interview.popup, title: "관찰 인터뷰", closeOnBackdrop: false, dim: true, dimAlpha: 0.25, onClose: () => { interviewState = observationInterviewPanelState(interviewState, "close"); trigger.setScale(1); } }, (panel, closeInterview) => {
+            this.popups.open({ ...interview.popup, title: t("info.interview.title"), closeOnBackdrop: false, dim: true, dimAlpha: 0.25, onClose: () => { interviewState = observationInterviewPanelState(interviewState, "close"); trigger.setScale(1); } }, (panel, closeInterview) => {
               panel.add(this.scene.add.text(interview.question.x, interview.question.y, question.prompt, textStyle({ role: "emphasis", size: journal.font.question, color: COLOR.accentText, wrap: interview.question.width })).setOrigin(0, 0));
               question.choices.forEach((choice, index) => {
                 const choiceButton = this.scene.add.container(0, interview.choice.firstY + index * interview.choice.step);
@@ -1410,9 +1403,9 @@ export class InfoManager {
     const entry = history[index];
     // 이 레이어는 눌린 자리 위에 얹히는 쪽지가 아니라 따로 읽는 기록판이다. 관찰 일지와
     // 같은 자리에 겹쳐 열면 두 판의 닫기 X가 거의 포개져 헷갈린다 — 화면 가운데 그대로 둔다.
-    this.popups.open({ width: 820, height: 620, title: "관찰 기록" }, (body, close) => {
+    this.popups.open({ width: 820, height: 620, title: t("info.journal.history") }, (body, close) => {
       if (!entry) {
-        body.add(this.scene.add.text(0, 0, "아직 기록된 인터뷰가 없습니다.", textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0.5));
+        body.add(this.scene.add.text(0, 0, t("info.journal.noInterview"), textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0.5));
         return;
       }
       const goTo = (next: number): void => { close(); this.openObservationHistory(def, from, next); };
@@ -1421,7 +1414,7 @@ export class InfoManager {
       body.add(this.scene.add
         .text(0, -246, `${entry.date}  ·  #${entry.personalityTag}`, textStyle({ role: "body", size: 22, color: COLOR.inkDim, align: "center" }))
         .setOrigin(0.5, 0));
-      const copy = `Q. ${entry.question}\n\nA. ${entry.answer}\n\n발견  ${entry.discoveredHabit}`;
+      const copy = t("info.journal.historyEntry", { question: entry.question, answer: entry.answer, habit: entry.discoveredHabit });
       body.add(this.scene.add
         .text(0, -196, copy, textStyle({ role: "body", size: 26, color: COLOR.ink, lineSpacing: 10, align: "center", wrap: 720 }))
         .setOrigin(0.5, 0));
@@ -1445,6 +1438,21 @@ export class InfoManager {
         body.add(hit);
       }
     });
+  }
+
+  /**
+   * 한계 돌파 테크트리.
+   *
+   * 별 하나에서 시작해 다섯까지 오르는 길을 한 장에 세운다. 단계마다 드는 **그 개체의 파편**과
+   * 열리는 효과·레벨 상한을 함께 적어, 연구소 중복 획득이 무엇으로 돌아오는지 여기서 다 읽히게 한다.
+   */
+  private openBreakthroughSteps(_from: PopupSource): void {
+    const def = this.currentDef;
+    if (!def) return;
+    const grade = this.publicProfile
+      ? Math.max(1, this.publicProfile.breakthroughGrade)
+      : breakthroughGrade(relicProgression.getProgress(def.id).breakthrough);
+    openBreakthroughStepsPopup(this.scene, this.popups, def, grade);
   }
 
 
@@ -1566,14 +1574,14 @@ export class InfoManager {
     const progress = relicProgression.getProgress(def.id);
     const level = progress.bondLevel;
     const next = Math.min(BOND_LEVEL_CAP, level + 1);
-    this.popups.open({ width: 820, height: 900, title: "유대 " + level + " / " + BOND_LEVEL_CAP, tilt: -1.2, ...anchorOf(from) }, (body) => {
+    this.popups.open({ width: 820, height: 900, title: t("info.bond.level", { level: `${level} / ${BOND_LEVEL_CAP}` }), tilt: -1.2, ...anchorOf(from) }, (body) => {
       const rows: [string, string, string][] = [
-        ["야성 상승", "+" + Math.round((BOND_FEROCITY_MULTIPLIER[level] - 1) * 100) + "%", "+" + Math.round((BOND_FEROCITY_MULTIPLIER[next] - 1) * 100) + "%"],
-        ["로비 상호작용", "하루 한 번 " + BOND_XP_REWARD.firstLobbyInteraction + " EXP", "같음"],
-        ["전투 승리", "편성 렐릭 전원 " + BOND_XP_REWARD.partyVictory + " EXP", "같음"],
+        [t("info.bond.ferocityGain"), "+" + Math.round((BOND_FEROCITY_MULTIPLIER[level] - 1) * 100) + "%", "+" + Math.round((BOND_FEROCITY_MULTIPLIER[next] - 1) * 100) + "%"],
+        [t("info.bond.lobbyInteraction"), t("info.bond.oncePerDay", { amount: `${BOND_XP_REWARD.firstLobbyInteraction} EXP` }), t("info.bond.same")],
+        [t("info.bond.battleWin"), t("info.bond.partyAll", { amount: `${BOND_XP_REWARD.partyVictory} EXP` }), t("info.bond.same")],
       ];
-      body.add(this.scene.add.text(-350, -368, "지금", textStyle({ role: "emphasis", size: 22, color: COLOR.accentText })).setOrigin(0, 0.5));
-      body.add(this.scene.add.text(348, -368, "다음 단계", textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(1, 0.5));
+      body.add(this.scene.add.text(-350, -368, t("info.bond.now"), textStyle({ role: "emphasis", size: 22, color: COLOR.accentText })).setOrigin(0, 0.5));
+      body.add(this.scene.add.text(348, -368, t("info.bond.nextStep"), textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(1, 0.5));
       rows.forEach(([label, now, later], index) => {
         const y = -300 + index * 84;
         body.add(this.scene.add.text(-350, y - 18, label, textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0, 0));
@@ -1581,7 +1589,7 @@ export class InfoManager {
         body.add(this.scene.add.text(348, y + 14, later, textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(1, 0));
         body.add(drawHairline(this.scene, 0, y + 56, 700, { color: COLOR.accent, alpha: 0.14 }));
       });
-      body.add(this.scene.add.text(-350, -20, "유대 이야기", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0));
+      body.add(this.scene.add.text(-350, -20, t("info.bond.story"), textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0));
       // 이야기는 유대 레벨로 하나씩 열린다. 아직 잠긴 것도 자리를 보여 줘 다음 목표가 된다.
       BOND_STORY_STEPS.forEach((step, index) => {
         const y = 46 + index * 92;
@@ -1595,7 +1603,7 @@ export class InfoManager {
         body.add(this.scene.add.text(-318, y + 12, step.title, textStyle({ role: "display", size: 26, color: open ? COLOR.ink : COLOR.inkDim })).setOrigin(0, 0));
         body.add(
           this.scene.add
-            .text(318, y + 18, open ? "열림" : "유대 " + step.level + " 필요", textStyle({ role: "body", size: 21, color: open ? COLOR.accentText : COLOR.inkDim }))
+            .text(318, y + 18, open ? t("info.bond.opened") : t("info.bond.required", { level: step.level }), textStyle({ role: "body", size: 21, color: open ? COLOR.accentText : COLOR.inkDim }))
             .setOrigin(1, 0),
         );
       });
@@ -1607,7 +1615,7 @@ export class InfoManager {
     const def = this.currentDef;
     if (!def) return;
     const slots = relicProgression.getProgress(def.id).heartGemSlots;
-    this.popups.open({ width: 800, height: 620, title: "룬 세 자리", tilt: -1.2, ...anchorOf(from) }, (body) => {
+    this.popups.open({ width: 800, height: 620, title: t("info.rune.threeSlots"), tilt: -1.2, ...anchorOf(from) }, (body) => {
       slots.forEach((gemId, index) => {
         const y = -180 + index * 130;
         const gem = gemId ? session.runeInventory.find(({ instanceId }) => instanceId === gemId) : undefined;
@@ -1619,21 +1627,21 @@ export class InfoManager {
         }));
         // 자리마다 들어갈 조각이 정해져 있으므로 빈 칸도 제 조각을 옅게 세워 둔다.
         body.add(addRuneFrame(this.scene, -272, y, 92, gem?.rarity, index as RunePart, { mainStats: gem?.mainStats, engraved: (gem?.engravings.length ?? 0) > 0 }));
-        body.add(this.scene.add.text(-206, y - 26, RUNE_PART_LABELS[index as RunePart], textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0, 0));
+        body.add(this.scene.add.text(-206, y - 26, runePartLabel(index as RunePart), textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0, 0));
         body.add(
           this.scene.add
-            .text(-206, y + 2, gem ? (gem.customName ?? `${RUNE_RARITY_LABELS[gem.rarity]} 룬`) : "빈 자리", textStyle({ role: "display", size: 28, color: gem ? COLOR.ink : COLOR.inkDim }))
+            .text(-206, y + 2, gem ? (gem.customName ?? t("info.rune.named", { rarity: runeRarityLabel(gem.rarity) })) : t("info.rune.empty"), textStyle({ role: "display", size: 28, color: gem ? COLOR.ink : COLOR.inkDim }))
             .setOrigin(0, 0),
         );
         if (gem) {
-          const effect = [...gem.mainStats, ...gem.subStats].map(({ key, value }) => RUNE_STAT_LABEL[key] + " +" + value + "%").join("   ");
+          const effect = [...gem.mainStats, ...gem.subStats].map(({ key, value }) => runeStatLabel(key) + " +" + value + "%").join("   ");
           body.add(this.scene.add.text(306, y + 8, effect, textStyle({ role: "emphasis", size: 22, color: COLOR.accentText })).setOrigin(1, 0));
         }
       });
       const filled = slots.filter(Boolean).length;
       body.add(
         this.scene.add
-          .text(0, 240, filled === 3 ? "세 조각이 모두 맞물렸다." : "채운 자리 " + filled + " / 3", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText }))
+          .text(0, 240, filled === 3 ? t("info.rune.complete") : t("info.rune.filled", { count: `${filled} / 3` }), textStyle({ role: "emphasis", size: 24, color: COLOR.accentText }))
           .setOrigin(0.5),
       );
     });
@@ -1672,12 +1680,12 @@ export class InfoManager {
     const extra = skinsForRelic(def.id);
     if (extra.length === 0) return;
     const layout = APPEARANCE_PANEL_LAYOUT;
-    this.popups.open({ width: layout.width, height: layout.height, title: "외형", dim: true, closeOnBackdrop: false, onClose }, (body) => {
+    this.popups.open({ width: layout.width, height: layout.height, title: t("info.skin.title"), dim: true, closeOnBackdrop: false, onClose }, (body) => {
       let selected: RelicSkinDef | undefined = extra.find(({ id }) => id === relicSkinManager.equippedFor(def.id));
       const cards: Phaser.GameObjects.Container[] = [];
-      const entries: Array<{ skin?: RelicSkinDef; name: string }> = [{ name: "기본 외형" }, ...extra.map((skin) => ({ skin, name: skin.name }))];
+      const entries: Array<{ skin?: RelicSkinDef; name: string }> = [{ name: t("info.skin.default") }, ...extra.map((skin) => ({ skin, name: skin.name }))];
       const action = new Button(this.scene, 0, layout.actionY, {
-        width: layout.actionWidth, height: layout.actionHeight, label: "장착", variant: "primary",
+        width: layout.actionWidth, height: layout.actionHeight, label: t("info.skin.equip"), variant: "primary",
         onClick: () => {
           const equipped = relicSkinManager.equippedFor(def.id);
           const succeeded = selected ? relicSkinManager.equip(def.id, selected.id) : (equipped === undefined || relicSkinManager.unequip(def.id));
@@ -1705,7 +1713,7 @@ export class InfoManager {
           puppet.setAlpha(owned ? 1 : 0.28); card.addAt(puppet, 2);
         });
         card.add(this.scene.add.text(0, 310, entry.name, textStyle({ role: "display", size: 28, color: owned ? COLOR.ink : COLOR.inkDim, align: "center", wrap: 330 })).setOrigin(0.5));
-        card.add(this.scene.add.text(0, 352, owned ? "보유" : "미보유 · 잠금", textStyle({ role: "emphasis", size: 22, color: owned ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5));
+        card.add(this.scene.add.text(0, 352, owned ? t("info.skin.owned") : t("info.skin.locked"), textStyle({ role: "emphasis", size: 22, color: owned ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5));
         const hit = this.scene.add.rectangle(0, 0, layout.cardWidth, layout.cardHeight, 0xffffff, 0);
         if (owned) hit.setInteractive({ useHandCursor: true }).on("pointerup", () => { selected = entry.skin; paint(); });
         card.add(hit); body.add(card); cards.push(card);
@@ -1722,7 +1730,7 @@ export class InfoManager {
         });
         const selectedId = selected?.id;
         const equippedNow = selectedId ? equipped === selectedId : equipped === undefined;
-        action.setLabel(equippedNow ? "장착 중" : "장착");
+        action.setLabel(equippedNow ? t("info.skin.equipped") : t("info.skin.equip"));
         action.setEnabled(!equippedNow && (!selectedId || relicSkinManager.owns(selectedId)));
       }
       paint();
@@ -1731,12 +1739,7 @@ export class InfoManager {
 
   /** SD 피규어가 공중에 뜨지 않도록 받침을 깐다. 대사는 그 위에 뜬다. */
   private buildFigureStand(): void {
-    this.chrome.add(this.scene.add.ellipse(FIGURE.x, FIGURE.y + 6, 206, 52, COLOR.void, 0.55));
-    this.chrome.add(this.scene.add.ellipse(FIGURE.x, FIGURE.y, 192, 44, 0x141920, 0.92));
-    this.chrome.add(drawHairline(this.scene, FIGURE.x, FIGURE.y - 20, 172, { color: COLOR.accent, alpha: 0.4 }));
-    this.chrome.add(
-      this.scene.add.text(FIGURE.x, FIGURE.y + 32, "IN-GAME SD", textStyle({ role: "body", size: 17, color: COLOR.inkDim })).setOrigin(0.5, 0),
-    );
+    addInfoFigureStand(this.scene, this.chrome, FIGURE.x, FIGURE.y);
   }
 
   /** 캐릭터 대사. SD 위에 떠서 오른쪽 판들과 겹치지 않는다. */
@@ -1842,7 +1845,7 @@ export class InfoManager {
     this.figure?.destroy();
     this.figure = figure;
     enableHitOnClick(this.scene, figure);
-    figure.on("pointerup", () => this.say(def.name + "는 당신을 바라본다."));
+    figure.on("pointerup", () => this.say(t("info.enemy.gaze", { name: def.name })));
     figure.setVisible(this.portraitWanted && this.root.visible);
   }
 
@@ -1850,9 +1853,9 @@ export class InfoManager {
   private buildSkillIcons(def: RelicDef): void {
     for (const icon of this.skillIcons.splice(0)) icon.destroy();
     const entries: [string, Skill, number | undefined, SkillArtSlot][] = [
-      ["패시브", { ...def.passive, power: def.passive.value, damageType: "physical" } as unknown as Skill, undefined, "passive"],
-      ["일반 공격", def.basic, undefined, "basic"],
-      ["궁극기", def.ultimate, def.ultimate.cost, "ultimate"],
+      [t("info.skill.passive"), { ...def.passive, power: def.passive.value, damageType: "physical" } as unknown as Skill, undefined, "passive"],
+      [t("info.skill.basic"), def.basic, undefined, "basic"],
+      [t("info.skill.ultimate"), def.ultimate, def.ultimate.cost, "ultimate"],
     ];
     entries.forEach(([kindLabel, skill, gaugeCost, slot], index) => {
       const size = SKILL_ICON.size;
@@ -1901,7 +1904,7 @@ export class InfoManager {
     this.skillIcons.push(addInfoFerocityBadge(this.scene, this.popups, this.chrome, x, y, def, (from) => this.openFerocityTrait(def, from)));
   }
 
-  /** 이 창이 연 개체의 최종 정의와 열린 돌파 등급의 몫으로 공용 폭주 쪽지를 연다. */
+  /** 개체별 폭주 발현 설명. 야성 규칙 자체는 강조된 말을 눌러 다시 열 수 있다. */
   private openFerocityTrait(def: RelicDef, from: PopupSource): void {
     const finalDef = { ...def, stats: relicProgression.getFinalStats(def.id) };
     const breakthrough = relicProgression.getProgress(def.id).breakthrough;
@@ -1911,14 +1914,14 @@ export class InfoManager {
     });
   }
 
-  /** 이 창이 열고 있는 개체의 최종 정의로 공용 조립기를 부른다. */
+  /** 읽기 전용 도감에 실제 방어력을 가정하지 않은 스킬 능력치 배율을 만든다. */
   private skillViewModel(kindLabel: string, skill: Skill | Passive, gaugeCost?: number, slot?: SkillArtSlot): SkillInfoViewModel {
     // 레벨·돌파·장착 룬을 모두 반영한 정의를 넘겨 74 같은 기본치가 성장 후에 남지 않게 한다.
     const def = this.currentDef!;
     const finalDef = { ...def, stats: relicProgression.getFinalStats(def.id) };
     const breakthrough = relicProgression.getProgress(def.id).breakthrough;
-    // **열린 돌파 등급의 몫만 넘긴다.** 아직 뚫지 않은 단계의 효과를 쪽지에 적으면 지금 싸우는 이
-    // 개체가 하지 않는 일을 말하게 된다 — 무엇이 열리는지는 등급 돋보기가 여는 표가 맡는다.
+    // **열린 돌파 등급의 몫만 넘긴다.** 아직 뚫지 않은 단계의 효과를 쪽지에 적으면 지금 싸우는
+    // 이 개체가 하지 않는 일을 말하게 된다 — 무엇이 열리는지는 등급 돋보기가 여는 표가 맡는다.
     const breakthroughEffect = slot && !this.publicProfile && isBreakthroughSlotOpen(breakthrough, slot)
       ? breakthroughEffectText(def, slot) : undefined;
     return buildSkillViewModel({
@@ -1942,10 +1945,12 @@ export class InfoManager {
     const tags: KeywordDef[] = summons.map(({ def, growthStat }) => ({
       id: `summon-${def.id}`,
       term: def.name,
-      kind: "규칙" as const,
-      description: `${owner?.name ?? "지휘자"}에게 귀속된 근거리 소환수다.`
-        + ` ${growthStat === "atk" ? "공격력" : "주문력"}이 이 개체의 모든 능력치를 정하며 스스로 표적을 고르고 제 궁극기를 쓴다.`
-        + ` 일반 공격은 「${def.basic.name}」, 궁극기는 「${def.ultimate.name}」이다.`,
+      kind: "rule" as const,
+      description: t("skill.keyword.summon.description", {
+        owner: owner?.name ?? t("skill.keyword.summon.owner"),
+        stat: t(growthStat === "atk" ? "skill.stat.atk" : "skill.stat.ap"),
+        basic: def.basic.name, ultimate: def.ultimate.name,
+      }),
     }));
     // 겹당 수치와 상한은 지휘자마다 다를 수 있으므로 전역 사전이 아니라 그 창이 데이터에서 만든다.
     // 겹당 수치와 상한, 문턱 증가폭은 지휘자마다 다르므로 전역 사전이 아니라 그 정의에서 만든다.
@@ -1953,20 +1958,19 @@ export class InfoManager {
     if (scent) {
       const threshold = finisher === undefined || finisher.thresholdPerStack <= 0
         ? ""
-        : ` [[nape|목덜미]]가 열리는 체력 문턱이 ${finisher.thresholdPerStack}% 오른다.`;
+        : t("skill.keyword.bloodscent.threshold", { percent: finisher.thresholdPerStack });
       tags.push({
-        id: "bloodscent", term: "피 냄새", kind: "버프",
-        description: `표적이 쓰러지거나 [[nape|목덜미]]가 들어갈 때마다 한 겹 얻고 최대 ${scent.maxStacks}겹까지 쌓인다.`
-          + ` 겹마다 일반 공격 피해가 ${scent.damagePercentPerStack}% 커지고,${threshold}`
-          + ` 전투가 끝나면 사라진다.`,
+        id: "bloodscent", term: t("skill.keyword.bloodscent.term"), kind: "buff",
+        description: t("skill.keyword.bloodscent.description", {
+          stacks: scent.maxStacks, percent: scent.damagePercentPerStack, threshold,
+        }),
       });
     }
     // 목덜미도 비례 수치를 아는 자리에서는 실제 값으로 말한다.
     if (finisher) {
       tags.push({
-        id: "nape", term: "목덜미", kind: "규칙",
-        description: `표적 뒤로 [[teleport|순간이동]]해 표적의 남은 체력의 ${finisher.remainingHpPercent}%만큼 [[fixed-damage|고정 피해]]를 준다.`
-          + ` 방어력과 저항력을 무시하며 [[stealth|은신]]은 풀리지 않는다.`,
+        id: "nape", term: t("skill.keyword.nape.term"), kind: "rule",
+        description: t("skill.keyword.nape.description", { percent: finisher.remainingHpPercent }),
       });
     }
     return tags;
@@ -1995,7 +1999,7 @@ export class InfoManager {
     this.popups.closeAll();
 
     this.paintRarity(owned ? def.rarity : undefined);
-    this.nameText.setText(owned ? def.name : "미발굴 개체");
+    this.nameText.setText(owned ? def.name : t("info.enemy.undug"));
     this.nameShadow.setText(this.nameText.text);
     // 이름 폭이 캐릭터마다 다르므로 뱃지 자리도 그릴 때마다 이름 끝에서 다시 잡는다.
     const badgeLeft = this.nameText.x + this.nameText.width + AFFINITY.gap;
@@ -2008,7 +2012,7 @@ export class InfoManager {
       addColorAssistMark(this.scene, this.colorAssistMarks, BASE_WIDTH - 72, 112, COLOR_ASSIST_LAYOUT.card.size, session.settings.accessibility.colorAssist, "element", def.element);
     }
     // 속성과 직군은 옆의 아이콘이 말한다. 같은 것을 글자로 또 적으면 줄만 길어진다.
-    this.roleText.setText("NO." + def.specimenNumber + (owned ? "   " + def.origin : "   실루엣 기록"));
+    this.roleText.setText("NO." + def.specimenNumber + (owned ? "   " + def.origin : t("info.enemy.silhouette")));
     this.refreshBadges();
     this.paintStars(def);
     this.buildSkillIcons(def);
@@ -2047,17 +2051,17 @@ export class InfoManager {
   }
 
   /**
-   * 돌파 등급은 다섯 칸이 아니라 로마자 한 글자다. 모양과 색은 `rarityMark.ts`가 정한다.
+   * 별은 다섯 칸이 아니라 로마자 한 글자다. 모양과 색은 `rarityMark.ts`가 정한다.
    *
    * 세는 것은 희귀도가 아니라 한계 돌파 단계다. 친구·적처럼 공개 프로필로 여는 창은 그쪽이
-   * 알려 준 등급을 그대로 쓰고, 값이 없으면 모든 개체의 시작인 1등급으로 본다.
+   * 알려 준 별을 그대로 쓰고, 값이 없으면 모든 개체의 시작인 별 하나로 본다.
    */
   private paintStars(def: RelicDef): void {
-    this.gradeRow.removeAll(true);
-    const grade = this.publicProfile
+    this.starRow.removeAll(true);
+    const stars = this.publicProfile
       ? Math.max(1, this.publicProfile.breakthroughGrade)
       : breakthroughGrade(relicProgression.getProgress(def.id).breakthrough);
-    addBreakthroughGradeMark(this.scene, this.gradeRow, 0, 0, GRADE_MARK_SIZE * 2, grade);
+    addBreakthroughGradeMark(this.scene, this.starRow, 0, 0, STAR_SIZE * 2, stars);
   }
 
   /** 레벨·경험치·유대·능력치·젬을 지금 상태로 다시 칠한다. */
@@ -2073,7 +2077,7 @@ export class InfoManager {
     const maxed = progress.level >= cap;
 
     // 사거리는 성장하지 않는 정적 값이지만, 다른 캐릭터로 넘길 때 함께 갈아 끼워야 한다.
-    this.reachLabel.setText("사거리 · " + REACH_LABEL[def.reachTier]);
+    this.reachLabel.setText(`${t("stat.range")} · ${REACH_LABEL[def.reachTier]}`);
     this.levelValue.setText(String(progress.level));
     this.levelCap.setText("/ " + cap);
     // 숫자 폭이 자리 수에 따라 달라지므로 붙는 자리도 그릴 때마다 다시 잡는다.
@@ -2086,7 +2090,7 @@ export class InfoManager {
     // 경험치 줄은 "얼마나 컸는가"만 말한다. 급여에 드는 치즈케이크는 바로 아래 버튼이 맡는다.
     this.expLabel.setText(maxed ? "MAX" : progress.exp + " / " + need + " EXP");
     this.paintFeedButton(this.ownedNow && canFeedRelic(progress, session.wallet.cheesecake));
-    this.feedLabel.setText(maxed ? "최대 레벨" : "급여하기");
+    this.feedLabel.setText(maxed ? t("info.level.max") : t("info.feed"));
     // 급여는 치즈케이크를 먹이는 일이라 버튼이 그 수를 직접 말한다. 상단 줄과 같은 세션 지갑을
     // 읽으므로 두 곳의 값이 갈라지지 않는다.
     // 만렙에서는 보유/비용 대신 **MAX** 한 마디만 남긴다. 먹일 수 없는 판에서 `보유/—`는
@@ -2104,7 +2108,7 @@ export class InfoManager {
     this.bondBar.setValue(bondMaxed ? 1 : (progress.bondXp - bondBase) / (bondNext - bondBase));
     // 유대는 야성을 눌러 주는 것이 아니라 더 빨리 끓게 한다. 피버로 가는 지름길이다.
     const boost = Math.round((BOND_FEROCITY_MULTIPLIER[progress.bondLevel] - 1) * 100);
-    this.bondLabel.setText((bondMaxed ? "MAX" : progress.bondXp + " / " + bondNext + " EXP") + "   ·   야성 상승 +" + boost + "%");
+    this.bondLabel.setText(`${bondMaxed ? "MAX" : `${progress.bondXp} / ${bondNext} EXP`}   ·   ${t("info.bond.ferocityGain")} +${boost}%`);
 
     this.statRadar?.draw(finalStats, STAT_RADAR_RADIUS);
 
@@ -2209,26 +2213,344 @@ function runeSpot(size: number, index: number): { x: number; y: number } {
   return { x: Math.cos(rad) * radius, y: Math.sin(rad) * radius };
 }
 
-/**
- * 스킬 쪽지 한 장의 표시 계약을 **정의에서 조립한다.**
+
+/* ───────────────────────────────────────────────────────────────────────────
+ * 정보창의 조각을 **적 팝업과 함께 쓰는 모듈 함수**로 끌어낸 자리.
  *
- * 정보창(아군·친구)과 적 전용 팝업이 같은 함수를 쓴다 — 화면마다 따로 만들면 같은 궁극기가
- * 어디서는 실제 피해로, 어디서는 위력 %로 적히고 돌파로 붙은 줄이 한쪽에만 선다.
- * `def`는 **이미 최종 능력치가 반영된 정의**여야 한다(레벨·돌파·룬 또는 스테이지 성장).
- */
+ * 적은 화면이 아니라 팝업 한 장을 쓰지만(`EnemyInfoPopup`), 생김새는 정보창을 그대로 줄인
+ * 것이다. 클래스 안에 묶어 두면 그 팝업이 같은 모양을 다시 만들게 되고, 한쪽만 좋아질 때
+ * 다른 쪽이 옛 모습으로 남는다.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/** 미발굴 개체가 쓰는 잿빛. 등급이 없으면 보석이 아니라 돌이다. */
+const RARITY_GEM_UNKNOWN = ["#9aa3ad", "#6f7681", "#4a5058"] as const;
+
+export function paintRarityGem(
+  text: Phaser.GameObjects.Text,
+  glow: Phaser.GameObjects.Text,
+  rarity?: RelicRarity,
+): void {
+  const stops = rarity ? RARITY_GEM[rarity] : RARITY_GEM_UNKNOWN;
+  text.setText(rarity ?? "???");
+  glow.setText(rarity ?? "???").setColor(stops[1]);
+  // 글자 높이를 따라 색이 흐르게 한다. Phaser Text는 캔버스 채우기를 그대로 받는다.
+  const gradient = text.context.createLinearGradient(0, 0, 0, text.height);
+  gradient.addColorStop(0, stops[0]);
+  gradient.addColorStop(0.55, stops[1]);
+  gradient.addColorStop(1, stops[2]);
+  text.setFill(gradient);
+}
+
+
+export function slotFallbackIcon(def: RelicDef, slot: SkillArtSlot): string | undefined {
+  if (slot === "basic") return def.basic.iconAssetId;
+  if (slot === "ultimate") return def.ultimate.iconAssetId;
+  if (slot === "passive") return def.passive.iconAssetId;
+  return undefined;
+}
+
+
+export function addInfoMagnifier(
+  scene: Phaser.Scene,
+  popups: PopupLayer,
+  parent: Phaser.GameObjects.Container,
+  x: number,
+  y: number,
+  onClick: (from: PopupSource) => void,
+  /** 기울어진 칸 안에 넣을 때는 칸의 국소 좌표로 옮겨 함께 기울게 한다. */
+  intoPanel = false,
+): void {
+  // 자리는 늘 판의 오른쪽 끝 안쪽이다. 끝에 붙어야 "이 칸에 딸린 것"으로 읽히고, 안쪽으로
+  // 조금 들여야 기울어진 변에 걸치지 않는다.
+  const container = scene.add.container(x, y);
+  // 작고 흐린 회색이다. 이것은 "더 있다"는 힌트일 뿐이라, 옆의 수치보다 먼저 눈에 들어오면
+  // 안 된다. 대신 작아진 만큼 선은 굵게 줘야 형태가 뭉개지지 않는다.
+  container.add(drawGlyph(scene, "magnifier", 0, 0, 30, 0xb9c0ca, 0.42, 4));
+  const hit = scene.add.rectangle(x, y, 78, 78, 0xffffff, 0).setInteractive({ useHandCursor: true });
+  hit.on("pointerdown", () => container.setScale(1.15));
+  hit.on("pointerout", () => { if (!popups.isOpen) container.setScale(1); });
+  hit.on("pointerup", () => {
+    container.setScale(1.15);
+    onClick({ x, y: y - 26, onClose: () => container.setScale(1) });
+  });
+  if (intoPanel) attach(parent, container, hit);
+  else parent.add([container, hit]);
+}
+
+
+export function addInfoPanel(
+  scene: Phaser.Scene,
+  parent: Phaser.GameObjects.Container,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+): Phaser.GameObjects.Container {
+  const panel = scene.add.container(x, y).setRotation(Phaser.Math.DegToRad(PANEL_TILT));
+  // 좁아지는 양을 비율이 아니라 픽셀로 고정한다. 비율로 두면 높은 판이 더 많이 좁아져
+  // 판마다 변의 기울기가 달라지고, 네 장이 저마다 다른 방향으로 노는 것처럼 보인다.
+  const shape = perspectiveRect(width, height, { tall: "right", taper: (2 * PANEL_TAPER) / height });
+  panel.add(drawLayer(scene, 0, 0, shape, { fill: 0x0b0f15, alpha: 0.6, edge: COLOR.accent, edgeAlpha: 0.4 }));
+  panel.add(drawShapeEdge(scene, 0, 0, shape, "bottom", { color: COLOR.accent, alpha: 0.22, inset: 10 }));
+  parent.add(panel);
+  return panel;
+}
+
+
+export function addInfoFigureStand(scene: Phaser.Scene, parent: Phaser.GameObjects.Container, x: number, y: number): void {
+  parent.add(scene.add.ellipse(x, y + 6, 206, 52, COLOR.void, 0.55));
+  parent.add(scene.add.ellipse(x, y, 192, 44, 0x141920, 0.92));
+  parent.add(drawHairline(scene, x, y - 20, 172, { color: COLOR.accent, alpha: 0.4 }));
+  parent.add(
+    scene.add.text(x, y + 32, "IN-GAME SD", textStyle({ role: "body", size: 17, color: COLOR.inkDim })).setOrigin(0.5, 0),
+  );
+}
+
+
+export function addInfoFerocityBadge(
+  scene: Phaser.Scene,
+  popups: PopupLayer,
+  parent: Phaser.GameObjects.Container,
+  x: number,
+  y: number,
+  def: RelicDef,
+  onOpen: (from: PopupSource) => void,
+): Phaser.GameObjects.Container {
+  // 스킬 아이콘의 자식으로 두면 아이콘을 눌러 커질 때 뱃지까지 함께 커져, 패시브를 눌렀는데
+  // 야성까지 눌린 것처럼 보인다. 자리만 아이콘 위로 잡고 층은 따로 세운다.
+  // 스킬 아이콘(150)보다는 작게 두되, 그림이 무엇인지 알아볼 만큼은 키운다. 너무 작으면
+  // 폭주 일러스트가 점처럼 뭉갠다.
+  const badgeSize = 96;
+  const badge = scene.add.container(x, y);
+  const shape = chipPoints(badgeSize, badgeSize, {
+    bevel: { topLeft: badgeSize * 0.34, topRight: 0, bottomRight: badgeSize * 0.34, bottomLeft: 0 },
+  });
+  badge.add(drawLayer(scene, 0, 0, shape, { fill: FEROCITY_BADGE, alpha: 1, edge: 0xf0a58a, edgeAlpha: 0.8, glow: { color: 0x8f3a2a, strength: 0.35, height: 0.6 } }));
+  badge.add(drawInnerVignette(scene, 0, 0, shape, { strength: 0.4 }));
+  // 폭주도 스킬 넷 중 하나라 전용 일러스트를 쓴다. 다만 붉은 판 위에서는 속성 색을 그대로
+  // 얹으면 판에 묻히므로, 여기서만 야성의 살구빛을 쓴다 — 이 뱃지는 개체 구분이 아니라
+  // "야성이 이렇게 터진다"를 알리는 자리이기 때문이다.
+  const art = skillArtFor(def.id, "ferocity");
+  if (art) {
+    badge.add(scene.add.image(0, -13, art).setDisplaySize(badgeSize * 0.64, badgeSize * 0.64).setTint(0xffd9c4));
+  } else {
+    badge.add(drawGlyph(scene, "ferocity", 0, -13, badgeSize * 0.46, 0xffd9c4));
+  }
+  // 스킬 액자와 같은 방식으로 이름을 안쪽 아래에 단다. 셋과 나란히 읽히려면 이름이 있어야 한다.
+  badge.add(scene.add.text(0, badgeSize / 2 - 23, t("info.skill.ferocity"), textStyle({ role: "display", size: 19, color: "#ffd9c4" })).setOrigin(0.5));
+  // 입력 영역도 뱃지 크기에 딱 맞춘다. 넓게 잡으면 아래 아이콘의 터치를 가로챈다.
+  const hit = scene.add.rectangle(0, 0, badgeSize, badgeSize, 0xffffff, 0).setInteractive({ useHandCursor: true });
+  hit.on("pointerdown", () => badge.setScale(1.1));
+  hit.on("pointerout", () => { if (!popups.isOpen) badge.setScale(1); });
+  hit.on("pointerup", () => {
+    badge.setScale(1.1);
+    onOpen({ x, y: y - badgeSize / 2 - 12, onClose: () => badge.setScale(1) });
+  });
+  badge.add(drawShapeOutline(scene, 0, 0, shape, { color: 0xf0a58a, alpha: 0.65, width: 3 }));
+  badge.add(hit);
+  parent.add(badge);
+  return badge;
+}
+
+
+export function openBreakthroughStepsPopup(
+  scene: Phaser.Scene,
+  popups: PopupLayer,
+  def: RelicDef,
+  grade: number,
+): void {
+  const layout = breakthroughStepsLayout(BREAKTHROUGH_STEPS.length);
+  // **돋보기 자리에 붙이지 않고 화면 가운데에 선다.** 네 줄이 저마다 설명을 이고 있어 판이
+  // 길어지는데, 돋보기에 붙이면 그 판이 화면 한쪽으로 쏠려 위나 아래가 잘린다.
+  popups.open({
+    width: BREAK_STEPS.width,
+    height: layout.height,
+    y: BREAK_STEPS.centerY,
+    title: t("info.breakthrough"),
+    titleSize: POPUP_TITLE_SIZE.workboard,
+    dim: true,
+    backButton: true,
+  }, (body) => {
+    const top = -layout.height / 2;
+    BREAKTHROUGH_STEPS.forEach((entry, index) => {
+      // 돌파 한 번이 등급 하나다. 표의 첫 줄이 곧 "II로 가는 길"이다.
+      const rowGrade = index + 2;
+      const y = top + layout.rows[index];
+      const reached = grade >= rowGrade;
+      // 열린 줄과 안 열린 줄을 **밝기가 아니라 결**로 가른다(`BREAK_STEPS.tone` 주석 참고).
+      // 등급 하나로 시작하는 개체는 네 줄이 모두 안 열린 줄이라, 어둡게 누르면 이 창을 처음
+      // 여는 사람이 캄캄한 판 넷을 본다.
+      const tone = reached ? BREAK_STEPS.tone.reached : BREAK_STEPS.tone.locked;
+      body.add(drawLayer(scene, 0, y, slantedRect(layout.rowWidth, BREAK_STEPS.row.height, 16), {
+        fill: tone.fill,
+        alpha: tone.alpha,
+        edge: COLOR.accent,
+        edgeAlpha: tone.edgeAlpha,
+      }));
+      const mark = scene.add.container(BREAK_STEPS.gradeMark.x, y);
+      addBreakthroughGradeMark(scene, mark, 0, 0, BREAK_STEPS.gradeMark.size, rowGrade);
+      // "어디까지 왔는가"는 별이 맡는다 — 글과 그림을 누르지 않는 대신 이 표식만 흐려진다.
+      mark.setAlpha(tone.gradeMark);
+      body.add(mark);
+      // **어느 기술이 열리는지는 그 기술의 액자가 말한다.** 정보창 아래 네 칸과 같은 프리팹을
+      // 써서 같은 그림·같은 이름으로 서므로, 표를 읽다가 "이게 뭐였지"로 돌아가지 않는다.
+      const icon = addSkillIconFrame(scene, {
+        size: BREAK_STEPS.icon.size,
+        slot: entry.slot,
+        relicId: def.id,
+        fallbackIcon: slotFallbackIcon(def, entry.slot),
+        element: def.element,
+        role: def.role,
+        label: SKILL_SLOT_LABEL[entry.slot],
+        // 액자는 그 줄의 주제라 안 열린 줄에서도 어느 기술인지 알아볼 수 있어야 한다.
+        dimAlpha: reached ? undefined : BREAK_STEPS.lockedIconAlpha,
+      });
+      icon.setPosition(BREAK_STEPS.icon.x, y);
+      body.add(icon);
+      // 열리는 것은 **이 개체의** 효과다. 문구는 정의에서 조립하므로 화면이 따로 적지 않고,
+      // 아직 설계하지 않은 개체는 어느 슬롯이 열리는지만 말한다.
+      const opens = breakthroughEffectText(def, entry.slot) ?? breakthroughSlotLabel(entry.slot);
+      body.add(scene.add
+        .text(BREAK_STEPS.textX, y, opens, textStyle({ role: "body", size: BREAK_STEPS.textSize, color: COLOR.ink, wrap: layout.textWrap, lineSpacing: 8 }))
+        .setOrigin(0, 0.5));
+    });
+  });
+}
+
+
+export function openExtraStatsPopup(
+  scene: Phaser.Scene,
+  popups: PopupLayer,
+  def: RelicDef,
+  stats: Stats,
+  from: PopupSource,
+): void {
+  // 판은 글자가 들어가는 만큼만 넓다. 남는 여백은 읽는 데 도움이 되지 않고 뒤 화면만 가린다.
+  const width = 700;
+  const edge = width / 2 - 34;
+  const height = 1150;
+  // 이 창만 **누른 자리에 붙지 않고 화면 가운데에 선다.** 열두 줄이 쌓인 성적표라 돋보기에
+  // 매달면 판이 통째로 아래로 밀려 마지막 줄이 화면 밑변에 붙는다(v0.58.0까지 그랬다) —
+  // 손이 닿기도 읽기도 어려운 자리다. 관찰 기록판과 같은 이유로 자리를 고정한다.
+  popups.open({
+    width, height, title: t("info.stats.detail"), tilt: -1.2,
+    x: BASE_WIDTH / 2, y: EXTRA_STATS_POPUP_Y, onClose: from.onClose,
+  }, (body) => {
+    // 칸에는 오각형이 서 있으므로 여기서는 **숫자**를 맡는다. 총 전투력이 먼저 오고, 다섯
+    // 축의 정확한 값과 기본값 대비 상승분, 그 아래에 오각형에 없는 세부 수치가 온다.
+    const top = -height / 2;
+    // 총 전투력은 판때기 없이 맨 글자로 선다. 이 창에서 가장 굵고 큰 수라 판을 깔지 않아도
+    // 저절로 맨 앞에 읽히고, 판을 깔면 아래 목록과 다른 종류의 값처럼 보인다.
+    body.add(scene.add.text(-edge, top + 100, t("info.stats.power"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5));
+    body.add(
+      scene.add
+        .text(edge, top + 100, combatPower(stats).toLocaleString(), textStyle({ role: "display", size: 52 }))
+        .setOrigin(1, 0.5)
+        .setScale(1, 1.12)
+        .setShadow(3, 6, "#05070a", 8, false, true),
+    );
+    body.add(drawHairline(scene, 0, top + 142, width - 68, { color: COLOR.accent, alpha: 0.3 }));
+    STAT_CHIPS.forEach((chip, index) => {
+      const y = top + 204 + index * 84;
+      const base = def.stats[chip.key];
+      const gain = stats[chip.key] - base;
+      // 칸의 축 이름과 같은 색이라 그래프에서 본 축을 그대로 따라 읽는다.
+      body.add(scene.add.text(-edge, y, chip.label, textStyle({ role: "display", size: 30, color: `#${chip.color.toString(16).padStart(6, "0")}` })).setOrigin(0, 0.5));
+      body.add(scene.add.text(edge, y - 12, stats[chip.key].toLocaleString(), textStyle({ role: "display", size: 36 })).setOrigin(1, 0.5));
+      const detail = gain > 0 ? t("info.stats.baseWithGain", { base: base.toLocaleString(), gain: gain.toLocaleString() }) : t("info.stats.base", { base: base.toLocaleString() });
+      const detailStyle = gain > 0
+        ? textStyle({ role: "body", size: 21, color: COLOR.accentText })
+        : textStyle({ role: "body", size: 21, color: COLOR.inkDim });
+      body.add(scene.add.text(edge, y + 22, detail, detailStyle).setOrigin(1, 0.5));
+      body.add(drawHairline(scene, 0, y + 42, width - 68, { color: COLOR.accent, alpha: 0.14 }));
+    });
+    // 사거리는 오각형에 없는 축이라 다섯 줄 **아래**에 한 줄로 붙는다. 값이 아니라 단계라
+    // 기본값 대비 상승분이 없고, 단계 자체를 색이 말한다(근거리 붉은색·중거리 푸른색·원거리 노란색).
+    const reachY = top + 204 + STAT_CHIPS.length * 84;
+    const reachHex = reachToneHex(def.reachTier);
+    body.add(scene.add.text(-edge, reachY, t("stat.range"), textStyle({ role: "display", size: 30, color: reachHex })).setOrigin(0, 0.5));
+    body.add(scene.add.text(edge, reachY, REACH_LABEL[def.reachTier], textStyle({ role: "display", size: 36, color: reachHex })).setOrigin(1, 0.5));
+    body.add(drawHairline(scene, 0, reachY + 42, width - 68, { color: COLOR.accent, alpha: 0.14 }));
+    body.add(
+      scene.add
+        .text(-edge, top + 700, t("info.stats.extra"), textStyle({ role: "emphasis", size: 26, color: COLOR.accentText }))
+        .setOrigin(0, 0),
+    );
+    EXTRA_STATS.forEach((row, index) => {
+      const y = top + 772 + index * 76;
+      body.add(scene.add.text(-edge, y, row.label, textStyle({ role: "body", size: 28, color: COLOR.inkDim })).setOrigin(0, 0.5));
+      body.add(scene.add.text(edge, y, stats[row.key].toLocaleString() + (row.suffix ?? ""), textStyle({ role: "display", size: 33 })).setOrigin(1, 0.5));
+      if (index < EXTRA_STATS.length - 1) body.add(drawHairline(scene, 0, y + 38, width - 68, { color: COLOR.accent, alpha: 0.14 }));
+    });
+  });
+}
+
+export function openFerocityTraitPopup(
+  scene: Phaser.Scene,
+  popups: PopupLayer,
+  keywords: KeywordManager,
+  /** 레벨·돌파·룬까지 반영한 정의. 창이 다시 성장시키지 않는다. */
+  def: RelicDef,
+  from: PopupSource,
+  options: { breakthroughEffect?: string } = {},
+): void {
+  // 피해 수치가 있는 폭주만 현재 능력치로 환산한다. 토리카의 새 탱커 계약은 자체 실제값을 그대로 보여 준다.
+  const { atk: attack, def: defense, ap: abilityPower } = def.stats;
+  const defensePercent = def.ferocityTrait.effectId === "splashDamage" ? def.ferocityTrait.defenseDamagePercent : undefined;
+  const attackPercent = def.ferocityTrait.effectId === "crescendoStaccato" ? def.ferocityTrait.damagePercent : undefined;
+  // 남아 있는 공격형 폭주 추가 피해도 일반 스킬과 같은 수치 링크를 써서 별도 팝업을 만들지 않는다.
+  const convertedDamage = defensePercent !== undefined ? Math.round(defense * defensePercent / 100)
+    : attackPercent !== undefined ? Math.round(attack * attackPercent / 100)
+    : undefined;
+  const damageSourceLabel = t(defensePercent !== undefined ? "skill.stat.def" : "skill.stat.atk");
+  const contextualKeywords: KeywordDef[] = [];
+  // 금강불괴가 덮는 막도 퍼센트가 아니라 실제로 덮이는 값으로 보여 준다.
+  if (def.ferocityTrait.effectId === "adamantBody") contextualKeywords.push({
+    id: "shield-value", term: String(Math.round(def.stats.hp * def.ferocityTrait.shieldMaxHpPercent / 100)), kind: "rule",
+    description: t("skill.keyword.shield.fromMaxHp", { percent: def.ferocityTrait.shieldMaxHpPercent }),
+  });
+  if (convertedDamage !== undefined) contextualKeywords.push({
+    id: "damage-value", term: String(convertedDamage), kind: "rule",
+    description: t("skill.keyword.damage.bonus", { stat: damageSourceLabel, percent: defensePercent ?? attackPercent }),
+  });
+  // 메테의 스타카토 추가타는 기본 공격과 같은 효과를 다시 부르는 것이므로 그 뜻을 여기서 짧게 설명한다.
+  if (def.ferocityTrait.effectId === "crescendoStaccato") contextualKeywords.push({
+    id: "mette-staccato", term: t("skill.keyword.staccato.term"), kind: "rule",
+    description: t("skill.keyword.staccato.description"),
+  });
+  // 폭주도 패시브와 같은 정형 상세창을 사용한다. 별도 제목 레이어 없이 아이콘 옆에서
+  // 스킬 종류·이름·발현 유형을 한 번에 읽게 한다.
+  openSkillPopup(scene, popups, keywords, {
+    name: def.ferocityTrait.name,
+    kindLabel: t("info.skill.ferocity"),
+    iconAssetId: "skill-icon-buff",
+    art: skillArtFor(def.id, "ferocity"),
+    tint: skillArtTint(def.element, def.role),
+    effectType: "buff",
+    valueLabel: t("skill.ferocity.valueLabel"),
+    contextualKeywords: contextualKeywords.length > 0 ? contextualKeywords : undefined,
+    // 폭주도 돌파가 효과를 붙이는 슬롯이라 같은 노란 줄을 얻는다.
+    breakthroughEffect: options.breakthroughEffect,
+    // 설명 수치는 전투가 읽는 특성 필드에서 생성해 정적 문구와 실제 효과가 갈라지지 않는다.
+    description: t("skill.ferocity.head")
+      + ferocityTraitDescription(def.ferocityTrait, { attack, defense, maxHp: def.stats.hp, abilityPower }),
+  }, from);
+}
+
 export function buildSkillViewModel(options: {
-def: RelicDef;
-breakthrough: number;
-kindLabel: string;
-skill: Skill | Passive;
-gaugeCost?: number;
-slot?: SkillArtSlot;
-/** 지휘자의 귀속 소환수 설명. 감추는 문맥(미보유 도감)은 빈 배열을 넘긴다. */
-summonTags?: readonly KeywordDef[];
-/** 한계 돌파로 이 슬롯에 붙은 효과를 노란 줄로 함께 세울지. 열린 돌파 등급의 몫만 넘긴다. */
-breakthroughEffect?: string;
+  /** 레벨·돌파·룬까지 반영한 정의. 도감처럼 성장을 모르는 자리는 정적 정의를 그대로 넘긴다. */
+  def: RelicDef;
+  breakthrough: number;
+  kindLabel: string;
+  skill: Skill | Passive;
+  gaugeCost?: number;
+  slot?: SkillArtSlot;
+  /** 지휘자의 귀속 소환수 설명. 감추는 문맥(미보유 도감)은 빈 배열을 넘긴다. */
+  summonTags?: readonly KeywordDef[];
+  /** 한계 돌파로 이 슬롯에 붙은 효과를 노란 줄로 함께 세울지. 열린 돌파 등급의 몫만 넘긴다. */
+  breakthroughEffect?: string;
 }): SkillInfoViewModel {
-const { def: finalDef, kindLabel, skill, gaugeCost, slot, breakthroughEffect } = options;
+  const { def: finalDef, kindLabel, skill, gaugeCost, slot, breakthroughEffect } = options;
   const attacker: Combatant | undefined = finalDef && {
     def: finalDef, hp: finalDef.stats.hp, maxHp: finalDef.stats.hp,
     energy: 0, ferocity: 0, bondLevel: 0, ferocityFever: false,
@@ -2245,12 +2567,12 @@ const { def: finalDef, kindLabel, skill, gaugeCost, slot, breakthroughEffect } =
   const compositeDamage = attackSpeedPower !== undefined
     ? attackSpeedCompositeDamageKeyword(skill as Ultimate, attacker?.def.stats.atk, attacker?.def.stats.attackSpeed)
     : undefined;
-  const preview = !compositeDamage && attacker && canPreviewSkillDamage(skill, kindLabel)
+  const preview = !compositeDamage && attacker && canPreviewSkillDamage(skill)
     ? previewSkillDamage(attacker, skill as Skill) : undefined;
   // 순환 기본 공격은 걸음마다 위력이 통째로 달라 한 수로 말할 수 없다. 걸음마다 같은
   // 미리보기 경계를 지나 제 수치를 구하고, 본문이 그 순서 그대로 읽는다.
   const cycle = "cycle" in skill ? (skill as BasicAttack).cycle : undefined;
-  const cycleDamage = cycle && attacker && canPreviewSkillDamage(skill, kindLabel)
+  const cycleDamage = cycle && attacker && canPreviewSkillDamage(skill)
     ? cycle.map((step) => {
       const stepPreview = previewSkillDamage(attacker, { ...(skill as Skill), power: step.power } as Skill);
       return stepPreview.kind === "scaling" ? stepPreview.amount : 0;
@@ -2271,11 +2593,11 @@ const { def: finalDef, kindLabel, skill, gaugeCost, slot, breakthroughEffect } =
   const allyHealingPower = "allyHealingPower" in skill ? (skill as Ultimate).allyHealingPower : undefined;
   const healDetail = allyHealingPower !== undefined ? allyHealPowerKeyword(allyHealingPower, attacker?.def.stats.ap) : undefined;
   const valueLabel = compositeDamage
-    ? `피해량 [[damage-value|${compositeDamage.term}]]`
+    ? t("skill.label.compositeDamage", { amount: compositeDamage.term })
     : detonationDamage
-      ? `예상 최대 피해량 [[damage-value|${detonationDamage.term}]]`
+      ? t("skill.label.detonationDamage", { amount: detonationDamage.term })
       : preview?.kind === "scaling"
-        ? `${preview.label} [[damage-value|${preview.amount}]]`
+        ? `${t(preview.label === "damage" ? "skill.label.damageAmount" : "skill.label.expectedDamage")} [[damage-value|${preview.amount}]]`
         : undefined;
   return {
     name: skill.name,
@@ -2298,8 +2620,8 @@ const { def: finalDef, kindLabel, skill, gaugeCost, slot, breakthroughEffect } =
       "kind" in skill ? elationKeyword(skill as Passive) : undefined,
       // 「인」이 덮는 막도 실제 값으로 보여 주고, 어디서 나온 수인지 눌러 읽게 한다.
       guardShield === undefined || !("selfGuard" in skill) || skill.selfGuard === undefined ? undefined : {
-        id: "shield-value", term: String(guardShield), kind: "규칙" as const,
-        description: `현재 최대 체력에서 ${skill.selfGuard.shieldMaxHpPercent}%를 받아 계산한 보호막 수치다.`,
+        id: "shield-value", term: String(guardShield), kind: "rule" as const,
+        description: t("skill.keyword.shield.fromMaxHp", { percent: skill.selfGuard.shieldMaxHpPercent }),
       },
     ].filter((item): item is KeywordDef => item !== undefined),
     // 정적 문장에서 수치를 재해석하지 않고 전투 정의를 그대로 팝업에 넘긴다.
@@ -2323,342 +2645,4 @@ const { def: finalDef, kindLabel, skill, gaugeCost, slot, breakthroughEffect } =
         maxHp,
       }),
   };
-}
-
-/**
- * 개체별 폭주 발현 쪽지. 야성 규칙 자체는 강조된 말을 눌러 다시 열 수 있다.
- *
- * 정보창과 적 팝업이 같은 함수를 쓴다 — `def`는 **이미 최종 능력치가 반영된 정의**이며,
- * 수치는 그 정의에서만 나온다(화면이 레벨 보정을 다시 하지 않는다).
- */
-export function openFerocityTraitPopup(
-  scene: Phaser.Scene,
-  popups: PopupLayer,
-  keywords: KeywordManager,
-  def: RelicDef,
-  from: PopupSource,
-  options: { breakthroughEffect?: string } = {},
-): void {
-  // 피해 수치가 있는 폭주만 현재 능력치로 환산한다. 토리카의 새 탱커 계약은 자체 실제값을 그대로 보여 준다.
-  const { atk: attack, def: defense, ap: abilityPower } = def.stats;
-  const defensePercent = def.ferocityTrait.effectId === "splashDamage" ? def.ferocityTrait.defenseDamagePercent : undefined;
-  const attackPercent = def.ferocityTrait.effectId === "crescendoStaccato" ? def.ferocityTrait.damagePercent : undefined;
-  // 남아 있는 공격형 폭주 추가 피해도 일반 스킬과 같은 수치 링크를 써서 별도 팝업을 만들지 않는다.
-  const convertedDamage = defensePercent !== undefined ? Math.round(defense * defensePercent / 100)
-    : attackPercent !== undefined ? Math.round(attack * attackPercent / 100)
-    : undefined;
-  const damageSourceLabel = defensePercent !== undefined ? "방어력" : "공격력";
-  const contextualKeywords: KeywordDef[] = [];
-  // 금강불괴가 덮는 막도 퍼센트가 아니라 실제로 덮이는 값으로 보여 준다.
-  if (def.ferocityTrait.effectId === "adamantBody") contextualKeywords.push({
-    id: "shield-value", term: String(Math.round(def.stats.hp * def.ferocityTrait.shieldMaxHpPercent / 100)), kind: "규칙",
-    description: `현재 최대 체력에서 ${def.ferocityTrait.shieldMaxHpPercent}%를 받아 계산한 보호막 수치다.`,
-  });
-  if (convertedDamage !== undefined) contextualKeywords.push({
-    id: "damage-value", term: String(convertedDamage), kind: "규칙",
-    description: `현재 ${damageSourceLabel}에서 ${defensePercent ?? attackPercent}%를 받아 계산한 추가 피해 수치다.`,
-  });
-  // 메테의 스타카토 추가타는 기본 공격과 같은 효과를 다시 부르는 것이므로 그 뜻을 여기서 짧게 설명한다.
-  if (def.ferocityTrait.effectId === "crescendoStaccato") contextualKeywords.push({
-    id: "mette-staccato", term: "스타카토", kind: "규칙",
-    description: "메테의 [[basic-attack|기본 공격]]과 같은 마법 추가타다. 적중한 대상을 [[stagger|경직]]시킨다.",
-  });
-  // 폭주도 패시브와 같은 정형 상세창을 사용한다. 별도 제목 레이어 없이 아이콘 옆에서
-  // 스킬 종류·이름·발현 유형을 한 번에 읽게 한다.
-  openSkillPopup(scene, popups, keywords, {
-    name: def.ferocityTrait.name,
-    kindLabel: "폭주",
-    iconAssetId: "skill-icon-buff",
-    art: skillArtFor(def.id, "ferocity"),
-    tint: skillArtTint(def.element, def.role),
-    effectType: "buff",
-    valueLabel: "야성 발현",
-    contextualKeywords: contextualKeywords.length > 0 ? contextualKeywords : undefined,
-    // 폭주도 돌파가 효과를 붙이는 슬롯이라 같은 노란 줄을 얻는다. 열렸는지는 부르는 쪽이 안다.
-    breakthroughEffect: options.breakthroughEffect,
-    // 설명 수치는 전투가 읽는 특성 필드에서 생성해 정적 문구와 실제 효과가 갈라지지 않는다.
-    description: "[[ferocity|야성 게이지]]가 가득 차면 폭주한다. "
-      + ferocityTraitDescription(def.ferocityTrait, { attack, defense, maxHp: def.stats.hp, abilityPower }),
-  }, from);
-}
-
-/**
- * 그 슬롯의 공용 대체 아이콘. 전용 일러스트가 없는 개체가 빈 액자로 서지 않게 한다.
- */
-export function slotFallbackIcon(def: RelicDef, slot: SkillArtSlot): string | undefined {
-  if (slot === "basic") return def.basic.iconAssetId;
-  if (slot === "ultimate") return def.ultimate.iconAssetId;
-  if (slot === "passive") return def.passive.iconAssetId;
-  return undefined;
-}
-
-/**
- * 더 볼 것이 있다는 표시 — 정보창과 적 팝업이 같은 한 장을 쓴다.
- *
- * 자리는 늘 판의 오른쪽 끝 안쪽이다. 끝에 붙어야 "이 칸에 딸린 것"으로 읽히고, 안쪽으로
- * 조금 들여야 기울어진 변에 걸치지 않는다. 작고 흐린 회색인 것은 이것이 "더 있다"는 힌트일
- * 뿐이기 때문이고, 작아진 만큼 선만 굵게 준다.
- */
-export function addInfoMagnifier(
-  scene: Phaser.Scene,
-  popups: PopupLayer,
-  parent: Phaser.GameObjects.Container,
-  x: number,
-  y: number,
-  onClick: (from: PopupSource) => void,
-  /** 기울어진 칸 안에 넣을 때는 칸의 국소 좌표로 옮겨 함께 기울게 한다. */
-  intoPanel = false,
-): void {
-  const container = scene.add.container(x, y);
-  container.add(drawGlyph(scene, "magnifier", 0, 0, 30, 0xb9c0ca, 0.42, 4));
-  const hit = scene.add.rectangle(x, y, 78, 78, 0xffffff, 0).setInteractive({ useHandCursor: true });
-  hit.on("pointerdown", () => container.setScale(1.15));
-  hit.on("pointerout", () => { if (!popups.isOpen) container.setScale(1); });
-  hit.on("pointerup", () => {
-    container.setScale(1.15);
-    onClick({ x, y: y - 26, onClose: () => container.setScale(1) });
-  });
-  if (intoPanel) attach(parent, container, hit);
-  else parent.add([container, hit]);
-}
-
-/**
- * 오른쪽 기둥의 칸 하나 — 정보창과 적 팝업이 같은 모양을 쓴다.
- *
- * 판만 기울고 그 위의 글자와 칩이 반듯하면 종이를 얹어 둔 것처럼 어긋난다. 그래서 판을
- * 돌려주고, 칸의 내용물은 전부 이 컨테이너 **안에** 넣어 같은 각도로 함께 기운다.
- */
-export function addInfoPanel(
-  scene: Phaser.Scene,
-  parent: Phaser.GameObjects.Container,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-): Phaser.GameObjects.Container {
-  const panel = scene.add.container(x, y).setRotation(Phaser.Math.DegToRad(PANEL_TILT));
-  // 좁아지는 양을 비율이 아니라 픽셀로 고정한다. 비율로 두면 높은 판이 더 많이 좁아져
-  // 판마다 변의 기울기가 달라지고, 네 장이 저마다 다른 방향으로 노는 것처럼 보인다.
-  const shape = perspectiveRect(width, height, { tall: "right", taper: (2 * PANEL_TAPER) / height });
-  panel.add(drawLayer(scene, 0, 0, shape, { fill: 0x0b0f15, alpha: 0.6, edge: COLOR.accent, edgeAlpha: 0.4 }));
-  panel.add(drawShapeEdge(scene, 0, 0, shape, "bottom", { color: COLOR.accent, alpha: 0.22, inset: 10 }));
-  parent.add(panel);
-  return panel;
-}
-
-/** 정보창 구석의 SD 받침 — 타원 두 겹과 얇은 선, 그리고 이름표 한 줄. */
-export function addInfoFigureStand(scene: Phaser.Scene, parent: Phaser.GameObjects.Container, x: number, y: number): void {
-  parent.add(scene.add.ellipse(x, y + 6, 206, 52, COLOR.void, 0.55));
-  parent.add(scene.add.ellipse(x, y, 192, 44, 0x141920, 0.92));
-  parent.add(drawHairline(scene, x, y - 20, 172, { color: COLOR.accent, alpha: 0.4 }));
-  parent.add(scene.add.text(x, y + 32, "IN-GAME SD", textStyle({ role: "body", size: 17, color: COLOR.inkDim })).setOrigin(0.5, 0));
-}
-
-export function openBreakthroughStepsPopup(
-scene: Phaser.Scene,
-popups: PopupLayer,
-def: RelicDef,
-grade: number,
-): void {
-const layout = breakthroughStepsLayout(BREAKTHROUGH_STEPS.length);
-  // **돋보기 자리에 붙이지 않고 화면 가운데에 선다.** 네 줄이 저마다 설명을 이고 있어 판이
-  // 길어지는데, 돋보기에 붙이면 그 판이 화면 한쪽으로 쏠려 위나 아래가 잘린다.
-popups.open({
-    width: BREAK_STEPS.width,
-    height: layout.height,
-    y: BREAK_STEPS.centerY,
-    title: "한계 돌파",
-    titleSize: POPUP_TITLE_SIZE.workboard,
-    dim: true,
-    backButton: true,
-  }, (body) => {
-    const top = -layout.height / 2;
-    BREAKTHROUGH_STEPS.forEach((entry, index) => {
-      // 돌파 한 번이 등급 하나다. 표의 첫 줄이 곧 "II로 가는 길"이다.
-      const rowGrade = index + 2;
-      const y = top + layout.rows[index];
-      const reached = grade >= rowGrade;
-      // 열린 줄과 안 열린 줄을 **밝기가 아니라 결**로 가른다(`BREAK_STEPS.tone` 주석 참고).
-      // 등급 하나로 시작하는 개체는 네 줄이 모두 안 열린 줄이라, 어둡게 누르면 이 창을 처음
-      // 여는 사람이 캄캄한 판 넷을 본다.
-      const tone = reached ? BREAK_STEPS.tone.reached : BREAK_STEPS.tone.locked;
-      body.add(drawLayer(scene, 0, y, slantedRect(layout.rowWidth, BREAK_STEPS.row.height, 16), {
-        fill: tone.fill,
-        alpha: tone.alpha,
-        edge: COLOR.accent,
-        edgeAlpha: tone.edgeAlpha,
-      }));
-      const mark = scene.add.container(BREAK_STEPS.gradeMark.x, y);
-      addBreakthroughGradeMark(scene, mark, 0, 0, BREAK_STEPS.gradeMark.size, rowGrade);
-      // "어디까지 왔는가"는 돌파 등급 표식이 맡는다 — 글과 그림을 누르지 않는 대신 이 표식만 흐려진다.
-      mark.setAlpha(tone.gradeMark);
-      body.add(mark);
-      // **어느 기술이 열리는지는 그 기술의 액자가 말한다.** 정보창 아래 네 칸과 같은 프리팹을
-      // 써서 같은 그림·같은 이름으로 서므로, 표를 읽다가 "이게 뭐였지"로 돌아가지 않는다.
-      const icon = addSkillIconFrame(scene, {
-        size: BREAK_STEPS.icon.size,
-        slot: entry.slot,
-        relicId: def.id,
-        fallbackIcon: slotFallbackIcon(def, entry.slot),
-        element: def.element,
-        role: def.role,
-        label: SKILL_SLOT_LABEL[entry.slot],
-        // 액자는 그 줄의 주제라 안 열린 줄에서도 어느 기술인지 알아볼 수 있어야 한다.
-        dimAlpha: reached ? undefined : BREAK_STEPS.lockedIconAlpha,
-      });
-      icon.setPosition(BREAK_STEPS.icon.x, y);
-      body.add(icon);
-      // 열리는 것은 **이 개체의** 효과다. 문구는 정의에서 조립하므로 화면이 따로 적지 않고,
-      // 아직 설계하지 않은 개체는 어느 슬롯이 열리는지만 말한다.
-      const opens = breakthroughEffectText(def, entry.slot) ?? BREAKTHROUGH_SLOT_LABEL[entry.slot];
-      body.add(scene.add
-        .text(BREAK_STEPS.textX, y, opens, textStyle({ role: "body", size: BREAK_STEPS.textSize, color: COLOR.ink, wrap: layout.textWrap, lineSpacing: 8 }))
-        .setOrigin(0, 0.5));
-    });
-  });
-}
-
-/** 그 슬롯의 공용 효과 아이콘. 전용 아트가 없는 개체도 액자가 빈 칸으로 남지 않게 한다. */
-
-export function openExtraStatsPopup(
-scene: Phaser.Scene,
-popups: PopupLayer,
-def: RelicDef,
-stats: Stats,
-from: PopupSource,
-): void {
-  // 판은 글자가 들어가는 만큼만 넓다. 남는 여백은 읽는 데 도움이 되지 않고 뒤 화면만 가린다.
-  const width = 700;
-  const edge = width / 2 - 34;
-  const height = 1150;
-  // 이 창만 **누른 자리에 붙지 않고 화면 가운데에 선다.** 열두 줄이 쌓인 성적표라 돋보기에
-  // 매달면 판이 통째로 아래로 밀려 마지막 줄이 화면 밑변에 붙는다(v0.58.0까지 그랬다) —
-  // 손이 닿기도 읽기도 어려운 자리다. 관찰 기록판과 같은 이유로 자리를 고정한다.
-popups.open({
-    width, height, title: "능력치 상세", tilt: -1.2,
-    x: BASE_WIDTH / 2, y: EXTRA_STATS_POPUP_Y, onClose: from.onClose,
-  }, (body) => {
-    // 칸에는 오각형이 서 있으므로 여기서는 **숫자**를 맡는다. 총 전투력이 먼저 오고, 다섯
-    // 축의 정확한 값과 기본값 대비 상승분, 그 아래에 오각형에 없는 세부 수치가 온다.
-    const top = -height / 2;
-    // 총 전투력은 판때기 없이 맨 글자로 선다. 이 창에서 가장 굵고 큰 수라 판을 깔지 않아도
-    // 저절로 맨 앞에 읽히고, 판을 깔면 아래 목록과 다른 종류의 값처럼 보인다.
-    body.add(scene.add.text(-edge, top + 100, "전투력", textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5));
-    body.add(
-      scene.add
-        .text(edge, top + 100, combatPower(stats).toLocaleString(), textStyle({ role: "display", size: 52 }))
-        .setOrigin(1, 0.5)
-        .setScale(1, 1.12)
-        .setShadow(3, 6, "#05070a", 8, false, true),
-    );
-    body.add(drawHairline(scene, 0, top + 142, width - 68, { color: COLOR.accent, alpha: 0.3 }));
-    STAT_CHIPS.forEach((chip, index) => {
-      const y = top + 204 + index * 84;
-      const base = def.stats[chip.key];
-      const gain = stats[chip.key] - base;
-      // 칸의 축 이름과 같은 색이라 그래프에서 본 축을 그대로 따라 읽는다.
-      body.add(scene.add.text(-edge, y, chip.label, textStyle({ role: "display", size: 30, color: `#${chip.color.toString(16).padStart(6, "0")}` })).setOrigin(0, 0.5));
-      body.add(scene.add.text(edge, y - 12, stats[chip.key].toLocaleString(), textStyle({ role: "display", size: 36 })).setOrigin(1, 0.5));
-      const detail = gain > 0 ? `기본 ${base.toLocaleString()}   +${gain.toLocaleString()}` : `기본 ${base.toLocaleString()}`;
-      const detailStyle = gain > 0
-        ? textStyle({ role: "body", size: 21, color: COLOR.accentText })
-        : textStyle({ role: "body", size: 21, color: COLOR.inkDim });
-      body.add(scene.add.text(edge, y + 22, detail, detailStyle).setOrigin(1, 0.5));
-      body.add(drawHairline(scene, 0, y + 42, width - 68, { color: COLOR.accent, alpha: 0.14 }));
-    });
-    // 사거리는 오각형에 없는 축이라 다섯 줄 **아래**에 한 줄로 붙는다. 값이 아니라 단계라
-    // 기본값 대비 상승분이 없고, 단계 자체를 색이 말한다(근거리 붉은색·중거리 푸른색·원거리 노란색).
-    const reachY = top + 204 + STAT_CHIPS.length * 84;
-    const reachHex = reachToneHex(def.reachTier);
-    body.add(scene.add.text(-edge, reachY, "사거리", textStyle({ role: "display", size: 30, color: reachHex })).setOrigin(0, 0.5));
-    body.add(scene.add.text(edge, reachY, REACH_LABEL[def.reachTier], textStyle({ role: "display", size: 36, color: reachHex })).setOrigin(1, 0.5));
-    body.add(drawHairline(scene, 0, reachY + 42, width - 68, { color: COLOR.accent, alpha: 0.14 }));
-    body.add(
-      scene.add
-        .text(-edge, top + 700, "세부 능력치", textStyle({ role: "emphasis", size: 26, color: COLOR.accentText }))
-        .setOrigin(0, 0),
-    );
-    EXTRA_STATS.forEach((row, index) => {
-      const y = top + 772 + index * 76;
-      body.add(scene.add.text(-edge, y, row.label, textStyle({ role: "body", size: 28, color: COLOR.inkDim })).setOrigin(0, 0.5));
-      body.add(scene.add.text(edge, y, stats[row.key].toLocaleString() + (row.suffix ?? ""), textStyle({ role: "display", size: 33 })).setOrigin(1, 0.5));
-      if (index < EXTRA_STATS.length - 1) body.add(drawHairline(scene, 0, y + 38, width - 68, { color: COLOR.accent, alpha: 0.14 }));
-    });
-  });
-}
-
-/**
- * 패시브 아이콘 위에 붙는 야성(피버) 뱃지 — 정보창과 적 팝업이 같은 한 장을 쓴다.
- *
- * 야성은 모든 개체가 공유하는 규칙이지만 어떻게 터지는지는 개체마다 다르다. 그 차이만
- * 이름 두 글자로 알리고, 자세한 것은 눌렀을 때 그 위에 뜨는 쪽지가 맡는다.
- */
-export function addInfoFerocityBadge(
-scene: Phaser.Scene,
-popups: PopupLayer,
-parent: Phaser.GameObjects.Container,
-x: number,
-y: number,
-def: RelicDef,
-onOpen: (from: PopupSource) => void,
-): Phaser.GameObjects.Container {
-  // 스킬 아이콘의 자식으로 두면 아이콘을 눌러 커질 때 뱃지까지 함께 커져, 패시브를 눌렀는데
-  // 야성까지 눌린 것처럼 보인다. 자리만 아이콘 위로 잡고 층은 따로 세운다.
-  // 스킬 아이콘(150)보다는 작게 두되, 그림이 무엇인지 알아볼 만큼은 키운다. 너무 작으면
-  // 폭주 일러스트가 점처럼 뭉갠다.
-  const badgeSize = 96;
-  const badge = scene.add.container(x, y);
-  const shape = chipPoints(badgeSize, badgeSize, {
-    bevel: { topLeft: badgeSize * 0.34, topRight: 0, bottomRight: badgeSize * 0.34, bottomLeft: 0 },
-  });
-  badge.add(drawLayer(scene, 0, 0, shape, { fill: FEROCITY_BADGE, alpha: 1, edge: 0xf0a58a, edgeAlpha: 0.8, glow: { color: 0x8f3a2a, strength: 0.35, height: 0.6 } }));
-  badge.add(drawInnerVignette(scene, 0, 0, shape, { strength: 0.4 }));
-  // 폭주도 스킬 넷 중 하나라 전용 일러스트를 쓴다. 다만 붉은 판 위에서는 속성 색을 그대로
-  // 얹으면 판에 묻히므로, 여기서만 야성의 살구빛을 쓴다 — 이 뱃지는 개체 구분이 아니라
-  // "야성이 이렇게 터진다"를 알리는 자리이기 때문이다.
-  const art = skillArtFor(def.id, "ferocity");
-  if (art) {
-    badge.add(scene.add.image(0, -13, art).setDisplaySize(badgeSize * 0.64, badgeSize * 0.64).setTint(0xffd9c4));
-  } else {
-    badge.add(drawGlyph(scene, "ferocity", 0, -13, badgeSize * 0.46, 0xffd9c4));
-  }
-  // 스킬 액자와 같은 방식으로 이름을 안쪽 아래에 단다. 셋과 나란히 읽히려면 이름이 있어야 한다.
-  badge.add(scene.add.text(0, badgeSize / 2 - 23, "폭주", textStyle({ role: "display", size: 19, color: "#ffd9c4" })).setOrigin(0.5));
-  // 입력 영역도 뱃지 크기에 딱 맞춘다. 넓게 잡으면 아래 아이콘의 터치를 가로챈다.
-  const hit = scene.add.rectangle(0, 0, badgeSize, badgeSize, 0xffffff, 0).setInteractive({ useHandCursor: true });
-  hit.on("pointerdown", () => badge.setScale(1.1));
-  hit.on("pointerout", () => { if (!popups.isOpen) badge.setScale(1); });
-  hit.on("pointerup", () => {
-    badge.setScale(1.1);
-    onOpen({ x, y: y - badgeSize / 2 - 12, onClose: () => badge.setScale(1) });
-  });
-  badge.add(drawShapeOutline(scene, 0, 0, shape, { color: 0xf0a58a, alpha: 0.65, width: 3 }));
-  badge.add(hit);
-  parent.add(badge);
-  return badge;
-}
-
-/** 미발굴 개체가 쓰는 잿빛. 등급이 없으면 보석이 아니라 돌이다. */
-const RARITY_GEM_UNKNOWN = ["#9aa3ad", "#6f7681", "#4a5058"] as const;
-
-/**
- * 등급 글자를 **보석처럼** 칠한다 — 정보창과 적 팝업이 같은 한 함수를 쓴다.
- *
- * 글자 높이를 따라 색이 위에서 아래로 흐르고(Phaser Text는 캔버스 채우기를 그대로 받는다),
- * 같은 글자를 한 겹 더 겹쳐 밝아지는 합성으로 깔아 스스로 빛나게 한다. 화면마다 단색으로
- * 칠하면 같은 등급이 어디서는 보석, 어디서는 맨 글자가 된다.
- */
-export function paintRarityGem(
-  text: Phaser.GameObjects.Text,
-  glow: Phaser.GameObjects.Text,
-  rarity?: RelicRarity,
-): void {
-  const stops = rarity ? RARITY_GEM[rarity] : RARITY_GEM_UNKNOWN;
-  text.setText(rarity ?? "???");
-  glow.setText(rarity ?? "???").setColor(stops[1]);
-  const gradient = text.context.createLinearGradient(0, 0, 0, text.height);
-  gradient.addColorStop(0, stops[0]);
-  gradient.addColorStop(0.55, stops[1]);
-  gradient.addColorStop(1, stops[2]);
-  text.setFill(gradient);
 }

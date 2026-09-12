@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { t } from "../i18n";
 import { drawGlyph } from "./glyphs";
 import { chipPoints, drawLayer, HOLO, slantedRect } from "./holo";
 import { FORMATION_SLOT_PLATE } from "./formationSlotStyle";
@@ -114,5 +115,5 @@ export function addFormationSlotPlate(
     return;
   }
   const style = textStyle({ role: "emphasis", size: FORMATION_SLOT_PLATE.emptyFontSize, color: COLOR.inkDim, align: "center" });
-  parent.add(scene.add.text(box.x, box.y, `빈 슬롯\n${options.index + 1}`, style).setOrigin(0.5));
+  parent.add(scene.add.text(box.x, box.y, t("formation.emptySlot", { index: options.index + 1 }), style).setOrigin(0.5));
 }

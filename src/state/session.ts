@@ -9,6 +9,7 @@ import { BOND_XP_REWARD, grantBondXp } from "../core/bond";
 import type { MissionState } from "../core/missions";
 import type { RuneInstance } from "../core/runes";
 import { createDefaultSettings } from "../core/settings";
+import type { LanguageId } from "../core/language";
 import { createIdleExcavationState, type IdleExcavationState } from "../core/idleExcavation";
 import type { ExpeditionMapNode } from "../core/expeditionMap";
 import type { ExpeditionAugmentOffer, ExpeditionAugmentSelection } from "../core/expeditionRewards";
@@ -32,7 +33,7 @@ export interface GameSettings {
   /** `reduceFlashes`와 `colorAssist`는 공용 효과·의미 표식 경계에서 소비한다. 필수 대사는 숨기지 않는다. */
   accessibility: { textScale: 1 | 1.15 | 1.3; reduceMotion: boolean; reduceFlashes: boolean; colorAssist: boolean };
   /** 전투 중 즉시 바꿀 수 있는 조작은 SettingsManager 저장 경계를 공유한다. */
-  game: { battleSpeed: 1 | 2 | 3; autoUltimate: boolean; skipUltimatePresentation: boolean; textSpeed: 0.5 | 1 | 2; language: "ko" | "en" | "ja" };
+  game: { battleSpeed: 1 | 2 | 3; autoUltimate: boolean; skipUltimatePresentation: boolean; textSpeed: 0.5 | 1 | 2; language: LanguageId };
   account: { provider: "guest" | "google" | "apple"; displayId: string };
 }
 

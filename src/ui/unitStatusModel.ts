@@ -1,4 +1,5 @@
 import type { Fighter } from "../core/skirmish";
+import { t } from "../i18n";
 
 /**
  * 머리 위 상태 칩과 그 팝업이 함께 읽는 한 표.
@@ -62,7 +63,7 @@ export const UNIT_STATUS_COLOR: Readonly<Record<UnitStatusId, number>> = {
 };
 
 function seconds(value: number): string {
-  return `${value >= 10 ? Math.round(value) : Math.round(value * 10) / 10}초`;
+  return t("status.seconds", { value: value >= 10 ? Math.round(value) : Math.round(value * 10) / 10 });
 }
 
 /**
@@ -93,132 +94,132 @@ export function unitStatusViews(fighter: Fighter, pack: readonly Fighter[] = [])
       // 서 있는 동안에는 시계를 돌리지 않는다. 덮인 만큼이 곧 남은 대기라는 규칙이 흐려진다.
       remaining: alive ? undefined : remaining,
       total: alive ? undefined : Math.max(total, remaining),
-      detail: alive ? "곁에 서 있다" : remaining > 0 ? `${seconds(remaining)} 뒤 다시 선다` : "다시 서지 않는다",
+      detail: alive ? t("status.pack.standing") : remaining > 0 ? t("status.pack.returns", { time: seconds(remaining) }) : t("status.pack.gone"),
     });
   }
   if (fighter.shellGuard) {
     const shell = fighter.shellGuard;
     const maxStacks = fighter.def.passive.shellGuard?.maxStacks ?? shell.stacks;
     views.push({
-      id: "shell", name: "조가비", color: UNIT_STATUS_COLOR.shell, stacks: shell.stacks,
+      id: "shell", name: t("status.shell"), color: UNIT_STATUS_COLOR.shell, stacks: shell.stacks,
       remaining: shell.remaining, total: Math.max(shell.total, shell.remaining),
-      detail: `조가비 ${shell.stacks}/${maxStacks} · ${seconds(shell.remaining)} 남음`,
+      detail: t("status.shell.detail", { stacks: shell.stacks, max: maxStacks, time: seconds(shell.remaining) }),
     });
   }
   if (fighter.stunnedFor > 0) {
     views.push({
-      id: "stun", name: "기절", color: UNIT_STATUS_COLOR.stun,
+      id: "stun", name: t("status.stun"), color: UNIT_STATUS_COLOR.stun,
       remaining: fighter.stunnedFor, total: Math.max(fighter.stunnedTotal, fighter.stunnedFor),
-      detail: `${seconds(fighter.stunnedFor)} 남음`,
+      detail: t("status.stun.detail", { time: seconds(fighter.stunnedFor) }),
     });
   }
   if (fighter.frozen) {
     const frozen = fighter.frozen;
     views.push({
-      id: "frozen", name: "빙결", color: UNIT_STATUS_COLOR.frozen,
+      id: "frozen", name: t("status.frozen"), color: UNIT_STATUS_COLOR.frozen,
       remaining: frozen.remaining, total: Math.max(frozen.total, frozen.remaining),
-      detail: `${seconds(frozen.remaining)} 남음 · 풀리는 순간 최대 체력의 ${frozen.maxHpPercentOnExpire}% 고정 피해`,
+      detail: t("status.frozen.detail", { time: seconds(frozen.remaining), percent: frozen.maxHpPercentOnExpire }),
     });
   }
   if (fighter.frenzy) {
     const frenzy = fighter.frenzy;
     views.push({
-      id: "frenzy", name: "광란", color: UNIT_STATUS_COLOR.frenzy,
+      id: "frenzy", name: t("status.frenzy"), color: UNIT_STATUS_COLOR.frenzy,
       remaining: frenzy.remaining, total: Math.max(frenzy.total, frenzy.remaining),
-      detail: `자기 편을 공격 · 공격 속도 +${frenzy.attackSpeedPercent}% · ${seconds(frenzy.remaining)} 남음`,
+      detail: t("status.frenzy.detail", { percent: frenzy.attackSpeedPercent, time: seconds(frenzy.remaining) }),
     });
   }
   if (fighter.taunted) {
     const taunted = fighter.taunted;
     views.push({
-      id: "taunt", name: "도발", color: UNIT_STATUS_COLOR.taunt,
+      id: "taunt", name: t("status.taunt"), color: UNIT_STATUS_COLOR.taunt,
       remaining: taunted.remaining, total: Math.max(taunted.total, taunted.remaining),
       // 행동을 막지 않고 방향만 바꾸는 상태라, 남은 시간과 "누구만 본다"는 사실만 말한다.
-      detail: `도발한 상대만 표적으로 삼는다 · ${seconds(taunted.remaining)} 남음`,
+      detail: t("status.taunt.detail", { time: seconds(taunted.remaining) }),
     });
   }
   if (fighter.bleed) {
     views.push({
-      id: "bleed", name: "출혈", color: UNIT_STATUS_COLOR.bleed,
+      id: "bleed", name: t("status.bleed"), color: UNIT_STATUS_COLOR.bleed,
       remaining: fighter.bleed.remaining, total: Math.max(fighter.bleed.total, fighter.bleed.remaining),
-      detail: `매초 최대 체력의 ${fighter.bleed.percent}% · ${seconds(fighter.bleed.remaining)} 남음`,
+      detail: t("status.bleed.detail", { percent: fighter.bleed.percent, time: seconds(fighter.bleed.remaining) }),
     });
   }
   if (fighter.poison) {
     const poison = fighter.poison;
     views.push({
-      id: "poison", name: "중독", color: UNIT_STATUS_COLOR.poison,
+      id: "poison", name: t("status.poison"), color: UNIT_STATUS_COLOR.poison,
       remaining: poison.remaining, total: Math.max(poison.total, poison.remaining),
       // 중독은 맞은 쪽의 비율이 아니라 바른 쪽이 굳혀 둔 값이라, 비율이 아니라 그 수를 그대로 적는다.
-      detail: `매초 ${poison.amountPerSecond} · ${seconds(poison.remaining)} 남음`,
+      detail: t("status.poison.detail", { amount: poison.amountPerSecond, time: seconds(poison.remaining) }),
     });
   }
   // 제공자별 장부를 합치지 않는다. 여러 리파가 있어도 각자의 1→2→반응 순환이 따로 보인다.
   for (const [providerId, reagent] of Object.entries(fighter.reagents)) {
     views.push({
-      key: `reagent:${providerId}`, id: "reagent", name: "시약", color: UNIT_STATUS_COLOR.reagent,
+      key: `reagent:${providerId}`, id: "reagent", name: t("status.reagent"), color: UNIT_STATUS_COLOR.reagent,
       stacks: reagent.stacks, stackSlots: 3,
       remaining: reagent.remaining, total: Math.max(reagent.total, reagent.remaining),
-      detail: `${reagent.stacks}/3겹 · ${seconds(reagent.remaining)} 남음`,
+      detail: t("status.reagent.detail", { stacks: reagent.stacks, time: seconds(reagent.remaining) }),
     });
   }
   if (fighter.weakpoint) {
     views.push({
-      id: "weakpoint", name: "약점 포착", color: UNIT_STATUS_COLOR.weakpoint,
+      id: "weakpoint", name: t("status.weakpoint"), color: UNIT_STATUS_COLOR.weakpoint,
       // 시간이 흘러 사라지지 않고 듀오의 다음 한 방으로만 풀리므로 시계를 그리지 않는다.
-      detail: "듀오가 때리면 추가 피해",
+      detail: t("status.weakpoint.detail"),
     });
   }
   if (fighter.overpaint) {
     const paint = fighter.overpaint;
     views.push({
-      id: "overpaint", name: "덧칠", color: UNIT_STATUS_COLOR.overpaint,
+      id: "overpaint", name: t("status.overpaint"), color: UNIT_STATUS_COLOR.overpaint,
       stacks: paint.stacks,
       remaining: paint.remaining, total: Math.max(paint.total, paint.remaining),
-      detail: `${paint.stacks}겹 · 받는 피해 +${paint.stacks * paint.percentPerStack}% · ${seconds(paint.remaining)} 남음`,
+      detail: t("status.overpaint.detail", { stacks: paint.stacks, percent: paint.stacks * paint.percentPerStack, time: seconds(paint.remaining) }),
     });
   }
   if (fighter.curse) {
     const curse = fighter.curse;
     views.push({
-      id: "curse", name: "저주", color: UNIT_STATUS_COLOR.curse,
+      id: "curse", name: t("status.curse"), color: UNIT_STATUS_COLOR.curse,
       stacks: curse.stacks,
       remaining: curse.remaining, total: Math.max(curse.total, curse.remaining),
-      detail: `${curse.stacks}겹 · 저항력 -${curse.stacks * curse.percentPerStack}% · ${seconds(curse.remaining)} 남음`,
+      detail: t("status.curse.detail", { stacks: curse.stacks, percent: curse.stacks * curse.percentPerStack, time: seconds(curse.remaining) }),
     });
   }
   if (fighter.chill) {
     const chill = fighter.chill;
     views.push({
-      id: "chill", name: "둔화", color: UNIT_STATUS_COLOR.chill,
+      id: "chill", name: t("status.chill"), color: UNIT_STATUS_COLOR.chill,
       stacks: chill.stacks,
-      detail: `${chill.stacks} / ${chill.maxStacks}겹 · 공격 속도·이동 속도 -${chill.stacks * chill.speedPercentPerStack}%`,
+      detail: t("status.chill.detail", { stacks: chill.stacks, max: chill.maxStacks, percent: chill.stacks * chill.speedPercentPerStack }),
     });
   }
   // 잠김은 시계가 도는 상태가 아니라 **지금 서 있는 자리**다. 물 밖으로 나가면 그 프레임에
   // 사라지므로 남은 시간을 그리지 않는다 — 손질·밴덜리즘과 같은 자리다.
   if (fighter.submergedIn) {
     views.push({
-      id: "submerged", name: "잠김", color: UNIT_STATUS_COLOR.submerged,
-      detail: `이동 속도 -${fighter.submergedIn.moveSlowPercent}% · 여울에서 벗어나면 풀린다`,
+      id: "submerged", name: t("status.submerged"), color: UNIT_STATUS_COLOR.submerged,
+      detail: t("status.submerged.detail", { percent: fighter.submergedIn.moveSlowPercent }),
     });
   }
   if (fighter.vandalism) {
     const paint = fighter.vandalism;
     views.push({
-      id: "vandalism", name: "밴덜리즘", color: UNIT_STATUS_COLOR.vandalism,
+      id: "vandalism", name: t("status.vandalism"), color: UNIT_STATUS_COLOR.vandalism,
       stacks: paint.stacks,
       // 손질과 같이 시간이 흘러 사라지지 않는다 — 시계를 그리지 않는 이유이자 그 자체가 성질이다.
-      detail: `${paint.stacks} / ${paint.maxStacks}겹 · 공격력·주문력 -${paint.stacks * paint.percentPerStack}% · 다 차면 그 자리에서 터진다`,
+      detail: t("status.vandalism.detail", { stacks: paint.stacks, max: paint.maxStacks, percent: paint.stacks * paint.percentPerStack }),
     });
   }
   if (fighter.butcher && fighter.butcher.stacks > 0) {
     const butcher = fighter.butcher;
     views.push({
-      id: "butcher", name: "손질", color: UNIT_STATUS_COLOR.butcher,
+      id: "butcher", name: t("status.butcher"), color: UNIT_STATUS_COLOR.butcher,
       stacks: butcher.stacks,
       // 손질은 시간이 흘러 사라지지 않는다 — 시계를 두지 않는 이유이자, 그 자체가 성질이다.
-      detail: `${butcher.stacks} / ${butcher.maxStacks}겹 · 다 차면 그 자리에서 터진다`,
+      detail: t("status.butcher.detail", { stacks: butcher.stacks, max: butcher.maxStacks }),
     });
   }
   return views;

@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { t } from "../i18n";
 import type { RelicDef, SkillIconAssetId } from "../core/types";
 import type { ActiveCombatBuff } from "../core/skirmish";
 import type { BattleUiMotion } from "../core/settings";
@@ -113,10 +114,10 @@ export class BattleProfile extends Phaser.GameObjects.Container {
   public setMeters(currentHp: number, maxHp: number, ferocity: number, dead = false): this {
     // 이 메서드는 숫자/야성 표시만 갱신한다. HP 애니메이션은 실제 목표와 사건을 받는 훅이 맡는다.
     if (dead) this.battleHpBar.snap(0);
-    this.hpLabel.setText(dead ? "전투 불능" : `HP ${Math.round(currentHp)} / ${Math.round(maxHp)}`)
+    this.hpLabel.setText(dead ? t("battle.profile.down") : `HP ${Math.round(currentHp)} / ${Math.round(maxHp)}`)
       .setColor(dead ? COLOR.dangerText : COLOR.hpText);
     this.ferocityBar.setValue(ferocity / 100, COLOR.ferocityLow);
-    this.ferocityLabel.setText(`야성 ${Math.round(ferocity)} / 100`).setColor(COLOR.ferocityText);
+    this.ferocityLabel.setText(t("battle.profile.ferocity", { value: Math.round(ferocity) })).setColor(COLOR.ferocityText);
     // 사망은 카드와 충전 가림막의 조립이 끝난 뒤 전체 알파를 정확히 한 번 적용한다. 잠금 tint,
     // 선택 면, 충전 효과의 개별 알파를 여기서 다시 계산하지 않아 중복 감쇠를 피하고 부활 시 복구한다.
     this.card.setCompositeAlpha(dead ? 0.45 : 1);

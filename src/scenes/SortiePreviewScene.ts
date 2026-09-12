@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { t } from "../i18n";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugScene } from "../debug";
 import { addBackButton } from "../ui/IconButton";
@@ -21,9 +22,9 @@ export class SortiePreviewScene extends Phaser.Scene {
     // 잘못된 직접 진입도 케이크 대작전으로 안전하게 수렴시키되 게임 진행 데이터는 만들지 않는다.
     const mode = data?.mode ?? "cake";
     const content = {
-      cake: { title: "케이크 대작전", type: "물량 던전", objective: "몰려오는 적을 3웨이브 처치", reward: "성장 재화" },
-      bounty: { title: "현상수배", type: "태그 매치", objective: "강한 단일 개체를 3회 처치", reward: "골드 재화" },
-      raid: { title: "레이드", type: "협동 작전", objective: "레이드 작전 정보 준비 중", reward: "보상 정보 준비 중" },
+      cake: { title: t("sortie.cake.name"), type: t("sortie.cake.kind"), objective: t("sortie.cake.goal"), reward: t("sortie.cake.reward") },
+      bounty: { title: t("sortie.bounty.name"), type: t("sortie.bounty.kind"), objective: t("sortie.bounty.goal"), reward: t("sortie.bounty.reward") },
+      raid: { title: t("sortie.raid.name"), type: t("sortie.raid.kind"), objective: t("sortie.raid.goal"), reward: t("sortie.raid.reward") },
     }[mode];
 
     const background = { cake: BACKGROUND.sortieCake, bounty: BACKGROUND.sortieBounty, raid: BACKGROUND.sortieRaid }[mode];
@@ -38,11 +39,11 @@ export class SortiePreviewScene extends Phaser.Scene {
     const panel = drawLayer(this, BASE_WIDTH / 2, 760, slantedRect(900, 560, 34), { fill: COLOR.panel, alpha: 0.9, edge: COLOR.sortie, edgeAlpha: 0.72 });
     this.add.existing(panel);
     drawHairline(this, BASE_WIDTH / 2, 620, 740, { color: COLOR.sortie, alpha: 0.42 });
-    this.add.text(160, 510, "작전 목표", textStyle({ role: "emphasis", size: 27, color: COLOR.sortieText })).setOrigin(0, 0);
+    this.add.text(160, 510, t("sortie.goalTitle"), textStyle({ role: "emphasis", size: 27, color: COLOR.sortieText })).setOrigin(0, 0);
     this.add.text(160, 650, content.objective, textStyle({ role: "display", size: 36, color: COLOR.ink })).setOrigin(0, 0);
-    this.add.text(160, 790, "주요 보상", textStyle({ role: "emphasis", size: 27, color: COLOR.sortieText })).setOrigin(0, 0);
+    this.add.text(160, 790, t("sortie.rewardTitle"), textStyle({ role: "emphasis", size: 27, color: COLOR.sortieText })).setOrigin(0, 0);
     this.add.text(160, 850, content.reward, textStyle({ role: "display", size: 36, color: COLOR.ink })).setOrigin(0, 0);
-    this.add.text(BASE_WIDTH / 2, 1230, "작전 편성 및 전투는 추후 개방됩니다", textStyle({ role: "body", size: 25, color: COLOR.inkDim })).setOrigin(0.5);
+    this.add.text(BASE_WIDTH / 2, 1230, t("sortie.comingSoon"), textStyle({ role: "body", size: 25, color: COLOR.inkDim })).setOrigin(0.5);
     addBackButton(this, () => this.scene.start("lobby"));
   }
 }

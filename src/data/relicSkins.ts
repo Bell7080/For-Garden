@@ -1,4 +1,5 @@
 import type { RelicSkinId } from "../core/types";
+import { registerDataText } from "../i18n";
 import { RELICS } from "./relics";
 
 /** 렐릭의 전투 정의와 분리된 플레이어 표시용 외형 한 벌이다. */
@@ -68,4 +69,9 @@ export function getRelicSkin(id: string): RelicSkinDef | undefined {
 /** 렐릭 하나에 명시적으로 연결된 추가 외형만 새 배열로 반환하며 기본 외형은 포함하지 않는다. */
 export function skinsForRelic(relicId: string): RelicSkinDef[] {
   return RELIC_SKINS.filter((skin) => skin.relicId === relicId);
+}
+
+/** 추가 외형의 이름을 언어별로 덮어쓸 수 있게 등록한다. */
+for (const skin of RELIC_SKINS) {
+  registerDataText(skin, "name", `skin.${skin.id}.name`);
 }

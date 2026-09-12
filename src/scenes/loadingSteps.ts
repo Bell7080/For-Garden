@@ -2,6 +2,8 @@ import type Phaser from "phaser";
 import { preloadPuppetAssets, PUPPET_PRELOAD_GROUPS } from "../puppets/assets";
 import { BACKGROUND_ASSETS, BACKGROUND_BOOT_KEYS } from "../ui/backgrounds";
 import { loadGameFonts } from "../ui/fonts";
+import { loadDataOverlay, loadTextCatalog } from "../i18n";
+import { settingsManager } from "../managers/SettingsManager";
 import { UI_ICON_ASSETS } from "../ui/icons";
 import { AFFINITY_ICON_ASSETS } from "../ui/affinityIcons";
 import { CURRENCY_ICON_ASSETS } from "../ui/currencyIcons";
@@ -21,7 +23,10 @@ import { SHOP_PRODUCT_ICON_ASSETS } from "../data/shopCatalog";
  * 직접 `load`를 부르지 말고 이 목록에 단계를 더한다 — 진행 칸 수가 목록 길이라서 저절로 맞는다.
  */
 export interface LoadingStep {
-  /** 디버깅과 테스트에서 단계를 가리키는 이름. 화면에는 띄우지 않는다. */
+  /**
+   * 디버깅과 테스트에서 단계를 가리키는 이름. **화면에는 띄우지 않으므로 번역하지 않는다** —
+   * 언어를 따라 바뀌면 E2E가 어느 단계인지 확인하는 기준이 언어마다 갈린다.
+   */
   readonly label: string;
   run(scene: Phaser.Scene): Promise<void>;
 }
@@ -87,7 +92,12 @@ const CONTENT_ART_ASSETS = [
 export const LOADING_STEPS: ReadonlyArray<LoadingStep> = [
   {
     label: "글꼴",
-    run: () => loadGameFonts(),
+    // 그 언어가 실제로 쓰는 글꼴과 문구 표만 내려받는다 — 전부 올리면 한국어만 쓰는 사람도
+    // 열한 언어를 함께 받는다. 둘은 같은 시점에 있어야 하므로 한 단계로 묶는다.
+    run: () => {
+      const language = settingsManager.get().game.language;
+      return Promise.all([loadGameFonts(language), loadTextCatalog(language), loadDataOverlay(language)]).then(() => undefined);
+    },
   },
   {
     label: "배경 원화",

@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { t } from "../i18n";
 import type { ExpeditionAugmentOffer, ExpeditionAugmentSelection } from "../core/expeditionRewards";
 import { getExpeditionAugment, type ExpeditionAugmentDef } from "../data/expeditionAugments";
 import { Button } from "./Button";
@@ -60,12 +61,12 @@ export class ExpeditionAugmentPopup {
   /** 지도보다 위에 닫을 수 없는 선택판을 열어 저장된 보상을 건너뛸 입력을 없앤다. */
   open(): void {
     // 판은 생존 HUD 위에서 멈춘다. 아래 세 칸이 곧 대상 선택지라 가려서는 안 된다.
-    this.popup.open({ width: EXPEDITION_AUGMENT_POPUP.width, height: EXPEDITION_AUGMENT_POPUP.height, y: EXPEDITION_AUGMENT_POPUP.centerY, title: `증강 선택 ${this.options.round} / ${this.options.totalRounds}`, dim: true, dimAlpha: 0.86, closeOnBackdrop: false, hideCloseButton: true, titleSize: 40 }, (body) => {
+    this.popup.open({ width: EXPEDITION_AUGMENT_POPUP.width, height: EXPEDITION_AUGMENT_POPUP.height, y: EXPEDITION_AUGMENT_POPUP.centerY, title: t("augment.pick.title", { round: this.options.round, total: this.options.totalRounds }), dim: true, dimAlpha: 0.86, closeOnBackdrop: false, hideCloseButton: true, titleSize: 40 }, (body) => {
       // 세 후보는 요청된 가로 ㅁㅁㅁ 배열로 두고, 아이콘→이름→설명의 세 층으로 읽힌다.
-      body.add(this.scene.add.text(0, -330, "전투 프로토콜", textStyle({ role: "emphasis", size: 24, color: COLOR.sortieText })).setOrigin(0.5));
+      body.add(this.scene.add.text(0, -330, t("augment.pick.protocol"), textStyle({ role: "emphasis", size: 24, color: COLOR.sortieText })).setOrigin(0.5));
       this.options.offers.forEach((offer, index) => this.addOffer(body, offer, -300 + index * 300, -110));
-      body.add(this.scene.add.text(0, 145, "개인 증강은 아래 원정대에서 대상을 고릅니다", textStyle({ role: "emphasis", size: 25, color: COLOR.inkDim })).setOrigin(0.5));
-      this.confirmButton = new Button(this.scene, 0, 300, { width: 500, height: 104, label: "선택 확정", variant: "primary", accentColor: COLOR.sortie, accentTextColor: COLOR.sortieText, onClick: () => this.confirmSelection() });
+      body.add(this.scene.add.text(0, 145, t("augment.pick.targetNote"), textStyle({ role: "emphasis", size: 25, color: COLOR.inkDim })).setOrigin(0.5));
+      this.confirmButton = new Button(this.scene, 0, 300, { width: 500, height: 104, label: t("augment.pick.confirm"), variant: "primary", accentColor: COLOR.sortie, accentTextColor: COLOR.sortieText, onClick: () => this.confirmSelection() });
       this.confirmButton.setEnabled(false);
       body.add(this.confirmButton);
     });
@@ -85,7 +86,7 @@ export class ExpeditionAugmentPopup {
     this.offerSelections.set(offer.augmentId, selected);
     card.add(selected);
     // 카테고리 이름을 작은 표식으로 함께 보여 같은 범위라도 공격/생존 후보를 즉시 가른다.
-    const categoryLabel: Record<ExpeditionAugmentDef["category"], string> = { attack: "공격", spell: "주문", survival: "생존", shield: "보호막", recovery: "회복", status: "상태", conditional: "조건" };
+    const categoryLabel: Record<ExpeditionAugmentDef["category"], string> = { attack: t("augment.group.attack"), spell: t("augment.group.spell"), survival: t("augment.group.survival"), shield: t("augment.group.shield"), recovery: t("augment.group.heal"), status: t("augment.group.status"), conditional: t("augment.group.conditional") };
     card.add(this.scene.add.image(0, -122, "skill-icon-buff").setDisplaySize(68, 68).setTint(def.target === "party" ? COLOR.accent : COLOR.sortie));
     card.add(this.scene.add.text(0, -78, categoryLabel[def.category], textStyle({ role: "emphasis", size: 18, color: COLOR.inkDim })).setOrigin(0.5));
     card.add(this.scene.add.text(0, -32, def.name, textStyle({ role: "display", size: 29 })).setOrigin(0.5));

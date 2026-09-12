@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { t } from "../i18n";
 import type { SubmitExpeditionBossScoreResponse } from "../api/contracts";
 import { expeditionScoreDetailModel } from "./expeditionScoreDetailModel";
 import type { PopupLayer } from "./PopupLayer";
@@ -11,9 +12,9 @@ export class ExpeditionScoreDetailPopup {
   open(receipt: SubmitExpeditionBossScoreResponse): void {
     // 모델은 서버 영수증을 그대로 투영하며 이 팝업은 어떤 점수도 합산하거나 보정하지 않는다.
     const score = expeditionScoreDetailModel(receipt);
-    this.popups.open({ width: 760, height: 560, title: "점수 상세", dim: true, dimAlpha: 0.36 }, (body) => {
-      this.addRow(body, -90, "일반 노드 합계", score.normalNodeScoreTotal);
-      this.addRow(body, 90, "폰토스 피해 점수", score.bossDamageScore);
+    this.popups.open({ width: 760, height: 560, title: t("score.detail"), dim: true, dimAlpha: 0.36 }, (body) => {
+      this.addRow(body, -90, t("score.normalNodes"), score.normalNodeScoreTotal);
+      this.addRow(body, 90, t("score.bossDamage"), score.bossDamageScore);
     });
   }
 

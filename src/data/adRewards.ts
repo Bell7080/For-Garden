@@ -1,3 +1,4 @@
+import { registerDataText } from "../i18n";
 /** 광고로 즉시 지급할 수 있는 일반 플레이 재화의 폐쇄된 허용 목록이다. */
 export type AdRewardCurrency = "stamina" | "cheesecake";
 
@@ -40,3 +41,6 @@ export function findAdRewardSlot(slotId: string): AdRewardSlot | undefined { ret
 export function completedAdToken(result: { status: string; verificationToken?: string }): string | undefined {
   return result.status === "completed" && result.verificationToken ? result.verificationToken : undefined;
 }
+
+/** 광고 보상 슬롯의 표시 문구를 언어별로 덮어쓸 수 있게 등록한다. */
+for (const slot of AD_REWARD_SLOTS) registerDataText(slot, "displayText", `adReward.${slot.id}.text`);

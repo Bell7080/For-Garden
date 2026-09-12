@@ -11,6 +11,7 @@ import { RailButton } from "../ui/RailButton";
 import { TopBar } from "../ui/TopBar";
 import { chipPoints, drawHairline, drawLayer, drawShapeEdge, drawVignette, HOLO, slantedRect } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
+import { t } from "../i18n";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { gameApi } from "../api/FakeServer";
 import { loadPlayerProfileDisplay } from "../managers/PlayerProfileManager";
@@ -149,7 +150,7 @@ export class LobbyScene extends Phaser.Scene {
     new Button(this, LOBBY_ACTION_BOUNDS.expedition.x, LOBBY_ACTION_BOUNDS.expedition.y, {
       width: LOBBY_ACTION_BOUNDS.expedition.width,
       height: LOBBY_ACTION_BOUNDS.expedition.height,
-      label: "결투",
+      label: t("lobby.duel"),
       fontSize: 34,
       // 출격과 성격이 다른 입구라 강조 양식을 쓰지 않는다. 같은 원근만 공유한다.
       perspective: "right",
@@ -161,7 +162,7 @@ export class LobbyScene extends Phaser.Scene {
     new Button(this, LOBBY_ACTION_BOUNDS.sortie.x, LOBBY_ACTION_BOUNDS.sortie.y, {
       width: LOBBY_ACTION_BOUNDS.sortie.width,
       height: LOBBY_ACTION_BOUNDS.sortie.height,
-      label: "출  격",
+      label: t("lobby.sortie"),
       sub: "SORTIE",
       fontSize: 52,
       variant: "primary",
@@ -177,7 +178,7 @@ export class LobbyScene extends Phaser.Scene {
     new Button(this, 250, NAV_TOP - 400, {
       width: 292,
       height: 106,
-      label: "교류",
+      label: t("lobby.interaction"),
       sub: "EXCHANGE",
       fontSize: 34,
       perspective: "left",
@@ -192,8 +193,8 @@ export class LobbyScene extends Phaser.Scene {
     const excavationButton = new Button(this, 250, NAV_TOP - 245, {
       width: 292,
       height: 106,
-      label: "발굴",
-      sub: "자원 수집",
+      label: t("lobby.excavation"),
+      sub: t("lobby.excavation.sub"),
       fontSize: 34,
       perspective: "left",
       tilt: 6,
@@ -319,7 +320,7 @@ export class LobbyScene extends Phaser.Scene {
   private openPvpMenu(): void {
     if (!this.popupLayer || this.popupLayer.isOpen) return;
     const panel = PVP_MENU.panel;
-    this.popupLayer.open({ width: panel.width, height: panel.height, title: "결투", titleSize: 34, dim: true, dimAlpha: 0.24, closeOnBackdrop: false, hideCloseButton: true, onClose: () => this.clearSortieChrome() }, (body, close) => {
+    this.popupLayer.open({ width: panel.width, height: panel.height, title: t("lobby.duel"), titleSize: 34, dim: true, dimAlpha: 0.24, closeOnBackdrop: false, hideCloseButton: true, onClose: () => this.clearSortieChrome() }, (body, close) => {
       PVP_MODES.forEach((mode, index) => {
         const y = PVP_MENU.firstY + index * PVP_MENU.stepY;
         body.add(new ExpeditionEntryButton(this, 0, y, {
@@ -343,12 +344,12 @@ export class LobbyScene extends Phaser.Scene {
     // 다섯 콘텐츠가 저마다 원화와 SD를 세우므로 판을 한 뼘 키워 서로 붙어 보이지 않게 한다.
     const panel = SORTIE_MENU.panel;
     // 일반 작업판보다 암전을 옅게 해 로비의 애착 렐릭이 뒤에서 계속 보이도록 한다.
-    this.popupLayer.open({ width: panel.width, height: panel.height, title: "출격", titleSize: 34, dim: true, dimAlpha: 0.24, closeOnBackdrop: false, hideCloseButton: true, onClose: () => this.clearSortieChrome() }, (body, close) => {
+    this.popupLayer.open({ width: panel.width, height: panel.height, title: t("lobby.sortie.title"), titleSize: 34, dim: true, dimAlpha: 0.24, closeOnBackdrop: false, hideCloseButton: true, onClose: () => this.clearSortieChrome() }, (body, close) => {
       // Puppet은 컨테이너 변환을 물려받지 않으므로 원점에 선 전용 레이어에 화면 좌표로 세운다.
       this.sortieSdLayer = this.add.container(0, 0).setName("sortie-entry-sd").setDepth(SORTIE_SD_DEPTH);
       const entries: SortieEntry[] = [
         {
-          y: -410, width: 800, height: 220, label: "스토리", status: "메인 작전", artKey: "content-story-entry",
+          y: -410, width: 800, height: 220, label: t("lobby.sortie.story"), status: t("lobby.sortie.story.status"), artKey: "content-story-entry",
           accentColor: EXCHANGE_BLUE, accentTextColor: "#9fd0f0", sd: ENEMY_SD_ASSETS[0], sdScale: 0.9,
           onClick: () => { close(); this.scene.start("stageMap"); },
         },
@@ -356,18 +357,18 @@ export class LobbyScene extends Phaser.Scene {
         // 두 던전은 각자의 전용 원화를 칩 실루엣에 물려 세운다. 같은 그림을 나눠 쓰면 나란히 선
         // 두 버튼이 한 콘텐츠의 두 갈래처럼 읽힌다.
         {
-          x: -204, y: -124, width: 392, height: 200, label: "케이크 대작전", labelSize: 38, status: "3 WAVE · 성장 재화", split: "left",
+          x: -204, y: -124, width: 392, height: 200, label: t("lobby.sortie.cake"), labelSize: 38, status: t("lobby.sortie.cake.status"), split: "left",
           artKey: "content-cake-entry", accentColor: EXCHANGE_BLUE, accentTextColor: "#9fd0f0",
           onClick: () => { close(); this.scene.start("sortiePreview", { mode: "cake" }); },
         },
         {
-          x: 204, y: -124, width: 392, height: 200, label: "현상수배", labelSize: 38, status: "태그 3회 · 골드", split: "right",
+          x: 204, y: -124, width: 392, height: 200, label: t("lobby.sortie.bounty"), labelSize: 38, status: t("lobby.sortie.bounty.status"), split: "right",
           artKey: "content-bounty-entry", accentColor: EXCHANGE_BLUE, accentTextColor: "#9fd0f0",
           onClick: () => { close(); this.scene.start("sortiePreview", { mode: "bounty" }); },
         },
         // 레이드는 일일 던전 아래에서 독립된 전체 폭 콘텐츠로 읽히게 한다.
         {
-          y: 152, width: 800, height: 200, label: "레이드", status: "협동 작전 · 준비 중",
+          y: 152, width: 800, height: 200, label: t("lobby.sortie.raid"), status: t("lobby.sortie.raid.status"),
           onClick: () => { close(); this.scene.start("sortiePreview", { mode: "raid" }); },
         },
         // 전용 프리팹이 Content2_001 원화, 주황 출격 위계, 확대 피드백을 한 입력면으로 유지한다.
@@ -463,9 +464,11 @@ export class LobbyScene extends Phaser.Scene {
 
   /** 주간 횟수·진행·최고점·빠른 가능 여부를 한 줄의 짧은 원정 상태로 합친다. */
   private expeditionStatus(status = expeditionManager.status()): string {
-    if (status.active) return `이어하기 · ${status.playsThisWeek}회 · 최고 ${status.bestScore.toLocaleString()}`;
-    const quick = status.quickAvailable ? "빠른 가능" : "빠른 잠김";
-    return `주간 ${status.playsThisWeek}회 · 최고 ${status.bestScore.toLocaleString()} · ${quick}`;
+    const plays = status.playsThisWeek;
+    const best = status.bestScore.toLocaleString();
+    if (status.active) return t("lobby.expedition.resume", { plays, best });
+    const quick = t(status.quickAvailable ? "lobby.expedition.quickReady" : "lobby.expedition.quickLocked");
+    return t("lobby.expedition.weekly", { plays, best, quick });
   }
 
   /** 연구소에서 옮긴 채광 설비·식물 원화를 로비 광장 배경으로 사용한다. */
@@ -516,9 +519,9 @@ export class LobbyScene extends Phaser.Scene {
    */
   private buildMissionEntry(): void {
     const entries = [
-      { bounds: LOBBY_RAIL_BOUNDS.content.mission, icon: "mission", label: "임무", accent: true, onClick: () => this.openMissions() },
-      { bounds: LOBBY_RAIL_BOUNDS.content.shop, icon: "shop", label: "상점", accent: false, onClick: () => this.openShop() },
-      { bounds: LOBBY_RAIL_BOUNDS.content.trade, icon: "exchange", label: "무역", accent: false, onClick: () => this.openTrade() },
+      { bounds: LOBBY_RAIL_BOUNDS.content.mission, icon: "mission", label: t("lobby.rail.mission"), accent: true, onClick: () => this.openMissions() },
+      { bounds: LOBBY_RAIL_BOUNDS.content.shop, icon: "shop", label: t("lobby.rail.shop"), accent: false, onClick: () => this.openShop() },
+      { bounds: LOBBY_RAIL_BOUNDS.content.trade, icon: "exchange", label: t("lobby.rail.trade"), accent: false, onClick: () => this.openTrade() },
     ] as const;
     // 캔버스 E2E에는 레일의 게임 상태가 아니라 실제 입력 중심만 전달한다.
     setDebugStorefrontControls({ lobby: {
@@ -550,10 +553,10 @@ export class LobbyScene extends Phaser.Scene {
     drawLayer(this, x, y, chipPoints(width, height, {
       bevel: { topLeft: height * 0.42, topRight: 0, bottomRight: height * 0.42, bottomLeft: 0 },
     }), { fill: 0x1a1f27, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.5 });
-    this.add.text(x, y - 26, "월간 화석 패스", textStyle({ role: "display", size: 28 })).setOrigin(0.5);
-    this.add.text(x, y + 16, "준비 중", textStyle({ role: "emphasis", size: 22, color: COLOR.accentText })).setOrigin(0.5);
+    this.add.text(x, y - 26, t("lobby.pass.title"), textStyle({ role: "display", size: 28 })).setOrigin(0.5);
+    this.add.text(x, y + 16, t("lobby.pass.status"), textStyle({ role: "emphasis", size: 22, color: COLOR.accentText })).setOrigin(0.5);
     const hit = this.add.rectangle(x, y, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    hit.on("pointerup", () => this.notReady("월간 화석 패스"));
+    hit.on("pointerup", () => this.notReady(t("lobby.pass.title")));
   }
 
   /** 애착 렐릭을 광장 한가운데 세우고, 전용 원화가 없을 때만 임시 색으로 구분한다. */
@@ -589,7 +592,9 @@ export class LobbyScene extends Phaser.Scene {
     void gameApi.interactInLobby(relicId).then((result) => {
       const progress = result.relicProgress[relicId];
       const dialogue = bondDialogue(relicId, progress.bondLevel, this.interactionIndex++);
-      const reward = result.bondXpEarned > 0 ? `\n유대 EXP +${result.bondXpEarned}${result.bondLevelsGained ? ` · LEVEL UP +${result.bondLevelsGained}` : ""}` : "";
+      // 문장을 조각내 이어 붙이지 않고 자리만 채운다 — 어순이 다른 언어에서 말이 되지 않는다.
+      const levelUp = result.bondLevelsGained ? t("lobby.bondLevelUp", { levels: result.bondLevelsGained }) : "";
+      const reward = result.bondXpEarned > 0 ? t("lobby.bondXp", { xp: result.bondXpEarned }) + levelUp : "";
       this.showLine(getRelic(relicId).name, dialogue.text, reward, dialogue.id);
     }).finally(() => { this.interactionPending = false; });
   }
@@ -640,7 +645,7 @@ export class LobbyScene extends Phaser.Scene {
 
   private notReady(label: string): void {
     const toast = this.add
-      .text(BASE_WIDTH / 2, NAV_TOP - 300, `${label} — 준비 중`, textStyle({ role: "emphasis", size: 30, color: COLOR.accentText }))
+      .text(BASE_WIDTH / 2, NAV_TOP - 300, t("lobby.notReady", { label }), textStyle({ role: "emphasis", size: 30, color: COLOR.accentText }))
       .setOrigin(0.5)
       .setDepth(500);
     this.tweens.add({ targets: toast, alpha: 0, duration: 1200, onComplete: () => toast.destroy() });

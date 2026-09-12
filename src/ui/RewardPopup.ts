@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { t } from "../i18n";
 import { formatCurrency } from "../core/formatCurrency";
 import { setDebugRewardPopup } from "../debug";
 import { drawHairline } from "./holo";
@@ -54,7 +55,7 @@ export function openRewardPopup(scene: Phaser.Scene, popups: PopupLayer, options
   popups.open({
     width: REWARD_POPUP.width,
     height: REWARD_POPUP.height,
-    title: options.title ?? "획득 보상",
+    title: options.title ?? t("reward.title"),
     titleSize: options.titleSize,
     // 영수증은 원래 화면의 맥락을 남기되, 아래 작업판보다 높은 층에서 불필요한 돌아가기를 가린다.
     dim: true,
@@ -103,7 +104,7 @@ export function openRewardPopup(scene: Phaser.Scene, popups: PopupLayer, options
     }
     // 팝업 판이 아니라 화면 밑동에 반투명한 굵은 글자로 남겨, 누를 수 있는 곳이 화면 전체임을 알린다.
     hint = scene.add
-      .text(scene.scale.width / 2, scene.scale.height - 130, overflow > 0 ? "좌우로 밀어 확인 · 화면을 눌러 확인" : "화면을 눌러 확인", textStyle({ role: "emphasis", size: 30, color: COLOR.ink }))
+      .text(scene.scale.width / 2, scene.scale.height - 130, overflow > 0 ? t("reward.swipeHint") : t("reward.tapHint"), textStyle({ role: "emphasis", size: 30, color: COLOR.ink }))
       .setOrigin(0.5)
       .setAlpha(0.62)
       .setDepth(4000);

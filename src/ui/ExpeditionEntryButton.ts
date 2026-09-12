@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { t } from "../i18n";
 import { chipPoints, drawFrameVignette, drawLayer, drawShapeOutline, HOLO } from "./holo";
 import { COLOR, textStyle } from "./theme";
 
@@ -141,7 +142,7 @@ export class ExpeditionEntryButton extends Phaser.GameObjects.Container {
     const labelBottom = 56;
     const statusBottom = 16;
     const label = scene.add
-      .text(edgeX(labelBottom), options.height / 2 - labelBottom, options.label ?? "원정", textStyle({ role: "display", size: options.labelSize ?? 58, color: accentText }))
+      .text(edgeX(labelBottom), options.height / 2 - labelBottom, options.label ?? t("expedition.entry"), textStyle({ role: "display", size: options.labelSize ?? 58, color: accentText }))
       .setOrigin(originX, 1)
       .setShadow(4, 5, "#04060a", 0, true, true);
     const status = scene.add

@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { t } from "../i18n";
 import type { AdPresentationResult, GameApi } from "../api/contracts";
 import { completedAdToken } from "../data/adRewards";
 import { currencyGuide } from "../data/currencyGuide";
@@ -99,11 +100,11 @@ export class StaminaPopup {
     const guide = currencyGuide("stamina");
     view.add(drawHairline(this.scene, 0, LAYOUT.hairlineY, LAYOUT.hero.width, { color: COLOR.accent, alpha: 0.32 }));
     const half = LAYOUT.hero.width / 2;
-    view.add(addSectionTitle(this.scene, -half, LAYOUT.usesTitleY, "획득처", { size: 24 }));
+    view.add(addSectionTitle(this.scene, -half, LAYOUT.usesTitleY, t("stamina.sources"), { size: 24 }));
     guide.sources.forEach((row, index) => {
       view.add(this.scene.add.text(-half + 14, LAYOUT.usesFirstRowY + index * LAYOUT.usesRowHeight, `◆  ${row}`, textStyle({ role: "body", size: 22, color: COLOR.ink })).setOrigin(0, 0.5));
     });
-    view.add(addSectionTitle(this.scene, 12, LAYOUT.usesTitleY, "사용처", { size: 24 }));
+    view.add(addSectionTitle(this.scene, 12, LAYOUT.usesTitleY, t("stamina.uses"), { size: 24 }));
     guide.uses.forEach((row, index) => {
       view.add(this.scene.add.text(26, LAYOUT.usesFirstRowY + index * LAYOUT.usesRowHeight, `◆  ${row}`, textStyle({ role: "body", size: 22, color: COLOR.ink })).setOrigin(0, 0.5));
     });
@@ -117,7 +118,7 @@ export class StaminaPopup {
    * 더 크게 세우면 값을 비교하기 전에 크기가 먼저 답을 정해 버린다.
    */
   private paintRecharge(view: Phaser.GameObjects.Container, full: boolean): void {
-    view.add(addSectionTitle(this.scene, -LAYOUT.hero.width / 2, LAYOUT.rechargeTitleY, "충전", { size: 24 }));
+    view.add(addSectionTitle(this.scene, -LAYOUT.hero.width / 2, LAYOUT.rechargeTitleY, t("stamina.recharge"), { size: 24 }));
     STAMINA_RECHARGE_SOURCES.forEach((source, index) => {
       const x = LAYOUT.cell.centers[index];
       if (x === undefined) return;
@@ -170,7 +171,7 @@ export class StaminaPopup {
         gain: item?.amount ?? 0,
         detail: "",
         owned,
-        label: "사용",
+        label: t("stamina.spend"),
         enabled: item !== undefined && owned > 0,
       };
     }
@@ -182,7 +183,7 @@ export class StaminaPopup {
         gain: source.amount,
         detail: "",
         owned: held,
-        label: "충전",
+        label: t("stamina.recharge"),
         enabled: held >= source.cost,
         cost: { icon: "currency-gems", amount: source.cost, affordable: held >= source.cost },
       };
@@ -195,8 +196,8 @@ export class StaminaPopup {
       name: source.name,
       gain: ad?.amount ?? 0,
       // 남은 횟수는 다음에 누를 수 있는지를 정하므로 이름 아래 한 줄로 남긴다.
-      detail: `오늘 ${Math.max(0, limit - used)}/${limit}`,
-      label: "시청",
+      detail: t("stamina.adRemaining", { left: Math.max(0, limit - used), limit }),
+      label: t("stamina.watchAd"),
       enabled: ad !== undefined && used < limit && !full,
     };
   }
@@ -210,7 +211,7 @@ export class StaminaPopup {
       else if (source.kind === "currency") await this.inventory.rechargeStamina(this.api, source.id);
       else await this.watchAd(source.slotId);
     } catch {
-      this.message = "충전에 실패했습니다. 잠시 뒤 다시 시도해 주세요.";
+      this.message = t("stamina.rechargeFailed");
     } finally {
       this.pending = false; this.repaint?.();
     }
@@ -219,7 +220,7 @@ export class StaminaPopup {
   /** 취소·SDK 미준비는 성공을 흉내 내지 않고, 다른 두 수단은 그대로 남긴다. */
   private async watchAd(slotId: string): Promise<void> {
     const verificationToken = completedAdToken(await this.presentAd(slotId));
-    if (!verificationToken) { this.message = "광고가 취소되었거나 준비되지 않았습니다."; return; }
+    if (!verificationToken) { this.message = t("stamina.adCancelled"); return; }
     await this.inventory.claimAdReward(this.api, { slotId, verificationToken, requestId: adRequestId() });
   }
 }

@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { t } from "../i18n";
 import { chipPoints, drawLayer, drawShapeEdge, HOLO } from "./holo";
 import { IconButton } from "./IconButton";
 import { UI_ICON } from "./icons";
@@ -158,7 +159,7 @@ export class PopupLayer {
         button.on("pointerup", action);
         body.add(button);
       };
-      addAction(-150, "취소", COLOR.inkDim, close);
+      addAction(-150, t("popup.cancel"), COLOR.inkDim, close);
       addAction(150, options.confirmLabel, options.destructive ? "#ff8c88" : COLOR.accentText, () => { close(); onConfirm(); });
     });
   }

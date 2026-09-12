@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { t } from "../i18n";
 import type { BattleContributionResult, ContributionCategory } from "../core/battleContribution";
 import { getRelic } from "../data/relics";
 import { contributionRenderModel, CONTRIBUTION_CATEGORIES } from "./battleContributionRenderModel";
@@ -29,7 +30,7 @@ export class BattleContributionPopup {
   open(result: BattleContributionResult, onClosed?: () => void): void {
     const width = 936; const height = 1320;
     this.popups.open({
-      width, height, title: "전투 기여도", titleSize: 34, dim: true, dimAlpha: 0.36,
+      width, height, title: t("contribution.title"), titleSize: 34, dim: true, dimAlpha: 0.36,
       closeOnBackdrop: false, hideCloseButton: true, onClose: () => onClosed?.(),
     }, (body, close) => {
       let category: ContributionCategory = "attack";
@@ -49,7 +50,7 @@ export class BattleContributionPopup {
         const replayTotal = result.rows.attack.reduce((sum, row) => sum + row.total, 0);
         // 서버 보정이 있을 때만 두 기준을 병기하고 개별 막대는 행동 재생 결과를 그대로 유지한다.
         const header = category === "attack" && result.confirmedAttackTotal !== undefined && result.confirmedAttackTotal !== replayTotal
-          ? `서버 확정 ${result.confirmedAttackTotal.toLocaleString()} · 행동 재생 ${replayTotal.toLocaleString()}` : "아군 기여도";
+          ? t("contribution.totals", { confirmed: result.confirmedAttackTotal.toLocaleString(), replay: replayTotal.toLocaleString() }) : t("contribution.allies");
         content.add(this.scene.add.text(0, -445, header, textStyle({ role: "body", size: 25, color: COLOR.inkDim })).setOrigin(0.5));
         rows.rows.slice(0, 5).forEach((row, index) => {
           const y = -330 + index * 158;
@@ -68,8 +69,8 @@ export class BattleContributionPopup {
       };
       render();
       // 결과 팝업이 숨긴 "공격 · 방어 · 회복" 버튼과 짝을 이루는 조작이라, 우하단 아이콘
-      // 대신 판 우측(닫기 X가 원래 서는 자리)에 작은 "돌아가기" 라벨 버튼을 둔다.
-      body.add(new Button(this.scene, width / 2 - 90, -height / 2 + 40, { width: 140, height: 60, label: "돌아가기", fontSize: 20, onClick: close }));
+      // 대신 판 우측(닫기 X가 원래 서는 자리)에 작은 t("contribution.back") 라벨 버튼을 둔다.
+      body.add(new Button(this.scene, width / 2 - 90, -height / 2 + 40, { width: 140, height: 60, label: t("contribution.back"), fontSize: 20, onClick: close }));
     });
   }
 }

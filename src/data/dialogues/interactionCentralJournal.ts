@@ -1,4 +1,5 @@
 import type { DialogueStory } from "../../core/dialogue";
+import { registerDialogueTexts } from "./registerDialogue";
 
 /** 중앙 정원구에서 회수하는 분기형 현장 기록이다. 원문과 분기는 씬이 아니라 정적 데이터가 소유한다. */
 export const INTERACTION_CENTRAL_JOURNAL: DialogueStory = {
@@ -12,3 +13,5 @@ export const INTERACTION_CENTRAL_JOURNAL: DialogueStory = {
     { id: "route-result", speaker: "토리카", body: "발자국은 모두 온실 가운데로 향해요. 첫 만남을 기다리던 사람들의 동선 같아요.", standing: "torika", expression: "smile", motion: "attack" },
   ],
 };
+
+registerDialogueTexts(INTERACTION_CENTRAL_JOURNAL);

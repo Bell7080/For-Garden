@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { t } from "../i18n";
 import type { PuppetCreature } from "../puppets/assets";
 import { BASE_WIDTH } from "../config/gameConfig";
 import { setDebugResearchBoard, setDebugScene } from "../debug";
@@ -110,7 +111,7 @@ export class LabScene extends Phaser.Scene {
     this.pickupText = this.add.text(cx, 250, "", textStyle({ role: "emphasis", size: 28, color: COLOR.accentText })).setOrigin(0.5, 0);
     // 기존 Button/패널 토큰을 재사용해 확률 정보가 별도 웹 UI처럼 보이지 않게 한다.
     new Button(this, cx, 390, {
-      width: 300, height: 82, label: "확률 정보", fontSize: 28,
+      width: 300, height: 82, label: t("lab.rates"), fontSize: 28,
       onClick: () => this.showRates(),
     });
 
@@ -133,7 +134,7 @@ export class LabScene extends Phaser.Scene {
     this.oneButton = new Button(this, 300, NAV_TOP - 250, {
       width: 440,
       height: 150,
-      label: "1회 연구",
+      label: t("lab.pull.one"),
       sub: "",
       fontSize: 36,
       onClick: () => this.doPull(1),
@@ -141,7 +142,7 @@ export class LabScene extends Phaser.Scene {
     this.tenButton = new Button(this, 780, NAV_TOP - 250, {
       width: 440,
       height: 150,
-      label: "10회 연구",
+      label: t("lab.pull.ten"),
       sub: "",
       fontSize: 36,
       onClick: () => this.doPull(10),
@@ -191,7 +192,7 @@ export class LabScene extends Phaser.Scene {
     ring.lineStyle(3, MILEAGE_EDGE, 0.95);
     ring.strokeRoundedRect(-width / 2, -height / 2, width, height, height / 2);
     container.add(ring);
-    container.add(this.add.text(0, 0, "마일리지 상점", textStyle({ role: "display", size: 28, color: "#ffe9a3" })).setOrigin(0.5));
+    container.add(this.add.text(0, 0, t("lab.mileageShop"), textStyle({ role: "display", size: 28, color: "#ffe9a3" })).setOrigin(0.5));
     const hit = this.add.rectangle(x, y, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
     hit.on("pointerdown", () => container.setScale(1.06));
     hit.on("pointerout", () => container.setScale(1));
@@ -244,7 +245,7 @@ export class LabScene extends Phaser.Scene {
       // API가 상태 반영과 저장까지 끝낸 뒤 응답하므로 이후 건너뛰기는 보상에 영향을 주지 않는다.
       await this.playPresentation(response.results);
     } catch (error) {
-      const message = error instanceof GameApiError ? error.message : "통신에 실패했습니다. 다시 시도해 주세요.";
+      const message = error instanceof GameApiError ? error.message : t("lab.networkError");
       this.showNotice(message);
     } finally {
       this.pullPending = false;
@@ -271,25 +272,25 @@ export class LabScene extends Phaser.Scene {
       fill: 0x141920, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.3,
     });
     overlay.add([shade, panel]);
-    overlay.add(this.add.text(cx, 390, "연구 확률 · 보장 정책", textStyle({ role: "display", size: 42 })).setOrigin(0.5));
+    overlay.add(this.add.text(cx, 390, t("lab.policy.title"), textStyle({ role: "display", size: 42 })).setOrigin(0.5));
     const rates = (["SSR", "SR", "R", "GRAY"] as const)
-      .map((rarity) => `${rarity === "GRAY" ? "회색 보상" : rarity}  ${(banner.slotRates[rarity] * 100).toFixed(1)}%`)
+      .map((rarity) => t("lab.policy.rate", { rarity: rarity === "GRAY" ? t("lab.policy.grayReward") : rarity, percent: (banner.slotRates[rarity] * 100).toFixed(1) }))
       .join("\n");
     overlay.add(this.add.text(cx, 475, rates, textStyle({ role: "body", size: 30, align: "center", lineSpacing: 14 })).setOrigin(0.5, 0));
     const pity = session.gachaPityByGroup[banner.pityGroupId] ?? { pullsSinceSsr: 0, pickupGuaranteed: false };
     // 확률뿐 아니라 현재 계정 상태와 배너 교체 정책, 중복 환산까지 한 화면에서 확인시킨다.
     const policy = [
-      `현재 SSR 미획득 ${pity.pullsSinceSsr}회 · 확정까지 ${Math.max(0, banner.highestRarityGuarantee - pity.pullsSinceSsr)}회`,
-      `픽업 확정  ${pity.pickupGuaranteed ? "ON · 다음 SSR은 픽업" : "OFF"}`,
-      `SSR 픽업 확률 ${(banner.pickupRate * 100).toFixed(0)}% · 실패 시 다음 SSR 픽업 확정`,
-      `이월 그룹  ${banner.pityGroupId}`,
-      "같은 그룹의 교체 배너로 천장·픽업 확정 이월",
-      "10연 마지막 슬롯 SR 이상 보장 (SSR 천장 우선)",
-      "중복 보상  해당 렐릭 파편 +1 · 파편을 모아 한계 돌파",
-      "돌파 등급 V 달성 이후 중복은 공용 DNA 조각 +1",
+      t("lab.policy.pity", { since: pity.pullsSinceSsr, left: Math.max(0, banner.highestRarityGuarantee - pity.pullsSinceSsr) }),
+      t("lab.policy.pickup", { state: t(pity.pickupGuaranteed ? "lab.policy.pickupOn" : "lab.policy.pickupOff") }),
+      t("lab.policy.pickupRate", { percent: (banner.pickupRate * 100).toFixed(0) }),
+      t("lab.policy.group", { group: banner.pityGroupId }),
+      t("lab.policy.groupNote"),
+      t("lab.policy.tenGuarantee"),
+      t("lab.policy.duplicate"),
+      t("lab.policy.duplicateMax"),
     ].join("\n");
     overlay.add(this.add.text(cx, 700, policy, textStyle({ role: "body", size: 25, color: COLOR.inkDim, align: "center", lineSpacing: 13, wrap: 760 })).setOrigin(0.5, 0));
-    const close = new Button(this, cx, 1190, { width: 320, height: 100, label: "확인", fontSize: 32, onClick: () => overlay.destroy() });
+    const close = new Button(this, cx, 1190, { width: 320, height: 100, label: t("lab.confirm"), fontSize: 32, onClick: () => overlay.destroy() });
     overlay.add(close);
     shade.on("pointerdown", () => overlay.destroy());
   }
@@ -335,13 +336,13 @@ export class LabScene extends Phaser.Scene {
       if (this.finishStage) { this.finishStage(); return; }
       this.boardTap?.();
     });
-    const skip = new Button(this, BASE_WIDTH - 150, 100, { width: 230, height: 70, label: "전체 건너뛰기", fontSize: 22, onClick: () => {
+    const skip = new Button(this, BASE_WIDTH - 150, 100, { width: 230, height: 70, label: t("lab.skipAll"), fontSize: 22, onClick: () => {
       this.presentation.skipAll();
       this.finishStage?.();
     } });
     layer.add(skip);
 
-    content.add(this.add.text(BASE_WIDTH / 2, 660, "화석 DNA 연구 중", textStyle({ role: "display", size: 48, color: COLOR.inkDim })).setOrigin(0.5));
+    content.add(this.add.text(BASE_WIDTH / 2, 660, t("lab.scanning"), textStyle({ role: "display", size: 48, color: COLOR.inkDim })).setOrigin(0.5));
     await this.waitForStage(excavationStageDuration("scan", preferences.presentation.shortenExcavation), request);
     if (!this.presentation.isCurrent(request)) return;
     if (!this.presentation.wasSkipped) this.presentation.advance();
@@ -439,7 +440,7 @@ export class LabScene extends Phaser.Scene {
     if (rarity === "SR" || rarity === "SSR") layer.add(this.add.rectangle(BASE_WIDTH / 2, 960, 920, 1240)
       .setStrokeStyle(10, rarity === "SR" ? COLOR.raritySRAlt : COLOR.raritySSRLight, 0.85));
     const assist = colorAssistPolicy(colorAssist, "rarity", rarity);
-    layer.add(this.add.text(BASE_WIDTH / 2, 800, `${assist.glyph ? `${assist.glyph} ` : ""}${rarity === "SSR" ? "호박빛 공명이 폭발한다" : rarity === "SR" ? "청록과 보랏빛이 교차한다" : rarity === "R" ? "회청색 파장이 감지된다" : "중립 파장이 응결한다"}`, textStyle({ role: "emphasis", size: 42, align: "center", wrap: 820 })).setOrigin(0.5));
+    layer.add(this.add.text(BASE_WIDTH / 2, 800, `${assist.glyph ? `${assist.glyph} ` : ""}${t(rarity === "SSR" ? "lab.resonance.SSR" : rarity === "SR" ? "lab.resonance.SR" : rarity === "R" ? "lab.resonance.R" : "lab.resonance.GRAY")}`, textStyle({ role: "emphasis", size: 42, align: "center", wrap: 820 })).setOrigin(0.5));
     const flashes = flashPolicy(reduceFlashes);
     this.tweens.add({ targets: flash, alpha: 0.55 * flashes.alphaRatio, duration: 180, yoyo: true, repeat: Math.min(1, flashes.maxRepeats) });
   }
@@ -466,7 +467,7 @@ export class LabScene extends Phaser.Scene {
       standing = await spawnPuppet(this, portraitAssetFor(def.portraitAssetId), { x: BASE_WIDTH / 2, groundY: 1260, height: 900, depth: 1205 });
     } catch {
       // 부트 캐시나 WebGL 복제가 실패해도 첫 대면 정보는 텍스트로 온전히 전달한다.
-      layer.add(this.add.text(BASE_WIDTH / 2, 650, `[${def.name} 스탠딩을 불러오지 못했습니다]`, textStyle({ role: "body", size: 30, color: COLOR.inkDim })).setOrigin(0.5));
+      layer.add(this.add.text(BASE_WIDTH / 2, 650, t("lab.standingFailed", { name: def.name }), textStyle({ role: "body", size: 30, color: COLOR.inkDim })).setOrigin(0.5));
     }
     if (!this.presentation.isCurrent(request)) { standing?.destroy(); layer.destroy(true); return; }
     layer.add(drawLayer(this, BASE_WIDTH / 2, 1470, slantedRect(900, 250), {
@@ -499,7 +500,7 @@ export class LabScene extends Phaser.Scene {
     const shortened = settingsManager.get().presentation.shortenExcavation;
     content.removeAll(true);
     const board = researchBoardLayout(results.length, BASE_WIDTH);
-    content.add(this.add.text(cx, board.titleY, "연구 결과", textStyle({ role: "display", size: 52 })).setOrigin(0.5));
+    content.add(this.add.text(cx, board.titleY, t("lab.result.title"), textStyle({ role: "display", size: 52 })).setOrigin(0.5));
 
     this.boardRequest = request;
     this.boardShortened = shortened;
@@ -525,7 +526,7 @@ export class LabScene extends Phaser.Scene {
     this.boardHint = hint;
 
     // 한 칸씩 여는 손이 지치지 않게 남은 칸을 한 번에 여는 길도 둔다. 다 열리면 사라진다.
-    this.boardOpenAll = new Button(this, BASE_WIDTH - 150, 100, { width: 230, height: 70, label: "모두 열기", fontSize: 22, onClick: () => this.openEverySlot() });
+    this.boardOpenAll = new Button(this, BASE_WIDTH - 150, 100, { width: 230, height: 70, label: t("lab.result.openAll"), fontSize: 22, onClick: () => this.openEverySlot() });
     layer.add(this.boardOpenAll);
 
     // 전체 건너뛰기는 결과까지 건너뛴다는 뜻이다. 판을 깔되 칸은 이미 다 열려 있다.
@@ -561,11 +562,11 @@ export class LabScene extends Phaser.Scene {
     const closed = this.boardTiles.filter((tile) => !tile.opened);
     setDebugResearchBoard({ slots: this.boardTiles.length, opened: this.boardTiles.length - closed.length });
     if (closed.length > 0) {
-      this.boardHint?.setText("칸을 눌러 확인");
+      this.boardHint?.setText(t("lab.result.tapTile"));
       this.boardTap = () => void this.openSlot(closed[0]);
       return;
     }
-    this.boardHint?.setText("화면을 눌러 돌아가기");
+    this.boardHint?.setText(t("lab.result.tapToReturn"));
     this.boardOpenAll?.destroy();
     this.boardOpenAll = undefined;
     this.presentation.advance();
@@ -590,9 +591,9 @@ export class LabScene extends Phaser.Scene {
     const pickupNames = Object.values(banner.pickupRelicIds).flat().map((id) => getRelic(id).name);
     this.pickupText.setText(`PICK UP  ${pickupNames.join(" · ")}`);
     const currentPity = session.gachaPityByGroup[banner.pityGroupId] ?? { pullsSinceSsr: 0, pickupGuaranteed: false };
-    this.pityText.setText(`SSR 확정까지 ${Math.max(0, banner.highestRarityGuarantee - currentPity.pullsSinceSsr)}회${currentPity.pickupGuaranteed ? " · 다음 SSR 픽업 확정" : ""}`);
+    this.pityText.setText(t("lab.pityLine", { left: Math.max(0, banner.highestRarityGuarantee - currentPity.pullsSinceSsr), pickup: currentPity.pickupGuaranteed ? t("lab.pityLine.pickup") : "" }));
 
-    const unit = banner.currency === "fossil" ? "화석" : "호박석";
+    const unit = t(banner.currency === "fossil" ? "lab.currency.fossil" : "lab.currency.amber");
     this.oneButton
       .setSub(`${unit} ${pullCost(banner, 1)}`)
       .setEnabled(!this.pullPending && canPull(session.wallet, banner, 1));

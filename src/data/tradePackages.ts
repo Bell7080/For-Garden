@@ -1,4 +1,5 @@
 import type { ProductAcquisition, ProductCurrency, ProductDefinition, ProductGrant, ProductRefresh, ProductStorefront } from "./products";
+import { registerDataText } from "../i18n";
 
 /**
  * 무역 패키지 — **운영이 그때그때 올려 두는 묶음 하나하나를 전시하는 자리.**
@@ -110,3 +111,12 @@ export const TRADE_PACKAGES: readonly ProductDefinition[] = [
     visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z",
   },
 ];
+
+/** 무역 묶음의 이름과 설명을 언어별로 덮어쓸 수 있게 등록한다. */
+for (const pkg of TRADE_PACKAGES) {
+  registerDataText(pkg, "name", `trade.${pkg.id}.name`);
+  registerDataText(pkg, "description", `trade.${pkg.id}.description`);
+}
+
+/** 갱신 주기 이름도 함께 등록한다. */
+for (const key of Object.keys(REFRESH_LABEL)) registerDataText(REFRESH_LABEL, key, `trade.refresh.${key}`);

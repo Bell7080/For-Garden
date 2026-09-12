@@ -1,3 +1,4 @@
+import { registerDataText } from "../i18n";
 /** 원정 증강의 제안 등급이다. 일반(SR)과 정예(SSR) 전투의 후보 풀을 분리한다. */
 export type ExpeditionAugmentRarity = "sr" | "ssr";
 /** 개인 효과는 한 렐릭을 고르고, 전체 효과는 선택 즉시 파티 전체에 적용된다. */
@@ -106,3 +107,8 @@ export const EXPEDITION_AUGMENTS = [
 
 /** 저장 검증과 UI 조회가 같은 표를 사용하도록 ID 조회를 공개한다. */
 export function getExpeditionAugment(id: string): ExpeditionAugmentDef | undefined { return EXPEDITION_AUGMENTS.find((augment) => augment.id === id); }
+
+/** 원정 증강의 이름을 언어별로 덮어쓸 수 있게 등록한다. 효과 문구는 수치에서 조립한다. */
+for (const augment of EXPEDITION_AUGMENTS) {
+  registerDataText(augment, "name", `augment.${augment.id}.name`);
+}

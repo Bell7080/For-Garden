@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { t } from "../i18n";
 import type { GameApi, ProductDto, PurchaseProductResponse } from "../api/contracts";
 import type { Wallet } from "../core/gacha";
 import { TRADE_PACKAGES } from "../data/tradePackages";
@@ -43,7 +44,7 @@ export class TradePopup {
   /** 연타는 기존 레이어를 유지하며 서버 trade 카탈로그만 조회한다. */
   open(): void {
     if (this.closeAction) return;
-    this.popups.open({ width: this.shell.width, height: this.shell.height, title: "무역", dim: true, closeOnBackdrop: false, hideCloseButton: true, onClose: () => this.dispose() }, (body, close) => {
+    this.popups.open({ width: this.shell.width, height: this.shell.height, title: t("trade.title"), dim: true, closeOnBackdrop: false, hideCloseButton: true, onClose: () => this.dispose() }, (body, close) => {
       this.closeAction = close;
       this.body = body;
       // PopupLayer가 만든 판·제목은 그대로 두고, 비동기 상품만 안전하게 다시 그릴 자식층을 한 번 만든다.

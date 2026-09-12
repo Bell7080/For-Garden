@@ -1,4 +1,5 @@
 import type { DialogueStory } from "../../core/dialogue";
+import { registerDialogueTexts } from "./registerDialogue";
 import { GREAT_AUK_REPORT } from "./greatAukReport";
 import { OPENING_TRAIN } from "./openingTrain";
 import { GREENHOUSE_ECHO } from "./greenhouseEcho";
@@ -12,3 +13,5 @@ export function getRecollectionStory(storyId: string): DialogueStory {
   if (!story) throw new Error(`알 수 없는 회상 스토리 id: ${storyId}`);
   return story;
 }
+
+for (const story of RECOLLECTION_STORIES) registerDialogueTexts(story);

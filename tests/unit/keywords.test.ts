@@ -17,18 +17,18 @@ describe("스킬 설명 키워드", () => {
 
   it("의 id는 서로 겹치지 않는다", () => {
     expect(new Set(KEYWORDS.map((keyword) => keyword.id)).size).toBe(KEYWORDS.length);
-    expect(findKeyword("burn")?.kind).toBe("디버프");
+    expect(findKeyword("burn")?.kind).toBe("debuff");
   });
 
   it("는 스킬마다 다른 피해 수치 설명을 같은 링크 문법으로 연결한다", () => {
-    const contextual = [{ id: "damage-value", term: "384", kind: "규칙" as const, description: "현재 방어력에서 300%를 받아 계산했다." }];
+    const contextual = [{ id: "damage-value", term: "384", kind: "rule" as const, description: "현재 방어력에서 300%를 받아 계산했다." }];
     const [segment] = parseKeywordText("[[damage-value|384]]", contextual);
     expect(segment.keyword).toEqual(contextual[0]);
   });
 
   it("는 렉시아의 데이터 기반 출혈 표기를 기존 키워드 사전에 연결한다", () => {
     const linked = parseKeywordText("[[bleed|출혈]] 3초 · 매초 최대 체력 2%");
-    expect(linked.find((segment) => segment.keyword)?.keyword).toMatchObject({ id: "bleed", kind: "디버프" });
+    expect(linked.find((segment) => segment.keyword)?.keyword).toMatchObject({ id: "bleed", kind: "debuff" });
   });
 
   it("는 스피나의 은신·연격·공격 속도 규칙을 모두 설명 팝업에 연결한다", () => {

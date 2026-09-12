@@ -1,0 +1,31 @@
+/** 교류(도시 파견) 화면과 팝업의 문구. */
+export const INTERACTION_KO = {
+  "interaction.title": "교류",
+  "interaction.subtitle": "도시마다 한 팀씩 보낼 수 있다",
+  "interaction.exchange": "교환소",
+  "interaction.dispatched": "파견 중 · {remaining}",
+  "interaction.awaitingClaim": "수령 대기",
+  "interaction.lockedByResearch": "연구 Lv.{level}에 열린다",
+
+  "interaction.journal": "도시 일지",
+  "interaction.returning": "돌아오는 것",
+  "interaction.autoPlace": "자동 배치",
+  "interaction.noRelics": "보낼 수 있는 렐릭이 없다",
+  "interaction.ownedRelics": "보유 렐릭",
+  "interaction.ownedRelicsForSlot": "보유 렐릭 · {slot}번 자리에 배치",
+  "interaction.claiming": "수령 중…",
+  "interaction.claim": "보상 수령",
+  "interaction.cancel": "취소",
+  "interaction.sending": "보내는 중…",
+  "interaction.send": "파견 보내기",
+  "interaction.rewardTitle": "교류 보상",
+
+  "interaction.exchange.owned": "보유 표본  {owned}",
+  "interaction.exchange.required": "요구량  {amount}",
+  "interaction.exchange.result": "교환 결과  치즈케이크 {amount}",
+  "interaction.exchange.remaining": "남은 교환 횟수  {remaining}",
+  "interaction.exchange.busy": "처리 중",
+  "interaction.exchange.do": "교환",
+  "interaction.exchange.granted": "치즈케이크 {amount} 지급",
+  "interaction.exchange.failed": "교환 실패",
+} as const;

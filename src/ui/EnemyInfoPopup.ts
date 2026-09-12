@@ -25,6 +25,7 @@ import type { SkillArtSlot } from "./skillArt";
 import { StatRadar } from "./StatRadar";
 import { REACH_LABEL, STAT_TONE } from "./statTones";
 import { COLOR, textStyle } from "./theme";
+import { t } from "../i18n";
 
 /** 그 적이 실제로 서 있는 상태. 화면이 레벨 보정을 다시 하지 않고 배치된 값을 그대로 받는다. */
 export interface EnemyInfoSnapshot {
@@ -72,7 +73,7 @@ export class EnemyInfoPopup {
     this.popups.open({
       // 제목은 개체 이름이 아니라 **정보창**이다 — 이름은 판 안의 이름 블록이 이미 크게 말하고,
       // 머리글이 같은 말을 반복하면 한 창에 이름이 두 번 선다.
-      width: ENEMY_INFO.width, height: ENEMY_INFO.height, title: "정보창", titleSize: POPUP_TITLE_SIZE.workboard,
+      width: ENEMY_INFO.width, height: ENEMY_INFO.height, title: t("info.enemy.title"), titleSize: POPUP_TITLE_SIZE.workboard,
       dim: true, dimAlpha: 0.64, closeOnBackdrop: false, backButton: true,
       onClose: () => this.dispose(),
     }, (body) => {
@@ -178,7 +179,7 @@ export class EnemyInfoPopup {
     addInfoMagnifier(scene, this.popups, chrome, gradeMagnifier.x, gradeMagnifier.y, () => openBreakthroughStepsPopup(scene, this.popups, snapshot.def, grade));
 
     const panel = addInfoPanel(scene, chrome, column.x, enemyInfoPanelCenterY(levelPanel), column.width, levelPanel.height);
-    addSectionTitle(scene, column.x - column.width / 2, levelPanel.top - 4, "레벨", { parent: chrome });
+    addSectionTitle(scene, column.x - column.width / 2, levelPanel.top - 4, t("info.level"), { parent: chrome });
     const value = scene.add
       .text(-column.width / 2 + 54, -66, String(snapshot.level), textStyle({ role: "display", size: 96 }))
       .setOrigin(0, 0)
@@ -203,11 +204,11 @@ export class EnemyInfoPopup {
     const scene = this.scene;
     const { column, statPanel, radar, reach, statMagnifier } = ENEMY_INFO;
     const panel = addInfoPanel(scene, chrome, column.x, enemyInfoPanelCenterY(statPanel), column.width, statPanel.height);
-    addSectionTitle(scene, column.x - column.width / 2, statPanel.top - 4, "능력치", { parent: chrome });
+    addSectionTitle(scene, column.x - column.width / 2, statPanel.top - 4, t("info.section.stats"), { parent: chrome });
     addInfoMagnifier(scene, this.popups, panel, column.x + column.width / 2 - 30, enemyInfoPanelCenterY(statPanel) + statMagnifier.offsetY, (from) => openExtraStatsPopup(scene, this.popups, def, def.stats, from), true);
     // 사거리는 오각형에 없는 축이라 제목 바로 아래에 이름표처럼 한 줄로만 선다.
     panel.add(scene.add
-      .text(reach.offsetX, reach.offsetY, `사거리 · ${REACH_LABEL[def.reachTier]}`, textStyle({ role: "body", size: 22, color: COLOR.inkDim }))
+      .text(reach.offsetX, reach.offsetY, t("info.enemy.reach", { tier: REACH_LABEL[def.reachTier] }), textStyle({ role: "body", size: 22, color: COLOR.inkDim }))
       .setOrigin(0, 0.5));
     const chart = new StatRadar(scene, 0, radar.offsetY, radar.radius, {
       size: 24,

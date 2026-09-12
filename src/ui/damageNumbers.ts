@@ -1,4 +1,5 @@
 import { COLOR } from "./theme";
+import { t } from "../i18n";
 
 /**
  * 전투 수치 한 개를 어떻게 그릴지 정하는 **순수 규칙**.
@@ -244,7 +245,7 @@ export function damagePopupStyle(request: DamagePopupRequest): DamagePopupStyle 
   if (flavor === "blocked") {
     // 무효는 세기가 없다. 늘 같은 크기의 흐린 표식 하나로만 알리고 화면을 흔들지 않는다.
     return {
-      text: "무효", tier: 0, size: 22, color: DAMAGE_FLAVOR_COLOR.blocked, stroke: "#14171a", strokeWidth: 4,
+      text: t("damage.immune"), tier: 0, size: 22, color: DAMAGE_FLAVOR_COLOR.blocked, stroke: "#14171a", strokeWidth: 4,
       rise: 140, punch: 1.08, holdMs: 120, riseMs: 560, nearAlpha: 0.3, peakAlpha: 0.75, shake: 0, sparks: 0,
     };
   }

@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { parseKeywordText, type KeywordDef } from "../data/keywords";
+import { t } from "../i18n";
 import type { PopupLayer } from "../ui/PopupLayer";
 import { COLOR, textStyle } from "../ui/theme";
 
@@ -103,7 +104,7 @@ export class KeywordManager {
     this.popups.open({ width: 720, height: 360, title: keyword.term, anchor }, (body) => {
       body.add(
         this.scene.add
-          .text(-720 / 2 + 52, -360 / 2 + 74, keyword.kind, textStyle({ role: "emphasis", size: 22, color: COLOR.accentText }))
+          .text(-720 / 2 + 52, -360 / 2 + 74, t(`skill.keywordKind.${keyword.kind}`), textStyle({ role: "emphasis", size: 22, color: COLOR.accentText }))
           .setOrigin(0, 0),
       );
       const description = this.layout(keyword.description, { width: 610, size: 26, lineSpacing: 8 });

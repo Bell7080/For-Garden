@@ -1,4 +1,5 @@
 import type { DialogueStory } from "../../core/dialogue";
+import { registerDialogueTexts } from "./registerDialogue";
 
 /** 첫 이벤트의 발굴 보고서 본문이며 완료 ID는 기존 회상 저장소와 공유한다. */
 export const GREAT_AUK_REPORT: DialogueStory = {
@@ -11,3 +12,4 @@ export const GREAT_AUK_REPORT: DialogueStory = {
   ],
 };
 
+registerDialogueTexts(GREAT_AUK_REPORT);

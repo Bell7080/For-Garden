@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { t } from "../i18n";
 import { profileAvatarContent, type PlayerProfileDisplay, type PublicProfileModifier } from "../state/playerProfile";
 import { HoloBar, chipPoints, drawLayer, HOLO } from "./holo";
 import type { PopupLayer } from "./PopupLayer";
@@ -26,7 +27,7 @@ export class PlayerProfilePopup {
     this.opened = true;
     setDebugPlayerProfileOpen(true);
     const layout = PLAYER_PROFILE_LAYOUT;
-    this.layer.open({ ...layout.popup, title: "플레이어 정보", dim: true, closeOnBackdrop: true, onClose: () => {
+    this.layer.open({ ...layout.popup, title: t("profile.title"), dim: true, closeOnBackdrop: true, onClose: () => {
       this.opened = false; setDebugPlayerProfileOpen(false); this.onClose();
     } }, (body) => {
       const avatar = profileAvatarContent(this.profile, (key) => this.scene.textures.exists(key));
@@ -52,7 +53,7 @@ export class PlayerProfilePopup {
         body.add(this.scene.add.text(x, layout.modifiers.y, compactProfileText(modifier.displayName, 10), textStyle({ role: "emphasis", size: 18, color: `#${color.toString(16).padStart(6, "0")}` })).setOrigin(0.5));
       });
       // 자기 프로필만 manager로 이어지는 교체 진입점을 받으며 친구 프로필 DTO에는 이 행동이 존재하지 않는다.
-      if (this.onEditModifiers) body.add(new Button(this.scene, 250, 408, { width: 150, height: 48, label: "수식어 변경", fontSize: 18, onClick: this.onEditModifiers }));
+      if (this.onEditModifiers) body.add(new Button(this.scene, 250, 408, { width: 150, height: 48, label: t("profile.changeModifier"), fontSize: 18, onClick: this.onEditModifiers }));
 
       const stats = this.profile.competitiveStats;
       const addStatChip = (x: number, y: number, label: string, value: string, glyph?: "arena-tier", textOffset = -86): void => {
@@ -63,19 +64,19 @@ export class PlayerProfilePopup {
         body.add(this.scene.add.text(x + textOffset, y + 18, compactProfileText(value, 16), textStyle({ role: "emphasis", size: 24 })).setOrigin(0, 0.5));
       };
       if (stats.favoriteRelic) {
-        addStatChip(layout.stats.leftX, layout.stats.firstY, "애착 렐릭", stats.favoriteRelic.displayName, undefined, -50);
+        addStatChip(layout.stats.leftX, layout.stats.firstY, t("profile.favorite"), stats.favoriteRelic.displayName, undefined, -50);
         // 안전한 공개 portraitAssetId를 공용 PortraitCard에 전달하며 별도 크롭/원화 fallback을 만들지 않는다.
         body.add(new PortraitCard(this.scene, layout.stats.leftX - 112, layout.stats.firstY, { width: 92, height: 112, portraitAssetId: stats.favoriteRelic.portraitAssetId }));
-      } else addStatChip(layout.stats.leftX, layout.stats.firstY, "애착 렐릭", "미지정");
-      if (stats.arenaTier) addStatChip(layout.stats.rightX, layout.stats.firstY, "결투장 티어", stats.arenaTier.displayName, "arena-tier");
-      addStatChip(layout.stats.leftX, layout.stats.secondY, "최대 클리어", stats.highestStage?.displayValue ?? "기록 없음");
+      } else addStatChip(layout.stats.leftX, layout.stats.firstY, t("profile.favorite"), t("profile.unset"));
+      if (stats.arenaTier) addStatChip(layout.stats.rightX, layout.stats.firstY, t("profile.arenaTier"), stats.arenaTier.displayName, "arena-tier");
+      addStatChip(layout.stats.leftX, layout.stats.secondY, t("profile.highestClear"), stats.highestStage?.displayValue ?? t("profile.noRecord"));
       addStatChip(layout.stats.rightX, layout.stats.secondY, stats.expedition.label, stats.expedition.score.toLocaleString());
 
       const addValue = (y: number, label: string, value: string): void => {
         body.add(this.scene.add.text(-330, y, label, textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0, 0.5));
         body.add(this.scene.add.text(330, y, compactProfileText(value, 24), textStyle({ role: "emphasis", size: 26 })).setOrigin(1, 0.5));
       };
-      addValue(layout.rows.firstY, "공개 ID", this.profile.displayId);
+      addValue(layout.rows.firstY, t("profile.publicId"), this.profile.displayId);
     });
   }
 

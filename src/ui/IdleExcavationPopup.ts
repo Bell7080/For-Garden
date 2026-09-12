@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { t } from "../i18n";
 import type { AdOperationsConfigResponse, AdPresentationResult, AdSlotOperationsDto, GameApi, HarvestExcavationResponse, IdleExcavationResponse } from "../api/contracts";
 import { motionPolicy, powerSavingPolicy } from "../core/settings";
 import { emptyExcavationAmounts, EXCAVATION_CURRENCIES, excavationProductionDisplayModel, excavationStorageFillRatio, excavationStorageLimitSeconds, type ExcavationCurrency, type IdleExcavationState } from "../core/idleExcavation";
@@ -12,7 +13,7 @@ import { notificationManager } from "../managers/NotificationManager";
 import { Button } from "./Button";
 import { chipPoints, drawHairline, drawLayer, HOLO, HoloBar, slantedRect } from "./holo";
 import { PortraitCard } from "./PortraitCard";
-import { autoAssignExcavation, EXCAVATION_AUTO_MODE_LABEL, EXCAVATION_AUTO_MODES, type ExcavationAutoMode, type ExcavationCandidate } from "../core/excavationAutoAssign";
+import { autoAssignExcavation, excavationAutoModeLabel, EXCAVATION_AUTO_MODES, type ExcavationAutoMode, type ExcavationCandidate } from "../core/excavationAutoAssign";
 import { bindLongPress } from "./longPressInfo";
 import { type InfoManager, sceneInfoManager } from "./info";
 import { formationRosterColumnX, formationRosterGrid, PORTRAIT_GRID_MASK_GAP, portraitGridContentHeight, portraitGridFirstRowY } from "./portraitGrid";
@@ -183,10 +184,10 @@ export class IdleExcavationPopup {
   /** 연타는 기존 한 장을 유지하며 닫기는 저장되지 않은 draft를 버린다. */
   open(): void {
     if (this.body) return;
-    this.body = this.popups.open({ width: PANEL.width, height: PANEL.height, title: "발굴", titleSize: 34, dim: true, closeOnBackdrop: false, hideCloseButton: true, onClose: () => this.dispose() }, (body, close) => {
+    this.body = this.popups.open({ width: PANEL.width, height: PANEL.height, title: t("excavation.title"), titleSize: 34, dim: true, closeOnBackdrop: false, hideCloseButton: true, onClose: () => this.dispose() }, (body, close) => {
       this.closeAction = close;
       body.setName("idle-excavation-popup");
-      this.showMessage("발굴 현황을 정산하고 있습니다…", "loading");
+      this.showMessage(t("excavation.settling"), "loading");
     });
     // E2E는 새 레이아웃의 실제 입력 중심을 사용하고 게임 데이터에는 접근하지 않는다.
     setDebugIdleExcavationControls({
@@ -216,7 +217,7 @@ export class IdleExcavationPopup {
       this.renderStatus();
     } catch {
       if (!this.body || generation !== this.requestGeneration) return;
-      this.showMessage("발굴 기록을 불러오지 못했습니다.", "error", true);
+      this.showMessage(t("excavation.loadFailed"), "error", true);
     }
   }
 
@@ -288,8 +289,8 @@ export class IdleExcavationPopup {
       this.editTitle = addSectionTitle(this.scene, -380, STATUS_HERO.headerY, this.editTitleText(), { size: 23, parent: upper });
     } else {
       // 진행 문구는 일반 강조, 배치 수는 같은 행의 얇은 보조 정보로 두어 제목 위계를 만들지 않는다.
-      upper.add(this.scene.add.text(-360, STATUS_HERO.headerY, this.saving ? "수확 처리 중…" : "발굴 진행 중", textStyle({ role: "emphasis", size: 27, color: COLOR.accentText })).setOrigin(0, 0.5));
-      upper.add(this.scene.add.text(-160, STATUS_HERO.headerY, `배치 ${formation.filter(Boolean).length}/3`, textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0, 0.5));
+      upper.add(this.scene.add.text(-360, STATUS_HERO.headerY, this.saving ? t("excavation.harvesting") : t("excavation.running"), textStyle({ role: "emphasis", size: 27, color: COLOR.accentText })).setOrigin(0, 0.5));
+      upper.add(this.scene.add.text(-160, STATUS_HERO.headerY, t("excavation.placed", { count: formation.filter(Boolean).length }), textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0, 0.5));
     }
     upper.add(drawHairline(this.scene, 0, -535, 760, { color: COLOR.accent, alpha: 0.42 }));
     this.addSlots(upper, formation, editable);
@@ -302,7 +303,7 @@ export class IdleExcavationPopup {
     if (!content || !this.body) return;
     // 상태 문구는 비워 둔 액자 중앙에 놓아 로딩 피드백이 제목이나 닫기 조작을 가리지 않는다.
     content.add(this.scene.add.text(0, 20, message, textStyle({ role: "body", size: 28, color: state === "error" ? COLOR.dangerText : COLOR.inkDim })).setOrigin(0.5));
-    if (retry) content.add(new Button(this.scene, 0, 65, { width: 260, height: 82, label: "다시 시도", onClick: () => { this.showMessage("발굴 현황을 정산하고 있습니다…", "loading"); void this.fetch(); } }));
+    if (retry) content.add(new Button(this.scene, 0, 65, { width: 260, height: 82, label: t("excavation.retry"), onClick: () => { this.showMessage(t("excavation.settling"), "loading"); void this.fetch(); } }));
     this.setState(state);
   }
 
@@ -371,13 +372,13 @@ export class IdleExcavationPopup {
         rate[currency] > 0 ? Math.max(0, Math.ceil((1 - liveAmounts[currency]) / rate[currency] * 3600)) : Number.POSITIVE_INFINITY
       ));
       const next = Math.min(...seconds);
-      availability.setText(harvestable ? "현재 누적 보상을 수확할 수 있습니다." : Number.isFinite(next) ? `현재 누적 0 · 다음 수확까지 약 ${Math.max(1, Math.ceil(next / 60))}분` : "현재 누적 0 · 렐릭을 배치하면 생산이 시작됩니다.");
+      availability.setText(harvestable ? t("excavation.readyToHarvest") : Number.isFinite(next) ? t("excavation.nextHarvest", { minutes: Math.max(1, Math.ceil(next / 60)) }) : t("excavation.needRelics"));
       // 실제로 쌓인 재화량 자체를 보관 한도와 비교한다 — 경과 시간 기준으로 계산하면 창을 열
       // 때마다 서버 정산이 일어나 기준 시각이 현재로 밀리면서 게이지가 늘 0%로 보였다.
       const limitSeconds = excavationStorageLimitSeconds(response.excavation, new Date());
       const storageRatio = excavationStorageFillRatio(liveAmounts, rate, limitSeconds);
       storageGauge.setValue(storageRatio);
-      storageLabel.setText(`보관량 ${Math.round(storageRatio * 100)}%`);
+      storageLabel.setText(t("excavation.storage", { percent: Math.round(storageRatio * 100) }));
     };
     refreshEstimate();
     this.ticker?.remove(false);
@@ -385,18 +386,18 @@ export class IdleExcavationPopup {
     content.add(drawHairline(this.scene, 0, 180, 760, { color: COLOR.accent, alpha: 0.25 }));
     const result = this.harvestResult;
     const discarded = result ? EXCAVATION_CURRENCIES.reduce((sum, currency) => sum + result.discarded[currency], 0) : 0;
-    const notice = this.harvestError ?? (discarded > 0 ? "수확 완료 · 지갑 상한 손실" : result ? "수확이 완료되었습니다." : "빈 슬롯은 허용되며 생산량 0으로 계산됩니다.");
+    const notice = this.harvestError ?? (discarded > 0 ? t("excavation.harvestCapped") : result ? t("excavation.harvestDone") : t("excavation.emptySlotNote"));
     content.add(this.scene.add.text(0, 250, notice, textStyle({ role: "body", size: 21, color: discarded > 0 || this.harvestError ? COLOR.dangerText : COLOR.inkDim, align: "center" })).setOrigin(0.5));
     this.addAdOffers(content, response.serverTime);
     // 5순위 주요 행동: 별도 편성 버튼은 없애고, 하단 전체 폭은 수확 primary 하나에만 준다.
-    harvestButton = new Button(this.scene, 0, BOTTOM_ACTION.y, { width: 520, height: 98, label: this.saving ? "수확 중…" : "수확", variant: "primary", onClick: () => void this.harvest() });
+    harvestButton = new Button(this.scene, 0, BOTTOM_ACTION.y, { width: 520, height: 98, label: this.saving ? t("excavation.harvestBusy") : t("excavation.harvest"), variant: "primary", onClick: () => void this.harvest() });
     // 서버 확정 누적량이 1 미만이거나 요청 중이면 지급할 것이 없으므로 입력부터 막는다.
     refreshEstimate(); content.add(harvestButton);
     this.setState(this.saving ? "saving" : "ready");
     if (result) {
       // 서버 확정 지급분만 공용 획득 팝업에 넘긴다. 지갑 상한 손실은 현황 경고로 남기고 보상처럼 꾸미지 않는다.
       openRewardPopup(this.scene, this.popups, {
-        title: "발굴 보상 획득",
+        title: t("excavation.rewardTitle"),
         // 수확 결과는 일반 영수증보다 한 단계 큰 제목을 쓰고, 암전은 공용 기본값(짙은 검정)을 그대로 받는다.
         titleSize: 30,
         items: EXCAVATION_CURRENCIES.map((currency) => ({
@@ -441,17 +442,17 @@ export class IdleExcavationPopup {
 
   /** 취소·동의 거부·SDK/재고 실패는 메시지만 바꾸며 일반 수확 버튼과 발굴 상태를 건드리지 않는다. */
   private async claimAdEffect(slot: AdSlotOperationsDto): Promise<void> {
-    if (!this.presentAd || this.saving) { this.adMessage = "광고를 이용할 수 없어도 일반 수확은 계속할 수 있습니다."; this.renderStatus(); return; }
+    if (!this.presentAd || this.saving) { this.adMessage = t("excavation.ad.unavailable"); this.renderStatus(); return; }
     const presentation = await this.presentAd(slot.slotId);
     const verificationToken = completedAdToken(presentation);
-    if (!verificationToken) { this.adMessage = "광고가 취소되었거나 준비되지 않았습니다. 일반 수확을 이용해 주세요."; this.renderStatus(); return; }
+    if (!verificationToken) { this.adMessage = t("excavation.ad.cancelled"); this.renderStatus(); return; }
     try {
       const result = await this.api.claimAdReward({ slotId: slot.slotId, verificationToken, requestId: requestId() });
       if (result.excavation) session.idleExcavation = { ...result.excavation, assignedRelicIds: copyFormation(result.excavation.assignedRelicIds), unclaimed: { ...result.excavation.unclaimed } };
       session.dailyAdRewards = { date: result.dailyAdRewards.date, claimsBySlot: { ...result.dailyAdRewards.claimsBySlot }, requestIds: session.dailyAdRewards.requestIds };
       // 광고 적용 뒤에도 임시 응답을 조립하지 않고 비율·알림이 포함된 발굴 API 스냅샷을 다시 받는다.
-      this.confirmed = await this.api.getIdleExcavation(); this.adMessage = "발굴 효과가 적용되었습니다."; this.renderStatus();
-    } catch { this.adMessage = "광고 검증에 실패했습니다. 일반 수확은 그대로 가능합니다."; this.renderStatus(); }
+      this.confirmed = await this.api.getIdleExcavation(); this.adMessage = t("excavation.ad.applied"); this.renderStatus();
+    } catch { this.adMessage = t("excavation.ad.verifyFailed"); this.renderStatus(); }
   }
 
   /** 편집을 열 때에만 확정 배열을 복사하므로 취소/닫기가 서버 편성을 건드릴 수 없다. */
@@ -487,14 +488,14 @@ export class IdleExcavationPopup {
     this.renderUpper(this.draft, true);
     const content = this.resetLower();
     if (!content) return;
-    this.rosterLabel = this.scene.add.text(GRID_VIEW.left + 10, GRID_VIEW.top - 42, (this.selectedSlot === undefined ? "보유 렐릭" : `보유 렐릭 · ${this.selectedSlot + 1}번 칸에 배치`), textStyle({ role: "emphasis", size: 23, color: COLOR.accentText })).setOrigin(0, 0.5);
+    this.rosterLabel = this.scene.add.text(GRID_VIEW.left + 10, GRID_VIEW.top - 42, (this.selectedSlot === undefined ? t("excavation.ownedRelics") : t("excavation.ownedRelicsForSlot", { slot: this.selectedSlot + 1 })), textStyle({ role: "emphasis", size: 23, color: COLOR.accentText })).setOrigin(0, 0.5);
     content.add(this.rosterLabel);
     // 조작 설명 대신 **그 조작을 대신해 주는 단추**를 둔다. 기준은 화살표로 돌려 고르고,
     // 무엇을 많이 캘지는 지금 모자란 재화에 따라 그때그때 달라지므로 하나로 고정하지 않는다.
     const autoY = GRID_VIEW.top - 42;
     content.add(new Button(this.scene, GRID_VIEW.right - 205, autoY, {
       width: 190, height: 56, fontSize: 22,
-      label: "자동 배치", sub: EXCAVATION_AUTO_MODE_LABEL[this.autoMode],
+      label: t("excavation.autoPlace"), sub: excavationAutoModeLabel(this.autoMode),
       onClick: () => {
         if (this.saving || !this.draft) return;
         this.draft = autoAssignExcavation(this.autoCandidates(), this.autoMode);
@@ -554,8 +555,8 @@ export class IdleExcavationPopup {
     this.addGridScroll(content, grid, owned.length);
     if (error) content.add(this.scene.add.text(0, 455, error, textStyle({ role: "body", size: 22, color: COLOR.dangerText })).setOrigin(0.5));
     // 수확이 서 있던 자리를 배치가 그대로 물려받고, 취소는 배치 중에만 그 왼쪽에 나타난다.
-    const cancel = new Button(this.scene, BOTTOM_ACTION.cancelX, BOTTOM_ACTION.y, { width: 220, height: 82, label: "취소", onClick: () => { if (!this.saving) { this.draft = undefined; this.renderStatus(); } } });
-    const done = new Button(this.scene, BOTTOM_ACTION.primaryX, BOTTOM_ACTION.y, { width: 500, height: 92, label: this.saving ? "저장 중…" : "배 치", variant: "primary", onClick: () => void this.saveDraft() });
+    const cancel = new Button(this.scene, BOTTOM_ACTION.cancelX, BOTTOM_ACTION.y, { width: 220, height: 82, label: t("excavation.cancel"), onClick: () => { if (!this.saving) { this.draft = undefined; this.renderStatus(); } } });
+    const done = new Button(this.scene, BOTTOM_ACTION.primaryX, BOTTOM_ACTION.y, { width: 500, height: 92, label: this.saving ? t("excavation.saving") : t("excavation.place"), variant: "primary", onClick: () => void this.saveDraft() });
     cancel.setEnabled(!this.saving); done.setEnabled(!this.saving);
     content.add([cancel, done]);
     this.setState(this.saving ? "saving" : error ? "save-error" : "editing");
@@ -639,8 +640,8 @@ export class IdleExcavationPopup {
 
   /** 편집 중 제목이 말하는 것. 선택만 바뀌어도 이 한 줄은 따라와야 한다. */
   private editTitleText(): string {
-    if (this.saving) return "편성 저장 중…";
-    return this.selectedSlot === undefined ? "배치 편집" : `배치 편집 · 슬롯 ${this.selectedSlot + 1}/3`;
+    if (this.saving) return t("excavation.formationSaving");
+    return this.selectedSlot === undefined ? t("excavation.editTitle") : t("excavation.editTitleSlot", { slot: this.selectedSlot + 1 });
   }
 
   /**
@@ -658,7 +659,7 @@ export class IdleExcavationPopup {
       const label = this.editTitle.list.find((child): child is Phaser.GameObjects.Text => child instanceof Phaser.GameObjects.Text);
       label?.setText(this.editTitleText());
     }
-    this.rosterLabel?.setText(this.selectedSlot === undefined ? "보유 렐릭" : `보유 렐릭 · ${this.selectedSlot + 1}번 칸에 배치`);
+    this.rosterLabel?.setText(this.selectedSlot === undefined ? t("excavation.ownedRelics") : t("excavation.ownedRelicsForSlot", { slot: this.selectedSlot + 1 }));
     setDebugIdleExcavationSlots(
       [0, 1, 2].map((index) => ({ index, x: BASE_WIDTH / 2 - 250 + index * 250, y: BASE_HEIGHT / 2 + STATUS_HERO.slotY, width: 210, height: 245 })),
       editable ? this.selectedSlot : undefined,
@@ -877,7 +878,7 @@ export class IdleExcavationPopup {
       this.draft = undefined; this.saving = false; this.renderStatus();
     } catch {
       if (!this.body) return;
-      this.saving = false; this.renderEditor("편성을 저장하지 못했습니다. 연결을 확인하고 다시 시도해 주세요.");
+      this.saving = false; this.renderEditor(t("excavation.formationFailed"));
     }
   }
 
@@ -897,7 +898,7 @@ export class IdleExcavationPopup {
       void notificationManager.refresh().catch(() => undefined);
     } catch {
       if (!this.body) return;
-      this.saving = false; this.harvestError = "수확하지 못했습니다. 같은 요청으로 다시 시도해 주세요."; this.renderStatus();
+      this.saving = false; this.harvestError = t("excavation.harvestFailed"); this.renderStatus();
     }
   }
 

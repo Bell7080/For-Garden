@@ -1,4 +1,5 @@
 import { POISON } from "../core/skirmish";
+import { registerDataText } from "../i18n";
 import type { BasicAttack, RelicDef } from "../core/types";
 
 /**
@@ -2386,7 +2387,7 @@ export const RELICS: RelicDef[] = [
       cycle: [
         { name: "신중한 일격...! 이에요...", power: 90 },
         { name: "신중한 일격...! 이에요...", power: 90 },
-        { name: "갈래화살", power: 45, targeting: "splitShot", maxTargets: 3 },
+        { name: "갈래화살", keywordId: "split-arrow", power: 45, targeting: "splitShot", maxTargets: 3 },
       ],
     } satisfies BasicAttack,
     ultimate: {
@@ -2749,3 +2750,40 @@ export function getRelic(id: string): RelicDef {
 
 /** 플레이어가 파티에 넣을 수 있는 렐릭. 이름 규칙이 아니라 명시적인 적 전용 계약을 따른다. */
 export const PLAYABLE_RELICS = RELICS.filter((relic) => relic.enemyOnly !== true && relic.summonOnly !== true);
+
+/**
+ * 렐릭 정의의 **문구 필드**를 언어에 맞춰 갈아 끼울 수 있게 등록한다.
+ *
+ * 한국어는 위의 정의가 그대로 원본이고, 다른 언어만 개체 ID로 덮어쓴다 — 이 파일은 수치와
+ * 서사를 함께 보며 고치는 콘텐츠 문서라, 이름 자리에 키만 남으면 어느 개체를 고치는 중인지
+ * 알 수 없다. 자세한 이유는 `src/i18n/dataText.ts`의 머리 주석에 있다.
+ *
+ * **ID·에셋 키·수치는 등록하지 않는다.** 언어와 무관하고, 번역되면 데이터를 찾는 코드가 깨진다.
+ * `specimenNumber`와 `projectName`도 그대로 둔다 — 번호와 내부 코드네임이라 언어를 타지 않는다.
+ */
+for (const relic of RELICS) {
+  const key = (field: string): string => `relic.${relic.id}.${field}`;
+  registerDataText(relic, "name", key("name"));
+  registerDataText(relic, "origin", key("origin"));
+  registerDataText(relic, "excavationSite", key("excavationSite"));
+  registerDataText(relic, "fossilRecord", key("fossilRecord"));
+  registerDataText(relic, "catalogSummary", key("catalogSummary"));
+  registerDataText(relic, "squadNote", key("squadNote"));
+  registerDataText(relic, "researcherTitle", key("researcherTitle"));
+  registerDataText(relic.unlockRecord, "text", key("unlockRecord"));
+  for (const field of ["originYear", "restorationYear", "lifeStage", "height", "weight"]) {
+    registerDataText(relic.observationProfile, field, key(`observation.${field}`));
+  }
+  // 스킬은 슬롯 이름이 곧 자리라 개체 안에서 겹치지 않는다.
+  registerDataText(relic.passive, "name", key("passive.name"));
+  registerDataText(relic.passive, "desc", key("passive.desc"));
+  registerDataText(relic.ferocityTrait, "name", key("ferocity.name"));
+  registerDataText(relic.basic, "name", key("basic.name"));
+  registerDataText(relic.ultimate, "name", key("ultimate.name"));
+  // 이름을 가진 주기 스택(토리카의 「세 개의 뿔」)은 머리 위 칩과 쪽지에 그대로 선다.
+  registerDataText(relic.basic, "statusEffectStackName", key("basic.stackName"));
+  // 일반 공격이 순환하는 걸음마다 제 이름이 있고, 스킬 쪽지가 그 이름을 그대로 세운다.
+  relic.basic.cycle?.forEach((step, index) => registerDataText(step, "name", key(`basic.step.${index}`)));
+  // 프로젝트 코드네임은 관찰 일지 상단에 그대로 선다.
+  registerDataText(relic, "projectName", key("projectName"));
+}

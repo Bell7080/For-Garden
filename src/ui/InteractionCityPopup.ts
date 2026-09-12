@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { t } from "../i18n";
 import { INTERACTION_DEPARTMENT_LABEL, interactionDurationLabel } from "../data/interactionCities";
 import { addFramedIcon } from "./itemFrame";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
@@ -171,7 +172,7 @@ export class InteractionCityPopup {
       body.add(this.chromeLayer);
       // 일지는 그 도시에서만 쌓이므로 도시 쪽지가 유일한 진입점이다.
       if (this.onOpenJournal) body.add(new Button(this.scene, PANEL.width / 2 - 130, -PANEL.height / 2 + 96, {
-        width: 200, height: 62, fontSize: 22, label: "도시 일지", accentColor: BLUE,
+        width: 200, height: 62, fontSize: 22, label: t("interaction.journal"), accentColor: BLUE,
         onClick: () => this.onOpenJournal?.(view.city.id),
       }));
     });
@@ -206,10 +207,10 @@ export class InteractionCityPopup {
 
     this.remainingLabel = undefined;
     if (view.state === "away") {
-      this.remainingLabel = this.scene.add.text(0, SLOT.y - SLOT.height / 2 - 52, `파견 중 · ${interactionRemainingLabel(this.remainingMs(view))}`, textStyle({ role: "display", size: 34, color: "#a8ddf5" })).setOrigin(0.5);
+      this.remainingLabel = this.scene.add.text(0, SLOT.y - SLOT.height / 2 - 52, t("interaction.dispatched", { remaining: interactionRemainingLabel(this.remainingMs(view)) }), textStyle({ role: "display", size: 34, color: "#a8ddf5" })).setOrigin(0.5);
       parent.add(this.remainingLabel);
     } else if (view.state === "done") {
-      parent.add(this.scene.add.text(0, SLOT.y - SLOT.height / 2 - 52, "수령 대기", textStyle({ role: "display", size: 34, color: "#e0a83e" })).setOrigin(0.5));
+      parent.add(this.scene.add.text(0, SLOT.y - SLOT.height / 2 - 52, t("interaction.awaitingClaim"), textStyle({ role: "display", size: 34, color: "#e0a83e" })).setOrigin(0.5));
     }
 
     this.party.forEach((relicId, index) => {
@@ -265,7 +266,7 @@ export class InteractionCityPopup {
     if (!view || !this.body || view.state !== "away") return;
     const remaining = this.remainingMs(view);
     if (remaining <= 0) { this.onChanged?.(); return; }
-    this.remainingLabel?.setText(`파견 중 · ${interactionRemainingLabel(remaining)}`);
+    this.remainingLabel?.setText(t("interaction.dispatched", { remaining: interactionRemainingLabel(remaining) }));
   }
 
   /** 아래 칸 — 이 도시가 어떤 곳이고 얼마나 걸리며 무엇이 돌아오는가. */
@@ -293,7 +294,7 @@ export class InteractionCityPopup {
     // **돌아오는 것은 글이 아니라 액자다.** 재화 이름을 늘어놓으면 무엇이 오는지 읽어야 알지만,
     // 액자 한 줄은 훑기만 해도 보인다. 품목이 늘면 판을 키우지 않고 **가로로 흐른다** — 판이
     // 커지면 위 칸의 파견대와 아래 조작이 함께 밀린다.
-    parent.add(this.scene.add.text(left, LOWER.bottom + BRIEF_ROWS.rewardLabel, "돌아오는 것", textStyle({ role: "emphasis", size: BRIEF_TEXT.rewardLabel, color: COLOR.inkDim })).setOrigin(0, 0.5));
+    parent.add(this.scene.add.text(left, LOWER.bottom + BRIEF_ROWS.rewardLabel, t("interaction.returning"), textStyle({ role: "emphasis", size: BRIEF_TEXT.rewardLabel, color: COLOR.inkDim })).setOrigin(0, 0.5));
     const rail = this.scene.add.container(0, LOWER.bottom + BRIEF_ROWS.rewardFrames);
     parent.add(rail);
     const step = REWARD_FRAME.size + REWARD_FRAME.gap;
@@ -383,7 +384,7 @@ export class InteractionCityPopup {
     // 조작 설명 대신 그 조작을 대신해 주는 단추를 둔다. 교류에는 발굴의 생산 특화 같은 개체별
     // 기준이 없어 고를 축이 전투력뿐이라, 발굴처럼 기준을 돌려 고르는 화살표는 두지 않는다.
     parent.add(new Button(this.scene, LOWER.right - 90, LOWER.top - 42, {
-      width: 170, height: 52, fontSize: 22, label: "자동 배치", accentColor: BLUE,
+      width: 170, height: 52, fontSize: 22, label: t("interaction.autoPlace"), accentColor: BLUE,
       onClick: () => {
         this.party = toFormationSlots(autoAssignInteractionParty(
           roster.map((relic) => ({ id: relic.id, power: combatPower(relicProgression.getFinalStats(relic.id)) })),
@@ -395,7 +396,7 @@ export class InteractionCityPopup {
     }));
 
     if (roster.length === 0) {
-      parent.add(this.scene.add.text(0, (LOWER.top + LOWER.bottom) / 2, "보낼 수 있는 렐릭이 없다", textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0.5));
+      parent.add(this.scene.add.text(0, (LOWER.top + LOWER.bottom) / 2, t("interaction.noRelics"), textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0.5));
       return;
     }
 
@@ -439,7 +440,7 @@ export class InteractionCityPopup {
 
   /** 지금 어느 자리에 세우는 중인지. 아무 칸도 고르지 않았으면 목록 이름만 남는다. */
   private rosterHintText(): string {
-    return this.selectedSlot === undefined ? "보유 렐릭" : `보유 렐릭 · ${this.selectedSlot + 1}번 자리에 배치`;
+    return this.selectedSlot === undefined ? t("interaction.ownedRelics") : t("interaction.ownedRelicsForSlot", { slot: this.selectedSlot + 1 });
   }
 
   /** 아래 칸이 무엇을 보여 주든 주요 조작은 같은 높이에 선다. */
@@ -450,7 +451,7 @@ export class InteractionCityPopup {
     if (view.state === "away") return;
     if (view.state === "done") {
       parent.add(new Button(this.scene, 0, ACTION.y, {
-        width: ACTION.width, height: ACTION.height, label: this.busy ? "수령 중…" : "보상 수령", variant: "primary",
+        width: ACTION.width, height: ACTION.height, label: this.busy ? t("interaction.claiming") : t("interaction.claim"), variant: "primary",
         accentColor: COLOR.missionClaim, onClick: () => void this.claim(view.dispatch),
       }));
       return;
@@ -460,14 +461,14 @@ export class InteractionCityPopup {
     // 배치 중에만 취소가 그 왼쪽에 나타난다 — 발굴과 같은 자리, 같은 폭이다.
     if (this.editing) {
       const cancel = new Button(this.scene, ACTION.cancelX, ACTION.y, {
-        width: ACTION.cancelWidth, height: ACTION.cancelHeight, label: "취소", onClick: () => { if (!this.busy) { this.editing = false; this.render(); } },
+        width: ACTION.cancelWidth, height: ACTION.cancelHeight, label: t("interaction.cancel"), onClick: () => { if (!this.busy) { this.editing = false; this.render(); } },
       });
       cancel.setEnabled(!this.busy);
       parent.add(cancel);
     }
     const send = new Button(this.scene, this.editing ? ACTION.primaryX : 0, ACTION.y, {
       width: this.editing ? ACTION.editingWidth : ACTION.width, height: this.editing ? ACTION.editingHeight : ACTION.height,
-      label: this.busy ? "보내는 중…" : "파견 보내기",
+      label: this.busy ? t("interaction.sending") : t("interaction.send"),
       sub: `${picked.length} / 3`, variant: "primary", accentColor: BLUE, accentTextColor: "#d9f3ff",
       onClick: () => void this.start(view),
     });
@@ -642,7 +643,7 @@ export class InteractionCityPopup {
       this.onChanged?.();
       // 영수증은 공용 표기 한 장이 그린다 — 재화 키를 아이콘으로 바꾸는 표도 그쪽이 갖는다.
       openRewardPopup(this.scene, this.popups, {
-        title: "교류 보상",
+        title: t("interaction.rewardTitle"),
         items: currencyRecordToRewardItems({ [response.granted.currency]: response.granted.amount }),
       });
     } finally { this.busy = false; }

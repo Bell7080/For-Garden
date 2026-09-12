@@ -1,4 +1,5 @@
 import { INTERACTION_CITIES, type InteractionCity } from "../data/interactionCities";
+import { t } from "../i18n";
 import type { InteractionDispatchSnapshot } from "../state/session";
 
 /**
@@ -66,7 +67,7 @@ export function relicsAwayOnInteraction(dispatches: readonly InteractionDispatch
  * 끝났다고 말한다 — `00:00:00`은 다녀왔다는 뜻으로는 읽히지 않는다.
  */
 export function interactionRemainingLabel(remainingMs: number): string {
-  if (remainingMs <= 0) return "완료";
+  if (remainingMs <= 0) return t("interaction.done");
   const totalSeconds = Math.ceil(remainingMs / 1000);
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);

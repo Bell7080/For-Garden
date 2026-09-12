@@ -1,15 +1,16 @@
 import Phaser from "phaser";
+import { t } from "../i18n";
 import { BASE_WIDTH, BASE_HEIGHT } from "../config/gameConfig";
 import { drawGlassFade, drawHairline, HOLO } from "./holo";
 import { COLOR, textStyle } from "./theme";
 
 /** 핵심 화면 다섯 개. 로비를 중심으로 고고학과 프리미엄이 양 끝에서 서로 균형을 이룬다. */
 export const NAV_TABS = [
-  { key: "archaeology", scene: "archaeology", label: "고고학" },
-  { key: "relics", scene: "relics", label: "렐릭" },
-  { key: "lobby", scene: "lobby", label: "로비" },
-  { key: "lab", scene: "lab", label: "연구소" },
-  { key: "premium", scene: "premium", label: "프리미엄" },
+  { key: "archaeology", scene: "archaeology", label: t("nav.archaeology") },
+  { key: "relics", scene: "relics", label: t("nav.relics") },
+  { key: "lobby", scene: "lobby", label: t("nav.lobby") },
+  { key: "lab", scene: "lab", label: t("nav.lab") },
+  { key: "premium", scene: "premium", label: t("nav.premium") },
 ] as const;
 
 export type NavKey = (typeof NAV_TABS)[number]["key"];

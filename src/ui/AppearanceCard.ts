@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { t } from "../i18n";
 import type { RelicDef } from "../core/types";
 import type { RelicSkinDef } from "../data/relicSkins";
 import { portraitAssetForSkin, sdAssetForSkin, spawnPuppet } from "../puppets/assets";
@@ -74,7 +75,7 @@ export class AppearanceCard extends Phaser.GameObjects.Container {
     });
 
     this.add(scene.add.text(0, layout.nameY, options.name, textStyle({ role: "display", size: 27, color: options.owned ? COLOR.ink : COLOR.inkDim, align: "center", wrap: 320 })).setOrigin(0.5));
-    this.add(scene.add.text(0, layout.statusY, options.owned ? "보유" : "미보유 · 잠금", textStyle({ role: "emphasis", size: 21, color: options.owned ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5));
+    this.add(scene.add.text(0, layout.statusY, options.owned ? t("info.skin.owned") : t("info.skin.locked"), textStyle({ role: "emphasis", size: 21, color: options.owned ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5));
     const hit = scene.add.rectangle(0, 0, layout.width, layout.height, 0xffffff, 0);
     if (options.owned) hit.setInteractive({ useHandCursor: true }).on("pointerup", options.onChoose);
     this.add(hit);

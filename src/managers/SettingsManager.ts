@@ -4,6 +4,8 @@ import { saveManager, type SaveManager } from "../state/SaveManager";
 import { session, type GameSettings, type Session } from "../state/session";
 import { platformFeedback, type HapticPattern, type PlatformFeedback, type ScheduledNotification } from "../api/PlatformFeedback";
 import { setTextScale } from "../ui/textScale";
+import { setFontLanguage } from "../ui/fonts";
+import { setDataLanguage, setTextLanguage } from "../i18n";
 import { adjustForQuietHours } from "../core/notificationSchedule";
 import { applyFrameRateLimit } from "../config/gameConfig";
 
@@ -28,6 +30,11 @@ export class SettingsManager extends EventTarget {
     this.state.settings = normalizeSettings(merged);
     // 새로 그리는 모든 글자가 공용 스타일 배율을 사용하도록 한곳에서 동기화한다.
     setTextScale(this.state.settings.accessibility.textScale);
+    // 글꼴 스택과 문구 표도 같은 저장 경계에서 함께 바뀌어야 한다 — 따로 두면 언어만 바뀌고
+    // 글자는 옛 글꼴·옛 문구로 남는다.
+    setFontLanguage(this.state.settings.game.language);
+    setTextLanguage(this.state.settings.game.language);
+    setDataLanguage(this.state.settings.game.language);
     if (this.runtimeGame) applyFrameRateLimit(this.runtimeGame, this.state.settings.presentation.frameRateLimit);
     this.saves.save(this.state);
     this.dispatchEvent(new CustomEvent<GameSettings>("change", { detail: this.get() }));
@@ -41,6 +48,11 @@ export class SettingsManager extends EventTarget {
     this.state.settings = { ...createDefaultSettings(), account };
     // 씬을 다시 그리기 전에도 이후 생성되는 글자가 즉시 기본 배율을 사용하도록 공용 배율을 먼저 맞춘다.
     setTextScale(this.state.settings.accessibility.textScale);
+    // 글꼴 스택과 문구 표도 같은 저장 경계에서 함께 바뀌어야 한다 — 따로 두면 언어만 바뀌고
+    // 글자는 옛 글꼴·옛 문구로 남는다.
+    setFontLanguage(this.state.settings.game.language);
+    setTextLanguage(this.state.settings.game.language);
+    setDataLanguage(this.state.settings.game.language);
     if (this.runtimeGame) applyFrameRateLimit(this.runtimeGame, this.state.settings.presentation.frameRateLimit);
     this.saves.save(this.state);
     this.dispatchEvent(new CustomEvent<GameSettings>("change", { detail: this.get() }));

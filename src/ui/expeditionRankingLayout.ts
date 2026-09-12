@@ -1,4 +1,5 @@
 import type { ExpeditionLeaderboardEntry } from "../api/contracts";
+import type { TextKey } from "../i18n";
 
 /**
  * 원정 주간 기록 순위표의 **순수 규칙** — 자리, 메달, 그리고 아직 없는 이용자 풀을 채우는 표본.
@@ -33,10 +34,10 @@ export const RANKING_LIST = {
  * (`RARITY_GEM`)과 같은 결의 금·은·동 한 쌍씩이며, 그 아래 줄은 지금까지의 회색 그대로다.
  */
 export const RANKING_MEDALS = [
-  { rank: 1, fill: 0x3a2f16, edge: 0xe8c25a, text: "#f5d98a", label: "1위" },
-  { rank: 2, fill: 0x2b2f36, edge: 0xc3ccd6, text: "#dfe6ee", label: "2위" },
-  { rank: 3, fill: 0x33251b, edge: 0xc08652, text: "#e0a274", label: "3위" },
-] as const;
+  { rank: 1, fill: 0x3a2f16, edge: 0xe8c25a, text: "#f5d98a", label: "ranking.medal.1" },
+  { rank: 2, fill: 0x2b2f36, edge: 0xc3ccd6, text: "#dfe6ee", label: "ranking.medal.2" },
+  { rank: 3, fill: 0x33251b, edge: 0xc08652, text: "#e0a274", label: "ranking.medal.3" },
+] as const satisfies ReadonlyArray<{ rank: number; fill: number; edge: number; text: string; label: TextKey }>;
 
 export type RankingMedal = (typeof RANKING_MEDALS)[number];
 
@@ -80,6 +81,7 @@ export function rankingScrollMetrics(rows: number): RankingScrollMetrics {
  * 이름은 **고정 표본 목록을 돌려 쓰고 호수를 붙인다** — 난수로 지으면 열 때마다 다른 사람이
  * 서서 "어제보다 몇 등 올랐나"를 읽을 수 없다.
  */
+// 계정 이름이라 번역하지 않는다 — 실제 이용자 풀이 생기면 서버가 주는 이름이 그대로 선다.
 const PLACEHOLDER_NAMES = [
   "하늘정원", "이끼연구소", "물결관측소", "돌숲기록실", "잿빛표본실",
   "고요한둥지", "첫서리연구반", "붉은등대", "모래시계반", "깊은뿌리",

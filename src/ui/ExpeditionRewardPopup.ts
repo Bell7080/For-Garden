@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { t } from "../i18n";
 import { gameApi } from "../api/FakeServer";
 import { GameApiError, type ExpeditionRewardStageDto, type GameApi } from "../api/contracts";
 import { BASE_WIDTH } from "../config/gameConfig";
@@ -66,7 +67,7 @@ export class ExpeditionRewardPopup {
     }
     const height = VIEW.chromeTop + this.viewHeight() + VIEW.chromeBottom;
     this.popups.open({
-      width: BASE_WIDTH - 140, height, title: "기록 보상", titleSize: POPUP_TITLE_SIZE.workboard,
+      width: BASE_WIDTH - 140, height, title: t("expeditionReward.title"), titleSize: POPUP_TITLE_SIZE.workboard,
       // 고를 것이 없는 읽기 판이라 바깥을 눌러도 닫힌다.
       dim: true, dimAlpha: 0.72, closeOnBackdrop: true,
       onClose: () => this.dispose(),
@@ -104,12 +105,12 @@ export class ExpeditionRewardPopup {
     const view = this.viewHeight();
     const top = -(VIEW.chromeTop + view + VIEW.chromeBottom) / 2;
     if (!snapshot || snapshot.rewardStages.length === 0) {
-      content.add(this.scene.add.text(0, 0, this.error ?? "아직 열린 보상 단계가 없습니다", textStyle({ role: "body", size: 27, color: COLOR.ink, align: "center", wrap: 700 })).setOrigin(0.5));
-      if (this.error) content.add(new Button(this.scene, 0, 96, { width: 280, height: 76, label: "새로고침", onClick: () => void this.refresh() }));
+      content.add(this.scene.add.text(0, 0, this.error ?? t("expeditionReward.none"), textStyle({ role: "body", size: 27, color: COLOR.ink, align: "center", wrap: 700 })).setOrigin(0.5));
+      if (this.error) content.add(new Button(this.scene, 0, 96, { width: 280, height: 76, label: t("expeditionReward.refresh"), onClick: () => void this.refresh() }));
       return;
     }
     // 보상 기준인 합계와 랭킹 기준인 한 판 최고를 완전한 이름으로 적어 서로 바꿔 읽지 않게 한다.
-    content.add(this.scene.add.text(0, top + 96, `주간 누적 원정 점수 ${snapshot.cumulativeScore.toLocaleString()}  ·  주간 최고 점수 ${snapshot.bestScore.toLocaleString()}`, textStyle({ role: "display", size: 27, color: COLOR.accentText })).setOrigin(0.5));
+    content.add(this.scene.add.text(0, top + 96, t("expeditionReward.summary", { cumulative: snapshot.cumulativeScore.toLocaleString(), best: snapshot.bestScore.toLocaleString() }), textStyle({ role: "display", size: 27, color: COLOR.accentText })).setOrigin(0.5));
     if (this.message) content.add(this.scene.add.text(0, top + 140, this.message, textStyle({ role: "emphasis", size: 22, color: COLOR.sortieText })).setOrigin(0.5));
 
     // 창은 판 안의 고정된 사각이고, 길만 그 안에서 흐른다.
@@ -261,7 +262,7 @@ export class ExpeditionRewardPopup {
       const result = await this.api.claimExpeditionReward({ requestId: `expedition-reward:${new Date().toISOString().slice(0, 10)}:${stageId}:${Date.now()}`, stageId });
       session.wallet = { ...result.wallet };
       this.onClaimed?.();
-      await this.refresh(result.alreadyClaimed ? "이미 수령한 보상" : `${result.reward.amount.toLocaleString()} 수령 완료`);
+      await this.refresh(result.alreadyClaimed ? t("expeditionReward.claimed") : t("expeditionReward.claimedAmount", { amount: result.reward.amount.toLocaleString() }));
     } catch (error) {
       this.error = this.errorMessage(error);
       this.render();
@@ -272,11 +273,11 @@ export class ExpeditionRewardPopup {
 
   /** 서버 오류 코드를 다음 행동을 고를 수 있는 짧은 상태로 바꾼다. */
   private errorMessage(error: unknown): string {
-    if (!(error instanceof GameApiError)) return "기록 보상을 불러오지 못했습니다.";
+    if (!(error instanceof GameApiError)) return t("expeditionReward.loadFailed");
     const labels: Record<string, string> = {
-      EXPEDITION_REWARD_NOT_EARNED: "점수가 부족합니다. 최신 진행량을 확인해 주세요.",
-      EXPEDITION_REWARD_NOT_FOUND: "주차가 변경되었거나 보상 단계가 종료되었습니다.",
-      INVALID_STATE: "주차가 변경되었습니다. 기록을 다시 확인해 주세요.",
+      EXPEDITION_REWARD_NOT_EARNED: t("expeditionReward.notEnough"),
+      EXPEDITION_REWARD_NOT_FOUND: t("expeditionReward.stageClosed"),
+      INVALID_STATE: t("expeditionReward.weekRolled"),
     };
     return labels[error.code] ?? error.message;
   }

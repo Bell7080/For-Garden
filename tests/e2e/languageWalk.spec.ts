@@ -25,8 +25,7 @@ test.describe("일본어 화면 훑기", () => {
 
     await tapUntil(page, 324, BASE_HEIGHT - 90, async () => (await scene(page)) === "relics");
     await captureGame(page, `${OUT}/02-relics.png`);
-    await tap(page, 200, 620);
-    await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.infoOpen)).toBe(true);
+    await tapUntil(page, 200, 620, async () => (await page.evaluate(() => window.__PF_DEBUG?.infoOpen)) === true);
     await captureGame(page, `${OUT}/03-info.png`);
     // 스킬 아이콘 셋 중 궁극기를 눌러 조립된 설명문을 본다.
     await tap(page, 470, BASE_HEIGHT - 196);

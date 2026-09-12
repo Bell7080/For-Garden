@@ -10,6 +10,20 @@
 /** 세 자리의 가로 중심. 고른 순서가 왼쪽부터의 자리를 정한다. */
 export const PARTY_PREVIEW_COLUMNS = [270, 540, 810] as const;
 
+/**
+ * 적이 서는 자리 — **몇이 서느냐가 자리를 정한다.**
+ *
+ * 셋이면 세 칸을 그대로 쓰고, 정예 하나면 가운데 한 칸만 쓴다. 앞에서부터 채우면 홀로 선
+ * 정예가 왼쪽 끝에 서고 오른쪽 두 칸이 통째로 비어, 그 관문이 "정예 하나"가 아니라 "편성을
+ * 빠뜨린 셋"으로 읽힌다. 노드 미리보기(`enemyPreviewColumns`)가 이미 같은 규칙을 쓴다.
+ */
+export function partyPreviewEnemyColumns(count: number): readonly number[] {
+  if (count >= PARTY_PREVIEW_COLUMNS.length) return PARTY_PREVIEW_COLUMNS;
+  const center = PARTY_PREVIEW_COLUMNS[1];
+  const gap = PARTY_PREVIEW_COLUMNS[1] - PARTY_PREVIEW_COLUMNS[0];
+  return Array.from({ length: Math.max(1, count) }, (_, index) => center + (index - (count - 1) / 2) * gap);
+}
+
 /** SD가 발을 딛는 줄과 그 위로 차지하는 높이. 적은 위, 아군은 아래다. */
 export const PARTY_PREVIEW = {
   enemyRow: 430,

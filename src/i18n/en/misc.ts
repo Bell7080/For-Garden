@@ -127,6 +127,7 @@ export const MISC_EN = {
   "damage.immune": "Immune",
   "popup.cancel": "Cancel",
   "expedition.entry": "Expedition",
+  "stage.eliteMark": "ELITE",
   "stageMap.sortie": "D E P L O Y",
   "stageMap.prevZone": "Previous Zone",
   "stageMap.nextZone": "Next Zone",

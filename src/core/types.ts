@@ -1810,7 +1810,23 @@ export function effectiveEnemyLevel(enemy: Pick<StageEnemyDef, "level" | "feroci
 /** 전투 노드만 적별 성장 스냅샷과 전투 보상을 소유한다. */
 export interface BattleStageDef extends StageBase {
   kind: "battle";
-  enemies: [StageEnemyDef, StageEnemyDef, StageEnemyDef];
+  /**
+   * 이 관문에 서는 적. **셋이 기본이고 정예 관문만 하나다.**
+   *
+   * 길이를 셋으로 못 박아 두었을 때는 정예 하나를 세우려면 나머지 두 자리를 빈 개체로 채우거나
+   * 스테이지 전용 분기를 만들어야 했다 — 원정 지도가 이미 노드 종류마다 다른 수를 세우고
+   * 있으므로 스토리도 같은 모양을 쓴다. 자리는 배열 순서가 아니라 `formationSlot`이 정한다.
+   */
+  enemies: readonly StageEnemyDef[];
+  /**
+   * **단일 정예 관문**이라는 표식.
+   *
+   * 원정 지도의 정예 노드처럼 여럿 대신 하나가 서고, 그 하나가 더 무겁다. 다만 무거워지는 몫은
+   * 여기서 곱하지 않는다 — 세기는 언제나 `ferocityLevel` 하나가 말하고(화면의 붉은 `+n`),
+   * 이 표식이 여는 것은 **표현**뿐이다(몸집과 정예 표식). 숨은 배율을 만들면 화면에 선 수치와
+   * 실제로 맞는 수치가 갈린다.
+   */
+  elite?: true;
   rewards: { firstClearCheesecake: number; repeatClearCheesecake: number };
   /**
    * 관문 한 줄 — **예고가 아니라 지금 어디까지 왔는가**다.

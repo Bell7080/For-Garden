@@ -148,6 +148,7 @@ export const MISC_JA = {
   "popup.cancel": "キャンセル",
   "expedition.entry": "遠征",
 
+  "stage.eliteMark": "精鋭",
   "stageMap.sortie": "出  撃",
   "stageMap.prevZone": "前の区域",
   "stageMap.nextZone": "次の区域",

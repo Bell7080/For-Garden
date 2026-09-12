@@ -1519,35 +1519,50 @@ export const RELICS: RelicDef[] = [
       ferocityGain: 0,
     },
     ferocityTrait: { name: "맹추", effectId: "attackIntervalReduction", reductionPercent: 12 },
+    /*
+     * **손을 대기 시작하면 멈추지 못한다.** 관찰 기록의 성격(먼저 집게발을 대고, 부순 다음에야
+     * 힘 조절에 실패했다는 것을 안다)을 그대로 전투 값으로 옮긴 셋이다 — 때릴수록 손이 빨라지고
+     * (패시브), 한 번 문 자리를 비틀어 열고(기본기), 마지막에는 주위를 통째로 뜯어 넘긴다(궁극기).
+     */
     passive: {
       id: "toby-passive",
-      name: "집게 손놀림",
+      name: "손대고 나서 생각하기",
       kind: "basicHitAttackSpeedStack",
       iconAssetId: "skill-icon-buff",
       effectType: "buff",
       value: 2,
       maxStacks: 8,
-      // 정면 전사라는 새 역할은 출혈 암살 대신 실제 적중을 거듭할수록 손이 빨라지는 방식으로 드러낸다.
+      // 전용 분기(`passiveDescription`)가 이 종류의 문장을 짓는다. 이 원문은 표시되지 않는 데이터
+      // 문서용 사본이라, 고칠 때는 그 분기도 함께 본다.
       desc: "기본 공격이 적중할 때마다 이번 전투 동안 공격 속도가 증가한다.",
     },
     basic: {
       id: "toby-basic",
-      name: "갈퀴 할퀴기",
+      name: "집게발 비틀기",
       power: 100,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
+      targeting: "single",
     },
     ultimate: {
       id: "toby-ult",
-      name: "무리 사냥",
-      power: 170,
+      // 잠긴 방벽을 먼저 뜯어 일을 키우는 그 손이다. 이름이 이미 그림을 말하므로 본문은 효과만 적는다.
+      name: "일단 뜯고 본다",
+      /*
+       * **혼자 서는 자리를 전제로 짠 광역이다.** 1-5의 단일 정예가 이 개체라, 궁극기가 한 명만
+       * 때리면 셋이 둘러싼 자리에서 아무 일도 일어나지 않는다(실제로 야성을 34까지 올려도 바닥
+       * 파티의 잔여 체력이 0.64에서 움직이지 않았다). 잡졸로 설 때도 같은 기술이므로 위력은
+       * 단일 170에서 낮추고, 넘어뜨린 시간을 기절로 준다.
+       */
+      power: 150,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
       cost: 100,
       // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
-      targeting: "single",
+      targeting: "nearbyEnemies",
+      radius: 300,
     },
   },
   {
@@ -1783,9 +1798,23 @@ export const RELICS: RelicDef[] = [
     excavationSite: "오디디 격리 연구동",
     // 봉인된 적 캐릭터도 출처와 복원 흔적은 영구 정의에 남겨 스테이지 데이터와 섞지 않는다.
     fossilRecord: "오디디 격리 연구동의 파손된 배양조에서 소형 골격과 폭발 잔류물을 회수했다. 빠른 이동을 위한 경량 복원 흔적이 사지 관절마다 남아 있다.",
+    observationProfile: {
+      originYear: "약 1억 5,000만 년 전",
+      // E.C.는 앞뒤를 재지 않고 먼저 달려 나가는 소년기형 인상을 분류하며, 복원 경과 연도가 아니다.
+      restorationYear: "E.C. 10년",
+      lifeStage: "성체",
+      height: "1.18 m",
+      weight: "29 kg",
+    },
     catalogSummary: "가벼운 체형과 긴 꼬리로 급습하는 콤프소그나투스 기반 공멸 선봉.",
-    unlockRecord: { status: "sealed", reason: "restricted" },
-    // 봉인된 적은 소속만 공개하며 squadNote와 researcherTitle은 관계 기록 해제 전까지 넣지 않는다.
+    /*
+     * **봉인을 풀었다.** 1장 마지막 관문에 홀로 서는 개체인데 관찰 기록만 봉인되어 있어, 정보창의
+     * 오른쪽 절반이 비어 있었다 — 플레이어가 가장 오래 마주 보는 적이 이름과 수치밖에 갖지 못했다.
+     * 다른 공멸 셋과 같은 층위(복원 후 관찰 · 소속 행동 · 호칭)로 채운다.
+     */
+    unlockRecord: { status: "recorded", text: "복원 후 코마는 문이 열리는 소리보다 먼저 그 앞에 가 있다. 길이 맞는지 확인하는 일은 뒤따라오는 동료에게 맡기고, 막다른 곳이면 왔던 자리로 되돌아와 다시 다른 길을 골라 달린다. 한 번 뒤를 밟기 시작한 상대는 시야에서 사라져도 놓지 않아, 훈련이 끝난 뒤에도 표적이 지나간 통로를 혼자 몇 번씩 되짚는다." },
+    squadNote: "공멸의 첨병. 돌입로가 정해지기 전에 먼저 들어가 안을 보고 오며, 흩어진 적을 한 방향으로 몰아 뒤따르는 아모와 토비 앞에 세운다.",
+    researcherTitle: "연구원",
     /*
      * **중간보스는 SR급이다.** 공멸 3인조(토비·아모·리파)가 R 띠를 지키는 잡졸이라면 이쪽은
      * 1장 마지막 관문에 서는 개체라 한 단계 위에 둔다. 적 전용이라 띠 검사 대상은 아니지만,
@@ -1846,14 +1875,21 @@ export const RELICS: RelicDef[] = [
     ultimate: {
       id: "husk-koma-ult",
       name: "추락하는 방주",
-      // 잡졸의 궁극기(토비 170 · 리파 150)와 최종 보스(폰토스 500) 사이에 둔다.
-      power: 220,
+      // 잡졸의 궁극기(토비 150 · 리파 100)와 최종 보스(폰토스 500) 사이에 둔다. 통로 전체를
+      // 치는 기술이 되었으므로 단일 220에서 낮춘다.
+      power: 190,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
       cost: 100,
-      // 코마 역시 일반 캐릭터 표적 규칙만 사용하며 스테이지 전용 효과를 받지 않는다.
-      targeting: "single",
+      /*
+       * **뚫고 지나간다.** 1-10의 단일 정예가 이 개체라, 한 명만 때리는 궁극기로는 셋이 둘러싼
+       * 자리에서 아무것도 바꾸지 못한다. 나아가는 거리는 스킬이 아니라 **이동 속도**가 정하므로
+       * (`SKIRMISH.chargeSeconds` × 이속) 발이 가장 빠른 이 개체가 가장 멀리 민다 — 급습형이라는
+       * 정체성이 곧 이 기술의 사거리가 된다.
+       */
+      targeting: "chargeLine",
+      radius: 90,
     },
   },
   {

@@ -23,7 +23,8 @@ import {
   skirmishRelicResults,
 } from "../core/skirmish";
 import { getRelic } from "../data/relics";
-import { getBattleStage, getStageEnemies } from "../data/stages";
+import { getBattleStage, getStageEnemies, stageEnemyGrowth } from "../data/stages";
+import { STAGE_ELITE } from "../data/stageElite";
 import { getExpeditionNodeEnemies } from "../data/expeditionEnemies";
 import type { PuppetCreature, PuppetAsset } from "../puppets/assets";
 import { cancelMotion, flashHit, isHitFlashing, placePuppet, playMotion, spawnPuppet, tintPuppet } from "../puppets/assets";
@@ -380,7 +381,9 @@ export class BattleScene extends Phaser.Scene {
     } : {
       // 일반 스테이지의 적도 능력치뿐 아니라 스킬 돌파 효과까지 슬롯별 스냅샷을 사용한다.
       // 능력치 복사본과 같은 formationSlot 순서로 돌파 스킬 스냅샷을 맞춘다.
-      enemyBreakthroughs: [...stage.enemies].sort((a, b) => a.formationSlot - b.formationSlot).map(({ breakthrough }) => breakthrough),
+      enemyBreakthroughs: stageEnemyGrowth(stage).map(({ breakthrough }) => breakthrough),
+      // 정예는 혼자 서는 만큼 몸이 크다. 능력치는 건드리지 않는다 — 세기는 야성 몫이 낸다.
+      ...(stage.elite === true ? { enemyBodyScale: STAGE_ELITE.bodyScale } : {}),
     });
     this.views.clear();
     this.profiles = [];

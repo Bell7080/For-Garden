@@ -2,6 +2,8 @@ import Phaser from "phaser";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugScene } from "../debug";
 import { settingsManager } from "../managers/SettingsManager";
+import { LANGUAGE_IDS, LANGUAGE_NATIVE_NAME } from "../core/language";
+import { loadGameFonts } from "../ui/fonts";
 import { saveManager } from "../state/SaveManager";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { addBackButton } from "../ui/IconButton";
@@ -141,7 +143,14 @@ export class SettingsScene extends Phaser.Scene {
       this.content.add(new SettingsSelectRow(this,90,y,'전투 배속',s.game.battleSpeed,[1,2,3] as const,v=>settingsManager.update({game:{battleSpeed:v}}))); y+=94;
       toggle('자동 궁극기','game','autoUltimate');
       this.content.add(new SettingsSelectRow(this,90,y,'텍스트 속도',s.game.textSpeed,[0.5,1,2] as const,v=>settingsManager.update({game:{textSpeed:v}}))); y+=94;
-      this.content.add(new SettingsSelectRow(this,90,y,'언어',s.game.language,['ko','en','ja'] as const,v=>settingsManager.update({game:{language:v}}))); y+=110;
+      // 목록·표기는 core/language.ts 한 표가 갖는다. 각 언어는 제 이름으로 서야 지금 화면을
+      // 읽지 못하는 사람도 제 언어를 찾는다.
+      this.content.add(new SettingsSelectRow(this,90,y,'언어',s.game.language,LANGUAGE_IDS,v=>{
+        settingsManager.update({game:{language:v}});
+        // 글꼴 스택이 바뀌었으므로 이미 텍스처로 굳은 글자를 그대로 둘 수 없다. 그 언어의 글꼴을
+        // 먼저 받고 다시 그린다 — 받기 전에 그리면 대체 글꼴 상태로 굳는다.
+        void loadGameFonts(v).then(()=>{ if (this.scene.isActive()) this.scene.restart({ tab: "play", returnScene: this.returnScene, returnData: this.returnData }); });
+      },v=>LANGUAGE_NATIVE_NAME[v])); y+=110;
     } else if (this.activeTab === "access") {
       section("접근성", 650);
       this.content.add(new SettingsSelectRow(this,90,y,'텍스트 크기',s.accessibility.textScale,[1,1.15,1.3] as const,value=>{ settingsManager.update({accessibility:{textScale:value}}); this.scene.restart({ tab: "access" }); })); y+=94;

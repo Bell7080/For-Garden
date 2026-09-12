@@ -1,4 +1,4 @@
-import { FONT_FAMILY, fontStyleFor, type TextRole } from "./fonts";
+import { activeFontFamily, fontStyleFor, type TextRole } from "./fonts";
 import { getTextScale } from "./textScale";
 
 /** 색과 글꼴을 한 곳에 모아둔다. 씬에서 값을 직접 박아 넣지 않는다. */
@@ -71,7 +71,7 @@ export const PROFILE_MODIFIER_RARITY_COLOR = {
   legendary: COLOR.raritySSR,
 } as const;
 
-export { FONT_FAMILY, type TextRole } from "./fonts";
+export { activeFontFamily, type TextRole } from "./fonts";
 
 export interface TextOpts {
   size: number;
@@ -90,7 +90,8 @@ export interface TextOpts {
 /** 글자 스타일을 만든다. 굵기는 역할에서만 나오고 씬이 직접 정하지 못한다. */
 export function textStyle(opts: TextOpts): Phaser.Types.GameObjects.Text.TextStyle {
   return {
-    fontFamily: FONT_FAMILY,
+    // 언어마다 글꼴 스택이 다르므로 상수로 굳히지 않고 그리는 순간에 읽는다.
+    fontFamily: activeFontFamily(),
     // 접근성 배율은 개별 씬 좌표 대신 모든 텍스트가 거치는 이 스타일 계층에서만 적용한다.
     fontSize: `${Math.round(opts.size * getTextScale())}px`,
     fontStyle: fontStyleFor(opts.role),

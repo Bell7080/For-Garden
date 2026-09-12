@@ -1,4 +1,5 @@
 import type { GameSettings } from "../state/session";
+import { DEFAULT_LANGUAGE, normalizeLanguage } from "./language";
 
 /** Phaser나 저장소 없이도 서버·테스트가 함께 쓸 수 있는 설정 허용값이다. */
 // 실제 전투 조작의 1→2→3배 순환과 저장 허용값을 같은 표로 맞춘다.
@@ -147,7 +148,7 @@ export function createDefaultSettings(): GameSettings {
     // 현재 대사는 보이스의 보조 자막이 아니라 필수 진행 정보이므로 숨김 설정을 제공하지 않는다.
     accessibility: { textScale: 1, reduceMotion: false, reduceFlashes: false, colorAssist: false },
     // 궁극기 스킵은 연출 품질이 아니라 전투 조작이며 기본적으로 완전한 시퀀스를 보여 준다.
-    game: { battleSpeed: 1, autoUltimate: false, skipUltimatePresentation: false, textSpeed: 1, language: "ko" },
+    game: { battleSpeed: 1, autoUltimate: false, skipUltimatePresentation: false, textSpeed: 1, language: DEFAULT_LANGUAGE },
     account: { provider: "guest", displayId: "게스트" },
   };
 }
@@ -177,7 +178,9 @@ export function normalizeSettings(value: unknown): GameSettings {
     game: { battleSpeed: allowed(g.battleSpeed, BATTLE_SPEEDS, d.game.battleSpeed), autoUltimate: bool(g.autoUltimate, d.game.autoUltimate),
       // 새 필드가 없을 때만 옛 `컷인 끄기`를 `전체 궁극 연출 스킵`으로 승격한다. 명시된 새 값이 언제나 우선한다.
       skipUltimatePresentation: typeof g.skipUltimatePresentation === "boolean" ? g.skipUltimatePresentation : p.ultimateCutIn === false,
-      textSpeed: allowed(g.textSpeed, TEXT_SPEEDS, d.game.textSpeed), language: allowed(g.language, ["ko", "en", "ja"] as const, d.game.language) },
+      textSpeed: allowed(g.textSpeed, TEXT_SPEEDS, d.game.textSpeed),
+      // 지원 언어 목록은 language.ts 하나가 가지므로 여기에 코드를 다시 적지 않는다.
+      language: normalizeLanguage(g.language) },
     // 인증 토큰은 이 모델에 애초에 자리를 만들지 않아 로컬 저장으로 새는 경로를 차단한다.
     account: { provider: allowed(a.provider, ["guest", "google", "apple"] as const, d.account.provider), displayId: typeof a.displayId === "string" && a.displayId.length <= 80 ? a.displayId : d.account.displayId },
   };

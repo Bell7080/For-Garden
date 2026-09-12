@@ -4,13 +4,20 @@ import { GREAT_AUK_REPORT } from "../dialogues/greatAukReport";
 import { FIXED_STAGE_ENEMIES } from "../stages";
 import type { EventDefinition } from "./types";
 
+/** 본편 관문과 같은 앞뒤 순서(탱커 → 전사 → 지원가)로 세 적을 세운다. */
+const EVENT_STAGE_FORMATION = ["amo", "toby", "ripa"] as const satisfies readonly (typeof FIXED_STAGE_ENEMIES)[number][];
+
 /** 공용 StageDef 전투 규칙을 사용하는 소규모 해안 발굴 전투다. */
 const GREAT_AUK_SHORE: BattleStageDef = {
   kind: "battle",
   id: "event-great-auk-shore",
   name: "큰바다쇠오리 해안 발굴지",
   // 이벤트도 캐릭터 정의를 덮어쓰지 않고 플레이어와 같은 성장 축만 고정한다.
-  enemies: FIXED_STAGE_ENEMIES.map((relicId) => ({ relicId, level: 4, breakthrough: 0 })) as BattleStageDef["enemies"],
+  // **자리는 본편과 같다** — 탱커가 앞이고 종이 방어가 뒤다. 예전에는 이 줄이 formationSlot을
+  // 빠뜨린 채 단언으로 통과해, 세 적이 모두 0번 자리에 겹쳐 선 상태로 전투에 들어갔다.
+  enemies: EVENT_STAGE_FORMATION.map((relicId, formationSlot) => ({
+    relicId, level: 4, breakthrough: 0, formationSlot: formationSlot as 0 | 1 | 2,
+  })),
   rewards: { firstClearCheesecake: 60, repeatClearCheesecake: 15 },
   prerequisiteStageIds: [],
 };

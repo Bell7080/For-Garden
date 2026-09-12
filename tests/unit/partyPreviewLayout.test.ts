@@ -8,6 +8,7 @@ import {
   partyAllyPlateBox,
   partyAllySlotBox,
   partyPowerPlateBounds,
+  partyPreviewEnemyColumns,
 } from "../../src/ui/partyPreviewLayout";
 
 /** 아군 SD의 정수리가 서는 줄. 밑판 위로 아무것도 내려오면 안 되는 경계다. */
@@ -55,5 +56,18 @@ describe("스토리 편성 미리보기 배치", () => {
     expect(bounds.left).toBeGreaterThan(0);
     expect(bounds.right).toBeLessThan(1080);
     expect(PARTY_POWER_PLATE.width).toBeGreaterThan(400);
+  });
+
+  /*
+   * **정예 하나는 가운데에 선다.** 앞에서부터 채우면 홀로 선 정예가 왼쪽 끝에 서고 오른쪽 두
+   * 칸이 통째로 비어, 그 관문이 "정예 하나"가 아니라 "편성을 빠뜨린 셋"으로 읽힌다.
+   */
+  it("은 적이 몇이냐에 따라 자리를 가운데로 모은다", () => {
+    expect(partyPreviewEnemyColumns(3)).toEqual([...PARTY_PREVIEW_COLUMNS]);
+    expect(partyPreviewEnemyColumns(1)).toEqual([PARTY_PREVIEW_COLUMNS[1]]);
+    // 둘이면 가운데를 사이에 두고 마주 본다 — 어느 쪽으로도 쏠리지 않는다.
+    const pair = partyPreviewEnemyColumns(2);
+    expect(pair).toHaveLength(2);
+    expect((pair[0] + pair[1]) / 2).toBe(PARTY_PREVIEW_COLUMNS[1]);
   });
 });

@@ -190,10 +190,11 @@ test("일반 전투 결과의 기여도 세 분류를 확인하고 닫은 뒤 �
     await tap(page, x, 425); await page.waitForTimeout(100);
     await captureGame(page, `test-results/${testInfo.project.name}-battle-result-contribution-${name}-1080x1920.png`);
   }
-  // 판 우측 상단의 "돌아가기" 라벨 버튼으로 닫으면 뒤에 있던 StageCompletePopup으로 돌아가고
+  // 닫기는 화면 우하단의 **공용 뒤로가기**(BACK_SLOT)다 — 판 안의 라벨 버튼이 아니라 다른
+  // 화면과 같은 자리·같은 아이콘이다. 닫으면 뒤에 있던 StageCompletePopup으로 돌아가고
   // 숨겨졌던 "공격 · 방어 · 회복" 버튼이 다시 보인다. 그 팝업은 화면 아무 곳(SD 자리 근처)을
   // 눌러도 지도로 넘어간다.
-  await tap(page, 918, 340); await tap(page, BASE_WIDTH / 2, 790);
+  await tap(page, BASE_WIDTH - 106, BASE_HEIGHT - 120); await tap(page, BASE_WIDTH / 2, 790);
   await expect.poll(() => scene(page)).toBe("stageMap");
 });
 

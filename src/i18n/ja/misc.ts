@@ -15,7 +15,6 @@ export const MISC_JA = {
   "contribution.title": "戦闘貢献度",
   "contribution.totals": "サーバー確定 {confirmed} · 行動再生 {replay}",
   "contribution.allies": "味方の貢献度",
-  "contribution.back": "戻る",
 
   "augment.pick.title": "オーグメント選択 {round} / {total}",
   "augment.pick.protocol": "戦闘プロトコル",
@@ -148,6 +147,7 @@ export const MISC_JA = {
   "popup.cancel": "キャンセル",
   "expedition.entry": "遠征",
 
+  "stage.eliteMark": "精鋭",
   "stageMap.sortie": "出  撃",
   "stageMap.prevZone": "前の区域",
   "stageMap.nextZone": "次の区域",

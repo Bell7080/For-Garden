@@ -3,7 +3,7 @@ import { t } from "../i18n";
 import type { BattleContributionResult, ContributionCategory } from "../core/battleContribution";
 import { getRelic } from "../data/relics";
 import { contributionCategoryLabel, contributionRenderModel, CONTRIBUTION_CATEGORIES } from "./battleContributionRenderModel";
-import { Button } from "./Button";
+import { addBackButton } from "./IconButton";
 import { FaceFrame } from "./FaceFrame";
 import { HoloBar } from "./holo";
 import type { PopupLayer } from "./PopupLayer";
@@ -29,9 +29,12 @@ export class BattleContributionPopup {
    */
   open(result: BattleContributionResult, onClosed?: () => void): void {
     const width = 936; const height = 1320;
+    /** 판 밖(화면 좌표)에 세운 것들. 팝업이 닫힐 때 함께 거둔다. */
+    const closers: Array<() => void> = [];
     this.popups.open({
       width, height, title: t("contribution.title"), titleSize: 34, dim: true, dimAlpha: 0.36,
-      closeOnBackdrop: false, hideCloseButton: true, onClose: () => onClosed?.(),
+      closeOnBackdrop: false, hideCloseButton: true,
+      onClose: () => { for (const dispose of closers) dispose(); closers.length = 0; onClosed?.(); },
     }, (body, close) => {
       let category: ContributionCategory = "attack";
       const content = this.scene.add.container(0, 0); body.add(content);
@@ -68,9 +71,18 @@ export class BattleContributionPopup {
         });
       };
       render();
-      // 결과 팝업이 숨긴 "공격 · 방어 · 회복" 버튼과 짝을 이루는 조작이라, 우하단 아이콘
-      // 대신 판 우측(닫기 X가 원래 서는 자리)에 작은 t("contribution.back") 라벨 버튼을 둔다.
-      body.add(new Button(this.scene, width / 2 - 90, -height / 2 + 40, { width: 140, height: 60, label: t("contribution.back"), fontSize: 20, onClick: close }));
+      /*
+       * **화면을 벗어나는 뒤로가기는 늘 쓰는 그 한 장이다**(`addBackButton`).
+       *
+       * 예전에는 판 오른쪽 위에 「돌아가기」 라벨 버튼이 따로 섰다. 자리도 생김새도 이 판에서만
+       * 쓰는 것이라, 같은 손짓이 다른 화면에서는 우하단 아이콘이고 여기서는 판 안의 글자였다.
+       * 판 **밖** 우하단의 고정 자리로 옮겨 다른 화면과 같은 손으로 닫는다.
+       *
+       * 팝업 층 바로 위에만 머물게 해 이 판이 닫히면 함께 사라진다 — 화면 좌표에 서는 버튼이라
+       * body에 넣을 수 없고, 넣지 않으면 팝업이 닫혀도 남는다.
+       */
+      const back = addBackButton(this.scene, close).setDepth((body.parentContainer?.depth ?? 0) + 1);
+      closers.push(() => back.destroy());
     });
   }
 }

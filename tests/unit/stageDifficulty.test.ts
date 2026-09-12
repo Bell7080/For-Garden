@@ -72,6 +72,7 @@ const BASELINES = {
    * 같은 속도로 자란다**는 뜻이다 — 잔여 체력은 고원에 머물다 전멸선에서 한 번에 떨어진다.
    */
   "1-1": { hp: [0.63, 0.75] },
+  // 1-5·1-10은 셋 대신 정예 하나가 서는 관문이다. 무게는 그 하나의 야성이 대신 낸다.
   "1-5": { hp: [0.61, 0.73] },
   "1-10": { hp: [0.61, 0.73] },
   "2-5": { hp: [0.62, 0.74] },
@@ -153,12 +154,19 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
     expect(levels[levels.length - 1] / levels[0]).toBeGreaterThan(4);
   });
 
-  /** 세 적은 모든 챕터에서 같은 자리에 선다. 회전시키면 탱커가 뒷줄로 밀려 난이도가 무너진다. */
+  /**
+   * 세 적은 모든 챕터에서 같은 자리에 선다. 회전시키면 탱커가 뒷줄로 밀려 난이도가 무너진다.
+   *
+   * **정예 관문만 이 줄 밖이다** — 거기에는 셋 대신 하나가 서고, 그 하나는 가운데 자리를 쓴다.
+   */
   it("적 배치는 챕터가 바뀌어도 같은 순서를 지킨다", () => {
     for (const { stage } of STORY_STAGES) {
-      expect(stage.enemies.map(({ relicId }) => relicId), stage.id).toEqual(["amo", "toby", "ripa"].map(
-        (id, slot) => stage.id === "1-10" && slot === 1 ? "husk-koma" : id,
-      ));
+      if (stage.elite === true) {
+        expect(stage.enemies, stage.id).toHaveLength(1);
+        expect(stage.enemies[0].formationSlot, stage.id).toBe(1);
+        continue;
+      }
+      expect(stage.enemies.map(({ relicId }) => relicId), stage.id).toEqual(["amo", "toby", "ripa"]);
     }
   });
 
@@ -172,7 +180,8 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
     expect(report.auto.runs).toHaveLength(SEEDS.length);
     // 승패 외 요구 지표가 판마다 실제로 채워지고 적 세 명의 기여가 별도로 남는지 검증한다.
     for (const run of report.auto.runs) {
-      expect(run.enemyContributions).toHaveLength(3);
+      // 정예 관문은 하나, 나머지는 셋이다 — 서 있는 수만큼 장부가 따로 남는지 본다.
+      expect(run.enemyContributions).toHaveLength(entry.stage.enemies.length);
       expect(run.enemyContributions.every(({ damage, healing, damageAbsorbed }) => damage >= 0 && healing >= 0 && damageAbsorbed >= 0)).toBe(true);
       expect(run.ultimateUses).toBeGreaterThan(0);
       expect(run.firstDefeat).toEqual(expect.objectContaining({ at: expect.any(Number) }));

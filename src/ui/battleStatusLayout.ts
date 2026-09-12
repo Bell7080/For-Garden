@@ -92,11 +92,17 @@ export function battleBuffChipBounds(slot: number) {
 }
 
 /** 배율과 이동을 적용한 프로필의 화면 bounds를 순수 계산해 회귀 테스트와 공유한다. */
-export function battleProfileBounds(x: number, y: number, scale: number, showBuffs = false) {
+export function battleProfileBounds(x: number, y: number, scale: number, showChipRow = false) {
   const bounds = BATTLE_PROFILE_LAYOUT.bounds;
-  // 원정처럼 setBuffs를 쓰지 않는 읽기 전용 프로필에는 빈 버프 행의 예약 공간을 실제 외곽으로
-  // 세지 않는다. 전투 HUD는 `showBuffs`로 액자가 생긴 상태까지 검사할 수 있다.
-  const top = showBuffs ? bounds.top : -BATTLE_PROFILE_LAYOUT.glowSize / 2;
+  /*
+   * 칩 줄이 실제로 서는 프로필만 그 높이를 외곽으로 센다.
+   *
+   * 전투의 버프 액자와 원정의 증강 표식은 **같은 줄**(`buffRow.y` = `augmentRow.y`)을 쓰므로
+   * 둘 중 어느 쪽이든 서 있으면 이 값이 참이다. 예전 이름(`showBuffs`)은 전투 버프만 세는
+   * 것으로 읽혀, 증강 칩이 서는 원정 HUD가 `false`로 넘어갔고 그 줄이 구역 밖으로 삐져나온
+   * 채 위의 전체 증강 칩과 겹쳤다.
+   */
+  const top = showChipRow ? bounds.top : -BATTLE_PROFILE_LAYOUT.glowSize / 2;
   return {
     left: x + bounds.left * scale,
     right: x + bounds.right * scale,

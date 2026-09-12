@@ -42,10 +42,24 @@ describe("expedition portrait layout", () => {
     expect(EXPEDITION_LAYOUT.rewards.top).toBeGreaterThanOrEqual(96);
     expect(EXPEDITION_LAYOUT.actions.bottom).toBeLessThanOrEqual(1920);
     // 생존 HUD 구역은 실제로 세워지는 전투 프로필 세 칸의 bounds와 어긋나지 않는다.
+    // 원정 HUD에는 **개인 증강 칩 줄이 실제로 선다.** 그 줄까지 센 bounds로 검사하지 않으면
+    // 칩이 구역 밖으로 삐져나온 채 위의 전체 증강 줄과 겹치고, 표에서는 드러나지 않는다.
     const { centersX, centerY, scale } = BATTLE_PROFILE_LAYOUT.expedition;
-    const profiles = centersX.map((x) => battleProfileBounds(x, centerY, scale));
+    const profiles = centersX.map((x) => battleProfileBounds(x, centerY, scale, true));
     expect(Math.min(...profiles.map(({ top }) => top))).toBeGreaterThanOrEqual(EXPEDITION_LAYOUT.relics.top);
     expect(Math.max(...profiles.map(({ bottom }) => bottom))).toBeLessThanOrEqual(EXPEDITION_LAYOUT.relics.bottom);
+  });
+
+  /*
+   * **전체 증강 칩과 개인 증강 칩이 맞닿지 않는다.**
+   *
+   * 둘은 같은 생김새의 액자라, 위아래로 붙으면 어디까지가 전체 몫이고 어디부터가 그 캐릭터의
+   * 몫인지 읽히지 않는다. 실제로 v0.112.0까지 7px 겹쳐 있었다.
+   */
+  it("전체 증강 칩 줄은 프로필의 개인 증강 칩 줄과 겹치지 않는다", () => {
+    const { centerY } = BATTLE_PROFILE_LAYOUT.expedition;
+    const personalTop = centerY + BATTLE_PROFILE_LAYOUT.augmentRow.y - BATTLE_PROFILE_LAYOUT.augmentRow.chipSize / 2;
+    expect(EXPEDITION_LAYOUT.augments.bottom).toBeLessThanOrEqual(personalTop - 20);
   });
 
   it("증강 선택판은 생존 HUD를 가리지 않고 그 위에서 멈춘다", () => {

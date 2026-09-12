@@ -1,6 +1,7 @@
 import type { BattleSceneInputDto } from "../core/expeditionBattle";
 import type { BattleStageDef, RelicDef } from "../core/types";
 import { expeditionEnemyLevel } from "./expeditionEnemies";
+import { stageEnemyGrowth } from "./stages";
 
 /**
  * 전장에 **실제로 선** 적 하나. 정의와 함께 그 자리에서 자란 값을 들고 다닌다.
@@ -31,9 +32,7 @@ export function placedEnemyIndex(
   const expeditionLevel = input.mode === "expedition" ? expeditionEnemyLevel(input.nodeType, input.floor)
     : input.mode === "expeditionBoss" ? expeditionEnemyLevel("boss", 20) : undefined;
   // 스토리만 적별 성장 정의를 갖는다. 성장 사본과 같은 formationSlot 순서로 짝을 맞춘다.
-  const placed = expeditionLevel === undefined
-    ? [...stage.enemies].sort((a, b) => a.formationSlot - b.formationSlot)
-    : undefined;
+  const placed = expeditionLevel === undefined ? stageEnemyGrowth(stage) : undefined;
   return new Map(enemyDefs.map((def, index) => {
     const growth = placed?.[index];
     return [`enemy-${index}`, {

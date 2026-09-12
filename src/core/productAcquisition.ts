@@ -26,5 +26,5 @@ function acquisitionText(acquisition: ProductAcquisition): string {
 
 /** 지갑 키의 사용자 표시명을 한 곳에 고정한다. */
 function currencyName(currency: ProductCurrency): string {
-  return ({ fossil: "화석", amber: "호박석", cheesecake: "치즈케이크", dnaFragments: "DNA 조각" } as const)[currency];
+  return ({ fossil: "화석", amber: "호박석", cheesecake: "치즈케이크", dnaFragments: "DNA 조각", gems: "젬", gold: "골드" } as const)[currency];
 }

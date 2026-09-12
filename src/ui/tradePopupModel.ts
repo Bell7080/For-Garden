@@ -1,9 +1,51 @@
 import type { ProductDto } from "../api/contracts";
+import type { ProductCurrency } from "../data/products";
+import { tradePackageLimitLabel, tradePackageValuePercent } from "../data/tradePackages";
 
 /** 무역 UI가 서버 응답을 다시 방어해 trade storefront 상품만 보존한다. */
 export function tradePopupModel(products: readonly ProductDto[]): ProductDto[] {
   // 새 배열을 반환해 원본 API 스냅샷을 화면 정렬이나 갱신으로 변경하지 않는다.
   return products.filter((product) => product.storefront === "trade");
+}
+
+/** 카드 한 장이 그리는 것. 재화 키만 들고 있어 그림·글꼴은 화면이 고른다. */
+export interface TradePackageAmount { currency: ProductCurrency; amount: number }
+
+/**
+ * 패키지 한 장의 표시 계약.
+ *
+ * **카드가 직접 값을 계산하지 않는다.** 가치 %는 시세표가, 제한 문구는 갱신 주기 표가 만든다 —
+ * 카드는 받은 글자를 자리에 놓기만 해야 구매 확인판과 같은 말이 선다.
+ */
+export interface TradePackageView {
+  id: string;
+  name: string;
+  /** 같은 젬으로 따로 사는 것 대비 몇 %인가. 환산할 수 없는 상품은 비운다. */
+  valueLabel?: string;
+  cost?: TradePackageAmount;
+  grants: readonly TradePackageAmount[];
+  limitLabel: string;
+  /** 남은 횟수가 없거나 서버가 막은 상품. 카드는 눌리지 않고 눌러 둔 채로 남는다. */
+  soldOut: boolean;
+  disabledReason?: string;
+}
+
+/** 서버 상품을 카드가 그대로 그릴 수 있는 표시 계약으로 바꾼다. */
+export function tradePackageViews(products: readonly ProductDto[]): TradePackageView[] {
+  return tradePopupModel(products).map((product) => {
+    const percent = tradePackageValuePercent(product.acquisition, product.grants);
+    return {
+      id: product.id,
+      name: product.name,
+      valueLabel: percent === undefined ? undefined : `가치 ${percent}%`,
+      cost: product.acquisition.kind === "currency" ? { currency: product.acquisition.currency, amount: product.acquisition.amount } : undefined,
+      // 재화가 아닌 지급품(룬·장식)은 아직 이 전시장에 없다. 생기면 액자 그림만 늘린다.
+      grants: product.grants.flatMap((grant) => grant.kind === "currency" ? [{ currency: grant.currency, amount: grant.amount }] : []),
+      limitLabel: tradePackageLimitLabel(product.refresh, product.purchaseLimit, product.remaining),
+      soldOut: !product.purchasable || product.remaining <= 0,
+      disabledReason: product.disabledReason,
+    };
+  });
 }
 
 /** 조회 실패 화면이 chrome과 분리된 동적 영역에 그릴 최소 표시 계약이다. */

@@ -64,7 +64,7 @@ test("로비 임무→상점→무역과 교류→교환소의 분리된 진입 
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.shopView?.scrollY)).toBe(0);
   input = await controls(page); await tap(page, input.shop!.cards[0]);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual(["구매 확인"]);
-  input = await controls(page); await tap(page, input.purchase!.plus); await tap(page, input.purchase!.confirm);
+  input = await controls(page); await tap(page, input.purchase!.plus!); await tap(page, input.purchase!.confirm);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual(["구매 보상"]);
   await tap(page, await page.evaluate(() => window.__PF_DEBUG!.rewardPopupConfirm!));
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toBeUndefined();
@@ -74,7 +74,8 @@ test("로비 임무→상점→무역과 교류→교환소의 분리된 진입 
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
 
   // 무역은 독립 씬이 아니라 로비 위 레이어지만 같은 구매·확정 보상 계약을 사용한다.
-  // 상점(사는 곳)·무역(재화를 바꾸는 곳)·교환소(교류 표본을 바꾸는 곳)는 서로 다른 셋이다.
+  // 상점(상시 보급품을 사는 곳)·무역(운영 패키지를 전시하는 곳)·교환소(교류 표본을 바꾸는 곳)는
+  // 서로 다른 셋이다. 무역의 카드는 옆에 버튼을 두지 않고 칸 자체가 입력면이다.
   input = await controls(page); await tap(page, input.lobby!.trade);
   // 조회 직후에는 PopupLayer가 만든 chrome이 먼저 살아 있어야 하며 비동기 목록을 기다리다 제목이 사라지면 안 된다.
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual(["무역"]);

@@ -1,23 +1,28 @@
 import Phaser from "phaser";
 import type { GameApi, ProductDto, PurchaseProductResponse } from "../api/contracts";
 import type { Wallet } from "../core/gacha";
-import { productActionModel } from "../core/productAcquisition";
+import { TRADE_PACKAGES } from "../data/tradePackages";
 import { Button } from "./Button";
 import { PopupLayer } from "./PopupLayer";
 import { PurchasePopup } from "./PurchasePopup";
 import { COLOR, textStyle } from "./theme";
 import { setDebugStorefrontControls } from "../debug";
 import { BACK_SLOT } from "./IconButton";
-import { TRADE_POPUP_FAILURE_MODEL, TradePopupRequestGate, tradePopupModel } from "./tradePopupModel";
-import { chipPoints, drawLayer, HOLO } from "./holo";
-import { addFramedIcon } from "./itemFrame";
-import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
-import { formatCurrency } from "../core/formatCurrency";
+import { TRADE_POPUP_FAILURE_MODEL, TradePopupRequestGate, tradePackageViews, tradePopupModel } from "./tradePopupModel";
+import { tradePackageCenters, tradePackageLayout } from "./tradePackageLayout";
+import { TradePackageCard } from "./TradePackageCard";
 
-/** 교환 한 건이 서는 칸. 판 폭 안에서 액자 둘과 버튼 하나가 나란히 든다. */
-const TRADE_ROW = { width: 860, height: 168, firstY: -500, stepY: 190, frame: 96 } as const;
+/** 팝업 본문 원점은 화면 중앙이므로 E2E에 넘길 입력 중심만 이 기준으로 절대 좌표로 옮긴다. */
+const BASE_CENTER = { x: 540, y: 960 } as const;
 
-/** 무역을 씬 전환 없이 로비 위 패키지 레이어로 여는 공개 프리팹이다. */
+/**
+ * 무역 — **운영 패키지를 전시해 두는 레이어.**
+ *
+ * 재화 교환소가 아니다. 한 칸이 묶음 하나이고 칸 자체가 눌리며, 값·받는 것·가치·제한이 그 칸
+ * 안에서 함께 읽힌다. 창 크기는 손으로 적지 않고 전시할 카드 수에서 나온다
+ * (`tradePackageLayout`) — 예전에는 1420이라 적어 두고 줄을 190씩 내려놓아, 상품이 늘자
+ * 마지막 줄이 팝업 판 밖으로 나갔다.
+ */
 export class TradePopup {
   private closeAction?: () => void;
   private body?: Phaser.GameObjects.Container;
@@ -27,13 +32,18 @@ export class TradePopup {
   private generation = 0;
   /** 재시도 버튼 연타가 동일 카탈로그 요청을 겹치지 않게 한다. */
   private readonly requestGate = new TradePopupRequestGate();
+  /**
+   * 창 규격. 전시할 수 있는 최대 품목 수(정적 카탈로그)로 한 번 정한다 — 팝업은 열린 뒤 크기를
+   * 바꿀 수 없고, 조회는 창을 띄운 다음에 끝나기 때문이다.
+   */
+  private readonly shell = tradePackageLayout(TRADE_PACKAGES.length);
 
   constructor(private readonly scene: Phaser.Scene, private readonly popups: PopupLayer, private readonly api: GameApi, private readonly wallet: Wallet, private readonly onPurchased: (result: PurchaseProductResponse) => void, private readonly onClosed?: () => void) {}
 
   /** 연타는 기존 레이어를 유지하며 서버 trade 카탈로그만 조회한다. */
   open(): void {
     if (this.closeAction) return;
-    this.popups.open({ width: 940, height: 1420, title: "무역", dim: true, closeOnBackdrop: false, hideCloseButton: true, onClose: () => this.dispose() }, (body, close) => {
+    this.popups.open({ width: this.shell.width, height: this.shell.height, title: "무역", dim: true, closeOnBackdrop: false, hideCloseButton: true, onClose: () => this.dispose() }, (body, close) => {
       this.closeAction = close;
       this.body = body;
       // PopupLayer가 만든 판·제목은 그대로 두고, 비동기 상품만 안전하게 다시 그릴 자식층을 한 번 만든다.
@@ -84,56 +94,32 @@ export class TradePopup {
     const retry = new Button(this.scene, 0, 55, { width: 300, height: 82, label: TRADE_POPUP_FAILURE_MODEL.retryLabel, onClick: () => { void this.refresh(); } });
     this.productList.add(retry);
     // E2E에는 실제로 남은 재시도와 공용 닫기 입력 중심만 공개한다.
-    setDebugStorefrontControls({ trade: { products: [], retry: { x: 540, y: 960 + 55 }, back: { ...BACK_SLOT } } });
+    setDebugStorefrontControls({ trade: { products: [], retry: { x: BASE_CENTER.x, y: BASE_CENTER.y + 55 }, back: { ...BACK_SLOT } } });
   }
 
-  /**
-   * 무역의 교환 하나하나가 **제 판 위에 선다.**
-   *
-   * 예전에는 이름과 값이 판 위에 맨 글자로 늘어서고 버튼만 오른쪽에 있어, 어디까지가 한 건인지
-   * 줄 간격으로만 짐작해야 했다. 이제 한 건이 한 칸이고 그 안에 **주는 것**(액자 + 수량)과
-   * **받는 것**(액자 + 수량)이 화살표를 사이에 두고 마주 선다 — 무역은 사는 일이 아니라
-   * 바꾸는 일이라, 두 재화가 한 칸 안에서 함께 읽혀야 값을 견줄 수 있다.
-   */
+  /** 전시된 카드를 다시 그린다. 카드 한 장이 곧 하나의 입력면이고 따로 버튼을 세우지 않는다. */
   private render(): void {
     if (!this.productList?.active) return;
-    // 동적 행만 비워 팝업 chrome(판·제목)의 수명은 PopupLayer가 끝까지 소유하게 한다.
+    // 동적 카드만 비워 팝업 chrome(판·제목)의 수명은 PopupLayer가 끝까지 소유하게 한다.
     this.productList.removeAll(true);
-    // 행 버튼과 로비 위 돌아가기만 노출해 E2E가 상품 데이터를 디버그 상태로 읽지 않게 한다.
-    setDebugStorefrontControls({ trade: { products: this.products.map((_, index) => ({ x: 540, y: 960 + TRADE_ROW.firstY + index * TRADE_ROW.stepY })), back: { ...BACK_SLOT } } });
-    this.products.forEach((product, index) => {
-      const y = TRADE_ROW.firstY + index * TRADE_ROW.stepY;
-      const action = productActionModel(product.acquisition, { remaining: product.remaining, available: product.purchasable });
-      const row = this.scene.add.container(0, y);
-      row.add(drawLayer(this.scene, 0, 0, chipPoints(TRADE_ROW.width, TRADE_ROW.height, { bevel: { topLeft: 34, topRight: 0, bottomRight: 34, bottomLeft: 0 } }), {
-        fill: 0x141b24, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: action.disabledReason ? 0.22 : 0.5,
+    const views = tradePackageViews(this.products);
+    // 서버가 전시 품목을 덜 돌려주면 남은 자리에서 가운데로 모은다. 창 높이는 열 때 이미 정해졌다.
+    const centers = tradePackageCenters(views.length, this.shell.height);
+    // 카드 입력 중심과 로비 위 돌아가기만 노출해 E2E가 상품 데이터를 디버그 상태로 읽지 않게 한다.
+    setDebugStorefrontControls({
+      trade: { products: centers.map((y) => ({ x: BASE_CENTER.x, y: BASE_CENTER.y + y })), back: { ...BACK_SLOT } },
+    });
+    views.forEach((view, index) => {
+      const product = this.products.find(({ id }) => id === view.id);
+      this.productList?.add(new TradePackageCard(this.scene, 0, centers[index], {
+        metrics: this.shell.card,
+        view,
+        onClick: () => { if (product) this.openPurchase(product); },
       }));
-      row.add(this.scene.add.text(-TRADE_ROW.width / 2 + 28, -TRADE_ROW.height / 2 + 30, product.name, textStyle({ role: "display", size: 27 })).setOrigin(0, 0.5));
-
-      // 주는 것 → 받는 것. 액자·그림·수량은 어디서나 같은 공용 프리팹 한 장이 그린다.
-      const cost = product.acquisition;
-      if (cost.kind === "currency") {
-        addFramedIcon(this.scene, row, -TRADE_ROW.width / 2 + 92, 26, TRADE_ROW.frame, CURRENCY_ICON_BY_WALLET[cost.currency], {
-          amount: formatCurrency(cost.amount),
-          amountColor: action.disabledReason ? COLOR.dangerText : undefined,
-        });
-      }
-      row.add(this.scene.add.text(-TRADE_ROW.width / 2 + 176, 26, "▶", textStyle({ role: "display", size: 26, color: COLOR.inkDim })).setOrigin(0.5));
-      const grant = product.grants[0];
-      if (grant?.kind === "currency") {
-        addFramedIcon(this.scene, row, -TRADE_ROW.width / 2 + 258, 26, TRADE_ROW.frame, CURRENCY_ICON_BY_WALLET[grant.currency], { amount: formatCurrency(grant.amount) });
-      }
-
-      const button = new Button(this.scene, TRADE_ROW.width / 2 - 150, 20, { width: 250, height: 76, label: action.label, onClick: () => this.openPurchase(product) });
-      button.setEnabled(!action.disabledReason);
-      row.add(button);
-      // 왜 못 바꾸는지는 버튼 바로 아래 한 줄로 둔다 — 칸 밖에 적으면 어느 줄의 이야기인지 흐려진다.
-      if (action.disabledReason) row.add(this.scene.add.text(TRADE_ROW.width / 2 - 150, 74, action.disabledReason, textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0.5));
-      this.productList?.add(row);
     });
   }
 
-  /** 현재 무역 데이터는 재화 교환이며 공용 구매 작업판에서 서버 확정까지 수행한다. */
+  /** 패키지 구매도 공용 구매 확인판 한 장이 맡는다 — 무역만의 확정 경계를 따로 만들지 않는다. */
   private openPurchase(product: ProductDto): void {
     if (product.acquisition.kind !== "currency") return;
     new PurchasePopup(this.scene, this.popups, this.api, this.wallet).open(product, async (result) => {

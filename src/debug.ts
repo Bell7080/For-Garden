@@ -120,7 +120,8 @@ export interface DebugState {
     /** 교류 씬에서 교환소를 여는 유일한 고정 입력 중심이다. */
     interaction?: { exchange: DebugPoint };
     shop?: { back: DebugPoint; tabs: Record<"general" | "enhancement" | "rune", DebugPoint>; cards: DebugPoint[]; drag: { from: DebugPoint; to: DebugPoint } };
-    purchase?: { minus: DebugPoint; plus: DebugPoint; confirm: DebugPoint };
+    /** 수량 작업판은 ±와 확정을, 패키지 확인판은 확정만 공개한다(고를 것이 수량이 아니다). */
+    purchase?: { minus?: DebugPoint; plus?: DebugPoint; confirm: DebugPoint };
   };
   /** 상품명·재화 대신 현재 렌더 탭과 스크롤 위치만 관찰하는 표시 계약이다. */
   shopView?: { category: "general" | "enhancement" | "rune"; scrollY: number; minScrollY: number };

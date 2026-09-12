@@ -10,6 +10,17 @@ import { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
 import { openRewardPopup, productGrantsToRewardItems } from "./RewardPopup";
 import { setDebugStorefrontControls } from "../debug";
+import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
+import { isTradePackage, tradePackageLimitLabel, tradePackageValuePercent } from "../data/tradePackages";
+
+/**
+ * 패키지 확인판의 자리.
+ *
+ * 수량 작업판과 한 파일에 있는 이유는 **확정 경계가 같기 때문이다** — 쓰는 재화도, 서버 요청도,
+ * 영수증도 하나다. 다른 것은 고를 것이 수량이 아니라 "살까 말까"뿐이라는 점이고, 그래서 ±와
+ * 총가격 줄이 없다.
+ */
+const PACKAGE = { width: 820, height: 800, frame: 150, frameGap: 22, nameY: -300, valueY: -244, frameY: -130, hairlineY: -18, priceY: 40, limitY: 120, buyY: 280, statusY: 345 } as const;
 
 /** 신규 상점과 무역이 같은 수량·표시·요청 잠금을 쓰는 공용 구매 작업판이다. */
 export class PurchasePopup {
@@ -35,9 +46,10 @@ export class PurchasePopup {
     // 돌아가기는 모서리 X가 아니라 다른 작업판과 같은 **우하단 공용 슬롯**에 선다. 자리와
     // 층은 팝업 층(`backButton`)이 소유한다 — 창마다 IconButton을 손으로 세우면 아래 화면이
     // 이미 쓰고 있는 같은 자리와의 층 순서를 창마다 다시 정하게 된다.
-    this.popups.open({ width: 820, height: 850, title: "구매 확인", dim: true, closeOnBackdrop: true, backButton: true }, (body, close) => {
+    const pack = isTradePackage(product);
+    this.popups.open({ width: PACKAGE.width, height: pack ? PACKAGE.height : 850, title: pack ? "패키지 구매" : "구매 확인", dim: true, closeOnBackdrop: true, backButton: true }, (body, close) => {
       const view = this.scene.add.container(0, 0); body.add(view);
-      const render = (): void => { view.removeAll(true); this.paint(view, product, close, onPurchased); };
+      const render = (): void => { view.removeAll(true); if (pack) this.paintPackage(view, product, close, onPurchased); else this.paint(view, product, close, onPurchased); };
       this.repaint = render;
       view.once(Phaser.GameObjects.Events.DESTROY, () => { this.repaint = undefined; });
       render();
@@ -88,6 +100,49 @@ export class PurchasePopup {
     if (status) view.add(this.scene.add.text(0, 410, status, textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0.5));
   }
 
+  /**
+   * 패키지 한 장의 확인판.
+   *
+   * **고를 것이 수량이 아니다.** 무역의 묶음은 정해진 구성 하나를 한 번에 사는 것이라 ±와
+   * 총가격 줄이 설 자리가 없다 — 그 줄을 남겨 두면 "몇 개를 살지"가 이 판의 질문처럼 보인다.
+   * 남는 것은 받는 것(액자), 가치, 값, 제한, 그리고 확정 하나다.
+   */
+  private paintPackage(view: Phaser.GameObjects.Container, product: ProductDto, close: () => void, onPurchased: (result: PurchaseProductResponse) => void | Promise<void>): void {
+    if (product.acquisition.kind !== "currency") return;
+    const acquisition = product.acquisition;
+    // 묶음 구성은 서버 카탈로그가 정한 그대로 한 번만 산다.
+    this.quantity = 1;
+    const grants = product.grants.flatMap((grant) => grant.kind === "currency" ? [grant] : []);
+    const percent = tradePackageValuePercent(acquisition, product.grants);
+
+    view.add(drawLayer(this.scene, 0, -170, chipPoints(690, 330, { bevel: { topLeft: 44, topRight: 0, bottomRight: 34, bottomLeft: 0 } }), { fill: 0x141b24, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.45 }));
+    view.add(this.scene.add.text(0, PACKAGE.nameY, product.name, textStyle({ role: "display", size: 36 })).setOrigin(0.5));
+    if (percent !== undefined) {
+      view.add(this.scene.add.text(0, PACKAGE.valueY, `가치 ${percent}%`, textStyle({ role: "display", size: 27, color: COLOR.accentText })).setOrigin(0.5));
+    }
+    // 받는 것은 전부 같은 공용 액자다. 카드와 같은 그림·같은 수량 자리를 쓰므로 눌러서 열어도
+    // 방금 보고 있던 것과 같은 묶음으로 읽힌다.
+    const span = grants.length * PACKAGE.frame + Math.max(0, grants.length - 1) * PACKAGE.frameGap;
+    grants.forEach((grant, index) => {
+      addFramedIcon(this.scene, view, -span / 2 + PACKAGE.frame / 2 + index * (PACKAGE.frame + PACKAGE.frameGap), PACKAGE.frameY, PACKAGE.frame, CURRENCY_ICON_BY_WALLET[grant.currency], {
+        amount: formatCurrency(grant.amount),
+      });
+    });
+
+    view.add(drawHairline(this.scene, 0, PACKAGE.hairlineY, 690, { color: COLOR.accent, alpha: 0.32 }));
+    this.addValueRow(view, PACKAGE.priceY, "가격", priceText(acquisition, acquisition.amount), true);
+    this.addValueRow(view, PACKAGE.limitY, "구매 제한", tradePackageLimitLabel(product.refresh, product.purchaseLimit, product.remaining));
+
+    const balance = this.wallet[acquisition.currency];
+    const canPurchase = product.purchasable && product.remaining > 0 && balance >= acquisition.amount && !this.pending;
+    const buy = new Button(this.scene, 0, PACKAGE.buyY, { width: 650, height: 86, label: this.pending ? "처리 중" : "구매", fontSize: 31, variant: "primary", onClick: () => { void this.purchase(product, close, onPurchased); } }).setEnabled(canPurchase);
+    view.add(buy);
+    // 수량 조작이 없으므로 공개하는 입력 중심도 확정 하나뿐이다.
+    setDebugStorefrontControls({ purchase: { confirm: { x: BASE_CENTER.x, y: BASE_CENTER.y + PACKAGE.buyY } } });
+    const status = this.message || (!product.purchasable ? product.disabledReason ?? "구매할 수 없습니다." : balance < acquisition.amount ? "재화가 부족합니다." : "");
+    if (status) view.add(this.scene.add.text(0, PACKAGE.statusY, status, textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0.5));
+  }
+
   /** 이름과 값을 같은 기준선에 놓아 가격 비교 시 시선이 흔들리지 않게 한다. */
   private addValueRow(view: Phaser.GameObjects.Container, y: number, label: string, value: string, emphasized = false): void {
     view.add(this.scene.add.text(-325, y, label, textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5));
@@ -134,5 +189,5 @@ function priceText(acquisition: Extract<ProductDto["acquisition"], { kind: "curr
 
 /** 데이터 키가 화면마다 서로 다른 번역으로 노출되지 않게 한 곳에서 이름을 정한다. */
 function currencyName(currency: Extract<ProductDto["acquisition"], { kind: "currency" }>["currency"]): string {
-  return ({ fossil: "화석", amber: "호박석", cheesecake: "치즈케이크", dnaFragments: "DNA 조각" } as const)[currency];
+  return ({ fossil: "화석", amber: "호박석", cheesecake: "치즈케이크", dnaFragments: "DNA 조각", gems: "젬", gold: "골드" } as const)[currency];
 }

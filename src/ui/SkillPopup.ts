@@ -63,10 +63,27 @@ export interface SkillInfoViewModel {
   breakthroughEffect?: string;
 }
 
-const POPUP = { width: 880, height: 620 } as const;
+/**
+ * 쪽지의 폭과 **글 위에 쌓이는 높이**.
+ *
+ * 높이를 손으로 적지 않는다 — 본문이 몇 줄인지는 개체마다 다르고 언어마다 또 다르다.
+ * 620으로 못 박아 두었을 때는 짧은 일반 공격 설명 아래가 통째로 비었고(돌파 줄까지 붙으면
+ * 그 아래로 한 뼘 더), 반대로 긴 문장은 안내 줄을 파고들었다. 지금은 실제로 그린 글의 높이를
+ * 재서 거꾸로 구한다.
+ */
+const POPUP = {
+  width: 880,
+  /** 본문 글이 시작하는 y(판 윗변 기준). 그 위는 아이콘·이름·요약 줄이 쓰는 고정 높이다. */
+  descriptionY: 268,
+  /** 본문 아래끝에서 안내 줄까지, 그리고 안내 줄에서 판 밑변까지. */
+  hintGap: 30,
+  hintBottom: 44,
+  /** 아이콘 칩과 이름 줄이 들어가는 최소 높이. 한 줄짜리 설명이 판을 이보다 짧게 만들지 않는다. */
+  minHeight: 400,
+} as const;
 
-/** 돌파로 붙은 줄이 차지하는 몫. 있을 때만 판이 그만큼 길어진다. */
-const BREAKTHROUGH_LINE = { extraHeight: 150, gap: 34, label: t("info.breakthrough"), size: 25 } as const;
+/** 돌파로 붙은 줄이 차지하는 몫. 있을 때만 그 높이가 판에 더해진다. */
+const BREAKTHROUGH_LINE = { gap: 34, labelGap: 10, label: t("info.breakthrough"), size: 25 } as const;
 
 /**
  * 스킬 하나를 설명하는 정형 팝업.
@@ -83,7 +100,22 @@ export function openSkillPopup(
   /** 누른 아이콘 자리와 눌린 상태를 되돌릴 콜백. 쪽지가 그 위에 얹히게 한다. */
   from?: { x: number; y: number; onClose?: () => void },
 ): void {
-  const height = POPUP.height + (skill.breakthroughEffect ? BREAKTHROUGH_LINE.extraHeight : 0);
+  // **판을 열기 전에 글을 먼저 그려 높이를 잰다.** `PopupLayer.open`은 높이를 미리 받으므로,
+  // 본문을 나중에 채우면 그 길이를 판이 알 수 없다. 여기서 만든 컨테이너를 그대로 판에 넣어
+  // 두 번 그리지 않는다.
+  const description = keywords.layout(skill.description, skillKeywordLayoutOptions(skill, {
+    width: POPUP.width - 120, size: 28, lineSpacing: 10,
+  }));
+  const breakthrough = skill.breakthroughEffect === undefined ? undefined : keywords.layout(skill.breakthroughEffect, skillKeywordLayoutOptions(skill, {
+    width: POPUP.width - 120, size: 26, lineSpacing: 10, color: COLOR.accentText,
+  }));
+  const breakthroughLabelHeight = breakthrough === undefined ? 0 : Math.round(BREAKTHROUGH_LINE.size * 1.4);
+  const breakthroughBlock = breakthrough === undefined ? 0
+    : BREAKTHROUGH_LINE.gap + breakthroughLabelHeight + BREAKTHROUGH_LINE.labelGap + breakthrough.height;
+  const height = Math.max(
+    POPUP.minHeight,
+    POPUP.descriptionY + description.height + breakthroughBlock + POPUP.hintGap + POPUP.hintBottom,
+  );
   popups.open({
     width: POPUP.width,
     height,
@@ -145,30 +177,25 @@ export function openSkillPopup(
     body.add(drawHairline(scene, 0, top + 232, POPUP.width - 96, { color: COLOR.accent, alpha: 0.35 }));
 
     // 폭주·보호막처럼 동적 수치가 본문에 있는 경우에도 요약과 같은 사전을 넘겨 밑줄과 입력을 붙인다.
-    const description = keywords.layout(skill.description, skillKeywordLayoutOptions(skill, {
-      width: POPUP.width - 120, size: 28, lineSpacing: 10,
-    }));
-    description.setPosition(left + 60, top + 268);
+    description.setPosition(left + 60, top + POPUP.descriptionY);
     body.add(description);
 
     // **돌파로 붙은 줄은 한 줄 띄우고 노랗게 선다.** 본문 바로 아래에 같은 색으로 이으면
     // 처음부터 있던 효과로 읽히므로, 별 표식과 같은 금색 이름표를 앞에 세워 "나중에 얹힌
     // 것"임을 한눈에 알린다.
-    if (skill.breakthroughEffect) {
+    if (breakthrough) {
       const gapY = description.y + description.height + BREAKTHROUGH_LINE.gap;
       body.add(drawHairline(scene, 0, gapY - 12, POPUP.width - 96, { color: COLOR.accent, alpha: 0.28 }));
       const mark = scene.add
-        .text(left + 60, gapY + 8, BREAKTHROUGH_LINE.label, textStyle({ role: "display", size: BREAKTHROUGH_LINE.size, color: COLOR.accentText }))
+        .text(left + 60, gapY, BREAKTHROUGH_LINE.label, textStyle({ role: "display", size: BREAKTHROUGH_LINE.size, color: COLOR.accentText }))
         .setOrigin(0, 0);
       body.add(mark);
-      body.add(keywords.layout(skill.breakthroughEffect, skillKeywordLayoutOptions(skill, {
-        width: POPUP.width - 120, size: 26, lineSpacing: 10, color: COLOR.accentText,
-      })).setPosition(left + 60, gapY + 8 + mark.height + 10));
+      body.add(breakthrough.setPosition(left + 60, gapY + breakthroughLabelHeight + BREAKTHROUGH_LINE.labelGap));
     }
 
     body.add(
       scene.add
-        .text(0, height / 2 - 44, t("skill.keywordHint"), textStyle({ role: "body", size: 20, color: COLOR.inkDim }))
+        .text(0, height / 2 - POPUP.hintBottom, t("skill.keywordHint"), textStyle({ role: "body", size: 20, color: COLOR.inkDim }))
         .setOrigin(0.5, 0.5),
     );
   });

@@ -51,6 +51,7 @@ export const SKILL_JA = {
   "skill.keyword.damage.composite": "現在の攻撃力の{percent}%と攻撃速度の{speedPercent}%を一つに合わせて計算したダメージ数値だ。",
   "skill.keyword.damage.detonation": "[[overpaint|重ね塗り]]を上限の{stacks}重まで積んだ敵1体に入るダメージだ。重ねが少なければその分減る。",
   "skill.keyword.shield.fromAttack": "現在の攻撃力から{percent}%を受けて計算したシールド数値だ。",
+  "skill.keyword.heal.fromStat": "現在の{stat}から{percent}%を受けて計算した回復数値だ。",
   "skill.keyword.heal.fromAp": "現在の魔力から{percent}%を受けて計算した回復数値だ。",
 
   "skill.stack.bonus": "{stat}の{percent}%に当たる物理ダメージを追加で与え",
@@ -232,9 +233,10 @@ export const SKILL_JA = {
   "skill.breakthrough.ultimate": "必殺技 強化",
   "skill.breakthrough.ferocity": "暴走 強化",
   "skill.breakthrough.passive": "パッシブ 強化",
-  "skill.breakthrough.effect.basic": "「{trigger}」発動時、{stat}の{percent}%に当たる体力を回復し、広い範囲の敵を{seconds}秒間挑発する。",
+  "skill.breakthrough.effect.basic": "「{trigger}」発動時、{stat}の{percent}%に当たる[[hp|体力]]を回復し、広い範囲の敵を{seconds}秒間[[taunt|挑発]]する。",
+  "skill.breakthrough.effect.basicValue": "「{trigger}」発動時、{heal}だけ[[hp|体力]]を回復し、広い範囲の敵を{seconds}秒間[[taunt|挑発]]する。",
   "skill.breakthrough.effect.ultimate": "ダメージ量の{percent}%に当たる「{name}」を{seconds}秒間隔で{casts}回多く発動する。",
-  "skill.breakthrough.effect.ferocity": "暴走が終わるとき、暴走の間に受けたダメージ量の{percent}%に当たるシールドを得て、広い範囲の敵をもう一度{seconds}秒間挑発する。",
+  "skill.breakthrough.effect.ferocity": "[[ferocity|暴走]]が終わるとき、暴走の間に受けたダメージ量の{percent}%に当たるシールドを得て、広い範囲の敵をもう一度{seconds}秒間[[taunt|挑発]]する。",
   "skill.breakthrough.effect.passive": "「{name}」が発動するとき、すべての味方にその回復量の{percent}%を分ける。",
 
   "skill.keyword.shield.fromMaxHp": "現在の最大体力から{percent}%を受けて計算したシールド数値だ。",

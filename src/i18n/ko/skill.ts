@@ -64,6 +64,7 @@ export const SKILL_KO = {
   "skill.keyword.damage.composite": "현재 공격력의 {percent}%와 공격 속도의 {speedPercent}%를 하나로 합쳐 계산한 피해 수치다.",
   "skill.keyword.damage.detonation": "[[overpaint|덧칠]]을 상한인 {stacks}겹까지 쌓은 적 하나에게 들어가는 피해다. 겹이 적으면 그만큼 줄어든다.",
   "skill.keyword.shield.fromAttack": "현재 공격력에서 {percent}%를 받아 계산한 보호막 수치다.",
+  "skill.keyword.heal.fromStat": "현재 {stat}에서 {percent}%를 받아 계산한 회복 수치다.",
   "skill.keyword.heal.fromAp": "현재 주문력에서 {percent}%를 받아 계산한 회복 수치다.",
 
   // ── 이름을 가진 주기 스택 ────────────────────────────────────────────────
@@ -255,9 +256,10 @@ export const SKILL_KO = {
   "skill.breakthrough.ultimate": "궁극기 강화",
   "skill.breakthrough.ferocity": "폭주 강화",
   "skill.breakthrough.passive": "패시브 강화",
-  "skill.breakthrough.effect.basic": "「{trigger}」 발동 시 {stat}의 {percent}%에 해당하는 체력을 회복하고 넓은 범위의 적을 {seconds}초 동안 도발한다.",
+  "skill.breakthrough.effect.basic": "「{trigger}」 발동 시 {stat}의 {percent}%에 해당하는 [[hp|체력]]을 회복하고 넓은 범위의 적을 {seconds}초 동안 [[taunt|도발]]한다.",
+  "skill.breakthrough.effect.basicValue": "「{trigger}」 발동 시 {heal}만큼 [[hp|체력]]을 회복하고 넓은 범위의 적을 {seconds}초 동안 [[taunt|도발]]한다.",
   "skill.breakthrough.effect.ultimate": "피해량의 {percent}%에 해당하는 「{name}」을 {seconds}초 간격으로 {casts} 번 더 시전한다.",
-  "skill.breakthrough.effect.ferocity": "폭주가 끝날 때, 폭주 동안 받은 피해량의 {percent}%에 해당하는 보호막을 얻고 넓은 범위의 적에게 {seconds}초 동안 한 번 더 도발한다.",
+  "skill.breakthrough.effect.ferocity": "[[ferocity|폭주]]가 끝날 때, 폭주 동안 받은 피해량의 {percent}%에 해당하는 보호막을 얻고 넓은 범위의 적에게 {seconds}초 동안 한 번 더 [[taunt|도발]]한다.",
   "skill.breakthrough.effect.passive": "「{name}」이 발동될 때 모든 아군에게 그 회복량의 {percent}%를 나눈다.",
 
   // ── 정보창이 스킬 쪽지에 주입하는 문맥 사전 ─────────────────────────────

@@ -9,7 +9,7 @@ import { setDebugScene, setDebugShopView, setDebugStorefrontControls } from "../
 import { spawnPuppet } from "../puppets/assets";
 import { SHOP_MERCHANT_ASSET } from "../data/shopPresentation";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
-import { CURRENCY_ICON_BY_WALLET } from "../ui/currencyIcons";
+import { addPriceTag } from "../ui/priceTag";
 import { addBackButton } from "../ui/IconButton";
 import { addItemFrame, ITEM_FRAME } from "../ui/itemFrame";
 import { chipPoints, drawHairline, drawLayer, drawVignette, HOLO } from "../ui/holo";
@@ -23,7 +23,7 @@ import { productsForShopCategory, shopModel } from "../ui/shopModel";
 /** 상품 목록이 제목 아래에서 뒤로가기 안전 영역 위까지 흐르는 화면 좌표 경계다. */
 const LIST_VIEW = { left: 470, right: BASE_WIDTH - 36, top: 330, bottom: BASE_HEIGHT - 285 } as const;
 /** 세로 카드 간격과 드래그 판정을 한곳에 묶어 스크롤 감각을 일정하게 유지한다. */
-const LIST_LAYOUT = { cardHeight: 292, gap: 28, dragSlop: 16, frameSize: 164 } as const;
+const LIST_LAYOUT = { cardHeight: 292, gap: 28, dragSlop: 16, frameSize: 164, frameY: -40, priceY: 95 } as const;
 
 /** 일반 상품과 성장 재화를 취급하는 독립 상점 씬이다. */
 export class ShopScene extends Phaser.Scene {
@@ -126,7 +126,8 @@ export class ShopScene extends Phaser.Scene {
     const card = this.add.container(x, y);
     card.add(drawLayer(this, 0, 0, chipPoints(width, LIST_LAYOUT.cardHeight, { bevel: { topLeft: 44, topRight: 0, bottomRight: 32, bottomLeft: 0 } }), { fill: 0x182029, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.52 }));
     const frameX = -width / 2 + 106;
-    const frame = addItemFrame(this, frameX, -28, LIST_LAYOUT.frameSize);
+    // 아래에 값 액자가 한 장 더 서므로 상품 액자는 그만큼 위로 올라간다.
+    const frame = addItemFrame(this, frameX, LIST_LAYOUT.frameY, LIST_LAYOUT.frameSize);
     // iconKey는 카탈로그가 고른 임시 상품 그림이며 최종 원화 교체에도 카드 코드는 유지된다.
     frame.add(this.add.image(0, 0, product.iconKey).setDisplaySize(LIST_LAYOUT.frameSize * ITEM_FRAME.icon, LIST_LAYOUT.frameSize * ITEM_FRAME.icon));
     const currencyGrant = product.grants.find((grant) => grant.kind === "currency");
@@ -137,11 +138,12 @@ export class ShopScene extends Phaser.Scene {
     card.add(frame);
     card.add(this.add.text(-width / 2 + 206, -100, product.name, textStyle({ role: "emphasis", size: 29 })).setOrigin(0, 0));
     card.add(this.add.text(-width / 2 + 206, -48, product.description, textStyle({ role: "body", size: 21, color: COLOR.inkDim, wrap: width - 242 })).setOrigin(0, 0));
-    // 가격은 액자 바로 아래에 숫자와 공용 재화 아이콘을 한 행으로 놓는다.
+    // **값도 상품과 같은 액자다.** 맨 그림 옆에 수를 적어 두었을 때는 같은 젬이 위에서는 액자
+    // 안에, 아래에서는 글로 서서 한 카드 안에 두 양식이 보였다.
     if (product.acquisition.kind === "currency") {
-      const priceX = frameX - 12;
-      card.add(this.add.image(priceX - 44, 91, CURRENCY_ICON_BY_WALLET[product.acquisition.currency]).setDisplaySize(34, 34));
-      card.add(this.add.text(priceX - 20, 91, formatCurrency(product.acquisition.amount), textStyle({ role: "emphasis", size: 25, color: COLOR.accentText })).setOrigin(0, 0.5));
+      addPriceTag(this, card, frameX, LIST_LAYOUT.priceY, product.acquisition.currency, product.acquisition.amount, {
+        short: session.wallet[product.acquisition.currency] < product.acquisition.amount,
+      });
     }
     card.add(this.add.text(-width / 2 + 206, 78, t("shop.exchangeRemaining", { remaining: formatCurrency(product.remaining), limit: formatCurrency(product.purchaseLimit) }), textStyle({ role: "body", size: 20, color: product.purchasable ? COLOR.ink : COLOR.inkDim })).setOrigin(0, 0));
     const hit = this.add.rectangle(0, 0, width, LIST_LAYOUT.cardHeight, 0xffffff, 0).setInteractive({ useHandCursor: product.purchasable });

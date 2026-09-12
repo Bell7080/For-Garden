@@ -28,7 +28,7 @@ import { PopupLayer, POPUP_TITLE_SIZE } from "./PopupLayer";
 import { calculateObservationJournalFlow, OBSERVATION_JOURNAL_SIZE, withoutRepeatedProfileDetails } from "./observationJournalLayout";
 import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
-import { breakthroughSlotLabel, breakthroughEffectText } from "./skillPresentation";
+import { breakthroughSlotLabel, breakthroughEffectText, breakthroughEffectKeywords } from "./skillPresentation";
 import { addBreakthroughGradeMark, RARITY_TONE, BREAKTHROUGH_GRADE_ROMAN } from "./rarityMark";
 import { addFramedIcon, addItemFrame } from "./itemFrame";
 import { FaceFrame } from "./FaceFrame";
@@ -49,7 +49,7 @@ import { relicCollection } from "../managers/RelicCollectionManager";
 import { COLOR, textStyle } from "./theme";
 import { skillArtFor, skillArtTint, type SkillArtSlot } from "./skillArt";
 import { addSkillIconFrame, SKILL_SLOT_LABEL } from "./SkillIconFrame";
-import { BREAK_CONFIRM, BREAK_STEPS, breakthroughStepsLayout } from "./breakthroughLayout";
+import { BREAK_CONFIRM, BREAK_STEPS, breakConfirmHeight, breakthroughStepsLayout } from "./breakthroughLayout";
 import { gameApi } from "../api/FakeServer";
 import { BREAKTHROUGH_STEPS, breakthroughFragmentCost, canBreakThrough, canFeedRelic, FEED_UNIT, isBreakthroughSlotOpen, nextBreakthrough, relicExpToNext, relicLevelCap, breakthroughGrade } from "../core/relicProgression";
 import { BOND_FEROCITY_MULTIPLIER, BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL, BOND_XP_REWARD } from "../core/bond";
@@ -840,8 +840,14 @@ export class InfoManager {
     if (!def) return;
     const progress = relicProgression.getProgress(def.id);
     const step = nextBreakthrough(progress.breakthrough);
-    const height = BREAK_CONFIRM.height;
-    this.popups.open({ width: 780, height, title: t("info.breakthrough"), tilt: -1.2, ...anchorOf(from) }, (body, close) => {
+    const height = breakConfirmHeight();
+    // **누른 자리에 붙지 않고 화면 가운데에 선다.** 돌파 버튼은 오른쪽 기둥 위쪽에 있어, 거기
+    // 매달면 판이 화면 한쪽으로 쏠려 액자 셋이 가장자리에 붙는다. 닫기 X도 두지 않는다 —
+    // 고를 것이 「돌파하기」 하나뿐이라, 그만두는 손짓은 판 밖을 누르는 것으로 충분하다.
+    this.popups.open({
+      width: BREAK_CONFIRM.width, height, title: t("info.breakthrough"), tilt: -1.2,
+      dim: true, hideCloseButton: true, onClose: from.onClose,
+    }, (body, close) => {
       if (!step) {
         body.add(this.scene.add.text(0, 20, t("info.breakthrough.alreadyMax", { rarity: BREAKTHROUGH_GRADE_ROMAN[BREAKTHROUGH_GRADE_ROMAN.length - 1] }), textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0.5).setWordWrapWidth(640));
         return;
@@ -1452,7 +1458,7 @@ export class InfoManager {
     const grade = this.publicProfile
       ? Math.max(1, this.publicProfile.breakthroughGrade)
       : breakthroughGrade(relicProgression.getProgress(def.id).breakthrough);
-    openBreakthroughStepsPopup(this.scene, this.popups, def, grade);
+    openBreakthroughStepsPopup(this.scene, this.popups, this.keywords, def, grade, relicProgression.getFinalStats(def.id));
   }
 
 
@@ -1910,7 +1916,7 @@ export class InfoManager {
     const breakthrough = relicProgression.getProgress(def.id).breakthrough;
     openFerocityTraitPopup(this.scene, this.popups, this.keywords, finalDef, from, {
       breakthroughEffect: this.publicProfile || !isBreakthroughSlotOpen(breakthrough, "ferocity")
-        ? undefined : breakthroughEffectText(def, "ferocity"),
+        ? undefined : breakthroughEffectText(def, "ferocity", finalDef.stats),
     });
   }
 
@@ -1923,7 +1929,7 @@ export class InfoManager {
     // **열린 돌파 등급의 몫만 넘긴다.** 아직 뚫지 않은 단계의 효과를 쪽지에 적으면 지금 싸우는
     // 이 개체가 하지 않는 일을 말하게 된다 — 무엇이 열리는지는 등급 돋보기가 여는 표가 맡는다.
     const breakthroughEffect = slot && !this.publicProfile && isBreakthroughSlotOpen(breakthrough, slot)
-      ? breakthroughEffectText(def, slot) : undefined;
+      ? breakthroughEffectText(def, slot, finalDef.stats) : undefined;
     return buildSkillViewModel({
       def: finalDef, breakthrough, kindLabel, skill, gaugeCost, slot,
       summonTags: this.summonKeywordTags(), breakthroughEffect,
@@ -2356,8 +2362,12 @@ export function addInfoFerocityBadge(
 export function openBreakthroughStepsPopup(
   scene: Phaser.Scene,
   popups: PopupLayer,
+  /** 줄 안의 강조된 말을 눌러 뜻을 열 수 있게 하는 공용 경계. */
+  keywords: KeywordManager,
   def: RelicDef,
   grade: number,
+  /** 성장한 능력치. 넘기면 회복처럼 계산 가능한 수치가 실제 값으로 선다. */
+  stats?: Stats,
 ): void {
   const layout = breakthroughStepsLayout(BREAKTHROUGH_STEPS.length);
   // **돋보기 자리에 붙이지 않고 화면 가운데에 선다.** 네 줄이 저마다 설명을 이고 있어 판이
@@ -2409,10 +2419,16 @@ export function openBreakthroughStepsPopup(
       body.add(icon);
       // 열리는 것은 **이 개체의** 효과다. 문구는 정의에서 조립하므로 화면이 따로 적지 않고,
       // 아직 설계하지 않은 개체는 어느 슬롯이 열리는지만 말한다.
-      const opens = breakthroughEffectText(def, entry.slot) ?? breakthroughSlotLabel(entry.slot);
-      body.add(scene.add
-        .text(BREAK_STEPS.textX, y, opens, textStyle({ role: "body", size: BREAK_STEPS.textSize, color: COLOR.ink, wrap: layout.textWrap, lineSpacing: 8 }))
-        .setOrigin(0, 0.5));
+      const opens = breakthroughEffectText(def, entry.slot, stats) ?? breakthroughSlotLabel(entry.slot);
+      // **이 표의 문장도 스킬 쪽지와 같은 것이다.** 그래서 강조된 말도 같은 경계로 그려 눌리게
+      // 한다 — 맨 글자로 그리면 `[[taunt|도발]]` 같은 표기가 그대로 보이고, 같은 문장이 창마다
+      // 다른 것을 말하게 된다. 세로 가운데 맞춤은 컨테이너 높이를 재서 직접 올린다.
+      const line = keywords.layout(opens, {
+        width: layout.textWrap, size: BREAK_STEPS.textSize, lineSpacing: 8,
+        contextualKeywords: breakthroughEffectKeywords(def, entry.slot, stats),
+      });
+      line.setPosition(BREAK_STEPS.textX, y - line.height / 2);
+      body.add(line);
     });
   });
 }
@@ -2589,6 +2605,9 @@ export function buildSkillViewModel(options: {
   // 귀속 소환수는 이름표 버튼이 아니라 **패시브 본문의 태그**로 연다. 화면 어딘가에 버튼을
   // 따로 세우면 "누구를 부르는가"가 그 패시브를 읽는 자리와 갈라져, 같은 사실이 두 곳에 선다.
   const summonTags = options.summonTags ?? [];
+  // 돌파 줄이 실제 값으로 말하는 수는 그 자리에서 산출 근거를 물을 수 있어야 한다. 스킬 본문의
+  // `heal-value`와 ID가 달라 한 쪽지에 두 회복 수치가 함께 서도 서로 덮어쓰지 않는다.
+  const breakthroughTags = breakthroughEffect && slot ? breakthroughEffectKeywords(finalDef, slot, finalDef.stats) : [];
   const shieldDetail = "kind" in skill ? passiveShieldKeyword(skill as Passive, attacker?.def.stats.atk) : undefined;
   const allyHealingPower = "allyHealingPower" in skill ? (skill as Ultimate).allyHealingPower : undefined;
   const healDetail = allyHealingPower !== undefined ? allyHealPowerKeyword(allyHealingPower, attacker?.def.stats.ap) : undefined;
@@ -2614,6 +2633,7 @@ export function buildSkillViewModel(options: {
     // 이 스킬을 여는 자리에서만 주입한다(메테의 스타카토와 같은 자리다).
     contextualKeywords: [
       ...summonTags,
+      ...breakthroughTags,
       damageDetail, shieldDetail, healDetail,
       "kind" in skill ? undefined : periodicStackKeyword(skill as Skill),
       // 「고통의 희열」은 패시브 본문이 직접 가리키는 태그라 그 쪽지에도 함께 실린다.

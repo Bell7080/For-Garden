@@ -176,7 +176,7 @@ export class EnemyInfoPopup {
     const gradeContainer = scene.add.container(gradeRow.x, gradeRow.y);
     addBreakthroughGradeMark(scene, gradeContainer, 0, 0, gradeRow.size, grade);
     chrome.add(gradeContainer);
-    addInfoMagnifier(scene, this.popups, chrome, gradeMagnifier.x, gradeMagnifier.y, () => openBreakthroughStepsPopup(scene, this.popups, snapshot.def, grade));
+    addInfoMagnifier(scene, this.popups, chrome, gradeMagnifier.x, gradeMagnifier.y, () => openBreakthroughStepsPopup(scene, this.popups, this.keywords, snapshot.def, grade, snapshot.def.stats));
 
     const panel = addInfoPanel(scene, chrome, column.x, enemyInfoPanelCenterY(levelPanel), column.width, levelPanel.height);
     addSectionTitle(scene, column.x - column.width / 2, levelPanel.top - 4, t("info.level"), { parent: chrome });
@@ -258,7 +258,7 @@ export class EnemyInfoPopup {
       // 패시브 위에만 이 개체의 피버 발현을 작게 얹는다. 야성은 벌이 아니라 상이라는 표시다.
       if (index === 0) {
         addInfoFerocityBadge(this.scene, this.popups, chrome, container.x, container.y + ENEMY_INFO.ferocityBadgeOffsetY, def, (from) => {
-          const breakthroughEffect = isBreakthroughSlotOpen(snapshot.breakthrough, "ferocity") ? breakthroughEffectText(def, "ferocity") : undefined;
+          const breakthroughEffect = isBreakthroughSlotOpen(snapshot.breakthrough, "ferocity") ? breakthroughEffectText(def, "ferocity", def.stats) : undefined;
           openFerocityTraitPopup(this.scene, this.popups, this.keywords, def, { ...from, x: SCREEN_CENTER.x + from.x, y: SCREEN_CENTER.y + from.y }, { breakthroughEffect });
         });
       }
@@ -273,7 +273,7 @@ export class EnemyInfoPopup {
   ): void {
     const { def, breakthrough } = snapshot;
     // 적도 돌파로 스킬에 효과가 붙는다. 열린 등급의 몫만 노란 줄로 선다.
-    const breakthroughEffect = isBreakthroughSlotOpen(breakthrough, entry.slot) ? breakthroughEffectText(def, entry.slot) : undefined;
+    const breakthroughEffect = isBreakthroughSlotOpen(breakthrough, entry.slot) ? breakthroughEffectText(def, entry.slot, def.stats) : undefined;
     openSkillPopup(this.scene, this.popups, this.keywords, buildSkillViewModel({
       def, breakthrough, kindLabel: entry.label, skill: entry.skill, gaugeCost: entry.gaugeCost, slot: entry.slot,
       breakthroughEffect,

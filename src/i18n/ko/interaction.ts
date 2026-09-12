@@ -20,9 +20,9 @@ export const INTERACTION_KO = {
   "interaction.send": "파견 보내기",
   "interaction.rewardTitle": "교류 보상",
 
-  "interaction.exchange.owned": "보유 표본  {owned}",
-  "interaction.exchange.required": "요구량  {amount}",
-  "interaction.exchange.result": "교환 결과  치즈케이크 {amount}",
+  "interaction.exchange.owned": "보유",
+  "interaction.exchange.required": "요구",
+  "interaction.exchange.result": "교환 결과",
   "interaction.exchange.remaining": "남은 교환 횟수  {remaining}",
   "interaction.exchange.busy": "처리 중",
   "interaction.exchange.do": "교환",

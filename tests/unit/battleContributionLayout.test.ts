@@ -39,8 +39,10 @@ describe("battle contribution panel layout", () => {
     // 마지막 행의 액자까지 판 아래를 넘지 않는다.
     const lastFaceBottom = L.rows.top + (L.rows.count - 1) * (L.rows.height + L.rows.gap) + L.face.offsetY + L.face.size / 2;
     expect(lastFaceBottom).toBeLessThanOrEqual(panel.top + panel.height);
-    // 액자가 한눈에 읽힐 만큼 크다 — 여는 칩이 판 밖으로 나가 이 자리가 통째로 비었다.
-    expect(L.face.size).toBeGreaterThanOrEqual(80);
+    // 액자는 얼굴이 읽힐 만큼 크되 **결과 화면의 것보다는 작다** — 싸우는 동안 전장 옆에 붙는
+    // 판이라 액자가 커진 만큼 그 뒤의 전장을 가린다.
+    expect(L.face.size).toBeGreaterThanOrEqual(60);
+    expect(L.face.size).toBeLessThan(100);
   });
 
   it("접으면 판이 화면 왼쪽 밖으로 완전히 나간다", () => {

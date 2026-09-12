@@ -3,12 +3,14 @@ import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
 import {
   BREAK_CONFIRM,
   BREAK_STEPS,
+  breakConfirmHeight,
   breakthroughStepsLayout,
   stepsFirstRowClearsBevel,
 } from "../../src/ui/breakthroughLayout";
 import { BACK_BUTTON_SIZE, BACK_SLOT, POPUP_TITLE_SIZE, popupTitleBand } from "../../src/ui/popupGeometry";
 import { BREAKTHROUGH_STEPS } from "../../src/core/relicProgression";
 import { breakthroughEffectText } from "../../src/ui/skillPresentation";
+import { parseKeywordText } from "../../src/data/keywords";
 import { getRelic } from "../../src/data/relics";
 
 /** `info.ts`는 Phaser를 들여오므로 node 환경에서는 소스 문자열로만 읽는다. */
@@ -75,7 +77,10 @@ describe("한계 돌파 표", () => {
     for (const step of BREAKTHROUGH_STEPS) {
       const text = breakthroughEffectText(getRelic("anky"), step.slot);
       expect(text).toBeDefined();
-      expect(Math.ceil(text!.length / perLine), `${step.slot}: ${text}`).toBeLessThanOrEqual(maxLines);
+      // 화면에 실제로 서는 것은 `[[taunt|도발]]`이 아니라 「도발」이다 — 태그 표기를 그대로
+      // 세면 같은 문장이 소스에서만 길어져, 줄이 남는데도 넘친다고 읽힌다.
+      const shown = parseKeywordText(text!).map((segment) => segment.text).join("");
+      expect(Math.ceil(shown.length / perLine), `${step.slot}: ${shown}`).toBeLessThanOrEqual(maxLines);
     }
   });
 
@@ -101,7 +106,12 @@ describe("한계 돌파 확정 창", () => {
     // 두면 판만 길어지고, 같은 문장이 세 곳에 서서 어느 것이 최신인지 알 수 없다.
     expect(Object.keys(BREAK_CONFIRM)).not.toContain("effectY");
     expect(Object.keys(BREAK_CONFIRM)).not.toContain("effectExtra");
-    expect(BREAK_CONFIRM.actionY + BREAK_CONFIRM.action.height / 2).toBeLessThan(BREAK_CONFIRM.height / 2 + BREAK_CONFIRM.height / 2);
+    // 판 높이는 버튼 아래 여백에서 거꾸로 나온다 — 손으로 적어 두면 줄을 내릴 때마다 어긋난다.
+    expect(breakConfirmHeight()).toBe(BREAK_CONFIRM.actionY + BREAK_CONFIRM.action.height / 2 + BREAK_CONFIRM.actionBottomMargin);
+    // 상한 줄과 버튼은 위 덩어리(등급 표식·액자)에서 충분히 내려앉는다.
+    expect(BREAK_CONFIRM.capY - BREAK_CONFIRM.gradeY).toBeGreaterThanOrEqual(BREAK_CONFIRM.gradeSize);
+    expect(BREAK_CONFIRM.actionY - BREAK_CONFIRM.action.height / 2)
+      .toBeGreaterThan(BREAK_CONFIRM.costY + BREAK_CONFIRM.costFrame / 2 + 58);
   });
 
   it("은 두 창이 같은 별 수를 말한다", () => {
@@ -150,8 +160,11 @@ describe("한계 돌파 표의 열림 표시", () => {
   });
 
   it("은 설명을 두 줄 다 같은 잉크로 적는다", () => {
-    // 어느 쪽이든 읽으러 온 내용이라 안 열린 줄의 설명도 흐리게 적지 않는다.
-    expect(INFO_SOURCE).toContain("color: COLOR.ink, wrap: layout.textWrap");
+    // 어느 쪽이든 읽으러 온 내용이라 안 열린 줄의 설명도 흐리게 적지 않는다. 줄은 스킬 쪽지와
+    // 같은 경계(`keywords.layout`)로 그리므로 색을 따로 고르지 않고 기본 잉크를 그대로 받는다.
+    const call = INFO_SOURCE.slice(INFO_SOURCE.indexOf("const line = keywords.layout(opens, {"));
+    expect(call.startsWith("const line = keywords.layout(opens, {")).toBe(true);
+    expect(call.slice(0, call.indexOf("});"))).not.toContain("color:");
     expect(INFO_SOURCE).not.toContain("reached ? COLOR.ink : COLOR.inkDim");
   });
 });

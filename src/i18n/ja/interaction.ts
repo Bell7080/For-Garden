@@ -20,9 +20,9 @@ export const INTERACTION_JA = {
   "interaction.send": "派遣する",
   "interaction.rewardTitle": "交流報酬",
 
-  "interaction.exchange.owned": "所持標本  {owned}",
-  "interaction.exchange.required": "必要量  {amount}",
-  "interaction.exchange.result": "交換結果  チーズケーキ {amount}",
+  "interaction.exchange.owned": "所持",
+  "interaction.exchange.required": "必要",
+  "interaction.exchange.result": "交換結果",
   "interaction.exchange.remaining": "残り交換回数  {remaining}",
   "interaction.exchange.busy": "処理中",
   "interaction.exchange.do": "交換",

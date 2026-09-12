@@ -24,16 +24,29 @@ import { POPUP_BODY_BEVEL_RATIO } from "./popupGeometry";
  */
 export const BREAK_CONFIRM = {
   width: 780,
-  height: 760,
-  gradeY: 108,
+  gradeY: 112,
   gradeSize: 96,
-  capY: 208,
-  costY: 370,
+  /**
+   * 상한 줄과 「돌파하기」는 **위쪽 덩어리에서 한 뼘씩 더 내려앉는다.**
+   *
+   * 등급 표식 바로 아래에 붙이면 세 줄(등급 · 상한 · 액자)이 한 덩어리로 뭉쳐 어느 것이
+   * 무엇을 말하는지 갈라 읽히지 않고, 버튼도 액자 밑 두 줄(이름·`필요 N`)을 파고들어 요구
+   * 수치가 눌린 것처럼 보인다. 판 높이는 버튼 아래 여백에서 거꾸로 잡는다.
+   */
+  capY: 236,
+  costY: 396,
   costFrame: 124,
   costStep: 236,
-  actionY: 566,
+  actionY: 612,
   action: { width: 420, height: 88 },
+  /** 버튼 아래끝에서 판 밑변까지. 이보다 넓으면 빈 판이 한 뼘 더 길어 보인다. */
+  actionBottomMargin: 64,
 } as const;
+
+/** 확정 창의 높이는 버튼 아래 여백에서 거꾸로 나온다. 화면이 높이를 손으로 적지 않는다. */
+export function breakConfirmHeight(): number {
+  return BREAK_CONFIRM.actionY + BREAK_CONFIRM.action.height / 2 + BREAK_CONFIRM.actionBottomMargin;
+}
 
 /**
  * 표 — **별마다 무엇이 열리는가**만 읽는 창이다.

@@ -14,6 +14,7 @@ import { PopupLayer } from "../ui/PopupLayer";
 import { PurchasePopup } from "../ui/PurchasePopup";
 import { session } from "../state/session";
 import { productActionModel } from "../core/productAcquisition";
+import { addPriceTag, PRICE_TAG } from "../ui/priceTag";
 
 /** 현금 결제 카탈로그를 인게임 재화 상점과 분리해 소유하는 독립 프리미엄 씬이다. */
 export class PremiumScene extends Phaser.Scene {
@@ -71,8 +72,16 @@ export class PremiumScene extends Phaser.Scene {
       : product.description;
     card.add(this.add.text(-390, -35, benefitNotice, textStyle({ role: "body", size: 24, color: COLOR.inkDim, wrap: 590, lineSpacing: 8 })).setOrigin(0, 0));
     const action = productActionModel(product.acquisition, { remaining: product.remaining, available: product.purchasable });
-    const price = action.priceText;
-    card.add(this.add.text(360, -28, price, textStyle({ role: "emphasis", size: 30, color: COLOR.accentText })).setOrigin(1, 0.5));
+    // 재화로 값을 치르는 묶음은 다른 화면과 같은 **액자**로 선다. 플랫폼 결제·광고·무료는 그릴
+    // 재화 그림이 없으므로 카탈로그가 준 문자열을 그대로 적는다.
+    if (product.acquisition.kind === "currency") {
+      addPriceTag(this, card, 360 - PRICE_TAG.emphasizedSize / 2, -28, product.acquisition.currency, product.acquisition.amount, {
+        size: PRICE_TAG.emphasizedSize,
+        short: session.wallet[product.acquisition.currency] < product.acquisition.amount,
+      });
+    } else {
+      card.add(this.add.text(360, -28, action.priceText, textStyle({ role: "emphasis", size: 30, color: COLOR.accentText })).setOrigin(1, 0.5));
+    }
     card.add(this.add.text(360, 52, action.disabledReason ?? t("shop.premium.remaining", { remaining: product.remaining, limit: product.purchaseLimit }), textStyle({ role: "body", size: 22, color: product.purchasable ? COLOR.ink : COLOR.inkDim })).setOrigin(1, 0));
     const hit = this.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
     hit.on("pointerdown", () => card.setScale(1.06));

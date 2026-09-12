@@ -2,7 +2,7 @@ import type { DamagePreview } from "../core/damage";
 import type { KeywordDef } from "../data/keywords";
 import type { KeywordTextOptions } from "../managers/KeywordManager";
 import type { BreakthroughSlot } from "../core/relicProgression";
-import type { BasicAttack, BasicAttackStep, CombatStatusEffect, FerocityTrait, Passive, RelicDef, Skill, Ultimate } from "../core/types";
+import type { BasicAttack, BasicAttackStep, CombatStatusEffect, FerocityTrait, Passive, RelicDef, Skill, Stats, Ultimate } from "../core/types";
 import type { ScalingStatId } from "../core/damage";
 import { t } from "../i18n";
 
@@ -955,20 +955,26 @@ export function breakthroughSlotLabel(slot: BreakthroughSlot): string {
  * 정의하지 않은 슬롯은 `undefined`다. 화면은 그 줄을 아예 그리지 않는다 — 아직 설계하지 않은
  * 개체에 "효과 없음"이라고 적으면 없는 규칙을 말하는 셈이다.
  */
-export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot): string | undefined {
+export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, stats?: Stats): string | undefined {
   const effects = def.breakthroughEffects;
   if (!effects) return undefined;
   if (slot === "basic" && effects.basic) {
     const effect = effects.basic;
     // 주기 이름이 있으면 그것이 이 효과가 얹히는 그 한 방의 이름이다(칩에 뜨는 이름과 같다).
     const trigger = def.basic.statusEffectStackName ?? def.basic.name;
-    return t("skill.breakthrough.effect.basic", {
+    // **회복량은 계산할 수 있으면 실제 값으로 말한다.** 능력치를 아는 자리(정보창·적 팝업)에서는
+    // 지금 성장한 대로의 수를 태그로 세우고, 모르는 자리(도감)에서만 어느 능력치의 몇 %인지로
+    // 되돌아간다 — 스킬 본문이 쓰는 것과 같은 규칙이다.
+    const heal = breakthroughHealAmount(effect, stats);
+    return t(heal === undefined ? "skill.breakthrough.effect.basic" : "skill.breakthrough.effect.basicValue", {
       trigger, stat: statScalingLabel(effect.healScalingStat),
       percent: trim(effect.healPercent), seconds: trim(effect.tauntSeconds),
+      heal: `[[${BREAKTHROUGH_HEAL_ID}|${heal}]]`,
     });
   }
   if (slot === "ultimate" && effects.ultimate) {
     const effect = effects.ultimate;
+    // 피해량의 몇 %는 **명중 시점의 상대값**이라 실제 수로 바꾸지 않는다(대상마다 달라진다).
     return t("skill.breakthrough.effect.ultimate", {
       percent: trim(effect.powerPercent), name: def.ultimate.name,
       seconds: trim(effect.intervalSeconds), casts: countLabel(effect.casts),
@@ -984,6 +990,33 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot): s
     return t("skill.breakthrough.effect.passive", { name: def.passive.name, percent: trim(effects.passive.percent) });
   }
   return undefined;
+}
+
+/** 돌파 회복 태그의 ID. 스킬 본문의 `heal-value`와 갈라 두어 두 수가 한 쪽지에서 섞이지 않는다. */
+const BREAKTHROUGH_HEAL_ID = "breakthrough-heal-value";
+
+/** 돌파 회복량. 능력치를 모르면 계산하지 않고 위력 %로 되돌아간다. */
+function breakthroughHealAmount(effect: { healScalingStat: keyof Stats; healPercent: number }, stats?: Stats): number | undefined {
+  if (!stats) return undefined;
+  return Math.round(stats[effect.healScalingStat] * effect.healPercent / 100);
+}
+
+/**
+ * 돌파 설명문이 쓰는 **문맥 용어**.
+ *
+ * 실제 값으로 바꾼 수는 그 자리에서 "어디서 나온 수인가"를 물을 수 있어야 한다 — 스킬 본문의
+ * 수치가 그러하듯 눌러서 산출 근거를 읽는다. 스킬이 이미 쓰는 `heal-value`와 ID를 갈라 두는
+ * 이유는, 한 쪽지에 스킬의 회복과 돌파의 회복이 함께 설 수 있기 때문이다.
+ */
+export function breakthroughEffectKeywords(def: RelicDef, slot: BreakthroughSlot, stats?: Stats): KeywordDef[] {
+  const effect = slot === "basic" ? def.breakthroughEffects?.basic : undefined;
+  if (!effect) return [];
+  const heal = breakthroughHealAmount(effect, stats);
+  if (heal === undefined) return [];
+  return [{
+    id: BREAKTHROUGH_HEAL_ID, term: String(heal), kind: "rule",
+    description: t("skill.keyword.heal.fromStat", { stat: statScalingLabel(effect.healScalingStat), percent: trim(effect.healPercent) }),
+  }];
 }
 
 /** 회복·피해의 기준이 되는 능력치 이름. 스킬 본문이 쓰는 것과 같은 표를 읽는다. */

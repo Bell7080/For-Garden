@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { formatCurrency } from "../core/formatCurrency";
+import { addPriceTag, PRICE_TAG } from "./priceTag";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { chipPoints, drawFrameVignette, drawHairline, drawLayer, slantedRect } from "./holo";
 import { addFramedIcon } from "./itemFrame";
@@ -128,17 +129,13 @@ export class TradePackageCard extends Phaser.GameObjects.Container {
       });
     });
 
-    // 비용은 아이콘과 수를 바짝 붙여 한 덩어리로 읽히게 한다.
+    // **드는 것도 받는 것과 같은 액자다.** 맨 그림 옆에 수를 적어 두었을 때는 같은 젬이 위에서는
+    // 액자 안에, 아래에서는 글로 서서 한 카드 안에 두 양식이 보였다.
     if (view.cost) {
-      const iconKey = CURRENCY_ICON_BY_WALLET[view.cost.currency];
-      let cursor = metrics.left;
-      if (scene.textures.exists(iconKey)) {
-        this.add(scene.add.image(cursor + 19, metrics.costY, iconKey).setDisplaySize(38, 38).setAlpha(view.soldOut ? 0.6 : 1));
-        cursor += 44;
-      }
-      this.add(scene.add.text(cursor, metrics.costY, formatCurrency(view.cost.amount), textStyle({ role: "display", size: 32, color: view.soldOut ? COLOR.inkDim : COLOR.ink }))
-        .setOrigin(0, 0.5)
-        .setShadow(3, 4, "#04060a", 0, true, true));
+      addPriceTag(scene, this, metrics.left + PRICE_TAG.size / 2, metrics.costY, view.cost.currency, view.cost.amount, {
+        iconAlpha: view.soldOut ? 0.6 : 1,
+        color: accent,
+      });
     }
     // 왜 지금 못 사는지는 제한 줄이 그대로 말한다(`소진`). 개발 상태 문구를 따로 적지 않는다.
     this.add(scene.add.text(metrics.right, metrics.limitY, view.limitLabel, textStyle({ role: "emphasis", size: 22, color: view.soldOut ? COLOR.dangerText : COLOR.inkDim }))

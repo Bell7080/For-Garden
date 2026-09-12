@@ -165,12 +165,13 @@ describe("돌파 효과 문구", () => {
     const basic = breakthroughEffectText(torika, "basic");
     expect(basic).toContain(torika.basic.statusEffectStackName!);
     expect(basic).toContain("방어력의 60%");
-    expect(basic).toContain("1초 동안 도발");
+    // 「도발」은 규칙어라 태그로 걸린다 — 쪽지에서 눌러 뜻을 열 수 있어야 한다.
+    expect(basic).toContain("1초 동안 [[taunt|도발]]");
     const ultimate = breakthroughEffectText(torika, "ultimate");
     expect(ultimate).toContain(torika.ultimate.name);
     expect(ultimate).toContain("1.5초 간격");
     expect(ultimate).toContain("두 번 더");
-    expect(breakthroughEffectText(torika, "ferocity")).toContain("폭주가 끝날 때");
+    expect(breakthroughEffectText(torika, "ferocity")).toContain("[[ferocity|폭주]]가 끝날 때");
     expect(breakthroughEffectText(torika, "passive")).toContain(torika.passive.name);
   });
 

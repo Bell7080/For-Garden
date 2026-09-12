@@ -3,10 +3,13 @@ import { t } from "../i18n";
 import type { BattleContributionRow, ContributionCategory } from "../core/battleContribution";
 import { COLOR } from "./theme";
 
-/** 전투 HUD와 종료 팝업이 공유하는 탭 순서와 플레이어 문구다. */
-export const CONTRIBUTION_CATEGORIES: readonly { id: ContributionCategory; label: string }[] = [
-  { id: "attack", label: t("contribution.attack") }, { id: "defense", label: t("contribution.defense") }, { id: "healing", label: t("contribution.heal") },
-];
+/** 전투 HUD와 종료 팝업이 공유하는 탭 순서다. */
+export const CONTRIBUTION_CATEGORIES: readonly ContributionCategory[] = ["attack", "defense", "healing"];
+
+/** 탭의 이름. 표에 넣으면 모듈을 읽는 순간 굳어 언어를 따라오지 않는다. */
+export function contributionCategoryLabel(category: ContributionCategory): string {
+  return t(`contribution.${category === "healing" ? "heal" : category}`);
+}
 
 /** Phaser 객체와 무관한 한 행의 표시값이라 두 UI가 막대 산식과 축약 수치를 복제하지 않는다. */
 export interface ContributionRenderRow { source: BattleContributionRow; value: string; fill: number }

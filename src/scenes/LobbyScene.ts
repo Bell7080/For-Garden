@@ -5,6 +5,7 @@ import { bindDebugReadyLifecycle, setDebugReady, setDebugScene, setDebugStorefro
 import { getRelic } from "../data/relics";
 import { enableHitOnClick, spawnPuppet } from "../puppets/assets";
 import { session } from "../state/session";
+import { latinEcho } from "../ui/latinEcho";
 import { BottomNav, NAV_TOP } from "../ui/BottomNav";
 import { Button } from "../ui/Button";
 import { RailButton } from "../ui/RailButton";
@@ -163,7 +164,7 @@ export class LobbyScene extends Phaser.Scene {
       width: LOBBY_ACTION_BOUNDS.sortie.width,
       height: LOBBY_ACTION_BOUNDS.sortie.height,
       label: t("lobby.sortie"),
-      sub: "SORTIE",
+      sub: latinEcho(t("lobby.sortie"), "SORTIE"),
       fontSize: 52,
       variant: "primary",
       perspective: "right",
@@ -179,7 +180,7 @@ export class LobbyScene extends Phaser.Scene {
       width: 292,
       height: 106,
       label: t("lobby.interaction"),
-      sub: "EXCHANGE",
+      sub: latinEcho(t("lobby.interaction"), "EXCHANGE"),
       fontSize: 34,
       perspective: "left",
       tilt: 6,

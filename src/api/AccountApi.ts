@@ -79,7 +79,12 @@ export interface AccountApi {
   mergeGuestSave(request: GuestSaveMergeRequest): Promise<AccountResult<RemoteSaveDocument>>;
 }
 
-const UNSUPPORTED = t("error.account.noSdk");
+/**
+ * 미지원 메시지는 부를 때 고른다.
+ *
+ * 상수로 두면 **모듈을 읽는 순간** 굳어, 언어를 바꿔도 그때 고른 문장이 그대로 남는다.
+ */
+const unsupportedMessage = (): string => t("error.account.noSdk");
 
 /** SDK가 없는 웹 프로토타입은 성공을 가장하지 않고 모든 원격 동작에 명확한 미지원 결과를 준다. */
 export class UnsupportedAccountApi implements AccountApi {
@@ -96,7 +101,7 @@ export class UnsupportedAccountApi implements AccountApi {
   async deleteRemoteSave(_expectedRemote: RemoteSavePrecondition): Promise<AccountResult<void>> { return this.unsupported(); }
   async mergeGuestSave(_request: GuestSaveMergeRequest): Promise<AccountResult<RemoteSaveDocument>> { return this.unsupported(); }
 
-  private unsupported<T>(): AccountResult<T> { return { ok: false, code: "unsupported", message: UNSUPPORTED }; }
+  private unsupported<T>(): AccountResult<T> { return { ok: false, code: "unsupported", message: unsupportedMessage() }; }
 }
 
 /** 실제 SDK 어댑터가 주입되기 전 사용하는 유일한 기본 구현이다. */

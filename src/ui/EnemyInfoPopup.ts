@@ -18,12 +18,12 @@ import { drawFrameVignette, drawGlassFade, drawShapeOutline } from "./holo";
 import { popupArtShape, popupBodyShapeMask } from "./popupArt";
 import { addBreakthroughGradeMark } from "./rarityMark";
 import { addSectionTitle } from "./SectionTitle";
-import { addSkillIconFrame, SKILL_SLOT_LABEL } from "./SkillIconFrame";
+import { addSkillIconFrame, skillSlotLabel } from "./SkillIconFrame";
 import { openSkillPopup } from "./SkillPopup";
 import { breakthroughEffectText } from "./skillPresentation";
 import type { SkillArtSlot } from "./skillArt";
 import { StatRadar } from "./StatRadar";
-import { REACH_LABEL, STAT_TONE } from "./statTones";
+import { reachLabel, STAT_TONE } from "./statTones";
 import { COLOR, textStyle } from "./theme";
 import { t } from "../i18n";
 
@@ -208,7 +208,7 @@ export class EnemyInfoPopup {
     addInfoMagnifier(scene, this.popups, panel, column.x + column.width / 2 - 30, enemyInfoPanelCenterY(statPanel) + statMagnifier.offsetY, (from) => openExtraStatsPopup(scene, this.popups, def, def.stats, from), true);
     // 사거리는 오각형에 없는 축이라 제목 바로 아래에 이름표처럼 한 줄로만 선다.
     panel.add(scene.add
-      .text(reach.offsetX, reach.offsetY, t("info.enemy.reach", { tier: REACH_LABEL[def.reachTier] }), textStyle({ role: "body", size: 22, color: COLOR.inkDim }))
+      .text(reach.offsetX, reach.offsetY, t("info.enemy.reach", { tier: reachLabel(def.reachTier) }), textStyle({ role: "body", size: 22, color: COLOR.inkDim }))
       .setOrigin(0, 0.5));
     const chart = new StatRadar(scene, 0, radar.offsetY, radar.radius, {
       size: 24,
@@ -231,9 +231,9 @@ export class EnemyInfoPopup {
   private paintSkills(chrome: Phaser.GameObjects.Container, snapshot: EnemyInfoSnapshot): void {
     const { def } = snapshot;
     const entries: { label: string; slot: SkillArtSlot; skill: Skill | Passive; gaugeCost?: number }[] = [
-      { label: SKILL_SLOT_LABEL.passive, slot: "passive", skill: { ...def.passive, power: def.passive.value, damageType: "physical" } as unknown as Skill },
-      { label: SKILL_SLOT_LABEL.basic, slot: "basic", skill: def.basic },
-      { label: SKILL_SLOT_LABEL.ultimate, slot: "ultimate", skill: def.ultimate, gaugeCost: (def.ultimate as Ultimate).cost },
+      { label: skillSlotLabel("passive"), slot: "passive", skill: { ...def.passive, power: def.passive.value, damageType: "physical" } as unknown as Skill },
+      { label: skillSlotLabel("basic"), slot: "basic", skill: def.basic },
+      { label: skillSlotLabel("ultimate"), slot: "ultimate", skill: def.ultimate, gaugeCost: (def.ultimate as Ultimate).cost },
     ];
     const columns = enemyInfoSkillColumns(entries.length);
     entries.forEach((entry, index) => {

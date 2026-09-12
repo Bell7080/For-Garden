@@ -41,7 +41,8 @@ const DRAG_SLOP = 18;
 /** 도감 정렬 기준. 버튼 하나가 이 순서대로 돌아간다. */
 type SortMode = "number" | "rarity" | "power";
 const SORT_ORDER: readonly SortMode[] = ["number", "rarity", "power"];
-const SORT_LABELS: Record<SortMode, string> = { number: t("relics.sort.id"), rarity: t("relics.sort.rarity"), power: t("relics.sort.power") };
+/** 정렬 기준의 이름. 표가 아니라 함수인 이유는 표가 모듈을 읽는 순간 굳기 때문이다. */
+const sortLabel = (mode: SortMode): string => t(`relics.sort.${mode === "number" ? "id" : mode}`);
 
 export class RelicsScene extends Phaser.Scene {
   private info!: CharacterInfoManager;
@@ -130,7 +131,7 @@ export class RelicsScene extends Phaser.Scene {
     // 정렬은 버튼 **하나**다. 기준마다 버튼을 세우면 지금 어느 기준인지 버튼 색으로 읽어야
     // 하고, 기준이 늘 때마다 줄이 좁아진다. 누를 때마다 다음 기준으로 돌아간다.
     this.sortButton = new Button(this, BASE_WIDTH / 2, 262, {
-      width: 460, height: 82, label: SORT_LABELS[this.sortMode], fontSize: 26,
+      width: 460, height: 82, label: sortLabel(this.sortMode), fontSize: 26,
       onClick: () => this.setSortMode(SORT_ORDER[(SORT_ORDER.indexOf(this.sortMode) + 1) % SORT_ORDER.length]),
     });
 
@@ -259,7 +260,7 @@ export class RelicsScene extends Phaser.Scene {
   private setSortMode(mode: SortMode): void {
     if (this.sortMode === mode) return;
     this.sortMode = mode;
-    this.sortButton.setLabel(SORT_LABELS[mode]);
+    this.sortButton.setLabel(sortLabel(mode));
     this.refresh();
   }
 

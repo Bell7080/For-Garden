@@ -82,8 +82,13 @@ const POPUP = {
   minHeight: 400,
 } as const;
 
-/** 돌파로 붙은 줄이 차지하는 몫. 있을 때만 그 높이가 판에 더해진다. */
-const BREAKTHROUGH_LINE = { gap: 34, labelGap: 10, label: t("info.breakthrough"), size: 25 } as const;
+/**
+ * 돌파로 붙은 줄이 차지하는 몫. 있을 때만 그 높이가 판에 더해진다.
+ *
+ * **이름표 문구는 여기 두지 않는다** — 모듈을 읽는 순간의 언어로 굳어, 나중에 언어를 바꿔도
+ * 그 한 줄만 처음 언어로 남는다. 그릴 때 `t()`로 고른다.
+ */
+const BREAKTHROUGH_LINE = { gap: 34, labelTop: 8, labelGap: 10, size: 25 } as const;
 
 /**
  * 스킬 하나를 설명하는 정형 팝업.
@@ -111,7 +116,7 @@ export function openSkillPopup(
   }));
   const breakthroughLabelHeight = breakthrough === undefined ? 0 : Math.round(BREAKTHROUGH_LINE.size * 1.4);
   const breakthroughBlock = breakthrough === undefined ? 0
-    : BREAKTHROUGH_LINE.gap + breakthroughLabelHeight + BREAKTHROUGH_LINE.labelGap + breakthrough.height;
+    : BREAKTHROUGH_LINE.gap + BREAKTHROUGH_LINE.labelTop + breakthroughLabelHeight + BREAKTHROUGH_LINE.labelGap + breakthrough.height;
   const height = Math.max(
     POPUP.minHeight,
     POPUP.descriptionY + description.height + breakthroughBlock + POPUP.hintGap + POPUP.hintBottom,
@@ -187,10 +192,10 @@ export function openSkillPopup(
       const gapY = description.y + description.height + BREAKTHROUGH_LINE.gap;
       body.add(drawHairline(scene, 0, gapY - 12, POPUP.width - 96, { color: COLOR.accent, alpha: 0.28 }));
       const mark = scene.add
-        .text(left + 60, gapY, BREAKTHROUGH_LINE.label, textStyle({ role: "display", size: BREAKTHROUGH_LINE.size, color: COLOR.accentText }))
+        .text(left + 60, gapY + BREAKTHROUGH_LINE.labelTop, t("info.breakthrough"), textStyle({ role: "display", size: BREAKTHROUGH_LINE.size, color: COLOR.accentText }))
         .setOrigin(0, 0);
       body.add(mark);
-      body.add(breakthrough.setPosition(left + 60, gapY + breakthroughLabelHeight + BREAKTHROUGH_LINE.labelGap));
+      body.add(breakthrough.setPosition(left + 60, gapY + BREAKTHROUGH_LINE.labelTop + breakthroughLabelHeight + BREAKTHROUGH_LINE.labelGap));
     }
 
     body.add(

@@ -34,12 +34,16 @@ export const REACH_TONE: Readonly<Record<ReachTier, number>> = {
   ranged: 0xe0b64a,
 };
 
-/** 화면에 적는 사거리 이름. */
-export const REACH_LABEL: Readonly<Record<ReachTier, string>> = {
-  melee: t("reach.close"),
-  mid: t("reach.mid"),
-  ranged: t("reach.far"),
-};
+/**
+ * 화면에 적는 사거리 이름.
+ *
+ * 표가 아니라 함수인 이유는 **표는 모듈을 읽는 순간 굳기 때문이다** — 문구 표가 아직 도착하기
+ * 전에 한 번 고르고 나면 언어를 바꿔도 그 낱말만 옛 언어로 남는다(일본어 능력치 판에서
+ * `射程 · 중거리`가 그랬다).
+ */
+export function reachLabel(tier: ReachTier): string {
+  return t(`reach.${tier === "melee" ? "close" : tier === "mid" ? "mid" : "far"}`);
+}
 
 /** 사거리 색을 텍스트 스타일이 받는 `#rrggbb` 문자열로 바꾼다. */
 export function reachToneHex(tier: ReachTier): string {

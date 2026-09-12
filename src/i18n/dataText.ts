@@ -30,6 +30,7 @@ export type DataOverlay = Readonly<Record<string, string>>;
  */
 const LOADERS: Partial<Record<LanguageId, () => Promise<{ default: DataOverlay }>>> = {
   ja: () => import("./ja/data"),
+  en: () => import("./en/data"),
 };
 
 const loaded = new Map<LanguageId, DataOverlay>();

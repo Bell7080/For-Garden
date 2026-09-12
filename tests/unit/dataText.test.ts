@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { getRelic } from "../../src/data/relics";
-import { loadDataOverlay, registeredDataTexts, languagesWithDataOverlay } from "../../src/i18n";
+import { dataText, loadDataOverlay, registeredDataTexts, languagesWithDataOverlay } from "../../src/i18n";
 import { LANGUAGE_IDS } from "../../src/core/language";
 
 /** 언어별 덮어쓰기 표를 통째로 훑는다. 새 언어를 더하면 검사 대상이 저절로 늘어난다. */
@@ -31,10 +31,9 @@ describe("정적 콘텐츠 번역", () => {
 
   it("은 덮을 값이 없는 자리를 한국어로 남긴다", async () => {
     await loadDataOverlay("ja");
-    // 관찰 기록은 아직 옮기지 않았다 — 빈칸이 아니라 한국어가 서야 한다.
-    const record = getRelic("anky").unlockRecord;
-    expect(record.status).toBe("recorded");
-    if (record.status === "recorded") expect(record.text).toContain("토리카");
+    // 번역이 늦은 자리는 빈칸이 아니라 한국어가 서야 한다. 실제 표의 구멍에 기대지 않고
+    // 없는 키로 직접 확인한다 — 표가 다 차면 그 구멍이 사라져 검사도 함께 사라진다.
+    expect(dataText("relic.__nobody__.name", "토리카")).toBe("토리카");
   });
 });
 
@@ -51,6 +50,18 @@ describe("덮어쓰기 표", () => {
   it("의 언어는 저장이 받아들이는 목록 안에 있다", () => {
     for (const path of Object.keys(OVERLAYS)) expect(LANGUAGE_IDS).toContain(languageOf(path));
     for (const id of languagesWithDataOverlay()) expect(LANGUAGE_IDS).toContain(id);
+  });
+
+  it("는 다 채운 언어에 구멍을 내지 않는다", () => {
+    // 한 언어를 다 채우고 나면 그 뒤로는 **빠뜨린 자리가 곧 회귀**다 — 새 개체를 넣은 사람이
+    // 그 언어만 한국어로 남기는 일을 막는다. 아직 채우는 중인 언어는 여기 오르지 않는다.
+    const COMPLETE = ["en", "ja"];
+    const known = registeredDataTexts().map(({ key }) => key);
+    for (const [path, overlay] of Object.entries(OVERLAYS)) {
+      if (!COMPLETE.includes(languageOf(path))) continue;
+      const missing = known.filter((key) => !(key in overlay));
+      expect(missing, path).toEqual([]);
+    }
   });
 
   it("는 빈 값을 두지 않는다", () => {

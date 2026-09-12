@@ -102,89 +102,30 @@ describe("언어와 표의 계약", () => {
 });
 
 /**
- * 문구 이관을 마친 파일. 여기 오른 파일에 한글이 다시 박히면 그 자리만 언어를 따라오지 않는다.
+ * 한글을 그대로 두어도 되는 자리. **목록에 없는 파일은 전부 검사한다.**
  *
- * **옮기는 대로 이 목록에 더한다.** 목록에 없으면 검사가 돌지 않아, 옮겼다고 생각한 화면이
- * 조용히 되돌아가도 아무도 모른다.
+ * 예전에는 반대였다 — 이관을 마친 파일만 목록에 올렸고, 그래서 목록에 올리는 것을 잊은 125개
+ * 파일은 한글이 다시 박혀도 아무도 몰랐다. 지금은 새 파일이 저절로 검사에 들어오고, 빼려면
+ * **왜 빼는지**를 여기 적어야 한다.
  */
-const MIGRATED = [
-  "../../src/scenes/SettingsScene.ts",
-  "../../src/scenes/LobbyScene.ts",
-  "../../src/scenes/LabScene.ts",
-  "../../src/ui/unitStatusModel.ts",
-  "../../src/scenes/ExpeditionScene.ts",
-  "../../src/scenes/BattleScene.ts",
-  "../../src/scenes/FriendsScene.ts",
-  "../../src/scenes/PartyScene.ts",
-  "../../src/ui/IdleExcavationPopup.ts",
-  "../../src/ui/expeditionAugmentBadges.ts",
-  "../../src/ui/RunePopup.ts",
-  "../../src/ui/ExpeditionRewardPopup.ts",
-  "../../src/ui/SaveConflictPopup.ts",
-  "../../src/scenes/InteractionScene.ts",
-  "../../src/scenes/PremiumScene.ts",
-  "../../src/ui/InteractionCityPopup.ts",
-  "../../src/ui/InteractionExchangePopup.ts",
-  "../../src/ui/PurchasePopup.ts",
-  "../../src/ui/MissionsPopup.ts",
-  "../../src/scenes/ArchaeologyScene.ts",
-  "../../src/scenes/BootScene.ts",
-  "../../src/scenes/RelicsScene.ts",
-  "../../src/scenes/ShopScene.ts",
-  "../../src/scenes/SortiePreviewScene.ts",
-  "../../src/scenes/StageMapScene.ts",
-  "../../src/scenes/TitleScene.ts",
-  "../../src/scenes/partyEntryError.ts",
-  "../../src/ui/AppearanceCard.ts",
-  "../../src/ui/BattleBuffPopup.ts",
-  "../../src/ui/BattleContributionPopup.ts",
-  "../../src/ui/BattleProfile.ts",
-  "../../src/ui/BottomNav.ts",
-  "../../src/ui/CurrencyGuidePopup.ts",
-  "../../src/ui/ExpeditionAugmentPopup.ts",
-  "../../src/ui/ExpeditionEntryButton.ts",
-  "../../src/ui/ExpeditionRankingPopup.ts",
-  "../../src/ui/ExpeditionScoreDetailPopup.ts",
-  "../../src/ui/InteractionJournalPopup.ts",
-  "../../src/ui/InventoryPopup.ts",
-  "../../src/ui/MailPopup.ts",
-  "../../src/ui/MileagePopup.ts",
-  "../../src/ui/NodeEnemyPreview.ts",
-  "../../src/ui/PlayerProfilePopup.ts",
-  "../../src/ui/PopupLayer.ts",
-  "../../src/ui/RewardPopup.ts",
-  "../../src/ui/SkillIconFrame.ts",
-  "../../src/ui/SkillPopup.ts",
-  "../../src/ui/StageCompletePopup.ts",
-  "../../src/ui/StaminaPopup.ts",
-  "../../src/ui/TradePopup.ts",
-  "../../src/ui/UnitStatusPopup.ts",
-  "../../src/ui/battleContributionRenderModel.ts",
-  "../../src/ui/damageNumbers.ts",
-  "../../src/ui/excavationAdOfferModel.ts",
-  "../../src/ui/formationSlotChrome.ts",
-  "../../src/ui/interactionLayerModel.ts",
-  "../../src/ui/lobbyUtilityRail.ts",
-  "../../src/ui/runeIcons.ts",
-  "../../src/ui/staminaDisplay.ts",
-  "../../src/ui/statTones.ts",
-  "../../src/ui/tradePopupModel.ts",
-  "../../src/ui/skillPresentation.ts",
-  "../../src/ui/info.ts",
-  "../../src/managers/KeywordManager.ts",
-  "../../src/core/damage.ts",
-  "../../src/core/runes.ts",
-  "../../src/core/excavationAutoAssign.ts",
-  "../../src/core/battleBuffPresentation.ts",
-  "../../src/core/expeditionBattle.ts",
-  "../../src/core/productAcquisition.ts",
-  "../../src/state/playerProfile.ts",
-  "../../src/ui/InventoryPopup.ts",
-  "../../src/ui/rewardPopupModel.ts",
-  "../../src/managers/ExpeditionManager.ts",
-  "../../src/api/AccountSaveSync.ts",
-  "../../src/api/AccountApi.ts",
-];
+const KOREAN_ALLOWED: Readonly<Record<string, string>> = {
+  // 그 언어 자신의 표기다. 번역하면 제 언어를 찾을 수 없다.
+  "../../src/core/language.ts": "언어 이름은 그 언어로 적는다",
+  // ZIP 안의 실제 관절 키라 옮기면 찾지 못한다.
+  "../../src/puppets/anchors.ts": "Puppet 관절 이름",
+  // 화면에 그리지 않는다. E2E가 어느 단계인지 확인하는 데만 쓴다.
+  "../../src/scenes/loadingSteps.ts": "로딩 단계 이름",
+  // 화면에 그리는 곳이 없다. 테스트와 개발자만 읽는다.
+  "../../src/core/skirmish.ts": "전투 기록(log)",
+  // 던져서 복구 경로를 고르는 진단문이다. 그대로 그리지 않는다.
+  "../../src/state/SaveManager.ts": "저장 검증 오류와 v12 옛 룬 이름",
+  "../../src/core/expeditionMap.ts": "모듈을 읽을 때 터지는 지도 검증",
+  "../../src/puppets/IndexedPuppetCreature.ts": "개발자 오류",
+  // 실제 이용자 풀이 생기면 서버가 주는 이름이 그대로 선다.
+  "../../src/ui/expeditionRankingLayout.ts": "표본 순위의 계정 이름",
+  // 한국어가 원본이고 다른 언어만 덮어쓴다(정적 콘텐츠와 같은 경계).
+  "../../src/core/missions.ts": "임무 제목 — registerDataText로 덮는다",
+};
 
 /**
  * 사람이 읽지 않는 줄은 검사에서 뺀다.
@@ -194,12 +135,43 @@ const MIGRATED = [
  */
 const isDeveloperLine = (line: string): boolean => /console\.|setDebug|throw new \w*Error/.test(line);
 
-describe("화면 문구", () => {
-  it("은 이관을 마친 화면에 한글을 남기지 않는다", () => {
+/**
+ * 모듈을 읽는 순간 굳는 문구가 있는가.
+ *
+ * `const X = { a: t("...") }`처럼 **선언의 초기값**에서 문구를 고르면 그 값은 모듈을 읽는 순간
+ * 한 번 굳는다 — 문구 표는 타이틀 로딩에서야 도착하므로 그 자리만 한국어로 남고, 언어를 바꿔도
+ * 따라오지 않는다. 일본어로 바꾼 화면에서 하단 탭 다섯과 능력치 판의 `射程 · 중거리`가 그랬다.
+ * 부를 때 고르는 **함수**로 두면 그 일이 없다.
+ */
+describe("굳은 문구", () => {
+  it("은 선언의 초기값에서 문구를 고르지 않는다", () => {
     const offenders: string[] = [];
-    for (const path of MIGRATED) {
-      const code = SOURCES[path];
-      expect(code, path).toBeTruthy();
+    for (const [path, code] of Object.entries(SOURCES)) {
+      if (path.startsWith("../../src/i18n/")) continue;
+      const withoutComments = code.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+      let depth = 0;
+      let frozen = false;
+      for (const [index, line] of withoutComments.split("\n").entries()) {
+        // 바깥 층에서 시작하는 `const`·`let` 선언은 그 초기값이 곧 모듈을 읽을 때의 값이다.
+        // 화살표 함수와 `function`은 부를 때 몸통이 도므로 굳지 않는다.
+        if (depth === 0 && /^\s*(export\s+)?(const|let)\s/.test(line) && !/=>|function /.test(line)) frozen = true;
+        if (frozen && /\bt\(/.test(line)) offenders.push(`${path}:${index + 1} ${line.trim().slice(0, 60)}`);
+        depth += (line.match(/[{([]/g) ?? []).length - (line.match(/[})\]]/g) ?? []).length;
+        if (depth < 0) depth = 0;
+        if (frozen && (depth === 0 || /=>|function /.test(line))) frozen = false;
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+});
+
+describe("화면 문구", () => {
+  it("은 화면에 한글을 남기지 않는다", () => {
+    const offenders: string[] = [];
+    for (const [path, code] of Object.entries(SOURCES)) {
+      // 문구 표와 정적 콘텐츠는 한국어가 원본이라 검사 대상이 아니다.
+      if (path.startsWith("../../src/i18n/") || path.startsWith("../../src/data/")) continue;
+      if (path in KOREAN_ALLOWED) continue;
       const withoutComments = code.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
       for (const [index, line] of withoutComments.split("\n").entries()) {
         if (isDeveloperLine(line)) continue;
@@ -210,5 +182,10 @@ describe("화면 문구", () => {
       }
     }
     expect(offenders).toEqual([]);
+  });
+
+  it("의 예외 목록은 실제로 있는 파일만 담는다", () => {
+    // 파일이 사라졌는데 예외만 남으면, 그 이름으로 새 파일을 만든 사람이 조용히 검사를 면한다.
+    for (const path of Object.keys(KOREAN_ALLOWED)) expect(SOURCES[path], path).toBeTruthy();
   });
 });

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  DEFAULT_LANGUAGE, LANGUAGE_IDS, LANGUAGE_NATIVE_NAME, matchLanguage, normalizeLanguage,
+  DEFAULT_LANGUAGE, LANGUAGE_IDS, LANGUAGE_NATIVE_NAME, SELECTABLE_LANGUAGE_IDS,
+  matchLanguage, normalizeLanguage, resolveLanguageTag,
 } from "../../src/core/language";
 import { createDefaultSettings, normalizeSettings } from "../../src/core/settings";
 
@@ -21,8 +22,16 @@ describe("지원 언어 목록", () => {
     expect(new Set(Object.values(LANGUAGE_NATIVE_NAME)).size).toBe(LANGUAGE_IDS.length);
   });
 
-  it("의 기본 언어는 목록 안에 있다", () => {
+  it("의 기본 언어는 언제나 고를 수 있다", () => {
     expect(LANGUAGE_IDS).toContain(DEFAULT_LANGUAGE);
+    // 기본 언어에 번역이 없으면 첫 실행이 아무 문구도 세우지 못한다.
+    expect(SELECTABLE_LANGUAGE_IDS).toContain(DEFAULT_LANGUAGE);
+  });
+
+  it("의 고를 수 있는 언어는 저장이 받아들이는 목록 안에 있다", () => {
+    // 저장이 모르는 코드를 설정에 세우면 고르는 순간 정규화가 되돌린다.
+    for (const id of SELECTABLE_LANGUAGE_IDS) expect(LANGUAGE_IDS).toContain(id);
+    expect(new Set(SELECTABLE_LANGUAGE_IDS).size).toBe(SELECTABLE_LANGUAGE_IDS.length);
   });
 });
 
@@ -36,25 +45,49 @@ describe("언어 정규화", () => {
   });
 });
 
-describe("기기 언어 해석", () => {
+describe("언어 표기 해석", () => {
   it("은 지역이 붙은 표기에서 언어를 읽는다", () => {
-    expect(matchLanguage(["ja-JP"])).toBe("ja");
-    expect(matchLanguage(["en-US", "ko"])).toBe("en");
-    expect(matchLanguage(["vi-VN"])).toBe("vi");
-    expect(matchLanguage(["th-TH"])).toBe("th");
+    expect(resolveLanguageTag("ja-JP")).toBe("ja");
+    expect(resolveLanguageTag("en-US")).toBe("en");
+    expect(resolveLanguageTag("vi-VN")).toBe("vi");
+    expect(resolveLanguageTag("th-TH")).toBe("th");
+    expect(resolveLanguageTag("de-AT")).toBe("de");
+    expect(resolveLanguageTag("es-MX")).toBe("es");
   });
 
   it("은 중국어 지역 표기를 번체와 간체로 가른다", () => {
-    expect(matchLanguage(["zh-TW"])).toBe("zh-Hant");
-    expect(matchLanguage(["zh-HK"])).toBe("zh-Hant");
-    expect(matchLanguage(["zh-CN"])).toBe("zh-Hans");
-    expect(matchLanguage(["zh-Hant"])).toBe("zh-Hant");
+    expect(resolveLanguageTag("zh-TW")).toBe("zh-Hant");
+    expect(resolveLanguageTag("zh-HK")).toBe("zh-Hant");
+    expect(resolveLanguageTag("zh-CN")).toBe("zh-Hans");
+    expect(resolveLanguageTag("zh-Hant")).toBe("zh-Hant");
     // 어느 쪽인지 말하지 않은 zh는 쓰는 사람이 더 많은 간체로 본다.
-    expect(matchLanguage(["zh"])).toBe("zh-Hans");
+    expect(resolveLanguageTag("zh")).toBe("zh-Hans");
+  });
+
+  it("은 브라질 포르투갈어를 지역까지 보고 고른다", () => {
+    expect(resolveLanguageTag("pt-BR")).toBe("pt-BR");
+    // 유럽 포르투갈어는 아직 목록에 없으므로 앞 조각으로 되돌아 브라질 표기를 만나지 못한다.
+    expect(resolveLanguageTag("pt-PT")).toBeUndefined();
+  });
+
+  it("은 모르는 표기를 만들어 내지 않는다", () => {
+    for (const bad of ["", "  ", "xx", "kr", "jp", "zz-ZZ"]) expect(resolveLanguageTag(bad)).toBeUndefined();
+  });
+});
+
+describe("기기 언어 고르기", () => {
+  it("은 번역이 있는 언어만 고른다", () => {
+    // 목록에만 올라 있고 번역이 없는 언어로 켜지면, 화면은 한국어인데 설정만 그 언어라고 적힌다.
+    for (const id of LANGUAGE_IDS) {
+      const picked = matchLanguage([id]);
+      expect(SELECTABLE_LANGUAGE_IDS).toContain(picked);
+      if (!SELECTABLE_LANGUAGE_IDS.includes(id)) expect(picked).toBe(DEFAULT_LANGUAGE);
+      else expect(picked).toBe(id);
+    }
   });
 
   it("은 앞선 선호를 먼저 고르고 모르면 기본 언어로 간다", () => {
-    expect(matchLanguage(["xx", "ja", "ko"])).toBe("ja");
+    expect(matchLanguage(["xx", ...SELECTABLE_LANGUAGE_IDS])).toBe(SELECTABLE_LANGUAGE_IDS[0]);
     expect(matchLanguage(["xx", "yy"])).toBe(DEFAULT_LANGUAGE);
     expect(matchLanguage([])).toBe(DEFAULT_LANGUAGE);
     expect(matchLanguage([""])).toBe(DEFAULT_LANGUAGE);

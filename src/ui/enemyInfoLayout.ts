@@ -17,26 +17,32 @@ import { POPUP_BODY_BEVEL_RATIO } from "./popupGeometry";
  * 때문이다. 좌표는 모두 **팝업 몸판 가운데가 0인 로컬 좌표**다.
  */
 export const ENEMY_INFO = {
-  /** 출격 선택판(980 × 1240)과 같은 무게의 판. 화면을 다 덮지 않는다. */
-  width: 960,
-  height: 1240,
+  /**
+   * 출격 선택판과 같은 무게의 판. 화면을 다 덮지 않는다.
+   *
+   * **내용이 끝나는 자리에서 끊는다** — 팝업은 판을 키워 여백을 남길 자리가 아니라 누른 것
+   * 위에 얹히는 쪽지라, 남는 여백은 읽는 데 도움이 되지 않고 뒤 화면만 가린다.
+   */
+  width: 940,
+  height: 1180,
   /** 글이 앉는 좌·우 선. 몸판의 깎인 모서리를 피해 안쪽으로 들어온다. */
-  left: -392,
-  right: 392,
+  left: -382,
+  right: 382,
   /**
    * 이름 블록 뒤로 내려오는 어둠.
    *
    * 정보창과 같이 **판때기를 깔지 않는다** — 배경 원화와 전신 원화 위로 검정→투명 그라데이션만
    * 한 겹 덮어, 밝은 원화 앞에서도 등급·이름·개체번호가 읽히게 한다.
    *
-   * 시작은 판 윗변이 아니라 **제목표 아래**다. 윗변까지 덮으면 판 위에 걸터앉은 `/정보창`이
-   * 그 어둠에 함께 눌려 흐려진다.
+   * **판 윗변에서 시작한다** — 어둠이 중간에서 시작하면 그 시작선이 가로줄로 보인다. 제목이
+   * 눌리지 않는 것은 자리를 피해서가 아니라 **제목표를 이 어둠보다 위층으로 옮겨서**다
+   * (`PopupLayer.moveTitle`).
    */
-  nameFade: { top: -600, height: 300 },
+  nameFade: { top: -590, height: 290 },
   /** 왼쪽 위 이름 블록 — 정보창과 같은 순서(등급 · 이름 · 개체번호)와 같은 글자 크기다. */
-  rarityY: -540,
-  nameY: -466,
-  numberY: -402,
+  rarityY: -512,
+  nameY: -440,
+  numberY: -378,
   /** 이름 오른쪽에 붙는 속성·직군 뱃지. 정보창의 `AFFINITY`와 같은 값이다. */
   badge: { element: 96, role: 72, gap: 30 },
   /**
@@ -44,15 +50,15 @@ export const ENEMY_INFO = {
    *
    * 두 칸이 같은 x·같은 폭이라 한 벌로 읽히고, 제목은 판 윗변에 걸터앉는다.
    */
-  column: { x: 190, width: 404 },
+  column: { x: 186, width: 390 },
   /** 돌파 등급 표식과 돌파 단계표 돋보기. 정보창과 같이 **레벨 칸 위**에 선다. */
-  gradeRow: { x: 300, y: -520, size: 68 },
-  gradeMagnifier: { x: 356, y: -512 },
+  gradeRow: { x: 292, y: -496, size: 68 },
+  gradeMagnifier: { x: 348, y: -488 },
   /** 레벨 칸 — 읽기 전용이라 경험치·급여가 빠진 정보창의 축소 판과 같은 높이다. */
-  levelPanel: { top: -430, height: 168 },
+  levelPanel: { top: -406, height: 162 },
   /** 능력치 칸. 오각형 반지름·사거리 줄·돋보기 자리가 모두 정보창과 같은 간격이다. */
-  statPanel: { top: -214, height: 450 },
-  radar: { radius: 128, offsetY: 40 },
+  statPanel: { top: -196, height: 446 },
+  radar: { radius: 128, offsetY: 46 },
   /**
    * 사거리 한 줄.
    *
@@ -60,7 +66,7 @@ export const ENEMY_INFO = {
    * 하므로 색은 상세 팝업이 맡는다. 칸이 정보창보다 좁아 그 높이 그대로 두면 오각형의 **위 축
    * 이름표**와 부딪히므로 한 뼘만 위로 올린다.
    */
-  reach: { offsetX: -160, offsetY: -178 },
+  reach: { offsetX: -156, offsetY: -166 },
   statMagnifier: { offsetY: -148 },
   /**
    * 전신 원화.
@@ -69,13 +75,13 @@ export const ENEMY_INFO = {
    * 작아져 누구인지보다 여백이 먼저 읽힌다. 코어(`중심1`) 관절을 기준으로 세우고 판과 같은
    * 실루엣으로 잘라 깎인 모서리 밖으로 나가지 않게 한다.
    */
-  portrait: { x: -196, coreY: -40, height: 1180 },
+  portrait: { x: -192, coreY: -52, height: 1120 },
   /** 스킬 액자 줄 — 정보창과 같이 **왼쪽 아래**에 서고 크기·간격도 같다. */
-  skills: { x: -356, y: 442, size: 150, step: 168 },
+  skills: { x: -344, y: 424, size: 150, step: 168 },
   /** 패시브 액자 위에 얹히는 폭주 뱃지. 정보창과 같은 높이 차이를 지킨다. */
   ferocityBadgeOffsetY: -139,
   /** 오른쪽 아래 SD 받침. */
-  figure: { x: 258, groundY: 520, height: 200 },
+  figure: { x: 248, groundY: 508, height: 196 },
 } as const;
 
 /** 오른쪽 칸 하나의 중심 y. 표는 윗변으로 적고 그리는 쪽은 가운데를 쓴다. */

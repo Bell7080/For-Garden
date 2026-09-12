@@ -11,9 +11,9 @@ import { addPopupBackgroundImage, BACKGROUND } from "./backgrounds";
 import { ENEMY_INFO, enemyInfoPanelCenterY, enemyInfoSkillColumns } from "./enemyInfoLayout";
 import {
   addInfoFerocityBadge, addInfoFigureStand, addInfoMagnifier, addInfoPanel, buildSkillViewModel,
-  openBreakthroughStepsPopup, openExtraStatsPopup, openFerocityTraitPopup, RARITY_GEM, slotFallbackIcon,
+  openBreakthroughStepsPopup, openExtraStatsPopup, openFerocityTraitPopup, paintRarityGem, slotFallbackIcon,
 } from "./info";
-import type { PopupLayer } from "./PopupLayer";
+import { POPUP_TITLE_SIZE, type PopupLayer } from "./PopupLayer";
 import { drawFrameVignette, drawGlassFade, drawShapeOutline } from "./holo";
 import { popupArtShape, popupBodyShapeMask } from "./popupArt";
 import { addBreakthroughGradeMark } from "./rarityMark";
@@ -72,7 +72,7 @@ export class EnemyInfoPopup {
     this.popups.open({
       // 제목은 개체 이름이 아니라 **정보창**이다 — 이름은 판 안의 이름 블록이 이미 크게 말하고,
       // 머리글이 같은 말을 반복하면 한 창에 이름이 두 번 선다.
-      width: ENEMY_INFO.width, height: ENEMY_INFO.height, title: "정보창",
+      width: ENEMY_INFO.width, height: ENEMY_INFO.height, title: "정보창", titleSize: POPUP_TITLE_SIZE.workboard,
       dim: true, dimAlpha: 0.64, closeOnBackdrop: false, backButton: true,
       onClose: () => this.dispose(),
     }, (body) => {
@@ -93,23 +93,30 @@ export class EnemyInfoPopup {
        * 어디부터가 뒤 화면인지 흐려져 잘린 단면이 "덜 그려진 것"처럼 보인다. 선은 **몸판과 같은
        * 도형**을 따라가므로 깎인 두 모서리도 그대로 돈다.
        *
-       * 판(`body`)에 넣는 이유는 제목표 때문이다 — 제목은 윗변에 걸터앉아 있어, 원화 위층에
-       * 두르면 선이 `/정보창` 한가운데를 가로지른다. 판에 두면 `raiseChrome`이 제목을 그 위로
-       * 다시 올려 준다.
+       * 색은 강조색이 아니라 **검정**이다 — 강조색 선을 사방에 두르면 그 선이 판 안의 강조색
+       * 수치·제목과 같은 무게로 읽혀 창 전체가 한 겹 더 시끄러워진다. 어두운 획은 배경에서
+       * 판을 떼어 놓는 일만 하고 물러난다.
+       *
+       * 판(`body`)에 넣는 이유는 원화 때문이다 — 원화 위층에 두르면 그 층의 이름줄 어둠과
+       * 함께 움직여야 하고, 제목표는 `moveTitle`로 그보다 더 위에 올려 두었다.
        */
-      body.add(drawShapeOutline(this.scene, 0, 0, shape, { color: COLOR.accent, alpha: 0.55, width: 3 }));
+      body.add(drawShapeOutline(this.scene, 0, 0, shape, { color: COLOR.void, alpha: 0.92, width: 7 }));
       // 원화와 SD는 판 위에 서지만 그 위의 칸·액자에는 가려야 한다. Puppet은 컨테이너 변환을
       // 물려받지 않아 판 안에 넣을 수 없으므로, 팝업 층과 다음 팝업(쪽지) 사이에 두 층을 낸다.
       const depth = body.parentContainer?.depth ?? this.popups.baseDepth;
       const mask = popupBodyShapeMask(this.scene, body, shape);
       const chrome = this.scene.add.container(body.x, body.y).setDepth(depth + 0.6).setAlpha(0).setScale(0.96);
       // 이름줄 뒤의 어둠은 원화보다 위, 글자보다 아래다 — 정보창과 같이 판이 아니라 내려오는
-      // 그라데이션 한 겹이라, 밝은 원화 앞에서도 이름과 개체번호가 읽힌다.
+      // 그라데이션 한 겹이라, 밝은 원화 앞에서도 이름과 개체번호가 읽힌다. **판 윗변에서**
+      // 시작해야 시작선이 가로줄로 보이지 않는다.
       chrome.add(drawGlassFade(this.scene, 0, ENEMY_INFO.nameFade.top + ENEMY_INFO.nameFade.height / 2, ENEMY_INFO.width, ENEMY_INFO.nameFade.height, { topAlpha: 0.9, bottomAlpha: 0 }).setMask(popupBodyShapeMask(this.scene, chrome, shape)));
       this.chrome = chrome;
       // 판과 함께 떠오르게 같은 등장 tween을 건다 — 층이 다르다고 따로 나타나면 두 장으로 보인다.
       this.scene.tweens.add({ targets: chrome, alpha: 1, duration: 160 });
       this.scene.tweens.add({ targets: chrome, scale: 1, duration: 200, ease: "Cubic.Out" });
+      // 제목표를 이 층으로 끌어올린다 — 판 안에 두면 바로 위의 이름줄 어둠이 `/정보창`과 그
+      // 그림자를 함께 눌러 흐려진다. 판과 같은 자리·같은 배율이라 좌표는 그대로 맞는다.
+      this.popups.moveTitle(body, chrome);
       this.paintHeader(chrome, snapshot);
       this.paintLevel(chrome, snapshot);
       this.paintStats(chrome, snapshot.def);
@@ -136,10 +143,13 @@ export class EnemyInfoPopup {
   private paintHeader(chrome: Phaser.GameObjects.Container, snapshot: EnemyInfoSnapshot): void {
     const { def } = snapshot;
     const scene = this.scene;
-    const gem = RARITY_GEM[def.rarity];
-    chrome.add(scene.add.text(ENEMY_INFO.left, ENEMY_INFO.rarityY, def.rarity, textStyle({ role: "display", size: 44, color: gem[1] }))
-      .setOrigin(0, 0.5).setAlpha(0.55).setScale(1.06).setBlendMode(Phaser.BlendModes.ADD));
-    chrome.add(scene.add.text(ENEMY_INFO.left, ENEMY_INFO.rarityY, def.rarity, textStyle({ role: "display", size: 44, color: gem[1] })).setOrigin(0, 0.5));
+    // 등급 글자는 **정보창과 같은 함수**가 칠한다 — 글자 높이를 따라 색이 흐르는 보석 연출이라
+    // 화면이 단색으로 다시 칠하면 같은 등급이 여기서만 맨 글자로 보인다.
+    const rarityGlow = scene.add.text(ENEMY_INFO.left, ENEMY_INFO.rarityY, "", textStyle({ role: "display", size: 44 }))
+      .setOrigin(0, 0.5).setAlpha(0.55).setScale(1.06).setBlendMode(Phaser.BlendModes.ADD);
+    const rarityText = scene.add.text(ENEMY_INFO.left, ENEMY_INFO.rarityY, "", textStyle({ role: "display", size: 44 })).setOrigin(0, 0.5);
+    chrome.add([rarityGlow, rarityText]);
+    paintRarityGem(rarityText, rarityGlow, def.rarity);
     // 이름은 같은 글자를 검게 한 겹 어긋나게 깔아 그림자를 만든다. 흐린 그림자보다 또렷하다.
     chrome.add(scene.add.text(ENEMY_INFO.left + 6, ENEMY_INFO.nameY + 8, def.name, textStyle({ role: "display", size: 84, color: "#05070a" })).setOrigin(0, 0.5).setAlpha(0.85));
     const name = scene.add.text(ENEMY_INFO.left, ENEMY_INFO.nameY, def.name, textStyle({ role: "display", size: 84 })).setOrigin(0, 0.5);

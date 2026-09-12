@@ -2043,15 +2043,7 @@ export class InfoManager {
    * 바꾸면 그냥 색 글씨라, 위아래로 색이 흐르는 결과 뒤에 깔리는 같은 색 발광을 함께 쓴다.
    */
   private paintRarity(rarity?: RelicRarity): void {
-    const stops = rarity ? RARITY_GEM[rarity] : ["#9aa3ad", "#6f7681", "#4a5058"] as const;
-    this.rarityText.setText(rarity ?? "???");
-    this.rarityGlow.setText(rarity ?? "???").setColor(stops[1]);
-    // 글자 높이를 따라 색이 흐르게 한다. Phaser Text는 캔버스 채우기를 그대로 받는다.
-    const gradient = this.rarityText.context.createLinearGradient(0, 0, 0, this.rarityText.height);
-    gradient.addColorStop(0, stops[0]);
-    gradient.addColorStop(0.55, stops[1]);
-    gradient.addColorStop(1, stops[2]);
-    this.rarityText.setFill(gradient);
+    paintRarityGem(this.rarityText, this.rarityGlow, rarity);
   }
 
   /**
@@ -2644,4 +2636,29 @@ onOpen: (from: PopupSource) => void,
   badge.add(hit);
   parent.add(badge);
   return badge;
+}
+
+/** 미발굴 개체가 쓰는 잿빛. 등급이 없으면 보석이 아니라 돌이다. */
+const RARITY_GEM_UNKNOWN = ["#9aa3ad", "#6f7681", "#4a5058"] as const;
+
+/**
+ * 등급 글자를 **보석처럼** 칠한다 — 정보창과 적 팝업이 같은 한 함수를 쓴다.
+ *
+ * 글자 높이를 따라 색이 위에서 아래로 흐르고(Phaser Text는 캔버스 채우기를 그대로 받는다),
+ * 같은 글자를 한 겹 더 겹쳐 밝아지는 합성으로 깔아 스스로 빛나게 한다. 화면마다 단색으로
+ * 칠하면 같은 등급이 어디서는 보석, 어디서는 맨 글자가 된다.
+ */
+export function paintRarityGem(
+  text: Phaser.GameObjects.Text,
+  glow: Phaser.GameObjects.Text,
+  rarity?: RelicRarity,
+): void {
+  const stops = rarity ? RARITY_GEM[rarity] : RARITY_GEM_UNKNOWN;
+  text.setText(rarity ?? "???");
+  glow.setText(rarity ?? "???").setColor(stops[1]);
+  const gradient = text.context.createLinearGradient(0, 0, 0, text.height);
+  gradient.addColorStop(0, stops[0]);
+  gradient.addColorStop(0.55, stops[1]);
+  gradient.addColorStop(1, stops[2]);
+  text.setFill(gradient);
 }

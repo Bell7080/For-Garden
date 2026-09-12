@@ -22,17 +22,23 @@ UI가 함께 묻히므로, 굽는 단계에서 그림 자체를 되돌린다.
 칠해서 덮지 않는 이유가 여기 있다 — 표식 자리로 **장화가 지나간다**. 바닥으로 메우면 그
 프레임에서 장화가 통째로 뭉개지고, 되돌리기는 장화 위에서도 아래 그림을 그대로 되살린다.
 
-**되돌아가는 자리를 이어 붙인다.** 이 영상은 타이틀에서 끝없이 되돌아 흐르는데, 마지막
-프레임과 첫 프레임이 서로 달라 한 바퀴마다 한 번씩 톡 끊겼다(실측: 연속 프레임끼리는 평균
-2.6만큼 달라지는데 이음매만 8.8이라 네 배 가까이 튀었다). 그래서 **꼬리 몇 프레임을 머리에
-겹쳐 녹인다** — 마지막 `OVERLAP`장을 잘라 내고, 남은 머리 `OVERLAP`장을 잘라 낸 꼬리와
-가중치를 옮겨 가며 섞는다. 그러면 새 마지막 프레임의 다음이 원본에서 실제로 이어지던
-프레임이 되어 이음매가 1.9까지 내려간다 — 원본의 평균 걸음(2.6)보다도 작아 한 바퀴가 도는
-자리를 눈이 짚지 못한다.
+**되돌아가는 자리에서 한 번 숨을 쉰다.** 이 영상은 타이틀에서 끝없이 도는데, 마지막
+프레임과 첫 프레임이 서로 달라 한 바퀴마다 톡 끊겼다(실측: 연속 프레임끼리는 평균 2.6만큼
+달라지는데 이음매만 8.8이라 네 배 가까이 튀었다). 그래서 **끝에 멈춤과 되돌아감을 덧붙인다** —
+원본이 다 흐른 뒤 마지막 프레임에서 `HOLD_SECONDS`만큼 가만히 서 있다가, `RETURN_SECONDS`에
+걸쳐 첫 프레임으로 녹아 들어간다. 되돌아온 그림이 곧 첫 프레임이라 그다음 바퀴가 이어진다.
 
-겹치는 길이는 여덟 장(0.33초)이다. 더 길게 녹이면 겹친 두 그림이 서로 비치는 시간이 그만큼
-길어지고, 더 짧으면 그 구간의 걸음이 커진다 — 여덟 장에서 구간 최대 걸음이 2.2로 원본의
-평균보다 작아 가장 매끄러웠다.
+**멈추는 자리를 고를 필요가 없다.** 원본은 끝으로 갈수록 이미 잔잔해져(마지막 열 장의 걸음이
+1.55로 평균 2.61의 절반이다) 마지막 프레임에서 서는 것이 그대로 자연스럽다.
+
+**되돌아가는 몫은 원본에 손대지 않고 뒤에 덧붙인다.** 예전에는 꼬리를 머리에 겹쳐 녹였는데,
+그러면 **첫 프레임이 꼬리와 섞여** 타이틀이 정지 원화에서 영상으로 넘어가는 순간이 어긋났다
+(정지 원화와의 차가 5.37 → 7.87로 벌어졌다). 지금은 원본 프레임을 하나도 건드리지 않으므로
+첫 프레임이 정지 원화와 그대로 맞고, 이음매는 뒤에 붙인 몫이 맡는다.
+
+녹아 드는 동안에는 화면이 이미 멈춰 있어 두 그림이 겹쳐도 잔상으로 보이지 않는다 — 움직이는
+구간을 겹쳤을 때와 다른 점이다. 가중치는 양 끝에서 느려지는 곡선(smoothstep)이라 멈춤에서
+움직임으로 돌아가는 자리가 각지지 않는다.
 
 **오디오는 지운다.** 이 영상은 배경 원화를 대신하는 움직이는 그림이라 소리가 없고, 소리가
 붙어 있으면 브라우저가 자동 재생 자체를 막는다(muted 자동 재생만 허용한다).
@@ -67,14 +73,16 @@ MARK_BOX = (569, 1129, 630, 1191)
 SAMPLE_ROWS = 4
 # 덮은 색. 표식은 흰 실루엣 한 겹이다.
 MARK_COLOR = 255.0
-# 되돌아가는 자리에서 꼬리와 머리를 겹쳐 녹이는 길이(프레임). 위 설명의 실측에서 고른 값이다.
-OVERLAP = 8
+# 다 흐른 뒤 마지막 프레임에서 가만히 서 있는 시간과, 첫 프레임으로 녹아 돌아가는 시간(초).
+# 둘을 합친 3.1초가 한 바퀴와 다음 바퀴 사이의 숨이다.
+HOLD_SECONDS = 2.6
+RETURN_SECONDS = 0.5
 
 
-def scan_source(ffmpeg, source: Path) -> tuple[np.ndarray, list[np.ndarray], int]:
-    """영상 전체를 한 번 훑어 표식의 알파와, 이어 붙일 꼬리 프레임과 전체 장수를 얻는다.
+def scan_source(ffmpeg, source: Path) -> tuple[np.ndarray, np.ndarray, np.ndarray, int]:
+    """영상 전체를 한 번 훑어 표식의 알파와, 되돌아갈 첫 장·마지막 장과 전체 장수를 얻는다.
 
-    알파는 픽셀별 `(높이, 너비, 1)` 실수 배열이다. 꼬리는 아직 표식을 걷기 전의 원본이라
+    알파는 픽셀별 `(높이, 너비, 1)` 실수 배열이다. 두 프레임은 아직 표식을 걷기 전의 원본이라
     — 알파를 이 훑기가 끝나야 알 수 있으므로 — 부르는 쪽이 걷어 낸 뒤 쓴다.
     """
     x0, y0, x1, y1 = MARK_BOX
@@ -87,15 +95,15 @@ def scan_source(ffmpeg, source: Path) -> tuple[np.ndarray, list[np.ndarray], int
 
     ramp = ((np.arange(height, dtype=np.float32) + 0.5) / height)[:, None, None]
     samples = []
-    tail: list[np.ndarray] = []
+    first = last = None
     total = 0
     for raw in reader:
         frame = np.frombuffer(raw, np.uint8).reshape(frame_h, frame_w, 3).astype(np.float32)
         total += 1
-        # 꼬리는 마지막 OVERLAP장만 들고 있으면 된다 — 한 장이 2.6MB라 전부 쥐지 않는다.
-        tail.append(frame.copy())
-        if len(tail) > OVERLAP:
-            tail.pop(0)
+        # 되돌아가는 몫에 필요한 것은 양 끝 두 장뿐이다 — 한 장이 2.6MB라 전부 쥐지 않는다.
+        if first is None:
+            first = frame.copy()
+        last = frame
         # 표식이 없었다면 이 자리가 어떤 색이었을지 — 위·아래 바닥을 곧게 이어 짐작한다.
         top = frame[y0 - SAMPLE_ROWS:y0, x0:x1].mean(axis=0)
         bottom = frame[y1:y1 + SAMPLE_ROWS, x0:x1].mean(axis=0)
@@ -104,8 +112,10 @@ def scan_source(ffmpeg, source: Path) -> tuple[np.ndarray, list[np.ndarray], int
         samples.append((seen - under) / np.maximum(MARK_COLOR - under, 1.0))
 
     # 프레임에서 한 번, 채널에서 한 번 — 중앙값을 두 번 지나 틀린 추정을 걸러 낸다.
+    if first is None or last is None:
+        sys.exit("원본에서 프레임을 하나도 읽지 못했다.")
     alpha = np.median(np.median(np.stack(samples), axis=0), axis=2)
-    return np.clip(alpha, 0.0, 0.9)[:, :, None].astype(np.float32), tail, total
+    return np.clip(alpha, 0.0, 0.9)[:, :, None].astype(np.float32), first, last.copy(), total
 
 
 def erase_mark(frame: np.ndarray, alpha: np.ndarray) -> np.ndarray:
@@ -118,26 +128,29 @@ def erase_mark(frame: np.ndarray, alpha: np.ndarray) -> np.ndarray:
 
 
 def bake(ffmpeg, source: Path, targets: dict[Path, list[str]], alpha: np.ndarray,
-         tail: list[np.ndarray], total: int) -> None:
-    """표식을 걷고 되돌아가는 자리를 이어 붙인 뒤 두 벌을 **한 번의 훑기로** 함께 굽는다.
+         first: np.ndarray, last: np.ndarray, total: int) -> int:
+    """표식을 걷어 원본을 그대로 흘린 뒤, 멈춤과 되돌아감을 덧붙여 두 벌을 함께 굽는다.
 
     두 벌을 따로 돌리면 같은 계산을 두 번 하는 데다, 한쪽만 값을 고쳤을 때 같은 이름의 두
     파일이 서로 다른 그림이 된다. 인코더는 저마다 다른 프로세스라 나란히 돌아간다.
-    """
-    length = total - OVERLAP
-    if length <= OVERLAP:
-        sys.exit(f"원본이 {total}장뿐이라 꼬리 {OVERLAP}장을 겹칠 수 없다.")
-    # 꼬리도 머리와 같은 손질을 지나야 섞이는 두 그림의 밝기가 어긋나지 않는다.
-    blend_tail = [erase_mark(frame, alpha).astype(np.float32) for frame in tail]
 
+    돌려주는 값은 실제로 쓴 전체 장수다.
+    """
     reader = ffmpeg.read_frames(str(source), pix_fmt="rgb24")
     meta = next(reader)
     width, height = meta["size"]
+    fps = meta["fps"]
+    # **키프레임은 맨 앞 한 장뿐이다.** 멈춤 구간은 같은 그림이 이어져 거의 공짜여야 하는데,
+    # 기본 간격대로면 그 안에 키프레임이 여러 장 박혀 3.1초가 300KB 넘게 들었다. 되돌아 돌기만
+    # 하고 중간으로 건너뛰는 일이 없는 영상이라(브라우저의 되감기는 키프레임인 0번으로 간다)
+    # 간격을 전체 길이로 벌린다 — webm 1424 → 1232KB로 줄었다.
+    keyint = str(total + round(HOLD_SECONDS * fps) + round(RETURN_SECONDS * fps))
     writers = []
     for target, params in targets.items():
         codec, *options = params
+        options += ["-g", keyint, "-keyint_min", keyint]
         writer = ffmpeg.write_frames(
-            str(target), (width, height), fps=meta["fps"], pix_fmt_in="rgb24", pix_fmt_out="yuv420p",
+            str(target), (width, height), fps=fps, pix_fmt_in="rgb24", pix_fmt_out="yuv420p",
             # 크기를 16의 배수로 맞춰 주는 기본 동작과 기본 화질 옵션을 끈다 — 원본 크기와 아래
             # 옵션을 그대로 쓰지 않으면 같은 이름의 두 벌이 서로 다른 그림이 된다.
             macro_block_size=1, quality=None, codec=codec, output_params=options,
@@ -145,22 +158,37 @@ def bake(ffmpeg, source: Path, targets: dict[Path, list[str]], alpha: np.ndarray
         writer.send(None)
         writers.append(writer)
 
-    for index, raw in enumerate(reader):
-        # 잘라 낸 꼬리는 이미 머리에 녹아 있다. 여기서 멈춰야 그 자리가 두 번 흐르지 않는다.
-        if index >= length:
-            break
-        frame = erase_mark(np.frombuffer(raw, dtype=np.uint8).reshape(height, width, 3), alpha)
-        if index < OVERLAP:
-            # 꼬리에서 머리로 가중치를 옮긴다. 첫 장은 거의 꼬리, 마지막 장은 거의 머리다.
-            weight = (index + 0.5) / OVERLAP
-            mixed = blend_tail[index] * (1 - weight) + frame.astype(np.float32) * weight
-            frame = np.clip(mixed, 0, 255).astype(np.uint8)
+    written = 0
+
+    def emit(frame: np.ndarray) -> None:
+        nonlocal written
         data = frame.tobytes()
         for writer in writers:
             writer.send(data)
+        written += 1
+
+    # 1. 원본을 그대로 흘린다. 첫 프레임이 정지 원화와 맞아야 하므로 한 장도 건드리지 않는다.
+    for raw in reader:
+        emit(erase_mark(np.frombuffer(raw, dtype=np.uint8).reshape(height, width, 3), alpha))
+
+    # 2. 마지막 프레임에서 가만히 선다. 같은 그림이 이어지므로 용량은 거의 늘지 않는다.
+    still = erase_mark(last, alpha)
+    for _ in range(round(HOLD_SECONDS * fps)):
+        emit(still)
+
+    # 3. 첫 프레임으로 녹아 돌아간다. 마지막 한 장이 첫 프레임과 거의 같아져 다음 바퀴가 잇는다.
+    opening = erase_mark(first, alpha).astype(np.float32)
+    steps = round(RETURN_SECONDS * fps)
+    for step in range(steps):
+        # 양 끝에서 느려지는 곡선이라 멈춤에서 움직임으로 돌아가는 자리가 각지지 않는다.
+        ratio = (step + 1) / (steps + 1)
+        weight = ratio * ratio * (3 - 2 * ratio)
+        mixed = still.astype(np.float32) * (1 - weight) + opening * weight
+        emit(np.clip(mixed, 0, 255).astype(np.uint8))
 
     for writer in writers:
         writer.close()
+    return written
 
 
 def main() -> None:
@@ -175,15 +203,16 @@ def main() -> None:
         return
 
     TARGET.mkdir(parents=True, exist_ok=True)
-    alpha, tail, total = scan_source(imageio_ffmpeg, source)
-    print(f"표식 알파 최대 {alpha.max():.3f} · {total}장에서 꼬리 {OVERLAP}장을 머리에 녹인다")
+    alpha, first, last, total = scan_source(imageio_ffmpeg, source)
     webm = TARGET / f"{STEM}.webm"
     mp4 = TARGET / f"{STEM}.mp4"
-    bake(imageio_ffmpeg, source, {
+    written = bake(imageio_ffmpeg, source, {
         webm: ["libvpx-vp9", "-an", "-crf", str(VP9_CRF), "-b:v", "0", "-row-mt", "1"],
         # faststart는 moov 상자를 앞으로 옮겨 다 내려받기 전에 재생이 시작되게 한다.
         mp4: ["libx264", "-an", "-crf", str(H264_CRF), "-preset", "slow", "-movflags", "+faststart"],
-    }, alpha, tail, total)
+    }, alpha, first, last, total)
+    print(f"표식 알파 최대 {alpha.max():.3f} · 원본 {total}장 뒤에 "
+          f"멈춤 {HOLD_SECONDS}초와 되돌아감 {RETURN_SECONDS}초를 붙여 {written}장")
     for baked in (webm, mp4):
         print(f"{source.name} -> {baked.relative_to(PUBLIC)} ({baked.stat().st_size // 1024}KB)")
     source.unlink()

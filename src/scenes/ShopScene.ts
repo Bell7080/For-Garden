@@ -22,8 +22,9 @@ import { PurchasePopup } from "../ui/PurchasePopup";
 import { session } from "../state/session";
 import { productsForShopCategory, shopModel } from "../ui/shopModel";
 import {
-  SHOP_BOARD, SHOP_CARD, SHOP_STAGE, SHOP_TAB_ROW,
-  shopBoardSize, shopCardSpot, shopCardWidth, shopGridContentHeight, shopGridViewport, shopTabSpot,
+  SHOP_BOARD, SHOP_CARD, SHOP_SHELF, SHOP_STAGE, SHOP_TAB_ROW,
+  shopBoardSize, shopCardSpot, shopCardWidth, shopGridContentHeight, shopGridViewport,
+  shopShelfWidth, shopShelfY, shopTabSpot,
 } from "../ui/shopLayout";
 
 /**
@@ -118,11 +119,31 @@ export class ShopScene extends Phaser.Scene {
    */
   private createBoard(): void {
     const { width, height, centerX, centerY } = shopBoardSize();
-    const shape = chipPoints(width, height, { bevel: { topLeft: 52, topRight: 0, bottomRight: 40, bottomLeft: 0 } });
+    // 판이 화면 좌우와 밑동에 닿으므로 깎는 것은 **윗변 두 모서리뿐**이다 — 화면 밖으로 나가는
+    // 아래 모서리를 깎으면 그 빗변이 보이지 않는 자리에서만 잘려 아무 말도 하지 않는다.
+    const shape = chipPoints(width, height, { bevel: { topLeft: 56, topRight: 0, bottomRight: 0, bottomLeft: 0 } });
     this.add.existing(drawLayer(this, centerX, centerY, shape, { fill: 0x10161d, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.7 }).setDepth(6));
     this.add.existing(drawFrameVignette(this, centerX, centerY, width, height, { strength: 0.45 }).setDepth(6));
     this.add.text(SHOP_BOARD.left + SHOP_BOARD.padX, SHOP_BOARD.top + SHOP_BOARD.headerY, t("shop.exchangeList"), textStyle({ role: "emphasis", size: 27, color: COLOR.accentText })).setOrigin(0, 0.5).setDepth(7);
     this.add.existing(drawHairline(this, centerX, SHOP_BOARD.top + SHOP_BOARD.hairlineY, width - SHOP_BOARD.padX * 2, { color: COLOR.accent, alpha: 0.4 }).setDepth(7));
+    this.createCase();
+  }
+
+  /**
+   * 격자가 흐르는 자리를 한 겹 **파 놓는다**.
+   *
+   * 상품이 판 위에 얹혀 있으면 목록이고, 안으로 들어가 있으면 전시대가 된다 — 창보다 조금 넓은
+   * 어두운 면과 네 변 비네트가 그 깊이를 만든다. 이 면은 흐르지 않으므로 격자 컨테이너 밖,
+   * 판과 칸 사이 층에 둔다.
+   */
+  private createCase(): void {
+    const view = shopGridViewport();
+    const width = view.right - view.left + SHOP_SHELF.overhang * 2 + 12;
+    const height = view.bottom - view.top + 24;
+    const x = (view.left + view.right) / 2;
+    const y = (view.top + view.bottom) / 2;
+    this.add.existing(drawLayer(this, x, y, slantedRect(width, height, 14), { fill: 0x070b11, alpha: 0.62, shadow: false }).setDepth(7));
+    this.add.existing(drawFrameVignette(this, x, y, width, height, { strength: 0.55 }).setDepth(7));
   }
 
   /**
@@ -167,6 +188,9 @@ export class ShopScene extends Phaser.Scene {
   private renderProducts(): void {
     this.content?.removeAll(true);
     const visibleProducts = productsForShopCategory(this.products, this.selectedCategory);
+    // 선반을 먼저 깔고 그 위에 칸을 올린다 — 순서가 뒤집히면 선반이 칸을 가로질러 지나간다.
+    const rows = Math.ceil(visibleProducts.length / SHOP_CARD.columns);
+    for (let row = 0; row < rows; row += 1) this.addShelf(row);
     visibleProducts.forEach((product, index) => this.addProduct(product, index));
     const view = shopGridViewport();
     this.minScrollY = Math.min(0, view.bottom - view.top - shopGridContentHeight(visibleProducts.length));
@@ -183,6 +207,19 @@ export class ShopScene extends Phaser.Scene {
       cards: visibleProducts.map((_, index) => shopCardSpot(index)),
       drag: { from: { x: (view.left + view.right) / 2, y: view.bottom - 80 }, to: { x: (view.left + view.right) / 2, y: view.top + 80 } },
     } });
+  }
+
+  /**
+   * 그 줄의 선반 한 장.
+   *
+   * 칸 밑변 바로 아래를 지나고 좌우로 한 뼘 더 내밀어, 칸이 선반 **위에 놓인 것**으로 읽히게
+   * 한다. 윗변 한 줄의 강조선이 곧 선반의 모서리다 — 사방을 두르면 판때기가 하나 더 생긴다.
+   */
+  private addShelf(row: number): void {
+    const shelf = drawLayer(this, (shopGridViewport().left + shopGridViewport().right) / 2, shopShelfY(row), slantedRect(shopShelfWidth(), SHOP_SHELF.height, 10), {
+      fill: 0x060a0f, alpha: 0.95, edge: COLOR.accent, edgeAlpha: 0.55,
+    });
+    this.content?.add(shelf);
   }
 
   /** 일반 판은 윗선만, 상품 그림 액자만 사방 테두리와 내부 비네트를 사용한다. */
@@ -250,7 +287,7 @@ export class ShopScene extends Phaser.Scene {
     this.tabRow?.destroy();
     this.tabRow = this.add.container(0, 0).setDepth(9);
     SHOP_TABS.forEach((tab, index) => {
-      const { x, y } = shopTabSpot(index, SHOP_TABS.length);
+      const { x, y } = shopTabSpot(index);
       addCategoryTab(this, this.tabRow, {
         x, y, width: SHOP_TAB_ROW.width, height: SHOP_TAB_ROW.height,
         label: tab.label, selected: tab.id === this.selectedCategory,
@@ -262,7 +299,7 @@ export class ShopScene extends Phaser.Scene {
 
   /** 런타임 탭 간격과 동일한 계산으로 테스트 입력 중심을 제공한다. */
   private tabPoints(): Record<ShopCategory, { x: number; y: number }> {
-    return Object.fromEntries(SHOP_TABS.map((tab, index) => [tab.id, shopTabSpot(index, SHOP_TABS.length)])) as Record<ShopCategory, { x: number; y: number }>;
+    return Object.fromEntries(SHOP_TABS.map((tab, index) => [tab.id, shopTabSpot(index)])) as Record<ShopCategory, { x: number; y: number }>;
   }
 
   /** 탭을 바꾸면 이전 스크롤을 버리고 해당 분류의 첫 상품부터 다시 보여 준다. */

@@ -3,49 +3,71 @@ import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 /**
  * 상점 화면의 자리표.
  *
- * **화면을 넷으로 나눠 위 한 칸은 무대, 아래 세 칸은 상품 판이다.** 예전에는 점원 전신이
- * 왼쪽 430px를 통째로 쓰고 목록이 그 오른쪽 610px에 세로로 한 줄씩 섰는데, 세로 화면에서
- * 한 줄짜리 목록은 카드 하나가 가로로 길어 액자·이름·설명·값이 한 줄에 늘어서고 그만큼
- * 한 번에 두 개밖에 보이지 않았다. 점원은 무대 한 칸에서 **상반신만** 서고 목록은 화면 폭을
- * 다 쓰는 두 줄 격자가 된다.
+ * **위는 점원이 선 무대, 아래는 상품을 얹어 둔 전시대다.** 예전에는 점원 전신이 왼쪽 430px를
+ * 통째로 쓰고 목록이 그 오른쪽 610px에 세로로 한 줄씩 섰는데, 세로 화면에서 한 줄짜리 목록은
+ * 카드 하나가 가로로 길어 액자·이름·설명·값이 한 줄에 늘어서고 그만큼 한 번에 두 개밖에
+ * 보이지 않았다.
  *
  * 값은 화면이 손으로 적지 않고 이 표와 아래 함수에서만 나온다 —
- * `tests/unit/shopLayout.test.ts`가 무대·판·격자·탭이 서로를 침범하지 않는지 지킨다.
+ * `tests/unit/shopLayout.test.ts`가 무대·전시대·격자·탭이 서로를 침범하지 않는지 지킨다.
  */
-export const SHOP_QUARTER = BASE_HEIGHT / 4;
 
-/** 위 한 칸 — 오른쪽에 점원, 왼쪽에 대사. */
+/** 상단 재화 줄이 지키는 띠. 점원의 머리끝이 이 아래에서 시작한다. */
+export const SHOP_TOPBAR_GUARD = 150;
+
+/**
+ * 위 무대 — 오른쪽에 점원, 왼쪽에 대사.
+ *
+ * **무대 바닥선(`bottom`) 하나가 이 화면의 유일한 손잡이다.** 전시대의 윗변도, 점원이 잘리는
+ * 자리도, 격자가 시작하는 높이도 전부 이 값에서 나온다.
+ */
 export const SHOP_STAGE = {
   top: 0,
-  bottom: SHOP_QUARTER,
+  /**
+   * 무대 바닥선.
+   *
+   * **화면의 삼분의 일보다 조금 더 준다.** 넷으로 나눠 한 칸(480)만 주었을 때는 점원이 어깨
+   * 언저리에서 잘려 누구인지만 겨우 읽혔다 — 허리께까지 보여야 그 자리에 사람이 서 있는 것으로
+   * 읽힌다.
+   */
+  bottom: 700,
   /**
    * 점원은 **머리 관절**을 기준으로 세운다. 전신 높이로 발끝을 맞추면 등신이 다른 원화마다
-   * 얼굴이 다른 자리에 서므로, 머리를 무대에 고정하고 남는 몸은 상품 판이 가린다.
+   * 얼굴이 다른 자리에 서므로, 머리를 무대에 고정하고 남는 몸은 전시대가 가린다.
+   *
+   * **머리끝이 상단 재화 줄 아래에서 시작해야 한다**(`SHOP_TOPBAR_GUARD`) — 더 올리면 모자·뿔이
+   * 재화 칸을 침범해, 지금 얼마인지를 읽는 줄 위에 그림이 겹친다.
    */
-  merchant: { headX: 790, headY: 306, height: 1080 },
+  merchant: { headX: 790, headY: 360, height: 1200 },
   /** 대사는 왼쪽. 이름줄과 대사줄만 덮는 얇은 띠라 무대 배경이 그대로 보인다. */
-  dialogue: { centerX: 340, centerY: 352, width: 588, height: 168, nameOffsetY: -46, lineOffsetY: 22 },
+  dialogue: { centerX: 340, centerY: 500, width: 588, height: 168, nameOffsetY: -46, lineOffsetY: 22 },
 } as const;
 
 /**
- * 아래 세 칸을 덮는 상품 판.
+ * 상품을 얹어 둔 **전시대** — 화면 좌우와 밑동까지 쓴다.
  *
  * 무대 바닥선보다 한 뼘 위에서 시작해 점원의 허리를 가린다 — 경계에서 딱 맞추면 잘린 몸통이
- * 판 윗변에 붙어 "덜 그려진 것"처럼 보인다.
+ * 윗변에 붙어 "덜 그려진 것"처럼 보인다.
+ *
+ * **사방에 여백을 남기지 않는다.** 36px 띠를 좌우에, 236px를 밑에 두었을 때는 그 자리에
+ * 아무것도 서지 않으면서 칸만 좁혔다 — 세로 화면에서 가장 아쉬운 것이 칸 폭이다. 판이 화면
+ * 밑동까지 내려가므로 **목록 교체 줄도 판 안**에 서고, 그 줄은 우하단 뒤로가기를 피해 왼쪽에
+ * 붙는다.
  */
 export const SHOP_BOARD = {
-  left: 36,
-  right: BASE_WIDTH - 36,
-  top: SHOP_QUARTER - 10,
-  bottom: BASE_HEIGHT - 236,
+  left: 0,
+  right: BASE_WIDTH,
+  top: SHOP_STAGE.bottom - 10,
+  bottom: BASE_HEIGHT,
   /** 글과 칸이 판 좌우 변에서 들어오는 여백. */
   padX: 30,
   /** 머리글 한 줄과 그 아래 구분선의 판 윗변 기준 높이. */
   headerY: 44,
   hairlineY: 82,
-  /** 격자가 흐르는 창이 머리글 아래에서 시작해 판 밑변 앞에서 끊기는 여백. */
+  /** 격자가 흐르는 창이 머리글 아래에서 시작하는 여백. */
   viewportTopPad: 100,
-  viewportBottomPad: 26,
+  /** 창 밑변이 목록 교체 줄에서 물러나는 여백. */
+  viewportTabGap: 22,
 } as const;
 
 /**
@@ -66,18 +88,42 @@ export const SHOP_CARD = {
    * 흐르지 않고, 그 탭만 스크롤이 없는 화면이 된다 — 탭마다 손짓이 갈리면 목록을 끝까지 봤는지
    * 알 수 없다.
    */
-  height: 360,
-  frame: 160,
-  frameY: -88,
-  nameY: 28,
-  remainingY: 70,
-  price: { y: 132, height: 64, inset: 56 },
+  height: 390,
+  frame: 170,
+  frameY: -95,
+  nameY: 38,
+  remainingY: 82,
+  price: { y: 148, height: 66, inset: 56 },
   /** 드래그와 탭을 가르는 거리. 이보다 많이 밀렸으면 스크롤이지 구매가 아니다. */
   dragSlop: 16,
 } as const;
 
-/** 하단 목록 교체 줄 — 가방과 같은 서류철 라벨이다. */
-export const SHOP_TAB_ROW = { width: 176, height: 82, gap: 8, overlap: 8 } as const;
+/**
+ * 하단 목록 교체 줄 — 가방과 같은 서류철 라벨이다.
+ *
+ * 판이 화면 밑동까지 내려오므로 **판 안**의 밑동에 서고, 우하단 뒤로가기를 피해 **왼쪽에
+ * 붙는다** — 가운데에 세우면 마지막 라벨이 그 버튼 밑으로 들어간다.
+ */
+export const SHOP_TAB_ROW = { width: 176, height: 82, gap: 8, left: 30, bottom: BASE_HEIGHT - 26 } as const;
+
+/**
+ * 줄마다 깔리는 **선반 한 장**.
+ *
+ * 칸만 떠 있으면 목록이고, 그 밑에 선반이 지나가면 전시대가 된다 — 상품이 놓여 있는 것으로
+ * 읽히게 하는 것이 이 한 줄의 몫이다. 선반은 칸과 함께 흐르므로 격자 컨테이너 안에 둔다.
+ */
+export const SHOP_SHELF = { height: 18, offsetY: 10, overhang: 14 } as const;
+
+/** 그 줄의 선반이 지나가는 y. 칸 밑변 바로 아래라 칸이 선반에 놓인 것으로 읽힌다. */
+export function shopShelfY(row: number): number {
+  return shopCardSpot(row * SHOP_CARD.columns).y + SHOP_CARD.height / 2 + SHOP_SHELF.offsetY;
+}
+
+/** 선반 한 장의 폭. 칸 줄보다 조금 더 내밀어 칸이 선반 **위에** 선 것으로 보인다. */
+export function shopShelfWidth(): number {
+  const view = shopGridViewport();
+  return view.right - view.left + SHOP_SHELF.overhang * 2;
+}
 
 export interface ShopRect { left: number; right: number; top: number; bottom: number }
 
@@ -94,7 +140,7 @@ export function shopGridViewport(): ShopRect {
     left: SHOP_BOARD.left + SHOP_BOARD.padX,
     right: SHOP_BOARD.right - SHOP_BOARD.padX,
     top: SHOP_BOARD.top + SHOP_BOARD.viewportTopPad,
-    bottom: SHOP_BOARD.bottom - SHOP_BOARD.viewportBottomPad,
+    bottom: SHOP_TAB_ROW.bottom - SHOP_TAB_ROW.height - SHOP_BOARD.viewportTabGap,
   };
 }
 
@@ -123,15 +169,8 @@ export function shopGridContentHeight(count: number): number {
   return rows * (SHOP_CARD.height + SHOP_CARD.gapY) - SHOP_CARD.gapY;
 }
 
-/**
- * 탭 한 장의 중심.
- *
- * 판 **밑변에 걸터앉아** 서류철 라벨처럼 조금 물려 선다 — 떼어 놓으면 판과 무관한 버튼 줄로
- * 읽히고, 완전히 겹치면 판 안의 격자와 같은 층이 된다.
- */
-export function shopTabSpot(index: number, count: number): { x: number; y: number } {
-  const { width, height, gap, overlap } = SHOP_TAB_ROW;
-  const rowWidth = count * width + (count - 1) * gap;
-  const { centerX } = shopBoardSize();
-  return { x: centerX - rowWidth / 2 + width / 2 + index * (width + gap), y: SHOP_BOARD.bottom + height / 2 - overlap };
+/** 탭 한 장의 중심. 판 안 밑동의 왼쪽에서 오른쪽으로 이어진다. */
+export function shopTabSpot(index: number): { x: number; y: number } {
+  const { width, height, gap, left, bottom } = SHOP_TAB_ROW;
+  return { x: left + width / 2 + index * (width + gap), y: bottom - height / 2 };
 }

@@ -1,24 +1,40 @@
 import { describe, expect, it } from "vitest";
 import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
 import {
-  SHOP_BOARD, SHOP_CARD, SHOP_QUARTER, SHOP_STAGE, SHOP_TAB_ROW,
-  shopBoardSize, shopCardSpot, shopCardWidth, shopGridContentHeight, shopGridViewport, shopTabSpot,
+  SHOP_BOARD, SHOP_CARD, SHOP_SHELF, SHOP_STAGE, SHOP_TAB_ROW, SHOP_TOPBAR_GUARD,
+  shopBoardSize, shopCardSpot, shopCardWidth, shopGridContentHeight, shopGridViewport,
+  shopShelfWidth, shopShelfY, shopTabSpot,
 } from "../../src/ui/shopLayout";
 
 /** 우하단 뒤로가기가 지키는 자리. 씬이 그 좌표를 고정값으로 쓰므로 여기서도 같은 값을 본다. */
 const BACK_BUTTON = { x: BASE_WIDTH - 106, y: BASE_HEIGHT - 120, radius: 70 };
 
 describe("상점 자리표", () => {
-  it("위 한 칸은 무대, 아래 세 칸은 상품 판이다", () => {
-    expect(SHOP_QUARTER).toBe(BASE_HEIGHT / 4);
-    expect(SHOP_STAGE.bottom).toBe(SHOP_QUARTER);
-    // 판은 무대 바닥선보다 살짝 위에서 시작해 점원의 허리를 가린다 — 경계에서 딱 맞추면
-    // 잘린 몸통이 판 윗변에 붙어 "덜 그려진 것"처럼 보인다.
+  it("위는 무대, 아래는 전시대이고 전시대가 무대 바닥선에 물린다", () => {
+    // 무대는 화면의 삼분의 일보다 조금 더 — 넷으로 나눈 한 칸만 주면 점원이 어깨에서 잘린다.
+    expect(SHOP_STAGE.bottom).toBeGreaterThan(BASE_HEIGHT / 3);
+    expect(SHOP_STAGE.bottom).toBeLessThan(BASE_HEIGHT / 2);
+    // 전시대는 무대 바닥선보다 살짝 위에서 시작해 점원의 허리를 가린다 — 경계에서 딱 맞추면
+    // 잘린 몸통이 윗변에 붙어 "덜 그려진 것"처럼 보인다.
     expect(SHOP_BOARD.top).toBeLessThan(SHOP_STAGE.bottom);
     expect(SHOP_STAGE.bottom - SHOP_BOARD.top).toBeLessThanOrEqual(24);
-    const { height } = shopBoardSize();
-    // 아래 세 칸 몫이라 화면 절반보다는 넉넉히 크다.
-    expect(height).toBeGreaterThan(BASE_HEIGHT / 2);
+    expect(shopBoardSize().height).toBeGreaterThan(BASE_HEIGHT / 2);
+  });
+
+  it("전시대가 화면 좌우와 밑동을 남김없이 쓴다", () => {
+    // 좌우 36px 띠와 아래 236px는 아무것도 서지 않으면서 칸 폭만 좁혔다.
+    expect(SHOP_BOARD.left).toBe(0);
+    expect(SHOP_BOARD.right).toBe(BASE_WIDTH);
+    expect(SHOP_BOARD.bottom).toBe(BASE_HEIGHT);
+  });
+
+  it("점원은 상단 재화 줄을 침범하지 않고 허리까지 보인다", () => {
+    const { headX, headY, height } = SHOP_STAGE.merchant;
+    // 원화에서 머리 관절 위로 솟은 몫(모자·뿔)까지 재화 줄 아래에서 시작해야 한다.
+    expect(headY - height * 0.16).toBeGreaterThan(SHOP_TOPBAR_GUARD);
+    // 머리끝부터 잘리는 자리까지가 전신의 3할을 넘어야 상반신이 허리께까지 읽힌다.
+    expect((SHOP_BOARD.top - headY) / height).toBeGreaterThan(0.25);
+    expect(headX).toBeLessThan(BASE_WIDTH);
   });
 
   it("무대의 대사와 점원이 서로를 침범하지 않는다", () => {
@@ -96,21 +112,34 @@ describe("상점 자리표", () => {
     expect(shopGridContentHeight(5)).toBeGreaterThan(viewHeight);
   });
 
-  it("하단 탭 줄이 판 밑변에 걸터앉고 뒤로가기를 침범하지 않는다", () => {
+  it("선반이 줄마다 칸 밑으로 지나가고 좌우로 한 뼘 더 내민다", () => {
+    for (const row of [0, 1, 2]) {
+      const cardBottom = shopCardSpot(row * SHOP_CARD.columns).y + SHOP_CARD.height / 2;
+      // 칸 밑변 바로 아래를 지나야 칸이 선반에 놓인 것으로 읽힌다.
+      expect(shopShelfY(row)).toBeGreaterThan(cardBottom);
+      expect(shopShelfY(row) - cardBottom).toBeLessThanOrEqual(SHOP_CARD.gapY);
+      // 다음 줄의 칸을 침범하지 않는다.
+      if (row > 0) expect(shopShelfY(row) - shopShelfY(row - 1)).toBe(SHOP_CARD.height + SHOP_CARD.gapY);
+    }
+    const view = shopGridViewport();
+    expect(shopShelfWidth()).toBe(view.right - view.left + SHOP_SHELF.overhang * 2);
+    expect(SHOP_SHELF.overhang).toBeGreaterThan(0);
+  });
+
+  it("하단 탭 줄이 전시대 안 밑동 왼쪽에 서고 뒤로가기를 침범하지 않는다", () => {
     const count = 3;
-    const spots = Array.from({ length: count }, (_, index) => shopTabSpot(index, count));
+    const spots = Array.from({ length: count }, (_, index) => shopTabSpot(index));
     for (const spot of spots) {
-      // 라벨은 판 밑변에 물려 서고(떼어 놓으면 판과 무관한 버튼 줄로 읽힌다) 화면 안에 든다.
-      expect(spot.y - SHOP_TAB_ROW.height / 2).toBeLessThan(SHOP_BOARD.bottom);
+      // 엄지가 닿는 밑동이되 화면 밖으로 나가지 않는다.
       expect(spot.y + SHOP_TAB_ROW.height / 2).toBeLessThanOrEqual(BASE_HEIGHT);
+      expect(spot.y - SHOP_TAB_ROW.height / 2).toBeGreaterThan(SHOP_BOARD.top);
       // 격자 창과 겹치지 않는다 — 탭을 누르는 손이 스크롤로 오인되면 목록이 흔들린다.
       expect(spot.y - SHOP_TAB_ROW.height / 2).toBeGreaterThanOrEqual(shopGridViewport().bottom);
-      // 우하단 뒤로가기와 떨어져 있다.
+      // 우하단 뒤로가기와 떨어져 있다 — 가운데 정렬하면 마지막 라벨이 그 버튼 밑으로 들어간다.
       expect(spot.x + SHOP_TAB_ROW.width / 2).toBeLessThan(BACK_BUTTON.x - BACK_BUTTON.radius);
     }
-    // 줄은 판 가운데를 기준으로 대칭이다.
-    const { centerX } = shopBoardSize();
-    expect((spots[0].x + spots[count - 1].x) / 2).toBeCloseTo(centerX, 6);
+    // 줄은 왼쪽 여백에서 시작해 오른쪽으로 이어진다.
+    expect(spots[0].x - SHOP_TAB_ROW.width / 2).toBe(SHOP_TAB_ROW.left);
     expect(spots[1].x - spots[0].x).toBe(SHOP_TAB_ROW.width + SHOP_TAB_ROW.gap);
   });
 });

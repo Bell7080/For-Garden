@@ -143,7 +143,7 @@ export interface PublicRelicProfileDto {
   equippedSkinId?: import("../core/types").RelicSkinId;
   level: number;
   /** 성급은 중복 획득/각성 단계와 구분되는 공개 표시 값이다. */
-  stars: number;
+  breakthroughGrade: number;
   /** 서버가 공개 시점에 계산한 대표 능력치라 조회자의 세션을 참조하지 않는다. */
   stats: Stats;
   /** 공개가 허용된 스킬만 id로 전달한다. */
@@ -384,7 +384,7 @@ export type ApiErrorCode = "INSUFFICIENT_STAMINA" | "EXPEDITION_RUN_NOT_FOUND" |
  */
 export interface FeedRelicResponse extends PlayerStateDto { relicId: string; feeds: number; cheesecakeSpent: number; levelsGained: number; }
 /** 돌파 결과. 열린 상한을 함께 돌려줘 화면이 표를 다시 뒤지지 않게 한다. */
-export interface BreakThroughResponse extends PlayerStateDto { relicId: string; breakthrough: number; levelCap: number; /** 돌파 뒤의 별(1~5). */ stars: number; /** 남은 그 개체의 파편. */ fragments: number; }
+export interface BreakThroughResponse extends PlayerStateDto { relicId: string; breakthrough: number; levelCap: number; /** 돌파 뒤의 별(1~5). */ breakthroughGrade: number; /** 남은 그 개체의 파편. */ fragments: number; }
 /** 전투 확인 시 저장되는 보상으로 최초 여부와 획득 치즈케이크를 결과 UI에 그대로 전달한다. */
 export interface CompleteStageResponse extends PlayerStateDto { stageId: string; firstClear: boolean; cheesecakeEarned: number; }
 /** 입장 영수증은 재시도에 그대로 반환되며 확정 뒤 클라이언트 로딩 실패는 자동 환불하지 않는다. */

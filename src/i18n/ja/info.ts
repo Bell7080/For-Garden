@@ -2,6 +2,8 @@
 export const INFO_JA = {
   "info.section.bond": "絆",
   "info.section.stats": "ステータス",
+  "info.enemy.title": "情報ウィンドウ",
+  "info.enemy.reach": "射程 · {tier}",
   "info.section.rune": "ルーン",
   "info.level": "レベル",
   "info.level.max": "最大レベル",
@@ -13,8 +15,8 @@ export const INFO_JA = {
   "info.feed.ten": "10 レベル",
   "info.breakthrough": "限界突破",
   "info.breakthrough.do": "突破する",
-  "info.breakthrough.starMax": "星が最大",
-  "info.breakthrough.alreadyMax": "すでに{rarity}ランクだ。重複はDNA片として貯まる。",
+  "info.breakthrough.gradeMax": "突破最大",
+  "info.breakthrough.alreadyMax": "すでに突破ランク{rarity}だ。重複はDNA片として貯まる。",
   "info.breakthrough.fragment": "{name}の欠片",
   "info.breakthrough.cheesecake": "チーズケーキ",
   "info.breakthrough.need": "必要 {count}",
@@ -85,9 +87,6 @@ export const INFO_JA = {
 
   "info.enemy.undug": "未発掘個体",
   "info.enemy.silhouette": "   シルエット記録",
-  "info.enemy.noAilment": "状態異常なし",
-  "info.enemy.bleed": "出血 {seconds}秒",
-  "info.enemy.live": "HP {hp} / {maxHp}   ·   必殺 {energy}   ·   野性 {ferocity}   ·   {ailment}",
   "info.enemy.gaze": "{name}はあなたを見つめている。",
 
   "info.story.1": "第1話 · はじめの挨拶",

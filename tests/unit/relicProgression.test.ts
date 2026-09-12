@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { breakthroughBonus, breakthroughFragmentCost, breakthroughSlotStar, BREAKTHROUGH_STEPS, calculateFinalStats, canBreakThrough, isBreakthroughSlotOpen, openedBreakthroughSlots, canFeedRelic, canLevelUpRelic, feedRelic, FEED_UNIT, levelUpRelic, nextBreakthrough, relicLevelCap, RELIC_LEVEL_CAP, RELIC_STAR_CAP, relicExpToNext, relicLevelUpCost, relicStars } from "../../src/core/relicProgression";
+import { breakthroughBonus, breakthroughFragmentCost, breakthroughSlotGrade, BREAKTHROUGH_STEPS, calculateFinalStats, canBreakThrough, isBreakthroughSlotOpen, openedBreakthroughSlots, canFeedRelic, canLevelUpRelic, feedRelic, FEED_UNIT, levelUpRelic, nextBreakthrough, relicLevelCap, RELIC_LEVEL_CAP, BREAKTHROUGH_GRADE_CAP, relicExpToNext, relicLevelUpCost, breakthroughGrade } from "../../src/core/relicProgression";
 import { combatPower } from "../../src/core/combatPower";
 import type { RelicProgress, Stats } from "../../src/core/types";
 import { RelicProgressionManager } from "../../src/managers/RelicProgressionManager";
@@ -106,10 +106,10 @@ describe("렐릭 성장 규칙", () => {
 
   it("별은 돌파 단계 + 1이고 모든 개체가 하나에서 시작한다", () => {
     const manager = new RelicProgressionManager(makeSession());
-    expect(manager.getStars("rex")).toBe(1);
+    expect(manager.getBreakthroughGrade("rex")).toBe(1);
     expect(manager.getFragments("rex")).toBe(0);
-    expect(relicStars(BREAKTHROUGH_STEPS.length)).toBe(RELIC_STAR_CAP);
-    for (const invalid of [-1, BREAKTHROUGH_STEPS.length + 1, 2.5]) expect(() => relicStars(invalid)).toThrow(RangeError);
+    expect(breakthroughGrade(BREAKTHROUGH_STEPS.length)).toBe(BREAKTHROUGH_GRADE_CAP);
+    for (const invalid of [-1, BREAKTHROUGH_STEPS.length + 1, 2.5]) expect(() => breakthroughGrade(invalid)).toThrow(RangeError);
   });
 
   it("장착과 해제는 API 응답의 전체 장착표를 세션에 적용한다", async () => {
@@ -209,8 +209,8 @@ describe("돌파", () => {
     expect(isBreakthroughSlotOpen(1, "ultimate")).toBe(false);
     expect(isBreakthroughSlotOpen(BREAKTHROUGH_STEPS.length, "passive")).toBe(true);
     // 별 둘이 첫 슬롯을 연다. 표의 첫 줄이 곧 "별 둘로 가는 길"이다.
-    expect(breakthroughSlotStar("basic")).toBe(2);
-    expect(breakthroughSlotStar("passive")).toBe(RELIC_STAR_CAP);
+    expect(breakthroughSlotGrade("basic")).toBe(2);
+    expect(breakthroughSlotGrade("passive")).toBe(BREAKTHROUGH_GRADE_CAP);
   });
 
   it("뒤에는 열린 상한까지 다시 급여할 수 있다", () => {

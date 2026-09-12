@@ -90,11 +90,20 @@ export function breakthroughFragmentCost(rarity: RelicRarity, breakthrough: numb
 /** 한계를 몇 번까지 뚫을 수 있는지. 별 하나에서 시작하므로 최대 별은 이 값 + 1이다. */
 export const BREAKTHROUGH_CAP = BREAKTHROUGH_STEPS.length;
 
-/** 화면에 로마자로 서는 별. 돌파 0단계가 별 하나다. */
-export const RELIC_STAR_CAP = BREAKTHROUGH_CAP + 1;
+/** 화면에 로마자로 서는 돌파 등급. 돌파 0단계가 등급 I다. */
+export const BREAKTHROUGH_GRADE_CAP = BREAKTHROUGH_CAP + 1;
+
+/**
+ * 돌파 등급의 표기 — **로마자 한 글자**다.
+ *
+ * 칸 다섯을 세게 하면 카드마다 다섯이 반짝여 얼굴보다 먼저 읽히고, 아라비아 숫자는 레벨과
+ * 섞인다. 표를 코어에 두는 이유는 전투 머리글(`expeditionBattle`)과 표식(`rarityMark`)이
+ * **같은 글자**를 써야 하기 때문이다.
+ */
+export const BREAKTHROUGH_GRADE_ROMAN: readonly string[] = ["I", "II", "III", "IV", "V"];
 
 /** 돌파 단계를 별 개수로 바꾼다. 별을 세는 곳은 전부 이 함수를 쓴다. */
-export function relicStars(breakthrough: number): number {
+export function breakthroughGrade(breakthrough: number): number {
   if (!Number.isInteger(breakthrough) || breakthrough < 0 || breakthrough > BREAKTHROUGH_CAP) {
     throw new RangeError("돌파 단계가 범위를 벗어났습니다.");
   }
@@ -153,10 +162,10 @@ export function isBreakthroughSlotOpen(breakthrough: number, slot: BreakthroughS
   return openedBreakthroughSlots(breakthrough).includes(slot);
 }
 
-/** 그 슬롯을 여는 별(로마자로 세는 수). 화면이 "몇 번째 별에서 열리는가"를 적을 때 쓴다. */
-export function breakthroughSlotStar(slot: BreakthroughSlot): number {
+/** 그 슬롯을 여는 돌파 등급(로마자로 세는 수). 화면이 "몇 등급에서 열리는가"를 적을 때 쓴다. */
+export function breakthroughSlotGrade(slot: BreakthroughSlot): number {
   const index = BREAKTHROUGH_STEPS.findIndex((step) => step.slot === slot);
-  return index < 0 ? RELIC_STAR_CAP : index + 2;
+  return index < 0 ? BREAKTHROUGH_GRADE_CAP : index + 2;
 }
 
 /**

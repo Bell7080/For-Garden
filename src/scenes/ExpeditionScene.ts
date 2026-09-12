@@ -39,6 +39,7 @@ import { expeditionEnemyLevel, getExpeditionEncounterEnemies } from "../data/exp
 import { formatCurrency } from "../core/formatCurrency";
 import { drawInnerVignette } from "../ui/holo";
 import { CharacterInfoManager } from "../managers/CharacterInfoManager";
+import { EnemyInfoPopup } from "../ui/EnemyInfoPopup";
 import { bindLongPress } from "../ui/longPressInfo";
 import { groundedPortraitBounds } from "../ui/portraitPlacement";
 import { NodeEnemyPreview } from "../ui/NodeEnemyPreview";
@@ -158,7 +159,7 @@ export class ExpeditionScene extends Phaser.Scene {
   /** 지도에서 마지막으로 확인한 전투 노드다. 하단 출격 버튼은 이 선택만 소비한다. */
   private selectedNode?: ExpeditionMapNode;
   /** 적 상세는 실제 전투와 같은 공용 읽기 전용 상태창을 사용한다. */
-  private enemyInfo?: CharacterInfoManager;
+  private enemyInfo?: EnemyInfoPopup;
   /** 아군 상세는 편성과 같은 소유자 문맥 창이다. 문맥이 섞이지 않게 창을 나눈다. */
   private allyInfo?: CharacterInfoManager;
 
@@ -259,9 +260,8 @@ export class ExpeditionScene extends Phaser.Scene {
     this.buildMap(run.nodes, run.currentNodeId, run.visitedNodeIds);
     this.buildAugmentChips(augments);
     this.buildRelicHud(run.relics, augments);
-    // 원화는 정보창의 판·스킬 아이콘 아래(1001)에 선다. 더 높이면 스테이지와 달리 원화가
-    // 스킬 층 앞으로 튀어나와 아이콘을 가린다.
-    this.enemyInfo = new CharacterInfoManager(this, 1001, "enemy");
+    // 적은 정보창 씬이 아니라 팝업 한 장이다 — 노드 미리보기 위에 얹히므로 그보다 위 층을 쓴다.
+    this.enemyInfo = new EnemyInfoPopup(this, new PopupLayer(this, 2200));
     this.enemyPreview = new NodeEnemyPreview(this, { title: "", growth: [], enemies: [], top: EXPEDITION_LAYOUT.map.top, bottom: EXPEDITION_LAYOUT.map.bottom, depth: 20, onEnemyClick: () => undefined });
     // 지도 영역 밖 입력은 편성판 내부가 아닌 경우 현재 노드 선택만 닫는다.
     const dismissOutsideMap = (pointer: Phaser.Input.Pointer): void => {
@@ -357,7 +357,7 @@ export class ExpeditionScene extends Phaser.Scene {
       // 선택 세대가 바뀌면 프리팹이 기존 SD와 늦게 끝난 로드 요청을 함께 폐기한다.
       // 원정은 아직 슬롯별 돌파가 없지만 같은 미리보기 계약에 각 슬롯의 성장 상태를 명시한다.
       const growth = enemies.map(() => ({ level, breakthrough: 0 }));
-      this.enemyPreview?.showAt(nodeY, { title: t("expedition.node.title", { floor: node.floor, type: names[node.type] }), growth, enemies, onEnemyClick: (enemy) => this.enemyInfo?.showEnemy(enemy, { level }) });
+      this.enemyPreview?.showAt(nodeY, { title: t("expedition.node.title", { floor: node.floor, type: names[node.type] }), growth, enemies, onEnemyClick: (enemy, slot) => this.enemyInfo?.show({ def: enemy, level: slot.level, breakthrough: slot.breakthrough, ferocityLevel: slot.ferocityLevel }) });
       return;
     }
     this.nodeTransitionPending = true;
@@ -507,7 +507,7 @@ export class ExpeditionScene extends Phaser.Scene {
       // 지도는 카드·게이지·글자를 개별 축소하지 않고 전투와 같은 한 칸을 그대로 세운다.
       // 생존은 노란 발광으로 알리지 않는다 — 그 발광은 전투에서 "궁극기가 찼다"는 뜻이다.
       const profile = new BattleProfile(this, x, BATTLE_PROFILE_LAYOUT.expedition.centerY, {
-        relic: def, level: relicProgression.getProgress(def.id).level, stars: relicProgression.getStars(def.id),
+        relic: def, level: relicProgression.getProgress(def.id).level, breakthroughGrade: relicProgression.getBreakthroughGrade(def.id),
         currentHp, maxHp, ferocity: 0, active: false, readOnly: true, dead: !state.alive,
       }).setScale(BATTLE_PROFILE_LAYOUT.expedition.scale);
       // 지도 HUD의 칸도 편성 그리드와 같은 꾹 누름으로 상세를 연다. 증강 대상 고르기는
@@ -766,7 +766,7 @@ export class ExpeditionScene extends Phaser.Scene {
         label: relic.name,
         level: relicProgression.getProgress(relic.id).level,
         rarity: relic.rarity,
-        stars: relicProgression.getStars(relic.id),
+        breakthroughGrade: relicProgression.getBreakthroughGrade(relic.id),
         affinity: { element: relic.element, role: relic.role },
         // 이미 편성판에 나가 있는 카드는 떠오르지 않고 눌려 들어간다.
         selectedStyle: "pressed",

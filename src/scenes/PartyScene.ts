@@ -7,6 +7,7 @@ import { getRelic } from "../data/relics";
 import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { relicCollection } from "../managers/RelicCollectionManager";
 import { CharacterInfoManager, roleLabel } from "../managers/CharacterInfoManager";
+import { EnemyInfoPopup } from "../ui/EnemyInfoPopup";
 import { bindLongPress } from "../ui/longPressInfo";
 import type { PuppetCreature } from "../puppets/assets";
 import { placePuppet, spawnPuppet } from "../puppets/assets";
@@ -27,7 +28,7 @@ import type { SetPartyFailureReason } from "../managers/RelicCollectionManager";
 import { AffinityDirection } from "../ui/AffinityDirection";
 import { AffinityBadge } from "../ui/AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "../ui/affinityIcons";
-import { addStarMark } from "../ui/rarityMark";
+import { addBreakthroughGradeMark } from "../ui/rarityMark";
 import { addUnitNameplate } from "../ui/unitNameplate";
 import { combatPower } from "../core/combatPower";
 import { formationMembers, tapFormationSlot, tapRosterRelic, toFormationSlots } from "../core/formationSlots";
@@ -143,7 +144,7 @@ export class PartyScene extends Phaser.Scene {
   private autoButtonPosition = { x: 0, y: 0 };
   private info!: CharacterInfoManager;
   /** 같은 정보창을 적 문맥으로 하나 더 둔다. 아군 창과 문맥이 섞이지 않게 창을 나눈다. */
-  private enemyInfo!: CharacterInfoManager;
+  private enemyInfo!: EnemyInfoPopup;
   /** 저장을 포함한 전투 진입 처리 중에는 연속 탭이 같은 처리를 다시 시작하지 못하게 한다. */
   private isEnteringBattle = false;
   /** 세 화면에서 같은 감광·드롭 칸·미리보기 수명을 사용하는 공용 표현기다. */
@@ -262,7 +263,8 @@ export class PartyScene extends Phaser.Scene {
     addBackButton(this, () => this.scene.start("stageMap"));
 
     this.info = new CharacterInfoManager(this);
-    this.enemyInfo = new CharacterInfoManager(this, 1001, "enemy");
+    // 적은 정보창 씬이 아니라 팝업 한 장이다. 스킬 쪽지는 이 층 위에 쌓인다.
+    this.enemyInfo = new EnemyInfoPopup(this, new PopupLayer(this, 2200));
     this.bindDeselect();
     this.refresh();
   }
@@ -274,7 +276,7 @@ export class PartyScene extends Phaser.Scene {
    * 로마자, 레벨과 이름은 한 줄에 강조색으로. 두 화면이 같은 적을 다른 글로 적으면 같은 값이
    * 어디서는 표식, 어디서는 문장이 된다.
    */
-  private buildPreview(enemies: readonly RelicDef[], growth: readonly { level: number; breakthrough: number }[]): void {
+  private buildPreview(enemies: readonly RelicDef[], growth: readonly { level: number; breakthrough: number; ferocityLevel?: number }[]): void {
     // 두 줄 사이의 대치선.
     this.add
       .line(0, 0, 120, FRONT_LINE, BASE_WIDTH - 120, FRONT_LINE, COLOR.panelEdge)
@@ -293,17 +295,17 @@ export class PartyScene extends Phaser.Scene {
       this.add.existing(new AffinityBadge(this, x - 104, badgeTop, ELEMENT_ICON[def.element], 52, 0.62)).setDepth(3);
       this.add.existing(new AffinityBadge(this, x - 104, badgeTop + 49, ROLE_ICON[def.role], 38, 0.62)).setDepth(3);
       const marks = this.add.container(0, 0).setDepth(3);
-      addStarMark(this, marks, x + 104, badgeTop - 4, 42, snapshot.breakthrough + 1);
+      addBreakthroughGradeMark(this, marks, x + 104, badgeTop - 4, 42, snapshot.breakthrough + 1);
 
       // 체력은 적지 않는다 — 붙어 볼지 정하는 데 필요한 것은 개체별 수치가 아니라 아래의
       // 두 총 전투력이다. 이름줄은 노드 미리보기와 같은 프리팹을 쓴다(레벨 강조색·이름 흰색).
-      addUnitNameplate(this, undefined, x, ENEMY_ROW + 26, snapshot.level, def.name, 30);
+      addUnitNameplate(this, undefined, x, ENEMY_ROW + 26, snapshot.level, def.name, 30, snapshot.ferocityLevel ?? 0);
       // **적을 누르면 상세가 열린다.** 옆에 물음표를 하나 더 세우면 SD와 표식 사이에 눌러야 할
       // 것이 둘이 되고, 정작 크게 서 있는 SD는 눌러도 아무 일이 없다.
       this.add.rectangle(x, ENEMY_ROW - PREVIEW_HEIGHT / 2, 210, PREVIEW_HEIGHT + 70, 0xffffff, 0)
         .setDepth(4)
         .setInteractive({ useHandCursor: true })
-        .on("pointerup", () => this.enemyInfo.showEnemy(def, { level: snapshot.level }));
+        .on("pointerup", () => this.enemyInfo.show({ def, level: snapshot.level, breakthrough: snapshot.breakthrough, ferocityLevel: snapshot.ferocityLevel }));
     });
 
     // **대치선 위에는 두 편의 무게만 남긴다.** 속성 분포는 이미 각 SD의 아이콘이 말하고, "적"과
@@ -494,7 +496,7 @@ export class PartyScene extends Phaser.Scene {
         label: relic.name,
         level: relicProgression.getProgress(relic.id).level,
         rarity: relic.rarity,
-        stars: relicProgression.getStars(relic.id),
+        breakthroughGrade: relicProgression.getBreakthroughGrade(relic.id),
         affinity: { element: relic.element, role: relic.role },
         // 이미 자리에 나가 있는 카드는 떠오르지 않고 눌려 들어간다 — 발광은 "지금 고를 수 있다"로
         // 읽혀 이미 세운 렐릭과 아직 고를 수 있는 렐릭이 같은 무게가 된다.
@@ -629,7 +631,7 @@ export class PartyScene extends Phaser.Scene {
         const badgeTop = ALLY_ROW - PREVIEW_HEIGHT + 34;
         marks.add(new AffinityBadge(this, PREVIEW_COLUMNS[i] - 104, badgeTop, ELEMENT_ICON[def.element], 52, 0.62));
         marks.add(new AffinityBadge(this, PREVIEW_COLUMNS[i] - 104, badgeTop + 49, ROLE_ICON[def.role], 38, 0.62));
-        addStarMark(this, marks, PREVIEW_COLUMNS[i] + 104, badgeTop - 4, 42, relicProgression.getStars(id));
+        addBreakthroughGradeMark(this, marks, PREVIEW_COLUMNS[i] + 104, badgeTop - 4, 42, relicProgression.getBreakthroughGrade(id));
         addUnitNameplate(this, marks, PREVIEW_COLUMNS[i], ALLY_ROW + 26, relicProgression.getProgress(id).level, def.name, 30);
       }
 

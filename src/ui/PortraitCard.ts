@@ -7,7 +7,7 @@ import { chipPoints, HOLO } from "./holo";
 import { BACKGROUND } from "./backgrounds";
 import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
-import { addStarMark, RARITY_TONE } from "./rarityMark";
+import { addBreakthroughGradeMark, RARITY_TONE } from "./rarityMark";
 import { COLOR, textStyle } from "./theme";
 import { portraitCardHeadWindow, portraitCardOverhang } from "./portraitGrid";
 import { addBookmarkMark } from "./bookmarkMark";
@@ -54,7 +54,7 @@ export interface PortraitCardOptions {
    * 희귀도와 다른 축이다 — 별은 같은 개체를 몇 번 더 만나 한계를 돌파했는지이고, 희귀도는
    * 개체가 원래 얼마나 귀한지다. 그래서 색(바탕)과 글자(별)가 서로 다른 값에서 나온다.
    */
-  stars?: number;
+  breakthroughGrade?: number;
   /** 보유 렐릭 즐겨찾기. 한계 돌파 로마자 아래에 전용 별표로만 표시한다. */
   bookmarked?: boolean;
   /** 미발굴 카드. 원화를 실루엣으로 덮고 이름을 감춘다. */
@@ -414,8 +414,8 @@ export class PortraitCard extends Phaser.GameObjects.Container {
 
     // 왼쪽 위는 크게 깎여 나가므로, 표식은 덜 깎인 오른쪽 위에 붙인다. 등급을 아는 카드는
     // 개체번호 대신 로마자 등급이 그 자리에 선다 — 카드에서 궁금한 것은 번호가 아니라 등급이다.
-    if (options.stars !== undefined && !options.locked) {
-      addStarMark(scene, this, width / 2 - CHIP_INSET - 22, -height / 2 + 34, Math.min(46, width / 6), options.stars);
+    if (options.breakthroughGrade !== undefined && !options.locked) {
+      addBreakthroughGradeMark(scene, this, width / 2 - CHIP_INSET - 22, -height / 2 + 34, Math.min(46, width / 6), options.breakthroughGrade);
     } else if (options.badge) {
       this.add(
         scene.add

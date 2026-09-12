@@ -408,7 +408,7 @@ export class InteractionCityPopup {
       const y = portraitGridFirstRowY(0, ROSTER.cardHeight, PORTRAIT_GRID_MASK_GAP) + Math.floor(index / ROSTER.columns) * ROSTER.rowStep;
       const card = new PortraitCard(this.scene, x, y, {
         width: ROSTER.cardWidth, height: ROSTER.cardHeight, relicId: relic.id,
-        label: relic.name, level: progress.level, rarity: relic.rarity, stars: relicProgression.getStars(relic.id),
+        label: relic.name, level: progress.level, rarity: relic.rarity, breakthroughGrade: relicProgression.getBreakthroughGrade(relic.id),
         affinity: { element: relic.element, role: relic.role },
         // 이미 자리에 나가 있는 카드는 떠오르지 않고 눌려 들어간다.
         selectedStyle: "pressed",

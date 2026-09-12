@@ -5,6 +5,7 @@ import type { ExpeditionAugmentEffect } from "./expeditionAugments";
 import { EXPEDITION_COMBAT_BALANCE } from "../data/expedition";
 import { EXPEDITION_BOSS_BALANCE } from "../data/expedition";
 import type { BattleStageDef, RelicDef } from "./types";
+import { BREAKTHROUGH_GRADE_ROMAN } from "./relicProgression";
 import type { FighterInitialState, SkirmishBossPhase, SkirmishRelicResult } from "./skirmish";
 import { t } from "../i18n";
 
@@ -100,12 +101,15 @@ export function normalizeBattleSceneInput(input?: unknown): BattleSceneInputDto 
 }
 
 /** 모드별 상단 문구를 분리해 원정 화면이 선택된 스토리 이름을 읽지 않게 한다. */
-export function battleHeaderText(input: BattleSceneInputDto, stage: Pick<BattleStageDef, "id" | "name"> & { enemies: readonly Pick<BattleStageDef["enemies"][number], "level" | "breakthrough">[] }): string {
+export function battleHeaderText(input: BattleSceneInputDto, stage: Pick<BattleStageDef, "id" | "name"> & { enemies: readonly Pick<BattleStageDef["enemies"][number], "level" | "breakthrough" | "ferocityLevel">[] }): string {
   // 서로 다른 성장 상태도 숨기지 않도록 슬롯 순서대로 간결하게 요약한다.
   if (input.mode === "stage") {
     return t("battle.header.stage", {
       id: stage.id, name: stage.name,
-      enemies: stage.enemies.map(({ level, breakthrough }) => `LV.${level}/★${breakthrough + 1}`).join(" · "),
+      // 야성으로 얹힌 몫과 돌파 등급도 머리글에서 갈라 읽힌다 — 한 줄의 문장 모양은 표가 갖는다.
+      enemies: stage.enemies.map(({ level, breakthrough, ferocityLevel }) => t("battle.header.enemy", {
+        level, bonus: ferocityLevel ? `+${ferocityLevel}` : "", grade: BREAKTHROUGH_GRADE_ROMAN[breakthrough] ?? "",
+      })).join(" · "),
     });
   }
   if (input.mode === "expeditionBoss") return t("battle.header.expeditionBoss", { floor: input.floor });

@@ -2,6 +2,9 @@
 export const INFO_KO = {
   "info.section.bond": "유대",
   "info.section.stats": "능력치",
+  // 적 전용 팝업 — 정보창을 줄여 놓은 창이라 머리글은 개체 이름이 아니라 창 이름이다.
+  "info.enemy.title": "정보창",
+  "info.enemy.reach": "사거리 · {tier}",
   "info.section.rune": "룬",
   "info.level": "레벨",
   "info.level.max": "최대 레벨",
@@ -13,8 +16,8 @@ export const INFO_KO = {
   "info.feed.ten": "10 레벨",
   "info.breakthrough": "한계 돌파",
   "info.breakthrough.do": "돌파하기",
-  "info.breakthrough.starMax": "별 최대",
-  "info.breakthrough.alreadyMax": "이미 {rarity} 등급이다. 중복은 DNA 조각으로 쌓인다.",
+  "info.breakthrough.gradeMax": "돌파 최대",
+  "info.breakthrough.alreadyMax": "이미 돌파 등급 {rarity}다. 중복은 DNA 조각으로 쌓인다.",
   "info.breakthrough.fragment": "{name} 파편",
   "info.breakthrough.cheesecake": "치즈케이크",
   "info.breakthrough.need": "필요 {count}",
@@ -85,9 +88,6 @@ export const INFO_KO = {
 
   "info.enemy.undug": "미발굴 개체",
   "info.enemy.silhouette": "   실루엣 기록",
-  "info.enemy.noAilment": "상태이상 없음",
-  "info.enemy.bleed": "출혈 {seconds}초",
-  "info.enemy.live": "HP {hp} / {maxHp}   ·   궁극 {energy}   ·   야성 {ferocity}   ·   {ailment}",
   "info.enemy.gaze": "{name}는 당신을 바라본다.",
 
   "info.story.1": "1화 · 첫 인사",

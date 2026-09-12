@@ -38,9 +38,10 @@ import { combatPalette, signatureFor, type CombatPalette, type SignatureMoment }
 import { COLOR, textStyle } from "../ui/theme";
 import { setDebugBattle, setDebugBossResult, setDebugScene } from "../debug";
 import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
-import { CharacterInfoManager } from "../managers/CharacterInfoManager";
 import { bindLongPress } from "../ui/longPressInfo";
 import { type InfoManager, sceneInfoManager } from "../ui/info";
+import { EnemyInfoPopup } from "../ui/EnemyInfoPopup";
+import { placedEnemyIndex, type PlacedEnemy } from "../data/placedEnemies";
 import { UltimateCutIn } from "../ui/UltimateCutIn";
 import {
   nextBattleSpeed, scaleUltimateDuration, shouldWaitForUltimatePresentation, ultimatePresentationTiming, ULTIMATE_RECOVERY_RATIO,
@@ -300,8 +301,15 @@ export class BattleScene extends Phaser.Scene {
   private presentationChip!: ControlChip;
   /** 기여도 판을 여닫는 칩. 배속 칩과 같은 열에 서고 판이 아니라 화면이 소유한다. */
   private contributionChip!: ControlChip;
-  /** 적 상세는 플레이어 성장 입력을 만들지 않는 전투 읽기 전용 창이다. */
-  private info!: CharacterInfoManager;
+  /** 적 상세는 씬이 아니라 팝업 한 장이다 — 적에게는 유대·급여·룬이 없어 화면을 다 쓰면 초라하다. */
+  private info!: EnemyInfoPopup;
+  /**
+   * 전장에 실제로 선 적의 성장 스냅샷. 키는 난전이 매기는 `enemy-<index>`다.
+   *
+   * 화면이 레벨·돌파를 다시 계산하지 않는다 — 예전에는 창이 정적 정의만 받아 2돌파 25레벨로
+   * 세워 둔 적을 눌러도 1돌파 상한 20으로 읽혔다.
+   */
+  private enemySnapshots = new Map<string, PlacedEnemy>();
   /** 꾹 눌러 처음 열 때만 만들어지는 아군 창. 만들기 전에는 멈춤 판단에서도 없는 셈이다. */
   private allyInfoRef?: InfoManager;
   /** 버프 상세도 전투 씬의 한 PopupLayer에 쌓아 입력·닫기 순서를 통일한다. */
@@ -395,9 +403,9 @@ export class BattleScene extends Phaser.Scene {
     this.contributionCategory = "attack";
     this.contributionRefreshAt = 0;
     this.contributionResult = undefined;
-    // 적도 같은 정보창을 쓴다. 문맥만 "enemy"라 급여·돌파·유대·룬이 빠지고 현재 전투 줄이 붙는다.
-    this.info = new CharacterInfoManager(this, 1001, "enemy");
     this.buffPopups = new PopupLayer(this, 2200);
+    this.info = new EnemyInfoPopup(this, this.buffPopups);
+    this.enemySnapshots = placedEnemyIndex(this.battleInput, stage, stageEnemies);
     this.openBuff = undefined;
     // 파편·파문은 SD보다 앞이되 궁극기 컷인(900)보다는 뒤라 연출을 가리지 않는다.
     // 광역 범위만 배경 원화 위·SD 아래에 깔려 누가 어디 섰는지 가리지 않는다.
@@ -597,9 +605,8 @@ export class BattleScene extends Phaser.Scene {
         ? this.add.rectangle(fighter.x, fighter.y - unitHeight / 2, 190 * fighter.bodyScale, unitHeight + 70, 0xffffff, 0)
           .setInteractive({ useHandCursor: true })
           .on("pointerup", () => {
-            // 불사 폰토스는 런타임 Fighter가 아니라 지도와 같은 유한 표시 스냅샷을 상세창에 넘긴다.
-            const displayDef = this.battleInput.mode === "expeditionBoss" ? getExpeditionNodeEnemies("boss", 20)[0] : fighter.def;
-            this.info.showEnemy(displayDef, { live: fighter, ...(this.battleInput.mode === "expeditionBoss" ? { level: 20 } : {}) });
+            // 배치된 그 개체를 그대로 연다. 스냅샷에 없는 소환수는 제 정의만 들고 1레벨로 선다.
+            this.info.show(this.enemySnapshots.get(fighter.id) ?? { def: fighter.def, level: 1, breakthrough: 0 });
           })
         : undefined;
       // 폭주 필터. 스킬 아이콘과 같은 속성·직군 색을 그대로 쓰며, 발광이 아니라 몸에 입힌다.
@@ -641,7 +648,7 @@ export class BattleScene extends Phaser.Scene {
       const x = 190 + index * 350;
       // 세 화면은 같은 프리팹을 쓰며 전투 씬은 실시간 입력만 연결한다.
       const prefab = new BattleProfile(this, x, 1620, {
-        relic: fighter.def, level: relicProgression.getProgress(fighter.def.id).level, stars: fighter.breakthrough + 1,
+        relic: fighter.def, level: relicProgression.getProgress(fighter.def.id).level, breakthroughGrade: fighter.breakthrough + 1,
         currentHp: fighter.hp, maxHp: fighter.maxHp, ferocity: fighter.ferocity,
         active: false, readOnly: false, sub: fighter.def.ultimate.name,
         battleUiMotion: this.motion.effectiveBattleUiMotion,
@@ -675,8 +682,8 @@ export class BattleScene extends Phaser.Scene {
   }
 
   /**
-   * 아군 상세 창. `this.info`는 적 문맥이라 같은 창을 쓸 수 없다 — 유대·급여·룬이 빠진
-   * 읽기 전용 창에 아군을 세우면 정보창이 좋아질 때 전투만 옛 모습으로 남는다.
+   * 아군 상세 창. `this.info`는 적 전용 팝업이라 같은 창을 쓸 수 없다 — 유대·급여·룬이 없는
+   * 판에 아군을 세우면 정보창이 좋아질 때 전투만 옛 모습으로 남는다.
    */
   private allyInfo(): InfoManager {
     this.allyInfoRef = sceneInfoManager(this, { key: "battle-ally" });
@@ -902,7 +909,7 @@ export class BattleScene extends Phaser.Scene {
     // **펼친 기여도 판은 전투를 멈추지 않는다.** 그 판은 창이 아니라 화면 한쪽에 붙는 순위표라,
     // 열어 둔 채로 순위가 실시간으로 바뀌는 것을 보는 것이 그 판의 쓸모다 — 멈추면 열어 볼
     // 때마다 전투가 서고, 다시 접을 때까지 아무 일도 일어나지 않는다.
-    return anyPopupOpen() || this.info.isOpen || (this.allyInfoRef?.isOpen ?? false);
+    return anyPopupOpen() || (this.allyInfoRef?.isOpen ?? false);
   }
 
   /** 제한 주기 또는 카테고리 입력 때만 코어의 불변 표시 스냅샷을 프리팹에 전달한다. */

@@ -32,6 +32,7 @@ export const SYSTEM_KO = {
 
   // ── 전투 머리글 ─────────────────────────────────────────────────────────
   "battle.header.stage": "{id} · {name} · 적 {enemies}",
+  "battle.header.enemy": "LV.{level}{bonus} · 돌파 {grade}",
   "battle.header.expeditionBoss": "원정 {floor}층 · 불사 관측 보스",
   "battle.header.expedition": "원정 {floor}층 · {node}",
   "battle.node.normal": "일반 전투",

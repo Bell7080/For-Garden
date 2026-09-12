@@ -18,7 +18,7 @@ export const LAB_KO = {
   "lab.policy.groupNote": "같은 그룹의 교체 배너로 천장·픽업 확정 이월",
   "lab.policy.tenGuarantee": "10연 마지막 슬롯 SR 이상 보장 (SSR 천장 우선)",
   "lab.policy.duplicate": "중복 보상  해당 렐릭 파편 +1 · 파편을 모아 한계 돌파",
-  "lab.policy.duplicateMax": "별 V 달성 이후 중복은 공용 DNA 조각 +1",
+  "lab.policy.duplicateMax": "돌파 등급 V 달성 이후 중복은 공용 DNA 조각 +1",
   "lab.confirm": "확인",
 
   "lab.skipAll": "전체 건너뛰기",

@@ -22,6 +22,7 @@ export const SYSTEM_JA = {
   "battle.buff.seconds": "{seconds}秒",
 
   "battle.header.stage": "{id} · {name} · 敵 {enemies}",
+  "battle.header.enemy": "LV.{level}{bonus} · 突破 {grade}",
   "battle.header.expeditionBoss": "遠征{floor}層 · 不死観測ボス",
   "battle.header.expedition": "遠征{floor}層 · {node}",
   "battle.node.normal": "通常戦闘",

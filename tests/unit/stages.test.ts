@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { effectiveEnemyLevel } from "../../src/core/types";
 import { getRelic } from "../../src/data/relics";
 import { CHAPTERS, DAILY_RESTORATION, FIXED_STAGE_ENEMIES, SIDE_STORY_STAGE, STAGES, getStage, getStageEnemies } from "../../src/data/stages";
 import { isStageUnlockedByProgress } from "../../src/core/stageProgress";
@@ -21,7 +22,9 @@ describe("stage enemy design", () => {
 
   it("챕터 1의 레벨·돌파 초안을 적별 StageEnemyDef에 정확히 기록한다", () => {
     // 비교표는 캐릭터별 [레벨, 돌파]로 읽어 배열 배치 변경과 독립적으로 검증한다.
-    const growthAt = (index: number) => Object.fromEntries(battles[index].enemies.map(({ relicId, level, breakthrough }) => [getRelic(relicId).name, [level, breakthrough]]));
+    // 한 줄은 [자란 레벨, 한계 돌파 단계, 야성 추가 레벨]이다 — 관문의 무게가 어느 축에서
+    // 오는지 표에서 바로 읽히게 셋을 함께 적는다.
+    const growthAt = (index: number) => Object.fromEntries(battles[index].enemies.map(({ relicId, level, breakthrough, ferocityLevel }) => [getRelic(relicId).name, [level, breakthrough, ferocityLevel ?? 0]]));
     const ladder = Array.from({ length: 10 }, (_, index) => growthAt(index));
     /*
      * **셋이 같은 레벨·같은 돌파로 선다.** 예전에는 적마다 한두 레벨씩 어긋나 있었는데, 그
@@ -32,16 +35,16 @@ describe("stage enemy design", () => {
      * 다시 풀었다.
      */
     expect(ladder).toEqual([
-      { 아모: [5, 0], 토비: [5, 0], 리파: [5, 0] },
-      { 아모: [8, 0], 토비: [8, 0], 리파: [8, 0] },
-      { 아모: [9, 0], 토비: [9, 0], 리파: [9, 0] },
-      { 아모: [10, 0], 토비: [10, 0], 리파: [10, 0] },
-      { 아모: [12, 0], 토비: [12, 0], 리파: [12, 0] },
-      { 아모: [13, 0], 토비: [13, 0], 리파: [13, 0] },
-      { 아모: [15, 0], 토비: [15, 0], 리파: [15, 0] },
-      { 아모: [15, 1], 토비: [15, 1], 리파: [15, 1] },
-      { 아모: [16, 1], 토비: [16, 1], 리파: [16, 1] },
-      { 아모: [19, 1], 코마: [19, 1], 리파: [19, 1] },
+      { 아모: [4, 0, 1], 토비: [4, 0, 1], 리파: [4, 0, 1] },
+      { 아모: [5, 0, 2], 토비: [5, 0, 2], 리파: [5, 0, 2] },
+      { 아모: [6, 0, 2], 토비: [6, 0, 2], 리파: [6, 0, 2] },
+      { 아모: [7, 0, 2], 토비: [7, 0, 2], 리파: [7, 0, 2] },
+      { 아모: [7, 0, 3], 토비: [7, 0, 3], 리파: [7, 0, 3] },
+      { 아모: [8, 0, 3], 토비: [8, 0, 3], 리파: [8, 0, 3] },
+      { 아모: [9, 0, 3], 토비: [9, 0, 3], 리파: [9, 0, 3] },
+      { 아모: [9, 1, 3], 토비: [9, 1, 3], 리파: [9, 1, 3] },
+      { 아모: [10, 1, 3], 토비: [10, 1, 3], 리파: [10, 1, 3] },
+      { 아모: [10, 1, 4], 코마: [10, 1, 4], 리파: [10, 1, 4] },
     ]);
     /*
      * **레벨은 관문을 따라 내려가지 않는다.** 1-10까지 마지막 관문이 직전보다 쉬운 구간이
@@ -73,7 +76,7 @@ describe("stage enemy design", () => {
     for (const enemy of finalEnemies) {
       expect(enemy.stats.hp, enemy.name).toBeGreaterThan(getRelic(enemy.id).stats.hp);
     }
-    expect(getRelic(FIXED_STAGE_ENEMIES[0]).stats.hp).toBe(1000);
+    expect(getRelic(FIXED_STAGE_ENEMIES[0]).stats.hp).toBe(1020);
   });
 
   it("1-1부터 1-10까지 재등장한 캐릭터의 레벨이나 돌파가 메타데이터 없이 역행하지 않는다", () => {
@@ -95,7 +98,7 @@ describe("stage enemy design", () => {
     // 정렬된 직렬화는 배열 작성 순서가 아니라 실제 formationSlot을 비교한다.
     const signature = (index: number) => JSON.stringify([...battles[index].enemies]
       .sort((a, b) => a.formationSlot - b.formationSlot)
-      .map(({ relicId, level, breakthrough, formationSlot }) => ({ relicId, level, breakthrough, formationSlot })));
+      .map(({ relicId, level, breakthrough, ferocityLevel, formationSlot }) => ({ relicId, level, breakthrough, ferocityLevel, formationSlot })));
     for (let index = 1; index < 10; index += 1) expect(signature(index)).not.toBe(signature(index - 1));
   });
 
@@ -109,9 +112,29 @@ describe("stage enemy design", () => {
     }
   });
 
-  it("스테이지 사이에서 허용하는 차이는 레벨과 돌파뿐이다", () => {
-    const allowed = ["relicId", "level", "breakthrough", "formationSlot"];
-    for (const stage of battles) for (const enemy of stage.enemies) expect(Object.keys(enemy).sort()).toEqual([...allowed].sort());
+  it("스테이지 사이에서 허용하는 차이는 레벨·돌파·야성 추가 레벨뿐이다", () => {
+    // 태생 능력치나 스킬 보정을 스테이지에 두지 않는다는 계약이다. 야성 추가 레벨도 레벨과
+    // 같은 성장 공식을 지나는 정수라 이 목록에 든다(스테이지 전용 배율이 아니다).
+    const allowed = ["relicId", "level", "breakthrough", "ferocityLevel", "formationSlot"];
+    for (const stage of battles) for (const enemy of stage.enemies) {
+      expect(allowed).toEqual(expect.arrayContaining(Object.keys(enemy)));
+      expect(Object.keys(enemy)).toEqual(expect.arrayContaining(["relicId", "level", "breakthrough", "formationSlot"]));
+    }
+  });
+
+  it("야성 추가 레벨은 0 이상의 정수이고 실효 레벨은 관문 순서를 따라 내려가지 않는다", () => {
+    let previous = 0;
+    for (const stage of battles) {
+      for (const enemy of stage.enemies) {
+        const bonus = enemy.ferocityLevel ?? 0;
+        expect(Number.isInteger(bonus)).toBe(true);
+        expect(bonus).toBeGreaterThanOrEqual(0);
+      }
+      // 실효 레벨(자란 레벨 + 야성)이 뒤로 가면 새 구역이 직전 구역보다 약해 곡선이 끊긴다.
+      const effective = Math.max(...stage.enemies.map((enemy) => effectiveEnemyLevel(enemy)));
+      expect(effective, stage.id).toBeGreaterThanOrEqual(previous);
+      previous = effective;
+    }
   });
 
   it("전투 복사본을 만들어도 원본 RelicDef를 변경하지 않는다", () => {

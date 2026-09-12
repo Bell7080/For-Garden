@@ -128,6 +128,26 @@ export class PopupLayer {
     return this.stack.length > 0;
   }
 
+  /**
+   * 제목표를 다른 층으로 옮긴다.
+   *
+   * 판 위에 원화를 세우는 창은 그 원화와 그 위의 칸을 **팝업 층보다 위**에 두는데, 제목은 판
+   * 안에 있어 그 밑에 깔린다 — 이름줄 뒤로 내려오는 어둠 한 겹이 제목과 그림자를 함께 덮는다.
+   * 판과 같은 자리·같은 배율을 쓰는 컨테이너로 옮기면 좌표를 고치지 않고 위계만 바뀐다.
+   */
+  moveTitle(body: Phaser.GameObjects.Container, target: Phaser.GameObjects.Container): void {
+    const chrome = this.chromeByBody.get(body);
+    if (!chrome) return;
+    for (const object of chrome) target.add(object);
+    // 옮긴 뒤에는 판이 제목을 다시 끌어올리지 않는다 — 이미 판 밖에 있다.
+    this.chromeByBody.set(body, []);
+  }
+
+  /** 이 층이 서는 밑 깊이. 판 위에 Puppet을 세우는 화면이 층을 손으로 적지 않게 한다. */
+  get baseDepth(): number {
+    return this.depth;
+  }
+
   /** 파괴적 동작이 화면마다 제각각 구현되지 않도록 같은 팝업 위에 확인/취소를 제공한다. */
   confirm(options: { title: string; message: string; confirmLabel: string; destructive?: boolean }, onConfirm: () => void): void {
     this.open({ width: 820, height: 390, title: options.title, dim: true, closeOnBackdrop: false }, (body, close) => {

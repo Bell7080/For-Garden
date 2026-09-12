@@ -6,12 +6,22 @@ import { COLOR, textStyle } from "./theme";
 
 /** 핵심 화면 다섯 개. 로비를 중심으로 고고학과 프리미엄이 양 끝에서 서로 균형을 이룬다. */
 export const NAV_TABS = [
-  { key: "archaeology", scene: "archaeology", label: t("nav.archaeology") },
-  { key: "relics", scene: "relics", label: t("nav.relics") },
-  { key: "lobby", scene: "lobby", label: t("nav.lobby") },
-  { key: "lab", scene: "lab", label: t("nav.lab") },
-  { key: "premium", scene: "premium", label: t("nav.premium") },
+  { key: "archaeology", scene: "archaeology" },
+  { key: "relics", scene: "relics" },
+  { key: "lobby", scene: "lobby" },
+  { key: "lab", scene: "lab" },
+  { key: "premium", scene: "premium" },
 ] as const;
+
+/**
+ * 탭의 이름.
+ *
+ * **표에 넣지 않는다** — 표는 모듈을 읽는 순간 굳어, 문구 표가 도착하기 전에 고른 낱말이
+ * 언어를 바꿔도 그대로 남는다(일본어로 바꿔도 하단 탭만 한국어로 서 있었다).
+ */
+export function navLabel(key: NavKey): string {
+  return t(`nav.${key}`);
+}
 
 export type NavKey = (typeof NAV_TABS)[number]["key"];
 
@@ -95,7 +105,7 @@ export class BottomNav {
       group.add(drawIcon(scene, tab.key, 0, -16, color));
       group.add(
         scene.add
-          .text(0, 26, tab.label, textStyle({ role: "emphasis", size: 26, color: active ? COLOR.accentText : COLOR.inkDim }))
+          .text(0, 26, navLabel(tab.key), textStyle({ role: "emphasis", size: 26, color: active ? COLOR.accentText : COLOR.inkDim }))
           .setOrigin(0.5, 0),
       );
       // 지금 화면인 탭만 살짝 크다. 밑줄이나 상자 대신 크기로 알린다.

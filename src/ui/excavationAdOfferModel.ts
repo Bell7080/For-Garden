@@ -11,11 +11,13 @@ export interface ExcavationAdOfferDisplayModel {
   enabled: boolean;
 }
 
-/** 서버는 효과와 한도를 소유하고, 클라이언트는 슬롯 ID별 짧고 안정적인 한국어 표기를 소유한다. */
-const LABEL_BY_SLOT: Record<ExcavationAdOfferId, string> = {
-  "excavation-harvest": t("excavation.ad.production"),
-  "excavation-storage": t("excavation.ad.storage"),
-};
+/**
+ * 서버는 효과와 한도를 소유하고, 클라이언트는 슬롯 ID별 짧은 표기를 소유한다.
+ *
+ * 표가 아니라 함수인 이유는 표가 모듈을 읽는 순간 굳기 때문이다.
+ */
+const labelBySlot = (slotId: ExcavationAdOfferId): string =>
+  t(slotId === "excavation-harvest" ? "excavation.ad.production" : "excavation.ad.storage");
 
 /** 남은 횟수를 그대로 사용량처럼 보이지 않도록 used = limit - remaining을 명시적으로 계산한다. */
 export function excavationAdOfferDisplayModel(slotId: ExcavationAdOfferId, limit: number, remaining: number): ExcavationAdOfferDisplayModel {
@@ -23,5 +25,5 @@ export function excavationAdOfferDisplayModel(slotId: ExcavationAdOfferId, limit
   const safeLimit = Math.max(0, limit);
   const safeRemaining = Math.min(safeLimit, Math.max(0, remaining));
   const used = safeLimit - safeRemaining;
-  return { label: LABEL_BY_SLOT[slotId], usage: `${used}/${safeLimit}`, used, limit: safeLimit, enabled: safeRemaining > 0 };
+  return { label: labelBySlot(slotId), usage: `${used}/${safeLimit}`, used, limit: safeLimit, enabled: safeRemaining > 0 };
 }

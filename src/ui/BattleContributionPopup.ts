@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import { t } from "../i18n";
 import type { BattleContributionResult, ContributionCategory } from "../core/battleContribution";
 import { getRelic } from "../data/relics";
-import { contributionRenderModel, CONTRIBUTION_CATEGORIES } from "./battleContributionRenderModel";
+import { contributionCategoryLabel, contributionRenderModel, CONTRIBUTION_CATEGORIES } from "./battleContributionRenderModel";
 import { Button } from "./Button";
 import { FaceFrame } from "./FaceFrame";
 import { HoloBar } from "./holo";
@@ -37,15 +37,15 @@ export class BattleContributionPopup {
       const content = this.scene.add.container(0, 0); body.add(content);
       const labels = CONTRIBUTION_CATEGORIES.map((item, index) => {
         const x = -250 + index * 250;
-        const label = this.scene.add.text(x, -535, item.label, textStyle({ role: "emphasis", size: 30, color: COLOR.inkDim })).setOrigin(0.5);
+        const label = this.scene.add.text(x, -535, contributionCategoryLabel(item), textStyle({ role: "emphasis", size: 30, color: COLOR.inkDim })).setOrigin(0.5);
         const hit = this.scene.add.rectangle(x, -535, 210, 82, 0xffffff, 0).setInteractive({ useHandCursor: true });
         // 넓은 투명 입력면은 접근성 배율에서도 글자 자체를 정확히 누를 필요가 없게 한다.
-        hit.on("pointerup", () => { category = item.id; render(); }); body.add([label, hit]);
+        hit.on("pointerup", () => { category = item; render(); }); body.add([label, hit]);
         return label;
       });
       const render = (): void => {
         content.removeAll(true);
-        labels.forEach((label, index) => { const selected = CONTRIBUTION_CATEGORIES[index].id === category; label.setColor(selected ? COLOR.accentText : COLOR.inkDim).setScale(selected ? 1.08 : 1); });
+        labels.forEach((label, index) => { const selected = CONTRIBUTION_CATEGORIES[index] === category; label.setColor(selected ? COLOR.accentText : COLOR.inkDim).setScale(selected ? 1.08 : 1); });
         const rows = contributionRenderModel(category, result.rows[category]);
         const replayTotal = result.rows.attack.reduce((sum, row) => sum + row.total, 0);
         // 서버 보정이 있을 때만 두 기준을 병기하고 개별 막대는 행동 재생 결과를 그대로 유지한다.

@@ -42,13 +42,14 @@ export interface SkillIconFrameOptions {
   dimAlpha?: number;
 }
 
-/** 슬롯의 짧은 이름. 정보창 아이콘과 돌파 표가 같은 말을 쓰도록 한 표만 둔다. */
-export const SKILL_SLOT_LABEL: Readonly<Record<SkillArtSlot, string>> = {
-  passive: t("info.skill.passive"),
-  basic: t("info.skill.basic"),
-  ultimate: t("info.skill.ultimate"),
-  ferocity: t("info.skill.ferocity"),
-};
+/**
+ * 슬롯의 짧은 이름. 정보창 아이콘과 돌파 표가 같은 말을 쓰도록 한 경계만 둔다.
+ *
+ * 표가 아니라 함수인 이유는 표가 모듈을 읽는 순간 굳기 때문이다.
+ */
+export function skillSlotLabel(slot: SkillArtSlot): string {
+  return t(`info.skill.${slot}`);
+}
 
 /** 액자 한 장을 만들어 컨테이너로 돌려준다. 부른 쪽이 자리를 잡고 입력을 붙인다. */
 export function addSkillIconFrame(scene: Phaser.Scene, options: SkillIconFrameOptions): Phaser.GameObjects.Container {

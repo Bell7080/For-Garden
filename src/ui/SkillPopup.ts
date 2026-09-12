@@ -66,7 +66,7 @@ export interface SkillInfoViewModel {
 const POPUP = { width: 880, height: 620 } as const;
 
 /** 돌파로 붙은 줄이 차지하는 몫. 있을 때만 판이 그만큼 길어진다. */
-const BREAKTHROUGH_LINE = { extraHeight: 150, gap: 34, label: t("info.breakthrough"), size: 25 } as const;
+const BREAKTHROUGH_LINE = { extraHeight: 150, gap: 34, size: 25 } as const;
 
 /**
  * 스킬 하나를 설명하는 정형 팝업.
@@ -158,7 +158,7 @@ export function openSkillPopup(
       const gapY = description.y + description.height + BREAKTHROUGH_LINE.gap;
       body.add(drawHairline(scene, 0, gapY - 12, POPUP.width - 96, { color: COLOR.accent, alpha: 0.28 }));
       const mark = scene.add
-        .text(left + 60, gapY + 8, BREAKTHROUGH_LINE.label, textStyle({ role: "display", size: BREAKTHROUGH_LINE.size, color: COLOR.accentText }))
+        .text(left + 60, gapY + 8, t("info.breakthrough"), textStyle({ role: "display", size: BREAKTHROUGH_LINE.size, color: COLOR.accentText }))
         .setOrigin(0, 0);
       body.add(mark);
       body.add(keywords.layout(skill.breakthroughEffect, skillKeywordLayoutOptions(skill, {

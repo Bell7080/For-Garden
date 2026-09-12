@@ -9,7 +9,7 @@ import { PurchasePopup } from "./PurchasePopup";
 import { COLOR, textStyle } from "./theme";
 import { setDebugStorefrontControls } from "../debug";
 import { BACK_SLOT } from "./IconButton";
-import { TRADE_POPUP_FAILURE_MODEL, TradePopupRequestGate, tradePackageViews, tradePopupModel } from "./tradePopupModel";
+import { tradePopupFailureModel, TradePopupRequestGate, tradePackageViews, tradePopupModel } from "./tradePopupModel";
 import { tradePackageCenters, tradePackageLayout } from "./tradePackageLayout";
 import { TradePackageCard } from "./TradePackageCard";
 
@@ -91,8 +91,9 @@ export class TradePopup {
     // 서버 응답으로 만든 상품 행만 제거하므로 PopupLayer가 소유한 판과 제목은 그대로 남는다.
     this.productList.removeAll(true);
     this.products = [];
-    this.productList.add(this.scene.add.text(0, -70, TRADE_POPUP_FAILURE_MODEL.status, textStyle({ role: "emphasis", size: 30, color: COLOR.inkDim })).setOrigin(0.5));
-    const retry = new Button(this.scene, 0, 55, { width: 300, height: 82, label: TRADE_POPUP_FAILURE_MODEL.retryLabel, onClick: () => { void this.refresh(); } });
+    const failure = tradePopupFailureModel();
+    this.productList.add(this.scene.add.text(0, -70, failure.status, textStyle({ role: "emphasis", size: 30, color: COLOR.inkDim })).setOrigin(0.5));
+    const retry = new Button(this.scene, 0, 55, { width: 300, height: 82, label: failure.retryLabel, onClick: () => { void this.refresh(); } });
     this.productList.add(retry);
     // E2E에는 실제로 남은 재시도와 공용 닫기 입력 중심만 공개한다.
     setDebugStorefrontControls({ trade: { products: [], retry: { x: BASE_CENTER.x, y: BASE_CENTER.y + 55 }, back: { ...BACK_SLOT } } });

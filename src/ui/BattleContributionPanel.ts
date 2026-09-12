@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import type { BattleContributionRow, ContributionCategory } from "../core/battleContribution";
-import { CONTRIBUTION_CATEGORIES, contributionRenderModel } from "./battleContributionRenderModel";
+import { CONTRIBUTION_CATEGORIES, contributionCategoryLabel, contributionRenderModel } from "./battleContributionRenderModel";
 import { BATTLE_CONTRIBUTION_LAYOUT as L, battleContributionBounds, contributionRowCenterY, CONTRIBUTION_TOGGLE } from "./battleContributionLayout";
 import { chipPoints, drawLayer, HoloBar, HOLO } from "./holo";
 import { FaceFrame } from "./FaceFrame";
@@ -63,9 +63,9 @@ export class BattleContributionPanel {
   private buildCategories(): void {
     CONTRIBUTION_CATEGORIES.forEach((item, index) => {
       const x = L.categories.left + L.categories.itemWidth * (index + 0.5);
-      const label = this.scene.add.text(x, L.categories.top + L.categories.height / 2, item.label, textStyle({ role: "emphasis", size: 23, color: COLOR.inkDim })).setOrigin(0.5);
+      const label = this.scene.add.text(x, L.categories.top + L.categories.height / 2, contributionCategoryLabel(item), textStyle({ role: "emphasis", size: 23, color: COLOR.inkDim })).setOrigin(0.5);
       const hit = this.scene.add.rectangle(x, L.categories.top + L.categories.height / 2, L.categories.itemWidth, L.categories.height, 0xffffff, 0).setInteractive({ useHandCursor: true });
-      hit.on("pointerup", () => { if (!this.locked) this.selectCategory(item.id); });
+      hit.on("pointerup", () => { if (!this.locked) this.selectCategory(item); });
       this.panel.add([label, hit]); this.categoryLabels.push(label); this.categoryHits.push(hit);
     });
     this.refreshCategoryStyle();
@@ -100,7 +100,7 @@ export class BattleContributionPanel {
 
   private refreshCategoryStyle(): void {
     CONTRIBUTION_CATEGORIES.forEach((item, index) => {
-      const selected = item.id === this.category;
+      const selected = item === this.category;
       this.categoryLabels[index].setColor(selected ? COLOR.accentText : COLOR.inkDim).setFontSize(selected ? 26 : 23).setScale(selected ? 1.04 : 1);
     });
   }

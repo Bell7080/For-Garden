@@ -37,7 +37,7 @@ import { session } from "../state/session";
 import { addColorAssistMark, COLOR_ASSIST_LAYOUT } from "./colorAssist";
 import { addMarkChip } from "./MarkChip";
 import { addRuneCard, addRuneFrame, RUNE_ACCENT, RUNE_CENTER_Y, runeTexture } from "./runeIcons";
-import { REACH_LABEL, STAT_TONE, reachToneHex } from "./statTones";
+import { reachLabel, STAT_TONE, reachToneHex } from "./statTones";
 import { equippedRelicName, openRuneInfoPopup, runeStatLabel } from "./RunePopup";
 import { t, type TextKey } from "../i18n";
 import { combatPower } from "../core/combatPower";
@@ -48,7 +48,7 @@ import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { relicCollection } from "../managers/RelicCollectionManager";
 import { COLOR, textStyle } from "./theme";
 import { skillArtFor, skillArtTint, type SkillArtSlot } from "./skillArt";
-import { addSkillIconFrame, SKILL_SLOT_LABEL } from "./SkillIconFrame";
+import { addSkillIconFrame, skillSlotLabel } from "./SkillIconFrame";
 import { BREAK_CONFIRM, BREAK_STEPS, breakthroughStepsLayout } from "./breakthroughLayout";
 import { gameApi } from "../api/FakeServer";
 import { BREAKTHROUGH_STEPS, breakthroughFragmentCost, canBreakThrough, canFeedRelic, FEED_UNIT, isBreakthroughSlotOpen, nextBreakthrough, relicExpToNext, relicLevelCap, relicStars } from "../core/relicProgression";
@@ -246,11 +246,12 @@ function feedCostRow(
  * 아직 대사 데이터가 없어 제목과 조건만 둔다. 원문이 생기면 `src/data/dialogues`에 넣고
  * 여기서는 그 id만 가리키게 바꾼다 — 대사를 화면에 적어 두지 않기 위해서다.
  */
-const BOND_STORY_STEPS: readonly { level: number; title: string }[] = [
-  { level: 2, title: t("info.story.1") },
-  { level: 4, title: t("info.story.2") },
-  { level: 7, title: t("info.story.3") },
-  { level: 10, title: t("info.story.4") },
+const BOND_STORY_STEPS: readonly { level: number; title: () => string }[] = [
+  // 제목을 값으로 두면 모듈을 읽는 순간 굳는다. 그릴 때 고르도록 부르는 자리를 남긴다.
+  { level: 2, title: () => t("info.story.1") },
+  { level: 4, title: () => t("info.story.2") },
+  { level: 7, title: () => t("info.story.3") },
+  { level: 10, title: () => t("info.story.4") },
 ];
 
 /** 돌파 버튼과 팝업이 함께 쓰는 색. 레벨(초록)과 갈라 놓아 다른 종류의 성장임을 알린다. */
@@ -1522,7 +1523,7 @@ export class InfoManager {
           fallbackIcon: this.slotFallbackIcon(def, entry.slot),
           element: def.element,
           role: def.role,
-          label: SKILL_SLOT_LABEL[entry.slot],
+          label: skillSlotLabel(entry.slot),
           // 액자는 그 줄의 주제라 안 열린 줄에서도 어느 기술인지 알아볼 수 있어야 한다.
           dimAlpha: reached ? undefined : BREAK_STEPS.lockedIconAlpha,
         });
@@ -1690,7 +1691,7 @@ export class InfoManager {
           edge: COLOR.accent,
           edgeAlpha: open ? 0.6 : 0.16,
         }));
-        body.add(this.scene.add.text(-318, y + 12, step.title, textStyle({ role: "display", size: 26, color: open ? COLOR.ink : COLOR.inkDim })).setOrigin(0, 0));
+        body.add(this.scene.add.text(-318, y + 12, step.title(), textStyle({ role: "display", size: 26, color: open ? COLOR.ink : COLOR.inkDim })).setOrigin(0, 0));
         body.add(
           this.scene.add
             .text(318, y + 18, open ? t("info.bond.opened") : t("info.bond.required", { level: step.level }), textStyle({ role: "body", size: 21, color: open ? COLOR.accentText : COLOR.inkDim }))
@@ -1786,7 +1787,7 @@ export class InfoManager {
       const reachY = top + 204 + STAT_CHIPS.length * 84;
       const reachHex = reachToneHex(def.reachTier);
       body.add(this.scene.add.text(-edge, reachY, t("stat.range"), textStyle({ role: "display", size: 30, color: reachHex })).setOrigin(0, 0.5));
-      body.add(this.scene.add.text(edge, reachY, REACH_LABEL[def.reachTier], textStyle({ role: "display", size: 36, color: reachHex })).setOrigin(1, 0.5));
+      body.add(this.scene.add.text(edge, reachY, reachLabel(def.reachTier), textStyle({ role: "display", size: 36, color: reachHex })).setOrigin(1, 0.5));
       body.add(drawHairline(this.scene, 0, reachY + 42, width - 68, { color: COLOR.accent, alpha: 0.14 }));
       body.add(
         this.scene.add
@@ -2424,7 +2425,7 @@ export class InfoManager {
     const maxed = progress.level >= cap;
 
     // 사거리는 성장하지 않는 정적 값이지만, 다른 캐릭터로 넘길 때 함께 갈아 끼워야 한다.
-    this.reachLabel.setText(`${t("stat.range")} · ${REACH_LABEL[def.reachTier]}`);
+    this.reachLabel.setText(`${t("stat.range")} · ${reachLabel(def.reachTier)}`);
     this.levelValue.setText(String(progress.level));
     this.levelCap.setText("/ " + cap);
     // 숫자 폭이 자리 수에 따라 달라지므로 붙는 자리도 그릴 때마다 다시 잡는다.

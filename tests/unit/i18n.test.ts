@@ -194,6 +194,36 @@ const MIGRATED = [
  */
 const isDeveloperLine = (line: string): boolean => /console\.|setDebug|throw new \w*Error/.test(line);
 
+/**
+ * 모듈을 읽는 순간 굳는 문구가 있는가.
+ *
+ * `const X = { a: t("...") }`처럼 **선언의 초기값**에서 문구를 고르면 그 값은 모듈을 읽는 순간
+ * 한 번 굳는다 — 문구 표는 타이틀 로딩에서야 도착하므로 그 자리만 한국어로 남고, 언어를 바꿔도
+ * 따라오지 않는다. 일본어로 바꾼 화면에서 하단 탭 다섯과 능력치 판의 `射程 · 중거리`가 그랬다.
+ * 부를 때 고르는 **함수**로 두면 그 일이 없다.
+ */
+describe("굳은 문구", () => {
+  it("은 선언의 초기값에서 문구를 고르지 않는다", () => {
+    const offenders: string[] = [];
+    for (const [path, code] of Object.entries(SOURCES)) {
+      if (path.startsWith("../../src/i18n/")) continue;
+      const withoutComments = code.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+      let depth = 0;
+      let frozen = false;
+      for (const [index, line] of withoutComments.split("\n").entries()) {
+        // 바깥 층에서 시작하는 `const`·`let` 선언은 그 초기값이 곧 모듈을 읽을 때의 값이다.
+        // 화살표 함수와 `function`은 부를 때 몸통이 도므로 굳지 않는다.
+        if (depth === 0 && /^\s*(export\s+)?(const|let)\s/.test(line) && !/=>|function /.test(line)) frozen = true;
+        if (frozen && /\bt\(/.test(line)) offenders.push(`${path}:${index + 1} ${line.trim().slice(0, 60)}`);
+        depth += (line.match(/[{([]/g) ?? []).length - (line.match(/[})\]]/g) ?? []).length;
+        if (depth < 0) depth = 0;
+        if (frozen && (depth === 0 || /=>|function /.test(line))) frozen = false;
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+});
+
 describe("화면 문구", () => {
   it("은 이관을 마친 화면에 한글을 남기지 않는다", () => {
     const offenders: string[] = [];

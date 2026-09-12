@@ -7,9 +7,16 @@ import { OPENING_TRAIN } from "../data/dialogues/openingTrain";
 import { storyManager } from "../managers/StoryManager";
 import { Button } from "../ui/Button";
 import { LoadingDiamonds } from "../ui/LoadingDiamonds";
+import { LoadingPercent } from "../ui/LoadingPercent";
+import {
+  startTitleMovie,
+  TITLE_MOVIE_FALLBACK_MS,
+  TITLE_MOVIE_KEY,
+  TITLE_MOVIE_SOURCES,
+} from "../ui/titleMovie";
 import { LOADING_STEPS, refreshTextTextures, runLoadingSteps } from "./loadingSteps";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
-import { drawVignette } from "../ui/holo";
+import { drawCornerShroud, drawVignette } from "../ui/holo";
 import packageInfo from "../../package.json";
 
 /** 타이틀 로고타입(글자 대신 쓰는 그림)의 텍스처 키다. 원본은 1536×1024 비율이다. */
@@ -67,7 +74,23 @@ const TITLE_SHADOW = {
  * 사라진다. 로고를 가로로 늘였다 줄이면 그림이 찌그러지므로, **잘라내는 창을 넓히는** 방식으로
  * 연다 — 로고 자체의 비율은 처음부터 끝까지 그대로다.
  */
-const TITLE_REVEAL = { openMs: 520, flashMs: 420, flashHeightRatio: 0.28 } as const;
+const TITLE_REVEAL = {
+  openMs: 520,
+  flashMs: 420,
+  flashHeightRatio: 0.28,
+  /** 제목 아래 두 줄이 뒤따라 떠오르는 높이·시점. 함께 들어오면 어느 것이 제목인지 흐려진다. */
+  lineRiseY: 18,
+  lineDelayMs: 260,
+  lineMs: 420,
+} as const;
+
+/**
+ * 화면 아래 한 줄이 서는 자리.
+ *
+ * 로딩 중에는 진행률 숫자가, 다 찬 뒤에는 진입 문구가 **같은 자리를** 이어받는다. 둘이 함께
+ * 서는 순간은 없으므로 자리를 나누면 오히려 무엇을 기다리는지가 두 곳으로 갈린다.
+ */
+const LOADING_PROMPT_Y = BASE_HEIGHT * 0.89;
 
 /**
  * 타이틀이자 로딩 화면.
@@ -83,6 +106,8 @@ const TITLE_REVEAL = { openMs: 520, flashMs: 420, flashHeightRatio: 0.28 } as co
 export class TitleScene extends Phaser.Scene {
   /** 최소 리소스를 기다리다 실패해도 반드시 진입하도록, 시작 연출을 정확히 한 번만 연다. */
   private revealed = false;
+  /** 제목 연출도 영상이 시작하지 않는 기기에서 한 번은 반드시 열려야 하므로 같은 빗장을 쓴다. */
+  private headerOpened = false;
 
   constructor() {
     super("title");
@@ -93,17 +118,29 @@ export class TitleScene extends Phaser.Scene {
     bindDebugReadyLifecycle(this.events);
     setDebugScene("title");
     this.revealed = false;
+    this.headerOpened = false;
 
     const cx = BASE_WIDTH / 2;
     // 최소 리소스가 도착할 때까지 화면은 검다. 조립 과정을 보여 주지 않기 위해서다.
     const curtain = this.add.rectangle(cx, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, 0x000000).setDepth(50);
 
-    // 타이틀 자신의 배경·로고는 다른 화면 배경과 달리 로딩 단계를 기다리지 않고 곧바로 읽는다
-    // — 이 화면 자체가 로딩 화면이라 그 단계가 끝나기 전부터 보여야 하기 때문이다.
+    // 타이틀 자신의 배경·로고·영상은 다른 화면 배경과 달리 로딩 단계를 기다리지 않고 가장 먼저
+    // 읽는다 — 이 화면 자체가 로딩 화면이라 그 단계가 끝나기 전부터 보여야 하기 때문이다.
+    // **검은 화면을 여는 것은 원화와 로고 둘뿐이다.** 영상까지 함께 기다리면 1MB가 넘는 파일
+    // 하나가 화면 전체를 붙잡는다. 영상은 도착하는 대로 정지 화면 위를 덮는다.
+    this.load.video(TITLE_MOVIE_KEY, [...TITLE_MOVIE_SOURCES], true);
     this.load.image(BACKGROUND.title, "sprites/background/background_011.webp");
     this.load.image(TITLE_LOGOTYPE_KEY, "sprites/ui/titlename.webp");
-    this.load.once("complete", () => this.enterTitle(curtain, cx));
+
+    let stillLeft = 2;
+    const stillReady = (): void => {
+      stillLeft -= 1;
+      if (stillLeft <= 0) this.enterTitle(curtain, cx);
+    };
+    this.load.once(`filecomplete-image-${BACKGROUND.title}`, stillReady);
+    this.load.once(`filecomplete-image-${TITLE_LOGOTYPE_KEY}`, stillReady);
     // 파일 하나가 없어도 검은 화면에 갇히지 않는다. 아트가 UI와 로딩 진행까지 막지 않는다.
+    this.load.once("complete", () => this.enterTitle(curtain, cx));
     this.load.once("loaderror", () => this.enterTitle(curtain, cx));
     this.load.start();
   }
@@ -131,17 +168,12 @@ export class TitleScene extends Phaser.Scene {
     const descY = subtitleY + 48;
 
     if (this.textures.exists(BACKGROUND.title)) addSceneBackground(this, BACKGROUND.title, -30);
+    // 영상은 정지 원화 바로 위, 비네트 아래에 선다 — 가장자리를 누르는 규칙은 두 그림이 같다.
+    this.startMovie(cx, logoY, logoWidth, logoHeight, subtitleY, descY);
     drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { depth: -20 });
-
-    // 판때기를 받치지 않는다. 글자 모양 그대로 진 복제 그림자가 대비를 만들고 배경은 비친다.
-    this.addShadowedText(cx, subtitleY, "ETERNAL CITY",
-      textStyle({ role: "emphasis", size: 40, color: COLOR.accentText }),
-      textStyle({ role: "emphasis", size: 40, color: "#000000" }));
-    this.addShadowedText(cx, descY, t("title.subtitle"),
-      textStyle({ role: "body", size: 30, color: COLOR.inkDim }),
-      textStyle({ role: "body", size: 30, color: "#000000" }));
-
-    if (this.textures.exists(TITLE_LOGOTYPE_KEY)) this.openLogo(cx, logoY, logoWidth, logoHeight);
+    // 화면 자신도 팝업 몸판과 같은 방향으로 두 모서리를 깎아, 끝까지 차 있는 영상이 투영
+    // 장비 안에 들어 있는 것으로 읽히게 한다.
+    drawCornerShroud(this, BASE_WIDTH, BASE_HEIGHT, { depth: -19 });
 
     const recoveryNotice = this.registry.get("saveRecoveryNotice") as TextKey | undefined;
     if (recoveryNotice) {
@@ -160,18 +192,101 @@ export class TitleScene extends Phaser.Scene {
       .setAlpha(0.7);
 
     const diamonds = new LoadingDiamonds(this, cx, BASE_HEIGHT * 0.94, LOADING_STEPS.length);
+    // 칸은 "몇 개 남았나"를, 이 숫자는 "얼마나 왔나"를 말한다. 다 차면 그 자리를 진입 문구가
+    // 그대로 이어받으므로 같은 y에 세운다.
+    const percent = new LoadingPercent(this, cx, LOADING_PROMPT_Y);
 
     // 검은 화면은 타이틀이 다 선 뒤에 걷는다. 걷히는 순간 화면은 이미 완성돼 있다.
     this.tweens.add({ targets: curtain, alpha: 0, duration: 220, onComplete: () => curtain.destroy() });
 
-    void runLoadingSteps(this, (done) => {
-      diamonds.setFilled(done);
-      // 글꼴 단계가 끝나면 이미 그려 둔 제목을 게임 글꼴로 다시 굳힌다.
-      if (done === 1) refreshTextTextures(this);
-    }).then(() => {
+    void runLoadingSteps(
+      this,
+      (done) => {
+        diamonds.setFilled(done);
+        // 글꼴 단계가 끝나면 이미 그려 둔 제목을 게임 글꼴로 다시 굳힌다.
+        if (done === 1) refreshTextTextures(this);
+      },
+      LOADING_STEPS,
+      (ratio) => percent.setRatio(ratio),
+    ).then(() => {
       if (!this.scene.isActive()) return;
+      // 따라가기를 건너뛰고 정확히 100.00%에 멈춘 뒤 그 자리를 진입 문구에 넘긴다.
+      percent.complete();
+      percent.handOver();
       this.showEntry(cx);
     });
+  }
+
+  /**
+   * 타이틀 영상을 세우고, **영상이 실제로 흐르기 시작하는 순간** 제목 연출을 연다.
+   *
+   * 정지된 일러스트가 먼저 서 있다가 같은 구도의 영상이 그 위를 점차 덮고, 그때 제목이
+   * 좌우로 열린다 — 화면이 움직이기 시작하는 한 순간에 시작을 알리는 모든 것이 모인다.
+   *
+   * 영상이 없거나 자동 재생이 막힌 기기에서도 제목은 반드시 선다. 그쪽에서는 정지된 원화
+   * 위에서 같은 연출이 조금 늦게 열릴 뿐이다.
+   */
+  private startMovie(
+    cx: number,
+    logoY: number,
+    logoWidth: number,
+    logoHeight: number,
+    subtitleY: number,
+    descY: number,
+  ): void {
+    const open = (): void => this.openHeader(cx, logoY, logoWidth, logoHeight, subtitleY, descY);
+    // 영상이 아직 안 왔으면 도착하는 대로 세운다 — 검은 화면을 여는 것은 원화와 로고뿐이다.
+    if (!this.cache.video.exists(TITLE_MOVIE_KEY)) {
+      this.load.once(`filecomplete-video-${TITLE_MOVIE_KEY}`, () => {
+        if (this.scene.isActive()) startTitleMovie(this, -29, open);
+      });
+    } else {
+      startTitleMovie(this, -29, open);
+    }
+    this.time.delayedCall(TITLE_MOVIE_FALLBACK_MS, open);
+  }
+
+  /**
+   * 제목·부제가 들어오는 연출.
+   *
+   * 로고는 가운데에서 좌우로 열리고, 그 아래 두 줄은 뒤따라 떠오른다. 영상이 시작하는
+   * 시점에 한 번만 열린다.
+   */
+  private openHeader(
+    cx: number,
+    logoY: number,
+    logoWidth: number,
+    logoHeight: number,
+    subtitleY: number,
+    descY: number,
+  ): void {
+    if (this.headerOpened || !this.scene.isActive()) return;
+    this.headerOpened = true;
+
+    // 판때기를 받치지 않는다. 글자 모양 그대로 진 복제 그림자가 대비를 만들고 배경은 비친다.
+    const lines = [
+      ...this.addShadowedText(cx, subtitleY, "ETERNAL CITY",
+        textStyle({ role: "emphasis", size: 40, color: COLOR.accentText }),
+        textStyle({ role: "emphasis", size: 40, color: "#000000" })),
+      ...this.addShadowedText(cx, descY, t("title.subtitle"),
+        textStyle({ role: "body", size: 30, color: COLOR.inkDim }),
+        textStyle({ role: "body", size: 30, color: "#000000" })),
+    ];
+    // 두 줄은 제목이 다 열린 뒤에 뒤따라 뜬다. 함께 들어오면 어느 것이 제목인지 흐려진다.
+    lines.forEach((line) => {
+      const rest = line.alpha;
+      line.setAlpha(0).setY(line.y + TITLE_REVEAL.lineRiseY);
+      this.tweens.add({
+        targets: line,
+        alpha: rest,
+        y: line.y - TITLE_REVEAL.lineRiseY,
+        delay: TITLE_REVEAL.lineDelayMs,
+        duration: TITLE_REVEAL.lineMs,
+        ease: "Quad.Out",
+      });
+    });
+
+    if (this.textures.exists(TITLE_LOGOTYPE_KEY)) this.openLogo(cx, logoY, logoWidth, logoHeight);
   }
 
   /**
@@ -187,16 +302,17 @@ export class TitleScene extends Phaser.Scene {
     style: Phaser.Types.GameObjects.Text.TextStyle,
     // 그림자도 같은 역할·같은 크기여야 획이 어긋나지 않는다. 색만 검다.
     shadowStyle: Phaser.Types.GameObjects.Text.TextStyle,
-  ): void {
+    // 그림자와 본체를 함께 움직여야 들어오는 연출에서 획이 어긋나지 않는다.
+  ): readonly Phaser.GameObjects.Text[] {
     const size = Number.parseInt(String(shadowStyle.fontSize ?? "30"), 10);
-    this.add
+    const shadow = this.add
       .text(x + TITLE_SHADOW.textOffset.x, y + TITLE_SHADOW.textOffset.y, text, shadowStyle)
       .setOrigin(0.5)
       // 획 둘레로 번지는 검은 띠가 실제 배경이 되어 대비를 배경 원화에서 떼어 놓는다.
       .setStroke("#000000", Math.round(size * TITLE_SHADOW.haloRatio))
       .setAlpha(TITLE_SHADOW.alpha)
       .setDepth(-11);
-    this.add.text(x, y, text, style).setOrigin(0.5).setDepth(-10);
+    return [shadow, this.add.text(x, y, text, style).setOrigin(0.5).setDepth(-10)];
   }
 
   /**
@@ -264,7 +380,7 @@ export class TitleScene extends Phaser.Scene {
   /** 다섯 칸이 다 찬 뒤에만 부른다. 이때부터 화면 어디를 눌러도 다음으로 넘어간다. */
   private showEntry(cx: number): void {
     const prompt = this.add
-      .text(cx, BASE_HEIGHT * 0.89, "TAP TO ENTER", textStyle({ role: "emphasis", size: 36 }))
+      .text(cx, LOADING_PROMPT_Y, "TAP TO ENTER", textStyle({ role: "emphasis", size: 36 }))
       .setOrigin(0.5)
       // 이 자리는 배경 원화의 밝은 부분과 겹칠 수 있어 검은 그림자로 대비를 만든다.
       .setShadow(0, 3, "#000000", 6, true, true);

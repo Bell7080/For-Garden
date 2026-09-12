@@ -33,6 +33,7 @@ export const MISC_JA = {
   "shop.exchangeList": "交換一覧",
   "shop.exchangeRemaining": "残り交換 {remaining}/{limit}",
   "shop.exchangeDone": "交換が完了しました。",
+  "shop.merchant.line": "今日入った品はぜんぶ並べておきました。ゆっくり選んでください。",
 
   "skill.effect.physical": "物理ダメージ",
   "skill.effect.magical": "魔法ダメージ",

@@ -30,6 +30,7 @@ export const MISC_EN = {
   "shop.exchangeList": "Exchange List",
   "shop.exchangeRemaining": "Exchanges left {remaining}/{limit}",
   "shop.exchangeDone": "The exchange is complete.",
+  "shop.merchant.line": "Everything that came in today is out on the shelves. Take your time.",
   "skill.effect.physical": "Physical Damage",
   "skill.effect.magical": "Magical Damage",
   "skill.effect.fixed": "Fixed Damage",

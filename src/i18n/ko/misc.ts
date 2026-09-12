@@ -37,6 +37,7 @@ export const MISC_KO = {
   "shop.exchangeList": "교환 목록",
   "shop.exchangeRemaining": "남은 교환 {remaining}/{limit}",
   "shop.exchangeDone": "교환이 완료되었습니다.",
+  "shop.merchant.line": "오늘 들어온 물건은 여기 다 꺼내 뒀어요. 천천히 골라 보세요.",
 
   // 스킬 쪽지
   "skill.effect.physical": "물리 피해",

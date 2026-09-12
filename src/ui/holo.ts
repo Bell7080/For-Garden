@@ -583,3 +583,46 @@ export class HoloBar {
     this.frame?.destroy();
   }
 }
+
+/**
+ * 화면의 대각 모서리를 깎는 한 쌍.
+ *
+ * **팝업 몸판과 같은 방향으로 깎인 모서리**(좌상단·우하단)를 화면에도 한 쌍 앉혀, 배경
+ * 원화나 영상이 화면 끝까지 차 있어도 그 판이 투영 장비 안에 들어 있는 것으로 읽히게 한다.
+ * 비네트가 네 변을 고르게 누르는 것과 달리 이쪽은 마주 보는 두 모서리만 깎아 방향을 준다.
+ *
+ * 캔버스에는 흐리기가 없으므로 **삼각형을 겹으로 쌓아** 안쪽으로 사라지는 그라데이션을
+ * 만든다 — 바깥 겹은 넓고 옅게, 안쪽 겹은 좁고 짙게 깔려 경계가 계단으로 남지 않는다.
+ * 깎인 변에는 얇은 강조선 한 줄만 긋는다. 사방을 두르는 테두리가 아니라 **그 두 모서리가
+ * 여기서 끝난다**는 말이라, 판때기를 두르지 않는다는 규칙과 어긋나지 않는다.
+ */
+export function drawCornerShroud(
+  scene: Phaser.Scene,
+  width: number,
+  height: number,
+  options: { size?: number; strength?: number; layers?: number; depth?: number; edgeAlpha?: number } = {},
+): Phaser.GameObjects.Graphics {
+  // 두 모서리는 같은 크기로 마주 본다. 한쪽만 크면 화면이 기운 것처럼 보인다.
+  const size = options.size ?? Math.round(width * 0.34);
+  // 가리는 것이 아니라 모서리를 알리는 어둠이라 옅다. 진하면 그 자리에 선 UI까지 함께 묻힌다.
+  const strength = options.strength ?? 0.62;
+  const layers = options.layers ?? 8;
+  const edgeAlpha = options.edgeAlpha ?? 0.28;
+  const g = scene.add.graphics();
+  const black = 0x000000;
+
+  // 바깥에서 안으로 겹을 좁히며 쌓는다. 같은 알파를 여러 번 곱해 가장자리로 갈수록 짙어진다.
+  for (let i = 0; i < layers; i++) {
+    const reach = size * (1 - i / layers);
+    g.fillStyle(black, strength / layers);
+    g.fillTriangle(0, 0, reach, 0, 0, reach);
+    g.fillTriangle(width, height, width - reach, height, width, height - reach);
+  }
+
+  // 깎인 변 한 줄. 어둠이 사라지는 자리보다 안쪽에 그어 선이 어둠 위에 뜨지 않게 한다.
+  const edge = size * 0.62;
+  g.lineStyle(HOLO.lineWidth, COLOR.accent, edgeAlpha);
+  g.lineBetween(edge, 0, 0, edge);
+  g.lineBetween(width - edge, height, width, height - edge);
+  return g.setDepth(options.depth ?? -22);
+}

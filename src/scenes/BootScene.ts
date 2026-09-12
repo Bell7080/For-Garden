@@ -5,7 +5,7 @@ import { replaceSession, session } from "../state/session";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { setTextScale } from "../ui/textScale";
 import { setFontLanguage } from "../ui/fonts";
-import { setTextLanguage } from "../i18n";
+import { setTextLanguage, type TextKey } from "../i18n";
 import { matchLanguage } from "../core/language";
 import { EffectOverlayScene } from "./EffectOverlayScene";
 import { settingsManager } from "../managers/SettingsManager";
@@ -26,7 +26,9 @@ export class BootScene extends Phaser.Scene {
       // 손상된 로컬 데이터가 전체 앱을 막지 않게 제거하고 계정 연동 전 기본 상태로 복구한다.
       saveManager.reset();
       replaceSession(defaultSessionAfterReset());
-      this.registry.set("saveRecoveryNotice", "저장 데이터를 확인할 수 없어 안전한 초기 상태로 복구했습니다.");
+      // 문장이 아니라 키를 넘긴다 — 부트는 문구 표가 도착하기 전이라 여기서 고르면 언어를 고른
+      // 사람에게도 한국어가 남는다. 타이틀이 표가 온 뒤에 고른다.
+      this.registry.set("saveRecoveryNotice", "title.saveRecovered" satisfies TextKey);
     }
     // 임시 지급: 가방이 비어 있으면 세공을 만져 볼 시작 룬을 넣어 준다. 정식 획득 경로가
     // 생기면 이 한 줄과 매니저의 `grantStarterRunes`를 함께 지운다.

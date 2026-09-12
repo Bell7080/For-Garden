@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { t } from "../i18n";
 import { currencyGuide, type CurrencyGuideAction } from "../data/currencyGuide";
 import type { WalletItemKey } from "../data/items";
 import { session } from "../state/session";
@@ -27,8 +28,8 @@ export class CurrencyGuidePopup {
       this.addHolding(body, key);
       // 짧은 세계관 문장은 보유량 아래에만 두고, 실제 판단 정보는 두 구역으로 명확히 가른다.
       body.add(this.scene.add.text(0, -170, guide.lore, textStyle({ role: "body", size: 24, color: COLOR.inkDim, align: "center", wrap: 650 })).setOrigin(0.5));
-      this.addSection(body, -30, "획득처", guide.sources);
-      this.addSection(body, 250, "사용처", guide.uses);
+      this.addSection(body, -30, t("stamina.sources"), guide.sources);
+      this.addSection(body, 250, t("stamina.uses"), guide.uses);
       if (guide.action && this.onAction) {
         // 이동은 안내창을 닫은 뒤 로비 콜백에 요청하며 지갑이나 Scene 상태를 여기서 만지지 않는다.
         const button = this.scene.add.container(0, 430);

@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { t } from "../i18n";
 import type { RelicDef, StageEnemyDef } from "../core/types";
 import { setDebugEnemyPreview } from "../debug";
 import { battleAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
@@ -58,7 +59,7 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
     this.tail = this.scene.add.graphics(); this.add(this.tail); this.drawTail(above);
     const titleLeft = -NODE_ENEMY_PREVIEW.width / 2 + bevel * 0.7;
     this.add(this.scene.add.text(titleLeft, NODE_ENEMY_SLOT.titleY, this.options.title, textStyle({ role: "display", size: 32 })).setOrigin(0, 0));
-    this.add(this.scene.add.text(NODE_ENEMY_PREVIEW.width / 2 - 30, NODE_ENEMY_SLOT.titleY + 4, "적 편성", textStyle({ role: "emphasis", size: 22, color: COLOR.dangerText })).setOrigin(1, 0));
+    this.add(this.scene.add.text(NODE_ENEMY_PREVIEW.width / 2 - 30, NODE_ENEMY_SLOT.titleY + 4, t("enemyPreview.title"), textStyle({ role: "emphasis", size: 22, color: COLOR.dangerText })).setOrigin(1, 0));
     // **관문 한 줄은 제목 바로 아래에 선다.** 판 아래로 내리면 총 전투력과 같은 무게가 되고,
     // 별도 판으로 빼면 아무도 열지 않는다 — 이유는 `nodeEnemyPreviewLayout`에 적어 두었다.
     // 문장이므로 역할은 `body`다. 제목이 `display`라 위계는 저절로 갈린다.
@@ -101,7 +102,7 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
     const power = this.options.enemies.reduce((sum, enemy) => sum + combatPower(enemy.stats), 0);
     this.add(drawHairline(this.scene, 0, NODE_ENEMY_SLOT.footerDividerY, NODE_ENEMY_PREVIEW.width - 60, { color: COLOR.accent, alpha: 0.28 }));
     this.add(this.scene.add
-      .text(0, NODE_ENEMY_SLOT.powerY, `총 전투력 ${power.toLocaleString()}`, textStyle({ role: "display", size: 28, color: COLOR.dangerText }))
+      .text(0, NODE_ENEMY_SLOT.powerY, t("enemyPreview.totalPower", { power: power.toLocaleString() }), textStyle({ role: "display", size: 28, color: COLOR.dangerText }))
       .setOrigin(0.5, 0)
       .setShadow(0, 3, "#05070a", 4, false, true));
     // 상세 진입 E2E는 고정 숫자를 복제하지 않고 실제 적 입력 중심을 사용한다.

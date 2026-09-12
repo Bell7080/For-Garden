@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { t } from "../i18n";
 import { gameApi } from "../api/FakeServer";
 import type { ProductDto, PurchaseProductResponse } from "../api/contracts";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
@@ -32,7 +33,7 @@ export class PremiumScene extends Phaser.Scene {
   }
 
   create(): void {
-    setDebugScene("premium", "프리미엄");
+    setDebugScene("premium", t("shop.premium.title"));
     setDebugPremiumSection(this.activeSection);
     // 유료 상품은 기존 흰 쇼케이스를 유지해 무역소의 어두운 작업실과 시각적으로 구분한다.
     addSceneBackground(this, BACKGROUND.premiumShop);
@@ -41,7 +42,7 @@ export class PremiumScene extends Phaser.Scene {
     this.topBar = new TopBar(this, 40, {
       onSettings: () => this.scene.start("settings", { returnScene: "premium", returnData: { section: this.activeSection } }),
     });
-    this.add.text(60, 185, "프리미엄", textStyle({ role: "display", size: 52 })).setOrigin(0, 0);
+    this.add.text(60, 185, t("shop.premium.title"), textStyle({ role: "display", size: 52 })).setOrigin(0, 0);
     // 프리미엄은 핵심 하단 탭의 기존 진입점을 그대로 사용한다.
     new BottomNav(this, "premium");
     void this.refresh();
@@ -66,20 +67,20 @@ export class PremiumScene extends Phaser.Scene {
     card.add(this.add.text(-390, -92, product.name, textStyle({ role: "display", size: 36 })).setOrigin(0, 0));
     // 패스는 구매 전에 수령 방식과 서버의 UTC 제한을 같은 카드에서 확인시킨다.
     const benefitNotice = product.passBenefit
-      ? `광고 보상 즉시 수령  ·  ${product.passBenefit.durationDays === null ? "영구" : `유효 기간 ${product.passBenefit.durationDays}일`}\n광고 이용자와 동일한 기본 보상 · 슬롯별 UTC 일일 한도`
+      ? t("shop.premium.passBenefit", { duration: product.passBenefit.durationDays === null ? t("shop.premium.forever") : t("shop.premium.duration", { days: product.passBenefit.durationDays }) })
       : product.description;
     card.add(this.add.text(-390, -35, benefitNotice, textStyle({ role: "body", size: 24, color: COLOR.inkDim, wrap: 590, lineSpacing: 8 })).setOrigin(0, 0));
     const action = productActionModel(product.acquisition, { remaining: product.remaining, available: product.purchasable });
     const price = action.priceText;
     card.add(this.add.text(360, -28, price, textStyle({ role: "emphasis", size: 30, color: COLOR.accentText })).setOrigin(1, 0.5));
-    card.add(this.add.text(360, 52, action.disabledReason ?? `남은 구매 ${product.remaining}/${product.purchaseLimit}`, textStyle({ role: "body", size: 22, color: product.purchasable ? COLOR.ink : COLOR.inkDim })).setOrigin(1, 0));
+    card.add(this.add.text(360, 52, action.disabledReason ?? t("shop.premium.remaining", { remaining: product.remaining, limit: product.purchaseLimit }), textStyle({ role: "body", size: 22, color: product.purchasable ? COLOR.ink : COLOR.inkDim })).setOrigin(1, 0));
     const hit = this.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
     hit.on("pointerdown", () => card.setScale(1.06));
     hit.on("pointerout", () => card.setScale(1));
     hit.on("pointerup", () => {
       card.setScale(1);
       // 결제 비활성 상품도 상세 팝업 안에서 지급량·가격·사유를 확인한다.
-      new PurchasePopup(this, this.popups, gameApi, session.wallet).open(product, async (result) => { this.applyPurchaseResult(result); this.notice("구매가 완료되었습니다."); await this.refresh(); });
+      new PurchasePopup(this, this.popups, gameApi, session.wallet).open(product, async (result) => { this.applyPurchaseResult(result); this.notice(t("shop.premium.purchased")); await this.refresh(); });
     });
     card.add(hit);
     this.content?.add(card);

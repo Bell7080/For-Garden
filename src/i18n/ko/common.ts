@@ -33,6 +33,14 @@ export const COMMON_KO = {
   "role.assassin": "암살자",
   "role.support": "지원가",
 
+  // 재화 — 데이터 키가 화면마다 다른 이름으로 노출되지 않게 한 표가 갖는다.
+  "currency.gold": "골드",
+  "currency.gems": "젬",
+  "currency.fossil": "화석",
+  "currency.amber": "호박석",
+  "currency.cheesecake": "치즈케이크",
+  "currency.dnaFragments": "DNA 조각",
+
   // 속성
   "element.fire": "불",
   "element.water": "물",

@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { t } from "../i18n";
 import type { ActiveCombatBuff } from "../core/skirmish";
 import type { RelicDef } from "../core/types";
 import { battleBuffTimingLabel } from "../core/battleBuffPresentation";
@@ -21,7 +22,7 @@ export interface BattleBuffListItem { buff: ActiveCombatBuff; provider: RelicDef
 export function openBattleBuffListPopup(scene: Phaser.Scene, popups: PopupLayer, items: readonly BattleBuffListItem[], onSelect: (buff: ActiveCombatBuff) => void): void {
   const rowHeight = 82;
   const height = Math.min(760, 170 + items.length * rowHeight);
-  popups.open({ width: 760, height, title: `활성 버프  ${items.length}`, tilt: -1.2 }, (content, close) => {
+  popups.open({ width: 760, height, title: t("buff.activeCount", { count: items.length }), tilt: -1.2 }, (content, close) => {
     const top = -height / 2 + 92;
     items.forEach(({ buff, provider }, index) => {
       const y = top + index * rowHeight;
@@ -44,7 +45,7 @@ export function openBattleBuffListPopup(scene: Phaser.Scene, popups: PopupLayer,
 export function openBattleBuffPopup(scene: Phaser.Scene, popups: PopupLayer, buff: ActiveCombatBuff, provider: RelicDef, onClose?: () => void): BattleBuffPopupController {
   let closePopup = (): void => undefined;
   let timingText!: Phaser.GameObjects.Text;
-  const body = popups.open({ width: 760, height: 470, title: "버프 정보", tilt: -1.2, onClose }, (content, close) => {
+  const body = popups.open({ width: 760, height: 470, title: t("buff.title"), tilt: -1.2, onClose }, (content, close) => {
     closePopup = close;
     const left = -380;
     const top = -235;
@@ -63,11 +64,11 @@ export function openBattleBuffPopup(scene: Phaser.Scene, popups: PopupLayer, buf
 
     // 헤더에는 이름과 제공자만 두고 구현 상태나 개발 설명은 노출하지 않는다.
     content.add(scene.add.text(left + 154, top + 66, buff.name, textStyle({ role: "display", size: 42 })).setOrigin(0, 0));
-    content.add(scene.add.text(left + 154, top + 120, `제공자  ${provider.name}`, textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0, 0));
+    content.add(scene.add.text(left + 154, top + 120, t("buff.provider", { name: provider.name }), textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0, 0));
     content.add(drawHairline(scene, 0, top + 184, 664, { color: COLOR.accent, alpha: 0.35 }));
-    content.add(scene.add.text(left + 48, top + 220, "효과", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0));
+    content.add(scene.add.text(left + 48, top + 220, t("buff.effect"), textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0));
     content.add(scene.add.text(left + 148, top + 217, buff.description, textStyle({ role: "body", size: 26, wrap: 540 })).setOrigin(0, 0));
-    content.add(scene.add.text(left + 48, top + 320, "시간", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0));
+    content.add(scene.add.text(left + 48, top + 320, t("buff.duration"), textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0));
     timingText = scene.add.text(left + 148, top + 317, battleBuffTimingLabel(buff.timing), textStyle({ role: "display", size: 28 })).setOrigin(0, 0);
     content.add(timingText);
   });

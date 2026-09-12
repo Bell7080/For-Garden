@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { t, type TextKey } from "../i18n";
 import type { KeywordManager } from "../managers/KeywordManager";
 import type { KeywordDef } from "../data/keywords";
 import type { CombatStatusEffect, EffectType, SkillIconAssetId, Ultimate } from "../core/types";
@@ -10,13 +11,16 @@ import { damageHealingLabel, recoveryLabel, skillKeywordLayoutOptions, statusEff
 import { COLOR, textStyle } from "./theme";
 
 /** 데이터 효과 분류를 플레이어가 읽는 고정 라벨로 바꾼다. */
-export const EFFECT_LABEL: Record<EffectType, string> = {
-  physical: "물리 피해",
-  magical: "마법 피해",
-  fixed: "고정 피해",
-  healing: "회복",
-  buff: "강화",
+const EFFECT_KEY: Record<EffectType, TextKey> = {
+  physical: "skill.effect.physical",
+  magical: "skill.effect.magical",
+  fixed: "skill.effect.fixed",
+  healing: "skill.effect.healing",
+  buff: "skill.effect.buff",
 };
+
+/** 상수가 아니라 함수다 — 모듈이 읽히는 순간의 문구로 굳으면 언어를 바꿔도 옛 이름으로 남는다. */
+export function effectLabel(effect: EffectType): string { return t(EFFECT_KEY[effect]); }
 
 /** 문자열 순서에 의존하지 않고 스킬 팝업의 각 요소를 직접 채우는 계약이다. */
 export interface SkillInfoViewModel {
@@ -62,7 +66,7 @@ export interface SkillInfoViewModel {
 const POPUP = { width: 880, height: 620 } as const;
 
 /** 돌파로 붙은 줄이 차지하는 몫. 있을 때만 판이 그만큼 길어진다. */
-const BREAKTHROUGH_LINE = { extraHeight: 150, gap: 34, label: "한계 돌파", size: 25 } as const;
+const BREAKTHROUGH_LINE = { extraHeight: 150, gap: 34, label: t("info.breakthrough"), size: 25 } as const;
 
 /**
  * 스킬 하나를 설명하는 정형 팝업.
@@ -117,7 +121,7 @@ export function openSkillPopup(
     if (skill.gaugeCost !== undefined) {
       body.add(
         scene.add
-          .text(kind.x + kind.width + 20, top + 64, `게이지 ${skill.gaugeCost}`, textStyle({ role: "body", size: 22, color: COLOR.inkDim }))
+          .text(kind.x + kind.width + 20, top + 64, t("skill.gauge", { cost: skill.gaugeCost }), textStyle({ role: "body", size: 22, color: COLOR.inkDim }))
           .setOrigin(0, 0),
       );
     }
@@ -125,9 +129,9 @@ export function openSkillPopup(
 
     // 효과 분류와 수치는 한 줄에 둔다. 둘 다 "얼마나 세게, 어떤 식으로"를 말한다.
     const summary = [
-      EFFECT_LABEL[skill.effectType], skill.valueLabel, targetingLabel(skill.targeting),
+      effectLabel(skill.effectType), skill.valueLabel, targetingLabel(skill.targeting),
       ...((skill.statusEffects ?? []).map(statusEffectLabel)),
-      skill.durationSeconds === undefined ? undefined : `${skill.durationSeconds}초 동안`,
+      skill.durationSeconds === undefined ? undefined : t("skill.duration", { seconds: skill.durationSeconds }),
       recoveryLabel(skill.recoveryPercent),
       damageHealingLabel(skill.damageHealingPercent),
     ].filter(Boolean).join("   ·   ");
@@ -164,7 +168,7 @@ export function openSkillPopup(
 
     body.add(
       scene.add
-        .text(0, height / 2 - 44, "강조된 말을 누르면 뜻이 열린다", textStyle({ role: "body", size: 20, color: COLOR.inkDim }))
+        .text(0, height / 2 - 44, t("skill.keywordHint"), textStyle({ role: "body", size: 20, color: COLOR.inkDim }))
         .setOrigin(0.5, 0.5),
     );
   });

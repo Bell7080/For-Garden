@@ -1,4 +1,5 @@
 import { GameApiError } from "../api/contracts";
+import { t } from "../i18n";
 
 /** 전투 입장 실패가 요구하는 안내와 후속 UI를 Phaser 없이 판정해 회귀 테스트할 수 있게 한다. */
 export interface PartyEntryErrorView {
@@ -14,7 +15,7 @@ export interface PartyEntryErrorView {
  */
 export function partyEntryErrorView(error?: GameApiError): PartyEntryErrorView {
   if (error?.code === "INSUFFICIENT_STAMINA") {
-    return { message: "스테미나가 부족하다. 충전 수단을 확인해 주세요.", openStaminaPopup: true };
+    return { message: t("partyEntry.noStamina"), openStaminaPopup: true };
   }
-  return { message: "전투 입장에 실패했다. 통신 상태를 확인한 뒤 다시 시도해 주세요.", openStaminaPopup: false };
+  return { message: t("partyEntry.failed"), openStaminaPopup: false };
 }

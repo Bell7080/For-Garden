@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { t } from "../i18n";
 import { BASE_WIDTH } from "../config/gameConfig";
 import { setDebugRelicScroll, setDebugScene } from "../debug";
 import { sortRelicsByRarity, sortRelicsBySpecimenNumber } from "../data/relics";
@@ -40,7 +41,7 @@ const DRAG_SLOP = 18;
 /** 도감 정렬 기준. 버튼 하나가 이 순서대로 돌아간다. */
 type SortMode = "number" | "rarity" | "power";
 const SORT_ORDER: readonly SortMode[] = ["number", "rarity", "power"];
-const SORT_LABELS: Record<SortMode, string> = { number: "개체번호순", rarity: "희귀도순", power: "전투력순" };
+const SORT_LABELS: Record<SortMode, string> = { number: t("relics.sort.id"), rarity: t("relics.sort.rarity"), power: t("relics.sort.power") };
 
 export class RelicsScene extends Phaser.Scene {
   private info!: CharacterInfoManager;
@@ -115,7 +116,7 @@ export class RelicsScene extends Phaser.Scene {
 
     const ownedCount = relicCollection.owned.length;
     this.add
-      .text(40, 152, "보유 렐릭", textStyle({ role: "display", size: 56 }))
+      .text(40, 152, t("relics.owned"), textStyle({ role: "display", size: 56 }))
       .setOrigin(0, 0);
     this.add
       .text(
@@ -201,7 +202,7 @@ export class RelicsScene extends Phaser.Scene {
       // 실제 접근성 글꼴 배율이 반영된 displayHeight를 읽어 첫 카드의 윗경계를 계산한다.
       // 카드 본체 높이뿐 아니라 머리 원화의 돌출 높이도 포함해 제목·등급 표식과 겹치지 않게 한다.
       const labelTop = dividerY + Math.round(gapY * 0.48);
-      const label = this.add.text(40, labelTop, "미보유 렐릭", textStyle({ role: "display", size: 40, color: COLOR.inkDim })).setOrigin(0, 0);
+      const label = this.add.text(40, labelTop, t("relics.unowned"), textStyle({ role: "display", size: 40, color: COLOR.inkDim })).setOrigin(0, 0);
       const count = this.add.text(BASE_WIDTH - 40, labelTop, String(locked.length), textStyle({ role: "emphasis", size: 26, color: COLOR.inkDim })).setOrigin(1, 0);
       section.add([label, count]);
       this.content.add(section);

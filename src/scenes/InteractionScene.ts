@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { t } from "../i18n";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { INTERACTION_DEPARTMENT_LABEL, interactionDurationLabel } from "../data/interactionCities";
 import { interactionManager } from "../managers/InteractionManager";
@@ -63,15 +64,15 @@ export class InteractionScene extends Phaser.Scene {
   constructor() { super("interaction"); }
 
   create(data: { openExchange?: boolean } = {}): void {
-    setDebugScene("interaction", "교류");
+    setDebugScene("interaction", t("interaction.title"));
     // TODO(art): 전용 원화 전까지 loadingSteps가 이미 읽는 로비 배경을 임시 사용한다.
     addSceneBackground(this, BACKGROUND.lobby);
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.66);
     new TopBar(this, 40, { currencies: "none", onSettings: () => this.scene.start("settings", { returnScene: "interaction" }) });
-    this.add.text(52, 150, "교류", textStyle({ role: "display", size: 50, color: "#a8ddf5" }));
-    this.add.text(56, 216, "도시마다 한 팀씩 보낼 수 있다", textStyle({ role: "body", size: 24, color: COLOR.inkDim }));
+    this.add.text(52, 150, t("interaction.title"), textStyle({ role: "display", size: 50, color: "#a8ddf5" }));
+    this.add.text(56, 216, t("interaction.subtitle"), textStyle({ role: "body", size: 24, color: COLOR.inkDim }));
     // 파견 목록이 다시 그려져도 파괴되지 않는 씬 고정 진입점이라 항상 교환소를 찾을 수 있다.
-    this.add.existing(new Button(this, 875, 185, { width: 300, height: 86, label: "교환소", accentColor: BLUE, onClick: () => this.openExchange() }));
+    this.add.existing(new Button(this, 875, 185, { width: 300, height: 86, label: t("interaction.exchange"), accentColor: BLUE, onClick: () => this.openExchange() }));
     // 자동화도 런타임과 같은 고정 버튼을 누르도록 최소 입력 중심만 공개한다.
     setDebugStorefrontControls({ interaction: { exchange: { x: 875, y: 185 } } });
     // 재화 안내에서 온 경우에도 별도 팝업 경로를 만들지 않고 같은 공개 진입점을 호출한다.
@@ -166,7 +167,7 @@ export class InteractionScene extends Phaser.Scene {
     if (InteractionScene.signature(views) !== this.layerSignature) { this.drawLayers(); return; }
     views.forEach((view, index) => {
       if (view.state !== "away") return;
-      this.remainingLabels[index]?.setText(`파견 중 · ${interactionRemainingLabel(view.remainingMs ?? 0)}`);
+      this.remainingLabels[index]?.setText(t("interaction.dispatched", { remaining: interactionRemainingLabel(view.remainingMs ?? 0) }));
     });
   }
 
@@ -244,12 +245,12 @@ export class InteractionScene extends Phaser.Scene {
     const textX = -width / 2 + padding + textInset;
     const name = `${view.city.displayName} ${INTERACTION_DEPARTMENT_LABEL[view.city.department]}`;
     layer.add(this.add.text(textX, -44, name, textStyle({ role: "display", size: 36, color: locked ? COLOR.inkDim : "#dff2ff" })).setOrigin(0, 0.5));
-    layer.add(this.add.text(textX, 6, locked ? `연구 Lv.${view.city.unlock.researchLevel}에 열린다` : interactionDurationLabel(view.city.durationMinutes), textStyle({ role: "emphasis", size: 26, color: locked ? COLOR.inkDim : COLOR.accentText })).setOrigin(0, 0.5));
+    layer.add(this.add.text(textX, 6, locked ? t("interaction.lockedByResearch", { level: view.city.unlock.researchLevel }) : interactionDurationLabel(view.city.durationMinutes), textStyle({ role: "emphasis", size: 26, color: locked ? COLOR.inkDim : COLOR.accentText })).setOrigin(0, 0.5));
 
     if (view.state === "away" || view.state === "done") {
       // 나가 있는 동안에는 층 위에 한 겹을 더 덮는다. 완료는 덮지 않고 색으로 알린다.
       if (view.state === "away") layer.add(drawLayer(this, 0, 0, shape, { fill: COLOR.void, alpha: 0.62 }));
-      const label = view.state === "away" ? `파견 중 · ${interactionRemainingLabel(view.remainingMs ?? 0)}` : "수령 대기";
+      const label = view.state === "away" ? t("interaction.dispatched", { remaining: interactionRemainingLabel(view.remainingMs ?? 0) }) : t("interaction.awaitingClaim");
       const text = this.add.text(textX, 52, label, textStyle({ role: "emphasis", size: 28, color: view.state === "away" ? "#a8ddf5" : "#e0a83e" })).setOrigin(0, 0.5);
       layer.add(text);
       // 시계는 이 줄 하나만 초마다 갈아 끼운다 — 층을 다시 만들면 원화까지 매초 새로 선다.

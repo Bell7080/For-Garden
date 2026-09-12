@@ -1,4 +1,5 @@
 import type { ProductDto } from "../api/contracts";
+import { t } from "../i18n";
 import type { ProductCurrency } from "../data/products";
 import { tradePackageLimitLabel, tradePackageValuePercent } from "../data/tradePackages";
 
@@ -37,7 +38,7 @@ export function tradePackageViews(products: readonly ProductDto[]): TradePackage
     return {
       id: product.id,
       name: product.name,
-      valueLabel: percent === undefined ? undefined : `가치 ${percent}%`,
+      valueLabel: percent === undefined ? undefined : t("trade.value", { percent }),
       cost: product.acquisition.kind === "currency" ? { currency: product.acquisition.currency, amount: product.acquisition.amount } : undefined,
       // 재화가 아닌 지급품(룬·장식)은 아직 이 전시장에 없다. 생기면 액자 그림만 늘린다.
       grants: product.grants.flatMap((grant) => grant.kind === "currency" ? [{ currency: grant.currency, amount: grant.amount }] : []),
@@ -51,8 +52,8 @@ export function tradePackageViews(products: readonly ProductDto[]): TradePackage
 /** 조회 실패 화면이 chrome과 분리된 동적 영역에 그릴 최소 표시 계약이다. */
 export const TRADE_POPUP_FAILURE_MODEL = {
   // 세계관 안의 짧은 상태와 실제 입력만 남기고 네트워크 구현 설명은 노출하지 않는다.
-  status: "교신 두절",
-  retryLabel: "재접속",
+  status: t("trade.disconnected"),
+  retryLabel: t("trade.reconnect"),
   clearsDynamicContent: true,
   preservesChrome: true,
   actions: ["retry", "close"] as const,

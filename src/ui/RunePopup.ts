@@ -63,8 +63,8 @@ export interface RuneInfoPopupOptions extends RunePopupOptions {
 /** 저장의 단일 장착표에서 이 룬이 어디에 끼워져 있는지 한 줄로 만든다. */
 export function equippedLine(instanceId: string): string {
   const entry = Object.entries(session.relicProgress).find(([, progress]) => progress.heartGemSlots.includes(instanceId));
-  if (!entry) return "장착 안 함";
-  return `장착 중 · ${RELICS.find(({ id }) => id === entry[0])?.name ?? entry[0]}`;
+  if (!entry) return t("rune.notEquipped");
+  return t("rune.equippedBy", { name: RELICS.find(({ id }) => id === entry[0])?.name ?? entry[0] });
 }
 
 /** 이 룬을 지금 끼고 있는 렐릭 이름. 아무도 끼지 않았으면 undefined다. */
@@ -97,8 +97,8 @@ function requestRuneName(scene: Phaser.Scene, current: string, commit: (name: st
   const input = document.createElement("input");
   input.value = current;
   input.maxLength = 16;
-  input.placeholder = "룬 이름 (1~16자)";
-  input.setAttribute("aria-label", "룬 이름");
+  input.placeholder = t("rune.namePlaceholder");
+  input.setAttribute("aria-label", t("rune.nameTitle"));
   Object.assign(input.style, { position: "fixed", left: "50%", top: "19%", transform: "translateX(-50%)", width: "min(70vw, 520px)", padding: "14px", zIndex: "10000", background: "#0b0f15", color: "#f2f0ec", border: "1px solid #62d9ff", fontSize: "20px" });
   document.body.append(input);
   input.focus(); input.select();
@@ -203,11 +203,11 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
   // 높이는 손으로 적지 않고 실제로 쌓인 옵션 줄에서 거꾸로 구한다 — 박아 두면 고급 룬은 아래가
   // 통째로 비고 전설 룬은 마지막 줄이 판을 넘는다.
   const layout = runeNoteLayout(stats.length);
-  popups.open({ width: panel.width, height: layout.height, title: "룬", y: panel.centerY, dim: true, backButton: true, onClose: options.onClose }, (body, close) => {
+  popups.open({ width: panel.width, height: layout.height, title: t("rune.title"), y: panel.centerY, dim: true, backButton: true, onClose: options.onClose }, (body, close) => {
     const top = -layout.height / 2;
     // 판매 버튼은 자물쇠 칩이 다시 칠할 대상이라 먼저 만들고, 자리는 아래 버튼 줄에서 정한다.
     const sell = new Button(scene, 0, 0, {
-      width: RUNE_NOTE_BUTTONS.sellWidth, height: RUNE_NOTE_BUTTONS.sellHeight, label: "판매", fontSize: 22,
+      width: RUNE_NOTE_BUTTONS.sellWidth, height: RUNE_NOTE_BUTTONS.sellHeight, label: t("rune.sell"), fontSize: 22,
       accentColor: RUNE_NOTE_BUTTONS.sellAccent, accentTextColor: RUNE_NOTE_BUTTONS.sellText,
       onClick: () => { void new InventoryManager(session).sellRunes(options.api ?? gameApi, [rune.instanceId]).then(() => close()); },
     });
@@ -221,7 +221,7 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
     });
     body.add(addRuneFrame(scene, panel.frame.x, top + panel.frame.y, panel.frame.size, rune.rarity, rune.part, { mainStats: rune.mainStats, engraved: rune.engravings.length > 0 }));
     body.add(scene.add.text(panel.textX, top + panel.rarityY, rarity + "  ·  " + RUNE_PART_LABELS[rune.part], textStyle({ role: "emphasis", size: 20, color: hex(accent) })).setOrigin(0, 0));
-    body.add(scene.add.text(panel.textX, top + panel.nameY, rune.customName ?? `${rarity} 룬`, textStyle({ role: "display", size: 29 })).setOrigin(0, 0).setWordWrapWidth(panel.nameWrap));
+    body.add(scene.add.text(panel.textX, top + panel.nameY, rune.customName ?? t("rune.named", { rarity }), textStyle({ role: "display", size: 29 })).setOrigin(0, 0).setWordWrapWidth(panel.nameWrap));
     body.add(scene.add.text(panel.textX, top + panel.equippedY, equippedLine(rune.instanceId), textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0, 0));
     body.add(drawHairline(scene, 0, top + panel.hairlineY, panel.hairlineWidth, { color: accent, alpha: 0.45 }));
 
@@ -246,7 +246,7 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
     // 세공 진행은 숫자 하나로만 알린다. 자세한 결과 표식은 세공 화면이 맡는다.
     const attempts = runeEnhancementAttempts(rune);
     const total = runeTotalEnhancementAttempts(rune.rarity);
-    const progress = rune.engravings.length > 0 ? "각인 완료" : `세공 ${attempts} / ${total}`;
+    const progress = rune.engravings.length > 0 ? t("rune.engraved") : t("rune.craftProgress", { done: attempts, total });
     body.add(scene.add.text(0, top + layout.progressY, progress, textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0.5, 0));
 
     const buttonY = top + layout.buttonY;
@@ -260,7 +260,7 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
     // 해제 둘만 나란히 선다.
     const main = equipped ? RUNE_NOTE_BUTTONS.equipped : equip ? RUNE_NOTE_BUTTONS.withEquip : RUNE_NOTE_BUTTONS.plain;
     const craft = new Button(scene, main.craftX, buttonY, {
-      width: main.width, height: panel.buttonHeight, label: "세공", fontSize: 26, variant: "primary", accentColor: accent,
+      width: main.width, height: panel.buttonHeight, label: t("rune.craft"), fontSize: 26, variant: "primary", accentColor: accent,
       onClick: () => {
         close();
         openRunePopup(scene, popups, options);
@@ -278,7 +278,7 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
     if (slot) {
       // 해제는 되돌릴 수 있는 조작이라 판매처럼 붉게 물러나지 않고 세공과 나란히 선다.
       body.add(new Button(scene, main.equipX, buttonY, {
-        width: main.width, height: panel.buttonHeight, label: "해제", fontSize: 26,
+        width: main.width, height: panel.buttonHeight, label: t("rune.unequip"), fontSize: 26,
         onClick: () => {
           void relicProgression.unequipRune(slot.relicId, slot.slotIndex).then(() => {
             close();
@@ -290,7 +290,7 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
       }));
     } else if (equip) {
       body.add(new Button(scene, main.equipX, buttonY, {
-        width: main.width, height: panel.buttonHeight, label: "장착", fontSize: 26,
+        width: main.width, height: panel.buttonHeight, label: t("rune.equip"), fontSize: 26,
         onClick: () => {
           void relicProgression.equipRune(equip.relicId, equip.slotIndex, rune.instanceId).then(() => {
             close();
@@ -358,7 +358,7 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
   let chanceShown = rune.currentSuccessChance;
   /** 방금 박힌 결과. 다시 그릴 때 그 표식 하나만 크게 나타났다가 앉는다. */
   let landed: { statKey: RuneStatKey; slot: number; kind: RuneCraftImpactKind } | undefined;
-  popups.open({ width: panel.width, height: layout.height, title: "룬 세공", y: panel.centerY, titleSize: POPUP_TITLE_SIZE.workboard, dim: true, backButton: true, onClose: options.onClose }, (body) => {
+  popups.open({ width: panel.width, height: layout.height, title: t("rune.craftTitle"), y: panel.centerY, titleSize: POPUP_TITLE_SIZE.workboard, dim: true, backButton: true, onClose: options.onClose }, (body) => {
     const content = scene.add.container(0, 0);
     body.add(content);
     /** 이번 그림에서 비어 있는 칸들. 누른 순간 그 자리에 예고를 번지게 한다. */
@@ -431,11 +431,11 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
         // 무엇에 새길지는 반드시 사람이 다시 고른다.
         selected = rune.enhancementComplete ? undefined : nextCraftTarget(rune, statKey);
         pending = false;
-        render(engraving ? "룬을 완성했습니다." : succeeded ? "세공 성공" : "세공 실패");
+        render(engraving ? t("rune.completed") : succeeded ? t("rune.craftSuccess") : t("rune.craftFail"));
       } catch (error) {
         pending = false;
         queued = 0;
-        render(error instanceof Error ? error.message : "요청을 완료하지 못했습니다.");
+        render(error instanceof Error ? error.message : t("rune.requestFailed"));
         return;
       }
       if (queued <= 0) return;
@@ -463,7 +463,7 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
       const current = rune!;
       const accent = RUNE_ACCENT[current.rarity];
       const rarity = RUNE_RARITY_LABELS[current.rarity];
-      const displayName = current.customName ?? `${rarity} 룬`;
+      const displayName = current.customName ?? t("rune.named", { rarity });
       const top = -layout.height / 2;
       const half = panel.width / 2;
       content.add(addRuneFrame(scene, panel.frame.x, top + panel.frame.y, panel.frame.size, current.rarity, current.part, { mainStats: current.mainStats, engraved: current.engravings.length > 0 }));
@@ -500,7 +500,7 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
           const response = await inventory.renameRune(api, rune!.instanceId, value);
           rune = response.rune; options.onChanged?.(rune);
           pending = false;
-          render("이름을 저장했습니다.");
+          render(t("rune.nameSaved"));
         } catch (error) { pending = false; throw error; }
       }));
       content.add(renameHit);
@@ -519,7 +519,7 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
         });
         line.rollTo(current.currentSuccessChance, landed !== undefined);
       } else {
-        const done = current.engravings.length > 0 ? "모든 세공이 끝났습니다." : "각인을 진행해 룬을 완성해 주세요.";
+        const done = current.engravings.length > 0 ? t("rune.allCrafted") : t("rune.engraveNext");
         content.add(scene.add.text(0, top + panel.chanceBarY - 12, done, textStyle({ role: "emphasis", size: 25, color: hex(accent) })).setOrigin(0.5, 0.5));
       }
 
@@ -577,11 +577,11 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
         content.add(hit);
       };
 
-      content.add(scene.add.text(-half + 44, top + panel.mainLabelY, "주 옵션", textStyle({ role: "emphasis", size: 21, color: hex(accent) })).setOrigin(0, 0.5));
+      content.add(scene.add.text(-half + 44, top + panel.mainLabelY, t("rune.mainOption"), textStyle({ role: "emphasis", size: 21, color: hex(accent) })).setOrigin(0, 0.5));
       current.mainStats.forEach((stat, index) => drawRow(stat, top + layout.mainRows[index], panel.mainRow.height, true));
-      content.add(scene.add.text(-half + 44, top + layout.subLabelY, "보조 옵션", textStyle({ role: "emphasis", size: 21, color: COLOR.inkDim })).setOrigin(0, 0.5));
+      content.add(scene.add.text(-half + 44, top + layout.subLabelY, t("rune.subOption"), textStyle({ role: "emphasis", size: 21, color: COLOR.inkDim })).setOrigin(0, 0.5));
       if (current.subStats.length === 0) {
-        content.add(scene.add.text(0, top + layout.emptySubY, "이 등급에는 보조 옵션이 없다", textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0.5, 0.5));
+        content.add(scene.add.text(0, top + layout.emptySubY, t("rune.noSubOption"), textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0.5, 0.5));
       }
       current.subStats.forEach((stat, index) => drawRow(stat, top + layout.subRows[index], panel.subRow.height, false));
 
@@ -590,15 +590,15 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
       const cost = completed ? 0 : runeEnhancementGoldCost(current.rarity, runeEnhancementAttempts(current));
       const affordable = completed || session.wallet.gold >= cost;
       const reason = engraved
-        ? "모든 세공이 끝났습니다."
+        ? t("rune.allCrafted")
         : completed
-          ? (selected ? "고른 능력치에 각인해 룬을 완성합니다." : "각인할 능력치를 골라 주세요.")
-          : selected ? "성공하면 다음 확률 ↓ · 실패하면 ↑" : "먼저 세공할 능력치 줄을 골라 주세요.";
+          ? (selected ? t("rune.engraveReady") : t("rune.engravePick"))
+          : selected ? t("rune.chanceNote") : t("rune.craftPick");
       // 방금 무슨 일이 있었는지는 버튼 바로 위에 크게 박는다. 손이 머무는 자리에서 결과가
       // 나오지 않으면 확률만 바뀐 채 무엇이 성공이었는지 되짚어야 한다.
-      const resultStyle = notice.includes("성공")
+      const resultStyle = notice.includes(t("rune.success"))
         ? textStyle({ role: "display", size: 32, color: hex(RUNE_MARK.success.halo) })
-        : notice.includes("실패")
+        : notice.includes(t("rune.fail"))
           ? textStyle({ role: "display", size: 32, color: hex(RUNE_MARK.fail.glow) })
           : notice
             ? textStyle({ role: "display", size: 32, color: hex(accent) })
@@ -609,7 +609,7 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
       // 보낼 수 있는지는 `craftable()`이 요청 직전에 다시 묻는다.
       const action = new Button(scene, 0, top + layout.buttonY, {
         width: panel.button.width, height: panel.button.height,
-        label: completed ? "각인 확정" : "세공", variant: "primary", accentColor: accent,
+        label: completed ? t("rune.engraveConfirm") : t("rune.craft"), variant: "primary", accentColor: accent,
         cost: completed ? undefined : { icon: "currency-gold", amount: cost, affordable },
         onClick: press,
       }).setEnabled(!!selected && !engraved && affordable);

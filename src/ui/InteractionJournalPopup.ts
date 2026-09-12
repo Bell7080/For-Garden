@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { t } from "../i18n";
 import { journalsForCity, type InteractionJournal } from "../data/interactionJournals";
 import type { InteractionManager } from "../managers/InteractionManager";
 import { storyManager } from "../managers/StoryManager";
@@ -27,9 +28,9 @@ export class InteractionJournalPopup {
   /** 발견된 제목만 목록에 만들고 미발견 행은 원문 대신 잠금 상태로 남긴다. */
   open(cityId: string): void {
     const journals = journalsForCity(cityId);
-    this.popups.open({ width: 900, height: 980, title: "도시 일지", dim: true, closeOnBackdrop: true, backButton: true }, (body) => {
+    this.popups.open({ width: 900, height: 980, title: t("journal.city.title"), dim: true, closeOnBackdrop: true, backButton: true }, (body) => {
       if (journals.length === 0) {
-        body.add(this.scene.add.text(0, 0, "아직 이 도시의 기록이 없다", textStyle({ role: "body", size: 28, color: "#8d97a5" })).setOrigin(0.5));
+        body.add(this.scene.add.text(0, 0, t("journal.city.empty"), textStyle({ role: "body", size: 28, color: "#8d97a5" })).setOrigin(0.5));
         return;
       }
       journals.forEach((journal, index) => {
@@ -37,8 +38,8 @@ export class InteractionJournalPopup {
         const read = session.readInteractionJournalIds.has(journal.id);
         const button = new Button(this.scene, 0, -330 + index * 150, {
           width: 760, height: 110,
-          label: discovered ? journal.title : `기록 ${journal.discoveryOrder} · 미발견`,
-          sub: discovered ? (read ? "열람 완료" : "새 기록") : "본문 잠김",
+          label: discovered ? journal.title : t("journal.city.undiscovered", { order: journal.discoveryOrder }),
+          sub: discovered ? (read ? t("journal.city.read") : t("journal.city.new")) : t("journal.city.locked"),
           accentColor: BLUE,
           onClick: () => { if (discovered) this.openJournal(journal); },
         });

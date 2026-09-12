@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { t, type TextKey } from "../i18n";
 import { BASE_WIDTH, BASE_HEIGHT } from "../config/gameConfig";
 import { bindDebugReadyLifecycle, setDebugReady, setDebugScene } from "../debug";
 import { COLOR, textStyle } from "../ui/theme";
@@ -136,17 +137,17 @@ export class TitleScene extends Phaser.Scene {
     this.addShadowedText(cx, subtitleY, "ETERNAL CITY",
       textStyle({ role: "emphasis", size: 40, color: COLOR.accentText }),
       textStyle({ role: "emphasis", size: 40, color: "#000000" }));
-    this.addShadowedText(cx, descY, "멸종 동물 복원 연구 도시",
+    this.addShadowedText(cx, descY, t("title.subtitle"),
       textStyle({ role: "body", size: 30, color: COLOR.inkDim }),
       textStyle({ role: "body", size: 30, color: "#000000" }));
 
     if (this.textures.exists(TITLE_LOGOTYPE_KEY)) this.openLogo(cx, logoY, logoWidth, logoHeight);
 
-    const recoveryNotice = this.registry.get("saveRecoveryNotice") as string | undefined;
+    const recoveryNotice = this.registry.get("saveRecoveryNotice") as TextKey | undefined;
     if (recoveryNotice) {
       // 새게임 버튼 대신 자동 복구 사실만 안내해 향후 Google/Apple 계정 복구 흐름을 막지 않는다.
       this.add
-        .text(cx, BASE_HEIGHT * 0.63, recoveryNotice, textStyle({ role: "body", size: 26, color: COLOR.dangerText, align: "center" }))
+        .text(cx, BASE_HEIGHT * 0.63, t(recoveryNotice), textStyle({ role: "body", size: 26, color: COLOR.dangerText, align: "center" }))
         .setOrigin(0.5);
       this.registry.remove("saveRecoveryNotice");
     }
@@ -280,7 +281,7 @@ export class TitleScene extends Phaser.Scene {
       // 회상은 이 화면의 주된 조작이 아니라 이미 본 사람을 위한 곁길이다. 가운데를 비우고
       // 좌상단에 작게 둬 제목과 배경 원화를 가리지 않는다.
       // 완료 플래그를 지우지 않으므로 선택 보상이 다시 지급되지 않는다.
-      new Button(this, 150, 92, { width: 220, height: 64, label: "오프닝 회상", fontSize: 24, onClick: () => this.scene.start("opening") });
+      new Button(this, 150, 92, { width: 220, height: 64, label: t("title.replayOpening"), fontSize: 24, onClick: () => this.scene.start("opening") });
     }
 
     // 회상 버튼이 먼저 눌리도록 화면 전체 히트영역은 가장 아래 깊이에 깔고 pointerup에서 확정한다.

@@ -1,0 +1,27 @@
+/** 구매 확인 팝업과 프리미엄 화면의 문구. */
+export const SHOP_KO = {
+  "shop.purchase.package": "패키지 구매",
+  "shop.purchase.confirm": "구매 확인",
+  "shop.purchase.grant": "지급품",
+  "shop.purchase.unitGrant": "1개당 {amount}",
+  "shop.purchase.price": "가격",
+  "shop.purchase.count": "구매 개수",
+  "shop.purchase.total": "총가격",
+  "shop.purchase.remaining": "남은 구매 제한",
+  "shop.purchase.limit": "구매 제한",
+  "shop.purchase.busy": "처리 중",
+  "shop.purchase.buy": "구매",
+  "shop.purchase.blocked": "구매할 수 없습니다.",
+  "shop.purchase.needMore": "잔액 또는 구매 제한이 부족합니다.",
+  "shop.purchase.needCurrency": "재화가 부족합니다.",
+  "shop.purchase.value": "가치 {percent}%",
+  "shop.purchase.rewardTitle": "구매 보상",
+  "shop.purchase.failed": "구매에 실패했습니다.",
+
+  "shop.premium.title": "프리미엄",
+  "shop.premium.passBenefit": "광고 보상 즉시 수령  ·  {duration}\n광고 이용자와 동일한 기본 보상 · 슬롯별 UTC 일일 한도",
+  "shop.premium.forever": "영구",
+  "shop.premium.duration": "유효 기간 {days}일",
+  "shop.premium.remaining": "남은 구매 {remaining}/{limit}",
+  "shop.premium.purchased": "구매가 완료되었습니다.",
+} as const;

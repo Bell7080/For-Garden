@@ -1,0 +1,31 @@
+/** 교류 화면과 팝업의 일본어 표. */
+export const INTERACTION_JA = {
+  "interaction.title": "交流",
+  "interaction.subtitle": "都市ごとに一チームずつ送れる",
+  "interaction.exchange": "交換所",
+  "interaction.dispatched": "派遣中 · {remaining}",
+  "interaction.awaitingClaim": "受け取り待ち",
+  "interaction.lockedByResearch": "研究 Lv.{level}で解放される",
+
+  "interaction.journal": "都市日誌",
+  "interaction.returning": "持ち帰るもの",
+  "interaction.autoPlace": "自動配置",
+  "interaction.noRelics": "送れるレリックがいない",
+  "interaction.ownedRelics": "所持レリック",
+  "interaction.ownedRelicsForSlot": "所持レリック · {slot}番の枠に配置",
+  "interaction.claiming": "受け取り中…",
+  "interaction.claim": "報酬を受け取る",
+  "interaction.cancel": "キャンセル",
+  "interaction.sending": "送出中…",
+  "interaction.send": "派遣する",
+  "interaction.rewardTitle": "交流報酬",
+
+  "interaction.exchange.owned": "所持標本  {owned}",
+  "interaction.exchange.required": "必要量  {amount}",
+  "interaction.exchange.result": "交換結果  チーズケーキ {amount}",
+  "interaction.exchange.remaining": "残り交換回数  {remaining}",
+  "interaction.exchange.busy": "処理中",
+  "interaction.exchange.do": "交換",
+  "interaction.exchange.granted": "チーズケーキ {amount} を付与",
+  "interaction.exchange.failed": "交換失敗",
+} as const;

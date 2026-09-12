@@ -23,7 +23,10 @@ import { SHOP_PRODUCT_ICON_ASSETS } from "../data/shopCatalog";
  * 직접 `load`를 부르지 말고 이 목록에 단계를 더한다 — 진행 칸 수가 목록 길이라서 저절로 맞는다.
  */
 export interface LoadingStep {
-  /** 디버깅과 테스트에서 단계를 가리키는 이름. 화면에는 띄우지 않는다. */
+  /**
+   * 디버깅과 테스트에서 단계를 가리키는 이름. **화면에는 띄우지 않으므로 번역하지 않는다** —
+   * 언어를 따라 바뀌면 E2E가 어느 단계인지 확인하는 기준이 언어마다 갈린다.
+   */
   readonly label: string;
   run(scene: Phaser.Scene): Promise<void>;
 }

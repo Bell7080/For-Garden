@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { t } from "../i18n";
 import { formatCurrency } from "../core/formatCurrency";
 import { getRelic } from "../data/relics";
 import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
@@ -82,7 +83,7 @@ export class StageCompletePopup {
       puppetLayer = this.scene.add.container(0, 0).setDepth((body.parentContainer?.depth ?? 0) + 1);
       this.buildFighterPuppets(body, puppetLayer, puppets, () => disposed, options.fighters);
       attackButton = new Button(this.scene, 0, 90, {
-        width: 360, height: 84, label: "공격 · 방어 · 회복", fontSize: 26,
+        width: 360, height: 84, label: t("stageComplete.contribution"), fontSize: 26,
         // 그래프를 보는 동안은 이 버튼이 뒤에서 겹쳐 눌리지 않도록 숨겼다가, 그래프를 닫으면
         // 다시 보여준다.
         onClick: () => { attackButton?.setVisible(false); options.onOpenContribution(() => { if (!disposed) attackButton?.setVisible(true); }); },
@@ -94,7 +95,7 @@ export class StageCompletePopup {
       // 팝업 밖(화면 고정 좌표)에 두되, 이 층 바로 위에만 머물게 한다 — 그래야 기여도 그래프가
       // 같은 popups 위에 한 겹 더 쌓여도 그 뒤로 가려지고, 새치기하듯 계속 앞에 남지 않는다.
       hint = this.scene.add
-        .text(this.scene.scale.width / 2, this.scene.scale.height - 130, "화면을 눌러 확인", textStyle({ role: "emphasis", size: 30, color: COLOR.ink }))
+        .text(this.scene.scale.width / 2, this.scene.scale.height - 130, t("stageComplete.tapToConfirm"), textStyle({ role: "emphasis", size: 30, color: COLOR.ink }))
         .setOrigin(0.5).setAlpha(0.62).setDepth((body.parentContainer?.depth ?? 0) + 1);
       hint.setShadow(0, 3, "#000000", 4, false, true);
     });
@@ -177,6 +178,6 @@ export class StageCompletePopup {
     const amount = this.scene.add.text(size / 2 - 11, y + size / 2 - 9, formatCurrency(cheesecake), textStyle({ role: "display", size: 30, color: COLOR.accentText })).setOrigin(1, 1);
     amount.setStroke("#000000", 6); amount.setShadow(2, 3, "#000000", 2, false, true);
     body.add(amount);
-    body.add(this.scene.add.text(0, y + size / 2 + 33, firstClear ? "최초 클리어 보상" : "반복 클리어 보상", textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0.5));
+    body.add(this.scene.add.text(0, y + size / 2 + 33, firstClear ? t("stageComplete.firstClear") : t("stageComplete.repeatClear"), textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0.5));
   }
 }

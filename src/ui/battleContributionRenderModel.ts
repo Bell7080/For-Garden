@@ -1,10 +1,11 @@
 import { formatCurrency } from "../core/formatCurrency";
+import { t } from "../i18n";
 import type { BattleContributionRow, ContributionCategory } from "../core/battleContribution";
 import { COLOR } from "./theme";
 
 /** 전투 HUD와 종료 팝업이 공유하는 탭 순서와 플레이어 문구다. */
 export const CONTRIBUTION_CATEGORIES: readonly { id: ContributionCategory; label: string }[] = [
-  { id: "attack", label: "공격" }, { id: "defense", label: "방어" }, { id: "healing", label: "회복" },
+  { id: "attack", label: t("contribution.attack") }, { id: "defense", label: t("contribution.defense") }, { id: "healing", label: t("contribution.heal") },
 ];
 
 /** Phaser 객체와 무관한 한 행의 표시값이라 두 UI가 막대 산식과 축약 수치를 복제하지 않는다. */

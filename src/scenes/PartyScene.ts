@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { t } from "../i18n";
 import { BASE_WIDTH, BASE_HEIGHT } from "../config/gameConfig";
 import { setDebugParty, setDebugScene } from "../debug";
 import type { RelicDef } from "../core/types";
@@ -202,7 +203,7 @@ export class PartyScene extends Phaser.Scene {
     new Button(this, this.autoButtonPosition.x, this.autoButtonPosition.y, {
       width: autoButtonWidth,
       height: autoButtonHeight,
-      label: "자동 배치",
+      label: t("party.autoPlace"),
       fontSize: 26,
       onClick: () => {
         this.picked = toFormationSlots(autoPickParty(relicCollection.owned, this.enemies), 3);
@@ -218,7 +219,7 @@ export class PartyScene extends Phaser.Scene {
     this.startButton = new Button(this, cx, 1700, {
       width: 560,
       height: 150,
-      label: "전투 시작",
+      label: t("party.start"),
       fontSize: 44,
       onClick: async () => {
         // 첫 유효 클릭에서 즉시 잠가 같은 프레임의 빠른 연속 입력도 한 번만 처리한다.
@@ -238,7 +239,7 @@ export class PartyScene extends Phaser.Scene {
           }
         } catch {
           // 이 문구는 setParty의 영속 저장 예외에만 사용해 입장 API 오류와 섞이지 않게 한다.
-          this.hint.setText("파티 저장에 실패했다. 저장 공간을 확인한 뒤 다시 시도해 주세요.");
+          this.hint.setText(t("party.saveFailed"));
           this.restoreEntryControls();
           return;
         }
@@ -514,7 +515,7 @@ export class PartyScene extends Phaser.Scene {
     this.bindRosterScroll();
 
     this.add
-      .text(BASE_WIDTH / 2, 1520, "꾹 누르면 상세 정보", textStyle({ role: "body", size: 24, color: COLOR.inkDim }))
+      .text(BASE_WIDTH / 2, 1520, t("party.longPressHint"), textStyle({ role: "body", size: 24, color: COLOR.inkDim }))
       .setOrigin(0.5, 0);
   }
 
@@ -602,7 +603,7 @@ export class PartyScene extends Phaser.Scene {
       const at = this.picked.indexOf(id);
       const chosen = at >= 0;
       entry.card.setSelected(chosen);
-      entry.card.setSub(chosen ? `${at + 1}번 자리` : entry.role);
+      entry.card.setSub(chosen ? t("party.slot", { index: at + 1 }) : entry.role);
     }
 
     const plate = this.slotPlate;
@@ -646,8 +647,8 @@ export class PartyScene extends Phaser.Scene {
     });
 
     // 어느 편이 센지는 두 수가 마주 보는 것으로 말한다. 표시·정렬 전용 값이라 전투에는 쓰지 않는다.
-    this.enemyPowerText?.setText(`적 ${this.enemies.reduce((sum, def) => sum + combatPower(def.stats), 0).toLocaleString()}`);
-    this.allyPowerText?.setText(`${members.reduce((sum, id) => sum + combatPower(relicProgression.getFinalStats(id)), 0).toLocaleString()} 아군`);
+    this.enemyPowerText?.setText(t("party.enemyPower", { power: this.enemies.reduce((sum, def) => sum + combatPower(def.stats), 0).toLocaleString() }));
+    this.allyPowerText?.setText(t("party.allyPower", { power: members.reduce((sum, id) => sum + combatPower(relicProgression.getFinalStats(id)), 0).toLocaleString() }));
 
     this.refreshButtonState();
     // 자동 배치 직후 방향 표식이 실제로 나타났는지 캔버스 밖 E2E가 판별하는 읽기 전용 수치다.
@@ -658,7 +659,7 @@ export class PartyScene extends Phaser.Scene {
       // 입력면 중심을 공개해 E2E가 SD 로딩이나 하드코딩 좌표에 의존하지 않게 한다.
       slots: PREVIEW_COLUMNS.map((x) => ({ x, y: ALLY_ROW - PREVIEW_HEIGHT / 2 })),
     });
-    this.hint.setText(members.length === 3 ? "편성 완료" : `${3 - members.length}명 더 골라야 한다`);
+    this.hint.setText(members.length === 3 ? t("party.ready") : t("party.needMore", { count: 3 - members.length }));
   }
 
   /** 선택 수와 전투 진입 잠금을 함께 반영해 버튼 활성 상태를 한곳에서 계산한다. */
@@ -674,9 +675,9 @@ export class PartyScene extends Phaser.Scene {
 
   /** 매니저의 안정적인 실패 코드를 편성 화면에서 바로 이해할 수 있는 안내로 바꾼다. */
   private partyFailureMessage(reason: SetPartyFailureReason, relicId?: string): string {
-    if (reason === "wrong-size") return "정확히 3명을 골라야 전투를 시작할 수 있다.";
-    if (reason === "duplicate") return "같은 렐릭을 두 자리 이상 편성할 수 없다.";
-    const relicName = relicId ? getRelic(relicId).name : "선택한 렐릭";
-    return `${relicName}은(는) 현재 보유하고 있지 않아 편성할 수 없다.`;
+    if (reason === "wrong-size") return t("party.needExactlyThree");
+    if (reason === "duplicate") return t("party.noDuplicate");
+    const relicName = relicId ? getRelic(relicId).name : t("party.selected");
+    return t("party.notOwned", { name: relicName });
   }
 }

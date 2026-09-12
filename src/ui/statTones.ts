@@ -1,4 +1,5 @@
 import type { RuneMainStatKey } from "../core/runes";
+import { t } from "../i18n";
 import type { ReachTier } from "../core/types";
 
 /**
@@ -35,9 +36,9 @@ export const REACH_TONE: Readonly<Record<ReachTier, number>> = {
 
 /** 화면에 적는 사거리 이름. */
 export const REACH_LABEL: Readonly<Record<ReachTier, string>> = {
-  melee: "근거리",
-  mid: "중거리",
-  ranged: "원거리",
+  melee: t("reach.close"),
+  mid: t("reach.mid"),
+  ranged: t("reach.far"),
 };
 
 /** 사거리 색을 텍스트 스타일이 받는 `#rrggbb` 문자열로 바꾼다. */

@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { t } from "../i18n";
 import type { Element, Role } from "../core/types";
 import { chipPoints, drawInnerVignette, drawLayer, drawShapeOutline } from "./holo";
 import { FALLBACK_SKILL_ICON } from "./skillIcons";
@@ -43,10 +44,10 @@ export interface SkillIconFrameOptions {
 
 /** 슬롯의 짧은 이름. 정보창 아이콘과 돌파 표가 같은 말을 쓰도록 한 표만 둔다. */
 export const SKILL_SLOT_LABEL: Readonly<Record<SkillArtSlot, string>> = {
-  passive: "패시브",
-  basic: "일반 공격",
-  ultimate: "궁극기",
-  ferocity: "폭주",
+  passive: t("info.skill.passive"),
+  basic: t("info.skill.basic"),
+  ultimate: t("info.skill.ultimate"),
+  ferocity: t("info.skill.ferocity"),
 };
 
 /** 액자 한 장을 만들어 컨테이너로 돌려준다. 부른 쪽이 자리를 잡고 입력을 붙인다. */

@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { t } from "../i18n";
 import { gameApi } from "../api/FakeServer";
 import { GameApiError, type ExpeditionLeaderboardEntry, type GameApi } from "../api/contracts";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
@@ -27,7 +28,7 @@ export class ExpeditionRankingPopup {
   open(): void {
     if (this.body) return;
     const width = BASE_WIDTH - 100; const height = BASE_HEIGHT - 180;
-    this.popups.open({ width, height, title: "원정 주간 기록", titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: 0.76, closeOnBackdrop: false, backButton: true, onClose: () => { this.destroyListMask(); this.content?.destroy(); this.content = undefined; this.body = undefined; } }, (body) => {
+    this.popups.open({ width, height, title: t("ranking.title"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: 0.76, closeOnBackdrop: false, backButton: true, onClose: () => { this.destroyListMask(); this.content?.destroy(); this.content = undefined; this.body = undefined; } }, (body) => {
       this.body = body;
       /*
        * **원화는 판과 같은 실루엣으로 잘린다.** 팝업 몸판은 왼쪽 위·오른쪽 아래가 크게 깎여
@@ -50,10 +51,10 @@ export class ExpeditionRankingPopup {
   private async refresh(): Promise<void> {
     if (!this.body) return;
     this.resetContent();
-    this.content?.add(this.scene.add.text(0, -700, "기록 동기화 중", textStyle({ role: "emphasis", size: 26, color: COLOR.inkDim })).setOrigin(0.5));
+    this.content?.add(this.scene.add.text(0, -700, t("ranking.syncing"), textStyle({ role: "emphasis", size: 26, color: COLOR.inkDim })).setOrigin(0.5));
     try {
       const [best, leaderboard] = await Promise.all([this.api.getExpeditionWeeklyBest(), this.api.getExpeditionLeaderboard(RANKING_VISIBLE_RANKS)]);
-      if (best.weekKey !== leaderboard.weekKey) throw new GameApiError("INVALID_STATE", "주차가 변경되어 기록을 다시 불러옵니다.");
+      if (best.weekKey !== leaderboard.weekKey) throw new GameApiError("INVALID_STATE", t("ranking.weekRolledReload"));
       this.render(best.bestScore, leaderboard.entries);
     } catch (error) {
       this.renderError(this.errorMessage(error));
@@ -77,8 +78,8 @@ export class ExpeditionRankingPopup {
     // 실제 이용자 풀이 생기면 표본 보정만 지운다 — 순위·스크롤 규칙은 그대로 남는다.
     const merged = rankedLeaderboard([...entries, ...placeholderRankingEntries(bestScore, RANKING_VISIBLE_RANKS)]);
     // 순위는 누적 보상 점수가 아니라 한 판 최고 점수로 정렬된다는 기준을 제목에서 바로 밝힌다.
-    content.add(this.scene.add.text(-410, -720, "주간 최고 점수 순위", textStyle({ role: "display", size: 36, color: COLOR.accentText })).setOrigin(0, 0.5));
-    content.add(this.scene.add.text(410, -720, "동점: 최고점 최초 달성 순", textStyle({ role: "body", size: 19, color: COLOR.inkDim })).setOrigin(1, 0.5));
+    content.add(this.scene.add.text(-410, -720, t("ranking.bestScoreOrder"), textStyle({ role: "display", size: 36, color: COLOR.accentText })).setOrigin(0, 0.5));
+    content.add(this.scene.add.text(410, -720, t("ranking.tieBreak"), textStyle({ role: "body", size: 19, color: COLOR.inkDim })).setOrigin(1, 0.5));
 
     /*
      * **100등까지 아래로 내려 본다.** 여덟 줄만 세워 두면 내가 몇 등인지, 위가 얼마나 먼지를
@@ -156,7 +157,7 @@ export class ExpeditionRankingPopup {
     if (!this.body) return;
     this.resetContent();
     this.content?.add(this.scene.add.text(0, -50, message, textStyle({ role: "body", size: 27, color: COLOR.ink, align: "center", wrap: 700 })).setOrigin(0.5));
-    this.content?.add(new Button(this.scene, 0, 90, { width: 280, height: 76, label: "새로고침", onClick: () => void this.refresh() }));
+    this.content?.add(new Button(this.scene, 0, 90, { width: 280, height: 76, label: t("ranking.refresh"), onClick: () => void this.refresh() }));
   }
 
   /**
@@ -188,8 +189,8 @@ export class ExpeditionRankingPopup {
 
   /** 서버 오류 코드를 사용자가 다음 행동을 결정할 수 있는 짧은 상태로 바꾼다. */
   private errorMessage(error: unknown): string {
-    if (!(error instanceof GameApiError)) return "원정 기록을 불러오지 못했습니다.";
-    const labels: Record<string, string> = { INVALID_STATE: "주차가 변경되었습니다. 기록을 다시 확인해 주세요." };
+    if (!(error instanceof GameApiError)) return t("ranking.loadFailed");
+    const labels: Record<string, string> = { INVALID_STATE: t("ranking.weekRolled") };
     return labels[error.code] ?? error.message;
   }
 }

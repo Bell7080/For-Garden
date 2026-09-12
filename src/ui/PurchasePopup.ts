@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { t } from "../i18n";
 import type { GameApi, ProductDto, PurchaseProductResponse } from "../api/contracts";
 import { formatCurrency } from "../core/formatCurrency";
 import { quotePurchase, totalGrantAmount } from "../core/purchase";
@@ -47,7 +48,7 @@ export class PurchasePopup {
     // 층은 팝업 층(`backButton`)이 소유한다 — 창마다 IconButton을 손으로 세우면 아래 화면이
     // 이미 쓰고 있는 같은 자리와의 층 순서를 창마다 다시 정하게 된다.
     const pack = isTradePackage(product);
-    this.popups.open({ width: PACKAGE.width, height: pack ? PACKAGE.height : 850, title: pack ? "패키지 구매" : "구매 확인", dim: true, closeOnBackdrop: true, backButton: true }, (body, close) => {
+    this.popups.open({ width: PACKAGE.width, height: pack ? PACKAGE.height : 850, title: pack ? t("shop.purchase.package") : t("shop.purchase.confirm"), dim: true, closeOnBackdrop: true, backButton: true }, (body, close) => {
       const view = this.scene.add.container(0, 0); body.add(view);
       const render = (): void => { view.removeAll(true); if (pack) this.paintPackage(view, product, close, onPurchased); else this.paint(view, product, close, onPurchased); };
       this.repaint = render;
@@ -66,7 +67,7 @@ export class PurchasePopup {
     this.quantity = quote.quantity;
     const grant = product.grants[0];
     const unitGrant = grant?.kind === "currency" ? grant.amount : 1;
-    const grantLabel = grant?.kind === "currency" ? currencyName(grant.currency) : grant?.name ?? "지급품";
+    const grantLabel = grant?.kind === "currency" ? currencyName(grant.currency) : grant?.name ?? t("shop.purchase.grant");
 
     // 상품 그림만 사방 액자로 두고 나머지는 홀로그램 면과 구분선만 사용한다.
     view.add(drawLayer(this.scene, 0, -215, chipPoints(690, 230, { bevel: { topLeft: 38, topRight: 0, bottomRight: 28, bottomLeft: 0 } }), { fill: 0x141b24, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.45 }));
@@ -78,14 +79,14 @@ export class PurchasePopup {
     });
     view.add(this.scene.add.text(-125, -272, product.name, textStyle({ role: "display", size: 32 })).setOrigin(0, 0.5));
     view.add(this.scene.add.text(-125, -212, `${grantLabel} ${formatCurrency(totalGrantAmount(unitGrant, quote.quantity))}`, textStyle({ role: "emphasis", size: 27, color: COLOR.accentText })).setOrigin(0, 0.5));
-    view.add(this.scene.add.text(-125, -157, `1개당 ${formatCurrency(unitGrant)}`, textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0, 0.5));
+    view.add(this.scene.add.text(-125, -157, t("shop.purchase.unitGrant", { amount: formatCurrency(unitGrant) }), textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0, 0.5));
 
     view.add(drawHairline(this.scene, 0, -55, 690, { color: COLOR.accent, alpha: 0.32 }));
     // "단가"는 상거래 장부의 말이다. 화면에는 사람이 쓰는 말로 적는다.
-    this.addValueRow(view, -5, "가격", priceText(product.acquisition, product.acquisition.amount));
-    this.addValueRow(view, 75, "구매 개수", formatCurrency(quote.quantity));
-    this.addValueRow(view, 155, "총가격", priceText(product.acquisition, quote.totalPrice), true);
-    this.addValueRow(view, 235, "남은 구매 제한", `${formatCurrency(product.remaining)} / ${formatCurrency(product.purchaseLimit)}`);
+    this.addValueRow(view, -5, t("shop.purchase.price"), priceText(product.acquisition, product.acquisition.amount));
+    this.addValueRow(view, 75, t("shop.purchase.count"), formatCurrency(quote.quantity));
+    this.addValueRow(view, 155, t("shop.purchase.total"), priceText(product.acquisition, quote.totalPrice), true);
+    this.addValueRow(view, 235, t("shop.purchase.remaining"), `${formatCurrency(product.remaining)} / ${formatCurrency(product.purchaseLimit)}`);
 
     // 수량 조작은 순수 모델이 계산한 실제 구매 가능 상한에서만 활성화한다.
     const minus = new Button(this.scene, 105, 75, { width: 76, height: 58, label: "−", fontSize: 30, onClick: () => this.changeQuantity(product, -1) }).setEnabled(!this.pending && quote.quantity > 1);
@@ -94,9 +95,9 @@ export class PurchasePopup {
     setDebugStorefrontControls({ purchase: { minus: { x: BASE_CENTER.x + 105, y: BASE_CENTER.y + 75 }, plus: { x: BASE_CENTER.x + 205, y: BASE_CENTER.y + 75 }, confirm: { x: BASE_CENTER.x, y: BASE_CENTER.y + 345 } } });
     view.add([minus, plus]);
     const canPurchase = product.purchasable && quote.valid && !this.pending;
-    const buy = new Button(this.scene, 0, 345, { width: 650, height: 86, label: this.pending ? "처리 중" : "구매", fontSize: 31, variant: "primary", onClick: () => { void this.purchase(product, close, onPurchased); } }).setEnabled(canPurchase);
+    const buy = new Button(this.scene, 0, 345, { width: 650, height: 86, label: this.pending ? t("shop.purchase.busy") : t("shop.purchase.buy"), fontSize: 31, variant: "primary", onClick: () => { void this.purchase(product, close, onPurchased); } }).setEnabled(canPurchase);
     view.add(buy);
-    const status = this.message || (!product.purchasable ? product.disabledReason ?? "구매할 수 없습니다." : !quote.valid ? "잔액 또는 구매 제한이 부족합니다." : "");
+    const status = this.message || (!product.purchasable ? product.disabledReason ?? t("shop.purchase.blocked") : !quote.valid ? t("shop.purchase.needMore") : "");
     if (status) view.add(this.scene.add.text(0, 410, status, textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0.5));
   }
 
@@ -118,7 +119,7 @@ export class PurchasePopup {
     view.add(drawLayer(this.scene, 0, -170, chipPoints(690, 330, { bevel: { topLeft: 44, topRight: 0, bottomRight: 34, bottomLeft: 0 } }), { fill: 0x141b24, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.45 }));
     view.add(this.scene.add.text(0, PACKAGE.nameY, product.name, textStyle({ role: "display", size: 36 })).setOrigin(0.5));
     if (percent !== undefined) {
-      view.add(this.scene.add.text(0, PACKAGE.valueY, `가치 ${percent}%`, textStyle({ role: "display", size: 27, color: COLOR.accentText })).setOrigin(0.5));
+      view.add(this.scene.add.text(0, PACKAGE.valueY, t("shop.purchase.value", { percent }), textStyle({ role: "display", size: 27, color: COLOR.accentText })).setOrigin(0.5));
     }
     // 받는 것은 전부 같은 공용 액자다. 카드와 같은 그림·같은 수량 자리를 쓰므로 눌러서 열어도
     // 방금 보고 있던 것과 같은 묶음으로 읽힌다.
@@ -130,16 +131,16 @@ export class PurchasePopup {
     });
 
     view.add(drawHairline(this.scene, 0, PACKAGE.hairlineY, 690, { color: COLOR.accent, alpha: 0.32 }));
-    this.addValueRow(view, PACKAGE.priceY, "가격", priceText(acquisition, acquisition.amount), true);
-    this.addValueRow(view, PACKAGE.limitY, "구매 제한", tradePackageLimitLabel(product.refresh, product.purchaseLimit, product.remaining));
+    this.addValueRow(view, PACKAGE.priceY, t("shop.purchase.price"), priceText(acquisition, acquisition.amount), true);
+    this.addValueRow(view, PACKAGE.limitY, t("shop.purchase.limit"), tradePackageLimitLabel(product.refresh, product.purchaseLimit, product.remaining));
 
     const balance = this.wallet[acquisition.currency];
     const canPurchase = product.purchasable && product.remaining > 0 && balance >= acquisition.amount && !this.pending;
-    const buy = new Button(this.scene, 0, PACKAGE.buyY, { width: 650, height: 86, label: this.pending ? "처리 중" : "구매", fontSize: 31, variant: "primary", onClick: () => { void this.purchase(product, close, onPurchased); } }).setEnabled(canPurchase);
+    const buy = new Button(this.scene, 0, PACKAGE.buyY, { width: 650, height: 86, label: this.pending ? t("shop.purchase.busy") : t("shop.purchase.buy"), fontSize: 31, variant: "primary", onClick: () => { void this.purchase(product, close, onPurchased); } }).setEnabled(canPurchase);
     view.add(buy);
     // 수량 조작이 없으므로 공개하는 입력 중심도 확정 하나뿐이다.
     setDebugStorefrontControls({ purchase: { confirm: { x: BASE_CENTER.x, y: BASE_CENTER.y + PACKAGE.buyY } } });
-    const status = this.message || (!product.purchasable ? product.disabledReason ?? "구매할 수 없습니다." : balance < acquisition.amount ? "재화가 부족합니다." : "");
+    const status = this.message || (!product.purchasable ? product.disabledReason ?? t("shop.purchase.blocked") : balance < acquisition.amount ? t("shop.purchase.needCurrency") : "");
     if (status) view.add(this.scene.add.text(0, PACKAGE.statusY, status, textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0.5));
   }
 
@@ -167,13 +168,13 @@ export class PurchasePopup {
       // 작업판을 먼저 없애 입력면이 겹치지 않게 한 뒤, 더 높은 공용 계층에 서버 영수증만 연다.
       close();
       openRewardPopup(this.scene, this.popups, {
-        title: "구매 보상",
+        title: t("shop.purchase.rewardTitle"),
         items: productGrantsToRewardItems(result.granted, result.grantedRunes),
         onConfirm: () => { void onPurchased(result); },
       });
     } catch (error) {
       // 낙관적 차감이 없으므로 실패 시 되돌릴 로컬 상태도 없고 서버 이전 화면을 그대로 유지한다.
-      this.message = error instanceof Error ? error.message : "구매에 실패했습니다.";
+      this.message = error instanceof Error ? error.message : t("shop.purchase.failed");
       this.pending = false; this.repaint?.();
     }
   }
@@ -189,5 +190,6 @@ function priceText(acquisition: Extract<ProductDto["acquisition"], { kind: "curr
 
 /** 데이터 키가 화면마다 서로 다른 번역으로 노출되지 않게 한 곳에서 이름을 정한다. */
 function currencyName(currency: Extract<ProductDto["acquisition"], { kind: "currency" }>["currency"]): string {
-  return ({ fossil: "화석", amber: "호박석", cheesecake: "치즈케이크", dnaFragments: "DNA 조각", gems: "젬", gold: "골드" } as const)[currency];
+  // 재화 이름은 공용 표에서 읽는다 — 화면마다 다시 적으면 같은 재화가 두 이름으로 보인다.
+  return t(({ fossil: "currency.fossil", amber: "currency.amber", cheesecake: "currency.cheesecake", dnaFragments: "currency.dnaFragments", gems: "currency.gems", gold: "currency.gold" } as const)[currency]);
 }

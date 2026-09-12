@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { t } from "../i18n";
 import { BASE_WIDTH, BASE_HEIGHT } from "../config/gameConfig";
 import type { StageDef } from "../core/types";
 import { setDebugScene } from "../debug";
@@ -90,7 +91,7 @@ export class StageMapScene extends Phaser.Scene {
       variant: "primary",
       accentColor: COLOR.sortie,
       accentTextColor: COLOR.sortieText,
-      label: "출  전",
+      label: t("stageMap.sortie"),
       fontSize: 36,
       onClick: () => {
         // 선택 kind에 맞는 한 진입점만 호출해 스토리에서 편성 화면이 열리지 않게 한다.
@@ -100,11 +101,11 @@ export class StageMapScene extends Phaser.Scene {
     this.sortieButton.setDepth(CHROME_DEPTH);
     const navigation = stageChapterNavigationLayout(BASE_WIDTH, BASE_HEIGHT);
     this.previousChapterButton = new Button(this, navigation.previous.x, navigation.previous.y, {
-      width: navigation.previous.width, height: navigation.previous.height, label: "이전 구역", fontSize: 28,
+      width: navigation.previous.width, height: navigation.previous.height, label: t("stageMap.prevZone"), fontSize: 28,
       onClick: () => this.showChapter(this.currentChapter - 1),
     }).setDepth(CHROME_DEPTH);
     this.nextChapterButton = new Button(this, navigation.next.x, navigation.next.y, {
-      width: navigation.next.width, height: navigation.next.height, label: "다음 구역", fontSize: 28,
+      width: navigation.next.width, height: navigation.next.height, label: t("stageMap.nextZone"), fontSize: 28,
       onClick: () => this.showChapter(this.currentChapter + 1),
     }).setDepth(CHROME_DEPTH);
     addBackButton(this, () => this.scene.start("lobby")).setDepth(CHROME_DEPTH);
@@ -283,10 +284,10 @@ export class StageMapScene extends Phaser.Scene {
     this.sortieButton.setSub("");
     if (stage.kind === "story") {
       this.enemyPreview.dismiss();
-      this.sortieButton.setLabel(storyManager.isCompleted(stage.storyId) ? "다시 보기" : "기록 읽기");
+      this.sortieButton.setLabel(storyManager.isCompleted(stage.storyId) ? t("stageMap.replay") : t("stageMap.readRecord"));
       return;
     }
-    this.sortieButton.setLabel("출  전");
+    this.sortieButton.setLabel(t("stageMap.sortie"));
     const enemies = getStageEnemies(stage);
     this.enemyPreview.showAt(scroll - index * NODE_GAP, {
       title: `${stage.id}  ${stage.name}`, growth: stage.enemies, enemies,

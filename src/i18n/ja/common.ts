@@ -24,6 +24,13 @@ export const COMMON_JA = {
   "role.assassin": "アサシン",
   "role.support": "サポーター",
 
+  "currency.gold": "ゴールド",
+  "currency.gems": "ジェム",
+  "currency.fossil": "化石",
+  "currency.amber": "琥珀",
+  "currency.cheesecake": "チーズケーキ",
+  "currency.dnaFragments": "DNA片",
+
   "element.fire": "火",
   "element.water": "水",
   "element.grass": "草",

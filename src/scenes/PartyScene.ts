@@ -5,7 +5,7 @@ import type { RelicDef } from "../core/types";
 import { getRelic } from "../data/relics";
 import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { relicCollection } from "../managers/RelicCollectionManager";
-import { CharacterInfoManager, ROLE_LABEL } from "../managers/CharacterInfoManager";
+import { CharacterInfoManager, roleLabel } from "../managers/CharacterInfoManager";
 import { bindLongPress } from "../ui/longPressInfo";
 import type { PuppetCreature } from "../puppets/assets";
 import { placePuppet, spawnPuppet } from "../puppets/assets";
@@ -485,7 +485,7 @@ export class PartyScene extends Phaser.Scene {
     roster.forEach((relic, i) => {
       const x = rosterColumnX(i % cols);
       const y = startY + Math.floor(i / cols) * rowStep;
-      const role = ROLE_LABEL[relic.role];
+      const role = roleLabel(relic.role);
       const card = new PortraitCard(this, x, y, {
         width: cardW,
         height: cardH,

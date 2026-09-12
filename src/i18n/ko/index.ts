@@ -7,8 +7,15 @@
  * 화면이 늘면 그 화면의 표를 새 파일로 만들고 여기서 펼친다.
  */
 import { SETTINGS_KO } from "./settings";
+import { LOBBY_KO } from "./lobby";
+import { COMMON_KO } from "./common";
+import { INFO_KO } from "./info";
+import { STATUS_KO } from "./status";
+import { LAB_KO } from "./lab";
+import { EXPEDITION_KO } from "./expedition";
+import { BATTLE_KO } from "./battle";
 
-export const KO = { ...SETTINGS_KO } as const;
+export const KO = { ...SETTINGS_KO, ...LOBBY_KO, ...COMMON_KO, ...INFO_KO, ...STATUS_KO, ...LAB_KO, ...EXPEDITION_KO, ...BATTLE_KO } as const;
 
 /** 화면이 고를 수 있는 문구 키. 한국어 표에 없는 키는 타입에서 막힌다. */
 export type TextKey = keyof typeof KO;

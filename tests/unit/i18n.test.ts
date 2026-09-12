@@ -93,15 +93,44 @@ describe("언어와 표의 계약", () => {
   });
 });
 
+/**
+ * 문구 이관을 마친 파일. 여기 오른 파일에 한글이 다시 박히면 그 자리만 언어를 따라오지 않는다.
+ *
+ * **옮기는 대로 이 목록에 더한다.** 목록에 없으면 검사가 돌지 않아, 옮겼다고 생각한 화면이
+ * 조용히 되돌아가도 아무도 모른다.
+ */
+const MIGRATED = [
+  "../../src/scenes/SettingsScene.ts",
+  "../../src/scenes/LobbyScene.ts",
+  "../../src/scenes/LabScene.ts",
+  "../../src/ui/unitStatusModel.ts",
+  "../../src/scenes/ExpeditionScene.ts",
+  "../../src/scenes/BattleScene.ts",
+];
+
+/**
+ * 사람이 읽지 않는 줄은 검사에서 뺀다.
+ *
+ * `console.*`는 개발자만 보는 기록이고, `setDebug*`가 넘기는 화면 이름은 화면에 그리지 않고
+ * E2E가 어느 화면인지 확인하는 데만 쓴다 — 언어를 따라 바뀌면 그 확인이 언어마다 갈린다.
+ */
+const isDeveloperLine = (line: string): boolean => /console\.|setDebug/.test(line);
+
 describe("화면 문구", () => {
-  it("은 이관을 마친 화면에 한글 문자열을 남기지 않는다", () => {
-    // 옮긴 화면에 문장이 다시 박히면 그 자리만 언어를 따라오지 않는다.
-    const code = SOURCES["../../src/scenes/SettingsScene.ts"];
-    const withoutComments = code.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
-    const literals = [...withoutComments.matchAll(/"([^"\\\n]*(?:\\.[^"\\\n]*)*)"|'([^'\\\n]*(?:\\.[^'\\\n]*)*)'/g)]
-      .map((match) => match[1] ?? match[2])
-      .filter((text) => /[가-힣]/.test(text));
-    // 디버그 채널의 화면 이름 하나만 남는다 — 화면에 그리지 않고 E2E가 언어와 무관하게 읽는다.
-    expect(literals).toEqual(["환경 설정"]);
+  it("은 이관을 마친 화면에 한글을 남기지 않는다", () => {
+    const offenders: string[] = [];
+    for (const path of MIGRATED) {
+      const code = SOURCES[path];
+      expect(code, path).toBeTruthy();
+      const withoutComments = code.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+      for (const [index, line] of withoutComments.split("\n").entries()) {
+        if (isDeveloperLine(line)) continue;
+        for (const match of line.matchAll(/"([^"\\\n]*(?:\\.[^"\\\n]*)*)"|'([^'\\\n]*(?:\\.[^'\\\n]*)*)'|`([^`\\]*(?:\\.[^`\\]*)*)`/g)) {
+          const text = match[1] ?? match[2] ?? match[3];
+          if (/[가-힣]/.test(text)) offenders.push(`${path}:${index + 1} ${text}`);
+        }
+      }
+    }
+    expect(offenders).toEqual([]);
   });
 });

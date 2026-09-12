@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { t, type TextKey } from "../i18n";
 import type { GameApi } from "../api/contracts";
 import { gameApi } from "../api/FakeServer";
 import { setDebugRuneForgeRename, setDebugRuneNoteCraft } from "../debug";
@@ -27,11 +28,14 @@ import { COLOR, textStyle } from "./theme";
  * 룬을 보여 주는 화면이 셋(가방·조각 요약·세공)이라 표가 갈라지기 쉽다. 갈라지면 어떤
  * 화면에서는 `ferocityGain` 같은 내부 키가 그대로 새어 나온다 — 그래서 한 표만 둔다.
  */
-export const RUNE_STAT_LABEL: Readonly<Record<RuneStatKey, string>> = {
-  hp: "체력", atk: "공격력", ap: "주문력", def: "방어력", res: "저항력", moveSpeed: "이동 속도",
-  attackSpeed: "공격 속도", lifeSteal: "피해 흡혈", critChance: "치명타 확률", critDamage: "치명타 피해",
-  ferocityGain: "야성 획득 증가", energyGain: "궁극기 충전량 증가",
+const RUNE_STAT_KEY: Readonly<Record<RuneStatKey, TextKey>> = {
+  hp: "stat.hp", atk: "stat.atk", ap: "stat.ap", def: "stat.def", res: "stat.res", moveSpeed: "stat.moveSpeed",
+  attackSpeed: "stat.attackSpeed", lifeSteal: "stat.lifeSteal", critChance: "stat.critChance", critDamage: "stat.critDamage",
+  ferocityGain: "stat.ferocityGain.rune", energyGain: "stat.energyGain.rune",
 };
+
+/** 상수가 아니라 함수다 — 모듈이 읽히는 순간의 문구로 굳으면 언어를 바꿔도 그 자리만 옛 이름으로 남는다. */
+export function runeStatLabel(key: RuneStatKey): string { return t(RUNE_STAT_KEY[key]); }
 
 /** 쪽지의 옵션 줄에 붙는 각인 표식. 이름을 밀어내지 않을 만큼만 작다. */
 const NOTE_ENGRAVE_MARK = { outer: 12, gap: 20 } as const;
@@ -229,7 +233,7 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
       const nameStyle = main
         ? textStyle({ role: "emphasis", size: 24, color: COLOR.ink })
         : textStyle({ role: "body", size: 22, color: COLOR.inkDim });
-      const name = scene.add.text(statLeft, y, RUNE_STAT_LABEL[stat.key], nameStyle).setOrigin(0, 0.5);
+      const name = scene.add.text(statLeft, y, runeStatLabel(stat.key), nameStyle).setOrigin(0, 0.5);
       body.add(name);
       // 각인한 옵션은 **이름 옆에서 바로** 읽혀야 한다. 어느 줄이 완성된 줄인지 알려고 세공
       // 화면을 다시 열게 하지 않는다. 표식은 세공 화면과 같은 다이아이고 크기만 작다.
@@ -548,7 +552,7 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
         const labelStyle = main
           ? textStyle({ role: "display", size: 29, color: chosen ? COLOR.accentText : COLOR.ink })
           : textStyle({ role: "emphasis", size: 23, color: chosen ? COLOR.accentText : COLOR.inkDim });
-        content.add(scene.add.text(-width / 2 + (chosen ? 36 : 24), y, `${RUNE_STAT_LABEL[stat.key]}  +${stat.value}%`, labelStyle).setOrigin(0, 0.5).setWordWrapWidth(marks.labelWrap));
+        content.add(scene.add.text(-width / 2 + (chosen ? 36 : 24), y, `${runeStatLabel(stat.key)}  +${stat.value}%`, labelStyle).setOrigin(0, 0.5).setWordWrapWidth(marks.labelWrap));
         const history = current.enhancementHistory[stat.key] ?? [];
         const outer = main ? marks.mainOuter : marks.subOuter;
         for (let slot = 0; slot < 3; slot += 1) {

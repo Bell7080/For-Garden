@@ -3,11 +3,12 @@ import type { Stats } from "../core/types";
 import { STAT_RADAR_MAX } from "../config/statRadar";
 import { combatPower } from "../core/combatPower";
 import { COLOR, textStyle } from "./theme";
+import { t, type TextKey } from "../i18n";
 
 /** 레이더에 표시하는 축은 항상 같은 순서와 상한을 사용한다. */
 const AXES = [
-  ["hp", "체력"], ["def", "방어"], ["res", "저항"], ["atk", "공격"], ["ap", "주문"],
-] as const;
+  ["hp", "stat.hp"], ["def", "stat.def.short"], ["res", "stat.res.short"], ["atk", "stat.atk.short"], ["ap", "stat.ap.short"],
+] as const satisfies ReadonlyArray<readonly [string, TextKey]>;
 
 /**
  * 축 이름의 크기와 색.
@@ -56,7 +57,7 @@ export class StatRadar extends Phaser.GameObjects.Container {
     }
 
     // 축 라벨은 그래프 밖으로 일정하게 밀어 최대 자릿수 숫자와 겹치지 않게 한다.
-    AXES.forEach(([key, name], index) => {
+    AXES.forEach(([key, nameKey], index) => {
       const angle = -Math.PI / 2 + index * Math.PI * 2 / AXES.length;
       const color = label.colors?.[key];
       const size = label.size ?? 17;
@@ -65,7 +66,7 @@ export class StatRadar extends Phaser.GameObjects.Container {
         : textStyle({ role: "body", size, color: COLOR.inkDim });
       const lx = Math.cos(angle) * (radius + 31);
       const ly = Math.sin(angle) * (radius + 25);
-      this.add(scene.add.text(lx, ly, name, style).setOrigin(0.5));
+      this.add(scene.add.text(lx, ly, t(nameKey), style).setOrigin(0.5));
       if (!label.values) return;
       // 수치는 축 이름보다 **한 칸 더 바깥**에 같은 색으로 선다. "아래"로 밀면 위쪽 축의 수가
       // 그래프 면 안으로 들어가 선과 겹친다. 바깥으로 밀면 어느 축이든 면을 건드리지 않는다.

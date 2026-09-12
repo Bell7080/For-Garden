@@ -38,7 +38,8 @@ import { addColorAssistMark, COLOR_ASSIST_LAYOUT } from "./colorAssist";
 import { addMarkChip } from "./MarkChip";
 import { addRuneCard, addRuneFrame, RUNE_ACCENT, RUNE_CENTER_Y, runeTexture } from "./runeIcons";
 import { REACH_LABEL, STAT_TONE, reachToneHex } from "./statTones";
-import { equippedRelicName, openRuneInfoPopup, RUNE_STAT_LABEL } from "./RunePopup";
+import { equippedRelicName, openRuneInfoPopup, runeStatLabel } from "./RunePopup";
+import { t, type TextKey } from "../i18n";
 import { combatPower } from "../core/combatPower";
 import { StatRadar } from "./StatRadar";
 import { addSectionTitle } from "./SectionTitle";
@@ -246,10 +247,10 @@ function feedCostRow(
  * 여기서는 그 id만 가리키게 바꾼다 — 대사를 화면에 적어 두지 않기 위해서다.
  */
 const BOND_STORY_STEPS: readonly { level: number; title: string }[] = [
-  { level: 2, title: "1화 · 첫 인사" },
-  { level: 4, title: "2화 · 사육장의 밤" },
-  { level: 7, title: "3화 · 옛 기억의 조각" },
-  { level: 10, title: "4화 · 이터널 시티의 끝" },
+  { level: 2, title: t("info.story.1") },
+  { level: 4, title: t("info.story.2") },
+  { level: 7, title: t("info.story.3") },
+  { level: 10, title: t("info.story.4") },
 ];
 
 /** 돌파 버튼과 팝업이 함께 쓰는 색. 레벨(초록)과 갈라 놓아 다른 종류의 성장임을 알린다. */
@@ -278,12 +279,12 @@ const SWIPE_DISTANCE = 110;
 const RUNE_GAP = 0.955;
 
 /** 능력치 칩에서 쓰는 다섯 축과 색. */
-const STAT_CHIPS: readonly { key: keyof Stats; label: string; color: number }[] = [
-  { key: "hp", label: "체력", color: STAT_TONE.hp },
-  { key: "atk", label: "공격", color: STAT_TONE.atk },
-  { key: "def", label: "방어", color: STAT_TONE.def },
-  { key: "res", label: "저항", color: STAT_TONE.res },
-  { key: "ap", label: "주문", color: STAT_TONE.ap },
+const STAT_CHIPS: readonly { key: keyof Stats; label: TextKey; color: number }[] = [
+  { key: "hp", label: "stat.hp", color: STAT_TONE.hp },
+  { key: "atk", label: "stat.atk.short", color: STAT_TONE.atk },
+  { key: "def", label: "stat.def.short", color: STAT_TONE.def },
+  { key: "res", label: "stat.res.short", color: STAT_TONE.res },
+  { key: "ap", label: "stat.ap.short", color: STAT_TONE.ap },
 ];
 
 /**
@@ -304,12 +305,12 @@ const RUNE_PICKER = { columns: 4, cardWidth: 180, cardHeight: 180, cellWidth: 20
 const EXTRA_STATS_POPUP_Y = 920;
 
 /** 돋보기로만 여는 보조 능력치. 평소에는 다섯 축만 보여 화면을 비운다. */
-const EXTRA_STATS: readonly { key: keyof Stats; label: string; suffix?: string }[] = [
-  { key: "attackSpeed", label: "공격 속도" },
-  { key: "moveSpeed", label: "이동 속도" },
-  { key: "critChance", label: "치명타 확률", suffix: "%" },
-  { key: "critDamage", label: "치명타 피해", suffix: "%" },
-  { key: "energyGain", label: "궁극기 충전량" },
+const EXTRA_STATS: readonly { key: keyof Stats; label: TextKey; suffix?: string }[] = [
+  { key: "attackSpeed", label: "stat.attackSpeed" },
+  { key: "moveSpeed", label: "stat.moveSpeed" },
+  { key: "critChance", label: "stat.critChance", suffix: "%" },
+  { key: "critDamage", label: "stat.critDamage", suffix: "%" },
+  { key: "energyGain", label: "stat.energyGain" },
 ];
 
 /**
@@ -354,10 +355,19 @@ interface GemSlot {
   paint(gemId: string | null): void;
 }
 
+/**
+ * 역할·속성의 이름표.
+ *
+ * 상수가 아니라 함수인 이유는 언어가 바뀌면 이름도 바뀌기 때문이다 — 모듈이 읽히는 순간의
+ * 문구로 굳으면 언어를 바꿔도 그 자리만 옛 이름으로 남는다.
+ */
+const ROLE_KEY: Record<Role, TextKey> = { warrior: "role.warrior", tank: "role.tank", assassin: "role.assassin", support: "role.support" };
+const ELEMENT_KEY: Record<Element, TextKey> = { fire: "element.fire", water: "element.water", grass: "element.grass", earth: "element.earth", wind: "element.wind" };
+
 /** 역할은 전투 공식을 바꾸지 않는 특화 태그로만 노출한다. */
-export const ROLE_LABEL: Record<Role, string> = { warrior: "전사", tank: "탱커", assassin: "암살자", support: "지원가" };
-/** 상세 정보에서 코드 키 대신 일관된 한국어 속성명을 보여 준다. */
-export const ELEMENT_LABEL: Record<Element, string> = { fire: "불", water: "물", grass: "풀", earth: "땅", wind: "바람" };
+export function roleLabel(role: Role): string { return t(ROLE_KEY[role]); }
+/** 상세 정보에서 코드 키 대신 일관된 속성명을 보여 준다. */
+export function elementLabel(element: Element): string { return t(ELEMENT_KEY[element]); }
 
 /** `?` 도움말 배지의 클릭이 아래 카드 입력으로 전파되지 않게 한다. */
 export function addHelpBadge(scene: Phaser.Scene, x: number, y: number, onClick: () => void, radius = 26): Phaser.GameObjects.Container {
@@ -569,7 +579,7 @@ export class InfoManager {
     gemPanel.setVisible(this.capabilities.mutateProgress);
 
     // 레벨 · 경험치 · 급여.
-    this.addSectionTitle("레벨", 442 - 166);
+    this.addSectionTitle(t("info.level"), 442 - 166);
     this.levelValue = scene.add
       .text(COLUMN.x - COLUMN.width / 2 + 54, 300, "", textStyle({ role: "display", size: 96 }))
       .setOrigin(0, 0)
@@ -604,11 +614,11 @@ export class InfoManager {
     this.bondBar = new Gauge(scene, COLUMN.x + 40, 718, COLUMN.width - 184, 14, BOND_HEART);
     this.bondLabel = scene.add.text(COLUMN.x - COLUMN.width / 2 + 152, 738, "", textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0, 0);
     attach(bondPanel, bondHeart, ...this.bondBar.objects, this.bondLabel);
-    this.addSectionTitle("유대", 706 - 72).setVisible(this.capabilities.showBond);
+    this.addSectionTitle(t("info.section.bond"), 706 - 72).setVisible(this.capabilities.showBond);
     this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 30, 686, (from) => this.openBondDetail(from), bondPanel);
 
     // 능력치.
-    this.addSectionTitle("능력치", 1024 - 198);
+    this.addSectionTitle(t("info.section.stats"), 1024 - 198);
     this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 30, 876, (from) => this.openExtraStats(from), statPanel);
     // 사거리는 오각형에 없는 축이라 제목 바로 아래에 이름표처럼 한 줄로만 선다. 색은 상세
     // 팝업이 맡고 여기서는 회색으로 물러난다 — 늘 떠 있는 자리는 균형이 먼저 읽혀야 한다.
@@ -630,7 +640,7 @@ export class InfoManager {
     attach(statPanel, this.statRadar);
 
     // 하트 젬 — 하트 하나를 셋으로 가른 자리.
-    this.addSectionTitle("룬", 1398 - 146).setVisible(this.capabilities.mutateProgress);
+    this.addSectionTitle(t("info.section.rune"), 1398 - 146).setVisible(this.capabilities.mutateProgress);
     this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 30, 1316, (from) => this.openRuneOverview(from), gemPanel);
     for (let index = 0; index < 3; index += 1) this.gemSlots.push(this.addGemSlot(index, gemPanel));
 
@@ -741,7 +751,7 @@ export class InfoManager {
       glow: { color: FEED_AMBER, strength: 0.45, height: 0.7 },
     });
     container.add([off, on]);
-    const label = this.scene.add.text(0, -height / 2 + 22, "급여하기", textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0.5);
+    const label = this.scene.add.text(0, -height / 2 + 22, t("info.feed"), textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0.5);
     container.add(label);
     const row = feedCostRow(this.scene, 0, 16, width - 40, 54, 36);
     this.feedCost = row.text;
@@ -810,7 +820,7 @@ export class InfoManager {
     const container = this.scene.add.container(x, y);
     const shape = slantedRect(196, 74, 12);
     container.add(drawLayer(this.scene, 0, 0, shape, { fill: 0x24202f, alpha: 0.94, edge: BREAK_EDGE, edgeAlpha: 0.9, glow: { color: BREAK_EDGE, strength: 0.4, height: 0.6 } }));
-    const label = this.scene.add.text(0, -12, "한계 돌파", textStyle({ role: "display", size: 26 })).setOrigin(0.5);
+    const label = this.scene.add.text(0, -12, t("info.breakthrough"), textStyle({ role: "display", size: 26 })).setOrigin(0.5);
     const cost = this.scene.add.text(0, 18, "", textStyle({ role: "emphasis", size: 20, color: COLOR.accentText })).setOrigin(0.5);
     container.add([label, cost]);
     const hit = this.scene.add.rectangle(0, 0, 204, 86, 0xffffff, 0).setInteractive({ useHandCursor: true });
@@ -834,7 +844,7 @@ export class InfoManager {
     const need = def && step ? breakthroughFragmentCost(def.rarity, progress.breakthrough) : 0;
     const ready = this.ownedNow && def !== undefined && canBreakThrough(def.rarity, progress, held, session.wallet.cheesecake);
     this.breakButton?.container.setAlpha(step ? (ready ? 1 : 0.62) : 0.35);
-    this.breakButton?.label.setText(step ? "한계 돌파" : "별 최대");
+    this.breakButton?.label.setText(step ? t("info.breakthrough") : t("info.breakthrough.starMax"));
     this.breakButton?.label.setColor(ready ? COLOR.ink : COLOR.inkDim);
     // 파편이 몇 개 모였는지는 버튼이 직접 말한다. 눌러 보고서야 아는 값이면 늦다.
     this.breakButton?.cost.setText(step ? held + " / " + need : "");
@@ -860,9 +870,9 @@ export class InfoManager {
     const progress = relicProgression.getProgress(def.id);
     const step = nextBreakthrough(progress.breakthrough);
     const height = BREAK_CONFIRM.height;
-    this.popups.open({ width: 780, height, title: "한계 돌파", tilt: -1.2, ...anchorOf(from) }, (body, close) => {
+    this.popups.open({ width: 780, height, title: t("info.breakthrough"), tilt: -1.2, ...anchorOf(from) }, (body, close) => {
       if (!step) {
-        body.add(this.scene.add.text(0, 20, "이미 " + STAR_ROMAN[STAR_ROMAN.length - 1] + " 등급이다. 중복은 DNA 조각으로 쌓인다.", textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0.5).setWordWrapWidth(640));
+        body.add(this.scene.add.text(0, 20, t("info.breakthrough.alreadyMax", { rarity: STAR_ROMAN[STAR_ROMAN.length - 1] }), textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0.5).setWordWrapWidth(640));
         return;
       }
       const top = -height / 2;
@@ -876,7 +886,7 @@ export class InfoManager {
 
       // 상한은 이 조작이 실제로 바꾸는 값이라 등급 바로 아래에 같은 무게로 선다.
       const capLine = this.scene.add.container(0, top + BREAK_CONFIRM.capY);
-      const capLabel = this.scene.add.text(0, 0, "레벨 상한", textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(1, 0.5);
+      const capLabel = this.scene.add.text(0, 0, t("info.level.cap"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(1, 0.5);
       const capFrom = this.scene.add.text(0, 0, String(cap), textStyle({ role: "display", size: 36, color: COLOR.inkDim })).setOrigin(0.5);
       const capArrow = this.scene.add.text(0, 0, "▶", textStyle({ role: "display", size: 22, color: COLOR.inkDim })).setOrigin(0.5);
       const capTo = this.scene.add.text(0, 0, String(step.levelCap), textStyle({ role: "display", size: 44, color: COLOR.accentText })).setOrigin(0.5);
@@ -896,9 +906,9 @@ export class InfoManager {
       const fragmentCost = breakthroughFragmentCost(def.rarity, progress.breakthrough);
       const costY = top + BREAK_CONFIRM.costY;
       const costs: BreakthroughCost[] = [
-        { kind: "level", label: "레벨", need: cap, have: progress.level },
-        { kind: "fragment", label: def.name + " 파편", need: fragmentCost, have: held },
-        { kind: "currency", texture: CURRENCY_ICON_BY_WALLET.cheesecake, label: "치즈케이크", need: step.cheesecake, have: session.wallet.cheesecake },
+        { kind: "level", label: t("info.level"), need: cap, have: progress.level },
+        { kind: "fragment", label: t("info.breakthrough.fragment", { name: def.name }), need: fragmentCost, have: held },
+        { kind: "currency", texture: CURRENCY_ICON_BY_WALLET.cheesecake, label: t("info.breakthrough.cheesecake"), need: step.cheesecake, have: session.wallet.cheesecake },
       ];
       costs.forEach((cost, index) => {
         const x = (index - (costs.length - 1) / 2) * BREAK_CONFIRM.costStep;
@@ -906,7 +916,7 @@ export class InfoManager {
         this.addBreakthroughCost(body, x, costY, cost, enough, def);
         body.add(this.scene.add.text(x, costY + BREAK_CONFIRM.costFrame / 2 + 26, cost.label, textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0.5).setWordWrapWidth(BREAK_CONFIRM.costStep - 12));
         body.add(this.scene.add
-          .text(x, costY + BREAK_CONFIRM.costFrame / 2 + 58, "필요 " + formatCurrency(cost.need), textStyle({ role: "emphasis", size: 24, color: enough ? COLOR.ink : COLOR.dangerText }))
+          .text(x, costY + BREAK_CONFIRM.costFrame / 2 + 58, t("info.breakthrough.need", { count: formatCurrency(cost.need) }), textStyle({ role: "emphasis", size: 24, color: enough ? COLOR.ink : COLOR.dangerText }))
           .setOrigin(0.5));
       });
 
@@ -918,7 +928,7 @@ export class InfoManager {
         edge: BREAK_EDGE,
         edgeAlpha: ready ? 1 : 0.25,
       }));
-      body.add(this.scene.add.text(0, actionY, "돌파하기", textStyle({ role: "display", size: 34, color: ready ? COLOR.ink : COLOR.inkDim })).setOrigin(0.5));
+      body.add(this.scene.add.text(0, actionY, t("info.breakthrough.do"), textStyle({ role: "display", size: 34, color: ready ? COLOR.ink : COLOR.inkDim })).setOrigin(0.5));
       // 열리는 효과를 여기 적지 않는다 — 등급 돋보기가 여는 표와 그 기술의 스킬 쪽지가 이미
       // 말하고(돌파로 붙은 줄은 노란 글씨로 선다), 이 창은 드는 것과 확정만 맡는다.
       if (!ready) return;
@@ -1022,7 +1032,7 @@ export class InfoManager {
       height: 250,
       x,
       y: y + 150,
-      title: "한 번에 급여",
+      title: t("info.feed.bulk"),
       hideCloseButton: true,
       closeOnBackdrop: true,
       onClose: () => { this.feedPopupOpen = false; },
@@ -1045,7 +1055,7 @@ export class InfoManager {
     // 다음에 할 일(한계 돌파)은 별 옆의 버튼이 제 자리에서 말한다.
     if (progress.level >= relicLevelCap(progress.breakthrough)) { close(); return; }
     {
-      ([["1 레벨", 1], ["10 레벨", 10]] as const).forEach(([label, levels], index) => {
+      ([[t("info.feed.one"), 1], [t("info.feed.ten"), 10]] as const).forEach(([label, levels], index) => {
         const bx = index === 0 ? -118 : 118;
         const cost = this.feedsForLevels(levels) * FEED_UNIT.cheesecake;
         const enough = session.wallet.cheesecake >= cost;
@@ -1166,10 +1176,10 @@ export class InfoManager {
         piece.setDisplaySize(size, size).setScale(piece.scaleX * (gem ? 1 : RUNE_GAP), piece.scaleY * (gem ? 1 : RUNE_GAP));
         if (gem) {
           glow.setTexture(runeTexture(gem.rarity, index)).setTint(RUNE_ACCENT[gem.rarity]).setAlpha(0.4);
-          label.setText(index + 1 + "   " + (gem.customName ?? `${RUNE_RARITY_LABELS[gem.rarity]} 룬`)).setColor(COLOR.ink);
+          label.setText(index + 1 + "   " + (gem.customName ?? t("info.rune.named", { rarity: RUNE_RARITY_LABELS[gem.rarity] }))).setColor(COLOR.ink);
         } else {
           glow.setAlpha(0);
-          label.setText(index + 1 + "   빈 자리").setColor(COLOR.inkDim);
+          label.setText(index + 1 + t("info.rune.emptySlot")).setColor(COLOR.inkDim);
         }
       },
     };
@@ -1195,11 +1205,11 @@ export class InfoManager {
     const pickerHeight = Math.min(BASE_HEIGHT - 120, RUNE_PICKER.headerHeight + (rows - 1) * RUNE_PICKER.cellHeight + RUNE_PICKER.cardHeight / 2 + 48);
     // 룬을 다루는 판은 모두 **판 밖 우하단의 공용 뒤로가기**로 닫는다. 가방 → 쪽지 → 세공이
     // 이어지는 흐름에서 닫는 자리가 판마다 달라지면 한 손짓으로 물러날 수 없다.
-    this.popups.open({ width: pickerWidth, height: pickerHeight, title: "룬 가방 · " + RUNE_PART_LABELS[index as RunePart], dim: true, backButton: true }, (body, close) => {
+    this.popups.open({ width: pickerWidth, height: pickerHeight, title: t("info.rune.bag", { part: RUNE_PART_LABELS[index as RunePart] }), dim: true, backButton: true }, (body, close) => {
       const top = -pickerHeight / 2;
       // 비우기는 격자 위 한 줄이다. 룬 카드와 섞이면 실수로 누르기 쉽다.
       body.add(drawLayer(this.scene, 0, top + 128, slantedRect(pickerWidth - 96, 66, 12), { fill: 0x141a22, alpha: 0.92, edge: COLOR.accent, edgeAlpha: 0.3 }));
-      body.add(this.scene.add.text(0, top + 128, "비우기", textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0.5));
+      body.add(this.scene.add.text(0, top + 128, t("info.rune.clear"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0.5));
       const clearHit = this.scene.add.rectangle(0, top + 128, pickerWidth - 96, 66, 0xffffff, 0).setInteractive({ useHandCursor: true });
       clearHit.on("pointerup", () => void relicProgression.unequipRune(def.id, index).then(() => { close(); this.refreshGrowth(); }));
       body.add(clearHit);
@@ -1241,22 +1251,22 @@ export class InfoManager {
     // 무엇인지"가 느리게 읽힌다.
     const identityLines: { label: string; value: string }[] = disclosure.access === "full"
       ? [
-          { label: "개체번호", value: "NO." + disclosure.specimenNumber },
-          { label: "프로젝트", value: disclosure.projectName },
-          { label: "기원", value: disclosure.origin },
-          { label: "발굴지", value: disclosure.excavationSite },
+          { label: t("info.journal.id"), value: "NO." + disclosure.specimenNumber },
+          { label: t("info.journal.project"), value: disclosure.projectName },
+          { label: t("info.journal.origin"), value: disclosure.origin },
+          { label: t("info.journal.site"), value: disclosure.excavationSite },
           ...(def.observationProfile ? [
-            { label: "기원 연대", value: def.observationProfile.originYear },
+            { label: t("info.journal.era"), value: def.observationProfile.originYear },
             // 복원 연도는 저장된 경과 시간이 아니라 정적 도감의 세계관 나잇대만 단독으로 표시한다.
-            { label: "복원 연도", value: def.observationProfile.restorationYear },
-            { label: "성장 단계", value: `${def.observationProfile.lifeStage} · 키 ${def.observationProfile.height} · 몸무게 ${def.observationProfile.weight}` },
+            { label: t("info.journal.restoredYear"), value: def.observationProfile.restorationYear },
+            { label: t("info.journal.lifeStage"), value: t("info.journal.lifeStageValue", { stage: def.observationProfile.lifeStage, height: def.observationProfile.height, weight: def.observationProfile.weight }) },
           ] : []),
         ]
       : [
-          { label: "개체번호", value: "NO." + disclosure.specimenNumber },
-          { label: "프로젝트", value: "기록 없음" },
-          { label: "기원", value: "미상" },
-          { label: "발굴지", value: "미상" },
+          { label: t("info.journal.id"), value: "NO." + disclosure.specimenNumber },
+          { label: t("info.journal.project"), value: t("info.journal.noRecord") },
+          { label: t("info.journal.origin"), value: t("info.journal.unknown") },
+          { label: t("info.journal.site"), value: t("info.journal.unknown") },
         ];
 
     // 텍스트를 먼저 만들어 실제 height를 얻는다. 이후 배치는 줄 수나 개체별 문단 길이를 추측하지 않는다.
@@ -1264,22 +1274,22 @@ export class InfoManager {
     // 상단 정보는 확대된 표식의 실제 왼쪽 외곽(복제 그림자 포함) 전까지만 사용한다.
     const metadataWidth = JOURNAL_SQUAD_MARK.x + markBounds.left - JOURNAL_SQUAD_MARK.metadataGap - bodyLeft;
     const identity = this.buildJournalIdentity(identityLines, metadataWidth, journal.font.regular, journal.spacing.line);
-    const rawRecord = disclosure.access === "full" ? disclosure.record : def.catalogSummary + "\n\n상세 기록은 개체 획득 후 해제됩니다.";
+    const rawRecord = disclosure.access === "full" ? disclosure.record : def.catalogSummary + t("info.journal.lockedNotice");
     const excavationRecord = withoutRepeatedProfileDetails(rawRecord, def.observationProfile?.height, def.observationProfile?.weight);
     const excavation = this.keywords.layout(excavationRecord, { width: journal.body.width, size: journal.font.large, color: COLOR.inkDim, lineSpacing: journal.spacing.line });
     // 다른 스쿼드를 향한 동경은 unlockRecord의 관찰 문장이 담당하므로, 여기서는 소속 메모만 그린다.
     const squad = disclosure.access === "full" && def.squadNote
       ? this.scene.add.text(0, 0, def.squadNote, textStyle({ role: "body", size: journal.font.small, color: COLOR.inkDim, lineSpacing: journal.spacing.compactLine, wrap: journal.body.width })).setOrigin(0, 0)
       : undefined;
-    const observationHeading = this.scene.add.text(0, 0, "복원 후 관찰 기록", textStyle({ role: "emphasis", size: journal.font.regular, color: COLOR.ink })).setOrigin(0, 0);
+    const observationHeading = this.scene.add.text(0, 0, t("info.journal.afterRestoration"), textStyle({ role: "emphasis", size: journal.font.regular, color: COLOR.ink })).setOrigin(0, 0);
     // 이 판에는 가장 최근 관찰 기록 한 건만 둔다. 쌓인 전체 이력은 별도 레이어(관찰 기록)가
     // 한 건씩 넘겨 보여 준다 — 매일 쌓이는 인터뷰를 전부 여기 밀어 넣으면 캐릭터 소개보다
     // 로그가 더 길어진다.
     const allEntries = observations.recordFor(def.id);
     const entries = allEntries.slice(-1).reverse();
     const observationCopy = entries.length
-      ? entries.map((entry) => `${entry.date}  ·  #${entry.personalityTag}\nQ. ${entry.question}\nA. ${entry.answer}\n발견  ${entry.discoveredHabit}`).join("\n\n")
-      : "아직 기록된 관찰이 없습니다.";
+      ? entries.map((entry) => t("info.journal.entry", { date: entry.date, tag: entry.personalityTag, question: entry.question, answer: entry.answer, habit: entry.discoveredHabit })).join("\n\n")
+      : t("info.journal.noObservation");
     const observation = this.scene.add.text(0, 0, observationCopy, textStyle({ role: "body", size: entries.length ? journal.font.regular : journal.font.small, color: COLOR.ink, lineSpacing: journal.spacing.compactLine, wrap: journal.body.width })).setOrigin(0, 0);
     // 링크 한 줄만큼 흐름 계산에 미리 더해 둔다 — 그러지 않으면 바로 아래 인터뷰 조작과 겹친다.
     const historyLinkHeight = allEntries.length > 1 ? journal.spacing.compactLine + journal.font.small + 16 : 0;
@@ -1289,7 +1299,7 @@ export class InfoManager {
       observationHeading: observationHeading.height, observation: observation.height + historyLinkHeight, action: actionHeight,
     });
 
-    this.popups.open({ width: journal.popup.width, height: flow.popupHeight, title: "관찰 일지", titleSize: journal.font.title, tilt: journal.popup.tilt, ...anchorOf(from) }, (body, close) => {
+    this.popups.open({ width: journal.popup.width, height: flow.popupHeight, title: t("info.journal.title"), titleSize: journal.font.title, tilt: journal.popup.tilt, ...anchorOf(from) }, (body, close) => {
       const artWidth = journal.popup.width - journal.art.inset * 2;
       const artHeight = flow.popupHeight - journal.art.inset * 2;
       if (this.scene.textures.exists("content-observation-journal")) {
@@ -1311,7 +1321,7 @@ export class InfoManager {
       if (allEntries.length > 1) {
         // 이 개체의 다른 날짜 기록은 여기 밀어 넣지 않고 전용 레이어에서 한 건씩 넘겨 본다.
         const linkY = y(flow.observationY) + observation.height + journal.spacing.compactLine;
-        const link = this.scene.add.text(bodyLeft, linkY, `전체 기록 보기 (${allEntries.length}건)`, textStyle({ role: "emphasis", size: journal.font.small, color: COLOR.accentText })).setOrigin(0, 0);
+        const link = this.scene.add.text(bodyLeft, linkY, t("info.journal.viewAll", { count: allEntries.length }), textStyle({ role: "emphasis", size: journal.font.small, color: COLOR.accentText })).setOrigin(0, 0);
         content.add(link);
         // 글자 자체보다 넉넉한 손끝 크기의 히트 영역을 따로 둔다 — 작은 글자 그대로 입력을
         // 받으면 모바일에서 자주 빗나간다.
@@ -1335,7 +1345,7 @@ export class InfoManager {
         const canStart = observations.canStart(def.id, utcDate);
         const trigger = this.scene.add.container(0, flow.actionY + actionHeight / 2);
         trigger.add(drawLayer(this.scene, 0, 0, slantedRect(interview.trigger.width, interview.trigger.height, interview.trigger.bevel), { fill: canStart ? 0x141a22 : 0x10141a, alpha: canStart ? 0.92 : 0.58, edge: COLOR.accent, edgeAlpha: canStart ? 0.4 : 0.16 }));
-        trigger.add(this.scene.add.text(0, 0, canStart ? "관찰 인터뷰 열기" : "오늘의 관찰 인터뷰 완료", textStyle({ role: "emphasis", size: journal.font.large, color: canStart ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5));
+        trigger.add(this.scene.add.text(0, 0, canStart ? t("info.interview.open") : t("info.interview.doneToday"), textStyle({ role: "emphasis", size: journal.font.large, color: canStart ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5));
         let interviewState: ObservationInterviewPanelState = { open: false, completedToday: !canStart };
         if (canStart) {
           const hit = this.scene.add.rectangle(0, 0, interview.trigger.width, interview.trigger.height, 0xffffff, 0).setInteractive({ useHandCursor: true });
@@ -1344,7 +1354,7 @@ export class InfoManager {
             trigger.setScale(1); if (interviewState.open) { this.popups.closeTop(); return; }
             interviewState = observationInterviewPanelState(interviewState, "toggle");
             const question = observationQuestionForRelicAndDate(def.id, utcDate);
-            this.popups.open({ ...interview.popup, title: "관찰 인터뷰", closeOnBackdrop: false, dim: true, dimAlpha: 0.25, onClose: () => { interviewState = observationInterviewPanelState(interviewState, "close"); trigger.setScale(1); } }, (panel, closeInterview) => {
+            this.popups.open({ ...interview.popup, title: t("info.interview.title"), closeOnBackdrop: false, dim: true, dimAlpha: 0.25, onClose: () => { interviewState = observationInterviewPanelState(interviewState, "close"); trigger.setScale(1); } }, (panel, closeInterview) => {
               panel.add(this.scene.add.text(interview.question.x, interview.question.y, question.prompt, textStyle({ role: "emphasis", size: journal.font.question, color: COLOR.accentText, wrap: interview.question.width })).setOrigin(0, 0));
               question.choices.forEach((choice, index) => {
                 const choiceButton = this.scene.add.container(0, interview.choice.firstY + index * interview.choice.step);
@@ -1422,9 +1432,9 @@ export class InfoManager {
     const entry = history[index];
     // 이 레이어는 눌린 자리 위에 얹히는 쪽지가 아니라 따로 읽는 기록판이다. 관찰 일지와
     // 같은 자리에 겹쳐 열면 두 판의 닫기 X가 거의 포개져 헷갈린다 — 화면 가운데 그대로 둔다.
-    this.popups.open({ width: 820, height: 620, title: "관찰 기록" }, (body, close) => {
+    this.popups.open({ width: 820, height: 620, title: t("info.journal.history") }, (body, close) => {
       if (!entry) {
-        body.add(this.scene.add.text(0, 0, "아직 기록된 인터뷰가 없습니다.", textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0.5));
+        body.add(this.scene.add.text(0, 0, t("info.journal.noInterview"), textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0.5));
         return;
       }
       const goTo = (next: number): void => { close(); this.openObservationHistory(def, from, next); };
@@ -1433,7 +1443,7 @@ export class InfoManager {
       body.add(this.scene.add
         .text(0, -246, `${entry.date}  ·  #${entry.personalityTag}`, textStyle({ role: "body", size: 22, color: COLOR.inkDim, align: "center" }))
         .setOrigin(0.5, 0));
-      const copy = `Q. ${entry.question}\n\nA. ${entry.answer}\n\n발견  ${entry.discoveredHabit}`;
+      const copy = t("info.journal.historyEntry", { question: entry.question, answer: entry.answer, habit: entry.discoveredHabit });
       body.add(this.scene.add
         .text(0, -196, copy, textStyle({ role: "body", size: 26, color: COLOR.ink, lineSpacing: 10, align: "center", wrap: 720 }))
         .setOrigin(0.5, 0));
@@ -1477,7 +1487,7 @@ export class InfoManager {
       width: BREAK_STEPS.width,
       height: layout.height,
       y: BREAK_STEPS.centerY,
-      title: "한계 돌파",
+      title: t("info.breakthrough"),
       titleSize: POPUP_TITLE_SIZE.workboard,
       dim: true,
       backButton: true,
@@ -1654,14 +1664,14 @@ export class InfoManager {
     const progress = relicProgression.getProgress(def.id);
     const level = progress.bondLevel;
     const next = Math.min(BOND_LEVEL_CAP, level + 1);
-    this.popups.open({ width: 820, height: 900, title: "유대 " + level + " / " + BOND_LEVEL_CAP, tilt: -1.2, ...anchorOf(from) }, (body) => {
+    this.popups.open({ width: 820, height: 900, title: t("info.bond.level", { level: `${level} / ${BOND_LEVEL_CAP}` }), tilt: -1.2, ...anchorOf(from) }, (body) => {
       const rows: [string, string, string][] = [
-        ["야성 상승", "+" + Math.round((BOND_FEROCITY_MULTIPLIER[level] - 1) * 100) + "%", "+" + Math.round((BOND_FEROCITY_MULTIPLIER[next] - 1) * 100) + "%"],
-        ["로비 상호작용", "하루 한 번 " + BOND_XP_REWARD.firstLobbyInteraction + " EXP", "같음"],
-        ["전투 승리", "편성 렐릭 전원 " + BOND_XP_REWARD.partyVictory + " EXP", "같음"],
+        [t("info.bond.ferocityGain"), "+" + Math.round((BOND_FEROCITY_MULTIPLIER[level] - 1) * 100) + "%", "+" + Math.round((BOND_FEROCITY_MULTIPLIER[next] - 1) * 100) + "%"],
+        [t("info.bond.lobbyInteraction"), t("info.bond.oncePerDay", { amount: `${BOND_XP_REWARD.firstLobbyInteraction} EXP` }), t("info.bond.same")],
+        [t("info.bond.battleWin"), t("info.bond.partyAll", { amount: `${BOND_XP_REWARD.partyVictory} EXP` }), t("info.bond.same")],
       ];
-      body.add(this.scene.add.text(-350, -368, "지금", textStyle({ role: "emphasis", size: 22, color: COLOR.accentText })).setOrigin(0, 0.5));
-      body.add(this.scene.add.text(348, -368, "다음 단계", textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(1, 0.5));
+      body.add(this.scene.add.text(-350, -368, t("info.bond.now"), textStyle({ role: "emphasis", size: 22, color: COLOR.accentText })).setOrigin(0, 0.5));
+      body.add(this.scene.add.text(348, -368, t("info.bond.nextStep"), textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(1, 0.5));
       rows.forEach(([label, now, later], index) => {
         const y = -300 + index * 84;
         body.add(this.scene.add.text(-350, y - 18, label, textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0, 0));
@@ -1669,7 +1679,7 @@ export class InfoManager {
         body.add(this.scene.add.text(348, y + 14, later, textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(1, 0));
         body.add(drawHairline(this.scene, 0, y + 56, 700, { color: COLOR.accent, alpha: 0.14 }));
       });
-      body.add(this.scene.add.text(-350, -20, "유대 이야기", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0));
+      body.add(this.scene.add.text(-350, -20, t("info.bond.story"), textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0));
       // 이야기는 유대 레벨로 하나씩 열린다. 아직 잠긴 것도 자리를 보여 줘 다음 목표가 된다.
       BOND_STORY_STEPS.forEach((step, index) => {
         const y = 46 + index * 92;
@@ -1683,7 +1693,7 @@ export class InfoManager {
         body.add(this.scene.add.text(-318, y + 12, step.title, textStyle({ role: "display", size: 26, color: open ? COLOR.ink : COLOR.inkDim })).setOrigin(0, 0));
         body.add(
           this.scene.add
-            .text(318, y + 18, open ? "열림" : "유대 " + step.level + " 필요", textStyle({ role: "body", size: 21, color: open ? COLOR.accentText : COLOR.inkDim }))
+            .text(318, y + 18, open ? t("info.bond.opened") : t("info.bond.required", { level: step.level }), textStyle({ role: "body", size: 21, color: open ? COLOR.accentText : COLOR.inkDim }))
             .setOrigin(1, 0),
         );
       });
@@ -1695,7 +1705,7 @@ export class InfoManager {
     const def = this.currentDef;
     if (!def) return;
     const slots = relicProgression.getProgress(def.id).heartGemSlots;
-    this.popups.open({ width: 800, height: 620, title: "룬 세 자리", tilt: -1.2, ...anchorOf(from) }, (body) => {
+    this.popups.open({ width: 800, height: 620, title: t("info.rune.threeSlots"), tilt: -1.2, ...anchorOf(from) }, (body) => {
       slots.forEach((gemId, index) => {
         const y = -180 + index * 130;
         const gem = gemId ? session.runeInventory.find(({ instanceId }) => instanceId === gemId) : undefined;
@@ -1710,18 +1720,18 @@ export class InfoManager {
         body.add(this.scene.add.text(-206, y - 26, RUNE_PART_LABELS[index as RunePart], textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0, 0));
         body.add(
           this.scene.add
-            .text(-206, y + 2, gem ? (gem.customName ?? `${RUNE_RARITY_LABELS[gem.rarity]} 룬`) : "빈 자리", textStyle({ role: "display", size: 28, color: gem ? COLOR.ink : COLOR.inkDim }))
+            .text(-206, y + 2, gem ? (gem.customName ?? t("info.rune.named", { rarity: RUNE_RARITY_LABELS[gem.rarity] })) : t("info.rune.empty"), textStyle({ role: "display", size: 28, color: gem ? COLOR.ink : COLOR.inkDim }))
             .setOrigin(0, 0),
         );
         if (gem) {
-          const effect = [...gem.mainStats, ...gem.subStats].map(({ key, value }) => RUNE_STAT_LABEL[key] + " +" + value + "%").join("   ");
+          const effect = [...gem.mainStats, ...gem.subStats].map(({ key, value }) => runeStatLabel(key) + " +" + value + "%").join("   ");
           body.add(this.scene.add.text(306, y + 8, effect, textStyle({ role: "emphasis", size: 22, color: COLOR.accentText })).setOrigin(1, 0));
         }
       });
       const filled = slots.filter(Boolean).length;
       body.add(
         this.scene.add
-          .text(0, 240, filled === 3 ? "세 조각이 모두 맞물렸다." : "채운 자리 " + filled + " / 3", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText }))
+          .text(0, 240, filled === 3 ? t("info.rune.complete") : t("info.rune.filled", { count: `${filled} / 3` }), textStyle({ role: "emphasis", size: 24, color: COLOR.accentText }))
           .setOrigin(0.5),
       );
     });
@@ -1740,7 +1750,7 @@ export class InfoManager {
     // 매달면 판이 통째로 아래로 밀려 마지막 줄이 화면 밑변에 붙는다(v0.58.0까지 그랬다) —
     // 손이 닿기도 읽기도 어려운 자리다. 관찰 기록판과 같은 이유로 자리를 고정한다.
     this.popups.open({
-      width, height, title: "능력치 상세", tilt: -1.2,
+      width, height, title: t("info.stats.detail"), tilt: -1.2,
       x: BASE_WIDTH / 2, y: EXTRA_STATS_POPUP_Y, onClose: from.onClose,
     }, (body) => {
       // 칸에는 오각형이 서 있으므로 여기서는 **숫자**를 맡는다. 총 전투력이 먼저 오고, 다섯
@@ -1748,7 +1758,7 @@ export class InfoManager {
       const top = -height / 2;
       // 총 전투력은 판때기 없이 맨 글자로 선다. 이 창에서 가장 굵고 큰 수라 판을 깔지 않아도
       // 저절로 맨 앞에 읽히고, 판을 깔면 아래 목록과 다른 종류의 값처럼 보인다.
-      body.add(this.scene.add.text(-edge, top + 100, "전투력", textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5));
+      body.add(this.scene.add.text(-edge, top + 100, t("info.stats.power"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5));
       body.add(
         this.scene.add
           .text(edge, top + 100, combatPower(stats).toLocaleString(), textStyle({ role: "display", size: 52 }))
@@ -1764,7 +1774,7 @@ export class InfoManager {
         // 칸의 축 이름과 같은 색이라 그래프에서 본 축을 그대로 따라 읽는다.
         body.add(this.scene.add.text(-edge, y, chip.label, textStyle({ role: "display", size: 30, color: `#${chip.color.toString(16).padStart(6, "0")}` })).setOrigin(0, 0.5));
         body.add(this.scene.add.text(edge, y - 12, stats[chip.key].toLocaleString(), textStyle({ role: "display", size: 36 })).setOrigin(1, 0.5));
-        const detail = gain > 0 ? `기본 ${base.toLocaleString()}   +${gain.toLocaleString()}` : `기본 ${base.toLocaleString()}`;
+        const detail = gain > 0 ? t("info.stats.baseWithGain", { base: base.toLocaleString(), gain: gain.toLocaleString() }) : t("info.stats.base", { base: base.toLocaleString() });
         const detailStyle = gain > 0
           ? textStyle({ role: "body", size: 21, color: COLOR.accentText })
           : textStyle({ role: "body", size: 21, color: COLOR.inkDim });
@@ -1775,12 +1785,12 @@ export class InfoManager {
       // 기본값 대비 상승분이 없고, 단계 자체를 색이 말한다(근거리 붉은색·중거리 푸른색·원거리 노란색).
       const reachY = top + 204 + STAT_CHIPS.length * 84;
       const reachHex = reachToneHex(def.reachTier);
-      body.add(this.scene.add.text(-edge, reachY, "사거리", textStyle({ role: "display", size: 30, color: reachHex })).setOrigin(0, 0.5));
+      body.add(this.scene.add.text(-edge, reachY, t("stat.range"), textStyle({ role: "display", size: 30, color: reachHex })).setOrigin(0, 0.5));
       body.add(this.scene.add.text(edge, reachY, REACH_LABEL[def.reachTier], textStyle({ role: "display", size: 36, color: reachHex })).setOrigin(1, 0.5));
       body.add(drawHairline(this.scene, 0, reachY + 42, width - 68, { color: COLOR.accent, alpha: 0.14 }));
       body.add(
         this.scene.add
-          .text(-edge, top + 700, "세부 능력치", textStyle({ role: "emphasis", size: 26, color: COLOR.accentText }))
+          .text(-edge, top + 700, t("info.stats.extra"), textStyle({ role: "emphasis", size: 26, color: COLOR.accentText }))
           .setOrigin(0, 0),
       );
       EXTRA_STATS.forEach((row, index) => {
@@ -1818,12 +1828,12 @@ export class InfoManager {
     const extra = skinsForRelic(def.id);
     if (extra.length === 0) return;
     const layout = APPEARANCE_PANEL_LAYOUT;
-    this.popups.open({ width: layout.width, height: layout.height, title: "외형", dim: true, closeOnBackdrop: false, onClose }, (body) => {
+    this.popups.open({ width: layout.width, height: layout.height, title: t("info.skin.title"), dim: true, closeOnBackdrop: false, onClose }, (body) => {
       let selected: RelicSkinDef | undefined = extra.find(({ id }) => id === relicSkinManager.equippedFor(def.id));
       const cards: Phaser.GameObjects.Container[] = [];
-      const entries: Array<{ skin?: RelicSkinDef; name: string }> = [{ name: "기본 외형" }, ...extra.map((skin) => ({ skin, name: skin.name }))];
+      const entries: Array<{ skin?: RelicSkinDef; name: string }> = [{ name: t("info.skin.default") }, ...extra.map((skin) => ({ skin, name: skin.name }))];
       const action = new Button(this.scene, 0, layout.actionY, {
-        width: layout.actionWidth, height: layout.actionHeight, label: "장착", variant: "primary",
+        width: layout.actionWidth, height: layout.actionHeight, label: t("info.skin.equip"), variant: "primary",
         onClick: () => {
           const equipped = relicSkinManager.equippedFor(def.id);
           const succeeded = selected ? relicSkinManager.equip(def.id, selected.id) : (equipped === undefined || relicSkinManager.unequip(def.id));
@@ -1851,7 +1861,7 @@ export class InfoManager {
           puppet.setAlpha(owned ? 1 : 0.28); card.addAt(puppet, 2);
         });
         card.add(this.scene.add.text(0, 310, entry.name, textStyle({ role: "display", size: 28, color: owned ? COLOR.ink : COLOR.inkDim, align: "center", wrap: 330 })).setOrigin(0.5));
-        card.add(this.scene.add.text(0, 352, owned ? "보유" : "미보유 · 잠금", textStyle({ role: "emphasis", size: 22, color: owned ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5));
+        card.add(this.scene.add.text(0, 352, owned ? t("info.skin.owned") : t("info.skin.locked"), textStyle({ role: "emphasis", size: 22, color: owned ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5));
         const hit = this.scene.add.rectangle(0, 0, layout.cardWidth, layout.cardHeight, 0xffffff, 0);
         if (owned) hit.setInteractive({ useHandCursor: true }).on("pointerup", () => { selected = entry.skin; paint(); });
         card.add(hit); body.add(card); cards.push(card);
@@ -1868,7 +1878,7 @@ export class InfoManager {
         });
         const selectedId = selected?.id;
         const equippedNow = selectedId ? equipped === selectedId : equipped === undefined;
-        action.setLabel(equippedNow ? "장착 중" : "장착");
+        action.setLabel(equippedNow ? t("info.skin.equipped") : t("info.skin.equip"));
         action.setEnabled(!equippedNow && (!selectedId || relicSkinManager.owns(selectedId)));
       }
       paint();
@@ -1988,7 +1998,7 @@ export class InfoManager {
     this.figure?.destroy();
     this.figure = figure;
     enableHitOnClick(this.scene, figure);
-    figure.on("pointerup", () => this.say(def.name + "는 당신을 바라본다."));
+    figure.on("pointerup", () => this.say(t("info.enemy.gaze", { name: def.name })));
     figure.setVisible(this.portraitWanted && this.root.visible);
   }
 
@@ -1996,9 +2006,9 @@ export class InfoManager {
   private buildSkillIcons(def: RelicDef): void {
     for (const icon of this.skillIcons.splice(0)) icon.destroy();
     const entries: [string, Skill, number | undefined, SkillArtSlot][] = [
-      ["패시브", { ...def.passive, power: def.passive.value, damageType: "physical" } as unknown as Skill, undefined, "passive"],
-      ["일반 공격", def.basic, undefined, "basic"],
-      ["궁극기", def.ultimate, def.ultimate.cost, "ultimate"],
+      [t("info.skill.passive"), { ...def.passive, power: def.passive.value, damageType: "physical" } as unknown as Skill, undefined, "passive"],
+      [t("info.skill.basic"), def.basic, undefined, "basic"],
+      [t("info.skill.ultimate"), def.ultimate, def.ultimate.cost, "ultimate"],
     ];
     entries.forEach(([kindLabel, skill, gaugeCost, slot], index) => {
       const size = SKILL_ICON.size;
@@ -2064,7 +2074,7 @@ export class InfoManager {
       badge.add(drawGlyph(this.scene, "ferocity", 0, -13, badgeSize * 0.46, 0xffd9c4));
     }
     // 스킬 액자와 같은 방식으로 이름을 안쪽 아래에 단다. 셋과 나란히 읽히려면 이름이 있어야 한다.
-    badge.add(this.scene.add.text(0, badgeSize / 2 - 23, "폭주", textStyle({ role: "display", size: 19, color: "#ffd9c4" })).setOrigin(0.5));
+    badge.add(this.scene.add.text(0, badgeSize / 2 - 23, t("info.skill.ferocity"), textStyle({ role: "display", size: 19, color: "#ffd9c4" })).setOrigin(0.5));
     // 입력 영역도 뱃지 크기에 딱 맞춘다. 넓게 잡으면 아래 아이콘의 터치를 가로챈다.
     const hit = this.scene.add.rectangle(0, 0, badgeSize, badgeSize, 0xffffff, 0).setInteractive({ useHandCursor: true });
     hit.on("pointerdown", () => badge.setScale(1.1));
@@ -2110,7 +2120,7 @@ export class InfoManager {
     // 스킬 종류·이름·발현 유형을 한 번에 읽게 한다.
     openSkillPopup(this.scene, this.popups, this.keywords, {
       name: def.ferocityTrait.name,
-      kindLabel: "폭주",
+      kindLabel: t("info.skill.ferocity"),
       iconAssetId: "skill-icon-buff",
       art: skillArtFor(def.id, "ferocity"),
       tint: skillArtTint(def.element, def.role),
@@ -2314,8 +2324,8 @@ export class InfoManager {
     const live = options.live;
     this.combatLine.setVisible(this.capabilities.showRuntimeCombat && live !== undefined);
     if (!live) return;
-    const ailment = live.bleed ? `출혈 ${Math.ceil(live.bleed.remaining)}초` : "상태이상 없음";
-    this.combatLine.setText(`HP ${Math.ceil(live.hp)} / ${live.maxHp}   ·   궁극 ${Math.round(live.energy)}   ·   야성 ${Math.round(live.ferocity)}   ·   ${ailment}`);
+    const ailment = live.bleed ? t("info.enemy.bleed", { seconds: Math.ceil(live.bleed.remaining) }) : t("info.enemy.noAilment");
+    this.combatLine.setText(t("info.enemy.live", { hp: Math.ceil(live.hp), maxHp: live.maxHp, energy: Math.round(live.energy), ferocity: Math.round(live.ferocity), ailment }));
   }
 
   /** 정적 렐릭 정의만 받아 읽기 전용 상세 화면의 상태를 교체한다. */
@@ -2327,7 +2337,7 @@ export class InfoManager {
     this.popups.closeAll();
 
     this.paintRarity(owned ? def.rarity : undefined);
-    this.nameText.setText(owned ? def.name : "미발굴 개체");
+    this.nameText.setText(owned ? def.name : t("info.enemy.undug"));
     this.nameShadow.setText(this.nameText.text);
     // 이름 폭이 캐릭터마다 다르므로 뱃지 자리도 그릴 때마다 이름 끝에서 다시 잡는다.
     const badgeLeft = this.nameText.x + this.nameText.width + AFFINITY.gap;
@@ -2340,7 +2350,7 @@ export class InfoManager {
       addColorAssistMark(this.scene, this.colorAssistMarks, BASE_WIDTH - 72, 112, COLOR_ASSIST_LAYOUT.card.size, session.settings.accessibility.colorAssist, "element", def.element);
     }
     // 속성과 직군은 옆의 아이콘이 말한다. 같은 것을 글자로 또 적으면 줄만 길어진다.
-    this.roleText.setText("NO." + def.specimenNumber + (owned ? "   " + def.origin : "   실루엣 기록"));
+    this.roleText.setText("NO." + def.specimenNumber + (owned ? "   " + def.origin : t("info.enemy.silhouette")));
     this.refreshBadges();
     this.paintStars(def);
     this.buildSkillIcons(def);
@@ -2413,7 +2423,7 @@ export class InfoManager {
     const maxed = progress.level >= cap;
 
     // 사거리는 성장하지 않는 정적 값이지만, 다른 캐릭터로 넘길 때 함께 갈아 끼워야 한다.
-    this.reachLabel.setText("사거리 · " + REACH_LABEL[def.reachTier]);
+    this.reachLabel.setText(`${t("stat.range")} · ${REACH_LABEL[def.reachTier]}`);
     this.levelValue.setText(String(progress.level));
     this.levelCap.setText("/ " + cap);
     // 숫자 폭이 자리 수에 따라 달라지므로 붙는 자리도 그릴 때마다 다시 잡는다.
@@ -2426,7 +2436,7 @@ export class InfoManager {
     // 경험치 줄은 "얼마나 컸는가"만 말한다. 급여에 드는 치즈케이크는 바로 아래 버튼이 맡는다.
     this.expLabel.setText(maxed ? "MAX" : progress.exp + " / " + need + " EXP");
     this.paintFeedButton(this.ownedNow && canFeedRelic(progress, session.wallet.cheesecake));
-    this.feedLabel.setText(maxed ? "최대 레벨" : "급여하기");
+    this.feedLabel.setText(maxed ? t("info.level.max") : t("info.feed"));
     // 급여는 치즈케이크를 먹이는 일이라 버튼이 그 수를 직접 말한다. 상단 줄과 같은 세션 지갑을
     // 읽으므로 두 곳의 값이 갈라지지 않는다.
     // 만렙에서는 보유/비용 대신 **MAX** 한 마디만 남긴다. 먹일 수 없는 판에서 `보유/—`는
@@ -2444,7 +2454,7 @@ export class InfoManager {
     this.bondBar.setValue(bondMaxed ? 1 : (progress.bondXp - bondBase) / (bondNext - bondBase));
     // 유대는 야성을 눌러 주는 것이 아니라 더 빨리 끓게 한다. 피버로 가는 지름길이다.
     const boost = Math.round((BOND_FEROCITY_MULTIPLIER[progress.bondLevel] - 1) * 100);
-    this.bondLabel.setText((bondMaxed ? "MAX" : progress.bondXp + " / " + bondNext + " EXP") + "   ·   야성 상승 +" + boost + "%");
+    this.bondLabel.setText(`${bondMaxed ? "MAX" : `${progress.bondXp} / ${bondNext} EXP`}   ·   ${t("info.bond.ferocityGain")} +${boost}%`);
 
     this.statRadar?.draw(finalStats, STAT_RADAR_RADIUS);
 

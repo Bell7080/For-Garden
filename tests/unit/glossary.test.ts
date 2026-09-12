@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { GLOSSARY, glossaryForm, type GlossaryId } from "../../src/i18n/glossary";
+import { GLOSSARY, GLOSSARY_EXCEPTIONS, glossaryForm, type GlossaryId } from "../../src/i18n/glossary";
 import { KO } from "../../src/i18n/ko";
 import { LANGUAGE_IDS, type LanguageId } from "../../src/core/language";
 
@@ -58,6 +58,7 @@ describe("번역 표의 용어", () => {
         for (const id of ids) {
           const korean = GLOSSARY[id].forms.ko;
           if (!source.includes(korean)) continue;
+          if (GLOSSARY_EXCEPTIONS[key]?.includes(id)) continue;
           const expected = glossaryForm(id, language);
           if (expected === undefined) continue;
           if (!translated.includes(expected)) drifted.push(`${language} ${key}: ${korean} → ${expected} 없음 (${translated})`);

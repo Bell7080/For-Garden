@@ -55,7 +55,7 @@ export const SETTINGS_JA = {
   "settings.play.motion.default": "標準",
   "settings.play.motion.reduced": "軽減",
   "settings.play.motion.off": "オフ",
-  "settings.play.battleSpeed": "戦闘速度",
+  "settings.play.battleSpeed": "戦闘倍速",
   "settings.play.autoUltimate": "必殺技オート",
   "settings.play.textSpeed": "テキスト速度",
   "settings.play.language": "言語",

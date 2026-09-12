@@ -1,0 +1,41 @@
+/** 전투 화면과 결과판의 일본어 표. */
+export const BATTLE_JA = {
+  "battle.boss.phase": "観測 · 00:00",
+  "battle.boss.scoreLine": "通常ステージ {normal}  ·  ボス戦 {boss}",
+  "battle.boss.phaseLine": "{phase}{warning} · {time}",
+  "battle.boss.tideWarning": " · 高潮の予兆",
+  "battle.boss.limit": " · LIMIT",
+
+  "battle.settle.failed": "結果画面を復旧できませんでした。",
+  "battle.settle.retry": "精算を再試行",
+  "battle.settle.done": "遠征観測完了",
+  "battle.settle.reward": "精算報酬",
+  "battle.settle.noReward": "精算通貨なし",
+  "battle.settle.score": "今回の遠征スコア",
+  "battle.settle.detail": "詳細",
+  "battle.settle.toLobby": "ロビーへ",
+  "battle.settle.weeklyRecord": "週間記録",
+  "battle.contribution": "貢献度",
+
+  "battle.chip.speed": "{speed}倍速",
+  "battle.chip.autoOn": "必殺 ON",
+  "battle.chip.autoOff": "必殺 OFF",
+  "battle.chip.skipOn": "演出スキップ",
+  "battle.chip.skipOff": "演出 ON",
+
+  "battle.gauge.frenzy": "暴走 {value} / {max}",
+  "battle.gauge.ferocity": "野性 {value} / {max}",
+
+  "battle.result.defeat": "作戦失敗",
+  "battle.result.noReward": "獲得報酬なし",
+  "battle.result.toMap": "マップへ",
+  "battle.result.saveFailed": "結果を保存できませんでした",
+  "battle.result.retry": "再試行",
+  "battle.result.expeditionWin": "遠征交戦勝利",
+  "battle.result.expeditionLose": "遠征隊全滅",
+  "battle.result.save": "結果を保存",
+  "battle.result.settle": "終了精算",
+  "battle.result.defeatLoot": "敗北戦利品の精算",
+  "battle.result.nodeLoot": "交戦獲得戦利品",
+  "battle.result.nodeScore": "遠征スコア +{score}",
+} as const;

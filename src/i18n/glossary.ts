@@ -68,7 +68,7 @@ export const GLOSSARY = {
   // ── 전투 ──────────────────────────────────────────────────────────────
   formation: { note: "세 자리에 개체를 세우는 일. 스쿼드(소속)와 다르다.", forms: { ko: "편성", ja: "編成" } },
   combatPower: { note: "능력치 오각형의 넓이. 표시와 정렬에만 쓰고 전투 계산에는 쓰지 않는다.", forms: { ko: "전투력", ja: "戦闘力" } },
-  battleSpeed: { note: "전투 진행 배율 1·2·3.", forms: { ko: "배속", ja: "戦闘速度" } },
+  battleSpeed: { note: "전투 진행 배율 1·2·3. 칩에 `2배속`처럼 수와 붙어 서므로 짧은 표기를 쓴다.", forms: { ko: "배속", ja: "倍速" } },
   ultimate: { note: "게이지가 차면 쓰는 큰 기술.", forms: { ko: "궁극기", ja: "必殺技" } },
   passive: { note: "항상 도는 개체 고유 효과.", forms: { ko: "패시브", ja: "パッシブ" } },
   frenzy: { note: "야성 게이지가 가득 차 시작되는 강화 상태. 벌이 아니라 상이다.", forms: { ko: "폭주", ja: "暴走" } },
@@ -88,3 +88,19 @@ export function glossaryForm(id: GlossaryId, language: LanguageId): string | und
   const forms = GLOSSARY[id].forms as Record<string, string | undefined>;
   return forms[language];
 }
+
+/**
+ * 사전 검사를 건너뛰는 자리와 그 이유.
+ *
+ * 한국어 낱말 하나가 두 가지를 가리키는 자리가 있다. `발굴`이 그렇다 — 게임의 방치형 자원
+ * 수집 기능이기도 하고, 화석을 땅에서 캐낸 실제 행위이기도 하다. 두 뜻은 다른 언어에서 다른
+ * 말이 되므로, 기능이 아닌 쪽은 여기 적어 검사에서 뺀다.
+ *
+ * **비우려고 적지 않는다.** 새로 더할 때는 왜 사전의 표기를 쓰면 안 되는지를 주석으로 남긴다.
+ */
+export const GLOSSARY_EXCEPTIONS: Readonly<Record<string, readonly GlossaryId[]>> = {
+  // 화석을 캐낸 실제 장소이지 방치형 자원 수집 기능이 아니다.
+  "info.journal.site": ["excavation"],
+  // 아직 화석에서 복원하지 않은 개체라는 뜻이다.
+  "info.enemy.undug": ["excavation"],
+};

@@ -1,0 +1,32 @@
+/** 여러 화면이 함께 쓰는 이름표의 일본어 표. */
+export const COMMON_JA = {
+  "stat.hp": "体力",
+  "stat.atk": "攻撃力",
+  "stat.atk.short": "攻撃",
+  "stat.def": "防御力",
+  "stat.def.short": "防御",
+  "stat.res": "抵抗力",
+  "stat.res.short": "抵抗",
+  "stat.ap": "魔力",
+  "stat.ap.short": "魔力",
+  "stat.attackSpeed": "攻撃速度",
+  "stat.moveSpeed": "移動速度",
+  "stat.critChance": "クリティカル率",
+  "stat.critDamage": "クリティカルダメージ",
+  "stat.energyGain": "必殺技チャージ量",
+  "stat.energyGain.rune": "必殺技チャージ量増加",
+  "stat.ferocityGain.rune": "野性獲得量増加",
+  "stat.lifeSteal": "ダメージ吸収",
+  "stat.range": "射程",
+
+  "role.warrior": "ウォリアー",
+  "role.tank": "タンク",
+  "role.assassin": "アサシン",
+  "role.support": "サポーター",
+
+  "element.fire": "火",
+  "element.water": "水",
+  "element.grass": "草",
+  "element.earth": "地",
+  "element.wind": "風",
+} as const;

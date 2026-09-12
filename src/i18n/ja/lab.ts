@@ -1,0 +1,41 @@
+/** 연구소 화면의 일본어 표. */
+export const LAB_JA = {
+  "lab.rates": "確率情報",
+  "lab.pull.one": "1回研究",
+  "lab.pull.ten": "10回研究",
+  "lab.mileageShop": "マイレージショップ",
+  "lab.networkError": "通信に失敗しました。もう一度お試しください。",
+
+  "lab.policy.title": "研究確率 · 保証ポリシー",
+  "lab.policy.grayReward": "グレー報酬",
+  "lab.policy.rate": "{rarity}  {percent}%",
+  "lab.policy.pity": "現在SSR未獲得 {since}回 · 確定まで {left}回",
+  "lab.policy.pickup": "ピックアップ確定  {state}",
+  "lab.policy.pickupOn": "ON · 次のSSRはピックアップ",
+  "lab.policy.pickupOff": "OFF",
+  "lab.policy.pickupRate": "SSRピックアップ確率 {percent}% · 外れた場合は次のSSRがピックアップ確定",
+  "lab.policy.group": "繰り越しグループ  {group}",
+  "lab.policy.groupNote": "同じグループの入れ替えバナーへ天井·ピックアップ確定を繰り越し",
+  "lab.policy.tenGuarantee": "10連の最終スロットはSR以上保証 (SSR天井が優先)",
+  "lab.policy.duplicate": "重複報酬  該当レリックの欠片 +1 · 欠片を集めて限界突破",
+  "lab.policy.duplicateMax": "星Vに到達した後の重複は共用DNA片 +1",
+  "lab.confirm": "確認",
+
+  "lab.skipAll": "すべてスキップ",
+  "lab.scanning": "化石DNAを研究中",
+  "lab.resonance.SSR": "琥珀色の共鳴が弾ける",
+  "lab.resonance.SR": "青緑と紫が交差する",
+  "lab.resonance.R": "灰青色の波長を検知した",
+  "lab.resonance.GRAY": "中立の波長が凝結する",
+  "lab.standingFailed": "[{name}の立ち絵を読み込めませんでした]",
+
+  "lab.result.title": "研究結果",
+  "lab.result.openAll": "すべて開く",
+  "lab.result.tapTile": "マスを押して確認",
+  "lab.result.tapToReturn": "画面を押して戻る",
+
+  "lab.pityLine": "SSR確定まで {left}回{pickup}",
+  "lab.pityLine.pickup": " · 次のSSRはピックアップ確定",
+  "lab.currency.fossil": "化石",
+  "lab.currency.amber": "琥珀",
+} as const;

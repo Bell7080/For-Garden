@@ -9,7 +9,8 @@ import { captureGame, tap, tapUntil } from "./canvasInput";
  * 문구 표에 키가 있는지는 단위 테스트가 지키지만, **그 글자가 실제로 그려지는지**는 캔버스를
  * 봐야 안다 — 글꼴에 없는 글자는 빈칸이 되고, 길어진 문장은 판 밖으로 나간다.
  */
-const OUT = process.env.WALK_OUT ?? "walk";
+// 캡처는 기본으로 테스트 산출물 폴더에 쌓는다 — 저장소 안에 그림이 남지 않게 한다.
+const OUT = process.env.WALK_OUT ?? "test-results/languageWalk";
 const scene = (page: import("@playwright/test").Page) => page.evaluate(() => window.__PF_DEBUG?.scene);
 
 test.describe("일본어 화면 훑기", () => {
@@ -45,6 +46,9 @@ test.describe("일본어 화면 훑기", () => {
     await captureGame(page, `${OUT}/06-premium.png`);
     await tapUntil(page, BASE_WIDTH - 58, 86, async () => (await scene(page)) === "settings");
     await captureGame(page, `${OUT}/07-settings.png`);
+    // 언어 줄은 게임 탭에 있다. 고를 수 있는 언어가 둘 이상일 때만 서므로 여기서 함께 본다.
+    await tap(page, 540, 210);
+    await captureGame(page, `${OUT}/07b-settings-game.png`);
   });
 
   test("는 출격·편성·전투를 열어 본다", async ({ page }) => {

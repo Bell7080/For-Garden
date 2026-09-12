@@ -107,7 +107,7 @@ export const SETTINGS_JA = {
   "settings.debug.breakthroughTitle": "突破セット",
   "settings.debug.breakthroughSuffix": " 突破セット",
   "settings.debug.needOwned": "先にそのキャラクターを所持する必要があります。",
-  "settings.debug.granted": "{name}の欠片{fragments}個とチーズケーキ{cheesecake}個を付与しました。給与で上限まで上げてから、星の横の限界突破を押します。",
+  "settings.debug.granted": "{name}の欠片{fragments}個とチーズケーキ{cheesecake}個を付与しました。給餌で上限まで上げてから、星の横の限界突破を押します。",
   "settings.debug.alreadyMax": "すでに星五まで育てたキャラクターです。",
   "settings.debug.grantedRelics": "新しいキャラクター{count}体を所持状態にしました。",
   "settings.debug.alreadyAll": "すでにすべてのキャラクターを所持しています。",

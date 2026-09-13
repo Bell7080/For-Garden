@@ -4,7 +4,7 @@ import { computeDamage, computeDamageContribution, currentAbilityPower, isCritic
 // 전투 HUD와 피해 공식이 동일한 현재 주문력 계산을 소비하도록 공용 헬퍼를 다시 노출한다.
 export { currentAbilityPower } from "./damage";
 import { drainFerocityFever, FEROCITY_RULES } from "./ferocity";
-import { breakthroughBonus, isBreakthroughSlotOpen, type BreakthroughSlot } from "./relicProgression";
+import { isBreakthroughSlotOpen, type BreakthroughSlot } from "./relicProgression";
 import { augmentAppliesTo, bleedOnAttackEffect, conditionalAttackPowerMultiplier, expeditionAugmentStatMultipliers, type ExpeditionAugmentEffect, type ExpeditionAugmentTrigger, type ExpeditionTriggeredEffect } from "./expeditionAugments";
 import type { BasicAttack, BasicAttackStep, BreakthroughEffects, CombatStatusEffect, FerocityTrait, ReachTier, RelicDef, Side, Skill, Stats, TeamBuff } from "./types";
 import { ULTIMATE_ENERGY_MAX } from "./ultimate";
@@ -833,7 +833,6 @@ export const EMERGENCY_RECOVERY = {
 const NO_CRIT = (): number => 0.999999;
 
 function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: number, bondLevel = 0, breakthrough = 0, bodyScale = 1, augmentEffects: readonly ExpeditionAugmentEffect[] = []): Fighter {
-  const opened = breakthroughBonus(breakthrough);
   // 정적 정의를 복제한 전투 스냅샷에만 단순 능력치 증강을 한 번 반영한다.
   const multipliers = side === "player" ? expeditionAugmentStatMultipliers(augmentEffects, def.id) : expeditionAugmentStatMultipliers([], def.id);
   const battleDef: RelicDef = { ...def, stats: { ...def.stats,
@@ -848,8 +847,9 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     def: battleDef,
     hp: battleDef.stats.hp,
     maxHp: battleDef.stats.hp,
-    // 각성 5단계는 전투를 궁극기 준비 상태로 연다.
-    energy: opened.readyUltimate ? def.ultimate.cost : 0,
+    // **돌파가 궁극기를 미리 채워 주지 않는다.** 마지막 등급에 `readyUltimate`가 달려 있던
+    // 동안에는 다섯 등급에 닿은 개체가 종류를 가리지 않고 전투를 궁극기가 찬 채로 시작했다.
+    energy: 0,
     ferocity: 0,
     bondLevel,
     breakthrough,

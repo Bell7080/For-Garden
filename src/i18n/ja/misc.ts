@@ -32,6 +32,7 @@ export const MISC_JA = {
   "shop.exchangeList": "交換一覧",
   "shop.exchangeRemaining": "残り交換 {remaining}/{limit}",
   "shop.exchangeDone": "交換が完了しました。",
+  "shop.merchant.line": "い、いらっしゃいませ…! 今日入った品はぜんぶ並べておきました。ごゆっくり。",
 
   "skill.effect.physical": "物理ダメージ",
   "skill.effect.magical": "魔法ダメージ",
@@ -92,6 +93,9 @@ export const MISC_JA = {
   "stageComplete.tapToConfirm": "画面を押して確認",
   "stageComplete.firstClear": "初回クリア報酬",
   "stageComplete.repeatClear": "反復クリア報酬",
+  "stageComplete.toResearch": "研究所",
+  "stageComplete.toRelics": "レリック強化",
+  "stageComplete.toMap": "マップへ",
 
 
   "battle.profile.down": "戦闘不能",
@@ -111,6 +115,20 @@ export const MISC_JA = {
   "relics.sort.power": "戦闘力順",
   "relics.owned": "所持レリック",
   "relics.unowned": "未所持レリック",
+  "relics.filter": "フィルター",
+  "relics.filter.element": "属性",
+  "relics.filter.role": "クラス",
+  "relics.filter.reach": "射程",
+  "relics.filter.reset": "条件解除",
+  "relics.search": "名前で検索",
+
+  "affinity.chart": "属性相性",
+  "affinity.strong": "有利 ×{multiplier}",
+  "affinity.weak": "不利 ×{multiplier}",
+  "role.desc.warrior": "長い交戦で安定して攻め続ける。",
+  "role.desc.tank": "前列を守り、味方の代わりに受ける。",
+  "role.desc.assassin": "素早く踏み込み一気に叩く。長くは持たない。",
+  "role.desc.support": "回復と強化で味方を支える。",
 
   "trade.value": "お得度 {percent}%",
   "trade.disconnected": "通信途絶",

@@ -72,12 +72,14 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
     clueJournalId: "interaction-doppel-01", illustration: "background-interaction-doppel-parlor",
   },
   {
-    id: "central-council", displayName: "중앙 정원구", department: "council",
-    description: "온실 위층의 원탁. 시민 대표들이 복원 계획서를 검토하는 동안 오래 기다려야 한다.",
+    // 첫 창구(응접실)보다 **안쪽으로 한 걸음** 들어간 자리다. 응접실이 손님을 앉혀 두고 일지를
+    // 내어 주는 곳이라면, 여기는 그 일지를 실제로 쓰는 자리라 결재가 한 단계 더 걸린다.
+    id: "doppel-lab", displayName: "도플 · 중앙 연구소 외곽 연구실", department: "council",
+    description: "중앙 연구소 안쪽의 외곽 연구실. 복원 계획서에 결재가 한 번 더 필요해 오래 기다려야 한다.",
     unlock: { researchLevel: 2 }, durationMinutes: 240, partySize: { min: 1, max: 3 },
     recommended: { elements: ["water", "grass"], squads: ["rune"], tags: ["garden"] },
     rewards: [{ currency: "gold", amount: 4200, weight: 5 }, { currency: "gems", amount: 8, weight: 1 }],
-    clueJournalId: "interaction-central-02", illustration: "background-relics",
+    clueJournalId: "interaction-doppel-lab-01", illustration: "background-interaction-doppel-lab",
   },
   {
     id: "night-ward", displayName: "나이트 시티", department: "exchange",

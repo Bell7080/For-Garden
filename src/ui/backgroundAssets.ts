@@ -23,6 +23,13 @@ export const BACKGROUND = {
   premiumShop: "background-premium-shop",
   /** 일반 상품과 성장 재화를 진열하는 상점 쇼케이스 배경 키다. */
   shop: "background-shop",
+  /**
+   * 외형 전시관의 전용 뒷배경 — 금색 납선으로 갈린 스테인드글라스 창의 홀이다.
+   *
+   * 웹툰 칸 셋이 이 그림의 창살과 같은 문법으로 서므로(금색 납선 · 반투명 유리면) 판 안의
+   * 칸과 배경이 한 장으로 읽힌다. 다른 화면과 공유하지 않는다.
+   */
+  appearance: "background-appearance",
   /** 발굴 연출이 덮는 발굴장. 검은 판 대신 이 원화를 깔고 그 위를 눌러 어둡게 한다. */
   excavation: "background-excavation",
   /** 캐릭터 카드 안, 인물 뒤에 깔리는 원화. 등급색 필터를 통과해 은은하게만 남는다. */
@@ -56,6 +63,11 @@ export const BACKGROUND = {
    */
   interactionDoppelParlor: "background-interaction-doppel-parlor",
   /**
+   * 도플 중앙 연구소의 **외곽 연구실**이다. 응접실(첫 창구)보다 안쪽으로 한 걸음 들어간
+   * 자리이며 교류 두 번째 칸이 쓴다. 응접실과 같이 판 안에 `coverCrop`으로 잘려 들어간다.
+   */
+  interactionDoppelLab: "background-interaction-doppel-lab",
+  /**
    * 타이틀(로딩) 화면 전용 원화다. 화면 자체가 로딩 화면이라 다른 배경처럼 이 표의
    * `BACKGROUND_ASSETS`(로딩 단계 안에서 읽힘)로 적재할 수 없다 — `TitleScene`이
    * 씬 진입 직후 이 키로 직접 읽는다.
@@ -84,8 +96,10 @@ export const BACKGROUND_ASSETS = [
   [BACKGROUND.stageMap, "sprites/background/map_001.webp"],
   [BACKGROUND.archaeology, "sprites/background/background_007.webp"],
   [BACKGROUND.premiumShop, "sprites/background/background_008.webp"],
-  // 일반 상점은 완성된 흰 쇼케이스 원화를 쓰되 유료 상점과 독립된 texture key를 유지한다.
-  [BACKGROUND.shop, "sprites/background/background_008.webp"],
+  // 일반 상점은 전용 원화를 쓴다 — 유료 상점(008)과 같은 그림을 나눠 쓰던 때는 두 화면이
+  // 같은 자리처럼 보여 무엇을 사는 곳인지 배경이 말하지 못했다.
+  [BACKGROUND.shop, "sprites/background/background_013.webp"],
+  [BACKGROUND.appearance, "sprites/background/background_014.webp"],
   [BACKGROUND.excavation, "sprites/background/background_009.webp"],
   [BACKGROUND.cardBackdrop, "sprites/background/background_010.webp"],
   // 원정 지도 WebP는 화면 배경 표가 키와 경로를 단독 소유하며 원본 복제본을 만들지 않는다.
@@ -102,8 +116,11 @@ export const BACKGROUND_ASSETS = [
   [BACKGROUND.cakeField, "sprites/content/Content3_001field.webp"],
   [BACKGROUND.bountyField, "sprites/content/Content4_001field.webp"],
   [BACKGROUND.raidField, "sprites/content/Content5_001field.webp"],
-  // 교류 도시 원화는 세로 화면 배경이 아니라 판 안에 잘려 들어가는 가로 그림이다.
-  [BACKGROUND.interactionDoppelParlor, "sprites/background/background_012.webp"],
+  // 교류 도시 원화는 세로 화면 배경이 아니라 판 안에 잘려 들어가는 가로 그림이다. 그래서
+  // 파일 이름도 세로 배경 번호를 쓰지 않고 `interaction_00N`으로 갈라 둔다 — 새 도시 원화가
+  // 들어올 때 굽는 스크립트와 이 표가 같은 규칙을 읽는다.
+  [BACKGROUND.interactionDoppelParlor, "sprites/background/interaction_001.webp"],
+  [BACKGROUND.interactionDoppelLab, "sprites/background/interaction_002.webp"],
   // 타이틀은 TitleScene이 직접 먼저 읽지만(그 화면이 곧 로딩 화면이다) 경로가 이 표에 있어야
   // 로비로 넘어간 뒤 25MB를 내리고, 되돌아왔을 때 다시 읽을 수 있다.
   [BACKGROUND.title, "sprites/background/background_011.webp"],

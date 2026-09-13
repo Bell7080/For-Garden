@@ -52,6 +52,7 @@ import {
   STELLA_PORTRAIT_METADATA,
   TIA_PORTRAIT_METADATA,
   TIA_SD_METADATA,
+  SHOP_CLERK_PORTRAIT_METADATA,
   TORIKA_PORTRAIT_METADATA,
   TORIKA_SKIN_001_PORTRAIT_METADATA,
   TORIKA_SKIN_001_SD_METADATA,
@@ -151,6 +152,17 @@ const base = import.meta.env.BASE_URL;
 export const TORIKA_ASSET: PuppetAsset = {
   url: `${base}puppets/char_001.zip`,
   ...TORIKA_PORTRAIT_METADATA,
+};
+
+/**
+ * 상점 점원 **오비**의 전신.
+ *
+ * `PORTRAIT_ASSETS`에 넣지 않는다 — 그 표는 **렐릭 데이터가 참조하는** 레지스트리이고,
+ * 오비는 도감에 서지 않는 상점 전용 개체다. 상점 표(`shopPresentation.ts`)가 직접 가리킨다.
+ */
+export const SHOP_CLERK_ASSET: PuppetAsset = {
+  url: `${base}puppets/char_shop.zip`,
+  ...SHOP_CLERK_PORTRAIT_METADATA,
 };
 
 /** 토리카 skin001 전신: 기본 외형과 독립 측정한 카드·로비·정보창 배치를 사용한다. */

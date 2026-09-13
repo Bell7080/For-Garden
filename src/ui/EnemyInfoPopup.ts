@@ -1,12 +1,13 @@
 import Phaser from "phaser";
-import { infoPortraitPlacement } from "./portraitPlacement";
-import { battleAssetFor, portraitAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
+import { galleryPortraitPlacement, infoPortraitPlacement } from "./portraitPlacement";
+import { battleAssetFor, placePuppet, portraitAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { breakthroughGrade, isBreakthroughSlotOpen, relicLevelCap } from "../core/relicProgression";
 import type { Passive, RelicDef, Skill, Ultimate } from "../core/types";
 import { KeywordManager } from "../managers/KeywordManager";
 import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
+import { openElementPopup, openRolePopup } from "./affinityPopups";
 import { addPopupBackgroundImage, BACKGROUND } from "./backgrounds";
 import { ENEMY_INFO, enemyInfoPanelCenterY, enemyInfoSkillColumns } from "./enemyInfoLayout";
 import {
@@ -57,6 +58,11 @@ export class EnemyInfoPopup {
   private chrome?: Phaser.GameObjects.Container;
   private portrait?: PuppetCreature;
   private figure?: PuppetCreature;
+  /** 감상 중에만 사는 것들. 원화를 되돌릴 자리와 판을 덮은 입력면을 함께 붙잡는다. */
+  private gallery?: { exit: Phaser.GameObjects.Rectangle; home: { x: number; y: number; scale: number }; mask: Phaser.Display.Masks.GeometryMask; onClose?: () => void };
+  private galleryBody?: Phaser.GameObjects.Container;
+  /** 감상이 어느 개체의 원화를 세워야 하는지. 열려 있는 동안의 스냅샷을 그대로 붙잡는다. */
+  private shownDef?: RelicDef;
   /** 늦게 도착한 원화가 이미 닫힌 판 위에 서지 않도록 세대를 센다. */
   private generation = 0;
   private open = false;
@@ -123,6 +129,10 @@ export class EnemyInfoPopup {
       this.paintStats(chrome, snapshot.def);
       this.paintSkills(chrome, snapshot);
       addInfoFigureStand(this.scene, chrome, ENEMY_INFO.figure.x, ENEMY_INFO.figure.groundY);
+      // 아군 창과 같은 돋보기 — 원화를 통째로 보는 입구다. 판이 열려 있는 동안에만 살아 있다.
+      this.galleryBody = body;
+      this.shownDef = snapshot.def;
+      addInfoMagnifier(this.scene, this.popups, chrome, ENEMY_INFO.portraitMagnifier.x, ENEMY_INFO.portraitMagnifier.y, (from) => this.enterGallery(from.onClose, mask));
       void this.loadPuppets(snapshot.def, generation, depth + 0.4, depth + 0.7, mask);
     });
   }
@@ -135,9 +145,62 @@ export class EnemyInfoPopup {
   private dispose(): void {
     this.open = false;
     this.generation += 1;
+    this.gallery?.exit.destroy(); this.gallery = undefined;
+    this.galleryBody = undefined;
+    this.shownDef = undefined;
     this.portrait?.destroy(); this.portrait = undefined;
     this.figure?.destroy(); this.figure = undefined;
     this.chrome?.destroy(); this.chrome = undefined;
+  }
+
+  /**
+   * 원화만 남기고 통째로 본다.
+   *
+   * 아군 정보창과 **같은 손짓·같은 결과**다 — 판과 제목이 옆으로 빠지고 원화가 화면 한가운데에
+   * 한 조각도 잘리지 않게 선다. 다른 점은 자를 것이 하나 더 있다는 것뿐이다: 이 창의 원화는
+   * 판과 같은 실루엣의 마스크로 잘려 있으므로, 감상하는 동안 그 마스크를 벗겼다가 돌아올 때
+   * 다시 씌운다(벗기지 않으면 판 자리 밖은 보이지 않는다).
+   */
+  private enterGallery(onClose: (() => void) | undefined, mask: Phaser.Display.Masks.GeometryMask): void {
+    const portrait = this.portrait;
+    if (!portrait || this.gallery) return;
+    const home = { x: portrait.x, y: portrait.y, scale: portrait.scaleX };
+    const def = this.shownDef;
+    if (!def) return;
+    const asset = portraitAssetFor(def.portraitAssetId);
+    this.scene.tweens.killTweensOf(portrait);
+    portrait.clearMask(false);
+    placePuppet(portrait, asset, galleryPortraitPlacement(asset));
+    // SD와 판·머리글은 원화를 가리므로 함께 물러난다. 판을 없애지 않고 밀어내는 이유는
+    // 돌아올 때 그대로 미끄러져 들어와야 같은 창을 보고 있었다는 것이 읽히기 때문이다.
+    this.figure?.setVisible(false);
+    const targets = [this.galleryBody, this.chrome].filter(Boolean) as Phaser.GameObjects.Container[];
+    this.scene.tweens.add({ targets, x: BASE_WIDTH, alpha: 0, duration: 320, ease: "Cubic.In" });
+    const exit = this.scene.add
+      .rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, 0xffffff, 0)
+      .setDepth(portrait.depth + 0.05)
+      .setInteractive({ useHandCursor: true });
+    exit.on("pointerup", () => this.leaveGallery());
+    this.gallery = { exit, home, mask, onClose };
+  }
+
+  /** 감상에서 나온다. 원화는 **처음 세운 자리**로 돌아가고 판이 다시 미끄러져 들어온다. */
+  private leaveGallery(): void {
+    const state = this.gallery;
+    const portrait = this.portrait;
+    if (!state) return;
+    this.gallery = undefined;
+    state.exit.destroy();
+    // 부른 돋보기를 눌린 크기에서 풀어 준다.
+    state.onClose?.();
+    if (portrait) {
+      this.scene.tweens.killTweensOf(portrait);
+      portrait.setMask(state.mask);
+      this.scene.tweens.add({ targets: portrait, x: state.home.x, y: state.home.y, scale: state.home.scale, duration: 320, ease: "Cubic.Out" });
+    }
+    const targets = [this.galleryBody, this.chrome].filter(Boolean) as Phaser.GameObjects.Container[];
+    this.scene.tweens.add({ targets, x: SCREEN_CENTER.x, alpha: 1, duration: 320, ease: "Cubic.Out" });
+    this.figure?.setVisible(true);
   }
 
   /** 왼쪽 위 이름 블록 — 정보창과 같은 순서·같은 글자 크기·같은 그림자다. */
@@ -158,8 +221,14 @@ export class EnemyInfoPopup {
     chrome.add(scene.add.text(ENEMY_INFO.left + 4, ENEMY_INFO.numberY, `NO.${def.specimenNumber}   ${def.origin}`, textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5));
     // 이름 폭이 개체마다 다르므로 뱃지 자리도 그릴 때마다 이름 끝에서 다시 잡는다.
     const badgeLeft = ENEMY_INFO.left + name.width + ENEMY_INFO.badge.gap;
-    chrome.add(new AffinityBadge(scene, badgeLeft + ENEMY_INFO.badge.element / 2, ENEMY_INFO.nameY, ELEMENT_ICON[def.element], ENEMY_INFO.badge.element));
-    chrome.add(new AffinityBadge(scene, badgeLeft + ENEMY_INFO.badge.element + ENEMY_INFO.badge.role / 2 + 12, ENEMY_INFO.nameY + 6, ROLE_ICON[def.role], ENEMY_INFO.badge.role));
+    const elementX = badgeLeft + ENEMY_INFO.badge.element / 2;
+    const roleX = badgeLeft + ENEMY_INFO.badge.element + ENEMY_INFO.badge.role / 2 + 12;
+    chrome.add(new AffinityBadge(scene, elementX, ENEMY_INFO.nameY, ELEMENT_ICON[def.element], ENEMY_INFO.badge.element));
+    chrome.add(new AffinityBadge(scene, roleX, ENEMY_INFO.nameY + 6, ROLE_ICON[def.role], ENEMY_INFO.badge.role));
+    // 적 표식도 아군 창과 **같은 쪽지**를 연다. 같은 그림이 어느 창에서 눌리느냐에 따라 다른
+    // 말을 하면 상성을 두 번 배우게 된다.
+    chrome.add(addAffinityTap(scene, elementX, ENEMY_INFO.nameY, ENEMY_INFO.badge.element, () => openElementPopup(scene, this.popups, def.element, { x: elementX, y: ENEMY_INFO.nameY })));
+    chrome.add(addAffinityTap(scene, roleX, ENEMY_INFO.nameY + 6, ENEMY_INFO.badge.role, () => openRolePopup(scene, this.popups, def.role, { x: roleX, y: ENEMY_INFO.nameY })));
   }
 
   /**
@@ -317,4 +386,11 @@ export class EnemyInfoPopup {
       this.scene.tweens.add({ targets: puppet, alpha: 1, duration: 220 });
     }
   }
+}
+
+/** 표식 위에 얹는 투명한 입력면. 뱃지 자체는 발광을 겹친 그림이라 입력을 받지 않는다. */
+function addAffinityTap(scene: Phaser.Scene, x: number, y: number, size: number, onTap: () => void): Phaser.GameObjects.Rectangle {
+  const hit = scene.add.rectangle(x, y, size, size, 0xffffff, 0).setInteractive({ useHandCursor: true });
+  hit.on("pointerup", onTap);
+  return hit;
 }

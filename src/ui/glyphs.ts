@@ -36,7 +36,11 @@ export type GlyphName =
   | "arena-tier"
   | "page-prev"
   | "page-next"
-  | "remove";
+  | "remove"
+  | "filter"
+  | "search"
+  | "caret-down"
+  | "affinity";
 
 function points(...pairs: number[]): Phaser.Geom.Point[] {
   const list: Phaser.Geom.Point[] = [];
@@ -261,6 +265,35 @@ export function drawGlyph(
       g.strokeRect(-r * 0.72, -r * 0.06, r * 1.44, r * 0.98);
       g.strokePoints(points(-r * 0.42, -r * 0.06, -r * 0.42, -r * 0.52, -r * 0.2, -r * 0.78, r * 0.2, -r * 0.78, r * 0.42, -r * 0.52, r * 0.42, -r * 0.06), false);
       break;
+    case "filter":
+      // 깔때기 — 목록을 좁힌다. 둥근 목 대신 각지게 꺾어 다른 아이콘과 결을 맞춘다.
+      g.strokePoints(points(-r * 0.9, -r * 0.78, r * 0.9, -r * 0.78, r * 0.22, r * 0.04, r * 0.22, r * 0.86, -r * 0.22, r * 0.56, -r * 0.22, r * 0.04), true);
+      break;
+    case "search":
+      // 돋보기 — 이름으로 찾는다. `magnifier`와 달리 렌즈 안이 비어 있다: 저쪽은 "더 볼 것이
+      // 있다"는 표시라 +를 품지만, 여기서는 글자를 넣어 찾는 자리라 렌즈만 있으면 된다.
+      g.strokeCircle(-r * 0.18, -r * 0.18, r * 0.56);
+      g.lineBetween(r * 0.24, r * 0.24, r * 0.86, r * 0.86);
+      break;
+    case "caret-down":
+      // 펼침 표식. 삼각형을 채우지 않고 꺾인 선 하나로 둔다 — 채우면 글자 옆에서 덩어리로 읽힌다.
+      g.strokePoints(points(-r * 0.72, -r * 0.34, 0, r * 0.38, r * 0.72, -r * 0.34), false);
+      break;
+    case "affinity": {
+      // 상성 오각형 — 다섯 꼭짓점과 한 칸 건너뛰는 안쪽 별. 상성표가 그리는 그림을 그대로
+      // 줄인 것이라, 이 버튼이 무엇을 여는지 그림 자체가 말한다.
+      const ring: number[] = [];
+      for (let i = 0; i < 5; i += 1) {
+        const angle = -Math.PI / 2 + (i * Math.PI * 2) / 5;
+        ring.push(Math.cos(angle) * r * 0.92, Math.sin(angle) * r * 0.92);
+      }
+      g.strokePoints(points(...ring), true);
+      for (let i = 0; i < 5; i += 1) {
+        const next = (i + 2) % 5;
+        g.lineBetween(ring[i * 2], ring[i * 2 + 1], ring[next * 2], ring[next * 2 + 1]);
+      }
+      break;
+    }
     case "bookmark": {
       // 즐겨찾기 — 별. 성급 별과 같은 5각이라 "골라 둔 것"으로 바로 읽힌다.
       const star: number[] = [];

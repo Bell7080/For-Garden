@@ -6,9 +6,10 @@ import { setDebugInventoryCategory, setDebugInventoryTextureKeys } from "../debu
 import { DEFAULT_INVENTORY_SORT, INVENTORY_LAYOUT, InventoryManager, inventoryGridPosition, inventoryScrollMetrics, type InventoryDisplayItem, type InventorySort } from "../managers/InventoryManager";
 import { session } from "../state/session";
 import { drawGlyph } from "./glyphs";
-import { chipPoints, drawHairline, drawLayer } from "./holo";
+import { chipPoints, drawLayer } from "./holo";
 import { addItemFrame, ITEM_FRAME } from "./itemFrame";
 import { INVENTORY_TAB_LAYOUT, inventoryCategoryTabPosition } from "./inventoryTabs";
+import { addCategoryTab } from "./CategoryTab";
 import { POPUP_TITLE_SIZE, PopupLayer } from "./PopupLayer";
 import { equippedRelicName, openRuneInfoPopup } from "./RunePopup";
 import { runeDisplayName, runePartLabel, runeRarityLabel } from "../core/runes";
@@ -46,7 +47,6 @@ const INVENTORY_ITEM_FRAME = { ratio: 0.89 } as const;
  * 탭 폭은 넷이 나눠 갖는 고정값인데 낱말 길이는 언어가 정한다. 넘치면 글자만 가로로 줄이고,
  * 그래도 안 들면 거기서 멈춘다 — 더 줄이면 읽을 수 없는 글자가 된다.
  */
-const TAB_LABEL = { size: 27, padX: 22, minScale: 0.68 } as const;
 
 /** 로비를 유지한 채 서버 확정 인벤토리를 표시하는 홀로그램 작업판이다. */
 export class InventoryPopup {
@@ -121,40 +121,21 @@ export class InventoryPopup {
     if (this.category === "rune") this.addSortControls(body);
   }
 
-  /** 서류철 라벨처럼 돌출된 단색 면과 면 전체 입력을 가진 카테고리 탭을 추가한다. */
+  /**
+   * 목록을 갈아 끼우는 서류철 라벨 한 장.
+   *
+   * **상점의 하단 탭과 같은 프리팹**(`addCategoryTab`)을 쓴다 — 두 화면이 같은 손짓으로 같은
+   * 일(보는 목록을 통째로 바꾸기)을 하므로 생김새도 한 곳에서 나온다.
+   */
   private addCategoryTab(body: Phaser.GameObjects.Container, tab: (typeof CATEGORIES)[number], index: number): void {
-    const selected = tab.id === this.category;
     const { x, y } = inventoryCategoryTabPosition(index);
-    const { width, height, selectedScale, pressedScale } = INVENTORY_TAB_LAYOUT;
-    const tabContainer = this.scene.add.container(x, y);
-    // 서로 다른 깎임으로 파일 라벨의 방향성을 만들고, 사방선 대신 그림자와 윗변만 남긴다.
-    const face = chipPoints(width, height, { bevel: { topLeft: 18, topRight: 0, bottomRight: 14, bottomLeft: 4 } });
-    tabContainer.add(drawLayer(this.scene, 0, 0, face, {
-      fill: selected ? 0x3b3326 : 0x2b3037,
-      alpha: selected ? 0.98 : 0.92,
-      edge: selected ? COLOR.accent : COLOR.panelEdge,
-      edgeAlpha: selected ? 0.9 : 0.7,
-    }));
-    // **문구 표를 지난다.** 키를 그대로 그리면 화면에 `inventory.tab.rune`이 선다 — 한국어에서도
+    const { width, height } = INVENTORY_TAB_LAYOUT;
+    // **문구 표를 지난다.** 키를 그대로 넘기면 화면에 `inventory.tab.rune`이 선다 — 한국어에서도
     // 같았지만 다른 언어에서 더 길어져 탭 밖으로 넘치며 눈에 띄었다.
-    const label = this.scene.add.text(0, 1, t(tab.labelKey), textStyle({ role: "emphasis", size: TAB_LABEL.size, color: selected ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5);
-    // 낱말 길이는 언어가 정한다(`룬` 한 글자 ↔ `Consumable` 열 글자). 탭 폭은 넷이 나눠 갖는
-    // 고정값이라 넘치는 만큼 글자를 줄인다 — 탭을 넓히면 네 칸이 팝업 밖으로 나간다.
-    const room = (width - TAB_LABEL.padX) / selectedScale;
-    if (label.width > room) label.setScale(Math.max(TAB_LABEL.minScale, room / label.width), 1);
-    tabContainer.add(label);
-    if (index < CATEGORIES.length - 1) {
-      // 면 사이의 짧은 세로 머리선만으로 인접 탭의 경계를 보조한다.
-      tabContainer.add(drawHairline(this.scene, width / 2 + INVENTORY_TAB_LAYOUT.gap / 2, 0, height * 0.52, { color: COLOR.panelEdge, alpha: 0.55 }).setRotation(Math.PI / 2));
-    }
-    const restingScale = selected ? selectedScale : 1;
-    tabContainer.setScale(restingScale);
-    // 글자가 아닌 전체 투명 면이 입력을 받아 가장자리에서도 같은 클릭과 눌림 피드백을 준다.
-    const hit = this.scene.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    hit.on("pointerdown", () => tabContainer.setScale(selected ? 1.14 : pressedScale));
-    hit.on("pointerout", () => tabContainer.setScale(restingScale));
-    hit.on("pointerup", () => { tabContainer.setScale(restingScale); this.category = tab.id; this.render(body); });
-    tabContainer.add(hit); body.add(tabContainer);
+    addCategoryTab(this.scene, body, {
+      x, y, width, height, label: t(tab.labelKey), selected: tab.id === this.category,
+      onSelect: () => { this.category = tab.id; this.render(body); },
+    });
   }
 
   /** 기존 탭처럼 크기와 강조색만으로 선택을 알리고 누르면 정렬 및 스크롤 원점을 갱신한다. */

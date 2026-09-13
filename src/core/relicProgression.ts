@@ -37,27 +37,22 @@ export interface BreakthroughStep {
   /** 이 별에서 열리는 슬롯. 개체별 효과와 전투 분기가 같은 키를 읽는다. */
   slot: BreakthroughSlot;
   cheesecake: number;
-  /**
-   * 모든 능력치에 더해지는 백분율. 없으면 0이다.
-   *
-   * **화면에 글로 적지 않는다.** 능력치 판(오각형)이 이미 오른 값을 보여 주므로, 돌파 창이
-   * "모든 능력치 +15%"라고 한 줄 더 적으면 그 창에서 읽어야 할 것(개체 전용 효과)이 공용
-   * 수치 안내에 묻힌다. 값 자체는 적·아군의 성장 기준이라 그대로 둔다.
-   */
-  statPercent?: number;
-  /** 일반 공격 피해 배율 증가(0.25 = +25%). 같은 이유로 글로 적지 않는다. */
-  basicDamage?: number;
-  /** 궁극기 피해 배율 증가. */
-  ultimateDamage?: number;
-  /** 전투 시작 시 궁극기가 준비된 상태로 시작하는지. */
-  readyUltimate?: boolean;
 }
 
+/**
+ * 단계가 여는 것은 **상한과 슬롯뿐**이다.
+ *
+ * 한때 여기에 `basicDamage`·`ultimateDamage`·`statPercent`·`readyUltimate` 같은 공용 배율이
+ * 함께 달려 있었다. 위 주석이 이미 그 방식을 버렸다고 적어 두었는데도 필드는 남아 계속 돌았고,
+ * 그래서 **다섯 등급에 닿은 개체는 종류를 가리지 않고 전투를 궁극기가 찬 채로 시작했다**
+ * (토리카가 그랬다) — 개체 전용 효과가 말하려던 "이 캐릭터를 끝까지 키우면 무엇이 달라지는가"를
+ * 그 공짜 한 방이 덮었다. 돌파가 바꾸는 것은 이제 `RelicDef.breakthroughEffects` 하나뿐이다.
+ */
 export const BREAKTHROUGH_STEPS: readonly BreakthroughStep[] = [
-  { levelCap: 30, slot: "basic", cheesecake: 200, basicDamage: 0.25 },
-  { levelCap: 40, slot: "ultimate", cheesecake: 500, ultimateDamage: 0.25 },
-  { levelCap: 50, slot: "ferocity", cheesecake: 1000, statPercent: 15 },
-  { levelCap: 60, slot: "passive", cheesecake: 2000, readyUltimate: true },
+  { levelCap: 30, slot: "basic", cheesecake: 200 },
+  { levelCap: 40, slot: "ultimate", cheesecake: 500 },
+  { levelCap: 50, slot: "ferocity", cheesecake: 1000 },
+  { levelCap: 60, slot: "passive", cheesecake: 2000 },
 ];
 
 /**
@@ -153,17 +148,6 @@ export function canBreakThrough(rarity: RelicRarity, progress: RelicProgress, fr
   if (!step) return false;
   if (progress.level < relicLevelCap(progress.breakthrough)) return false;
   return fragments >= breakthroughFragmentCost(rarity, progress.breakthrough) && cheesecake >= step.cheesecake;
-}
-
-/** 지금까지 열린 별의 공용 전투 보정을 한 값으로 합친다. 전투와 능력치 계산이 같은 표를 본다. */
-export function breakthroughBonus(breakthrough: number): { statPercent: number; basicDamage: number; ultimateDamage: number; readyUltimate: boolean } {
-  const opened = BREAKTHROUGH_STEPS.slice(0, Math.max(0, Math.min(BREAKTHROUGH_CAP, breakthrough)));
-  return {
-    statPercent: opened.reduce((sum, entry) => sum + (entry.statPercent ?? 0), 0),
-    basicDamage: opened.reduce((sum, entry) => sum + (entry.basicDamage ?? 0), 0),
-    ultimateDamage: opened.reduce((sum, entry) => sum + (entry.ultimateDamage ?? 0), 0),
-    readyUltimate: opened.some((entry) => entry.readyUltimate === true),
-  };
 }
 
 /**
@@ -349,10 +333,18 @@ export function applyLevelGrowth(base: Stats, level: number, rarity: RelicRarity
   return applyStatPercent(base, growthPercent((level - 1) * RARITY_LEVEL_GROWTH[rarity]));
 }
 
-/** 별이 능력치를 직접 올리는 것은 셋째 돌파뿐이고, 그 몫도 주능력치 다섯에만 얹힌다. */
+/**
+ * 돌파 단계는 **능력치를 직접 올리지 않는다.**
+ *
+ * 예전에는 셋째 돌파가 모든 능력치를 15% 올렸는데, 그러면 어느 개체를 뚫어도 같은 숫자가 올라
+ * "이 캐릭터를 끝까지 키우면 무엇이 달라지는가"를 말하지 못했다. 돌파가 바꾸는 것은 그 개체의
+ * `breakthroughEffects`뿐이므로 여기서는 범위만 지키고 값은 그대로 통과시킨다 — 함수를 지우지
+ * 않는 이유는 적 배치(`stages.ts`)와 성장 파이프라인이 같은 자리에서 단계 범위를 검사하기
+ * 때문이다.
+ */
 export function applyBreakthrough(stats: Stats, breakthrough: number): Stats {
   if (!Number.isInteger(breakthrough) || breakthrough < 0 || breakthrough > BREAKTHROUGH_CAP) throw new RangeError("돌파 단계가 범위를 벗어났습니다.");
-  return applyStatPercent(stats, growthPercent(breakthroughBonus(breakthrough).statPercent));
+  return { ...stats };
 }
 
 /** 장착된 Heart Gem을 슬롯 순서대로 적용해 저장 순서까지 계산 규칙의 일부로 고정한다. */

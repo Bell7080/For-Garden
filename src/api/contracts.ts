@@ -1,5 +1,5 @@
 import type { AcquisitionResult, GachaPityState, QuantityRewardKind, Wallet } from "../core/gacha";
-import type { RelicProgress, Stats } from "../core/types";
+import type { RelicProgress, RelicSkinId, Stats } from "../core/types";
 import type { MissionPeriod } from "../core/missions";
 import type { PassBenefitDefinition, ProductAcquisition, ProductGrant, ProductRefresh, ProductStorefront, ShopCategory, ShopProductIconKey } from "../data/products";
 /** storefront와 상점 카테고리는 클라이언트·서버가 함께 쓰는 공용 계약으로 다시 공개한다. */
@@ -62,6 +62,17 @@ export interface MarkMailsReadRequest { mailIds: string[]; }
 export interface UseConsumableRequest { itemId: string; quantity: number; }
 /** 실제 적용량을 반환해 상한에서 버려진 회복을 UI가 추측하지 않게 한다. */
 export interface UseConsumableResponse extends InventoryResponse { itemId: string; quantityUsed: number; effect: ItemUseEffect; appliedAmount: number; overflowAmount: number; wallet: Wallet; stamina: StaminaDto; }
+
+/**
+ * 렐릭 추가 외형 구매.
+ *
+ * **값 계산과 차감은 화면이 하지 않는다.** 외형 전시관은 어떤 외형을 사겠다는 것만 보내고,
+ * 값은 서버가 콘텐츠 표(`RELIC_SKINS`의 `price`)에서 읽어 지갑과 대조한다 — 화면이 값을
+ * 들고 있으면 그 값을 고친 날 전시관과 실제 차감이 갈린다. 재전송은 `requestId`가 막는다.
+ */
+export interface PurchaseRelicSkinRequest { relicId: string; skinId: RelicSkinId; requestId: string; }
+/** 치른 값을 함께 돌려줘 화면이 영수증을 다시 계산하지 않게 한다. */
+export interface PurchaseRelicSkinResponse extends PlayerStateDto { skinId: RelicSkinId; spent: { currency: keyof Wallet; amount: number }; }
 
 /** 로컬 시계로 확정량을 만들지 않도록 서버가 완성해 주는 스테미나 시계다. 세부 명명 규칙은 docs/server-time-dto.md를 따른다. */
 /** 재화로 스테미나를 채우는 요청. 수단 ID는 서버 표와 대조하고 재전송은 requestId로 막는다. */
@@ -463,6 +474,8 @@ export interface GameApi extends AsyncArenaProfileApi {
   useConsumable(request: UseConsumableRequest): Promise<UseConsumableResponse>;
   /** 재화 차감과 스테미나 회복을 한 처리 단위로 확정한다. 화면은 결과만 다시 읽는다. */
   rechargeStamina(request: RechargeStaminaRequest): Promise<RechargeStaminaResponse>;
+  /** 값 조회·차감·외형 지급을 한 처리 단위로 확정한다. 화면은 결과만 다시 읽는다. */
+  purchaseRelicSkin(request: PurchaseRelicSkinRequest): Promise<PurchaseRelicSkinResponse>;
   /** 장착 검증과 지갑 상한을 통과한 룬 판매를 서버가 원자 확정한다. */
   sellRunes(request: SellRunesRequest): Promise<SellRunesResponse>;
   /** 조회 자체가 서버 시각까지의 생산분을 원자적으로 정산한다. */

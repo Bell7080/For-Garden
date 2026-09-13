@@ -10,6 +10,9 @@ export type InteractionJournal = { readonly id: string; readonly cityId: string;
 export const INTERACTION_JOURNALS: readonly InteractionJournal[] = [
   { id: "interaction-doppel-01", cityId: "doppel-parlor", title: "응접실의 연구 일지", discoveryOrder: 1, body: "손님 탁자에 놓아 둔 일지의 첫 장. 어떤 표본을 어떤 순서로 되살렸는지가 담담하게 적혀 있고, 담당자 칸만 이름 없이 비어 있다." },
   { id: "interaction-doppel-02", cityId: "doppel-parlor", title: "되풀이되는 인사", discoveryOrder: 2, dialogueStory: INTERACTION_CENTRAL_JOURNAL },
+  // 외곽 연구실은 응접실이 내어 주던 일지를 **실제로 쓰는** 자리다. 그래서 같은 프로젝트의
+  // 뒷면(결재가 한 단계 더 걸리는 이유)이 여기서 나온다.
+  { id: "interaction-doppel-lab-01", cityId: "doppel-lab", title: "결재가 멈춘 계획서", discoveryOrder: 1, body: "외곽 연구실 책상에 엎어 둔 복원 계획서. 서명란이 두 칸인데 아래 칸만 채워져 있고, 위 칸에는 \"본사 확인 대기\"라는 도장이 비스듬히 찍혀 있다." },
   { id: "interaction-night-01", cityId: "night-ward", title: "침수 구역 당직표", discoveryOrder: 1, body: "물때가 가장 높은 시간에도 구조등을 끄지 않았던 의료조의 교대 기록. 마지막 칸은 아직 비어 있다." },
   { id: "interaction-abyss-01", cityId: "abyss-port", title: "인양 상자의 항로", discoveryOrder: 1, body: "봉인 상자에는 멸종 직전의 표본을 연구 도시로 옮기려던 항로와 되돌아오지 못한 배의 좌표가 겹쳐 적혀 있다." },
 ] as const;

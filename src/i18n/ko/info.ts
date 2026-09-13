@@ -79,7 +79,10 @@ export const INFO_KO = {
   "info.skin.equip": "장착",
   "info.skin.equipped": "장착 중",
   "info.skin.owned": "보유",
-  "info.skin.locked": "미보유 · 잠금",
+  "info.skin.locked": "미보유",
+  "info.skin.purchasable": "미보유",
+  "info.skin.comingSoon": "미출시",
+  "info.skin.buy": "구매",
 
   "info.skill.passive": "패시브",
   "info.skill.basic": "일반 공격",

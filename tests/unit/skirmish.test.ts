@@ -2131,11 +2131,14 @@ describe("렉시아 전투 계약", () => {
   });
 });
 
-describe("각성", () => {
-  it("5단계는 전투를 궁극기 준비 상태로 연다", () => {
-    const ready = createSkirmish([getRelic("rex")], [getRelic("amo")], ARENA, {}, { rex: 5 });
+describe("한계 돌파", () => {
+  it("는 전투를 궁극기가 찬 채로 열지 않는다", () => {
+    // 마지막 등급에 `readyUltimate`가 달려 있던 동안에는 다섯 등급에 닿은 개체가 **종류를
+    // 가리지 않고** 전투를 궁극기가 찬 채로 시작했다(토리카가 그랬다) — 개체 전용 효과가
+    // 말하려던 "이 캐릭터를 끝까지 키우면 무엇이 달라지는가"를 그 공짜 한 방이 덮었다.
+    const maxed = createSkirmish([getRelic("rex")], [getRelic("amo")], ARENA, {}, { rex: 5 });
     const plain = createSkirmish([getRelic("rex")], [getRelic("amo")], ARENA);
-    expect(ready.fighters[0].energy).toBe(getRelic("rex").ultimate.cost);
+    expect(maxed.fighters[0].energy).toBe(0);
     expect(plain.fighters[0].energy).toBe(0);
   });
 });

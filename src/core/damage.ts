@@ -1,6 +1,5 @@
 import { effectiveElement, elementMultiplier } from "./element";
 import { ferocityDamageBonus } from "./ferocity";
-import { breakthroughBonus } from "./relicProgression";
 import type { Skill } from "./types";
 import type { Combatant, DamageInput } from "./combatTypes";
 
@@ -62,10 +61,8 @@ function offenseValue(attacker: Combatant, input: DamageInput): number {
 /** 방어·저항·속성·대상 패시브 전, 공격자가 스킬과 버프로 만들어 낸 순수 공격 기여값이다. */
 export function computeDamageContribution(attacker: Combatant, input: DamageInput): number {
   const critical = input.isCritical ? attacker.def.stats.critDamage / 100 : 1;
-  const opened = breakthroughBonus(attacker.breakthrough);
-  const awakened = 1 + (input.kind === "ultimate" ? opened.ultimateDamage : input.kind === "basic" ? opened.basicDamage : 0);
   // 타격별 반올림은 같은 총 계수의 다단히트를 더 크게 만들므로 기여도에는 소수 정밀도를 보존한다.
-  return Math.max(0, offenseValue(attacker, input) * critical * awakened * (1 + ferocityDamageBonus(attacker.ferocity)));
+  return Math.max(0, offenseValue(attacker, input) * critical * (1 + ferocityDamageBonus(attacker.ferocity)));
 }
 
 /** 실시간 난전의 공격력, 방어, 치명타, 각성, 야성, 속성 순서를 고정한 피해 공식이다. */
@@ -73,9 +70,9 @@ export function computeDamage(attacker: Combatant, target: Combatant, input: Dam
   // 고정 피해는 방어·저항을 0으로 두고 지나간다. 속성 상성과 대상 경감은 그대로 거친다.
   const defense = input.ignoresDefense ? 0 : input.damageType === "physical" ? target.def.stats.def : target.def.stats.res;
   const critical = input.isCritical ? attacker.def.stats.critDamage / 100 : 1;
-  const opened = breakthroughBonus(attacker.breakthrough);
-  const awakened = 1 + (input.kind === "ultimate" ? opened.ultimateDamage : input.kind === "basic" ? opened.basicDamage : 0);
-  const raw = offenseValue(attacker, input) * critical * awakened * (1 + ferocityDamageBonus(attacker.ferocity));
+  // **돌파는 공용 피해 배율을 주지 않는다** — 어느 개체를 뚫어도 같은 숫자가 오르면 그 개체를
+  // 끝까지 키운 이유를 말하지 못한다. 돌파가 바꾸는 것은 `breakthroughEffects`뿐이다.
+  const raw = offenseValue(attacker, input) * critical * (1 + ferocityDamageBonus(attacker.ferocity));
   const afterDefense = (raw * 100) / (100 + defense);
   // 위치와 무관한 공용 방어·속성 공식만 적용한다. 특정 개체의 전방 경감은 더 이상 숨은 배율로 끼우지 않는다.
   return Math.max(1, Math.round(afterDefense * elementMultiplier(effectiveElement(attacker.def), effectiveElement(target.def))));

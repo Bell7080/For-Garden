@@ -3,7 +3,6 @@ import { t } from "../i18n";
 import { gameApi } from "../api/FakeServer";
 import type { ProductDto, PurchaseProductResponse } from "../api/contracts";
 import { formatCurrency } from "../core/formatCurrency";
-import { RELICS } from "../data/relics";
 import { SHOP_TABS, type ShopCategory } from "../data/shopCatalog";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugScene, setDebugShopView, setDebugStorefrontControls } from "../debug";
@@ -106,7 +105,7 @@ export class ShopScene extends Phaser.Scene {
     const left = centerX - width / 2 + 30;
     // 이름 왼쪽의 두꺼운 막대. 누가 말하는지를 한 글자보다 먼저 알린다.
     this.add.rectangle(left, centerY + nameOffsetY, 9, 40, COLOR.accent, 0.95).setOrigin(0, 0.5).setDepth(5);
-    const name = RELICS.find((relic) => relic.id === SHOP_MERCHANT.relicId)?.name ?? "";
+    const name = SHOP_MERCHANT.name;
     this.add.text(left + 22, centerY + nameOffsetY, name, textStyle({ role: "display", size: 32, color: COLOR.accentText })).setOrigin(0, 0.5).setDepth(5);
     this.add.text(left, centerY + lineOffsetY, t("shop.merchant.line"), textStyle({ role: "body", size: 26, color: COLOR.ink, lineSpacing: 6, wrap: width - 60 })).setOrigin(0, 0.5).setDepth(5);
   }

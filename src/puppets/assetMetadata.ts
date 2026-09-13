@@ -529,3 +529,16 @@ export const TERISA_SD_METADATA: Omit<PuppetAsset, "url"> = {
   imageHeight: 1254,
   content: { left: 34, top: 32, right: 1219, bottom: 1222 },
 };
+
+/**
+ * 상점 점원 **오비**(오비랍토르)의 전신.
+ *
+ * 렐릭이 아니라 상점 무대에만 서는 개체라 SD 묶음이 없다 — 전투에 나가지 않기 때문이다.
+ * 값은 ZIP의 alpha 경계와 관절을 실측한 것이며, 눈 관절이 alpha 상자 안에 있어 카드·로비
+ * 비례 규칙을 그대로 통과한다(상점은 머리 관절만 쓴다).
+ */
+export const SHOP_CLERK_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1122, imageHeight: 1402,
+  content: { left: 69, top: 3, right: 879, bottom: 1359 },
+  joints: { center: [608, 371], head: [576, 284], eyes: [[534, 300], [625, 262]], feet: [[474, 1280], [698, 1360]] },
+};

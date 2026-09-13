@@ -78,7 +78,10 @@ export const INFO_JA = {
   "info.skin.equip": "装着",
   "info.skin.equipped": "装着中",
   "info.skin.owned": "所持",
-  "info.skin.locked": "未所持 · ロック",
+  "info.skin.locked": "未所持",
+  "info.skin.purchasable": "未所持",
+  "info.skin.comingSoon": "未公開",
+  "info.skin.buy": "購入",
 
   "info.skill.passive": "パッシブ",
   "info.skill.basic": "通常攻撃",

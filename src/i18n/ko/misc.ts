@@ -36,6 +36,7 @@ export const MISC_KO = {
   "shop.exchangeList": "교환 목록",
   "shop.exchangeRemaining": "남은 교환 {remaining}/{limit}",
   "shop.exchangeDone": "교환이 완료되었습니다.",
+  "shop.merchant.line": "오, 오셔서 감사합니다…! 오늘 들어온 건 다 꺼내 뒀어요. 천천히 보세요.",
 
   // 스킬 쪽지
   "skill.effect.physical": "물리 피해",
@@ -105,6 +106,9 @@ export const MISC_KO = {
   "stageComplete.tapToConfirm": "화면을 눌러 확인",
   "stageComplete.firstClear": "최초 클리어 보상",
   "stageComplete.repeatClear": "반복 클리어 보상",
+  "stageComplete.toResearch": "연구소",
+  "stageComplete.toRelics": "렐릭 강화",
+  "stageComplete.toMap": "지도로",
 
   // 전투 프로필·보상
   "battle.profile.down": "전투 불능",
@@ -126,6 +130,21 @@ export const MISC_KO = {
   "relics.sort.power": "전투력순",
   "relics.owned": "보유 렐릭",
   "relics.unowned": "미보유 렐릭",
+  "relics.filter": "필터",
+  "relics.filter.element": "속성",
+  "relics.filter.role": "직군",
+  "relics.filter.reach": "사거리",
+  "relics.filter.reset": "조건 해제",
+  "relics.search": "이름 검색",
+
+  // 속성 상성·직군 안내
+  "affinity.chart": "속성 상성",
+  "affinity.strong": "유리 ×{multiplier}",
+  "affinity.weak": "불리 ×{multiplier}",
+  "role.desc.warrior": "지속 교전에서 꾸준히 때린다.",
+  "role.desc.tank": "앞줄을 지키며 아군 대신 받아 낸다.",
+  "role.desc.assassin": "빠르게 파고들어 한 번에 몰아친다. 오래 버티지는 못한다.",
+  "role.desc.support": "회복과 강화로 아군을 세운다.",
 
   // 무역·점수 상세
   "trade.value": "가치 {percent}%",

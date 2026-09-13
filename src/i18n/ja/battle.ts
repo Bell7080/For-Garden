@@ -25,16 +25,7 @@ export const BATTLE_JA = {
 
   "battle.gauge.frenzy": "暴走 {value} / {max}",
   "battle.gauge.ferocity": "野性 {value} / {max}",
-
-  "battle.result.defeat": "作戦失敗",
-  "battle.result.noReward": "獲得報酬なし",
-  "battle.result.toMap": "マップへ",
   "battle.result.saveFailed": "結果を保存できませんでした",
   "battle.result.retry": "再試行",
-  "battle.result.expeditionWin": "遠征交戦勝利",
-  "battle.result.expeditionLose": "遠征隊全滅",
-  "battle.result.save": "結果を保存",
-  "battle.result.settle": "終了精算",
-  "battle.result.defeatLoot": "敗北戦利品の精算",
   "battle.result.nodeScore": "遠征スコア +{score}",
 } as const;

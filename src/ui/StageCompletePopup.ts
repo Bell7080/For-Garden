@@ -31,7 +31,27 @@ export interface StageCompleteFighter {
  */
 export type StageCompleteReward =
   | { kind: "storyClear"; cheesecakeEarned: number; firstClear: boolean }
-  | { kind: "loot"; items: readonly RewardPopupItem[]; footnote?: string };
+  | { kind: "loot"; items: readonly RewardPopupItem[]; footnote?: string }
+  /**
+   * 작전 실패.
+   *
+   * **승리와 같은 결산창을 쓴다.** 예전에는 전장 위에 검은 띠 하나와 버튼 둘을 얹어 끝냈는데,
+   * 같은 전투가 이겼을 때는 편성과 MVP와 기여도를 보여 주고 졌을 때는 아무것도 말하지 않았다 —
+   * 정작 무엇이 모자랐는지 알고 싶은 쪽은 진 판이다. 판은 그대로 두고 **색만 가라앉히며**,
+   * 보상이 서던 자리에는 받을 것이 없으므로 **다음에 할 일**이 대신 선다.
+   */
+  | {
+      kind: "defeat";
+      actions: readonly StageCompleteAction[];
+      /** 지는 길에도 걷어 온 것이 있으면(원정 전멸 정산) 버튼 위에 같은 액자 줄로 선다. */
+      items?: readonly RewardPopupItem[];
+    };
+
+/** 실패 결산창의 버튼 한 장. 무엇을 하면 강해지는지만 말한다. */
+export interface StageCompleteAction {
+  readonly label: string;
+  readonly onPress: () => void;
+}
 
 export interface StageCompletePopupOptions {
   reward: StageCompleteReward;
@@ -53,6 +73,15 @@ const HEIGHT = 1200;
 const REWARD_ROW = { y: 300, frame: 132, gap: 168 } as const;
 
 /**
+ * 실패 결산창이 보상 자리에 세우는 버튼 줄.
+ *
+ * 가로로 늘어놓지 않고 **세로로 쌓는다** — 셋을 한 줄에 두면 글자가 칸을 넘고, 무엇보다 이
+ * 자리는 고를 것이 하나뿐인 영수증이 아니라 **다음에 어디로 갈지**를 고르는 자리라 줄마다
+ * 한 번씩 읽혀야 한다.
+ */
+const DEFEAT_ACTIONS = { top: 252, width: 420, height: 86, gap: 18, belowLoot: 396 } as const;
+
+/**
  * MVP는 크게, 좌우 둘은 작게 — 가로 간격은 예전 카드 규격을 그대로 빌려 쓰고, 세로는 발끝이
  * 한 줄에 맞도록 SD 그림 높이만 다르게 잡는다. `groundY`가 모두 같은 값을 쓰는 이유다.
  */
@@ -69,6 +98,7 @@ export class StageCompletePopup {
   constructor(private readonly scene: Phaser.Scene, private readonly popups: PopupLayer) {}
 
   open(options: StageCompletePopupOptions): void {
+    const defeated = options.reward.kind === "defeat";
     const loot = options.reward.kind === "loot" ? options.reward.items.filter(({ amount }) => amount > 0) : [];
     const shownRewards = options.reward.kind === "storyClear"
       ? (Math.floor(options.reward.cheesecakeEarned) > 0 ? 1 : 0)
@@ -81,7 +111,9 @@ export class StageCompletePopup {
     let disposed = false;
     setDebugRewardPopup(true, shownRewards, { x: BASE_WIDTH / 2, y: BASE_HEIGHT / 2 });
     this.popups.open({
-      width: WIDTH, height: HEIGHT, dim: true, dimAlpha: 0.5,
+      // 진 판은 한 겹 더 어둡다. 판 자체를 다른 모양으로 만들지 않고 **뒤를 더 덮는 것**만으로
+      // 가라앉히는 이유는, 같은 창을 보고 있다는 것이 먼저 읽혀야 하기 때문이다.
+      width: WIDTH, height: HEIGHT, dim: true, dimAlpha: defeated ? 0.74 : 0.5,
       // 영수증과 같은 계약이라 팝업 안팎 어디를 눌러도 닫히고, 별도 닫기 버튼은 두지 않는다.
       closeOnBackdrop: true, hideCloseButton: true,
       onClose: () => {
@@ -101,7 +133,7 @@ export class StageCompletePopup {
       closeCatcher.on("pointerup", close);
       body.add(closeCatcher);
 
-      this.buildTitle(body);
+      this.buildTitle(body, defeated);
       // SD는 body 바깥, 팝업 층 바로 위에 화면 좌표로 세운다.
       puppetLayer = this.scene.add.container(0, 0).setDepth((body.parentContainer?.depth ?? 0) + 1);
       this.buildFighterPuppets(body, puppetLayer, puppets, () => disposed, options.fighters);
@@ -112,8 +144,13 @@ export class StageCompletePopup {
         onClick: () => { attackButton?.setVisible(false); options.onOpenContribution(() => { if (!disposed) attackButton?.setVisible(true); }); },
       });
       body.add(attackButton);
-      body.add(drawHairline(this.scene, 0, 168, WIDTH - 140, { color: COLOR.accent, alpha: 0.3 }));
+      body.add(drawHairline(this.scene, 0, 168, WIDTH - 140, { color: defeated ? COLOR.danger : COLOR.accent, alpha: 0.3 }));
       if (options.reward.kind === "storyClear") this.buildClearReward(body, Math.floor(options.reward.cheesecakeEarned), options.reward.firstClear);
+      else if (options.reward.kind === "defeat") {
+        const carried = (options.reward.items ?? []).filter(({ amount }) => amount > 0);
+        if (carried.length > 0) this.buildLoot(body, carried);
+        this.buildDefeatActions(body, close, options.reward.actions, carried.length > 0);
+      }
       else this.buildLoot(body, loot, options.reward.footnote);
 
       // 팝업 밖(화면 고정 좌표)에 두되, 이 층 바로 위에만 머물게 한다 — 그래야 기여도 그래프가
@@ -125,16 +162,52 @@ export class StageCompletePopup {
     });
   }
 
-  /** "Victory!"는 튀어 오르듯 한 번 확대했다 가라앉고, 양옆의 별 표식이 축하 인상을 더한다. */
-  private buildTitle(body: Phaser.GameObjects.Container): void {
+  /**
+   * 표제.
+   *
+   * "Victory!"는 튀어 오르듯 한 번 확대했다 가라앉고, 양옆의 별 표식이 축하 인상을 더한다.
+   * **"Defeat"는 반대로 위에서 내려앉는다** — 같은 자리·같은 크기지만 붉게 물들고 별 대신
+   * 아무것도 서지 않으며, 커졌다 줄어드는 대신 조금 위에서 미끄러져 내려와 멈춘다. 글자만
+   * 바꾸면 같은 축포가 진 판에서도 터진다.
+   */
+  private buildTitle(body: Phaser.GameObjects.Container, defeated: boolean): void {
     const y = -HEIGHT / 2 + 108;
-    const title = this.scene.add.text(0, y, "Victory!", textStyle({ role: "display", size: 64, color: COLOR.accentText })).setOrigin(0.5);
+    const title = this.scene.add
+      .text(0, y, defeated ? "Defeat" : "Victory!", textStyle({ role: "display", size: 64, color: defeated ? COLOR.dangerText : COLOR.accentText }))
+      .setOrigin(0.5);
     title.setShadow(0, 4, "#000000", 6, false, true);
+    body.add(title);
+    if (defeated) {
+      title.setY(y - 34).setAlpha(0);
+      this.scene.tweens.add({ targets: title, y, alpha: 1, duration: 380, ease: "Cubic.Out" });
+      return;
+    }
     title.setScale(0.5);
     this.scene.tweens.add({ targets: title, scale: 1.12, duration: 260, ease: "Back.Out", onComplete: () => this.scene.tweens.add({ targets: title, scale: 1, duration: 140, ease: "Sine.Out" }) });
     const starLeft = drawGlyph(this.scene, "bookmark", -title.width / 2 - 44, y, 40, COLOR.accent);
     const starRight = drawGlyph(this.scene, "bookmark", title.width / 2 + 44, y, 40, COLOR.accent);
-    body.add([title, starLeft, starRight]);
+    body.add([starLeft, starRight]);
+  }
+
+  /**
+   * 보상 자리에 서는 **다음에 할 일**.
+   *
+   * 진 판에는 받을 것이 없다 — 그 자리를 비워 두면 판 아래 절반이 통째로 빈 상자가 되고,
+   * "보상 없음" 같은 문장을 적으면 플레이어가 지금 할 일은 바뀌지 않는다. 대신 강해지는 길로
+   * 가는 입구를 세운다. 어느 길인지는 부르는 쪽(전투 화면)이 정하고 이 판은 줄만 쌓는다.
+   */
+  private buildDefeatActions(body: Phaser.GameObjects.Container, close: () => void, actions: readonly StageCompleteAction[], belowLoot: boolean): void {
+    const top = belowLoot ? DEFEAT_ACTIONS.belowLoot : DEFEAT_ACTIONS.top;
+    actions.forEach((action, index) => {
+      const y = top + index * (DEFEAT_ACTIONS.height + DEFEAT_ACTIONS.gap);
+      body.add(new Button(this.scene, 0, y, {
+        width: DEFEAT_ACTIONS.width, height: DEFEAT_ACTIONS.height, label: action.label, fontSize: 30,
+        // **고른 길을 먼저 알리고 그다음 닫는다.** 판은 화면 아무 곳이나 눌러도 닫히고 그
+        // 닫힘이 "아무것도 고르지 않았다"는 기본 행선지를 부르므로, 닫기를 먼저 부르면 고른
+        // 길과 기본 길이 같은 틱에 둘 다 선다.
+        onClick: () => { action.onPress(); close(); },
+      }));
+    });
   }
 
   /**

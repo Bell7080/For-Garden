@@ -49,6 +49,14 @@ import { powerSavingPolicy } from "../core/settings";
 /** 확대된 애착 렐릭의 골반 아래가 내비게이션 뒤로 자연스럽게 이어지는 기준선. */
 const STAGE_FLOOR = 1660;
 
+/**
+ * 로비에 선 애착 렐릭의 층.
+ *
+ * 배경 원화(-30)보다 위, 조작(0 이상)보다 아래다. **가장자리를 누르는 비네트는 이 바로 위**에
+ * 깔려 배경과 인물을 한 번에 누른다 — 배경만 누르면 인물이 혼자 밝게 떠 오려 붙인 것으로 보인다.
+ */
+const LOBBY_PORTRAIT_DEPTH = -20;
+
 /** 교류의 강조색. 출격의 주황과 마주 보는 자리라 성격이 다른 색을 쓴다. */
 const EXCHANGE_BLUE = 0x6fa8d6;
 
@@ -477,7 +485,11 @@ export class LobbyScene extends Phaser.Scene {
     const cx = BASE_WIDTH / 2;
     addSceneBackground(this, BACKGROUND.lobby);
     // 가장자리를 눌러 화면 가운데의 렐릭에 눈이 먼저 가게 한다.
-    drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { depth: -26, strength: 0.62 });
+    //
+    // **렐릭 위에 깐다.** 배경 원화만 누르고 그 위에 세운 전신은 그대로 두었을 때는, 눌린 배경
+    // 위에 혼자 밝은 인물이 떠 한 장면이 아니라 배경에 오려 붙인 스티커로 보였다 — 비네트는
+    // 가운데를 비워 두므로 얼굴은 그대로 밝고 어깨 밖으로 벗어난 자락만 함께 잦아든다.
+    drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { depth: LOBBY_PORTRAIT_DEPTH + 1, strength: 0.62 });
     // 하단 조작부의 글자 대비를 유지하되 원화는 은은하게 이어 보이도록 반투명 바닥만 얹는다.
     this.add
       .rectangle(cx, (STAGE_FLOOR + NAV_TOP) / 2, BASE_WIDTH, NAV_TOP - STAGE_FLOOR, COLOR.void, 0.24)
@@ -570,7 +582,7 @@ export class LobbyScene extends Phaser.Scene {
       // 자리·바닥선·키 보정은 모두 `LOBBY_PORTRAIT_SPOT`이 정한다. 화면이 좌표를 적지 않는다.
       ...lobbyPortraitPlacement(asset),
       // 전용 원화가 연결된 두 캐릭터는 원본 색을 유지한다.
-      depth: -20,
+      depth: LOBBY_PORTRAIT_DEPTH,
     });
     // 로비 대표 Puppet만 장식 예산을 opt-in하며 입력과 서버/게임 시계에는 영향을 주지 않는다.
     nextFavorite.setDecorativeUpdateFactor(powerSavingPolicy(session.settings).idlePuppetUpdateFactor);

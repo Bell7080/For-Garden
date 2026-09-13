@@ -24,6 +24,39 @@ export function infoPortraitPlacement(asset: PuppetAsset, focus: { x: number; y:
 }
 
 /**
+ * 원화 감상(돋보기)의 여백.
+ *
+ * 화면 네 변에서 이만큼만 비우고 나머지를 그림이 다 쓴다. 0으로 두지 않는 이유는 정수리와
+ * 발끝이 화면 변에 딱 붙으면 잘린 것처럼 보이기 때문이다.
+ */
+export const GALLERY_PORTRAIT_MARGIN = 26;
+
+/**
+ * 돋보기로 여는 감상 자리.
+ *
+ * **그림이 한 조각도 잘리지 않는다.** 정보창의 전신은 코어 관절을 기준으로 크게 세워 종아리쯤에서
+ * 판 밑변에 잘리는데, 그것을 자세히 보려고 누른 자리에서 같은 방식으로 세우면 더 크게 잘린
+ * 그림을 볼 뿐이다. 여기서는 alpha 경계의 **가로와 세로 둘 다** 화면 안에 들어오는 배율을 고르고
+ * (둘 중 작은 쪽), 그림 한가운데를 화면 한가운데에 둔다.
+ *
+ * **개체별 보정(`portraitZoom`·`portraitOffsetY`)을 태우지 않는다.** 그 둘은 정보창에서 여러
+ * 개체의 얼굴 크기와 시각 중심을 맞추려고 둔 값이라, 통째로 보는 자리에서 곱하면 어떤 원화는
+ * 다시 화면 밖으로 나간다.
+ */
+export function galleryPortraitPlacement(asset: PuppetAsset): { x: number; groundY: number; height: number } {
+  const contentWidth = asset.content.right - asset.content.left;
+  const contentHeight = asset.content.bottom - asset.content.top;
+  const scale = Math.min(
+    (BASE_WIDTH - GALLERY_PORTRAIT_MARGIN * 2) / contentWidth,
+    (BASE_HEIGHT - GALLERY_PORTRAIT_MARGIN * 2) / contentHeight,
+  );
+  const height = contentHeight * scale;
+  // `computePlacement`는 그림의 가로 가운데를 `x`에, 밑변을 `groundY`에 맞춘다 — 세로 가운데에
+  // 두려면 밑변이 화면 중심보다 그림 높이의 절반만큼 아래에 있으면 된다.
+  return { x: BASE_WIDTH / 2, groundY: BASE_HEIGHT / 2 + height / 2, height };
+}
+
+/**
  * 로비 광장에 선 애착 렐릭의 자리.
  *
  * 예전에는 상자 하나에 그림을 욱여넣어 크기를 정했다. 그러면 캔버스 여백과 등신이 원화마다

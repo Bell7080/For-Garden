@@ -11,7 +11,9 @@ import { EnemyInfoPopup } from "../ui/EnemyInfoPopup";
 import { bindLongPress } from "../ui/longPressInfo";
 import type { PuppetCreature } from "../puppets/assets";
 import { placePuppet, spawnPuppet } from "../puppets/assets";
-import { getBattleStage, getStageEnemies } from "../data/stages";
+import { getBattleStage, getStageEnemies, stageEnemyGrowth } from "../data/stages";
+import { STAGE_ELITE } from "../data/stageElite";
+import { addStageEliteMark } from "../ui/stageEliteMark";
 import { session } from "../state/session";
 import { gameApi } from "../api/FakeServer";
 import { GameApiError } from "../api/contracts";
@@ -34,7 +36,7 @@ import { combatPower } from "../core/combatPower";
 import { formationMembers, tapFormationSlot, tapRosterRelic, toFormationSlots } from "../core/formationSlots";
 import { moveFormationSlot } from "../core/formation";
 import { addFormationRemoveChip, addFormationSlotPlate, addFormationSlotSelection } from "../ui/formationSlotChrome";
-import { PARTY_ALLY_PLATE, PARTY_POWER_PLATE, PARTY_PREVIEW, PARTY_PREVIEW_COLUMNS, partyAllyGroundOffset, partyAllyPlateBox, partyAllySlotBox } from "../ui/partyPreviewLayout";
+import { PARTY_ALLY_PLATE, PARTY_POWER_PLATE, PARTY_PREVIEW, PARTY_PREVIEW_COLUMNS, partyAllyGroundOffset, partyAllyPlateBox, partyAllySlotBox, partyPreviewEnemyColumns } from "../ui/partyPreviewLayout";
 import { bindFormationDrag } from "../ui/formationDrag";
 import { FORMATION_DRAG_VISUAL } from "../ui/formationDragVisual";
 import { createFormationDragVisualController, type FormationDragVisualController } from "../ui/formationDragVisualController";
@@ -184,7 +186,9 @@ export class PartyScene extends Phaser.Scene {
     // 손상된 런타임 파티만 보유 목록 기반 자동 편성으로 안전하게 대체한다.
     if (formationMembers(this.picked).length !== 3) this.picked = toFormationSlots(autoPickParty(relicCollection.owned, this.enemies), 3);
     this.add.text(cx, 70, `${stage.id}  ${stage.name}`, textStyle({ role: "display", size: 46 })).setOrigin(0.5, 0);
-    this.buildPreview(this.enemies, stage.enemies);
+    // 성장 스냅샷은 능력치 사본과 **같은 자리 순서**로 넘긴다 — 배열 순서로 넘기면 아모의
+    // 레벨이 리파 밑에 적힌다.
+    this.buildPreview(this.enemies, stageEnemyGrowth(stage), stage.elite === true);
     this.buildRoster();
 
     // 그리드 위 우측 — 고르는 손이 그리드에 머무는 동안 곧바로 닿는 자리다. 그리드 오른쪽
@@ -276,7 +280,7 @@ export class PartyScene extends Phaser.Scene {
    * 로마자, 레벨과 이름은 한 줄에 강조색으로. 두 화면이 같은 적을 다른 글로 적으면 같은 값이
    * 어디서는 표식, 어디서는 문장이 된다.
    */
-  private buildPreview(enemies: readonly RelicDef[], growth: readonly { level: number; breakthrough: number; ferocityLevel?: number }[]): void {
+  private buildPreview(enemies: readonly RelicDef[], growth: readonly { level: number; breakthrough: number; ferocityLevel?: number }[], elite: boolean): void {
     // 두 줄 사이의 대치선.
     this.add
       .line(0, 0, 120, FRONT_LINE, BASE_WIDTH - 120, FRONT_LINE, COLOR.panelEdge)
@@ -284,12 +288,17 @@ export class PartyScene extends Phaser.Scene {
       .setLineWidth(2)
       .setAlpha(0.45);
 
+    // **몇이 서느냐가 자리를 정한다** — 정예 하나면 가운데 한 칸만 쓴다.
+    const enemyColumns = partyPreviewEnemyColumns(enemies.length);
+    const bodyScale = elite ? STAGE_ELITE.bodyScale : 1;
     enemies.forEach((def, slot) => {
       const snapshot = growth[slot] ?? { level: 1, breakthrough: 0 };
-      const x = PREVIEW_COLUMNS[slot];
+      const x = enemyColumns[slot] ?? PREVIEW_COLUMNS[slot];
       // 받침은 SD(-10)보다 뒤에 둬야 발을 덮지 않는다.
-      this.add.ellipse(x, ENEMY_ROW + 4, 190, 34, COLOR.void, 0.45).setDepth(-12);
-      void this.standSD(def.id, x, ENEMY_ROW, true);
+      this.add.ellipse(x, ENEMY_ROW + 4, 190 * bodyScale, 34, COLOR.void, 0.45).setDepth(-12);
+      void this.standSD(def.id, x, ENEMY_ROW, true, bodyScale);
+      // 셋이 아니라 하나가 선 자리라는 것을 머리 위 이름표가 말한다.
+      if (elite) addStageEliteMark(this, undefined, x, ENEMY_ROW - PREVIEW_HEIGHT * bodyScale - 6, 28).setDepth(3);
 
       const badgeTop = ENEMY_ROW - PREVIEW_HEIGHT + 34;
       this.add.existing(new AffinityBadge(this, x - 104, badgeTop, ELEMENT_ICON[def.element], 52, 0.62)).setDepth(3);
@@ -432,11 +441,12 @@ export class PartyScene extends Phaser.Scene {
   }
 
   /** 미리보기용 SD 하나를 세운다. 씬을 떠난 뒤 도착한 로딩은 그대로 버린다. */
-  private async standSD(relicId: string, x: number, groundY: number, enemy: boolean): Promise<PuppetCreature | undefined> {
+  private async standSD(relicId: string, x: number, groundY: number, enemy: boolean, bodyScale = 1): Promise<PuppetCreature | undefined> {
     const creature = await spawnPuppet(this, relicAppearanceManager.battleAssetFor(relicId, enemy ? "enemy" : "ally"), {
       x,
       groundY,
-      height: PREVIEW_HEIGHT,
+      // 정예는 혼자 서는 만큼 몸이 크다. 전투 화면의 `enemyBodyScale`과 같은 값을 쓴다.
+      height: PREVIEW_HEIGHT * bodyScale,
       flipX: enemy,
       // 전투 화면과 같은 규칙 — 임시 공용 적만 색으로 구분한다.
       depth: -10,

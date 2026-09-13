@@ -165,14 +165,27 @@ export async function runLoadingSteps(
   scene: Phaser.Scene,
   onStepDone: (done: number, total: number) => void,
   steps: ReadonlyArray<LoadingStep> = LOADING_STEPS,
+  /**
+   * 0~1로 흐르는 진행률. 칸은 끝난 단계만 세지만 아래 숫자는 그 사이도 말해야 한다.
+   *
+   * 파일을 읽는 단계는 Phaser 로더가 알려 주는 몫까지 실어 보내고, 글꼴·Puppet처럼 진행을
+   * 알려 주지 않는 단계는 끝나는 순간에만 오른다 — 없는 진행을 지어내지 않는다.
+   */
+  onProgress?: (ratio: number) => void,
 ): Promise<void> {
   for (let i = 0; i < steps.length; i++) {
+    // 상수 대신 문자열을 쓰는 것은 이 모듈이 Phaser를 값으로 들이지 않기 때문이다
+    // (`Phaser.Loader.Events.PROGRESS`와 같은 값이다).
+    const onLoaderProgress = (value: number): void => onProgress?.((i + value) / steps.length);
+    scene.load.on("progress", onLoaderProgress);
     try {
       await steps[i].run(scene);
     } catch {
       // 실패한 단계도 칸은 채운다. 진행이 멈춘 것처럼 보이는 편이 더 나쁘다.
     }
+    scene.load.off("progress", onLoaderProgress);
     if (!scene.scene.isActive()) return;
+    onProgress?.((i + 1) / steps.length);
     onStepDone(i + 1, steps.length);
   }
 }

@@ -11,6 +11,8 @@ import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
 import { addBreakthroughGradeMark } from "./rarityMark";
 import { combatPower } from "../core/combatPower";
 
+import { STAGE_ELITE } from "../data/stageElite";
+import { addStageEliteMark } from "./stageEliteMark";
 import { anchorEnemyPreview, enemyPreviewColumns, enemyPreviewSlotHalfWidth, NODE_ENEMY_PREVIEW, NODE_ENEMY_SITUATION, NODE_ENEMY_SLOT } from "./nodeEnemyPreviewLayout";
 
 export interface NodeEnemyPreviewOptions {
@@ -20,6 +22,12 @@ export interface NodeEnemyPreviewOptions {
   /** 렌더된 적과 같은 슬롯 순서의 공개 성장 상태다. */
   growth: readonly Pick<StageEnemyDef, "level" | "breakthrough" | "ferocityLevel">[];
   enemies: readonly RelicDef[];
+  /**
+   * **단일 정예 조우**인가. 그러면 그 하나가 크게 서고 머리 위에 정예 이름표가 붙는다.
+   *
+   * 수를 세어 판단하지 않는다 — 원정의 최종층 보스도 하나이지만 그쪽은 정예가 아니라 보스다.
+   */
+  elite?: boolean;
   top: number;
   bottom: number;
   depth?: number;
@@ -48,7 +56,7 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
   }
 
   /** 새 노드의 제목·레벨·편성을 원자적으로 갈아 끼우고 노드에 꼬리를 붙인다. */
-  showAt(nodeY: number, options: Partial<Pick<NodeEnemyPreviewOptions, "title" | "situation" | "growth" | "enemies" | "onEnemyClick">> = {}): void {
+  showAt(nodeY: number, options: Partial<Pick<NodeEnemyPreviewOptions, "title" | "situation" | "growth" | "enemies" | "elite" | "onEnemyClick">> = {}): void {
     this.options = { ...this.options, ...options };
     this.removeAll(true); this.clearPuppets();
     const generation = ++this.generation;
@@ -95,7 +103,10 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
       const hit = this.scene.add.rectangle(x, ground - 70, compact ? 145 : 230, 300, 0xffffff, 0).setInteractive({ useHandCursor: true });
       // 누른 칸의 성장 상태를 함께 넘긴다 — 화면이 배열 index로 다시 찾으면 순서가 바뀌는 날 어긋난다.
       hit.on("pointerup", () => this.options.onEnemyClick(enemy, growth)); this.add(hit);
-      void this.spawnEnemy(enemy.id, x, ground, compact ? 158 : NODE_ENEMY_PREVIEW.sdHeight, generation);
+      const sdHeight = (compact ? 158 : NODE_ENEMY_PREVIEW.sdHeight) * (this.options.elite ? STAGE_ELITE.bodyScale : 1);
+      void this.spawnEnemy(enemy.id, x, ground, sdHeight, generation);
+      // 셋이 아니라 하나가 선 자리라는 것을 머리 위 이름표가 말한다.
+      if (this.options.elite) addStageEliteMark(this.scene, this, x, ground - sdHeight - 6, compact ? 22 : 26);
     });
     // **판 아래는 이 편성이 얼마나 센가 한 줄이다.** 개체별 수치를 다 읽지 않고도 붙어 볼지
     // 말지를 정할 수 있어야 한다. 전투력은 표시·정렬 전용이라 전투 계산에는 들어가지 않는다.

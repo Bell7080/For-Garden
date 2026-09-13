@@ -40,25 +40,66 @@ function enemyGrowth(relicId: string, level: number, breakthrough: number, forma
  */
 const CHAPTER_ONE_LEVELS: readonly number[] = [4, 5, 6, 7, 7, 8, 9, 9, 10, 10];
 
-/** 1장에서 야성으로 얹히는 몫. 관문이 뒤로 갈수록 같은 개체가 더 사나워진다. */
-const CHAPTER_ONE_FEROCITY: readonly number[] = [1, 2, 2, 2, 3, 3, 3, 3, 3, 4];
+/**
+ * 1장에서 야성으로 얹히는 몫. 관문이 뒤로 갈수록 같은 개체가 더 사나워진다.
+ *
+ * 정예 관문의 자리(1-5·1-10)는 이 표를 읽지 않는다 — 그 둘은 `CHAPTER_ONE_ELITE_FEROCITY`가 갖는다.
+ *
+ * 1-8이 3에서 4로 오른 것은 돌파 축을 걷어 낸 자리를 메우기 위해서다. 예전에는 1-7과 1-8이
+ * 같은 레벨·같은 야성이고 돌파만 0과 1로 달랐는데, 그 돌파가 만들 수 없는 값이라 걷어 내자
+ * 두 관문이 글자 하나까지 같아졌다.
+ */
+const CHAPTER_ONE_FEROCITY: readonly number[] = [1, 2, 2, 2, 3, 3, 3, 4, 4, 4];
 
-/** 1장 후반 셋만 별 둘로 서서 마지막 세 관문의 무게를 레벨이 아닌 축으로도 올린다. */
-const CHAPTER_ONE_BREAKTHROUGHS: readonly number[] = [0, 0, 0, 0, 0, 0, 0, 1, 1, 1];
+/**
+ * **단일 정예 관문.** 그 자리에는 셋 대신 하나가 선다.
+ *
+ * 원정 지도의 정예 노드와 같은 문법이다 — 여럿 대신 하나가 나오고 그 하나가 더 무겁다.
+ * 1-5는 방벽을 뜯고 혼자 남은 토비, 1-10은 공멸 선봉 코마다.
+ *
+ * **무거워지는 몫은 아래 야성 표 하나에만 있다.** 정예라고 능력치에 배율을 곱하지 않는다 —
+ * 곱하는 순간 화면에 선 `LV.n`과 실제로 맞는 수치가 갈리고, 관문을 조일 때 움직일 수가 둘이
+ * 된다. 정예 표식이 여는 것은 몸집과 표식뿐이다(`STAGE_ELITE`).
+ */
+const CHAPTER_ONE_ELITES: Readonly<Record<number, string>> = { 5: "toby", 10: "husk-koma" };
 
-const CHAPTER_ONE_ENEMIES: readonly [StageEnemyDef, StageEnemyDef, StageEnemyDef][] =
+/**
+ * 정예가 홀로 설 때의 야성 몫.
+ *
+ * 셋이 나눠 내던 화력과 체력을 하나가 대신하므로 잡졸 표(`CHAPTER_ONE_FEROCITY`)보다 훨씬
+ * 크다. 값은 눈대중이 아니라 실제 전투로 잰다 — 바닥 파티를 두 갈래로 세워 돌리고, 잔여 체력
+ * 평균이 같은 장의 다른 관문과 같은 띠(0.61~0.73)에 들어오는 자리를 고른다.
+ *
+ * **여기를 더 올려도 관문이 무거워지지는 않는다.** 하나가 셋을 상대하는 자리라 그 하나가 한
+ * 번에 때릴 수 있는 것도 하나뿐이고, 그래서 야성을 80까지 올려도 바닥 파티의 잔여 체력이
+ * 0.62에서 0.58 언저리로만 움직였다(한 명이 쓰러지고 나머지 둘은 멀쩡한 판이 그대로 남는다).
+ * **정예가 실제로 무서워지는 몫은 수치가 아니라 그 개체의 기술이다** — 토비의 「일단 뜯고
+ * 본다」가 주위를 통째로 넘기고 코마의 「추락하는 방주」가 통로를 뚫는 것이 그 때문이다.
+ * 관문이 가벼워 보이면 이 수를 키우기 전에 그 개체가 몇을 때리는지를 먼저 본다.
+ */
+const CHAPTER_ONE_ELITE_FEROCITY: Readonly<Record<number, number>> = { 5: 20, 10: 22 };
+
+/**
+ * 1장의 적 편성. 정예 관문만 하나가 서고 나머지는 같은 셋이 같은 자리에 선다.
+ *
+ * **돌파는 어느 관문에도 없다.** 돌파는 레벨 상한(20)을 채운 뒤에만 뚫리는데 1장의 적은
+ * 열 관문 내내 그 절반에도 닿지 않는다 — 그런데도 마지막 셋이 돌파 1로 서 있어, 정보창이
+ * `LV.10 / 상한 20`과 돌파 등급 II를 나란히 세웠다. 플레이어가 만들 수 없는 성장을 화면이
+ * 가르치는 자리라, 그 축을 걷어 내고 무게는 레벨과 야성 둘로만 낸다.
+ */
+const CHAPTER_ONE_ENEMIES: readonly (readonly StageEnemyDef[])[] =
   CHAPTER_ONE_LEVELS.map((level, index) => {
-    const breakthrough = CHAPTER_ONE_BREAKTHROUGHS[index] ?? 0;
-    // 마지막 관문만 중간보스 코마가 토비 자리를 대신한다. 호위보다 낮은 레벨로 서지 않는다.
-    const ids = index === CHAPTER_ONE_LEVELS.length - 1 ? ["amo", "husk-koma", "ripa"] : ["amo", "toby", "ripa"];
+    const chapterOrder = index + 1;
+    const eliteId = CHAPTER_ONE_ELITES[chapterOrder];
+    // 홀로 서는 정예는 가운데 자리(1)를 쓴다 — 왼쪽 끝에 세우면 빈 두 자리가 편성 실수처럼 보인다.
+    if (eliteId) return [enemyGrowth(eliteId, level, 0, 1, CHAPTER_ONE_ELITE_FEROCITY[chapterOrder] ?? 0)];
     const ferocity = CHAPTER_ONE_FEROCITY[index] ?? 0;
-    return ids.map((id, slot) => enemyGrowth(id, level, breakthrough, slot as 0 | 1 | 2, ferocity)) as
-      [StageEnemyDef, StageEnemyDef, StageEnemyDef];
+    return STAGE_ENEMY_FORMATION.map((id, slot) => enemyGrowth(id, level, 0, slot as 0 | 1 | 2, ferocity));
   });
 
 /**
  * 스테이지. 지도에서 아래에서 위로 올라가는 순서 그대로다.
- * 적은 언제나 3명으로 구성된다.
+ * 적은 셋이 기본이고 **정예 관문만 하나**다(`CHAPTER_ONE_ELITES`).
  */
 /**
  * 2·3장의 적 레벨. 1장과 같은 곡선의 이어짐이며 **레벨은 끝까지 뒤로 가지 않는다.**
@@ -96,12 +137,12 @@ const CHAPTER_SITUATIONS: readonly (readonly string[])[] = [
     "추격조가 깨진 유리 지붕을 밟고 내려온다.",
     "물에 잠긴 배양조 사이로 발소리가 흩어진다.",
     "부서진 진열장마다 같은 손자국이 남아 있다.",
-    "관제탑 무전이 끊긴 지 오래다. 응답하는 것은 적뿐이다.",
+    "관제탑 문을 뜯어낸 것이 아직 그 앞에 혼자 서 있다.",
     "구조 신호를 보내려면 무너진 안테나부터 되살려야 한다.",
     "폐기된 것들이 일어나 길을 막는다.",
     "코마의 흔적이 배수로 아래로 이어진다.",
     "봉쇄문 너머에서 무언가가 기다리고 있다.",
-    "경계문 앞. 더 물러설 곳이 없다.",
+    "경계문 앞. 코마가 홀로 길을 막고 서 있다.",
   ],
   [],
   [],
@@ -132,16 +173,24 @@ export const CHAPTERS: readonly ChapterDef[] = CHAPTER_CONTENT.map((content, cha
     const laterChapterIds = chapter === 3 && chapterOrder === 10
       ? ["amo", "pontos", "ripa"]
       : [...STAGE_ENEMY_FORMATION];
+    /*
+     * **돌파는 적지 않는다.** 예전에는 장 번호를 그대로 돌파 단계로 썼는데(2장 1단계·3장 2단계),
+     * 그 레벨은 10~18이라 상한 20을 채운 적이 없다 — 플레이어의 손으로는 만들 수 없는 성장이다.
+     * 관문의 무게는 레벨과 야성 둘로만 낸다.
+     */
     const laterChapterEnemies = laterChapterIds.map((relicId, slot) =>
-      enemyGrowth(relicId, LATER_CHAPTER_LEVELS[globalOrder - 10] ?? globalOrder + 1, Math.floor(globalOrder / 10), slot as 0 | 1 | 2, LATER_CHAPTER_FEROCITY[globalOrder - 10] ?? 0),
-    ) as [StageEnemyDef, StageEnemyDef, StageEnemyDef];
+      enemyGrowth(relicId, LATER_CHAPTER_LEVELS[globalOrder - 10] ?? globalOrder + 1, 0, slot as 0 | 1 | 2, LATER_CHAPTER_FEROCITY[globalOrder - 10] ?? 0),
+    );
+    const enemies = chapter === 1 ? CHAPTER_ONE_ENEMIES[orderIndex] : laterChapterEnemies;
     return {
       kind: "battle",
       id: `${chapter}-${chapterOrder}`, name, chapter, chapterOrder,
       // 첫 노드는 이전 챕터 끝을, 나머지는 같은 챕터의 직전 노드를 선행 조건으로 삼는다.
       prerequisiteStageIds: chapterOrder === 1 ? (prerequisiteStageId ? [prerequisiteStageId] : []) : [`${chapter}-${chapterOrder - 1}`],
       // 마지막 심층 관문은 원정 최종층과 같은 폰토스를 세워 등록된 보스가 스테이지에서도 고립되지 않게 한다.
-      enemies: chapter === 1 ? CHAPTER_ONE_ENEMIES[orderIndex] : laterChapterEnemies,
+      enemies,
+      // 혼자 서면 정예다. 화면은 이 표식으로 몸집과 표식만 바꾸고 수치는 건드리지 않는다.
+      ...(enemies.length === 1 ? { elite: true as const } : {}),
       rewards: { firstClearCheesecake: 30 + globalOrder * 5, repeatClearCheesecake: 10 + globalOrder * 2 },
       // 아직 서사가 없는 장은 이 값이 비어 있고, 화면은 그 줄을 그리지 않는다.
       situation: CHAPTER_SITUATIONS[chapterIndex]?.[orderIndex],
@@ -182,16 +231,26 @@ export function getBattleStage(id: string): Extract<StageDef, { kind: "battle" }
   return stage;
 }
 
+/**
+ * 그 관문의 적을 **전투에 서는 자리 순서**로 편다.
+ *
+ * 정렬을 호출부마다 되풀이하면 한 곳이 빠뜨렸을 때 성장 스냅샷과 능력치 사본이 서로 다른
+ * 개체를 가리킨다 — 화면은 아모의 레벨을 리파에게 적어 준다.
+ */
+export function stageEnemyGrowth(stage: Extract<StageDef, { kind: "battle" }>): readonly StageEnemyDef[] {
+  return [...stage.enemies].sort((a, b) => a.formationSlot - b.formationSlot);
+}
+
 /** 플레이어와 같은 레벨→돌파 순서로 성장시키며 영구 캐릭터 정의는 변경하지 않는다. */
-export function getStageEnemies(stage: Extract<StageDef, { kind: "battle" }>): [RelicDef, RelicDef, RelicDef] {
+export function getStageEnemies(stage: Extract<StageDef, { kind: "battle" }>): RelicDef[] {
   // 배열을 재정렬해도 실제 전투 배치는 formationSlot이라는 데이터 계약을 따른다.
-  return [...stage.enemies].sort((a, b) => a.formationSlot - b.formationSlot).map((enemy) => {
+  return stageEnemyGrowth(stage).map((enemy) => {
     const base = getRelic(enemy.relicId);
     // 야성으로 얹힌 몫도 레벨과 **같은 성장 공식**을 지난다 — 스테이지 전용 배율을 만들지 않고,
     // 관문의 무게를 그 수 하나로 움직이기 위해서다.
     const leveled = applyLevelGrowth(base.stats, effectiveEnemyLevel(enemy), base.rarity);
     return { ...base, stats: applyBreakthrough(leveled, enemy.breakthrough) };
-  }) as [RelicDef, RelicDef, RelicDef];
+  });
 }
 
 /** 장 제목과 스테이지 이름, 상황 문구를 언어별로 덮어쓸 수 있게 등록한다. */

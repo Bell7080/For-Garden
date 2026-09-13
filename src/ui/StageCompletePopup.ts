@@ -7,6 +7,8 @@ import { relicProgression } from "../managers/RelicProgressionManager";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { chipPoints, drawHairline, drawInnerVignette, drawLayer, drawShapeOutline } from "./holo";
 import { drawGlyph } from "./glyphs";
+import { addFramedIcon } from "./itemFrame";
+import type { RewardPopupItem } from "./rewardPopupModel";
 import { Button } from "./Button";
 import type { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
@@ -20,9 +22,19 @@ export interface StageCompleteFighter {
   isMvp: boolean;
 }
 
+/**
+ * 판 아래에 서는 **결과 보상**.
+ *
+ * 스토리는 치즈케이크 한 종류라 액자 하나에 첫/반복 클리어 한 줄이면 끝이지만, 원정 노드는
+ * 서버가 만든 전리품이 여럿이고 점수 증가분도 함께 말해야 한다. 둘을 **같은 판 안에서** 그리는
+ * 이유는 승리 화면과 영수증이 따로 뜨면 MVP를 보다가 창을 한 번 더 넘겨야 하기 때문이다.
+ */
+export type StageCompleteReward =
+  | { kind: "storyClear"; cheesecakeEarned: number; firstClear: boolean }
+  | { kind: "loot"; items: readonly RewardPopupItem[]; footnote?: string };
+
 export interface StageCompletePopupOptions {
-  cheesecakeEarned: number;
-  firstClear: boolean;
+  reward: StageCompleteReward;
   /** 편성 순서 그대로 셋을 넘긴다. MVP 한 명만 가운데 크게 선다. */
   fighters: readonly StageCompleteFighter[];
   /** 그래프 팝업을 연 뒤 그 팝업이 닫히면 반드시 `onClosed`를 불러야 버튼이 다시 보인다. */
@@ -32,6 +44,14 @@ export interface StageCompletePopupOptions {
 
 const WIDTH = 940;
 const HEIGHT = 1200;
+/**
+ * 보상 줄의 자리. 스토리의 치즈케이크 한 장과 원정의 전리품 여럿이 **같은 줄**을 쓴다.
+ *
+ * 액자 크기는 `RewardPopup`의 158보다 한 뼘 작다 — 그쪽은 영수증 한 장이 전부인 판이지만
+ * 여기는 위에 승리 표제와 편성 SD가 이미 서 있어, 같은 크기로 두면 보상이 MVP보다 먼저 읽힌다.
+ */
+const REWARD_ROW = { y: 300, frame: 132, gap: 168 } as const;
+
 /**
  * MVP는 크게, 좌우 둘은 작게 — 가로 간격은 예전 카드 규격을 그대로 빌려 쓰고, 세로는 발끝이
  * 한 줄에 맞도록 SD 그림 높이만 다르게 잡는다. `groundY`가 모두 같은 값을 쓰는 이유다.
@@ -49,14 +69,17 @@ export class StageCompletePopup {
   constructor(private readonly scene: Phaser.Scene, private readonly popups: PopupLayer) {}
 
   open(options: StageCompletePopupOptions): void {
-    const cheesecake = Math.floor(options.cheesecakeEarned);
+    const loot = options.reward.kind === "loot" ? options.reward.items.filter(({ amount }) => amount > 0) : [];
+    const shownRewards = options.reward.kind === "storyClear"
+      ? (Math.floor(options.reward.cheesecakeEarned) > 0 ? 1 : 0)
+      : loot.length;
     let hint: Phaser.GameObjects.Text | undefined;
     /** Puppet은 컨테이너 변환을 물려받지 않으므로 원점(0,0)에 선 전용 레이어에 화면 좌표로 세운다. */
     let puppetLayer: Phaser.GameObjects.Container | undefined;
     const puppets = new Set<PuppetCreature>();
     let attackButton: Button | undefined;
     let disposed = false;
-    setDebugRewardPopup(true, cheesecake > 0 ? 1 : 0, { x: BASE_WIDTH / 2, y: BASE_HEIGHT / 2 });
+    setDebugRewardPopup(true, shownRewards, { x: BASE_WIDTH / 2, y: BASE_HEIGHT / 2 });
     this.popups.open({
       width: WIDTH, height: HEIGHT, dim: true, dimAlpha: 0.5,
       // 영수증과 같은 계약이라 팝업 안팎 어디를 눌러도 닫히고, 별도 닫기 버튼은 두지 않는다.
@@ -90,7 +113,8 @@ export class StageCompletePopup {
       });
       body.add(attackButton);
       body.add(drawHairline(this.scene, 0, 168, WIDTH - 140, { color: COLOR.accent, alpha: 0.3 }));
-      this.buildReward(body, cheesecake, options.firstClear);
+      if (options.reward.kind === "storyClear") this.buildClearReward(body, Math.floor(options.reward.cheesecakeEarned), options.reward.firstClear);
+      else this.buildLoot(body, loot, options.reward.footnote);
 
       // 팝업 밖(화면 고정 좌표)에 두되, 이 층 바로 위에만 머물게 한다 — 그래야 기여도 그래프가
       // 같은 popups 위에 한 겹 더 쌓여도 그 뒤로 가려지고, 새치기하듯 계속 앞에 남지 않는다.
@@ -165,19 +189,56 @@ export class StageCompletePopup {
     body.add(label);
   }
 
-  /** RewardPopup과 같은 액자 하나로, 지금은 치즈케이크 한 종류만 보여 준다. */
-  private buildReward(body: Phaser.GameObjects.Container, cheesecake: number, firstClear: boolean): void {
-    const y = 300;
+  /** RewardPopup과 같은 액자 하나로, 스토리 클리어의 치즈케이크 한 종류를 보여 준다. */
+  private buildClearReward(body: Phaser.GameObjects.Container, cheesecake: number, firstClear: boolean): void {
     if (cheesecake <= 0) return;
-    const size = 132;
+    const size = REWARD_ROW.frame;
     const frame = chipPoints(size, size, { bevel: { topLeft: size * 0.215, topRight: 0, bottomRight: size * 0.215, bottomLeft: 0 } });
-    body.add(drawLayer(this.scene, 0, y, frame, { fill: 0x101722, alpha: 0.98 }));
-    body.add(this.scene.add.image(0, y, "currency-cheesecake").setDisplaySize(size * 0.76, size * 0.76));
-    body.add(drawInnerVignette(this.scene, 0, y, frame, { strength: 0.62 }));
-    body.add(drawShapeOutline(this.scene, 0, y, frame, { color: COLOR.accent, alpha: 0.82, width: 3 }));
-    const amount = this.scene.add.text(size / 2 - 11, y + size / 2 - 9, formatCurrency(cheesecake), textStyle({ role: "display", size: 30, color: COLOR.accentText })).setOrigin(1, 1);
+    body.add(drawLayer(this.scene, 0, REWARD_ROW.y, frame, { fill: 0x101722, alpha: 0.98 }));
+    body.add(this.scene.add.image(0, REWARD_ROW.y, "currency-cheesecake").setDisplaySize(size * 0.76, size * 0.76));
+    body.add(drawInnerVignette(this.scene, 0, REWARD_ROW.y, frame, { strength: 0.62 }));
+    body.add(drawShapeOutline(this.scene, 0, REWARD_ROW.y, frame, { color: COLOR.accent, alpha: 0.82, width: 3 }));
+    const amount = this.scene.add.text(size / 2 - 11, REWARD_ROW.y + size / 2 - 9, formatCurrency(cheesecake), textStyle({ role: "display", size: 30, color: COLOR.accentText })).setOrigin(1, 1);
     amount.setStroke("#000000", 6); amount.setShadow(2, 3, "#000000", 2, false, true);
     body.add(amount);
-    body.add(this.scene.add.text(0, y + size / 2 + 33, firstClear ? t("stageComplete.firstClear") : t("stageComplete.repeatClear"), textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0.5));
+    body.add(this.scene.add.text(0, REWARD_ROW.y + size / 2 + 33, firstClear ? t("stageComplete.firstClear") : t("stageComplete.repeatClear"), textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0.5));
+  }
+
+  /**
+   * 원정 노드의 전리품 — **같은 판 안에서** 액자 줄로 선다.
+   *
+   * 예전에는 승리 화면을 닫고 `RewardPopup`이 따로 떴다. 창이 둘이면 MVP를 보다가 한 번 더
+   * 넘겨야 하고, 그 사이에 방금 본 편성이 사라진다. 액자·그림 비율·수량 자리는 어디서나 같은
+   * 공용 프리팹 한 장(`addFramedIcon`)이 그리므로 여기서 다시 정하지 않는다.
+   *
+   * 점수 증가분은 액자로 세우지 않는다 — 지갑에 들어온 재화가 아니라 **이번 판이 얼마를
+   * 보탰는가**라, 줄 아래 글자 한 줄이 그 몫을 맡는다(`RewardPopup`의 `footnote`와 같은 규칙).
+   */
+  private buildLoot(body: Phaser.GameObjects.Container, items: readonly RewardPopupItem[], footnote?: string): void {
+    if (items.length === 0) {
+      if (footnote) this.buildFootnote(body, REWARD_ROW.y, footnote);
+      return;
+    }
+    // 넉 장까지는 판 안에 들어오고, 그보다 많으면 칸 사이만 좁혀 같은 줄에 담는다 — 여기는
+    // 가로로 훑을 수 있는 영수증이 아니라 한눈에 읽는 결과판이라 줄이 흐르면 안 된다.
+    const gap = Math.min(REWARD_ROW.gap, (WIDTH - 140 - REWARD_ROW.frame) / Math.max(1, items.length - 1));
+    const startX = -((items.length - 1) * gap) / 2;
+    items.forEach((item, index) => {
+      const x = startX + index * gap;
+      const holder = addFramedIcon(this.scene, body, x, REWARD_ROW.y, REWARD_ROW.frame, typeof item.icon === "string" ? item.icon : "", {
+        amount: formatCurrency(item.amount),
+      });
+      // 계정 장식처럼 전용 텍스처가 없는 결과만 기존 홀로그램 글리프 체계로 대신한다.
+      if (typeof item.icon !== "string") holder.addAt(drawGlyph(this.scene, item.icon.key, 0, 0, REWARD_ROW.frame * 0.56, COLOR.accent), 1);
+      if (item.label) body.add(this.scene.add.text(x, REWARD_ROW.y + REWARD_ROW.frame / 2 + 26, item.label, textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0.5));
+    });
+    if (footnote) this.buildFootnote(body, REWARD_ROW.y + REWARD_ROW.frame / 2 + 66, footnote);
+  }
+
+  /** 이번 판이 점수를 얼마나 보탰는가. 재화가 아니므로 액자가 아니라 글자 한 줄이다. */
+  private buildFootnote(body: Phaser.GameObjects.Container, y: number, footnote: string): void {
+    body.add(this.scene.add.text(0, y, footnote, textStyle({ role: "display", size: 34, color: COLOR.sortieText }))
+      .setOrigin(0.5)
+      .setShadow(0, 4, "#000000", 6, false, true));
   }
 }

@@ -456,7 +456,8 @@ export class ExpeditionScene extends Phaser.Scene {
       this.add.text(x, CHIP_Y, `+${overflow}`, textStyle({ role: "display", size: 22, color: "#ffffff" })).setOrigin(0.5).setStroke("#05070a", 4);
     }
     // 표식만으로는 무엇인지 알 수 없다. 누르면 전체·개인을 한 장에 모아 보여 준다.
-    const hit = this.add.rectangle(BASE_WIDTH / 2, CHIP_Y, Math.max(total + 40, 200), size + 24, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    // 입력면도 이 구역 안에 든다 — 넘치면 아래 개인 증강 칩 줄의 짧은 탭을 가로챈다.
+    const hit = this.add.rectangle(BASE_WIDTH / 2, CHIP_Y, Math.max(total + 40, 200), size + 16, 0xffffff, 0).setInteractive({ useHandCursor: true });
     hit.on("pointerup", () => this.openAugmentDetails(augments));
   }
 

@@ -32,6 +32,5 @@ export const BATTLE_EN = {
   "battle.result.save": "Save Result",
   "battle.result.settle": "Final Settlement",
   "battle.result.defeatLoot": "Defeat Loot Settlement",
-  "battle.result.nodeLoot": "Engagement Loot",
   "battle.result.nodeScore": "Expedition Score +{score}",
 } as const;

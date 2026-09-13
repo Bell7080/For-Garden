@@ -3,7 +3,7 @@ import { t } from "../i18n";
 import { BASE_WIDTH, BASE_HEIGHT } from "../config/gameConfig";
 import type { StageDef } from "../core/types";
 import { setDebugScene } from "../debug";
-import { CHAPTERS, SIDE_STORY_STAGE, STAGES, getStageEnemies } from "../data/stages";
+import { CHAPTERS, SIDE_STORY_STAGE, STAGES, getStageEnemies, stageEnemyGrowth } from "../data/stages";
 import { latestUnlockedStage } from "../core/stageProgress";
 import { EnemyInfoPopup } from "../ui/EnemyInfoPopup";
 import { storyManager } from "../managers/StoryManager";
@@ -294,7 +294,9 @@ export class StageMapScene extends Phaser.Scene {
     this.sortieButton.setLabel(t("stageMap.sortie"));
     const enemies = getStageEnemies(stage);
     this.enemyPreview.showAt(scroll - index * NODE_GAP, {
-      title: `${stage.id}  ${stage.name}`, growth: stage.enemies, enemies,
+      // 성장 스냅샷은 능력치 사본과 **같은 자리 순서**로 넘긴다 — 배열 순서로 넘기면 아모의
+      // 레벨이 리파 밑에 적힌다.
+      title: `${stage.id}  ${stage.name}`, growth: stageEnemyGrowth(stage), enemies, elite: stage.elite === true,
       // 서사가 없는 관문은 `undefined`가 그대로 넘어가 직전 노드의 줄이 남지 않는다.
       situation: stage.situation,
       // 전투 전에도 전투와 동일한 공용 적 정보창으로 연결한다.

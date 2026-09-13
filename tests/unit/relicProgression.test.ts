@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { breakthroughFragmentCost, breakthroughSlotGrade, BREAKTHROUGH_STEPS, calculateFinalStats, canBreakThrough, isBreakthroughSlotOpen, openedBreakthroughSlots, canFeedRelic, canLevelUpRelic, feedRelic, FEED_UNIT, levelUpRelic, nextBreakthrough, relicLevelCap, RELIC_LEVEL_CAP, BREAKTHROUGH_GRADE_CAP, relicExpToNext, relicLevelUpCost, breakthroughGrade } from "../../src/core/relicProgression";
+import { breakthroughFragmentCost, breakthroughSlotGrade, BREAKTHROUGH_STEPS, calculateFinalStats, canBreakThrough, isBreakthroughSlotOpen, openedBreakthroughSlots, canFeedRelic, canLevelUpRelic, feedRelic, FEED_UNIT, levelUpRelic, nextBreakthrough, relicLevelCap, RELIC_LEVEL_CAP, BREAKTHROUGH_GRADE_CAP, relicExpToNext, relicLevelUpCost, breakthroughGrade, isGrowthReachable, BREAKTHROUGH_CAP } from "../../src/core/relicProgression";
 import { combatPower } from "../../src/core/combatPower";
 import type { RelicProgress, Stats } from "../../src/core/types";
 import { RelicProgressionManager } from "../../src/managers/RelicProgressionManager";
@@ -238,5 +238,36 @@ describe("전투력", () => {
     expect(combatPower({ ...BASE, atk: BASE.atk + 100 })).toBeGreaterThan(weak);
     // 체력 한 점은 공격 한 점보다 가볍다. 수가 큰 능력치가 전투력을 통째로 지배하지 않는다.
     expect(combatPower({ ...BASE, hp: BASE.hp + 10 })).toBeLessThan(combatPower({ ...BASE, atk: BASE.atk + 10 }));
+  });
+});
+
+/*
+ * **화면이 만들 수 없는 성장을 가르치지 않는다.**
+ *
+ * 돌파는 레벨 상한을 채운 뒤에만 뚫린다(`canBreakThrough`). 그러니 레벨 10에 돌파 1은 어느
+ * 손으로도 만들 수 없는 값이고, 적도 플레이어와 같은 성장 축만 쓰므로 같은 규칙을 지나야 한다.
+ */
+describe("도달 가능한 성장 자리", () => {
+  it("은 상한을 채우지 않은 돌파를 거부한다", () => {
+    expect(isGrowthReachable(1, 0)).toBe(true);
+    expect(isGrowthReachable(RELIC_LEVEL_CAP, 0)).toBe(true);
+    // 상한 20을 넘긴 레벨은 돌파 없이는 설 수 없다.
+    expect(isGrowthReachable(RELIC_LEVEL_CAP + 1, 0)).toBe(false);
+    // 돌파 1은 20레벨을 한 번 찍은 개체만 갖는다. 10레벨 돌파 1은 만들 수 없다.
+    expect(isGrowthReachable(10, 1)).toBe(false);
+    expect(isGrowthReachable(RELIC_LEVEL_CAP, 1)).toBe(true);
+    expect(isGrowthReachable(relicLevelCap(1), 1)).toBe(true);
+    expect(isGrowthReachable(relicLevelCap(1) + 1, 1)).toBe(false);
+    // 직전 단계의 상한이 곧 하한이다 — 돌파해도 레벨은 그대로이므로.
+    expect(isGrowthReachable(relicLevelCap(1) - 1, 2)).toBe(false);
+    expect(isGrowthReachable(relicLevelCap(1), 2)).toBe(true);
+  });
+
+  it("은 범위를 벗어난 값을 던지지 않고 거짓으로 돌려준다", () => {
+    // 검수 목록을 만드는 자리라 한 줄이 던지면 나머지 관문을 보지 못한다.
+    expect(isGrowthReachable(0, 0)).toBe(false);
+    expect(isGrowthReachable(1.5, 0)).toBe(false);
+    expect(isGrowthReachable(1, -1)).toBe(false);
+    expect(isGrowthReachable(1, BREAKTHROUGH_CAP + 1)).toBe(false);
   });
 });

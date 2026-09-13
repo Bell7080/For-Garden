@@ -36,6 +36,5 @@ export const BATTLE_JA = {
   "battle.result.save": "結果を保存",
   "battle.result.settle": "終了精算",
   "battle.result.defeatLoot": "敗北戦利品の精算",
-  "battle.result.nodeLoot": "交戦獲得戦利品",
   "battle.result.nodeScore": "遠征スコア +{score}",
 } as const;

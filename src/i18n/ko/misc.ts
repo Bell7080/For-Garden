@@ -17,7 +17,6 @@ export const MISC_KO = {
   "contribution.title": "전투 기여도",
   "contribution.totals": "서버 확정 {confirmed} · 행동 재생 {replay}",
   "contribution.allies": "아군 기여도",
-  "contribution.back": "돌아가기",
 
   // 원정 증강 선택
   "augment.pick.title": "증강 선택 {round} / {total}",
@@ -169,6 +168,8 @@ export const MISC_KO = {
   "expedition.entry": "원정",
 
   // 스테이지 지도
+  /** 단일 정예 관문에서 그 하나의 머리 위에 서는 이름표. 셋이 아니라 하나가 선 자리를 말한다. */
+  "stage.eliteMark": "정예",
   "stageMap.sortie": "출  전",
   "stageMap.prevZone": "이전 구역",
   "stageMap.nextZone": "다음 구역",

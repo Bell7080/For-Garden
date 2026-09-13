@@ -113,6 +113,25 @@ export function relicLevelCap(breakthrough: number): number {
   return breakthrough === 0 ? RELIC_LEVEL_CAP : BREAKTHROUGH_STEPS[breakthrough - 1].levelCap;
 }
 
+/**
+ * 그 성장 상태가 **플레이어가 실제로 지날 수 있는 자리인가.**
+ *
+ * 돌파는 레벨 상한을 채운 뒤에만 뚫린다(`canBreakThrough`). 그러니 돌파 1단계인 개체는
+ * 적어도 한 번 20레벨을 찍은 개체이고, 레벨 10에 돌파 1은 **어느 손으로도 만들 수 없는 값**이다.
+ * 적도 플레이어와 같은 성장 축만 쓰므로(스테이지 전용 배율을 두지 않는 이유와 같다) 같은 규칙을
+ * 지나야 한다 — 그러지 않으면 정보창이 "LV.10 / 상한 20"과 돌파 등급 II를 함께 세워, 화면이
+ * 플레이어에게 만들 수 없는 성장을 가르친다.
+ *
+ * 위는 지금 단계의 상한, 아래는 **직전 단계의 상한**이다. 돌파해도 레벨은 그대로이므로 뚫은
+ * 직후의 자리가 곧 하한이다.
+ */
+export function isGrowthReachable(level: number, breakthrough: number): boolean {
+  if (!Number.isInteger(level) || level < 1) return false;
+  if (!Number.isInteger(breakthrough) || breakthrough < 0 || breakthrough > BREAKTHROUGH_CAP) return false;
+  if (level > relicLevelCap(breakthrough)) return false;
+  return breakthrough === 0 || level >= relicLevelCap(breakthrough - 1);
+}
+
 /** 다음 돌파에 드는 재료. 이미 별 다섯이면 없다. */
 export function nextBreakthrough(breakthrough: number): BreakthroughStep | undefined {
   return BREAKTHROUGH_STEPS[breakthrough];

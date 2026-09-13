@@ -1,4 +1,5 @@
 import type { RelicSkinId } from "../core/types";
+import type { WalletItemKey } from "./items";
 import { registerDataText } from "../i18n";
 import { RELICS } from "./relics";
 
@@ -16,6 +17,20 @@ export interface RelicSkinDef {
   portraitAssetId: string;
   /** 전투·축약 화면의 SD Puppet 레지스트리가 해석할 논리 에셋 키다. */
   sdAssetId: string;
+  /**
+   * 아직 열리지 않은 외형.
+   *
+   * 이름만 걸어 두고 **얻는 길은 말하지 않는다** — 값도 조건도 정해지지 않았는데 둘 중 하나를
+   * 적으면 플레이어가 찾을 곳을 만들어 낸다.
+   */
+  comingSoon?: boolean;
+  /**
+   * 아직 없을 때 드는 값.
+   *
+   * 비우면 "값으로 사는 외형이 아니다"라는 뜻이다 — 보상·이벤트로만 오는 외형이 그렇다.
+   * 값이 있으면 외형 전시관이 그 줄을 `addPriceBar`로 그대로 세운다.
+   */
+  price?: { currency: WalletItemKey; amount: number };
 }
 
 /**

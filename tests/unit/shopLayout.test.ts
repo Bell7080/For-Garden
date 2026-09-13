@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
 import {
-  SHOP_BOARD, SHOP_CARD, SHOP_CASE, SHOP_SHELF, SHOP_STAGE, SHOP_TAB_ROW, SHOP_TOPBAR_GUARD,
-  shopBoardSize, shopCardSpot, shopCardWidth, shopCaseRect, shopGridContentHeight, shopGridViewport,
-  shopShelfWidth, shopShelfY, shopTabSpot, shopTitleLeft,
+  SHOP_BOARD, SHOP_CARD, SHOP_SHELF, SHOP_STAGE, SHOP_TAB_ROW, SHOP_TITLE, SHOP_TOPBAR_GUARD,
+  shopBoardSize, shopCardSpot, shopCardWidth, shopGridContentHeight, shopGridViewport,
+  shopShelfWidth, shopShelfY, shopTabSpot, shopTitleLeft, shopTitleY,
 } from "../../src/ui/shopLayout";
 
 /** 우하단 뒤로가기가 지키는 자리. 씬이 그 좌표를 고정값으로 쓰므로 여기서도 같은 값을 본다. */
@@ -59,30 +59,12 @@ describe("상점 자리표", () => {
     expect(view.bottom).toBeLessThanOrEqual(SHOP_BOARD.bottom);
   });
 
-  it("살피가 창을 사방으로 품되 전시대 안에 들고 탭 줄을 침범하지 않는다", () => {
+  it("제목표가 격자 창 위에 걸터앉고 칸 줄과 같은 시작선을 쓴다", () => {
     const view = shopGridViewport();
-    const rect = shopCaseRect();
-    // 창보다 사방으로 더 품어야 상품이 판 위가 아니라 **안에** 든 것으로 읽힌다.
-    expect(rect.left).toBeLessThan(view.left);
-    expect(rect.right).toBeGreaterThan(view.right);
-    expect(rect.top).toBeLessThan(view.top);
-    expect(rect.bottom).toBeGreaterThan(view.bottom);
-    // 선반이 내민 만큼은 살피 안에 들어야 선반 끝이 밖으로 삐져나오지 않는다.
-    expect(view.left - rect.left).toBeGreaterThanOrEqual(SHOP_SHELF.overhang);
-    // 전시대 안에 들고 하단 탭 줄과 겹치지 않는다.
-    expect(rect.left).toBeGreaterThanOrEqual(SHOP_BOARD.left);
-    expect(rect.right).toBeLessThanOrEqual(SHOP_BOARD.right);
-    expect(rect.top).toBeGreaterThan(SHOP_BOARD.top);
-    expect(rect.bottom).toBeLessThanOrEqual(SHOP_TAB_ROW.bottom - SHOP_TAB_ROW.height);
-  });
-
-  it("제목표가 살피 윗변에 걸터앉고 칸 줄과 같은 시작선을 쓴다", () => {
-    const rect = shopCaseRect();
-    // 제목표는 살피 **윗변**에 걸터앉는다 — 안으로 들여놓으면 격자와 한 덩어리로 읽힌다.
-    expect(rect.top).toBeGreaterThan(SHOP_BOARD.top);
-    // 표의 절반이 살피 위로 솟아도 전시대 윗변을 넘지 않는다.
-    expect(rect.top - SHOP_CASE.titleSize * 1.52 / 2).toBeGreaterThan(SHOP_BOARD.top);
-    expect(shopTitleLeft()).toBe(shopGridViewport().left);
+    // 창 바로 위에 서되 전시대 윗변을 넘지 않는다 — 표의 절반이 위로 솟는다.
+    expect(shopTitleY()).toBeLessThan(view.top);
+    expect(shopTitleY() - SHOP_TITLE.size * 1.52 / 2).toBeGreaterThan(SHOP_BOARD.top);
+    expect(shopTitleLeft()).toBe(view.left);
   });
 
   it("두 칸과 그 사이 간격이 창을 정확히 나눠 갖는다", () => {

@@ -112,36 +112,29 @@ export const SHOP_TAB_ROW = { width: 176, height: 82, gap: 8, left: 30, bottom: 
 export const SHOP_SHELF = { height: 18, offsetY: 10, overhang: 14 } as const;
 
 /**
- * 격자가 흐르는 자리를 **한 겹 파 놓는 살피**.
+ * 격자 위에 서는 **제목표**의 자리.
  *
- * 상품이 전시대 위에 얹혀 있으면 목록이고, 안으로 들어가 있으면 전시대가 된다 — 창보다 사방으로
- * 조금 더 품는 어두운 면 한 겹이 그 깊이를 만든다. 선반이 내민 만큼은 이 살피 안에 들어야
- * 선반 끝이 살피 밖으로 삐져나오지 않는다.
+ * **머리글은 맨 글자가 아니라 제목표다.** `교환 목록`을 판 위에 그냥 적고 아래에 구분선을
+ * 하나 그었을 때는, 같은 위계의 글이 다른 화면에서는 판에 걸터앉고 여기서만 맨 글자로 섰다.
+ * 지금은 화면 어디서나 쓰는 `addSectionTitle` 한 장이다.
  *
- * **머리글은 맨 글자가 아니라 제목표다.** `교환 목록`을 판 위에 그냥 적고 아래에 구분선을 하나
- * 그었을 때는, 같은 위계의 글이 다른 화면에서는 판에 걸터앉고 여기서만 맨 글자로 섰다. 지금은
- * 살피의 **윗변에 `addSectionTitle`이 걸터앉는다** — 화면 어디서나 쓰는 그 한 장이다.
+ * **뒤에 판을 받치지 않는다.** 창보다 넓은 어두운 살피를 한 겹 깔아 봤는데, 선반이 이미 줄마다
+ * 깊이를 만들고 있어 그 위에 판이 하나 더 생기는 것으로만 보였다 — 제목표가 제 판을 이미
+ * 갖고 있어 받칠 것도 없다.
  */
-export const SHOP_CASE = {
-  padX: SHOP_SHELF.overhang + 6,
-  padTop: 26,
-  padBottom: 16,
+export const SHOP_TITLE = {
   /** 제목표 글자 크기. 표의 높이도 이 값을 따라간다. */
-  titleSize: 34,
+  size: 34,
+  /** 창 윗변에서 얼마나 위에 걸터앉는지. */
+  liftFromViewport: 26,
 } as const;
 
-/** 살피가 차지하는 사각형. 화면과 테스트가 같은 값을 읽는다. */
-export function shopCaseRect(): ShopRect {
-  const view = shopGridViewport();
-  return {
-    left: view.left - SHOP_CASE.padX,
-    right: view.right + SHOP_CASE.padX,
-    top: view.top - SHOP_CASE.padTop,
-    bottom: view.bottom + SHOP_CASE.padBottom,
-  };
+/** 제목표가 걸터앉는 높이. 격자 창 바로 위다. */
+export function shopTitleY(): number {
+  return shopGridViewport().top - SHOP_TITLE.liftFromViewport;
 }
 
-/** 제목표의 왼쪽 끝. 살피 안쪽에서 시작해 칸 줄과 같은 시작선을 쓴다. */
+/** 제목표의 왼쪽 끝. 칸 줄과 같은 시작선을 쓴다. */
 export function shopTitleLeft(): number {
   return shopGridViewport().left;
 }

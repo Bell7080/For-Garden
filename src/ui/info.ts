@@ -21,8 +21,8 @@ import {
   spawnPuppet,
 } from "../puppets/assets";
 import { addPopupBackgroundImage, addSceneBackground, BACKGROUND } from "./backgrounds";
-import { addBackButton } from "./IconButton";
-import { chipPoints, drawGlassFade, drawHairline, drawInnerVignette, drawLayer, drawShapeEdge, drawShapeOutline, drawVignette, HOLO, perspectiveRect, slantedRect, toPoints } from "./holo";
+import { addBackButton, IconButton } from "./IconButton";
+import { chipPoints, drawGlassFade, drawHairline, drawInnerVignette, drawLayer, drawShapeEdge, drawShapeInnerGlow, drawShapeOutline, drawVignette, HOLO, perspectiveRect, slantedRect, toPoints } from "./holo";
 import { drawGlyph } from "./glyphs";
 import { PopupLayer, POPUP_TITLE_SIZE } from "./PopupLayer";
 import { calculateObservationJournalFlow, OBSERVATION_JOURNAL_SIZE, withoutRepeatedProfileDetails } from "./observationJournalLayout";
@@ -46,6 +46,10 @@ import { addSectionTitle } from "./SectionTitle";
 import { openSkillPopup, type SkillInfoViewModel } from "./SkillPopup";
 import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { relicCollection } from "../managers/RelicCollectionManager";
+import { AppearanceStrip } from "./AppearanceStrip";
+import { addBreakthroughBurst, BREAKTHROUGH_BURST } from "./breakthroughBurst";
+import { appearanceEntries } from "./appearanceModel";
+import { APPEARANCE_PANEL } from "./appearancePanelLayout";
 import { COLOR, textStyle } from "./theme";
 import { skillArtFor, skillArtTint, type SkillArtSlot } from "./skillArt";
 import { addSkillIconFrame, skillSlotLabel } from "./SkillIconFrame";
@@ -65,9 +69,8 @@ import { addFactionMark, factionMarkBounds } from "./FactionMark";
 import { SQUADS } from "../data/factions";
 import { OBSERVATION_INTERVIEW_LAYOUT, observationInterviewPanelState, type ObservationInterviewPanelState } from "./observationInterviewPanel";
 import { INFO_PORTRAIT_FOCUS, infoPortraitPlacement } from "./portraitPlacement";
-import { skinsForRelic, type RelicSkinDef } from "../data/relicSkins";
+import { skinsForRelic } from "../data/relicSkins";
 import { relicSkinManager } from "../managers/RelicSkinManager";
-import { Button } from "./Button";
 
 export type { SkillInfoViewModel } from "./SkillPopup";
 
@@ -102,12 +105,14 @@ const PORTRAIT_FOCUS = INFO_PORTRAIT_FOCUS;
 /** 정보창 구석에 세우는 SD 피규어. 받침 위에서 idle만 재생한다. */
 const FIGURE = { x: 762, y: 1786, height: 240 } as const;
 
-/** 1080×1920에서 제목·카드·상태·하단 공용 버튼이 서로 침범하지 않는 외형 작업판 배치다. */
-export const APPEARANCE_PANEL_LAYOUT = {
-  width: 920, height: 1240, cardY: -90, cardWidth: 390, cardHeight: 760,
-  cardCenters: [-210, 210] as const, puppetGroundY: 195, puppetHeight: 620,
-  actionY: 500, actionWidth: 520, actionHeight: 96,
-} as const;
+/**
+ * 외형 버튼.
+ *
+ * **오른쪽 변을 능력치 판과 같은 선에 맞춘다** — 기둥의 판 넷이 이미 한 선으로 서 있는데
+ * 버튼만 그 안쪽에 떠 있으면 그 줄이 거기서 한 번 끊긴다. 자리를 손으로 적지 않고 기둥의
+ * 오른쪽 변에서 거꾸로 구하므로, 기둥이 움직이면 버튼도 함께 따라간다.
+ */
+const APPEARANCE_BUTTON = { size: 78, y: FIGURE.y - 206 } as const;
 
 /** 오른쪽 정보 기둥. 캐릭터를 덮지 않도록 화면 오른쪽 절반만 쓴다. */
 const COLUMN = {
@@ -120,6 +125,11 @@ const COLUMN = {
 
 /** 판 하나하나가 같은 각도로 기울어 한 벌로 읽힌다. */
 const PANEL_TILT = -1.6;
+
+/** 외형 버튼의 중심 x. 버튼 오른쪽 변이 기둥의 판과 같은 선에 선다. */
+function appearanceButtonX(): number {
+  return COLUMN.x + COLUMN.width / 2 + COLUMN.offsetX - APPEARANCE_BUTTON.size / 2;
+}
 
 /**
  * 판의 왼쪽 변이 오른쪽 변보다 짧아지는 양(px).
@@ -264,6 +274,9 @@ const BREAK_EDGE = 0xa88cf0;
  * 재화의 것인지 간격으로 읽히게 한다.
  */
 const BREAK_BUTTON = { width: 260, height: 86, labelY: -18, costY: 18, costSize: 19, icon: 26, gap: 5, pairGap: 18 } as const;
+
+/** 뚫을 수 있을 때 판 안쪽에서 번지는 빛의 숨. 느려야 재촉이 아니라 신호로 읽힌다. */
+const BREAK_ARM = { low: 0.35, high: 1, duration: 900 } as const;
 
 /**
  * 한계 돌파 쪽지의 자리표.
@@ -487,7 +500,9 @@ export class InfoManager {
   private sliding = false;
   /** 급여 버튼의 켜짐·꺼짐 판 두 장. */
   /** 돌파 버튼. 레벨 옆에 붙어 지금 뚫을 수 있는지를 진하기로 알린다. */
-  private breakButton?: { container: Phaser.GameObjects.Container; label: Phaser.GameObjects.Text; cost: Phaser.GameObjects.Container };
+  private breakButton?: { container: Phaser.GameObjects.Container; label: Phaser.GameObjects.Text; cost: Phaser.GameObjects.Container; arm: Phaser.GameObjects.Graphics };
+  /** 돌파할 수 있을 때만 도는 숨. 조건이 풀리면 멈추고 빛을 끈다. */
+  private breakPulse?: Phaser.Tweens.Tween;
   private feedPlate?: { on: Phaser.GameObjects.Graphics; off: Phaser.GameObjects.Graphics };
   /** 급여 버튼의 치즈케이크 값줄 — `가진 수/한 번에 드는 수`. */
   private feedCost?: Phaser.GameObjects.Text;
@@ -647,7 +662,7 @@ export class InfoManager {
     for (let index = 0; index < 3; index += 1) this.gemSlots.push(this.addGemSlot(index, gemPanel));
 
     this.buildFigureStand();
-    if (this.capabilities.mutateProgress) this.addAppearanceButton(FIGURE.x + 152, FIGURE.y - 206);
+    if (this.capabilities.mutateProgress) this.addAppearanceButton(appearanceButtonX(), APPEARANCE_BUTTON.y);
     this.chrome.add(addBackButton(scene, () => this.hide()));
   }
 
@@ -797,10 +812,17 @@ export class InfoManager {
    * 눌러 보기 전에 읽힌다. 아래 줄에는 지금 가진 파편과 다음 별에 드는 파편을 함께 적고,
    * 누르면 남은 재료를 마저 보여 준 뒤 거기서 확정한다.
    */
-  private addBreakButton(x: number, y: number, panel: Phaser.GameObjects.Container): { container: Phaser.GameObjects.Container; label: Phaser.GameObjects.Text; cost: Phaser.GameObjects.Container } {
+  private addBreakButton(x: number, y: number, panel: Phaser.GameObjects.Container): { container: Phaser.GameObjects.Container; label: Phaser.GameObjects.Text; cost: Phaser.GameObjects.Container; arm: Phaser.GameObjects.Graphics } {
     const container = this.scene.add.container(x, y);
     const shape = slantedRect(BREAK_BUTTON.width, BREAK_BUTTON.height, 12);
-    container.add(drawLayer(this.scene, 0, 0, shape, { fill: 0x24202f, alpha: 0.94, edge: BREAK_EDGE, edgeAlpha: 0.9, glow: { color: BREAK_EDGE, strength: 0.4, height: 0.6 } }));
+    container.add(drawLayer(this.scene, 0, 0, shape, { fill: 0x1d1a28, alpha: 0.94, edge: BREAK_EDGE, edgeAlpha: 0.55 }));
+    // **지금 뚫을 수 있다는 것은 진하기가 아니라 빛이 말한다.** 예전에는 알파만 1과 0.62로
+    // 갈랐는데, 재료가 모자란 버튼과 다 모인 버튼이 둘 다 같은 판이라 무엇이 달라졌는지 옆에
+    // 두고 봐야 알았다. 다 모이면 판 안쪽에서 빛이 번지고 그 빛이 느리게 숨 쉰다 — 한 계정에
+    // 몇 번 없는 조작이라 화면에서 한 번은 눈에 걸려야 한다.
+    const arm = drawShapeInnerGlow(this.scene, 0, 0, shape, { color: BREAK_EDGE, strength: 0.85 });
+    container.add(arm);
+    container.add(drawShapeEdge(this.scene, 0, 0, shape, "top", { color: BREAK_EDGE, alpha: 1, width: 4 }));
     const label = this.scene.add.text(0, BREAK_BUTTON.labelY, t("info.breakthrough"), textStyle({ role: "display", size: 26 })).setOrigin(0.5);
     // 드는 것 둘(파편·치즈케이크)이 한 줄에 서므로 글자 하나가 아니라 담는 칸이다.
     const cost = this.scene.add.container(0, BREAK_BUTTON.costY);
@@ -814,7 +836,7 @@ export class InfoManager {
     });
     container.add(hit);
     attach(panel, container);
-    return { container, label, cost };
+    return { container, label, cost, arm };
   }
 
   /** 돌파할 수 있는 상태인지 알린다. 재료가 모자라도 눌러 무엇이 필요한지 볼 수 있다. */
@@ -825,10 +847,30 @@ export class InfoManager {
     // 드는 파편 수는 등급이 정한다 — 같은 단계라도 R은 다섯, SSR은 하나다.
     const need = def && step ? breakthroughFragmentCost(def.rarity, progress.breakthrough) : 0;
     const ready = this.ownedNow && def !== undefined && canBreakThrough(def.rarity, progress, held, session.wallet.cheesecake);
-    this.breakButton?.container.setAlpha(step ? (ready ? 1 : 0.62) : 0.35);
+    this.breakButton?.container.setAlpha(step ? (ready ? 1 : 0.7) : 0.35);
     this.breakButton?.label.setText(step ? t("info.breakthrough") : t("info.breakthrough.gradeMax"));
     this.breakButton?.label.setColor(ready ? COLOR.ink : COLOR.inkDim);
+    this.paintBreakArm(ready);
     this.paintBreakCost(def, step, held, need);
+  }
+
+  /**
+   * 뚫을 수 있는 순간에만 도는 숨.
+   *
+   * 조건이 풀리면 tween을 멈추고 빛을 **0으로 되돌린다** — 멈추기만 하면 마지막 프레임의
+   * 밝기가 그대로 굳어, 못 뚫는 버튼이 뚫을 수 있는 것처럼 남는다.
+   */
+  private paintBreakArm(ready: boolean): void {
+    const arm = this.breakButton?.arm;
+    if (!arm) return;
+    this.breakPulse?.stop();
+    this.breakPulse = undefined;
+    if (!ready) { arm.setAlpha(0); return; }
+    arm.setAlpha(BREAK_ARM.low);
+    this.breakPulse = this.scene.tweens.add({
+      targets: arm, alpha: BREAK_ARM.high, duration: BREAK_ARM.duration,
+      yoyo: true, repeat: -1, ease: "Sine.easeInOut",
+    });
   }
 
   /**
@@ -1023,10 +1065,25 @@ export class InfoManager {
       await gameApi.breakThroughRelic(def.id);
       // 성공한 서버 처리만 알린다. 실패했을 때는 지갑 값이 바뀌지 않는다.
       this.onWalletChange?.();
+      this.playBreakthroughBurst();
     } catch {
       // 조건은 화면에서 이미 막는다. 실패하면 상태만 다시 그린다.
     }
     this.refreshGrowth();
+  }
+
+  /**
+   * 돌파가 확정된 순간의 연출.
+   *
+   * **표식이 있는 자리에서 터진다** — 올라간 것이 그 로마자 한 글자라, 화면 한가운데에서
+   * 터지면 무엇이 바뀌었는지와 어긋난다. 표식 자체도 한 번 부풀었다 제자리로 돌아와, 눈이
+   * 파문을 따라간 끝에 바뀐 글자에 닿는다.
+   */
+  private playBreakthroughBurst(): void {
+    const spot = this.starRow.getWorldTransformMatrix();
+    addBreakthroughBurst(this.scene, spot.tx, spot.ty, BREAK_EDGE, this.root.depth + 3);
+    this.starRow.setScale(BREAKTHROUGH_BURST.grade.pop);
+    this.scene.tweens.add({ targets: this.starRow, scale: 1, duration: BREAKTHROUGH_BURST.grade.duration, ease: "Back.easeOut" });
   }
 
   /** 급여를 지금 할 수 있는지에 따라 버튼의 진하기를 바꾼다. */
@@ -1712,7 +1769,7 @@ export class InfoManager {
 
   /** 추가 외형이 있는 렐릭에게만 공용 외형 선택 진입점을 세운다. */
   private addAppearanceButton(x: number, y: number): void {
-    const size = 78;
+    const size = APPEARANCE_BUTTON.size;
     const container = this.scene.add.container(x, y);
     container.add(drawLayer(this.scene, 0, 0, chipPoints(size, size, {
       bevel: { topLeft: size * 0.3, topRight: 0, bottomRight: size * 0.3, bottomLeft: 0 },
@@ -1731,65 +1788,35 @@ export class InfoManager {
     this.appearanceButton = container;
   }
 
-  /** 기본 외형과 추가 외형을 실제 resolver의 Puppet으로 비교하고 manager를 통해 장착한다. */
+  /**
+   * 외형 **전시관**.
+   *
+   * 위 무대에 지금 고른 외형이 전신으로 크게 서고, 아래 띠를 옆으로 넘기며 고른다 — 입을지
+   * 말지를 정하는 화면이라 그 외형이 카드만 하게 서 있으면 안 된다(카드 둘을 나란히 세우던
+   * 예전 판이 그랬다).
+   *
+   * **오른쪽 위 X를 두지 않는다.** 나가는 길은 화면 어디서나 같은 자리(우하단)여야 하므로
+   * 판 밖의 공용 뒤로가기가 그 몫을 맡는다.
+   */
   private openAppearancePanel(def: RelicDef, onClose: () => void): void {
     const extra = skinsForRelic(def.id);
     if (extra.length === 0) return;
-    const layout = APPEARANCE_PANEL_LAYOUT;
-    this.popups.open({ width: layout.width, height: layout.height, title: t("info.skin.title"), dim: true, closeOnBackdrop: false, onClose }, (body) => {
-      let selected: RelicSkinDef | undefined = extra.find(({ id }) => id === relicSkinManager.equippedFor(def.id));
-      const cards: Phaser.GameObjects.Container[] = [];
-      const entries: Array<{ skin?: RelicSkinDef; name: string }> = [{ name: t("info.skin.default") }, ...extra.map((skin) => ({ skin, name: skin.name }))];
-      const action = new Button(this.scene, 0, layout.actionY, {
-        width: layout.actionWidth, height: layout.actionHeight, label: t("info.skin.equip"), variant: "primary",
-        onClick: () => {
-          const equipped = relicSkinManager.equippedFor(def.id);
-          const succeeded = selected ? relicSkinManager.equip(def.id, selected.id) : (equipped === undefined || relicSkinManager.unequip(def.id));
-          if (!succeeded) return;
-          paint();
-          // 사건 구독 화면과 함께 현재 정보창의 두 Puppet도 즉시 같은 장착 결과로 교체한다.
-          void this.loadPortrait(def); void this.loadFigure(def);
-        },
+    const layout = APPEARANCE_PANEL;
+    const entries = appearanceEntries(t("info.skin.default"), def.portraitAssetId, extra, {
+      owns: (id) => relicSkinManager.owns(id),
+      equippedId: relicSkinManager.equippedFor(def.id),
+    });
+    let back: IconButton | undefined;
+    let strip: AppearanceStrip | undefined;
+    this.popups.open({
+      width: layout.width, height: layout.height, title: t("info.skin.title"), dim: true,
+      closeOnBackdrop: false, hideCloseButton: true,
+      onClose: () => { strip?.destroy(); strip = undefined; back?.destroy(); back = undefined; onClose(); },
+    }, (body, close) => {
+      back = addBackButton(this.scene, close).setDepth(this.popups.baseDepth + 500);
+      strip = new AppearanceStrip(this.scene, body, def, entries, {
+        onEquipped: () => { void this.loadPortrait(def); void this.loadFigure(def); },
       });
-      body.add(action);
-
-      entries.forEach((entry, index) => {
-        const owned = !entry.skin || relicSkinManager.owns(entry.skin.id);
-        const card = this.scene.add.container(layout.cardCenters[index], layout.cardY);
-        const shape = chipPoints(layout.cardWidth, layout.cardHeight, { bevel: { topLeft: 54, topRight: 0, bottomRight: 54, bottomLeft: 0 } });
-        const off = drawLayer(this.scene, 0, 0, shape, { fill: 0x0b0f15, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.24 });
-        const on = drawLayer(this.scene, 0, 0, shape, { fill: 0x121820, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.95, edgeWidth: 4 });
-        card.add([off, on]);
-        const asset = portraitAssetForSkin(def.portraitAssetId, entry.skin?.id);
-        // 복사 이미지나 전용 크롭 없이 장착과 같은 resolver가 돌려준 Puppet을 카드 바닥선에 세운다.
-        void spawnPuppet(this.scene, asset, { x: 0, groundY: layout.puppetGroundY, height: layout.puppetHeight, depth: 1 }).then((puppet) => {
-          if (!card.active) { puppet.destroy(); return; }
-          // 목록 카드 Puppet은 정보 전달을 바꾸지 않는 장식이므로 공용 유휴 갱신 예산을 적용한다.
-          puppet.setDecorativeUpdateFactor(powerSavingPolicy(session.settings).idlePuppetUpdateFactor);
-          puppet.setAlpha(owned ? 1 : 0.28); card.addAt(puppet, 2);
-        });
-        card.add(this.scene.add.text(0, 310, entry.name, textStyle({ role: "display", size: 28, color: owned ? COLOR.ink : COLOR.inkDim, align: "center", wrap: 330 })).setOrigin(0.5));
-        card.add(this.scene.add.text(0, 352, owned ? t("info.skin.owned") : t("info.skin.locked"), textStyle({ role: "emphasis", size: 22, color: owned ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5));
-        const hit = this.scene.add.rectangle(0, 0, layout.cardWidth, layout.cardHeight, 0xffffff, 0);
-        if (owned) hit.setInteractive({ useHandCursor: true }).on("pointerup", () => { selected = entry.skin; paint(); });
-        card.add(hit); body.add(card); cards.push(card);
-      });
-      function paint(): void {
-        const equipped = relicSkinManager.equippedFor(def.id);
-        cards.forEach((card, index) => {
-          const chosen = entries[index].skin?.id === selected?.id;
-          // 기본(undefined)끼리도 같은 선택이며, 선택 상태는 1.08배 확대와 강조 윗선으로만 읽힌다.
-          const selectedNow = chosen || (!entries[index].skin && !selected);
-          card.setScale(selectedNow ? 1.08 : 1);
-          (card.list[0] as Phaser.GameObjects.Graphics).setVisible(!selectedNow);
-          (card.list[1] as Phaser.GameObjects.Graphics).setVisible(selectedNow);
-        });
-        const selectedId = selected?.id;
-        const equippedNow = selectedId ? equipped === selectedId : equipped === undefined;
-        action.setLabel(equippedNow ? t("info.skin.equipped") : t("info.skin.equip"));
-        action.setEnabled(!equippedNow && (!selectedId || relicSkinManager.owns(selectedId)));
-      }
-      paint();
     });
   }
 

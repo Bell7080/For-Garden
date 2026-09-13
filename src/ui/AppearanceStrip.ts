@@ -8,6 +8,8 @@ import { powerSavingPolicy } from "../core/settings";
 import { session } from "../state/session";
 import { Button } from "./Button";
 import { chipPoints, drawFrameVignette, drawLayer, drawShapeInnerGlow, drawShapeOutline, slantedRect } from "./holo";
+import { addPopupBackgroundImage, BACKGROUND } from "./backgrounds";
+import { popupArtShape, popupBodyShapeMask } from "./popupArt";
 import { addPriceBar } from "./priceTag";
 import { COLOR, textStyle } from "./theme";
 import {
@@ -40,6 +42,15 @@ const STATE_COLOR: Record<AppearanceState, string> = {
   locked: COLOR.inkDim,
   comingSoon: COLOR.inkDim,
 };
+
+/**
+ * 스테인드글라스 한 벌의 색.
+ *
+ * 값은 배경 원화에서 실측해 골랐다 — 납선의 금색 평균이 `#c6aa89`라 화면의 강조색과 같은
+ * 계열이고, 유리면은 그 그림 위에서 캐릭터가 읽힐 만큼만 눌러 둔 짙은 청회색이다. 더 옅게
+ * 두면 노란 옷을 입은 개체가 창의 밝은 면에 그대로 묻힌다.
+ */
+const PANE = { glass: 0x101826, glassAlpha: 0.66, page: 0x0b111b, leading: 6 } as const;
 
 export interface AppearanceStripHooks {
   /** 장착이 확정된 뒤 정보창의 두 Puppet을 같은 결과로 갈아 끼우게 알린다. */
@@ -89,16 +100,36 @@ export class AppearanceStrip {
     const layout = APPEARANCE_PANEL;
     this.focused = Math.max(0, entries.findIndex((entry) => entry.state === "equipped"));
 
-    // **무대는 웹툰 칸 셋이다.** 받침 타원을 깔지 않는다 — 화면에서 유일하게 둥근 것이라
-    // 홀로그램 결에서 혼자 떠 있었고, 전용 뒷배경이 들어오면 그 자리를 칸이 대신 맡는다.
-    // 아래 글줄과 띠도 같은 페이지 위에 앉혀 위아래가 한 장으로 읽히게 한다.
+    /*
+     * **전용 뒷배경은 스테인드글라스 창의 홀이다.**
+     *
+     * 금색 납선이 창을 크고 작은 유리면으로 가르는 그림이라, 무대의 웹툰 칸 셋을 **그 창살과
+     * 같은 문법**으로 세운다 — 칸 사이의 홈통에는 금색 납선이 지나가고 칸 자체는 반투명한
+     * 유리면이다. 판 위에 도형을 덧그리는 대신 그림의 규칙을 이어받았으므로 배경과 칸이 한
+     * 장으로 읽힌다.
+     *
+     * 가장자리는 `drawFrameVignette`으로 **은은하게만** 누른다 — 진하게 두면 창의 위아래가
+     * 잘려 보여 홀의 높이가 사라진다.
+     */
+    const artShape = popupArtShape(layout.width, layout.height);
+    addPopupBackgroundImage(this.scene, body, BACKGROUND.appearance, {
+      x: 0, y: 0, width: layout.width, height: layout.height, maskShape: artShape, overlayStrength: 0.22,
+    });
+    body.add(drawFrameVignette(this.scene, 0, 0, layout.width, layout.height, { strength: 0.42, spread: 0.2 })
+      .setMask(popupBodyShapeMask(this.scene, body, artShape)));
+
+    // 아래 글줄과 띠도 같은 창 위에 앉는다 — 칸만 유리면이고 나머지가 빈 판이면 위아래가
+    // 서로 다른 화면으로 읽힌다. 판때기 대신 한 겹 더 눌린 유리면이다.
     const page = appearancePageRect();
     body.add(drawLayer(this.scene, (page.left + page.right) / 2, (page.top + page.bottom) / 2,
-      slantedRect(page.right - page.left, page.bottom - page.top, 0), { fill: 0x080d13, alpha: 0.5, shadow: false }));
+      slantedRect(page.right - page.left, page.bottom - page.top, 0), { fill: PANE.page, alpha: 0.5, shadow: false }));
+
     const frames = appearanceFrames();
     this.heroLayer = this.addFrame(body, frames.hero);
     this.faceLayer = this.addFrame(body, frames.face);
     this.sdLayer = this.addFrame(body, frames.sd);
+    // 납선은 칸을 다 세운 뒤에 긋는다 — 칸보다 먼저 그으면 유리면이 그 위를 덮어 사라진다.
+    this.addLeading(body, frames);
     this.frames = frames;
 
     this.name = this.scene.add.text(0, layout.name.y, "", textStyle({ role: "display", size: layout.name.size, align: "center", wrap: layout.width - 140 })).setOrigin(0.5);
@@ -122,6 +153,27 @@ export class AppearanceStrip {
   }
 
   /**
+   * 칸과 칸 사이를 지나는 **금색 납선**.
+   *
+   * 홈통을 빈자리로 두면 세 칸이 따로 뜬 판 셋으로 보인다. 창살이 지나가야 한 장의 창을
+   * 갈라 놓은 것으로 읽히므로, 홈통 폭 안쪽에 금색 띠를 긋고 그 아래로 어두운 획을 한 겹
+   * 깔아 납선이 유리면보다 앞에 있는 것처럼 보이게 한다.
+   */
+  private addLeading(body: Phaser.GameObjects.Container, frames: ReturnType<typeof appearanceFrames>): void {
+    const bar = (x: number, y: number, width: number, height: number): void => {
+      const shape = slantedRect(width, height, 0);
+      body.add(drawLayer(this.scene, x + 2, y + 2, shape, { fill: 0x1a1206, alpha: 0.55, shadow: false }));
+      body.add(drawLayer(this.scene, x, y, shape, { fill: COLOR.accent, alpha: 0.72, shadow: false }));
+    };
+    // 큰 칸과 오른쪽 기둥을 가르는 세로 납선.
+    bar((frames.hero.right + frames.face.left) / 2, (frames.hero.top + frames.hero.bottom) / 2,
+      PANE.leading, frames.hero.bottom - frames.hero.top);
+    // 오른쪽 기둥의 두 칸을 가르는 가로 납선.
+    bar((frames.face.left + frames.face.right) / 2, (frames.face.bottom + frames.sd.top) / 2,
+      frames.face.right - frames.face.left, PANE.leading);
+  }
+
+  /**
    * 웹툰 칸 한 장.
    *
    * 그림 한 장을 담는 칸이라 **액자 규칙**을 쓴다 — 불투명한 면에 사방 외곽선, 안쪽 비네트다.
@@ -134,11 +186,13 @@ export class AppearanceStrip {
     const shape = chipPoints(spot.width, spot.height, {
       bevel: { topLeft: unit * 0.16, topRight: 0, bottomRight: unit * 0.16, bottomLeft: 0 },
     });
-    body.add(drawLayer(this.scene, spot.x, spot.y, shape, { fill: 0x0a1017, alpha: 0.98, shadow: false }));
+    // **불투명한 판이 아니라 유리면이다.** 배경 원화가 비쳐야 창을 갈라 놓은 것으로 읽힌다.
+    body.add(drawLayer(this.scene, spot.x, spot.y, shape, { fill: PANE.glass, alpha: PANE.glassAlpha, shadow: false }));
     const content = this.scene.add.container(spot.x, spot.y);
     body.add(content);
     body.add(drawFrameVignette(this.scene, spot.x, spot.y, spot.width, spot.height, { strength: 0.52 }));
-    body.add(drawShapeOutline(this.scene, spot.x, spot.y, shape, { color: COLOR.accent, alpha: 0.5, width: 3 }));
+    // 칸 둘레의 납선. 홈통의 띠와 같은 금색이라 창살 한 벌로 이어진다.
+    body.add(drawShapeOutline(this.scene, spot.x, spot.y, shape, { color: COLOR.accent, alpha: 0.72, width: 4 }));
     // 마스크는 표시 목록 밖이라 판의 이동·배율을 물려받지 않는다 — 팝업의 지금 월드 행렬로
     // 네 변을 다시 재어 세운다(띠 마스크와 같은 방법).
     const matrix = body.getWorldTransformMatrix();

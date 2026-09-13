@@ -77,7 +77,7 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
     unlock: { researchLevel: 2 }, durationMinutes: 240, partySize: { min: 1, max: 3 },
     recommended: { elements: ["water", "grass"], squads: ["rune"], tags: ["garden"] },
     rewards: [{ currency: "gold", amount: 4200, weight: 5 }, { currency: "gems", amount: 8, weight: 1 }],
-    clueJournalId: "interaction-central-02", illustration: "background-relics",
+    clueJournalId: "interaction-central-02", illustration: "background-interaction-doppel-lab",
   },
   {
     id: "night-ward", displayName: "나이트 시티", department: "exchange",

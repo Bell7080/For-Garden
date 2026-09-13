@@ -33,7 +33,18 @@ export type ProductGrant =
 export type ProductRefresh = "none" | "daily" | "weekly" | "once";
 
 /** 상품 그림은 영속 ID와 분리해 최종 원화 교체가 구매 기록에 영향을 주지 않게 한다. */
-export type ShopProductIconKey = "shop-product-supplies" | "shop-product-enhancement" | "shop-product-rune";
+export type ShopProductIconKey =
+  | "shop-product-supplies" | "shop-product-enhancement" | "shop-product-rune"
+  | "shop-product-gems" | "shop-product-amber" | "shop-product-fossil";
+
+/**
+ * 프리미엄 화면의 목록 갈래.
+ *
+ * 일반 상점의 `ShopCategory`(일반·강화·룬)를 그대로 쓰던 때는 후원 패스가 「룬」 탭에 서 있었다 —
+ * 재화로 사는 보급품을 가르는 기준이라 현금 상품에는 아무 뜻이 없었다. 여기는 **무엇을 사는가**로
+ * 가른다: 묶음(패키지), 지금만 싼 것(특가), 기간·수량이 걸린 것(한정), 그리고 다이아 자체(젬).
+ */
+export type PremiumCategory = "package" | "deal" | "limited" | "gem";
 
 /** 후원 상품이 부여하는 기간제 또는 영구 계정 권리다. */
 export interface PassBenefitDefinition {
@@ -46,6 +57,8 @@ export interface PassBenefitDefinition {
 /** 정적 상품은 가격·지급·기본 구매 수량·제한 주기를 빠짐없이 선언한다. */
 export interface ProductDefinition {
   id: string; storefront: ProductStorefront; category: ShopCategory; iconKey: ShopProductIconKey;
+  /** 프리미엄 화면의 목록 갈래. 다른 storefront의 상품은 읽지 않는다. */
+  premiumCategory?: PremiumCategory;
   name: string; description: string;
   acquisition: ProductAcquisition;
   grants: readonly ProductGrant[];

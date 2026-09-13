@@ -89,7 +89,8 @@ export class StaminaPopup {
     view.add(drawLayer(this.scene, 0, LAYOUT.hero.y, panelShape(LAYOUT.hero.width, LAYOUT.hero.height), { fill: 0x101720, alpha: 0.9, edge: COLOR.accent, edgeAlpha: 0.35 }));
     // 시간 줄이 없는 순간(가득 참)에도 남은 둘이 위로 쏠리지 않도록 덩어리째 가운데에 세운다.
     const stack = heroStack(LAYOUT.hero.y, timer !== undefined);
-    addFramedIcon(this.scene, view, 0, stack.frameY, LAYOUT.frameSize, CURRENCY_ICON_BY_WALLET.stamina);
+    // 이미 스테미나 창이라 눌러도 열 창이 없다.
+    addFramedIcon(this.scene, view, 0, stack.frameY, LAYOUT.frameSize, CURRENCY_ICON_BY_WALLET.stamina, { plain: true });
     view.add(this.scene.add.text(0, stack.valueY, `${amount.toLocaleString()} / ${maximum.toLocaleString()}`, textStyle({ role: "display", size: 52, color: TONE.value })).setOrigin(0.5).setShadow(2, 6, "#05070a", 7, false, true));
     if (timer && stack.timerY !== undefined) view.add(this.scene.add.text(0, stack.timerY, timer, textStyle({ role: "body", size: 22, color: TONE.timer })).setOrigin(0.5));
 
@@ -140,6 +141,8 @@ export class StaminaPopup {
     if (view.texture) {
       addFramedIcon(this.scene, cell, 0, CELL.frameY, CELL.frameSize, view.texture, {
         amount: view.owned === undefined ? undefined : formatCurrency(view.owned),
+        // 칸 자체가 충전 버튼을 가진 자리라, 그림만 다른 창을 열면 한 칸이 두 가지 일을 한다.
+        plain: true,
       });
     }
     // 회복량은 이 칸의 이유다. 이름보다 크게, 스테미나와 같은 색으로 세운다.

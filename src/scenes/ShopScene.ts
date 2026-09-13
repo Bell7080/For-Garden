@@ -19,11 +19,13 @@ import { DialogueBubble } from "../ui/DialogueBubble";
 import { COLOR, textStyle } from "../ui/theme";
 import { TopBar } from "../ui/TopBar";
 import { PopupLayer } from "../ui/PopupLayer";
+import { bindCurrencyGuide, openCurrencyGuide } from "../ui/currencyGuideEntry";
 import { PurchasePopup } from "../ui/PurchasePopup";
 import { session } from "../state/session";
+import { motionPolicy } from "../core/settings";
 import { productsForShopCategory, shopModel } from "../ui/shopModel";
 import {
-  SHOP_BOARD, SHOP_CARD, SHOP_SHELF, SHOP_STAGE, SHOP_TAB_ROW, SHOP_TITLE,
+  SHOP_BOARD, SHOP_CARD, SHOP_ENTRANCE, SHOP_SHELF, SHOP_STAGE, SHOP_TAB_ROW, SHOP_TITLE,
   shopBoardSize, shopCardSpot, shopCardWidth, shopDialogueSpot, shopGridContentHeight, shopGridViewport,
   shopShelfWidth, shopShelfY, shopTabSpot, shopTitleLeft, shopTitleY,
 } from "../ui/shopLayout";
@@ -45,12 +47,19 @@ export class ShopScene extends Phaser.Scene {
   /** 구매 응답 지갑을 적용한 직후 화면 가장자리 잔액을 같은 프레임에 갱신한다. */
   private topBar?: TopBar;
   private viewportMask?: Phaser.GameObjects.Graphics;
+  /** 판·가장자리·제목표 한 덩어리. 등장에서 아래에서 올라온다. */
+  private boardChrome!: Phaser.GameObjects.Container;
+  /** 격자의 등장 층. 안쪽의 `content`가 스크롤을 갖는다. */
+  private gridHolder!: Phaser.GameObjects.Container;
   /** 점원을 무대 한 칸 안으로 자르는 마스크. Puppet은 컨테이너 변환을 물려받지 않는다. */
   private stageMask?: Phaser.GameObjects.Graphics;
   /** 점원의 말 한 장. 누를 때마다 갈아 끼우므로 씬이 하나만 들고 있는다. */
   private dialogue?: DialogueBubble;
   /** 다음에 할 마디의 순번. 누를 때마다 돌아가며 다른 말을 한다. */
   private merchantLine = 0;
+  /** 첫 마디의 두 조건. 판이 다 서고 점원이 도착해야 말이 뜬다. */
+  private entranceSettled = false;
+  private merchantReady = false;
   /** 상품 목록 위에 재사용 구매 작업판을 쌓는 전용 팝업 계층이다. */
   private readonly popups = new PopupLayer(this, 2600);
   private minScrollY = 0;
@@ -67,7 +76,11 @@ export class ShopScene extends Phaser.Scene {
     addSceneBackground(this, BACKGROUND.shop);
     drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { depth: -20, strength: 0.76 });
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.5).setDepth(-19);
-    this.topBar = new TopBar(this, 40, { onSettings: () => this.scene.start("settings", { returnScene: "lobby" }) });
+    bindCurrencyGuide({ scene: this, popups: this.popups });
+    this.topBar = new TopBar(this, 40, {
+      onSettings: () => this.scene.start("settings", { returnScene: "lobby" }),
+      onCurrency: (currency) => openCurrencyGuide({ scene: this, popups: this.popups }, currency),
+    });
     this.add.text(54, 170, t("shop.title"), textStyle({ role: "display", size: 54 })).setOrigin(0, 0);
     // 목록 컨테이너는 비동기 생성되므로 공용 돌아가기를 그보다 높은 고정 계층에 둔다.
     addBackButton(this, () => this.scene.start("lobby")).setDepth(1000);
@@ -77,6 +90,7 @@ export class ShopScene extends Phaser.Scene {
     this.createViewport();
     this.createTabs();
     this.installScrollInput();
+    this.playEntrance();
     this.publishControls([]);
     // 점원 자산은 별도 표시 데이터에서 고르고 공용 Puppet과 관절 배치 규칙을 그대로 거친다.
     void this.createMerchant();
@@ -106,7 +120,28 @@ export class ShopScene extends Phaser.Scene {
   private createStage(): void {
     const { centerX, width, bottom } = shopDialogueSpot();
     this.dialogue = new DialogueBubble(this, { centerX, width, y: bottom, bodySize: 27, nameSize: 26, depth: 5 });
-    this.speak();
+  }
+
+  /**
+   * 화면이 조립되며 열린다.
+   *
+   * 전시대가 아래에서 올라오고, 점원은 오른쪽에서, 첫 마디는 그 뒤에 왼쪽에서 들어온다 —
+   * 다 그려진 판이 한꺼번에 뜨면 어디가 무대이고 어디가 전시대인지 한 장의 그림으로만 읽힌다.
+   * 전체 움직임 감소에서는 **거리만** 줄고 순서는 그대로 남는다: 조립되는 순서가 이 연출의
+   * 뜻이라 그것까지 없애면 화면이 다시 한 장이 된다.
+   */
+  private playEntrance(): void {
+    const distance = motionPolicy(session.settings).nonEssentialDistanceFactor;
+    const board = SHOP_ENTRANCE.board;
+    this.boardChrome.setY(board.rise * distance);
+    this.tweens.add({ targets: this.boardChrome, y: 0, duration: board.duration, ease: "Cubic.Out" });
+    const grid = SHOP_ENTRANCE.grid;
+    this.gridHolder.setY(grid.rise * distance);
+    this.tweens.add({ targets: this.gridHolder, y: 0, duration: grid.duration, delay: grid.delay, ease: "Cubic.Out" });
+    this.tabRow?.setAlpha(0);
+    this.tweens.add({ targets: this.tabRow, alpha: 1, duration: grid.duration, delay: grid.delay });
+    // 첫 마디는 셋이 다 선 뒤에 뜬다. 아직 조립 중인 화면에 말부터 서면 무엇이 말하는지 모른다.
+    this.time.delayedCall(SHOP_ENTRANCE.dialogue.delay, () => { this.entranceSettled = true; this.tryFirstLine(); });
   }
 
   /**
@@ -115,10 +150,27 @@ export class ShopScene extends Phaser.Scene {
    * 누를 때마다 다음 마디로 넘어간다 — 같은 말을 되풀이하면 눌러 볼 이유가 없다. 첫 마디는
    * 화면에 들어온 순간 저절로 선다.
    */
-  private speak(): void {
+  /**
+   * 첫 마디는 **점원이 도착한 뒤에** 뜬다.
+   *
+   * 묶음은 내려받기라 늦게 올 수 있는데, 그때 말풍선만 먼저 서면 아무도 없는 자리에서 말이
+   * 나온다. 둘 중 늦은 쪽이 이 문을 연다.
+   */
+  private tryFirstLine(): void {
+    if (!this.entranceSettled || !this.merchantReady || this.merchantLine > 0) return;
+    if (!this.scene.isActive()) return;
+    this.speak(true);
+  }
+
+  private speak(entering = false): void {
     const line = SHOP_MERCHANT_LINE_KEYS[this.merchantLine % SHOP_MERCHANT_LINE_KEYS.length];
     this.merchantLine += 1;
-    this.dialogue?.say(SHOP_MERCHANT.name, t(line), { holdMs: 4200 });
+    const distance = motionPolicy(session.settings).nonEssentialDistanceFactor;
+    this.dialogue?.say(SHOP_MERCHANT.name, t(line), {
+      holdMs: 4200,
+      // 첫 마디만 화면 조립의 일부라 왼쪽에서 밀려 들어오고, 그 뒤로는 제자리에서 떠오른다.
+      slideX: entering ? SHOP_ENTRANCE.dialogue.slide * distance : 0,
+    });
   }
 
   /**
@@ -130,11 +182,13 @@ export class ShopScene extends Phaser.Scene {
    */
   private createBoard(): void {
     const { width, height, centerX, centerY } = shopBoardSize();
+    // 판·가장자리 누르기·제목표를 한 층에 담아 등장 연출이 셋을 한 덩어리로 올린다.
+    this.boardChrome = this.add.container(0, 0).setDepth(6);
     // 판이 화면 좌우와 밑동에 닿으므로 깎는 것은 **윗변 두 모서리뿐**이다 — 화면 밖으로 나가는
     // 아래 모서리를 깎으면 그 빗변이 보이지 않는 자리에서만 잘려 아무 말도 하지 않는다.
     const shape = chipPoints(width, height, { bevel: { topLeft: 56, topRight: 0, bottomRight: 0, bottomLeft: 0 } });
-    this.add.existing(drawLayer(this, centerX, centerY, shape, { fill: 0x10161d, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.7 }).setDepth(6));
-    this.add.existing(drawFrameVignette(this, centerX, centerY, width, height, { strength: 0.45 }).setDepth(6));
+    this.boardChrome.add(drawLayer(this, centerX, centerY, shape, { fill: 0x10161d, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.7 }));
+    this.boardChrome.add(drawFrameVignette(this, centerX, centerY, width, height, { strength: 0.45 }));
     this.createTitle();
   }
 
@@ -146,7 +200,7 @@ export class ShopScene extends Phaser.Scene {
    * 이미 갖고 있어 받칠 것도 없다.
    */
   private createTitle(): void {
-    addSectionTitle(this, shopTitleLeft(), shopTitleY(), t("shop.exchangeList"), { size: SHOP_TITLE.size }).setDepth(8);
+    addSectionTitle(this, shopTitleLeft(), shopTitleY(), t("shop.exchangeList"), { size: SHOP_TITLE.size, parent: this.boardChrome });
   }
 
   /**
@@ -167,6 +221,12 @@ export class ShopScene extends Phaser.Scene {
     // 넘어간다. 로비의 애착 렐릭과 같은 손짓이라 여기서만 가만히 서 있지 않는다.
     enableHitOnClick(this, merchant);
     merchant.on("pointerup", () => this.speak());
+    // 오른쪽에서 들어와 제자리에 선다. 늦게 도착해도 같은 거리를 지나 같은 자리에서 멈춘다.
+    const slide = SHOP_ENTRANCE.merchant.slide * motionPolicy(session.settings).nonEssentialDistanceFactor;
+    merchant.setX(headX + slide).setAlpha(0);
+    this.tweens.add({ targets: merchant, x: headX, alpha: 1, duration: SHOP_ENTRANCE.merchant.duration, ease: "Cubic.Out" });
+    this.merchantReady = true;
+    this.tryFirstLine();
     this.stageMask = this.make.graphics({});
     this.stageMask.fillStyle(0xffffff, 1).fillRect(0, SHOP_STAGE.top, BASE_WIDTH, SHOP_BOARD.top - SHOP_STAGE.top);
     merchant.setMask(this.stageMask.createGeometryMask());
@@ -175,10 +235,15 @@ export class ShopScene extends Phaser.Scene {
   /** 격자 한 계층만 자르는 고정 마스크를 만들어 판 머리글과 탭 입력을 침범하지 않게 한다. */
   private createViewport(): void {
     const view = shopGridViewport();
-    this.content = this.add.container(0, 0).setDepth(8);
+    // 흐르는 격자(`content`)와 등장에서 올라오는 층(`gridHolder`)을 가른다 — 한 컨테이너에
+    // 둘을 겹치면 올라오는 동안의 이동이 스크롤 위치로 남아 첫 줄이 창 밖에서 멈춘다.
+    this.gridHolder = this.add.container(0, 0).setDepth(8);
+    this.content = this.add.container(0, 0);
+    this.gridHolder.add(this.content);
     this.viewportMask = this.make.graphics();
     this.viewportMask.fillStyle(0xffffff, 1).fillRect(view.left, view.top, view.right - view.left, view.bottom - view.top);
-    this.content.setMask(this.viewportMask.createGeometryMask());
+    // 마스크는 화면 좌표를 자르므로, 아직 올라오는 중인 칸은 창 밖에서 저절로 잘린다.
+    this.gridHolder.setMask(this.viewportMask.createGeometryMask());
   }
 
   /** 서버의 storefront 경계를 신뢰하되 독립 상점 씬에서는 shop 상품만 렌더링한다. */

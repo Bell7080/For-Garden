@@ -55,7 +55,8 @@ export class CurrencyGuidePopup {
     body.add(drawLayer(this.scene, 0, HERO.y, slantedRect(HERO.width, HERO.height, 22), { fill: 0x101720, alpha: 0.9, edge: COLOR.accent, edgeAlpha: 0.35 }));
     const iconX = -HERO.width / 2 + 48 + HERO.frameSize / 2;
     // 액자·그림·그늘은 어디서나 같은 공용 프리팹 한 장이 그린다.
-    addFramedIcon(this.scene, body, iconX, HERO.y, HERO.frameSize, CURRENCY_ICON_BY_WALLET[key]);
+    // 이미 그 재화를 보고 있는 자리라 눌러도 열 창이 없다.
+    addFramedIcon(this.scene, body, iconX, HERO.y, HERO.frameSize, CURRENCY_ICON_BY_WALLET[key], { plain: true });
     body.add(this.scene.add
       .text(HERO.width / 2 - 40, HERO.y, amount.toLocaleString(), textStyle({ role: "display", size: 52, color: TONE.value }))
       .setOrigin(1, 0.5)

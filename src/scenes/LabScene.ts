@@ -27,6 +27,7 @@ import { ResearchSlotTile } from "../ui/ResearchSlotTile";
 import { firstMeetingLine } from "../data/relicFirstMeetings";
 import { audioManager, type AudioScope } from "../managers/AudioManager";
 import { PopupLayer } from "../ui/PopupLayer";
+import { bindCurrencyGuide, openCurrencyGuide } from "../ui/currencyGuideEntry";
 import { MileagePopup } from "../ui/MileagePopup";
 import { settingsManager } from "../managers/SettingsManager";
 import { colorAssistPolicy, excavationStageDuration } from "../core/settings";
@@ -100,9 +101,12 @@ export class LabScene extends Phaser.Scene {
     this.add.rectangle(cx, BANNER_FLOOR, BASE_WIDTH, 3, COLOR.panelEdge).setDepth(-28);
 
     // 모집 화면은 "무엇으로 뽑을 수 있나"를 묻는다. 상단 줄도 다이아·화석·호박석으로 바꾼다.
+    bindCurrencyGuide({ scene: this, popups: this.popupLayer });
     this.topBar = new TopBar(this, 40, {
       currencies: "recruit",
       onSettings: () => this.scene.start("settings", { returnScene: "lab" }),
+      // 연구소의 화석·호박석도 로비의 보석과 같이 눌러서 무엇에 쓰는지 읽을 수 있어야 한다.
+      onCurrency: (currency) => openCurrencyGuide({ scene: this, popups: this.popupLayer! }, currency),
     });
     this.addMileageButton(BASE_WIDTH - 246, 178);
 

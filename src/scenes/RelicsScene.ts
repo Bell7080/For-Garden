@@ -22,6 +22,7 @@ import { relicSkinManager } from "../managers/RelicSkinManager";
 import { RelicControlBar } from "../ui/RelicControlBar";
 import { openRelicFilterPopup } from "../ui/RelicFilterPopup";
 import { PopupLayer } from "../ui/PopupLayer";
+import { bindCurrencyGuide } from "../ui/currencyGuideEntry";
 import {
   RELIC_GRID,
   RELIC_GRID_INTRO,
@@ -162,6 +163,8 @@ export class RelicsScene extends Phaser.Scene {
     // 조작 줄은 왼쪽부터 **필터 · 이름 검색 · 정렬**이다. 정렬은 눌러 돌리는 버튼이 아니라
     // 열고 닫는 목록이다 — 기준이 셋을 넘으면 원하는 것을 만날 때까지 눌러야 했다.
     this.popups = new PopupLayer(this);
+    // 도감의 상단 줄에는 재화가 없지만, 정보창·가방에서 세우는 액자는 여기서도 눌린다.
+    bindCurrencyGuide({ scene: this, popups: this.popups });
     this.controls = new RelicControlBar(this, {
       sortOptions: SORT_ORDER.map((mode) => ({ id: mode, label: sortLabel(mode) })),
       sortMode: this.sortMode,

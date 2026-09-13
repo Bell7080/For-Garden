@@ -1,6 +1,31 @@
 import Phaser from "phaser";
+import type { WalletItemKey } from "../data/items";
+import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { chipPoints, drawInnerVignette, drawShapeOutline, drawLayer } from "./holo";
 import { COLOR, textStyle } from "./theme";
+
+/**
+ * 그 화면에서 재화 액자를 누르면 무엇이 열리는가.
+ *
+ * **액자를 세우는 자리마다 안내창을 이어 주지 않는다.** 재화 그림이 서는 자리는 가방·상점·
+ * 무역·영수증·발굴 현황까지 수십 곳이라, 한 곳씩 잇다 보면 새 화면이 생길 때마다 하나를
+ * 빠뜨리고 **빠뜨린 것이 보이지 않는다**(같은 골드가 어디서는 눌리고 어디서는 눌리지 않는다).
+ * 씬이 열릴 때 `bindCurrencyGuide` 한 줄만 걸면 그 뒤로 이 함수가 세우는 재화 액자는 전부
+ * 눌린다.
+ *
+ * 씬마다 따로 들고 있어야 하므로 `WeakMap`이다 — 씬이 죽으면 함께 사라져 다음 씬에 새지 않는다.
+ */
+const currencyGuideOpeners = new WeakMap<Phaser.Scene, (key: WalletItemKey) => void>();
+
+/** 그림 키에서 지갑 키로 되짚는 표. 액자는 그림만 받으므로 여기서 거꾸로 찾는다. */
+const WALLET_BY_ICON = Object.fromEntries(
+  Object.entries(CURRENCY_ICON_BY_WALLET).map(([wallet, icon]) => [icon, wallet as WalletItemKey]),
+) as Readonly<Record<string, WalletItemKey>>;
+
+/** 씬 하나가 제 재화 안내창을 등록한다. `src/ui/currencyGuideEntry.ts`가 유일한 호출자다. */
+export function setCurrencyGuideOpener(scene: Phaser.Scene, open: (key: WalletItemKey) => void): void {
+  currencyGuideOpeners.set(scene, open);
+}
 
 /**
  * 그림 한 장을 담는 액자 한 칸 — **재화·아이템이 서는 모든 자리의 유일한 양식.**
@@ -70,6 +95,14 @@ export interface FramedIconOptions extends ItemFrameOptions {
   amountColor?: string;
   /** 그림 자체의 진하기. 이미 받은 보상처럼 눌러 두어야 하는 자리만 넘긴다. */
   iconAlpha?: number;
+  /**
+   * 눌러도 안내창을 열지 않는다.
+   *
+   * 안내창 **자신이** 세우는 액자(그 재화를 이미 보고 있는 자리)와, 이미 제 손짓이 걸린 칸
+   * 안의 그림에만 쓴다 — 칸을 누르면 구매 확인이 떠야 하는데 그림만 다른 창을 열면 같은 칸이
+   * 두 가지 일을 한다.
+   */
+  plain?: boolean;
 }
 
 /**
@@ -110,6 +143,17 @@ export function addFramedIcon(
       .setOrigin(1, 1)
       .setStroke("#000000", 6)
       .setShadow(2, 3, "#000000", 2, false, true));
+  }
+  // 재화 그림이면 그 자리에서 안내창이 열린다 — 어느 화면에서 보든 같은 그림은 같은 일을 한다.
+  const wallet = WALLET_BY_ICON[textureKey];
+  const openGuide = currencyGuideOpeners.get(scene);
+  if (wallet && openGuide && !options.plain) {
+    const hit = scene.add.rectangle(0, 0, size, size, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    // 누르면 커진다 — 눌린 상태를 색이 아니라 크기로 알리는 화면 전체의 규칙이다.
+    hit.on("pointerdown", () => holder.setScale(1.08));
+    hit.on("pointerout", () => holder.setScale(1));
+    hit.on("pointerup", () => { holder.setScale(1); openGuide(wallet); });
+    holder.add(hit);
   }
   if (parent) parent.add(holder);
   return holder;

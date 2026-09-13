@@ -30,6 +30,7 @@ export const MISC_JA = {
 
   "shop.title": "ショップ",
   "shop.exchangeList": "交換一覧",
+  "premium.list": "商品一覧",
   "shop.exchangeRemaining": "残り交換 {remaining}/{limit}",
   "shop.exchangeDone": "交換が完了しました。",
   "shop.merchant.line1": "い、いらっしゃいませ…! 今日入った品はぜんぶ並べておきました。ごゆっくり。",

@@ -64,7 +64,7 @@ export class DialogueBubble extends Phaser.GameObjects.Container {
    * 높이는 손으로 적지 않고 **실제 글 높이에서 거꾸로 구한다** — 대사가 길어지거나 언어를
    * 바꿀 때마다 아래 여백이 어긋나지 않는다.
    */
-  say(name: string, line: string, options: { holdMs?: number } = {}): void {
+  say(name: string, line: string, options: { holdMs?: number; slideX?: number } = {}): void {
     const generation = ++this.generation;
     this.scene.tweens.killTweensOf(this);
     this.removeAll(true);
@@ -90,8 +90,13 @@ export class DialogueBubble extends Phaser.GameObjects.Container {
     addSectionTitle(this.scene, -width / 2 + DIALOGUE_BUBBLE.nameInset, -height / 2, name, { size: nameSize, parent: this });
 
     const centerY = dialogueBubbleCenterY(this.options.y, height, this.options.anchor);
-    this.setPosition(this.options.centerX, centerY + DIALOGUE_BUBBLE.rise).setAlpha(0).setVisible(true);
-    this.scene.tweens.add({ targets: this, alpha: 1, y: centerY, duration: DIALOGUE_BUBBLE.riseMs, ease: "Sine.easeOut" });
+    // 기본은 아래에서 떠오르는 것이고, 화면이 조립되는 자리에서만 옆에서 밀려 들어온다.
+    const slideX = options.slideX ?? 0;
+    this.setPosition(this.options.centerX + slideX, centerY + (slideX ? 0 : DIALOGUE_BUBBLE.rise)).setAlpha(0).setVisible(true);
+    this.scene.tweens.add({
+      targets: this, alpha: 1, x: this.options.centerX, y: centerY,
+      duration: slideX ? DIALOGUE_BUBBLE.riseMs * 1.7 : DIALOGUE_BUBBLE.riseMs, ease: "Cubic.Out",
+    });
     /*
      * **사라짐은 지연 tween이 아니라 타이머가 연다.**
      *
@@ -104,7 +109,7 @@ export class DialogueBubble extends Phaser.GameObjects.Container {
     this.fade = this.scene.time.delayedCall(options.holdMs ?? DIALOGUE_BUBBLE.holdMs, () => {
       if (generation !== this.generation) return;
       this.scene.tweens.add({
-        targets: this, alpha: 0, y: centerY - DIALOGUE_BUBBLE.rise * 2, duration: DIALOGUE_BUBBLE.fadeMs,
+        targets: this, alpha: 0, x: this.options.centerX, y: centerY - DIALOGUE_BUBBLE.rise * 2, duration: DIALOGUE_BUBBLE.fadeMs,
         onComplete: () => { if (generation === this.generation) this.hideNow(); },
       });
     });

@@ -236,3 +236,25 @@ export function shopTabSpot(index: number): { x: number; y: number } {
   const { width, height, gap, left, bottom } = SHOP_TAB_ROW;
   return { x: left + width / 2 + index * (width + gap), y: bottom - height / 2 };
 }
+
+/**
+ * 화면이 **조립되는** 등장.
+ *
+ * 다 그려진 판이 한꺼번에 나타나면 어디가 무대이고 어디가 전시대인지 한 장의 그림으로만
+ * 읽힌다. 전시대는 밑에서 올라오고, 점원은 오른쪽에서, 말은 왼쪽에서 들어와 **제자리를
+ * 스스로 말하며** 자리를 잡는다. 첫 마디는 셋이 다 선 뒤에 뜬다 — 아직 조립 중인 화면에
+ * 말부터 서면 무엇이 말하는지 알 수 없다.
+ *
+ * 값은 화면이 손으로 적지 않고 이 표에서만 나온다. 전체 움직임 감소에서는 거리만 줄고 순서는
+ * 그대로 남는다 — 조립되는 **순서**가 이 연출의 뜻이라 그것까지 없애면 화면이 다시 한 장이 된다.
+ */
+export const SHOP_ENTRANCE = {
+  /** 전시대가 아래에서 올라오는 거리와 시간. */
+  board: { rise: 260, duration: 420 },
+  /** 격자는 판보다 한 박자 늦게 따라 올라온다. */
+  grid: { rise: 200, duration: 420, delay: 90 },
+  /** 점원이 오른쪽에서 들어오는 거리와 시간. */
+  merchant: { slide: 210, duration: 460 },
+  /** 대사가 왼쪽에서 들어오는 거리. 시간은 공용 대사창이 정한다. */
+  dialogue: { slide: -240, delay: 430 },
+} as const;

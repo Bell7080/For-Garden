@@ -27,6 +27,7 @@ export const MISC_EN = {
   "augment.group.conditional": "Conditional",
   "shop.title": "Shop",
   "shop.exchangeList": "Exchange List",
+  "premium.list": "Store List",
   "shop.exchangeRemaining": "Exchanges left {remaining}/{limit}",
   "shop.exchangeDone": "The exchange is complete.",
   "shop.merchant.line1": "W-welcome in…! Everything that came in today is out on the shelves. Take your time.",

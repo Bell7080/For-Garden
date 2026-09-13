@@ -6,6 +6,8 @@ import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { BottomNav } from "../ui/BottomNav";
 import { chipPoints, drawLayer, drawVignette, HOLO } from "../ui/holo";
 import { TopBar } from "../ui/TopBar";
+import { PopupLayer } from "../ui/PopupLayer";
+import { bindCurrencyGuide, openCurrencyGuide } from "../ui/currencyGuideEntry";
 import { COLOR, textStyle } from "../ui/theme";
 
 /**
@@ -15,6 +17,9 @@ import { COLOR, textStyle } from "../ui/theme";
  * 파고드는 탐사 — 에너지와 희귀 자원을 시간으로 바꾸는 쪽이다.
  */
 export class ArchaeologyScene extends Phaser.Scene {
+  /** 상단 재화 안내를 얹는 전용 계층. 이 화면의 다른 조작과 층이 섞이지 않는다. */
+  private popups!: PopupLayer;
+
   constructor() {
     super("archaeology");
   }
@@ -25,7 +30,12 @@ export class ArchaeologyScene extends Phaser.Scene {
     addSceneBackground(this, BACKGROUND.archaeology);
     drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { depth: -20, strength: 0.72 });
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.5).setDepth(-19);
-    new TopBar(this, 40, { onSettings: () => this.scene.start("settings", { returnScene: "archaeology" }) });
+    this.popups = new PopupLayer(this, 2600);
+    bindCurrencyGuide({ scene: this, popups: this.popups });
+    new TopBar(this, 40, {
+      onSettings: () => this.scene.start("settings", { returnScene: "archaeology" }),
+      onCurrency: (currency) => openCurrencyGuide({ scene: this, popups: this.popups }, currency),
+    });
 
     this.add.text(60, 185, t("archaeology.title"), textStyle({ role: "display", size: 52 })).setOrigin(0, 0);
     this.add.text(62, 252, t("archaeology.subtitle"), textStyle({ role: "body", size: 27, color: COLOR.inkDim })).setOrigin(0, 0);

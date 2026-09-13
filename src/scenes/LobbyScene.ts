@@ -10,7 +10,7 @@ import { BottomNav, NAV_TOP } from "../ui/BottomNav";
 import { Button } from "../ui/Button";
 import { RailButton } from "../ui/RailButton";
 import { TopBar } from "../ui/TopBar";
-import { chipPoints, drawHairline, drawLayer, drawVignette, HOLO } from "../ui/holo";
+import { chipPoints, drawLayer, drawVignette, HOLO } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
 import { t } from "../i18n";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
@@ -43,13 +43,9 @@ import { PlayerProfilePopup } from "../ui/PlayerProfilePopup";
 import { profileModifierManager } from "../managers/ProfileModifierManager";
 import type { PlayerProfileDisplay } from "../state/playerProfile";
 import { MailPopup } from "../ui/MailPopup";
-import { CurrencyGuidePopup } from "../ui/CurrencyGuidePopup";
-import { StaminaPopup } from "../ui/StaminaPopup";
+import { bindCurrencyGuide, openCurrencyGuide } from "../ui/currencyGuideEntry";
 import type { CurrencyGuideAction } from "../data/currencyGuide";
 import { powerSavingPolicy } from "../core/settings";
-
-/** 확대된 애착 렐릭의 골반 아래가 내비게이션 뒤로 자연스럽게 이어지는 기준선. */
-const STAGE_FLOOR = 1660;
 
 /**
  * 로비에 선 애착 렐릭의 층.
@@ -150,6 +146,8 @@ export class LobbyScene extends Phaser.Scene {
     bindDebugReadyLifecycle(this.events);
     setDebugScene("lobby");
     this.popupLayer = new PopupLayer(this);
+    // 이 한 줄로 상단 재화 칸뿐 아니라 가방·무역·영수증의 재화 액자까지 같은 창으로 이어진다.
+    bindCurrencyGuide({ scene: this, popups: this.popupLayer, onAction: (action) => this.handleCurrencyAction(action) });
     this.sortieSdPuppets.clear();
 
     this.buildPlaza();
@@ -296,10 +294,7 @@ export class LobbyScene extends Phaser.Scene {
   /** 상단과 가방이 공유하는 안내를 열고, 선택적인 이동만 로비 소유 콜백에서 해석한다. */
   private openCurrencyGuide(currency: import("../data/items").WalletItemKey): void {
     if (!this.popupLayer) return;
-    // 스테미나만 전용 창이다 — 남은 양·회복 시간·지금 채우는 수단이 다음 조작을 정하므로
-    // 획득처를 글로 읽는 공용 안내로는 모자란다.
-    if (currency === "stamina") { new StaminaPopup(this, this.popupLayer, gameApi).open(); return; }
-    new CurrencyGuidePopup(this, this.popupLayer, (action) => this.handleCurrencyAction(action)).open(currency);
+    openCurrencyGuide({ scene: this, popups: this.popupLayer, onAction: (action) => this.handleCurrencyAction(action) }, currency);
   }
 
   /** 안내 프리팹은 이 콜백만 요청하므로 지갑 변경 없이 구현된 씬·로비 팝업으로만 이동한다. */
@@ -486,7 +481,6 @@ export class LobbyScene extends Phaser.Scene {
 
   /** 연구소에서 옮긴 채광 설비·식물 원화를 로비 광장 배경으로 사용한다. */
   private buildPlaza(): void {
-    const cx = BASE_WIDTH / 2;
     addSceneBackground(this, BACKGROUND.lobby);
     // 가장자리를 눌러 화면 가운데의 렐릭에 눈이 먼저 가게 한다.
     //
@@ -494,13 +488,11 @@ export class LobbyScene extends Phaser.Scene {
     // 위에 혼자 밝은 인물이 떠 한 장면이 아니라 배경에 오려 붙인 스티커로 보였다 — 비네트는
     // 가운데를 비워 두므로 얼굴은 그대로 밝고 어깨 밖으로 벗어난 자락만 함께 잦아든다.
     drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { depth: LOBBY_PORTRAIT_DEPTH + 1, strength: 0.62 });
-    // 하단 조작부의 글자 대비를 유지하되 원화는 은은하게 이어 보이도록 반투명 바닥만 얹는다.
-    this.add
-      .rectangle(cx, (STAGE_FLOOR + NAV_TOP) / 2, BASE_WIDTH, NAV_TOP - STAGE_FLOOR, COLOR.void, 0.24)
-      .setDepth(-29);
-    drawHairline(this, cx, STAGE_FLOOR, BASE_WIDTH, { color: COLOR.accent, alpha: 0.14 }).setDepth(-28);
-    // 여기가 어디인지는 배경 원화가 이미 말한다. 자리 이름을 글자로 한 번 더 적으면 로비의
-    // 주인공(애착 렐릭) 위에 아무 조작도 바꾸지 않는 문장이 하나 더 얹힌다.
+    // **하단 탭 위에 바닥 띠를 깔지 않는다.** 예전에는 무대 바닥선부터 탭 윗변까지 80px짜리
+    // 반투명 검정을 한 겹 얹고 그 위에 금색 선을 그었다 — 글자 대비를 위한 것이었는데, 탭 줄이
+    // 이미 제 `drawGlassFade`로 아래로 짙어지므로 그 위에 더 깔린 띠는 대비를 보태지 않고
+    // **배경 원화를 가로지르는 어두운 줄 하나로만** 보였다(애착 렐릭의 다리가 거기서 한 번
+    // 끊겼다). 여기가 어디인지는 배경 원화가 이미 말한다.
   }
 
   /**

@@ -13,6 +13,7 @@ import { COLOR, textStyle } from "../ui/theme";
 import { TopBar } from "../ui/TopBar";
 import { setDebugScene, setDebugStorefrontControls } from "../debug";
 import { PopupLayer } from "../ui/PopupLayer";
+import { bindCurrencyGuide } from "../ui/currencyGuideEntry";
 import { InteractionExchangePopup } from "../ui/InteractionExchangePopup";
 import { InteractionCityPopup } from "../ui/InteractionCityPopup";
 import { InteractionJournalPopup } from "../ui/InteractionJournalPopup";
@@ -73,6 +74,7 @@ export class InteractionScene extends Phaser.Scene {
     // 먼저 가고, 가장자리의 제목·뒤로가기는 그 어둠 위에서 읽힌다.
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.5).setDepth(-27);
     drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { depth: -26, strength: 0.7 });
+    bindCurrencyGuide({ scene: this, popups: this.popups });
     new TopBar(this, 40, { currencies: "none", onSettings: () => this.scene.start("settings", { returnScene: "interaction" }) });
     this.add.text(52, 150, t("interaction.title"), textStyle({ role: "display", size: 50, color: "#a8ddf5" }));
     this.add.text(56, 216, t("interaction.subtitle"), textStyle({ role: "body", size: 24, color: COLOR.inkDim }));

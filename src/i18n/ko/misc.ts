@@ -34,6 +34,7 @@ export const MISC_KO = {
   // 상점
   "shop.title": "상점",
   "shop.exchangeList": "교환 목록",
+  "premium.list": "상품 목록",
   "shop.exchangeRemaining": "남은 교환 {remaining}/{limit}",
   "shop.exchangeDone": "교환이 완료되었습니다.",
   "shop.merchant.line1": "오, 오셔서 감사합니다…! 오늘 들어온 건 다 꺼내 뒀어요. 천천히 보세요.",

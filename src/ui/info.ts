@@ -1951,6 +1951,7 @@ export class InfoManager {
   /** 원화 아래 스킬 아이콘 세 개. 누르면 정형 팝업이 뜬다. */
   private buildSkillIcons(def: RelicDef): void {
     for (const icon of this.skillIcons.splice(0)) icon.destroy();
+    const breakthrough = this.publicProfile ? 0 : relicProgression.getProgress(def.id).breakthrough;
     const entries: [string, Skill, number | undefined, SkillArtSlot][] = [
       [t("info.skill.passive"), { ...def.passive, power: def.passive.value, damageType: "physical" } as unknown as Skill, undefined, "passive"],
       [t("info.skill.basic"), def.basic, undefined, "basic"],
@@ -1969,8 +1970,10 @@ export class InfoManager {
         element: def.element,
         role: def.role,
         label: kindLabel,
-        // 궁극기 한 칸만 강조한다. 한 화면에 강조가 여럿이면 위계가 사라진다.
-        emphasis: index === 2,
+        // **강조는 돌파로 자란 칸만 갖는다.** 예전에는 궁극기 한 칸이 무조건 노란빛이었는데,
+        // 그 색이 아무 상태도 말하지 않아 세 칸의 위계만 이유 없이 갈라 놓았다. 공개 프로필은
+        // 그쪽 돌파 단계를 모르므로 강조하지 않는다.
+        enhanced: !this.publicProfile && isBreakthroughSlotOpen(breakthrough, slot),
       }));
       const hit = this.scene.add.rectangle(0, 0, size, size, 0xffffff, 0).setInteractive({ useHandCursor: true });
       hit.on("pointerdown", () => container.setScale(1.08));
@@ -2169,6 +2172,10 @@ export class InfoManager {
   private refreshGrowth(): void {
     const def = this.currentDef;
     if (!def) return;
+    // **돌파 등급도 함께 다시 칠한다.** 예전에는 창을 열 때 한 번만 그려서, 그 자리에서 한계를
+    // 돌파하고 파문이 터져도 로마자는 `I`에 머물렀다 — 올라간 것이 바로 그 글자인데 연출만
+    // 돌고 표기는 창을 닫았다 열어야 바뀌었다.
+    this.paintStars(def);
     // 공개 프로필은 필요한 표시용 기본값도 DTO로부터 만들며 플레이어 저장을 건드리지 않는다.
     const progress: RelicProgress = this.publicProfile
       ? { level: this.publicProfile.level, exp: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] }
@@ -2507,6 +2514,9 @@ export function openBreakthroughStepsPopup(
         element: def.element,
         role: def.role,
         label: skillSlotLabel(entry.slot),
+        // 이미 뚫은 줄은 정보창 아래 액자 줄과 **같은 얼굴**로 선다(강조색 + 이름 뒤의 `+`) —
+        // 두 자리가 같은 것을 다르게 말하면 표를 읽고 돌아와 다시 맞춰 봐야 한다.
+        enhanced: reached,
         // 액자는 그 줄의 주제라 안 열린 줄에서도 어느 기술인지 알아볼 수 있어야 한다.
         dimAlpha: reached ? undefined : BREAK_STEPS.lockedIconAlpha,
       });

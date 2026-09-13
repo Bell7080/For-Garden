@@ -48,7 +48,14 @@ export const RELIC_CONTROL_ROW = {
   height: 84,
   gap: 16,
   filterWidth: 96,
-  sortWidth: 300,
+  sortWidth: 214,
+  /**
+   * 정렬 **방향**을 뒤집는 칩.
+   *
+   * 목록 이름과 **따로 선다** — 한 칸에 두면 누를 때마다 "기준을 고르는 것"과 "방향을 뒤집는
+   * 것" 중 무엇이 일어날지 손이 알 수 없다. 화살표 하나만 담으므로 정사각에 가깝다.
+   */
+  sortDirWidth: 84,
 } as const;
 
 /**
@@ -75,16 +82,18 @@ export interface ControlSpot {
   readonly width: number;
 }
 
-/** 세 조작이 서는 자리. 남는 폭은 전부 검색 칸이 갖는다. */
-export function relicControlSpots(): { filter: ControlSpot; search: ControlSpot; sort: ControlSpot } {
-  const { gap, filterWidth, sortWidth } = RELIC_CONTROL_ROW;
+/** 네 조작이 서는 자리. 남는 폭은 전부 검색 칸이 갖는다. */
+export function relicControlSpots(): { filter: ControlSpot; search: ControlSpot; sort: ControlSpot; sortDir: ControlSpot } {
+  const { gap, filterWidth, sortWidth, sortDirWidth } = RELIC_CONTROL_ROW;
   const total = BASE_WIDTH - RELIC_GRID_MARGIN * 2;
-  const searchWidth = total - filterWidth - sortWidth - gap * 2;
+  const searchWidth = total - filterWidth - sortWidth - sortDirWidth - gap * 3;
   const left = RELIC_GRID_MARGIN;
+  const sortDirX = BASE_WIDTH - RELIC_GRID_MARGIN - sortDirWidth / 2;
   return {
     filter: { x: left + filterWidth / 2, width: filterWidth },
     search: { x: left + filterWidth + gap + searchWidth / 2, width: searchWidth },
-    sort: { x: BASE_WIDTH - RELIC_GRID_MARGIN - sortWidth / 2, width: sortWidth },
+    sort: { x: sortDirX - sortDirWidth / 2 - gap - sortWidth / 2, width: sortWidth },
+    sortDir: { x: sortDirX, width: sortDirWidth },
   };
 }
 

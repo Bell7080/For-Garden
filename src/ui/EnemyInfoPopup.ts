@@ -312,8 +312,8 @@ export class EnemyInfoPopup {
         size, slot: entry.slot, relicId: def.id,
         fallbackIcon: slotFallbackIcon(def, entry.slot),
         element: def.element, role: def.role, label: entry.label,
-        // 궁극기 한 칸만 강조한다. 한 판에 강조가 여럿이면 위계가 사라진다.
-        emphasis: entry.slot === "ultimate",
+        // 강조는 돌파로 자란 칸만 갖는다 — 아군 창과 같은 규칙이다.
+        enhanced: isBreakthroughSlotOpen(snapshot.breakthrough, entry.slot),
       }));
       const hit = this.scene.add.rectangle(0, 0, size, size, 0xffffff, 0).setInteractive({ useHandCursor: true });
       hit.on("pointerdown", () => container.setScale(1.08));

@@ -32,8 +32,15 @@ export interface SkillIconFrameOptions {
   role: Role;
   /** 액자 안 아래에 박는 이름(`일반 공격`·`궁극기`…). 비우면 그림만 담는다. */
   label?: string;
-  /** 이 칸이 화면에서 가장 중요한 하나인지. 테두리와 글자가 강조색을 얻는다. */
-  emphasis?: boolean;
+  /**
+   * **한계 돌파가 이 칸을 강화했는가.**
+   *
+   * 예전에는 궁극기 한 칸만 무조건 강조색을 얻었다(`emphasis`) — "가장 중요한 칸"이라는
+   * 뜻이었는데, 그 노란빛이 실제로는 아무 상태도 말하지 않아 세 칸의 위계만 이유 없이
+   * 갈라 놓았다. 지금 그 강조는 **돌파로 실제로 달라진 칸**만 갖는다: 테두리와 글자가
+   * 강조색을 얻고 이름 뒤에 `+`가 붙어, 어느 기술이 자란 것인지 액자 줄에서 바로 읽힌다.
+   */
+  enhanced?: boolean;
   /**
    * 아직 열리지 않은 칸의 진하기. 비우면 흐리지 않는다.
    *
@@ -54,7 +61,7 @@ export function skillSlotLabel(slot: SkillArtSlot): string {
 
 /** 액자 한 장을 만들어 컨테이너로 돌려준다. 부른 쪽이 자리를 잡고 입력을 붙인다. */
 export function addSkillIconFrame(scene: Phaser.Scene, options: SkillIconFrameOptions): Phaser.GameObjects.Container {
-  const { size, emphasis = false } = options;
+  const { size, enhanced = false } = options;
   const frame = scene.add.container(0, 0);
   const tint = skillArtTint(options.element, options.role);
   const chip = chipPoints(size, size, {
@@ -62,10 +69,10 @@ export function addSkillIconFrame(scene: Phaser.Scene, options: SkillIconFrameOp
   });
   // 판을 불투명하게 채운다. 배경 원화가 비쳐 보이면 그림 두 장이 겹쳐 무엇이 스킬인지 흐려진다.
   frame.add(drawLayer(scene, 0, 0, chip, {
-    fill: emphasis ? 0x241f16 : 0x11161d,
+    fill: enhanced ? 0x241f16 : 0x11161d,
     alpha: 1,
     edge: COLOR.accent,
-    edgeAlpha: emphasis ? 0.9 : 0.45,
+    edgeAlpha: enhanced ? 0.9 : 0.45,
   }));
   // 그림이 앉는 안쪽 칸. 이름이 들어갈 만큼 아래를 남기고 위쪽으로 올려 붙인다.
   const innerSize = size - SKILL_ICON_FRAME.innerInset;
@@ -88,22 +95,25 @@ export function addSkillIconFrame(scene: Phaser.Scene, options: SkillIconFrameOp
   if (art) image.setTint(tint);
   frame.add(image);
   if (options.label) {
-    // 액자 안의 이름은 그림 다음으로 먼저 읽히는 것이라 굵고 크게 둔다.
-    const color = emphasis ? COLOR.accentText : COLOR.ink;
+    // 액자 안의 이름은 그림 다음으로 먼저 읽히는 것이라 굵고 크게 둔다. 돌파로 자란 칸은
+    // **이름 뒤에 `+`가 붙는다** — 색만으로 알리면 무엇이 다른지가 아니라 "이 칸이 특별하다"
+    // 까지만 읽히고, 색을 못 가르는 손에게는 아무것도 말하지 않는다.
+    const color = enhanced ? COLOR.accentText : COLOR.ink;
     const label = scene.add
-      .text(0, size / 2 - SKILL_ICON_FRAME.labelBaseline, options.label, textStyle({ role: "display", size: Math.round(size * SKILL_ICON_FRAME.labelRatio), color }))
+      .text(0, size / 2 - SKILL_ICON_FRAME.labelBaseline, enhanced ? `${options.label}+` : options.label, textStyle({ role: "display", size: Math.round(size * SKILL_ICON_FRAME.labelRatio), color }))
       .setOrigin(0.5);
     /*
      * **낱말 길이는 언어가 정하고 액자 폭은 화면이 정한다.** 「일반 공격」 네 글자가 영어에서는
-     * `Basic Attack` 열두 글자라 그대로 두면 액자 밖으로 잘려 나간다(실제로 그랬다). 넘치는
-     * 만큼만 가로로 누르고, 읽을 수 없어지기 전에 멈춘다 — 크기를 줄이지 않는 이유는 세 칸이
-     * 나란히 선 줄에서 한 칸만 글자가 작아지면 그 칸이 덜 중요한 것처럼 읽히기 때문이다.
+     * `Basic Attack` 열두 글자라 그대로 두면 액자 밖으로 잘려 나간다(실제로 그랬다). 돌파로
+     * 붙는 `+`까지 더해지므로 그 글자까지 담은 폭을 잰다. 넘치는 만큼만 가로로 누르고, 읽을 수
+     * 없어지기 전에 멈춘다 — 크기를 줄이지 않는 이유는 세 칸이 나란히 선 줄에서 한 칸만 글자가
+     * 작아지면 그 칸이 덜 중요한 것처럼 읽히기 때문이다.
      */
     squeezeTextToWidth(label, size - SKILL_ICON_FRAME.labelInset);
     frame.add(label);
   }
   // 액자 테두리. 채운 판 위에 한 줄을 얹어 배경 원화와 확실히 갈라 놓는다.
-  frame.add(drawShapeOutline(scene, 0, 0, chip, { color: COLOR.accent, alpha: emphasis ? 0.75 : 0.42, width: 3 }));
+  frame.add(drawShapeOutline(scene, 0, 0, chip, { color: COLOR.accent, alpha: enhanced ? 0.75 : 0.42, width: 3 }));
   if (options.dimAlpha !== undefined) frame.setAlpha(options.dimAlpha);
   return frame;
 }

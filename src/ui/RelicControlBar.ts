@@ -23,6 +23,10 @@ export interface RelicControlBarOptions<T extends string> {
   readonly sortOptions: readonly SortOption<T>[];
   readonly sortMode: T;
   readonly onSort: (mode: T) => void;
+  /** 지금 방향. 아래(내림차순)면 큰 값이 먼저 선다. */
+  readonly descending: boolean;
+  /** 방향을 뒤집는다. 기준은 그대로 두고 줄만 반대로 선다. */
+  readonly onDirection: (descending: boolean) => void;
   readonly onFilter: (anchor: { x: number; y: number }) => void;
   readonly onSearch: (query: string) => void;
   /** 속성 상성표를 여는 버튼. 필터 버튼 바로 아래에 같은 폭으로 선다. */
@@ -51,6 +55,9 @@ export class RelicControlBar {
   private readonly caret: Phaser.GameObjects.Rectangle;
   private caretTween?: Phaser.Tweens.Tween;
   private readonly sortLabel: Phaser.GameObjects.Text;
+  /** 방향 칩의 화살표. 뒤집을 때 다시 그리지 않고 회전만 시킨다. */
+  private readonly sortArrow: Phaser.GameObjects.Container;
+  private descending: boolean;
   private menu?: Phaser.GameObjects.Container;
   private readonly filterBadge: Phaser.GameObjects.Container;
   private readonly filterCountText: Phaser.GameObjects.Text;
@@ -60,6 +67,7 @@ export class RelicControlBar {
     const spots = relicControlSpots();
     const { y, height } = RELIC_CONTROL_ROW;
     this.sortMode = options.sortMode;
+    this.descending = options.descending;
 
     // ── 필터 ──────────────────────────────────────────────────────────────
     const filter = scene.add.container(spots.filter.x, y);
@@ -165,7 +173,45 @@ export class RelicControlBar {
     sortHit.on("pointerup", () => { sort.setScale(1); this.toggleMenu(spots.sort.x, y, spots.sort.width); });
     sort.add(sortHit);
 
+    // ── 정렬 방향 ─────────────────────────────────────────────────────────
+    // **목록 이름과 따로 선다.** 한 칸에 두면 누를 때마다 기준을 고르는 것인지 방향을 뒤집는
+    // 것인지 손이 알 수 없다. 화살표가 아래를 가리키면 큰 값이 먼저다.
+    const dirShape = slantedRect(spots.sortDir.width, height, 16);
+    const direction = scene.add.container(spots.sortDir.x, y);
+    direction.add(drawLayer(scene, 0, 0, dirShape, { fill: BAR.fill, alpha: BAR.alpha }));
+    this.sortArrow = scene.add.container(0, 0);
+    this.sortArrow.add(drawGlyph(scene, "sort-arrow", 0, 0, 36, COLOR.accent, 0.95, 3));
+    direction.add(this.sortArrow);
+    this.paintDirection();
+    const dirHit = scene.add.rectangle(0, 0, spots.sortDir.width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    dirHit.on("pointerdown", () => direction.setScale(1.08));
+    dirHit.on("pointerout", () => direction.setScale(1));
+    dirHit.on("pointerup", () => {
+      direction.setScale(1);
+      this.closeMenu();
+      this.descending = !this.descending;
+      this.paintDirection();
+      options.onDirection(this.descending);
+    });
+    direction.add(dirHit);
+
     scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.destroy());
+  }
+
+  /**
+   * 기준이 바뀌면 그 기준이 처음 보여 주는 방향으로 되돌린다.
+   *
+   * 전투력을 높은 순으로 보다가 개체번호로 바꾸면 001이 아니라 마지막 번호부터 서는데, 그건
+   * 고른 기준이 아니라 직전 방향이 남긴 결과다 — 기준을 고르는 손은 방향까지 고른 적이 없다.
+   */
+  setDirection(descending: boolean): void {
+    this.descending = descending;
+    this.paintDirection();
+  }
+
+  /** 화살표는 다시 그리지 않고 뒤집기만 한다 — 같은 그림이라 뜻이 흔들리지 않는다. */
+  private paintDirection(): void {
+    this.sortArrow.setAngle(this.descending ? 0 : 180);
   }
 
   /** 걸린 조건 수를 다시 적는다. 0이면 표식 자체가 사라진다. */

@@ -40,7 +40,8 @@ export type GlyphName =
   | "filter"
   | "search"
   | "caret-down"
-  | "affinity";
+  | "affinity"
+  | "sort-arrow";
 
 function points(...pairs: number[]): Phaser.Geom.Point[] {
   const list: Phaser.Geom.Point[] = [];
@@ -294,6 +295,12 @@ export function drawGlyph(
       }
       break;
     }
+    case "sort-arrow":
+      // 정렬 방향 — 아래를 가리키면 큰 값이 먼저다. 화살촉을 채우지 않고 꺾인 선 둘로 그려
+      // 다른 아이콘과 같은 선 두께 체계에 남는다.
+      g.lineBetween(0, -r * 0.82, 0, r * 0.72);
+      g.strokePoints(points(-r * 0.5, r * 0.18, 0, r * 0.82, r * 0.5, r * 0.18), false);
+      break;
     case "bookmark": {
       // 즐겨찾기 — 별. 성급 별과 같은 5각이라 "골라 둔 것"으로 바로 읽힌다.
       const star: number[] = [];

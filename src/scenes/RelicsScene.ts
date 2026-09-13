@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import { t } from "../i18n";
 import { BASE_WIDTH } from "../config/gameConfig";
 import { setDebugRelicScroll, setDebugScene } from "../debug";
-import { sortRelicsByRarity, sortRelicsBySpecimenNumber } from "../data/relics";
+import { RELIC_SORT_MODES, SORT_DEFAULT_DESCENDING, sortRelicsBy, type RelicSortMode } from "../core/relicSort";
 import { combatPower } from "../core/combatPower";
 import type { RelicDef } from "../core/types";
 import { relicCollection } from "../managers/RelicCollectionManager";
@@ -55,8 +55,8 @@ const DRAG_SLOP = 18;
  * 두면 어느 쪽을 봐야 하는지 흐려지고 그리드에 쓸 자리도 줄기 때문이다.
  */
 /** 도감 정렬 기준. 버튼 하나가 이 순서대로 돌아간다. */
-type SortMode = "number" | "rarity" | "power";
-const SORT_ORDER: readonly SortMode[] = ["number", "rarity", "power"];
+type SortMode = RelicSortMode;
+const SORT_ORDER = RELIC_SORT_MODES;
 /** 정렬 기준의 이름. 표가 아니라 함수인 이유는 표가 모듈을 읽는 순간 굳기 때문이다. */
 const sortLabel = (mode: SortMode): string => t(`relics.sort.${mode === "number" ? "id" : mode}`);
 
@@ -69,6 +69,8 @@ export class RelicsScene extends Phaser.Scene {
   private cards = new Map<string, PortraitCard>();
   /** 스토리 배열 순서와 분리된 도감 표시 정렬 기준이다. */
   private sortMode: SortMode = "number";
+  /** 지금 방향. 기준마다 처음 보여 주는 쪽이 달라 순수 표에서 읽는다. */
+  private descending = SORT_DEFAULT_DESCENDING.number;
   /** 필터·검색·정렬을 한 줄에 세우는 조작 줄이다. */
   private controls!: RelicControlBar;
   /** 목록을 좁히는 조건. 화면이 규칙을 복제하지 않고 순수 모듈에 묻는다. */
@@ -163,8 +165,10 @@ export class RelicsScene extends Phaser.Scene {
     this.controls = new RelicControlBar(this, {
       sortOptions: SORT_ORDER.map((mode) => ({ id: mode, label: sortLabel(mode) })),
       sortMode: this.sortMode,
+      descending: this.descending,
       filterCount: relicFilterCount(this.filter),
       onSort: (mode) => this.setSortMode(mode as SortMode),
+      onDirection: (descending) => { this.descending = descending; this.refresh(true); },
       onFilter: (anchor) => openRelicFilterPopup(this, this.popups, anchor, () => this.filter, (filter) => this.setFilter(filter)),
       onSearch: (query) => this.setFilter({ ...this.filter, query }),
       onAffinity: (anchor) => openElementChartPopup(this, this.popups, anchor),
@@ -259,15 +263,15 @@ export class RelicsScene extends Phaser.Scene {
     this.contentBottom = this.gridBottom;
   }
 
-  /** 지금 기준으로 목록을 정렬한다. 기준이 무엇이든 같은 카드 조립을 쓴다. */
+  /**
+   * 지금 기준·방향으로 목록을 정렬한다. 기준이 무엇이든 같은 카드 조립을 쓴다.
+   *
+   * 순서 규칙은 순수 모듈(`core/relicSort.ts`)이 갖고 씬은 **전투력을 어떻게 세는지**만
+   * 넘긴다 — 미보유는 성장이 없으므로 기본 능력치로 줄을 세운다.
+   */
   private sortRelics(catalog: readonly RelicDef[]): RelicDef[] {
-    if (this.sortMode === "rarity") return sortRelicsByRarity(catalog);
-    if (this.sortMode === "power") {
-      // 미보유는 성장이 없으므로 기본 능력치의 전투력으로 줄을 세운다.
-      const powerOf = (relic: RelicDef): number => combatPower(relicCollection.owns(relic.id) ? relicProgression.getFinalStats(relic.id) : relic.stats);
-      return [...catalog].sort((a, b) => powerOf(b) - powerOf(a) || a.specimenNumber.localeCompare(b.specimenNumber));
-    }
-    return sortRelicsBySpecimenNumber(catalog);
+    const powerOf = (relic: RelicDef): number => combatPower(relicCollection.owns(relic.id) ? relicProgression.getFinalStats(relic.id) : relic.stats);
+    return sortRelicsBy(catalog, this.sortMode, this.descending, powerOf);
   }
 
   /** 카드 한 장. 자리는 부르는 쪽이 정하고 여기서는 생김새와 입력만 맞춘다. */
@@ -326,6 +330,10 @@ export class RelicsScene extends Phaser.Scene {
   private setSortMode(mode: SortMode): void {
     if (this.sortMode === mode) return;
     this.sortMode = mode;
+    // 기준을 바꾸면 그 기준이 처음 보여 주는 방향으로 되돌린다 — 전투력을 높은 순으로 보다가
+    // 개체번호로 바꿨는데 마지막 번호부터 서면, 그건 고른 기준이 아니라 직전 방향이 남긴 줄이다.
+    this.descending = SORT_DEFAULT_DESCENDING[mode];
+    this.controls.setDirection(this.descending);
     this.refresh(true);
   }
 

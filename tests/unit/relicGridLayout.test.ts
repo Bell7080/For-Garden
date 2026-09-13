@@ -36,15 +36,20 @@ describe("도감 그리드", () => {
 });
 
 describe("도감 조작 줄", () => {
-  it("필터·검색·정렬이 겹치지 않고 여백 안을 남김없이 쓴다", () => {
-    const { filter, search, sort } = relicControlSpots();
+  it("필터·검색·정렬·방향이 겹치지 않고 여백 안을 남김없이 쓴다", () => {
+    const { filter, search, sort, sortDir } = relicControlSpots();
     const { gap } = RELIC_CONTROL_ROW;
+    const row = [filter, search, sort, sortDir];
     expect(filter.x - filter.width / 2).toBe(RELIC_GRID_MARGIN);
-    expect(BASE_WIDTH - (sort.x + sort.width / 2)).toBe(RELIC_GRID_MARGIN);
-    expect(search.x - search.width / 2 - (filter.x + filter.width / 2)).toBe(gap);
-    expect(sort.x - sort.width / 2 - (search.x + search.width / 2)).toBe(gap);
+    // 방향 칩이 줄의 오른쪽 끝이다 — 정렬 이름과 **따로** 서므로 그 바깥에 선다.
+    expect(BASE_WIDTH - (sortDir.x + sortDir.width / 2)).toBe(RELIC_GRID_MARGIN);
+    for (let index = 1; index < row.length; index += 1) {
+      expect(row[index].x - row[index].width / 2 - (row[index - 1].x + row[index - 1].width / 2)).toBeCloseTo(gap, 6);
+    }
     // 글자가 흐르는 칸이 가장 넓어야 한다 — 이름이 길어지는 것은 검색 칸뿐이다.
     expect(search.width).toBeGreaterThan(sort.width);
+    // 화살표 하나만 담는 칸이라 정사각에 가깝다.
+    expect(sortDir.width).toBeLessThan(sort.width);
   });
 
   it("정렬 판 높이는 항목 수에서 나오고 줄이 판 안에 든다", () => {

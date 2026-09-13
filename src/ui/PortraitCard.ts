@@ -73,8 +73,13 @@ export interface PortraitCardOptions {
    * 살짝 작아지며 발광은 켜지 않는다. 편성 목록이 이쪽을 쓰는 이유는, 고른 카드가 "지금 고를
    * 수 있는 것"이 아니라 **"이미 자리에 나가 있는 것"**이기 때문이다 — 떠오르면 아직 고를
    * 수 있는 것처럼 읽힌다.
+   *
+   * `favorite`는 **떠오르지 않고 붉게 타오르는** 세 번째다. 도감 그리드가 이쪽을 쓴다: 애착
+   * 렐릭은 "지금 고른 것"이 아니라 **늘 그 자리에 있는 한 명**이라, 카드가 1.06배로 커져 있으면
+   * 옆 칸과 줄이 맞지 않아 목록을 훑는 눈이 거기서 걸린다. 그래서 크기는 그대로 두고 발광만
+   * 더 진하게 여러 겹 겹쳐, 노란 강조색(재화·보상의 색)이 아니라 **애착의 붉은색**으로 태운다.
    */
-  selectedStyle?: "glow" | "pressed";
+  selectedStyle?: "glow" | "pressed" | "favorite";
   /**
    * 머리를 칩 위로 내보낼지.
    *
@@ -88,6 +93,26 @@ export interface PortraitCardOptions {
 
 /** 눌린 카드. 검은 반투명 한 겹과 아주 조금의 축소만으로 "이미 나갔다"를 말한다. */
 const PRESSED_SELECTION = { overlayAlpha: 0.46, scale: 0.955 } as const;
+
+/**
+ * 발광을 몇 겹으로 쌓을지.
+ *
+ * 카드 실루엣을 조금씩 키워 겹쳐 칠한다 — 테두리를 두르지 않고도 카드 전체가 "밝아진" 것으로
+ * 읽힌다. `favorite`가 더 촘촘하고 진한 이유는 **커지지 않기 때문이다**: 크기로 알리던 몫까지
+ * 빛이 대신 맡아야 한 화면에 스무 장이 서 있어도 그 한 장이 먼저 보인다.
+ */
+const GLOW_LAYERS: Readonly<Record<"glow" | "favorite", ReadonlyArray<readonly [number, number]>>> = {
+  glow: [[1.16, 0.07], [1.1, 0.1], [1.05, 0.16]],
+  favorite: [[1.2, 0.14], [1.14, 0.2], [1.09, 0.28], [1.045, 0.4], [1.015, 0.5]],
+};
+
+/**
+ * 애착 렐릭이 타오르는 색.
+ *
+ * 정보창 헤더의 애착 하트(`0xe23a46`)와 같은 붉은색이다 — 같은 값을 말하는 두 자리가 다른
+ * 색을 쓰면 그리드의 빛과 하트가 서로 다른 뜻으로 읽힌다.
+ */
+export const FAVORITE_GLOW = 0xe23a46;
 
 /** 카드 몸통과 원화 알파를 보존한 돌출 머리를 한 상태값으로 갱신하는 공개 오버레이다. */
 export interface PortraitAlphaOverlay {
@@ -469,7 +494,7 @@ export class PortraitCard extends Phaser.GameObjects.Container {
   private paintGlow(color: number): void {
     const points = toGeomPoints(this.chipShape);
     this.glow.clear();
-    for (const [scale, alpha] of [[1.16, 0.07], [1.1, 0.1], [1.05, 0.16]] as const) {
+    for (const [scale, alpha] of GLOW_LAYERS[this.options.selectedStyle === "favorite" ? "favorite" : "glow"]) {
       this.glow.fillStyle(color, alpha);
       this.glow.fillPoints(points.map((point) => new Phaser.Geom.Point(point.x * scale, point.y * scale)), true);
     }
@@ -700,12 +725,17 @@ export class PortraitCard extends Phaser.GameObjects.Container {
   setSelected(selected: boolean, accent: number = COLOR.accent): this {
     if (this.selected === selected && !selected) return this;
     this.selected = selected;
-    const pressed = this.options.selectedStyle === "pressed";
-    if (selected && !pressed) this.paintGlow(accent);
+    const style = this.options.selectedStyle ?? "glow";
+    const pressed = style === "pressed";
+    // 애착은 색을 호출부에서 고르게 두지 않는다 — 화면마다 다른 붉은색을 넘기면 같은 뜻이
+    // 그리드와 정보창에서 갈린다.
+    if (selected && !pressed) this.paintGlow(style === "favorite" ? FAVORITE_GLOW : accent);
     this.glow.setVisible(selected && !pressed);
     this.selectedOverlay.setVisible(selected && this.overlayAlpha > 0);
     this.selectedHeadShade?.setVisible(selected);
-    this.setScale(selected ? (pressed ? PRESSED_SELECTION.scale : 1.06) : 1);
+    // 애착 카드만 자리를 지킨다. 크기까지 바뀌면 줄이 어긋나 목록을 훑는 눈이 거기서 걸린다.
+    const scale = pressed ? PRESSED_SELECTION.scale : style === "favorite" ? 1 : 1.06;
+    this.setScale(selected ? scale : 1);
     this.syncMask();
     return this;
   }

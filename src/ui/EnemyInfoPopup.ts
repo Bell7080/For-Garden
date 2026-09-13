@@ -7,6 +7,7 @@ import type { Passive, RelicDef, Skill, Ultimate } from "../core/types";
 import { KeywordManager } from "../managers/KeywordManager";
 import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
+import { openElementPopup, openRolePopup } from "./affinityPopups";
 import { addPopupBackgroundImage, BACKGROUND } from "./backgrounds";
 import { ENEMY_INFO, enemyInfoPanelCenterY, enemyInfoSkillColumns } from "./enemyInfoLayout";
 import {
@@ -158,8 +159,14 @@ export class EnemyInfoPopup {
     chrome.add(scene.add.text(ENEMY_INFO.left + 4, ENEMY_INFO.numberY, `NO.${def.specimenNumber}   ${def.origin}`, textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5));
     // 이름 폭이 개체마다 다르므로 뱃지 자리도 그릴 때마다 이름 끝에서 다시 잡는다.
     const badgeLeft = ENEMY_INFO.left + name.width + ENEMY_INFO.badge.gap;
-    chrome.add(new AffinityBadge(scene, badgeLeft + ENEMY_INFO.badge.element / 2, ENEMY_INFO.nameY, ELEMENT_ICON[def.element], ENEMY_INFO.badge.element));
-    chrome.add(new AffinityBadge(scene, badgeLeft + ENEMY_INFO.badge.element + ENEMY_INFO.badge.role / 2 + 12, ENEMY_INFO.nameY + 6, ROLE_ICON[def.role], ENEMY_INFO.badge.role));
+    const elementX = badgeLeft + ENEMY_INFO.badge.element / 2;
+    const roleX = badgeLeft + ENEMY_INFO.badge.element + ENEMY_INFO.badge.role / 2 + 12;
+    chrome.add(new AffinityBadge(scene, elementX, ENEMY_INFO.nameY, ELEMENT_ICON[def.element], ENEMY_INFO.badge.element));
+    chrome.add(new AffinityBadge(scene, roleX, ENEMY_INFO.nameY + 6, ROLE_ICON[def.role], ENEMY_INFO.badge.role));
+    // 적 표식도 아군 창과 **같은 쪽지**를 연다. 같은 그림이 어느 창에서 눌리느냐에 따라 다른
+    // 말을 하면 상성을 두 번 배우게 된다.
+    chrome.add(addAffinityTap(scene, elementX, ENEMY_INFO.nameY, ENEMY_INFO.badge.element, () => openElementPopup(scene, this.popups, def.element, { x: elementX, y: ENEMY_INFO.nameY })));
+    chrome.add(addAffinityTap(scene, roleX, ENEMY_INFO.nameY + 6, ENEMY_INFO.badge.role, () => openRolePopup(scene, this.popups, def.role, { x: roleX, y: ENEMY_INFO.nameY })));
   }
 
   /**
@@ -317,4 +324,11 @@ export class EnemyInfoPopup {
       this.scene.tweens.add({ targets: puppet, alpha: 1, duration: 220 });
     }
   }
+}
+
+/** 표식 위에 얹는 투명한 입력면. 뱃지 자체는 발광을 겹친 그림이라 입력을 받지 않는다. */
+function addAffinityTap(scene: Phaser.Scene, x: number, y: number, size: number, onTap: () => void): Phaser.GameObjects.Rectangle {
+  const hit = scene.add.rectangle(x, y, size, size, 0xffffff, 0).setInteractive({ useHandCursor: true });
+  hit.on("pointerup", onTap);
+  return hit;
 }

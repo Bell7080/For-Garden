@@ -127,6 +127,21 @@ export const MISC_KO = {
   "relics.sort.power": "전투력순",
   "relics.owned": "보유 렐릭",
   "relics.unowned": "미보유 렐릭",
+  "relics.filter": "필터",
+  "relics.filter.element": "속성",
+  "relics.filter.role": "직군",
+  "relics.filter.reach": "사거리",
+  "relics.filter.reset": "조건 해제",
+  "relics.search": "이름 검색",
+
+  // 속성 상성·직군 안내
+  "affinity.chart": "속성 상성",
+  "affinity.strong": "유리 ×{multiplier}",
+  "affinity.weak": "불리 ×{multiplier}",
+  "role.desc.warrior": "지속 교전에서 꾸준히 때린다.",
+  "role.desc.tank": "앞줄을 지키며 아군 대신 받아 낸다.",
+  "role.desc.assassin": "빠르게 파고들어 한 번에 몰아친다. 오래 버티지는 못한다.",
+  "role.desc.support": "회복과 강화로 아군을 세운다.",
 
   // 무역·점수 상세
   "trade.value": "가치 {percent}%",

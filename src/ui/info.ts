@@ -28,6 +28,7 @@ import { PopupLayer, POPUP_TITLE_SIZE } from "./PopupLayer";
 import { calculateObservationJournalFlow, OBSERVATION_JOURNAL_SIZE, withoutRepeatedProfileDetails } from "./observationJournalLayout";
 import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
+import { openElementPopup, openRolePopup } from "./affinityPopups";
 import { breakthroughSlotLabel, breakthroughEffectText, breakthroughEffectKeywords } from "./skillPresentation";
 import { addBreakthroughGradeMark, RARITY_TONE, BREAKTHROUGH_GRADE_ROMAN } from "./rarityMark";
 import { addFramedIcon, addItemFrame } from "./itemFrame";
@@ -449,6 +450,9 @@ export class InfoManager {
   private readonly nameShadow: Phaser.GameObjects.Text;
   private readonly elementBadge: AffinityBadge;
   private readonly roleBadge: AffinityBadge;
+  /** 두 표식을 누르면 열리는 쪽지의 입력면. 이름 폭을 따라 자리가 바뀌므로 함께 옮긴다. */
+  private readonly elementHit: Phaser.GameObjects.Rectangle;
+  private readonly roleHit: Phaser.GameObjects.Rectangle;
   /** 상세 대상을 바꿀 때 정책 표식 두 개만 교체하는 고정 앵커 층이다. */
   private readonly colorAssistMarks: Phaser.GameObjects.Container;
   private readonly roleText: Phaser.GameObjects.Text;
@@ -565,7 +569,14 @@ export class InfoManager {
     // 덩어리로 읽힌다. 카드와 마찬가지로 속성이 크고 직군이 조금 작다.
     this.elementBadge = new AffinityBadge(scene, 0, 152, ELEMENT_ICON.fire, AFFINITY.main);
     this.roleBadge = new AffinityBadge(scene, 0, 152, ROLE_ICON.warrior, AFFINITY.sub);
-    this.chrome.add([this.elementBadge, this.roleBadge]);
+    // **표식을 누르면 그것이 무엇인지 말하는 쪽지가 열린다.** 속성·직군은 화면 곳곳에 서 있는
+    // 표식인데, 처음 보는 손에게는 그림 하나라 무엇에 강한지·무엇을 하는 자리인지 물어볼 곳이
+    // 없었다. 적 창도 같은 함수를 부르므로 두 창이 다른 말을 하지 않는다.
+    this.elementHit = scene.add.rectangle(0, 152, AFFINITY.main, AFFINITY.main, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    this.roleHit = scene.add.rectangle(0, 158, AFFINITY.sub, AFFINITY.sub, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    this.elementHit.on("pointerup", () => { if (this.currentDef) openElementPopup(scene, this.popups, this.currentDef.element, { x: this.elementHit.x, y: this.elementHit.y }); });
+    this.roleHit.on("pointerup", () => { if (this.currentDef) openRolePopup(scene, this.popups, this.currentDef.role, { x: this.roleHit.x, y: this.roleHit.y }); });
+    this.chrome.add([this.elementBadge, this.roleBadge, this.elementHit, this.roleHit]);
     this.colorAssistMarks = scene.add.container(0, 0);
     this.chrome.add(this.colorAssistMarks);
 
@@ -2088,6 +2099,8 @@ export class InfoManager {
     const badgeLeft = this.nameText.x + this.nameText.width + AFFINITY.gap;
     this.elementBadge.setIcon(ELEMENT_ICON[def.element], AFFINITY.main).setPosition(badgeLeft + AFFINITY.main / 2, 152).setVisible(owned);
     this.roleBadge.setIcon(ROLE_ICON[def.role], AFFINITY.sub).setPosition(badgeLeft + AFFINITY.main + AFFINITY.sub / 2 + 12, 158).setVisible(owned);
+    this.elementHit.setPosition(this.elementBadge.x, this.elementBadge.y).setVisible(owned);
+    this.roleHit.setPosition(this.roleBadge.x, this.roleBadge.y).setVisible(owned);
     this.colorAssistMarks.removeAll(true);
     if (owned) {
       // 이름 너비와 무관한 화면 좌우 앵커라 1.3배 텍스트에서도 뱃지·탭을 침범하지 않는다.

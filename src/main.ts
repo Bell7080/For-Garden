@@ -50,6 +50,12 @@ const game = new Phaser.Game({
     roundPixels: false,
     powerPreference: "high-performance",
   },
+  dom: {
+    // 도감의 이름 검색 칸만 쓴다. 캔버스 위에 투명한 `<input>`을 겹쳐 두어야 모바일에서
+    // 운영체제 자판이 올라오고, 글자·자리·깜빡이는 막대는 여전히 Phaser가 그린다.
+    // 컨테이너 자체는 입력을 통과시키므로 겹쳐 둔 칸 밖의 조작은 그대로 캔버스가 받는다.
+    createContainer: true,
+  },
   input: {
     // 멀티터치 환경에서도 Phaser pointer 이벤트가 touchstart/touchend를 안정적으로 추적한다.
     activePointers: 3,

@@ -1829,6 +1829,9 @@ export class InfoManager {
       back = addBackButton(this.scene, close).setDepth(this.popups.baseDepth + 500);
       strip = new AppearanceStrip(this.scene, body, def, entries, {
         onEquipped: () => { void this.loadPortrait(def); void this.loadFigure(def); },
+        // 값을 치르면 상단 재화 줄도 같은 지갑을 다시 읽어야 한다 — 창을 닫고 나서야 줄어든
+        // 수가 보이면 무엇을 치렀는지 그 순간에 확인할 수 없다.
+        onWalletChange: () => this.onWalletChange?.(),
       });
     });
   }

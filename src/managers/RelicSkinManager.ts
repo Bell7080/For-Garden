@@ -39,6 +39,19 @@ export class RelicSkinManager {
     return true;
   }
 
+  /**
+   * 서버가 지급을 확정한 외형을 세션에 반영하고 화면들에 알린다.
+   *
+   * **차감과 지급은 여기서 하지 않는다** — 값도 지갑 대조도 `GameApi.purchaseRelicSkin`이
+   * 한 처리 단위로 확정하고, manager는 그 결과를 받아 세션에 반영만 한다(획득 상태의 단일
+   * 소유자 규칙과 같다). FakeServer가 이미 같은 세션을 갱신했더라도 화면은 이 사건으로만
+   * 다시 그린다.
+   */
+  markPurchased(relicId: string, skinId: RelicSkinId): void {
+    this.state.ownedRelicSkinIds.add(skinId);
+    this.publish(relicId);
+  }
+
   /** 추가 외형 선택을 제거해 기본 외형으로 되돌리고, 실제 변경이 있을 때만 저장한다. */
   unequip(relicId: string): boolean {
     if (!this.state.owned.has(relicId) || this.state.equippedRelicSkinIds[relicId] === undefined) return false;

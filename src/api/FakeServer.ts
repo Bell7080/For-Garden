@@ -13,7 +13,8 @@ import { saveManager } from "../state/SaveManager";
 import { INTERACTION_CITIES, findInteractionCity } from "../data/interactionCities";
 import { INTERACTION_EXCHANGE_OFFERS, findInteractionExchangeOffer, type InteractionExchangeOffer } from "../data/interactionExchange";
 import { interactionDurationMs, interactionRewardWeights, isInteractionCityUnlocked, isInteractionDispatchComplete, validateInteractionFormation, type InteractionMemberTraits } from "../core/interactionDispatch";
-import type { ClaimInteractionDispatchRequest, ClaimInteractionDispatchResponse, InteractionCitiesResponse, InteractionDispatchResponse, StartInteractionDispatchRequest } from "./contracts";
+import type {
+  PurchaseRelicSkinRequest, PurchaseRelicSkinResponse, ClaimInteractionDispatchRequest, ClaimInteractionDispatchResponse, InteractionCitiesResponse, InteractionDispatchResponse, StartInteractionDispatchRequest } from "./contracts";
 import type { ExchangeInteractionOfferRequest, ExchangeInteractionOfferResponse, InteractionExchangeListResponse } from "./contracts";
 import { ProfileModifierManager } from "../managers/ProfileModifierManager";
 import { GameApiError, type AdOperationsConfigResponse, type BreakThroughResponse, type ClaimMissionRewardsResponse, type CompleteStageResponse, type EnterDailyRestorationResponse, type FeedRelicResponse, type GameApi, type LobbyInteractionResponse, type MissionListResponse, type PlayerStateDto, type ClaimAdRewardRequest, type ClaimAdRewardResponse, type PullRequest, type PullResponse, type RechargeStaminaRequest, type RechargeStaminaResponse } from "./contracts";
@@ -22,6 +23,7 @@ import { PRODUCTS } from "../data/shopCatalog";
 import type { ProductListResponse, PurchaseProductRequest, PurchaseProductResponse } from "./contracts";
 import { totalGrantAmount } from "../core/purchase";
 import type { ExchangeDnaRequest, ExchangeDnaResponse } from "./contracts";
+import { getRelicSkin } from "../data/relicSkins";
 import { DNA_EXCHANGE_OFFERS, WALLET_CAPS } from "../data/economy";
 import { EVENTS, findEventByProductId, findEventByStageId } from "../data/events";
 import type { EventDefinition } from "../data/events/types";
@@ -483,6 +485,36 @@ export class FakeServer implements GameApi {
     this.state.wallet = nextWallet; this.state.itemInventory = nextItems;
     const inventory = await this.getInventory();
     return { ...inventory, itemId: request.itemId, quantityUsed: request.quantity, effect: definition.useEffect, appliedAmount, overflowAmount: requested - appliedAmount, wallet: { ...nextWallet }, stamina: this.staminaDto(this.now()) };
+  }
+
+  /**
+   * 렐릭 추가 외형을 값으로 산다.
+   *
+   * **값은 화면이 아니라 콘텐츠 표가 갖는다**(`RELIC_SKINS`의 `price`). 전시관은 어떤 외형을
+   * 사겠다는 것만 보내고, 여기서 그 표를 읽어 지갑과 대조한 뒤 차감과 지급을 한 처리로
+   * 확정한다 — 화면이 값을 들고 있으면 그 값을 고친 날 전시대와 실제 차감이 갈린다.
+   *
+   * **이미 가진 외형은 멱등 성공이다.** 같은 요청이 두 번 와도(재전송·두 번 누름) 두 번
+   * 치르지 않는다. 값이 없는 외형(보상·이벤트로만 오는 것)과 아직 열리지 않은 외형은
+   * 살 수 있는 것이 아니므로 거절한다.
+   */
+  async purchaseRelicSkin(request: PurchaseRelicSkinRequest): Promise<PurchaseRelicSkinResponse> {
+    await this.delay();
+    const skin = getRelicSkin(request.skinId);
+    if (!skin || skin.relicId !== request.relicId) throw new GameApiError("ITEM_NOT_FOUND", "존재하지 않는 외형입니다.");
+    if (!this.state.owned.has(request.relicId)) throw new GameApiError("RELIC_NOT_FOUND", "보유하지 않은 렐릭입니다.");
+    if (skin.comingSoon || !skin.price) throw new GameApiError("ITEM_NOT_USABLE", "살 수 있는 외형이 아닙니다.");
+    const { currency, amount } = skin.price;
+    if (this.state.ownedRelicSkinIds.has(request.skinId)) {
+      return { ...this.snapshot(), skinId: request.skinId, spent: { currency, amount: 0 } };
+    }
+    if ((this.state.wallet[currency] ?? 0) < amount) throw new GameApiError("INSUFFICIENT_CURRENCY", "재화가 부족합니다.");
+    const nextWallet = { ...this.state.wallet, [currency]: this.state.wallet[currency] - amount };
+    const nextSkins = new Set(this.state.ownedRelicSkinIds);
+    nextSkins.add(request.skinId);
+    this.persist({ ...this.state, wallet: nextWallet, ownedRelicSkinIds: nextSkins });
+    this.state.wallet = nextWallet; this.state.ownedRelicSkinIds = nextSkins;
+    return { ...this.snapshot(), skinId: request.skinId, spent: { currency, amount } };
   }
 
   /**

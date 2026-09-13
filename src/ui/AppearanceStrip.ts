@@ -1,7 +1,8 @@
 import Phaser from "phaser";
 import { t } from "../i18n";
-import type { RelicDef } from "../core/types";
+import type { RelicDef, RelicSkinId } from "../core/types";
 import { relicSkinManager } from "../managers/RelicSkinManager";
+import { gameApi } from "../api/FakeServer";
 import { battleAssetFor, headCardFrame, loadPortraitTexture, portraitAssetForSkin, sdAssetForSkin, spawnPuppet, type PuppetAsset, type PuppetCreature } from "../puppets/assets";
 import { powerSavingPolicy } from "../core/settings";
 import { session } from "../state/session";
@@ -43,6 +44,8 @@ const STATE_COLOR: Record<AppearanceState, string> = {
 export interface AppearanceStripHooks {
   /** 장착이 확정된 뒤 정보창의 두 Puppet을 같은 결과로 갈아 끼우게 알린다. */
   onEquipped: () => void;
+  /** 값을 치른 뒤 상단 재화 줄이 같은 지갑을 다시 읽게 알린다. */
+  onWalletChange?: () => void;
 }
 
 /**
@@ -54,6 +57,8 @@ export interface AppearanceStripHooks {
  */
 export class AppearanceStrip {
   private focused = 0;
+  /** 서버가 답하는 동안 잠근다 — 응답이 늦을 때 한 번 더 눌리면 같은 값을 두 번 낸다. */
+  private busy = false;
   private hero?: PuppetCreature;
   private sd?: PuppetCreature;
   private face?: Phaser.GameObjects.Image;
@@ -103,7 +108,7 @@ export class AppearanceStrip {
 
     this.action = new Button(this.scene, 0, layout.action.y, {
       width: layout.action.width, height: layout.action.height, label: t("info.skin.equip"), variant: "primary",
-      onClick: () => this.equipFocused(),
+      onClick: () => this.pressAction(),
     });
     body.add(this.action);
 
@@ -240,6 +245,36 @@ export class AppearanceStrip {
     this.paint();
   }
 
+  /**
+   * 버튼 하나가 맡는 두 조작 — 사거나, 입거나.
+   *
+   * 어느 쪽인지는 지금 상태가 정한다. 사는 쪽은 서버가 답할 때까지 버튼을 잠가 두 번 치르지
+   * 않게 하고(응답이 늦는 동안 한 번 더 눌리면 같은 값을 두 번 낸다), 지급이 확정된 뒤에야
+   * manager를 통해 세션에 반영한다.
+   */
+  private pressAction(): void {
+    const entry = this.entries[this.focused];
+    if (entry.skinId && entry.price && !relicSkinManager.owns(entry.skinId)) { void this.purchaseFocused(entry.skinId); return; }
+    this.equipFocused();
+  }
+
+  /** 값 조회·차감·지급을 한 처리로 맡기고, 화면은 확정된 결과만 다시 그린다. */
+  private async purchaseFocused(skinId: RelicSkinId): Promise<void> {
+    if (this.busy) return;
+    this.busy = true;
+    this.paint();
+    try {
+      const result = await gameApi.purchaseRelicSkin({ relicId: this.def.id, skinId, requestId: `skin:${this.def.id}:${skinId}` });
+      relicSkinManager.markPurchased(this.def.id, result.skinId);
+      this.hooks.onWalletChange?.();
+    } catch {
+      // 실패는 값 줄이 이미 말한다(모자란 수가 붉다). 상태 문구로 같은 말을 되풀이하지 않는다.
+    } finally {
+      this.busy = false;
+      this.paint();
+    }
+  }
+
   /** 지금 고른 외형을 입힌다. 성공 여부는 manager가 정하고 화면은 결과만 다시 그린다. */
   private equipFocused(): void {
     const entry = this.entries[this.focused];
@@ -260,10 +295,14 @@ export class AppearanceStrip {
     const equippedId = relicSkinManager.equippedFor(this.def.id);
     // 장착은 목록 전체의 상태를 바꾼다 — 입고 있던 것이 보유로 내려가므로 한 칸이 아니라
     // 늘 전부를 지금 장착값에 비춰 다시 읽는다. 못 가진 셋은 장착과 무관하다.
-    const stateOf = (entry: AppearanceEntry): AppearanceState =>
-      entry.state === "comingSoon" || entry.state === "purchasable" || entry.state === "locked"
-        ? entry.state
-        : entry.skinId === equippedId ? "equipped" : "owned";
+    // 산 뒤에는 그 칸이 `purchasable`에서 내려와야 한다 — 정적 계약이 아니라 **지금 소유**를
+    // 다시 물어야 방금 치른 값이 화면에 반영된다.
+    const stateOf = (entry: AppearanceEntry): AppearanceState => {
+      if (entry.state === "comingSoon") return "comingSoon";
+      const owned = entry.skinId === undefined || relicSkinManager.owns(entry.skinId);
+      if (!owned) return entry.price ? "purchasable" : "locked";
+      return entry.skinId === equippedId ? "equipped" : "owned";
+    };
     this.cards.forEach((card, index) => {
       const chosen = index === this.focused;
       const state = stateOf(this.entries[index]);
@@ -288,10 +327,12 @@ export class AppearanceStrip {
       });
     }
 
-    // **조작은 장착 하나뿐이다.** 값이 붙은 외형도 아직 사는 경계가 없어, 있는 척하는 버튼
-    // 대신 무엇을 하면 되는지만 값 줄이 말하고 버튼은 눌리지 않는다.
+    // **버튼 하나가 상태를 따라간다** — 가진 것은 입고, 살 수 있는 것은 산다. 사는 길은
+    // 화면이 아니라 서버 경계(`GameApi.purchaseRelicSkin`)를 지나므로 값과 차감을 여기서
+    // 계산하지 않는다. 이미 입고 있거나 아직 열리지 않은 외형만 누를 것이 없다.
     this.action.setLabel(state === "equipped" ? t("info.skin.equipped") : state === "purchasable" ? t("info.skin.buy") : t("info.skin.equip"));
-    this.action.setEnabled(state === "owned");
+    const affordable = state !== "purchasable" || !entry.price || session.wallet[entry.price.currency] >= entry.price.amount;
+    this.action.setEnabled(!this.busy && (state === "owned" || (state === "purchasable" && affordable)));
     this.loadHero(entry);
   }
 

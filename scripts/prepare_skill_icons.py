@@ -18,7 +18,8 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parent.parent
 PUBLIC = ROOT / "public"
-SOURCE = Path(sys.argv[1]) if len(sys.argv) > 1 else PUBLIC
+ARGS = [value for value in sys.argv[1:] if not value.startswith("--")]
+SOURCE = Path(ARGS[0]) if ARGS else PUBLIC
 
 # 원본 이름 머리말과 렐릭 id. Puppet 묶음(char_00N.zip · enemy_00N.zip)과 같은 번호를 쓴다.
 RELICS = {
@@ -89,6 +90,60 @@ def framed(art: Image.Image) -> Image.Image:
     return canvas
 
 
+# 그림의 **테두리 고리**가 차 있는지 보는 값.
+#
+# 고리는 캔버스 변이 아니라 **그림이 실제로 차지한 상자**(alpha 경계)의 가장 바깥 두 줄이다 —
+# 굽는 단계가 그림을 잘라 가운데에 앉히므로 캔버스 변에는 어느 아이콘이든 빈 여백이 남고,
+# 거기서 재면 모두 0이 되어 아무것도 드러나지 않는다.
+#
+# 가운데로 모인 모티프는 이 고리에 **몇 점만 닿는다**(0.4~19.4). 사방이 꽉 찬 그림만 크게
+# 나오고, 그런 그림은 액자 안에서 그림이 아니라 **네모난 판**으로 읽힌다 — 실제로 케리스
+# 궁극기가 81.2로 혼자 네 배 높았고, 다른 아이콘이 전부 자유로운 실루엣인 사이에서 그 칸만
+# 사각 블록으로 보였다.
+RING = 2
+RING_LIMIT = 40
+
+
+def edge_load(icon: Image.Image) -> float:
+    """그림 상자의 가장 바깥 두 줄 평균 알파. 값이 크면 그림의 윤곽이 곧 그 사각형이라는 뜻이다."""
+    alpha = icon.split()[3]
+    box = alpha.getbbox()
+    if box is None:
+        return 0.0
+    left, top, right, bottom = box
+    pieces = [
+        alpha.crop((left, top, right, top + RING)),
+        alpha.crop((left, bottom - RING, right, bottom)),
+        alpha.crop((left, top + RING, left + RING, bottom - RING)),
+        alpha.crop((right - RING, top + RING, right, bottom - RING)),
+    ]
+    values = [value for piece in pieces for value in piece.getdata()]
+    return sum(values) / len(values) if values else 0.0
+
+
+def audit() -> int:
+    """
+    이미 구운 아이콘이 **한 식구로 읽히는지** 검수한다.
+
+        python3 scripts/prepare_skill_icons.py --audit
+
+    원본이 저장소에 남지 않으므로 잘못 그려진 그림은 구운 뒤에야 드러난다. 여기서 재는 것은
+    하나뿐이다 — **그림의 윤곽이 곧 사각형인가.** 다른 아이콘은 가운데로 모인 모티프라 상자
+    테두리에 몇 점만 닿는데, 사방이 찬 그림은 네모난 판으로 읽혀 혼자 양식이 다르다.
+    고치는 방법은 이 스크립트가 아니라 **원본을 사방 여백이 있게 다시 그려 다시 굽는 것**이다 —
+    여기서 기계로 가장자리를 흐리면 그 그림만 바깥 내용이 함께 지워진다.
+    """
+    bad: list[str] = []
+    for path in sorted((PUBLIC / "sprites" / "skills").glob("*/*.webp")):
+        load = edge_load(Image.open(path).convert("RGBA"))
+        name = f"{path.parent.name}/{path.stem}"
+        if load > RING_LIMIT:
+            bad.append(name)
+        print(f"{name:20} 테두리 {load:6.1f}{'  ← 윤곽이 사각형이다' if load > RING_LIMIT else ''}")
+    print("\n" + (f"다시 그려야 하는 그림: {', '.join(bad)}" if bad else "모두 가운데로 모인 모티프다."))
+    return 1 if bad else 0
+
+
 def exists(stem: str, slot: int) -> bool:
     """굽지 않은 원본이 남아 있는지만 본다."""
     return any((SOURCE / f"{stem}skill_{slot:03d}{suffix}").exists() for suffix in (".png", ".jpeg", ".jpg", ".webp"))
@@ -104,6 +159,8 @@ def find(stem: str, slot: int) -> Path:
 
 
 def main() -> None:
+    if "--audit" in sys.argv[1:]:
+        raise SystemExit(audit())
     for stem, relic in RELICS.items():
         # 원본은 구운 뒤 저장소에서 지운다. 그래서 이미 구운 개체는 원본이 없는 것이 정상이고,
         # 그때는 조용히 건너뛴다 — 없다고 멈추면 새로 올린 개체 하나를 굽지 못한다.

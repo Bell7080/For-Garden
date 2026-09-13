@@ -5,6 +5,7 @@ import { chipPoints, drawInnerVignette, drawLayer, drawShapeOutline } from "./ho
 import { FALLBACK_SKILL_ICON } from "./skillIcons";
 import { skillArtFor, skillArtTint, SKILL_ART_WASH_ALPHA, type SkillArtSlot } from "./skillArt";
 import { COLOR, textStyle } from "./theme";
+import { squeezeTextToWidth } from "./textFit";
 
 /**
  * 스킬 아이콘 **액자** 한 장.
@@ -89,9 +90,17 @@ export function addSkillIconFrame(scene: Phaser.Scene, options: SkillIconFrameOp
   if (options.label) {
     // 액자 안의 이름은 그림 다음으로 먼저 읽히는 것이라 굵고 크게 둔다.
     const color = emphasis ? COLOR.accentText : COLOR.ink;
-    frame.add(scene.add
+    const label = scene.add
       .text(0, size / 2 - SKILL_ICON_FRAME.labelBaseline, options.label, textStyle({ role: "display", size: Math.round(size * SKILL_ICON_FRAME.labelRatio), color }))
-      .setOrigin(0.5));
+      .setOrigin(0.5);
+    /*
+     * **낱말 길이는 언어가 정하고 액자 폭은 화면이 정한다.** 「일반 공격」 네 글자가 영어에서는
+     * `Basic Attack` 열두 글자라 그대로 두면 액자 밖으로 잘려 나간다(실제로 그랬다). 넘치는
+     * 만큼만 가로로 누르고, 읽을 수 없어지기 전에 멈춘다 — 크기를 줄이지 않는 이유는 세 칸이
+     * 나란히 선 줄에서 한 칸만 글자가 작아지면 그 칸이 덜 중요한 것처럼 읽히기 때문이다.
+     */
+    squeezeTextToWidth(label, size - SKILL_ICON_FRAME.labelInset);
+    frame.add(label);
   }
   // 액자 테두리. 채운 판 위에 한 줄을 얹어 배경 원화와 확실히 갈라 놓는다.
   frame.add(drawShapeOutline(scene, 0, 0, chip, { color: COLOR.accent, alpha: emphasis ? 0.75 : 0.42, width: 3 }));
@@ -112,6 +121,8 @@ const SKILL_ICON_FRAME = {
   /** 이름이 들어갈 아래 여백(px). 이름이 없으면 그림 칸이 그만큼 커진다. */
   labelRoom: 14,
   labelBaseline: 27,
+  /** 이름이 액자 좌우 변에서 비워 두는 자리(px). 깎인 모서리와 테두리를 함께 피한다. */
+  labelInset: 26,
   labelRatio: 0.167,
   artRatio: 0.74,
   iconRatio: 0.52,

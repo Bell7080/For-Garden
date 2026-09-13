@@ -49,6 +49,7 @@ import { relicCollection } from "../managers/RelicCollectionManager";
 import { COLOR, textStyle } from "./theme";
 import { skillArtFor, skillArtTint, type SkillArtSlot } from "./skillArt";
 import { addSkillIconFrame, skillSlotLabel } from "./SkillIconFrame";
+import { squeezeTextToWidth } from "./textFit";
 import { BREAK_CONFIRM, BREAK_STEPS, breakConfirmHeight, breakthroughStepsLayout } from "./breakthroughLayout";
 import { gameApi } from "../api/FakeServer";
 import { BREAKTHROUGH_STEPS, breakthroughFragmentCost, type BreakthroughStep, canBreakThrough, canFeedRelic, FEED_UNIT, isBreakthroughSlotOpen, nextBreakthrough, relicExpToNext, relicLevelCap, breakthroughGrade } from "../core/relicProgression";
@@ -263,7 +264,8 @@ const BREAK_EDGE = 0xa88cf0;
  * 글자가 판을 넘는다. 그림은 수와 **바짝** 붙이고 두 덩어리 사이만 벌려, 어느 수가 어느
  * 재화의 것인지 간격으로 읽히게 한다.
  */
-const BREAK_BUTTON = { width: 260, height: 86, labelY: -18, costY: 18, costSize: 19, icon: 26, gap: 5, pairGap: 18 } as const;
+/** 한계 돌파 버튼. `labelInset`은 이름이 판 좌우 변에서 비워 두는 자리다(기울인 변을 피한다). */
+const BREAK_BUTTON = { width: 260, height: 86, labelY: -18, costY: 18, costSize: 19, icon: 26, gap: 5, pairGap: 18, labelInset: 28 } as const;
 
 /**
  * 한계 돌파 쪽지의 자리표.
@@ -801,7 +803,12 @@ export class InfoManager {
     const container = this.scene.add.container(x, y);
     const shape = slantedRect(BREAK_BUTTON.width, BREAK_BUTTON.height, 12);
     container.add(drawLayer(this.scene, 0, 0, shape, { fill: 0x24202f, alpha: 0.94, edge: BREAK_EDGE, edgeAlpha: 0.9, glow: { color: BREAK_EDGE, strength: 0.4, height: 0.6 } }));
-    const label = this.scene.add.text(0, BREAK_BUTTON.labelY, t("info.breakthrough"), textStyle({ role: "display", size: 26 })).setOrigin(0.5);
+    // 낱말 길이는 언어가 정하고 버튼 폭은 화면이 정한다(「한계 돌파」 ↔ `Breakthrough`).
+    // 넘치는 만큼만 가로로 눌러 버튼 판 안에 남긴다.
+    const label = squeezeTextToWidth(
+      this.scene.add.text(0, BREAK_BUTTON.labelY, t("info.breakthrough"), textStyle({ role: "display", size: 26 })).setOrigin(0.5),
+      BREAK_BUTTON.width - BREAK_BUTTON.labelInset,
+    );
     // 드는 것 둘(파편·치즈케이크)이 한 줄에 서므로 글자 하나가 아니라 담는 칸이다.
     const cost = this.scene.add.container(0, BREAK_BUTTON.costY);
     container.add([label, cost]);
@@ -826,7 +833,8 @@ export class InfoManager {
     const need = def && step ? breakthroughFragmentCost(def.rarity, progress.breakthrough) : 0;
     const ready = this.ownedNow && def !== undefined && canBreakThrough(def.rarity, progress, held, session.wallet.cheesecake);
     this.breakButton?.container.setAlpha(step ? (ready ? 1 : 0.62) : 0.35);
-    this.breakButton?.label.setText(step ? t("info.breakthrough") : t("info.breakthrough.gradeMax"));
+    // 문구가 바뀌면 폭도 함께 바뀐다 — 처음 그릴 때만 누르면 `돌파 완료`가 판을 넘는다.
+    if (this.breakButton) squeezeTextToWidth(this.breakButton.label.setText(step ? t("info.breakthrough") : t("info.breakthrough.gradeMax")), BREAK_BUTTON.width - BREAK_BUTTON.labelInset);
     this.breakButton?.label.setColor(ready ? COLOR.ink : COLOR.inkDim);
     this.paintBreakCost(def, step, held, need);
   }
@@ -2393,7 +2401,11 @@ export function addInfoFerocityBadge(
     badge.add(drawGlyph(scene, "ferocity", 0, -13, badgeSize * 0.46, 0xffd9c4));
   }
   // 스킬 액자와 같은 방식으로 이름을 안쪽 아래에 단다. 셋과 나란히 읽히려면 이름이 있어야 한다.
-  badge.add(scene.add.text(0, badgeSize / 2 - 23, t("info.skill.ferocity"), textStyle({ role: "display", size: 19, color: "#ffd9c4" })).setOrigin(0.5));
+  // 스킬 액자의 이름과 같은 규칙으로 누른다 — 「폭주」 두 글자가 영어에서는 `Frenzy`다.
+  badge.add(squeezeTextToWidth(
+    scene.add.text(0, badgeSize / 2 - 23, t("info.skill.ferocity"), textStyle({ role: "display", size: 19, color: "#ffd9c4" })).setOrigin(0.5),
+    badgeSize * 0.82,
+  ));
   // 입력 영역도 뱃지 크기에 딱 맞춘다. 넓게 잡으면 아래 아이콘의 터치를 가로챈다.
   const hit = scene.add.rectangle(0, 0, badgeSize, badgeSize, 0xffffff, 0).setInteractive({ useHandCursor: true });
   hit.on("pointerdown", () => badge.setScale(1.1));

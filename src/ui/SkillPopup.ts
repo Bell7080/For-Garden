@@ -9,6 +9,7 @@ import { FALLBACK_SKILL_ICON } from "./skillIcons";
 import { SKILL_ART_WASH_ALPHA } from "./skillArt";
 import { damageHealingLabel, recoveryLabel, skillKeywordLayoutOptions, statusEffectLabel, targetingLabel } from "./skillPresentation";
 import { COLOR, textStyle } from "./theme";
+import { shrinkTextToWidth } from "./textFit";
 
 /** 데이터 효과 분류를 플레이어가 읽는 고정 라벨로 바꾼다. */
 const EFFECT_KEY: Record<EffectType, TextKey> = {
@@ -80,6 +81,8 @@ const POPUP = {
   hintBottom: 44,
   /** 아이콘 칩과 이름 줄이 들어가는 최소 높이. 한 줄짜리 설명이 판을 이보다 짧게 만들지 않는다. */
   minHeight: 400,
+  /** 이름 줄이 판 오른쪽 변에서 비워 두는 자리. 깎인 모서리와 기울임을 함께 피한다. */
+  nameRightGutter: 48,
 } as const;
 
 /**
@@ -162,7 +165,16 @@ export function openSkillPopup(
           .setOrigin(0, 0),
       );
     }
-    body.add(scene.add.text(textLeft, top + 96, skill.name, textStyle({ role: "display", size: 46 })).setOrigin(0, 0));
+    /*
+     * **이름은 줄바꿈하지 않고 크기만 낮춘다.**
+     *
+     * 바로 아래 요약 줄(`top + 156`)이 고정 자리라 두 줄이 되면 그 줄을 파고든다. 낱말 길이는
+     * 언어가 정하므로(「세기의 대발견… 그렇죠?!」가 영어에서는 `The Discovery of the
+     * Century… Right?!`) 판 오른쪽 변까지 들 만큼만 줄인다.
+     */
+    const name = scene.add.text(textLeft, top + 96, skill.name, textStyle({ role: "display", size: 46 })).setOrigin(0, 0);
+    shrinkTextToWidth(name, POPUP.width / 2 - textLeft - POPUP.nameRightGutter);
+    body.add(name);
 
     // 효과 분류와 수치는 한 줄에 둔다. 둘 다 "얼마나 세게, 어떤 식으로"를 말한다.
     const summary = [

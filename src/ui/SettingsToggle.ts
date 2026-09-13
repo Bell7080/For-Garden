@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { drawLayer, slantedRect } from "./holo";
 import { SETTINGS_TOGGLE as T, settingsKnobOffsetX, settingsStateLabelOffsetX, settingsTrackCenterX } from "./settingsToggleLayout";
+import { squeezeTextToWidth } from "./textFit";
 import { COLOR, textStyle } from "./theme";
 
 /**
@@ -23,7 +24,16 @@ export class SettingsToggle extends Phaser.GameObjects.Container {
   constructor(scene: Phaser.Scene, x: number, y: number, label: string, value: boolean, onChange: (value: boolean) => unknown) {
     super(scene, x, y);
     this.value = value;
-    this.add(scene.add.text(0, 0, label, textStyle({ role: "body", size: 28 })).setOrigin(0, 0.5));
+    /*
+     * 이름이 홈 위로 올라타지 않게, 홈이 시작하는 자리까지만 남긴다 — 낱말 길이는 언어가
+     * 정한다(「연구 연출 단축」 ↔ `Shorten Research Sequence`). 목록이라 크기를 낮추지 않고
+     * 가로로만 누른다.
+     */
+    this.add(squeezeTextToWidth(
+      scene.add.text(0, 0, label, textStyle({ role: "body", size: 28 })).setOrigin(0, 0.5),
+      settingsTrackCenterX() - T.trackWidth / 2 - 28,
+      0.8,
+    ));
 
     // 홈과 손잡이를 한 컨테이너에 담아, 눌린 크기가 두 조각에 따로 걸리지 않게 한다.
     this.track = scene.add.container(settingsTrackCenterX(), 0);

@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { t } from "../i18n";
 import type { Element, Role } from "../core/types";
+import { bakeChipArt, chipArtShape } from "./chipArtTexture";
 import { chipPoints, drawInnerVignette, drawLayer, drawShapeOutline } from "./holo";
 import { FALLBACK_SKILL_ICON } from "./skillIcons";
 import { skillArtFor, skillArtTint, SKILL_ART_WASH_ALPHA, type SkillArtSlot } from "./skillArt";
@@ -77,23 +78,37 @@ export function addSkillIconFrame(scene: Phaser.Scene, options: SkillIconFrameOp
   // 그림이 앉는 안쪽 칸. 이름이 들어갈 만큼 아래를 남기고 위쪽으로 올려 붙인다.
   const innerSize = size - SKILL_ICON_FRAME.innerInset;
   const innerHeight = innerSize - (options.label ? SKILL_ICON_FRAME.labelRoom : 0);
-  const inner = chipPoints(innerSize, innerHeight, {
-    bevel: { topLeft: innerSize * 0.22, topRight: 0, bottomRight: innerSize * 0.22, bottomLeft: 0 },
-  });
+  const inner = chipArtShape(innerSize, innerHeight, SKILL_ICON_FRAME.innerBevel);
   const innerY = options.label ? -SKILL_ICON_FRAME.labelRoom / 2.4 : 0;
   frame.add(drawLayer(scene, 0, innerY, inner, { fill: 0x05080c, alpha: 1, shadow: false }));
   const art = skillArtFor(options.relicId, options.slot);
+  const hasArt = art !== undefined && scene.textures.exists(art);
   // 그림 자리에 같은 색을 아주 옅게 깔아 아이콘이 색판 위에 앉은 것처럼 보이게 한다. 전용
   // 아트가 없는 개체도 같은 색판을 깐다 — 그림만 공용 아이콘일 뿐 액자는 같은 체계여야 한다.
-  frame.add(drawLayer(scene, 0, innerY, inner, { fill: tint, alpha: art ? SKILL_ART_WASH_ALPHA : SKILL_ART_WASH_ALPHA * 0.7, shadow: false }));
+  frame.add(drawLayer(scene, 0, innerY, inner, { fill: tint, alpha: hasArt ? SKILL_ART_WASH_ALPHA : SKILL_ART_WASH_ALPHA * 0.7, shadow: false }));
+  if (hasArt) {
+    /*
+     * **전용 일러스트는 칸을 꽉 채운다.**
+     *
+     * 예전에는 액자 한 변의 74%짜리 정사각으로 가운데에 떠 있었다. 그러면 **모서리까지 연출이
+     * 그려진 그림**(폭발·파문처럼 네 변으로 퍼지는 것)은 아무것도 없는 자리에서 네모나게 끊겨
+     * 잘린 것처럼 보였고, 액자와 그림 사이에는 쓰이지 않는 테가 한 겹 남았다.
+     *
+     * 채우면 깎인 두 모서리로 그림이 나가므로 **구워서 그 모서리를 그림 자체에서 지운다**
+     * (`bakeChipArt`). 덮지도 마스크를 쓰지도 않는 이유는 이 액자가 눌릴 때 커지기 때문이다 —
+     * 기하 마스크는 그 배율을 물려받지 않아 어긋난다.
+     */
+    const baked = bakeChipArt(scene, art, innerSize, innerHeight, SKILL_ICON_FRAME.innerBevel);
+    // 전용 일러스트는 흰 실루엣이라 여기서 속성·직군을 섞은 색을 입는다.
+    frame.add(scene.add.image(0, innerY, baked).setDisplaySize(innerSize, innerHeight).setTint(tint));
+  } else {
+    // 공용 효과 아이콘은 그림이 아니라 **상징 하나**라 채우지 않고 가운데에 작게 선다.
+    const fallback = options.fallbackIcon && scene.textures.exists(options.fallbackIcon) ? options.fallbackIcon : FALLBACK_SKILL_ICON;
+    frame.add(scene.add.image(0, innerY - 2, fallback).setDisplaySize(size * SKILL_ICON_FRAME.iconRatio, size * SKILL_ICON_FRAME.iconRatio));
+  }
+  // **안쪽 비네트는 그림 위에 얹는다**(재화 액자와 같은 순서). 그림이 칸을 채우게 된 뒤로는
+  // 아래에 깔면 아무것도 누르지 못하고, 위에 얹혀야 테두리 안쪽이 어두워져 액자가 읽힌다.
   frame.add(drawInnerVignette(scene, 0, innerY, inner, { strength: 0.55 }));
-  const fallback = options.fallbackIcon && scene.textures.exists(options.fallbackIcon) ? options.fallbackIcon : FALLBACK_SKILL_ICON;
-  const texture = art ?? fallback;
-  const ratio = art ? SKILL_ICON_FRAME.artRatio : SKILL_ICON_FRAME.iconRatio;
-  const image = scene.add.image(0, innerY - 2, texture).setDisplaySize(size * ratio, size * ratio);
-  // 전용 일러스트는 흰 실루엣이라 여기서 속성·직군을 섞은 색을 입는다.
-  if (art) image.setTint(tint);
-  frame.add(image);
   if (options.label) {
     // 액자 안의 이름은 그림 다음으로 먼저 읽히는 것이라 굵고 크게 둔다. 돌파로 자란 칸은
     // **이름 뒤에 `+`가 붙는다** — 색만으로 알리면 무엇이 다른지가 아니라 "이 칸이 특별하다"
@@ -101,7 +116,11 @@ export function addSkillIconFrame(scene: Phaser.Scene, options: SkillIconFrameOp
     const color = enhanced ? COLOR.accentText : COLOR.ink;
     const label = scene.add
       .text(0, size / 2 - SKILL_ICON_FRAME.labelBaseline, enhanced ? `${options.label}+` : options.label, textStyle({ role: "display", size: Math.round(size * SKILL_ICON_FRAME.labelRatio), color }))
-      .setOrigin(0.5);
+      .setOrigin(0.5)
+      // 그림이 칸을 채우게 되어 이름이 그 위에 선다. 판을 한 겹 더 깔지 않고 이름줄과 같은
+      // 규칙으로 획 둘레에 검은 띠를 둘러, 어떤 그림 위에서도 대비가 그림과 무관해진다.
+      .setStroke("#05080c", 5)
+      .setShadow(0, 2, "#05080c", 3, true, true);
     /*
      * **낱말 길이는 언어가 정하고 액자 폭은 화면이 정한다.** 「일반 공격」 네 글자가 영어에서는
      * `Basic Attack` 열두 글자라 그대로 두면 액자 밖으로 잘려 나간다(실제로 그랬다). 돌파로
@@ -130,11 +149,12 @@ const SKILL_ICON_FRAME = {
   innerInset: 16,
   /** 이름이 들어갈 아래 여백(px). 이름이 없으면 그림 칸이 그만큼 커진다. */
   labelRoom: 14,
+  /** 안쪽 칸이 깎이는 깊이 — 칸 **가로**에 대한 비율이다. 굽는 쪽과 그리는 쪽이 함께 읽는다. */
+  innerBevel: 0.22,
   labelBaseline: 27,
   /** 이름이 액자 좌우 변에서 비워 두는 자리(px). 깎인 모서리와 테두리를 함께 피한다. */
   labelInset: 26,
   labelRatio: 0.167,
-  artRatio: 0.74,
   iconRatio: 0.52,
 } as const;
 

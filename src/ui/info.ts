@@ -69,7 +69,7 @@ import type { KeywordDef } from "../data/keywords";
 import { addFactionMark, factionMarkBounds } from "./FactionMark";
 import { SQUADS } from "../data/factions";
 import { OBSERVATION_INTERVIEW_LAYOUT, observationInterviewPanelState, type ObservationInterviewPanelState } from "./observationInterviewPanel";
-import { INFO_PORTRAIT_FOCUS, infoPortraitPlacement } from "./portraitPlacement";
+import { galleryPortraitPlacement, INFO_PORTRAIT_FOCUS, infoPortraitPlacement } from "./portraitPlacement";
 import { skinsForRelic } from "../data/relicSkins";
 import { relicSkinManager } from "../managers/RelicSkinManager";
 
@@ -1651,8 +1651,10 @@ export class InfoManager {
     // 제자리를 향해 계속 움직인다.
     this.scene.tweens.killTweensOf(portrait);
     this.galleryReturn = onClose;
-    // 감상 모드도 일반 창과 같은 보정을 거쳐 적 전용 우회 좌표를 만들지 않는다.
-    placePuppet(portrait, asset, infoPortraitPlacement(asset, { x: BASE_WIDTH / 2, y: BASE_HEIGHT * 0.52, height: BASE_HEIGHT * 1.02 }));
+    // **감상은 그림을 통째로 보는 자리다.** 예전에는 정보창과 같은 코어 관절 배치에 화면
+    // 높이의 1.02배를 주어, 자세히 보려고 눌렀는데 오히려 더 크게 잘린 그림이 떴다. 지금은
+    // 가로·세로 둘 다 들어오는 배율로 화면 한가운데에 놓는다.
+    placePuppet(portrait, asset, galleryPortraitPlacement(asset));
     portrait.setAlpha(0.001);
     this.scene.tweens.add({ targets: portrait, alpha: 1, duration: 260 });
     // SD는 판이 아니라 따로 선 인형이라 함께 빠지지 않는다. 감상 중에는 접어 둔다.

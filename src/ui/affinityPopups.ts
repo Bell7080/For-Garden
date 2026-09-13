@@ -35,7 +35,7 @@ const ROLE_NOTE = { width: 600, height: 430, icon: 128 } as const;
  */
 export function openElementChartPopup(scene: Phaser.Scene, popups: PopupLayer, anchor?: { x: number; y: number }): void {
   popups.open(
-    { width: CHART.width, height: CHART.height, title: t("affinity.chart"), closeOnBackdrop: true, ...(anchor ? { anchor } : {}) },
+    { width: CHART.width, height: CHART.height, title: t("affinity.chart"), closeOnBackdrop: true, hideCloseButton: true, ...(anchor ? { anchor } : {}) },
     (body) => {
       const nodes = elementChartNodes(CHART.radius);
       const at = (element: Element) => nodes.find((node) => node.element === element)!;
@@ -69,7 +69,7 @@ export function openElementChartPopup(scene: Phaser.Scene, popups: PopupLayer, a
 export function openElementPopup(scene: Phaser.Scene, popups: PopupLayer, element: Element, anchor?: { x: number; y: number }): void {
   const tone = AFFINITY_GLOW[ELEMENT_ICON[element]];
   popups.open(
-    { width: DETAIL.width, height: DETAIL.height, title: t(`element.${element}`), closeOnBackdrop: true, ...(anchor ? { anchor } : {}) },
+    { width: DETAIL.width, height: DETAIL.height, title: t(`element.${element}`), closeOnBackdrop: true, hideCloseButton: true, ...(anchor ? { anchor } : {}) },
     (body) => {
       body.add(new AffinityBadge(scene, 0, -DETAIL.height / 2 + 132, ELEMENT_ICON[element], DETAIL.icon, 0.55));
       addAffinityRow(scene, body, 46, t("affinity.strong", { multiplier: MULTIPLIER.strong }), tone, elementStrongAgainst(element));
@@ -87,7 +87,7 @@ export function openElementPopup(scene: Phaser.Scene, popups: PopupLayer, elemen
  */
 export function openRolePopup(scene: Phaser.Scene, popups: PopupLayer, role: Role, anchor?: { x: number; y: number }): void {
   popups.open(
-    { width: ROLE_NOTE.width, height: ROLE_NOTE.height, title: t(`role.${role}`), closeOnBackdrop: true, ...(anchor ? { anchor } : {}) },
+    { width: ROLE_NOTE.width, height: ROLE_NOTE.height, title: t(`role.${role}`), closeOnBackdrop: true, hideCloseButton: true, ...(anchor ? { anchor } : {}) },
     (body) => {
       body.add(new AffinityBadge(scene, 0, -ROLE_NOTE.height / 2 + 136, ROLE_ICON[role], ROLE_NOTE.icon, 0.55));
       body.add(scene.add

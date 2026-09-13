@@ -84,12 +84,12 @@ describe("토리카 스킬 표시 계약", () => {
     expect(torika.ultimate).toMatchObject({
       targeting: "nearbyEnemies",
       radius: 220,
-      statusEffects: [{ kind: "stun", seconds: 3.5 }],
+      statusEffects: [{ kind: "stun", seconds: 2 }],
     });
     expect(torika.passive).toMatchObject({ value: 7, durationSeconds: 5 });
     expect(`${torika.passive.durationSeconds}초 동안 ${recoveryLabel(torika.passive.value)}`).toBe("5초 동안 매초 최대 체력의 7% 회복");
     expect(targetingLabel(torika.ultimate.targeting)).toBe("자신의 주위 모든 적");
-    expect(statusEffectLabel(torika.ultimate.statusEffects?.[0])).toBe("[[stun|기절]] 3.5초");
+    expect(statusEffectLabel(torika.ultimate.statusEffects?.[0])).toBe("[[stun|기절]] 2초");
     expect(torika.ferocityTrait.name).toBe("이제 못참아!");
     expect(torika.ferocityTrait).toMatchObject({ effectId: "torikaBulwark", maxHpRegenPercentPerSecond: 5, defenseBonus: 80, resistanceBonus: 60, tauntRadius: 320, tauntDurationSeconds: 3 });
     expect(ferocityTraitDescription(torika.ferocityTrait, { attack: torika.stats.atk, defense: torika.stats.def })).toBe("매초 최대 체력의 5%를 회복하고 방어력이 80, 저항력이 60 증가한다. 폭주에 들어가는 순간 주위 모든 적을 3초 동안 [[taunt|도발]]한다.");

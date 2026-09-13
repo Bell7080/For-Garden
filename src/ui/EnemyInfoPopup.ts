@@ -1,6 +1,6 @@
 import Phaser from "phaser";
-import { infoPortraitPlacement } from "./portraitPlacement";
-import { battleAssetFor, portraitAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
+import { galleryPortraitPlacement, infoPortraitPlacement } from "./portraitPlacement";
+import { battleAssetFor, placePuppet, portraitAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { breakthroughGrade, isBreakthroughSlotOpen, relicLevelCap } from "../core/relicProgression";
 import type { Passive, RelicDef, Skill, Ultimate } from "../core/types";
@@ -58,6 +58,11 @@ export class EnemyInfoPopup {
   private chrome?: Phaser.GameObjects.Container;
   private portrait?: PuppetCreature;
   private figure?: PuppetCreature;
+  /** 감상 중에만 사는 것들. 원화를 되돌릴 자리와 판을 덮은 입력면을 함께 붙잡는다. */
+  private gallery?: { exit: Phaser.GameObjects.Rectangle; home: { x: number; y: number; scale: number }; mask: Phaser.Display.Masks.GeometryMask; onClose?: () => void };
+  private galleryBody?: Phaser.GameObjects.Container;
+  /** 감상이 어느 개체의 원화를 세워야 하는지. 열려 있는 동안의 스냅샷을 그대로 붙잡는다. */
+  private shownDef?: RelicDef;
   /** 늦게 도착한 원화가 이미 닫힌 판 위에 서지 않도록 세대를 센다. */
   private generation = 0;
   private open = false;
@@ -124,6 +129,10 @@ export class EnemyInfoPopup {
       this.paintStats(chrome, snapshot.def);
       this.paintSkills(chrome, snapshot);
       addInfoFigureStand(this.scene, chrome, ENEMY_INFO.figure.x, ENEMY_INFO.figure.groundY);
+      // 아군 창과 같은 돋보기 — 원화를 통째로 보는 입구다. 판이 열려 있는 동안에만 살아 있다.
+      this.galleryBody = body;
+      this.shownDef = snapshot.def;
+      addInfoMagnifier(this.scene, this.popups, chrome, ENEMY_INFO.portraitMagnifier.x, ENEMY_INFO.portraitMagnifier.y, (from) => this.enterGallery(from.onClose, mask));
       void this.loadPuppets(snapshot.def, generation, depth + 0.4, depth + 0.7, mask);
     });
   }
@@ -136,9 +145,62 @@ export class EnemyInfoPopup {
   private dispose(): void {
     this.open = false;
     this.generation += 1;
+    this.gallery?.exit.destroy(); this.gallery = undefined;
+    this.galleryBody = undefined;
+    this.shownDef = undefined;
     this.portrait?.destroy(); this.portrait = undefined;
     this.figure?.destroy(); this.figure = undefined;
     this.chrome?.destroy(); this.chrome = undefined;
+  }
+
+  /**
+   * 원화만 남기고 통째로 본다.
+   *
+   * 아군 정보창과 **같은 손짓·같은 결과**다 — 판과 제목이 옆으로 빠지고 원화가 화면 한가운데에
+   * 한 조각도 잘리지 않게 선다. 다른 점은 자를 것이 하나 더 있다는 것뿐이다: 이 창의 원화는
+   * 판과 같은 실루엣의 마스크로 잘려 있으므로, 감상하는 동안 그 마스크를 벗겼다가 돌아올 때
+   * 다시 씌운다(벗기지 않으면 판 자리 밖은 보이지 않는다).
+   */
+  private enterGallery(onClose: (() => void) | undefined, mask: Phaser.Display.Masks.GeometryMask): void {
+    const portrait = this.portrait;
+    if (!portrait || this.gallery) return;
+    const home = { x: portrait.x, y: portrait.y, scale: portrait.scaleX };
+    const def = this.shownDef;
+    if (!def) return;
+    const asset = portraitAssetFor(def.portraitAssetId);
+    this.scene.tweens.killTweensOf(portrait);
+    portrait.clearMask(false);
+    placePuppet(portrait, asset, galleryPortraitPlacement(asset));
+    // SD와 판·머리글은 원화를 가리므로 함께 물러난다. 판을 없애지 않고 밀어내는 이유는
+    // 돌아올 때 그대로 미끄러져 들어와야 같은 창을 보고 있었다는 것이 읽히기 때문이다.
+    this.figure?.setVisible(false);
+    const targets = [this.galleryBody, this.chrome].filter(Boolean) as Phaser.GameObjects.Container[];
+    this.scene.tweens.add({ targets, x: BASE_WIDTH, alpha: 0, duration: 320, ease: "Cubic.In" });
+    const exit = this.scene.add
+      .rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, 0xffffff, 0)
+      .setDepth(portrait.depth + 0.05)
+      .setInteractive({ useHandCursor: true });
+    exit.on("pointerup", () => this.leaveGallery());
+    this.gallery = { exit, home, mask, onClose };
+  }
+
+  /** 감상에서 나온다. 원화는 **처음 세운 자리**로 돌아가고 판이 다시 미끄러져 들어온다. */
+  private leaveGallery(): void {
+    const state = this.gallery;
+    const portrait = this.portrait;
+    if (!state) return;
+    this.gallery = undefined;
+    state.exit.destroy();
+    // 부른 돋보기를 눌린 크기에서 풀어 준다.
+    state.onClose?.();
+    if (portrait) {
+      this.scene.tweens.killTweensOf(portrait);
+      portrait.setMask(state.mask);
+      this.scene.tweens.add({ targets: portrait, x: state.home.x, y: state.home.y, scale: state.home.scale, duration: 320, ease: "Cubic.Out" });
+    }
+    const targets = [this.galleryBody, this.chrome].filter(Boolean) as Phaser.GameObjects.Container[];
+    this.scene.tweens.add({ targets, x: SCREEN_CENTER.x, alpha: 1, duration: 320, ease: "Cubic.Out" });
+    this.figure?.setVisible(true);
   }
 
   /** 왼쪽 위 이름 블록 — 정보창과 같은 순서·같은 글자 크기·같은 그림자다. */

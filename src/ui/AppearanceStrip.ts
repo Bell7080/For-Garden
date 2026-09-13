@@ -2,15 +2,16 @@ import Phaser from "phaser";
 import { t } from "../i18n";
 import type { RelicDef } from "../core/types";
 import { relicSkinManager } from "../managers/RelicSkinManager";
-import { portraitAssetForSkin, spawnPuppet, type PuppetCreature } from "../puppets/assets";
+import { battleAssetFor, headCardFrame, loadPortraitTexture, portraitAssetForSkin, sdAssetForSkin, spawnPuppet, type PuppetAsset, type PuppetCreature } from "../puppets/assets";
 import { powerSavingPolicy } from "../core/settings";
 import { session } from "../state/session";
 import { Button } from "./Button";
-import { chipPoints, drawFrameVignette, drawHairline, drawLayer, drawShapeInnerGlow, slantedRect } from "./holo";
+import { chipPoints, drawFrameVignette, drawLayer, drawShapeInnerGlow, drawShapeOutline, slantedRect } from "./holo";
 import { addPriceBar } from "./priceTag";
 import { COLOR, textStyle } from "./theme";
 import {
-  APPEARANCE_PANEL, appearanceStripCardX, appearanceStripMinX, appearanceStripOffsetFor, appearanceStripViewport,
+  APPEARANCE_PANEL, appearanceFrames, appearanceFrameSpot, appearancePageRect, appearanceStripCardX,
+  appearanceStripMinX, appearanceStripOffsetFor, appearanceStripViewport, type AppearanceRect,
 } from "./appearancePanelLayout";
 import {
   canEquipAppearance, isAppearanceDimmed, type AppearanceEntry, type AppearanceState,
@@ -54,8 +55,15 @@ export interface AppearanceStripHooks {
 export class AppearanceStrip {
   private focused = 0;
   private hero?: PuppetCreature;
+  private sd?: PuppetCreature;
+  private face?: Phaser.GameObjects.Image;
   private heroToken = 0;
   private readonly heroLayer: Phaser.GameObjects.Container;
+  private readonly faceLayer: Phaser.GameObjects.Container;
+  private readonly sdLayer: Phaser.GameObjects.Container;
+  private readonly frames: ReturnType<typeof appearanceFrames>;
+  /** 칸마다 하나씩 — 컨테이너 이동을 물려받지 않으므로 소유자가 직접 거둔다. */
+  private readonly frameMasks: Phaser.GameObjects.Graphics[] = [];
   private readonly name: Phaser.GameObjects.Text;
   private readonly state: Phaser.GameObjects.Text;
   private readonly priceRow: Phaser.GameObjects.Container;
@@ -76,12 +84,17 @@ export class AppearanceStrip {
     const layout = APPEARANCE_PANEL;
     this.focused = Math.max(0, entries.findIndex((entry) => entry.state === "equipped"));
 
-    // 무대 바닥의 투영 받침. 전신이 공중에 뜨지 않게 하고 그 아래 글줄과 가른다.
-    body.add(this.scene.add.ellipse(0, layout.stand.y + 8, layout.stand.width, layout.stand.height, COLOR.void, 0.5));
-    body.add(this.scene.add.ellipse(0, layout.stand.y, layout.stand.width - 24, layout.stand.height - 16, 0x121a24, 0.9));
-    body.add(drawHairline(this.scene, 0, layout.stand.y - layout.stand.height / 2 + 8, layout.stand.width - 80, { color: COLOR.accent, alpha: 0.45 }));
-    this.heroLayer = this.scene.add.container(0, 0);
-    body.add(this.heroLayer);
+    // **무대는 웹툰 칸 셋이다.** 받침 타원을 깔지 않는다 — 화면에서 유일하게 둥근 것이라
+    // 홀로그램 결에서 혼자 떠 있었고, 전용 뒷배경이 들어오면 그 자리를 칸이 대신 맡는다.
+    // 아래 글줄과 띠도 같은 페이지 위에 앉혀 위아래가 한 장으로 읽히게 한다.
+    const page = appearancePageRect();
+    body.add(drawLayer(this.scene, (page.left + page.right) / 2, (page.top + page.bottom) / 2,
+      slantedRect(page.right - page.left, page.bottom - page.top, 0), { fill: 0x080d13, alpha: 0.5, shadow: false }));
+    const frames = appearanceFrames();
+    this.heroLayer = this.addFrame(body, frames.hero);
+    this.faceLayer = this.addFrame(body, frames.face);
+    this.sdLayer = this.addFrame(body, frames.sd);
+    this.frames = frames;
 
     this.name = this.scene.add.text(0, layout.name.y, "", textStyle({ role: "display", size: layout.name.size, align: "center", wrap: layout.width - 140 })).setOrigin(0.5);
     this.state = this.scene.add.text(0, layout.state.y, "", textStyle({ role: "emphasis", size: layout.state.size })).setOrigin(0.5);
@@ -101,6 +114,43 @@ export class AppearanceStrip {
     entries.forEach((entry, index) => this.addCard(entry, index));
     this.installDrag(body, view);
     this.paint();
+  }
+
+  /**
+   * 웹툰 칸 한 장.
+   *
+   * 그림 한 장을 담는 칸이라 **액자 규칙**을 쓴다 — 불투명한 면에 사방 외곽선, 안쪽 비네트다.
+   * 돌려주는 컨테이너는 칸 안쪽만 보이도록 잘려 있어, 안에 세운 원화가 칸을 넘쳐도 홈통을
+   * 침범하지 않는다(그 넘침이 곧 "칸에 꽉 찬 그림"이다).
+   */
+  private addFrame(body: Phaser.GameObjects.Container, rect: AppearanceRect): Phaser.GameObjects.Container {
+    const spot = appearanceFrameSpot(rect);
+    const unit = Math.min(spot.width, spot.height);
+    const shape = chipPoints(spot.width, spot.height, {
+      bevel: { topLeft: unit * 0.16, topRight: 0, bottomRight: unit * 0.16, bottomLeft: 0 },
+    });
+    body.add(drawLayer(this.scene, spot.x, spot.y, shape, { fill: 0x0a1017, alpha: 0.98, shadow: false }));
+    const content = this.scene.add.container(spot.x, spot.y);
+    body.add(content);
+    body.add(drawFrameVignette(this.scene, spot.x, spot.y, spot.width, spot.height, { strength: 0.52 }));
+    body.add(drawShapeOutline(this.scene, spot.x, spot.y, shape, { color: COLOR.accent, alpha: 0.5, width: 3 }));
+    // 마스크는 표시 목록 밖이라 판의 이동·배율을 물려받지 않는다 — 팝업의 지금 월드 행렬로
+    // 네 변을 다시 재어 세운다(띠 마스크와 같은 방법).
+    const matrix = body.getWorldTransformMatrix();
+    const center = matrix.transformPoint(spot.x, spot.y);
+    const right = matrix.transformPoint(spot.x + spot.width / 2, spot.y);
+    const bottom = matrix.transformPoint(spot.x, spot.y + spot.height / 2);
+    const mask = this.scene.make.graphics({});
+    mask.fillStyle(0xffffff, 1);
+    mask.fillRect(
+      center.x - Math.hypot(right.x - center.x, right.y - center.y),
+      center.y - Math.hypot(bottom.x - center.x, bottom.y - center.y),
+      Math.hypot(right.x - center.x, right.y - center.y) * 2,
+      Math.hypot(bottom.x - center.x, bottom.y - center.y) * 2,
+    );
+    content.setMask(mask.createGeometryMask());
+    this.frameMasks.push(mask);
+    return content;
   }
 
   /**
@@ -173,15 +223,12 @@ export class AppearanceStrip {
     this.rail.add(card);
     this.cards.push(card);
 
-    void spawnPuppet(this.scene, portraitAssetForSkin(this.def.portraitAssetId, entry.skinId ?? null), {
-      x: 0, groundY: strip.cardHeight / 2 - 44, height: strip.cardHeight - 74, depth: 0,
-    }).then((puppet) => {
-      if (!card.active) { puppet.destroy(); return; }
-      // 띠의 Puppet은 정보 전달을 바꾸지 않는 장식이므로 공용 유휴 갱신 예산을 적용한다.
-      puppet.setDecorativeUpdateFactor(powerSavingPolicy(session.settings).idlePuppetUpdateFactor);
-      puppet.setAlpha(isAppearanceDimmed(entry) ? 0.34 : 1);
-      figure.add(puppet);
-    });
+    // **칸에는 얼굴이 크게 든다.** 전신을 통째로 줄여 넣으면 이름표 위의 작은 인형이 되어
+    // 스킨끼리 무엇이 다른지 알 수 없다 — 바뀌는 것은 대개 머리 장식과 얼굴 주변이라, 카드와
+    // 같은 머리 관절 기준 잘라내기로 그 부분만 꽉 채운다. 살아 움직일 필요가 없는 목록이라
+    // Mesh가 아니라 정지 그림 한 장이다(칸이 여럿 서므로 draw call도 그만큼 줄어든다).
+    void this.addFaceImage(figure, portraitAssetForSkin(this.def.portraitAssetId, entry.skinId ?? null),
+      strip.cardWidth, strip.cardHeight - 46, -22, isAppearanceDimmed(entry) ? 0.34 : 1, () => card.active);
   }
 
   /** 고른 칸을 바꾼다. 띠 밖의 칸을 고르면 그 칸이 창 안으로 따라 들어온다. */
@@ -248,21 +295,83 @@ export class AppearanceStrip {
     this.loadHero(entry);
   }
 
-  /** 무대의 전신. 고른 칸이 바뀌면 이전 것을 버리고 그 외형으로 다시 세운다. */
+  /**
+   * 무대 세 칸. 고른 칸이 바뀌면 셋을 함께 그 외형으로 갈아 끼운다.
+   *
+   * 큰 칸은 **전신**(코어 관절을 기준으로 세워 발끝은 칸 밖으로 나간다 — "거의 전신"이라
+   * 중심이 먼저 보여야 한다), 중간 칸은 **얼굴**, 작은 칸은 **SD**다. 셋이 한 세대(`heroToken`)를
+   * 공유하므로, 읽는 사이에 다른 칸을 골랐으면 늦게 온 셋이 모두 버려진다.
+   */
   private loadHero(entry: AppearanceEntry): void {
     const token = ++this.heroToken;
-    const { hero } = APPEARANCE_PANEL;
-    void spawnPuppet(this.scene, portraitAssetForSkin(this.def.portraitAssetId, entry.skinId ?? null), {
-      x: 0, groundY: hero.groundY, height: hero.height, depth: 0,
+    const asset = portraitAssetForSkin(this.def.portraitAssetId, entry.skinId ?? null);
+    const alpha = isAppearanceDimmed(entry) ? 0.5 : 1;
+    const heroSpot = appearanceFrameSpot(this.frames.hero);
+    const sdSpot = appearanceFrameSpot(this.frames.sd);
+    const faceSpot = appearanceFrameSpot(this.frames.face);
+
+    // 큰 칸 — 전신. 칸보다 크게 세워 넘치는 만큼은 칸이 잘라 낸다.
+    void spawnPuppet(this.scene, asset, {
+      focus: { anchor: "core", x: 0, y: heroSpot.height * 0.06 }, height: heroSpot.height * 1.24, depth: 0,
     }).then((puppet) => {
-      // 읽는 사이에 다른 칸을 골랐거나 판이 닫혔으면 새 Mesh를 남기지 않는다.
       if (token !== this.heroToken || !this.heroLayer.active) { puppet.destroy(); return; }
       puppet.setDecorativeUpdateFactor(powerSavingPolicy(session.settings).idlePuppetUpdateFactor);
-      puppet.setAlpha(isAppearanceDimmed(entry) ? 0.5 : 1);
+      puppet.setAlpha(alpha);
       this.hero?.destroy();
       this.hero = puppet;
       this.heroLayer.add(puppet);
     });
+
+    // 작은 칸 — SD. 발끝을 칸 밑변 조금 위에 세운다.
+    void spawnPuppet(this.scene, sdAssetForSkin(this.def.id, entry.skinId ?? null) ?? battleAssetFor(this.def.id), {
+      x: 0, groundY: sdSpot.height / 2 - 18, height: sdSpot.height * 0.74, depth: 0,
+    }).then((puppet) => {
+      if (token !== this.heroToken || !this.sdLayer.active) { puppet.destroy(); return; }
+      puppet.setDecorativeUpdateFactor(powerSavingPolicy(session.settings).idlePuppetUpdateFactor);
+      puppet.setAlpha(alpha);
+      this.sd?.destroy();
+      this.sd = puppet;
+      this.sdLayer.add(puppet);
+    });
+
+    // 중간 칸 — 얼굴. 띠의 칸과 **같은 잘라내기**를 쓰고 크기만 다르다.
+    this.face?.destroy(); this.face = undefined;
+    this.faceLayer.removeAll(true);
+    void this.addFaceImage(this.faceLayer, asset, faceSpot.width, faceSpot.height, 0, alpha, () => token === this.heroToken && this.faceLayer.active);
+  }
+
+  /**
+   * 머리 관절을 기준으로 얼굴만 크게 잘라 넣은 정지 그림 한 장.
+   *
+   * 카드(`PortraitCard`)와 **같은 잘라내기 함수**를 쓴다 — 여기서 따로 값을 정하면 같은 원화가
+   * 도감 카드와 외형 칸에서 다른 데를 잘라 보인다.
+   */
+  private async addFaceImage(
+    parent: Phaser.GameObjects.Container,
+    asset: PuppetAsset,
+    width: number,
+    height: number,
+    offsetY: number,
+    alpha: number,
+    isCurrent: () => boolean,
+  ): Promise<void> {
+    const { key, anchors } = await loadPortraitTexture(this.scene, asset);
+    if (!isCurrent()) return;
+    const frame = headCardFrame(asset, anchors, {
+      width, height,
+      // 카드보다 더 당겨 얼굴이 칸을 꽉 채우게 한다 — 여기서 보려는 것은 등신이 아니라 머리다.
+      fillRatio: 0.42 / ((asset.cardZoom ?? 1) * (asset.portraitZoom ?? 1)),
+      headroom: 0,
+      cardTop: asset.cardTop,
+    });
+    const image = this.scene.add
+      .image(-width / 2 - frame.cropX * frame.scale, -height / 2 + offsetY - frame.cropY * frame.scale, key)
+      .setOrigin(0, 0)
+      .setScale(frame.scale)
+      .setAlpha(alpha);
+    image.setCrop(frame.cropX, frame.cropY, frame.cropWidth, frame.cropHeight);
+    parent.add(image);
+    if (parent === this.faceLayer) this.face = image;
   }
 
   /** 기하 마스크와 원본 도형은 컨테이너 자식이 아니므로 소유자가 직접 파괴한다. */
@@ -271,6 +380,10 @@ export class AppearanceStrip {
     this.rail.clearMask(true);
     this.geometryMask?.destroy(); this.geometryMask = undefined;
     this.maskShape?.destroy(); this.maskShape = undefined;
+    for (const mask of this.frameMasks) mask.destroy();
+    this.frameMasks.length = 0;
     this.hero?.destroy(); this.hero = undefined;
+    this.sd?.destroy(); this.sd = undefined;
+    this.face?.destroy(); this.face = undefined;
   }
 }

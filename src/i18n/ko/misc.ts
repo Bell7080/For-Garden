@@ -106,6 +106,9 @@ export const MISC_KO = {
   "stageComplete.tapToConfirm": "화면을 눌러 확인",
   "stageComplete.firstClear": "최초 클리어 보상",
   "stageComplete.repeatClear": "반복 클리어 보상",
+  "stageComplete.toResearch": "연구소",
+  "stageComplete.toRelics": "렐릭 강화",
+  "stageComplete.toMap": "지도로",
 
   // 전투 프로필·보상
   "battle.profile.down": "전투 불능",

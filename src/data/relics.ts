@@ -288,13 +288,16 @@ export const RELICS: RelicDef[] = [
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
-      // 광역 제어가 이 개체의 값이므로 게이지를 낮춰 더 자주 돌게 한다.
-      cost: 90,
+      // 광역 제어가 이 개체의 값이라 한때 90까지 낮춰 두었는데, 돌파로 「지각 붕괴」가 1.5초
+      // 간격으로 두 번 더 떨어지게 되자 **그 전열이 적의 시간을 거의 전부 가져갔다** — 3.5초
+      // 기절이 세 번 나눠 들어오는 동안 다시 게이지가 차서 다음 붕괴가 이어졌다. 게이지를
+      // 올려 도는 주기를 벌리고, 기절도 한 번에 가져가는 시간을 줄인다.
+      cost: 120,
       // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
       targeting: "nearbyEnemies",
       // 반경은 전투 엔진의 대상 판정용 값이며 플레이어에게는 이해하기 쉬운 대상 범위로 바꿔 표시한다.
       radius: 220,
-      statusEffects: [{ kind: "stun", seconds: 3.5 }],
+      statusEffects: [{ kind: "stun", seconds: 2 }],
     },
   },
   {

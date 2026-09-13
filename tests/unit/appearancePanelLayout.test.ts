@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  APPEARANCE_PANEL, appearanceBoundsOverlap, appearancePanelRegions,
+  APPEARANCE_PANEL, appearanceBoundsOverlap, appearanceFrames, appearancePanelRegions, appearanceStageRect,
   appearanceStripCardX, appearanceStripContentWidth, appearanceStripMinX, appearanceStripOffsetFor, appearanceStripViewport,
 } from "../../src/ui/appearancePanelLayout";
 import { appearanceEntries, appearanceState, canEquipAppearance, isAppearanceDimmed } from "../../src/ui/appearanceModel";
@@ -14,7 +14,7 @@ const skin = (id: string, extra: Partial<RelicSkinDef> = {}): RelicSkinDef => ({
 describe("외형 전시관 자리표", () => {
   it("무대·글줄·조작·띠가 서로 겹치지 않고 판 안에 든다", () => {
     const regions = appearancePanelRegions();
-    const order = [regions.stand, regions.name, regions.state, regions.price, regions.action, regions.strip];
+    const order = [regions.hero, regions.name, regions.state, regions.price, regions.action, regions.strip];
     for (let i = 1; i < order.length; i += 1) {
       expect(appearanceBoundsOverlap(order[i - 1], order[i])).toBe(false);
       // 위에서 아래로 쌓인다 — 자리가 뒤섞이면 무엇을 읽고 무엇을 누르는지 흐려진다.
@@ -25,10 +25,32 @@ describe("외형 전시관 자리표", () => {
       expect(region.left).toBeGreaterThanOrEqual(-half.x);
       expect(region.right).toBeLessThanOrEqual(half.x);
       expect(region.bottom).toBeLessThanOrEqual(half.y);
+      expect(region.top).toBeGreaterThanOrEqual(-half.y);
     }
-    // 전신은 무대 위쪽을 통째로 쓰되 판 밖으로 솟지 않는다.
-    expect(regions.hero.top).toBeGreaterThanOrEqual(-half.y);
-    expect(regions.hero.bottom).toBeLessThanOrEqual(regions.stand.bottom);
+  });
+
+  /**
+   * 웹툰 칸 셋은 크기가 곧 위계다 — 같으면 어느 것을 먼저 봐야 하는지 알 수 없다.
+   * 홈통(`gutter`)만큼 떨어져 서로 침범하지 않는지도 함께 지킨다.
+   */
+  it("무대는 큰 칸·중간 칸·작은 칸으로 갈리고 서로 겹치지 않는다", () => {
+    const frames = appearanceFrames();
+    const area = (rect: { left: number; right: number; top: number; bottom: number }) =>
+      (rect.right - rect.left) * (rect.bottom - rect.top);
+    expect(area(frames.hero)).toBeGreaterThan(area(frames.face));
+    expect(area(frames.face)).toBeGreaterThan(area(frames.sd));
+    expect(appearanceBoundsOverlap(frames.hero, frames.face)).toBe(false);
+    expect(appearanceBoundsOverlap(frames.hero, frames.sd)).toBe(false);
+    expect(appearanceBoundsOverlap(frames.face, frames.sd)).toBe(false);
+    // 오른쪽 기둥 둘은 같은 폭으로 서고, 작은 칸이 큰 칸 밑변에 맞춰 끝난다.
+    expect(frames.face.left).toBe(frames.sd.left);
+    expect(frames.face.right).toBe(frames.sd.right);
+    expect(frames.sd.bottom).toBe(frames.hero.bottom);
+    expect(frames.sd.top - frames.face.bottom).toBe(APPEARANCE_PANEL.gutter);
+    // 무대 전체가 판 안쪽 여백을 지킨다.
+    const stage = appearanceStageRect();
+    expect(frames.hero.left).toBe(stage.left);
+    expect(frames.face.right).toBe(stage.right);
   });
 
   it("띠는 왼쪽부터 채우고 칸이 창을 못 채우면 흐르지 않는다", () => {

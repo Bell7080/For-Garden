@@ -1,32 +1,41 @@
 /**
  * 외형 **전시관**의 자리표. Phaser에 의존하지 않아 화면과 회귀 테스트가 같은 값을 읽는다.
  *
- * **카드 둘을 나란히 세우던 판이 아니다.** 예전에는 기본 외형과 추가 외형을 같은 크기의 카드
- * 두 장으로 세워 놓고 골랐는데, 외형이 셋만 되어도 설 자리가 없었고 무엇보다 **고른 외형을
- * 크게 볼 수 없었다** — 입을지 말지를 정하는 화면인데 정작 그 외형이 카드만 하게 서 있었다.
+ * **한 장을 크게 세우던 무대가 아니다.** 전신 하나를 받침 위에 세워 두었을 때는 그 외형이
+ * 무엇인지는 알 수 있어도 **얼굴이 작았고**, 받침 타원이 화면에서 유일하게 둥근 것이라 홀로그램
+ * 결에서도 혼자 떠 있었다. 지금 무대는 **웹툰 칸처럼 셋으로 갈린다** — 큰 칸에 전신, 중간 칸에
+ * 얼굴, 오른쪽 아래 작은 칸에 SD다. 한 외형을 세 각도에서 한 번에 보여 주므로 칸을 넘겨 가며
+ * 확인할 것이 없다.
  *
- * 지금은 위가 **무대**, 아래가 **띠**다. 무대에는 지금 고른 외형 하나가 전신으로 크게 서고,
- * 띠는 옆으로 넘기며 고른다 — 전시관을 한 바퀴 도는 손짓이다.
+ * 아래 띠와 글줄도 같은 페이지 위에 앉는다 — 칸만 웹툰이고 나머지가 빈 판이면 위아래가 서로
+ * 다른 화면으로 읽힌다.
  */
 export const APPEARANCE_PANEL = {
-  width: 940,
-  height: 1520,
-  /** 무대에 선 전신. 발끝을 바닥선에 맞추고 그 높이로 배율이 정해진다. */
-  hero: { groundY: 160, height: 660 },
-  /** 무대 바닥의 투영 받침 — 전신이 공중에 뜨지 않게 한다. */
-  stand: { y: 172, width: 420, height: 84 },
-  name: { y: 252, size: 42 },
-  state: { y: 306, size: 26 },
+  /** 예전(940×1520)보다 한 뼘 작다. 판이 화면을 거의 다 덮으면 뒤 정보창이 사라진 것처럼 보인다. */
+  width: 880,
+  height: 1300,
+  /** 페이지(무대+글줄+띠)가 판 안쪽에서 남기는 여백. */
+  pad: 30,
+  /** 칸과 칸 사이. 웹툰의 홈통이라 얇다 — 넓히면 세 칸이 서로 다른 판으로 갈린다. */
+  gutter: 14,
+  /** 무대 — 세 칸이 들어가는 영역. */
+  stage: { top: -576, height: 640 },
+  /** 왼쪽 큰 칸(전신)이 무대 폭에서 갖는 비율. */
+  heroRatio: 0.635,
+  /** 오른쪽 위 칸(얼굴)이 무대 높이에서 갖는 비율. */
+  faceRatio: 0.594,
+  name: { y: 116, size: 38 },
+  state: { y: 172, size: 24 },
   /** 값 줄. `purchasable`인 외형에만 서고 그 밖에는 자리를 비운다. */
-  price: { y: 376, width: 420, height: 68 },
-  action: { y: 480, width: 460, height: 92 },
+  price: { y: 236, width: 420, height: 62 },
+  action: { y: 326, width: 440, height: 88 },
   /**
    * 아래 띠.
    *
    * 칸이 창보다 길면 **옆으로 흐른다**. 기하 마스크는 컨테이너 이동을 물려받지 않으므로
    * 화면이 팝업의 월드 행렬로 마스크를 다시 잡는다(가방 격자와 같은 방법).
    */
-  strip: { y: 648, cardWidth: 188, cardHeight: 216, gap: 18, padX: 40 },
+  strip: { y: 486, cardWidth: 168, cardHeight: 200, gap: 16, padX: 34 },
 } as const;
 
 export interface AppearanceRect { left: number; top: number; right: number; bottom: number }
@@ -39,6 +48,46 @@ export function appearanceBounds(x: number, y: number, width: number, height: nu
 /** 변만 맞닿는 것은 허용하고, 실제 면적이 겹칠 때만 true다. */
 export function appearanceBoundsOverlap(a: AppearanceRect, b: AppearanceRect): boolean {
   return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+}
+
+/** 세 칸이 나눠 쓰는 무대 전체. */
+export function appearanceStageRect(): AppearanceRect {
+  const { width, pad, stage } = APPEARANCE_PANEL;
+  return { left: -width / 2 + pad, right: width / 2 - pad, top: stage.top, bottom: stage.top + stage.height };
+}
+
+/**
+ * 웹툰 칸 셋.
+ *
+ * `hero`는 왼쪽을 통째로 쓰는 큰 칸(전신), `face`는 오른쪽 위(얼굴), `sd`는 오른쪽 아래의 가장
+ * 작은 칸이다. 크기가 곧 위계라 셋을 같게 두지 않는다 — 같으면 어느 것을 먼저 봐야 하는지
+ * 알 수 없다.
+ */
+export function appearanceFrames(): { hero: AppearanceRect; face: AppearanceRect; sd: AppearanceRect } {
+  const stage = appearanceStageRect();
+  const { gutter, heroRatio, faceRatio } = APPEARANCE_PANEL;
+  const stageWidth = stage.right - stage.left;
+  const stageHeight = stage.bottom - stage.top;
+  const heroWidth = Math.round((stageWidth - gutter) * heroRatio);
+  const columnLeft = stage.left + heroWidth + gutter;
+  const faceHeight = Math.round((stageHeight - gutter) * faceRatio);
+  return {
+    hero: { left: stage.left, right: stage.left + heroWidth, top: stage.top, bottom: stage.bottom },
+    face: { left: columnLeft, right: stage.right, top: stage.top, bottom: stage.top + faceHeight },
+    sd: { left: columnLeft, right: stage.right, top: stage.top + faceHeight + gutter, bottom: stage.bottom },
+  };
+}
+
+/** 칸 하나의 가운데와 크기. 그리는 쪽은 외곽이 아니라 이 꼴을 쓴다. */
+export function appearanceFrameSpot(rect: AppearanceRect): { x: number; y: number; width: number; height: number } {
+  return { x: (rect.left + rect.right) / 2, y: (rect.top + rect.bottom) / 2, width: rect.right - rect.left, height: rect.bottom - rect.top };
+}
+
+/** 무대 아래 — 글줄과 띠가 앉는 페이지. 무대와 같은 폭이라 위아래가 한 장으로 읽힌다. */
+export function appearancePageRect(): AppearanceRect {
+  const { width, height, pad } = APPEARANCE_PANEL;
+  const stage = appearanceStageRect();
+  return { left: -width / 2 + pad, right: width / 2 - pad, top: stage.bottom + APPEARANCE_PANEL.gutter, bottom: height / 2 - pad };
 }
 
 /** 띠가 흐르는 창. 마스크와 입력 경계가 같은 값을 읽는다. */
@@ -102,9 +151,11 @@ export function appearanceStripOffsetFor(index: number, count: number, current: 
 /** 테스트와 프리팹이 같은 배치표로 무대·글줄·조작·띠의 안전 영역을 계산한다. */
 export function appearancePanelRegions() {
   const layout = APPEARANCE_PANEL;
+  const frames = appearanceFrames();
   return {
-    hero: appearanceBounds(0, layout.hero.groundY - layout.hero.height / 2, 360, layout.hero.height),
-    stand: appearanceBounds(0, layout.stand.y, layout.stand.width, layout.stand.height),
+    hero: frames.hero,
+    face: frames.face,
+    sd: frames.sd,
     name: appearanceBounds(0, layout.name.y, layout.width - 120, layout.name.size * 1.4),
     state: appearanceBounds(0, layout.state.y, layout.width - 120, layout.state.size * 1.4),
     price: appearanceBounds(0, layout.price.y, layout.price.width, layout.price.height),

@@ -63,7 +63,7 @@ import { expeditionManager, ExpeditionBossSettlementError, ExpeditionBossSettlem
 import { settingsManager } from "../managers/SettingsManager";
 import { motionPolicy, type MotionPolicy } from "../core/settings";
 import type { SettleExpeditionRunResponse, SubmitExpeditionBossScoreResponse } from "../api/contracts";
-import { currencyRecordToRewardItems, openRewardPopup } from "../ui/RewardPopup";
+import { currencyRecordToRewardItems } from "../ui/RewardPopup";
 import { BATTLE_CONTROLS, BATTLE_STATUS_LAYOUT } from "../ui/battleStatusLayout";
 import { UnitStatusChips } from "../ui/UnitStatusChips";
 import { openUnitStatusPopup } from "../ui/UnitStatusPopup";
@@ -1724,17 +1724,42 @@ export class BattleScene extends Phaser.Scene {
     if (this.battleInput.mode === "expeditionBoss") { void this.submitAndSettleBoss(this.battleInput, this.bossActions); return; }
     if (this.battleInput.mode === "expedition") { this.finishExpeditionBattle(this.battleInput, won); return; }
     const stage = getBattleStage(session.selectedStageId ?? "1-1");
-    if (!won) {
-      this.add.rectangle(BASE_WIDTH / 2, 930, BASE_WIDTH, 420, COLOR.void, 0.84).setDepth(100);
-      this.add.text(BASE_WIDTH / 2, 840, t("battle.result.defeat"), textStyle({ role: "display", size: 68, color: COLOR.dangerText })).setOrigin(0.5).setDepth(101);
-      this.add.text(BASE_WIDTH / 2, 930, t("battle.result.noReward"), textStyle({ role: "body", size: 28, color: COLOR.ink, align: "center", lineSpacing: 8 })).setOrigin(0.5).setDepth(101);
-      new Button(this, BASE_WIDTH / 2, 1050, { width: 400, height: 110, label: t("battle.result.toMap"), fontSize: 34, onClick: () => {
-        void gameApi.completeStage(stage.id, false).finally(() => this.scene.start("stageMap"));
-      } }).setDepth(101);
-      new Button(this, BASE_WIDTH / 2, 1175, { width: 300, height: 76, label: t("battle.contribution"), fontSize: 27, onClick: () => this.openContributionPopup() }).setDepth(101);
-      return;
-    }
+    if (!won) { this.finishStageDefeat(stage); return; }
     void this.finishStageVictory(stage);
+  }
+
+  /**
+   * 패배 결과 화면.
+   *
+   * **승리와 같은 결산판을 쓴다.** 예전에는 전장 위에 검은 띠 하나와 버튼 둘을 얹어 끝냈는데,
+   * 같은 전투가 이겼을 때는 편성·MVP·기여도를 보여 주고 졌을 때는 아무것도 말하지 않았다 —
+   * 정작 무엇이 모자랐는지 궁금한 쪽은 진 판이다. 색만 가라앉히고, 보상이 서던 자리에는
+   * **강해지러 가는 길**이 대신 선다.
+   *
+   * 패배도 서버에 알린다(`completeStage(stage.id, false)`) — 도전 기록은 이긴 판만의 것이
+   * 아니고, 그 호출이 늦어도 판은 이미 떠 있어야 한다.
+   */
+  private finishStageDefeat(stage: ReturnType<typeof getBattleStage>): void {
+    void gameApi.completeStage(stage.id, false).catch(() => undefined);
+    const popups = new PopupLayer(this, 2200);
+    // 버튼이 닫기를 먼저 부르므로 `onConfirm`이 그 직후에 돈다 — 고른 길과 기본 길이 같은
+    // 틱에 두 번 시작되지 않도록, 고른 것이 있으면 기본 길은 서지 않는다.
+    let chosen = false;
+    const go = (scene: string) => () => { chosen = true; this.scene.start(scene); };
+    new StageCompletePopup(this, popups).open({
+      reward: {
+        kind: "defeat",
+        actions: [
+          { label: t("stageComplete.toResearch"), onPress: go("lab") },
+          { label: t("stageComplete.toRelics"), onPress: go("relics") },
+          { label: t("stageComplete.toMap"), onPress: go("stageMap") },
+        ],
+      },
+      fighters: this.stageCompleteFighters(),
+      onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),
+      // 버튼을 고르지 않고 판을 닫으면 원래 가던 곳(지도)으로 돌아간다.
+      onConfirm: () => { if (!chosen && this.scene.isActive()) this.scene.start("stageMap"); },
+    });
   }
 
   /**
@@ -1777,23 +1802,43 @@ export class BattleScene extends Phaser.Scene {
       .map((fighter) => ({ relicId: fighter.def.id, isMvp: fighter.id === mvpFighterId }));
   }
 
-  /** 결과 확인 탭을 직렬화하고 HP 저장, 증강 또는 정산이 끝난 뒤에만 다음 화면을 연다. */
+  /**
+   * 원정 노드 결과.
+   *
+   * **창은 하나뿐이다.** 예전에는 「원정 교전 승리」 표제와 「저장」 버튼만 있는 판이 먼저 뜨고,
+   * 그것을 눌러야 결산창이 열렸다 — 앞 판에서 고를 것이 하나뿐이라 그 손짓이 하는 일은
+   * "다음"을 누르는 것뿐이었고, 그사이 전장이 그대로 떠 있어 판이 끝난 것인지도 흐렸다.
+   * 지금은 끝나는 즉시 HP를 제출하고 결산창 하나만 연다.
+   */
   private finishExpeditionBattle(input: ExpeditionBattleInputDto, won: boolean): void {
-    this.add.rectangle(BASE_WIDTH / 2, 930, BASE_WIDTH, 420, COLOR.void, 0.84).setDepth(100);
-    this.add.text(BASE_WIDTH / 2, 850, won ? t("battle.result.expeditionWin") : t("battle.result.expeditionLose"), textStyle({ role: "display", size: 62, color: won ? COLOR.accentText : COLOR.dangerText })).setOrigin(0.5).setDepth(101);
-    let saving = false;
-    new Button(this, BASE_WIDTH / 2, 1030, { width: 440, height: 110, label: won ? t("battle.result.save") : t("battle.result.settle"), onClick: () => {
-      if (saving) return;
-      saving = true;
+    {
       // 시작부터 사망해 불참한 렐릭도 원래 ID·HP·생존 상태로 종료 DTO에 다시 합친다.
       const results = expeditionBattleResults(input, skirmishRelicResults(this.state));
       // 서버에는 HP만 제출하고 재화 필드는 계약에 존재하지 않아 임의 보상 주입을 막는다.
       void gameApi.completeExpeditionNode({ requestId: `${input.runId}:${input.nodeId}`, runId: input.runId, nodeId: input.nodeId, relicHp: results.map(({ currentHp }) => currentHp) }).then((nodeResult) => {
         if (!won) {
-          // 전멸은 추가 지도 입력을 거치지 않고 같은 멱등 정산 경계로 끝낸다.
+          // 전멸은 추가 지도 입력을 거치지 않고 같은 멱등 정산 경계로 끝낸다. 결과는 스토리
+          // 실패와 **같은 결산창**이 말하고, 그때까지 걷은 전리품이 보상 줄에 함께 선다.
           void gameApi.settleExpeditionRun({ runId: input.runId, settlementId: `${input.runId}:defeat`, outcome: "abandoned" }).then((settlement) => {
-            openRewardPopup(this, new PopupLayer(this, 2200), { title: t("battle.result.defeatLoot"), items: currencyRecordToRewardItems(settlement.granted), onConfirm: () => this.scene.start("lobby") });
-          }).catch(() => { saving = false; });
+            const popups = new PopupLayer(this, 2200);
+            let chosen = false;
+            new StageCompletePopup(this, popups).open({
+              reward: {
+                kind: "defeat",
+                // 전멸이어도 그때까지 걷은 것은 이미 지갑에 들어갔다 — 그 영수증을 따로 띄우지
+                // 않고 같은 판의 보상 줄이 그대로 말한다.
+                items: currencyRecordToRewardItems(settlement.granted),
+                actions: [
+                  { label: t("stageComplete.toResearch"), onPress: () => { chosen = true; this.scene.start("lab"); } },
+                  { label: t("stageComplete.toRelics"), onPress: () => { chosen = true; this.scene.start("relics"); } },
+                  { label: t("stageComplete.toMap"), onPress: () => { chosen = true; this.scene.start("lobby"); } },
+                ],
+              },
+              fighters: this.stageCompleteFighters(),
+              onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),
+              onConfirm: () => { if (!chosen && this.scene.isActive()) this.scene.start("lobby"); },
+            });
+          }).catch(() => undefined);
           return;
         }
         /*
@@ -1816,10 +1861,8 @@ export class BattleScene extends Phaser.Scene {
           onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),
           onConfirm: () => this.scene.start("expedition"),
         });
-      }).catch(() => { saving = false; });
-    } }).setDepth(101);
-    // 일반 원정 결과에서도 정산 전후와 무관하게 finish 시점의 같은 스냅샷을 확인한다.
-    new Button(this, BASE_WIDTH / 2, 1160, { width: 300, height: 76, label: t("battle.contribution"), fontSize: 27, onClick: () => this.openContributionPopup() }).setDepth(101);
+      }).catch(() => undefined);
+    }
   }
 
   /** 종료 경로마다 큐·트윈·입력 잠금을 같은 방식으로 정리한다. */

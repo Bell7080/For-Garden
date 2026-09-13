@@ -25,16 +25,7 @@ export const BATTLE_KO = {
 
   "battle.gauge.frenzy": "폭주 {value} / {max}",
   "battle.gauge.ferocity": "야성 {value} / {max}",
-
-  "battle.result.defeat": "작전 실패",
-  "battle.result.noReward": "획득 보상 없음",
-  "battle.result.toMap": "지도로",
   "battle.result.saveFailed": "결과를 저장하지 못했습니다",
   "battle.result.retry": "다시 시도",
-  "battle.result.expeditionWin": "원정 교전 승리",
-  "battle.result.expeditionLose": "원정대 전멸",
-  "battle.result.save": "결과 저장",
-  "battle.result.settle": "종료 정산",
-  "battle.result.defeatLoot": "패배 전리품 정산",
   "battle.result.nodeScore": "원정 점수 +{score}",
 } as const;

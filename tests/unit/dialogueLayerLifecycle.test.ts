@@ -12,7 +12,7 @@ describe("DialogueLayer 표시 수명주기", () => {
 
     // create() 중 첫 렌더가 막히지 않도록 await 전에는 종료 여부만 검사한다.
     expect(showSource.slice(0, awaitIndex)).not.toContain("isRenderOwnerActive()");
-    expect(showSource.indexOf("this.speaker.setText")).toBeLessThan(awaitIndex);
+    expect(showSource.indexOf("this.setSpeaker(")).toBeLessThan(awaitIndex);
     expect(showSource.indexOf("this.startTyping")).toBeLessThan(awaitIndex);
     // 늦게 끝난 Puppet은 교체된 노드나 종료된 씬에 붙지 않아야 한다.
     expect(showSource.slice(awaitIndex)).toContain("generation !== this.renderGeneration || !this.isRenderOwnerActive()");

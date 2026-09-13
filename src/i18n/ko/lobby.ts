@@ -29,7 +29,7 @@ export const LOBBY_KO = {
   "lobby.pass.title": "월간 화석 패스",
   "lobby.pass.status": "준비 중",
 
-  "lobby.bondXp": "\n유대 EXP +{xp}",
-  "lobby.bondLevelUp": " · LEVEL UP +{levels}",
+  "lobby.bondXp": "유대 +{xp}",
+  "lobby.bondLevelUp": "유대 레벨 +{levels}",
   "lobby.notReady": "{label} — 준비 중",
 } as const;

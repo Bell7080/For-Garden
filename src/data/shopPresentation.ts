@@ -1,4 +1,4 @@
-import { registerDataText } from "../i18n";
+import { registerDataText, type TextKey } from "../i18n";
 import { SHOP_CLERK_ASSET, type PuppetAsset } from "../puppets/assets";
 
 /**
@@ -26,3 +26,15 @@ export const SHOP_MERCHANT_ASSET: PuppetAsset = SHOP_MERCHANT.asset;
 
 // 이름은 화면 문구 표가 아니라 정적 콘텐츠라, 다른 언어만 개체 ID로 덮어쓴다.
 registerDataText(SHOP_MERCHANT, "name", "shopClerk.obi.name");
+
+/**
+ * 오비가 돌아가며 하는 말.
+ *
+ * 한 마디만 걸어 두면 눌러 볼 이유가 없어 점원이 배경 그림과 다를 바 없다 — 누를 때마다 다음
+ * 마디로 넘어가야 그 자리에 사람이 서 있는 것으로 읽힌다. 문장 자체는 화면 문구라
+ * `src/i18n`이 갖고, 여기는 **순서만** 소유한다.
+ */
+export const SHOP_MERCHANT_LINE_KEYS: readonly TextKey[] = [
+  "shop.merchant.line1", "shop.merchant.line2", "shop.merchant.line3",
+  "shop.merchant.line4", "shop.merchant.line5",
+];

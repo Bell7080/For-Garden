@@ -28,7 +28,7 @@ export const LOBBY_JA = {
   "lobby.pass.title": "月間化石パス",
   "lobby.pass.status": "準備中",
 
-  "lobby.bondXp": "\n絆EXP +{xp}",
-  "lobby.bondLevelUp": " · LEVEL UP +{levels}",
+  "lobby.bondXp": "絆 +{xp}",
+  "lobby.bondLevelUp": "絆レベル +{levels}",
   "lobby.notReady": "{label} — 準備中",
 } as const;

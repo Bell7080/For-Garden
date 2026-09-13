@@ -23,7 +23,7 @@ export const LOBBY_EN = {
   "lobby.rail.trade": "Trade",
   "lobby.pass.title": "Monthly Fossil Pass",
   "lobby.pass.status": "In Preparation",
-  "lobby.bondXp": "\nBond EXP +{xp}",
-  "lobby.bondLevelUp": " · LEVEL UP +{levels}",
+  "lobby.bondXp": "Bond +{xp}",
+  "lobby.bondLevelUp": "Bond Level +{levels}",
   "lobby.notReady": "{label} — In Preparation",
 } as const;

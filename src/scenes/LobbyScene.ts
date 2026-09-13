@@ -10,7 +10,7 @@ import { BottomNav, NAV_TOP } from "../ui/BottomNav";
 import { Button } from "../ui/Button";
 import { RailButton } from "../ui/RailButton";
 import { TopBar } from "../ui/TopBar";
-import { chipPoints, drawHairline, drawLayer, drawShapeEdge, drawVignette, HOLO, slantedRect } from "../ui/holo";
+import { chipPoints, drawHairline, drawLayer, drawVignette, HOLO } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
 import { t } from "../i18n";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
@@ -28,7 +28,9 @@ import { perspectiveButtonNotificationAnchor } from "../ui/notificationDotStyle"
 import { notificationManager } from "../managers/NotificationManager";
 import { MissionsPopup } from "../ui/MissionsPopup";
 import { lobbyPortraitPlacement } from "../ui/portraitPlacement";
-import { LOBBY_ACTION_BOUNDS, LOBBY_RAIL_BOUNDS } from "../ui/lobbyLayout";
+import { LOBBY_ACTION_BOUNDS, LOBBY_BOND_MARK, LOBBY_DIALOGUE, LOBBY_RAIL_BOUNDS } from "../ui/lobbyLayout";
+import { DialogueBubble } from "../ui/DialogueBubble";
+import { showBondGain, type BondGain } from "../ui/bondGainMark";
 import { createLobbyUtilityRail } from "../ui/lobbyUtilityRail";
 import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { relicSkinManager } from "../managers/RelicSkinManager";
@@ -111,6 +113,8 @@ export class LobbyScene extends Phaser.Scene {
   /** 같은 방문 중 반복 터치의 대사 변형 순번이며 보상 중복 판정은 서버 날짜가 담당한다. */
   private interactionIndex = 0;
   private interactionPending = false;
+  /** 로비의 말 한 장. 누를 때마다 갈아 끼우므로 씬이 하나만 들고 있는다. */
+  private dialogue?: DialogueBubble;
   /** 로비 위 팝업은 씬을 바꾸지 않으며 한 번에 한 발굴 쪽지만 소유한다. */
   private popupLayer?: PopupLayer;
   /** 출격 선택판 위에 화면 좌표로 세우는 SD와 그 수명은 이 씬이 직접 소유한다. */
@@ -605,55 +609,29 @@ export class LobbyScene extends Phaser.Scene {
     void gameApi.interactInLobby(relicId).then((result) => {
       const progress = result.relicProgress[relicId];
       const dialogue = bondDialogue(relicId, progress.bondLevel, this.interactionIndex++);
-      // 문장을 조각내 이어 붙이지 않고 자리만 채운다 — 어순이 다른 언어에서 말이 되지 않는다.
-      const levelUp = result.bondLevelsGained ? t("lobby.bondLevelUp", { levels: result.bondLevelsGained }) : "";
-      const reward = result.bondXpEarned > 0 ? t("lobby.bondXp", { xp: result.bondXpEarned }) + levelUp : "";
-      this.showLine(getRelic(relicId).name, dialogue.text, reward, dialogue.id);
+      this.showLine(getRelic(relicId).name, dialogue.text, { xp: result.bondXpEarned, levels: result.bondLevelsGained }, dialogue.id);
     }).finally(() => { this.interactionPending = false; });
   }
 
   /**
    * 로비 대사.
    *
-   * 화면을 최대한 덜 가리도록 이름줄과 대사줄만 덮는 얇은 띠를 쓴다. 대신 그 띠는 충분히
-   * 불투명해서 배경이 아무리 밝아도 글자가 뭉개지지 않는다. 경계는 판때기가 아니라 위아래
-   * 선 두 줄이 잡고, 이름 옆으로 이어지는 짧은 선이 이름과 대사를 가른다.
+   * 띠를 화면마다 다시 그리지 않고 **공용 대사창 한 장**을 쓴다 — 상점의 점원, 정보창의 전신과
+   * 같은 생김새라 누가 어디서 말하든 같은 양식으로 읽힌다. 이름은 띠 안이 아니라 윗변에
+   * 걸터앉는 제목표가 맡으므로, 이름과 대사를 가르던 선 한 줄이 사라지고 띠도 그만큼 얇아졌다.
+   *
+   * **오른 유대는 대사 뒤에 이어 붙이지 않는다**(`showBondGain`). 캐릭터가 한 말과 시스템이
+   * 준 보상이 한 문단에 섞이면 대사가 영수증처럼 읽힌다.
    */
-  private showLine(name: string, line: string, reward: string, dialogueId: string): void {
-    const cy = 900;
-    const left = 96;
-    const width = BASE_WIDTH - left * 2;
-    const layer = this.add.container(0, 0).setDepth(500);
-
-    const band = slantedRect(width, 176, 18);
-    layer.add(drawLayer(this, BASE_WIDTH / 2, cy + 4, band, {
-      fill: 0x05070a,
-      alpha: 0.94,
-      shadow: false,
-    }));
-    // 선은 판의 변을 그대로 따라 긋는다. 수평으로 그으면 기울어진 판과 어긋나 두 겹으로 보인다.
-    layer.add(drawShapeEdge(this, BASE_WIDTH / 2, cy + 4, band, "top", { color: COLOR.accent, alpha: 0.8, inset: 6 }));
-    layer.add(drawShapeEdge(this, BASE_WIDTH / 2, cy + 4, band, "bottom", { color: COLOR.accent, alpha: 0.3, inset: 6 }));
-
-    // 이름 왼쪽의 두꺼운 막대. 누가 말하는지를 한 글자보다 먼저 알린다.
-    const bar = this.add.rectangle(left + 30, cy - 44, 9, 46, COLOR.accent, 0.95).setOrigin(0, 0.5);
-    layer.add(bar);
-    const nameText = this.add
-      .text(left + 54, cy - 66, name, textStyle({ role: "display", size: 38, color: COLOR.accentText }))
-      .setOrigin(0, 0);
-    layer.add(nameText);
-    // 이름과 대사 사이를 가르는 긴 선. 띠의 폭을 그대로 그어 두 줄의 성격을 나눈다.
-    layer.add(drawHairline(this, BASE_WIDTH / 2, cy - 16, width - 60, { color: COLOR.accent, alpha: 0.45 }));
-
-    const text = this.add
-      .text(left + 30, cy + 2, `${line}${reward}`, textStyle({ role: "body", size: 40, color: COLOR.ink, lineSpacing: 8, wrap: width - 60 }))
-      .setOrigin(0, 0);
+  private showLine(name: string, line: string, gain: BondGain, dialogueId: string): void {
+    if (!this.dialogue) {
+      this.dialogue = new DialogueBubble(this, { ...LOBBY_DIALOGUE, y: LOBBY_DIALOGUE.bottom, depth: 500 });
+      this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.dialogue?.hideNow());
+    }
+    this.dialogue.say(name, line);
     // 대사 ID는 번역/분석 추적용으로 객체에 남기되 플레이어 화면에는 노출하지 않는다.
-    text.setData("dialogueId", dialogueId);
-    layer.add(text);
-    layer.setAlpha(0);
-    this.tweens.add({ targets: layer, alpha: 1, y: -22, duration: 240, ease: "Sine.easeOut" });
-    this.tweens.add({ targets: layer, alpha: 0, y: -64, delay: 2200, duration: 420, onComplete: () => layer.destroy() });
+    this.dialogue.setData("dialogueId", dialogueId);
+    showBondGain(this, LOBBY_BOND_MARK.x, LOBBY_BOND_MARK.y, gain, 501);
   }
 
   private notReady(label: string): void {

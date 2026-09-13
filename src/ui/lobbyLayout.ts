@@ -25,6 +25,27 @@ export const LOBBY_RAIL_BOUNDS = {
   },
 } as const satisfies Record<string, Record<string, LobbyInputBounds>>;
 
+/**
+ * 로비 대사창의 자리.
+ *
+ * **애착 렐릭의 허리께에 선다.** 예전에는 화면 위쪽(y 900)에 떠서 오른쪽 레일의 친구·가방
+ * 아이콘과 왼쪽의 상점·무역을 통째로 덮었다 — 말을 듣는 동안 누를 것이 사라지는 자리였다.
+ * 지금은 레일 세 줄이 끝나는 아래, 결투 버튼이 시작하는 위의 빈 띠에 선다: 얼굴도 가리지
+ * 않고 조작도 가리지 않는 유일한 자리다.
+ *
+ * 높이는 여기서 정하지 않는다 — 공용 대사창이 실제 글 높이에서 거꾸로 구하고, 밑변을 여기에
+ * 걸므로 대사가 길어져도 결투 버튼 쪽으로 자라지 않는다.
+ */
+export const LOBBY_DIALOGUE = { centerX: BASE_WIDTH / 2, width: 960, bottom: 1265 } as const;
+
+/**
+ * 오른 유대를 알리는 표식의 자리.
+ *
+ * 대사창 **밖**, 그 위 오른쪽이다 — 캐릭터가 한 말과 시스템이 준 보상이 한 판에 섞이지
+ * 않으면서도 한 사건으로 읽힌다.
+ */
+export const LOBBY_BOND_MARK = { x: 780, y: LOBBY_DIALOGUE.bottom - 200 } as const;
+
 /** 상단 프로필과 홍보 칸을 합친 금지 영역으로 레일과의 세로 여백을 검증한다. */
 export const LOBBY_UPPER_BOUNDS: LobbyInputBounds = { x: BASE_WIDTH / 2, y: 158, width: BASE_WIDTH, height: 316 };
 

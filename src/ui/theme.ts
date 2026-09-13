@@ -61,6 +61,14 @@ export const COLOR = {
   ferocityFever: 0xff5a4a,
   ferocityText: "#f0a49c",
   ferocityHotText: "#ff9184",
+  /**
+   * 유대의 색 — 붉은 하트.
+   *
+   * 정보창의 하트, 유대 게이지, 상호작용으로 오른 유대 표식이 같은 색을 써야 "이것이 유대다"가
+   * 화면마다 흔들리지 않는다. 글자는 게이지보다 한 톤 밝아야 배경 원화 위에서 읽힌다.
+   */
+  bond: 0xe23a46,
+  bondText: "#ff9a90",
 } as const;
 
 /** 프로필 수식어는 외부 색 문자열 대신 희귀도→의미 토큰 표만 거쳐 색을 고른다. */

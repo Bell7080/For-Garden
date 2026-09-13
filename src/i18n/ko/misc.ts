@@ -36,7 +36,11 @@ export const MISC_KO = {
   "shop.exchangeList": "교환 목록",
   "shop.exchangeRemaining": "남은 교환 {remaining}/{limit}",
   "shop.exchangeDone": "교환이 완료되었습니다.",
-  "shop.merchant.line": "오, 오셔서 감사합니다…! 오늘 들어온 건 다 꺼내 뒀어요. 천천히 보세요.",
+  "shop.merchant.line1": "오, 오셔서 감사합니다…! 오늘 들어온 건 다 꺼내 뒀어요. 천천히 보세요.",
+  "shop.merchant.line2": "이, 이쪽 선반은 제가 정리했어요. 삐뚤어진 건… 못 본 척해 주세요.",
+  "shop.merchant.line3": "재고 확인은 다 끝냈습니다! …아마도요. 한 번만 더 세어 볼게요.",
+  "shop.merchant.line4": "치즈케이크는 오늘 폐기가 없어서… 아, 아무것도 아니에요!",
+  "shop.merchant.line5": "필요한 게 안 보이면 말씀해 주세요. 창고에서 꺼내 올게요.",
 
   // 스킬 쪽지
   "skill.effect.physical": "물리 피해",

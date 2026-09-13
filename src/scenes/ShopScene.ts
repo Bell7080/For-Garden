@@ -6,15 +6,16 @@ import { formatCurrency } from "../core/formatCurrency";
 import { SHOP_TABS, type ShopCategory } from "../data/shopCatalog";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugScene, setDebugShopView, setDebugStorefrontControls } from "../debug";
-import { spawnPuppet } from "../puppets/assets";
-import { SHOP_MERCHANT } from "../data/shopPresentation";
+import { enableHitOnClick, spawnPuppet } from "../puppets/assets";
+import { SHOP_MERCHANT, SHOP_MERCHANT_LINE_KEYS } from "../data/shopPresentation";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { addPriceBar } from "../ui/priceTag";
 import { addCategoryTab } from "../ui/CategoryTab";
 import { addSectionTitle } from "../ui/SectionTitle";
 import { addBackButton } from "../ui/IconButton";
 import { addItemFrame, ITEM_FRAME } from "../ui/itemFrame";
-import { chipPoints, drawFrameVignette, drawLayer, drawShapeEdge, drawVignette, HOLO, slantedRect } from "../ui/holo";
+import { chipPoints, drawFrameVignette, drawLayer, drawVignette, HOLO, slantedRect } from "../ui/holo";
+import { DialogueBubble } from "../ui/DialogueBubble";
 import { COLOR, textStyle } from "../ui/theme";
 import { TopBar } from "../ui/TopBar";
 import { PopupLayer } from "../ui/PopupLayer";
@@ -23,16 +24,17 @@ import { session } from "../state/session";
 import { productsForShopCategory, shopModel } from "../ui/shopModel";
 import {
   SHOP_BOARD, SHOP_CARD, SHOP_SHELF, SHOP_STAGE, SHOP_TAB_ROW, SHOP_TITLE,
-  shopBoardSize, shopCardSpot, shopCardWidth, shopGridContentHeight, shopGridViewport,
+  shopBoardSize, shopCardSpot, shopCardWidth, shopDialogueSpot, shopGridContentHeight, shopGridViewport,
   shopShelfWidth, shopShelfY, shopTabSpot, shopTitleLeft, shopTitleY,
 } from "../ui/shopLayout";
 
 /**
  * 일반 상품과 성장 재화를 취급하는 독립 상점 씬이다.
  *
- * 화면은 넷으로 나뉜다 — **위 한 칸은 무대**(오른쪽에 점원 상반신, 왼쪽에 대사), **아래 세 칸은
- * 상품 판**이고 하단의 서류철 라벨이 목록을 갈아 끼운다. 자리는 전부 `src/ui/shopLayout.ts`가
- * 갖고 이 씬은 좌표를 손으로 적지 않는다.
+ * 화면은 둘로 나뉜다 — **위는 점원이 선 무대**, **아래는 상품을 얹어 둔 전시대**이고 하단의
+ * 서류철 라벨이 목록을 갈아 끼운다. 점원의 말은 그 둘이 만나는 자리, 곧 전시대 윗변의
+ * 제목표 바로 위에 선다. 자리는 전부 `src/ui/shopLayout.ts`가 갖고 이 씬은 좌표를 손으로
+ * 적지 않는다.
  */
 export class ShopScene extends Phaser.Scene {
   private products: ProductDto[] = [];
@@ -45,6 +47,10 @@ export class ShopScene extends Phaser.Scene {
   private viewportMask?: Phaser.GameObjects.Graphics;
   /** 점원을 무대 한 칸 안으로 자르는 마스크. Puppet은 컨테이너 변환을 물려받지 않는다. */
   private stageMask?: Phaser.GameObjects.Graphics;
+  /** 점원의 말 한 장. 누를 때마다 갈아 끼우므로 씬이 하나만 들고 있는다. */
+  private dialogue?: DialogueBubble;
+  /** 다음에 할 마디의 순번. 누를 때마다 돌아가며 다른 말을 한다. */
+  private merchantLine = 0;
   /** 상품 목록 위에 재사용 구매 작업판을 쌓는 전용 팝업 계층이다. */
   private readonly popups = new PopupLayer(this, 2600);
   private minScrollY = 0;
@@ -91,23 +97,28 @@ export class ShopScene extends Phaser.Scene {
   }
 
   /**
-   * 위 한 칸 — 왼쪽의 대사 띠.
+   * 점원의 대사창.
    *
-   * 로비 대사와 같은 규칙이다: 판을 키우는 대신 **이름줄과 대사줄만 덮는 얇은 띠**를 불투명하게
-   * 두고, 경계는 판때기가 아니라 띠의 변을 따라 긋는 선 두 줄이 잡는다.
+   * 화면마다 제 띠를 그리지 않고 **공용 대사창 한 장**을 쓴다 — 로비의 애착 렐릭, 정보창의
+   * 전신과 같은 생김새라 누가 어디서 말하든 같은 양식으로 읽힌다. 자리는 전시대 윗변의
+   * 제목표 바로 위이고, 높이는 실제 글 높이에서 창이 스스로 구한다.
    */
   private createStage(): void {
-    const { centerX, centerY, width, height, nameOffsetY, lineOffsetY } = SHOP_STAGE.dialogue;
-    const band = slantedRect(width, height, 18);
-    this.add.existing(drawLayer(this, centerX, centerY, band, { fill: 0x05070a, alpha: 0.9, shadow: false }).setDepth(4));
-    this.add.existing(drawShapeEdge(this, centerX, centerY, band, "top", { color: COLOR.accent, alpha: 0.8, inset: 6 }).setDepth(4));
-    this.add.existing(drawShapeEdge(this, centerX, centerY, band, "bottom", { color: COLOR.accent, alpha: 0.3, inset: 6 }).setDepth(4));
-    const left = centerX - width / 2 + 30;
-    // 이름 왼쪽의 두꺼운 막대. 누가 말하는지를 한 글자보다 먼저 알린다.
-    this.add.rectangle(left, centerY + nameOffsetY, 9, 40, COLOR.accent, 0.95).setOrigin(0, 0.5).setDepth(5);
-    const name = SHOP_MERCHANT.name;
-    this.add.text(left + 22, centerY + nameOffsetY, name, textStyle({ role: "display", size: 32, color: COLOR.accentText })).setOrigin(0, 0.5).setDepth(5);
-    this.add.text(left, centerY + lineOffsetY, t("shop.merchant.line"), textStyle({ role: "body", size: 26, color: COLOR.ink, lineSpacing: 6, wrap: width - 60 })).setOrigin(0, 0.5).setDepth(5);
+    const { centerX, width, bottom } = shopDialogueSpot();
+    this.dialogue = new DialogueBubble(this, { centerX, width, y: bottom, bodySize: 27, nameSize: 26, depth: 5 });
+    this.speak();
+  }
+
+  /**
+   * 점원이 한 마디 한다.
+   *
+   * 누를 때마다 다음 마디로 넘어간다 — 같은 말을 되풀이하면 눌러 볼 이유가 없다. 첫 마디는
+   * 화면에 들어온 순간 저절로 선다.
+   */
+  private speak(): void {
+    const line = SHOP_MERCHANT_LINE_KEYS[this.merchantLine % SHOP_MERCHANT_LINE_KEYS.length];
+    this.merchantLine += 1;
+    this.dialogue?.say(SHOP_MERCHANT.name, t(line), { holdMs: 4200 });
   }
 
   /**
@@ -152,6 +163,10 @@ export class ShopScene extends Phaser.Scene {
     });
     // 비동기 로딩 사이 씬이 닫혔으면 새 Mesh를 남기지 않는다.
     if (!this.scene.isActive()) { merchant.destroy(); return; }
+    // 점원도 다른 캐릭터와 같이 눌리면 반응한다 — 누르면 hit 모션이 한 번 돌고 다음 마디로
+    // 넘어간다. 로비의 애착 렐릭과 같은 손짓이라 여기서만 가만히 서 있지 않는다.
+    enableHitOnClick(this, merchant);
+    merchant.on("pointerup", () => this.speak());
     this.stageMask = this.make.graphics({});
     this.stageMask.fillStyle(0xffffff, 1).fillRect(0, SHOP_STAGE.top, BASE_WIDTH, SHOP_BOARD.top - SHOP_STAGE.top);
     merchant.setMask(this.stageMask.createGeometryMask());

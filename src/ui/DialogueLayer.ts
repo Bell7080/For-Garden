@@ -5,15 +5,28 @@ import { DialoguePlaybackClock } from "../core/dialoguePlayback";
 import { settingsManager } from "../managers/SettingsManager";
 import { LEXIA_ASSET, playMotion, SEIRA_ASSET, spawnPuppet, TORIKA_ASSET, type PuppetAsset, type PuppetCreature } from "../puppets/assets";
 import { Button } from "./Button";
+import { DIALOGUE_BUBBLE } from "./dialogueBubbleLayout";
 import { drawGlassFade, drawHairline } from "./holo";
+import { addSectionTitle } from "./SectionTitle";
 import { COLOR, textStyle } from "./theme";
 
 const ASSETS: Record<DialogueStandingAsset, PuppetAsset> = { torika: TORIKA_ASSET, lexia: LEXIA_ASSET, seira: SEIRA_ASSET };
 const PANEL_TOP = 1270;
 
+/**
+ * 이야기 대사판도 **공용 대사창과 같은 문법**을 쓴다.
+ *
+ * 판 자체는 화면 밑동을 통째로 덮는 유리면이라 띠 한 장으로 줄일 수 없지만, 화자 이름은 판
+ * 안이 아니라 **윗선에 걸터앉는 제목표**가 맡는다 — 로비·상점·정보창의 대사창과 같은 자리에
+ * 같은 빗금으로 서므로, 짧은 한마디든 긴 이야기든 "누가 말하는가"가 한 양식으로 읽힌다.
+ * 이름과 본문을 가르던 자리도 그 선 하나가 대신해 본문이 한 줄만큼 위로 올라온다.
+ */
+const PANEL_TEXT = { nameX: 82, bodyX: 92, bodyY: PANEL_TOP + 74, nameSize: 34 } as const;
+
 /** 1080×1920 안전 영역 안에서 모든 스토리가 공유하는 대사/선택/스탠딩 표시다. */
 export class DialogueLayer extends Phaser.GameObjects.Container {
-  private readonly speaker: Phaser.GameObjects.Text;
+  /** 화자 이름표. 노드마다 글자 폭이 달라지므로 판 한 장을 다시 만든다. */
+  private speakerPlate?: Phaser.GameObjects.Container;
   private readonly bodyText: Phaser.GameObjects.Text;
   private readonly nextMark: Phaser.GameObjects.Text;
   private readonly choiceObjects: Phaser.GameObjects.GameObject[] = [];
@@ -46,10 +59,9 @@ export class DialogueLayer extends Phaser.GameObjects.Container {
       if (this.isTyping) { this.finishTyping(); return; }
       this.onAdvance();
     });
-    this.speaker = scene.add.text(92, PANEL_TOP + 52, "", textStyle({ role: "display", size: 34, color: COLOR.accentText }));
-    this.bodyText = scene.add.text(92, PANEL_TOP + 126, "", textStyle({ role: "body", size: 36, wrap: BASE_WIDTH - 184, lineSpacing: 14 }));
+    this.bodyText = scene.add.text(PANEL_TEXT.bodyX, PANEL_TEXT.bodyY, "", textStyle({ role: "body", size: 36, wrap: BASE_WIDTH - 184, lineSpacing: DIALOGUE_BUBBLE.lineSpacing + 6 }));
     this.nextMark = scene.add.text(BASE_WIDTH - 100, PANEL_TOP + 464, "▼", textStyle({ role: "emphasis", size: 28, color: COLOR.accentText })).setOrigin(0.5);
-    this.add([glass, topLine, blocker, this.speaker, this.bodyText, this.nextMark]);
+    this.add([glass, topLine, blocker, this.bodyText, this.nextMark]);
     this.setDepth(600);
     scene.add.existing(this);
     scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
@@ -68,7 +80,7 @@ export class DialogueLayer extends Phaser.GameObjects.Container {
     const generation = ++this.renderGeneration;
     this.cancelTyping();
     this.clearChoices();
-    this.speaker.setText(node.expression ? `${node.speaker}  ·  ${node.expression}` : node.speaker);
+    this.setSpeaker(node.expression ? `${node.speaker}  ·  ${node.expression}` : node.speaker);
     this.pendingChoices = node.choices ?? [];
     this.startTyping(node.body);
     if (!node.standing) this.destroyStanding();
@@ -83,6 +95,12 @@ export class DialogueLayer extends Phaser.GameObjects.Container {
       this.scene.tweens.add({ targets: creature, alpha: 1, x: creature.x, duration: 220 });
     }
     if (this.standing && node.motion) playMotion(this.scene, this.standing, node.motion);
+  }
+
+  /** 화자 이름표를 판 윗선에 다시 세운다. 이름 길이가 노드마다 달라 판째로 갈아 끼운다. */
+  private setSpeaker(label: string): void {
+    this.speakerPlate?.destroy();
+    this.speakerPlate = addSectionTitle(this.scene, PANEL_TEXT.nameX, PANEL_TOP - 10, label, { size: PANEL_TEXT.nameSize, parent: this });
   }
 
   /** 현재 설정으로 글자 간격을 계산하고 본문 완성 전에는 진행 표식과 선택지를 감춘다. */

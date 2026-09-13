@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
 import {
-  SHOP_BOARD, SHOP_CARD, SHOP_SHELF, SHOP_STAGE, SHOP_TAB_ROW, SHOP_TITLE, SHOP_TOPBAR_GUARD,
-  shopBoardSize, shopCardSpot, shopCardWidth, shopGridContentHeight, shopGridViewport,
-  shopShelfWidth, shopShelfY, shopTabSpot, shopTitleLeft, shopTitleY,
+  SHOP_BOARD, SHOP_CARD, SHOP_SHELF, SHOP_STAGE, SHOP_TAB_ROW, SHOP_TOPBAR_GUARD,
+  shopBoardSize, shopCardSpot, shopCardWidth, shopDialogueSpot, shopGridContentHeight, shopGridViewport,
+  shopShelfWidth, shopShelfY, shopTabSpot, shopTitleHeight, shopTitleLeft, shopTitleY,
 } from "../../src/ui/shopLayout";
+import { DIALOGUE_BUBBLE } from "../../src/ui/dialogueBubbleLayout";
 
 /** 우하단 뒤로가기가 지키는 자리. 씬이 그 좌표를 고정값으로 쓰므로 여기서도 같은 값을 본다. */
 const BACK_BUTTON = { x: BASE_WIDTH - 106, y: BASE_HEIGHT - 120, radius: 70 };
@@ -37,14 +38,17 @@ describe("상점 자리표", () => {
     expect(headX).toBeLessThan(BASE_WIDTH);
   });
 
-  it("무대의 대사와 점원이 서로를 침범하지 않는다", () => {
-    const dialogueRight = SHOP_STAGE.dialogue.centerX + SHOP_STAGE.dialogue.width / 2;
-    // 대사는 왼쪽, 점원은 오른쪽. 머리 관절이 대사 띠의 오른쪽 변보다 더 오른쪽에 선다.
-    expect(dialogueRight).toBeLessThan(SHOP_STAGE.merchant.headX);
-    expect(SHOP_STAGE.dialogue.centerX - SHOP_STAGE.dialogue.width / 2).toBeGreaterThanOrEqual(16);
-    // 띠는 무대 한 칸 안에 통째로 든다.
-    expect(SHOP_STAGE.dialogue.centerY - SHOP_STAGE.dialogue.height / 2).toBeGreaterThan(SHOP_STAGE.top);
-    expect(SHOP_STAGE.dialogue.centerY + SHOP_STAGE.dialogue.height / 2).toBeLessThanOrEqual(SHOP_BOARD.top);
+  it("대사창이 제목표 바로 위에 서고 점원의 얼굴을 덮지 않는다", () => {
+    const dialogue = shopDialogueSpot();
+    // 제목표와 **같은 시작선**에서 시작한다 — 말과 목록이 한 기둥으로 읽힌다.
+    expect(dialogue.centerX - dialogue.width / 2).toBe(shopTitleLeft());
+    // 제목표 윗변보다 위에 서되 그 바로 위다.
+    expect(dialogue.bottom).toBeLessThan(shopTitleY() - shopTitleHeight() / 2);
+    expect(shopTitleY() - shopTitleHeight() / 2 - dialogue.bottom).toBeLessThanOrEqual(48);
+    // 머리 관절이 띠의 오른쪽 변보다 더 오른쪽에 서서 얼굴이 가려지지 않는다.
+    expect(dialogue.centerX + dialogue.width / 2).toBeLessThan(SHOP_STAGE.merchant.headX);
+    // 가장 긴 대사(최소 높이의 두 배로 잡아도)가 얼굴 아래에서 시작한다.
+    expect(dialogue.bottom - DIALOGUE_BUBBLE.minHeight * 2).toBeGreaterThan(SHOP_STAGE.merchant.headY);
     // 얼굴도 무대 안에 있어야 상품 판 마스크에 잘리지 않는다.
     expect(SHOP_STAGE.merchant.headY).toBeGreaterThan(SHOP_STAGE.top);
     expect(SHOP_STAGE.merchant.headY).toBeLessThan(SHOP_BOARD.top);
@@ -59,11 +63,14 @@ describe("상점 자리표", () => {
     expect(view.bottom).toBeLessThanOrEqual(SHOP_BOARD.bottom);
   });
 
-  it("제목표가 격자 창 위에 걸터앉고 칸 줄과 같은 시작선을 쓴다", () => {
+  it("제목표가 전시대 윗변에 걸터앉아 안팎을 가른다", () => {
     const view = shopGridViewport();
-    // 창 바로 위에 서되 전시대 윗변을 넘지 않는다 — 표의 절반이 위로 솟는다.
-    expect(shopTitleY()).toBeLessThan(view.top);
-    expect(shopTitleY() - SHOP_TITLE.size * 1.52 / 2).toBeGreaterThan(SHOP_BOARD.top);
+    // 표의 가운데가 판의 윗변 그 자리다 — 절반은 밖, 절반은 안이라 그 한 장이 경계를 잡는다.
+    expect(shopTitleY()).toBe(SHOP_BOARD.top);
+    expect(shopTitleY() - shopTitleHeight() / 2).toBeLessThan(SHOP_BOARD.top);
+    expect(shopTitleY() + shopTitleHeight() / 2).toBeGreaterThan(SHOP_BOARD.top);
+    // 격자 첫 줄은 표의 아래 절반보다 더 아래에서 시작한다.
+    expect(view.top).toBeGreaterThan(shopTitleY() + shopTitleHeight() / 2);
     expect(shopTitleLeft()).toBe(view.left);
   });
 

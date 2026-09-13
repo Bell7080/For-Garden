@@ -30,7 +30,7 @@ export const SHOP_STAGE = {
    * 언저리에서 잘려 누구인지만 겨우 읽혔다 — 허리께까지 보여야 그 자리에 사람이 서 있는 것으로
    * 읽힌다.
    */
-  bottom: 700,
+  bottom: 820,
   /**
    * 점원은 **머리 관절**을 기준으로 세운다. 전신 높이로 발끝을 맞추면 등신이 다른 원화마다
    * 얼굴이 다른 자리에 서므로, 머리를 무대에 고정하고 남는 몸은 전시대가 가린다.
@@ -39,8 +39,22 @@ export const SHOP_STAGE = {
    * 재화 칸을 침범해, 지금 얼마인지를 읽는 줄 위에 그림이 겹친다.
    */
   merchant: { headX: 790, headY: 360, height: 1200 },
-  /** 대사는 왼쪽. 이름줄과 대사줄만 덮는 얇은 띠라 무대 배경이 그대로 보인다. */
-  dialogue: { centerX: 340, centerY: 500, width: 588, height: 168, nameOffsetY: -46, lineOffsetY: 22 },
+} as const;
+
+/**
+ * 점원의 대사창 — **전시대 윗변의 제목표 바로 위**에 선다.
+ *
+ * 무대 한가운데에 떠 있던 때는 띠가 점원의 가슴께를 가로질러 누가 말하는지보다 띠가 먼저
+ * 읽혔다. 지금은 제목표와 **같은 시작선**에서 시작해 그 바로 위에 서므로, 말과 목록이 한
+ * 기둥으로 읽히고 무대는 점원에게 통째로 돌아간다. 폭은 점원의 머리 관절 왼쪽에서 끊어
+ * 얼굴을 덮지 않는다.
+ *
+ * 높이는 여기서 정하지 않는다 — 공용 대사창이 실제 글 높이에서 거꾸로 구한다.
+ */
+export const SHOP_DIALOGUE = {
+  width: 700,
+  /** 제목표 윗변에서 띄우는 틈. */
+  liftFromTitle: 40,
 } as const;
 
 /**
@@ -61,8 +75,13 @@ export const SHOP_BOARD = {
   bottom: BASE_HEIGHT,
   /** 글과 칸이 판 좌우 변에서 들어오는 여백. */
   padX: 30,
-  /** 격자가 흐르는 창이 전시대 윗변에서 내려오는 여백. 제목표가 그 사이에 걸터앉는다. */
-  viewportTopPad: 100,
+  /**
+   * 격자가 흐르는 창이 전시대 윗변에서 내려오는 여백.
+   *
+   * 제목표가 그 윗변에 **걸터앉으므로** 표의 아래 절반이 판 안으로 내려온다 — 창은 그 아래에서
+   * 시작해야 첫 줄이 제목에 물리지 않는다.
+   */
+  viewportTopPad: 60,
   /** 창 밑변이 목록 교체 줄에서 물러나는 여백. */
   viewportTabGap: 22,
 } as const;
@@ -125,13 +144,31 @@ export const SHOP_SHELF = { height: 18, offsetY: 10, overhang: 14 } as const;
 export const SHOP_TITLE = {
   /** 제목표 글자 크기. 표의 높이도 이 값을 따라간다. */
   size: 34,
-  /** 창 윗변에서 얼마나 위에 걸터앉는지. */
-  liftFromViewport: 26,
 } as const;
 
-/** 제목표가 걸터앉는 높이. 격자 창 바로 위다. */
+/** 제목표 한 장의 높이. `addSectionTitle`이 글자 크기에서 잡는 값과 같다. */
+export function shopTitleHeight(): number {
+  return Math.round(SHOP_TITLE.size * 1.52);
+}
+
+/**
+ * 제목표가 걸터앉는 높이 — **전시대의 윗변 그 자리다.**
+ *
+ * 판 안쪽에 들여놓았을 때는 제목이 목록의 첫 줄처럼 읽혀, 어디까지가 전시대이고 어디부터가
+ * 상품인지 흐렸다. 변에 올려 절반이 판 밖으로 솟으면 그 한 장이 안과 밖의 경계를 잡는다 —
+ * 화면 어디서나 쓰는 제목표의 문법이 원래 그렇다.
+ */
 export function shopTitleY(): number {
-  return shopGridViewport().top - SHOP_TITLE.liftFromViewport;
+  return SHOP_BOARD.top;
+}
+
+/** 대사창의 밑변과 가로 자리. 제목표와 같은 시작선에서 시작해 그 위에 선다. */
+export function shopDialogueSpot(): { centerX: number; width: number; bottom: number } {
+  return {
+    centerX: shopTitleLeft() + SHOP_DIALOGUE.width / 2,
+    width: SHOP_DIALOGUE.width,
+    bottom: shopTitleY() - shopTitleHeight() / 2 - SHOP_DIALOGUE.liftFromTitle,
+  };
 }
 
 /** 제목표의 왼쪽 끝. 칸 줄과 같은 시작선을 쓴다. */

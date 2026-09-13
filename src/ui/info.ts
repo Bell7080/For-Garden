@@ -22,7 +22,7 @@ import {
 } from "../puppets/assets";
 import { addPopupBackgroundImage, addSceneBackground, BACKGROUND } from "./backgrounds";
 import { addBackButton, IconButton } from "./IconButton";
-import { chipPoints, drawGlassFade, drawHairline, drawInnerVignette, drawLayer, drawShapeEdge, drawShapeInnerGlow, drawShapeOutline, drawVignette, HOLO, perspectiveRect, slantedRect, toPoints } from "./holo";
+import { chipPoints, drawGlassFade, drawHairline, drawLayer, drawShapeEdge, drawShapeInnerGlow, drawVignette, HOLO, perspectiveRect, slantedRect, toPoints } from "./holo";
 import { drawGlyph } from "./glyphs";
 import { PopupLayer, POPUP_TITLE_SIZE } from "./PopupLayer";
 import { calculateObservationJournalFlow, OBSERVATION_JOURNAL_SIZE, withoutRepeatedProfileDetails } from "./observationJournalLayout";
@@ -53,8 +53,7 @@ import { appearanceEntries } from "./appearanceModel";
 import { APPEARANCE_PANEL } from "./appearancePanelLayout";
 import { COLOR, textStyle } from "./theme";
 import { skillArtFor, skillArtTint, type SkillArtSlot } from "./skillArt";
-import { addSkillIconFrame, skillSlotLabel } from "./SkillIconFrame";
-import { bakeChipArt, chipArtShape } from "./chipArtTexture";
+import { addSkillIconFrame, skillSlotLabel, type SkillIconTone } from "./SkillIconFrame";
 import { squeezeTextToWidth } from "./textFit";
 import { BREAK_CONFIRM, BREAK_STEPS, breakConfirmHeight, breakthroughStepsLayout } from "./breakthroughLayout";
 import { gameApi } from "../api/FakeServer";
@@ -2424,11 +2423,24 @@ export function addInfoFigureStand(scene: Phaser.Scene, parent: Phaser.GameObjec
 }
 
 
-/** 폭주 뱃지가 깎이는 깊이. 굽는 쪽과 그리는 쪽이 같은 값을 읽는다. */
-const FEROCITY_BADGE_BEVEL = 0.34;
-
-/** 뱃지 아래에 이름이 앉을 만큼 비워 두는 자리(px). 스킬 액자의 `labelRoom`과 같은 몫이다. */
-const FEROCITY_BADGE_LABEL_ROOM = 26;
+/**
+ * 폭주 뱃지의 색.
+ *
+ * 뱃지는 옆에 나란히 선 스킬 액자 셋과 **같은 한 장**(`addSkillIconFrame`)이고, 다른 것은
+ * 색과 크기뿐이다 — 제 나름의 판·비네트·이름을 다시 그리던 때는 층 순서도 안쪽 칸도 눌림
+ * 깊이도 셋과 갈려, 넷이 한 줄로 읽히지 않았다. 붉은빛을 쓰는 이유는 야성의 색이기 때문이고,
+ * 그림에 속성 색을 그대로 얹지 않는 이유는 이 칸이 개체 구분이 아니라 "야성이 이렇게 터진다"를
+ * 알리는 자리이기 때문이다.
+ */
+const FEROCITY_BADGE_TONE: SkillIconTone = {
+  plate: FEROCITY_BADGE,
+  inner: 0x180a08,
+  edge: 0xf0a58a,
+  art: 0xffd9c4,
+  label: "#ffd9c4",
+  labelStroke: "#2a1410",
+  glow: { color: 0x8f3a2a, strength: 0.35, height: 0.6 },
+};
 
 export function addInfoFerocityBadge(
   scene: Phaser.Scene,
@@ -2445,41 +2457,18 @@ export function addInfoFerocityBadge(
   // 폭주 일러스트가 점처럼 뭉갠다.
   const badgeSize = 96;
   const badge = scene.add.container(x, y);
-  const shape = chipArtShape(badgeSize, badgeSize, FEROCITY_BADGE_BEVEL);
-  badge.add(drawLayer(scene, 0, 0, shape, { fill: FEROCITY_BADGE, alpha: 1, edge: 0xf0a58a, edgeAlpha: 0.8, glow: { color: 0x8f3a2a, strength: 0.35, height: 0.6 } }));
-  // 폭주도 스킬 넷 중 하나라 전용 일러스트를 쓴다. 다만 붉은 판 위에서는 속성 색을 그대로
-  // 얹으면 판에 묻히므로, 여기서만 야성의 살구빛을 쓴다 — 이 뱃지는 개체 구분이 아니라
-  // "야성이 이렇게 터진다"를 알리는 자리이기 때문이다.
-  const art = skillArtFor(def.id, "ferocity");
-  if (art !== undefined && scene.textures.exists(art)) {
-    /*
-     * 옆에 나란히 선 스킬 액자 셋과 같은 규칙이다 — 그림이 칸을 채우고 깎인 두 모서리는
-     * 구워서 그림 자체에서 지운다. 이 뱃지만 작게 떠 있으면 넷이 한 줄로 읽히지 않는다.
-     *
-     * **다만 이름 자리는 비운다**(스킬 액자의 `labelRoom`과 같다). 이 뱃지의 그림은 이름과
-     * **같은 살구빛**으로 물드는 자리라, 아래까지 채우면 「폭주」가 그림에 통째로 묻힌다 —
-     * 획 둘레를 검게 둘러도 같은 색끼리는 갈리지 않는다.
-     */
-    const artHeight = badgeSize - FEROCITY_BADGE_LABEL_ROOM;
-    badge.add(scene.add.image(0, -FEROCITY_BADGE_LABEL_ROOM / 2.4, bakeChipArt(scene, art, badgeSize, artHeight, FEROCITY_BADGE_BEVEL))
-      .setDisplaySize(badgeSize, artHeight)
-      .setTint(0xffd9c4));
-  } else {
-    badge.add(drawGlyph(scene, "ferocity", 0, -13, badgeSize * 0.46, 0xffd9c4));
-  }
-  // 안쪽 비네트는 그림 위에 얹는다 — 아래에 깔면 칸을 채운 그림이 통째로 덮는다.
-  badge.add(drawInnerVignette(scene, 0, 0, shape, { strength: 0.4 }));
-  // 스킬 액자와 같은 방식으로 이름을 안쪽 아래에 단다. 셋과 나란히 읽히려면 이름이 있어야 한다.
-  // 스킬 액자의 이름과 같은 규칙으로 누른다 — 「폭주」 두 글자가 영어에서는 `Frenzy`다.
-  badge.add(squeezeTextToWidth(
-    scene.add.text(0, badgeSize / 2 - 23, t("info.skill.ferocity"), textStyle({ role: "display", size: 19, color: "#ffd9c4" }))
-      .setOrigin(0.5)
-      // 그림이 칸을 채우게 되어 이름이 그 위에 선다. 판을 한 겹 더 깔지 않고 획 둘레에 검은
-      // 띠를 둘러, 어떤 그림 위에서도 대비가 그림과 무관해진다(스킬 액자의 이름과 같은 규칙).
-      .setStroke("#2a1410", 5)
-      .setShadow(0, 2, "#2a1410", 3, true, true),
-    badgeSize * 0.82,
-  ));
+  badge.add(addSkillIconFrame(scene, {
+    size: badgeSize,
+    slot: "ferocity",
+    relicId: def.id,
+    // 전용 아트가 없는 개체는 공용 효과 아이콘이 아니라 야성 글리프로 되돌아간다 — 이 칸이
+    // 말하는 것은 피해 종류가 아니라 야성 그 자체다.
+    fallbackGlyph: "ferocity",
+    element: def.element,
+    role: def.role,
+    label: t("info.skill.ferocity"),
+    tone: FEROCITY_BADGE_TONE,
+  }));
   // 입력 영역도 뱃지 크기에 딱 맞춘다. 넓게 잡으면 아래 아이콘의 터치를 가로챈다.
   const hit = scene.add.rectangle(0, 0, badgeSize, badgeSize, 0xffffff, 0).setInteractive({ useHandCursor: true });
   hit.on("pointerdown", () => badge.setScale(1.1));
@@ -2488,7 +2477,6 @@ export function addInfoFerocityBadge(
     badge.setScale(1.1);
     onOpen({ x, y: y - badgeSize / 2 - 12, onClose: () => badge.setScale(1) });
   });
-  badge.add(drawShapeOutline(scene, 0, 0, shape, { color: 0xf0a58a, alpha: 0.65, width: 3 }));
   badge.add(hit);
   parent.add(badge);
   return badge;

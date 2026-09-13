@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { t } from "../i18n";
 import type { Element, Role } from "../core/types";
 import { bakeChipArt, chipArtShape } from "./chipArtTexture";
+import { drawGlyph, type GlyphName } from "./glyphs";
 import { chipPoints, drawInnerVignette, drawLayer, drawShapeOutline } from "./holo";
 import { FALLBACK_SKILL_ICON } from "./skillIcons";
 import { skillArtFor, skillArtTint, SKILL_ART_WASH_ALPHA, type SkillArtSlot } from "./skillArt";
@@ -28,6 +29,10 @@ export interface SkillIconFrameOptions {
   relicId: string;
   /** 전용 아트가 없을 때 쓸 공용 아이콘 텍스처 키. */
   fallbackIcon?: string;
+  /** 그림 파일이 아니라 글리프로 되돌아가는 자리(폭주). 있으면 `fallbackIcon`보다 먼저 쓴다. */
+  fallbackGlyph?: GlyphName;
+  /** 색을 갈아 끼운다. 비우면 속성·직군과 돌파 여부가 정하는 기본 색이다. */
+  tone?: SkillIconTone;
   /** 흰 실루엣에 입히는 색. 속성·직군을 섞은 값이라 화면이 직접 고르지 않는다. */
   element: Element;
   role: Role;
@@ -52,6 +57,29 @@ export interface SkillIconFrameOptions {
 }
 
 /**
+ * 액자 한 장의 **색만** 바꿔 끼우는 표.
+ *
+ * 폭주 뱃지가 이 표 하나로 같은 액자를 붉게 쓴다 — 뱃지가 제 나름의 판·비네트·이름을 다시
+ * 그리던 때는 옆에 나란히 선 세 칸과 층 순서도 눌림 깊이도 갈려, 넷이 한 줄로 읽히지 않았다.
+ * **바꿀 수 있는 것은 색과 빛뿐이고** 비례·층 순서·굽기는 여전히 이 파일 하나가 갖는다.
+ */
+export interface SkillIconTone {
+  /** 액자 판 색. */
+  plate: number;
+  /** 그림이 앉는 안쪽 칸의 바닥색. */
+  inner: number;
+  /** 윗변 강조선과 사방 테두리 색. */
+  edge: number;
+  /** 흰 실루엣에 입히는 색. 속성·직군을 섞은 값 대신 쓴다. */
+  art: number;
+  /** 이름 색과 그 획 둘레 색. 채운 그림 위에 서므로 둘이 한 쌍이다. */
+  label: string;
+  labelStroke: string;
+  /** 판 아래로 번지는 빛. 비우면 두르지 않는다. */
+  glow?: { color: number; strength: number; height: number };
+}
+
+/**
  * 슬롯의 짧은 이름. 정보창 아이콘과 돌파 표가 같은 말을 쓰도록 한 경계만 둔다.
  *
  * 표가 아니라 함수인 이유는 표가 모듈을 읽는 순간 굳기 때문이다.
@@ -62,25 +90,27 @@ export function skillSlotLabel(slot: SkillArtSlot): string {
 
 /** 액자 한 장을 만들어 컨테이너로 돌려준다. 부른 쪽이 자리를 잡고 입력을 붙인다. */
 export function addSkillIconFrame(scene: Phaser.Scene, options: SkillIconFrameOptions): Phaser.GameObjects.Container {
-  const { size, enhanced = false } = options;
+  const { size, enhanced = false, tone } = options;
   const frame = scene.add.container(0, 0);
-  const tint = skillArtTint(options.element, options.role);
+  const tint = tone?.art ?? skillArtTint(options.element, options.role);
   const chip = chipPoints(size, size, {
     bevel: { topLeft: size * SKILL_ICON_FRAME.bevel, topRight: 0, bottomRight: size * SKILL_ICON_FRAME.bevel, bottomLeft: 0 },
   });
   // 판을 불투명하게 채운다. 배경 원화가 비쳐 보이면 그림 두 장이 겹쳐 무엇이 스킬인지 흐려진다.
   frame.add(drawLayer(scene, 0, 0, chip, {
-    fill: enhanced ? 0x241f16 : 0x11161d,
+    fill: tone?.plate ?? (enhanced ? 0x241f16 : 0x11161d),
     alpha: 1,
-    edge: COLOR.accent,
+    edge: tone?.edge ?? COLOR.accent,
     edgeAlpha: enhanced ? 0.9 : 0.45,
+    glow: tone?.glow,
   }));
   // 그림이 앉는 안쪽 칸. 이름이 들어갈 만큼 아래를 남기고 위쪽으로 올려 붙인다.
-  const innerSize = size - SKILL_ICON_FRAME.innerInset;
-  const innerHeight = innerSize - (options.label ? SKILL_ICON_FRAME.labelRoom : 0);
+  const innerSize = size - size * SKILL_ICON_FRAME.innerInset;
+  const labelRoom = options.label ? size * SKILL_ICON_FRAME.labelRoom : 0;
+  const innerHeight = innerSize - labelRoom;
   const inner = chipArtShape(innerSize, innerHeight, SKILL_ICON_FRAME.innerBevel);
-  const innerY = options.label ? -SKILL_ICON_FRAME.labelRoom / 2.4 : 0;
-  frame.add(drawLayer(scene, 0, innerY, inner, { fill: 0x05080c, alpha: 1, shadow: false }));
+  const innerY = -labelRoom / 2.4;
+  frame.add(drawLayer(scene, 0, innerY, inner, { fill: tone?.inner ?? 0x05080c, alpha: 1, shadow: false }));
   const art = skillArtFor(options.relicId, options.slot);
   const hasArt = art !== undefined && scene.textures.exists(art);
   // 그림 자리에 같은 색을 아주 옅게 깔아 아이콘이 색판 위에 앉은 것처럼 보이게 한다. 전용
@@ -101,6 +131,10 @@ export function addSkillIconFrame(scene: Phaser.Scene, options: SkillIconFrameOp
     const baked = bakeChipArt(scene, art, innerSize, innerHeight, SKILL_ICON_FRAME.innerBevel);
     // 전용 일러스트는 흰 실루엣이라 여기서 속성·직군을 섞은 색을 입는다.
     frame.add(scene.add.image(0, innerY, baked).setDisplaySize(innerSize, innerHeight).setTint(tint));
+  } else if (options.fallbackGlyph) {
+    // 그림 파일이 없는 자리(폭주)는 글리프로 되돌아간다. 그것도 그림이 아니라 **상징 하나**라
+    // 채우지 않고 가운데에 작게 선다.
+    frame.add(drawGlyph(scene, options.fallbackGlyph, 0, innerY - 2, size * SKILL_ICON_FRAME.iconRatio, tint));
   } else {
     // 공용 효과 아이콘은 그림이 아니라 **상징 하나**라 채우지 않고 가운데에 작게 선다.
     const fallback = options.fallbackIcon && scene.textures.exists(options.fallbackIcon) ? options.fallbackIcon : FALLBACK_SKILL_ICON;
@@ -113,14 +147,15 @@ export function addSkillIconFrame(scene: Phaser.Scene, options: SkillIconFrameOp
     // 액자 안의 이름은 그림 다음으로 먼저 읽히는 것이라 굵고 크게 둔다. 돌파로 자란 칸은
     // **이름 뒤에 `+`가 붙는다** — 색만으로 알리면 무엇이 다른지가 아니라 "이 칸이 특별하다"
     // 까지만 읽히고, 색을 못 가르는 손에게는 아무것도 말하지 않는다.
-    const color = enhanced ? COLOR.accentText : COLOR.ink;
+    const color = tone?.label ?? (enhanced ? COLOR.accentText : COLOR.ink);
+    const stroke = tone?.labelStroke ?? "#05080c";
     const label = scene.add
-      .text(0, size / 2 - SKILL_ICON_FRAME.labelBaseline, enhanced ? `${options.label}+` : options.label, textStyle({ role: "display", size: Math.round(size * SKILL_ICON_FRAME.labelRatio), color }))
+      .text(0, size / 2 - size * SKILL_ICON_FRAME.labelBaseline, enhanced ? `${options.label}+` : options.label, textStyle({ role: "display", size: Math.round(size * SKILL_ICON_FRAME.labelRatio), color }))
       .setOrigin(0.5)
       // 그림이 칸을 채우게 되어 이름이 그 위에 선다. 판을 한 겹 더 깔지 않고 이름줄과 같은
       // 규칙으로 획 둘레에 검은 띠를 둘러, 어떤 그림 위에서도 대비가 그림과 무관해진다.
-      .setStroke("#05080c", 5)
-      .setShadow(0, 2, "#05080c", 3, true, true);
+      .setStroke(stroke, Math.max(2, Math.round(size * SKILL_ICON_FRAME.labelStroke)))
+      .setShadow(0, 2, stroke, Math.max(2, Math.round(size * SKILL_ICON_FRAME.labelStroke * 0.6)), true, true);
     /*
      * **낱말 길이는 언어가 정하고 액자 폭은 화면이 정한다.** 「일반 공격」 네 글자가 영어에서는
      * `Basic Attack` 열두 글자라 그대로 두면 액자 밖으로 잘려 나간다(실제로 그랬다). 돌파로
@@ -128,11 +163,11 @@ export function addSkillIconFrame(scene: Phaser.Scene, options: SkillIconFrameOp
      * 없어지기 전에 멈춘다 — 크기를 줄이지 않는 이유는 세 칸이 나란히 선 줄에서 한 칸만 글자가
      * 작아지면 그 칸이 덜 중요한 것처럼 읽히기 때문이다.
      */
-    squeezeTextToWidth(label, size - SKILL_ICON_FRAME.labelInset);
+    squeezeTextToWidth(label, size - size * SKILL_ICON_FRAME.labelInset);
     frame.add(label);
   }
   // 액자 테두리. 채운 판 위에 한 줄을 얹어 배경 원화와 확실히 갈라 놓는다.
-  frame.add(drawShapeOutline(scene, 0, 0, chip, { color: COLOR.accent, alpha: enhanced ? 0.75 : 0.42, width: 3 }));
+  frame.add(drawShapeOutline(scene, 0, 0, chip, { color: tone?.edge ?? COLOR.accent, alpha: tone ? 0.65 : enhanced ? 0.75 : 0.42, width: 3 }));
   if (options.dimAlpha !== undefined) frame.setAlpha(options.dimAlpha);
   return frame;
 }
@@ -145,16 +180,23 @@ export function addSkillIconFrame(scene: Phaser.Scene, options: SkillIconFrameOp
  */
 const SKILL_ICON_FRAME = {
   bevel: 0.26,
-  /** 안쪽 칸이 액자 변에서 들어오는 거리(px). 테두리 두께와 안쪽 비네트가 앉는 자리다. */
-  innerInset: 16,
-  /** 이름이 들어갈 아래 여백(px). 이름이 없으면 그림 칸이 그만큼 커진다. */
-  labelRoom: 14,
+  /** 안쪽 칸이 액자 변에서 들어오는 거리. 테두리 두께와 안쪽 비네트가 앉는 자리다. */
+  innerInset: 0.1067,
+  /** 이름이 들어갈 아래 여백. 이름이 없으면 그림 칸이 그만큼 커진다. */
+  labelRoom: 0.0933,
   /** 안쪽 칸이 깎이는 깊이 — 칸 **가로**에 대한 비율이다. 굽는 쪽과 그리는 쪽이 함께 읽는다. */
   innerBevel: 0.22,
-  labelBaseline: 27,
-  /** 이름이 액자 좌우 변에서 비워 두는 자리(px). 깎인 모서리와 테두리를 함께 피한다. */
-  labelInset: 26,
+  labelBaseline: 0.18,
+  /** 이름이 액자 좌우 변에서 비워 두는 자리. 깎인 모서리와 테두리를 함께 피한다. */
+  labelInset: 0.1733,
   labelRatio: 0.167,
+  /**
+   * 이름 획 둘레에 두르는 검은 띠의 두께.
+   *
+   * **여기까지 비율이어야 한다.** 150짜리 액자에 맞춰 5px로 못 박아 두었더니, 96짜리 폭주
+   * 뱃지에서는 그 띠가 16px 글자의 획을 통째로 메워 「폭주」 두 글자가 검은 덩어리로 뭉갰다.
+   */
+  labelStroke: 0.0333,
   iconRatio: 0.52,
 } as const;
 

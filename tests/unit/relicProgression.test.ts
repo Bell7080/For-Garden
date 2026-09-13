@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { breakthroughBonus, breakthroughFragmentCost, breakthroughSlotGrade, BREAKTHROUGH_STEPS, calculateFinalStats, canBreakThrough, isBreakthroughSlotOpen, openedBreakthroughSlots, canFeedRelic, canLevelUpRelic, feedRelic, FEED_UNIT, levelUpRelic, nextBreakthrough, relicLevelCap, RELIC_LEVEL_CAP, BREAKTHROUGH_GRADE_CAP, relicExpToNext, relicLevelUpCost, breakthroughGrade } from "../../src/core/relicProgression";
+import { breakthroughFragmentCost, breakthroughSlotGrade, BREAKTHROUGH_STEPS, calculateFinalStats, canBreakThrough, isBreakthroughSlotOpen, openedBreakthroughSlots, canFeedRelic, canLevelUpRelic, feedRelic, FEED_UNIT, levelUpRelic, nextBreakthrough, relicLevelCap, RELIC_LEVEL_CAP, BREAKTHROUGH_GRADE_CAP, relicExpToNext, relicLevelUpCost, breakthroughGrade } from "../../src/core/relicProgression";
 import { combatPower } from "../../src/core/combatPower";
 import type { RelicProgress, Stats } from "../../src/core/types";
 import { RelicProgressionManager } from "../../src/managers/RelicProgressionManager";
@@ -66,15 +66,15 @@ describe("렐릭 성장 규칙", () => {
     expect(() => levelUpRelic({ ...base, level: RELIC_LEVEL_CAP }, 9999)).toThrow("최대 레벨");
   });
   it("기본 능력치에 레벨, 별, Heart Gem 순으로 단계별 반올림해 적용한다", () => {
-    // 별 둘(돌파 1단계)은 일반 공격 피해만 바꾸므로 능력치 수치는 그대로다.
     const early: RelicProgress = { level: 2, exp: 0, breakthrough: 1, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: ["vital-seed", null, null] };
     const rune = testRune("growth");
     // 101 → 레벨 2%(103) → 별 0%(103) → 룬 표의 HP 기본 8%(111) 순서다.
     expect(calculateFinalStats(BASE, early, [rune], "SR").hp).toBe(111);
 
-    // 셋째 돌파부터 15%가 붙는다. 103 → 별 15%(118) → Heart Gem 8%(127).
+    // **돌파는 능력치를 올리지 않는다.** 셋째 돌파에 모든 능력치 15%가 달려 있던 동안에는
+    // 어느 개체를 뚫어도 같은 숫자가 올라, 그 개체를 끝까지 키운 이유를 말하지 못했다.
     const broken: RelicProgress = { ...early, breakthrough: 3 };
-    expect(calculateFinalStats(BASE, broken, [rune], "SR").hp).toBe(127);
+    expect(calculateFinalStats(BASE, broken, [rune], "SR").hp).toBe(111);
   });
 
   it("룬 교체 계산은 렐릭 기본 객체를 변경하지 않고 실패 강화는 수치를 올리지 않는다", () => {
@@ -98,10 +98,17 @@ describe("렐릭 성장 규칙", () => {
     expect(after.atk).toBe(before.atk);
   });
 
-  it("별 효과는 지금까지 뚫은 단계까지만 합쳐진다", () => {
-    expect(breakthroughBonus(0)).toEqual({ statPercent: 0, basicDamage: 0, ultimateDamage: 0, readyUltimate: false });
-    expect(breakthroughBonus(2)).toMatchObject({ basicDamage: 0.25, ultimateDamage: 0.25, statPercent: 0 });
-    expect(breakthroughBonus(BREAKTHROUGH_STEPS.length)).toMatchObject({ statPercent: 15, readyUltimate: true });
+  it("단계가 여는 것은 상한과 슬롯뿐이고 공용 배율은 남아 있지 않다", () => {
+    // 한때 단계마다 `basicDamage`·`ultimateDamage`·`statPercent`·`readyUltimate`가 달려 있었다.
+    // 그 공용 배율이 도는 동안에는 다섯 등급에 닿은 개체가 종류를 가리지 않고 전투를 궁극기가
+    // 찬 채로 시작했고(토리카가 그랬다), 개체 전용 효과가 말하려던 것을 그 공짜 한 방이 덮었다.
+    for (const step of BREAKTHROUGH_STEPS) {
+      expect(Object.keys(step).sort()).toEqual(["cheesecake", "levelCap", "slot"]);
+    }
+    // 능력치도 단계가 직접 올리지 않는다 — 돌파가 바꾸는 것은 `breakthroughEffects`뿐이다.
+    const plain: RelicProgress = { level: 1, exp: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] };
+    expect(calculateFinalStats(BASE, { ...plain, breakthrough: BREAKTHROUGH_STEPS.length }, [], "SR"))
+      .toEqual(calculateFinalStats(BASE, plain, [], "SR"));
   });
 
   it("별은 돌파 단계 + 1이고 모든 개체가 하나에서 시작한다", () => {

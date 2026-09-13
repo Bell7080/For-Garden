@@ -90,7 +90,6 @@ export const INFO_JA = {
 
   "info.enemy.undug": "未発掘個体",
   "info.enemy.silhouette": "   シルエット記録",
-  "info.enemy.gaze": "{name}はあなたを見つめている。",
 
   "info.story.1": "第1話 · はじめの挨拶",
   "info.story.2": "第2話 · 飼育場の夜",

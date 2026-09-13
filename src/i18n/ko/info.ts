@@ -91,7 +91,6 @@ export const INFO_KO = {
 
   "info.enemy.undug": "미발굴 개체",
   "info.enemy.silhouette": "   실루엣 기록",
-  "info.enemy.gaze": "{name}는 당신을 바라본다.",
 
   "info.story.1": "1화 · 첫 인사",
   "info.story.2": "2화 · 사육장의 밤",

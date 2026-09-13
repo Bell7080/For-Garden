@@ -58,6 +58,23 @@ describe("교류 층 자리", () => {
     expect(chipLeft).toBeGreaterThan(-INTERACTION_LAYER.width / 2 + INTERACTION_LAYER.padding);
   });
 
+  it("원화가 기운 액자 안에 통째로 든다", () => {
+    // 같은 폭으로 두면 그림이 기운 변 밖으로 새어 나가 사방에 두른 테두리가 그림 위를 지난다.
+    // 기운 만큼(한쪽에 slant/2씩) 좁히면 어느 높이에서도 판 안이다.
+    const artWidth = INTERACTION_LAYER.width - INTERACTION_LAYER.slant;
+    expect(artWidth).toBeLessThan(INTERACTION_LAYER.width);
+    expect(INTERACTION_LAYER.width - artWidth).toBeGreaterThanOrEqual(INTERACTION_LAYER.slant);
+    // 글과 칩은 좁아진 원화 폭 안에서도 서로 만나지 않는다.
+    const chipLeft = artWidth / 2 - INTERACTION_LAYER.chip.inset - INTERACTION_LAYER.chip.width;
+    expect(chipLeft).toBeGreaterThan(-artWidth / 2 + INTERACTION_LAYER.padding);
+  });
+
+  it("아래쪽 띠의 결은 눈에 띄지 않을 만큼 얇고 촘촘하다", () => {
+    // 굵거나 성기면 무늬가 먼저 읽혀 글과 원화 대신 줄이 보인다.
+    expect(INTERACTION_LAYER.readout.width).toBeLessThan(INTERACTION_LAYER.readout.gap / 2);
+    expect(INTERACTION_LAYER.readout.alpha).toBeLessThan(0.25);
+  });
+
   it("가장자리 누르기는 원화를 흐리지 않을 만큼만이다", () => {
     // 0.5로 두었을 때는 어느 도시나 같은 잿빛 판으로 보여 목록을 훑을 이유가 없었다.
     expect(INTERACTION_LAYER.scrim).toBeLessThan(0.6);

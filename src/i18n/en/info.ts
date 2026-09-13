@@ -81,7 +81,6 @@ export const INFO_EN = {
   "info.skill.ferocity": "Frenzy",
   "info.enemy.undug": "Unexcavated Specimen",
   "info.enemy.silhouette": "   Silhouette record",
-  "info.enemy.gaze": "{name} looks at you.",
   "info.story.1": "Ep. 1 · First Greeting",
   "info.story.2": "Ep. 2 · Night in the Enclosure",
   "info.story.3": "Ep. 3 · A Shard of Old Memory",

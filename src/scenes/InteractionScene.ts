@@ -8,7 +8,7 @@ import type { InteractionDispatchSnapshot } from "../state/session";
 import { Button } from "../ui/Button";
 import { addBackButton } from "../ui/IconButton";
 import { addSceneBackground, BACKGROUND, useBackgroundTexture } from "../ui/backgrounds";
-import { drawFrameVignette, drawGlassFade, drawHairline, drawLayer, drawVignette, slantedRect } from "../ui/holo";
+import { drawFrameVignette, drawGlassFade, drawHairline, drawLayer, drawShapeOutline, drawVignette, slantedRect } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
 import { TopBar } from "../ui/TopBar";
 import { setDebugScene, setDebugStorefrontControls } from "../debug";
@@ -233,14 +233,15 @@ export class InteractionScene extends Phaser.Scene {
     const layer = this.add.container(spot.x, spot.y);
     const { width, height, padding, textInset } = INTERACTION_LAYER;
     const locked = view.state === "locked";
-    const shape = slantedRect(width, height, 30);
+    const { slant } = INTERACTION_LAYER;
+    const shape = slantedRect(width, height, slant);
     const bottom = height / 2;
-    layer.add(drawLayer(this, 0, 0, shape, {
-      fill: COLOR.void,
-      alpha: 0.9,
-      edge: view.state === "done" ? 0xe0a83e : BLUE,
-      edgeAlpha: locked ? 0.34 : 0.85,
-    }));
+    // **원화는 액자보다 한 뼘 좁다.** 판이 기울어 좌우에 삼각형이 생기는데 원화는 네모라 그
+    // 자리를 채울 수 없다 — 같은 폭으로 두면 그림이 기운 변 밖으로 새어 나가 사방에 두른
+    // 테두리가 그림 위를 지난다. 기운 만큼 안으로 넣으면 어느 높이에서도 판 안에 든다.
+    const artWidth = width - slant;
+    const tone = view.state === "done" ? 0xe0a83e : BLUE;
+    layer.add(drawLayer(this, 0, 0, shape, { fill: COLOR.void, alpha: 0.9 }));
 
     // **원화가 카드를 채우되 늘어나지는 않는다.** 상자 크기에 맞춰 넣으면(`setDisplaySize`)
     // 원화마다 비율이 달라 세로로 눌린 그림이 되었다. 제 비율 그대로 키워 **넘치는 만큼만
@@ -255,22 +256,23 @@ export class InteractionScene extends Phaser.Scene {
     const art = this.add.image(0, 0, "__DEFAULT").setAlpha(0);
     layer.add(art);
     useBackgroundTexture(this, art, view.city.illustration, (loaded) => {
-      const crop = coverCrop(loaded.width, loaded.height, width, height);
+      const crop = coverCrop(loaded.width, loaded.height, artWidth, height);
       loaded.setScale(crop.scale);
       loaded.setCrop(crop.cropX, crop.cropY, crop.cropWidth, crop.cropHeight);
       this.tweens.add({ targets: loaded, alpha: locked ? ART_LOCKED_ALPHA : ART_ALPHA, duration: 160 });
     });
 
     // 글이 서는 아래쪽만 어둠이 올라온다. 카드 전체를 누르면 원화가 잿빛이 된다.
-    const scrimHeight = height * INTERACTION_LAYER.scrim;
-    const scrim = this.add.graphics();
-    scrim.fillGradientStyle(COLOR.void, COLOR.void, COLOR.void, COLOR.void, 0, 0, SCRIM_ALPHA, SCRIM_ALPHA);
-    scrim.fillRect(-width / 2, bottom - scrimHeight, width, scrimHeight);
-    layer.add(scrim);
+    layer.add(this.buildReadoutBand(artWidth, height, bottom, tone));
 
     // **가장자리는 살짝만 누른다.** 강하게 누르면 원화의 본질이 흐려진다 — 카드 하나를 버튼으로
     // 떼어 놓을 만큼만 남긴다.
-    layer.add(drawFrameVignette(this, 0, 0, width, height, { strength: FRAME_VIGNETTE }));
+    layer.add(drawFrameVignette(this, 0, 0, artWidth, height, { strength: FRAME_VIGNETTE }));
+
+    // **이 판만 사방 테두리를 두른다.** 화면의 판때기는 윗변 한 줄이 원칙이지만, 여기는 원화
+    // 한 장을 통째로 담는 **액자**다(적 정보창과 같은 예외) — 선이 없으면 카드끼리 맞닿은
+    // 자리에서 어디까지가 한 곳인지 흐려지고, 도시 원화가 배경 원화로 흘러 보인다.
+    layer.add(drawShapeOutline(this, 0, 0, shape, { color: tone, alpha: locked ? 0.4 : 0.72, width: 3 }));
 
     if (locked) {
       // 잠긴 카드는 한 겹을 더 덮되 이름과 원화는 그대로 읽힌다.
@@ -278,7 +280,7 @@ export class InteractionScene extends Phaser.Scene {
       layer.add(drawGlyph(this, "lock", 0, -40, INTERACTION_LAYER.lock, COLOR.inkDimHex, 0.9, 4));
     }
 
-    const textX = -width / 2 + padding + textInset;
+    const textX = -artWidth / 2 + padding + textInset;
     const name = `${view.city.displayName} ${INTERACTION_DEPARTMENT_LABEL[view.city.department]}`;
     layer.add(this.add
       .text(textX, bottom - INTERACTION_LAYER.nameUp, name, textStyle({ role: "display", size: 38, color: locked ? COLOR.inkDim : "#dff2ff" }))
@@ -295,16 +297,45 @@ export class InteractionScene extends Phaser.Scene {
 
     // 오른쪽 칩 한 장이 **지금 이 카드에서 읽어야 할 수**를 든다 — 아직이면 소요 시간,
     // 나가 있으면 남은 시간, 다녀왔으면 수령 대기다.
-    if (!locked) layer.add(this.buildStateChip(view, index, width, bottom));
+    if (!locked) layer.add(this.buildStateChip(view, index, artWidth, bottom));
 
     if (!locked) {
-      const hit = this.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
+      const hit = this.add.rectangle(0, 0, artWidth, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
       hit.on("pointerdown", () => layer.setScale(1.02));
       hit.on("pointerout", () => layer.setScale(1));
       hit.on("pointerup", () => { layer.setScale(1); this.openCity(view); });
       layer.add(hit);
     }
     return layer;
+  }
+
+  /**
+   * 글이 서는 아래쪽 띠.
+   *
+   * **어둠 한 겹만으로는 글과 원화가 갈리지 않는다** — 밝은 하늘이나 흰 벽이 그 자리에 오면
+   * 그라데이션이 통째로 밝아져 이름이 그림에 묻힌다. 아래로 짙어지는 어둠 위에 **얇은 가로줄을
+   * 촘촘히** 깔아 그 자리를 투영면으로 만들면, 어떤 그림 위에서도 같은 결이 한 겹 덮여 글이 늘
+   * 같은 바탕에 선다. 띠가 시작하는 자리는 강조색 한 줄이 알린다.
+   *
+   * 칠은 마스크가 아니라 **띠 사각형 안에서 잘라** 만든다 — 기하 마스크는 컨테이너 이동을
+   * 물려받지 않아 세로로 흐르는 이 목록에서 어긋난다.
+   */
+  private buildReadoutBand(artWidth: number, height: number, bottom: number, tone: number): Phaser.GameObjects.Graphics {
+    const { readout } = INTERACTION_LAYER;
+    const bandHeight = height * INTERACTION_LAYER.scrim;
+    const top = bottom - bandHeight;
+    const left = -artWidth / 2;
+    const band = this.add.graphics();
+    band.fillGradientStyle(COLOR.void, COLOR.void, COLOR.void, COLOR.void, 0, 0, SCRIM_ALPHA, SCRIM_ALPHA);
+    band.fillRect(left, top, artWidth, bandHeight);
+    // 가로줄은 아래로 갈수록 어둠에 묻히므로 위쪽에서 가장 또렷하다 — 글이 서는 자리와 원화가
+    // 만나는 그 경계가 가장 흐린 곳이라, 결이 필요한 곳에 결이 남는다.
+    band.fillStyle(COLOR.void, readout.alpha);
+    for (let y = top; y < bottom; y += readout.gap) band.fillRect(left, y, artWidth, readout.width);
+    // 띠가 시작하는 선은 **테두리보다 옅다** — 같은 무게로 두면 한 카드 안에 테두리가 두 겹이 된다.
+    band.lineStyle(2, tone, 0.38);
+    band.lineBetween(left, top, left + artWidth, top);
+    return band;
   }
 
   /**

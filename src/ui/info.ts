@@ -71,7 +71,6 @@ import { addFactionMark, factionMarkBounds } from "./FactionMark";
 import { SQUADS } from "../data/factions";
 import { OBSERVATION_INTERVIEW_LAYOUT, observationInterviewPanelState, type ObservationInterviewPanelState } from "./observationInterviewPanel";
 import { galleryPortraitPlacement, INFO_PORTRAIT_FOCUS, infoPortraitPlacement } from "./portraitPlacement";
-import { DialogueBubble } from "./DialogueBubble";
 import { skinsForRelic } from "../data/relicSkins";
 import { relicSkinManager } from "../managers/RelicSkinManager";
 
@@ -108,14 +107,14 @@ const PORTRAIT_FOCUS = INFO_PORTRAIT_FOCUS;
 /** 정보창 구석에 세우는 SD 피규어. 받침 위에서 idle만 재생한다. */
 const FIGURE = { x: 762, y: 1786, height: 240 } as const;
 
-/**
- * 전신을 누르면 뜨는 대사창의 자리.
+/*
+ * **정보창에는 대사창을 세우지 않는다.**
  *
- * **인물의 중하단부에 선다** — 얼굴은 화면 위쪽 절반에 있고 스킬 액자 줄은 아래 끝에 있어,
- * 그 사이의 허리~다리께가 무엇도 덮지 않는 유일한 띠다. 오른쪽 수치 기둥의 왼쪽 변에서
- * 끊어 판 넷을 침범하지 않는다. 밑변을 걸므로 대사가 길어져도 스킬 줄 쪽으로 자라지 않는다.
+ * 전신을 눌렀을 때 인물 중하단부에 한 장 띄워 봤는데(v0.123.0), 이 창은 이미 왼쪽에 전신·
+ * 스킬 액자 줄·SD가 서고 오른쪽에 판 넷이 선 빽빽한 화면이라 띠 한 장이 더 들어설 자리가
+ * 없었다 — 누를 때마다 그 위를 덮었다. 지금은 누르면 **인물이 반응만 한다**(hit 모션).
+ * 캐릭터가 말하는 자리는 화면이 비어 있는 로비와 상점이다.
  */
-const PORTRAIT_LINE = { centerX: 290, width: 500, bottom: 1400 } as const;
 
 /**
  * 외형 버튼.
@@ -492,8 +491,6 @@ export class InfoManager {
 
   private currentDef?: RelicDef;
   private ownedNow = true;
-  /** 전신과 SD가 함께 쓰는 대사창 한 장. 창을 닫으면 함께 치운다. */
-  private liveLine?: DialogueBubble;
   private portrait?: PuppetCreature;
   private portraitWanted = false;
   private portraitRequest = 0;
@@ -563,9 +560,7 @@ export class InfoManager {
       .rectangle(PORTRAIT_FOCUS.x, PORTRAIT_FOCUS.y, 340, 620, 0xffffff, 0)
       .setInteractive({ useHandCursor: true });
     body.on("pointerup", () => {
-      if (!this.portrait) return;
-      playMotion(scene, this.portrait, "hit");
-      if (this.currentDef) this.say(this.currentDef.name, t("info.enemy.gaze", { name: this.currentDef.name }));
+      if (this.portrait) playMotion(scene, this.portrait, "hit");
     });
     this.root.add(body);
     this.enableSwipe();
@@ -1861,22 +1856,6 @@ export class InfoManager {
     addInfoFigureStand(this.scene, this.chrome, FIGURE.x, FIGURE.y);
   }
 
-  /**
-   * 캐릭터 대사.
-   *
-   * 전신을 눌러도, 구석의 SD를 눌러도 **같은 한 장**이 인물의 중하단부에 선다 — 자리가 둘로
-   * 갈리면 같은 말이 어디서 나오는지에 따라 다른 양식으로 읽힌다. 창은 로비·상점과 공유하는
-   * 공용 대사창이라 생김새도 한 곳에서만 정한다.
-   */
-  private say(name: string, line: string): void {
-    if (!this.liveLine) {
-      this.liveLine = new DialogueBubble(this.scene, {
-        ...PORTRAIT_LINE, y: PORTRAIT_LINE.bottom, bodySize: 27, nameSize: 26, depth: this.chrome.depth + 4,
-      });
-    }
-    this.liveLine.say(name, line);
-  }
-
   get isOpen(): boolean {
     return this.root.visible;
   }
@@ -1892,7 +1871,6 @@ export class InfoManager {
     this.portraitWanted = false;
     this.portrait?.setVisible(false);
     this.figure?.setVisible(false);
-    this.liveLine?.hideNow();
     setDebugInfoOpen(false);
     this.onClose?.();
   }
@@ -1968,7 +1946,6 @@ export class InfoManager {
     this.figure?.destroy();
     this.figure = figure;
     enableHitOnClick(this.scene, figure);
-    figure.on("pointerup", () => this.say(def.name, t("info.enemy.gaze", { name: def.name })));
     figure.setVisible(this.portraitWanted && this.root.visible);
   }
 

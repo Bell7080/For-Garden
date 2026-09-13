@@ -54,6 +54,8 @@ import { APPEARANCE_PANEL } from "./appearancePanelLayout";
 import { COLOR, textStyle } from "./theme";
 import { skillArtFor, skillArtTint, type SkillArtSlot } from "./skillArt";
 import { addSkillIconFrame, skillSlotLabel } from "./SkillIconFrame";
+import { bakeChipArt, chipArtShape } from "./chipArtTexture";
+import { squeezeTextToWidth } from "./textFit";
 import { BREAK_CONFIRM, BREAK_STEPS, breakConfirmHeight, breakthroughStepsLayout } from "./breakthroughLayout";
 import { gameApi } from "../api/FakeServer";
 import { BREAKTHROUGH_STEPS, breakthroughFragmentCost, type BreakthroughStep, canBreakThrough, canFeedRelic, FEED_UNIT, isBreakthroughSlotOpen, nextBreakthrough, relicExpToNext, relicLevelCap, breakthroughGrade } from "../core/relicProgression";
@@ -274,7 +276,8 @@ const BREAK_EDGE = 0xa88cf0;
  * 글자가 판을 넘는다. 그림은 수와 **바짝** 붙이고 두 덩어리 사이만 벌려, 어느 수가 어느
  * 재화의 것인지 간격으로 읽히게 한다.
  */
-const BREAK_BUTTON = { width: 260, height: 86, labelY: -18, costY: 18, costSize: 19, icon: 26, gap: 5, pairGap: 18 } as const;
+/** 한계 돌파 버튼. `labelInset`은 이름이 판 좌우 변에서 비워 두는 자리다(기울인 변을 피한다). */
+const BREAK_BUTTON = { width: 260, height: 86, labelY: -18, costY: 18, costSize: 19, icon: 26, gap: 5, pairGap: 18, labelInset: 28 } as const;
 
 /** 뚫을 수 있을 때 판 안쪽에서 번지는 빛의 숨. 느려야 재촉이 아니라 신호로 읽힌다. */
 const BREAK_ARM = { low: 0.35, high: 1, duration: 900 } as const;
@@ -834,7 +837,12 @@ export class InfoManager {
     const arm = drawShapeInnerGlow(this.scene, 0, 0, shape, { color: BREAK_EDGE, strength: 0.85 });
     container.add(arm);
     container.add(drawShapeEdge(this.scene, 0, 0, shape, "top", { color: BREAK_EDGE, alpha: 1, width: 4 }));
-    const label = this.scene.add.text(0, BREAK_BUTTON.labelY, t("info.breakthrough"), textStyle({ role: "display", size: 26 })).setOrigin(0.5);
+    // 낱말 길이는 언어가 정하고 버튼 폭은 화면이 정한다(「한계 돌파」 ↔ `Breakthrough`).
+    // 넘치는 만큼만 가로로 눌러 버튼 판 안에 남긴다.
+    const label = squeezeTextToWidth(
+      this.scene.add.text(0, BREAK_BUTTON.labelY, t("info.breakthrough"), textStyle({ role: "display", size: 26 })).setOrigin(0.5),
+      BREAK_BUTTON.width - BREAK_BUTTON.labelInset,
+    );
     // 드는 것 둘(파편·치즈케이크)이 한 줄에 서므로 글자 하나가 아니라 담는 칸이다.
     const cost = this.scene.add.container(0, BREAK_BUTTON.costY);
     container.add([label, cost]);
@@ -859,7 +867,8 @@ export class InfoManager {
     const need = def && step ? breakthroughFragmentCost(def.rarity, progress.breakthrough) : 0;
     const ready = this.ownedNow && def !== undefined && canBreakThrough(def.rarity, progress, held, session.wallet.cheesecake);
     this.breakButton?.container.setAlpha(step ? (ready ? 1 : 0.7) : 0.35);
-    this.breakButton?.label.setText(step ? t("info.breakthrough") : t("info.breakthrough.gradeMax"));
+    // 문구가 바뀌면 폭도 함께 바뀐다 — 처음 그릴 때만 누르면 `돌파 완료`가 판을 넘는다.
+    if (this.breakButton) squeezeTextToWidth(this.breakButton.label.setText(step ? t("info.breakthrough") : t("info.breakthrough.gradeMax")), BREAK_BUTTON.width - BREAK_BUTTON.labelInset);
     this.breakButton?.label.setColor(ready ? COLOR.ink : COLOR.inkDim);
     this.paintBreakArm(ready);
     this.paintBreakCost(def, step, held, need);
@@ -2415,6 +2424,12 @@ export function addInfoFigureStand(scene: Phaser.Scene, parent: Phaser.GameObjec
 }
 
 
+/** 폭주 뱃지가 깎이는 깊이. 굽는 쪽과 그리는 쪽이 같은 값을 읽는다. */
+const FEROCITY_BADGE_BEVEL = 0.34;
+
+/** 뱃지 아래에 이름이 앉을 만큼 비워 두는 자리(px). 스킬 액자의 `labelRoom`과 같은 몫이다. */
+const FEROCITY_BADGE_LABEL_ROOM = 26;
+
 export function addInfoFerocityBadge(
   scene: Phaser.Scene,
   popups: PopupLayer,
@@ -2430,22 +2445,41 @@ export function addInfoFerocityBadge(
   // 폭주 일러스트가 점처럼 뭉갠다.
   const badgeSize = 96;
   const badge = scene.add.container(x, y);
-  const shape = chipPoints(badgeSize, badgeSize, {
-    bevel: { topLeft: badgeSize * 0.34, topRight: 0, bottomRight: badgeSize * 0.34, bottomLeft: 0 },
-  });
+  const shape = chipArtShape(badgeSize, badgeSize, FEROCITY_BADGE_BEVEL);
   badge.add(drawLayer(scene, 0, 0, shape, { fill: FEROCITY_BADGE, alpha: 1, edge: 0xf0a58a, edgeAlpha: 0.8, glow: { color: 0x8f3a2a, strength: 0.35, height: 0.6 } }));
-  badge.add(drawInnerVignette(scene, 0, 0, shape, { strength: 0.4 }));
   // 폭주도 스킬 넷 중 하나라 전용 일러스트를 쓴다. 다만 붉은 판 위에서는 속성 색을 그대로
   // 얹으면 판에 묻히므로, 여기서만 야성의 살구빛을 쓴다 — 이 뱃지는 개체 구분이 아니라
   // "야성이 이렇게 터진다"를 알리는 자리이기 때문이다.
   const art = skillArtFor(def.id, "ferocity");
-  if (art) {
-    badge.add(scene.add.image(0, -13, art).setDisplaySize(badgeSize * 0.64, badgeSize * 0.64).setTint(0xffd9c4));
+  if (art !== undefined && scene.textures.exists(art)) {
+    /*
+     * 옆에 나란히 선 스킬 액자 셋과 같은 규칙이다 — 그림이 칸을 채우고 깎인 두 모서리는
+     * 구워서 그림 자체에서 지운다. 이 뱃지만 작게 떠 있으면 넷이 한 줄로 읽히지 않는다.
+     *
+     * **다만 이름 자리는 비운다**(스킬 액자의 `labelRoom`과 같다). 이 뱃지의 그림은 이름과
+     * **같은 살구빛**으로 물드는 자리라, 아래까지 채우면 「폭주」가 그림에 통째로 묻힌다 —
+     * 획 둘레를 검게 둘러도 같은 색끼리는 갈리지 않는다.
+     */
+    const artHeight = badgeSize - FEROCITY_BADGE_LABEL_ROOM;
+    badge.add(scene.add.image(0, -FEROCITY_BADGE_LABEL_ROOM / 2.4, bakeChipArt(scene, art, badgeSize, artHeight, FEROCITY_BADGE_BEVEL))
+      .setDisplaySize(badgeSize, artHeight)
+      .setTint(0xffd9c4));
   } else {
     badge.add(drawGlyph(scene, "ferocity", 0, -13, badgeSize * 0.46, 0xffd9c4));
   }
+  // 안쪽 비네트는 그림 위에 얹는다 — 아래에 깔면 칸을 채운 그림이 통째로 덮는다.
+  badge.add(drawInnerVignette(scene, 0, 0, shape, { strength: 0.4 }));
   // 스킬 액자와 같은 방식으로 이름을 안쪽 아래에 단다. 셋과 나란히 읽히려면 이름이 있어야 한다.
-  badge.add(scene.add.text(0, badgeSize / 2 - 23, t("info.skill.ferocity"), textStyle({ role: "display", size: 19, color: "#ffd9c4" })).setOrigin(0.5));
+  // 스킬 액자의 이름과 같은 규칙으로 누른다 — 「폭주」 두 글자가 영어에서는 `Frenzy`다.
+  badge.add(squeezeTextToWidth(
+    scene.add.text(0, badgeSize / 2 - 23, t("info.skill.ferocity"), textStyle({ role: "display", size: 19, color: "#ffd9c4" }))
+      .setOrigin(0.5)
+      // 그림이 칸을 채우게 되어 이름이 그 위에 선다. 판을 한 겹 더 깔지 않고 획 둘레에 검은
+      // 띠를 둘러, 어떤 그림 위에서도 대비가 그림과 무관해진다(스킬 액자의 이름과 같은 규칙).
+      .setStroke("#2a1410", 5)
+      .setShadow(0, 2, "#2a1410", 3, true, true),
+    badgeSize * 0.82,
+  ));
   // 입력 영역도 뱃지 크기에 딱 맞춘다. 넓게 잡으면 아래 아이콘의 터치를 가로챈다.
   const hit = scene.add.rectangle(0, 0, badgeSize, badgeSize, 0xffffff, 0).setInteractive({ useHandCursor: true });
   hit.on("pointerdown", () => badge.setScale(1.1));

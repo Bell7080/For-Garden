@@ -53,6 +53,22 @@ export interface DebugState {
   dialogue?: { nodeId: string; body: string };
   /** 지금 열려 있는 팝업 제목을 아래(가장 먼저 연 것)부터 순서대로 쌓아 둔다. E2E가 팝업이 실제로 열렸는지 확인한다. */
   popupTitles?: string[];
+  /**
+   * **칸에 맞추다가 하한에 걸린 글자.**
+   *
+   * 낱말 길이는 언어가 정하고 칸 폭은 화면이 정한다. 넘치는 글은 `src/ui/textFit.ts`가 눌러
+   * 넣지만, **하한까지 눌러도 들지 않으면** 거기서 멈추고 넘친 채로 남는다 — 그때는 글자가
+   * 아니라 칸을 손봐야 한다는 신호다. Canvas 안에서는 그 사실을 DOM으로 알 수 없으므로
+   * 여기에만 쌓아 두고 E2E가 언어를 바꿔 가며 확인한다. 눌러서 들어간 글자는 남기지 않는다.
+   */
+  clampedText?: Array<{ text: string; width: number; room: number }>;
+  /**
+   * 칸에 맞추는 규칙을 **몇 번 지났는가**.
+   *
+   * 넘친 글자만 세면 아무것도 넘치지 않는 날과 **규칙이 통째로 빠진 날**이 똑같이 빈 목록으로
+   * 보인다. 지난 횟수를 함께 남겨 두면 검사가 양쪽으로 무너지는 것을 잡는다.
+   */
+  fittedText?: number;
   /** 세공 화면의 연필 입력면 중심. 이름 글자 폭에 따라 자리가 달라지므로 화면이 직접 알린다. */
   runeForgeRename?: DebugPoint;
   /** 룬 쪽지의 "세공" 버튼 중심. 줄 구성(장착·해제·판매)에 따라 자리가 달라진다. */
@@ -331,4 +347,22 @@ export function setDebugInfoGemSlots(slots: (string | null)[] | undefined): void
 
 export function setDebugPopupTitles(titles: string[]): void {
   ensure().popupTitles = titles.length > 0 ? titles : undefined;
+}
+
+/**
+ * 칸에 맞추다가 **하한에 걸린** 글자를 기록한다. 들어간 글자는 부르지 않는다.
+ *
+ * 같은 글이 여러 번 그려질 수 있으므로 문구와 칸 폭이 같은 것은 한 번만 쌓는다 — 목록이
+ * 길어지면 E2E 실패 메시지에서 어느 자리가 넘쳤는지 읽히지 않는다.
+ */
+export function countFittedText(): void {
+  const state = ensure();
+  state.fittedText = (state.fittedText ?? 0) + 1;
+}
+
+export function reportClampedText(text: string, width: number, room: number): void {
+  const state = ensure();
+  const list = state.clampedText ?? (state.clampedText = []);
+  if (list.some((entry) => entry.text === text && entry.room === room)) return;
+  list.push({ text, width: Math.round(width), room: Math.round(room) });
 }

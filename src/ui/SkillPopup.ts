@@ -3,12 +3,14 @@ import { t, type TextKey } from "../i18n";
 import type { KeywordManager } from "../managers/KeywordManager";
 import type { KeywordDef } from "../data/keywords";
 import type { CombatStatusEffect, EffectType, SkillIconAssetId, Ultimate } from "../core/types";
-import { chipPoints, drawHairline, drawInnerVignette, drawLayer, drawShapeOutline } from "./holo";
+import { bakeChipArt, chipArtShape } from "./chipArtTexture";
+import { drawHairline, drawInnerVignette, drawLayer, drawShapeOutline } from "./holo";
 import type { PopupLayer } from "./PopupLayer";
 import { FALLBACK_SKILL_ICON } from "./skillIcons";
 import { SKILL_ART_WASH_ALPHA } from "./skillArt";
 import { damageHealingLabel, recoveryLabel, skillKeywordLayoutOptions, statusEffectLabel, targetingLabel } from "./skillPresentation";
 import { COLOR, textStyle } from "./theme";
+import { shrinkTextToWidth } from "./textFit";
 
 /** 데이터 효과 분류를 플레이어가 읽는 고정 라벨로 바꾼다. */
 const EFFECT_KEY: Record<EffectType, TextKey> = {
@@ -80,6 +82,8 @@ const POPUP = {
   hintBottom: 44,
   /** 아이콘 칩과 이름 줄이 들어가는 최소 높이. 한 줄짜리 설명이 판을 이보다 짧게 만들지 않는다. */
   minHeight: 400,
+  /** 이름 줄이 판 오른쪽 변에서 비워 두는 자리. 깎인 모서리와 기울임을 함께 피한다. */
+  nameRightGutter: 48,
 } as const;
 
 /**
@@ -88,6 +92,9 @@ const POPUP = {
  * **이름표 문구는 여기 두지 않는다** — 모듈을 읽는 순간의 언어로 굳어, 나중에 언어를 바꿔도
  * 그 한 줄만 처음 언어로 남는다. 그릴 때 `t()`로 고른다.
  */
+/** 쪽지 아이콘 액자가 깎이는 깊이. 굽는 쪽과 그리는 쪽이 같은 값을 읽는다. */
+const ICON_BEVEL = 0.26;
+
 const BREAKTHROUGH_LINE = { gap: 34, labelTop: 8, labelGap: 10, size: 25 } as const;
 
 /**
@@ -135,18 +142,24 @@ export function openSkillPopup(
     const iconSize = 132;
     const iconX = left + 96;
     const iconY = top + 108;
-    const chip = chipPoints(iconSize, iconSize, {
-      bevel: { topLeft: iconSize * 0.26, topRight: 0, bottomRight: iconSize * 0.26, bottomLeft: 0 },
-    });
+    const chip = chipArtShape(iconSize, iconSize, ICON_BEVEL);
     // 도감 아이콘과 같은 액자다 — 불투명한 판, 안쪽으로 스미는 어둠, 사방 한 줄.
     body.add(drawLayer(scene, iconX, iconY, chip, { fill: 0x11161d, alpha: 1, edge: COLOR.accent, edgeAlpha: 0.6 }));
     const art = skill.art && scene.textures.exists(skill.art) ? skill.art : undefined;
     if (art && skill.tint !== undefined) body.add(drawLayer(scene, iconX, iconY, chip, { fill: skill.tint, alpha: SKILL_ART_WASH_ALPHA, shadow: false }));
+    if (art) {
+      // 정보창의 액자와 같은 규칙이다 — 전용 일러스트는 칸을 꽉 채우고, 깎인 두 모서리는
+      // 구워서 그림 자체에서 지운다(`bakeChipArt`).
+      const image = scene.add.image(iconX, iconY, bakeChipArt(scene, art, iconSize, iconSize, ICON_BEVEL)).setDisplaySize(iconSize, iconSize);
+      if (skill.tint !== undefined) image.setTint(skill.tint);
+      body.add(image);
+    } else {
+      // 공용 효과 아이콘은 그림이 아니라 상징 하나라 채우지 않고 가운데에 작게 선다.
+      const fallback = scene.textures.exists(skill.iconAssetId) ? skill.iconAssetId : FALLBACK_SKILL_ICON;
+      body.add(scene.add.image(iconX, iconY, fallback).setDisplaySize(iconSize * 0.62, iconSize * 0.62));
+    }
+    // 안쪽 비네트는 그림 위에 얹는다 — 아래에 깔면 칸을 채운 그림이 통째로 덮어 아무것도 누르지 못한다.
     body.add(drawInnerVignette(scene, iconX, iconY, chip, { strength: 0.55 }));
-    const texture = art ?? (scene.textures.exists(skill.iconAssetId) ? skill.iconAssetId : FALLBACK_SKILL_ICON);
-    const image = scene.add.image(iconX, iconY, texture).setDisplaySize(iconSize * (art ? 0.82 : 0.62), iconSize * (art ? 0.82 : 0.62));
-    if (art && skill.tint !== undefined) image.setTint(skill.tint);
-    body.add(image);
     body.add(drawShapeOutline(scene, iconX, iconY, chip, { color: COLOR.accent, alpha: 0.55, width: 3 }));
 
     // 분류와 이름. 궁극기는 소비 게이지를 분류 옆에 붙여 "얼마를 쓰는 기술인지"를 먼저 알린다.
@@ -162,7 +175,16 @@ export function openSkillPopup(
           .setOrigin(0, 0),
       );
     }
-    body.add(scene.add.text(textLeft, top + 96, skill.name, textStyle({ role: "display", size: 46 })).setOrigin(0, 0));
+    /*
+     * **이름은 줄바꿈하지 않고 크기만 낮춘다.**
+     *
+     * 바로 아래 요약 줄(`top + 156`)이 고정 자리라 두 줄이 되면 그 줄을 파고든다. 낱말 길이는
+     * 언어가 정하므로(「세기의 대발견… 그렇죠?!」가 영어에서는 `The Discovery of the
+     * Century… Right?!`) 판 오른쪽 변까지 들 만큼만 줄인다.
+     */
+    const name = scene.add.text(textLeft, top + 96, skill.name, textStyle({ role: "display", size: 46 })).setOrigin(0, 0);
+    shrinkTextToWidth(name, POPUP.width / 2 - textLeft - POPUP.nameRightGutter);
+    body.add(name);
 
     // 효과 분류와 수치는 한 줄에 둔다. 둘 다 "얼마나 세게, 어떤 식으로"를 말한다.
     const summary = [

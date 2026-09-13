@@ -14,6 +14,26 @@ const OUT = process.env.WALK_OUT ?? "test-results/languageWalk";
 const scene = (page: import("@playwright/test").Page) => page.evaluate(() => window.__PF_DEBUG?.scene);
 
 /**
+ * **칸을 넘긴 채로 남은 글자가 없는가.**
+ *
+ * 낱말 길이는 언어가 정하고 칸 폭은 화면이 정한다 — 「일반 공격」 네 글자가 영어에서는
+ * `Basic Attack` 열두 글자다. 넘치는 글은 `src/ui/textFit.ts`가 눌러 넣지만, **하한까지 눌러도
+ * 들지 않으면** 거기서 멈추고 넘친 채로 남는다. 그때는 글자가 아니라 칸을 손봐야 한다는
+ * 신호이므로, 훑는 길에서 하나라도 남으면 문구와 칸 폭을 함께 실패 메시지에 싣는다.
+ *
+ * 캔버스 안의 글자 폭은 DOM으로 알 수 없어 화면이 직접 알린다(`reportClampedText`).
+ */
+async function expectNothingClamped(page: import("@playwright/test").Page, where: string): Promise<void> {
+  const fit = await page.evaluate(() => ({
+    clamped: window.__PF_DEBUG?.clampedText ?? [],
+    fitted: window.__PF_DEBUG?.fittedText ?? 0,
+  }));
+  expect(fit.clamped.map(({ text, width, room }) => `${where}: "${text}" ${width}px > ${room}px`)).toEqual([]);
+  // 빈 목록이 "아무것도 넘치지 않았다"인지 "규칙이 통째로 빠졌다"인지 가른다.
+  expect(fit.fitted, `${where}: 칸 맞추기를 한 번도 지나지 않았다`).toBeGreaterThan(0);
+}
+
+/**
  * 고를 수 있는 언어를 모두 같은 길로 훑는다.
  *
  * 언어마다 스펙을 복사하면 화면이 늘 때 한쪽만 고쳐지고, 그 언어의 회귀가 캡처에서 조용히
@@ -40,6 +60,7 @@ test.describe(`${language} 화면 훑기`, () => {
     // 스킬 아이콘 셋 중 궁극기를 눌러 조립된 설명문을 본다.
     await tap(page, 470, BASE_HEIGHT - 196);
     await captureGame(page, `${OUT}/${language}/04-skill.png`);
+    await expectNothingClamped(page, `${language} 도감·정보창·스킬 쪽지`);
   });
 
   test("는 연구소·프리미엄·설정을 열어 본다", async ({ page }) => {
@@ -58,6 +79,7 @@ test.describe(`${language} 화면 훑기`, () => {
     // 언어 줄은 게임 탭에 있다. 고를 수 있는 언어가 둘 이상일 때만 서므로 여기서 함께 본다.
     await tap(page, 540, 210);
     await captureGame(page, `${OUT}/${language}/07b-settings-game.png`);
+    await expectNothingClamped(page, `${language} 연구소·프리미엄·환경설정`);
   });
 
   test("는 출격·편성·전투를 열어 본다", async ({ page }) => {
@@ -70,6 +92,7 @@ test.describe(`${language} 화면 훑기`, () => {
     await captureGame(page, `${OUT}/${language}/08-stageMap.png`);
     await tapUntil(page, BASE_WIDTH / 2, BASE_HEIGHT - 180, async () => (await scene(page)) === "party");
     await captureGame(page, `${OUT}/${language}/09-party.png`);
+    await expectNothingClamped(page, `${language} 지도·편성`);
   });
 });
 }

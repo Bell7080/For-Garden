@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { t } from "../i18n";
 import { BASE_WIDTH, BASE_HEIGHT } from "../config/gameConfig";
 import { drawGlassFade, drawHairline, HOLO } from "./holo";
+import { squeezeTextToWidth } from "./textFit";
 import { COLOR, textStyle } from "./theme";
 
 /** 핵심 화면 다섯 개. 로비를 중심으로 고고학과 프리미엄이 양 끝에서 서로 균형을 이룬다. */
@@ -26,6 +27,12 @@ export function navLabel(key: NavKey): string {
 export type NavKey = (typeof NAV_TABS)[number]["key"];
 
 export const NAV_TOP = BASE_HEIGHT - 180;
+
+/** 지금 화면인 탭이 커지는 배율. 이름을 칸에 맞출 때도 이만큼을 미리 뺀다. */
+const ACTIVE_SCALE = 1.12;
+
+/** 탭 이름이 칸 좌우에서 비워 두는 자리. 두 탭의 글자가 맞닿아 한 낱말로 읽히지 않게 한다. */
+const NAV_LABEL_GUTTER = 18;
 
 /**
  * 아이콘은 아직 그림이 없어 선으로 그린다. 채운 덩어리 대신 얇은 선을 쓰는 이유는, 하단 바에
@@ -103,13 +110,22 @@ export class BottomNav {
 
       const group = scene.add.container(x, NAV_TOP + 84);
       group.add(drawIcon(scene, tab.key, 0, -16, color));
-      group.add(
+      /*
+       * **다섯이 폭을 나눠 갖는 줄이라 이름이 칸을 넘으면 옆 탭을 침범한다.**
+       *
+       * 낱말 길이는 언어가 정한다 — 「연구소」 세 글자가 영어에서는 `Research Lab` 열두
+       * 글자다. 크기를 낮추지 않고 가로로만 누르는 것은 다섯이 나란히 선 줄에서 한 칸만
+       * 글자가 작아지면 그 탭이 덜 중요한 것처럼 읽히기 때문이다. 지금 화면인 탭은 1.12배로
+       * 커지므로 그만큼을 미리 뺀 자리에 맞춘다.
+       */
+      group.add(squeezeTextToWidth(
         scene.add
           .text(0, 26, navLabel(tab.key), textStyle({ role: "emphasis", size: 26, color: active ? COLOR.accentText : COLOR.inkDim }))
           .setOrigin(0.5, 0),
-      );
+        (step - NAV_LABEL_GUTTER) / ACTIVE_SCALE,
+      ));
       // 지금 화면인 탭만 살짝 크다. 밑줄이나 상자 대신 크기로 알린다.
-      group.setScale(active ? 1.12 : 1);
+      group.setScale(active ? ACTIVE_SCALE : 1);
 
       const hit = scene.add
         .rectangle(x, NAV_TOP + 90, step - 8, 160, 0xffffff, 0)

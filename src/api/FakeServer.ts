@@ -151,7 +151,7 @@ export class FakeServer implements GameApi {
     return ids.map(id => { const relic = RELICS.find(candidate => candidate.id === id)!; return { id, element: relic.element, squad: relic.squad, tags: relic.squad === "gear" ? ["night-gear"] : [] }; });
   }
 
-  async getInteractionCities(): Promise<InteractionCitiesResponse> { await this.delay(); return { cities: INTERACTION_CITIES.map(city => ({ ...city, unlocked: isInteractionCityUnlocked(city, this.state.playerResearch.level) })), serverTime: this.now().toISOString() }; }
+  async getInteractionCities(): Promise<InteractionCitiesResponse> { await this.delay(); return { cities: INTERACTION_CITIES.map(city => ({ ...city, unlocked: isInteractionCityUnlocked(city, this.state.cleared) })), serverTime: this.now().toISOString() }; }
 
   /** 보유 표본과 서버 시각의 해금·잔여 제한만 교류 전용 DTO로 합성한다. */
   async getInteractionExchangeOffers(): Promise<InteractionExchangeListResponse> {
@@ -166,7 +166,7 @@ export class FakeServer implements GameApi {
     const cached = this.interactionExchangeResults.get(request.requestId); if (cached) return structuredClone(cached);
     if (!Number.isSafeInteger(request.quantity) || request.quantity < 1) throw new GameApiError("INVALID_ITEM_QUANTITY", "교환 수량이 올바르지 않습니다.");
     const offer = findInteractionExchangeOffer(request.offerId); if (!offer) throw new GameApiError("PRODUCT_NOT_FOUND", "존재하지 않는 교환 제안입니다.");
-    const city = findInteractionCity(offer.requiredCityId); if (!city || !isInteractionCityUnlocked(city, this.state.playerResearch.level)) throw new GameApiError("INVALID_STATE", "교환 도시가 잠겨 있습니다.");
+    const city = findInteractionCity(offer.requiredCityId); if (!city || !isInteractionCityUnlocked(city, this.state.cleared)) throw new GameApiError("INVALID_STATE", "교환 도시가 잠겨 있습니다.");
     const now = this.now(); const key = `${offer.id}:${this.interactionExchangePeriodKey(offer, now)}`; const used = this.interactionExchangeCounts.get(key) ?? 0;
     if (used + request.quantity > offer.exchangeLimit) throw new GameApiError("PURCHASE_LIMIT_REACHED", "남은 교환 횟수를 초과했습니다.");
     const required = offer.cost.amount * request.quantity; const stack = this.state.itemInventory.find(({ itemId }) => itemId === offer.cost.itemId);
@@ -184,7 +184,7 @@ export class FakeServer implements GameApi {
   /** 일·주·계정 제한을 UTC 서버 키로 정규화한다. */
   private interactionExchangePeriodKey(offer: InteractionExchangeOffer, now: Date): string { const day = now.toISOString().slice(0, 10); if (offer.refresh === "daily") return day; if (offer.refresh === "weekly") { const date = new Date(`${day}T00:00:00Z`); date.setUTCDate(date.getUTCDate() - ((date.getUTCDay() + 6) % 7)); return date.toISOString().slice(0, 10); } return "account"; }
   /** 표시와 실행이 같은 제한 키·보유량·도시 판정을 공유한다. */
-  private interactionExchangeDto(offer: InteractionExchangeOffer, now: Date): import("./contracts").InteractionExchangeOfferDto { const definition = findItem(offer.cost.itemId)!; const owned = this.state.itemInventory.find(({ itemId }) => itemId === offer.cost.itemId)?.quantity ?? 0; const used = this.interactionExchangeCounts.get(`${offer.id}:${this.interactionExchangePeriodKey(offer, now)}`) ?? 0; const city = findInteractionCity(offer.requiredCityId)!; return { id: offer.id, name: offer.name, requiredCityId: offer.requiredCityId, cost: { itemId: offer.cost.itemId, itemName: definition.name, amount: offer.cost.amount, owned }, grants: offer.grants.map((grant) => ({ ...grant })), remaining: Math.max(0, offer.exchangeLimit - used), exchangeLimit: offer.exchangeLimit, unlocked: isInteractionCityUnlocked(city, this.state.playerResearch.level) }; }
+  private interactionExchangeDto(offer: InteractionExchangeOffer, now: Date): import("./contracts").InteractionExchangeOfferDto { const definition = findItem(offer.cost.itemId)!; const owned = this.state.itemInventory.find(({ itemId }) => itemId === offer.cost.itemId)?.quantity ?? 0; const used = this.interactionExchangeCounts.get(`${offer.id}:${this.interactionExchangePeriodKey(offer, now)}`) ?? 0; const city = findInteractionCity(offer.requiredCityId)!; return { id: offer.id, name: offer.name, requiredCityId: offer.requiredCityId, cost: { itemId: offer.cost.itemId, itemName: definition.name, amount: offer.cost.amount, owned }, grants: offer.grants.map((grant) => ({ ...grant })), remaining: Math.max(0, offer.exchangeLimit - used), exchangeLimit: offer.exchangeLimit, unlocked: isInteractionCityUnlocked(city, this.state.cleared) }; }
 
   async getInteractionDispatch(): Promise<InteractionDispatchResponse> { await this.delay(); return this.interactionDispatchResponse(); }
 
@@ -196,7 +196,7 @@ export class FakeServer implements GameApi {
   /** 출발 순간 서버가 편성·seed·결과와 절대 종료 시각을 함께 확정한다. */
   async startInteractionDispatch(request: StartInteractionDispatchRequest): Promise<InteractionDispatchResponse> {
     await this.delay(); const city = findInteractionCity(request.cityId);
-    if (!city || !isInteractionCityUnlocked(city, this.state.playerResearch.level)) throw new GameApiError("INVALID_STATE", "개방되지 않은 교류 도시입니다.");
+    if (!city || !isInteractionCityUnlocked(city, this.state.cleared)) throw new GameApiError("INVALID_STATE", "개방되지 않은 교류 도시입니다.");
     // 도시마다 한 팀씩 나간다. 같은 도시에 두 팀을 겹쳐 보내면 어느 쪽 보상인지 화면이 말할 수 없다.
     if (this.state.interaction.slots.some((slot) => slot && slot.cityId === city.id && !slot.claimed)) throw new GameApiError("INVALID_STATE", "이미 이 도시에 파견 중입니다.");
     // 나가 있는 팀은 다른 도시에도 함께 나갈 수 없다.

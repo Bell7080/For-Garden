@@ -14,7 +14,16 @@ export function validateInteractionFormation(ids: readonly string[], owned: Read
 }
 
 /** 연구 레벨은 서버 진행 스냅샷에서 읽으며 씬이 별도 개방 목록을 저장하지 않는다. */
-export function isInteractionCityUnlocked(city: InteractionCity, researchLevel: number): boolean { return Number.isInteger(researchLevel) && researchLevel >= city.unlock.researchLevel; }
+/**
+ * 그 도시가 열렸는가 — **스토리 진행 하나만 본다**(`docs/interaction-cities.md` §3).
+ *
+ * 조건이 없는 도시는 언제나 열려 있다. 조건이 있으면 그 관문을 **깬 적이 있어야** 하며,
+ * 알 수 없는 ID는 열지 않는다 — 없는 관문을 조건으로 적어 두면 조용히 전부 열린다.
+ */
+export function isInteractionCityUnlocked(city: InteractionCity, clearedStageIds: ReadonlySet<string>): boolean {
+  const required = city.unlock.stageId;
+  return required === undefined || clearedStageIds.has(required);
+}
 
 /** 추천 속성/스쿼드/태그의 일치 수마다 8%씩, 최대 36%까지 시간을 단축한다. */
 export function interactionSpeedMultiplier(city: InteractionCity, members: readonly InteractionMemberTraits[]): number {

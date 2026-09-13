@@ -5,7 +5,7 @@ export const INTERACTION_KO = {
   "interaction.exchange": "교환소",
   "interaction.dispatched": "파견 중 · {remaining}",
   "interaction.awaitingClaim": "수령 대기",
-  "interaction.lockedByResearch": "연구 Lv.{level}에 열린다",
+  "interaction.lockedByStage": "{stage} 클리어로 열린다",
 
   "interaction.journal": "도시 일지",
   "interaction.returning": "돌아오는 것",

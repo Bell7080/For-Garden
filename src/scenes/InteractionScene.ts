@@ -8,7 +8,7 @@ import type { InteractionDispatchSnapshot } from "../state/session";
 import { Button } from "../ui/Button";
 import { addBackButton } from "../ui/IconButton";
 import { addSceneBackground, BACKGROUND, useBackgroundTexture } from "../ui/backgrounds";
-import { drawFrameVignette, drawGlassFade, drawHairline, drawLayer, drawVignette, HOLO, slantedRect } from "../ui/holo";
+import { drawFrameVignette, drawGlassFade, drawHairline, drawLayer, drawVignette, slantedRect } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
 import { TopBar } from "../ui/TopBar";
 import { setDebugScene, setDebugStorefrontControls } from "../debug";
@@ -20,14 +20,39 @@ import { InteractionJournalPopup } from "../ui/InteractionJournalPopup";
 import { INTERACTION_LAYER, interactionLayersHeight, interactionLayerSpot } from "../ui/interactionLayerLayout";
 import { interactionLayerViews, interactionRemainingLabel, type InteractionLayerView } from "../ui/interactionLayerModel";
 import { coverCrop } from "../ui/coverCrop";
+import { drawGlyph } from "../ui/glyphs";
+import { STAGES } from "../data/stages";
+
+/**
+ * 여는 조건에 적을 관문 이름.
+ *
+ * 화면이 `1-4` 같은 ID를 그대로 적지 않는다 — 그 수는 데이터의 자리 번호이지 플레이어가
+ * 스테이지 화면에서 읽는 이름이 아니다. 알 수 없는 ID는 그 ID를 그대로 돌려주어 빠진 조건이
+ * 조용히 사라지지 않게 한다.
+ */
+function stageDisplayName(stageId: string | undefined): string {
+  if (!stageId) return "";
+  const stage = STAGES.find((candidate) => candidate.id === stageId);
+  return stage ? `${stage.id} ${stage.name}` : stageId;
+}
 
 const BLUE = 0x55b9e8;
 
-/** 층을 덮는 원화의 진하기. 글자가 그 위에서 읽혀야 하므로 절반을 넘기지 않는다. */
-const ART_ALPHA = 0.5;
-/** 양 끝에서 판 색으로 녹는 폭(px)과 그 끝의 진하기. */
-const ART_FADE_WIDTH = 260;
-const ART_FADE_ALPHA = 0.98;
+/**
+ * 카드를 채우는 원화의 진하기.
+ *
+ * **원화가 이 화면의 본질이다.** 0.5로 눌러 두었을 때는 어느 도시나 같은 잿빛 판으로 보여
+ * 목록을 훑을 이유가 없었다 — 글은 아래에서 올라오는 어둠이 받쳐 주므로 그림은 밝게 둔다.
+ */
+const ART_ALPHA = 0.92;
+/** 잠긴 카드의 원화. 검은 베일이 한 겹 더 덮이므로 조금만 눌러 둔다. */
+const ART_LOCKED_ALPHA = 0.8;
+/** 글이 서는 아래쪽만 덮는 어둠의 진하기. */
+const SCRIM_ALPHA = 0.92;
+/** 가장자리를 누르는 세기. 세게 두면 원화의 본질이 흐려진다. */
+const FRAME_VIGNETTE = 0.26;
+/** 잠긴 카드를 덮는 한 겹. 이름과 원화는 그 위로도 읽혀야 한다. */
+const LOCKED_VEIL = 0.52;
 /** 남은 시간이 초까지 도는 시계라 초가 바뀌는 순간을 놓치지 않을 만큼만 자주 본다. */
 const CLOCK_TICK_MS = 200;
 
@@ -154,7 +179,7 @@ export class InteractionScene extends Phaser.Scene {
 
   private currentViews(): InteractionLayerView[] {
     const dispatches = session.interaction.slots.filter((slot): slot is InteractionDispatchSnapshot => slot !== null);
-    return interactionLayerViews(session.playerResearch.level, dispatches, this.serverNow());
+    return interactionLayerViews(session.cleared, dispatches, this.serverNow());
   }
 
   /**
@@ -195,11 +220,13 @@ export class InteractionScene extends Phaser.Scene {
   }
 
   /**
-   * 층 한 장.
+   * 교류지 한 장.
    *
-   * 잠긴 층은 무엇이 열릴지만 말하고 눌리지 않는다. 나가 있는 층은 **검은 반투명을 한 겹 더
-   * 쌓아** 남은 시간을 그 위에 적는다 — 층을 지우지 않는 이유는 지금 어디에 누가 나가 있는지가
-   * 목록에서 바로 읽혀야 하기 때문이다.
+   * **원화가 카드를 채우고, 글은 아래에서 올라오는 어둠 위에 선다.** 카드 전체를 누르면
+   * 도시가 무엇을 그린 그림인지 읽히지 않으므로 위쪽 절반은 그대로 밝게 둔다.
+   *
+   * **잠긴 카드도 원화와 이름을 그대로 보여 준다** — 무엇이 열릴지 모르면 그 관문을 깰 이유가
+   * 화면에서 사라진다. 잠긴 것은 한 겹의 검정과 자물쇠, 그리고 여는 조건 한 줄이 말한다.
    */
   private buildLayer(view: InteractionLayerView, index: number): Phaser.GameObjects.Container {
     const spot = interactionLayerSpot(index);
@@ -207,76 +234,100 @@ export class InteractionScene extends Phaser.Scene {
     const { width, height, padding, textInset } = INTERACTION_LAYER;
     const locked = view.state === "locked";
     const shape = slantedRect(width, height, 30);
+    const bottom = height / 2;
     layer.add(drawLayer(this, 0, 0, shape, {
-      fill: locked ? COLOR.void : COLOR.panel,
-      alpha: locked ? 0.72 : HOLO.glass,
+      fill: COLOR.void,
+      alpha: 0.9,
       edge: view.state === "done" ? 0xe0a83e : BLUE,
-      edgeAlpha: locked ? 0.28 : 0.85,
+      edgeAlpha: locked ? 0.34 : 0.85,
     }));
 
-    // **원화가 층 전체를 덮되 늘어나지는 않는다.** 상자 크기에 맞춰 넣으면(`setDisplaySize`)
-    // 원화마다 비율이 달라 세로로 눌린 그림이 되었다. 대신 제 비율 그대로 키워 **넘치는 만큼만
-    // 잘라 낸다**(`coverCrop`) — 일부만 보여도 좋으니 생김새가 바뀌지 않는 쪽을 고른다.
+    // **원화가 카드를 채우되 늘어나지는 않는다.** 상자 크기에 맞춰 넣으면(`setDisplaySize`)
+    // 원화마다 비율이 달라 세로로 눌린 그림이 되었다. 제 비율 그대로 키워 **넘치는 만큼만
+    // 잘라 낸다**(`coverCrop`).
     //
     // 자르는 것은 기하 마스크가 아니라 **이미지 자신의 crop**이다. 이 목록은 세로로 흐르는데
     // 기하 마스크는 컨테이너 이동을 물려받지 않아, 마스크로 씌우면 스크롤하는 순간 원화만
-    // 제자리에 남는다. 양 끝은 여전히 판 색으로 녹여 글이 그림 위에서 읽히게 한다.
+    // 제자리에 남는다.
     //
     // **여기서 `textures.exists`로 가르지 않는다.** 부트가 미리 읽는 두 장 말고는 어느 도시
-    // 원화도 목록이 그려지는 순간에는 올라와 있지 않아, 물어보고 세우면 층은 늘 빈 판이었다.
-    // 판을 먼저 깔고 도착하는 대로 그 위에 그린다 — 원화가 사는 동안만 붙잡는 일은
-    // `useBackgroundTexture`가 맡는다.
-    if (!locked) {
-      const art = this.add.image(0, 0, "__DEFAULT").setAlpha(0);
-      layer.add(art);
-      useBackgroundTexture(this, art, view.city.illustration, (loaded) => {
-        const crop = coverCrop(loaded.width, loaded.height, width, height);
-        loaded.setScale(crop.scale);
-        loaded.setCrop(crop.cropX, crop.cropY, crop.cropWidth, crop.cropHeight);
-        this.tweens.add({ targets: loaded, alpha: ART_ALPHA, duration: 160 });
-      });
-      const fade = this.add.graphics();
-      // 왼쪽은 불투명 → 투명, 오른쪽은 투명 → 불투명. 두 끝이 판 색으로 녹아 붙여 넣은
-      // 섬네일처럼 각진 경계가 남지 않는다. 위아래로 흐르는 공용 `drawGlassFade`는 쓰지 않는다.
-      fade.fillGradientStyle(COLOR.void, COLOR.void, COLOR.void, COLOR.void, ART_FADE_ALPHA, 0, ART_FADE_ALPHA, 0);
-      fade.fillRect(-width / 2, -height / 2, ART_FADE_WIDTH, height);
-      fade.fillGradientStyle(COLOR.void, COLOR.void, COLOR.void, COLOR.void, 0, ART_FADE_ALPHA, 0, ART_FADE_ALPHA);
-      fade.fillRect(width / 2 - ART_FADE_WIDTH, -height / 2, ART_FADE_WIDTH, height);
-      layer.add(fade);
+    // 원화도 목록이 그려지는 순간에는 올라와 있지 않아, 물어보고 세우면 카드는 늘 빈 판이었다.
+    const art = this.add.image(0, 0, "__DEFAULT").setAlpha(0);
+    layer.add(art);
+    useBackgroundTexture(this, art, view.city.illustration, (loaded) => {
+      const crop = coverCrop(loaded.width, loaded.height, width, height);
+      loaded.setScale(crop.scale);
+      loaded.setCrop(crop.cropX, crop.cropY, crop.cropWidth, crop.cropHeight);
+      this.tweens.add({ targets: loaded, alpha: locked ? ART_LOCKED_ALPHA : ART_ALPHA, duration: 160 });
+    });
+
+    // 글이 서는 아래쪽만 어둠이 올라온다. 카드 전체를 누르면 원화가 잿빛이 된다.
+    const scrimHeight = height * INTERACTION_LAYER.scrim;
+    const scrim = this.add.graphics();
+    scrim.fillGradientStyle(COLOR.void, COLOR.void, COLOR.void, COLOR.void, 0, 0, SCRIM_ALPHA, SCRIM_ALPHA);
+    scrim.fillRect(-width / 2, bottom - scrimHeight, width, scrimHeight);
+    layer.add(scrim);
+
+    // **가장자리는 살짝만 누른다.** 강하게 누르면 원화의 본질이 흐려진다 — 카드 하나를 버튼으로
+    // 떼어 놓을 만큼만 남긴다.
+    layer.add(drawFrameVignette(this, 0, 0, width, height, { strength: FRAME_VIGNETTE }));
+
+    if (locked) {
+      // 잠긴 카드는 한 겹을 더 덮되 이름과 원화는 그대로 읽힌다.
+      layer.add(drawLayer(this, 0, 0, shape, { fill: COLOR.void, alpha: LOCKED_VEIL, shadow: false }));
+      layer.add(drawGlyph(this, "lock", 0, -40, INTERACTION_LAYER.lock, COLOR.inkDimHex, 0.9, 4));
     }
 
-    // **가장자리를 눌러 층 하나를 버튼으로 떼어 놓는다.** 원화가 판을 가득 채우면 어디까지가
-    // 한 층인지 흐려지므로, 네 변을 고르게 누르는 액자 비네트를 한 겹 얹는다. 같은 도형을
-    // 줄여 가며 두르는 `drawInnerVignette`은 가로로 긴 판에서 좌우가 더 많이 줄어 검은 줄이
-    // 여러 겹 어긋난 잔상으로 남는다.
-    layer.add(drawFrameVignette(this, 0, 0, width, height, { strength: 0.5 }));
-
-    // **글은 잠기든 말든 같은 x에서 시작한다.** 층이 화면보다 넓어 왼쪽 여백은 화면 밖에 있고,
-    // 거기서 시작하면 잠긴 층의 이름이 화면 왼쪽으로 잘려 나간다. 같은 시작선이 목록을 목록으로
-    // 읽히게 하는 것이기도 하다.
-    // 층이 화면(1080)보다 넓어 왼쪽 여백은 화면 밖에 있다. 판 왼쪽 변에서 시작하면 이름이
-    // 화면 왼쪽으로 잘려 나가므로, 화면 안으로 들어오는 자리를 시작선으로 삼는다.
     const textX = -width / 2 + padding + textInset;
     const name = `${view.city.displayName} ${INTERACTION_DEPARTMENT_LABEL[view.city.department]}`;
-    layer.add(this.add.text(textX, -44, name, textStyle({ role: "display", size: 36, color: locked ? COLOR.inkDim : "#dff2ff" })).setOrigin(0, 0.5));
-    layer.add(this.add.text(textX, 6, locked ? t("interaction.lockedByResearch", { level: view.city.unlock.researchLevel }) : interactionDurationLabel(view.city.durationMinutes), textStyle({ role: "emphasis", size: 26, color: locked ? COLOR.inkDim : COLOR.accentText })).setOrigin(0, 0.5));
+    layer.add(this.add
+      .text(textX, bottom - INTERACTION_LAYER.nameUp, name, textStyle({ role: "display", size: 38, color: locked ? COLOR.inkDim : "#dff2ff" }))
+      .setOrigin(0, 0.5)
+      .setShadow(0, 3, "#05070a", 6, false, true));
+    // 아랫줄은 그 도시가 무엇을 하는 자리인지 한 줄로 말한다. 잠긴 카드만 여는 조건이 대신 선다.
+    const note = locked
+      ? t("interaction.lockedByStage", { stage: stageDisplayName(view.city.unlock.stageId) })
+      : view.city.description;
+    layer.add(this.add
+      .text(textX, bottom - INTERACTION_LAYER.noteUp, note, textStyle({ role: "body", size: 23, color: locked ? "#e0a83e" : COLOR.inkDim }))
+      .setOrigin(0, 0.5)
+      .setShadow(0, 2, "#05070a", 5, false, true));
 
-    if (view.state === "away" || view.state === "done") {
-      // 나가 있는 동안에는 층 위에 한 겹을 더 덮는다. 완료는 덮지 않고 색으로 알린다.
-      if (view.state === "away") layer.add(drawLayer(this, 0, 0, shape, { fill: COLOR.void, alpha: 0.62 }));
-      const label = view.state === "away" ? t("interaction.dispatched", { remaining: interactionRemainingLabel(view.remainingMs ?? 0) }) : t("interaction.awaitingClaim");
-      const text = this.add.text(textX, 52, label, textStyle({ role: "emphasis", size: 28, color: view.state === "away" ? "#a8ddf5" : "#e0a83e" })).setOrigin(0, 0.5);
-      layer.add(text);
-      // 시계는 이 줄 하나만 초마다 갈아 끼운다 — 층을 다시 만들면 원화까지 매초 새로 선다.
-      if (view.state === "away") this.remainingLabels[index] = text;
-    }
+    // 오른쪽 칩 한 장이 **지금 이 카드에서 읽어야 할 수**를 든다 — 아직이면 소요 시간,
+    // 나가 있으면 남은 시간, 다녀왔으면 수령 대기다.
+    if (!locked) layer.add(this.buildStateChip(view, index, width, bottom));
 
     if (!locked) {
       const hit = this.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
-      hit.on("pointerup", () => this.openCity(view));
+      hit.on("pointerdown", () => layer.setScale(1.02));
+      hit.on("pointerout", () => layer.setScale(1));
+      hit.on("pointerup", () => { layer.setScale(1); this.openCity(view); });
       layer.add(hit);
     }
     return layer;
+  }
+
+  /**
+   * 카드 오른쪽 아래의 칩 한 장.
+   *
+   * 세 상태가 **같은 자리·같은 크기**로 갈아 끼워진다 — 상태마다 다른 자리에 적으면 훑는 눈이
+   * 카드마다 다른 곳을 찾아야 한다. 시계만 도는 동안에는 이 글자 하나만 갈아 끼운다.
+   */
+  private buildStateChip(view: InteractionLayerView, index: number, width: number, bottom: number): Phaser.GameObjects.Container {
+    const { chip } = INTERACTION_LAYER;
+    const away = view.state === "away";
+    const done = view.state === "done";
+    const tone = done ? 0xe0a83e : away ? BLUE : COLOR.accent;
+    const holder = this.add.container(width / 2 - chip.inset - chip.width / 2, bottom - chip.up);
+    holder.add(drawLayer(this, 0, 0, slantedRect(chip.width, chip.height, 14), { fill: 0x05070a, alpha: 0.88, edge: tone, edgeAlpha: 0.9 }));
+    const label = done
+      ? t("interaction.awaitingClaim")
+      : away ? interactionRemainingLabel(view.remainingMs ?? 0) : interactionDurationLabel(view.city.durationMinutes);
+    const text = this.add.text(0, 0, label, textStyle({ role: "emphasis", size: 27, color: done ? "#e0a83e" : away ? "#a8ddf5" : COLOR.accentText })).setOrigin(0.5);
+    holder.add(text);
+    // 시계는 이 글자 하나만 초마다 갈아 끼운다 — 카드를 다시 만들면 원화까지 매초 새로 선다.
+    if (away) this.remainingLabels[index] = text;
+    return holder;
   }
 
   /** 층을 누르면 그 도시의 쪽지가 열린다. 완료한 층은 바로 보상으로 이어진다. */

@@ -23,8 +23,16 @@ export const INTERACTION_DEPARTMENT_LABEL: Readonly<Record<InteractionDepartment
 /** 종료 시각은 포함하지 않는 운영 정적 정의다. 실제 시각은 출발 API가 서버 시계로 확정한다. */
 export interface InteractionCity {
   readonly id: string; readonly displayName: string; readonly department: InteractionDepartment; readonly description: string;
-  /** 해금은 **플레이어 레벨**이 연다. 도시가 늘어나는 순서가 곧 성장 순서다. */
-  readonly unlock: { readonly researchLevel: number };
+  /**
+   * 해금은 **스토리 진행이 연다**(`docs/interaction-cities.md` §3).
+   *
+   * 플레이어 레벨로 열던 때는 레벨이 스토리를 앞질러, 아직 만나지도 않은 도시의 창구가 먼저
+   * 열렸다. 지금은 그 도시를 알게 되는 관문을 지나야 열린다.
+   *
+   * **비워 두면 처음부터 열려 있다.** 교류에 처음 들어온 손이 빈 목록을 보지 않도록 앞의 세
+   * 곳은 조건을 두지 않는다 — 눌러 볼 것이 하나도 없는 화면은 콘텐츠가 없는 것으로 읽힌다.
+   */
+  readonly unlock: { readonly stageId?: string };
   /**
    * 파견에 드는 시간(분).
    *
@@ -66,7 +74,7 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
     // 흘린다.
     id: "doppel-parlor", displayName: "도플 · 중앙 연구소 응접실", department: "exchange",
     description: "도플의 중앙 연구소 한쪽에 딸린 응접실. 손님을 앉혀 두고 연구 일지를 한 장씩 내어 준다.",
-    unlock: { researchLevel: 1 }, durationMinutes: 10, partySize: { min: 1, max: 3 },
+    unlock: {}, durationMinutes: 10, partySize: { min: 1, max: 3 },
     recommended: { elements: ["water"], squads: ["rune"], tags: ["garden"] },
     rewards: [{ currency: "gold", amount: 600, weight: 6 }, { currency: "cheesecake", amount: 1, weight: 2 }],
     clueJournalId: "interaction-doppel-01", illustration: "background-interaction-doppel-parlor",
@@ -76,7 +84,7 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
     // 내어 주는 곳이라면, 여기는 그 일지를 실제로 쓰는 자리라 결재가 한 단계 더 걸린다.
     id: "doppel-lab", displayName: "도플 · 중앙 연구소 외곽 연구실", department: "council",
     description: "중앙 연구소 안쪽의 외곽 연구실. 복원 계획서에 결재가 한 번 더 필요해 오래 기다려야 한다.",
-    unlock: { researchLevel: 2 }, durationMinutes: 240, partySize: { min: 1, max: 3 },
+    unlock: {}, durationMinutes: 240, partySize: { min: 1, max: 3 },
     recommended: { elements: ["water", "grass"], squads: ["rune"], tags: ["garden"] },
     rewards: [{ currency: "gold", amount: 4200, weight: 5 }, { currency: "gems", amount: 8, weight: 1 }],
     clueJournalId: "interaction-doppel-lab-01", illustration: "background-interaction-doppel-lab",
@@ -84,7 +92,7 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
   {
     id: "night-ward", displayName: "나이트 시티", department: "exchange",
     description: "밤에도 구조 신호가 끊이지 않는 침수 외곽 의료 구역. 손이 모자라 오래 붙잡지 않는다.",
-    unlock: { researchLevel: 3 }, durationMinutes: 30, partySize: { min: 1, max: 3 },
+    unlock: {}, durationMinutes: 30, partySize: { min: 1, max: 3 },
     recommended: { elements: ["wind"], squads: ["gear"], tags: ["night-gear"] },
     rewards: [{ currency: "gold", amount: 1500, weight: 5, tags: ["night-gear"] }, { currency: "fossil", amount: 90, weight: 2 }],
     clueJournalId: "interaction-night-01", illustration: "background-expedition-ranking",
@@ -92,7 +100,7 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
   {
     id: "night-council", displayName: "나이트 시티", department: "council",
     description: "구조 기록을 넘겨받는 야간 관제탑. 협정 한 줄에 밤이 통째로 든다.",
-    unlock: { researchLevel: 5 }, durationMinutes: 480, partySize: { min: 1, max: 3 },
+    unlock: { stageId: "1-4" }, durationMinutes: 480, partySize: { min: 1, max: 3 },
     recommended: { elements: ["wind", "fire"], squads: ["gear"], tags: ["night-gear"] },
     rewards: [{ currency: "gold", amount: 9000, weight: 5 }, { currency: "gems", amount: 16, weight: 1, tags: ["wind"] }],
     clueJournalId: "interaction-night-02", illustration: "background-expedition-field",
@@ -100,7 +108,7 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
   {
     id: "abyss-port", displayName: "심해 항만구", department: "exchange",
     description: "도시 끝의 인양조가 고대 화물과 잃어버린 기록을 건져 올린다.",
-    unlock: { researchLevel: 6 }, durationMinutes: 60, partySize: { min: 1, max: 3 },
+    unlock: { stageId: "1-7" }, durationMinutes: 60, partySize: { min: 1, max: 3 },
     recommended: { elements: ["water", "wind"], squads: ["gear"], tags: ["salvage"] },
     rewards: [{ currency: "fossil", amount: 220, weight: 5 }, { currency: "gold", amount: 2600, weight: 2 }],
     clueJournalId: "interaction-abyss-01", illustration: "background-excavation",
@@ -108,7 +116,7 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
   {
     id: "abyss-council", displayName: "심해 항만구", department: "council",
     description: "인양권을 나누는 항만 위원회. 하루를 통째로 비워 두고 다녀와야 한다.",
-    unlock: { researchLevel: 9 }, durationMinutes: 1440, partySize: { min: 1, max: 3 },
+    unlock: { stageId: "1-10" }, durationMinutes: 1440, partySize: { min: 1, max: 3 },
     recommended: { elements: ["water"], squads: ["gear", "fang"], tags: ["salvage"] },
     rewards: [{ currency: "fossil", amount: 900, weight: 5 }, { currency: "amber", amount: 2, weight: 1 }],
     clueJournalId: "interaction-abyss-02", illustration: "background-archaeology",
@@ -116,7 +124,7 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
   {
     id: "ember-market", displayName: "잿불 시장구", department: "exchange",
     description: "무너진 화력 발전소 아래 선 노천 시장. 재고가 도는 동안만 문이 열린다.",
-    unlock: { researchLevel: 12 }, durationMinutes: 120, partySize: { min: 1, max: 3 },
+    unlock: { stageId: "2-5" }, durationMinutes: 120, partySize: { min: 1, max: 3 },
     recommended: { elements: ["fire"], squads: ["fang"], tags: ["market"] },
     rewards: [{ currency: "gold", amount: 5200, weight: 6 }, { currency: "cheesecake", amount: 6, weight: 2 }],
     clueJournalId: "interaction-ember-01", illustration: "background-shop",
@@ -124,7 +132,7 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
   {
     id: "ember-council", displayName: "잿불 시장구", department: "council",
     description: "상단주들이 모이는 잿불 회합. 값을 정하는 자리라 밤을 넘긴다.",
-    unlock: { researchLevel: 15 }, durationMinutes: 720, partySize: { min: 1, max: 3 },
+    unlock: { stageId: "2-10" }, durationMinutes: 720, partySize: { min: 1, max: 3 },
     recommended: { elements: ["fire", "earth"], squads: ["fang"], tags: ["market"] },
     rewards: [{ currency: "gold", amount: 14_000, weight: 5 }, { currency: "amber", amount: 3, weight: 1 }],
     clueJournalId: "interaction-ember-02", illustration: "background-sortie-cake",

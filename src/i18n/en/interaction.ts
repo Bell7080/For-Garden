@@ -5,7 +5,7 @@ export const INTERACTION_EN = {
   "interaction.exchange": "Exchange Post",
   "interaction.dispatched": "Dispatched · {remaining}",
   "interaction.awaitingClaim": "Awaiting claim",
-  "interaction.lockedByResearch": "Opens at Research Lv.{level}",
+  "interaction.lockedByStage": "Opens after clearing {stage}",
   "interaction.journal": "City Journal",
   "interaction.returning": "Bringing back",
   "interaction.autoPlace": "Auto Place",

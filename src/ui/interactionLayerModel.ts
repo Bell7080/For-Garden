@@ -1,4 +1,5 @@
 import { INTERACTION_CITIES, type InteractionCity } from "../data/interactionCities";
+import { isInteractionCityUnlocked } from "../core/interactionDispatch";
 import { t } from "../i18n";
 import type { InteractionDispatchSnapshot } from "../state/session";
 
@@ -26,7 +27,7 @@ export interface InteractionLayerView {
  * 이유가 화면에서 사라진다.
  */
 export function interactionLayerViews(
-  playerLevel: number,
+  clearedStageIds: ReadonlySet<string>,
   dispatches: readonly InteractionDispatchSnapshot[],
   nowMs: number,
   cities: readonly InteractionCity[] = INTERACTION_CITIES,
@@ -39,7 +40,9 @@ export function interactionLayerViews(
     if (!previous || Date.parse(dispatch.startedAt) >= Date.parse(previous.startedAt)) byCity.set(dispatch.cityId, dispatch);
   }
   return cities.map((city) => {
-    if (playerLevel < city.unlock.researchLevel) return { city, state: "locked" as const };
+    // 해금 판정은 서버와 화면이 **같은 한 규칙**을 읽는다. 여기서 다시 비교하면 서버가 거절한
+    // 도시가 화면에서만 열려 보인다.
+    if (!isInteractionCityUnlocked(city, clearedStageIds)) return { city, state: "locked" as const };
     const dispatch = byCity.get(city.id);
     if (!dispatch) return { city, state: "idle" as const };
     const remainingMs = Math.max(0, Date.parse(dispatch.completesAt) - nowMs);

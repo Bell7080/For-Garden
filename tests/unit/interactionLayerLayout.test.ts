@@ -41,6 +41,28 @@ describe("교류 층 자리", () => {
     expect(INTERACTION_LAYER.padding * 2).toBeLessThan(INTERACTION_LAYER.height);
   });
 
+  it("첫 카드가 창 안에서 시작하고 원화가 읽힐 만큼 두껍다", () => {
+    // 176px 띠이던 때는 세로 원화가 스무 남짓으로 잘려 색만 남았다.
+    expect(INTERACTION_LAYER.firstY - INTERACTION_LAYER.height / 2).toBeGreaterThanOrEqual(INTERACTION_LAYER.viewport.top);
+    expect(INTERACTION_LAYER.width / INTERACTION_LAYER.height).toBeLessThan(4.5);
+  });
+
+  it("글 두 줄과 상태 칩이 어둠이 덮는 아래쪽 안에 든다", () => {
+    // 어둠은 아래쪽만 덮는다 — 카드 전체를 누르면 무엇을 그린 그림인지 읽히지 않는다.
+    const scrimTop = INTERACTION_LAYER.height * INTERACTION_LAYER.scrim;
+    expect(INTERACTION_LAYER.nameUp).toBeLessThan(scrimTop);
+    expect(INTERACTION_LAYER.noteUp).toBeLessThan(INTERACTION_LAYER.nameUp);
+    expect(INTERACTION_LAYER.chip.up + INTERACTION_LAYER.chip.height / 2).toBeLessThan(scrimTop);
+    // 칩은 오른쪽 끝, 이름은 왼쪽 끝이라 둘이 같은 줄에서 만나지 않는다.
+    const chipLeft = INTERACTION_LAYER.width / 2 - INTERACTION_LAYER.chip.inset - INTERACTION_LAYER.chip.width;
+    expect(chipLeft).toBeGreaterThan(-INTERACTION_LAYER.width / 2 + INTERACTION_LAYER.padding);
+  });
+
+  it("가장자리 누르기는 원화를 흐리지 않을 만큼만이다", () => {
+    // 0.5로 두었을 때는 어느 도시나 같은 잿빛 판으로 보여 목록을 훑을 이유가 없었다.
+    expect(INTERACTION_LAYER.scrim).toBeLessThan(0.6);
+  });
+
   it("목록 높이는 층 수에서 나온다", () => {
     expect(interactionLayersHeight(0)).toBe(0);
     expect(interactionLayersHeight(1)).toBe(INTERACTION_LAYER.height);

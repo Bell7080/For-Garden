@@ -5,7 +5,7 @@ export const INTERACTION_JA = {
   "interaction.exchange": "交換所",
   "interaction.dispatched": "派遣中 · {remaining}",
   "interaction.awaitingClaim": "受け取り待ち",
-  "interaction.lockedByResearch": "研究 Lv.{level}で解放される",
+  "interaction.lockedByStage": "{stage} クリアで解放",
 
   "interaction.journal": "都市日誌",
   "interaction.returning": "持ち帰るもの",

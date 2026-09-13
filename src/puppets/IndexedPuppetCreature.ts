@@ -123,10 +123,33 @@ function createProgram(gl: WebGLRenderingContext): SharedGpuProgram {
   };
 }
 
+/**
+ * 일꾼이 이미 디코드해 보낸 원화. 아직 Phaser에 올리지 않은 것만 잠깐 들고 있는다.
+ *
+ * 올리고 나면 곧바로 지운다 — Texture Manager가 같은 그림을 붙잡으므로 여기 남겨 두면
+ * 한 장에 6MB 남짓한 픽셀을 두 곳이 세는 셈이 된다.
+ */
+const decodedTextures = new Map<string, ImageBitmap>();
+
+/** 일꾼이 해석한 묶음의 원화를 등록한다. 실제 업로드는 씬이 생길 때 `ensureTexture`가 한다. */
+export function registerDecodedTexture(name: string, bitmap: ImageBitmap): void {
+  if (!decodedTextures.has(name)) decodedTextures.set(name, bitmap);
+}
+
 /** 같은 Puppet 이미지는 Phaser Texture Manager에 한 번만 디코딩해서 모든 개체가 공유한다. */
 export async function ensureTexture(scene: Phaser.Scene, puppet: Puppet): Promise<string> {
   const key = `puppetforge:indexed:${puppet.name}`;
   if (scene.textures.exists(key)) return key;
+
+  // 일꾼이 이미 픽셀로 풀어 둔 그림은 디코드를 건너뛰고 그대로 올린다. 확인과 등록 사이에
+  // `await`가 없어야 같은 묶음을 동시에 여는 두 카드가 서로의 그림을 가로채지 않는다.
+  const decoded = decodedTextures.get(puppet.name);
+  if (decoded) {
+    decodedTextures.delete(puppet.name);
+    // Phaser의 TextureSource는 `texImage2D`가 받는 원본이면 무엇이든 그대로 올린다.
+    scene.textures.addImage(key, decoded as unknown as HTMLImageElement);
+    return key;
+  }
   if (!puppet.texture) throw new Error(`Puppet 묶음에 이미지가 없습니다: ${puppet.name}`);
 
   // Blob 타입은 SharedArrayBuffer 가능성을 받지 않으므로 독립 ArrayBuffer 복사본으로 넘긴다.

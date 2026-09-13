@@ -692,12 +692,32 @@ const motionCompletions = new WeakMap<PuppetCreature, () => void>();
 /** 묶음의 정적 프로젝트와 텍스처는 파일당 한 번만 읽어 재사용한다. */
 const loaded = new Map<string, Promise<Puppet>>();
 
+/**
+ * 묶음 하나를 읽는다.
+ *
+ * **내려받기·ZIP 해제·puppet.json 파싱·원화 디코드는 전부 일꾼이 한다**(`puppetParsePool`).
+ * 도감 한 화면이 카탈로그 전부의 카드를 세우므로 그 넷을 메인 스레드에서 하면 그동안 화면이
+ * 통째로 멎는다 — 실측에서 가장 무거운 것은 파싱(한 장에 10ms 안팎)이 아니라 **원화 디코드**
+ * (한 장에 400ms 남짓)라, 파싱만 옮겨서는 아무것도 달라지지 않는다.
+ *
+ * 메인 스레드에 남는 것은 정적 프로젝트로 재생기를 만드는 일뿐이고, 그림을 GPU에 올리는 일은
+ * 씬이 생기는 순간 `ensureTexture`가 맡는다. 일꾼을 쓸 수 없는 환경은 예전처럼 여기서 전부 한다.
+ */
 async function loadPuppet(asset: PuppetAsset): Promise<Puppet> {
   let pending = loaded.get(asset.url);
   if (!pending) {
     // ZIP의 원본 격자와 모든 deform 가중치를 그대로 캐시한다. 인게임용 재샘플링은 하지 않는다.
     // 렌더러 모듈은 실제 Puppet 로딩 시점에만 평가해 순수 resolver 단위 테스트가 DOM을 요구하지 않게 한다.
-    pending = import("puppetforge/phaser").then(({ Puppet }) => Puppet.load(asset.url));
+    pending = (async () => {
+      const { parsePuppetOffThread } = await import("./puppetParsePool");
+      const parsed = await parsePuppetOffThread(asset.url);
+      const { Puppet } = await import("puppetforge/phaser");
+      if (!parsed) return Puppet.load(asset.url);
+      const puppet = Puppet.fromProject(parsed.project);
+      const { registerDecodedTexture } = await import("./IndexedPuppetCreature");
+      registerDecodedTexture(puppet.name, parsed.bitmap);
+      return puppet;
+    })();
     loaded.set(asset.url, pending);
   }
   return pending;

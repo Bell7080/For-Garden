@@ -45,6 +45,8 @@ export interface DebugBattle {
 }
 
 export interface DebugState {
+  /** 현재 실행 중인 번들을 만든 Git 커밋. E2E가 오래된 preview 접속을 거부하는 데 쓴다. */
+  build: { commit: string };
   ready: boolean;
   scene: string;
   /** 캔버스 DOM에서 읽을 수 없는 현재 화면 제목을 E2E가 사용자 관점으로 확인할 때 쓴다. */
@@ -168,7 +170,7 @@ declare global {
 }
 
 function ensure(): DebugState {
-  window.__PF_DEBUG ??= { ready: false, scene: "boot" };
+  window.__PF_DEBUG ??= { build: { commit: __PF_BUILD_COMMIT__ }, ready: false, scene: "boot" };
   return window.__PF_DEBUG;
 }
 

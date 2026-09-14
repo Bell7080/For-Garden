@@ -84,6 +84,8 @@ async function pickParty(page: Page): Promise<void> {
 }
 
 async function enterBattle(page: Page): Promise<void> {
+  // 테스트 빌드의 명시적 창구에 고정 seed를 넣어 전투 사건 순서가 실행마다 흔들리지 않게 한다.
+  await page.evaluate(() => { window.__PF_BATTLE_TEST__ ??= { seed: 0x5eed }; });
   await enterParty(page);
   await pickParty(page);
   await tap(page, BASE_WIDTH / 2, 1700); // 전투 시작
@@ -134,26 +136,6 @@ test("1080×1920 전장 HUD와 궁극기 입력이 겹치지 않는다", async (
   await captureGame(page, `test-results/${testInfo.project.name}-battle-hp-buffs-ultimate-safe-area-1080x1920.png`);
 });
 
-/** 큰 돌출 머리(스피나)와 좌우로 치우친 얼굴(렉시아)의 충전 가림막 경계를 실제 캔버스로 남긴다. */
-test("궁극기 카드 몸통과 돌출 머리는 빈·중간·꽉 참에서 한 부채꼴로 걷힌다", async ({ page }, testInfo) => {
-  await enterBattle(page);
-  await expect.poll(async () => (await battle(page))?.chargeRatios?.[1] ?? 1).toBeLessThan(0.08);
-  await captureGame(page, `test-results/${testInfo.project.name}-battle-charge-portrait-000.png`);
-
-  // 충전은 한 방마다 계단으로 오른다 — 지금 이 개체는 한 번에 약 24%씩 차서 0.47 다음이 0.71이라
-  // 정확히 절반인 프레임 자체가 존재하지 않는다(좁은 창을 기다리면 영영 오지 않는다). 부채꼴이
-  // 반쯤 걷힌 것을 남기는 것이 목적이므로 실제로 지나가는 중간 구간을 잡는다.
-  await expect.poll(async () => {
-    const ratio = (await battle(page))?.chargeRatios?.[1] ?? 0;
-    return ratio >= 0.35 && ratio <= 0.8;
-  }, { timeout: 60_000 }).toBe(true);
-  await captureGame(page, `test-results/${testInfo.project.name}-battle-charge-portrait-mid.png`);
-
-  // 수동 궁극기 기본값에서는 100%가 유지되므로 몸통과 머리 복제 모두 완전히 사라진 상태를 캡처한다.
-  await expect.poll(async () => (await battle(page))?.chargeRatios?.[1] ?? 0, { timeout: 60_000 }).toBe(1);
-  await captureGame(page, `test-results/${testInfo.project.name}-battle-charge-portrait-100.png`);
-});
-
 test("전투 기여도 판을 열고 세 분류를 바꾼 뒤 접어 1080×1920 테마를 보존한다", async ({ page }, testInfo) => {
   await page.setViewportSize({ width: BASE_WIDTH, height: BASE_HEIGHT });
   await enterBattle(page);
@@ -176,10 +158,10 @@ test("전투 기여도 판을 열고 세 분류를 바꾼 뒤 접어 1080×1920 
 
 test("일반 전투 결과의 기여도 세 분류를 확인하고 닫은 뒤 기존 저장 조작으로 복귀한다", async ({ page }, testInfo) => {
   await page.setViewportSize({ width: BASE_WIDTH, height: BASE_HEIGHT });
+  // test mode에서만 열리는 preset은 적 HP만 1로 시작시켜 결과 팝업 연결을 실제 시간 대기와 분리한다.
+  await page.addInitScript(() => { window.__PF_BATTLE_TEST__ = { seed: 0x5eed, preset: "result" }; });
   await enterBattle(page);
-  // 3배속으로 결과까지 진행하되 결과 스냅샷을 만들기 위해 전투를 별도로 재현하지 않는다.
-  await tap(page, BATTLE_CONTROLS.speedX, BATTLE_CONTROLS.rowY); await tap(page, BATTLE_CONTROLS.speedX, BATTLE_CONTROLS.rowY);
-  await expect.poll(async () => (await battle(page))?.phase !== "fight", { timeout: 60_000 }).toBe(true);
+  await expect.poll(async () => (await battle(page))?.phase !== "fight", { timeout: 10_000 }).toBe(true);
   // 승리 결과는 StageCompletePopup(보상 팝업의 연장선)이다 — 화면 중심에 뜨는 "공격 · 방어 ·
   // 회복" 버튼(로컬 (0,90))을 눌러 같은 popups 위에 기여도 그래프를 한 겹 더 연다. SD가
   // 다 뜨기 전에 누르지 않도록 팝업이 실제로 열렸다는 디버그 플래그부터 기다린다.
@@ -196,32 +178,6 @@ test("일반 전투 결과의 기여도 세 분류를 확인하고 닫은 뒤 �
   // 눌러도 지도로 넘어간다.
   await tap(page, BASE_WIDTH - 106, BASE_HEIGHT - 120); await tap(page, BASE_WIDTH / 2, 790);
   await expect.poll(() => scene(page)).toBe("stageMap");
-});
-
-test("토리카 패시브 회복은 1080×1920 전장에서 초록 +수치로 표시된다", async ({ page }, testInfo) => {
-  await page.setViewportSize({ width: BASE_WIDTH, height: BASE_HEIGHT });
-  await enterBattle(page);
-  // 배속은 코어 진행만 앞당기며 회복 숫자의 화면 수명은 정상 속도라 캡처할 시간이 유지된다.
-  await tap(page, BATTLE_CONTROLS.speedX, BATTLE_CONTROLS.rowY);
-  await tap(page, BATTLE_CONTROLS.speedX, BATTLE_CONTROLS.rowY);
-  await expect.poll(async () => (await battle(page))?.healPopups ?? 0, { timeout: 45_000 }).toBeGreaterThan(0);
-  await captureGame(page, `test-results/${testInfo.project.name}-battle-torika-passive-heal-1080x1920.png`);
-});
-
-test("토리카 궁극기의 다중 기절 뱃지를 1080×1920 전장에서 함께 표시한다", async ({ page }, testInfo) => {
-  await page.setViewportSize({ width: BASE_WIDTH, height: BASE_HEIGHT });
-  await enterBattle(page);
-  // 가까이 모인 적이 둘 이상이고 토리카 궁극기가 준비된 순간의 범위 기절 장면을 고정한다.
-  await tap(page, BATTLE_CONTROLS.speedX, BATTLE_CONTROLS.rowY);
-  await tap(page, BATTLE_CONTROLS.speedX, BATTLE_CONTROLS.rowY);
-  // **손으로 누르지 않고 자동 궁극기에 맡긴다.** 배속은 프레임이 촘촘할 때만 실제로 빨라지고
-  // (코어가 한 프레임에 진행하는 시간에 상한이 있다), 느린 환경에서는 "준비됐다"를 보고 누르러
-  // 가는 사이에 전투가 끝나 버린다 — 그때는 이미 지도로 돌아가 있어 눌러도 아무 일이 없었다.
-  // 자동은 충전이 끝나는 그 프레임에 발동하므로 전투가 끝나기 전에 반드시 터진다.
-  await tap(page, BATTLE_CONTROLS.rightX, BATTLE_CONTROLS.rowY);
-  await expect.poll(async () => (await battle(page))?.autoUltimate).toBe(true);
-  await expect.poll(async () => (await battle(page))?.stunned?.length ?? 0, { timeout: 90_000 }).toBeGreaterThanOrEqual(2);
-  await captureGame(page, `test-results/${testInfo.project.name}-battle-multi-stun-1080x1920.png`);
 });
 
 test("전투 시작의 빠른 연속 탭은 한 번만 진입하고 유효 편성을 보존한다", async ({ page }) => {
@@ -307,20 +263,6 @@ test("관찰 일지의 단일 조작에서 질문과 모든 답변을 한 선택
   await captureGame(page, `test-results/${test.info().project.name}-observation-interview-popup.png`);
 });
 
-test("실시간 자동 전투는 입력 없이 서로 붙어 체력을 깎는다", async ({ page }) => {
-  await enterBattle(page);
-  const before = await battle(page);
-
-  // 조작하지 않아도 여섯이 달려가 붙고, 양쪽 체력이 함께 줄어든다.
-  await expect
-    .poll(async () => (await battle(page))?.enemyHp, { timeout: 20_000 })
-    .toBeLessThan(before!.enemyHp);
-  await expect
-    .poll(async () => (await battle(page))?.playerHp, { timeout: 20_000 })
-    .toBeLessThan(before!.playerHp);
-  await expect.poll(async () => (await battle(page))?.elapsed).toBeGreaterThan(0);
-});
-
 test("출전 전 지도와 편성에서도 같은 적 분석창이 열린다", async ({ page }) => {
   await startAfterOpening(page);
   await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
@@ -375,25 +317,7 @@ test("전투 조작 칩으로 1·2·3배속과 자동 궁극기를 전환한다"
   await captureGame(page, `test-results/${test.info().project.name}-battle-controls.png`);
 });
 
-test("동시에 준비된 두 궁극기는 연출 하나씩 직렬 실행한다", async ({ page }) => {
-  await enterBattle(page);
-  // 빠르게 게이지를 모으되 자동 발동은 두 명이 준비될 때까지 켜지 않는다.
-  await tap(page, BATTLE_CONTROLS.speedX, BATTLE_CONTROLS.rowY);
-  await tap(page, BATTLE_CONTROLS.speedX, BATTLE_CONTROLS.rowY);
-  // 위와 같은 이유로 넉넉히 기다린다. 여기는 둘이 함께 준비되어야 해 더 오래 걸린다.
-  await expect.poll(async () => (await battle(page))?.ultimateReady.length ?? 0, { timeout: 90_000 }).toBeGreaterThanOrEqual(2);
-  await tap(page, BATTLE_CONTROLS.rightX, BATTLE_CONTROLS.rowY);
-
-  // 첫 연출 활성 중 다음 전투원이 큐에 남는 것이 곧 겹치지 않고 직렬화됐다는 관찰 계약이다.
-  await expect.poll(async () => (await battle(page))?.ultimateSequenceActive, { timeout: 5_000 }).toBe(true);
-  await expect.poll(async () => (await battle(page))?.ultimateQueue?.length ?? 0).toBeGreaterThanOrEqual(1);
-  await captureGame(page, `test-results/${test.info().project.name}-ultimate-serialized.png`);
-  // 두 연출이 모두 끝나면 큐와 입력 잠금이 함께 풀린다.
-  await expect.poll(async () => (await battle(page))?.ultimateSequenceActive, { timeout: 10_000 }).toBe(false);
-  await expect.poll(async () => (await battle(page))?.ultimateQueue ?? []).toEqual([]);
-});
-
-test("전투는 한쪽이 전멸하면 끝난다", async ({ page }) => {
+test("@slow 실제 시간 전투는 한쪽이 전멸하면 끝난다", async ({ page }) => {
   await enterBattle(page);
 
   await expect

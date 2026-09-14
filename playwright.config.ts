@@ -1,5 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
+// 기기별로 반복할 가치가 있는 화면 배치·에셋 회귀만 이 목록에서 명시적으로 관리한다.
+const DEVICE_VISUAL_SPECS = ["**/mobile.spec.ts", "**/languageWalk.spec.ts", "**/relicAssetRegression.spec.ts"];
+
 /**
  * 실제 모바일 기기가 없어도 GitHub Actions에서 화면비/터치 구동을 확인하기 위한 설정.
  * 빌드된 결과물을 `vite preview`로 띄운 뒤 세로형 기기 프로필로 접속한다.
@@ -8,7 +11,7 @@ export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: true,
   /**
-   * **한 번에 한 편만 돈다.**
+   * **한 실행기 안에서는 직렬, CI 실행기 간에는 shard 병렬**로 돈다.
    *
    * 이 게임은 매 프레임 WebGL로 전장을 다시 그리고, 스펙은 "몇 초 안에 이 상태가 되는가"를
    * 폴링으로 잰다. 브라우저 넷이 한 기계에서 동시에 돌면 프레임이 굶어 그 시간 안에 상태가
@@ -46,9 +49,22 @@ export default defineConfig({
   // iPhone 14 기기 프로필의 뷰포트/터치 설정만 가져와 Chromium 위에서 그대로 재현한다.
   projects: [
     {
-      name: "iphone-14",
+      // 공통 기능은 같은 Chromium 실행을 기기 프로필마다 중복하지 않는다.
+      name: "functional-chromium",
+      testIgnore: DEVICE_VISUAL_SPECS,
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      // iPhone 화면비·터치에서만 의미가 있는 배치 회귀를 선별 실행한다.
+      name: "iphone-14-visual",
+      testMatch: DEVICE_VISUAL_SPECS,
       use: { ...devices["Desktop Chrome"], ...devices["iPhone 14"], defaultBrowserType: "chromium" },
     },
-    { name: "pixel-7", use: { ...devices["Pixel 7"] } },
+    {
+      // Android 대표 화면에서도 iPhone과 동일한 선별 회귀 범위를 확인한다.
+      name: "pixel-7-visual",
+      testMatch: DEVICE_VISUAL_SPECS,
+      use: { ...devices["Pixel 7"] },
+    },
   ],
 });

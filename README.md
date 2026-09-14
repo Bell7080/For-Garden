@@ -120,7 +120,8 @@ npm run dev        # 로컬 개발 서버 (컴퓨터 브라우저로 세로 화�
 npm run build      # tsc --noEmit + vite build
 npm test           # Vitest (코어 로직)
 npm run typecheck
-npm run test:e2e   # Playwright — 모바일 화면비/터치로 빌드 결과 구동 확인 (build 이후 실행)
+npm run test:e2e:smoke # Playwright — Chromium 공통 기능을 빠르게 확인 (build 이후 실행)
+npm run test:e2e:full  # Playwright — 공통 기능과 두 모바일 기기 선별 회귀를 모두 확인
 ```
 
 ## 구동 확인
@@ -129,7 +130,7 @@ CI는 두지 않는다. 배포는 Vercel이 맡고, 품질 게이트는 커밋 �
 
 ```bash
 npm run typecheck && npm test && npm run build
-npm run test:e2e   # iPhone 14 / Pixel 7 화면비로 빌드 결과를 실제로 띄워 본다
+npm run test:e2e:full # 공통 기능과 iPhone 14 / Pixel 7 선별 회귀를 실제로 띄워 본다
 ```
 
 e2e는 캔버스가 세로로 렌더링되는지, 탭(터치)으로 씬이 전환되는지, 기기를 가로로 눕히면

@@ -383,7 +383,7 @@ export interface Fighter extends Combatant {
   /** 「절정」의 다음 1초 주위 피해까지 남은 시간이며 비활성 중에는 1초로 초기화한다. */
   climaxAuraTickIn: number;
   /** 토리카 탱커 폭주의 다음 1초 최대 체력 회복까지 남은 시간이다. */
-  torikaBulwarkTickIn: number;
+  ferocityRegenTickIn: number;
   /**
    * 지금 묻어 있는 밴덜리즘. 묻은 겹만큼 **공격력과 주문력이 함께 깎인다.**
    *
@@ -986,7 +986,7 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     // 폭주가 켜진 뒤 온전한 1초가 지나야 첫 파동이 발생한다.
     pontusRageTickIn: 1,
     climaxAuraTickIn: 1,
-    torikaBulwarkTickIn: 1,
+    ferocityRegenTickIn: 1,
     vandalism: null,
     artChannel: null,
     taggedIds: [],
@@ -1910,23 +1910,22 @@ function healClimaxBasic(attacker: Fighter, state: SkirmishState, events: Skirmi
 }
 
 /**
- * 폭주 중 매초 도는 회복을 공용 회복 경계로 처리한다.
+ * 폭주 중 **매초 도는 회복**의 1초 시계.
  *
- * 토리카와 티아가 같은 **1초 시계**를 쓰되 무엇에 비례하는지는 다르다 — 앞에 서서 버티는
- * 토리카는 최대 체력 비례로 꾸준히 돌고, 계속 뛰어드는 티아는 **잃은 체력** 비례라 많이
- * 다쳤을 때만 크게 돈다. 시계가 하나라 새 개체가 제 타이머를 따로 만들지 않는다.
+ * 지금 이 시계를 쓰는 것은 티아의 「이크티오 다이브!」 하나다 — **잃은 체력** 비례라 많이
+ * 다쳤을 때만 크게 돈다. 토리카도 같은 시계로 최대 체력을 되찾던 때가 있었지만, 폭주 한 번이
+ * 곧 완치라 앞에 선 몸이 언제 무너지는지가 사라져 걷어 냈다. 시계를 개체마다 따로 만들지
+ * 않으려고 함수는 계약(`missingHpRegenPercentPerSecond`)만 읽는다.
  */
-function tickTorikaBulwark(fighter: Fighter, dt: number, state: SkirmishState, events: SkirmishEvent[]): void {
+function tickFerocityRegen(fighter: Fighter, dt: number, state: SkirmishState, events: SkirmishEvent[]): void {
   const trait = fighter.def.ferocityTrait;
-  if (!fighter.ferocityFever || (trait.effectId !== "torikaBulwark" && trait.effectId !== "tidalVigor")) { fighter.torikaBulwarkTickIn = 1; return; }
-  fighter.torikaBulwarkTickIn -= dt;
-  while (fighter.torikaBulwarkTickIn <= EMERGENCY_RECOVERY.epsilon) {
-    const basis = trait.effectId === "tidalVigor"
-      ? (fighter.maxHp - fighter.hp) * trait.missingHpRegenPercentPerSecond
-      : fighter.maxHp * trait.maxHpRegenPercentPerSecond;
-    const amount = applyHealing(state, fighter, basis / 100, fighter.id);
+  if (!fighter.ferocityFever || trait.effectId !== "tidalVigor") { fighter.ferocityRegenTickIn = 1; return; }
+  fighter.ferocityRegenTickIn -= dt;
+  while (fighter.ferocityRegenTickIn <= EMERGENCY_RECOVERY.epsilon) {
+    const missing = (fighter.maxHp - fighter.hp) * trait.missingHpRegenPercentPerSecond;
+    const amount = applyHealing(state, fighter, missing / 100, fighter.id);
     if (amount > 0) events.push({ kind: "heal", fighterId: fighter.id, amount, source: "ferocity", effect: { tag: "heal", intensity: 1.2 } });
-    fighter.torikaBulwarkTickIn += 1;
+    fighter.ferocityRegenTickIn += 1;
   }
 }
 
@@ -5418,7 +5417,7 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     tickElationRegen(fighter, dt, state, events);
     tickAftershock(fighter, dt, rng, state, events);
     // 폭주 회복은 행동 불능과 무관한 전투 시간으로 돌아 탱커가 제어당해도 계약한 생존력을 유지한다.
-    tickTorikaBulwark(fighter, dt, state, events);
+    tickFerocityRegen(fighter, dt, state, events);
     tickClimaxAura(fighter, dt, state, events);
     tickGraffitiAura(fighter, dt, state, events);
     // 궁극기 채널링은 기절·행동불가와 무관하게 흐른다 — 이미 뿌려 둔 낙서라 손이 멈춰도 마른다.

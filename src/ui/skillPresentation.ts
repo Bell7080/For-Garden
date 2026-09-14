@@ -147,8 +147,7 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
   if (trait.effectId === "torikaBulwark") {
     // 방어 수치는 퍼센트로 재해석하지 않고 전투 계약의 실제 증가값을 그대로 노출한다.
     return t("skill.ferocity.torikaBulwark", {
-      regen: trait.maxHpRegenPercentPerSecond, defense: trait.defenseBonus,
-      resistance: trait.resistanceBonus, seconds: trait.tauntDurationSeconds,
+      defense: trait.defenseBonus, resistance: trait.resistanceBonus, seconds: trait.tauntDurationSeconds,
     });
   }
   // 덧셈형 확률도 플레이어에게는 일반적인 퍼센트 기호로 보여 주고 내부 산술 단위는 노출하지 않는다.

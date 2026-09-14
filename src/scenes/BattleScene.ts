@@ -148,8 +148,6 @@ export { BATTLE_CONTROLS } from "../ui/battleStatusLayout";
 
 /** 아직 다 차지 않은 카드의 불투명도. 다 차면 1이 되어 그림이 온전히 선다. */
 const CHARGE_CARD_ALPHA = 0.62;
-/** 카드 명도가 목표를 뒤쫓는 초당 계수. 게이지보다 조금 느려 밝기가 값보다 늦게 가라앉는다. */
-const CARD_ALPHA_EASE = 7;
 
 /** 야성 수치의 글자색. 게이지의 붉은 계열과 같아 어느 수인지 색으로 먼저 읽힌다. */
 const FEROCITY_TEXT = COLOR.ferocityText;
@@ -264,16 +262,6 @@ interface ProfileView {
    * 계단이 더 성겨진다. 쓸 수 있는지는 언제나 코어가 정하고 이 값은 각도만 정한다.
    */
   chargeShown: number;
-  /**
-   * 카드가 지금 띠고 있는 명도. 목표를 뒤쫓아 **굴러간다.**
-   *
-   * 예전에는 프레임마다 `setAlpha`로 못 박았다 — 궁극기를 쓰는 순간 1 → 0.62로, 연출이 도는
-   * 동안 다른 카드가 0.32로, 끝나면 다시 원래대로 **한 프레임에** 튀어 프로필 줄 전체가
-   * 번쩍였다. 값이 바뀌는 이유는 그대로 두고 그 사이를 잇는 길만 만든다.
-   */
-  alphaShown: number;
-  /** 이번 프레임이 요구하는 명도. `refreshProfiles`가 정하고 `stepMeters`가 뒤쫓는다. */
-  alphaTarget: number;
   /** 궁극기를 쓴 순간 한 번 도는 스쿼시. 도는 동안 다른 코드가 배율을 못 박지 않는다. */
   press?: Phaser.Tweens.Tween;
   ready: boolean;
@@ -737,12 +725,12 @@ export class BattleScene extends Phaser.Scene {
         // 기존 입력 규칙대로 누른 순간만 추가 확대하고, 잠금 카드는 반응하지 않는다.
         if (!this.ultimateSequenceActive && canFireUltimate(this.state, fighter)) card.setScale(1.14);
       });
-      card.hit.on("pointerout", () => card.setScale(profileScale(canFireUltimate(this.state, fighter))));
+      card.hit.on("pointerout", () => card.setScale(profileScale(this.ultimateCharged(fighter))));
       // 짧은 탭은 궁극기, 꾹 누름은 상세다. 다른 그리드와 같은 조작이라 화면마다 다르게 익히지 않는다.
       bindLongPress(this, card.hit, {
         onTap: () => this.useUltimate(fighter),
         onLongPress: () => {
-          card.setScale(profileScale(canFireUltimate(this.state, fighter)));
+          card.setScale(profileScale(this.ultimateCharged(fighter)));
           this.allyInfo().showRelic(fighter.def);
         },
         depth: 1500,
@@ -750,7 +738,7 @@ export class BattleScene extends Phaser.Scene {
       // 두 게이지는 굵기만 다르고 모양이 같다. 위가 체력, 아래가 폭주다.
       // 수치는 제 게이지와 같은 색으로, 굵게, 아래로 한 겹 복제한 그림자를 달고 선다.
       // 밝은 배경 원화 위에서 흐린 회색 글자는 게이지 옆에 있어도 읽히지 않는다.
-      this.profiles.push({ fighter, prefab, card, glow, sweep, charge, hpBar, hpLabel, ferocityBar, ferocityLabel, hpShown: fighter.hp, ferocityShown: fighter.ferocity, chargeShown: 0, alphaShown: CHARGE_CARD_ALPHA, alphaTarget: CHARGE_CARD_ALPHA, ready: false });
+      this.profiles.push({ fighter, prefab, card, glow, sweep, charge, hpBar, hpLabel, ferocityBar, ferocityLabel, hpShown: fighter.hp, ferocityShown: fighter.ferocity, chargeShown: 0, ready: false });
     });
   }
 
@@ -1601,18 +1589,25 @@ export class BattleScene extends Phaser.Scene {
     for (const profile of this.profiles) {
       const { fighter } = profile;
       const alive = isFighterAlive(fighter);
-      // 궁극기는 숫자가 아니라 그림이 말한다. 쓸 수 있게 되기까지의 몫만큼 어둠이 걷힌다.
-      const ready = canFireUltimate(this.state, fighter);
-      // 어둠이 걷힌 각도와 카드 명도는 `stepMeters`가 굴려 그린다. 여기서 코어 값을 다시
-      // 칠하면 계단이 그대로 한 프레임 튀어, 굴러가던 것이 매 갱신마다 목표로 끌려간다.
+      /*
+       * 궁극기는 숫자가 아니라 그림이 말한다. 쓸 수 있게 되기까지의 몫만큼 어둠이 걷힌다.
+       *
+       * **카드가 말하는 것은 "게이지가 찼는가"이지 "지금 이 프레임에 쓸 수 있는가"가 아니다.**
+       * `canFireUltimate`은 기절·경직·광란까지 함께 보는데, 경직은 0.1초짜리라 난전에서는
+       * 몇 초에 한 번씩 걸린다 — 그때마다 준비 연출이 통째로 꺼졌다 켜져 카드가 커졌다 작아지고
+       * 발광이 처음부터 다시 돌았다. **배속을 올리면 그 왕복이 그만큼 잦아져** 프로필 줄이
+       * 쉬지 않고 번쩍였다. 눌렀을 때 실제로 나가는지는 여전히 코어가 정한다.
+       */
+      const ready = alive && this.ultimateCharged(fighter);
+      // 어둠이 걷힌 각도만 `stepMeters`가 굴려 그린다. 여기서 코어 값을 다시 칠하면 계단이
+      // 그대로 한 프레임 튀어, 굴러가던 것이 매 갱신마다 목표로 끌려간다.
       // 머리 위 바와 같은 값을 같은 주기로 읽어 두 HUD가 서로 다른 막 길이를 말하지 않게 한다.
       profile.prefab.setShield(alive ? fighter.shield.amount : 0, fighter.maxHp);
-      // **아직이면 반투명하고 찰수록 또렷해진다.** 다 찬 순간에만 밝아지게 두었을 때는 그
-      // 경계가 켜고 끄는 스위치라, 쓰는 순간 카드가 한 프레임에 어두워져 번쩍였다. 걷히는
-      // 어둠과 같은 값을 읽으므로 밝기도 게이지와 함께 굴러간다.
-      profile.alphaTarget = alive ? CHARGE_CARD_ALPHA + (1 - CHARGE_CARD_ALPHA) * profile.chargeShown : 0.45;
-      // 연출 중에는 사용자 외 모든 카드가 잠겼다는 것을 명도로 알린다.
-      if (this.ultimateSequenceActive && this.currentUltimateFighterId !== fighter.id) profile.alphaTarget = alive ? 0.32 : 0.2;
+      // 아직이면 카드째 반투명하다. 뒤가 비쳐야 "잠깐 꺼 둔 칸"으로 읽히고, 다 차면 또렷해진다.
+      const charge = alive ? Math.min(1, fighter.energy / fighter.def.ultimate.cost) : 0;
+      profile.card.setAlpha(alive ? (charge >= 1 ? 1 : CHARGE_CARD_ALPHA) : 0.45);
+      // 연출 중에는 사용자 외 모든 카드가 잠겼다는 것을 명도로 즉시 알린다.
+      if (this.ultimateSequenceActive && this.currentUltimateFighterId !== fighter.id) profile.card.setAlpha(alive ? 0.32 : 0.2);
       if (ready !== profile.ready) this.setUltimateReady(profile, ready);
       // 준비 상태가 유지된 채 다른 궁극기가 시작되어도 잠긴 카드의 반복 광선은 즉시 감춘다.
       if (this.ultimateSequenceActive) profile.sweep.setAlpha(0);
@@ -1713,10 +1708,6 @@ export class BattleScene extends Phaser.Scene {
       const chargeTarget = alive ? Math.min(1, fighter.energy / fighter.def.ultimate.cost) : 0;
       profile.chargeShown = stepUltimateCharge(profile.chargeShown, chargeTarget, deltaMs / 1000, motionFactor);
       profile.prefab.setChargeRatio(profile.chargeShown);
-      // 명도도 같은 결로 굴린다. 못 박으면 궁극기 한 번에 프로필 줄 전체가 번쩍인다.
-      profile.alphaShown = motionFactor === 0 ? profile.alphaTarget
-        : profile.alphaShown + (profile.alphaTarget - profile.alphaShown) * Math.min(1, (deltaMs / 1000) * CARD_ALPHA_EASE * motionFactor);
-      profile.card.setAlpha(profile.alphaShown);
       const fever = fighter.ferocityFever;
       const ferocityColor = fever ? COLOR.ferocityFever : fighter.ferocity >= 80 ? COLOR.ferocityWarning : COLOR.ferocityLow;
       // 값과 사망 표현의 최종 소유자는 공용 프리팹이며 폭주 문구만 전투가 덧씌운다.
@@ -1751,6 +1742,16 @@ export class BattleScene extends Phaser.Scene {
     });
   }
 
+  /**
+   * 카드 연출이 읽는 "다 찼는가". **지금 이 프레임에 쓸 수 있는가와 다른 값이다.**
+   *
+   * 기절·경직처럼 잠깐 막는 것까지 여기서 보면, 0.1초짜리 경직 한 번에 준비 연출이 꺼졌다
+   * 켜지며 카드가 커졌다 작아진다. 눌렀을 때 실제로 나가는지는 `canFireUltimate`이 정한다.
+   */
+  private ultimateCharged(fighter: Fighter): boolean {
+    return this.state.phase === "fight" && isFighterAlive(fighter) && fighter.energy >= fighter.def.ultimate.cost;
+  }
+
   /** 준비 상태가 바뀔 때만 연출을 갈아 끼운다. 매 프레임 트윈을 다시 만들지 않는다. */
   private setUltimateReady(profile: ProfileView, ready: boolean): void {
     // 화면 재생성이나 유지 프레임이 아니라 기존 false→true 경계의 플레이어 카드만 알린다.
@@ -1778,8 +1779,17 @@ export class BattleScene extends Phaser.Scene {
       yoyo: true,
       repeat: -1,
     });
-    // 게이지 완료 플래시는 한 번, 사선 스윕은 입력 가능 동안 낮은 빈도로 반복한다.
-    this.tweens.add({ targets: profile.charge, alpha: { from: 0.2, to: 1 }, duration: 110, yoyo: true, repeat: 1 });
+    /*
+     * **충전 가림막을 깜빡이지 않는다.**
+     *
+     * 예전에는 다 차는 순간 이 그래픽의 알파를 0.2 ↔ 1로 **두 번 왕복**시켰다(110ms yoyo,
+     * repeat 1 — 네 번의 급변이 0.44초에 몰린다). 그것이 카드 전체를 덮는 면이라 화면에서는
+     * 프로필이 번쩍번쩍하는 것으로 보였고, **배속을 올릴수록 심해졌다** — 게이지가 그만큼
+     * 자주 다시 차 이 스트로브가 몇 초에 한 번씩 되돌아오기 때문이다.
+     *
+     * 다 찼다는 것은 이미 셋이 말한다: 걷힌 어둠(그림이 온전히 선다), 1.08배로 커진 카드,
+     * 숨 쉬는 발광과 사선 스윕. 여기에 깜빡임을 더할 자리는 없다.
+     */
     profile.sweepTween = this.tweens.add({
       targets: profile.sweep, x: profile.sweep.x + 250, alpha: { from: 0, to: 0.42 },
       duration: 520, hold: 80, repeat: -1, repeatDelay: 900, yoyo: true,

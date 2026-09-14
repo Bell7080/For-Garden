@@ -67,7 +67,7 @@ export const SKILL_JA = {
   "skill.ferocity.reagentDoping": "暴走に入るとすべての生存中の敵に[[reagent|試薬]]を{stacks}重付与する。暴走中は[[attack-speed|攻撃速度]]が{percent}%増加する。",
   "skill.ferocity.attackIntervalReduction": "攻撃間隔が{percent}%短くなる。",
   "skill.ferocity.damageReduction": "受けるダメージが{percent}%減る。",
-  "skill.ferocity.torikaBulwark": "毎秒 最大体力の{regen}%を回復し、防御力が{defense}、抵抗力が{resistance}増加する。暴走に入った瞬間、周囲のすべての敵を{seconds}秒間[[taunt|挑発]]する。",
+  "skill.ferocity.torikaBulwark": "防御力が{defense}、抵抗力が{resistance}増加する。暴走に入った瞬間、周囲のすべての敵を{seconds}秒間[[taunt|挑発]]する。",
   "skill.ferocity.teamMoveSpeedBonus": "生存中の味方全体の移動速度が{percent}%速くなる。",
   "skill.ferocity.rexBattleQueen": "[[bleed|出血]]中の敵を攻撃するとクリティカルが確定し、すべてのダメージ吸血が{percent}%増加する。",
   "skill.ferocity.stealthLeap": "体力割合が最も低い敵に[[teleport|瞬間移動]]し、{seconds}秒間[[stealth|隠密]]する。",

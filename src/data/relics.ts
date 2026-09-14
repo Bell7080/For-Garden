@@ -231,12 +231,13 @@ export const RELICS: RelicDef[] = [
       lifeSteal: 0,
       ferocityGain: 0,
     },
-    // 회복 1.5%는 8초 폭주 동안 최대 체력 12%를 되찾는다. 5%였을 때는 같은 8초에 40%가 돌아와
-    // **폭주 한 번이 곧 완치**였고, 전열이 언제 무너지는지가 화면에서 사라졌다.
-    // 방어력 +80·저항력 +60은 CLAUDE.md의 탱커 규칙대로 퍼센트가 아닌 능력치 판의 실제 증가값이다.
+    // **폭주가 체력을 되돌리지 않는다.** 매초 회복이 함께 있던 때는 폭주 한 번이 곧 완치라,
+    // 앞에 선 몸이 언제 무너지는지가 화면에서 사라졌다(5% → 1.5%로 내려도 성격은 같았다).
+    // 되찾는 것은 패시브 「온화한 방패」가 전투당 한 번만 맡고, 폭주는 **버티는 값**만 든다.
+    // 방어력 +40·저항력 +30은 CLAUDE.md의 탱커 규칙대로 퍼센트가 아닌 능력치 판의 실제 증가값이다.
     // 320px 도발은 기존 폭주 반경 220보다 넓어 전열 주변의 복수 적을 확실히 붙잡되 전장 전체는 덮지 않는다.
     // 도발은 진입 때 한 번만 3초간 걸어 폭주 내내 표적을 강제하지 않고, 그 뒤에는 적의 공용 재지정을 허용한다.
-    ferocityTrait: { name: "이제 못참아!", effectId: "torikaBulwark", maxHpRegenPercentPerSecond: 1.5, defenseBonus: 80, resistanceBonus: 60, tauntRadius: 320, tauntDurationSeconds: 3 },
+    ferocityTrait: { name: "이제 못참아!", effectId: "torikaBulwark", defenseBonus: 40, resistanceBonus: 30, tauntRadius: 320, tauntDurationSeconds: 3 },
     // 별 넷이 이 개체를 **여엿한 탱커**로 완성한다. 넷 다 "막아 선다"는 한 방향을 향하고,
     // 열리는 순서가 곧 그 방향의 단계다 — 기본 공격에 자급 회복과 도발이 붙고(II), 궁극기가
     // 제어를 두 번 더 뿌리고(III), 폭주 뒤의 가장 약한 자리를 보호막이 메우며(IV), 마지막에

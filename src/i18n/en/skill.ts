@@ -53,7 +53,7 @@ export const SKILL_EN = {
   "skill.ferocity.reagentDoping": "On entering Frenzy, applies {stacks} stacks of [[reagent|Reagent]] to every living enemy. During Frenzy, [[attack-speed|Attack Speed]] increases by {percent}%.",
   "skill.ferocity.attackIntervalReduction": "The attack interval shortens by {percent}%.",
   "skill.ferocity.damageReduction": "Damage taken is reduced by {percent}%.",
-  "skill.ferocity.torikaBulwark": "Restores {regen}% max HP per second and gains {defense} Defense and {resistance} Resistance. On entering Frenzy, [[taunt|Taunts]] every enemy nearby for {seconds}s.",
+  "skill.ferocity.torikaBulwark": "Gains {defense} Defense and {resistance} Resistance. On entering Frenzy, [[taunt|Taunts]] every enemy nearby for {seconds}s.",
   "skill.ferocity.teamMoveSpeedBonus": "Move Speed of every living ally increases by {percent}%.",
   "skill.ferocity.rexBattleQueen": "Attacks against [[bleed|Bleeding]] enemies always critically strike, and life steal on all damage increases by {percent}%.",
   "skill.ferocity.stealthLeap": "[[teleport|Teleports]] to the enemy with the lowest HP ratio and enters [[stealth|Stealth]] for {seconds}s.",

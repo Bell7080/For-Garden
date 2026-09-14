@@ -1479,7 +1479,10 @@ describe("효과 ID별 야성 특성", () => {
 
     const calmDefinition = { defense: torika.def.stats.def, resistance: torika.def.stats.res };
     const raging = defensiveDefinition(torika, state).def.stats;
-    expect({ defense: raging.def, resistance: raging.res }).toEqual({ defense: calmDefinition.defense + 80, resistance: calmDefinition.resistance + 60 });
+    // 수치는 밸런스 값이라 정의에서 읽는다 — 여기서 재는 것은 "실제 증가값으로 얹힌다"는 규칙이다.
+    const bulwark = torika.def.ferocityTrait.effectId === "torikaBulwark" ? torika.def.ferocityTrait : undefined;
+    expect({ defense: raging.def, resistance: raging.res })
+      .toEqual({ defense: calmDefinition.defense + bulwark!.defenseBonus, resistance: calmDefinition.resistance + bulwark!.resistanceBonus });
     // 동일 위력의 물리·마법 입력을 실제 피해 공식에 넣어 각 방어 축이 피해를 줄이는지 고정한다.
     const physical = { power: 100, damageType: "physical" as const, kind: "basic" as const, isCritical: false };
     const magical = { power: 100, damageType: "magical" as const, kind: "basic" as const, isCritical: false };
@@ -1487,16 +1490,15 @@ describe("효과 ID별 야성 특성", () => {
     expect(computeDamage(first, defensiveDefinition(torika, state), physical)).toBeLessThan(computeDamage(first, calmTarget, physical));
     expect(computeDamage(first, defensiveDefinition(torika, state), magical)).toBeLessThan(computeDamage(first, calmTarget, magical));
 
-    // 다른 행동을 막아 정확히 한 번의 1초 폭주 회복만 관찰한다.
+    // **폭주는 체력을 되돌리지 않는다.** 매초 회복이 함께 있던 때는 폭주 한 번이 곧 완치라
+    // 앞에 선 몸이 언제 무너지는지가 사라졌다. 버티는 값만 남기고 되찾는 것은 패시브가 맡는다.
     state.fighters.forEach((fighter) => { fighter.attackCooldown = 99; });
     const hpBeforeTick = torika.hp;
     // 한 호출은 프레임 폭주를 막기 위해 0.25초로 제한되므로 네 프레임을 진행해 온전한 1초를 만든다.
     for (let frame = 0; frame < 4; frame += 1) stepSkirmish(state, 0.25);
-    // 비율은 밸런스 값이라 정의에서 읽는다. 여기서 재는 것은 "1초에 한 번 돈다"는 규칙이다.
-    const regen = torika.def.ferocityTrait.effectId === "torikaBulwark" ? torika.def.ferocityTrait.maxHpRegenPercentPerSecond : 0;
-    expect(torika.hp - hpBeforeTick).toBeCloseTo(torika.maxHp * regen / 100);
+    expect(torika.hp).toBe(hpBeforeTick);
 
-    // 공용 피버 배수구로 종료시켜 정적 종족값과 회복이 모두 원상복구되는지 확인한다.
+    // 공용 피버 배수구로 종료시켜 정적 종족값이 원상복구되는지 확인한다.
     torika.ferocity = 0.1;
     stepSkirmish(state, 1 / 60);
     expect(torika.ferocityFever).toBe(false);

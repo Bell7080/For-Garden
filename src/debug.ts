@@ -53,6 +53,13 @@ export interface DebugState {
   screenTitle?: string;
   /** Canvas 안 현재 대사의 ID와 원문이며, E2E가 최초 Puppet 로딩 중 커서 보존만 관찰한다. */
   dialogue?: { nodeId: string; body: string };
+  /**
+   * 지금 화면에 **서 있는** 공용 대사 띠(`DialogueBubble`)의 이름과 본문.
+   *
+   * 띠는 잠깐 떠올랐다 스스로 사라지므로 캡처 사이로 빠져나가기 쉽다 — 실제로 상점 첫 마디가
+   * 화면 조립 중에 떴다가 지는 것을 캡처만으로는 잡지 못했다. 사라지면 비워 둔다.
+   */
+  bubble?: { name: string; body: string };
   /** 지금 열려 있는 팝업 제목을 아래(가장 먼저 연 것)부터 순서대로 쌓아 둔다. E2E가 팝업이 실제로 열렸는지 확인한다. */
   popupTitles?: string[];
   /** PuppetForge 조립이 끝나 실제 컨테이너가 살아 있는 수다. E2E 관찰 전용이며 편성 규칙에는 입력되지 않는다. */
@@ -205,6 +212,11 @@ export function setDebugReady(ready: boolean): void {
 /** 화면이 실제 표시를 시작한 대사만 복사해 E2E가 UI 구현을 재계산하지 않게 한다. */
 export function setDebugDialogue(node: { id: string; body: string } | undefined): void {
   ensure().dialogue = node ? { nodeId: node.id, body: node.body } : undefined;
+}
+
+/** 공용 대사 띠가 서고 지는 것을 그대로 옮긴다. 띠 자신만 부르므로 화면마다 갈리지 않는다. */
+export function setDebugBubble(line: { name: string; body: string } | undefined): void {
+  ensure().bubble = line;
 }
 
 /**

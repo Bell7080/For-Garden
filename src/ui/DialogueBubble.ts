@@ -5,6 +5,7 @@ import {
 } from "./dialogueBubbleLayout";
 import { drawLayer, drawShapeEdge, slantedRect } from "./holo";
 import { addSectionTitle } from "./SectionTitle";
+import { setDebugBubble } from "../debug";
 import { COLOR, textStyle } from "./theme";
 
 /**
@@ -66,6 +67,8 @@ export class DialogueBubble extends Phaser.GameObjects.Container {
    */
   say(name: string, line: string, options: { holdMs?: number; slideX?: number } = {}): void {
     const generation = ++this.generation;
+    // 띠는 잠깐 떴다 스스로 사라져 캡처 사이로 빠져나간다 — 검사 채널이 실제로 섰는지를 남긴다.
+    setDebugBubble({ name, body: line });
     this.scene.tweens.killTweensOf(this);
     this.removeAll(true);
 
@@ -118,6 +121,7 @@ export class DialogueBubble extends Phaser.GameObjects.Container {
   /** 화면을 닫을 때처럼 곧바로 치운다. */
   hideNow(): void {
     this.generation += 1;
+    setDebugBubble(undefined);
     this.fade?.remove(false);
     this.fade = undefined;
     this.scene?.tweens.killTweensOf(this);

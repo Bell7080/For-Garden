@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { PRODUCTS, SHOP_PRODUCT_ICON_ASSETS, SHOP_TABS } from "../../src/data/shopCatalog";
 import { SHOP_STAGE_PRESENTATION } from "../../src/data/shopPresentation";
@@ -44,6 +45,20 @@ describe("상점 무대", () => {
 });
 
 describe("상점 등장 순서", () => {
+  it("의 기다림을 씬의 시계에서 재지 않는다", () => {
+    /*
+     * **`create()`가 도는 동안 씬의 시계는 아직 0이다.**
+     *
+     * 거기에 더해 둔 시각(`time.now + settle`)으로 기다림을 재던 때는, 점원 묶음이 도착할
+     * 즈음이면 그 시각이 이미 지나 있어 기다림이 통째로 0으로 접혔다 — 점원이 전시대와 함께
+     * 미끄러져 들어와 잘린 하반신이 드러났고, 첫 마디도 화면이 조립되는 중에 떴다가 플레이어가
+     * 무대를 보기 전에 사라졌다. 기다림은 시각이 아니라 **타이머**가 연다.
+     */
+    const scene = readFileSync(new URL("../../src/scenes/ShopScene.ts", import.meta.url), "utf8");
+    expect(scene).not.toMatch(/this\.time\.now/);
+    expect(scene).toContain("await this.stageSettled");
+  });
+
   it("점원은 전시대가 다 올라온 뒤에 들어온다", () => {
     // 점원은 전시대 윗변에서 잘려 있어, 함께 움직이면 그 절단면이 빈 배경 위에 드러난다.
     const settle = shopStageSettleMs();

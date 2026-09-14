@@ -45,6 +45,16 @@ test("고고학의 두 탭과 고고학 상점을 연다", async ({ page }, test
   await page.waitForTimeout(600);
   await captureGame(page, `test-results/${testInfo.project.name}-archaeology-strata.png`);
 
+  // 판을 하나 열고 칸 몇 개를 판다 — 부순 칸에만 아래층과 보상이 드러나는지 보는 자리다.
+  await tap(page, BASE_WIDTH / 2, 900);
+  await page.waitForTimeout(1_500);
+  for (const [col, row] of [[1, 1], [3, 0], [2, 3], [0, 4]] as const) {
+    await tap(page, 340 + col * 100, 430 + row * 178);
+    await page.waitForTimeout(500);
+  }
+  await page.waitForTimeout(800);
+  await captureGame(page, `test-results/${testInfo.project.name}-archaeology-dug.png`);
+
   // 라벨 줄을 **여러 번** 오간다. 한 번만 눌러 보면 겹친 것이 한 겹처럼 보인다.
   const tabY = BASE_HEIGHT - 268;
   for (let round = 0; round < 2; round += 1) {
@@ -57,8 +67,15 @@ test("고고학의 두 탭과 고고학 상점을 연다", async ({ page }, test
   await page.waitForTimeout(600);
   await captureGame(page, `test-results/${testInfo.project.name}-archaeology-research.png`);
 
+  // 연구대에 룬을 끼운다 — 칸이 왼쪽으로 밀리고 오른쪽에 상세가 들어서는지 보는 자리다.
+  await tap(page, 540, 583);
+  await page.waitForTimeout(900);
+  await tap(page, 300, 700);
+  await page.waitForTimeout(1_200);
+  await captureGame(page, `test-results/${testInfo.project.name}-archaeology-bench.png`);
+
   // 왼쪽 위 상점 입구 — 같은 상점 씬이 점원과 배경만 갈아 끼운다.
-  await tapUntil(page, 96, 352, "shop");
+  await tapUntil(page, 984, 262, "shop");
   // 점원 Puppet은 ZIP을 내려받아 세우므로 첫 프레임보다 늦게 도착한다.
   await page.waitForTimeout(3_000);
   await captureGame(page, `test-results/${testInfo.project.name}-archaeology-shop.png`);
@@ -74,7 +91,7 @@ test("고고학 상점을 다녀와도 로비 상점은 제 자리로 열린다"
 
   // 먼저 고고학 상점을 열어 **지난 자리를 남긴다.**
   await tapUntil(page, BASE_WIDTH / 10, BASE_HEIGHT - 180 + 90, "archaeology");
-  await tapUntil(page, 96, 352, "shop");
+  await tapUntil(page, 984, 262, "shop");
   await expect.poll(() => screenTitle(page)).toBe("고고학 상점");
 
   // 우하단 뒤로가기는 들어온 자리로 돌아간다.

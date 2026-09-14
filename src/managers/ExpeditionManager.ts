@@ -6,7 +6,7 @@ import type { SkirmishRelicResult } from "../core/skirmish";
 import { EXPEDITION_AUGMENT_IDS, EXPEDITION_REST_RULES, EXPEDITION_WEEKLY_POLICY } from "../data/expedition";
 import { saveManager, type SaveManager } from "../state/SaveManager";
 import { session, type ExpeditionRunState, type Session } from "../state/session";
-import type { GameApi, SettleExpeditionRunResponse, SubmitExpeditionBossScoreResponse } from "../api/contracts";
+import { GameApiError, type ApiErrorCode, type GameApi, type SettleExpeditionRunResponse, type SubmitExpeditionBossScoreResponse } from "../api/contracts";
 import type { ExpeditionBossAction } from "../core/expeditionBoss";
 import { t } from "../i18n";
 
@@ -259,8 +259,13 @@ export const expeditionManager = new ExpeditionManager();
 
 /** 어느 원격 경계에서 멈췄는지 UI와 테스트가 문자열 추측 없이 구분하는 실패다. */
 export class ExpeditionBossSettlementError extends Error {
+  /** API 원인 코드를 보존해 같은 score 단계에서도 검증 거절과 저장 장애를 구분한다. */
+  readonly causeCode: ApiErrorCode | undefined;
+
   constructor(readonly phase: "score" | "settlement", readonly cause: unknown) {
     super(phase === "score" ? t("error.expedition.submit") : t("error.expedition.settle"));
+    this.name = "ExpeditionBossSettlementError";
+    this.causeCode = cause instanceof GameApiError ? cause.code : undefined;
   }
 }
 

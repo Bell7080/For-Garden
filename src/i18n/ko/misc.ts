@@ -60,12 +60,13 @@ export const MISC_KO = {
 
   // 고고학
   "archaeology.shop": "상점",
+  "archaeology.bench.pick": "룬 고르기",
+  "archaeology.bench.clear": "빼기",
   "archaeology.tab.strata": "지층 탐사",
   "archaeology.tab.research": "특성 연구",
-  "archaeology.charges": "탐사 {charges} / {max}",
+  "archaeology.charges": "{charges} / {max}",
   "archaeology.start": "지층 탐사 시작",
   "archaeology.digsLeft": "남은 굴착 {digs}",
-  "archaeology.haul": "이번 탐사",
   "archaeology.title": "고 고 학",
 
   // 마일리지

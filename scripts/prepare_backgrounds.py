@@ -47,7 +47,11 @@ def main() -> None:
     backgrounds = sorted(sources(PUBLIC, "background_*") | sources(BACKGROUND_TARGET, "*"))
     contents = sorted(sources(PUBLIC, "Content*") | sources(CONTENT_TARGET, "*"))
     interactions = sorted(sources(PUBLIC, "교류 배경*") | sources(BACKGROUND_TARGET, "교류 배경*"))
-    if not backgrounds and not contents and not interactions:
+    strata_base = sorted(sources(PUBLIC, "발굴판 뒷배경") | sources(BACKGROUND_TARGET, "발굴판 뒷배경"))
+    # 뒷배경도 "발굴판 *"에 걸리므로 겉장 목록은 **번호로 시작하는 것만** 본다. 함께 구우면
+    # 무작위로 뽑히는 겉장이 다섯 장이 되어 아래층이 겉장으로 한 번씩 깔린다.
+    strata_layers = sorted(sources(PUBLIC, "발굴판 [0-9]*") | sources(BACKGROUND_TARGET, "발굴판 [0-9]*"))
+    if not backgrounds and not contents and not interactions and not strata_base and not strata_layers:
         print("구울 원본이 없다. public/background_00N.png 또는 public/ContentN_00M.png를 올린 뒤 다시 실행한다.")
         return
     for source in backgrounds:
@@ -57,6 +61,11 @@ def main() -> None:
     for source in interactions:
         number = "".join(ch for ch in source.stem if ch.isdigit()) or "001"
         bake(source, BACKGROUND_TARGET / f"interaction_{number.zfill(3)}.webp")
+    for source in strata_base:
+        bake(source, BACKGROUND_TARGET / "strata_base.webp")
+    for source in strata_layers:
+        number = "".join(ch for ch in source.stem if ch.isdigit()) or "1"
+        bake(source, BACKGROUND_TARGET / f"strata_layer_{number.zfill(3)}.webp")
 
 
 if __name__ == "__main__":

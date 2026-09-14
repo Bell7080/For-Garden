@@ -3,24 +3,26 @@ import { t, type TextKey } from "../i18n";
 import { gameApi } from "../api/FakeServer";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugScene } from "../debug";
-import { strataBoardHaul, type StrataBoardView } from "../core/strataDig";
+import type { StrataBoardView } from "../core/strataDig";
 import { DEFAULT_STRATA_LAYER_ID, type StrataRewardKind } from "../data/strataLayers";
 import { session } from "../state/session";
-import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
+import { canUpgradeRuneTraitGrade, RUNE_TRAIT_RULES } from "../core/runeTraits";
+import { RUNE_TRAIT_ITEMS } from "../data/runeTraits";
+import type { RuneInstance } from "../core/runes";
+import { addResearchBench, type ResearchBenchAction } from "../ui/ResearchBench";
+import { addSceneBackground, BACKGROUND, useBackgroundTexture } from "../ui/backgrounds";
 import { BottomNav } from "../ui/BottomNav";
 import { Button } from "../ui/Button";
 import { addCategoryTab } from "../ui/CategoryTab";
 import { CURRENCY_ICON_BY_WALLET } from "../ui/currencyIcons";
-import { chipPoints, drawLayer, drawVignette, HOLO } from "../ui/holo";
+import { drawVignette } from "../ui/holo";
 import { addFramedIcon } from "../ui/itemFrame";
 import { KeywordManager } from "../managers/KeywordManager";
 import { PopupLayer } from "../ui/PopupLayer";
 import { RailButton } from "../ui/RailButton";
-import { openRuneTraitPopup } from "../ui/RuneTraitPopup";
-import { addRuneCard } from "../ui/runeIcons";
-import { addSectionTitle } from "../ui/SectionTitle";
-import { STRATA_BOARD, STRATA_ZONE_TONE, strataBoardMetrics, strataTileCenter } from "../ui/strataBoardLayout";
-import { runeTraitName } from "../ui/runeTraitPresentation";
+import { openRuneTraitReroll } from "../ui/RuneTraitPopup";
+import { STRATA_BOARD, strataBoardFrame, strataLayerTextureKey, strataTileCenter, strataTileCrop } from "../ui/strataBoardLayout";
+import { UI_ICON } from "../ui/icons";
 import { TopBar } from "../ui/TopBar";
 import { bindCurrencyGuide, openCurrencyGuide } from "../ui/currencyGuideEntry";
 import { COLOR, textStyle } from "../ui/theme";
@@ -48,9 +50,33 @@ const ARCHAEOLOGY = {
   tabWidth: 280,
   tabHeight: 84,
   gridTop: 420,
-  /** 상점 입구. 제목 줄과 같은 왼쪽 기둥에 서되 그 아래다. */
-  shopY: 352,
+  /** 남은 횟수를 말하는 곡괭이의 한 변. */
+  chargeIcon: 46,
+  /**
+   * 상점 입구.
+   *
+   * **횟수 줄과 같은 높이의 오른쪽 끝이다.** 왼쪽 기둥 아래에 두었더니 그 아래에서 시작하는
+   * 판(탐사판·연구대)이 버튼을 덮었다 — 이 줄은 화면 몸통이 시작하기 전의 마지막 자리라
+   * 어느 탭에서도 가려지지 않는다.
+   */
+  shopX: BASE_WIDTH - 96,
+  shopY: 262,
 } as const;
+
+/**
+ * 아직 올라오지 않았을 수도 있는 배경 원화를 세운다.
+ *
+ * **이미 올라와 있으면 그 키로 만들어야 한다** — `useBackgroundTexture`는 텍스처가 이미
+ * 있으면 `setTexture`를 하지 않고 곧바로 `onReady`만 부르는 계약이라, 늘 `__DEFAULT`로
+ * 만들면 두 번째 그리기부터 투명한 32×32가 그대로 남는다(판을 한 칸 판 뒤 판이 통째로
+ * 사라졌다). 도착이 늦을 때만 자리지기를 쓰고 그때는 보이지 않게 둔다.
+ */
+function addBoardImage(scene: Phaser.Scene, key: string, apply: (image: Phaser.GameObjects.Image) => void): Phaser.GameObjects.Image {
+  const ready = scene.textures.exists(key);
+  const image = scene.add.image(0, 0, ready ? key : "__DEFAULT").setAlpha(ready ? 1 : 0);
+  useBackgroundTexture(scene, image, key, (loaded) => { apply(loaded); loaded.setAlpha(1); });
+  return image;
+}
 
 /** 보상 종류를 액자에 세울 그림 키로 바꾼다. 화면이 종류마다 그림을 따로 고르지 않는다. */
 function rewardTexture(kind: StrataRewardKind): string | null {
@@ -81,6 +107,13 @@ export class ArchaeologyScene extends Phaser.Scene {
   private chargeText!: Phaser.GameObjects.Text;
   /** 서버 응답을 기다리는 동안 같은 칸을 두 번 누르지 못하게 한다. */
   private digging = false;
+  /**
+   * 연구대에 끼워 둔 룬.
+   *
+   * **인스턴스가 아니라 ID를 들고 있는다** — 특성을 바꾸면 서버가 새 값을 주므로, 객체를
+   * 붙잡아 두면 화면만 옛 특성을 계속 그린다.
+   */
+  private benchRuneId: string | null = null;
 
   constructor() {
     super("archaeology");
@@ -102,11 +135,16 @@ export class ArchaeologyScene extends Phaser.Scene {
     });
 
     this.add.text(60, ARCHAEOLOGY.titleY, t("archaeology.title"), textStyle({ role: "display", size: 52 })).setOrigin(0, 0);
-    this.chargeText = this.add.text(62, ARCHAEOLOGY.chargeY, "", textStyle({ role: "emphasis", size: 27, color: COLOR.inkDim })).setOrigin(0, 0);
+    // 남은 횟수는 곡괭이 하나와 수 하나다. 「탐사」라고 다시 적지 않는다 — 이 화면에서 곡괭이가
+    // 세는 것은 그것뿐이고, 그림이 이미 무엇을 세는지 말한다.
+    this.add.image(60 + ARCHAEOLOGY.chargeIcon / 2, ARCHAEOLOGY.chargeY + ARCHAEOLOGY.chargeIcon / 2, UI_ICON.pickaxe)
+      .setDisplaySize(ARCHAEOLOGY.chargeIcon, ARCHAEOLOGY.chargeIcon);
+    this.chargeText = this.add.text(60 + ARCHAEOLOGY.chargeIcon + 10, ARCHAEOLOGY.chargeY + ARCHAEOLOGY.chargeIcon / 2, "",
+      textStyle({ role: "display", size: 32, color: COLOR.ink })).setOrigin(0, 0.5);
 
     // **상점은 왼쪽 위다.** 같은 상점 씬을 상품표만 바꿔 다시 쓴다 — 새 씬을 만들면 선반·
     // 격자·값줄 규칙이 두 곳이 되고 한쪽만 고치는 사고가 난다.
-    new RailButton(this, 96, ARCHAEOLOGY.shopY, {
+    new RailButton(this, ARCHAEOLOGY.shopX, ARCHAEOLOGY.shopY, {
       icon: "shop",
       label: t("archaeology.shop"),
       accent: true,
@@ -181,48 +219,49 @@ export class ArchaeologyScene extends Phaser.Scene {
       return;
     }
 
-    const { cell, height } = strataBoardMetrics(board.columns, board.rows);
-    const grid = this.add.container(BASE_WIDTH / 2, ARCHAEOLOGY.boardY);
+    const frame = strataBoardFrame(board.columns, board.rows, BASE_WIDTH);
+    const grid = this.add.container(frame.centerX, frame.centerY);
     this.view.add(grid);
-    this.view.add(this.add.text(BASE_WIDTH / 2, ARCHAEOLOGY.boardY - height / 2 - 72,
-      t("archaeology.digsLeft", { digs: board.digsLeft }),
-      textStyle({ role: "display", size: 34, color: COLOR.accentText })).setOrigin(0.5));
 
+    // **아래층이 맨 밑에 깔린다.** 겉장을 부순 칸에 드러나는 맨 흙이고, 겉장보다 가라앉아
+    // 보이도록 한 겹 눌러 둔다 — 같은 밝기면 부순 자리가 아니라 다른 무늬로 보인다.
+    grid.add(addBoardImage(this, BACKGROUND.strataBase, (image) => image.setDisplaySize(frame.width, frame.height)));
+    grid.add(this.add.rectangle(0, 0, frame.width, frame.height, COLOR.void, STRATA_BOARD.baseShade));
+
+    // **겉장은 칸마다 같은 원화를 잘라 쓴다.** 조각을 따로 굽지 않으므로 칸 사이에 이음매가
+    // 없고, 부순 칸만 지우면 그 자리에 아래층이 그대로 드러난다.
+    const layerKey = strataLayerTextureKey(board.art);
     for (const tile of board.tiles) {
-      const { x, y } = strataTileCenter(tile.index, board.columns, board.rows);
-      const shape = chipPoints(cell, cell, {
-        bevel: { topLeft: cell * STRATA_BOARD.bevelRatio, topRight: 0, bottomRight: cell * STRATA_BOARD.bevelRatio, bottomLeft: 0 },
-      });
-      const tone = STRATA_ZONE_TONE[board.zones[tile.zone]?.tone ?? "soil"];
-      // 연 칸은 흙을 걷어 낸 자리다 — 어두워지고 구역 색이 빠진다.
-      grid.add(drawLayer(this, x, y, shape, {
-        fill: tile.revealed ? 0x0a0f15 : tone.color,
-        alpha: tile.revealed ? 0.82 : tone.alpha + HOLO.glass * 0.5,
+      if (tile.revealed) continue;
+      const crop = strataTileCrop(tile.index, board.columns, board.rows);
+      grid.add(addBoardImage(this, layerKey, (image) => {
+        // 자르기는 **원본 좌표**로 재고 크기는 그 뒤에 맞춘다. 순서가 바뀌면 조각이 어긋난다.
+        image.setDisplaySize(frame.width, frame.height);
+        image.setCrop(crop.x, crop.y, crop.width, crop.height);
       }));
+    }
+
+    // 보상은 부순 칸 위에 선다. 액자 없이 그림만 두면 흙 위에 얹힌 그림으로 읽히지 않는다.
+    for (const tile of board.tiles) {
+      const { x, y } = strataTileCenter(tile.index, board.columns, frame);
       if (tile.revealed) {
         const texture = tile.kind === undefined ? null : rewardTexture(tile.kind);
         if (texture === null) continue;
         // 룬처럼 수가 뜻이 없는 것에는 수를 적지 않는다 — 「1」이 서면 하나를 세는 자리로 읽힌다.
         const amount = tile.kind === "rune" ? undefined : String(tile.amount ?? 0);
-        addFramedIcon(this, grid, x, y, cell * 0.7, texture, { ...(amount ? { amount } : {}), plain: true });
+        addFramedIcon(this, grid, x, y, Math.min(frame.cellWidth, frame.cellHeight) * 0.82, texture,
+          { ...(amount ? { amount } : {}), plain: true });
         continue;
       }
-      const hit = this.add.rectangle(x, y, cell, cell, 0xffffff, 0.001).setInteractive({ useHandCursor: true });
+      const hit = this.add.rectangle(x, y, frame.cellWidth, frame.cellHeight, 0xffffff, 0.001)
+        .setInteractive({ useHandCursor: true });
       hit.on("pointerup", () => this.dig(tile.index));
       grid.add(hit);
     }
 
-    // 이번 판에서 캔 것. 세는 일은 순수 규칙이 하고 화면은 늘어놓기만 한다.
-    const haul = strataBoardHaul(board);
-    if (haul.length > 0) {
-      const haulY = ARCHAEOLOGY.boardY + height / 2 + 96;
-      addSectionTitle(this, 60, haulY - 70, t("archaeology.haul"));
-      haul.forEach((entry, index) => {
-        const texture = rewardTexture(entry.kind);
-        if (texture === null) return;
-        addFramedIcon(this, this.view, 110 + index * 126, haulY, 104, texture, { amount: String(entry.amount), plain: true });
-      });
-    }
+    this.view.add(this.add.text(frame.centerX, STRATA_BOARD.top - 34,
+      t("archaeology.digsLeft", { digs: board.digsLeft }),
+      textStyle({ role: "display", size: 34, color: COLOR.accentText })).setOrigin(0.5, 1));
   }
 
   private dig(index: number): void {
@@ -239,31 +278,72 @@ export class ArchaeologyScene extends Phaser.Scene {
 
   /* ── 특성 연구 ────────────────────────────────────────────────────────────── */
 
+  /**
+   * 연구대 한 판.
+   *
+   * **룬을 늘어놓지 않는다** — 칸 하나에 끼우고 그 룬만 들여다본다. 위가 연구대, 아래가 그
+   * 룬의 특성에 대해 지금 할 수 있는 일이다.
+   */
   private paintResearch(): void {
-    const runes = [...session.runeInventory]
-      // 특성이 있는 룬이 먼저 선다 — 연구 중인 것이 곧 지금 보고 싶은 것이다.
-      .sort((a, b) => Number(b.trait !== undefined) - Number(a.trait !== undefined) || (a.sequence ?? 0) - (b.sequence ?? 0));
-    if (runes.length === 0) return;
-
-    const columns = 4;
-    const cardWidth = 200;
-    const cardHeight = 250;
-    const gap = 18;
-    const left = (BASE_WIDTH - (columns * cardWidth + (columns - 1) * gap)) / 2 + cardWidth / 2;
-    runes.slice(0, 12).forEach((rune, index) => {
-      const x = left + (index % columns) * (cardWidth + gap);
-      const y = ARCHAEOLOGY.gridTop + Math.floor(index / columns) * (cardHeight + gap + 34);
-      const card = addRuneCard(this, x, y, cardWidth, cardHeight, rune);
-      card.setInteractive(new Phaser.Geom.Rectangle(-cardWidth / 2, -cardHeight / 2, cardWidth, cardHeight), Phaser.Geom.Rectangle.Contains);
-      card.on("pointerup", () => openRuneTraitPopup({
-        scene: this, popups: this.popups, keywords: this.keywords, rune,
-        onChanged: () => void this.refresh(),
-      }));
-      this.view.add(card);
-      // 특성은 카드 밑에 이름 한 줄로만 말한다 — 카드 안에 넣으면 얼굴보다 먼저 읽힌다.
-      this.view.add(this.add.text(x, y + cardHeight / 2 + 22,
-        rune.trait ? runeTraitName(rune.trait.id) : t("rune.trait.none"),
-        textStyle({ role: "emphasis", size: 22, color: rune.trait ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5));
+    // 끼워 둔 룬이 팔리거나 바뀌었을 수 있다. 저장에서 다시 찾아 지금 값을 쓴다.
+    const rune = this.benchRuneId === null
+      ? undefined
+      : session.runeInventory.find(({ instanceId }) => instanceId === this.benchRuneId);
+    if (rune === undefined) this.benchRuneId = null;
+    addResearchBench({
+      scene: this, parent: this.view, popups: this.popups, keywords: this.keywords, rune,
+      onPick: (picked) => { this.benchRuneId = picked.instanceId; this.paintView(); },
+      onClear: () => { this.benchRuneId = null; this.paintView(); },
+      actions: rune === undefined ? [] : this.traitActions(rune),
     });
+  }
+
+  /**
+   * 그 룬의 특성에 지금 할 수 있는 일.
+   *
+   * **특성이 없으면 부여 하나만 선다.** 재해석·등급 상승을 함께 세우면 눌러도 아무 일이 없는
+   * 칸이 되어 준비 상태를 과장한다.
+   */
+  private traitActions(rune: RuneInstance): ResearchBenchAction[] {
+    const owned = (itemId: string): number => session.itemInventory.find((stack) => stack.itemId === itemId)?.quantity ?? 0;
+    const grant = RUNE_TRAIT_ITEMS.grant;
+    const grantHigh = RUNE_TRAIT_ITEMS.grantHigh;
+    const upgrade = RUNE_TRAIT_ITEMS.upgrade;
+    const request = (name: string): string => `${name}-${Date.now()}`;
+    const actions: ResearchBenchAction[] = [
+      {
+        labelKey: rune.trait === undefined ? "rune.traitAction.grant" : "rune.traitAction.regrant",
+        enabled: owned(grant.itemId) > 0,
+        onPress: () => void gameApi.grantRuneTrait({ runeInstanceId: rune.instanceId, itemId: grant.itemId, requestId: request("trait") })
+          .then(() => this.paintView()),
+      },
+      {
+        labelKey: "rune.traitAction.grantHigh",
+        enabled: owned(grantHigh.itemId) > 0,
+        onPress: () => void gameApi.grantRuneTrait({ runeInstanceId: rune.instanceId, itemId: grantHigh.itemId, requestId: request("trait-high") })
+          .then(() => this.paintView()),
+      },
+    ];
+    if (rune.trait === undefined) return actions;
+    actions.push({
+      labelKey: "rune.traitAction.reroll",
+      enabled: session.wallet.rawStone >= RUNE_TRAIT_RULES.rerollCost[rune.trait.grade],
+      cost: { icon: "currency-orestone", amount: RUNE_TRAIT_RULES.rerollCost[rune.trait.grade] },
+      onPress: () => void gameApi.rerollRuneTrait({ runeInstanceId: rune.instanceId, requestId: request("trait-reroll") })
+        .then((result) => openRuneTraitReroll({
+          scene: this, popups: this.popups, keywords: this.keywords,
+          runeInstanceId: rune.instanceId, current: result.current, candidate: result.candidate,
+          upgraded: result.upgraded, onResolved: () => this.paintView(),
+        })),
+    });
+    if (canUpgradeRuneTraitGrade(rune.trait)) {
+      actions.push({
+        labelKey: "rune.traitAction.upgrade",
+        enabled: owned(upgrade.itemId) > 0,
+        onPress: () => void gameApi.upgradeRuneTrait({ runeInstanceId: rune.instanceId, itemId: upgrade.itemId, requestId: request("trait-up") })
+          .then(() => this.paintView()),
+      });
+    }
+    return actions;
   }
 }

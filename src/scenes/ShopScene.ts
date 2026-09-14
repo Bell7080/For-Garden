@@ -31,6 +31,7 @@ import {
   SHOP_BOARD, SHOP_CARD, SHOP_ENTRANCE, SHOP_SHELF, SHOP_STAGE, SHOP_TAB_ROW, SHOP_TITLE,
   shopBoardSize, shopCardSpot, shopCardWidth, shopDialogueSpot, shopGridContentHeight, shopGridViewport,
   shopShelfWidth, shopShelfY, shopTabSpot, shopTitleLeft, shopTitleY,
+  shopStageSettleMs,
 } from "../ui/shopLayout";
 
 /**
@@ -47,6 +48,8 @@ export class ShopScene extends Phaser.Scene {
   private selectedCategory: ShopCategory = SHOP_TABS[0].id;
   private tabRow?: Phaser.GameObjects.Container;
   private content?: Phaser.GameObjects.Container;
+  /** 전시대가 다 올라와 점원이 들어와도 되는 시각(씬 시계 ms). */
+  private stageSettlesAt = 0;
   /** 구매 응답 지갑을 적용한 직후 화면 가장자리 잔액을 같은 프레임에 갱신한다. */
   private topBar?: TopBar;
   private viewportMask?: Phaser.GameObjects.Graphics;
@@ -156,6 +159,9 @@ export class ShopScene extends Phaser.Scene {
    */
   private playEntrance(): void {
     const distance = motionPolicy(session.settings).nonEssentialDistanceFactor;
+    // 점원이 언제 들어와도 되는지는 이 순간에서 잰다. 묶음이 늦게 도착하면 이미 지난 시각이라
+    // 기다림이 0이 되고, 빨리 오면 전시대가 다 올라올 때까지만 기다린다.
+    this.stageSettlesAt = this.time.now + (distance > 0 ? shopStageSettleMs() : 0);
     const board = SHOP_ENTRANCE.board;
     this.boardChrome.setY(board.rise * distance);
     this.tweens.add({ targets: this.boardChrome, y: 0, duration: board.duration, ease: "Cubic.Out" });
@@ -253,9 +259,16 @@ export class ShopScene extends Phaser.Scene {
     // 오른쪽에서 들어와 제자리에 선다. 늦게 도착해도 같은 거리를 지나 같은 자리에서 멈춘다.
     const slide = SHOP_ENTRANCE.merchant.slide * motionPolicy(session.settings).nonEssentialDistanceFactor;
     merchant.setX(headX + slide).setAlpha(0);
-    this.tweens.add({ targets: merchant, x: headX, alpha: 1, duration: SHOP_ENTRANCE.merchant.duration, ease: "Cubic.Out" });
-    this.merchantReady = true;
-    this.tryFirstLine();
+    // **전시대가 다 올라온 뒤에 들어온다.** 함께 움직이면 전시대가 가려 줄 하반신 절단면이
+    // 빈 배경 위에 드러나, 다리 없는 상반신이 미끄러져 들어오는 것으로 보인다.
+    const wait = Math.max(0, this.stageSettlesAt - this.time.now);
+    this.tweens.add({ targets: merchant, x: headX, alpha: 1, delay: wait, duration: SHOP_ENTRANCE.merchant.duration, ease: "Cubic.Out" });
+    // **첫 마디도 점원이 자리에 선 뒤다.** 들어오는 중에 말풍선이 뜨면 말이 사람을 앞질러
+    // 도착해, 누가 말하는지보다 띠가 먼저 읽힌다.
+    this.tweens.addCounter({
+      from: 0, to: 1, delay: wait + SHOP_ENTRANCE.merchant.duration, duration: 1,
+      onComplete: () => { if (!this.scene.isActive()) return; this.merchantReady = true; this.tryFirstLine(); },
+    });
     this.stageMask = this.make.graphics({});
     this.stageMask.fillStyle(0xffffff, 1).fillRect(0, SHOP_STAGE.top, BASE_WIDTH, SHOP_BOARD.top - SHOP_STAGE.top);
     merchant.setMask(this.stageMask.createGeometryMask());

@@ -8,7 +8,7 @@
  * 다른 것이 나오고, 「저 구역이 특별해 보인다」는 판단이 아무것도 가리키지 않게 된다.
  */
 
-import { findStrataLayer, STRATA_CHARGE, type StrataLayerDefinition, type StrataRewardKind, type StrataZoneTone } from "../data/strataLayers";
+import { findStrataLayer, STRATA_ART_COUNT, STRATA_CHARGE, type StrataLayerDefinition, type StrataRewardKind, type StrataZoneTone } from "../data/strataLayers";
 import { timeAccrualWindow } from "./timeAccrual";
 import type { RuneTrait } from "./runeTraits";
 
@@ -33,6 +33,13 @@ export interface StrataZone {
 /** 지금 진행 중인 한 판이다. 저장에 그대로 직렬화된다. */
 export interface StrataBoard {
   layerId: string;
+  /**
+   * 이 판의 겉장 원화 번호(1부터).
+   *
+   * **판을 열 때 한 번 뽑고 그 뒤로는 바뀌지 않는다.** 화면이 그릴 때마다 고르면 앱을 껐다
+   * 켤 때나 탭을 오갈 때마다 파던 땅의 그림이 바뀐다.
+   */
+  art: number;
   columns: number;
   rows: number;
   tiles: StrataTile[];
@@ -54,6 +61,7 @@ export interface StrataTileView {
 /** 화면이 받는 판이다. 여기에 없는 것은 화면이 알 수 없다. */
 export interface StrataBoardView {
   layerId: string;
+  art: number;
   columns: number;
   rows: number;
   zones: StrataZone[];
@@ -126,7 +134,8 @@ export function createStrataBoard(input: { layerId: string; random: () => number
     const amount = row.kind === "empty" ? 0 : row.min + Math.round(roll(input.random) * span);
     return { index, zone, kind: row.kind, amount, revealed: false };
   });
-  return { layerId: layer.id, columns: layer.columns, rows: layer.rows, tiles, zones, digsLeft: layer.digs };
+  const art = 1 + Math.floor(roll(input.random) * STRATA_ART_COUNT);
+  return { layerId: layer.id, art, columns: layer.columns, rows: layer.rows, tiles, zones, digsLeft: layer.digs };
 }
 
 /** 파기 전에 그 칸을 팔 수 있는지 판정한다. 상태를 바꾸지 않는다. */
@@ -155,6 +164,7 @@ export function isStrataBoardFinished(board: StrataBoard): boolean {
 export function strataBoardView(board: StrataBoard): StrataBoardView {
   return {
     layerId: board.layerId,
+    art: board.art,
     columns: board.columns,
     rows: board.rows,
     zones: board.zones.map((zone) => ({ ...zone })),

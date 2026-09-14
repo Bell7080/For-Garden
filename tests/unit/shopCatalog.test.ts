@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { PRODUCTS, SHOP_PRODUCT_ICON_ASSETS, SHOP_TABS } from "../../src/data/shopCatalog";
 import { SHOP_STAGE_PRESENTATION } from "../../src/data/shopPresentation";
-import { SHOP_DIALOGUE, SHOP_STAGE, shopDialogueSpot } from "../../src/ui/shopLayout";
+import { SHOP_DIALOGUE, SHOP_ENTRANCE, SHOP_STAGE, shopDialogueSpot, shopStageSettleMs } from "../../src/ui/shopLayout";
 import { BASE_WIDTH } from "../../src/config/gameConfig";
 
 /** 카탈로그 탭과 상품 메타데이터가 화면 코드 없이 완결되는지 검증한다. */
@@ -40,5 +40,14 @@ describe("상점 무대", () => {
       expect(right, key).toBeLessThanOrEqual(BASE_WIDTH);
       expect(left, key).toBeGreaterThanOrEqual(0);
     }
+  });
+});
+
+describe("상점 등장 순서", () => {
+  it("점원은 전시대가 다 올라온 뒤에 들어온다", () => {
+    // 점원은 전시대 윗변에서 잘려 있어, 함께 움직이면 그 절단면이 빈 배경 위에 드러난다.
+    const settle = shopStageSettleMs();
+    expect(settle).toBeGreaterThanOrEqual(SHOP_ENTRANCE.board.duration);
+    expect(settle).toBeGreaterThanOrEqual(SHOP_ENTRANCE.grid.delay + SHOP_ENTRANCE.grid.duration);
   });
 });

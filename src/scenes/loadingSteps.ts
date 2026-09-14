@@ -4,7 +4,7 @@ import { BACKGROUND_ASSETS, BACKGROUND_BOOT_KEYS } from "../ui/backgrounds";
 import { loadGameFonts } from "../ui/fonts";
 import { loadDataOverlay, loadTextCatalog } from "../i18n";
 import { settingsManager } from "../managers/SettingsManager";
-import { UI_ICON_ASSETS } from "../ui/icons";
+import { UI_ICON_ASSETS, UI_RASTER_ICON_ASSETS } from "../ui/icons";
 import { AFFINITY_ICON_ASSETS } from "../ui/affinityIcons";
 import { CURRENCY_ICON_ASSETS } from "../ui/currencyIcons";
 import { RUNE_ICON_ASSETS } from "../ui/runeIcons";
@@ -135,6 +135,8 @@ export const LOADING_STEPS: ReadonlyArray<LoadingStep> = [
         // 임시 item SVG도 개별 가방 씬이 아니라 공용 단계에서 크게 구운 뒤 축소해 사용한다.
         ITEM_ICON_ASSETS.forEach(([key, path]) => scene.load.svg(key, path, { width: SVG_BAKE.skill, height: SVG_BAKE.skill }));
         UI_ICON_ASSETS.forEach(([key, path, size]) => scene.load.svg(key, path, { width: size * SVG_BAKE.uiScale, height: size * SVG_BAKE.uiScale }));
+        // 원화로 온 UI 아이콘은 벡터가 아니라 그림 한 장이라 그대로 읽는다.
+        UI_RASTER_ICON_ASSETS.forEach(([key, path]) => scene.load.image(key, path));
         // 발굴 특화는 카드 보조 정보 크기의 단색 SVG라 UI 아이콘과 같은 배율로 미리 굽는다.
         EXCAVATION_TRAIT_ICON_ASSETS.forEach(([key, path]) => scene.load.svg(key, path, { width: 64, height: 64 }));
       }),

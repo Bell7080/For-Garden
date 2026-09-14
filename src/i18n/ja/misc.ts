@@ -54,12 +54,13 @@ export const MISC_JA = {
   "skill.duration": "{seconds}秒間",
 
   "archaeology.shop": "ショップ",
+  "archaeology.bench.pick": "ルーンを選ぶ",
+  "archaeology.bench.clear": "外す",
   "archaeology.tab.strata": "地層探査",
   "archaeology.tab.research": "特性研究",
-  "archaeology.charges": "探査 {charges} / {max}",
+  "archaeology.charges": "{charges} / {max}",
   "archaeology.start": "地層探査を開始",
   "archaeology.digsLeft": "残り掘削 {digs}",
-  "archaeology.haul": "今回の探査",
   "archaeology.title": "考 古 学",
 
   "mileage.title": "マイレージショップ",

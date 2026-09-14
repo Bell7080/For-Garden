@@ -118,9 +118,11 @@ placeholder로 공유하고 `src/puppets/tints.ts`의 색 필터로 구분한다
 npm install       # puppetforge git 의존성도 함께 빌드된다
 npm run dev        # 로컬 개발 서버 (컴퓨터 브라우저로 세로 화면 확인)
 npm run build      # tsc --noEmit + vite build
+npm run build:test # E2E 주입 경로가 열린 test mode 빌드(배포 금지)
 npm test           # Vitest (코어 로직)
 npm run typecheck
-npm run test:e2e   # Playwright — 모바일 화면비/터치로 빌드 결과 구동 확인 (build 이후 실행)
+npm run test:e2e:smoke # Playwright — @slow 실시간 완주를 뺀 Chromium 공통 기능
+npm run test:e2e:full  # Playwright — @slow와 두 모바일 기기 선별 회귀까지 모두 확인
 ```
 
 ## 구동 확인
@@ -129,8 +131,12 @@ CI는 두지 않는다. 배포는 Vercel이 맡고, 품질 게이트는 커밋 �
 
 ```bash
 npm run typecheck && npm test && npm run build
-npm run test:e2e   # iPhone 14 / Pixel 7 화면비로 빌드 결과를 실제로 띄워 본다
+npm run test:e2e:full # 공통 기능과 iPhone 14 / Pixel 7 선별 회귀를 실제로 띄워 본다
 ```
+
+Playwright는 실행 전에 test mode 산출물을 직접 만들며, 배포용 `npm run build`에는 결정론적 전투
+초기 상태 주입 창구가 포함되지 않는다. 전투 전체를 실제 시간으로 완주하는 `@slow` 한 편은
+full 실행에서만 돌고, 전투 공식·전멸·충전 검증은 Vitest의 `skirmish.test.ts`가 맡는다.
 
 e2e는 캔버스가 세로로 렌더링되는지, 탭(터치)으로 씬이 전환되는지, 기기를 가로로 눕히면
 회전 안내가 뜨는지를 확인하고 `test-results/`에 스크린샷을 남긴다. 실제 모바일 기기가 없을

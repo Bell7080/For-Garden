@@ -53,6 +53,14 @@ export interface DebugState {
   dialogue?: { nodeId: string; body: string };
   /** 지금 열려 있는 팝업 제목을 아래(가장 먼저 연 것)부터 순서대로 쌓아 둔다. E2E가 팝업이 실제로 열렸는지 확인한다. */
   popupTitles?: string[];
+  /** PuppetForge 조립이 끝나 실제 컨테이너가 살아 있는 수다. E2E 관찰 전용이며 편성 규칙에는 입력되지 않는다. */
+  puppetContainers?: Record<string, number>;
+  /** 정보창의 원화와 비교 SD가 각각 실제 컨테이너로 교체됐는지 나타내는 읽기 전용 표시 상태다. */
+  infoAssetReady?: { portrait: boolean; sd: boolean };
+  /** WebGL 복구 사건과 그 뒤 실제 post-render 수를 기록하는 수명 주기 관찰값이다. */
+  webglRestore?: { restoredEvents: number; renderedFramesAfterRestore: number; renderingResumed: boolean };
+  /** 임무판이 API 응답을 받아 현재 그린 탭이다. 게임 규칙에는 사용하지 않는다. */
+  missionsPeriod?: "daily" | "weekly";
   /**
    * **칸에 맞추다가 하한에 걸린 글자.**
    *
@@ -126,6 +134,11 @@ export interface DebugState {
   inventoryTextureKeys?: string[];
   /** 도감 스크롤의 표시 범위와 현재 제한값. Canvas E2E가 경계·입력 분리를 검증하는 용도다. */
   relicScroll?: { y: number; minY: number; maxY: number; enabled: boolean; viewportTop: number; viewportBottom: number };
+  /** 교류 카드가 실제로 그린 정체성·잠금·화면 bounds와 목록 스크롤 경계다. */
+  interactionLayers?: {
+    cards: Array<{ id: string; locked: boolean; bounds: { left: number; top: number; right: number; bottom: number }; textureKey: string }>;
+    scrollY: number; minScrollY: number; maxScrollY: number; viewport: { top: number; bottom: number };
+  };
   /** 노드 편성판의 안전 영역·꼬리 방향·적 입력 중심만 노출하는 모바일 시각 회귀 계약이다. */
   enemyPreview?: { top: number; bottom: number; panelTop: number; panelBottom: number; above: boolean; enemyTargets: Array<{ x: number; y: number }> };
   /** 상점군 E2E가 Canvas 구현을 복제하지 않고 실제 입력면만 누르는 최소 좌표 계약이다. */
@@ -168,6 +181,8 @@ export function setDebugScene(scene: string, screenTitle?: string): void {
   state.dialogue = undefined;
   // 새 씬이 자기 입력면을 게시하기 전에는 과거 상점 좌표를 남기지 않는다.
   state.storefrontControls = undefined; state.shopView = undefined;
+  // 다른 씬에서 직전 교류 카드가 아직 보이는 것처럼 읽히지 않게 씬 경계에서 비운다.
+  state.interactionLayers = undefined;
 }
 
 /** 현재 화면이 실제로 만든 상점 입력 중심만 병합하며 상품/지갑 데이터는 받지 않는다. */
@@ -177,6 +192,9 @@ export function setDebugStorefrontControls(controls: Partial<NonNullable<DebugSt
 
 /** 탭 재렌더와 스크롤 clamp 결과를 그대로 게시한다. */
 export function setDebugShopView(view: DebugState["shopView"]): void { ensure().shopView = view; }
+
+/** Canvas 밖에서 목록 구현을 복제하지 않도록 교류 씬이 계산한 표시 계약을 그대로 게시한다. */
+export function setDebugInteractionLayers(layers: DebugState["interactionLayers"]): void { ensure().interactionLayers = layers; }
 
 export function setDebugReady(ready: boolean): void {
   ensure().ready = ready;
@@ -248,7 +266,25 @@ export function setDebugRelicScroll(scroll: DebugState["relicScroll"]): void {
 
 export function setDebugInfoOpen(open: boolean): void {
   ensure().infoOpen = open;
+  if (!open) ensure().infoAssetReady = undefined;
 }
+
+/** 비동기 Puppet 생성/파괴 결과만 세며 저장이나 편성 상태를 읽거나 바꾸지 않는다. */
+export function changeDebugPuppetContainers(scene: string, delta: number): void {
+  const state = ensure(); const counts = state.puppetContainers ?? (state.puppetContainers = {});
+  counts[scene] = Math.max(0, (counts[scene] ?? 0) + delta);
+}
+
+/** 정보창이 실제로 채운 두 비동기 에셋의 완료 여부만 병합한다. */
+export function setDebugInfoAssetReady(part: Partial<NonNullable<DebugState["infoAssetReady"]>> | undefined): void {
+  ensure().infoAssetReady = part ? { portrait: false, sd: false, ...ensure().infoAssetReady, ...part } : undefined;
+}
+
+/** 브라우저 WebGL 사건과 Phaser post-render 관찰값을 그대로 게시한다. */
+export function setDebugWebglRestore(state: DebugState["webglRestore"]): void { ensure().webglRestore = state; }
+
+/** 임무 API 응답을 그린 뒤의 선택 탭만 게시한다. */
+export function setDebugMissionsPeriod(period: DebugState["missionsPeriod"]): void { ensure().missionsPeriod = period; }
 
 /** Canvas 프로필 칩의 열기·닫기 흐름만 자동화가 관찰하게 한다. */
 export function setDebugPlayerProfileOpen(open: boolean): void {

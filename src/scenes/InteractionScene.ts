@@ -11,7 +11,7 @@ import { addSceneBackground, BACKGROUND, useBackgroundTexture } from "../ui/back
 import { drawFrameVignette, drawGlassFade, drawHairline, drawLayer, drawShapeOutline, drawVignette, slantedRect } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
 import { TopBar } from "../ui/TopBar";
-import { setDebugScene, setDebugStorefrontControls } from "../debug";
+import { setDebugInteractionLayers, setDebugScene, setDebugStorefrontControls } from "../debug";
 import { PopupLayer } from "../ui/PopupLayer";
 import { bindCurrencyGuide } from "../ui/currencyGuideEntry";
 import { InteractionExchangePopup } from "../ui/InteractionExchangePopup";
@@ -165,6 +165,32 @@ export class InteractionScene extends Phaser.Scene {
   private scrollTo(value: number): void {
     this.scrollY = Phaser.Math.Clamp(value, this.minScroll, 0);
     this.layers?.setY(this.scrollY);
+    // bounds는 현재 스크롤이 반영된 화면 좌표여야 화면 밖 카드도 정확히 찾아 누를 수 있다.
+    this.publishLayerDebug(this.currentViews());
+  }
+
+  /** 실제 렌더 배치와 같은 수식에서 카드 관찰값을 만들어 E2E의 좌표 재구현을 막는다. */
+  private publishLayerDebug(views: readonly InteractionLayerView[]): void {
+    setDebugInteractionLayers({
+      cards: views.map((view, index) => {
+        const spot = interactionLayerSpot(index);
+        return {
+          id: view.city.id,
+          locked: view.state === "locked",
+          bounds: {
+            left: spot.x - INTERACTION_LAYER.width / 2,
+            top: spot.y + this.scrollY - INTERACTION_LAYER.height / 2,
+            right: spot.x + INTERACTION_LAYER.width / 2,
+            bottom: spot.y + this.scrollY + INTERACTION_LAYER.height / 2,
+          },
+          textureKey: view.city.illustration,
+        };
+      }),
+      scrollY: this.scrollY,
+      minScrollY: this.minScroll,
+      maxScrollY: 0,
+      viewport: { ...INTERACTION_LAYER.viewport },
+    });
   }
 
   /** 서버가 확정한 시각에 맞춰 기기 시계와의 차이만 잡아 둔다. */

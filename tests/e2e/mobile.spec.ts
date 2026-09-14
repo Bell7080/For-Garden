@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { startAfterOpening } from "./openingSave";
-import { canvasBox, captureGame, gamePoint, tap, tapUntil } from "./canvasInput";
+import { canvasBox, captureGame, gamePoint, tap, tapUntil, waitForDebugState } from "./canvasInput";
 import { ExpeditionManager } from "../../src/managers/ExpeditionManager";
 import { EXPEDITION_LAYOUT, expeditionNodePosition, focusExpeditionFloor } from "../../src/ui/expeditionLayout";
 
@@ -123,7 +123,7 @@ test("세로형 첫 방문은 오프닝을 끝내고 중복 입력 없이 로비
     body: "연구원님, 곧 이터널 시티에 도착해요.",
   });
   // 첫 전신 ZIP 파싱이 끝나 입력 잠금이 풀릴 시간을 저사양 모바일 실행에도 보장한다.
-  await page.waitForTimeout(2_000);
+  await waitForDebugState(page, () => (window.__PF_DEBUG?.puppetContainers?.OpeningScene ?? 0) >= 1, true, { timeout: 60_000 });
 
   // 디버그 계약의 실제 대입을 감시해 중복 로비 진입과 ready 전환의 선후를 함께 검증한다.
   await page.evaluate(() => {
@@ -147,18 +147,17 @@ test("세로형 첫 방문은 오프닝을 끝내고 중복 입력 없이 로비
   });
 
   // wake → window → 선택 → 분기 응답 → arrival → end까지 실제 Canvas 입력으로 진행한다.
-  await tapGame(page, BASE_WIDTH / 2, 1500); await page.waitForTimeout(300);
-  await tapGame(page, BASE_WIDTH / 2, 1500); await page.waitForTimeout(300);
-  await tapGame(page, BASE_WIDTH / 2, 1050); await page.waitForTimeout(300);
-  await tapGame(page, BASE_WIDTH / 2, 1500); await page.waitForTimeout(300);
-  await tapGame(page, BASE_WIDTH / 2, 1500); await page.waitForTimeout(500);
+  await tapGame(page, BASE_WIDTH / 2, 1500); await waitForDebugState(page, () => window.__PF_DEBUG?.dialogue?.nodeId, "window");
+  await tapGame(page, BASE_WIDTH / 2, 1500); await waitForDebugState(page, () => window.__PF_DEBUG?.dialogue?.nodeId, "answer");
+  await tapGame(page, BASE_WIDTH / 2, 1050); await waitForDebugState(page, () => window.__PF_DEBUG?.dialogue?.nodeId, "warm");
+  await tapGame(page, BASE_WIDTH / 2, 1500); await waitForDebugState(page, () => window.__PF_DEBUG?.dialogue?.nodeId, "arrival");
+  await tapGame(page, BASE_WIDTH / 2, 1500); await waitForDebugState(page, () => window.__PF_DEBUG?.dialogue?.nodeId, "end");
 
   // 마지막 노드 입력은 같은 순간 여러 번 보내 완료 저장/전환 멱등 경계를 직접 압박한다.
   for (let input = 0; input < 5; input += 1) await tapGame(page, BASE_WIDTH / 2, 1500);
   // 최종 입력 직후에는 오프닝 준비 상태가 먼저 내려가고, Puppet 초기화가 끝나야 로비가 준비된다.
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.ready)).toBe(false);
   await expect.poll(() => page.evaluate(() => ({ scene: window.__PF_DEBUG?.scene, ready: window.__PF_DEBUG?.ready })), { timeout: 15_000 }).toEqual({ scene: "lobby", ready: true });
-  await page.waitForTimeout(500);
   expect(await page.evaluate(() => (window.__PF_DEBUG as typeof window.__PF_DEBUG & { __lobbyEntries?: number })?.__lobbyEntries)).toBe(1);
   const transitionEvents = await page.evaluate(() => (window.__PF_DEBUG as typeof window.__PF_DEBUG & { __transitionEvents?: string[] })?.__transitionEvents ?? []);
   // 첫 ready:false가 lobby 게시보다 앞서고, ready:true는 lobby 게시 뒤에 와야 한다.
@@ -189,26 +188,26 @@ test("출격 선택판에서 원정대 3기를 골라 진행 중 상태로 저�
   await tapGame(page, BASE_WIDTH / 2, 1403);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("expedition");
   // 원정의 첫 화면은 주간 기록이다. 순위와 기록 보상을 먼저 보고 출격으로 편성을 연다.
-  await page.waitForTimeout(900);
+  await waitForDebugState(page, () => (window.__PF_DEBUG?.puppetContainers?.ExpeditionScene ?? 0) >= 1, true, { timeout: 60_000 });
   await captureGame(page, `test-results/${test.info().project.name}-expedition-ranking.png`);
   // 기록 원경과 별개로 합성된 순위 팝업(도시 원경 + 옅은 필드)을 실제 캔버스에 남긴다.
   await tapGame(page, 363, 1610);
-  await page.waitForTimeout(700);
+  await waitForDebugState(page, () => (window.__PF_DEBUG?.popupTitles?.length ?? 0) > 0, true);
   await captureGame(page, `test-results/${test.info().project.name}-expedition-ranking-popup.png`);
   // 닫힌 팝업의 우하단 공용 뒤로가기로 기록 화면에 복귀한다.
   await tapGame(page, RANKING_BACK.x, RANKING_BACK.y);
-  await page.waitForTimeout(500);
+  await waitForDebugState(page, () => window.__PF_DEBUG?.popupTitles, undefined);
   await tapGame(page, 717, 1610);
-  await page.waitForTimeout(700);
+  await waitForDebugState(page, () => (window.__PF_DEBUG?.popupTitles?.length ?? 0) > 0, true);
   await captureGame(page, `test-results/${test.info().project.name}-expedition-reward-popup.png`);
   // 기록 보상 판은 고를 것이 없는 읽기 판이라 판 바깥을 눌러 닫는다.
   await tapGame(page, RANKING_BACK.x, RANKING_BACK.y);
-  await page.waitForTimeout(500);
+  await waitForDebugState(page, () => window.__PF_DEBUG?.popupTitles, undefined);
 
   // 하단 출격 버튼이 편성 단계를 연다. 씬 재시작과 SD 로딩을 기다린 뒤 카드를 누른다.
   // 기록 화면의 판들이 닫히고 나서야 출격이 드러난다 — 편성이 열릴 때까지 다시 누른다.
   await tapUntil(page, BASE_WIDTH / 2, 1800, async () => (await page.evaluate(() => window.__PF_DEBUG?.expeditionFormation)) !== undefined);
-  await page.waitForTimeout(1500);
+  await waitForDebugState(page, () => (window.__PF_DEBUG?.puppetContainers?.ExpeditionScene ?? 0) >= (window.__PF_DEBUG?.expeditionFormation?.selectedCount ?? 3), true, { timeout: 60_000 });
   await captureGame(page, `test-results/${test.info().project.name}-expedition-preparation.png`);
 
   // 복원된 세 기 중 가운데 슬롯을 직접 해제하면 카드·SD·인원수·버튼 상태가 함께 2기로 바뀐다.
@@ -276,7 +275,7 @@ test("폰토스 종료 결과판에서 로비로 이동하면 원정은 비활�
   });
   await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
-  await page.waitForTimeout(700);
+  await waitForDebugState(page, () => window.__PF_DEBUG?.storefrontControls?.lobby !== undefined, true);
   await tapGame(page, BASE_WIDTH - 290, BASE_HEIGHT - 425);
   await tapGame(page, BASE_WIDTH / 2, 1403);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("expedition");
@@ -308,10 +307,10 @@ test("원정 전투 노드는 지도 안 공용 편성판을 붙이고 적 상�
   await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   // 로비 입장 애니메이션이 입력을 넘겨받은 뒤 출격 버튼을 눌러 저속 모바일 실행을 안정화한다.
-  await page.waitForTimeout(700);
+  await waitForDebugState(page, () => window.__PF_DEBUG?.storefrontControls?.lobby !== undefined, true);
   await tapGame(page, BASE_WIDTH - 290, BASE_HEIGHT - 425);
   // 출격 선택판은 로비 위 PopupLayer이므로 씬 이름은 유지된다. 판의 입력 생성만 잠시 기다린다.
-  await page.waitForTimeout(400);
+  await waitForDebugState(page, () => window.__PF_DEBUG?.popupTitles?.includes("출격"), true);
   await tapGame(page, BASE_WIDTH / 2, 1403);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("expedition");
   // 실제 지도 포커스 계산이 반영된 첫 도달 노드의 화면 좌표를 선택한다.

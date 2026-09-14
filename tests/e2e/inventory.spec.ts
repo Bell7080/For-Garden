@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { startAfterOpening } from "./openingSave";
 import { inventoryCategoryTabPosition } from "../../src/ui/inventoryTabs";
 import { createRuneInstance, type RuneStatKey } from "../../src/core/runes";
-import { captureGame, tap, tapUntil } from "./canvasInput";
+import { captureGame, tap, tapUntil, waitForDebugState } from "./canvasInput";
 // 레일 자리는 화면이 소유한 배치표에서 읽는다 — 좌표를 스펙에 베껴 두면 줄이 옮겨질 때 조용히 빗나간다.
 import { LOBBY_RAIL_BOUNDS } from "../../src/ui/lobbyLayout";
 
@@ -45,13 +45,13 @@ test("가방은 로비를 유지하고 카테고리 탭과 많은 항목 스크�
   await page.mouse.wheel(0, 1200);
   // 갱신하는 결과 캡처는 기준 게임 해상도와 같은 1080×1920으로 고정한다.
   await page.setViewportSize({ width: WIDTH, height: HEIGHT });
-  await page.waitForTimeout(100);
+  await waitForDebugState(page, () => window.__PF_DEBUG?.inventoryCategory, "rune");
   await captureGame(page, `test-results/${test.info().project.name}-inventory-popup.png`);
 
   // 외부 뒤로가기로 닫은 뒤 버튼과 팝업 인스턴스가 함께 정리되어 같은 가방을 다시 열 수 있어야 한다.
   await tap(page, WIDTH - 106, HEIGHT - 120);
   await tap(page, WIDTH - 106, 1096);
-  await page.waitForTimeout(150);
+  await waitForDebugState(page, () => window.__PF_DEBUG?.popupTitles, ["가방"]);
   await captureGame(page, `test-results/${test.info().project.name}-inventory-popup-reopened.png`);
   // 재개방 캡처까지 끝나면 테스트가 만든 팝업은 페이지 종료와 함께 정리된다.
 });
@@ -62,7 +62,7 @@ test("상단과 가방 재화는 같은 안내를 열고 가방 위 안내만 �
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   // 기본 상단의 첫 칩(젬)을 눌러 공용 안내 제목이 스택에 기록되는지 확인한다.
   // 안내를 여는 조작은 다시 누르면 배경을 눌러 닫아 버린다 — 상단 줄이 그려질 틈만 두고 한 번 누른다.
-  await page.waitForTimeout(700);
+  await waitForDebugState(page, () => window.__PF_DEBUG?.storefrontControls?.lobby !== undefined, true);
   await tap(page, 500, 86);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual(["젬"]);
   await tap(page, 880, 556);

@@ -88,6 +88,7 @@ import { ExpeditionScoreDetailPopup } from "../ui/ExpeditionScoreDetailPopup";
 import { BOSS_RESULT_LAYOUT, bossResultUtilityBounds } from "../ui/bossResultLayout";
 import type { CurrencyIconKey } from "../ui/currencyIcons";
 import { hasMergedBattleHit, isPlayerUltimateReadyTransition } from "../core/hapticPolicy";
+import { applyBattleTestPreset, battleRandom } from "../testSupport/battleHarness";
 
 /**
  * 여섯이 돌아다닐 수 있는 범위.
@@ -263,6 +264,8 @@ export class BattleScene extends Phaser.Scene {
   /** init 입력은 씬 한 생명주기 동안 고정되며 원정 진행 상태는 매니저만 저장한다. */
   private battleInput: BattleSceneInputDto = { mode: "stage" };
   private state!: SkirmishState;
+  /** 전투 한 판이 공유하는 난수원. 테스트 빌드는 seed를 주입하고 일반 빌드는 Math.random을 쓴다. */
+  private rng: () => number = Math.random;
   /** 전투 시작 시 고정해 카메라·게이지·카드가 같은 최종 움직임 정책을 소비한다. */
   private motion!: MotionPolicy;
   private views = new Map<string, FighterView>();
@@ -385,6 +388,9 @@ export class BattleScene extends Phaser.Scene {
       // 정예는 혼자 서는 만큼 몸이 크다. 능력치는 건드리지 않는다 — 세기는 야성 몫이 낸다.
       ...(stage.elite === true ? { enemyBodyScale: STAGE_ELITE.bodyScale } : {}),
     });
+    // 테스트 초기 상태는 코어 생성이 끝난 단 한 경계에서만 적용해 씬 로직과 전투 공식을 오염시키지 않는다.
+    this.rng = battleRandom();
+    applyBattleTestPreset(this.state);
     this.views.clear();
     this.profiles = [];
     this.allyInfoRef = undefined;
@@ -762,7 +768,7 @@ export class BattleScene extends Phaser.Scene {
       const zoom = skipPresentation
         ? Promise.resolve()
         : this.tween({ targets: view.creature, scale: base * presentation.zoomScale, duration: scaleUltimateDuration(presentation.zoomMs, timing), ease: "Back.Out" });
-      const events = fireUltimate(this.state, fighter.id, () => Math.random());
+      const events = fireUltimate(this.state, fighter.id, this.rng);
       // 공격 판정(core), 시각적 사망(scene tween), 전투 결과(finish)는 서로 다른 책임이다.
       // 사건 순서는 건드리지 않고, finish가 있는 결정타인지만 종료 대기 정책에 따로 전달한다.
       const hasDeathEvent = events.some((event) => event.kind === "death");
@@ -875,7 +881,7 @@ export class BattleScene extends Phaser.Scene {
     if (this.ultimateSequenceActive) return;
     // battleSpeed는 코어 시간에 여기서 정확히 한 번만 곱한다. 궁극기 연출 배율은 tween/Puppet에만
     // 쓰고 stepSkirmish에 넣지 않으므로 피해량·공격 주기·게이지 충전이 이중 가속되지 않는다.
-    const events = stepSkirmish(this.state, dt * this.battleSpeed, () => Math.random());
+    const events = stepSkirmish(this.state, dt * this.battleSpeed, this.rng);
     if (this.state.boss) {
       const boss = this.state.boss; const phase = boss.phases[boss.phaseIndex];
       const normalScore = expeditionManager.status().run?.normalNodeScoreTotal ?? 0;

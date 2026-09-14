@@ -45,7 +45,8 @@ export default defineConfig({
     trace: "retain-on-failure",
   },
   webServer: {
-    command: "npm run preview",
+    // E2E 전용 주입 경로가 production 번들에 열리지 않도록 반드시 test mode 산출물을 띄운다.
+    command: "npm run build:test && npm run preview",
     url: "http://localhost:4173",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
@@ -57,6 +58,7 @@ export default defineConfig({
       // 공통 기능은 같은 Chromium 실행을 기기 프로필마다 중복하지 않는다.
       name: "functional-chromium",
       testIgnore: DEVICE_VISUAL_SPECS,
+      // 실제 시계 완주 한 편은 명시적으로 full 실행할 때만 포함하고 기본 smoke에서는 제외한다.
       use: { ...devices["Desktop Chrome"] },
     },
     {

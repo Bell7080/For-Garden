@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { AD_REWARD_SLOTS, completedAdToken, findAdRewardSlot } from "../../src/data/adRewards";
 import { excavationAdOfferDisplayModel } from "../../src/ui/excavationAdOfferModel";
+import { createIdleExcavationState, STORAGE_EXTENSION_MULTIPLIER } from "../../src/core/idleExcavation";
 
 /** 광고 운영표가 희소 가챠 재화를 우회 지급하지 못하도록 허용 목록을 고정한다. */
 describe("광고 보상 정적 정의", () => {
@@ -18,6 +19,18 @@ describe("광고 보상 정적 정의", () => {
       { kind: "storage_extension", maxStorageSeconds: 28_800, appliesTo: "next_settlement_window" },
       { kind: "production_speed", multiplier: 1.5, durationSeconds: 3_600, refresh: "replace_expiry" },
     ]);
+  });
+
+  /**
+   * **"최대 8시간"이 두 곳에 적혀 있다.** 광고 표의 `maxStorageSeconds`와, 실제로 한도를
+   * 계산하는 `기본 보관 시간 × STORAGE_EXTENSION_MULTIPLIER`다. 둘이 갈리면 버튼은 8시간을
+   * 약속하고 정산은 다른 시간으로 담는다 — 기본 보관 시간을 손보는 사람이 광고 문구를
+   * 함께 고치도록 여기서 붙잡는다.
+   */
+  it("보관 확장 광고가 약속한 시간과 정산이 실제로 늘리는 한도가 같다", () => {
+    const slot = findAdRewardSlot("excavation-storage");
+    const promised = slot?.reward.kind === "excavation_effect" && slot.reward.effect.kind === "storage_extension" ? slot.reward.effect.maxStorageSeconds : 0;
+    expect(promised).toBe(createIdleExcavationState().baseStorageSeconds * STORAGE_EXTENSION_MULTIPLIER);
   });
 
   it("발굴 버튼은 서버 문구 대신 슬롯별 라벨과 사용/한도 상태를 표시한다", () => {

@@ -22,19 +22,45 @@ export function excavationStorageLimitSeconds(state: IdleExcavationState, now: D
 }
 
 /**
+ * 재화별로 **지금 담을 수 있는 최대량**(시간당 생산량 × 보관 한도 초).
+ *
+ * 게이지의 분모, 정산의 상한, 화면의 예상 누적이 전부 이 한 함수를 읽는다 — 세 곳이 저마다
+ * 곱셈을 적어 두면 게이지가 말하는 한도와 실제로 쌓이는 양이 갈린다.
+ */
+export function excavationStorageCapacity(ratePerHour: Readonly<Record<ExcavationCurrency, number>>, limitSeconds: number): Record<ExcavationCurrency, number> {
+  const capacity = emptyExcavationAmounts();
+  for (const currency of EXCAVATION_CURRENCIES) capacity[currency] = fixedAmount(Math.max(0, ratePerHour[currency]) / 3600 * Math.max(0, limitSeconds));
+  return capacity;
+}
+
+/**
+ * 한도를 넘겨 담지 않는다. 단 **이미 담긴 것은 절대 줄이지 않는다.**
+ *
+ * 편성에서 그 재화를 캐던 렐릭을 빼면 시간당 생산이 0이 되고 한도도 0이 된다 — 그때 그냥
+ * 자르면 지난 편성이 캐 둔 것이 수확하기도 전에 사라진다. 확장권이 끝나 한도가 반으로 줄 때도
+ * 같다. 막는 것은 **새로 쌓는 몫**뿐이다.
+ */
+export function clampExcavationStorage(previous: number, grown: number, capacity: number): number {
+  return fixedAmount(Math.max(previous, Math.min(grown, capacity)));
+}
+
+/**
  * 실제로 쌓인 재화량을 그 재화의 보관 한도(시간당 생산량 × 보관 한도 초)와 비교해 채운
  * 비율(0~1)을 계산한다.
  *
  * 마지막 정산 이후 경과 시간으로 계산하면 조회할 때마다 정산이 일어나 기준 시각이 현재로
  * 밀리므로, 창을 열 때마다 게이지가 0%로 보이는 문제가 있었다. 실제 누적 재화량 자체를
  * 기준으로 삼아야 조회 횟수와 무관하게 지금 쌓인 양을 그대로 보여준다.
+ *
+ * 정산이 한도에서 멈추므로 보통은 1을 넘지 않지만, 한도가 줄어든 뒤(편성 변경·확장권 만료)에는
+ * 남아 있던 몫이 그 위에 설 수 있다 — 그것까지 게이지가 넘치게 두지 않고 가득으로 읽는다.
  */
 export function excavationStorageFillRatio(unclaimed: Readonly<Record<ExcavationCurrency, number>>, ratePerHour: Readonly<Record<ExcavationCurrency, number>>, limitSeconds: number): number {
   if (limitSeconds <= 0) return 0;
+  const capacity = excavationStorageCapacity(ratePerHour, limitSeconds);
   let ratio = 0;
   for (const currency of EXCAVATION_CURRENCIES) {
-    const capacity = ratePerHour[currency] / 3600 * limitSeconds;
-    if (capacity > 0) ratio = Math.max(ratio, unclaimed[currency] / capacity);
+    if (capacity[currency] > 0) ratio = Math.max(ratio, unclaimed[currency] / capacity[currency]);
   }
   return Math.min(1, ratio);
 }
@@ -152,7 +178,26 @@ export function settleIdleExcavation(state: IdleExcavationState, serverNow: Date
   const split = splitAccrualAt(accrual.window, state.productionMultiplierExpiresAt);
   const boostedSeconds = split.beforeMs / 1000;
   const normalSeconds = split.afterMs / 1000;
-  for (const currency of EXCAVATION_CURRENCIES) unclaimed[currency] = fixedAmount((unclaimed[currency] ?? 0) + production[currency] / 3600 * (boostedSeconds * state.activeProductionMultiplier + normalSeconds));
+  /*
+   * **보관 한도는 계산 구간이 아니라 담기는 양의 상한이다.**
+   *
+   * 한 번의 정산이 4시간까지만 계산하는 것만으로는 한도가 되지 않았다 — 8시간마다 앱을 열면
+   * 그때마다 4시간치가 더해져 하루면 한도의 세 배가 쌓였고, 게이지는 100%에서 잘려 그 사이
+   * 아무 말도 하지 못했다. 그래서 수확해도 남는 소수가 커져(화석 0.96 / 한도 1.32 = 73%)
+   * "수확했는데 게이지가 그대로"로 보였다. 지금은 **한도에 닿으면 거기서 멈춘다** — 100%가
+   * 정말 "더 담을 수 없다"는 뜻이 되고, 수확 뒤 남는 것은 정수에 못 미친 몫뿐이다.
+   *
+   * 상한은 **계산 구간과 같은 한도**(`storageLimit`)로 잡는다. 확장권이 만료되는 순간을 두
+   * 기준으로 나눠 판단하면 8시간을 계산해 놓고 4시간치만 담게 되어 확장권이 아무 일도 하지
+   * 않는다. 확장이 끝난 뒤에는 게이지의 분모(지금 기준 한도)보다 담긴 것이 많을 수 있는데,
+   * 그때는 게이지가 가득으로 읽히고 담긴 것은 그대로 남는다.
+   */
+  const capacity = excavationStorageCapacity(production, storageLimit);
+  for (const currency of EXCAVATION_CURRENCIES) {
+    const previous = unclaimed[currency] ?? 0;
+    const grown = previous + production[currency] / 3600 * (boostedSeconds * state.activeProductionMultiplier + normalSeconds);
+    unclaimed[currency] = clampExcavationStorage(previous, grown, capacity[currency]);
+  }
   return { ...state, lastSettledAt: serverNow.toISOString(), assignedRelicIds: [...state.assignedRelicIds], unclaimed, activeProductionMultiplier: speedExpiryMs > serverNow.getTime() ? state.activeProductionMultiplier : 1, productionMultiplierExpiresAt: speedExpiryMs > serverNow.getTime() ? state.productionMultiplierExpiresAt : null, storageExtensionExpiresAt: state.storageExtensionExpiresAt && new Date(state.storageExtensionExpiresAt).getTime() > serverNow.getTime() ? state.storageExtensionExpiresAt : null, retroactiveExcavationGrantVersion: RETROACTIVE_EXCAVATION_GRANT_VERSION };
 }
 

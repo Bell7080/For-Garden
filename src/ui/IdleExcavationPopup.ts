@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import { t } from "../i18n";
 import type { AdOperationsConfigResponse, AdPresentationResult, AdSlotOperationsDto, GameApi, HarvestExcavationResponse, IdleExcavationResponse } from "../api/contracts";
 import { motionPolicy, powerSavingPolicy } from "../core/settings";
-import { emptyExcavationAmounts, EXCAVATION_CURRENCIES, excavationProductionDisplayModel, excavationStorageFillRatio, excavationStorageLimitSeconds, type ExcavationCurrency, type IdleExcavationState } from "../core/idleExcavation";
+import { clampExcavationStorage, emptyExcavationAmounts, EXCAVATION_CURRENCIES, excavationProductionDisplayModel, excavationStorageCapacity, excavationStorageFillRatio, excavationStorageLimitSeconds, type ExcavationCurrency, type IdleExcavationState } from "../core/idleExcavation";
 import { tapFormationSlot, tapRosterRelic } from "../core/formationSlots";
 import { RELICS } from "../data/relics";
 import { placePuppet, spawnPuppet, type PuppetAsset, type PuppetCreature } from "../puppets/assets";
@@ -355,9 +355,13 @@ export class IdleExcavationPopup {
       // 서버 응답 이후의 로컬 경과분만 더하는 표시용 예상치이며 정산 기준 시각은 절대 갱신하지 않는다.
       const elapsedHours = Math.max(0, Date.now() - baseServerMs) / 3_600_000;
       const liveAmounts = emptyExcavationAmounts();
+      // 예상치도 **서버와 같은 한도에서 멈춘다.** 창을 열어 둔 채 한도를 넘겨 계속 올라가면
+      // 화면의 수와 실제로 받는 수확량이 갈린다 — 서버는 이미 한도에서 생산을 멈춘 뒤다.
+      const capacity = excavationStorageCapacity(rate, excavationStorageLimitSeconds(response.excavation, new Date()));
       // 틱에서는 프리팹의 Text만 바꾼다. 이미지와 불투명 요약 레이어는 재생성하지 않는다.
       for (const row of rows) {
-        const amount = response.excavation.unclaimed[row.currency] + rate[row.currency] * elapsedHours;
+        const stored = response.excavation.unclaimed[row.currency];
+        const amount = clampExcavationStorage(stored, stored + rate[row.currency] * elapsedHours, capacity[row.currency]);
         liveAmounts[row.currency] = amount;
         row.frame.setValues(amount, row.rate);
         // 정수 단위가 실제로 증가한 틱에만 기여 렐릭의 SD와 자원 아이콘으로 생산 피드백을 준다.

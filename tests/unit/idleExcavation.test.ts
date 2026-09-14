@@ -17,6 +17,11 @@ function activeState() {
 
 const starterProgress = { anky: progress(), rex: progress(), spino: progress() };
 
+/** 기본 편성(토리카·렉시아·스피나)의 시간당 합산. 게이지의 분모를 손으로 적지 않는다. */
+const TOTALS = excavationProductionDisplayModel(["anky", "rex", "spino"], RELICS, starterProgress).totalsPerHour;
+
+const emptyWallet = { fossil: 0, gold: 0, cheesecake: 0, amber: 0, gems: 0, stamina: 0, dnaFragments: 0 };
+
 describe("방치 발굴 순수 규칙", () => {
   it("공유 시계 fixture에서 시간대·역행·장기 오프라인·만료 경계를 지킨다", () => {
     const fixture = TIME_ACCRUAL_FIXTURES;
@@ -126,6 +131,42 @@ describe("방치 발굴 순수 규칙", () => {
   it("보관 상한을 넘긴 서버 경과 시간은 기본 4시간까지만 계산한다", () => {
     const result = settleIdleExcavation(activeState(), new Date("2026-08-21T00:00:00.000Z"), RELICS, starterProgress);
     expect(result.unclaimed.gold).toBe(105);
+  });
+
+  /**
+   * **한 번의 정산을 4시간으로 자르는 것만으로는 한도가 되지 않았다.**
+   *
+   * 8시간마다 앱을 열면 그때마다 4시간치가 더해져 하루면 한도의 세 배가 쌓였고, 게이지는
+   * 100%에서 잘려 그 사이 아무 말도 하지 못했다. 그래서 수확해도 남는 소수가 커져 게이지가
+   * 그대로인 것처럼 보였다.
+   */
+  it("정산을 여러 번 반복해도 보관 한도 위로는 쌓이지 않는다", () => {
+    let state: ReturnType<typeof settleIdleExcavation> = activeState();
+    for (const at of ["2026-08-20T08:00:00.000Z", "2026-08-20T16:00:00.000Z", "2026-08-21T00:00:00.000Z"]) {
+      state = settleIdleExcavation(state, new Date(at), RELICS, starterProgress);
+    }
+    // 26.25/h × 4h = 105. 세 번을 열어도 315가 아니라 105다.
+    expect(state.unclaimed.gold).toBe(105);
+    expect(state.unclaimed.fossil).toBeCloseTo(0.33 * 4, 6);
+    // 한도에서 멈추므로 수확 뒤 남는 것은 정수에 못 미친 몫뿐이고 게이지가 실제로 내려간다.
+    const before = excavationStorageFillRatio(state.unclaimed, TOTALS, 4 * 3600);
+    const after = harvestIdleExcavation(state, { ...emptyWallet }).state;
+    expect(before).toBe(1);
+    expect(excavationStorageFillRatio(after.unclaimed, TOTALS, 4 * 3600)).toBeLessThan(0.3);
+  });
+
+  /**
+   * 한도가 줄어드는 길은 둘이다 — 그 재화를 캐던 렐릭을 편성에서 빼거나, 확장권이 끝나거나.
+   * 그때 담긴 것을 잘라 내면 수확하기도 전에 사라지므로, 막는 것은 **새로 쌓는 몫**뿐이다.
+   */
+  it("한도가 줄어도 이미 담긴 것은 줄이지 않는다", () => {
+    const stored = { ...emptyExcavationAmounts(), gold: 500 };
+    // 금을 캐던 렐릭을 모두 뺀 편성이라 시간당 생산도 한도도 0이다.
+    const emptied = settleIdleExcavation(
+      { ...createIdleExcavationState("2026-08-20T00:00:00.000Z"), assignedRelicIds: [null, null, null], unclaimed: stored },
+      new Date("2026-08-20T04:00:00.000Z"), RELICS, starterProgress,
+    );
+    expect(emptied.unclaimed.gold).toBe(500);
   });
 
   it("서버 시계가 역행하면 생산량과 마지막 정상 정산 시각을 유지한다", () => {

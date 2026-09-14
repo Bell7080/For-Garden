@@ -90,9 +90,12 @@ function weightedPick<T>(entries: readonly T[], weightOf: (entry: T) => number, 
 function assignZones(layer: StrataLayerDefinition, random: () => number): { zones: StrataZone[]; zoneOf: number[] } {
   const cells = layer.columns * layer.rows;
   const seeds: number[] = [];
+  // 이미 찍은 자리가 다시 나오면 **다음 빈 칸으로 옮겨 앉는다** — 다시 굴리면 난수가 같은
+  // 값만 돌려주는 환경(고정 시드 테스트·손상된 주입)에서 영영 끝나지 않는다.
   while (seeds.length < Math.min(layer.zones, cells)) {
-    const candidate = Math.floor(roll(random) * cells);
-    if (!seeds.includes(candidate)) seeds.push(candidate);
+    let candidate = Math.floor(roll(random) * cells);
+    while (seeds.includes(candidate)) candidate = (candidate + 1) % cells;
+    seeds.push(candidate);
   }
   const tones = Object.keys(layer.toneWeight) as StrataZoneTone[];
   const zones = seeds.map((_, index) => ({ index, tone: weightedPick(tones, (tone) => layer.toneWeight[tone], random) }));

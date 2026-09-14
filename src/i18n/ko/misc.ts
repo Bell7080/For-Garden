@@ -54,11 +54,13 @@ export const MISC_KO = {
   "skill.keywordHint": "강조된 말을 누르면 뜻이 열린다",
 
   // 고고학
+  "archaeology.tab.strata": "지층 탐사",
+  "archaeology.tab.research": "특성 연구",
+  "archaeology.charges": "탐사 {charges} / {max}",
+  "archaeology.start": "지층 탐사 시작",
+  "archaeology.digsLeft": "남은 굴착 {digs}",
+  "archaeology.haul": "이번 탐사",
   "archaeology.title": "고 고 학",
-  "archaeology.subtitle": "장기 탐사 · 에너지 · 희귀 자원",
-  "archaeology.unknownZone": "미확인 탐사 구역",
-  "archaeology.zoneNote": "장기 탐사로 추가 에너지와 다양한 재화,\n아이템 및 강화 재료를 회수할 구역입니다.",
-  "archaeology.comingSoon": "탐사 체계 준비 중",
 
   // 마일리지
   "mileage.title": "마일리지 상점",

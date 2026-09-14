@@ -48,11 +48,13 @@ export const MISC_JA = {
   "skill.duration": "{seconds}秒間",
   "skill.keywordHint": "強調された語を押すと意味が開く",
 
+  "archaeology.tab.strata": "地層探査",
+  "archaeology.tab.research": "特性研究",
+  "archaeology.charges": "探査 {charges} / {max}",
+  "archaeology.start": "地層探査を開始",
+  "archaeology.digsLeft": "残り掘削 {digs}",
+  "archaeology.haul": "今回の探査",
   "archaeology.title": "考 古 学",
-  "archaeology.subtitle": "長期探査 · エネルギー · 希少資源",
-  "archaeology.unknownZone": "未確認の探査区域",
-  "archaeology.zoneNote": "長期探査で追加のエネルギーや各種通貨、\nアイテムおよび強化素材を回収する区域です。",
-  "archaeology.comingSoon": "探査体系を準備中",
 
   "mileage.title": "マイレージショップ",
   "mileage.owned": "所持DNA  {amount}",

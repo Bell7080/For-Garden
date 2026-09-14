@@ -20,6 +20,8 @@ export const STATUS_EN = {
   "status.poison.detail": "{amount} per second · {time} left",
   "status.reagent": "Reagent",
   "status.reagent.detail": "{stacks}/3 stacks · {time} left",
+  "status.shimmer": "Sparkle!",
+  "status.shimmer.detail": "The mark is removed by the next hit",
   "status.weakpoint": "Weak Point",
   "status.weakpoint.detail": "Extra damage when the Duo strikes",
   "status.overpaint": "Overpaint",

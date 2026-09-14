@@ -8,7 +8,7 @@ import { t } from "../i18n";
  * 겹 수와 남은 시간을 여기서 한 번만 만들고 둘 다 이 목록만 그린다. Phaser를 들여오지 않아
  * 순서·색·문구를 테스트가 그대로 고정할 수 있다.
  */
-export type UnitStatusId = "packKuro" | "packShiro" | "shell" | "stun" | "frozen" | "frenzy" | "taunt" | "bleed" | "poison" | "reagent" | "curse" | "chill" | "submerged" | "overpaint" | "butcher" | "vandalism" | "weakpoint";
+export type UnitStatusId = "packKuro" | "packShiro" | "shell" | "stun" | "frozen" | "frenzy" | "taunt" | "bleed" | "poison" | "reagent" | "curse" | "chill" | "submerged" | "overpaint" | "butcher" | "vandalism" | "weakpoint" | "shimmer";
 
 export interface UnitStatusView {
   /** 같은 상태를 제공자가 여럿 걸 수 있을 때도 HUD 객체를 덮어쓰지 않는 전투 내 키다. */
@@ -58,6 +58,9 @@ export const UNIT_STATUS_COLOR: Readonly<Record<UnitStatusId, number>> = {
   // 관측 신호의 노란빛. 다른 디버프처럼 눌러 두지 않는 이유는 이것이 지속 피해가 아니라
   // **다음 한 방을 알리는 표식**이라, 듀오가 어디를 밟아야 하는지가 먼저 읽혀야 하기 때문이다.
   weakpoint: 0xe8c33a,
+  // 물살이 튀어 남은 자국. 여울·둔화와 같은 물빛 계열이되 가장 밝아, 지속 피해가 아니라
+  // **다음 한 방이 무엇을 할지 알리는 표식**이라는 것이 먼저 읽힌다(약점 포착과 같은 이유다).
+  shimmer: 0x8fe3f0,
   butcher: 0xc07fa4,
   vandalism: 0xd45aa8,
 };
@@ -168,6 +171,13 @@ export function unitStatusViews(fighter: Fighter, pack: readonly Fighter[] = [])
       id: "weakpoint", name: t("status.weakpoint"), color: UNIT_STATUS_COLOR.weakpoint,
       // 시간이 흘러 사라지지 않고 듀오의 다음 한 방으로만 풀리므로 시계를 그리지 않는다.
       detail: t("status.weakpoint.detail"),
+    });
+  }
+  if (fighter.shimmer) {
+    views.push({
+      id: "shimmer", name: t("status.shimmer"), color: UNIT_STATUS_COLOR.shimmer,
+      // 시간이 흘러 사라지지 않고 다음 타격으로만 풀리므로 시계를 그리지 않는다.
+      detail: t("status.shimmer.detail"),
     });
   }
   if (fighter.overpaint) {

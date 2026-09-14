@@ -147,9 +147,15 @@ export const RELICS: RelicDef[] = [
       attackPowerPercent: 25,
       criticalChancePercent: 25,
       criticalDamagePercent: 25,
+      // 흡혈은 전 개체 공통 0이라 곱이 아니라 퍼센트포인트로 끌어다 쓴다. 물어뜯을수록 회복하는
+      // 개체라야 앞장서서 먼저 붙는 폭주와 맞물린다.
+      lifeStealPoints: 25,
+      // 뒤에서 쏘는 상대에게는 붙는 것 자체가 일이다. 멀리 선 표적으로 열리면 그 자리로 파고들어
+      // 한 번 멈춰 세운다 — 붙어 서는 상대에게는 이미 사거리 안이라 아무 일도 하지 않는다.
+      openingCharge: { againstReachTiers: ["mid", "ranged"], stunSeconds: 1 },
       // kind가 battleMaidMastery인 패시브는 passiveDescription()이 실제 능력치로 다시 문장을 만들므로
       // 이 원문은 데이터 문서화용일 뿐 화면에는 쓰이지 않는다.
-      desc: "전투 시작 시, 전투에 필요한 네 가지 능력이 25% 오른다.",
+      desc: "전투 시작 시, 전투에 필요한 네 가지 능력과 흡혈이 25% 오르고, 멀리 선 표적에게는 돌진해 1초 동안 기절시킨다.",
     },
     basic: {
       id: "rex-basic",
@@ -457,7 +463,7 @@ export const RELICS: RelicDef[] = [
       ferocityGain: 0,
     },
     // 폭주는 스피나와 같은 은신 태그를 쓰되 도약 없이 무리 사냥을 재실행하며, 루카 자신도 공속 오라 대상이다.
-    ferocityTrait: { name: "폭주", effectId: "packHunt", stealthDurationSeconds: 3, retriggerPackHunt: true, sharedTargetAttackSpeedPercent: 25 },
+    ferocityTrait: { name: "폭주", effectId: "packHunt", stealthDurationSeconds: 3, retriggerPackHunt: true, sharedTargetAttackSpeedPercent: 40 },
     passive: {
       id: "luka-passive",
       name: "무리 사냥",
@@ -472,7 +478,7 @@ export const RELICS: RelicDef[] = [
     basic: {
       id: "luka-basic",
       name: "치명적인 발톱",
-      power: 80,
+      power: 100,
       periodicCritical: { every: 4 },
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
@@ -488,6 +494,10 @@ export const RELICS: RelicDef[] = [
       cost: 90,
       // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
       targeting: "single",
+      // 약점을 뚫는 기술이라 표적을 고르는 일까지 이 궁극기가 맡는다 — 가장 무른 곳으로 뛰어
+      // 그 자리에서 쓴다. 정적 정의가 아니라 지금의 실제 방어력을 읽어, 깎여 무너진 적이 있으면
+      // 그쪽이 먼저다.
+      blinkToLowestDefense: true,
       // 주 대상의 최종 HP 손실을 기준으로, 주 대상에게서 가장 가까운 다른 적에게 전이한다.
       damageTransfer: { percent: 75, distanceOrigin: "primaryTarget" },
     },
@@ -541,8 +551,10 @@ export const RELICS: RelicDef[] = [
       lifeSteal: 0,
       ferocityGain: 0,
     },
-    // 공격 속도 +100%는 속도 x2이며, 계산 결과 공격 간격이 50%가 되는 계약이다.
-    ferocityTrait: { name: "인비저블 썸띵?", effectId: "selfAttackSpeedMultiplier", bonusPercent: 100 },
+    // 손이 빨라지는 몫은 절반으로 줄이고, 그만큼을 고친 자리에 한 겹 덮는 쪽으로 옮겼다 —
+    // 속도만 두 배가 되면 폭주가 "더 많이 고쳤다"까지만 말하고, 이미 가득 찬 아군에게는
+    // 아무 일도 하지 않는다.
+    ferocityTrait: { name: "인비저블 썸띵?", effectId: "selfAttackSpeedMultiplier", bonusPercent: 50, healingShieldPercent: 25 },
     passive: {
       id: "dodo-passive",
       name: "연구원님, 이것 좀 보세요!",
@@ -629,16 +641,21 @@ export const RELICS: RelicDef[] = [
     // 표적을 계속 바꾸는 쪽으로 발현한다 — 표식을 옮기는 패시브와 한 덩어리로 움직인다.
     ferocityTrait: { name: "이크티오 다이브!", effectId: "ichthyoDive", moveSpeedPercent: 100 },
     passive: {
-      // kind가 shimmerMark인 패시브는 passiveDescription()이 구조화 필드로 다시 문장을 만들므로
+      // kind가 tidalVigor인 패시브는 passiveDescription()이 구조화 필드로 다시 문장을 만들므로
       // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
+      //
+      // 「반짝!」은 더 이상 패시브가 아니다 — 그 규칙은 규칙어 하나가 갖고, 표식을 다루는 것은
+      // 실제로 때리는 스킬(`Skill.shimmer`)이다. 패시브는 물살을 타고 계속 뛰어드는 몸이
+      // 버틸 숨과 손을 맡는다.
       id: "tia-passive",
-      name: "반짝반짝 첨벙첨벙!",
-      kind: "shimmerMark",
-      iconAssetId: "skill-icon-magical",
-      effectType: "magical",
-      // 표식이 옮겨 갈 때 터지는 추가 피해의 주문력 계수(%)다.
-      value: 100,
-      desc: "적을 타격하면 반짝이는 표식을 남기고, 표식이 없는 적을 타격하면 표식이 옮겨가며 추가 마법 피해를 입힌다.",
+      name: "쉬지 않는 물장구",
+      kind: "tidalVigor",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      value: 3,
+      maxHpRegenPercentPerSecond: 3,
+      attackSpeedPercent: 20,
+      desc: "매초 최대 체력의 3%를 회복하고 공격 속도가 20% 오른다.",
     },
     basic: {
       id: "tia-basic",
@@ -649,9 +666,12 @@ export const RELICS: RelicDef[] = [
       iconAssetId: "skill-icon-magical",
       effectType: "magical",
       damageType: "magical",
-      // 표식은 한 번에 한 명만 달 수 있으므로 기본 공격도 한 명을 겨눈다 — 범위로 여럿을 함께
-      // 때리면 한 번 휘두를 때마다 표식이 여러 번 옮겨 가 무엇이 표식인지 읽히지 않는다.
+      // 표식을 다루는 손이라 한 명을 겨눈다 — 범위로 여럿을 함께 때리면 한 번 휘두를 때마다
+      // 표식이 여러 장 붙었다 지워져 무엇이 표식인지 읽히지 않는다.
       targeting: "single",
+      // 표식이 없으면 남기고, 있으면 그 자리에서 터뜨려 주위까지 함께 적시고 그 피해의 일부를
+      // 제 몸에 두른다.
+      shimmer: { markPower: 100, burstPower: 50, burstRadius: 260, burstShieldPercent: 25 },
     },
     ultimate: {
       id: "tia-ult",
@@ -664,7 +684,11 @@ export const RELICS: RelicDef[] = [
       cost: 90,
       // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
       targeting: "nearbyEnemies",
-      radius: 300,
+      radius: 420,
+      // 쿵. 쿵. 두 번 내리찍는다. 첫 번째가 표식을 남기면 두 번째가 그 표식을 지운다 —
+      // 터뜨리는 것은 일반 공격의 몫이라 여기서는 터지지 않는다.
+      repeatStrike: { count: 2, intervalSeconds: 0.45 },
+      shimmer: { markPower: 100 },
       statusEffects: [{ kind: "stagger", seconds: 0.1 }],
     },
   },

@@ -336,7 +336,12 @@ describe("렉시아 스킬 표시 계약", () => {
   it("은 폭주·패시브·출혈·궁극기 회복을 현재 데이터에서 문장화한다", () => {
     const rex = RELICS.find((def) => def.id === "rex")!;
     expect(ferocityTraitDescription(rex.ferocityTrait)).toBe("[[bleed|출혈]] 중인 적을 공격하면 치명타가 확정되고, 모든 피해 흡혈이 25% 증가한다.");
-    expect(passiveDescription(rex.passive)).toBe("전투 시작 시, 공격 속도·공격력·치명타 확률·치명타 피해가 모두 25% 오른다.");
+    // 흡혈은 오각형에 서지 않는 축이라 같은 값이어도 제 절로 서고, 여는 돌진은 조건(사거리
+    // 등급)이 곧 그 절의 값이라 본문이 직접 적는다.
+    expect(passiveDescription(rex.passive)).toBe(
+      "전투 시작 시, 공격 속도·공격력·치명타 확률·치명타 피해가 모두 25% 오른다. 흡혈이 25% 오른다."
+      + " 전투 시작 시 표적이 중거리나 원거리에서 싸우는 적이라면 그 자리로 [[charge|돌진]]하며, 적중하면 1초 동안 [[stun|기절]]시킨다.",
+    );
     expect(statusEffectLabel(rex.basic.statusEffects?.[0])).toBe("[[bleed|출혈]] 3초 · 매초 최대 체력 2%");
     expect(targetingLabel(rex.ultimate.targeting)).toBe("적 한 명");
     expect(damageHealingLabel(rex.ultimate.damageHealingPercent)).toBe("실제 피해의 50% 회복");
@@ -393,7 +398,7 @@ describe("도디 스킬 표시 계약", () => {
 
   it("의 야성 발현은 배속 환산 괄호 없이 상승률만 말한다", () => {
     const dodo = RELICS.find((def) => def.id === "dodo")!;
-    expect(ferocityTraitDescription(dodo.ferocityTrait)).toBe("공격 속도가 100% 증가한다.");
+    expect(ferocityTraitDescription(dodo.ferocityTrait)).toBe("공격 속도가 50% 증가하고, 회복시킨 양의 25%만큼 그 아군에게 보호막을 덧씌운다.");
   });
 
   it("의 일반 공격은 묘사 대신 대상·피해·회복 비율을 말한다", () => {
@@ -442,27 +447,36 @@ describe("티아 스킬 표시 계약", () => {
     expect(def.basic.radius).toBeUndefined();
     expect(def.ultimate.radius).toBeGreaterThan(0);
     // 능력치를 모르는 자리에서도 어느 능력치에서 나오는 배율인지 말한다.
-    expect(skillDescription(def.basic)).toBe(`적 한 명에게 주문력의 ${def.basic.power}% [[magical-damage|마법 피해]]를 준다.`);
-  });
-
-  it("의 궁극기는 대상·피해·경직을 한 문장으로 말한다", () => {
-    const def = tia();
-    expect(skillDescription(def.ultimate, { damage: 300 })).toBe(
-      "자신의 주위 모든 적에게 [[damage-value|300]]의 [[magical-damage|마법 피해]]를 주고 [[stagger|경직]]시킨다.",
+    expect(skillDescription(def.basic)).toBe(
+      `적 한 명에게 주문력의 ${def.basic.power}% [[magical-damage|마법 피해]]를 준다.`
+      + " [[shimmer|반짝!]]이 사라질 때 그 자리에서 터져 주위 적에게 [[ap|주문력]]의 50%만큼 [[magical-damage|마법 피해]]를 입히고, 그 피해의 25%만큼 보호막을 얻는다.",
     );
   });
 
-  it("의 폭주와 패시브는 표식을 옮겨 다니는 쪽으로 읽힌다", () => {
+  it("의 궁극기는 대상·피해·경직을 말한 뒤 두 번 찍는다는 것과 반짝을 제 문장으로 세운다", () => {
     const def = tia();
-    // 두 스킬이 한 덩어리다 — 폭주가 표적을 계속 바꾸고, 바뀐 표적마다 표식이 옮겨가며 터진다.
+    // 위력이 총량이 아니라 한 번의 값이라는 말이 반드시 함께 서야 화면의 수치가 총 피해로
+    // 읽히지 않는다.
+    expect(skillDescription(def.ultimate, { damage: 300 })).toBe(
+      "자신의 주위 모든 적에게 [[damage-value|300]]의 [[magical-damage|마법 피해]]를 주고 [[stagger|경직]]시킨다."
+      + " 같은 범위를 2번 내리찍으며, 위 수치는 한 번의 값이다. 모든 타격이 [[shimmer|반짝!]]을 남기거나 지운다.",
+    );
+  });
+
+  it("의 폭주는 표적을 바꾸고, 패시브는 표식이 아니라 버틸 숨과 손을 맡는다", () => {
+    const def = tia();
     expect(def.ferocityTrait).toMatchObject({ effectId: "ichthyoDive", moveSpeedPercent: 100 });
     expect(ferocityTraitDescription(def.ferocityTrait)).toBe(
       "이동 속도가 100% 증가하고, [[basic-attack|기본 공격]] 이후 표적을 다른 적으로 바꾼다.",
     );
-    expect(def.passive.kind).toBe("shimmerMark");
-    // 추가 피해 계수는 데이터에서 나오고 어느 능력치에서 나오는지도 함께 말한다.
+    // 반짝은 더 이상 패시브의 몫이 아니다 — 규칙은 규칙어가 갖고, 표식을 다루는 것은 실제로
+    // 때리는 스킬(`Skill.shimmer`)이다.
+    expect(def.passive.kind).toBe("tidalVigor");
+    expect(def.basic.shimmer).toMatchObject({ markPower: 100, burstPower: 50, burstShieldPercent: 25 });
+    expect(def.ultimate.shimmer).toMatchObject({ markPower: 100 });
+    expect(def.ultimate.shimmer?.burstPower).toBeUndefined();
     expect(passiveDescription(def.passive)).toBe(
-      `적을 타격하면 반짝이는 표식을 남긴다. 표식이 없는 적을 타격하면 표식이 그 적에게 옮겨가며 [[ap|주문력]]의 ${def.passive.value}% [[magical-damage|마법 피해]]를 추가로 입힌다.`,
+      `매초 최대 [[hp|체력]]의 ${def.passive.maxHpRegenPercentPerSecond}%를 회복하고 [[attack-speed|공격 속도]]가 ${def.passive.attackSpeedPercent}% 오른다.`,
     );
   });
 });
@@ -767,7 +781,7 @@ describe("루카 스킬 표시 계약", () => {
     // 루카 자신도 동일 표적 공속 대상이라는 모호한 범위를 폭주 표시 문구에 명시한다.
     expect(ferocityTraitDescription(luka.ferocityTrait)).toContain("자신을 포함해 같은 적");
     expect(ferocityTraitDescription(luka.ferocityTrait)).toContain("[[stealth|은신]]");
-    expect(ferocityTraitDescription(luka.ferocityTrait)).toContain("[[attack-speed|공격 속도]]가 25%");
+    expect(ferocityTraitDescription(luka.ferocityTrait)).toContain("[[attack-speed|공격 속도]]가 40%");
     expect(passiveDescription(luka.passive)).toContain("공격력이 가장 높은 렐릭");
     expect(passiveDescription(luka.passive)).toContain(`치명타 확률이 ${luka.passive.criticalChancePercent}% 오른다`);
     expect(skillDescription(luka.basic)).toContain("매 4번째 실제 [[basic-attack|기본 공격]]");

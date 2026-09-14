@@ -76,8 +76,17 @@ test("고고학의 두 탭과 고고학 상점을 연다", async ({ page }, test
 
   // 왼쪽 위 상점 입구 — 같은 상점 씬이 점원과 배경만 갈아 끼운다.
   await tapUntil(page, 984, 262, "shop");
+  /*
+   * **첫 마디는 저절로 뜬다.**
+   *
+   * 띠는 잠깐 떴다 스스로 사라져 캡처 사이로 빠져나가므로 화면 그림이 아니라 검사 채널로
+   * 확인한다. 점원이 들어와도 되는 순간을 씬의 시계(`time.now`)로 재던 때는 기다림이 0으로
+   * 접혀 첫 마디가 화면 조립 중에 떴다 졌고, 그 뒤 한 박자를 더 두었을 때는 점원 묶음을
+   * 기다린 시간 뒤에 붙어 등장 연출이 끝나고 한참 뒤에야 떴다.
+   */
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.bubble?.body), { timeout: 30_000 }).toBeTruthy();
   // 점원 Puppet은 ZIP을 내려받아 세우므로 첫 프레임보다 늦게 도착한다.
-  await page.waitForTimeout(3_000);
+  await page.waitForTimeout(1_000);
   await captureGame(page, `test-results/${testInfo.project.name}-archaeology-shop.png`);
 });
 

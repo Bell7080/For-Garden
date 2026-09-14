@@ -48,8 +48,15 @@ export class ShopScene extends Phaser.Scene {
   private selectedCategory: ShopCategory = SHOP_TABS[0].id;
   private tabRow?: Phaser.GameObjects.Container;
   private content?: Phaser.GameObjects.Container;
-  /** 전시대가 다 올라와 점원이 들어와도 되는 시각(씬 시계 ms). */
-  private stageSettlesAt = 0;
+  /**
+   * 전시대가 다 올라오는 순간을 여는 문.
+   *
+   * **시각으로 재지 않는다** — 씬의 시계(`time.now`)는 `create()`가 도는 동안 아직 0이라,
+   * 거기에 더해 둔 시각은 점원 묶음이 도착할 즈음이면 이미 지난 시각이 된다. 그러면
+   * 기다림이 0으로 접혀 점원이 전시대와 함께 미끄러져 들어오고(잘린 하반신이 드러난다)
+   * 첫 마디도 화면이 조립되는 중에 떠올랐다 사라진다.
+   */
+  private stageSettled?: Promise<void>;
   /** 구매 응답 지갑을 적용한 직후 화면 가장자리 잔액을 같은 프레임에 갱신한다. */
   private topBar?: TopBar;
   private viewportMask?: Phaser.GameObjects.Graphics;
@@ -159,9 +166,11 @@ export class ShopScene extends Phaser.Scene {
    */
   private playEntrance(): void {
     const distance = motionPolicy(session.settings).nonEssentialDistanceFactor;
-    // 점원이 언제 들어와도 되는지는 이 순간에서 잰다. 묶음이 늦게 도착하면 이미 지난 시각이라
-    // 기다림이 0이 되고, 빨리 오면 전시대가 다 올라올 때까지만 기다린다.
-    this.stageSettlesAt = this.time.now + (distance > 0 ? shopStageSettleMs() : 0);
+    // 점원이 언제 들어와도 되는지는 타이머가 연다. 묶음이 늦게 도착하면 이미 열려 있어
+    // 곧바로 이어지고, 빨리 오면 전시대가 다 올라올 때까지 그 앞에서 기다린다.
+    this.stageSettled = new Promise((resolve) => {
+      this.time.delayedCall(distance > 0 ? shopStageSettleMs() : 0, resolve);
+    });
     const board = SHOP_ENTRANCE.board;
     this.boardChrome.setY(board.rise * distance);
     this.tweens.add({ targets: this.boardChrome, y: 0, duration: board.duration, ease: "Cubic.Out" });
@@ -170,7 +179,7 @@ export class ShopScene extends Phaser.Scene {
     this.tweens.add({ targets: this.gridHolder, y: 0, duration: grid.duration, delay: grid.delay, ease: "Cubic.Out" });
     this.tabRow?.setAlpha(0);
     this.tweens.add({ targets: this.tabRow, alpha: 1, duration: grid.duration, delay: grid.delay });
-    // 첫 마디는 셋이 다 선 뒤에 뜬다. 아직 조립 중인 화면에 말부터 서면 무엇이 말하는지 모른다.
+    // 전시대가 아직 올라오는 중이면 말부터 서지 않는다. 점원 쪽 문과 둘 다 열려야 첫 마디가 뜬다.
     this.time.delayedCall(SHOP_ENTRANCE.dialogue.delay, () => { this.entranceSettled = true; this.tryFirstLine(); });
   }
 
@@ -181,10 +190,10 @@ export class ShopScene extends Phaser.Scene {
    * 화면에 들어온 순간 저절로 선다.
    */
   /**
-   * 첫 마디는 **점원이 도착한 뒤에** 뜬다.
+   * 첫 마디는 **점원이 들어오는 순간에** 함께 뜬다.
    *
    * 묶음은 내려받기라 늦게 올 수 있는데, 그때 말풍선만 먼저 서면 아무도 없는 자리에서 말이
-   * 나온다. 둘 중 늦은 쪽이 이 문을 연다.
+   * 나온다. 둘 중 늦은 쪽이 이 문을 연다 — 전시대가 다 올라왔는지와 점원이 왔는지다.
    */
   private tryFirstLine(): void {
     if (!this.entranceSettled || !this.merchantReady || this.merchantLine > 0) return;
@@ -259,19 +268,23 @@ export class ShopScene extends Phaser.Scene {
     // 오른쪽에서 들어와 제자리에 선다. 늦게 도착해도 같은 거리를 지나 같은 자리에서 멈춘다.
     const slide = SHOP_ENTRANCE.merchant.slide * motionPolicy(session.settings).nonEssentialDistanceFactor;
     merchant.setX(headX + slide).setAlpha(0);
-    // **전시대가 다 올라온 뒤에 들어온다.** 함께 움직이면 전시대가 가려 줄 하반신 절단면이
-    // 빈 배경 위에 드러나, 다리 없는 상반신이 미끄러져 들어오는 것으로 보인다.
-    const wait = Math.max(0, this.stageSettlesAt - this.time.now);
-    this.tweens.add({ targets: merchant, x: headX, alpha: 1, delay: wait, duration: SHOP_ENTRANCE.merchant.duration, ease: "Cubic.Out" });
-    // **첫 마디도 점원이 자리에 선 뒤다.** 들어오는 중에 말풍선이 뜨면 말이 사람을 앞질러
-    // 도착해, 누가 말하는지보다 띠가 먼저 읽힌다.
-    this.tweens.addCounter({
-      from: 0, to: 1, delay: wait + SHOP_ENTRANCE.merchant.duration, duration: 1,
-      onComplete: () => { if (!this.scene.isActive()) return; this.merchantReady = true; this.tryFirstLine(); },
-    });
     this.stageMask = this.make.graphics({});
     this.stageMask.fillStyle(0xffffff, 1).fillRect(0, SHOP_STAGE.top, BASE_WIDTH, SHOP_BOARD.top - SHOP_STAGE.top);
     merchant.setMask(this.stageMask.createGeometryMask());
+    // **전시대가 다 올라온 뒤에 들어온다.** 함께 움직이면 전시대가 가려 줄 하반신 절단면이
+    // 빈 배경 위에 드러나, 다리 없는 상반신이 미끄러져 들어오는 것으로 보인다.
+    await this.stageSettled;
+    if (!this.scene.isActive()) { merchant.destroy(); return; }
+    this.tweens.add({ targets: merchant, x: headX, alpha: 1, duration: SHOP_ENTRANCE.merchant.duration, ease: "Cubic.Out" });
+    /*
+     * **첫 마디는 점원과 함께 들어온다.**
+     *
+     * 점원이 다 선 뒤에 한 박자 더 두었더니, 그 박자가 점원 묶음을 기다린 시간 뒤에 붙어
+     * 대사가 등장 연출이 끝나고 한참 뒤에야 떴다 — 플레이어는 그때 이미 목록을 보고 있어
+     * 「대사가 안 뜬다」로 읽혔다. 띠는 왼쪽에서, 점원은 오른쪽에서 같은 순간에 들어온다.
+     */
+    this.merchantReady = true;
+    this.tryFirstLine();
   }
 
   /** 격자 한 계층만 자르는 고정 마스크를 만들어 판 머리글과 탭 입력을 침범하지 않게 한다. */

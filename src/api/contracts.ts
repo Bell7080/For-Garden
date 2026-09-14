@@ -1,3 +1,4 @@
+import { t, type TextKey } from "../i18n";
 import type { AcquisitionResult, GachaPityState, QuantityRewardKind, Wallet } from "../core/gacha";
 import type { RelicProgress, RelicSkinId, Stats } from "../core/types";
 import type { MissionPeriod } from "../core/missions";
@@ -622,8 +623,14 @@ export class GameApiError extends Error {
   }
 }
 
-/** 저장 구현의 원인을 잃지 않으면서 화면이 처리할 공용 API 오류로 바꾸는 쓰기 경계다. */
-export function persistenceFailed(error: unknown, message = "게임 상태를 저장하지 못했습니다."): GameApiError {
+/**
+ * 저장 구현의 원인을 잃지 않으면서 화면이 처리할 공용 API 오류로 바꾸는 쓰기 경계다.
+ *
+ * **문장이 아니라 문구 키를 받는다** — 이 메시지는 여러 화면이 `error.message`를 그대로
+ * 그리므로 플레이어가 읽는 글이고, 규칙 쪽에서 만들어지는 글은 `system` 표가 갖는다.
+ */
+export function persistenceFailed(error: unknown, messageKey: TextKey = "error.persist.state"): GameApiError {
+  const message = t(messageKey);
   // 이미 분류된 저장 실패는 중첩 포장하지 않고, 그 밖의 SaveManager/Storage 오류만 원인으로 보존한다.
   return error instanceof GameApiError && error.code === "PERSISTENCE_FAILED"
     ? error

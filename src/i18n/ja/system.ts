@@ -76,4 +76,6 @@ export const SYSTEM_JA = {
   "error.save.mergeInvalid": "サーバーの統合セーブを検証できません。",
   "error.expedition.submit": "スコアを送信できませんでした。",
   "error.expedition.settle": "スコアは送信しましたが精算を終えられませんでした。",
+  "error.persist.state": "ゲームの状態を保存できませんでした。",
+  "error.persist.expeditionScore": "遠征スコアを保存できませんでした。",
 } as const;

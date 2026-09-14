@@ -69,4 +69,6 @@ export const SYSTEM_EN = {
   "error.save.mergeInvalid": "The merged server save could not be verified.",
   "error.expedition.submit": "Could not submit the score.",
   "error.expedition.settle": "The score was submitted but the settlement did not finish.",
+  "error.persist.state": "Could not save the game state.",
+  "error.persist.expeditionScore": "Could not save the expedition score.",
 } as const;

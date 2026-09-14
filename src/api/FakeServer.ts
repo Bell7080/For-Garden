@@ -320,7 +320,7 @@ export class FakeServer implements GameApi {
       // 검증 성공 뒤의 저장만 공용 저장 실패로 바꾸며, 원래 Storage/SaveManager 오류는 cause에 보존한다.
       this.persist(nextState);
     } catch (error) {
-      throw persistenceFailed(error, "원정 점수를 저장하지 못했습니다.");
+      throw persistenceFailed(error, "error.persist.expeditionScore");
     }
     // 영속화가 성공한 뒤에만 메모리와 멱등 영수증을 반영해 실패 재시도가 깨끗한 상태에서 시작한다.
     this.state.expedition = nextExpedition;

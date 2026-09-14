@@ -70,7 +70,16 @@ describe("stamina admission", () => {
     const api = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-09-01T00:00:00.000Z"), persistSession: () => { if (shouldFail) throw new Error("storage unavailable"); } });
     const request = { stageId: "1-1", requestId: "persistence-retry" };
 
-    await expect(api.enterStage(request)).rejects.toThrow("storage unavailable");
+    /*
+     * **저장 실패는 공용 API 오류로 감싸여 나온다.**
+     *
+     * 화면이 여러 곳에서 `error.message`를 그대로 그리므로 저장소의 원문이 그대로 나가면
+     * 플레이어가 영어 내부 메시지를 읽는다. 원인은 `cause`에 남으므로 여기서 함께 확인한다.
+     */
+    const failure = await api.enterStage(request).then(() => undefined, (error: unknown) => error);
+    expect(failure).toBeInstanceOf(GameApiError);
+    expect((failure as GameApiError).code).toBe("PERSISTENCE_FAILED");
+    expect(((failure as GameApiError).cause as Error).message).toBe("storage unavailable");
     // persist 이전에는 복제 지갑만 바뀌므로 실패한 커밋이 공유 메모리 잔액을 오염시키지 않는다.
     expect(state.wallet.stamina).toBe(20);
 

@@ -118,7 +118,7 @@ export const RELICS: RelicDef[] = [
     // 송곳니로 물어뜯는 근접 물리 딜러.
     reachTier: "melee",
     // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
-    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 0.30, efficiencyMultiplier: 1.10 },
+    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 1.2, efficiencyMultiplier: 1.10 },
     stats: {
       hp: 980,
       def: 50,
@@ -209,7 +209,7 @@ export const RELICS: RelicDef[] = [
     // 들이받아 막아서는 전방 탱커.
     reachTier: "melee",
     // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
-    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 25, efficiencyMultiplier: 1.05 },
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 125, efficiencyMultiplier: 1.05 },
     stats: {
       hp: 1420,
       def: 128,
@@ -331,7 +331,7 @@ export const RELICS: RelicDef[] = [
     // 악어턱으로 물어뜯는 근접 암살자.
     reachTier: "melee",
     // 치즈케이크 생산 계약은 수중 발굴 특화이며 전투 역할을 바꿔도 기존 생산성을 보존한다.
-    excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 0.80, efficiencyMultiplier: 1.10 },
+    excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 2.4, efficiencyMultiplier: 1.10 },
     // 낮은 HP·방어력은 렉시아보다 낮은 생존력을, 높은 공격·공속·이속은 암살자의 선공 능력을 보장한다.
     // 저항력 46과 주문력 58은 최소 대응력만 남기고, 치명타 15/155는 빠른 공격이 과도하게 폭증하지 않게 한다.
     stats: {
@@ -441,7 +441,7 @@ export const RELICS: RelicDef[] = [
     // 발톱으로 파고드는 근접 암살자.
     reachTier: "melee",
     // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
-    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 27.5, efficiencyMultiplier: 1.08 },
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 137.5, efficiencyMultiplier: 1.08 },
     stats: {
       hp: 850,
       def: 52,
@@ -525,8 +525,8 @@ export const RELICS: RelicDef[] = [
     // 깃펜을 든 조수라 겁이 많아 한 걸음 뒤에서 거든다.
     reachTier: "mid",
     // 다이아는 희소 재화라 1시간 생산량을 1 미만으로 두고 수확 시에만 내림한다.
-    // 보석은 희소성을 유지하되 기본 보관 4시간에 슬롯 하나가 최소 정수 1개를 만든다.
-    excavationTrait: { primaryCurrency: "gems", baseProductionPerHour: 0.25, efficiencyMultiplier: 1.12 },
+    // 보석은 희소성을 유지하되 기본 보관 시간에 슬롯 하나가 최소 정수 넷을 만든다.
+    excavationTrait: { primaryCurrency: "gems", baseProductionPerHour: 0.5, efficiencyMultiplier: 1.12 },
     stats: {
       hp: 760,
       def: 48,
@@ -608,7 +608,7 @@ export const RELICS: RelicDef[] = [
     // 물장구는 붙어야 튄다.
     reachTier: "melee",
     // 물가에서 주워 오는 것이 곧 그 아이의 일이라, 발굴 특화도 화석 회수 쪽에 붙인다.
-    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 0.28, efficiencyMultiplier: 1.06 },
+    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 1.12, efficiencyMultiplier: 1.06 },
     // 앞으로 뛰어드는 전사지만 피해는 주문력에서 나온다 — 물살 자체가 무기라 공격력이 낮고
     // 주문력이 높으며, 어린 유체라 체력과 방어는 같은 등급의 탱커보다 낮게 잡는다.
     stats: {
@@ -700,7 +700,7 @@ export const RELICS: RelicDef[] = [
     // 바람을 밀어 보내는 지원가.
     reachTier: "mid",
     // 관측 기록을 자산으로 바꾸는 담당이라 발굴 특화도 골드 회수 쪽에 붙인다.
-    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 31.5, efficiencyMultiplier: 1.10 },
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 157.5, efficiencyMultiplier: 1.10 },
     // 회복이 아니라 아군의 스킬 회전을 앞당기는 지원가라, 자기 화력보다 생존과 충전에 무게를 둔다.
     stats: {
       hp: 980,
@@ -784,7 +784,7 @@ export const RELICS: RelicDef[] = [
     // 붓이 닿는 만큼만 다가간다.
     reachTier: "mid",
     // 그림으로 표본을 기록하는 담당이라 발굴 특화도 화석 회수 쪽에 붙인다.
-    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 0.28, efficiencyMultiplier: 1.14 },
+    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 1.12, efficiencyMultiplier: 1.14 },
     // 앞에 나서지 못하는 지원가라 화력과 발이 느리고, 대신 오래 서 있도록 체력과 저항이 두껍다.
     stats: {
       hp: 1000,
@@ -878,7 +878,7 @@ export const RELICS: RelicDef[] = [
     // 철거 스윙은 휘두르는 팔 길이가 곧 사거리다.
     reachTier: "melee",
     // 부수고 다니는 개체라 발굴 특화도 화석 회수 쪽에 붙인다.
-    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 0.26, efficiencyMultiplier: 1.04 },
+    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 1.04, efficiencyMultiplier: 1.04 },
     // 머리로 받는 개체라 방어가 두껍고 발이 빠르다. 주문력을 쓰는 스킬이 하나도 없어 낮게 둔다.
     stats: {
       hp: 1100,
@@ -987,7 +987,7 @@ export const RELICS: RelicDef[] = [
     // 손질은 붙어서 한다.
     reachTier: "melee",
     // 재료를 다루는 손이라 발굴 특화도 치즈케이크 쪽에 붙인다.
-    excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 0.76, efficiencyMultiplier: 1.12 },
+    excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 2.28, efficiencyMultiplier: 1.12 },
     // 가장 약해진 적을 골라 뛰어드는 개체라 발이 가장 빠르고, 칼을 쓰는 손이라 공격력이 높다.
     stats: {
       hp: 930,
@@ -1086,7 +1086,7 @@ export const RELICS: RelicDef[] = [
     // 서가 사이에서 글로 싸우는 마법형이라 붙지 않는다.
     reachTier: "ranged",
     // 장서를 정리하며 나오는 기록 자산이라 발굴 특화도 골드 회수 쪽에 붙인다.
-    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 26.5, efficiencyMultiplier: 1.06 },
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 132.5, efficiencyMultiplier: 1.06 },
     // 주문력에 전부 몰아준 마법형 디버프 딜러다. 공격력은 쓰는 스킬이 하나도 없으므로 가장 낮고,
     // 뒷줄에서 한 자 한 자 적는 손이라 공격 속도와 이동 속도도 낮다.
     stats: {
@@ -1180,7 +1180,7 @@ export const RELICS: RelicDef[] = [
     // 손을 벗어나 날아가는 카드라 붙지 않고 한 걸음 물러서서 던진다.
     reachTier: "mid",
     // 남의 주머니에서 나온 것을 되돌려 주는 손이라 발굴 특화도 골드 회수 쪽에 붙인다.
-    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 26.0, efficiencyMultiplier: 1.07 },
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 130, efficiencyMultiplier: 1.07 },
     // 유일한 혼합형이다. 카드 한 장이 손끝 힘과 발라 둔 독을 함께 쓰므로 공격력과 주문력을
     // 비슷하게 들며, 그래서 둘 중 어느 쪽도 남는 수치가 되지 않는다. 대신 몸은 가장 얇다.
     stats: {
@@ -1283,7 +1283,7 @@ export const RELICS: RelicDef[] = [
     // 아군 앞에 서는 자리라 손이 닿는 거리에서만 싸운다. 날개는 버티는 데 쓴다.
     reachTier: "melee",
     // 하늘에서 내려다보며 넓게 훑는 손이라 발굴 특화는 화석 쪽에 붙인다.
-    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 0.31, efficiencyMultiplier: 1.1 },
+    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 1.24, efficiencyMultiplier: 1.1 },
     /**
      * **종이 방어에 산더미 체력이다.** 방어력 86·저항력 80은 탱커 중 최저이고 체력 2280은
      * 로스터 최고다(엘라 1500). 다 맞으면서 그보다 빨리 차오르는 것이 이 개체의 값이라,
@@ -1385,7 +1385,7 @@ export const RELICS: RelicDef[] = [
     // 붙어서 밀고 흘리는 권법이라 손이 닿는 거리에서만 싸운다.
     reachTier: "melee",
     // 굳은 몸으로 땅을 다지는 손이라 발굴 특화는 화석 쪽에 붙인다.
-    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 0.34, efficiencyMultiplier: 1.14 },
+    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 1.36, efficiencyMultiplier: 1.14 },
     // **로스터에서 가장 느리다**(공속 62 · 이속 64). 한 방 한 방이 무거운 대신 그 사이가 길고,
     // 공격력은 탱커답게 절제해 화력이 아니라 버티는 시간이 이 개체의 값이 되게 한다.
     stats: {
@@ -1501,7 +1501,7 @@ export const RELICS: RelicDef[] = [
     // 갈퀴로 할퀴는 근접 허스크.
     reachTier: "melee",
     // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
-    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 22.5, efficiencyMultiplier: 1.00 },
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 112.5, efficiencyMultiplier: 1.00 },
     // 기존의 강한 물리 공격과 빠른 발은 보존한다. 다만 암살자가 아닌 전사로 확정했으므로
     // 체력·방어를 한 단계 올리고, 공속은 폭증시키지 않아 정면에서 버티며 때리는 감각을 만든다.
     // 쓰지 않는 주문력은 낮추고 공용 부가 능력치는 COMMON_SECONDARY_STATS와 같은 값으로 맞춘다.
@@ -1605,7 +1605,7 @@ export const RELICS: RelicDef[] = [
     // 몸통으로 밀어붙이는 근접 허스크.
     reachTier: "melee",
     // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
-    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 0.25, efficiencyMultiplier: 1.00 },
+    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 1, efficiencyMultiplier: 1.00 },
     // 높은 체력·방어·저항과 느린 공속·이속이라는 기존 방벽 감각을 그대로 살린다.
     // 물리 기본기만큼의 공격력만 남기고 쓰지 않는 주문력은 낮춰, 생존 능력으로 R 띠를 채운다.
     // 치명타·충전 계열은 캐릭터 차별점이 아니므로 COMMON_SECONDARY_STATS와 동일하게 통일한다.
@@ -1701,7 +1701,7 @@ export const RELICS: RelicDef[] = [
     // 복원된 마디가 일으키는 수류가 조금 떨어진 곳까지 닿는다.
     reachTier: "mid",
     // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
-    excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 0.60, efficiencyMultiplier: 1.00 },
+    excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 1.8, efficiencyMultiplier: 1.00 },
     // 높은 주문력·이동 속도와 낮은 체력·방어라는 기존 지원가 감각을 보존한다.
     // 마법 기본기·궁극기가 쓰는 주문력으로 R 띠를 채우고, 쓰지 않는 공격력은 낮게 둔다.
     // 공용 부가 능력치는 COMMON_SECONDARY_STATS와 맞춰 차별점을 스킬·패시브에만 남긴다.
@@ -1831,7 +1831,7 @@ export const RELICS: RelicDef[] = [
     // 전열 사이를 빠르게 파고드는 근접 중간보스다.
     reachTier: "melee",
     // 적 전용 개체지만 데이터 계약을 완성하기 위해 비전투 특성도 영구 정의에 둔다.
-    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 22.5, efficiencyMultiplier: 1.00 },
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 112.5, efficiencyMultiplier: 1.00 },
     /*
      * **잡졸보다 아래에 있던 수치를 SR 띠로 올렸다.** 태생 전투력이 1916으로 공멸 3인조
      * (2082~2098)보다도 낮아, 중간보스 자리에 섰는데 실제로는 셋 중 누구보다 약했다 —
@@ -1925,7 +1925,7 @@ export const RELICS: RelicDef[] = [
     // 활을 켜는 자리는 무대 뒤편이다.
     reachTier: "ranged",
     // 물리형 지원가의 견고함을 운영에서도 드러내도록 화석 생산 특화를 부여했다.
-    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 0.30, efficiencyMultiplier: 1.12 },
+    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 1.2, efficiencyMultiplier: 1.12 },
     stats: {
       hp: 1260, def: 110, res: 76, atk: 124, ap: 52,
       attackSpeed: 88, moveSpeed: 74, critChance: 10, critDamage: 150,
@@ -1988,7 +1988,7 @@ export const RELICS: RelicDef[] = [
     role: "tank",
     // 캔이 닿는 거리까지만 다가간다.
     reachTier: "melee",
-    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 22, efficiencyMultiplier: 1.14 },
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 110, efficiencyMultiplier: 1.14 },
     /*
      * **버티는 몫을 체력에 두지 않는다.** 탱커 넷 중 방어·저항이 가장 얇고 방어를 곱한 실효
      * 체력도 가장 낮다(2961 · 토리카 3238 · 엘라 3690 · 노도니아 4241) — 이 개체가 사는 방식은
@@ -2165,7 +2165,7 @@ export const RELICS: RelicDef[] = [
     role: "warrior",
     // 엄니와 모피를 휘두르는 근접형이다.
     reachTier: "melee",
-    excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 0.72, efficiencyMultiplier: 1.09 },
+    excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 2.16, efficiencyMultiplier: 1.09 },
     // SSR 시절의 방어형 전사 윤곽은 유지하되, SR 띠에 맞춰 주 능력치를 약 6~10% 낮춘다.
     // 공속·이속은 전투에서 보이는 개체 정체성이므로 그대로 두고 전투력 2304로 완화한다.
     stats: {
@@ -2257,7 +2257,7 @@ export const RELICS: RelicDef[] = [
     role: "support",
     // 제 손으로 직접 잘라야 아군이 꿰매지므로 적 한가운데로 파고드는 지원가다.
     reachTier: "melee",
-    excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 0.68, efficiencyMultiplier: 1.08 },
+    excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 2.04, efficiencyMultiplier: 1.08 },
     /*
      * 근거리 지원가라 전사보다 두껍고 탱커보다는 얇은 자리에 선다(전투력 2303, SR 띠 안).
      *
@@ -2366,7 +2366,7 @@ export const RELICS: RelicDef[] = [
     role: "assassin",
     // 로스터에서 세 번째 원거리 개체이며, 사거리는 집중이 자라면서 함께 늘어난다.
     reachTier: "ranged",
-    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 21, efficiencyMultiplier: 1.06 },
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 105, efficiencyMultiplier: 1.06 },
     /*
      * **공격력에 전부 몰아준 유리몸이다.** 체력·방어·저항이 로스터 최하급이고 공격력은 SR
      * 루카(136)보다 높다 — 600 뒤에서 쏘는 대신 붙으면 곧바로 무너지는 자리다.
@@ -2474,7 +2474,7 @@ export const RELICS: RelicDef[] = [
     // 듀오 곁에 붙어 다니되 듀오보다 앞에 서지 않는 자리다.
     reachTier: "mid",
     // 관측 기록을 그대로 자산으로 바꾸는 담당이라 발굴 특화도 다이아 쪽에 붙인다.
-    excavationTrait: { primaryCurrency: "gems", baseProductionPerHour: 0.26, efficiencyMultiplier: 1.13 },
+    excavationTrait: { primaryCurrency: "gems", baseProductionPerHour: 0.52, efficiencyMultiplier: 1.13 },
     /*
      * **모든 스킬이 주문력에서 나온다.** 평타도 약점 포착의 추가 피해도 주문력 하나를 읽으므로
      * 공격력은 로스터 최하로 둔다 — 쓰지 않는 값을 높게 적으면 실전에 없는 힘이 전투력만 부풀린다.
@@ -2579,7 +2579,7 @@ export const RELICS: RelicDef[] = [
     element: "fire",
     role: "assassin",
     reachTier: "ranged",
-    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 29, efficiencyMultiplier: 1.10 },
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 145, efficiencyMultiplier: 1.10 },
     /**
      * 생존 셋과 이동 속도를 로스터 최저로 내주고 공격 속도와 두 공격 축을 최고로 가져간다.
      *

@@ -3,6 +3,7 @@ import { CURRENT_SAVE_VERSION, SAVE_STORAGE_KEY, SaveDataError, SaveManager } fr
 import { createDefaultSession, type SaveData } from "../../src/state/session";
 import { createRuneInstance, type RuneStatKey } from "../../src/core/runes";
 import { ExpeditionManager } from "../../src/managers/ExpeditionManager";
+import { EXCAVATION_BASE_STORAGE_SECONDS } from "../../src/core/idleExcavation";
 
 /** 저장 왕복과 손상 검증에 쓰는 결정적 신규 룬이다. */
 function testRune(instanceId = "rune-save-1") {
@@ -228,7 +229,7 @@ describe("SaveManager", () => {
   it("v17 저장은 임의 현재 시각 없이 서버 첫 조회 초기화 상태로 마이그레이션한다", () => {
     const legacy = validData() as unknown as Record<string, unknown>; legacy.saveVersion = 17; delete legacy.idleExcavation;
     const migrated = new SaveManager(new MemoryStorage()).migrate(legacy);
-    expect(migrated.idleExcavation).toMatchObject({ assignedRelicIds: [null, null, null], lastSettledAt: null, baseStorageSeconds: 14_400 });
+    expect(migrated.idleExcavation).toMatchObject({ assignedRelicIds: [null, null, null], lastSettledAt: null, baseStorageSeconds: EXCAVATION_BASE_STORAGE_SECONDS });
   });
 
   it("v18 발굴을 보존하면서 화석·다이아 키와 미완료 소급 표식을 보충한다", () => {

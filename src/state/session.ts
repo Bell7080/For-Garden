@@ -287,7 +287,7 @@ export function createDefaultSession(): Session {
     // 첫 서버 동기화 전에도 프로필이 명시적인 레벨 1 진행을 표시하도록 한다.
     playerResearch: createInitialPlayerResearchProgress(),
     itemInventory: [{ itemId: "stamina-tonic", quantity: 3 }],
-    // 서버 첫 조회가 현재 시각을 기준점으로 확정하며 기본 보관 시간은 4시간이다.
+    // 서버 첫 조회가 현재 시각을 기준점으로 확정하며 기본 보관 시간은 서버 상수가 정한다.
     idleExcavation: createIdleExcavationState(),
     settings,
     completedStoryIds: new Set<string>(),

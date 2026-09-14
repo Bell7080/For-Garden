@@ -5,7 +5,7 @@ export type AdRewardCurrency = "stamina" | "cheesecake";
 /** 발굴 광고 효과는 서버가 이해하는 세 종류로만 제한한다. */
 export type ExcavationAdEffect =
   | { readonly kind: "harvest_multiplier"; readonly multiplier: 1.5; readonly appliesTo: "current_confirmed_harvest_once" }
-  | { readonly kind: "storage_extension"; readonly maxStorageSeconds: 28_800; readonly appliesTo: "next_settlement_window" }
+  | { readonly kind: "storage_extension"; readonly maxStorageSeconds: 57_600; readonly appliesTo: "next_settlement_window" }
   | { readonly kind: "production_speed"; readonly multiplier: 1.5; readonly durationSeconds: number; readonly refresh: "replace_expiry" };
 
 /** kind로 즉시 재화와 상태 변경을 안전하게 분기하는 광고 보상 합집합이다. */
@@ -26,8 +26,9 @@ export const AD_REWARD_SLOTS = [
   { id: "daily-cheesecake", displayText: "치즈케이크 20", reward: { kind: "currency", currency: "cheesecake", amount: 20 }, dailyLimitUtc: 3, placement: "daily_mission_rewards" },
   // 수확 배율은 광고 완료 전에 서버가 확정한 현재 미수확분에만 소비되는 일회성 규칙이다.
   { id: "excavation-harvest", displayText: "현재 수확 1.5배", reward: { kind: "excavation_effect", effect: { kind: "harvest_multiplier", multiplier: 1.5, appliesTo: "current_confirmed_harvest_once" } }, dailyLimitUtc: 3, placement: "idle_excavation" },
-  // 확장은 다음 정산 한 번에서만 최대 8시간을 허용하며 기존 생산분을 소급하지 않는다.
-  { id: "excavation-storage", displayText: "다음 정산 보관 최대 8시간", reward: { kind: "excavation_effect", effect: { kind: "storage_extension", maxStorageSeconds: 28_800, appliesTo: "next_settlement_window" } }, dailyLimitUtc: 2, placement: "idle_excavation" },
+  // 확장은 다음 정산 한 번에서만 기본 보관 시간의 두 배(8 → 16시간)를 허용하며 기존 생산분을
+  // 소급하지 않는다. 두 값이 갈리면 `tests/unit/adRewards.test.ts`가 실패한다.
+  { id: "excavation-storage", displayText: "다음 정산 보관 최대 16시간", reward: { kind: "excavation_effect", effect: { kind: "storage_extension", maxStorageSeconds: 57_600, appliesTo: "next_settlement_window" } }, dailyLimitUtc: 2, placement: "idle_excavation" },
   // 같은 효과 재수령은 배율을 곱하지 않고, 수확과 같은 1.5배로 서버 시각부터 만료만 교체한다.
   { id: "excavation-speed", displayText: "생산 1.5배 · 60분", reward: { kind: "excavation_effect", effect: { kind: "production_speed", multiplier: 1.5, durationSeconds: 3_600, refresh: "replace_expiry" } }, dailyLimitUtc: 2, placement: "idle_excavation" },
   // 기준 점수가 없거나 광고 검증이 실패하면 서버가 지급을 거절하며 횟수도 소비하지 않는다.

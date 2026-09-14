@@ -210,7 +210,7 @@ export class IdleExcavationPopup {
     const generation = ++this.requestGeneration;
     try {
       const response = await this.api.getIdleExcavation();
-      // 운영 설정 실패는 선택 광고만 숨기며 기본 4시간 생산과 일반 수확 진입은 그대로 계속한다.
+      // 운영 설정 실패는 선택 광고만 숨기며 기본 보관 시간 생산과 일반 수확 진입은 그대로 계속한다.
       try { this.adOperations = await this.api.getAdOperationsConfig(); } catch { this.adOperations = undefined; }
       if (!this.body || generation !== this.requestGeneration) return;
       this.confirmed = response;

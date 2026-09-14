@@ -15,6 +15,21 @@ export const RETROACTIVE_EXCAVATION_GRANT_VERSION = 1;
 /** 절반부터 수확 시점을 알리되 실제 정수 보상이 없으면 점을 켜지 않는 운영 임계값이다. */
 export const EXCAVATION_HARVEST_NOTICE_RATIO = 0.5;
 
+/**
+ * 보관 한도의 기본 시간.
+ *
+ * **네 시간은 방치형에게 너무 짧았다** — 자고 일어나면 여덟 시간 중 넷은 이미 흘러간 뒤였고,
+ * 화석·다이아는 시간당 생산이 0.3 언저리라 그 네 시간이 담을 수 있는 양이 **한 개 남짓**이었다.
+ * 수확은 정수 단위라 한 번 걷을 때마다 1 미만이 남는데, 한도 자체가 그만한 크기면 남은 몫이
+ * 한도의 절반을 차지해 "수확했는데 게이지가 그대로"로 보인다. 여덟 시간이면 어떤 재화든
+ * **최소 네 개 분량**을 담아 그 잔량이 한도의 4분의 1 아래로 내려간다
+ * (`tests/unit/idleExcavation.test.ts`의 정수 하한 계약).
+ *
+ * **이 값은 플레이어 진행이 아니라 운영 상수다.** 저장에도 `baseStorageSeconds`로 남지만
+ * 정산할 때마다 서버가 지금 값으로 덮으므로, 예전 계정도 다음 정산 한 번이면 같은 한도를 쓴다.
+ */
+export const EXCAVATION_BASE_STORAGE_SECONDS = 8 * 60 * 60;
+
 /** 정산 로직과 같은 확장 배율로, 지금 시각 기준 보관 한도(초)를 계산한다. */
 export function excavationStorageLimitSeconds(state: IdleExcavationState, now: Date): number {
   const extensionActive = state.storageExtensionExpiresAt !== null && now.getTime() < new Date(state.storageExtensionExpiresAt).getTime();
@@ -150,7 +165,7 @@ export const STORAGE_EXTENSION_MULTIPLIER = 2;
 
 /** 신규 계정과 구버전 마이그레이션이 공유하는 독립 상태를 만든다. */
 export function createIdleExcavationState(lastSettledAt: string | null = null): IdleExcavationState {
-  return { assignedRelicIds: [null, null, null], lastSettledAt, unclaimed: emptyExcavationAmounts(), baseStorageSeconds: 4 * 60 * 60, activeProductionMultiplier: 1, productionMultiplierExpiresAt: null, storageExtensionExpiresAt: null, pendingHarvestMultiplier: 1, retroactiveExcavationGrantVersion: RETROACTIVE_EXCAVATION_GRANT_VERSION };
+  return { assignedRelicIds: [null, null, null], lastSettledAt, unclaimed: emptyExcavationAmounts(), baseStorageSeconds: EXCAVATION_BASE_STORAGE_SECONDS, activeProductionMultiplier: 1, productionMultiplierExpiresAt: null, storageExtensionExpiresAt: null, pendingHarvestMultiplier: 1, retroactiveExcavationGrantVersion: RETROACTIVE_EXCAVATION_GRANT_VERSION };
 }
 
 /** 새 Record를 만들어 응답과 저장 상태가 같은 객체를 공유하지 않게 한다. */
@@ -165,12 +180,20 @@ function fixedAmount(value: number): number { return Number(value.toFixed(6)); }
 export function settleIdleExcavation(state: IdleExcavationState, serverNow: Date, relics: readonly RelicDef[] = [], progressByRelicId: Readonly<Record<string, Pick<RelicProgress, "level" | "breakthrough">>> = {}): IdleExcavationState {
   const previousMs = state.lastSettledAt === null ? Number.NaN : Date.parse(state.lastSettledAt);
   const extensionActive = Number.isFinite(previousMs) && state.storageExtensionExpiresAt !== null && previousMs < Date.parse(state.storageExtensionExpiresAt);
-  const storageLimit = state.baseStorageSeconds * (extensionActive ? STORAGE_EXTENSION_MULTIPLIER : 1);
+  /*
+   * **보관 시간은 저장이 아니라 서버가 소유한다.**
+   *
+   * `baseStorageSeconds`는 저장에 남지만 계정마다 다른 값이 아니라 운영 상수라, 정산할 때마다
+   * 지금 값으로 덮는다(소급 지급 버전을 매번 찍는 것과 같은 자리·같은 이유다). 저장에 적힌
+   * 옛 값을 그대로 믿으면 한도를 늘려도 이미 만들어진 계정만 예전 한도에 갇힌다.
+   */
+  const baseStorageSeconds = EXCAVATION_BASE_STORAGE_SECONDS;
+  const storageLimit = baseStorageSeconds * (extensionActive ? STORAGE_EXTENSION_MULTIPLIER : 1);
   const accrual = timeAccrualWindow(state.lastSettledAt, serverNow, storageLimit * 1000);
   // 역행 또는 잘못된 서버 시각은 생산과 저장 기준점 모두 그대로 보존한다.
-  if (!accrual.accepted) return { ...state, assignedRelicIds: [...state.assignedRelicIds], unclaimed: { ...state.unclaimed } };
+  if (!accrual.accepted) return { ...state, baseStorageSeconds, assignedRelicIds: [...state.assignedRelicIds], unclaimed: { ...state.unclaimed } };
   // 첫 조회는 과거 생산을 추측하지 않고 검증된 서버 시각만 기준점으로 기록한다.
-  if (accrual.initialized) return { ...state, lastSettledAt: new Date(accrual.window.serverNowMs).toISOString(), assignedRelicIds: [...state.assignedRelicIds], unclaimed: { ...state.unclaimed } };
+  if (accrual.initialized) return { ...state, baseStorageSeconds, lastSettledAt: new Date(accrual.window.serverNowMs).toISOString(), assignedRelicIds: [...state.assignedRelicIds], unclaimed: { ...state.unclaimed } };
   const production = excavationProductionDisplayModel(state.assignedRelicIds, relics, progressByRelicId).totalsPerHour;
   const unclaimed = { ...state.unclaimed };
   // 만료 경계를 가로지르면 활성 구간과 기본 구간을 나눠 계산해 1ms도 과다 지급하지 않는다.
@@ -181,16 +204,16 @@ export function settleIdleExcavation(state: IdleExcavationState, serverNow: Date
   /*
    * **보관 한도는 계산 구간이 아니라 담기는 양의 상한이다.**
    *
-   * 한 번의 정산이 4시간까지만 계산하는 것만으로는 한도가 되지 않았다 — 8시간마다 앱을 열면
-   * 그때마다 4시간치가 더해져 하루면 한도의 세 배가 쌓였고, 게이지는 100%에서 잘려 그 사이
-   * 아무 말도 하지 못했다. 그래서 수확해도 남는 소수가 커져(화석 0.96 / 한도 1.32 = 73%)
-   * "수확했는데 게이지가 그대로"로 보였다. 지금은 **한도에 닿으면 거기서 멈춘다** — 100%가
-   * 정말 "더 담을 수 없다"는 뜻이 되고, 수확 뒤 남는 것은 정수에 못 미친 몫뿐이다.
+   * 한 번의 정산이 한도 시간까지만 계산하는 것만으로는 한도가 되지 않았다 — 그 시간마다 앱을
+   * 열면 그때마다 한 창 분량이 더해져 하루면 한도의 세 배가 쌓였고, 게이지는 100%에서 잘려
+   * 그 사이 아무 말도 하지 못했다. 그래서 수확해도 남는 소수가 커져(화석 0.96 / 한도 1.32 =
+   * 73%) "수확했는데 게이지가 그대로"로 보였다. 지금은 **한도에 닿으면 거기서 멈춘다** —
+   * 100%가 정말 "더 담을 수 없다"는 뜻이 되고, 수확 뒤 남는 것은 정수에 못 미친 몫뿐이다.
    *
    * 상한은 **계산 구간과 같은 한도**(`storageLimit`)로 잡는다. 확장권이 만료되는 순간을 두
-   * 기준으로 나눠 판단하면 8시간을 계산해 놓고 4시간치만 담게 되어 확장권이 아무 일도 하지
-   * 않는다. 확장이 끝난 뒤에는 게이지의 분모(지금 기준 한도)보다 담긴 것이 많을 수 있는데,
-   * 그때는 게이지가 가득으로 읽히고 담긴 것은 그대로 남는다.
+   * 기준으로 나눠 판단하면 두 배 구간을 계산해 놓고 기본 구간만큼만 담게 되어 확장권이 아무
+   * 일도 하지 않는다. 확장이 끝난 뒤에는 게이지의 분모(지금 기준 한도)보다 담긴 것이 많을 수
+   * 있는데, 그때는 게이지가 가득으로 읽히고 담긴 것은 그대로 남는다.
    */
   const capacity = excavationStorageCapacity(production, storageLimit);
   for (const currency of EXCAVATION_CURRENCIES) {
@@ -198,7 +221,7 @@ export function settleIdleExcavation(state: IdleExcavationState, serverNow: Date
     const grown = previous + production[currency] / 3600 * (boostedSeconds * state.activeProductionMultiplier + normalSeconds);
     unclaimed[currency] = clampExcavationStorage(previous, grown, capacity[currency]);
   }
-  return { ...state, lastSettledAt: serverNow.toISOString(), assignedRelicIds: [...state.assignedRelicIds], unclaimed, activeProductionMultiplier: speedExpiryMs > serverNow.getTime() ? state.activeProductionMultiplier : 1, productionMultiplierExpiresAt: speedExpiryMs > serverNow.getTime() ? state.productionMultiplierExpiresAt : null, storageExtensionExpiresAt: state.storageExtensionExpiresAt && new Date(state.storageExtensionExpiresAt).getTime() > serverNow.getTime() ? state.storageExtensionExpiresAt : null, retroactiveExcavationGrantVersion: RETROACTIVE_EXCAVATION_GRANT_VERSION };
+  return { ...state, baseStorageSeconds, lastSettledAt: serverNow.toISOString(), assignedRelicIds: [...state.assignedRelicIds], unclaimed, activeProductionMultiplier: speedExpiryMs > serverNow.getTime() ? state.activeProductionMultiplier : 1, productionMultiplierExpiresAt: speedExpiryMs > serverNow.getTime() ? state.productionMultiplierExpiresAt : null, storageExtensionExpiresAt: state.storageExtensionExpiresAt && new Date(state.storageExtensionExpiresAt).getTime() > serverNow.getTime() ? state.storageExtensionExpiresAt : null, retroactiveExcavationGrantVersion: RETROACTIVE_EXCAVATION_GRANT_VERSION };
 }
 
 /** 정수 부분만 지갑에 옮기며 지갑 상한 밖의 정수는 버리고 소수 잔량만 보존한다. */

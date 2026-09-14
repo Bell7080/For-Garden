@@ -16,15 +16,15 @@ describe("광고 보상 정적 정의", () => {
     const effects = AD_REWARD_SLOTS.filter((slot) => slot.placement === "idle_excavation").map((slot) => slot.reward.kind === "excavation_effect" ? slot.reward.effect : undefined);
     expect(effects).toEqual([
       { kind: "harvest_multiplier", multiplier: 1.5, appliesTo: "current_confirmed_harvest_once" },
-      { kind: "storage_extension", maxStorageSeconds: 28_800, appliesTo: "next_settlement_window" },
+      { kind: "storage_extension", maxStorageSeconds: 57_600, appliesTo: "next_settlement_window" },
       { kind: "production_speed", multiplier: 1.5, durationSeconds: 3_600, refresh: "replace_expiry" },
     ]);
   });
 
   /**
-   * **"최대 8시간"이 두 곳에 적혀 있다.** 광고 표의 `maxStorageSeconds`와, 실제로 한도를
-   * 계산하는 `기본 보관 시간 × STORAGE_EXTENSION_MULTIPLIER`다. 둘이 갈리면 버튼은 8시간을
-   * 약속하고 정산은 다른 시간으로 담는다 — 기본 보관 시간을 손보는 사람이 광고 문구를
+   * **확장이 약속하는 시간이 두 곳에 적혀 있다.** 광고 표의 `maxStorageSeconds`와, 실제로 한도를
+   * 계산하는 `기본 보관 시간 × STORAGE_EXTENSION_MULTIPLIER`다. 둘이 갈리면 버튼이 약속한
+   * 시간과 정산이 담는 시간이 어긋난다 — 기본 보관 시간을 손보는 사람이 광고 문구를
    * 함께 고치도록 여기서 붙잡는다.
    */
   it("보관 확장 광고가 약속한 시간과 정산이 실제로 늘리는 한도가 같다", () => {

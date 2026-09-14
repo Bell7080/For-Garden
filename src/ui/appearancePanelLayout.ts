@@ -18,24 +18,37 @@ export const APPEARANCE_PANEL = {
   pad: 30,
   /** 칸과 칸 사이. 웹툰의 홈통이라 얇다 — 넓히면 세 칸이 서로 다른 판으로 갈린다. */
   gutter: 14,
-  /** 무대 — 세 칸이 들어가는 영역. */
-  stage: { top: -576, height: 640 },
+  /**
+   * 무대 — 세 칸이 들어가는 영역.
+   *
+   * **아래 조작을 밑동으로 내린 만큼 무대가 길어진다.** 이 창에서 정작 보려는 것은 그 외형이라,
+   * 남는 세로는 글줄이 아니라 칸이 갖는다 — 640에서 720으로 늘려 큰 칸이 전신을 발끝까지
+   * 온전히 품는다.
+   */
+  stage: { top: -620, height: 720 },
   /** 왼쪽 큰 칸(전신)이 무대 폭에서 갖는 비율. */
   heroRatio: 0.635,
   /** 오른쪽 위 칸(얼굴)이 무대 높이에서 갖는 비율. */
   faceRatio: 0.594,
-  name: { y: 116, size: 38 },
-  state: { y: 172, size: 24 },
+  /**
+   * 글줄은 **보유 여부 → 이름** 순이다.
+   *
+   * 이름 아래에 상태를 두었을 때는 큰 글자가 먼저 눈을 잡고 그 아래 작은 글자를 다시 찾아
+   * 읽어야 했다 — 지금 이 칸이 내 것인지가 이름보다 먼저 정해지는 판단이라 위에 선다.
+   */
+  state: { y: 138, size: 26 },
+  name: { y: 196, size: 40 },
   /** 값 줄. `purchasable`인 외형에만 서고 그 밖에는 자리를 비운다. */
-  price: { y: 236, width: 420, height: 62 },
-  action: { y: 326, width: 440, height: 88 },
+  price: { y: 268, width: 420, height: 62 },
   /**
    * 아래 띠.
    *
    * 칸이 창보다 길면 **옆으로 흐른다**. 기하 마스크는 컨테이너 이동을 물려받지 않으므로
    * 화면이 팝업의 월드 행렬로 마스크를 다시 잡는다(가방 격자와 같은 방법).
    */
-  strip: { y: 486, cardWidth: 168, cardHeight: 200, gap: 16, padX: 34 },
+  strip: { y: 414, cardWidth: 168, cardHeight: 200, gap: 16, padX: 34 },
+  /** 장착·구매. **판의 맨 밑동**이라 어느 외형을 고르든 손이 가는 자리가 움직이지 않는다. */
+  action: { y: 572, width: 440, height: 84 },
 } as const;
 
 export interface AppearanceRect { left: number; top: number; right: number; bottom: number }
@@ -83,11 +96,18 @@ export function appearanceFrameSpot(rect: AppearanceRect): { x: number; y: numbe
   return { x: (rect.left + rect.right) / 2, y: (rect.top + rect.bottom) / 2, width: rect.right - rect.left, height: rect.bottom - rect.top };
 }
 
-/** 무대 아래 — 글줄과 띠가 앉는 페이지. 무대와 같은 폭이라 위아래가 한 장으로 읽힌다. */
+/**
+ * 아래 조작이 앉는 밑동 판.
+ *
+ * **띠 칸의 허리에서 시작한다**(`strip.y` = 칸 높이의 절반). 무대 바로 밑에서 시작해 글줄까지
+ * 다 품던 때는 창의 아래 절반이 통째로 한 장의 어두운 판이 되어, 이름·보유 여부가 배경 원화가
+ * 아니라 그 판 위에 적힌 목록처럼 읽혔다. 판이 칸의 허리를 지나가면 아이콘 줄은 반쯤 판 위에
+ * 올라선 것으로 보이고, 그 위의 글줄은 창 자체 위에 선다 — 그래서 이름과 보유 여부는 판이
+ * 아니라 **제 그림자와 테두리**로 배경에서 떨어져 나온다.
+ */
 export function appearancePageRect(): AppearanceRect {
-  const { width, height, pad } = APPEARANCE_PANEL;
-  const stage = appearanceStageRect();
-  return { left: -width / 2 + pad, right: width / 2 - pad, top: stage.bottom + APPEARANCE_PANEL.gutter, bottom: height / 2 - pad };
+  const { width, height, pad, strip } = APPEARANCE_PANEL;
+  return { left: -width / 2 + pad, right: width / 2 - pad, top: strip.y, bottom: height / 2 - pad };
 }
 
 /** 띠가 흐르는 창. 마스크와 입력 경계가 같은 값을 읽는다. */
@@ -161,5 +181,6 @@ export function appearancePanelRegions() {
     price: appearanceBounds(0, layout.price.y, layout.price.width, layout.price.height),
     action: appearanceBounds(0, layout.action.y, layout.action.width, layout.action.height),
     strip: appearanceStripViewport(),
+    page: appearancePageRect(),
   };
 }

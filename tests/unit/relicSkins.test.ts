@@ -10,18 +10,25 @@ describe("relic skins", () => {
   });
   it("토리카 추가 외형은 anky에만 연결된다", () => {
     // 표시명이나 파일 번호가 아니라 저장 호환 렐릭 ID로 소유 대상을 고정한다.
-    expect(skinsForRelic("anky").map(({ id }) => id)).toEqual(["torika-skin-001"]);
+    expect(skinsForRelic("anky").map(({ id }) => id))
+      .toEqual(["torika-skin-001", "torika-skin-002", "torika-skin-003", "torika-skin-004", "torika-skin-005"]);
     expect(RELIC_SKINS.filter(({ id }) => id === "torika-skin-001").map(({ relicId }) => relicId)).toEqual(["anky"]);
     expect(skinsForRelic("rex")).toEqual([]);
   });
 
-  it("모든 추가 외형은 전신과 SD 에셋을 한 벌로 가진다", () => {
-    // 어느 한 화면만 기본 외형으로 폴백하지 않도록 공개 표 전체의 두 키를 검사한다.
+  it("출시된 추가 외형은 전신과 SD 에셋을 한 벌로 가지고, 미출시 외형은 둘 다 비운다", () => {
+    // 어느 한 화면만 기본 외형으로 폴백하지 않도록 공개 표 전체의 두 키를 함께 검사한다.
+    // 반쪽짜리 조합은 원화가 준비된 것처럼 보이면서 실제로는 한 화면만 기본 외형으로 돌아간다.
     for (const skin of RELIC_SKINS) {
-      expect(skin.portraitAssetId, `${skin.id} portrait`).not.toBe("");
-      expect(skin.sdAssetId, `${skin.id} SD`).not.toBe("");
+      const drawn = [skin.portraitAssetId, skin.sdAssetId].filter((assetId) => assetId?.trim()).length;
+      expect(drawn, `${skin.id} 전신·SD 조합`).toBe(skin.comingSoon ? 0 : 2);
     }
     expect(() => validateRelicSkins(RELIC_SKINS)).not.toThrow();
+    // 한쪽만 적힌 외형은 어느 쪽이든 거부한다.
+    const half = { ...RELIC_SKINS[0], id: "torika-skin-002" as const, sdAssetId: undefined };
+    expect(() => validateRelicSkins([half])).toThrow();
+    // 미출시 외형에 논리 키를 미리 적어 두면 없는 배포 파일을 요구하게 된다.
+    expect(() => validateRelicSkins([{ ...RELIC_SKINS[0], comingSoon: true }])).toThrow();
   });
 
   it("정적 정의의 전신·SD ZIP이 배포 디렉터리에 실제 파일로 존재한다", () => {
@@ -32,6 +39,8 @@ describe("relic skins", () => {
     };
     for (const skin of RELIC_SKINS) {
       for (const assetId of [skin.portraitAssetId, skin.sdAssetId]) {
+        // 아직 열리지 않은 외형은 원화가 없다 — 없는 파일을 요구하지 않는다.
+        if (!assetId) continue;
         const file = filesByAssetId[assetId];
         expect(file, `${assetId} 배포 파일 매핑`).toBeDefined();
         const path = resolve(process.cwd(), "public", "puppets", file);

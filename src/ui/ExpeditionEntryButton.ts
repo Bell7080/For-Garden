@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { t } from "../i18n";
 import { chipPoints, drawFrameVignette, drawLayer, drawShapeOutline, HOLO } from "./holo";
 import { COLOR, textStyle } from "./theme";
+import { shapeClipMask } from "./popupArt";
 
 /** 로컬 좌표 도형을 지금의 월드 좌표로 옮긴다. 팝업 안에서 마스크가 엉뚱한 자리에 남지 않게 한다. */
 function worldPoints(matrix: Phaser.GameObjects.Components.TransformMatrix, flat: readonly number[]): Phaser.Geom.Point[] {
@@ -109,22 +110,12 @@ export class ExpeditionEntryButton extends Phaser.GameObjects.Container {
     art.setScale(Math.max(options.width / art.width, options.height / art.height)).setAlpha(0.68);
     // 원화는 버튼 비율로 cover하므로 반드시 칩 실루엣에 마스킹한다. 그렇지 않으면 확대된
     // 사각 이미지가 크게 깎인 좌상단과 우하단 밖으로 삐져나온다.
-    const artMask = scene.make.graphics({});
-    // GeometryMask는 팝업 body/container 변환을 상속하지 않는다. 렌더 직전에 버튼의 실제 월드
-    // 행렬로 다시 그려야 로비 팝업 안에서도 마스크가 화면 밖 엉뚱한 위치에 남지 않는다.
-    const syncMask = (): void => {
-      if (!this.active || !artMask.active) return;
-      artMask.clear().fillStyle(0xffffff).fillPoints(worldPoints(this.getWorldTransformMatrix(), shape), true);
-    };
-    scene.events.on(Phaser.Scenes.Events.PRE_RENDER, syncMask);
-    syncMask();
-    // 원화와 비네팅이 같은 칩 마스크를 나눠 쓴다. 마스크를 두 개 만들면 같은 도형을 두 번 그린다.
-    const chipMask = artMask.createGeometryMask();
+    //
+    // 원화와 비네팅이 **같은 칩 마스크를 나눠 쓴다** — 마스크를 두 개 만들면 같은 도형을 두 번
+    // 그린다. 마스크는 컨테이너 변환을 물려받지 않으므로 공용 규칙이 버튼의 지금 월드 행렬을
+    // 매 프레임 따라간다(로비 팝업 안에서도 화면 밖 엉뚱한 자리에 남지 않는다).
+    const chipMask = shapeClipMask(scene, this, shape);
     art.setMask(chipMask);
-    this.once(Phaser.GameObjects.Events.DESTROY, () => {
-      scene.events.off(Phaser.Scenes.Events.PRE_RENDER, syncMask);
-      artMask.destroy();
-    });
     // 사각 원화의 가장자리는 비네트와 주황 액자가 눌러 기존 홀로그램 판 안의 이미지로 읽히게 한다.
     // 줄여 가며 두르는 옛 비네트는 가로로 긴 칸에서 검은 테두리 잔상을 남기므로 쓰지 않는다.
     this.add(art);

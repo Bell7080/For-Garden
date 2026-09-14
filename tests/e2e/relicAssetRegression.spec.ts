@@ -50,32 +50,38 @@ test("도디·메테의 도감 전신과 루카 포함 편성·전투 SD 에셋�
 });
 
 test("토리카 기본 외형에서 스킨을 장착해 도감·로비·편성·전투·재시작까지 같은 한 벌을 유지한다", async ({ page }, testInfo) => {
+  // 도감·전시관·로비·편성·전투에 재시작까지 한 편에 담아 여섯 번의 Puppet 조립을 기다린다.
+  // SwiftShader로 도는 CI에서는 기본 240초 안에 끝나지 않는다.
+  test.setTimeout(420_000);
   // 신규 계정의 정적 기본 해금만으로 외형 선택 흐름이 열려야 한다.
   await startAfterOpening(page);
   await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   await tapUntil(page, BASE_WIDTH * 0.3, BASE_HEIGHT - 90, async () => (await page.evaluate(() => window.__PF_DEBUG?.scene)) === "relics");
 
-  // 개체번호순 보유 구역의 세 번째 카드가 토리카다. 공용 정보창 우하단 외형 칩으로 진입한다.
-  await tapUntil(page, 669, 620, async () => (await page.evaluate(() => window.__PF_DEBUG?.infoOpen)) === true);
-  await tapGame(page, 914, 1580);
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toContain("외형");
+  // 개체번호순 보유 구역의 둘째 칸(도디 001 다음)이 토리카 014다. 열은 `relicGridColumnX`가 정한다.
+  await tapUntil(page, 411, 620, async () => (await page.evaluate(() => window.__PF_DEBUG?.infoOpen)) === true);
+  // 외형 칩은 오른쪽 기둥 가운데에 선다(`appearanceButtonX()` = 991, `APPEARANCE_BUTTON.y`).
+  // 칩은 정보창이 그 개체를 다 읽은 뒤에야 보이므로 열릴 때까지 눌러 본다.
+  await tapUntil(page, 991, 1580, async () => ((await page.evaluate(() => window.__PF_DEBUG?.popupTitles)) ?? []).includes("외형"));
   // 두 resolver Puppet이 비동기 addAt으로 카드에 조립된 뒤, 각 카드의 선택 배율을 물려받으면서도
   // 카드 중심(x=0)과 공용 바닥선에 나란히 선 완성 상태를 시각 회귀로 남긴다.
   await page.waitForTimeout(800);
   await captureGame(page, `test-results/${testInfo.project.name}-torika-appearance-default.png`);
 
-  // 오른쪽 추가 외형을 고른 뒤 공용 장착 버튼으로 manager 경계를 호출한다.
-  await tapGame(page, 750, 870);
-  await tapGame(page, 540, 1460);
+  // 띠의 둘째 칸(여름방학 토리카)을 고른 뒤 **판 밑동의** 장착 버튼으로 manager 경계를 호출한다.
+  // 창은 화면 한가운데(540, 960)에 서므로 좌표는 `APPEARANCE_PANEL`의 띠·조작 자리 그대로다.
+  await tapGame(page, 402, 1374);
+  await tapGame(page, 540, 1532);
   await page.waitForTimeout(800);
   await captureGame(page, `test-results/${testInfo.project.name}-torika-appearance-skin001.png`);
 
-  // 선택판을 닫아 같은 스킨 전신을 도감 정보창 자체에서도 캡처한다.
-  await tapGame(page, 958, 382);
+  // **전시관에는 X가 없다** — 나가는 길은 화면 어디서나 같은 자리(우하단)라 판 밖의 공용
+  // 뒤로가기가 그 몫을 맡는다. 닫고 나서 같은 스킨 전신을 도감 정보창 자체에서도 캡처한다.
+  await tapUntil(page, BASE_WIDTH - 106, BASE_HEIGHT - 120, async () => ((await page.evaluate(() => window.__PF_DEBUG?.popupTitles)) ?? []).length === 0);
   await page.waitForTimeout(500);
   await captureGame(page, `test-results/${testInfo.project.name}-torika-skin001-catalog-fullbody.png`);
-  await tapGame(page, BASE_WIDTH - 106, BASE_HEIGHT - 120);
+  await tapUntil(page, BASE_WIDTH - 106, BASE_HEIGHT - 120, async () => (await page.evaluate(() => window.__PF_DEBUG?.infoOpen)) === false);
   await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT - 90);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   await page.waitForTimeout(800);

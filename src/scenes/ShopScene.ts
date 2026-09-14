@@ -24,6 +24,7 @@ import { PurchasePopup } from "../ui/PurchasePopup";
 import { session } from "../state/session";
 import { motionPolicy } from "../core/settings";
 import { productsForShopCategory, shopModel } from "../ui/shopModel";
+import { shapeClipMask } from "../ui/popupArt";
 import {
   SHOP_BOARD, SHOP_CARD, SHOP_ENTRANCE, SHOP_SHELF, SHOP_STAGE, SHOP_TAB_ROW, SHOP_TITLE,
   shopBoardSize, shopCardSpot, shopCardWidth, shopDialogueSpot, shopGridContentHeight, shopGridViewport,
@@ -188,7 +189,10 @@ export class ShopScene extends Phaser.Scene {
     // 아래 모서리를 깎으면 그 빗변이 보이지 않는 자리에서만 잘려 아무 말도 하지 않는다.
     const shape = chipPoints(width, height, { bevel: { topLeft: 56, topRight: 0, bottomRight: 0, bottomLeft: 0 } });
     this.boardChrome.add(drawLayer(this, centerX, centerY, shape, { fill: 0x10161d, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.7 }));
-    this.boardChrome.add(drawFrameVignette(this, centerX, centerY, width, height, { strength: 0.45 }));
+    // 가장자리 누르기는 네 변의 그라데이션 넉 장이라 판의 도형을 모른다 — 그대로 두면 깎아 낸
+    // 윗변 모서리 밖으로 검은 삼각형이 남아 판 뒤에 사각형이 한 장 더 있는 것처럼 보인다.
+    this.boardChrome.add(drawFrameVignette(this, centerX, centerY, width, height, { strength: 0.45 })
+      .setMask(shapeClipMask(this, this.boardChrome, shape, { x: centerX, y: centerY })));
     this.createTitle();
   }
 

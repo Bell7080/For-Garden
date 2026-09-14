@@ -20,6 +20,7 @@ import { InteractionJournalPopup } from "../ui/InteractionJournalPopup";
 import { INTERACTION_LAYER, interactionLayersHeight, interactionLayerSpot } from "../ui/interactionLayerLayout";
 import { interactionLayerViews, interactionRemainingLabel, type InteractionLayerView } from "../ui/interactionLayerModel";
 import { coverCrop } from "../ui/coverCrop";
+import { shapeClipMask } from "../ui/popupArt";
 import { drawGlyph } from "../ui/glyphs";
 import { STAGES } from "../data/stages";
 
@@ -267,7 +268,11 @@ export class InteractionScene extends Phaser.Scene {
 
     // **가장자리는 살짝만 누른다.** 강하게 누르면 원화의 본질이 흐려진다 — 카드 하나를 버튼으로
     // 떼어 놓을 만큼만 남긴다.
-    layer.add(drawFrameVignette(this, 0, 0, artWidth, height, { strength: FRAME_VIGNETTE }));
+    // 가장자리 누르기는 네 변의 그라데이션 넉 장이라 판의 도형을 모른다 — 기운 변 밖으로
+    // 검은 띠가 새지 않도록 카드와 같은 실루엣으로 잘라 둔다(목록이 흐르므로 마스크는 카드의
+    // 지금 월드 행렬을 매 프레임 따라간다).
+    layer.add(drawFrameVignette(this, 0, 0, artWidth, height, { strength: FRAME_VIGNETTE })
+      .setMask(shapeClipMask(this, layer, shape)));
 
     // **이 판만 사방 테두리를 두른다.** 화면의 판때기는 윗변 한 줄이 원칙이지만, 여기는 원화
     // 한 장을 통째로 담는 **액자**다(적 정보창과 같은 예외) — 선이 없으면 카드끼리 맞닿은

@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
-  APPEARANCE_PANEL, appearanceBoundsOverlap, appearanceFrames, appearancePanelRegions, appearanceStageRect,
+  APPEARANCE_PANEL, appearanceBoundsOverlap, appearanceFrames, appearancePageRect, appearancePanelRegions, appearanceStageRect,
   appearanceStripCardX, appearanceStripContentWidth, appearanceStripMinX, appearanceStripOffsetFor, appearanceStripViewport,
 } from "../../src/ui/appearancePanelLayout";
-import { appearanceEntries, appearanceState, canEquipAppearance, isAppearanceDimmed } from "../../src/ui/appearanceModel";
+import { appearanceEntries, appearanceState, canEquipAppearance, isAppearanceDimmed, isAppearanceUnrevealed } from "../../src/ui/appearanceModel";
 import type { RelicSkinDef } from "../../src/data/relicSkins";
 
 const skin = (id: string, extra: Partial<RelicSkinDef> = {}): RelicSkinDef => ({
@@ -14,7 +14,9 @@ const skin = (id: string, extra: Partial<RelicSkinDef> = {}): RelicSkinDef => ({
 describe("외형 전시관 자리표", () => {
   it("무대·글줄·조작·띠가 서로 겹치지 않고 판 안에 든다", () => {
     const regions = appearancePanelRegions();
-    const order = [regions.hero, regions.name, regions.state, regions.price, regions.action, regions.strip];
+    // 보유 여부가 이름 위에 서고 장착은 판의 맨 밑동이다 — 큰 글자가 먼저 눈을 잡은 뒤 그
+    // 아래에서 작은 글자를 다시 찾아 읽게 하지 않고, 누르는 자리는 어느 외형을 고르든 같다.
+    const order = [regions.hero, regions.state, regions.name, regions.price, regions.strip, regions.action];
     for (let i = 1; i < order.length; i += 1) {
       expect(appearanceBoundsOverlap(order[i - 1], order[i])).toBe(false);
       // 위에서 아래로 쌓인다 — 자리가 뒤섞이면 무엇을 읽고 무엇을 누르는지 흐려진다.
@@ -51,6 +53,25 @@ describe("외형 전시관 자리표", () => {
     const stage = appearanceStageRect();
     expect(frames.hero.left).toBe(stage.left);
     expect(frames.face.right).toBe(stage.right);
+  });
+
+  /**
+   * 밑동 판은 창의 아래 절반을 통째로 덮지 않는다 — 그러면 이름과 보유 여부가 배경 원화가
+   * 아니라 그 판 위에 적힌 목록처럼 읽힌다. 띠 칸의 허리에서 시작해 조작만 품는다.
+   */
+  it("밑동 판은 띠 칸의 허리에서 시작해 장착 버튼까지만 품는다", () => {
+    const regions = appearancePanelRegions();
+    const page = appearancePageRect();
+    expect(page.top).toBe(APPEARANCE_PANEL.strip.y);
+    // 칸의 절반쯤을 지나간다 — 위 절반은 판 밖, 아래 절반은 판 위다.
+    expect(page.top - regions.strip.top).toBeCloseTo(regions.strip.bottom - page.top, 6);
+    // 글줄은 판 위에 서지 않는다.
+    for (const region of [regions.name, regions.state, regions.price]) {
+      expect(appearanceBoundsOverlap(region, page)).toBe(false);
+    }
+    // 조작은 판 안에 든다.
+    expect(regions.action.top).toBeGreaterThanOrEqual(page.top);
+    expect(regions.action.bottom).toBeLessThanOrEqual(page.bottom);
   });
 
   it("띠는 왼쪽부터 채우고 칸이 창을 못 채우면 흐르지 않는다", () => {
@@ -121,5 +142,8 @@ describe("외형 상태", () => {
     const entries = appearanceEntries("기본", "base", [skin("a"), skin("b", { price: { currency: "gems", amount: 1 } }), skin("c", { comingSoon: true })], { owns: owns(["a"]) });
     expect(entries.map(canEquipAppearance)).toEqual([false, true, false, false]);
     expect(entries.map(isAppearanceDimmed)).toEqual([false, false, true, true]);
+    // 실루엣으로 세우는 것은 **아직 열리지 않은 것뿐**이다 — 값만 치르면 되는 외형까지 검게
+    // 누르면 무엇을 사는 중인지 화면이 말하지 못한다.
+    expect(entries.map(isAppearanceUnrevealed)).toEqual([false, false, false, true]);
   });
 });

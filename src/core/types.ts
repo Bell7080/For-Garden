@@ -38,7 +38,12 @@ export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "
  * 파일명이나 에셋 번호와 직접 결합하지 않으며, 스킨은 능력치·스킬을 전혀 갖지 않는 외형 전용
  * 데이터다. 새 외형을 출시할 때 이 유니온에 영구 ID를 추가하고 기존 ID의 의미는 바꾸지 않는다.
  */
-export type RelicSkinId = "torika-skin-001";
+export type RelicSkinId =
+  | "torika-skin-001"
+  | "torika-skin-002"
+  | "torika-skin-003"
+  | "torika-skin-004"
+  | "torika-skin-005";
 
 export interface Stats {
   /** 생존력과 물리·마법 공격의 기반이 되는 주 능력치다. */

@@ -22,7 +22,8 @@ export interface AppearanceEntry {
   /** 기본 외형은 ID가 없다 — 저장의 선택값 `null`과 같은 뜻이다. */
   readonly skinId?: RelicSkinId;
   readonly name: string;
-  readonly portraitAssetId: string;
+  /** 아직 열리지 않은 외형은 원화가 없어 비어 있다. */
+  readonly portraitAssetId?: string;
   readonly state: AppearanceState;
   /** `purchasable`만 갖는다. 값 줄이 이 값을 그대로 읽는다. */
   readonly price?: { readonly currency: WalletItemKey; readonly amount: number };
@@ -56,7 +57,7 @@ export function appearanceEntries(
   return [base, ...skins.map((skin) => ({
     skinId: skin.id,
     name: skin.name,
-    portraitAssetId: skin.portraitAssetId,
+    ...(skin.portraitAssetId ? { portraitAssetId: skin.portraitAssetId } : {}),
     state: appearanceState(skin, status),
     ...(skin.price ? { price: skin.price } : {}),
   }))];
@@ -77,4 +78,15 @@ export function canEquipAppearance(entry: AppearanceEntry): boolean {
 /** 그 칸의 원화를 흐리게 눌러야 하는가 — 아직 내 것이 아닌 외형만 눌러 둔다. */
 export function isAppearanceDimmed(entry: AppearanceEntry): boolean {
   return entry.state !== "equipped" && entry.state !== "owned";
+}
+
+/**
+ * 그 칸을 **실루엣**으로 세워야 하는가.
+ *
+ * 아직 열리지 않은 외형은 원화가 없어 화면이 기본 외형으로 되돌아간다 — 그대로 흐리게만 두면
+ * 기본 외형이 목록에 여러 번 선 것처럼 보인다. 검게 눌러 두면 "아직 보여 줄 수 없다"가 그림
+ * 자체로 읽히고, 값도 조건도 말하지 않는 규칙과도 어긋나지 않는다.
+ */
+export function isAppearanceUnrevealed(entry: AppearanceEntry): boolean {
+  return entry.state === "comingSoon";
 }

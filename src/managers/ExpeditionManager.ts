@@ -298,7 +298,15 @@ export class ExpeditionBossSettlementFlow {
     const cachedSettlement = this.settlements.get(input.settlementId);
     if (cachedSettlement) return { score, settlement: cachedSettlement };
     // 응답 적용도 manager 경계에 맡겨 씬이 Session을 직접 수정하지 않게 한다.
-    if (!this.manager.applyBossScore(input.nodeId, score)) throw new ExpeditionBossSettlementError("score", new Error("BOSS_NODE_SAVE_FAILED"));
+    if (!this.manager.applyBossScore(input.nodeId, score)) {
+      // 앱이 최종 정산 커밋 직후 다시 시작되면 활성 런은 이미 없지만 서버의 두 멱등 영수증은 남는다.
+      // 이때 노드 적용 실패를 점수 오류로 단정하지 않고 최종 영수증을 먼저 조회해야 완료 UI를 복구할 수 있다.
+      try {
+        const settlement = await this.api.settleExpeditionRun({ runId: input.runId, settlementId: input.settlementId, outcome: "completed" });
+        this.settlements.set(input.settlementId, settlement);
+        return { score, settlement };
+      } catch (error) { throw new ExpeditionBossSettlementError("score", error); }
+    }
 
     let settlement: SettleExpeditionRunResponse;
     try {

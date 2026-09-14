@@ -43,6 +43,7 @@ export const MISC_EN = {
   "skill.gauge": "Gauge {cost}",
   "skill.duration": "For {seconds}s",
   "skill.keywordHint": "Tap a highlighted word to open its meaning",
+  "archaeology.shop": "Shop",
   "archaeology.tab.strata": "Strata Survey",
   "archaeology.tab.research": "Trait Research",
   "archaeology.charges": "Surveys {charges} / {max}",

@@ -27,6 +27,9 @@ import { registerDataText } from "../i18n";
  */
 export const TRADE_GEM_RATE: Readonly<Record<ProductCurrency, number>> = {
   gems: 1,
+  // 원석은 고고학 안에서만 도는 재화라 무역 전시대에 올리지 않는다. 시세만 채워 두면
+  // 표가 비지 않으면서도 그 값이 어디에도 쓰이지 않는다 — 올릴 때 다시 재서 고친다.
+  rawStone: 40,
   cheesecake: 2,
   fossil: 5,
   gold: 500,
@@ -54,7 +57,7 @@ export function tradePackageValuePercent(acquisition: ProductAcquisition, grants
 
 /** 갱신 주기를 말하는 이름표. 같은 말이 카드와 구매 확인에서 갈리지 않게 한 곳에 둔다. */
 const REFRESH_LABEL: Readonly<Record<ProductRefresh, string>> = {
-  once: "계정당", daily: "매일", weekly: "주간", none: "상시",
+  once: "계정당", daily: "매일", weekly: "주간", monthly: "월간", none: "상시",
 };
 
 /**

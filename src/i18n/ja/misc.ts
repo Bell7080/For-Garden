@@ -48,6 +48,7 @@ export const MISC_JA = {
   "skill.duration": "{seconds}秒間",
   "skill.keywordHint": "強調された語を押すと意味が開く",
 
+  "archaeology.shop": "ショップ",
   "archaeology.tab.strata": "地層探査",
   "archaeology.tab.research": "特性研究",
   "archaeology.charges": "探査 {charges} / {max}",

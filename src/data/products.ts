@@ -1,7 +1,14 @@
 import { TRADE_PACKAGES } from "./tradePackages";
 
 /** 상품이 노출되고 구매될 화면 경계다. ID만으로 다른 화면의 상품을 구매하지 못하게 서버 요청에도 사용한다. */
-export type ProductStorefront = "shop" | "trade" | "premium";
+/**
+ * 상품이 서는 자리.
+ *
+ * **고고학은 제 씬을 만들지 않고 일반 상점의 자리 하나를 빌린다** — 상점은 「위가 무대,
+ * 아래가 전시대」라는 규칙이 이미 깊이 박혀 있어, 둘로 갈리면 선반·격자·값줄 규칙이 두 곳이
+ * 되고 한쪽만 고치는 사고가 난다.
+ */
+export type ProductStorefront = "shop" | "trade" | "premium" | "archaeology";
 
 /** 일반 인게임 상점과 무역소가 공유하는 안정적인 카테고리 계약이다. */
 export type ShopCategory = "general" | "enhancement" | "rune";
@@ -13,7 +20,7 @@ export type ShopCategory = "general" | "enhancement" | "rune";
  * 지급에는 골드가 섞이기 때문이다. 셋 다 서버가 같은 지갑 키를 원자 차감·지급하므로 다른
  * 경로를 만들지 않는다.
  */
-export type ProductCurrency = "fossil" | "amber" | "cheesecake" | "dnaFragments" | "gems" | "gold";
+export type ProductCurrency = "fossil" | "amber" | "cheesecake" | "dnaFragments" | "gems" | "gold" | "rawStone";
 
 /** 가격 숫자와 획득 절차를 분리한 판별 합집합이며 외부 절차의 필수 식별자를 타입으로 강제한다. */
 export type ProductAcquisition =
@@ -30,7 +37,13 @@ export type ProductGrant =
   | { kind: "profile_decoration"; decorationId: string; name: string };
 
 /** 구매 제한의 재설정 주기다. */
-export type ProductRefresh = "none" | "daily" | "weekly" | "once";
+/**
+ * 구매 제한의 재설정 주기.
+ *
+ * `monthly`는 고고학의 상위 특성 아이템이 쓴다 — 주간으로 두면 한 달에 넷이 되어, 특성 등급을
+ * 상시 과금으로 밀어 올리는 길이 열린다.
+ */
+export type ProductRefresh = "none" | "daily" | "weekly" | "monthly" | "once";
 
 /** 상품 그림은 영속 ID와 분리해 최종 원화 교체가 구매 기록에 영향을 주지 않게 한다. */
 export type ShopProductIconKey =
@@ -78,6 +91,14 @@ export const SHOP_PRODUCTS: readonly ProductDefinition[] = [
   { id: "shop-night-kit", storefront: "shop", category: "general", iconKey: "shop-product-supplies", name: "야간 조사 키트", description: "야간 근무용 치즈케이크 60개", acquisition: { kind: "currency", currency: "fossil", amount: 145 }, grants: [{ kind: "currency", currency: "cheesecake", amount: 60 }], defaultQuantity: 1, purchaseLimit: 2, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "shop-enhancement-dna", storefront: "shop", category: "enhancement", iconKey: "shop-product-enhancement", name: "강화 DNA 묶음", description: "공용 DNA 조각 10개", acquisition: { kind: "currency", currency: "amber", amount: 8 }, grants: [{ kind: "currency", currency: "dnaFragments", amount: 10 }], defaultQuantity: 1, purchaseLimit: 3, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "shop-rune-research", storefront: "shop", category: "rune", iconKey: "shop-product-rune", name: "룬 연구 보급", description: "룬 연구용 DNA 조각 6개", acquisition: { kind: "currency", currency: "fossil", amount: 220 }, grants: [{ kind: "currency", currency: "dnaFragments", amount: 6 }], defaultQuantity: 1, purchaseLimit: 2, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  // **고고학 상점.** 기본 리롤은 언제나 플레이 재화(원석)로 돌아가야 하므로, 여기서 파는 것은
+  // 그 바깥의 몫이다 — 원석 자체는 골드로 바꿔 주되 하루 몫으로 끊고, 특성 아이템은 상시
+  // 무제한으로 팔지 않는다(무한 과금으로 전설 특성을 완성하는 길을 열지 않는다).
+  { id: "arch-orestone-cache", storefront: "archaeology", category: "general", iconKey: "shop-product-fossil", name: "원석 정리함", description: "원석 200개", acquisition: { kind: "currency", currency: "gold", amount: 12000 }, grants: [{ kind: "currency", currency: "rawStone", amount: 200 }], defaultQuantity: 1, purchaseLimit: 3, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "arch-orestone-crate", storefront: "archaeology", category: "general", iconKey: "shop-product-fossil", name: "원석 운반 상자", description: "원석 600개", acquisition: { kind: "currency", currency: "fossil", amount: 300 }, grants: [{ kind: "currency", currency: "rawStone", amount: 600 }], defaultQuantity: 1, purchaseLimit: 2, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "arch-ancient-core", storefront: "archaeology", category: "enhancement", iconKey: "shop-product-enhancement", name: "고대 핵 반출 허가", description: "미지의 고대 핵 1개", acquisition: { kind: "currency", currency: "fossil", amount: 600 }, grants: [{ kind: "item", itemId: "ancient-core", name: "미지의 고대 핵", amount: 1 }], defaultQuantity: 1, purchaseLimit: 3, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "arch-refined-core", storefront: "archaeology", category: "rune", iconKey: "shop-product-rune", name: "정제 핵 반출 허가", description: "정제된 고대 핵 1개", acquisition: { kind: "currency", currency: "amber", amount: 30 }, grants: [{ kind: "item", itemId: "refined-core", name: "정제된 고대 핵", amount: 1 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "monthly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "arch-restoration-crystal", storefront: "archaeology", category: "rune", iconKey: "shop-product-rune", name: "복원 결정 인가", description: "완전 복원 결정 1개", acquisition: { kind: "currency", currency: "gems", amount: 900 }, grants: [{ kind: "item", itemId: "restoration-crystal", name: "완전 복원 결정", amount: 1 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "monthly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   // **무역은 교환소가 아니라 패키지 전시장이다.** 일반 상점이 화석·호박석으로 보급품을 사는
   // 상시 진열대라면, 무역은 그때그때 운영이 올려 두는 **묶음 하나하나를 전시**하는 자리다 —
   // 값은 젬으로 받고, 같은 젬으로 따로 사는 것보다 더 많이 주는 것이 이 화면의 존재 이유다.

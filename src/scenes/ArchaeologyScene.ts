@@ -15,6 +15,7 @@ import { chipPoints, drawLayer, drawVignette, HOLO } from "../ui/holo";
 import { addFramedIcon } from "../ui/itemFrame";
 import { KeywordManager } from "../managers/KeywordManager";
 import { PopupLayer } from "../ui/PopupLayer";
+import { RailButton } from "../ui/RailButton";
 import { openRuneTraitPopup } from "../ui/RuneTraitPopup";
 import { addRuneCard } from "../ui/runeIcons";
 import { addSectionTitle } from "../ui/SectionTitle";
@@ -47,6 +48,8 @@ const ARCHAEOLOGY = {
   tabWidth: 280,
   tabHeight: 84,
   gridTop: 420,
+  /** 상점 입구. 제목 줄과 같은 왼쪽 기둥에 서되 그 아래다. */
+  shopY: 352,
 } as const;
 
 /** 보상 종류를 액자에 세울 그림 키로 바꾼다. 화면이 종류마다 그림을 따로 고르지 않는다. */
@@ -92,6 +95,15 @@ export class ArchaeologyScene extends Phaser.Scene {
 
     this.add.text(60, ARCHAEOLOGY.titleY, t("archaeology.title"), textStyle({ role: "display", size: 52 })).setOrigin(0, 0);
     this.chargeText = this.add.text(62, ARCHAEOLOGY.chargeY, "", textStyle({ role: "emphasis", size: 27, color: COLOR.inkDim })).setOrigin(0, 0);
+
+    // **상점은 왼쪽 위다.** 같은 상점 씬을 상품표만 바꿔 다시 쓴다 — 새 씬을 만들면 선반·
+    // 격자·값줄 규칙이 두 곳이 되고 한쪽만 고치는 사고가 난다.
+    new RailButton(this, 96, ARCHAEOLOGY.shopY, {
+      icon: "shop",
+      label: t("archaeology.shop"),
+      accent: true,
+      onClick: () => this.scene.start("shop", { storefront: "archaeology", returnScene: "archaeology" }),
+    });
 
     this.view = this.add.container(0, 0);
     this.paintTabs();

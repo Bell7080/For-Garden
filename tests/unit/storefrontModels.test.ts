@@ -16,12 +16,19 @@ describe("storefront product models", () => {
     // PR #277이 지키려던 규칙을 그 사이 사라진 TradePopup 대신 지금 남은 진입점에 옮긴 것이다.
     // 생산 화면이 같은 storefront 규칙을 다시 쓰면 한쪽만 고쳐도 다른 쪽이 옛 규칙으로 남는다.
     const source = readFileSync(new URL("../../src/scenes/ShopScene.ts", import.meta.url), "utf8");
-    expect(source).toContain("shopModel(response.products)");
+    // 씬이 **지금 보고 있는 자리**를 모델에 함께 넘긴다 — 고고학 상점이 같은 씬을 쓰므로
+    // 자리를 넘기지 않으면 한 화면이 늘 일반 상점 상품만 세운다.
+    expect(source).toContain("shopModel(response.products, this.storefront)");
     expect(source).not.toMatch(/response\.products\.filter\s*\(/);
   });
 
   it("shopModel preserves only shop products", () => {
     expect(shopModel(mixed).map(({ id }) => id)).toEqual(["shop-item"]);
+  });
+
+  it("shopModel은 고른 자리의 상품만 남긴다", () => {
+    const archaeology = product("arch-item", "archaeology");
+    expect(shopModel([...mixed, archaeology], "archaeology").map(({ id }) => id)).toEqual(["arch-item"]);
   });
 
   it("탭별 상품 필터는 다른 storefront와 다른 분류를 동시에 제외한다", () => {

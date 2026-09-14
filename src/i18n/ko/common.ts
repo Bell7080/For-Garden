@@ -34,6 +34,7 @@ export const COMMON_KO = {
   "role.support": "지원가",
 
   // 재화 — 데이터 키가 화면마다 다른 이름으로 노출되지 않게 한 표가 갖는다.
+  "currency.rawStone": "원석",
   "currency.gold": "골드",
   "currency.gems": "젬",
   "currency.fossil": "화석",

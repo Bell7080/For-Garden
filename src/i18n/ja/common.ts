@@ -24,6 +24,7 @@ export const COMMON_JA = {
   "role.assassin": "アサシン",
   "role.support": "サポーター",
 
+  "currency.rawStone": "原石",
   "currency.gold": "ゴールド",
   "currency.gems": "ジェム",
   "currency.fossil": "化石",

@@ -1206,6 +1206,8 @@ export class FakeServer implements GameApi {
       const date = new Date(`${day}T00:00:00Z`); date.setUTCDate(date.getUTCDate() - ((date.getUTCDay() + 6) % 7));
       return date.toISOString().slice(0, 10);
     }
+    // 월간은 UTC 달 하나가 곧 주기다. 달 길이가 달라도 키가 바뀌는 자리는 한 번뿐이다.
+    if (product.refresh === "monthly") return day.slice(0, 7);
     return product.refresh === "once" ? "account" : "permanent";
   }
 

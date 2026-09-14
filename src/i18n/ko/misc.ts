@@ -54,6 +54,7 @@ export const MISC_KO = {
   "skill.keywordHint": "강조된 말을 누르면 뜻이 열린다",
 
   // 고고학
+  "archaeology.shop": "상점",
   "archaeology.tab.strata": "지층 탐사",
   "archaeology.tab.research": "특성 연구",
   "archaeology.charges": "탐사 {charges} / {max}",

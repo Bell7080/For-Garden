@@ -24,6 +24,7 @@ import { PurchasePopup } from "../ui/PurchasePopup";
 import { session } from "../state/session";
 import { motionPolicy } from "../core/settings";
 import { productsForShopCategory, shopModel } from "../ui/shopModel";
+import type { ProductStorefront } from "../data/products";
 import { shapeClipMask } from "../ui/popupArt";
 import {
   SHOP_BOARD, SHOP_CARD, SHOP_ENTRANCE, SHOP_SHELF, SHOP_STAGE, SHOP_TAB_ROW, SHOP_TITLE,
@@ -69,7 +70,24 @@ export class ShopScene extends Phaser.Scene {
   private draggedDistance = 0;
   private velocityY = 0;
 
+  /**
+   * 지금 보고 있는 자리.
+   *
+   * **고고학도 이 씬을 그대로 쓴다** — 무대·선반·격자·값줄 규칙이 한 곳에만 살아 있게 하려는
+   * 것이라, 갈리는 것은 상품표와 돌아갈 화면뿐이다. 점원과 배경은 전용 원화가 오면 그때
+   * 이 두 값 옆에 나란히 선다.
+   */
+  private storefront: ProductStorefront = "shop";
+  /** 우하단 뒤로가기가 돌아갈 화면. 어디서 들어왔는지는 부른 쪽이 안다. */
+  private returnScene = "lobby";
+
   constructor() { super("shop"); }
+
+  init(data?: { storefront?: ProductStorefront; returnScene?: string }): void {
+    this.storefront = data?.storefront ?? "shop";
+    this.returnScene = data?.returnScene ?? "lobby";
+    this.selectedCategory = SHOP_TABS[0].id;
+  }
 
   create(): void {
     setDebugScene("shop", t("shop.title"));
@@ -79,12 +97,12 @@ export class ShopScene extends Phaser.Scene {
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.5).setDepth(-19);
     bindCurrencyGuide({ scene: this, popups: this.popups });
     this.topBar = new TopBar(this, 40, {
-      onSettings: () => this.scene.start("settings", { returnScene: "lobby" }),
+      onSettings: () => this.scene.start("settings", { returnScene: this.returnScene }),
       onCurrency: (currency) => openCurrencyGuide({ scene: this, popups: this.popups }, currency),
     });
     this.add.text(54, 170, t("shop.title"), textStyle({ role: "display", size: 54 })).setOrigin(0, 0);
     // 목록 컨테이너는 비동기 생성되므로 공용 돌아가기를 그보다 높은 고정 계층에 둔다.
-    addBackButton(this, () => this.scene.start("lobby")).setDepth(1000);
+    addBackButton(this, () => this.scene.start(this.returnScene)).setDepth(1000);
 
     this.createStage();
     this.createBoard();
@@ -252,18 +270,18 @@ export class ShopScene extends Phaser.Scene {
 
   /** 서버의 storefront 경계를 신뢰하되 독립 상점 씬에서는 shop 상품만 렌더링한다. */
   private async refresh(): Promise<void> {
-    const response = await gameApi.getProducts("shop");
+    const response = await gameApi.getProducts(this.storefront);
     if (!this.scene.isActive()) return;
     // storefront 판정은 검증된 모델 하나가 소유한다. 여기서 filter를 다시 쓰면 같은 규칙이
     // 두 곳에 살아, 한쪽만 고쳐도 화면은 조용히 예전 규칙으로 남는다.
-    this.products = shopModel(response.products);
+    this.products = shopModel(response.products, this.storefront);
     this.renderProducts();
   }
 
   /** 현재 서버 상태로 두 줄 격자를 재조립하고 실제 높이에서 스크롤 한계를 계산한다. */
   private renderProducts(): void {
     this.content?.removeAll(true);
-    const visibleProducts = productsForShopCategory(this.products, this.selectedCategory);
+    const visibleProducts = productsForShopCategory(this.products, this.selectedCategory, this.storefront);
     // 선반을 먼저 깔고 그 위에 칸을 올린다 — 순서가 뒤집히면 선반이 칸을 가로질러 지나간다.
     const rows = Math.ceil(visibleProducts.length / SHOP_CARD.columns);
     for (let row = 0; row < rows; row += 1) this.addShelf(row);

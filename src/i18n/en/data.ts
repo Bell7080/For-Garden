@@ -273,6 +273,7 @@ export default {
   "journal.interaction-doppel-lab-01.title": "A Plan Stalled at Approval",
   "journal.interaction-doppel-lab-01.body": "A restoration plan left face-down on the outer lab desk. There are two signature boxes; only the lower one is filled, and a stamp reading \"awaiting head office\" sits crooked over the upper one.",
   "shopClerk.obi.name": "Obi",
+  "shopClerk.protia.name": "Protia",
   "city.night-ward.displayName": "Night City",
   "city.night-council.displayName": "Night City",
   "city.abyss-port.displayName": "Abyssal Harbor District",

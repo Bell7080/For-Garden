@@ -70,6 +70,14 @@ export class ArchaeologyScene extends Phaser.Scene {
   private chargesMax = 0;
   /** 갈아 끼우는 몸통. 탭을 바꾸면 통째로 비운다. */
   private view!: Phaser.GameObjects.Container;
+  /**
+   * 라벨 줄을 담는 컨테이너.
+   *
+   * **씬에 직접 붙이면 다시 그릴 때 이전 것이 남는다** — `addCategoryTab`은 부모를 주지 않으면
+   * 씬에 그대로 얹으므로, 탭을 누를 때마다 새 라벨이 옛 라벨 위에 겹쳐 글자가 두 겹으로
+   * 보였다. 줄을 담을 자리를 씬이 갖고 다시 그리기 전에 비운다.
+   */
+  private tabRow!: Phaser.GameObjects.Container;
   private chargeText!: Phaser.GameObjects.Text;
   /** 서버 응답을 기다리는 동안 같은 칸을 두 번 누르지 못하게 한다. */
   private digging = false;
@@ -106,6 +114,7 @@ export class ArchaeologyScene extends Phaser.Scene {
     });
 
     this.view = this.add.container(0, 0);
+    this.tabRow = this.add.container(0, 0);
     this.paintTabs();
     new BottomNav(this, "archaeology");
     void this.refresh();
@@ -117,8 +126,10 @@ export class ArchaeologyScene extends Phaser.Scene {
       { key: "strata", labelKey: "archaeology.tab.strata" },
       { key: "research", labelKey: "archaeology.tab.research" },
     ];
+    // 옛 라벨을 먼저 지운다. 남겨 두면 누를 때마다 한 겹씩 쌓인다.
+    this.tabRow.removeAll(true);
     tabs.forEach(({ key, labelKey }, index) => {
-      addCategoryTab(this, undefined, {
+      addCategoryTab(this, this.tabRow, {
         x: 60 + ARCHAEOLOGY.tabWidth / 2 + index * (ARCHAEOLOGY.tabWidth + 16),
         y: ARCHAEOLOGY.tabY,
         width: ARCHAEOLOGY.tabWidth,

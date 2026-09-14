@@ -542,3 +542,16 @@ export const SHOP_CLERK_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   content: { left: 69, top: 3, right: 879, bottom: 1359 },
   joints: { center: [608, 371], head: [576, 284], eyes: [[534, 300], [625, 262]], feet: [[474, 1280], [698, 1360]] },
 };
+
+/**
+ * 고고학 상점 점원 **프로티아**(프로토케라톱스)의 전신.
+ *
+ * 오비와 같은 이유로 렐릭이 아니고 SD 묶음도 없다. 값은 ZIP의 alpha 경계와 관절을 실측한
+ * 것이다 — **발 관절이 그림 밖에 박혀 있는 묶음**이라(발1이 y=1768, 캔버스는 1448) 바닥선
+ * 기준으로는 세울 수 없지만, 상점 무대는 머리 관절만 쓰므로 그대로 통과한다.
+ */
+export const ARCHAEOLOGY_CLERK_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1086, imageHeight: 1448,
+  content: { left: 51, top: 21, right: 1018, bottom: 1412 },
+  joints: { center: [550, 384], head: [557, 276], eyes: [[524, 288], [604, 248]], feet: [[631, 1768], [533, 1521]] },
+};

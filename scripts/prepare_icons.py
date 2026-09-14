@@ -46,18 +46,21 @@ ART: dict[str, tuple[str, tuple[float, float, float] | None] | tuple[str, tuple[
     # 누런빛과 섞인다. 회색 쪽으로 살짝 빼는 정도가 돌빛에 가장 가깝다.
     "sprites/currency/fossil.webp": ("Photoroom_20260822_113252.png", None, 0.55),
     "sprites/currency/heart.webp": ("Photoroom_20260822_113309.png", None),
+    # 고고학의 원석. 화석은 채도를 덜어 낸 회갈색이라 같은 돌빛에 머물면 상단 재화 줄에서
+    # 두 칸이 같은 그림으로 보인다 — 원석은 **청록 쪽으로** 조금 밀어 갈라 놓는다.
+    "sprites/currency/orestone.webp": ("원석.png", (0.92, 1.02, 1.08)),
     "sprites/currency/energy.webp": ("Photoroom_20260822_113612.png", (0.44, 1.04, 0.52)),
 }
 
-# 원본 PNG가 없는 파생 아이콘.
+# 그림이 캔버스 가운데에 있지 않은 원본.
 #
-# 고고학의 **원석**은 전용 원화가 아직 없다. 화석 원본은 저장소에 남기지 않으므로(굽고 나면
-# 지운다) 이미 구워 둔 `fossil.webp`에서 파생한다 — 그래야 원본 없이도 이 스크립트만으로
-# 다시 구울 수 있다. 색은 **청록 쪽으로** 민다: 화석은 채도를 덜어 낸 회갈색이라, 같은 돌빛에
-# 머물면 상단 재화 줄에서 두 칸이 같은 그림으로 보인다. 전용 원화가 오면 이 줄을 지우고
-# `ART` 표에 source와 함께 올린다.
-DERIVED: dict[str, tuple[str, tuple[float, float, float]]] = {
-    "sprites/currency/orestone.webp": ("sprites/currency/fossil.webp", (0.72, 0.98, 1.18)),
+# 액자(`addFramedIcon`)는 텍스처를 **캔버스 기준**으로 가운데에 놓으므로, 원본이 한쪽으로
+# 쏠려 그려져 있으면 액자 안에서도 그만큼 쏠려 앉는다. 원석 원본이 그랬다 — 오른쪽과 위
+# 변에 그림이 닿아 있어(여백 L232 R0 T0 B158) 그대로 넣으면 잘린 것처럼 보인다.
+# 알파 경계로 잘라 낸 뒤 **긴 변이 캔버스의 이만큼**이 되도록 다시 가운데에 앉힌다 —
+# 화석·호박석 같은 기존 재화 아이콘의 여백(한 변의 12~20%)과 같은 결이 된다.
+RECENTER: dict[str, float] = {
+    "sprites/currency/orestone.webp": 0.8,
 }
 
 # 화면에서 쓰는 가장 큰 크기의 두 배로 굽는다. 더 키우면 파일만 커지고 눈에 보이지 않는다.
@@ -150,6 +153,26 @@ def desaturate(image: Image.Image, keep: float) -> Image.Image:
     return Image.blend(grey, image, keep)
 
 
+# 그림의 경계를 정할 때 무시하는 알파.
+#
+# 원석 원본에는 **거의 보이지 않는 후광**(알파 1~7)이 캔버스 오른쪽·위 변까지 번져 있었다.
+# 그대로 재면 경계가 캔버스 전체가 되어 가운데 맞추기가 아무 일도 하지 않는다 — 눈에 보이는
+# 획만 세도록 문턱을 둔다.
+TRIM_ALPHA = 8
+
+
+def recenter(image: Image.Image, fill: float) -> Image.Image:
+    """눈에 보이는 알파 경계로 잘라 낸 뒤 정사각 캔버스 가운데에 다시 앉힌다."""
+    box = image.getchannel("A").point(lambda value: 255 if value >= TRIM_ALPHA else 0).getbbox()
+    if box is None:
+        return image
+    art = image.crop(box)
+    side = round(max(art.size) / fill)
+    canvas = Image.new("RGBA", (side, side), (0, 0, 0, 0))
+    canvas.paste(art, ((side - art.width) // 2, (side - art.height) // 2))
+    return canvas
+
+
 def shift(image: Image.Image, factor: tuple[float, float, float]) -> Image.Image:
     """채널별로 밝기를 눌러 색을 민다. 알파와 명암은 그대로라 질감이 살아 있다."""
     r, g, b, a = image.split()
@@ -186,11 +209,9 @@ def main() -> None:
             art = shift(art, factor)
         if len(entry) == 3:
             art = desaturate(art, entry[2])
+        if out in RECENTER:
+            art = recenter(art, RECENTER[out])
         save(art, PUBLIC / out)
-
-    # 파생 아이콘은 원본 폴더가 아니라 이미 구워 둔 결과에서 읽는다.
-    for out, (base, factor) in DERIVED.items():
-        save(shift(Image.open(PUBLIC / base).convert("RGBA"), factor), PUBLIC / out)
 
 
 if __name__ == "__main__":

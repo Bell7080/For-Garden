@@ -7,8 +7,8 @@ import { SHOP_TABS, type ShopCategory } from "../data/shopCatalog";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugScene, setDebugShopView, setDebugStorefrontControls } from "../debug";
 import { enableHitOnClick, spawnPuppet } from "../puppets/assets";
-import { SHOP_MERCHANT, SHOP_MERCHANT_LINE_KEYS } from "../data/shopPresentation";
-import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
+import { shopStagePresentation, type ShopStagePresentation } from "../data/shopPresentation";
+import { addSceneBackground } from "../ui/backgrounds";
 import { addPriceBar } from "../ui/priceTag";
 import { addCategoryTab } from "../ui/CategoryTab";
 import { addSectionTitle } from "../ui/SectionTitle";
@@ -78,6 +78,8 @@ export class ShopScene extends Phaser.Scene {
    * 이 두 값 옆에 나란히 선다.
    */
   private storefront: ProductStorefront = "shop";
+  /** 이 자리의 점원·배경·대사. 씬이 storefront로 분기하지 않고 이 한 덩어리만 읽는다. */
+  private stage: ShopStagePresentation = shopStagePresentation("shop");
   /** 우하단 뒤로가기가 돌아갈 화면. 어디서 들어왔는지는 부른 쪽이 안다. */
   private returnScene = "lobby";
 
@@ -85,14 +87,15 @@ export class ShopScene extends Phaser.Scene {
 
   init(data?: { storefront?: ProductStorefront; returnScene?: string }): void {
     this.storefront = data?.storefront ?? "shop";
+    this.stage = shopStagePresentation(this.storefront);
     this.returnScene = data?.returnScene ?? "lobby";
     this.selectedCategory = SHOP_TABS[0].id;
   }
 
   create(): void {
-    setDebugScene("shop", t("shop.title"));
+    setDebugScene("shop", t(this.stage.titleKey));
     // 최종 상점 쇼케이스 배경은 공용 로딩 표에서 먼저 읽혀 씬 진입 중 로더가 튀어나오지 않는다.
-    addSceneBackground(this, BACKGROUND.shop);
+    addSceneBackground(this, this.stage.background);
     drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { depth: -20, strength: 0.76 });
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.5).setDepth(-19);
     bindCurrencyGuide({ scene: this, popups: this.popups });
@@ -100,7 +103,7 @@ export class ShopScene extends Phaser.Scene {
       onSettings: () => this.scene.start("settings", { returnScene: this.returnScene }),
       onCurrency: (currency) => openCurrencyGuide({ scene: this, popups: this.popups }, currency),
     });
-    this.add.text(54, 170, t("shop.title"), textStyle({ role: "display", size: 54 })).setOrigin(0, 0);
+    this.add.text(54, 170, t(this.stage.titleKey), textStyle({ role: "display", size: 54 })).setOrigin(0, 0);
     // 목록 컨테이너는 비동기 생성되므로 공용 돌아가기를 그보다 높은 고정 계층에 둔다.
     addBackButton(this, () => this.scene.start(this.returnScene)).setDepth(1000);
 
@@ -182,10 +185,10 @@ export class ShopScene extends Phaser.Scene {
   }
 
   private speak(entering = false): void {
-    const line = SHOP_MERCHANT_LINE_KEYS[this.merchantLine % SHOP_MERCHANT_LINE_KEYS.length];
+    const line = this.stage.lineKeys[this.merchantLine % this.stage.lineKeys.length];
     this.merchantLine += 1;
     const distance = motionPolicy(session.settings).nonEssentialDistanceFactor;
-    this.dialogue?.say(SHOP_MERCHANT.name, t(line), {
+    this.dialogue?.say(this.stage.merchant.name, t(line), {
       holdMs: 4200,
       // 첫 마디만 화면 조립의 일부라 왼쪽에서 밀려 들어오고, 그 뒤로는 제자리에서 떠오른다.
       slideX: entering ? SHOP_ENTRANCE.dialogue.slide * distance : 0,
@@ -233,8 +236,10 @@ export class ShopScene extends Phaser.Scene {
    * 둔다 — Puppet은 컨테이너 변환을 물려받지 않으므로 화면 좌표의 기하 마스크를 쓴다.
    */
   private async createMerchant(): Promise<void> {
-    const { headX, headY, height } = SHOP_STAGE.merchant;
-    const merchant = await spawnPuppet(this, SHOP_MERCHANT.asset, {
+    // 자리는 공용 무대가 정하고, 그 원화만의 보정이 있으면 무대표가 덮어쓴다.
+    const { headY } = SHOP_STAGE.merchant;
+    const { headX, height } = this.stage.merchantSpot ?? SHOP_STAGE.merchant;
+    const merchant = await spawnPuppet(this, this.stage.merchant.asset, {
       focus: { anchor: "head", x: headX, y: headY }, height, depth: 2,
     });
     // 비동기 로딩 사이 씬이 닫혔으면 새 Mesh를 남기지 않는다.

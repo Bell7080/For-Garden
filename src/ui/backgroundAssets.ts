@@ -24,6 +24,14 @@ export const BACKGROUND = {
   /** 일반 상품과 성장 재화를 진열하는 상점 쇼케이스 배경 키다. */
   shop: "background-shop",
   /**
+   * 고고학 상점의 무대 — 고비 사막 발굴 캠프다.
+   *
+   * 같은 상점 씬을 쓰면서도 배경을 가른다. 중앙 연구소 1층 편의점과 사막 한복판의 발굴
+   * 캠프는 파는 것도 파는 사람도 다른 자리라, 같은 그림 위에 서면 상품표만 바뀐 같은
+   * 가게로 읽힌다.
+   */
+  archaeologyShop: "background-archaeology-shop",
+  /**
    * 외형 전시관의 전용 뒷배경 — 금색 납선으로 갈린 스테인드글라스 창의 홀이다.
    *
    * 웹툰 칸 셋이 이 그림의 창살과 같은 문법으로 서므로(금색 납선 · 반투명 유리면) 판 안의
@@ -99,6 +107,7 @@ export const BACKGROUND_ASSETS = [
   // 일반 상점은 전용 원화를 쓴다 — 유료 상점(008)과 같은 그림을 나눠 쓰던 때는 두 화면이
   // 같은 자리처럼 보여 무엇을 사는 곳인지 배경이 말하지 못했다.
   [BACKGROUND.shop, "sprites/background/background_013.webp"],
+  [BACKGROUND.archaeologyShop, "sprites/background/background_015.webp"],
   [BACKGROUND.appearance, "sprites/background/background_014.webp"],
   [BACKGROUND.excavation, "sprites/background/background_009.webp"],
   [BACKGROUND.cardBackdrop, "sprites/background/background_010.webp"],

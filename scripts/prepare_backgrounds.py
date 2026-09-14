@@ -7,6 +7,8 @@
     python3 scripts/prepare_backgrounds.py
 
 이름 규칙만 지키면 표를 고칠 일이 없다: `public/background_00N.png` → 같은 번호의 WebP.
+**원본이 JPEG로 올 때도 같다** — 아트가 어느 형식으로 오는지는 그때그때 다른데, 확장자 하나
+때문에 스크립트가 그 그림을 못 보고 지나가면 원본이 저장소에 그대로 남아 빌드에 실린다.
 
 화면 배경이 아닌 콘텐츠 원화(`public/ContentN_00M.png` — 출격 진입 버튼 일러스트 등)도 같은
 이유로 여기서 굽는다. 이쪽은 `sprites/background`가 아니라 `sprites/content`에 같은 이름의
@@ -39,9 +41,12 @@ def main() -> None:
     # 원본은 `public/` 바로 아래에 올리는 것이 규칙이지만, **구운 결과가 사는 폴더에 그대로
     # 떨어뜨리는 일이 잦다**(아트를 교체할 때 기존 WebP 옆에 새 PNG를 놓는다). 두 자리를 모두
     # 훑어 같은 규칙으로 굽는다 — 한 자리만 보면 PNG가 그대로 저장소에 남고 빌드에 실려 나간다.
-    backgrounds = sorted({*PUBLIC.glob("background_*.png"), *BACKGROUND_TARGET.glob("*.png")})
-    contents = sorted({*PUBLIC.glob("Content*.png"), *CONTENT_TARGET.glob("*.png")})
-    interactions = sorted({*PUBLIC.glob("교류 배경*.png"), *BACKGROUND_TARGET.glob("교류 배경*.png")})
+    def sources(folder: Path, stem: str) -> set[Path]:
+        return {path for suffix in ("png", "jpg", "jpeg") for path in folder.glob(f"{stem}.{suffix}")}
+
+    backgrounds = sorted(sources(PUBLIC, "background_*") | sources(BACKGROUND_TARGET, "*"))
+    contents = sorted(sources(PUBLIC, "Content*") | sources(CONTENT_TARGET, "*"))
+    interactions = sorted(sources(PUBLIC, "교류 배경*") | sources(BACKGROUND_TARGET, "교류 배경*"))
     if not backgrounds and not contents and not interactions:
         print("구울 원본이 없다. public/background_00N.png 또는 public/ContentN_00M.png를 올린 뒤 다시 실행한다.")
         return

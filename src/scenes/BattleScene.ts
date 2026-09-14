@@ -88,6 +88,7 @@ import { ExpeditionRankingPopup } from "../ui/ExpeditionRankingPopup";
 import { ExpeditionScoreDetailPopup } from "../ui/ExpeditionScoreDetailPopup";
 import { BOSS_RESULT_LAYOUT, bossResultUtilityBounds } from "../ui/bossResultLayout";
 import type { CurrencyIconKey } from "../ui/currencyIcons";
+import { beginBossSettlementAttempt, bossSettlementRecoveryRoute, completeBossSettlementAttempt, createBossSettlementFailureState, failBossSettlementAttempt } from "../core/bossSettlementFailure";
 import { hasMergedBattleHit, isPlayerUltimateReadyTransition } from "../core/hapticPolicy";
 import { applyBattleTestPreset, battleRandom } from "../testSupport/battleHarness";
 
@@ -276,6 +277,10 @@ export class BattleScene extends Phaser.Scene {
   private bossActions: ExpeditionBossAction[] = [];
   /** 성공 응답은 결과 UI보다 오래 살아 UI 생성 중단 뒤에도 같은 영수증으로 복구된다. */
   private readonly bossSettlement = new ExpeditionBossSettlementFlow(gameApi, expeditionManager);
+  /** 요청 잠금과 실패판 세대를 함께 보관해 연타와 재시도 UI 중첩을 막는다. */
+  private readonly bossSettlementFailureState = createBossSettlementFailureState();
+  /** 실패 문구와 두 행동을 한꺼번에 거두기 위한 전용 표시 컨테이너다. */
+  private bossSettlementFailureUi?: Phaser.GameObjects.Container;
   private bossLeaving = false;
   private bossScoreLabel?: Phaser.GameObjects.Text;
   /** 중앙 총점이 서버/코어 목표값을 부드럽게 따라갈 때 사용하는 화면 전용 정수다. */
@@ -361,6 +366,10 @@ export class BattleScene extends Phaser.Scene {
 
   create(): void {
     setDebugScene("battle");
+    // Phaser가 같은 Scene 인스턴스를 다시 쓰므로 지난 판의 요청/UI 잠금을 새 전투로 넘기지 않는다.
+    completeBossSettlementAttempt(this.bossSettlementFailureState);
+    this.bossSettlementFailureUi = undefined;
+    this.bossLeaving = false;
     const stage = getBattleStage(session.selectedStageId ?? "1-1");
     // 적은 스테이지별 임시 레벨 성장치를 적용한 복사본으로 전투에 투입한다.
     // 유대는 정적 RelicDef가 아니라 현재 플레이어의 저장 진행에서 전투 스냅샷으로 넘긴다.
@@ -471,19 +480,38 @@ export class BattleScene extends Phaser.Scene {
 
   /** 두 원격 경계를 manager 흐름에 맡기고, 성공하면 전리품을 포함한 최종판을 곧바로 연다. */
   private async submitAndSettleBoss(input: ExpeditionBossBattleInputDto, actions: ExpeditionBossAction[]): Promise<void> {
+    // 전송 중 연타는 같은 멱등 요청조차 병렬 실행하지 않으며, 재시도는 낡은 실패판부터 걷는다.
+    if (!beginBossSettlementAttempt(this.bossSettlementFailureState)) return;
+    this.bossSettlementFailureUi?.destroy(true);
+    this.bossSettlementFailureUi = undefined;
     try {
       const result = await this.bossSettlement.finish(input, actions);
+      completeBossSettlementAttempt(this.bossSettlementFailureState);
       this.showBossResult(result.score, result.settlement);
     } catch (error) {
       // **무엇이 실패했는지 남긴다.** 예전에는 이유를 통째로 삼켜, 정산이 막히면 화면에 "다시
       // 시도"만 남고 눌러도 같은 자리에서 같은 이유로 막혔다 — 서버가 거절한 것인지, 이미
       // 정산된 런인지, 결과판을 그리다 터진 것인지 아무도 알 수 없었다.
       console.error("[expedition] 보스 정산 실패", error);
+      failBossSettlementAttempt(this.bossSettlementFailureState);
       const reason = error instanceof ExpeditionBossSettlementError ? error.message : t("battle.settle.failed");
-      this.add.text(BASE_WIDTH / 2, 970, reason, textStyle({ role: "body", size: 27, color: COLOR.dangerText, align: "center", wrap: BASE_WIDTH - 220 })).setOrigin(0.5).setDepth(201);
+      // 결과판의 암막·강조색·공용 Button 문법을 그대로 써 실패도 전투 결과의 한 상태로 보이게 한다.
+      const failureUi = this.add.container(0, 0).setDepth(5000);
+      failureUi.add(this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.96));
+      failureUi.add(this.add.text(BASE_WIDTH / 2, 850, reason, textStyle({ role: "body", size: 27, color: COLOR.dangerText, align: "center", wrap: BASE_WIDTH - 220 })).setOrigin(0.5));
       // 같은 버튼은 저장된 요청 ID로 전체 체인을 재시도하므로 성공한 서버 제출도 중복 누적되지 않는다.
-      new Button(this, BASE_WIDTH / 2, 1050, { width: 460, height: 100, label: t("battle.settle.retry"), onClick: () => void this.submitAndSettleBoss(input, actions) }).setDepth(201);
+      failureUi.add(new Button(this, BASE_WIDTH / 2, 1010, { width: 460, height: 100, label: t("battle.settle.retry"), variant: "primary", onClick: () => void this.submitAndSettleBoss(input, actions) }));
+      failureUi.add(new Button(this, BASE_WIDTH / 2, 1140, { width: 460, height: 90, label: t("battle.settle.recoverLobby"), onClick: () => this.recoverBossSettlementToLobby() }));
+      this.bossSettlementFailureUi = failureUi;
     }
+  }
+
+  /** 실패를 성공/포기로 꾸미거나 로컬 런을 지우지 않고 Boot의 서버·저장 재동기화 경계로 나간다. */
+  private recoverBossSettlementToLobby(): void {
+    if (this.bossLeaving) return;
+    this.bossLeaving = true;
+    const route = bossSettlementRecoveryRoute();
+    this.scene.start(route.scene, route.data);
   }
 
   /** 서버 총점과 정산 재화를 같은 결과 화면 안의 독립된 위계로 보여 준다. */

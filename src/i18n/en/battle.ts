@@ -7,6 +7,7 @@ export const BATTLE_EN = {
   "battle.boss.limit": " · LIMIT",
   "battle.settle.failed": "Could not restore the result screen.",
   "battle.settle.retry": "Retry Settlement",
+  "battle.settle.recoverLobby": "Resync & Return to Lobby",
   "battle.settle.done": "Expedition Observation Complete",
   "battle.settle.reward": "Settlement Rewards",
   "battle.settle.noReward": "No settlement currency",

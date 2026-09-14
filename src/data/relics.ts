@@ -150,12 +150,13 @@ export const RELICS: RelicDef[] = [
       // 흡혈은 전 개체 공통 0이라 곱이 아니라 퍼센트포인트로 끌어다 쓴다. 물어뜯을수록 회복하는
       // 개체라야 앞장서서 먼저 붙는 폭주와 맞물린다.
       lifeStealPoints: 25,
-      // 뒤에서 쏘는 상대에게는 붙는 것 자체가 일이다. 멀리 선 표적으로 열리면 그 자리로 파고들어
-      // 한 번 멈춰 세운다 — 붙어 서는 상대에게는 이미 사거리 안이라 아무 일도 하지 않는다.
-      openingCharge: { againstReachTiers: ["mid", "ranged"], stunSeconds: 1 },
+      // 뒤에서 쏘는 상대에게는 붙는 것 자체가 일이다. **중거리쯤까지 다가서면** 남은 사이를
+      // 한 번에 파고들어 멈춰 세운다 — 원거리 상대에게는 한두 대 맞으며 달려간 끝에 뛰어들고,
+      // 상대도 중거리면 서로 닿는 그 순간 함께 뛰어드는 그림이 된다.
+      openingCharge: { withinReachTier: "mid", stunSeconds: 1 },
       // kind가 battleMaidMastery인 패시브는 passiveDescription()이 실제 능력치로 다시 문장을 만들므로
       // 이 원문은 데이터 문서화용일 뿐 화면에는 쓰이지 않는다.
-      desc: "전투 시작 시, 전투에 필요한 네 가지 능력과 흡혈이 25% 오르고, 멀리 선 표적에게는 돌진해 1초 동안 기절시킨다.",
+      desc: "전투 시작 시 공격 속도·공격력·치명타 확률·치명타 피해·흡혈이 모두 25% 오르고, 표적에게 중거리까지 다가서면 돌진해 1초 동안 기절시킨다.",
     },
     basic: {
       id: "rex-basic",
@@ -637,25 +638,25 @@ export const RELICS: RelicDef[] = [
       lifeSteal: 0,
       ferocityGain: 0,
     },
-    // 한자리에 버티는 아이가 아니라 물살을 타고 이리저리 뛰어드는 아이라, 폭주도 발이 빨라지고
-    // 표적을 계속 바꾸는 쪽으로 발현한다 — 표식을 옮기는 패시브와 한 덩어리로 움직인다.
-    ferocityTrait: { name: "이크티오 다이브!", effectId: "ichthyoDive", moveSpeedPercent: 100 },
+    // 물살을 타고 계속 뛰어드는 몸이라 폭주는 **버틸 숨과 손**으로 발현한다. 토리카의 폭주와
+    // 같은 1초 시계를 쓰되(`torikaBulwark`) 손이 함께 빨라진다 — 그쪽은 앞에 서서 버티는
+    // 값이고, 이쪽은 계속 때리면서 버티는 값이다.
+    ferocityTrait: { name: "이크티오 다이브!", effectId: "tidalVigor", attackSpeedPercent: 20, maxHpRegenPercentPerSecond: 3 },
     passive: {
-      // kind가 tidalVigor인 패시브는 passiveDescription()이 구조화 필드로 다시 문장을 만들므로
+      // kind가 shimmerMark인 패시브는 passiveDescription()이 구조화 필드로 다시 문장을 만들므로
       // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
       //
-      // 「반짝!」은 더 이상 패시브가 아니다 — 그 규칙은 규칙어 하나가 갖고, 표식을 다루는 것은
-      // 실제로 때리는 스킬(`Skill.shimmer`)이다. 패시브는 물살을 타고 계속 뛰어드는 몸이
-      // 버틸 숨과 손을 맡는다.
+      // **표식을 남기는 것이 패시브의 몫이다.** 규칙어(`shimmer`)는 반짝이 무엇이고 다시
+      // 맞으면 사라진다는 것까지만 말하고, 지워지는 순간에 무엇이 터지는지는 그 타격을 낸
+      // 스킬이 든다(`Skill.shimmerBurst`).
       id: "tia-passive",
-      name: "쉬지 않는 물장구",
-      kind: "tidalVigor",
-      iconAssetId: "skill-icon-buff",
-      effectType: "buff",
-      value: 3,
-      maxHpRegenPercentPerSecond: 3,
-      attackSpeedPercent: 20,
-      desc: "매초 최대 체력의 3%를 회복하고 공격 속도가 20% 오른다.",
+      name: "반짝반짝 첨벙첨벙!",
+      kind: "shimmerMark",
+      iconAssetId: "skill-icon-magical",
+      effectType: "magical",
+      // 표식을 새로 남길 때 터지는 추가 피해의 주문력 계수(%)다.
+      value: 100,
+      desc: "적을 타격하면 반짝! 표식을 부여하고 주문력의 100%만큼 마법 피해를 추가로 입힌다.",
     },
     basic: {
       id: "tia-basic",
@@ -669,14 +670,15 @@ export const RELICS: RelicDef[] = [
       // 표식을 다루는 손이라 한 명을 겨눈다 — 범위로 여럿을 함께 때리면 한 번 휘두를 때마다
       // 표식이 여러 장 붙었다 지워져 무엇이 표식인지 읽히지 않는다.
       targeting: "single",
-      // 표식이 없으면 남기고, 있으면 그 자리에서 터뜨려 주위까지 함께 적시고 그 피해의 일부를
+      // 반짝이 묻은 적을 때리면 그 자리에서 터뜨려 주위까지 함께 적시고, 그 피해의 일부를
       // 제 몸에 두른다.
-      shimmer: { markPower: 100, burstPower: 50, burstRadius: 260, burstShieldPercent: 25 },
+      shimmerBurst: { power: 50, radius: 260, shieldPercent: 25 },
     },
     ultimate: {
       id: "tia-ult",
       name: "반짝이는 건 다 내 거야!",
-      power: 240,
+      // 위력은 총량이 아니라 **한 번 내리찍는 값**이다. 두 번 찍으므로 예전 240%를 둘로 나눴다.
+      power: 120,
       scalingStat: "ap",
       iconAssetId: "skill-icon-magical",
       effectType: "magical",
@@ -685,10 +687,9 @@ export const RELICS: RelicDef[] = [
       // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
       targeting: "nearbyEnemies",
       radius: 420,
-      // 쿵. 쿵. 두 번 내리찍는다. 첫 번째가 표식을 남기면 두 번째가 그 표식을 지운다 —
-      // 터뜨리는 것은 일반 공격의 몫이라 여기서는 터지지 않는다.
-      repeatStrike: { count: 2, intervalSeconds: 0.45 },
-      shimmer: { markPower: 100 },
+      // 쿵. 쿵. 1초 간격으로 두 번 내리찍는다. 첫 번째가 남긴 표식을 두 번째가 지운다 —
+      // 터뜨리는 것은 일반 공격의 몫이라 여기서는 터지지 않는다(`shimmerBurst`가 없다).
+      repeatStrike: { count: 2, intervalSeconds: 1 },
       statusEffects: [{ kind: "stagger", seconds: 0.1 }],
     },
   },

@@ -148,6 +148,8 @@ export { BATTLE_CONTROLS } from "../ui/battleStatusLayout";
 
 /** 아직 다 차지 않은 카드의 불투명도. 다 차면 1이 되어 그림이 온전히 선다. */
 const CHARGE_CARD_ALPHA = 0.62;
+/** 카드 명도가 목표를 뒤쫓는 초당 계수. 게이지보다 조금 느려 밝기가 값보다 늦게 가라앉는다. */
+const CARD_ALPHA_EASE = 7;
 
 /** 야성 수치의 글자색. 게이지의 붉은 계열과 같아 어느 수인지 색으로 먼저 읽힌다. */
 const FEROCITY_TEXT = COLOR.ferocityText;
@@ -262,6 +264,18 @@ interface ProfileView {
    * 계단이 더 성겨진다. 쓸 수 있는지는 언제나 코어가 정하고 이 값은 각도만 정한다.
    */
   chargeShown: number;
+  /**
+   * 카드가 지금 띠고 있는 명도. 목표를 뒤쫓아 **굴러간다.**
+   *
+   * 예전에는 프레임마다 `setAlpha`로 못 박았다 — 궁극기를 쓰는 순간 1 → 0.62로, 연출이 도는
+   * 동안 다른 카드가 0.32로, 끝나면 다시 원래대로 **한 프레임에** 튀어 프로필 줄 전체가
+   * 번쩍였다. 값이 바뀌는 이유는 그대로 두고 그 사이를 잇는 길만 만든다.
+   */
+  alphaShown: number;
+  /** 이번 프레임이 요구하는 명도. `refreshProfiles`가 정하고 `stepMeters`가 뒤쫓는다. */
+  alphaTarget: number;
+  /** 궁극기를 쓴 순간 한 번 도는 스쿼시. 도는 동안 다른 코드가 배율을 못 박지 않는다. */
+  press?: Phaser.Tweens.Tween;
   ready: boolean;
   pulse?: Phaser.Tweens.Tween;
   /** 입력 가능한 카드 위만 주기적으로 지나는 얇은 황동 사선이다. */
@@ -736,7 +750,7 @@ export class BattleScene extends Phaser.Scene {
       // 두 게이지는 굵기만 다르고 모양이 같다. 위가 체력, 아래가 폭주다.
       // 수치는 제 게이지와 같은 색으로, 굵게, 아래로 한 겹 복제한 그림자를 달고 선다.
       // 밝은 배경 원화 위에서 흐린 회색 글자는 게이지 옆에 있어도 읽히지 않는다.
-      this.profiles.push({ fighter, prefab, card, glow, sweep, charge, hpBar, hpLabel, ferocityBar, ferocityLabel, hpShown: fighter.hp, ferocityShown: fighter.ferocity, chargeShown: 0, ready: false });
+      this.profiles.push({ fighter, prefab, card, glow, sweep, charge, hpBar, hpLabel, ferocityBar, ferocityLabel, hpShown: fighter.hp, ferocityShown: fighter.ferocity, chargeShown: 0, alphaShown: CHARGE_CARD_ALPHA, alphaTarget: CHARGE_CARD_ALPHA, ready: false });
     });
   }
 
@@ -813,6 +827,9 @@ export class BattleScene extends Phaser.Scene {
 
       // 스킵도 입력 순간의 낡은 상태를 믿지 않는다. 컷인 유무와 무관하게 발사 직전 생존·게이지·종료를 재검증한다.
       if (!this.sequenceValid(next.token, fighter) || !canFireUltimate(this.state, fighter)) return;
+      // **쿵.** 쓰는 순간 그 카드가 한 번 눌렸다 올라온다 — 게이지가 비는 것만으로는 "썼다"가
+      // 값의 변화로만 남고, 어느 칸에서 나갔는지가 화면에서 약하다.
+      this.pressProfileCard(fighter.id);
       // 확대와 공격 모션을 동시에 시작해 확대를 기다리는 별도 턴처럼 보이지 않게 한다.
       // 스킵에서는 0ms 확대조차 만들지 않아 실제 발사만 아래에서 정확히 한 번 수행한다.
       const zoom = skipPresentation
@@ -1586,15 +1603,16 @@ export class BattleScene extends Phaser.Scene {
       const alive = isFighterAlive(fighter);
       // 궁극기는 숫자가 아니라 그림이 말한다. 쓸 수 있게 되기까지의 몫만큼 어둠이 걷힌다.
       const ready = canFireUltimate(this.state, fighter);
-      // 어둠이 걷힌 각도는 `stepMeters`가 굴려 그린다. 여기서 다시 칠하면 계단 값이 그대로
-      // 한 프레임 튀어, 굴러가던 것이 매 갱신마다 목표로 끌려간다.
-      const charge = alive ? Math.min(1, fighter.energy / fighter.def.ultimate.cost) : 0;
+      // 어둠이 걷힌 각도와 카드 명도는 `stepMeters`가 굴려 그린다. 여기서 코어 값을 다시
+      // 칠하면 계단이 그대로 한 프레임 튀어, 굴러가던 것이 매 갱신마다 목표로 끌려간다.
       // 머리 위 바와 같은 값을 같은 주기로 읽어 두 HUD가 서로 다른 막 길이를 말하지 않게 한다.
       profile.prefab.setShield(alive ? fighter.shield.amount : 0, fighter.maxHp);
-      // 아직이면 카드째 반투명하다. 뒤가 비쳐야 "잠깐 꺼 둔 칸"으로 읽히고, 다 차면 또렷해진다.
-      profile.card.setAlpha(alive ? (charge >= 1 ? 1 : CHARGE_CARD_ALPHA) : 0.45);
-      // 연출 중에는 사용자 외 모든 카드가 잠겼다는 것을 명도로 즉시 알린다.
-      if (this.ultimateSequenceActive && this.currentUltimateFighterId !== fighter.id) profile.card.setAlpha(alive ? 0.32 : 0.2);
+      // **아직이면 반투명하고 찰수록 또렷해진다.** 다 찬 순간에만 밝아지게 두었을 때는 그
+      // 경계가 켜고 끄는 스위치라, 쓰는 순간 카드가 한 프레임에 어두워져 번쩍였다. 걷히는
+      // 어둠과 같은 값을 읽으므로 밝기도 게이지와 함께 굴러간다.
+      profile.alphaTarget = alive ? CHARGE_CARD_ALPHA + (1 - CHARGE_CARD_ALPHA) * profile.chargeShown : 0.45;
+      // 연출 중에는 사용자 외 모든 카드가 잠겼다는 것을 명도로 알린다.
+      if (this.ultimateSequenceActive && this.currentUltimateFighterId !== fighter.id) profile.alphaTarget = alive ? 0.32 : 0.2;
       if (ready !== profile.ready) this.setUltimateReady(profile, ready);
       // 준비 상태가 유지된 채 다른 궁극기가 시작되어도 잠긴 카드의 반복 광선은 즉시 감춘다.
       if (this.ultimateSequenceActive) profile.sweep.setAlpha(0);
@@ -1695,6 +1713,10 @@ export class BattleScene extends Phaser.Scene {
       const chargeTarget = alive ? Math.min(1, fighter.energy / fighter.def.ultimate.cost) : 0;
       profile.chargeShown = stepUltimateCharge(profile.chargeShown, chargeTarget, deltaMs / 1000, motionFactor);
       profile.prefab.setChargeRatio(profile.chargeShown);
+      // 명도도 같은 결로 굴린다. 못 박으면 궁극기 한 번에 프로필 줄 전체가 번쩍인다.
+      profile.alphaShown = motionFactor === 0 ? profile.alphaTarget
+        : profile.alphaShown + (profile.alphaTarget - profile.alphaShown) * Math.min(1, (deltaMs / 1000) * CARD_ALPHA_EASE * motionFactor);
+      profile.card.setAlpha(profile.alphaShown);
       const fever = fighter.ferocityFever;
       const ferocityColor = fever ? COLOR.ferocityFever : fighter.ferocity >= 80 ? COLOR.ferocityWarning : COLOR.ferocityLow;
       // 값과 사망 표현의 최종 소유자는 공용 프리팹이며 폭주 문구만 전투가 덧씌운다.
@@ -1704,6 +1726,29 @@ export class BattleScene extends Phaser.Scene {
       profile.ferocityLabel.setText(t(fever ? "battle.gauge.frenzy" : "battle.gauge.ferocity", { value: Math.round(profile.ferocityShown), max: FEROCITY_RULES.max }))
         .setColor(fever || fighter.ferocity >= 80 ? COLOR.ferocityHotText : FEROCITY_TEXT);
     }
+  }
+
+  /**
+   * 궁극기를 쓴 카드를 한 번 **꾹 눌렀다 놓는다.**
+   *
+   * 가로로 퍼지며 세로로 눌리는 짧은 스쿼시 하나뿐이다 — 명도나 색을 함께 흔들면 그것이 곧
+   * 번쩍임이라, 지우려던 것을 다른 모양으로 되살리게 된다. 깎인 마스크가 배율을 물려받지
+   * 않으므로 프레임마다 `syncMask`로 월드 좌표에 다시 맞춘다.
+   */
+  private pressProfileCard(fighterId: string): void {
+    const profile = this.profiles.find(({ fighter }) => fighter.id === fighterId);
+    if (!profile || this.motion.battleUiFactor === 0) return;
+    profile.press?.remove();
+    profile.card.setScale(1);
+    profile.press = this.tweens.add({
+      targets: profile.card,
+      scaleX: { from: 1.1, to: 1 },
+      scaleY: { from: 0.86, to: 1 },
+      duration: 260,
+      ease: "Back.Out",
+      onUpdate: () => profile.card.syncMask(),
+      onComplete: () => { profile.press = undefined; profile.card.syncMask(); },
+    });
   }
 
   /** 준비 상태가 바뀔 때만 연출을 갈아 끼운다. 매 프레임 트윈을 다시 만들지 않는다. */
@@ -1719,8 +1764,8 @@ export class BattleScene extends Phaser.Scene {
     // 황동 테두리는 카드 프리팹의 선택 상태를 그대로 쓴다.
     profile.card.setSelected(ready);
     if (!ready) {
-      profile.card.setScale(1);
-      profile.card.syncMask();
+      // 누르는 연출이 도는 동안에는 배율을 건드리지 않는다 — 그 한 프레임이 곧 튐이다.
+      if (!profile.press) { profile.card.setScale(1); profile.card.syncMask(); }
       profile.glow.setAlpha(0);
       return;
     }

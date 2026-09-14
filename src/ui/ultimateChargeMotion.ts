@@ -15,6 +15,12 @@ export const ULTIMATE_CHARGE_MOTION = {
   ease: 9,
   /** 초당 최소 이동량(비율). 멀든 가깝든 이만큼은 움직여 끝자락이 멎지 않는다. */
   minPerSecond: 0.45,
+  /**
+   * **줄어들 때의 초당 이동량.** 차오르는 것은 전투가 만드는 속도지만, 쓰고 나서 비는 것은
+   * 한 순간의 사건이라 그 길이는 화면이 정한다 — 다음 평타가 들어오기 전에 끝나야 "쓰고 다시
+   * 찬다"가 한 번의 리듬으로 읽힌다. 가득 찬 게이지가 0.3초 안에 비는 속도다.
+   */
+  drainPerSecond: 3.4,
   /** 이 차이보다 가까우면 목표에 붙인다. 부동소수점 꼬리로 매 프레임 다시 칠하지 않는다. */
   snap: 0.004,
 } as const;
@@ -34,7 +40,9 @@ export function stepUltimateCharge(shown: number, target: number, deltaSeconds: 
   if (Math.abs(gap) <= ULTIMATE_CHARGE_MOTION.snap) return goal;
   const seconds = Math.max(0, deltaSeconds);
   const eased = Math.abs(gap) * Math.min(1, seconds * ULTIMATE_CHARGE_MOTION.ease * motionFactor);
-  const floor = seconds * ULTIMATE_CHARGE_MOTION.minPerSecond * motionFactor;
+  // 비는 길은 한 방향으로 쭉 미끄러진다 — 지수로 빼면 끝에서 늘어져 다음 평타까지 남는다.
+  const perSecond = gap < 0 ? ULTIMATE_CHARGE_MOTION.drainPerSecond : ULTIMATE_CHARGE_MOTION.minPerSecond;
+  const floor = seconds * perSecond * motionFactor;
   // 목표를 지나치지 않는다 — 지나치면 다 찬 카드가 한 프레임 덜 찬 것으로 보였다가 되돌아온다.
   const move = Math.min(Math.abs(gap), Math.max(eased, floor));
   return clamp01(from + Math.sign(gap) * move);

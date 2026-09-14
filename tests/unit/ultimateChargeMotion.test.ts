@@ -40,3 +40,20 @@ describe("궁극기 충전 굴리기", () => {
     expect(stepUltimateCharge(0.5, -1, 1)).toBe(0);
   });
 });
+
+describe("궁극기를 쓴 직후", () => {
+  it("게이지는 다음 평타가 오기 전에 다 빈다", () => {
+    // 가장 손이 빠른 개체의 평타 간격보다 짧아야 "쓰고 다시 찬다"가 한 번의 리듬으로 읽힌다.
+    let shown = 1;
+    let seconds = 0;
+    while (shown > 0 && seconds < 5) { shown = stepUltimateCharge(shown, 0, 1 / 60); seconds += 1 / 60; }
+    expect(shown).toBe(0);
+    expect(seconds).toBeLessThan(0.4);
+  });
+
+  it("비는 길은 차오르는 길보다 빠르다 — 쓴 것은 한 순간의 사건이다", () => {
+    const drained = 1 - stepUltimateCharge(1, 0, 1 / 60);
+    const filled = stepUltimateCharge(0, 1, 1 / 60);
+    expect(drained).toBeGreaterThan(filled * 0.9);
+  });
+});

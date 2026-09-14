@@ -127,8 +127,6 @@ export const SKILL_JA = {
   "skill.passive.adagioWeight.shieldAmount": "[[shield-value|{amount}]]",
   "skill.passive.abyssalPressure": "完全に経過した毎秒、基本[[ap|魔力]]の{percent}%が複利で累積する。現在の体力が最大体力の100%から{hpPercent}%へ下がるほど、受けるすべてのダメージ減少が{base}%から{max}%まで線形に増加し、それ以下では最大値に制限される。最終的に受けるダメージが{ignore}以下の攻撃は無効化する。",
   "skill.passive.gourmetHunt": "戦闘を始めるとき、現在の体力が最も低い敵を標的にしてその場へ[[teleport|瞬間移動]]する。敵を倒すと即座に、それ以外は{cooldown}秒ごとに選び直す。敵からダメージを受けると{seconds}秒間[[stealth|隠密]]する。戦闘ごとに最大{triggers}回発動する。",
-  "skill.passive.lowHpVanish.plain": "戦闘ごとに1回、体力が半分以下になると{seconds}秒間[[stealth|隠密]]する。",
-  "skill.passive.lowHpVanish.focus": "戦闘ごとに1回、体力が半分以下になると[[focus|集中]]をすべて失う代わりに{seconds}秒間[[stealth|隠密]]する。",
   "skill.passive.cursedInsight": "[[curse|呪い]]にかかった敵へ[[basic-attack|通常攻撃]]を直接命中させるたびに、この戦闘の間[[ap|魔力]]が{value}%増加する。最大{stacks}回まで積まれ、[[transfer|転移]]した一撃では発動しない。",
   "skill.passive.impactCap": "一度に受けるダメージが最大体力の{percent}%を超えない。{shield}",
   "skill.passive.impactCap.shield": " [[concussion|脳震盪]]が与えたダメージの{percent}%分のシールドを得る。",

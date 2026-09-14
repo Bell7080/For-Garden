@@ -4233,39 +4233,12 @@ describe("파루아 — 쏘면서 자라는 사거리", () => {
   it("는 적중마다 집중을 쌓고 상한에서 멈춘다", () => {
     const state = volleyState();
     const parua = state.fighters.find((fighter) => fighter.def.id === "parua")!;
-    // 셋을 상대로 혼자 서면 곧 절반 밑으로 떨어져 저체력 은신이 집중을 털어 간다. 여기서
-    // 재려는 것은 쌓이는 쪽이므로 그 발동권만 미리 써 둔다.
-    parua.passiveTriggered = true;
     expect(parua.focus).toBe(0);
     run(state, 6);
     // 갈래화살 한 발이 셋을 맞히면 겹도 셋 오르므로 초반 몇 번만 쏘면 눈에 띄게 쌓인다.
     expect(parua.focus).toBeGreaterThan(0);
     run(state, 60);
     expect(parua.focus).toBeLessThanOrEqual(FOCUS.maxStacks);
-  });
-
-  it("는 절반 밑으로 떨어지면 전투당 한 번, 집중을 모두 내려놓고 은신한다", () => {
-    const state = volleyState();
-    const parua = state.fighters.find((fighter) => fighter.def.id === "parua")!;
-    parua.focus = 5;
-    // 경계 위에서는 아직 아무 일도 없다 — 쌓은 것도 그대로다.
-    parua.hp = parua.maxHp * 0.6;
-    expect(tryTriggerLowHpVanish(parua, state)).toBe(false);
-    expect(parua.focus).toBe(5);
-
-    // 절반을 지나는 순간 쌓아 둔 것을 내려놓고 사라진다. 이미 자신을 보던 적의 추적도 풀린다.
-    const chaser = state.fighters.find((fighter) => fighter.side === "enemy")!;
-    chaser.targetId = parua.id;
-    parua.hp = parua.maxHp * 0.5;
-    expect(tryTriggerLowHpVanish(parua, state)).toBe(true);
-    expect(parua.focus).toBe(0);
-    expect(parua.stealthFor).toBeCloseTo(parua.def.passive.lowHpVanishSeconds!, 5);
-    expect(chaser.targetId).toBeNull();
-
-    // 전투당 한 번뿐이다. 다시 쌓아 올린 집중은 두 번째 위기에서 지켜지지 않는다.
-    parua.focus = 4; parua.stealthFor = 0; parua.hp = 1;
-    expect(tryTriggerLowHpVanish(parua, state)).toBe(false);
-    expect(parua.focus).toBe(4);
   });
 
   it("는 집중이 쌓이면 실제로 더 멀리서 때린다", () => {

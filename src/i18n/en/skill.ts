@@ -112,8 +112,6 @@ export const SKILL_EN = {
   "skill.passive.adagioWeight.shieldAmount": "[[shield-value|{amount}]]",
   "skill.passive.abyssalPressure": "Each fully elapsed second compounds {percent}% of base [[ap|Ability Power]]. As current HP falls from 100% of max HP toward {hpPercent}%, reduction of all damage taken rises linearly from {base}% to {max}%, and below that it is capped at the maximum. Attacks whose final damage taken is {ignore} or less are nullified.",
   "skill.passive.gourmetHunt": "At the start of battle, targets the enemy with the lowest current HP and [[teleport|teleports]] to it. It picks again immediately on a kill, and otherwise every {cooldown}s. Taking damage from an enemy grants [[stealth|Stealth]] for {seconds}s, up to {triggers} times per battle.",
-  "skill.passive.lowHpVanish.plain": "Once per battle, falling to half HP or below grants [[stealth|Stealth]] for {seconds}s.",
-  "skill.passive.lowHpVanish.focus": "Once per battle, falling to half HP or below spends all [[focus|Focus]] to gain [[stealth|Stealth]] for {seconds}s.",
   "skill.passive.cursedInsight": "Each time a [[basic-attack|basic attack]] directly lands on a [[curse|Cursed]] enemy, [[ap|Ability Power]] increases by {value}% for this battle, up to {stacks} times. [[transfer|Transferred]] hits do not trigger it.",
   "skill.passive.impactCap": "Damage taken in a single hit never exceeds {percent}% of max HP.{shield}",
   "skill.passive.impactCap.shield": " Gains a shield equal to {percent}% of the damage [[concussion|Concussion]] dealt.",

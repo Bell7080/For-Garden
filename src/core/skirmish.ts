@@ -6,7 +6,7 @@ export { currentAbilityPower } from "./damage";
 import { drainFerocityFever, FEROCITY_RULES } from "./ferocity";
 import { isBreakthroughSlotOpen, type BreakthroughSlot } from "./relicProgression";
 import { augmentAppliesTo, bleedOnAttackEffect, conditionalAttackPowerMultiplier, expeditionAugmentStatMultipliers, flatStatPoints, highHpDamageMultiplier, sameTargetStreakMultiplier, type ExpeditionAugmentEffect, type ExpeditionAugmentTrigger, type ExpeditionTriggeredEffect } from "./expeditionAugments";
-import type { BasicAttack, BasicAttackStep, BreakthroughEffects, CombatStatusEffect, FerocityTrait, Passive, ReachTier, RelicDef, Side, Skill, Stats, TeamBuff } from "./types";
+import type { BasicAttack, BasicAttackStep, BreakthroughEffects, CombatStatusEffect, FerocityTrait, ReachTier, RelicDef, Side, Skill, Stats, TeamBuff } from "./types";
 import { ULTIMATE_ENERGY_MAX } from "./ultimate";
 import { deriveSummonStats } from "./summonStats";
 import { combatPower } from "./combatPower";
@@ -3660,31 +3660,16 @@ function siphonOverpaintHealing(attacker: Fighter, target: Fighter, hpLost: numb
  * 순간 이미 이 개체를 노리던 상대의 추적도 함께 풀어야 실제로 표적에서 벗어난다.
  */
 export function tryTriggerLowHpVanish(fighter: Fighter, state: SkirmishState): boolean {
-  const passive = fighter.def.passive;
-  if (!isFighterAlive(fighter) || fighter.hp > fighter.maxHp * 0.5 || fighter.passiveTriggered) return false;
+  if (fighter.def.passive.kind !== "lowHpVanish" || !isFighterAlive(fighter)
+    || fighter.hp > fighter.maxHp * 0.5 || fighter.passiveTriggered) return false;
 
   // 표시와 전투가 같은 값을 읽도록 지속 시간을 패시브 정의에서 가져온다.
-  const duration = lowHpVanishSeconds(passive);
-  if (duration <= 0) return false;
+  const duration = fighter.def.passive.durationSeconds;
+  if (duration === undefined || duration <= 0) return false;
   fighter.passiveTriggered = true;
-  // 치르는 값이 있는 개체는 여기서 낸다. 쌓아 둔 것을 내려놓고 사는 자리라, 빠져나온 뒤에는
-  // 공격력도 사거리도 처음으로 돌아가 다시 쌓아 올려야 한다.
-  if (passive.lowHpVanishSpendsFocus === true) fighter.focus = 0;
   fighter.stealthFor = Math.max(fighter.stealthFor, duration);
   for (const other of state.fighters) if (other.targetId === fighter.id) { other.targetId = null; other.engaged = false; }
   return true;
-}
-
-/**
- * 저체력 은신의 지속 시간. **종류가 아니라 계약을 읽는다.**
- *
- * 패시브 전체가 이 규칙인 개체(스테라)는 제 `durationSeconds`를 쓰고, 다른 패시브에 이 절만
- * 얹은 개체(파루아)는 전용 필드를 쓴다. 두 자리가 한 함수로 모이므로 발동 경계와 발동권은
- * 언제나 하나다.
- */
-function lowHpVanishSeconds(passive: Passive): number {
-  if (passive.kind === "lowHpVanish") return passive.durationSeconds ?? 0;
-  return passive.lowHpVanishSeconds ?? 0;
 }
 
 /**

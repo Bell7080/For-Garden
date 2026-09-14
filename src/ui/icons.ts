@@ -3,6 +3,8 @@ export const UI_ICON = {
   back: "ui-icon-back",
   /** 로비 가방과 인벤토리 작업판을 잇는 전용 홀로그램 픽토그램. */
   bag: "ui-icon-bag",
+  /** 지층 탐사의 남은 횟수를 말하는 곡괭이. 재화가 아니라 조작 횟수다. */
+  pickaxe: "ui-icon-pickaxe",
 } as const;
 
 export type UiIconKey = (typeof UI_ICON)[keyof typeof UI_ICON];
@@ -16,4 +18,15 @@ export type UiIconKey = (typeof UI_ICON)[keyof typeof UI_ICON];
 export const UI_ICON_ASSETS: ReadonlyArray<readonly [UiIconKey, string, number]> = [
   [UI_ICON.back, "sprites/ui/back.svg", 96],
   [UI_ICON.bag, "sprites/ui/bag.svg", 96],
+];
+
+/**
+ * 이미 구워 둔 WebP로 오는 UI 아이콘.
+ *
+ * 위 목록은 `load.svg`로 원하는 크기에 맞춰 래스터화하지만, 원화로 그려 온 아이콘은 벡터가
+ * 아니라 그림 한 장이라 그대로 읽는다 — 같은 목록에 섞으면 SVG 파서가 읽지 못해 조용히 빈
+ * 텍스처가 된다.
+ */
+export const UI_RASTER_ICON_ASSETS: ReadonlyArray<readonly [UiIconKey, string]> = [
+  [UI_ICON.pickaxe, "sprites/ui/pickaxe.webp"],
 ];

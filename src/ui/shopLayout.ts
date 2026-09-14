@@ -258,3 +258,14 @@ export const SHOP_ENTRANCE = {
   /** 대사가 왼쪽에서 들어오는 거리. 시간은 공용 대사창이 정한다. */
   dialogue: { slide: -240, delay: 430 },
 } as const;
+
+/**
+ * 전시대가 완전히 올라온 순간(ms).
+ *
+ * **점원은 그 뒤에 들어온다.** 점원은 전시대 윗변에서 잘려 있는데(무대 마스크), 전시대가 아직
+ * 올라오는 중이면 그 절단면이 빈 배경 위에 그대로 드러난다 — 둘이 함께 움직이면 다리가 없는
+ * 상반신이 미끄러져 들어오는 것으로 보인다. 판과 격자 중 **늦게 끝나는 쪽**을 기준으로 삼는다.
+ */
+export function shopStageSettleMs(): number {
+  return Math.max(SHOP_ENTRANCE.board.duration, SHOP_ENTRANCE.grid.delay + SHOP_ENTRANCE.grid.duration);
+}

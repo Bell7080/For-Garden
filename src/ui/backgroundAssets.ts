@@ -32,6 +32,14 @@ export const BACKGROUND = {
    */
   archaeologyShop: "background-archaeology-shop",
   /**
+   * 지층 탐사판의 **아래층** — 겉장을 부순 칸에 드러나는 맨 흙이다.
+   *
+   * 겉장 넉 장은 여기 키를 두지 않는다. 판이 들고 있는 번호가 곧 키라
+   * `strataLayerTextureKey`가 짓고, 아래 목록이 같은 이름으로 경로를 댄다 — 원화가 늘 때
+   * 이 표와 그 함수를 함께 고치는 대신 `STRATA_ART_COUNT`만 올리면 된다.
+   */
+  strataBase: "background-strata-base",
+  /**
    * 외형 전시관의 전용 뒷배경 — 금색 납선으로 갈린 스테인드글라스 창의 홀이다.
    *
    * 웹툰 칸 셋이 이 그림의 창살과 같은 문법으로 서므로(금색 납선 · 반투명 유리면) 판 안의
@@ -108,6 +116,12 @@ export const BACKGROUND_ASSETS = [
   // 같은 자리처럼 보여 무엇을 사는 곳인지 배경이 말하지 못했다.
   [BACKGROUND.shop, "sprites/background/background_013.webp"],
   [BACKGROUND.archaeologyShop, "sprites/background/background_015.webp"],
+  [BACKGROUND.strataBase, "sprites/background/strata_base.webp"],
+  // 겉장은 한 번 탐사할 때마다 그중 한 장이 뽑힌다. 키 이름은 `strataLayerTextureKey`가 짓는다.
+  ["background-strata-layer-001", "sprites/background/strata_layer_001.webp"],
+  ["background-strata-layer-002", "sprites/background/strata_layer_002.webp"],
+  ["background-strata-layer-003", "sprites/background/strata_layer_003.webp"],
+  ["background-strata-layer-004", "sprites/background/strata_layer_004.webp"],
   [BACKGROUND.appearance, "sprites/background/background_014.webp"],
   [BACKGROUND.excavation, "sprites/background/background_009.webp"],
   [BACKGROUND.cardBackdrop, "sprites/background/background_010.webp"],

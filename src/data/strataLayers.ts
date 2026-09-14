@@ -102,3 +102,12 @@ export const STRATA_CHARGE = {
   /** 한 번이 차는 데 걸리는 시간(ms). 세 시간마다 하나다. */
   intervalMs: 3 * 60 * 60 * 1000,
 } as const;
+
+/**
+ * 겉장 원화의 장수.
+ *
+ * 한 번 탐사할 때마다 이 중 한 장이 뽑혀 판을 덮고, 칸을 팔 때마다 그 칸만 부서져 아래층
+ * (`strata_base`)과 그 위의 보상이 드러난다. 원화를 더 그리면 이 수만 올리고 같은 이름 규칙으로
+ * 구우면 된다(`prepare_backgrounds.py`).
+ */
+export const STRATA_ART_COUNT = 4;

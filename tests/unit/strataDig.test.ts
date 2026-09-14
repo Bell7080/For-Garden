@@ -3,8 +3,9 @@ import {
   canDigStrataTile, createArchaeologyState, createStrataBoard, digStrataTile,
   isStrataBoardFinished, nextStrataChargeAt, settleStrataCharges, strataBoardHaul, strataBoardView,
 } from "../../src/core/strataDig";
-import { DEFAULT_STRATA_LAYER_ID, findStrataLayer, STRATA_CHARGE } from "../../src/data/strataLayers";
-import { strataBoardMetrics, strataTileCenter, STRATA_BOARD } from "../../src/ui/strataBoardLayout";
+import { DEFAULT_STRATA_LAYER_ID, findStrataLayer, STRATA_ART_COUNT, STRATA_CHARGE } from "../../src/data/strataLayers";
+import { BACKGROUND_ASSETS } from "../../src/ui/backgroundAssets";
+import { STRATA_ART, STRATA_BOARD, strataBoardFrame, strataLayerTextureKey, strataTileCenter, strataTileCrop } from "../../src/ui/strataBoardLayout";
 
 const LAYER = findStrataLayer(DEFAULT_STRATA_LAYER_ID)!;
 
@@ -98,20 +99,61 @@ describe("탐사 횟수", () => {
 });
 
 describe("탐사판 배치", () => {
-  it("은 칸 수에서 판 크기를 거꾸로 구한다", () => {
-    const { cell, width } = strataBoardMetrics(LAYER.columns, LAYER.rows);
-    expect(width).toBeLessThanOrEqual(STRATA_BOARD.maxWidth);
-    expect(width).toBe(cell * LAYER.columns + STRATA_BOARD.gap * (LAYER.columns - 1));
+  const FRAME = strataBoardFrame(LAYER.columns, LAYER.rows, 1080);
+
+  it("은 원화 비율을 지켜 자리 안에 든다", () => {
+    // 자리에 맞춰 늘이면 흙 결이 세로로 뭉개진다.
+    expect(FRAME.width / FRAME.height).toBeCloseTo(STRATA_ART.width / STRATA_ART.height, 5);
+    expect(FRAME.width).toBeLessThanOrEqual(STRATA_BOARD.maxWidth + 0.001);
+    expect(FRAME.height).toBeLessThanOrEqual(STRATA_BOARD.bottom - STRATA_BOARD.top + 0.001);
+  });
+
+  it("의 칸들은 틈 없이 붙어 판을 남김없이 나눈다", () => {
+    // 칸 사이에 틈이 있으면 땅이 아니라 타일 바닥이 된다.
+    expect(FRAME.cellWidth * LAYER.columns).toBeCloseTo(FRAME.width, 5);
+    expect(FRAME.cellHeight * LAYER.rows).toBeCloseTo(FRAME.height, 5);
+    const first = strataTileCenter(0, LAYER.columns, FRAME);
+    const second = strataTileCenter(1, LAYER.columns, FRAME);
+    expect(second.x - first.x).toBeCloseTo(FRAME.cellWidth, 5);
   });
 
   it("의 칸들은 판 안에서 서로 겹치지 않는다", () => {
-    const { cell, width, height } = strataBoardMetrics(LAYER.columns, LAYER.rows);
-    const centers = Array.from({ length: LAYER.columns * LAYER.rows }, (_, index) => strataTileCenter(index, LAYER.columns, LAYER.rows));
+    const centers = Array.from({ length: LAYER.columns * LAYER.rows }, (_, index) => strataTileCenter(index, LAYER.columns, FRAME));
     for (const { x, y } of centers) {
-      expect(Math.abs(x) + cell / 2).toBeLessThanOrEqual(width / 2 + 0.001);
-      expect(Math.abs(y) + cell / 2).toBeLessThanOrEqual(height / 2 + 0.001);
+      expect(Math.abs(x) + FRAME.cellWidth / 2).toBeLessThanOrEqual(FRAME.width / 2 + 0.001);
+      expect(Math.abs(y) + FRAME.cellHeight / 2).toBeLessThanOrEqual(FRAME.height / 2 + 0.001);
     }
-    // 이웃한 두 칸의 사이는 언제나 정해 둔 여백이다.
-    expect(centers[1].x - centers[0].x).toBeCloseTo(cell + STRATA_BOARD.gap);
+    expect(new Set(centers.map(({ x, y }) => `${x.toFixed(3)}:${y.toFixed(3)}`)).size).toBe(centers.length);
+  });
+
+  it("의 잘라내기는 원화를 남김없이 덮고 서로 겹치지 않는다", () => {
+    // 조각을 따로 굽지 않고 같은 원화를 칸마다 잘라 쓰므로, 잘린 자리가 곧 칸이다.
+    const crops = Array.from({ length: LAYER.columns * LAYER.rows }, (_, index) => strataTileCrop(index, LAYER.columns, LAYER.rows));
+    const area = crops.reduce((sum, crop) => sum + crop.width * crop.height, 0);
+    expect(area).toBeCloseTo(STRATA_ART.width * STRATA_ART.height, 3);
+    for (const crop of crops) {
+      expect(crop.x).toBeGreaterThanOrEqual(0);
+      expect(crop.y).toBeGreaterThanOrEqual(0);
+      expect(crop.x + crop.width).toBeLessThanOrEqual(STRATA_ART.width + 0.001);
+      expect(crop.y + crop.height).toBeLessThanOrEqual(STRATA_ART.height + 0.001);
+    }
+    // 첫 줄 두 칸은 가로로 붙어 있고 아랫줄은 딱 한 칸 아래다.
+    expect(crops[1].x).toBeCloseTo(crops[0].x + crops[0].width, 5);
+    expect(crops[LAYER.columns].y).toBeCloseTo(crops[0].y + crops[0].height, 5);
+  });
+
+  it("의 겉장 키는 판이 들고 있는 번호를 그대로 쓴다", () => {
+    for (let art = 1; art <= STRATA_ART_COUNT; art += 1) {
+      const key = strataLayerTextureKey(art);
+      expect(BACKGROUND_ASSETS.some(([assetKey]) => assetKey === key), key).toBe(true);
+    }
+  });
+
+  it("은 판을 열 때 겉장을 하나 뽑아 그대로 들고 다닌다", () => {
+    // 화면이 그릴 때마다 고르면 탭을 오갈 때마다 파던 땅의 그림이 바뀐다.
+    const board = createStrataBoard({ layerId: LAYER.id, random: constant(0.5) });
+    expect(board.art).toBeGreaterThanOrEqual(1);
+    expect(board.art).toBeLessThanOrEqual(STRATA_ART_COUNT);
+    expect(strataBoardView(digStrataTile(board, 0).board).art).toBe(board.art);
   });
 });

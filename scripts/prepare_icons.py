@@ -49,6 +49,9 @@ ART: dict[str, tuple[str, tuple[float, float, float] | None] | tuple[str, tuple[
     # 고고학의 원석. 화석은 채도를 덜어 낸 회갈색이라 같은 돌빛에 머물면 상단 재화 줄에서
     # 두 칸이 같은 그림으로 보인다 — 원석은 **청록 쪽으로** 조금 밀어 갈라 놓는다.
     "sprites/currency/orestone.webp": ("원석.png", (0.92, 1.02, 1.08)),
+    # 지층 탐사의 남은 횟수를 말하는 곡괭이. 재화가 아니라 조작 횟수라 색을 밀지 않는다 —
+    # 상단 재화 줄의 칸들과 같은 결로 보이면 지갑에 있는 것으로 읽힌다.
+    "sprites/ui/pickaxe.webp": ("발굴기회아이콘.png", None),
     "sprites/currency/energy.webp": ("Photoroom_20260822_113612.png", (0.44, 1.04, 0.52)),
 }
 
@@ -61,6 +64,7 @@ ART: dict[str, tuple[str, tuple[float, float, float] | None] | tuple[str, tuple[
 # 화석·호박석 같은 기존 재화 아이콘의 여백(한 변의 12~20%)과 같은 결이 된다.
 RECENTER: dict[str, float] = {
     "sprites/currency/orestone.webp": 0.8,
+    "sprites/ui/pickaxe.webp": 0.86,
 }
 
 # 화면에서 쓰는 가장 큰 크기의 두 배로 굽는다. 더 키우면 파일만 커지고 눈에 보이지 않는다.

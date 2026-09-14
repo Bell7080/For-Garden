@@ -3,24 +3,24 @@ import { t, type TextKey } from "../i18n";
 import { gameApi } from "../api/FakeServer";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugScene } from "../debug";
-import { strataBoardHaul, type StrataBoardView } from "../core/strataDig";
+import type { StrataBoardView } from "../core/strataDig";
 import { DEFAULT_STRATA_LAYER_ID, type StrataRewardKind } from "../data/strataLayers";
 import { session } from "../state/session";
-import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
+import { addSceneBackground, BACKGROUND, useBackgroundTexture } from "../ui/backgrounds";
 import { BottomNav } from "../ui/BottomNav";
 import { Button } from "../ui/Button";
 import { addCategoryTab } from "../ui/CategoryTab";
 import { CURRENCY_ICON_BY_WALLET } from "../ui/currencyIcons";
-import { chipPoints, drawLayer, drawVignette, HOLO } from "../ui/holo";
+import { drawVignette } from "../ui/holo";
 import { addFramedIcon } from "../ui/itemFrame";
 import { KeywordManager } from "../managers/KeywordManager";
 import { PopupLayer } from "../ui/PopupLayer";
 import { RailButton } from "../ui/RailButton";
 import { openRuneTraitPopup } from "../ui/RuneTraitPopup";
 import { addRuneCard } from "../ui/runeIcons";
-import { addSectionTitle } from "../ui/SectionTitle";
-import { STRATA_BOARD, STRATA_ZONE_TONE, strataBoardMetrics, strataTileCenter } from "../ui/strataBoardLayout";
+import { STRATA_BOARD, strataBoardFrame, strataLayerTextureKey, strataTileCenter, strataTileCrop } from "../ui/strataBoardLayout";
 import { runeTraitName } from "../ui/runeTraitPresentation";
+import { UI_ICON } from "../ui/icons";
 import { TopBar } from "../ui/TopBar";
 import { bindCurrencyGuide, openCurrencyGuide } from "../ui/currencyGuideEntry";
 import { COLOR, textStyle } from "../ui/theme";
@@ -48,9 +48,26 @@ const ARCHAEOLOGY = {
   tabWidth: 280,
   tabHeight: 84,
   gridTop: 420,
+  /** 남은 횟수를 말하는 곡괭이의 한 변. */
+  chargeIcon: 46,
   /** 상점 입구. 제목 줄과 같은 왼쪽 기둥에 서되 그 아래다. */
   shopY: 352,
 } as const;
+
+/**
+ * 아직 올라오지 않았을 수도 있는 배경 원화를 세운다.
+ *
+ * **이미 올라와 있으면 그 키로 만들어야 한다** — `useBackgroundTexture`는 텍스처가 이미
+ * 있으면 `setTexture`를 하지 않고 곧바로 `onReady`만 부르는 계약이라, 늘 `__DEFAULT`로
+ * 만들면 두 번째 그리기부터 투명한 32×32가 그대로 남는다(판을 한 칸 판 뒤 판이 통째로
+ * 사라졌다). 도착이 늦을 때만 자리지기를 쓰고 그때는 보이지 않게 둔다.
+ */
+function addBoardImage(scene: Phaser.Scene, key: string, apply: (image: Phaser.GameObjects.Image) => void): Phaser.GameObjects.Image {
+  const ready = scene.textures.exists(key);
+  const image = scene.add.image(0, 0, ready ? key : "__DEFAULT").setAlpha(ready ? 1 : 0);
+  useBackgroundTexture(scene, image, key, (loaded) => { apply(loaded); loaded.setAlpha(1); });
+  return image;
+}
 
 /** 보상 종류를 액자에 세울 그림 키로 바꾼다. 화면이 종류마다 그림을 따로 고르지 않는다. */
 function rewardTexture(kind: StrataRewardKind): string | null {
@@ -102,7 +119,12 @@ export class ArchaeologyScene extends Phaser.Scene {
     });
 
     this.add.text(60, ARCHAEOLOGY.titleY, t("archaeology.title"), textStyle({ role: "display", size: 52 })).setOrigin(0, 0);
-    this.chargeText = this.add.text(62, ARCHAEOLOGY.chargeY, "", textStyle({ role: "emphasis", size: 27, color: COLOR.inkDim })).setOrigin(0, 0);
+    // 남은 횟수는 곡괭이 하나와 수 하나다. 「탐사」라고 다시 적지 않는다 — 이 화면에서 곡괭이가
+    // 세는 것은 그것뿐이고, 그림이 이미 무엇을 세는지 말한다.
+    this.add.image(60 + ARCHAEOLOGY.chargeIcon / 2, ARCHAEOLOGY.chargeY + ARCHAEOLOGY.chargeIcon / 2, UI_ICON.pickaxe)
+      .setDisplaySize(ARCHAEOLOGY.chargeIcon, ARCHAEOLOGY.chargeIcon);
+    this.chargeText = this.add.text(60 + ARCHAEOLOGY.chargeIcon + 10, ARCHAEOLOGY.chargeY + ARCHAEOLOGY.chargeIcon / 2, "",
+      textStyle({ role: "display", size: 32, color: COLOR.ink })).setOrigin(0, 0.5);
 
     // **상점은 왼쪽 위다.** 같은 상점 씬을 상품표만 바꿔 다시 쓴다 — 새 씬을 만들면 선반·
     // 격자·값줄 규칙이 두 곳이 되고 한쪽만 고치는 사고가 난다.
@@ -181,48 +203,49 @@ export class ArchaeologyScene extends Phaser.Scene {
       return;
     }
 
-    const { cell, height } = strataBoardMetrics(board.columns, board.rows);
-    const grid = this.add.container(BASE_WIDTH / 2, ARCHAEOLOGY.boardY);
+    const frame = strataBoardFrame(board.columns, board.rows, BASE_WIDTH);
+    const grid = this.add.container(frame.centerX, frame.centerY);
     this.view.add(grid);
-    this.view.add(this.add.text(BASE_WIDTH / 2, ARCHAEOLOGY.boardY - height / 2 - 72,
-      t("archaeology.digsLeft", { digs: board.digsLeft }),
-      textStyle({ role: "display", size: 34, color: COLOR.accentText })).setOrigin(0.5));
 
+    // **아래층이 맨 밑에 깔린다.** 겉장을 부순 칸에 드러나는 맨 흙이고, 겉장보다 가라앉아
+    // 보이도록 한 겹 눌러 둔다 — 같은 밝기면 부순 자리가 아니라 다른 무늬로 보인다.
+    grid.add(addBoardImage(this, BACKGROUND.strataBase, (image) => image.setDisplaySize(frame.width, frame.height)));
+    grid.add(this.add.rectangle(0, 0, frame.width, frame.height, COLOR.void, STRATA_BOARD.baseShade));
+
+    // **겉장은 칸마다 같은 원화를 잘라 쓴다.** 조각을 따로 굽지 않으므로 칸 사이에 이음매가
+    // 없고, 부순 칸만 지우면 그 자리에 아래층이 그대로 드러난다.
+    const layerKey = strataLayerTextureKey(board.art);
     for (const tile of board.tiles) {
-      const { x, y } = strataTileCenter(tile.index, board.columns, board.rows);
-      const shape = chipPoints(cell, cell, {
-        bevel: { topLeft: cell * STRATA_BOARD.bevelRatio, topRight: 0, bottomRight: cell * STRATA_BOARD.bevelRatio, bottomLeft: 0 },
-      });
-      const tone = STRATA_ZONE_TONE[board.zones[tile.zone]?.tone ?? "soil"];
-      // 연 칸은 흙을 걷어 낸 자리다 — 어두워지고 구역 색이 빠진다.
-      grid.add(drawLayer(this, x, y, shape, {
-        fill: tile.revealed ? 0x0a0f15 : tone.color,
-        alpha: tile.revealed ? 0.82 : tone.alpha + HOLO.glass * 0.5,
+      if (tile.revealed) continue;
+      const crop = strataTileCrop(tile.index, board.columns, board.rows);
+      grid.add(addBoardImage(this, layerKey, (image) => {
+        // 자르기는 **원본 좌표**로 재고 크기는 그 뒤에 맞춘다. 순서가 바뀌면 조각이 어긋난다.
+        image.setDisplaySize(frame.width, frame.height);
+        image.setCrop(crop.x, crop.y, crop.width, crop.height);
       }));
+    }
+
+    // 보상은 부순 칸 위에 선다. 액자 없이 그림만 두면 흙 위에 얹힌 그림으로 읽히지 않는다.
+    for (const tile of board.tiles) {
+      const { x, y } = strataTileCenter(tile.index, board.columns, frame);
       if (tile.revealed) {
         const texture = tile.kind === undefined ? null : rewardTexture(tile.kind);
         if (texture === null) continue;
         // 룬처럼 수가 뜻이 없는 것에는 수를 적지 않는다 — 「1」이 서면 하나를 세는 자리로 읽힌다.
         const amount = tile.kind === "rune" ? undefined : String(tile.amount ?? 0);
-        addFramedIcon(this, grid, x, y, cell * 0.7, texture, { ...(amount ? { amount } : {}), plain: true });
+        addFramedIcon(this, grid, x, y, Math.min(frame.cellWidth, frame.cellHeight) * 0.82, texture,
+          { ...(amount ? { amount } : {}), plain: true });
         continue;
       }
-      const hit = this.add.rectangle(x, y, cell, cell, 0xffffff, 0.001).setInteractive({ useHandCursor: true });
+      const hit = this.add.rectangle(x, y, frame.cellWidth, frame.cellHeight, 0xffffff, 0.001)
+        .setInteractive({ useHandCursor: true });
       hit.on("pointerup", () => this.dig(tile.index));
       grid.add(hit);
     }
 
-    // 이번 판에서 캔 것. 세는 일은 순수 규칙이 하고 화면은 늘어놓기만 한다.
-    const haul = strataBoardHaul(board);
-    if (haul.length > 0) {
-      const haulY = ARCHAEOLOGY.boardY + height / 2 + 96;
-      addSectionTitle(this, 60, haulY - 70, t("archaeology.haul"));
-      haul.forEach((entry, index) => {
-        const texture = rewardTexture(entry.kind);
-        if (texture === null) return;
-        addFramedIcon(this, this.view, 110 + index * 126, haulY, 104, texture, { amount: String(entry.amount), plain: true });
-      });
-    }
+    this.view.add(this.add.text(frame.centerX, STRATA_BOARD.top - 34,
+      t("archaeology.digsLeft", { digs: board.digsLeft }),
+      textStyle({ role: "display", size: 34, color: COLOR.accentText })).setOrigin(0.5, 1));
   }
 
   private dig(index: number): void {

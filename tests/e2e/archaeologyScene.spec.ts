@@ -45,6 +45,16 @@ test("고고학의 두 탭과 고고학 상점을 연다", async ({ page }, test
   await page.waitForTimeout(600);
   await captureGame(page, `test-results/${testInfo.project.name}-archaeology-strata.png`);
 
+  // 판을 하나 열고 칸 몇 개를 판다 — 부순 칸에만 아래층과 보상이 드러나는지 보는 자리다.
+  await tap(page, BASE_WIDTH / 2, 900);
+  await page.waitForTimeout(1_500);
+  for (const [col, row] of [[1, 1], [3, 0], [2, 3], [0, 4]] as const) {
+    await tap(page, 340 + col * 100, 430 + row * 178);
+    await page.waitForTimeout(500);
+  }
+  await page.waitForTimeout(800);
+  await captureGame(page, `test-results/${testInfo.project.name}-archaeology-dug.png`);
+
   // 라벨 줄을 **여러 번** 오간다. 한 번만 눌러 보면 겹친 것이 한 겹처럼 보인다.
   const tabY = BASE_HEIGHT - 268;
   for (let round = 0; round < 2; round += 1) {

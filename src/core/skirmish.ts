@@ -1910,17 +1910,21 @@ function healClimaxBasic(attacker: Fighter, state: SkirmishState, events: Skirmi
 }
 
 /**
- * 폭주 중 매초 도는 최대 체력 비례 회복을 공용 회복 경계로 처리한다.
+ * 폭주 중 매초 도는 회복을 공용 회복 경계로 처리한다.
  *
- * 토리카와 티아가 같은 시계를 쓴다 — 앞에 서서 버티는 몸이든 계속 뛰어드는 몸이든, 폭주
- * 동안 매초 같은 몫을 되찾는다는 규칙은 하나다.
+ * 토리카와 티아가 같은 **1초 시계**를 쓰되 무엇에 비례하는지는 다르다 — 앞에 서서 버티는
+ * 토리카는 최대 체력 비례로 꾸준히 돌고, 계속 뛰어드는 티아는 **잃은 체력** 비례라 많이
+ * 다쳤을 때만 크게 돈다. 시계가 하나라 새 개체가 제 타이머를 따로 만들지 않는다.
  */
 function tickTorikaBulwark(fighter: Fighter, dt: number, state: SkirmishState, events: SkirmishEvent[]): void {
   const trait = fighter.def.ferocityTrait;
   if (!fighter.ferocityFever || (trait.effectId !== "torikaBulwark" && trait.effectId !== "tidalVigor")) { fighter.torikaBulwarkTickIn = 1; return; }
   fighter.torikaBulwarkTickIn -= dt;
   while (fighter.torikaBulwarkTickIn <= EMERGENCY_RECOVERY.epsilon) {
-    const amount = applyHealing(state, fighter, fighter.maxHp * trait.maxHpRegenPercentPerSecond / 100, fighter.id);
+    const basis = trait.effectId === "tidalVigor"
+      ? (fighter.maxHp - fighter.hp) * trait.missingHpRegenPercentPerSecond
+      : fighter.maxHp * trait.maxHpRegenPercentPerSecond;
+    const amount = applyHealing(state, fighter, basis / 100, fighter.id);
     if (amount > 0) events.push({ kind: "heal", fighterId: fighter.id, amount, source: "ferocity", effect: { tag: "heal", intensity: 1.2 } });
     fighter.torikaBulwarkTickIn += 1;
   }

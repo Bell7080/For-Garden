@@ -80,7 +80,7 @@ export const SKILL_JA = {
   "skill.ferocity.pontusRage": "暴走中、毎秒すべての敵に最大体力{percent}%の固定ダメージを与え、すべての回復を打ち消す。",
   "skill.ferocity.tailwindRally": "すべての味方が攻撃するたびに上がる[[ferocity|野性]]ゲージと必殺技ゲージが、それぞれ{ferocity}、{energy}ずつ増える。",
   "skill.ferocity.sharedOverpaint": "暴走中、すべての味方の[[basic-attack|通常攻撃]]が[[overpaint|重ね塗り]]を一緒に積む。",
-  "skill.ferocity.tidalVigor": "毎秒最大[[hp|体力]]の{percent}%を回復し、[[attack-speed|攻撃速度]]が{speed}%増加する。",
+  "skill.ferocity.tidalVigor": "毎秒[[missing-hp|失った体力]]の{percent}%を回復し、[[attack-speed|攻撃速度]]が{speed}%増加する。",
   "skill.ferocity.butcherFeast": "暴走後、次の{attacks}回の[[basic-attack|通常攻撃]]は[[butcher|仕込み]]を即座に弾けさせる。[[butcher|仕込み]]が弾けたダメージの{percent}%分、生存中の味方全体を回復させる。",
   "skill.ferocity.adamantBody": "{shield}のシールドを得る。その後[[basic-attack|通常攻撃]]{attacks}回の間、[[attack-speed|攻撃速度]]が{percent}%上がる。",
   "skill.ferocity.adamantBody.shieldPercent": "最大体力の{percent}%",

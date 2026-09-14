@@ -465,10 +465,11 @@ describe("티아 스킬 표시 계약", () => {
 
   it("의 패시브는 반짝을 남기고, 폭주는 버틸 숨과 손을 맡는다", () => {
     const def = tia();
-    // 폭주는 토리카와 같은 1초 시계를 쓰되 손이 함께 빨라진다.
-    expect(def.ferocityTrait).toMatchObject({ effectId: "tidalVigor", attackSpeedPercent: 20, maxHpRegenPercentPerSecond: 3 });
+    // 폭주는 토리카와 같은 1초 시계를 쓰되 손이 함께 빨라지고, 되찾는 몫은 **잃은 체력**에서
+    // 나온다 — 계속 뛰어들어 맞는 몸이라 멀쩡할 때도 도는 최대 체력 비례와는 다른 값이다.
+    expect(def.ferocityTrait).toMatchObject({ effectId: "tidalVigor", attackSpeedPercent: 20, missingHpRegenPercentPerSecond: 2 });
     expect(ferocityTraitDescription(def.ferocityTrait)).toBe(
-      "매초 최대 [[hp|체력]]의 3%를 회복하고 [[attack-speed|공격 속도]]가 20% 증가한다.",
+      "매초 [[missing-hp|잃은 체력]]의 2%를 회복하고 [[attack-speed|공격 속도]]가 20% 증가한다.",
     );
     // 남기는 것은 패시브, 지워질 때 터지는 것은 그 타격을 낸 스킬이다.
     expect(def.passive.kind).toBe("shimmerMark");

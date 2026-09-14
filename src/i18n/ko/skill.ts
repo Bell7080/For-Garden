@@ -96,7 +96,7 @@ export const SKILL_KO = {
   "skill.ferocity.pontusRage": "폭주 중 매초 모든 적에게 최대 체력 {percent}% 고정 피해를 주고, 모든 회복을 취소한다.",
   "skill.ferocity.tailwindRally": "모든 아군이 공격할 때마다 오르는 [[ferocity|야성]] 게이지와 궁극기 게이지가 각각 {ferocity}, {energy}씩 늘어난다.",
   "skill.ferocity.sharedOverpaint": "폭주 중 모든 아군의 [[basic-attack|기본 공격]]이 [[overpaint|덧칠]]을 함께 쌓는다.",
-  "skill.ferocity.tidalVigor": "매초 최대 [[hp|체력]]의 {percent}%를 회복하고 [[attack-speed|공격 속도]]가 {speed}% 증가한다.",
+  "skill.ferocity.tidalVigor": "매초 [[missing-hp|잃은 체력]]의 {percent}%를 회복하고 [[attack-speed|공격 속도]]가 {speed}% 증가한다.",
   "skill.ferocity.butcherFeast": "폭주 후 다음 {attacks}번의 [[basic-attack|기본 공격]]은 [[butcher|손질]]을 즉시 터뜨린다. [[butcher|손질]]이 터진 피해의 {percent}%만큼 생존 아군 전체를 회복시킨다.",
   "skill.ferocity.adamantBody": "{shield}만큼 보호막을 얻는다. 이후 [[basic-attack|기본 공격]] {attacks}회 동안 [[attack-speed|공격 속도]]가 {percent}% 오른다.",
   "skill.ferocity.adamantBody.shieldPercent": "최대 체력의 {percent}%",

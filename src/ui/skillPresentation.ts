@@ -175,7 +175,7 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
   if (trait.effectId === "sharedOverpaint") return t("skill.ferocity.sharedOverpaint");
   // 되찾는 숨과 빨라지는 손은 서로 다른 축이라 한 문장이 둘을 함께 말한다.
   if (trait.effectId === "tidalVigor") {
-    return t("skill.ferocity.tidalVigor", { percent: trait.maxHpRegenPercentPerSecond, speed: trait.attackSpeedPercent });
+    return t("skill.ferocity.tidalVigor", { percent: trait.missingHpRegenPercentPerSecond, speed: trait.attackSpeedPercent });
   }
   if (trait.effectId === "butcherFeast") return t("skill.ferocity.butcherFeast", { attacks: trait.instantButcherAttacks, percent: trait.healPercent });
   // 바르거나 터뜨리거나 한 번에 하나뿐이라는 것이 이 폭주의 전부다. 번갈아 한다고 적지 않는

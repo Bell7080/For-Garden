@@ -2467,7 +2467,7 @@ describe("티아 정적 전투 계약", () => {
     expect(tia.shield.amount).toBeGreaterThan(shieldBefore);
   });
 
-  it("의 폭주는 매초 제 체력을 되찾고 손만 빨라진다", () => {
+  it("의 폭주는 매초 잃은 체력의 몫을 되찾고 손만 빨라진다", () => {
     const state = newSkirmish(["tia", "rex"], ["amo"]);
     const [tia, ally, foe] = state.fighters;
     for (const fighter of state.fighters) { fighter.attackCooldown = 99; fighter.openingChargeReady = false; }
@@ -2479,11 +2479,18 @@ describe("티아 정적 전투 계약", () => {
     expect(currentAttackSpeed(tia, state)).toBeCloseTo(calm * 1.2);
     expect(currentAttackSpeed(ally, state)).toBe(allyCalm);
 
-    // 숨은 토리카의 폭주와 같은 1초 시계로 돈다.
+    // 숨은 토리카의 폭주와 같은 1초 시계로 돌되, 몫은 **잃은 체력**에서 나온다 — 반쯤
+    // 다쳤으므로 최대 체력의 절반에 비율을 곱한 만큼이다.
     const before = tia.hp;
+    const missing = tia.maxHp - tia.hp;
     for (let frame = 0; frame < 60 && state.phase === "fight"; frame += 1) stepSkirmish(state, 1 / 60, () => 0.99);
-    expect(tia.hp - before).toBeCloseTo(tia.maxHp * 0.03, 0);
+    expect(tia.hp - before).toBeCloseTo(missing * 0.02, 0);
     expect(foe.hp).toBe(foe.maxHp);
+
+    // 멀쩡할 때는 거의 돌지 않는다 — 그것이 최대 체력 비례와 갈라 둔 이유다.
+    tia.hp = tia.maxHp;
+    for (let frame = 0; frame < 60 && state.phase === "fight"; frame += 1) stepSkirmish(state, 1 / 60, () => 0.99);
+    expect(tia.hp).toBe(tia.maxHp);
   });
 
   it("은 적이 하나뿐이면 표적을 풀지 않는다", () => {

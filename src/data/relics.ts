@@ -641,7 +641,7 @@ export const RELICS: RelicDef[] = [
     // 물살을 타고 계속 뛰어드는 몸이라 폭주는 **버틸 숨과 손**으로 발현한다. 토리카의 폭주와
     // 같은 1초 시계를 쓰되(`torikaBulwark`) 손이 함께 빨라진다 — 그쪽은 앞에 서서 버티는
     // 값이고, 이쪽은 계속 때리면서 버티는 값이다.
-    ferocityTrait: { name: "이크티오 다이브!", effectId: "tidalVigor", attackSpeedPercent: 20, maxHpRegenPercentPerSecond: 3 },
+    ferocityTrait: { name: "이크티오 다이브!", effectId: "tidalVigor", attackSpeedPercent: 20, missingHpRegenPercentPerSecond: 2 },
     passive: {
       // kind가 shimmerMark인 패시브는 passiveDescription()이 구조화 필드로 다시 문장을 만들므로
       // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
@@ -655,8 +655,8 @@ export const RELICS: RelicDef[] = [
       iconAssetId: "skill-icon-magical",
       effectType: "magical",
       // 표식을 새로 남길 때 터지는 추가 피해의 주문력 계수(%)다.
-      value: 100,
-      desc: "적을 타격하면 반짝! 표식을 부여하고 주문력의 100%만큼 마법 피해를 추가로 입힌다.",
+      value: 50,
+      desc: "적을 타격하면 반짝! 표식을 부여하고 주문력의 50%만큼 마법 피해를 추가로 입힌다.",
     },
     basic: {
       id: "tia-basic",

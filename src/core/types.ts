@@ -1201,8 +1201,14 @@ export type FerocityTrait = {
       effectId: "tidalVigor";
       /** 폭주 중 공격 속도에 더하는 퍼센트다. */
       attackSpeedPercent: number;
-      /** 폭주 중 매초 되찾는 최대 체력 비율(%). */
-      maxHpRegenPercentPerSecond: number;
+      /**
+       * 폭주 중 매초 되찾는 **잃은 체력** 비율(%).
+       *
+       * 최대 체력 비례가 아니라 잃은 체력 비례인 이유는, 계속 뛰어들어 맞는 몸이라 최대 체력
+       * 비례로 두면 **멀쩡할 때도 같은 몫이 돌아** 깎이지 않는 것처럼 보이기 때문이다. 많이
+       * 다쳤을 때 크게, 멀쩡할 때 거의 없게 돌아야 "버티는 숨"이 화면에서 읽힌다.
+       */
+      missingHpRegenPercentPerSecond: number;
     }
   | {
       effectId: "rexBattleQueen";

@@ -66,7 +66,7 @@ export const SKILL_EN = {
   "skill.ferocity.pontusRage": "During Frenzy, deals {percent}% max HP fixed damage to every enemy each second and cancels all healing.",
   "skill.ferocity.tailwindRally": "The [[ferocity|Ferocity]] gauge and Ultimate gauge gained whenever any ally attacks increase by {ferocity} and {energy}.",
   "skill.ferocity.sharedOverpaint": "During Frenzy, the [[basic-attack|basic attacks]] of every ally also build [[overpaint|Overpaint]].",
-  "skill.ferocity.tidalVigor": "Recovers {percent}% of max [[hp|HP]] each second and gains {speed}% [[attack-speed|Attack Speed]].",
+  "skill.ferocity.tidalVigor": "Recovers {percent}% of [[missing-hp|missing HP]] each second and gains {speed}% [[attack-speed|Attack Speed]].",
   "skill.ferocity.butcherFeast": "After Frenzy, the next {attacks} [[basic-attack|basic attacks]] burst [[butcher|Butcher]] immediately. Every living ally is healed for {percent}% of the damage the burst [[butcher|Butcher]] dealt.",
   "skill.ferocity.adamantBody": "Gains a shield equal to {shield}. For the next {attacks} [[basic-attack|basic attacks]], [[attack-speed|Attack Speed]] rises by {percent}%.",
   "skill.ferocity.adamantBody.shieldPercent": "{percent}% of max HP",

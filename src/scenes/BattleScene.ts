@@ -1662,7 +1662,14 @@ export class BattleScene extends Phaser.Scene {
    * 연출이 끝난 순간 값이 통째로 점프하지 않는다.
    */
   private stepMeters(deltaMs: number): void {
-    for (const view of this.views.values()) if (!view.dead) view.hpBar.step(deltaMs);
+    for (const view of this.views.values()) {
+      if (view.dead) continue;
+      // 막은 사건이 아니라 `Fighter.shield`의 **잔량**이다. 궁극기 자리에서만 읽던 때는
+      // 일반 공격으로 두른 막(티아의 반짝! 폭발)이 머리 위 바에 영영 서지 않았다 — 프로필
+      // 게이지만 차고 정작 맞는 자리의 바는 그대로였다. 체력과 같은 주기로 여기서 읽는다.
+      view.hpBar.setShield(view.fighter.shield.amount, view.fighter.maxHp);
+      view.hpBar.step(deltaMs);
+    }
     const motionFactor = this.motion.battleUiFactor;
     const k = motionFactor === 0 ? 1 : Math.min(1, (deltaMs / 1000) * METER_EASE * motionFactor);
     for (const profile of this.profiles) {

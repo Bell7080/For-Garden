@@ -138,6 +138,22 @@ function critAndLifeStealClause(criticalPoints: number, lifeStealPoints: number)
     : t("skill.ferocity.critLifeSteal.split", { chance: criticalPoints, lifeSteal: lifeStealPoints });
 }
 
+/**
+ * 다른 패시브에 얹히는 저체력 은신 절. **종류가 아니라 계약을 읽는다.**
+ *
+ * 패시브 전체가 그 규칙인 개체(스테라)는 제 문장을 이미 갖고 있으므로 여기 오지 않는다.
+ */
+function lowHpVanishSentence(passive: Passive): string | undefined {
+  const seconds = passive.lowHpVanishSeconds;
+  if (seconds === undefined) return undefined;
+  return t(passive.lowHpVanishSpendsFocus === true ? "skill.passive.lowHpVanish.focus" : "skill.passive.lowHpVanish.plain", { seconds });
+}
+
+/** 완성된 문장들을 잇는다. 조각을 이어 붙이지 않으므로 어순이 다른 언어에서도 말이 된다. */
+function joinPassiveSentences(...sentences: (string | undefined)[]): string {
+  return sentences.filter((sentence): sentence is string => sentence !== undefined).join(" ");
+}
+
 /** 폭주 설명의 모든 수치를 실제 전투 계약에서 만들어 밸런스 조정 후 문구가 남지 않게 한다. */
 export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack: number; defense: number; maxHp?: number; abilityPower?: number }): string {
   // 캐릭터 ID가 아니라 도핑 계약의 구조화 수치만 읽어 어떤 정의에도 같은 문장 조립을 제공한다.
@@ -365,7 +381,7 @@ function passiveHead(passive: Passive, atk?: number): string {
   if (passive.kind === "farthestFocus") {
     // 겹당 무엇이 얼마나 오르는지는 전부 태그가 말한다 — 쓰는 개체가 하나뿐인 규칙어라
     // 태그가 수치를 갖고, 본문은 그것을 되풀이하지 않는다(출혈이 아니라 덧칠 쪽 규칙이다).
-    return t("skill.passive.farthestFocus");
+    return joinPassiveSentences(t("skill.passive.farthestFocus"), lowHpVanishSentence(passive));
   }
   if (passive.kind === "adagioWeight") {
     const shield = passiveShieldKeyword(passive, atk);

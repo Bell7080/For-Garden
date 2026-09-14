@@ -144,6 +144,8 @@ export const SKILL_KO = {
   "skill.passive.adagioWeight.shieldAmount": "[[shield-value|{amount}]]",
   "skill.passive.abyssalPressure": "완전히 경과한 매초 기본 [[ap|주문력]]의 {percent}%가 복리로 누적된다. 현재 체력이 최대 체력의 100%에서 {hpPercent}%로 낮아질수록 받는 모든 피해 감소가 {base}%에서 {max}%까지 선형으로 증가하며, 그 이하에서는 최대치로 제한된다. 최종 받는 피해가 {ignore} 이하인 공격은 무효화한다.",
   "skill.passive.gourmetHunt": "전투를 시작할 때 현재 체력이 가장 낮은 적을 표적으로 삼고 그 자리로 [[teleport|순간이동]]한다. 적을 처치하면 즉시, 그 밖에는 {cooldown}초마다 다시 고른다. 적에게 피해를 입으면 {seconds}초 동안 [[stealth|은신]]한다. 전투당 최대 {triggers}번 발동한다.",
+  "skill.passive.lowHpVanish.plain": "전투당 한 번, 체력이 절반 이하가 되면 {seconds}초 동안 [[stealth|은신]]한다.",
+  "skill.passive.lowHpVanish.focus": "전투당 한 번, 체력이 절반 이하가 되면 [[focus|집중]]을 모두 잃는 대신 {seconds}초 동안 [[stealth|은신]]한다.",
   "skill.passive.cursedInsight": "[[curse|저주]]에 걸린 적에게 [[basic-attack|기본 공격]]을 직접 적중시킬 때마다 이번 전투 동안 [[ap|주문력]]이 {value}% 증가한다. 최대 {stacks}회까지 쌓이며, [[transfer|전이]]된 타격으로는 발동하지 않는다.",
   "skill.passive.impactCap": "한 번에 받는 피해가 최대 체력의 {percent}%를 넘지 않는다.{shield}",
   "skill.passive.impactCap.shield": " [[concussion|뇌진탕]]이 입힌 피해의 {percent}%만큼 보호막을 얻는다.",

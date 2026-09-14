@@ -677,7 +677,8 @@ export const RELICS: RelicDef[] = [
     ultimate: {
       id: "tia-ult",
       name: "반짝이는 건 다 내 거야!",
-      // 위력은 총량이 아니라 **한 번 내리찍는 값**이다. 두 번 찍으므로 예전 240%를 둘로 나눴다.
+      // 한 번만 내리찍는다. 두 번 찍던 때의 값을 그대로 두어(240%를 둘로 나눈 120) 궁극기가
+      // 내는 총량이 절반이 된다 — 줄이려는 것이 그 총량이라 한 번의 값은 건드리지 않는다.
       power: 120,
       scalingStat: "ap",
       iconAssetId: "skill-icon-magical",
@@ -687,9 +688,9 @@ export const RELICS: RelicDef[] = [
       // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
       targeting: "nearbyEnemies",
       radius: 420,
-      // 쿵. 쿵. 1초 간격으로 두 번 내리찍는다. 첫 번째가 남긴 표식을 두 번째가 지운다 —
-      // 터뜨리는 것은 일반 공격의 몫이라 여기서는 터지지 않는다(`shimmerBurst`가 없다).
-      repeatStrike: { count: 2, intervalSeconds: 1 },
+      // 쿵. 한 번이다. 두 번 찍던 때는 첫 번째가 남긴 표식을 두 번째가 지워 궁극기 혼자
+      // 표식을 열고 닫았고, 그 두 대가 초반 화력을 통째로 밀어 올렸다. 터뜨리는 것은 여전히
+      // 일반 공격의 몫이라 여기서는 터지지 않는다(`shimmerBurst`가 없다).
       statusEffects: [{ kind: "stagger", seconds: 0.1 }],
     },
   },

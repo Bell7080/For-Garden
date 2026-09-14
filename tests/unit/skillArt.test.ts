@@ -453,13 +453,14 @@ describe("티아 스킬 표시 계약", () => {
     );
   });
 
-  it("의 궁극기는 간격·횟수까지 한 문장으로 말한다", () => {
+  it("의 궁극기는 한 번만 내리찍고 되찍는 절을 남기지 않는다", () => {
     const def = tia();
-    // 위력은 총량이 아니라 **한 번 내리찍는 값**이다. 간격과 횟수를 절로 뒤에 붙이지 않고 대상
-    // 바로 뒤에 넣어, 짧게 읽히면서 그 수가 한 번의 값이라는 것도 함께 서게 한다.
-    expect(def.ultimate).toMatchObject({ power: 120, repeatStrike: { count: 2, intervalSeconds: 1 } });
+    // 두 번 찍던 때의 한 번치(120)를 그대로 두어 총량이 절반이 된다 — 줄이려는 것이 총량이라
+    // 한 번의 값은 건드리지 않는다. 되찍기가 사라졌으므로 문장에서 간격·횟수 절도 빠진다.
+    expect(def.ultimate).toMatchObject({ power: 120 });
+    expect(def.ultimate.repeatStrike).toBeUndefined();
     expect(skillDescription(def.ultimate, { damage: 120 })).toBe(
-      "자신의 주위 모든 적에게 1초 간격으로 [[damage-value|120]]의 [[magical-damage|마법 피해]]를 2번 주고 [[stagger|경직]]시킨다.",
+      "자신의 주위 모든 적에게 [[damage-value|120]]의 [[magical-damage|마법 피해]]를 주고 [[stagger|경직]]시킨다.",
     );
   });
 

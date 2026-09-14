@@ -592,12 +592,14 @@ export const RELICS: RelicDef[] = [
     ultimate: {
       id: "dodo-ult",
       name: "세기의 대발견... 맞죠?!",
-      power: 200,
+      power: 150,
       iconAssetId: "skill-icon-magical",
       effectType: "magical",
       damageType: "magical",
       cost: 100,
-      allyHealingPower: 200,
+      // 200이었을 때는 한 번에 아군 셋이 거의 만피로 돌아와, 그 한 방이 앞선 전투를 통째로
+      // 되감았다. 지금은 크게 한 번 메우되 깎인 자리가 남는다.
+      allyHealingPower: 100,
       // 지정점 중심의 넓은 원 경계 안에서 적 피해와 아군 회복을 한 번에 판정한다.
       targeting: "targetedCircle",
       radius: 360,

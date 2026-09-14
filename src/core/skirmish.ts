@@ -2935,9 +2935,11 @@ function grantFeverHealingShield(caster: Fighter, target: Fighter, healed: numbe
 }
 
 /** 현재 HP 절대값이 가장 낮은 생존 아군을 고르며 동률은 fighters의 편성 순서로 확정한다. */
-function lowestCurrentHpAlly(state: SkirmishState, side: Side): Fighter | undefined {
-  return aliveFighters(state, side).reduce<Fighter | undefined>((chosen, fighter) =>
-    chosen === undefined || fighter.hp < chosen.hp ? fighter : chosen, undefined);
+function lowestCurrentHpAlly(state: SkirmishState, side: Side, exceptId?: string): Fighter | undefined {
+  return aliveFighters(state, side)
+    .filter((fighter) => fighter.id !== exceptId)
+    .reduce<Fighter | undefined>((chosen, fighter) =>
+      chosen === undefined || fighter.hp < chosen.hp ? fighter : chosen, undefined);
 }
 
 /** 이동 속도와 현재 편의 피버 오라가 정하는 초당 이동 거리(px). */
@@ -4215,9 +4217,11 @@ function strike(
   // 단일 타격으로 들어와도 같은 계약이 돈다 — 경로가 갈리면 같은 기술이 대상 수에 따라 다른 일을 한다.
   shareShieldFromDamage(attacker, skill.allyShieldFromDamagePercent, targetHpBefore - target.hp, state, events);
   if (!useUltimate && attacker.def.basic.lowestHpAllyHealingFromDamagePercent !== undefined) {
-    const ally = lowestCurrentHpAlly(state, attacker.side);
+    // **때린 본인은 후보에서 빠진다.** 자기도 후보면 앞줄이 멀쩡한 동안 깎인 제 몸에 회복이
+    // 계속 돌아와, 뒤에서 거드는 개체가 저 혼자 버티는 몸이 된다 — 이 회복은 남을 고치는 값이다.
+    const ally = lowestCurrentHpAlly(state, attacker.side, attacker.id);
     if (ally) {
-      // 과잉 피해가 아닌 실제 감소 HP만 회복 원천으로 쓰며 공격자 자신도 정상 후보에 남긴다.
+      // 과잉 피해가 아닌 실제 감소 HP만 회복 원천으로 쓴다.
       const healed = applyHealing(state, ally, (targetHpBefore - target.hp) * attacker.def.basic.lowestHpAllyHealingFromDamagePercent / 100, attacker.id);
       if (healed > 0) events.push({ kind: "heal", fighterId: ally.id, amount: healed, source: "passive", effect: { tag: "heal", intensity: 1 } });
       grantFeverHealingShield(attacker, ally, healed, events);

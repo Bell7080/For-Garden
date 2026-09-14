@@ -1573,15 +1573,22 @@ describe("도디 정적 전투 계약", () => {
     expect(healed(true)).toBeCloseTo(healed(false) * 0.7);
   });
 
-  it("일반 공격은 자신을 포함해 현재 HP가 가장 낮은 아군을 편성 순서 동률 규칙으로 회복한다", () => {
+  it("일반 공격은 자신을 뺀 아군 중 현재 HP가 가장 낮은 쪽을 편성 순서 동률 규칙으로 회복한다", () => {
     const state = readyDodiBattle(); const [dodi, first, second, enemy] = state.fighters;
     dodi.hp = 300; first.hp = second.hp = 200; dodi.x = enemy.x = 500; dodi.y = enemy.y = 900; dodi.attackCooldown = 0;
     const heals = stepSkirmish(state, 1 / 60).filter((event) => event.kind === "heal");
     expect(heals[0]?.fighterId).toBe(first.id);
 
+    // **때린 본인은 후보가 아니다.** 자기도 후보면 앞줄이 멀쩡한 동안 깎인 제 몸으로 회복이
+    // 계속 돌아와, 뒤에서 거드는 개체가 저 혼자 버티는 몸이 된다.
     const selfState = readyDodiBattle(["dodo", "rex"]); const [self, ally, foe] = selfState.fighters;
     self.hp = 1; ally.hp = ally.maxHp; self.x = foe.x = 500; self.y = foe.y = 900; self.attackCooldown = 0;
-    expect(stepSkirmish(selfState, 1 / 60).some((event) => event.kind === "heal" && event.fighterId === self.id)).toBe(true);
+    const events = stepSkirmish(selfState, 1 / 60);
+    expect(events.some((event) => event.kind === "heal" && event.fighterId === self.id)).toBe(false);
+    // 만피인 아군이라도 회복은 그쪽으로 간다 — 넘치는 몫이 버려질 뿐, 자기에게 돌아오지 않는다.
+    expect(events.some((event) => event.kind === "attack" && event.attackerId === self.id)).toBe(true);
+    expect(self.hp).toBe(1);
+    expect(ally.hp).toBe(ally.maxHp);
   });
 
   it("과잉 피해가 아니라 실제 감소 HP만 일반 공격 회복량으로 사용한다", () => {

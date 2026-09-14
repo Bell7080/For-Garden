@@ -393,10 +393,10 @@ describe("메테 스킬 표시 계약", () => {
 describe("도디 스킬 표시 계약", () => {
   it("은 궁극기의 아군 회복 %를 실제 주문력 수치로 환산한 태그로 만든다", () => {
     const dodo = RELICS.find((def) => def.id === "dodo")!;
-    expect(allyHealPowerKeyword(dodo.ultimate.allyHealingPower!, 150)).toMatchObject({ id: "heal-value", term: "300" });
+    expect(allyHealPowerKeyword(dodo.ultimate.allyHealingPower!, 150)).toMatchObject({ id: "heal-value", term: "150" });
     expect(skillDescription(dodo.ultimate, { ap: 150, damage: 400 })).toBe(
       "지정한 원 안의 모든 적에게 [[damage-value|400]]의 [[magical-damage|마법 피해]]를 주고, "
-      + "모든 생존 아군의 체력을 [[heal-value|300]]만큼 회복한다.",
+      + "모든 생존 아군의 체력을 [[heal-value|150]]만큼 회복한다.",
     );
   });
 

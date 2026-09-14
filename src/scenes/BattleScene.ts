@@ -83,6 +83,7 @@ import { attackDamagePopupRequest, type DamageFlavor, type DebuffId } from "../u
 import { openBattleBuffListPopup, openBattleBuffPopup, type BattleBuffListItem, type BattleBuffPopupController } from "../ui/BattleBuffPopup";
 import type { ActiveCombatDisplayEffect } from "../core/combatEffects";
 import { stepBattleScoreMotion } from "../ui/battleScoreMotion";
+import { stepUltimateCharge } from "../ui/ultimateChargeMotion";
 import { RewardFrame } from "../ui/RewardFrame";
 import { ExpeditionRankingPopup } from "../ui/ExpeditionRankingPopup";
 import { ExpeditionScoreDetailPopup } from "../ui/ExpeditionScoreDetailPopup";
@@ -254,6 +255,13 @@ interface ProfileView {
   /** 화면에 지금 적힌 값. 실제 값으로 스르륵 따라가며 숫자가 굴러간다. */
   hpShown: number;
   ferocityShown: number;
+  /**
+   * 카드의 어둠이 지금 걷혀 있는 만큼. 코어의 게이지를 뒤쫓아 **굴러간다.**
+   *
+   * 실제 값은 한 대에 3할씩 뛰는 계단이라 그대로 그리면 번쩍이기만 하고, 배속을 올리면 그
+   * 계단이 더 성겨진다. 쓸 수 있는지는 언제나 코어가 정하고 이 값은 각도만 정한다.
+   */
+  chargeShown: number;
   ready: boolean;
   pulse?: Phaser.Tweens.Tween;
   /** 입력 가능한 카드 위만 주기적으로 지나는 얇은 황동 사선이다. */
@@ -728,7 +736,7 @@ export class BattleScene extends Phaser.Scene {
       // 두 게이지는 굵기만 다르고 모양이 같다. 위가 체력, 아래가 폭주다.
       // 수치는 제 게이지와 같은 색으로, 굵게, 아래로 한 겹 복제한 그림자를 달고 선다.
       // 밝은 배경 원화 위에서 흐린 회색 글자는 게이지 옆에 있어도 읽히지 않는다.
-      this.profiles.push({ fighter, prefab, card, glow, sweep, charge, hpBar, hpLabel, ferocityBar, ferocityLabel, hpShown: fighter.hp, ferocityShown: fighter.ferocity, ready: false });
+      this.profiles.push({ fighter, prefab, card, glow, sweep, charge, hpBar, hpLabel, ferocityBar, ferocityLabel, hpShown: fighter.hp, ferocityShown: fighter.ferocity, chargeShown: 0, ready: false });
     });
   }
 
@@ -1578,8 +1586,9 @@ export class BattleScene extends Phaser.Scene {
       const alive = isFighterAlive(fighter);
       // 궁극기는 숫자가 아니라 그림이 말한다. 쓸 수 있게 되기까지의 몫만큼 어둠이 걷힌다.
       const ready = canFireUltimate(this.state, fighter);
+      // 어둠이 걷힌 각도는 `stepMeters`가 굴려 그린다. 여기서 다시 칠하면 계단 값이 그대로
+      // 한 프레임 튀어, 굴러가던 것이 매 갱신마다 목표로 끌려간다.
       const charge = alive ? Math.min(1, fighter.energy / fighter.def.ultimate.cost) : 0;
-      profile.prefab.setChargeRatio(charge);
       // 머리 위 바와 같은 값을 같은 주기로 읽어 두 HUD가 서로 다른 막 길이를 말하지 않게 한다.
       profile.prefab.setShield(alive ? fighter.shield.amount : 0, fighter.maxHp);
       // 아직이면 카드째 반투명하다. 뒤가 비쳐야 "잠깐 꺼 둔 칸"으로 읽히고, 다 차면 또렷해진다.
@@ -1681,6 +1690,11 @@ export class BattleScene extends Phaser.Scene {
       profile.ferocityShown = Math.abs(profile.ferocityShown - fighter.ferocity) < 0.4
         ? fighter.ferocity
         : profile.ferocityShown + (fighter.ferocity - profile.ferocityShown) * k;
+      // 충전도 매 프레임 굴린다. 여기서 그리는 이유는 이 함수가 **연출 중에도** 도는 유일한
+      // 자리이기 때문이다 — 궁극기를 쓴 그 순간의 0으로 내려가는 길이 연출에 묻히지 않는다.
+      const chargeTarget = alive ? Math.min(1, fighter.energy / fighter.def.ultimate.cost) : 0;
+      profile.chargeShown = stepUltimateCharge(profile.chargeShown, chargeTarget, deltaMs / 1000, motionFactor);
+      profile.prefab.setChargeRatio(profile.chargeShown);
       const fever = fighter.ferocityFever;
       const ferocityColor = fever ? COLOR.ferocityFever : fighter.ferocity >= 80 ? COLOR.ferocityWarning : COLOR.ferocityLow;
       // 값과 사망 표현의 최종 소유자는 공용 프리팹이며 폭주 문구만 전투가 덧씌운다.

@@ -3,23 +3,28 @@ import { defineConfig, devices } from "@playwright/test";
 // 기기별로 반복할 가치가 있는 화면 배치·에셋 회귀만 이 목록에서 명시적으로 관리한다.
 const DEVICE_VISUAL_SPECS = ["**/mobile.spec.ts", "**/languageWalk.spec.ts", "**/relicAssetRegression.spec.ts"];
 
+// 로컬 병렬 실행은 의도적으로 PW_WORKERS를 지정했을 때만 열고, 잘못된 값은 안전한 직렬 실행으로 되돌린다.
+const requestedLocalWorkers = Number(process.env.PW_WORKERS);
+const localWorkers = Number.isInteger(requestedLocalWorkers) && requestedLocalWorkers > 0 ? requestedLocalWorkers : 1;
+
 /**
  * 실제 모바일 기기가 없어도 GitHub Actions에서 화면비/터치 구동을 확인하기 위한 설정.
  * 빌드된 결과물을 `vite preview`로 띄운 뒤 세로형 기기 프로필로 접속한다.
  */
 export default defineConfig({
   testDir: "./tests/e2e",
-  fullyParallel: true,
   /**
-   * **한 실행기 안에서는 직렬, CI 실행기 간에는 shard 병렬**로 돈다.
-   *
    * 이 게임은 매 프레임 WebGL로 전장을 다시 그리고, 스펙은 "몇 초 안에 이 상태가 되는가"를
    * 폴링으로 잰다. 브라우저 넷이 한 기계에서 동시에 돌면 프레임이 굶어 그 시간 안에 상태가
    * 도달하지 못하고, 실제로 멀쩡한 화면이 무더기로 `Timeout ... waiting on the predicate`로
    * 실패한다 — 4코어에서 병렬로 돌렸을 때 31편이 그렇게 죽었고, 같은 커밋을 한 편씩 돌리자
-   * 3편만 남았다. 느려지는 대신 **실패가 실패를 뜻하게** 한다.
+   * 3편만 남았다. 따라서 같은 파일 안의 테스트까지 흩는 완전 병렬화는 금지하고, 기본값과 CI는
+   * 한 실행기당 worker 하나만 쓴다. CI의 허용 경계는 실행기를 `--shard=N/M`으로 나누는 것이며,
+   * 자원이 충분한 로컬에서만 명시적인 `PW_WORKERS`로 파일 단위 병렬 실행을 선택할 수 있다.
    */
-  workers: 1,
+  fullyParallel: false,
+  // CI worker 증가는 금지한다. 로컬 worker 수도 위에서 검증한 명시적 PW_WORKERS 값만 받아들인다.
+  workers: process.env.CI ? 1 : localWorkers,
   /**
    * 캐릭터 묶음(zip)이 수 MB라 첫 화면까지 시간이 걸리고, 실시간 전투 검증은 전투가 실제로
    * 끝날 때까지 기다린다. GPU 없이 도는 환경에서는 타이틀 로딩부터 전투 진입까지만 1분 반이

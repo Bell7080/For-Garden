@@ -101,6 +101,23 @@ export function setUnitShield(state: UnitHealthBarState, amount: number, maxHp: 
   return shieldTarget === state.shieldTarget ? state : { ...state, shieldTarget };
 }
 
+/**
+ * 막이 실제로 그려지는 구간(0~1). **체력 오른쪽에 이어 붙되, 자리가 없으면 오른쪽 끝을 덮는다.**
+ *
+ * 예전에는 `min(1, 체력 + 막)`으로 끝만 잘랐는데, 그러면 **체력이 가득한 개체의 막은 설 자리가
+ * 0이라 통째로 보이지 않았다** — 반짝!·조가비처럼 멀쩡할 때 두르는 막이 화면에서 사라져,
+ * 코어는 들고 있는데 화면은 아무 말도 하지 않았다. 바의 오른쪽 끝은 **피해가 가장 먼저 먹는
+ * 자리**라 거기에 막을 얹으면 "체력보다 먼저 깎이는 한 겹"이 그대로 그림이 된다.
+ */
+export function unitShieldBand(shown: number, shield: number): { start: number; end: number } {
+  const width = clamp01(shield);
+  if (width <= 0) return { start: 0, end: 0 };
+  const filled = clamp01(shown);
+  // 자리가 남으면 체력 바로 뒤에서 시작하고, 모자라면 그만큼 왼쪽으로 물러서 끝에 붙인다.
+  const start = Math.max(0, Math.min(filled, 1 - width));
+  return { start, end: Math.min(1, start + width) };
+}
+
 /** 한 프레임을 진행한다. 큰 delta도 보간을 초과시키지 않고 잔상을 현재 체력 이상으로 고정한다. */
 export function stepUnitHealthBar(state: UnitHealthBarState, deltaMs: number, motionFactor = 1): UnitHealthBarState {
   const seconds = Math.max(0, deltaMs) / 1000;

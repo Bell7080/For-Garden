@@ -86,13 +86,17 @@ describe("토리카 스킬 표시 계약", () => {
       radius: 220,
       statusEffects: [{ kind: "stun", seconds: 2 }],
     });
-    expect(torika.passive).toMatchObject({ value: 7, durationSeconds: 5 });
-    expect(`${torika.passive.durationSeconds}초 동안 ${recoveryLabel(torika.passive.value)}`).toBe("5초 동안 매초 최대 체력의 7% 회복");
+    expect(torika.passive).toMatchObject({ value: 3.5, durationSeconds: 5 });
+    expect(`${torika.passive.durationSeconds}초 동안 ${recoveryLabel(torika.passive.value)}`).toBe("5초 동안 매초 최대 체력의 3.5% 회복");
+    // **규칙어로 감싸지 않는다.** 「지속 회복」은 "정해진 시간 동안 일정한 간격으로"까지만 말해,
+    // 정작 이 패시브가 말해야 하는 시간과 몫이 눌러도 나오지 않았다. 문장이 직접 적는다.
+    expect(torika.passive.desc).toBe("전투당 한 번, 체력이 절반 이하가 되면 5초 동안 매초 최대 체력의 3.5%를 회복한다.");
+    expect(torika.passive.desc).not.toContain("[[regeneration");
     expect(targetingLabel(torika.ultimate.targeting)).toBe("자신의 주위 모든 적");
     expect(statusEffectLabel(torika.ultimate.statusEffects?.[0])).toBe("[[stun|기절]] 2초");
     expect(torika.ferocityTrait.name).toBe("이제 못참아!");
-    expect(torika.ferocityTrait).toMatchObject({ effectId: "torikaBulwark", maxHpRegenPercentPerSecond: 5, defenseBonus: 80, resistanceBonus: 60, tauntRadius: 320, tauntDurationSeconds: 3 });
-    expect(ferocityTraitDescription(torika.ferocityTrait, { attack: torika.stats.atk, defense: torika.stats.def })).toBe("매초 최대 체력의 5%를 회복하고 방어력이 80, 저항력이 60 증가한다. 폭주에 들어가는 순간 주위 모든 적을 3초 동안 [[taunt|도발]]한다.");
+    expect(torika.ferocityTrait).toMatchObject({ effectId: "torikaBulwark", maxHpRegenPercentPerSecond: 1.5, defenseBonus: 80, resistanceBonus: 60, tauntRadius: 320, tauntDurationSeconds: 3 });
+    expect(ferocityTraitDescription(torika.ferocityTrait, { attack: torika.stats.atk, defense: torika.stats.def })).toBe("매초 최대 체력의 1.5%를 회복하고 방어력이 80, 저항력이 60 증가한다. 폭주에 들어가는 순간 주위 모든 적을 3초 동안 [[taunt|도발]]한다.");
     // 공격 스킬에는 설명 원문 자체를 두지 않는다 — 문장은 구조화 필드에서만 나온다.
     expect(torika.ultimate.desc).toBeUndefined();
     // 전투 엔진의 반경(px) 같은 개발 좌표는 문장에 새지 않고 대상 범위 문구로만 나온다.

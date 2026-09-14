@@ -231,11 +231,12 @@ export const RELICS: RelicDef[] = [
       lifeSteal: 0,
       ferocityGain: 0,
     },
-    // 회복 5%는 8초 폭주 동안 최대 체력 40%를 되찾아 전열 유지력을 주되 즉시 완치시키지 않는다.
+    // 회복 1.5%는 8초 폭주 동안 최대 체력 12%를 되찾는다. 5%였을 때는 같은 8초에 40%가 돌아와
+    // **폭주 한 번이 곧 완치**였고, 전열이 언제 무너지는지가 화면에서 사라졌다.
     // 방어력 +80·저항력 +60은 CLAUDE.md의 탱커 규칙대로 퍼센트가 아닌 능력치 판의 실제 증가값이다.
     // 320px 도발은 기존 폭주 반경 220보다 넓어 전열 주변의 복수 적을 확실히 붙잡되 전장 전체는 덮지 않는다.
     // 도발은 진입 때 한 번만 3초간 걸어 폭주 내내 표적을 강제하지 않고, 그 뒤에는 적의 공용 재지정을 허용한다.
-    ferocityTrait: { name: "이제 못참아!", effectId: "torikaBulwark", maxHpRegenPercentPerSecond: 5, defenseBonus: 80, resistanceBonus: 60, tauntRadius: 320, tauntDurationSeconds: 3 },
+    ferocityTrait: { name: "이제 못참아!", effectId: "torikaBulwark", maxHpRegenPercentPerSecond: 1.5, defenseBonus: 80, resistanceBonus: 60, tauntRadius: 320, tauntDurationSeconds: 3 },
     // 별 넷이 이 개체를 **여엿한 탱커**로 완성한다. 넷 다 "막아 선다"는 한 방향을 향하고,
     // 열리는 순서가 곧 그 방향의 단계다 — 기본 공격에 자급 회복과 도발이 붙고(II), 궁극기가
     // 제어를 두 번 더 뿌리고(III), 폭주 뒤의 가장 약한 자리를 보호막이 메우며(IV), 마지막에
@@ -261,9 +262,14 @@ export const RELICS: RelicDef[] = [
       kind: "emergencyRecovery",
       iconAssetId: "skill-icon-buff",
       effectType: "healing",
-      value: 7,
+      // 5초 동안 최대 체력의 17.5%를 되찾는다. 7%였을 때는 같은 5초에 35%가 돌아와, 반쯤
+      // 무너진 몸이 한 번에 제자리로 서서 "여기서 위험하다"는 순간 자체가 없었다.
+      value: 3.5,
       durationSeconds: 5,
-      desc: "전투당 한 번, 체력이 절반 이하가 되면 [[regeneration|지속 회복]]한다.",
+      // **규칙어로 감싸지 않는다.** 「지속 회복」은 "정해진 시간 동안 일정한 간격으로"까지만
+      // 말해 정작 얼마나 오래 얼마씩인지는 눌러 봐도 나오지 않았다 — 이 패시브가 말해야 하는
+      // 것이 바로 그 둘이라, 문장이 직접 적는다.
+      desc: "전투당 한 번, 체력이 절반 이하가 되면 5초 동안 매초 최대 체력의 3.5%를 회복한다.",
     },
     basic: {
       id: "anky-basic",
@@ -538,13 +544,17 @@ export const RELICS: RelicDef[] = [
     // 다이아는 희소 재화라 1시간 생산량을 1 미만으로 두고 수확 시에만 내림한다.
     // 보석은 희소성을 유지하되 기본 보관 시간에 슬롯 하나가 최소 정수 넷을 만든다.
     excavationTrait: { primaryCurrency: "gems", baseProductionPerHour: 0.5, efficiencyMultiplier: 1.12 },
+    // **손이 빠른 지원가가 아니라 단단한 지원가다.** 공속 96은 깃펜이 옮기는 회복을 그대로
+    // 횟수로 바꿔, 이 개체가 서 있는 것만으로 편성이 죽지 않았다. 그 몫(12)을 체력·방어·저항
+    // 셋으로 나눠 옮긴다 — 같은 등급 띠 안에서 총량은 그대로이고, 오르는 것은 제가 버티는
+    // 힘이라 회복 총량으로 되돌아오지 않는다.
     stats: {
-      hp: 760,
-      def: 48,
-      res: 86,
+      hp: 794,
+      def: 52,
+      res: 90,
       atk: 96,
       ap: 118,
-      attackSpeed: 96,
+      attackSpeed: 84,
       moveSpeed: 94,
       critChance: 10,
       critDamage: 150,
@@ -574,7 +584,9 @@ export const RELICS: RelicDef[] = [
       iconAssetId: "skill-icon-magical",
       effectType: "magical",
       damageType: "magical",
-      lowestHpAllyHealingFromDamagePercent: 50,
+      // 깎은 만큼의 30%가 가장 다친 아군에게 간다. 50%였을 때는 평타 한 대가 곧 회복 한 번이라
+      // 도디가 선 편성은 받은 피해가 그대로 지워졌다.
+      lowestHpAllyHealingFromDamagePercent: 30,
       // lowestHpAllyHealingFromDamagePercent가 있는 스킬은 skillDescription()이 대상·피해·회복을
     },
     ultimate: {
@@ -654,9 +666,10 @@ export const RELICS: RelicDef[] = [
       kind: "shimmerMark",
       iconAssetId: "skill-icon-magical",
       effectType: "magical",
-      // 표식을 새로 남길 때 터지는 추가 피해의 주문력 계수(%)다.
-      value: 50,
-      desc: "적을 타격하면 반짝! 표식을 부여하고 주문력의 50%만큼 마법 피해를 추가로 입힌다.",
+      // 표식을 새로 남길 때 터지는 추가 피해의 주문력 계수(%)다. 100 → 50으로 내렸다가
+      // **되돌렸다** — 도달선이 한 칸도 움직이지 않아, 줄인 것은 체감뿐이었다.
+      value: 100,
+      desc: "적을 타격하면 반짝! 표식을 부여하고 주문력의 100%만큼 마법 피해를 추가로 입힌다.",
     },
     basic: {
       id: "tia-basic",

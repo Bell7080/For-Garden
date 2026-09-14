@@ -5,6 +5,7 @@ import { BATTLE_STATUS_LAYOUT } from "./battleStatusLayout";
 import { COLOR } from "./theme";
 import {
   createUnitHealthBarState,
+  unitShieldBand,
   HEALTH_BAR_MOTION,
   setUnitHealthValue,
   setUnitShield,
@@ -116,13 +117,13 @@ export class UnitHealthBar extends Phaser.GameObjects.Container {
     const trailFilled = width * this.health.damageTrail;
     if (trailFilled > 0.5) this.paintFill(trailFilled, COLOR.danger, 0.95);
     const filled = width * this.health.shown;
-    // 막은 체력 **오른쪽으로 이어 붙는다.** 체력 아래에 한 겹 더 넓게 깔면 넘치는 만큼만
-    // 푸르게 남아, 체력 채움과 겹치는 자리에서 두 색이 섞이지 않는다.
-    const shielded = Math.min(width, filled + width * this.health.shield);
-    if (shielded > filled + 0.5) this.paintFill(shielded, COLOR.shieldFill, 1);
     if (filled > 0.5) {
       this.paintFill(filled, this.color, 1);
     }
+    // 막은 체력 **오른쪽으로 이어 붙고**, 체력이 가득해 자리가 없으면 바의 오른쪽 끝을 덮는다.
+    // 아래에 깔던 때는 멀쩡할 때 두른 막이 통째로 보이지 않았다(반짝!·조가비가 그랬다).
+    const band = unitShieldBand(this.health.shown, this.health.shield);
+    if (band.end - band.start > 0.001) this.paintBand(width * band.start, width * band.end, COLOR.shieldFill, 1);
     // 칸을 나누는 흰 선. 얼마나 깎였는지를 눈금으로 셈할 수 있게 한다.
     this.graph.lineStyle(2, 0xffffff, 0.5);
     for (let i = 1; i <= ticks; i += 1) {
@@ -144,14 +145,19 @@ export class UnitHealthBar extends Phaser.GameObjects.Container {
 
   /** 홈과 같은 기울기 규칙으로 한 채움층을 그린다. 호출 순서가 곧 레이어 순서다. */
   private paintFill(filled: number, color: number, alpha: number): void {
+    this.paintBand(0, filled, color, alpha);
+  }
+
+  /** 왼쪽 끝이 아니라 구간을 칠한다. 다른 채움 위에 덧대는 층(막)이 쓴다. */
+  private paintBand(from: number, to: number, color: number, alpha: number): void {
     const left = -BAR.width / 2;
     const s = BAR.slant / 2;
     this.graph.fillStyle(color, alpha);
     this.graph.fillPoints([
-      new Phaser.Geom.Point(left + s, -BAR.height / 2),
-      new Phaser.Geom.Point(left + filled + s, -BAR.height / 2),
-      new Phaser.Geom.Point(left + filled - s, BAR.height / 2),
-      new Phaser.Geom.Point(left - s, BAR.height / 2),
+      new Phaser.Geom.Point(left + from + s, -BAR.height / 2),
+      new Phaser.Geom.Point(left + to + s, -BAR.height / 2),
+      new Phaser.Geom.Point(left + to - s, BAR.height / 2),
+      new Phaser.Geom.Point(left + from - s, BAR.height / 2),
     ], true);
   }
 }

@@ -486,6 +486,8 @@ export class HoloBar {
   /** 최대치 테두리와 칸 나눔. 켜지 않은 게이지에는 없다. */
   private readonly frame?: Phaser.GameObjects.Graphics;
   private ratio = 1;
+  /** 채움이 시작하는 지점(0~1). 대부분의 게이지는 0이고, 막처럼 **덧대는 층만** 옮겨 앉는다. */
+  private from = 0;
   private color: number;
 
   /** 복합 UI가 게이지 두 겹을 자신의 컨테이너 생명주기에 함께 묶을 때 쓰는 표시 객체다. */
@@ -538,7 +540,18 @@ export class HoloBar {
   }
 
   setValue(ratio: number, color?: number): void {
-    this.ratio = Phaser.Math.Clamp(ratio, 0, 1);
+    this.setRange(0, ratio, color);
+  }
+
+  /**
+   * 왼쪽 끝이 아니라 **구간**을 채운다. 다른 채움 위에 덧대는 층이 쓴다.
+   *
+   * 보호막이 그 자리다 — 체력 오른쪽에 이어 붙다가, 체력이 가득해 자리가 없으면 바의 오른쪽
+   * 끝을 덮는다. 구간을 못 그리면 그런 막은 화면에서 통째로 사라진다.
+   */
+  setRange(from: number, to: number, color?: number): void {
+    this.from = Phaser.Math.Clamp(from, 0, 1);
+    this.ratio = Phaser.Math.Clamp(to, this.from, 1);
     if (color !== undefined) this.color = color;
     this.redraw();
   }
@@ -560,17 +573,18 @@ export class HoloBar {
   private redraw(): void {
     const slant = Math.min(HOLO.slant, this.height);
     const filled = this.width * this.ratio;
+    const begin = this.width * this.from;
     this.fill.clear();
-    if (filled <= 0) return;
+    if (filled - begin <= 0) return;
     this.fill.fillStyle(this.color, 1);
     const left = -this.width / 2;
     const s = slant / 2;
     this.fill.fillPoints(
       toPoints([
-        left + s, -this.height / 2,
+        left + begin + s, -this.height / 2,
         left + filled + s, -this.height / 2,
         left + filled - s, this.height / 2,
-        left - s, this.height / 2,
+        left + begin - s, this.height / 2,
       ]),
       true,
     );

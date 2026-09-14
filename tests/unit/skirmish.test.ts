@@ -1056,7 +1056,7 @@ describe("긴급 회복 패시브", () => {
     expect(fighter.regeneration).toMatchObject({
       remaining: fighter.def.passive.durationSeconds,
       tickIn: EMERGENCY_RECOVERY.tickSeconds,
-      percentPerTick: 7,
+      percentPerTick: fighter.def.passive.value,
     });
   });
 
@@ -1080,14 +1080,16 @@ describe("긴급 회복 패시브", () => {
     expect(afterDamage("bleed").passiveTriggered).toBe(true);
   });
 
-  it("는 5초 동안 1초마다 최대 HP의 7%만 실제 회복량으로 기록한다", () => {
+  it("는 5초 동안 1초마다 정의된 비율만큼만 실제 회복량으로 기록한다", () => {
     const { fighter } = emergencyRecoveryFighter();
+    // 비율은 밸런스 값이라 여기 적지 않고 정의에서 읽는다 — 수치를 고쳐도 규칙 검사는 남는다.
+    const percent = fighter.def.passive.value / 100;
     fighter.hp = fighter.maxHp * 0.5;
     tryTriggerEmergencyRecovery(fighter);
     const events = tickRegeneration(fighter, 5).filter((event) => event.kind === "heal");
     expect(events).toHaveLength(5);
-    for (const event of events) expect(event.amount).toBeCloseTo(fighter.maxHp * 0.07);
-    expect(fighter.hp).toBeCloseTo(fighter.maxHp * 0.85);
+    for (const event of events) expect(event.amount).toBeCloseTo(fighter.maxHp * percent);
+    expect(fighter.hp).toBeCloseTo(fighter.maxHp * (0.5 + percent * 5));
     expect(fighter.regeneration).toBeNull();
   });
 
@@ -1490,7 +1492,9 @@ describe("효과 ID별 야성 특성", () => {
     const hpBeforeTick = torika.hp;
     // 한 호출은 프레임 폭주를 막기 위해 0.25초로 제한되므로 네 프레임을 진행해 온전한 1초를 만든다.
     for (let frame = 0; frame < 4; frame += 1) stepSkirmish(state, 0.25);
-    expect(torika.hp - hpBeforeTick).toBeCloseTo(torika.maxHp * 0.05);
+    // 비율은 밸런스 값이라 정의에서 읽는다. 여기서 재는 것은 "1초에 한 번 돈다"는 규칙이다.
+    const regen = torika.def.ferocityTrait.effectId === "torikaBulwark" ? torika.def.ferocityTrait.maxHpRegenPercentPerSecond : 0;
+    expect(torika.hp - hpBeforeTick).toBeCloseTo(torika.maxHp * regen / 100);
 
     // 공용 피버 배수구로 종료시켜 정적 종족값과 회복이 모두 원상복구되는지 확인한다.
     torika.ferocity = 0.1;
@@ -1586,7 +1590,7 @@ describe("도디 정적 전투 계약", () => {
     const heal = stepSkirmish(state, 1 / 60)
       .find((event): event is Extract<SkirmishEvent, { kind: "heal" }> => event.kind === "heal" && event.fighterId === ally.id);
     // 회복 비율은 정의에서 읽는다. 숫자를 박아 두면 밸런스를 조정할 때마다 이 계약이 함께 깨진다.
-    expect(heal?.amount).toBe(3 * getRelic("dodo").basic.lowestHpAllyHealingFromDamagePercent! / 100);
+    expect(heal?.amount).toBeCloseTo(3 * getRelic("dodo").basic.lowestHpAllyHealingFromDamagePercent! / 100, 6);
   });
 
   it("지정 원의 경계를 포함해 광역 피해·회복을 적용하고 제 게이지를 소비한다", () => {

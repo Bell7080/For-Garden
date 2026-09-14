@@ -13,6 +13,8 @@ const localWorkers = Number.isInteger(requestedLocalWorkers) && requestedLocalWo
  */
 export default defineConfig({
   testDir: "./tests/e2e",
+  // 브라우저 스펙을 시작하기 전에 preview가 현재 checkout으로 만들어졌는지 단 한 번 확인한다.
+  globalSetup: "./tests/e2e/globalSetup.ts",
   /**
    * 이 게임은 매 프레임 WebGL로 전장을 다시 그리고, 스펙은 "몇 초 안에 이 상태가 되는가"를
    * 폴링으로 잰다. 브라우저 넷이 한 기계에서 동시에 돌면 프레임이 굶어 그 시간 안에 상태가
@@ -45,11 +47,13 @@ export default defineConfig({
     trace: "retain-on-failure",
   },
   webServer: {
-    // E2E 전용 주입 경로가 production 번들에 열리지 않도록 반드시 test mode 산출물을 띄운다.
-    command: "npm run build:test && npm run preview",
+    // 기본 회귀 경로는 현재 소스를 test mode로 새로 빌드한 뒤 그 산출물만 띄운다.
+    command: "npm run preview:e2e",
     url: "http://localhost:4173",
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
+    // 다른 checkout의 서버를 붙잡지 않는다. 위험을 이름에 드러낸 :reuse 스크립트만 예외다.
+    reuseExistingServer: process.env.PF_E2E_REUSE_SERVER === "1" && !process.env.CI,
+    // 타입 검사와 대형 에셋 번들까지 이 명령 안에서 수행하므로 느린 CI에도 빌드 시간을 보장한다.
+    timeout: 300_000,
   },
   // 실제 iOS는 WebKit이지만, CI에는 Chromium만 설치한다. 화면비·터치 구동 확인이 목적이므로
   // iPhone 14 기기 프로필의 뷰포트/터치 설정만 가져와 Chromium 위에서 그대로 재현한다.

@@ -51,6 +51,7 @@ import { addFormationRemoveChip, addFormationSlotPlate, addFormationSlotSelectio
 import { bindFormationDrag, type FormationDragSlot } from "../ui/formationDrag";
 import { FORMATION_DRAG_VISUAL } from "../ui/formationDragVisual";
 import { createFormationDragVisualController, type FormationDragVisualController } from "../ui/formationDragVisualController";
+import { consumeSceneEntry } from "./sceneEntry";
 
 /** 편성 목록은 어디서나 네 칸이 한 줄이다. 카드 크기와 줄 간격은 폭에서 공용 규칙이 구한다. */
 const ROSTER = formationRosterGrid(BASE_WIDTH - 96);
@@ -191,6 +192,7 @@ export class ExpeditionScene extends Phaser.Scene {
   /** 로비에서 새로 들어오면 늘 기록 화면부터다. 편성은 출격 버튼이 여는 다음 단계다. */
   init(data?: { stage?: "ranking" | "preparation" }): void {
     this.stage = data?.stage ?? "ranking";
+    consumeSceneEntry(this);
   }
 
   create(): void {

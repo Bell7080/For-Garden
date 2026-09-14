@@ -27,6 +27,7 @@ import {
   premiumCardSpot, premiumCardWidth, premiumGridContentHeight, premiumGridViewport,
   premiumTabSpot, premiumTitleLeft, premiumTitleY,
 } from "../ui/premiumLayout";
+import { consumeSceneEntry } from "./sceneEntry";
 
 /**
  * 현금 결제 카탈로그를 인게임 재화 상점과 분리해 소유하는 독립 프리미엄 씬이다.
@@ -61,6 +62,7 @@ export class PremiumScene extends Phaser.Scene {
   init(data: { section?: PremiumSection }): void {
     // 설정 화면이나 개발 콘솔이 넘긴 값도 실제 지원하는 섹션으로 제한한다.
     this.activeSection = data?.section === "premium" ? data.section : "premium";
+    consumeSceneEntry(this);
   }
 
   create(): void {

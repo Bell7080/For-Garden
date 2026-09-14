@@ -11,6 +11,11 @@ import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
  * 테스트는 전부 통과했다(씬 안의 표시 객체 수는 순수 규칙이 볼 수 없다).
  */
 
+/** 지금 화면의 제목. 같은 씬이 두 자리를 맡으므로 **어느 상점인지**는 이 값이 가른다. */
+function screenTitle(page: Page): Promise<string | undefined> {
+  return page.evaluate(() => window.__PF_DEBUG?.screenTitle);
+}
+
 /** 화면 이름을 읽는다. 디버그 채널은 언어를 따르지 않아 어느 언어에서나 같은 값이다. */
 function scene(page: Page): Promise<string | undefined> {
   return page.evaluate(() => window.__PF_DEBUG?.scene);
@@ -57,4 +62,28 @@ test("고고학의 두 탭과 고고학 상점을 연다", async ({ page }, test
   // 점원 Puppet은 ZIP을 내려받아 세우므로 첫 프레임보다 늦게 도착한다.
   await page.waitForTimeout(3_000);
   await captureGame(page, `test-results/${testInfo.project.name}-archaeology-shop.png`);
+});
+
+test("고고학 상점을 다녀와도 로비 상점은 제 자리로 열린다", async ({ page }) => {
+  test.setTimeout(300_000);
+  // **Phaser는 데이터 없이 시작한 씬의 지난 데이터를 그대로 남긴다.** 고고학 상점을 한 번 열면
+  // 로비의 `scene.start("shop")`이 그 자리를 물려받아 일반 상점 자리에 고고학 상점이 떴다.
+  await startAfterOpening(page, (session) => { session.wallet.fossil = 10_000; });
+  await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
+  await expect.poll(() => scene(page)).toBe("lobby");
+
+  // 먼저 고고학 상점을 열어 **지난 자리를 남긴다.**
+  await tapUntil(page, BASE_WIDTH / 10, BASE_HEIGHT - 180 + 90, "archaeology");
+  await tapUntil(page, 96, 352, "shop");
+  await expect.poll(() => screenTitle(page)).toBe("고고학 상점");
+
+  // 우하단 뒤로가기는 들어온 자리로 돌아간다.
+  await tapUntil(page, 974, 1800, "archaeology");
+  await tapUntil(page, BASE_WIDTH / 2, BASE_HEIGHT - 180 + 90, "lobby");
+
+  // 로비의 상점 레일 — 자리를 넘기지 않고 들어오는 경로다.
+  const shopSpot = await page.evaluate(() => window.__PF_DEBUG?.storefrontControls?.lobby?.shop);
+  expect(shopSpot).toBeTruthy();
+  await tapUntil(page, shopSpot!.x, shopSpot!.y, "shop");
+  await expect.poll(() => screenTitle(page)).toBe("상점");
 });

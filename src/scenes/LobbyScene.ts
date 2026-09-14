@@ -286,9 +286,14 @@ export class LobbyScene extends Phaser.Scene {
     if (!this.tradeBackButton) this.tradeBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: () => this.tradePopup?.close() }).setDepth(2100);
   }
 
-  /** 인게임 상점은 로비 팝업이 아니라 등록된 ShopScene의 독립 수명주기로 연다. */
+  /**
+   * 인게임 상점은 로비 팝업이 아니라 등록된 ShopScene의 독립 수명주기로 연다.
+   *
+   * **어느 자리인지 반드시 함께 넘긴다** — 같은 씬이 고고학 상점도 맡으므로, 비워 두면
+   * Phaser가 지난 진입의 자리를 그대로 물려준다.
+   */
   private openShop(): void {
-    this.scene.start("shop");
+    this.scene.start("shop", { storefront: "shop", returnScene: "lobby" });
   }
 
   /** 상단과 가방이 공유하는 안내를 열고, 선택적인 이동만 로비 소유 콜백에서 해석한다. */

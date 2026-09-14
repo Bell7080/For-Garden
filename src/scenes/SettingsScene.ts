@@ -24,6 +24,7 @@ import { relicCollection } from "../managers/RelicCollectionManager";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { getRelic } from "../data/relics";
 import { openPolicyDocument, type PolicyPath } from "./policyNavigation";
+import { consumeSceneEntry } from "./sceneEntry";
 
 /** 상단 탭은 긴 설정을 의미 단위로 나눠 좁은 화면에서도 한 섹션만 스크롤하게 한다. */
 const TABS = [
@@ -100,6 +101,7 @@ export class SettingsScene extends Phaser.Scene {
     if (data?.tab && TABS.some(tab => tab.id === data.tab)) this.activeTab = data.tab;
     const route = validateSettingsReturn(data);
     this.returnScene = route.returnScene; this.returnData = route.returnData;
+    consumeSceneEntry(this);
   }
 
   /** 현재 탭에 종속된 행만 생성해 다른 탭의 입력면이 마스크 뒤에 남지 않게 한다. */

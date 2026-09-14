@@ -25,6 +25,7 @@ import { session } from "../state/session";
 import { motionPolicy } from "../core/settings";
 import { productsForShopCategory, shopModel } from "../ui/shopModel";
 import type { ProductStorefront } from "../data/products";
+import { consumeSceneEntry } from "./sceneEntry";
 import { shapeClipMask } from "../ui/popupArt";
 import {
   SHOP_BOARD, SHOP_CARD, SHOP_ENTRANCE, SHOP_SHELF, SHOP_STAGE, SHOP_TAB_ROW, SHOP_TITLE,
@@ -90,6 +91,7 @@ export class ShopScene extends Phaser.Scene {
     this.stage = shopStagePresentation(this.storefront);
     this.returnScene = data?.returnScene ?? "lobby";
     this.selectedCategory = SHOP_TABS[0].id;
+    consumeSceneEntry(this);
   }
 
   create(): void {

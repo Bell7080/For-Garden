@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { FakeServer } from "../../src/api/FakeServer";
 import { breakthroughFragmentCost, BREAKTHROUGH_STEPS, RELIC_LEVEL_CAP } from "../../src/core/relicProgression";
 import { GameApiError } from "../../src/api/contracts";
@@ -89,12 +89,36 @@ describe("FakeServer", () => {
   });
   it("보스 점수 저장 실패는 검증 거절로 오인하지 않고 원래 저장 오류를 보존한다", async () => {
     const storageError = new Error("quota exceeded");
-    const server = new FakeServer(makeSession(), { latencyMs: 0, persistSession: () => { throw storageError; } });
+    const state = makeSession();
+    const manager = new (await import("../../src/managers/ExpeditionManager")).ExpeditionManager(state, { save: () => undefined }, () => new Date("2026-08-25T12:00:00Z"));
+    manager.start(["anky", "rex", "dodo"]);
+    const originalRun = state.expedition.run;
+    const originalRunSnapshot = structuredClone(originalRun);
+    const originalAllTimeBestScore = state.expedition.allTimeBestScore;
+    let fail = true;
+    const persistSession = vi.fn(() => { if (fail) throw storageError; });
+    const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-25T12:00:00Z"), persistSession });
+    const weeklyBefore = await server.getExpeditionWeeklyBest();
     // 정상 행동열은 검증을 통과하므로 persistSession 실패만 공용 저장 오류 경계에서 변환되어야 한다.
-    const failure = await server.submitExpeditionBossScore({ requestId: "persist-failure", actions: bossActions(2) }).catch((error: unknown) => error);
+    const bossNode = originalRun!.nodes.find(({ type }) => type === "boss")!;
+    const request = { requestId: "persist-failure", runId: originalRun!.runId, nodeId: bossNode.id, actions: bossActions(2) };
+    const failure = await server.submitExpeditionBossScore(request).catch((error: unknown) => error);
     expect(failure).toBeInstanceOf(GameApiError);
     expect(failure).toMatchObject({ code: "PERSISTENCE_FAILED", cause: storageError });
     expect(failure).not.toMatchObject({ code: "EXPEDITION_SCORE_REJECTED" });
+    // 실패한 후보 커밋은 공유 run의 참조와 내용, 역대 최고점, 주간 캐시 어느 것도 노출하지 않는다.
+    expect(state.expedition.run).toBe(originalRun);
+    expect(state.expedition.run).toEqual(originalRunSnapshot);
+    expect(state.expedition.allTimeBestScore).toBe(originalAllTimeBestScore);
+    expect((await server.getExpeditionWeeklyBest()).cumulativeScore).toBe(weeklyBefore.cumulativeScore);
+
+    fail = false;
+    const success = await server.submitExpeditionBossScore(request);
+    expect(success.cumulativeScore).toBe(success.bossDamageScore);
+    expect(state.expedition.run).not.toBe(originalRun);
+    expect(state.expedition.run).toMatchObject({ bossDamageScore: success.bossDamageScore, runScore: success.runScore });
+    expect(state.expedition.allTimeBestScore).toBe(success.runScore);
+    expect(persistSession).toHaveBeenCalledTimes(2);
   });
   it("발굴 조회는 첫 서버 시각을 초기화하고 편성 변경 전 생산을 원자적으로 정산한다", async () => {
     const state = makeSession(); let now = new Date("2026-08-20T00:00:00Z"); const server = new FakeServer(state, { latencyMs: 0, now: () => now });

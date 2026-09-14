@@ -8,7 +8,7 @@ import { BOND_XP_REWARD, grantBondXp, grantDailyLobbyBondXp } from "../core/bond
 import { MAX_RESEARCH_POINTS, MISSIONS, RESEARCH_REWARD_STAGES, addResearchPoints, applyMissionEvent, claimResearchStages, claimableMissionIds, normalizeMissions, researchPointsForClaim, researchStageClaimId, type MissionPeriod } from "../core/missions";
 import { DAILY_RESTORATION, getStage } from "../data/stages";
 import { CONTENT_STAMINA_COSTS } from "../data/contentCosts";
-import { createInitialRelicProgress, session, type Session } from "../state/session";
+import { createInitialRelicProgress, replaceSession, session, type Session } from "../state/session";
 import { saveManager } from "../state/SaveManager";
 import { INTERACTION_CITIES, findInteractionCity } from "../data/interactionCities";
 import { INTERACTION_EXCHANGE_OFFERS, findInteractionExchangeOffer, type InteractionExchangeOffer } from "../data/interactionExchange";
@@ -276,7 +276,7 @@ export class FakeServer implements GameApi {
   async submitExpeditionBossScore(request: SubmitExpeditionBossScoreRequest): Promise<SubmitExpeditionBossScoreResponse> {
     await this.delay(); const cached = this.bossSubmissionResults.get(request.requestId); if (cached) return { ...cached };
     if (!request.requestId) throw new GameApiError("EXPEDITION_SCORE_REJECTED", "점수 제출 요청 ID가 필요합니다.");
-    const now = this.now(); this.normalizeBossWeek(now);
+    const now = this.now();
     const run = request.runId ? this.state.expedition.run : null;
     let result: ReturnType<typeof resolveExpeditionBossBattle>;
     let runScore: ReturnType<typeof calculateExpeditionRunScore>;
@@ -309,21 +309,33 @@ export class FakeServer implements GameApi {
       throw new GameApiError("EXPEDITION_SCORE_REJECTED", "검증할 수 없거나 비정상적으로 큰 보스 점수입니다.", { cause: error });
     }
 
-    const improved = runScore.runScore > this.bossWeek.bestScore;
-    const nextBossWeek = { ...this.bossWeek, cumulativeScore: this.bossWeek.cumulativeScore + runScore.bossDamageScore };
+    // 주차 정규화도 아직 공유 캐시에 쓰지 않는다. 저장 실패가 이번 제출의 누적 점수를 남겨서는 안 된다.
+    const weekKey = expeditionWeekKey(now);
+    const currentBossWeek = this.bossWeek.weekKey === weekKey
+      ? this.bossWeek
+      : { weekKey, bestScore: 0, cumulativeScore: 0, achievedAt: "", claimedStageIds: [] as string[] };
+    const improved = runScore.runScore > currentBossWeek.bestScore;
+    const nextBossWeek = { ...currentBossWeek, cumulativeScore: currentBossWeek.cumulativeScore + runScore.bossDamageScore };
     if (improved) { nextBossWeek.bestScore = runScore.runScore; nextBossWeek.achievedAt = now.toISOString(); }
-    const nextRun = run ? { ...run, bossDamage: runScore.bossDamageScore, bossDamageScore: runScore.bossDamageScore, runScore: runScore.runScore, bestScore: runScore.runScore } : null;
-    const allTimeBestScore = Math.max(this.state.expedition.allTimeBestScore, runScore.runScore);
-    const nextExpedition = { ...this.state.expedition, ...(nextRun ? { run: nextRun } : {}), allTimeBestScore };
-    const nextState = { ...this.state, expedition: nextExpedition };
+    // 공유 run을 건드리지 않는 완전한 후보 상태에 피해·런 점수·역대 최고점을 모두 먼저 확정한다.
+    const nextState = structuredClone(this.state);
+    if (nextState.expedition.run) {
+      nextState.expedition.run.bossDamage = runScore.bossDamageScore;
+      nextState.expedition.run.bossDamageScore = runScore.bossDamageScore;
+      nextState.expedition.run.runScore = runScore.runScore;
+      nextState.expedition.run.bestScore = runScore.runScore;
+    }
+    nextState.expedition.allTimeBestScore = Math.max(nextState.expedition.allTimeBestScore, runScore.runScore);
     try {
       // 검증 성공 뒤의 저장만 공용 저장 실패로 바꾸며, 원래 Storage/SaveManager 오류는 cause에 보존한다.
       this.persist(nextState);
     } catch (error) {
       throw persistenceFailed(error, "원정 점수를 저장하지 못했습니다.");
     }
-    // 영속화가 성공한 뒤에만 메모리와 멱등 영수증을 반영해 실패 재시도가 깨끗한 상태에서 시작한다.
-    this.state.expedition = nextExpedition;
+    // 단 한 번의 저장이 성공한 뒤 루트 세션 정체성을 보존해 후보를 적용하고, 캐시와 영수증도 그 뒤 확정한다.
+    if (this.state === session) replaceSession(nextState);
+    else Object.assign(this.state, nextState);
+    if (currentBossWeek !== this.bossWeek) this.previousBossBest = this.bossWeek.bestScore;
     this.bossWeek = nextBossWeek;
     const response = { weekKey: nextBossWeek.weekKey, score: runScore.runScore, normalNodeScoreTotal: runScore.normalNodeScoreTotal, bossDamageScore: runScore.bossDamageScore, runScore: runScore.runScore, bestScore: nextBossWeek.bestScore, cumulativeScore: nextBossWeek.cumulativeScore, improved, endedAtMs: result.endedAtMs, rankBefore: this.previousBossBest > 0 ? 1 : null, rankAfter: 1 };
     this.previousBossBest = nextBossWeek.bestScore;

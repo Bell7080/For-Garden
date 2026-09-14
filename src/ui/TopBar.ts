@@ -43,7 +43,7 @@ interface CurrencySlot {
  * 치즈케이크는 정보창의 급여 버튼이 "가진 수/드는 수"로 직접 말하므로, 위에 또 적으면 같은
  * 값을 두 곳에서 읽게 되고 정작 봐야 할 카드 그리드의 자리만 좁아진다.
  */
-export type TopBarCurrencyContext = "default" | "recruit" | "none";
+export type TopBarCurrencyContext = "default" | "recruit" | "none" | "archaeology";
 
 const SLOTS: Record<TopBarCurrencyContext, readonly CurrencySlot[]> = {
   default: [
@@ -55,6 +55,13 @@ const SLOTS: Record<TopBarCurrencyContext, readonly CurrencySlot[]> = {
     { key: "gems", icon: "currency-gems", read: () => session.wallet.gems, color: "#cfe6ff" },
     { key: "fossil", icon: "currency-fossil", read: () => session.wallet.fossil, compact: true, color: "#e6dcc4" },
     { key: "amber", icon: "currency-amber", read: () => session.wallet.amber, color: "#ffc98a" },
+  ],
+  // 고고학은 제 경제를 갖는다 — 원석이 첫 칸에 서고, 탐사가 함께 캐내는 화석과
+  // 늘 쓰는 골드가 뒤를 잇는다. 스테미나는 이 화면의 조작을 정하지 않으므로 세우지 않는다.
+  archaeology: [
+    { key: "rawStone", icon: "currency-orestone", read: () => session.wallet.rawStone, compact: true, color: "#a9d8e8" },
+    { key: "fossil", icon: "currency-fossil", read: () => session.wallet.fossil, compact: true, color: "#e6dcc4" },
+    { key: "gold", icon: "currency-gold", read: () => session.wallet.gold, compact: true, color: "#ffdf9a" },
   ],
   none: [],
 };

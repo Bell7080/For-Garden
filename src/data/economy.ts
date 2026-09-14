@@ -14,6 +14,7 @@ export const WALLET_CAPS: Readonly<Record<keyof Wallet, number>> = {
   stamina: 9_999,
   dnaFragments: 99_999,
   cheesecake: 9_999_999,
+  rawStone: 9_999_999,
 };
 
 /** 문서의 월간 무과금 수급 계산이 참조하는 30일/4주 기준 목표 지급량이다. */

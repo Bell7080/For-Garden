@@ -49,6 +49,17 @@ ART: dict[str, tuple[str, tuple[float, float, float] | None] | tuple[str, tuple[
     "sprites/currency/energy.webp": ("Photoroom_20260822_113612.png", (0.44, 1.04, 0.52)),
 }
 
+# 원본 PNG가 없는 파생 아이콘.
+#
+# 고고학의 **원석**은 전용 원화가 아직 없다. 화석 원본은 저장소에 남기지 않으므로(굽고 나면
+# 지운다) 이미 구워 둔 `fossil.webp`에서 파생한다 — 그래야 원본 없이도 이 스크립트만으로
+# 다시 구울 수 있다. 색은 **청록 쪽으로** 민다: 화석은 채도를 덜어 낸 회갈색이라, 같은 돌빛에
+# 머물면 상단 재화 줄에서 두 칸이 같은 그림으로 보인다. 전용 원화가 오면 이 줄을 지우고
+# `ART` 표에 source와 함께 올린다.
+DERIVED: dict[str, tuple[str, tuple[float, float, float]]] = {
+    "sprites/currency/orestone.webp": ("sprites/currency/fossil.webp", (0.72, 0.98, 1.18)),
+}
+
 # 화면에서 쓰는 가장 큰 크기의 두 배로 굽는다. 더 키우면 파일만 커지고 눈에 보이지 않는다.
 SIZE = 256
 
@@ -176,5 +187,11 @@ def main() -> None:
         if len(entry) == 3:
             art = desaturate(art, entry[2])
         save(art, PUBLIC / out)
+
+    # 파생 아이콘은 원본 폴더가 아니라 이미 구워 둔 결과에서 읽는다.
+    for out, (base, factor) in DERIVED.items():
+        save(shift(Image.open(PUBLIC / base).convert("RGBA"), factor), PUBLIC / out)
+
+
 if __name__ == "__main__":
     main()

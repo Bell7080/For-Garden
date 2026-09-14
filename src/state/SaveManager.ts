@@ -9,6 +9,7 @@ import { assertValidRuneInstance, type RuneInstance } from "../core/runes";
 import { normalizeSettings } from "../core/settings";
 import { AD_REWARD_SLOTS } from "../data/adRewards";
 import { createIdleExcavationState, EXCAVATION_CURRENCIES, RETROACTIVE_EXCAVATION_GRANT_VERSION } from "../core/idleExcavation";
+import { createArchaeologyState } from "../core/strataDig";
 import { findItem } from "../data/items";
 import { EXPEDITION_AUGMENT_IDS, EXPEDITION_REWARD_IDS } from "../data/expedition";
 import { validateExpeditionMap } from "../core/expeditionMap";
@@ -225,6 +226,9 @@ export class SaveManager {
       playerResearch: { ...state.playerResearch },
       itemInventory: state.itemInventory.map((stack) => ({ ...stack })),
       idleExcavation: { ...state.idleExcavation, assignedRelicIds: [...state.idleExcavation.assignedRelicIds], unclaimed: { ...state.idleExcavation.unclaimed } },
+      // 진행 중인 판까지 통째로 복사한다 — 얕게 담으면 저장 뒤의 한 번 더 판 칸이 이미 쓴
+      // 저장에 새어 들어가 앱을 껐다 켠 화면과 갈린다.
+      archaeology: structuredClone(state.archaeology),
       saveVersion: CURRENT_SAVE_VERSION,
       settings: normalizeSettings(state.settings),
       completedStoryIds: [...state.completedStoryIds],
@@ -285,6 +289,10 @@ export class SaveManager {
       : createInitialPlayerResearchProgress();
     // v18 이전에는 기준 시각이 없으므로 현재 시각을 꾸며 넣지 않는다. v18은 기존 기준 시각과
     // 편성을 보존하되 신규 키를 0으로 보충하고, 서버가 소급 정산할 일회성 버전만 미완료로 둔다.
+    // 고고학을 몰랐던 저장은 기본 상태로 시작한다 — 횟수가 가득 차 있고 판은 없다.
+    const savedArchaeology = legacy.archaeology && typeof legacy.archaeology === "object"
+      ? legacy.archaeology as Partial<SaveData["archaeology"]> : undefined;
+    const archaeology = { ...createArchaeologyState(), ...savedArchaeology };
     const savedExcavation = Number(legacy.saveVersion) >= 18 && legacy.idleExcavation && typeof legacy.idleExcavation === "object"
       ? legacy.idleExcavation as Partial<SaveData["idleExcavation"]> : undefined;
     const excavationDefaults = createIdleExcavationState();
@@ -408,10 +416,10 @@ export class SaveManager {
     // v20 이전에는 중첩 가방이 없었다. 지갑과 룬은 기존 단일 기준에 남겨 빈 스택만 보충한다.
     const itemInventory = Array.isArray(legacy.itemInventory) ? legacy.itemInventory : [];
     const { ownedHeartGemIds: _oldOwned, runeSlotsByRelicId: _oldSlots, ...current } = legacy;
-    if (legacy.saveVersion === undefined) return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, idleExcavation, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition } as unknown as SaveData;
+    if (legacy.saveVersion === undefined) return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, idleExcavation, archaeology, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition } as unknown as SaveData;
     const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, CURRENT_SAVE_VERSION];
     if (!supported.includes(legacy.saveVersion as number)) throw new SaveDataError(`지원하지 않는 저장 버전입니다: ${String(legacy.saveVersion)}`);
-    return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, idleExcavation, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition } as unknown as SaveData;
+    return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, idleExcavation, archaeology, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition } as unknown as SaveData;
   }
 
   /** 콘텐츠 ID와 교차 필드 불변식까지 검사해 부분 손상을 조용히 전파하지 않는다. */
@@ -496,6 +504,7 @@ export class SaveManager {
       playerResearch: { ...data.playerResearch },
       itemInventory: data.itemInventory.map((stack) => ({ ...stack })),
       idleExcavation: { ...data.idleExcavation, assignedRelicIds: [...data.idleExcavation.assignedRelicIds], unclaimed: { ...data.idleExcavation.unclaimed } },
+      archaeology: structuredClone(data.archaeology ?? createArchaeologyState()),
       settings: normalizeSettings(data.settings),
       completedStoryIds: new Set(data.completedStoryIds),
       observationRecords: data.observationRecords.map((record) => ({ ...record })),

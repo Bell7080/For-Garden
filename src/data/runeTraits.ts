@@ -84,6 +84,21 @@ export const RUNE_TRAIT_DEFS: readonly RuneTraitDefinition[] = [
   { id: "riposte", effect: { kind: "shieldOnCritical", cooldownSeconds: 6 }, values: { uncommon: 2, rare: 3, epic: 4, legendary: 5.5 } },
 ];
 
+/**
+ * 특성 연구 아이템의 표다.
+ *
+ * **어느 아이템이 무엇을 하는지는 여기 한 곳에만 있다** — 화면이 아이템 ID로 분기하면
+ * 아이템이 하나 늘 때마다 화면이 길어지고, 서버와 화면이 다른 규칙을 말하게 된다.
+ */
+export const RUNE_TRAIT_ITEMS = {
+  /** 무작위 특성 하나. 이미 특성이 있으면 지우고 다시 부여한다. */
+  grant: { itemId: "ancient-core", minimumGrade: "uncommon" },
+  /** 영웅 이상 확정. 매우 드물게만 공급한다. */
+  grantHigh: { itemId: "refined-core", minimumGrade: "epic" },
+  /** 등급만 한 단계 확정 상승. 전설에는 쓸 수 없다. */
+  upgrade: { itemId: "restoration-crystal" },
+} as const;
+
 /** 추첨과 저장 검증이 함께 읽는 특성 ID 목록이다. */
 export const RUNE_TRAIT_IDS: readonly string[] = RUNE_TRAIT_DEFS.map(({ id }) => id);
 

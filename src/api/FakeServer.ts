@@ -30,6 +30,11 @@ import type { EventDefinition } from "../data/events/types";
 import type { EnterEventStageResponse, EventListResponse } from "./contracts";
 import { assertValidRuneInstance, canEngraveRune, canEnhanceRune, generateRune, runePartLabel, type RunePart, engraveRune as applyRuneEngraving, enhanceRune as applyRuneEnhancement, runeEnhancementAttempts, runeEnhancementIncrease, type RuneInstance, type RuneRarity } from "../core/runes";
 import { runeEnhancementGoldCost, runeSellValue } from "../data/runes";
+import { canUpgradeRuneTraitGrade, grantRuneTrait as rollRuneTrait, rerollRuneTrait as rollRuneTraitReroll, RUNE_TRAIT_RULES, upgradeRuneTraitGrade, type RuneTrait } from "../core/runeTraits";
+import { RUNE_TRAIT_IDS, RUNE_TRAIT_ITEMS } from "../data/runeTraits";
+import { canDigStrataTile, createStrataBoard, digStrataTile as digTile, nextStrataChargeAt, settleStrataCharges, strataBoardView } from "../core/strataDig";
+import { findStrataLayer, STRATA_CHARGE } from "../data/strataLayers";
+import type { ArchaeologyStateResponse, DigStrataTileRequest, DigStrataTileResponse, GrantRuneTraitRequest, GrantRuneTraitResponse, RerollRuneTraitRequest, RerollRuneTraitResponse, ResolveRuneTraitRerollRequest, ResolveRuneTraitRerollResponse, StartStrataRunRequest, UpgradeRuneTraitRequest, UpgradeRuneTraitResponse } from "./contracts";
 import { findItem } from "../data/items";
 import { staminaCurrencyRecharge } from "../data/staminaRecharge";
 import { settleStamina, staminaMaxForPlayer, staminaTiming } from "../core/stamina";
@@ -1254,6 +1259,182 @@ export class FakeServer implements GameApi {
       runeInventory: this.runeInventoryDto(),
       dailyAdRewards: { date: this.state.dailyAdRewards.date, claimsBySlot: { ...this.state.dailyAdRewards.claimsBySlot } },
     };
+  }
+
+
+  /* ── 고고학 ───────────────────────────────────────────────────────────────── */
+
+  /**
+   * 탐사 횟수를 서버 시각까지 정산한다.
+   *
+   * **모든 고고학 응답이 이 한 곳을 지난다** — 조회와 조작이 저마다 정산하면 판을 여는 순간의
+   * 횟수와 화면이 방금 읽은 횟수가 갈린다.
+   */
+  private settleStrataChargesNow(): void {
+    const settled = settleStrataCharges(this.state.archaeology.charges, this.state.archaeology.chargesUpdatedAt, this.now());
+    this.state.archaeology.charges = settled.charges;
+    this.state.archaeology.chargesUpdatedAt = settled.updatedAt;
+  }
+
+  /** 고고학 응답의 공통 몸통이다. 판은 연 칸만 담아 내려보낸다. */
+  private archaeologyDto(): ArchaeologyStateResponse {
+    const { charges, chargesUpdatedAt, board } = this.state.archaeology;
+    return {
+      charges,
+      chargesMax: STRATA_CHARGE.max,
+      nextChargeAt: chargesUpdatedAt ? nextStrataChargeAt(charges, chargesUpdatedAt) : null,
+      board: board ? strataBoardView(board) : null,
+      serverTime: this.now().toISOString(),
+    };
+  }
+
+  async archaeologyState(): Promise<ArchaeologyStateResponse> {
+    await this.delay();
+    this.settleStrataChargesNow();
+    this.persist(this.state);
+    return this.archaeologyDto();
+  }
+
+  async startStrataRun(request: StartStrataRunRequest): Promise<ArchaeologyStateResponse> {
+    await this.delay();
+    this.settleStrataChargesNow();
+    if (findStrataLayer(request.layerId) === undefined) throw new GameApiError("STRATA_RUN_NOT_FOUND", "존재하지 않는 지층입니다.");
+    // 진행 중인 판이 있으면 새로 열지 않는다 — 횟수를 이미 치른 판이라 덮으면 그 한 번이 사라진다.
+    if (this.state.archaeology.board !== null) throw new GameApiError("STRATA_RUN_ACTIVE", "아직 끝나지 않은 탐사가 있습니다.");
+    if (this.state.archaeology.charges <= 0) throw new GameApiError("STRATA_NO_CHARGE", "탐사 횟수가 부족합니다.");
+    this.state.archaeology.charges -= 1;
+    // 가득 찬 상태에서 하나를 쓰는 순간이 곧 다음 충전이 시작되는 시각이다.
+    this.state.archaeology.chargesUpdatedAt = this.now().toISOString();
+    this.state.archaeology.board = createStrataBoard({ layerId: request.layerId, random: this.random });
+    this.persist(this.state);
+    return this.archaeologyDto();
+  }
+
+  async digStrataTile(request: DigStrataTileRequest): Promise<DigStrataTileResponse> {
+    await this.delay();
+    this.settleStrataChargesNow();
+    const board = this.state.archaeology.board;
+    if (board === null) throw new GameApiError("STRATA_RUN_NOT_FOUND", "진행 중인 탐사가 없습니다.");
+    if (!canDigStrataTile(board, request.tileIndex)) throw new GameApiError("STRATA_TILE_UNAVAILABLE", "이미 열었거나 팔 수 없는 칸입니다.");
+    const result = digTile(board, request.tileIndex);
+    this.state.archaeology.board = result.board;
+    const tile = result.tile;
+    let grantedRune: RuneInstance | undefined;
+    let grantedItemId: string | undefined;
+    if (tile.kind === "rune") {
+      // 희귀도도 서버가 정한다. 어느 룬이 나올지는 발굴의 일부라 요청이 주장하지 못한다.
+      const roll = this.random();
+      const rarity: RuneRarity = roll < 0.55 ? "uncommon" : roll < 0.85 ? "rare" : roll < 0.97 ? "epic" : "legendary";
+      grantedRune = this.createGrantedRune(rarity, this.state.runeInventory);
+      this.state.runeInventory = [...this.state.runeInventory, grantedRune];
+    } else if (tile.kind === "researchItem") {
+      // 상위 아이템은 아주 드물다. 무한 과금 없이도 모이되, 흔하면 특성 연구가 리롤을 거친다.
+      const roll = this.random();
+      grantedItemId = roll < 0.78 ? RUNE_TRAIT_ITEMS.grant.itemId : roll < 0.96 ? RUNE_TRAIT_ITEMS.grantHigh.itemId : RUNE_TRAIT_ITEMS.upgrade.itemId;
+      const stack = this.state.itemInventory.find(({ itemId }) => itemId === grantedItemId);
+      if (stack) stack.quantity += tile.amount;
+      else this.state.itemInventory = [...this.state.itemInventory, { itemId: grantedItemId, quantity: tile.amount }];
+    } else if (tile.kind !== "empty") {
+      this.state.wallet[tile.kind] = Math.min(WALLET_CAPS[tile.kind], this.state.wallet[tile.kind] + tile.amount);
+    }
+    // 판을 다 판 순간 치운다 — 남겨 두면 다음에 들어온 사람이 아무것도 팔 수 없는 판을 본다.
+    if (this.state.archaeology.board && this.state.archaeology.board.digsLeft <= 0) this.state.archaeology.board = null;
+    this.persist(this.state);
+    const inventory = await this.getInventory();
+    return {
+      ...this.archaeologyDto(),
+      tile: { index: tile.index, kind: tile.kind, amount: tile.amount },
+      wallet: { ...this.state.wallet },
+      items: inventory.items,
+      ...(grantedRune ? { grantedRune: this.cloneRune(grantedRune) } : {}),
+      ...(grantedItemId ? { grantedItemId } : {}),
+    };
+  }
+
+  /** 아이템 한 개를 차감한다. 모자라면 아무것도 바꾸지 않는다. */
+  private consumeTraitItem(itemId: string): void {
+    const stack = this.state.itemInventory.find((entry) => entry.itemId === itemId);
+    if (!stack || stack.quantity < 1) throw new GameApiError("INSUFFICIENT_ITEMS", "아이템 수량이 부족합니다.");
+    this.state.itemInventory = this.state.itemInventory.flatMap((entry) =>
+      entry.itemId === itemId ? (entry.quantity > 1 ? [{ ...entry, quantity: entry.quantity - 1 }] : []) : [{ ...entry }]);
+  }
+
+  /** 룬 하나를 새 값으로 갈아 끼운 인벤토리를 만든다. */
+  private replaceRune(rune: RuneInstance): void {
+    this.state.runeInventory = this.state.runeInventory.map((candidate) => candidate.instanceId === rune.instanceId ? rune : candidate);
+  }
+
+  async grantRuneTrait(request: GrantRuneTraitRequest): Promise<GrantRuneTraitResponse> {
+    await this.delay();
+    const current = this.ownedRune(request.runeInstanceId);
+    const entry = [RUNE_TRAIT_ITEMS.grant, RUNE_TRAIT_ITEMS.grantHigh].find(({ itemId }) => itemId === request.itemId);
+    if (!entry) throw new GameApiError("RUNE_TRAIT_ITEM_INVALID", "특성을 부여할 수 있는 아이템이 아닙니다.");
+    this.consumeTraitItem(entry.itemId);
+    const trait = rollRuneTrait({ traitIds: RUNE_TRAIT_IDS, minimumGrade: entry.minimumGrade, random: this.random });
+    const rune: RuneInstance = { ...current, trait };
+    assertValidRuneInstance(rune);
+    this.replaceRune(rune);
+    // 부여로 특성이 바뀌면 들고 있던 재해석 후보는 그 특성의 것이 아니다.
+    if (this.state.archaeology.pendingReroll?.runeInstanceId === rune.instanceId) this.state.archaeology.pendingReroll = null;
+    this.persist(this.state);
+    const inventory = await this.getInventory();
+    return { rune: this.cloneRune(rune), items: inventory.items };
+  }
+
+  async rerollRuneTrait(request: RerollRuneTraitRequest): Promise<RerollRuneTraitResponse> {
+    await this.delay();
+    const current = this.ownedRune(request.runeInstanceId);
+    if (current.trait === undefined) throw new GameApiError("RUNE_TRAIT_NOT_FOUND", "재해석할 특성이 없습니다.");
+    // 아직 고르지 않은 후보가 있으면 새로 굴리지 않는다 — 새로 굴리면 먼저 뽑힌 것이 조용히 사라진다.
+    if (this.state.archaeology.pendingReroll !== null) throw new GameApiError("RUNE_TRAIT_REROLL_PENDING", "아직 고르지 않은 재해석 결과가 있습니다.");
+    const cost = RUNE_TRAIT_RULES.rerollCost[current.trait.grade];
+    if (this.state.wallet.rawStone < cost) throw new GameApiError("INSUFFICIENT_CURRENCY", "재해석에 필요한 원석이 부족합니다.");
+    const outcome = rollRuneTraitReroll({ trait: current.trait, traitIds: RUNE_TRAIT_IDS, random: this.random });
+    this.state.wallet = { ...this.state.wallet, rawStone: this.state.wallet.rawStone - cost };
+    this.state.archaeology.pendingReroll = { runeInstanceId: current.instanceId, candidate: outcome.candidate };
+    this.persist(this.state);
+    return {
+      runeInstanceId: current.instanceId,
+      current: { ...current.trait },
+      candidate: { ...outcome.candidate },
+      upgraded: outcome.upgraded,
+      byPity: outcome.byPity,
+      rawStoneSpent: cost,
+      wallet: { ...this.state.wallet },
+    };
+  }
+
+  async resolveRuneTraitReroll(request: ResolveRuneTraitRerollRequest): Promise<ResolveRuneTraitRerollResponse> {
+    await this.delay();
+    const current = this.ownedRune(request.runeInstanceId);
+    const pending = this.state.archaeology.pendingReroll;
+    if (!pending || pending.runeInstanceId !== current.instanceId) throw new GameApiError("RUNE_TRAIT_NOT_FOUND", "고를 재해석 결과가 없습니다.");
+    // **버려도 실패 횟수는 남는다** — 천장이 「후보를 받아들인 횟수」가 되면 버리기만 해서
+    // 천장을 피해 갈 수 있고, 그러면 천장이 아무것도 보장하지 않는다.
+    const kept: RuneTrait = request.keepCandidate
+      ? pending.candidate
+      : { ...(current.trait ?? pending.candidate), upgradeMisses: pending.candidate.upgradeMisses };
+    const rune: RuneInstance = { ...current, trait: kept };
+    assertValidRuneInstance(rune);
+    this.replaceRune(rune);
+    this.state.archaeology.pendingReroll = null;
+    this.persist(this.state);
+    return { rune: this.cloneRune(rune) };
+  }
+
+  async upgradeRuneTrait(request: UpgradeRuneTraitRequest): Promise<UpgradeRuneTraitResponse> {
+    await this.delay();
+    const current = this.ownedRune(request.runeInstanceId);
+    if (request.itemId !== RUNE_TRAIT_ITEMS.upgrade.itemId) throw new GameApiError("RUNE_TRAIT_ITEM_INVALID", "등급을 올릴 수 있는 아이템이 아닙니다.");
+    if (current.trait === undefined) throw new GameApiError("RUNE_TRAIT_NOT_FOUND", "등급을 올릴 특성이 없습니다.");
+    if (!canUpgradeRuneTraitGrade(current.trait)) throw new GameApiError("RUNE_TRAIT_MAX_GRADE", "전설 특성은 더 올릴 수 없습니다.");
+    this.consumeTraitItem(request.itemId);
+    const rune: RuneInstance = { ...current, trait: upgradeRuneTraitGrade(current.trait) };
+    assertValidRuneInstance(rune);
+    this.replaceRune(rune);
+    this.persist(this.state);
+    const inventory = await this.getInventory();
+    return { rune: this.cloneRune(rune), items: inventory.items };
   }
 
   /** 희귀도 계약만 받아 옵션과 고유 ID를 서버가 소유하는 새 룬 인스턴스로 발급한다. */

@@ -7,6 +7,7 @@ import { createInitialPlayerResearchProgress, type Session } from "../../src/sta
 import { createRuneInstance, engraveRune, enhanceRune, type RuneInstance, type RuneStatKey } from "../../src/core/runes";
 import { FakeServer } from "../../src/api/FakeServer";
 import { createDefaultSettings } from "../../src/core/settings";
+import { createArchaeologyState } from "../../src/core/strataDig";
 
 /** 계산 순서를 쉽게 확인할 수 있도록 모든 능력치가 같은 테스트 기본값을 쓴다. */
 const BASE: Stats = { hp: 101, def: 101, res: 101, atk: 101, ap: 101, attackSpeed: 101, moveSpeed: 101, critChance: 101, critDamage: 101, energyGain: 101, lifeSteal: 0, ferocityGain: 0 };
@@ -31,6 +32,7 @@ function makeSession(): Session {
     playerResearch: createInitialPlayerResearchProgress(),
     // 성장 테스트용 세션에도 직렬화 가능한 기본 발굴 상태를 둔다.
     idleExcavation: { assignedRelicIds: [null, null, null], lastSettledAt: null, unclaimed: { gold: 0, cheesecake: 0, fossil: 0, gems: 0 }, baseStorageSeconds: 14_400, activeProductionMultiplier: 1, storageExtensionExpiresAt: null, retroactiveExcavationGrantVersion: 1 },
+    archaeology: createArchaeologyState(),
     settings: createDefaultSettings(),
     completedStoryIds: new Set(), observationRecords: [],
     selectedStageId: null, party: ["rex"], cleared: new Set(), owned: new Set(["rex"]), favorite: "rex", bookmarked: new Set<string>(),

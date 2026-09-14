@@ -22,6 +22,7 @@ import {
   type SkirmishState,
   skirmishRelicResults,
 } from "../core/skirmish";
+import { partyRuneTraitEffects } from "../core/runeTraitEffects";
 import { getRelic } from "../data/relics";
 import { getBattleStage, getStageEnemies, stageEnemyGrowth } from "../data/stages";
 import { STAGE_ELITE } from "../data/stageElite";
@@ -375,15 +376,23 @@ export class BattleScene extends Phaser.Scene {
       : this.battleInput.mode === "expeditionBoss" ? getExpeditionNodeEnemies("boss", 20) : getStageEnemies(stage);
     const expeditionConfig = this.battleInput.mode === "expedition" ? createExpeditionSkirmishConfig(this.battleInput, players, stageEnemies)
       : this.battleInput.mode === "expeditionBoss" ? createExpeditionBossSkirmishConfig(this.battleInput, players, stageEnemies) : null;
+    // 편성이 낀 룬의 특성은 어느 전투에서나 돈다 — 원정 증강과 **같은 계약**을 쓰므로 두 몫이
+    // 한 배열에서 만난다. 장착 목록을 읽는 일은 씬이 하고, 효과로 옮기는 일은 코어가 한다.
+    const traitEffects = partyRuneTraitEffects(partyIds.map((id) => ({
+      relicId: id,
+      runes: relicProgression.getProgress(id).heartGemSlots
+        .flatMap((instanceId) => instanceId === null ? [] : session.runeInventory.filter((rune) => rune.instanceId === instanceId)),
+    })));
     this.state = createSkirmish(expeditionConfig?.playerDefs ?? players, expeditionConfig?.enemyDefs ?? stageEnemies, ARENA, bonds, breakthroughs, expeditionConfig ? {
       // 원정 입력 모델이 HP·증강·크기까지 만들고 씬은 공용 난전을 연결하기만 한다.
       playerInitialStates: expeditionConfig.playerInitialStates,
-      augmentEffects: expeditionConfig.augmentEffects,
+      augmentEffects: [...expeditionConfig.augmentEffects, ...traitEffects],
       enemyBodyScale: expeditionConfig.enemyBodyScale,
       ...(this.battleInput.mode === "expeditionBoss" ? { boss: (expeditionConfig as ReturnType<typeof createExpeditionBossSkirmishConfig>).boss } : {}),
     } : {
       // 일반 스테이지의 적도 능력치뿐 아니라 스킬 돌파 효과까지 슬롯별 스냅샷을 사용한다.
       // 능력치 복사본과 같은 formationSlot 순서로 돌파 스킬 스냅샷을 맞춘다.
+      augmentEffects: traitEffects,
       enemyBreakthroughs: stageEnemyGrowth(stage).map(({ breakthrough }) => breakthrough),
       // 정예는 혼자 서는 만큼 몸이 크다. 능력치는 건드리지 않는다 — 세기는 야성 몫이 낸다.
       ...(stage.elite === true ? { enemyBodyScale: STAGE_ELITE.bodyScale } : {}),

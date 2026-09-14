@@ -11,6 +11,7 @@ import type { RuneInstance } from "../core/runes";
 import { createDefaultSettings } from "../core/settings";
 import type { LanguageId } from "../core/language";
 import { createIdleExcavationState, type IdleExcavationState } from "../core/idleExcavation";
+import { createArchaeologyState, type ArchaeologyState } from "../core/strataDig";
 import type { ExpeditionMapNode } from "../core/expeditionMap";
 import type { ExpeditionAugmentOffer, ExpeditionAugmentSelection } from "../core/expeditionRewards";
 import { defaultUnlockedRelicSkinIds } from "../data/relicSkins";
@@ -76,6 +77,8 @@ export interface Session {
   itemInventory: ItemStack[];
   /** 서버 정산 전용 방치 발굴 상태다. 씬은 이 객체를 직접 변경하지 않는다. */
   idleExcavation: IdleExcavationState;
+  /** 고고학의 탐사 횟수·진행 중인 판·재해석 후보다. 씬은 GameApi를 통해서만 변경한다. */
+  archaeology: ArchaeologyState;
   /** 씬은 직접 쓰지 않고 SettingsManager를 거쳐 저장·이벤트와 한 처리로 변경한다. */
   settings: GameSettings;
   /** 완료한 스토리 ID. 첫 실행 진입과 회상 보상 차단에 함께 사용한다. */
@@ -220,6 +223,8 @@ export interface SaveData {
   itemInventory: ItemStack[];
   /** 서버와 동기화할 수 있는 순수 JSON 발굴 상태다. */
   idleExcavation: IdleExcavationState;
+  /** 진행 중인 판까지 그대로 담는 JSON 안전 고고학 상태다. */
+  archaeology: ArchaeologyState;
   saveVersion: number;
   settings: GameSettings;
   completedStoryIds: string[];
@@ -289,6 +294,7 @@ export function createDefaultSession(): Session {
     itemInventory: [{ itemId: "stamina-tonic", quantity: 3 }],
     // 서버 첫 조회가 현재 시각을 기준점으로 확정하며 기본 보관 시간은 서버 상수가 정한다.
     idleExcavation: createIdleExcavationState(),
+    archaeology: createArchaeologyState(),
     settings,
     completedStoryIds: new Set<string>(),
     observationRecords: [],

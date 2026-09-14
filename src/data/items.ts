@@ -45,6 +45,9 @@ export const ITEMS = [
   { id: "cheesecake", name: "치즈케이크", description: "렐릭에게 급여해 성장시킵니다.", category: "currency", icon: { kind: "currency", key: "cheesecake" }, maxStack: 9_999_999, useEffect: { kind: "none" } },
   { id: "rawStone", name: "원석", description: "지층 탐사로 캐낸 미가공 광물입니다. 룬 특성 재해석에 사용합니다.", category: "currency", icon: { kind: "currency", key: "rawStone" }, maxStack: 9_999_999, useEffect: { kind: "none" } },
   { id: "stamina-tonic", name: "에너지 드링크", description: "스테미나를 30 회복합니다.", category: "consumable", icon: { kind: "asset", key: "item-stamina-tonic" }, maxStack: 99, useEffect: { kind: "restore_stamina", amount: 30 } },
+  { id: "ancient-core", name: "미지의 고대 핵", description: "룬에 특성 한 줄을 새로 부여합니다. 이미 특성이 있으면 지우고 다시 부여합니다.", category: "material", icon: { kind: "glyph", key: "scroll" }, maxStack: 999, useEffect: { kind: "none" } },
+  { id: "refined-core", name: "정제된 고대 핵", description: "영웅 이상 등급의 특성을 확정으로 부여합니다.", category: "material", icon: { kind: "glyph", key: "scroll" }, maxStack: 999, useEffect: { kind: "none" } },
+  { id: "restoration-crystal", name: "완전 복원 결정", description: "특성의 등급을 한 단계 확정으로 올립니다. 전설 특성에는 사용할 수 없습니다.", category: "material", icon: { kind: "glyph", key: "scroll" }, maxStack: 999, useEffect: { kind: "none" } },
   { id: "rune-dust", name: "룬 가루", description: "룬 연구에 쓰이는 정제 재료입니다.", category: "material", icon: { kind: "asset", key: "item-rune-dust" }, maxStack: 999, useEffect: { kind: "none" } },
   // 교류 표본의 등급 설명은 교환 화면에 반복하지 않고 정적 도감 데이터에만 보존한다.
   { id: "sr-psychic-sample", name: "SR 심령 샘플", description: "나이트 시티에서 회수한 SR급 교류 표본입니다.", category: "material", icon: { kind: "glyph", key: "scroll" }, maxStack: 999, useEffect: { kind: "none" } },

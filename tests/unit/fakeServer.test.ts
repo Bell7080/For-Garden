@@ -8,6 +8,7 @@ import { createDefaultSettings } from "../../src/core/settings";
 import { WALLET_CAPS } from "../../src/data/economy";
 import { staminaCurrencyRecharge } from "../../src/data/staminaRecharge";
 import { staminaMaxForPlayer } from "../../src/core/stamina";
+import { createArchaeologyState } from "../../src/core/strataDig";
 
 /** API 테스트에서 같은 옵션 구성을 재현하는 보유 룬을 만든다. */
 function makeRune(instanceId = "rune-1"): RuneInstance {
@@ -27,6 +28,7 @@ function makeSession(fossil = 1000): Session {
     earnedProfileModifierIds: [], equippedProfileModifierIds: [],
     playerResearch: createInitialPlayerResearchProgress(),
     idleExcavation: { assignedRelicIds: [null, null, null], lastSettledAt: null, unclaimed: { gold: 0, cheesecake: 0, fossil: 0, gems: 0 }, baseStorageSeconds: 14_400, activeProductionMultiplier: 1, storageExtensionExpiresAt: null, retroactiveExcavationGrantVersion: 1 },
+    archaeology: createArchaeologyState(),
     settings: createDefaultSettings(),
     completedStoryIds: new Set(), observationRecords: [],
     selectedStageId: null,

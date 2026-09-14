@@ -8,7 +8,9 @@
  * 다른 것이 나오고, 「저 구역이 특별해 보인다」는 판단이 아무것도 가리키지 않게 된다.
  */
 
-import { findStrataLayer, type StrataLayerDefinition, type StrataRewardKind, type StrataZoneTone } from "../data/strataLayers";
+import { findStrataLayer, STRATA_CHARGE, type StrataLayerDefinition, type StrataRewardKind, type StrataZoneTone } from "../data/strataLayers";
+import { timeAccrualWindow } from "./timeAccrual";
+import type { RuneTrait } from "./runeTraits";
 
 /** 판에 깔린 칸 하나다. 서버가 갖고 있다가 공개된 것만 클라이언트에 내려보낸다. */
 export interface StrataTile {
@@ -168,4 +170,49 @@ export function strataBoardHaul(board: StrataBoardView): Array<{ kind: StrataRew
     totals.set(tile.kind, (totals.get(tile.kind) ?? 0) + (tile.amount ?? 0));
   }
   return [...totals].map(([kind, amount]) => ({ kind, amount }));
+}
+
+/**
+ * 고고학의 저장 상태다.
+ *
+ * 진행 중인 판을 저장에 남기는 이유는, 판을 여는 데 횟수를 하나 치렀기 때문이다 — 앱을 껐다
+ * 켜면 사라지는 판이면 그 횟수가 조용히 사라진다.
+ */
+export interface ArchaeologyState {
+  /** 남은 탐사 횟수다. */
+  charges: number;
+  /** 마지막 충전 정산 기준점이다. 없으면 다음 정산이 지금을 기준으로 잡는다. */
+  chargesUpdatedAt: string | null;
+  /** 진행 중인 판. 없으면 기록 화면만 선다. */
+  board: StrataBoard | null;
+  /**
+   * 재해석해 두고 아직 고르지 않은 특성 후보다.
+   *
+   * 서버가 들고 있는 이유는 **고르기 전에 앱이 꺼져도 원석이 사라지지 않게** 하기 위해서다 —
+   * 후보를 화면만 들고 있으면 돌아온 사람은 값만 치르고 아무것도 받지 못한다.
+   */
+  pendingReroll: { runeInstanceId: string; candidate: RuneTrait } | null;
+}
+
+/** 새 계정의 고고학 상태다. 횟수는 가득 찬 채로 시작한다. */
+export function createArchaeologyState(): ArchaeologyState {
+  return { charges: STRATA_CHARGE.max, chargesUpdatedAt: null, board: null, pendingReroll: null };
+}
+
+/** 서버 시각까지 끝난 구간만 채운다. 시각이 역행하면 기준점을 뒤로 옮기지 않는다. */
+export function settleStrataCharges(charges: number, updatedAt: string | null, now: Date): { charges: number; updatedAt: string } {
+  const safe = Math.min(STRATA_CHARGE.max, Math.max(0, Math.floor(Number.isFinite(charges) ? charges : 0)));
+  const accrual = timeAccrualWindow(updatedAt, now, Math.max(0, STRATA_CHARGE.max - safe) * STRATA_CHARGE.intervalMs);
+  if (!accrual.accepted) return { charges: safe, updatedAt: updatedAt ?? now.toISOString() };
+  const nowIso = new Date(accrual.window.serverNowMs).toISOString();
+  if (safe >= STRATA_CHARGE.max || accrual.initialized) return { charges: safe, updatedAt: nowIso };
+  const recovered = Math.min(STRATA_CHARGE.max - safe, Math.floor(accrual.window.elapsedMs / STRATA_CHARGE.intervalMs));
+  const nextMs = safe + recovered >= STRATA_CHARGE.max ? accrual.window.serverNowMs : accrual.window.startMs + recovered * STRATA_CHARGE.intervalMs;
+  return { charges: safe + recovered, updatedAt: new Date(nextMs).toISOString() };
+}
+
+/** 다음 한 번이 차는 시각이다. 가득 찼으면 null이다. */
+export function nextStrataChargeAt(charges: number, updatedAt: string): string | null {
+  if (charges >= STRATA_CHARGE.max) return null;
+  return new Date(Date.parse(updatedAt) + STRATA_CHARGE.intervalMs).toISOString();
 }

@@ -7,6 +7,7 @@ import { getExpeditionNodeEnemies } from "../../src/data/expeditionEnemies";
 import { RELICS } from "../../src/data/relics";
 import { ExpeditionBossSettlementError, ExpeditionBossSettlementFlow } from "../../src/managers/ExpeditionManager";
 import type { SettleExpeditionRunResponse, SubmitExpeditionBossScoreResponse } from "../../src/api/contracts";
+import { beginBossSettlementAttempt, bossSettlementRecoveryRoute, completeBossSettlementAttempt, createBossSettlementFailureState, failBossSettlementAttempt } from "../../src/core/bossSettlementFailure";
 
 const ARENA = { left: 130, right: 950, top: 600, bottom: 1360 };
 
@@ -125,6 +126,10 @@ describe("원정 보스 비동기 정산 복구", () => {
     await expect(harness.flow.finish(request, [])).resolves.toEqual({ score: scoreReceipt, settlement: settlementReceipt });
     expect(harness.api.submitExpeditionBossScore).toHaveBeenCalledTimes(1);
     expect(harness.api.settleExpeditionRun).toHaveBeenCalledTimes(2);
+    // 정산 재시도도 최초 전투가 만든 동일 ID를 보내 서버 멱등 영수증을 이어받아야 한다.
+    expect(harness.api.submitExpeditionBossScore).toHaveBeenCalledWith(expect.objectContaining({ requestId: "score" }));
+    expect(harness.api.settleExpeditionRun).toHaveBeenNthCalledWith(1, expect.objectContaining({ settlementId: "settle" }));
+    expect(harness.api.settleExpeditionRun).toHaveBeenNthCalledWith(2, expect.objectContaining({ settlementId: "settle" }));
   });
 
   it("정산 성공 뒤 UI 생성이 중단되어도 캐시된 최종 영수증으로 복구한다", async () => {
@@ -144,5 +149,31 @@ describe("원정 보스 비동기 정산 복구", () => {
     expect(harness.api.submitExpeditionBossScore).toHaveBeenCalledTimes(1);
     expect(harness.api.settleExpeditionRun).toHaveBeenCalledTimes(1);
     expect(harness.applyBossScore).toHaveBeenCalledTimes(1);
+  });
+
+  it("영구 정산 실패도 실패판은 한 장씩 교체하고 Boot 복구 이탈을 제공한다", async () => {
+    const harness = settlementHarness();
+    harness.api.settleExpeditionRun.mockRejectedValue(new Error("offline"));
+    const state = createBossSettlementFailureState();
+    expect(beginBossSettlementAttempt(state)).toBe(true);
+    // 전송 중의 두 번째 탭은 새 네트워크 요청이나 실패 UI를 만들 수 없다.
+    expect(beginBossSettlementAttempt(state)).toBe(false);
+    await expect(harness.flow.finish(request, [])).rejects.toMatchObject({ phase: "settlement" });
+    failBossSettlementAttempt(state);
+    expect(state).toMatchObject({ bossSettlementPending: false, failureVisible: true, failureUiGeneration: 1 });
+
+    // 재시도 시작이 기존 판을 먼저 숨기고, 다시 실패해도 최신 세대 한 장만 표시한다.
+    expect(beginBossSettlementAttempt(state)).toBe(true);
+    expect(state.failureVisible).toBe(false);
+    await expect(harness.flow.finish(request, [])).rejects.toMatchObject({ phase: "settlement" });
+    failBossSettlementAttempt(state);
+    expect(state).toMatchObject({ bossSettlementPending: false, failureVisible: true, failureUiGeneration: 2 });
+    expect(harness.api.submitExpeditionBossScore).toHaveBeenCalledTimes(1);
+    expect(harness.api.settleExpeditionRun).toHaveBeenNthCalledWith(2, expect.objectContaining({ settlementId: "settle" }));
+
+    // 이 경로에는 정산 성공이나 로컬 런 삭제 명령이 없고 Boot 목적지만 존재한다.
+    expect(bossSettlementRecoveryRoute()).toEqual({ scene: "boot", data: { destination: "lobby" } });
+    completeBossSettlementAttempt(state);
+    expect(state).toMatchObject({ bossSettlementPending: false, failureVisible: false });
   });
 });

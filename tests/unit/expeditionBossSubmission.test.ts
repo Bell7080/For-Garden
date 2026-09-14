@@ -5,9 +5,10 @@ import { calculateExpeditionRunScore } from "../../src/core/expeditionRewards";
 import { resolveExpeditionBossBattle, type ExpeditionBossAction } from "../../src/core/expeditionBoss";
 import { getExpeditionNodeEnemies } from "../../src/data/expeditionEnemies";
 import { RELICS } from "../../src/data/relics";
-import { ExpeditionBossSettlementError, ExpeditionBossSettlementFlow } from "../../src/managers/ExpeditionManager";
-import type { SettleExpeditionRunResponse, SubmitExpeditionBossScoreResponse } from "../../src/api/contracts";
+import { ExpeditionBossSettlementError, ExpeditionBossSettlementFlow, ExpeditionManager } from "../../src/managers/ExpeditionManager";
 import { beginBossSettlementAttempt, bossSettlementRecoveryRoute, completeBossSettlementAttempt, createBossSettlementFailureState, failBossSettlementAttempt } from "../../src/core/bossSettlementFailure";
+import { FakeServer } from "../../src/api/FakeServer";
+import { createDefaultSession, type Session } from "../../src/state/session";
 
 const ARENA = { left: 130, right: 950, top: 600, bottom: 1360 };
 
@@ -96,80 +97,125 @@ describe("원정 보스 제출 왕복", () => {
   });
 });
 
-/** 렌더러와 무관하게 두 await 경계의 멱등·복구 상태만 고정하는 최소 영수증이다. */
-const scoreReceipt = { score: 130, normalNodeScoreTotal: 100, bossDamageScore: 30, runScore: 130, bestScore: 130, cumulativeScore: 230, improved: true, endedAtMs: 90_000, rankBefore: 4, rankAfter: 2, weekKey: "2026-08-31" } satisfies SubmitExpeditionBossScoreResponse;
-// 흐름은 PlayerStateDto의 나머지 필드를 해석하지 않으므로 테스트 영수증은 관찰 필드만 채운다.
-const settlementReceipt = { runId: "run", settlementId: "settle", outcome: "completed", granted: { gold: 50 } } as unknown as SettleExpeditionRunResponse;
-const request = { requestId: "score", settlementId: "settle", runId: "run", nodeId: "boss" };
+type PersistPhase = "score" | "settlement";
 
-/** 테스트는 manager가 응답 적용을 소유한다는 호출 계약도 함께 관찰한다. */
-function settlementHarness() {
-  const applyBossScore = vi.fn(() => true);
-  const api = { submitExpeditionBossScore: vi.fn(async () => scoreReceipt), settleExpeditionRun: vi.fn(async () => settlementReceipt) };
-  return { flow: new ExpeditionBossSettlementFlow(api, { applyBossScore }), api, applyBossScore };
+/**
+ * 실제 Session 하나를 FakeServer와 manager가 공유하게 해 클라이언트/임시 서버의 상태 이전을 함께 본다.
+ * 개발 바로가기는 보스 도달 상태만 준비하며, pendingRewards는 앞선 노드가 서버에 맡긴 임시 전리품을 모사한다.
+ */
+function settlementHarness(failOnce?: PersistPhase) {
+  const state = createDefaultSession();
+  const managerSaves: Session[] = [];
+  const serverPersists: Session[] = [];
+  let failed = false;
+  const manager = new ExpeditionManager(state, { save: (next) => { managerSaves.push(structuredClone(next)); } }, () => new Date("2026-09-02T12:00:00Z"), true);
+  const shortcut = manager.prepareDevelopmentBossShortcut(["anky", "rex", "spino"]);
+  if (!shortcut.ok) throw new Error(`보스 테스트 런 준비 실패: ${shortcut.reason}`);
+  const boss = state.expedition.run!.nodes.find(({ type }) => type === "boss")!;
+  state.expedition.run!.pendingRewards = { gold: 73 };
+  const walletBefore = state.wallet.gold;
+  const persistSession = vi.fn((next: Session) => {
+    const phase: PersistPhase = next.expedition.run === null ? "settlement" : "score";
+    // 점수 저장 실패는 FakeServer가 점수/누적 영수증을 소유하지 않아야 하고, 최종 저장 실패는
+    // manager가 이미 확정한 보스 방문을 보존한 채 FakeServer의 원자 정산만 재시도해야 한다.
+    if (!failed && failOnce === phase) { failed = true; throw new Error(`${phase} persistence failure`); }
+    serverPersists.push(structuredClone(next));
+  });
+  const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-09-02T12:00:00Z"), persistSession });
+  const submit = vi.spyOn(server, "submitExpeditionBossScore");
+  const settle = vi.spyOn(server, "settleExpeditionRun");
+  const requests = manager.prepareBossRequests(boss.id)!;
+  const request = { ...requests, runId: state.expedition.run!.runId, nodeId: boss.id };
+  const actions = fightAndLog(["anky", "rex", "spino"], 1);
+  return { state, manager, server, flow: new ExpeditionBossSettlementFlow(server, manager), request, actions, walletBefore, managerSaves, serverPersists, persistSession, submit, settle };
 }
 
 describe("원정 보스 비동기 정산 복구", () => {
-  it("점수 제출 실패는 정산을 시작하지 않고 score 단계에서 재시도한다", async () => {
+  it("실제 구성요소가 점수·방문·임시 보상·주간 횟수·런 제거를 각각 한 번만 확정한다", async () => {
     const harness = settlementHarness();
-    harness.api.submitExpeditionBossScore.mockRejectedValueOnce(new Error("offline"));
-    await expect(harness.flow.finish(request, [])).rejects.toMatchObject({ phase: "score" } satisfies Partial<ExpeditionBossSettlementError>);
-    await expect(harness.flow.finish(request, [])).resolves.toEqual({ score: scoreReceipt, settlement: settlementReceipt });
-    expect(harness.api.submitExpeditionBossScore).toHaveBeenCalledTimes(2);
-    expect(harness.api.settleExpeditionRun).toHaveBeenCalledTimes(1);
+    const result = await harness.flow.finish(harness.request, harness.actions);
+    expect(result.score.bossDamageScore).toBeGreaterThan(0);
+    expect(result.settlement.granted).toEqual({ gold: 73 });
+    expect(harness.submit).toHaveBeenCalledTimes(1);
+    expect(harness.settle).toHaveBeenCalledTimes(1);
+    expect(harness.managerSaves.filter(({ expedition }) => expedition.run?.visitedNodeIds.includes(harness.request.nodeId))).toHaveLength(1);
+    expect(harness.state.wallet.gold).toBe(harness.walletBefore + 73);
+    expect(harness.state.expedition.playsThisWeek).toBe(1);
+    expect(harness.state.expedition.run).toBeNull();
   });
 
-  it("점수 성공 뒤 정산 실패는 점수를 다시 제출하지 않고 settlement 단계만 재시도한다", async () => {
-    const harness = settlementHarness();
-    harness.api.settleExpeditionRun.mockRejectedValueOnce(new Error("timeout"));
-    await expect(harness.flow.finish(request, [])).rejects.toMatchObject({ phase: "settlement" } satisfies Partial<ExpeditionBossSettlementError>);
-    await expect(harness.flow.finish(request, [])).resolves.toEqual({ score: scoreReceipt, settlement: settlementReceipt });
-    expect(harness.api.submitExpeditionBossScore).toHaveBeenCalledTimes(1);
-    expect(harness.api.settleExpeditionRun).toHaveBeenCalledTimes(2);
-    // 정산 재시도도 최초 전투가 만든 동일 ID를 보내 서버 멱등 영수증을 이어받아야 한다.
-    expect(harness.api.submitExpeditionBossScore).toHaveBeenCalledWith(expect.objectContaining({ requestId: "score" }));
-    expect(harness.api.settleExpeditionRun).toHaveBeenNthCalledWith(1, expect.objectContaining({ settlementId: "settle" }));
-    expect(harness.api.settleExpeditionRun).toHaveBeenNthCalledWith(2, expect.objectContaining({ settlementId: "settle" }));
+  it("점수 저장 실패는 score 소유자가 깨끗한 상태로 재시도해 누적을 한 번만 반영한다", async () => {
+    const harness = settlementHarness("score");
+    await expect(harness.flow.finish(harness.request, harness.actions)).rejects.toMatchObject({ phase: "score", causeCode: "PERSISTENCE_FAILED" } satisfies Partial<ExpeditionBossSettlementError>);
+    const result = await harness.flow.finish(harness.request, harness.actions);
+    expect(harness.submit).toHaveBeenCalledTimes(2);
+    expect(harness.settle).toHaveBeenCalledTimes(1);
+    expect(result.score.cumulativeScore).toBe(result.score.bossDamageScore);
+    expect(harness.state.wallet.gold).toBe(harness.walletBefore + 73);
+    expect(harness.state.expedition.playsThisWeek).toBe(1);
   });
 
-  it("정산 성공 뒤 UI 생성이 중단되어도 캐시된 최종 영수증으로 복구한다", async () => {
+  it("최종 정산 저장 실패는 settlement 소유자만 재시도해 보상과 플레이 횟수를 중복하지 않는다", async () => {
+    const harness = settlementHarness("settlement");
+    await expect(harness.flow.finish(harness.request, harness.actions)).rejects.toMatchObject({ phase: "settlement", causeCode: "PERSISTENCE_FAILED" } satisfies Partial<ExpeditionBossSettlementError>);
+    const result = await harness.flow.finish(harness.request, harness.actions);
+    expect(result.settlement.granted).toEqual({ gold: 73 });
+    expect(harness.submit).toHaveBeenCalledTimes(1);
+    expect(harness.settle).toHaveBeenCalledTimes(2);
+    expect(harness.state.wallet.gold).toBe(harness.walletBefore + 73);
+    expect(harness.state.expedition.playsThisWeek).toBe(1);
+    expect(harness.state.expedition.run).toBeNull();
+  });
+
+  it("페이지 재시작으로 flow 캐시가 사라져도 저장된 ID와 서버 영수증으로 복구한다", async () => {
+    const harness = settlementHarness("settlement");
+    await expect(harness.flow.finish(harness.request, harness.actions)).rejects.toMatchObject({ phase: "settlement" });
+    const storedRequest = { requestId: harness.state.expedition.run!.bossSubmissionId!, settlementId: harness.state.expedition.run!.bossSettlementId!, runId: harness.state.expedition.run!.runId, nodeId: harness.request.nodeId };
+    // 새 flow와 manager는 페이지 메모리 캐시가 모두 사라진 뒤의 Boot 복구 소유자이고, FakeServer의
+    // 영속 멱등 영수증과 Session에 먼저 저장한 ID만으로 점수 누적 없이 최종 정산을 계속한다.
+    const restartedManager = new ExpeditionManager(harness.state, { save: vi.fn() }, () => new Date("2026-09-02T12:00:00Z"));
+    const restartedFlow = new ExpeditionBossSettlementFlow(harness.server, restartedManager);
+    const recovered = await restartedFlow.finish(storedRequest, harness.actions);
+    expect(recovered.settlement.settlementId).toBe(storedRequest.settlementId);
+    expect(harness.submit).toHaveBeenCalledTimes(2);
+    expect(harness.settle).toHaveBeenCalledTimes(2);
+    expect(recovered.score.cumulativeScore).toBe(recovered.score.bossDamageScore);
+    expect(harness.state.wallet.gold).toBe(harness.walletBefore + 73);
+    expect(harness.state.expedition.playsThisWeek).toBe(1);
+  });
+
+  it("최종 커밋 직후 페이지가 재시작되어 활성 런이 없어도 두 서버 영수증을 다시 읽는다", async () => {
     const harness = settlementHarness();
-    const first = await harness.flow.finish(request, []);
-    // 첫 결과를 받은 뒤 렌더가 예외로 끊겼다고 가정해 동일 입력으로 최종 결과만 다시 얻는다.
-    const recovered = await harness.flow.finish(request, []);
+    const first = await harness.flow.finish(harness.request, harness.actions);
+    // 성공 직후 렌더 전에 재시작한 경우 런은 이미 제거됐다. 새 flow는 저장된 요청 ID를 전달받아
+    // 로컬 노드를 다시 적용하지 않고 FakeServer의 점수/정산 영수증 복구 경계를 사용해야 한다.
+    const restarted = new ExpeditionBossSettlementFlow(harness.server, new ExpeditionManager(harness.state, { save: vi.fn() }, () => new Date("2026-09-02T12:00:00Z")));
+    const recovered = await restarted.finish(harness.request, harness.actions);
     expect(recovered).toEqual(first);
-    expect(harness.api.submitExpeditionBossScore).toHaveBeenCalledTimes(1);
-    expect(harness.api.settleExpeditionRun).toHaveBeenCalledTimes(1);
-  });
-
-  it("같은 멱등 ID 재시도는 누적 점수와 정산 보상을 만드는 API를 다시 부르지 않는다", async () => {
-    const harness = settlementHarness();
-    await harness.flow.finish(request, []);
-    await harness.flow.finish({ ...request }, []);
-    expect(harness.api.submitExpeditionBossScore).toHaveBeenCalledTimes(1);
-    expect(harness.api.settleExpeditionRun).toHaveBeenCalledTimes(1);
-    expect(harness.applyBossScore).toHaveBeenCalledTimes(1);
+    expect(harness.state.wallet.gold).toBe(harness.walletBefore + 73);
+    expect(harness.state.expedition.playsThisWeek).toBe(1);
+    expect(harness.state.expedition.run).toBeNull();
   });
 
   it("영구 정산 실패도 실패판은 한 장씩 교체하고 Boot 복구 이탈을 제공한다", async () => {
     const harness = settlementHarness();
-    harness.api.settleExpeditionRun.mockRejectedValue(new Error("offline"));
+    harness.persistSession.mockImplementation((next: Session) => { if (next.expedition.run === null) throw new Error("offline"); });
     const state = createBossSettlementFailureState();
     expect(beginBossSettlementAttempt(state)).toBe(true);
     // 전송 중의 두 번째 탭은 새 네트워크 요청이나 실패 UI를 만들 수 없다.
     expect(beginBossSettlementAttempt(state)).toBe(false);
-    await expect(harness.flow.finish(request, [])).rejects.toMatchObject({ phase: "settlement" });
+    await expect(harness.flow.finish(harness.request, harness.actions)).rejects.toMatchObject({ phase: "settlement" });
     failBossSettlementAttempt(state);
     expect(state).toMatchObject({ bossSettlementPending: false, failureVisible: true, failureUiGeneration: 1 });
 
     // 재시도 시작이 기존 판을 먼저 숨기고, 다시 실패해도 최신 세대 한 장만 표시한다.
     expect(beginBossSettlementAttempt(state)).toBe(true);
     expect(state.failureVisible).toBe(false);
-    await expect(harness.flow.finish(request, [])).rejects.toMatchObject({ phase: "settlement" });
+    await expect(harness.flow.finish(harness.request, harness.actions)).rejects.toMatchObject({ phase: "settlement" });
     failBossSettlementAttempt(state);
     expect(state).toMatchObject({ bossSettlementPending: false, failureVisible: true, failureUiGeneration: 2 });
-    expect(harness.api.submitExpeditionBossScore).toHaveBeenCalledTimes(1);
-    expect(harness.api.settleExpeditionRun).toHaveBeenNthCalledWith(2, expect.objectContaining({ settlementId: "settle" }));
+    expect(harness.submit).toHaveBeenCalledTimes(1);
+    expect(harness.settle).toHaveBeenNthCalledWith(2, expect.objectContaining({ settlementId: harness.request.settlementId }));
 
     // 이 경로에는 정산 성공이나 로컬 런 삭제 명령이 없고 Boot 목적지만 존재한다.
     expect(bossSettlementRecoveryRoute()).toEqual({ scene: "boot", data: { destination: "lobby" } });

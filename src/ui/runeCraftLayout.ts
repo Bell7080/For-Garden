@@ -153,6 +153,33 @@ export const RUNE_NOTE_PANEL = {
   statInset: 52,
   /** 마지막 옵션 줄 아래끝에서 세공 진행 한 줄까지. */
   progressGap: 34,
+  /**
+   * 특성 칸.
+   *
+   * 옵션 줄과 **선 하나로 갈라** 아래에 둔다 — 특성은 룬 등급·옵션과 독립한 다른 축이라,
+   * 같은 목록에 섞으면 여섯째 옵션으로 읽힌다. 선 위는 「이 룬이 무엇을 올리나」이고 선
+   * 아래는 「이 룬이 무엇을 하나」다.
+   *
+   * 특성이 없는 룬에는 이 칸 자체가 서지 않는다 — 「특성 없음」 한 줄을 위해 판을 늘리면
+   * 대부분의 룬이 빈 칸을 달고 다니게 된다. 없다는 것은 연구 화면이 말한다.
+   */
+  trait: {
+    /** 마지막 옵션 줄 아래끝에서 구분선까지. */
+    dividerGap: 40,
+    /** 구분선에서 「특성」 이름표 윗끝까지. */
+    labelGap: 26,
+    /** 이름표 윗끝에서 등급·이름 줄 윗끝까지. */
+    nameGap: 34,
+    /** 등급·이름 줄 윗끝에서 설명 윗끝까지. */
+    bodyGap: 42,
+    /** 설명 아래끝에서 세공 진행 줄까지. */
+    bottomGap: 30,
+    /** 설명이 판 좌우에서 안으로 들어오는 거리. */
+    inset: 52,
+    labelSize: 20,
+    nameSize: 27,
+    bodySize: 21,
+  },
   /** 진행 줄에서 버튼 줄 가운데까지. */
   buttonGap: 84,
   buttonHeight: 74,
@@ -165,19 +192,38 @@ export interface RuneNoteLayout {
   statRows: readonly number[];
   progressY: number;
   buttonY: number;
+  /** 특성 칸의 자리. 특성이 없으면 null이라 화면이 그릴 것이 없다. */
+  trait: { dividerY: number; labelY: number; nameY: number; bodyY: number } | null;
 }
 
-/** 옵션 줄 수에서 쪽지의 높이와 모든 y를 구한다. */
-export function runeNoteLayout(statCount: number): RuneNoteLayout {
+/**
+ * 옵션 줄 수에서 쪽지의 높이와 모든 y를 구한다.
+ *
+ * `traitBodyHeight`는 **이미 줄바꿈까지 끝난 설명의 실제 높이**다. 글자를 재는 일은 Phaser를
+ * 아는 화면이 하고, 여기서는 그 높이를 받아 쌓기만 한다 — 줄 수를 여기서 어림하면 언어를
+ * 바꿀 때마다 설명이 버튼을 파고든다. 0이면 특성 칸이 통째로 서지 않는다.
+ */
+export function runeNoteLayout(statCount: number, traitBodyHeight = 0): RuneNoteLayout {
   const panel = RUNE_NOTE_PANEL;
   const statRows = Array.from({ length: Math.max(0, statCount) }, (_, index) => panel.firstStatY + index * panel.statStep);
   const statsBottom = (statRows.at(-1) ?? panel.firstStatY) + panel.statStep / 2;
-  const progressY = statsBottom + panel.progressGap;
+  const hasTrait = traitBodyHeight > 0;
+  const trait = hasTrait
+    ? {
+      dividerY: statsBottom + panel.trait.dividerGap,
+      labelY: statsBottom + panel.trait.dividerGap + panel.trait.labelGap,
+      nameY: statsBottom + panel.trait.dividerGap + panel.trait.labelGap + panel.trait.nameGap,
+      bodyY: statsBottom + panel.trait.dividerGap + panel.trait.labelGap + panel.trait.nameGap + panel.trait.bodyGap,
+    }
+    : null;
+  const contentBottom = trait ? trait.bodyY + traitBodyHeight + panel.trait.bottomGap : statsBottom;
+  const progressY = contentBottom + panel.progressGap;
   const buttonY = progressY + panel.buttonGap;
   return {
     height: buttonY + panel.buttonHeight / 2 + panel.bottomMargin,
     statRows,
     progressY,
     buttonY,
+    trait,
   };
 }

@@ -106,6 +106,39 @@ describe("룬 쪽지 배치표", () => {
     expect(layout.buttonY + RUNE_NOTE_PANEL.buttonHeight / 2).toBeLessThanOrEqual(layout.height - 20);
   });
 
+
+  it("특성 칸은 옵션 줄과 진행 줄 사이에 선다", () => {
+    const layout = runeNoteLayout(5, 58);
+    expect(layout.trait).not.toBeNull();
+    const trait = layout.trait!;
+    // 구분선이 마지막 옵션 줄 아래에 있고, 이름표·등급 이름·설명이 그 아래로 차례로 쌓인다.
+    expect(trait.dividerY).toBeGreaterThan((layout.statRows.at(-1) ?? 0) + RUNE_NOTE_PANEL.statStep / 2);
+    expect(trait.labelY).toBeGreaterThan(trait.dividerY);
+    expect(trait.nameY).toBeGreaterThan(trait.labelY);
+    expect(trait.bodyY).toBeGreaterThan(trait.nameY);
+    // 설명이 진행 줄과 버튼을 파고들지 않는다.
+    expect(layout.progressY).toBeGreaterThan(trait.bodyY + 58);
+    expect(layout.buttonY).toBeGreaterThan(layout.progressY);
+  });
+
+  it("특성이 없는 룬에는 그 칸이 서지 않고 판도 커지지 않는다", () => {
+    // 「특성 없음」 한 줄을 위해 판을 늘리면 대부분의 룬이 빈 칸을 달고 다닌다.
+    expect(runeNoteLayout(5).trait).toBeNull();
+    expect(runeNoteLayout(5).height).toBe(runeNoteLayout(5, 0).height);
+    expect(runeNoteLayout(5, 58).height).toBeGreaterThan(runeNoteLayout(5).height);
+  });
+
+  it("특성 설명이 길어진 만큼만 판이 자란다", () => {
+    // 줄 수를 어림해 박아 두면 언어를 바꿀 때마다 설명이 버튼을 파고든다.
+    expect(runeNoteLayout(5, 116).height - runeNoteLayout(5, 58).height).toBe(58);
+  });
+
+  it("특성이 붙은 전설 룬도 화면과 뒤로가기 자리를 넘지 않는다", () => {
+    const layout = runeNoteLayout(5, 116);
+    expect(RUNE_NOTE_PANEL.centerY - layout.height / 2).toBeGreaterThanOrEqual(24);
+    expect(RUNE_NOTE_PANEL.centerY + layout.height / 2).toBeLessThan(BACK_SLOT.y - BACK_BUTTON_SIZE / 2);
+  });
+
   it("표식 칩 줄이 액자와 겹치지 않는다", () => {
     const chip = RUNE_NOTE_PANEL.chip;
     expect(chip.y + chip.size / 2).toBeLessThan(RUNE_NOTE_PANEL.frame.y - RUNE_NOTE_PANEL.frame.size / 2);

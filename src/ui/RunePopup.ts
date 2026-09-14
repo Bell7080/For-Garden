@@ -18,6 +18,8 @@ import { RUNE_CRAFT_MARKS, RUNE_CRAFT_PANEL, RUNE_NOTE_PANEL, runeCraftLayout, r
 import { planRuneCraftTap, RUNE_CRAFT_IMPACT, RUNE_CRAFT_STRIKE, RUNE_MARK, type RuneCraftImpactKind } from "./runeCraftMotion";
 import { addEmptyRuneMark, addRuneFrame, addRuneMark, RUNE_ACCENT, RuneChanceLine } from "./runeIcons";
 import { addCurrencyChip } from "./CurrencyChip";
+import { KeywordManager } from "../managers/KeywordManager";
+import { runeTraitView } from "./runeTraitPresentation";
 import { addMarkChip } from "./MarkChip";
 import { formatCurrency } from "../core/formatCurrency";
 import { COLOR, textStyle } from "./theme";
@@ -200,9 +202,15 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
   const accent = RUNE_ACCENT[rune.rarity];
   const rarity = runeRarityLabel(rune.rarity);
   const stats = [...rune.mainStats, ...rune.subStats];
-  // 높이는 손으로 적지 않고 실제로 쌓인 옵션 줄에서 거꾸로 구한다 — 박아 두면 고급 룬은 아래가
-  // 통째로 비고 전설 룬은 마지막 줄이 판을 넘는다.
-  const layout = runeNoteLayout(stats.length);
+  // **특성 설명을 먼저 재고 그 높이에서 판을 구한다.** 줄 수를 어림해 박아 두면 언어를 바꿀
+  // 때마다 설명이 버튼을 파고든다(스킬 쪽지와 같은 방식이다). 규칙어 태그가 섞인 글이라
+  // 재는 일도 그리는 일과 같은 공용 경계 하나가 한다.
+  const traitView = rune.trait ? runeTraitView(rune.trait) : undefined;
+  const keywords = new KeywordManager(scene, popups);
+  const traitBody = traitView
+    ? keywords.layout(traitView.description, { width: panel.width - panel.trait.inset * 2, size: panel.trait.bodySize, color: COLOR.ink })
+    : undefined;
+  const layout = runeNoteLayout(stats.length, traitBody ? Math.max(1, traitBody.getBounds().height) : 0);
   popups.open({ width: panel.width, height: layout.height, title: t("rune.title"), y: panel.centerY, dim: true, backButton: true, onClose: options.onClose }, (body, close) => {
     const top = -layout.height / 2;
     // 판매 버튼은 자물쇠 칩이 다시 칠할 대상이라 먼저 만들고, 자리는 아래 버튼 줄에서 정한다.
@@ -242,6 +250,25 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
       }
       body.add(scene.add.text(-statLeft, y, `+${stat.value}%`, textStyle({ role: "display", size: 24, color: main ? hex(accent) : COLOR.ink })).setOrigin(1, 0.5));
     });
+
+    // **특성은 선 하나로 갈라 아래에 선다.** 옵션 목록에 섞으면 여섯째 옵션으로 읽히는데,
+    // 특성은 룬 등급·옵션과 독립한 다른 축이다 — 선 위는 이 룬이 무엇을 올리나, 선 아래는
+    // 이 룬이 무엇을 하나다.
+    if (layout.trait && traitView && traitBody && rune.trait) {
+      const traitLeft = -panel.width / 2 + panel.trait.inset;
+      body.add(drawHairline(scene, 0, top + layout.trait.dividerY, panel.hairlineWidth, { color: accent, alpha: 0.32 }));
+      body.add(scene.add.text(traitLeft, top + layout.trait.labelY, t("rune.trait.title"),
+        textStyle({ role: "emphasis", size: panel.trait.labelSize, color: COLOR.inkDim })).setOrigin(0, 0));
+      // 등급은 **특성 자신의 등급**이라 룬 등급색이 아니라 그 등급의 색을 쓴다 — 고급 룬에
+      // 전설 특성이 붙을 수 있고, 그 한 줄이 이 룬을 보관할 이유를 말한다.
+      const grade = scene.add.text(traitLeft, top + layout.trait.nameY, `[${traitView.gradeLabel}]`,
+        textStyle({ role: "emphasis", size: panel.trait.nameSize, color: hex(RUNE_ACCENT[rune.trait.grade]) })).setOrigin(0, 0);
+      body.add(grade);
+      body.add(scene.add.text(traitLeft + grade.width + 12, top + layout.trait.nameY, traitView.name,
+        textStyle({ role: "display", size: panel.trait.nameSize })).setOrigin(0, 0));
+      traitBody.setPosition(traitLeft, top + layout.trait.bodyY);
+      body.add(traitBody);
+    }
 
     // 세공 진행은 숫자 하나로만 알린다. 자세한 결과 표식은 세공 화면이 맡는다.
     const attempts = runeEnhancementAttempts(rune);

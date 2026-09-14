@@ -22,6 +22,7 @@ import { EffectOverlayScene } from "./scenes/EffectOverlayScene";
 import { initializeAudioManager } from "./managers/AudioManager";
 import { InteractionScene } from "./scenes/InteractionScene";
 import { PvpPreviewScene } from "./scenes/PvpPreviewScene";
+import { setDebugWebglRestore } from "./debug";
 
 const game = new Phaser.Game({
   // Puppet 원본 indexed mesh를 GPU로 직접 그리므로 중복 정점을 만드는 Canvas 폴백은 사용하지 않는다.
@@ -64,6 +65,23 @@ const game = new Phaser.Game({
   // 원정은 로비 출격 선택판에서 진입하며 준비/이어하기 상태를 같은 씬에서 소유한다.
   // 누른 자리에 답하는 겹은 모든 화면 위에 서야 하므로 목록의 맨 끝에 둔다.
   scene: [BootScene, TitleScene, OpeningScene, LobbyScene, PvpPreviewScene, InteractionScene, ExpeditionScene, SortiePreviewScene, SettingsScene, FriendsScene, ShopScene, PremiumScene, RelicsScene, LabScene, ArchaeologyScene, StageMapScene, StageStoryScene, PartyScene, BattleScene, EffectOverlayScene],
+});
+
+// 모바일 백그라운드 복귀를 검증하도록 DOM 사건과 실제 Phaser 렌더 재개만 관찰한다.
+let restoredEvents = 0; let renderedFramesAfterRestore = 0; let waitingForRestoredRender = false;
+setDebugWebglRestore({ restoredEvents, renderedFramesAfterRestore, renderingResumed: false });
+game.canvas.addEventListener("webglcontextlost", () => {
+  renderedFramesAfterRestore = 0; waitingForRestoredRender = true;
+  setDebugWebglRestore({ restoredEvents, renderedFramesAfterRestore, renderingResumed: false });
+});
+game.canvas.addEventListener("webglcontextrestored", () => {
+  restoredEvents += 1; waitingForRestoredRender = true;
+  setDebugWebglRestore({ restoredEvents, renderedFramesAfterRestore, renderingResumed: false });
+});
+game.events.on(Phaser.Core.Events.POST_RENDER, () => {
+  if (!waitingForRestoredRender) return;
+  renderedFramesAfterRestore += 1;
+  setDebugWebglRestore({ restoredEvents, renderedFramesAfterRestore, renderingResumed: true });
 });
 
 // Phaser Sound 생성과 브라우저 수명 주기 처리는 씬이 아니라 중앙 오디오 관리자에 연결한다.

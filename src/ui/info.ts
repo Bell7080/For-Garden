@@ -6,7 +6,7 @@ import type { Combatant } from "../core/combatTypes";
 import { runePartLabel, runeRarityLabel, type RunePart } from "../core/runes";
 import { previewSkillDamage } from "../core/damage";
 import type { BasicAttack, Element, RelicDef, RelicProgress, RelicRarity, Role, Passive, Skill, SkillIconAssetId, Stats, Ultimate } from "../core/types";
-import { setDebugFeedButton, setDebugInfoGemSlots, setDebugInfoOpen } from "../debug";
+import { setDebugFeedButton, setDebugInfoAssetReady, setDebugInfoGemSlots, setDebugInfoOpen } from "../debug";
 import { formatCurrency } from "../core/formatCurrency";
 import { RELICS } from "../data/relics";
 import { KeywordManager } from "../managers/KeywordManager";
@@ -1918,6 +1918,7 @@ export class InfoManager {
     if (request !== this.portraitRequest) { portrait.destroy(); return; }
     this.portrait?.destroy();
     this.portrait = portrait;
+    setDebugInfoAssetReady({ portrait: true });
     // 세운 그 자리가 곧 제자리다. 전신 감상은 여기로만 되돌아온다.
     this.portraitHome = { x: portrait.x, y: portrait.y, scale: portrait.scaleX };
     // 화면 아무 데나 눌러도 통통 튀면 정신이 없다. 코어 관절 둘레의 몸통에서만 반응한다.
@@ -1945,6 +1946,7 @@ export class InfoManager {
     if (request !== this.figureRequest) { figure.destroy(); return; }
     this.figure?.destroy();
     this.figure = figure;
+    setDebugInfoAssetReady({ sd: true });
     enableHitOnClick(this.scene, figure);
     figure.setVisible(this.portraitWanted && this.root.visible);
   }
@@ -2126,6 +2128,8 @@ export class InfoManager {
     // 미보유 개체는 원화·스킬을 감추고 번호와 실루엣만 남긴다.
     for (const icon of this.skillIcons) icon.setVisible(owned);
     this.portraitWanted = owned;
+    // 이전 인물의 완료값을 지워 새 원화·SD가 모두 교체된 순간만 관찰하게 한다.
+    setDebugInfoAssetReady(owned ? { portrait: false, sd: false } : undefined);
     this.portrait?.setVisible(false);
     this.figure?.setVisible(false);
     if (owned) {

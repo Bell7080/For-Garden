@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
 import { startAfterOpening } from "./openingSave";
-import { captureGame, tap as tapGame, tapUntil } from "./canvasInput";
+import { captureGame, tap as tapGame, tapUntil, waitForDebugState } from "./canvasInput";
 
 /** 타이틀에서 기본 작전의 편성 화면까지 공용 UI만 눌러 이동한다. */
 async function openParty(page: Page): Promise<void> {
@@ -41,7 +41,8 @@ test("도디·메테의 도감 전신과 루카 포함 편성·전투 SD 에셋�
   // 보유 순서는 토리카·렉시아·스피나·루카·도디·메테이고, 그리드는 다섯 칸마다 줄이 바뀐다.
   for (const [x, y] of [[116, 1080], [328, 1080], [540, 1080]] as const) await tapGame(page, x, y);
   for (const [x, y] of [[964, 1080], [116, 1324], [752, 1080]] as const) await tapGame(page, x, y);
-  await page.waitForTimeout(1_000); // 비동기 Puppet 조립이 캡처 전에 세 자리를 모두 채우게 한다.
+  // 비동기 조립 결과로 PartyScene에 세 SD 컨테이너가 실제 생길 때까지 기다린다.
+  await waitForDebugState(page, () => (window.__PF_DEBUG?.puppetContainers?.PartyScene ?? 0) >= 3, true, { timeout: 60_000 });
   await captureGame(page, `test-results/${testInfo.project.name}-asset-dodi-mette-luka-party-sd.png`);
   await tapGame(page, BASE_WIDTH / 2, 1700);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("battle");
@@ -62,27 +63,27 @@ test("토리카 기본 외형에서 스킨을 장착해 도감·로비·편성·
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toContain("외형");
   // 두 resolver Puppet이 비동기 addAt으로 카드에 조립된 뒤, 각 카드의 선택 배율을 물려받으면서도
   // 카드 중심(x=0)과 공용 바닥선에 나란히 선 완성 상태를 시각 회귀로 남긴다.
-  await page.waitForTimeout(800);
+  await waitForDebugState(page, () => (window.__PF_DEBUG?.puppetContainers?.RelicsScene ?? 0) >= 3, true, { timeout: 60_000 });
   await captureGame(page, `test-results/${testInfo.project.name}-torika-appearance-default.png`);
 
   // 오른쪽 추가 외형을 고른 뒤 공용 장착 버튼으로 manager 경계를 호출한다.
   await tapGame(page, 750, 870);
   await tapGame(page, 540, 1460);
-  await page.waitForTimeout(800);
+  await waitForDebugState(page, () => window.__PF_DEBUG?.infoAssetReady, { portrait: true, sd: true }, { timeout: 60_000 });
   await captureGame(page, `test-results/${testInfo.project.name}-torika-appearance-skin001.png`);
 
   // 선택판을 닫아 같은 스킨 전신을 도감 정보창 자체에서도 캡처한다.
   await tapGame(page, 958, 382);
-  await page.waitForTimeout(500);
+  await waitForDebugState(page, () => window.__PF_DEBUG?.infoAssetReady, { portrait: true, sd: true }, { timeout: 60_000 });
   await captureGame(page, `test-results/${testInfo.project.name}-torika-skin001-catalog-fullbody.png`);
   await tapGame(page, BASE_WIDTH - 106, BASE_HEIGHT - 120);
   await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT - 90);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
-  await page.waitForTimeout(800);
+  await waitForDebugState(page, () => (window.__PF_DEBUG?.puppetContainers?.LobbyScene ?? 0) >= 1, true, { timeout: 60_000 });
   await captureGame(page, `test-results/${testInfo.project.name}-torika-skin001-lobby-fullbody.png`);
 
   await openParty(page);
-  await page.waitForTimeout(800);
+  await waitForDebugState(page, () => (window.__PF_DEBUG?.puppetContainers?.PartyScene ?? 0) >= 3, true, { timeout: 60_000 });
   await captureGame(page, `test-results/${testInfo.project.name}-torika-skin001-party-sd.png`);
   await tapGame(page, BASE_WIDTH / 2, 1700);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("battle");
@@ -94,7 +95,7 @@ test("토리카 기본 외형에서 스킨을 장착해 도감·로비·편성·
   await page.waitForFunction(() => window.__PF_DEBUG?.ready === true);
   await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
-  await page.waitForTimeout(800);
+  await waitForDebugState(page, () => (window.__PF_DEBUG?.puppetContainers?.LobbyScene ?? 0) >= 1, true, { timeout: 60_000 });
   await captureGame(page, `test-results/${testInfo.project.name}-torika-skin001-restored-lobby-fullbody.png`);
 });
 
@@ -108,6 +109,6 @@ test("스킨 ZIP 하나가 실패해도 타이틀과 기본 토리카 외형으�
   await captureGame(page, `test-results/${testInfo.project.name}-skin-zip-failure-title-continues.png`);
   await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
-  await page.waitForTimeout(800);
+  await waitForDebugState(page, () => (window.__PF_DEBUG?.puppetContainers?.LobbyScene ?? 0) >= 1, true, { timeout: 60_000 });
   await captureGame(page, `test-results/${testInfo.project.name}-skin-zip-failure-default-torika.png`);
 });

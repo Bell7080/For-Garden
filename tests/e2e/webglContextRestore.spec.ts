@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { startAfterOpening } from "./openingSave";
-import { canvasBox, gamePoint, tap } from "./canvasInput";
+import { canvasBox, gamePoint, tap, waitForDebugState } from "./canvasInput";
 
 /**
  * 모바일에서 앱을 백그라운드로 보냈다 돌아오면 WebGL 컨텍스트가 날아가는 것이 정상 동작이다.
@@ -30,26 +30,28 @@ test("컨텍스트를 잃었다 되찾아도 죽은 GL program으로 그리지 �
   await tap(page, center.x, center.y);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   // 애착 렐릭 Puppet이 실제로 설 때까지 기다린다. 서 있지 않으면 잃을 것도 없어 검사가 헛돈다.
-  await page.waitForTimeout(4000);
+  await waitForDebugState(page, () => (window.__PF_DEBUG?.puppetContainers?.LobbyScene ?? 0) >= 1, true, { timeout: 60_000 });
 
   const restored = await page.evaluate(async () => {
     const canvas = document.querySelector("canvas") as HTMLCanvasElement;
     const gl = canvas.getContext("webgl") as WebGLRenderingContext;
     const ext = gl.getExtension("WEBGL_lose_context");
     if (!ext) return false;
-    const back = new Promise<void>((r) => canvas.addEventListener("webglcontextrestored", () => r(), { once: true }));
+    // 이벤트 수신기를 먼저 걸어 빠른 구현에서도 context-lost 통지를 놓치지 않는다.
+    const lost = new Promise((resolve) => canvas.addEventListener("webglcontextlost", resolve, { once: true }));
     ext.loseContext();
-    await new Promise((r) => setTimeout(r, 300));
+    await lost;
     ext.restoreContext();
-    await Promise.race([back, new Promise((r) => setTimeout(r, 4000))]);
-    // 복구 이전의 실패는 세지 않는다. 우리가 보는 것은 "돌아온 뒤에도 죽은 것을 쓰는가"다.
-    (window as unknown as { __deadProgramUses: number }).__deadProgramUses = 0;
     return true;
   });
   expect(restored).toBe(true);
 
-  // 복구 뒤 여러 프레임을 그리게 둔다.
-  await page.waitForTimeout(4000);
+  // restored 사건과 그 뒤 실제 post-render가 모두 관찰될 때까지 기다린다.
+  await waitForDebugState(page, () => (window.__PF_DEBUG?.webglRestore?.restoredEvents ?? 0) >= 1, true, { timeout: 20_000 });
+  await waitForDebugState(page, () => (window.__PF_DEBUG?.webglRestore?.renderedFramesAfterRestore ?? 0) >= 3 && window.__PF_DEBUG?.webglRestore?.renderingResumed === true, true, { timeout: 20_000 });
+  // 복구 이후의 렌더만 세도록 실제 복구 완료 뒤 계측값을 초기화한다.
+  await page.evaluate(() => { (window as unknown as { __deadProgramUses: number }).__deadProgramUses = 0; });
+  await waitForDebugState(page, () => (window.__PF_DEBUG?.webglRestore?.renderedFramesAfterRestore ?? 0) >= 5, true);
   const deadUses = await page.evaluate(() => (window as unknown as { __deadProgramUses: number }).__deadProgramUses);
   expect(deadUses).toBe(0);
 });

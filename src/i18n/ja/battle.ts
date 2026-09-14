@@ -8,6 +8,7 @@ export const BATTLE_JA = {
 
   "battle.settle.failed": "結果画面を復旧できませんでした。",
   "battle.settle.retry": "精算を再試行",
+  "battle.settle.recoverLobby": "状態を復旧してロビーへ",
   "battle.settle.done": "遠征観測完了",
   "battle.settle.reward": "精算報酬",
   "battle.settle.noReward": "精算通貨なし",

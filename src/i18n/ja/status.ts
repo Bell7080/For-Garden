@@ -22,6 +22,8 @@ export const STATUS_JA = {
   "status.poison.detail": "毎秒 {amount} · 残り {time}",
   "status.reagent": "試薬",
   "status.reagent.detail": "{stacks}/3層 · 残り {time}",
+  "status.shimmer": "きらっ!",
+  "status.shimmer.detail": "次に当たると印が消える",
   "status.weakpoint": "弱点捕捉",
   "status.weakpoint.detail": "デュオが攻撃すると追加ダメージ",
   "status.overpaint": "重ね塗り",

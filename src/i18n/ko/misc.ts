@@ -57,7 +57,6 @@ export const MISC_KO = {
   "skill.effect.buff": "강화",
   "skill.gauge": "게이지 {cost}",
   "skill.duration": "{seconds}초 동안",
-  "skill.keywordHint": "강조된 말을 누르면 뜻이 열린다",
 
   // 고고학
   "archaeology.shop": "상점",

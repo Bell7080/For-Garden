@@ -27,6 +27,8 @@ export const STATUS_KO = {
   "status.poison.detail": "매초 {amount} · {time} 남음",
   "status.reagent": "시약",
   "status.reagent.detail": "{stacks}/3겹 · {time} 남음",
+  "status.shimmer": "반짝!",
+  "status.shimmer.detail": "다음에 맞으면 표식이 사라진다",
   "status.weakpoint": "약점 포착",
   "status.weakpoint.detail": "듀오가 때리면 추가 피해",
   "status.overpaint": "덧칠",

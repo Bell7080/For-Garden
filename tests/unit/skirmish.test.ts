@@ -651,12 +651,12 @@ describe("루카 전투 계약", () => {
     expect(enemy.targetId).not.toBe(luka.id); expect({ x: luka.x, y: luka.y }).toEqual(position);
   });
 
-  it("는 폭주 중 자신과 동일 표적 생존 아군만 공속을 25% 높이고 복수 오라는 중첩하지 않는다", () => {
+  it("는 폭주 중 자신과 동일 표적 생존 아군만 공속을 40% 높이고 복수 오라는 중첩하지 않는다", () => {
     const state = newSkirmish(["luka", "luka", "rex", "anky"], ["amo", "ripa"]);
     const [first, second, same, other] = state.fighters; first.ferocityFever = second.ferocityFever = true;
     first.targetId = second.targetId = same.targetId = "enemy-0"; other.targetId = "enemy-1";
-    expect(currentAttackSpeed(first, state)).toBeCloseTo(first.def.stats.attackSpeed * 1.25);
-    expect(currentAttackSpeed(same, state)).toBeCloseTo((same.def.stats.attackSpeed + (same.def.passive.attackSpeedPercent ?? 0)) * 1.25);
+    expect(currentAttackSpeed(first, state)).toBeCloseTo(first.def.stats.attackSpeed * 1.4);
+    expect(currentAttackSpeed(same, state)).toBeCloseTo((same.def.stats.attackSpeed + (same.def.passive.attackSpeedPercent ?? 0)) * 1.4);
     expect(currentAttackSpeed(other, state)).toBe(other.def.stats.attackSpeed);
     same.hp = 0; expect(currentAttackSpeed(same, state)).toBe(same.def.stats.attackSpeed + (same.def.passive.attackSpeedPercent ?? 0));
   });
@@ -687,6 +687,11 @@ describe("루카 전투 계약", () => {
   it("는 주 대상 최종 HP 손실의 75%를 주 대상 기준 가장 가까운 다른 적에게만 전이한다", () => {
     const state = newSkirmish(["luka"], ["amo", "ripa", "toby"]); const [luka, primary, near, far] = state.fighters;
     primary.x = 100; primary.y = 100; near.x = 110; near.y = 100; far.x = 500; far.y = 900; luka.energy = 90; luka.targetId = primary.id;
+    // 약점 관통은 쓰는 순간 **방어력이 가장 낮은 적**으로 뛴다. 이 편이 재는 것은 전이라
+    // 주 대상이 흔들리지 않도록 그 적을 가장 무르게 두고, 옆 적은 그보다 단단하게 둔다.
+    primary.def = { ...primary.def, stats: { ...primary.def.stats, def: 0 } };
+    near.def = { ...near.def, stats: { ...near.def.stats, def: 40 } };
+    far.def = { ...far.def, stats: { ...far.def.stats, def: 40 } };
     const primaryBefore = primary.hp; const nearBefore = near.hp;
     const events = fireUltimate(state, luka.id, () => 0.99);
     const primaryLoss = primaryBefore - primary.hp; const transfer = events.find((event): event is Extract<SkirmishEvent, { kind: "attack" }> => event.kind === "attack" && event.skill === "transfer");
@@ -698,6 +703,9 @@ describe("루카 전투 계약", () => {
     const solo = newSkirmish(["luka"], ["amo"]); solo.fighters[0].energy = 90;
     expect(fireUltimate(solo, "player-0").some((event) => event.kind === "attack" && event.skill === "transfer")).toBe(false);
     const state = newSkirmish(["luka"], ["amo", "ripa"]); const [luka, primary, secondary] = state.fighters;
+    // 순간이동이 표적을 다시 고르므로 주 대상을 가장 무르게 두어 이 편의 기준을 고정한다.
+    primary.def = { ...primary.def, stats: { ...primary.def.stats, def: 0 } };
+    secondary.def = { ...secondary.def, stats: { ...secondary.def.stats, def: 40 } };
     luka.energy = 90; luka.targetId = primary.id; primary.hp = 20; primary.shield = { amount: 10, providerId: null }; secondary.shield = { amount: 5, providerId: null };
     const before = secondary.hp; const events = fireUltimate(state, luka.id, () => 0);
     // 치명타·방어 계산은 주 피해에만 반영되고 과잉 제한된 20 HP의 75%=15가 전이되어 보호막 5 뒤 10만 HP에 적용된다.
@@ -1379,7 +1387,8 @@ describe("능력치 반영", () => {
     const dealt = targetBefore - target.hp;
     expect(attacker.energy).toBe(40);
     expect(attacker.ferocity).toBeCloseTo(FEROCITY_RULES.basicGain * 1.5);
-    expect(attacker.hp - hpBefore).toBeCloseTo(dealt * 0.25);
+    // 태생 25퍼센트포인트에 렉시아 패시브의 25퍼센트포인트가 더해진다.
+    expect(attacker.hp - hpBefore).toBeCloseTo(dealt * 0.5);
   });
 
   it("은 광역 실제 피해에는 흡혈하고 별도 고정 출혈 피해에는 흡혈하지 않는다", () => {
@@ -1528,11 +1537,11 @@ describe("도디 정적 전투 계약", () => {
     expect(dodi.basic.power).toBe(50);
   });
 
-  it("폭주 중에만 공격 속도 x2, 즉 공격 간격 50%를 적용한다", () => {
+  it("폭주 중에만 공격 속도 x1.5, 즉 공격 간격을 그만큼 줄인다", () => {
     const [dodi] = readyDodiBattle().fighters;
     const calm = attackInterval(dodi);
     dodi.ferocityFever = true;
-    expect(attackInterval(dodi)).toBeCloseTo(calm / 2);
+    expect(attackInterval(dodi)).toBeCloseTo(calm / 1.5);
     dodi.hp = 0;
     // 사망자는 행동하지 않으며 데이터 배율 자체가 사망 상태를 되살리지 않는다.
     expect(dodi.hp).toBe(0);
@@ -2063,7 +2072,7 @@ describe("렉시아 전투 계약", () => {
     expect(hit).toMatchObject({ critical: true, amount: computeDamage(boosted, foe, { ...rex.def.basic, kind: "basic", isCritical: true }) });
   });
 
-  it("은 폭주 중 출혈 중인 적을 물면 확정 치명타가 되고 모든 피해를 25% 흡혈한다", () => {
+  it("은 폭주 중 출혈 중인 적을 물면 확정 치명타가 되고 패시브·폭주를 더해 50% 흡혈한다", () => {
     const { state, rex, foe } = readyRex();
     rex.hp = rex.maxHp / 2; rex.ferocity = 100; rex.ferocityFever = true;
     // 이미 물어뜯어 피가 흐르는 자리를 다시 무는 상황이다. 확률이 아니라 이 상태가 조건이므로
@@ -2072,10 +2081,13 @@ describe("렉시아 전투 계약", () => {
     const before = rex.hp;
     const hit = stepSkirmish(state, 1 / 60, () => 0.99).find((event) => event.kind === "attack")!;
     expect(hit).toMatchObject({ critical: true });
-    expect(rex.hp - before).toBeCloseTo(hit.amount * 0.25);
+    // 패시브 25퍼센트포인트 + 폭주 25퍼센트포인트다. 흡혈은 전 개체 공통 0이라 곱이 아니라
+    // 덧셈으로만 이 축을 끌어다 쓸 수 있다.
+    expect(rex.hp - before).toBeCloseTo(hit.amount * 0.5);
     rex.ferocityFever = false; rex.attackCooldown = 0; const hp = rex.hp;
     stepSkirmish(state, 1 / 60, () => 0.49);
-    expect(rex.hp).toBe(hp);
+    // 폭주가 꺼져도 패시브의 몫은 남으므로 무는 만큼 계속 돌아온다.
+    expect(rex.hp).toBeGreaterThan(hp);
   });
 
   it("은 폭주 중이어도 출혈이 없는 적에게는 확정 치명타를 주지 않는다", () => {
@@ -2097,14 +2109,15 @@ describe("렉시아 전투 계약", () => {
     expect(hit).toMatchObject({ critical: true });
   });
 
-  it("은 300% 단일 궁극기에 제 게이지를 쓰고 실제 피해의 50%만 상한까지 회복한다", () => {
+  it("은 300% 단일 궁극기에 제 게이지를 쓰고 실제 피해만큼만 상한까지 회복한다", () => {
     const { state, rex, foe } = readyRex();
     expect(rex.def.ultimate).toMatchObject({ power: 300, targeting: "single", damageHealingPercent: 50 });
     rex.energy = rex.def.ultimate.cost; rex.hp = rex.maxHp - 10; foe.hp = 5;
     const events = fireUltimate(state, rex.id, () => 0.99);
     const hit = events.find((event) => event.kind === "attack")!;
     expect(hit.amount).toBeGreaterThan(foe.hp); // 사건의 계산 피해는 남은 HP보다 커도 회복은 실제 5만 본다.
-    expect(rex.hp).toBe(rex.maxHp - 7.5);
+    // 패시브 25퍼센트포인트 + 궁극기 50퍼센트포인트 = 75%이며, 실제로 깎인 5만 본다.
+    expect(rex.hp).toBe(rex.maxHp - 6.25);
     expect(rex.energy).toBe(0);
 
     const capped = readyRex();
@@ -2112,11 +2125,11 @@ describe("렉시아 전투 계약", () => {
     capped.rex.ferocity = 100; capped.rex.ferocityFever = true; capped.rex.energy = capped.rex.def.ultimate.cost;
     capped.rex.hp = capped.rex.maxHp - 1;
     fireUltimate(capped.state, capped.rex.id, () => 0.99);
-    // 기본 10퍼센트포인트 + 폭주 25퍼센트포인트 + 궁극기 50퍼센트포인트를 합산해도 최대 체력을 넘지 않는다.
+    // 기본 10 + 패시브 25 + 폭주 25 + 궁극기 50퍼센트포인트를 합산해도 최대 체력을 넘지 않는다.
     expect(capped.rex.hp).toBe(capped.rex.maxHp);
   });
 
-  it("은 궁극기 피해에 패시브 공격력과 세 흡혈 원천을 합산하고 피해 반올림 뒤 회복한다", () => {
+  it("은 궁극기 피해에 패시브 공격력과 네 흡혈 원천을 합산하고 피해 반올림 뒤 회복한다", () => {
     const { state, rex, foe } = readyRex();
     // 158 × 1.25 × 3 × 1.35 = 799.875를 피해 800으로 반올림한 뒤 85%를 회복한다.
     rex.def = { ...rex.def, stats: { ...rex.def.stats, lifeSteal: 10 } };
@@ -2126,8 +2139,8 @@ describe("렉시아 전투 계약", () => {
     rex.hp = 100; rex.ferocity = 100; rex.ferocityFever = true; rex.energy = rex.def.ultimate.cost;
     const hit = fireUltimate(state, rex.id, () => 0.99).find((event) => event.kind === "attack")!;
     expect(hit).toMatchObject({ critical: false, amount: 800 });
-    // 기본 10퍼센트포인트 + 폭주 25퍼센트포인트 + 궁극기 50퍼센트포인트 = 85%이며 회복량 자체는 재반올림하지 않는다.
-    expect(rex.hp).toBeCloseTo(100 + 800 * 0.85);
+    // 기본 10 + 패시브 25 + 폭주 25 + 궁극기 50퍼센트포인트 = 110%이며 회복량 자체는 재반올림하지 않는다.
+    expect(rex.hp).toBeCloseTo(100 + 800 * 1.1);
   });
 });
 
@@ -2400,7 +2413,7 @@ describe("폰토스 실전 스킬과 심해 압력", () => {
 });
 
 describe("티아 정적 전투 계약", () => {
-  /** 티아 한 명과 적 둘만 세워 표식이 옮겨 다니는 것만 관찰한다. */
+  /** 티아 한 명과 적 둘만 세워 반짝이 붙고 지워지는 것만 관찰한다. */
   function tiaBattle(enemies = ["amo", "toby"]) {
     const state = newSkirmish(["tia"], enemies);
     const [tia, first] = state.fighters;
@@ -2427,16 +2440,31 @@ describe("티아 정적 전투 계약", () => {
     expect(shimmer).toMatchObject({ targetId: target.id, damageType: "magical", critical: false, animate: false });
     // 값은 데이터에서 나온다 — 계수를 조정하면 이 기대치도 함께 움직인다.
     expect(shimmer.amount).toBeGreaterThan(0);
-    expect(tia.def.passive.kind).toBe("shimmerMark");
+    // 반짝은 맞은 쪽이 든다 — 공격자가 하나만 들고 다니면 여럿을 함께 때리는 타격이 표식을
+    // 어디에 남기는지 말할 수 없다.
+    expect(target.shimmer).toMatchObject({ sourceId: tia.id });
   });
 
-  it("은 같은 적을 이어서 때리는 동안에는 표식을 다시 터뜨리지 않는다", () => {
-    const { state, tia, fighters } = tiaBattle();
+  it("은 반짝이 묻은 적을 다시 때리면 그 표식을 지우고 주위까지 함께 적신다", () => {
+    // 아모를 세우지 않는다 — 조가비가 두른 보호막이 터진 몫을 통째로 먹어 실제로 깎인 HP가
+    // 0이 되고, 그러면 이 편이 재려는 "피해의 일부가 보호막이 된다"가 재어지지 않는다.
+    const { state, tia, fighters } = tiaBattle(["toby", "toby"]);
+    const [target, neighbour] = fighters.slice(1);
+    // 첫 대는 표식을 남긴다. 여기까지는 주 대상 하나만 맞는다.
     expect(shimmerHits(state)).toHaveLength(1);
-    // 폭주가 아니면 표적을 바꾸지 않으므로 다음 공격도 같은 상대다.
-    tia.attackCooldown = 0;
-    expect(shimmerHits(state)).toEqual([]);
-    expect(tia.targetId).toBe(fighters[1].id);
+    expect(target.shimmer).not.toBeNull();
+    const shieldBefore = tia.shield.amount;
+
+    // 두 번째 대가 그 표식을 지우며 터진다 — 옆에 선 적까지 함께 맞고, 그 피해의 일부가
+    // 보호막이 된다.
+    tia.attackCooldown = 0; neighbour.x = target.x + 40;
+    const burst = shimmerHits(state);
+    expect(target.shimmer).toBeNull();
+    expect(burst.map((event) => event.targetId)).toEqual([target.id, neighbour.id]);
+    // 옆 적은 아모의 보호막을 두르고 있어 HP가 줄지 않을 수 있다 — 재는 것은 그 한 대가
+    // 실제로 들어갔는가이므로 사건의 피해로 본다.
+    expect(burst.every((event) => event.amount > 0)).toBe(true);
+    expect(tia.shield.amount).toBeGreaterThan(shieldBefore);
   });
 
   it("의 폭주는 일반 공격 뒤 표적을 다른 적으로 바꿔 표식이 계속 옮겨 다니게 한다", () => {
@@ -4243,7 +4271,9 @@ describe("리파 — 제공자별 시약 반응", () => {
     const state = createSkirmish(players.map(getRelic), enemies.map(getRelic), ARENA);
     const providers = state.fighters.filter((fighter) => fighter.side === "player");
     const targets = state.fighters.filter((fighter) => fighter.side === "enemy");
-    for (const fighter of state.fighters) { fighter.x = 400; fighter.y = 900; fighter.attackCooldown = 99; }
+    // 적 편의 렉시아가 전투가 열리는 순간 원거리인 리파에게 파고들어 기절시킨다 — 이 편이
+    // 재는 것은 시약뿐이라 자리와 함께 그 기절도 풀어 둔다.
+    for (const fighter of state.fighters) { fighter.x = 400; fighter.y = 900; fighter.attackCooldown = 99; fighter.stunnedFor = 0; }
     return { state, providers, targets };
   }
 
@@ -4485,8 +4515,8 @@ describe("슈테 전투 계약 — 듀오 랭크", () => {
     const hit = run(state, 0.1, () => 0.55)
       .find((event): event is Extract<SkirmishEvent, { kind: "attack" }> => event.kind === "attack" && event.attackerId === duo.id)!;
     expect(hit).toMatchObject({ critical: true });
-    // 렉시아 자신의 흡혈은 0이므로 여기서 돌아온 체력은 전부 오더의 몫이다.
-    expect(duo.hp - healthBefore).toBeCloseTo(hit.amount * 0.25);
+    // 렉시아의 패시브 25퍼센트포인트에 오더의 25퍼센트포인트가 더해진다.
+    expect(duo.hp - healthBefore).toBeCloseTo(hit.amount * 0.5);
   });
 
   it("의 폭주는 듀오를 체력이 가장 낮은 적으로 돌진시키고 통로의 적을 날려버린다", () => {

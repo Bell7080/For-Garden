@@ -77,9 +77,8 @@ const POPUP = {
   width: 880,
   /** 본문 글이 시작하는 y(판 윗변 기준). 그 위는 아이콘·이름·요약 줄이 쓰는 고정 높이다. */
   descriptionY: 268,
-  /** 본문 아래끝에서 안내 줄까지, 그리고 안내 줄에서 판 밑변까지. */
-  hintGap: 30,
-  hintBottom: 44,
+  /** 본문 아래끝에서 판 밑변까지 비우는 자리. */
+  bottomPad: 74,
   /** 아이콘 칩과 이름 줄이 들어가는 최소 높이. 한 줄짜리 설명이 판을 이보다 짧게 만들지 않는다. */
   minHeight: 400,
   /** 이름 줄이 판 오른쪽 변에서 비워 두는 자리. 깎인 모서리와 기울임을 함께 피한다. */
@@ -126,7 +125,7 @@ export function openSkillPopup(
     : BREAKTHROUGH_LINE.gap + BREAKTHROUGH_LINE.labelTop + breakthroughLabelHeight + BREAKTHROUGH_LINE.labelGap + breakthrough.height;
   const height = Math.max(
     POPUP.minHeight,
-    POPUP.descriptionY + description.height + breakthroughBlock + POPUP.hintGap + POPUP.hintBottom,
+    POPUP.descriptionY + description.height + breakthroughBlock + POPUP.bottomPad,
   );
   popups.open({
     width: POPUP.width,
@@ -219,11 +218,5 @@ export function openSkillPopup(
       body.add(mark);
       body.add(breakthrough.setPosition(left + 60, gapY + BREAKTHROUGH_LINE.labelTop + breakthroughLabelHeight + BREAKTHROUGH_LINE.labelGap));
     }
-
-    body.add(
-      scene.add
-        .text(0, height / 2 - POPUP.hintBottom, t("skill.keywordHint"), textStyle({ role: "body", size: 20, color: COLOR.inkDim }))
-        .setOrigin(0.5, 0.5),
-    );
   });
 }

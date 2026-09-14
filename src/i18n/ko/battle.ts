@@ -8,6 +8,7 @@ export const BATTLE_KO = {
 
   "battle.settle.failed": "결과 화면을 복구하지 못했습니다.",
   "battle.settle.retry": "정산 다시 시도",
+  "battle.settle.recoverLobby": "상태 복구 후 로비",
   "battle.settle.done": "원정 관측 완료",
   "battle.settle.reward": "정산 보상",
   "battle.settle.noReward": "정산 재화 없음",

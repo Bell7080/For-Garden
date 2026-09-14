@@ -52,7 +52,6 @@ export const MISC_JA = {
   "skill.effect.buff": "強化",
   "skill.gauge": "ゲージ {cost}",
   "skill.duration": "{seconds}秒間",
-  "skill.keywordHint": "強調された語を押すと意味が開く",
 
   "archaeology.shop": "ショップ",
   "archaeology.bench.pick": "ルーンを選ぶ",

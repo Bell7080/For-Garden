@@ -156,7 +156,12 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
   if (trait.effectId === "rexBattleQueen") return t("skill.ferocity.rexBattleQueen", { percent: trait.allDamageLifeStealPoints });
   // 내부 효과명은 저장 호환성을 위해 도약으로 유지하지만, 플레이어에게는 실제 좌표 변경 규칙을 정확히 알린다.
   if (trait.effectId === "stealthLeap") return t("skill.ferocity.stealthLeap", { seconds: trait.durationSeconds });
-  if (trait.effectId === "selfAttackSpeedMultiplier") return t("skill.ferocity.selfAttackSpeedMultiplier", { percent: trait.bonusPercent });
+  if (trait.effectId === "selfAttackSpeedMultiplier") {
+    // 고친 자리에 한 겹 덮는 몫은 손이 빨라지는 것과 다른 축이라 제 절로 선다.
+    return trait.healingShieldPercent === undefined
+      ? t("skill.ferocity.selfAttackSpeedMultiplier", { percent: trait.bonusPercent })
+      : t("skill.ferocity.selfAttackSpeedMultiplier.shield", { percent: trait.bonusPercent, shield: trait.healingShieldPercent });
+  }
   if (trait.effectId === "packHunt") return t("skill.ferocity.packHunt", { seconds: trait.stealthDurationSeconds, percent: trait.sharedTargetAttackSpeedPercent });
   if (trait.effectId === "crescendoStaccato") {
     const converted = stats === undefined ? undefined : Math.round(stats.attack * trait.damagePercent / 100);
@@ -428,11 +433,20 @@ function passiveHead(passive: Passive, atk?: number): string {
     // 없으면 "남만 꿰매 주고 자기는 그냥 맞는 개체"로 읽힌다.
     return t("skill.passive.sutureStitch", { percent: passive.suture.damagePercent, capPercent: passive.suture.maxHpCapPercent });
   }
-  if (passive.kind === "shimmerMark") return t("skill.passive.shimmerMark", { percent: passive.value });
+  // 되찾는 숨과 빨라지는 손은 서로 다른 축이라 한 문장이 둘을 함께 말한다. 값이 같아질 일이
+  // 없으므로 나열을 접지 않는다.
+  if (passive.kind === "tidalVigor") {
+    return t("skill.passive.tidalVigor", { percent: passive.maxHpRegenPercentPerSecond, speed: passive.attackSpeedPercent });
+  }
   if (passive.kind === "frostboundDominion") return t("skill.passive.frostboundDominion");
   if (passive.kind !== "battleMaidMastery") return passive.desc;
   // 네 능력이 모두 같은 비율로 오르므로 값을 한 번만 말한다. 값이 서로 달라지면 다시 나열해야 한다.
-  return t("skill.passive.battleMaidMastery", { percent: passive.attackSpeedPercent });
+  const sentences = [t("skill.passive.battleMaidMastery", { percent: passive.attackSpeedPercent })];
+  // 흡혈은 오각형에 서지 않는 축이라 같은 값이어도 위 문장이 말하지 못한다 — 제 절로 세운다.
+  if (passive.lifeStealPoints !== undefined) sentences.push(t("skill.passive.lifeSteal", { percent: passive.lifeStealPoints }));
+  // 언제 달려드는지가 곧 조건이라 본문이 사거리 등급을 적는다.
+  if (passive.openingCharge !== undefined) sentences.push(t("skill.passive.openingCharge", { seconds: passive.openingCharge.stunSeconds }));
+  return sentences.join(" ");
 }
 
 /**
@@ -798,6 +812,29 @@ function skillEffectClauses(skill: DescribedSkill, stats: SkillDescriptionStats)
   // 본문이 그걸 다시 늘어놓으면 한 문장이 그 규칙 하나로 가득 찬다.
   if ("shallows" in skill && skill.shallows !== undefined) {
     clauses.push({ text: t("skill.clause.shallows"), standalone: true });
+  }
+  // 몇 번 찍는지는 위력이 그 한 번의 값이라는 뜻이기도 하다 — 적지 않으면 화면의 수치가
+  // 총 피해로 읽힌다.
+  if ("repeatStrike" in skill && skill.repeatStrike !== undefined) {
+    clauses.push({ text: t("skill.clause.repeatStrike", { count: skill.repeatStrike.count }), standalone: true });
+  }
+  /*
+   * 반짝은 **쓰는 개체가 하나뿐인 규칙어**라 남기고 지우는 규칙을 태그가 갖는다. 본문이 적는
+   * 것은 그 태그가 말하지 않는 몫, 곧 **사라지는 순간에 무엇이 터지는가**뿐이다 — 일반 공격과
+   * 궁극기가 지우는 값이 서로 달라 태그에 못 박으면 한쪽 설명이 거짓말이 된다.
+   */
+  if ("shimmer" in skill && skill.shimmer !== undefined) {
+    const shimmer = skill.shimmer;
+    clauses.push({
+      text: shimmer.burstPower === undefined
+        ? t("skill.clause.shimmer")
+        : t("skill.clause.shimmerBurst", { percent: shimmer.burstPower, shield: shimmer.burstShieldPercent ?? 0 }),
+      standalone: true,
+    });
+  }
+  // 순간이동해서 쓴다는 것은 대상을 고르는 규칙 자체라, 대상 문구가 말하지 못하는 몫을 적는다.
+  if ("blinkToLowestDefense" in skill && skill.blinkToLowestDefense === true) {
+    clauses.push({ text: t("skill.clause.blinkToLowestDefense"), standalone: true });
   }
   if ("chargeStartsAtHpPercent" in skill && skill.chargeStartsAtHpPercent !== undefined) {
     clauses.push({ text: t("skill.clause.chargeStartsAtHp", { percent: skill.chargeStartsAtHpPercent }), standalone: true });

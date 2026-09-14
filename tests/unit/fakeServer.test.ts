@@ -87,6 +87,15 @@ describe("FakeServer", () => {
     const server = new FakeServer(makeSession(), { latencyMs: 0 });
     await expect(server.submitExpeditionBossScore({ requestId: "forged", actions: [{ elapsedMs: 0, actorId: "hacker", kind: "ultimate" }] })).rejects.toMatchObject({ code: "EXPEDITION_SCORE_REJECTED" });
   });
+  it("보스 점수 저장 실패는 검증 거절로 오인하지 않고 원래 저장 오류를 보존한다", async () => {
+    const storageError = new Error("quota exceeded");
+    const server = new FakeServer(makeSession(), { latencyMs: 0, persistSession: () => { throw storageError; } });
+    // 정상 행동열은 검증을 통과하므로 persistSession 실패만 공용 저장 오류 경계에서 변환되어야 한다.
+    const failure = await server.submitExpeditionBossScore({ requestId: "persist-failure", actions: bossActions(2) }).catch((error: unknown) => error);
+    expect(failure).toBeInstanceOf(GameApiError);
+    expect(failure).toMatchObject({ code: "PERSISTENCE_FAILED", cause: storageError });
+    expect(failure).not.toMatchObject({ code: "EXPEDITION_SCORE_REJECTED" });
+  });
   it("발굴 조회는 첫 서버 시각을 초기화하고 편성 변경 전 생산을 원자적으로 정산한다", async () => {
     const state = makeSession(); let now = new Date("2026-08-20T00:00:00Z"); const server = new FakeServer(state, { latencyMs: 0, now: () => now });
     await server.getIdleExcavation();

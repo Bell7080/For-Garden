@@ -6,7 +6,7 @@ import type { SkirmishRelicResult } from "../core/skirmish";
 import { EXPEDITION_AUGMENT_IDS, EXPEDITION_REST_RULES, EXPEDITION_WEEKLY_POLICY } from "../data/expedition";
 import { saveManager, type SaveManager } from "../state/SaveManager";
 import { session, type ExpeditionRunState, type Session } from "../state/session";
-import type { GameApi, SettleExpeditionRunResponse, SubmitExpeditionBossScoreResponse } from "../api/contracts";
+import { GameApiError, type ApiErrorCode, type GameApi, type SettleExpeditionRunResponse, type SubmitExpeditionBossScoreResponse } from "../api/contracts";
 import type { ExpeditionBossAction } from "../core/expeditionBoss";
 import { t } from "../i18n";
 
@@ -259,8 +259,13 @@ export const expeditionManager = new ExpeditionManager();
 
 /** 어느 원격 경계에서 멈췄는지 UI와 테스트가 문자열 추측 없이 구분하는 실패다. */
 export class ExpeditionBossSettlementError extends Error {
+  /** API 원인 코드를 보존해 같은 score 단계에서도 검증 거절과 저장 장애를 구분한다. */
+  readonly causeCode: ApiErrorCode | undefined;
+
   constructor(readonly phase: "score" | "settlement", readonly cause: unknown) {
     super(phase === "score" ? t("error.expedition.submit") : t("error.expedition.settle"));
+    this.name = "ExpeditionBossSettlementError";
+    this.causeCode = cause instanceof GameApiError ? cause.code : undefined;
   }
 }
 
@@ -293,7 +298,15 @@ export class ExpeditionBossSettlementFlow {
     const cachedSettlement = this.settlements.get(input.settlementId);
     if (cachedSettlement) return { score, settlement: cachedSettlement };
     // 응답 적용도 manager 경계에 맡겨 씬이 Session을 직접 수정하지 않게 한다.
-    if (!this.manager.applyBossScore(input.nodeId, score)) throw new ExpeditionBossSettlementError("score", new Error("BOSS_NODE_SAVE_FAILED"));
+    if (!this.manager.applyBossScore(input.nodeId, score)) {
+      // 앱이 최종 정산 커밋 직후 다시 시작되면 활성 런은 이미 없지만 서버의 두 멱등 영수증은 남는다.
+      // 이때 노드 적용 실패를 점수 오류로 단정하지 않고 최종 영수증을 먼저 조회해야 완료 UI를 복구할 수 있다.
+      try {
+        const settlement = await this.api.settleExpeditionRun({ runId: input.runId, settlementId: input.settlementId, outcome: "completed" });
+        this.settlements.set(input.settlementId, settlement);
+        return { score, settlement };
+      } catch (error) { throw new ExpeditionBossSettlementError("score", error); }
+    }
 
     let settlement: SettleExpeditionRunResponse;
     try {

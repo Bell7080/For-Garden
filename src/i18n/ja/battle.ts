@@ -7,6 +7,8 @@ export const BATTLE_JA = {
   "battle.boss.limit": " · LIMIT",
 
   "battle.settle.failed": "結果画面を復旧できませんでした。",
+  "battle.settle.scoreRejected": "戦闘記録がサーバー検証で拒否されました。",
+  "battle.settle.persistenceFailed": "結果を保存できませんでした。再試行するか、状態を復旧してロビーへ戻ってください。",
   "battle.settle.retry": "精算を再試行",
   "battle.settle.recoverLobby": "状態を復旧してロビーへ",
   "battle.settle.done": "遠征観測完了",

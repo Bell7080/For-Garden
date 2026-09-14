@@ -7,6 +7,8 @@ export const BATTLE_KO = {
   "battle.boss.limit": " · LIMIT",
 
   "battle.settle.failed": "결과 화면을 복구하지 못했습니다.",
+  "battle.settle.scoreRejected": "전투 기록이 서버 검증에서 거절되었습니다.",
+  "battle.settle.persistenceFailed": "결과를 저장하지 못했습니다. 다시 시도하거나 상태 복구 후 로비로 이동해 주세요.",
   "battle.settle.retry": "정산 다시 시도",
   "battle.settle.recoverLobby": "상태 복구 후 로비",
   "battle.settle.done": "원정 관측 완료",

@@ -494,7 +494,12 @@ export class BattleScene extends Phaser.Scene {
       // 정산된 런인지, 결과판을 그리다 터진 것인지 아무도 알 수 없었다.
       console.error("[expedition] 보스 정산 실패", error);
       failBossSettlementAttempt(this.bossSettlementFailureState);
-      const reason = error instanceof ExpeditionBossSettlementError ? error.message : t("battle.settle.failed");
+      // 점수 규칙 거절만 전투 기록 문제로 안내하고, 저장 장애는 Boot 재동기화가 필요한 상태로 분리한다.
+      const reason = error instanceof ExpeditionBossSettlementError && error.causeCode === "EXPEDITION_SCORE_REJECTED"
+        ? t("battle.settle.scoreRejected")
+        : error instanceof ExpeditionBossSettlementError && error.causeCode === "PERSISTENCE_FAILED"
+          ? t("battle.settle.persistenceFailed")
+          : error instanceof ExpeditionBossSettlementError ? error.message : t("battle.settle.failed");
       // 결과판의 암막·강조색·공용 Button 문법을 그대로 써 실패도 전투 결과의 한 상태로 보이게 한다.
       const failureUi = this.add.container(0, 0).setDepth(5000);
       failureUi.add(this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.96));

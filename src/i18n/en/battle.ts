@@ -6,6 +6,8 @@ export const BATTLE_EN = {
   "battle.boss.tideWarning": " · Tide Warning",
   "battle.boss.limit": " · LIMIT",
   "battle.settle.failed": "Could not restore the result screen.",
+  "battle.settle.scoreRejected": "The battle record was rejected by server validation.",
+  "battle.settle.persistenceFailed": "Could not save the result. Retry, or resync and return to the lobby.",
   "battle.settle.retry": "Retry Settlement",
   "battle.settle.recoverLobby": "Resync & Return to Lobby",
   "battle.settle.done": "Expedition Observation Complete",

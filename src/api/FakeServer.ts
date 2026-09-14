@@ -17,7 +17,7 @@ import type {
   PurchaseRelicSkinRequest, PurchaseRelicSkinResponse, ClaimInteractionDispatchRequest, ClaimInteractionDispatchResponse, InteractionCitiesResponse, InteractionDispatchResponse, StartInteractionDispatchRequest } from "./contracts";
 import type { ExchangeInteractionOfferRequest, ExchangeInteractionOfferResponse, InteractionExchangeListResponse } from "./contracts";
 import { ProfileModifierManager } from "../managers/ProfileModifierManager";
-import { GameApiError, type AdOperationsConfigResponse, type BreakThroughResponse, type ClaimMissionRewardsResponse, type CompleteStageResponse, type EnterDailyRestorationResponse, type FeedRelicResponse, type GameApi, type LobbyInteractionResponse, type MissionListResponse, type PlayerStateDto, type ClaimAdRewardRequest, type ClaimAdRewardResponse, type PullRequest, type PullResponse, type RechargeStaminaRequest, type RechargeStaminaResponse } from "./contracts";
+import { GameApiError, persistenceFailed, type AdOperationsConfigResponse, type BreakThroughResponse, type ClaimMissionRewardsResponse, type CompleteStageResponse, type EnterDailyRestorationResponse, type FeedRelicResponse, type GameApi, type LobbyInteractionResponse, type MissionListResponse, type PlayerStateDto, type ClaimAdRewardRequest, type ClaimAdRewardResponse, type PullRequest, type PullResponse, type RechargeStaminaRequest, type RechargeStaminaResponse } from "./contracts";
 import type { ProductDefinition } from "../data/shopCatalog";
 import { PRODUCTS } from "../data/shopCatalog";
 import type { ProductListResponse, PurchaseProductRequest, PurchaseProductResponse } from "./contracts";
@@ -277,10 +277,12 @@ export class FakeServer implements GameApi {
     await this.delay(); const cached = this.bossSubmissionResults.get(request.requestId); if (cached) return { ...cached };
     if (!request.requestId) throw new GameApiError("EXPEDITION_SCORE_REJECTED", "점수 제출 요청 ID가 필요합니다.");
     const now = this.now(); this.normalizeBossWeek(now);
+    const run = request.runId ? this.state.expedition.run : null;
+    let result: ReturnType<typeof resolveExpeditionBossBattle>;
+    let runScore: ReturnType<typeof calculateExpeditionRunScore>;
     try {
-      // 런 제출은 현재 파티가 아니라 서버에 저장된 원정 편성·HP·증강을 사용한다. 독립 보스 API
-      // 테스트의 레거시 호출만 runId가 없을 때 기존 파티 스냅샷으로 되돌아간다.
-      const run = request.runId ? this.state.expedition.run : null;
+      // 이 좁은 경계는 행동 재현·서버 편성·최대 점수처럼 실제 제출 거절 사유만 변환한다.
+      // 아래 저장 및 상태 반영 오류는 이 블록 밖에서 PERSISTENCE_FAILED로 전파한다.
       if (request.runId && (!run || run.runId !== request.runId || !run.nodes.some(({ id, type }) => id === request.nodeId && type === "boss"))) throw new Error("INVALID_RUN");
       const roster = run?.relics ?? this.state.party.map((relicId) => ({ relicId, currentHp: 100, alive: true }));
       const effects = expeditionBattleEffects(run?.selectedAugments ?? []);
@@ -288,45 +290,45 @@ export class FakeServer implements GameApi {
       const allies = roster.map(({ relicId: id }) => {
         const relic = RELICS.find((entry) => entry.id === id);
         if (!relic || !this.state.owned.has(id)) throw new Error("INVALID_PARTY");
-        const stats = progression.getFinalStats(id);
-        // 스킬·패시브 계약은 정적 정의에서, 계정별 수치만 서버 성장 스냅샷에서 가져온다.
-        return { ...relic, stats };
+        // 스킬 계약은 정적 정의에서, 계정별 수치만 서버 성장 스냅샷에서 가져온다.
+        return { ...relic, stats: progression.getFinalStats(id) };
       });
       const boss = RELICS.find(({ id }) => id === "pontos");
       if (!boss) throw new Error("INVALID_BOSS_DEFINITION");
-      const result = resolveExpeditionBossBattle({
-        allies,
-        boss,
+      result = resolveExpeditionBossBattle({
+        allies, boss,
         initialHpPercentByRelic: Object.fromEntries(roster.map(({ relicId, currentHp }) => [relicId, currentHp])),
         augmentEffects: effects,
-        // 서버와 BattleScene이 공유하는 논리 전장 크기다. 좌표는 렌더 픽셀이 아니라 순수 난전 입력이다.
+        // 서버와 BattleScene이 공유하는 논리 전장 크기다.
         arena: { left: 130, right: 950, top: 600, bottom: 1360 },
       }, request.actions);
       if (result.totalDamage > EXPEDITION_BOSS_BALANCE.maximumAcceptedScore) throw new Error("ABNORMAL_SCORE");
-      // 일반 노드 누적과 폰토스 피해를 같은 순수 모델로 합쳐 한 판 점수를 확정한다. 보스 피해는
-      // 원값이 아니라 점수판 환산을 한 번 거친다 — 그 환산은 순수 규칙 한 곳이 소유한다.
-      const runScore = calculateExpeditionRunScore({ normalNodeScoreTotal: run?.normalNodeScoreTotal ?? 0, bossDamageScore: expeditionBossDamageScore(result.totalDamage) });
-      const improved = runScore.runScore > this.bossWeek.bestScore;
-      // 일반 노드 몫은 각 노드 확정 때 이미 반영했으므로 여기서는 새 보스 피해만 한 번 더한다.
-      this.bossWeek.cumulativeScore += runScore.bossDamageScore;
-      if (improved) { this.bossWeek.bestScore = runScore.runScore; this.bossWeek.achievedAt = now.toISOString(); }
-      if (run) {
-        run.bossDamage = runScore.bossDamageScore; run.bossDamageScore = runScore.bossDamageScore;
-        run.runScore = runScore.runScore; run.bestScore = runScore.runScore;
-        this.persist(this.state);
-      }
-      // 불사 보스는 처치가 아니라 입힌 피해량 자체가 성과이므로, 승패와 무관하게 이 제출이
-      // 소탕이 참조하는 역대 최고점(allTimeBestScore)의 유일한 갱신 경로다.
-      if (runScore.runScore > this.state.expedition.allTimeBestScore) {
-        const expedition = { ...this.state.expedition, allTimeBestScore: runScore.runScore };
-        this.persist({ ...this.state, expedition }); this.state.expedition = expedition;
-      }
-      // 단일 개발 계정은 기록 전 미등재(null), 제출 뒤 1위다. 운영 구현은 같은 필드에 실제 변화를 넣는다.
-      // 최종 영수증은 UI가 합산하지 않도록 일반 노드·보스·총점을 각각 확정해 돌려준다.
-      const response = { weekKey: this.bossWeek.weekKey, score: runScore.runScore, normalNodeScoreTotal: runScore.normalNodeScoreTotal, bossDamageScore: runScore.bossDamageScore, runScore: runScore.runScore, bestScore: this.bossWeek.bestScore, cumulativeScore: this.bossWeek.cumulativeScore, improved, endedAtMs: result.endedAtMs, rankBefore: this.previousBossBest > 0 ? 1 : null, rankAfter: 1 };
-      this.previousBossBest = this.bossWeek.bestScore;
-      this.bossSubmissionResults.set(request.requestId, response); return { ...response };
-    } catch { throw new GameApiError("EXPEDITION_SCORE_REJECTED", "검증할 수 없거나 비정상적으로 큰 보스 점수입니다."); }
+      runScore = calculateExpeditionRunScore({ normalNodeScoreTotal: run?.normalNodeScoreTotal ?? 0, bossDamageScore: expeditionBossDamageScore(result.totalDamage) });
+    } catch (error) {
+      // 검증 세부 원인은 공격자가 규칙을 역산하지 못하게 공용 거절 코드로만 노출한다.
+      throw new GameApiError("EXPEDITION_SCORE_REJECTED", "검증할 수 없거나 비정상적으로 큰 보스 점수입니다.", { cause: error });
+    }
+
+    const improved = runScore.runScore > this.bossWeek.bestScore;
+    const nextBossWeek = { ...this.bossWeek, cumulativeScore: this.bossWeek.cumulativeScore + runScore.bossDamageScore };
+    if (improved) { nextBossWeek.bestScore = runScore.runScore; nextBossWeek.achievedAt = now.toISOString(); }
+    const nextRun = run ? { ...run, bossDamage: runScore.bossDamageScore, bossDamageScore: runScore.bossDamageScore, runScore: runScore.runScore, bestScore: runScore.runScore } : null;
+    const allTimeBestScore = Math.max(this.state.expedition.allTimeBestScore, runScore.runScore);
+    const nextExpedition = { ...this.state.expedition, ...(nextRun ? { run: nextRun } : {}), allTimeBestScore };
+    const nextState = { ...this.state, expedition: nextExpedition };
+    try {
+      // 검증 성공 뒤의 저장만 공용 저장 실패로 바꾸며, 원래 Storage/SaveManager 오류는 cause에 보존한다.
+      this.persist(nextState);
+    } catch (error) {
+      throw persistenceFailed(error, "원정 점수를 저장하지 못했습니다.");
+    }
+    // 영속화가 성공한 뒤에만 메모리와 멱등 영수증을 반영해 실패 재시도가 깨끗한 상태에서 시작한다.
+    this.state.expedition = nextExpedition;
+    this.bossWeek = nextBossWeek;
+    const response = { weekKey: nextBossWeek.weekKey, score: runScore.runScore, normalNodeScoreTotal: runScore.normalNodeScoreTotal, bossDamageScore: runScore.bossDamageScore, runScore: runScore.runScore, bestScore: nextBossWeek.bestScore, cumulativeScore: nextBossWeek.cumulativeScore, improved, endedAtMs: result.endedAtMs, rankBefore: this.previousBossBest > 0 ? 1 : null, rankAfter: 1 };
+    this.previousBossBest = nextBossWeek.bestScore;
+    this.bossSubmissionResults.set(request.requestId, response);
+    return { ...response };
   }
 
   /** 단계 ID와 누적 점수를 다시 확인하며 같은 요청과 다른 요청 모두 중복 지급하지 않는다. */
@@ -1540,8 +1542,13 @@ export class FakeServer implements GameApi {
   private persist(next: Session): void {
     // 모든 쓰기 API가 공유하는 마지막 경계에서 음수·상한·중복을 저장 전에 차단한다.
     this.validateState(next);
-    if (this.persistSession) this.persistSession(next);
-    else if (this.state === session) saveManager.save(next);
+    // validateState의 도메인 오류는 그대로 두고 실제 저장 장치 오류만 공용 API 실패로 분류한다.
+    try {
+      if (this.persistSession) this.persistSession(next);
+      else if (this.state === session) saveManager.save(next);
+    } catch (error) {
+      throw persistenceFailed(error);
+    }
   }
 
   /** 실제 HTTP 서버로 옮겨도 그대로 적용할 API 응답 직전 불변식 검사다. */

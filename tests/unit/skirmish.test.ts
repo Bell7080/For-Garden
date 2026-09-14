@@ -2467,28 +2467,23 @@ describe("티아 정적 전투 계약", () => {
     expect(tia.shield.amount).toBeGreaterThan(shieldBefore);
   });
 
-  it("의 폭주는 일반 공격 뒤 표적을 다른 적으로 바꿔 표식이 계속 옮겨 다니게 한다", () => {
-    const { state, tia, fighters } = tiaBattle();
-    tia.ferocity = 100; tia.ferocityFever = true;
-    const [first] = shimmerHits(state);
-    expect(first.targetId).toBe(fighters[1].id);
-    // 방금 때린 상대가 아닌 다른 적으로 옮겨 붙는다.
-    expect(tia.targetId).toBe(fighters[2].id);
-
-    tia.attackCooldown = 0; tia.x = fighters[2].x - 60;
-    const [second] = shimmerHits(state);
-    expect(second.targetId).toBe(fighters[2].id);
-    expect(tia.targetId).toBe(fighters[1].id);
-  });
-
-  it("의 폭주는 자신만 두 배로 달리고 아군 이동 속도는 건드리지 않는다", () => {
+  it("의 폭주는 매초 제 체력을 되찾고 손만 빨라진다", () => {
     const state = newSkirmish(["tia", "rex"], ["amo"]);
-    const [tia, ally] = state.fighters;
-    const before = moveSpeed(tia, state);
-    const allyBefore = moveSpeed(ally, state);
+    const [tia, ally, foe] = state.fighters;
+    for (const fighter of state.fighters) { fighter.attackCooldown = 99; fighter.openingChargeReady = false; }
+    tia.hp = tia.maxHp / 2;
+    const calm = currentAttackSpeed(tia, state);
+    const allyCalm = currentAttackSpeed(ally, state);
     tia.ferocity = 100; tia.ferocityFever = true;
-    expect(moveSpeed(tia, state)).toBeCloseTo(before * 2);
-    expect(moveSpeed(ally, state)).toBe(allyBefore);
+    // 손은 폭주한 본인만 빨라진다 — 팀 오라가 아니다.
+    expect(currentAttackSpeed(tia, state)).toBeCloseTo(calm * 1.2);
+    expect(currentAttackSpeed(ally, state)).toBe(allyCalm);
+
+    // 숨은 토리카의 폭주와 같은 1초 시계로 돈다.
+    const before = tia.hp;
+    for (let frame = 0; frame < 60 && state.phase === "fight"; frame += 1) stepSkirmish(state, 1 / 60, () => 0.99);
+    expect(tia.hp - before).toBeCloseTo(tia.maxHp * 0.03, 0);
+    expect(foe.hp).toBe(foe.maxHp);
   });
 
   it("은 적이 하나뿐이면 표적을 풀지 않는다", () => {
@@ -4271,9 +4266,9 @@ describe("리파 — 제공자별 시약 반응", () => {
     const state = createSkirmish(players.map(getRelic), enemies.map(getRelic), ARENA);
     const providers = state.fighters.filter((fighter) => fighter.side === "player");
     const targets = state.fighters.filter((fighter) => fighter.side === "enemy");
-    // 적 편의 렉시아가 전투가 열리는 순간 원거리인 리파에게 파고들어 기절시킨다 — 이 편이
-    // 재는 것은 시약뿐이라 자리와 함께 그 기절도 풀어 둔다.
-    for (const fighter of state.fighters) { fighter.x = 400; fighter.y = 900; fighter.attackCooldown = 99; fighter.stunnedFor = 0; }
+    // 적 편의 렉시아는 표적에게 중거리까지 다가서면 파고들어 기절시킨다 — 한자리에 세워 둔
+    // 이 편에서는 첫 프레임에 걸려 시약이 아니라 그 기절을 재게 되므로 여는 돌진을 꺼 둔다.
+    for (const fighter of state.fighters) { fighter.x = 400; fighter.y = 900; fighter.attackCooldown = 99; fighter.openingChargeReady = false; }
     return { state, providers, targets };
   }
 

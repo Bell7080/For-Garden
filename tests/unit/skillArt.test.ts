@@ -336,11 +336,11 @@ describe("렉시아 스킬 표시 계약", () => {
   it("은 폭주·패시브·출혈·궁극기 회복을 현재 데이터에서 문장화한다", () => {
     const rex = RELICS.find((def) => def.id === "rex")!;
     expect(ferocityTraitDescription(rex.ferocityTrait)).toBe("[[bleed|출혈]] 중인 적을 공격하면 치명타가 확정되고, 모든 피해 흡혈이 25% 증가한다.");
-    // 흡혈은 오각형에 서지 않는 축이라 같은 값이어도 제 절로 서고, 여는 돌진은 조건(사거리
-    // 등급)이 곧 그 절의 값이라 본문이 직접 적는다.
+    // 다섯이 모두 같은 값으로 오르므로 한 줄에 함께 선다 — 흡혈만 따로 세우면 같은 값이 두
+    // 번 나뉘어 읽혀 서로 다른 몫처럼 보인다. 여는 돌진은 **거리**가 조건이라 그 절이 따로 선다.
     expect(passiveDescription(rex.passive)).toBe(
-      "전투 시작 시, 공격 속도·공격력·치명타 확률·치명타 피해가 모두 25% 오른다. 흡혈이 25% 오른다."
-      + " 전투 시작 시 표적이 중거리나 원거리에서 싸우는 적이라면 그 자리로 [[charge|돌진]]하며, 적중하면 1초 동안 [[stun|기절]]시킨다.",
+      "전투 시작 시, 공격 속도·공격력·치명타 확률·치명타 피해·흡혈이 모두 25% 오른다."
+      + " 전투당 한 번, 표적에게 중거리까지 다가서면 그 자리로 [[charge|돌진]]해 1초 동안 [[stun|기절]]시킨다.",
     );
     expect(statusEffectLabel(rex.basic.statusEffects?.[0])).toBe("[[bleed|출혈]] 3초 · 매초 최대 체력 2%");
     expect(targetingLabel(rex.ultimate.targeting)).toBe("적 한 명");
@@ -453,30 +453,29 @@ describe("티아 스킬 표시 계약", () => {
     );
   });
 
-  it("의 궁극기는 대상·피해·경직을 말한 뒤 두 번 찍는다는 것과 반짝을 제 문장으로 세운다", () => {
+  it("의 궁극기는 간격·횟수까지 한 문장으로 말한다", () => {
     const def = tia();
-    // 위력이 총량이 아니라 한 번의 값이라는 말이 반드시 함께 서야 화면의 수치가 총 피해로
-    // 읽히지 않는다.
-    expect(skillDescription(def.ultimate, { damage: 300 })).toBe(
-      "자신의 주위 모든 적에게 [[damage-value|300]]의 [[magical-damage|마법 피해]]를 주고 [[stagger|경직]]시킨다."
-      + " 같은 범위를 2번 내리찍으며, 위 수치는 한 번의 값이다. 모든 타격이 [[shimmer|반짝!]]을 남기거나 지운다.",
+    // 위력은 총량이 아니라 **한 번 내리찍는 값**이다. 간격과 횟수를 절로 뒤에 붙이지 않고 대상
+    // 바로 뒤에 넣어, 짧게 읽히면서 그 수가 한 번의 값이라는 것도 함께 서게 한다.
+    expect(def.ultimate).toMatchObject({ power: 120, repeatStrike: { count: 2, intervalSeconds: 1 } });
+    expect(skillDescription(def.ultimate, { damage: 120 })).toBe(
+      "자신의 주위 모든 적에게 1초 간격으로 [[damage-value|120]]의 [[magical-damage|마법 피해]]를 2번 주고 [[stagger|경직]]시킨다.",
     );
   });
 
-  it("의 폭주는 표적을 바꾸고, 패시브는 표식이 아니라 버틸 숨과 손을 맡는다", () => {
+  it("의 패시브는 반짝을 남기고, 폭주는 버틸 숨과 손을 맡는다", () => {
     const def = tia();
-    expect(def.ferocityTrait).toMatchObject({ effectId: "ichthyoDive", moveSpeedPercent: 100 });
+    // 폭주는 토리카와 같은 1초 시계를 쓰되 손이 함께 빨라진다.
+    expect(def.ferocityTrait).toMatchObject({ effectId: "tidalVigor", attackSpeedPercent: 20, maxHpRegenPercentPerSecond: 3 });
     expect(ferocityTraitDescription(def.ferocityTrait)).toBe(
-      "이동 속도가 100% 증가하고, [[basic-attack|기본 공격]] 이후 표적을 다른 적으로 바꾼다.",
+      "매초 최대 [[hp|체력]]의 3%를 회복하고 [[attack-speed|공격 속도]]가 20% 증가한다.",
     );
-    // 반짝은 더 이상 패시브의 몫이 아니다 — 규칙은 규칙어가 갖고, 표식을 다루는 것은 실제로
-    // 때리는 스킬(`Skill.shimmer`)이다.
-    expect(def.passive.kind).toBe("tidalVigor");
-    expect(def.basic.shimmer).toMatchObject({ markPower: 100, burstPower: 50, burstShieldPercent: 25 });
-    expect(def.ultimate.shimmer).toMatchObject({ markPower: 100 });
-    expect(def.ultimate.shimmer?.burstPower).toBeUndefined();
+    // 남기는 것은 패시브, 지워질 때 터지는 것은 그 타격을 낸 스킬이다.
+    expect(def.passive.kind).toBe("shimmerMark");
+    expect(def.basic.shimmerBurst).toMatchObject({ power: 50, radius: 260, shieldPercent: 25 });
+    expect(def.ultimate.shimmerBurst).toBeUndefined();
     expect(passiveDescription(def.passive)).toBe(
-      `매초 최대 [[hp|체력]]의 ${def.passive.maxHpRegenPercentPerSecond}%를 회복하고 [[attack-speed|공격 속도]]가 ${def.passive.attackSpeedPercent}% 오른다.`,
+      `적을 타격하면 [[shimmer|반짝!]] 표식을 부여하고 [[ap|주문력]]의 ${def.passive.value}% [[magical-damage|마법 피해]]를 추가로 입힌다.`,
     );
   });
 });
@@ -628,7 +627,8 @@ describe("스킬 설명문 양식 계약", () => {
         }
         // 그다음이 피해다. 실제 수치를 알 수 있으면 조회 가능한 태그로 보여 준다.
         expect(body).toContain("[[damage-value|");
-        expect(body).toMatch(/\[\[(physical|magical)-damage\|(물리|마법) 피해\]\]를( 동시에)? (준다|주고)/);
+        // 되찍는 궁극기만 그 사이에 횟수가 선다 — 위력이 총량이 아니라 한 번의 값이기 때문이다.
+        expect(body).toMatch(/\[\[(physical|magical)-damage\|(물리|마법) 피해\]\]를( 동시에| \d+번)? (준다|주고)/);
       }
       expect(text.endsWith(".")).toBe(true);
     },

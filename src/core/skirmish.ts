@@ -106,8 +106,8 @@ export interface Fighter extends Combatant {
    * 다른 값이 된다.
    */
   shimmer: { sourceId: string } | null;
-  /** 패시브 자가 재생의 다음 틱까지 남은 시간(초). 재생이 없는 개체는 늘 0이다. */
-  passiveRegenIn: number;
+  /** 아직 여는 돌진을 쓰지 않았는가. 전투당 한 번이라 쓰면 false로 내린다. */
+  openingChargeReady: boolean;
   /**
    * 같은 자리를 다시 내리찍기까지 남은 횟수와 시간. 없으면 null이다.
    *
@@ -914,7 +914,7 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     streakTargetId: null,
     streakCount: 0,
     shimmer: null,
-    passiveRegenIn: def.passive.maxHpRegenPercentPerSecond === undefined ? 0 : 1,
+    openingChargeReady: def.passive.openingCharge !== undefined,
     aftershock: null,
     overpaint: null,
     knockback: null,
@@ -1118,8 +1118,6 @@ export function createSkirmish(
   // 무리 사냥이 있는 편만 기준 아군의 정상 최초 표적을 확정한 뒤 루카가 이를 복사한다.
   triggerPackHunt(state, "player");
   triggerPackHunt(state, "enemy");
-  // 표적이 정해진 뒤라야 그 표적이 멀리 서는 개체인지 볼 수 있다.
-  state.initialEvents.push(...triggerOpeningCharge(state));
   return state;
 }
 
@@ -1846,22 +1844,6 @@ function tickElationRegen(fighter: Fighter, dt: number, state: SkirmishState, ev
   if (amount > 0) events.push({ kind: "heal", fighterId: fighter.id, amount, source: "passive", effect: { tag: "heal", intensity: 1 } });
 }
 
-/**
- * 패시브가 스스로 되찾는 숨. 시간이 없어 전투 내내 매초 한 번씩 돈다.
- *
- * 희열과 같은 시계를 쓰되 겹이 없다 — 맞아서 오르는 값이 아니라 그냥 이 개체가 가진 회복이라,
- * 시작부터 끝까지 같은 속도로 찬다.
- */
-function tickPassiveRegen(fighter: Fighter, dt: number, state: SkirmishState, events: SkirmishEvent[]): void {
-  const percent = fighter.def.passive.maxHpRegenPercentPerSecond;
-  if (percent === undefined || percent <= 0 || !isFighterAlive(fighter)) return;
-  const tickIn = fighter.passiveRegenIn - dt;
-  if (tickIn > 0) { fighter.passiveRegenIn = tickIn; return; }
-  fighter.passiveRegenIn = tickIn + 1;
-  const amount = applyHealing(state, fighter, fighter.maxHp * percent / 100, fighter.id);
-  if (amount > 0) events.push({ kind: "heal", fighterId: fighter.id, amount, source: "passive", effect: { tag: "heal", intensity: 1 } });
-}
-
 /** 재피격으로 갱신되지 않은 희열의 유지 시간을 줄이고, 만료되면 모든 겹을 제거한다. */
 function tickElation(fighter: Fighter, dt: number): void {
   const elation = fighter.elation;
@@ -1927,10 +1909,15 @@ function healClimaxBasic(attacker: Fighter, state: SkirmishState, events: Skirmi
   if (amount > 0) events.push({ kind: "heal", fighterId: attacker.id, amount, source: "ferocity", effect: { tag: "heal", intensity: 1.2 } });
 }
 
-/** 토리카 폭주의 최대 체력 비례 회복을 온전한 1초마다 공용 회복 경계로 처리한다. */
+/**
+ * 폭주 중 매초 도는 최대 체력 비례 회복을 공용 회복 경계로 처리한다.
+ *
+ * 토리카와 티아가 같은 시계를 쓴다 — 앞에 서서 버티는 몸이든 계속 뛰어드는 몸이든, 폭주
+ * 동안 매초 같은 몫을 되찾는다는 규칙은 하나다.
+ */
 function tickTorikaBulwark(fighter: Fighter, dt: number, state: SkirmishState, events: SkirmishEvent[]): void {
   const trait = fighter.def.ferocityTrait;
-  if (!fighter.ferocityFever || trait.effectId !== "torikaBulwark") { fighter.torikaBulwarkTickIn = 1; return; }
+  if (!fighter.ferocityFever || (trait.effectId !== "torikaBulwark" && trait.effectId !== "tidalVigor")) { fighter.torikaBulwarkTickIn = 1; return; }
   fighter.torikaBulwarkTickIn -= dt;
   while (fighter.torikaBulwarkTickIn <= EMERGENCY_RECOVERY.epsilon) {
     const amount = applyHealing(state, fighter, fighter.maxHp * trait.maxHpRegenPercentPerSecond / 100, fighter.id);
@@ -2760,7 +2747,7 @@ export function activeCombatBuffs(state: SkirmishState, fighterId: string): Acti
 /** 공격 속도가 정하는 공격 간격(초). 100이 기준이다. */
 export function currentAttackSpeed(fighter: Fighter, state?: SkirmishState): number {
   // 전투의 환희 누적과 영구 패시브만 포함한다. 폭주처럼 시간이 정해진 임시 배율은 궁극기 계수에서 제외한다.
-  const passiveSpeedPoints = fighter.def.passive.kind === "battleMaidMastery" || fighter.def.passive.kind === "tidalVigor"
+  const passiveSpeedPoints = fighter.def.passive.kind === "battleMaidMastery"
     ? fighter.def.passive.attackSpeedPercent ?? 0 : 0;
   const teamPercent = state ? Math.max(0, ...state.fighters.filter((ally) => ally.side === fighter.side && isFighterAlive(ally)
     && ally.def.passive.kind === "adagioWeight").map((ally) => ally.def.passive.teamAttackSpeedPercent ?? 0)) : 0;
@@ -2778,6 +2765,9 @@ export function currentAttackSpeed(fighter: Fighter, state?: SkirmishState): num
   // 시약 도핑은 폭주한 제공자 자신의 손만 빠르게 하며 팀 오라로 퍼지지 않는다.
   const reagentDopingPercent = fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "reagentDoping"
     ? fighter.def.ferocityTrait.attackSpeedPercent : 0;
+  // 물살을 타는 손도 폭주한 본인만 빨라진다. 시약 도핑과 같은 자리다.
+  const tidalVigorPercent = fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "tidalVigor"
+    ? fighter.def.ferocityTrait.attackSpeedPercent : 0;
   // 둔화는 남이 걸어 준 감속이라 다른 배율과 같은 자리에서 나눈다.
   const chillPercent = fighter.chill ? fighter.chill.stacks * fighter.chill.speedPercentPerStack : 0;
   // 룬 특성의 가속도 시간이 정해진 배율이라 순풍·광란과 같은 자리에서 곱한다.
@@ -2785,7 +2775,8 @@ export function currentAttackSpeed(fighter: Fighter, state?: SkirmishState): num
   return (fighter.def.stats.attackSpeed + passiveSpeedPoints + fighter.bonusAttackSpeed)
     * (1 + traitHastePercent / 100)
     * (1 + teamPercent / 100) * (1 + packHuntPercent / 100) * (1 + tailwindPercent / 100) * (1 + frenzyPercent / 100)
-    * (1 + volleyPercent / 100) * (1 + reagentDopingPercent / 100) * (1 - chillPercent / 100);
+    * (1 + volleyPercent / 100) * (1 + reagentDopingPercent / 100) * (1 + tidalVigorPercent / 100)
+    * (1 - chillPercent / 100);
 }
 
 export function attackInterval(fighter: Fighter, state?: SkirmishState): number {
@@ -2954,10 +2945,9 @@ export function moveSpeed(fighter: Fighter, state?: SkirmishState): number {
         && ally.def.ferocityTrait.effectId === "teamMoveSpeedBonus")
       .map((ally) => ally.def.ferocityTrait.effectId === "teamMoveSpeedBonus" ? ally.def.ferocityTrait.bonusPercent : 0))
     : 0;
-  // 팀 오라와 달리 이크티오 다이브와 그래피티 런은 폭주한 본인만 빨라진다.
+  // 팀 오라와 달리 그래피티 런은 폭주한 본인만 빨라진다.
   const trait = fighter.def.ferocityTrait;
-  const selfBonus = fighter.ferocityFever && (trait.effectId === "ichthyoDive" || trait.effectId === "graffitiRun")
-    ? trait.moveSpeedPercent : 0;
+  const selfBonus = fighter.ferocityFever && trait.effectId === "graffitiRun" ? trait.moveSpeedPercent : 0;
   // 이동 속도를 데려오는 것은 순풍뿐이다 — 오더는 한 명의 화력만 올리고 걸음은 건드리지 않는다.
   const tailwindPercent = fighter.tailwindFor > 0 && fighter.tailwind?.kind === "tailwind" ? fighter.tailwind.moveSpeedPercent : 0;
   // 둔화는 공격 속도와 같은 비율로 이동 속도도 함께 깎는다.
@@ -3155,32 +3145,34 @@ export function triggerPackHunt(state: SkirmishState, side: Side): void {
 }
 
 /**
- * 전투가 열리는 순간, 멀리 선 표적에게 파고든다.
+ * 표적에게 정해진 거리까지 다가서면, 남은 사이를 한 번에 파고든다. 전투당 한 번이다.
  *
- * 개체 이름이 아니라 표적의 사거리 등급으로 가른다 — 붙어 서는 개체에게까지 달려들면 이미
- * 사거리 안이라 아무 일도 일어나지 않고, 왜 어떤 판에서만 달려드는지 화면이 말하지 못한다.
+ * **개체가 아니라 거리가 조건이다.** 표적의 사거리 등급으로 가르면 같은 거리에서도 어떤
+ * 판에서는 달려들고 어떤 판에서는 그냥 걷는다. 중거리쯤에서 발동하므로 원거리에서 쏘는
+ * 상대에게는 한두 대 맞으며 달려간 끝에 파고들고, 상대도 중거리면 서로 닿는 그 순간 함께
+ * 뛰어드는 그림이 된다.
+ *
  * 자리를 옮기는 것 자체가 화면에서 보이는 신호이므로 돌진 사건만 싣고, 지나온 길은 궁극기
  * 돌진과 **같은 잔상**(`beginChargeGlide`)이 달려 따라온다.
  */
-export function triggerOpeningCharge(state: SkirmishState): SkirmishEvent[] {
-  const events: SkirmishEvent[] = [];
-  for (const fighter of state.fighters) {
-    const charge = fighter.def.passive.openingCharge;
-    if (charge === undefined || !isFighterAlive(fighter)) continue;
-    const target = resolveTarget(state, fighter);
-    if (!target || !charge.againstReachTiers.includes(target.def.reachTier)) continue;
-    const from = { x: fighter.x, y: fighter.y };
-    // 착지 거리는 마키의 도약과 같은 기준을 쓴다 — 사거리보다 조금 안쪽이라 붙은 채로 선다.
-    const dx = fighter.x - target.x; const dy = fighter.y - target.y; const gap = Math.hypot(dx, dy) || 1;
-    const landing = fighterReach(fighter) * 0.8;
-    fighter.x = Math.min(state.arena.right, Math.max(state.arena.left, target.x + dx / gap * landing));
-    fighter.y = Math.min(state.arena.bottom, Math.max(state.arena.top, target.y + dy / gap * landing));
-    beginChargeGlide(fighter, from);
-    events.push({ kind: "charge", fighterId: fighter.id, from, to: { x: fighter.x, y: fighter.y } });
-    // 기절은 공용 경로를 지난다 — 여기서 슬롯에 직접 넣으면 저항·정화·표시 사건을 비껴간다.
-    events.push(...applyStun(target, charge.stunSeconds, state));
-  }
-  return events;
+function tickOpeningCharge(fighter: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
+  const charge = fighter.def.passive.openingCharge;
+  if (charge === undefined || !fighter.openingChargeReady || !isFighterAlive(fighter)) return;
+  if (fighter.stunnedFor > 0 || fighter.frozen || fighter.knockback) return;
+  const target = fighter.targetId === null ? undefined : findFighter(state, fighter.targetId);
+  if (!target || target.side === fighter.side || !isFighterAlive(target)) return;
+  if (distance(fighter, target) > REACH_TIER[charge.withinReachTier]) return;
+  fighter.openingChargeReady = false;
+  const from = { x: fighter.x, y: fighter.y };
+  // 착지 거리는 마키의 도약과 같은 기준을 쓴다 — 사거리보다 조금 안쪽이라 붙은 채로 선다.
+  const dx = fighter.x - target.x; const dy = fighter.y - target.y; const gap = Math.hypot(dx, dy) || 1;
+  const landing = fighterReach(fighter) * 0.8;
+  fighter.x = Math.min(state.arena.right, Math.max(state.arena.left, target.x + dx / gap * landing));
+  fighter.y = Math.min(state.arena.bottom, Math.max(state.arena.top, target.y + dy / gap * landing));
+  beginChargeGlide(fighter, from);
+  events.push({ kind: "charge", fighterId: fighter.id, from, to: { x: fighter.x, y: fighter.y } });
+  // 기절은 공용 경로를 지난다 — 여기서 슬롯에 직접 넣으면 저항·정화·표시 사건을 비껴간다.
+  events.push(...applyStun(target, charge.stunSeconds, state));
 }
 
 /**
@@ -3387,32 +3379,32 @@ function applyStreak(attacker: Fighter, target: Fighter, events: SkirmishEvent[]
  * 다니지 않는다: 옮기는 규칙은 여럿을 함께 때리는 타격에서 어디로 옮겼는지 말할 수 없었고,
  * 표식이 늘 하나뿐이라 "지웠다"가 곧 "다른 곳에 생겼다"가 되어 지우는 값이 서지 않았다.
  *
- * 사라지는 순간에 무엇이 터지는지만 스킬이 정한다(`Skill.shimmer`). 추가타는 치명타를
- * 판정하지 않고 궁극기·야성 게이지도 충전하지 않는다.
+ * **남기는 것은 패시브의 몫이고**(`shimmerMark`의 `value`가 그 추가 피해다), 지워지는 순간에
+ * 무엇이 함께 터지는지만 스킬이 정한다(`Skill.shimmerBurst`) — 일반 공격과 궁극기가 서로
+ * 다르기 때문이다. 추가타는 치명타를 판정하지 않고 궁극기·야성 게이지도 충전하지 않는다.
  */
 function applyShimmer(attacker: Fighter, target: Fighter, skill: Skill, state: SkirmishState, events: SkirmishEvent[]): void {
-  const shimmer = skill.shimmer;
-  if (shimmer === undefined || !isFighterAlive(target)) return;
+  const passive = attacker.def.passive;
+  if (passive.kind !== "shimmerMark" || !isFighterAlive(target)) return;
   if (target.shimmer === null) {
     target.shimmer = { sourceId: attacker.id };
-    strikeShimmer(attacker, target, shimmer.markPower, state, events);
+    strikeShimmer(attacker, target, passive.value, state, events);
     return;
   }
   target.shimmer = null;
-  if (shimmer.burstPower === undefined) return;
+  const burst = skill.shimmerBurst;
+  if (burst === undefined) return;
   // 터지는 자리는 표식이 묻어 있던 그 적이다. 그래서 반경 표시도 시전자가 아니라 거기서 번진다.
-  const radius = shimmer.burstRadius ?? 0;
   events.push({ kind: "areaImpact", attackerId: attacker.id, ultimate: false, damageType: "magical",
-    area: { shape: "radial", x: target.x, y: target.y, radius } });
+    area: { shape: "radial", x: target.x, y: target.y, radius: burst.radius } });
   let dealt = 0;
   for (const other of state.fighters) {
     if (other.side === attacker.side || !isFighterAlive(other)) continue;
-    if (other.id !== target.id && distance(target, other) > radius) continue;
-    dealt += strikeShimmer(attacker, other, shimmer.burstPower, state, events);
+    if (other.id !== target.id && distance(target, other) > burst.radius) continue;
+    dealt += strikeShimmer(attacker, other, burst.power, state, events);
   }
-  const shieldPercent = shimmer.burstShieldPercent ?? 0;
-  if (shieldPercent <= 0 || dealt <= 0 || !isFighterAlive(attacker)) return;
-  const amount = Math.max(1, Math.round(dealt * shieldPercent / 100));
+  if (burst.shieldPercent <= 0 || dealt <= 0 || !isFighterAlive(attacker)) return;
+  const amount = Math.max(1, Math.round(dealt * burst.shieldPercent / 100));
   attacker.shield.amount += amount;
   attacker.shield.providerId = attacker.id;
   events.push({ kind: "shieldGranted", fighterId: attacker.id, providerId: attacker.id, amount, remaining: attacker.shield.amount, effect: { tag: "shieldGain", intensity: 1 } });
@@ -3485,9 +3477,7 @@ export const KNOCKBACK = { restitution: 0.86 } as const;
  * 것이 아니므로, 살아 있는 다른 적이 있을 때만 푼다.
  */
 function retargetAfterBasic(attacker: Fighter, target: Fighter, state: SkirmishState): void {
-  if (attacker.def.passive.kind === "tagAndRun") { tagAndRun(attacker, target, state); return; }
-  if (!attacker.ferocityFever || attacker.def.ferocityTrait.effectId !== "ichthyoDive") return;
-  moveToNearestOtherEnemy(attacker, target, state);
+  if (attacker.def.passive.kind === "tagAndRun") tagAndRun(attacker, target, state);
 }
 
 /**
@@ -5414,10 +5404,10 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     tickPoison(fighter, dt, state, events);
     if (!isFighterAlive(fighter)) continue;
     tickGourmetHunt(fighter, dt, state);
+    tickOpeningCharge(fighter, state, events);
     tickBulwark(fighter, dt, state, events);
     tickElation(fighter, dt);
     tickElationRegen(fighter, dt, state, events);
-    tickPassiveRegen(fighter, dt, state, events);
     tickAftershock(fighter, dt, rng, state, events);
     // 폭주 회복은 행동 불능과 무관한 전투 시간으로 돌아 탱커가 제어당해도 계약한 생존력을 유지한다.
     tickTorikaBulwark(fighter, dt, state, events);

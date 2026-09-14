@@ -173,7 +173,10 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
   if (trait.effectId === "pontusRage") return t("skill.ferocity.pontusRage", { percent: trait.maxHpDamagePercentPerSecond });
   if (trait.effectId === "tailwindRally") return t("skill.ferocity.tailwindRally", { ferocity: trait.teamFerocityGain, energy: trait.teamEnergyGain });
   if (trait.effectId === "sharedOverpaint") return t("skill.ferocity.sharedOverpaint");
-  if (trait.effectId === "ichthyoDive") return t("skill.ferocity.ichthyoDive", { percent: trait.moveSpeedPercent });
+  // 되찾는 숨과 빨라지는 손은 서로 다른 축이라 한 문장이 둘을 함께 말한다.
+  if (trait.effectId === "tidalVigor") {
+    return t("skill.ferocity.tidalVigor", { percent: trait.maxHpRegenPercentPerSecond, speed: trait.attackSpeedPercent });
+  }
   if (trait.effectId === "butcherFeast") return t("skill.ferocity.butcherFeast", { attacks: trait.instantButcherAttacks, percent: trait.healPercent });
   // 바르거나 터뜨리거나 한 번에 하나뿐이라는 것이 이 폭주의 전부다. 번갈아 한다고 적지 않는
   // 이유는 실제 규칙이 "지금 걸려 있나"만 보기 때문이다 — 공속이 빨라져도 그 판단은 같다.
@@ -433,18 +436,18 @@ function passiveHead(passive: Passive, atk?: number): string {
     // 없으면 "남만 꿰매 주고 자기는 그냥 맞는 개체"로 읽힌다.
     return t("skill.passive.sutureStitch", { percent: passive.suture.damagePercent, capPercent: passive.suture.maxHpCapPercent });
   }
-  // 되찾는 숨과 빨라지는 손은 서로 다른 축이라 한 문장이 둘을 함께 말한다. 값이 같아질 일이
-  // 없으므로 나열을 접지 않는다.
-  if (passive.kind === "tidalVigor") {
-    return t("skill.passive.tidalVigor", { percent: passive.maxHpRegenPercentPerSecond, speed: passive.attackSpeedPercent });
-  }
+  // 표식을 남기는 것이 이 패시브의 전부다. 무엇이고 다시 맞으면 어떻게 되는지는 태그가 말한다.
+  if (passive.kind === "shimmerMark") return t("skill.passive.shimmerMark", { percent: passive.value });
   if (passive.kind === "frostboundDominion") return t("skill.passive.frostboundDominion");
   if (passive.kind !== "battleMaidMastery") return passive.desc;
-  // 네 능력이 모두 같은 비율로 오르므로 값을 한 번만 말한다. 값이 서로 달라지면 다시 나열해야 한다.
-  const sentences = [t("skill.passive.battleMaidMastery", { percent: passive.attackSpeedPercent })];
-  // 흡혈은 오각형에 서지 않는 축이라 같은 값이어도 위 문장이 말하지 못한다 — 제 절로 세운다.
-  if (passive.lifeStealPoints !== undefined) sentences.push(t("skill.passive.lifeSteal", { percent: passive.lifeStealPoints }));
-  // 언제 달려드는지가 곧 조건이라 본문이 사거리 등급을 적는다.
+  /*
+   * **다섯이 모두 같은 비율로 오르므로 한 줄에 함께 세운다.** 흡혈만 따로 문장을 세웠을 때는
+   * 같은 값이 두 번 나뉘어 읽혀, 네 능력과 흡혈이 서로 다른 몫인 것처럼 보였다. 값이 서로
+   * 달라지는 순간 다시 나열해야 한다.
+   */
+  const sentences = [t(passive.lifeStealPoints === undefined ? "skill.passive.battleMaidMastery" : "skill.passive.battleMaidMastery.lifeSteal",
+    { percent: passive.attackSpeedPercent })];
+  // 언제 달려드는지가 곧 조건이라 본문이 그 거리를 적는다.
   if (passive.openingCharge !== undefined) sentences.push(t("skill.passive.openingCharge", { seconds: passive.openingCharge.stunSeconds }));
   return sentences.join(" ");
 }
@@ -715,9 +718,17 @@ export function skillDescription(
   const parts = { target: skillTargetPhrase(skill), damage: skillDamagePhrase(skill, stats) };
   // 이어 붙이는 어미는 언어마다 다르므로 문구 표가 문장을 통째로 갖는다 — 한국어에서 "준다"에
   // "고"를 그대로 붙이면 인용형 어미("~라고")로 읽히는 것도 그 표가 아는 일이다.
+  /*
+   * **되찍는 궁극기는 뼈대가 다르다.** 위력이 총량이 아니라 한 번의 값이라, 다른 스킬과 같은
+   * 문장으로 적으면 화면의 수치가 총 피해로 읽힌다. 간격과 횟수를 절로 뒤에 붙이는 대신 대상
+   * 바로 뒤에 넣어 한 문장으로 끝낸다 — 짧게 읽히고, 그 수가 곧 한 번의 값이라는 것도 함께 선다.
+   */
+  const repeat = "repeatStrike" in skill ? skill.repeatStrike : undefined;
+  const repeatParts = repeat === undefined ? undefined : { ...parts, seconds: repeat.intervalSeconds, count: repeat.count };
   sentences.push(joined === undefined
-    ? t("skill.sentence.damage", parts)
-    : t(joined.joinWithComma ? "skill.sentence.damageAndComma" : "skill.sentence.damageAnd", { ...parts, effect: joined.text }));
+    ? t(repeatParts ? "skill.sentence.repeat" : "skill.sentence.damage", repeatParts ?? parts)
+    : t(repeatParts ? "skill.sentence.repeatAnd" : joined.joinWithComma ? "skill.sentence.damageAndComma" : "skill.sentence.damageAnd",
+      { ...(repeatParts ?? parts), effect: joined.text }));
   for (const clause of clauses) if (clause !== joined) sentences.push(t("skill.sentence.clause", { text: clause.text }));
   return sentences.join(" ");
 }
@@ -813,24 +824,15 @@ function skillEffectClauses(skill: DescribedSkill, stats: SkillDescriptionStats)
   if ("shallows" in skill && skill.shallows !== undefined) {
     clauses.push({ text: t("skill.clause.shallows"), standalone: true });
   }
-  // 몇 번 찍는지는 위력이 그 한 번의 값이라는 뜻이기도 하다 — 적지 않으면 화면의 수치가
-  // 총 피해로 읽힌다.
-  if ("repeatStrike" in skill && skill.repeatStrike !== undefined) {
-    clauses.push({ text: t("skill.clause.repeatStrike", { count: skill.repeatStrike.count }), standalone: true });
-  }
   /*
-   * 반짝은 **쓰는 개체가 하나뿐인 규칙어**라 남기고 지우는 규칙을 태그가 갖는다. 본문이 적는
-   * 것은 그 태그가 말하지 않는 몫, 곧 **사라지는 순간에 무엇이 터지는가**뿐이다 — 일반 공격과
-   * 궁극기가 지우는 값이 서로 달라 태그에 못 박으면 한쪽 설명이 거짓말이 된다.
+   * 반짝은 **쓰는 개체가 하나뿐인 규칙어**라 무엇이고 다시 맞으면 어떻게 되는지를 태그가 갖고,
+   * 남기는 것은 패시브가 말한다. 본문이 적는 것은 둘 다 말하지 않는 몫, 곧 **지워지는 순간에
+   * 무엇이 함께 터지는가**뿐이다 — 일반 공격과 궁극기가 서로 달라 태그에 못 박으면 한쪽
+   * 설명이 거짓말이 된다.
    */
-  if ("shimmer" in skill && skill.shimmer !== undefined) {
-    const shimmer = skill.shimmer;
-    clauses.push({
-      text: shimmer.burstPower === undefined
-        ? t("skill.clause.shimmer")
-        : t("skill.clause.shimmerBurst", { percent: shimmer.burstPower, shield: shimmer.burstShieldPercent ?? 0 }),
-      standalone: true,
-    });
+  if ("shimmerBurst" in skill && skill.shimmerBurst !== undefined) {
+    const burst = skill.shimmerBurst;
+    clauses.push({ text: t("skill.clause.shimmerBurst", { percent: burst.power, shield: burst.shieldPercent }), standalone: true });
   }
   // 순간이동해서 쓴다는 것은 대상을 고르는 규칙 자체라, 대상 문구가 말하지 못하는 몫을 적는다.
   if ("blinkToLowestDefense" in skill && skill.blinkToLowestDefense === true) {

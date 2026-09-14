@@ -5,7 +5,7 @@ import { computeDamage, computeDamageContribution, currentAbilityPower, isCritic
 export { currentAbilityPower } from "./damage";
 import { drainFerocityFever, FEROCITY_RULES } from "./ferocity";
 import { isBreakthroughSlotOpen, type BreakthroughSlot } from "./relicProgression";
-import { augmentAppliesTo, bleedOnAttackEffect, conditionalAttackPowerMultiplier, expeditionAugmentStatMultipliers, type ExpeditionAugmentEffect, type ExpeditionAugmentTrigger, type ExpeditionTriggeredEffect } from "./expeditionAugments";
+import { augmentAppliesTo, bleedOnAttackEffect, conditionalAttackPowerMultiplier, expeditionAugmentStatMultipliers, flatStatPoints, highHpDamageMultiplier, sameTargetStreakMultiplier, type ExpeditionAugmentEffect, type ExpeditionAugmentTrigger, type ExpeditionTriggeredEffect } from "./expeditionAugments";
 import type { BasicAttack, BasicAttackStep, BreakthroughEffects, CombatStatusEffect, FerocityTrait, ReachTier, RelicDef, Side, Skill, Stats, TeamBuff } from "./types";
 import { ULTIMATE_ENERGY_MAX } from "./ultimate";
 import { deriveSummonStats } from "./summonStats";
@@ -133,6 +133,21 @@ export interface Fighter extends Combatant {
   /** 낮은 체력 훅이 부여한 전투 한정 방어·저항 퍼센트다. */
   augmentDefensePercent: number;
   augmentResistancePercent: number;
+  /**
+   * 룬 특성이 건 시간제 가속이다.
+   *
+   * 순풍·광란 슬롯을 빌리지 않는다 — 그 둘은 규칙어가 제 수치와 부수 효과(광란은 표적 비우기)를
+   * 갖고 있어, 다른 수치로 걸면 머리 위 표식이 말하는 것과 실제가 갈린다.
+   */
+  traitHaste: { remaining: number; attackSpeedPercent: number; moveSpeedPercent: number } | null;
+  /**
+   * 룬 특성 「집념」이 세는 연속 타격 표적과 겹이다.
+   *
+   * 패시브가 쓰는 `streakTargetId`/`streakCount`와 **따로 센다** — 그쪽은 상한에 닿는 순간
+   * 0으로 돌아가는 발동 카운터라, 같은 값을 나눠 쓰면 겹이 터질 때마다 피해 증가가 사라진다.
+   */
+  traitStreakTargetId: string | null;
+  traitStreakStacks: number;
   /**
    * 지금 쌓인 손질. 상한에 닿으면 그 자리에서 터지고 다시 0부터 센다.
    *
@@ -835,6 +850,7 @@ const NO_CRIT = (): number => 0.999999;
 function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: number, bondLevel = 0, breakthrough = 0, bodyScale = 1, augmentEffects: readonly ExpeditionAugmentEffect[] = []): Fighter {
   // 정적 정의를 복제한 전투 스냅샷에만 단순 능력치 증강을 한 번 반영한다.
   const multipliers = side === "player" ? expeditionAugmentStatMultipliers(augmentEffects, def.id) : expeditionAugmentStatMultipliers([], def.id);
+  const flatPoints = (stat: "critChance" | "ferocityGain" | "energyGain"): number => side === "player" ? flatStatPoints(augmentEffects, def.id, stat) : 0;
   const battleDef: RelicDef = { ...def, stats: { ...def.stats,
     hp: def.stats.hp * multipliers.maxHpPercent,
     def: def.stats.def * multipliers.defensePercent,
@@ -842,6 +858,11 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     atk: def.stats.atk * multipliers.attackPowerPercent,
     ap: def.stats.ap * multipliers.spellPowerPercent,
     attackSpeed: def.stats.attackSpeed * multipliers.attackSpeedPercent,
+    // 셋은 이미 퍼센트로 세는 수치라 덧셈으로 붙는다. 곱셈 배율과 섞으면 같은 「+10」이
+    // 능력치마다 다른 크기가 된다.
+    critChance: def.stats.critChance + flatPoints("critChance"),
+    energyGain: def.stats.energyGain + flatPoints("energyGain"),
+    ferocityGain: def.stats.ferocityGain + flatPoints("ferocityGain"),
   } };
   return {
     def: battleDef,
@@ -888,6 +909,9 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     augmentRuntime: {},
     augmentDefensePercent: 0,
     augmentResistancePercent: 0,
+    traitHaste: null,
+    traitStreakTargetId: null,
+    traitStreakStacks: 0,
     butcher: null,
     // 첫 도약은 전투가 시작되고 조금 뒤다 — 첫 프레임에 뛰면 순간이동한 것으로만 보인다.
     huntCooldown: def.passive.kind === "gourmetHunt" ? def.passive.huntOpeningSeconds ?? 0 : 0,
@@ -1083,6 +1107,22 @@ export function createSkirmish(
   return state;
 }
 
+/**
+ * 룬 특성이 이번 한 대에 얹는 피해 배율이다.
+ *
+ * **연속 타격 겹은 여기서 센다** — 피해를 만드는 자리와 겹을 세는 자리가 갈리면 표적을 바꾼
+ * 프레임에 지난 겹이 한 번 더 얹힌다. 겹은 실제로 때린 순간에만 오르므로 배율만 조회하는
+ * 호출부는 없다.
+ */
+function traitDamageMultiplier(state: SkirmishState, attacker: Fighter, target: Fighter): number {
+  const effects = state.augmentEffects;
+  attacker.traitStreakStacks = attacker.traitStreakTargetId === target.id ? attacker.traitStreakStacks + 1 : 0;
+  attacker.traitStreakTargetId = target.id;
+  const targetHpPercent = target.maxHp > 0 ? target.hp / target.maxHp * 100 : 0;
+  return highHpDamageMultiplier(effects, attacker.def.id, targetHpPercent)
+    * sameTargetStreakMultiplier(effects, attacker.def.id, attacker.traitStreakStacks);
+}
+
 /** 현재 전투의 조건부 증강만 안전하게 좁혀 대상 렐릭에 적용되는 항목과 안정적인 키를 돌려준다. */
 function triggeredAugments(state: SkirmishState, fighter: Fighter, trigger: ExpeditionAugmentTrigger): Array<{ effect: ExpeditionTriggeredEffect; key: string }> {
   return state.augmentEffects.flatMap((effect, index) => effect.kind === "triggered" && effect.trigger === trigger && augmentAppliesTo(effect, fighter.def.id)
@@ -1110,7 +1150,12 @@ export function initializeSkirmishAugments(state: SkirmishState): SkirmishEvent[
     }
     for (const { effect, key } of triggeredAugments(state, fighter, "battleStart")) {
       if (effect.payload.kind !== "shield" || !consumeAugmentTrigger(state, fighter, key, effect)) continue;
-      const targets = effect.limits.target === "allAllies" ? state.fighters.filter((ally) => ally.side === fighter.side && isFighterAlive(ally)) : [fighter];
+      const living = state.fighters.filter((ally) => ally.side === fighter.side && isFighterAlive(ally));
+      // 체력 **비율**로 고른다 — 절대량으로 고르면 최대 체력이 작은 개체가 늘 뽑힌다.
+      const lowest = living.slice().sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0];
+      const targets = effect.limits.target === "allAllies" ? living
+        : effect.limits.target === "lowestHpAlly" ? (lowest ? [lowest] : [])
+        : [fighter];
       for (const target of targets) {
         const amount = target.maxHp * effect.payload.maxHpPercent / 100; target.shield.amount += amount; target.shield.providerId = fighter.id;
         events.push({ kind: "shieldGranted", fighterId: target.id, providerId: fighter.id, amount, remaining: target.shield.amount, effect: { tag: "shieldGain", intensity: 1 } });
@@ -2662,7 +2707,10 @@ export function currentAttackSpeed(fighter: Fighter, state?: SkirmishState): num
     ? fighter.def.ferocityTrait.attackSpeedPercent : 0;
   // 둔화는 남이 걸어 준 감속이라 다른 배율과 같은 자리에서 나눈다.
   const chillPercent = fighter.chill ? fighter.chill.stacks * fighter.chill.speedPercentPerStack : 0;
+  // 룬 특성의 가속도 시간이 정해진 배율이라 순풍·광란과 같은 자리에서 곱한다.
+  const traitHastePercent = fighter.traitHaste?.attackSpeedPercent ?? 0;
   return (fighter.def.stats.attackSpeed + passiveSpeedPoints + fighter.bonusAttackSpeed)
+    * (1 + traitHastePercent / 100)
     * (1 + teamPercent / 100) * (1 + packHuntPercent / 100) * (1 + tailwindPercent / 100) * (1 + frenzyPercent / 100)
     * (1 + volleyPercent / 100) * (1 + reagentDopingPercent / 100) * (1 - chillPercent / 100);
 }
@@ -2727,7 +2775,24 @@ export function defensiveDefinition(target: Fighter, state: SkirmishState): Figh
 function triggerCombatAugments(state: SkirmishState, owner: Fighter, trigger: ExpeditionAugmentTrigger, events: SkirmishEvent[], hitTarget?: Fighter): void {
   for (const { effect, key } of triggeredAugments(state, owner, trigger)) {
     const payload = effect.payload;
-    if (payload.kind === "ultimateCostReduction" || payload.kind === "shield") continue;
+    if (payload.kind === "ultimateCostReduction") continue;
+    if (payload.kind === "haste") {
+      if (!consumeAugmentTrigger(state, owner, key, effect)) continue;
+      // 더 센 가속이 걸려 있으면 덮지 않는다 — 약한 쪽이 나중에 터져 강한 쪽을 지우면
+      // 같은 특성이 전투 중에 제 수치보다 못한 것으로 보인다.
+      const stronger = (owner.traitHaste?.attackSpeedPercent ?? 0) > payload.attackSpeedPercent;
+      if (!stronger) owner.traitHaste = { remaining: payload.seconds, attackSpeedPercent: payload.attackSpeedPercent, moveSpeedPercent: payload.moveSpeedPercent };
+      else owner.traitHaste = { ...owner.traitHaste!, remaining: Math.max(owner.traitHaste!.remaining, payload.seconds) };
+      continue;
+    }
+    // 보호막은 저체력·치명타 훅에서도 자신에게 걸린다. 전투 시작 몫만 초기화 단계가 맡는다.
+    if (payload.kind === "shield") {
+      if (trigger === "battleStart" || !consumeAugmentTrigger(state, owner, key, effect)) continue;
+      const amount = owner.maxHp * payload.maxHpPercent / 100;
+      owner.shield.amount += amount; owner.shield.providerId = owner.id;
+      events.push({ kind: "shieldGranted", fighterId: owner.id, providerId: owner.id, amount, remaining: owner.shield.amount, effect: { tag: "shieldGain", intensity: 1 } });
+      continue;
+    }
     if (payload.kind === "lowHpDefense") {
       const hpPercent = owner.maxHp > 0 ? owner.hp / owner.maxHp * 100 : 0;
       if (hpPercent > payload.belowHpPercent || !consumeAugmentTrigger(state, owner, key, effect)) continue;
@@ -2810,6 +2875,7 @@ export function moveSpeed(fighter: Fighter, state?: SkirmishState): number {
   const submergedPercent = fighter.submergedIn?.moveSlowPercent ?? 0;
   return fighter.def.stats.moveSpeed * SKIRMISH.moveRate
     * (1 + teamBonus / 100) * (1 + selfBonus / 100) * (1 + tailwindPercent / 100)
+    * (1 + (fighter.traitHaste?.moveSpeedPercent ?? 0) / 100)
     * (1 - chillPercent / 100) * (1 - submergedPercent / 100);
 }
 
@@ -3943,7 +4009,8 @@ function strike(
     : undefined;
   const periodicBonus = periodicBonusInput ? computeDamage(damageAttacker, damageTarget, periodicBonusInput) : 0;
   // 원정 공격력은 전투 스냅샷에 이미 반영됐으므로 공용 피해 공식에서 다시 곱하지 않는다.
-  const rawAmount = Math.max(1, Math.round(computeDamage(damageAttacker, damageTarget, damageInput) + defenseBonus + periodicBonus));
+  const rawAmount = Math.max(1, Math.round((computeDamage(damageAttacker, damageTarget, damageInput) + defenseBonus + periodicBonus)
+    * traitDamageMultiplier(state, attacker, target)));
   const contributionAmount = Math.max(0, computeDamageContribution(damageAttacker, damageInput)
     + (defenseBonus > 0 ? computeDamageContribution(attacker, { ...damageInput, power: splashTrait.effectId === "splashDamage" ? splashTrait.defenseDamagePercent ?? 0 : 0, scalingStat: "def", damageType: "physical" }) : 0)
     + (periodicBonusInput ? computeDamageContribution(damageAttacker, periodicBonusInput) : 0));
@@ -4337,7 +4404,8 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     // 폭발형 궁극기의 위력은 총량이 아니라 **겹당 값**이라 그 대상의 겹 수만큼 곱한다.
     const scaled = detonation ? { ...skill, power: (skill.power ?? 0) * (target.overpaint?.stacks ?? 0) } : skill;
     const damageInput = { ...scaled, isCritical: critical, kind: useUltimate ? "ultimate" as const : "basic" as const };
-    const rawAmount = Math.max(1, Math.round(computeDamage(damageAttacker, defensiveDefinition(target, state), damageInput)));
+    const rawAmount = Math.max(1, Math.round(computeDamage(damageAttacker, defensiveDefinition(target, state), damageInput)
+      * traitDamageMultiplier(state, attacker, target)));
     const contributionAmount = Math.max(0, computeDamageContribution(damageAttacker, damageInput));
     const resolution = resolveReceivedDamage(target, rawAmount);
     const amount = resolution.applied;
@@ -5151,6 +5219,12 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
       const remaining = fighter.frenzy.remaining - dt;
       if (remaining <= EMERGENCY_RECOVERY.epsilon) { fighter.frenzy = null; fighter.targetId = null; }
       else fighter.frenzy = { ...fighter.frenzy, remaining };
+    }
+    // 룬 특성의 가속도 같은 공용 시계로 마른다. 다 흐르면 통째로 비워 남은 값이 새지 않게 한다.
+    if (isFighterAlive(fighter) && fighter.traitHaste) {
+      const remaining = fighter.traitHaste.remaining - dt;
+      if (remaining <= EMERGENCY_RECOVERY.epsilon) fighter.traitHaste = null;
+      else fighter.traitHaste = { ...fighter.traitHaste, remaining };
     }
     // 여울도 같은 공용 시계로 마른다. 개체를 따라다니지 않으므로 자리는 고인 그대로 둔다.
     tickShallows(fighter, dt, events);

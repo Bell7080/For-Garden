@@ -51,7 +51,9 @@ export function expeditionAugmentEffectLabel(def: ExpeditionAugmentDef): string 
     if (payload.kind === "status") return t("augment.statusTrigger", { trigger: t(def.effect.trigger === "onCritical" ? "augment.trigger.critical" : "augment.trigger.hit"), status: payload.status.kind });
     if (payload.kind === "conditionalBonusDamage") return t("augment.conditionalDamage", { status: t(payload.requiresStatus === "curse" ? "augment.status.curse" : "augment.status.stun"), percent: payload.percent });
     if (payload.kind === "lowHpDefense") return t("augment.lowHpDefense", { threshold: payload.belowHpPercent, percent: payload.defensePercent });
-    return t("augment.healOnKill", { percent: payload.maxHpPercent });
+    if (payload.kind === "heal") return t("augment.healOnKill", { percent: payload.maxHpPercent });
+    // 가속(`haste`)은 룬 특성만 쓰는 payload라 증강 카드에는 오지 않는다. 그래도 종류가
+    // 늘었을 때 조용히 다른 효과의 문장을 빌려 쓰지 않도록 여기서 일반 표기로 떨어뜨린다.
   }
   // 위 분기가 모든 판별 가능한 효과를 다루며, 이 반환은 향후 데이터 종류 추가 시 안전한 표시다.
   return t("augment.effect");

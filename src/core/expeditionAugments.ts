@@ -10,7 +10,8 @@ export interface ExpeditionAugmentLimits {
   maxTriggers: number;
   cooldownSeconds: number;
   maxStacks: number;
-  target: "self" | "hitTarget" | "allAllies";
+  /** `lowestHpAlly`는 발동 순간 체력 **비율**이 가장 낮은 살아 있는 아군 하나다. */
+  target: "self" | "hitTarget" | "allAllies" | "lowestHpAlly";
 }
 
 /** 콜백 대신 공용 상태 계약 또는 수치만 담는 안전한 payload다. */
@@ -20,7 +21,14 @@ export type ExpeditionTriggeredPayload =
   | { kind: "ultimateCostReduction"; percent: number }
   | { kind: "conditionalBonusDamage"; percent: number; damageType: DamageType; requiresStatus: "curse" | "stun" }
   | { kind: "lowHpDefense"; belowHpPercent: number; defensePercent: number; resistancePercent: number }
-  | { kind: "heal"; maxHpPercent: number };
+  | { kind: "heal"; maxHpPercent: number }
+  /**
+   * 일정 시간 공격 속도·이동 속도.
+   *
+   * 순풍(`tailwind`)이나 광란(`frenzy`) 슬롯을 빌려 쓰지 않는다 — 둘 다 규칙어가 제 수치와
+   * 부수 효과를 갖고 있어, 다른 수치로 걸면 머리 위 표식이 말하는 것과 실제가 갈린다.
+   */
+  | { kind: "haste"; attackSpeedPercent: number; moveSpeedPercent: number; seconds: number };
 
 /** 런타임 훅은 이 구조만 해석하며 데이터가 임의 함수를 주입할 자리는 없다. */
 export interface ExpeditionTriggeredEffect {
@@ -44,6 +52,17 @@ export type ExpeditionAugmentEffect =
   | { kind: ExpeditionAugmentStatKind; percent: number; scope: ExpeditionAugmentScope; stacking?: ExpeditionAugmentStacking; stackKey?: string }
   | { kind: "bleedOnAttack"; strength: "standard" | "minor"; everyNAttacks: number; reapplication: "refresh"; scope: ExpeditionAugmentScope }
   | { kind: "lowHpAttackPowerPercent"; percent: number; belowHpPercent: number; scope: ExpeditionAugmentScope }
+  /** 표적의 현재 체력 비율이 기준 이상일 때만 얹히는 피해 증가율(%)이다. */
+  | { kind: "damageVsHighHpPercent"; percent: number; aboveHpPercent: number; scope: ExpeditionAugmentScope }
+  /** 같은 적을 연속으로 때린 겹마다 얹히는 피해 증가율(%)이다. 표적을 바꾸면 겹이 풀린다. */
+  | { kind: "sameTargetStreakPercent"; percentPerStack: number; maxStacks: number; scope: ExpeditionAugmentScope }
+  /**
+   * 이미 퍼센트로 세는 능력치에 **덧셈**으로 붙는 가산이다.
+   *
+   * 곱셈 배율과 섞지 않는 이유는 같은 「+10」이 능력치마다 다른 크기가 되기 때문이다 —
+   * 치명타 확률 가산이 패시브(`criticalChancePercent`)와 같은 문법으로 읽히게 한다.
+   */
+  | { kind: "flatStat"; stat: "critChance" | "ferocityGain" | "energyGain"; points: number; scope: ExpeditionAugmentScope }
   | ExpeditionTriggeredEffect;
 
 /** 합산 결과는 배율로 반환해 호출부가 같은 효과를 두 번 적용하지 않게 한다. */
@@ -147,4 +166,27 @@ export function applyExpeditionRest(relics: readonly ExpeditionRelicHealth[], he
     if (!revived) { revived = true; return { ...relic, currentHp: revivePercent, alive: true }; }
     return { ...relic, currentHp: 0, alive: false };
   });
+}
+
+/** 조건이 맞는 표적에게만 얹히는 피해 증가율을 배율로 합산한다. 조건이 없으면 1이다. */
+export function highHpDamageMultiplier(effects: readonly ExpeditionAugmentEffect[], relicId: string, targetHpPercent: number): number {
+  const percent = effects.filter((effect): effect is Extract<ExpeditionAugmentEffect, { kind: "damageVsHighHpPercent" }> =>
+    effect.kind === "damageVsHighHpPercent" && augmentAppliesTo(effect, relicId) && targetHpPercent >= effect.aboveHpPercent)
+    .reduce((sum, effect) => sum + effect.percent, 0);
+  return 1 + percent / 100;
+}
+
+/** 연속 타격 겹이 만드는 피해 배율이다. 겹은 호출부가 세고 상한은 효과가 정한다. */
+export function sameTargetStreakMultiplier(effects: readonly ExpeditionAugmentEffect[], relicId: string, stacks: number): number {
+  const percent = effects.filter((effect): effect is Extract<ExpeditionAugmentEffect, { kind: "sameTargetStreakPercent" }> =>
+    effect.kind === "sameTargetStreakPercent" && augmentAppliesTo(effect, relicId))
+    .reduce((sum, effect) => sum + effect.percentPerStack * Math.min(Math.max(0, stacks), effect.maxStacks), 0);
+  return 1 + percent / 100;
+}
+
+/** 퍼센트 능력치에 덧셈으로 붙는 가산의 합이다. 능력치마다 한 번씩만 더한다. */
+export function flatStatPoints(effects: readonly ExpeditionAugmentEffect[], relicId: string, stat: "critChance" | "ferocityGain" | "energyGain"): number {
+  return effects.filter((effect): effect is Extract<ExpeditionAugmentEffect, { kind: "flatStat" }> =>
+    effect.kind === "flatStat" && effect.stat === stat && augmentAppliesTo(effect, relicId))
+    .reduce((sum, effect) => sum + effect.points, 0);
 }

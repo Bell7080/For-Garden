@@ -5,6 +5,8 @@
  */
 
 import { t } from "../i18n";
+import { assertValidRuneTrait, type RuneTrait } from "./runeTraits";
+import { RUNE_TRAIT_IDS } from "../data/runeTraits";
 
 /**
  * 룬이 들어가는 자리(파츠).
@@ -130,6 +132,13 @@ export interface RuneInstance {
   locked?: boolean;
   /** 즐겨찾기다. 잠금과 달리 무엇도 막지 않고 "골라 둔 것"만 나타낸다. */
   bookmarked?: boolean;
+  /**
+   * 고고학의 특성 연구가 붙이는 숨은 한 줄이다.
+   *
+   * **선택 필드다** — 특성이 없는 룬이 정상 상태이고, 특성을 몰랐던 구 저장도 그대로 읽힌다.
+   * 특성 등급은 `rarity`와 **독립**이라 고급 룬에 전설 특성이 붙을 수 있다.
+   */
+  trait?: RuneTrait;
 }
 
 /** 룬 옵션을 실제 전투 계산에 넘기는 계약이다. 모든 값의 단위는 백분율이다. */
@@ -290,6 +299,7 @@ export function assertValidRuneInstance(rune: RuneInstance): void {
   if (histories.filter(({ succeeded }) => succeeded).length > histories.length) throw new Error("강화 성공 횟수는 시도 횟수를 넘을 수 없습니다.");
   if (rune.locked !== undefined && typeof rune.locked !== "boolean") throw new Error("룬 잠금은 boolean이어야 합니다.");
   if (rune.bookmarked !== undefined && typeof rune.bookmarked !== "boolean") throw new Error("룬 즐겨찾기는 boolean이어야 합니다.");
+  if (rune.trait !== undefined) assertValidRuneTrait(rune.trait, RUNE_TRAIT_IDS);
   if (rune.engravings.length > 1) throw new Error("각인은 룬 하나에 한 번만 적용할 수 있습니다.");
   if (rune.engravings.length > 0 && !rune.enhancementComplete) throw new Error("강화를 완료하기 전에는 각인할 수 없습니다.");
   if (rune.engravings.some(({ statKey, grade, valueAdded }) => !optionKeys.has(statKey) || (grade !== undefined && !["normal", "great", "perfect"].includes(grade)) || !Number.isFinite(valueAdded) || valueAdded < 0)) throw new Error("각인 결과가 올바르지 않습니다.");

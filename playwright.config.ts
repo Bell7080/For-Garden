@@ -1,7 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
 // 기기별로 반복할 가치가 있는 화면 배치·에셋 회귀만 이 목록에서 명시적으로 관리한다.
-const DEVICE_VISUAL_SPECS = ["**/mobile.spec.ts", "**/languageWalk.spec.ts", "**/relicAssetRegression.spec.ts"];
+const DEVICE_VISUAL_SPECS = ["**/mobile.spec.ts", "**/languageWalk.spec.ts", "**/relicAssetRegression.spec.ts", "**/interactionScene.visual.spec.ts"];
 
 // 로컬 병렬 실행은 의도적으로 PW_WORKERS를 지정했을 때만 열고, 잘못된 값은 안전한 직렬 실행으로 되돌린다.
 const requestedLocalWorkers = Number(process.env.PW_WORKERS);

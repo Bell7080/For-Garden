@@ -107,11 +107,17 @@ function settlementHarness(failOnce?: PersistPhase) {
   const state = createDefaultSession();
   const managerSaves: Session[] = [];
   const serverPersists: Session[] = [];
+  const commitOrder: string[] = [];
+  let bossNodeId = "";
   let failed = false;
-  const manager = new ExpeditionManager(state, { save: (next) => { managerSaves.push(structuredClone(next)); } }, () => new Date("2026-09-02T12:00:00Z"), true);
+  const manager = new ExpeditionManager(state, { save: (next) => {
+    managerSaves.push(structuredClone(next));
+    commitOrder.push(next.expedition.run?.visitedNodeIds.includes(bossNodeId) ? "local-node" : "manager-setup");
+  } }, () => new Date("2026-09-02T12:00:00Z"), true);
   const shortcut = manager.prepareDevelopmentBossShortcut(["anky", "rex", "spino"]);
   if (!shortcut.ok) throw new Error(`보스 테스트 런 준비 실패: ${shortcut.reason}`);
   const boss = state.expedition.run!.nodes.find(({ type }) => type === "boss")!;
+  bossNodeId = boss.id;
   state.expedition.run!.pendingRewards = { gold: 73 };
   const walletBefore = state.wallet.gold;
   const persistSession = vi.fn((next: Session) => {
@@ -120,6 +126,7 @@ function settlementHarness(failOnce?: PersistPhase) {
     // manager가 이미 확정한 보스 방문을 보존한 채 FakeServer의 원자 정산만 재시도해야 한다.
     if (!failed && failOnce === phase) { failed = true; throw new Error(`${phase} persistence failure`); }
     serverPersists.push(structuredClone(next));
+    commitOrder.push(phase);
   });
   const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-09-02T12:00:00Z"), persistSession });
   const submit = vi.spyOn(server, "submitExpeditionBossScore");
@@ -127,7 +134,9 @@ function settlementHarness(failOnce?: PersistPhase) {
   const requests = manager.prepareBossRequests(boss.id)!;
   const request = { ...requests, runId: state.expedition.run!.runId, nodeId: boss.id };
   const actions = fightAndLog(["anky", "rex", "spino"], 1);
-  return { state, manager, server, flow: new ExpeditionBossSettlementFlow(server, manager), request, actions, walletBefore, managerSaves, serverPersists, persistSession, submit, settle };
+  // 준비 단계의 manager 저장은 finish 순서 검증 대상이 아니므로 실제 왕복 직전에 기록만 비운다.
+  commitOrder.length = 0;
+  return { state, manager, server, flow: new ExpeditionBossSettlementFlow(server, manager), request, actions, walletBefore, managerSaves, serverPersists, commitOrder, persistSession, submit, settle };
 }
 
 describe("원정 보스 비동기 정산 복구", () => {
@@ -139,6 +148,14 @@ describe("원정 보스 비동기 정산 복구", () => {
     expect(harness.submit).toHaveBeenCalledTimes(1);
     expect(harness.settle).toHaveBeenCalledTimes(1);
     expect(harness.managerSaves.filter(({ expedition }) => expedition.run?.visitedNodeIds.includes(harness.request.nodeId))).toHaveLength(1);
+    // 실제 FakeServer 점수 커밋, manager의 로컬 노드 적용, 최종 런 정산이 서로 앞서거나 합쳐지지 않는다.
+    const scoreCommit = harness.serverPersists.findIndex(({ expedition }) => expedition.run?.bossDamageScore === result.score.bossDamageScore);
+    const localNodeCommit = harness.managerSaves.findIndex(({ expedition }) => expedition.run?.visitedNodeIds.includes(harness.request.nodeId));
+    const settlementCommit = harness.serverPersists.findIndex(({ expedition }) => expedition.run === null);
+    expect(scoreCommit).toBeGreaterThanOrEqual(0);
+    expect(localNodeCommit).toBeGreaterThanOrEqual(0);
+    expect(settlementCommit).toBeGreaterThan(scoreCommit);
+    expect(harness.commitOrder).toEqual(["score", "local-node", "settlement"]);
     expect(harness.state.wallet.gold).toBe(harness.walletBefore + 73);
     expect(harness.state.expedition.playsThisWeek).toBe(1);
     expect(harness.state.expedition.run).toBeNull();

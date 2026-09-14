@@ -1,6 +1,7 @@
 import type Phaser from "phaser";
 import type { Puppet } from "puppetforge/phaser";
 import type { PortraitAssetId } from "../core/types";
+import { changeDebugPuppetContainers } from "../debug";
 import { ENEMY_SD_ASSET_IDS } from "./enemyAssetIds";
 import {
   computeAnchoredPlacement,
@@ -890,6 +891,11 @@ export async function spawnPuppet(
   const puppet = Puppet.fromProject(template.project, template.texture);
   const { IndexedPuppetCreature } = await import("./IndexedPuppetCreature");
   const creature = await IndexedPuppetCreature.fromPuppet(scene, puppet);
+
+  // Canvas 밖 자동화가 ZIP 파싱 완료를 시간으로 추측하지 않도록 실제 생존 컨테이너만 센다.
+  const sceneKey = scene.scene.key;
+  changeDebugPuppetContainers(sceneKey, 1);
+  creature.once("destroy", () => changeDebugPuppetContainers(sceneKey, -1));
 
   placePuppet(creature, asset, options);
   if (options.tint !== undefined) tintPuppet(creature, options.tint);

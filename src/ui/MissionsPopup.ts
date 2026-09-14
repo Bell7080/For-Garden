@@ -1,3 +1,4 @@
+import { setDebugMissionsPeriod } from "../debug";
 import Phaser from "phaser";
 import { t } from "../i18n";
 import type { GameApi, MissionDto, ClaimMissionRewardsResponse, MissionListResponse } from "../api/contracts";
@@ -48,8 +49,8 @@ export class MissionsPopup {
     });
   }
 
-  private select(period: "daily" | "weekly"): void { this.period = period; this.render(); }
-  private async refresh(): Promise<void> { const result = await this.api.getMissions(); this.missions = result.missions; this.research = result.research; this.status?.setText(t("missions.unclaimed", { count: result.claimableCount })); this.render(); }
+  private select(period: "daily" | "weekly"): void { this.period = period; this.render(); setDebugMissionsPeriod(this.period); }
+  private async refresh(): Promise<void> { const result = await this.api.getMissions(); this.missions = result.missions; this.research = result.research; this.status?.setText(t("missions.unclaimed", { count: result.claimableCount })); this.render(); setDebugMissionsPeriod(this.period); }
   private destroyContent(): void { this.bars.forEach((bar) => bar.destroy()); this.bars = []; this.list?.destroy(); this.list = undefined; }
 
   /** 카드와 보상 액자 모두 같은 콜백을 받으며 수령 완료 행은 명확히 흐리게 남긴다. */

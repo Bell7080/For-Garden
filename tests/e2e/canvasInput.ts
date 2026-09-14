@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
 
 /**
@@ -52,6 +52,16 @@ export function gamePoint(box: Box, x: number, y: number): { x: number; y: numbe
  * 바뀌거나 판이 열릴 때까지 기다려야 하는 자리는 스펙이 `expect.poll`로 따로 확인한다.
  */
 const SETTLE_MS = 150;
+
+/** `window.__PF_DEBUG`에서 읽은 완료 조건을 스펙마다 복제하지 않고 폴링한다. */
+export async function waitForDebugState<T>(page: Page, read: () => T | Promise<T>, expected: T, options: { timeout?: number } = {}): Promise<void> {
+  await expect.poll(() => page.evaluate(read), { timeout: options.timeout }).toEqual(expected);
+}
+
+/** 한 번 누른 뒤 시간 대신 디버그 계약의 실제 완료값을 기다린다. */
+export async function tapAndWait<T>(page: Page, x: number, y: number, read: () => T | Promise<T>, expected: T, options: { timeout?: number } = {}): Promise<void> {
+  await tap(page, x, y); await waitForDebugState(page, read, expected, options);
+}
 
 /** 기준 해상도 좌표를 눌렀다 뗀다. 모바일 우선 입력이라 확정은 `pointerup`에서 난다. */
 export async function tap(page: Page, x: number, y: number): Promise<void> {

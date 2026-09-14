@@ -50,6 +50,8 @@ export const MISC_EN = {
   "skill.duration": "For {seconds}s",
   "skill.keywordHint": "Tap a highlighted word to open its meaning",
   "archaeology.shop": "Shop",
+  "archaeology.bench.pick": "Choose a Rune",
+  "archaeology.bench.clear": "Remove",
   "archaeology.tab.strata": "Strata Survey",
   "archaeology.tab.research": "Trait Research",
   "archaeology.charges": "{charges} / {max}",

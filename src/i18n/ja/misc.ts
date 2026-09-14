@@ -55,6 +55,8 @@ export const MISC_JA = {
   "skill.keywordHint": "強調された語を押すと意味が開く",
 
   "archaeology.shop": "ショップ",
+  "archaeology.bench.pick": "ルーンを選ぶ",
+  "archaeology.bench.clear": "外す",
   "archaeology.tab.strata": "地層探査",
   "archaeology.tab.research": "特性研究",
   "archaeology.charges": "{charges} / {max}",

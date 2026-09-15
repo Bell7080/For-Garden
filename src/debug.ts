@@ -165,6 +165,8 @@ export interface DebugState {
   shopView?: { category: "general" | "enhancement" | "rune"; scrollY: number; minScrollY: number };
   /** 연구 결과판에 깔린 칸 수와 그중 열린 칸 수. 결과 내용은 공개하지 않는다. */
   researchBoard?: { slots: number; opened: number };
+  /** 지층 판이 실제 게시한 입력점과 요청/타격/공개 순서를 관찰하는 E2E 전용 표시 계약이다. */
+  archaeologyDig?: { requests: number; active: boolean; impactIndex?: number; revealedIndices: number[]; tiles: Array<DebugPoint & { index: number }> };
 }
 
 /** 자동화에 공개하는 좌표는 누를 중심점 두 숫자만 가진다. */
@@ -240,6 +242,9 @@ export function setDebugMailPopup(state: DebugState["mailPopup"]): void { ensure
 
 /** 뒤집힌 칸이 몇 장 남았는지만 알린다. 어느 칸에 무엇이 들었는지는 열기 전까지 공개하지 않는다. */
 export function setDebugResearchBoard(board: DebugState["researchBoard"]): void { ensure().researchBoard = board; }
+
+/** Canvas 바깥 테스트가 판의 구현을 복제하지 않고 지층 입력·공개 경계만 읽게 한다. */
+export function setDebugArchaeologyDig(state: DebugState["archaeologyDig"]): void { ensure().archaeologyDig = state; }
 
 /** 현재 탭을 다시 그릴 때 실제 이미지로 사용한 키만 복사해 이전 렌더의 잔여값을 막는다. */
 export function setDebugInventoryTextureKeys(keys: readonly string[] | undefined): void {

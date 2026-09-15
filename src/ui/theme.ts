@@ -42,6 +42,12 @@ export const COLOR = {
   excavationStorage: 0x8b72a6,
   /** 보관 버튼의 유리 면은 호박색을 아주 어둡게 눌러 보라 강조선과 따뜻한 대비만 남긴다. */
   excavationStorageFill: 0x302a24,
+  /** 지층 타격 연출의 산화 금속빛. 저채도 청록이라 금색 보상 강조와 경쟁하지 않는다. */
+  archaeologyOxide: 0x659a94,
+  /** 곡괭이 날과 충돌 파편에 쓰는 차가운 금속색이다. */
+  archaeologyMetal: 0x9aa5a4,
+  /** 흙 파편은 배경 지층보다 한 톤 밝게 두어 짧은 타격에서도 윤곽이 남는다. */
+  archaeologySoil: 0x806f59,
   /** 출격·출전처럼 "나가서 싸운다"를 뜻하는 입구의 강조색. 금색보다 붉다. */
   sortie: 0xd85f34,
   sortieText: "#f08b62",

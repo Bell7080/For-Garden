@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import { t, type TextKey } from "../i18n";
 import { gameApi } from "../api/FakeServer";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
-import { setDebugScene } from "../debug";
+import { setDebugArchaeologyDig, setDebugScene } from "../debug";
 import type { StrataBoardView } from "../core/strataDig";
 import { DEFAULT_STRATA_LAYER_ID, type StrataRewardKind } from "../data/strataLayers";
 import { session } from "../state/session";
@@ -27,6 +27,7 @@ import { UI_ICON } from "../ui/icons";
 import { TopBar } from "../ui/TopBar";
 import { bindCurrencyGuide, openCurrencyGuide } from "../ui/currencyGuideEntry";
 import { COLOR, textStyle } from "../ui/theme";
+import { StrataDigEffect } from "../ui/StrataDigEffect";
 
 /**
  * 고고학. 하단 탭 첫 슬롯이다.
@@ -107,6 +108,13 @@ export class ArchaeologyScene extends Phaser.Scene {
   private chargeText!: Phaser.GameObjects.Text;
   /** 서버 응답을 기다리는 동안 같은 칸을 두 번 누르지 못하게 한다. */
   private digging = false;
+  /** 판 전체를 다시 만들지 않고 결과 한 칸만 갈아 끼우기 위한 렌더 경계다. */
+  private readonly strataTiles = new Map<number, Phaser.GameObjects.Container>();
+  private strataGrid: Phaser.GameObjects.Container | null = null;
+  /** 씬 종료 때 네트워크와 독립적으로 남아 있을 수 있는 연출을 모두 정리한다. */
+  private readonly digEffects = new Set<StrataDigEffect>();
+  /** 자동화에는 실제 API 호출 경계를 그대로 세어 한 입력당 한 요청인지 알린다. */
+  private digRequests = 0;
   /**
    * 연구대에 끼워 둔 룬.
    *
@@ -159,6 +167,12 @@ export class ArchaeologyScene extends Phaser.Scene {
     this.tabRow = this.add.container(0, 0);
     this.paintTabs();
     new BottomNav(this, "archaeology");
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.digEffects.forEach((effect) => effect.destroy());
+      this.digEffects.clear();
+      this.strataTiles.clear(); this.strataGrid = null; this.digging = false;
+      setDebugArchaeologyDig(undefined);
+    });
     void this.refresh();
   }
 
@@ -211,6 +225,8 @@ export class ArchaeologyScene extends Phaser.Scene {
   }
 
   private paintView(): void {
+    // 명시적인 화면 전환에서만 기존 판 경계를 버린다. 한 칸 결과에는 이 메서드를 호출하지 않는다.
+    this.strataTiles.clear(); this.strataGrid = null;
     this.view.removeAll(true);
     this.chargeText.setText(t("archaeology.charges", { charges: this.charges, max: this.chargesMax }));
     if (this.tab === "strata") this.paintStrata();
@@ -238,6 +254,7 @@ export class ArchaeologyScene extends Phaser.Scene {
 
     const frame = strataBoardFrame(board.columns, board.rows, BASE_WIDTH);
     const grid = this.add.container(frame.centerX, frame.centerY);
+    this.strataGrid = grid;
     this.view.add(grid);
 
     // **아래층이 맨 밑에 깔린다.** 겉장을 부순 칸에 드러나는 맨 흙이고, 겉장보다 가라앉아
@@ -249,9 +266,13 @@ export class ArchaeologyScene extends Phaser.Scene {
     // 없고, 부순 칸만 지우면 그 자리에 아래층이 그대로 드러난다.
     const layerKey = strataLayerTextureKey(board.art);
     for (const tile of board.tiles) {
-      if (tile.revealed) continue;
       const crop = strataTileCrop(tile.index, board.columns, board.rows);
-      grid.add(addBoardImage(this, layerKey, (image) => {
+      // 컨테이너는 판 원점에 둔다. Crop 된 원화 조각은 전체 판과 같은 원점을 공유해야 이음매가 맞는다.
+      const tileView = this.add.container(0, 0);
+      this.strataTiles.set(tile.index, tileView);
+      grid.add(tileView);
+      if (tile.revealed) continue;
+      tileView.add(addBoardImage(this, layerKey, (image) => {
         // 자르기는 **원본 좌표**로 재고 크기는 그 뒤에 맞춘다. 순서가 바뀌면 조각이 어긋난다.
         image.setDisplaySize(frame.width, frame.height);
         image.setCrop(crop.x, crop.y, crop.width, crop.height);
@@ -260,37 +281,102 @@ export class ArchaeologyScene extends Phaser.Scene {
 
     // 보상은 부순 칸 위에 선다. 액자 없이 그림만 두면 흙 위에 얹힌 그림으로 읽히지 않는다.
     for (const tile of board.tiles) {
+      const tileView = this.strataTiles.get(tile.index);
+      if (tileView === undefined) continue;
       const { x, y } = strataTileCenter(tile.index, board.columns, frame);
       if (tile.revealed) {
         const texture = tile.kind === undefined ? null : rewardTexture(tile.kind);
         if (texture === null) continue;
         // 룬처럼 수가 뜻이 없는 것에는 수를 적지 않는다 — 「1」이 서면 하나를 세는 자리로 읽힌다.
         const amount = tile.kind === "rune" ? undefined : String(tile.amount ?? 0);
-        addFramedIcon(this, grid, x, y, Math.min(frame.cellWidth, frame.cellHeight) * 0.82, texture,
+        addFramedIcon(this, tileView, x, y, Math.min(frame.cellWidth, frame.cellHeight) * 0.82, texture,
           { ...(amount ? { amount } : {}), plain: true });
         continue;
       }
       const hit = this.add.rectangle(x, y, frame.cellWidth, frame.cellHeight, 0xffffff, 0.001)
         .setInteractive({ useHandCursor: true });
       hit.on("pointerup", () => this.dig(tile.index));
-      grid.add(hit);
+      tileView.add(hit);
     }
 
     this.view.add(this.add.text(frame.centerX, STRATA_BOARD.top - 34,
       t("archaeology.digsLeft", { digs: board.digsLeft }),
       textStyle({ role: "display", size: 34, color: COLOR.accentText })).setOrigin(0.5, 1));
+    this.publishDigDebug();
   }
 
-  private dig(index: number): void {
+  /** 서버 처리와 충돌 프레임을 병렬로 기다리고 성공한 결과 칸만 제자리에서 교체한다. */
+  private async dig(index: number): Promise<void> {
     if (this.digging) return;
     this.digging = true;
-    void gameApi.digStrataTile({ tileIndex: index, requestId: `dig-${Date.now()}` })
-      .then((result) => {
-        this.charges = result.charges;
-        this.board = result.board;
-        this.paintView();
-      })
-      .finally(() => { this.digging = false; });
+    // 투명 입력면까지 모두 꺼야 빠른 멀티 터치가 다른 칸의 pointerup으로 확정되지 않는다.
+    this.strataTiles.forEach((tile) => tile.list.forEach((child) => {
+      if (child instanceof Phaser.GameObjects.Rectangle && child.input) child.disableInteractive();
+    }));
+    const board = this.board;
+    if (board === null || this.strataGrid === null) { this.digging = false; return; }
+    const frame = strataBoardFrame(board.columns, board.rows, BASE_WIDTH);
+    const center = strataTileCenter(index, board.columns, frame);
+    const effect = new StrataDigEffect(this, frame.centerX + center.x, frame.centerY + center.y,
+      Math.min(frame.cellWidth, frame.cellHeight));
+    this.digEffects.add(effect);
+    const playback = effect.play();
+    this.digRequests += 1; this.publishDigDebug();
+    const request = gameApi.digStrataTile({ tileIndex: index, requestId: `dig-${Date.now()}` });
+    try {
+      const [result] = await Promise.all([request, playback.impact]);
+      this.charges = result.charges; this.board = result.board;
+      this.chargeText.setText(t("archaeology.charges", { charges: this.charges, max: this.chargesMax }));
+      this.replaceStrataTile(index);
+      this.publishDigDebug(index);
+    } catch {
+      // 실패는 서버가 확정하지 않은 상태다. 흙을 그대로 두고 연출 종료 뒤 입력만 복구한다.
+    } finally {
+      await playback.finished;
+      this.digEffects.delete(effect);
+      this.digging = false;
+      this.restoreStrataInputs();
+      this.publishDigDebug();
+    }
+  }
+
+  /** 서버가 돌려준 결과 중 선택한 칸만 기존 컨테이너 안에서 교체한다. */
+  private replaceStrataTile(index: number): void {
+    const board = this.board; const tileView = this.strataTiles.get(index);
+    const tile = board?.tiles[index];
+    if (!board || !tileView || !tile?.revealed) return;
+    tileView.removeAll(true);
+    const texture = tile.kind === undefined ? null : rewardTexture(tile.kind);
+    if (texture === null) return;
+    const frame = strataBoardFrame(board.columns, board.rows, BASE_WIDTH);
+    const center = strataTileCenter(index, board.columns, frame);
+    const amount = tile.kind === "rune" ? undefined : String(tile.amount ?? 0);
+    addFramedIcon(this, tileView, center.x, center.y, Math.min(frame.cellWidth, frame.cellHeight) * 0.82, texture,
+      { ...(amount ? { amount } : {}), plain: true });
+  }
+
+  /** 성공·실패 뒤 현재도 팔 수 있는 모든 칸에만 입력을 되돌린다. */
+  private restoreStrataInputs(): void {
+    const board = this.board;
+    if (!board || board.digsLeft <= 0) return;
+    board.tiles.forEach((tile) => {
+      if (tile.revealed) return;
+      const hit = this.strataTiles.get(tile.index)?.list.find((child) => child instanceof Phaser.GameObjects.Rectangle);
+      if (hit instanceof Phaser.GameObjects.Rectangle) hit.setInteractive({ useHandCursor: true });
+    });
+  }
+
+  /** 테스트에는 보상 내용 없이 실제 입력점과 공개 순서만 게시한다. */
+  private publishDigDebug(impactIndex?: number): void {
+    const board = this.board;
+    if (!board) { setDebugArchaeologyDig(undefined); return; }
+    const frame = strataBoardFrame(board.columns, board.rows, BASE_WIDTH);
+    setDebugArchaeologyDig({ requests: this.digRequests, active: this.digging, impactIndex,
+      revealedIndices: board.tiles.filter((tile) => tile.revealed).map((tile) => tile.index),
+      tiles: board.tiles.filter((tile) => !tile.revealed).map((tile) => {
+        const point = strataTileCenter(tile.index, board.columns, frame);
+        return { index: tile.index, x: frame.centerX + point.x, y: frame.centerY + point.y };
+      }) });
   }
 
   /* ── 특성 연구 ────────────────────────────────────────────────────────────── */

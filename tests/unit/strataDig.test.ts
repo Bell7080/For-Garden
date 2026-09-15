@@ -101,9 +101,9 @@ describe("탐사 횟수", () => {
 describe("탐사판 배치", () => {
   const FRAME = strataBoardFrame(LAYER.columns, LAYER.rows, 1080);
 
-  it("은 원화 비율을 지켜 자리 안에 든다", () => {
-    // 자리에 맞춰 늘이면 흙 결이 세로로 뭉개진다.
-    expect(FRAME.width / FRAME.height).toBeCloseTo(STRATA_ART.width / STRATA_ART.height, 5);
+  it("은 정사각 셀로 자리 안에 든다", () => {
+    // 원화 비율은 cover 크롭이 지키고, 입력 격자는 정사각형을 지킨다.
+    expect(FRAME.cellWidth).toBeCloseTo(FRAME.cellHeight, 5);
     expect(FRAME.width).toBeLessThanOrEqual(STRATA_BOARD.maxWidth + 0.001);
     expect(FRAME.height).toBeLessThanOrEqual(STRATA_BOARD.bottom - STRATA_BOARD.top + 0.001);
   });
@@ -130,7 +130,8 @@ describe("탐사판 배치", () => {
     // 조각을 따로 굽지 않고 같은 원화를 칸마다 잘라 쓰므로, 잘린 자리가 곧 칸이다.
     const crops = Array.from({ length: LAYER.columns * LAYER.rows }, (_, index) => strataTileCrop(index, LAYER.columns, LAYER.rows));
     const area = crops.reduce((sum, crop) => sum + crop.width * crop.height, 0);
-    expect(area).toBeCloseTo(STRATA_ART.width * STRATA_ART.height, 3);
+    // 기본 크롭은 정사각 판을 cover하는 원본 중앙 영역만 남긴다.
+    expect(area).toBeCloseTo(STRATA_ART.width * STRATA_ART.width, 3);
     for (const crop of crops) {
       expect(crop.x).toBeGreaterThanOrEqual(0);
       expect(crop.y).toBeGreaterThanOrEqual(0);

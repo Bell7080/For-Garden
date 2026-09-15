@@ -15,6 +15,7 @@ import { createArchaeologyState, type ArchaeologyState } from "../core/strataDig
 import type { ExpeditionMapNode } from "../core/expeditionMap";
 import type { ExpeditionAugmentOffer, ExpeditionAugmentSelection } from "../core/expeditionRewards";
 import { defaultUnlockedRelicSkinIds } from "../data/relicSkins";
+import { STARTER_RUNE_TRAIT_KIT } from "../data/runes";
 
 /** 로컬에 저장 가능한 사용자 환경설정이다. 계정에는 표시 정보만 두며 인증 비밀은 서버 경계에 남긴다. */
 export interface GameSettings {
@@ -291,7 +292,9 @@ export function createDefaultSession(): Session {
     equippedProfileModifierIds: [],
     // 첫 서버 동기화 전에도 프로필이 명시적인 레벨 1 진행을 표시하도록 한다.
     playerResearch: createInitialPlayerResearchProgress(),
-    itemInventory: [{ itemId: "stamina-tonic", quantity: 3 }],
+    // 특성 아이템 셋도 임시 지급이다 — 특성이 비어 있는 시작 룬에 부여해 보고, 부여된 특성의
+    // 등급을 올려 보는 길이 지층 탐사 없이도 열려 있어야 한다. 정식 수급이 붙으면 함께 지운다.
+    itemInventory: [{ itemId: "stamina-tonic", quantity: 3 }, ...STARTER_RUNE_TRAIT_KIT.items.map((entry) => ({ ...entry }))],
     // 서버 첫 조회가 현재 시각을 기준점으로 확정하며 기본 보관 시간은 서버 상수가 정한다.
     idleExcavation: createIdleExcavationState(),
     archaeology: createArchaeologyState(),
@@ -304,7 +307,9 @@ export function createDefaultSession(): Session {
     owned: new Set(STARTER_RELICS),
     favorite: STARTER_RELICS[0],
     bookmarked: new Set<string>(),
-    wallet: { fossil: 1200, amber: 10, gems: 120, gold: 25_400, stamina: 60, dnaFragments: 0, cheesecake: 0, rawStone: 0 },
+    // 원석은 룬 특성 재해석에만 쓰이고 아직 정식 수급처가 지층 탐사 하나뿐이라, 임시 지급
+    // 표가 정한 만큼을 처음부터 넣어 둔다. 수급이 붙으면 그 표와 함께 0으로 되돌린다.
+    wallet: { fossil: 1200, amber: 10, gems: 120, gold: 25_400, stamina: 60, dnaFragments: 0, cheesecake: 0, rawStone: STARTER_RUNE_TRAIT_KIT.rawStone },
     // 첫 FakeServer 요청이 서버 시각으로 안전하게 초기화한다.
     staminaUpdatedAt: "",
     gachaPityByGroup: Object.fromEntries([...new Set(BANNERS.map(({ pityGroupId }) => pityGroupId))].map((id) => [id, { pullsSinceSsr: 0, pickupGuaranteed: false }])),

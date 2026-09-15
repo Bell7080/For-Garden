@@ -5,6 +5,8 @@ import {
 } from "../../src/core/runeTraits";
 import { RUNE_TRAIT_DEFS, RUNE_TRAIT_IDS, runeTraitValue } from "../../src/data/runeTraits";
 import { runeTraitCombatEffects } from "../../src/core/runeTraitEffects";
+import { backfillStarterRuneTraits, createStarterRunes, STARTER_RUNE_TRAITED } from "../../src/data/runes";
+import { assertValidRuneInstance } from "../../src/core/runes";
 
 /** 정해진 순서대로 돌려주는 난수. 마지막 값에서 멈춘다. */
 function scripted(values: readonly number[]): () => number {
@@ -75,6 +77,22 @@ describe("룬 특성", () => {
       // 특성은 그 룬을 낀 렐릭 하나에만 걸린다 — 전체 범위가 새면 편성 전체가 함께 세진다.
       for (const effect of effects) expect(effect.scope).toEqual({ kind: "relic", relicId: "anky" });
     }
+  });
+
+  it("은 임시 지급 룬의 절반에만 붙고 이미 붙은 것을 덮지 않는다", () => {
+    const runes = createStarterRunes(scripted([0.42, 0.13, 0.77, 0.31]));
+    const traited = runes.filter(({ trait }) => trait !== undefined);
+    expect(traited).toHaveLength(STARTER_RUNE_TRAITED.filter(Boolean).length);
+    expect(traited.length * 2).toBe(runes.length);
+    for (const rune of runes) assertValidRuneInstance(rune);
+    // 이미 굴려 둔 특성은 보충이 건드리지 않는다 — 덮으면 쌓아 둔 천장 실패 횟수까지 사라진다.
+    const kept = runes[0].trait;
+    const stripped = runes.map((rune, index) => index === 2 ? { ...rune, trait: undefined } : rune);
+    const refilled = backfillStarterRuneTraits(stripped, scripted([0.5, 0.5]));
+    expect(refilled[0].trait).toEqual(kept);
+    expect(refilled[2].trait).toBeDefined();
+    // 비워 둔 자리는 보충 뒤에도 비어 있다 — 절반만 특성을 달고 오는 구성이 무너지면 부여를 시험할 룬이 없다.
+    expect(refilled.filter(({ trait }) => trait !== undefined)).toHaveLength(traited.length);
   });
 
   it("은 알 수 없는 ID에 효과를 만들지 않는다", () => {

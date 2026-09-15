@@ -1,4 +1,6 @@
 import { generateRune, runePartLabel, type RuneInstance, type RunePart, type RuneRarity, type RuneStatKey } from "../core/runes";
+import { grantRuneTrait } from "../core/runeTraits";
+import { RUNE_TRAIT_IDS } from "./runeTraits";
 import { t } from "../i18n";
 
 /** 옵션 수치 단위. percent는 기존 수치에 곱하고 percentagePoint는 게이지/확률에 그대로 더한다. */
@@ -61,15 +63,60 @@ export const STARTER_RUNE_RARITIES: readonly RuneRarity[] = [
  */
 export const STARTER_RUNE_PARTS: readonly RunePart[] = [0, 1, 2, 0, 1, 2, 0, 1, 2, 0];
 
+/**
+ * 특성이 이미 박힌 채로 오는 시작 룬의 자리(임시).
+ *
+ * **절반만 특성을 달고 온다.** 실제 플레이에서 주워 오는 룬은 특성이 붙어 있는 것이 섞여
+ * 있으므로, 부여 아이템을 쓰지 않고도 곧바로 재해석·등급 상승을 시험할 수 있어야 한다.
+ * 나머지 절반은 비워 두어 부여(고대 핵)를 쓰는 길도 함께 열어 둔다. 등급은 고정하지 않고
+ * 일반 부여와 **같은 추첨**을 지나므로, 여기서 나온 특성도 실제 부여와 같은 분포를 갖는다.
+ */
+export const STARTER_RUNE_TRAITED: readonly boolean[] = [true, false, true, false, true, false, true, false, true, false];
+
+/**
+ * 이미 받아 둔 시작 룬 중 특성이 비어 있어야 할 자리를 채운다(임시).
+ *
+ * 특성이 생기기 전에 시작 룬을 받은 저장은 열 개가 모두 특성 없이 남아 있어, 재해석을
+ * 시험할 룬이 하나도 없다. 그 자리만 채우고 **이미 붙은 특성은 손대지 않는다** — 굴려 둔
+ * 결과를 부트가 조용히 덮으면 천장에 쌓아 둔 실패 횟수까지 사라진다.
+ */
+export function backfillStarterRuneTraits(runes: readonly RuneInstance[], random: () => number): RuneInstance[] {
+  return runes.map((rune) => {
+    const index = STARTER_RUNE_TRAITED.findIndex((_, slot) => rune.instanceId === `starter-rune-${slot + 1}`);
+    if (index < 0 || !STARTER_RUNE_TRAITED[index] || rune.trait !== undefined) return rune;
+    return { ...rune, trait: grantRuneTrait({ traitIds: RUNE_TRAIT_IDS, minimumGrade: "uncommon", random }) };
+  });
+}
+
+/**
+ * 룬 특성을 만져 보기 위한 임시 지급 하한이다.
+ *
+ * 원석은 재해석 비용(80~260)을 수십 번 치를 만큼, 아이템은 비어 있는 시작 룬 다섯에 부여하고
+ * 등급까지 올려 볼 만큼만 둔다. 기본 지갑과 부트의 보충이 **같은 표**를 읽으므로 수치가 두
+ * 곳에서 갈리지 않는다. 정식 수급(지층 탐사·상점 교환)이 붙으면 이 표를 함께 지운다.
+ */
+export const STARTER_RUNE_TRAIT_KIT = {
+  rawStone: 50_000,
+  items: [
+    { itemId: "ancient-core", quantity: 30 },
+    { itemId: "refined-core", quantity: 10 },
+    { itemId: "restoration-crystal", quantity: 10 },
+  ],
+} as const satisfies { rawStone: number; items: readonly { itemId: string; quantity: number }[] };
+
 /** 등급표와 주입된 난수만으로 시작 룬을 만든다. 상태를 읽지도 바꾸지도 않는다. */
 export function createStarterRunes(random: () => number): RuneInstance[] {
-  return STARTER_RUNE_RARITIES.map((rarity, index) => generateRune({
-    instanceId: `starter-rune-${index + 1}`,
-    baseName: t("rune.baseName", { part: runePartLabel(STARTER_RUNE_PARTS[index]) }),
-    rarity,
-    part: STARTER_RUNE_PARTS[index],
-    random,
-  }));
+  return STARTER_RUNE_RARITIES.map((rarity, index) => {
+    const rune = generateRune({
+      instanceId: `starter-rune-${index + 1}`,
+      baseName: t("rune.baseName", { part: runePartLabel(STARTER_RUNE_PARTS[index]) }),
+      rarity,
+      part: STARTER_RUNE_PARTS[index],
+      random,
+    });
+    if (!STARTER_RUNE_TRAITED[index]) return rune;
+    return { ...rune, trait: grantRuneTrait({ traitIds: RUNE_TRAIT_IDS, minimumGrade: "uncommon", random }) };
+  });
 }
 
 

@@ -33,6 +33,9 @@ export class BootScene extends Phaser.Scene {
     // 임시 지급: 가방이 비어 있으면 세공을 만져 볼 시작 룬을 넣어 준다. 정식 획득 경로가
     // 생기면 이 한 줄과 매니저의 `grantStarterRunes`를 함께 지운다.
     relicProgression.grantStarterRunes();
+    // 임시 지급: 특성 재해석·부여를 만져 볼 원석과 아이템을 하한까지 채운다. 이미 저장이 있는
+    // 계정도 채워야 해서 룬 지급과 달리 매번 지나간다. 정식 수급이 붙으면 이 줄도 함께 지운다.
+    relicProgression.grantRuneTraitTestKit();
     // 저장에서 복원한 접근성 배율을 어떤 씬도 생성되기 전에 공용 텍스트 계층에 반영한다.
     setTextScale(session.settings.accessibility.textScale);
     // 저장이 없는 첫 실행에서만 기기 언어를 따른다. 한 번 고른 뒤로는 저장값이 언제나 우선한다 —

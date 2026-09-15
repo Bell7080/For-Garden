@@ -1,7 +1,7 @@
 import { calculateFinalStats, breakthroughGrade, remainingBreakthroughCost } from "../core/relicProgression";
 import type { RelicProgress, Stats } from "../core/types";
 import { getRelic } from "../data/relics";
-import { createStarterRunes } from "../data/runes";
+import { backfillStarterRuneTraits, createStarterRunes, STARTER_RUNE_TRAIT_KIT } from "../data/runes";
 import { createInitialRelicProgress, session, type Session } from "../state/session";
 import { saveManager } from "../state/SaveManager";
 import { gameApi } from "../api/FakeServer";
@@ -54,6 +54,31 @@ export class RelicProgressionManager {
     this.state.runeInventory = createStarterRunes(random);
     this.persistSharedSession();
     return this.state.runeInventory.length;
+  }
+
+  /**
+   * 룬 특성을 만져 볼 원석과 아이템을 표의 하한까지 채워 준다(임시 지급).
+   *
+   * 시작 룬과 달리 이 둘은 **이미 저장이 있는 계정에도** 채운다 — 신규 지갑만 늘리면 지금
+   * 플레이하던 저장으로는 재해석을 한 번도 굴려 볼 수 없다. 하한까지만 올리므로 써서 줄어든
+   * 뒤에 다시 채워지긴 해도 여러 번 열었다고 불어나지는 않는다. 정식 수급(지층 탐사·상점
+   * 교환)이 붙으면 이 메서드와 `STARTER_RUNE_TRAIT_KIT`을 함께 지운다.
+   */
+  grantRuneTraitTestKit(random: () => number = Math.random): void {
+    // 특성이 생기기 전에 받은 시작 룬은 열 개 모두 특성이 비어 있다. 절반 자리만 채워 준다.
+    this.state.runeInventory = backfillStarterRuneTraits(this.state.runeInventory, random);
+    const wallet = this.state.wallet.rawStone < STARTER_RUNE_TRAIT_KIT.rawStone
+      ? { ...this.state.wallet, rawStone: STARTER_RUNE_TRAIT_KIT.rawStone }
+      : this.state.wallet;
+    const items = this.state.itemInventory.map((entry) => ({ ...entry }));
+    for (const { itemId, quantity } of STARTER_RUNE_TRAIT_KIT.items) {
+      const owned = items.find((entry) => entry.itemId === itemId);
+      if (!owned) items.push({ itemId, quantity });
+      else if (owned.quantity < quantity) owned.quantity = quantity;
+    }
+    this.state.wallet = wallet;
+    this.state.itemInventory = items;
+    this.persistSharedSession();
   }
 
   /** 서버가 검증한 장착 응답만 로컬 세션에 적용해 UI가 슬롯 불변식을 재구현하지 않게 한다. */

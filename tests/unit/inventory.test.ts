@@ -8,6 +8,7 @@ import { createDefaultSession } from "../../src/state/session";
 import { INVENTORY_TAB_LAYOUT, inventoryCategoryTabPosition } from "../../src/ui/inventoryTabs";
 import { createRuneInstance, type RuneStatKey } from "../../src/core/runes";
 import { ITEMS, type WalletItemKey } from "../../src/data/items";
+import { STARTER_RUNE_TRAIT_KIT } from "../../src/data/runes";
 import { CURRENCY_GUIDE } from "../../src/data/currencyGuide";
 import { ITEM_ICON_ASSETS } from "../../src/ui/itemIcons";
 import { existsSync } from "node:fs";
@@ -91,7 +92,9 @@ describe("inventory", () => {
   it("룬·지갑·스택을 카테고리별로 합성하고 많은 행의 하단 범위를 계산한다", () => {
     const state = createDefaultSession(); const inventory = new InventoryManager(state);
     expect(inventory.list("currency").find(({ id }) => id === "gold")?.quantity).toBe(state.wallet.gold);
-    expect(inventory.list("consumable")).toHaveLength(1); expect(inventory.list("material")).toHaveLength(0);
+    expect(inventory.list("consumable")).toHaveLength(1);
+    // 재료 칸은 룬 특성을 만져 보게 하는 임시 지급뿐이다. 그 표를 지우면 이 줄도 함께 0으로 돌아간다.
+    expect(inventory.list("material")).toHaveLength(STARTER_RUNE_TRAIT_KIT.items.length);
     expect(inventoryScrollMetrics(4).minY).toBe(0); expect(inventoryScrollMetrics(20)).toEqual({ contentHeight: 1040, minY: 0 });
   });
 

@@ -36,6 +36,13 @@ export const LAB_KO = {
 
   "lab.pityLine": "SSR 확정까지 {left}회{pickup}",
   "lab.pityLine.pickup": " · 다음 SSR 픽업 확정",
+  // 시네마틱은 세계관 안의 명칭과 조작 라벨만 세운다 — 진행 상태·안내 문장은 두지 않는다.
+  "lab.cinematic.skip": "SKIP",
+  "lab.cinematic.resource": "재화",
+  "lab.cinematic.specimenCode": "SPECIMEN No. 001",
+  "lab.cinematic.specimenName": "UNKNOWN ORGANISM",
+  "lab.cinematic.specimenNote": "FOSSIL / AMBER",
+
   "lab.currency.fossil": "화석",
   "lab.currency.amber": "호박석",
 } as const;

@@ -33,6 +33,9 @@ import { settingsManager } from "../managers/SettingsManager";
 import { colorAssistPolicy, excavationStageDuration } from "../core/settings";
 import { flashPolicy } from "../ui/signatureEffects";
 import { hasRareExcavationResult } from "../core/hapticPolicy";
+import { ResearchCinematic, researchCinematicEnabled } from "../ui/ResearchCinematic";
+import { cinematicRewards, isCinematicCount } from "../ui/researchCinematicModel";
+import { firstMeetingRelicIds } from "../core/researchPresentation";
 
 /** 마일리지 상점 버튼의 황금빛. 다른 버튼과 갈라 놓아 "쌓아 두었다 쓰는 곳"임을 알린다. */
 const MILEAGE_EDGE = 0xf2c744;
@@ -78,6 +81,8 @@ export class LabScene extends Phaser.Scene {
   private boardLayer?: Phaser.GameObjects.Container;
   /** 칸을 여는 동안에도 연출 시간이 갈리지 않게 판이 열릴 때의 설정 스냅샷을 든다. */
   private boardShortened = false;
+  /** 떠 있는 3D 연출. 씬이 꺼지면 캔버스 위의 DOM도 함께 걷어야 한다. */
+  private cinematic?: ResearchCinematic;
   private boardRequest = 0;
 
   constructor() {
@@ -169,6 +174,8 @@ export class LabScene extends Phaser.Scene {
       this.boardOpenAll = undefined;
       this.boardLayer = undefined;
       setDebugResearchBoard(undefined);
+      this.cinematic?.close();
+      this.cinematic = undefined;
       this.presentationLayer?.destroy(true);
       this.presentationLayer = undefined;
       this.audioScope?.release();
@@ -325,6 +332,8 @@ export class LabScene extends Phaser.Scene {
     const rarity = highestRarity(results.map((result) => result.type === "relic" ? getRelic(result.relicId).rarity : result.grade));
     // API가 확정한 전체 결과를 순수 희귀도 정책에 넣고, 10연이어도 결과 묶음당 한 번만 울린다.
     if (hasRareExcavationResult([rarity])) settingsManager.haptic("rareExcavation");
+    // 3D 연출이 서면 그것이 이 뽑기의 연출 전부다. 서지 못한 기기만 아래의 Phaser 연출을 탄다.
+    if (await this.playCinematic(results, request)) return;
     this.presentationLayer?.destroy(true);
     const layer = this.add.container(0, 0).setDepth(900);
     this.presentationLayer = layer;
@@ -371,6 +380,64 @@ export class LabScene extends Phaser.Scene {
 
     skip.destroy();
     this.showResultBoard(content, layer, results, request);
+  }
+
+  /**
+   * 화석 복원 시네마틱.
+   *
+   * 스캔 → 균열 → 폭발 → 카드 공개 → 결산까지 한 판이 전부 이 안에서 흐른다. 등급이 오를수록
+   * 더 오래, 더 격하게 흔들리고 더 멀리 깨지며, 카드는 회색에서 시작해 서버가 확정한 등급까지
+   * 한 칸씩 올라간 뒤 그 색으로 뒤집힌다. 결산 격자는 세로 화면에 맞춰 두 칸씩 다섯 줄이다.
+   *
+   * 새로 만난 렐릭의 첫 대면은 시네마틱이 닫힌 **뒤에** 슬롯 순서대로 잇는다 — 3D 무대 위에
+   * Puppet을 겹쳐 세울 수 없고, 무엇보다 결산을 보기 전에 스탠딩이 끼어들면 무엇이 나왔는지
+   * 확인하는 흐름이 끊긴다.
+   *
+   * 돌려주는 값은 "시네마틱이 실제로 연출을 맡았는가"다. 거짓이면 씬은 예전 연출을 재생한다.
+   */
+  private async playCinematic(results: PullResultDto[], request: number): Promise<boolean> {
+    if (!researchCinematicEnabled() || !isCinematicCount(results.length)) return false;
+    const preferences = settingsManager.get();
+    const views = researchSlotViews(results, (relicId) => getRelic(relicId).rarity);
+    const rewards = cinematicRewards(views, {
+      relic: (relicId) => { const def = getRelic(relicId); return { name: def.name, project: def.projectName }; },
+      fragment: (name) => t("info.breakthrough.fragment", { name }),
+      currency: (kind) => t(`currency.${kind}`),
+      resourceTitle: t("lab.cinematic.resource"),
+    });
+    const cinematic = await ResearchCinematic.open({
+      canvas: this.game.canvas,
+      rewards,
+      reducedMotion: preferences.accessibility.reduceMotion,
+      text: {
+        skip: t("lab.cinematic.skip"),
+        gray: t("lab.cinematic.resource"),
+        specimen: {
+          code: t("lab.cinematic.specimenCode"),
+          name: t("lab.cinematic.specimenName"),
+          note: t("lab.cinematic.specimenNote"),
+        },
+      },
+    });
+    if (!cinematic) return false;
+    // 늦게 도착한 판이 이미 넘어간 요청의 것이면 곧바로 걷는다.
+    if (!this.presentation.isCurrent(request)) { cinematic.close(); return true; }
+    this.cinematic?.close();
+    this.cinematic = cinematic;
+    setDebugResearchBoard({ slots: results.length, opened: 0 });
+    this.audioScope?.play("research.crack");
+    await cinematic.done();
+    this.cinematic = undefined;
+    if (!this.presentation.isCurrent(request)) { setDebugResearchBoard(undefined); return true; }
+    this.presentation.skipAll();
+    setDebugResearchBoard({ slots: results.length, opened: results.length });
+
+    for (const relicId of firstMeetingRelicIds(results)) {
+      if (!this.presentation.isCurrent(request)) break;
+      await this.showFirstMeeting(relicId, request, preferences.presentation.shortenExcavation);
+    }
+    if (this.presentation.isCurrent(request)) setDebugResearchBoard(undefined);
+    return true;
   }
 
   /**

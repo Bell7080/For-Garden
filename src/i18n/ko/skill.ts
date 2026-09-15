@@ -81,7 +81,6 @@ export const SKILL_KO = {
   "skill.ferocity.critLifeSteal.same": "치명타 확률과 모든 피해 흡혈이 모두 {percent}% 증가한다.",
   "skill.ferocity.critLifeSteal.split": "치명타 확률이 {chance}%, 모든 피해 흡혈이 {lifeSteal}% 증가한다.",
   "skill.ferocity.reagentDoping": "폭주에 진입하면 모든 생존 적에게 [[reagent|시약]]을 {stacks}겹 부여한다. 폭주 중 [[attack-speed|공격 속도]]가 {percent}% 증가한다.",
-  "skill.ferocity.attackIntervalReduction": "공격 간격이 {percent}% 짧아진다.",
   "skill.ferocity.damageReduction": "받는 피해가 {percent}% 줄어든다.",
   "skill.ferocity.torikaBulwark": "방어력이 {defense}, 저항력이 {resistance} 증가한다. 폭주에 들어가는 순간 주위 모든 적을 {seconds}초 동안 [[taunt|도발]]한다.",
   "skill.ferocity.teamMoveSpeedBonus": "생존 아군 전체의 이동 속도가 {percent}% 빨라진다.",

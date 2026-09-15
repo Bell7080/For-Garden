@@ -2786,9 +2786,7 @@ export function attackInterval(fighter: Fighter, state?: SkirmishState): number 
   const trait = fighter.def.ferocityTrait;
   // 공격 속도는 이미 백분율 척도인 추가 능력치이므로 패시브 수치를 퍼센트포인트로 더한다.
   // 개별 공속은 공용 야성 피해 보너스를 다시 건드리지 않고 재사용 대기시간에만 곱한다.
-  const feverMultiplier = fighter.ferocityFever && trait.effectId === "attackIntervalReduction"
-    ? 1 - trait.reductionPercent / 100
-    : fighter.ferocityFever && trait.effectId === "splashDamage" && trait.attackSpeedBonusPercent !== undefined
+  const feverMultiplier = fighter.ferocityFever && trait.effectId === "splashDamage" && trait.attackSpeedBonusPercent !== undefined
       // 공격 속도 +20%는 공격 간격 -20%와 다르므로 증가된 속도로 간격을 나눈다.
       ? 1 / (1 + trait.attackSpeedBonusPercent / 100)
       : fighter.ferocityFever && trait.effectId === "packBody"

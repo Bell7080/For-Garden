@@ -1563,7 +1563,10 @@ export const RELICS: RelicDef[] = [
       lifeSteal: 0,
       ferocityGain: 0,
     },
-    ferocityTrait: { name: "맹추", effectId: "attackIntervalReduction", reductionPercent: 12 },
+    // 공속 축의 폭주는 전부 같은 계약(`selfAttackSpeedMultiplier`)을 쓴다. 예전에는 이 둘만
+    // 간격을 직접 줄이는 별도 효과라, 같은 일을 하는 폭주가 화면에서 "공격 간격이 짧아진다"는
+    // 다른 말로 섰다 — 게임 어디에도 없는 단위다. 간격 -12%는 속도 x1/0.88이므로 +14%로 옮긴다.
+    ferocityTrait: { name: "맹추", effectId: "selfAttackSpeedMultiplier", bonusPercent: 14 },
     /*
      * **손을 대기 시작하면 멈추지 못한다.** 관찰 기록의 성격(먼저 집게발을 대고, 부순 다음에야
      * 힘 조절에 실패했다는 것을 안다)을 그대로 전투 값으로 옮긴 셋이다 — 때릴수록 손이 빨라지고
@@ -1897,7 +1900,8 @@ export const RELICS: RelicDef[] = [
       lifeSteal: 0,
       ferocityGain: 0,
     },
-    ferocityTrait: { name: "공멸 선봉", effectId: "attackIntervalReduction", reductionPercent: 15 },
+    // 토비와 같은 이유로 공속 계약으로 옮긴다. 간격 -15%는 속도 x1/0.85이므로 +18%다.
+    ferocityTrait: { name: "공멸 선봉", effectId: "selfAttackSpeedMultiplier", bonusPercent: 18 },
     passive: {
       id: "husk-koma-passive",
       name: "집요한 추격",

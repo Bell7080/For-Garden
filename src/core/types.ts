@@ -975,7 +975,6 @@ export type PassiveKind =
 export type FerocityEffectId =
   /** 파루아 전용: 폭주 중 모든 일반 공격이 갈래화살이 되고 사거리가 늘어난다. */
   | "splitVolley"
-  | "attackIntervalReduction"
   | "damageReduction"
   | "splashDamage"
   /** 토리카 전용: 폭주 중 재생·실제 방어 수치 가산과 진입 도발을 한 계약으로 묶는다. */
@@ -1040,7 +1039,6 @@ export type FerocityTrait = {
       /** 폭주 동안 더해지는 사거리(px). `fighterReach`가 집중 겹 위에 얹는다. */
       reachBonus: number;
     }
-  | { effectId: "attackIntervalReduction"; reductionPercent: number }
   | { effectId: "damageReduction"; reductionPercent: number }
   | {
       /** 토리카 전용 탱커 폭주. 정적 종족값을 바꾸지 않고 전투 계산에만 투영한다. */

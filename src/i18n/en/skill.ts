@@ -51,7 +51,6 @@ export const SKILL_EN = {
   "skill.ferocity.critLifeSteal.same": "Critical Rate and life steal on all damage both increase by {percent}%.",
   "skill.ferocity.critLifeSteal.split": "Critical Rate increases by {chance}% and life steal on all damage by {lifeSteal}%.",
   "skill.ferocity.reagentDoping": "On entering Frenzy, applies {stacks} stacks of [[reagent|Reagent]] to every living enemy. During Frenzy, [[attack-speed|Attack Speed]] increases by {percent}%.",
-  "skill.ferocity.attackIntervalReduction": "The attack interval shortens by {percent}%.",
   "skill.ferocity.damageReduction": "Damage taken is reduced by {percent}%.",
   "skill.ferocity.torikaBulwark": "Gains {defense} Defense and {resistance} Resistance. On entering Frenzy, [[taunt|Taunts]] every enemy nearby for {seconds}s.",
   "skill.ferocity.teamMoveSpeedBonus": "Move Speed of every living ally increases by {percent}%.",

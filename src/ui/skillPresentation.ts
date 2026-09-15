@@ -142,7 +142,6 @@ function critAndLifeStealClause(criticalPoints: number, lifeStealPoints: number)
 export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack: number; defense: number; maxHp?: number; abilityPower?: number }): string {
   // 캐릭터 ID가 아니라 도핑 계약의 구조화 수치만 읽어 어떤 정의에도 같은 문장 조립을 제공한다.
   if (trait.effectId === "reagentDoping") return t("skill.ferocity.reagentDoping", { stacks: trait.stacksOnEntry, percent: trait.attackSpeedPercent });
-  if (trait.effectId === "attackIntervalReduction") return t("skill.ferocity.attackIntervalReduction", { percent: trait.reductionPercent });
   if (trait.effectId === "damageReduction") return t("skill.ferocity.damageReduction", { percent: trait.reductionPercent });
   if (trait.effectId === "torikaBulwark") {
     // 방어 수치는 퍼센트로 재해석하지 않고 전투 계약의 실제 증가값을 그대로 노출한다.

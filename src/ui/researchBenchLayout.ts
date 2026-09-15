@@ -25,13 +25,47 @@ export const RESEARCH_BENCH = {
   slideMs: 260,
   /** 상세 레이어가 판 안에서 시작하는 x(판 왼쪽 변 기준). */
   detailLeft: 430,
-  /** 조작 버튼 줄이 시작하는 y. 연구대 아래다. */
-  actionsTop: 880,
   actionHeight: 96,
   actionGap: 16,
   /** 버튼 폭. 좌우 여백은 판과 같은 기둥을 쓴다. */
   actionWidth: 880,
 } as const;
+
+/**
+ * 특성 판.
+ *
+ * **연구대와 버튼 사이에 판 한 장으로 선다.** 제목표(`/특성`)만 있고 판이 없던 때는 그 아래
+ * 글이 바탕 위에 떠 있어 어디까지가 특성 이야기인지 말하지 않았고, 곧바로 버튼 줄이 시작해
+ * **특성 본문이 버튼에 덮였다.** 판을 깔고 버튼을 그 아래로 내린다.
+ *
+ * 높이는 특성 한 줄(등급·이름)과 두어 줄짜리 설명이 드는 만큼이며, 특성이 없을 때는 같은 판
+ * 안에 「특성 없음」 한 줄만 선다 — 판이 사라지면 룬을 끼울 때마다 버튼 줄이 오르내린다.
+ */
+export const RESEARCH_TRAIT = {
+  /** 연구대 밑변에서 이만큼 아래에 윗변이 선다. */
+  gap: 30,
+  height: 250,
+  /** 판 안쪽 글자 여백. */
+  inset: 34,
+  /** 판 밑변에서 버튼 첫 줄까지의 거리. */
+  actionsGap: 30,
+} as const;
+
+/** 특성 판이 쓰는 자리(화면 좌표). 좌우는 연구대 판과 같은 기둥을 쓴다. */
+export function researchTraitBounds(screenWidth: number): { left: number; right: number; top: number; bottom: number } {
+  const top = RESEARCH_BENCH.top + RESEARCH_BENCH.height + RESEARCH_TRAIT.gap;
+  return { left: RESEARCH_BENCH.inset, right: screenWidth - RESEARCH_BENCH.inset, top, bottom: top + RESEARCH_TRAIT.height };
+}
+
+/**
+ * 조작 버튼 줄이 시작하는 y.
+ *
+ * **손으로 적지 않고 특성 판 밑변에서 거꾸로 구한다** — 적어 두었을 때는 판이 자라자 그
+ * 밑변이 버튼 줄을 파고들어 특성 본문이 버튼에 가려졌다.
+ */
+export function researchActionsTop(): number {
+  return researchTraitBounds(0).bottom + RESEARCH_TRAIT.actionsGap;
+}
 
 /** 판의 실제 가로 폭이다. 화면 폭에서 여백을 뺀 값 하나만 쓴다. */
 export function researchBenchWidth(screenWidth: number): number {
@@ -59,11 +93,11 @@ export function researchDetailBounds(screenWidth: number): { left: number; right
 
 /** 조작 버튼 한 줄의 중심 y. 버튼이 늘어도 배치표 하나만 읽는다. */
 export function researchActionY(index: number): number {
-  return RESEARCH_BENCH.actionsTop + RESEARCH_BENCH.actionHeight / 2
+  return researchActionsTop() + RESEARCH_BENCH.actionHeight / 2
     + index * (RESEARCH_BENCH.actionHeight + RESEARCH_BENCH.actionGap);
 }
 
 /** 버튼 줄이 실제로 차지하는 아래끝이다. 라벨 줄을 파고들지 않는지 테스트가 이 값으로 잰다. */
 export function researchActionsBottom(count: number): number {
-  return count <= 0 ? RESEARCH_BENCH.actionsTop : researchActionY(count - 1) + RESEARCH_BENCH.actionHeight / 2;
+  return count <= 0 ? researchActionsTop() : researchActionY(count - 1) + RESEARCH_BENCH.actionHeight / 2;
 }

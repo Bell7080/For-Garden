@@ -8,7 +8,8 @@ import { Button } from "./Button";
 import { chipPoints, drawHairline, drawLayer, HOLO, slantedRect } from "./holo";
 import type { PopupLayer } from "./PopupLayer";
 import {
-  RESEARCH_BENCH, researchActionY, researchBenchWidth, researchDetailBounds, researchSlotCenter,
+  RESEARCH_BENCH, RESEARCH_TRAIT, researchActionY, researchBenchWidth, researchDetailBounds,
+  researchSlotCenter, researchTraitBounds,
 } from "./researchBenchLayout";
 import { addRuneCard, addRuneFrame, RUNE_ACCENT } from "./runeIcons";
 import { runeStatLabel } from "./RunePopup";
@@ -107,31 +108,49 @@ function paintDetail(scene: Phaser.Scene, parent: Phaser.GameObjects.Container, 
   });
 }
 
-/** 이 탭이 주로 다루는 것은 특성이다. 연구대 아래에 그 한 줄이 크게 선다. */
+/**
+ * 특성 판.
+ *
+ * **제목만 세우지 않는다** — 제목표 아래 글이 바탕 위에 그냥 떠 있으면 어디까지가 특성
+ * 이야기인지 말하지 못하고, 그 아래에서 시작하는 버튼 줄이 본문을 덮는다. 연구대와 같은
+ * 유리면 한 겹을 깔고 제목표를 그 윗변에 걸터앉힌다.
+ *
+ * 특성이 없어도 판은 그대로 서고 안에 「특성 없음」 한 줄만 든다 — 판이 사라지면 룬을 끼울
+ * 때마다 아래 버튼 줄이 오르내린다.
+ */
 function paintTrait(options: {
   scene: Phaser.Scene;
   parent: Phaser.GameObjects.Container;
   keywords: KeywordManager;
   rune: RuneInstance;
-  width: number;
 }): void {
-  const { scene, parent, rune, width } = options;
-  const left = RESEARCH_BENCH.inset + 34;
-  const y = RESEARCH_BENCH.top + RESEARCH_BENCH.height + 34;
-  addSectionTitle(scene, RESEARCH_BENCH.inset + 24, y, t("rune.trait.title"));
+  const { scene, parent, rune } = options;
+  const bounds = researchTraitBounds(BASE_WIDTH);
+  const width = bounds.right - bounds.left;
+  const height = bounds.bottom - bounds.top;
+  const bevel = width * 0.06;
+  // 연구대와 **같은 깎임·같은 유리면**이라 두 판이 한 장비의 두 칸으로 읽힌다.
+  parent.add(drawLayer(scene, (bounds.left + bounds.right) / 2, (bounds.top + bounds.bottom) / 2,
+    chipPoints(width, height, { bevel: { topLeft: bevel, topRight: 0, bottomRight: bevel, bottomLeft: 0 } }),
+    { fill: 0x111b24, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.5 }));
+  // 제목표는 깎인 모서리 **안쪽**에서 시작한다. 왼쪽 끝에 붙이면 빗변 너머로 삐져나온다.
+  addSectionTitle(scene, bounds.left + bevel + 10, bounds.top, t("rune.trait.title"), { parent });
+
+  const left = bounds.left + RESEARCH_TRAIT.inset;
   if (rune.trait === undefined) {
     // **없으면 없다고만 말한다.** 무엇을 하면 생기는지는 아래 버튼이 이미 말하고 있다.
-    parent.add(scene.add.text(left, y + 62, t("rune.trait.none"),
-      textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0, 0));
+    parent.add(scene.add.text(left, (bounds.top + bounds.bottom) / 2, t("rune.trait.none"),
+      textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0, 0.5));
     return;
   }
   const view = runeTraitView(rune.trait);
-  const grade = scene.add.text(left, y + 62, `[${view.gradeLabel}]`,
-    textStyle({ role: "emphasis", size: 24, color: `#${RUNE_ACCENT[rune.trait.grade].toString(16).padStart(6, "0")}` })).setOrigin(0, 0);
+  const grade = scene.add.text(left, bounds.top + 84, `[${view.gradeLabel}]`,
+    textStyle({ role: "emphasis", size: 24, color: `#${RUNE_ACCENT[rune.trait.grade].toString(16).padStart(6, "0")}` })).setOrigin(0, 0.5);
   parent.add(grade);
-  parent.add(scene.add.text(left + grade.width + 12, y + 58, view.name, textStyle({ role: "display", size: 30 })).setOrigin(0, 0));
-  const body = options.keywords.layout(view.description, { width: width - 68, size: 22, color: COLOR.ink });
-  body.setPosition(left, y + 104);
+  parent.add(scene.add.text(left + grade.width + 12, bounds.top + 82, view.name,
+    textStyle({ role: "display", size: 30 })).setOrigin(0, 0.5));
+  const body = options.keywords.layout(view.description, { width: width - RESEARCH_TRAIT.inset * 2, size: 22, color: COLOR.ink });
+  body.setPosition(left, bounds.top + 124);
   parent.add(body);
 }
 
@@ -177,7 +196,7 @@ export function addResearchBench(options: ResearchBenchOptions): void {
     parent.add(detail);
     paintDetail(scene, detail, rune);
     scene.tweens.add({ targets: detail, alpha: 1, delay: RESEARCH_BENCH.slideMs * 0.6, duration: 200 });
-    paintTrait({ scene, parent, keywords: options.keywords, rune, width });
+    paintTrait({ scene, parent, keywords: options.keywords, rune });
 
     const clear = scene.add.text(BASE_WIDTH - RESEARCH_BENCH.inset - 30, RESEARCH_BENCH.top + 22,
       t("archaeology.bench.clear"), textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(1, 0);

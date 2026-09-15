@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
 import {
-  RESEARCH_BENCH, researchActionsBottom, researchActionY, researchBenchWidth,
-  researchDetailBounds, researchSlotCenter,
+  RESEARCH_BENCH, researchActionsBottom, researchActionsTop, researchActionY, researchBenchWidth,
+  researchDetailBounds, researchSlotCenter, researchTraitBounds,
 } from "../../src/ui/researchBenchLayout";
 
 /** 좌하단 라벨 줄의 윗변. 버튼 줄이 여기를 파고들면 안 된다. */
@@ -35,12 +35,20 @@ describe("특성 연구대 배치", () => {
     expect(RESEARCH_BENCH.slot).toBeLessThanOrEqual(RESEARCH_BENCH.height);
   });
 
-  it("의 버튼 줄은 연구대 아래에 서고 라벨 줄을 파고들지 않는다", () => {
+  it("의 특성 판은 연구대 아래에 서고 좌우 기둥을 같이 쓴다", () => {
+    const trait = researchTraitBounds(BASE_WIDTH);
+    expect(trait.top).toBeGreaterThanOrEqual(RESEARCH_BENCH.top + RESEARCH_BENCH.height);
+    expect(trait.left).toBe(RESEARCH_BENCH.inset);
+    expect(trait.right - trait.left).toBe(researchBenchWidth(BASE_WIDTH));
+  });
+
+  it("의 버튼 줄은 특성 판 아래에 서고 라벨 줄을 파고들지 않는다", () => {
     // 조작이 가장 많은 경우는 부여·확정 부여·재해석·등급 상승 넷이다.
+    // **특성 본문 위로 올라오면 안 된다** — 버튼이 판을 덮으면 그 룬의 특성을 읽을 수 없다.
     expect(researchActionY(0) - RESEARCH_BENCH.actionHeight / 2)
-      .toBeGreaterThanOrEqual(RESEARCH_BENCH.top + RESEARCH_BENCH.height);
+      .toBeGreaterThanOrEqual(researchTraitBounds(BASE_WIDTH).bottom);
     expect(researchActionsBottom(4)).toBeLessThanOrEqual(TAB_TOP);
-    expect(researchActionsBottom(0)).toBe(RESEARCH_BENCH.actionsTop);
+    expect(researchActionsBottom(0)).toBe(researchActionsTop());
   });
 
   it("의 버튼은 서로 겹치지 않는다", () => {

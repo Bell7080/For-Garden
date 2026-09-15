@@ -97,6 +97,28 @@ PATCHES: list[tuple[str, str, int]] = [
     # 7. 카드 뒷판의 표식은 게임의 낱말을 쓴다.
     ('<div class="back-code">RE:GEN</div>', '<div class="back-code">RELIC</div>', 1),
     ("<span>SEALED GENETIC ARCHIVE</span>", "<span>SEALED GENOME ARCHIVE</span>", 1),
+    # 8. 카드 공개는 시간이 아니라 **손**이 넘긴다.
+    #
+    #    누르면 등급이 한 칸 오르고, 다 오르면 뒤집히고, 한 번 더 누르면 다음 칸이다. 시간이
+    #    저절로 흐르면 그 셋이 전부 지나가 버려 누를 이유가 사라진다. 얼어붙이지 않고 **목표
+    #    지점까지만** 흐르게 해, 한 걸음이 뚝 끊기지 않고 그 사이를 미끄러져 간다.
+    (
+        "this.previous=e,this.elapsed+=n,this.phaseTime+=n,",
+        "this.previous=e,this.elapsed+=n,this.phaseTime=this.phase===\"reveal\"&&this.revealTarget!==void 0"
+        "?Math.min(this.phaseTime+n,this.revealTarget):this.phaseTime+n,",
+        1,
+    ),
+    # 9. 같은 수를 한 카드에 두 번 적지 않는다 — 수량은 액자 우하단이 말한다.
+    (
+        'querySelector(".card-name").textContent=t.rarity==="GRAY"?`${t.name} \\xD7 ${t.quantity??1}`:t.name,',
+        'querySelector(".card-name").textContent=t.name,',
+        1,
+    ),
+    # 10. 화면에 낀 뿌연 것을 걷는다 — 필름 그레인·가장자리 어둠·안개를 절반 아래로 내린다.
+    #    무대 조명과 등급색이 그 흐림 뒤에서 탁해 보였다.
+    ("aberration:{value:0},darkness:{value:.12}", "aberration:{value:0},darkness:{value:.045}", 1),
+    ("col+=(hash(vUv)-.5)*.016;", "col+=(hash(vUv)-.5)*.005;", 1),
+    ("this.scene.fog=new As(462869,.035)", "this.scene.fog=new As(462869,.019)", 1),
 ]
 
 # 그래픽 연결이 끊기면 제 안내를 띄우고 새로고침하는 대신 씬에 알린다 — 게임 안에서는
@@ -109,7 +131,36 @@ CONTEXT_LOST_NEW = (
 
 # 데모 부팅이 시작하는 자리. 여기서부터 끝까지를 내보내기 한 줄로 갈아 끼운다.
 DEMO_BOOT = ',Ks=document.getElementById("game")'
-EXPORT_TAIL = ";window.__RESEARCH_CINEMATIC__={Cinematic:xo,text:CT,tiers:ft};})();"
+EXPORT_TAIL = (
+    ";"
+    # 카드 공개를 손으로 넘기는 규칙. 원본을 헤집지 않고 **밖에서 덧붙인다** — 최소화된 코드
+    # 안을 고칠수록 원본이 새로 올 때 다시 맞추기 어려워진다.
+    "var RVS=xo.prototype.setPhase;"
+    'xo.prototype.setPhase=function(e){if(e==="reveal")this.revealTarget=0;return RVS.call(this,e)};'
+    # 한 걸음: 스캔은 곧바로 균열로, 균열은 깨지는 순간 앞으로, 폭발은 끝으로, 공개는 한 칸.
+    "xo.prototype.advance=function(){"
+    'if(this.destroyed)return;'
+    'var s=this.reduced?.55:1,L=ft[this.reward.rarity].level;'
+    'if(this.phase==="idle")return this.start();'
+    'if(this.phase==="scan")return void(this.phaseTime=2.15*s+.001);'
+    'if(this.phase==="fracture")return void(this.phaseTime=Math.max(this.phaseTime,1.95*s*(1+L*.29)*.82));'
+    'if(this.phase==="burst")return void(this.phaseTime=1.05*s*(1+L*.14)+.001);'
+    'if(this.phase==="reveal")return void this.stepReveal()};'
+    # 공개 한 걸음의 세 단계: 등급 한 칸 → 뒤집기 → 다음 칸.
+    "xo.prototype.stepReveal=function(){"
+    "var r=this.rewards,e=this.revealTarget!==void 0?this.revealTarget:this.phaseTime,t=0,i=0,d=0;"
+    "for(;i<r.length;i++){d=this.reduced?.45:ft[r[i].rarity].duration;if(e<t+d-1e-6)break;t+=d}"
+    "if(i>=r.length){this.revealTarget=this.deck.duration+1;return}"
+    "var L=ft[r[i].rarity].level,s=(e-t)/d,k=Math.min(L,Math.floor(Math.max(0,s)*(L+1)/.6));"
+    "if(k<L){this.revealTarget=t+d*(.6*(k+1)/(L+1)+.002);return}"
+    "if(s<.86){this.revealTarget=t+d*.9;return}"
+    "this.revealTarget=i+1<r.length?t+d+1e-4:this.deck.duration+1};"
+    # 건너뛰기는 연출을 지우는 것이 아니라 **결산으로 곧장 간다**.
+    "xo.prototype.skipToResult=function(){"
+    'if(this.destroyed||this.phase==="result")return;'
+    "this.stopAudio(),this.finish()};"
+    "window.__RESEARCH_CINEMATIC__={Cinematic:xo,text:CT,tiers:ft};})();"
+)
 
 
 def main() -> int:

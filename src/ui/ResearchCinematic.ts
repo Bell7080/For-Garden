@@ -12,8 +12,10 @@
  * 예전의 Phaser 연출로 되돌아간다.
  */
 
+import type Phaser from "phaser";
 import { activeFontFamily, FONT_FALLBACK } from "./fonts";
-import type { CinematicReward } from "./researchCinematicModel";
+import { bakeCinematicFace, bakeCinematicIcon, bakeCinematicPortrait } from "./researchCinematicArt";
+import type { CinematicCardArt, CinematicReward } from "./researchCinematicModel";
 
 const SCRIPT_URL = "cinematic/researchCinematic.js";
 const STYLE_URL = "cinematic/researchCinematic.css";
@@ -35,7 +37,10 @@ interface CinematicOptions {
 
 interface CinematicInstance {
   start(): void;
-  skip(): void;
+  /** 한 걸음 넘긴다. 공개 단계에서는 등급 한 칸 → 뒤집기 → 다음 칸 순서다. */
+  advance(): void;
+  /** 남은 연출을 건너뛰고 **결산 화면으로 곧장** 간다. 판을 지우지 않는다. */
+  skipToResult(): void;
   destroy(): void;
   getState(): { phase: string; count: number; activeTier: string };
 }
@@ -59,7 +64,11 @@ export interface ResearchCinematicText {
 export interface ResearchCinematicOptions {
   /** 연출을 덮어씌울 게임 캔버스. 뿌리 요소가 이 상자를 그대로 따라간다. */
   canvas: HTMLCanvasElement;
+  /** 원화를 굽는 데 쓸 씬. 게임이 이미 올려 둔 텍스처를 그대로 읽는다. */
+  scene: Phaser.Scene;
   rewards: readonly CinematicReward[];
+  /** 카드마다 무엇을 세울지. 순서는 `rewards`와 같다. */
+  art: readonly CinematicCardArt[];
   reducedMotion: boolean;
   text: ResearchCinematicText;
 }
@@ -152,6 +161,18 @@ function buildMarkup(text: ResearchCinematicText): string {
 <div id="loading" class="rc-loading"><i></i><i></i><i></i></div>`;
 }
 
+/** 카드 그림을 굽는 크기. 화면 크기마다 굽지 않고 비율만 맞춰 한 번 굽는다. */
+const PORTRAIT_BAKE = { width: 420, height: 432 } as const;
+const FACE_BAKE = 192;
+
+function imageOf(url: string, className: string): HTMLImageElement {
+  const image = document.createElement("img");
+  image.src = url;
+  image.alt = "";
+  image.className = className;
+  return image;
+}
+
 function escapeHtml(value: string): string {
   return value.replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch] ?? ch));
 }
@@ -167,16 +188,30 @@ export class ResearchCinematic {
   private readonly root: HTMLElement;
   private readonly instance: CinematicInstance;
   private readonly canvas: HTMLCanvasElement;
+  private readonly game: Phaser.Game;
   private readonly observer: ResizeObserver;
   private readonly onWindowChange = () => this.syncBox();
   private settle?: () => void;
   private closed = false;
+  /** 연출이 떠 있는 동안 게임이 받던 입력. 닫을 때 그대로 되돌린다. */
+  private readonly inputWasEnabled: boolean;
   /** 결산까지 실제로 흘렀는지. 검사 채널이 읽는다. */
   private reachedResult = false;
 
   private constructor(bundle: CinematicBundle, options: ResearchCinematicOptions) {
     this.canvas = options.canvas;
+    this.game = options.scene.game;
     bundle.text.gray = options.text.gray;
+    /*
+     * **게임의 입력을 끈다.**
+     *
+     * Phaser는 캔버스 밖에서 손을 떼는 것도 받으려고 `pointerup`을 window에도 건다. 그래서
+     * 캔버스 위를 덮은 이 판을 눌러도 그 아래 좌표의 버튼이 함께 눌렸다 — 우하단 건너뛰기가
+     * 하단 탭의 프리미엄 자리와 겹쳐, 건너뛰면 연출이 끝나는 대신 화면이 통째로 넘어갔다.
+     * 판이 떠 있는 동안은 게임이 손을 받지 않는다.
+     */
+    this.inputWasEnabled = this.game.input.enabled;
+    this.game.input.enabled = false;
 
     const root = document.createElement("div");
     root.className = "rc-root";
@@ -200,6 +235,9 @@ export class ResearchCinematic {
       onComplete: () => { this.settleResult(); },
       onContextLost: () => { this.close(); },
     });
+    // 카드가 깔린 **뒤에** 그림을 채운다. 무대가 도는 동안 뒤에서 구우므로 연출이 기다리지 않고,
+    // 공개 단계에 닿기 전에 도착한다. 묶음 하나가 늦거나 실패해도 그 칸만 액자로 남는다.
+    void this.paintCards(options.scene, options.art);
 
     this.observer = new ResizeObserver(() => this.syncBox());
     this.observer.observe(this.canvas);
@@ -244,15 +282,21 @@ export class ResearchCinematic {
     return new Promise<void>((resolve) => { this.settle = resolve; });
   }
 
-  /** 결과 화면까지 한 번에 건너뛴다. 보상은 이미 서버가 확정했으므로 달라지는 것은 없다. */
+  /**
+   * 결산으로 곧장 간다.
+   *
+   * 판을 지우는 것이 아니다 — 남은 카드를 전부 공개한 결산 격자를 보여 주고, 거기서 화면을
+   * 누르면 닫힌다. 보상은 이미 서버가 확정했으므로 건너뛴다고 달라지는 것은 없다.
+   */
   skip(): void {
     if (this.phase === "result") { this.close(); return; }
-    this.instance.skip();
+    this.instance.skipToResult();
   }
 
   close(): void {
     if (this.closed) return;
     this.closed = true;
+    this.game.input.enabled = this.inputWasEnabled;
     this.observer.disconnect();
     window.removeEventListener("resize", this.onWindowChange);
     window.removeEventListener("orientationchange", this.onWindowChange);
@@ -271,11 +315,59 @@ export class ResearchCinematic {
     this.reachedResult = true;
   }
 
+  /**
+   * 화면을 누른 한 번.
+   *
+   * 연출은 시간이 아니라 이 손이 넘긴다 — 스캔에서 균열로, 균열에서 폭발로, 공개에서는
+   * **등급 한 칸 → 뒤집기 → 다음 칸** 순서다. 결산에서는 판을 닫는다.
+   */
   private tap(): void {
-    const phase = this.phase;
-    if (phase === "result") { this.close(); return; }
-    // 균열에서만 재촉이 뜻을 갖는다. 에셋은 그 몫을 제 버튼에 걸어 두었으므로 그대로 부른다.
-    if (phase === "fracture") this.root.querySelector<HTMLElement>("#primary")?.click();
+    if (this.phase === "result") { this.close(); return; }
+    this.instance.advance();
+  }
+
+  /**
+   * 카드마다 무엇을 세울지 채운다.
+   *
+   * 결과판과 **같은 규칙**이다 — 새로 만난 렐릭만 실제 원화가 카드를 채우고, 중복 파편과
+   * 재화는 액자 한 장에 수량이 우하단으로 겹친다. 도형 아이콘으로 대신하면 같은 골드가
+   * 뽑기에서만 다른 그림으로 서게 된다.
+   *
+   * 그림은 뒤에서 굽는다. 묶음 하나가 늦거나 실패해도 그 칸은 액자만 남고 연출은 이어진다.
+   */
+  private async paintCards(scene: Phaser.Scene, art: readonly CinematicCardArt[]): Promise<void> {
+    const cards = Array.from(this.root.querySelectorAll<HTMLElement>(".archive-card"));
+    for (const [index, card] of cards.entries()) {
+      const slot = art[index];
+      const box = card.querySelector<HTMLElement>(".card-art");
+      if (!slot || !box) continue;
+      if (slot.frame === "portrait") {
+        box.className = "card-art card-art-portrait";
+        box.replaceChildren();
+        const url = await bakeCinematicPortrait(scene, slot.portraitAssetId, PORTRAIT_BAKE.width, PORTRAIT_BAKE.height);
+        if (this.closed) return;
+        if (url) box.appendChild(imageOf(url, "character-art"));
+        continue;
+      }
+      // 액자는 그림이 오기 전에 먼저 선다 — 뒤늦게 액자가 생기면 카드가 한 번 조립되어 보인다.
+      box.className = "card-art card-art-framed";
+      const frame = document.createElement("div");
+      frame.className = "rc-item-frame";
+      // 깎인 판과, 그 위에 깎이지 않고 얹히는 수량 — 판 안에 수를 넣으면 빗변이 숫자를 자른다.
+      const plate = document.createElement("div");
+      plate.className = "rc-item-plate";
+      const amount = document.createElement("span");
+      amount.className = "rc-item-amount";
+      amount.textContent = slot.amount;
+      frame.append(plate, amount);
+      box.replaceChildren(frame);
+      const url = slot.frame === "face"
+        ? await bakeCinematicFace(scene, slot.portraitAssetId, FACE_BAKE)
+        : bakeCinematicIcon(scene, slot.iconKey, FACE_BAKE);
+      if (this.closed) return;
+      // 얼굴은 액자를 꽉 채우고(구울 때 모서리를 지웠다) 재화 아이콘만 사방 여백이 규격이다.
+      if (url) plate.appendChild(imageOf(url, slot.frame === "face" ? "rc-item-face" : "rc-item-icon"));
+    }
   }
 
   /** 뿌리 상자를 캔버스에 맞춘다. 캔버스가 레터박스로 줄어들면 연출도 같이 줄어든다. */

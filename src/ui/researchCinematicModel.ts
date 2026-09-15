@@ -8,6 +8,7 @@
 
 import type { ResearchSlotView } from "../core/researchPresentation";
 import type { ResearchGrade } from "../core/gacha";
+import type { PortraitAssetId } from "../core/types";
 
 /** 에셋이 검증하는 카드 한 장. `quantity`는 회색 카드에만 있고 1 이상의 정수여야 한다. */
 export interface CinematicReward {
@@ -79,4 +80,45 @@ export function cinematicRewards(
  */
 export function isCinematicCount(count: number): boolean {
   return count === 1 || count === 10;
+}
+
+
+/**
+ * 카드 하나가 무엇을 보여 주는가.
+ *
+ * 결과판(`ResearchSlotTile`)이 칸에 세우는 것과 **같은 규칙**이다 — 새로 만난 렐릭만 실제
+ * 원화가 카드를 채우고, 중복 파편과 재화는 액자 한 장에 수량이 겹친다. 그림을 굽는 일은
+ * 화면이 하고, 여기서는 "어느 그림을 어느 액자에" 까지만 정한다.
+ */
+export type CinematicCardArt =
+  | { frame: "portrait"; portraitAssetId: PortraitAssetId }
+  | { frame: "face"; portraitAssetId: PortraitAssetId; amount: string }
+  | { frame: "icon"; iconKey: string; amount: string };
+
+/** 칸을 카드 그림 계약으로 옮길 때 바깥에서 받아야 하는 것들. */
+export interface CinematicCardArtSource {
+  /** 렐릭 id로 그 개체의 전신 원화 id를 찾는다. */
+  portrait: (relicId: string) => PortraitAssetId;
+  /** 재화·DNA 조각의 아이콘 텍스처 키. */
+  icon: (kind: "gold" | "cheesecake" | "dnaFragments") => string;
+  /** 수량 표기. 화면과 같은 축약 규칙(`formatCurrency`)을 그대로 넘긴다. */
+  amount: (value: number) => string;
+}
+
+/** 칸 목록을 카드 그림 목록으로 옮긴다. 순서는 카드 순서 그대로다. */
+export function cinematicCardArt(
+  views: readonly ResearchSlotView[],
+  source: CinematicCardArtSource,
+): CinematicCardArt[] {
+  return views.map((view) => {
+    if (view.kind === "relic") {
+      return { frame: "portrait", portraitAssetId: source.portrait(view.relicId) } as const;
+    }
+    if (view.kind === "fragment") {
+      // 중복은 그 개체의 얼굴을 꽉 채운 액자다 — 결과판과 같은 그림, 같은 수량 자리.
+      return { frame: "face", portraitAssetId: source.portrait(view.relicId), amount: source.amount(view.amount) } as const;
+    }
+    const kind = view.kind === "dna" ? "dnaFragments" : view.currency;
+    return { frame: "icon", iconKey: source.icon(kind), amount: source.amount(view.amount) } as const;
+  });
 }

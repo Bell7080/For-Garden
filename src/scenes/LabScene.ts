@@ -34,7 +34,9 @@ import { colorAssistPolicy, excavationStageDuration } from "../core/settings";
 import { flashPolicy } from "../ui/signatureEffects";
 import { hasRareExcavationResult } from "../core/hapticPolicy";
 import { ResearchCinematic, researchCinematicEnabled } from "../ui/ResearchCinematic";
-import { cinematicRewards, isCinematicCount } from "../ui/researchCinematicModel";
+import { cinematicCardArt, cinematicRewards, isCinematicCount } from "../ui/researchCinematicModel";
+import { CURRENCY_ICON_BY_WALLET } from "../ui/currencyIcons";
+import { formatCurrency } from "../core/formatCurrency";
 import { firstMeetingRelicIds } from "../core/researchPresentation";
 
 /** 마일리지 상점 버튼의 황금빛. 다른 버튼과 갈라 놓아 "쌓아 두었다 쓰는 곳"임을 알린다. */
@@ -405,9 +407,17 @@ export class LabScene extends Phaser.Scene {
       currency: (kind) => t(`currency.${kind}`),
       resourceTitle: t("lab.cinematic.resource"),
     });
+    // 카드에 서는 것은 결과판과 같은 규칙이다 — 새 렐릭만 실제 원화, 중복과 재화는 액자 한 장.
+    const art = cinematicCardArt(views, {
+      portrait: (relicId) => getRelic(relicId).portraitAssetId,
+      icon: (kind) => CURRENCY_ICON_BY_WALLET[kind],
+      amount: (value) => formatCurrency(value),
+    });
     const cinematic = await ResearchCinematic.open({
       canvas: this.game.canvas,
+      scene: this,
       rewards,
+      art,
       reducedMotion: preferences.accessibility.reduceMotion,
       text: {
         skip: t("lab.cinematic.skip"),

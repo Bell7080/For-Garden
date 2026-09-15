@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ResearchSlotView } from "../../src/core/researchPresentation";
-import { cinematicRewards, isCinematicCount } from "../../src/ui/researchCinematicModel";
+import { cinematicCardArt, cinematicRewards, isCinematicCount } from "../../src/ui/researchCinematicModel";
 
 const TEXT = {
   relic: (relicId: string) => ({ name: `이름-${relicId}`, project: `PROJECT ${relicId}` }),
@@ -52,6 +52,40 @@ describe("연구 시네마틱 카드 계약", () => {
       { kind: "relic", relicId: "z", grade: "SSR" },
     ];
     expect(cinematicRewards(views, TEXT).map((reward) => reward.rarity)).toEqual(["GRAY", "SSR"]);
+  });
+
+  it("카드에 서는 것은 결과판과 같다 — 신규만 원화, 중복은 얼굴 액자, 재화는 아이콘 액자", () => {
+    const views: ResearchSlotView[] = [
+      { kind: "relic", relicId: "a", grade: "SSR" },
+      { kind: "fragment", relicId: "b", amount: 3, grade: "SR" },
+      { kind: "dna", amount: 12, grade: "GRAY" },
+      { kind: "currency", currency: "gold", amount: 1922, grade: "GRAY" },
+    ];
+    const art = cinematicCardArt(views, {
+      portrait: (relicId) => `portrait-${relicId}` as never,
+      icon: (kind) => `icon-${kind}`,
+      amount: (value) => `x${value}`,
+    });
+    expect(art[0]).toEqual({ frame: "portrait", portraitAssetId: "portrait-a" });
+    // 중복은 도형이 아니라 그 개체의 얼굴이다 — 결과판과 같은 그림이어야 한다.
+    expect(art[1]).toEqual({ frame: "face", portraitAssetId: "portrait-b", amount: "x3" });
+    expect(art[2]).toEqual({ frame: "icon", iconKey: "icon-dnaFragments", amount: "x12" });
+    expect(art[3]).toEqual({ frame: "icon", iconKey: "icon-gold", amount: "x1922" });
+  });
+
+  it("카드 그림은 보상 카드와 개수·순서가 같다", () => {
+    const views: ResearchSlotView[] = [
+      { kind: "currency", currency: "cheesecake", amount: 5, grade: "GRAY" },
+      { kind: "relic", relicId: "z", grade: "SSR" },
+    ];
+    const art = cinematicCardArt(views, {
+      portrait: () => "p" as never,
+      icon: () => "i",
+      amount: (value) => String(value),
+    });
+    // 순서가 어긋나면 골드 칸에 렐릭 원화가 서고 아무도 그것을 눈치채지 못한다.
+    expect(art.map((slot) => slot.frame)).toEqual(["icon", "portrait"]);
+    expect(art).toHaveLength(cinematicRewards(views, TEXT).length);
   });
 
   it("에셋이 받아들이는 장수는 1과 10뿐이다", () => {

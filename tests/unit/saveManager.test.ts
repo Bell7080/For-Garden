@@ -27,6 +27,11 @@ function validData(): SaveData {
 }
 
 describe("SaveManager", () => {
+  it("데이터 초기화가 복원할 신규 상태에는 임시 뽑기 테스트 재화를 넉넉히 지급한다", () => {
+    // 기본 상태 팩토리를 직접 고정해 첫 설치와 설정의 데이터 초기화가 같은 지급량을 쓰게 한다.
+    expect(createDefaultSession().wallet).toMatchObject({ fossil: 90_000, amber: 900 });
+  });
+
   it("v32 외형 없는 저장도 토리카 기본 해금을 보유하고 손상된 레거시 선택은 폐기한다", () => {
     const legacy = validData() as unknown as Record<string, unknown>;
     legacy.saveVersion = 32;

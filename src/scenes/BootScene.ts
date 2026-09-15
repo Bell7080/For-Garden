@@ -21,7 +21,12 @@ export class BootScene extends Phaser.Scene {
     try {
       const loaded = saveManager.load();
       if (loaded) replaceSession(loaded);
-      else firstRun = true;
+      else {
+        // 저장 삭제만으로는 모듈의 공유 session 객체가 비워지지 않는다. 데이터 초기화 뒤 부트로
+        // 돌아왔을 때 직전 진행을 다시 저장하지 않도록, 저장이 없는 모든 진입에서 새 상태로 교체한다.
+        replaceSession(defaultSessionAfterReset());
+        firstRun = true;
+      }
     } catch {
       // 손상된 로컬 데이터가 전체 앱을 막지 않게 제거하고 계정 연동 전 기본 상태로 복구한다.
       saveManager.reset();

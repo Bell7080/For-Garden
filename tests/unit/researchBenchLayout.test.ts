@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
 import {
-  RESEARCH_BENCH, researchActionsBottom, researchActionsTop, researchActionY, researchBenchWidth,
-  researchDetailBounds, researchSlotCenter, researchTraitBounds,
+  RESEARCH_BENCH, researchActionsBottom, researchActionsTop, researchActionY, researchBenchTop,
+  researchBenchWidth, researchDetailBounds, researchSlotCenter, researchTraitBounds,
 } from "../../src/ui/researchBenchLayout";
 
 /** 좌하단 라벨 줄의 윗변. 버튼 줄이 여기를 파고들면 안 된다. */
@@ -15,7 +15,15 @@ describe("특성 연구대 배치", () => {
     // 비면 가운데, 끼우면 왼쪽이다 — 상세가 들어설 자리가 그 차이만큼 생긴다.
     expect(empty.x).toBe(BASE_WIDTH / 2);
     expect(slotted.x).toBeLessThan(empty.x);
-    expect(empty.y).toBe(slotted.y);
+    // **비면 아래(화면 가운데)에 서고 끼우면 위로 올라간다** — 그 아래에 특성 판과 버튼이 선다.
+    expect(empty.y).toBeGreaterThan(slotted.y);
+    expect(researchBenchTop(false)).toBe(RESEARCH_BENCH.emptyTop);
+    expect(researchBenchTop(true)).toBe(RESEARCH_BENCH.top);
+  });
+
+  it("의 빈 연구대는 특성 판이 서던 자리를 넘지 않는다", () => {
+    // 가운데로 내려온 판이 하단 라벨 줄을 덮으면 탭을 바꿀 수 없다.
+    expect(RESEARCH_BENCH.emptyTop + RESEARCH_BENCH.height).toBeLessThanOrEqual(TAB_TOP);
   });
 
   it("의 상세는 밀린 칸의 오른쪽에서 시작해 판 안에서 끝난다", () => {

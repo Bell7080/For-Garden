@@ -56,6 +56,7 @@ export const MISC_JA = {
   "archaeology.shop": "ショップ",
   "archaeology.bench.pick": "ルーンを選ぶ",
   "archaeology.bench.clear": "外す",
+  "archaeology.bench.empty": "ルーンを差し込んでください",
   "archaeology.tab.strata": "地層探査",
   "archaeology.tab.research": "特性研究",
   "archaeology.charges": "{charges} / {max}",

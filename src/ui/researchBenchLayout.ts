@@ -11,25 +11,65 @@
 
 /** 연구대 한 판의 자리와 크기. 모든 y는 화면 좌표다. */
 export const RESEARCH_BENCH = {
-  /** 연구대 판의 윗변. 제목·횟수 줄 아래다. */
-  top: 348,
-  /** 연구대 판의 높이. 룬 칸 하나와 그 이름줄이 드는 만큼이다. */
-  height: 470,
-  /** 판이 화면 좌우에서 안으로 들어오는 거리. */
-  inset: 60,
+  /** 룬을 끼웠을 때 연구대 판의 윗변. 제목·횟수 줄 아래다. */
+  top: 300,
+  /**
+   * 룬이 비었을 때 판이 서는 윗변.
+   *
+   * **비면 화면 가운데에 선다** — 아래에 설 특성 판도 버튼도 없는데 판만 천장에 붙어 있으면
+   * 화면의 3분의 2가 빈 자리로 남는다. 끼우는 순간 위로 올라가며 그 아래 자리를 낸다.
+   */
+  emptyTop: 720,
+  /** 연구대 판의 높이. 룬 칸 하나가 드는 만큼이다. */
+  height: 400,
+  /**
+   * 판이 화면 좌우에서 안으로 들어오는 거리.
+   *
+   * **가로로 길게 늘이지 않는다** — 안에 서는 것은 룬 칸 하나와 옵션 몇 줄뿐이라, 화면 폭을
+   * 다 쓰면 그 사이가 통째로 빈 자리가 된다.
+   */
+  inset: 100,
   /** 룬을 끼우는 칸 한 변. */
   slot: 260,
   /** 비었을 때 칸이 판 가운데에 선다. 끼우면 왼쪽으로 이만큼 밀린다. */
   slideX: -190,
   /** 미는 데 걸리는 시간(ms). */
   slideMs: 260,
+  /** 판이 가운데에서 제자리로 올라가는 데 걸리는 시간(ms). */
+  riseMs: 320,
   /** 상세 레이어가 판 안에서 시작하는 x(판 왼쪽 변 기준). */
-  detailLeft: 430,
+  detailLeft: 400,
   actionHeight: 96,
   actionGap: 16,
   /** 버튼 폭. 좌우 여백은 판과 같은 기둥을 쓴다. */
   actionWidth: 880,
+  /**
+   * 끼운 뒤의 순서(ms).
+   *
+   * **한꺼번에 뜨지 않는다** — 올라가며 룬이 밀리고, 옵션이 들어서고, 특성이 내려오고, 버튼이
+   * 차례로 선다. 그 순서가 곧 "무엇을 보고 무엇을 고르는 자리인가"이다.
+   */
+  detailDelay: 260,
+  traitDelay: 420,
+  actionDelay: 540,
+  /** 버튼이 한 줄씩 늦게 서는 간격(ms). */
+  actionStagger: 80,
 } as const;
+
+/**
+ * 연구대·특성 판이 함께 쓰는 깎임.
+ *
+ * **네 모서리를 서로 다르게 깎는다** — 같은 깊이로 깎으면 반듯한 팔각형이 되어 정면 판때기로
+ * 보인다. 두 판이 같은 비율을 쓰므로 위아래가 한 장비의 두 칸으로 읽힌다.
+ */
+export function researchPlateBevel(width: number): { topLeft: number; topRight: number; bottomRight: number; bottomLeft: number } {
+  return { topLeft: width * 0.085, topRight: width * 0.024, bottomRight: width * 0.085, bottomLeft: width * 0.024 };
+}
+
+/** 지금 연구대 판의 윗변. 룬이 비면 화면 가운데, 끼우면 제자리다. */
+export function researchBenchTop(slotted: boolean): number {
+  return slotted ? RESEARCH_BENCH.top : RESEARCH_BENCH.emptyTop;
+}
 
 /**
  * 특성 판.
@@ -76,7 +116,7 @@ export function researchBenchWidth(screenWidth: number): number {
 export function researchSlotCenter(screenWidth: number, slotted: boolean): { x: number; y: number } {
   return {
     x: screenWidth / 2 + (slotted ? RESEARCH_BENCH.slideX : 0),
-    y: RESEARCH_BENCH.top + RESEARCH_BENCH.height / 2,
+    y: researchBenchTop(slotted) + RESEARCH_BENCH.height / 2,
   };
 }
 

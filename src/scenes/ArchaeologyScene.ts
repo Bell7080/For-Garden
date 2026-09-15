@@ -6,7 +6,7 @@ import { setDebugScene } from "../debug";
 import type { StrataBoardView } from "../core/strataDig";
 import { DEFAULT_STRATA_LAYER_ID, type StrataRewardKind } from "../data/strataLayers";
 import { session } from "../state/session";
-import { canUpgradeRuneTraitGrade, RUNE_TRAIT_RULES } from "../core/runeTraits";
+import { canUpgradeRuneTraitGrade, RUNE_TRAIT_GRADES, RUNE_TRAIT_RULES } from "../core/runeTraits";
 import { RUNE_TRAIT_ITEMS } from "../data/runeTraits";
 import type { RuneInstance } from "../core/runes";
 import { addResearchBench, type ResearchBenchAction } from "../ui/ResearchBench";
@@ -21,6 +21,7 @@ import { KeywordManager } from "../managers/KeywordManager";
 import { PopupLayer } from "../ui/PopupLayer";
 import { RailButton } from "../ui/RailButton";
 import { openRuneTraitReroll } from "../ui/RuneTraitPopup";
+import { openRuneTraitOdds } from "../ui/RuneTraitOddsPopup";
 import { STRATA_BOARD, strataBoardFrame, strataLayerTextureKey, strataTileCenter, strataTileCrop } from "../ui/strataBoardLayout";
 import { UI_ICON } from "../ui/icons";
 import { TopBar } from "../ui/TopBar";
@@ -53,14 +54,13 @@ const ARCHAEOLOGY = {
   /** 남은 횟수를 말하는 곡괭이의 한 변. */
   chargeIcon: 46,
   /**
-   * 상점 입구.
+   * 확률 정보 입구.
    *
-   * **횟수 줄과 같은 높이의 오른쪽 끝이다.** 왼쪽 기둥 아래에 두었더니 그 아래에서 시작하는
-   * 판(탐사판·연구대)이 버튼을 덮었다 — 이 줄은 화면 몸통이 시작하기 전의 마지막 자리라
-   * 어느 탭에서도 가려지지 않는다.
+   * **횟수 줄과 같은 높이의 오른쪽 끝이다.** 그 아래에서 시작하는 판(탐사판·연구대)이 덮지
+   * 않는 마지막 자리다. 예전에는 상점이 여기 섰고, 지금은 하단 라벨 줄의 셋째 자리로 갔다.
    */
-  shopX: BASE_WIDTH - 96,
-  shopY: 262,
+  oddsX: BASE_WIDTH - 96,
+  oddsY: 262,
 } as const;
 
 /**
@@ -114,6 +114,8 @@ export class ArchaeologyScene extends Phaser.Scene {
    * 붙잡아 두면 화면만 옛 특성을 계속 그린다.
    */
   private benchRuneId: string | null = null;
+  /** 방금 끼운 참인가. 연구대가 올라가며 들어서는 연출을 그 한 번만 태운다. */
+  private benchJustSlotted = false;
 
   constructor() {
     super("archaeology");
@@ -142,13 +144,13 @@ export class ArchaeologyScene extends Phaser.Scene {
     this.chargeText = this.add.text(60 + ARCHAEOLOGY.chargeIcon + 10, ARCHAEOLOGY.chargeY + ARCHAEOLOGY.chargeIcon / 2, "",
       textStyle({ role: "display", size: 32, color: COLOR.ink })).setOrigin(0, 0.5);
 
-    // **상점은 왼쪽 위다.** 같은 상점 씬을 상품표만 바꿔 다시 쓴다 — 새 씬을 만들면 선반·
-    // 격자·값줄 규칙이 두 곳이 되고 한쪽만 고치는 사고가 난다.
-    new RailButton(this, ARCHAEOLOGY.shopX, ARCHAEOLOGY.shopY, {
-      icon: "shop",
-      label: t("archaeology.shop"),
+    // **확률 정보는 판이 시작하기 전의 마지막 줄에 선다.** 어느 탭에서도 가려지지 않는 자리라
+    // 굴리기 전에 무엇이 나올 수 있는지 읽고 들어갈 수 있다. 상점은 하단 라벨 줄로 내려갔다.
+    new RailButton(this, ARCHAEOLOGY.oddsX, ARCHAEOLOGY.oddsY, {
+      icon: "magnifier",
+      label: t("rune.trait.odds"),
       accent: true,
-      onClick: () => this.scene.start("shop", { storefront: "archaeology", returnScene: "archaeology" }),
+      onClick: () => openRuneTraitOdds({ scene: this, popups: this.popups, anchor: { x: ARCHAEOLOGY.oddsX, y: ARCHAEOLOGY.oddsY } }),
     });
 
     this.view = this.add.container(0, 0);
@@ -158,11 +160,18 @@ export class ArchaeologyScene extends Phaser.Scene {
     void this.refresh();
   }
 
-  /** 좌하단 라벨 두 장. 가방·상점과 같은 한 장(`CategoryTab`)을 쓴다. */
+  /**
+   * 좌하단 라벨 석 장. 가방·상점과 같은 한 장(`CategoryTab`)을 쓴다.
+   *
+   * **셋째는 판을 갈아 끼우지 않고 상점으로 건너간다.** 오른쪽 위 아이콘으로 서 있던 때는
+   * 같은 화면의 두 갈래(탐사·연구)와 다른 문법으로 열려, 같은 콘텐츠의 세 갈래가 두 자리에
+   * 나뉘어 있었다. 선택된 채로 남지 않으므로 셋째 라벨은 늘 꺼진 모습이다.
+   */
   private paintTabs(): void {
-    const tabs: ReadonlyArray<{ key: ArchaeologyTab; labelKey: TextKey }> = [
+    const tabs: ReadonlyArray<{ key: ArchaeologyTab | "shop"; labelKey: TextKey }> = [
       { key: "strata", labelKey: "archaeology.tab.strata" },
       { key: "research", labelKey: "archaeology.tab.research" },
+      { key: "shop", labelKey: "archaeology.shop" },
     ];
     // 옛 라벨을 먼저 지운다. 남겨 두면 누를 때마다 한 겹씩 쌓인다.
     this.tabRow.removeAll(true);
@@ -173,8 +182,14 @@ export class ArchaeologyScene extends Phaser.Scene {
         width: ARCHAEOLOGY.tabWidth,
         height: ARCHAEOLOGY.tabHeight,
         label: t(labelKey),
-        selected: this.tab === key,
+        selected: key !== "shop" && this.tab === key,
         onSelect: () => {
+          if (key === "shop") {
+            // 같은 상점 씬을 상품표만 바꿔 다시 쓴다 — 새 씬을 만들면 선반·격자·값줄 규칙이
+            // 두 곳이 되고 한쪽만 고치는 사고가 난다.
+            this.scene.start("shop", { storefront: "archaeology", returnScene: "archaeology" });
+            return;
+          }
           if (this.tab === key) return;
           this.tab = key;
           this.paintTabs();
@@ -290,9 +305,13 @@ export class ArchaeologyScene extends Phaser.Scene {
       ? undefined
       : session.runeInventory.find(({ instanceId }) => instanceId === this.benchRuneId);
     if (rune === undefined) this.benchRuneId = null;
+    // 끼우는 그 한 번만 연출을 태운다. 부여·재해석 뒤의 다시 그리기까지 태우면 조작할 때마다
+    // 판이 통째로 다시 조립되는 것으로 보인다.
+    const animate = this.benchJustSlotted;
+    this.benchJustSlotted = false;
     addResearchBench({
-      scene: this, parent: this.view, popups: this.popups, keywords: this.keywords, rune,
-      onPick: (picked) => { this.benchRuneId = picked.instanceId; this.paintView(); },
+      scene: this, parent: this.view, popups: this.popups, keywords: this.keywords, rune, animate,
+      onPick: (picked) => { this.benchRuneId = picked.instanceId; this.benchJustSlotted = true; this.paintView(); },
       onClear: () => { this.benchRuneId = null; this.paintView(); },
       actions: rune === undefined ? [] : this.traitActions(rune),
     });
@@ -301,8 +320,15 @@ export class ArchaeologyScene extends Phaser.Scene {
   /**
    * 그 룬의 특성에 지금 할 수 있는 일.
    *
-   * **특성이 없으면 부여 하나만 선다.** 재해석·등급 상승을 함께 세우면 눌러도 아무 일이 없는
-   * 칸이 되어 준비 상태를 과장한다.
+   * **부여는 특성이 없는 룬에만 선다.** 이미 붙은 특성을 같은 버튼으로 갈아 치우면, 굴려서
+   * 얻은 것을 한 번의 오조작으로 잃는 자리가 재해석 바로 위에 선다 — 다시 뽑는 일은 등급이
+   * 내려가지 않는 **재해석**이 맡는다.
+   *
+   * **재해석이 맨 위다.** 이 화면에서 되풀이하는 조작이 그것뿐이고, 아래 셋은 아이템이 있을
+   * 때만 한 번씩 누르는 일이다.
+   *
+   * **영웅 이상 확정 부여는 영웅 이하에서만 선다.** 전설 특성 위에 세우면 눌러서 등급을
+   * 떨어뜨리는 버튼이 되고, 눌러도 나아지지 않는 칸은 준비 상태를 과장한다.
    */
   private traitActions(rune: RuneInstance): ResearchBenchAction[] {
     const owned = (itemId: string): number => session.itemInventory.find((stack) => stack.itemId === itemId)?.quantity ?? 0;
@@ -310,33 +336,41 @@ export class ArchaeologyScene extends Phaser.Scene {
     const grantHigh = RUNE_TRAIT_ITEMS.grantHigh;
     const upgrade = RUNE_TRAIT_ITEMS.upgrade;
     const request = (name: string): string => `${name}-${Date.now()}`;
-    const actions: ResearchBenchAction[] = [
-      {
-        labelKey: rune.trait === undefined ? "rune.traitAction.grant" : "rune.traitAction.regrant",
+    const actions: ResearchBenchAction[] = [];
+    const trait = rune.trait;
+
+    if (trait !== undefined) {
+      actions.push({
+        labelKey: "rune.traitAction.reroll",
+        enabled: session.wallet.rawStone >= RUNE_TRAIT_RULES.rerollCost[trait.grade],
+        cost: { icon: "currency-orestone", amount: RUNE_TRAIT_RULES.rerollCost[trait.grade] },
+        onPress: () => void gameApi.rerollRuneTrait({ runeInstanceId: rune.instanceId, requestId: request("trait-reroll") })
+          .then((result) => openRuneTraitReroll({
+            scene: this, popups: this.popups, keywords: this.keywords,
+            runeInstanceId: rune.instanceId, current: result.current, candidate: result.candidate,
+            upgraded: result.upgraded, onResolved: () => this.paintView(),
+          })),
+      });
+    } else {
+      actions.push({
+        labelKey: "rune.traitAction.grant",
         enabled: owned(grant.itemId) > 0,
         onPress: () => void gameApi.grantRuneTrait({ runeInstanceId: rune.instanceId, itemId: grant.itemId, requestId: request("trait") })
           .then(() => this.paintView()),
-      },
-      {
+      });
+    }
+
+    // 확정 부여가 보장하는 등급(영웅)보다 이미 위면 세우지 않는다.
+    if (trait === undefined || RUNE_TRAIT_GRADES.indexOf(trait.grade) <= RUNE_TRAIT_GRADES.indexOf(grantHigh.minimumGrade)) {
+      actions.push({
         labelKey: "rune.traitAction.grantHigh",
         enabled: owned(grantHigh.itemId) > 0,
         onPress: () => void gameApi.grantRuneTrait({ runeInstanceId: rune.instanceId, itemId: grantHigh.itemId, requestId: request("trait-high") })
           .then(() => this.paintView()),
-      },
-    ];
-    if (rune.trait === undefined) return actions;
-    actions.push({
-      labelKey: "rune.traitAction.reroll",
-      enabled: session.wallet.rawStone >= RUNE_TRAIT_RULES.rerollCost[rune.trait.grade],
-      cost: { icon: "currency-orestone", amount: RUNE_TRAIT_RULES.rerollCost[rune.trait.grade] },
-      onPress: () => void gameApi.rerollRuneTrait({ runeInstanceId: rune.instanceId, requestId: request("trait-reroll") })
-        .then((result) => openRuneTraitReroll({
-          scene: this, popups: this.popups, keywords: this.keywords,
-          runeInstanceId: rune.instanceId, current: result.current, candidate: result.candidate,
-          upgraded: result.upgraded, onResolved: () => this.paintView(),
-        })),
-    });
-    if (canUpgradeRuneTraitGrade(rune.trait)) {
+      });
+    }
+
+    if (trait !== undefined && canUpgradeRuneTraitGrade(trait)) {
       actions.push({
         labelKey: "rune.traitAction.upgrade",
         enabled: owned(upgrade.itemId) > 0,

@@ -51,6 +51,7 @@ export const MISC_EN = {
   "archaeology.shop": "Shop",
   "archaeology.bench.pick": "Choose a Rune",
   "archaeology.bench.clear": "Remove",
+  "archaeology.bench.empty": "Insert a rune",
   "archaeology.tab.strata": "Strata Survey",
   "archaeology.tab.research": "Trait Research",
   "archaeology.charges": "{charges} / {max}",

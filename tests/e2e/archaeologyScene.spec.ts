@@ -67,15 +67,23 @@ test("고고학의 두 탭과 고고학 상점을 연다", async ({ page }, test
   await page.waitForTimeout(600);
   await captureGame(page, `test-results/${testInfo.project.name}-archaeology-research.png`);
 
-  // 연구대에 룬을 끼운다 — 칸이 왼쪽으로 밀리고 오른쪽에 상세가 들어서는지 보는 자리다.
-  await tap(page, 540, 583);
+  // 빈 연구대는 **화면 가운데**에 선다. 끼우면 위로 올라가며 룬이 밀리고 상세·특성·버튼이
+  // 차례로 들어선다 — 연출이 다 끝난 뒤를 찍는다.
+  await tap(page, 540, 920);
   await page.waitForTimeout(900);
   await tap(page, 300, 700);
-  await page.waitForTimeout(1_200);
+  await page.waitForTimeout(1_500);
   await captureGame(page, `test-results/${testInfo.project.name}-archaeology-bench.png`);
 
-  // 왼쪽 위 상점 입구 — 같은 상점 씬이 점원과 배경만 갈아 끼운다.
-  await tapUntil(page, 984, 262, "shop");
+  // 오른쪽 위 확률 정보 — 등급 상승 확률과 특성 목록을 한 장에서 읽는다.
+  await tap(page, 984, 262);
+  await page.waitForTimeout(700);
+  await captureGame(page, `test-results/${testInfo.project.name}-archaeology-odds.png`);
+  await tap(page, 100, 100);
+  await page.waitForTimeout(400);
+
+  // 상점은 하단 라벨 줄 셋째 자리다 — 같은 상점 씬이 점원과 배경만 갈아 끼운다.
+  await tapUntil(page, 60 + 280 / 2 + 2 * (280 + 16), tabY, "shop");
   /*
    * **첫 마디는 저절로 뜬다.**
    *
@@ -98,9 +106,9 @@ test("고고학 상점을 다녀와도 로비 상점은 제 자리로 열린다"
   await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => scene(page)).toBe("lobby");
 
-  // 먼저 고고학 상점을 열어 **지난 자리를 남긴다.**
+  // 먼저 고고학 상점을 열어 **지난 자리를 남긴다.** 입구는 하단 라벨 줄 셋째 자리다.
   await tapUntil(page, BASE_WIDTH / 10, BASE_HEIGHT - 180 + 90, "archaeology");
-  await tapUntil(page, 984, 262, "shop");
+  await tapUntil(page, 60 + 280 / 2 + 2 * (280 + 16), BASE_HEIGHT - 268, "shop");
   await expect.poll(() => screenTitle(page)).toBe("고고학 상점");
 
   // 우하단 뒤로가기는 들어온 자리로 돌아간다.

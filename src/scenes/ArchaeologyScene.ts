@@ -22,7 +22,7 @@ import { PopupLayer } from "../ui/PopupLayer";
 import { RailButton } from "../ui/RailButton";
 import { openRuneTraitReroll } from "../ui/RuneTraitPopup";
 import { openRuneTraitOdds } from "../ui/RuneTraitOddsPopup";
-import { coverSourceCrop, STRATA_ART, STRATA_BOARD, strataBoardFrame, strataLayerTextureKey, strataTileCenter, strataTileCrop } from "../ui/strataBoardLayout";
+import { coverSourceCrop, STRATA_ART, STRATA_BOARD, strataBoardFrame, strataCropPlacement, strataLayerTextureKey, strataTileCenter, strataTileCrop, type ScreenRect, type SourceCropRect } from "../ui/strataBoardLayout";
 import { UI_ICON } from "../ui/icons";
 import { TopBar } from "../ui/TopBar";
 import { bindCurrencyGuide, openCurrencyGuide } from "../ui/currencyGuideEntry";
@@ -78,6 +78,16 @@ function addBoardImage(scene: Phaser.Scene, key: string, apply: (image: Phaser.G
   const image = scene.add.image(0, 0, ready ? key : "__DEFAULT").setAlpha(ready ? 1 : 0);
   useBackgroundTexture(scene, image, key, (loaded) => { apply(loaded); loaded.setAlpha(1); });
   return image;
+}
+
+/**
+ * 잘라낸 원본 영역만 남겨 화면 사각형을 꽉 채운다. 배율·위치 계산은 순수 배치표가 갖고
+ * 여기서는 그 값을 물리기만 한다 — 화면이 다시 재면 판과 칸이 서로 다른 셈을 쓴다.
+ */
+function fillWithCrop(image: Phaser.GameObjects.Image, crop: SourceCropRect, target: ScreenRect): void {
+  const placement = strataCropPlacement(crop, target);
+  image.setCrop(crop.x, crop.y, crop.width, crop.height);
+  image.setScale(placement.scaleX, placement.scaleY).setPosition(placement.x, placement.y);
 }
 
 /** 보상 종류를 액자에 세울 그림 키로 바꾼다. 화면이 종류마다 그림을 따로 고르지 않는다. */
@@ -274,7 +284,7 @@ export class ArchaeologyScene extends Phaser.Scene {
 
     // **아래층이 맨 밑에 깔린다.** 겉장을 부순 칸에 드러나는 맨 흙이고, 겉장보다 가라앉아
     // 보이도록 한 겹 눌러 둔다 — 같은 밝기면 부순 자리가 아니라 다른 무늬로 보인다.
-    grid.add(addBoardImage(this, BACKGROUND.strataBase, (image) => image.setCrop(boardCrop.x, boardCrop.y, boardCrop.width, boardCrop.height).setDisplaySize(frame.width, frame.height)));
+    grid.add(addBoardImage(this, BACKGROUND.strataBase, (image) => fillWithCrop(image, boardCrop, { centerX: 0, centerY: 0, width: frame.width, height: frame.height })));
     grid.add(this.add.rectangle(0, 0, frame.width, frame.height, COLOR.void, STRATA_BOARD.baseShade));
 
     // **겉장은 칸마다 같은 원화를 잘라 쓴다.** 조각을 따로 굽지 않으므로 칸 사이에 이음매가
@@ -293,9 +303,8 @@ export class ArchaeologyScene extends Phaser.Scene {
       grid.add(tileView);
       if (tile.revealed) continue;
       tileView.add(addBoardImage(this, layerKey, (image) => {
-        // 크롭은 원본 px, 배치와 표시 크기는 화면 px이다. 두 좌표계를 한 연산에 섞지 않는다.
-        image.setCrop(crop.x, crop.y, crop.width, crop.height);
-        image.setDisplaySize(frame.cellWidth, frame.cellHeight).setPosition(center.x, center.y);
+        // 크롭은 원본 px, 칸은 화면 px이다. 두 좌표계를 한 연산에 섞지 않고 배치표가 환산한다.
+        fillWithCrop(image, crop, { centerX: center.x, centerY: center.y, width: frame.cellWidth, height: frame.cellHeight });
       }));
     }
 

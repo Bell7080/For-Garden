@@ -61,3 +61,32 @@ export function strataTileCrop(index: number, columns: number, rows: number, sou
 export function strataLayerTextureKey(art: number): string {
   return `background-strata-layer-${String(Math.max(1, Math.floor(art))).padStart(3, "0")}`;
 }
+
+/** 화면에 세울 사각형이다. 단위는 화면 px이고 중심을 기준으로 잡는다. */
+export interface ScreenRect { centerX: number; centerY: number; width: number; height: number }
+
+/** 잘라낸 원본 영역을 화면 사각형에 꽉 채울 때의 배율과 위치다. */
+export interface CropPlacement { x: number; y: number; scaleX: number; scaleY: number }
+
+/**
+ * **잘라낸 조각은 `setDisplaySize`로 칸에 맞출 수 없다.** Phaser의 crop은 남길 원본 영역만
+ * 고를 뿐 원점을 **원화 전체**에 그대로 두므로, 표시 크기를 칸 한 변으로 주면 원화 한 장이
+ * 칸만 하게 줄고 그 안에서 조각 하나만 남아 칸 구석에 작은 그림이 뜬다 — 칸마다 다른 자리가
+ * 남아 서로 무관한 그림이 하나씩 놓인 것으로 읽힌다. 그래서 배율은 **조각 크기**에서 구하고
+ * 위치는 원화 중심이 있어야 할 자리로 되민다. 그러면 스물다섯 칸이 배경 한 장을 나눠 깐다.
+ */
+export function strataCropPlacement(
+  crop: SourceCropRect,
+  target: ScreenRect,
+  sourceWidth: number = STRATA_ART.width,
+  sourceHeight: number = STRATA_ART.height,
+): CropPlacement {
+  const scaleX = target.width / Math.max(1, crop.width);
+  const scaleY = target.height / Math.max(1, crop.height);
+  return {
+    x: target.centerX - target.width / 2 + scaleX * (sourceWidth / 2 - crop.x),
+    y: target.centerY - target.height / 2 + scaleY * (sourceHeight / 2 - crop.y),
+    scaleX,
+    scaleY,
+  };
+}

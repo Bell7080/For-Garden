@@ -206,6 +206,14 @@ interface SkillBase {
   targeting?: "single" | "nearbyEnemies" | "splitShot" | "battlefieldEnemies" | "battlefieldAllies" | "duo" | "self" | "targetedCircle" | "chargeLine";
   /** 원형 범위의 반경이자, `chargeLine`에서는 지나간 통로의 **반폭**이다. */
   radius?: number;
+  /**
+   * `chargeLine`이 밀고 들어가는 거리에 곱하는 배율. 없으면 1이다.
+   *
+   * 거리 자체를 px로 적지 않는 이유는 그 거리가 **이동 속도**에서 나와야 하기 때문이다
+   * (발이 빠른 개체가 더 멀리 파고든다). 여기서 정하는 것은 "그 개체 기준으로 얼마나 더
+   * 멀리 뚫는가"뿐이라, 이속을 올려도 두 값이 갈리지 않는다.
+   */
+  chargeReachMultiplier?: number;
   /** `splitShot`이 표적을 포함해 한 번에 맞히는 최대 인원이다. */
   maxTargets?: number;
   /**
@@ -630,6 +638,25 @@ export type CombatStatusEffect =
     }
   | { kind: "stagger"; /** 기절 저항을 무시하는 순간 행동 차단 시간(초). */ seconds: number }
   | {
+      /**
+       * 날려버림. 맞은 적이 때린 방향으로 튕겨 나가 전장 벽을 튕기며, 그동안 행동하지 못한다.
+       *
+       * **기절과 다른 축이다** — 기절은 제자리에서 멈추는 것이고 이쪽은 실제로 좌표가 움직인다.
+       * 그래서 밀려난 적은 다시 걸어 들어와야 하고, 뒤에 선 아군까지 자리가 함께 어긋난다.
+       *
+       * 예전에는 파치의 폭주(`knockbackSlam`)만 적을 날릴 수 있었고 그 궤적도 뇌진탕 안에
+       * 숨어 있었다. 스킬이 직접 선언하는 상태로 꺼내 두어야 폭주가 아닌 손도 적을 밀 수 있고,
+       * 두 곳이 같은 감쇠 규칙(`KNOCKBACK`)을 함께 쓴다.
+       */
+      kind: "knockback";
+      /** 튕겨 날아다니는 시간(초). 이 동안 그 적은 행동하지 못한다. */
+      seconds: number;
+      /** 처음 튕겨 나가는 속도(px/s). 때린 방향 그대로 팡 튀어 나간다. */
+      speed: number;
+      /** 전장 벽에 부딪히는 횟수. 이 수를 다 채우면 그 자리에 선다. */
+      bounces: number;
+    }
+  | {
       kind: "bleed";
       /** 출혈이 유지되는 시간(초). 매초 틱과 별개인 갱신 기준이다. */
       seconds: number;
@@ -934,6 +961,15 @@ export type PassiveKind =
   | "followHighestAttackAllyTarget"
   /** 데이 전용: 때린 적을 건너뛰며 표적을 돌리고, 때리는 순간까지 멈추지 않고 움직인다. */
   | "tagAndRun"
+  /**
+   * 코마 전용: 정해진 주기마다 **가장 약해진 적의 곁으로 순간이동**하고, 그 자리에서 내는
+   * 첫 기본 공격이 확정 치명타가 된다.
+   *
+   * 마키의 「고품격 식재료」와 같은 자리 계산을 쓰되(`leapToLowestHpEnemy`) 숨지 않는다 —
+   * 마키는 가장 잘 익은 것을 고르러 가는 개체이고, 이쪽은 **쓰러지기 직전인 하나를 끝내러**
+   * 간다. 그래서 도착한 한 방만 확정 치명타이고, 그 뒤로는 평소의 손으로 돌아온다.
+   */
+  | "stalkerBlink"
   /** 매디 전용: 상성 계산에서 물을 얼음으로 가로채고, 이미 둔화가 최대인 적을 때리면 빙결시킨다. */
   | "frostboundDominion"
   /**
@@ -998,6 +1034,7 @@ export type FerocityEffectId =
   | "tailwindRally"
   /** 파치 전용: 폭주 중 뇌진탕이 확정 치명타가 되고 그 적을 전장 밖으로 튕겨 날린다. */
   | "knockbackSlam"
+  | "vanguardCharge"
   /** 마키 전용: 폭주 중 손질이 터진 피해의 일부를 아군 전체의 회복으로 돌린다. */
   | "butcherFeast"
   /** 델로피 전용: 폭주 중 일반 공격이 중독을 걸거나, 이미 걸린 중독을 그 자리에서 청산한다. */
@@ -1169,6 +1206,20 @@ export type FerocityTrait = {
       effectId: "venomousEncore";
       /** 폭주 중 자기 공격 속도에 더하는 비율(%)이다. */
       attackSpeedBonusPercent: number;
+    }
+  | {
+      /**
+       * 공멸 선봉. 앞장서서 뚫는 몸이라 **잃은 만큼을 두르고** 손이 빨라진다.
+       *
+       * 막을 최대 체력이 아니라 **잃은 체력**에서 재는 이유는, 이 폭주가 열리는 때가 곧 그
+       * 개체가 오래 맞은 뒤이기 때문이다 — 최대 체력 비례로 두면 멀쩡할 때 열린 폭주가 가장
+       * 두꺼운 막을 주어 "몰리면 더 사나워진다"와 정반대로 읽힌다.
+       */
+      effectId: "vanguardCharge";
+      /** 폭주에 드는 순간 **잃은 체력**의 이 비율(%)만큼 보호막을 두른다. */
+      missingHpShieldPercent: number;
+      /** 폭주 중 공격 속도 증가율(%). 속도의 역수가 곧 공격 주기다. */
+      attackSpeedPercent: number;
     }
   | {
       effectId: "knockbackSlam";
@@ -1884,6 +1935,27 @@ export interface StageEnemyDef {
   ferocityLevel?: number;
   /** 배열 순서와 무관하게 전열(0)에서 후열(2)까지의 전투 배치를 고정한다. */
   formationSlot: 0 | 1 | 2;
+}
+
+/**
+ * **야성 한 단계가 몇 레벨어치인가.**
+ *
+ * 야성은 레벨과 다른 축이다 — 자란 것이 아니라 난폭해진 것이라, 한 단계가 한 레벨과 같은
+ * 무게일 이유가 없다. 같은 무게로 두었을 때는 관문을 조이는 손잡이가 사실상 레벨 하나뿐이라
+ * 1장 전체를 **전원 1레벨로도 밀 수 있었다.**
+ *
+ * **정예는 그보다 더 크다.** 셋이 나눠 내던 몫을 하나가 대신하는 자리인데, 그 하나가 한 번에
+ * 때릴 수 있는 것도 하나뿐이라 같은 단계로는 관문이 가벼워진다(야성을 80까지 올려도 바닥
+ * 파티 잔여 체력이 0.62 → 0.58에서만 움직였다).
+ *
+ * 곱한 결과는 숨기지 않는다 — 스테이지 표가 이 함수를 지나 **얹히는 레벨 수 자체**를 적으므로,
+ * 화면의 붉은 `+n`과 실제로 자란 몫이 언제나 같은 수다.
+ */
+export const FEROCITY_LEVEL_WEIGHT = { normal: 3, elite: 5 } as const;
+
+/** 야성 단계가 실제로 얹는 레벨 수. 정예만 더 무거운 배율을 쓴다. */
+export function ferocityBonusLevels(ferocityStep: number, elite = false): number {
+  return Math.max(0, Math.round(ferocityStep)) * (elite ? FEROCITY_LEVEL_WEIGHT.elite : FEROCITY_LEVEL_WEIGHT.normal);
 }
 
 /** 그 개체가 실제로 싸우는 레벨 — 자란 레벨에 야성으로 얹힌 몫을 더한 값이다. */

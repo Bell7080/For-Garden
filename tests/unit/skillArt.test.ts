@@ -970,6 +970,55 @@ describe("파치 스킬 표시 계약", () => {
   });
 });
 
+describe("코마 스킬 표시 계약", () => {
+  const koma = () => RELICS.find((def) => def.id === "husk-koma")!;
+
+  it("의 패시브는 주기와 그 한 방만 말한다", () => {
+    const def = koma();
+    // 도착한 한 방이 얼마나 센지는 치명타 피해가 이미 말하므로 본문이 되풀이하지 않는다.
+    expect(def.passive.kind).toBe("stalkerBlink");
+    expect(passiveDescription(def.passive, def.stats.atk)).toBe(
+      "8초마다 체력이 가장 적은 적의 곁으로 순간이동하고, 그 자리에서 내는 첫 [[basic-attack|기본 공격]]이 확정 치명타가 된다.",
+    );
+  });
+
+  it("의 기본 공격은 세 효과를 한 절로 이어 붙인다", () => {
+    const def = koma();
+    expect(def.basic.statusEffectEvery).toBe(3);
+    // 셋을 따로 세우면 "기절시킨다 날려버린다"처럼 끝맺은 문장이 나란히 선다. 어미를 잘라
+    // 붙이지 않고 이어지는 형태를 문구 표가 통째로 갖는다.
+    expect(skillDescription(def.basic, { damage: 150 })).toBe(
+      "적 한 명에게 [[damage-value|150]]의 [[physical-damage|물리 피해]]를 준다."
+      + " 매 3번째 공격마다 [[concussion|뇌진탕]]을 입히고 1초 동안 [[stun|기절]]시키며 [[knockback|날려버린다]].",
+    );
+  });
+
+  it("의 궁극기는 돌진 거리를 본문에 적지 않는다", () => {
+    const def = koma();
+    // 나아가는 거리는 이동 속도가 정하므로 문장이 말할 수 있는 수가 아니다. 배율은 데이터에만 있다.
+    expect(def.ultimate).toMatchObject({ targeting: "chargeLine", chargeReachMultiplier: 1.8, damageHealingPercent: 40 });
+    expect(skillDescription(def.ultimate, { damage: 280 })).toBe(
+      "[[charge|돌진]]해 뚫고 지나간 길의 모든 적에게 [[damage-value|280]]의 [[physical-damage|물리 피해]]를 주고,"
+      + " 입힌 피해의 40%만큼 체력을 회복한다.",
+    );
+  });
+
+  it("의 폭주는 막을 잃은 체력에서 잰다", () => {
+    const trait = koma().ferocityTrait;
+    if (trait.effectId !== "vanguardCharge") throw new Error("코마의 폭주 특성이 아니다");
+    // 잃은 체력은 대상이 없으면 계산할 수 없는 값이라 명중 시점의 상대값과 같이 %로 남는다.
+    expect(ferocityTraitDescription(trait)).toBe(
+      "[[missing-hp|잃은 체력]]의 40%만큼 보호막을 얻고 [[attack-speed|공격 속도]]가 50% 증가한다.",
+    );
+  });
+
+  it("의 규칙어는 전부 전역 키워드로 정의된다", () => {
+    for (const id of ["knockback", "concussion", "stun", "charge", "missing-hp", "attack-speed", "basic-attack"]) {
+      expect(KEYWORDS.some((keyword) => keyword.id === id), id).toBe(true);
+    }
+  });
+});
+
 describe("마키 스킬 표시 계약", () => {
   const maki = () => RELICS.find((def) => def.id === "maki")!;
 

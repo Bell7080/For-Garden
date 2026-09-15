@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { effectiveEnemyLevel } from "../../src/core/types";
+import { effectiveEnemyLevel, FEROCITY_LEVEL_WEIGHT, ferocityBonusLevels } from "../../src/core/types";
 import { getRelic } from "../../src/data/relics";
 import { CHAPTERS, DAILY_RESTORATION, FIXED_STAGE_ENEMIES, SIDE_STORY_STAGE, STAGES, getStage, getStageEnemies } from "../../src/data/stages";
 import { isStageUnlockedByProgress } from "../../src/core/stageProgress";
@@ -44,18 +44,21 @@ describe("stage enemy design", () => {
      *
      * **정예 관문(1-5·1-10)은 한 줄에 하나뿐이고 야성 몫이 훨씬 크다.** 셋이 나눠 내던 몫을
      * 하나가 대신하기 때문이다.
+     *
+     * **셋째 칸은 야성 단계가 아니라 그것이 실제로 얹는 레벨 수다**(`ferocityBonusLevels` —
+     * 잡졸 3배, 정예 5배). 화면의 붉은 `+n`도 같은 수라, 표와 화면과 실제 성장이 한 값이다.
      */
     expect(ladder).toEqual([
-      { 아모: [4, 0, 1], 토비: [4, 0, 1], 리파: [4, 0, 1] },
-      { 아모: [5, 0, 2], 토비: [5, 0, 2], 리파: [5, 0, 2] },
-      { 아모: [6, 0, 2], 토비: [6, 0, 2], 리파: [6, 0, 2] },
-      { 아모: [7, 0, 2], 토비: [7, 0, 2], 리파: [7, 0, 2] },
-      { 토비: [7, 0, 20] },
-      { 아모: [8, 0, 3], 토비: [8, 0, 3], 리파: [8, 0, 3] },
-      { 아모: [9, 0, 3], 토비: [9, 0, 3], 리파: [9, 0, 3] },
-      { 아모: [9, 0, 4], 토비: [9, 0, 4], 리파: [9, 0, 4] },
-      { 아모: [10, 0, 4], 토비: [10, 0, 4], 리파: [10, 0, 4] },
-      { 코마: [10, 0, 22] },
+      { 아모: [4, 0, 3], 토비: [4, 0, 3], 리파: [4, 0, 3] },
+      { 아모: [5, 0, 6], 토비: [5, 0, 6], 리파: [5, 0, 6] },
+      { 아모: [6, 0, 6], 토비: [6, 0, 6], 리파: [6, 0, 6] },
+      { 아모: [7, 0, 6], 토비: [7, 0, 6], 리파: [7, 0, 6] },
+      { 토비: [7, 0, 100] },
+      { 아모: [8, 0, 9], 토비: [8, 0, 9], 리파: [8, 0, 9] },
+      { 아모: [9, 0, 9], 토비: [9, 0, 9], 리파: [9, 0, 9] },
+      { 아모: [9, 0, 12], 토비: [9, 0, 12], 리파: [9, 0, 12] },
+      { 아모: [10, 0, 12], 토비: [10, 0, 12], 리파: [10, 0, 12] },
+      { 코마: [10, 0, 110] },
     ]);
     /*
      * **레벨은 관문을 따라 내려가지 않는다.** 1-10까지 마지막 관문이 직전보다 쉬운 구간이
@@ -132,6 +135,33 @@ describe("stage enemy design", () => {
       expect(allowed).toEqual(expect.arrayContaining(Object.keys(enemy)));
       expect(Object.keys(enemy)).toEqual(expect.arrayContaining(["relicId", "level", "breakthrough", "formationSlot"]));
     }
+  });
+
+  /*
+   * **야성 한 단계는 한 레벨이 아니다.** 같은 무게로 두었을 때는 관문을 조이는 손잡이가
+   * 사실상 레벨 하나뿐이라 1장 전체가 전원 1레벨로도 밀렸다. 정예는 셋이 나눠 내던 몫을
+   * 하나가 대신하는 자리라 그보다 더 크다.
+   */
+  it("야성 단계는 잡졸 3배·정예 5배로 레벨에 얹힌다", () => {
+    expect(FEROCITY_LEVEL_WEIGHT).toEqual({ normal: 3, elite: 5 });
+    expect(ferocityBonusLevels(4)).toBe(12);
+    expect(ferocityBonusLevels(4, true)).toBe(20);
+    // 음수는 얹지 않는다 — 야성이 레벨을 깎는 축이 되면 관문이 거꾸로 가벼워진다.
+    expect(ferocityBonusLevels(-3)).toBe(0);
+  });
+
+  /*
+   * **곱한 결과는 숨기지 않는다.** 스테이지 데이터에 들어가는 `ferocityLevel`이 이미 곱해진
+   * 값이라, 화면의 붉은 `+n`과 실제로 자란 몫이 언제나 같은 수다. 단계를 그대로 적어 두고
+   * 성장할 때만 곱하면 화면이 보여 준 수와 맞는 수가 갈린다.
+   */
+  it("스테이지가 들고 다니는 야성 값은 이미 얹힌 레벨 수다", () => {
+    const elite = battles.find((stage) => stage.id === "1-10")!;
+    expect(elite.elite).toBe(true);
+    expect(elite.enemies[0].ferocityLevel).toBe(ferocityBonusLevels(22, true));
+    expect(effectiveEnemyLevel(elite.enemies[0])).toBe(elite.enemies[0].level + 110);
+    const mob = battles.find((stage) => stage.id === "1-9")!;
+    expect(mob.enemies[0].ferocityLevel).toBe(ferocityBonusLevels(4));
   });
 
   it("야성 추가 레벨은 0 이상의 정수이고 실효 레벨은 관문 순서를 따라 내려가지 않는다", () => {

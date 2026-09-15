@@ -22,6 +22,17 @@ const SEEDS = [1, 2, 3, 4, 5, 6, 7, 8] as const;
  */
 const FLOOR_ROSTER = ["anky", "dodo", "parua"] as const;
 
+/**
+ * **지금 관문이 전제하는 파티 — SSR 한 명이 낀 자리다.**
+ *
+ * 위 바닥 로스터는 "SSR이 하나도 없는 사람"을 그린 것인데, 그 파티를 통과선으로 삼는 동안
+ * 관문은 **전원 1레벨로도 밀렸다.** 뽑기·룬·강화가 전부 선택지로만 남아 아무것도 요구하지
+ * 않았기 때문이다. 야성 한 단계를 세 레벨(정예는 다섯)로 올리면서 기준을 여기로 옮겼다 —
+ * 스타트 이벤트로 쥐는 SSR 하나에 초반 R·SR 둘이면 **잡졸 관문은 그대로 흐르고 정예 둘만
+ * 막는다.** 바닥 로스터가 어디서 막히는지는 아래 "성장하지 않은 파티" 검수가 따로 지킨다.
+ */
+const REFERENCE_ROSTER = ["anky", "dodo", "rex"] as const;
+
 /** 자원을 몰아줄 자리. 편성 순서는 진형이 정하므로 누구에게 몰아주는지는 따로 적는다. */
 const FLOOR_CARRY_INDEX = 2;
 
@@ -47,9 +58,9 @@ function cheesecakeBefore(globalOrder: number): number {
 }
 
 /** 스토리 보상만으로 자란 바닥 파티. 몰아주기와 균등 분배 두 갈래를 같은 예산에서 만든다. */
-function floorParty(globalOrder: number, shape: InvestmentShape): RelicDef[] {
+function floorParty(globalOrder: number, shape: InvestmentShape, roster: readonly string[] = FLOOR_ROSTER): RelicDef[] {
   const growth = storyFloorGrowth(cheesecakeBefore(globalOrder), globalOrder, shape, FLOOR_CARRY_INDEX);
-  return FLOOR_ROSTER.map((id, index) => grown(getRelic(id), growth.levels[index] ?? 1, growth.runes[index] ?? 0));
+  return roster.map((id, index) => grown(getRelic(id), growth.levels[index] ?? 1, growth.runes[index] ?? 0));
 }
 
 const BATTLE_STAGES = CHAPTERS.flatMap(({ stages }) => stages)
@@ -61,64 +72,41 @@ const EXPEDITION_BOSS_STAGES = BATTLE_STAGES.filter(({ stage }) => stage.enemies
 const STORY_STAGES = BATTLE_STAGES.filter((entry) => !EXPEDITION_BOSS_STAGES.includes(entry));
 
 /**
- * **바닥 파티가 지금 못 넘는 관문 — 알고 남겨 둔 구멍이다.**
+ * **스토리의 통과선은 기준 파티(SSR 하나 + R·SR 둘)다.**
  *
- * "스토리는 막히지 않는다"는 계약(균등 전승 · 몰아주기 0.75)을 지우지 않고 **지금 값을 그대로
- * 적어 둔다.** 아래 검수는 각 관문이 여기 적힌 승률 **이상**인지만 본다:
+ * 예전에는 SSR이 하나도 없는 바닥 로스터가 이 자리에 있었고, 그 파티가 넘지 못하는 관문을
+ * `FLOOR_GAP`이라는 표에 "알고 남겨 둔 구멍"으로 하나씩 적어 두었다. 그 표가 스토리 전체로
+ * 번진 채 오래 남아 있었는데, 정작 실제로 플레이하면 **전원 1레벨로도 열 관문이 전부 밀렸다** —
+ * 검수의 바닥이 실제 파티보다 훨씬 약해, 표가 기록한 "구멍"이 난이도와 아무 관계가 없었다.
  *
- * - 더 나빠지면 실패한다 — 다른 조정이 이 구멍을 더 벌리는 것을 막는다.
- * - 적히지 않은 관문의 기준은 여전히 원래 계약이다.
- * - 사다리를 다시 풀어 전부 원래 계약으로 돌아가면 이 표를 **지우면 된다**(지워도 통과한다).
+ * 그래서 기준을 옮겼다. 통과선은 `REFERENCE_ROSTER`이고, 요구는 둘뿐이다.
  *
- * **v0.132.2~v0.132.3에서 구멍이 스토리 전체로 번졌다 — 알고 한 선택이며, 다음 작업은 적 레벨
- * 사다리다.** 토리카의 두 회복(폭주 매초 5 → 1.5% · 패시브 매초 7 → 3.5%), 도디의 평타 회복
- * (50 → 30% · 공속 96 → 84 · **자기 자신은 회복 대상에서 제외**), 도디 궁극기(피해 200 → 150%
- * · 아군 회복 200 → 100%)를 차례로 내렸는데, 그 전부가 이 검수의 바닥 로스터가 **버티는 방식
- * 그 자체**였다. 회복이 절반 아래로 내려가자 균등은 1장부터, 몰아주기는 1-2부터 구멍이 생긴다.
+ * - **잡졸 관문은 그대로 흐른다**(전승). 길을 막는 자리가 아니다.
+ * - **정예 둘(1-5·1-10)만 막는다.** 관문의 무게는 야성 단계 하나로 내며(`ferocityBonusLevels`),
+ *   정예는 그 몫이 다섯 배라 같은 파티가 여기서 처음으로 멈춘다.
  *
- * 개체 쪽 의도(회복이 피해를 그대로 지워 전투가 언제 위험해지는지 보이지 않던 것)는 이룬 값이라
- * 되돌리지 않는다. 대신 **관문이 요구하는 힘을 `stages.ts`의 레벨 표에서 다시 푼다** — 지금
- * 사다리는 회복이 두 배였던 시절의 파티를 기준으로 짠 값이라, 개체가 아니라 관문이 어긋나 있다.
- * 그 작업 전까지 이 표가 지금 상태를 기록한다.
+ * 값을 눈대중으로 고치지 말고 그 두 축(스테이지 야성 표 · 가중치)을 움직인 뒤 다시 잰다.
  */
-const FLOOR_GAP: Readonly<Record<"spread" | "carry", Readonly<Record<string, number>>>> = {
-  spread: {
-    "1-1": 0.75, "1-2": 0.5, "1-3": 0.5, "1-4": 0.5, "1-6": 0.125, "1-7": 0.5, "1-8": 0.5, "1-9": 0.5,
-    "2-1": 0.375, "2-2": 0.25, "2-3": 0.25, "2-4": 0.25, "2-5": 0.25, "2-6": 0.25, "2-7": 0.5,
-    "2-8": 0.25, "2-9": 0.5, "2-10": 0.25,
-    "3-1": 0.25, "3-2": 0.25, "3-3": 0.125, "3-4": 0.25, "3-5": 0.125, "3-6": 0.25, "3-7": 0.125,
-    "3-8": 0.125, "3-9": 0.125,
-  },
-  carry: {
-    "1-2": 0.5, "1-6": 0.5, "1-7": 0.5, "1-8": 0.5, "1-9": 0.5,
-    "2-1": 0.5, "2-2": 0.5, "2-3": 0.5, "2-4": 0.5, "2-5": 0.5, "2-6": 0.5, "2-7": 0.625,
-    "2-8": 0.5, "2-9": 0.5, "2-10": 0.5,
-    "3-1": 0.5, "3-2": 0.5, "3-3": 0.25, "3-4": 0.25, "3-5": 0.25, "3-6": 0.25, "3-7": 0.125,
-    "3-8": 0.125, "3-9": 0.125,
-  },
-};
-
-/** 원래 계약. 표에 없는 관문은 이 값을 그대로 쓴다. */
-const FLOOR_CONTRACT = { spread: 1, carry: 0.75 } as const;
+const ELITE_STAGE_IDS = ["1-5", "1-10"] as const;
 
 /**
- * 요구된 대표 관문은 수치 조정 PR에서 의도하지 않은 체감 변화를 즉시 보여 주도록 고정한다.
+ * 대표 관문의 기록. 수치 조정이 의도하지 않은 체감 변화를 냈는지 즉시 드러낸다.
  *
- * **토리카·도디의 회복 조정으로 다시 쟀다.** 폭주의 공속 배율을 절반으로 내린 만큼 깃펜이 옮기는 회복이
- * 줄어 같은 관문의 잔여 체력이 또 한 뼘 내려갔다(예: 3-9는 0.48 → 0.40). 띠 폭은 예전과
- * 같고 가운데만 옮겨 갔다 — 폭까지 넓히면 다음 조정의 체감 변화가 이 검수에 걸리지 않는다.
+ * **기준 파티(`REFERENCE_ROSTER`)로 다시 쟀다.** 야성 가중치가 들어오면서 잡졸 관문은 거의
+ * 무손실로 흐르고 정예 둘만 남는 모양이 되었다 — 이 표가 그 모양 자체를 기록한다. 띠는 좁게
+ * 두어 다음 조정이 이 검수에 반드시 걸리게 한다.
  */
 const BASELINES = {
-  "1-1": { hp: [0.32, 0.44] },
-  // 1-5·1-10은 셋 대신 정예 하나가 서는 관문이다. 무게는 그 하나의 야성이 대신 낸다.
-  "1-5": { hp: [0.52, 0.64] },
-  "1-10": { hp: [0.48, 0.60] },
-  // 2·3장은 회복을 내린 뒤 전멸 직전까지 내려갔다. 띠를 넓히지 않고 지금 값을 그대로 적는다 —
-  // 사다리를 다시 풀면 이 네 줄이 가장 먼저 올라온다.
-  "2-5": { hp: [0.08, 0.20] },
-  "2-10": { hp: [0.06, 0.18] },
-  "3-5": { hp: [0.01, 0.12] },
-  "3-9": { hp: [0.02, 0.14] },
+  "1-1": { win: 1, hp: [0.94, 1] },
+  // 정예 둘은 막는 자리라 기준 파티도 여기서 멈춘다. 1-5는 균등 분배가 겨우 세 판을 열고,
+  // 1-10은 한 판도 열리지 않아 잔여 체력이 0이다 — 그것이 이 관문의 기록이다.
+  "1-5": { win: 0.375, hp: [0.06, 0.18] },
+  "1-10": { win: 0, hp: [0, 0.04] },
+  // 정예를 넘고 나면 2·3장의 잡졸은 다시 흐른다. 길에 선 관문은 막는 자리가 아니다.
+  "2-5": { win: 1, hp: [0.93, 1] },
+  "2-10": { win: 1, hp: [0.93, 1] },
+  "3-5": { win: 1, hp: [0.91, 1] },
+  "3-9": { win: 1, hp: [0.91, 1] },
 } as const;
 
 describe("Phaser 없는 챕터 난이도 검수", () => {
@@ -129,37 +117,46 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
    * 그 두 갈래가 이 검수의 바닥이다. 토리카를 깎으면서 그 바닥이 내려앉은 자리는
    * `FLOOR_GAP`에 그대로 적어 두었다 — 여기서는 **적어 둔 값보다 나빠졌는지**만 본다.
    */
-  it.each(["spread", "carry"] as const)("%s로 키운 바닥 파티의 관문별 승률이 기록된 바닥 아래로 내려가지 않는다", (shape) => {
+  /*
+   * **잡졸 관문은 기준 파티를 막지 않는다.**
+   *
+   * 자원을 몰아줬든 고루 나눴든 같아야 한다 — 길에 선 관문이 투자 방식을 고르게 만들면,
+   * 고르지 않은 쪽은 스토리를 볼 수 없다는 뜻이 된다.
+   */
+  it.each(["spread", "carry"] as const)("%s로 키운 기준 파티는 잡졸 관문을 전부 넘는다", (shape) => {
     for (const { stage, globalOrder } of STORY_STAGES) {
-      const report = summarizeStageDifficulty(floorParty(globalOrder, shape), getStageEnemies(stage), SEEDS, "auto");
-      expect(report.winRate, `${shape} ${stage.id}`).toBeGreaterThanOrEqual(FLOOR_GAP[shape][stage.id] ?? FLOOR_CONTRACT[shape]);
+      if (ELITE_STAGE_IDS.some((id) => id === stage.id)) continue;
+      const report = summarizeStageDifficulty(floorParty(globalOrder, shape, REFERENCE_ROSTER), getStageEnemies(stage), SEEDS, "auto");
+      expect(report.winRate, `${shape} ${stage.id}`).toBe(1);
     }
   });
 
   /*
-   * **구멍이 적어 둔 자리 밖으로 번지지 않는다.**
+   * **막는 자리는 정예 둘뿐이고, 그 둘은 실제로 막는다.**
    *
-   * 위 검수는 "적어 둔 값 이상"만 보므로, 표에 적힌 관문이 실제로는 이미 나아졌는데 표만 남아
-   * 있는 경우를 잡지 못한다. 여기서 그 반대 방향을 지킨다 — 표에 적힌 관문이 원래 계약을 다시
-   * 만족하게 되면 이 검수가 실패하고, 그때 그 줄을 지우면 된다.
+   * 1-5는 자원을 한 명에게 몰아주면 넘어가는 자리라 "무엇을 키웠나"를 처음 묻고, 1-10은
+   * 그 파티로는 어느 쪽으로 키워도 넘지 못한다 — 뽑기·룬·한계 돌파가 처음으로 선택지가
+   * 아니라 요구가 되는 자리가 여기다.
    */
-  it("기록된 구멍에는 실제로 구멍이 남아 있다", () => {
-    for (const shape of ["spread", "carry"] as const) {
-      for (const stageId of Object.keys(FLOOR_GAP[shape])) {
-        const entry = STORY_STAGES.find(({ stage }) => stage.id === stageId);
-        expect(entry, `${shape} ${stageId}`).toBeTruthy();
-        const report = summarizeStageDifficulty(floorParty(entry!.globalOrder, shape), getStageEnemies(entry!.stage), SEEDS, "auto");
-        expect(report.winRate, `${shape} ${stageId}`).toBeLessThan(FLOOR_CONTRACT[shape]);
-      }
-    }
+  it("정예 두 관문만 기준 파티를 멈춰 세운다", () => {
+    const winRateAt = (stageId: string, shape: InvestmentShape) => {
+      const entry = STORY_STAGES.find(({ stage }) => stage.id === stageId)!;
+      return summarizeStageDifficulty(floorParty(entry.globalOrder, shape, REFERENCE_ROSTER), getStageEnemies(entry.stage), SEEDS, "auto").winRate;
+    };
+    // 1-5는 몰아준 쪽만 넘는다. 균등은 절반도 열리지 않는다.
+    expect(winRateAt("1-5", "carry")).toBe(1);
+    expect(winRateAt("1-5", "spread")).toBeLessThanOrEqual(0.5);
+    // 1-10은 어느 쪽으로 키워도 열리지 않는다.
+    expect(winRateAt("1-10", "carry")).toBe(0);
+    expect(winRateAt("1-10", "spread")).toBe(0);
   });
 
   /*
    * **키우지 않으면 막힌다 — 그 벽은 1장 중반부터 조여 2장에서 완전히 닫힌다.**
    *
-   * 같은 로스터를 1레벨·룬 없이 세운 파티다. 토리카·도디의 회복을 내린 v0.132.2에서 이 줄이
-   * 한 번 더 내려왔다 — 1-4에서 절반을 놓치고, 1장 뒷부분은 네 판 중 한 판만 이기며, 2장에
-   * 들어서면 한 판도 넘지 못한다. 회복이 피해를 지우던 때는 이 벽이 3장까지 밀려 있었다.
+   * **바닥 로스터**(SSR 없음)를 1레벨·룬 없이 세운 파티다. 야성 한 단계를 세 레벨로 올린
+   * 뒤 이 줄이 한 장 앞으로 당겨졌다 — 1-4에서 네 판 중 한 판이 되고, 1장 후반부터는 이미
+   * 한 판도 열리지 않는다. 키우지 않으면 막힌다는 말이 1장 안에서 끝난다.
    *
    * **정예 관문(1-5·1-10)은 이 줄 밖이다.** 셋 대신 하나가 서는 자리라 무게를 내는 축이 다르다.
    */
@@ -167,12 +164,12 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
     const bare = FLOOR_ROSTER.map((id) => getRelic(id));
     const winRateAt = (stageId: string) =>
       summarizeStageDifficulty(bare, getStageEnemies(getBattleStage(stageId)), SEEDS, "auto").winRate;
-    // 첫 관문은 맨몸으로도 배우는 자리다.
-    expect(winRateAt("1-1")).toBeGreaterThanOrEqual(0.75);
-    // 1장 중반부터 절반 아래로 내려가고,
-    expect(winRateAt("1-4")).toBeLessThanOrEqual(0.5);
-    expect(winRateAt("1-7")).toBeLessThanOrEqual(0.375);
-    // 2장부터는 한 판도 열리지 않는다.
+    // 첫 관문은 맨몸으로도 절반은 열린다 — 배우는 자리라 아주 닫아 두지는 않는다.
+    expect(winRateAt("1-1")).toBeGreaterThanOrEqual(0.5);
+    // 1장 중반부터 네 판 중 한 판으로 줄고,
+    expect(winRateAt("1-4")).toBeLessThanOrEqual(0.25);
+    // 1장 후반부터 이미 한 판도 열리지 않는다.
+    expect(winRateAt("1-7")).toBe(0);
     expect(winRateAt("2-5")).toBe(0);
     expect(winRateAt("3-9")).toBe(0);
   });
@@ -188,8 +185,8 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
     expect(winRateAt("1-5")).toBe(1);
     // 2장 끝에서 흔들리고 3장에서는 대부분 진다. 편성 칸이 셋인 이유다 — 혼자 밀 수 있는
     // 구간은 있어도 그 구간이 끝나는 자리가 분명해야 한다.
-    expect(winRateAt("2-10")).toBeLessThanOrEqual(0.75);
-    expect(winRateAt("3-5")).toBeLessThanOrEqual(0.5);
+    expect(winRateAt("2-10")).toBe(0);
+    expect(winRateAt("3-5")).toBe(0);
   });
 
   /** 적 레벨은 스토리 내내 뒤로 가지 않는다. 새 구역이 직전 구역보다 약해 보이면 곡선이 끊긴 것이다. */
@@ -220,10 +217,10 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
 
   it.each(Object.entries(BASELINES))("%s의 여러 고정 난수열 결과와 상세 지표를 기준 범위에 둔다", (stageId, baseline) => {
     const entry = STORY_STAGES.find(({ stage }) => stage.id === stageId)!;
-    const report = inspectStageDifficulty(floorParty(entry.globalOrder, "spread"), getStageEnemies(entry.stage), SEEDS);
+    const report = inspectStageDifficulty(floorParty(entry.globalOrder, "spread", REFERENCE_ROSTER), getStageEnemies(entry.stage), SEEDS);
 
-    // 기록된 구멍이 있는 관문은 그 값까지만 요구한다(위 `FLOOR_GAP` 주석 참고).
-    expect(report.auto.winRate).toBeGreaterThanOrEqual(FLOOR_GAP.spread[stageId] ?? FLOOR_CONTRACT.spread);
+    // 기준 파티의 기록이다 — 잡졸은 전승, 정예 둘만 여기서 멈춘다.
+    expect(report.auto.winRate).toBe(baseline.win);
     expect(report.auto.playerHpRatio.mean).toBeGreaterThanOrEqual(baseline.hp[0]);
     expect(report.auto.playerHpRatio.mean).toBeLessThanOrEqual(baseline.hp[1]);
     expect(report.auto.runs).toHaveLength(SEEDS.length);
@@ -232,10 +229,14 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
       // 정예 관문은 하나, 나머지는 셋이다 — 서 있는 수만큼 장부가 따로 남는지 본다.
       expect(run.enemyContributions).toHaveLength(entry.stage.enemies.length);
       expect(run.enemyContributions.every(({ damage, healing, damageAbsorbed }) => damage >= 0 && healing >= 0 && damageAbsorbed >= 0)).toBe(true);
-      expect(run.ultimateUses).toBeGreaterThan(0);
+      // 이기는 관문은 판마다 궁극기가 실제로 돈다. **지는 관문은 한 판씩 예외가 생긴다** —
+      // 1-10처럼 열두 초 만에 무너지는 판에서는 게이지가 차기 전에 끝나는 난수열이 섞인다.
+      // 그래서 전패하는 관문은 "그 관문에서 한 번이라도 돌았는가"까지만 본다.
+      if (baseline.win === 1) expect(run.ultimateUses).toBeGreaterThan(0);
       expect(run.firstDefeat).toEqual(expect.objectContaining({ at: expect.any(Number) }));
       expect(["player", "enemy"]).toContain(run.firstDefeat?.side);
     }
+    expect(report.auto.runs.reduce((sum, run) => sum + run.ultimateUses, 0)).toBeGreaterThan(0);
     expect(report.manualDelta).toEqual(expect.objectContaining({ winRate: expect.any(Number), durationSeconds: expect.any(Number), playerHpRatio: expect.any(Number) }));
   });
 

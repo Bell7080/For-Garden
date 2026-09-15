@@ -143,6 +143,11 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
   // 캐릭터 ID가 아니라 도핑 계약의 구조화 수치만 읽어 어떤 정의에도 같은 문장 조립을 제공한다.
   if (trait.effectId === "reagentDoping") return t("skill.ferocity.reagentDoping", { stacks: trait.stacksOnEntry, percent: trait.attackSpeedPercent });
   if (trait.effectId === "damageReduction") return t("skill.ferocity.damageReduction", { percent: trait.reductionPercent });
+  // 두르는 막은 잃은 체력에서 재므로 지금 능력치로 실제 값을 환산할 수 없다 — 대상이 없으면
+  // 계산할 수 없는 값이라 명중 시점의 상대값과 같은 자리에서 `%`를 그대로 남긴다.
+  if (trait.effectId === "vanguardCharge") {
+    return t("skill.ferocity.vanguardCharge", { shield: trait.missingHpShieldPercent, percent: trait.attackSpeedPercent });
+  }
   if (trait.effectId === "torikaBulwark") {
     // 방어 수치는 퍼센트로 재해석하지 않고 전투 계약의 실제 증가값을 그대로 노출한다.
     return t("skill.ferocity.torikaBulwark", {
@@ -359,6 +364,9 @@ function passiveHead(passive: Passive, atk?: number): string {
     return t("skill.passive.summonCommander", { guard, exposed, scent });
   }
   if (passive.kind === "followHighestAttackAllyTarget") return t("skill.passive.followHighestAttackAllyTarget");
+  // 주기만 적는다. 어디로 가는지(가장 약해진 적)와 한 방이 확정 치명타라는 것은 문장이 갖고,
+  // 그 한 방의 세기는 치명타 피해가 이미 말한다.
+  if (passive.kind === "stalkerBlink") return t("skill.passive.stalkerBlink", { seconds: passive.value });
   if (passive.kind === "basicHitAttackSpeedStack") return t("skill.passive.basicHitAttackSpeedStack", { value: passive.value });
   if (passive.kind === "farthestFocus") {
     // 겹당 무엇이 얼마나 오르는지는 전부 태그가 말한다 — 쓰는 개체가 하나뿐인 규칙어라
@@ -854,13 +862,20 @@ function statusClauses(skill: DescribedSkill): SkillEffectClause[] {
   const effects = skill.statusEffects ?? [];
   const concussion = effects.find((effect) => effect.kind === "concussion");
   const stun = effects.find((effect) => effect.kind === "stun");
+  // 셋이 한 타격에 함께 오면 절도 하나다 — 따로 세우면 "기절시킨다 날려버린다"처럼 끝맺은
+  // 문장 둘이 나란히 선다. 어미를 잘라 붙이지 않고 이어지는 형태를 표가 통째로 갖는다.
+  const knockback = effects.find((effect) => effect.kind === "knockback");
+  const merged = concussion !== undefined && stun !== undefined && knockback !== undefined;
   const texts: string[] = [];
   // 뇌진탕이 있으면 기절을 그 뒤에 이어 붙여 한 덩어리로 만든다. 어미를 잘라 붙이지 않고
   // 이어지는 형태를 직접 적는다 — 잘라 붙이면 "입힌고" 같은 어형이 나온다.
   if (concussion && stun && stun.kind === "stun") {
-    texts.push(t("skill.status.concussionStun", { seconds: stun.seconds }));
+    texts.push(merged
+      ? t("skill.status.concussionStunKnockback", { seconds: stun.seconds })
+      : t("skill.status.concussionStun", { seconds: stun.seconds }));
   }
   for (const effect of effects) {
+    if (merged && effect === knockback) continue;
     if (concussion && stun && (effect === concussion || effect === stun)) continue;
     const text = statusEffectClause(effect);
     if (text) texts.push(text);
@@ -895,6 +910,8 @@ function statusEffectClause(effect: CombatStatusEffect): string | undefined {
   // 겹 상한과 터지는 위력은 태그가 말하므로 본문은 겹이 쌓인다는 사실만 적는다.
   if (effect.kind === "butcher") return t("skill.status.butcher");
   if (effect.kind === "stagger") return t("skill.status.stagger");
+  // 날아가는 시간·속도·튕기는 횟수는 화면에서 그대로 보이는 그림이라 본문이 수로 적지 않는다.
+  if (effect.kind === "knockback") return t("skill.status.knockback");
   if (effect.kind === "bleed") return t("skill.status.bleed", { seconds: effect.seconds, percent: effect.maxHpPercentPerSecond });
   // 매초 얼마인지는 태그가 말한다(쓰는 개체가 하나뿐이다). 시간만 스킬마다 달라 본문이 적는다.
   if (effect.kind === "poison") return t("skill.status.poison", { seconds: effect.seconds });

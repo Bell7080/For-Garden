@@ -1900,26 +1900,53 @@ export const RELICS: RelicDef[] = [
       lifeSteal: 0,
       ferocityGain: 0,
     },
-    // 토비와 같은 이유로 공속 계약으로 옮긴다. 간격 -15%는 속도 x1/0.85이므로 +18%다.
-    ferocityTrait: { name: "공멸 선봉", effectId: "selfAttackSpeedMultiplier", bonusPercent: 18 },
+    /*
+     * **앞장서서 뚫는 몸이라 잃은 만큼을 두른다.** 공속만 올리던 때는 이 폭주가 열려도
+     * 1장 마지막 관문이 달라지지 않았다 — 혼자 셋을 상대하는 자리에서는 손이 빨라져도 한 번에
+     * 때리는 것이 하나뿐이라, 정작 필요한 것은 **그 사이에 버티는 값**이다. 막을 최대 체력이
+     * 아니라 잃은 체력에서 재므로 몰린 뒤에 열릴수록 두꺼워진다.
+     */
+    ferocityTrait: { name: "공멸 선봉", effectId: "vanguardCharge", missingHpShieldPercent: 40, attackSpeedPercent: 50 },
+    /*
+     * **한 번 밟기 시작한 상대는 시야에서 사라져도 놓지 않는다**(관찰 기록). 같은 적을 세 번
+     * 때려야 출혈이 남던 예전 패시브는 그 문장을 말하지 못했다 — 붙어 있던 적이 물러나면
+     * 셈이 처음으로 돌아가 아무 일도 없었던 것이 되고, 혼자 셋을 상대하는 자리에서는 그 셈이
+     * 끝까지 채워지지도 않았다. 지금은 **가장 약해진 하나를 끝내러 건너뛴다.**
+     */
     passive: {
       id: "husk-koma-passive",
       name: "집요한 추격",
-      kind: "bleedStreak",
+      kind: "stalkerBlink",
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
-      value: 3,
-      desc: "같은 적을 연속으로 3번 맞히면 [[bleed|출혈]]을 남긴다.",
+      // 이 패시브의 유일한 수치는 주기(초)다. 도착한 한 방의 세기는 치명타 피해가 이미 말한다.
+      value: 8,
+      // 전용 분기(`passiveDescription`)가 이 종류의 문장을 짓는다. 이 원문은 표시되지 않는
+      // 데이터 문서용 사본이라, 고칠 때는 그 분기도 함께 본다.
+      desc: "8초마다 체력이 가장 적은 적의 곁으로 순간이동하고, 그 자리에서 내는 첫 기본 공격이 확정 치명타가 된다.",
     },
     basic: {
       id: "husk-koma-basic",
-      name: "꼬리 베기",
+      name: "후려치기",
       // 중간보스는 잡졸보다 한 대가 아프다(토비·아모·리파 100).
       power: 120,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
       targeting: "single",
+      /*
+       * **세 번째 꼬리가 후려친다.** 매 타격마다 날리면 맞은 쪽이 영영 일어나지 못해 전투가
+       * 아니라 한쪽의 처형이 되고, 코마도 날아간 상대를 쫓아 전장을 가로지르기만 한다.
+       * 주기로 끊으면 플레이어가 "세 번째에 밀린다"를 읽고 자리를 다시 잡을 수 있다.
+       */
+      statusEffectEvery: 3,
+      statusEffects: [
+        { kind: "concussion", maxHpPercent: 5, criticalMaxHpPercent: 15 },
+        { kind: "stun", seconds: 1 },
+        // 밀어내는 것이 이 개체가 무리에서 맡은 일이다 — 흩어진 적을 한 방향으로 몰아
+        // 뒤따르는 아모와 토비 앞에 세운다(`squadNote`).
+        { kind: "knockback", seconds: 1.1, speed: 1800, bounces: 2 },
+      ],
     },
     ultimate: {
       id: "husk-koma-ult",
@@ -1939,6 +1966,15 @@ export const RELICS: RelicDef[] = [
        */
       targeting: "chargeLine",
       radius: 90,
+      /*
+       * **더 멀리 뚫는다.** 나아가는 거리는 이동 속도가 정하므로(`SKIRMISH.chargeSeconds` × 이속)
+       * 여기서 px를 적지 않고 그 개체 기준의 배율만 얹는다 — 이속을 올려도 두 값이 갈리지 않는다.
+       * 셋이 선 자리를 한 번에 가로지르려면 제 이속으로 한 번 달린 거리로는 모자랐다.
+       */
+      chargeReachMultiplier: 1.8,
+      // 뚫고 지나간 만큼 스스로를 되돌린다. 혼자 셋을 상대하는 자리라 궁극기가 피해만 내면
+      // 주고받는 총량에서 언제나 지는 쪽이 된다.
+      damageHealingPercent: 40,
     },
   },
   {

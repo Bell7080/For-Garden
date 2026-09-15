@@ -928,7 +928,9 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     traitStreakStacks: 0,
     butcher: null,
     // 첫 도약은 전투가 시작되고 조금 뒤다 — 첫 프레임에 뛰면 순간이동한 것으로만 보인다.
-    huntCooldown: def.passive.kind === "gourmetHunt" ? def.passive.huntOpeningSeconds ?? 0 : 0,
+    huntCooldown: def.passive.kind === "gourmetHunt" ? def.passive.huntOpeningSeconds ?? 0
+      // 코마도 같은 시계를 쓴다. 0에서 시작하면 전장을 보기도 전에 이미 후열에 서 있다.
+      : def.passive.kind === "stalkerBlink" ? def.passive.value : 0,
     duoId: null,
     duoSyncIn: 0,
     weakpoint: null,
@@ -1342,6 +1344,13 @@ export function applyCombatStatusEffect(fighter: Fighter, effect: CombatStatusEf
   // 원정의 지속시간 배율(`potency`)은 시계가 있는 상태에만 든다. 밴덜리즘은 시간으로 사라지지
   // 않으므로 늘릴 시간 자체가 없다.
   if (effect.kind === "vandalism") applyVandalism(fighter, effect, events, state, sourceId);
+  // 날려버림은 때린 쪽의 자리에서 방향이 나오므로 시전자를 모르면 밀 방향이 없다. 원정의
+  // 지속시간 배율은 시계가 있는 상태에만 들므로 여기서는 곱하지 않는다 — 날아가는 시간은
+  // 벽에 부딪히는 횟수가 끊는다(`bounces`).
+  if (effect.kind === "knockback" && sourceId) {
+    const source = findFighter(state, sourceId);
+    if (source && isFighterAlive(fighter)) launchKnockback(fighter, source, effect, state, events);
+  }
 }
 
 /**
@@ -1413,7 +1422,7 @@ function knockbackSlamOf(attacker: Fighter): Extract<FerocityTrait, { effectId: 
 function launchKnockback(
   target: Fighter,
   attacker: Fighter,
-  trait: Extract<FerocityTrait, { effectId: "knockbackSlam" }>,
+  trait: { seconds: number; speed: number; bounces: number },
   state: SkirmishState,
   events: SkirmishEvent[],
 ): void {
@@ -1573,6 +1582,25 @@ function tickGourmetHunt(fighter: Fighter, dt: number, state: SkirmishState): vo
   fighter.huntCooldown = passive.huntCooldownSeconds ?? 10;
   // 자리를 옮기는 것 자체가 화면에서 보이는 신호라 따로 표시 사건을 만들지 않는다.
   leapToLowestHpEnemy(fighter, state, fighterReach(fighter) * 0.8);
+}
+
+/**
+ * 「집요한 추격」의 시계. 정해진 주기마다 가장 약해진 적의 곁으로 건너뛴다.
+ *
+ * 마키의 시계(`tickGourmetHunt`)와 **같은 자리 계산을 쓰되 숨지 않는다** — 그쪽은 가장 잘
+ * 익은 것을 고르러 가는 손이고, 이쪽은 쓰러지기 직전인 하나를 끝내러 가는 발이다. 건너뛴
+ * 자리에서 내는 **첫 기본 공격 한 번만** 확정 치명타이며, 그 한 방은 궁극기가 걸어 두는
+ * 강화와 같은 자리(`empoweredBasic`)를 쓴다 — 확정 치명타를 세는 곳이 둘로 갈리면 난수열이
+ * 리플레이마다 어긋난다.
+ */
+function tickStalkerBlink(fighter: Fighter, dt: number, state: SkirmishState): void {
+  const passive = fighter.def.passive;
+  if (passive.kind !== "stalkerBlink" || fighter.stunnedFor > 0 || fighter.frozen || fighter.knockback) return;
+  fighter.huntCooldown -= dt;
+  if (fighter.huntCooldown > 0) return;
+  fighter.huntCooldown = passive.value;
+  // 자리를 옮기는 것 자체가 화면에서 보이는 신호라 따로 표시 사건을 만들지 않는다.
+  if (leapToLowestHpEnemy(fighter, state, fighterReach(fighter) * 0.8)) fighter.empoweredBasic = true;
 }
 
 /**
@@ -2800,6 +2828,9 @@ export function attackInterval(fighter: Fighter, state?: SkirmishState): number 
       : fighter.ferocityFever && trait.effectId === "venomousEncore"
         // 바르고 터뜨리기를 번갈아 하는 손이라 속도가 곧 그 주기다. 같은 역수 규칙을 쓴다.
         ? 1 / (1 + trait.attackSpeedBonusPercent / 100)
+      : fighter.ferocityFever && trait.effectId === "vanguardCharge"
+        // 앞장서서 뚫는 손이다. 다른 자기 가속과 같은 역수 규칙을 쓴다.
+        ? 1 / (1 + trait.attackSpeedPercent / 100)
       : fighter.ferocityFever && trait.effectId === "cautery"
         // 자를수록 꿰매는 개체라 속도가 곧 지원량이다. 다른 자기 가속과 같은 역수 규칙을 쓴다.
         ? 1 / (1 + trait.attackSpeedPercent / 100)
@@ -2996,14 +3027,14 @@ function distance(a: Fighter, b: Fighter): number {
  * 거리를 스킬에 적지 않고 이동 속도에서 뽑는 이유는, 그래야 "발이 빠른 개체가 더 멀리
  * 파고든다"가 능력치 하나로 설명되기 때문이다. 전장 밖으로 나가지 않도록 끝점만 가둔다.
  */
-function chargePath(attacker: Fighter, state: SkirmishState, aim: { x: number; y: number }): { from: { x: number; y: number }; to: { x: number; y: number } } {
+function chargePath(attacker: Fighter, state: SkirmishState, aim: { x: number; y: number }, skill?: Pick<Skill, "chargeReachMultiplier">): { from: { x: number; y: number }; to: { x: number; y: number } } {
   const dx = aim.x - attacker.x;
   const dy = aim.y - attacker.y;
   const gap = Math.hypot(dx, dy);
   // 대상이 겹쳐 서 있어 방향이 없으면 바라보는 쪽으로 그냥 달린다.
   const ux = gap < 1e-3 ? attacker.facing : dx / gap;
   const uy = gap < 1e-3 ? 0 : dy / gap;
-  const reach = moveSpeed(attacker, state) * SKIRMISH.chargeSeconds;
+  const reach = moveSpeed(attacker, state) * SKIRMISH.chargeSeconds * (skill?.chargeReachMultiplier ?? 1);
   const arena = state.arena;
   return {
     from: { x: attacker.x, y: attacker.y },
@@ -3304,6 +3335,13 @@ function gainFerocity(fighter: Fighter, base: number, state: SkirmishState, even
       fighter.statusHitCount = Math.max(0, (fighter.def.basic.statusEffectEvery ?? 1) - 1);
     }
     if (trait.effectId === "adamantBody") fighter.hastenedAttacksLeft = trait.hastenedAttacks;
+    // 공멸 선봉: 지금까지 잃은 만큼을 막으로 두른다. 몰린 뒤에 열릴수록 두꺼워지는 것이
+    // 이 폭주의 값이라 최대 체력이 아니라 **잃은 체력**에서 잰다.
+    if (trait.effectId === "vanguardCharge") {
+      const missing = Math.max(0, fighter.maxHp - fighter.hp);
+      const shield = Math.round(missing * trait.missingHpShieldPercent / 100);
+      if (shield > 0) grantShieldAmount(fighter, fighter, shield, events);
+    }
     if (trait.effectId === "duoBreakthrough") launchDuoBreakthrough(fighter, trait, state, events);
     // 마키는 폭주 진입 직후 세 번의 칼질을 회복과 폭딜로 바꾼다. 이전 폭주의 잔여치는 덮어쓴다.
     if (trait.effectId === "butcherFeast") {
@@ -4449,7 +4487,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
   } : { x: attacker.x, y: attacker.y };
   const inCircle = (fighter: Fighter): boolean => Math.hypot(fighter.x - center.x, fighter.y - center.y) <= (skill.radius ?? 0);
   // 돌진은 지금 보고 있는 방향으로 이동 속도만큼 밀고 들어가며, 그 통로 안의 적을 모두 뚫는다.
-  const charge = skill.targeting === "chargeLine" ? chargePath(attacker, state, requestedCenter) : undefined;
+  const charge = skill.targeting === "chargeLine" ? chargePath(attacker, state, requestedCenter, skill) : undefined;
   const inCharge = (fighter: Fighter): boolean => charge !== undefined
     && distanceToSegment(fighter, charge.from, charge.to) <= (skill.radius ?? 0);
   // 덧칠을 터뜨리는 궁극기는 그릴 것이 남은 적만 친다. 한 겹도 없는 적까지 대상에 넣으면
@@ -5409,6 +5447,7 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     tickPoison(fighter, dt, state, events);
     if (!isFighterAlive(fighter)) continue;
     tickGourmetHunt(fighter, dt, state);
+    tickStalkerBlink(fighter, dt, state);
     tickOpeningCharge(fighter, state, events);
     tickBulwark(fighter, dt, state, events);
     tickElation(fighter, dt);
@@ -5448,6 +5487,7 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     // 2초마다 조용히 덮인다.
     const ownTarget = fighter.def.passive.kind !== "followHighestAttackAllyTarget"
       && fighter.def.passive.kind !== "gourmetHunt"
+      && fighter.def.passive.kind !== "stalkerBlink"
       // 태그 앤 런은 적중할 때 직접 다음 표적을 예약한다. 공용 재평가를 켜면 그 예약이 거리
       // 점수에 덮여 방금 때린 적에게 되돌아가므로, 표적 사망 때만 resolveTarget이 보충한다.
       && fighter.def.passive.kind !== "tagAndRun";

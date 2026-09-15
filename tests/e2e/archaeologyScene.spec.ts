@@ -121,3 +121,32 @@ test("고고학 상점을 다녀와도 로비 상점은 제 자리로 열린다"
   await tapUntil(page, shopSpot!.x, shopSpot!.y, "shop");
   await expect.poll(() => screenTitle(page)).toBe("상점");
 });
+
+test("지층 한 칸은 타격까지 입력을 잠그고 선택한 결과만 공개한다", async ({ page }, testInfo) => {
+  test.setTimeout(300_000);
+  await startAfterOpening(page, (session) => { session.wallet.fossil = 10_000; });
+  await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
+  await expect.poll(() => scene(page)).toBe("lobby");
+  await tapUntil(page, BASE_WIDTH / 10, BASE_HEIGHT - 180 + 90, "archaeology");
+
+  // 새 판의 입력면이 실제로 게시될 때까지 기다린 뒤 시작 버튼을 누른다.
+  await tap(page, BASE_WIDTH / 2, 900);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.archaeologyDig?.tiles.length),
+    { timeout: 30_000 }).toBeGreaterThan(1);
+  const targets = await page.evaluate(() => window.__PF_DEBUG!.archaeologyDig!.tiles.slice(0, 2));
+  const before = await page.evaluate(() => window.__PF_DEBUG!.archaeologyDig!.revealedIndices);
+
+  // 첫 입력 직후 같은 칸과 다른 칸을 연달아 눌러도 전역 잠금이 요청을 하나로 제한해야 한다.
+  await tap(page, targets[0].x, targets[0].y);
+  await tap(page, targets[0].x, targets[0].y);
+  await tap(page, targets[1].x, targets[1].y);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.archaeologyDig?.requests)).toBe(1);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.archaeologyDig?.active)).toBe(false);
+
+  // 서버 결과는 충돌 이정표 뒤 선택한 컨테이너에만 반영되고 다른 흙은 그대로 남는다.
+  const after = await page.evaluate(() => window.__PF_DEBUG!.archaeologyDig!.revealedIndices);
+  expect(after).toEqual([...before, targets[0].index]);
+  expect(await page.evaluate(() => window.__PF_DEBUG?.archaeologyDig?.impactIndex)).toBeUndefined();
+  // 결과 한 칸만 바뀐 뒤 판의 이음매와 보상 액자가 유지되는지도 같은 회귀에서 남긴다.
+  await captureGame(page, `test-results/${testInfo.project.name}-archaeology-dig-effect.png`);
+});

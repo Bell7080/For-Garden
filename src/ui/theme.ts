@@ -47,6 +47,12 @@ export const COLOR = {
   strataFrameGlow: 0x78a6ad,
   /** 셀을 벌리지 않고 경계만 읽히게 하는 저채도 청회색이다. */
   strataGrid: 0x727b7d,
+  /** 지층 타격 연출의 산화 금속빛. 저채도 청록이라 금색 보상 강조와 경쟁하지 않는다. */
+  archaeologyOxide: 0x659a94,
+  /** 곡괭이 날과 충돌 파편에 쓰는 차가운 금속색이다. */
+  archaeologyMetal: 0x9aa5a4,
+  /** 흙 파편은 배경 지층보다 한 톤 밝게 두어 짧은 타격에서도 윤곽이 남는다. */
+  archaeologySoil: 0x806f59,
   /** 출격·출전처럼 "나가서 싸운다"를 뜻하는 입구의 강조색. 금색보다 붉다. */
   sortie: 0xd85f34,
   sortieText: "#f08b62",

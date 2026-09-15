@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import { t, type TextKey } from "../i18n";
 import { gameApi } from "../api/FakeServer";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
-import { setDebugScene } from "../debug";
+import { setDebugArchaeologyDig, setDebugScene } from "../debug";
 import { strataBoardHaul, type StrataBoardView } from "../core/strataDig";
 import { DEFAULT_STRATA_LAYER_ID, type StrataRewardKind } from "../data/strataLayers";
 import { session } from "../state/session";
@@ -28,6 +28,7 @@ import { TopBar } from "../ui/TopBar";
 import { bindCurrencyGuide, openCurrencyGuide } from "../ui/currencyGuideEntry";
 import { COLOR, textStyle } from "../ui/theme";
 import { openRewardPopup, type RewardPopupItem } from "../ui/RewardPopup";
+import { StrataDigEffect } from "../ui/StrataDigEffect";
 
 /**
  * 고고학. 하단 탭 첫 슬롯이다.
@@ -108,6 +109,15 @@ export class ArchaeologyScene extends Phaser.Scene {
   private chargeText!: Phaser.GameObjects.Text;
   /** 서버 응답을 기다리는 동안 같은 칸을 두 번 누르지 못하게 한다. */
   private digging = false;
+  /** 판 전체를 다시 만들지 않고 결과 한 칸만 갈아 끼우기 위한 렌더 경계다. */
+  private readonly strataTiles = new Map<number, Phaser.GameObjects.Container>();
+  private strataGrid: Phaser.GameObjects.Container | null = null;
+  /** 판 아래 영수증 줄. 한 칸만 갈아 끼우는 굴착에서도 이 줄은 다시 그린다. */
+  private strataHaul: Phaser.GameObjects.Container | null = null;
+  /** 씬 종료 때 네트워크와 독립적으로 남아 있을 수 있는 연출을 모두 정리한다. */
+  private readonly digEffects = new Set<StrataDigEffect>();
+  /** 자동화에는 실제 API 호출 경계를 그대로 세어 한 입력당 한 요청인지 알린다. */
+  private digRequests = 0;
   /**
    * 연구대에 끼워 둔 룬.
    *
@@ -160,6 +170,12 @@ export class ArchaeologyScene extends Phaser.Scene {
     this.tabRow = this.add.container(0, 0);
     this.paintTabs();
     new BottomNav(this, "archaeology");
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.digEffects.forEach((effect) => effect.destroy());
+      this.digEffects.clear();
+      this.strataTiles.clear(); this.strataGrid = null; this.strataHaul = null; this.digging = false;
+      setDebugArchaeologyDig(undefined);
+    });
     void this.refresh();
   }
 
@@ -212,6 +228,8 @@ export class ArchaeologyScene extends Phaser.Scene {
   }
 
   private paintView(): void {
+    // 명시적인 화면 전환에서만 기존 판 경계를 버린다. 한 칸 결과에는 이 메서드를 호출하지 않는다.
+    this.strataTiles.clear(); this.strataGrid = null; this.strataHaul = null;
     this.view.removeAll(true);
     this.chargeText.setText(t("archaeology.charges", { charges: this.charges, max: this.chargesMax }));
     if (this.tab === "strata") this.paintStrata();
@@ -239,6 +257,7 @@ export class ArchaeologyScene extends Phaser.Scene {
 
     const frame = strataBoardFrame(board.columns, board.rows, BASE_WIDTH);
     const grid = this.add.container(frame.centerX, frame.centerY);
+    this.strataGrid = grid;
     this.view.add(grid);
 
     // 그림자 → 금속 외곽 → 홀로그램 안쪽 선 순으로 판의 깊이를 만든다. 모두 입력 타일보다 아래다.
@@ -262,10 +281,18 @@ export class ArchaeologyScene extends Phaser.Scene {
     // 없고, 부순 칸만 지우면 그 자리에 아래층이 그대로 드러난다.
     const layerKey = strataLayerTextureKey(board.art);
     for (const tile of board.tiles) {
-      if (tile.revealed) continue;
       const crop = strataTileCrop(tile.index, board.columns, board.rows, boardCrop);
       const center = strataTileCenter(tile.index, board.columns, frame);
-      grid.add(addBoardImage(this, layerKey, (image) => {
+      /*
+       * **칸마다 제 컨테이너를 갖는다.** 결과가 들어올 때 판을 통째로 다시 그리면 그 프레임에
+       * 모든 칸이 한 번씩 깜빡이고, 굴착 연출이 도는 중에 그 아래 판이 갈아 끼워진다.
+       * 비어 있는(이미 판) 칸도 자리를 만들어 두어야 그 자리에 결과를 넣을 수 있다.
+       */
+      const tileView = this.add.container(0, 0);
+      this.strataTiles.set(tile.index, tileView);
+      grid.add(tileView);
+      if (tile.revealed) continue;
+      tileView.add(addBoardImage(this, layerKey, (image) => {
         // 크롭은 원본 px, 배치와 표시 크기는 화면 px이다. 두 좌표계를 한 연산에 섞지 않는다.
         image.setCrop(crop.x, crop.y, crop.width, crop.height);
         image.setDisplaySize(frame.cellWidth, frame.cellHeight).setPosition(center.x, center.y);
@@ -274,20 +301,22 @@ export class ArchaeologyScene extends Phaser.Scene {
 
     // 보상은 부순 칸 위에 선다. 액자 없이 그림만 두면 흙 위에 얹힌 그림으로 읽히지 않는다.
     for (const tile of board.tiles) {
+      const tileView = this.strataTiles.get(tile.index);
+      if (tileView === undefined) continue;
       const { x, y } = strataTileCenter(tile.index, board.columns, frame);
       if (tile.revealed) {
         const texture = tile.kind === undefined ? null : rewardTexture(tile.kind);
         if (texture === null) continue;
         // 룬처럼 수가 뜻이 없는 것에는 수를 적지 않는다 — 「1」이 서면 하나를 세는 자리로 읽힌다.
         const amount = tile.kind === "rune" ? undefined : String(tile.amount ?? 0);
-        addFramedIcon(this, grid, x, y, Math.min(frame.cellWidth, frame.cellHeight) * 0.82, texture,
+        addFramedIcon(this, tileView, x, y, Math.min(frame.cellWidth, frame.cellHeight) * 0.82, texture,
           { ...(amount ? { amount } : {}), plain: true });
         continue;
       }
       const hit = this.add.rectangle(x, y, frame.cellWidth, frame.cellHeight, 0xffffff, 0.001)
         .setInteractive({ useHandCursor: true });
       hit.on("pointerup", () => this.dig(tile.index));
-      grid.add(hit);
+      tileView.add(hit);
     }
 
     // 경계는 입력 사각형과 분리된 단 하나의 Graphics가 일괄 그린다. 열린 칸도 같은 선을 공유한다.
@@ -309,41 +338,128 @@ export class ArchaeologyScene extends Phaser.Scene {
       t("archaeology.digsLeft", { digs: board.digsLeft }),
       textStyle({ role: "display", size: 34, color: COLOR.accentText })).setOrigin(0.5, 1));
 
-    // 판 아래 빈 띠는 현재까지 얻은 결과를 작은 액자 영수증으로 채운다.
+    this.paintStrataHaul(board);
+    this.publishDigDebug();
+  }
+
+  /** 서버 처리와 충돌 프레임을 병렬로 기다리고 성공한 결과 칸만 제자리에서 교체한다. */
+  private async dig(index: number): Promise<void> {
+    if (this.digging) return;
+    this.digging = true;
+    // 투명 입력면까지 모두 꺼야 빠른 멀티 터치가 다른 칸의 pointerup으로 확정되지 않는다.
+    this.strataTiles.forEach((tile) => tile.list.forEach((child) => {
+      if (child instanceof Phaser.GameObjects.Rectangle && child.input) child.disableInteractive();
+    }));
+    const board = this.board;
+    if (board === null || this.strataGrid === null) { this.digging = false; return; }
+    const frame = strataBoardFrame(board.columns, board.rows, BASE_WIDTH);
+    const center = strataTileCenter(index, board.columns, frame);
+    const effect = new StrataDigEffect(this, frame.centerX + center.x, frame.centerY + center.y,
+      Math.min(frame.cellWidth, frame.cellHeight));
+    this.digEffects.add(effect);
+    const playback = effect.play();
+    this.digRequests += 1; this.publishDigDebug();
+    const request = gameApi.digStrataTile({ tileIndex: index, requestId: `dig-${Date.now()}` });
+    try {
+      const [result] = await Promise.all([request, playback.impact]);
+      /*
+       * **판이 닫히기 전에 이번 판의 영수증을 먼저 만든다.** 서버는 마지막 굴착과 동시에 판을
+       * 닫아 `result.board`를 비우므로, 그 뒤에 읽으면 한 판에서 무엇을 캤는지 말할 자리가
+       * 통째로 사라진다. 보상은 이미 지급됐고 팝업은 그 사실만 확인시킨다.
+       */
+      const completedBoard = {
+        ...board,
+        digsLeft: result.board?.digsLeft ?? 0,
+        tiles: board.tiles.map((tile) => tile.index === result.tile.index
+          ? { ...tile, revealed: true, kind: result.tile.kind, amount: result.tile.amount }
+          : tile),
+      } satisfies StrataBoardView;
+      this.charges = result.charges; this.board = result.board;
+      this.chargeText.setText(t("archaeology.charges", { charges: this.charges, max: this.chargesMax }));
+      if (result.board === null) {
+        // 판이 닫히면 남는 것은 빈 시작 화면이라 갈아 끼울 칸 자체가 없다. 그때만 다시 그린다.
+        this.paintView();
+        const items: RewardPopupItem[] = strataBoardHaul(completedBoard).flatMap(({ kind, amount }) => {
+          const icon = rewardTexture(kind);
+          return icon === null ? [] : [{ icon, amount }];
+        });
+        openRewardPopup(this, this.popups, { items });
+      } else {
+        this.replaceStrataTile(index);
+        // **판 아래 영수증도 함께 자란다.** 칸 하나만 갈아 끼우면 그 줄이 직전 판에서 멈춘다.
+        this.paintStrataHaul(result.board);
+      }
+      this.publishDigDebug(index);
+    } catch {
+      // 실패는 서버가 확정하지 않은 상태다. 흙을 그대로 두고 연출 종료 뒤 입력만 복구한다.
+    } finally {
+      await playback.finished;
+      this.digEffects.delete(effect);
+      this.digging = false;
+      this.restoreStrataInputs();
+      this.publishDigDebug();
+    }
+  }
+
+  /**
+   * 판 아래 빈 띠에 지금까지 캔 결과를 액자 영수증으로 세운다.
+   *
+   * **제 컨테이너를 갖는다** — 한 칸만 갈아 끼우는 굴착에서도 이 줄은 다시 그려야 하는데,
+   * 씬이나 몸통에 직접 얹으면 지울 방법이 없어 판을 팔 때마다 액자가 겹쳐 쌓인다.
+   */
+  private paintStrataHaul(board: StrataBoardView): void {
+    this.strataHaul?.destroy(true);
+    const frame = strataBoardFrame(board.columns, board.rows, BASE_WIDTH);
+    const row = this.add.container(0, 0);
+    this.strataHaul = row;
+    this.view.add(row);
     const haul = strataBoardHaul(board);
     const haulY = frame.centerY + frame.height / 2 + 62;
     haul.forEach(({ kind, amount }, index) => {
       const texture = rewardTexture(kind);
       if (texture === null) return;
       const x = frame.centerX - ((haul.length - 1) * 116) / 2 + index * 116;
-      addFramedIcon(this, this.view, x, haulY, 84, texture, { amount: String(amount), plain: true });
+      addFramedIcon(this, row, x, haulY, 84, texture, { amount: String(amount), plain: true });
     });
   }
 
-  private dig(index: number): void {
-    if (this.digging) return;
-    this.digging = true;
-    void gameApi.digStrataTile({ tileIndex: index, requestId: `dig-${Date.now()}` })
-      .then((result) => {
-        // 서버는 마지막 굴착과 동시에 판을 닫으므로, 닫기 전 화면 판에 마지막 영수증을 합쳐
-        // 이번 판 전체 보상을 만든다. 보상은 이미 지급됐고 팝업은 그 사실만 확인시킨다.
-        const completedBoard = this.board === null ? null : {
-          ...this.board,
-          digsLeft: result.board?.digsLeft ?? 0,
-          tiles: this.board.tiles.map((tile) => tile.index === result.tile.index ? { ...tile, revealed: true, kind: result.tile.kind, amount: result.tile.amount } : tile),
-        } satisfies StrataBoardView;
-        this.charges = result.charges;
-        this.board = result.board;
-        this.paintView();
-        if (result.board === null && completedBoard !== null) {
-          const items: RewardPopupItem[] = strataBoardHaul(completedBoard).flatMap(({ kind, amount }) => {
-            const icon = rewardTexture(kind);
-            return icon === null ? [] : [{ icon, amount }];
-          });
-          openRewardPopup(this, this.popups, { items });
-        }
-      })
-      .finally(() => { this.digging = false; });
+  /** 서버가 돌려준 결과 중 선택한 칸만 기존 컨테이너 안에서 교체한다. */
+  private replaceStrataTile(index: number): void {
+    const board = this.board; const tileView = this.strataTiles.get(index);
+    const tile = board?.tiles[index];
+    if (!board || !tileView || !tile?.revealed) return;
+    tileView.removeAll(true);
+    const texture = tile.kind === undefined ? null : rewardTexture(tile.kind);
+    if (texture === null) return;
+    const frame = strataBoardFrame(board.columns, board.rows, BASE_WIDTH);
+    const center = strataTileCenter(index, board.columns, frame);
+    const amount = tile.kind === "rune" ? undefined : String(tile.amount ?? 0);
+    addFramedIcon(this, tileView, center.x, center.y, Math.min(frame.cellWidth, frame.cellHeight) * 0.82, texture,
+      { ...(amount ? { amount } : {}), plain: true });
+  }
+
+  /** 성공·실패 뒤 현재도 팔 수 있는 모든 칸에만 입력을 되돌린다. */
+  private restoreStrataInputs(): void {
+    const board = this.board;
+    if (!board || board.digsLeft <= 0) return;
+    board.tiles.forEach((tile) => {
+      if (tile.revealed) return;
+      const hit = this.strataTiles.get(tile.index)?.list.find((child) => child instanceof Phaser.GameObjects.Rectangle);
+      if (hit instanceof Phaser.GameObjects.Rectangle) hit.setInteractive({ useHandCursor: true });
+    });
+  }
+
+  /** 테스트에는 보상 내용 없이 실제 입력점과 공개 순서만 게시한다. */
+  private publishDigDebug(impactIndex?: number): void {
+    const board = this.board;
+    if (!board) { setDebugArchaeologyDig(undefined); return; }
+    const frame = strataBoardFrame(board.columns, board.rows, BASE_WIDTH);
+    setDebugArchaeologyDig({ requests: this.digRequests, active: this.digging, impactIndex,
+      revealedIndices: board.tiles.filter((tile) => tile.revealed).map((tile) => tile.index),
+      tiles: board.tiles.filter((tile) => !tile.revealed).map((tile) => {
+        const point = strataTileCenter(tile.index, board.columns, frame);
+        return { index: tile.index, x: frame.centerX + point.x, y: frame.centerY + point.y };
+      }) });
   }
 
   /* ── 특성 연구 ────────────────────────────────────────────────────────────── */

@@ -158,3 +158,26 @@ export function bakeCinematicIcon(scene: Phaser.Scene, textureKey: string, size:
     return undefined;
   }
 }
+
+/**
+ * 카드 그림을 미리 굽는다.
+ *
+ * 시네마틱 묶음(560KB 남짓)을 내려받는 동안 놀릴 이유가 없다 — 그때 원화를 먼저 구워 두면
+ * 판이 뜨자마자 카드가 제 그림을 갖는다. 결과는 키로 캐시되므로 화면이 다시 부를 때 그대로
+ * 쓰인다. 기다리지 않고 던져 두며, 실패는 각 함수가 제 안에서 삼킨다.
+ */
+export function prewarmCinematicArt(
+  scene: Phaser.Scene,
+  slots: ReadonlyArray<{ frame: string; portraitAssetId?: PortraitAssetId; iconKey?: string }>,
+  portrait: { width: number; height: number },
+  faceSize: number,
+): void {
+  for (const slot of slots) {
+    if (slot.portraitAssetId) {
+      void bakeCinematicPortrait(scene, slot.portraitAssetId, portrait.width, portrait.height);
+      if (slot.frame === "face") void bakeCinematicFace(scene, slot.portraitAssetId, faceSize);
+    } else if (slot.iconKey) {
+      bakeCinematicIcon(scene, slot.iconKey, faceSize);
+    }
+  }
+}

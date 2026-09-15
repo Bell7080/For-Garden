@@ -14,7 +14,7 @@
 
 import type Phaser from "phaser";
 import { activeFontFamily, FONT_FALLBACK } from "./fonts";
-import { bakeCinematicFace, bakeCinematicIcon, bakeCinematicPortrait } from "./researchCinematicArt";
+import { bakeCinematicFace, bakeCinematicIcon, bakeCinematicPortrait, prewarmCinematicArt } from "./researchCinematicArt";
 import type { CinematicCardArt, CinematicReward } from "./researchCinematicModel";
 
 const SCRIPT_URL = "cinematic/researchCinematic.js";
@@ -218,6 +218,13 @@ export class ResearchCinematic {
   private readonly art: readonly CinematicCardArt[];
   /** 파편으로 바뀌기를 기다리는 타이머. 판을 닫을 때 남김없이 걷는다. */
   private readonly timers = new Set<number>();
+  /**
+   * 이미 파편이 된 칸.
+   *
+   * DOM이 아니라 **상태로** 기억한다 — 그림을 굽는 사이에 건너뛰기가 들어오면 그 칸은 아직
+   * 액자도 서기 전이라, 화면만 보고 바꾸면 늦게 도착한 원화가 파편을 덮어쓴다.
+   */
+  private readonly shattered = new Set<number>();
 
   private constructor(bundle: CinematicBundle, options: ResearchCinematicOptions) {
     this.canvas = options.canvas;
@@ -273,7 +280,7 @@ export class ResearchCinematic {
     });
     // 카드가 깔린 **뒤에** 그림을 채운다. 무대가 도는 동안 뒤에서 구우므로 연출이 기다리지 않고,
     // 공개 단계에 닿기 전에 도착한다. 묶음 하나가 늦거나 실패해도 그 칸만 액자로 남는다.
-    void this.paintCards(options.scene, options.art);
+    this.paintCards(options.scene, options.art);
 
     this.observer = new ResizeObserver(() => this.syncBox());
     this.observer.observe(this.canvas);
@@ -290,6 +297,8 @@ export class ResearchCinematic {
    */
   static async open(options: ResearchCinematicOptions): Promise<ResearchCinematic | null> {
     if (!supportsWebgl2()) return null;
+    // 묶음을 내려받는 동안 원화를 미리 굽는다 — 판이 뜨자마자 카드가 제 그림을 갖는다.
+    prewarmCinematicArt(options.scene, options.art, PORTRAIT_BAKE, FACE_BAKE);
     try {
       const bundle = await loadAsset();
       return new ResearchCinematic(bundle, options);
@@ -382,19 +391,18 @@ export class ResearchCinematic {
    *
    * 그림은 뒤에서 굽는다. 묶음 하나가 늦거나 실패해도 그 칸은 액자만 남고 연출은 이어진다.
    */
-  private async paintCards(scene: Phaser.Scene, art: readonly CinematicCardArt[]): Promise<void> {
+  private paintCards(scene: Phaser.Scene, art: readonly CinematicCardArt[]): void {
     const cards = Array.from(this.root.querySelectorAll<HTMLElement>(".archive-card"));
+    // 1) 뼈대는 **기다리지 않고 한 번에** 세운다.
     for (const [index, card] of cards.entries()) {
       const slot = art[index];
       const box = card.querySelector<HTMLElement>(".card-art");
       if (!slot || !box) continue;
+      box.replaceChildren();
       if (slot.frame === "icon") {
         // 재화는 원화가 없다. 액자 한 장이 칸 안에 서고 수량이 우하단에 겹친다.
         box.className = "card-art card-art-framed";
-        box.replaceChildren(this.buildFrame(slot.amount));
-        const url = bakeCinematicIcon(scene, slot.iconKey, FACE_BAKE);
-        if (this.closed) return;
-        if (url) box.querySelector(".rc-item-plate")?.appendChild(imageOf(url, "rc-item-icon"));
+        box.appendChild(this.buildFrame(slot.amount));
         continue;
       }
       /*
@@ -404,21 +412,46 @@ export class ResearchCinematic {
        * 갈아 끼운다 — 누구를 만났는지 먼저 읽히고, 그다음에 "이미 가진 개체였다"가 온다.
        */
       box.className = "card-art card-art-portrait";
-      box.replaceChildren();
-      if (slot.frame === "face") {
-        box.appendChild(this.buildFrame(slot.amount));
-        const flash = document.createElement("span");
-        flash.className = "rc-shatter-flash";
-        box.appendChild(flash);
-      }
-      const url = await bakeCinematicPortrait(scene, slot.portraitAssetId, PORTRAIT_BAKE.width, PORTRAIT_BAKE.height);
-      if (this.closed) return;
-      if (url) box.insertBefore(imageOf(url, "character-art"), box.firstChild);
       if (slot.frame !== "face") continue;
-      const face = await bakeCinematicFace(scene, slot.portraitAssetId, FACE_BAKE);
-      if (this.closed) return;
-      if (face) box.querySelector(".rc-item-plate")?.appendChild(imageOf(face, "rc-item-face"));
+      box.appendChild(this.buildFrame(slot.amount));
+      const flash = document.createElement("span");
+      flash.className = "rc-shatter-flash";
+      box.appendChild(flash);
+      this.applyShattered(index, box);
     }
+    // 2) 굽는 일만 **나란히** 돌린다. 하나가 늦거나 실패해도 나머지는 제 그림을 받는다.
+    for (const [index, card] of cards.entries()) void this.fillCard(scene, art[index], index, card);
+  }
+
+  /**
+   * 구운 그림을 제자리에 끼운다.
+   *
+   * 칸마다 따로 돌기 때문에 **순서를 기다리지 않는다** — 한 장씩 차례로 구우면 열 장짜리 판의
+   * 뒤쪽 두어 칸이 아직 차례도 오기 전에 건너뛰기가 들어와, 결산에 그림 없는 칸이 남았다.
+   * 굽는 사이에 결산에 닿았다면 그 칸은 곧바로 파편으로 세운다.
+   */
+  private async fillCard(
+    scene: Phaser.Scene,
+    slot: CinematicCardArt | undefined,
+    index: number,
+    card: HTMLElement,
+  ): Promise<void> {
+    const box = card.querySelector<HTMLElement>(".card-art");
+    if (!slot || !box) return;
+    if (slot.frame === "icon") {
+      const url = bakeCinematicIcon(scene, slot.iconKey, FACE_BAKE);
+      if (url && !this.closed) box.querySelector(".rc-item-plate")?.appendChild(imageOf(url, "rc-item-icon"));
+      return;
+    }
+    const portrait = await bakeCinematicPortrait(scene, slot.portraitAssetId, PORTRAIT_BAKE.width, PORTRAIT_BAKE.height);
+    if (this.closed) return;
+    if (portrait) box.insertBefore(imageOf(portrait, "character-art"), box.firstChild);
+    if (slot.frame !== "face") return;
+    const face = await bakeCinematicFace(scene, slot.portraitAssetId, FACE_BAKE);
+    if (this.closed) return;
+    // 얼굴은 액자를 꽉 채우고(구울 때 모서리를 지웠다) 재화 아이콘만 사방 여백이 규격이다.
+    if (face) box.querySelector(".rc-item-plate")?.appendChild(imageOf(face, "rc-item-face"));
+    this.applyShattered(index, box);
   }
 
   /** 게임의 아이템 액자 한 장. 깎인 판과, 그 위에 깎이지 않고 얹히는 수량 두 겹이다. */
@@ -441,10 +474,17 @@ export class ResearchCinematic {
    * 바뀐다 — 결산 격자에 원화와 파편이 섞여 있으면 무엇이 중복인지 읽히지 않는다.
    */
   private shatter(index: number, instant: boolean): void {
+    if (this.shattered.has(index)) return;
+    this.shattered.add(index);
     const card = this.root.querySelectorAll<HTMLElement>(".archive-card")[index];
-    const box = card?.querySelector<HTMLElement>(".card-art.card-art-portrait");
-    if (!box || !box.querySelector(".rc-item-frame")) return;
+    const box = card?.querySelector<HTMLElement>(".card-art");
+    if (!box) return;
     box.className = instant ? "card-art card-art-framed" : "card-art card-art-framed rc-shattering";
+  }
+
+  /** 뼈대나 그림이 늦게 선 칸에 이미 정해진 파편 상태를 입힌다. 섬광은 다시 켜지 않는다. */
+  private applyShattered(index: number, box: HTMLElement): void {
+    if (this.shattered.has(index)) box.className = "card-art card-art-framed";
   }
 
   /** 방금 넘긴 걸음이 중복 카드의 뒤집기였다면, 한 박자 뒤에 파편으로 바꾼다. */

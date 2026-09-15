@@ -7,7 +7,7 @@ import { CHAPTERS, getBattleStage, getStageEnemies } from "../../src/data/stages
 import { getRelic, PLAYABLE_RELICS } from "../../src/data/relics";
 import { applyLevelGrowth } from "../../src/core/relicProgression";
 import { RUNE_GENERATION_RULES } from "../../src/core/runes";
-import { storyFloorGrowth, type InvestmentShape } from "../../src/core/stageBalance";
+import { levelFromCheesecake, storyFloorGrowth, type InvestmentShape } from "../../src/core/stageBalance";
 import type { RelicDef, Stats } from "../../src/core/types";
 
 /** 단일 운 좋은 판 대신 치명타 순서를 달리하는 재현 가능한 표본 여덟 개를 공통으로 사용한다. */
@@ -23,15 +23,44 @@ const SEEDS = [1, 2, 3, 4, 5, 6, 7, 8] as const;
 const FLOOR_ROSTER = ["anky", "dodo", "parua"] as const;
 
 /**
- * **지금 관문이 전제하는 파티 — SSR 한 명이 낀 자리다.**
+ * **두 번째 축 — 실제로 밀 만한 파티.**
  *
- * 위 바닥 로스터는 "SSR이 하나도 없는 사람"을 그린 것인데, 그 파티를 통과선으로 삼는 동안
- * 관문은 **전원 1레벨로도 밀렸다.** 뽑기·룬·강화가 전부 선택지로만 남아 아무것도 요구하지
- * 않았기 때문이다. 야성 한 단계를 세 레벨(정예는 다섯)로 올리면서 기준을 여기로 옮겼다 —
- * 스타트 이벤트로 쥐는 SSR 하나에 초반 R·SR 둘이면 **잡졸 관문은 그대로 흐르고 정예 둘만
- * 막는다.** 바닥 로스터가 어디서 막히는지는 아래 "성장하지 않은 파티" 검수가 따로 지킨다.
+ * 위 바닥 로스터는 "SSR이 하나도 없고 스토리 보상만 받은 사람"이라 **가장 아래**를 그린다.
+ * 그 하나만으로는 관문이 실제로 어떤지 알 수 없다 — 바닥이 막히는 자리와 사람이 막히는
+ * 자리는 다르고, 바닥만 보고 조이면 실제로는 아무 저항이 없는 관문이 "어렵다"고 기록된다
+ * (야성 가중치를 넣기 전까지 그랬다. 검수는 구멍투성이인데 실제로는 전원 1레벨로 밀렸다).
+ *
+ * 그래서 축을 둘로 둔다. 이쪽은 **자리마다 SSR 하나씩을 골라 세운 편성**이고, 셋을 고정하지
+ * 않고 자리별 후보에서 조합을 만든다 — 한 조합만 박아 두면 그 조합에만 맞는 관문이 된다.
  */
-const REFERENCE_ROSTER = ["anky", "dodo", "rex"] as const;
+const BLENDED_DPS = ["rex", "spino", "maki"] as const;
+const BLENDED_TANK = ["anky", "nodonia", "ella"] as const;
+const BLENDED_SUPPORT = ["stella", "luka", "mette"] as const;
+
+/**
+ * **27개 조합의 양 끝과 가운데.** 전부 돌리면 검수 한 번에 수천 판이라 대표만 남긴다.
+ *
+ * 실측에서 갈리는 축은 딜러였다 — 스피나 조합은 정예 둘까지 뚫고, 렉시아 조합은 정예 둘에
+ * 모두 막히며, 마키 조합이 그 사이다. 탱커·지원가는 잔여 체력만 움직이고 통과 여부를 바꾸지
+ * 않았다. 새 개체가 들어오면 이 셋을 다시 고른다.
+ */
+const BLENDED_COMBOS = [
+  ["anky", "rex", "luka"],
+  ["ella", "maki", "stella"],
+  ["nodonia", "spino", "mette"],
+] as const;
+
+/**
+ * **스토리 밖에서 들어오는 케이크를 몇 배로 볼 것인가.**
+ *
+ * 발굴·의뢰·우편 보상·스테미나 환전·이벤트가 전부 이 위에 얹히므로, 스토리 첫 클리어 보상만
+ * 세면 실제 플레이어보다 한참 아래가 된다. 정확한 수가 아니라 **어림값**이며, 각 콘텐츠의
+ * 지급량이 정해지면 그 표에서 거꾸로 푼다.
+ */
+const OUTSIDE_CHEESECAKE_MULTIPLIER = 3;
+
+/** 레어 룬 주 옵션 기본값 + 세공 세 번 성공. "희귀~레어를 대충 강화해서 풀세팅"의 몫이다. */
+const BLENDED_RUNE_MAIN = RUNE_GENERATION_RULES.rare.mainBase + 3 * RUNE_GENERATION_RULES.rare.mainEnhancement;
 
 /** 자원을 몰아줄 자리. 편성 순서는 진형이 정하므로 누구에게 몰아주는지는 따로 적는다. */
 const FLOOR_CARRY_INDEX = 2;
@@ -63,6 +92,20 @@ function floorParty(globalOrder: number, shape: InvestmentShape, roster: readonl
   return roster.map((id, index) => grown(getRelic(id), growth.levels[index] ?? 1, growth.runes[index] ?? 0));
 }
 
+/** 세 칸에 룬을 다 끼운 블렌딩 파티. 레벨은 셋이 고르게 나눠 먹는다. */
+function blendedParty(globalOrder: number, roster: readonly string[]): RelicDef[] {
+  const budget = Math.floor(cheesecakeBefore(globalOrder) * OUTSIDE_CHEESECAKE_MULTIPLIER / FLOOR_ROSTER.length);
+  const level = levelFromCheesecake(budget);
+  return roster.map((id) => {
+    const def = getRelic(id);
+    const stats = { ...applyLevelGrowth(def.stats, level, def.rarity) };
+    for (const key of ["hp", "atk", "def"] as (keyof Stats)[]) {
+      stats[key] = Math.round(stats[key] * (1 + BLENDED_RUNE_MAIN / 100));
+    }
+    return { ...def, stats };
+  });
+}
+
 const BATTLE_STAGES = CHAPTERS.flatMap(({ stages }) => stages)
   .filter((stage): stage is Extract<typeof stage, { kind: "battle" }> => stage.kind === "battle")
   .map((stage, index) => ({ stage, globalOrder: index }));
@@ -92,21 +135,22 @@ const ELITE_STAGE_IDS = ["1-5", "1-10"] as const;
 /**
  * 대표 관문의 기록. 수치 조정이 의도하지 않은 체감 변화를 냈는지 즉시 드러낸다.
  *
- * **기준 파티(`REFERENCE_ROSTER`)로 다시 쟀다.** 야성 가중치가 들어오면서 잡졸 관문은 거의
- * 무손실로 흐르고 정예 둘만 남는 모양이 되었다 — 이 표가 그 모양 자체를 기록한다. 띠는 좁게
- * 두어 다음 조정이 이 검수에 반드시 걸리게 한다.
+ * **블렌딩 파티의 가운데 조합**(`BLENDED_COMBOS[1]` — 엘라·마키·스테라)으로 쟀다. 양 끝은
+ * 통과 여부가 갈려 잔여 체력을 기록해도 같은 뜻이 되지 않지만, 가운데 조합은 정예 둘을
+ * 아슬아슬하게 지나 관문의 모양을 그대로 보여 준다. 띠는 좁게 두어 다음 조정이 이 검수에
+ * 반드시 걸리게 한다.
  */
 const BASELINES = {
-  "1-1": { win: 1, hp: [0.94, 1] },
-  // 정예 둘은 막는 자리라 기준 파티도 여기서 멈춘다. 1-5는 균등 분배가 겨우 세 판을 열고,
-  // 1-10은 한 판도 열리지 않아 잔여 체력이 0이다 — 그것이 이 관문의 기록이다.
-  "1-5": { win: 0.375, hp: [0.06, 0.18] },
-  "1-10": { win: 0, hp: [0, 0.04] },
-  // 정예를 넘고 나면 2·3장의 잡졸은 다시 흐른다. 길에 선 관문은 막는 자리가 아니다.
-  "2-5": { win: 1, hp: [0.93, 1] },
-  "2-10": { win: 1, hp: [0.93, 1] },
-  "3-5": { win: 1, hp: [0.91, 1] },
-  "3-9": { win: 1, hp: [0.91, 1] },
+  "1-1": { win: 1, hp: [0.78, 0.90] },
+  // 정예 둘이 이 조합에는 마지막 관문이다. 1-5는 넘되 잔여가 4분의 1까지 내려가고,
+  // 1-10은 여덟 판 중 넷만 열린다 — 무엇을 뽑았는지를 처음 묻는 자리다.
+  "1-5": { win: 1, hp: [0.21, 0.33] },
+  "1-10": { win: 0.5, hp: [0.04, 0.16] },
+  // 2·3장 잡졸은 다시 흐르되 무손실은 아니다. 레벨 상한에 묶이는 3장으로 갈수록 더 깎인다.
+  "2-5": { win: 1, hp: [0.81, 0.93] },
+  "2-10": { win: 1, hp: [0.82, 0.94] },
+  "3-5": { win: 1, hp: [0.73, 0.85] },
+  "3-9": { win: 1, hp: [0.62, 0.74] },
 } as const;
 
 describe("Phaser 없는 챕터 난이도 검수", () => {
@@ -118,37 +162,81 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
    * `FLOOR_GAP`에 그대로 적어 두었다 — 여기서는 **적어 둔 값보다 나빠졌는지**만 본다.
    */
   /*
-   * **잡졸 관문은 기준 파티를 막지 않는다.**
+   * **두 번째 축 — 실제로 밀 만한 파티는 3장 끝까지 민다.**
    *
-   * 자원을 몰아줬든 고루 나눴든 같아야 한다 — 길에 선 관문이 투자 방식을 고르게 만들면,
-   * 고르지 않은 쪽은 스토리를 볼 수 없다는 뜻이 된다.
+   * 스토리는 길이지 관문이 아니다. 자리마다 SSR 하나씩을 세우고 스토리 밖 재화까지 센 파티가
+   * 어느 관문에서든 멈춘다면, 그 자리는 조인 것이 아니라 잘못 잡힌 것이다.
+   *
+   * **그렇다고 무손실로 흐르지도 않는다** — 아래 대표 관문 기록이 잔여 체력을 함께 지킨다.
+   * 3장으로 갈수록 레벨 상한(돌파 0 = 20)에 묶여 같은 파티가 더 깎이며 지나간다.
    */
-  it.each(["spread", "carry"] as const)("%s로 키운 기준 파티는 잡졸 관문을 전부 넘는다", (shape) => {
-    for (const { stage, globalOrder } of STORY_STAGES) {
-      if (ELITE_STAGE_IDS.some((id) => id === stage.id)) continue;
-      const report = summarizeStageDifficulty(floorParty(globalOrder, shape, REFERENCE_ROSTER), getStageEnemies(stage), SEEDS, "auto");
-      expect(report.winRate, `${shape} ${stage.id}`).toBe(1);
+  it.each(BLENDED_COMBOS.map((combo) => [combo.join("+"), combo] as const))(
+    "%s 조합은 잡졸 관문을 끝까지 민다", (_name, combo) => {
+      for (const stageId of ["1-1", "1-9", "2-5", "2-10", "3-5", "3-9"]) {
+        const entry = STORY_STAGES.find(({ stage }) => stage.id === stageId)!;
+        const report = summarizeStageDifficulty(blendedParty(entry.globalOrder, combo), getStageEnemies(entry.stage), SEEDS, "auto");
+        expect(report.winRate, stageId).toBe(1);
+      }
+    },
+  );
+
+  /*
+   * **막는 자리는 정예 둘뿐이고, 그 둘은 무엇을 뽑았는지를 묻는다.**
+   *
+   * 같은 재화·같은 룬으로 자란 세 조합이 여기서만 갈린다 — 스피나는 둘 다 뚫고, 렉시아는 둘
+   * 다 막히며, 마키는 1-5를 넘고 1-10에서 반만 연다. 잡졸 관문이 조합을 가리지 않는 것과
+   * 짝을 이루는 값이라, 한쪽이 무너지면 다른 쪽도 함께 본다.
+   */
+  /*
+   * **대표 셋은 후보 표에서 골라야 한다.** 개체가 늘거나 역할이 바뀌어 후보에서 빠진 조합이
+   * 대표로 남아 있으면, 검수가 지키는 것이 "지금 사람들이 짜는 편성"이 아니게 된다.
+   */
+  it("대표 조합은 자리별 후보에서 하나씩 고른 것이다", () => {
+    for (const [tank, dps, support] of BLENDED_COMBOS) {
+      expect(BLENDED_TANK, tank).toContain(tank);
+      expect(BLENDED_DPS, dps).toContain(dps);
+      expect(BLENDED_SUPPORT, support).toContain(support);
     }
   });
 
   /*
-   * **막는 자리는 정예 둘뿐이고, 그 둘은 실제로 막는다.**
+   * **첫 번째 축 — 바닥 로스터는 1장 안에서 멈춘다.**
    *
-   * 1-5는 자원을 한 명에게 몰아주면 넘어가는 자리라 "무엇을 키웠나"를 처음 묻고, 1-10은
-   * 그 파티로는 어느 쪽으로 키워도 넘지 못한다 — 뽑기·룬·한계 돌파가 처음으로 선택지가
-   * 아니라 요구가 되는 자리가 여기다.
+   * SSR이 하나도 없고 스토리 첫 클리어 보상만 받은 파티다. 1장은 절반의 확률로 더듬으며
+   * 나아가지만 정예 둘은 한 번도 열리지 않고, 2장부터는 사실상 닫힌다 — 위 블렌딩 축이
+   * 3-9까지 미는 것과 나란히 두면 관문이 무엇을 요구하는지가 두 수로 읽힌다.
    */
-  it("정예 두 관문만 기준 파티를 멈춰 세운다", () => {
-    const winRateAt = (stageId: string, shape: InvestmentShape) => {
+  it.each(["spread", "carry"] as const)("%s로 키운 바닥 로스터는 1장 안에서 멈춘다", (shape) => {
+    const winRateAt = (stageId: string) => {
       const entry = STORY_STAGES.find(({ stage }) => stage.id === stageId)!;
-      return summarizeStageDifficulty(floorParty(entry.globalOrder, shape, REFERENCE_ROSTER), getStageEnemies(entry.stage), SEEDS, "auto").winRate;
+      return summarizeStageDifficulty(floorParty(entry.globalOrder, shape), getStageEnemies(entry.stage), SEEDS, "auto").winRate;
     };
-    // 1-5는 몰아준 쪽만 넘는다. 균등은 절반도 열리지 않는다.
-    expect(winRateAt("1-5", "carry")).toBe(1);
-    expect(winRateAt("1-5", "spread")).toBeLessThanOrEqual(0.5);
-    // 1-10은 어느 쪽으로 키워도 열리지 않는다.
-    expect(winRateAt("1-10", "carry")).toBe(0);
-    expect(winRateAt("1-10", "spread")).toBe(0);
+    // 첫 관문은 배우는 자리라 절반은 열린다.
+    expect(winRateAt("1-1")).toBeGreaterThanOrEqual(0.5);
+    // 1장 잡졸은 끝까지 절반을 넘지 못하고,
+    for (const stageId of ["1-4", "1-7", "1-9"]) expect(winRateAt(stageId), stageId).toBeLessThanOrEqual(0.5);
+    // 정예 둘은 한 판도 열리지 않는다.
+    for (const stageId of ELITE_STAGE_IDS) expect(winRateAt(stageId), stageId).toBe(0);
+    // 2장은 한 판이 열릴까 말까 하고, 3장은 완전히 닫힌다.
+    for (const { stage } of STORY_STAGES) {
+      if (stage.id.startsWith("2-")) expect(winRateAt(stage.id), stage.id).toBeLessThanOrEqual(0.125);
+      if (stage.id.startsWith("3-")) expect(winRateAt(stage.id), stage.id).toBe(0);
+    }
+  });
+
+  it("정예 두 관문만 조합을 가린다", () => {
+    const winRateAt = (stageId: string, combo: readonly string[]) => {
+      const entry = STORY_STAGES.find(({ stage }) => stage.id === stageId)!;
+      return summarizeStageDifficulty(blendedParty(entry.globalOrder, combo), getStageEnemies(entry.stage), SEEDS, "auto").winRate;
+    };
+    const [weak, middle, strong] = BLENDED_COMBOS;
+    expect(ELITE_STAGE_IDS).toEqual(["1-5", "1-10"]);
+    expect(winRateAt("1-5", weak)).toBe(0);
+    expect(winRateAt("1-10", weak)).toBe(0);
+    expect(winRateAt("1-5", middle)).toBe(1);
+    expect(winRateAt("1-10", middle)).toBe(0.5);
+    expect(winRateAt("1-5", strong)).toBe(1);
+    expect(winRateAt("1-10", strong)).toBe(1);
   });
 
   /*
@@ -217,9 +305,9 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
 
   it.each(Object.entries(BASELINES))("%s의 여러 고정 난수열 결과와 상세 지표를 기준 범위에 둔다", (stageId, baseline) => {
     const entry = STORY_STAGES.find(({ stage }) => stage.id === stageId)!;
-    const report = inspectStageDifficulty(floorParty(entry.globalOrder, "spread", REFERENCE_ROSTER), getStageEnemies(entry.stage), SEEDS);
+    const report = inspectStageDifficulty(blendedParty(entry.globalOrder, BLENDED_COMBOS[1]), getStageEnemies(entry.stage), SEEDS);
 
-    // 기준 파티의 기록이다 — 잡졸은 전승, 정예 둘만 여기서 멈춘다.
+    // 블렌딩 파티 가운데 조합의 기록이다 — 잡졸은 깎이며 흐르고, 정예 둘만 여기서 멈춘다.
     expect(report.auto.winRate).toBe(baseline.win);
     expect(report.auto.playerHpRatio.mean).toBeGreaterThanOrEqual(baseline.hp[0]);
     expect(report.auto.playerHpRatio.mean).toBeLessThanOrEqual(baseline.hp[1]);

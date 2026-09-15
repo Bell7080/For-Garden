@@ -307,9 +307,9 @@ export function createDefaultSession(): Session {
     owned: new Set(STARTER_RELICS),
     favorite: STARTER_RELICS[0],
     bookmarked: new Set<string>(),
-    // 원석은 룬 특성 재해석에만 쓰이고 아직 정식 수급처가 지층 탐사 하나뿐이라, 임시 지급
-    // 표가 정한 만큼을 처음부터 넣어 둔다. 수급이 붙으면 그 표와 함께 0으로 되돌린다.
-    wallet: { fossil: 1200, amber: 10, gems: 120, gold: 25_400, stamina: 60, dnaFragments: 0, cheesecake: 0, rawStone: STARTER_RUNE_TRAIT_KIT.rawStone },
+    // 임시 뽑기 테스트 지급: 화석·호박석 배너를 각각 100회의 10연속 복원까지 확인할 수 있다.
+    // 정식 경제 밸런스를 적용할 때는 fossil 1,200 / amber 10으로 되돌리고 이 주석도 제거한다.
+    wallet: { fossil: 90_000, amber: 900, gems: 120, gold: 25_400, stamina: 60, dnaFragments: 0, cheesecake: 0, rawStone: STARTER_RUNE_TRAIT_KIT.rawStone },
     // 첫 FakeServer 요청이 서버 시각으로 안전하게 초기화한다.
     staminaUpdatedAt: "",
     gachaPityByGroup: Object.fromEntries([...new Set(BANNERS.map(({ pityGroupId }) => pityGroupId))].map((id) => [id, { pullsSinceSsr: 0, pickupGuaranteed: false }])),

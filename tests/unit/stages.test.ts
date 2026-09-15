@@ -45,20 +45,21 @@ describe("stage enemy design", () => {
      * **정예 관문(1-5·1-10)은 한 줄에 하나뿐이고 야성 몫이 훨씬 크다.** 셋이 나눠 내던 몫을
      * 하나가 대신하기 때문이다.
      *
-     * **셋째 칸은 야성 단계가 아니라 그것이 실제로 얹는 레벨 수다**(`ferocityBonusLevels` —
-     * 잡졸 3배, 정예 5배). 화면의 붉은 `+n`도 같은 수라, 표와 화면과 실제 성장이 한 값이다.
+     * **셋째 칸은 야성 단계이고, 능력치에 얹히는 레벨은 그 몇 배다**(`ferocityBonusLevels` —
+     * 잡졸 3배, 정예 5배). 화면의 붉은 `+n`도 이 단계 그대로이며, 곱한 값은 데이터에도 화면에도
+     * 나타나지 않는다 — 배율은 `getStageEnemies`가 능력치를 구하는 자리에서만 돈다.
      */
     expect(ladder).toEqual([
-      { 아모: [4, 0, 3], 토비: [4, 0, 3], 리파: [4, 0, 3] },
-      { 아모: [5, 0, 6], 토비: [5, 0, 6], 리파: [5, 0, 6] },
-      { 아모: [6, 0, 6], 토비: [6, 0, 6], 리파: [6, 0, 6] },
-      { 아모: [7, 0, 6], 토비: [7, 0, 6], 리파: [7, 0, 6] },
-      { 토비: [7, 0, 100] },
-      { 아모: [8, 0, 9], 토비: [8, 0, 9], 리파: [8, 0, 9] },
-      { 아모: [9, 0, 9], 토비: [9, 0, 9], 리파: [9, 0, 9] },
-      { 아모: [9, 0, 12], 토비: [9, 0, 12], 리파: [9, 0, 12] },
-      { 아모: [10, 0, 12], 토비: [10, 0, 12], 리파: [10, 0, 12] },
-      { 코마: [10, 0, 110] },
+      { 아모: [4, 0, 1], 토비: [4, 0, 1], 리파: [4, 0, 1] },
+      { 아모: [5, 0, 2], 토비: [5, 0, 2], 리파: [5, 0, 2] },
+      { 아모: [6, 0, 2], 토비: [6, 0, 2], 리파: [6, 0, 2] },
+      { 아모: [7, 0, 2], 토비: [7, 0, 2], 리파: [7, 0, 2] },
+      { 토비: [7, 0, 20] },
+      { 아모: [8, 0, 3], 토비: [8, 0, 3], 리파: [8, 0, 3] },
+      { 아모: [9, 0, 3], 토비: [9, 0, 3], 리파: [9, 0, 3] },
+      { 아모: [9, 0, 4], 토비: [9, 0, 4], 리파: [9, 0, 4] },
+      { 아모: [10, 0, 4], 토비: [10, 0, 4], 리파: [10, 0, 4] },
+      { 코마: [10, 0, 22] },
     ]);
     /*
      * **레벨은 관문을 따라 내려가지 않는다.** 1-10까지 마지막 관문이 직전보다 쉬운 구간이
@@ -155,13 +156,18 @@ describe("stage enemy design", () => {
    * 값이라, 화면의 붉은 `+n`과 실제로 자란 몫이 언제나 같은 수다. 단계를 그대로 적어 두고
    * 성장할 때만 곱하면 화면이 보여 준 수와 맞는 수가 갈린다.
    */
-  it("스테이지가 들고 다니는 야성 값은 이미 얹힌 레벨 수다", () => {
+  it("스테이지가 들고 다니는 야성 값은 곱하기 전의 단계다", () => {
     const elite = battles.find((stage) => stage.id === "1-10")!;
     expect(elite.elite).toBe(true);
-    expect(elite.enemies[0].ferocityLevel).toBe(ferocityBonusLevels(22, true));
-    expect(effectiveEnemyLevel(elite.enemies[0])).toBe(elite.enemies[0].level + 110);
+    // 화면의 붉은 `+n`이 읽는 값이라 단계 그대로 서 있어야 한다 — 곱한 값을 여기 적으면
+    // `LV.10 +110`이 되어 야성이 레벨과 나란히 읽힌다.
+    expect(elite.enemies[0].ferocityLevel).toBe(22);
+    expect(effectiveEnemyLevel(elite.enemies[0], true)).toBe(elite.enemies[0].level + 110);
+    // 정예 배율은 그 관문에만 든다. 같은 값이라도 잡졸로 세면 세 배다.
+    expect(effectiveEnemyLevel(elite.enemies[0])).toBe(elite.enemies[0].level + 66);
     const mob = battles.find((stage) => stage.id === "1-9")!;
-    expect(mob.enemies[0].ferocityLevel).toBe(ferocityBonusLevels(4));
+    expect(mob.enemies[0].ferocityLevel).toBe(4);
+    expect(effectiveEnemyLevel(mob.enemies[0])).toBe(mob.enemies[0].level + 12);
   });
 
   it("야성 추가 레벨은 0 이상의 정수이고 실효 레벨은 관문 순서를 따라 내려가지 않는다", () => {
@@ -180,7 +186,7 @@ describe("stage enemy design", () => {
        * "약해졌다"로 읽힌다. 정예가 직전 관문보다 무거운지는 위의 사다리 표가 따로 지킨다.
        */
       if (stage.kind === "battle" && stage.elite === true) continue;
-      const effective = Math.max(...stage.enemies.map((enemy) => effectiveEnemyLevel(enemy)));
+      const effective = Math.max(...stage.enemies.map((enemy) => effectiveEnemyLevel(enemy, stage.elite === true)));
       expect(effective, stage.id).toBeGreaterThanOrEqual(previous);
       previous = effective;
     }

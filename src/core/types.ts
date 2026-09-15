@@ -1928,9 +1928,13 @@ export interface StageEnemyDef {
    * (`level`)과 **난폭해진 것**으로 가른다. 표시도 그렇게 갈라, 화면은 `LV.30` 옆에 작고 붉은
    * `+2`를 붙인다(`addUnitNameplate`의 `bonusLevel`).
    *
-   * 값은 레벨과 **같은 성장 공식**을 지난다 — 레벨 32와 레벨 30 +2는 능력치가 같다. 그래서
-   * 난이도를 조일 때 개체 정의나 스테이지 전용 배율을 만들 필요가 없고, 관문 하나의 무게만
-   * 이 수 하나로 움직인다.
+   * 값은 레벨과 **같은 성장 공식**을 지나되 **한 단계가 한 레벨은 아니다** — 잡졸은 세 배,
+   * 정예는 다섯 배로 얹힌다(`ferocityBonusLevels`). 그래서 난이도를 조일 때 개체 정의나
+   * 스테이지 전용 배율을 만들 필요가 없고, 관문 하나의 무게만 이 수 하나로 움직인다.
+   *
+   * **여기 적는 수와 화면의 붉은 `+n`은 같은 수다.** 배율은 능력치를 구하는 자리에서만 돌고
+   * 데이터에도 화면에도 곱한 값이 나타나지 않는다 — `LV.10 +110`은 그 개체가 110레벨만큼
+   * 자란 것으로 읽혀, 자란 축이 아닌 야성을 레벨과 나란히 읽게 만든다.
    */
   ferocityLevel?: number;
   /** 배열 순서와 무관하게 전열(0)에서 후열(2)까지의 전투 배치를 고정한다. */
@@ -1948,8 +1952,10 @@ export interface StageEnemyDef {
  * 때릴 수 있는 것도 하나뿐이라 같은 단계로는 관문이 가벼워진다(야성을 80까지 올려도 바닥
  * 파티 잔여 체력이 0.62 → 0.58에서만 움직였다).
  *
- * 곱한 결과는 숨기지 않는다 — 스테이지 표가 이 함수를 지나 **얹히는 레벨 수 자체**를 적으므로,
- * 화면의 붉은 `+n`과 실제로 자란 몫이 언제나 같은 수다.
+ * **화면에 서는 붉은 `+n`은 곱하기 전의 단계다.** 곱한 값을 그대로 세우면 `LV.10 +110`처럼
+ * 레벨보다 훨씬 큰 수가 이름 옆에 붙어, 그 개체가 110레벨만큼 자란 것으로 읽힌다 — 야성은
+ * 자란 축이 아니므로 그 수를 레벨과 나란히 읽게 하면 안 된다. 단계는 단계로 보여 주고,
+ * 배율은 능력치 계산에서만 돈다.
  */
 export const FEROCITY_LEVEL_WEIGHT = { normal: 3, elite: 5 } as const;
 
@@ -1958,9 +1964,14 @@ export function ferocityBonusLevels(ferocityStep: number, elite = false): number
   return Math.max(0, Math.round(ferocityStep)) * (elite ? FEROCITY_LEVEL_WEIGHT.elite : FEROCITY_LEVEL_WEIGHT.normal);
 }
 
-/** 그 개체가 실제로 싸우는 레벨 — 자란 레벨에 야성으로 얹힌 몫을 더한 값이다. */
-export function effectiveEnemyLevel(enemy: Pick<StageEnemyDef, "level" | "ferocityLevel">): number {
-  return enemy.level + Math.max(0, enemy.ferocityLevel ?? 0);
+/**
+ * 그 개체가 실제로 싸우는 레벨 — 자란 레벨에 야성이 얹는 몫을 더한 값이다.
+ *
+ * **얹히는 몫은 단계가 아니라 그 단계에 배율을 먹인 값이다**(`ferocityBonusLevels`). 화면이
+ * 보여 주는 `+n`은 단계 그대로이고, 배율은 여기서만 돈다.
+ */
+export function effectiveEnemyLevel(enemy: Pick<StageEnemyDef, "level" | "ferocityLevel">, elite = false): number {
+  return enemy.level + ferocityBonusLevels(enemy.ferocityLevel ?? 0, elite);
 }
 
 /** 전투 노드만 적별 성장 스냅샷과 전투 보상을 소유한다. */

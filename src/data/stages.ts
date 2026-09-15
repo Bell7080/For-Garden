@@ -1,6 +1,6 @@
 import { applyBreakthrough, applyLevelGrowth } from "../core/relicProgression";
 import { registerDataText } from "../i18n";
-import { effectiveEnemyLevel, ferocityBonusLevels, type ChapterDef, type RelicDef, type StageDef, type StageEnemyDef } from "../core/types";
+import { effectiveEnemyLevel, type ChapterDef, type RelicDef, type StageDef, type StageEnemyDef } from "../core/types";
 import { getRelic } from "./relics";
 
 /** 챕터 1의 기본 악당 셋은 영구 캐릭터 ID만 공유하고 성장 상태는 각 스테이지가 소유한다. */
@@ -52,12 +52,13 @@ const CHAPTER_ONE_LEVELS: readonly number[] = [4, 5, 6, 7, 7, 8, 9, 9, 10, 10];
 const CHAPTER_ONE_FEROCITY: readonly number[] = [1, 2, 2, 2, 3, 3, 3, 4, 4, 4];
 
 /*
- * **이 표가 적는 것은 야성 "단계"이고, 실제로 얹히는 레벨은 그 몇 배다**
+ * **이 표가 적는 것도 화면이 세우는 것도 야성 "단계"이고, 능력치에 얹히는 레벨은 그 몇 배다**
  * (`ferocityBonusLevels` — 잡졸 3배, 정예 5배). 한 단계가 한 레벨과 같은 무게였을 때는 관문을
  * 조이는 손잡이가 사실상 레벨 하나뿐이라 1장 전체가 **전원 1레벨로도 밀렸다.**
  *
- * 곱한 결과는 숨기지 않는다 — 스테이지 데이터에 들어가는 `ferocityLevel`이 이미 곱해진 값이라
- * 화면의 붉은 `+n`과 실제로 자란 몫이 언제나 같은 수다.
+ * 곱한 값을 데이터나 화면에 세우지 않는다 — `LV.10 +110`은 그 개체가 110레벨만큼 자란 것으로
+ * 읽혀, 자란 축이 아닌 야성을 레벨과 나란히 읽게 만든다. 배율은 `getStageEnemies`가 능력치를
+ * 구하는 그 한 줄에서만 돈다.
  */
 
 /**
@@ -101,9 +102,9 @@ const CHAPTER_ONE_ENEMIES: readonly (readonly StageEnemyDef[])[] =
     const chapterOrder = index + 1;
     const eliteId = CHAPTER_ONE_ELITES[chapterOrder];
     // 홀로 서는 정예는 가운데 자리(1)를 쓴다 — 왼쪽 끝에 세우면 빈 두 자리가 편성 실수처럼 보인다.
-    if (eliteId) return [enemyGrowth(eliteId, level, 0, 1, ferocityBonusLevels(CHAPTER_ONE_ELITE_FEROCITY[chapterOrder] ?? 0, true))];
+    if (eliteId) return [enemyGrowth(eliteId, level, 0, 1, CHAPTER_ONE_ELITE_FEROCITY[chapterOrder] ?? 0)];
     const ferocity = CHAPTER_ONE_FEROCITY[index] ?? 0;
-    return STAGE_ENEMY_FORMATION.map((id, slot) => enemyGrowth(id, level, 0, slot as 0 | 1 | 2, ferocityBonusLevels(ferocity)));
+    return STAGE_ENEMY_FORMATION.map((id, slot) => enemyGrowth(id, level, 0, slot as 0 | 1 | 2, ferocity));
   });
 
 /**
@@ -188,7 +189,7 @@ export const CHAPTERS: readonly ChapterDef[] = CHAPTER_CONTENT.map((content, cha
      * 관문의 무게는 레벨과 야성 둘로만 낸다.
      */
     const laterChapterEnemies = laterChapterIds.map((relicId, slot) =>
-      enemyGrowth(relicId, LATER_CHAPTER_LEVELS[globalOrder - 10] ?? globalOrder + 1, 0, slot as 0 | 1 | 2, ferocityBonusLevels(LATER_CHAPTER_FEROCITY[globalOrder - 10] ?? 0)),
+      enemyGrowth(relicId, LATER_CHAPTER_LEVELS[globalOrder - 10] ?? globalOrder + 1, 0, slot as 0 | 1 | 2, LATER_CHAPTER_FEROCITY[globalOrder - 10] ?? 0),
     );
     const enemies = chapter === 1 ? CHAPTER_ONE_ENEMIES[orderIndex] : laterChapterEnemies;
     return {
@@ -257,7 +258,7 @@ export function getStageEnemies(stage: Extract<StageDef, { kind: "battle" }>): R
     const base = getRelic(enemy.relicId);
     // 야성으로 얹힌 몫도 레벨과 **같은 성장 공식**을 지난다 — 스테이지 전용 배율을 만들지 않고,
     // 관문의 무게를 그 수 하나로 움직이기 위해서다.
-    const leveled = applyLevelGrowth(base.stats, effectiveEnemyLevel(enemy), base.rarity);
+    const leveled = applyLevelGrowth(base.stats, effectiveEnemyLevel(enemy, stage.elite === true), base.rarity);
     return { ...base, stats: applyBreakthrough(leveled, enemy.breakthrough) };
   });
 }

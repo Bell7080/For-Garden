@@ -79,6 +79,7 @@ import { EffectManager } from "../managers/EffectManager";
 import { CombatEffectPresenter, type CombatEffectTarget } from "../managers/CombatEffectPresenter";
 import { knockbackFlightPath } from "../ui/knockbackFlight";
 import { ensureEffectTextures } from "../ui/effectTextures";
+import { chargeAfterimageSteps } from "../ui/chargeAfterimage";
 import { attackDamagePopupRequest, type DamageFlavor, type DebuffId } from "../ui/damageNumbers";
 import { openBattleBuffListPopup, openBattleBuffPopup, type BattleBuffListItem, type BattleBuffPopupController } from "../ui/BattleBuffPopup";
 import type { ActiveCombatDisplayEffect } from "../core/combatEffects";
@@ -224,6 +225,8 @@ interface FighterView {
   tint: number;
   /** 지금 몸이 폭주 색으로 물들어 있는지. 상태가 바뀔 때만 다시 칠한다. */
   feverTinted: boolean;
+  /** 지금 돌진 잔상이 서 있는지. 돌진이 끝난 프레임에 한 번만 지우기 위한 값이다. */
+  afterimageShown: boolean;
   /** 맞는 순간의 눌림이 시작된 시각(ms). `placePuppet`이 매 프레임 배율을 다시 잡으므로 tween이 아니라 값으로 둔다. */
   squashAt: number;
   /** 눌림을 가로로 늘일 방향(때린 쪽에서 맞은 쪽). 세로로 날아가도 몸은 가로로 눌린다. */
@@ -684,7 +687,7 @@ export class BattleScene extends Phaser.Scene {
           event.stopPropagation();
           this.openStatusList(fighter.id);
         });
-      this.views.set(fighter.id, { creature, asset, fighter, infoHit, shadow, hpBar, statusChips, statusHit, stunShown: false, feverTint, feverStep: -1, feverTinted: false, tint, squashAt: -Infinity, squashDir: 1, spinDir: 1, dead: false });
+      this.views.set(fighter.id, { creature, asset, fighter, infoHit, shadow, hpBar, statusChips, statusHit, stunShown: false, feverTint, feverStep: -1, feverTinted: false, afterimageShown: false, tint, squashAt: -Infinity, squashDir: 1, spinDir: 1, dead: false });
     }
     this.syncViews();
     // 마지막 한 명까지 서고 나서 시간을 흘려야 먼저 뜬 캐릭터만 앞서 달려가지 않는다.
@@ -1548,6 +1551,21 @@ export class BattleScene extends Phaser.Scene {
           view.feverStep = step;
           tintPuppet(view.creature, this.bodyTint(view));
         }
+      }
+      /*
+       * **돌진은 3배속에서 순간이동으로 보인다.** 그림이 출발점에서 끝점까지 따라붙는 시간이
+       * 0.34초인데(`SKIRMISH.chargeGlideSeconds`) 배속을 그대로 받아 0.11초가 되면, 어디서
+       * 어디로 뚫고 지나갔는지가 화면에 남지 않고 푹 박힌 결과만 보인다. 지나온 길에 같은 몸을
+       * 몇 겹 세워 두면 한 프레임만 봐도 그 선이 남는다.
+       *
+       * **돌진일 때만 세운다.** `dashX`·`dashY`는 피격 변위도 함께 쓰는 자리라, 맞을 때마다
+       * 잔상이 뜨면 난전 내내 몸이 여러 겹으로 보인다.
+       */
+      const ghosts = fighter.chargeGlide > 0 ? chargeAfterimageSteps(fighter.dashX, fighter.dashY) : [];
+      // 빈 목록도 한 번은 넘겨야 돌진이 끝난 프레임에 잔상이 지워진다.
+      if (ghosts.length > 0 || view.afterimageShown) {
+        view.afterimageShown = ghosts.length > 0;
+        view.creature.setAfterimages(ghosts);
       }
       // SD의 발 위치보다 몸통 중앙을 누르는 편이 자연스러우므로 클릭 영역은 반 높이만큼 올린다.
       view.infoHit

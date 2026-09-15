@@ -187,6 +187,14 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
   /** 1보다 작은 값은 비전투 장식의 프레임 일부를 버리며 누락 시간을 다음 프레임에 합치지 않는다. */
   private decorativeUpdateFactor = 1;
   private decorativeUpdateCredit = 0;
+  /**
+   * 지금 몸 뒤에 함께 그릴 잔상 겹.
+   *
+   * **같은 정점을 자리만 옮겨 다시 그린다.** 개체를 하나 더 세우면 ZIP·재생기·버퍼가 통째로
+   * 늘고 `spawnPuppet`은 비동기라 0.1초짜리 돌진이 끝난 뒤에야 도착한다. 여기서는 이미 바인딩한
+   * program과 버퍼를 그대로 두고 행렬·색·알파만 갈아 끼우므로 겹 하나가 draw 한 번이다.
+   */
+  private afterimages: readonly { dx: number; dy: number; alpha: number }[] = [];
 
   private constructor(scene: Phaser.Scene, puppet: Puppet, textureKey: string) {
     super(scene, 0, 0, textureKey);
@@ -217,6 +225,17 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
 
   play(name: string, options?: PlayOptions): boolean {
     return this.puppet.play(name, options);
+  }
+
+  /**
+   * 몸 뒤에 겹칠 잔상을 정한다. 빈 목록이면 지운다.
+   *
+   * 변위는 **월드 픽셀**이라 카메라·부모 변환을 화면이 다시 계산하지 않는다 — 그릴 때 좌표만
+   * 잠깐 옮겨 같은 경로로 행렬을 만들기 때문이다.
+   */
+  setAfterimages(steps: readonly { dx: number; dy: number; alpha: number }[]): this {
+    this.afterimages = steps;
+    return this;
   }
 
   /** 전투 개체는 호출하지 않는 opt-in 장식 예산 경계다. */
@@ -306,9 +325,38 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
       // GetCalcMatrix가 개체 로컬 → 부모 Container → Camera 순으로 이동·배율·회전을 합성한다.
       // Puppet 정점은 이미지 좌상단 픽셀이므로 displayOrigin을 로컬에서 먼저 빼고, flip도 원점
       // 둘레의 로컬 반전으로 행렬에 포함한다. vec4 이동/축 배율로는 부모 회전과 shear를 보존할 수 없다.
+      gl.uniform2f(shared.viewport, renderer.width, renderer.height);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, frameTexture);
+      gl.uniform1i(shared.sampler, 0);
+
+      /*
+       * **잔상을 먼저, 먼 것부터 그린다.** 몸을 먼저 그리면 반투명 겹이 그 위에 얹혀 진짜 몸이
+       * 흐려지고, 지나온 길이 아니라 몸에 묻은 얼룩으로 읽힌다.
+       *
+       * 좌표를 잠깐 옮겨 같은 `GetCalcMatrix` 경로를 지나는 이유는, 변위를 행렬에 직접 더하면
+       * 부모 컨테이너의 배율·회전이 그 변위에 먹지 않아 확대된 화면에서 잔상만 어긋나기
+       * 때문이다. 색은 검게 고정한다 — 개체 색으로 채우면 잔상이 아니라 발광이 된다.
+       */
+      const baseX = this.x;
+      const baseY = this.y;
+      for (const ghost of this.afterimages) {
+        this.x = baseX + ghost.dx;
+        this.y = baseY + ghost.dy;
+        const ghostCalc = Phaser.GameObjects.GetCalcMatrix(this, camera, parentMatrix).calc;
+        gl.uniformMatrix3fv(shared.transform, false, puppetAffineUniform(ghostCalc, this.displayOriginX, this.displayOriginY, this.flipX, this.flipY));
+        gl.uniform3f(shared.tint, 0, 0, 0);
+        gl.uniform1f(shared.alpha, puppetShaderAlpha(this.alpha * ghost.alpha, camera.alpha));
+        gl.drawElements(gl.TRIANGLES, this.indices.length, gl.UNSIGNED_SHORT, 0);
+      }
+      this.x = baseX;
+      this.y = baseY;
+
+      // GetCalcMatrix가 개체 로컬 → 부모 Container → Camera 순으로 이동·배율·회전을 합성한다.
+      // Puppet 정점은 이미지 좌상단 픽셀이므로 displayOrigin을 로컬에서 먼저 빼고, flip도 원점
+      // 둘레의 로컬 반전으로 행렬에 포함한다. vec4 이동/축 배율로는 부모 회전과 shear를 보존할 수 없다.
       const calc = Phaser.GameObjects.GetCalcMatrix(this, camera, parentMatrix).calc;
       gl.uniformMatrix3fv(shared.transform, false, puppetAffineUniform(calc, this.displayOriginX, this.displayOriginY, this.flipX, this.flipY));
-      gl.uniform2f(shared.viewport, renderer.width, renderer.height);
       gl.uniform3f(
         shared.tint,
         ((this.tintTopLeft >> 16) & 0xff) / 255,
@@ -317,9 +365,6 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
       );
       // Container renderer가 호출 직전에 누적 부모 alpha를 this.alpha에 곱하므로 카메라 alpha만 마저 합친다.
       gl.uniform1f(shared.alpha, puppetShaderAlpha(this.alpha, camera.alpha));
-      gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D, frameTexture);
-      gl.uniform1i(shared.sampler, 0);
       gl.drawElements(gl.TRIANGLES, this.indices.length, gl.UNSIGNED_SHORT, 0);
     } finally {
       // texture 누락·shader/buffer 오류를 포함한 모든 종료 경로에서 Phaser의 program과

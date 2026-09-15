@@ -3,7 +3,7 @@ import { t, type TextKey } from "../i18n";
 import { gameApi } from "../api/FakeServer";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugScene } from "../debug";
-import type { StrataBoardView } from "../core/strataDig";
+import { strataBoardHaul, type StrataBoardView } from "../core/strataDig";
 import { DEFAULT_STRATA_LAYER_ID, type StrataRewardKind } from "../data/strataLayers";
 import { session } from "../state/session";
 import { canUpgradeRuneTraitGrade, RUNE_TRAIT_GRADES, RUNE_TRAIT_RULES } from "../core/runeTraits";
@@ -22,11 +22,12 @@ import { PopupLayer } from "../ui/PopupLayer";
 import { RailButton } from "../ui/RailButton";
 import { openRuneTraitReroll } from "../ui/RuneTraitPopup";
 import { openRuneTraitOdds } from "../ui/RuneTraitOddsPopup";
-import { STRATA_BOARD, strataBoardFrame, strataLayerTextureKey, strataTileCenter, strataTileCrop } from "../ui/strataBoardLayout";
+import { coverSourceCrop, STRATA_ART, STRATA_BOARD, strataBoardFrame, strataLayerTextureKey, strataTileCenter, strataTileCrop } from "../ui/strataBoardLayout";
 import { UI_ICON } from "../ui/icons";
 import { TopBar } from "../ui/TopBar";
 import { bindCurrencyGuide, openCurrencyGuide } from "../ui/currencyGuideEntry";
 import { COLOR, textStyle } from "../ui/theme";
+import { openRewardPopup, type RewardPopupItem } from "../ui/RewardPopup";
 
 /**
  * 고고학. 하단 탭 첫 슬롯이다.
@@ -240,9 +241,21 @@ export class ArchaeologyScene extends Phaser.Scene {
     const grid = this.add.container(frame.centerX, frame.centerY);
     this.view.add(grid);
 
+    // 그림자 → 금속 외곽 → 홀로그램 안쪽 선 순으로 판의 깊이를 만든다. 모두 입력 타일보다 아래다.
+    const shadow = this.add.graphics().fillStyle(COLOR.void, 0.42)
+      .fillRoundedRect(-frame.width / 2 + 10, -frame.height / 2 + 16, frame.width, frame.height, 18);
+    grid.add(shadow);
+    const frameArt = this.add.graphics();
+    frameArt.lineStyle(8, COLOR.strataFrame, 0.78).strokeRoundedRect(-frame.width / 2 - 7, -frame.height / 2 - 7, frame.width + 14, frame.height + 14, 20);
+    frameArt.lineStyle(2, COLOR.strataFrameGlow, 0.68).strokeRect(-frame.width / 2 + 5, -frame.height / 2 + 5, frame.width - 10, frame.height - 10);
+    grid.add(frameArt);
+
+    // 두 원화 모두 같은 cover 크롭을 써서 열린 칸과 닫힌 칸의 흙 결 좌표가 이어진다.
+    const boardCrop = coverSourceCrop(STRATA_ART.width, STRATA_ART.height, frame.width, frame.height);
+
     // **아래층이 맨 밑에 깔린다.** 겉장을 부순 칸에 드러나는 맨 흙이고, 겉장보다 가라앉아
     // 보이도록 한 겹 눌러 둔다 — 같은 밝기면 부순 자리가 아니라 다른 무늬로 보인다.
-    grid.add(addBoardImage(this, BACKGROUND.strataBase, (image) => image.setDisplaySize(frame.width, frame.height)));
+    grid.add(addBoardImage(this, BACKGROUND.strataBase, (image) => image.setCrop(boardCrop.x, boardCrop.y, boardCrop.width, boardCrop.height).setDisplaySize(frame.width, frame.height)));
     grid.add(this.add.rectangle(0, 0, frame.width, frame.height, COLOR.void, STRATA_BOARD.baseShade));
 
     // **겉장은 칸마다 같은 원화를 잘라 쓴다.** 조각을 따로 굽지 않으므로 칸 사이에 이음매가
@@ -250,11 +263,12 @@ export class ArchaeologyScene extends Phaser.Scene {
     const layerKey = strataLayerTextureKey(board.art);
     for (const tile of board.tiles) {
       if (tile.revealed) continue;
-      const crop = strataTileCrop(tile.index, board.columns, board.rows);
+      const crop = strataTileCrop(tile.index, board.columns, board.rows, boardCrop);
+      const center = strataTileCenter(tile.index, board.columns, frame);
       grid.add(addBoardImage(this, layerKey, (image) => {
-        // 자르기는 **원본 좌표**로 재고 크기는 그 뒤에 맞춘다. 순서가 바뀌면 조각이 어긋난다.
-        image.setDisplaySize(frame.width, frame.height);
+        // 크롭은 원본 px, 배치와 표시 크기는 화면 px이다. 두 좌표계를 한 연산에 섞지 않는다.
         image.setCrop(crop.x, crop.y, crop.width, crop.height);
+        image.setDisplaySize(frame.cellWidth, frame.cellHeight).setPosition(center.x, center.y);
       }));
     }
 
@@ -276,9 +290,34 @@ export class ArchaeologyScene extends Phaser.Scene {
       grid.add(hit);
     }
 
+    // 경계는 입력 사각형과 분리된 단 하나의 Graphics가 일괄 그린다. 열린 칸도 같은 선을 공유한다.
+    // 원화 뒤에 먼저 만들어 둔 외곽선을 원화 앞으로 올리되, 입력 객체와는 계속 분리해 둔다.
+    grid.bringToTop(frameArt);
+    const gridLines = this.add.graphics().lineStyle(2, COLOR.strataGrid, 0.62);
+    for (let column = 0; column <= board.columns; column += 1) {
+      const x = -frame.width / 2 + column * frame.cellWidth;
+      gridLines.moveTo(x, -frame.height / 2).lineTo(x, frame.height / 2);
+    }
+    for (let row = 0; row <= board.rows; row += 1) {
+      const y = -frame.height / 2 + row * frame.cellHeight;
+      gridLines.moveTo(-frame.width / 2, y).lineTo(frame.width / 2, y);
+    }
+    gridLines.strokePath();
+    grid.add(gridLines);
+
     this.view.add(this.add.text(frame.centerX, STRATA_BOARD.top - 34,
       t("archaeology.digsLeft", { digs: board.digsLeft }),
       textStyle({ role: "display", size: 34, color: COLOR.accentText })).setOrigin(0.5, 1));
+
+    // 판 아래 빈 띠는 현재까지 얻은 결과를 작은 액자 영수증으로 채운다.
+    const haul = strataBoardHaul(board);
+    const haulY = frame.centerY + frame.height / 2 + 62;
+    haul.forEach(({ kind, amount }, index) => {
+      const texture = rewardTexture(kind);
+      if (texture === null) return;
+      const x = frame.centerX - ((haul.length - 1) * 116) / 2 + index * 116;
+      addFramedIcon(this, this.view, x, haulY, 84, texture, { amount: String(amount), plain: true });
+    });
   }
 
   private dig(index: number): void {
@@ -286,9 +325,23 @@ export class ArchaeologyScene extends Phaser.Scene {
     this.digging = true;
     void gameApi.digStrataTile({ tileIndex: index, requestId: `dig-${Date.now()}` })
       .then((result) => {
+        // 서버는 마지막 굴착과 동시에 판을 닫으므로, 닫기 전 화면 판에 마지막 영수증을 합쳐
+        // 이번 판 전체 보상을 만든다. 보상은 이미 지급됐고 팝업은 그 사실만 확인시킨다.
+        const completedBoard = this.board === null ? null : {
+          ...this.board,
+          digsLeft: result.board?.digsLeft ?? 0,
+          tiles: this.board.tiles.map((tile) => tile.index === result.tile.index ? { ...tile, revealed: true, kind: result.tile.kind, amount: result.tile.amount } : tile),
+        } satisfies StrataBoardView;
         this.charges = result.charges;
         this.board = result.board;
         this.paintView();
+        if (result.board === null && completedBoard !== null) {
+          const items: RewardPopupItem[] = strataBoardHaul(completedBoard).flatMap(({ kind, amount }) => {
+            const icon = rewardTexture(kind);
+            return icon === null ? [] : [{ icon, amount }];
+          });
+          openRewardPopup(this, this.popups, { items });
+        }
       })
       .finally(() => { this.digging = false; });
   }

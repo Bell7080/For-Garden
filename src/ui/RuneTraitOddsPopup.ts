@@ -24,6 +24,13 @@ import { COLOR, textStyle } from "./theme";
 const ODDS = {
   width: 920,
   padding: 44,
+  /**
+   * 첫 제목표가 판 윗변에서 내려오는 거리.
+   *
+   * **팝업 머리글도 그 윗변에 걸터앉는다** — 같은 x에서 시작하므로 여백만큼만 내리면 두
+   * 제목표가 서로 겹친다.
+   */
+  topRoom: 86,
   /** 제목표가 걸터앉는 판 윗변에서 첫 줄까지. */
   headerRoom: 74,
   row: 50,
@@ -52,7 +59,7 @@ export function openRuneTraitOdds(options: { scene: Phaser.Scene; popups: PopupL
   const { scene, popups } = options;
   const upgradeRows = RUNE_TRAIT_GRADES.length;
   const listRows = RUNE_TRAIT_DEFS.length;
-  const height = ODDS.padding * 2 + ODDS.headerRoom
+  const height = ODDS.topRoom + ODDS.padding + ODDS.headerRoom
     + (upgradeRows + 1) * ODDS.row + ODDS.sectionGap + ODDS.headerRoom + listRows * ODDS.row;
 
   popups.open({
@@ -64,7 +71,7 @@ export function openRuneTraitOdds(options: { scene: Phaser.Scene; popups: PopupL
     const left = -ODDS.width / 2 + ODDS.padding;
     const inner = ODDS.width - ODDS.padding * 2;
     const at = (ratio: number): number => left + inner * ratio;
-    let y = -height / 2 + ODDS.padding;
+    let y = -height / 2 + ODDS.topRoom;
 
     /* ── 등급 상승 ─────────────────────────────────────────────────────────── */
     addSectionTitle(scene, left, y, t("rune.trait.odds.upgradeTitle"), { size: 28, parent: body });

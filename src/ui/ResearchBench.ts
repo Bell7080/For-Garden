@@ -1,10 +1,10 @@
 import Phaser from "phaser";
-import { t, type TextKey } from "../i18n";
+import { t } from "../i18n";
 import { BASE_WIDTH } from "../config/gameConfig";
 import { runeDisplayName, runePartLabel, runeRarityLabel, type RuneInstance, type RuneStatKey } from "../core/runes";
 import { KeywordManager } from "../managers/KeywordManager";
 import { session } from "../state/session";
-import { Button } from "./Button";
+import { addResearchActionRow, type ResearchActionRowSpec } from "./ResearchActionRow";
 import { chipPoints, drawHairline, drawLayer, drawShapeEdge, HOLO, slantedRect } from "./holo";
 import type { PopupLayer } from "./PopupLayer";
 import {
@@ -27,14 +27,13 @@ import { COLOR, textStyle } from "./theme";
  * 대해 지금 할 수 있는 일뿐이다.
  */
 
-/** 연구대가 아래 줄에 세우는 조작 한 줄이다. 화면이 아니라 부른 쪽이 무엇을 세울지 정한다. */
-export interface ResearchBenchAction {
-  labelKey: TextKey;
-  enabled: boolean;
-  /** 값을 치르는 조작만 버튼 안에 비용을 박는다. */
-  cost?: { icon: "currency-orestone"; amount: number };
-  onPress: () => void;
-}
+/**
+ * 연구대가 아래 줄에 세우는 조작 한 줄이다. 화면이 아니라 부른 쪽이 무엇을 세울지 정한다.
+ *
+ * 생김새는 `ResearchActionRow` 한 장이 갖는다 — 아이템을 태우는 줄과 재화를 치르는 줄이 같은
+ * 골격을 쓰므로, 무엇을 쓰는 조작인지가 줄마다 다른 양식으로 읽히지 않는다.
+ */
+export type ResearchBenchAction = ResearchActionRowSpec;
 
 export interface ResearchBenchOptions {
   scene: Phaser.Scene;
@@ -252,15 +251,7 @@ export function addResearchBench(options: ResearchBenchOptions): void {
   }
 
   options.actions.forEach((action, index) => {
-    const button = new Button(scene, BASE_WIDTH / 2, researchActionY(index), {
-      width: RESEARCH_BENCH.actionWidth,
-      height: RESEARCH_BENCH.actionHeight,
-      label: t(action.labelKey),
-      ...(action.cost ? { cost: { ...action.cost, affordable: action.enabled } } : {}),
-      onClick: () => { if (action.enabled) action.onPress(); },
-    });
-    button.setEnabled(action.enabled);
-    parent.add(button);
+    const button = addResearchActionRow(scene, parent, BASE_WIDTH / 2, researchActionY(index), action);
     if (!rising) return;
     // **버튼은 한 줄씩 늦게 선다.** 넷이 한꺼번에 뜨면 특성을 읽기도 전에 고르는 줄이 먼저 찬다.
     button.setAlpha(0);

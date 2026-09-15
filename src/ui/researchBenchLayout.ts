@@ -39,8 +39,8 @@ export const RESEARCH_BENCH = {
   riseMs: 320,
   /** 상세 레이어가 판 안에서 시작하는 x(판 왼쪽 변 기준). */
   detailLeft: 400,
-  actionHeight: 96,
-  actionGap: 16,
+  actionHeight: 116,
+  actionGap: 18,
   /** 버튼 폭. 좌우 여백은 판과 같은 기둥을 쓴다. */
   actionWidth: 880,
   /**
@@ -54,6 +54,28 @@ export const RESEARCH_BENCH = {
   actionDelay: 540,
   /** 버튼이 한 줄씩 늦게 서는 간격(ms). */
   actionStagger: 80,
+} as const;
+
+/**
+ * 조작 한 줄 안의 자리.
+ *
+ * **이 화면의 조작은 아이템을 태워 굴리는 일이다.** 무엇을 쓰는지·몇 개 남았는지·몇 개를
+ * 태우는지가 누르기 전에 보여야 해서, 줄 왼쪽에 그 아이템의 액자가 서고 오른쪽에 드는 수가
+ * 선다. 재화(원석)를 치르는 줄만 액자 없이 그림과 수를 바짝 붙인다 — 그 양식은 이미 버튼
+ * 비용 표기의 공용 규칙이다.
+ */
+export const RESEARCH_ACTION = {
+  /** 왼쪽 액자 한 변. */
+  frame: 78,
+  /** 줄 좌우에서 안으로 들어오는 여백. */
+  padX: 30,
+  /** 액자와 글 사이. */
+  gap: 24,
+  labelSize: 32,
+  /** 액자 아래에 붙는 아이템 이름. 무엇을 태우는지는 그림만으로는 갈리지 않는다. */
+  itemNameSize: 20,
+  /** 오른쪽 끝의 드는 수. */
+  costSize: 30,
 } as const;
 
 /**

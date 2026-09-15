@@ -357,6 +357,7 @@ export class ArchaeologyScene extends Phaser.Scene {
       actions.push({
         labelKey: "rune.traitAction.grant",
         enabled: owned(grant.itemId) > 0,
+        item: { itemId: grant.itemId, owned: owned(grant.itemId), cost: 1 },
         onPress: () => void gameApi.grantRuneTrait({ runeInstanceId: rune.instanceId, itemId: grant.itemId, requestId: request("trait") })
           .then(() => this.paintView()),
       });
@@ -367,6 +368,7 @@ export class ArchaeologyScene extends Phaser.Scene {
       actions.push({
         labelKey: "rune.traitAction.grantHigh",
         enabled: owned(grantHigh.itemId) > 0,
+        item: { itemId: grantHigh.itemId, owned: owned(grantHigh.itemId), cost: 1 },
         onPress: () => void gameApi.grantRuneTrait({ runeInstanceId: rune.instanceId, itemId: grantHigh.itemId, requestId: request("trait-high") })
           .then(() => this.paintView()),
       });
@@ -376,6 +378,7 @@ export class ArchaeologyScene extends Phaser.Scene {
       actions.push({
         labelKey: "rune.traitAction.upgrade",
         enabled: owned(upgrade.itemId) > 0,
+        item: { itemId: upgrade.itemId, owned: owned(upgrade.itemId), cost: 1 },
         onPress: () => void gameApi.upgradeRuneTrait({ runeInstanceId: rune.instanceId, itemId: upgrade.itemId, requestId: request("trait-up") })
           .then(() => this.paintView()),
       });

@@ -150,7 +150,9 @@ export class ArchaeologyScene extends Phaser.Scene {
       icon: "magnifier",
       label: t("rune.trait.odds"),
       accent: true,
-      onClick: () => openRuneTraitOdds({ scene: this, popups: this.popups, anchor: { x: ARCHAEOLOGY.oddsX, y: ARCHAEOLOGY.oddsY } }),
+      // **누른 자리에 붙이지 않는다** — 표 두 장이 든 큰 판이라 위로 붙이면 제목·횟수 줄을
+      // 덮는다. 한동안 머무는 판은 화면 가운데에 서고 우하단 뒤로가기로 닫는다.
+      onClick: () => openRuneTraitOdds({ scene: this, popups: this.popups }),
     });
 
     this.view = this.add.container(0, 0);

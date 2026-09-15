@@ -42,8 +42,13 @@ function gradeHex(grade: (typeof RUNE_TRAIT_GRADES)[number]): string {
   return `#${RUNE_ACCENT[grade].toString(16).padStart(6, "0")}`;
 }
 
-/** 확률 정보 한 장을 연다. 읽기만 하는 창이라 뒤를 덮지 않고 누른 자리 위에 얹힌다. */
-export function openRuneTraitOdds(options: { scene: Phaser.Scene; popups: PopupLayer; anchor?: { x: number; y: number } }): void {
+/**
+ * 확률 정보 한 장을 연다.
+ *
+ * **누른 자리에 붙는 쪽지가 아니라 화면 가운데에 서는 판이다** — 표 두 장이 들어 화면 높이의
+ * 절반을 넘으므로, 위로 붙이면 제목·횟수 줄을 덮는다. 닫는 길은 화면과 같은 우하단이다.
+ */
+export function openRuneTraitOdds(options: { scene: Phaser.Scene; popups: PopupLayer }): void {
   const { scene, popups } = options;
   const upgradeRows = RUNE_TRAIT_GRADES.length;
   const listRows = RUNE_TRAIT_DEFS.length;
@@ -54,7 +59,6 @@ export function openRuneTraitOdds(options: { scene: Phaser.Scene; popups: PopupL
     width: ODDS.width,
     height,
     title: t("rune.trait.odds"),
-    ...(options.anchor ? { anchor: options.anchor } : {}),
     backButton: true,
   }, (body) => {
     const left = -ODDS.width / 2 + ODDS.padding;

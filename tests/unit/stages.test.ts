@@ -59,7 +59,7 @@ describe("stage enemy design", () => {
       { 아모: [9, 0, 3], 토비: [9, 0, 3], 리파: [9, 0, 3] },
       { 아모: [9, 0, 4], 토비: [9, 0, 4], 리파: [9, 0, 4] },
       { 아모: [10, 0, 4], 토비: [10, 0, 4], 리파: [10, 0, 4] },
-      { 코마: [10, 0, 22] },
+      { 코마: [10, 0, 14] },
     ]);
     /*
      * **레벨은 관문을 따라 내려가지 않는다.** 1-10까지 마지막 관문이 직전보다 쉬운 구간이
@@ -161,10 +161,10 @@ describe("stage enemy design", () => {
     expect(elite.elite).toBe(true);
     // 화면의 붉은 `+n`이 읽는 값이라 단계 그대로 서 있어야 한다 — 곱한 값을 여기 적으면
     // `LV.10 +110`이 되어 야성이 레벨과 나란히 읽힌다.
-    expect(elite.enemies[0].ferocityLevel).toBe(22);
-    expect(effectiveEnemyLevel(elite.enemies[0], true)).toBe(elite.enemies[0].level + 110);
+    expect(elite.enemies[0].ferocityLevel).toBe(14);
+    expect(effectiveEnemyLevel(elite.enemies[0], true)).toBe(elite.enemies[0].level + 70);
     // 정예 배율은 그 관문에만 든다. 같은 값이라도 잡졸로 세면 세 배다.
-    expect(effectiveEnemyLevel(elite.enemies[0])).toBe(elite.enemies[0].level + 66);
+    expect(effectiveEnemyLevel(elite.enemies[0])).toBe(elite.enemies[0].level + 42);
     const mob = battles.find((stage) => stage.id === "1-9")!;
     expect(mob.enemies[0].ferocityLevel).toBe(4);
     expect(effectiveEnemyLevel(mob.enemies[0])).toBe(mob.enemies[0].level + 12);

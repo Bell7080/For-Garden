@@ -141,7 +141,16 @@ test("지층 한 칸은 타격까지 입력을 잠그고 선택한 결과만 공
   await tap(page, targets[0].x, targets[0].y);
   await tap(page, targets[1].x, targets[1].y);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.archaeologyDig?.requests)).toBe(1);
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.archaeologyDig?.active)).toBe(false);
+  /*
+   * **연출이 끝나기를 기다리는 자리는 기본 제한(5초)으로 부족하다.** 시간표 자체는 1.06초지만
+   * (`StrataDigEffect`의 진입·회전·충돌·퇴장 합) Phaser의 Tween과 Timer는 프레임이 돌아야
+   * 나아가고, 보이지 않는 창에서 도는 헤드리스 브라우저는 그 프레임을 훨씬 드물게 준다 —
+   * 실측에서 입력부터 잠금 해제까지 약 6초였다. 위 입력면 게시를 기다리는 줄이 이미 같은
+   * 이유로 30초를 쓰고 있어 같은 값을 준다. 화면을 여는 시간이 아니라 **프레임이 오는 속도**에
+   * 걸리는 대기라 실제 기기에서는 1초 남짓이다.
+   */
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.archaeologyDig?.active),
+    { timeout: 30_000 }).toBe(false);
 
   // 서버 결과는 충돌 이정표 뒤 선택한 컨테이너에만 반영되고 다른 흙은 그대로 남는다.
   const after = await page.evaluate(() => window.__PF_DEBUG!.archaeologyDig!.revealedIndices);

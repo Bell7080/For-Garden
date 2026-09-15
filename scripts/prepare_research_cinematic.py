@@ -152,9 +152,12 @@ EXPORT_TAIL = (
     "for(;i<r.length;i++){d=this.reduced?.45:ft[r[i].rarity].duration;if(e<t+d-1e-6)break;t+=d}"
     "if(i>=r.length){this.revealTarget=this.deck.duration+1;return}"
     "var L=ft[r[i].rarity].level,s=(e-t)/d,k=Math.min(L,Math.floor(Math.max(0,s)*(L+1)/.6));"
-    "if(k<L){this.revealTarget=t+d*(.6*(k+1)/(L+1)+.002);return}"
-    "if(s<.86){this.revealTarget=t+d*.9;return}"
-    "this.revealTarget=i+1<r.length?t+d+1e-4:this.deck.duration+1};"
+    # 방금 걸음이 무엇이었는지 남긴다 — 화면이 "뒤집힌 순간"을 알아야 중복 카드가 그때
+    # 파편으로 바뀐다. 같은 계산을 화면에서 다시 하면 두 곳이 갈린다.
+    "this.revealIndex=i;"
+    "if(k<L){this.revealStep=\"tier\";this.revealTarget=t+d*(.6*(k+1)/(L+1)+.002);return}"
+    'if(s<.86){this.revealStep="flip";this.revealTarget=t+d*.9;return}'
+    'this.revealStep="next";this.revealTarget=i+1<r.length?t+d+1e-4:this.deck.duration+1};'
     # 건너뛰기는 연출을 지우는 것이 아니라 **결산으로 곧장 간다**.
     "xo.prototype.skipToResult=function(){"
     'if(this.destroyed||this.phase==="result")return;'

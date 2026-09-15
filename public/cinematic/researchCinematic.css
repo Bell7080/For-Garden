@@ -303,7 +303,57 @@
  * (`ITEM_FRAME`) 한 장에 수량이 우하단으로 겹친다. 값은 그 표와 같아야 한다 — 같은 골드가
  * 가방에서는 액자 안에, 뽑기에서는 다른 그림으로 서면 두 가지가 있는 줄 안다.
  */
-.card-art-portrait > .character-art { width: 100%; height: 100%; object-fit: cover; object-position: 50% 0%; }
+/*
+ * 렐릭 카드는 원화가 **가장자리까지 찬다.**
+ *
+ * 액자 안 정사각으로 넣으면 인물이 아이콘처럼 잘려, 같은 개체가 도감 카드와 다른 그림으로
+ * 읽힌다. 카드와 같은 비율(0.66)로 구워 두었으므로 늘어나지 않는다.
+ */
+.card-art-portrait { top: 0; left: 0; right: 0; height: 100%; }
+.card-art-portrait > .character-art { width: 100%; height: 100%; object-fit: cover; }
+/* 이름줄은 별도 레이어가 아니다 — 원화 위아래에 투명→검정을 깔고 그 위에 글자가 얹힌다. */
+.card-art-portrait:after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(#05070ad6 0%, transparent 20%, transparent 52%, #05070af0 90%);
+}
+/* 파편 액자는 원화 위에 숨어 있다가 갈아 끼워진다. */
+.card-art-portrait > .rc-item-frame { display: none; }
+.card-art-framed > .character-art { display: none; }
+
+/*
+ * 중복이 파편으로 바뀌는 한 순간.
+ *
+ * 섬광은 **동그라미가 아니라 납작한 마름모**이고 옅게 깐다 — 화면 전체의 규칙과 같다.
+ * 액자는 그 빛 안에서 부풀었다 제자리로 앉는다.
+ */
+.rc-shatter-flash {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 150%;
+  aspect-ratio: 1.6;
+  transform: translate(-50%, -50%) scale(0.5);
+  opacity: 0;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  clip-path: polygon(50% 0, 100% 52%, 50% 100%, 0 48%);
+  background: radial-gradient(closest-side, #ffffffd9, color-mix(in srgb, var(--tier) 72%, transparent) 42%, transparent 72%);
+}
+@keyframes rc-shatter {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.42); }
+  16% { opacity: 0.6; transform: translate(-50%, -50%) scale(0.92); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.5); }
+}
+@keyframes rc-frame-in {
+  0% { opacity: 0; transform: scale(0.72); }
+  60% { opacity: 1; transform: scale(1.07); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.rc-shattering > .rc-shatter-flash { animation: rc-shatter 0.52s ease-out; }
+.rc-shattering > .rc-item-frame { animation: rc-frame-in 0.38s ease-out; }
 
 /*
  * 액자는 두 겹이다 — 깎인 판과, 그 위에 **깎이지 않고** 얹히는 수량.

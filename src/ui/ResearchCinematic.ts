@@ -37,6 +37,9 @@ interface CinematicOptions {
 
 interface CinematicInstance {
   start(): void;
+  /** 방금 넘긴 걸음과 그 칸. 뒤집힌 순간을 화면이 알아야 중복이 파편으로 바뀐다. */
+  revealStep?: "tier" | "flip" | "next";
+  revealIndex?: number;
   /** 한 걸음 넘긴다. 공개 단계에서는 등급 한 칸 → 뒤집기 → 다음 칸 순서다. */
   advance(): void;
   /** 남은 연출을 건너뛰고 **결산 화면으로 곧장** 간다. 판을 지우지 않는다. */
@@ -161,9 +164,23 @@ function buildMarkup(text: ResearchCinematicText): string {
 <div id="loading" class="rc-loading"><i></i><i></i><i></i></div>`;
 }
 
-/** 카드 그림을 굽는 크기. 화면 크기마다 굽지 않고 비율만 맞춰 한 번 굽는다. */
-const PORTRAIT_BAKE = { width: 420, height: 432 } as const;
+/**
+ * 카드 그림을 굽는 크기.
+ *
+ * 카드와 **같은 비율**(0.66)로 굽는다 — 원화가 카드를 가장자리까지 채우기 때문이다. 액자 안에
+ * 정사각으로 넣으면 인물이 아이콘처럼 잘려 그리드 카드와 다른 그림이 된다. 화면 크기마다
+ * 굽지 않고 비율만 맞춰 한 번 굽는다.
+ */
+const PORTRAIT_BAKE = { width: 440, height: 667 } as const;
 const FACE_BAKE = 192;
+
+/**
+ * 중복이 파편으로 바뀌기까지.
+ *
+ * 뒤집히는 순간 곧바로 파편이면 누구를 만났는지 읽을 새가 없다. 뒤집힘(0.45초)이 끝나고 한 박자
+ * 더 두었다가 섬광과 함께 바뀐다.
+ */
+const SHATTER_DELAY_MS = 900;
 
 function imageOf(url: string, className: string): HTMLImageElement {
   const image = document.createElement("img");
@@ -197,10 +214,15 @@ export class ResearchCinematic {
   private readonly inputWasEnabled: boolean;
   /** 결산까지 실제로 흘렀는지. 검사 채널이 읽는다. */
   private reachedResult = false;
+  /** 카드마다 무엇이 서는지. 뒤집힌 칸이 중복인지 볼 때 읽는다. */
+  private readonly art: readonly CinematicCardArt[];
+  /** 파편으로 바뀌기를 기다리는 타이머. 판을 닫을 때 남김없이 걷는다. */
+  private readonly timers = new Set<number>();
 
   private constructor(bundle: CinematicBundle, options: ResearchCinematicOptions) {
     this.canvas = options.canvas;
     this.game = options.scene.game;
+    this.art = options.art;
     bundle.text.gray = options.text.gray;
     /*
      * **게임의 입력을 끈다.**
@@ -223,7 +245,21 @@ export class ResearchCinematic {
 
     // 연출을 재촉하는 손은 화면 **전체**가 받는다. 균열에서는 그 손이 깨는 순간을 앞당기고,
     // 결과 화면에서는 판을 닫는다 — 눌러야 하는 자리를 따로 세우지 않는다.
+    /*
+     * **판 위의 손은 판 밖으로 새지 않는다.**
+     *
+     * Phaser가 `pointerup`을 window에도 걸어 두므로, 여기서 멈추지 않으면 같은 한 번이 판을
+     * 닫고 나서 그 아래 좌표의 하단 탭까지 누른다 — 결산에서 화면 밑동을 누르면 뒤의 탭이
+     * 함께 눌리던 원인이다. 게임 입력을 끄는 것만으로는 모자랐다: 판을 닫는 그 순간 입력을
+     * 되돌리므로, 같은 사건이 window에 닿을 때는 이미 켜져 있었다.
+     */
+    // **잡는 단계(capture)에서 멈추지 않는다.** 같은 요소에서 잡는 단계에 끊으면 그 요소의
+    // 거품 단계 처리기까지 함께 죽어, 화면을 눌러도 아무 일이 일어나지 않는다.
+    for (const kind of ["pointerdown", "pointercancel", "click"] as const) {
+      root.addEventListener(kind, (event) => event.stopPropagation());
+    }
     root.addEventListener("pointerup", (event) => {
+      event.stopPropagation();
       if (event.target instanceof Element && event.target.closest(".rc-skip")) return;
       this.tap();
     });
@@ -296,7 +332,12 @@ export class ResearchCinematic {
   close(): void {
     if (this.closed) return;
     this.closed = true;
-    this.game.input.enabled = this.inputWasEnabled;
+    for (const timer of this.timers) window.clearTimeout(timer);
+    this.timers.clear();
+    // 입력은 지금 도는 사건이 지나간 **다음에** 되돌린다. 여기서 곧바로 켜면 판을 닫은 그
+    // 한 번이 window까지 흘러가 뒤의 탭을 누른다.
+    const restore = this.inputWasEnabled;
+    window.setTimeout(() => { this.game.input.enabled = restore; }, 0);
     this.observer.disconnect();
     window.removeEventListener("resize", this.onWindowChange);
     window.removeEventListener("orientationchange", this.onWindowChange);
@@ -313,6 +354,11 @@ export class ResearchCinematic {
    */
   private settleResult(): void {
     this.reachedResult = true;
+    for (const timer of this.timers) window.clearTimeout(timer);
+    this.timers.clear();
+    // 건너뛰어 곧장 온 칸도 파편으로 세운다. 격자에 원화와 파편이 섞이면 무엇이 중복인지
+    // 읽히지 않는다.
+    this.art.forEach((slot, index) => { if (slot.frame === "face") this.shatter(index, true); });
   }
 
   /**
@@ -324,6 +370,7 @@ export class ResearchCinematic {
   private tap(): void {
     if (this.phase === "result") { this.close(); return; }
     this.instance.advance();
+    this.scheduleShatter();
   }
 
   /**
@@ -341,33 +388,75 @@ export class ResearchCinematic {
       const slot = art[index];
       const box = card.querySelector<HTMLElement>(".card-art");
       if (!slot || !box) continue;
-      if (slot.frame === "portrait") {
-        box.className = "card-art card-art-portrait";
-        box.replaceChildren();
-        const url = await bakeCinematicPortrait(scene, slot.portraitAssetId, PORTRAIT_BAKE.width, PORTRAIT_BAKE.height);
+      if (slot.frame === "icon") {
+        // 재화는 원화가 없다. 액자 한 장이 칸 안에 서고 수량이 우하단에 겹친다.
+        box.className = "card-art card-art-framed";
+        box.replaceChildren(this.buildFrame(slot.amount));
+        const url = bakeCinematicIcon(scene, slot.iconKey, FACE_BAKE);
         if (this.closed) return;
-        if (url) box.appendChild(imageOf(url, "character-art"));
+        if (url) box.querySelector(".rc-item-plate")?.appendChild(imageOf(url, "rc-item-icon"));
         continue;
       }
-      // 액자는 그림이 오기 전에 먼저 선다 — 뒤늦게 액자가 생기면 카드가 한 번 조립되어 보인다.
-      box.className = "card-art card-art-framed";
-      const frame = document.createElement("div");
-      frame.className = "rc-item-frame";
-      // 깎인 판과, 그 위에 깎이지 않고 얹히는 수량 — 판 안에 수를 넣으면 빗변이 숫자를 자른다.
-      const plate = document.createElement("div");
-      plate.className = "rc-item-plate";
-      const amount = document.createElement("span");
-      amount.className = "rc-item-amount";
-      amount.textContent = slot.amount;
-      frame.append(plate, amount);
-      box.replaceChildren(frame);
-      const url = slot.frame === "face"
-        ? await bakeCinematicFace(scene, slot.portraitAssetId, FACE_BAKE)
-        : bakeCinematicIcon(scene, slot.iconKey, FACE_BAKE);
+      /*
+       * 렐릭은 신규든 중복이든 **원화가 카드를 가장자리까지 채운다.**
+       *
+       * 중복은 그 위에 파편 액자를 미리 숨겨 두었다가, 뒤집힌 뒤 한 박자 지나면 섬광과 함께
+       * 갈아 끼운다 — 누구를 만났는지 먼저 읽히고, 그다음에 "이미 가진 개체였다"가 온다.
+       */
+      box.className = "card-art card-art-portrait";
+      box.replaceChildren();
+      if (slot.frame === "face") {
+        box.appendChild(this.buildFrame(slot.amount));
+        const flash = document.createElement("span");
+        flash.className = "rc-shatter-flash";
+        box.appendChild(flash);
+      }
+      const url = await bakeCinematicPortrait(scene, slot.portraitAssetId, PORTRAIT_BAKE.width, PORTRAIT_BAKE.height);
       if (this.closed) return;
-      // 얼굴은 액자를 꽉 채우고(구울 때 모서리를 지웠다) 재화 아이콘만 사방 여백이 규격이다.
-      if (url) plate.appendChild(imageOf(url, slot.frame === "face" ? "rc-item-face" : "rc-item-icon"));
+      if (url) box.insertBefore(imageOf(url, "character-art"), box.firstChild);
+      if (slot.frame !== "face") continue;
+      const face = await bakeCinematicFace(scene, slot.portraitAssetId, FACE_BAKE);
+      if (this.closed) return;
+      if (face) box.querySelector(".rc-item-plate")?.appendChild(imageOf(face, "rc-item-face"));
     }
+  }
+
+  /** 게임의 아이템 액자 한 장. 깎인 판과, 그 위에 깎이지 않고 얹히는 수량 두 겹이다. */
+  private buildFrame(amount: string): HTMLElement {
+    const frame = document.createElement("div");
+    frame.className = "rc-item-frame";
+    const plate = document.createElement("div");
+    plate.className = "rc-item-plate";
+    const label = document.createElement("span");
+    label.className = "rc-item-amount";
+    label.textContent = amount;
+    frame.append(plate, label);
+    return frame;
+  }
+
+  /**
+   * 중복 카드를 파편으로 갈아 끼운다.
+   *
+   * 뒤집은 그 칸만, 한 번만 바꾼다. 건너뛰어 결산으로 바로 간 칸은 기다리지 않고 곧바로
+   * 바뀐다 — 결산 격자에 원화와 파편이 섞여 있으면 무엇이 중복인지 읽히지 않는다.
+   */
+  private shatter(index: number, instant: boolean): void {
+    const card = this.root.querySelectorAll<HTMLElement>(".archive-card")[index];
+    const box = card?.querySelector<HTMLElement>(".card-art.card-art-portrait");
+    if (!box || !box.querySelector(".rc-item-frame")) return;
+    box.className = instant ? "card-art card-art-framed" : "card-art card-art-framed rc-shattering";
+  }
+
+  /** 방금 넘긴 걸음이 중복 카드의 뒤집기였다면, 한 박자 뒤에 파편으로 바꾼다. */
+  private scheduleShatter(): void {
+    const index = this.instance.revealIndex;
+    if (this.instance.revealStep !== "flip" || index === undefined) return;
+    if (this.art[index]?.frame !== "face") return;
+    const timer = window.setTimeout(() => {
+      this.timers.delete(timer);
+      if (!this.closed) this.shatter(index, false);
+    }, SHATTER_DELAY_MS);
+    this.timers.add(timer);
   }
 
   /** 뿌리 상자를 캔버스에 맞춘다. 캔버스가 레터박스로 줄어들면 연출도 같이 줄어든다. */
